@@ -60,6 +60,8 @@ public:
   void MeasureIsland(int xSeed, int ySeed, int zSeed);
   void SaveIsland(int xSeed, int ySeed, int zSeed);
   void ChangeLabel(int inputLabel, int outputLabel);
+
+  void LabelVOI(int c1x, int c1y, int c1z, int c2x, int c2y, int c2z, int method);
   
   vtkGetMacro(IslandSize, int);
   vtkGetMacro(LargestIslandSize, int);

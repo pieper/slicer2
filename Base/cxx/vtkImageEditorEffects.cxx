@@ -30,6 +30,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkImageThresholdBeyond.h"
 #include "vtkImageCopy.h"
 #include "vtkObjectFactory.h"
+#include "vtkImageLabelVOI.h"
 #include <time.h>
 
 //------------------------------------------------------------------------------
@@ -409,3 +410,19 @@ void vtkImageEditorEffects::PrintSelf(ostream& os, vtkIndent indent)
   vtkImageEditor::PrintSelf(os, indent);
 }
 
+void vtkImageEditorEffects::LabelVOI(int c1x, int c1y, int c1z, int c2x, int c2y, int c2z, int method)
+{
+  vtkImageLabelVOI *change  = vtkImageLabelVOI::New();
+
+  //  change->SetInputLabel(inputLabel);
+  //  change->SetOutputLabel(outputLabel);
+  change->SetCorner1(c1x, c1y, c1z);
+  change->SetCorner2(c2x, c2y, c2z);
+  change->SetMethod(method);
+  
+  this->Apply(change, change);
+
+  change->SetInput(NULL);
+  change->SetOutput(NULL);
+  change->Delete();
+}
