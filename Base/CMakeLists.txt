@@ -74,12 +74,12 @@ ENABLE_TESTING()
 ## DartConfiguration.tcl
 
 # Pick up xml files to test
-FILE(GLOB_RECURSE xmlfiles "${SLICER_HOME}/Testing/TestData/*.xml")
+FILE(GLOB_RECURSE xmlfiles "${CTEST_SLICER_HOME}/Testing/TestData/*.xml")
 
 # For debugging purposes
 # MESSAGE("${xmlfiles}")
 # MESSAGE("${testname}")
-# MESSAGE(" path is: [${SLICER_HOME}/Testing/TestData/*.xml]")
+# MESSAGE(" path is: [${CTEST_SLICER_HOME}/Testing/TestData/*.xml]")
 # MESSAGE(" executable is: [${SLICER_EXECUTABLE}")
 
 # Try to open each xml file
