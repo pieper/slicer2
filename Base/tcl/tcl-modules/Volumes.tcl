@@ -127,7 +127,7 @@ DICOMDataDictFile='$Volumes(DICOMDataDictFile)'"
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-                {$Revision: 1.46 $} {$Date: 2001/05/03 19:48:42 $}]
+                {$Revision: 1.47 $} {$Date: 2001/05/08 16:18:17 $}]
 
 	# Props
 	set Volume(propertyType) Basic
@@ -2178,6 +2178,13 @@ proc DICOMReadHeaderValues { filename } {
 	} else  {
 	    set Volume(gantryDetectorTilt) 0
 	}
+	if { [parser FindElement 0x0018 0x5100] == "1" } {
+	    set Length [lindex [split [parser ReadElement]] 3]
+	    set str [parser ReadText $Length]
+	    if {[string compare -nocase [string trim $str] "HFP"] == "0"} {
+		set Volume(gantryDetectorTilt) [expr -1.0 * $Volume(gantryDetectorTilt)]
+	    }
+	}
 
 	if { [parser FindElement 0x0008 0x0060] == "1" } {
 	    set Length [lindex [split [parser ReadElement]] 3]
@@ -2356,11 +2363,18 @@ proc DICOMPredictScanOrder { file1 file2 } {
 	set diff [expr sqrt($dx * $dx + $dy * $dy + $dz *$dz)]
     }
 
-    if {$diff != $Volume(sliceThickness)} {
-	set answer [tk_messageBox -message "Slice thickness is $Volume(sliceThickness) in the header, but $diff when calculated from Slice Positions.\nWould you like to use the calculated one ($diff)?" \
+    scan $Volume(gantryDetectorTilt) "%f" gantrytilt
+    if {$gantrytilt != ""} {
+	set thickness [expr $diff * cos([expr $gantrytilt * acos(-1.0) / 180.0])]
+    } else {
+	set thickness $diff
+    }
+
+    if {[expr abs($thickness - $Volume(sliceThickness))] > 0.05} {
+	set answer [tk_messageBox -message "Slice thickness is $Volume(sliceThickness) in the header, but $thickness when calculated from Slice Positions.\nWould you like to use the calculated one ($thickness)?" \
 			-type yesno -icon question -title "Slice thickness question."]
 	if {$answer == "yes"} {
-	    set Volume(sliceThickness) $diff
+	    set Volume(sliceThickness) $thickness
 	}
     }
 
@@ -2428,8 +2442,8 @@ proc DICOMListHeader {filename} {
 	return
     }
     
-    Volumes(lister) ReadList $Volumes(DICOMDataDictFile)
-    Volumes(lister) SetListAll 0
+    #Volumes(lister) ReadList $Volumes(DICOMDataDictFile)
+    #Volumes(lister) SetListAll 0
 
     while {[Volumes(lister) IsStatusOK] == "1"} {
 	set ret [Volumes(lister) ReadElement]
