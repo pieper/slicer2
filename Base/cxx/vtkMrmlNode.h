@@ -44,8 +44,6 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #ifndef __vtkMrmlNode_h
 #define __vtkMrmlNode_h
 
-//#include <iostream.h>
-//#include <fstream.h>
 #include "vtkObject.h"
 #include "vtkMatrix4x4.h"
 #include "vtkTransform.h"
@@ -54,7 +52,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 class VTK_SLICER_BASE_EXPORT vtkMrmlNode : public vtkObject
 {
   public:
-    static vtkMrmlNode *New();
+  static vtkMrmlNode *New();
   vtkTypeMacro(vtkMrmlNode,vtkObject);
   void PrintSelf(ostream& os, vtkIndent indent);
   
