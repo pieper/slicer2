@@ -139,8 +139,6 @@ proc MainBoot {{mrmlFile ""}} {
     lappend Module(Renderers) viewRen
     set View(viewCam) [viewRen GetActiveCamera]
 
-    update
-
     MainViewerBuildGUI
 
     # Module Init
@@ -271,7 +269,7 @@ The 3D Slicer will exit so the problem can be corrected."
     # - if a dir, load single xml file if it exists
     # - if nothing, set some defaults
     #-------------------------------------------    
-    update
+    update ;# draw the UI before loading the file
     if { [file isdirectory $mrmlFile] } {
         set mrmlfiles [glob -nocomplain -directory $mrmlFile *.xml]
         if { [llength $mrmlfiles] == 1 } {
@@ -370,7 +368,7 @@ proc MainInit {} {
 
         # Set version info
     lappend Module(versions) [ParseCVSInfo Main \
-        {$Revision: 1.86 $} {$Date: 2002/11/05 14:34:19 $}]
+        {$Revision: 1.87 $} {$Date: 2002/11/05 14:53:51 $}]
 
     # Call each "Init" routine that's not part of a module
     #-------------------------------------------
