@@ -8,8 +8,10 @@
 #include "vtkTractShapeFeatures.h"
 #include "vtkNormalizedCuts.h"
 
+// itk object for exception handling
+#include "itkExceptionObject.h"
 
-vtkCxxRevisionMacro(vtkClusterTracts, "$Revision: 1.2 $");
+vtkCxxRevisionMacro(vtkClusterTracts, "$Revision: 1.3 $");
 vtkStandardNewMacro(vtkClusterTracts);
 
 vtkCxxSetObjectMacro(vtkClusterTracts, InputStreamlines, vtkCollection);
@@ -67,10 +69,31 @@ void vtkClusterTracts::ComputeClusters()
 
   this->TractShapeFeatures->SetInputStreamlines(this->InputStreamlines);
   //this->TractShapeFeatures->DebugOn();
-  this->TractShapeFeatures->ComputeFeatures();
+
+  try {
+    this->TractShapeFeatures->ComputeFeatures();
+  }
+  catch (itk::ExceptionObject &e) {
+    vtkErrorMacro("Error in vtkTractShapeFeatures->ComputeFeatures: " << e);
+    return;
+  }
+  catch (...) {
+    vtkErrorMacro("Error in vtkTractShapeFeatures:ComputeFeatures");
+    return;
+  }
 
   //this->NormalizedCuts->DebugOn();
   this->NormalizedCuts->SetInputWeightMatrix(this->TractShapeFeatures->GetOutputSimilarityMatrix());
-  this->NormalizedCuts->ComputeClusters();
 
+  try {
+    this->NormalizedCuts->ComputeClusters();
+  }
+  catch (itk::ExceptionObject &e) {
+    vtkErrorMacro("Error in vtkNormalizedCuts->ComputeClusters: " << e);
+    return;
+  }
+  catch (...) {
+    vtkErrorMacro("Error in vtkNormalizedCuts:ComputeClusters");
+    return;
+  }
 }

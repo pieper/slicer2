@@ -8,6 +8,7 @@
 #include "itkWeightedCentroidKdTreeGenerator.h"
 #include "itkKdTreeBasedKmeansEstimator.h"
 #include "itkMinimumDecisionRule.h"
+#include "itkExceptionObject.h"
 
 // for debug output/visualization of features
 #include "vtkImageData.h"
@@ -17,7 +18,7 @@
 #include <ctime>
 
 
-vtkCxxRevisionMacro(vtkNormalizedCuts, "$Revision: 1.2 $");
+vtkCxxRevisionMacro(vtkNormalizedCuts, "$Revision: 1.3 $");
 vtkStandardNewMacro(vtkNormalizedCuts);
 
 
@@ -44,6 +45,12 @@ void vtkNormalizedCuts::PrintSelf(ostream& os, vtkIndent indent)
 
 void vtkNormalizedCuts::ComputeClusters()
 {
+
+  // NOTE: what is the way to do this correctly for itk pointers?
+  // First clear output in case we exit with an error.
+  // This prevents any old output from being re-used after such an error.
+  //this->OutputClassifier->Delete();
+
 
   // test we have input
   if (this->InputWeightMatrix == NULL)
@@ -128,9 +135,8 @@ void vtkNormalizedCuts::ComputeClusters()
   // an error in eigensystem computation
   if (!this->InputWeightMatrix->is_finite())
     {    
-      // Exit here with an error, and clear output
+      // Exit here with an error
       vtkErrorMacro("Normalized input weight matrix not finite (Nan or Inf)");
-      this->OutputClassifier = NULL;
       return;
     }
 
@@ -212,8 +218,17 @@ void vtkNormalizedCuts::ComputeClusters()
   // it seems not to work with 1
   treeGenerator->SetBucketSize( 3 );
   //treeGenerator->SetBucketSize( 16 );
-  treeGenerator->Update();
-
+  try {
+    treeGenerator->Update();
+  }
+  catch (itk::ExceptionObject &e) {
+    vtkErrorMacro("Error in tree generation: " << e);
+    return;
+  }
+  catch (...) {
+    vtkErrorMacro("Error in tree generation");
+    return;
+  }
 
   // Run kmeans on the new vectors (eigenvector embedding of tract info)
   // store these as that sample list with classes 
@@ -256,7 +271,17 @@ void vtkNormalizedCuts::ComputeClusters()
   //estimator->SetMaximumIteration( 1000 );
   //estimator->SetMaximumIteration( 20 );
   estimator->SetCentroidPositionChangesThreshold(0.0);
-  estimator->StartOptimization();
+  try {
+    estimator->StartOptimization();
+  }
+  catch (itk::ExceptionObject &e) {
+    vtkErrorMacro("Error in cluster estimation: " << e);
+    return;
+  }
+  catch (...) {
+    vtkErrorMacro("Error in cluster estimation");
+    return;
+  }
 
   EstimatorType::ParametersType estimatedMeans = estimator->GetParameters();
   vtkDebugMacro("Final estimator params: " << estimator->GetParameters());
@@ -318,7 +343,17 @@ void vtkNormalizedCuts::ComputeClusters()
       this->OutputClassifier->AddMembershipFunction( membershipFunctions[i].GetPointer() );
     }
 
-  this->OutputClassifier->Update();
+  try {
+    this->OutputClassifier->Update();
+  }
+  catch (itk::ExceptionObject &e) {
+    vtkErrorMacro("Error in update of output classifier: " << e);
+    return;
+  }
+  catch (...) {
+    vtkErrorMacro("Error in update of output classifier");
+    return;
+  }
   this->OutputClassifier->GetOutput()->DebugOn();
 
 }
