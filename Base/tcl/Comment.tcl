@@ -159,8 +159,6 @@ proc CommentFile {filename {verbose 0}} {
 	PrintCopyright $fid 1
 	puts $fid "#==============================================================================="
 	puts $fid "# FILE:        [file tail $filename]"
-	set str "%m/%d/%Y %H:%M"
-	puts $fid "# DATE:        [clock format [clock seconds] -format $str]"
 	puts $fid "# PROCEDURES:  "
 	foreach i $Comments(idList) {
 		puts -nonewline $fid "#   $Comments($i,proc)"
