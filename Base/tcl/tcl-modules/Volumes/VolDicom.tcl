@@ -127,6 +127,9 @@ proc VolDicomInit {} {
 DICOMPreviewWidth='64' DICOMPreviewHeight='64' DICOMPreviewHighestValue='256' \
 DICOMDataDictFile='$Volumes(DICOMDataDictFile)'"
 
+    # flag to search in subdirectories when parsing dicom filenames
+    set ::DICOMrecurse "true"
+
     # End
 }
 
@@ -243,11 +246,12 @@ proc DICOMLoadStudy { dir } {
     }
 
     if { $dir != "" } {
-        set files [glob $dir/*]
-        if { [file isdirectory [lindex $files 0]] } {
-            set dirs $files
-        } else {
-            set dirs [list $dir]
+        set files [glob -nocomplain $dir/*]
+        set dirs [list $dir]
+        foreach f $files {
+            if { [file isdirectory $f] } {
+                lappend dirs $f
+            } 
         }
 
         foreach d $dirs { 
@@ -258,6 +262,13 @@ proc DICOMLoadStudy { dir } {
             MainVolumesSetActive NEW
             Tab Volumes row1 Props
             set ::Volumes(DICOMStartDir) $d
+            if { $d == $dir } {
+                # if this is the top level dir, then only look for
+                # files at this level to avoid duplicate loading
+                set ::DICOMrecurse "false"
+            } else {
+                set ::DICOMrecurse "true"
+            }
             DICOMSelectMain $::Volume(dICOMFileListbox) "autoload"
 
             if { $::FindDICOMCounter != 0 } {
@@ -720,7 +731,7 @@ proc FindDICOM2 { StartDir AddDir Pattern } {
     }
     parser Delete
     
-    if { $::DICOMabort != "true" } {
+    if { $::DICOMabort != "true" && $::DICOMrecurse == "true" } {
         foreach file [glob -nocomplain *] {
             if [file isdirectory $file] {
                 FindDICOM2 [file join $StartDir $AddDir] $file $Pattern
