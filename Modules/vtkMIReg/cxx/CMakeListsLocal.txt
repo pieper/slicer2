@@ -32,10 +32,10 @@ INCLUDE_DIRECTORIES(
 #### INCLUDE_DIRECTORIES and LINK_LIBRARIES
 #### lines below
 ####
-#INCLUDE_DIRECTORIES( 
-#   ${VTKSLICERBASE_SOURCE_DIR}/cxx 
-#   ${VTKSLICERBASE_BUILD_DIR}
-#)
+INCLUDE_DIRECTORIES( 
+   ${VTKSLICERBASE_SOURCE_DIR}/cxx 
+   ${VTKSLICERBASE_BUILD_DIR}
+)
 
 # To add a list of additional libraries you need to link with, uncomment
 # the following line.  The library names should omit the "lib" and any
