@@ -3,8 +3,8 @@
   Program:   Insight Segmentation & Registration Toolkit
   Module:    $RCSfile: itkCompareHistogramImageToImageMetric.txx,v $
   Language:  C++
-  Date:      $Date: 2003/12/24 02:41:54 $
-  Version:   $Revision: 1.5 $
+  Date:      $Date: 2003/12/29 14:51:37 $
+  Version:   $Revision: 1.6 $
 
   Copyright (c) Insight Software Consortium. All rights reserved.
   See ITKCopyright.txt or http://www.itk.org/HTML/Copyright.htm for details.
@@ -179,6 +179,9 @@ PrintSelf(std::ostream& os, Indent indent) const
   os << indent << "TrainingHistogram: ";
   if (m_TrainingHistogram    == 0) os << 0 << std::endl;
   else os << m_TrainingHistogram << std::endl;
+
+  os << indent << "TrainingFixedImageRegion: " << m_TrainingFixedImageRegion
+     << std::endl;
 }
 
 
