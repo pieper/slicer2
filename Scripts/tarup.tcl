@@ -281,10 +281,12 @@ proc tarup { {destdir "auto"} } {
     set archroot [file tail $destdir]
     switch $::env(BUILD) {
         "solaris8" {
+            puts " -- making $archroot.tar.gz"
             exec gtar cvfz $archroot.tar.gz $archroot
         }
         "redhat7.3" - 
         "Darwin" {
+            puts " -- making $archroot.tar.gz"
             exec tar cvfz $archroot.tar.gz $archroot
         }
         "Win32VC7" { 
@@ -298,10 +300,10 @@ proc tarup { {destdir "auto"} } {
         "solaris8" -
         "redhat7.3" - 
         "Darwin" {
-            exec xterm -e scp $archroot.tar.gz pieper@gpop:slicer-dist
+            exec xterm -e scp $archroot.tar.gz pieper@gpop.bwh.harvard.edu:slicer-dist
         }
         "Win32VC7" { 
-            exec rxvt -e scp $archroot.zip pieper@gpop:slicer-dist
+            exec rxvt -e scp $archroot.zip pieper@gpop.bwh.harvard.edu:slicer-dist
         }
     }
 
