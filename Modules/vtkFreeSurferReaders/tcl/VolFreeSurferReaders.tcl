@@ -105,7 +105,7 @@ proc VolFreeSurferReadersBuildGUI {parentFrame} {
 
     set f $parentFrame.fVolume
 
-    DevAddFileBrowse $f Volume "VolFreeSurferReaders,FileName" "FreeSurfer File:" "VolFreeSurferReadersSetFileName" "" "\$Volume(DefaultDir)"  "Browse for a FreeSurfer file (.info or a surface)" 
+    DevAddFileBrowse $f Volume "VolFreeSurferReaders,FileName" "FreeSurfer File:" "VolFreeSurferReadersSetFileName" "" "\$Volume(DefaultDir)" "Open" "Browse for a FreeSurfer file (.info or a surface)" 
 
     frame $f.fLabelMap -bg $Gui(activeWorkspace)
 

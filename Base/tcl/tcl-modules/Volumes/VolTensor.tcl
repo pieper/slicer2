@@ -93,7 +93,7 @@ proc VolTensorBuildGUI {parentFrame} {
     # f->Volume
     #-------------------------------------------
     set f $parentFrame.fVolume
-    DevAddFileBrowse $f Volume "VolTensor,FileName" "Structured Points File (.vtk)" "VolTensorSetFileName" "vtk" "\$Volume(DefaultDir)"  "Browse for a Volume" 
+    DevAddFileBrowse $f Volume "VolTensor,FileName" "Structured Points File (.vtk)" "VolTensorSetFileName" "vtk" "\$Volume(DefaultDir)" "Open" "Browse for a Volume" 
     #-------------------------------------------
     # f->FileType
     #-------------------------------------------

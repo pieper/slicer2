@@ -151,7 +151,7 @@ proc TesterInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.16 $} {$Date: 2003/07/14 22:36:09 $}]
+        {$Revision: 1.17 $} {$Date: 2003/09/19 18:25:41 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -251,7 +251,7 @@ up. To fix this, simply exit and enter the Tester. "
         #-------------------------------------------
         set f $fSource.fBrowse
 
-        DevAddFileBrowse $f Tester SourceFileName "File to Source:" "source \$Tester\(SourceFileName\)" "tcl" ""  "Browse for a new module" 
+        DevAddFileBrowse $f Tester SourceFileName "File to Source:" "source \$Tester\(SourceFileName\)" "tcl" "" "Open" "Browse for a new module" 
 
         #-------------------------------------------
         # Source->Main frame
@@ -290,7 +290,7 @@ up. To fix this, simply exit and enter the Tester. "
         DevAddLabel $f.lSource "Or, Read in a New Module:"
         pack $f.lSource -side top -padx $Gui(pad) -fill x -pady $Gui(pad)
 
-        DevAddFileBrowse $f Tester NewModuleFileName "New Module to Source:" "TesterReadNewModule \$Tester\(NewModuleFileName\)" "tcl" ""  "Browse for a new module"
+        DevAddFileBrowse $f Tester NewModuleFileName "New Module to Source:" "TesterReadNewModule \$Tester\(NewModuleFileName\)" "tcl" "" "Open"  "Browse for a new module"
 
         #-------------------------------------------
         # Source->Bottom frame

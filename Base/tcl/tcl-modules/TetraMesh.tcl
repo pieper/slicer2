@@ -174,7 +174,7 @@ proc TetraMeshInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.38 $} {$Date: 2003/07/14 22:36:09 $}]
+        {$Revision: 1.39 $} {$Date: 2003/09/19 18:25:41 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -315,7 +315,7 @@ The TetraMesh module allows a user to read in a Tetrahedral Mesh.  The Mesh is c
     pack $f.f -side top -pady $Gui(pad)
 
         DevAddFileBrowse $f.f TetraMesh FileName "Tetrahedral Mesh:" "TetraMeshFileNameEntered" "vtk"\
-                "\$TetraMesh(DefaultDir)" "Browse for a Tetrahedral Mesh"
+                "\$TetraMesh(DefaultDir)" "Open" "Browse for a Tetrahedral Mesh"
 
     #-------------------------------------------
     # Read->Name
@@ -436,7 +436,7 @@ The TetraMesh module allows a user to read in a Tetrahedral Mesh.  The Mesh is c
     pack $f.f -side top -pady $Gui(pad)
 
         DevAddFileBrowse $f.f TetraMesh FileName "Tetrahedral Mesh:" "TetraMeshFileNameEntered" "vtk"\
-                "\$TetraMesh(DefaultDir)" "Browse for a Tetrahedral Mesh"
+                "\$TetraMesh(DefaultDir)" "Open" "Browse for a Tetrahedral Mesh"
 
     #-------------------------------------------
     # Props->Bot->Grid frame
