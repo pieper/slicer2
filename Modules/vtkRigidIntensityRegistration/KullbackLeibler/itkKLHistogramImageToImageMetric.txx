@@ -3,8 +3,8 @@
   Program:   Insight Segmentation & Registration Toolkit
   Module:    $RCSfile: itkKLHistogramImageToImageMetric.txx,v $
   Language:  C++
-  Date:      $Date: 2003/12/17 03:36:23 $
-  Version:   $Revision: 1.6 $
+  Date:      $Date: 2003/12/23 22:44:24 $
+  Version:   $Revision: 1.7 $
 
   Copyright (c) Insight Software Consortium. All rights reserved.
   See ITKCopyright.txt or http://www.itk.org/HTML/Copyright.htm for details.
@@ -53,8 +53,6 @@ namespace itk
     // p(x,y) log p(x,y) - p(x,y) log q(x,y)
 
     MeasureType    KL = NumericTraits<MeasureType>::Zero;
-    HistogramFrequencyType totalTrainingFreq = m_TrainingHistogram->GetTotalFrequency();
-    HistogramFrequencyType totalMeasuredFreq = histogram.GetTotalFrequency();
 
     HistogramIteratorType measured_it   = histogram.Begin();
     HistogramIteratorType measured_end  = histogram.End();
@@ -64,11 +62,9 @@ namespace itk
 
     while (measured_it != measured_end)
     {
-      HistogramFrequencyType TrainingFreq    = training_it.GetFrequency();
-      HistogramFrequencyType MeasuredFreq = measured_it.GetFrequency();
-
-      if (MeasuredFreq == 0) MeasuredFreq = m_Epsilon;
-      if (TrainingFreq == 0)    TrainingFreq    = m_Epsilon;
+      // Every bin gets epsilon added to it
+      double TrainingFreq = training_it.GetFrequency()+m_Epsilon;
+      double MeasuredFreq = measured_it.GetFrequency()+m_Epsilon;
 
       KL += TrainingFreq*log(TrainingFreq/MeasuredFreq);
 
@@ -79,8 +75,19 @@ namespace itk
     if (training_it != training_end)
       itkWarningMacro("The Measured and Training Histograms have different number of bins.");
 
-    KL = -KL/static_cast<MeasureType>(totalTrainingFreq)
-      - log(totalMeasuredFreq/totalTrainingFreq);
+    // Get the total frequency for each histogram.
+    HistogramFrequencyType totalTrainingFreq = m_TrainingHistogram->GetTotalFrequency();
+    HistogramFrequencyType totalMeasuredFreq = histogram.GetTotalFrequency();
+
+    // The actual number of total frequency is a bit larger
+    // than the number of counst because we add m_Epsilon to every bin
+    double AdjustedTotalTrainingFreq = totalTrainingFreq +
+      m_HistogramSize[0]*m_HistogramSize[1]*m_Epsilon;
+    double AdjustedTotalMeasuredFreq = totalTrainingFreq +
+      m_HistogramSize[0]*m_HistogramSize[1]*m_Epsilon;
+
+    KL = -KL/static_cast<MeasureType>(AdjustedTotalTrainingFreq)
+      - log(AdjustedTotalMeasuredFreq/AdjustedTotalTrainingFreq);
 
     return KL;
   }
