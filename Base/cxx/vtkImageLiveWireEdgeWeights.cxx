@@ -608,35 +608,33 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
 		    }
 
 		  // convert features to an edge weight
-#define callMemberFunction(object,ptrToMember)  ((object).*(ptrToMember)) 
 		  featureProperties *props;
 		  float sum = 0;
 		  for (int i=0;i<numFeatures;i++)
 		    {
-		      //sum += GaussianCost(features[i], 0, 1);
 		      props = self->GetFeatureSettings(i);
-		      //(props->*Transform)();
-		      //sum += (props->*Transform)(features[i]);
-		      //sum += callMemberFunction(props,props.Transform);
 
-		      float tmp2 = GaussianC(features[i],props->TransformParams[0],props->TransformParams[1]);
-		      if (tmp2 > 1)
-			cout << "feature " << i << " too large: " << tmp2 << endl;
+		      // don't compute if weight is 0
+		      if (props->Weight != 0) 
+			{
+			  //sum += props->Weight*GaussianC(features[i],props->TransformParams[0],props->TransformParams[1]);
 
-		      float tmp = props->Weight*tmp2;
-		      if (tmp < testMin) 
-			testMin = tmp;
-		      else
-			if (tmp > testMax)
-			  testMax = tmp;
-
-
-		      sum += tmp;
-		      
-		      //sum += props->Weight*GaussianC(features[i],props->TransformParams[0],props->TransformParams[1]);
-		      //sum+= props->TransformParams[0];
+			  // junk for testing:
+			  float tmp2 = GaussianC(features[i],props->TransformParams[0],props->TransformParams[1]);
+			  if (tmp2 > 1)
+			    cout << "feature " << i << " too large: " << tmp2 << endl;
+			  
+			  float tmp = props->Weight*tmp2;
+			  if (tmp < testMin) 
+			    testMin = tmp;
+			  else
+			    if (tmp > testMax)
+			      testMax = tmp;
+			 
+			  sum += tmp;
+			  
+			}
 		    }
-
 		  // each feature is between 0 and its Weight.  
 		  // normalize sum to 1 and multiply by max edge cost.
 		  *outPtr0 = (sum*maxEdge/sumOfWeights);
