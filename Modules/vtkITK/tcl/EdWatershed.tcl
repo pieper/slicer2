@@ -120,7 +120,7 @@ See www.itk.org for description of algorithm.
 
     grid $f.bSegment -padx 2 -pady $Gui(pad)
 
-    eval {scale $f.sLevel -from 0 -to 100 \
+    eval {scale $f.sLevel -from 1 -to 100 \
             -length 220 -variable EdWatershed(level) -resolution 1 \
             -command "EdWatershedLevel "} \
             $Gui(WSA) {-sliderlength 22}
