@@ -151,7 +151,7 @@ proc MIRIADSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.20 $} {$Date: 2004/02/15 15:16:29 $}]
+        {$Revision: 1.21 $} {$Date: 2004/02/17 18:03:46 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -743,13 +743,11 @@ proc MIRIADSegmentSubTreeClassDefinition {SuperClass} {
             if {$::EMSegment(Cattrib,$class,IsSuperClass)} { 
                 MIRIADSegmentSubTreeClassDefinition $class ;# recursive call to this proc
             } else {
-                puts "setting class $class probvol to $probvol"
                 if { $probvol != "none" } {
                     set ::EMSegment(ProbVolumeSelect) [MIRIADSegmentGetVolumeByName $probvol]   
                     EMSegmentProbVolumeSelectNode \
                         Volume [MIRIADSegmentGetVolumeByName $probvol] \
                         EMSegment EM-ProbVolumeSelect ProbVolumeSelect
-                    puts "--- did the set of class $class probvol to $probvol"
                 }
 
                 set index 0
@@ -1023,16 +1021,19 @@ proc MIRIADSegmentRunEM {} {
 
     set ::EMSegment(StartSlice) 29
     set ::EMSegment(EndSlice) 31
+
     set ::EMSegment(SegmentationBoundaryMin,0) 1
     set ::EMSegment(SegmentationBoundaryMin,1) 1
-    set ::EMSegment(SegmentationBoundaryMin,2) 27
-    set ::EMSegment(SegmentationBoundaryMax,0) 256
+    set ::EMSegment(SegmentationBoundaryMin,2) 29
+    set ::EMSegment(SegmentationBoundaryMax,0) 128
     set ::EMSegment(SegmentationBoundaryMax,1) 256
-    set ::EMSegment(SegmentationBoundaryMax,2) 35
+    set ::EMSegment(SegmentationBoundaryMax,2) 30
 
     set ::EMSegment(EMiteration) 5
     set ::EMSegment(MFAiteration) 2
-    
+
+    set ::EMSegment(Alpha) 1.0
+
 
     EMSegmentSumGlobalUpdate
 
