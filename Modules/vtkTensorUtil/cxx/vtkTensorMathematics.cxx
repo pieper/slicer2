@@ -134,9 +134,9 @@ static void vtkTensorMathematicsExecute1(vtkTensorMathematics *self,
   in1Data->GetContinuousIncrements(outExt, inIncX, inIncY, inIncZ);
 
   //Initialize ptId to walk through tensor volume
-  int inInc[3],inFullUpdateExt[3];
-  in1Data->GetIncrements(inInc);
-  in1Data->GetExtent(inFullUpdateExt); //We are only working over the update extent
+  int *inInc,*inFullUpdateExt;
+  inInc = in1Data->GetIncrements();
+  inFullUpdateExt = in1Data->GetExtent(); //We are only working over the update extent
   inPtId = ((outExt[0] - inFullUpdateExt[0]) * inInc[0]
      + (outExt[2] - inFullUpdateExt[2]) * inInc[1]
      + (outExt[4] - inFullUpdateExt[4]) * inInc[2]);
@@ -273,9 +273,9 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
   in1Data->GetContinuousIncrements(outExt, inIncX, inIncY, inIncZ);
 
   //Initialize ptId to walk through tensor volume
-  int inInc[3],inFullUpdateExt[3];
-  in1Data->GetIncrements(inInc);
-  in1Data->GetExtent(inFullUpdateExt); //We are only working over the update extent
+  int *inInc,*inFullUpdateExt;
+  inInc = in1Data->GetIncrements();
+  inFullUpdateExt = in1Data->GetExtent(); //We are only working over the update extent
   inPtId = ((outExt[0] - inFullUpdateExt[0]) * inInc[0]
      + (outExt[2] - inFullUpdateExt[2]) * inInc[1]
      + (outExt[4] - inFullUpdateExt[4]) * inInc[2]);
