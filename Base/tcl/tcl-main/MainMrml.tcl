@@ -524,7 +524,7 @@ proc MainMrmlBuildTreesVersion1.0 {} {
 	
 	set level 0
 	set transformCount($level) 0
-	set dag $Dag(withColors)
+	set dag $Dag(expanded)
 	set num [MRMLGetNumNodes $dag]
 
 	for {set j 0} {$j < $num} {incr j} {
