@@ -142,6 +142,23 @@ unsigned long int vtkMrmlDataVolume::GetMTime()
   return result;
 }
 
+char* 
+vtkMrmlDataVolume::GetOutputPointer(int zslice)
+{
+    static char p[1024];
+    void *ptr;
+
+    if ( this->ImageData == NULL )
+    {   sprintf (p, "%p", 0);
+    } else
+    {
+        ptr = this->ImageData->GetScalarPointer(0, 0, zslice);
+        sprintf (p, "%p", ptr);
+    }
+    return (p);
+}
+
+
 //----------------------------------------------------------------------------
 void vtkMrmlDataVolume::CheckImageData()
 {

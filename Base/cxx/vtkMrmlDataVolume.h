@@ -85,6 +85,7 @@ public:
   // Use GetOutput to get the image data.
   vtkSetObjectMacro(ImageData, vtkImageData);
   vtkImageData* GetOutput();
+  char* GetOutputPointer(int zslice);
 
   // Description:
   // Read/Write image 
