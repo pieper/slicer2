@@ -53,10 +53,11 @@ vtkMrmlVolumeNode \
 vtkMrmlModelNode \
 vtkMrmlEndTransformNode \
 vtkMrmlColorNode \
-vtkMrmlOptionsNode \
 vtkMrmlTree \
 vtkMrmlTransformNode \
 vtkXDisplayWindow \
+
+#vtkMrmlOptionsNode \
 
 #------------------------------------------------------------------------------
 # Autoconfig defines that can be overridden in user.make
