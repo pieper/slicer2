@@ -1,6 +1,6 @@
 #include "vtkObjectFactory.h"
 #include "vtkBXHParser.h"
-
+#include <ctype.h>
 
 vtkStandardNewMacro(vtkBXHParser);
 
