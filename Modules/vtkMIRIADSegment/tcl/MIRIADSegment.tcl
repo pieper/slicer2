@@ -154,7 +154,7 @@ proc MIRIADSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.5 $} {$Date: 2003/10/16 18:43:39 $}]
+        {$Revision: 1.6 $} {$Date: 2003/10/16 19:01:29 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -302,6 +302,23 @@ proc MIRIADSegmentExit {} {
 
 
 #-------------------------------------------------------------------------------
+# .PROC MIRIADSegmentLoadStudy
+# Read the dicom data and the atlas for a subject, runs the segmentation and saves results
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MIRIADSegmentLoadStudy { {BIRNID "000397921927"} {visit 001} } {
+
+    MainFileClose 
+    set root /home/pieper/data/duke-data/neil/MIRIAD/subjects/${BIRNID}
+    set subj $root/Visit_$visit/Study_0001/
+
+    MIRIADSegmentLoadDukeStudy $subj/RawData/001.ser
+    MIRIADSegmentLoadLONIWarpedAtlas $subj/DerivedData/LONI/mri/atlases/bwh_prob/air_252p
+
+}
+
+#-------------------------------------------------------------------------------
 # .PROC MIRIADSegmentProcessStudy
 # Read the dicom data and the atlas for a subject, runs the segmentation and saves results
 # .ARGS
@@ -311,17 +328,11 @@ proc MIRIADSegmentProcessStudy { {BIRNID "000397921927"} {visit 001} } {
 
     set ::MIRIADSegment(version) 1
 
-    MainFileClose 
-    set root /home/pieper/data/duke-data/neil/MIRIAD/subjects/${BIRNID}
-    set subj $root/Visit_$visit/Study_0001/
+    MIRIADSegmentLoadStudy $BIRNID $visit 
+    MIRIADSegmentSetEMParameters
+    MIRIADSegmentRunEM
 
-    MIRIADSegmentLoadDukeStudy $subj/RawData/001.ser
-    MIRIADSegmentLoadLONIWarpedAtlas $subj/DerivedData/LONI/mri/atlases/bwh_prob/air_252p
-
-    # MIRIADSegmentSetEMParameters
-    # MIRIADSegmentRunEM
-
-    # MIRIADSegmentSaveResults $subj
+    MIRIADSegmentSaveResults $subj
 }
 
 #-------------------------------------------------------------------------------
