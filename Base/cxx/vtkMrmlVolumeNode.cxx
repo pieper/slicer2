@@ -202,7 +202,7 @@ void vtkMrmlVolumeNode::Write(ofstream& of, int nIndent)
   // Write all attributes not equal to their defaults
   
   // If the description is blank, set it to the scan order
-  if (this->Description && strcmp(this->Description, ""))
+  if (this->Description && (strcmp(this->Description, "") == 0))
   {
     delete [] this->Description;
     this->Description = NULL;
