@@ -86,13 +86,14 @@ proc EditorInit {} {
     set Module($m,procMRML)  EditorUpdateMRML
     set Module($m,procVTK)   EditorBuildVTK
     set Module($m,procEnter) EditorEnter
+    set Module($m,procExit) EditorExit
     
     # Define Dependencies
     set Module($m,depend) "Labels"
     
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.32 $} {$Date: 2000/08/28 15:50:30 $}]
+	    {$Revision: 1.33 $} {$Date: 2000/10/17 05:33:24 $}]
     
     # Initialize globals
     set Editor(idOriginal)  $Volume(idNone)
@@ -107,6 +108,8 @@ proc EditorInit {} {
     set Editor(fgName) Working
     set Editor(bgName) Composite
     set Editor(nameWorking) Working
+    set Editor(eventManager)  { \
+	    {all <KeyPress-l>  {EditorToggleWorking}} }
     
     # Look for Editor effects and form an array, Ed, for them.
     # Each effect has a *.tcl file in the tcl-modules/Editor directory.
@@ -826,8 +829,15 @@ proc EditorEnter {} {
 			EditorSetOriginal $v
 		}
 	}
+
+	# use the bindings stack for adding new bindings.
+	pushEventManager $Editor(eventManager)
 }
 
+
+proc EditorExit {} {
+    popEventManager
+}
 #-------------------------------------------------------------------------------
 # .PROC EditorMakeModel
 # Sets the active volume (to the first one of Composite, Working, or Original 
@@ -1248,7 +1258,8 @@ proc EditorGetCompositeID {} {
 	
 #-------------------------------------------------------------------------------
 # .PROC EditorResetDisplay
-# 
+# This procedure sets up the slice orientations, the volumes,
+# and the other things you notice when you enter an effect.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -1295,6 +1306,44 @@ proc EditorResetDisplay {} {
 		# Show all slices in 3D
 		MainSlicesSetVisibilityAll 1
 	}
+}
+
+proc EditorToggleWorking {} {
+    global Editor Slice
+
+    set w [EditorGetWorkingID]
+    set ok 1
+    foreach s $Slice(idList) {
+	set f [[[Slicer GetForeVolume  $s] GetMrmlNode] GetID]
+	set l [[[Slicer GetLabelVolume $s] GetMrmlNode] GetID]
+	if {$f != $w} {set ok 0}
+	if {$l != $w} {set ok 0}
+    }
+    
+    if {$ok == 0} {
+	EditorShowWorking
+    } else {
+	EditorHideWorking
+    }
+}
+
+proc EditorHideWorking {} {
+    global Volume
+
+    MainSlicesSetVolumeAll Fore  $Volume(idNone)
+    MainSlicesSetVolumeAll Label $Volume(idNone)
+
+    RenderSlices
+}
+
+proc EditorShowWorking {} {
+    global Editor Volume
+
+    set w [EditorGetWorkingID]    
+    MainSlicesSetVolumeAll Fore  $w
+    MainSlicesSetVolumeAll Label $w
+
+    RenderSlices
 }
 
 #-------------------------------------------------------------------------------

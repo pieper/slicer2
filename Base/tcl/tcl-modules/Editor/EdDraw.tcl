@@ -86,9 +86,11 @@ proc EdDrawBuildGUI {} {
 	frame $f.fGrid    -bg $Gui(activeWorkspace)
 	frame $f.fBtns    -bg $Gui(activeWorkspace)
 	frame $f.fApply   -bg $Gui(activeWorkspace)
+	frame $f.fToggle  -bg $Gui(activeWorkspace)
 	pack $f.fGrid $f.fBtns $f.fMode $f.fDelete $f.fRender $f.fApply\
 		-side top -pady 2 -fill x
-
+	pack $f.fToggle -side bottom -pady 4 -fill x
+    
 	EdBuildRenderGUI $Ed(EdDraw,frame).fRender Ed(EdDraw,render)
 
 	#-------------------------------------------
@@ -167,6 +169,19 @@ proc EdDrawBuildGUI {} {
 	grid $f.bSelectAll $f.bDeselectAll  -padx $Gui(pad) -pady $Gui(pad)
 	grid $f.bDeleteSel $f.bDeleteAll    -padx $Gui(pad) -pady $Gui(pad)
 
+	#-------------------------------------------
+	# Draw->Toggle frame
+	#-------------------------------------------
+	set f $Ed(EdDraw,frame).fToggle
+
+	#frame $f.fToggle -bg $Gui(activeWorkspace)
+	
+	eval {checkbutton $f.cW -width 21 -indicatoron 0 \
+		-variable Editor(toggleWorking) -text "peek under labelmap"  \
+		-command EditorToggleWorking} $Gui(WCA) 
+	pack $f.cW -side top -padx $Gui(pad) -pady $Gui(pad)
+
+	TooltipAdd  $f.cW "Click or hit the l key to see grayscale only."
 
 	#-------------------------------------------
 	# Draw->Apply frame
@@ -323,24 +338,31 @@ proc EdDrawApply {} {
 	EdSetupBeforeApplyEffect $v $Ed($e,scope) Active
 
 	# Only draw on native slices
-	if {[set native [EdIsNativeSlice]] != ""} {
-		tk_messageBox -message "Please draw on the slice with orient = $native."
-		return
-	}
+# Lauren
+	puts "Apply v $v scope $Ed($e,scope)"
+#	if {[set native [EdIsNativeSlice]] != ""} {
+#		tk_messageBox -message "Please draw on the slice with orient = $native."
+#		return
+#	}
 
 	set Gui(progressText) "Draw on [Volume($v,node) GetName]"
 	
 	set label    $Label(label)
 	set radius   $Ed($e,radius)
 	set shape    $Ed($e,shape)
-	set points   [Slicer DrawGetPoints]
+#	set points   [Slicer DrawGetPoints]
+# Lauren
+	set oldpoints   [Slicer DrawGetPoints]
+	Slicer DrawComputeIjkPoints
+	set points [Slicer GetDrawIjkPoints]
+
 	Ed(editor)   Draw $label $points $radius $shape
 
 	# Dump points
-#	set n [$points GetNumberOfPoints]
-#	for {set i 0} {$i < $n} {incr i} {
-#		puts [$points GetPoint $i]
-#	}
+	set n [$points GetNumberOfPoints]
+	for {set i 0} {$i < $n} {incr i} {
+		puts "ijk: [$points GetPoint $i] 2D: [$oldpoints GetPoint $i]"
+	}
 
 	Ed(editor)   SetInput ""
 	Ed(editor)   UseInputOff
