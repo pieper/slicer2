@@ -459,7 +459,7 @@ proc MainInit {} {
 
         # Set version info
     lappend Module(versions) [ParseCVSInfo Main \
-        {$Revision: 1.116 $} {$Date: 2005/01/13 15:18:54 $}]
+        {$Revision: 1.117 $} {$Date: 2005/01/16 21:01:30 $}]
 
     # Call each "Init" routine that's not part of a module
     #-------------------------------------------
@@ -1222,7 +1222,7 @@ proc MainSetup {} {
     # Active Tensor
     set m [lindex $Tensor(idList) 0]
     if {$m != ""} {    
-        MainTensorSetActive $m
+        MainTensorSetActive Tensor $m
     }
 
     # Active TetraMesh
