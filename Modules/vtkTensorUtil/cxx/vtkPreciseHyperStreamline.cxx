@@ -3,8 +3,8 @@
 Program:   Visualization Toolkit
 Module:    $RCSfile: vtkPreciseHyperStreamline.cxx,v $
 Language:  C++
-Date:      $Date: 2004/09/17 22:47:42 $
-Version:   $Revision: 1.5 $
+Date:      $Date: 2004/11/27 13:37:10 $
+Version:   $Revision: 1.6 $
 
 Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen 
 All rights reserved.
@@ -30,7 +30,7 @@ PURPOSE.  See the above copyright notice for more information.
 #include "vtkPreciseHyperArray.h"
 #include "vtkPreciseHyperPoint.h"
 
-vtkCxxRevisionMacro(vtkPreciseHyperStreamline, "$Revision: 1.5 $");
+vtkCxxRevisionMacro(vtkPreciseHyperStreamline, "$Revision: 1.6 $");
 vtkStandardNewMacro(vtkPreciseHyperStreamline);
 
 
@@ -330,15 +330,13 @@ void vtkPreciseHyperStreamline::Execute()
   vtkPointData *pd=input->GetPointData();
   vtkDataArray *inScalars;
   vtkDataArray *inTensors;
-  vtkFloatingPointType *tensor;
   vtkPreciseHyperPoint *sNext, *sPtr;
-  int i, j, k, ptId, subId, iv, ix, iy;
-  vtkFloatingPointType ev[3], xNext[3];
+  int i, ptId, iv, ix, iy;
+  vtkFloatingPointType xNext[3];
   vtkCell *cell;
-  vtkFloatingPointType tol2,closestPoint[3];
-  vtkFloatingPointType d, step, p[3];
+  vtkFloatingPointType tol2;
+  vtkFloatingPointType d, step;
   vtkFloatingPointType *w;
-  vtkFloatingPointType dist2;
   vtkFloatingPointType deitActual, error, dirStart[3];
   vtkFloatingPointType *m[3], *v[3];
   vtkFloatingPointType totalLength =0.0;

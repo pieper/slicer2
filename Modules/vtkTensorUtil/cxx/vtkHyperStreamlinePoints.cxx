@@ -36,9 +36,9 @@ vtkHyperStreamlinePoints::~vtkHyperStreamlinePoints()
 //------------------------------------------------------------------------------
 void vtkHyperStreamlinePoints::Execute()
 {
-  vtkHyperPoint *sPrev, *sPtr;
+  vtkHyperPoint *sPtr;
   vtkIdType i, npts;
-  int ptId, j, id;
+  int ptId;
   vtkIdType numIntPts;
 
   vtkDebugMacro(<<"Calling superclass execute");

@@ -102,12 +102,11 @@ static void vtkTensorMathematicsExecute1(vtkTensorMathematics *self,
   clock_t tStart=0;
   tStart = clock();
   // working matrices
-  vtkFloatingPointType *m[3], w[3], *v[3];
+  vtkFloatingPointType *m[3], *v[3];
   vtkFloatingPointType m0[3], m1[3], m2[3];
   vtkFloatingPointType v0[3], v1[3], v2[3];
   m[0] = m0; m[1] = m1; m[2] = m2; 
   v[0] = v0; v[1] = v1; v[2] = v2;
-  int i, j;
   // scaling
   vtkFloatingPointType scaleFactor = self->GetScaleFactor();
 

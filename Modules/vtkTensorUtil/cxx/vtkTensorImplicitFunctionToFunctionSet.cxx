@@ -3,8 +3,8 @@
   Program:   Insight Segmentation & Registration Toolkit
   Module:    $RCSfile: vtkTensorImplicitFunctionToFunctionSet.cxx,v $
   Language:  C++
-  Date:      $Date: 2004/09/17 17:59:21 $
-  Version:   $Revision: 1.3 $
+  Date:      $Date: 2004/11/27 13:37:10 $
+  Version:   $Revision: 1.4 $
 
   Copyright (c) 2002 Insight Consortium. All rights reserved.
   See ITKCopyright.txt or http://www.itk.org/HTML/Copyright.htm for details.
@@ -21,7 +21,7 @@
 #include "vtkObjectFactory.h"
 #include "vtkTensorImplicitFunctionToFunctionSet.h"
 
-vtkCxxRevisionMacro(vtkTensorImplicitFunctionToFunctionSet, "$Revision: 1.3 $");
+vtkCxxRevisionMacro(vtkTensorImplicitFunctionToFunctionSet, "$Revision: 1.4 $");
 vtkStandardNewMacro(vtkTensorImplicitFunctionToFunctionSet);
 
 void vtkTensorImplicitFunctionToFunctionSet::PrintSelf(ostream& os, vtkIndent indent)
@@ -36,8 +36,7 @@ void vtkTensorImplicitFunctionToFunctionSet::PrintSelf(ostream& os, vtkIndent in
 }
 
 int vtkTensorImplicitFunctionToFunctionSet::GetTensor(vtkFloatingPointType *x, vtkFloatingPointType * res) {
-  int i;
-
+    
   if ( TensorComponent[0] )
     res[0] = TensorComponent[0]->EvaluateFunction(x);
   else {
@@ -84,7 +83,6 @@ int vtkTensorImplicitFunctionToFunctionSet::GetTensor(vtkFloatingPointType *x, v
 int vtkTensorImplicitFunctionToFunctionSet::FunctionValues(vtkFloatingPointType* x, vtkFloatingPointType* res){
   vtkFloatingPointType f[9];
   vtkFloatingPointType * val[3];
-  vtkFloatingPointType dist2;
   vtkFloatingPointType trace;
   vtkFloatingPointType correction;
   int i,j;

@@ -55,7 +55,7 @@ static void vtkImageGetTensorComponentsExecute(vtkImageGetTensorComponents *self
   int offset[6];
   unsigned long count = 0;
   unsigned long target;
-  float tensor[3][3];
+  vtkFloatingPointType tensor[3][3];
   
   // find the region to loop over
   maxX = outExt[1] - outExt[0];
@@ -65,7 +65,6 @@ static void vtkImageGetTensorComponentsExecute(vtkImageGetTensorComponents *self
   target++;
   
   vtkDataArray *inTensors;
-  float inT[9];
   vtkPointData *pd;
   int numPts, inPtId;
   
@@ -98,8 +97,6 @@ static void vtkImageGetTensorComponentsExecute(vtkImageGetTensorComponents *self
   offset[3]=4;
   offset[4]=5;
   offset[5]=8;
-  double a;
-  double b;
 //  cout << "off0 " << offset[0] << endl;
   for (idxZ = 0; idxZ <= maxZ; idxZ++)
     {
@@ -115,7 +112,7 @@ static void vtkImageGetTensorComponentsExecute(vtkImageGetTensorComponents *self
         }
       for (idxR = 0; idxR <= maxX; idxR++)
         {
-         inTensors->GetTuple(inPtId,(float *)tensor);
+         inTensors->GetTuple(inPtId,(vtkFloatingPointType *)tensor);
      *outPtr = (T)(tensor[0][0]); 
      outPtr++;
      *outPtr = (T)(tensor[1][0]);
@@ -153,7 +150,7 @@ void vtkImageGetTensorComponents::ThreadedExecute(vtkImageData *inData,
                                                 vtkImageData *outData,
                                                 int outExt[6], int id)
 {
-  int max, idx;
+  int max;
   void *inPtr = inData->GetScalarPointerForExtent(outExt);
   void *outPtr = outData->GetScalarPointerForExtent(outExt);
   vtkPointData *pd;

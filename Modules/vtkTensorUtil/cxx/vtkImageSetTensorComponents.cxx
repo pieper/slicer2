@@ -79,13 +79,12 @@ static void vtkImageSetTensorComponentsExecute(vtkImageSetTensorComponents *self
   int maxX, maxY, maxZ;
   int inIncX, inIncY, inIncZ;
   int outIncX, outIncY, outIncZ;
-  int cnt, inCnt;
   int offset[9];
   unsigned long count = 0;
   unsigned long target;
   
   vtkDataArray *outTensors;
-  float outT[3][3]; float inT[3][3];
+  float outT[3][3];
   int ptId;
   
   // Get information to march through output tensor data
@@ -166,7 +165,7 @@ void vtkImageSetTensorComponents::ThreadedExecute(vtkImageData *inData,
                                                 vtkImageData *outData,
                                                 int outExt[6], int id)
 {
-  int max, idx;
+  int max;
   void *inPtr = inData->GetScalarPointerForExtent(outExt);
   void *outPtr = outData->GetScalarPointerForExtent(outExt);
   vtkPointData *pd;
