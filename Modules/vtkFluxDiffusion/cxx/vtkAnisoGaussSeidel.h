@@ -37,8 +37,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkAnisoGaussSeidel.h,v $
   Language:  C++
-  Date:      $Date: 2003/05/15 15:54:22 $
-  Version:   $Revision: 1.5 $
+  Date:      $Date: 2003/12/18 20:08:51 $
+  Version:   $Revision: 1.6 $
   Author:    Karl Krissian
 
 =========================================================================*/
@@ -83,6 +83,11 @@ public:
   // Description:
   // Construct object to extract all of the input data.
   static vtkAnisoGaussSeidel *New();
+
+  // current iteration number
+  //
+  vtkSetMacro(iteration,int);
+  vtkGetMacro(iteration,int);
 
   // Dimensionality 2 for 2D, 3 for 3D
   vtkSetMacro(mode,int);

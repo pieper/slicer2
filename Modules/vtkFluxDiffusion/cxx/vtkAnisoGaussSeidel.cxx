@@ -37,8 +37,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkAnisoGaussSeidel.cxx,v $
   Language:  C++
-  Date:      $Date: 2003/09/09 20:16:11 $
-  Version:   $Revision: 1.7 $
+  Date:      $Date: 2003/12/18 20:08:50 $
+  Version:   $Revision: 1.8 $
 
 =========================================================================*/
 
@@ -560,7 +560,7 @@ float vtkAnisoGaussSeidel::Iterate2D()
 
     Reel   phi0_param;
 
-  fprintf(stderr,"vtkAnisoGaussSeidel.cxx begin \n");
+    //  fprintf(stderr,"vtkAnisoGaussSeidel.cxx begin \n");
 
   ResetCoefficients();
 
@@ -739,12 +739,12 @@ float vtkAnisoGaussSeidel::Iterate2D()
   im_tmp1->CopyAndCastFrom(this->im_tmp2,
                this->im_tmp2->GetExtent());
 
-  cout << endl;
-  cout << " Erreur = " << erreur << endl;
-  cout << "( " << erreur_x << ", " 
-               << erreur_y << ", " 
-               << erreur_z << " )" << endl; 
-  cout << "nb de points variables " << nb_points_instables << endl;
+  //  cout << endl;
+  //  cout << " Erreur = " << erreur << endl;
+  //  cout << "( " << erreur_x << ", " 
+  //              << erreur_y << ", " 
+  //               << erreur_z << " )" << endl; 
+  //  cout << "nb de points variables " << nb_points_instables << endl;
 
 
   Retourne erreur;
@@ -803,6 +803,7 @@ float vtkAnisoGaussSeidel::Iterate3D()
 
   Pour(z,0,tz-1)
 
+    /*
     Si z==0 Alors
       printf("z = %3d",z);
       fflush(stdout);
@@ -811,6 +812,7 @@ float vtkAnisoGaussSeidel::Iterate3D()
       printf("%3d",z);
       fflush(stdout);
     FinSi
+    */
 
   Pour(y,0,ty-1)
   Pour(x,0,tx-1)
@@ -1193,6 +1195,7 @@ float vtkAnisoGaussSeidel::Iterate3D()
                   this->im_tmp->GetExtent());
     */
 
+    /*
   fprintf(stderr," Pourcentage of isotropic points = %2.5f \n",
       nbpts_isotropic/(1.0*(nbpts_isotropic+nbpts_anisotropic))*100.0);
   cout << endl;
@@ -1205,6 +1208,7 @@ float vtkAnisoGaussSeidel::Iterate3D()
   diff /= txy*tz;
 
   cout << "diff =" << sqrt(diff) << endl;
+    */
 
   Retourne erreur;
 
@@ -1741,7 +1745,7 @@ float vtkAnisoGaussSeidel::Iterate3D( vtkImageData *inData,  int inExt[6],
   FinPour
 
 
-    
+    /*    
   fprintf(stderr," Pourcentage of isotropic points = %2.5f \n",
       nbpts_isotropic/(1.0*(nbpts_isotropic+nbpts_anisotropic))*100.0);
   cout << endl;
@@ -1754,7 +1758,7 @@ float vtkAnisoGaussSeidel::Iterate3D( vtkImageData *inData,  int inExt[6],
   diff /= txy*tz;
 
   cout << "diff =" << sqrt(diff) << endl;
-    
+    */
 
   DeleteCoefficients(alpha_y,alpha_z,
              gamma_y,gamma_z,
@@ -1790,9 +1794,20 @@ void vtkAnisoGaussSeidel::ExecuteData(vtkDataObject *out)
 
   filter = (vtkImageGaussianSmooth*) vtkImageGaussianSmooth::New();
 
-  Pour(i,1,NumberOfIterations)
+  total = (image_entree->GetExtent()[1] - image_entree->GetExtent()[0] + 1) 
+    * (image_entree->GetExtent()[3] - image_entree->GetExtent()[2] + 1) 
+    * (image_entree->GetExtent()[5] - image_entree->GetExtent()[4] + 1);
+  
+  total *= NumberOfIterations;
 
-    printf("iteration %d \n",i);
+  target           = total/100.0;
+  partial_progress = 0;
+  progress         = 0;
+  update_busy      = 0;
+
+  for(i=1; i<=NumberOfIterations; i++) {
+
+    //    printf("iteration %d \n",i);
     im_tmp1->Modified();
     filter->SetInput(im_tmp1);
     // 1. compute the smoothed image
@@ -1804,36 +1819,28 @@ void vtkAnisoGaussSeidel::ExecuteData(vtkDataObject *out)
       break;
     case MODE_3D:
       filter->SetDimensionality(3);
-      printf("sigma = %f \n",sigma);
+      //      printf("sigma = %f \n",sigma);
       filter->SetStandardDeviations(sigma,sigma,sigma);
       filter->SetRadiusFactors(4.01,4.01,4.01);
       break;
     }
-
-   filter->SetNumberOfThreads(this->GetNumberOfThreads());
-   filter->Update();
-   image_lissee = filter->GetOutput();
-
-   total = (image_entree->GetExtent()[1] - image_entree->GetExtent()[0] + 1) 
-         * (image_entree->GetExtent()[3] - image_entree->GetExtent()[2] + 1) 
-         * (image_entree->GetExtent()[5] - image_entree->GetExtent()[4] + 1);
-
-   target           = total/50.0;
-   partial_progress = 0;
-   progress         = 0;
-   update_busy      = 0;
     
-   // 2. run the threaded iteration
-
-   //   Iterate3D();
-   vtkImageToImageFilter::MultiThread(im_tmp2,im_tmp1);
-
-   im_tmp2->CopyAndCastFrom(im_tmp1,
-                im_tmp1->GetExtent());
-
-
-  FinPour
-
+    filter->SetNumberOfThreads(this->GetNumberOfThreads());
+    filter->Update();
+    image_lissee = filter->GetOutput();
+    
+    
+    // 2. run the threaded iteration
+    
+    //   Iterate3D();
+    vtkImageToImageFilter::MultiThread(im_tmp2,im_tmp1);
+    
+    im_tmp2->CopyAndCastFrom(im_tmp1,
+                 im_tmp1->GetExtent());
+    
+    
+  } // end for
+  
   filter->Delete();
 
   // Check the limits
