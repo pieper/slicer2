@@ -298,6 +298,7 @@ public:
   void GetAdvectionTerm(  float* data) { advection_data = data; }
   void GetVelocityTerm(   float* data) { velocity_data  = data; }
   void GetBalloonTerm(    float* data) { balloon_data   = data; }
+  void GetDistanceMap(    float* data) { distance_data  = data; }
 
   // public methods for multithreading ...
   int  SplitBand(int& first, int& last, int num, int total);
@@ -442,6 +443,7 @@ protected:
   float*  advection_data;
   float*  velocity_data;
   float*  balloon_data;
+  float*  distance_data;
 
 
   // We copy input data to float, just to avoid

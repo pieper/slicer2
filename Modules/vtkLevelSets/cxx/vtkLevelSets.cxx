@@ -192,6 +192,7 @@ vtkLevelSets::vtkLevelSets()
   advection_data = NULL;
   velocity_data  = NULL;
   balloon_data   = NULL;
+  distance_data  = NULL;
 
   data_attach_x = NULL;
   data_attach_y = NULL;
@@ -405,6 +406,15 @@ void vtkLevelSets::DistanceMap()
   // swap the images
   this->current=1-this->current;
   
+
+  if (distance_data!=NULL) {
+    float* ptr;
+    int  i;
+    for(i=0;i<imsize;i++) {
+      distance_data[i] = u[this->current][i];
+      ptr++;
+    }
+  }
 
   // Save the result
   if (savedistmap)
@@ -2564,7 +2574,7 @@ void vtkLevelSets::Evolve3D( int first_band, int last_band)
 
       //ut = min(max(StepDt*ut,-Band),Band);
       newU[p]=u0+StepDt*ut;
-      if (fabs(newU[p])>Band+1) {
+      if ((fabsf(newU[p])>Band+1)&&(verbose)) {
     fprintf(stderr,"pb: absf(newU[p])>Band+1, p=%d, newU[p] = %f \n",p,newU[p]);
     fprintf(stderr,"pb: curvterm = %f, imcomp = %f, balloonterm = %f, vel = %f, \n",curvterm, imcomp,balloonterm, vel);
       }
@@ -2616,9 +2626,9 @@ void vtkLevelSets::InitEvolution()
      float *outPtr;
      // Rescale parameters
      float vs[3];
-     int   i,n;
+     int   i;
      float th;
-     float mean,sd;
+     //     float mean,sd;
 
   if (verbose) {
     fprintf(stderr,"vtkLevelSets::InitEvolution() \n");
@@ -2994,7 +3004,7 @@ void vtkLevelSets::PreComputeDataAttachment()
     float gradnorm;
     float DAx,DAy,DAz;
     float* im   = (float*) this->inputImage->GetScalarPointer();;
-    int imsize;
+    //    int imsize;
 
     float norm, maxnorm;
 
