@@ -84,11 +84,6 @@ if { [file exists $localvarsfile] } {
     source $localvarsfile
 } else {
     
-    # Set your custom values here
-    set VTK_DIR ${env(SLICER_HOME)}/Lib/${env(BUILD)}/vtk/VTK-build
-    set ITK_BINARY_PATH ${env(SLICER_HOME)}/Lib/${env(BUILD)}/itk/ITK-build
-    set TCL_BIN_DIR ${env(SLICER_HOME)}/Lib/${env(BUILD)}/tcl/TCL/bin
-    set TCL_LIB_DIR ${env(SLICER_HOME)}/Lib/${env(BUILD)}/tcl/TCL/lib
     # set up variables for the OS Builds, this is all done in the slicer_variables file if it exists
     set solaris "solaris8"
     set linux "redhat7.3"
@@ -120,6 +115,14 @@ if { [file exists $localvarsfile] } {
         }
     }
     puts "\nSlicer build directory set to $env(BUILD)"
+
+    # Set your custom values here
+    set VTK_DIR ${env(SLICER_HOME)}/Lib/${env(BUILD)}/vtk/VTK-build
+    set ITK_BINARY_PATH ${env(SLICER_HOME)}/Lib/${env(BUILD)}/itk/ITK-build
+    set TCL_BIN_DIR ${env(SLICER_HOME)}/Lib/${env(BUILD)}/tcl/bin
+    set TCL_LIB_DIR ${env(SLICER_HOME)}/Lib/${env(BUILD)}/tcl/lib
+    set env(VTK_BIN_DIR) $VTK_DIR
+    set env(VTK_SRC_DIR) ${env(SLICER_HOME)}/Lib/${env(BUILD)}/vtk/VTK
 }
 
 # if it is an empty string or doesn't exist, set the LD_LIBRARY_PATH 
