@@ -99,6 +99,10 @@ proc ImageSmoothInit {} {
     set Module($m,row1Name) "{Help} {Main}"
     set Module($m,row1,tab) Main
 
+    set Module($m,author) "Karl Krissian, BWH, karl@bwh.harvard.edu"
+    set Module($m,summary) "This module implements a version of anisotropic diffusion.\n It aims at restoring 2D and 3D images with the ability to preserve small and elongated structures."
+    set Module($m,category) "Filtering"
+
     # Define Procedures
     #------------------------------------
     # Description:
@@ -154,7 +158,7 @@ proc ImageSmoothInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1 $} {$Date: 2004/02/16 23:12:39 $}]
+        {$Revision: 1.2 $} {$Date: 2004/04/13 21:17:59 $}]
 
     # Initialize module-level variables
     #------------------------------------
