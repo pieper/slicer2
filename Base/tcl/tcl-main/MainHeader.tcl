@@ -376,7 +376,7 @@ proc ReadHeader {image run utility tk} {
 			return ""
 		    } else {
 			set hdr $errmsg
-                        puts $errmsg
+                        #puts $errmsg
 		    }
 		}
 	} else {

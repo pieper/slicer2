@@ -95,7 +95,7 @@ proc EditorInit {} {
     
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.45 $} {$Date: 2001/02/19 17:53:28 $}]
+	    {$Revision: 1.46 $} {$Date: 2001/02/20 14:07:00 $}]
     
     # Initialize globals
     set Editor(idOriginal)  $Volume(idNone)
@@ -116,21 +116,44 @@ proc EditorInit {} {
     # Look for Editor effects and form an array, Ed, for them.
     # Each effect has a *.tcl file in the tcl-modules/Editor directory.
     set Ed(idList) ""
-    
+
+    set local [file join tcl-modules Editor]
     set prog $Path(program)
-    set dir  [file join [file join $prog tcl-modules] Editor]
-    # fullname is the full path name
-    foreach fullname [glob -nocomplain $dir/*.tcl] {
-	if {[regexp "$dir/(\.*).tcl" $fullname match name] == 1} {
-	    lappend Ed(idList) $name
-	    # If there's an error, print the fullname:
-	    if {[catch {source $fullname} errmsg] == 1} {
-		puts "ERROR in $fullname:\n $errmsg"
-		source $fullname
+    set central  [file join [file join $prog tcl-modules] Editor]
+    set names ""
+
+    # Look locally
+    foreach fullname [glob -nocomplain $local/*] {
+	if {[regexp "$local/(\.*).tcl$" $fullname match name] == 1} {
+	    lappend names $name
+	}
+    }
+    # Look centrally
+    foreach fullname [glob -nocomplain $central/*] {
+	if {[regexp "$central/(\.*).tcl$" $fullname match name] == 1} {
+	    if {[lsearch $names $name] == -1} {
+		lappend names $name
 	    }
 	}
     }
-    
+
+    # source them
+    set found ""
+    foreach name $names {
+	
+	set path [GetFullPath $name tcl $local]
+	if {$path != ""} {
+	    #puts "source $path"
+
+	    # If there's an error, print the fullname:
+	    if {[catch {source $path} errmsg] == 1} {
+		puts "ERROR in $path:\n $errmsg"
+	    }
+
+	    lappend Ed(idList) $name
+	} 
+    }
+
     # Initialize effects
     if {$Module(verbose) == 1} {
 	puts Editor-Init:
