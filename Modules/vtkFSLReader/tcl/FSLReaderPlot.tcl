@@ -56,6 +56,11 @@
 proc FSLReaderPopUpPlot {x y} {
     global FSLReader
 
+    # timer to remove the time course plot
+    if {[info exists FSLReader(timer)]} {
+        after cancel $FSLReader(timer)
+    }
+
     if {! [info exists FSLReader(firstMRMLid)] ||
         ! [info exists FSLReader(lastMRMLid)]} {
         # DevErrorWindow "Please load filtered_func_data.hdr first."
@@ -98,7 +103,8 @@ proc FSLReaderPopUpPlot {x y} {
 
         vtkTimeCoursePlotActor2 tcPlot
         tcPlot SetVoxelIndex $i $j $k
-        tcPlot SetPlot $FSLReader(timeCourse) FSLReader(ev$FSLReader(selectedEV),model) 
+        tcPlot SetPlot $FSLReader(timeCourse) FSLReader(ev$FSLReader(selectedEV),model) \
+            $FSLReader(ev$FSLReader(selectedEV),shape)
 
         vtkRenderer render
         render AddActor2D tcPlot 
@@ -120,10 +126,12 @@ proc FSLReaderPopUpPlot {x y} {
     }
 
     $FSLReader(tcPlot) SetVoxelIndex $i $j $k
-    $FSLReader(tcPlot) SetPlot $FSLReader(timeCourse) FSLReader(ev$FSLReader(selectedEV),model) 
+    $FSLReader(tcPlot) SetPlot $FSLReader(timeCourse) FSLReader(ev$FSLReader(selectedEV),model) \
+        $FSLReader(ev$FSLReader(selectedEV),shape)
 
     #Update the graph for the new data
     $FSLReader(renWin) Render 
+    set FSLReader(timer) [after 6000 {FSLReaderCloseTimeCourseWindow}]
 }
 
 
