@@ -136,7 +136,7 @@ proc DTMRIInit {} {
 
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.49.2.3 $} {$Date: 2004/12/09 21:37:00 $}]
+                  {$Revision: 1.49.2.4 $} {$Date: 2005/02/07 21:38:14 $}]
 
      # Define Tabs
     #------------------------------------
@@ -2690,13 +2690,18 @@ proc RunLSDIrecon {} {
     # Copy LSDIrecon.par in the selected volume data directory  
     #
 
-    #puts $Mrml(dir)/Modules/vtkDTMRI/LSDIrecon_par
+    #puts $Mrml(dir)/Modules/vtkDTMRI/data/LSDIrecon_par
     #puts $Volume(DefaultDir)
 
-    puts "Copying LSDIrecon_par to Volume Data directory..."
-    set a [catch {file copy $PACKAGE_DIR_VTKDTMRI/../../../LSDIrecon_par $Volume(DefaultDir)}]
+    if {![file exists $PACKAGE_DIR_VTKDTMRI/../../../data/LSDIrecon_par]} {
+        DevErrorWindow "Error: script file not found: Modules/vtkDTMRI/LSDIrecon_par"
+        return
+    }
+
+    puts "Copying LSDIrecon_par to Volume Data directory $Volume(DefaultDir) ..."
+    set a [catch {file copy -force $PACKAGE_DIR_VTKDTMRI/../../../data/LSDIrecon_par $Volume(DefaultDir)} errMsg]
     if {$a} {
-       DevInfoWindow "You don't have permission \n to write in the selected directory."
+       DevInfoWindow "You don't have permission to write in the selected directory\n$Volume(DefaultDir).\n$errMsg"
        return
     }
 
