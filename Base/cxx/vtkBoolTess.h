@@ -68,9 +68,9 @@ public:
   /*  inline */ static vtkBoolTess *New() {return (new vtkBoolTess);}
   /*  inline */ void Delete() { delete this; }
   void SetPoints( float *points );
-  int AddContour( int nPts, int *ptIds );
+  int AddContour( vtkIdType nPts, vtkIdType *ptIds );
   void Reset();
-  int Triangulate( int **tris );
+  int Triangulate( vtkIdType **tris );
 
 protected:
   int GenerateTriangles();
@@ -78,8 +78,8 @@ protected:
 
   // this is the input data
   int NumContours;
-  int NLoopPts[VTK_BOOL_MAX_CONTOURS];
-  int *Contours[VTK_BOOL_MAX_CONTOURS];
+  vtkIdType NLoopPts[VTK_BOOL_MAX_CONTOURS];
+  vtkIdType *Contours[VTK_BOOL_MAX_CONTOURS];
   
   //BTX - begin tcl exclude
   float (*Points)[3];
@@ -101,7 +101,7 @@ protected:
 
   // this is the output data
   int NumTriangles;
-  int *Triangles;
+  vtkIdType *Triangles;
 
   double ProjTriangleArea( int ptId0, int ptId1, int ptId2 );
   void AddNewEdges( vtkBoolTessEdge *prevEdge, vtkBoolTessEdge *nextEdge );

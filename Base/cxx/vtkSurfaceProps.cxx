@@ -66,8 +66,9 @@ vtkPolyData *vtkSurfaceProps::GetInput()
 void vtkSurfaceProps::Execute()
   {
   vtkPolyData *input = (vtkPolyData *)this->Inputs[0];
-  int *ptIds;
-  int numPts, numCells, jj, kk, cellId, type, pId, qId, rId;
+  vtkIdType *ptIds;
+  int numCells, jj, kk, type;
+  vtkIdType numPts, cellId, pId, qId, rId;
   float *p, *q, *r, xp[3], edge0[3], edge1[3], edge2[3], *center;
   double tri_area, cell_area, tot_area, tri_vol, tot_vol, tot_vol2;
 

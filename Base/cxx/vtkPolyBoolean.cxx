@@ -517,7 +517,7 @@ void vtkPolyBoolean::Execute()
 
   if ( operationOutputs3D )
     {
-    int numPts, *pts;
+    vtkIdType numPts, *pts;
     vtkCellArray *oldLines;
 
     this->ClassifyCells();
@@ -639,8 +639,9 @@ int vtkPolyBoolean::ProcessTwoNodes( vtkOBBNode *nodeA,
   {
   vtkPolyBoolean *pbool = (vtkPolyBoolean *)bool_void;
   vtkPolyData *InputA;
-  int ii, jj, numA, numB, cellIdA, cellIdB, numPts, type;
-  int *ptIds;
+  int ii, jj, numA, numB, type;
+  vtkIdType cellIdA, cellIdB, numPts;
+  vtkIdType *ptIds;
   static vtkIdList *cellIdsA = vtkIdList::New();
   static vtkIdList *cellIdsB = vtkIdList::New();
   float *p[3];
@@ -1072,9 +1073,11 @@ void vtkPolyBoolean::MakeNewPoint( vtkPiercePoint *inPP )
 
 void vtkPolyBoolean::DisplayIntersectionGeometry()
   {
-  int ii, jj, nEdges, AorB, minId;
+  int AorB;
+  vtkIdType ii, jj, minId, nEdges;
   vtkIdList *pntIds = vtkIdList::New();
-  int numEdges, *cellPts, numCells;
+  int numEdges, numCells;
+  vtkIdType *cellPts;
   vtkBoolTriEdge *thisEdge, *firstEdge, *lastEdge;
   vtkPolyData *dataset;
 
@@ -1327,11 +1330,12 @@ void vtkPolyBoolean::ClassifyCells()
 void vtkPolyBoolean::GatherMarkCellNeighbors( int AorB, vtkPolyData *dataset,
                                               int cellId, int marker ) 
   {
-  int ii, numPts, jj, p0, p1, neighborId, offset, thisId;
+  int ii, jj,   offset; 
+  vtkIdType thisId, numPts, neighborId, p0, p1;
   vtkIdList *cellNeighbors = vtkIdList::New();
   vtkIdList *offsetIds = vtkIdList::New();
-  int *cellIdStack;
-  int *ptIds, depth, maxDepth, newId, invertB = 0;
+  vtkIdType *cellIdStack, *ptIds;
+  int depth, maxDepth, newId, invertB = 0;
 
   if ( AorB == 0 )
     offset = 0;
@@ -1344,7 +1348,7 @@ void vtkPolyBoolean::GatherMarkCellNeighbors( int AorB, vtkPolyData *dataset,
 
   if ( this->CellFlags[AorB] != NULL )
     {
-    cellIdStack = new int[dataset->GetNumberOfCells()];
+    cellIdStack = new vtkIdType[dataset->GetNumberOfCells()];
     cellIdStack[0] = cellId;
     this->CellFlags[AorB][cellId] = marker;
     }
@@ -1632,9 +1636,10 @@ void vtkPolyBoolean::FormLoops()
 void vtkPolyBoolean::AddNewPolygons( vtkBoolTri *thisTri )
   {
   vtkBoolLoop *thisLoop;
-  int ii, nPts, nTriangles = 0, *tris;
+  int ii, nPts, nTriangles = 0;
+  vtkIdType *tris, outerLoop[3];
   vtkBoolTess *tess = this->Tess;
-  int flagBit, outerLoop[3], addOuterLoop = 0;
+  int flagBit, addOuterLoop = 0;
   float *p0, *p1, xprod[3], areavec[3];
 
   // Generate new triangles from the loops on this triangle.
@@ -1691,7 +1696,7 @@ void vtkPolyBoolean::AddNewPolygons( vtkBoolTri *thisTri )
     tess->Reset();
     tess->SetPoints( this->NewPoints->GetData()->GetTuple(0) );
     if ( addOuterLoop )
-      tess->AddContour( 3, outerLoop );
+      tess->AddContour( (vtkIdType)3, outerLoop );
     do {
       tess->AddContour( thisLoop->Points->GetNumberOfIds(),
                        thisLoop->Points->GetPointer(0) );
@@ -1729,8 +1734,8 @@ void vtkPolyBoolean::SortLoops( vtkBoolTri *thisTri )
         PTID0 = PTID1 = PTID2 = -1; \
       } }
 
-void vtkPolyBoolean::AddCellTriangles( int cellId, int *ptIds, int type,
-                                       int numPts, int AorB )
+void vtkPolyBoolean::AddCellTriangles( vtkIdType cellId, vtkIdType *ptIds, 
+                                       int type, vtkIdType numPts, int AorB )
   {
   vtkBoolTri *newTri, *nextTri, **thisTriDirectory, *adjTri;
   int ii, jj, kk, numCells, triPts[3], p0, p1, neighborId, found;

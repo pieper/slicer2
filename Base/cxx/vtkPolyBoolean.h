@@ -203,8 +203,8 @@ protected:
                              vtkMatrix4x4 *XformBtoA,
                              void *bool_void);
   void BuildBPoints( vtkMatrix4x4 *XformBtoA );
-  void AddCellTriangles( int cellId, int *ptIds, int type, int numPts,
-                         int AorB );
+  void AddCellTriangles( vtkIdType cellId, vtkIdType *ptIds, int type, 
+                         vtkIdType numPts, int AorB );
   int IntersectCellPair( int cellIdA, int cellIdB );
   int IntersectBoolTriPair( vtkBoolTri *triA, vtkBoolTri *triB );
   void MakeNewPoint( vtkPiercePoint *inPP );

@@ -70,7 +70,7 @@ void vtkBoolTess::SetPoints( float *points )
   this->Points = (float (*)[3])points;
   }
 
-int vtkBoolTess::AddContour( int nPts, int *ptIds )
+int vtkBoolTess::AddContour( vtkIdType nPts, vtkIdType *ptIds )
   {
   if ( this->NumContours == VTK_BOOL_MAX_CONTOURS )
     {
@@ -82,11 +82,11 @@ int vtkBoolTess::AddContour( int nPts, int *ptIds )
   return( 0 );
   }
 
-int vtkBoolTess::Triangulate( int **tris )
+int vtkBoolTess::Triangulate( vtkIdType **tris )
   {
   int ii, jj, kk;
-  int nContours, **ptIds,
-      nEdges, *nPts;
+  int nContours, nEdges;
+  vtkIdType **ptIds, *nPts;
   int edgeIndex, prevIndex;
   double bbox[2][3], normal[3];
   int ptId0, ptId1;
@@ -148,7 +148,7 @@ int vtkBoolTess::Triangulate( int **tris )
     if ( this->Triangles )
       delete [] this->Triangles;
     // The maximum # of triangles = nEdges+2*nContours-4
-    this->Triangles = new int [3*(nEdges + 2*nContours - 4)];
+    this->Triangles = new vtkIdType[3*(nEdges + 2*nContours - 4)];
     this->PrevNumInputEdges = nEdges;
 //nEdges -= 200;
     }
@@ -437,7 +437,7 @@ void vtkBoolTess::TriangulateMonotone( vtkBoolTessEdge *firstEdge )
   {
   int nEdges, baseIndex, ii, jj, tmpId, nPasses = 0;
   vtkBoolTessEdge *thisEdge;
-  int *tris;
+  vtkIdType *tris;
   double area;
 
   tris = this->Triangles;
