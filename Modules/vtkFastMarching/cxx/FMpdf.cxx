@@ -1,4 +1,5 @@
 #include "FMpdf.h"
+#include <math.h>
 
 FMpdf::FMpdf( int realizationMax )
 {

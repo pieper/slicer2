@@ -6,7 +6,15 @@
 #include <float.h>
 #define isnan(x) _isnan(x)
 #define finite(x) _finite(x)
-#define min(a,b) __min((a),(b))
+
+#ifndef min
+#define min(a,b) (((a)<(b))?(a):(b))
+#endif
+
+#ifndef M_PI
+#define M_PI 3.1415926535898
+#endif
+
 #include <deque>
 
 #else // UNIX

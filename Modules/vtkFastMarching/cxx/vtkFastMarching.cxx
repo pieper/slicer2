@@ -196,8 +196,16 @@ void vtkFastMarching::initNewExpansion( void )
     for(int j=0;j<dimY;j++)
       for(int i=0;i<dimX;i++)
     {
-      if(outdata[index]==label)
+      if( (outdata[index]==label) && (node[index].status!=fmsOUT) )
         {
+            collectInfoSeed( index );
+            for(int n=1;n<nNeighbors;n++)
+            if(outdata[index+shiftNeighbor(n)]==0)
+              {
+                seedPoints.push_back( index+shiftNeighbor(n) );
+                }    
+
+/*
           bool hasIntensityZeroNeighbor = false;
           for(int n=1;n<nNeighbors;n++)
         if(outdata[index+shiftNeighbor(n)]==0)
@@ -213,9 +221,11 @@ void vtkFastMarching::initNewExpansion( void )
         }
           else
         {
-          node[index].status=fmsKNOWN;
+          node[index].status=fmsDONE;
           node[index].T=0.0;
         }
+*/
+
         }
 
       index++;
@@ -239,20 +249,21 @@ void vtkFastMarchingExecute(vtkFastMarching *self,
     return;
 
   int n=0;
+  int k;
 
   self->setInData( (short *)inPtr );
   self->setOutData( (short *)outPtr );
 
   if( !self->initialized )
-    {
+    {      
       self->initialized = true;
 
       int index=0;
       int lastPercentageProgressBarUpdated=-1;
 
 
-      for(int k=0;k<self->dimZ;k++)
-    for(int j=0;j<self->dimY;j++)
+      for(k=0;k<self->dimZ;k++)
+      for(int j=0;j<self->dimY;j++)
       for(int i=0;i<self->dimX;i++)
         {
 
@@ -311,13 +322,17 @@ void vtkFastMarchingExecute(vtkFastMarching *self,
       self->pdfInhomoIn->update();
     }
 
+        if(self->nPointsEvolution<=0)
+            // then we have nothing to do and we have just been called to update the pipeline
+        return;
+
   // reinitialize the points that were removed by the user
-  if( self->nEvolutions>=0 )
+  if( self->nEvolutions>0 )
     if( (self->knownPoints.size()>1) && 
     ((signed)self->knownPoints.size()-1>self->nPointsBeforeLeakEvolution) )
       {
     // reinitialize all the points
-    for(int k=self->nPointsBeforeLeakEvolution;k<(int)self->knownPoints.size();k++)
+    for(k=self->nPointsBeforeLeakEvolution;k<(int)self->knownPoints.size();k++)
       {
         int index = self->knownPoints[k];
         self->node[ index ].status = fmsFAR;
@@ -341,7 +356,7 @@ void vtkFastMarchingExecute(vtkFastMarching *self,
       }
 
     // if the points still have a KNOWN neighbor, put them back in TRIAL
-    for(int k=self->nPointsBeforeLeakEvolution;k<(int)self->knownPoints.size();k++)
+    for(k=self->nPointsBeforeLeakEvolution;k<(int)self->knownPoints.size();k++)
       {
         int index = self->knownPoints[k];
         int indexN;
@@ -415,6 +430,10 @@ void vtkFastMarchingExecute(vtkFastMarching *self,
   self->minHeapIsSorted();
 
   self->firstPassThroughShow = true;
+
+  // we've done that,
+  // make sure this is reset to 0 so that nothing happen if Update is called
+  self->nPointsEvolution=0;
 }
 
 void vtkFastMarching::show(float r)
@@ -448,7 +467,7 @@ void vtkFastMarching::show(float r)
   else if( newIndex < oldIndex )
     for(int index=oldIndex;index>newIndex;index--)
       {
-    if(node[  knownPoints[index] ].status==fmsKNOWN )
+    if(node[ knownPoints[index] ].status==fmsKNOWN )
         if(outdata[ knownPoints[index] ]==label)
           outdata[ knownPoints[index] ]=0;
       }
@@ -541,7 +560,9 @@ void vtkFastMarching::insert(const FMleaf leaf) {
 bool vtkFastMarching::minHeapIsSorted( void )
 {
   int N=(int)tree.size();
-  for(int k=(N-1);k>=1;k--)
+  int k;
+
+  for(k=(N-1);k>=1;k--)
     {
       if(node[tree[k].nodeIndex].leafIndex!=k)
     {
@@ -550,7 +571,7 @@ bool vtkFastMarching::minHeapIsSorted( void )
              << (unsigned int)tree.size() << ")" );
     }
     }
-  for(int k=(N-1);k>=1;k--)
+  for(k=(N-1);k>=1;k--)
     {
       if( finite( node[tree[k].nodeIndex].T)==0 )
     vtkErrorMacro( "Error in vtkFastMarching::minHeapIsSorted(): "
@@ -888,11 +909,6 @@ float vtkFastMarching::step( void )
 {
   if(somethingReallyWrong)
     return (float)INF;
-
-#ifdef _WIN32
-  // to try to debug a problem under Windows with Steve...
-  vtkErrorMacro( "tree.size()==" << (unsigned int)tree.size() << endl );
-#endif
 
   int indexN;
   int n;

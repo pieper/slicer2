@@ -266,12 +266,56 @@ proc EdFastMarchingUserExpand {zero userExpand} {
         
     if {$EdFastMarching(totalExpand) > 0} {
         EdFastMarching(FastMarching) show [expr $userExpand/$EdFastMarching(totalExpand)]
+
+
+# the progress bar should not be updated
+#     EdFastMarching(FastMarching) SetStartMethod     ""
+#     EdFastMarching(FastMarching) SetProgressMethod  ""
+#     EdFastMarching(FastMarching) SetEndMethod       ""
+
+EdFastMarching(FastMarching) Modified
+EdFastMarching(FastMarching) Update
+
+set w [EditorGetWorkingID]
+
+    MainVolumesUpdate $w
+
+    # Update the effect panel GUI by re-running it's Enter procedure
+    #EditorUpdateEffect
+    
+    # Mark the volume as changed
+    set Volume($w,dirty) 1
+    
+    RenderAll
+
+
+#[Volume($w,vol) GetOutput] Modified
+#[Volume($w,vol) GetOutput] Update
+
+#set Volume($w,dirty) 1
+
+#MainVolumesUpdate $w
+#RenderAll
+
+#RenderActive
+#MainInteractorRender
+#EdUpdateAfterApplyEffect $w Active
+
+#        EditorResetDisplay
+        
+        # Refresh the effect, if it's an interactive one
+#        EditorUpdateEffect
+
+#RenderSlices
+
+
     }
+#        EdSetupBeforeApplyEffect $v $Ed($e,scope) Native
 
-        Ed(editor)  SetInput ""
-        Ed(editor)  UseInputOff
+#        Ed(editor)  SetInput ""
+#        Ed(editor)  UseInputOff
 
-        EdUpdateAfterApplyEffect $v
+#        EdUpdateAfterApplyEffect $v
     }
 }
 
@@ -360,7 +404,7 @@ proc EdFastMarchingEnter {} {
 
         EditorActivateUndo 0
         
-        EditorClear Working
+#        EditorClear Working
         
         set v [EditorGetInputID $Ed($e,input)]
 
@@ -369,7 +413,7 @@ proc EdFastMarchingEnter {} {
 
         set Gui(progressText) "FastMarching: initializing"
 
-        MainStartProgress
+        
 
         # insert a cast to SHORT before the editor
         # note: no effect if data already SHORT
@@ -381,7 +425,34 @@ proc EdFastMarchingEnter {} {
     #note: that would work too but would screw up the progress bar
     #Ed(editor) Apply EdFastMarching(castToShort) EdFastMarching(FastMarching)
 
-        Ed(editor) Apply  EdFastMarching(FastMarching) EdFastMarching(FastMarching)
+################### try that
+set o [EditorGetOriginalID]
+set w [EditorGetWorkingID]
+
+set vtkImageDataOriginal [Volume($o,vol) GetOutput]
+set vtkImageDataWorking [Volume($w,vol) GetOutput]
+
+EdFastMarching(castToShort) SetInput $vtkImageDataOriginal
+
+EdFastMarching(FastMarching) SetInput [EdFastMarching(castToShort) GetOutput]
+EdFastMarching(FastMarching) SetOutput $vtkImageDataWorking
+
+     EdFastMarching(FastMarching) SetStartMethod     MainStartProgress
+     EdFastMarching(FastMarching) SetProgressMethod  "MainShowProgress EdFastMarching(FastMarching)"
+     EdFastMarching(FastMarching) SetEndMethod       MainEndProgress
+#MainShowProgress EdFastMarching(FastMarching)
+MainStartProgress
+
+EdFastMarching(FastMarching) Modified
+EdFastMarching(FastMarching) Update
+
+
+#$vtkImageDataWorking Update
+###################
+
+
+
+#        Ed(editor) Apply  EdFastMarching(FastMarching) EdFastMarching(FastMarching)
 
         # necessary for init
         EdFastMarchingLabel 
@@ -516,8 +587,6 @@ proc EdFastMarchingSegment {} {
 
     set Gui(progressText) "FastMarching"
 
-    MainStartProgress
-
     # insert a cast to SHORT before the editor
     # note: no effect if data already SHORT
     EdFastMarching(castToShort) SetInput [Ed(editor) GetInput]
@@ -528,14 +597,40 @@ proc EdFastMarchingSegment {} {
 #note: that would work too but would screw up the progress bar
 #Ed(editor) Apply EdFastMarching(castToShort) EdFastMarching(FastMarching)
 
-    Ed(editor) Apply  EdFastMarching(FastMarching) EdFastMarching(FastMarching)
+################### try that
+set o [EditorGetOriginalID]
+set w [EditorGetWorkingID]
 
-    MainEndProgress
+set vtkImageDataOriginal [Volume($o,vol) GetOutput]
+set vtkImageDataWorking [Volume($w,vol) GetOutput]
+
+EdFastMarching(castToShort) SetInput $vtkImageDataOriginal
+
+EdFastMarching(FastMarching) SetInput [EdFastMarching(castToShort) GetOutput]
+EdFastMarching(FastMarching) SetOutput $vtkImageDataWorking
+
+#MainShowProgress EdFastMarching(FastMarching)
+#MainStartProgress
+
+     EdFastMarching(FastMarching) SetStartMethod     MainStartProgress
+     EdFastMarching(FastMarching) SetProgressMethod  "MainShowProgress EdFastMarching(FastMarching)"
+     EdFastMarching(FastMarching) SetEndMethod       MainEndProgress
+
+
+EdFastMarching(FastMarching) Modified
+EdFastMarching(FastMarching) Update
+
+#$vtkImageDataWorking Update
+###################
+
+#    Ed(editor) Apply  EdFastMarching(FastMarching) EdFastMarching(FastMarching)
+
+#    MainEndProgress
 
     Ed(editor)  SetInput ""
     Ed(editor)  UseInputOff
 
-    EdUpdateAfterApplyEffect $v
+#    EdUpdateAfterApplyEffect $v
 }
 
 # this is called when the user clicks on the active slice
