@@ -10,11 +10,13 @@
 #include "vtkImageData.h"
 #include "math.h"
 #include <GL/gl.h>
+// for error checking
+#include <GL/glu.h>
 
 #define volumeBox 3
 
 #ifndef VTK_IMPLEMENT_MESA_CXX
-vtkCxxRevisionMacro(vtkOpenGLVolumeTextureMapper3D, "$Revision: 1.5 $");
+vtkCxxRevisionMacro(vtkOpenGLVolumeTextureMapper3D, "$Revision: 1.6 $");
 vtkStandardNewMacro(vtkOpenGLVolumeTextureMapper3D);
 #endif
 
@@ -218,13 +220,25 @@ void vtkOpenGLVolumeTextureMapper3D::Render(vtkRenderer *ren, vtkVolume *vol)
 //-----------------------------------------------------
 void vtkOpenGLVolumeTextureMapper3D::CreateEmptyTexture()
 {
+        GLenum errCode;
+        const GLubyte *errString;
+        
   if (init != 0)
   { 
     glDisable(GL_TEXTURE_3D_EXT);
     glDeleteTextures(3, &tempIndex3d[0]);
   }
-    
-  glGenTextures(3, &tempIndex3d[0]);  
+  if ((errCode = glGetError()) != GL_NO_ERROR) {
+      errString = gluErrorString(errCode);
+      cerr << "CreateEmptyTexture: error status after init check: " << errString << endl;
+  }
+  
+  glGenTextures(3, &tempIndex3d[0]);
+  if ((errCode = glGetError()) != GL_NO_ERROR) {
+      errString = gluErrorString(errCode);
+      cerr << "CreateEmptyTexture: error after glGenTextures:" << errString << endl;
+  }
+  
   for (int m = 0; m < 3; m++)
   {
     glBindTexture(GL_TEXTURE_3D_EXT, tempIndex3d[m]);
@@ -233,6 +247,10 @@ void vtkOpenGLVolumeTextureMapper3D::CreateEmptyTexture()
     glTexParameteri(GL_TEXTURE_3D_EXT, GL_TEXTURE_WRAP_R, GL_CLAMP);
     glTexParameteri(GL_TEXTURE_3D_EXT, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_3D_EXT, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    if ((errCode = glGetError()) != GL_NO_ERROR) {
+      errString = gluErrorString(errCode);
+      cerr << "CreateEmptyTexture: error after glTexParameteri for m= " << m << ":" << errString << endl;
+    }
   }
   
   for (int i = 0; i < 3; i++)
@@ -254,9 +272,12 @@ void vtkOpenGLVolumeTextureMapper3D::CreateEmptyTexture()
     
     //store empty textures for each dataset
     glBindTexture(GL_TEXTURE_3D_EXT, tempIndex3d[i]);
-    
+    if ((errCode = glGetError()) != GL_NO_ERROR) {
+      errString = gluErrorString(errCode);
+      cerr << "CreateEmptyTexture: error after glBindTexture:" << errString << endl;
+    }
     //store the data in the texture memory
-
+    
     if (using_palette != 1)
     {
       glTexImage3DEXT(GL_TEXTURE_3D_EXT, 
@@ -281,8 +302,14 @@ void vtkOpenGLVolumeTextureMapper3D::CreateEmptyTexture()
               0, GL_COLOR_INDEX, 
               GL_UNSIGNED_BYTE, 
               emptyImage);    
-    }  
-
+    }
+    errCode = glGetError();
+    if (errCode != GL_NO_ERROR)
+    {
+        errString = gluErrorString(errCode);
+        cerr << "CreateEmptyTexture: after glTexImage3DEXT: " << errString << " (using palette = " << using_palette << ")" << endl;
+       
+    }
   }
 }
 
@@ -746,6 +773,25 @@ void vtkOpenGLVolumeTextureMapper3D::ChangeColorTable(int volume, int colorTable
          GL_RGBA ,
          GL_UNSIGNED_BYTE ,
          &newColorTable);
+  }
+  #else
+  if (using_palette != 1)
+  {
+      glColorTable(GL_TEXTURE_COLOR_TABLE_SGI,
+                   GL_RGBA ,
+                   256 ,
+                   GL_RGBA ,
+                   GL_UNSIGNED_BYTE ,
+                   &newColorTable);
+  }
+  else
+  {
+       glColorTable(GL_SHARED_TEXTURE_PALETTE_EXT,
+                       GL_RGBA ,
+                       256 ,
+                       GL_RGBA ,
+                       GL_UNSIGNED_BYTE ,
+                       &newColorTable);
   }
   #endif
 }
