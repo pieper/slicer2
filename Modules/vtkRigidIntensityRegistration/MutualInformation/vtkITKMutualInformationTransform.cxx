@@ -163,7 +163,7 @@ void vtkITKMutualInformationTransform::InternalUpdate()
   if (this->SourceImage->GetScalarType() != VTK_FLOAT)
     {
     vtkErrorMacro (<< "Source type " << this->SourceImage->GetScalarType()
-                   << "must be float");
+                   << " must be float");
     this->Matrix->Identity();
     return;
     }
@@ -171,7 +171,7 @@ void vtkITKMutualInformationTransform::InternalUpdate()
   if (this->TargetImage->GetScalarType() != VTK_FLOAT)
     {
     vtkErrorMacro (<< "Target type " << this->SourceImage->GetScalarType()
-                   << "must be float");
+                   << " must be float");
     this->Matrix->Identity();
     return;
     }
