@@ -62,6 +62,7 @@
 #   EdLiveWireReadFeatureParams
 #   EdLiveWireWriteFeatureParams
 #   EdLiveWireTestCF
+#   EdLiveWireTestCF2
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -123,6 +124,10 @@ proc EdLiveWireInit {} {
 
     # for writing settings as option
     set Ed(EdLiveWire,contents) "LiveWireSettings"
+
+    # PHASE : whether to run the experimental phase code
+    set Ed(EdLiveWire,phase) 0
+    #set Ed(EdLiveWire,phase) 1
 }
 
 #-------------------------------------------------------------------------------
@@ -176,7 +181,9 @@ proc EdLiveWireBuildVTK {} {
 
 	# for looking at edge weight image
 	vtkImageViewer Ed(EdLiveWire,viewer$s)
-	Ed(EdLiveWire,viewer$s) SetInput [Ed(EdLiveWire,lwSetup$s) GetEdgeImage 0]
+	# get input from livewire as image
+	Ed(EdLiveWire,viewer$s) SetInput [Ed(EdLiveWire,lwPath$s) GetInput 0]
+	#Ed(EdLiveWire,viewer$s) SetInput [Ed(EdLiveWire,lwSetup$s) GetEdgeImage 0]
 	#Ed(EdLiveWire,viewer$s) SetInput [Slicer GetActiveOutput $s]
 	Ed(EdLiveWire,viewer$s) SetColorWindow 256
 	Ed(EdLiveWire,viewer$s) SetColorLevel 127.5
@@ -195,7 +202,6 @@ proc EdLiveWireBuildVTK {} {
     for {set i 0} {$i < $Ed(EdLiveWire,numEdgeFilters)} {incr i} {
 	lappend  Ed(EdLiveWire,edgeIDList) $i
     }
-
 
 }
 
@@ -299,12 +305,38 @@ proc EdLiveWireBuildGUI {} {
     # TabbedFrame->Basic->Test frame
     #-------------------------------------------
     set f $Ed(EdLiveWire,frame).fTabbedFrame.fBasic.fTest
-    
-    #eval {button $f.bTest -text "Test quadrature filter input on slice" \
-	    #-command "EdLiveWireTestCF"} $Gui(WBA) {-width 30}
-    #pack $f.bTest
-    #TooltipAdd $f.bTest \
-	    #"hello"
+
+    # PHASE
+    if {$Ed(EdLiveWire,phase) == 1} {
+
+	eval {button $f.bTest -text "use phase" \
+		-command "EdLiveWireTestCF2"} $Gui(WBA) {-width 15}
+	pack $f.bTest -side top
+	TooltipAdd $f.bTest \
+		"hello"
+	
+	eval {button $f.bClr -text "clear last contour" \
+		-command "EdLiveWirePrettyPicture"} $Gui(WBA) {-width 15}
+	pack $f.bClr -side top
+	
+	set Ed(EdLiveWire,phaseWeight) 1
+	set Ed(EdLiveWire,certWeight) 1
+	set Ed(EdLiveWire,gradWeight) 0
+	set Ed(EdLiveWire,certLowerCutoff) 0
+	set Ed(EdLiveWire,certUpperCutoff) 150
+
+	eval {label $f.lPW -text "P:"} $Gui(WLA)
+	eval {label $f.lCW -text "C:"} $Gui(WLA)
+	eval {label $f.lGW -text "T:"} $Gui(WLA)
+	eval {label $f.lCU -text "CU:"} $Gui(WLA)
+	eval {label $f.lCL -text "CL:"} $Gui(WLA)
+	eval {entry $f.ePW -width 2 -textvariable Ed(EdLiveWire,phaseWeight)} $Gui(WEA)
+	eval {entry $f.eCW -width 2 -textvariable Ed(EdLiveWire,certWeight)} $Gui(WEA)
+	eval {entry $f.eGW -width 2 -textvariable Ed(EdLiveWire,gradWeight)} $Gui(WEA)
+	eval {entry $f.eCU -width 6 -textvariable Ed(EdLiveWire,certUpperCutoff)} $Gui(WEA)
+	eval {entry $f.eCL -width 6 -textvariable Ed(EdLiveWire,certLowerCutoff)} $Gui(WEA)
+	pack $f.lPW $f.ePW $f.lCW $f.eCW  $f.lGW $f.eGW $f.lCL $f.eCL $f.lCU $f.eCU -side left
+    }
 
     #-------------------------------------------
     # TabbedFrame->Basic->File frame
@@ -618,6 +650,24 @@ proc EdLiveWireToggleWeight {feat} {
 
 }
 
+proc EdLiveWirePrettyPicture {}  {
+    global Slice
+
+    set s $Slice(activeID)
+
+    set invis [Ed(EdLiveWire,lwPath$s) GetInvisibleLastSegment]
+    if {$invis == 1} {
+	puts "turning invis off"
+	set invis 0
+    } else {
+	puts "turning invis on"
+	set invis 1
+    }
+
+    Ed(EdLiveWire,lwPath$s) SetInvisibleLastSegment $invis
+
+}
+
 #-------------------------------------------------------------------------------
 # .PROC EdLiveWireRaiseEdgeImageWin
 # Displays \"edge image,\" which shows edge weights (costs)
@@ -768,9 +818,12 @@ proc EdLiveWireUpdateEdgeImageWin {viewerWidget edgeNum} {
     
     set s $Slice(activeID)
     
-    # image window
-    Ed(EdLiveWire,viewer$s) SetInput [Ed(EdLiveWire,lwSetup$s) \
-	    GetEdgeImage $edgeNum]
+    # test inputs to sum filter here like this
+    #Ed(EdLiveWire,viewer$s) SetInput [Ed(EdLiveWire,imageSumFilter) GetInput $edgeNum]
+    # get input from livewire and show image
+    set inputNum [expr $edgeNum + 1]
+    Ed(EdLiveWire,viewer$s) SetInput [Ed(EdLiveWire,lwPath$s) GetInput $inputNum]
+
     $viewerWidget Render
 
     # histogram
@@ -804,7 +857,10 @@ proc EdLiveWireWriteEdgeImage {} {
 
     # save it  (ppm default now)
     vtkImageCast cast
-    cast SetInput [Ed(EdLiveWire,lwSetup$s) GetEdgeImage $edge]
+    #cast SetInput [Ed(EdLiveWire,imageSumFilter) GetInput $edge]
+    cast SetInput [Ed(EdLiveWire,lwPath$s) GetInput $edge]
+    #cast SetInput [Ed(EdLiveWire,lwSetup$s) GetEdgeImage $edge]
+
     cast SetOutputScalarTypeToUnsignedChar
 
     vtkPNMWriter writer
@@ -1980,6 +2036,7 @@ proc EdLiveWireWriteFeatureParams {} {
 
 	    set settings "$settings,\n"
 	}
+
 	# remove newline and last comma
 	set settings [string trimright $settings]
 	set settings [string trimright $settings ,]
@@ -2008,7 +2065,8 @@ proc EdLiveWireWriteFeatureParams {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdLiveWireTestCF
-# development
+# development 
+# PHASE
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -2043,6 +2101,16 @@ proc EdLiveWireTestCF {} {
     EdLiveWireReformatSlice $Slice($s,offset) phaseReformat $phaseVol
     EdLiveWireReformatSlice $Slice($s,offset) certReformat $certVol
 
+    # normalize...
+    vtkImageDivideByMax phaseNorm
+    vtkImageDivideByMax certNorm
+    phaseNorm SetInput [phaseReformat GetOutput]     
+    certNorm SetInput [certReformat GetOutput]     
+    set scale [Ed(EdLiveWire,lwPath$s) GetMaxEdgeCost]
+    phaseNorm SetScaleFactor $scale
+    certNorm SetScaleFactor  $scale
+
+
     # give to (all) lw edge filters as input
     set e EdLiveWire
     for {set f 0} {$f < $Ed($e,numEdgeFilters)} {incr f} {
@@ -2056,8 +2124,10 @@ proc EdLiveWireTestCF {} {
 	    return
 	}
 
-	$filt SetPhaseImage [phaseReformat GetOutput]     
-	$filt SetCertaintyImage [certReformat GetOutput]     
+	#$filt SetPhaseImage [phaseReformat GetOutput]     
+	#$filt SetCertaintyImage [certReformat GetOutput]     
+	$filt SetPhaseImage [phaseNorm GetOutput]     
+	$filt SetCertaintyImage [certNorm GetOutput]     
 
 	# Lauren for now set the other inputs to this too!
 	$filt SetPreviousContourImage [phaseReformat GetOutput]
@@ -2068,6 +2138,168 @@ proc EdLiveWireTestCF {} {
     phaseReformat Delete
     certReformat Delete
 
+    puts "almost done!"
+
+    # update slicer
+    Slicer Update
+    
+    puts "woo hoo!!!"
+}
+
+#-------------------------------------------------------------------------------
+# .PROC EdLiveWireTestCF2
+# PHASE
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc EdLiveWireTestCF2 {} {
+    global Ed Volume Slice
+
+    set phaseVol ""
+    set certVol ""
+
+    set orig [EditorGetInputID Original]
+    set origname [Volume($orig,node) GetName]
+
+    if {[regexp {(.*)var(.*)} $origname match type num] == 0} {
+	puts "using default names phase and cert"
+	set phase "phase"
+	set cert "cert"
+    } else {
+	set phase "phasevar$num"
+	set cert "certvar$num"
+    }
+    puts "phase: $phase, cert: $cert"
+
+    # figure out which volumes to use: hack for now
+    foreach v $Volume(idList) {
+	set n Volume($v,node)
+	set name [$n GetName]
+	puts $name
+	if {$name == $phase} {
+	    set phaseVol $v
+	}
+	if {$name == $cert} {
+	    set certVol $v
+	}
+    }
+    
+    if {$phaseVol == "" || $certVol == ""} {
+	puts "can't find phase and cert volumes"
+	return
+    }
+
+    # reformat the right slices
+    set s $Slice(activeID)
+    vtkImageReformat phaseReformat
+    vtkImageReformat certReformat
+    EdLiveWireReformatSlice $Slice($s,offset) phaseReformat $phaseVol
+    EdLiveWireReformatSlice $Slice($s,offset) certReformat $certVol
+
+    # compute the gradient magnitude
+    if {[info commands "gradMag"] == ""} {
+	# we haven't made the object yet...
+	# really do this in build vtk
+	vtkImageGradientMagnitude gradMag
+	# PHASE
+	vtkImageWeightedSum Ed(EdLiveWire,imageSumFilter)
+    }
+    # get input image from Slicer object
+    gradMag SetInput [Ed(EdLiveWire,lwSetup$s) GetInput] ; # hack!!
+    #Slicer SetFirstFilter $s gradMag
+    #Slicer SetLastFilter  $s Ed(EdLiveWire,lwPath$s)  
+    #Slicer Update
+
+    # normalize...
+    vtkImageDivideByMax phaseNorm
+    vtkImageDivideByMax certNorm
+    vtkImageDivideByMax gradNorm
+    phaseNorm SetInput [phaseReformat GetOutput]     
+
+    certNorm SetInput [certReformat GetOutput] 
+    #certNorm SetTransformationFunctionToOneOverX
+    certNorm SetTransformationFunctionToInverseLinearRamp
+    # test this: all input vals > 1000 will be set to 1000.
+    certNorm SetLowerCutoff $Ed(EdLiveWire,certLowerCutoff)
+    certNorm SetUpperCutoff $Ed(EdLiveWire,certUpperCutoff)
+
+    # Lauren 
+    # test whether cert works better than gradient mag!
+    #gradNorm SetInput [gradMag GetOutput]     
+
+   #  gradNorm SetTransformationFunctionToInverseLinearRamp ; # in case LUT fails, do this
+    
+    # Lauren test this
+    gradNorm SetTransformationFunctionToOneOverX
+
+    # test with all old pixels first (limit the number later)
+    gradNorm SetLookupPoints [Ed(EdLiveWire,lwPath$s) GetContourPixels]
+    #gradNorm SetUseLookupTable 1
+    gradNorm SetUseGaussianLookup 1
+
+    set scale [Ed(EdLiveWire,lwPath$s) GetMaxEdgeCost]
+    phaseNorm SetScaleFactor $scale
+    certNorm SetScaleFactor  $scale
+    gradNorm SetScaleFactor  $scale
+
+    # ___________________test_____________
+    # Lauren 
+    # test whether cert works better than gradient mag!
+    #gradNorm SetInput [certNorm GetOutput]     
+    vtkImageDivideByMax testNorm
+    testNorm SetScaleFactor  $scale
+    testNorm SetInput [certReformat GetOutput]     
+
+    gradNorm SetInput [testNorm GetOutput]     
+    testNorm Delete
+    #gradNorm SetInput [certReformat GetOutput]     
+    # ___________________end test_____________
+
+    # do weighted sum of these
+    #vtkImageWeightedSum sum
+    set sum Ed(EdLiveWire,imageSumFilter)
+    $sum SetInput 0 [phaseNorm GetOutput]
+    $sum SetInput 1 [certNorm GetOutput]
+    $sum SetInput 2 [gradNorm GetOutput]
+    puts "set inputs to sum"
+
+    # Lauren!
+    if {[info exists Ed(EdLiveWire,phaseWeight)] == 0 } {
+
+	set Ed(EdLiveWire,phaseWeight) 1
+	set Ed(EdLiveWire,certWeight) 1
+	set Ed(EdLiveWire,gradWeight) 1
+    }
+
+    $sum SetWeightForInput 0 $Ed(EdLiveWire,phaseWeight)
+    $sum SetWeightForInput 1 $Ed(EdLiveWire,certWeight)
+    $sum SetWeightForInput 2 $Ed(EdLiveWire,gradWeight)
+    puts "set weights for sum"
+
+    # screw the edge filters, just give this stuff to lw filter
+    
+    # set all lw inputs to be just this!
+    set livewire Ed(EdLiveWire,lwPath$s)
+    # Lauren change numEdgeFilters to be called num edge directions...
+    set totalInputs [expr $Ed(EdLiveWire,numEdgeFilters) + 1]
+    for {set e 0} {$e < $totalInputs} {incr e} {   
+	
+	# livewire wants input 0 to be "original image" 
+	# (no good reason, not used except to make pipeline update, or something...)
+	# wants next (4 or 8) inputs to be directional info
+
+	# must set input 0 since that's where LW gets type info now!!!
+
+	$livewire SetInput $e [$sum GetOutput]
+    }
+
+    # clean up
+    phaseReformat Delete
+    certReformat Delete
+    phaseNorm Delete
+    certNorm Delete
+    gradNorm Delete
+    #sum Delete
     puts "almost done!"
 
     # update slicer
