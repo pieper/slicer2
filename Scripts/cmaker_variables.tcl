@@ -5,6 +5,10 @@
 #   be overwritten when this file is updated
 #
 
+## variables that are the same for all systems
+set SLICER_DATA_ROOT ""
+
+## system dependent variables
 switch $tcl_platform(os) {
     "SunOS" {
         set BUILD $solaris
