@@ -59,6 +59,9 @@
 #   MainSlicesAllOffsetToPoint
 #   MainSlicesAdvancedControlsPopup
 #   MainSlicesSetOffsetIncrement int float
+#   MainSlicesSet3DOpacity s opacity
+#   MainSlicesReset3DOpacityAll
+#   MainSlicesSet3DOpacityAll opacity
 #==========================================================================auto=
 
 
@@ -88,7 +91,7 @@ proc MainSlicesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainSlices \
-		{$Revision: 1.34 $} {$Date: 2002/02/03 23:01:32 $}]
+		{$Revision: 1.35 $} {$Date: 2002/02/06 16:42:30 $}]
 
 	# Initialize Variables
 	set Slice(idList) "0 1 2"
@@ -1242,6 +1245,11 @@ proc MainSlicesSetVisibility {s} {
 #-------------------------------------------------------------------------------
 # .PROC MainSlicesSetOpacityAll
 #  Set opacity of all Fore layers to value
+# This means the opacity used when overlaying the slices in
+# the vtkMrmlSlicer object (in its vtkImageOverlay member object).
+# This is used to fade from fore to back layers (image overlay).
+# This does not affect the transparency of the slice actor
+# in the 3D window.
 # .ARGS
 # value int opacity value
 # .END
@@ -1578,4 +1586,55 @@ proc MainSlicesSetOffsetIncrement {s {incr ""}} {
 
     # Make the slider allow this resolution
     MainSlicesConfigGui $s fOffset.sOffset "-resolution $incr"    
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC MainSlicesSet3DOpacity
+# This actually sets the opacity of the slice's plane actor
+# in the 3D scene.  This has nothing to do with the opacity
+# of fore/back layers.  This only affects the 3D display.
+# .ARGS
+# int s slice number
+# float opacity a number between 0 and 1
+# .END
+#-------------------------------------------------------------------------------
+proc MainSlicesSet3DOpacity  {s opacity} {
+    global Slice
+
+    [Slice($s,planeActor) GetProperty] SetOpacity $opacity
+    Render3D
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MainSlicesReset3DOpacityAll
+# Reset opacity of all slice actors in 3D window to 1
+# (completely opaque, this is the default).
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MainSlicesReset3DOpacityAll  {} {
+    global Slice
+
+    MainSlicesSet3DOpacityAll  1
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC MainSlicesSet3DOpacityAll
+# This actually sets the opacity of all slices' plane actors
+# in the 3D scene.  This has nothing to do with the opacity
+# of fore/back layers.  This only affects the 3D display.
+# 
+# .ARGS
+# float opacity a number between 0 and 1
+# .END
+#-------------------------------------------------------------------------------
+proc MainSlicesSet3DOpacityAll  {opacity} {
+    global Slice
+
+    foreach s $Slice(idList) {
+	[Slice($s,planeActor) GetProperty] SetOpacity $opacity
+    }
+    Render3D
 }
