@@ -36,55 +36,49 @@
 # Class will store results in EMSegment and Volume()
 # Do not forget to delete the Volumes at the end and to define SLICER_HOME !!!
 
-if {[info exists env(SLICER_HOME)] == 0 || $env(SLICER_HOME) == ""} {
-    set Slicer_Home ""
-} else { 
-    set Slicer_Home $env(SLICER_HOME)
+proc EMSegmentXMLInit {} {
+    set ::EMSegment(debug) 0
+    set ::EMSegment(CIMList) {West North Up East South Down}
+    set ::EMSegment(ImgTestNo) -1
+    set ::EMSegment(ImgTestDivision) 0
+    set ::EMSegment(ImgTestPixel) 0
+    set ::Volume(idNone) 0
+    set ::EMSegment(GlobalClassList) ""
 }
-source [file join $Slicer_Home Base/tcl/tcl-main/Parse.tcl]  
-
-set EMSegment(debug) 0
-set EMSegment(CIMList) {West North Up East South Down}
-set EMSegment(ImgTestNo) -1
-set EMSegment(ImgTestDivision) 0
-set EMSegment(ImgTestPixel) 0
-set Volume(idNone) 0
-
-set EMSegment(GlobalClassList) ""
 
 proc EMSegmentCreateSuperClass {SuperClass NumClasses StartIndex} {
-  global EMSegment Volume
-  set max  [expr  $NumClasses + $StartIndex]
-  set EMSegment(Cattrib,$SuperClass,IsSuperClass) 1
-  set EMSegment(Cattrib,$SuperClass,ClassList) {} 
-  lappend EMSegment(GlobalClassList) $SuperClass
-  puts "DEBUGGING: creating superclass $SuperClass"
-  for {set i $StartIndex} { $i < $max} {incr i} {
-      lappend EMSegment(Cattrib,$SuperClass,ClassList) $i
-      puts "DEBUGGING: ClassList is $EMSegment(Cattrib,$SuperClass,ClassList)"
+    global EMSegment Volume
+    set max  [expr  $NumClasses + $StartIndex]
+    set EMSegment(Cattrib,$SuperClass,IsSuperClass) 1
+    set EMSegment(Cattrib,$SuperClass,ClassList) {} 
+    lappend EMSegment(GlobalClassList) $SuperClass
+    puts "DEBUGGING: creating superclass $SuperClass"
+    for {set i $StartIndex} { $i < $max} {incr i} {
+        lappend EMSegment(Cattrib,$SuperClass,ClassList) $i
+        puts "DEBUGGING: ClassList is $EMSegment(Cattrib,$SuperClass,ClassList)"
 
-      set EMSegment(Cattrib,$i,IsSuperClass) 0
-      set EMSegment(Cattrib,$i,ClassList) ""
+        set EMSegment(Cattrib,$i,IsSuperClass) 0
+        set EMSegment(Cattrib,$i,ClassList) ""
 
-      set EMSegment(Cattrib,$i,Name) ""
-      set EMSegment(Cattrib,$i,ProbabilityData) $Volume(idNone)
-      for {set y 0} {$y < $EMSegment(MaxInputChannelDef)} {incr y} {
-          set EMSegment(Cattrib,$i,LogMean,$y) 0.0
-          for {set x 0} {$x < $EMSegment(MaxInputChannelDef)} {incr x} {
-             set EMSegment(Cattrib,$i,LogCovariance,$y,$x)  0.0     
-          }
-      }
-      set EMSegment(Cattrib,$i,Label) 0
-      set EMSegment(Cattrib,$i,Prob) 0.0
-      set EMSegment(Cattrib,$i,ShapeParameter) 0.0
+        set EMSegment(Cattrib,$i,Name) ""
+        set EMSegment(Cattrib,$i,ProbabilityData) $Volume(idNone)
+        for {set y 0} {$y < $EMSegment(MaxInputChannelDef)} {incr y} {
+            set EMSegment(Cattrib,$i,LogMean,$y) 0.0
+            for {set x 0} {$x < $EMSegment(MaxInputChannelDef)} {incr x} {
+               set EMSegment(Cattrib,$i,LogCovariance,$y,$x)  0.0     
+            }
+        }
+        set EMSegment(Cattrib,$i,Label) 0
+        set EMSegment(Cattrib,$i,Prob) 0.0
+        set EMSegment(Cattrib,$i,ShapeParameter) 0.0
 
-      foreach Name $EMSegment(CIMList) {
-      for {set y $StartIndex} { $y < $max} {incr y} {
-          set EMSegment(Cattrib,$SuperClass,CIMMatrix,$i,$y,$Name) 0.0
-      }
-      set EMSegment(Cattrib,$SuperClass,CIMMatrix,$i,$i,$Name) 1.0
-      }
-  }
+        foreach Name $EMSegment(CIMList) {
+            for {set y $StartIndex} { $y < $max} {incr y} {
+                set EMSegment(Cattrib,$SuperClass,CIMMatrix,$i,$y,$Name) 0.0
+            }
+            set EMSegment(Cattrib,$SuperClass,CIMMatrix,$i,$i,$Name) 1.0
+        }
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -96,6 +90,7 @@ proc EMSegmentCreateSuperClass {SuperClass NumClasses StartIndex} {
 #-------------------------------------------------------------------------------
 proc EMSegmentBatchDefineParameters {VolumeStartNumber tags} {
     global EMSegment Volume
+
     set EMSegment(VolNumber) $VolumeStartNumber 
     set NumClassesDef 0
     set EMSegment(SelVolList,VolumeList) ""
@@ -109,146 +104,150 @@ proc EMSegmentBatchDefineParameters {VolumeStartNumber tags} {
         set attr [lreplace $pair 0 0]
 
         switch $tag {
-        
-        "Volume" {
-        incr EMSegment(VolNumber)
-        set num $EMSegment(VolNumber)
-        set Volume($num,Name) ""
-        set spacing "0.9375 0.9375 1.5" 
-        set dimensions "256 256"
-        set imageRange "1 124"
-        vtkImageReader Volume($num,vol)
-        # Default
-        Volume($num,vol) ReleaseDataFlagOff
-        Volume($num,vol) SetDataScalarTypeToShort
-        Volume($num,vol) SetDataByteOrderToBigEndian
-        foreach a $attr {
-            set key [lindex $a 0]
-            set val [lreplace $a 0 0]
-            switch [string tolower $key] {
-            "name"            {set Volume($num,Name) $val}
-            "filepattern"     {set Volume($num,FilePattern) $val; Volume($num,vol) SetFilePattern    $val}
-            "fileprefix"      {set Volume($num,FilePrefix) $val; Volume($num,vol) SetFilePrefix $val}
-            "rastoijkmatrix"  {set Volume($num,rasToIjkMatrix) $val}
-            "rastovtkmatrix"  {set Volume($num,rasToVtkMatrix) $val}
-            "positionmatrix"  {set Volume($num,positionMatrix) $val}
-            "scanorder"       {set Volume($num,scanOrder) $val}
-            "description"     {set Volume($num,description) $val}
-            "colorlut"        {set Volume($num,colorLUT) $val}
-            "imagerange"      {set Volume($num,imageRange) $val; set imageRange $val}
-            "spacing"         {set Volume($num,spacing) $val; set spacing $val}
-            "dimensions"      {set Volume($num,dimensions) $val;set dimensions $val}
-            "scalartype"      {Volume($num,vol) SetDataScalarTypeTo$val; set Volume($num,scalarType) $val}
-            "numscalars"      {Volume($num,vol) SetNumberOfScalarComponents $val; set Volume($num,numScalars) $val}
-            "littleendian" {
-                set Volume($num,littleEndian) $val
-                if {$val == "yes" || $val == "true"} {
-                Volume($num,vol) SetDataByteOrderToLittleEndian
-                } else {
+            
+            "Volume" {
+                incr EMSegment(VolNumber)
+                set num $EMSegment(VolNumber)
+                set Volume($num,Name) ""
+                set spacing "0.9375 0.9375 1.5" 
+                set dimensions "256 256"
+                set imageRange "1 124"
+                vtkImageReader Volume($num,vol)
+                # Default
+                Volume($num,vol) ReleaseDataFlagOff
+                Volume($num,vol) SetDataScalarTypeToShort
                 Volume($num,vol) SetDataByteOrderToBigEndian
+                foreach a $attr {
+                    set key [lindex $a 0]
+                    set val [lreplace $a 0 0]
+                    switch -- [string tolower $key] {
+                        "name"            {set Volume($num,Name) $val}
+                        "filepattern"     {set Volume($num,FilePattern) $val; Volume($num,vol) SetFilePattern    $val}
+                        "fileprefix"      {set Volume($num,FilePrefix) $val; Volume($num,vol) SetFilePrefix $val}
+                        "rastoijkmatrix"  {set Volume($num,rasToIjkMatrix) $val}
+                        "rastovtkmatrix"  {set Volume($num,rasToVtkMatrix) $val}
+                        "positionmatrix"  {set Volume($num,positionMatrix) $val}
+                        "scanorder"       {set Volume($num,scanOrder) $val}
+                        "description"     {set Volume($num,description) $val}
+                        "colorlut"        {set Volume($num,colorLUT) $val}
+                        "imagerange"      {set Volume($num,imageRange) $val; set imageRange $val}
+                        "spacing"         {set Volume($num,spacing) $val; set spacing $val}
+                        "dimensions"      {set Volume($num,dimensions) $val;set dimensions $val}
+                        "scalartype"      {Volume($num,vol) SetDataScalarTypeTo$val; set Volume($num,scalarType) $val}
+                        "numscalars"      {Volume($num,vol) SetNumberOfScalarComponents $val; set Volume($num,numScalars) $val}
+                        "littleendian" {
+                            set Volume($num,littleEndian) $val
+                            if {$val == "yes" || $val == "true"} {
+                                Volume($num,vol) SetDataByteOrderToLittleEndian
+                            } else {
+                                Volume($num,vol) SetDataByteOrderToBigEndian
+                            }
+                        }
+                        "window"          {set Volume($num,window) $val;}
+                        "level"           {set Volume($num,level) $val;}
+                        "lowerthreshold"  {set Volume($num,lowerThreshold) $val;}
+                        "upperthreshold"  {set Volume($num,upperThreshold) $val;}
+                    }
                 }
+                eval Volume($num,vol) SetDataSpacing $spacing
+                eval Volume($num,vol) SetDataExtent 0 [expr [lindex $dimensions 0]-1] \
+                                                    0 [expr [lindex $dimensions 1]-1] $imageRange
+                        
+                puts "===================== Volume $Volume($num,Name) defined ====================="
+                if {$EMSegment(debug)} {puts "[Volume($num,vol) Print]"}    
             }
-            "window"          {set Volume($num,window) $val;}
-            "level"           {set Volume($num,level) $val;}
-            "lowerthreshold"  {set Volume($num,lowerThreshold) $val;}
-            "upperthreshold"  {set Volume($num,upperThreshold) $val;}
-            }
-        }
-        eval Volume($num,vol) SetDataSpacing $spacing
-        eval Volume($num,vol) SetDataExtent 0 [expr [lindex $dimensions 0]-1] 0 [expr [lindex $dimensions 1]-1] $imageRange
-                
-        puts "===================== Volume $Volume($num,Name) defined ====================="
-        if {$EMSegment(debug)} {puts "[Volume($num,vol) Print]"}    
-        }
-        "Segmenter" {
-        set NumClasses 0 
-        set EMSegment(MaxInputChannelDef) 0
-        set EMSegment(EMiteration) 0 
-        set EMSegment(MFAiteration) 0
-        set EMSegment(Alpha) 0
-        set EMSegment(SmWidth) 0
-        set EMSegment(SmSigma) 0
-        set EMSegment(PrintIntermediateResults) 0
-        set EMSegment(PrintIntermediateSlice) -1 
-        set EMSegment(PrintIntermediateFrequency) -1
-        set EMSegment(PrintIntermediateDir) "."
-        set EMSegment(BiasPrint) 0
-        set EMSegment(StartSlice) 0 
-        set EMSegment(EndSlice) 0 
-        set EMSegment(NumberOfTrainingSamples) 0 
-        set EMSegment(IntensityAvgClass) -1
+            
+            "Segmenter" {
+                set NumClasses 0 
+                set EMSegment(MaxInputChannelDef) 0
+                set EMSegment(EMiteration) 0 
+                set EMSegment(MFAiteration) 0
+                set EMSegment(Alpha) 0
+                set EMSegment(SmWidth) 0
+                set EMSegment(SmSigma) 0
+                set EMSegment(PrintIntermediateResults) 0
+                set EMSegment(PrintIntermediateSlice) -1 
+                set EMSegment(PrintIntermediateFrequency) -1
+                set EMSegment(PrintIntermediateDir) "."
+                set EMSegment(BiasPrint) 0
+                set EMSegment(StartSlice) 0 
+                set EMSegment(EndSlice) 0 
+                set EMSegment(NumberOfTrainingSamples) 0 
+                set EMSegment(IntensityAvgClass) -1
                 lappend EMSegment(GlobalSuperClassList) 0
-        foreach a $attr {
-            set key [lindex $a 0]
-            set val [lreplace $a 0 0]
-            switch [string tolower $key] {
-            "numclasses"         {set NumClasses $val}
-            "maxinputchanneldef" {set EMSegment(MaxInputChannelDef) $val}
-            "emshapeiter"        {set EMSegment(EMShapeIter) $val}
-            "emiteration"        {set EMSegment(EMiteration) $val}
-            "mfaiteration"       {set EMSegment(MFAiteration) $val}
-            "alpha"              {set EMSegment(Alpha) $val}
-            "smwidth"            {set EMSegment(SmWidth) $val}
-            "smsigma"            {set EMSegment(SmSigma) $val}
-            "printintermediateresults"   {set EMSegment(PrintIntermediateResults) $val}
-            "printintermediateslice"     {set EMSegment(PrintIntermediateSlice) $val}
-            "printintermediatefrequency" {set EMSegment(PrintIntermediateFrequency) $val}
-                "printintermediatedir"       {set EMSegment(PrintIntermediateDir) $val} 
-            "biasprint"                  {set EMSegment(BiasPrint) $val}  
-            "startslice"                 {set EMSegment(StartSlice) $val}
-            "endslice"                   {set EMSegment(EndSlice) $val}
-            "numberoftrainingsamples"    {set EMSegment(NumberOfTrainingSamples) $val}
-            "displayprob"        {set EMSegment(DisplayProb) $val}
-            "intensityavgclass"  {set EMSegment(IntensityAvgClass) $val}
+                foreach a $attr {
+                    set key [lindex $a 0]
+                    set val [lreplace $a 0 0]
+                    switch [string tolower $key] {
+                        "numclasses"         {set NumClasses $val}
+                        "maxinputchanneldef" {set EMSegment(MaxInputChannelDef) $val}
+                        "emshapeiter"        {set EMSegment(EMShapeIter) $val}
+                        "emiteration"        {set EMSegment(EMiteration) $val}
+                        "mfaiteration"       {set EMSegment(MFAiteration) $val}
+                        "alpha"              {set EMSegment(Alpha) $val}
+                        "smwidth"            {set EMSegment(SmWidth) $val}
+                        "smsigma"            {set EMSegment(SmSigma) $val}
+                        "printintermediateresults"   {set EMSegment(PrintIntermediateResults) $val}
+                        "printintermediateslice"     {set EMSegment(PrintIntermediateSlice) $val}
+                        "printintermediatefrequency" {set EMSegment(PrintIntermediateFrequency) $val}
+                        "printintermediatedir"       {set EMSegment(PrintIntermediateDir) $val} 
+                        "biasprint"                  {set EMSegment(BiasPrint) $val}  
+                        "startslice"                 {set EMSegment(StartSlice) $val}
+                        "endslice"                   {set EMSegment(EndSlice) $val}
+                        "numberoftrainingsamples"    {set EMSegment(NumberOfTrainingSamples) $val}
+                        "displayprob"        {set EMSegment(DisplayProb) $val}
+                        "intensityavgclass"  {set EMSegment(IntensityAvgClass) $val}
+                    }
+                }
+                puts "===================== EM Segmenter Parameters  ====================="
+                if {$EMSegment(debug)} {puts "[array get EMSegment]"}
+                # Define default Class Parameters
+                set EMSegment(SuperClass) 0
+                set EMSegment(Cattrib,0,Name) "Head"
+                set EMSegment(Cattrib,0,Prob) 0.0 
+                set EMSegment(Cattrib,0,ProbabilityData) $Volume(idNone)
+                
+                EMSegmentCreateSuperClass 0 $NumClasses 1
+                set StartIndex [expr $NumClasses+1]
+                set CurrentClassList $EMSegment(Cattrib,0,ClassList)  
+                set indent "  "
             }
-        }
-        puts "===================== EM Segmenter Parameters  ====================="
-        if {$EMSegment(debug)} {puts "[array get EMSegment]"}
-        # Define default Class Parameters
-        set EMSegment(SuperClass) 0
-        set EMSegment(Cattrib,0,Name) "Head"
-        set EMSegment(Cattrib,0,Prob) 0.0 
-        set EMSegment(Cattrib,0,ProbabilityData) $Volume(idNone)
-        
-        EMSegmentCreateSuperClass 0 $NumClasses 1
-        set StartIndex [expr $NumClasses+1]
-        set CurrentClassList $EMSegment(Cattrib,0,ClassList)  
-        set indent "  "
-        }    
-        "SegmenterInput" {
-        set intensity -1.0
-        foreach a $attr {
-            set key [lindex $a 0]
-            set val [lreplace $a 0 0]
-            switch [string tolower $key] {
-            "name"        {set Name $val}
-            "fileprefix"  {set FilePrefix $val}
-            "filename"    {set FileName $val}
-            "imagerange"  {set imageRange  $val}
-            "intensityavgvaluepredef" {set intensity $val}
-            }
-        }
-                  
-        for {set i [expr $VolumeStartNumber + 1]} {$i <= $EMSegment(VolNumber)} {incr i} {
-            ### NIW -- FilePrefix test doesn't work anymore
-            ### rely only on Filename and ImageRange (not sure
-            ### why latter is interesting, tho)
-            if {$FileName == $Volume($i,Name) && $imageRange == $Volume($i,imageRange)} { 
-            incr EMSegment(NumInputChannel)
-            set EMSegment(IntensityAvgValue,$i) $intensity 
-            lappend EMSegment(SelVolList,VolumeList) $i
-            puts "${indent}===================== EM Segmenter Input Channel $Name  ====================="
-            break
-            }
-        }    
+
+            "SegmenterInput" {
+                set intensity -1.0
+                foreach a $attr {
+                    set key [lindex $a 0]
+                    set val [lreplace $a 0 0]
+                    switch [string tolower $key] {
+                        "name"        {set Name $val}
+                        "fileprefix"  {set FilePrefix $val}
+                        "filename"    {set FileName $val}
+                        "imagerange"  {set imageRange  $val}
+                        "intensityavgvaluepredef" {set intensity $val}
+                    }
+                }
+                          
+                for {set i [expr $VolumeStartNumber + 1]} {$i <= $EMSegment(VolNumber)} {incr i} {
+                    ### NIW -- FilePrefix test doesn't work anymore
+                    ### rely only on Filename and ImageRange (not sure
+                    ### why latter is interesting, tho)
+                    if {$FileName == $Volume($i,Name) && $imageRange == $Volume($i,imageRange)} { 
+                        incr EMSegment(NumInputChannel)
+                        set EMSegment(IntensityAvgValue,$i) $intensity 
+                        lappend EMSegment(SelVolList,VolumeList) $i
+                        puts "${indent}===================== EM Segmenter Input Channel $Name  ====================="
+                        break
+                    }
+                }    
                 if {$i > $EMSegment(VolNumber)} {puts "${indent}Warning: Channel $Name could not be assigned to any input volume !"}
 
-        }
+            }
+
             "SegmenterSuperClass" {
-          set NumClass [lindex $CurrentClassList 0]
+              set NumClass [lindex $CurrentClassList 0]
               lappend EMSegment(GlobalSuperClassList) $NumClass
-          set CurrentClassList [lrange $CurrentClassList 1 end]
-          set NumClasses 0
+              set CurrentClassList [lrange $CurrentClassList 1 end]
+              set NumClasses 0
               if {$NumClass == ""} { puts "Error in XML File : Super class $EMSegment(SuperClass)  has not a sub-classes defined" }
               foreach a $attr {
                 set key [lindex $a 0]
@@ -256,113 +255,117 @@ proc EMSegmentBatchDefineParameters {VolumeStartNumber tags} {
                 switch [string tolower $key] {
                     "numclasses" {set NumClasses $val}
                     "name"       {set EMSegment(Cattrib,$NumClass,Name) $val}
-            "prob"       {set EMSegment(Cattrib,$NumClass,Prob) $val}
+                    "prob"       {set EMSegment(Cattrib,$NumClass,Prob) $val}
                 }
               }
               lappend SclassMemory [list "$EMSegment(SuperClass)" "$CurrentClassList"]
-          set EMSegment(SuperClass) $NumClass
-          EMSegmentCreateSuperClass $NumClass $NumClasses $StartIndex
+              set EMSegment(SuperClass) $NumClass
+              EMSegmentCreateSuperClass $NumClass $NumClasses $StartIndex
 
-          incr StartIndex $NumClasses
+              incr StartIndex $NumClasses
 
-          set CurrentClassList $EMSegment(Cattrib,$NumClass,ClassList)
-          puts "${indent}===================== EM Segmenter SuperClass $EMSegment(Cattrib,$NumClass,Name) ========================"
-          set indent "$indent  " 
-          if {$EMSegment(debug)} {puts "[array get EMSegment Cattrib,$EMSegment(SuperClass),*]"}
+              set CurrentClassList $EMSegment(Cattrib,$NumClass,ClassList)
+              puts "${indent}===================== EM Segmenter SuperClass $EMSegment(Cattrib,$NumClass,Name) ========================"
+              set indent "$indent  " 
+              if {$EMSegment(debug)} {puts "[array get EMSegment Cattrib,$EMSegment(SuperClass),*]"}
             }
+
             "EndSegmenterSuperClass" {
-          # Pop the last parent from the Stack
-          set temp [lindex $SclassMemory end]
-          set SclassMemory [lreplace $SclassMemory end end]
-          set CurrentClassList [lindex $temp 1] 
-          set EMSegment(SuperClass) [lindex $temp 0]
-          set indent [string range $indent 0 [expr [string length $indent] -2]]
-          puts "${indent}===================== EM Segmenter EndSuperClass  ========================"
+              # Pop the last parent from the Stack
+              set temp [lindex $SclassMemory end]
+              set SclassMemory [lreplace $SclassMemory end end]
+              set CurrentClassList [lindex $temp 1] 
+              set EMSegment(SuperClass) [lindex $temp 0]
+              set indent [string range $indent 0 [expr [string length $indent] -2]]
+              puts "${indent}===================== EM Segmenter EndSuperClass  ========================"
 
             }
-        "SegmenterClass" {
-        set NumClassesDef [lindex $CurrentClassList 0]
-        set CurrentClassList [lrange $CurrentClassList 1 end]  
 
-        set LocalPriorPrefix ""
-        set LocalPriorName   ""
-        set LocalPriorRange  ""
-        foreach a $attr {
-            set key [lindex $a 0]
-            set val [lreplace $a 0 0]
-            switch [string tolower $key] {
-            "name"              {set EMSegment(Cattrib,$NumClassesDef,Name) $val}
-            "localpriorprefix"  {set LocalPriorPrefix $val}
-            "localpriorname"    {set LocalPriorName $val}
-            "localpriorrange"   {set LocalPriorRange  $val}
-            "logmean"           {set LogMean $val}
-            "logcovariance"     {set LogCovariance $val}
-            "label"             {set EMSegment(Cattrib,$NumClassesDef,Label) $val}
-            "prob"              {set EMSegment(Cattrib,$NumClassesDef,Prob) $val}
+            "SegmenterClass" {
+                set NumClassesDef [lindex $CurrentClassList 0]
+                set CurrentClassList [lrange $CurrentClassList 1 end]  
+
+                set LocalPriorPrefix ""
+                set LocalPriorName   ""
+                set LocalPriorRange  ""
+                foreach a $attr {
+                    set key [lindex $a 0]
+                    set val [lreplace $a 0 0]
+                    switch [string tolower $key] {
+                        "name"              {set EMSegment(Cattrib,$NumClassesDef,Name) $val}
+                        "localpriorprefix"  {set LocalPriorPrefix $val}
+                        "localpriorname"    {set LocalPriorName $val}
+                        "localpriorrange"   {set LocalPriorRange  $val}
+                        "logmean"           {set LogMean $val}
+                        "logcovariance"     {set LogCovariance $val}
+                        "label"             {set EMSegment(Cattrib,$NumClassesDef,Label) $val}
+                        "prob"              {set EMSegment(Cattrib,$NumClassesDef,Prob) $val}
                         "shapeparameter"    {set EMSegment(Cattrib,$NumClassesDef,ShapeParameter) $val}
-            }
-        }
-        puts "${indent}===================== EM Segmenter Class $EMSegment(Cattrib,$NumClassesDef,Name) ========================"
+                    }
+                }
+                puts "${indent}===================== EM Segmenter Class $EMSegment(Cattrib,$NumClassesDef,Name) ========================"
                 set index 0
-        for {set y 0} {$y < $EMSegment(MaxInputChannelDef)} {incr y} {
-            set EMSegment(Cattrib,$NumClassesDef,LogMean,$y) [lindex $LogMean $y]
-            for {set x 0} {$x < $EMSegment(MaxInputChannelDef)} {incr x} {
-            set EMSegment(Cattrib,$NumClassesDef,LogCovariance,$y,$x)  [lindex $LogCovariance $index]
-            incr index
+                for {set y 0} {$y < $EMSegment(MaxInputChannelDef)} {incr y} {
+                    set EMSegment(Cattrib,$NumClassesDef,LogMean,$y) [lindex $LogMean $y]
+                    for {set x 0} {$x < $EMSegment(MaxInputChannelDef)} {incr x} {
+                        set EMSegment(Cattrib,$NumClassesDef,LogCovariance,$y,$x)  [lindex $LogCovariance $index]
+                        incr index
+                    }
+                    incr index
+                }
+                puts -nonewline "${indent}  Local Prob Map: " 
+                set flag 0
+                for {set i [expr $VolumeStartNumber + 1]} {$i <= $EMSegment(VolNumber)} {incr i} {
+                    if {$LocalPriorName == $Volume($i,Name) && $LocalPriorRange == $Volume($i,imageRange)} { 
+                        set EMSegment(Cattrib,$NumClassesDef,ProbabilityData) $i
+                        puts "Enabled"
+                        set flag 1
+                        break
+                    } 
+                }
+                if {$flag == 0 } {puts "Disabled"}
+                if {$EMSegment(debug)} {puts "[array get EMSegment Cattrib,$NumClassesDef,*]"}
             }
-            incr index
-        }
-        puts -nonewline "${indent}  Local Prob Map: " 
-        set flag 0
-        for {set i [expr $VolumeStartNumber + 1]} {$i <= $EMSegment(VolNumber)} {incr i} {
-            if {$LocalPriorName == $Volume($i,Name) && $LocalPriorRange == $Volume($i,imageRange)} { 
-            set EMSegment(Cattrib,$NumClassesDef,ProbabilityData) $i
-            puts "Enabled"
-            set flag 1
-            break
+
+            "SegmenterGraph" {
+                incr EMSegment(GraphNum)
+                foreach a $attr {
+                    set key [lindex $a 0]
+                    set val [lreplace $a 0 0]
+                    switch [string tolower $key] {
+                        "name" {set EMSegment(Graph,$EMSegment(GraphNum),name) $val}
+                        "xmin" {set EMSegment(Graph,$EMSegment(GraphNum),Xmin) $val}
+                        "xmax" {set EMSegment(Graph,$EMSegment(GraphNum),Xmax) $val}
+                        "xsca" {set EMSegment(Graph,$EMSegment(GraphNum),Xsca) $val}
+                    }
+                }
             } 
-        }
-        if {$flag == 0 } {puts "Disabled"}
-        if {$EMSegment(debug)} {puts "[array get EMSegment Cattrib,$NumClassesDef,*]"}
-        }
-        "SegmenterGraph" {
-        incr EMSegment(GraphNum)
-        foreach a $attr {
-            set key [lindex $a 0]
-            set val [lreplace $a 0 0]
-            switch [string tolower $key] {
-            "name" {set EMSegment(Graph,$EMSegment(GraphNum),name) $val}
-            "xmin" {set EMSegment(Graph,$EMSegment(GraphNum),Xmin) $val}
-            "xmax" {set EMSegment(Graph,$EMSegment(GraphNum),Xmax) $val}
-            "xsca" {set EMSegment(Graph,$EMSegment(GraphNum),Xsca) $val}
-            }
-        }
-        } 
-        "SegmenterCIM" {
-        set Name ""
-        set CIMMatrix ""
-        foreach a $attr {
-            set key [lindex $a 0]
-            set val [lreplace $a 0 0]
-            switch [string tolower $key] {
-            "name"       {set Name $val}
-            "cimmatrix"  {set CIMMatrix $val}
-            }
-        }
+
+            "SegmenterCIM" {
+                set Name ""
+                set CIMMatrix ""
+                foreach a $attr {
+                    set key [lindex $a 0]
+                    set val [lreplace $a 0 0]
+                    switch [string tolower $key] {
+                        "name"       {set Name $val}
+                        "cimmatrix"  {set CIMMatrix $val}
+                    }
+                }
                 if {[lsearch $EMSegment(CIMList) $Name] > -1} { 
                   set i 0
                   foreach y $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList) {
-             foreach x $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList) {
-               set EMSegment(Cattrib,$EMSegment(SuperClass),CIMMatrix,$x,$y,$Name) [lindex $CIMMatrix $i]
-               incr i
-             }
-             incr i
+                     foreach x $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList) {
+                       set EMSegment(Cattrib,$EMSegment(SuperClass),CIMMatrix,$x,$y,$Name) [lindex $CIMMatrix $i]
+                       incr i
+                     }
+                     incr i
                   }
                   puts "${indent}===================== EM Segmenter CIM $Name for $EMSegment(SuperClass)  ========================"
                   if {$EMSegment(debug)} {puts "[array get EMSegment CIMMatrix,*,*,$Name]"}
                 }
+            }
         }
-    }
     }
 }
 
@@ -374,25 +377,25 @@ proc EMSegmentReadXMLFile {XMLFile {VolumeStartNumber 0}} {
     # Check File for correctness .We have to do it otherwise warning window will pop up in 
     # Parse.tcl
     if {[catch {set fid [open $XMLFile r]} errmsg] == 1} {
-    puts $errmsg
-    exit 1 
+        puts $errmsg
+        return
     }
     set mrml [read $fid]
     if {[catch {close $fid} errorMessage]} {
-    puts "Aborting due to : ${errorMessage}"
-    exit 1
+        puts "Aborting due to : ${errorMessage}"
+        return
     }
 
     # accepts all versions from MRML 2.0 to 2.5
     if {[regexp {<!DOCTYPE MRML SYSTEM ['"]mrml2[0-5].dtd['"]>} $mrml match] == 0} {
-    puts "The file \"$fileName\" is NOT MRML version 2.x"
-    exit 1
+        puts "The file \"$fileName\" is NOT MRML version 2.x"
+        return
     }
 
     # Strip off everything but the body
     if {[regexp {<MRML>(.*)</MRML>} $mrml match mrml] == 0} {
-    puts "There's no content in the file"
-    exit 1
+        puts "There's no content in the file"
+        return
     }
 
     # Load and Define Paramters
@@ -404,27 +407,27 @@ proc EMSegmentWriteXMLFileSuperClass  {SuperClass Ident fid} {
   global EMSegment Volume
   foreach ID $EMSegment(Cattrib,$SuperClass,ClassList) {
       if {[llength $EMSegment(Cattrib,$ID,ClassList)]} {
-    puts $fid "${Ident}<SegmenterSuperClass name ='$EMSegment(Cattrib,$ID,Name)'  NumClasses ='[llength $EMSegment(Cattrib,$ID,ClassList)]' Prob='$EMSegment(Cattrib,$ID,Prob)'>"
+        puts $fid "${Ident}<SegmenterSuperClass name ='$EMSegment(Cattrib,$ID,Name)'  NumClasses ='[llength $EMSegment(Cattrib,$ID,ClassList)]' Prob='$EMSegment(Cattrib,$ID,Prob)'>"
         EMSegmentWriteXMLFileSuperClass $ID "$Ident  " $fid
-    puts  $fid "${Ident}</SegmenterSuperClass>"
+        puts  $fid "${Ident}</SegmenterSuperClass>"
       } else {
          if {[info exists EMSegment(Cattrib,$ID,Name)]} { set name $EMSegment(Cattrib,$ID,Name)
          } else { set name $EMSegment(Cattrib,$ID,Label)}
          puts -nonewline $fid "${Ident}<SegmenterClass name ='$name' Label='$EMSegment(Cattrib,$ID,Label)' Prob='$EMSegment(Cattrib,$ID,Prob)' ShapeParameter='$EMSegment(Cattrib,$ID,ShapeParameter)' "
-     set pid $EMSegment(Cattrib,$ID,ProbabilityData)  
-     if {$pid } {
-        puts -nonewline $fid "LocalPriorPrefix='$Volume($pid,FilePrefix)' LocalPriorName='$Volume($pid,Name)' LocalPriorRange='$Volume($pid,imageRange)' "
-     } 
-     puts -nonewline $fid "LogMean='" 
-     for {set y 0} {$y < $EMSegment(MaxInputChannelDef)} {incr y} { puts -nonewline $fid "$EMSegment(Cattrib,$ID,LogMean,$y) " }
-     puts -nonewline $fid "' LogCovariance='"
-     for {set y 0} {$y < $EMSegment(MaxInputChannelDef)} {incr y} {
-       if {$y} {puts -nonewline $fid "| " }
-       for {set x 0} {$x < $EMSegment(MaxInputChannelDef)} {incr x} {
-           puts -nonewline $fid "$EMSegment(Cattrib,$ID,LogCovariance,$y,$x) "
-       }
-     }
-     puts $fid "'></SegmenterClass>"
+         set pid $EMSegment(Cattrib,$ID,ProbabilityData)  
+         if {$pid } {
+            puts -nonewline $fid "LocalPriorPrefix='$Volume($pid,FilePrefix)' LocalPriorName='$Volume($pid,Name)' LocalPriorRange='$Volume($pid,imageRange)' "
+         } 
+         puts -nonewline $fid "LogMean='" 
+         for {set y 0} {$y < $EMSegment(MaxInputChannelDef)} {incr y} { puts -nonewline $fid "$EMSegment(Cattrib,$ID,LogMean,$y) " }
+         puts -nonewline $fid "' LogCovariance='"
+         for {set y 0} {$y < $EMSegment(MaxInputChannelDef)} {incr y} {
+           if {$y} {puts -nonewline $fid "| " }
+           for {set x 0} {$x < $EMSegment(MaxInputChannelDef)} {incr x} {
+               puts -nonewline $fid "$EMSegment(Cattrib,$ID,LogCovariance,$y,$x) "
+           }
+         }
+         puts $fid "'></SegmenterClass>"
      } 
  }
  set len [llength $EMSegment(Cattrib,$SuperClass,ClassList)]
@@ -440,15 +443,16 @@ proc EMSegmentWriteXMLFileSuperClass  {SuperClass Ident fid} {
            if {$flag} {puts -nonewline $fid "| " 
            } else {set flag 1}
            foreach x $EMSegment(Cattrib,$SuperClass,ClassList) {
-           puts -nonewline $fid "$EMSegment(Cattrib,$SuperClass,CIMMatrix,$x,$y,$direct) "
+               puts -nonewline $fid "$EMSegment(Cattrib,$SuperClass,CIMMatrix,$x,$y,$direct) "
            }
        }
      } else {
-    for {set y 1} { $y<= $len} {incr y} {
+        for {set y 1} { $y<= $len} {incr y} {
            if {$y > 1} {puts -nonewline $fid "| " }
             for {set x 1} { $x<= $len} {incr x} {
-        if {$x == $y} {puts -nonewline $fid "1.0 "
-        } else { puts -nonewline $fid "0.0 "}
+                if {$x == $y} {
+                    puts -nonewline $fid "1.0 "
+                } else { puts -nonewline $fid "0.0 "}
             }
         }
      }
@@ -536,16 +540,16 @@ proc IncrFileNumber {index FilePrefix} {
     set Max [lindex $Volume($index,imageRange) 1] 
     set Min [lindex $Volume($index,imageRange) 0] 
     for {set i $Max} {$i >= $Min} {incr i -1} {
-    set targetFile $FilePrefix.[format %03d $i]
-    if {[file exists $targetFile]} {file delete $targetFile}    
-    file rename $FilePrefix.[format %03d [expr $i-$Min]] $targetFile
+        set targetFile $FilePrefix.[format %03d $i]
+        if {[file exists $targetFile]} {file delete $targetFile}    
+        file rename $FilePrefix.[format %03d [expr $i-$Min]] $targetFile
     }    
 }
 
 proc DeleteVolumes {} {
     global EMSegment Volume
     for {set i 1} {$i <= $EMSegment(VolNumber)} {incr i} {
-    Volume($i,vol) Delete
+        Volume($i,vol) Delete
     } 
 }
 
