@@ -82,7 +82,7 @@ proc FiducialsInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.27 $} {$Date: 2002/11/07 03:21:11 $}]
+        {$Revision: 1.28 $} {$Date: 2002/11/13 23:16:21 $}]
     
     # Initialize module-level variables
     
@@ -1392,65 +1392,66 @@ proc FiducialsSetActiveList {name {menu ""} {scroll ""}} {
     
     global Fiducials Point Module
 
-if {[lsearch $Fiducials(listOfNames) $name] != -1} {
-    set Fiducials(activeList) $name
-    if { $menu == "" } {
-    foreach m $Fiducials(mbActiveList) {
-        $m config -text $name
-    } 
-    } else {
-    $menu config -text $name
-    }
+    if {[lsearch $Fiducials(listOfNames) $name] != -1} {
+        set Fiducials(activeList) $name
+        if { $menu == "" } {
+            foreach m $Fiducials(mbActiveList) {
+                $m config -text $name
+            } 
+        } else {
+            $menu config -text $name
+        }
 
-    # change the content of the selection box to display only the points
-    # that belong to that list
+        # change the content of the selection box to display only the points
+        # that belong to that list
 
-    # clear the scroll text
+        # clear the scroll text
 
-    if {$scroll == ""} {
-    foreach s $Fiducials(scrollActiveList) {
-        $s delete 0 end
-        foreach pid [FiducialsGetPointIdListFromName $name] {
-        $s insert end "[Point($pid,node) GetName] : [Point($pid,node) GetXYZ]"
+        if {$scroll == ""} {
+            foreach s $Fiducials(scrollActiveList) {
+                $s delete 0 end
+                foreach pid [FiducialsGetPointIdListFromName $name] {
+                    $s insert end "[Point($pid,node) GetName] : [Point($pid,node) GetXYZ]"
+                }
+            }
+        } else {
+
+            $scroll delete 0 end
+            
+            foreach pid [FiducialsGetPointIdListFromName $name] {
+                $scroll insert end "[Point($pid,node) GetName] : [Point($pid,node) GetXYZ]"
+                if {[info exists Fiducials($name,fid)] == 1} {
+                    set fid $Fiducials($name,fid)
+                    # if it is selected, tell the scroll
+                    if {[lsearch $Fiducials($fid,selectedPointIdList) $pid] != -1} {
+                        set index [lsearch $Fiducials($fid,pointIdList) $pid]
+                        $scroll selection set $index $index
+                    }
+                }    
+            }
+        }
+
+        # callback in case any module wants to know the name of the active list    
+        if {$name == "None"} {
+            foreach m $Module(idList) {
+                if {[info exists Module($m,fiducialsActivatedListCallback)] == 1} {
+                    if {$Module(verbose) == 1} {puts "Fiducials Activated List Callback: $m"}
+                    $Module($m,fiducialsActivatedListCallback)  "default" $name ""
+                }
+            }
+        } else {
+            set id $Fiducials($name,fid)
+            set type [Fiducials($id,node) GetType]
+            foreach m $Module(idList) {
+                if {[info exists Module($m,fiducialsActivatedListCallback)] == 1} {
+                    if {$Module(verbose) == 1} {
+                        puts "Fiducials Activated List Callback: $m"
+                    }
+                    $Module($m,fiducialsActivatedListCallback)  $type $name $id
+                }
+            }
         }
     }
-    } else {
-
-
-    $scroll delete 0 end
-    
-    foreach pid [FiducialsGetPointIdListFromName $name] {
-        $scroll insert end "[Point($pid,node) GetName] : [Point($pid,node) GetXYZ]"
-        if {[info exists Fiducials($name,fid)] == 1} {
-        set fid $Fiducials($name,fid)
-        # if it is selected, tell the scroll
-        if {[lsearch $Fiducials($fid,selectedPointIdList) $pid] != -1} {
-            set index [lsearch $Fiducials($fid,pointIdList) $pid]
-            $scroll selection set $index $index
-        }
-        }    
-    }
-}
-
-# callback in case any module wants to know the name of the active list    
-if {$name == "None"} {
-foreach m $Module(idList) {
-    if {[info exists Module($m,fiducialsActivatedListCallback)] == 1} {
-        if {$Module(verbose) == 1} {puts "Fiducials Activated List Callback: $m"}
-        $Module($m,fiducialsActivatedListCallback)  "default" $name ""
-    }
-}
-} else {
-    set id $Fiducials($name,fid)
-    set type [Fiducials($id,node) GetType]
-    foreach m $Module(idList) {
-    if {[info exists Module($m,fiducialsActivatedListCallback)] == 1} {
-        if {$Module(verbose) == 1} {puts "Fiducials Activated List Callback: $m"}
-        $Module($m,fiducialsActivatedListCallback)  $type $name $id
-    }
-    }
-}
-}
 }
 
 proc FiducialsSelectionUpdate {fid pid on} {
@@ -1843,10 +1844,10 @@ proc FiducialsWorldPointXYZ { fid pid } {
 proc FiducialsGetPointIdListFromName { name } {
     global Fiducials Point
     if { [lsearch $Fiducials(listOfNames) $name] != -1 } {
-    set fid $Fiducials($name,fid)
-    return $Fiducials($fid,pointIdList) 
+        set fid $Fiducials($name,fid)
+        return $Fiducials($fid,pointIdList) 
     } else {
-    return ""
+        return ""
     }
 }
 
