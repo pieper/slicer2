@@ -17,8 +17,12 @@ wm withdraw .
 # variable, or the root directory of this script ($argv0).
 if {[info exists env(SLICER_HOME)] == 0 || $env(SLICER_HOME) == ""} {
 	set prog [file dirname $argv0]
+	# temporary fix for print_header call to use in GetHeaderInfo
+	set Gui(pc) 1
 } else {
 	set prog [file join $env(SLICER_HOME) program]
+	# temporary fix for print_header call to use in GetHeaderInfo
+	set Gui(pc) 0
 }
 
 # Read source files
