@@ -336,7 +336,7 @@ proc MainInit {} {
 
         # Set version info
 	lappend Module(versions) [ParseCVSInfo Main \
-		{$Revision: 1.54 $} {$Date: 2001/03/10 01:20:07 $}]
+		{$Revision: 1.55 $} {$Date: 2001/03/10 01:25:01 $}]
 
 	# Call each "Init" routine that's not part of a module
 	#-------------------------------------------
@@ -898,7 +898,6 @@ proc MainRemoveModelActor { m } {
 proc MainSetup {} {
 	global Module Gui Volume Slice View Model Color Matrix Options Preset
 
-    puts "main: recalling presets here!"
 	# Set current values to preset 0 (user preferences)
 	MainOptionsRecallPresets $Preset(userOptions)
 
