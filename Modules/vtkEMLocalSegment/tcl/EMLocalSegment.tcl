@@ -245,7 +245,7 @@ proc EMSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.7 $} {$Date: 2003/10/05 22:46:02 $}]
+        {$Revision: 1.8 $} {$Date: 2003/10/16 18:44:08 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -2074,7 +2074,7 @@ proc EMSegmentChangeSuperClassName {Active SuperClass} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc EMSegmentStartEM { } {
+proc EMSegmentStartEM { {save_mode "save"} } {
    global EMSegment Volume Mrml env tcl_platform
    # ----------------------------------------------
    # 1. Update Values
@@ -2172,7 +2172,9 @@ proc EMSegmentStartEM { } {
                }
            }
            # Update MRML Tree
-           EMSegmentSaveSetting 0
+           if { $save_mode == "save" } {
+               EMSegmentSaveSetting 0
+           }
        }
        # Update MRML
        MainUpdateMRML
@@ -3819,7 +3821,7 @@ proc EMSegmentDrawDeleteCurveRegion {Sclass NumGraph} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc EMSegmentExecute {menue command} {
+proc EMSegmentExecute {menue command {save_mode "save"} } {
     global EMSegment
     # Make sure Tab is set to 
     Tab EMSegment row1 $menue
@@ -3834,7 +3836,7 @@ proc EMSegmentExecute {menue command} {
          # So window is displayed
          $EMSegment(MA-lRun) configure -text "EM Segmentation algorithm started"
          update
-         EMSegmentStartEM
+         EMSegmentStartEM $save_mode
        } 
     } 
 }

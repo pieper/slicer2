@@ -154,7 +154,7 @@ proc MIRIADSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.4 $} {$Date: 2003/10/05 23:27:24 $}]
+        {$Revision: 1.5 $} {$Date: 2003/10/16 18:43:39 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -318,10 +318,10 @@ proc MIRIADSegmentProcessStudy { {BIRNID "000397921927"} {visit 001} } {
     MIRIADSegmentLoadDukeStudy $subj/RawData/001.ser
     MIRIADSegmentLoadLONIWarpedAtlas $subj/DerivedData/LONI/mri/atlases/bwh_prob/air_252p
 
-    MIRIADSegmentSetEMParameters
-    MIRIADSegmentRunEM
+    # MIRIADSegmentSetEMParameters
+    # MIRIADSegmentRunEM
 
-    MIRIADSegmentSaveResults $subj
+    # MIRIADSegmentSaveResults $subj
 }
 
 #-------------------------------------------------------------------------------
@@ -573,8 +573,8 @@ if {0} {
 #-------------------------------------------------------------------------------
 proc MIRIADSegmentRunEM {} {
 
-    #set ::EMSegment(StartSlice) 28
-    #set ::EMSegment(EndSlice) 32
+    #set ::EMSegment(StartSlice) 29
+    #set ::EMSegment(EndSlice) 31
 
     set ::EMSegment(Cattrib,1,Prob) .25
     set ::EMSegment(Cattrib,2,Prob) .25
@@ -582,7 +582,7 @@ proc MIRIADSegmentRunEM {} {
     set ::EMSegment(Cattrib,4,Prob) .25
     EMSegmentSumGlobalUpdate
 
-    EMSegmentExecute "EM" "Run"
+    EMSegmentExecute "EM" "Run" "do_not_save"
 }
 
 #-------------------------------------------------------------------------------
