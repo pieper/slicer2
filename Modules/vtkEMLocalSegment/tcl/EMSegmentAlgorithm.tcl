@@ -56,10 +56,21 @@
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentSetVtkGenericClassSetting {vtkGenericClass Sclass} {
-  global EMSegment
+  global EMSegment Volume
   $vtkGenericClass SetNumInputImages $EMSegment(NumInputChannel) 
   eval $vtkGenericClass SetSegmentationBoundaryMin $EMSegment(SegmentationBoundaryMin,0) $EMSegment(SegmentationBoundaryMin,1) $EMSegment(SegmentationBoundaryMin,2)
   eval $vtkGenericClass SetSegmentationBoundaryMax $EMSegment(SegmentationBoundaryMax,0) $EMSegment(SegmentationBoundaryMax,1) $EMSegment(SegmentationBoundaryMax,2)
+
+  if {$EMSegment(Cattrib,$Sclass,ProbabilityData) != $Volume(idNone)} {
+      # Pipeline does not automatically update volumes bc of fake first input  
+      Volume($EMSegment(Cattrib,$Sclass,ProbabilityData),vol) Update
+      $vtkGenericClass SetProbDataPtr [Volume($EMSegment(Cattrib,$Sclass,ProbabilityData),vol) GetOutput]
+      
+      # Kilian: Currently LocalPriorWeight is also used for shape parameters - should change it later
+  } elseif {($EMSegment(Cattrib,$Sclass,IsSuperClass) == 0 ) && ($EMSegment(Cattrib,$Sclass,PCAMeanData) ==  $Volume(idNone))} {
+      # set EMSegment(Cattrib,$Sclass,LocalPriorWeight) 0.0
+  }
+  $vtkGenericClass SetProbDataWeight $EMSegment(Cattrib,$Sclass,LocalPriorWeight)
 
   $vtkGenericClass SetTissueProbability $EMSegment(Cattrib,$Sclass,Prob)
   $vtkGenericClass SetPrintWeights $EMSegment(Cattrib,$Sclass,PrintWeights)
@@ -76,6 +87,8 @@ proc EMSegmentSetVtkGenericClassSetting {vtkGenericClass Sclass} {
     eval $vtkGenericClass SetPrintRegistrationParameters  $EMSegment(Cattrib,$Sclass,PrintRegistrationParameters)   
     eval $vtkGenericClass SetPrintRegistrationSimularityMeasure  $EMSegment(Cattrib,$Sclass,PrintRegistrationSimularityMeasure) 
   }
+
+
 }
 
 #-------------------------------------------------------------------------------
@@ -98,7 +111,6 @@ proc EMSegmentSetVtkPrivateSuperClassSetting {SuperClass} {
   EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPrintFrequency $EMSegment(Cattrib,$SuperClass,PrintFrequency)
   EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPrintBias      $EMSegment(Cattrib,$SuperClass,PrintBias)
   EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPrintLabelMap  $EMSegment(Cattrib,$SuperClass,PrintLabelMap)
-  EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetProbDataWeight $EMSegment(Cattrib,$SuperClass,LocalPriorWeight)
 
   EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPrintEMLabelMapConvergence  $EMSegment(Cattrib,$SuperClass,PrintEMLabelMapConvergence)
   EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPrintEMWeightsConvergence   $EMSegment(Cattrib,$SuperClass,PrintEMWeightsConvergence)
@@ -113,11 +125,11 @@ proc EMSegmentSetVtkPrivateSuperClassSetting {SuperClass} {
   EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetStopMFAType                  $EMSegment(Cattrib,$SuperClass,StopMFAType)
   EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetStopMFAValue                 $EMSegment(Cattrib,$SuperClass,StopMFAValue)
   EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetStopBiasCalculation          $EMSegment(Cattrib,$SuperClass,StopBiasCalculation)
-  puts "EMSegment(Cattrib,$SuperClass,PrintShapeSimularityMeasure) $EMSegment(Cattrib,$SuperClass,PrintShapeSimularityMeasure)"
 
   EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPrintShapeSimularityMeasure  $EMSegment(Cattrib,$SuperClass,PrintShapeSimularityMeasure)
 
-  
+  EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPCA_CLASS_Dependent_Model_Flag 0
+
   # Current Legacy - I have to fix gui
   if {$EMSegment(Cattrib,$SuperClass,StopMFAMaxIter) == 0} {set EMSegment(Cattrib,$SuperClass,StopMFAMaxIter) $EMSegment(Cattrib,0,StopMFAMaxIter) }
   EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetStopMFAMaxIter               $EMSegment(Cattrib,$SuperClass,StopMFAMaxIter)
@@ -139,17 +151,6 @@ proc EMSegmentSetVtkPrivateSuperClassSetting {SuperClass} {
 
       EMSegment(Cattrib,$i,vtkImageEMClass) SetLabel             $EMSegment(Cattrib,$i,Label) 
       EMSegment(Cattrib,$i,vtkImageEMClass) SetShapeParameter    $EMSegment(Cattrib,$i,ShapeParameter)
-
-      if {$EMSegment(Cattrib,$i,ProbabilityData) != $Volume(idNone)} {
-          # Pipeline does not automatically update volumes bc of fake first input  
-          Volume($EMSegment(Cattrib,$i,ProbabilityData),vol) Update
-          EMSegment(Cattrib,$i,vtkImageEMClass) SetProbDataPtr [Volume($EMSegment(Cattrib,$i,ProbabilityData),vol) GetOutput]
-      
-      # Kilian: Currently LocalPriorWeight is also used for shape parameters - should change it later
-      } elseif {$EMSegment(Cattrib,$i,PCAMeanData) ==  $Volume(idNone)} {
-          set EMSegment(Cattrib,$i,LocalPriorWeight) 0.0
-      }
-      EMSegment(Cattrib,$i,vtkImageEMClass) SetProbDataWeight $EMSegment(Cattrib,$i,LocalPriorWeight)
 
       for {set y 0} {$y < $EMSegment(NumInputChannel)} {incr y} {
           EMSegment(Cattrib,$i,vtkImageEMClass) SetLogMu $EMSegment(Cattrib,$i,LogMean,$y) $y
