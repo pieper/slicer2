@@ -64,13 +64,16 @@ proc OptionsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.6 $} {$Date: 2000/02/20 02:51:20 $}]
+		{$Revision: 1.7 $} {$Date: 2000/02/20 03:54:47 $}]
 
 	# Props
 	set Options(propertyType) Basic
 
 	foreach m $Module(idList) {
 		set Module($m,visibility) 1
+	}
+	foreach m $Module(supList) {
+		set Module($m,visibility) 0
 	}
 }
 
@@ -388,7 +391,7 @@ proc OptionsModulesApply {} {
 
 	set ordered "ordered='"
 	set suppressed "suppressed='"
-	foreach m $Module(idList) {
+	foreach m $Module(allList) {
 		if {$Module($m,visibility) == 1} {
 			set ordered "$ordered $m"
 		} else {
@@ -433,7 +436,7 @@ proc OptionsPropsCancel {} {
 proc OptionsModulesAll {} {
     global Options Module
 
-    foreach m $Module(idList) {
+    foreach m $Module(allList) {
 	set Module($m,visibility) 1
     }
     OptionsModulesGUI
@@ -474,7 +477,7 @@ proc OptionsModulesGUI {} {
         # y spacing important for calculation of frame height for scrolling
         set pady 2
 
-	foreach m $Module(idList) {
+	foreach m $Module(allList) {
 
 		# Name / Visible
 		set c {checkbutton $f.c$m \
@@ -528,12 +531,12 @@ proc CheckScrollLimits {args} {
 proc OptionsModulesUp {m} {
 	global Module
 
-	set j [lsearch $Module(idList) $m]
+	set j [lsearch $Module(allList) $m]
 	if {$j == 0} {return}
 	set i [expr $j - 1]
-	set n [lindex $Module(idList) $i]
-	set Module(idList) [lreplace $Module(idList) $i $j $n]
-	set Module(idList) [linsert  $Module(idList) $i $m]
+	set n [lindex $Module(allList) $i]
+	set Module(allList) [lreplace $Module(allList) $i $j $n]
+	set Module(allList) [linsert  $Module(allList) $i $m]
 
 	OptionsModulesGUI
 }
@@ -545,12 +548,12 @@ proc OptionsModulesUp {m} {
 proc OptionsModulesDown {m} {
 	global Module
 
-	set i [lsearch $Module(idList) $m]
-	if {$i == [expr [llength $Module(idList)] - 1]} {return}
+	set i [lsearch $Module(allList) $m]
+	if {$i == [expr [llength $Module(allList)] - 1]} {return}
 	set j [expr $i + 1]
-	set n [lindex $Module(idList) $j]
-	set Module(idList) [lreplace $Module(idList) $i $j $m]
-	set Module(idList) [linsert  $Module(idList) $i $n]
+	set n [lindex $Module(allList) $j]
+	set Module(allList) [lreplace $Module(allList) $i $j $m]
+	set Module(allList) [linsert  $Module(allList) $i $n]
 
 	OptionsModulesGUI
 }
