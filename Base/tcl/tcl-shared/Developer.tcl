@@ -30,6 +30,8 @@
 #   DevWarningWindow message
 #   DevErrorWindow message
 #   DevFatalErrorWindow message
+#   DevAddLabel LabelName Message
+#   DevAddLabel
 #   DevAddButton ButtonName Message Command Width
 #   DevAddSelectButton TabName Label Message Pack
 #   DevUpdateSelectButton ArrayName type Label Name CommandSet None New LabelMap
@@ -37,6 +39,7 @@
 #   DevSelect type id ArrayName VolumeLabel VolumeName
 #   DevSelect
 #   DevCreateNewCopiedVolume VolumeId Description VolName
+#   DevGetFile filename DefaultExt DefaultDir Title
 #==========================================================================auto=
 # This file exists specifically for user to help fast development
 # of Slicer modules
@@ -111,6 +114,12 @@ proc DevFatalErrorWindow {{message "Fatal Error"}} {
 # .END
 #-------------------------------------------------------------------------------
 
+#-------------------------------------------------------------------------------
+# .PROC DevAddLabel
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc DevAddLabel { LabelName Message } {
 	global Gui
     eval {label $LabelName -text $Message} $Gui(WLA)

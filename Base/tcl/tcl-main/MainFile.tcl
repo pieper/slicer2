@@ -27,6 +27,7 @@
 #===============================================================================
 # FILE:        MainFile.tcl
 # PROCEDURES:  
+#   MainFileInit
 #   MainFileBuildGUI
 #   MainFileBuildOpenGUI
 #   MainFileBuildSaveAsGUI
@@ -50,6 +51,13 @@
 #   CheckVolumeExists
 #==========================================================================auto=
 
+
+#-------------------------------------------------------------------------------
+# .PROC MainFileInit
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc MainFileInit {} {
 	global Module File Path Gui
 
@@ -64,7 +72,7 @@ proc MainFileInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainFile \
-		{$Revision: 1.20 $} {$Date: 2000/02/28 17:56:09 $}]
+		{$Revision: 1.21 $} {$Date: 2000/07/28 17:47:58 $}]
 
 	set File(filePrefix) data
 }
@@ -632,6 +640,9 @@ To read a volume for the first time, click 'Add Volume' on the Data panel."
 
 #-------------------------------------------------------------------------------
 # .PROC MainFileGetRelativePrefix
+# Get the file prefix relative to Mrml(dir), where the Mrml file was last
+# saved.  If there is no way to make a relative path, returns the 
+# absolute path.
 # 
 # .ARGS
 # .END
