@@ -87,7 +87,7 @@ proc MainSlicesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainSlices \
-		{$Revision: 1.19 $} {$Date: 2000/02/28 17:56:12 $}]
+		{$Revision: 1.20 $} {$Date: 2000/03/02 01:39:56 $}]
 
 	# Initialize Variables
 	set Slice(idList) "0 1 2"
@@ -267,7 +267,11 @@ proc MainSlicesBuildControlsForVolume {f s layer text} {
 #-------------------------------------------------------------------------------
 # .PROC MainSlicesBuildControls
 # 
+# Called from MainViewer.tcl in MainViewerBuildGUI.
+#
 # .ARGS
+#  int s the id of the Slice
+#  str F the name of the Slice Window
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesBuildControls {s F} {
