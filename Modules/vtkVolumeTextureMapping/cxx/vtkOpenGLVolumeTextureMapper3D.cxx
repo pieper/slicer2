@@ -16,7 +16,7 @@
 #define volumeBox 3
 
 #ifndef VTK_IMPLEMENT_MESA_CXX
-vtkCxxRevisionMacro(vtkOpenGLVolumeTextureMapper3D, "$Revision: 1.8 $");
+vtkCxxRevisionMacro(vtkOpenGLVolumeTextureMapper3D, "$Revision: 1.9 $");
 vtkStandardNewMacro(vtkOpenGLVolumeTextureMapper3D);
 #endif
 
@@ -45,7 +45,12 @@ int intersectionPlanes[12][4] ={0, 1, 0, 1,
                 2, 5, 3, 4};
 
 
+#ifdef VOLUME_TEXTURE_DEBUG
 FILE* fm = fopen("error_vtkOpenGLVolumeTextureMapper3D.txt", "w");
+#else
+FILE* fm = stderr;
+#endif
+
 
 //-----------------------------------------------------
 //Name: isExtensionSupported

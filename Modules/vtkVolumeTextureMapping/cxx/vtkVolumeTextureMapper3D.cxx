@@ -12,7 +12,12 @@
 #include "math.h"
 #include <GL/gl.h>
 
+#ifdef VOLUME_TEXTURE_DEBUG
 FILE* fd = fopen("error_vtkVolumeTextureMapper3D.txt", "w");
+#else
+FILE* fd = stderr;
+#endif
+
 int currentCounter= 0;
 template <class T>
 
@@ -236,7 +241,7 @@ void vtkVolumeTextureMapper3D::RescaleData(unsigned char* texture,  int size[3],
 }
 
 
-vtkCxxRevisionMacro(vtkVolumeTextureMapper3D, "$Revision: 1.4 $");
+vtkCxxRevisionMacro(vtkVolumeTextureMapper3D, "$Revision: 1.5 $");
 
 //----------------------------------------------------------------------------
 // Needed when we don't use the vtkStandardNewMacro.
