@@ -168,7 +168,7 @@ be displayed throughout your session."
     #--- Set VolumeGroupCollection(numCollections) to 0
     set ::VolumeGroupCollection(numCollections) 0
     
-    MainSlicesSetVolumeAll Back $::Volume(idNone)
+    #MainSlicesSetVolumeAll Back $::Volume(idNone)
 
     #--- Create the 'none' interval for emptying BG or FG
     set zznewIval "none"
@@ -180,8 +180,8 @@ be displayed throughout your session."
     set ::Ibrowser(0,numDrops) 0
     
     #when starting, both BG and FG have the none interval loaded..
-    IbrowserSelectBGIcon 0 $::IbrowserController(Icanvas)
-    IbrowserSelectFGIcon 0 $::IbrowserController(Icanvas)
+    #IbrowserSelectBGIcon 0 $::IbrowserController(Icanvas)
+    #IbrowserSelectFGIcon 0 $::IbrowserController(Icanvas)
     MainSlicesSetVisibilityAll 1
     RenderAll
 

@@ -288,17 +288,27 @@ proc IbrowserUpdateMainViewer { n } {
 
         set inumFG $::Ibrowser(FGInterval)
         set inumBG $::Ibrowser(BGInterval)
+        set inumActive $::Ibrowser(activeInterval)
 
         #--- update the slices window.
         if { $inumFG > 0 } {
             if { $::Ibrowser($inumFG,numDrops) > $n } {
                 #--- What's active in the foreground?
                 MainSlicesSetVolumeAll Fore $::Ibrowser($inumFG,$n,MRMLid)
+                if { $inumFG == $inumActive } {
+                    MainVolumesSetActive $::Ibrowser($inumFG,$n,MRMLid)
+                }
             } else {
                 if { $::Ibrowser($inumFG,holdStatus) == $::IbrowserController(Info,Ival,nohold) } {
                     MainSlicesSetVolumeAll Fore "None"
+                    if { $inumFG == $inumActive } {
+                        MainVolumesSetActive $::Volume(idNone)
+                    }
                 } else {
                     MainSlicesSetVolumeAll Fore $::Ibrowser($inumFG,lastMRMLid)
+                    if { $inumFG == $inumActive } {
+                        MainVolumesSetActive $::Ibrowser($inumFG,lastMRMLid)
+                    }
                 }
             }
         }
@@ -309,17 +319,27 @@ proc IbrowserUpdateMainViewer { n } {
             if { $::Ibrowser($inumBG,numDrops) > $n } {
                 #--- What's active in the background?
                 MainSlicesSetVolumeAll Back $::Ibrowser($inumBG,$n,MRMLid)
+                if { $inumBG == $inumActive } {
+                    MainVolumesSetActive $::Ibrowser($inumBG,$n,MRMLid)
+                }
             } else {
                 if { $::Ibrowser($inumBG,holdStatus) == $::IbrowserController(Info,Ival,nohold) } {
                     MainSlicesSetVolumeAll Back "None"
+                    if { $inumBG == $inumActive } {
+                        MainVolumesSetActive $::Volume(idNone)
+                    }
                 } else {
                     MainSlicesSetVolumeAll Back $::Ibrowser($inumBG,lastMRMLid)
+                    if { $inumBG == $inumActive } {
+                        MainVolumesSetActive $::Ibrowser($inumFG,lastMRMLid)
+                    }
                 }
             }
         }
         RenderAll
     }
 }
+
 
 
 
