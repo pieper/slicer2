@@ -137,7 +137,8 @@ protected:
   // We override this in order to allocate output tensors
   // before threading happens.  This replaces the superclass 
   // vtkImageToImageFilter's Execute function.
-  void Execute();
+  //void Execute();
+  void ExecuteData(vtkDataObject *out);
 
 };
 
