@@ -60,7 +60,7 @@ proc ViewInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.19 $} {$Date: 2001/09/20 20:11:34 $}]
+		{$Revision: 1.20 $} {$Date: 2001/09/21 01:06:57 $}]
 
 	set View(movie) 0
 	set View(movieDirectory) "/tmp"
@@ -194,8 +194,8 @@ called <I>movie.mpg</I>.
 	#-------------------------------------------
 	set f $fView.fStereo.fStereoType
 
-	foreach value "RedBlue CrystalEyes" width "12 12" {
-		eval {radiobutton $f.r$value -width $width \
+	foreach value "RedBlue CrystalEyes Interlaced" {
+		eval {radiobutton $f.r$value \
 			-text "$value" -value "$value" \
 			-variable View(stereoType) \
 			-indicatoron 0 \
