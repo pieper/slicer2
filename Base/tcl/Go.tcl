@@ -305,6 +305,9 @@ if {$verbose == 1} {
 }
 
 # Append found names to ordered names
+# - after this ordered includes:
+# --- specifically named modules from Options.xml
+# --- modules found by looking for tcl files
 foreach name $found {
     if {[lsearch $ordered $name] == -1} {
         lappend ordered $name
@@ -322,12 +325,20 @@ foreach name $suppressed {
 # Source the modules
 set foundOrdered ""
 foreach name $ordered {
-    set path [GetFullPath $name tcl tcl-modules]
-    if {$path != ""} {
-        if {$verbose == 1} {puts "source $path"}
-        source $path
+    if { [info command ${name}Init] == "" } {
+        # if the entry point proc doesn't exist yet,
+        # then read the file (Modules loaded through 
+        # 'package require' will already have had their code sourced
+        set path [GetFullPath $name tcl tcl-modules]
+        if {$path != ""} {
+            if {$verbose == 1} {puts "source $path"}
+            source $path
+            lappend foundOrdered $name
+        } 
+    } else {
+        if {$verbose == 1} {puts "aready have $name"}
         lappend foundOrdered $name
-    } 
+    }
 }
 # Ordered list only contains modules that exist
 set ordered $foundOrdered
