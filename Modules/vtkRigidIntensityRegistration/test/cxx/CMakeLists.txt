@@ -1,4 +1,4 @@
-SET (LOCAL_LIBRARY_BASENAME vtkMutualInformationRegistration)
+SET (LOCAL_LIBRARY_BASENAME vtkRigidIntensityRegistration)
 
 INCLUDE (${VTKRIGIDINTENSITYREGISTRATION_SOURCE_DIR}/test/cxx/CMakeListsLocal.txt)
 
@@ -21,7 +21,7 @@ INCLUDE (${VTKRIGIDINTENSITYREGISTRATION_SOURCE_DIR}/test/cxx/CMakeListsLocal.tx
 #  ADD_LIBRARY (vtkMutualInformationRegistrationTCL MutualInformationRegistrationTCL_SRCS)
 
 LINK_LIBRARIES (
-  vtkMutualInformationRegistration
+  vtkRigidIntensityRegistration
   vtkIO
   vtkGraphics
   vtkImaging 
