@@ -70,6 +70,8 @@ proc MainTensorAddTensor {} {
     # tab to return to after the freeze
     set Module(freezer) "Data row1 List"
     }
+    
+    
     #puts "exiting MainTensorAddTensor"
 }
 
@@ -98,7 +100,7 @@ proc MainTensorInit {} {
     # Set version info
     #-------------------------------------------
     lappend Module(versions) [ParseCVSInfo MainTensor \
-        {$Revision: 1.14 $} {$Date: 2004/07/06 15:52:29 $}]
+        {$Revision: 1.15 $} {$Date: 2004/11/03 22:15:04 $}]
 
 
     # List variables that shadow the active MRML node 
@@ -114,6 +116,14 @@ proc MainTensorInit {} {
     # vtkMrmlTensorNode attributes
     # Lauren we don't have this in the regular volume node!
     lappend Tensor(MrmlNode,tclVars) {FileName String}
+
+    set Tensor(idNode) -1
+    set Tensor(activeID) ""
+    set Tensor(freeze) ""
+ 
+    # Append widgets to list that gets refreshed during UpdateMRML
+    set Tensor(mbActiveList) ""
+    set Tensor(mActiveList) ""
 
     # Lauren we need more attribs, many are so much like volumes...
 
