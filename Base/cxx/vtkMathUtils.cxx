@@ -138,7 +138,7 @@ int vtkMathUtils::PrincipalMomentsAndAxes( vtkPoints *Points,
 int vtkMathUtils::AlignPoints( vtkPoints *Data, vtkPoints *Ref,
                            vtkMatrix4x4 *Xform )
   {
-  int nPts, ii, jj, status;
+  int nPts, ii, jj;
   vtkFloatingPointType *p, *p1;
   vtkFloatingPointType cmData[3] = { 0.0, 0.0, 0.0 },
          cmRef[3] = { 0.0, 0.0, 0.0 },
