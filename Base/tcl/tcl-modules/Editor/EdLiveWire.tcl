@@ -36,7 +36,6 @@
 #   EdLiveWireEnter
 #   EdLiveWireExit
 #   EdLiveWireUpdateInteractive
-#   EdLiveWireSetInput
 #   EdLiveWireSetInteract
 #   EdLiveWireUpdateInit
 #   EdLiveWireUpdate
@@ -45,6 +44,7 @@
 #   EdLiveWireB1Motion
 #   EdLiveWireRenderInteractive
 #   EdLiveWireLabel
+#   EdLiveWireClearCurrentSlice
 #   EdLiveWireResetSlice
 #   EdLiveWireApply
 #   EdLiveWireStartProgress
@@ -56,6 +56,7 @@
 #   EdLiveWireGetContourSlice
 #   EdLiveWireTrain
 #   EdLiveWireReadFeatureParams
+#   EdLiveWireWriteFeatureParams
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -1106,6 +1107,12 @@ proc EdLiveWireLabel {} {
 
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EdLiveWireClearCurrentSlice
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EdLiveWireClearCurrentSlice {} {
     global Slice
     
@@ -1673,6 +1680,12 @@ proc EdLiveWireReadFeatureParams {} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC EdLiveWireWriteFeatureParams
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EdLiveWireWriteFeatureParams {} {
     global Ed Slice
 
