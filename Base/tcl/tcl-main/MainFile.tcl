@@ -86,7 +86,7 @@ proc MainFileInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainFile \
-        {$Revision: 1.54 $} {$Date: 2003/07/10 14:54:56 $}]
+        {$Revision: 1.55 $} {$Date: 2003/07/22 20:37:33 $}]
 
     set File(filePrefix) data
 }
@@ -409,6 +409,9 @@ proc MainFileSaveOptions {} {
     # Write Options.xml
     set filename Options.xml
     tree Write $filename
+    if {[tree GetErrorCode] != 0} {
+        puts "ERROR: MainFileSaveOptions: unable to write Options file $filename"
+    }
 
     # Clean up.
     tree RemoveAllItems
@@ -416,7 +419,7 @@ proc MainFileSaveOptions {} {
     pre Delete
     mod Delete
     if {$Module(verbose) == 1} {
-        puts "save options done"
+        puts "Save options done"
     }
 }
 
