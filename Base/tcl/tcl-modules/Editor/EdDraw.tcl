@@ -48,7 +48,8 @@ proc EdDrawInit {} {
 
 	set e EdDraw
 	set Ed($e,name)      "Draw"
-	set Ed($e,desc)      "Draw on the image using a brush."
+	set Ed($e,initials)  "Dr"
+	set Ed($e,desc)      "Draw: label pixels using a brush."
 	set Ed($e,rank)      4
 	set Ed($e,procGUI)   EdDrawBuildGUI
 	set Ed($e,procEnter) EdDrawEnter
@@ -59,7 +60,7 @@ proc EdDrawInit {} {
 	set Ed($e,input) Working
 
 	set Ed($e,mode)   Draw
-	set Ed($e,delete) No
+	set Ed($e,delete) Yes
 	set Ed($e,radius) 0
 	set Ed($e,shape)  Polygon
 	set Ed($e,render) Active
@@ -83,10 +84,8 @@ proc EdDrawBuildGUI {} {
 	frame $f.fGrid    -bg $Gui(activeWorkspace)
 	frame $f.fBtns    -bg $Gui(activeWorkspace)
 	frame $f.fApply   -bg $Gui(activeWorkspace)
-	pack $f.fRender $f.fMode $f.fDelete \
-		-side top -pady $Gui(pad) -fill x
-	pack $f.fGrid $f.fBtns $f.fApply \
-		-side top -pady $Gui(pad) -fill x
+	pack $f.fGrid $f.fBtns $f.fMode $f.fDelete $f.fRender $f.fApply\
+		-side top -pady 2 -fill x
 
 	EdBuildRenderGUI $Ed(EdDraw,frame).fRender Ed(EdDraw,render)
 
@@ -116,7 +115,7 @@ proc EdDrawBuildGUI {} {
 	set c {label $f.l -text "Delete points after apply:" $Gui(WLA)}; eval [subst $c]
 	pack $f.l -side left -pady $Gui(pad) -padx $Gui(pad) -fill x
 
-	foreach s "Yes No" text "Yes No" width "3 2" {
+	foreach s "Yes No" text "Yes No" width "4 3" {
 		set c {radiobutton $f.r$s -width $width -indicatoron 0\
 			-text "$text" -value "$s" -variable Ed(EdDraw,delete) \
 			$Gui(WCA)}
@@ -205,9 +204,19 @@ proc EdDrawBuildGUI {} {
 # .END
 #-------------------------------------------------------------------------------
 proc EdDrawEnter {} {
-	global Ed
+	global Ed Label
 
 	LabelsColorWidgets
+
+	set e EdDraw
+	Slicer DrawSetRadius $Ed($e,radius)
+	Slicer DrawSetShapeTo$Ed($e,shape)
+	if {$Label(activeID) != ""} {
+		set color [Color($Label(activeID),node) GetDiffuseColor]
+		eval Slicer DrawSetColor $color
+	} else {
+		Slicer DrawSetColor 0 0 0
+	}
 }
 
 #-------------------------------------------------------------------------------
@@ -230,8 +239,12 @@ proc EdDrawLabel {} {
 
 	LabelsFindLabel
 
-	set color [Color($Label(activeID),node) GetDiffuseColor]
-	eval Slicer DrawSetColor $color
+	if {$Label(activeID) != ""} {
+		set color [Color($Label(activeID),node) GetDiffuseColor]
+		eval Slicer DrawSetColor $color
+	} else {
+		Slicer DrawSetColor 0 0 0
+	}
 }
 
 #-------------------------------------------------------------------------------
@@ -307,22 +320,7 @@ proc EdDrawApply {} {
 	EdSetupBeforeApplyEffect $v $Ed($e,scope) Active
 
 	# Only draw on native slices
-	set outOrder [Ed(editor) GetOutputSliceOrder]
-	set inOrder  [Ed(editor) GetInputSliceOrder]
-	# Output order is one of IS, LR, PA
-	if {$inOrder == "RL"} {set inOrder LR}
-	if {$inOrder == "AP"} {set inOrder PA}
-	if {$inOrder == "SI"} {set inOrder IS}
-	if {$outOrder != $inOrder} {
-		if {$inOrder == "LR"} {
-			set native SagSlice
-		}
-		if {$inOrder == "PA"} {
-			set native CorSlice
-		}
-		if {$inOrder == "IS"} {
-			set native AxiSlice
-		}
+	if {[set native [EdIsNativeSlice]] != ""} {
 		tk_messageBox -message "Please draw on the slice with orient = $native."
 		return
 	}

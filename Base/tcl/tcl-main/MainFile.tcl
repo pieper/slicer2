@@ -454,7 +454,7 @@ proc MainFileSaveModel {m prefix} {
 	# Ensure model exists
 	if {$m == "" || $m == "NEW" || [lsearch $Model(idList) $m] == -1} {
 		tk_messageBox -message "\
-Use this utility to save a model that is already in the 3D Slicer."
+To save a model, it must already exist in the 3D Slicer."
 		return ""
 	}
 
@@ -533,7 +533,7 @@ proc MainFileSaveVolume {v prefix} {
 	# Ensure volume exists
 	if {$v == "" || $v == "NEW" || [lsearch $Volume(idList) $v] == -1} {
 		tk_messageBox -message "\
-Use this utility to save a volume that already exists in the 3D Slicer."
+To save a volume, it must already exist in the 3D Slicer."
 		return ""
 	}
 

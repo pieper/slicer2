@@ -76,7 +76,7 @@ proc MainColorsUpdateMRML {} {
 
 	# Did we delete the active color?
 	if {[lsearch $Color(idList) $Color(activeID)] == -1} {
-		MainColorsSetActive [lindex $Color(idList) 0]
+		MainColorsSetActive [lindex $Color(idList) 1]
 	}
 
 	# Refresh GUI 
@@ -139,6 +139,8 @@ proc MainColorsSetActive {c} {
 #-------------------------------------------------------------------------------
 proc MainColorsAddLabel {c newLabel} {
 	global Color Gui Mrml
+
+	if {$c == ""} {return} 
 
 	# Convert to integer
 	if {$newLabel >= -32768 && $newLabel <= 32767} {
@@ -228,6 +230,8 @@ proc MainColorsAddColor {name diffuseColor \
 proc MainColorsDeleteLabel {c delLabel} {
 	global Color
 
+	if {$c == ""} {return}
+	
 	set labels [Color($c,node) GetLabels]
 
 	set i  [lsearch $labels $delLabel]

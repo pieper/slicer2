@@ -82,13 +82,11 @@ proc ModelsUpdateMRML {} {
 	# Create the GUI for any new models
 	set gui 0
 	foreach m $Model(idList) {
-#		MainModelsCreateGUI $Module(Models,fDisplay).fGrid $m
 		set gui [expr $gui + [MainModelsCreateGUI $Model(fScrolledGUI) $m]]
 	}
 
 	# Delete the GUI for any old models
 	foreach m $Model(idListDelete) {
-#		MainModelsDeleteGUI $Module(Models,fDisplay).fGrid $m
 		set gui [expr $gui + [MainModelsDeleteGUI $Model(fScrolledGUI) $m]]
 	}
 
@@ -99,10 +97,14 @@ proc ModelsUpdateMRML {} {
 	# Refresh the GUI for all models (in case color changed)
 	foreach m $Model(idList) {
 		set c $Model($m,colorID)
-#		$Module(Models,fDisplay).fGrid.s$m config \
-#			-troughcolor [MakeColorNormalized [Color($c,node) GetDiffuseColor]]
-		$Model(fScrolledGUI).s$m config \
-			-troughcolor [MakeColorNormalized [Color($c,node) GetDiffuseColor]]
+		# I shouldn't have to do this test, but making sure
+		if {[lsearch $Color(idList) $c] != -1} {
+			$Model(fScrolledGUI).s$m config \
+				-troughcolor [MakeColorNormalized [Color($c,node) GetDiffuseColor]]
+		} else {
+			$Model(fScrolledGUI).s$m config \
+				-troughcolor [MakeColorNormalized "0 0 0"]
+		}
 	}
 }
 
@@ -184,9 +186,6 @@ Models are fun. Do you like models, Ron?
 	set f $Module(Models,fDisplay).fGrid
 	set c {label $f.lV -text Visibility $Gui(WLA)}; eval [subst $c]
 	set c {label $f.lO -text Opacity $Gui(WLA)}; eval [subst $c]
-#	set c {label $f.lC -text Clip $Gui(WLA)}; eval [subst $c]
-#	grid $f.lV $f.lO $f.lC -pady 2 -padx 2
-#	grid $f.lC -column 3
 	grid $f.lV $f.lO -pady 0 -padx 12
 	grid $f.lO -columnspan 2
 

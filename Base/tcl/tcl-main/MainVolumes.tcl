@@ -60,7 +60,7 @@ proc MainVolumesInit {} {
         
         set m MainVolumes
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.23 $} {$Date: 2000/02/16 14:17:03 $}]
+		{$Revision: 1.24 $} {$Date: 2000/02/20 00:36:54 $}]
 
 	set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -227,8 +227,10 @@ proc MainVolumesCreate {v} {
 
 	# Label maps ALWAYS use the Label indirectLUT, and are not interpolated
 	if {[Volume($v,node) GetLabelMap] == 1} {
+		Volume($v,node) SetLUTName $Lut(idLabel)
 		Volume($v,vol)  UseLabelIndirectLUTOn
 		Volume($v,node) InterpolateOff
+		Volume($v,vol) Update
 	}
 
 	# Mark it as unsaved and created on the fly.
@@ -332,7 +334,7 @@ since the last time it was saved."
 	if {$tcl_platform(machine) == "intel" || $tcl_platform(machine) == "mips"} {
 		Volume($v,node) SetLittleEndian 1
 	} else {
-		Volume($v,node) SetLittleEndian 1
+		Volume($v,node) SetLittleEndian 0
 	}
 
 	# Write volume data
@@ -730,8 +732,8 @@ proc MainVolumesSetActive {v} {
 
 			# Update Volumes->Props GUI
 			foreach item "filePattern gantryDetectorTilt numScalars \
-				name desc labelMap" vtkname "FilePattern Tilt \
-				NumScalars Name Description LabelMap" {
+				name desc labelMap littleEndian" vtkname "FilePattern Tilt \
+				NumScalars Name Description LabelMap LittleEndian" {
 			    set Volume($item) [Volume($v,node) Get$vtkname]
 			}
 			# update menus
@@ -950,7 +952,7 @@ proc MainVolumesSetGUIDefaults {} {
     vtkMrmlVolumeNode default
     set Volume(name) [default GetName]
     set Volume(filePattern) %s.%03d
-    set Volume(scanOrder) SI
+    set Volume(scanOrder) [default GetScanOrder]
     set Volume(littleEndian) [default GetLittleEndian]
     set Volume(resolution) [lindex [default GetDimensions] 0]
     set spacing [default GetSpacing]

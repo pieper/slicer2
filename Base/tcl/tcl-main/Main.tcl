@@ -310,7 +310,7 @@ proc MainInit {} {
 	set Module(procRecallPresets) ""
 	set m Main
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.25 $} {$Date: 2000/02/18 22:09:15 $}]
+		{$Revision: 1.26 $} {$Date: 2000/02/20 00:36:51 $}]
 
 	# Call each "Init" routine that's not part of a module
 	#-------------------------------------------
@@ -455,12 +455,14 @@ proc MainBuildGUI {} {
 
 	$Gui(mView) add command -label "Normal" -command \
 		"MainMenu View Normal"
-	$Gui(mView) add command -label "4x256" -command \
-		"MainMenu View Quad256"
-	$Gui(mView) add command -label "4x512" -command \
-		"MainMenu View Quad512"
 	$Gui(mView) add command -label "3D" -command \
 		"MainMenu View 3D"
+	$Gui(mView) add command -label "4x512" -command \
+		"MainMenu View Quad512"
+	$Gui(mView) add command -label "1x512" -command \
+		"MainMenu View Single512"
+	$Gui(mView) add command -label "4x256" -command \
+		"MainMenu View Quad256"
 	$Gui(mHelp) add command -label "Documentation..." -command \
 		"MainMenu Help Documentation"
 	$Gui(mHelp) add command -label "Copyright..." -command \
@@ -502,7 +504,7 @@ proc MainBuildGUI {} {
 			-width 6 -menu $f.mbMore.m $Gui(WMBA)}; eval [subst $c]
 			set c {menu $f.mbMore.m $Gui(WMA)}; eval [subst $c]
 		set Module(mbMore) $f.mbMore
-		set c {radiobutton $f.rMore -width 9 \
+		set c {radiobutton $f.rMore -width 10 \
 			-text "None" -variable Module(moreBtn) -value 1 \
 			-command "Tab Menu" -indicatoron 0 $Gui(WCA)}; eval [subst $c]
 		set Module(rMore) $f.rMore
@@ -530,7 +532,7 @@ proc MainBuildGUI {} {
 		foreach m "$m1 $m2 $m3" {
 			# Either make a button for it, or add it to the "more" menu
 			if {$Module($m,more) == 0} {
-				set c {radiobutton $f.$row.r$m -width 9 \
+				set c {radiobutton $f.$row.r$m -width 10 \
 					-text "$m" -variable Module(btn) -value $m \
 					-command "Tab $m" -indicatoron 0 $Gui(WCA)}
 					eval [subst $c]
@@ -718,7 +720,6 @@ proc MainBuildGUI {} {
 		}
 		$p
 	}
-	MainViewerAnno 256
 }
 
 #-------------------------------------------------------------------------------
@@ -805,7 +806,7 @@ proc MainSetup {} {
 	}
 
 	# Active color
-	MainColorsSetActive [lindex $Color(idList) 0]
+	MainColorsSetActive [lindex $Color(idList) 1]
 
 	# Active option
 	MainOptionsSetActive [lindex $Options(idList) 0]

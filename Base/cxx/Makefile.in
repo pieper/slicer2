@@ -55,8 +55,7 @@ vtkMrmlTree \
 vtkMrmlTransformNode \
 vtkMrmlOptionsNode \
 vtkXDisplayWindow \
-
-#vtkImageFrameSource \
+vtkImageFrameSource \
 
 
 

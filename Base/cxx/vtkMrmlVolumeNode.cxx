@@ -861,6 +861,14 @@ int vtkMrmlVolumeNode::ComputeRasToIjkFromCorners(
   //   top-left  -> top-right
 	//   top-right -> bottom-right
 	//---------------------------------------------------------------------
+  // Check if no corner points in header
+  if (ftl[0] == 0 && ftl[1] == 0 && ftl[2] == 1 &&
+      ftr[0] == 0 && ftr[1] == 0 && ftr[2] == 0 && 
+      fbr[0] == 1 && fbr[1] == 0 && fbr[2] == 0)
+  {
+    // (probably read a no-header image)
+	  return(-1);
+  }
   if (ftl[0] != ftr[0] && ftl[1] == ftr[1] && 
       ftl[2] == ftr[2] && ftr[0] == fbr[0] && 
       ftr[1] != fbr[1] && ftr[2] == fbr[2])
@@ -881,8 +889,8 @@ int vtkMrmlVolumeNode::ComputeRasToIjkFromCorners(
   }
   if (!orient)
   {
-    // Error! (probably read a no-header image)
-	  return(-1);
+    // oblique, so call it axial
+	  orient = 1;
   }
 
 	// Determine acquisition order 

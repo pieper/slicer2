@@ -43,7 +43,8 @@ proc EdSaveIslandInit {} {
 
 	set e EdSaveIsland
 	set Ed($e,name)      "Save Island"
-	set Ed($e,desc)      "Remove all but one island."
+	set Ed($e,initials)  "SI"
+	set Ed($e,desc)      "Save Island: remove all but one island."
 	set Ed($e,rank)      7
 	set Ed($e,procGUI)   EdSaveIslandBuildGUI
 
@@ -72,9 +73,7 @@ proc EdSaveIslandBuildGUI {} {
 	frame $f.fScope   -bg $Gui(activeWorkspace)
 	frame $f.fGrid    -bg $Gui(activeWorkspace)
 	frame $f.fApply   -bg $Gui(activeWorkspace)
-	pack \
-		$f.fInput $f.fScope \
-		$f.fGrid $f.fApply \
+	pack $f.fGrid $f.fInput $f.fScope $f.fApply \
 		-side top -pady $Gui(pad) -fill x
 
 	EdBuildScopeGUI $Ed(EdSaveIsland,frame).fScope Ed(EdSaveIsland,scope) Multi
@@ -121,6 +120,12 @@ proc EdSaveIslandApply {} {
 	set v [EditorGetInputID $Ed($e,input)]
 
 	EdSetupBeforeApplyEffect $v $Ed($e,scope) Native
+
+	# Only apply to native slices
+	if {[set native [EdIsNativeSlice]] != ""} {
+		tk_messageBox -message "Please click on the slice with orient = $native."
+		return
+	}
 
 	set Gui(progressText) "Save Island in [Volume($v,node) GetName]"
 	

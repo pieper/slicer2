@@ -45,7 +45,8 @@ proc EdIdentifyIslandsInit {} {
 
 	set e EdIdentifyIslands
 	set Ed($e,name)      "Identify Islands"
-	set Ed($e,desc)      "Assign a unique label to each island."
+	set Ed($e,initials)  "II"
+	set Ed($e,desc)      "Identify Islands: label islands uniquely."
 	set Ed($e,rank)      5
 	set Ed($e,procGUI)   EdIdentifyIslandsBuildGUI
 	set Ed($e,procEnter) EdIdentifyIslandsEnter
@@ -75,9 +76,7 @@ proc EdIdentifyIslandsBuildGUI {} {
 	frame $f.fScope   -bg $Gui(activeWorkspace)
 	frame $f.fGrid    -bg $Gui(activeWorkspace)
 	frame $f.fApply   -bg $Gui(activeWorkspace)
-	pack \
-		$f.fInput $f.fScope \
-		$f.fGrid $f.fApply \
+	pack $f.fGrid $f.fInput $f.fScope $f.fApply \
 		-side top -pady $Gui(pad) -fill x
 
 	EdBuildScopeGUI $Ed(EdIdentifyIslands,frame).fScope Ed(EdIdentifyIslands,scope) Multi
@@ -189,6 +188,12 @@ proc EdIdentifyIslandsApply {} {
 	}
 
 	EdSetupBeforeApplyEffect $v $Ed($e,scope) Native
+
+	# Only apply to native slices
+	if {[set native [EdIsNativeSlice]] != ""} {
+		tk_messageBox -message "Please click on the slice with orient = $native."
+		return
+	}
 
 	set Gui(progressText) "IdentifyIslands in [Volume($v,node) GetName]"
 	

@@ -1166,11 +1166,14 @@ proc LocatorSetRealtime {v} {
 
 	set Locator(idRealtime) $v
 	
-	# Change button text
+	# Change button text, and show file prefix
 	if {$v == "NEW"} {
 		$Locator(mbRealtime) config -text $v
+		set Locator(prefixRealtime) ""
 	} else {
 		$Locator(mbRealtime) config -text [Volume($v,node) GetName]
+		set Locator(prefixRealtime) [MainFileGetRelativePrefix \
+			[Volume($v,node) GetFilePrefix]]
 	}
 }
 

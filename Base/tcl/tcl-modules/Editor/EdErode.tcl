@@ -44,7 +44,8 @@ proc EdErodeInit {} {
 
 	set e EdErode
 	set Ed($e,name)      "Erode"
-	set Ed($e,desc)      "Label pixels that are on the perimeter."
+	set Ed($e,initials)  "Er"
+	set Ed($e,desc)      "Erode: re-label perimeter pixels."
 	set Ed($e,rank)      2
 	set Ed($e,procGUI)   EdErodeBuildGUI
 	set Ed($e,procEnter) EdErodeEnter
@@ -77,9 +78,7 @@ proc EdErodeBuildGUI {} {
 	frame $f.fMulti   -bg $Gui(activeWorkspace)
 	frame $f.fGrid    -bg $Gui(activeWorkspace)
 	frame $f.fApply   -bg $Gui(activeWorkspace)
-	pack \
-		$f.fInput $f.fScope $f.fMulti \
-		$f.fGrid $f.fApply \
+	pack $f.fGrid $f.fInput $f.fScope $f.fMulti $f.fApply \
 		-side top -pady $Gui(pad) -fill x
 
 	EdBuildInputGUI $Ed($e,frame).fInput Ed($e,input)

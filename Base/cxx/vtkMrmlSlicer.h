@@ -111,10 +111,9 @@ public:
   int GetZoomAutoCenter(int s) {return this->Zoom[s]->GetAutoCenter();};
 
   // Double
-  void DoubleOn() {
-    this->DoubleSliceSize = 1; this->BuildLowerTime.Modified();};
-  void DoubleOff() {
-    this->DoubleSliceSize = 0; this->BuildLowerTime.Modified();};
+  void SetDouble(int s, int yes) {
+    this->DoubleSliceSize[s] = yes; this->BuildLowerTime.Modified();};
+  int GetDouble(int s) {return this->DoubleSliceSize[s];};
 
   // Cursor
   void SetShowCursor(int vis);
@@ -285,9 +284,10 @@ protected:
   void ComputeReformatMatrix(int s);
   void ComputeReformatMatrixIJK(int s, float offset, vtkMatrix4x4 *ref);
   float GetOffsetForComputation(int s);
+  void SetOffsetRange(int s, int orient, int min, int max, int *modified);
 
   int ActiveSlice;
-  int DoubleSliceSize;
+  int DoubleSliceSize[NUM_SLICES];
   float FieldOfView;
   float ForeOpacity;
   int ForeFade;

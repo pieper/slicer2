@@ -54,7 +54,8 @@ proc EdThresholdInit {} {
 
 	set e EdThreshold
 	set Ed($e,name)      "Threshold"
-	set Ed($e,desc)      "Label pixels that satisfy a threshold."
+	set Ed($e,initials)  "Th"
+	set Ed($e,desc)      "Threshold: assign a label to a pixel range."
 	set Ed($e,rank)      1
 	set Ed($e,procGUI)   EdThresholdBuildGUI
 	set Ed($e,procVTK)   EdThresholdBuildVTK
@@ -117,9 +118,8 @@ proc EdThresholdBuildGUI {} {
 	frame $f.fGrid      -bg $Gui(activeWorkspace)
 	frame $f.fSliders   -bg $Gui(activeWorkspace)
 	frame $f.fApply     -bg $Gui(activeWorkspace)
-	pack \
-		$f.fInput $f.fScope $f.fInteract \
-		$f.fGrid $f.fSliders $f.fHistogram $f.fApply \
+	pack $f.fGrid $f.fSliders $f.fHistogram $f.fInput $f.fScope \
+		$f.fInteract $f.fApply \
 		-side top -pady $Gui(pad) -fill x
 
 	EdBuildScopeGUI $Ed(EdThreshold,frame).fScope Ed(EdThreshold,scope) Multi
@@ -187,18 +187,19 @@ proc EdThresholdBuildGUI {} {
 	set f $Ed(EdThreshold,frame).fSliders
 
 	foreach slider "Lower Upper" text "Lo Hi" {
-		set c {label $f.l${slider} -text "$text:" $Gui(WLA)}; eval [subst $c]
-		set c {entry $f.e${slider} -width 6 \
+		set c {label $f.l$slider -text "$text:" $Gui(WLA)}; eval [subst $c]
+		set c {entry $f.e$slider -width 6 \
 			-textvariable Ed(EdThreshold,[Uncap $slider]) $Gui(WEA)}; 
 			eval [subst $c]
-		bind $f.e${slider} <Return>   "EdThresholdUpdate; RenderActive;"
-		bind $f.e${slider} <FocusOut> "EdThresholdUpdate; RenderActive;"
-		set c {scale $f.s${slider} -from $Ed(EdThreshold,rangeLow) -to $Ed(EdThreshold,rangeHigh)\
-			-length 140 -variable Ed(EdThreshold,[Uncap $slider])  -resolution 1 \
+		bind $f.e$slider <Return>   "EdThresholdUpdate; RenderActive;"
+		bind $f.e$slider <FocusOut> "EdThresholdUpdate; RenderActive;"
+		set c {scale $f.s$slider -from $Ed(EdThreshold,rangeLow) -to $Ed(EdThreshold,rangeHigh)\
+			-length 220 -variable Ed(EdThreshold,[Uncap $slider])  -resolution 1 \
 			-command "EdThresholdUpdateInit $f.s$slider"\
-			$Gui(WSA) -sliderlength 14 }; eval [subst $c]
-		grid $f.l${slider} $f.e${slider} $f.s${slider} -padx 2 -pady $Gui(pad) \
-			-sticky news
+			$Gui(WSA) -sliderlength 22 }; eval [subst $c]
+		grid $f.l$slider $f.e$slider -padx 2 -pady 2 -sticky w
+		grid $f.l$slider -sticky e
+		grid $f.s$slider -columnspan 2 -pady 2 
 
 		set Ed(EdThreshold,slider$slider) $f.s$slider
 	}

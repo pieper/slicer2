@@ -427,7 +427,7 @@ Models are fun. Do you like models, Ron?
 	#-------------------------------------------
 	set f $fVolumes.fComposite.fBtns
 
-	set c {button $f.bWrite -text "Write" -width 6 \
+	set c {button $f.bWrite -text "Save" -width 5 \
 		-command "EditorWrite Composite; RenderAll" $Gui(WBA)}; eval [subst $c]
 	set c {button $f.bClear -text "Clear to 0's" -width 12 \
 		-command "EditorClear Composite; RenderAll" $Gui(WBA)}; eval [subst $c]
@@ -473,7 +473,7 @@ Models are fun. Do you like models, Ron?
 		$m add command -label $v -command "EditorMerge Back $v"
 	}
 
-	pack $f.l1 $f.mbFore $f.l2 $f.mbBack -padx $Gui(pad) -side left -anchor w
+	pack $f.mbFore $f.l2 $f.mbBack -padx $Gui(pad) -side left -anchor w
 
 
 	############################################################################
@@ -486,10 +486,11 @@ Models are fun. Do you like models, Ron?
 	set fEffects $Module(Editor,fEffects)
 	set f $fEffects
 
-	frame $f.fEffects   -bg $Gui(activeWorkspace) -relief groove -bd 2
+	frame $f.fEffects   -bg $Gui(backdrop) -relief sunken -bd 2
 	frame $f.fActive    -bg $Gui(activeWorkspace)
 	frame $f.fTime      -bg $Gui(activeWorkspace)
-	pack $f.fEffects $f.fActive $f.fTime \
+	frame $f.fModel    -bg $Gui(activeWorkspace)
+	pack $f.fEffects $f.fActive $f.fTime $f.fModel \
 		-side top -padx $Gui(pad) -pady $Gui(pad) -fill x
 
 	#-------------------------------------------
@@ -524,13 +525,23 @@ Models are fun. Do you like models, Ron?
 	set Editor(lTotalTime) $f.lTotalTime
 
 	#-------------------------------------------
+	# Effects->Model frame
+	#-------------------------------------------
+	set f $fEffects.fModel
+
+	if {[IsModule ModelMaker] == 1} {
+		set c {button $f.b -text "Make Model" -command "EditorMakeModel" $Gui(WBA)}; eval [subst $c]
+		pack $f.b
+	}
+
+	#-------------------------------------------
 	# Effects->Effects
 	#-------------------------------------------
 	set f $fEffects.fEffects
 
-	frame $f.fBtns -bg $Gui(activeWorkspace)
-	frame $f.fMore -bg $Gui(activeWorkspace)
-	frame $f.fUndo -bg $Gui(activeWorkspace)
+	frame $f.fBtns -bg $Gui(backdrop)
+	frame $f.fMore -bg $Gui(backdrop)
+	frame $f.fUndo -bg $Gui(backdrop)
 	pack $f.fBtns $f.fMore $f.fUndo -side top -pady $Gui(pad)
 
 	#-------------------------------------------
@@ -628,19 +639,40 @@ Models are fun. Do you like models, Ron?
 	set fDetails $Module(Editor,fDetails)
 	set f $fDetails
 
-	frame $f.fTitle  -bg $Gui(activeWorkspace) -relief groove -bd 2
+	frame $f.fTitle  -bg $Gui(backdrop) -relief sunken -bd 2
 	frame $f.fEffect -bg $Gui(activeWorkspace)
-	pack $f.fTitle -side top -pady 2 -padx 2 -fill x
-	pack $f.fEffect -side top -pady 2 -padx 2 -fill both -expand 1
+	pack $f.fTitle -side top -pady 5 -padx 2 -fill x
+	pack $f.fEffect -side top -pady 0 -padx 2 -fill both -expand 1
 
 	#-------------------------------------------
 	# Details->Title frame
 	#-------------------------------------------
 	set f $fDetails.fTitle
 
-	set c {label $f.lName -text "None" $Gui(WLA)}; eval [subst $c]
-	set c {label $f.lDesc -text "Does nothing." $Gui(WLA)}; eval [subst $c]
-	pack $f.lName $f.lDesc -pady 0
+	frame $f.fBar -bg $Gui(activeWorkspace)
+	frame $f.fHelp -bg $Gui(activeWorkspace)
+	pack $f.fBar $f.fHelp -side top -pady 2
+
+	# List top 8 effects on a button bar across the top
+	set f $fDetails.fTitle.fBar
+	foreach e [lrange $Ed(idList) 0 7] {
+		set c {radiobutton $f.r$e -width 2 -indicatoron 0\
+			-text $Ed($e,initials) -value $e -variable Editor(btn) \
+			-command "EditorSetEffect $e" $Gui(WCA)}
+			eval [subst $c]
+		pack $f.r$e -side left -fill x -anchor e
+	}
+	# Add an Undo button
+	set c {button $f.bUndo -width 2 -text Un -command "EditorUndo; RenderAll" \
+		$Gui(WBA) -state disabled}
+			eval [subst $c]
+	pack $f.bUndo -side left -fill x -anchor e
+	set Editor(bUndo2) $f.bUndo
+
+	set f $fDetails.fTitle.fHelp
+	set c {label $f.lName -text "None" $Gui(BLA)}; eval [subst $c]
+	set c {label $f.lDesc -text "Does nothing." $Gui(BLA)}; eval [subst $c]
+	pack $f.lDesc
 
 	set Editor(lEffectName) $f.lName
 	set Editor(lEffectDesc) $f.lDesc
@@ -697,6 +729,20 @@ proc EditorEnter {} {
 	}
 }
 
+proc EditorMakeModel {} {
+	global Editor
+
+	if {$Editor(idComposite) == "NEW"} {
+		if {$Editor(idWorking) == "NEW"} {
+			MainVolumesSetActive [EditorGetOriginalID]
+		} else {
+			MainVolumesSetActive [EditorGetWorkingID]
+		}
+	} else {
+		MainVolumesSetActive [EditorGetCompositeID]
+	}
+	Tab ModelMaker row1 Create
+}
 
 ################################################################################
 #                             Event Bindings
@@ -889,11 +935,14 @@ proc EditorSetWorking {v} {
 	}
 	set Editor(idWorking) $v
 	
-	# Change button text
+	# Change button text, and show file prefix
 	if {$v == "NEW"} {
 		$Editor(mbWorking) config -text $v
+		set Editor(prefixWorking) ""
 	} else {
 		$Editor(mbWorking) config -text [Volume($v,node) GetName]
+		set Editor(prefixWorking) [MainFileGetRelativePrefix \
+			[Volume($v,node) GetFilePrefix]]
 	}
 
 	# Refresh the effect, if it's an interactive one
@@ -917,11 +966,14 @@ proc EditorSetComposite {v} {
 	}
 	set Editor(idComposite) $v
 	
-	# Change button text
+	# Change button text, and show file prefix
 	if {$v == "NEW"} {
 		$Editor(mbComposite) config -text $v
+		set Editor(prefixComposite) ""
 	} else {
 		$Editor(mbComposite) config -text [Volume($v,node) GetName]
+		set Editor(prefixComposite) [MainFileGetRelativePrefix \
+			[Volume($v,node) GetFilePrefix]]
 	}
 
 	# Refresh the effect, if it's an interactive one
@@ -1195,8 +1247,10 @@ proc EditorActivateUndo {active} {
 	set Editor(undoActive) $active
 	if {$Editor(undoActive) == 0} {
 		$Editor(bUndo) config -state disabled
+		$Editor(bUndo2) config -state disabled
 	} else {
 		$Editor(bUndo) config -state normal
+		$Editor(bUndo2) config -state normal
 	}
 }
 
@@ -1375,6 +1429,31 @@ proc EdBuildRenderGUI {f var {options ""}} {
 	pack $f.l $f.f -side left -padx $Gui(pad) -fill x -anchor w
 }
 
+proc EdIsNativeSlice {} {
+	global Ed
+	
+	set outOrder [Ed(editor) GetOutputSliceOrder]
+	set inOrder  [Ed(editor) GetInputSliceOrder]
+
+	# Output order is one of IS, LR, PA
+	if {$inOrder == "RL"} {set inOrder LR}
+	if {$inOrder == "AP"} {set inOrder PA}
+	if {$inOrder == "SI"} {set inOrder IS}
+	if {$outOrder != $inOrder} {
+		if {$inOrder == "LR"} {
+			set native SagSlice
+		}
+		if {$inOrder == "PA"} {
+			set native CorSlice
+		}
+		if {$inOrder == "IS"} {
+			set native AxiSlice
+		}
+		return $native
+	}
+	return ""
+}
+
 #-------------------------------------------------------------------------------
 # .PROC EdSetupBeforeApplyEffect
 # .END
@@ -1402,7 +1481,8 @@ proc EdSetupBeforeApplyEffect {v scope multi} {
 	Ed(editor) SetDimensionTo$scope
 
 	# Set the slice orientation and number
-	if {$scope != "3D"} {
+	# (not used for 3D)
+
 		set s      [Slicer GetActiveSlice]
 		set orient [Slicer GetOrientString $s]
 		set slice  [Slicer GetOffset $s]
@@ -1426,7 +1506,7 @@ proc EdSetupBeforeApplyEffect {v scope multi} {
 		}
 
 		# Does the user want the orien of the active slice or native slices?
-		if {$multi == "Native"} {
+		if {$scope == "Multi" && $multi == "Native"} {
 			set order [Volume($o,node) GetScanOrder]
 		}
 		switch $order {
@@ -1444,7 +1524,6 @@ proc EdSetupBeforeApplyEffect {v scope multi} {
 		Ed(editor) SetOutputSliceOrder $order
 		Ed(editor) SetInputSliceOrder [Volume($v,node) GetScanOrder]
 		Ed(editor) SetSlice $slice
-	}
 }
 
 #-------------------------------------------------------------------------------

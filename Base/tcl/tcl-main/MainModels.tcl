@@ -138,8 +138,13 @@ proc MainModelsUpdateMRML {} {
 
 		# Color slider
 		set c $Model($m,colorID)
-		$Gui(wModels).fGrid.s$m config \
-			-troughcolor [MakeColorNormalized [Color($c,node) GetDiffuseColor]]
+		if {$c != ""} {
+			$Gui(wModels).fGrid.s$m config \
+				-troughcolor [MakeColorNormalized [Color($c,node) GetDiffuseColor]]
+		} else {
+			$Gui(wModels).fGrid.s$m config \
+				-troughcolor [MakeColorNormalized "0 0 0"]
+		}
 	}
 
 	# Form the Active Model menu 
@@ -593,8 +598,8 @@ proc MainModelsSetColor {m {name ""}} {
 		Model($m,node) SetColor $name
 	}
 
-	# Use first color by default
-	set Model($m,colorID) [lindex $Color(idList) 0]
+	# Use second color by default
+	set Model($m,colorID) [lindex $Color(idList) 1]
 	foreach c $Color(idList) {
 		if {[Color($c,node) GetName] == $name} {
 			set Model($m,colorID) $c

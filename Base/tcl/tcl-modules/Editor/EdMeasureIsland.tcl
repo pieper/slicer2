@@ -44,7 +44,8 @@ proc EdMeasureIslandInit {} {
 
 	set e EdMeasureIsland
 	set Ed($e,name)      "Measure Island"
-	set Ed($e,desc)      "Measure the size of an island."
+	set Ed($e,initials)  "MI"
+	set Ed($e,desc)      "Measure Island size."
 	set Ed($e,rank)      8
 	set Ed($e,procGUI)   EdMeasureIslandBuildGUI
 	set Ed($e,procEnter) EdMeasureIslandEnter
@@ -78,9 +79,7 @@ proc EdMeasureIslandBuildGUI {} {
 	frame $f.fGrid    -bg $Gui(activeWorkspace)
 	frame $f.fApply   -bg $Gui(activeWorkspace)
 	frame $f.fResults -bg $Gui(activeWorkspace)
-	pack \
-		$f.fInput $f.fScope \
-		$f.fGrid $f.fApply $f.fResults \
+	pack $f.fGrid $f.fInput $f.fScope $f.fApply $f.fResults \
 		-side top -pady $Gui(pad) -fill x
 
 	EdBuildScopeGUI $Ed(EdMeasureIsland,frame).fScope Ed(EdMeasureIsland,scope) Multi
@@ -184,6 +183,12 @@ proc EdMeasureIslandApply {} {
 	}
 
 	EdSetupBeforeApplyEffect $v $Ed($e,scope) Native
+
+	# Only apply to native slices
+	if {[set native [EdIsNativeSlice]] != ""} {
+		tk_messageBox -message "Please click on the slice with orient = $native."
+		return
+	}
 
 	set Gui(progressText) "Measure Island in [Volume($v,node) GetName]"
 	

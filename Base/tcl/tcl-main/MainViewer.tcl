@@ -72,9 +72,9 @@ proc MainViewerBuildGUI {} {
 	# Viewer frame
 	#-------------------------------------------
 	set f $Gui(fViewer)
-	frame $f.fTop
-	frame $f.fBot
-	frame $f.fMid
+	frame $f.fTop -bg $Gui(backdrop)
+	frame $f.fBot -bg $Gui(backdrop)
+	frame $f.fMid -bg $Gui(backdrop)
 	set Gui(fTop) $f.fTop
 	set Gui(fBot) $f.fBot
 	set Gui(fMid) $f.fMid
@@ -262,19 +262,17 @@ proc MainViewerUserResize {} {
 # .PROC MainViewerAnno
 # .END
 #-------------------------------------------------------------------------------
-proc MainViewerAnno {dim} {
+proc MainViewerAnno {s dim} {
 	global Anno Slice
 	
-	foreach s $Slice(idList) {
-		#
-		foreach name $Anno(mouseList) y $Anno(y256) {
-			[Anno($s,$name,actor) GetPositionCoordinate] SetValue 1 $y
-		}
-		#
-		foreach name $Anno(orientList) x $Anno(orient,x256) \
-			y $Anno(orient,y256) {
-			[Anno($s,$name,actor) GetPositionCoordinate] SetValue $x $y
-		}
+	#
+	foreach name $Anno(mouseList) y $Anno(y$dim) {
+		[Anno($s,$name,actor) GetPositionCoordinate] SetValue 1 $y
+	}
+	#
+	foreach name $Anno(orientList) x $Anno(orient,x$dim) \
+		y $Anno(orient,y$dim) {
+		[Anno($s,$name,actor) GetPositionCoordinate] SetValue $x $y
 	}
 }
 
@@ -288,13 +286,12 @@ proc MainViewerSetMode {{mode ""}} {
     # set View(mode) if called with an argument
     if {$mode != ""} {
 	if {$mode == "Normal" || $mode == "Quad256"  || $mode == "Quad512" \
-		|| $mode == "3D" } {
+		|| $mode == "3D" || $mode == "Single512"} {
 	    set View(mode) $mode
 	} else {
 	    return
 	}   
     }
-
 	
 	set f $Gui(fViewer)
 	pack forget $f.fBot $f.fTop $f.fMid \
@@ -320,8 +317,8 @@ proc MainViewerSetMode {{mode ""}} {
 		# Do NOT show the thumbnails on top of the slice images
 		foreach s $Slice(idList) {
 			raise $Gui(fSlice$s).fImage
+			MainViewerAnno $s 256
 		}
-		MainViewerAnno 256
 	}
 	"3D" {
 		set hReq $View(viewerHeight)
@@ -349,8 +346,8 @@ proc MainViewerSetMode {{mode ""}} {
 		# Show the control thumbnails on top of the slice images
 		foreach s $Slice(idList) {
 			raise $Gui(fSlice$s).fThumb
+			MainViewerAnno $s 256
 		}
-		MainViewerAnno 256
 	}
 	"Quad512" {
 		pack $Gui(fTop) $Gui(fBot) -side top
@@ -367,16 +364,49 @@ proc MainViewerSetMode {{mode ""}} {
 		# Show the control thumbnails on top of the slice images
 		foreach s $Slice(idList) {
 			raise $Gui(fSlice$s).fThumb
+			MainViewerAnno $s 512
 		}
-		MainViewerAnno 512
+	}
+	"Single512" {
+		pack $Gui(fTop) $Gui(fBot) -side top -anchor w
+		pack $f.fSlice0 $f.fViewWin -in $Gui(fTop) -side left -anchor n
+		pack $f.fSlice1 $f.fSlice2  -in $Gui(fBot) -side left -anchor w
+
+		wm geometry .tViewer 768x768
+		wm resizable .tViewer 0 0
+		$Gui(fViewWin) config -width 256 -height 256
+		$Gui(fSl0Win)  config -width 512 -height 512
+		$Gui(fSl1Win)  config -width 256 -height 256
+		$Gui(fSl2Win)  config -width 256 -height 256
+
+		# Show the control thumbnails on top of the slice images
+		foreach s $Slice(idList) {
+			raise $Gui(fSlice$s).fThumb
+			MainViewerAnno $s 256
+		}
+		MainViewerAnno 0 512
 	}
 	}
 	# Double the slice size in 512 mode
 
 	if {$View(mode) == "Normal" || $View(mode) == "Quad256"} {
-		Slicer DoubleOff
+		foreach s $Slice(idList) {
+			Slicer SetDouble $s 0
+			Slicer SetCursorPosition $s 128 128
+		}
 	} elseif {$View(mode) == "Quad512"} {
-		Slicer DoubleOn
+		foreach s $Slice(idList) {
+			Slicer SetDouble $s 1
+			Slicer SetCursorPosition $s 256 256
+		}
+	} elseif {$View(mode) == "Single512"} {
+		foreach s $Slice(idList) {
+			Slicer SetDouble $s 0
+			Slicer SetCursorPosition $s 128 128
+		}
+		set s 0
+		Slicer SetDouble $s 1
+		Slicer SetCursorPosition $s 256 256
 	}
 	Slicer Update
 }

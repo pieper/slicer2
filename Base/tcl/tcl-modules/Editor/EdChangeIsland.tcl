@@ -45,7 +45,8 @@ proc EdChangeIslandInit {} {
 
 	set e EdChangeIsland
 	set Ed($e,name)      "Change Island"
-	set Ed($e,desc)      "Change all pixels on an island."
+	set Ed($e,initials)  "CI"
+	set Ed($e,desc)      "Change Island: re-label an island of pixels."
 	set Ed($e,rank)      6
 	set Ed($e,procGUI)   EdChangeIslandBuildGUI
 	set Ed($e,procEnter) EdChangeIslandEnter
@@ -72,14 +73,12 @@ proc EdChangeIslandBuildGUI {} {
 	#-------------------------------------------
 	set f $Ed(EdChangeIsland,frame)
 
+	frame $f.fGrid    -bg $Gui(activeWorkspace)
 	frame $f.fInput   -bg $Gui(activeWorkspace)
 	frame $f.fScope   -bg $Gui(activeWorkspace)
 	frame $f.fRender  -bg $Gui(activeWorkspace)
-	frame $f.fGrid    -bg $Gui(activeWorkspace)
 	frame $f.fApply   -bg $Gui(activeWorkspace)
-	pack \
-		$f.fInput $f.fScope $f.fRender \
-		$f.fGrid $f.fApply \
+	pack $f.fGrid $f.fInput $f.fScope $f.fRender $f.fApply \
 		-side top -pady $Gui(pad) -fill x
 
 	EdBuildScopeGUI $Ed(EdChangeIsland,frame).fScope Ed(EdChangeIsland,scope) Multi
@@ -160,6 +159,12 @@ proc EdChangeIslandApply {} {
 	}
 
 	EdSetupBeforeApplyEffect $v $Ed($e,scope) Native
+
+	# Only apply to native slices
+	if {[set native [EdIsNativeSlice]] != ""} {
+		tk_messageBox -message "Please click on the slice with orient = $native."
+		return
+	}
 
 	set Gui(progressText) "Change Island in [Volume($v,node) GetName]"
 	

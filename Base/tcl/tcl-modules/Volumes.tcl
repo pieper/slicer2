@@ -499,7 +499,7 @@ Ron, the interpolation button won't work without downloading dll's again.
 		-command "VolumesPropsApply; RenderAll"} $Gui(WBA) {-width 8}
 	eval {button $f.bCancel -text "Cancel" \
 		-command "VolumesPropsCancel"} $Gui(WBA) {-width 8}
-	grid $f.bApply $f.bCancel -padx $Gui(pad) -pady $Gui(pad)
+	grid $f.bApply $f.bCancel -padx $Gui(pad)
 
 
 	#-------------------------------------------
@@ -510,7 +510,7 @@ Ron, the interpolation button won't work without downloading dll's again.
 	frame $f.fEntry   -bg $Gui(activeWorkspace)
 	frame $f.fApply   -bg $Gui(activeWorkspace)
 	pack $f.fEntry $f.fApply \
-		-side top -fill x -pady $Gui(pad)
+		-side top -fill x -pady 2
 
 	#-------------------------------------------
 	# Props->Bot->Header->Entry frame
@@ -525,8 +525,7 @@ Ron, the interpolation button won't work without downloading dll's again.
 
 	    set f $fProps.fBot.fHeader.fEntry
 	    frame $f.f$param   -bg $Gui(activeWorkspace)
-	    pack $f.f$param \
-		    -side top -fill x -pady $Gui(pad)
+	    pack $f.f$param -side top -fill x -pady 2
 
 	    set f $f.f$param
 	    set c {label $f.l$param -text "$name:" $Gui(WLA)}; eval [subst $c]
@@ -541,8 +540,7 @@ Ron, the interpolation button won't work without downloading dll's again.
 	set name "Scan Order"
 	set f $fProps.fBot.fHeader.fEntry
 	frame $f.f$param -bg $Gui(activeWorkspace)
-	pack $f.f$param \
-		-side top -fill x -pady $Gui(pad)
+	pack $f.f$param -side top -fill x -pady 2
 	
 	set f $f.f$param
 	set c {label $f.l${param} -text "$name:" $Gui(WLA)}; eval [subst $c]
@@ -566,8 +564,7 @@ Ron, the interpolation button won't work without downloading dll's again.
 	set name "Scalar Type"
 	set f $fProps.fBot.fHeader.fEntry
 	frame $f.f$param -bg $Gui(activeWorkspace)
-	pack $f.f$param \
-		-side top -fill x -pady $Gui(pad)
+	pack $f.f$param -side top -fill x -pady 2
 	
 	set f $f.f$param
 	set c {label $f.l${param} -text "$name:" $Gui(WLA)}; eval [subst $c]
@@ -584,15 +581,13 @@ Ron, the interpolation button won't work without downloading dll's again.
 	pack $f.l${param} -side left -padx $Gui(pad) -fill x -anchor w
 	pack $f.mb${param} -side left -padx $Gui(pad) -expand 1 -fill x 
     
-
 	# more Entry fields (the loop makes a frame for each variable)
 	foreach param "	gantryDetectorTilt numScalars" \
 		name "{Slice Tilt} {Num Scalars}" {
 
 	    set f $fProps.fBot.fHeader.fEntry
 	    frame $f.f$param -bg $Gui(activeWorkspace)
-	    pack $f.f$param \
-		    -side top -fill x -pady $Gui(pad)
+	    pack $f.f$param -side top -fill x -pady 2
 
 	    set f $f.f$param
 	    set c {label $f.l$param -text "$name:" $Gui(WLA)}; eval [subst $c]
@@ -601,6 +596,24 @@ Ron, the interpolation button won't work without downloading dll's again.
 	    pack $f.l$param -side left -padx $Gui(pad) -fill x -anchor w
 	    pack $f.e$param -side left -padx $Gui(pad) -expand 1 -fill x
 	}
+
+	# byte order
+	set f $fProps.fBot.fHeader.fEntry
+	frame $f.fEndian -bg $Gui(activeWorkspace)
+	pack $f.fEndian -side top -fill x -pady 2
+	set f $f.fEndian
+
+	set c {label $f.l -text "Little Endian (PC,SGI):" $Gui(WLA)}; eval [subst $c]
+	frame $f.f -bg $Gui(activeWorkspace)
+	pack $f.l $f.f -side left -pady $Gui(pad) -padx $Gui(pad) -fill x
+
+	foreach value "1 0" text "Yes No" width "4 3" {
+		set c {radiobutton $f.f.r$value -width $width -indicatoron 0\
+			-text $text -value $value -variable Volume(littleEndian) \
+			$Gui(WCA)}; eval [subst $c]
+		pack $f.f.r$value -side left -fill x
+	}
+
 
 	#-------------------------------------------
 	# Props->Bot->Header->Apply frame
@@ -611,7 +624,7 @@ Ron, the interpolation button won't work without downloading dll's again.
 		-command "VolumesPropsApply; RenderAll"} $Gui(WBA) {-width 8}
 	eval {button $f.bCancel -text "Cancel" \
 		-command "VolumesPropsCancel"} $Gui(WBA) {-width 8}
-	grid $f.bApply $f.bCancel -padx $Gui(pad) -pady $Gui(pad)
+	grid $f.bApply $f.bCancel -padx $Gui(pad)
 
 
 	#-------------------------------------------
@@ -700,7 +713,7 @@ proc VolumesSetPropertyType {} {
 }
  
 proc VolumesPropsApply {} {
-	global Volume Label Module Mrml
+	global Lut Volume Label Module Mrml
 
 	set m $Volume(activeID)
 	if {$m == ""} {return}
@@ -791,27 +804,32 @@ proc VolumesPropsApply {} {
 			    puts $msg
 			    tk_messageBox -message $msg
 			    # set readHeaders to manual
-			    set Volume(readHeaders) "0"
+			    set Volume(readHeaders) 0
 			    # switch to vols->props->header frame
 			    set Volume(propertyType) Header
 			    VolumesSetPropertyType
-				Mrml(dataTree) RemoveItem $n
-			    $n Delete
+				# Remove node
+				MainMrmlUndoAddNode Volume $n
 			    return
 			} elseif {$errmsg != ""} {
 				# File not found, most likely
 			    puts $errmsg
 			    tk_messageBox -message $errmsg
-				Mrml(dataTree) RemoveItem $n
-				$n Delete
+				# Remove node
+				MainMrmlUndoAddNode Volume $n
 				return
 			}
 		}
 
 		$n SetName $Volume(name)
 		$n SetDescription $Volume(desc)
+		$n SetLabelMap $Volume(labelMap)
 
 		MainUpdateMRML
+		# If failed, then it's no longer in the idList
+		if {[lsearch $Volume(idList) $i] == -1} {
+			return
+		}
 		set Volume(freeze) 0
 		MainVolumesSetActive $i
 		set m $i

@@ -45,7 +45,8 @@ proc EdChangeLabelInit {} {
 
 	set e EdChangeLabel
 	set Ed($e,name)      "Change Label"
-	set Ed($e,desc)      "Change all pixels of a certain label."
+	set Ed($e,initials)  "CL"
+	set Ed($e,desc)      "Change Label: re-label all similar pixels."
 	set Ed($e,rank)      3
 	set Ed($e,procGUI)   EdChangeLabelBuildGUI
 	set Ed($e,procEnter) EdChangeLabelEnter
@@ -73,9 +74,7 @@ proc EdChangeLabelBuildGUI {} {
 	frame $f.fScope   -bg $Gui(activeWorkspace)
 	frame $f.fGrid    -bg $Gui(activeWorkspace)
 	frame $f.fApply   -bg $Gui(activeWorkspace)
-	pack \
-		$f.fInput $f.fScope \
-		$f.fGrid $f.fApply \
+	pack $f.fGrid $f.fInput $f.fScope $f.fApply \
 		-side top -pady $Gui(pad) -fill x
 
 	EdBuildScopeGUI $Ed(EdChangeLabel,frame).fScope Ed(EdChangeLabel,scope) Multi

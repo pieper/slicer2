@@ -1,7 +1,7 @@
 <?xml version="1.0" standalone='no'?>
 <!DOCTYPE MRML SYSTEM "mrml20.dtd">
 <MRML>
-<Color name='Working' diffuseColor='1 0 0' labels='1'></Color>
+<Color name='Black' diffuseColor='0 0 0' labels='0'></Color>
 <Color name='Skin' diffuseColor='1.0 .8 .7' labels='2'></Color>
 <Color name='Brain' diffuseColor='1 1 1' labels='3'></Color>
 <Color name='Ventricles' diffuseColor='.4 .7 1.0' labels='4'></Color>

@@ -173,6 +173,29 @@ proc MainMrmlAddNode {nodeType} {
 	return ${nodeType}($i,node)
 }
 
+proc MainMrmlUndoAddNode {nodeType n} {
+	global Mrml Model Volume Color Transform EndTransform Matrix Options
+	global TransferFunction WindowLevel TFPoint ColorLUT 
+
+	upvar $nodeType Array
+
+	set tree "dataTree"
+	if {$nodeType == "Color"} {
+		set tree "colorTree"
+	}
+
+	# Remove node's ID from idList
+	set id [$n GetID]
+	set i [lsearch $Array(idList) $id]
+	if {$i == -1} {return}
+	set Array(idList) [lreplace $Array(idList) $i $i]
+	set Volume(nextID) [expr $Volume(nextID) - 1]
+
+	# Remove node from tree, and delete it
+	Mrml($tree) RemoveItem $n
+	$n Delete
+}
+
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlDeleteNodeDuringUpdate
 # Call this routine to delete a node during MainUpdateMRML

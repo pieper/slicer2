@@ -72,7 +72,6 @@ vtkMrmlSlicer::vtkMrmlSlicer()
   this->ZoomCenter1[0] = this->ZoomCenter1[1] = 0.0;
   this->ZoomCenter2[0] = this->ZoomCenter2[1] = 0.0;
   this->FieldOfView = 240.0;
-  this->DoubleSliceSize = 0;
   this->LabelIndirectLUT = NULL;
   this->PolyDraw = vtkImageDrawROI::New();
   this->ReformatIJK = vtkImageReformatIJK::New();
@@ -145,6 +144,7 @@ vtkMrmlSlicer::vtkMrmlSlicer()
     
     // Double
 	  this->Double[s] = vtkImageDouble2D::New();
+    this->DoubleSliceSize[s] = 0;
 
     // Zoom
 	  this->Zoom[s] = vtkImageZoom2D::New();
@@ -299,7 +299,6 @@ void vtkMrmlSlicer::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "BuildUpper Time: " <<this->BuildUpperTime.GetMTime()<<"\n";
   os << indent << "Update Time:     " <<this->UpdateTime.GetMTime() << "\n";
   os << indent << "Active Slice:    " <<this->ActiveSlice << "\n";
-  os << indent << "DoubleSliceSize: " <<this->DoubleSliceSize << "\n";
   os << indent << "ForeOpacity:     " <<this->ForeOpacity << "\n";
 
   // vtkSetObjectMacro
@@ -346,6 +345,7 @@ void vtkMrmlSlicer::PrintSelf(ostream& os, vtkIndent indent)
     {
       this->LastFilter[s]->PrintSelf(os,indent.GetNextIndent());
     }
+    os << indent << "DoubleSliceSize: " <<this->DoubleSliceSize[s] << "\n";
   }
 }
 
@@ -536,6 +536,7 @@ void vtkMrmlSlicer::SetBackVolume(int s, vtkMrmlVolume *vol)
     { 
       this->BackVolume[s]->Register(this); 
     }
+
     this->Modified(); 
     this->BuildUpperTime.Modified();
   } 
@@ -794,8 +795,12 @@ void vtkMrmlSlicer::BuildUpper(int s)
   // The IJK reformatting depends on the volumes
   /////////////////////////////////////////////////////
 
-  // IJK Orientations depends on volumes
+  // Reset the offset range.
+  // If the range changed, then reset the offset to be
+  // in the center of this new range.
   this->ComputeOffsetRangeIJK(s);
+    
+  // IJK Orientations depends on volumes
   if (this->IsOrientIJK(s))
   {
     this->ComputeReformatMatrix(s);
@@ -824,26 +829,17 @@ void vtkMrmlSlicer::BuildLower(int s)
   // 3.) Overlay --> PolyDraw --> Double --> Cursor
   // 4.) Overlay --> PolyDraw --> Zoom   --> Double --> Cursor
   	
-  if (this->DoubleSliceSize == 1)
-  {
-  	this->Cursor[s]->SetCursor(255, 255);
-  }
-  else 
-  {
-    this->Cursor[s]->SetCursor(127, 127);
-  }
-
   float ctr[2];
   this->Zoom[s]->GetCenter(ctr);
   if (this->Zoom[s]->GetMagnification() != 1.0 || 
     this->Zoom[s]->GetAutoCenter() == 0 ||
     (ctr[0] == 0.0 && ctr[1] == 0.0))
   {
-    mode = (this->DoubleSliceSize == 1) ? 4 : 2;
+    mode = (this->DoubleSliceSize[s] == 1) ? 4 : 2;
   } 
   else 
   {
-    mode = (this->DoubleSliceSize == 1) ? 3 : 1;
+    mode = (this->DoubleSliceSize[s] == 1) ? 3 : 1;
   }
 
   if (this->ActiveSlice == s)
@@ -921,19 +917,31 @@ void vtkMrmlSlicer::ComputeOffsetRange()
   }
 }
 
+void vtkMrmlSlicer::SetOffsetRange(int s, int orient, int min, int max, int *modified)
+{
+  if (this->OffsetRange[s][orient][0] != min)
+  {
+    this->OffsetRange[s][orient][0] = min;
+    *modified = 1;
+  }
+  if (this->OffsetRange[s][orient][1] != max)
+  {
+    this->OffsetRange[s][orient][1] = max;
+    *modified = 1;
+  }
+}
+
 void vtkMrmlSlicer::ComputeOffsetRangeIJK(int s)
 {
   int xMax, yMax, zMax, xMin, yMin, zMin, xAvg, yAvg, zAvg, *ext;
   float fov = this->FieldOfView / 2.0;
   int orient = this->GetOrient(s);
+  int modified = 0;
   vtkMrmlVolume *vol = this->GetIJKVolume(s);
+  if (vol == NULL) return;
   char* order = vol->GetMrmlNode()->GetScanOrder();
+  if (order == NULL) return;
 
-  if (vol == NULL || order == NULL)
-  {
-	  vtkErrorMacro(<<"ComputeOffsetRangeIJK: NULL volume or order");
-	  return;
-  }
   ext = vol->GetOutput()->GetWholeExtent();
   xMin = ext[0];
   yMin = ext[2];
@@ -948,47 +956,50 @@ void vtkMrmlSlicer::ComputeOffsetRangeIJK(int s)
   this->OffsetRange[s][MRML_SLICER_ORIENT_ORIGSLICE][0] = zMin;
   this->OffsetRange[s][MRML_SLICER_ORIENT_ORIGSLICE][1] = zMax;
 
-	if (!strcmp(order,"LR") || !strcmp(order,"RL")) 
+	// Sagittal
+  if (!strcmp(order,"LR") || !strcmp(order,"RL")) 
   {
-	  this->OffsetRange[s][MRML_SLICER_ORIENT_AXISLICE][0] = xMin;
-	  this->OffsetRange[s][MRML_SLICER_ORIENT_AXISLICE][1] = xMax;
-	  this->OffsetRange[s][MRML_SLICER_ORIENT_SAGSLICE][0] = zMin;
-	  this->OffsetRange[s][MRML_SLICER_ORIENT_SAGSLICE][1] = zMax;
-	  this->OffsetRange[s][MRML_SLICER_ORIENT_CORSLICE][0] = xMin;
-	  this->OffsetRange[s][MRML_SLICER_ORIENT_CORSLICE][1] = xMax;
+	  this->SetOffsetRange(s, MRML_SLICER_ORIENT_AXISLICE, xMin, xMax, &modified);
+	  this->SetOffsetRange(s, MRML_SLICER_ORIENT_SAGSLICE, zMin, zMax, &modified);
+	  this->SetOffsetRange(s, MRML_SLICER_ORIENT_CORSLICE, xMin, xMax, &modified);
 
-    this->Offset[s][MRML_SLICER_ORIENT_ORIGSLICE] = zAvg;
-    this->Offset[s][MRML_SLICER_ORIENT_AXISLICE]  = xAvg;
-    this->Offset[s][MRML_SLICER_ORIENT_SAGSLICE]  = zAvg;
-    this->Offset[s][MRML_SLICER_ORIENT_CORSLICE]  = xAvg;
+    if (modified)
+    {
+      this->Offset[s][MRML_SLICER_ORIENT_ORIGSLICE] = zAvg;
+      this->Offset[s][MRML_SLICER_ORIENT_AXISLICE]  = xAvg;
+      this->Offset[s][MRML_SLICER_ORIENT_SAGSLICE]  = zAvg;
+      this->Offset[s][MRML_SLICER_ORIENT_CORSLICE]  = xAvg;
+    }
 	}
+  // Coronal
 	else if (!strcmp(order,"AP") || !strcmp(order,"PA")) 
   {
-	  this->OffsetRange[s][MRML_SLICER_ORIENT_AXISLICE][0] = xMin;
-	  this->OffsetRange[s][MRML_SLICER_ORIENT_AXISLICE][1] = xMax;
-	  this->OffsetRange[s][MRML_SLICER_ORIENT_SAGSLICE][0] = xMin;
-	  this->OffsetRange[s][MRML_SLICER_ORIENT_SAGSLICE][1] = xMax;
-	  this->OffsetRange[s][MRML_SLICER_ORIENT_CORSLICE][0] = zMin;
-	  this->OffsetRange[s][MRML_SLICER_ORIENT_CORSLICE][1] = zMax;
+	  this->SetOffsetRange(s, MRML_SLICER_ORIENT_AXISLICE, xMin, xMax, &modified);
+	  this->SetOffsetRange(s, MRML_SLICER_ORIENT_SAGSLICE, xMin, xMax, &modified);
+	  this->SetOffsetRange(s, MRML_SLICER_ORIENT_CORSLICE, zMin, zMax, &modified);
 
-    this->Offset[s][MRML_SLICER_ORIENT_ORIGSLICE] = zAvg;
-    this->Offset[s][MRML_SLICER_ORIENT_AXISLICE]  = xAvg;
-    this->Offset[s][MRML_SLICER_ORIENT_SAGSLICE]  = xAvg;
-    this->Offset[s][MRML_SLICER_ORIENT_CORSLICE]  = zAvg;
+    if (modified)
+    {
+      this->Offset[s][MRML_SLICER_ORIENT_ORIGSLICE] = zAvg;
+      this->Offset[s][MRML_SLICER_ORIENT_AXISLICE]  = xAvg;
+      this->Offset[s][MRML_SLICER_ORIENT_SAGSLICE]  = xAvg;
+      this->Offset[s][MRML_SLICER_ORIENT_CORSLICE]  = zAvg;
+    }
 	}
+  // Axial (and oblique)
 	else 
   {
-	  this->OffsetRange[s][MRML_SLICER_ORIENT_AXISLICE][0] = zMin;
-	  this->OffsetRange[s][MRML_SLICER_ORIENT_AXISLICE][1] = zMax;
-	  this->OffsetRange[s][MRML_SLICER_ORIENT_SAGSLICE][0] = xMin;
-	  this->OffsetRange[s][MRML_SLICER_ORIENT_SAGSLICE][1] = xMax;
-	  this->OffsetRange[s][MRML_SLICER_ORIENT_CORSLICE][0] = xMin;
-	  this->OffsetRange[s][MRML_SLICER_ORIENT_CORSLICE][1] = xMax;
+	  this->SetOffsetRange(s, MRML_SLICER_ORIENT_AXISLICE, zMin, zMax, &modified);
+	  this->SetOffsetRange(s, MRML_SLICER_ORIENT_SAGSLICE, xMin, xMax, &modified);
+	  this->SetOffsetRange(s, MRML_SLICER_ORIENT_CORSLICE, xMin, xMax, &modified);
 
-    this->Offset[s][MRML_SLICER_ORIENT_ORIGSLICE] = zAvg;
-    this->Offset[s][MRML_SLICER_ORIENT_AXISLICE]  = zAvg;
-    this->Offset[s][MRML_SLICER_ORIENT_SAGSLICE]  = xAvg;
-    this->Offset[s][MRML_SLICER_ORIENT_CORSLICE]  = xAvg;
+    if (modified)
+    {
+      this->Offset[s][MRML_SLICER_ORIENT_ORIGSLICE] = zAvg;
+      this->Offset[s][MRML_SLICER_ORIENT_AXISLICE]  = zAvg;
+      this->Offset[s][MRML_SLICER_ORIENT_SAGSLICE]  = xAvg;
+      this->Offset[s][MRML_SLICER_ORIENT_CORSLICE]  = xAvg;
+    }
 	}
 }
 
@@ -1414,7 +1425,7 @@ void vtkMrmlSlicer::ComputeReformatMatrix(int s)
 void vtkMrmlSlicer::SetScreenPoint(int s, int x, int y)
 {
   // Convert from 512x512 to 256x256
-  if (this->DoubleSliceSize == 1) {
+  if (this->DoubleSliceSize[s] == 1) {
     x /= 2;
     y /= 2;
   }

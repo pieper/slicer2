@@ -526,14 +526,14 @@ Ron is nice.
 	#-------------------------------------------
 	set f $fAuto.fVolumes
 
-	set c {label $f.lVolume -text "Volume to Register:" $Gui(WLA)}; 
+	set c {label $f.lVolume -text "Volume to Move" $Gui(WLA)}; 
 		eval [subst $c]
 	set c {menubutton $f.mbVolume -text "None" \
 		-relief raised -bd 2 -width 13 -menu $f.mbVolume.m $Gui(WMBA)}
 		eval [subst $c]
 	set c {menu $f.mbVolume.m $Gui(WMA)}; eval [subst $c]
 
-	set c {label $f.lRefVolume -text "Reference Volume:" $Gui(WLA)}; 
+	set c {label $f.lRefVolume -text "Reference Vol." $Gui(WLA)}; 
 		eval [subst $c]
 	set c {menubutton $f.mbRefVolume -text "None" \
 		-relief raised -bd 2 -width 13 -menu $f.mbRefVolume.m $Gui(WMBA)}

@@ -592,11 +592,14 @@ proc RealtimeSetBaseline {v} {
 	}
 	set Realtime(idBaseline) $v
 	
-	# Change button text
+	# Change button text, and show file prefix
 	if {$v == "NEW"} {
 		$Realtime(mbBaseline) config -text $v
+		set Realtime(prefixBaseline) ""
 	} else {
 		$Realtime(mbBaseline) config -text [Volume($v,node) GetName]
+		set Realtime(prefixBaseline) [MainFileGetRelativePrefix \
+			[Volume($v,node) GetFilePrefix]]
 	}
 }
 
@@ -617,11 +620,14 @@ proc RealtimeSetResult {v} {
 	}
 	set Realtime(idResult) $v
 	
-	# Change button text
+	# Change button text, and show file prefix
 	if {$v == "NEW"} {
 		$Realtime(mbResult) config -text $v
+		set Realtime(prefixResult) ""
 	} else {
 		$Realtime(mbResult) config -text [Volume($v,node) GetName]
+		set Realtime(prefixResult) [MainFileGetRelativePrefix \
+			[Volume($v,node) GetFilePrefix]]
 	}
 }
 

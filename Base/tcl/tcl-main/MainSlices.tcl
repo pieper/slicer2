@@ -279,7 +279,7 @@ proc MainSlicesBuildControls {s F} {
 		bind $f.eOffset <Return>   "MainSlicesSetOffset $s; RenderBoth $s"
 		bind $f.eOffset <FocusOut> "MainSlicesSetOffset $s; RenderBoth $s"
 	set c {scale $f.sOffset -from -$fov2 -to $fov2 \
-		-variable Slice($s,offset) -length 180 -resolution 1.0 -command \
+		-variable Slice($s,offset) -length 160 -resolution 1.0 -command \
 		"MainSlicesSetOffsetInit $s $f.sOffset" $Gui(WSA) -troughcolor $Gui(slice$s) }
 		eval [subst $c]
 
@@ -290,7 +290,7 @@ proc MainSlicesBuildControls {s F} {
 
 	# This Slice
 	set c {checkbutton $f.cVisibility${s} \
-		-variable Slice($s,visibility) -indicatoron 0 -text "V" \
+		-variable Slice($s,visibility) -indicatoron 0 -text "V" -width 2 \
 		-command "MainSlicesSetVisibility ${s}; MainViewerHideSliceControls; Render3D" \
 		$Gui(WCA) -selectcolor $Gui(slice$s)}; eval [subst $c]
 	pack $f.cVisibility${s} -side left -padx 2
@@ -298,11 +298,9 @@ proc MainSlicesBuildControls {s F} {
 	# Menu on the Visibility checkbutton
 	set c {menu $f.cVisibility${s}.men $Gui(WMA)}; eval [subst $c]
 	set men $f.cVisibility${s}.men
-	$men add check -label "All Visible" \
-		-variable Slice(visibilityAll) \
+	$men add command -label "All Visible" \
 		-command "MainSlicesSetVisibilityAll 1; MainViewerHideSliceControls; Render3D"
-	$men add check -label "All Invisible" \
-		-variable Slice(visibilityAll) \
+	$men add command -label "All Invisible" \
 		-command "MainSlicesSetVisibilityAll 0; MainViewerHideSliceControls; Render3D"
 	$men add command -label "Reset zoom" -command \
 		"MainSlicesResetZoomAll; MainViewerHideSliceControls; RenderSlices"

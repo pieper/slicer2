@@ -182,7 +182,7 @@ Models are fun. Do you like models, Ron?
 	eval {entry $f.eName -width 10 \
 		-textvariable Label(name)} $Gui(WEA) \
 		{-bg $Gui(activeWorkspace) -state disabled}
-	grid $f.bLabel $f.eLabel $f.eLabel2 $f.eName \
+	grid $f.bLabel $f.eLabel $f.eName \
 		-padx $Gui(pad) -pady $Gui(pad) -sticky e
 
 	lappend Label(colorWidgetList) $f.eName
@@ -208,6 +208,7 @@ Models are fun. Do you like models, Ron?
 	eval {button $f.bCreate -text "Create" -width 7 \
 		-command "ModelMakerCreate; Render3D"} $Gui(WBA)
 	pack $f.bCreate -side top -pady $Gui(pad)
+	set ModelMaker(bCreate) $f.bCreate
 
 	#-------------------------------------------
 	# Create->Results frame
@@ -496,10 +497,10 @@ proc ModelMakerSetVolume {v} {
     $ModelMaker(mbVolume) config -text [Volume($v,node) GetName]
 
 	# Initialize the label to the highest value in the volume
-	set Label(label) [Volume($v,vol) GetRangeLow]
+	set Label(label) [Volume($v,vol) GetRangeHigh]
 	LabelsFindLabel
 	ModelMakerLabelCallback
-	set ModelMaker(label2) [Volume($v,vol) GetRangeHigh]
+	set ModelMaker(label2) [Volume($v,vol) GetRangeLow]
 }
 
 #-------------------------------------------------------------------------------
@@ -531,10 +532,16 @@ proc ModelMakerCreate {} {
 		return
 	}
 
+	# Disable button to prevent another
+	$ModelMaker(bCreate) config -state disabled
+
 	# Create the model's MRML node
 	set n [MainMrmlAddNode Model]
 	$n SetName  $ModelMaker(name)
 	$n SetColor $Label(name)
+
+	# Guess the prefix
+	set ModelMaker(prefix) $ModelMaker(name)
 
 	# Create the model
 	set m [$n GetID]
@@ -546,6 +553,7 @@ proc ModelMakerCreate {} {
 
 	if {[ModelMakerMarch $m $v $ModelMaker(decimate) $ModelMaker(smooth)] != 0} {
 		MainModelsDelete $m
+		$ModelMaker(bCreate) config -state normal
 		return
 	}
 	$ModelMaker(msg) config -text "\
@@ -556,6 +564,9 @@ $ModelMaker(n,mcubes) polygons reduced to $ModelMaker(n,decimator)."
 
 	MainUpdateMRML
 	MainModelsSetActive $m
+	$ModelMaker(bCreate) config -state normal
+	set name [Model($m,node) GetName]
+	tk_messageBox -message "The model '$name' has been created."
 }
 
 #-------------------------------------------------------------------------------
@@ -566,7 +577,6 @@ proc ModelMakerLabelCallback {} {
 	global Label ModelMaker
 
 	set ModelMaker(name)   $Label(name)
-	set ModelMaker(prefix) $Label(name)
 
 	set ModelMaker(label2) $Label(label)
 }
@@ -766,7 +776,7 @@ proc ModelMakerMarch {m v decimateIterations smoothIterations} {
 		$p SetReplaceIn 1
 		$p SetReplaceOut 1
 	}
-	$p SetInValue $Label(label)
+	$p SetInValue 100
 	$p SetOutValue 0
 # DAVE crashes:	$p ThresholdBetween $Label(label) $ModelMaker(label2)
 	$p ThresholdBetween $Label(label) $Label(label)
@@ -783,7 +793,7 @@ proc ModelMakerMarch {m v decimateIterations smoothIterations} {
 	vtkMarchingCubes $p
 	$p SetInput [to GetOutput]
 	if {[Volume($v,node) GetLabelMap] == 1 || 1 == 1} {
-		$p SetValue 0 $Label(label)
+		$p SetValue 0 100
 	} else {
 		$p SetValue $Label(label) $ModelMaker(label2)
 	}
@@ -858,17 +868,29 @@ proc ModelMakerMarch {m v decimateIterations smoothIterations} {
 	vtkTransformPolyDataFilter $p
 	$p SetInput [smoother GetOutput]
 	$p SetTransform rot
+	set Gui(progressText) "Transforming $name"
+	$p SetStartMethod     MainStartProgress
+	$p SetProgressMethod "MainShowProgress $p"
+	$p SetEndMethod       MainEndProgress
 	[$p GetOutput] ReleaseDataFlagOn
 
 	set p normals
 	vtkPolyDataNormals $p
     $p SetInput [transformer GetOutput]
     $p SetFeatureAngle 60
+	set Gui(progressText) "Normals $name"
+	$p SetStartMethod     MainStartProgress
+	$p SetProgressMethod "MainShowProgress $p"
+	$p SetEndMethod       MainEndProgress
     [$p GetOutput] ReleaseDataFlagOn
 
 	set p stripper
 	vtkStripper $p
     $p SetInput [normals GetOutput]
+	set Gui(progressText) "Stripping $name"
+	$p SetStartMethod     MainStartProgress
+	$p SetProgressMethod "MainShowProgress $p"
+	$p SetEndMethod       MainEndProgress
 	[$p GetOutput] ReleaseDataFlagOff
 
 	# polyData will survive as long as it's the input to the mapper
