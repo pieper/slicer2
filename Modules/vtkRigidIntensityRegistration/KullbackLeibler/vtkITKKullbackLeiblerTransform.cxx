@@ -73,6 +73,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "itkArray.h"
 
 #include "KLRegistration.h"
+#include "RigidRegistrationBase.txx"
 
 //------------------------------------------------------------------------------
 vtkITKKullbackLeiblerTransform* vtkITKKullbackLeiblerTransform::New()
@@ -145,6 +146,22 @@ void vtkITKKullbackLeiblerTransform::PrintSelf(ostream& os, vtkIndent indent)
   os << "HistEpsilon: "    << this->HistEpsilon    << endl;
 
 }
+  // some memory leaks here...
+  // This was copied form RigidRegistrationBase.txx. I'm not sure why I needed to copy it.
+  // But, it did not compile on windows without it.
+template <class itkImageType>
+itkImageType *VTKtoITKImageBB(vtkImageData *VtkImage, itkImageType *)
+{
+  typedef itk::VTKImageImport<itkImageType>  ImageImportType;
+
+  vtkImageExport *ImageExporter = vtkImageExport::New();
+    ImageExporter->SetInput(VtkImage);
+  ImageImportType::Pointer ItkImporter = ImageImportType::New();
+  ConnectPipelines(ImageExporter, ItkImporter);
+  ItkImporter->Update();
+  ItkImporter->GetOutput()->Register();
+  return ItkImporter->GetOutput();
+}
 
 //----------------------------------------------------------------------------
 
@@ -209,8 +226,8 @@ static void vtkITKKLExecute(vtkITKKullbackLeiblerTransform *self,
 #endif
 #endif
   
-  KLRegistrator->SetTrainingFixedImage(VTKtoITKImage(self->GetTrainingTargetImage(),(RegistratorType::FixedImageType *)(NULL)));
-  KLRegistrator->SetTrainingMovingImage(VTKtoITKImage(self->GetTrainingSourceImage(),(RegistratorType::MovingImageType *)(NULL)));
+  KLRegistrator->SetTrainingFixedImage(VTKtoITKImageBB(self->GetTrainingTargetImage(),(RegistratorType::FixedImageType *)(NULL)));
+  KLRegistrator->SetTrainingMovingImage(VTKtoITKImageBB(self->GetTrainingSourceImage(),(RegistratorType::MovingImageType *)(NULL)));
 
   // take care of memory leak 
   //  KLRegistrator->GetTrainingFixedImage()
