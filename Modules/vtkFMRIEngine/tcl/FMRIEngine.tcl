@@ -158,7 +158,7 @@ proc FMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.3 $} {$Date: 2004/04/22 19:00:13 $}]
+        {$Revision: 1.4 $} {$Date: 2004/04/22 19:34:21 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -572,8 +572,11 @@ proc FMRIEngineClear {} {
 
     set FMRIEngine(name) ""
     set Volume(VolAnalyze,FileName) ""
-    $FMRIEngine(timescale) configure -showvalue 0 
     
+    $FMRIEngine(timescale) configure -from 0 -to 0 
+    $FMRIEngine(timescale) configure -state disabled 
+    $FMRIEngine(timescale) configure -showvalue 0 
+
     if {[info exist FMRIEngine(lastindex)]} {
         set ii 1
         while {$ii <= $FMRIEngine(lastindex) } {
