@@ -359,7 +359,7 @@ vtkHyperStreamline * vtkMultipleStreamlineController::CreateHyperStreamline()
   vtkHyperStreamlinePoints *currHSP;
   vtkPreciseHyperStreamlinePoints *currPHSP;
 
-  cout << "in create HS -------------- " << this->TypeOfHyperStreamline << endl;
+  vtkDebugMacro(<< "in create HyperStreamline, type " << this->TypeOfHyperStreamline);
 
   switch (this->TypeOfHyperStreamline)
     {
@@ -379,7 +379,7 @@ vtkHyperStreamline * vtkMultipleStreamlineController::CreateHyperStreamline()
         {
           // create object
           currHSP=vtkHyperStreamlinePoints::New();
-          currHSP->DebugOn();
+          //currHSP->DebugOn();
           // Now copy user's settings into this object:
           // MaximumPropagationDistance 
           currHSP->SetMaximumPropagationDistance(this->VtkHyperStreamlinePointsSettings->GetMaximumPropagationDistance());
@@ -408,13 +408,11 @@ vtkHyperStreamline * vtkMultipleStreamlineController::CreateHyperStreamline()
       if (this->VtkPreciseHyperStreamlinePointsSettings) 
         {
 
-          cout << "precisely!!!!!!!!!!!1" << endl;
-
           // create object
           currPHSP=vtkPreciseHyperStreamlinePoints::New();
 
           
-          currPHSP->DebugOn();
+          //currPHSP->DebugOn();
 
           // Now copy user's settings into this object:
           // Method
