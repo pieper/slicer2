@@ -60,7 +60,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkMatrix4x4.h"
 #include "vtkObject.h"
 
-class VTK_MIREG_EXPORT vtkRasToIjkTransform : public vtkObject
+class VTK_EXPORT vtkRasToIjkTransform : public vtkObject
 {
 public:
   // VTK requisites

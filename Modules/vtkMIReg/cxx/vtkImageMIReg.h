@@ -49,7 +49,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkQuaternion.h"
 #include "vtkPose.h"
 
-class VTK_MIREG_EXPORT vtkImageMIReg : public vtkProcessObject
+class VTK_EXPORT vtkImageMIReg : public vtkProcessObject
 {
 public:
   // VTK requisites

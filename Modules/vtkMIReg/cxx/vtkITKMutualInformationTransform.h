@@ -60,7 +60,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 class vtkImageData;
 
-class VTK_MIREG_EXPORT vtkITKMutualInformationTransform : public vtkLinearTransform
+class VTK_EXPORT vtkITKMutualInformationTransform : public vtkLinearTransform
 {
 public:
   static vtkITKMutualInformationTransform *New();
@@ -106,6 +106,7 @@ public:
 
   // Description:
   // Get the value of the last metric calculation
+  // (Set is for internal use only).
   vtkSetMacro(MetricValue, double);
   vtkGetMacro(MetricValue, double);
 
@@ -125,7 +126,6 @@ public:
   // Description:
   // Get the MTime.
   unsigned long GetMTime();
-
 
 protected:
   vtkITKMutualInformationTransform();

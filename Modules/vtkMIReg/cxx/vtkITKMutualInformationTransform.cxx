@@ -93,7 +93,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "MIRegistration.txx"
 #include "vnl/vnl_math.h"
 
-vtkCxxRevisionMacro(vtkITKMutualInformationTransform, "$Revision: 1.2 $");
+vtkCxxRevisionMacro(vtkITKMutualInformationTransform, "$Revision: 1.3 $");
 vtkStandardNewMacro(vtkITKMutualInformationTransform);
 
 //----------------------------------------------------------------------------
@@ -132,7 +132,6 @@ void vtkITKMutualInformationTransform::PrintSelf(ostream& os, vtkIndent indent)
 {
   this->Superclass::PrintSelf(os, indent);
 
-  os << "This needs a complete rewrite" << endl;
   os << "SourceStandardDeviation: " << this->SourceStandardDeviation  << endl;
   os << "TargetStandardDeviation: " << this->SourceStandardDeviation  << endl;
   os << "LearningRate: " << this->LearningRate  << endl;
