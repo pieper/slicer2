@@ -103,6 +103,7 @@ if { [info exists env(SLICER_MODULES)] } {
 
 set TARGETS ""
 set CLEANFLAG 0
+set NOCMAKEFLAG 0
 
 foreach dir $modulePaths {
     if { ![file isdirectory $dir] } {continue}
@@ -129,12 +130,25 @@ set TARGETS "$slicer_home/Base $TARGETS"
 # by default, all modules are built.  If some are listed on commandline, only
 # those are built.
 #
+# also skip the cmake step for efficiency if desired
+#
 set cleanarg [lsearch $argv "--clean"] 
 if {$cleanarg != -1} {
     puts "Removing build directories"
     set CLEANFLAG 1
     # remove flag from the list
     set argv [lreplace $argv $cleanarg $cleanarg]
+    if {[llength $argv] == 0} {
+        set argv ""
+    }
+}
+
+set nocmakearg [lsearch $argv "--no-cmake"] 
+if {$nocmakearg != -1} {
+    puts "skipping cmake"
+    set NOCMAKEFLAG 1
+    # remove flag from the list
+    set argv [lreplace $argv $nocmakearg $nocmakearg]
     if {[llength $argv] == 0} {
         set argv ""
     }
@@ -189,24 +203,26 @@ foreach target $TARGETS {
     cd $build
     puts "enter directory $build..."
 
-    puts "running cmake ..."
+    if { $NOCMAKEFLAG == 0 } {
+        puts "running cmake ..."
 
-    set cmakecmd [list $CMAKE $target -G$GENERATOR \
-        $VTK_ARG1 $VTK_ARG2 $VTK_ARG3 $VTK_ARG4 $VTK_ARG5 \
-        $VTK_ARG6 $VTK_ARG7 \
-        $SLICER_ARG1 $SLICER_ARG2 $SLICER_ARG3 $SLICER_ARG4] 
+        set cmakecmd [list $CMAKE $target -G$GENERATOR \
+            $VTK_ARG1 $VTK_ARG2 $VTK_ARG3 $VTK_ARG4 $VTK_ARG5 \
+            $VTK_ARG6 $VTK_ARG7 \
+            $SLICER_ARG1 $SLICER_ARG2 $SLICER_ARG3 $SLICER_ARG4] 
 
-    if {[file exists [file join $target cmaker_local.tcl]]} {
-        # Define SLICER_MODULE_ARG in cmaker_local.tcl
-        source [file join $target cmaker_local.tcl]
-        foreach elem $SLICER_MODULE_ARG  {
-            lappend command $elem 
+        if {[file exists [file join $target cmaker_local.tcl]]} {
+            # Define SLICER_MODULE_ARG in cmaker_local.tcl
+            source [file join $target cmaker_local.tcl]
+            foreach elem $SLICER_MODULE_ARG  {
+                lappend command $elem 
+            }
         }
-    }
-    puts $cmakecmd
-    if { [ catch "exec $cmakecmd" err] } {
-        # catch here so that the build can continue if they're just warnings
-        puts "\n----------\nCMAKE error: $err\n-----------\n"
+        puts $cmakecmd
+        if { [ catch "exec $cmakecmd" err] } {
+            # catch here so that the build can continue if they're just warnings
+            puts "\n----------\nCMAKE error: $err\n-----------\n"
+        }
     }
 
     switch $tcl_platform(os) {
