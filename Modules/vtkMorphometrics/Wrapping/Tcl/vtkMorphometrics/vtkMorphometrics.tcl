@@ -14,6 +14,7 @@ if {[info commands vtkMorphometrics] != "" ||
     source [file join $PACKAGE_DIR_VTKMorphometrics/../../../tcl/Morphometrics.tcl]
     source [file join $PACKAGE_DIR_VTKMorphometrics/../../../tcl/CsysHelper.tcl]
     source [file join $PACKAGE_DIR_VTKMorphometrics/../../../tcl/StepFactories.tcl]
+    source [file join $PACKAGE_DIR_VTKMorphometrics/../../../tcl/MeasurementHipJoint.tcl]
     source [file join $PACKAGE_DIR_VTKMorphometrics/../../../tcl/MeasurementDeveloper.tcl]
 
 
