@@ -109,6 +109,8 @@ itcl::body dup_deidentify::run {dir} {
 
         $parent log "starting deidentify of $dir"
         set dcanon_dir [$parent pref DCANON_DIR]
+        set ::env(DCANON_DIR) $dcanon_dir
+        set ::env(MRI_DIR) $dcanon_dir
         foreach op $ops {
             puts "executing $op"
             $parent log "executing $op"
@@ -130,8 +132,8 @@ itcl::body dup_deidentify::run {dir} {
             # this avoids warning messages when slicer starts
             set ::env(SLICER_CUSTOM_CONFIG) "true"
 
-            set steps 120 ;# face 3 degrees per frame
-            set skip 1 ;# slices show every mm
+            set steps 15 ;# face 24 degrees per frame
+            set skip 3 ;# slices show every 3 mm
             if { [catch "exec $::env(SLICER_HOME)/slicer2-linux-x86 --agree_to_license --load-dicom $ser --script $::env(SLICER_HOME)/Modules/iSlicer/tcl/evaluation-movies.tcl --exec eval_movies $ser/Deface $steps $skip ., exit" res] } {
                 puts "$op failed: $res"
                 $parent log "$op failed: $res"
