@@ -186,7 +186,7 @@ proc FMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.34.2.3 $} {$Date: 2004/12/22 22:06:07 $}]
+        {$Revision: 1.34.2.4 $} {$Date: 2005/01/20 20:24:23 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -282,7 +282,7 @@ proc FMRIEngineBuildGUI {} {
     time course.
     <P>
 
-    Check the file README.txt in the data directory of this module \
+    Check the file README.txt in the docs directory of this module \
     for details about how to build and use the module.
     <BR><BR>
     ----------------------
@@ -337,16 +337,16 @@ proc FMRIEngineBuildGUI {} {
     set f $fSequence.fOption
 
     Notebook:create $f.fNotebook \
-                    -pages {Select Load} \
+                    -pages {Load Select} \
                     -pad 2 \
                     -bg $Gui(activeWorkspace) \
                     -height 356 \
                     -width 240
     pack $f.fNotebook -fill both -expand 1
-    set w [Notebook:frame $f.fNotebook Select]
-    FMRIEngineBuildUIForSelect $w
     set w [Notebook:frame $f.fNotebook Load]
     FMRIEngineBuildUIForLoad $w
+    set w [Notebook:frame $f.fNotebook Select]
+    FMRIEngineBuildUIForSelect $w
 
     #-------------------------------------------
     # Compute tab 
@@ -515,10 +515,9 @@ proc FMRIEngineBuildUIForDetectors {parent} {
     frame $parent.fType   -bg $Gui(backdrop)
     frame $parent.fApply  -bg $Gui(activeWorkspace)
     frame $parent.fName   -bg $Gui(activeWorkspace)
-    frame $parent.fStatus -bg $Gui(activeWorkspace)
 
     pack $parent.fType -side top -fill x -pady $Gui(pad) -padx $Gui(pad)
-    pack $parent.fName $parent.fApply $parent.fStatus -side top -fill x -pady $Gui(pad)
+    pack $parent.fName $parent.fApply -side top -fill x -pady $Gui(pad)
 
     # Type frame
     set f $parent.fType
@@ -559,11 +558,6 @@ proc FMRIEngineBuildUIForDetectors {parent} {
     DevAddButton $f.bApply "Compute" "FMRIEngineComputeActivationVolume" 10 
     grid $f.bApply -padx $Gui(pad)
 
-    # Status frame    
-    set f $parent.fStatus
-    set FMRIEngine(computeStatus) ""
-    eval {label $f.eName -textvariable FMRIEngine(computeStatus) -width 50} $Gui(WLA)
-    pack $f.eName -side left -padx 0 -pady 50 
 }
 
 
@@ -1000,7 +994,7 @@ proc FMRIEngineUpdateVolume {volumeNo} {
 # .END
 #-------------------------------------------------------------------------------
 proc FMRIEngineComputeActivationVolume {} {
-    global FMRIEngine Module Volume
+    global FMRIEngine Module Volume Gui
 
     # Checks if volumes have been loaded
     if {[info exists FMRIEngine(firstMRMLid)] == 0} {
@@ -1021,6 +1015,12 @@ proc FMRIEngineComputeActivationVolume {} {
         unset -nocomplain FMRIEngine(actvolgen)
     }
     vtkActivationVolumeGenerator FMRIEngine(actvolgen)
+    set obs1 [FMRIEngine(actvolgen) AddObserver StartEvent MainStartProgress]
+    set obs2 [FMRIEngine(actvolgen) AddObserver ProgressEvent \
+              "MainShowProgress FMRIEngine(actvolgen)"]
+    set obs3 [FMRIEngine(actvolgen) AddObserver EndEvent MainEndProgress]
+    set Gui(progressText) "Computing Volume $FMRIEngine(actVolName)..."
+
     set id $FMRIEngine(firstMRMLid) 
     while {$id <= $FMRIEngine(lastMRMLid)} {
         Volume($id,vol) Update
@@ -1041,14 +1041,7 @@ proc FMRIEngineComputeActivationVolume {} {
         return
     }
 
-    set FMRIEngine(computeStatus) \
-        "The activation volume is being\n\
-        computed. This may take a while.\n\
-        Upon completion, it will be displayed\n\
-        as the foreground image.
-        " 
-
-    puts "Computing Act Volume $FMRIEngine(actVolName)..." 
+    puts $Gui(progressText)
 
     if {[info commands FMRIEngine(detector)] != ""} {
         FMRIEngine(detector) Delete
@@ -1091,10 +1084,18 @@ proc FMRIEngineComputeActivationVolume {} {
     Volume($i,vol) SetImageData $act
     MainSlicesSetVolumeAll Fore $i
     MainVolumesSetActive $i
+
+    set Gui(progressText) "Updating..."
+    MainStartProgress
+    MainShowProgress FMRIEngine(actvolgen) 
     MainUpdateMRML
     RenderAll
+    MainEndProgress
 
-    set FMRIEngine(computeStatus) ""
+    FMRIEngine(actvolgen) RemoveObserver $obs1 
+    FMRIEngine(actvolgen) RemoveObserver $obs2 
+    FMRIEngine(actvolgen) RemoveObserver $obs3 
+
     puts "...done"
 }
 
