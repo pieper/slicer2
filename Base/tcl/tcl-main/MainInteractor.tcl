@@ -123,6 +123,15 @@ proc MainInteractorBind {widget} {
     bind $widget <Down>              {MainInteractorKeyPress Down  %W %x %y}
     bind $widget <Left>              {MainInteractorKeyPress Left  %W %x %y}
     bind $widget <Right>             {MainInteractorKeyPress Right %W %x %y}
+
+    # Added for Fiducials
+    if {[IsModule Fiducials] == 1 || [IsModule Matrices] == 1} {
+     bind $widget <KeyPress-p> {
+         puts "hello"
+         if { [SelectPick2D %W %x %y] != 0 } \
+             { eval FiducialsCreatePointFromWorldXYZ "default" $Select(xyz) ; MainUpdateMRML; Render3D}
+     }
+    }
 }
 
 #-------------------------------------------------------------------------------

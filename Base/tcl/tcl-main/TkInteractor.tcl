@@ -22,7 +22,7 @@
 #===============================================================================
 # FILE:        TkInteractor.tcl
 # PROCEDURES:  
-#   CreateAndBindTkEvents 
+#   CreateAndBindTkEvents
 #   Expose
 #   UpdateRenderer
 #   Enter
@@ -83,6 +83,23 @@ proc CreateAndBindTkEvents { widget } {
     EvDeclareEventHandler tkRegularEvents <Leave> {focus $oldFocus;}
     EvDeclareEventHandler tkRegularEvents <Expose> {Expose %W}
 
+    if {[IsModule Fiducials] == 1 ||[IsModule Matrices] == 1} {
+    EvDeclareEventHandler tkRegularEvents <KeyPress-p> { 
+        if { [SelectPick Fiducials(picker) %W %x %y] != 0 } \
+            { eval FiducialsCreatePointFromWorldXYZ "default" $Select(xyz) ; MainUpdateMRML; Render3D}
+    }
+    
+    EvDeclareEventHandler tkRegularEvents <KeyPress-q> {
+        if { [SelectPick Fiducials(picker) %W %x %y] != 0} \
+            {FiducialsSelectionFromPicker $Select(actor) $Select(cellId)}
+    }
+    
+    EvDeclareEventHandler tkRegularEvents <KeyPress-d> {
+        if { [SelectPick Fiducials(picker) %W %x %y] != 0} \
+            {FiducialsDeleteFromPicker $Select(actor) $Select(cellId)}
+    }      
+    }
+    
     ###### binding of event set that contains all the regular events ######
     EvAddWidgetToBindingSet bindTkRegularAndMotionEvents $widget {{tkMouseClickEvents} {tkMotionEvents} {tkRegularEvents}}
     ###### binding of event set that contains all the motion events #######
