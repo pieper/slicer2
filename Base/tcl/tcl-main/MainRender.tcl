@@ -62,7 +62,7 @@ proc Render3D {{scale ""}} {
     if { $View(movie) > 0 } {
 
         # directory and extension get added on later by the Save commands
-        set filename [format "%04d" $View(movieFrame)]
+        set filename [format "%s%04d" $View(movieFilePrefix) $View(movieFrame)]
 
         if { $View(movieSlices) == 0} {
             # no slices, just 3D image

@@ -70,10 +70,11 @@ proc ViewInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.32 $} {$Date: 2002/10/28 14:46:24 $}]
+        {$Revision: 1.33 $} {$Date: 2002/10/28 15:17:59 $}]
 
     set View(movie) 0
     set View(movieDirectory) "/tmp"
+    set View(movieFilePrefix) "slicer-"
     set View(movieFrame) 1
     set View(movieFileType) "PNG"
 }
@@ -259,29 +260,31 @@ a frame will be saved everytime the 3D View is rendered "
     eval {label $f.lFrame -text "Next frame #:"} $Gui(WLA)
     eval {entry $f.eFrame -width 6 -textvariable View(movieFrame)} $Gui(WEA)
  
-    eval {label $f.lPrefix -text "Directory:"} $Gui(WLA)
+    eval {label $f.lDir -text "Directory:"} $Gui(WLA)
 
-    eval {entry $f.ePrefix -width 16 -textvariable View(movieDirectory)} $Gui(WEA)
+    eval {entry $f.eDir -width 16 -textvariable View(movieDirectory)} $Gui(WEA)
+
+    eval {label $f.lPrefix -text "File prefix:"} $Gui(WLA)
+
+    eval {entry $f.ePrefix -width 16 -textvariable View(movieFilePrefix)} $Gui(WEA)
 
     grid $f.cMovie -columnspan 2 -padx $Gui(pad) -pady $Gui(pad)
     grid $f.cMovieSlices -columnspan 2 -padx $Gui(pad) -pady $Gui(pad)
     grid $f.lFrame $f.eFrame -sticky w -padx $Gui(pad) -pady $Gui(pad)
+    grid $f.lDir $f.eDir -sticky w -padx $Gui(pad) -pady $Gui(pad)
     grid $f.lPrefix $f.ePrefix -sticky w -padx $Gui(pad) -pady $Gui(pad)
         grid configure $f.lFrame -sticky e
+        grid configure $f.lDir -sticky e
         grid configure $f.lPrefix -sticky e
 
     # File type
     eval {label $f.lFile -text "File type:"} $Gui(WLA)
-    eval {menubutton $f.mbFile -text $View(movieFileType) -width 10 -menu $f.mbFile.m} \
-        $Gui(WMBA)
+
+    eval {tk_optionMenu $f.mbFile View(movieFileType)} [SaveGetSupportedImageTypes]
+    eval $f.mbFile configure $Gui(WMBA)
+
     grid $f.lFile $f.mbFile -sticky w -padx $Gui(pad) -pady $Gui(pad)
     grid configure $f.lFile -sticky e
-
-    eval {menu $f.mbFile.m} $Gui(WMA)
-
-    foreach item [SaveGetSupportedImageTypes] {
-        $f.mbFile.m add command -label $item -command "ViewSetMovieFileType $item"
-    }
 
     #-------------------------------------------
     # Fog frame
