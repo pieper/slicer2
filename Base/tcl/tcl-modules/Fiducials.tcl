@@ -67,8 +67,6 @@ proc FiducialsInit {} {
     set m Fiducials
     set Module($m,row1List) "Help Display Edit"
     set Module($m,row1Name) "{Help} {Display} {Edit}"
-#    set Module($m,row1List) "Help Edit"
-#    set Module($m,row1Name) "{Help} {Edit}"
     set Module($m,row1,tab) Edit
     set Module($m,procVTK) FiducialsBuildVTK
     set Module($m,procEnter) FiducialsEnter
@@ -82,7 +80,7 @@ proc FiducialsInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.29 $} {$Date: 2002/12/03 23:27:09 $}]
+        {$Revision: 1.30 $} {$Date: 2002/12/30 20:32:40 $}]
     
     # Initialize module-level variables
     
@@ -110,7 +108,7 @@ proc FiducialsInit {} {
     set Fiducials(displayList) ""
     
     set Fiducials(howto) "
-You can add Fiducials point on the volume in the 2D slice windows or on any models in the 3D View.
+You can add Fiducial points in the volume using the 2D slice windows or on any models in the 3D View.
 
 Fiducial points are grouped in lists. Each Fiducial list has a name. You have to select a list before creating a Fiducial point. 
 If you want to create a new list, go to the Fiducials module.
@@ -195,8 +193,7 @@ proc FiducialsBuildGUI {} {
     # Write the "help" in the form of psuedo-html.  
     # Refer to the documentation for details on the syntax.
     #
-    set help "
-$Fiducials(help) "
+    set help $Fiducials(help)
 
     regsub -all "\n" $help {} help
     MainHelpApplyTags Fiducials $help
@@ -278,7 +275,7 @@ $Fiducials(help) "
 
     FiducialsAddActiveListFrame $f 15 25 
     
-    }
+}
     
 
 #-------------------------------------------------------------------------------
@@ -328,7 +325,7 @@ proc FiducialsCreateGUI {f id} {
         -command "FiducialsSetScale $id" \
         -resolution 1} $Gui(WSA) {-sliderlength 10 }
 
-# text Scale
+    # text Scale
     #eval {entry $f.et${id} -textvariable Fiducials($id,textScale) -width 3} $Gui(WEA)
     #bind $f.et${id} <Return> "FiducialsSetTxtScale $id; Render3D"
     #bind $f.et${id} <FocusOut> "FiducialsSetTxtScale $id; Render3D"
@@ -338,7 +335,7 @@ proc FiducialsCreateGUI {f id} {
         -resolution 0.2} $Gui(WSA) {-sliderlength 10 }
         
 
-eval grid $f.c${id}  $f.s${id}  $f.st${id} -pady 2 -padx 2 -sticky we
+    eval grid $f.c${id}  $f.s${id}  $f.st${id} -pady 2 -padx 2 -sticky we
 
     return 1
 
@@ -399,7 +396,7 @@ proc FiducialsConfigScrolledGUI {canvasScrolledGUI fScrolledGUI} {
         # Find how many modules (lines) in the frame
         set numLines 0
         foreach m $Fiducials(idList) {
-                incr numLines
+            incr numLines
         }
         # Find the height of a line
         set incr [expr {[winfo reqheight $lastButton] + 2*$pady}]
@@ -512,11 +509,14 @@ proc FiducialsVTKCreateFiducialsList { id type {scale ""} {textScale ""} {visibi
     global Fiducials Mrml Module
     
     if {$scale == "" } {
-    set scale $Fiducials(scale)
+        set scale $Fiducials(scale)
     }
     if {$textScale == "" } {
-    set textScale $Fiducials(textScale)
+        set textScale $Fiducials(textScale)
     }
+    set Fiducials($id,scale) $scale
+    set Fiducials($id,textScale) $textScale
+
     vtkPoints Fiducials($id,points)
     
     vtkFloatArray Fiducials($id,scalars)
@@ -539,9 +539,9 @@ proc FiducialsVTKCreateFiducialsList { id type {scale ""} {textScale ""} {visibi
     
     vtkTransformPolyDataFilter Fiducials($id,XformFilter)
     if {$type == "endoscopic"} {
-    Fiducials($id,XformFilter) SetInput [Fiducials(sphereSource) GetOutput]
+        Fiducials($id,XformFilter) SetInput [Fiducials(sphereSource) GetOutput]
     } else {
-    Fiducials($id,XformFilter) SetInput Fiducials(symbolPD)
+        Fiducials($id,XformFilter) SetInput Fiducials(symbolPD)
     }
     Fiducials($id,XformFilter) SetTransform Fiducials($id,symbolXform)
     
@@ -565,15 +565,15 @@ proc FiducialsVTKCreateFiducialsList { id type {scale ""} {textScale ""} {visibi
 
     # create a different actor for each renderer
     foreach r $Fiducials(renList) {
-    vtkActor Fiducials($id,actor,$r)
-    Fiducials($id,actor,$r) SetMapper Fiducials($id,mapper)
-    [Fiducials($id,actor,$r) GetProperty] SetColor 1 0 0
-    [Fiducials($id,actor,$r) GetProperty] SetInterpolationToFlat
-    Fiducials($id,actor,$r) SetUserMatrix Fiducials($id,xform)
-    
-    $r AddActor Fiducials($id,actor,$r)
+        vtkActor Fiducials($id,actor,$r)
+        Fiducials($id,actor,$r) SetMapper Fiducials($id,mapper)
+        [Fiducials($id,actor,$r) GetProperty] SetColor 1 0 0
+        [Fiducials($id,actor,$r) GetProperty] SetInterpolationToFlat
+        Fiducials($id,actor,$r) SetUserMatrix Fiducials($id,xform)
+        
+        $r AddActor Fiducials($id,actor,$r)
     }  
-    
+     
     # now set the visibility
     FiducialsSetFiducialsVisibility $Fiducials($id,name) $visibility
 }
@@ -592,19 +592,23 @@ proc FiducialsVTKCreatePoint { fid pid visibility} {
     
     
     vtkVectorText Point($pid,text)
-    Point($pid,text) SetText [Point($pid,node) GetName]
+    Point($pid,text) SetText "   [Point($pid,node) GetName]"
     vtkPolyDataMapper Point($pid,mapper)
     Point($pid,mapper) SetInput [Point($pid,text) GetOutput]
     foreach r $Fiducials(renList) {
-    vtkFollower Point($pid,follower,$r)
-    Point($pid,follower,$r) SetMapper Point($pid,mapper)
-    Point($pid,follower,$r) SetCamera [$r GetActiveCamera]
-    Point($pid,follower,$r) SetUserMatrix [Point($fid,textXform) GetMatrix]
-    Point($pid,follower,$r) SetPickable 0
-    eval [Point($pid,follower,$r) GetProperty] SetColor $Fiducials(textColor)
-    
-    $r AddActor Point($pid,follower,$r)
-    Point($pid,follower,$r) SetVisibility $visibility
+        vtkFollower Point($pid,follower,$r)
+        Point($pid,follower,$r) SetMapper Point($pid,mapper)
+        Point($pid,follower,$r) SetCamera [$r GetActiveCamera]
+
+        # user matrix was making text disappear - changed to scale -sp 2002-12-15
+        #Point($pid,follower,$r) SetUserMatrix [Point($fid,textXform) GetMatrix]
+        Point($pid,follower,$r) SetScale $Fiducials($fid,textScale)
+
+        Point($pid,follower,$r) SetPickable 0
+        eval [Point($pid,follower,$r) GetProperty] SetColor $Fiducials(textColor)
+        
+        $r AddActor Point($pid,follower,$r)
+        Point($pid,follower,$r) SetVisibility $visibility
     }
 }
 
@@ -637,7 +641,7 @@ proc FiducialsVTKUpdatePoints {fid symbolSize textSize} {
         foreach r $Fiducials(renList) {
             eval Point($pid,follower,$r) SetPosition $xyz
         }
-        Point($pid,text) SetText [Point($pid,node) GetName]
+        Point($pid,text) SetText "   [Point($pid,node) GetName]"
     }
 
     # color the selected glyphs (by setting their scalar to 1)
@@ -666,22 +670,33 @@ proc FiducialsVTKUpdatePoints {fid symbolSize textSize} {
 #-------------------------------------------------------------------------------
 # .PROC FiducialsSetTxtScale
 #
-# Set the scale of the Fiducials symbol
+# Set the scale of the Fiducials text
 # .END
 #-------------------------------------------------------------------------------
 proc FiducialsSetTxtScale { id {val ""} } {
     global Fiducials Point
 
     if { $val == ""} {
-    set val $Fiducials($id,textScale)
+        set val $Fiducials($id,textScale)
     }
-    set s $Fiducials(textScale)
-    Point($id,textXform) Identity
-    Point($id,textXform) Translate 0 0 $Fiducials(textPush)
-    [Point($id,textXform) GetMatrix] SetElement 0 1 .333
-    Point($id,textXform) Scale $val $val 1
-    Point($id,textXform) Update
+
+    if {0} {
+        # changed to setting follower (actor) scale to avoid
+        # clipping problems - sp 2002-12-15
+        Point($id,textXform) Identity
+        Point($id,textXform) Translate 0 0 $Fiducials(textPush)
+        [Point($id,textXform) GetMatrix] SetElement 0 1 .333
+        Point($id,textXform) Scale $val $val 1
+        Point($id,textXform) Update
+    }
+
+    foreach pid $Fiducials($id,pointIdList) {
+        foreach r $Fiducials(renList) {
+            Point($pid,follower,$r) SetScale $val
+        }
+    }
     Fiducials($id,node) SetTextSize $val
+
     Render3D
 }
 
@@ -721,10 +736,10 @@ proc FiducialsUpdateMRML {} {
     # start callback in case any module wants to know that Fiducials are 
     # about to be updated
     foreach m $Module(idList) {
-    if {[info exists Module($m,fiducialsStartUpdateMRMLCallback)] == 1} {
-        if {$Module(verbose) == 1} {puts "Fiducials Start Callback: $m"}
-        $Module($m,fiducialsStartUpdateMRMLCallback)  
-    }
+        if {[info exists Module($m,fiducialsStartUpdateMRMLCallback)] == 1} {
+            if {$Module(verbose) == 1} {puts "Fiducials Start Callback: $m"}
+            $Module($m,fiducialsStartUpdateMRMLCallback)  
+        }
     }
        
     ############################################################
@@ -756,237 +771,235 @@ proc FiducialsUpdateMRML {} {
     set Fiducials(removeDisplayList) $Fiducials(displayList)
     
     while { $item != "" } {
-    
-    if { [$item GetClassName] == "vtkMrmlFiducialsNode"} {
-    set fid [$item GetID]
-    # get its name
-        # if there is no name, give it one
-        if {[$item GetName] == ""} {
-        $item SetName "Fiducials$fid"
-        }
-        set name [$item GetName]
-
-        lappend Fiducials(listOfNames) $name
-        lappend Fiducials(listOfIds) $fid
-    # reset/create variables for that list
-        set Fiducials($fid,name) $name
-        set Fiducials($name,fid) $fid
-        set Fiducials($fid,pointIdList) ""
-        set Fiducials($fid,selectedPointIdList) ""
-        if {[info exists Fiducials($fid,oldSelectedPointIdList)] == 0 } {
-        set Fiducials($fid,oldSelectedPointIdList) ""
-        }
-    set Fiducials($fid,pointsExist) 0
-    
-
-
-    # get type and options to create the right type of list
-    set type [$item GetType]
-    set symbolSize [$item GetSymbolSize]
-    set Fiducials($fid,scale) $symbolSize
-    if {$type == "endoscopic"} {
-        $item SetTextSize 0
-    }
-    set textSize [$item GetTextSize]
-    set Fiducials($fid,textScale) $textSize
-    set visibility [$item GetVisibility]
-    set Fiducials($fid,visibility) $visibility
-    FiducialsVTKCreateFiducialsList $fid $type $symbolSize $textSize $visibility
-    }
-    if { [$item GetClassName] == "vtkMrmlPointNode" } {
-        set pid [$item GetID]
         
-        lappend Fiducials($fid,pointIdList) $pid
-    #set its index based on its position in the list
-    Point($pid,node) SetIndex [lsearch $Fiducials($fid,pointIdList) $pid]
-    Point($pid,node) SetName [concat $Fiducials($fid,name) [Point($pid,node) GetIndex]]
-        FiducialsVTKCreatePoint $fid $pid $visibility
-        set Fiducials($fid,pointsExist) 1
-    }
-    if { [$item GetClassName] == "vtkMrmlEndFiducialsNode" } {
-        set efid [$item GetID]
-        # if the Mrml ID is not in the list already, then this
-        # a new Fiducials Node/EndNode pair
-    
-    # update the modified point List for all the existing Fiducials Node
-    if { $Fiducials($fid,pointsExist) ==  1} { 
-        FiducialsVTKUpdatePoints $fid $symbolSize $textSize
-    }
-    # if this is a new list and it doesn't exist in Fiducials->Display, then
-    # create its button and attributes
-    if { [lsearch $Fiducials(displayList) $fid] == -1 } { 
-        set gui [expr $gui + [FiducialsCreateGUI $Fiducials(fScrolledGUI) $fid]]
-    } else {
-    # otherwise the button for that list exists already so remove it 
-    # from the "to be deleted list"
-        set index [lsearch $Fiducials(removeDisplayList) $fid]
-        if {$index != -1} {
-        set Fiducials(removeDisplayList) [lreplace $Fiducials(removeDisplayList) $index $index]
-    }
-    }
-    # callback in case any module wants to know what list of fiducials 
-    # (and its type) was just read in the MRML tree
-    # see the endoscopic module for examples
+        if { [$item GetClassName] == "vtkMrmlFiducialsNode"} {
+            set fid [$item GetID]
+            # get its name
+            # if there is no name, give it one
+            if {[$item GetName] == ""} {
+                $item SetName "Fiducials$fid"
+            }
+            set name [$item GetName]
+
+            lappend Fiducials(listOfNames) $name
+            lappend Fiducials(listOfIds) $fid
+            # reset/create variables for that list
+            set Fiducials($fid,name) $name
+            set Fiducials($name,fid) $fid
+            set Fiducials($fid,pointIdList) ""
+            set Fiducials($fid,selectedPointIdList) ""
+            if {[info exists Fiducials($fid,oldSelectedPointIdList)] == 0 } {
+                set Fiducials($fid,oldSelectedPointIdList) ""
+            }
+            set Fiducials($fid,pointsExist) 0
+
+            # get type and options to create the right type of list
+            set type [$item GetType]
+            set symbolSize [$item GetSymbolSize]
+            set Fiducials($fid,scale) $symbolSize
+            if {$type == "endoscopic"} {
+                $item SetTextSize 0
+            }
+            set textSize [$item GetTextSize]
+            set Fiducials($fid,textScale) $textSize
+            set visibility [$item GetVisibility]
+            set Fiducials($fid,visibility) $visibility
+            FiducialsVTKCreateFiducialsList $fid $type $symbolSize $textSize $visibility
+        }
+
+        if { [$item GetClassName] == "vtkMrmlPointNode" } {
+            set pid [$item GetID]
+            
+            lappend Fiducials($fid,pointIdList) $pid
+            #set its index based on its position in the list
+            Point($pid,node) SetIndex [lsearch $Fiducials($fid,pointIdList) $pid]
+            Point($pid,node) SetName [concat $Fiducials($fid,name) [Point($pid,node) GetIndex]]
+            FiducialsVTKCreatePoint $fid $pid $visibility
+            set Fiducials($fid,pointsExist) 1
+        }
+        if { [$item GetClassName] == "vtkMrmlEndFiducialsNode" } {
+            set efid [$item GetID]
+            # if the Mrml ID is not in the list already, then this
+            # a new Fiducials Node/EndNode pair
+        
+        # update the modified point List for all the existing Fiducials Node
+        if { $Fiducials($fid,pointsExist) ==  1} { 
+            FiducialsVTKUpdatePoints $fid $symbolSize $textSize
+        }
+        # if this is a new list and it doesn't exist in Fiducials->Display, then
+        # create its button and attributes
+        if { [lsearch $Fiducials(displayList) $fid] == -1 } { 
+            set gui [expr $gui + [FiducialsCreateGUI $Fiducials(fScrolledGUI) $fid]]
+        } else {
+            # otherwise the button for that list exists already so remove it 
+            # from the "to be deleted list"
+            set index [lsearch $Fiducials(removeDisplayList) $fid]
+            if {$index != -1} {
+                set Fiducials(removeDisplayList) [lreplace $Fiducials(removeDisplayList) $index $index]
+            }
+        }
+        # callback in case any module wants to know what list of fiducials 
+        # (and its type) was just read in the MRML tree
+        # see the endoscopic module for examples
 
         foreach m $Module(idList) {
-        if {[info exists Module($m,fiducialsCallback)] == 1} {
-        if {$Module(verbose) == 1} {puts "Fiducials Callback: $m"}
-        $Module($m,fiducialsCallback) $type $fid $Fiducials($fid,pointIdList)
+            if {[info exists Module($m,fiducialsCallback)] == 1} {
+                if {$Module(verbose) == 1} {puts "Fiducials Callback: $m"}
+                    $Module($m,fiducialsCallback) $type $fid $Fiducials($fid,pointIdList)
+                }
+            }   
         }
-    }   
+
+        # BACKWARD COMPATIBILITY for old files that still use the 
+        # Path/Landmark Mrml nodes (the new ones use the Fiducials/Point nodes)
+
+        if { [$item GetClassName] == "vtkMrmlPathNode"} {
+            set fid [[MainMrmlAddNode Fiducials] GetID] 
+            set efid [[MainMrmlAddNode EndFiducials] GetID] 
+            Fiducials($fid,node) SetName "savedPath"
+            Fiducials($fid,node) SetType "endoscopic"
+            MainMrmlDeleteNodeDuringUpdate Path [$item GetID]
+        } elseif { [$item GetClassName] == "vtkMrmlLandmarkNode"} {
+            set pid [[MainMrmlInsertBeforeNode EndFiducials($efid,node) Point] GetID]
+            # set its world coordinates    
+            eval Point($pid,node) SetXYZ [$item GetXYZ]
+            eval Point($pid,node) SetFXYZ [$item GetFXYZ]
+            Point($pid,node) SetIndex [$item GetPathPosition]
+            Point($pid,node) SetName [concat "savedPath" [$item GetPathPosition]]
+            MainMrmlDeleteNodeDuringUpdate Landmark [$item GetID]
+        } elseif { [$item GetClassName] == "vtkMrmlEndPathNode" } {
+            MainMrmlDeleteNodeDuringUpdate EndPath [$item GetID]
+            set readOldNodesForCompatibility 1
+        }
+        
+        set item [Mrml(dataTree) GetNextItem]
+        
     }
 
-    # BACKWARD COMPATIBILITY for old files that still use the 
-    # Path/Landmark Mrml nodes (the new ones use the Fiducials/Point nodes)
-
-    if { [$item GetClassName] == "vtkMrmlPathNode"} {
-    set fid [[MainMrmlAddNode Fiducials] GetID] 
-    set efid [[MainMrmlAddNode EndFiducials] GetID] 
-    Fiducials($fid,node) SetName "savedPath"
-    Fiducials($fid,node) SetType "endoscopic"
-    MainMrmlDeleteNodeDuringUpdate Path [$item GetID]
-    } elseif { [$item GetClassName] == "vtkMrmlLandmarkNode"} {
-    set pid [[MainMrmlInsertBeforeNode EndFiducials($efid,node) Point] GetID]
-    # set its world coordinates    
-    eval Point($pid,node) SetXYZ [$item GetXYZ]
-    eval Point($pid,node) SetFXYZ [$item GetFXYZ]
-    Point($pid,node) SetIndex [$item GetPathPosition]
-    Point($pid,node) SetName [concat "savedPath" [$item GetPathPosition]]
-    MainMrmlDeleteNodeDuringUpdate Landmark [$item GetID]
-    } elseif { [$item GetClassName] == "vtkMrmlEndPathNode" } {
-    MainMrmlDeleteNodeDuringUpdate EndPath [$item GetID]
-    set readOldNodesForCompatibility 1
-    }
-    
-    set item [Mrml(dataTree) GetNextItem]
-    
-}
-
-Render3D
+    Render3D
  
- ##################################################
-# UPDATE ACTIVE LISTS
-# Check to see if the active list still exists
-# and tell other modules what list is active
-##################################################
+    ##################################################
+    # UPDATE ACTIVE LISTS
+    # Check to see if the active list still exists
+    # and tell other modules what list is active
+    ##################################################
 
-# if the list is in the listOfNames, then the active list before the
-# UpdateMRML still exists, and it stays active
+    # if the list is in the listOfNames, then the active list before the
+    # UpdateMRML still exists, and it stays active
 
-if { [lsearch $Fiducials(listOfNames) $Fiducials(activeList) ] > -1 } {
-    set name $Fiducials(activeList)
-    set id $Fiducials($name,fid)
-    set type [Fiducials($id,node) GetType]
-    # callback in case any module wants to know the name of the active list    
-    foreach m $Module(idList) {
-    if {[info exists Module($m,fiducialsActivatedListCallback)] == 1} {
-        if {$Module(verbose) == 1} {puts "Fiducials Activated List Callback: $m"}
-        $Module($m,fiducialsActivatedListCallback)  $type $name $id
+    if { [lsearch $Fiducials(listOfNames) $Fiducials(activeList) ] > -1 } {
+        set name $Fiducials(activeList)
+        set id $Fiducials($name,fid)
+        set type [Fiducials($id,node) GetType]
+        # callback in case any module wants to know the name of the active list    
+        foreach m $Module(idList) {
+            if {[info exists Module($m,fiducialsActivatedListCallback)] == 1} {
+                if {$Module(verbose) == 1} {puts "Fiducials Activated List Callback: $m"}
+                $Module($m,fiducialsActivatedListCallback)  $type $name $id
+            }
+        }
+       
+    } else {
+    # if the list that was active before the UpdateMRML does not exist anymore, 
+    # then make the active list the "None" list
+        FiducialsSetActiveList "None"
+         # callback in case any module wants that the None list is active
+        foreach m $Module(idList) {
+            if {[info exists Module($m,fiducialsActivatedListCallback)] == 1} {
+                if {$Module(verbose) == 1} {puts "Fiducials Activated List Callback: $m"}
+                $Module($m,fiducialsActivatedListCallback)  "default" "None" ""
+            }
+        }
     }
+
+    ##################################################
+    # Update the Fiducials->Display panel
+    ##################################################
+
+    # Remove the buttons on the Fiducials->Display panel
+    # for the fiducials not on the list
+    foreach i $Fiducials(removeDisplayList) {
+        FiducialsDeleteGUI $Fiducials(fScrolledGUI) $i
     }
-   
-} else {
-# if the list that was active before the UpdateMRML does not exist anymore, 
-# then make the active list the "None" list
-    FiducialsSetActiveList "None"
-     # callback in case any module wants that the None list is active
-    foreach m $Module(idList) {
-    if {[info exists Module($m,fiducialsActivatedListCallback)] == 1} {
-        if {$Module(verbose) == 1} {puts "Fiducials Activated List Callback: $m"}
-        $Module($m,fiducialsActivatedListCallback)  "default" "None" ""
+
+    # Tell the Fiducials->Display scrollbar to update if the gui height changed
+    if {$gui > 0} {
+        FiducialsConfigScrolledGUI $Fiducials(canvasScrolledGUI) $Fiducials(fScrolledGUI)
     }
-}
-}
-
-##################################################
-# Update the Fiducials->Display panel
-##################################################
-
-# Remove the buttons on the Fiducials->Display panel
-# for the fiducials not on the list
-foreach i $Fiducials(removeDisplayList) {
-    FiducialsDeleteGUI $Fiducials(fScrolledGUI) $i
-}
-
-# Tell the Fiducials->Display scrollbar to update if the gui height changed
-if {$gui > 0} {
-    FiducialsConfigScrolledGUI $Fiducials(canvasScrolledGUI) $Fiducials(fScrolledGUI)
-}
-    
-##################################################
-# Update all the Fiducials menus 
-##################################################
+        
+    ##################################################
+    # Update all the Fiducials menus 
+    ##################################################
 
     # Form the menus with all mrml fiducials plus the defaults that are not saved in mrml
     #--------------------------------------------------------
    
     set index 0
     foreach m $Fiducials(mActiveList) {
-    # get the corresponding scroll
-    set scroll [lindex $Fiducials(scrollActiveList) $index]
-    set mb [lindex $Fiducials(mbActiveList) $index]
-    $m delete 0 end
-    foreach v $Fiducials(idList) {
-        $m add command -label [Fiducials($v,node) GetName] \
-            -command "FiducialsSetActiveList [Fiducials($v,node) GetName] $mb $scroll"
-    }
-    foreach d $Fiducials(defaultNames) {
-        # if this default name doesn't exist in the list of fiducials in the mrml tree
-        if {[lsearch $Fiducials(listOfNames) $d] == -1} {
-        $m add command -label $d \
-            -command "FiducialsSetActiveList $d $mb $scroll"
+        # get the corresponding scroll
+        set scroll [lindex $Fiducials(scrollActiveList) $index]
+        set mb [lindex $Fiducials(mbActiveList) $index]
+        $m delete 0 end
+        foreach v $Fiducials(idList) {
+            $m add command -label [Fiducials($v,node) GetName] \
+                -command "FiducialsSetActiveList [Fiducials($v,node) GetName] $mb $scroll"
         }
-    }
-    incr index
+        foreach d $Fiducials(defaultNames) {
+            # if this default name doesn't exist in the list of fiducials in the mrml tree
+            if {[lsearch $Fiducials(listOfNames) $d] == -1} {
+                $m add command -label $d \
+                    -command "FiducialsSetActiveList $d $mb $scroll"
+            }
+        }
+        incr index
     }
     # re-write the scrolls
     set counter 0
     foreach scroll $Fiducials(scrollActiveList) {
-    $scroll delete 0 end
-    # get the current name to use 
-    set menu [lindex $Fiducials(mbActiveList) $counter]    
-    set name [$menu cget -text]
-    # if the name is valid
-    if {[lsearch $Fiducials(listOfNames) $name] != -1} {
-        # rewrite the list of points
-        foreach pid $Fiducials($Fiducials($name,fid),pointIdList) {
-        $scroll insert end "[Point($pid,node) GetName] : [Point($pid,node) GetXYZ]"
-        # if it is selected, tell the scroll
-        if {[lsearch $Fiducials($Fiducials($name,fid),selectedPointIdList) $pid] != -1} {
-            set index [lsearch $Fiducials($fid,pointIdList) $pid]
-          
-            $scroll selection set $index $index
+        $scroll delete 0 end
+        # get the current name to use 
+        set menu [lindex $Fiducials(mbActiveList) $counter]    
+        set name [$menu cget -text]
+        # if the name is valid
+        if {[lsearch $Fiducials(listOfNames) $name] != -1} {
+            # rewrite the list of points
+            foreach pid $Fiducials($Fiducials($name,fid),pointIdList) {
+                $scroll insert end "[Point($pid,node) GetName] : [Point($pid,node) GetXYZ]"
+                # if it is selected, tell the scroll
+                if {[lsearch $Fiducials($Fiducials($name,fid),selectedPointIdList) $pid] != -1} {
+                    set index [lsearch $Fiducials($fid,pointIdList) $pid]
+                  
+                    $scroll selection set $index $index
+                }
+            }
+        } else {
+            # if the name is not valid, just set the text to None
+            $menu configure -text "None"
         }
-        }
-    } else {
-        # if the name is not valid, just set the text to None
-        $menu configure -text "None"
+        incr counter
     }
-    incr counter
-}
 
-#################################################################
-# Tell the user if their file still has old nodes and give them 
-# the option to update their files
-#################################################################
-if {$readOldNodesForCompatibility == 1} {
+    #################################################################
+    # Tell the user if their file still has old nodes and give them 
+    # the option to update their files
+    #################################################################
+    if {$readOldNodesForCompatibility == 1} {
 
-    # tell the user to save the file
-    tk_messageBox -message "The file read uses a deprecated version of the endoscopic path. 
+        # tell the user to save the file
+        tk_messageBox -message "The file read uses a deprecated version of the endoscopic path. 
 The current data was updated to use the new version. 
 Please save the scene and use that new file instead to not get this message again."
-    MainUpdateMRML
-}
+        MainUpdateMRML
+    }
 
-# end callback in case any module wants to know that Fiducials 
-   # are done being updated 
+    # end callback in case any module wants to know that Fiducials 
+    # are done being updated 
     foreach m $Module(idList) {
-    if {[info exists Module($m,fiducialsEndUpdateMRMLCallback)] == 1} {
-        if {$Module(verbose) == 1} {puts "Fiducials End Callback: $m"}
-        $Module($m,fiducialsEndUpdateMRMLCallback)  
+        if {[info exists Module($m,fiducialsEndUpdateMRMLCallback)] == 1} {
+            if {$Module(verbose) == 1} {puts "Fiducials End Callback: $m"}
+            $Module($m,fiducialsEndUpdateMRMLCallback)  
+        }
     }
-    }
-
 }
 
 
@@ -1001,32 +1014,32 @@ proc FiducialsResetVariables {} {
     global Fiducials Module
     # go through the list of existing fiducial list and clear them
     foreach id $Fiducials(listOfIds) {
-    
-    foreach pid $Fiducials($id,pointIdList) {
-        foreach r $Fiducials(renList) {
-        $r RemoveActor Point($pid,follower,$r)
-        Point($pid,follower,$r) Delete
+        
+        foreach pid $Fiducials($id,pointIdList) {
+            foreach r $Fiducials(renList) {
+                $r RemoveActor Point($pid,follower,$r)
+                Point($pid,follower,$r) Delete
+            }
+            Point($pid,mapper) Delete
+            Point($pid,text) Delete
         }
-        Point($pid,mapper) Delete
-        Point($pid,text) Delete
-    }
-    
-    foreach r $Fiducials(renList) {
-        $r RemoveActor Fiducials($id,actor,$r)
-        Fiducials($id,actor,$r) Delete 
-    }
-    Fiducials($id,mapper) Delete 
-    Fiducials($id,glyphs) Delete
-    Fiducials($id,symbolXform) Delete
-    Fiducials($id,XformFilter) Delete
-    Fiducials($id,points) Delete 
-    Fiducials($id,scalars) Delete 
-    Fiducials($id,xform) Delete 
-    Fiducials($id,pointsPD) Delete 
-    Point($id,textXform) Delete
-    set Fiducials($id,pointIdList) ""
-    set Fiducials($id,oldSelectedPointIdList) $Fiducials($id,selectedPointIdList) 
-    set Fiducials($id,SelectedPointIdList) ""
+        
+        foreach r $Fiducials(renList) {
+            $r RemoveActor Fiducials($id,actor,$r)
+            Fiducials($id,actor,$r) Delete 
+        }
+        Fiducials($id,mapper) Delete 
+        Fiducials($id,glyphs) Delete
+        Fiducials($id,symbolXform) Delete
+        Fiducials($id,XformFilter) Delete
+        Fiducials($id,points) Delete 
+        Fiducials($id,scalars) Delete 
+        Fiducials($id,xform) Delete 
+        Fiducials($id,pointsPD) Delete 
+        Point($id,textXform) Delete
+        set Fiducials($id,pointIdList) ""
+        set Fiducials($id,oldSelectedPointIdList) $Fiducials($id,selectedPointIdList) 
+        set Fiducials($id,SelectedPointIdList) ""
     }
     set Fiducials(listOfIds) ""
     set Fiducials(listOfNames) ""
@@ -1061,9 +1074,9 @@ proc FiducialsCheckListExistence {name} {
     
     set existingLists $Fiducials(idList)
     foreach fid $existingLists {
-    if { [Fiducials($fid,node) GetName] == $name & [lsearch $Fiducials(listOfNames) $name] != -1} {
-        return 1 
-    } 
+        if { [Fiducials($fid,node) GetName] == $name & [lsearch $Fiducials(listOfNames) $name] != -1} {
+            return 1 
+        } 
     } 
     # if no list with that name is found, return 0
     return 0
@@ -1084,22 +1097,22 @@ proc FiducialsCreateFiducialsList {type name {textSize ""} {symbolSize ""}} {
     # search in the existing lists to see if one already exists with that name
     if { [FiducialsCheckListExistence $name] == 0 } {
     
-    set fid [[MainMrmlAddNode Fiducials] GetID] 
-    
-    Fiducials($fid,node) SetName $name
-    Fiducials($fid,node) SetType $type
-    #Fiducials($fid,node) SetTextSize $textSize
-    #Fiducials($fid,node) SetSymbolSize $SymbolSize
-    MainMrmlAddNode EndFiducials
+        set fid [[MainMrmlAddNode Fiducials] GetID] 
+        
+        Fiducials($fid,node) SetName $name
+        Fiducials($fid,node) SetType $type
+        #Fiducials($fid,node) SetTextSize $textSize
+        #Fiducials($fid,node) SetSymbolSize $SymbolSize
+        MainMrmlAddNode EndFiducials
 
-    MainUpdateMRML
-    # set that list active
-    FiducialsSetActiveList $name
-    Render3D
-    
-    return $fid
+        MainUpdateMRML
+        # set that list active
+        FiducialsSetActiveList $name
+        Render3D
+        
+        return $fid
     } else {
-    return -1
+        return -1
     }
 }
 
@@ -1118,7 +1131,6 @@ proc FiducialsCreateFiducialsList {type name {textSize ""} {symbolSize ""}} {
 # .END
 #-------------------------------------------------------------------------------
 proc FiducialsCreatePointFromWorldXYZ {type x y z  {listName ""} {name ""} } {
-
 
     global Fiducials Point Module Select
 
@@ -1181,6 +1193,10 @@ proc FiducialsCreatePointFromWorldXYZ {type x y z  {listName ""} {name ""} } {
     Point($pid,node) SetXYZ $x $y $z
     Point($pid,node) SetIndex $index
     Point($pid,node) SetName [concat $Fiducials($fid,name) $index]
+
+    # save actor and cell - TODO: this isn't saved in MRML
+    set Point($pid,actor) $actor
+    set Point($pid,cellId) $cellId
     
     # calculate FXYZ
     # if the actor and cell Id is not empty, get the normal of that cell
@@ -1200,9 +1216,9 @@ proc FiducialsCreatePointFromWorldXYZ {type x y z  {listName ""} {name ""} } {
                set num [expr $num - 1]
                incr count
                set id [$pointIds GetId $num]
-              # set normal [$normals GetNormal $id]
                set normal [$normals GetTuple3 $id]
 
+   
                set sumX [expr $sumX + [lindex $normal 0]]
                set sumY [expr $sumY + [lindex $normal 1]]
                set sumZ [expr $sumZ + [lindex $normal 2]]
@@ -1221,7 +1237,7 @@ proc FiducialsCreatePointFromWorldXYZ {type x y z  {listName ""} {name ""} } {
            Point($pid,node) SetFXYZ $fx $fy $fz
        }
    }
-   
+
    
    # callback for modules who wish to know a point was created
    foreach m $Module(idList) {
@@ -1255,14 +1271,14 @@ proc FiducialsDeletePoint {fid pid} {
     # list and if so, delete it
     set index [lsearch $Fiducials($fid,selectedPointIdList) $pid]
     if { $index != -1 } {
-    # remove the id from the list
-    set Fiducials($fid,selectedPointIdList) [lreplace $Fiducials($fid,selectedPointIdList) $index $index]
+        # remove the id from the list
+        set Fiducials($fid,selectedPointIdList) [lreplace $Fiducials($fid,selectedPointIdList) $index $index]
     }
     # remove the id from the fiducials list it belongs to
     set index [lsearch $Fiducials($fid,pointIdList) $pid]
     if { $index != -1 } {
-    # remove the id from the list
-    set Fiducials($fid,pointIdList) [lreplace $Fiducials($fid,pointIdList) $index $index]
+        # remove the id from the list
+        set Fiducials($fid,pointIdList) [lreplace $Fiducials($fid,pointIdList) $index $index]
     }
     foreach r $Fiducials(renList) {
         $r RemoveActor Point($pid,follower,$r)
@@ -1271,6 +1287,8 @@ proc FiducialsDeletePoint {fid pid} {
     Point($pid,mapper) Delete
     Point($pid,text) Delete
 
+    unset Point($pid,actor)
+    unset Point($pid,cellId)
 
     # delete from Mrml
     MainMrmlDeleteNode Point $pid
@@ -1292,14 +1310,14 @@ proc FiducialsDeleteFromPicker {actor cellId} {
     global Fiducials Point Module
     
     foreach fid $Fiducials(idList) {
-    foreach r $Fiducials(renList) {
-        if { $actor == "Fiducials($fid,actor,$r)" } {
-        
-        set pid [FiducialsPointIdFromGlyphCellId $fid $cellId]
-        FiducialsDeletePoint $fid $pid
-        return 1
+        foreach r $Fiducials(renList) {
+            if { $actor == "Fiducials($fid,actor,$r)" } {
+                
+                set pid [FiducialsPointIdFromGlyphCellId $fid $cellId]
+                FiducialsDeletePoint $fid $pid
+                return 1
+            }
         }
-    }
     }
     return 0
 }
@@ -1314,11 +1332,12 @@ proc FiducialsDeleteFromPicker {actor cellId} {
 #-------------------------------------------------------------------------------
 proc FiducialsDeleteActiveList {} {
     global Fiducials
+
     if {$Fiducials(activeList) == "None"} {
-    # do nothing 
-    return
+        # do nothing 
+        return
     } else {
-    FiducialsDeleteList $Fiducials(activeList)
+        FiducialsDeleteList $Fiducials(activeList)
     }
     
 }
@@ -1335,18 +1354,18 @@ proc FiducialsDeleteList {name} {
     global Fiducials Point
     
     if {$name == "None"} {
-    # do nothing 
-    return
+        # do nothing 
+        return
     }
     if { $Fiducials(activeList) == $name } {
-    set Fiducials(activeList) "None"
+        set Fiducials(activeList) "None"
     }
     
     set fid $Fiducials($name,fid)
 
     foreach pid $Fiducials($fid,pointIdList) {
-    # delete from Mrml
-    MainMrmlDeleteNodeNoUpdate Point $pid
+        # delete from Mrml
+        MainMrmlDeleteNodeNoUpdate Point $pid
     }
     
     MainMrmlDeleteNodeNoUpdate EndFiducials $fid
@@ -1371,36 +1390,35 @@ proc FiducialsSetFiducialsVisibility {name {visibility ""} {rendererName ""}} {
     global Fiducials Module
 
     if {$rendererName == ""} {
-    set rendererName "viewRen"
+        set rendererName "viewRen"
     }
    
     if {$name == "ALL"} {
-    set visibility 1 
-    set name $Fiducials(listOfNames)
+        set visibility 1 
+        set name $Fiducials(listOfNames)
     } elseif {$name == "None"} {
-    set visibility 0 
-    set name $Fiducials(listOfNames)
+        set visibility 0 
+        set name $Fiducials(listOfNames)
     } else {
-    set fid $Fiducials($name,fid)
-    if {$visibility == ""} {
-        set visibility $Fiducials($fid,visibility)
-    }
-     }
-     
-    foreach l $name {
-    foreach ren $rendererName {
-        if {[lsearch $Fiducials(listOfNames) $l] != -1} {
-        set fid $Fiducials($l,fid)
-            Fiducials($fid,actor,$ren) SetVisibility $visibility
-        Fiducials($fid,node) SetVisibility $visibility
-            # go through the list of followers as well
-            foreach pid $Fiducials($fid,pointIdList) {
-            Point($pid,follower,$ren) SetVisibility $visibility
-            }
-            Render3D
-        
+        set fid $Fiducials($name,fid)
+        if {$visibility == ""} {
+            set visibility $Fiducials($fid,visibility)
         }
     }
+     
+    foreach l $name {
+        foreach ren $rendererName {
+            if {[lsearch $Fiducials(listOfNames) $l] != -1} {
+                set fid $Fiducials($l,fid)
+                Fiducials($fid,actor,$ren) SetVisibility $visibility
+                Fiducials($fid,node) SetVisibility $visibility
+                # go through the list of followers as well
+                foreach pid $Fiducials($fid,pointIdList) {
+                    Point($pid,follower,$ren) SetVisibility $visibility
+                }
+                Render3D
+            }
+        }
     }
 }
     
@@ -1493,52 +1511,52 @@ proc FiducialsSelectionUpdate {fid pid on} {
 
     ### ON CASE #####
     if {$on } {
-    set index [lsearch $Fiducials($fid,selectedPointIdList) $pid]
-    if { $index == -1} {
-        lappend Fiducials($fid,selectedPointIdList) $pid
-        # tell procedure who want to know about it
-        # callback 
-        foreach m $Module(idList) {
-        if {[info exists Module($m,fiducialsPointSelectedCallback)] == 1} {
-            if {$Module(verbose) == 1} {puts "Fiducials Point Selected Callback: $m"}
-            $Module($m,fiducialsPointSelectedCallback) $fid $pid
+        set index [lsearch $Fiducials($fid,selectedPointIdList) $pid]
+        if { $index == -1} {
+            lappend Fiducials($fid,selectedPointIdList) $pid
+            # tell procedure who want to know about it
+            # callback 
+            foreach m $Module(idList) {
+                if {[info exists Module($m,fiducialsPointSelectedCallback)] == 1} {
+                    if {$Module(verbose) == 1} {puts "Fiducials Point Selected Callback: $m"}
+                    $Module($m,fiducialsPointSelectedCallback) $fid $pid
+                }
+            }
+            
+        } else {
+            # if it is already selected, do nothing
+            return
         }
-        }
-        
-    } else {
-        # if it is already selected, do nothing
-        return
-    }
     }
     
     if {!$on} {
     
-    ### OFF CASE ###
-    set index [lsearch $Fiducials($fid,selectedPointIdList) $pid]
-    if { $index != -1} {
-        # remove the id from the list
-        set Fiducials($fid,selectedPointIdList) [lreplace $Fiducials($fid,selectedPointIdList) $index $index]
-    } else {
-        # if it is already deselected, do nothing
-        return 
-    }
+        ### OFF CASE ###
+        set index [lsearch $Fiducials($fid,selectedPointIdList) $pid]
+        if { $index != -1} {
+            # remove the id from the list
+            set Fiducials($fid,selectedPointIdList) [lreplace $Fiducials($fid,selectedPointIdList) $index $index]
+        } else {
+            # if it is already deselected, do nothing
+            return 
+        }
     }
     # update all the scrollboxes
     
     set counter 0
     foreach menu $Fiducials(mbActiveList) {
-    # get the corresponding scrollbox
-    set scroll [lindex $Fiducials(scrollActiveList) $counter]
-    if {[$menu cget -text] == $Fiducials($fid,name)} {
-            # clear everything
-            $scroll selection clear 0 end
-            #re-color the entries
-            foreach pid $Fiducials($fid,selectedPointIdList) {
-                set sid [lsearch $Fiducials($fid,pointIdList) $pid]
-                $scroll selection set $sid $sid
-            }
-            incr counter
-    }
+        # get the corresponding scrollbox
+        set scroll [lindex $Fiducials(scrollActiveList) $counter]
+        if {[$menu cget -text] == $Fiducials($fid,name)} {
+                # clear everything
+                $scroll selection clear 0 end
+                #re-color the entries
+                foreach pid $Fiducials($fid,selectedPointIdList) {
+                    set sid [lsearch $Fiducials($fid,pointIdList) $pid]
+                    $scroll selection set $sid $sid
+                }
+                incr counter
+        }
     }
     
     FiducialsUpdateSelectionForActor $fid
@@ -1557,22 +1575,22 @@ proc FiducialsSelectionFromPicker {actor cellId} {
     global Fiducials Point Module
     
     foreach fid $Fiducials(idList) {
-    foreach r $Fiducials(renList) {
-        if { $actor == "Fiducials($fid,actor,$r)" } {
-        set pid [FiducialsPointIdFromGlyphCellId $fid $cellId]
-        
-        set index [lsearch $Fiducials($fid,selectedPointIdList) $pid]
-        if { $index != -1} {
-        # if it is already selected, it needs to unselected
-        FiducialsSelectionUpdate $fid $pid 0
-        } else {
-        FiducialsSelectionUpdate $fid $pid 1
+        foreach r $Fiducials(renList) {
+            if { $actor == "Fiducials($fid,actor,$r)" } {
+                set pid [FiducialsPointIdFromGlyphCellId $fid $cellId]
+                
+                set index [lsearch $Fiducials($fid,selectedPointIdList) $pid]
+                if { $index != -1} {
+                    # if it is already selected, it needs to unselected
+                    FiducialsSelectionUpdate $fid $pid 0
+                } else {
+                    FiducialsSelectionUpdate $fid $pid 1
+                }
+                return 1
+            }
         }
-        return 1
     }
-    }
-}
-return 0
+    return 0
 }
         
 
@@ -1595,34 +1613,33 @@ proc FiducialsSelectionFromScroll {menu scroll} {
     set name [$menu cget -text]
     
     if { $name != "None" } {
-    # get the id of the active list for that menu
-    set fid $Fiducials($name,fid)
-    # get the list of all selections
-    set idList [$scroll curselection]
-    
-    # find the matching point id and
-    # update the selection lists
-
-    # there is a problem here when we switch to another panel and the selections have changed because tcl sucks
-
-    set Fiducials($fid,selectedPointIdList) ""
-    foreach id $idList {
-        set pid [lindex $Fiducials($fid,pointIdList) $id]
-        lappend Fiducials($fid,selectedPointIdList) $pid
-    # tell procedure who want to know about it
-    # callback 
-    foreach m $Module(idList) {
-        if {[info exists Module($m,fiducialsPointSelectedCallback)] == 1} {
-        if {$Module(verbose) == 1} {puts "Fiducials Start Callback: $m"}
-        $Module($m,fiducialsPointSelectedCallback) $fid $pid
-        }
-    }
+        # get the id of the active list for that menu
+        set fid $Fiducials($name,fid)
+        # get the list of all selections
+        set idList [$scroll curselection]
         
+        # find the matching point id and
+        # update the selection lists
+
+        # there is a problem here when we switch to another panel and the selections have changed because tcl sucks
+
+        set Fiducials($fid,selectedPointIdList) ""
+        foreach id $idList {
+            set pid [lindex $Fiducials($fid,pointIdList) $id]
+            lappend Fiducials($fid,selectedPointIdList) $pid
+            # tell procedure who want to know about it
+            # callback 
+            foreach m $Module(idList) {
+                if {[info exists Module($m,fiducialsPointSelectedCallback)] == 1} {
+                    if {$Module(verbose) == 1} {puts "Fiducials Start Callback: $m"}
+                    $Module($m,fiducialsPointSelectedCallback) $fid $pid
+                }
+            }
+        }
+        
+        # now update the actors
+        FiducialsUpdateSelectionForActor $fid
     }
-    
-    # now update the actors
-    FiducialsUpdateSelectionForActor $fid
-}
 }
 
 
@@ -1640,24 +1657,24 @@ proc FiducialsUpdateSelectionForActor {fid} {
     global Fiducials Module
     
     foreach pid $Fiducials($fid,pointIdList) {
-    # if the point is selected
-    if {[lsearch $Fiducials($fid,selectedPointIdList) $pid] != -1} { 
-    
-        # color the point to show it is selected
-        Fiducials($fid,scalars) SetTuple1 [FiducialsScalarIdFromPointId $fid $pid] 1
-        # color the text
-        foreach r $Fiducials(renList) {
-        eval [Point($pid,follower,$r) GetProperty] SetColor $Fiducials(textSelColor)
+        # if the point is selected
+        if {[lsearch $Fiducials($fid,selectedPointIdList) $pid] != -1} { 
+        
+            # color the point to show it is selected
+            Fiducials($fid,scalars) SetTuple1 [FiducialsScalarIdFromPointId $fid $pid] 1
+            # color the text
+            foreach r $Fiducials(renList) {
+                eval [Point($pid,follower,$r) GetProperty] SetColor $Fiducials(textSelColor)
+            }
+            # if it is not selected
+        } else {
+            # color the point the default color
+            Fiducials($fid,scalars) SetTuple1 [FiducialsScalarIdFromPointId $fid $pid] 0
+            # uncolor the text
+            foreach r $Fiducials(renList) {
+                eval [Point($pid,follower,$r) GetProperty] SetColor $Fiducials(textColor)
+            }
         }
-        # if it is not selected
-    } else {
-        # color the point the default color
-        Fiducials($fid,scalars) SetTuple1 [FiducialsScalarIdFromPointId $fid $pid] 0
-        # uncolor the text
-        foreach r $Fiducials(renList) {
-        eval [Point($pid,follower,$r) GetProperty] SetColor $Fiducials(textColor)
-        }
-    }
     }
     
     Fiducials($fid,pointsPD) Modified
@@ -1741,18 +1758,18 @@ proc FiducialsGetAllNodesFromList {name} {
     global Fiducials Point Mrml
     
     if {$name == "None"} {
-    # do nothing 
-    return
+        # do nothing 
+        return
     }
     if { $Fiducials(activeList) == $name } {
-    set Fiducials(activeList) "None"
+        set Fiducials(activeList) "None"
     }
     
     set fid $Fiducials($name,fid)
     
     set list ""
     foreach pid $Fiducials($fid,pointIdList) {
-    lappend list Point($pid,node)
+        lappend list Point($pid,node)
     }
 
     lappend list EndFiducials($fid,node)
@@ -1777,14 +1794,14 @@ proc FiducialsAddActiveListFrame {frame scrollHeight scrollWidth {defaultNames "
     global Fiducials Gui
     
     foreach subframe "how menu scroll" {
-    frame $frame.f$subframe -bg $Gui(activeWorkspace)
-    pack $frame.f$subframe -side top -padx 0 -pady $Gui(pad) -fill x
+        frame $frame.f$subframe -bg $Gui(activeWorkspace)
+        pack $frame.f$subframe -side top -padx 0 -pady $Gui(pad) -fill x
     }
 
     #-------------------------------------------
     # frame->How frame
     #-------------------------------------------
-     set f $frame.fhow
+    set f $frame.fhow
     
     
     eval {button $f.bhow -text "How do I create Fiducials?"} $Gui(WBA)
@@ -1825,9 +1842,9 @@ proc FiducialsAddActiveListFrame {frame scrollHeight scrollWidth {defaultNames "
 
     # if there any default names specified, add them to the list
     foreach d $defaultNames {
-    $frame.fmenu.mbActive.m add command -label $d \
-        -command "FiducialsSetActiveList $d $frame.fmenu.mbActive $scroll"
-    lappend Fiducials(defaultNames) $d
+        $frame.fmenu.mbActive.m add command -label $d \
+            -command "FiducialsSetActiveList $d $frame.fmenu.mbActive $scroll"
+        lappend Fiducials(defaultNames) $d
     }
 
 } 
@@ -1894,10 +1911,10 @@ proc FiducialsGetPointIdListFromName { name } {
 proc FiducialsGetSelectedPointIdListFromName { name } {
     global Fiducials Point
     if { [lsearch $Fiducials(listOfNames) $name] != -1 } {
-    set fid $Fiducials($name,fid)
-    return $Fiducials($fid,selectedPointIdList) 
+        set fid $Fiducials($name,fid)
+        return $Fiducials($fid,selectedPointIdList) 
     } else {
-    return ""
+        return ""
     }
 }
 
@@ -1912,8 +1929,8 @@ proc FiducialsGetAllSelectedPointIdList {} {
     global Fiducials Point
     set list ""
     foreach name $Fiducials(listOfNames) {
-    set fid $Fiducials($name,fid)
-    set list [concat $list $Fiducials($fid,selectedPointIdList)] 
+        set fid $Fiducials($name,fid)
+        set list [concat $list $Fiducials($fid,selectedPointIdList)] 
     }
     return $list
 }
