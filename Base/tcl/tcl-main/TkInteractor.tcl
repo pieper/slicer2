@@ -1,5 +1,5 @@
 #=auto==========================================================================
-# (c) Copyright 2002 Massachusetts Institute of Technology
+# (c) Copyright 2001 Massachusetts Institute of Technology
 #
 # Permission is hereby granted, without payment, to copy, modify, display 
 # and distribute this software and its documentation, if any, for any purpose, 
@@ -43,32 +43,55 @@
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
-# .PROC BindTkRenderWidget
+# .PROC CreateAndBindTkEvents 
 # 
+#  This procedure creates 3 types of event sets:
+#  - regular events set: events that are always associated with the widget
+#     ( e.g KeyPress-u brings up the interactor)
+#  - mouse click event set: events associated with mouse buttons pressed or 
+#    released. This events signify the start or end of the virtual camera 
+#    motion.
+#  - motion events set: events to interact with the virtual camera to navigate 
+#    in 3D regularly
+#      (e.g B1-Motion Rotates the virtual camera)
+#
+#   Then those 3 event sets are bound to the widget and all 3 bindings 
+#   are activated
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc BindTkRenderWidget {widget} {
-    global Gui
+proc CreateAndBindTkEvents { widget } {
+    global Gui Ev
+    
+    EvDeclareEventHandler tkMouseClickEvents <Any-ButtonPress> {StartMotion %W %x %y}
+    EvDeclareEventHandler tkMouseClickEvents <Any-ButtonRelease> {EndMotion %W %x %y}
+    EvDeclareEventHandler tkMotionEvents <B1-Motion> {Rotate %W %x %y}
+    EvDeclareEventHandler tkMotionEvents <B2-Motion> {Pan %W %x %y}
+    EvDeclareEventHandler tkMotionEvents <B3-Motion> {Zoom %W %x %y}
+    EvDeclareEventHandler tkMotionEvents <Control-B1-Motion> {LR %W %x %y}
+    EvDeclareEventHandler tkMotionEvents <Control-B2-Motion> {UD %W %x %y}
+    EvDeclareEventHandler tkMotionEvents <Control-B3-Motion> {BF %W %x %y}
+    EvDeclareEventHandler tkMotionEvents <Shift-B1-Motion> {Pitch %W %x %y}
+    EvDeclareEventHandler tkMotionEvents <Shift-B2-Motion> {Roll %W %x %y}
+    EvDeclareEventHandler tkMotionEvents <Shift-B3-Motion> {Yaw %W %x %y}
 
-    bind $widget <Any-ButtonPress> {StartMotion %W %x %y}
-    bind $widget <Any-ButtonRelease> {EndMotion %W %x %y}
-    bind $widget <B1-Motion> {Rotate %W %x %y}
-    bind $widget <B2-Motion> {Pan %W %x %y}
-    bind $widget <B3-Motion> {Zoom %W %x %y}
-    bind $widget <Control-B1-Motion> {LR %W %x %y}
-    bind $widget <Control-B2-Motion> {UD %W %x %y}
-    bind $widget <Control-B3-Motion> {BF %W %x %y}
-    bind $widget <Shift-B1-Motion> {Pitch %W %x %y}
-    bind $widget <Shift-B2-Motion> {Roll %W %x %y}
-    bind $widget <Shift-B3-Motion> {Yaw %W %x %y}
-    bind $widget <KeyPress-r> {Reset %W %x %y}
-    bind $widget <KeyPress-u> {wm deiconify .vtkInteract}
-    bind $widget <KeyPress-w> Wireframe
-    bind $widget <KeyPress-s> Surface
-    bind $widget <Enter> {Enter %W %x %y;}
-    bind $widget <Leave> {focus $oldFocus;}
-    bind $widget <Expose> {Expose %W}
+    EvDeclareEventHandler tkRegularEvents <KeyPress-r> {Reset %W %x %y}
+    EvDeclareEventHandler tkRegularEvents <KeyPress-u> {wm deiconify .vtkInteract}
+    EvDeclareEventHandler tkRegularEvents <KeyPress-w> Wireframe
+    EvDeclareEventHandler tkRegularEvents <KeyPress-s> Surface
+    EvDeclareEventHandler tkRegularEvents <Enter> {Enter %W %x %y;}
+    EvDeclareEventHandler tkRegularEvents <Leave> {focus $oldFocus;}
+    EvDeclareEventHandler tkRegularEvents <Expose> {Expose %W}
+
+    ###### binding of event set that contains all the regular events ######
+    EvAddWidgetToBindingSet bindTkRegularAndMotionEvents $widget {{tkMouseClickEvents} {tkMotionEvents} {tkRegularEvents}}
+    ###### binding of event set that contains all the motion events #######
+    EvAddWidgetToBindingSet bindTkRegularEvents $widget {tkRegularEvents}
+    
+    #### activate the regular and motion events binding 
+    #### (should be deactivated when a new set of motion events are to be used
+    ####  instead, see tcl-modules/Endoscopic.tcl for example)
+    EvActivateBindingSet bindTkRegularAndMotionEvents 
 }
 
 #-------------------------------------------------------------------------------
