@@ -3,8 +3,8 @@
   Program:   Insight Segmentation & Registration Toolkit
   Module:    $RCSfile: itkHistogramImageToImageMetric.h,v $
   Language:  C++
-  Date:      $Date: 2004/01/02 21:12:16 $
-  Version:   $Revision: 1.3 $
+  Date:      $Date: 2004/01/02 21:45:01 $
+  Version:   $Revision: 1.4 $
 
   Copyright (c) Insight Software Consortium. All rights reserved.
   See ITKCopyright.txt or http://www.itk.org/HTML/Copyright.htm for details.
@@ -33,7 +33,7 @@ namespace itk
  
   \ingroup RegistrationMetrics */
 template <class TFixedImage, class TMovingImage>
-class VTK_RIGIDINTENSITYREGISTRATION_EXPORT HistogramImageToImageMetric : 
+class ITK_EXPORT HistogramImageToImageMetric : 
 public ImageToImageMetric<TFixedImage, TMovingImage>
 {
 public:
