@@ -8,10 +8,12 @@
 proc ToolsInit {} {
 	global env
 	set home [file join $env(SLICER_HOME) program]
-	set homebitmaps [file join $home gui/bitmaps]
+	set homebitmaps [file join $home gui bitmaps]
 
-	foreach foo [exec ls [file join $home gui/bitmaps]] {
-		image create bitmap $foo -file [file join $homebitmaps $foo]
+	foreach foo [exec ls [file join $home gui bitmaps]] {
+		if { [file extension $foo] == ".bmp" } {
+		  image create bitmap $foo -file [file join $homebitmaps $foo]
+		  }
 		}
 
 	}
