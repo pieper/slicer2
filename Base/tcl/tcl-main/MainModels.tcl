@@ -74,7 +74,7 @@ proc MainModelsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainModels \
-        {$Revision: 1.48 $} {$Date: 2002/03/21 23:05:22 $}]
+        {$Revision: 1.49 $} {$Date: 2002/10/04 17:52:54 $}]
 
     set Model(idNone) -1
     set Model(activeID) ""
@@ -331,7 +331,12 @@ proc MainModelsRead {m} {
     } elseif {$suffix == ".vtk"} {
         vtkPolyDataReader reader
         reader SetFileName $fileName
+    }  elseif {$suffix == ".orig" || $suffix == ".inflated" || $suffix == ".pial"} {
+        # read in a free surfer file
+        vtkFSSurfaceReader reader
+        reader SetFileName $fileName
     }
+
 
     # Progress Reporting
     reader SetStartMethod     MainStartProgress
