@@ -106,6 +106,12 @@ public:
   vtkSetMacro(StepDt,float);
   vtkGetMacro(StepDt,float);
   //
+
+  // current iteration number
+  //
+  vtkSetMacro(step,int);
+  vtkGetMacro(step,int);
+  //
   vtkSetMacro(CheckFreq,int);
   vtkGetMacro(CheckFreq,int);
   //
