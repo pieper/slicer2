@@ -24,8 +24,8 @@ exec tclsh "$0" "$@"
 
 switch $tcl_platform(os) {
     "SunOS" {
-        set SLICER_HOME /projects/birn/slicer2/latest/slicer2
-        set VTK_BINARY_PATH /projects/birn/slicer2/Lib/solaris8/vtk/VTK-build
+        set SLICER_HOME /projects/birn/slicer2/slicer2-2003-03-06-patches
+        set VTK_BINARY_PATH /projects/birn/slicer2/Lib/solaris8/vtk/VTK-build-4.2.2
         set ITK_BINARY_PATH /projects/birn/itk/itk-1.2/itk-build
         set BUILD solaris8
         set VTKSLICERBASE_BUILD_LIB $SLICER_HOME/Base/builds/$BUILD/bin/vtkSlicerBase.so
@@ -186,7 +186,7 @@ foreach target $TARGETS {
             puts "running: make"
 
             # print the results line by line to provide feedback during long builds
-            set fp [open "| make |& cat" "r"]
+            set fp [open "| gmake -j8 |& cat" "r"]
             while { ![eof $fp] } {
                 gets $fp line
                 puts $line
