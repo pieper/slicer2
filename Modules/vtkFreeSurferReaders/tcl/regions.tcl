@@ -585,8 +585,9 @@ itcl::body regions::findptscalars {} {
         foreach id $Point(idList) {
             vtkTextureText tt-$id
             tt-$id SetText [Point($id,node) GetName]
-            tt-$id SetBlur 3
+            [tt-$id GetFontParameters] SetBlur 3
             Point($id,node) SetName "."
+            tt-$id CreateTextureText
             [[tt-$id GetFollower] GetProperty] SetColor 0 0 0
             vtkTextCard tc-$id
             [QA_sch GetTextCards] AddItem tc-$id
