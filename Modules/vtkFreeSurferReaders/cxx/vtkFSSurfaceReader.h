@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkFSSurfaceReader.h,v $
   Language:  C++
-  Date:      $Date: 2002/10/04 22:05:14 $
-  Version:   $Revision: 1.3 $
+  Date:      $Date: 2002/10/07 21:08:47 $
+  Version:   $Revision: 1.4 $
 
 =========================================================================*/
 // .NAME vtkFSSurfaceReader - read a surface file from Freesurfer tools
@@ -65,10 +65,6 @@ protected:
   int ExecutePiece;
   int ExecuteNumberOfPieces;
   int ExecuteGhostLevel;
-
-  int ReadInt3 (FILE* iFile, int& oInt);
-  int ReadInt2 (FILE* iFile, int& oInt);
-  int ReadFloat (FILE* iFile, float& oInt);
 
 private:
   vtkFSSurfaceReader(const vtkFSSurfaceReader&);  // Not implemented.

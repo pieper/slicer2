@@ -3,14 +3,15 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkFSSurfaceReader.cxx,v $
   Language:  C++
-  Date:      $Date: 2002/10/04 22:05:14 $
-  Version:   $Revision: 1.4 $
+  Date:      $Date: 2002/10/07 21:08:47 $
+  Version:   $Revision: 1.5 $
 
 =========================================================================*/
 #include "vtkFSSurfaceReader.h"
 #include "vtkObjectFactory.h"
 #include "vtkByteSwap.h"
 #include "vtkFloatArray.h"
+#include "vtkFSIO.h"
 
 //-------------------------------------------------------------------------
 vtkFSSurfaceReader* vtkFSSurfaceReader::New()
@@ -94,46 +95,6 @@ void vtkFSSurfaceReader::ComputeInputUpdateExtents(vtkDataObject *data)
   this->ExecuteGhostLevel = ghostLevel;
 }
 
-int vtkFSSurfaceReader::ReadInt3 (FILE* iFile, int& oInt) {
-
-  int i = 0;
-  int result ;
-
-  // Read three bytes. Swap if we need to. Stuff into a full sized int
-  // and return.
-  result = fread (&i, 3, 1, iFile);
-  vtkByteSwap::Swap4BE (&i);
-  oInt = ((i>>8) & 0xffffff);
-
-  return result;
-}
-
-int vtkFSSurfaceReader::ReadInt2 (FILE* iFile, int& oInt) {
-
-  int i = 0;
-  int result ;
-
-  // Read two bytes. Swap if we need to. Return the value
-  result = fread (&i, 2, 1, iFile);
-  vtkByteSwap::Swap4BE (&i);
-  oInt = i;
-  
-  return result;
-}
-
-int vtkFSSurfaceReader::ReadFloat (FILE* iFile, float& oFloat) {
-
-  float f = 0;
-  int result ;
-
-  // Read a float. Swap if we need to. Return the value
-  result = fread (&f, 4, 1, iFile);
-  vtkByteSwap::Swap4BE (&f);
-  oFloat = f;
-  
-  return result;
-}
-
 void vtkFSSurfaceReader::Execute()
 {
   FILE* surfaceFile;
@@ -176,7 +137,7 @@ void vtkFSSurfaceReader::Execute()
   }  
 
   // Get the three byte magic number. We support two file types.
-  ReadInt3 (surfaceFile, magicNumber);
+  vtkFSIO::ReadInt3 (surfaceFile, magicNumber);
   if (magicNumber != FS_QUAD_FILE_MAGIC_NUMBER &&
       magicNumber != FS_NEW_QUAD_FILE_MAGIC_NUMBER &&
       magicNumber != FS_TRIANGLE_FILE_MAGIC_NUMBER) {
@@ -211,8 +172,8 @@ void vtkFSSurfaceReader::Execute()
   switch (magicNumber) {
   case FS_QUAD_FILE_MAGIC_NUMBER: 
   case FS_NEW_QUAD_FILE_MAGIC_NUMBER: 
-    ReadInt3 (surfaceFile, numVertices);
-    ReadInt3 (surfaceFile, numFaces);
+    vtkFSIO::ReadInt3 (surfaceFile, numVertices);
+    vtkFSIO::ReadInt3 (surfaceFile, numFaces);
     break;
   case FS_TRIANGLE_FILE_MAGIC_NUMBER: 
     fread (&numVertices, sizeof(int), 1, surfaceFile);
@@ -270,18 +231,18 @@ void vtkFSSurfaceReader::Execute()
     // use floats.
     switch (magicNumber) {
     case FS_QUAD_FILE_MAGIC_NUMBER: 
-      ReadInt2 (surfaceFile, tmpX);
-      ReadInt2 (surfaceFile, tmpY);
-      ReadInt2 (surfaceFile, tmpZ);
+      vtkFSIO::ReadInt2 (surfaceFile, tmpX);
+      vtkFSIO::ReadInt2 (surfaceFile, tmpY);
+      vtkFSIO::ReadInt2 (surfaceFile, tmpZ);
       locations[0] = (float)tmpX / 100.0;
       locations[1] = (float)tmpY / 100.0;
       locations[2] = (float)tmpZ / 100.0;
       break;
     case FS_NEW_QUAD_FILE_MAGIC_NUMBER: 
     case FS_TRIANGLE_FILE_MAGIC_NUMBER: 
-      ReadFloat (surfaceFile, locations[0]);
-      ReadFloat (surfaceFile, locations[1]);
-      ReadFloat (surfaceFile, locations[2]);
+      vtkFSIO::ReadFloat (surfaceFile, locations[0]);
+      vtkFSIO::ReadFloat (surfaceFile, locations[1]);
+      vtkFSIO::ReadFloat (surfaceFile, locations[2]);
       break;
     }
     
@@ -328,7 +289,7 @@ void vtkFSSurfaceReader::Execute()
       switch (magicNumber) {
       case FS_QUAD_FILE_MAGIC_NUMBER: 
       case FS_NEW_QUAD_FILE_MAGIC_NUMBER: 
-    ReadInt3 (surfaceFile, tmpfIndex);
+    vtkFSIO::ReadInt3 (surfaceFile, tmpfIndex);
     break;
       case FS_TRIANGLE_FILE_MAGIC_NUMBER: 
     fread (&tmpfIndex, sizeof(int), 1, surfaceFile);
