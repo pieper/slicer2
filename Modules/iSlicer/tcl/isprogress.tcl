@@ -84,8 +84,8 @@ itcl::body isprogress::constructor {args} {
     set  _geometry      "400x15"
     set  _abort         "0"
     set  _use_main_progress "1"
-    puts $_w
-    puts $_name
+    # puts $_w
+    # puts $_name
     global Gui
 
     catch {toplevel $_w}

@@ -81,7 +81,7 @@ if { [itcl::find class isregistration] == "" } {
 
         itk_option define -translatescale translatescale Translatescale 64
 
-        itk_option define -verbose verbose Verbose 1
+        itk_option define -verbose verbose Verbose 0
         itk_option define -update_procedure updateprocedure UpdateProcedure ""
         itk_option define -stop_procedure stopprocedure StopProcedure ""
         itk_option define -auto_repeat auto_repeat Auto_repeat 1
@@ -390,13 +390,17 @@ itcl::body isregistration::step {} {
     set i [lindex $itk_option(-source_shrink) 0 ]
     set j [lindex $itk_option(-source_shrink) 1 ]
     set k [lindex $itk_option(-source_shrink) 2 ]
-    puts "$i $j $k $itk_option(-source_shrink)"
+    if {$itk_option(-verbose)} {
+        puts "$i $j $k $itk_option(-source_shrink)"
+    }
     $_reg SetSourceShrinkFactors $i $j $k
 
     set i [lindex $itk_option(-target_shrink) 0 ]
     set j [lindex $itk_option(-target_shrink) 1 ]
     set k [lindex $itk_option(-target_shrink) 2 ]
-    puts "$i $j $k $itk_option(-target_shrink)"
+    if {$itk_option(-verbose)} {
+        puts "$i $j $k $itk_option(-target_shrink)"
+    }
     $_reg SetTargetShrinkFactors $i $j $k
 
     ## Reset for MultiResSettings
@@ -565,15 +569,15 @@ itcl::body isregistration::update_slicer_mat {} {
 # 0.0507421 0.0316625 0.99821 -4 
 # 0 0 0 1 
 
-
-    puts "Starting slicer updated matrix"
-    puts "The mat"
-    puts [$this StringMatrix $mat]
-    puts "P1"
-    puts [$this StringMatrix [$this getP1]]
-    puts "P2"
-    puts [$this StringMatrix [$this getP2]]
-
+    if {$itk_option(-verbose)} {
+        puts "Starting slicer updated matrix"
+        puts "The mat"
+        puts [$this StringMatrix $mat]
+        puts "P1"
+        puts [$this StringMatrix [$this getP1]]
+        puts "P2"
+        puts [$this StringMatrix [$this getP2]]
+    }
 ## (p1^-1 mat p2)^-1 = p2^-1 mat^-1 p1
 ## So, both of these are identical.
     if {0} {
@@ -591,9 +595,9 @@ itcl::body isregistration::update_slicer_mat {} {
     Matrix($t,node) SetMatrix [$this StringMatrix $mat]
 
     if {$itk_option(-verbose)} {
-    set results_mat [$this StringMatrix [$_reg GetOutputMatrix] ]
+        set results_mat [$this StringMatrix [$_reg GetOutputMatrix] ]
         puts "resulting mat: $results_mat"
-    set tmp_mat [Matrix($t,node) GetMatrix]
+        set tmp_mat [Matrix($t,node) GetMatrix]
         puts "actually set $tmp_mat"
     }
 
@@ -650,8 +654,10 @@ itcl::body isregistration::set_init_mat {} {
     $p1mat Invert
     $mat Invert
     $this GetSimilarityMatrix [$this getP1] $mat $p1mat
-    puts "switch, before--"
-    puts [$this StringMatrix $mat]
+    if {$itk_option(-verbose)} {
+        puts "switch, before--"
+        puts [$this StringMatrix $mat]
+    }
     } else {
 #### works
     ## normal p1,p2, invert mat after
@@ -660,8 +666,10 @@ itcl::body isregistration::set_init_mat {} {
     $p1mat Invert
     $this GetSimilarityMatrix [$this getP2] $mat $p1mat
     $mat Invert
-    puts "normal, after--"
-    puts [$this StringMatrix $mat]
+    if {$itk_option(-verbose)} {
+        puts "normal, after--"
+        puts [$this StringMatrix $mat]
+    }
     }
 
 #### does not work
@@ -740,7 +748,9 @@ itcl::body isregistration::getP1 {  } {
     vtkMatrix4x4 $_p1
 
     GetSlicerRASToItkMatrix Volume($itk_option(-source),node) $_p1
-    puts [$this StringMatrix $_p1]
+    if {$itk_option(-verbose)} {
+         puts [$this StringMatrix $_p1]
+    }
     return $_p1
 }
 
@@ -758,7 +768,9 @@ itcl::body isregistration::getP2 {  } {
     vtkMatrix4x4 $_p2
 
     GetSlicerRASToItkMatrix Volume($itk_option(-target),node) $_p2
-    puts [$this StringMatrix $_p2]
+    if {$itk_option(-verbose)} {
+        puts [$this StringMatrix $_p2]
+    }
     return $_p2
 }
 
