@@ -243,6 +243,7 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
   int i, j;
   vtkFloatingPointType trace, norm;
   int extractEigenvalues;
+  vtkFloatingPointType cl;
   // scaling
   vtkFloatingPointType scaleFactor = self->GetScaleFactor();
   // transformation of tensor orientations for coloring
@@ -425,13 +426,15 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
                  trans->TransformPoint(v0,v0);
                 }
               // Color R, G, B depending on max eigenvector
-              *outPtr = (T)(scale*fabs(v[0][0]));
+              //Before
+              cl = (w[0]-w[1])/w[0];
+              *outPtr = (T)(scale*fabs(v[0][0])*cl);
               outPtr++;
-              *outPtr = (T)(scale*fabs(v[1][0]));
+              *outPtr = (T)(scale*fabs(v[1][0])*cl);
               outPtr++;
-              *outPtr = (T)(scale*fabs(v[2][0]));
+              *outPtr = (T)(scale*fabs(v[2][0])*cl);
               outPtr++;
-              
+
               // A: alpha (opacity) depends on anisotropy
               // We want opacity to be less in spherical case.
               // Also in general less when trace is small.
