@@ -95,7 +95,7 @@ proc EditorInit {} {
     
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.46 $} {$Date: 2001/02/20 14:07:00 $}]
+	    {$Revision: 1.47 $} {$Date: 2001/02/22 15:19:21 $}]
     
     # Initialize globals
     set Editor(idOriginal)  $Volume(idNone)
@@ -1009,7 +1009,7 @@ proc EditorBuildGUI {} {
 # .END
 #-------------------------------------------------------------------------------
 proc EditorEnter {} {
-    global Editor Volume Slice
+    global Editor Volume Slice Module Ed
 
     # If the Original is None, then select what's being displayed,
     # otherwise the first volume in the mrml tree.
@@ -1029,6 +1029,17 @@ proc EditorEnter {} {
 
     # update GUI
     EditorSetSaveVolume
+
+    # if we have entered right to the Details tab, need to call 
+    # the procEnter of the effect
+    if {$Module(Editor,$Module(Editor,row),tab) == "Details"} {
+	# Call the Enter procedure of the active effect
+	set e $Editor(activeID)
+	if {[info exists Ed($e,procEnter)] == 1} {
+	    puts "calling $Ed($e,procEnter)"
+	    $Ed($e,procEnter)
+	}
+    }
 }
 
 
