@@ -417,7 +417,7 @@ proc DevAddSelectButton { TabName f aLabel message pack {tooltip ""} \
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc DevUpdateNodeSelectButton { type ArrayName Label Name { CommandSet "DevSelect" } { None 1 } { New 0 } { LabelMap 1 } {Command2Set ""} } {
+proc DevUpdateNodeSelectButton { type ArrayName Label Name { CommandSet "DevSelectNode" } { None 1 } { New 0 } { LabelMap 1 } {Command2Set ""} } {
 
     global Volume Model Tensor
     upvar $ArrayName LocalArray
