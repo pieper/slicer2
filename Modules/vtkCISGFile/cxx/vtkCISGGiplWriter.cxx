@@ -11,8 +11,8 @@
               Div. of Radiological Sciences, 
               Computational Imaging Science Group, 1997 - 2000
   Purpose   : 
-  Date      : $Date: 2003/08/14 17:32:35 $
-  Version   : $Revision: 1.1 $
+  Date      : $Date: 2004/09/16 18:52:03 $
+  Version   : $Revision: 1.2 $
 =========================================================================*/
 #include "vtkCISGGiplWriter.h"
 #include "vtkObjectFactory.h"
@@ -84,8 +84,8 @@ void vtkCISGGiplWriter::WriteData()
   to.Open(this->GetFileName());
 
   int Dimensions[3];
-  float PixelSize[3];
-  float DataOrigin[3], GIPLOrigin[3] ;
+  vtkFloatingPointType PixelSize[3];
+  vtkFloatingPointType DataOrigin[3], GIPLOrigin[3] ;
 
   vtkStructuredPoints *input= (vtkStructuredPoints *)this->GetInput();
 
@@ -172,7 +172,7 @@ void vtkCISGGiplWriter::WriteData()
   to.WriteAsChar(0, 186);
   to.WriteAsChar(0, 187);
 
-  float *range=input->GetScalarRange();
+  vtkFloatingPointType *range=input->GetScalarRange();
   to.WriteAsDouble(range[0], 188);
   to.WriteAsDouble(range[1], 196);
 

@@ -11,8 +11,8 @@
               Div. of Radiological Sciences, 
               Computational Imaging Science Group, 1997 - 2000
   Purpose   : 
-  Date      : $Date: 2003/08/14 17:32:34 $
-  Version   : $Revision: 1.1 $
+  Date      : $Date: 2004/09/16 18:52:02 $
+  Version   : $Revision: 1.2 $
 =========================================================================*/
 #include "vtkCISGAnalyzeWriter.h"
 #include "vtkObjectFactory.h"
@@ -108,7 +108,7 @@ void vtkCISGAnalyzeWriter::WriteData()
   short *voxels = ((vtkShortArray *)scalars)->WritePointer(0, nvoxels);
 
   input->GetPointData()->GetScalars()->ComputeRange(0);
-  float *range=input->GetPointData()->GetScalars()->GetRange();
+  vtkFloatingPointType *range=input->GetPointData()->GetScalars()->GetRange();
 
 
 

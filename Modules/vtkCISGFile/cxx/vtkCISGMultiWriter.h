@@ -11,8 +11,8 @@
               Div. of Radiological Sciences, 
               Computational Imaging Science Group, 1997 - 2000
               http://www-ipg.umds.ac.uk/cisg
-  Date      : $Date: 2003/08/14 17:32:37 $
-  Version   : $Revision: 1.1 $
+  Date      : $Date: 2004/09/16 18:52:03 $
+  Version   : $Revision: 1.2 $
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -156,12 +156,12 @@ class VTK_CISGFILE_EXPORT vtkCISGMultiWriter : public vtkDataWriter {
 
   // Member to hold the image origin. By default, this is (0,0,0) in mm,
   // centred in the image.  
-  float Origin[3];
+  vtkFloatingPointType Origin[3];
 
   // Description:
   // Member to hold the image voxel size. By default, this is 1mm x 1mm x
   // 1mm.
-  float Size[3];
+  vtkFloatingPointType Size[3];
 
   // Description:
   // Member to hold the image dimensions. By default, this is 0 x 0 x 0

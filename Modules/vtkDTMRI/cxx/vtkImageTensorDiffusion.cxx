@@ -261,7 +261,7 @@ static void vtkImageTensorDiffusionExecute(vtkImageTensorDiffusion *self,
 
           // Diffuse neighbors using tensors
           // -----------------------------
-          tensors->GetTuple(index,(float *)tensor);
+          tensors->GetTuple(index,(vtkFloatingPointType *)tensor);
 
           // construct mask M from tensor data
           float Dxx, Dyy, Dzz, Dxy, Dxz, Dyz, trace;

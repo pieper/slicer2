@@ -11,8 +11,8 @@
               Div. of Radiological Sciences, 
               Computational Imaging Science Group, 1997 - 2000
               http://www-ipg.umds.ac.uk/cisg
-  Date      : $Date: 2003/08/14 17:32:36 $
-  Version   : $Revision: 1.1 $
+  Date      : $Date: 2004/09/16 18:52:03 $
+  Version   : $Revision: 1.2 $
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -323,7 +323,7 @@ void vtkCISGInterfileWriter::WriteData()
   int nvoxels = Dim[0]*Dim[1]*Dim[2];
   short *voxels = ((vtkShortArray *)scalars)->WritePointer(0, nvoxels);
   input->GetPointData()->GetScalars()->ComputeRange(0);
-  float *range=input->GetPointData()->GetScalars()->GetRange();
+  vtkFloatingPointType *range=input->GetPointData()->GetScalars()->GetRange();
 
 
   // Create the filename of the data file
