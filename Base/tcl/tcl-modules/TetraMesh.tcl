@@ -4,7 +4,7 @@
 # This software ("3D Slicer") is provided by The Brigham and Women's 
 # Hospital, Inc. on behalf of the copyright holders and contributors. 
 # Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for internal 
+# and distribute this software and its documentation, if any, for 
 # research purposes only, provided that (1) the above copyright notice and 
 # the following four paragraphs appear on all copies of this software, and 
 # (2) that source code to any modifications to this software be made 
@@ -168,7 +168,7 @@ proc TetraMeshInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.35 $} {$Date: 2003/03/13 22:31:05 $}]
+        {$Revision: 1.36 $} {$Date: 2003/03/19 19:16:34 $}]
 
     # Initialize module-level variables
     #------------------------------------
