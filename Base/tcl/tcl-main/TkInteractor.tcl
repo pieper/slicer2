@@ -100,6 +100,10 @@ proc CreateAndBindTkEvents { widget } {
     EvDeclareEventHandler tkRegularEvents <Leave> {Leave %W %x %y;}
     EvDeclareEventHandler tkRegularEvents <Expose> {Expose %W}
 
+  # jeanette 
+    EvDeclareEventHandler tkMouseClickEvents <Double-Any-ButtonPress> { if { [SelectPick Endoscopic(picker) %W %x %y] != 0 } \
+    { eval EndoscopicAddLandmarkFromWorldCoordinates $Select(xyz) $Select(cellId)}}   
+
     if {[IsModule Fiducials] == 1 ||[IsModule Alignments] == 1} {
         EvDeclareEventHandler tkRegularEvents <KeyPress-p> { 
             if { [SelectPick Fiducials(picker) %W %x %y] != 0 } \
@@ -138,6 +142,7 @@ proc CreateAndBindTkEvents { widget } {
 
     ###### binding of event set that contains all the regular events ######
     EvAddWidgetToBindingSet bindTkRegularAndMotionEvents $widget {{tkMouseClickEvents} {tkMotionEvents} {tkRegularEvents}}
+    
     ###### binding of event set that contains all the motion events #######
     EvAddWidgetToBindingSet bindTkRegularEvents $widget {tkRegularEvents}
     
