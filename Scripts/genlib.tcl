@@ -386,6 +386,7 @@ if { ![file exists $itkTestFile] } {
         -DBUILD_SHARED_LIBS:BOOL=ON \
         -DBUILD_EXAMPLES:BOOL=OFF \
         -DBUILD_TESTING:BOOL=OFF \
+        -DCMAKE_BUILD_TYPE:STRING=$::VTK_BUILD_TYPE \
         ../Insight
 
     if {$isWindows} {
