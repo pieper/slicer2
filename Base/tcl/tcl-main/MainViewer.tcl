@@ -48,7 +48,7 @@ proc MainViewerInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainViewer \
-        {$Revision: 1.24 $} {$Date: 2002/07/26 23:41:52 $}]
+        {$Revision: 1.25 $} {$Date: 2002/07/31 21:25:56 $}]
 
         # Props
     set Gui(midHeight) 1
@@ -84,10 +84,10 @@ proc MainViewerBuildGUI {} {
     # Viewer frame
     #-------------------------------------------
     set f $Gui(fViewer)
-    frame $f.fTop -bg $Gui(backdrop)
+    frame $f.fTop -bg $Gui(backdrop) -width 100 -height 100
     frame $f.fBot -bg $Gui(backdrop)
     frame $f.fMid -bg $Gui(backdrop)
-    set Gui(fTop) $f.fTop
+    set Gui(fTop) $f.fTop 
     set Gui(fBot) $f.fBot
     set Gui(fMid) $f.fMid
     
@@ -97,6 +97,7 @@ proc MainViewerBuildGUI {} {
 
     set Gui(fViewWin) $Gui(fViewer).fViewWin
 
+    update idletasks
     vtkTkRenderWidget $Gui(fViewWin) -width $View(viewerHeight) -height $View(viewerHeightNormal)
     CreateAndBindTkEvents $Gui(fViewWin) 
 
