@@ -168,7 +168,7 @@ proc TetraMeshInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.36 $} {$Date: 2003/03/19 19:16:34 $}]
+        {$Revision: 1.37 $} {$Date: 2003/07/08 16:13:26 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -194,6 +194,9 @@ proc TetraMeshInit {} {
         #
 
         vtkMatrix4x4 ModelMoveOriginMatrix
+
+    set TetraMesh(TensorSkip) 2
+    set TetraMesh(TensorScaling) 1
 }
 
 
@@ -520,7 +523,7 @@ The TetraMesh module allows a user to read in a Tetrahedral Mesh.  The Mesh is c
         #
 
         set row 1
-    foreach p "Surfaces Edges Nodes Scalars Vectors" {
+    foreach p "Surfaces Edges Nodes Scalars Vectors Tensors" {
             eval {radiobutton $f.f.$row.r$p \
             -text "$p" -command "TetraMeshSetProcessType" \
             -variable TetraMesh(ProcessType) -value $p -width 10 \
@@ -537,7 +540,7 @@ The TetraMesh module allows a user to read in a Tetrahedral Mesh.  The Mesh is c
 
     set f $fVisualize.fOptions
 
-    foreach type "Surfaces Edges Nodes Scalars Vectors" {
+    foreach type "Surfaces Edges Nodes Scalars Vectors Tensors" {
         frame $f.f${type} -bg $Gui(activeWorkspace)
         place $f.f${type} -in $f -relheight 1.0 -relwidth 1.0
         set TetraMesh(f${type}) $f.f${type}
@@ -580,6 +583,38 @@ The TetraMesh module allows a user to read in a Tetrahedral Mesh.  The Mesh is c
 
         DevAddLabel $f.l "Grab the Edges of the mesh"
         pack $f.l -side left -padx $Gui(pad)
+
+    #-------------------------------------------
+    # Visualize->Options->Tensors
+    #-------------------------------------------
+        set ff $fVisualize.fOptions.fTensors
+
+    foreach frame "Scale Skip" {
+        frame $ff.f$frame -bg $Gui(activeWorkspace)
+        pack $ff.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
+    }
+
+           #-------------------------------------------
+           # TField->Scale
+           #-------------------------------------------
+           set f $ff.fScale
+   
+           DevAddLabel  $f.lArrowScale "Arrow Scaling"
+           eval {entry $f.eArrowScale -textvariable TetraMesh(TensorScaling) -width 5} $Gui(WEA)
+   
+           pack $f.lArrowScale $f.eArrowScale -side left -padx $Gui(pad)
+   
+           #-------------------------------------------
+           # TField->Skip
+           #-------------------------------------------
+   
+           set f $ff.fSkip
+   
+           DevAddLabel  $f.lArrowSkip "Keep Every Nth Arrow:"
+           eval {entry $f.eArrowSkip -textvariable TetraMesh(TensorSkip) -width 5} $Gui(WEA)
+   
+           pack $f.lArrowSkip $f.eArrowSkip -side left -padx $Gui(pad)
+
 
     #-------------------------------------------
     # Visualize->Options->Nodes
@@ -1214,6 +1249,102 @@ proc TetraMeshGetTransform {} {
 #  puts [$matrix GetElement 3 3]
 }
 
+#-------------------------------------------------------------------------------
+# .PROC TetraMeshProcessTensors
+#
+# Takes a TetraMesh and produces a Model of Tensors
+# Only real 3x3 tensors allowed
+#
+# Returns the ids of the models created
+#
+# .END
+#-------------------------------------------------------------------------------
+proc TetraMeshProcessTensors {} {
+    global TetraMesh Model Module
+
+######################################################################
+#### Get the input mesh
+######################################################################
+
+    set modelbasename "$TetraMesh(modelbasename)"
+
+    set CurrentTetraMesh $TetraMesh(ProcessMesh)
+
+######################################################################
+#### Get the range of the data, not exactly thread safe. See vtkDataSet.h
+#### But, since we are not concurrently modifying the dataset, we should
+#### be OK.
+######################################################################
+
+set tmptensors [[$CurrentTetraMesh GetPointData] GetTensors] 
+if { $tmptensors == ""} {
+    DevErrorWindow "No Tensor Data in Mesh"
+    return
+}
+
+set range [$CurrentTetraMesh GetScalarRange]
+set lowscalar [ lindex $range 0 ] 
+set highscalar [ lindex $range 1 ] 
+
+  ## need to hold on to full range of scalars
+  ## so that each model gets a different color
+set LOWSCALAR $lowscalar
+set HIGHSCALAR $highscalar
+set TetraMeshFractionOn $TetraMesh(TensorSkip)
+set TetraMeshArrowScale $TetraMesh(TensorScaling)
+
+#######################################################################
+#### Setup the pipeline: Ellipse -> PointMaskSelection -> Glyph data
+#######################################################################
+
+  TetraMeshGetTransform
+
+vtkSphereSource TetraSphere
+    TetraSphere SetThetaResolution 8
+    TetraSphere SetPhiResolution 8
+vtkMaskPoints PointSelection
+    PointSelection SetInput $CurrentTetraMesh
+    PointSelection SetOnRatio $TetraMeshFractionOn
+    PointSelection RandomModeOff
+vtkTransformFilter TransPoints
+  TransPoints SetTransform TheTransform
+  TransPoints SetInput [PointSelection GetOutput]
+vtkTensorGlyph TensorGlyph
+    TensorGlyph SetInput [TransPoints GetOutput]
+    TensorGlyph SetSource [TetraSphere GetOutput]
+    TensorGlyph SetScaleFactor $TetraMesh(TensorScaling)
+    # TensorGlyph ClampScalingOn
+#vtkGlyph3D VectorGlyph
+#  VectorGlyph SetInput [TransPoints GetOutput]
+#  VectorGlyph SetSource [TetraCone GetOutput]
+#  VectorGlyph SetScaleModeToScaleByVector
+##  VectorGlyph SetScaleModeToDataScalingOff
+#  VectorGlyph SetScaleFactor $TetraMeshArrowScale
+#  VectorGlyph Print
+#VectorGlyph Update
+
+  TensorGlyph Update
+  TensorGlyph Print
+
+set m [ TetraMeshCreateModel ${modelbasename}Tensor 0 10 ]
+#set m [ TetraMeshCreateModel ${modelbasename}Tensor $LOWSCALAR $HIGHSCALAR ]
+
+ #############################################################
+ #### Copy the output and set up the renderers
+ #############################################################
+
+  ### Need to copy the output of the pipeline so that the results
+  ### Don't get over-written later. Also, when we delete the inputs,
+  ### We don't want the outputs deleted. These lines should prevent this.
+  TetraMeshCopyPolyData [TensorGlyph GetOutput] $m
+
+TheTransform Delete
+TransPoints Delete
+TetraSphere Delete
+PointSelection Delete
+TensorGlyph Delete
+return $m
+}   
 #-------------------------------------------------------------------------------
 # .PROC TetraMeshProcessEdges
 #
