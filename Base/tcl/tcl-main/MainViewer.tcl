@@ -285,9 +285,20 @@ proc MainViewerAnno {dim} {
 # .PROC MainViewerSetMode
 # .END
 #-------------------------------------------------------------------------------
-proc MainViewerSetMode {} {
+proc MainViewerSetMode {{mode ""}} {
 	global Slice View Gui Anno
 
+    # set View(mode) if called with an argument
+    if {$mode != ""} {
+	if {$mode == "Normal" || $mode == "Quad256"  || $mode == "Quad512" \
+		|| $mode == "3D" } {
+	    set View(mode) $mode
+	} else {
+	    return
+	}   
+    }
+
+	
 	set f $Gui(fViewer)
 	pack forget $f.fBot $f.fTop $f.fMid \
 		$f.fSlice0 $f.fSlice1 $f.fSlice2 $f.fViewWin
