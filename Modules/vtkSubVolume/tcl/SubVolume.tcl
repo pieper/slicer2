@@ -105,7 +105,7 @@ proc SubVolumeInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.5 $} {$Date: 2004/07/19 19:20:19 $}]
+        {$Revision: 1.6 $} {$Date: 2004/08/11 14:40:03 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -604,6 +604,15 @@ proc SubVolumeEnter {} {
     #Create 3D cube
     SubVolumeCreate3DCube
 
+    #Change welcome logo if it exits under ./image
+    set modulepath $::PACKAGE_DIR_VTKSubVolume/../../../images
+    if {[file exist [ExpandPath [file join \
+                     $modulepath "welcome.ppm"]]]} {
+        image create photo iWelcome \
+        -file [ExpandPath [file join $modulepath "welcome.ppm"]]
+    }    
+
+
 }
 
 
@@ -625,10 +634,12 @@ proc SubVolumeExit {} {
     #
     popEventManager
     
-
-    
     #Remove 3D Cube
     SubVolumeDelete3DCube
+
+    #Restore standard slicer logo
+    image create photo iWelcome \
+        -file [ExpandPath [file join gui "welcome.ppm"]]
 }
 
 #-------------------------------------------------------------------------------
