@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkCORReader.h,v $
   Language:  C++
-  Date:      $Date: 2003/04/14 20:08:49 $
-  Version:   $Revision: 1.5 $
+  Date:      $Date: 2003/05/30 19:50:23 $
+  Version:   $Revision: 1.6 $
 
 =========================================================================*/
 // .NAME vtkFSCORReader - read COR file volume from Freesurfer tools
@@ -39,8 +39,16 @@ public:
   // Description: 
   // Other objects make use of these methods but we don't. Left here
   // but not implemented.
-  vtkImageData *GetImage(int ImageNumber);
-    
+    // Due to a change in vtk between versions 4.0 and 4.1, GetImage's
+    // declaration is not backwards compatible. Compiler preprocessor
+    // directives won't wrap properly in TCL so there's no automatic
+    // way to detect this and have it compile properly
+    // Uncomment the line after the next code line if the vtk version
+    // is lower than 4.1.
+    vtkImageData *GetImage(int ImageNumber);  
+//  vtkStructuredPoints *GetImage(int ImageNumber);
+
+
 protected:
   vtkCORReader();
   ~vtkCORReader();

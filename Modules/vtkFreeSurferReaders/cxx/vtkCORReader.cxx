@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkCORReader.cxx,v $
   Language:  C++
-  Date:      $Date: 2002/12/06 17:31:28 $
-  Version:   $Revision: 1.4 $
+  Date:      $Date: 2003/05/30 19:50:41 $
+  Version:   $Revision: 1.5 $
 
 =========================================================================*/
 #include "vtkCORReader.h"
@@ -87,11 +87,16 @@ void vtkCORReader::Execute()
       newScalars->Delete();
     }
 }
-
+// Due to a change in vtk between versions 4.0 and 4.1, GetImage's declaration
+// is not backwards compatible. Compiler preprocessor directives won't wrap
+// properly in TCL so there's no automatic way to detect this and have it
+// compile properly. Uncomment the line after the next code line if the vtk
+// version is lower than 4.1.  
 vtkImageData *vtkCORReader::GetImage(int ImageNumber)
+// vtkStructuredPoints *vtkCORReader::GetImage(int ImageNumber)
 {
-  cerr << "vtkCORReader::GetImage() called. uh oh." << endl;
-  return NULL;
+    cerr << "vtkCORReader::GetImage() called. uh oh." << endl;
+    return NULL;
 }
 
 vtkDataArray *vtkCORReader::ReadVolumeData()
