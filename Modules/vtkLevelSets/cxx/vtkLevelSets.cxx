@@ -157,7 +157,8 @@ vtkLevelSets::vtkLevelSets()
   savesecdergrad   = 0;
   advection_scheme = ADVECTION_UPWIND_VECTORS;
 
-  balloon_scheme = BALLOON_VESSELS;
+  balloon_scheme = BALLOON_BROCKETT_MARAGOS;
+  //  balloon_scheme = BALLOON_VESSELS;
 
   fm      = vtkLevelSetFastMarching::New();
   isodist = vtkImageIsoContourDist::New();
@@ -2242,7 +2243,7 @@ void vtkLevelSets::Evolve3D( int first_band, int last_band)
     double imcomp=0,costerm,ut;
     double curvterm;
     double balloonterm;
-    double val;
+    double val1,val2,val3,val;
 
     register int mx,my,mz,px,py,pz;
 
@@ -2518,9 +2519,6 @@ void vtkLevelSets::Evolve3D( int first_band, int last_band)
     else
      if (balloon_image != NULL) 
       balloonterm = ((float*)balloon_image->GetScalarPointer())[p];
-    if ((p==2842505)&&(step==17)) {
-      printf("examine this case \n");
-    }
 
     // bug fixed, replaced balloon_coeff by balloonterm:
     //  in case of an balloon_image, the balloon_coeff is 0 ...
@@ -2556,78 +2554,96 @@ void vtkLevelSets::Evolve3D( int first_band, int last_band)
     if (balloonterm>0) {
       // get the minimum of the neighborhood
       val = u0;
-      if (U[px]<val) val=U[px];
-      if (U[mx]<val) val=U[mx];
-      if (U[py]<val) val=U[py];
-      if (U[my]<val) val=U[my];
-      if (U[pz]<val) val=U[pz];
-      if (U[mz]<val) val=U[mz];
+      if (Up[px]<val) val=Up[px];
+      if (Up[mx]<val) val=Up[mx];
+      if (Up[py]<val) val=Up[py];
+      if (Up[my]<val) val=Up[my];
+      if (Up[pz]<val) val=Up[pz];
+      if (Up[mz]<val) val=Up[mz];
+      val1 = u0-val;
+
       // 2D diagonals
+      val = u0;
+      if (Up[px+py]<val) val=Up[px+py];
+      if (Up[px+my]<val) val=Up[px+my];
+      if (Up[mx+py]<val) val=Up[mx+py];
+      if (Up[mx+my]<val) val=Up[mx+my];
 
-      if (U[px+py]<val) val=U[px+py];
-      if (U[py+my]<val) val=U[px+my];
-      if (U[mx+py]<val) val=U[mx+py];
-      if (U[mx+my]<val) val=U[mx+my];
+      if (Up[px+pz]<val) val=Up[px+pz];
+      if (Up[px+mz]<val) val=Up[px+mz];
+      if (Up[mx+pz]<val) val=Up[mx+pz];
+      if (Up[mx+mz]<val) val=Up[mx+pz];
 
-      if (U[px+pz]<val) val=U[px+pz];
-      if (U[py+mz]<val) val=U[px+mz];
-      if (U[mx+pz]<val) val=U[mx+pz];
-      if (U[mx+mz]<val) val=U[mx+pz];
-
-      if (U[py+pz]<val) val=U[py+pz];
-      if (U[py+mz]<val) val=U[py+mz];
-      if (U[my+pz]<val) val=U[my+pz];
-      if (U[my+mz]<val) val=U[my+pz];
+      if (Up[py+pz]<val) val=Up[py+pz];
+      if (Up[py+mz]<val) val=Up[py+mz];
+      if (Up[my+pz]<val) val=Up[my+pz];
+      if (Up[my+mz]<val) val=Up[my+pz];
+      val2 = (u0-val)/sqrt(2.0);
 
       // 3D diagonals
-      if (U[px+py+pz]<val) val=U[px+py+pz];
-      if (U[py+py+mz]<val) val=U[px+py+mz];
-      if (U[px+my+pz]<val) val=U[px+my+pz];
-      if (U[py+my+mz]<val) val=U[px+my+mz];
+      val = u0;
+      if (Up[px+py+pz]<val) val=Up[px+py+pz];
+      if (Up[px+py+mz]<val) val=Up[px+py+mz];
+      if (Up[px+my+pz]<val) val=Up[px+my+pz];
+      if (Up[px+my+mz]<val) val=Up[px+my+mz];
 
-      if (U[mx+py+pz]<val) val=U[mx+py+pz];
-      if (U[my+py+mz]<val) val=U[mx+py+mz];
-      if (U[mx+my+pz]<val) val=U[mx+my+pz];
-      if (U[my+my+mz]<val) val=U[mx+my+mz];
-      balloonterm *= (u0-val);
+      if (Up[mx+py+pz]<val) val=Up[mx+py+pz];
+      if (Up[mx+py+mz]<val) val=Up[mx+py+mz];
+      if (Up[mx+my+pz]<val) val=Up[mx+my+pz];
+      if (Up[mx+my+mz]<val) val=Up[mx+my+mz];
+      val3 = (u0-val)/sqrt(3.0);
+
+      val=val1;
+      if (val2>val) val=val2;
+      if (val3>val) val=val3;
+      balloonterm *= val;
         }
         else {
-      val = u0;
       // get the maximum of the neighborhood
-      if (U[px]>val) val=U[px];
-      if (U[mx]>val) val=U[mx];
-      if (U[py]>val) val=U[py];
-      if (U[my]>val) val=U[my];
-      if (U[pz]>val) val=U[pz];
-      if (U[mz]>val) val=U[mz];
+      val = u0;
+      if (Up[px]>val) val=Up[px];
+      if (Up[mx]>val) val=Up[mx];
+      if (Up[py]>val) val=Up[py];
+      if (Up[my]>val) val=Up[my];
+      if (Up[pz]>val) val=Up[pz];
+      if (Up[mz]>val) val=Up[mz];
+      val1 = val-u0;
+
       // 2D diagonals
+      val = u0;
+      if (Up[px+py]>val) val=Up[px+py];
+      if (Up[px+my]>val) val=Up[px+my];
+      if (Up[mx+py]>val) val=Up[mx+py];
+      if (Up[mx+my]>val) val=Up[mx+my];
 
-      if (U[px+py]>val) val=U[px+py];
-      if (U[py+my]>val) val=U[px+my];
-      if (U[mx+py]>val) val=U[mx+py];
-      if (U[mx+my]>val) val=U[mx+my];
+      if (Up[px+pz]>val) val=Up[px+pz];
+      if (Up[px+mz]>val) val=Up[px+mz];
+      if (Up[mx+pz]>val) val=Up[mx+pz];
+      if (Up[mx+mz]>val) val=Up[mx+pz];
 
-      if (U[px+pz]>val) val=U[px+pz];
-      if (U[py+mz]>val) val=U[px+mz];
-      if (U[mx+pz]>val) val=U[mx+pz];
-      if (U[mx+mz]>val) val=U[mx+pz];
-
-      if (U[py+pz]>val) val=U[py+pz];
-      if (U[py+mz]>val) val=U[py+mz];
-      if (U[my+pz]>val) val=U[my+pz];
-      if (U[my+mz]>val) val=U[my+pz];
+      if (Up[py+pz]>val) val=Up[py+pz];
+      if (Up[py+mz]>val) val=Up[py+mz];
+      if (Up[my+pz]>val) val=Up[my+pz];
+      if (Up[my+mz]>val) val=Up[my+pz];
+      val2 = (val-u0)/sqrt(2.0);
 
       // 3D diagonals
-      if (U[px+py+pz]>val) val=U[px+py+pz];
-      if (U[py+py+mz]>val) val=U[px+py+mz];
-      if (U[px+my+pz]>val) val=U[px+my+pz];
-      if (U[py+my+mz]>val) val=U[px+my+mz];
+      val = u0;
+      if (Up[px+py+pz]>val) val=Up[px+py+pz];
+      if (Up[px+py+mz]>val) val=Up[px+py+mz];
+      if (Up[px+my+pz]>val) val=Up[px+my+pz];
+      if (Up[px+my+mz]>val) val=Up[px+my+mz];
 
-      if (U[mx+py+pz]>val) val=U[mx+py+pz];
-      if (U[my+py+mz]>val) val=U[mx+py+mz];
-      if (U[mx+my+pz]>val) val=U[mx+my+pz];
-      if (U[my+my+mz]>val) val=U[mx+my+mz];
-      balloonterm *= (val-u0);
+      if (Up[mx+py+pz]>val) val=Up[mx+py+pz];
+      if (Up[mx+py+mz]>val) val=Up[mx+py+mz];
+      if (Up[mx+my+pz]>val) val=Up[mx+my+pz];
+      if (Up[mx+my+mz]>val) val=Up[mx+my+mz];
+      val3 = (val-u0)/sqrt(3.0);
+
+      val=val1;
+      if (val2>val) val=val2;
+      if (val3>val) val=val3;
+      balloonterm *= val;
         }
     this->mean_balloon   += balloonterm;
     break;

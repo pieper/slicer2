@@ -54,8 +54,8 @@
 #define ADVECTION_CENTRAL_VECTORS 1
 #define ADVECTION_MORPHO          2
 
-#define BALLOON_BROCKETT_MARAGOS   1
-#define BALLOON_VESSELS            2
+#define BALLOON_BROCKETT_MARAGOS   0
+#define BALLOON_VESSELS            1
 
 #define DISTMAP_CURVES       0
 #define DISTMAP_FASTMARCHING 1
