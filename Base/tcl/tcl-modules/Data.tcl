@@ -43,7 +43,8 @@
 #   DataEditNode
 #   DataAddModel
 #   DataAddMatrix
-#   DataAddTransform
+#   DataAddTransformFromSelection
+#   DataAddTransform append firstSel lastSel
 #   DataAddVolume
 #   DataEnter
 #   DataExit
@@ -75,7 +76,7 @@ proc DataInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.27 $} {$Date: 2000/07/25 17:11:27 $}]
+		{$Revision: 1.28 $} {$Date: 2000/08/09 21:16:55 $}]
 
 	set Data(index) ""
 	set Data(clipboard) ""
@@ -196,7 +197,7 @@ to quickly cut and paste items.
 	set f $fList.fMenu
 
 	eval {button $f.bTransform  -text "Add Transform" \
-		-command "DataAddTransform"} $Gui(WBA)
+		-command "DataAddTransformFromSelection"} $Gui(WBA)
 	eval {button $f.bEnd  -text "Add Matrix" \
 		-command "DataAddMatrix"} $Gui(WBA)
 
@@ -591,7 +592,6 @@ proc DataPasteNode {} {
 	# Find the last selected node to paste after
 	set last [expr [llength $selection] - 1]
 	set lastSel [Mrml(dataTree) GetNthItem [lindex $selection $last]]
-
 	
 	# Paste from clipboard
 	set newNodes [DataClipboardPaste]
@@ -718,13 +718,18 @@ proc DataAddMatrix {} {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC DataAddTransform
-# 
+# .PROC DataAddTransformFromSelection
+#  
+# Adds a transform from Selection on Mrml Node Tree
+#
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc DataAddTransform {} {
-    global Transform Matrix EndTransform Data Mrml
+proc DataAddTransformFromSelection {} {
+    global Data Mrml
+
+    set firstSel ""
+    set lastSel ""
 
     # Add Transform, Matrix, EndTransform
     # Transform will enclose selected nodes
@@ -741,10 +746,44 @@ proc DataAddTransform {} {
 	set firstSel [Mrml(dataTree) GetNthItem [lindex $selection 0]]
 	set lastSel [Mrml(dataTree) GetNthItem [lindex $selection end]]
     }
-    
-    # Transform
+
+    DataAddTransform append $firstSel $lastSel 
+}
+
+#-------------------------------------------------------------------------------
+# .PROC DataAddTransform
+#  
+# Adds a transform with a matrix to the Mrml Node Tree
+# This function can be called from anywhere, not just from Data
+#
+# Example usage:
+# set matrixnum [ DataAddTransform 0 Model($first,node) Model($last,node) ]
+#
+# Returns the id of the Matrix created. The default name
+# of the matrix is \"manual$i\" where $i is the id number
+# of the matrix. But, you can change that easily enough...
+#
+# If append, firstSel and lastSel are not checked.
+#
+# .ARGS
+# bool append if 1, simply appends the transform to the end of the tree
+# vtkMrmlNode firstSel The first item to be included in the transform
+# vtkMrmlNode lastSel  The last item to be included in the transform
+# .END
+#-------------------------------------------------------------------------------
+proc DataAddTransform {append firstSel lastSel} {
+    global Transform Matrix Mrml EndTransform
+
+    ###########
+    ### Get the ID of the next transform
+    ### Create the Begin portion of the transform
+    ###########
+
+    ### Get the Next ID and increment that ID
     set i $Transform(nextID)
     incr Transform(nextID)
+
+    ### Change the list of existing Transforms
     lappend Transform(idList) $i
     vtkMrmlTransformNode Transform($i,node)
     set n Transform($i,node)
@@ -755,20 +794,30 @@ proc DataAddTransform {} {
 	Mrml(dataTree) InsertBeforeItem $firstSel $n
     }
 
+    ###########
+    ### Make a new matrix 
+    ### Insert the matrix into the Mrml Tree
+    ###########
+
     # Matrix
-    set i $Matrix(nextID)
+    set m $Matrix(nextID)
     incr Matrix(nextID)
-    lappend Matrix(idList) $i
-    vtkMrmlMatrixNode Matrix($i,node)
-    set n Matrix($i,node)
-    $n SetID $i
+    lappend Matrix(idList) $m
+    vtkMrmlMatrixNode Matrix($m,node)
+    set n Matrix($m,node)
+    $n SetID $m
     $n SetName manual$i
     if {$append == 1} {
 	Mrml(dataTree) AddItem $n
     } else {
 	Mrml(dataTree) InsertBeforeItem $firstSel $n
     }
-    MainMatricesSetActive $i
+    MainMatricesSetActive $m
+
+    ###########
+    ### Make a new EndTransform and insert it into the Mrml Tree
+    ### 
+    ###########
 
     # EndTransform
     set i $EndTransform(nextID)
@@ -784,6 +833,10 @@ proc DataAddTransform {} {
     }
 
     MainUpdateMRML
+
+    ### Return the id of the matrix 
+
+    return $m
 }
 
 
