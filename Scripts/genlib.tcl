@@ -27,7 +27,7 @@ exec tclsh "$0" "$@"
 #
 
 # set up the versions to check out
-set cmakeTag "CMake-2-0-1"
+set cmakeTag "CMake-2-0-5"
 set vtkTag "Slicer-2-4"
 set itkTag "Slicer-2-4"
 set tclTag "core-8-4-6"
@@ -151,11 +151,29 @@ if { ![file exists $SLICER_LIB] } {
 }
 
 # set up cross platform files to check for existence
+
+
+#initialize Windows and Darwin platform variables
+switch $tcl_platform(os) {
+    "SunOS" -
+    "Linux" { 
+    set isWindows 0
+    set isDarwin 0
+    }
+    "Darwin" { 
+    set isWindows 0
+    set isDarwin 1
+    }
+    default { 
+    set isWindows 1
+    set isDarwin 0
+    }
+}
+
 switch $tcl_platform(os) {
     "SunOS" -
     "Linux" -
     "Darwin" {
-        set isWindows 0
         set tclTestFile $TCL_BIN_DIR/tclsh8.4
         set tkTestFile  $TCL_BIN_DIR/wish8.4
         set itclTestFile $TCL_LIB_DIR/libitclstub3.2.a
@@ -170,7 +188,6 @@ switch $tcl_platform(os) {
     }
     default {
         # different windows machines return different values, assume if none of the above, windows
-        set isWindows 1
         set tclTestFile $TCL_BIN_DIR/tclsh84.exe
         set tkTestFile  $TCL_BIN_DIR/wish84.exe
         set itclTestFile $TCL_LIB_DIR/itcl3.2/itcl32.dll
@@ -246,6 +263,10 @@ if { ![file exists $tclTestFile] } {
     runcmd cvs -d :pserver:anonymous:@cvs.sourceforge.net:/cvsroot/tcl login
     runcmd cvs -z3 -d :pserver:anonymous@cvs.sourceforge.net:/cvsroot/tcl checkout -r $tclTag tcl
 
+    if {$isDarwin} {
+    # patch tk before building - placeholder
+    }
+
     if {$isWindows} {
         # can't do windows
     } else {
@@ -283,10 +304,17 @@ if { ![file exists $itclTestFile] } {
     cd $SLICER_LIB/tcl/incrTcl
 
     exec chmod +x ../incrTcl/configure 
+
     if {$isWindows} {
         # can't do windows
     } else {
         runcmd ../incrTcl/configure --with-tcl=$SLICER_LIB/tcl-build/lib --with-tk=$SLICER_LIB/tcl-build/lib --prefix=$SLICER_LIB/tcl-build
+    if { $isDarwin } {
+        # need to run ranlib separately on lib for Darwin
+        # file is created and ranlib is needed inside make all
+        catch "runcmd make all"
+        runcmd ranlib ../incrTcl/itcl/libitclstub3.2.a
+    }
         runcmd make all
         runcmd make install
     }
@@ -321,15 +349,20 @@ if { ![file exists $bltTestFile] } {
     runcmd cvs -d:pserver:anonymous:@cvs.sourceforge.net:/cvsroot/blt login
     runcmd cvs -z3 -d:pserver:anonymous:@cvs.sourceforge.net:/cvsroot/blt co -r $bltTag blt
 
-    if {$isWindows} {
-        # can't do windows
+    if { $isWindows } {
+        # can't do Windows
+    } elseif { $isDarwin } {
+    # this fails, but gets blt far enough along to build what is needed 
+        cd $SLICER_LIB/tcl/blt
+        runcmd ./configure --with-tcl=$SLICER_LIB/tcl-build --with-tk=$SLICER_LIB/tcl-build --prefix=$SLICER_LIB/tcl-build 
+        catch "runcmd make"
+        catch "runcmd make install"
     } else {
         cd $SLICER_LIB/tcl/blt
         runcmd ./configure --with-tcl=$SLICER_LIB/tcl-build --with-tk=$SLICER_LIB/tcl-build --prefix=$SLICER_LIB/tcl-build 
         runcmd make
         runcmd make install
     }
-
 }
 
 ################################################################################
@@ -345,8 +378,8 @@ if { ![file exists $gslTestFile] } {
     runcmd cvs -d:pserver:anoncvs:anoncvs@sources.redhat.com:/cvs/gsl login
     runcmd cvs -z3 -d:pserver:anoncvs:anoncvs@sources.redhat.com:/cvs/gsl co -r $gslTag gsl
 
-    if {$isWindows} {
-        # can't do windows
+    if {$isWindows || $isDarwin} {
+        # can't do Windows or Darwin
     } else {
         cd $SLICER_LIB/gsl-build/gsl
         runcmd ./autogen.sh
@@ -388,9 +421,9 @@ if { ![file exists $vtkTestFile] } {
         -DTCL_TCLSH:FILEPATH=$vtkTclsh \
         ../VTK
 
-    if {$isWindows} {
+    if { $isWindows } {
         runcmd devenv VTK.SLN /build  $::VTK_BUILD_TYPE
-    } else {
+    } elseif { !$isDarwin } {
         runcmd make -j4
     }
 
