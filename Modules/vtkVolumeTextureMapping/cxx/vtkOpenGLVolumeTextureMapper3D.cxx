@@ -15,7 +15,7 @@
 #define volumeBox 3
 
 #ifndef VTK_IMPLEMENT_MESA_CXX
-vtkCxxRevisionMacro(vtkOpenGLVolumeTextureMapper3D, "$Revision: 1.12 $");
+vtkCxxRevisionMacro(vtkOpenGLVolumeTextureMapper3D, "$Revision: 1.13 $");
 vtkStandardNewMacro(vtkOpenGLVolumeTextureMapper3D);
 #endif
 
@@ -179,7 +179,7 @@ void vtkOpenGLVolumeTextureMapper3D::Render(vtkRenderer *ren, vtkVolume *vol)
        #define glColorTable glColorTableEXT
     #else
        #ifndef GL_TEXTURE_COLOR_TABLE_SGI
-       #  define GL_TEXTURE_COLOR_TABLE_SGI -1
+       #  define GL_TEXTURE_COLOR_TABLE_SGI 0
        #endif
        #ifndef GL_INTENSITY_EXT
        #define GL_INTENSITY_EXT GL_INTENSITY

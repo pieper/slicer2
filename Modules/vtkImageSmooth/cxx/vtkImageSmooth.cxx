@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkImageSmooth.cxx,v $
   Language:  C++
-  Date:      $Date: 2004/09/16 17:27:36 $
-  Version:   $Revision: 1.3 $
+  Date:      $Date: 2004/12/30 00:17:36 $
+  Version:   $Revision: 1.4 $
 
   Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen 
   All rights reserved.
@@ -38,7 +38,7 @@
 //#undef DEBUG
 //----------------------------------------------------------------------------
 
-//vtkCxxRevisionMacro(vtkImageSmooth, "$Revision: 1.3 $");
+//vtkCxxRevisionMacro(vtkImageSmooth, "$Revision: 1.4 $");
 //vtkStandardNewMacro(vtkImageSmooth);
 
 //----------------------------------------------------------------------------
@@ -412,15 +412,15 @@ int final;
                 for(x=0;x<rowLength;x++)
                 {   
                     temp = (int)(self->dt * temp_ptr[x+shift_xyz]);
-                    final = outPtr[x+shift_xyz] + (IT)temp;
+                    final = outPtr[x+shift_xyz] + (OT)temp;
 
-                    if((IT)(final) > (IT)(255))
+                    if((OT)(final) > (OT)(255))
                         outPtr[x+shift_xyz] = 255;
                     else
                       if(final < 0)
                         outPtr[x+shift_xyz] = 0;
                       else
-                        outPtr[x+shift_xyz] = (IT)(final);
+                        outPtr[x+shift_xyz] = (OT)(final);
                 }
             }
         }
@@ -690,7 +690,7 @@ static void vtkImageSmoothExecute(vtkImageSmooth *self,
             {
                 shift_xyz = y*rowLength+z*maxY*rowLength;
                 for(x=0;x<rowLength;x++)
-                    outPtr[x+shift_xyz] = (IT)(outPtr[x+shift_xyz] + 
+                    outPtr[x+shift_xyz] = (OT)(outPtr[x+shift_xyz] + 
                          self->dt * (temp_ptr[x+shift_xyz]/edge_ptr[x+shift_xyz]));
             }
         }
