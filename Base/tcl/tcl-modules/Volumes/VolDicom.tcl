@@ -580,8 +580,10 @@ proc FindDICOM2 { StartDir AddDir Pattern } {
                 append add "<" $PatientID "><" $PatientName ">"
                 AddListUnique DICOMPatientIDsNames $add
                 set DICOMFiles($FindDICOMCounter,PatientIDName) $add
-                
-                if [expr [parser FindElement 0x0020 0x000d] == "1"] {
+
+                # changed from UID to StudyID - sp 2002-12-05
+                # UID -  0x0020 0x000d
+                if [expr [parser FindElement 0x0020 0x0010] == "1"] {
                     set Length [lindex [split [parser ReadElement]] 3]
                     set StudyInstanceUID [parser ReadText $Length]
                 } else  {
@@ -589,7 +591,9 @@ proc FindDICOM2 { StartDir AddDir Pattern } {
                 }
                 set DICOMFiles($FindDICOMCounter,StudyInstanceUID) $StudyInstanceUID
                 
-                if [expr [parser FindElement 0x0020 0x000e] == "1"] {
+                # changed from UID to SeriesNumber - sp 2002-12-05
+                # UID -  0x0020 0x000e
+                if [expr [parser FindElement 0x0020 0x0011] == "1"] {
                     set Length [lindex [split [parser ReadElement]] 3]
                     set SeriesInstanceUID [parser ReadText $Length]
                 } else  {
@@ -899,11 +903,11 @@ proc DICOMListSelect { parent values } {
 
     set iDsNames [DICOMScrolledListbox $parent.f1.iDsNames 0 1 DICOMListSelectPatientName "Patient <ID><Name>" -width 50 -height 5]
     TooltipAdd $iDsNames "Select a patient"
-    set studyUIDs [DICOMScrolledListbox $parent.f1.studyUIDs 0 1 DICOMListSelectStudyUID "Study UID" -width 50 -height 5]
+    set studyUIDs [DICOMScrolledListbox $parent.f1.studyUIDs 0 1 DICOMListSelectStudyUID "Study ID" -width 50 -height 5]
     TooltipAdd $studyUIDs "Select a study of the selected patient"
     pack $parent.f1.iDsNames $parent.f1.studyUIDs -side left -expand true -fill both
 
-    set seriesUIDs [DICOMScrolledListbox $parent.f2.seriesUIDs 0 1 DICOMListSelectSeriesUID "Series UID" -width 50 -height 5]
+    set seriesUIDs [DICOMScrolledListbox $parent.f2.seriesUIDs 0 1 DICOMListSelectSeriesUID "Series Number" -width 50 -height 5]
     TooltipAdd $seriesUIDs "Select a series of the selected study"
     set fileNames [DICOMScrolledTextbox $parent.f2.fileNames 0 1 DICOMListSelectFiles "Files" -width 50 -height 5 -wrap none -cursor hand1 -state disabled]
     set Volumes(DICOMFileNameTextbox) $fileNames
