@@ -82,7 +82,7 @@ proc FiducialsInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.21 $} {$Date: 2002/07/26 23:12:02 $}]
+        {$Revision: 1.22 $} {$Date: 2002/09/06 14:29:15 $}]
     
     # Initialize module-level variables
     
@@ -283,7 +283,7 @@ $Fiducials(help) "
 
 #-------------------------------------------------------------------------------
 # .PROC FiducialsCreateGUI
-# Makes the GUI for each model on the Models->Display panel.
+# Makes the GUI for each model on the Fiducials->Display panel.
 # This is called for each new model.
 # Also makes the popup menu that comes up when you right-click a model.
 #
@@ -717,6 +717,21 @@ proc FiducialsSetScale { id {val ""}} {
 proc FiducialsUpdateMRML {} {
     global Fiducials Mrml Module Models Model Landmark Path EndPath
     
+
+    # start callback in case any module wants to know that Fiducials are 
+    # about to be updated
+    foreach m $Module(idList) {
+    if {[info exists Module($m,fiducialsStartUpdateMRMLCallback)] == 1} {
+        if {$Module(verbose) == 1} {puts "Fiducials Start Callback: $m"}
+        $Module($m,fiducialsStartUpdateMRMLCallback)  
+    }
+    }
+       
+    ############################################################
+    # Read through the Mrml tree and create all the variables 
+    # and vtk entities for the fiducial/points nodes
+    ############################################################
+    
     Mrml(dataTree) ComputeTransforms
     Mrml(dataTree) InitTraversal
     set item [Mrml(dataTree) GetNextItem]
@@ -725,6 +740,19 @@ proc FiducialsUpdateMRML {} {
     FiducialsResetVariables
     set readOldNodesForCompatibility 0
     set gui 0
+
+    # the next line is for the Fiducials->Display panel where all lists have a 
+    # corresponding button with attributes when you right click
+    
+    # the "removeFromDisplayList" variable holds all the names of 
+    # the lists that have a button on the Fiducials-> Display panel 
+    # before the Mrml update
+    # Since we are reading through the new updated Mrml tree, 
+    # we will delete from the "removeFromDisplayList" all the lists that
+    # still exist and therefore keep their button
+    # The remaining lists in the "removeFromDisplayList" will be deleted from
+    # the display
+
     set Fiducials(removeDisplayList) $Fiducials(displayList)
     
     while { $item != "" } {
@@ -784,15 +812,21 @@ proc FiducialsUpdateMRML {} {
     if { $Fiducials($fid,pointsExist) ==  1} { 
         FiducialsVTKUpdatePoints $fid $symbolSize $textSize
     }
+    # if this is a new list and it doesn't exist in Fiducials->Display, then
+    # create its button and attributes
     if { [lsearch $Fiducials(displayList) $fid] == -1 } { 
         set gui [expr $gui + [FiducialsCreateGUI $Fiducials(fScrolledGUI) $fid]]
     } else {
+    # otherwise the button for that list exists already so remove it 
+    # from the "to be deleted list"
         set index [lsearch $Fiducials(removeDisplayList) $fid]
         if {$index != -1} {
         set Fiducials(removeDisplayList) [lreplace $Fiducials(removeDisplayList) $index $index]
     }
-    puts "remove $Fiducials(removeDisplayList) in"
     }
+    # callback in case any module wants to know what list of fiducials 
+    # (and its type) was just read in the MRML tree
+    # see the endoscopic module for examples
 
         foreach m $Module(idList) {
         if {[info exists Module($m,fiducialsCallback)] == 1} {
@@ -802,7 +836,8 @@ proc FiducialsUpdateMRML {} {
     }   
     }
 
-# BACKWARD COMP.
+    # BACKWARD COMPATIBILITY for old files that still use the 
+    # Path/Landmark Mrml nodes (the new ones use the Fiducials/Point nodes)
 
     if { [$item GetClassName] == "vtkMrmlPathNode"} {
     set fid [[MainMrmlAddNode Fiducials] GetID] 
@@ -828,17 +863,45 @@ proc FiducialsUpdateMRML {} {
 }
 
 Render3D
-    
-# Remove the display for the fiducials not on the list
+ 
+ ##################################################
+# Check to see if the active list still exists
+# and tell other modules what list is active
+##################################################
+
+if { [lsearch $Fiducials(listOfNames) $Fiducials(activeList) ] > -1 } {
+    set name $Fiducials(activeList)
+    set id $Fiducials($name,fid)
+    set type [Fiducials($id,node) GetType]
+    # callback in case any module wants to know the name of the active list    
+    foreach m $Module(idList) {
+    if {[info exists Module($m,fiducialsActivatedListCallback)] == 1} {
+        if {$Module(verbose) == 1} {puts "Fiducials Activated List Callback: $m"}
+        $Module($m,fiducialsActivatedListCallback)  $type $name $id
+    }
+    }
+   
+}
+
+##################################################
+# Update the Fiducials->Display panel
+##################################################
+
+# Remove the buttons on the Fiducials->Display panel
+# for the fiducials not on the list
 foreach i $Fiducials(removeDisplayList) {
     FiducialsDeleteGUI $Fiducials(fScrolledGUI) $i
 }
 
-# Tell the scrollbar to update if the gui height changed
+# Tell the Fiducials->Display scrollbar to update if the gui height changed
 if {$gui > 0} {
     FiducialsConfigScrolledGUI $Fiducials(canvasScrolledGUI) $Fiducials(fScrolledGUI)
 }
     
+##################################################
+# Update all the Fiducials menus 
+##################################################
+
     # Form the menus with all mrml fiducials plus the defaults that are not saved in mrml
     #--------------------------------------------------------
    
@@ -887,6 +950,10 @@ if {$gui > 0} {
     incr counter
 }
 
+#################################################################
+# Tell the user if their file still has old nodes and give them 
+# the option to update their files
+#################################################################
 if {$readOldNodesForCompatibility == 1} {
 
     # tell the user to save the file
@@ -896,14 +963,14 @@ Please save the scene and use that new file instead to not get this message agai
     MainUpdateMRML
 }
 
- # callback 
+# end callback in case any module wants to know that Fiducials 
+   # are done being updated 
     foreach m $Module(idList) {
-    if {[info exists Module($m,fiducialsStartCallback)] == 1} {
-        if {$Module(verbose) == 1} {puts "Fiducials Start Callback: $m"}
-        $Module($m,fiducialsStartCallback) 
+    if {[info exists Module($m,fiducialsEndUpdateMRMLCallback)] == 1} {
+        if {$Module(verbose) == 1} {puts "Fiducials End Callback: $m"}
+        $Module($m,fiducialsEndUpdateMRMLCallback)  
     }
     }
-
 }
 
 
@@ -1305,7 +1372,7 @@ proc FiducialsSetFiducialsVisibility {name {visibility ""} {rendererName ""}} {
 #-------------------------------------------------------------------------------
 proc FiducialsSetActiveList {name {menu ""} {scroll ""}} {
     
-    global Fiducials Point
+    global Fiducials Point Module
     
     set Fiducials(activeList) $name
     if { $menu == "" } {
