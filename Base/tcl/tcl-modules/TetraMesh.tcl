@@ -144,7 +144,7 @@ proc TetraMeshInit {} {
 	#   appropriate revision number and date when the module is checked in.
 	#   
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.14 $} {$Date: 2001/05/25 19:01:46 $}]
+		{$Revision: 1.15 $} {$Date: 2001/06/07 07:33:08 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -163,17 +163,15 @@ proc TetraMeshInit {} {
         set TetraMesh(ArrowScale) 9.5
         set TetraMesh(ArrowSkip) 2
 
-        # A bad hack. I need to fix this....
-        vtkMatrix4x4 SamsonFix
-        # Deal with 90 degree rotation problem
-        SamsonFix Zero
-        SamsonFix SetElement 0 1 -1
-        SamsonFix SetElement 1 0  1
-        SamsonFix SetElement 2 2  1
-        SamsonFix SetElement 3 3  1
-        # Deal with Offsets
-        SamsonFix SetElement 0 3 240
-        SamsonFix SetElement 1 3 0
+        # 
+        #
+        # The following matrix exists to move the origin
+        # and orientation of a mesh to the proper origin
+        # used in the slicer. See SetModelMoveOriginMatrix
+        #
+        #
+
+        vtkMatrix4x4 ModelMoveOriginMatrix
 }
 
 
@@ -697,6 +695,85 @@ $CurrentTetraMesh Update
 
     return 1
 }
+
+#-------------------------------------------------------------------------------
+# .PROC SetModelMoveOriginMatrix
+#
+#  Description
+#
+#
+# by Samson Timoner
+#
+#  Use of the position matrix causes models to have an origin at one corner
+#  of a volume. Unfortunately, it is not the corner I want!
+#
+#  The coordinate system used in my code is pretty standard:
+#  slices are in row-major order.
+#  rows are aligned along the x-axis. 
+#  The first row is x=0. The last row is       x=NumX*XSpacing.
+#  The first column is y=0. The last column is y=NumY*YSpacing.
+#  The first slice is z=0. The last slice is   z=NumZ*Zspacing.
+#  The space goes from (0,0,0) to 
+#  (Numx*XSpacing,NumY*Yspacing,Numz*Zspacing)
+#
+# SIMON WARFIELD WROTE:
+#  In my code own image processing code I use the same convention as you
+# describe above.  I assume you know that in graphics it is often the case 
+# that x and y are switched w.r.t. this convention, with x indexing columns.  
+# Also, at one point in time vtk switched to reflecting a particular axis
+# in a read function.
+# END
+#
+# Simon refers to the way it is done in the slicer. To correct for it,
+# one rotates 90 degrees and does a translation
+#
+# This code effectively takes the position matrix and adds a 90 degree
+# rotation and a translation
+#
+# 0 -1 0 ?
+# 1  0 0 0 
+# 0  0 1 0
+# 0  0 1 1
+#
+# The only thing that needs to be determined in the translation
+# The y position become the negative x-position
+# We therefore need to grab the y-translation*2
+# Once to undo what was done,once to move it in the correct direction.
+# This is 2*PositionMatrix[1][3].
+#
+# Problems: Things may change slightly for gantrytilt, but I don't think
+# so. Also, I'm not sure if I'm taking into account the extent of the
+# first and last voxel properly.
+#
+# .ARGS
+#  vtkMrmlVolumeNode n the vtkMrmlVolumeNode
+#  vtkMatrix4x4      matrix the matrix whose elements are to be set
+# .END
+#-------------------------------------------------------------------------------
+proc SetModelMoveOriginMatrix {n matrix} {
+  global Volume
+
+    # Deal with 90 degree rotation problem
+    $matrix Zero
+    $matrix SetElement 0 1 -1
+    $matrix SetElement 1 0  1
+    $matrix SetElement 2 2  1
+    $matrix SetElement 3 3  1
+
+    # Deal with Offsets
+    $matrix SetElement 1 3 0
+
+    ## To get this offset
+    ## The y position become the negative x-position
+    ## We therefore need to grab the y-translation*2
+    ## Once to undo what was done,once to move it in the correct direction.
+    ## This is 2*PositionMatrix[1][3]
+    set xtrans [ [$n GetPosition] GetElement 1 3 ]
+    set xtrans [expr 2* $xtrans]
+    puts $xtrans
+    $matrix SetElement 0 3 $xtrans
+}
+
 #-------------------------------------------------------------------------------
 # .PROC TetraMeshGetTransform
 #
@@ -717,15 +794,18 @@ proc TetraMeshGetTransform {} {
 
   set v $Volume(activeID)
 
+  puts "$v"
   if {$v != "" && $v != $Volume(idNone) } {
+      SetModelMoveOriginMatrix Volume($v,node) ModelMoveOriginMatrix
+      ModelMoveOriginMatrix Print
+      puts "Got Here"
       TheTransform PostMultiply
-      TheTransform Concatenate SamsonFix
+      TheTransform Concatenate ModelMoveOriginMatrix
       TheTransform Inverse
       TheTransform Concatenate [Volume($v,node) GetPosition]
      } else {
        TheTransform Identity
    }
-
 }
 
 #-------------------------------------------------------------------------------
@@ -794,7 +874,6 @@ set HIGHSCALAR $highscalar
 
   TetraMeshGetTransform
   set v $Volume(activeID)
-
 
   vtkTransformPolyDataFilter TransformPolyData
     TransformPolyData SetInput [TetraEdges GetOutput]
