@@ -57,7 +57,7 @@ public:
   // Copy the node's attributes to this object
   void Copy(vtkMrmlTransformNode *node);
 
-private:
+protected:
   vtkMrmlTransformNode();
   ~vtkMrmlTransformNode();
   vtkMrmlTransformNode(const vtkMrmlTransformNode&) {};

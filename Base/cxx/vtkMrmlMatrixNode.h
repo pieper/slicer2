@@ -92,7 +92,7 @@ public:
   vtkGetObjectMacro(Transform, vtkTransform);
   vtkSetObjectMacro(Transform, vtkTransform);
 
-private:
+protected:
   vtkMrmlMatrixNode();
   ~vtkMrmlMatrixNode();
   vtkMrmlMatrixNode(const vtkMrmlMatrixNode&) {};

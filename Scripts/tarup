@@ -1,5 +1,7 @@
 #! /bin/csh
 
+# Usage: Copy this file to /d/bigdaily, and then run it.
+
 echo cp slicer
 cp -r /local/share/src/slicer_12_99 slicer
 
@@ -7,7 +9,7 @@ echo cp script
 cp /local/bin/slicer2k slicer/slicer2k
 
 echo cp local
-cp -r /local/share/src/vtk3.01/local slicer/local
+cp -r /local/src/vtk3.01/local slicer/local
 
 echo cp vtk
 cp -r /local/pkg/vtk3.01 slicer/slicer_1299/vtk3.01

@@ -72,11 +72,11 @@ public:
 
   virtual void Write(ofstream& of, int indent) {};
 
-  vtkMrmlNode();
-  ~vtkMrmlNode();
 
 protected:
 
+  vtkMrmlNode();
+  ~vtkMrmlNode();
   vtkMrmlNode(const vtkMrmlNode&) {};
   void operator=(const vtkMrmlNode&) {};
 

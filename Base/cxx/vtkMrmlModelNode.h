@@ -121,7 +121,7 @@ public:
   void SetRasToWld(vtkMatrix4x4 *reg);
   vtkGetObjectMacro(RasToWld, vtkMatrix4x4);
 
-private:
+protected:
   vtkMrmlModelNode();
   ~vtkMrmlModelNode();
   vtkMrmlModelNode(const vtkMrmlModelNode&) {};

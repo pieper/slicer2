@@ -57,7 +57,7 @@ public:
   // Copy the node's attributes to this object
   void Copy(vtkMrmlEndTransformNode *node);
 
-private:
+protected:
   vtkMrmlEndTransformNode();
   ~vtkMrmlEndTransformNode();
   vtkMrmlEndTransformNode(const vtkMrmlEndTransformNode&) {};

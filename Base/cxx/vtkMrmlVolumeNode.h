@@ -236,7 +236,7 @@ public:
   vtkBooleanMacro(Interpolate, int);
 
 
-private:
+protected:
   vtkMrmlVolumeNode();
   ~vtkMrmlVolumeNode();
   vtkMrmlVolumeNode(const vtkMrmlVolumeNode&) {};

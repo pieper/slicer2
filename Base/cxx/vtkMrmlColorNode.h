@@ -94,7 +94,7 @@ public:
   vtkGetMacro(Power, int);
   vtkSetMacro(Power, int);
 
-private:
+protected:
   vtkMrmlColorNode();
   ~vtkMrmlColorNode();
   vtkMrmlColorNode(const vtkMrmlColorNode&) {};
