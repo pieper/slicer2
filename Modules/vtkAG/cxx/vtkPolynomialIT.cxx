@@ -45,7 +45,7 @@ void vtkPolynomialIT::BuildAlphas()
   this->Alphas=new float*[this->NumFuncs];
   for(int i=0;i<this->NumFuncs;++i)
     {
-    this->Alphas[i]=new float[this->Degree];
+    this->Alphas[i]=new float[this->Degree+1];
     std::fill_n(this->Alphas[i],this->Degree+1,0);
     }
 }
