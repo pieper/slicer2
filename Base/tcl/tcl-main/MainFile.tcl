@@ -68,7 +68,7 @@ proc MainFileInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainFile \
-		{$Revision: 1.28 $} {$Date: 2002/01/21 18:45:08 $}]
+		{$Revision: 1.29 $} {$Date: 2002/02/03 21:12:11 $}]
 
 	set File(filePrefix) data
 }
@@ -315,7 +315,7 @@ proc MainFileSaveAsApply {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainFileSave {} {
-	global Mrml
+	global File
 
 	# Call SaveAs if the filename is blank
 	if {$File(filePrefix) == ""} {
@@ -331,7 +331,7 @@ proc MainFileSave {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainFileSaveWithOptions {} {
-	global Mrml
+	global File
 
 	MainOptionsUnparsePresets
 
