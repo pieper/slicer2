@@ -52,7 +52,7 @@ proc MainAnnoInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainAnno \
-        {$Revision: 1.20 $} {$Date: 2002/11/05 17:35:16 $}]
+        {$Revision: 1.21 $} {$Date: 2003/01/20 01:29:36 $}]
 
     # Preset Defaults
     set Module(Anno,presets) "box='1' axes='0' outline='0' letters='1' cross='0'\
@@ -226,10 +226,17 @@ proc MainAnnoBuildGUI {} {
         foreach s $Slice(idList) {
             vtkTextMapper Anno($s,$name,mapper)
                 Anno($s,$name,mapper) SetInput ""
+            if {[info commands vtkTextProperty] != ""} {
+               [Anno($s,$name,mapper) GetTextProperty] SetFontFamilyToTimes
+               [Anno($s,$name,mapper) GetTextProperty] SetFontSize $Anno(fontSize)
+               [Anno($s,$name,mapper) GetTextProperty] BoldOn
+               [Anno($s,$name,mapper) GetTextProperty] ShadowOn
+            } else {
                 Anno($s,$name,mapper) SetFontFamilyToTimes
                 Anno($s,$name,mapper) SetFontSize $Anno(fontSize)
                 Anno($s,$name,mapper) BoldOn
                 Anno($s,$name,mapper) ShadowOn
+            }
             vtkActor2D Anno($s,$name,actor)
                 Anno($s,$name,actor) SetMapper \
                     Anno($s,$name,mapper)
@@ -253,10 +260,17 @@ proc MainAnnoBuildGUI {} {
         foreach s $Slice(idList) {
             vtkTextMapper Anno($s,$name,mapper)
                 Anno($s,$name,mapper) SetInput ""
+            if {[info commands vtkTextProperty] != ""} {
+               [Anno($s,$name,mapper) GetTextProperty] SetFontFamilyToTimes
+               [Anno($s,$name,mapper) GetTextProperty] SetFontSize $Anno(fontSize)
+               [Anno($s,$name,mapper) GetTextProperty] BoldOn
+               [Anno($s,$name,mapper) GetTextProperty] ShadowOn
+            } else {
                 Anno($s,$name,mapper) SetFontFamilyToTimes
                 Anno($s,$name,mapper) SetFontSize $Anno(fontSize)
                 Anno($s,$name,mapper) BoldOn
                 Anno($s,$name,mapper) ShadowOn
+            }
             vtkActor2D Anno($s,$name,actor)
                 Anno($s,$name,actor) SetMapper \
                     Anno($s,$name,mapper)
