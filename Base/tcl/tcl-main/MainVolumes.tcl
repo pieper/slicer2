@@ -446,6 +446,7 @@ proc MainVolumesUpdate {v} {
 			Slicer SetLabelVolume Volume($n,vol)
 			Slicer SetLabelVolume Volume($v,vol)
 		}
+		MainSlicesSetOffset $s
 	}
 	Volume($v,vol) Update
 	Slicer ReformatModified
@@ -499,7 +500,7 @@ proc MainVolumesRenderActive {{scale ""}} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainVolumesSetActive {{v ""}} {
-	global Volume Lut
+	global Volume Lut Slice
 
 	if {$Volume(freeze) == 1} {return}
 	
@@ -545,6 +546,22 @@ proc MainVolumesSetActive {{v ""}} {
 			if {$Volume(histogram) == "On"} {
 				histMapper SetInput [Volume($v,vol) GetHistogramPlot]
 				histWin Render
+			}
+
+			# Change button text on slice menu (in case name changed)
+			foreach s $Slice(idList) {
+ 				if {$v == $Slice($s,backVolID)} {
+					MainSlicesConfigGui $s fOrient.mbBackVolume$s \
+						"-text [Volume($v,node) GetName]"
+				}
+				if {$v == $Slice($s,foreVolID)} {
+					MainSlicesConfigGui $s fVolume.mbForeVolume$s \
+						"-text [Volume($v,node) GetName]"
+				}
+				if {$v == $Slice($s,labelVolID)} {
+					MainSlicesConfigGui $s fVolume.mbLabelVolume$s \
+						"-text [Volume($v,node) GetName]"
+				}
 			}
 
 			# Update Volumes->Props GUI

@@ -71,6 +71,7 @@ proc MatricesInit {} {
 
 	# Props
 	set Matrix(propertyType) Basic
+	set Matrix(volumeMatrix) None
 
 	set Matrix(autoOutput) mi-output.mrml
 	set Matrix(autoInput)  mi-input.pmrml
@@ -95,6 +96,17 @@ proc MatricesInit {} {
 #-------------------------------------------------------------------------------
 proc MatricesUpdateMRML {} {
 	global Matrix Volume
+
+	# See if the volume for each menu actually exists.
+	# If not, use the None volume
+	#
+	set n $Volume(idNone)
+	if {[lsearch $Volume(idList) $Matrix(refVolume) ] == -1} {
+		MatricesSetRefVolume $n
+	}
+	if {[lsearch $Volume(idList) $Matrix(volume) ] == -1} {
+		MatricesSetVolume $n
+	}
 
 	# Menu of Volumes
 	# ------------------------------------
@@ -233,8 +245,9 @@ Ron is nice.
 	set f $fProps.fBot.fAdvanced
 
 	frame $f.fDesc    -bg $Gui(activeWorkspace)
+	frame $f.fVolume  -bg $Gui(activeWorkspace) -relief groove -bd 3
 	frame $f.fApply   -bg $Gui(activeWorkspace)
-	pack $f.fDesc $f.fApply \
+	pack $f.fDesc $f.fVolume $f.fApply \
 		-side top -fill x -pady $Gui(pad)
 
 	#-------------------------------------------
@@ -244,8 +257,8 @@ Ron is nice.
 
 	eval {label $f.l -text "Name:" } $Gui(WLA)
 	eval {entry $f.e -textvariable Matrix(name)} $Gui(WEA)
-	pack $f.l -side left -padx $Gui(pad)
-	pack $f.e -side left -padx $Gui(pad) -expand 1 -fill x
+	pack $f.l -side top -padx $Gui(pad) -anchor w
+	pack $f.e -side top -padx $Gui(pad) -anchor w -expand 1 -fill x
 
 	#-------------------------------------------
 	# Props->Bot->Basic->Matrix frame
@@ -254,8 +267,8 @@ Ron is nice.
 
 	eval {label $f.l -text "Matrix:" } $Gui(WLA)
 	eval {entry $f.e -textvariable Matrix(matrix)} $Gui(WEA)
-	pack $f.l -side left -padx $Gui(pad)
-	pack $f.e -side left -padx $Gui(pad) -expand 1 -fill x
+	pack $f.l -side top -padx $Gui(pad) -anchor w
+	pack $f.e -side top -padx $Gui(pad)  -anchor w -expand 1 -fill x
 
 	#-------------------------------------------
 	# Props->Bot->Basic->Apply frame
@@ -279,6 +292,50 @@ Ron is nice.
 	pack $f.e -side top -padx $Gui(pad) -expand 1 -fill x
 
 	#-------------------------------------------
+	# Props->Bot->Advanced->Volume frame
+	#-------------------------------------------
+	set f $fProps.fBot.fAdvanced.fVolume
+
+	eval {label $f.l -text "Get Matrix from Volume"} $Gui(WTA)
+	frame $f.fVolume  -bg $Gui(activeWorkspace)
+	frame $f.fMatrix  -bg $Gui(activeWorkspace)
+	pack $f.l $f.fVolume $f.fMatrix \
+		-side top -fill x -pady $Gui(pad)
+
+	#-------------------------------------------
+	# Props->Bot->Advanced->Volume->Volume frame
+	#-------------------------------------------
+	set f $fProps.fBot.fAdvanced.fVolume.fVolume
+
+	set c {label $f.lActive -text "Volume: " $Gui(WLA)}; eval [subst $c]
+	set c {menubutton $f.mbActive -text "None" -relief raised -bd 2 -width 20 \
+		-menu $f.mbActive.m $Gui(WMBA)}; eval [subst $c]
+	set c {menu $f.mbActive.m $Gui(WMA)}; eval [subst $c]
+	pack $f.lActive $f.mbActive -side left -pady $Gui(pad) -padx $Gui(pad)
+
+	# Append widgets to list that gets refreshed during UpdateMRML
+	lappend Volume(mbActiveList) $f.mbActive
+	lappend Volume(mActiveList)  $f.mbActive.m
+
+	#-------------------------------------------
+	# Props->Bot->Advanced->Volume->Matrix frame
+	#-------------------------------------------
+	set f $fProps.fBot.fAdvanced.fVolume.fMatrix
+
+	# Menu of Matrices
+	# ------------------------------------
+	set c {label $f.l -text "Type of Matrix: " $Gui(WLA)}; eval [subst $c]
+	set c {menubutton $f.mb -text "$Matrix(volumeMatrix)" -relief raised -bd 2 -width 20 \
+		-menu $f.mb.m $Gui(WMBA)}; eval [subst $c]
+	set Matrix(mbVolumeMatrix) $f.mb
+	set c {menu $f.mb.m $Gui(WMA)}; eval [subst $c]
+	pack $f.l $f.mb -side left -pady $Gui(pad) -padx $Gui(pad)
+
+	foreach v "None ScaledIJK->RAS RAS->IJK RAS->VTK" {
+		$f.mb.m add command -label "$v" -command "MatricesSetVolumeMatrix $v"
+	}
+
+	#-------------------------------------------
 	# Props->Bot->Advanced->Apply frame
 	#-------------------------------------------
 	set f $fProps.fBot.fAdvanced.fApply
@@ -288,8 +345,6 @@ Ron is nice.
 	eval {button $f.bCancel -text "Cancel" \
 		-command "MatricesPropsCancel"} $Gui(WBA) {-width 8}
 	grid $f.bApply $f.bCancel -padx $Gui(pad) -pady $Gui(pad)
-
-
 
 	#-------------------------------------------
 	# Manual frame
@@ -577,6 +632,16 @@ Ron is nice.
 }
 
 #-------------------------------------------------------------------------------
+proc MatricesSetVolumeMatrix {type} {
+	global Matrix
+
+	set Matrix(volumeMatrix) $type
+
+        # update the button text
+        $Matrix(mbVolumeMatrix) config -text $type
+}
+
+#-------------------------------------------------------------------------------
 # .PROC MatricesIdentity
 # .END
 #-------------------------------------------------------------------------------
@@ -613,10 +678,16 @@ proc MatricesSetPropertyType {} {
 	
 	raise $Matrix(f$Matrix(propertyType))
 }
- 
-proc MatricesPropsApply {} {
-	global Matrix Label Module Mrml
 
+proc MatricesPropsApply {} {
+	global Matrix Label Module Mrml Volume
+
+	# none?
+	if {$Matrix(activeID) != "NEW" && $Matrix(idList) == ""} {
+		tk_messageBox -message "Please create a matrix first from the Data panel"
+		Tab Data row1 List
+	}
+		
 	# Validate Input
 	
 	# Ensure matrix is 16 numbers
@@ -665,8 +736,29 @@ but '$n' is not a number."
 		set m $i
 	}
 
+	# If user wants to use the matrix from a volume, set it here
+	set v $Volume(activeID)
+	switch $Matrix(volumeMatrix) {
+	"None" {}
+	"ScaledIJK->RAS" {
+		set Matrix(matrix) [Volume($v,node) GetPositionMatrix]
+	}
+	"RAS->IJK" {
+		set Matrix(matrix) [Volume($v,node) GetRasToIjkMatrix]
+	}
+	"RAS->VTK" {
+		set Matrix(matrix) [Volume($v,node) GetRasToVtkMatrix]
+	}
+	}
+
 	Matrix($m,node) SetName $Matrix(name)
 	Matrix($m,node) SetMatrix $Matrix(matrix)
+
+	# Return to Basic
+	if {$Matrix(propertyType) == "Advanced"} {
+		set Matrix(propertyType) Basic
+		MatricesSetPropertyType
+	}
 
 	# If tabs are frozen, then 
 	if {$Module(freezer) != ""} {
@@ -692,6 +784,12 @@ proc MatricesPropsCancel {} {
 	}
 	set Matrix(freeze) 0
 	MainMatricesSetActive $m
+
+	# Return to Basic
+	if {$Matrix(propertyType) == "Advanced"} {
+		set Matrix(propertyType) Basic
+		MatricesSetPropertyType
+	}
 
 	# Unfreeze
 	if {$Module(freezer) != ""} {

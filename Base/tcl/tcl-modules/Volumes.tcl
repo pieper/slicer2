@@ -70,7 +70,7 @@ proc VolumesInit {} {
 	set Volume(scalarTypeMenu) "Char UnsignedChar Short UnsignedShort\ 
 	{Int} UnsignedInt Long UnsignedLong Float Double"
 	set Volume(scanOrderMenu) "{Sagittal:LR} {Sagittal:RL} {Axial:SI}\
-		{Axial:IS} {Coronal:AP} {Coronal:PA} {Oblique}"
+		{Axial:IS} {Coronal:AP} {Coronal:PA}"
 	# corresponding values to use in Volume(scanOrder)
 	set Volume(scanOrderList) "LR RL SI IS AP PA OB" 
 	
@@ -703,6 +703,51 @@ proc VolumesPropsApply {} {
 	set m $Volume(activeID)
 	if {$m == ""} {return}
 	
+	# Validate name
+	if {$Volume(name) == ""} {
+		tk_messageBox -message "Please enter a name that will allow you to distinguish this model."
+		return
+	}
+	if {[ValidateName $Volume(name)] == 0} {
+		tk_messageBox -message "The name can consist of letters, digits, dashes, or underscores"
+		return
+	}
+	# lastNum
+	if {[ValidateInt $Volume(lastNum)] == 0} {
+		tk_messageBox -message "The last number must be an integer."
+		return
+	}
+	# resolution
+	if {[ValidateInt $Volume(resolution)] == 0} {
+		tk_messageBox -message "The resolution must be an integer."
+		return
+	}
+	# pixel size
+	if {[ValidateFloat $Volume(pixelSize)] == 0} {
+		tk_messageBox -message "The pixel size must be a number."
+		return
+	}
+	# slice thickness
+	if {[ValidateFloat $Volume(sliceThickness)] == 0} {
+		tk_messageBox -message "The slice thickness must be a number."
+		return
+	}
+	# slice spacing
+	if {[ValidateFloat $Volume(sliceSpacing)] == 0} {
+		tk_messageBox -message "The slice spacing must be a number."
+		return
+	}
+	# tilt
+	if {[ValidateFloat $Volume(gantryDetectorTilt)] == 0} {
+		tk_messageBox -message "The tilt must be a number."
+		return
+	}
+	# num scalars
+	if {[ValidateInt $Volume(numScalars)] == 0} {
+		tk_messageBox -message "The number of scalars must be an integer."
+		return
+	}
+
 	# Manual headers
 	if {$Volume(readHeaders) == "0"} {
 		# if on basic frame, switch to header frame.
@@ -740,8 +785,9 @@ proc VolumesPropsApply {} {
 		
 		# Read headers
 		} else {
-			if {[GetHeaderInfo [file join $Mrml(dir) $Volume(firstFile)] \
-				$Volume(lastNum) $n 1] == "-1"} {
+			set errmsg [GetHeaderInfo [file join $Mrml(dir) $Volume(firstFile)] \
+				$Volume(lastNum) $n 1]
+			if {$errmsg == "-1"} {
 			    set msg "No header information found. Please enter header info manually."
 			    puts $msg
 			    tk_messageBox -message $msg
@@ -752,9 +798,14 @@ proc VolumesPropsApply {} {
 			    VolumesSetPropertyType
 			    $n Delete
 			    return
+			} elseif {$errmsg != ""} {
+				# File not found, most likely
+			    puts $errmsg
+			    tk_messageBox -message $errmsg
+				$n Delete
+				return
 			}
 		}
-
 
 		$n SetName $Volume(name)
 		$n SetDescription $Volume(desc)
@@ -767,6 +818,8 @@ proc VolumesPropsApply {} {
 		set Volume(freeze) 0
 		MainVolumesSetActive $i
 		set m $i
+
+		MainSlicesSetVolumeAll Back $i
 	}
 
 	# Update all fields that the user changed (not stuff that would 
@@ -790,7 +843,7 @@ proc VolumesPropsApply {} {
 	
 	# Update pipeline
 	MainVolumesUpdate $m
-	
+
 	MainUpdateMRML
 }
 
@@ -817,32 +870,13 @@ proc VolumesPropsCancel {} {
 	}
 }
 
-#-------------------------------------------------------------------------------
-# .PROC VolumesSetFirst
-# .END
-#-------------------------------------------------------------------------------
-proc OldVolumesSetFirst {} {
-	global Volume Mrml
-	
-	set typelist {
-		{"All Datas" {*}}
-	}
-	set filename [GetOpenFile $Mrml(dir) $Volume(firstFile) \
-		$typelist 001 "First Image in Volume" 0]
-	if {$filename == ""} {return}
-    
-	# volumeFirst is a relative name (prefix.001) to the root.
-	# volumeLast is an image number
-	
-	set Volume(firstFile) $filename
-	set Volume(name)  [file root [file tail $filename]]
-	set Volume(lastNum)  [MainFileFindImageNumber Last \
-		[file join $Mrml(dir) $filename]]
-}
-
-
 proc VolumesSetFirst {} {
 	global Volume Mrml
+
+	# Cannot have blank prefix
+	if {$Volume(firstFile) == ""} {
+		set Volume(firstFile) I
+	}
 
  	# Show popup initialized to root plus any typed pathname
 	set filename [file join $Mrml(dir) $Volume(firstFile)]
@@ -857,8 +891,10 @@ proc VolumesSetFirst {} {
 	if {$filename == ""} {return}
 
 	# Store first image file as a relative filename to the root (prefix.001)
+	puts "filename=$filename"
 	set Volume(firstFile) [MainFileGetRelativePrefix $filename][file \
 		extension $filename]
+	puts "first=$Volume(firstFile)"
 
 	set Volume(name)  [file root [file tail $filename]]
 

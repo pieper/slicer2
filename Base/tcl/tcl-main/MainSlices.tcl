@@ -349,6 +349,18 @@ proc MainSlicesBuildControls {s F} {
 proc MainSlicesUpdateMRML {} {
 	global Gui Slice Volume Module
 
+	# See if the volume for each layer actually exists.
+	# If not, use the None volume
+	#
+	set n $Volume(idNone)
+	foreach s $Slice(idList) {
+ 		foreach layer "back fore label" {
+			if {[lsearch $Volume(idList) $Slice($s,${layer}VolID)] == -1} {
+				MainSlicesSetVolume [Cap $layer] $s $n
+			}
+		}
+	}
+
 	foreach s $Slice(idList) {
 		
 		# Volumes on slice

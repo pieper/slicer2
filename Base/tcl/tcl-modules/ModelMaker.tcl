@@ -48,7 +48,7 @@
 # .END
 #-------------------------------------------------------------------------------
 proc ModelMakerInit {} {
-	global ModelMaker Module
+	global ModelMaker Module Volume
 
 	# Define Tabs
 	set m ModelMaker
@@ -65,7 +65,7 @@ proc ModelMakerInit {} {
 	set Module($m,depend) "Labels"
 
 	# Create
-	set ModelMaker(idVolume) 0
+	set ModelMaker(idVolume) $Volume(idNone)
 	set ModelMaker(name) skin
 	set ModelMaker(smooth) 5
 	set ModelMaker(decimate) 1
@@ -84,6 +84,14 @@ proc ModelMakerInit {} {
 proc ModelMakerUpdateMRML {} {
 	global ModelMaker Volume
 
+	# See if the volume for each menu actually exists.
+	# If not, use the None volume
+	#
+	set n $Volume(idNone)
+	if {[lsearch $Volume(idList) $ModelMaker(idVolume)] == -1} {
+		ModelMakerSetVolume $n
+	}
+
 	# Volume menu
 	#---------------------------------------------------------------------------
 	set m $ModelMaker(mVolume)
@@ -92,7 +100,6 @@ proc ModelMakerUpdateMRML {} {
 		$m add command -label [Volume($v,node) GetName] -command \
 			"ModelMakerSetVolume $v"
 	}
-
 }
 
 #-------------------------------------------------------------------------------
@@ -100,7 +107,7 @@ proc ModelMakerUpdateMRML {} {
 # .END
 #-------------------------------------------------------------------------------
 proc ModelMakerBuildGUI {} {
-	global Gui ModelMaker Model Module Label
+	global Gui ModelMaker Model Module Label Matrix Volume
 
 	#-------------------------------------------
 	# Frame Hierarchy:
@@ -213,9 +220,11 @@ Models are fun. Do you like models, Ron?
 	set fEdit $Module(ModelMaker,fEdit)
 	set f $fEdit
 
-	frame $f.fActive -bg $Gui(activeWorkspace)
-	frame $f.fGrid   -bg $Gui(activeWorkspace) -relief groove -bd 3
-	pack  $f.fActive $f.fGrid \
+	frame $f.fActive   -bg $Gui(activeWorkspace)
+	frame $f.fGrid     -bg $Gui(activeWorkspace) -relief groove -bd 3
+	frame $f.fPosition -bg $Gui(activeWorkspace) -relief groove -bd 3
+	frame $f.fVolume   -bg $Gui(activeWorkspace) -relief groove -bd 3
+	pack  $f.fActive $f.fGrid $f.fPosition $f.fVolume \
 		-side top -padx $Gui(pad) -pady 10 -fill x
 
 	#-------------------------------------------
@@ -252,14 +261,74 @@ Models are fun. Do you like models, Ron?
 	grid $f.e$Param -sticky w
 
 	#-------------------------------------------
+	# Edit->Position frame
+	#-------------------------------------------
+	set f $fEdit.fPosition
+
+	eval {label $f.l -text "Transform the Polygons"} $Gui(WTA)
+
+	frame $f.f -bg $Gui(activeWorkspace)
+	eval {label $f.f.l -text "Matrix: "} $Gui(WLA)
+	eval {menubutton $f.f.mb -text "None" -relief raised -bd 2 -width 20 \
+		-menu $f.f.mb.m} $Gui(WMBA)
+	eval {menu $f.f.mb.m} $Gui(WMA)
+	pack $f.f.l $f.f.mb -side left
+
+	# Append widgets to list that gets refreshed during UpdateMRML
+	lappend Matrix(mbActiveList) $f.f.mb
+	lappend Matrix(mActiveList)  $f.f.mb.m
+
+	eval {button $f.b -text "Transform it" -width 13 \
+		-command "ModelMakerTransform 0; Render3D"} $Gui(WBA)
+	pack $f.l $f.f $f.b -side top -pady $Gui(pad)
+
+	#-------------------------------------------
+	# Edit->Volume frame
+	#-------------------------------------------
+	set f $fEdit.fVolume
+
+	eval {label $f.l -text "Transform from ScaledIJK to RAS"} $Gui(WTA)
+
+	frame $f.f -bg $Gui(activeWorkspace)
+	eval {label $f.f.l -text "Volume: "} $Gui(WLA)
+	eval {menubutton $f.f.mb -text "None" -relief raised -bd 2 -width 20 \
+		-menu $f.f.mb.m} $Gui(WMBA)
+	eval {menu $f.f.mb.m} $Gui(WMA)
+	pack $f.f.l $f.f.mb -side left
+
+	# Append widgets to list that gets refreshed during UpdateMRML
+	lappend Volume(mbActiveList) $f.f.mb
+	lappend Volume(mActiveList)  $f.f.mb.m
+
+	eval {button $f.b -text "Transform it" -width 13 \
+		-command "ModelMakerTransform 1; Render3D"} $Gui(WBA)
+	pack $f.l $f.f $f.b -side top -pady $Gui(pad)
+
+	#-------------------------------------------
 	# Save frame
 	#-------------------------------------------
 	set fSave $Module(ModelMaker,fSave)
 	set f $fSave
 
+	frame $f.fActive -bg $Gui(activeWorkspace)
 	frame $f.fWrite  -bg $Gui(activeWorkspace) -relief groove -bd 3
-	pack  $f.fWrite \
+	pack  $f.fActive $f.fWrite \
 		-side top -padx $Gui(pad) -pady 10 -fill x
+
+	#-------------------------------------------
+	# Save->Active frame
+	#-------------------------------------------
+	set f $fSave.fActive
+
+	eval {label $f.lActive -text "Active Model: "} $Gui(WLA)
+	eval {menubutton $f.mbActive -text "None" -relief raised -bd 2 -width 20 \
+		-menu $f.mbActive.m} $Gui(WMBA)
+	eval {menu $f.mbActive.m} $Gui(WMA)
+	pack $f.lActive $f.mbActive -side left -padx $Gui(pad) -pady 0 
+
+	# Append widgets to list that gets refreshed during UpdateMRML
+	lappend Model(mbActiveList) $f.mbActive
+	lappend Model(mActiveList)  $f.mbActive.m
 
 	#-------------------------------------------
 	# Save->Write frame
@@ -281,6 +350,68 @@ Models are fun. Do you like models, Ron?
 	eval {button $f.f.b -text "Browse..." -width 10 \
 		-command "ModelMakerSetPrefix"} $Gui(WBA)
 	pack $f.f.l $f.f.b -side left -padx $Gui(pad)
+}
+
+proc ModelMakerTransform {volume} {
+	global ModelMaker Model Volume Matrix
+	
+	if {$volume == 1} {
+		# See if the volume exists
+		if {[lsearch $Volume(idList) $Volume(activeID)] == -1} {
+			tk_messageBox -message "Please select a volume first."
+			return
+		}
+
+		set m $Model(activeID)
+		set v $Volume(activeID)
+	
+		set mat [Volume($v,node) GetPosition]
+	} else {
+		# See if the matrix exists
+		if {[lsearch $Matrix(idList) $Matrix(activeID)] == -1} {
+			tk_messageBox -message "Please select a matrix first."
+			return
+		}
+		set m $Model(activeID)
+		set v $Matrix(activeID)
+	
+		set mat [[Matrix($v,node) GetTransform] GetMatrixPointer]
+	}
+
+	vtkTransform tran
+	tran Concatenate $mat
+
+	vtkTransformPolyDataFilter transformer
+	transformer SetInput $Model($m,polyData)
+	transformer SetTransform tran
+	[transformer GetOutput] ReleaseDataFlagOn
+	transformer Update
+	
+	set p normals
+	vtkPolyDataNormals $p
+    $p SetInput [transformer GetOutput]
+    $p SetFeatureAngle 60
+    [$p GetOutput] ReleaseDataFlagOn
+
+	set p stripper
+	vtkStripper $p
+    $p SetInput [normals GetOutput]
+	[$p GetOutput] ReleaseDataFlagOff
+
+	# polyData will survive as long as it's the input to the mapper
+	set Model($m,polyData) [$p GetOutput]
+	$Model($m,polyData) Update
+	Model($m,mapper) SetInput $Model($m,polyData)
+
+	stripper SetOutput ""
+	foreach p "transformer normals stripper" {
+		$p SetInput ""
+		$p Delete
+	}
+	tran Delete
+
+	# Mark this model as unsaved
+	set Model($m,dirty) 1
 }
 
 #-------------------------------------------------------------------------------
@@ -310,6 +441,9 @@ proc ModelMakerSetPrefix {} {
 
 	# Store it as a relative prefix for next time
 	set ModelMaker(prefix) [MainFileGetRelativePrefix $filename]
+
+	# Actually do it now
+	ModelMakerWrite
 }
 
 #-------------------------------------------------------------------------------

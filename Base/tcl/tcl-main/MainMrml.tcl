@@ -51,6 +51,7 @@
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlInit {} {
+	global Mrml
 	global Model Volume Color Transform EndTransform Matrix
 	global TransferFunction WindowLevel TFPoint ColorLUT Options
 
@@ -68,7 +69,7 @@ proc MainMrmlInit {} {
 		set msg "Unable to read file MRML defaults file '$fileName'"
 		puts $msg
 		tk_messageBox -message $msg
-		return	
+		exit	
 	}
 	MRMLReadDefaults $fileName
 
@@ -267,9 +268,6 @@ proc MainMrmlSetFile {filename} {
 
 	# Synchronize with saving/opening MRML files from the menu bar
 	set File(filePrefix) $Mrml(filePrefix)
-
-	# Colors don't need saving now
-	set Mrml(colorsUnsaved) 0
 }
 
 #-------------------------------------------------------------------------------
@@ -293,17 +291,6 @@ proc MainMrmlRead {mrmlFile} {
 		}
 	}
 
-	# Check the file exists
-	if {$fileName != "" && [CheckFileExists $fileName] == "0"} {
-		set errmsg "Unable to read input MRML file '$fileName'"
-		puts $errmsg
-		tk_messageBox -message $errmsg
-		return	
-	}
-
-	# Store file and directory name
-	MainMrmlSetFile $fileName
-
 	# Build a MRML Tree for data, and another for colors and LUTs
 	if {[info command Mrml(dataTree)] == ""} {
 		vtkMrmlTree Mrml(dataTree)
@@ -312,7 +299,33 @@ proc MainMrmlRead {mrmlFile} {
 		vtkMrmlTree Mrml(colorTree)
 	}
 
+	# Check the file exists
+	if {$fileName != "" && [CheckFileExists $fileName 0] == "0"} {
+		set errmsg "Unable to read input MRML file '$fileName'"
+		puts $errmsg
+		tk_messageBox -message $errmsg
+
+		# At least read colors
+		set tags [MainMrmlAddColors ""]
+		MainMrmlBuildTreesVersion2.0 $tags
+		return	
+	}
+
+	# no file?
+	if {$fileName == ""} {
+		# At least read colors
+		set tags [MainMrmlAddColors ""]
+		MainMrmlBuildTreesVersion2.0 $tags
+		return	
+	}
+
 	MainMrmlDeleteAll
+
+	# Store file and directory name
+	MainMrmlSetFile $fileName
+
+	# Colors don't need saving now
+	set Mrml(colorsUnsaved) 0
 
 	# Open the file to determine it's type
 	set version 2
@@ -330,10 +343,17 @@ proc MainMrmlRead {mrmlFile} {
 		puts "Reading MRML V1.0: $fileName"
 		MainMrmlReadVersion1.0 $fileName
 		MainMrmlBuildTreesVersion1.0
+
+		# Always add Colors.xml
+		set tags [MainMrmlAddColors ""]
+		MainMrmlBuildTreesVersion2.0 $tags
 	} else {
 		puts "Reading MRML V2.0: $fileName"
 		set tags [MainMrmlReadVersion2.0 $fileName]
+
+		# Only add colors if none exist
 		set tags [MainMrmlAddColors $tags]
+
 		MainMrmlBuildTreesVersion2.0 $tags
 	}
 }
@@ -359,28 +379,6 @@ proc MainMrmlReadVersion1.0 {fileName} {
 
 	# Expand URLs
 	set Dag(expanded) [MRMLExpandUrls $Dag(read) $Mrml(dir)]
-
-	# If there are no Color nodes, then read, expand, append default colors.
-	set n [MRMLCountTypeOfNode $Dag(expanded) Color]
-	if {$n == 0} {
-		set fileName [ExpandPath Colors.mrml]
-		if {[CheckFileExists $fileName] == "0"} {
-			set msg "Unable to read file default MRML color file '$fileName'"
-			puts $msg
-			tk_messageBox -message $msg
-			return	
-		}
-		set Dag(defaultColors) [MRMLRead $fileName]
-		if {$Dag(defaultColors) == "-1"} {
-			tk_messageBox -message "Error reading MRML file: '$fileName'\n\
-				See message written in console." 
-			return
-		}
-		set Dag(defaultColors) [MRMLExpandUrls $Dag(defaultColors) [file dirname $fileName]]
-		set Dag(withColors) [MRMLAppendDag $Dag(expanded) $Dag(defaultColors)]
-	} else {
-		set Dag(withColors) $Dag(expanded)
-	}
 }
 
 
@@ -845,15 +843,17 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 				"name"            {$n SetName           $val}
 				"filePattern"     {$n SetFilePattern    $val}
 				"filePrefix"      {$n SetFilePrefix     $val}
-				"imageRange"      {eval $n SetImageRange     $val}
+				"imageRange"      {eval $n SetImageRange $val}
 				"littleEndian"    {$n SetLittleEndian   $val}
-				"spacing"         {eval $n SetSpacing        $val}
-				"dimensions"      {eval $n SetDimensions     $val}
+				"spacing"         {eval $n SetSpacing   $val}
+				"dimensions"      {eval $n SetDimensions $val}
 				"labelMap"        {$n SetLabelMap       $val}
 				"scalarType"      {$n SetScalarTypeTo$val}
 				"numScalars"      {$n SetNumScalars     $val}
 				"rasToIjkMatrix"  {$n SetRasToIjkMatrix $val}
 				"rasToVtkMatrix"  {$n SetRasToVtkMatrix $val}
+				"positionMatrix"  {$n SetPositionMatrix $val}
+				"scanOrder"       {$n SetScanOrder $val}
 				"colorLUT"        {$n SetLUTName        $val}
 				"window"          {$n SetWindow         $val}
 				"level"           {$n SetLevel          $val}
@@ -894,14 +894,9 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 	}
 }
 
-#-------------------------------------------------------------------------------
-# .PROC MainMrmlWrite
-# .END
-#-------------------------------------------------------------------------------
-proc MainMrmlWrite {filename} {
+proc MainMrmlCheckColors {} {
 	global Mrml
-
-	# See if colors are different than the defaults
+	
 	set fileName [ExpandPath Colors.xml]
 	set tags [MainMrmlReadVersion2.0 $fileName]
 
@@ -971,6 +966,52 @@ proc MainMrmlWrite {filename} {
 		}
 	}
 
+}
+
+proc MainMrmlRelativity {oldRoot} {
+	global Mrml
+
+	Mrml(dataTree) InitTraversal
+	set node [Mrml(dataTree) GetNextItem]
+	while {$node != ""} {
+		set class [$node GetClassName]
+
+		if {$class == "vtkMrmlVolumeNode"} {
+
+			$node SetFilePrefix [MainFileGetRelativePrefix \
+				[file join $oldRoot [$node GetFilePrefix]]]
+			$node SetFullPrefix [file join $Mrml(dir) \
+				[file join $oldRoot [$node GetFilePrefix]]]
+
+		} elseif {$class == "vtkMrmlModelNode"} {
+
+			set ext [file extension [$node GetFileName]]
+			$node SetFileName [MainFileGetRelativePrefix \
+				[file join $oldRoot [$node GetFileName]]]$ext
+			$node SetFullFileName [file join $Mrml(dir) \
+				[file join $oldRoot [$node GetFileName]]]$ext
+
+		}
+		set node [Mrml(dataTree) GetNextItem]
+	}
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MainMrmlWrite
+# .END
+#-------------------------------------------------------------------------------
+proc MainMrmlWrite {filename} {
+	global Mrml
+
+	# Store the new root and filePrefix
+	set oldRoot $Mrml(dir)
+	MainMrmlSetFile $filename
+
+	# Rename all file with relative path names
+	MainMrmlRelativity $oldRoot
+
+	# See if colors are different than the defaults
+	MainMrmlCheckColors
 
 	# If colors have changed since last save, then save colors too
 	if {$Mrml(colorsUnsaved) == 1} {
@@ -1001,8 +1042,9 @@ proc MainMrmlWrite {filename} {
 	} else {
 		Mrml(dataTree) Write $filename
 	}
+	
+	# Colors don't need saving now
+	set Mrml(colorsUnsaved) 0
 
-	# Store the new root and filePrefix
-	MainMrmlSetFile $filename
 }
 

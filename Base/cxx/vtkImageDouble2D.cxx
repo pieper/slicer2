@@ -79,7 +79,7 @@ void vtkImageDouble2D::ExecuteInformation(vtkImageData *inData,
 	outData->SetSpacing(outSpacing);
 }
 
-void vtkImageDouble2D::ComputeRequiredInputUpdateExtent(int inExt[6], int outExt[6])
+void vtkImageDouble2D::ComputeInputUpdateExtent(int inExt[6], int outExt[6])
 {
   int idx;
   

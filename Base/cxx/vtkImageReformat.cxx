@@ -152,7 +152,7 @@ void vtkImageReformat::ExecuteInformation(vtkImageData *inData, vtkImageData *ou
 }
 
 //----------------------------------------------------------------------------
-void vtkImageReformat::ComputeRequiredInputUpdateExtent(int inExt[6], int outExt[6])
+void vtkImageReformat::ComputeInputUpdateExtent(int inExt[6], int outExt[6])
 {
     // Use full input extent
     this->GetInput()->GetWholeExtent(inExt);

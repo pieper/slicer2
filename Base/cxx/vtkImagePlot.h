@@ -96,7 +96,7 @@ protected:
   int DataRange[2];
   int DataDomain[2];
 
-  void ComputeRequiredInputUpdateExtent(int inExt[6], int outExt[6]);
+  void ComputeInputUpdateExtent(int inExt[6], int outExt[6]);
   void ExecuteInformation(vtkImageData *inData, vtkImageData *outData);
   void Execute(vtkImageData *inData, vtkImageData *outData);
 };

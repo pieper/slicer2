@@ -85,10 +85,6 @@ vtkMrmlSlicer::vtkMrmlSlicer()
   this->NoneNode->SetID(0);
   this->NoneNode->SetDescription("NoneVolume created by vtkMrmlSlicer");
   this->NoneNode->SetName("None");
-  this->NoneNode->SetImageRange(1, 1);
-  this->NoneNode->SetDimensions(64, 64);
-  this->NoneNode->SetSpacing(0.9375, 0.9375, 3.0);
-  this->NoneNode->ComputeRasToIjkFromScanOrder("SI");
 
 	// Create a NoneVolume
   this->NoneVolume = vtkMrmlVolume::New();

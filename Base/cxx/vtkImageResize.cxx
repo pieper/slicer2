@@ -146,9 +146,8 @@ void vtkImageResize::ExecuteInformation(vtkImageData *inData,
   {
     this->SetOutputWholeExtent(extent);
   }
-  if ( ! this->Bypass)
-  {
-    // Clip the OutputWholeExtent with the input WholeExtent
+
+  // Clip the OutputWholeExtent with the input WholeExtent
     for (idx = 0; idx < 3; ++idx)
     {
       if (this->OutputWholeExtent[idx*2] >= extent[idx*2] && 
@@ -178,15 +177,15 @@ void vtkImageResize::ExecuteInformation(vtkImageData *inData,
 
       origin[idx] += this->InputClipExtent[idx*2];
     }
-  }
-  outData->SetWholeExtent(extent);
+
+    outData->SetWholeExtent(extent);
   outData->SetSpacing(spacing);
   outData->SetOrigin(origin);
 }
 
 //----------------------------------------------------------------------------
 // Get only the clipped input.
-void vtkImageResize::ComputeRequiredInputUpdateExtent(int inExt[6], 
+void vtkImageResize::ComputeInputUpdateExtent(int inExt[6], 
                                                         int outExt[6])
 {
   memcpy(inExt, this->InputClipExtent, 6*sizeof(int));
@@ -481,7 +480,7 @@ void vtkImageResize::ThreadedExecute(vtkImageData *inData,
 {
   int inExt[6];
   outData->GetExtent(outExt);
-  this->ComputeRequiredInputUpdateExtent(inExt, outExt);
+  this->ComputeInputUpdateExtent(inExt, outExt);
   void *inPtr = inData->GetScalarPointerForExtent(inExt);
   void *outPtr = outData->GetScalarPointerForExtent(outExt);
   

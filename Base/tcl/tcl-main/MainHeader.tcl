@@ -234,10 +234,15 @@ proc DumpHeader {aHeader} {
 
 #-------------------------------------------------------------------------------
 # .PROC GetHeaderInfo
+# Return an error message if files don't exist, else "".
 # .END
 #-------------------------------------------------------------------------------
 proc GetHeaderInfo {img1 num2 node tk} {
 	global Mrml Path
+
+	if {[CheckFileExists $img1 0] == 0} {
+		return "Cannot open '$img1'."
+	}
 
 	# Get filename pattern
 	set prefix [file root $img1]
@@ -248,7 +253,7 @@ proc GetHeaderInfo {img1 num2 node tk} {
 	set num1 [string trimleft $num1 "0"]
 	if {$num1 == ""} {set num1 0}
 
-	# Test pattern
+	# Determine the pattern by testing a couple cases
 	if {[format "%s.%03d$suffix" $prefix $num1] == $img1} {
 		set filePattern "%s.%03d$suffix"
 	} elseif {[format "%s.%d$suffix" $prefix $num1] == $img1} {
@@ -259,6 +264,9 @@ proc GetHeaderInfo {img1 num2 node tk} {
 
 	# Compute the full path of the last image in the volume
 	set img2 [format $filePattern $prefix $num2]
+	if {[CheckFileExists $img2 0] == 0} {
+		return "Cannot open '$img2'."
+	}
 
 	# Read headers
 	set hdr1 [ReadHeader $img1 1 $Path(printHeader) $tk]
@@ -292,5 +300,9 @@ proc GetHeaderInfo {img1 num2 node tk} {
 	if {[$node GetDescription] == ""} {
 		$node SetDescription [$node GetScanOrder]
 	}
-	return $result
+	if {$result == 0} {
+		return ""
+	} else {
+		return $result
+	}
 }

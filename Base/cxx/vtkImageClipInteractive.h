@@ -94,7 +94,7 @@ protected:
   int ClipExtent[6];
 
 	// Override this function since inExt != outExt
-	void ComputeRequiredInputUpdateExtent(int inExt[6],int outExt[6]);
+	void ComputeInputUpdateExtent(int inExt[6],int outExt[6]);
   
 	void ExecuteInformation(vtkImageData *inData, vtkImageData *outData);
 

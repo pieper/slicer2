@@ -194,7 +194,7 @@ Models are fun. Do you like models, Ron?
 	bind $Data(fNodeList) <Double-1>  {DataEditNode}
 	bind all <Control-e> {DataEditNode}
 	bind all <Control-x> {DataCutNode}
-	bind all <Control-c> {DataCopyNode}
+#	bind all <Control-c> {DataCopyNode}
 	bind all <Control-v> {DataPasteNode}
 	bind all <Control-d> {DataDeleteNode}
 	pack $f.list -side top -expand 1 -fill both
@@ -212,9 +212,9 @@ Models are fun. Do you like models, Ron?
 	set Data(rightMenu,Cut)    $id
 	$m add command -label "Cut (Ctrl+x)" -command "DataCutNode"
 	incr id
-	set Data(rightMenu,Copy)   $id
-	$m add command -label "Copy (Ctrl+c)" -command "DataCopyNode"
-	incr id
+#	set Data(rightMenu,Copy)   $id
+#	$m add command -label "Copy (Ctrl+c)" -command "DataCopyNode"
+#	incr id
 	set Data(rightMenu,Paste)  $id
 	$m add command -label "Paste (Ctrl+v)" -command "DataPasteNode" \
 		-state disabled
@@ -327,11 +327,11 @@ proc DataPostRightMenu {x y} {
 	# If no selection, then disable certain menu entries
 	set m $Data(rightMenu)
 	if {$index == ""} {
-		foreach entry "Cut Copy Edit Delete" {
+		foreach entry "Cut Edit Delete" {
 			$m entryconfigure $Data(rightMenu,$entry) -state disabled
 		}
 	} else {
-		foreach entry "Cut Copy Edit Delete" {
+		foreach entry "Cut Edit Delete" {
 			$m entryconfigure $Data(rightMenu,$entry) -state normal
 		}
 	}
@@ -520,7 +520,7 @@ proc DataEditNode {} {
 		set id [DataGetIdFromNode $node]
 		MainVolumesSetActive $id
 		if {[IsModule Volumes] == 1} {
-			Tab Volumes row1 Props
+			Tab Volumes row1 Display
 		}
 	}
 	"vtkMrmlModelNode" {
@@ -600,7 +600,7 @@ proc DataAddTransform {} {
 	vtkMrmlMatrixNode Matrix($i,node)
 	set n Matrix($i,node)
 	$n SetID $i
-	$n SetName new
+	$n SetName manual
 	Mrml(dataTree) AddItem $n
 	MainMatricesSetActive $i
 

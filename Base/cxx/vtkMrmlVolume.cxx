@@ -243,6 +243,8 @@ void vtkMrmlVolume::CheckLabelIndirectLUT()
 //----------------------------------------------------------------------------
 void vtkMrmlVolume::Update()
 {
+  int ext[6];
+  
   // We really should have an Update time that we compare with the
   // MTime, but since the other objects inside this class do this, 
   // its alright.
@@ -254,10 +256,16 @@ void vtkMrmlVolume::Update()
 
   // Connect pipeline
   this->Accumulate->SetInput(this->ImageData);
+  this->Accumulate->Update();
   this->Bimodal->SetInput(this->Accumulate->GetOutput());
+  this->Bimodal->Update();
+  this->Bimodal->GetClipExtent(ext);
+  this->Resize->SetInputClipExtent(ext);
   this->Resize->SetInput(this->Accumulate->GetOutput());
+  this->Resize->Update();
   this->HistPlot->SetInput(this->Resize->GetOutput());
- 
+
+
   // Bound W/L range and apply auto if requested
   this->UpdateWindowLevelThreshold();
 }
@@ -436,7 +444,9 @@ void vtkMrmlVolume::Read()
   reader->SetProgressMethod(vtkMrmlVolumeProgress, (void *)this);
  
   // Read it
+  vtkDebugMacro(<<"here0");
   reader->Update();
+  vtkDebugMacro(<<"here1");
 
   // Detach image data from reader
   this->SetImageData(reader->GetOutput());
@@ -451,7 +461,9 @@ void vtkMrmlVolume::Read()
   } 
 
   // Update W/L
+  vtkDebugMacro(<<"here2");
   this->Update();
+  vtkDebugMacro(<<"here3");
 }
 
 //----------------------------------------------------------------------------

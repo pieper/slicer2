@@ -62,6 +62,7 @@ vtkMrmlVolumeNode::vtkMrmlVolumeNode()
   this->FilePrefix = NULL;
   this->RasToIjkMatrix = NULL;
   this->RasToVtkMatrix = NULL;
+  this->PositionMatrix = NULL;
   this->LUTName = NULL;
   this->FullPrefix = NULL;
   this->ScanOrder = NULL;
@@ -88,14 +89,15 @@ vtkMrmlVolumeNode::vtkMrmlVolumeNode()
 
   // ScanOrder can never be NULL
   this->ScanOrder = new char[3];
-  strcpy(this->ScanOrder, "SI");
+  strcpy(this->ScanOrder, "LR");
 
   // Matrices
   this->WldToIjk = vtkMatrix4x4::New();
   this->RasToWld = vtkMatrix4x4::New();
   this->RasToIjk = vtkMatrix4x4::New();
+  this->Position = vtkMatrix4x4::New();
 
-  // Initialize to 64x64x1
+  // Initialize 
   this->SetImageRange(1, 1);
   this->SetDimensions(256, 256);
   this->SetSpacing(0.9375, 0.9375, 1.5);
@@ -108,6 +110,7 @@ vtkMrmlVolumeNode::~vtkMrmlVolumeNode()
   this->WldToIjk->Delete();
   this->RasToWld->Delete();
   this->RasToIjk->Delete();
+  this->Position->Delete();
 
   if (this->Name)
   {
@@ -133,6 +136,11 @@ vtkMrmlVolumeNode::~vtkMrmlVolumeNode()
   {
     delete [] this->RasToIjkMatrix;
     this->RasToIjkMatrix = NULL;
+  }
+  if (this->PositionMatrix)
+  {
+    delete [] this->PositionMatrix;
+    this->PositionMatrix = NULL;
   }
   if (this->LUTName)
   {
@@ -213,6 +221,14 @@ void vtkMrmlVolumeNode::Write(ofstream& of, int nIndent)
   if (this->RasToVtkMatrix && strcmp(this->RasToVtkMatrix, "")) 
   {
     of << " rasToVtkMatrix='" << this->RasToVtkMatrix << "'";
+  }
+  if (this->PositionMatrix && strcmp(this->PositionMatrix, "")) 
+  {
+    of << " positionMatrix='" << this->PositionMatrix << "'";
+  }
+  if (this->ScanOrder && strcmp(this->ScanOrder, "LR")) 
+  {
+    of << " scanOrder='" << this->ScanOrder << "'";
   }
   if (this->Description && strcmp(this->Description, "")) 
   {
@@ -311,6 +327,7 @@ void vtkMrmlVolumeNode::Copy(vtkMrmlVolumeNode *node)
   this->SetFilePattern(node->FilePattern);
   this->SetRasToIjkMatrix(node->RasToIjkMatrix);
   this->SetRasToVtkMatrix(node->RasToVtkMatrix);
+  this->SetPositionMatrix(node->PositionMatrix);
   this->SetLUTName(node->LUTName);
   this->SetScanOrder(node->ScanOrder);
 
@@ -337,6 +354,7 @@ void vtkMrmlVolumeNode::Copy(vtkMrmlVolumeNode *node)
   this->RasToIjk->DeepCopy(node->RasToIjk);
   this->RasToWld->DeepCopy(node->RasToWld);
   this->WldToIjk->DeepCopy(node->WldToIjk);
+  this->Position->DeepCopy(node->WldToIjk);
 }
 
 //----------------------------------------------------------------------------
@@ -380,6 +398,7 @@ void vtkMrmlVolumeNode::SetRasToWld(vtkMatrix4x4 *rasToWld)
   {
     SetMatrixToString(this->RasToIjk, this->RasToIjkMatrix);
   }
+  SetMatrixToString(this->Position, this->PositionMatrix);
 
   // Form WldToIjk matrix to pass to reformatter
   // --------------------------------------------
@@ -422,6 +441,8 @@ void vtkMrmlVolumeNode::PrintSelf(ostream& os, vtkIndent indent)
     (this->RasToIjkMatrix ? this->RasToIjkMatrix : "(none)") << "\n";
   os << indent << "RasToVtkMatrix: " <<
     (this->RasToVtkMatrix ? this->RasToVtkMatrix : "(none)") << "\n";
+  os << indent << "PositionMatrix: " <<
+    (this->PositionMatrix ? this->PositionMatrix : "(none)") << "\n";
   os << indent << "ScanOrder: " <<
     (this->ScanOrder ? this->ScanOrder : "(none)") << "\n";
   os << indent << "LUTName: " <<
@@ -469,6 +490,8 @@ void vtkMrmlVolumeNode::PrintSelf(ostream& os, vtkIndent indent)
     this->RasToIjk->PrintSelf(os, indent.GetNextIndent());  
   os << indent << "WldToIjk:\n";
     this->WldToIjk->PrintSelf(os, indent.GetNextIndent());  
+  os << indent << "Position:\n";
+    this->Position->PrintSelf(os, indent.GetNextIndent());  
 }
 
 //----------------------------------------------------------------------------
@@ -683,6 +706,58 @@ static void MakeVolumeMatrix(vtkMatrix4x4 *mat, vtkMatrix4x4 *matRotate,
 }
 
 //----------------------------------------------------------------------------
+static void MakePositionMatrix(vtkMatrix4x4 *mat, vtkMatrix4x4 *matRotate, 
+                double yDir, int nx, int ny, int nz, 
+                float vx, float vy, float vz, float ox, float oy, float oz, 
+                float sh)
+{
+  vtkTransform *tran = vtkTransform::New();
+
+  // The position matrix is a scaledIJK->RAS matrix.
+  // The difference between this matrix and the RAS->IJK matrix is:
+  //
+  // No scale term
+  // The matrix is not inverted at the end of this procedure.
+
+	// Make ScaledIJK->RAS matrix.
+	//---------------------------------------------------------------------
+	// Scaled-Center
+	// 1 0 0 -nx/2*vx
+	// 0 1 0 -ny/2*vy
+	// 0 0 1 -nz/2*vz
+	// 0 0 0     4
+
+	// Shear (from tilt)
+	//  1  0  0  0
+	//  0  1  0  0
+	//  0 sh  1  0
+	//  0  0  0  1
+
+	// Set the vtkTransform to PostMultiply so a concatenated matVol, C,
+	// is multiplied by the existing matVol, M: C*M (not M*C)
+	tran->PostMultiply();
+
+	// M = O*R*Y*S*C  
+	// Order of operation: Scaled-Center, Shear, Y-Reflect, Rotate, Offset
+	
+	tran->Identity();
+	// C:
+	tran->Translate(-nx/2.0*vx, -ny/2.0*vy, -nz/2.0*vz);
+	// Sh:
+	tran->GetMatrixPointer()->SetElement(2, 1, sh);
+	// Y:
+	tran->Scale(1.0, yDir, 1.0);
+	// R:
+	tran->Concatenate(matRotate);
+	// O:
+	tran->Translate(ox, oy, oz);
+
+  tran->GetMatrix(mat);
+
+  tran->Delete();
+}
+
+//----------------------------------------------------------------------------
 void vtkMrmlVolumeNode::ComputeRasToIjk(vtkMatrix4x4 *matRotate, 
                                         float ox, float oy, float oz)
 {
@@ -728,6 +803,12 @@ void vtkMrmlVolumeNode::ComputeRasToIjk(vtkMatrix4x4 *matRotate,
   MakeVolumeMatrix(mat, matRotate, yDir, nx, ny, nz, vx, vy, vz, 
     ox, oy, oz, sh);
   this->SetRasToIjkMatrix(GetMatrixToString(mat));
+
+  // Position (rotate, offset)
+  yDir = 1.0;
+  MakePositionMatrix(mat, matRotate, yDir, nx, ny, nz, vx, vy, vz,
+      ox, oy, oz, sh);
+  this->SetPositionMatrix(GetMatrixToString(mat));
 
   mat->Delete();
 }

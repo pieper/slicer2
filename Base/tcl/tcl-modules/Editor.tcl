@@ -86,7 +86,7 @@ proc EditorInit {} {
 	set Module($m,depend) "Labels"
 
 	# Initialize globals
-	set Editor(idOriginal)  0
+	set Editor(idOriginal)  $Volume(idNone)
 	set Editor(idWorking)   NEW
 	set Editor(idComposite) NEW
 	set Editor(undoActive)  0
@@ -174,6 +174,22 @@ proc EditorBuildVTK {} {
 #-------------------------------------------------------------------------------
 proc EditorUpdateMRML {} {
 	global Volume Editor
+
+	# See if the volume for each menu actually exists.
+	# If not, use the None volume
+	#
+	set n $Volume(idNone)
+	if {[lsearch $Volume(idList) $Editor(idOriginal)] == -1} {
+		EditorSetOriginal $n
+	}
+	if {$Editor(idWorking) != "NEW" && \
+		[lsearch $Volume(idList) $Editor(idWorking)] == -1} {
+		EditorSetWorking NEW
+	}
+	if {$Editor(idComposite) != "NEW" && \
+		[lsearch $Volume(idList) $Editor(idComposite)] == -1} {
+		EditorSetComposite NEW
+	}
 
 	# Original Volume menu
 	#---------------------------------------------------------------------------

@@ -53,13 +53,13 @@ protected:
   void operator=(const vtkImageAccumulateDiscrete&) {};
 
   void ExecuteInformation(vtkImageData *input, vtkImageData *output);
-  void ComputeRequiredInputUpdateExtent(int inExt[6], int outExt[6]);
+  void ComputeInputUpdateExtent(int inExt[6], int outExt[6]);
   void Execute(vtkImageData *inData, vtkImageData *outData);
 
   // Description:
   // Generate more than requested.  Called by the superclass before
   // an execute, and before output memory is allocated.
-  void ModifyOutputUpdateExtent();
+  void EnlargeOutputUpdateExtents( vtkDataObject *data );
 
 };
 

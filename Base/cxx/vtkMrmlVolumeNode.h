@@ -159,6 +159,11 @@ public:
   vtkSetStringMacro(RasToVtkMatrix);
   vtkGetStringMacro(RasToVtkMatrix);
 
+  // Description:
+  // 
+  vtkSetStringMacro(PositionMatrix);
+  vtkGetStringMacro(PositionMatrix);
+
 
   //--------------------------------------------------------------------------
   // Non-Header Information
@@ -206,6 +211,7 @@ public:
   vtkGetObjectMacro(WldToIjk, vtkMatrix4x4);
   vtkGetObjectMacro(RasToWld, vtkMatrix4x4);
   vtkGetObjectMacro(RasToIjk, vtkMatrix4x4);
+  vtkGetObjectMacro(Position, vtkMatrix4x4);
 
 
   //--------------------------------------------------------------------------
@@ -265,6 +271,7 @@ protected:
   char *FullPrefix;
   char *RasToIjkMatrix;
   char *RasToVtkMatrix;
+  char *PositionMatrix;
   char *LUTName;
   char *ScanOrder;
 
@@ -290,7 +297,7 @@ protected:
   vtkMatrix4x4 *WldToIjk;
   vtkMatrix4x4 *RasToWld;
   vtkMatrix4x4 *RasToIjk;
-
+  vtkMatrix4x4 *Position;
 };
 
 #endif

@@ -142,7 +142,7 @@ unsigned long vtkImagePlot::GetMTime()
 // By default,this filter will try to fetch an input the same size as the
 // output.  However, the output is 2D and the input is 1D.
 // So we have to override this function here.
-void vtkImagePlot::ComputeRequiredInputUpdateExtent(int inExt[6], 
+void vtkImagePlot::ComputeInputUpdateExtent(int inExt[6], 
 							  int outExt[6])
 {
   int *wholeExtent;
@@ -443,7 +443,7 @@ void vtkImagePlot::Execute(vtkImageData *inData, vtkImageData *outData)
 {
   int inExt[6], outExt[6];
   outData->GetExtent(outExt);
-  this->ComputeRequiredInputUpdateExtent(inExt, outExt);
+  this->ComputeInputUpdateExtent(inExt, outExt);
   void *inPtr = inData->GetScalarPointerForExtent(inExt);
   unsigned char *outPtr = (unsigned char*)
     outData->GetScalarPointerForExtent(outExt);

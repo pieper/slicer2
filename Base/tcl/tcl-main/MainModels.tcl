@@ -785,7 +785,8 @@ proc MainModelsWrite {m prefix} {
 	# So don't write it if it's not dirty.
 	if {$Model($m,dirty) == 0} {
 		tk_messageBox -message \
-			"This model will not be saved\nbecause it has not been changed."
+			"This model will not be saved\nbecause it has not been changed\n\
+			since the last time it was saved."
 		return
 	}
 

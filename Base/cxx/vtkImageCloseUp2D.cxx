@@ -99,7 +99,7 @@ void vtkImageCloseUp2D::ExecuteInformation(vtkImageData *inData,
 
 //----------------------------------------------------------------------------
 
-void vtkImageCloseUp2D::ComputeRequiredInputUpdateExtent(int inExt[6], int outExt[6])
+void vtkImageCloseUp2D::ComputeInputUpdateExtent(int inExt[6], int outExt[6])
 
 {
 	// Use full input extent

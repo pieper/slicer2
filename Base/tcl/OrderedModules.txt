@@ -2,13 +2,12 @@ Data
 Volumes
 Models
 Matrices
-Editor
 ModelMaker
-Colors
 Slices
 View
+Colors
 Locator
-Guidance
 Anno
 Modules
+Guidance
 Custom

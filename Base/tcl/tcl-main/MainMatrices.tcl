@@ -200,6 +200,10 @@ proc MainMatricesSetActive {t} {
 	Matrix(rotMatrix) Identity
 
 	if {$t == ""} {
+		# Change button text
+		foreach mb $Matrix(mbActiveList) {
+			$mb config -text None
+		}
 		return
 	} elseif {$t == "NEW"} {
 		# Change button text
@@ -208,7 +212,7 @@ proc MainMatricesSetActive {t} {
 		}
 		# Use defaults to update GUI
 		vtkMrmlMatrixNode default
-		set Matrix(name)   [default GetName]
+		set Matrix(name)   "manual"
 		set Matrix(desc)   [default GetDescription]
 		set Matrix(matrix) [default GetMatrix]
 		default Delete

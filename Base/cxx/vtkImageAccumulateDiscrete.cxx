@@ -98,7 +98,7 @@ void vtkImageAccumulateDiscrete::ExecuteInformation(vtkImageData *vtkNotUsed(inp
 
 //----------------------------------------------------------------------------
 // Get ALL of the input.
-void vtkImageAccumulateDiscrete::ComputeRequiredInputUpdateExtent(int inExt[6], 
+void vtkImageAccumulateDiscrete::ComputeInputUpdateExtent(int inExt[6], 
 							  int outExt[6])
 {
   int *wholeExtent;
@@ -109,16 +109,9 @@ void vtkImageAccumulateDiscrete::ComputeRequiredInputUpdateExtent(int inExt[6],
 }
 
 //----------------------------------------------------------------------------
-void vtkImageAccumulateDiscrete:: ModifyOutputUpdateExtent()
+void vtkImageAccumulateDiscrete::EnlargeOutputUpdateExtents(vtkDataObject *vtkNotUsed(data) )
 {
   int wholeExtent[8];
-  
-  // Filter superclass has no control of intercept cache update.
-  // a work around
-  if (this->Bypass)
-    {
-    return;
-    }
   
   this->GetOutput()->GetWholeExtent(wholeExtent);
   this->GetOutput()->SetUpdateExtent(wholeExtent);

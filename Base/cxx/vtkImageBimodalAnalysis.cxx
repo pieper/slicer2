@@ -86,7 +86,7 @@ void vtkImageBimodalAnalysis::ExecuteInformation(vtkImageData *vtkNotUsed(input)
 
 //----------------------------------------------------------------------------
 // Get ALL of the input.
-void vtkImageBimodalAnalysis::ComputeRequiredInputUpdateExtent(int inExt[6], 
+void vtkImageBimodalAnalysis::ComputeInputUpdateExtent(int inExt[6], 
 							  int outExt[6])
 {
   int *wholeExtent;
@@ -97,16 +97,10 @@ void vtkImageBimodalAnalysis::ComputeRequiredInputUpdateExtent(int inExt[6],
 }
 
 //----------------------------------------------------------------------------
-void vtkImageBimodalAnalysis::ModifyOutputUpdateExtent()
+void vtkImageBimodalAnalysis::EnlargeOutputUpdateExtents( vtkDataObject *vtkNotUsed(data) )
 {
   int wholeExtent[8];
   
-  // Filter superclass has no control of intercept cache update.
-  // a work around
-  if (this->Bypass)
-  {
-    return;
-  }
   this->GetOutput()->GetWholeExtent(wholeExtent);
   this->GetOutput()->SetUpdateExtent(wholeExtent);
 }

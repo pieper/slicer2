@@ -133,7 +133,7 @@ void vtkImageClipInteractive::ExecuteInformation(vtkImageData *inData, vtkImageD
 	}
 }
 
-void vtkImageClipInteractive::ComputeRequiredInputUpdateExtent(int inExt[6], int outExt[6])
+void vtkImageClipInteractive::ComputeInputUpdateExtent(int inExt[6], int outExt[6])
 {
   // Use full input extent
   this->GetInput()->GetWholeExtent(inExt);

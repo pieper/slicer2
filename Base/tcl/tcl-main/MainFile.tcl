@@ -256,6 +256,9 @@ proc MainFileSaveAs {} {
 
 	# Make it a relative prefix
 	set File(filePrefix) [MainFileGetRelativePrefix $filename]
+
+	MainFileSaveAsApply
+	wm withdraw $File(wSaveAs)
 }
 
 #-------------------------------------------------------------------------------
@@ -343,6 +346,9 @@ proc MainFileOpen {} {
 	if {[regexp {.*\.mrml$} $filename] == 1} {
 		set File(filePrefix) $File(filePrefix).mrml
 	}
+
+	wm withdraw $File(wOpen)
+	MainFileOpenApply
 }
 
 #-------------------------------------------------------------------------------
@@ -385,11 +391,7 @@ proc MainFileGetRelativePrefix {filename} {
 	# Returns the prefix (no extension) of filename relative to Mrml(dir)
 	set root $Mrml(dir)
 	set absPrefix [file rootname $filename]
-	if {$Gui(pc) == 1} {
-		set absPrefix [string tolower $absPrefix]
-		set root [string tolower $Mrml(dir)]
-	}
-	set relPrefix himom
+
 	if {[regexp "^$root/(\.*)" $absPrefix match relPrefix] == 1} {
 		return $relPrefix
 	} else {
@@ -478,15 +480,17 @@ proc CheckVolumeExists {filePrefix filePattern firstNum lastNum {verbose 0}} {
 	set num $firstNum
 	while {$num <= $lastNum} {
 		set filename [format $filePattern $filePrefix $num]
+		puts $filename
 		if {[CheckFileExists $filename $verbose] == 0} {
 			if {$filename == ""} {
+				# Return the word, filename just to indicate error
 				return filename
 			}
 			return $filename
 		}
 		incr num
 	}
-	return "" 
+	return ""
 }
 
 #-------------------------------------------------------------------------------

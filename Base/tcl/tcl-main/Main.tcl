@@ -249,7 +249,11 @@ proc MainInit {} {
 	set Path(printHeaderFirstWord) print_header
 	set Path(remoteHost) forest
 
-	set Mrml(dir) [pwd]
+	# Set the Mrml(dir) only if the user hasn't done this already
+	# (like in the startup script)
+	if {[info exists Mrml(dir)] == 0} {
+		set Mrml(dir) [pwd]
+	}
 
 	GuiInit
 	puts "Launching $Gui(title)..."

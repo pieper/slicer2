@@ -435,7 +435,7 @@ void vtkImageReformatIJK::ExecuteInformation()
 }
 
 //----------------------------------------------------------------------------
-void vtkImageReformatIJK::ComputeRequiredInputUpdateExtent(int inExt[6], int outExt[6])
+void vtkImageReformatIJK::ComputeInputUpdateExtent(int inExt[6], int outExt[6])
 {
     // Use full input extent
     this->GetInput()->GetWholeExtent(inExt);
