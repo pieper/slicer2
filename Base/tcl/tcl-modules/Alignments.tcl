@@ -132,7 +132,7 @@ proc AlignmentsInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.5 $} {$Date: 2002/07/28 06:01:21 $}]
+            {$Revision: 1.6 $} {$Date: 2002/07/28 06:41:36 $}]
 
     # Props
     set Matrix(propertyType) Basic
@@ -211,8 +211,8 @@ proc AlignmentsInit {} {
     #Hanifa - I started working on incorporating Thin Plate Spline into this module. 
     #Currently only the interface for TPS is here, but I have commented out everything that 
     #deals with TPS since the code has not yet been plugged in. 
-    set Matrix(TPSVolumeName) None
-    set Matrix(TPSRefVolumeName) None
+    #set Matrix(TPSVolumeName) None
+    #set Matrix(TPSRefVolumeName) None
 }
 
 #-------------------------------------------------------------------------------
@@ -738,8 +738,7 @@ proc AlignmentsBuildGUI {} {
     #-------------------------------------------
     set f $fAuto.fBot.fAlignBegin
 
-    eval {label $f.fTitle -text "Select a Registration mode\n
-    using the buttons above"} $Gui(WLA)
+    eval {label $f.fTitle -text "Select a Registration mode\n\ using the buttons above"} $Gui(WLA)
     
     pack $f.fTitle -pady 60
 
@@ -850,141 +849,144 @@ proc AlignmentsBuildGUI {} {
     # Auto->Bot->TPS Frame
     #-------------------------------------------
     set f $fAuto.fBot.fTPS
-    frame $f.fTPSFidPoints -bg $Gui(activeWorkspace) -relief groove -bd 2
-    frame $f.fTPSVolume -bg $Gui(activeWorkspace) -relief groove -bd 2 
-    frame $f.fTPSOptions -bg $Gui(activeWorkspace) -relief groove -bd 2 
-    frame $f.fTPSOutputSliceRange -bg $Gui(activeWorkspace) -relief groove -bd 2 
-    frame $f.fTPSWarp -bg $Gui(activeWorkspace) 
-    frame $f.fTPSSaveVolume -bg $Gui(activeWorkspace) 
-    
 
-    pack $f.fTPSFidPoints $f.fTPSVolume $f.fTPSOptions $f.fTPSOutputSliceRange  $f.fTPSWarp $f.fTPSSaveVolume\
-    -side top -pady 2 -padx $Gui(pad) -fill x
- 
+    frame $f.fTPSNotAvail -bg $Gui(activeWorkspace) -relief groove
+    #frame $f.fTPSFidPoints -bg $Gui(activeWorkspace) -relief groove -bd 2
+    #frame $f.fTPSVolume -bg $Gui(activeWorkspace) -relief groove -bd 2 
+    #frame $f.fTPSOptions -bg $Gui(activeWorkspace) -relief groove -bd 2 
+    #frame $f.fTPSOutputSliceRange -bg $Gui(activeWorkspace) -relief groove -bd 2 
+    #frame $f.fTPSWarp -bg $Gui(activeWorkspace) 
+    #frame $f.fTPSSaveVolume -bg $Gui(activeWorkspace) 
+    
+    pack $f.fTPSNotAvail -pady 80
+    #pack $f.fTPSFidPoints $f.fTPSVolume $f.fTPSOptions $f.fTPSOutputSliceRange \n
+    # $f.fTPSWarp $f.fTPSSaveVolume #-side top -pady 2 -padx $Gui(pad) -fill x
+
+    #-------------------------------------------
+    # Auto->Bot->TPS->Not Available Currently
+    #-------------------------------------------
+    set f $fAuto.fBot.fTPS.fTPSNotAvail
+    eval {label $f.lTPSNotAvail -text "TPS is currently not\n\ available in this\n\ version"} $Gui(WLA)
+
+    pack $f.lTPSNotAvail
+
     #-------------------------------------------
     # Auto->Bot->TPS->Volume frame
     #-------------------------------------------
-    set f $fAuto.fBot.fTPS.fTPSVolume
+    #set f $fAuto.fBot.fTPS.fTPSVolume
     
     #Allow the user to create a new volume to store the warped volume.
-    frame $f.fTPSNewVolume -bg $Gui(activeWorkspace)
-    pack $f.fTPSNewVolume -side top -padx $Gui(pad) -pady $Gui(pad) -anchor w
+    #frame $f.fTPSNewVolume -bg $Gui(activeWorkspace)
+    #pack $f.fTPSNewVolume -side top -padx $Gui(pad) -pady $Gui(pad) -anchor w
 
-    eval {label $f.fTPSNewVolume.lLabel -text "Generate New Volume Using TPS:"} $Gui(WLA) -foreground blue   
-    pack  $f.fTPSNewVolume.lLabel -pady 2 -anchor w
+    #eval {label $f.fTPSNewVolume.lLabel -text "Generate New Volume Using TPS:"} $Gui(WLA) -foreground blue   
+    #pack  $f.fTPSNewVolume.lLabel -pady 2 -anchor w
 
-    eval {label $f.fTPSNewVolume.lName -text "Name: "} $Gui(WLA)     
-    eval {entry $f.fTPSNewVolume.eName -textvariable $Matrix(TPSVolumeName) -width 13} $Gui(WEA)
-    pack $f.fTPSNewVolume.lName -side left -pady $Gui(pad) 
-    pack $f.fTPSNewVolume.eName -side left -padx $Gui(pad) -expand 1 -fill x
+    #eval {label $f.fTPSNewVolume.lName -text "Name: "} $Gui(WLA)     
+    #eval {entry $f.fTPSNewVolume.eName -textvariable $Matrix(TPSVolumeName) -width 13} $Gui(WEA)
+    #pack $f.fTPSNewVolume.lName -side left -pady $Gui(pad) 
+    #pack $f.fTPSNewVolume.eName -side left -padx $Gui(pad) -expand 1 -fill x
  
 
     #Allow the user to pick a target volume in which to save the warped volume.
-    frame $f.fTPSTargetVolume -bg $Gui(activeWorkspace)
+    #frame $f.fTPSTargetVolume -bg $Gui(activeWorkspace)
 
     #In the callback command make sure you add this to menubutton "target volume" 
-    eval {label $f.fTPSTargetVolume.lTargetVolume -text "Target Volume: "} $Gui(WLA)
-    eval {menubutton $f.fTPSTargetVolume.mbTargetVolume -text "Matrix(TpsTargetVolume)" \
-          -relief raised -bd 2 -width 20 \
-          -menu $f.fTPSTargetVolume.mbTargetVolume.m} $Gui(WMBA)
-    eval {menu $f.fTPSTargetVolume.mbTargetVolume.m} $Gui(WMA)
+    #eval {label $f.fTPSTargetVolume.lTargetVolume -text "Target Volume: "} $Gui(WLA)
+    #eval {menubutton $f.fTPSTargetVolume.mbTargetVolume -text "Matrix(TpsTargetVolume)" \
+    #      -relief raised -bd 2 -width 20 \
+    #     -menu $f.fTPSTargetVolume.mbTargetVolume.m} $Gui(WMBA)
+    #eval {menu $f.fTPSTargetVolume.mbTargetVolume.m} $Gui(WMA)
 
-    pack $f.fTPSTargetVolume -side top -pady $Gui(pad) -padx $Gui(pad)
-    pack $f.fTPSTargetVolume.lTargetVolume $f.fTPSTargetVolume.mbTargetVolume -side left -padx 1
+    #pack $f.fTPSTargetVolume -side top -pady $Gui(pad) -padx $Gui(pad)
+    #pack $f.fTPSTargetVolume.lTargetVolume $f.fTPSTargetVolume.mbTargetVolume -side left -padx 1
     
-
     #-------------------------------------------
     # TPS->TPS Options frame
     #-------------------------------------------
-    set f  $fAuto.fBot.fTPS.fTPSOptions
+    #set f  $fAuto.fBot.fTPS.fTPSOptions
     
-    eval {label $f.lTitle -text "TPS Parameters:"} $Gui(WLA) -foreground blue
-    pack $f.lTitle -padx $Gui(pad) -pady 4 -anchor w 
-    set Matrix(gui,test) $f.lTitle
+    #eval {label $f.lTitle -text "TPS Parameters:"} $Gui(WLA) -foreground blue
+    #pack $f.lTitle -padx $Gui(pad) -pady 4 -anchor w 
+    #set Matrix(gui,test) $f.lTitle
 
     ###Basis###
-    frame $f.fBasisMode -bg $Gui(activeWorkspace)    
-    eval {label $f.fBasisMode.lBasisMode -text "Basis Function: "} $Gui(WLA)
-    eval {menubutton $f.fBasisMode.mbBasisMode -text "Matrix(TpsBasisMode)" \
-          -relief raised -bd 2 -width 20 \
-          -menu $f.fBasisMode.mbBasisMode.m} $Gui(WMBA)
-    eval {menu $f.fBasisMode.mbBasisMode.m} $Gui(WMA)
+    #frame $f.fBasisMode -bg $Gui(activeWorkspace)    
+    #eval {label $f.fBasisMode.lBasisMode -text "Basis Function: "} $Gui(WLA)
+    #eval {menubutton $f.fBasisMode.mbBasisMode -text "Matrix(TpsBasisMode)" \
+    #      -relief raised -bd 2 -width 20 \
+    #     -menu $f.fBasisMode.mbBasisMode.m} $Gui(WMBA)
+    #eval {menu $f.fBasisMode.mbBasisMode.m} $Gui(WMA)
 
-    pack $f.fBasisMode -side top -pady $Gui(pad) -padx $Gui(pad)
-    pack $f.fBasisMode.lBasisMode $f.fBasisMode.mbBasisMode -side left -padx 1
+    #pack $f.fBasisMode -side top -pady $Gui(pad) -padx $Gui(pad)
+    #pack $f.fBasisMode.lBasisMode $f.fBasisMode.mbBasisMode -side left -padx 1
 
     # Add menu items
-    foreach mode {r r*r} {
-    $f.fBasisMode.mbBasisMode.m add command -label $mode \
-        -command "AlignmentsWhichCommand; set Matrix(TpsBasisMode) $mode; $f.fBasisMode.mbBasisMode config -text $mode "
-    }
+    #foreach mode {r r*r} {
+    #$f.fBasisMode.mbBasisMode.m add command -label $mode \
+    #    -command "AlignmentsWhichCommand; set Matrix(TpsBasisMode) $mode; $f.fBasisMode.mbBasisMode config -text $mode "
+    #}
 
     # save menubutton for config
     # set Matrix(gui,mbBasisMode) $f.mbBasisMode
 
     ###Fidelity###
-    frame $f.fFidelity -bg $Gui(activeWorkspace) 
-    eval {label $f.fFidelity.lFidelity -text "Fidelity: "} $Gui(WLA)
-    eval {entry $f.fFidelity.eFidelity -textvariable Matrix(TpsFidelity) \
-    -width 7} $Gui(WEA)
-    bind $f.fFidelity.eFidelity <Return> \
-    "AlignmentsWhichCommand"
-    bind $f.fFidelity.eFidelity <FocusOut> \
-    "AlignmentsWhichCommand"
+    #frame $f.fFidelity -bg $Gui(activeWorkspace) 
+    #eval {label $f.fFidelity.lFidelity -text "Fidelity: "} $Gui(WLA)
+    #eval {entry $f.fFidelity.eFidelity -textvariable Matrix(TpsFidelity) \
+    #-width 7} $Gui(WEA)
+    #bind $f.fFidelity.eFidelity <Return> "AlignmentsWhichCommand"
+    #bind $f.fFidelity.eFidelity <FocusOut> "AlignmentsWhichCommand"
     
-    eval {scale $f.fFidelity.sFidelity -from 0 -to 1 -length 100 \
-          -command "AlignmentsWhichCommand" \
-          -variable Matrix(TpsFidelity) -resolution 0.01 -digits 3} $Gui(WSA)
+    #eval {scale $f.fFidelity.sFidelity -from 0 -to 1 -length 100 \
+    #      -command "AlignmentsWhichCommand" \
+    #     -variable Matrix(TpsFidelity) -resolution 0.01 -digits 3} $Gui(WSA)
 
-    pack $f.fFidelity -side top -pady 2 -padx $Gui(pad)
-    grid $f.fFidelity.lFidelity $f.fFidelity.eFidelity $f.fFidelity.sFidelity -padx 1 -pady 2
+    #pack $f.fFidelity -side top -pady 2 -padx $Gui(pad)
+    #grid $f.fFidelity.lFidelity $f.fFidelity.eFidelity $f.fFidelity.sFidelity -padx 1 -pady 2
     
     #-------------------------------------------
     # Auto->Bot->TPS->TPSOutputSliceRange frame
     #-------------------------------------------
-    set f  $fAuto.fBot.fTPS.fTPSOutputSliceRange 
+    #set f  $fAuto.fBot.fTPS.fTPSOutputSliceRange 
     #Output slice range
     
-    eval {label $f.lRange -text "Output Slice Range: "} $Gui(WLA) -foreground blue
-    pack $f.lRange -padx $Gui(pad) -pady $Gui(pad) -anchor w
+    #eval {label $f.lRange -text "Output Slice Range: "} $Gui(WLA) -foreground blue
+    #pack $f.lRange -padx $Gui(pad) -pady $Gui(pad) -anchor w
 
     #Beginning of Range
-    frame $f.fFirstSlice -bg $Gui(activeWorkspace)
-    eval {label $f.fFirstSlice.lStartRange -text "First Slice: "} $Gui(WLA)
+    #frame $f.fFirstSlice -bg $Gui(activeWorkspace)
+    #eval {label $f.fFirstSlice.lStartRange -text "First Slice: "} $Gui(WLA)
  
-    eval {entry $f.fFirstSlice.eOutputRange -textvariable Matrix(TpsStartSliceRange) \
-         -width 4} $Gui(WEA)
-    bind $f.fFirstSlice.eOutputRange <Return> \
-    "AlignmentsWhichCommand"
-    bind $f.fFirstSlice.eOutputRange <FocusOut> \
-    "AlignmentsWhichCommand"
+    #eval {entry $f.fFirstSlice.eOutputRange -textvariable Matrix(TpsStartSliceRange) \
+    #     -width 4} $Gui(WEA)
+    #bind $f.fFirstSlice.eOutputRange <Return> "AlignmentsWhichCommand"
+    #bind $f.fFirstSlice.eOutputRange <FocusOut> "AlignmentsWhichCommand"
 
     #TBD:change the range to be what the range is for the volume
-    eval {scale $f.fFirstSlice.sOutputRange -from 0 -to 100 -length 100 \
-          -command "AlignmentsWhichCommand" \
-          -variable Matrix(TpsStartSliceRange) -resolution 1} $Gui(WSA)
-    pack $f.fFirstSlice -side top -padx $Gui(pad) -anchor w
-    grid $f.fFirstSlice.lStartRange $f.fFirstSlice.eOutputRange \
-    $f.fFirstSlice.sOutputRange -padx 1 -pady 1
+    #eval {scale $f.fFirstSlice.sOutputRange -from 0 -to 100 -length 100 \
+    #      -command "AlignmentsWhichCommand" \
+    #     -variable Matrix(TpsStartSliceRange) -resolution 1} $Gui(WSA)
+    #pack $f.fFirstSlice -side top -padx $Gui(pad) -anchor w
+    #grid $f.fFirstSlice.lStartRange $f.fFirstSlice.eOutputRange \
+    #$f.fFirstSlice.sOutputRange -padx 1 -pady 1
 
     #End of Range
-    frame $f.fLastSlice -bg $Gui(activeWorkspace)
-    eval {label $f.fLastSlice.lEndRange -text "Last Slice: "} $Gui(WLA)
+    #frame $f.fLastSlice -bg $Gui(activeWorkspace)
+    #eval {label $f.fLastSlice.lEndRange -text "Last Slice: "} $Gui(WLA)
  
-    eval {entry $f.fLastSlice.eOutputRange -textvariable Matrix(TpsEndSliceRange) \
-         -width 4} $Gui(WEA)
-    bind $f.fLastSlice.eOutputRange <Return> \
-    "AlignmentsWhichCommand"
-    bind $f.fLastSlice.eOutputRange <FocusOut> \
-    "AlignmentsWhichCommand"
+    #eval {entry $f.fLastSlice.eOutputRange -textvariable Matrix(TpsEndSliceRange) \
+    #     -width 4} $Gui(WEA)
+    #bind $f.fLastSlice.eOutputRange <Return> "AlignmentsWhichCommand"
+    #bind $f.fLastSlice.eOutputRange <FocusOut> "AlignmentsWhichCommand"
 
     #TBD:change the range 
-    eval {scale $f.fLastSlice.sOutputRange -from 0 -to 100 -length 100 \
-          -command "AlignmentsWhichCommand" \
-          -variable Matrix(TpsEndSliceRange) -resolution 1} $Gui(WSA)
-    pack $f.fLastSlice -padx $Gui(pad) -anchor w 
-    grid $f.fLastSlice.lEndRange $f.fLastSlice.eOutputRange \
-    $f.fLastSlice.sOutputRange -padx 1  
+    #eval {scale $f.fLastSlice.sOutputRange -from 0 -to 100 -length 100 \
+    #      -command "AlignmentsWhichCommand" \
+    #     -variable Matrix(TpsEndSliceRange) -resolution 1} $Gui(WSA)
+    #pack $f.fLastSlice -padx $Gui(pad) -anchor w 
+    #grid $f.fLastSlice.lEndRange $f.fLastSlice.eOutputRange \
+    #$f.fLastSlice.sOutputRange -padx 1  
 
     #-------------------------------------------
     # Auto->Bot->TPS->TPSFidPointsFrame
@@ -992,61 +994,60 @@ proc AlignmentsBuildGUI {} {
     #These are separate from the Points on the FidAlign Screen 
     #since the two methods are independent of one another
 
-    set f $fAuto.fBot.fTPS.fTPSFidPoints
+    #set f $fAuto.fBot.fTPS.fTPSFidPoints
 
-    eval {label $f.l -text "Fiducial XYZ Coordinates for TPS:"} $Gui(WTA) -foreground blue
-    eval {button $f.bhow -width 38 -text "How To Add Fiducials"} $Gui(WBA)
+    #eval {label $f.l -text "Fiducial XYZ Coordinates for TPS:"} $Gui(WTA) -foreground blue
+    #eval {button $f.bhow -width 38 -text "How To Add Fiducials"} $Gui(WBA)
     
-    frame $f.fListNames -bg $Gui(activeWorkspace)
+    #frame $f.fListNames -bg $Gui(activeWorkspace)
     #I made these buttons just because they looked nicer
-    eval {button $f.fListNames.bFidRefVolume -text $Matrix(FidAlignRefVolumeName) \
-              -relief raised -bd 2 -width 14} $Gui(WMBA)
+    #eval {button $f.fListNames.bFidRefVolume -text $Matrix(FidAlignRefVolumeName) \
+    #         -relief raised -bd 2 -width 14} $Gui(WMBA)
     
-    eval {button $f.fListNames.bFidVolume -text $Matrix(FidAlignVolumeName) \
-              -relief raised -bd 2 -width 14} $Gui(WMBA)
+    #eval {button $f.fListNames.bFidVolume -text $Matrix(FidAlignVolumeName) \
+     #         -relief raised -bd 2 -width 14} $Gui(WMBA)
 
-    pack $f.l $f.bhow $f.fListNames -side top -pady 2 -padx $Gui(pad)
-    grid $f.fListNames.bFidRefVolume $f.fListNames.bFidVolume
+    #pack $f.l $f.bhow $f.fListNames -side top -pady 2 -padx $Gui(pad)
+    #grid $f.fListNames.bFidRefVolume $f.fListNames.bFidVolume
 
     #Save paths for later
-    set Matrix(bTPSVolume) $f.fListNames.bFidVolume
-    set Matrix(bTPSRefVolume) $f.fListNames.bFidRefVolume
+    #set Matrix(bTPSVolume) $f.fListNames.bFidVolume
+    #set Matrix(bTPSRefVolume) $f.fListNames.bFidRefVolume
 
-    TooltipAdd $f.bhow "$Fiducials(howto)"
+    #TooltipAdd $f.bhow "$Fiducials(howto)"
     
-    frame $f.fPointBoxes -bg $Gui(activeWorkspace)
-    pack $f.fPointBoxes -side top -pady 2 -padx $Gui(pad)
+    #frame $f.fPointBoxes -bg $Gui(activeWorkspace)
+    #pack $f.fPointBoxes -side top -pady 2 -padx $Gui(pad)
 
-    set Matrix(TPSPointBoxes) $f.fPointBoxes
-    frame $Matrix(TPSPointBoxes).fRefVolumePoints -bg $Gui(activeWorkspace)
-    frame $Matrix(TPSPointBoxes).fVolumePoints -bg $Gui(activeWorkspace)
-    grid $Matrix(TPSPointBoxes).fRefVolumePoints $Matrix(TPSPointBoxes).fVolumePoints    
+    #set Matrix(TPSPointBoxes) $f.fPointBoxes
+    #frame $Matrix(TPSPointBoxes).fRefVolumePoints -bg $Gui(activeWorkspace)
+    #frame $Matrix(TPSPointBoxes).fVolumePoints -bg $Gui(activeWorkspace)
+    #grid $Matrix(TPSPointBoxes).fRefVolumePoints $Matrix(TPSPointBoxes).fVolumePoints    
 
-    set Matrix(TPSRefVolPointBoxes) $Matrix(TPSPointBoxes).fRefVolumePoints
-    set Matrix(TPSVolPointBoxes) $Matrix(TPSPointBoxes).fVolumePoints
+    #set Matrix(TPSRefVolPointBoxes) $Matrix(TPSPointBoxes).fRefVolumePoints
+    #set Matrix(TPSVolPointBoxes) $Matrix(TPSPointBoxes).fVolumePoints
 
     #-------------------------------------------
     # Auto->Bot->TPS->TPSWarp Frame
     #-------------------------------------------
-    set f   $fAuto.fBot.fTPS.fTPSWarp     
+    #set f   $fAuto.fBot.fTPS.fTPSWarp     
 
-    #TBD: Do you Really need a cancel button?
-    eval {button $f.bWarp -text "Warp" \
-          -command "AlignmentsWhichCommand"} $Gui(WBA) {-width 10}
-    eval {button $f.bCancel -text "Cancel" \
-          -command "AlignmentsFidSelectCancel"} $Gui(WBA) {-width 10}
-    grid $f.bWarp $f.bCancel -padx $Gui(pad) -pady $Gui(pad)
+    #eval {button $f.bWarp -text "Warp" \
+    #      -command "AlignmentsWhichCommand"} $Gui(WBA) {-width 10}
+    #eval {button $f.bCancel -text "Cancel" \
+    #      -command "AlignmentsFidSelectCancel"} $Gui(WBA) {-width 10}
+    #grid $f.bWarp $f.bCancel -padx $Gui(pad) -pady $Gui(pad)
     
     #-------------------------------------------
     # Auto->Bot->TPS->TPSSaveVolume Frame
     #-------------------------------------------
-    set f $fAuto.fBot.fTPS.fTPSSaveVolume
+    #set f $fAuto.fBot.fTPS.fTPSSaveVolume
 
     #TBD:should you have something here that says "as target volume?"
     #TBD:Include an error that pops up if the user has not selected the fiducial points
-    eval {button $f.bSave -text "Save Warped Volume" \
-       -command "AlignmentsWhichCommand"} $Gui(WBA) {-width 20}
-    pack $f.bSave -padx $Gui(pad) -pady $Gui(pad)
+    #eval {button $f.bSave -text "Save Warped Volume" \
+     #  -command "AlignmentsWhichCommand"} $Gui(WBA) {-width 20}
+    #pack $f.bSave -padx $Gui(pad) -pady $Gui(pad)
 
     #-------------------------------------------
     # Auto->Bot->MI Frame
@@ -1105,7 +1106,7 @@ proc AlignmentsBuildGUI {} {
     AlignmentsBuildSliceControls Slicer
     AlignmentsTestSliceControls
     AlignmentsBuildActiveVolSelectControls
-}
+    }
 
 #-------------------------------------------------------------------------------
 # .PROC AlignmentsBuildVTK
@@ -1632,7 +1633,7 @@ proc AlignmentsSetRefVolume {{v ""}} {
  
     #In the TPS frame, set the label on the button above the fiducial 
     #list for the reference volume
-    $Matrix(bTPSRefVolume) config -text "[Volume($v,node) GetName]"
+    #$Matrix(bTPSRefVolume) config -text "[Volume($v,node) GetName]"
 
     #Set the label for the checkbutton that sets the view parameters
     $Matrix(viewRefVol) config -text "[Volume($v,node) GetName]"
@@ -1672,7 +1673,7 @@ proc AlignmentsSetVolume {{v ""}} {
 
     #In the TPS frame, set the label on the button above the fiducial list
     #for the reference volume
-    $Matrix(bTPSVolume) config -text "[Volume($v,node) GetName]"
+    #$Matrix(bTPSVolume) config -text "[Volume($v,node) GetName]"
 
     #Set the label for the checkbutton that sets the view parameters
     $Matrix(viewVolToMove) config -text "[Volume($v,node) GetName]"
@@ -2382,25 +2383,19 @@ proc AlignmentsSetRegistrationMech {} {
     if {$Matrix(f$Matrix(regMech)) == "$Matrix(fFidAlign)"} {
         puts "you are in the fiducial alignment mode"
         AlignmentsFiducialPick
-        #Split the screens and set the controls if they are not already set. 
-        #freeze all other tabs
+        return
     } elseif {$Matrix(f$Matrix(regMech)) == "$Matrix(fTPS)"} {
         puts "you are in the Thin plate spline registration mode"
-        AlignmentsFiducialPick
-        #Split the screens and set the controls if they are not already set. 
-        #freeze all other tabs
+        #TPS is not currently implemented in this version.
+        raise $Matrix(f$Matrix(regMech))
+        return
     } elseif {$Matrix(f$Matrix(regMech)) == "$Matrix(fMI)"} {
         puts "you are in the registration by mutual information mode"
-        #Unsplit the screens if they are split 
-        #freeze all other tabs??
         raise $Matrix(f$Matrix(regMech))
         focus $Matrix(f$Matrix(regMech))
     }
 }
 
-#TEMP
-proc AlignmentsWhichCommand {{inputs ""} {inputs ""} {inputs ""}} {
-}
 
 #-------------------------------------------------------------------------------
 # .PROC AlignmentsBuildSliceControls
@@ -2672,42 +2667,41 @@ proc AlignmentsFiducialPick {} {
     global Matrix Module Volume Slice Gui View Fiducials
 
     if {[IsModule Alignments] == 1} { 
-      
-        # Store which transform we're editing 
-    set t $Matrix(activeID)
-    set Matrix(tAuto) $t
-    if {$t == ""} {
-        tk_messageBox -message "Please select a transform"
-    set Matrix(regMech) ""
-    raise $Matrix(fAlignBegin)
-        return
-    } 
-
+        
         #Do not allow entry into the Fiducial tab unless there is a volume to move
         #and a reference volume selected. 
         if {$Matrix(volume) == $Volume(idNone) || $Matrix(refVolume) == $Volume(idNone)} {
-            tk_messageBox -icon error -message "Either the reference volume or the volume to 
-            move has not yet been set" 
+            tk_messageBox -icon error -message "Either the reference volume or the volume to move has not yet been set" 
             set Matrix(regMech) ""
             raise $Matrix(fAlignBegin)
             return
         }
-                
+        
         # display an error message if the user has selected the same volume twice
         if {$Matrix(volume) == $Matrix(refVolume)} {
-            tk_messageBox -icon error -message "You have selected the same\nvolume for both the reference volume\n and the volume to move" 
-        set Matrix(regMech) ""
+            tk_messageBox -icon error -message "You have selected the same volume for both the reference volume  and the volume to move" 
+            set Matrix(regMech) ""
             raise $Matrix(fAlignBegin)
             return
         }
-
+        
+        # Store which transform we're editing 
+        set t $Matrix(activeID)
+        set Matrix(tAuto) $t
+        if {$t == ""} {
+            tk_messageBox -message "Please select a transform"
+            set Matrix(regMech) ""
+            raise $Matrix(fAlignBegin)
+            return
+        }
+ 
         #Jump to the Fiducials tab 
         set Alignments(freeze) 1
         Tab Alignments row1 Auto
         set Module(freezer) "Alignments row1 Auto" 
         raise $Matrix(f$Matrix(regMech))
-
-       
+        
+        
         #Set the fade opacity slider to be disabled and change the tooltip 
         #to indicate to the users that it is disabled in this mode
         #We dont want the fore fade opacity slider to be active here because
@@ -2720,12 +2714,12 @@ proc AlignmentsFiducialPick {} {
         #if the volumes are currently overlayed then set the opacity to be 1
         MainSlicesSetOpacityAll 1
         TooltipAdd $f.sOpacity "The opacity slider is diabled in this mode"
-    
+        
         #I put this in here because it was giving an error when the user tried to close 
         #the file or do any other operation on the fiduicials tab before the mouse was 
         #moved in the 3D view
         set Matirx(currentDataList) ""
-
+        
         AlignmentsMatRenUpdateCamera
         
         #Depending on what the user selected as the volume to move and the reference volume
@@ -2753,8 +2747,8 @@ proc AlignmentsFiducialPick {} {
         #but how do you set up the counter?
         #2 buttons- load fiducials list for : $referncevolume $volume
 
-
-
+        
+        
         #If the fiducials lists have not been created then create them here
         if { [lsearch $Fiducials(listOfNames) $Matrix(FidAlignRefVolumeName)] == -1} { 
         FiducialsCreateFiducialsList "Alignments" $Matrix(FidAlignRefVolumeName)     
@@ -2763,7 +2757,7 @@ proc AlignmentsFiducialPick {} {
         }
         
         if { [lsearch $Fiducials(listOfNames) $Matrix(FidAlignVolumeName)] == -1} {
-        FiducialsCreateFiducialsList "Alignments" $Matrix(FidAlignVolumeName)
+            FiducialsCreateFiducialsList "Alignments" $Matrix(FidAlignVolumeName)
             set Matrix(oldDataList,$Matrix(FidAlignVolumeName)) ""
             set Matrix(textBox,currentID,$Matrix(FidAlignVolumeName)) -1
         }
@@ -2776,14 +2770,13 @@ proc AlignmentsFiducialPick {} {
         AlignmentsSetRegTabState disabled
         set Matrix(matricesview,visibility) 1
         AlignmentsUpdateFidSelectViewVisibility
-             
+        
         #Display the new Slice control windows 
         #These new controls limit the user from being able to alter options 
         #such as the ability to change the bg/fg images when they are in fiducial selection 
         #AlignmentsSetSliceControls
         AlignmentsViewerUpdate             
         pushEventManager $Matrix(eventManager)
-    
     }
 }
 
@@ -3281,94 +3274,83 @@ proc AlignmentsDeleteFiducialsList {ListName currentTextFrame} {
 proc AlignmentsApplyFiducialSelection {} {
     global Matrix Module Label Slice 
   
-    #Validate the input
-
-    # If there is no active transform, then do nothing
-    set t $Matrix(activeID)
-    if {$t == "" || $t == "NEW"} {
-    tk_messageBox -icon error -message "Please Set An Active Transformation Matrix"
-        return 
-    }
-        
     # If tabs are frozen, then 
     if {$Module(freezer) != ""} {
-    
-    #check to see if three points for each list have been selected
-    #if three points not selected, diplay an error message
-    
-    if {[llength [FiducialsGetPointIdListFromName $Matrix(FidAlignRefVolumeName)]] < 2} {
-        tk_messageBox -icon error -message "You must select at least\n\
-            THREE fiducial points for\n\ rigid transformation"
-        return
-    }
-    
-    if {[llength [FiducialsGetPointIdListFromName $Matrix(FidAlignVolumeName)]] < 2} {
-        tk_messageBox -icon error -message "You must select at least\n\
-            THREE fiducial points for\n\ rigid transformation"
-        return
-    }
-    
-    set cmd "Tab $Module(freezer)"
-    set Module(freezer) ""
-    eval $cmd
-    
-        set Matrix(currentDataList) ""
-    #reset the view so that now only the output of the main slicer is shown again
-    set Matrix(matricesview,visibility) 0
-    set Matrix(mainview,visibility) 1
-    AlignmentsUpdateMainViewVisibility
+        #Validate the input
+        #check to see if three points for each list have been selected
+        #if three points not selected, diplay an error message
         
-    #Unpack the Slice controls that are specific to the fiducials selection tab
-    AlignmentsUnpackFidSelectScreenControls
-     
-    #set the slices that were visible in the fiducial selection mode to be 
-    #visible here as well
-    foreach s $Slice(idList) {
-        set Slice($s,visibility) $Matrix($s,Fore,visibility)
-        Slice($s,planeActor) SetVisibility $Matrix($s,Fore,visibility)
+        if {[llength [FiducialsGetPointIdListFromName $Matrix(FidAlignRefVolumeName)]] < 2} {
+            tk_messageBox -icon error -message "You must select at least THREE fiducial points for alignment using fiducials"
+            return
+        }
+        
+        if {[llength [FiducialsGetPointIdListFromName $Matrix(FidAlignVolumeName)]] < 2} {
+            tk_messageBox -icon error -message "You must select at least THREE fiducial points for alignment using fiducials"
+            return
+        }
+        
+        set cmd "Tab $Module(freezer)"
+        set Module(freezer) ""
+        eval $cmd
+        
+        set Matrix(currentDataList) ""
+        #reset the view so that now only the output of the main slicer is shown again
+        set Matrix(matricesview,visibility) 0
+        set Matrix(mainview,visibility) 1
+        AlignmentsUpdateMainViewVisibility
+        
+        #Unpack the Slice controls that are specific to the fiducials selection tab
+        AlignmentsUnpackFidSelectScreenControls
+        
+        #set the slices that were visible in the fiducial selection mode to be 
+        #visible here as well
+        foreach s $Slice(idList) {
+            set Slice($s,visibility) $Matrix($s,Fore,visibility)
+            Slice($s,planeActor) SetVisibility $Matrix($s,Fore,visibility)
     }
-       
-    #make sure that the background color is changed back to the normal bgcolor
-    set View(bgColor) "0.7 0.7 0.9"
-    eval viewRen SetBackground $View(bgColor)
+        
+        #make sure that the background color is changed back to the normal bgcolor
+        set View(bgColor) "0.7 0.7 0.9"
+        eval viewRen SetBackground $View(bgColor)
     
-    #Remove the slice actors that were used in the Fiducial Selection mode
-    #to show the volumes separately
-    foreach s $Slice(idList) {
-        viewRen RemoveActor Slice($s,Back,planeActor)
-        viewRen RemoveActor Slice($s,Fore,planeActor)
+        #Remove the slice actors that were used in the Fiducial Selection mode
+        #to show the volumes separately
+        foreach s $Slice(idList) {
+            viewRen RemoveActor Slice($s,Back,planeActor)
+            viewRen RemoveActor Slice($s,Fore,planeActor)
         viewRen AddActor Slice($s,planeActor)
-    }
-    
-    set Matrix(FiducialPickEntered) 0
+        }
+        
+        set Matrix(FiducialPickEntered) 0
         AlignmentsSetRegTabState normal    
 
-    #Set the fade opacity slider to be enabled again and change the tooltip 
-    #back to what it usually says
+        #Set the fade opacity slider to be enabled again and change the tooltip 
+        #back to what it usually says
         set f .tMain.fDisplay.fRight
         $f.sOpacity configure -state normal
         TooltipAdd $f.sOpacity "Slice overlay slider: Fade from\n\
         the Foreground to the Background slice."
 
-    #Apply the rigid transformation
-    AlignmentsLandTrans
+        #Apply the rigid transformation
+        AlignmentsLandTrans
 
-    #Set the fore and back volumes to be the reference volume and the volume to move
-    MainSlicesSetVolumeAll Fore $Matrix(refVolume)
-    MainSlicesSetVolumeAll Back $Matrix(volume)
-    
-    #Indicate to the user that registration is complete
-    set Matrix(regMech) ""
-    raise $Matrix(fAlignBegin)
-       
-    #Set the mode back to the normal view
-    MainViewerSetMode
-
-    MainSlicesSetOrientAll AxiSagCor
-
-    #Make any other fiducials that were there before dissapear
-    FiducialsSetFiducialsVisibility NONE 0 viewRen
-
+        #Set the fore and back volumes to be the reference volume and the volume to move
+        MainSlicesSetVolumeAll Fore $Matrix(refVolume)
+        MainSlicesSetVolumeAll Back $Matrix(volume)
+        
+        #Indicate to the user that registration is complete
+        set Matrix(regMech) ""
+        raise $Matrix(fAlignBegin)
+        
+        #Set the mode back to the normal view
+        MainViewerSetMode
+        
+        MainSlicesSetOrientAll AxiSagCor
+        
+        #Make any other fiducials that were there before dissapear
+        FiducialsSetFiducialsVisibility NONE 0 viewRen
+        
     }
 }
 
@@ -4103,8 +4085,7 @@ proc AlignmentsSetColorCorrespondence {} {
 
     #Check to see that the volume to move and the reference volume are set.
     if {$Matrix(volume) == $Volume(idNone) || $Matrix(refVolume) == $Volume(idNone)} {
-    tk_messageBox -icon error -message "Either the reference volume or the volume to 
-            move has not yet been set" 
+    tk_messageBox -icon error -message "Either the reference volume or the volume to move has not yet been set" 
     set Matrix(regMech) ""
     raise $Matrix(fAlignBegin)
     return
