@@ -253,7 +253,7 @@ void vtkImageMIReg::Update()
 //----------------------------------------------------------------------------
 int vtkImageMIReg::Initialize()
 {
-  int i, *ext;
+  int i, *ext, zSmooth, numSlices, numCutoff;
   vtkImageFastGaussian *smooth;
   vtkImageShrink3D *down;
   float slThick1, slThick2, *spacing1, *spacing2;
@@ -314,6 +314,11 @@ int vtkImageMIReg::Initialize()
   //
   // Downsample images to create various resolutions
   //
+  //
+  // Keep the voxels roughly isotropic. So if XY-voxel size is 1mm, and Z is 2mm,
+  // downsample only along X and Y. Note that in this case, the next iteration
+  // would downsample in all 3 axes because they are already isotropic.
+  //
   if (this->NumIterations[0] || this->NumIterations[1] || this->NumIterations[2])
   {
     for (i=2; i >= 0; i--)
@@ -325,14 +330,26 @@ int vtkImageMIReg::Initialize()
       // Smooth image
       smooth = vtkImageFastGaussian::New();
       smooth->SetInput(this->Refs[i+1]);
-      smooth->Modified(); 
-      smooth->Update();
 
       // Downsample image
       down = vtkImageShrink3D::New();
       down->SetMean(0);
-      down->SetShrinkFactors(2,2,2);
       down->SetInput(smooth->GetOutput()); 
+
+      // Decide whether to downsize along Z-axis
+      spacing = this->Refs[i+1]->GetSpacing();
+      if (spacing[2] > spacing[0]*1.5f) {
+        zSmooth = 0;
+        smooth->SetAxisFlags(1,1,0);
+        down->SetShrinkFactors(2,2,1);
+      } else {
+        zSmooth = 1;
+        smooth->SetAxisFlags(1,1,1);
+        down->SetShrinkFactors(2,2,2);
+      }
+
+      // Execute
+      smooth->Modified(); 
       down->Modified(); 
       down->Update();
 
@@ -350,39 +367,41 @@ int vtkImageMIReg::Initialize()
       // Compute Ijk-To-Ras matrices for downsampled image
       //
       // Corner points same in X,Y because the points are at voxel corners. 
-      
+      //
       // But Z must move 1/2 orig voxel inward because points are at voxel centers.
       // Approach: move the original corner points in the K direction
       // by moving back 1/2 old spacing, and then forward 1/2 new spacing.
-      // If old had odd number of slices, then move last slice in extra old.
-      //
-
-
+      // The last slice also needs to move forward by the number of old
+      // slices that were cut-off: nz1 % Factor
       // kDir = ltl - ftl
       // kStep = kDir * (slThick2-slThick1)
       // ftl += kStep
       // ftr += kStep
       // fbr += kStep
       // ltl -= kStep
-      spacing1 = this->Refs[i+1]->GetSpacing();
-      spacing2 = this->Refs[i  ]->GetSpacing();
-      slThick1 = spacing1[2];
-      slThick2 = spacing2[2];
       this->RefRasToIjk[i+1]->GetCorners(ftl, ftr, fbr, ltl);
-      kDir->Subtract(ltl, ftl);
-      kDir->Normalize();
-      kStep->Copy(kDir);
-      kStep->Multiply((slThick2 - slThick1) * 0.5);
-      ftl->Add(kStep);
-      ftr->Add(kStep);
-      fbr->Add(kStep);
-      ltl->Subtract(kStep);
-      ext = this->Refs[i+1]->GetExtent();
-      if ((ext[5]-ext[4]+1) % 2) {
-        // Input has odd number of slices
+      if (zSmooth) {
+        spacing1 = this->Refs[i+1]->GetSpacing();
+        spacing2 = this->Refs[i  ]->GetSpacing();
+        slThick1 = spacing1[2];
+        slThick2 = spacing2[2];
+        kDir->Subtract(ltl, ftl);
+        kDir->Normalize();
         kStep->Copy(kDir);
-        kStep->Multiply(slThick1);
+        kStep->Multiply((slThick2 - slThick1) * 0.5);
+        ftl->Add(kStep);
+        ftr->Add(kStep);
+        fbr->Add(kStep);
         ltl->Subtract(kStep);
+        ext = this->Refs[i+1]->GetExtent();
+        numSlices = ext[5]-ext[4]+1;
+        numCutoff = numSlices % 2;
+        if (numCutoff > 0) {
+          // Input has odd number of slices (in the case of downsampling by 2)
+          kStep->Copy(kDir);
+          kStep->Multiply(slThick1 * numCutoff);
+          ltl->Subtract(kStep);
+        }
       }
       this->RefRasToIjk[i]->SetExtent(this->Refs[i]->GetExtent());
       this->RefRasToIjk[i]->SetSpacing(this->Refs[i]->GetSpacing());
@@ -395,14 +414,26 @@ int vtkImageMIReg::Initialize()
       // Smooth image
       smooth = vtkImageFastGaussian::New();
       smooth->SetInput(this->Subs[i+1]);
-      smooth->Modified(); 
-      smooth->Update();
 
       // Downsample image
       down = vtkImageShrink3D::New();
       down->SetMean(0);
-      down->SetShrinkFactors(2,2,2);
       down->SetInput(smooth->GetOutput()); 
+
+      // Decide whether to downsize along Z-axis
+      spacing = this->Subs[i+1]->GetSpacing();
+      if (spacing[2] > spacing[0]*1.5f) {
+        zSmooth = 0;
+        smooth->SetAxisFlags(1,1,0);
+        down->SetShrinkFactors(2,2,1);
+      } else {
+        zSmooth = 1;
+        smooth->SetAxisFlags(1,1,1);
+        down->SetShrinkFactors(2,2,2);
+      }
+
+      // Execute
+      smooth->Modified(); 
       down->Modified(); 
       down->Update();
 
@@ -418,25 +449,28 @@ int vtkImageMIReg::Initialize()
       down->Delete();
 
       // Compute Ras-to-Ijk matrices for downsampled image
-      spacing1 = this->Subs[i+1]->GetSpacing();
-      spacing2 = this->Subs[i  ]->GetSpacing();
-      slThick1 = spacing1[2];
-      slThick2 = spacing2[2];
       this->SubRasToIjk[i+1]->GetCorners(ftl, ftr, fbr, ltl);
-      kDir->Subtract(ltl, ftl);
-      kDir->Normalize();
-      kStep->Copy(kDir);
-      kStep->Multiply((slThick2 - slThick1) * 0.5);
-      ftl->Add(kStep);
-      ftr->Add(kStep);
-      fbr->Add(kStep);
-      ltl->Subtract(kStep);
-      ext = this->Subs[i+1]->GetExtent();
-      if ((ext[5]-ext[4]+1) % 2) {
-        // Input has odd number of slices
+      if (zSmooth) {
+        spacing1 = this->Subs[i+1]->GetSpacing();
+        spacing2 = this->Subs[i  ]->GetSpacing();
+        slThick1 = spacing1[2];
+        slThick2 = spacing2[2];
+        kDir->Subtract(ltl, ftl);
+        kDir->Normalize();
         kStep->Copy(kDir);
-        kStep->Multiply(slThick1);
+        kStep->Multiply((slThick2 - slThick1) * 0.5);
+        ftl->Add(kStep);
+        ftr->Add(kStep);
+        fbr->Add(kStep);
         ltl->Subtract(kStep);
+        ext = this->Subs[i+1]->GetExtent();
+        numSlices = ext[5]-ext[4]+1;
+        numCutoff = numSlices % 2;
+        if (numCutoff > 0) {
+          kStep->Copy(kDir);
+          kStep->Multiply(slThick1*numCutoff);
+          ltl->Subtract(kStep);
+        }
       }
       this->SubRasToIjk[i]->SetExtent(this->Subs[i]->GetExtent());
       this->SubRasToIjk[i]->SetSpacing(this->Subs[i]->GetSpacing());

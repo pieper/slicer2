@@ -25,6 +25,9 @@ vtkImageFastGaussian::vtkImageFastGaussian()
   this->Kernel[2] = 6;
   this->Kernel[3] = 4;
   this->Kernel[4] = 1;
+
+  // Default to filtering all axes.
+  for(int i=0; i<3; i++) this->AxisFlags[i] = 1;
 }
 
 //----------------------------------------------------------------------------
@@ -260,16 +263,18 @@ void vtkImageFastGaussian::IterativeExecuteData(vtkImageData *inData,
     }
   }
   
-  // Execute the algorithms 
-  switch (outData->GetScalarType()) 
+  // Execute the algorithm on this axis
+  if (this->AxisFlags[this->GetIteration()]) 
   {
-    vtkTemplateMacro4(vtkImageFastGaussianExecute, 
-      this, outData, outExt, (VTK_TT *)outPtr);
-     default:
+    switch (outData->GetScalarType()) 
+    {
+      vtkTemplateMacro4(vtkImageFastGaussianExecute, 
+        this, outData, outExt, (VTK_TT *)outPtr);
+      default:
         vtkErrorMacro("Execute: Unknown input ScalarType");
         return;
     }
-  
+  }
   this->UpdateProgress((this->GetIteration()+1.0)/3.0);
 }
 

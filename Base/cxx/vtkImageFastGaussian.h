@@ -23,6 +23,10 @@ public:
   // Templated functions need access to the kernel
   double *GetKernel() {return this->Kernel;};
   
+  // Flags {1,0} indicating which IJK axes to filter.
+  vtkSetVector3Macro(AxisFlags, int);
+  vtkGetVector3Macro(AxisFlags, int);
+
   void IterativeExecuteData(vtkImageData *in, vtkImageData *out);
   
 protected:
@@ -31,6 +35,7 @@ protected:
 
   double Kernel[5];
   int KernelSize;
+  int AxisFlags[3];
 
   // Replaces "EnlargeOutputUpdateExtent"
   virtual void AllocateOutputScalars(vtkImageData *outData);
