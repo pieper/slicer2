@@ -101,7 +101,7 @@ proc MutualInformationRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.8 $} {$Date: 2003/11/24 18:17:00 $}]
+        {$Revision: 1.9 $} {$Date: 2003/11/25 00:47:06 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -127,7 +127,7 @@ proc MutualInformationRegistrationInit {} {
     set Matrix(allowAutoUndo) 0
 
     ## Set the default to fast registration
-    MutualInformationRegistrationCoarseParam
+    MutualInformationRegistrationVerySlowParam
 }
 #-------------------------------------------------------------------------------
 # .PROC MutualInformationRegistrationBuildSubGui
@@ -208,14 +208,15 @@ proc MutualInformationRegistrationBuildSubGui {f} {
     #-------------------------------------------
     # Level->Help frame
     #-------------------------------------------
-    
+
     set help "
-    Description by tab:<BR>
     <UL>
     <LI><B>The Algorithm </B> 
     This is an automatic method of registering two images using mutual information of the two images. It is based on the methods of Wells and Viola (1996).
     <LI><B>Limitations</B>
-    Cascades of transforms may not work. 
+    Cascades of transforms may not work. CT (or anything with gantry tilt) will not work.
+    <LI><B>Easiest way to begin</B>
+    Select a \"Volume to Move\" and a \"Reference Volume\" and click \"Start\".
     <LI><B>Normal: Coarse</B>
     The Coarse method will generally do a good job on all images. It takes 5 to 10 minutes to run. It requires no user intervention; and will finish on its own. Though, it updates regularly so that the user can stop the algorithm is she is satisfied.
     <LI><B>Normal: Fine</B>
@@ -230,6 +231,7 @@ proc MutualInformationRegistrationBuildSubGui {f} {
     The .mi window is left open and the pipeline is left taking lots of 
     memory.
     </UL>"
+
     regsub -all "\n" $help { } help
     MainHelpApplyTags MutualInformationRegistration $help
 #    MainHelpBuildGUI  MutualInformationRegistration 
@@ -293,6 +295,8 @@ proc MutualInformationRegistrationBuildSubGui {f} {
         if { $value == "GSlow" } {incr row};
     }
 
+   set MutualInformationRegistration(Objective) VerySlow
+
     #-------------------------------------------
     # Level->Normal->Repeat Frame
     #-------------------------------------------
@@ -308,8 +312,6 @@ proc MutualInformationRegistrationBuildSubGui {f} {
               -variable MutualInformationRegistration(Repeat) } $Gui(WCA)
         pack $f.f.r$value -side left -fill x -anchor w
     }
-
-   set MutualInformationRegistration(Objective) Coarse
 
     #-------------------------------------------
     # Level->Normal->Run frame
@@ -391,7 +393,7 @@ proc MutualInformationRegistrationBuildSubGui {f} {
     pack $f.bRun -side left -padx $Gui(pad) -pady $Gui(pad)
     set MutualInformationRegistration(b2Run) $f.bRun
 
-}
+}  
 
 #-------------------------------------------------------------------------------
 # .PROC MutualInformationRegistrationSetLevel
