@@ -1933,7 +1933,9 @@ float vtkMrmlSlicer::GetBackPixel(int s, int x, int y)
   data->GetWholeExtent(ext);
   if (x >= ext[0] && x <= ext[1] && y >= ext[2] && y <= ext[3])
   {
-    return data->GetPointData()->GetScalars()->GetTuple1(y*(ext[1]-ext[0]+1)+x);
+    if (data->GetPointData()->GetScalars()->GetNumberOfComponents() == 1) 
+    {   return data->GetPointData()->GetScalars()->GetTuple1(y*(ext[1]-ext[0]+1)+x);
+    }
   }
   return 0;
 }
@@ -1951,7 +1953,9 @@ float vtkMrmlSlicer::GetForePixel(int s, int x, int y)
   data->GetWholeExtent(ext);
   if (x >= ext[0] && x <= ext[1] && y >= ext[2] && y <= ext[3])
   {
-    return data->GetPointData()->GetScalars()->GetTuple1(y*(ext[1]-ext[0]+1)+x);
+    if (data->GetPointData()->GetScalars()->GetNumberOfComponents() == 1) 
+    {   return data->GetPointData()->GetScalars()->GetTuple1(y*(ext[1]-ext[0]+1)+x);
+    }
   }
   return 0;
 }
