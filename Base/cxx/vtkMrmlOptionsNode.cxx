@@ -1,5 +1,5 @@
 /*=auto=========================================================================
-Copyright (c) 2000 Surgical Planning Lab, Brigham and Women's Hospital
+Copyright (c) 2001 Surgical Planning Lab, Brigham and Women's Hospital
  
 Direct all questions on this copyright to slicer@ai.mit.edu.
 The following terms apply to all files associated with the software unless

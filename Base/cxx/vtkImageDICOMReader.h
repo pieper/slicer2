@@ -1,5 +1,5 @@
 /*=auto=========================================================================
-Copyright (c) 2000 Surgical Planning Lab, Brigham and Women's Hospital
+Copyright (c) 2001 Surgical Planning Lab, Brigham and Women's Hospital
  
 Direct all questions on this copyright to slicer@ai.mit.edu.
 The following terms apply to all files associated with the software unless
@@ -30,8 +30,8 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkImageDICOMReader.h,v $
   Language:  C++
-  Date:      $Date: 2000/11/06 21:05:26 $
-  Version:   $Revision: 1.3 $
+  Date:      $Date: 2001/01/24 17:15:34 $
+  Version:   $Revision: 1.4 $
   Thanks:    Thanks to C. Charles Law who developed this class.
 
 Copyright (c) 1993-2000 Ken Martin, Will Schroeder, Bill Lorensen 
