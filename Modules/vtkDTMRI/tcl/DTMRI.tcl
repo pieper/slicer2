@@ -123,7 +123,7 @@ proc DTMRIInit {} {
     set Module($m,author) "Lauren O'Donnell"
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.23 $} {$Date: 2004/08/16 18:12:48 $}]
+                  {$Revision: 1.24 $} {$Date: 2004/08/16 23:29:04 $}]
 
      # Define Tabs
     #------------------------------------
@@ -5759,8 +5759,10 @@ if {[info exists DTMRI(selectedpattern)]} {
     if {$numberOfNoGradientImages == 2} {
     vtkImageMathematics math
     math SetOperationToAdd
-    math SetInput 0 [extract6 GetOutput]
-    math SetInput 1 [extract7 GetOutput]
+    set slice1 [lindex $offsetsNoGradient 0]
+    set slice2 [lindex $offsetsNoGradient 1]
+    math SetInput 0 [extract$slice1 GetOutput]
+    math SetInput 1 [extract$slice2 GetOutput]
 
     vtkImageMathematics math2
     math2 SetOperationToMultiplyByK
@@ -5768,10 +5770,11 @@ if {[info exists DTMRI(selectedpattern)]} {
     math2 SetInput 0 [math GetOutput]
     
     # set the no diffusion input
-    DTMRI SetNoDiffusionImage [extract6 GetOutput]
+    #DTMRI SetNoDiffusionImage [extract6 GetOutput]
     DTMRI SetNoDiffusionImage [math2 GetOutput]
     } else {
-    DTMRI SetNoDiffusionImage [extract6 GetOutput]
+    set slice [lindex $offsetsNoGradient 0]
+    DTMRI SetNoDiffusionImage [extract$slice GetOutput]
     }    
     
     puts "3----------- DTMRI update --------"
