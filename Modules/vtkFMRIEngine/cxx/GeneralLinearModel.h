@@ -61,6 +61,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 
 #include <vtkFMRIEngineConfigure.h>
+#include <gsl_multifit.h>
 
 class VTK_FMRIENGINE_EXPORT GeneralLinearModel
 {
@@ -72,6 +73,17 @@ public:
     // timeCourse - voxel time course
     // The function returns t-test value for the voxel.
     static float ComputeVoxelActivation(float **designMatrix, int *dims, float *timeCourse);
+
+    // Description:
+    // Frees the allocated momery 
+    static void Free();
+
+private:
+    static gsl_matrix *X;
+    static gsl_matrix *cov;
+    static gsl_vector *y;
+    static gsl_vector *c;
+    static gsl_multifit_linear_workspace *work; 
 };
 
 
