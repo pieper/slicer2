@@ -604,18 +604,18 @@ proc EdLiveWireRaiseEdgeImageWin {} {
     set f $w.fTop.fRight
 
     # histogram
-    #source /scratch/src/slicer/program/vtkHistogramWidget.tcl
-    source vtkHistogramWidget.tcl
-    set hist [vtkHistogramWidget $f.hist]
-    scan [[Ed(EdLiveWire,viewer$s) GetInput] GetExtent] "%d %d %d %d %d %d" x1 x2 y1 y2 z1 z2
-    # this should match the first image displayed
-    HistogramWidgetSetInput $hist [Ed(EdLiveWire,viewer$s) GetInput]
-    HistogramWidgetSetExtent $hist $x1 $x2 $y1 $y2 $z1 $z2
-    pack $hist -side left -padx 3 -pady 3 -fill both -expand t
-    HistogramWidgetBind $f.hist
+    ##source /scratch/src/slicer/program/vtkHistogramWidget.tcl
+    #source vtkHistogramWidget.tcl
+    #set hist [vtkHistogramWidget $f.hist]
+    #scan [[Ed(EdLiveWire,viewer$s) GetInput] GetExtent] "%d %d %d %d %d %d" x1 x2 y1 y2 z1 z2
+    ## this should match the first image displayed
+    #HistogramWidgetSetInput $hist [Ed(EdLiveWire,viewer$s) GetInput]
+    #HistogramWidgetSetExtent $hist $x1 $x2 $y1 $y2 $z1 $z2
+    #pack $hist -side left -padx 3 -pady 3 -fill both -expand t
+    #HistogramWidgetBind $f.hist
 
     # save vars 
-    set Ed(EdLiveWire,edgeHistWidget$s) $hist
+    #set Ed(EdLiveWire,edgeHistWidget$s) $hist
 
     #-------------------------------------------
     # Bottom frame
@@ -651,9 +651,13 @@ proc EdLiveWireRaiseEdgeImageWin {} {
     set f $w.fBottom.fedgeBtns
     label $f.lradio -text "Edge Direction"
     pack $f.lradio -side left
-    #Ed(EdLiveWire,viewer$s) SetInput [Ed(EdLiveWire,lwSetup$s) GetEdgeImage 0]
-    foreach edge "0 1 2 3" text "0 1 2 3" width "2 2 2 2" {
-	radiobutton $f.r$edge -width $width -indicatoron 0\
+    # make list of edge numbers
+    set edges ""
+    for {set i 0} {$i < $Ed(EdLiveWire,numEdgeFilters)} {incr i} {
+	lappend edges $i
+    }
+    foreach edge $edges text $edges {
+	radiobutton $f.r$edge -width 2 -indicatoron 0\
 		-text "$text" -value "$edge" \
 		-variable Ed(EdLiveWire,edge$s) \
 		-command "EdLiveWireUpdateEdgeImageWin $viewerWidget $edge"
@@ -699,13 +703,13 @@ proc EdLiveWireUpdateEdgeImageWin {viewerWidget edgeNum} {
     $viewerWidget Render
 
     # histogram
-    HistogramWidgetSetInput $Ed(EdLiveWire,edgeHistWidget$s) \
-	    [Ed(EdLiveWire,viewer$s) GetInput]
-    scan [[Ed(EdLiveWire,viewer$s) GetInput] GetExtent] \
-	    "%d %d %d %d %d %d" x1 x2 y1 y2 z1 z2
-    HistogramWidgetSetExtent $Ed(EdLiveWire,edgeHistWidget$s) \
-	    $x1 $x2 $y1 $y2 $z1 $z2
-    HistogramWidgetRender $Ed(EdLiveWire,edgeHistWidget$s)
+    #HistogramWidgetSetInput $Ed(EdLiveWire,edgeHistWidget$s) \
+#	    [Ed(EdLiveWire,viewer$s) GetInput]
+    #scan [[Ed(EdLiveWire,viewer$s) GetInput] GetExtent] \
+	#    "%d %d %d %d %d %d" x1 x2 y1 y2 z1 z2
+    #HistogramWidgetSetExtent $Ed(EdLiveWire,edgeHistWidget$s) \
+	#    $x1 $x2 $y1 $y2 $z1 $z2
+    #HistogramWidgetRender $Ed(EdLiveWire,edgeHistWidget$s)
 }
 
 proc EdLiveWireWriteEdgeImage {} {
@@ -737,6 +741,7 @@ proc EdLiveWireWriteEdgeImage {} {
 	    "Saved image as $filename in dir where slicer was run.\nOpen image as unsigned char to view in slicer."
 
 }
+
 
 #-------------------------------------------------------------------------------
 # .PROC EdLiveWireGetFeatureParams
@@ -1416,9 +1421,13 @@ proc EdLiveWireReformatSlice {offset realReformat {volume "Working"}} {
     set s $Slice(activeID)
     if {$volume == "Working"} {
 	set v [EditorGetWorkingID]
-    } else {
+    } elseif {$volume == "Original"} {
 	set v [EditorGetOriginalID]
+    } else {
+	# input is a volume number, not a name
+	set v $volume
     }
+
     set vol Volume($v,vol)
     set node Volume($v,node)
 
@@ -1807,4 +1816,68 @@ proc EdLiveWireWriteFeatureParams {} {
     close $out
 
     puts "Saved settings to file $Ed($e,trainingOutputFileName)"
+}
+
+proc EdLiveWireTestCF {} {
+    global Ed Volume Slice
+
+    set phaseVol ""
+    set certVol ""
+
+    # figure out which volumes to use: hack for now
+    foreach v $Volume(idList) {
+	set n Volume($v,node)
+	set name [$n GetName]
+	puts $name
+	if {$name == "phase"} {
+	    set phaseVol $v
+	}
+	if {$name == "cert"} {
+	    set certVol $v
+	}
+    }
+    
+    if {$phaseVol == "" || $certVol == ""} {
+	puts "can't find phase and cert volumes"
+	return
+    }
+
+    # reformat the right slices
+    set s $Slice(activeID)
+    vtkImageReformat phaseReformat
+    vtkImageReformat certReformat
+    EdLiveWireReformatSlice $Slice($s,offset) phaseReformat $phaseVol
+    EdLiveWireReformatSlice $Slice($s,offset) certReformat $certVol
+
+    # give to (all) lw edge filters as input
+    set e EdLiveWire
+    for {set f 0} {$f < $Ed($e,numEdgeFilters)} {incr f} {
+	
+	set filt [Ed($e,lwSetup$s) GetEdgeFilter $f]
+	
+	# see if the edge filter already has its other inputs
+	if {[$filt GetNumberOfInputs] < 1} {
+	    tk_messageBox -message \
+		    "Please test again after LiveWire initialization."
+	    return
+	}
+
+	$filt SetPhaseImage [phaseReformat GetOutput]     
+	$filt SetCertaintyImage [certReformat GetOutput]     
+
+	# Lauren for now set the other inputs to this too!
+	$filt SetPreviousContourImage [phaseReformat GetOutput]
+	$filt SetTrainingPointsImage [phaseReformat GetOutput]
+    }
+
+    # clean up
+    phaseReformat Delete
+    certReformat Delete
+
+    puts "almost done!"
+
+    # update slicer
+    Slicer Update
+    
+    puts "woo hoo!!!"
 }
