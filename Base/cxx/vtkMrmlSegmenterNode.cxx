@@ -79,6 +79,10 @@ vtkMrmlSegmenterNode::vtkMrmlSegmenterNode()
   this->IntensityAvgClass = -1;
   this->PrintIntermediateDir = NULL;
   this->BiasPrint = 0;
+  for (int i=0; i < 3; i++) {
+    this->SegmentationBoundaryMin[i] = 0; // Lower bound of the boundary box where the image gets segments.
+    this->SegmentationBoundaryMax[i] = 0;// Upper bound of the boundary box where the image gets segments.
+  }
 }
 
 //----------------------------------------------------------------------------
@@ -120,12 +124,20 @@ void vtkMrmlSegmenterNode::Write(ofstream& of, int nIndent)
   of << " PrintIntermediateResults ='"   << this->PrintIntermediateResults  << "'";
   of << " PrintIntermediateSlice ='"     << this->PrintIntermediateSlice << "'";
   of << " PrintIntermediateFrequency ='" << this->PrintIntermediateFrequency << "'";
-  of << " StartSlice ='"                 << this->StartSlice << "'";
-  of << " EndSlice ='"                   << this->EndSlice << "'";
+  of << " SegmentationBoundaryMin ='" ;
+  for (int i=0; i < 3; i++) of << this->SegmentationBoundaryMin[i]<< " " ; // Upper bound of the boundary box where the image gets segments.
+  of << "'";
+
+  of << " SegmentationBoundaryMax ='" ;
+  for (int i=0; i < 3; i++) of << this->SegmentationBoundaryMax[i]<< " " ; // Upper bound of the boundary box where the image gets segments.
+  of << "'";
+
   of << " DisplayProb  ='"               << this->DisplayProb  << "'";
   of << " NumberOfTrainingSamples ='"    << this->NumberOfTrainingSamples << "'";
   of << " IntensityAvgClass ='"          << this->IntensityAvgClass << "'";
   of << " BiasPrint ='"                  << this->BiasPrint << "'";
+
+
   if (this->PrintIntermediateDir && strcmp(this->PrintIntermediateDir, "")) of << " PrintIntermediateDir ='"           << this->PrintIntermediateDir << "'";
   of << ">\n";;
 }
@@ -154,6 +166,8 @@ void vtkMrmlSegmenterNode::Copy(vtkMrmlNode *anode)
   this->NumberOfTrainingSamples    = node->NumberOfTrainingSamples;
   this->IntensityAvgClass          = node->IntensityAvgClass;
   this->BiasPrint                  = node->BiasPrint;
+  memcpy(this->SegmentationBoundaryMin, node->SegmentationBoundaryMin, sizeof(int)*3);
+  memcpy(this->SegmentationBoundaryMax, node->SegmentationBoundaryMax, sizeof(int)*3);
 }
 
 //----------------------------------------------------------------------------
@@ -179,4 +193,11 @@ void vtkMrmlSegmenterNode::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "IntensityAvgClass:"          << this->IntensityAvgClass << "\n";
   os << indent << "BiasPrint:"                  << this->BiasPrint << "\n";
   os << indent << "PrintIntermediateDir:"           << this->PrintIntermediateDir << "\n"; 
+  os << indent << "SegmentationBoundaryMin:    " ;
+  for (int i=0; i < 3; i++) os << this->SegmentationBoundaryMin[i]<< " " ; // Upper bound of the boundary box where the image gets segments.
+  os << "\n";
+
+  os << indent << "SegmentationBoundaryMax:    " ;
+  for (int i=0; i < 3; i++) os << this->SegmentationBoundaryMax[i]<< " " ; // Upper bound of the boundary box where the image gets segments.
+  os << "\n";
 }

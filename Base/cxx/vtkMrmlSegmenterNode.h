@@ -130,15 +130,24 @@ public:
   vtkGetMacro(PrintIntermediateFrequency, int);
 
   // Description:
-  // Get/Set for Segmenter
+  // Get/Set for Segmenter - not part of new version anymore 
   vtkSetMacro(StartSlice, int);
   vtkGetMacro(StartSlice, int);
 
   // Description:
-  // Get/Set for Segmenter
+  // Get/Set for Segmenter - not part of new version anymore 
   vtkSetMacro(EndSlice, int);
   vtkGetMacro(EndSlice, int);
 
+  // Description:
+  // Replacement for Start - EndSlice Bounding Box can be 3D
+  vtkSetVector3Macro(SegmentationBoundaryMin,int);
+  vtkSetVector3Macro(SegmentationBoundaryMax,int);
+
+  vtkGetVector3Macro(SegmentationBoundaryMin,int);
+  vtkGetVector3Macro(SegmentationBoundaryMax,int);
+
+ 
   // Description:
   // Get/Set for Segmenter
   vtkSetMacro(DisplayProb, int);
@@ -192,6 +201,8 @@ protected:
   int    IntensityAvgClass;
   char*  PrintIntermediateDir;
   int    BiasPrint;
+  int    SegmentationBoundaryMin[3];
+  int    SegmentationBoundaryMax[3];
 };
 
 #endif
