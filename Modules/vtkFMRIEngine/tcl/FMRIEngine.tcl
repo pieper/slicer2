@@ -59,6 +59,8 @@
 #   FMRIEnginePopBindings 
 #   FMRIEngineCreateBindings  
 #   FMRIEngineSetVolumeName   
+#   StripChartTest
+#   FMRIEngineTestBLT
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -66,7 +68,6 @@
 # This module computes activation volume from a sequence of fMRI images. 
 # To find it when you run the Slicer, click on More->FMRIEngine.
 #-------------------------------------------------------------------------------
-
 #-------------------------------------------------------------------------------
 # .PROC FMRIEngineInit
 #  The "Init" procedure is called automatically by the slicer.  
@@ -170,7 +171,7 @@ proc FMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.27 $} {$Date: 2004/08/31 17:30:24 $}]
+        {$Revision: 1.28 $} {$Date: 2004/10/17 14:31:55 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -180,6 +181,7 @@ proc FMRIEngineInit {} {
     #   the procedures in this module and others need to access.
     #
     set FMRIEngine(dir)  ""
+    set FMRIEngine(trackMotion) 1
     set FMRIEngine(modulePath) "$env(SLICER_HOME)/Modules/vtkFMRIEngine"
 
 
@@ -383,12 +385,13 @@ proc FMRIEngineBuildGUI {} {
     pack $f.lTitle -side top -fill x -pady $Gui(pad) 
 
     foreach param "None Long Short ROI" \
-         name "{No plotting} {Voxel long format} {Voxel short format} {ROI plotting}" {
+        name "{None} {Voxel-Natural} {Voxel-Combined} {ROI}" {
 
-         eval {radiobutton $f.r$param -width 20 -text $name \
-             -variable FMRIEngine(tcPlottingOption) -value $param -relief raised \
-             -offrelief raised -overrelief raised -selectcolor blue} $Gui(WEA)
-         pack $f.r$param -side top -pady $Gui(pad) 
+        eval {radiobutton $f.r$param -width 20 -text $name \
+            -variable FMRIEngine(tcPlottingOption) -value $param \
+            -relief raised -offrelief raised -overrelief raised \
+            -selectcolor blue} $Gui(WEA)
+        pack $f.r$param -side top -pady $Gui(pad) 
     } 
 
     set FMRIEngine(tcPlottingOption) None
@@ -1071,7 +1074,7 @@ proc FMRIEngineComputeActivationVolume {} {
         return
     }
 
-    set stimSize [$FMRIEngine(stimulus) GetNumberOfTuples]
+    set stimSize [FMRIEngine(stimulus) GetNumberOfTuples]
     set volSize [FMRIEngine(actvolgen) GetNumberOfInputs]
     if {$stimSize != $volSize} {
         DevErrorWindow "Stimulus size ($stimSize) is not same as no of volumes ($volSize)."
@@ -1094,7 +1097,7 @@ proc FMRIEngineComputeActivationVolume {} {
     vtkActivationDetector FMRIEngine(detector)
     FMRIEngine(detector) SetDetectionMethod 1
     FMRIEngine(detector) SetNumberOfPredictors [lindex $FMRIEngine(paradigm) 1] 
-    FMRIEngine(detector) SetStimulus $FMRIEngine(stimulus) 
+    FMRIEngine(detector) SetStimulus FMRIEngine(stimulus) 
 
     if {[info exists FMRIEngine(lowerThreshold)]} {
         FMRIEngine(actvolgen) SetLowerThreshold $FMRIEngine(lowerThreshold)
@@ -1211,9 +1214,12 @@ proc FMRIEnginePopBindings {} {
 proc FMRIEngineCreateBindings {} {
     global Gui Ev
 
+    EvDeclareEventHandler FMRIEngineSlicesEvents <ButtonPress-1> \
+        {set FMRIEngine(trackMotion) [expr {! $FMRIEngine(trackMotion)}]}
+ 
     EvDeclareEventHandler FMRIEngineSlicesEvents <Motion> \
         { FMRIEnginePopUpPlot %x %y }
-            
+           
     EvAddWidgetToBindingSet FMRISlice0Events $Gui(fSl0Win) {FMRIEngineSlicesEvents}
     EvAddWidgetToBindingSet FMRISlice1Events $Gui(fSl1Win) {FMRIEngineSlicesEvents}
     EvAddWidgetToBindingSet FMRISlice2Events $Gui(fSl2Win) {FMRIEngineSlicesEvents}    
