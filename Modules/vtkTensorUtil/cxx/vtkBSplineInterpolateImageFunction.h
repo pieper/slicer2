@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkBSplineInterpolateImageFunction.h,v $
   Language:  C++
-  Date:      $Date: 2004/07/27 16:52:18 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2004/07/29 20:28:57 $
+  Version:   $Revision: 1.2 $
 */
 // .NAME vtkBSplineInterpolateImageFunction - BSpline interpolation of a image dataset of points
 // .SECTION Description
@@ -23,9 +23,11 @@
 #include "vtkObjectFactory.h"
 #include "vtkImageData.h"  // for storing output of vtk/itk filter
 
+#include "vtkTensorUtilConfigure.h"
+
 #define ImageDimension 3
 
-class VTK_COMMON_EXPORT vtkBSplineInterpolateImageFunction : public vtkImplicitFunction
+class VTK_TENSORUTIL_EXPORT vtkBSplineInterpolateImageFunction : public vtkImplicitFunction
 {
  public:
   static vtkBSplineInterpolateImageFunction *New();
