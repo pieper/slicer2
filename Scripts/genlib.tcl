@@ -373,8 +373,10 @@ if { ![file exists $vtkTestFile] } {
 
     runcmd $CMAKE \
         -G$GENERATOR \
-    -DCMAKE_BUILD_TYPE:STRING=$::VTK_BUILD_TYPE \
+        -DCMAKE_BUILD_TYPE:STRING=$::VTK_BUILD_TYPE \
         -DBUILD_SHARED_LIBS:BOOL=ON \
+        -DCMAKE_CXX_COMPILER:STRING=$COMPILER_PATH/$COMPILER \
+        -DCMAKE_CXX_COMPILER_FULLPATH:FILEPATH=$COMPILER_PATH/$COMPILER \
         -DBUILD_TESTING:BOOL=OFF \
         -DVTK_USE_CARBON:BOOL=OFF \
         -DVTK_USE_X:BOOL=ON \
@@ -391,7 +393,7 @@ if { ![file exists $vtkTestFile] } {
     if {$isWindows} {
         runcmd devenv VTK.SLN /build  $::VTK_BUILD_TYPE
     } else {
-        runcmd make -j4
+        runcmd gmake -j4
     }
 
 }
@@ -412,6 +414,8 @@ if { ![file exists $itkTestFile] } {
 
     runcmd $CMAKE \
         -G$GENERATOR \
+        -DCMAKE_CXX_COMPILER:STRING=$COMPILER_PATH/$COMPILER \
+        -DCMAKE_CXX_COMPILER_FULLPATH:FILEPATH=$COMPILER_PATH/$COMPILER \
         -DBUILD_SHARED_LIBS:BOOL=ON \
         -DBUILD_EXAMPLES:BOOL=OFF \
         -DBUILD_TESTING:BOOL=OFF \
@@ -421,7 +425,7 @@ if { ![file exists $itkTestFile] } {
     if {$isWindows} {
         runcmd devenv ITK.SLN /build  $::VTK_BUILD_TYPE
     } else {
-        runcmd make -j4
+        runcmd gmake -j4
     }
 }
 
