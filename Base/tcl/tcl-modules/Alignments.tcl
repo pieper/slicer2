@@ -128,12 +128,13 @@ proc AlignmentsInit {} {
     set Module($m,row1,tab) Manual
 
     # Module Summary Info
-    set Module($m,overview) "Edit transformation matrices to move volumes/models.\n\t\tUse the Auto tab to perform registrations using embedded algorithms. \n\t\tSelect the FidAlign option to select corresponding points on two volumes so as to \n\t\t get a coarse alignment of the two volumes. Use the MI option \n\t\tto perform registration by mutual information."
+    set Module($m,overview) "Edit transformation matrices to move volumes/models.\n\t\tUse the Auto tab to perform registrations using embedded algorithms. \n\t\tSelect the FidAlign option to select corresponding points on two volumes so as to \n\t\t get a coarse alignment of the two volumes. Use the Intensity option \n\t\tto perform registration fully automatically."
 
     # Define Procedures
     set Module($m,procGUI)   AlignmentsBuildGUI
     set Module($m,procMRML)  AlignmentsUpdateMRML
     set Module($m,procVTK)   AlignmentsBuildVTK
+    set Module($m,procEnter) AlignmentsEnter
 
     # Callbacks from other modules
     set Module($m,procViewerUpdate) AlignmentsFidAlignViewUpdate
@@ -141,12 +142,12 @@ proc AlignmentsInit {} {
     set Module($m,fiducialsStartCallback) AlignmentsFiducialsUpdated
 
     # Define Dependencies
-    ## No Dependency, simply uses MutualInfoReg if available
-    #set Module($m,depend) "MutualInfoReg"
+    ## No Dependency, simply uses RigidIntensityRegistration if available
+    #set Module($m,depend) "RigidIntensityRegistration"
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.29 $} {$Date: 2003/09/10 14:58:48 $}]
+            {$Revision: 1.30 $} {$Date: 2003/12/08 04:13:43 $}]
 
     # Props
     set Matrix(propertyType) Basic
@@ -317,15 +318,14 @@ proc AlignmentsBuildGUI {} {
     <LI><B>Auto:
     </B> Automatic and semi-automatic registration mechanisms. 
        <UL> 
-          <LI> The <B>FidAlign</B> tab allows selection of corresponding fiducial points on the volume to move and the reference volume. Once this button is pressed, the screen is split into half and the volume to move is displayed in the screen on the right while the reference volume is displayed on the left. The screen color indicates which screen is the active one (yellow) and which one is the inactive one (blue). The active screen is set either by the motion of the mouse or the radio buttons found on the control panel. It is important to note that only the control panel for the active volume is shown. In the FidAlign mode, pick at least three corresponding points on each of the volumes and click the apply button to obtain a coarse registration of the two volumes. Click the cancel button to exit the fiducial selection mode. The matrix is set to the transformation matrix that was used to coarsly align the volume to move with the reference volume. This matrix can be set as the active matrix for MI or it can be manually adjusted using the sliders on the manual tab. 
+          <LI> The <B>FidAlign</B> tab allows selection of corresponding fiducial points on the volume to move and the reference volume. Once this button is pressed, the screen is split into half and the volume to move is displayed in the screen on the right while the reference volume is displayed on the left. The screen color indicates which screen is the active one (yellow) and which one is the inactive one (blue). The active screen is set either by the motion of the mouse or the radio buttons found on the control panel. It is important to note that only the control panel for the active volume is shown. In the FidAlign mode, pick at least three corresponding points on each of the volumes and click the apply button to obtain a coarse registration of the two volumes. Click the cancel button to exit the fiducial selection mode. The matrix is set to the transformation matrix that was used to coarsly align the volume to move with the reference volume. This matrix can be set as the active matrix for <B>Intensity</B> registration or the matrix can be manually adjusted using the sliders on the manual tab. 
+          <LI> The <B>Intensity</B> button performs automatic registration.. This will set the matrix to the transformation matrix needed to align the <B>Volume to Move</B> with the <B>Reference Vol.</B>.<BR><B>TIP:</B> Set the <B>Run Speed</B> to <I>Fast</I> if the 2 volumes are already roughly aligned. Click on the <I>View color correspondence between the two overlayed images</I> button to visually assess the quality of registration. When the reference volume(red) and the volume to move(blue) overlap, they form a pink color.
           <LI> The <B>TPS</B> button will be used to access registration using the thin plate spline method in the future. It is currently not available in this version. 
-          <LI> The <B>MI</B> button performs automatic registration using the method of Mutual Information (MI). This will set the matrix to the transformation matrix needed to align the <B>Volume to Move</B> with the <B>Reference Vol.</B>.<BR><B>TIP:</B> Set the <B>Run Speed</B> to <I>Fast</I> if the 2 volumes are already roughly aligned. Click on the <I>View color correspondence between the two overlayed images</I> button to visually assess the quality of registration. When the reference volume(red) and the volume to move(blue) overlap, they form a pink color.
        </UL>
     </UL>"
     regsub -all "\n" $help { } help
     MainHelpApplyTags Alignments $help
     MainHelpBuildGUI  Alignments
-
 
     #-------------------------------------------
     # Props frame
@@ -696,8 +696,8 @@ proc AlignmentsBuildGUI {} {
     #-------------------------------------------
     set f $fAuto.fBot
 
-    #Frames for FidAlign, TPS and MI and a "choose alignment" screen
-    foreach type "AlignBegin FidAlign MI TPS" {
+    #Frames for FidAlign, TPS and Intensity and a "choose alignment" screen
+    foreach type "AlignBegin FidAlign Intensity TPS" {
         frame $f.f${type} -bg $Gui(activeWorkspace)
         place $f.f${type} -in $f -relheight 1.0 -relwidth 1.0
         set Matrix(f${type}) $f.f${type}
@@ -768,9 +768,9 @@ proc AlignmentsBuildGUI {} {
 
     eval {label $f.l -text "Registration Mode:"} $Gui(BLA)
     frame $f.fmodes -bg $Gui(backdrop)
-    foreach mode "FidAlign MI TPS" {
+    foreach mode "FidAlign Intensity TPS" text "Fiducials Intensity TPS" {
         eval {radiobutton $f.fmodes.r$mode \
-            -text "$mode" -command "AlignmentsSetRegistrationMode" \
+            -text "$text" -command "AlignmentsSetRegistrationMode" \
             -variable Matrix(regMode) -value $mode -width 10 \
             -indicatoron 0} $Gui(WRA)
         set Matrix(r${mode}) $f.fmodes.r$mode
@@ -1104,22 +1104,22 @@ proc AlignmentsBuildGUI {} {
     #pack $f.bSave -padx $Gui(pad) -pady $Gui(pad)
 
     #-------------------------------------------
-    # Auto->Bot->MI Frame
+    # Auto->Bot->Intensity Frame
     #-------------------------------------------
-    set f $fAuto.fBot.fMI
+    set f $fAuto.fBot.fIntensity
 
     ##
     ## If the MutualInfoReg Module exists, use it
     ##
     ## Otherwise, don't use it.
 
-    set ret [catch "package require vtkMutualInformationRegistration" res]
+    set ret [catch "package require vtkRigidIntensityRegistration" res]
 
     if { $ret } {
-        DevAddLabel $f.lbadnews "I'm sorry but the \n MutualInformationRegistration Module\n is not loaded so that Mutual\n Information Registration is not available."
+        DevAddLabel $f.lbadnews "I'm sorry but the \n RigidIntensityRegistration Module\n is not loaded so that Automatic \nRegistration is not available."
         pack $f.lbadnews -pady $Gui(pad)
     } else {
-        MutualInformationRegistrationBuildSubGui $f
+        RigidIntensityRegistrationBuildSubGui $f
     }
 
     #-------------------------------------------
@@ -2126,8 +2126,8 @@ proc AlignmentsSetRegistrationMode {} {
         #TPS is not currently implemented in this version.
         raise $Matrix(f$Matrix(regMode))
         return
-    } elseif {$Matrix(f$Matrix(regMode)) == "$Matrix(fMI)"} {
-        puts "you are in the registration by mutual information mode"
+    } elseif {$Matrix(f$Matrix(regMode)) == "$Matrix(fIntensity)"} {
+        puts "you are in the registration by itensity mode"
         raise $Matrix(f$Matrix(regMode))
         focus $Matrix(f$Matrix(regMode))
     }
@@ -3752,16 +3752,16 @@ proc AlignmentsSetRegTabState {mode} {
     switch $Matrix(regMode) {
         "FidAlign" {
             $Matrix(rTPS) config -state $mode
-            $Matrix(rMI) config -state $mode
+            $Matrix(rIntensity) config -state $mode
         }
         "TPS" {
         $Matrix(rFidAlign) config -state $mode
-            $Matrix(rMI) config -state $mode
+            $Matrix(rIntensity) config -state $mode
         }
         default {
             $Matrix(rFidAlign) config -state $mode
             $Matrix(rTPS) config -state $mode
-                $Matrix(rMI) config -state $mode
+                $Matrix(rIntensity) config -state $mode
         }
     }
     #set the volume buttons
@@ -3856,7 +3856,7 @@ proc AlignmentsMainFileCloseUpdated {} {
 
 #-------------------------------------------------------------------------------
 # .PROC AlignmentsExit
-# Called when the Alignments module is exit
+# Called when the Alignments module is exit, NOT CALLED
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -3866,4 +3866,26 @@ proc AlignmentsExit {} {
     popEventManager
     Render3D
 }
+
+#-------------------------------------------------------------------------------
+# .PROC AlignmentsEnter
+# Called when the Alignments module is enter
+# Set the volumes chosen automatically if they are not already chosen.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc AlignmentsEnter {} {
+    global Matrix Volume Slice
+
+    if {$Matrix(volume) == $Volume(idNone) } {
+       AlignmentsSetVolume $Slice(0,foreVolID)
+    }
+    if {$Matrix(refVolume) == $Volume(idNone) } {
+       AlignmentsSetRefVolume $Slice(0,backVolID)
+    }
+
+    popEventManager
+    Render3D
+}
+
 
