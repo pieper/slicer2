@@ -23,22 +23,41 @@
 # FILE:        Parse.tcl
 # PROCEDURES:  
 #   MainMrmlReadVersion2.0 filename verbose
+#   MainMrmlReadVersion2.x filename verbose
 #==========================================================================auto=
+
 
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlReadVersion2.0
 # 
-# Opens a MRML2.0 file and reads and parses it to return a string that is
+# Left for compatibility reasons; the only thing this procedure does is calling
+# MainMrmlReadVersion2.x
+#
+# .ARGS
+# See MainMrmlReadVersion2.x
+# .END
+#-------------------------------------------------------------------------------
+
+proc MainMrmlReadVersion2.0 {fileName {verbose 1}} {
+	
+	return [MainMrmlReadVersion2.x $fileName $verbose]
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC MainMrmlReadVersion2.x
+# 
+# Opens a MRML2.x file and reads and parses it to return a string that is
 # a list of MRML nodes in the file. Each string element is itself a list of
 # (key value) pairs of the attributes of the node. So the format is:<br>
 # <code>(nodeName (key1 value1) (key2 value2)) (nodeName (key1 value1))</code>
 #
 # .ARGS
-# str filename Full pathname of the MRML2.0 file to read and parse.
+# str filename Full pathname of the MRML2.x file to read and parse.
 # str verbose set to 1 if you want to print debug information during parsing.
 # .END
 #-------------------------------------------------------------------------------
-proc MainMrmlReadVersion2.0 {fileName {verbose 1}} {
+proc MainMrmlReadVersion2.x {fileName {verbose 1}} {
 
 	# Returns list of tags on success else 0
 
@@ -52,8 +71,9 @@ proc MainMrmlReadVersion2.0 {fileName {verbose 1}} {
 	close $fid
 
 	# Check that it's the right file type and version
-	if {[regexp {<!DOCTYPE MRML SYSTEM "mrml20.dtd">} $mrml match] == 0} {
-		set errmsg "The file is NOT MRML version 2.0"
+	# accepts all versions from MRML 2.0 to 2.5
+	if {[regexp {<!DOCTYPE MRML SYSTEM ['"]mrml2[0-5].dtd['"]>} $mrml match] == 0} {
+		set errmsg "The file is NOT MRML version 2.x"
 		tk_messageBox -message $errmsg
 		return 0
 	}
@@ -72,6 +92,7 @@ proc MainMrmlReadVersion2.0 {fileName {verbose 1}} {
 
 		# Find next tag
 		if {[regexp {^<([^ >]*)([^>]*)>([^<]*)} $mrml match tag attr stuffing] == 0} {
+		#([^/>]*)
 				set errmsg "Invalid MRML file. Can't parse tags:\n$mrml"
 			puts "$errmsg"
 			tk_messageBox -message "$errmsg"
@@ -81,13 +102,28 @@ proc MainMrmlReadVersion2.0 {fileName {verbose 1}} {
 		# Strip off this tag, so we can continue.
 		if {[lsearch "Transform /Transform" $tag] != -1 || \
 		    [lsearch "Fiducials /Fiducials" $tag] != -1 || \
+		    [lsearch "Hierarchy /Hierarchy" $tag] != -1 || \
+		    [lsearch "ModelGroup /ModelGroup" $tag] != -1 || \
+		    [lsearch "Scenes /Scenes" $tag] != -1 || \
+		    [lsearch "VolumeState /VolumeState" $tag] != -1 || \
 		    [lsearch "Path /Path" $tag] != -1 } {
-			set str "<$tag>"
+			# set str "<$tag>" doesn't work with tags which have attributes
+			set str ">"
 		} else {
 			set str "</$tag>"
+			set str2 " />"
 		}
+		set str2_used 0
 		set i [string first $str $mrml]
-		set mrml [string range $mrml [expr $i + [string length $str]] end]
+		if {($i<=0) && ([info exists str2])} {
+			set i [string first $str2 $mrml]
+			set str2_used 1
+		}
+		if {!$str2_used} {
+			set mrml [string range $mrml [expr $i + [string length $str]] end]
+		} else {
+			set mrml [string range $mrml [expr $i + [string length $str2]] end]
+		}
 
 		# Give the EndTransform tag a name
 		if {$tag == "/Transform"} {
@@ -104,6 +140,26 @@ proc MainMrmlReadVersion2.0 {fileName {verbose 1}} {
 			set tag EndPath
 		}
 
+		# Give the EndHierarchy tag a name
+		if {$tag == "/Hierarchy"} {
+			set tag EndHierarchy
+		}
+		
+		# Give the EndModelGroup tag a name
+		if {$tag == "/ModelGroup"} {
+			set tag EndModelGroup
+		}
+		
+		# Give the EndScenes tag a name
+		if {$tag == "/Scenes"} {
+			set tag EndScenes
+		}
+
+		# Give the EndVolumeState tag a name
+		if {$tag == "/VolumeState"} {
+			set tag EndVolumeState
+		}
+		
 		# Append to List of tags1
 		lappend tags1 "$tag {$attr} {$stuffing}"
 
@@ -117,7 +173,7 @@ proc MainMrmlReadVersion2.0 {fileName {verbose 1}} {
 		set tag [lindex $pair 0]
 		set attr [lindex $pair 1]
 		set stuffing [lindex $pair 2]
-
+		
 		# Add the options (the "stuffing" from inside the start and end tags)
 		set attrList ""
 		lappend attrList "options $stuffing"
@@ -128,14 +184,19 @@ proc MainMrmlReadVersion2.0 {fileName {verbose 1}} {
 		while {$attr != ""} {
 		
 			# Find the next key=value pair (and also strip it off... all in one step!)
-			if {[regexp "^(\[^=\]*)\[\n\t \]*=\[\n\t \]*\['\"\](\[^'\"\]*)\['\"\](.*)$" \
-				$attr match key value attr] == 0} {
+			if {([regexp "^(\[^=\]*)\[\n\t \]*=\[\n\t \]*\['\"\](\[^'\"\]*)\['\"\](.*)$" \
+				$attr match key value attr] == 0) && ([string equal -length 1 $attr "/"] == 0)} {
 				set errmsg "Invalid MRML file. Can't parse attributes:\n$attr"
 				puts "$errmsg"
 				tk_messageBox -message "$errmsg"
 				return 0
 			}
-			lappend attrList "$key $value"
+			if {[string equal -length 1 $attr "/"] == 0} {
+				lappend attrList "$key $value"
+			} else {
+				# Strip the / at then end of an XML tag
+				regsub "/" $attr "" attr
+			}
 
 			# Strip leading white space
 			regsub "^\[\n\t \]*" $attr "" attr

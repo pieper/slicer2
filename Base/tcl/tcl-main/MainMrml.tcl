@@ -30,6 +30,7 @@
 #   MainMrmlClearList
 #   MainMrmlAddNode nodeType
 #   MainMrmlInsertBeforeNode nodeType
+#   MainMrmlInsertAfterNode nodeType
 #   MainMrmlUndoAddNode
 #   MainMrmlDeleteNodeDuringUpdate
 #   MainMrmlDeleteNode
@@ -68,7 +69,7 @@ proc MainMrmlInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainMrml \
-		{$Revision: 1.42 $} {$Date: 2001/08/22 15:20:47 $}]
+		{$Revision: 1.43 $} {$Date: 2001/11/13 20:44:53 $}]
 
 	set Mrml(filePrefix) data
 	set Mrml(colorsUnsaved) 0
@@ -86,11 +87,17 @@ proc MainMrmlInitIdLists {} {
 	global TransferFunction WindowLevel TFPoint ColorLUT Options
 	global Fiducials EndFiducials Point
         global Path EndPath Landmark
+        global Hierarchy EndHierarchy ModelGroup EndModelGroup ModelRef
+        global Scenes EndScenes VolumeState EndVolumeState CrossSection
+        global SceneOptions ModelState Locator
 
     #puts "in MainMrmlInitIdLists: Lauren developers should not have to edit this file"
 	foreach node "Color Model Volume Transform EndTransform Matrix \
 		TransferFunction WindowLevel TFPoint ColorLUT Options \
-		Fiducials EndFiducials Point Path EndPath Landmark" {
+		Fiducials EndFiducials Point Path EndPath Landmark \
+		Hierarchy EndHierarchy ModelGroup EndModelGroup ModelRef \
+		Scenes EndScenes VolumeState EndVolumeState CrossSection \
+		SceneOptions ModelState Locator" {
 		set ${node}(nextID) 0
 		set ${node}(idList) ""
 		set ${node}(idListDelete) ""
@@ -145,8 +152,8 @@ proc MainMrmlPrint {tags} {
 		set tag  [lindex $pair 0]
 		set attr [lreplace $pair 0 0]
 
-		# Process EndTransform & EndFiducials & EndPath
-		if {$tag == "EndTransform" || $tag == "EndFiducials" || $tag == "EndPath"} {
+		# Process EndTransform & EndFiducials & EndPath & EndModelGroup & EndHierarchy
+		if {$tag == "EndTransform" || $tag == "EndFiducials" || $tag == "EndPath" || $tag == "EndModelGroup" || $tag == "EndHierarchy"} {
 			set level [expr $level - 1]
 		}
 		set indent ""
@@ -156,8 +163,8 @@ proc MainMrmlPrint {tags} {
 
 		puts "${indent}$tag"
 
-		# Process Transform & Fiducials
-		if {$tag == "Transform" || $tag == "Fiducials" || $tag == "Path"} {
+		# Process Transform & Fiducials & Path & ModelGroup & Hierarchy
+		if {$tag == "Transform" || $tag == "Fiducials" || $tag == "Path" || $tag == "ModelGroup" || $tag == "Hierarchy"} {
 			incr level
 		}
 		set indent ""
@@ -184,10 +191,16 @@ proc MainMrmlClearList {} {
 	global TransferFunction WindowLevel TFPoint ColorLUT Options
 	global Fiducials EndFiducials Point
         global Path EndPath Landmark
+        global Hierarchy EndHierarchy ModelGroup EndModelGroup ModelRef
+        global Scenes EndScenes VolumeState EndVolumeState CrossSection
+        global SceneOptions ModelState Locator
 
 	foreach node "Color Model Volume Transform EndTransform Matrix \
 		TransferFunction WindowLevel TFPoint ColorLUT Options \
-		Fiducials EndFiducials Point Path EndPath Landmark" {
+		Fiducials EndFiducials Point Path EndPath Landmark \
+		Hierarchy EndHierarchy ModelGroup EndModelGroup ModelRef \
+		Scenes EndScenes VolumeState EndVolumeState CrossSection \
+		SceneOptions ModelState Locator" {
 		set ${node}(idListDelete) ""
 	}
 }
@@ -203,7 +216,14 @@ proc MainMrmlClearList {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlAddNode {nodeType} {
-
+	global Mrml Model Volume Color Transform EndTransform Matrix Options
+	global TransferFunction WindowLevel TFPoint ColorLUT 
+	global Fiducials EndFiducials Point 
+        global Path EndPath Landmark Array
+        global Hierarchy EndHierarchy ModelGroup EndModelGroup ModelRef
+        global Scenes EndScenes VolumeState EndVolumeState CrossSection
+        global SceneOptions ModelState Locator
+    
 	# the #0 puts the nodeType in global scope
 	upvar #0 $nodeType Array
 
@@ -247,6 +267,13 @@ proc MainMrmlAddNode {nodeType} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlInsertBeforeNode {nodeBefore nodeType} {
+	global Mrml Model Volume Color Transform EndTransform Matrix Options
+	global TransferFunction WindowLevel TFPoint ColorLUT 
+	global Fiducials EndFiducials Point 
+        global Path EndPath Landmark Array
+        global Hierarchy EndHierarchy ModelGroup EndModelGroup ModelRef
+        global Scenes EndScenes VolumeState EndVolumeState CrossSection
+        global SceneOptions ModelState Locator
 
 	# the #0 puts the nodeType in global scope
 	upvar #0 $nodeType Array
@@ -281,6 +308,57 @@ proc MainMrmlInsertBeforeNode {nodeBefore nodeType} {
 }
 
 #-------------------------------------------------------------------------------
+# .PROC MainMrmlInsertAfterNode
+#
+#  Adds a node to the data tree right after NodeBefore
+#  Returns the MrmlNode
+# 
+# .ARGS
+#  str nodeType the type of node, \"Volume\", \"Color\", etc.
+# .END
+#-------------------------------------------------------------------------------
+proc MainMrmlInsertAfterNode {nodeBefore nodeType} {
+	global Mrml Model Volume Color Transform EndTransform Matrix Options
+	global TransferFunction WindowLevel TFPoint ColorLUT 
+	global Fiducials EndFiducials Point 
+        global Path EndPath Landmark Array
+        global Hierarchy EndHierarchy ModelGroup EndModelGroup ModelRef
+        global Scenes EndScenes VolumeState EndVolumeState CrossSection
+        global SceneOptions ModelState Locator
+    
+
+	upvar $nodeType Array
+
+	set tree "dataTree"
+	if {$nodeType == "Color"} {
+		set tree "colorTree"
+	}
+
+	# Add ID to idList
+	set i $Array(nextID)
+	incr Array(nextID)
+	lappend Array(idList) $i
+
+	# Put the None volume at the end
+	if {$nodeType == "Volume"} {
+		set j [lsearch $Volume(idList) $Volume(idNone)]
+		set Volume(idList) "[lreplace $Volume(idList) $j $j] $Volume(idNone)"
+	}
+
+	# Create vtkMrmlNode
+	set n ${nodeType}($i,node)
+
+	vtkMrml${nodeType}Node $n
+	$n SetID $i
+
+	# Add node to tree
+	Mrml($tree) InsertAfterItem $nodeBefore $n
+
+	# Return node
+	return ${nodeType}($i,node)
+}
+
+#-------------------------------------------------------------------------------
 # .PROC MainMrmlUndoAddNode
 # 
 
@@ -293,6 +371,13 @@ proc MainMrmlInsertBeforeNode {nodeBefore nodeType} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlUndoAddNode {nodeType n} {
+	global Mrml Model Volume Color Transform EndTransform Matrix Options
+	global TransferFunction WindowLevel TFPoint ColorLUT 
+	global Fiducials EndFiducials Point
+        global Path EndPath Landmark Array
+        global Hierarchy EndHierarchy ModelGroup EndModelGroup ModelRef
+        global Scenes EndScenes VolumeState EndVolumeState CrossSection
+        global SceneOptions ModelState Locator
 
 	# the #0 puts the nodeType in global scope
 	upvar #0 $nodeType Array
@@ -320,6 +405,13 @@ proc MainMrmlUndoAddNode {nodeType n} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlDeleteNodeDuringUpdate {nodeType id} {
+	global Mrml Model Volume Color Transform EndTransform Matrix
+	global TransferFunction WindowLevel TFPoint ColorLUT Options
+	global Fiducials EndFiducials Point
+        global Path EndPath Landmark
+        global Hierarchy EndHierarchy ModelGroup EndModelGroup ModelRef
+        global Scenes EndScenes VolumeState EndVolumeState CrossSection
+        global SceneOptions ModelState Locator
 
 	# the #0 puts the nodeType in global scope
 	upvar #0 $nodeType Array
@@ -348,7 +440,16 @@ proc MainMrmlDeleteNodeDuringUpdate {nodeType id} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlDeleteNode {nodeType id} {
+	global Mrml Model Volume Color Transform EndTransform Matrix Options
+	global TransferFunction WindowLevel TFPoint ColorLUT 
+	global Fiducials EndFiducials Point
+        global Path EndPath Landmark
+        global Hierarchy EndHierarchy ModelGroup EndModelGroup ModelRef
+        global Scenes EndScenes VolumeState EndVolumeState CrossSection
+        global SceneOptions ModelState Locator
 
+	upvar $nodeType Array
+	
 	# the #0 puts the nodeType in global scope
 	upvar #0 $nodeType Array
 
@@ -386,6 +487,9 @@ proc MainMrmlDeleteAll {} {
 	global TransferFunction WindowLevel TFPoint ColorLUT Options
 	global Fiducials EndFiducials Point
         global Path EndPath Landmark
+        global Hierarchy EndHierarchy ModelGroup EndModelGroup ModelRef
+        global Scenes EndScenes VolumeState EndVolumeState CrossSection
+        global SceneOptions ModelState Locator
 
 	# Volumes are a special case because the "None" always exists
 	foreach id $Volume(idList) {
@@ -407,7 +511,10 @@ proc MainMrmlDeleteAll {} {
 	# dataTree
 	foreach node "Model Transform EndTransform Matrix \
 		TransferFunction WindowLevel TFPoint ColorLUT Options \
-		Fiducials EndFiducials Point Path EndPath Landmark" {
+		Fiducials EndFiducials Point Path EndPath Landmark \
+		Hierarchy EndHierarchy ModelGroup EndModelGroup ModelRef \
+		Scenes EndScenes VolumeState EndVolumeState CrossSection \
+		SceneOptions ModelState Locator" {
 		upvar 0 $node Array
 
 		foreach id $Array(idList) {
@@ -560,7 +667,7 @@ proc MainMrmlRead {mrmlFile} {
 		MainMrmlBuildTreesVersion2.0 $tags
 	} else {
 		puts "Reading MRML V2.0: $fileName"
-		set tags [MainMrmlReadVersion2.0 $fileName]
+		set tags [MainMrmlReadVersion2.x $fileName]
 
 		# Only add colors if none exist
 		set tags [MainMrmlAddColors $tags]
@@ -585,6 +692,9 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 	global TransferFunction WindowLevel TFPoint ColorLUT Options
 	global Preset Fiducials EndFiducials Point
         global Path EndPath Landmark
+        global Hierarchy EndHierarchy ModelGroup EndModelGroup ModelRef
+        global Scenes EndScenes VolumeState EndVolumeState CrossSection
+        global SceneOptions ModelState Locator
 
 	foreach pair $tags {
 		set tag  [lindex $pair 0]
@@ -605,7 +715,7 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 			foreach a $attr {
 				set key [lindex $a 0]
 				set val [lreplace $a 0 0]
-				switch $key {
+				switch [string tolower $key] {
 				"desc"   {$n SetDescription $val}
 				"name"   {$n SetName        $val}
 				"matrix" {$n SetMatrix      $val}
@@ -618,7 +728,7 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 			foreach a $attr {
 				set key [lindex $a 0]
 				set val [lreplace $a 0 0]
-				switch $key {
+				switch [string tolower $key] {
 				"desc"         {$n SetDescription  $val}
 				"name"         {$n SetName         $val}
 				"ambient"      {$n SetAmbient      $val}
@@ -626,7 +736,7 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 				"specular"     {$n SetSpecular     $val}
 				"power"        {$n SetPower        $val}
 				"labels"       {$n SetLabels       $val}
-				"diffuseColor" {eval $n SetDiffuseColor $val}
+				"diffusecolor" {eval $n SetDiffuseColor $val}
 				}
 			}
 		}
@@ -636,36 +746,37 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 			foreach a $attr {
 				set key [lindex $a 0]
 				set val [lreplace $a 0 0]
-				switch $key {
+				switch [string tolower $key] {
+				"id"	           {$n SetModelID      $val}
 				"desc"             {$n SetDescription  $val}
 				"name"             {$n SetName         $val}
-				"fileName"         {$n SetFileName     $val}
+				"filename"         {$n SetFileName     $val}
 				"color"            {$n SetColor        $val}
 				"opacity"          {$n SetOpacity      $val}
-				"scalarRange"      {eval $n SetScalarRange $val}
+				"scalarrange"      {eval $n SetScalarRange $val}
 				"visibility" {
-					if {$val == "yes"} {
+					if {$val == "yes" || $val == "true"} {
 						$n SetVisibility 1
 					} else {
 						$n SetVisibility 0
 					}
 				}
 				"clipping" {
-					if {$val == "yes"} {
+					if {$val == "yes" || $val == "true"} {
 						$n SetClipping 1
 					} else {
 						$n SetClipping 0
 					}
 				}
-				"backfaceCulling" {
-					if {$val == "yes"} {
+				"backfaceculling" {
+					if {$val == "yes" || $val == "true"} {
 						$n SetBackfaceCulling 1
 					} else {
 						$n SetBackfaceCulling 0
 					}
 				}
-				"scalarVisibility" {
-					if {$val == "yes"} {
+				"scalarvisibility" {
+					if {$val == "yes" || $val == "true"} {
 						$n SetScalarVisibility 1
 					} else {
 						$n SetScalarVisibility 0
@@ -683,68 +794,69 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 			foreach a $attr {
 				set key [lindex $a 0]
 				set val [lreplace $a 0 0]
-				switch $key {
+				switch [string tolower $key] {
+				"id"              {$n SetVolumeID       $val}
 				"desc"            {$n SetDescription    $val}
 				"name"            {$n SetName           $val}
-				"filePattern"     {$n SetFilePattern    $val}
-				"filePrefix"      {$n SetFilePrefix     $val}
-				"imageRange"      {eval $n SetImageRange $val}
+				"filepattern"     {$n SetFilePattern    $val}
+				"fileprefix"      {$n SetFilePrefix     $val}
+				"imagerange"      {eval $n SetImageRange $val}
 				"spacing"         {eval $n SetSpacing   $val}
 				"dimensions"      {eval $n SetDimensions $val}
-				"scalarType"      {$n SetScalarTypeTo$val}
-				"numScalars"      {$n SetNumScalars     $val}
-				"rasToIjkMatrix"  {$n SetRasToIjkMatrix $val}
-				"rasToVtkMatrix"  {$n SetRasToVtkMatrix $val}
-				"positionMatrix"  {$n SetPositionMatrix $val}
-				"scanOrder"       {$n SetScanOrder $val}
-				"colorLUT"        {$n SetLUTName        $val}
+				"scalartype"      {$n SetScalarTypeTo$val}
+				"numscalars"      {$n SetNumScalars     $val}
+				"rastoijkmatrix"  {$n SetRasToIjkMatrix $val}
+				"rastovtkmatrix"  {$n SetRasToVtkMatrix $val}
+				"positionmatrix"  {$n SetPositionMatrix $val}
+				"scanorder"       {$n SetScanOrder $val}
+				"colorlut"        {$n SetLUTName        $val}
 				"window"          {$n SetWindow         $val}
 				"level"           {$n SetLevel          $val}
-				"lowerThreshold"  {$n SetLowerThreshold $val}
-				"upperThreshold"  {$n SetUpperThreshold $val}
-				"autoWindowLevel" {
-					if {$val == "yes"} {
+				"lowerthreshold"  {$n SetLowerThreshold $val}
+				"upperthreshold"  {$n SetUpperThreshold $val}
+				"autowindowlevel" {
+					if {$val == "yes" || $val == "true"} {
 						$n SetAutoWindowLevel 1
 					} else {
 						$n SetAutoWindowLevel 0
 					}
 				}
-				"autoThreshold" {
-					if {$val == "yes"} {
+				"autothreshold" {
+					if {$val == "yes" || $val == "true"} {
 						$n SetAutoThreshold 1
 					} else {
 						$n SetAutoThreshold 0
 					}
 				}
-				"applyThreshold" {
-					if {$val == "yes"} {
+				"applythreshold" {
+					if {$val == "yes" || $val == "true"} {
 						$n SetApplyThreshold 1
 					} else {
 						$n SetApplyThreshold 0
 					}
 				}
 				"interpolate" {
-					if {$val == "yes"} {
+					if {$val == "yes" || $val == "true"} {
 						$n SetInterpolate 1
 					} else {
 						$n SetInterpolate 0
 					}
 				}
-				"labelMap" {
-					if {$val == "yes"} {
+				"labelmap" {
+					if {$val == "yes" || $val == "true"} {
 						$n SetLabelMap 1
 					} else {
 						$n SetLabelMap 0
 					}
 				}
-				"littleEndian" {
-					if {$val == "yes"} {
+				"littleendian" {
+					if {$val == "yes" || $val == "true"} {
 						$n SetLittleEndian 1
 					} else {
 						$n SetLittleEndian 0
 					}
 				}
-				    "dicomFileNameList" {
+				"dicomfilenamelist" {
 					set filelist {}
 					eval {lappend filelist} $val
 					foreach file $filelist {
@@ -762,10 +874,13 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 		}
 
 		"Options" {
+			# Legacy: options shouldn't be stored in an options tag,
+			# use the fancy XML tags instead
+
 			foreach a $attr {
 				set key [lindex $a 0]
 				set val [lreplace $a 0 0]
-				switch $key {
+				switch [string tolower $key] {
 					"options"      {set options $val}
 					"program"      {set program $val}
 					"contents"     {set contents $val}
@@ -805,7 +920,7 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 			foreach a $attr {
 				set key [lindex $a 0]
 				set val [lreplace $a 0 0]
-				switch $key {
+				switch [string tolower $key] {
 				"desc"             {$n SetDescription  $val}
 				"name"             {$n SetName         $val}
 				"xyz"              {eval $n SetXYZ     $val}
@@ -825,7 +940,7 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 			foreach a $attr {
 				set key [lindex $a 0]
 				set val [lreplace $a 0 0]
-				switch $key {
+				switch [string tolower $key] {
 				"desc"             {$n SetDescription  $val}
 				"name"             {$n SetName         $val}
 				"pathPosition"    {eval $n SetPathPosition  $val}
@@ -836,6 +951,308 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 			    }
 			}
 		    }
+		"Hierarchy" {
+			set n [MainMrmlAddNode Hierarchy]
+			foreach a $attr {
+				set key [lindex $a 0]
+				set val [lreplace $a 0 0]
+				switch [string tolower $key] {
+					"id" {$n SetHierarchyID $val}
+					"type" {$n SetType $val}
+				}
+			}
+		}
+		"EndHierarchy" {
+			set n [MainMrmlAddNode EndHierarchy]
+		}
+		"ModelGroup" {
+			set n [MainMrmlAddNode ModelGroup]
+			$n SetExpansion 1; #always show groups expanded
+			foreach a $attr {
+				set key [lindex $a 0]
+				set val [lreplace $a 0 0]
+				switch [string tolower $key] {
+					"id" {$n SetModelGroupID $val}
+					"name" {$n SetName $val}
+					"color" {$n SetColor $val}
+					"opacity" {$n SetOpacity $val}
+					"visibility" {
+						if {$val == "yes" || $val == "true"} {
+							$n SetVisibility 1
+						} else {
+							$n SetVisibility 0
+						}
+					}
+				}
+			}		
+		}
+		"EndModelGroup" {
+			set n [MainMrmlAddNode EndModelGroup]
+		}
+		"ModelRef" {
+			set n [MainMrmlAddNode ModelRef]
+			foreach a $attr {
+				set key [lindex $a 0]
+				set val [lreplace $a 0 0]
+				switch [string tolower $key] {
+					"modelrefid" {$n SetmodelRefID $val}
+				}
+			}
+		}
+		"Scenes" {
+		    	set n [MainMrmlAddNode Scenes]
+		    	foreach a $attr {
+		    		set key [lindex $a 0]
+		    		set val [lreplace $a 0 0]
+		    		switch [string tolower $key] {
+		    			"lang" {$n SetLang $val}
+		    			"name" {$n SetName $val}
+		    			"description" {$n SetDescription $val}
+		    		}
+		    	}
+		}
+		"EndScenes" {
+			set n [MainMrmlAddNode EndScenes]
+		}
+		"VolumeState" {
+			set n [MainMrmlAddNode VolumeState]
+			foreach a $attr {
+		    		set key [lindex $a 0]
+		    		set val [lreplace $a 0 0]
+		    		switch [string tolower $key] {
+		    			"volumerefid" {$n SetVolumeRefID $val}
+		    			"colorlut" {$n SetColorLUT $val}
+		    			"foreground" {
+		    				if {$val == "true"} {
+		    					$n SetForeground 1
+		    				} else {
+		    					$n SetForeground 0
+		    				}
+		    			}
+		    			"background" {
+		    				if {$val == "true"} {
+		    					$n SetForeground 1
+		    				} else {
+		    					$n SetForeground 0
+		    				}
+		    			}
+		    			"fade" {
+		    				if {$val == "true"} {
+		    					$n SetFade 1
+		    				} else {
+		    					$n SetFade 0
+		    				}
+		    			}
+		    			"opacity" [$n SetOpacity $val]
+		    		}
+		    	}
+		}
+		"EndVolumeState" {
+			set n [MainMrmlAddNode EndVolumeState]
+		}
+		"CrossSection" {
+			set n [MainMrmlAddNode CrossSection]
+			foreach a $attr {
+				set key [lindex $a 0]
+				set val [lreplace $a 0 0]
+				switch [string tolower $key] {
+					"position" {$n SetPosition $val}
+					"direction" {$n SetDirection $val}
+					"sliceslider" {$n SetSliceSlider $val}
+					"rotatorx" {$n SetRotatorX $val}
+					"rotatory" {$n SetRotatorY $val}
+					"inmodel" {
+						if {$val == "true"} {
+							$n SetInModel 1
+						} else {
+							$n SetInModel 0
+						}
+					}
+					"clipstate" {
+						if {$val == "true"} {
+							$n SetClipState 1
+						} else {
+							$n SetClipState 0
+						}
+					}
+					"zoom" {$n SetZoom $val}
+					"backvolrefid" {$n SetBackVolRefID $val}
+					"forevolrefid" {$n SetForeVolRefID $val}
+					"labelvolrefid" {$n SetLabelVolRefID $val}
+				}
+			}
+		}
+		"SceneOptions" {
+			set n [MainMrmlAddNode SceneOptions]
+			foreach a $attr {
+				set key [lindex $a 0]
+				set val [lreplace $a 0 0]
+				switch [string tolower $key] {
+					"viewup" {$n SetViewUp $val}
+					"position" {$n SetPosition $val}
+					"focalpoint" {$n SetFocalPoint $val}
+					"clippingrange" {$n SetClippingRange $val}
+					"viewmode" {$n SetViewMode $val}
+					"viewbgcolor" {$n SetViewBgColor $val}
+					"showaxes" {
+						if {$val == "true"} {
+							$n SetShowAxes 1
+						} else {
+							$n SetShowAxes 0
+						}
+					}
+					"showbox" {
+						if {$val == "true"} {
+							$n SetShowBox 1
+						} else {
+							$n SetShowBox 0
+						}
+					}
+					"showannotations" {
+						if {$val == "true"} {
+							$n SetShowAnnotations 1
+						} else {
+							$n SetShowAnnotations 0
+						}
+					}
+					"showslicebounds" {
+						if {$val == "true"} {
+							$n SetShowSliceBounds 1
+						} else {
+							$n SetShowSliceBounds 0
+						}
+					}
+					"showletters" {
+						if {$val == "true"} {
+							$n SetShowLetters 1
+						} else {
+							$n SetShowLetters 0
+						}
+					}
+					"showcross" {
+						if {$val == "true"} {
+							$n SetShowCross 1
+						} else {
+							$n SetShowCross 0
+						}
+					}
+					"showhashes" {
+						if {$val == "true"} {
+							$n SetShowHashes 1
+						} else {
+							$n SetShowHashes 0
+						}
+					}
+					"showmouse" {
+						if {$val == "true"} {
+							$n SetShowMouse 1
+						} else {
+							$n SetShowMouse 0
+						}
+					}
+					"dicomstartdir" {$n SetDICOMStartDir $val}
+					"filenamesortparam" {$n SetFileNameSortParam $val}
+					"dicomdatadictfile" {$n SetDICOMDataDictFile $val}
+					"dicompreviewwidth" {$n SetDICOMPreviewWidth $val}
+					"dicompreviewheight" {$n SetDICOMPreviewHeight $val}
+					"dicompreviewhighestvalue" {$n SetDICOMPreviewHighestValue $val}
+				}
+			}
+		}
+		"ModelState" {
+			set n [MainMrmlAddNode ModelState]
+			foreach a $attr {
+				set key [lindex $a 0]
+				set val [lreplace $a 0 0]
+				switch [string tolower $key] {
+					"modelrefid" {$n SetModelRefID $val}
+					"opacity" {$n SetOpacity $val}
+					"visible" {
+						if {$val == "true"} {
+							$n SetVisible 1
+						} else {
+							$n SetVisible 0
+						}
+					}
+					"slidervisible" {
+						if {$val == "true"} {
+							$n SetSliderVisible 1
+						} else {
+							$n SetSliderVisible 0
+						}
+					}
+					"sonsvisible" {
+						if {$val == "true"} {
+							$n SetSonsVisible 1
+						} else {
+							$n SetSonsVisible 0
+						}
+					}
+				}
+			}
+		}
+		"WindowLevel" {
+			set n [MainMrmlAddNode WindowLevel]
+			foreach a $attr {
+				set key [lindex $a 0]
+				set val [lreplace $a 0 0]
+				switch [string tolower $key] {
+					"window" {$n SetWindow $val}
+					"level" {$n SetLevel $val}
+					"lowerthreshold" {$n SetLowerThreshold $val}
+					"upperthreshold" {$n SetUpperThreshold $val}
+					"autowindowlevel" {
+						if {$val == "true"} {
+							$n SetAutoWindowLevel 1
+						} else {
+							$n SetAutoWindowLevel 0
+						}
+					}
+					"applythreshold" {
+						if {$val == "true"} {
+							$n SetApplyThreshold 1
+						} else {
+							$n SetApplyThreshold 0
+						}
+					}
+					"autothreshold" {
+						if {$val == "true"} {
+							$n SetAutoThreshold 1
+						} else {
+							$n SetAutoThreshold 0
+						}
+					}
+				}
+			}
+		}
+		"Locator" {
+			set n [MainMrmlAddNode Locator]
+			foreach a $attr {
+				set key [lindex $a 0]
+				set val [lreplace $a 0 0]
+				switch [string tolower $key] {
+					"driver" {$n SetDriver $val}
+					"diffusecolor" {$n SetDiffuseColor $val}
+					"visibility" {
+						if {$val == "true"} {
+							$n SetVisibility 1
+						} else {
+							$n SetVisibility 0
+						}
+					}
+					"transversevisibility" {
+						if {$val == "true"} {
+							$n SetTransverseVisibility 1
+						} else {
+							$n SetTransverseVisibility 0
+						}
+					}
+					"normallen" {$n SetNormalLen $val}
+					"transverselen" {$n SetTransverseLen $val}
+					"radius" {$n SetRadius $val}
+				}
+			}
+		}
 		}
 	    }
 	}
@@ -1017,7 +1434,7 @@ proc MainMrmlAddColors {tags} {
 	if {$colors == 1} {return $tags}
 	
 	set fileName [ExpandPath Colors.xml]
-	set tagsColors [MainMrmlReadVersion2.0 $fileName]
+	set tagsColors [MainMrmlReadVersion2.x $fileName]
 	if {$tagsColors == 0} {
 		set msg "Unable to read file default MRML color file '$fileName'"
 		puts $msg
@@ -1038,7 +1455,7 @@ proc MainMrmlCheckColors {} {
 	global Mrml
 	
 	set fileName [ExpandPath Colors.xml]
-	set tags [MainMrmlReadVersion2.0 $fileName]
+	set tags [MainMrmlReadVersion2.x $fileName]
 
 	if {$tags != 0} {
 		vtkMrmlColorNode default

@@ -64,7 +64,7 @@ viewMode='Normal' viewBgColor='Blue'"
 
         set m MainView
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.31 $} {$Date: 2001/07/10 11:45:56 $}]
+		{$Revision: 1.32 $} {$Date: 2001/11/13 20:44:53 $}]
 
 	set View(viewerHeightNormal) 656
 	set View(viewerWidth)  956 
@@ -279,13 +279,26 @@ proc MainViewBuildGUI {} {
 	pack $f.lPreset -side left -padx 5 -pady 0
 
 	# Preset Button
-	foreach p "1 2 3" {
-	    eval {button $f.c$p -text $p -width 2} $Gui(WBA)
-	    bind $f.c$p <ButtonPress>   "MainOptionsPreset $p Press"
-	    bind $f.c$p <ButtonRelease> "MainOptionsPreset $p Release"
-	    TooltipAdd $f.c$p "Saved view number $p: click to recall, hold down to save."
-	    pack $f.c$p -side left -padx 2 
-	}
+	
+	eval {menubutton $f.cm -text "Select" -width 10 -menu $f.cm.m} $Gui(WBA)
+	pack $f.cm -side left -padx 2
+	
+	# Store the widget path for later access
+	set Gui(ViewMenuButton) $f.cm
+	
+	eval {menu $f.cm.m} $Gui(WMA)
+	$f.cm.m add command -label "(none)"
+	TooltipAdd $f.cm "Recall a previously saved view, right-click to save current view, shift-right-click to delete current view"
+	bind $f.cm <Button-3> "MainOptionsPresetSaveCreateDialog $f.cm"
+	bind $f.cm <Shift-Button-3> "MainOptionsPresetDeleteDialog $f.cm"
+
+	#foreach p "1 2 3" {
+	#    eval {button $f.c$p -text $p -width 2} $Gui(WBA)
+	#    bind $f.c$p <ButtonPress>   "MainOptionsPreset $p Press"
+	#    bind $f.c$p <ButtonRelease> "MainOptionsPreset $p Release"
+	#    TooltipAdd $f.c$p "Saved view number $p: click to recall, hold down to save."
+	#    pack $f.c$p -side left -padx 2 
+	#}
 
 	# MainViewSpin button
 	eval {checkbutton $f.cMainViewSpin \
@@ -325,6 +338,14 @@ proc MainViewBuildGUI {} {
 
 	pack $f.cParallel $f.lParallelScale $f.eParallelScale \
 		-side left -padx 3
+}
+
+proc MainViewSelectView {p} {
+	global Gui
+	
+	MainOptionsPreset $p Press
+	MainOptionsPreset $p Release
+	$Gui(ViewMenuButton) config -text "$p"
 }
 
 #-----------------------------------------------------------------------------

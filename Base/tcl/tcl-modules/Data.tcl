@@ -71,7 +71,7 @@ proc DataInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.34 $} {$Date: 2001/08/21 23:23:01 $}]
+		{$Revision: 1.35 $} {$Date: 2001/11/13 20:44:53 $}]
 
 	set Data(index) ""
 	set Data(clipboard) ""
@@ -613,6 +613,15 @@ proc DataEditNode {} {
 		MainOptionsSetActive $id
 		if {[IsModule Options] == 1} {
 			Tab Options row1 Props
+		}
+	}
+	"vtkMrmlModelRefNode" -
+	"vtkMrmlModelGroupNode" -
+	"vtkMrmlEndModelGroupNode" -
+	"vtkMrmlEndHierarchyNode" -
+	"vtkMrmlHierarchyNode" {
+		if {[IsModule ModelHierarchy] == 1} {
+			Tab ModelHierarchy row1 HDisplay
 		}
 	}
 	}
