@@ -291,6 +291,11 @@ void vtkImageDICOMReader::SetFilePattern(char *pattern)
     {
     delete [] this->FilePattern;
     }
+  if (!pattern)
+    {
+    this->FilePattern = NULL;
+    return;
+    }
   if (this->FileName)
     {
     delete [] this->FileName;
