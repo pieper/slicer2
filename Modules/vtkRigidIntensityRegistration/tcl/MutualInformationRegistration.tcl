@@ -101,7 +101,7 @@ proc MutualInformationRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1 $} {$Date: 2003/12/07 19:39:31 $}]
+        {$Revision: 1.2 $} {$Date: 2003/12/07 22:25:52 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -712,7 +712,7 @@ proc MutualInformationRegistrationAutoRun_Itk { } {
 
     # TODO make islicer a package
     source $env(SLICER_HOME)/Modules/iSlicer/tcl/isregistration.tcl
-    source $env(SLICER_HOME)/Modules/vtkMutualInformationRegistration/tcl/ItkToSlicerTransform.tcl
+#    source $env(SLICER_HOME)/Modules/vtkMutualInformationRegistration/tcl/ItkToSlicerTransform.tcl
 
     ## if it is not already there, create it.
     set notalreadythere [catch ".mi cget -background"]
