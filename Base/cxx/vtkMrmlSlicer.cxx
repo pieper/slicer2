@@ -225,6 +225,41 @@ vtkMrmlSlicer::vtkMrmlSlicer()
   this->CamP[1] = 0;
   this->CamP[2] = 0;
 
+
+  this->ReformatAxialT[0] = -1 ;
+  this->ReformatAxialT[1] = 0 ;  
+  this->ReformatAxialT[2] = 0 ;
+  this->ReformatAxialN[0] = 0;
+  this->ReformatAxialN[1] = 0 ;
+  this->ReformatAxialN[2] = -1 ;
+
+  this->ReformatSagittalT[0] = 0 ;
+  this->ReformatSagittalT[1] = -1 ;  
+  this->ReformatSagittalT[2] = 0 ;
+  this->ReformatSagittalN[0] = -1;
+  this->ReformatSagittalN[1] = 0 ;
+  this->ReformatSagittalN[2] = 0 ;
+
+  this->ReformatCoronalT[0] = -1 ;
+  this->ReformatCoronalT[1] = 0 ;  
+  this->ReformatCoronalT[2] = 0 ;
+  this->ReformatCoronalN[0] = 0;
+  this->ReformatCoronalN[1] = 1 ;
+  this->ReformatCoronalN[2] = 0 ;
+
+  // set the user defined matrix for each slice
+  for (int s=0; s<NUM_SLICES; s++)
+    {
+      this->NewOrientN[s][0] = 0;
+      this->NewOrientN[s][1] = 0;
+      this->NewOrientN[s][2] = -1;
+      this->NewOrientT[s][0] = 1;
+      this->NewOrientT[s][1] = 0;
+      this->NewOrientT[s][2] = 0;
+      this->NewOrientP[s][0] = 0;
+      this->NewOrientP[s][1] = 0;
+      this->NewOrientP[s][2] = 0;
+    }
   // Draw
   this->DrawX = this->DrawY = 0;
 
@@ -1157,6 +1192,12 @@ void vtkMrmlSlicer::SetOrient(int orient)
 	  this->SetOrient(1, MRML_SLICER_ORIENT_INPLANE);
 	  this->SetOrient(2, MRML_SLICER_ORIENT_INPLANE90);
   }
+  if (orient == MRML_SLICER_ORIENT_REFORMAT_AXISAGCOR) 
+    {
+      this->SetOrient(0, MRML_SLICER_ORIENT_REFORMAT_AXIAL);
+      this->SetOrient(1, MRML_SLICER_ORIENT_REFORMAT_SAGITTAL);
+      this->SetOrient(2, MRML_SLICER_ORIENT_REFORMAT_CORONAL);
+    } 
 }
 
 void vtkMrmlSlicer::SetOrient(int s, int orient)
@@ -1174,6 +1215,8 @@ void vtkMrmlSlicer::SetOrientString(char *str)
  	  this->SetOrient(MRML_SLICER_ORIENT_ORTHO);
   else if (strcmp(str, "Slices") == 0)
  	  this->SetOrient(MRML_SLICER_ORIENT_SLICES);
+  else if (strcmp(str, "ReformatAxiSagCor") == 0)
+ 	  this->SetOrient(MRML_SLICER_ORIENT_REFORMAT_AXISAGCOR);
   else
  	  this->SetOrient(MRML_SLICER_ORIENT_AXISAGCOR);
 }
@@ -1213,6 +1256,15 @@ int vtkMrmlSlicer::ConvertStringToOrient(char *str)
  	  return MRML_SLICER_ORIENT_CORSLICE;
   else if (strcmp(str, "SagSlice") == 0)
  	  return MRML_SLICER_ORIENT_SAGSLICE;
+  else if (strcmp(str, "NewOrient") == 0)
+ 	  return MRML_SLICER_ORIENT_NEW_ORIENT;
+  else if (strcmp(str, "ReformatAxial") == 0)
+ 	  return MRML_SLICER_ORIENT_REFORMAT_AXIAL;
+  else if (strcmp(str, "ReformatSagittal") == 0)
+          return MRML_SLICER_ORIENT_REFORMAT_SAGITTAL;
+  else if (strcmp(str, "ReformatCoronal") == 0)
+ 	  return MRML_SLICER_ORIENT_REFORMAT_CORONAL;
+
   else
  	  return MRML_SLICER_ORIENT_AXIAL;
 }
@@ -1220,7 +1272,7 @@ int vtkMrmlSlicer::ConvertStringToOrient(char *str)
 char* vtkMrmlSlicer::ConvertOrientToString(int orient)
 {
   switch (orient) 
-  {
+    {
     case MRML_SLICER_ORIENT_AXIAL:
       return "Axial";
     case MRML_SLICER_ORIENT_SAGITTAL:
@@ -1243,7 +1295,15 @@ char* vtkMrmlSlicer::ConvertOrientToString(int orient)
       return "CorSlice";
     case MRML_SLICER_ORIENT_SAGSLICE:
       return "SagSlice";
-	default:
+    case MRML_SLICER_ORIENT_NEW_ORIENT:
+      return "NewOrient";
+    case MRML_SLICER_ORIENT_REFORMAT_AXIAL:
+      return "ReformatAxial";
+    case MRML_SLICER_ORIENT_REFORMAT_SAGITTAL:
+      return "ReformatSagittal";
+    case MRML_SLICER_ORIENT_REFORMAT_CORONAL:
+      return "ReformatCoronal";
+        default:
 	  return "Axial";
   }	  
 }
@@ -1507,6 +1567,66 @@ void vtkMrmlSlicer::ComputeReformatMatrix(int s)
       Uy[0] =   T[0];
       Uy[1] =   T[1];
       Uy[2] =   T[2];
+      break;
+
+      // by default, the reformat values are the regular
+      // axial, sagittal and coronal matrices
+    case MRML_SLICER_ORIENT_REFORMAT_AXIAL:
+      N[0] = this->ReformatAxialN[0];
+      N[1] = this->ReformatAxialN[1];
+      N[2] = this->ReformatAxialN[2];
+      T[0] = this->ReformatAxialT[0];
+      T[1] = this->ReformatAxialT[1];
+      T[2] = this->ReformatAxialT[2];
+      Ux[0] = T[0];
+      Ux[1] = T[1];
+      Ux[2] = T[2];
+      Cross(Uy,N,T);
+	  break;
+
+    case MRML_SLICER_ORIENT_REFORMAT_SAGITTAL:
+      N[0] = this->ReformatSagittalN[0];
+      N[1] = this->ReformatSagittalN[1];
+      N[2] = this->ReformatSagittalN[2];
+      T[0] = this->ReformatSagittalT[0];
+      T[1] = this->ReformatSagittalT[1];
+      T[2] = this->ReformatSagittalT[2];
+      Ux[0] = T[0];
+      Ux[1] = T[1];
+      Ux[2] = T[2];
+      Cross(Uy,N,T);
+	  break;
+
+    case MRML_SLICER_ORIENT_REFORMAT_CORONAL:
+      N[0] = this->ReformatCoronalN[0];
+      N[1] = this->ReformatCoronalN[1];
+      N[2] = this->ReformatCoronalN[2];
+      T[0] = this->ReformatCoronalT[0];
+      T[1] = this->ReformatCoronalT[1];
+      T[2] = this->ReformatCoronalT[2];
+      Ux[0] = T[0];
+      Ux[1] = T[1];
+      Ux[2] = T[2];
+      Cross(Uy,N,T);
+      break;
+      
+    case MRML_SLICER_ORIENT_NEW_ORIENT:
+
+      // In the plane of T, and normal to N
+      // Ux = T
+      // Uy = N x T
+      // Uz =  N
+      N[0] = this->NewOrientN[s][0];
+      N[1] = this->NewOrientN[s][1];
+      N[2] = this->NewOrientN[s][2];
+      T[0] = this->NewOrientT[s][0];
+      T[1] = this->NewOrientT[s][1];
+      T[2] = this->NewOrientT[s][2];
+      Ux[0] = T[0];
+      Ux[1] = T[1];
+      Ux[2] = T[2];
+      Cross(Uy,N,T);
+
       break;
 	  }//switch
 
@@ -1776,6 +1896,9 @@ void vtkMrmlSlicer::ComputeNTPFromCamera(vtkCamera *camera)
   }
 }
 
+// this function is used to set the reformat matrix directly for ALL the slices
+// It is called from Locator.tcl to set the reformat matrix to be the same than// the locator matrix
+ 
 void vtkMrmlSlicer::SetDirectNTP(float nx, float ny, float nz,
   float tx, float ty, float tz, float px, float py, float pz)
 {
@@ -1793,6 +1916,152 @@ void vtkMrmlSlicer::SetDirectNTP(float nx, float ny, float nz,
   {
     this->ComputeReformatMatrix(s);
   }
+}
+
+// this function is used to set the reformat matrix of a particular
+// slice interactively by the user this matrix is only used in
+// MRML_SLICER_ORIENT_NEW_ORIENT, for any other orientation, the standart
+// matrix (relative to the camera or relative to the locator) is used
+// 
+// See the function ComputeReformatMatrix for more detail
+
+void vtkMrmlSlicer::SetNewOrientNTP(int s, float nx, float ny, float nz,
+  float tx, float ty, float tz, float px, float py, float pz)
+{
+  this->NewOrientN[s][0] = nx;
+  this->NewOrientN[s][1] = ny;
+  this->NewOrientN[s][2] = nz;
+  this->NewOrientT[s][0] = tx;
+  this->NewOrientT[s][1] = ty;
+  this->NewOrientT[s][2] = tz;
+  this->NewOrientP[s][0] = px;
+  this->NewOrientP[s][1] = py;
+  this->NewOrientP[s][2] = pz;
+  
+  this->ComputeReformatMatrix(s);
+  
+}
+
+// this function is called to update the reformat matrix for the REFORMAT_AXIAL, REFORMAT_CORONAL, REFORMAT_SAGITTAL orientations
+
+void vtkMrmlSlicer::SetReformatNTP(char *orientation, float nx, float ny, float nz, float tx, float ty, float tz, float px, float py, float pz)
+{
+
+  double Ux[3],Uy[3],Uz[3];
+  
+  if (strcmp(orientation, "ReformatAxial") == 0){
+    
+    Ux[0] = tx;
+    Ux[1] = ty;
+    Ux[2] = tz;
+    Uz[0] = nx;
+    Uz[1] = ny;
+    Uz[2] = nz;
+    Cross(Uy,Uz,Ux);
+
+    // calculate the sagittal plane
+    this->ReformatSagittalT[0] = -Uy[0];
+    this->ReformatSagittalT[1] = -Uy[1];
+    this->ReformatSagittalT[2] = -Uy[2];
+    this->ReformatSagittalN[0] = Ux[0];
+    this->ReformatSagittalN[1] = Ux[1];
+    this->ReformatSagittalN[2] = Ux[2];
+
+    //calculate the coronal plane
+    this->ReformatCoronalT[0] = Ux[0];
+    this->ReformatCoronalT[1] = Ux[1];
+    this->ReformatCoronalT[2] = Ux[2];
+    this->ReformatCoronalN[0] = Uy[0];
+    this->ReformatCoronalN[1] = Uy[1];
+    this->ReformatCoronalN[2] = Uy[2];
+
+    // set the variables for axial
+    this->ReformatAxialT[0] = Ux[0];
+    this->ReformatAxialT[1] = Ux[1];
+    this->ReformatAxialT[2] = Ux[2];
+    this->ReformatAxialN[0] = Uz[0];
+    this->ReformatAxialN[1] = Uz[1];
+    this->ReformatAxialN[2] = Uz[2];
+
+  }
+  else if (strcmp(orientation, "ReformatSagittal") == 0){
+
+    Ux[0] = tx;
+    Ux[1] = ty;
+    Ux[2] = tz;
+    Uz[0] = nx;
+    Uz[1] = ny;
+    Uz[2] = nz;
+    Cross(Uy,Uz,Ux);
+
+    // calculate the axial plane
+    this->ReformatAxialT[0] = Uz[0];
+    this->ReformatAxialT[1] = Uz[1];
+    this->ReformatAxialT[2] = Uz[2];
+    this->ReformatAxialN[0] = -Uy[0];
+    this->ReformatAxialN[1] = -Uy[1];
+    this->ReformatAxialN[2] = -Uy[2];
+
+    //calculate the coronal plane
+    this->ReformatCoronalT[0] = Uz[0];
+    this->ReformatCoronalT[1] = Uz[1];
+    this->ReformatCoronalT[2] = Uz[2];
+    this->ReformatCoronalN[0] = -Ux[0];
+    this->ReformatCoronalN[1] = -Ux[1];
+    this->ReformatCoronalN[2] = -Ux[2];
+
+    // set the variables for sagittal
+    this->ReformatSagittalT[0] = Ux[0];
+    this->ReformatSagittalT[1] = Ux[1];
+    this->ReformatSagittalT[2] = Ux[2];
+    this->ReformatSagittalN[0] = Uz[0];
+    this->ReformatSagittalN[1] = Uz[1];
+    this->ReformatSagittalN[2] = Uz[2];
+
+  } 
+ else if (strcmp(orientation, "ReformatCoronal") == 0){
+
+
+    Ux[0] = tx;
+    Ux[1] = ty;
+    Ux[2] = tz;
+    Uz[0] = nx;
+    Uz[1] = ny;
+    Uz[2] = nz;
+    Cross(Uy,Uz,Ux);
+
+
+    // calculate the axial plane
+    this->ReformatAxialT[0] = Ux[0];
+    this->ReformatAxialT[1] = Ux[1];
+    this->ReformatAxialT[2] = Ux[2];
+    this->ReformatAxialN[0] = -Uy[0];
+    this->ReformatAxialN[1] = -Uy[1];
+    this->ReformatAxialN[2] = -Uy[2];
+
+    //calculate the sagittal plane
+    this->ReformatSagittalT[0] = -Uz[0];
+    this->ReformatSagittalT[1] = -Uz[1];
+    this->ReformatSagittalT[2] = -Uz[2];
+    this->ReformatSagittalN[0] = Ux[0];
+    this->ReformatSagittalN[1] = Ux[1];
+    this->ReformatSagittalN[2] = Ux[2];
+
+    // set the variables for coronal
+    this->ReformatCoronalT[0] = Ux[0];
+    this->ReformatCoronalT[1] = Ux[1];
+    this->ReformatCoronalT[2] = Ux[2];
+    this->ReformatCoronalN[0] = Uz[0];
+    this->ReformatCoronalN[1] = Uz[1];
+    this->ReformatCoronalN[2] = Uz[2];
+
+  } 
+  
+  for (int s=0; s<NUM_SLICES; s++)
+    {
+      this->ComputeReformatMatrix(s);
+    }
+  
 }
 
 double *vtkMrmlSlicer::GetP(int s)

@@ -80,6 +80,13 @@
 #   VolumesExit
 #   VolumesStorePresets
 #   VolumesRecallPresets
+#   VolumesChangeReformatGUI
+#   VolumesSetReformatOrientation
+#   VolumesReformatSlicePlane
+#   VolumesRotateSlicePlane
+#   VolumesReformatSave
+#   VolumesReformatSave
+#   VolumesProjectVectorOnPlane
 #==========================================================================auto=
 
 
@@ -91,13 +98,17 @@
 # .END
 #-------------------------------------------------------------------------------
 proc VolumesInit {} {
-	global Volumes Volume Module Gui Path prog
-
-	# Define Tabs
-	set m Volumes
-	set Module($m,row1List) "Help Display Props Other"
-	set Module($m,row1Name) "{Help} {Display} {Props} {Other}"
-	set Module($m,row1,tab) Display
+    global Volumes Volume Module Gui Path prog
+    
+    # Define Tabs
+    set m Volumes
+    set Module($m,row1List) "Help Display Props Reformat" 
+    set Module($m,row1Name) "{Help} {Display} {Props} {Reformat}"
+    set Module($m,row1,tab) Display
+    
+    set Module($m,row2List) "Other" 
+    set Module($m,row2Name) "{Other}"
+    set Module($m,row2,tab) Other
 
     # Module Summary Info
     set Module($m,overview) "Load/display 3d volumes (grayscale or label) in the slicer."
@@ -152,11 +163,11 @@ DICOMDataDictFile='$Volumes(DICOMDataDictFile)'"
 #	}
 
 	# Define Dependencies
-	set Module($m,depend) ""
+	set Module($m,depend) Fiducials
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-                {$Revision: 1.58 $} {$Date: 2002/01/28 19:04:49 $}]
+                {$Revision: 1.59 $} {$Date: 2002/02/06 22:11:03 $}]
 
 	# Props
 	set Volume(propertyType) Basic
@@ -171,8 +182,18 @@ DICOMDataDictFile='$Volumes(DICOMDataDictFile)'"
 	MainVolumesSetGUIDefaults
 
         set Volume(DefaultDir) ""
-}
 
+       #reformatting variable
+       vtkImageWriter Volumes(writer)
+       vtkImageReformat Volumes(reformatter)
+       Volumes(writer) SetFileDimensionality 2
+       Volumes(writer) SetStartMethod      MainStartProgress
+       Volumes(writer) SetProgressMethod  "MainShowProgress Volumes(writer)"
+       Volumes(writer) SetEndMethod        MainEndProgress
+
+       set Volumes(prefixSave) ""
+           
+}
 #-------------------------------------------------------------------------------
 # .PROC VolumesBuildGUI
 # Builds volumes module's GUI
@@ -180,7 +201,7 @@ DICOMDataDictFile='$Volumes(DICOMDataDictFile)'"
 # .END
 #-------------------------------------------------------------------------------
 proc VolumesBuildGUI {} {
-	global Gui Slice Volume Lut Module
+	global Gui Slice Volume Lut Module Volumes Fiducials
     
 	#-------------------------------------------
 	# Frame Hierarchy:
@@ -222,6 +243,15 @@ values in the volume.  However, some applications, such as monitoring
 thermal surgery, requires setting these manually to retain the same color 
 scheme as the volume's data changes over time due to realtime data
 acquisition.
+<BR><LI><B> Reformat: </B>
+<BR> You can reformat any 3 slice in any arbitrary orientation or define a new axial,sagittal or coronal orientation.
+<BR> To do that, create and select 3 fiducials that will define the new
+orientation plane of the slice (To see how to create/select Fiducials, press the 'How do I create Fiducials?' button when you are in the reformat panel)
+<BR>Once 3 Fiducials are selected, press the 'reformat plane' button and the active slice will now have the new orientation.
+<BR> If you would like to also define a rotation around the plane normal, create and select 2 fiducials that will define the alignment of the plane and press the 'rotate plane' button.
+<BR> 
+<BR> If you would like to save a reformatted volume: just select a volume, select the scan order and a location and click save. What this does is it saves new volume files that were created by 'slicing' the original volume with the plane defined in the scan order menu.
+
  "
 	regsub -all "\n" $help { } help
 	MainHelpApplyTags Volumes $help
@@ -777,6 +807,165 @@ acquisition.
     grid $f.bApply $f.bCancel -padx $Gui(pad)
     
     # End
+
+
+ #-------------------------------------------
+    # Reformat frame
+    #-------------------------------------------
+    set fReformat $Module(Volumes,fReformat)
+    set f $fReformat
+
+    # binding stuff to create a fiducials list
+    
+	
+	
+    foreach frame "Active ReOrient Save" {
+	set f $fReformat.f$frame
+	frame $f -bg $Gui(activeWorkspace) -relief groove -bd 3
+	pack $f -side top -pady 0
+    }
+    
+    set f $fReformat.fActive
+
+    eval {label $f.lActive -text "Active Slice:"} $Gui(WLA)
+    pack $f.lActive -side left -pady $Gui(pad) -padx $Gui(pad) -fill x
+    
+    foreach s $Slice(idList) text "Red Yellow Green" width "4 7 6" {
+	eval {radiobutton $f.r$s -width $width -indicatoron 0\
+		-text "$text" -value "$s" -variable Slice(activeID) \
+		-command "MainSlicesSetActive"} $Gui(WCA) {-selectcolor $Gui(slice$s)}
+	pack $f.r$s -side left -fill x -anchor e
+    }
+
+    set f $fReformat.fReOrient
+    foreach frame "top middle1 middle2 bottom" {
+	frame $f.f$frame -bg $Gui(activeWorkspace) 
+	pack $f.f$frame -side top -pady 1
+    }
+    set f $fReformat.fReOrient.ftop
+
+
+    eval {label $f.lintro -text "You can reformat the active slice by using fiducial points: " -wraplength 180} $Gui(WLA)
+    eval {button $f.bintro -text "How ?" } $Gui(WBA)
+    TooltipAdd $f.bintro "To reformat the volume, you need to specify which orientation you are going to re-define: ReformatAxial, ReformatSagittal, ReformatCoronal or newOrient. 
+
+For the first three orientations (axial,sagittal,coronal), once you defined the new orientation, the other 2 orientation planes are automatically computed to be orthogonal to the plane you re-defined. 
+To see the 3 slices in their Reformat orientation, select 'ReformatAxiSagCor' on the dropdown menu 'Or:' on one of the slice panel.  
+
+The last orientation (NewOrient) does not have any effect on any other orientation and each slice can have an arbitray NewOrient orientation. 
+To see the active slice in its NewOrient orientation, select 'NewOrient' on the dropdown menu of orientations for that slice.
+ 
+    To define a new plane orientation, you need to:
+    1. select the orientation that you want to redefine with the drop down menu
+    2. create and select 3 fiducials and then press the 'reformat plane' button
+    => you have now defined a new orientation for your volume
+    3. to define a new RL line for the axial or coronal, or a new PA line for the sagittal or newOrient orientation, 
+you need to create and select 2 fiducials and then press the 'define new axis' button"
+    
+    pack $f.lintro $f.bintro -side left -padx 0 -pady $Gui(pad)
+    
+    set f $fReformat.fReOrient.fmiddle1 
+    eval {label $f.lOr -text "Redefine plane:"} $Gui(WLA)
+    
+    
+    set Volumes(reformat,orientation) "ReformatSagittal"
+    set Volumes(reformat,ReformatSagittalAxis) "PA"
+    set Volumes(reformat,ReformatAxialAxis) "RL"
+    set Volumes(reformat,ReformatCoronalAxis) "RL"
+    set Volumes(reformat,NewOrientAxis) "PA"
+
+
+    
+    eval {menubutton $f.mbActive -text "CHOOSE" -relief raised -bd 2 -width 20 \
+	    -menu $f.mbActive.m} $Gui(WMBA)
+    eval {menu $f.mbActive.m} $Gui(WMA)
+    set Volumes(reformat,orMenu) $f.mbActive.m
+    set Volumes(reformat,orMenuB) $f.mbActive
+    pack $f.lOr  $f.mbActive -side left -padx $Gui(pad) -pady 0 
+    # Append widgets to list that gets refreshed during UpdateMRML
+    $Volumes(reformat,orMenu) add command -label "ReformatAxial" \
+	    -command "VolumesSetReformatOrientation ReformatAxial"
+    $Volumes(reformat,orMenu) add command -label "ReformatSagittal" \
+	    -command "VolumesSetReformatOrientation ReformatSagittal"
+    $Volumes(reformat,orMenu) add command -label "ReformatCoronal" \
+	    -command "VolumesSetReformatOrientation ReformatCoronal"
+    $Volumes(reformat,orMenu) add command -label "NewOrient" \
+	    -command "VolumesSetReformatOrientation NewOrient"
+    
+   
+ 
+    set f $fReformat.fReOrient.fmiddle2
+    FiducialsAddActiveListFrame $f 7 25 reformat
+    
+    set f $fReformat.fReOrient.fbottom
+    eval {button $f.bref -text "$Volumes(reformat,orientation) Plane" -command "VolumesReformatSlicePlane $Volumes(reformat,orientation)"} $Gui(WBA)
+    eval {button $f.brot -text "Define new $Volumes(reformat,$Volumes(reformat,orientation)Axis) axis" -command "VolumesRotateSlicePlane $Volumes(reformat,orientation)"} $Gui(WBA)
+    pack $f.bref $f.brot -side left -padx $Gui(pad)
+    set Volumes(reformat,planeButton)  $f.bref
+    set Volumes(reformat,axisButton)  $f.brot
+
+    set f $fReformat.fSave.fChoose
+    frame $f
+    pack $f
+
+    # Volume menu
+    DevAddSelectButton  Volume $f VolumeSelect "Choose Volume:" Pack \
+	    "Volume to save." 14
+
+    # bind menubutton to update stuff when volume changes.
+    bindtags $Volume(mVolumeSelect) [list Menu \
+	    $Volume(mVolumeSelect) all]
+    
+    # Append menu and button to lists that get refreshed during UpdateMRML
+    lappend Volume(mbActiveList) $f.mbVolumeSelect
+    lappend Volume(mActiveList) $f.mbVolumeSelect.m
+    
+    
+
+    set f $fReformat.fSave.fScanOrder
+    frame $f
+    pack $f
+    
+    eval {label $f.lOrient -text "Choose a scan order:"} $Gui(WLA)
+    
+    # This slice
+    eval {menubutton $f.mbOrient -text CHOOSE -menu $f.mbOrient.m \
+	    -width 13} $Gui(WMBA)
+    pack $f.lOrient $f.mbOrient -side left -pady 0 -padx 2 -fill x
+
+    # Choose scan order to save it in
+    eval {menu $f.mbOrient.m} $Gui(WMA)
+    foreach item "[Slicer GetOrientList]" {
+	$f.mbOrient.m add command -label $item -command \
+		"set Volumes(reformat,saveOrder) $item; $f.mbOrient config -text $item"
+    }
+    set Volumes(reformat,saveMenu) $f.mbOrient.m 
+
+    #-------------------------------------------
+    # Volumes->TabbedFrame->File->Vol->Prefix
+    #-------------------------------------------
+
+    set f $fReformat.fSave.fPrefix
+    frame $f
+    pack $f
+    
+    eval {label $f.l -text "Filename Prefix:"} $Gui(WLA)
+    eval {entry $f.e -textvariable Volume(prefixSave)} $Gui(WEA)
+    TooltipAdd $f.e "To save the Volume, enter the prefix here or just click Save."
+    pack $f.l -padx 3 -side left
+    pack $f.e -padx 3 -side left -expand 1 -fill x
+    
+    #-------------------------------------------
+    # Volumes->TabbedFrame->File->Vol->Btns
+    #-------------------------------------------
+    set f $fReformat.fSave.fSave
+    frame $f
+    pack $f
+    
+    eval {button $f.bWrite -text "Save" -width 5 \
+	    -command "VolumesReformatSave"} $Gui(WBA)
+    TooltipAdd $f.bWrite "Save the Volume."
+    pack $f.bWrite
     
     #-------------------------------------------
 	# Other frame
@@ -3277,13 +3466,18 @@ proc DICOMImageTextboxDeselectAll {} {
 # .END
 #-------------------------------------------------------------------------------
 proc VolumesEnter {} {
-    global Volumes
-
+    global Volumes Fiducials
+    # push the Fiducials event manager onto the events stack so that user 
+    # can add Fiducials with keys/mouse
+    pushEventManager $Fiducials(eventManager)
+    FiducialsSetActiveList "reformat"
     pushEventManager $Volumes(eventManager)
 
     DataExit
     bind Listbox <Control-Button-1> {tkListboxBeginToggle %W [%W index @%x,%y]}
     #tk_messageBox -type ok -message "VolumesEnter" -title "Title" -icon  info
+    $Volumes(reformat,orMenu) invoke "ReformatSagittal"
+    $Volumes(reformat,saveMenu) invoke "ReformatCoronal"
 }
 
 #-------------------------------------------------------------------------------
@@ -3337,4 +3531,415 @@ proc VolumesRecallPresets {p} {
     set Volumes(DICOMDataDictFile) $Preset(Volumes,$p,DICOMDataDictFile)
 }
 
-# << Presets
+#-------------------------------------------------------------------------------
+# .PROC VolumesSetReformatOrientation
+# This procedures changes the text of the buttons on the reformat panel based on the current reformat orientation chosen by the user.
+#
+# .ARGS str or the orientation string: either ReformatAxial, ReformatSagittal, ReformatCoronal, or NewOrient
+# .END
+#-------------------------------------------------------------------------------
+proc VolumesSetReformatOrientation {or} {
+    global Volumes 
+
+    set Volumes(reformat,orientation) $or
+    $Volumes(reformat,orMenuB) config -text $or
+    $Volumes(reformat,planeButton) configure -text "$Volumes(reformat,orientation) Plane"
+    $Volumes(reformat,axisButton) configure -text "Define new $Volumes(reformat,$Volumes(reformat,orientation)Axis) axis"
+
+}
+
+
+
+
+#-------------------------------------------------------------------------------
+# .PROC VolumesProjectVectorOnPlane
+# Given a Vector V defined by V1{xyz} and V2{xyz} and a plane defined by its
+# coefficients {A,B,C,D}, return a vector P that is the projection of V onto the plane
+# .ARGS 
+# .END
+#-------------------------------------------------------------------------------
+proc VolumesProjectVectorOnPlane {A B C D V1x V1y V1z V2x V2y V2z} {
+
+    global Volumes P1 P2
+
+    # tang is in the direction of p2-p1
+    puts "in VolumesProjectVectorOnPlane $P1(x) $P1(y) $P1(z) $P2(x) $P2(y) $P2(z)" 
+    set evaluateP1 [expr $P1(x)*$A + $P1(y)*$B + $P1(z)*$C + $D]
+    set evaluateP2 [expr $P2(x)*$A + $P2(y)*$B + $P2(z)*$C + $D]
+    set Norm [expr sqrt($A*$A + $B*$B + $C*$C)]
+    
+    # in case p2 and p1 are not on the plane
+    set distp1 [expr abs($evaluateP1/$Norm)]
+    set distp2 [expr abs($evaluateP2/$Norm)]
+    
+    # now define the unit normal to this plane
+    set n(x) $A
+    set n(y) $B
+    set n(z) $C
+    Normalize n
+
+    # see if the point is under or over the plane to know which direction
+    # to project it in
+    set multiplier 1
+    if {$evaluateP1 < 0} {
+	set multiplier -1 
+    } 
+    set p1projx [expr $P1(x)  - ($multiplier * $distp1 * $n(x))] 
+    set p1projy [expr $P1(y)  - ($multiplier * $distp1 * $n(y))]
+    set p1projz [expr $P1(z) - ($multiplier * $distp1 * $n(z))]
+    
+    set multiplier 1
+    if {$evaluateP2 < 0} {
+	set multiplier -1 
+    } 
+    set p2projx [expr $P2(x)  - ($multiplier * $distp2 * $n(x))] 
+    set p2projy [expr $P2(y)  - ($multiplier * $distp2 * $n(y))]
+    set p2projz [expr $P2(z)  - ($multiplier * $distp2 * $n(z))]
+    
+    puts "proj1 should be 0 [expr $p1projx * $A + $p1projy *$B + $p1projz *$C + $D]"
+ puts "proj2 should be 0 [expr $p2projx * $A + $p2projy *$B + $p2projz *$C + $D]"
+    set Projection(x) [expr $p2projx - $p1projx]
+    set Projection(y) [expr $p2projy - $p1projy]
+    set Projection(z) [expr $p2projz - $p1projz]
+    Normalize Projection
+    return "$Projection(x) $Projection(y) $Projection(z)"    
+}
+
+#-------------------------------------------------------------------------------
+# .PROC VolumesReformatSlicePlane
+#  This procedure changes the reformat matrix of either the ReformatAxial, 
+# ReformatSagittal,ReformatCoronal orientation or NewOrient. The new 
+# orientation is the plane defined by the 3 selected Fiducials.
+# If the reformat orientation is either ReformatAxial, ReformatSagittal or 
+# ReformatCoronal, then and the other 2 orthogonal orientations are also 
+# calculated. This means that if the user decides to redefine the 
+# ReformatAxial orientation, then the ReformatSagittal and ReformatCoronal 
+# are automatically computed so that the 3 orientations are orthogonal.
+#
+# If the reformat orientation is NewOrient, then it doesn't affect any other
+# slice orientations.
+#
+#  If there are more or less than 3 selected Fiducials, this procedure tells 
+#  the user and is a no-op
+# .ARGS str orientation has to be either reformatAxial, reformatSagittal, reformatCoronal or NewOrient
+# .END
+#-------------------------------------------------------------------------------
+proc VolumesReformatSlicePlane {orientation} {
+    global Volumes Fiducials Slice Slices P1 P2
+
+
+    # first check that we are reading the right orientation
+    if {$orientation != "ReformatAxial" && $orientation != "ReformatSagittal" && $orientation != "ReformatCoronal" && $orientation != "NewOrient"} {
+	tk_messageBox -message "The orientation $orientation is not a valid one"
+	return;
+    }
+    
+    # next check to see that only 3 fiducials are selected
+    set list [FiducialsGetAllSelectedPointIdList]
+    if { [llength $list] < 3 } {
+	# give warning and exit
+	tk_messageBox -message "You have to create and select 3 fiducials"
+	return
+    } elseif { [llength $list] > 3 } {
+	# give warning and exit
+	tk_messageBox -message "Please select only 3 fiducials"
+	return
+    } else {
+	# get the 3 selected fiducial points coordinates
+	set count 1
+	foreach pid $list {
+	    set xyz [Point($pid,node) GetXYZ]
+	    set p${count}x [lindex $xyz 0]
+	    set p${count}y [lindex $xyz 1]
+	    set p${count}z [lindex $xyz 2]
+	    incr count
+	}
+
+	# 3D plane equation
+	set N(x) [expr $p1y * ($p2z - $p3z) + $p2y * ($p3z-$p1z) + $p3y * ($p1z-$p2z)]
+	set N(y) [expr $p1z * ($p2x - $p3x) + $p2z * ($p3x-$p1x) + $p3z * ($p1x-$p2x)]
+	set N(z) [expr $p1x * ($p2y-$p3y) + $p2x * ($p3y - $p1y) + $p3x * ($p1y - $p2y)]
+	set coef [expr -($p1x * (($p2y* $p3z) - ($p3y* $p2z)) + $p2x * (($p3y * $p1z) - ($p1y * $p3z)) + $p3x * (($p1y*$p2z) - ($p2y *$p1z)))]
+
+	puts "coef is $coef"
+
+
+	# save the reformat plane equation coefficients
+	set s $Slice(activeID)
+	set Slice($s,reformatPlaneCoeff,A) $N(x)
+	set Slice($s,reformatPlaneCoeff,B) $N(y)
+	set Slice($s,reformatPlaneCoeff,C) $N(z)
+	set Slice($s,reformatPlaneCoeff,D) $coef
+	    
+	Normalize N
+
+	######################################################################
+	##################### CASE AXIAL, SAGITTAL, CORONAL ##################
+	######################################################################
+	
+	if {$orientation != "NewOrient" } {
+	    # Step 1, make sure the normal is oriented the right way by taking its dot product with the original normal
+
+
+	    if {$orientation == "ReformatSagittal" } {
+		set originalN(x) -1
+		set originalN(y) 0
+		set originalN(z) 0
+		set P1(x) 0
+		set P1(y) 1
+		set P1(z) 0
+		set P2(x) 0
+		set P2(y) 0
+		set P2(z) 0
+	    } elseif { $orientation == "ReformatAxial" } {
+		set originalN(x) 0
+		set originalN(y) 0
+		set originalN(z) -1
+		set P1(x) 1
+		set P1(y) 0
+		set P1(z) 0
+		set P2(x) 0
+		set P2(y) 0
+		set P2(z) 0
+	    } elseif { $orientation == "ReformatCoronal" } {
+		set originalN(x) 0
+		set originalN(y) 1
+		set originalN(z) 0
+		set P1(x) 1
+		set P1(y) 0
+		set P1(z) 0
+		set P2(x) 0
+		set P2(y) 0
+		set P2(z) 0
+	    }
+	    
+	    if {[expr $N(x)*$originalN(x) +  $N(y)*$originalN(y) +  $N(z)*$originalN(z)] <0 } {
+		puts "negating"
+		set N(x) [expr -$N(x)]
+		set N(y) [expr -$N(y)]
+		set N(z) [expr -$N(z)]
+		set Slice($s,reformatPlaneCoeff,A) [expr -$Slice($s,reformatPlaneCoeff,A)]
+		set Slice($s,reformatPlaneCoeff,B) [expr -$Slice($s,reformatPlaneCoeff,B)]
+		set Slice($s,reformatPlaneCoeff,C) [expr -$Slice($s,reformatPlaneCoeff,C)]
+		set Slice($s,reformatPlaneCoeff,D) [expr -$Slice($s,reformatPlaneCoeff,D)]
+	    }
+	    
+	    # get the distance from 0,0,0 to the plane
+	    set dist [expr -$Slice($s,reformatPlaneCoeff,D)/ sqrt($Slice($s,reformatPlaneCoeff,A)*$Slice($s,reformatPlaneCoeff,A)+ $Slice($s,reformatPlaneCoeff,B)*$Slice($s,reformatPlaneCoeff,B) + $Slice($s,reformatPlaneCoeff,C)*$Slice($s,reformatPlaneCoeff,C))]
+	
+
+	    # Step 2, project the original tangent onto the plane
+	    set proj [VolumesProjectVectorOnPlane $Slice($s,reformatPlaneCoeff,A) $Slice($s,reformatPlaneCoeff,B) $Slice($s,reformatPlaneCoeff,C) $Slice($s,reformatPlaneCoeff,D) $P1(x) $P1(y) P1(z) $P2(x) $P2(y) $P2(z)]
+	    set T(x) [lindex $proj 0]
+	    set T(y) [lindex $proj 1]
+	    set T(z) [lindex $proj 2]
+	    
+	    
+	    # set the reformat matrix of the active slice, make the origin 0 by default.
+	    Slicer SetReformatNTP $orientation $N(x) $N(y) $N(z) $T(x) $T(y) $T(z) 0 0 0
+	    MainSlicesSetOrientAll "ReformatAxiSagCor"
+	} else {
+	    
+	    ###################################################################
+	    ############################CASE NEW ORIENT  ######################
+	    ###################################################################
+	    # we are less smart about things, just take the 0 -1 0 vector and
+	    # project it onto the new plane to get a tangent 
+	    # 
+	
+
+	    set P1(x) 0
+	    set P1(y) 1
+	    set P1(z) 0
+	    set P2(x) 0
+	    set P2(y) 0
+	    set P2(z) 0
+	    set T(x) [lindex $proj 0]
+	    set T(y) [lindex $proj 1]
+	    set T(z) [lindex $proj 2]
+	    Slicer SetNewOrientNTP $Slice(activeID) $N(x) $N(y) $N(z) $T(x) $T(y) $T(z) 0 0 0
+	    MainSlices SetOrient $Slice(activeID) "NewOrient"
+	}
+	# make all 3 slices show the new Reformat orientation
+
+	MainSlicesSetOffset $Slice(activeID) $dist
+	RenderAll
+    }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC VolumesRotateSlicePlane
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc VolumesRotateSlicePlane {orientation} {
+    global Volumes Slices Slice P1 P2
+    
+    # the tangent is in the direction of the selected 2 fiducials
+    
+    # first check to see that only 2 fiducials are selected
+    set list [FiducialsGetAllSelectedPointIdList]
+    if { [llength $list] < 2 } {
+	# give warning and exit
+	tk_messageBox -message "You have to create and select 2 fiducials (they do not necessarily have to be on the reformated plane)"		
+	return
+    } elseif { [llength $list] > 2 } {
+	# give warning and exit
+	tk_messageBox -message "Please select only 2 fiducials"
+	return
+    } else {
+	# get the 2 points coordinates
+	set count 1
+	foreach pid $list {
+	    set xyz [Point($pid,node) GetXYZ]
+	    set temp${count}(x) [lindex $xyz 0]
+	    set temp${count}(y) [lindex $xyz 1]
+	    set temp${count}(z) [lindex $xyz 2]
+	    incr count
+	}
+
+	# if we want to define a new "RL" axis for the reformatted axial,
+	# the first point needs to be the one closest to R, so with the 
+	# highest x coordinate
+	
+	if {$orientation == "ReformatAxial" || $orientation == "ReformatCoronal"} {
+	    if {$temp1(x) < $temp2(x)} {
+		set P1(x) $temp2(x)
+		set P1(y) $temp2(y)
+		set P1(z) $temp2(z)
+		set P2(x) $temp1(x)
+		set P2(y) $temp1(y)
+		set P2(z) $temp1(z)
+	    } else {
+		set P1(x) $temp1(x)
+		set P1(y) $temp1(y)
+		set P1(z) $temp1(z)
+		set P2(x) $temp2(x)
+		set P2(y) $temp2(y)
+		set P2(z) $temp2(z)
+	    }
+	} 
+
+	# if we want to define a new "PA" axis for the reformatted axial,
+	# the first point needs to be the one closest to R, so with the 
+	# highest y coordinate
+
+	if {$orientation == "ReformatSagittal" || $orientation == "NewOrient" } {
+	    if {$temp1(y) < $temp2(y)} {
+		set P1(x) $temp2(x)
+		set P1(y) $temp2(y)
+		set P1(z) $temp2(z)
+		set P2(x) $temp1(x)
+		set P2(y) $temp1(y)
+		set P2(z) $temp1(z)
+	    } else {
+		set P1(x) $temp1(x)
+		set P1(y) $temp1(y)
+		set P1(z) $temp1(z)
+		set P2(x) $temp2(x)
+		set P2(y) $temp2(y)
+		set P2(z) $temp2(z)
+	    }
+	} 
+	set s $Slice(activeID)
+	set A $Slice($s,reformatPlaneCoeff,A) 
+	set B $Slice($s,reformatPlaneCoeff,B) 
+	set C $Slice($s,reformatPlaneCoeff,C) 
+	set D $Slice($s,reformatPlaneCoeff,D) 
+
+	set proj [VolumesProjectVectorOnPlane $A $B $C $D $P1(x) $P1(y) P1(z) $P2(x) $P2(y) $P2(z) ]
+	set T(x) [lindex $proj 0]
+	set T(y) [lindex $proj 1]
+	set T(z) [lindex $proj 2]
+	
+	set N(x) $A
+	set N(y) $B
+	set N(z) $C
+	Normalize N
+	
+	# set the reformat matrix of the active slice
+	Slicer SetReformatNTP $orientation $N(x) $N(y) $N(z) $T(x) $T(y) $T(z) 0 0 0
+
+	MainSlicesSetOrientAll "ReformatAxiSagCor"
+	RenderBoth $Slice(activeID)	
+    }
+
+}
+
+
+
+#-------------------------------------------------------------------------------
+# .PROC VolumesReformatSave
+#  Save the Active Volume slice by slice with the reformat matrix of the 
+#  chosen slice orientation in $Volumes(reformat,scanOrder)
+# .ARGS
+#       str orientation orientation of that slice to use when saving the 
+#       volume slice by slice
+# .END
+#-------------------------------------------------------------------------------
+# turn into smart image writer
+
+
+proc VolumesReformatSave {} {
+    
+    global Slices Slice Volume Gui Volumes
+    
+    # get the chosen volume
+    set v $Volume(activeID)
+    
+    # set initial directory to dir where vol last opened if unset
+    if {$Volumes(prefixSave) == ""} {
+	set Volumes(prefixSave) \
+	    [file join $Volume(DefaultDir) [Volume($v,node) GetName]]
+    }
+    
+    # Show user a File dialog box
+    set Volumes(prefixSave) [MainFileSaveVolume $v $Volumes(prefixSave)]
+    if {$Volumes(prefixSave) == ""} {return}
+    
+    
+    
+    # the idea is to slide the volume from the low to the high offset and
+    # save a slice each time
+    set s $Slice(activeID)
+    # make the slice the right orientation to get the right reformat
+    # matrix
+    MainSlicesSetOrient $s $Volumes(reformat,saveOrder)
+
+    scan [Volume($Volume(activeID),node) GetImageRange] "%d %d" lo hi
+    
+    set num [expr ($hi - $lo) + 1]
+    set slo [Slicer GetOffsetRangeLow  $s]
+    set shi [Slicer GetOffsetRangeHigh $s]
+	
+    set extra [expr $shi - int($num/2)]
+    
+    set lo [expr $slo + $extra]
+    set hi [expr $shi - $extra]
+    
+    Volumes(reformatter) SetInput [Volume($Volume(activeID),vol) GetOutput]
+    Volumes(reformatter) SetWldToIjkMatrix [[Volume($Volume(activeID),vol) GetMrmlNode] GetWldToIjk]
+    Volumes(reformatter) SetInterpolate 1
+    Volumes(reformatter) SetResolution [lindex [Volume($Volume(activeID),node) GetDimensions] 0]
+    Volumes(reformatter) SetFieldOfView [expr [lindex [Volume($Volume(activeID),node) GetDimensions] 0] * [lindex [Volume($Volume(activeID),node) GetSpacing] 0]]
+    
+    set ref [Slicer GetReformatMatrix $s]
+    
+    for {set i $lo} {$i<= $hi} {incr i} {
+	
+	MainSlicesSetOffset $s $i
+	Volumes(reformatter) SetReformatMatrix $ref
+	Volumes(reformatter) Modified
+	Volumes(reformatter) Update
+	#RenderBoth $s
+	Volumes(writer) SetInput [Volumes(reformatter) GetOutput]
+	set ext [expr $i + $hi]
+	Volumes(writer) SetFileName "$Volumes(prefixSave).$ext"
+	set Gui(progressText) "Writing slice $ext"
+	Volumes(writer) Write
+    }
+    set Gui(progressText) "Done!"
+    
+}
+

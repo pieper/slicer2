@@ -29,8 +29,8 @@
 #   MainViewerUserResize
 #   MainViewerAnno
 #   MainViewerAddViewsSeparation
-#   MainViewerSetEndoscopicViewOn
-#   MainViewerSetEndoscopicViewOff
+#   MainViewerSetSecondViewOn
+#   MainViewerSetSecondViewOff
 #   MainViewerSetMode
 #==========================================================================auto=
 
@@ -48,11 +48,11 @@ proc MainViewerInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainViewer \
-		{$Revision: 1.18 $} {$Date: 2001/11/09 17:40:01 $}]
+		{$Revision: 1.19 $} {$Date: 2002/02/06 22:11:03 $}]
 
         # Props
 	set Gui(midHeight) 1
-        set View(EndoscopicViewOn) 0
+        set View(SecondViewOn) 0
 }
 
 #-------------------------------------------------------------------------------
@@ -328,7 +328,7 @@ proc MainViewerAnno {s dim} {
 proc MainViewerAddViewsSeparation {p1 p2} {
 	global Gui View
     
-    if { $View(EndoscopicViewOn) == 1 } {
+    if { $View(SecondViewOn) == 1 } {
 	Gui(viewport,actor) SetVisibility 1
 	Gui(viewport,source) SetPoint1 [expr ($p1 / 2) - 2] $p2 0
 	Gui(viewport,source) SetPoint2 [expr ($p1/ 2) - 2] 0 0
@@ -343,27 +343,30 @@ proc MainViewerAddViewsSeparation {p1 p2} {
  
 
 #-------------------------------------------------------------------------------
-# .PROC MainViewerSetEndoscopicViewOn
-# 
+# .PROC MainViewerSetSecondViewOn
+#  Call this method if you created a second renderer (other than the MainView)
+#  and you want to have a separator between the 2 screens. 
+#  Then call MainViewerAddViewsSeparation
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc MainViewerSetEndoscopicViewOn {} {
-
+proc MainViewerSetSecondViewOn {} {
+    
     global View
-    set View(EndoscopicViewOn) 1
+    set View(SecondViewOn) 1
 }
 
 #-------------------------------------------------------------------------------
-# .PROC MainViewerSetEndoscopicViewOff
-# 
+# .PROC MainViewerSetSecondViewOff
+# Call this method you want to get rid of the separator between the 2 screens
+# Then call MainViewerAddViewsSeparation.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc MainViewerSetEndoscopicViewOff {} {
-
+proc MainViewerSetSecondViewOff {} {
+    
     global View
-    set View(EndoscopicViewOn) 0
+    set View(SecondViewOn) 0
 }
 
 #-------------------------------------------------------------------------------

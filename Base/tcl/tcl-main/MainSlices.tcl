@@ -48,6 +48,7 @@
 #   MainSlicesSetZoom
 #   MainSlicesSetVisibilityAll
 #   MainSlicesSetVisibility
+#   MainSlicesUserReformat id
 #   MainSlicesSetOpacityAll int
 #   MainSlicesSetFadeAll bool
 #   MainSlicesSave
@@ -91,7 +92,7 @@ proc MainSlicesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainSlices \
-		{$Revision: 1.35 $} {$Date: 2002/02/06 16:42:30 $}]
+		{$Revision: 1.36 $} {$Date: 2002/02/06 22:11:03 $}]
 
 	# Initialize Variables
 	set Slice(idList) "0 1 2"
@@ -128,6 +129,7 @@ proc MainSlicesInit {} {
 		set Slice($s,offsetInPlane90) 0
 		set Slice($s,offsetInPlaneNeg90) 0
 		set Slice($s,offsetPerp) 0
+	        set Slice($s,offsetUser) 0
 		set Slice($s,offsetOrigSlice) Auto
 		set Slice($s,offsetAxiSlice) Auto
 		set Slice($s,offsetCorSlice) Auto
@@ -175,6 +177,7 @@ proc MainSlicesInit {} {
 # Slice(id,offsetInPlaneNeg90)  :
 # Slice(id,offsetOrigSlice)     :
 # Slice(id,offsetPerp)          :
+# Slice(id,offsetUser)          :
 # Slice(id,offsetSagSlice)      :
 # Slice(id,offsetSagittal)      :
 # Slice(id,orient)              : 
@@ -348,11 +351,17 @@ proc MainSlicesBuildControls {s F} {
 		MainViewerHideSliceControls; Render3D"} $Gui(WCA) \
 		{-selectcolor $Gui(slice$s)}
 	pack $f.cVisibility${s} -side left -padx 2
-
 	# tooltip for Visibility checkbutton
 	TooltipAdd $f.cVisibility${s} "Click to make this slice visible.\n \
 		Right-click for menu: \nzoom, slice increments, \
 		volume display."
+
+
+	eval {button $f.cReformat${s} \
+		-text "R" -width 2 \
+		-command "MainSlicesUserReformat ${s}"} $Gui(WBA) 
+	pack $f.cVisibility${s} $f.cReformat${s} -side left -padx 2
+	TooltipAdd $f.cReformat${s} "Press to reformat this slice"	
 
 	# Menu on the Visibility checkbutton
 	eval {menu $f.cVisibility${s}.men} $Gui(WMA)
@@ -390,7 +399,7 @@ proc MainSlicesBuildControls {s F} {
 	TooltipAdd $f.mbOrient "Set Orientation of all slices."
 
 	eval {menu $f.mbOrient.m} $Gui(WMA)
-	foreach item "AxiSagCor Orthogonal Slices" {
+	foreach item "AxiSagCor Orthogonal Slices ReformatAxiSagCor" {
 		$f.mbOrient.m add command -label $item -command \
 			"MainSlicesSetOrientAll $item; MainViewerHideSliceControls; RenderAll"
 	}
@@ -404,11 +413,15 @@ proc MainSlicesBuildControls {s F} {
 	TooltipAdd $f.mbOrient${s} "Set Orientation of just this slice."
 
 	eval {menu $f.mbOrient${s}.m} $Gui(WMA)
+	set Slice($s,menu) $f.mbOrient${s}.m
 	foreach item "[Slicer GetOrientList]" {
 		$f.mbOrient${s}.m add command -label $item -command \
 			"MainSlicesSetOrient ${s} $item; MainViewerHideSliceControls; RenderBoth $s"
 	}
-
+	#$f.mbOrient${s}.m add command -label "Arbitrary" -command \
+		#	"MainSlicesSetOrient Arbitrary $item; MainViewerHideSliceControls; RenderBoth $s"
+	
+    
 	# Background Volume
 	#-------------------------------------------
 	MainSlicesBuildControlsForVolume $f $s Back Bg
@@ -953,6 +966,7 @@ proc MainSlicesSetSliderRange {s} {
 proc MainSlicesSetOrientAll {orient} {
 	global Slice View
 
+    
 	Slicer ComputeNTPFromCamera $View(viewCam)
 
 	Slicer SetOrientString $orient
@@ -1032,7 +1046,7 @@ proc MainSlicesSetOrientAll {orient} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesSetOrient {s orient} {
-	global Slice Volume View
+	global Slice Volume View Module
 
 	Slicer ComputeNTPFromCamera $View(viewCam)
 
@@ -1044,11 +1058,12 @@ proc MainSlicesSetOrient {s orient} {
 
 	# Set slider increments
 	MainSlicesSetOffsetIncrement $s
+	
+        # Set slider to the last used offset for this orient
+        set Slice($s,offset) [Slicer GetOffset $s]
+    
 
-	# Set slider to the last used offset for this orient
-	set Slice($s,offset) [Slicer GetOffset $s]
-
-	# Change text on menu button
+    # Change text on menu button
 	MainSlicesConfigGui $s fOrient.mbOrient$s "-text $orient"
 	$Slice($s,lOrient) config -text $orient
 
@@ -1129,10 +1144,8 @@ proc MainSlicesSetZoomAll {zoom} {
 	# Change Slice's Zoom variable
 	foreach s $Slice(idList) {
 		set Slice($s,zoom) $zoom
-	    # Attila's new zooming function
-	    Slicer SetZoomNew $s $zoom
 	}
-	#Slicer SetZoom $zoom
+	Slicer SetZoom $zoom
 	Slicer Update
 }
 
@@ -1185,10 +1198,8 @@ proc MainSlicesSetZoom {s {zoom ""}} {
 
     # Change Slice's Zoom variable
     set Slice($s,zoom) $zoom
-
-    # Use Attila's new zooming code
-    Slicer SetZoomNew $s $zoom
-    #Slicer SetZoom $s $zoom
+    
+    Slicer SetZoom $s $zoom
     Slicer Update
 }
 
@@ -1240,6 +1251,27 @@ proc MainSlicesSetVisibility {s} {
 			set Slice(visibilityAll) 0
 		}
 	}
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC MainSlicesUserReformat
+# Make the selected slice active and visible
+# Tab to Volumes -> Reformat
+# .ARGS
+#  s id of selected slice
+# .END
+#-------------------------------------------------------------------------------
+proc MainSlicesUserReformat {s} {
+    global Slice Anno Module
+
+    set Slice($s,visibility) 1
+    MainSlicesSetVisibility $s
+    MainSlicesSetActive $s
+    Render3D
+    if {[info exists Module(Volumes,fReformat)] == 1} {   
+	Tab Volumes row1 Reformat
+    }
 }
 
 #-------------------------------------------------------------------------------

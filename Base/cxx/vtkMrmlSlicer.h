@@ -1,8 +1,8 @@
 /*=auto=========================================================================
-
-(c) Copyright 2001 Massachusetts Institute of Technology
-
-Permission is hereby granted, without payment, to copy, modify, display 
+  
+  (c) Copyright 2001 Massachusetts Institute of Technology
+  
+  Permission is hereby granted, without payment, to copy, modify, display 
 and distribute this software and its documentation, if any, for any purpose, 
 provided that the above copyright notice and the following three paragraphs 
 appear on all copies of this software.  Use of this software constitutes 
@@ -62,21 +62,27 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #define NUM_SLICES 3
 
 // Orient
+
 #define MRML_SLICER_ORIENT_AXIAL        0
 #define MRML_SLICER_ORIENT_SAGITTAL     1
 #define MRML_SLICER_ORIENT_CORONAL      2
 #define MRML_SLICER_ORIENT_INPLANE      3
 #define MRML_SLICER_ORIENT_INPLANE90    4
 #define MRML_SLICER_ORIENT_INPLANENEG90 5
-#define MRML_SLICER_ORIENT_PERP         6
-#define MRML_SLICER_ORIENT_ORIGSLICE    7
-#define MRML_SLICER_ORIENT_AXISLICE     8
-#define MRML_SLICER_ORIENT_SAGSLICE     9
-#define MRML_SLICER_ORIENT_CORSLICE    10
-#define MRML_SLICER_ORIENT_AXISAGCOR   11
-#define MRML_SLICER_ORIENT_ORTHO       12
-#define MRML_SLICER_ORIENT_SLICES      13
-#define MRML_SLICER_NUM_ORIENT         14
+#define MRML_SLICER_ORIENT_NEW_ORIENT         6
+#define MRML_SLICER_ORIENT_REFORMAT_AXIAL    7
+#define MRML_SLICER_ORIENT_REFORMAT_SAGITTAL 8
+#define MRML_SLICER_ORIENT_REFORMAT_CORONAL  9
+#define MRML_SLICER_ORIENT_PERP         10
+#define MRML_SLICER_ORIENT_ORIGSLICE    11
+#define MRML_SLICER_ORIENT_AXISLICE     12
+#define MRML_SLICER_ORIENT_SAGSLICE     13
+#define MRML_SLICER_ORIENT_CORSLICE    14
+#define MRML_SLICER_ORIENT_AXISAGCOR   15
+#define MRML_SLICER_ORIENT_ORTHO       16
+#define MRML_SLICER_ORIENT_SLICES      17
+#define MRML_SLICER_ORIENT_REFORMAT_AXISAGCOR   18
+#define MRML_SLICER_NUM_ORIENT         19
 
 class VTK_EXPORT vtkMrmlSlicer : public vtkObject 
 {
@@ -280,7 +286,7 @@ class VTK_EXPORT vtkMrmlSlicer : public vtkObject
   int GetOrient(int s) {return this->Orient[s];};
   char *GetOrientString(int s);
   char *GetOrientList() {return
-"Axial Sagittal Coronal InPlane InPlane90 InPlaneNeg90 Perp OrigSlice AxiSlice SagSlice CorSlice";};
+"Axial Sagittal Coronal InPlane InPlane90 InPlaneNeg90 Perp OrigSlice AxiSlice SagSlice CorSlice ReformatAxial ReformatSagittal ReformatCoronal NewOrient";};
 
   // Description:
   // Slice Offset
@@ -307,6 +313,11 @@ class VTK_EXPORT vtkMrmlSlicer : public vtkObject
   double *GetN(int s);
   vtkGetVector3Macro(DirP, double);
   vtkGetVector3Macro(CamP, double);
+  // user defined matrix
+  void SetNewOrientNTP(int s, float nx, float ny, float nz,
+    float tx, float ty, float tz, float px, float py, float pz);
+  // reformat matrix
+  void SetReformatNTP(char *orientation, float nx, float ny, float nz, float tx, float ty, float tz, float px, float py, float pz);
 
   // Points
   void SetReformatPoint(int s, int x, int y);
@@ -506,7 +517,16 @@ protected:
   double DirN[3];
   double DirT[3];
   double DirP[3];
-
+  double NewOrientN[NUM_SLICES][3];
+  double NewOrientT[NUM_SLICES][3];
+  double NewOrientP[NUM_SLICES][3];
+  double ReformatAxialN[3];
+  double ReformatAxialT[3];
+  double ReformatSagittalN[3];
+  double ReformatSagittalT[3];
+  double ReformatCoronalN[3];
+  double ReformatCoronalT[3];
+  
   int Driver[NUM_SLICES];
   float OffsetRange[NUM_SLICES][MRML_SLICER_NUM_ORIENT][2];
   int Orient[NUM_SLICES];
