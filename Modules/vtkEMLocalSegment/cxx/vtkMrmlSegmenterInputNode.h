@@ -70,6 +70,14 @@ public:
   // Description:
   // Copy the node's attributes to this object
   void Copy(vtkMrmlNode *node);
+
+  // Variable Set/Get Functions - Name has to be first to properly work with GUI   
+  // Description:
+  // Just is listed here so that it properly works with automatic GUI - nothing really is changed 
+  vtkSetStringMacro(Name);
+  vtkGetStringMacro(Name);
+ 
+  // Any Variables afterwards 
   // Description:
   // Get/Set for SegmenterInput
   vtkSetStringMacro(FilePrefix);
