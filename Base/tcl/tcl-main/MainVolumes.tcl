@@ -72,7 +72,7 @@ proc MainVolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.57 $} {$Date: 2003/05/21 19:55:49 $}]
+    {$Revision: 1.58 $} {$Date: 2003/05/28 22:44:00 $}]
 
     set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -299,6 +299,11 @@ proc MainVolumesRead {v} {
     # Fixed by Attila Tanacs 6/14/2001
 
     set num [Volume($v,node) GetNumberOfDICOMFiles]
+    if {$::Module(verbose)} {
+        puts "MainVolumesRead: node $v number of dicom files = $num\nPrinting node $v:"
+        Volume($v,node) Print
+    }
+    
     if {$num == 0} {
         # if not DICOM, do the good old check
         if {[CheckVolumeExists [Volume($v,node) GetFullPrefix] \
@@ -309,7 +314,7 @@ proc MainVolumesRead {v} {
     } else {
         # DICOM requires another approach
         for {set i 0} {$i < $num} {incr i} {
-            if {[CheckFileExists [Volume($v,node) GetDICOMFileName $i] 0] == "0"} {
+            if {[CheckFileExists "[Volume($v,node) GetDICOMFileName $i]" 0] == "0"} {
                 DevErrorWindow "DICOM volume file [Volume($v,node) GetDICOMFileName $i] does not exist, file number $i, v=$v"
                 return -1
             }
