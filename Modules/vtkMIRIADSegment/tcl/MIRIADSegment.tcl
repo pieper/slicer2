@@ -151,7 +151,7 @@ proc MIRIADSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.19 $} {$Date: 2004/02/15 15:12:22 $}]
+        {$Revision: 1.20 $} {$Date: 2004/02/15 15:16:29 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -1087,22 +1087,23 @@ proc MIRIADSegmentSamplesFromSegmentation {class SEGid label} {
 proc MIRIADSegmentClassPDFFromSegmentation {} {
 
 
-    MIRIADSegmentSamplesFromSegmentation  1 [MIRIADSegmentGetVolumeByName WorkingB] 1
-    MIRIADSegmentSamplesFromSegmentation  2 [MIRIADSegmentGetVolumeByName WorkingW] 2
-    MIRIADSegmentSamplesFromSegmentation  3 [MIRIADSegmentGetVolumeByName WorkingC] 3
-    MIRIADSegmentSamplesFromSegmentation  4 [MIRIADSegmentGetVolumeByName WorkingG] 4
+    MIRIADSegmentSamplesFromSegmentation  1 [MIRIADSegmentGetVolumeByName handsef] 0
+    MIRIADSegmentSamplesFromSegmentation  4 [MIRIADSegmentGetVolumeByName handsef] 4
+    MIRIADSegmentSamplesFromSegmentation  5 [MIRIADSegmentGetVolumeByName handsef] 5
+    MIRIADSegmentSamplesFromSegmentation  6 [MIRIADSegmentGetVolumeByName handsef] 6
 
 
-    set ::EMSegment(UseSamples) 1
-    EMSegmentCalculateClassMeanCovariance 
-    set ::EMSegment(UseSamples) 0
 
-    set classes "1 2 3 4" 
+    set classes "1 4 5 6" 
     set logmeans ""
     set logcovs ""
     foreach class $classes {
         set lmean ""
         set lcov ""
+        
+        EMSegmentChangeClass $class                    ;# Set Active Class
+        set ::EMSegment(UseSamples) 1
+        EMSegmentUseSamples 1
         for {set y 0} {$y < $::EMSegment(NumInputChannel)} {incr y} {
             lappend lmean $::EMSegment(Cattrib,$class,LogMean,$y) 
             for {set x 0} {$x < $::EMSegment(NumInputChannel)} {incr x} {
@@ -1111,7 +1112,10 @@ proc MIRIADSegmentClassPDFFromSegmentation {} {
         }
         lappend logmeans $lmean
         lappend logcovs $lcov
+        set ::EMSegment(UseSamples) 0
+        EMSegmentUseSamples 1
     }
+
     puts "set logmeans $logmeans"
     puts "set logcovs $logcovs"
 }
