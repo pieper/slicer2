@@ -69,7 +69,7 @@ proc MainMrmlInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainMrml \
-		{$Revision: 1.48 $} {$Date: 2002/01/12 00:42:38 $}]
+		{$Revision: 1.49 $} {$Date: 2002/01/13 22:24:03 $}]
 
 	set Mrml(filePrefix) data
 	set Mrml(colorsUnsaved) 0
@@ -888,9 +888,10 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 		"TetraMesh" {
 			set n [MainMrmlAddNode TetraMesh]
 			foreach a $attr {
-				set key [lindex $a 0]
-				set val [lreplace $a 0 0]
-				switch [string tolower $key] {
+                            set key [lindex $a 0]
+                            set lowkey [string tolower $key]
+                            set val [lreplace $a 0 0]
+				switch $lowkey {
 				"id"	           {$n SetModelID      $val}
 				"desc"             {$n SetDescription  $val}
 				"name"             {$n SetName         $val}
@@ -903,27 +904,27 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 						$n SetClipping 0
 					}
 				}
-				"DisplaySurfaces" {
-					if {$val == "yes" || $val == "true"} {
-						$n SetDisplaySurfaces 1
-					} else {
-						$n SetDisplaySurfaces 0
-					}
-				}
-				"DisplaySurfaces" {
-					if {$val == "yes" || $val == "true"} {
-						$n SetDisplaySurfaces 1
-					} else {
-						$n SetDisplaySurfaces 0
-					}
-				}
+                                "nodescaling"      {$n SetNodeScaling   $val}
+                                "nodeskip"         {$n SetNodeSkip      $val}
+                                "scalarscaling"    {$n SetScalarScaling $val}
+                                "scalarskip"       {$n SetScalarSkip    $val}
+                                "vectorscaling"    {$n SetVectorScaling $val}
+                                "vectorskip"       {$n SetVectorSkip    $val}
                             }
-			}
+                          foreach item "Surfaces Nodes Edges Scalars Vectors" {
+                              if {[string tolower "Display$item"] == $lowkey} {
+                                  if {$val == "yes" || $val == "true"} {
+                                      $n SetDisplay$item 1
+                                  } else {
+                                      $n SetDisplay$item 0
+                                  }
+                              }
+                          }
 
-			# Compute full path name relative to the MRML file
-			$n SetFileName [file join $Mrml(dir) [$n GetFileName]]
-                    }
-
+                      }
+                      # Compute full path name relative to the MRML file
+                      $n SetFileName [file join $Mrml(dir) [$n GetFileName]]
+                  }
 
 		"Options" {
 			# Legacy: options shouldn't be stored in an options tag,

@@ -23,22 +23,23 @@
 # FILE:        MainTetraMesh.tcl
 # PROCEDURES:  
 #   MainTetraMeshInit
-#   MainTetraMeshBuildVTK
 #   MainTetraMeshUpdateMRML
-#   MainTetraMeshCopyData dst src 
+#   MainTetraMeshCopyData dst src
 #   MainTetraMeshCreate
 #   MainTetraMeshRead
 #   MainTetraMeshWrite v prefix
 #   MainTetraMeshDelete
 #   MainTetraMeshBuildGUI
-#   MainTetraMeshPopupGo
-#   MainTetraMeshPopup
 #   MainTetraMeshUpdate
 #   MainTetraMeshRender
 #   MainTetraMeshRenderActive
 #   MainTetraMeshSetActive v
+#   MainTetraMeshVtkDataToTclData VtkMrmlTetraMeshNode
+#   MainTetraMeshTclDataToVtkData
 #   MainTetraMeshSetParam
 #   MainTetraMeshUpdateSliderRange
+#   MainTetraMeshSetGUIDefaults 
+#   MainTetraMeshVisualize
 #==========================================================================auto=
 
 ## Todo: MainTetraMeshInit: defaultoptions
@@ -63,11 +64,11 @@ proc MainTetraMeshInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.1 $} {$Date: 2002/01/12 00:42:38 $}]
+		{$Revision: 1.2 $} {$Date: 2002/01/13 22:24:03 $}]
 
 	set TetraMesh(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
-	set TetraMesh(idNone) 0
+	set TetraMesh(idNone) -1
 	set TetraMesh(activeID)  ""
 	set TetraMesh(freeze) ""
 
@@ -80,6 +81,20 @@ proc MainTetraMeshInit {} {
 #-------------------------------------------------------------------------------
 # .PROC MainTetraMeshUpdateMRML
 # 
+# The first thing to do is to check if their are any unbuilt TetraMesh.
+# This is typically a TetraMesh read in from a MRML file that is only
+# now going to be read in.
+#
+# Then, check if any TetraMesh are supposed to be deleted and delete
+# them. This functionality is not used.
+#
+# If we deleted the active TetraMesh, select a new active TetraMesh
+#
+# Then, update all the menus that are on the list to be updated if
+# the TetraMesh data changes.
+#
+# Finally, call MainTetraMeshUpdate.
+#
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -99,7 +114,9 @@ proc MainTetraMeshUpdateMRML {} {
 			    tk_messageBox -message "Could not read TetraMesh [TetraMesh($v,node) GetFullPrefix]."
 			    # Failed, so axe it
 			    MainMrmlDeleteNodeDuringUpdate TetraMesh $v
-			}
+			} else {
+                            MainTetraMeshVisualize $v
+                        }
 		}
 	}  
 
@@ -165,9 +182,13 @@ proc MainTetraMeshCopyData {dst src } {
 #-------------------------------------------------------------------------------
 # .PROC MainTetraMeshCreate
 #
+# Creates vtkMrmlDataTetraMesh as TetraMesh($v,data) 
+# if it does not already exist.
+#
+#
 # Returns:
 #  1 - success
-#  0 - already built this TetraMesh
+#  0 - already built this TetraMesh data
 # .END
 #-------------------------------------------------------------------------------
 proc MainTetraMeshCreate {v} {
@@ -179,15 +200,15 @@ proc MainTetraMeshCreate {v} {
 	}
 
 	# If no LUT name, use first LUT in the list
-	if {[TetraMesh($v,node) GetLUTName] == ""} {
-		TetraMesh($v,node) SetLUTName [lindex $Lut(idList) 0]
-	}
+#        if {[TetraMesh($v,node) GetLUTName] == ""} {
+#                TetraMesh($v,node) SetLUTName [lindex $Lut(idList) 0]
+#        }
 
 	# Create vtkMrmlDataTetraMesh
 	vtkMrmlDataTetraMesh TetraMesh($v,data)
 	TetraMesh($v,data) SetMrmlNode          TetraMesh($v,node)
-	TetraMesh($v,data) SetLabelIndirectLUT  Lut($Lut(idLabel),indirectLUT)
-	TetraMesh($v,data) SetLookupTable       Lut([TetraMesh($v,node) GetLUTName],lut)
+#        TetraMesh($v,data) SetLabelIndirectLUT  Lut($Lut(idLabel),indirectLUT)
+#        TetraMesh($v,data) SetLookupTable       Lut([TetraMesh($v,node) GetLUTName],lut)
 	TetraMesh($v,data) SetStartMethod       MainStartProgress
 	TetraMesh($v,data) SetProgressMethod   "MainShowProgress TetraMesh($v,data)"
 	TetraMesh($v,data) SetEndMethod         MainEndProgress
@@ -204,6 +225,7 @@ proc MainTetraMeshCreate {v} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainTetraMeshRead
+#
 #
 # Returns:
 #  1 - success
@@ -579,49 +601,70 @@ proc MainTetraMeshRenderActive {{scale ""}} {
 proc MainTetraMeshSetActive {v} {
 	global TetraMesh Lut Slice
 
-	if {$TetraMesh(freeze) == 1} {return}
+    if {$TetraMesh(freeze) == 1} {return}
 	
-	set TetraMesh(activeID) $v
-	if {$v == ""} {
-		foreach mb $TetraMesh(mbActiveList) {
-                    $mb config -text "None"
-                }
-	} elseif {$v == "NEW"} {
-		
-		# Change button text
-		foreach mb $TetraMesh(mbActiveList) {
-			$mb config -text "NEW"
-		}
-
-		if {[IsModule TetraMesh] == 1} {		
-		    # Use defaults to update GUI
-		    MainTetraMeshSetGUIDefaults
-		}
-
-	} else {
-
-		# Change button text
-		foreach mb $TetraMesh(mbActiveList) {
-			$mb config -text [TetraMesh($v,node) GetName]
-		}
-
-		if {[IsModule TetraMesh] == 1} {
-
-#                        # LUT menu
-#                        $TetraMesh(mbLUT) config -text $Lut([TetraMesh($v,node) GetLUTName],name)
-#
-			# Update TetraMesh->Props GUI
-
-			foreach item     "Name FileName Description Opacity \
-                        Clipping  DisplaySurfaces DisplayEdges  \
-                        DisplayNodes  NodeScaling NodeSkip \
-                        DisplayScalars  ScalarScaling  ScalarSkip \
-                        DisplayVectors  VectorScaling  VectorSkip" {
-		    set TetraMesh($item) [TetraMesh($v,node) Get$item]
-            }
-            
+    set TetraMesh(activeID) $v
+    if {$v == ""} {
+        foreach mb $TetraMesh(mbActiveList) {
+            $mb config -text "None"
         }
-	}
+        MainTetraMeshSetGUIDefaults
+    } elseif {$v == "NEW"} {
+        
+        # Change button text
+        foreach mb $TetraMesh(mbActiveList) {
+            $mb config -text "NEW"
+        }
+
+        MainTetraMeshSetGUIDefaults
+    } else {
+        # Change button text
+        foreach mb $TetraMesh(mbActiveList) {
+            $mb config -text [TetraMesh($v,node) GetName]
+        }
+        MainTetraMeshVtkDataToTclData TetraMesh($v,node)
+    }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MainTetraMeshVtkDataToTclData
+# 
+# Grab all the VTKMrmlNode Data and put it in TetraMesh(...)
+#
+# .ARGS
+#  mrmlnode VtkMrmlTetraMeshNode
+# .END
+#-------------------------------------------------------------------------------
+proc MainTetraMeshVtkDataToTclData {mrmlnode} {
+    global TetraMesh
+
+    foreach item     "Name FileName Description Opacity \
+            Clipping  DisplaySurfaces DisplayEdges    \
+            DisplayNodes    NodeScaling NodeSkip      \
+            DisplayScalars  ScalarScaling  ScalarSkip \
+            DisplayVectors  VectorScaling  VectorSkip" {
+        set TetraMesh($item) [$mrmlnode Get$item]
+    }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MainTetraMeshTclDataToVtkData
+# 
+# Grab all the VTKMrmlNode Data and put it in TetraMesh(...)
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MainTetraMeshTclDataToVtkData {mrmlnode} {
+    global TetraMesh
+
+    foreach item     "Name FileName Description Opacity \
+            Clipping        DisplaySurfaces DisplayEdges  \
+            DisplayNodes    NodeScaling     NodeSkip \
+            DisplayScalars  ScalarScaling   ScalarSkip \
+            DisplayVectors  VectorScaling   VectorSkip" {
+        $mrmlnode Set$item $TetraMesh($item)
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -815,32 +858,33 @@ proc MainTetraMeshSetGUIDefaults {} {
 
     # Get defaults from VTK 
     vtkMrmlTetraMeshNode default
-    set TetraMesh(Name) [default GetName]
-    set TetraMesh(filePattern) %s.%03d
-    set TetraMesh(scanOrder) [default GetScanOrder]
-    set TetraMesh(littleEndian) [default GetLittleEndian]
-    #set TetraMesh(resolution) [lindex [default GetDimensions] 0]
-    set TetraMesh(width) [lindex [default GetDimensions] 0]
-    set TetraMesh(height) [lindex [default GetDimensions] 1]
-    set spacing [default GetSpacing]
-    set TetraMesh(pixelSize) [lindex $spacing 0]
-    set TetraMesh(sliceThickness) [lindex $spacing 2]
-    set TetraMesh(sliceSpacing) 0.0
-    set TetraMesh(gantryDetectorTilt) [default GetTilt]
-    set TetraMesh(desc) [default GetDescription]
-    set TetraMesh(numScalars) [default GetNumScalars]
-    set TetraMesh(scalarType) [lindex "Char UnsignedChar Short {UnsignedShort} \ 
-    {Int} UnsignedInt Long UnsignedLong Float Double"\
-	    [lsearch "2 3 4 5 6 7 8 9 10 11"  [default GetScalarType]]]
-    default Delete
 
-    # Added by Attila Tanacs 10/10/2000
-    set TetraMesh(numDICOMFiles) 0
-    # End
-    
-    # Set GUI defaults
-    set TetraMesh(firstFile) ""
-    set TetraMesh(readHeaders) 1
-    set TetraMesh(labelMap) 0
-    set TetraMesh(lastNum) ""
+    MainTetraMeshVtkDataToTclData default
+    default Delete
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MainTetraMeshVisualize
+#
+# For a particular vtkTetraMesh node, 
+# Visualize the results
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MainTetraMeshVisualize { v } {
+    global TetraMesh
+
+    MainTetraMeshVtkDataToTclData TetraMesh($v,node)
+
+    set TetraMesh(ProcessMesh) [TetraMesh($v,data) GetOutput]
+    foreach item "Surfaces Nodes Edges Scalars Vectors" {
+        if {$TetraMesh(Display$item) == "1"} {
+            puts "Got Here"
+            TetraMeshProcess$item
+        }
+    }
+
+#    Opacity 
+#    Clipping
 }
