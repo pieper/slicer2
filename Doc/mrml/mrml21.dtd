@@ -1,7 +1,7 @@
 <!ELEMENT MRML (Transform | Volume | Model | Color | Options |
-	ColorLUT | TransferFunction | Group)*>
+	ColorLUT | TransferFunction | ModelGroup)*>
 
-<!ELEMENT Transform (Transform | Matrix | Volume | Model | Group)*>
+<!ELEMENT Transform (Matrix *, (Transform | Volume | Model | ModelGroup)*)>
 
 <!ELEMENT Matrix (#PCDATA)>
 <!ATTLIST Matrix 
@@ -20,20 +20,20 @@
     colorLUT NMTOKEN ""
     scanOrder (LR | RL | SI | IS | AP | PA) "SI"
     description CDATA ""
-    scalarType (Char | UnsignedChar | Short | UnsignedShort | Int | UnsignedInt | Long | UnsignedLong | Float | Double) "Short"
+    scalarType (Int8 | UnsignedInt8 | Int16 | UnsignedInt16 | Int32 | UnsignedInt32 | Float4 | Float8) "Int16"
     numScalars NMTOKEN "1"
-    labelMap (yes | no) "no"
-    interpolate (yes | no) "yes"
-    littleEndian (yes | no) "no"
+    labelMap (true | false) "false"
+    interpolate (true | false) "true"
+    littleEndian (true | false) "false"
     tilt NMTOKEN "0.0"
-    autoWindowLevel (yes | no) "yes"
+    autoWindowLevel (true | false) "true"
     window CDATA "256"
     level CDATA "128"
-    applyThreshold (yes | no) "no"
-    autoThreshold (yes | no) "no"
+    applyThreshold (true | false) "false"
+    autoThreshold (true | false) "false"
     lowerThreshold CDATA "-32768"
     upperThreshold CDATA "32767"
-    ignore (yes | no) "no"
+    ignore (true | false) "false"
     imageRange NMTOKENS "1 1"
     dimensions NMTOKENS "256 256"
     spacing NMTOKENS "1 1 1"
@@ -46,11 +46,11 @@
     color NMTOKEN ""
     description CDATA ""
     opacity NMTOKEN "1.0"
-    visibility (yes | no) "yes"
-    clipping (yes | no) "no"
-    backfaceCulling (yes | no) "yes"
-    scalarVisibility (yes | no) "no"
-    ignore (yes | no) "no"
+    visibility (true | false) "true"
+    clipping (true | false) "false"
+    backfaceCulling (true | false) "true"
+    scalarVisibility (true | false) "false"
+    ignore (true | false) "false"
     scalarRange NMTOKENS "0 100">
 
 <!ELEMENT Color (#PCDATA)>
@@ -69,19 +69,21 @@
     program CDATA #REQUIRED
     content CDATA "">
 
-<!ELEMENT Group (Group | Model)*>
-<!ATTLIST Group name NMTOKEN #REQUIRED>
+<!ELEMENT ModelGroup (ModelGroup | Model)*>
+<!ATTLIST ModelGroup 
+    name NMTOKEN #REQUIRED
+    description CDATA"">
 
 <!ELEMENT TransferFunction ((TFPoint)* | WindowLevel)>
 <!ATTLIST TransferFunction name ID #REQUIRED>
 
 <!ELEMENT WindowLevel (#PCDATA)>
 <!ATTLIST WindowLevel
-    autoWindowLevel (yes | no) "yes"
+    autoWindowLevel (true | false) "true"
     window CDATA "256"
     level CDATA "128"
-    applyThreshold (yes | no) "no"
-    autoThreshold (yes | no) "no"
+    applyThreshold (true | false) "false"
+    autoThreshold (true | false) "false"
     lowerThreshold CDATA "-32768"
     upperThreshold CDATA "32767">
 
