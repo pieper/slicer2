@@ -22,10 +22,70 @@
 #===============================================================================
 # FILE:        Save.tcl
 # PROCEDURES:  
+#   SaveInit
+#   SaveInitTables
 #   SaveWindowToFile
 #   SaveImageToFile
 #   SaveGetFilePath
+#   SaveGetExtensionForImageType
+#   SaveGetImageType
+#   SaveGetSupportedImageTypes
+#   SaveGetSupportedExtensions
 #==========================================================================auto=
+
+#-------------------------------------------------------------------------------
+# .PROC SaveInit
+# 
+# Register the module with slicer and set up.
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+
+proc SaveInit {} {
+    set m "Save"
+
+    set Module($m,depend) ""
+    set Module($m,overview) "Image and Window file saving routines"
+    set Module($m,author) "Michael Halle, SPL"
+
+    # Set version info
+    lappend Module(versions) [ParseCVSInfo $m \
+            {$Revision: 1.4 $} {$Date: 2002/10/28 14:45:02 $}]
+
+    SaveInitTables
+}
+
+#-------------------------------------------------------------------------------
+# .PROC SaveInitTables
+#  Initialize the type tables.
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc SaveInitTables {} {
+    upvar \#0  SaveExtensionToImageTypeMap imtype
+
+    set imtype(ps)   "Postscript"
+    set imtype(eps)  "Postscript"
+    set imtype(prn)  "PostScript"
+    set imtype(tif)  "TIFF"
+    set imtype(tiff) "TIFF"
+    set imtype(pnm)  "PNM"
+    set imtype(png)  "PNG"
+    set imtype(bmp)  "BMP"
+    set imtype(jpg)  "JPEG"
+    set imtype(jpeg) "JPEG"
+
+    upvar \#0 SaveImageTypeToExtensionMap ext
+
+    set ext(BMP)  "bmp"
+    set ext(JPEG) "jpg"
+    set ext(PNG)  "png"
+    set ext(PNM)  "pnm"
+    set ext(PostScript) "ps"
+    set ext(TIFF) "tif"
+}
 #-------------------------------------------------------------------------------
 # .PROC SaveWindowToFile
 # 
@@ -37,8 +97,8 @@
 #
 # .ARGS
 # str directory Directory containing file;  if empty no directory is added.
-# str filename Filename to save image to (no extension).
-# str imageType Type of image to save (BMP, JPEG, PNG, PNM, PostScript, TIFF).
+# str filename Filename to save image to (see SaveGetFilePath).
+# str imageType Type of image to save (see SaveGetFilePath).
 # str window Name of window to save, defaults to viewWin.
 # .END
 #-------------------------------------------------------------------------------
@@ -65,13 +125,12 @@ proc SaveWindowToFile {directory filename imageType {window ""}} {
 #
 # .ARGS
 # str directory Directory containing file;  if empty no directory is added.
-# str filename Filename to save image to (no extension).
-# str imageType Type of image to save (BMP, JPEG, PNG, PNM, PostScript, TIFF).
+# str filename Filename to save image to (see SaveGetFilePath).
+# str imageType Type of image to save (see SaveGetFilePath).
 # str image The image to save.
 # .END
 #-------------------------------------------------------------------------------
 proc SaveImageToFile {directory filename imageType image} {
-
     set filename [SaveGetFilePath $directory $filename $imageType]
 
     vtk${imageType}Writer saveWriter
@@ -81,7 +140,6 @@ proc SaveImageToFile {directory filename imageType image} {
     saveWriter Delete
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC SaveGetFilePath
 # 
@@ -90,23 +148,113 @@ proc SaveImageToFile {directory filename imageType image} {
 #
 # .ARGS
 # str directory Directory containing file;  if empty no directory is added.
-# str filename Filename to save image to (no extension).
-# str imageType Type of image to save (BMP, JPEG, PNG, PNM, PostScript, TIFF).
+# str filename Filename to save image to.  If it has no extension, an appropriate one will be added.
+
+# str imageType Type of image to save (BMP, JPEG, PNG, PNM, PostScript, TIFF). If empty, image type will be determined from the filename
 # .END
 #-------------------------------------------------------------------------------
-proc SaveGetFilePath {directory filename imageType} {
-    set ext(BMP) bmp
-    set ext(JPEG) jpg 
-    set ext(PNG) png
-    set ext(PNM) pnm
-    set ext(PostScript) ps
-    set ext(TIFF) tif
+proc SaveGetFilePath {directory filename {imageType ""}} {
+    global SaveImageTypeToExtensionMap SaveExtensionToImageTypeMap
 
-    set filename [format "%s.%s" $filename $ext($imageType)]
-
+    if {$imageType == ""} {
+        set newImageType [SaveGetImageType $filename]
+        if {"$newImageType" == ""} {
+            error "unknown type for image $imageType"
+        }
+        set imageType $newImageType
+    } else {
+        #explicit image type, add extension (if different)
+        set ext $SaveImageTypeToExtensionMap($imageType)
+        set curExt [string tolower [string range [file extension $filename] 1 end]]
+        if {"$ext" != "$curExt"} {
+            set filename [format "%s.%s" $filename $ext]
+        }
+    }
+    
     if {"$directory" != ""} {
         set filename [file join $directory $filename]
     }
 
     return $filename
+}
+
+#-------------------------------------------------------------------------------
+# .PROC SaveGetExtensionForImageType
+# 
+# Returns the appropriate file extension (no ".") for a given image type.
+#
+# .ARGS
+# str imageType Type of image.
+# .END
+#-------------------------------------------------------------------------------
+
+proc SaveGetExtensionForImageType {imageType} {
+    global SaveExtensionToImageTypeMap
+    if {[info exists SaveImageTypeToExtensionMap($imageType)]} {
+        return $SaveImageTypeToExtensionMap($imageType)
+    }
+    return ""
+}
+#-------------------------------------------------------------------------------
+# .PROC SaveGetImageType
+# 
+# Returns the canonical image type given a filename, file extension, or image type.
+# Only supported image types are returned; if an image type isn't supported, 
+# the empty string is returned.
+#
+# .ARGS
+# str imageType the image type, filename, or file extension (with or without .)
+# .END
+#-------------------------------------------------------------------------------
+
+proc SaveGetImageType {imageTypeOrExt} {
+    global SaveImageTypeToExtensionMap SaveExtensionToImageTypeMap
+    # try the most straightforward map
+
+    if {[info exists SaveImageTypeToExtensionMap($imageTypeOrExt)]} {
+        return $imageTypeOrExt
+    }
+
+    # if not, see if we were handed an extension (or filename w/extension) instead
+    set ext [file extension $imageTypeOrExt]
+    
+    if {"$ext" == ""} {
+        # could be the extension, no "."
+        set ext $imageTypeOrExt
+    } else {
+        set ext [string tolower [string range  $ext 1 end]]
+    }
+
+    if {[info exists SaveExtensionToImageTypeMap($ext)]} { 
+        return $SaveExtensionToImageTypeMap($ext)
+    }
+
+    # no luck
+    return ""
+}
+
+#-------------------------------------------------------------------------------
+# .PROC SaveGetSupportedImageTypes
+# 
+#  Return a list of supported image types for saving.
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc SaveGetSupportedImageTypes {} {
+    global SaveImageTypeToExtensionMap
+    return [lsort [array names SaveImageTypeToExtensionMap]]
+}
+
+#-------------------------------------------------------------------------------
+# .PROC SaveGetSupportedImageTypes
+# 
+#  Return a list of extensions that correspond to supported image types
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc SaveGetSupportedExtensions {} {
+    global SaveExtensionToImageTypeMap
+    return [lsort [array names SaveExtensionToImageTypeMap]]
 }
