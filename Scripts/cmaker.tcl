@@ -66,23 +66,27 @@ switch $tcl_platform(os) {
 }
 
 
-set TARGETS { Base }
 
 # Add any modules here, as found in the Modules/vtk* directories of SLICER_HOME
+# or in the SLICER_MODULES environment variable
 regsub -all {\\} $SLICER_HOME / slicer_home
-set baseModulePath ${slicer_home}/Modules
-set modulePaths ""
-catch {set modulePaths [glob $baseModulePath/vtk*]}
+set baseModulePath $slicer_home/Modules
+set modulePaths [glob -nocomplain $baseModulePath/vtk*]
+if { [info exists env(SLICER_MODULES)] } {
+    foreach dir $env(SLICER_MODULES) {
+        lappend modulePaths [glob -nocomplain $dir/vtk*]
+    }
+}
+
+
+set TARGETS "$slicer_home/Base"
 
 foreach dir $modulePaths {
-    # get the module name
-    if {[regexp "$baseModulePath/(\.\*)" $dir match moduleName] == 1} {
-        # if it's not the custom one, append it to the list of targets
-        if {[string first Custom $moduleName] == -1} {
-            if {[file isdirectory ${baseModulePath}/${moduleName}] == 1} {
-                lappend TARGETS Modules/${moduleName}
-            }
-        }
+    if { ![file isdirectory $dir] } {continue}
+    set moduleName [file tail $dir]
+    # if it's not the custom one (the example) but starts with vtk, append it to the list of targets
+    if { [string match "vtk*" $moduleName] && ![string match "*CustomModule*" $moduleName] } {
+        lappend TARGETS $dir
     }
 }
 
@@ -103,6 +107,12 @@ if { $argv != "" } {
     }
     set TARGETS $newtargets
 }
+
+puts "Dirs to make: "
+foreach t $TARGETS {
+    puts $t
+}
+puts ""
 
 # use an already built version of vtk
 set VTK_ARG1 "-DUSE_BUILT_VTK:BOOL=ON"
@@ -134,16 +144,17 @@ foreach target $TARGETS {
 
     puts "\n----\nprocessing $target..."
 
-    set build $SLICER_HOME/$target/builds/$BUILD 
+    #set build $SLICER_HOME/$target/builds/$BUILD 
+    set build $target/builds/$BUILD 
     catch "file mkdir $build"
     cd $build
     puts "enter directory $build..."
 
     puts "running cmake ..."
-    puts "$CMAKE $SLICER_HOME/$target -G$GENERATOR \
+    puts "$CMAKE $target -G$GENERATOR \
         $VTK_ARG1 $VTK_ARG2 $VTK_ARG3 $VTK_ARG4 $VTK_ARG5 $VTK_ARG6 \
         $SLICER_ARG1 $SLICER_ARG2 $SLICER_ARG3"
-    exec $CMAKE $SLICER_HOME/$target -G$GENERATOR \
+    exec $CMAKE $target -G$GENERATOR \
         $VTK_ARG1 $VTK_ARG2 $VTK_ARG3 $VTK_ARG4 $VTK_ARG5 $VTK_ARG6 \
         $SLICER_ARG1 $SLICER_ARG2 $SLICER_ARG3
 
@@ -156,7 +167,7 @@ foreach target $TARGETS {
             puts $res
         }
         default {
-            if { $target == "Base" } {
+            if { [file tail $target] == "Base" } {
                 set sln VTKSLICER.sln
             } else {
                 set sln [string toupper [file tail $target]].sln
