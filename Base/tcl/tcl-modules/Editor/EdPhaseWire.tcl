@@ -140,29 +140,30 @@ proc EdPhaseWireSetOmega {omega} {
     set e EdPhaseWire
 
     # decide what size (256 or 512 now) kernel to use
+    # all reformatting is done at 256 resolution currently,
+    # unless we use attila's cool feature.  so for now,
+    # ignore the following checks
     #-------------------------------------------
-    set extent [[Volume([EditorGetWorkingID],vol) GetOutput] GetExtent]
-    set width [lindex $extent 1]
-    set height [lindex $extent 3]
+    #set extent [[Volume([EditorGetWorkingID],vol) GetOutput] GetExtent]
+    #set width [lindex $extent 1]
+    #set height [lindex $extent 3]
 
-    puts "$width $height"
+    #puts "$width $height"
     
-    if {$width != $height} {
-	puts "Can't work on non-square images now!"
-	return 1
-    }
+    #if {$width != $height} {
+	#puts "Can't work on non-square images now!"
+	#return 1
+    #}
 
-    if {$width != "255"} {
-	puts "Only 256x256 images supported!"
-	return 1
-    }
-
-    #if {$omega != "PiOverThree"} {
-	#	puts "Only w=pi/3 supported!"
-	#	return 1
+    #if {$width != "255"} {
+	#puts "Only 256x256 images supported!"
+	#return 1
     #}
 	
-    set width1 [expr $width + 1]
+    #set width1 [expr $width + 1]
+
+    set width 255
+    set width1 256
 
     # file name: look locally and then centrally
     #-------------------------------------------
