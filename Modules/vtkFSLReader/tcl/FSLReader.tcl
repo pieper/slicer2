@@ -41,8 +41,7 @@
 #   FSLReaderLoadAnalyze4D 
 #   FSLReaderWarn
 #   FSLReaderLoadBackgroundVolume
-#   FSLReaderCreateModels
-#   FSLReaderLoadDesignFSF
+#   FSLReaderLoadModels
 #   FSLReaderLoadForegroundVolume
 #   FSLReaderLoadVolume a
 #   FSLReaderSetDirectory
@@ -161,7 +160,7 @@ proc FSLReaderInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.3 $} {$Date: 2004/08/23 23:11:18 $}]
+        {$Revision: 1.4 $} {$Date: 2004/08/25 16:09:27 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -384,12 +383,9 @@ proc FSLReaderLoadAnalyze4D {} {
 proc FSLReaderWarn {} {
 
     DevWarningWindow \
-    "Before overlaying an activation onto \
-    a structrual or standard brain, you need \
-    make sure they are co-registered. FSL tool \
-    named \"flirt.\" can easily perform \
-    co-registration. For more information, check \
-    http://www.fmrib.ox.ac.uk/fsl/flirt/index.html
+    "Before overlaying an activation onto\
+    a structrual or standard brain, you need make\
+    sure they are co-registered. 
     "
 }
 
@@ -415,191 +411,63 @@ proc FSLReaderLoadBackgroundVolume {} {
     set fileName [file tail $FSLReader(bgFileName)]
     if {$fileName == "filtered_func_data.hdr"} {
 
-        # Loads design.fsf to retrieve EV model parameters 
-        FSLReaderLoadDesignFSF
-
-        # Creates models for EVs
-        FSLReaderCreateModels
-
         # Analyze 4D file
         FSLReaderLoadAnalyze4D
+
+        # Loads models from tsplot directory 
+        FSLReaderLoadModels
 
     } else {
         FSLReaderLoadVolume 1 
     }
 }
-
-   
-#-------------------------------------------------------------------------------
-# .PROC FSLReaderCreateModels
-# Creates models for all EVs 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc FSLReaderCreateModels {} {
-    global FSLReader 
-
-    set i 1
-    while {$i <= $FSLReader(nevs)} {
-
-        # if the stimulus array exists, remove it
-        if {[info command FSLReader(ev$i,model)] != ""} {
-            FSLReader(ev$i,model) Delete
-            unset -nocomplain FSLReader(ev$i,model)
-        }
-
-        vtkFloatArray FSLReader(ev$i,model)     
-        FSLReader(ev$i,model) SetNumberOfTuples $FSLReader(totalVolumes) 
-        FSLReader(ev$i,model) SetNumberOfComponents 1
-
-#        puts "\n$i\n"
-
-        # 0 : Square waveform
-        # 1 : Sinusoid
-        if {$FSLReader(ev$i,shape) == 0} {
-
-            set offset [expr $FSLReader(ev$i,skip) + $FSLReader(ev$i,phase)]
-            set rem [expr $offset % ($FSLReader(ev$i,off) + $FSLReader(ev$i,on))]
-            if {$rem < $FSLReader(ev$i,off)} {
-                set sVols [expr {($FSLReader(ev$i,off) - $rem)/$FSLReader(tr)}]
-            } else {
-                set sVols [expr {($FSLReader(ev$i,on) + $FSLReader(ev$i,off) \
-                    - $rem) / $FSLReader(tr)}]
-            }
-
-            set count 0
-            set doTask [expr {$rem < $FSLReader(ev$i,off) ? 0 : 1}]
-
-            while {$count < $FSLReader(totalVolumes)} {
-                if {$count == 0} {
-                    set length $sVols 
-                } else {
-                    set length [expr {$doTask ? ($FSLReader(ev$i,on) / $FSLReader(tr)) : \
-                        ($FSLReader(ev$i,off) / $FSLReader(tr))}]
-                }
-
-                set ii 0
-                while {$ii < $length && $count < $FSLReader(totalVolumes)} {
-
-                    set val [expr {$doTask ? 1.0 : 0.0}] 
-                    FSLReader(ev$i,model) SetComponent $count 0 $val 
-                    incr count 
-                    incr ii
-                }
-                set doTask [expr {!$doTask}] 
-            }
-        } elseif {$FSLReader(ev$i,shape) == 1} {
-            
-            set w [expr {2 * 3.14 / $FSLReader(ev$i,period)}]
-            set fi [expr {$FSLReader(ev$i,phase) * 2 * 3.14 / $FSLReader(ev$i,period)}]
-            set count 0
-            set t 0
-            while {$count < $FSLReader(totalVolumes)} {
-
-                set val [expr {sin($w * $t + $fi)}]  
-                set flipVal [expr $val * (-1)]
-                FSLReader(ev$i,model) SetComponent $count 0 $flipVal 
-                
-                set t [expr {$t + $FSLReader(tr)}]
-                incr count 
-            }
-
-        }
-
-        incr i
-    }
-}
  
 
 #-------------------------------------------------------------------------------
-# .PROC FSLReaderLoadDesignFSF
-# Loads design.fsf 
+# .PROC FSLReaderLoadModels
+# Loads models from tsplot directory 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc FSLReaderLoadDesignFSF {} {
+proc FSLReaderLoadModels {} {
     global FSLReader 
 
-#    if {! [info exists FSLReader(FSLDir)] ||
-#        ! [file exists $FSLReader(FSLDir)]} {
-#        set FSLReader(FSLDir) [file dirname $FSLReader(bgFileName)]
-#        set FSLReader(designFSFFileName) [file join $FSLReader(FSLDir) design.fsf] 
-#    }
-
     set FSLReader(FSLDir) [file dirname $FSLReader(bgFileName)]
-    set FSLReader(designFSFFileName) [file join $FSLReader(FSLDir) design.fsf] 
     set FSLReader(htmlFile) [file join $FSLReader(FSLDir) report.html]
 
-    if {! [file exists $FSLReader(designFSFFileName)]} {
-        DevErrorWindow "Design file doesn't exist: $FSLReader(designFSFFileName)."
+    set pattern "tsplot_*.txt"
+    set pattern [file join $FSLReader(FSLDir) tsplot $pattern] 
+    set plotFiles [glob -nocomplain $pattern]
+
+    if {$plotFiles == ""} {
+        DevErrorWindow "Time course text files don't exist."
         return
     }
 
-    # Reads file
-    set fp [open $FSLReader(designFSFFileName) r]
-    set data [read $fp]
-    set lines [split $data "\n"]
-    close $fp
+    foreach f $plotFiles {
 
-    # General info
-    set start [string first "# TR(s)" $data]
-    set end [string first "# Number of first-level analyses" $data]
-    set generalInfo [split [string range $data $start $end] "\n"]
-    foreach line $generalInfo {
+        set name [string range [file tail $f] 7 end-4]
 
-        set index [string first "set" $line]
-        if {$index != -1} {
-            set item [split $line " "]
-            set name [lindex $item 1]
-            set value [lindex $item 2]
-            if {$name == "fmri(tr)"} {
-                set FSLReader(tr) $value
-            } elseif {$name == "fmri(npts)"} {
-                set FSLReader(npts) $value
-            } else {
-                set FSLReader(ndelete) $value
-            }
+        # puts "file = $name"
+
+        # Reads file
+        set fp [open $f r]
+        set data [string trim [read $fp]]
+        set lines [split $data "\n"]
+        close $fp
+
+        vtkFloatArray FSLReader($name,model)     
+        FSLReader($name,model) SetNumberOfTuples $FSLReader(noOfAnalyzeVolumes)
+        FSLReader($name,model) SetNumberOfComponents 1
+
+        set count 0
+        set i [string first "f" $name]
+        set n [expr {$i == -1 ? 2 : 1}] 
+        foreach l $lines {
+            set tokens [split $l " "]
+            FSLReader($name,model) SetComponent $count 0 [lindex $tokens $n]
+            incr count
         }
-    }
-    set FSLReader(totalVolumes) [expr $FSLReader(npts)-$FSLReader(ndelete)]
-
-    # Number of EVs
-    set start [string first "set fmri(evs_orig)" $data]
-    set end [string first "\n" $data $start]
-    set evs [split [string range $data $start $end] " "]
-    set FSLReader(nevs) [lindex $evs 2]
-
-    # Info for each EV
-    set i 1
-    while {$i <= $FSLReader(nevs)} {
-
-        set start [string first "# Basic waveform shape (EV $i)" $data]
-        set end [string first "# Stop (EV $i)" $data]
-        set EV($i) [split [string range $data $start $end] "\n"]
-        foreach line $EV($i) {
-
-            set index [string first "set" $line]
-            if {$index != -1} {
-                set item [split $line " "]
-                set name [lindex $item 1]
-                set value [lindex $item 2]
-                if {$name == "fmri(shape$i)"} {
-                    set FSLReader(ev$i,shape) $value
-                } elseif {$name == "fmri(skip$i)"} {
-                    set FSLReader(ev$i,skip) $value
-                } elseif {$name == "fmri(period$i)"} {
-                    set FSLReader(ev$i,period) $value
-                } elseif {$name == "fmri(phase$i)"} {
-                    set FSLReader(ev$i,phase) $value
-                } elseif {$name == "fmri(off$i)"} {
-                    set FSLReader(ev$i,off) $value
-                } elseif {$name == "fmri(on$i)"} {
-                    set FSLReader(ev$i,on) $value
-                }
-            }
-        }
-
-        incr i
     }
 }
 

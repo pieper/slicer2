@@ -98,8 +98,8 @@ proc FSLReaderPopUpPlot {x y} {
 
         vtkTimeCoursePlotActor2 tcPlot
         tcPlot SetVoxelIndex $i $j $k
-        tcPlot SetPlot $FSLReader(timeCourse) FSLReader(ev$FSLReader(selectedEV),model) \
-            $FSLReader(ev$FSLReader(selectedEV),shape)
+        tcPlot SetPlot $FSLReader(timeCourse) \
+            FSLReader($FSLReader(currentModelName),model) 
 
         vtkRenderer render
         render AddActor2D tcPlot 
@@ -121,8 +121,8 @@ proc FSLReaderPopUpPlot {x y} {
     }
 
     $FSLReader(tcPlot) SetVoxelIndex $i $j $k
-    $FSLReader(tcPlot) SetPlot $FSLReader(timeCourse) FSLReader(ev$FSLReader(selectedEV),model) \
-        $FSLReader(ev$FSLReader(selectedEV),shape)
+    $FSLReader(tcPlot) SetPlot $FSLReader(timeCourse) \
+        FSLReader($FSLReader(currentModelName),model) 
 
     #Update the graph for the new data
     $FSLReader(renWin) Render 
@@ -242,6 +242,7 @@ proc FSLReaderGetVoxelFromSelection {x y} {
     }
 
     set bvName [[[Slicer GetBackVolume $s] GetMrmlNode] GetName]
+
     set index [string first "filtered_func_data" $bvName 0]
     if {$index != 0} {
         # DevErrorWindow "The background volume is not filtered_func_data.hdr."
@@ -249,38 +250,34 @@ proc FSLReaderGetVoxelFromSelection {x y} {
     }
 
     set fvName [[[Slicer GetForeVolume $s] GetMrmlNode] GetName]
-    set i 1
-    while {$i <= $FSLReader(nevs)} {
-        set index [string first "thresh_zstat$i" $fvName 0]
-        if {$index == 0} {
-            set FSLReader(selectedEV) $i
-            break
-        }
-        incr i
-    }
+    set start [string first "_" $fvName 0]
+    set end [string first "-" $fvName 0]
+    set name [string range $fvName [expr $start + 1] [expr $end - 1]]
 
-    if {$index == -1} {
-        # DevErrorWindow "Please input a right activation volume."
+    if {[info command FSLReader($name,model)] == ""} {
         return "-1 -1 -1"
     }
+
+    set FSLReader(currentModelName) $name
 
     set xs $x
     set ys $y
 
     # Which xy coordinates were picked?
     scan [MainInteractorXY $s $xs $ys] "%d %d %d %d" xs ys x y
-    puts "Click: $s $x $y"
+    # puts "Click: $s $x $y"
 
     # Which voxel index (ijk) were picked?
     $Interactor(activeSlicer) SetReformatPoint $s $x $y
     scan [$Interactor(activeSlicer) GetIjkPoint]  "%g %g %g" i j k
-    puts "Voxel coords: $i $j $k"
+    # puts "Voxel coords: $i $j $k"
 
     # Let's snap to the nearest voxel
     set i [expr round ($i) ]
     set j [expr round ($j) ]    
     set k [expr round ($k) ]
-    puts "Rounded voxel coords: $i $j $k"
+    # puts "Rounded voxel coords: $i $j $k"
+    puts "Voxel coords: $i $j $k"
     
     return "$i $j $k"
 }
