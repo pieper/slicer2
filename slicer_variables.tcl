@@ -51,6 +51,8 @@ set ::TCL_BIN_DIR $::SLICER_LIB/tcl-build/bin
 set ::TCL_LIB_DIR $::SLICER_LIB/tcl-build/lib
 set ::TCL_INCLUDE_DIR $::SLICER_LIB/tcl-build/include
 set ::CMAKE_PATH $::SLICER_LIB/CMake-build
+set ::GSL_LIB_DIR $::SLICER_LIB/gsl/lib
+set ::GSL_INC_DIR $::SLICER_LIB/gsl/include
 
 ## system dependent variables
 
