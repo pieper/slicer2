@@ -36,13 +36,10 @@
 #   EndoscopicBuildVTK
 #   EndoscopicGyroParams
 #   EndoscopicCreateCamera
-#   EndoscopicCreateCamera
-#   EndoscopicCameraParams (optional),
 #   EndoscopicCameraParams
 #   EndoscopicCreateFocalPoint
 #   EndoscopicCreateLandmarks
 #   EndoscopicCreatePath
-#   EndoscopicCreateVector
 #   EndoscopicCreateVector
 #   EndoscopicVectorParams
 #   EndoscopicUpdateVisibility name (optional)
@@ -101,20 +98,14 @@
 #   EndoscopicUpdateSelectionLandmarkList
 #   EndoscopicSetModelsVisibilityInside
 #   EndoscopicSetSlicesVisibility
-#   EndoscopicImplicitVolumeFromModel
-#   EndoscopicShowContour
-#   EndoscopicVolumeFromModel
-#   EndoscopicReadColonData
-#   EndoscopicReadPathData
 #==========================================================================auto=
 
-    
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicEnter
 # Called when this module is entered by the user.  
 
 # effects: Pushes the event manager for this module and 
-#          calls EndoscopicAddView. 
+#          calls EndoscopicAddEndoscopicView. 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -182,7 +173,7 @@ proc EndoscopicExit {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicUpdateEndoscopicViewVisibility
-# 
+#  Makes the endoscopic view appear or disappear based on the variable Endoscopic(mainview,visibility) [note: there is a check to make sure that the endoscopic view cannot disappear if the main view is not visible)
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -204,7 +195,7 @@ proc EndoscopicUpdateEndoscopicViewVisibility {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicUpdateMainViewVisibility
-# 
+# Makes the main view appear or disappear based on the variable Endoscopic(mainview,visibility) [note: there is a check to make sure that the main view cannot disappear if the endoscopic view is not visible)
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -225,7 +216,7 @@ proc EndoscopicUpdateMainViewVisibility {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicAddEndoscopicView
-# 
+#  Add the endoscopic renderer to the right of the main view 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -249,7 +240,7 @@ proc EndoscopicAddEndoscopicView {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicAddMainView
-# 
+#  Add the main view to the left of the endoscopic view
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -267,7 +258,8 @@ proc EndoscopicAddMainView {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicAddEndoscopicViewRemoveMainView
-# 
+#  Makes the main view invisible/the endoscopic view visible
+#  (so switch between the 2 views)
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -295,7 +287,7 @@ proc EndoscopicAddEndoscopicViewRemoveMainView {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicRemoveEndoscopicView
-# 
+#  Remove the endoscopic view
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -316,7 +308,7 @@ proc EndoscopicRemoveEndoscopicView {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicRemoveMainView
-# 
+#  Remove the main view
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -333,7 +325,8 @@ proc EndoscopicRemoveMainView {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicAddMainViewRemoveEndoscopicView
-# 
+#  Makes the main view visible/the endoscopic view invisible
+#  (so switch between the 2 views)
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -367,26 +360,26 @@ proc EndoscopicAddMainViewRemoveEndoscopicView {} {
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicInit
 #  The "Init" procedure is called automatically by the slicer.  
-#  
+#  <br>
 #
 #  effects: * It puts information about the module into a global array called 
-#             Module. 
+#             Module. <br>
 #           * It adds a renderer called View(endCam) to the global array 
 #             View and adds the new renderer to the list of renderers in 
-#             Module(renderers) 
+#             Module(renderers) <br> 
 #           * It also initializes module-level variables (in the global array 
-#             Endoscopic and Path)
+#             Endoscopic and Path) <br>
 #             The global array Endoscopic contains information about the 
-#             7 actors created in this module (the list is saved in Endoscopic(actors):
-#        regular actors:
-#               cam: the endoscopic camera 
-#               fp:  the focal point of cam
-#        3D glyphs:       
-#               cPath: the camera path
-#               cLand: the landmarks on the camera Path
-#               vector: the view vector at every point on the spline
-#               fPath: the focal point path
-#               fLand: the landmarks on the focal point Path
+#             7 actors created in this module (the list is saved in Endoscopic(actors): <br>
+#        regular actors: <br>
+#               cam: the endoscopic camera <br>
+#               fp:  the focal point of cam <br>
+#        3D glyphs:       <br>
+#               cPath: the camera path <br>
+#               cLand: the landmarks on the camera Path <br>
+#               vector: the view vector at every point on the spline <br>
+#               fPath: the focal point path <br>
+#               fLand: the landmarks on the focal point Path <br>
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -398,9 +391,9 @@ proc EndoscopicInit {} {
     set Module($m,row1List) "Help Display Camera Path"
     set Module($m,row1Name) "{Help} {Display} {Camera} {Path}"
     set Module($m,row1,tab) Camera    
-    set Module($m,row2List) "Advanced Automatic"
-    set Module($m,row2Name) "{Advanced} {Automatic}"
-    set Module($m,row2,tab) Automatic
+    set Module($m,row2List) "Advanced"
+    set Module($m,row2Name) "{Advanced}"
+    set Module($m,row2,tab) Advanced
 
     set Module($m,depend) ""
     
@@ -435,6 +428,7 @@ proc EndoscopicInit {} {
     $View(endCam) SetFocalPoint 0 30 0
     $View(endCam) SetViewUp 0 0 1
     $View(endCam) ComputeViewPlaneNormal        
+    set View(endoscopicClippingRange) ".01 1000"
     eval $View(endCam) SetClippingRange $View(endoscopicClippingRange)
     
 
@@ -604,7 +598,7 @@ proc EndoscopicInit {} {
 #  
 #  effects: calls EndoscopicCreateFocalPoint, 
 #           EndoscopicCreateCamera, EndoscopicCreateLandmarks and 
-#           EndoscopicCreatePath   
+#           EndoscopicCreatePath, EndoscopicCreateGyro, EndoscopicCreateVector   
 # 
 # .ARGS
 # .END
@@ -777,17 +771,10 @@ proc EndoscopicGyroParams { {axislen -1} {axisrad -1} {conelen -1} } {
 }
 
 
-#-------------------------------------------------------------------------------
-# .PROC EndoscopicCreateCamera
-#
-# Create the Camera vtk actor
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicCreateCamera
-# 
+#  Create the Camera vtk actor
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -883,20 +870,11 @@ proc EndoscopicCreateCamera {} {
 }
 
 
-#-------------------------------------------------------------------------------
-# .PROC EndoscopicCameraParams
-#
-# effects: Set the size parameters for the camera and the focal point
-# .ARGS
-#  size (optional), 30 by default
-#  
-# .END
-#-------------------------------------------------------------------------------
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicCameraParams
-# 
-# .ARGS
+# effects: Set the size parameters for the camera and the focal point
+# .ARGS int size (optional), 30 by default
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicCameraParams {{size -1}} {
@@ -1056,7 +1034,7 @@ proc EndoscopicCreatePath {} {
 	
 	# set the tube
 
-	Endoscopic(${p}Path,source)       SetNumberOfSides 3
+	Endoscopic(${p}Path,source)       SetNumberOfSides 8
 	Endoscopic(${p}Path,source)       SetInput Endoscopic(${p}Path,polyData)
 	Endoscopic(${p}Path,source)       SetRadius $Endoscopic(${p}Path,size)
 	Endoscopic(${p}Path,mapper)       SetInput [Endoscopic(${p}Path,source) GetOutput]
@@ -1073,13 +1051,6 @@ proc EndoscopicCreatePath {} {
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicCreateVector
 #  Create the vtk vector actor
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-
-#-------------------------------------------------------------------------------
-# .PROC EndoscopicCreateVector
-# 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -1184,6 +1155,10 @@ proc EndoscopicUpdateVisibility {a {visibility ""}} {
 	set Endoscopic($a,visibility) $visibility
     }
     Endoscopic($a,actor) SetVisibility $Endoscopic($a,visibility)
+    if {$a == "cam"} {
+	set Endoscopic(gyro,visibility) $Endoscopic($a,visibility)
+	Endoscopic(gyro,actor) SetVisibility $Endoscopic(gyro,visibility)
+    }
     EndoscopicSetPickable $a $Endoscopic($a,visibility)
 }
 
@@ -1468,7 +1443,7 @@ proc EndoscopicBuildGUI {} {
 
     set f $fDisplay.fMain
     eval {label $f.fexpl -text "Main View parameter:"} $Gui(WLA)
-     eval {checkbutton $f.cMainView -variable Endoscopic(mainview,visibility) -text "Show Main View" -command "EndoscopicUpdateMainViewVisibility" -indicatoron 1} $Gui(WCA)    
+     eval {checkbutton $f.cMainView -variable Endoscopic(mainview,visibility) -text "Show Main View" -command "EndoscopicUpdateMainViewVisibility" -indicatoron 0} $Gui(WCA)    
 
     pack $f.fexpl $f.cMainView -pady 2
     
@@ -1476,25 +1451,25 @@ proc EndoscopicBuildGUI {} {
     set f $fDisplay.fEndo
         eval {label $f.fexpl -text "Endoscopic View parameters:"} $Gui(WLA)
     
-    EndoscopicCreateCheckButton $f.cEndoView Endoscopic(endoview,visibility)   "Show Endoscopic View" "EndoscopicUpdateEndoscopicViewVisibility" 1
+    eval {checkbutton $f.cEndoView -variable Endoscopic(endoview,visibility) -text "Show Endoscopic View" -command "EndoscopicUpdateEndoscopicViewVisibility" -indicatoron 0} $Gui(WCA)    
     
-    #    eval {checkbutton $f.cEndoView -variable Endoscopic(endoview,visibility) -text "Show Endoscopic View" -command "EndoscopicUpdateEndoscopicViewVisibility" -indicatoron 1} $Gui(WCA)    
     
-    eval {checkbutton $f.cExitEndoView -variable Endoscopic(endoview,hideOnExit) -text "Hide Endoscopic View on Exit" -indicatoron 1} $Gui(WCA)    
-    
-    eval {checkbutton $f.cslices -variable Endoscopic(SlicesVisibility) -text "Show 2D Slices" -command "EndoscopicSetSlicesVisibility" -indicatoron 1} $Gui(WCA)
+    eval {checkbutton $f.cslices -variable Endoscopic(SlicesVisibility) -text "Show 2D Slices" -command "EndoscopicSetSlicesVisibility" -indicatoron 0} $Gui(WCA)
     pack $f.fexpl -side top -pady 2
-    pack $f.cEndoView $f.cExitEndoView -side top -padx $Gui(pad) -pady 0
+    pack $f.cEndoView  -side top -padx $Gui(pad) -pady 0
     pack $f.cslices -side top -pady 5
 
     set f $fDisplay
+
+    eval {checkbutton $f.cExitEndoView -variable Endoscopic(endoview,hideOnExit) -text "Hide Endoscopic View on Exit" -indicatoron 0} $Gui(WCA)   
+
     set text "
     To start, go to the Camera tab 
     If you need help, go to the Help tab"
 
     
     eval {label $f.fTitle2.lTitle -text $text} $Gui(WLA)
-    pack $f.fTitle2.lTitle -side top -padx $Gui(pad) -pady 7
+    pack $f.cExitEndoView -side top -padx $Gui(pad) -pady 7
     
     #-------------------------------------------
     # Camera frame
@@ -1861,8 +1836,8 @@ proc EndoscopicBuildGUI {} {
 	eval {checkbutton $f.sPath \
 		-text "Show Path" -variable Endoscopic(path,showPath) -width 12 -indicatoron 0 -command "EndoscopicShowPath; Render3D"} $Gui(WBA) {-bg $Endoscopic(path,rColor)}             
 	grid $f.cRandPath $f.dRandPath -padx 0 -pady $Gui(pad)
-	grid $f.rPath $f.sPath -padx 0 -pady $Gui(pad)
-
+	#grid $f.rPath $f.sPath -padx 0 -pady $Gui(pad)
+	grid $f.sPath -padx 0 -pady $Gui(pad)
 
 	#EndoscopicBuildLandmarkScroll $fPath.fBBot
 	#-------------------------------------------
@@ -1961,69 +1936,6 @@ proc EndoscopicBuildGUI {} {
 	grid $f.l $f.fMBtns $f.l2 -padx 1 -pady 1
 	
 	
-	#-------------------------------------------
-	# Automatic frame -> Volume Modeller
-	#-------------------------------------------
-
-
-	
-	set fAuto $Module(Endoscopic,fAutomatic)
-	set f $fAuto
-
-#	eval {button $f.brc -text "read colon data" -command EndoscopicReadColonData} $Gui(WBA)
-#	eval {button $f.brp -text "read path data" -command EndoscopicReadPathData} $Gui(WBA)
-
-	set text "press this button to use voxelModeller"
-	DevAddLabel $f.lintro $text WLA
-	
-	DevAddButton $f.bauto "Extract Volume from Model" EndoscopicVolumeFromModel
-	
-	set text "select a model and press the button above "
-	DevAddLabel $f.linfo $text WLA
-	set Endoscopic(automatic,infoLabel) $f.linfo
-	
-	pack $f.lintro $f.bauto $f.linfo -side top -padx 5 -pady 5
-	set Endoscopic(voxelSize) 1
-	eval {label $f.lvs -text "VoxelSize: $Endoscopic(voxelSize)"} $Gui(WLA)
-	eval {entry $f.vsWidth -width 5 -textvariable Endoscopic(voxelSize)} $Gui(WEA)
-	pack $f.lvs $f.vsWidth -side top -padx 5 -pady 5
-
-	#-------------------------------------------
-	# Automatic frame -> Implicit Modeller
-	#-------------------------------------------
-
-
-#	set text "press this button to use implicit"
-#	DevAddLabel $f.ilintro $text WLA
-
-#	DevAddButton $f.ibauto "Extract Implicit Volume from Model" EndoscopicImplicitVolumeFromModel
-#	
-#	set Endoscopic(distance) 1
-#	eval {label $f.ilvs -text "Distance: $Endoscopic(voxelSize)"} $Gui(WLA)
-#	
-#	eval {entry $f.ivsWidth -width 5 -textvariable Endoscopic(distance)} $Gui(WEA)
-#	set Endoscopic(implicitModeller,empty) 1
-#	bind $f.ivsWidth <Return> \
-#		"EndoscopicShowContour"
-#
-#	pack $f.ilintro $f.ibauto $f.ilvs $f.ivsWidth -side top -padx 5 -pady 5
-
-	
-
-
-	#-------------------------------------------
-	# Automatic ->Active frame
-	#-------------------------------------------
-
-        eval {label $f.lActive -text "Active Model: "} $Gui(BLA)
-	eval {menubutton $f.mbActive -text "None" -relief raised -bd 2 -width 20 \
-		-menu $f.mbActive.m} $Gui(WMBA)
-	eval {menu $f.mbActive.m} $Gui(WMA)
-	pack $f.lActive $f.mbActive -side left
-	# Append widgets to list that gets refreshed during UpdateMRML
-	lappend Model(mbActiveList) $f.mbActive
-	lappend Model(mActiveList)  $f.mbActive.m
-
     }
     
 
@@ -3904,10 +3816,9 @@ proc EndoscopicSetPathFrame {} {
 	    set Endoscopic(path,i) $Endoscopic(path,stepStr)
 	    set l [Endoscopic(cLand,allInterpolatedPoints) GetPoint $Endoscopic(path,i)] 
 	    set l2 [Endoscopic(fLand,allInterpolatedPoints) GetPoint $Endoscopic(path,i)]
-	    
-	    EndoscopicSetFocalAndCameraPosition [lindex $l 0] [lindex $l 1] [lindex $l 2] [lindex $l2 0] [lindex $l2 1] [lindex $l2 2]	    
-	    
 
+	    EndoscopicSetFocalAndCameraPosition [lindex $l 0] [lindex $l 1] [lindex $l 2] [lindex $l2 0] [lindex $l2 1] [lindex $l2 2]
+	    
 	} elseif { $Endoscopic(path,flyDirection) == "Backward" } {
 	    set Endoscopic(path,i) $Endoscopic(path,stepStr)
 	    set l [Endoscopic(cLand,allInterpolatedPoints) GetPoint $Endoscopic(path,i)]
@@ -4302,259 +4213,5 @@ proc EndoscopicSetSlicesVisibility {} {
 	}
     }
     Render3D
-}
-
-
-############################################################################
-#
-#       Current Research
-#
-############################################################################
-
-#-------------------------------------------------------------------------------
-# .PROC EndoscopicImplicitVolumeFromModel
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EndoscopicImplicitVolumeFromModel {} {
-    global Model Endoscopic
-    # get the bounds of the polydata of the active model
-    set m $Model(activeID)
-    if {$m != ""} {
-	
-	$Model($m,polyData) ComputeBounds
-	set bounds [$Model($m,polyData) GetBounds]
-	
-	set xMin [lindex $bounds 0]
-	set xMax [lindex $bounds 1]
-	set yMin [lindex $bounds 2]
-	set yMax [lindex $bounds 3]
-	set zMin [lindex $bounds 4]
-	set zMax [lindex $bounds 5]
-	
-	
-	set xLength [expr round(abs($xMax - $xMin)) + 1 ]
-	set yLength [expr round(abs($yMax - $yMin)) + 1 ]
-	set zLength [expr round(abs($zMax - $zMin)) + 1 ]
-	
-	
-	Endoscopic(implicitModeller) SetProcessModeToPerVoxel
-	Endoscopic(implicitModeller) SetInput $Model($m,polyData)
-	Endoscopic(implicitModeller) SetSampleDimensions $xLength $yLength $zLength
-	
-	#Endoscopic(implicitModeller) SetModelBounds $xMin $xMax $yMin $yMax $zMin $zMax
-	#Endoscopic(implicitModeller) AdjustBoundsOn
-	#Endoscopic(implicitModeller) SetAdjustDistance 1
-	
-	set Endoscopic(implicitModeller,empty) 0
-	
-	aWriter SetFileName implicitModel.vtk
-	aWriter SetInput [Endoscopic(implicitModeller) GetOutput]
-	aWriter Update
-	
-    }
-    
-}
-
-#-------------------------------------------------------------------------------
-# .PROC EndoscopicShowContour
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EndoscopicShowContour {} {
-    
-    global Endoscopic
-    
-    if { $Endoscopic(implicitModeller,empty) == 0 } {
-	
-	aReader SetFileName implicitModel.vtk
-	
-	Endoscopic(implicitModeller,contourFilter) SetInput [aReader GetOutput]
-	Endoscopic(implicitModeller,contourFilter) SetValue  0 $Endoscopic(distance)
-	
-	
-	Endoscopic(implicitModeller,mapper) SetInput [Endoscopic(implicitModeller,contourFilter) GetOutput]
-	
-	Endoscopic(implicitModeller,actor) SetMapper Endoscopic(implicitModeller,mapper) 
-	Render3D
-    }
-    
-}
-
-#-------------------------------------------------------------------------------
-# .PROC EndoscopicVolumeFromModel
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EndoscopicVolumeFromModel {} {
-    global Model Endoscopic
-
-        
-    # voxelize the active model
-    set m $Model(activeID)
-
-    if {$m != ""} {
-	$Model($m,polyData) ComputeBounds
-	set bounds [$Model($m,polyData) GetBounds]
-	
-	#set text "The model [Model($m,node) GetName] has [$Model($m,polyData) GetNumberOfCells] cells: \n [$Model($m,polyData) GetNumberOfPolys] polys, \n [$Model($m,polyData) GetNumberOfStrips] strips, \n [$Model($m,polyData) GetNumberOfLines] lines \n and [$Model($m,polyData) GetNumberOfVerts] verts."
-	
-	# we need to convert from triangle strips to triangles for now
-	vtkTriangleFilter triangleFilter
-	triangleFilter SetInput $Model($m,polyData) 
-	triangleFilter Update
-
-	set xMin [lindex $bounds 0]
-	set xMax [lindex $bounds 1]
-	set yMin [lindex $bounds 2]
-	set yMax [lindex $bounds 3]
-	set zMin [lindex $bounds 4]
-	set zMax [lindex $bounds 5]
-	
-	set xLength [expr round(abs($xMax - $xMin)) + 1 ]
-	set yLength [expr round(abs($yMax - $yMin)) + 1 ]
-	set zLength [expr round(abs($zMax - $zMin)) + 1 ]
-	
-	set xOrig [expr $xMin + ((abs($xMax - $xMin)) * 0.5 )]
-	set yOrig [expr $yMin + ((abs($yMax - $yMin)) * 0.5 )]
-	set zOrig [expr $zMin + ((abs($zMax - $zMin)) * 0.5 )]
-	
-	vtkSurfaceToVolumeFilter volumeFilter
-	volumeFilter SetInput [triangleFilter GetOutput]
-	#volumeFilter SetSampleDimensions [expr int($xLength/$Endoscopic(voxelSize))] [expr int($yLength/$Endoscopic(voxelSize))] [expr int($zLength/$Endoscopic(voxelSize))]
-	
-	volumeFilter SetSampleDimensions $Endoscopic(voxelSize) $Endoscopic(voxelSize) $Endoscopic(voxelSize)
-
-	vtkDataSetWriter aWriter
-	puts "aWriter SetFileName [Model($m,node) GetName].vtk"
-	aWriter SetFileName voxelModel.vtk
-	#aWriter SetInput [afilter GetStructuredPointsOutput]
-	aWriter SetInput [volumeFilter GetOutput]
-	aWriter Update
-
-	vtkDataSetReader aReader
-	aReader SetFileName voxelModel.vtk
-	
-	vtkContourFilter voxelSurface	
-	voxelSurface SetInput [aReader GetOutput]
-	voxelSurface SetValue 0 1
-
-	Endoscopic(voxelModeller,mapper) SetInput [voxelSurface GetOutput]
-	Endoscopic(voxelModeller,actor) SetMapper Endoscopic(voxelModeller,mapper)
-
-	#$Endoscopic(automatic,infoLabel) config -text $text
-	Render3D
-
-	triangleFilter Delete
-	volumeFilter Delete
-	aWriter Delete
-	aReader Delete
-	voxelSurface Delete
-    }
-}
-
-
-#-------------------------------------------------------------------------------
-# .PROC EndoscopicReadColonData
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EndoscopicReadColonData {} {
-    global Endoscopic
-
-    # create the volume modeller
-    vtkContourFilter colonSurface
-    vtkDataSetMapper colonMapper
-    vtkActor colonActor
-    aReader SetFileName colonModel.vtk	
-    colonSurface SetInput [aReader GetOutput]
-    colonSurface Modified
-    colonSurface Update
-    puts "get output"
-    colonSurface SetValue 0 1
-    colonMapper SetInput [colonSurface GetOutput]
-    colonMapper Modified
-    colonMapper Update
-    colonActor SetMapper colonMapper
-    viewRen AddActor colonActor
-    puts "before render"
-    Render3D
-
-#    vtkImageData idata
-#    idata SetInput [sreader GetOutput]
-#    idata SetScalarTypeToShort
-#    vtkImageWriter iwriter
-#    iwriter SetInput [idata GetOutput]
-#    iwriter SetFilePrefix "colonModel"
-#    iwriter SetFileDimensionality 2
-#    iwriter Write	
-
-}
-
-#-------------------------------------------------------------------------------
-# .PROC EndoscopicReadPathData
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EndoscopicReadPathData {} {
-    global Endoscopic
-    
-
-    
-    
-    vtkGlyph3D Endoscopic(glyph)
-    vtkPolyDataMapper Endoscopic(mapper)
-    vtkActor Endoscopic(actor)
-    vtkPolyData Endoscopic(pdata)
-
-    vtkStructuredPointsGeometryFilter Endoscopic(spFilter)
-    vtkPoints Endoscopic(points)
-    aReader SetFileName skeletonModel.vtk	
-    Endoscopic(spFilter) SetInput [aReader GetOutput]
-    
-    set pointdata [[Endoscopic(spFilter) GetInput] GetPointData]
-    set scalars [$pointdata GetScalars]
-    set num [$scalars GetNumberOfScalars]
-    puts "$num"
-    for {set i 0} {$i < $num} {incr i} {
-	if { [$scalars GetScalar $i] == 1} {
-	    eval Endoscopic(points) InsertNextPoint [[Endoscopic(spFilter) GetInput] GetPoint $i]
-	    puts "added $i"
-	}
-    }
-
-    Endoscopic(pdata) SetInputPoints Endoscopic(points)
-
-    Endoscopic(glyph)      SetInput [Endoscopic(pdata)]
-    Endoscopic(glyph)      SetSource [Endoscopic(fLand,source) GetOutput]
-    Endoscopic(mapper)     SetInput [Endoscopic(glyph) GetOutput]
-    Endoscopic(actor)      SetMapper Endoscopic(mapper)
-    viewRen AddActor Endoscopic(actor)
-    puts "before render"
-    Render3D
-    
-
-    #vtkImageCast icast
-    #icast SetInput [aReader GetOutput]
-    #icast SetOutputScalarTypeToShort
-    
-    #vtkImageWriter iwriter
-    #iwriter SetInput [icast GetOutput]
-    #iwriter SetFilePrefix "skeletonModel"
-    #iwriter SetFileDimensionality 3
-    #iwriter Write	
-
-
-    #vtkPolyDataWriter writer
-    #writer SetInput [skeletonMapper GetInput]
-    #writer SetFileType 2
-    #writer SetFileName surfaceSkeleton.vtk
-    #writer Write
-
 }
 
