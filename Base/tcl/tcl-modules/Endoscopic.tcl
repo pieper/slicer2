@@ -262,7 +262,7 @@ proc EndoscopicInit {} {
     set Module($m,category) "Visualisation"
     
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.95 $} {$Date: 2005/02/14 17:56:11 $}] 
+    {$Revision: 1.96 $} {$Date: 2005/02/15 18:32:58 $}] 
        
     # Define Procedures
     #------------------------------------
@@ -5005,7 +5005,7 @@ proc EndoscopicAddFlatView {} {
     
     
     set scalarRangefrm [frame $yfrm.scalarRangefrm]
-    set scaRangelbl [label $scalarRangefrm.lbl -text "Threshold Range:" -font {helvetica 10 bold}]
+    set scaRangelbl [label $scalarRangefrm.lbl -text "Scalar Range:" -font {helvetica 10 bold}]
     eval {entry $scalarRangefrm.eLo -width 6 -textvariable Endoscopic(flatColon,scalarLow) }
     bind $scalarRangefrm.eLo <Return> "EndoscopicSetFlatColonScalarRange $f.flatRenderWidget$name"
     bind $scalarRangefrm.eLo <FocusOut> "EndoscopicSetFlatColonScalarRange $f.flatRenderWidget$name"
