@@ -10,7 +10,7 @@ SET (Base_SRCS
 	vtkImageBimodalAnalysis.cxx
 	vtkImageCloseUp2D.cxx
 	vtkImageConnectivity.cxx vtkImageCopy.cxx vtkImageCrossHair2D.cxx vtkImageDICOMReader.cxx
-	vtkImageDouble2D.cxx vtkImageDrawROI.cxx vtkImageEMMarkov.cxx 
+	vtkImageDouble2D.cxx vtkImageDrawROI.cxx 
 	vtkImageEditor.cxx vtkImageEditorEffects.cxx vtkImageErode.cxx
 	vtkImageFillROI.cxx
 	vtkImageFrameSource.cxx vtkImageLabelChange.cxx vtkImageLabelOutline.cxx
@@ -35,7 +35,6 @@ SET (Base_SRCS
 	vtkMrmlVolumeNode.cxx vtkMrmlVolumeStateNode.cxx vtkMrmlWindowLevelNode.cxx
 	vtkResliceImage.cxx vtkSurfaceProps.cxx
 	vtkPolyBoolean.cxx 
-	vtkImageEMSegmenter.cxx
 	vtkMrmlEndSegmenterNode.cxx vtkMrmlSegmenterClassNode.cxx vtkMrmlSegmenterInputNode.cxx  
         vtkMrmlSegmenterCIMNode.cxx vtkMrmlSegmenterGraphNode.cxx vtkMrmlSegmenterNode.cxx 
         vtkMrmlSegmenterSuperClassNode.cxx vtkMrmlEndSegmenterSuperClassNode.cxx
