@@ -197,6 +197,7 @@ if { [info exists env(SLICER_MODULES)] } {
 
 set env(SLICER_MODULES_TO_REQUIRE) " "
 foreach modulePath $modulePaths {
+    set modulePath [string trimright $modulePath "/"] ;# remove trailing slash
     set modules [glob -nocomplain $modulePath/vtk*]
     foreach dir $modules {
         # get the module name
@@ -230,16 +231,18 @@ if { $env(BUILD) == "Darwin" } {
     set env(LD_LIBRARY_PATH) $env(DYLD_LIBRARY_PATH)
 }
 
+
 set msg "Slicer is an experimental software package.
 Any clinical use requires proper research controls.  
 Clicking \"Ok\" below binds you to the license agreement.
 See www.slicer.org for details.
 "
-#set resp okay
-set resp [tk_messageBox -message $msg -type okcancel -title "Slicer2"]
+if { ![file exists $env(HOME)/.IAgreeToSlicersLicense] } {
+    set resp [tk_messageBox -message $msg -type okcancel -title "Slicer2"]
 
-if {$resp == "cancel"} {
-    exit
+    if {$resp == "cancel"} {
+        exit
+    }
 }
 
 
@@ -278,6 +281,11 @@ proc file_event {fp} {
         puts $line
     }
 }
+
+# change from tcl escape to shell escape for command line arguments 
+# that contain spaces -- note that shell notation only works for a single
+# level of nesting
+regsub -all "{|}" $argv "\\\"" argv
 
 switch $env(BUILD) {
     "solaris8" -
