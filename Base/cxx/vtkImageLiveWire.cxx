@@ -53,15 +53,15 @@ vtkImageLiveWire::vtkImageLiveWire()
   memset(this->EndPoint, 0, 2*sizeof(int));
 
   this->MaxEdgeCost = 255;
+  this->Verbose = 0;
 
-  this->ContourPoints = vtkImageDrawROI::New();
+  this->ContourPoints = vtkPoints::New();
 
   this->Q = NULL;
   this->CC = NULL;
   this->Dir = NULL;
   this->L = NULL;
 
-  this->Verbose = 1;
 }
 
 
@@ -105,9 +105,6 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
 				     vtkImageData **inDatas, T **inPtrs,
 				     vtkImageData *outData)
 {
-  // Lauren output something
-  outData->CopyAndCastFrom(inDatas[0], inDatas[0]->GetExtent());
-
   int *extent = inDatas[0]->GetWholeExtent();
   int numrows = extent[1] - extent[0] + 1;
   int numcols = extent[3] - extent[2] + 1;
@@ -152,7 +149,18 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
   array2D<bool> &B = (*self->B);
 
 
+  // Lauren just use #define..
+  // since this isn't a member of the class:
+  const int NONE = self->NONE;
+  const int UP = self->UP;
+  const int DOWN = self->DOWN;
+  const int LEFT = self->LEFT;
+  const int RIGHT = self->RIGHT;
   
+  // these two match:
+  int neighbors[4][2] = {{0,1},{0,-1},{-1,0},{1,0}};
+  int arrows[4] = {UP, DOWN, LEFT, RIGHT};
+
   // ----------------  Dijkstra ------------------ //
 
   int *start = self->GetStartPoint();
@@ -181,9 +189,8 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
       // put vertex into L, the already looked at list
       L(currentX,currentY) = 1;
 
-      // remove it from Q (and list, A, in Q's bucket)
+      // remove it from Q
       Q->Remove(min);
-
      
       if (self->GetVerbose() > 1) 
 	{
@@ -203,14 +210,14 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
 
       // check out its 4 neighbors
       int oldCC, tempCC;
+      int x,y;
+
+
       vtkImageData *topEdge, *rightEdge;
       topEdge = self->GetTopEdges();
       rightEdge = self->GetRightEdges();
       T *topEdgeVal = (T*)topEdge->GetScalarPointerForExtent(topEdge->GetExtent());
       T *rightEdgeVal = (T*)rightEdge->GetScalarPointerForExtent(rightEdge->GetExtent());
-      int x,y;
-
-      int neighbors[4][2] = {{0,1},{1,0},{-1,0},{0,-1}};
       // Lauren use the proper edge map
       T* edges[4] = {rightEdgeVal, topEdgeVal, rightEdgeVal, topEdgeVal};
       T* edge;
@@ -238,21 +245,114 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
 		{
 		  // lower the cumulative cost to reach this neighbor
 		  CC(x,y) = tempCC;
+
 		  // store new short path direction
-		  Dir(x,y) = n+1;
+		  Dir(x,y) = arrows[n];
+
 		  // remove this neighbor from Q if in it
 		  Q->Remove(x,y);
+
 		  // then put it in the proper place in Q for its new cost
 		  Q->Insert(x,y,CC(x,y));
-
-		  if (self->GetVerbose() > 2)
-		    {
-		    cout << oldCC << " to  " << tempCC << endl;
-		    }
 		}
-	    }
+
+	    } // end if neighbor in image
+	} // end loop over neighbors
+    } // end while
+
+
+
+  // ------- Trace the shortest path using the Dir array. -----------//
+
+  // Lauren row column, x and y confusing.  test/fix it all.
+
+  int traceX = end[0];
+  int traceY = end[1];
+  
+  self->ContourPoints->InsertNextPoint(traceX,traceY,0);
+
+  while (traceX!=start[0] || traceY!=start[1])
+    {
+      if (self->GetVerbose() > 2) 
+	{
+	  cout << "(" << traceX << "," << traceY << ")" << endl;
 	}
-    }
+
+      // follow "arrows" backwards.
+      switch (Dir(traceX,traceY))
+	{
+	case NONE:
+	  {
+	    cout << "ERROR in vtkImageLiveWire: broken path" << endl;
+	    return;
+	  }
+	case UP:
+	  {	    
+	    traceX -= neighbors[UP][0];
+	    traceY -= neighbors[UP][1];
+	    if (self->GetVerbose() > 2) 
+	      {
+		cout << "UP: ";
+	      }
+	    //outPtr = (T*)outData->GetScalarPointerForExtent(extent[0],extent[1],
+	    //					    extent[2],extent[3],
+	    //					    extent[4],extent[5]);
+	    
+	    break;
+	  }
+	case DOWN:
+	  {
+	    traceX -= neighbors[DOWN][0];
+	    traceY -= neighbors[DOWN][1];
+	    if (self->GetVerbose() > 2) 
+	      {
+		cout << "DOWN: ";
+	      }
+	    break;
+	  }
+	case LEFT:
+	  {
+	    traceX -= neighbors[LEFT][0];
+	    traceY -= neighbors[LEFT][1];
+	    if (self->GetVerbose() > 2) 
+	      {
+		cout << "LEFT: ";
+	      }
+	    break;
+	  }
+	case RIGHT:
+	  {
+	    traceX -= neighbors[RIGHT][0];
+	    traceY -= neighbors[RIGHT][1];
+	    if (self->GetVerbose() > 2) 
+	      {
+		cout << "RIGHT: ";
+	      }
+	    break;
+	  }
+	default:
+	  {
+	    cout << "ERROR in vtkImageLiveWire: unknown path dir" << endl;
+	    return;
+	  }
+
+	}
+
+      self->ContourPoints->InsertNextPoint(traceX,traceY,0);
+
+    } // end while
+
+  if (self->GetVerbose() == 1) 
+    {
+      cout << "(" << traceX << "," << traceY << ")" << endl;
+    }  
+
+  // hack some output
+  // Lauren output something ????
+  outData->CopyAndCastFrom(inDatas[0], inDatas[0]->GetExtent());
+
+  // test points
+  cout << "num points C++ " << self->ContourPoints->GetNumberOfPoints() << endl;
   return;
 }
 

@@ -311,8 +311,8 @@ public:
   
   // Description:
   // This filter represents contour points
-  // it outputs an image containing them
-  vtkGetObjectMacro(ContourPoints, vtkImageDrawROI);
+  // it outputs an image containing them ??
+  vtkGetObjectMacro(ContourPoints, vtkPoints);
 
   // ---- Data structures for internal use in path computation -- //
   // Description:
@@ -330,7 +330,7 @@ public:
 
   // Description:
   // The directions the path may take.
-  enum {NONE, UP, DOWN, RIGHT, LEFT};
+  enum {UP, DOWN, LEFT, RIGHT, NONE};
 
 
   // Description:
@@ -343,6 +343,8 @@ public:
   //ETX
   // ---- End of data structures for internal use in path computation -- //
 
+  // Lauren how should this work with the Editor??
+  vtkPoints *ContourPoints;
 
 
 protected:
@@ -355,12 +357,7 @@ protected:
   int EndPoint[2];
   
   int MaxEdgeCost;
-
   int Verbose;
-
-  // Lauren here for now but vkMrmlSlicer has one of these
-  // we should use?
-  vtkImageDrawROI *ContourPoints;
 
   void ExecuteInformation(vtkImageData **inputs, vtkImageData *output); 
   void ComputeInputUpdateExtent(int inExt[6], int outExt[6],
