@@ -903,7 +903,7 @@ proc IbrowserMakeNewInterval { intval ikind spanmin spanmax numDrops } {
     set ::Ibrowser($intval,intervalID) $id
     set ::Ibrowser($id,name) $intval
 
-    IbrowserInitializeOrientation $id
+    #IbrowserInitializeOrientation $id
     IbrowserAddToList $intval
 
     # Fill toplevel array with with the interval's properties.
