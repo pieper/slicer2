@@ -12,4 +12,5 @@ endif
 
 setenv TCL_LIBRARY ${SLICER_HOME}/lib/tcl8.3
 
-exec $SLICER_HOME/program/tclsh $SLICER_HOME/program/GoPrintMrml.tcl $1
+# exec $SLICER_HOME/program/tclsh $SLICER_HOME/program/GoPrintMrml.tcl $1
+exec tclsh $SLICER_HOME/Base/tcl/GoPrintMrml.tcl $1
