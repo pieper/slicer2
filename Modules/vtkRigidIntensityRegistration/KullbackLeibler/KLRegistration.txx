@@ -58,6 +58,13 @@ KLRegistration<TFixedImage,TMovingImage>::KLRegistration()
   m_Metric->UsePaddingValue(false);
   m_Metric->SetHistogramSize(histSize);
   m_Metric->SetDerivativeStepLength(0.1); // 0.1 mm
+
+  // set the step length scales
+  typedef typename MetricType::ScalesType ScalesType;
+  ScalesType DerivativeStepLengthScales( GetNumberOfParameters() );
+  DerivativeStepLengthScales.fill(1.0);
+  m_Metric->SetDerivativeStepLengthScales(DerivativeStepLengthScales);
+
   // possible memory leak
   InterpolatorType::Pointer  TrainingInterpolator = InterpolatorType::New();
   m_Metric->SetTrainingInterpolator(TrainingInterpolator);
