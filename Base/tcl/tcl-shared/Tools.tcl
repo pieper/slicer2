@@ -38,19 +38,17 @@ proc ToolsInit {} {
 # In order to run on NT
 
     global env prog
-    #set home [file join $env(SLICER_HOME) program]
-    set home $prog
+    set home $prog 
     set homebitmaps [file join $home gui bitmaps]
     
-    #foreach foo [exec ls [file join $home gui bitmaps]] {}
     set pwd [pwd]
     cd [file join $home gui bitmaps]
     foreach foo [glob -nocomplain *.bmp] {
-    #if { [file extension $foo] == ".bmp" } {}
-    if {![file isdirectory $foo]} {
-        image create bitmap $foo -file [file join $homebitmaps $foo]
-        #tk_messageBox -type ok -message $foo -icon info
-    }
+        if {![file isdirectory $foo]} {
+            # image create bitmap $foo -file [file join $homebitmaps $foo]
+            image create bitmap $foo -file $foo
+            #tk_messageBox -type ok -message $foo -icon info
+        }
     }
     
     cd $pwd
