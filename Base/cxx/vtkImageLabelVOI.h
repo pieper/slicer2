@@ -33,8 +33,9 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #define __vtkImageLabelVOI_h
 
 #include "vtkImageToImageFilter.h"
+#include "vtkSlicer.h"
 
-class VTK_EXPORT vtkImageLabelVOI : public vtkImageToImageFilter
+class VTK_SLICER_BASE_EXPORT vtkImageLabelVOI : public vtkImageToImageFilter
 {
 public:
     static vtkImageLabelVOI *New();

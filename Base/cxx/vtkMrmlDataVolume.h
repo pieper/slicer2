@@ -45,12 +45,13 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkImageResize.h"
 #include "vtkImagePlot.h"
 #include "vtkImageData.h"
+#include "vtkSlicer.h"
 
 class vtkImageDICOMReader;
 class vtkImageReader;
 
 //----------------------------------------------------------------------------
-class VTK_EXPORT vtkMrmlDataVolume : public vtkMrmlData
+class VTK_SLICER_BASE_EXPORT vtkMrmlDataVolume : public vtkMrmlData
 {
 public:
   static vtkMrmlDataVolume *New();

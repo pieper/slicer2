@@ -39,6 +39,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #define __vtkImageLiveWire_h
 
 #include "vtkImageMultipleInputFilter.h"
+#include "vtkSlicer.h"
 
 
 //----------------------------------------------------------------------------
@@ -138,7 +139,7 @@ class circularQueue {
 //ETX
 
 
-class VTK_EXPORT vtkImageLiveWire : public vtkImageMultipleInputFilter
+class VTK_SLICER_BASE_EXPORT vtkImageLiveWire : public vtkImageMultipleInputFilter
 {
 public:
   static vtkImageLiveWire *New();

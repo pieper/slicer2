@@ -32,8 +32,9 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 #include "vtkImageToImageFilter.h"
 #include "vtkScalarsToColors.h"
+#include "vtkSlicer.h"
 
-class VTK_EXPORT vtkImagePlot : public vtkImageToImageFilter
+class VTK_SLICER_BASE_EXPORT vtkImagePlot : public vtkImageToImageFilter
 {
 public:
   static vtkImagePlot *New();

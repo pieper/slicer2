@@ -35,8 +35,9 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 #include "vtkIntArray.h"
 #include "vtkImageData.h"
+#include "vtkSlicer.h"
 
-class VTK_EXPORT vtkImageReplaceRegion : public vtkImageInPlaceFilter
+class VTK_SLICER_BASE_EXPORT vtkImageReplaceRegion : public vtkImageInPlaceFilter
 {
 public:
   static vtkImageReplaceRegion *New();

@@ -26,8 +26,8 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkImageEuclideanDistanceTransformation.cxx,v $
   Language:  C++
-  Date:      $Date: 2002/03/21 23:05:34 $
-  Version:   $Revision: 1.5 $
+  Date:      $Date: 2002/05/08 18:57:46 $
+  Version:   $Revision: 1.6 $
   Thanks:    Olivier Cuisenaire who developed this class
              URL: http://ltswww.epfl.ch/~cuisenai
          Email: Olivier.Cuisenaire@epfl.ch

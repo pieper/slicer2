@@ -29,12 +29,13 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #ifndef __vtkPolyBoolean_h
 #define __vtkPolyBoolean_h
 
-#include "vtkFloatPoints.h"
+#include "vtkPoints.h"
 #include "vtkPolyDataToPolyDataFilter.h"
 #include "vtkOBBTree.h"
 #include "vtkMatrix4x4.h"
 #include "vtkPolygon.h"
 #include "vtkBoolTess.h"
+#include "vtkSlicer.h"
 
 // Defines for Operation
 #define BOOL_A_MINUS_B 0
@@ -134,7 +135,7 @@ public:
 //ETX - end tcl exclude
 //
 
-class VTK_EXPORT vtkPolyBoolean : public vtkPolyDataToPolyDataFilter
+class VTK_SLICER_BASE_EXPORT vtkPolyBoolean : public vtkPolyDataToPolyDataFilter
 {
 public:
 //  vtkPolyBoolean(vtkPolyData *pd=NULL);
@@ -214,7 +215,7 @@ protected:
   float DistanceResolution;
   float AngleResolution;
   vtkNewBoolEdges NewEdges;
-  vtkFloatPoints *NewPoints;
+  vtkPoints *NewPoints;
   vtkCellArray *NewPolys;
   vtkCellArray *NewLines;
   vtkCellArray *NewVerts;
@@ -235,7 +236,7 @@ protected:
 private:
   vtkOBBTree *OBBTreeA;
   vtkOBBTree *OBBTreeB;
-  vtkFloatPoints *BPoints;
+  vtkPoints *BPoints;
   vtkBoolTri **TriDirectory[2];
   int *CellFlags[2];
   int *CellFlagsB;

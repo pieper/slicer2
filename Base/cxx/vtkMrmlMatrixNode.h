@@ -36,9 +36,9 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 //#include <fstream.h>
 #include "vtkMrmlNode.h"
 #include "vtkMatrix4x4.h"
-#include "vtkTransform.h"
+#include "vtkSlicer.h"
 
-class VTK_EXPORT vtkMrmlMatrixNode : public vtkMrmlNode
+class VTK_SLICER_BASE_EXPORT vtkMrmlMatrixNode : public vtkMrmlNode
 {
 public:
   static vtkMrmlMatrixNode *New();
@@ -53,9 +53,9 @@ public:
   // 16 numbers that form a 4x4 matrix. The matrix is multiplied by a 
   // point (M*P) to compute the transformed point
   void SetMatrix(char *str) {
-    this->SetMatrixToString(this->Transform->GetMatrixPointer(), str);};
+    this->SetMatrixToString(this->Transform->GetMatrix(), str);};
   char *GetMatrix() { 
-    return this->GetMatrixToString(this->Transform->GetMatrixPointer());};
+    return this->GetMatrixToString(this->Transform->GetMatrix());};
 
   // Description:
   // Rotate around each axis: x,y, and z in degrees

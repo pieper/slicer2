@@ -33,8 +33,9 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 
 #include "vtkImageToImageFilter.h"
+#include "vtkSlicer.h"
 
-class VTK_EXPORT vtkImageMeasureVoxels : public vtkImageToImageFilter
+class VTK_SLICER_BASE_EXPORT vtkImageMeasureVoxels : public vtkImageToImageFilter
 {
 public:
   static vtkImageMeasureVoxels *New();

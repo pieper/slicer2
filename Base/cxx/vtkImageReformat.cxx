@@ -924,7 +924,7 @@ static void vtkImageReformatExecute(vtkImageReformat *self,
 //----------------------------------------------------------------------------
 // Description:
 // This templated function executes the filter for any type of 
-// (scalar) data, and floating-point vtkTensors.
+// (scalar) data, and floating-point vtkDataArray.
 //
 // This is copied from the other reformat functions in this
 // file, and just modified to reformat tensors.
@@ -957,7 +957,7 @@ static void vtkImageReformatExecuteTensor(vtkImageReformat *self,
   // tensors 
   int numCompsI, numCompsJ;
   int outTensorIdx, j;
-  vtkTensors *inTensorData, *outTensorData;
+  vtkDataArray *inTensorData, *outTensorData;
 
   // execution time 
   if (id == 0)
@@ -982,7 +982,7 @@ static void vtkImageReformatExecuteTensor(vtkImageReformat *self,
 
   // If there are no scalars in the input, clear the output scalars
   if ((inData->GetPointData()->GetScalars() == NULL) ||
-      (inData->GetPointData()->GetScalars()->GetNumberOfScalars() == 0))
+      (inData->GetPointData()->GetScalars()->GetNumberOfTuples() == 0))
     {
       vtkGenericWarningMacro("Execute: no scalars with tensors in input image data");
 
@@ -1151,7 +1151,7 @@ static void vtkImageReformatExecuteTensor(vtkImageReformat *self,
                   (xi > nx2) || (yi > ny2) || (zi > nz1))
                 {
 
-                  vtkTensor *tensor = outTensorData->GetTensor(outTensorIdx);
+                  //-TENSOR- vtkTensor *tensor = outTensorData->GetTuple(outTensorIdx);
 
                   //              // set all components to 0
                   //              for (i = 0; i < numCompsI; i++)
@@ -1161,7 +1161,7 @@ static void vtkImageReformatExecuteTensor(vtkImageReformat *self,
                   //                      tensor->SetComponent(i, j, 0);
                   //                    }
                   //                }
-                  tensor->Initialize();
+                  //-TENSOR- tensor->Initialize();
 
                 }
               // Handle the case of being on the last slice
@@ -1187,13 +1187,13 @@ static void vtkImageReformatExecuteTensor(vtkImageReformat *self,
                   int idx4 = idx2 + nx;
 
                   // get the tensors at these image indices
-                  vtkTensor *tensor1 = inTensorData->GetTensor(idx1);
-                  vtkTensor *tensor2 = inTensorData->GetTensor(idx2);
-                  vtkTensor *tensor3 = inTensorData->GetTensor(idx3);
-                  vtkTensor *tensor4 = inTensorData->GetTensor(idx4);
+                  //-TENSOR- vtkTensor *tensor1 = inTensorData->GetTuple(idx1);
+                  //-TENSOR- vtkTensor *tensor2 = inTensorData->GetTuple(idx2);
+                  //-TENSOR- vtkTensor *tensor3 = inTensorData->GetTuple(idx3);
+                  //-TENSOR- vtkTensor *tensor4 = inTensorData->GetTuple(idx4);
 
                   // find output location
-                  vtkTensor *tensor = outTensorData->GetTensor(outTensorIdx);
+                  //-TENSOR- vtkTensor *tensor = outTensorData->GetTuple(outTensorIdx);
                   
                   // go through output tensor components
                   for (i = 0; i < numCompsI; i++)
@@ -1202,20 +1202,20 @@ static void vtkImageReformatExecuteTensor(vtkImageReformat *self,
                         {
                           // Interpolate in X and Y at Z0
                           //
-                          float comp1 = tensor1->GetComponent(i,j);
-                          float comp2 = tensor2->GetComponent(i,j);
-                          float comp3 = tensor3->GetComponent(i,j);
-                          float comp4 = tensor4->GetComponent(i,j);
+                          //-TENSOR- float comp1 = tensor1->GetComponent(i,j);
+                          //-TENSOR- float comp2 = tensor2->GetComponent(i,j);
+                          //-TENSOR- float comp3 = tensor3->GetComponent(i,j);
+                          //-TENSOR- float comp4 = tensor4->GetComponent(i,j);
 
                           // interpolate in x
-                          dx0 = x0*comp1 + x1*comp2; 
-                          dx1 = x0*comp3 + x1*comp4;
+                          //-TENSOR- dx0 = x0*comp1 + x1*comp2; 
+                          //-TENSOR- dx1 = x0*comp3 + x1*comp4;
                           
                           // and interpolate in y
                           dxy0 = y0*dx0 + y1*dx1;
                           
                           // Set output tensor value
-                          tensor->SetComponent(i, j, dxy0);
+                          //-TENSOR- tensor->SetComponent(i, j, dxy0);
                         }
                     }
                 }
@@ -1244,17 +1244,17 @@ static void vtkImageReformatExecuteTensor(vtkImageReformat *self,
                   int idx8 = idx6 + nx;
 
                   // get the tensors at these image indices
-                  vtkTensor *tensor1 = inTensorData->GetTensor(idx1);
-                  vtkTensor *tensor2 = inTensorData->GetTensor(idx2);
-                  vtkTensor *tensor3 = inTensorData->GetTensor(idx3);
-                  vtkTensor *tensor4 = inTensorData->GetTensor(idx4);
-                  vtkTensor *tensor5 = inTensorData->GetTensor(idx5);
-                  vtkTensor *tensor6 = inTensorData->GetTensor(idx6);
-                  vtkTensor *tensor7 = inTensorData->GetTensor(idx7);
-                  vtkTensor *tensor8 = inTensorData->GetTensor(idx8);
+                  //-TENSOR- vtkTensor *tensor1 = inTensorData->GetTuple(idx1);
+                  //-TENSOR- vtkTensor *tensor2 = inTensorData->GetTuple(idx2);
+                  //-TENSOR- vtkTensor *tensor3 = inTensorData->GetTuple(idx3);
+                  //-TENSOR- vtkTensor *tensor4 = inTensorData->GetTuple(idx4);
+                  //-TENSOR- vtkTensor *tensor5 = inTensorData->GetTuple(idx5);
+                  //-TENSOR- vtkTensor *tensor6 = inTensorData->GetTuple(idx6);
+                  //-TENSOR- vtkTensor *tensor7 = inTensorData->GetTuple(idx7);
+                  //-TENSOR- vtkTensor *tensor8 = inTensorData->GetTuple(idx8);
 
                   // find output location
-                  vtkTensor *tensor = outTensorData->GetTensor(outTensorIdx);
+                  //-TENSOR- vtkTensor *tensor = outTensorData->GetTuple(outTensorIdx);
 
                   // go through tensor components
                   for (i = 0; i < numCompsI; i++)
@@ -1263,33 +1263,33 @@ static void vtkImageReformatExecuteTensor(vtkImageReformat *self,
                         {
                           // Interpolate in X and Y at Z0
                           //
-                          float comp1 = tensor1->GetComponent(i,j);
-                          float comp2 = tensor2->GetComponent(i,j);
-                          float comp3 = tensor3->GetComponent(i,j);
-                          float comp4 = tensor4->GetComponent(i,j);
+                          //-TENSOR- float comp1 = tensor1->GetComponent(i,j);
+                          //-TENSOR- float comp2 = tensor2->GetComponent(i,j);
+                          //-TENSOR- float comp3 = tensor3->GetComponent(i,j);
+                          //-TENSOR- float comp4 = tensor4->GetComponent(i,j);
 
                           // interpolate in x
-                          dx0 = x0*comp1 + x1*comp2; 
-                          dx1 = x0*comp3 + x1*comp4;                      
+                          //-TENSOR- dx0 = x0*comp1 + x1*comp2; 
+                          //-TENSOR- dx1 = x0*comp3 + x1*comp4;                      
                           // and interpolate in y
-                          dxy0 = y0*dx0 + y1*dx1;
+                          //-TENSOR- dxy0 = y0*dx0 + y1*dx1;
                           
                           // Interpolate in X and Y at Z1
                           //
-                          float comp5 = tensor5->GetComponent(i,j);
-                          float comp6 = tensor6->GetComponent(i,j);
-                          float comp7 = tensor7->GetComponent(i,j);
-                          float comp8 = tensor8->GetComponent(i,j);
+                          //-TENSOR- float comp5 = tensor5->GetComponent(i,j);
+                          //-TENSOR- float comp6 = tensor6->GetComponent(i,j);
+                          //-TENSOR- float comp7 = tensor7->GetComponent(i,j);
+                          //-TENSOR- float comp8 = tensor8->GetComponent(i,j);
 
                           // interpolate in x
-                          dx0 = x0*comp5 + x1*comp6; 
-                          dx1 = x0*comp7 + x1*comp8;      
+                          //-TENSOR- dx0 = x0*comp5 + x1*comp6; 
+                          //-TENSOR- dx1 = x0*comp7 + x1*comp8;      
                           // and interpolate in y
-                          dxy1 = y0*dx0 + y1*dx1;
+                          //-TENSOR- dxy1 = y0*dx0 + y1*dx1;
                           
                           // Interpolate in Z
                           //
-                          tensor->SetComponent(i, j, z0*dxy0 + z1*dxy1);
+                          //-TENSOR- tensor->SetComponent(i, j, z0*dxy0 + z1*dxy1);
                         }
                     }
 
@@ -1341,7 +1341,7 @@ static void vtkImageReformatExecuteTensor(vtkImageReformat *self,
               if ((xi < 0) || (yi < 0) || (zi < 0) ||
                   (xi > nx2) || (yi > ny2) || (zi > nz2))
                 {
-                  outTensorData->GetTensor(outTensorIdx)->Initialize();
+                  //-TENSOR- outTensorData->GetTuple(outTensorIdx)->Initialize();
                 }
               else {
                 // Compute 'idx', the index into the input volume
@@ -1349,7 +1349,7 @@ static void vtkImageReformatExecuteTensor(vtkImageReformat *self,
                 idx = zi*nxy + yi*nx + xi;
 
                 // Set output tensor value to match
-                outTensorData->SetTensor(outTensorIdx,inTensorData->GetTensor(idx));
+                outTensorData->SetTuple(outTensorIdx,inTensorData->GetTuple(idx));
 
               }
 
@@ -1402,18 +1402,19 @@ void vtkImageReformat::Execute()
   // If we have tensors in the input
   if (this->GetInput()->GetPointData()->GetTensors() != NULL) {
 
-    if (this->GetInput()->GetPointData()->GetTensors()->GetNumberOfTensors() > 0)
+    if (this->GetInput()->GetPointData()->GetTensors()->GetNumberOfTuples() > 0)
       {
         // allocate output tensors
-        vtkTensors* data = vtkTensors::New();
+        vtkFloatArray *data = vtkFloatArray::New(); data->SetNumberOfComponents(9);
         int* dims = output->GetDimensions();
-        data->SetNumberOfTensors(dims[0]*dims[1]*dims[2]);
+        data->SetNumberOfTuples(dims[0]*dims[1]*dims[2]);
         output->GetPointData()->SetTensors(data);
         data->Delete();
       }
   }
   // jump back into normal pipeline: call standard superclass method here
-  this->vtkImageToImageFilter::Execute(this->GetInput(), output);
+  //this->vtkImageToImageFilter::Execute(this->GetInput(), output);
+  this->vtkImageToImageFilter::Execute();
 }
 
 //----------------------------------------------------------------------------
@@ -1468,7 +1469,7 @@ void vtkImageReformat::ThreadedExecute(vtkImageData *inData,
   // If we have tensors in the input
   if (inData->GetPointData()->GetTensors() != NULL) {
 
-    if (inData->GetPointData()->GetTensors()->GetNumberOfTensors() > 0)
+    if (inData->GetPointData()->GetTensors()->GetNumberOfTuples() > 0)
       {
         vtkDebugMacro("Execute: tensors  in input image data");
 

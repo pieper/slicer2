@@ -43,6 +43,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 //  #define LIVEWIRE_TRAINING_EXPERIMENT
 
 #include "vtkImageMultipleInputFilter.h"
+#include "vtkSlicer.h"
 
 //BTX
 
@@ -67,7 +68,7 @@ class featureProperties
 
 //ETX
 
-class VTK_EXPORT vtkImageLiveWireEdgeWeights : public vtkImageMultipleInputFilter
+class VTK_SLICER_BASE_EXPORT vtkImageLiveWireEdgeWeights : public vtkImageMultipleInputFilter
 {
 public:
   static vtkImageLiveWireEdgeWeights *New();

@@ -34,10 +34,13 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 //#include <fstream.h>
 #include "vtkObject.h"
 #include "vtkMatrix4x4.h"
+#include "vtkTransform.h"
+#include "vtkSlicer.h"
 
-class VTK_EXPORT vtkMrmlNode : public vtkObject
+class VTK_SLICER_BASE_EXPORT vtkMrmlNode : public vtkObject
 {
   public:
+    static vtkMrmlNode *New();
   vtkTypeMacro(vtkMrmlNode,vtkObject);
   void PrintSelf(ostream& os, vtkIndent indent);
   

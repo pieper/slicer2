@@ -34,8 +34,9 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #define __vtkImageClipper_h
 
 #include "vtkImageToImageFilter.h"
+#include "vtkSlicer.h"
 
-class VTK_EXPORT vtkImageClipper : public vtkImageToImageFilter
+class VTK_SLICER_BASE_EXPORT vtkImageClipper : public vtkImageToImageFilter
 {
 public:
     static vtkImageClipper *New();

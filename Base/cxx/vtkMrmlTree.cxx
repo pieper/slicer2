@@ -222,7 +222,7 @@ void vtkMrmlTree::ComputeTransforms()
     else if (!strcmp("vtkMrmlMatrixNode", n->GetClassName()))
     {
       t = (vtkMrmlMatrixNode*)n;
-      tran->Concatenate(t->GetTransform()->GetMatrixPointer());
+      tran->Concatenate(t->GetTransform()->GetMatrix());
     }
 
     // Volume
@@ -278,7 +278,7 @@ void vtkMrmlTree::ComputeNodeTransform( vtkMrmlNode *node, vtkMatrix4x4 *xform )
     else if (!strcmp("vtkMrmlMatrixNode", n->GetClassName()))
     {
       t = (vtkMrmlMatrixNode*)n;
-      tran->Concatenate(t->GetTransform()->GetMatrixPointer());
+      tran->Concatenate(t->GetTransform()->GetMatrix());
     }
 
     elem = elem->Next;

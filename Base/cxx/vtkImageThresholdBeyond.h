@@ -32,8 +32,9 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #define VTK_THRESHOLD_BEYOND  3
 
 #include "vtkImageThreshold.h"
+#include "vtkSlicer.h"
 
-class VTK_EXPORT vtkImageThresholdBeyond : public vtkImageThreshold
+class VTK_SLICER_BASE_EXPORT vtkImageThresholdBeyond : public vtkImageThreshold
 {
 public:
   static vtkImageThresholdBeyond *New();

@@ -59,6 +59,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkCollection.h"
 #include "vtkVoidArray.h"
 
+#include "vtkSlicer.h"
 #define NUM_SLICES 3
 
 // Orient
@@ -84,7 +85,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #define MRML_SLICER_ORIENT_REFORMAT_AXISAGCOR   18
 #define MRML_SLICER_NUM_ORIENT         19
 
-class VTK_EXPORT vtkMrmlSlicer : public vtkObject 
+class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject 
 {
   public:
   

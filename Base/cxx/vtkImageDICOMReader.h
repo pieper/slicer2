@@ -35,11 +35,12 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 //#include <fstream.h>
 #include "vtkImageSource.h"
 #include "vtkTransform.h"
+#include "vtkSlicer.h"
 
 #define VTK_FILE_BYTE_ORDER_BIG_ENDIAN 0
 #define VTK_FILE_BYTE_ORDER_LITTLE_ENDIAN 1
 
-class VTK_EXPORT vtkImageDICOMReader : public vtkImageSource
+class VTK_SLICER_BASE_EXPORT vtkImageDICOMReader : public vtkImageSource
 {
 public:
   static vtkImageDICOMReader *New();

@@ -29,6 +29,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #define __vtkImageConnectivity_h
 
 #include "vtkImageToImageFilter.h"
+#include "vtkSlicer.h"
 
 #define CONNECTIVITY_IDENTIFY 1
 #define CONNECTIVITY_REMOVE 2
@@ -36,7 +37,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #define CONNECTIVITY_MEASURE 4
 #define CONNECTIVITY_SAVE 5
 
-class VTK_EXPORT vtkImageConnectivity : public vtkImageToImageFilter
+class VTK_SLICER_BASE_EXPORT vtkImageConnectivity : public vtkImageToImageFilter
 {
 public:
     static vtkImageConnectivity *New();

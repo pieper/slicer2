@@ -46,8 +46,9 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkImageToImageFilter.h"
 #include "vtkFloatArray.h"
 #include "vtkPoints.h"
+#include "vtkSlicer.h"
 
-class VTK_EXPORT vtkImageLiveWireScale : public vtkImageToImageFilter
+class VTK_SLICER_BASE_EXPORT vtkImageLiveWireScale : public vtkImageToImageFilter
 {
   public:
   static vtkImageLiveWireScale *New();

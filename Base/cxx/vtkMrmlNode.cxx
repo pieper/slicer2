@@ -28,6 +28,19 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkObjectFactory.h"
 
 //------------------------------------------------------------------------------
+vtkMrmlNode* vtkMrmlNode::New()
+{
+  // First try to create the object from the vtkObjectFactory
+  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkMrmlNode");
+  if(ret)
+    {
+    return (vtkMrmlNode*)ret;
+    }
+  // If the factory was unable to create the object, then create it here.
+  return NULL;
+}
+
+//------------------------------------------------------------------------------
 vtkMrmlNode::vtkMrmlNode()
 {
   this->ID = 0;

@@ -28,9 +28,10 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkObject.h"
 #include "vtkObjectFactory.h"
 #include "vtkRenderer.h"
+#include "vtkSlicer.h"
 
 
-class VTK_EXPORT vtkFog : public vtkObject
+class VTK_SLICER_BASE_EXPORT vtkFog : public vtkObject
 {
 public:
 

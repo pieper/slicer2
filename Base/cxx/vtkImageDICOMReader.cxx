@@ -1202,7 +1202,8 @@ void vtkImageDICOMReader::ComputeInverseTransformedExtent(int inExtent[6],
     transformedExtent[3] = 1.0;
     // since transform better be orthonormal we can just transpose
     // it will be the same as the inverse
-    this->Transform->Transpose();
+    //this->Transform->Transpose();
+    this->Transform->Inverse();
     this->Transform->MultiplyPoint (transformedExtent, transformedExtent);
     outExtent[0] = (int) transformedExtent[0];
     outExtent[2] = (int) transformedExtent[1];
@@ -1213,7 +1214,8 @@ void vtkImageDICOMReader::ComputeInverseTransformedExtent(int inExtent[6],
     transformedExtent[2] = inExtent[5];
     transformedExtent[3] = 1.0;
     this->Transform->MultiplyPoint (transformedExtent, transformedExtent);
-    this->Transform->Transpose();
+    //this->Transform->Transpose();
+    this->Transform->Inverse();
     outExtent[1] = (int) transformedExtent[0];
     outExtent[3] = (int) transformedExtent[1];
     outExtent[5] = (int) transformedExtent[2];
@@ -1279,9 +1281,11 @@ void vtkImageDICOMReader::ComputeInverseTransformedIncrements(int inIncr[3],
     transformedIncr[3] = 0.0;
     // since transform better be orthonormal we can just transpose
     // it will be the same as the inverse
-    this->Transform->Transpose();
+    //this->Transform->Transpose();
+    this->Transform->Inverse();
     this->Transform->MultiplyPoint (transformedIncr, transformedIncr);
-    this->Transform->Transpose();
+    //this->Transform->Transpose();
+    this->Transform->Inverse();
     outIncr[0] = (int) transformedIncr[0];
     outIncr[1] = (int) transformedIncr[1];
     outIncr[2] = (int) transformedIncr[2];

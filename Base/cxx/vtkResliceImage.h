@@ -26,8 +26,8 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
   Program:   Samson Timoner TetraMesh Library
   Module:    $RCSfile: vtkResliceImage.h,v $
   Language:  C++
-  Date:      $Date: 2002/03/21 23:05:44 $
-  Version:   $Revision: 1.8 $
+  Date:      $Date: 2002/05/08 18:57:51 $
+  Version:   $Revision: 1.9 $
   
 Copyright (c) 2001 Samson Timoner
 
@@ -55,8 +55,9 @@ class vtkUnstructuredGrid;
 #include "vtkImageToImageFilter.h"
 #include "vtkUnstructuredGrid.h"
 #include "vtkMatrix4x4.h"
+#include "vtkSlicer.h"
 
-class VTK_EXPORT vtkResliceImage : public vtkImageToImageFilter
+class VTK_SLICER_BASE_EXPORT vtkResliceImage : public vtkImageToImageFilter
 {
 public:
   // Description:

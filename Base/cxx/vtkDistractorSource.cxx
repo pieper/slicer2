@@ -24,7 +24,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include <math.h>
 #include "vtkDistractorSource.h"
 #include "vtkPoints.h"
-#include "vtkNormals.h"
+//#include "vtkNormals.h"
 #include "vtkMath.h"
 #include "vtkTransform.h"
 

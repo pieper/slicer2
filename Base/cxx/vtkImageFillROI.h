@@ -41,12 +41,13 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkPoints.h"
 #include "point.h"
 #include <string.h>
+#include "vtkSlicer.h"
 
 #define SHAPE_POLYGON 1
 #define SHAPE_LINES   2
 #define SHAPE_POINTS  3
 
-class VTK_EXPORT vtkImageFillROI : public vtkImageInPlaceFilter
+class VTK_SLICER_BASE_EXPORT vtkImageFillROI : public vtkImageInPlaceFilter
 {
 public:
     static vtkImageFillROI *New();

@@ -26,7 +26,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include <string.h>
 #include <time.h>
 #include "vtkVersion.h"
-#if (VTK_MAJOR_VERSION == 3 && VTK_MINOR_VERSION == 2)
+#if ( (VTK_MAJOR_VERSION == 3 && VTK_MINOR_VERSION == 2) || VTK_MAJOR_VERSION == 4 )
 #include "vtkCommand.h"
 #endif
 #include "vtkImageEditor.h"
@@ -326,7 +326,7 @@ void vtkImageEditor::Apply()
   }    
  
   // Start progress reporting
-#if (VTK_MAJOR_VERSION == 3 && VTK_MINOR_VERSION == 2)
+#if ( (VTK_MAJOR_VERSION == 3 && VTK_MINOR_VERSION == 2) || VTK_MAJOR_VERSION == 4 )
     this->InvokeEvent(vtkCommand::StartEvent,NULL);
 #else
   if (this->StartMethod)
@@ -758,7 +758,7 @@ void vtkImageEditor::Apply()
     {
       vtkDebugMacro(<<"UndoOutput=NULL because called Apply twice too fast!");
       this->TotalTime = 0;
-#if (VTK_MAJOR_VERSION == 3 && VTK_MINOR_VERSION == 2)
+#if ( (VTK_MAJOR_VERSION == 3 && VTK_MINOR_VERSION == 2) || VTK_MAJOR_VERSION == 4 )
     this->InvokeEvent(vtkCommand::EndEvent,NULL);
 #else
       if (this->EndMethod)
@@ -796,7 +796,7 @@ void vtkImageEditor::Apply()
   this->TotalTime = (float)(clock() - tStartTotal) / CLOCKS_PER_SEC;
 
   // End progress reporting
-#if (VTK_MAJOR_VERSION == 3 && VTK_MINOR_VERSION == 2)
+#if ( (VTK_MAJOR_VERSION == 3 && VTK_MINOR_VERSION == 2) || VTK_MAJOR_VERSION == 4 )
     this->InvokeEvent(vtkCommand::EndEvent,NULL);
 #else
   if (this->EndMethod)

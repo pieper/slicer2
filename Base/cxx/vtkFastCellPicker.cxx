@@ -34,7 +34,7 @@ vtkFastCellPicker::vtkFastCellPicker()
   this->OBBTrees = vtkCollection::New();
 }
 
-#if (VTK_MAJOR_VERSION == 3 && VTK_MINOR_VERSION == 2)
+#if ( (VTK_MAJOR_VERSION == 3 && VTK_MINOR_VERSION == 2) || VTK_MAJOR_VERSION == 4 )
 float vtkFastCellPicker::IntersectWithLine(float p1[3], float p2[3], float tol, 
                       vtkAssemblyPath *assem, vtkActor *a, 
                       vtkMapper *m)

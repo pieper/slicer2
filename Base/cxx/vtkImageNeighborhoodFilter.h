@@ -32,8 +32,9 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #define __vtkImageNeighborhoodFilter_h
 
 #include "vtkImageSpatialFilter.h"
+#include "vtkSlicer.h"
 
-class VTK_EXPORT vtkImageNeighborhoodFilter : public vtkImageSpatialFilter
+class VTK_SLICER_BASE_EXPORT vtkImageNeighborhoodFilter : public vtkImageSpatialFilter
 {
 public:
   static vtkImageNeighborhoodFilter *New();

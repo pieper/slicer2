@@ -33,8 +33,9 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #define __vtkImageLabelChange_h
 
 #include "vtkImageToImageFilter.h"
+#include "vtkSlicer.h"
 
-class VTK_EXPORT vtkImageLabelChange : public vtkImageToImageFilter
+class VTK_SLICER_BASE_EXPORT vtkImageLabelChange : public vtkImageToImageFilter
 {
 public:
     static vtkImageLabelChange *New();

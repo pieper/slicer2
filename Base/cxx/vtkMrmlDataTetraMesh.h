@@ -41,9 +41,10 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 #include "vtkMrmlTetraMeshNode.h"
 #include "vtkUnstructuredGrid.h"
+#include "vtkSlicer.h"
 
 //----------------------------------------------------------------------------
-class VTK_EXPORT vtkMrmlDataTetraMesh : public vtkMrmlData
+class VTK_SLICER_BASE_EXPORT vtkMrmlDataTetraMesh : public vtkMrmlData
 {
 public:
   static vtkMrmlDataTetraMesh *New();

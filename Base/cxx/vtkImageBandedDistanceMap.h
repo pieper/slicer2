@@ -36,7 +36,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 #include "vtkImageNeighborhoodFilter.h"
 
-class VTK_EXPORT vtkImageBandedDistanceMap : public vtkImageNeighborhoodFilter
+class VTK_SLICER_BASE_EXPORT vtkImageBandedDistanceMap : public vtkImageNeighborhoodFilter
 {
 public:
   static vtkImageBandedDistanceMap *New();

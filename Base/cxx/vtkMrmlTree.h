@@ -24,7 +24,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 // .NAME vtkMrmlTree - a list of actors
 // .SECTION Description
 // vtkMrmlTree represents and provides methods to manipulate a list of
-// MRML objects. The list is unsorted and duplicate
+// MRML objects. The list is core and duplicate
 // entries are not prevented.
 
 // .SECTION see also
@@ -40,8 +40,9 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkMrmlTransformNode.h"
 #include "vtkMrmlMatrixNode.h"
 #include "vtkMrmlColorNode.h"
+#include "vtkSlicer.h"
 
-class VTK_EXPORT vtkMrmlTree : public vtkCollection
+class VTK_SLICER_BASE_EXPORT vtkMrmlTree : public vtkCollection
 {
 public:
   static vtkMrmlTree *New();

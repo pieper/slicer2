@@ -24,7 +24,9 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #ifndef __point_h
 #define __point_h
 
-class VTK_EXPORT Point
+#include "vtkSlicer.h"
+
+class VTK_SLICER_BASE_EXPORT Point
 {
 public:
     Point() {

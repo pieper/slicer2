@@ -47,13 +47,14 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkImageReformatIJK.h"
 #include "vtkImageCopy.h"
 #include "vtkIntArray.h"
+#include "vtkSlicer.h"
 
 //  Dimension
 #define EDITOR_DIM_SINGLE 1
 #define EDITOR_DIM_MULTI  2
 #define EDITOR_DIM_3D     3
 
-class VTK_EXPORT vtkImageEditor : public vtkProcessObject
+class VTK_SLICER_BASE_EXPORT vtkImageEditor : public vtkProcessObject
 {
 public:
   static vtkImageEditor *New();

@@ -401,7 +401,7 @@ void vtkPolyBoolean::Execute()
                 XformBtoA->GetElement( 3, 3 ) );
 
   // Initialize output
-  this->NewPoints = vtkFloatPoints::New();
+  this->NewPoints = vtkPoints::New();
   if ( operationOutputs3D )
     {
     this->NewPoints->Allocate( numInputPointsA + numInputPointsB +
@@ -787,7 +787,7 @@ int vtkPolyBoolean::IntersectBoolTriPair( vtkBoolTri *triA, vtkBoolTri *triB )
   vtkBoolTriEdge *thisEdge, *nextEdge, *prevEdge;
   vtkPiercePoint *thisPP, *nextPP, *intPPs[2][2], *startPP, *endPP, **prevPPP;
   vtkPiercePoint tmpPPs[2][2];
-  vtkFloatPoints *points;
+  vtkPoints *points;
   float xprod[3], offsets[2][3], *p0, *p1, param, offset0, offset1, deltaX;
   int PPEdgeIndices[2][2];
   float ang_eps = this->AngleResolution*3.14159/180,
@@ -806,7 +806,7 @@ int vtkPolyBoolean::IntersectBoolTriPair( vtkBoolTri *triA, vtkBoolTri *triB )
   tri[0] = triA; tri[1] = triB;
   for ( AorB=0; AorB<2; AorB++ )
     {
-    points = (AorB == 0 ? (vtkFloatPoints *)this->GetInput()->GetPoints() :
+    points = (AorB == 0 ? (vtkPoints *)this->GetInput()->GetPoints() :
                           this->BPoints );
     thisTri = tri[AorB];
     otherTri = tri[1-AorB];
@@ -837,7 +837,7 @@ int vtkPolyBoolean::IntersectBoolTriPair( vtkBoolTri *triA, vtkBoolTri *triB )
   // intersection is determined by the 4 PPs from PPEdgeIndices[2][2]
   for ( AorB=0; AorB<2; AorB++ )
     {
-    points = (AorB == 0 ? (vtkFloatPoints *)this->GetInput()->GetPoints() :
+    points = (AorB == 0 ? (vtkPoints *)this->GetInput()->GetPoints() :
                           this->BPoints );
     thisTri = tri[AorB];
     otherTri = tri[1-AorB];
@@ -1743,7 +1743,7 @@ void vtkPolyBoolean::AddCellTriangles( int cellId, int *ptIds, int type,
   vtkBoolTri *newTri, *nextTri, **thisTriDirectory, *adjTri;
   int ii, jj, kk, numCells, triPts[3], p0, p1, neighborId, found;
   int invertB = 0;
-  vtkFloatPoints *points;
+  vtkPoints *points;
   vtkPolyData *dataset;
   float *p, *q, *r, v0[3], v1[3], *norm;
   vtkIdList *cellNeighbors = vtkIdList::New();
@@ -1752,7 +1752,7 @@ void vtkPolyBoolean::AddCellTriangles( int cellId, int *ptIds, int type,
   if ( AorB == 0 )
     { // It's A
     dataset = this->GetInput();
-    points = (vtkFloatPoints *)this->GetInput()->GetPoints();
+    points = (vtkPoints *)this->GetInput()->GetPoints();
     }
   else
     { // It's B
@@ -1906,7 +1906,7 @@ void vtkPolyBoolean::BuildBPoints( vtkMatrix4x4 *XformBtoA )
 
   Xform->SetMatrix( *XformBtoA );
   numPts = this->PolyDataB->GetNumberOfPoints();
-  this->BPoints = vtkFloatPoints::New();
+  this->BPoints = vtkPoints::New();
   this->BPoints->Allocate( numPts, 1 );
   Xform->MultiplyPoints( this->PolyDataB->GetPoints(),
                         this->BPoints );

@@ -31,6 +31,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkImageInPlaceFilter.h"
 #include "vtkPoints.h"
 #include "point.h"
+#include "vtkSlicer.h"
 
 #define ROI_SHAPE_POLYGON 1
 #define ROI_SHAPE_LINES   2
@@ -40,7 +41,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #define ROI_SHAPE_BOXES   5
 //<< AT 01/17/01 01/19/01
 
-class VTK_EXPORT vtkImageDrawROI : public vtkImageInPlaceFilter
+class VTK_SLICER_BASE_EXPORT vtkImageDrawROI : public vtkImageInPlaceFilter
 {
 public:    
     static vtkImageDrawROI *New();

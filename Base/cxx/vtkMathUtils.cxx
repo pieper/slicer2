@@ -34,9 +34,9 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 // The fourth vector in "Vectors" is the center of mass.
 
 int vtkMathUtils::PrincipalMomentsAndAxes( vtkPoints *Points,
-                                           vtkScalars *Weights,
-                                           vtkScalars *Values,
-                                           vtkVectors *Vectors )
+                                           vtkDataArray *Weights,
+                                           vtkDataArray *Values,
+                                           vtkDataArray *Vectors)
   {
   int numPts, id, ii, jj, status;
   float *covar[3], cov0[3], cov1[3], cov2[3], tmp,
@@ -55,7 +55,7 @@ int vtkMathUtils::PrincipalMomentsAndAxes( vtkPoints *Points,
     p = Points->GetPoint(id);
     if ( Weights != NULL )
       {
-      weight = Weights->GetScalar(id);
+      weight = Weights->GetTuple1(id);
       }
     mean[0] += p[0]*weight;
     mean[1] += p[1]*weight;
@@ -75,7 +75,7 @@ int vtkMathUtils::PrincipalMomentsAndAxes( vtkPoints *Points,
     p = Points->GetPoint(id);
     if ( Weights != NULL )
       {
-      weight = Weights->GetScalar(id);
+      weight = Weights->GetTuple1(id);
       }
     pw[0] = p[0]*weight - mean[0];
     pw[1] = p[1]*weight - mean[1];
@@ -99,20 +99,20 @@ int vtkMathUtils::PrincipalMomentsAndAxes( vtkPoints *Points,
   status = vtkMath::JacobiN( covar, 3, eigenVals, eigenVecs );
 
   // Fourth - copy result to output
-  Values->SetNumberOfScalars( 3 );
-  Vectors->SetNumberOfVectors( 4 );
+  Values->SetNumberOfTuples( 3 );
+  Vectors->SetNumberOfTuples( 4 );
   for ( jj=0; jj<3; jj++ )
     {
-    Values->SetScalar( jj, eigenVals[jj] );
+    Values->SetTuple1( jj, eigenVals[jj] );
     for ( ii=jj+1; ii<3; ii++ )
       {
       tmp = eigenVecs[jj][ii];
       eigenVecs[jj][ii] = eigenVecs[ii][jj];
       eigenVecs[ii][jj] = tmp;
       }
-    Vectors->SetVector( jj, eigenVecs[jj] );
+    Vectors->SetTuple( jj, eigenVecs[jj] );
     }
-  Vectors->SetVector( 3, mean );
+  Vectors->SetTuple( 3, mean );
   return status;
   }
 
@@ -178,19 +178,19 @@ int vtkMathUtils::AlignPoints( vtkPoints *Data, vtkPoints *Ref,
       }
     }
 
-  vtkMathUtils:SVD3x3( H, U, sing, V );
+  vtkMathUtils::SVD3x3( H, U, sing, V );
 
   for ( ii=0; ii<3; ii++ )
     {
     for ( jj=0; jj<3; jj++ )
       {
-      tmpXform->GetMatrixPointer()->SetElement( ii, jj, U[ii][jj] );
+      tmpXform->GetMatrix()->SetElement( ii, jj, U[ii][jj] );
       Xform->SetElement( ii, jj, V[jj][ii] ); // V transpose
       }
     }
   tmpXform->Concatenate( Xform );
   tmpXform->MultiplyPoint( cmRef, translate );
-  Xform->DeepCopy( tmpXform->GetMatrixPointer() );
+  Xform->DeepCopy( tmpXform->GetMatrix() );
   for ( ii=0; ii<3; ii++ )
     {
     Xform->SetElement( ii, 3, cmData[ii] - translate[ii] );
@@ -261,8 +261,7 @@ void vtkMathUtils::Outer2(float x[2], float y[2], float A[2][2])
     }
 }
 
-// Remove static from here
-void vtkMathUtils::MatrixMultiply(double **A, double **B, double **C, int rowA, 
+/*static*/ void vtkMathUtils::MatrixMultiply(double **A, double **B, double **C, int rowA, 
                int colA, int rowB, int colB)
 {
   // we need colA == rowB 
@@ -293,8 +292,7 @@ void vtkMathUtils::MatrixMultiply(double **A, double **B, double **C, int rowA,
     }
 }
 
-// Remove static from here
-void vtkMathUtils::PrintMatrix(double **A, int rowA, int colA)
+/*static*/ void vtkMathUtils::PrintMatrix(double **A, int rowA, int colA)
 {
   int j,k;
 

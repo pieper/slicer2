@@ -30,10 +30,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include <cmath>
 #include "vtkImageToImageFilter.h"
 
-#define EMSEGMENT_ONE_OVER_2_PI 0.5/3.14159265358979
-#define EMSEGMENT_ONE_OVER_ROOT_2_PI sqrt(EMSEGMENT_ONE_OVER_2_PI)
-
-class VTK_EXPORT vtkImageEMSegmenter : public vtkImageToImageFilter
+class VTK_SLICER_BASE_EXPORT vtkImageEMSegmenter : public vtkImageToImageFilter
 {
   public:
 
@@ -141,10 +138,7 @@ protected:
 
   void operator=(const vtkImageEMSegmenter&) {};
   void ExecuteInformation(){this->vtkImageToImageFilter::ExecuteInformation();};
-  // void ExecuteInformation(vtkImageData *inData, vtkImageData *outData); 
-  // When it works on parallel machines use : void ThreadedExecute(vtkImageData *inData, vtkImageData *outData,int outExt[6], int id);
-  // otherwise :
-  void Execute(vtkImageData *inData, vtkImageData *outData);
+  void ThreadedExecute(vtkImageData *inData, vtkImageData *outData,int outExt[6], int id);
 
   // Description:
   // Opens up a new file and writes down result in the file
@@ -201,7 +195,7 @@ protected:
 
   // Description:
   // Defines the Label map of a given image
-  void DeterminLabelMap(double *LabelMap, double **w_m, int imgXY,int imgZ);
+  void DeterminLabelMap(double *LabelMap, double **w_m, int imgX,int imgY, int  NumSlices, int imgXY);
 
   // Description:
   // Print out intermediate result of the algorithm in a matlab file
@@ -235,4 +229,14 @@ protected:
   double ***MrfParams;         // Markov Model Parameters: Matrix3D mrfparams(this->NumClasses,this->NumClasses,4);
 };
 #endif
+
+
+
+
+
+
+
+
+
+
 

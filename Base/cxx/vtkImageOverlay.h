@@ -31,8 +31,9 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #define __vtkImageOverlay_h
 
 #include "vtkImageMultipleInputFilter.h"
+#include "vtkSlicer.h"
 
-class VTK_EXPORT vtkImageOverlay : public vtkImageMultipleInputFilter
+class VTK_SLICER_BASE_EXPORT vtkImageOverlay : public vtkImageMultipleInputFilter
 {
 public:
   static vtkImageOverlay *New();

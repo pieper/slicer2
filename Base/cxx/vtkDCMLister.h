@@ -42,6 +42,8 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkObject.h"
 #include "vtkDCMParser.h"
 
+#include "vtkSlicer.h"
+
 #define AUX_STR_MAX 4096
 
 struct DataElement {
@@ -52,7 +54,7 @@ struct DataElement {
   struct DataElement *Next;
 };
 
-class VTK_EXPORT vtkDCMLister : public vtkDCMParser
+class VTK_SLICER_BASE_EXPORT vtkDCMLister : public vtkDCMParser
 {
  public:
   static vtkDCMLister *New();

@@ -30,8 +30,9 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #define __vtkImageCrossHair2D_h
 
 #include "vtkImageInPlaceFilter.h"
+#include "vtkSlicer.h"
 
-class VTK_EXPORT vtkImageCrossHair2D : public vtkImageInPlaceFilter
+class VTK_SLICER_BASE_EXPORT vtkImageCrossHair2D : public vtkImageInPlaceFilter
 {
 public:
     static vtkImageCrossHair2D *New();

@@ -33,9 +33,10 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 //#include <iostream.h>
 //#include <fstream.h>
 #include "vtkMrmlNode.h"
+#include "vtkSlicer.h"
 
 
-class VTK_EXPORT vtkMrmlScenesNode : public vtkMrmlNode
+class VTK_SLICER_BASE_EXPORT vtkMrmlScenesNode : public vtkMrmlNode
 {
 public:
   static vtkMrmlScenesNode *New();

@@ -26,8 +26,8 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkImageEuclideanDistanceTransformation.h,v $
   Language:  C++
-  Date:      $Date: 2002/03/21 23:05:35 $
-  Version:   $Revision: 1.5 $
+  Date:      $Date: 2002/05/08 18:57:46 $
+  Version:   $Revision: 1.6 $
   Thanks:    Olivier Cuisenaire who developed this class
              URL: http://ltswww.epfl.ch/~cuisenai
          Email: Olivier.Cuisenaire@epfl.ch
@@ -96,8 +96,9 @@ is not copyright MIT.
 #define __vtkImageEuclideanDistanceTransformation_h
 
 #include "../imaging/vtkImageDecomposeFilter.h"
+#include "vtkSlicer.h"
 
-class VTK_EXPORT vtkImageEuclideanDistanceTransformation : public vtkImageDecomposeFilter
+class VTK_SLICER_BASE_EXPORT vtkImageEuclideanDistanceTransformation : public vtkImageDecomposeFilter
 {
 public:
   vtkImageEuclideanDistanceTransformation();

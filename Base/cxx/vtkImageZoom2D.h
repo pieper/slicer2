@@ -30,8 +30,9 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #define __vtkImageZoom2D_h
 
 #include "vtkImageToImageFilter.h"
+#include "vtkSlicer.h"
 
-class VTK_EXPORT vtkImageZoom2D : public vtkImageToImageFilter
+class VTK_SLICER_BASE_EXPORT vtkImageZoom2D : public vtkImageToImageFilter
 {
 public:
     static vtkImageZoom2D *New();

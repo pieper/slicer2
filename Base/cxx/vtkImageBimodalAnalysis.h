@@ -33,8 +33,9 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #define VTK_BIMODAL_MODALITY_MR 1
 
 #include "vtkImageToImageFilter.h"
+#include "vtkSlicer.h"
 
-class VTK_EXPORT vtkImageBimodalAnalysis : public vtkImageToImageFilter
+class VTK_SLICER_BASE_EXPORT vtkImageBimodalAnalysis : public vtkImageToImageFilter
 {
 public:
   static vtkImageBimodalAnalysis *New();

@@ -30,6 +30,19 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkImageWriter.h"
 #include <time.h>
 
+//------------------------------------------------------------------------------
+vtkMrmlData* vtkMrmlData::New()
+{
+  // First try to create the object from the vtkObjectFactory
+  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkMrmlData");
+  if(ret)
+    {
+    return (vtkMrmlData*)ret;
+    }
+  // If the factory was unable to create the object, then create it here.
+  return NULL;
+}
+
 //----------------------------------------------------------------------------
 vtkMrmlData::vtkMrmlData()
 {

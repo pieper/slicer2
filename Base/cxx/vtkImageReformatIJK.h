@@ -62,8 +62,9 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkMatrix4x4.h"
 #include "vtkTransform.h"
 #include "vtkIntArray.h"
+#include "vtkSlicer.h"
 
-class VTK_EXPORT vtkImageReformatIJK : public vtkImageToImageFilter
+class VTK_SLICER_BASE_EXPORT vtkImageReformatIJK : public vtkImageToImageFilter
 {
 public:
     static vtkImageReformatIJK *New();

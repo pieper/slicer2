@@ -29,8 +29,9 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #define __vtkDistractorSource_h
 
 #include "vtkPolyDataSource.h"
+#include "vtkSlicer.h"
 
-class VTK_EXPORT vtkDistractorSource : public vtkPolyDataSource 
+class VTK_SLICER_BASE_EXPORT vtkDistractorSource : public vtkPolyDataSource 
 {
 public:
   vtkDistractorSource(int res=6);

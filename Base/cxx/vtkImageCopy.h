@@ -31,8 +31,9 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #define __vtkImageCopy_h
 
 #include "vtkImageToImageFilter.h"
+#include "vtkSlicer.h"
 
-class VTK_EXPORT vtkImageCopy : public vtkImageToImageFilter
+class VTK_SLICER_BASE_EXPORT vtkImageCopy : public vtkImageToImageFilter
 {
 public:
   static vtkImageCopy *New();

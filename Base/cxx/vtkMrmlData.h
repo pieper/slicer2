@@ -48,10 +48,12 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkMrmlNode.h"
 #include "vtkLookupTable.h"
 #include "vtkImageData.h"
+#include "vtkSlicer.h"
 
 //----------------------------------------------------------------------------
-class VTK_EXPORT vtkMrmlData : public vtkProcessObject {
+class VTK_SLICER_BASE_EXPORT vtkMrmlData : public vtkProcessObject {
   public:
+    static vtkMrmlData *New();
 
   vtkTypeMacro(vtkMrmlData,vtkProcessObject);
   void PrintSelf(ostream& os, vtkIndent indent);

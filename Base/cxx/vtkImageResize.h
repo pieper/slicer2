@@ -32,8 +32,9 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #define __vtkImageResize_h
 
 #include "vtkImageToImageFilter.h"
+#include "vtkSlicer.h"
 
-class VTK_EXPORT vtkImageResize : public vtkImageToImageFilter
+class VTK_SLICER_BASE_EXPORT vtkImageResize : public vtkImageToImageFilter
 {
 public:
   static vtkImageResize *New();

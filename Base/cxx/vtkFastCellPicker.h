@@ -37,8 +37,9 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkVersion.h"
 #include "vtkPicker.h"
 #include "vtkOBBTree.h"
+#include "vtkSlicer.h"
 
-class VTK_EXPORT vtkFastCellPicker : public vtkPicker
+class VTK_SLICER_BASE_EXPORT vtkFastCellPicker : public vtkPicker
 {
 public:
   vtkFastCellPicker();
@@ -64,7 +65,7 @@ protected:
   int SubId; // picked cell subId
   float PCoords[3]; // picked cell parametric coordinates
 
-#if (VTK_MAJOR_VERSION == 3 && VTK_MINOR_VERSION == 2)
+#if ( (VTK_MAJOR_VERSION == 3 && VTK_MINOR_VERSION == 2) || VTK_MAJOR_VERSION == 4 )
   virtual float IntersectWithLine(float p1[3], float p2[3], float tol, 
                   vtkAssemblyPath *assem, vtkActor *a, vtkMapper *m);
 #else

@@ -34,7 +34,9 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkImageWindow.h"
 #include "vtkObject.h"
 
-class VTK_EXPORT vtkXDisplayWindow : public vtkObject
+#include "vtkSlicer.h"
+
+class VTK_SLICER_BASE_EXPORT vtkXDisplayWindow : public vtkObject
 {
 public:
   static vtkXDisplayWindow *New();

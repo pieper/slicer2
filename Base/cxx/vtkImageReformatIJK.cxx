@@ -181,7 +181,7 @@ void vtkImageReformatIJK::ComputeTransform()
 
   // InputToOutput = Inv(Output) * Input
   this->tran = vtkTransform::New();
-  this->tran->SetMatrix(*output);
+  this->tran->SetMatrix(output);
   this->tran->Inverse();
     // Set the vtkTransform to PreMultiply so a concatenated matrix, C,
     // is multiplied by the existing matrix, M, to form M`= M*C (not C*M)
@@ -382,7 +382,7 @@ void vtkImageReformatIJK::ComputeReformatMatrix(vtkMatrix4x4 *ref)
   xExt = this->OutputExtent[1] - this->OutputExtent[0] + 1;
 
   // Form IJK->RAS matrix
-  trans->SetMatrix(*(this->WldToIjkMatrix));
+  trans->SetMatrix(this->WldToIjkMatrix);
   trans->Inverse();
   trans->GetMatrix(ijkToRas);
 
@@ -393,8 +393,9 @@ void vtkImageReformatIJK::ComputeReformatMatrix(vtkMatrix4x4 *ref)
     C[i] = this->Origin[i] + this->XStep[i]*xExt/2 + this->YStep[i]*yExt/2;
   }
   C[3] = 1;
-  trans->SetPoint(C);
-  trans->GetPoint(C);
+  //trans->SetPoint(C);
+  //trans->GetPoint(C);
+  trans->TransformPoint(C,C);
 
     // X (right)
   //
@@ -403,8 +404,9 @@ void vtkImageReformatIJK::ComputeReformatMatrix(vtkMatrix4x4 *ref)
     X[i] = this->Origin[i] + this->XStep[i];
   }
   X[3] = 1;
-  trans->SetPoint(X);
-  trans->GetPoint(X);
+  //trans->SetPoint(X);
+  //trans->GetPoint(X);
+  trans->TransformPoint(X,X);
 
     // Y (lower)
   for (i=0; i<3; i++) 
@@ -412,8 +414,9 @@ void vtkImageReformatIJK::ComputeReformatMatrix(vtkMatrix4x4 *ref)
     Y[i] = this->Origin[i] + this->YStep[i];
   }
   Y[3] = 1;
-  trans->SetPoint(Y);
-  trans->GetPoint(Y);
+  //trans->SetPoint(Y);
+  //trans->GetPoint(Y);
+  trans->TransformPoint(Y,Y);
 
   // O (origin)
   for (i=0; i<3; i++) 
@@ -421,8 +424,9 @@ void vtkImageReformatIJK::ComputeReformatMatrix(vtkMatrix4x4 *ref)
     O[i] = this->Origin[i];
   }
   O[3] = 1;
-  trans->SetPoint(O);
-  trans->GetPoint(O);
+  //trans->SetPoint(O);
+  //trans->GetPoint(O);
+  trans->TransformPoint(O,O);
 
   // Ux (unit vector in x direction)
   // Uy (unit vector in y direction)

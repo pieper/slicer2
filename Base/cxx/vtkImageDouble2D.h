@@ -30,8 +30,9 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #define __vtkImageDouble2D_h
 
 #include "vtkImageToImageFilter.h"
+#include "vtkSlicer.h"
 
-class VTK_EXPORT vtkImageDouble2D : public vtkImageToImageFilter
+class VTK_SLICER_BASE_EXPORT vtkImageDouble2D : public vtkImageToImageFilter
 {
 public:    
     static vtkImageDouble2D *New();

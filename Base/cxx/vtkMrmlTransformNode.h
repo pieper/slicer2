@@ -35,8 +35,9 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkMrmlNode.h"
 #include "vtkMatrix4x4.h"
 #include "vtkTransform.h"
+#include "vtkSlicer.h"
 
-class VTK_EXPORT vtkMrmlTransformNode : public vtkMrmlNode
+class VTK_SLICER_BASE_EXPORT vtkMrmlTransformNode : public vtkMrmlNode
 {
 public:
   static vtkMrmlTransformNode *New();

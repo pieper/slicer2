@@ -30,8 +30,9 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #define __vtkImageErode_h
 
 #include "vtkImageNeighborhoodFilter.h"
+#include "vtkSlicer.h"
 
-class VTK_EXPORT vtkImageErode : public vtkImageNeighborhoodFilter
+class VTK_SLICER_BASE_EXPORT vtkImageErode : public vtkImageNeighborhoodFilter
 {
 public:
   static vtkImageErode *New();

@@ -38,8 +38,9 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 #include "vtkImageEditor.h"
 #include "vtkPoints.h"
+#include "vtkSlicer.h"
 
-class VTK_EXPORT vtkImageEditorEffects : public vtkImageEditor
+class VTK_SLICER_BASE_EXPORT vtkImageEditorEffects : public vtkImageEditor
 {
 public:
   static vtkImageEditorEffects *New();

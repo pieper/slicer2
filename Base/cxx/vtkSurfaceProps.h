@@ -27,8 +27,9 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkProcessObject.h"
 #include "vtkPolyData.h"
 #include "vtkCellTriMacro.h"
+#include "vtkSlicer.h"
 
-class VTK_EXPORT vtkSurfaceProps : public vtkProcessObject
+class VTK_SLICER_BASE_EXPORT vtkSurfaceProps : public vtkProcessObject
 {
   public:
   vtkSurfaceProps();

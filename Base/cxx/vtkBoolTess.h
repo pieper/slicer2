@@ -26,6 +26,8 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 #include "vtkObject.h"
 
+#include "vtkSlicer.h"
+
 //
 //BTX - begin tcl exclude
 //
@@ -58,7 +60,7 @@ typedef struct booltesspair {
 //ETX - end tcl exclude
 //
 
-class VTK_EXPORT vtkBoolTess { //; prevent man page generation
+class VTK_SLICER_BASE_EXPORT vtkBoolTess { //; prevent man page generation
 public:
   vtkBoolTess();
   ~vtkBoolTess();

@@ -48,8 +48,9 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkLookupTable.h"
 #include "vtkScalarsToColors.h"
 #include "vtkUnsignedShortArray.h"
+#include "vtkSlicer.h"
 
-class VTK_EXPORT vtkIndirectLookupTable : public vtkScalarsToColors
+class VTK_SLICER_BASE_EXPORT vtkIndirectLookupTable : public vtkScalarsToColors
 {
 public:
   static vtkIndirectLookupTable *New();

@@ -33,8 +33,11 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkImageToImageFilter.h"
 #include "vtkMatrix4x4.h"
 #include "vtkIntArray.h"
+#include "vtkFloatArray.h"
+#include "vtkTensor.h"
+#include "vtkSlicer.h"
 
-class VTK_EXPORT vtkImageReformat : public vtkImageToImageFilter
+class VTK_SLICER_BASE_EXPORT vtkImageReformat : public vtkImageToImageFilter
 {
   public:
     static vtkImageReformat *New();

@@ -34,8 +34,9 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 #include "vtkImageMultipleInputFilter.h"
 #include "vtkFloatArray.h"
+#include "vtkSlicer.h"
 
-class VTK_EXPORT vtkImageWeightedSum : public vtkImageMultipleInputFilter
+class VTK_SLICER_BASE_EXPORT vtkImageWeightedSum : public vtkImageMultipleInputFilter
 {
   public:
   static vtkImageWeightedSum *New();

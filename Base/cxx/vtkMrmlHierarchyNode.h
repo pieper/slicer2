@@ -34,7 +34,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkMrmlNode.h"
 
 
-class VTK_EXPORT vtkMrmlHierarchyNode : public vtkMrmlNode
+class VTK_SLICER_BASE_EXPORT vtkMrmlHierarchyNode : public vtkMrmlNode
 {
 public:
   static vtkMrmlHierarchyNode *New();

@@ -34,8 +34,9 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkImageToImageFilter.h"
 #include "vtkImageLiveWire.h"
 #include "vtkImageLiveWireEdgeWeights.h"
+#include "vtkSlicer.h"
 
-class VTK_EXPORT vtkImageLiveWireTester : public vtkImageToImageFilter
+class VTK_SLICER_BASE_EXPORT vtkImageLiveWireTester : public vtkImageToImageFilter
 {
   public:
   static vtkImageLiveWireTester *New();

@@ -42,6 +42,8 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkObject.h"
 //#include "vtkDCMDataElement.h"
 
+#include "vtkSlicer.h"
+
 #define TFS_IVRLE 1
 #define TFS_EVRLE 2
 #define TFS_EVRBE 3
@@ -85,7 +87,7 @@ class vtkDCMParser;
 
 typedef void (*dcm_callback)(DCMDataElementStruct des, int *stop, vtkDCMParser *parser);
 
-class VTK_EXPORT vtkDCMParser : public vtkObject
+class VTK_SLICER_BASE_EXPORT vtkDCMParser : public vtkObject
 {
  public:
   static vtkDCMParser *New();

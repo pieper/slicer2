@@ -23,12 +23,9 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 =========================================================================auto=*/
 #include "vtkImageEMSegmenter.h"
 #include "vtkObjectFactory.h"
-// 
+
 static inline double EMSegmenterGauss(double x,double m,double s) {
-   if  (s > 0 ) {
-     double term = x-m;
-     return (EMSEGMENT_ONE_OVER_ROOT_2_PI /sqrt(s))*exp(-0.5*term*term/s);
-   }
+   if  (s > 0 ) return (1 / (sqrt(2*3.14159265358979)*s)*exp(-(x-m)*(x-m)/(2*pow(s,2))));
    return (m == x ? 1e20:0);
 }
 
@@ -75,36 +72,49 @@ void vtkImageEMSegmenter::PrintSelf(ostream& os)
 }
 
 // To chage anything about output us this executed before Thread
+
 //----------------------------------------------------------------------------
-//void vtkImageEMSegmenter::ExecuteInformation(vtkImageData *inData, vtkImageData *outData) 
+//void vtkImageAccumulate::ExecuteInformation(vtkImageData *vtkNotUsed(input), 
+//                        vtkImageData *output)
 //{
-//  // outData->SetScalarTypeToUnsignedShort();
-//  outData->SetScalarType(VTK_UNSIGNED_SHORT);
+//  output->SetWholeExtent(this->ComponentExtent); // size of output
+//  output->SetOrigin(this->ComponentOrigin);
+//  output->SetSpacing(this->ComponentSpacing);
+//  output->SetNumberOfScalarComponents(1);
+//  output->SetScalarType(VTK_INT);      // type of output float, integer 
 //}
 
+
+
 //----------------------------------------------------------------------------
-// This non - templated function executes the filter for any type of input data.
+// This templated function executes the filter for any type of data.
 template <class T>
-static void vtkImageEMSegmenterExecute(vtkImageEMSegmenter *self,vtkImageData *in1Data, T *in1Ptr,vtkImageData *outData, T *outPtr,int maxZ)
+static void vtkImageEMSegmenterExecute(vtkImageEMSegmenter *self,vtkImageData *in1Data, T *in1Ptr,
+                  vtkImageData *outData, T *outPtr,int outExt[6], int id)
 {
   int idxR, idxY, idxZ;
+  int maxY, maxZ;
   int inIncX, inIncY, inIncZ;
   int outIncX, outIncY, outIncZ;
-  int maxY,rowLength;
+  int rowLength;
   int maxXY;
-  int ImageMax;
-  int index;
   int StartSlice = self->get_StartSlice();
   int EndSlice = self->get_EndSlice();
-  int StartEndSlice;
-  int outExt[6];
+  int StartEndSlice; 
+  int ImageMax;
+  int index;
 
   // find the region to loop over
-  self->GetOutput()->GetWholeExtent(outExt);
   rowLength = (outExt[1] - outExt[0]+1)*in1Data->GetNumberOfScalarComponents();
   maxY = outExt[3] - outExt[2] + 1; // outExt[3/2] = Relative Maximum/Minimum Y index  
-  StartEndSlice = EndSlice - StartSlice + 1;
+  maxZ = outExt[5] - outExt[4] + 1; // outExt[5/4] = Relative Maximum/Minimum Slice index  
   maxXY = rowLength*maxY;
+
+  // Making sure values are ste correctly
+  if (1 > StartSlice) StartSlice = 1;
+  if (maxZ < EndSlice) EndSlice = maxZ; 
+  else if (StartSlice > EndSlice) EndSlice = StartSlice -1;  
+  StartEndSlice = EndSlice - StartSlice + 1;
 
   // Get increments to march through data 
   in1Data->GetContinuousIncrements(outExt, inIncX, inIncY, inIncZ);
@@ -116,8 +126,8 @@ static void vtkImageEMSegmenterExecute(vtkImageEMSegmenter *self,vtkImageData *i
   for (idxZ = 1; idxZ < StartSlice; idxZ++) {
     for (idxY = 0; idxY < maxY; idxY++) {
       for (idxR = 0; idxR < rowLength; idxR++) {
-        *outPtr = 0;
-        outPtr++;
+    *outPtr = 0;
+    outPtr++;
       }
       outPtr += outIncY;
     }
@@ -125,17 +135,17 @@ static void vtkImageEMSegmenterExecute(vtkImageEMSegmenter *self,vtkImageData *i
   }
 
   //2.)  Define InputOutputVector by reading the log gray values of the image
-  double *InputOutputVector = new double[StartEndSlice*maxXY];
+  double *InputOutputVector = new double[rowLength*maxXY];
 
   ImageMax = ((int)*in1Ptr);
   for (idxZ = 0; idxZ < StartEndSlice ; idxZ++) { 
     for (idxY = maxY-1; idxY > -1; idxY--) {
       index  =  maxXY*idxZ+idxY;
       for (idxR = 0; idxR < rowLength; idxR++) {
-        InputOutputVector[index] = log(double(* in1Ptr) + 1);
+    InputOutputVector[index] = log(double(* in1Ptr) + 1);
         if (int(*in1Ptr) > ImageMax) ImageMax = int(*in1Ptr);
-        index += maxY;
-        in1Ptr++;
+    index += maxY;
+    in1Ptr++;
       }
       in1Ptr += inIncY;
     }
@@ -150,9 +160,9 @@ static void vtkImageEMSegmenterExecute(vtkImageEMSegmenter *self,vtkImageData *i
     for (idxY = maxY-1; idxY > -1; idxY--) {
       index  = maxXY*idxZ+idxY;
       for (idxR = 0; idxR < rowLength; idxR++) {
-        *outPtr = (T) (InputOutputVector[index]);
-        index += maxY;
-        outPtr++;
+    *outPtr = (T) (InputOutputVector[index]);
+    index += maxY;
+    outPtr++;
       }
       outPtr += outIncY;
     }
@@ -164,8 +174,8 @@ static void vtkImageEMSegmenterExecute(vtkImageEMSegmenter *self,vtkImageData *i
   for (idxZ = 1; idxZ < StartEndSlice; idxZ++) {
     for (idxY = 0; idxY < maxY; idxY++) {
       for (idxR = 0; idxR < rowLength; idxR++) {
-        *outPtr = 0;
-        outPtr++;
+    *outPtr = 0;
+    outPtr++;
       }
       outPtr += outIncY;
     }
@@ -180,68 +190,44 @@ static void vtkImageEMSegmenterExecute(vtkImageEMSegmenter *self,vtkImageData *i
 // It just executes a switch statement to call the correct function for
 // the datas data types.
 
-// This is doen to make it work on a parallel machine -> Algorithm is not parralilized 
-void vtkImageEMSegmenter::Execute(vtkImageData *inData, vtkImageData *outData)
+void vtkImageEMSegmenter::ThreadedExecute(vtkImageData *inData, vtkImageData *outData,int outExt[6], int id)
 {
   void *inPtr;
   void *outPtr;
-  int inExt[6];
-  int outExt[6];
-  int maxZ;
-
-  // Remark: setting your output to be unsigned shorts does not work in Slicer. Slicer wont display unsigned short  
-  vtkDebugMacro(<< "Execute: inData = " << inData << ", outData = " << outData);
   
+  vtkDebugMacro(<< "Execute: inData = " << inData 
+        << ", outData = " << outData);
+  
+
   if (inData == NULL)
     {
     vtkErrorMacro(<< "Input " << 0 << " must be specified.");
     return;
     }
 
-  // -----------------------------------------------------
-  // Checking Number of Components
-  // -----------------------------------------------------
-  if (inData->GetNumberOfScalarComponents() != 1) {
-    vtkErrorMacro(<< "Execute: Number of Scalar Components, " << inData->GetNumberOfScalarComponents() 
-                  << ", has to be 1 !");
-    return;
-  }
+  // Samson suggest:
+  // make sure the input has only one component
+  // set your output to be unsigned shorts.
+  // make sure it works on a parallel machine
+  // make sure your input and output sizes are the same
+  // figure out how to use the output data directly rather than copying over.
 
-  // -----------------------------------------------------
-  // Checking dimension of Input and Output image
-  // -----------------------------------------------------
-  this->GetInput()->GetWholeExtent(inExt);
-  this->GetOutput()->GetWholeExtent(outExt);
-  if ((inExt[1]-inExt[0] != (outExt[1]-outExt[0])) || (inExt[3]-inExt[2] != (outExt[3]-outExt[2])) || (inExt[5]-inExt[4] != (outExt[5]-outExt[4]))) {
-    vtkErrorMacro(<< "Execute: Extension of input Image , " << inExt[1]-inExt[0] << "x" << inExt[3]-inExt[2] << "x" 
-                  << inExt[5]-inExt[4] << ", must match output image " << outExt[1]-outExt[0] << "x" << outExt[3]-outExt[2] << "x" 
-    << outExt[5]-outExt[4]);
-    return;
-  }
-
-  // -----------------------------------------------------
-  // Checking dimension with start and end slice 
-  // -----------------------------------------------------
-  maxZ = inExt[5] - inExt[4] + 1; // outExt[5/4] = Relative Maximum/Minimum Slice index  
-
-  // Making sure values are set correctly
-  if ((this->StartSlice < 1) || (this->StartSlice > this->EndSlice) || (this->EndSlice > maxZ)) {
-    vtkErrorMacro(<< "Start Slice,"<<this->StartSlice<< ", or EndSlice," << this->EndSlice << ", not defined correctly !");
-    return;
-  }
-
-
-  // -----------------------------------------------------
-  // Executing filter 
-  // -----------------------------------------------------
   inPtr = inData->GetScalarPointerForExtent(outExt);
   outPtr = outData->GetScalarPointerForExtent(outExt);
   
+  // I added ask Lauren
+  if (inData->GetScalarType() != outData->GetScalarType()) {
+    vtkErrorMacro(<< "Execute: input ScalarType, " << inData->GetScalarType()
+                  << ", must match out ScalarType " << outData->GetScalarType());
+    return;
+  }
+  
   switch (inData->GetScalarType()) {
-     vtkTemplateMacro6(vtkImageEMSegmenterExecute,this, inData, (VTK_TT *)(inPtr), outData, (VTK_TT *) (outPtr), maxZ);
+    vtkTemplateMacro7(vtkImageEMSegmenterExecute, this, inData, (VTK_TT *)(inPtr), 
+                      outData, (VTK_TT *)(outPtr),outExt, id);
   default:
-     vtkErrorMacro(<< "Execute: Unknown ScalarType");
-     return;
+    vtkErrorMacro(<< "Execute: Unknown ScalarType");
+    return;
   }
 }
 
@@ -269,7 +255,7 @@ void vtkImageEMSegmenter::SetNumClasses(int NumberOfClasses)
     for (z=0; z < 6; z++) {
       this->MrfParams[z] = new double*[NumberOfClasses];
       for (y=0;y < NumberOfClasses; y ++) 
-        this->MrfParams[z][y] = new double[NumberOfClasses];
+    this->MrfParams[z][y] = new double[NumberOfClasses];
     }
 
     // Set all initial values to -1
@@ -280,7 +266,7 @@ void vtkImageEMSegmenter::SetNumClasses(int NumberOfClasses)
       *this->Label = -1;
       this->Mu ++; this->Sigma ++;this->Prob++;this->Label++;
       for (z=0; z < 6; z++) {
-        for (y=0;y < NumberOfClasses; y ++) this->MrfParams[z][y][x] = -1;
+    for (y=0;y < NumberOfClasses; y ++) this->MrfParams[z][y][x] = -1;
       }
     }
     this->Mu -= NumberOfClasses; this->Sigma  -= NumberOfClasses;this->Prob  -= NumberOfClasses;this->Label  -= NumberOfClasses;
@@ -303,10 +289,10 @@ int vtkImageEMSegmenter::checkValues()
 {
   int i=0,k,j;
   while (i < this->NumClasses) {
-    //if (this->Mu[i] < 0) {
-    //  cout << "vtkImageEMSegmenter:checkValues:  Mu[" << i+1 <<"] = " << this->Mu[i] << " must be greater than 0!" << endl;
-    //  return -2;
-    // }
+    if (this->Mu[i] < 0) {
+      cout << "vtkImageEMSegmenter:checkValues:  Mu[" << i+1 <<"] = " << this->Mu[i] << " must be greater than 0!" << endl;
+      return -2;
+    }
     if (this->Sigma[i] < 0)  {
       cout << "vtkImageEMSegmenter:checkValues:  Sigma[" << i+1 <<"] = " << this->Sigma[i] << " is not greater than 0!" << endl;
       return -3;
@@ -321,11 +307,11 @@ int vtkImageEMSegmenter::checkValues()
     }
     for (j = 0; j < this->NumClasses; j++) {
        for (k = 0; k < 6; k++) {
-         if ((this->MrfParams[k][j][i] < 0) || (this->MrfParams[k][j][i] > 1)) {
-           cout << "vtkImageEMSegmenter:checkValues:  MrfParams[" << k+1 <<"] [" << j+1 <<"] [" << i+1 <<"] = " << this->MrfParams[k][j][i] 
-                << " is not between 0 and 1!" << endl;
-           return -5;
-         }
+     if ((this->MrfParams[k][j][i] < 0) || (this->MrfParams[k][j][i] > 1)) {
+       cout << "vtkImageEMSegmenter:checkValues:  MrfParams[" << k+1 <<"] [" << j+1 <<"] [" << i+1 <<"] = " << this->MrfParams[k][j][i] 
+        << " is not between 0 and 1!" << endl;
+       return -5;
+     }
        }
     }
     i++;
@@ -404,62 +390,60 @@ void vtkImageEMSegmenter::vtkImageEMAlgorithm(double *InputOutputVector,int imgX
   int iMax = ImageMax+750;
   double *MuLog    = new double[this->NumClasses], *MuLogPtr    = MuLog; 
   double *SigmaLog = new double[this->NumClasses], *SigmaLogPtr = SigmaLog;
+  double *ProbSum  = new double[this->NumClasses], *ProbSumPtr  = ProbSum;
   double *MuPtr = this->Mu, *SigmaPtr = this->Sigma, *ProbPtr = this->Prob, *InputOutputVectorPtr = InputOutputVector; 
   for (k=0; k < this->NumClasses; k++) {
     *MuLog++    = 0; 
     *SigmaLog++ = 0;
+    *ProbSum++  = 0;
   }
-  MuLog = MuLogPtr; SigmaLog = SigmaLogPtr; 
+  MuLog = MuLogPtr; SigmaLog = SigmaLogPtr; ProbSum = ProbSumPtr; 
 
+  double *LogPlus  = new double[iMax], *LogPlusPtr = LogPlus; 
   double  **ProbMatrix = new double*[this->NumClasses];
   for (k=0; k< this->NumClasses;k++) ProbMatrix[k] = new double[iMax];
 
-  // From April 2002 the given values are already the log values !!!
-  // Also SigmaLog is the Log Covariance Matrix => See changes in EMSegmenterGauss
   // The following is the same in Matlab as sum(p.*log(x+1)) with x =[0:iMax-1] and p =Gauss(x,mu,sigma) 
-  // for (i = 0; i < iMax; i++) {
-  //    *LogPlus = log(i+1);
-//      for (k=0; k < this->NumClasses; k++) {
-//        ProbMatrix[k][i] = EMSegmenterGauss(i,*(this->Mu++),*(this->Sigma++));
-//        *MuLog++ +=  ProbMatrix[k][i]*(*LogPlus);
-//        *ProbSum++ += ProbMatrix[k][i]; 
-//      }
-//      LogPlus ++;
-//      this->Mu = MuPtr; this->Sigma = SigmaPtr; MuLog = MuLogPtr; ProbSum = ProbSumPtr;
-//    } 
-//    // Normalize Mu over psum
-//    LogPlus = LogPlusPtr;
-//    for (k=0; k < this->NumClasses; k++) {
-//        *MuLog /= *ProbSum;
-//        MuLog ++;ProbSum++;
-//    }
-//    MuLog = MuLogPtr; ProbSum = ProbSumPtr;
+  for (i = 0; i < iMax; i++) {
+    *LogPlus = log(i+1);
+    for (k=0; k < this->NumClasses; k++) {
+      ProbMatrix[k][i] = EMSegmenterGauss(i,*(this->Mu++),*(this->Sigma++));
+      *MuLog++ +=  ProbMatrix[k][i]*(*LogPlus);
+      *ProbSum++ += ProbMatrix[k][i]; 
+    }
+    LogPlus ++;
+    this->Mu = MuPtr; this->Sigma = SigmaPtr; MuLog = MuLogPtr; ProbSum = ProbSumPtr;
+  } 
+  // Normalize Mu over psum
+  LogPlus = LogPlusPtr;
+  for (k=0; k < this->NumClasses; k++) {
+      *MuLog /= *ProbSum;
+      MuLog ++;ProbSum++;
+  }
+  MuLog = MuLogPtr; ProbSum = ProbSumPtr;
 
-//    // The following is the same in Matlab as sqrt(sum(p.*(log(x+1)-mulog).*(log(x+1)-mulog))/psum)
-//    // with x =[0:iMax-1] and p =Gauss(x,mu,sigma) 
-//    for (i = 0; i < iMax; i++) {
-//      for (k=0; k < this->NumClasses; k++) 
-//        *SigmaLog++ +=  ProbMatrix[k][i]*pow(*LogPlus - *MuLog++,2);
-//      MuLog = MuLogPtr;SigmaLog = SigmaLogPtr;
-//      LogPlus ++;
-//    } 
-//    LogPlus = LogPlusPtr;
-//    // Take the sqrt
-//    for (k=0; k < this->NumClasses; k++) {
-//        *SigmaLog =  sqrt(*SigmaLog / (*ProbSum++));
-//        SigmaLog++;
-//    }
-//    SigmaLog = SigmaLogPtr;
-//    ProbSum  = ProbSumPtr;
-
-  // The Input for Sigma and Mu are already the log values :
-  memcpy(MuLog,this->Mu,sizeof(double)*this->NumClasses);  
-  memcpy(SigmaLog,this->Sigma,sizeof(double)*this->NumClasses); 
+  // The following is the same in Matlab as sqrt(sum(p.*(log(x+1)-mulog).*(log(x+1)-mulog))/psum)
+  // with x =[0:iMax-1] and p =Gauss(x,mu,sigma) 
+  for (i = 0; i < iMax; i++) {
+    for (k=0; k < this->NumClasses; k++) 
+      *SigmaLog++ +=  ProbMatrix[k][i]*pow(*LogPlus - *MuLog++,2);
+    MuLog = MuLogPtr;SigmaLog = SigmaLogPtr;
+    LogPlus ++;
+  } 
+  LogPlus = LogPlusPtr;
+  // Take the sqrt
+  for (k=0; k < this->NumClasses; k++) {
+      *SigmaLog =  sqrt(*SigmaLog / (*ProbSum++));
+      SigmaLog++;
+  }
+  SigmaLog = SigmaLogPtr;
+  ProbSum  = ProbSumPtr;
 
   // Calculate the inverse variance
   double *ivar = new double[this->NumClasses], *ivarPtr = ivar;
   for (i=0;i < this->NumClasses;i++) {
-    *ivar++ = 1/ (*SigmaLog++);  // inverse variance, needed in emseg
+    *ivar++ = 1/((*SigmaLog) * (*SigmaLog)); // inverse variance, needed in emseg
+    SigmaLog++;
   }
   SigmaLog = SigmaLogPtr;ivar = ivarPtr;
 
@@ -502,8 +486,8 @@ void vtkImageEMSegmenter::vtkImageEMAlgorithm(double *InputOutputVector,int imgX
       r_m[k]  = new double*[imgY];
       iv_m[k] = new double*[imgY];
       for (i=0;i < imgY; i ++) {
-        r_m[k][i]  = new double[imgX];
-        iv_m[k][i] = new double[imgX];
+    r_m[k][i]  = new double[imgX];
+    iv_m[k][i] = new double[imgX];
       }
   }  
  
@@ -521,27 +505,23 @@ void vtkImageEMSegmenter::vtkImageEMAlgorithm(double *InputOutputVector,int imgX
       cY_M++;InputOutputVector++;b_m++;
     }
     cY_M = cY_MPtr; InputOutputVector = InputOutputVectorPtr;b_m = b_mPtr;
-    
 
     // Ininitialize first iteration
     // This is the EM Algorithm with out MF Part -> The Regulizing part is the part where 
     // the MF part is added
  
-    
     if (iter == 1) { 
       for (k=0; k < imgProd; k++) {  
-        normRow = 0.0;
+        normRow = 0;
         for (j=0; j < this->NumClasses; j++) {
-          (*w_m)[j] = (*this->Prob++)*(exp(*cY_M)*EMSegmenterGauss(*cY_M, *MuLog++,*SigmaLog++));
+      (*w_m)[j] = (*this->Prob++)*(exp(*cY_M)*EMSegmenterGauss(*cY_M, *MuLog++,*SigmaLog++));
           normRow += (*w_m)[j];
-        }
-        this->Prob = ProbPtr;MuLog = MuLogPtr;SigmaLog = SigmaLogPtr;
+    }
+    cY_M++;
+    this->Prob = ProbPtr;MuLog = MuLogPtr;SigmaLog = SigmaLogPtr;
         // Normalize Rows and find Maxium of every Row and write it in Matrix
-        for (j=0; j < this->NumClasses; j++) {
-          (*w_m)[j] /= normRow;
-        }
-        w_m++;cY_M++;
-
+        for (j=0; j < this->NumClasses; j++) {(*w_m)[j] /= normRow;}
+    w_m++;
       }
       cY_M = cY_MPtr;w_m = w_mPtr;
     }
@@ -565,68 +545,69 @@ void vtkImageEMSegmenter::vtkImageEMAlgorithm(double *InputOutputVector,int imgX
       // i = 5 pixel and next neighbour (down)
       for(j = 0; j<  NumSlices; j++) {
         for(l = 1 ; l< imgXYPlus; l++) {
-          NormXN = NormXP = NormYN = NormYP = NormZN = NormZP = 0; 
-          for (i=0;i<this->NumClasses ;i++){
-            *wxp=*wxn=*wyn=*wyp=*wzn=*wzp=0;
-            for (k=0;k<this->NumClasses ;k++){
-              // f(i,j-1,k)
-              if (l > imgY)           *wxn += w_m[-imgY][k]*this->MrfParams[3][k][i];
-              else                    *wxn += (*w_m)[k]*this->MrfParams[3][k][i]; 
-              // f(i,j+1,k)
-              if (l < imgXYPlus-imgY) *wxp += w_m[imgY][k]*this->MrfParams[0][k][i]; 
-              else                    *wxp += (*w_m)[k]*this->MrfParams[0][k][i];
-              // f(i-1,j,k)
-              if ((l-1)%imgY)         *wyn += w_m[-1][k]*this->MrfParams[4][k][i];  
-              else                    *wyn += (*w_m)[k]*this->MrfParams[4][k][i];
-              // f(i+1,j,k)
-              if (l%imgY)             *wyp += w_m[1][k]*this->MrfParams[1][k][i];
-              else                    *wyp += (*w_m)[k]*this->MrfParams[1][k][i];
-              // f(i,j,k-1)
-              if (j > 0)              *wzn += w_m[-imgXY][k]*this->MrfParams[5][k][i]; 
-              else                    *wzn += (*w_m)[k]*this->MrfParams[5][k][i];  
-              // f(i,j,k+1)
-              if (j < (NumSlices -1)) *wzp += w_m[imgXY][k]*this->MrfParams[2][k][i]; 
-              else                    *wzp += (*w_m)[k]*this->MrfParams[2][k][i]; 
-            }
-            NormXN += *wxn++;
-            NormXP += *wxp++;
-            NormYN += *wyn++;
-            NormYP += *wyp++;
-            NormZN += *wzn++;
-            NormZP += *wzp++;
-          }
-          wxp = wxpPtr; wxn = wxnPtr; wyn = wynPtr; wyp = wypPtr; wzn = wznPtr; wzp = wzpPtr;
-          // mp = (ones(prod(imS),1)*p).*(1-alpha + alpha*wxn).*(1- alpha +alpha*wxp)...
-          //.*(1- alpha + alpha*wyp).*(1-alpha + alpha*wyn).*(1- alpha + alpha*wzp).*(1-alpha + alpha*wzn);
-          // w have to be normalized !
-          normRow = 0;
-          for (i=0; i<this->NumClasses; i++) {
-            mp = (*this->Prob++)*(1-this->Alpha+this->Alpha*(*wxp++/NormXP))*(1-this->Alpha+this->Alpha*(*wxn++/NormXN))
-                                *(1-this->Alpha+this->Alpha*(*wyp++/NormYP))*(1-this->Alpha+this->Alpha*(*wyn++/NormYN))
-                                *(1-this->Alpha+this->Alpha*(*wzp++/NormZP))*(1-this->Alpha+this->Alpha*(*wzn++/NormZN));
-            // w_m(:,i) = mp(:,i).*(exp(cY_m).*Gauss(cY_m, mu(i)*ones(size(X)),sigma(i)));
-            // w_m = w_m ./ repmat(eps +sum(w_m,2),[1,num_classes]);
-            // mp is not normalized right now  to be normalized !
-            (*w_m)[i] = mp*(exp(*cY_M)*EMSegmenterGauss(*cY_M, *MuLog++,*SigmaLog++));
-            normRow += (*w_m)[i];
-          } 
-          cY_M ++;
-          wxp = wxpPtr; wxn = wxnPtr; wyn = wynPtr; wyp = wypPtr; wzn = wznPtr; wzp = wzpPtr;
-          this->Prob = ProbPtr; MuLog = MuLogPtr; SigmaLog = SigmaLogPtr;
+      NormXN = NormXP = NormYN = NormYP = NormZN = NormZP = 0; 
+      for (i=0;i<this->NumClasses ;i++){
+        *wxp=*wxn=*wyn=*wyp=*wzn=*wzp=0;
 
-          for (i=0; i< this->NumClasses; i++) {
-              (*w_m)[i] /= normRow;       
-          }
-          w_m++;
+        for (k=0;k<this->NumClasses ;k++){
+          // f(i,j-1,k)
+              if (l > imgY)           *wxn += w_m[-imgY][k]*this->MrfParams[3][k][i];
+          else                    *wxn += (*w_m)[k]*this->MrfParams[3][k][i]; 
+          // f(i,j+1,k)
+          if (l < imgXYPlus-imgY) *wxp += w_m[imgY][k]*this->MrfParams[0][k][i]; 
+          else                    *wxp += (*w_m)[k]*this->MrfParams[0][k][i];
+          // f(i-1,j,k)
+          if ((l-1)%imgY)         *wyn += w_m[-1][k]*this->MrfParams[4][k][i];  
+          else                    *wyn += (*w_m)[k]*this->MrfParams[4][k][i];                       
+          // f(i+1,j,k)
+          if (l%imgY)             *wyp += w_m[1][k]*this->MrfParams[1][k][i];
+          else                    *wyp += (*w_m)[k]*this->MrfParams[1][k][i];
+          // f(i,j,k-1)
+          if (j > 0)              *wzn += w_m[-imgXY][k]*this->MrfParams[5][k][i]; 
+          else                    *wzn += (*w_m)[k]*this->MrfParams[5][k][i];  
+          // f(i,j,k+1)
+          if (j < (NumSlices -1)) *wzp += w_m[imgXY][k]*this->MrfParams[2][k][i]; 
+          else                    *wzp += (*w_m)[k]*this->MrfParams[2][k][i]; 
         }
+        NormXN += *wxn++;
+        NormXP += *wxp++;
+        NormYN += *wyn++;
+        NormYP += *wyp++;
+        NormZN += *wzn++;
+        NormZP += *wzp++;
+      }
+      wxp = wxpPtr; wxn = wxnPtr; wyn = wynPtr; wyp = wypPtr; wzn = wznPtr; wzp = wzpPtr;
+      // mp = (ones(prod(imS),1)*p).*(1-alpha + alpha*wxn).*(1- alpha +alpha*wxp)...
+      //.*(1- alpha + alpha*wyp).*(1-alpha + alpha*wyn).*(1- alpha + alpha*wzp).*(1-alpha + alpha*wzn);
+      // w have to be normalized !
+          normRow = 0;
+      for (i=0; i<this->NumClasses; i++) {
+        mp = (*this->Prob++)*(1-this->Alpha+this->Alpha*(*wxp++/NormXP))*(1-this->Alpha+this->Alpha*(*wxn++/NormXN))
+                    *(1-this->Alpha+this->Alpha*(*wyp++/NormYP))*(1-this->Alpha+this->Alpha*(*wyn++/NormYN))
+                    *(1-this->Alpha+this->Alpha*(*wzp++/NormZP))*(1-this->Alpha+this->Alpha*(*wzn++/NormZN));
+        // w_m(:,i) = mp(:,i).*(exp(cY_m).*Gauss(cY_m, mu(i)*ones(size(X)),sigma(i)));
+        // w_m = w_m ./ repmat(eps +sum(w_m,2),[1,num_classes]);
+        // mp is not normalized right now  to be normalized !
+        (*w_m)[i] = mp*(exp(*cY_M)*EMSegmenterGauss(*cY_M, *MuLog++,*SigmaLog++));
+        normRow += (*w_m)[i];
+      } 
+          cY_M ++;
+      wxp = wxpPtr; wxn = wxnPtr; wyn = wynPtr; wyp = wypPtr; wzn = wznPtr; wzp = wzpPtr;
+      this->Prob = ProbPtr; MuLog = MuLogPtr; SigmaLog = SigmaLogPtr;
+
+      for (i=0; i< this->NumClasses; i++) {
+          (*w_m)[i] /= normRow;       
+      }
+      w_m++;
+    }
       }
       cY_M = cY_MPtr;w_m = w_mPtr;
     }
 
     if ((this->PrintIntermediateResults) && ((iter%this->PrintIntermediateFrequency) == 0)){
-        cout << "vtkImageEMAlgorithm: Print intermediate result " << endl;
-        PrintMatlabGraphResults(iter,this->PrintIntermediateSlice,1, imgXY, imgY, imgX, w_m, b_m);
-        cout << "vtkImageEMAlgorithm: Return to Algorithm " << endl;
+    cout << "vtkImageEMAlgorithm: Print intermediate result " << endl;
+    PrintMatlabGraphResults(iter,this->PrintIntermediateSlice,1, imgXY, imgY, imgX, w_m, b_m);
+    cout << "vtkImageEMAlgorithm: Return to Algorithm " << endl;
     } 
 
     if (iter < this->NumIter) {
@@ -638,18 +619,18 @@ void vtkImageEMSegmenter::vtkImageEMAlgorithm(double *InputOutputVector,int imgX
       // r_m  = (w_m.*(repmat(cY_M,[1 num_classes]) - repmat(mu,[prod(imS) 1])))*(ivar)';
       // iv_m = w_m * ivar';
       for (k = 0; k< NumSlices;k++){
-        for (j = 0; j<imgX;j++){
-          for (i = 0; i<imgY;i++){
-            r_m[k][i][j] = 0;
-            iv_m[k][i][j] =0;
-            for (l=0; l<this->NumClasses; l++) {
-              r_m[k][i][j]  += (*w_m)[l]*(*cY_M - *MuLog++)*(*ivar);
-              iv_m[k][i][j] += (*w_m)[l] * (*ivar++);
-            }
-            MuLog = MuLogPtr;ivar = ivarPtr;
-            cY_M++;w_m++;
-          }
+    for (j = 0; j<imgX;j++){
+      for (i = 0; i<imgY;i++){
+        r_m[k][i][j] = 0;
+        iv_m[k][i][j] =0;
+        for (l=0; l<this->NumClasses; l++) {
+          r_m[k][i][j]  += (*w_m)[l]*(*cY_M - *MuLog++)*(*ivar);
+          iv_m[k][i][j] += (*w_m)[l] * (*ivar++);
         }
+        MuLog = MuLogPtr;ivar = ivarPtr;
+            cY_M++;w_m++;
+      }
+    }
       }
       cY_M = cY_MPtr;w_m = w_mPtr;
       //  smooth residuals and inv covariances - 3D
@@ -661,12 +642,12 @@ void vtkImageEMSegmenter::vtkImageEMAlgorithm(double *InputOutputVector,int imgX
       // transform r (smoothed weighted residuals) by iv (smoother inv covariances)
       // b_m = r_m./iv_m ;
       for (k = 0; k<NumSlices;k++){
-        for (j = 0; j<imgX;j++){
-          for (i = 0; i<imgY;i++){
-            if (!iv_m[k][i][j]) iv_m[k][i][j]= 2.2204e-14;
-            (*b_m++) = r_m[k][i][j] / iv_m[k][i][j];
-          }
-        }      
+    for (j = 0; j<imgX;j++){
+      for (i = 0; i<imgY;i++){
+        if (!iv_m[k][i][j]) iv_m[k][i][j]= 2.2204e-14;
+        (*b_m++) = r_m[k][i][j] / iv_m[k][i][j];
+      }
+    }      
       }
       b_m = b_mPtr;
     } else {
@@ -675,15 +656,16 @@ void vtkImageEMSegmenter::vtkImageEMAlgorithm(double *InputOutputVector,int imgX
       // -----------------------------------------------------------
       // Find out the maximum propability assigned to a certain class 
       // and assign that pixel to that class
-      this->DeterminLabelMap(InputOutputVector, w_m, imgXY,NumSlices);
+      this->DeterminLabelMap(InputOutputVector, w_m, imgX,imgY, NumSlices,imgXY);
     }    
   }
   delete []wxp;delete []wxn;delete []wyn;delete []wyp;delete []wzn;delete []wzp;
   delete []cY_M;
   delete []MuLog;  
   delete []SigmaLog;
+  delete []ProbSum;
+  delete []LogPlus;
   delete []ivar;
-  delete []skern;
   for (k=0; k< imgProd;k++) delete[] w_m[k];
   delete []w_m;
   for (k=0; k< this->NumClasses;k++) delete[] ProbMatrix[k];
@@ -718,7 +700,7 @@ void vtkImageEMSegmenter::PrintMatlabGraphResults(int iter,int slice,int FullPro
   double *weight = new double[imgXY];
   double *ind_Vector = new double [imgXY];
   w_m += imgXY*(slice-1); 
-  this->DeterminLabelMap(ind_Vector, w_m, imgXY, 1);
+  this->DeterminLabelMap(ind_Vector, w_m, imgX,imgY, 1,imgXY);
   sprintf(filename,"EMSegmResult%dImage.m",iter);
   this->WriteVectorToFile(filename,"Image",ind_Vector, imgXY);  
 
@@ -782,14 +764,18 @@ void vtkImageEMSegmenter::PrintMatlabGraphResults(int iter,int slice,int FullPro
   delete[] ind_Vector;
 }
 
-void vtkImageEMSegmenter::DeterminLabelMap(double* LabelMap, double **w_m, int imgXY, int imgZ) { 
-  int idx,l,MaxProbIndex;
-  int max = imgXY*imgZ;
-  for (idx = 0; idx < max ; idx++) {
+void vtkImageEMSegmenter::DeterminLabelMap(double* LabelMap, double **w_m, int imgX,int imgY, int NumSlices,int imgXY) { 
+  int idxZ,idxY, idxR,l,MaxProbIndex;
+  int index = 0;
+  for (idxZ = 0; idxZ < NumSlices ; idxZ++) {
+    for (idxY = 0; idxY < imgY; idxY++) {
+      for (idxR = 0; idxR < imgX; idxR++) {
     MaxProbIndex = 0;
-    for (l=1; l<this->NumClasses; l++) if ((*w_m)[l] > (*w_m)[MaxProbIndex]) MaxProbIndex = l;
+    for (l=1; l<this->NumClasses; l++) if (w_m[index][l] > w_m[index][MaxProbIndex]) MaxProbIndex = l;
     *(LabelMap++) = (double) this->Label[MaxProbIndex];
-    w_m++;
+    index++;
+      }
+    }
   }
 }
 
@@ -804,7 +790,7 @@ void vtkImageEMSegmenter::DeleteVariables() {
 
     for (z=0; z< 6; z ++) { 
       for (y=0; y < this->NumClasses; y++)
-        delete[] this->MrfParams[z][y];
+    delete[] this->MrfParams[z][y];
       delete[] this->MrfParams[z];
     }
     delete[] this->MrfParams;
@@ -873,8 +859,8 @@ void vtkImageEMSegmenter::smoothConv(double ***mat3D, int mat3DZlen, int mat3DYl
       resultY[k]  = new double*[mat3DYlen];
       resultX[k]  = new double*[mat3DYlen];
       for (i=0;i < mat3DYlen; i ++) {
-        resultY[k][i]  = new double[mat3DXlen];
-        resultX[k][i]  = new double[mat3DXlen];
+    resultY[k][i]  = new double[mat3DXlen];
+    resultX[k][i]  = new double[mat3DXlen];
       }
   }  
 
@@ -912,8 +898,8 @@ void vtkImageEMSegmenter::convMatrix3D(double*** mat3D, double*** U,int mat3DZle
 
   for (k = stump; k <  kMax; k++) {
     for (y = 0; y < mat3DYlen; y++) {
-      for (x = 0; x < mat3DXlen; x++) 
-          (*mat3D)[y][x] = 0;
+    for (x = 0; x < mat3DXlen; x++) 
+      (*mat3D)[y][x] = 0;
     }
     jMin = (0 > (k+1 - vLen) ? 0 : (k+1  - vLen));     //  max(0,k+1-vLen):
     jMax = ((k+1) < mat3DZlen ? (k+1) : mat3DZlen);     //  min(k+1,mat3DZlen) 
@@ -921,8 +907,8 @@ void vtkImageEMSegmenter::convMatrix3D(double*** mat3D, double*** U,int mat3DZle
     U = USta + jMin;  v = vSta + k-jMin; 
     for (j=jMin; j < jMax; j++) {
       for (y = 0; y < mat3DYlen; y++) {
-        for (x = 0; x < mat3DXlen; x++)
-          (*mat3D)[y][x] += (*U)[y][x] * (*v);
+    for (x = 0; x < mat3DXlen; x++)
+      (*mat3D)[y][x] += (*U)[y][x] * (*v);
       }
       v--;
       U++;
@@ -999,13 +985,13 @@ void vtkImageEMSegmenter::TestConv() {
       resultY[i]  = new double*[y];
       resultX[i]  = new double*[y];
       for (k=0;k < y; k ++) {
-        result[i][k] = new double[x];
-        resultY[i][k] = new double[x];
-        resultX[i][k] = new double[x];
-        for (l=0;l < x; l ++) {
-          resultY[i][k][l] = 0;
-          resultX[i][k][l] = 0;
-        }
+    result[i][k] = new double[x];
+    resultY[i][k] = new double[x];
+    resultX[i][k] = new double[x];
+    for (l=0;l < x; l ++) {
+      resultY[i][k][l] = 0;
+      resultX[i][k][l] = 0;
+    }
       }
       
   }  
@@ -1071,7 +1057,7 @@ void vtkImageEMSegmenter::PrintMatrix(double **mat, int yMax,int xMax) {
   int i;
   for (int y = 0; y < yMax; y++) {
       for (i = 0; i < xMax; i++)
-        cout << mat[y][i] << " ";
+    cout << mat[y][i] << " ";
       cout << endl;
   }
   cout << endl;

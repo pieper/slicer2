@@ -32,9 +32,10 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 //#include <iostream.h>
 //#include <fstream.h>
 #include "vtkMrmlNode.h"
+#include "vtkSlicer.h"
 
 
-class VTK_EXPORT vtkMrmlModelGroupNode : public vtkMrmlNode
+class VTK_SLICER_BASE_EXPORT vtkMrmlModelGroupNode : public vtkMrmlNode
 {
 public:
   static vtkMrmlModelGroupNode *New();

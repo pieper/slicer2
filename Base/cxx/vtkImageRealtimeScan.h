@@ -30,6 +30,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 #include "vtkImageSource.h"
 #include "vtkMatrix4x4.h"
+#include "vtkSlicer.h"
 
 #define LOC_OK 0
 #define LOC_NO 1
@@ -72,7 +73,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #define CMD_PIXELS 4
 #define CMD_POS    5
 
-class VTK_EXPORT vtkImageRealtimeScan : public vtkImageSource 
+class VTK_SLICER_BASE_EXPORT vtkImageRealtimeScan : public vtkImageSource 
 {
 public:
     static vtkImageRealtimeScan *New();

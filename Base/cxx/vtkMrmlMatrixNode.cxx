@@ -74,7 +74,7 @@ void vtkMrmlMatrixNode::Write(ofstream& of, int nIndent)
 
   // Matrix
   of << " matrix='" << 
-    GetMatrixToString(this->Transform->GetMatrixPointer()) << "'";
+    GetMatrixToString(this->Transform->GetMatrix()) << "'";
 
   of << "></Matrix>\n";;
 }

@@ -30,8 +30,9 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 #include "vtkImageSource.h"
 #include "vtkRenderWindow.h"
+#include "vtkSlicer.h"
 
-class VTK_EXPORT vtkImageFrameSource : public vtkImageSource 
+class VTK_SLICER_BASE_EXPORT vtkImageFrameSource : public vtkImageSource 
 {
 public:
     static vtkImageFrameSource *New();
