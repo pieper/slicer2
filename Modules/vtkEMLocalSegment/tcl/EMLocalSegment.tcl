@@ -235,7 +235,7 @@ proc EMSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.26 $} {$Date: 2004/02/29 19:54:54 $}]
+        {$Revision: 1.27 $} {$Date: 2004/03/01 01:02:10 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -311,6 +311,8 @@ proc EMSegmentInit {} {
     set EMSegment(Cattrib,0,Node) ""
     set EMSegment(Cattrib,0,LocalPriorWeight) 0.0 
 
+    set EMSegment(Cattrib,0,DICEData) $Volume(idNone)
+ 
     foreach dir  $EMSegment(CIMList) { 
        set EMSegment(Cattrib,0,CIMMatrix,$dir,Node) ""
     }
@@ -345,11 +347,6 @@ proc EMSegmentInit {} {
     set EMSegment(PrintIntermediateSlice)       [vtkEMInit GetPrintIntermediateSlice] 
     set EMSegment(PrintIntermediateFrequency)   [vtkEMInit GetPrintIntermediateFrequency] 
 
-    # Kilian Generally simplify strucutre so that you have to do the least amount of work when you neter new variables 
-    # Combine int functino for XMLReaderWriter.tcl and LocalSegment.tcl
-    set EMSegment(PrintPCAParameters) 0
-    set EMSegment(PrintDICEResults)   0
-
     set EMSegment(RunRemoteFlag) 0
     set EMSegment(RunRemoteServer) ""
 
@@ -380,7 +377,14 @@ proc EMSegmentInit {} {
     set EMSegment(IntensityAvgClass) -1
 
     # Bias Field will not be printed
+    # Kilian Generally simplify structure so that you have to do the least amount of work when you enter new variables 
+    # Combine intialize function for XMLReaderWriter.tcl and LocalSegment.tcl
+
+
     set EMSegment(BiasPrint) 0
+    set EMSegment(PrintPCAParameters) 0
+    set EMSegment(PrintDICEResults) 0
+
     set EMSegment(PrintIntermediateDir) "."
 
     # Class Table Overview 
@@ -1678,7 +1682,7 @@ proc EMSegmentUpdateMRML {} {
         set NumberOfGraphs 0
         set EMSegment(SegmenterNode) $item
         # Current SupperClass
-    EMSegmentChangeClass 0
+        EMSegmentChangeClass 0
         # set EMSegment(Cattrib,0,ClassList) ""
         $EMSegment(SegmenterNode) SetAlreadyRead 1
       
@@ -1709,8 +1713,10 @@ proc EMSegmentUpdateMRML {} {
         set EMSegment(SmSigma)                    [Segmenter($pid,node) GetSmSigma] 
         set EMSegment(PrintIntermediateResults)   [Segmenter($pid,node) GetPrintIntermediateResults]    
         set EMSegment(PrintIntermediateSlice)     [Segmenter($pid,node) GetPrintIntermediateSlice]      
-        set EMSegment(PrintIntermediateFrequency) [Segmenter($pid,node) GetPrintIntermediateFrequency]  
-    set BoundaryMin                           [Segmenter($pid,node) GetSegmentationBoundaryMin]
+        set EMSegment(PrintIntermediateFrequency) [Segmenter($pid,node) GetPrintIntermediateFrequency] 
+        set EMSegment(PrintPCAParameters)         [Segmenter($pid,node) GetPrintPCAParameters]
+        set EMSegment(PrintDICEResults)           [Segmenter($pid,node) GetPrintDICEResults]  
+        set BoundaryMin                           [Segmenter($pid,node) GetSegmentationBoundaryMin]
         set BoundaryMax                           [Segmenter($pid,node) GetSegmentationBoundaryMax]
         for {set i 0} {$i < 3} {incr i} { 
         set EMSegment(SegmentationBoundaryMin,$i) [lindex $BoundaryMin $i]
@@ -1835,17 +1841,23 @@ proc EMSegmentUpdateMRML {} {
         set EMSegment(Cattrib,$NumClass,PCATranslation)  [SegmenterClass($pid,node) GetPCATranslation]
         set EMSegment(Cattrib,$NumClass,PCARotation)     [SegmenterClass($pid,node) GetPCARotation]
         set EMSegment(Cattrib,$NumClass,PCAScale)        [SegmenterClass($pid,node) GetPCAScale]
-    set EMSegment(Cattrib,$NumClass,PCAMaxDist)      [SegmenterClass($pid,node) GetPCAMaxDist]
-    set EMSegment(Cattrib,$NumClass,PCADistVariance) [SegmenterClass($pid,node) GetPCADistVariance]
+        set EMSegment(Cattrib,$NumClass,PCAMaxDist)      [SegmenterClass($pid,node) GetPCAMaxDist]
+        set EMSegment(Cattrib,$NumClass,PCADistVariance) [SegmenterClass($pid,node) GetPCADistVariance]
 
         set EMSegment(Cattrib,$NumClass,PCAMeanData) $Volume(idNone) 
         set PCAMeanName   [SegmenterClass($pid,node) GetPCAMeanName]
+
+        set EMSegment(Cattrib,$NumClass,DICEData) $Volume(idNone) 
+        set DICEFileName  [SegmenterClass($pid,node) GetDICEFileName]
+
         foreach VolID $Volume(idList) VolAttr $VolumeList {
             if {([lindex $VolAttr 0] == $LocalPriorName) && ([lindex $VolAttr 1] == $LocalPriorRange) &&  ($LocalPriorName != "")} {
                if {([lindex $VolAttr 2] == $LocalPriorPrefix) || ([lindex $VolAttr 3] == $LocalPriorPrefix)} {set EMSegment(Cattrib,$NumClass,ProbabilityData) $VolID
                }
             }
             if {([lindex $VolAttr 0] == $PCAMeanName) && ($PCAMeanName != "") && ([lindex $VolAttr 1] == $EMSegment(Cattrib,$NumClass,PCAFileRange)) } { set EMSegment(Cattrib,$NumClass,PCAMeanData) $VolID }
+
+            if {([lindex $VolAttr 0] == $DICEFileName) && ($DICEFileName != "") } { set EMSegment(Cattrib,$NumClass,DICEData) $VolID }
         }
 
         set index 0
@@ -2196,7 +2208,6 @@ proc EMSegmentSaveSettingSuperClass {SuperClass LastNode} {
           if {$EMSegment(Cattrib,$i,Node) == ""} {set EMSegment(Cattrib,$i,Node) [MainMrmlInsertAfterNode $LastNode SegmenterClass] }
           set pid [$EMSegment(Cattrib,$i,Node) GetID]
           set LastNode $EMSegment(Cattrib,$i,Node)
-
           # Set Values
           SegmenterClass($pid,node) SetName                "$EMSegment(Cattrib,$i,Label)"
           SegmenterClass($pid,node) SetLabel               $EMSegment(Cattrib,$i,Label)
@@ -2212,41 +2223,49 @@ proc EMSegmentSaveSettingSuperClass {SuperClass LastNode} {
              SegmenterClass($pid,node) SetLocalPriorPrefix ""
              SegmenterClass($pid,node) SetLocalPriorName   ""
           }
-          eval SegmenterClass($pid,node) SetPCAFileRange    $EMSegment(Cattrib,$i,PCAFileRange)
-          eval SegmenterClass($pid,node) SetPCATranslation  $EMSegment(Cattrib,$i,PCATranslation)
-          eval SegmenterClass($pid,node) SetPCARotation     $EMSegment(Cattrib,$i,PCARotation)
-          eval SegmenterClass($pid,node) SetPCAScale        $EMSegment(Cattrib,$i,PCAScale)
-      eval SegmenterClass($pid,node) SetPCAMaxDist      $EMSegment(Cattrib,$i,PCAMaxDist)
-      eval SegmenterClass($pid,node) SetPCADistVariance $EMSegment(Cattrib,$i,PCADistVariance)
+          eval SegmenterClass($pid,node) SetPCAFileRange       $EMSegment(Cattrib,$i,PCAFileRange)
+          eval SegmenterClass($pid,node) SetPCATranslation     $EMSegment(Cattrib,$i,PCATranslation)
+          eval SegmenterClass($pid,node) SetPCARotation        $EMSegment(Cattrib,$i,PCARotation)
+          eval SegmenterClass($pid,node) SetPCAScale           $EMSegment(Cattrib,$i,PCAScale)
+          eval SegmenterClass($pid,node) SetPCAMaxDist         $EMSegment(Cattrib,$i,PCAMaxDist)
+          eval SegmenterClass($pid,node) SetPCADistVariance    $EMSegment(Cattrib,$i,PCADistVariance)
+
 
           if {$EMSegment(Cattrib,$i,PCAMeanData) != $Volume(idNone) } {
              SegmenterClass($pid,node) SetPCAMeanName  [Volume($EMSegment(Cattrib,$i,PCAMeanData),node) GetName]
-      } else {
-         SegmenterClass($pid,node) SetPCAMeanName  ""
-      }
+          } else {
+             SegmenterClass($pid,node) SetPCAMeanName  ""
+          }
+
+          if {$EMSegment(Cattrib,$i,DICEData) != $Volume(idNone) } {
+             SegmenterClass($pid,node) SetDICEFileName  [Volume($EMSegment(Cattrib,$i,DICEData),node) GetName]
+          } else {
+             SegmenterClass($pid,node) SetDICEFileName  ""
+          }
+
+
           set index 0
           foreach EigenList $EMSegment(Cattrib,$i,PCAEigen)  {
              set Number [lindex $EigenList 0]
              set EigenValue [lindex $EigenList 1]
              set EigenVectorData [lindex $EigenList 2]
-             set NodeItem [lindex $EigenList 3]
+             set PCANodeItem [lindex $EigenList 3]
 
               #No Node defined 
-             if { $NodeItem == "" } { 
-                  set NodeItem [MainMrmlInsertAfterNode $LastNode SegmenterPCAEigen] 
+             if { $PCANodeItem == "" } { 
+                  set PCANodeItem [MainMrmlInsertAfterNode $LastNode SegmenterPCAEigen] 
                   set EMSegment(Cattrib,$i,PCAEigen) [lreplace  $EMSegment(Cattrib,$i,PCAEigen) $index $index "$Number $EigenValue $EigenVectorData $NodeItem"]
              }
-             set LastNode $NodeItem
-             set pid [$NodeItem GetID]
-             SegmenterPCAEigen($pid,node) SetNumber $Number
-             SegmenterPCAEigen($pid,node) SetEigenValue $EigenValue
+             set LastNode $PCANodeItem
+             set PCApid [$PCANodeItem GetID]
+             SegmenterPCAEigen($PCApid,node) SetNumber $Number
+             SegmenterPCAEigen($PCApid,node) SetEigenValue $EigenValue
              if {$EigenVectorData != $Volume(idNone) } {
-             SegmenterPCAEigen($pid,node) SetEigenVectorName  [Volume($EigenVectorData,node) GetName]
-          } else {
-             SegmenterPCAEigen($pid,node) SetEigenVectorName  ""
-          }
+                SegmenterPCAEigen($PCApid,node) SetEigenVectorName  [Volume($EigenVectorData,node) GetName]
+              } else {
+                SegmenterPCAEigen($PCApid,node) SetEigenVectorName  ""
+              }
       }
-
           set LogMean ""
           set LogCovariance ""
           set InputChannelWeights ""
@@ -2691,6 +2710,7 @@ proc EMSegmentTransfereClassType {ActiveGui DeleteNode} {
          set EMSegment(Cattrib,$Sclass,InputChannelWeights,$y) 1.0
      }
      set EMSegment(Cattrib,$Sclass,ProbabilityData) $Volume(idNone)
+     set EMSegment(Cattrib,$Sclass,DICEData) $Volume(idNone)
      set EMSegment(Cattrib,$Sclass,PCAMeanData) $Volume(idNone)
 
      foreach EigenList $EMSegment(Cattrib,$Sclass,PCAEigen) {
@@ -2733,6 +2753,7 @@ proc EMSegmentTransfereClassType {ActiveGui DeleteNode} {
          set EMSegment(Cattrib,$Sclass,InputChannelWeights,$y) 1.0
      }
      set EMSegment(Cattrib,$Sclass,ProbabilityData) $Volume(idNone)
+     set EMSegment(Cattrib,$Sclass,DICEData) $Volume(idNone)
      set EMSegment(Cattrib,$Sclass,PCAMeanData) $Volume(idNone)
 
      # 2.) Remove from SuperClass List and add to Class List
@@ -3676,7 +3697,7 @@ proc EMSegmentCreateDeleteClasses {ChangeGui DeleteNode} {
         unset EMSegment(Cattrib,$i,PCAMeanData) EMSegment(Cattrib,$i,PCAFileRange) 
         unset EMSegment(Cattrib,$i,PCATranslation) EMSegment(Cattrib,$i,PCARotation) EMSegment(Cattrib,$i,PCAScale) 
         unset EMSegment(Cattrib,$i,PCAMaxDist) EMSegment(Cattrib,$i,PCADistVariance) 
-        unset EMSegment(Cattrib,$i,ShapeParameter)
+        unset EMSegment(Cattrib,$i,ShapeParameter) EMSegment(Cattrib,$i,DICEData) 
 
         foreach EigenList $EMSegment(Cattrib,$i,PCAEigen) {
            if {[lindex $EigenList 3] != ""} {MainMrmlDeleteNode SegmenterPCAEigen [[lindex $EigenList 3] GetID] }
@@ -3775,6 +3796,8 @@ proc EMSegmentCreateDeleteClasses {ChangeGui DeleteNode} {
       set EMSegment(Cattrib,$i,PCADistVariance) "0.0" 
       set EMSegment(Cattrib,$i,PCAMeanData) $Volume(idNone)
       set EMSegment(Cattrib,$i,PCAEigen) "" 
+
+      set EMSegment(Cattrib,$i,DICEData) $Volume(idNone)
     }
     # Define CIM Field as Matrix M(Class1,Class2,Relation of Pixels)
     # where the "Relation of the Pixels" can be set as Pixel with "left", 

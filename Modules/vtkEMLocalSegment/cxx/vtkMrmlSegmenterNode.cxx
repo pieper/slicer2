@@ -79,6 +79,8 @@ vtkMrmlSegmenterNode::vtkMrmlSegmenterNode()
   this->IntensityAvgClass = -1;
   this->PrintIntermediateDir = NULL;
   this->BiasPrint = 0;
+  this->PrintPCAParameters = 0;
+  this->PrintDICEResults   = 0;
   for (int i=0; i < 3; i++) {
     this->SegmentationBoundaryMin[i] = 0; // Lower bound of the boundary box where the image gets segments.
     this->SegmentationBoundaryMax[i] = 0;// Upper bound of the boundary box where the image gets segments.
@@ -136,7 +138,8 @@ void vtkMrmlSegmenterNode::Write(ofstream& of, int nIndent)
   of << " NumberOfTrainingSamples ='"    << this->NumberOfTrainingSamples << "'";
   of << " IntensityAvgClass ='"          << this->IntensityAvgClass << "'";
   of << " BiasPrint ='"                  << this->BiasPrint << "'";
-
+  of << " PrintPCAParameters ='"         << this->PrintPCAParameters << "'";
+  of << " PrintDICEResults ='"           << this->PrintDICEResults << "'";
 
   if (this->PrintIntermediateDir && strcmp(this->PrintIntermediateDir, "")) of << " PrintIntermediateDir ='"           << this->PrintIntermediateDir << "'";
   of << ">\n";;
@@ -166,6 +169,9 @@ void vtkMrmlSegmenterNode::Copy(vtkMrmlNode *anode)
   this->NumberOfTrainingSamples    = node->NumberOfTrainingSamples;
   this->IntensityAvgClass          = node->IntensityAvgClass;
   this->BiasPrint                  = node->BiasPrint;
+  this->PrintPCAParameters         = node->PrintPCAParameters;
+  this->PrintDICEResults           = node->PrintDICEResults;
+
   memcpy(this->SegmentationBoundaryMin, node->SegmentationBoundaryMin, sizeof(int)*3);
   memcpy(this->SegmentationBoundaryMax, node->SegmentationBoundaryMax, sizeof(int)*3);
 }
@@ -192,7 +198,9 @@ void vtkMrmlSegmenterNode::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "NumberOfTrainingSamples: "   << this->NumberOfTrainingSamples <<  "\n"; 
   os << indent << "IntensityAvgClass:"          << this->IntensityAvgClass << "\n";
   os << indent << "BiasPrint:"                  << this->BiasPrint << "\n";
-  os << indent << "PrintIntermediateDir:"           << this->PrintIntermediateDir << "\n"; 
+  os << indent << "PrintPCAParameters:"         << this-> PrintPCAParameters << "\n";
+  os << indent << "PrintDICEResults:"           << this-> PrintDICEResults << "\n";
+  os << indent << "PrintIntermediateDir:"       << this->PrintIntermediateDir << "\n"; 
   os << indent << "SegmentationBoundaryMin:    " ;
   for (int i=0; i < 3; i++) os << this->SegmentationBoundaryMin[i]<< " " ; // Upper bound of the boundary box where the image gets segments.
   os << "\n";

@@ -390,8 +390,7 @@ inline float vtkImageEMGeneral_qnexp2(float const x)
 inline double vtkImageEMGeneral::FastGauss(const double inverse_sigma, const double x)
 {
     float tmp = float(inverse_sigma * x);
-    return (double) EMSEGMENT_ONE_OVER_ROOT_2_PI * inverse_sigma 
-    * vtkImageEMGeneral_qnexp2(EMSEGMENT_MINUS_ONE_OVER_2_LOG_2 * tmp * tmp);
+    return (double) EMSEGMENT_ONE_OVER_ROOT_2_PI * inverse_sigma * vtkImageEMGeneral_qnexp2(EMSEGMENT_MINUS_ONE_OVER_2_LOG_2 * tmp * tmp);
 }
 
 // An approximation to the Gaussian function.

@@ -77,6 +77,7 @@ vtkMrmlSegmenterClassNode::vtkMrmlSegmenterClassNode()
   for (int i =0; i < 3; i++) PCAScale[i]= 1.0;
   this->PCAMaxDist       = 0.0;
   this->PCADistVariance  = 0.0; 
+  this->DICEFileName     = NULL; 
 }
 
 //----------------------------------------------------------------------------
@@ -113,6 +114,14 @@ vtkMrmlSegmenterClassNode::~vtkMrmlSegmenterClassNode()
     delete [] this->PCAMeanName;
     this->PCAMeanName = NULL;
   }
+
+  if (this->DICEFileName)
+  {
+    delete [] this->DICEFileName;
+    this->DICEFileName = NULL;
+  }
+
+
 }
 
 //----------------------------------------------------------------------------
@@ -162,6 +171,13 @@ void vtkMrmlSegmenterClassNode::Write(ofstream& of, int nIndent)
   {
     of << " PCAMeanName='" << this->PCAMeanName << "'";
   }
+
+  if (this->DICEFileName && strcmp(this->DICEFileName, "")) 
+  {
+    of << " DICEFileName='" << this->DICEFileName << "'";
+  }
+
+
   if  (this->PCAFileRange[0] || this->PCAFileRange[1]) of << " PCAFileRange='" << this->PCAFileRange[0] << " " << this->PCAFileRange[1] << "'";
 
   if  (this->PCATranslation[0] || this->PCATranslation[1] || this->PCATranslation[2]) of << " PCATranslation='" << this->PCATranslation[0] << " " << this->PCATranslation[1] << " " << this->PCATranslation[2] << "'";
@@ -192,6 +208,7 @@ void vtkMrmlSegmenterClassNode::Copy(vtkMrmlNode *anode)
   this->SetLocalPriorWeight(node->LocalPriorWeight);
   this->SetPCAFileRange(node->PCAFileRange);
   this->SetPCAMeanName(node->PCAMeanName);
+  this->SetDICEFileName(node->DICEFileName);
   this->SetPCATranslation(node->PCATranslation);
   this->SetPCARotation(node->PCARotation);
   this->SetPCAScale(node->PCAScale);
@@ -224,6 +241,7 @@ void vtkMrmlSegmenterClassNode::PrintSelf(ostream& os, vtkIndent indent)
    os << indent << "InputChannelWeights: " << 
     (this->InputChannelWeights ? this->InputChannelWeights : "(none)") << "\n";
 
+   os << indent << "DICEFileName: " <<  (this->DICEFileName ? this->DICEFileName : "(none)") << "\n"; 
    os << indent << "PCAMeanName: " <<  (this->PCAMeanName ? this->PCAMeanName : "(none)") << "\n"; 
    os << indent << "PCAFileRange: " << this->PCAFileRange[0] << ", " << this->PCAFileRange[1] << "\n" ;
    os << indent << "PCATranslation: " << this->PCATranslation[0] << ", " << this->PCATranslation[1] << ", " << this->PCATranslation[2] << "\n" ;
@@ -232,5 +250,3 @@ void vtkMrmlSegmenterClassNode::PrintSelf(ostream& os, vtkIndent indent)
    os << indent << "PCAMaxDist:'" << this->PCAMaxDist << "\n";
    os << indent << "PCADistVariance:" << this->PCADistVariance << "\n";
 }
-
-

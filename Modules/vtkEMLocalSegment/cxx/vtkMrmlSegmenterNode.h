@@ -177,6 +177,18 @@ public:
   vtkGetMacro(BiasPrint, int);
   vtkSetMacro(BiasPrint, int);
 
+
+  // Description:
+  // Get/Set for Segmenter
+  vtkGetMacro(PrintPCAParameters, int);
+  vtkSetMacro(PrintPCAParameters, int);
+
+ // Description:
+  // Get/Set for Segmenter
+  vtkGetMacro(PrintDICEResults, int);
+  vtkSetMacro(PrintDICEResults, int);
+
+
 protected:
   vtkMrmlSegmenterNode();
   ~vtkMrmlSegmenterNode();
@@ -204,6 +216,8 @@ protected:
   int    BiasPrint;
   int    SegmentationBoundaryMin[3];
   int    SegmentationBoundaryMax[3];
+  int    PrintPCAParameters;
+  int    PrintDICEResults;
 };
 
 #endif

@@ -126,6 +126,11 @@ public:
 
   // Description:
   // Get/Set for SegmenterClass
+  vtkSetStringMacro(DICEFileName);
+  vtkGetStringMacro(DICEFileName);
+
+  // Description:
+  // Get/Set for SegmenterClass
   vtkSetStringMacro(PCAMeanName);
   vtkGetStringMacro(PCAMeanName);
 
@@ -182,6 +187,7 @@ protected:
   double PCAScale[3];
   double PCAMaxDist;
   double PCADistVariance;
+  char   *DICEFileName;
 };
 
 #endif

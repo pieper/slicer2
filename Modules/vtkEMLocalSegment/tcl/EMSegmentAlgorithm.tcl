@@ -106,19 +106,23 @@ proc EMSegmentSetVtkSuperClassSetting {SuperClass NumInputImagesSet} {
              incr index
           } 
       }
+      # Setup DICE Related information
+      if {($EMSegment(Cattrib,$i,DICEData) !=  $Volume(idNone)) && $EMSegment(PrintDICEResults) } {
+      EMSegment(vtkEMSegment) SetDICEPtr [Volume($EMSegment(Cattrib,$i,DICEData),vol) GetOutput]
+      } 
       # Setup PCA parameter
       if {$EMSegment(Cattrib,$i,PCAMeanData) !=  $Volume(idNone) } {
          set NumEigenModes [llength $EMSegment(Cattrib,$i,PCAEigen)]
          # Kilan: first Rotate and translate the image before setting them 
          # Remember to first calculathe first the inverse of the two because we go from case2 to patient and data is given form patient to case2
-     EMSegment(vtkEMSegment) SetPCANumberOfEigenModes $NumEigenModes
+         EMSegment(vtkEMSegment) SetPCANumberOfEigenModes $NumEigenModes
 
          EMSegment(vtkEMSegment) SetInputIndex $NumInputImagesSet [Volume($EMSegment(Cattrib,$i,PCAMeanData),vol) GetOutput]
-      incr NumInputImagesSet
-
-     foreach EigenList $EMSegment(Cattrib,$i,PCAEigen) {
-             EMSegment(vtkEMSegment) SetInputIndex $NumInputImagesSet   [Volume([lindex $EigenList 2],vol) GetOutput] 
          incr NumInputImagesSet
+
+         foreach EigenList $EMSegment(Cattrib,$i,PCAEigen) {
+             EMSegment(vtkEMSegment) SetInputIndex $NumInputImagesSet   [Volume([lindex $EigenList 2],vol) GetOutput] 
+             incr NumInputImagesSet
          }
           
          # Have to do it seperate otherwise EigenValues get deleted 
@@ -248,6 +252,8 @@ proc EMSegmentAlgorithmStart { } {
                   }
               }
           }
+          EMSegment(vtkEMSegment) SetPrintPCAParameters $EMSegment(PrintPCAParameters)
+          EMSegment(vtkEMSegment) SetPrintDICEResults   $EMSegment(PrintDICEResults)
    } else {
        EMSegmentSetVtkClassSettingOld
    }
