@@ -101,7 +101,7 @@ proc FiducialsInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.37 $} {$Date: 2003/06/02 22:02:11 $}]
+        {$Revision: 1.38 $} {$Date: 2003/06/02 23:27:52 $}]
     
     # Initialize module-level variables
     
@@ -778,13 +778,9 @@ proc FiducialsSetScale { id {val ""}} {
         set val $Fiducials($id,scale)
     }
     
-    # not needed in new Fiducials -sp 2003-05-30
-    #set s $Fiducials(scale)
-    #Fiducials($id,symbolXform) Identity
-    #Fiducials($id,symbolXform) Scale $val $val $val
-    #Fiducials($id,symbolXform) Modified
-    #Fiducials($id,XformFilter) Update
     Fiducials($id,node) SetSymbolSize $val
+    Fiducials($id,symbolXform) Identity
+    Fiducials($id,symbolXform) Scale $val $val $val
     Render3D
 }
 
@@ -891,29 +887,31 @@ proc FiducialsUpdateMRML {} {
             # if the Mrml ID is not in the list already, then this
             # a new Fiducials Node/EndNode pair
         
-        # update the modified point List for all the existing Fiducials Node
-        if { $Fiducials($fid,pointsExist) ==  1} { 
-            FiducialsVTKUpdatePoints $fid $symbolSize $textSize
-        }
-        # if this is a new list and it doesn't exist in Fiducials->Display, then
-        # create its button and attributes
-        if { [lsearch $Fiducials(displayList) $fid] == -1 } { 
-            set gui [expr $gui + [FiducialsCreateGUI $Fiducials(fScrolledGUI) $fid]]
-        } else {
-            # otherwise the button for that list exists already so remove it 
-            # from the "to be deleted list"
-            set index [lsearch $Fiducials(removeDisplayList) $fid]
-            if {$index != -1} {
-                set Fiducials(removeDisplayList) [lreplace $Fiducials(removeDisplayList) $index $index]
+            # update the modified point List for all the existing Fiducials Node
+            if { $Fiducials($fid,pointsExist) ==  1} { 
+                FiducialsVTKUpdatePoints $fid $symbolSize $textSize
             }
-        }
-        # callback in case any module wants to know what list of fiducials 
-        # (and its type) was just read in the MRML tree
-        # see the endoscopic module for examples
+            # if this is a new list and it doesn't exist in Fiducials->Display, then
+            # create its button and attributes
+            if { [lsearch $Fiducials(displayList) $fid] == -1 } { 
+                set gui [expr $gui + [FiducialsCreateGUI $Fiducials(fScrolledGUI) $fid]]
+            } else {
+                # otherwise the button for that list exists already so remove it 
+                # from the "to be deleted list"
+                set index [lsearch $Fiducials(removeDisplayList) $fid]
+                if {$index != -1} {
+                    set Fiducials(removeDisplayList) [lreplace $Fiducials(removeDisplayList) $index $index]
+                }
+            }
+            # callback in case any module wants to know what list of fiducials 
+            # (and its type) was just read in the MRML tree
+            # see the endoscopic module for examples
 
-        foreach m $Module(idList) {
-            if {[info exists Module($m,fiducialsCallback)] == 1} {
-                if {$Module(verbose) == 1} {puts "Fiducials Callback: $m"}
+            foreach m $Module(idList) {
+                if {[info exists Module($m,fiducialsCallback)] == 1} {
+                    if {$Module(verbose) == 1} {
+                        puts "Fiducials Callback: $m"
+                    }
                     $Module($m,fiducialsCallback) $type $fid $Fiducials($fid,pointIdList)
                 }
             }   
@@ -969,8 +967,8 @@ proc FiducialsUpdateMRML {} {
         }
        
     } else {
-    # if the list that was active before the UpdateMRML does not exist anymore, 
-    # then make the active list the "None" list
+        # if the list that was active before the UpdateMRML does not exist anymore, 
+        # then make the active list the "None" list
         FiducialsSetActiveList "None"
          # callback in case any module wants that the None list is active
         foreach m $Module(idList) {
