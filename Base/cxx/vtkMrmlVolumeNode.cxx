@@ -758,8 +758,9 @@ void vtkMrmlVolumeNode::ComputeRasToIjkFromCorners(
 	}
   if (!orient)
   {
-    vtkErrorMacro(<< "Compute: Invalid corner points");
-    return;
+    // Error! (probably read a no-header image)
+	this->SetScanOrder("ER");
+	return
   }
 
 	// Determine acquisition order 
