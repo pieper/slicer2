@@ -69,7 +69,7 @@ proc MainFileInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainFile \
-        {$Revision: 1.41 $} {$Date: 2002/10/02 12:08:26 $}]
+        {$Revision: 1.42 $} {$Date: 2002/10/24 22:33:55 $}]
 
     set File(filePrefix) data
 }
@@ -226,7 +226,7 @@ proc MainFileBuildSaveAsGUI {} {
 #  At the beginning, there is a hook for modules who wish to delete anything
 #  that doesnt get deleted in the MainMrmlDeleteAll callback
 #  To use this, declare the following in your module's init routine:
-#  set Module($m,procMainFileCloseUpdate) MyModuleMainFileCloseUpdate.
+#  set Module($m,procMainFileCloseUpdateEntered) MyModuleMainFileCloseUpdate.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
