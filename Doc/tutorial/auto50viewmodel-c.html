@@ -1,4 +1,70 @@
 <title>Clipping</title>
-When Clipping is on, a model will be clipped by the slices.  This means that on one side of a slice, the model will be visible, and on the other side of a slice, it will be invisible.  This is nice for cutaway views of anatomy.  Using this in conjunction with automatic slice thresholding (under the Display tab of the Volumes menu) can be especially effective to remove the black background of the scan so that the models can be seen.
-<p>
-To turn Clipping on for a model, right-click on the model's name in the list (in the Display tab of the Models panel) and choose <b>Clipping</b>.  To adjust the way the slices clip the models, go to the <b>Clip tab</b> of the <b>Models panel</b>.  The Clip tab controls on which side of a slice the model is clipped, as well as whether an individual slice clips models or not.  Note that the red, yellow, and green buttons on this tab correspond to the red, yellow, and green slices in the Viewer.
+
+<ul>
+			<li>To cut away sections of the model turn on <b>Clipping</b>. The location
+where the clipping occures is controlled by the slice slider. This means that
+on one side of the slice, the model will be removed, making the image of
+the slice appear and on the other side of the slice, the model still remains
+visible.  			</li>
+  <li>To turn Clipping on for a model, right-click on the model's name in
+the list (in the <b>Display</b> tab of the <b>Models</b> panel) and choose
+    <b>Clipping</b>. 			</li>
+  <li>To adjust the way the slices clip the models, go to the <b>Clip</b>
+tab of the <b>Models </b>panel. 			</li>
+  <li>The <b>Clip</b> tab controls on which side of a slice the model is clipped,
+as well as whether an individual slice clips models or not. 		</li>
+</ul>
+		
+<p>Note that the red, yellow, and green buttons on this tab correspond to
+the red, yellow, and green slices in the Viewer. The cutaway order is listed
+in the following table:</p>
+		
+<table>
+			<tbody>
+    <tr>
+				<td bgcolor="#cc9999">red</td>
+				<td>(axial) slices</td>
+				<td>&nbsp;&nbsp;&nbsp;<b>+</b> is Superior</td>
+				<td>&nbsp;&nbsp;&nbsp; <b>-</b> is Inferior</td>
+			</tr>
+			<tr>
+				<td bgcolor="#cccc99">yellow</td>
+				<td>(sagittal) slices</td>
+				<td>&nbsp;&nbsp;&nbsp;<b>+</b> is Right</td>
+				<td>&nbsp;&nbsp;&nbsp; <b>-</b> is Left</td>
+			</tr>
+			<tr>
+				<td bgcolor="#99cc99">green</td>
+				<td>(coronal) slices</td>
+				<td>&nbsp;&nbsp;&nbsp;<b>+</b> is Posterior</td>
+				<td>&nbsp;&nbsp;&nbsp; <b>-</b> is Anterior</td>
+			</tr>
+		                     
+  </tbody>
+</table>
+		
+<p>In the sample given bellow the right-superior-posterior part of the cortical
+surface has been clipped.</p>
+		
+<table border="0" cols="2" width="100%">
+	<tbody>
+    <tr>
+		<td align="left" valign="top" width="520"><img
+ src="images/clip-select.jpg">
+&nbsp;&nbsp;&nbsp;<img src="images/clipping.jpg">
+      </td>
+	</tr>
+                    
+  </tbody>
+</table>
+		
+<table border="0" cols="2" width="100%">
+	<tbody>
+    <tr>
+		<td align="left" valign="top"><img src="images/clip.jpg">
+      </td>
+	</tr>
+                    
+  </tbody>
+</table>
+

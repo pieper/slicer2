@@ -1,14 +1,54 @@
 <title>Without Headers</title>
 
 
-This is useful for volumes without headers, or volumes whose headers cannot be read in automatically by the Slicer.
-<p>
 <ul>
-<li> 
-Follow the above directions, except set the <b>Image Headers</b> button to Manual.
-
-<li> 
-When you hit <b>Apply</b>, you will be taken to the <b>Header</b> section of the Properties.
-<li> 
-Change the default values as needed for your volume, and then hit <b>Apply</b> to read in the volume.
+	<li type="square">To manually set the header information, follow the directions
+above, except set the <b>Image Headers</b> button to Manual.</li>
+	<li type="square">When you hit <b>Apply</b>, you will be taken to the <b>Header</b>
+section of the <b>Prop</b>ertie<b>s</b>.</li>
+	<li type="square">Change the default values as needed according to the values
+of your volume, ie. the physical parameters of the pixels which make up your
+volumes.</li>
+	<li type="square">Then hit <b>Apply</b> to read in the volume.&nbsp;Your
+data will now be displayed in the 2D portion of the <b>Viewer</b> window.</li>
 </ul>
+<table border="0" cols="2">
+	<tbody>
+    <tr>
+		<td align="left" valign="top" width="260"><img
+ src="images/no-header-load.jpg">
+      </td>
+		<td align="left" valign="top">			                                      
+          
+      <ul>
+				<li type="disc">Image size: number of pixels of the image in the x and
+y directions. (for square images they are the same)</li>
+        <li type="disc">Pixel size: size of each pixel in the x and y directions.
+(for square images they are the same)</li>
+        <li type="disc">Slice thickness: the z dimension of the voxel.</li>
+        <li type="disc">Scan order:</li>
+                          
+        <ul>
+          <li type="circle">LR = left to right</li>
+          <li type="circle">IS = inferior to superior</li>
+          <li type="circle">PA = posterior to anterior</li>
+                          
+        </ul>
+        <li type="disc">Scalar type: The data format of the pixel, generally
+it is a Short (16bit integer).</li>
+        <li>In big-endian architectures, the leftmost bytes (those with a
+lower                       address) are most significant. In little-endian
+architectures, the rightmost bytes are most significant. 				</li>
+        <li type="disc">Little Endian: In little-endian architectures, the
+rightmost bytes are most significant. In big-endian architectures (slicer
+default) , the leftmost bytes (those with a lower                        address)
+are most significant. </li>
+        <li type="disc"><b>Note</b>: the "DTI data" , "Swap", and "No Swap"
+tabs are placeholders for future use.</li>
+                    
+      </ul>
+		</td>
+	</tr>
+                    
+  </tbody>
+</table>

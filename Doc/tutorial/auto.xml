@@ -3,15 +3,11 @@
 <auto>
 <title>Tutorial</title>
 
-<teaser>
-How to Get Started, and
-<br>Tips for Experienced Users</br>
-</teaser>
-
 <summary>
-This tutorial will walk you through the process of creating a 3D scene
-comprised of medical scans and surface models.  
-You will learn to view the data and save the scene for later. 
+This tutorial will walk you through the process
+of creating a 3D scene comprised of medical scans and surface models. You
+can learn how to view volume of images and to save the scene for later use. 
 </summary>
+
 </auto>
 

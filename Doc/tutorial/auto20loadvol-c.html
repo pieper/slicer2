@@ -1,64 +1,59 @@
 <title>DICOM</title>
 
 <ul>
-<li>
-Press <b>Add Volume</b> in the Data panel.  This will take you to the Props tab of the Volumes panel.  
-
-<li>
-Press <b>DICOM</b> button.
-
-<li>
-Press <b>Select DICOM Volume</b> button.
-
-<li>
-A dialog box appears. Select the start directory for search and press <b>OK</b>.
-After pressing <b>OK</b>, the whole directory structure starting
-at the selected directory will be traversed and every files will be checked
-whether they are DICOM files or not. Important information, such as
-the name and ID of the patient, the study UID (unique identifier), and
-the series UID will be extracted from each DICOM file.
-
-<li>
-After the search, a new dialog box appears.
-Here you can select a patient, a study of this patient, a series of
-this study, and the files of this series.<br>
-By default, all files of the first series of the first study of the
-first patient will be selected.
-
-<li>
-After pressing <b>OK</b>, the header data of the first file
-will be extracted. If you wish, you can select an other file and
-press <b>Extract Header</b>.
-You can check and modify the extracted values by pressing
-the <b>Header</b> button.
-
-<li>
-With the <b>Image Data</b> buttons in the <b>Basic</b> section,
-select whether your images are grayscale or label maps
-(the output of a segmentation).
-
-<li>
-The <b>Name</b> field is the name that your volume will have within the Slicer.  You may change this to something descriptive, like "presurgical SPGR," if you would like.
-
-<li>
-If you would like, enter a description in the optional <b>Description</b> field.
-
-<li>
-Finally, hit the <b>Apply</b> button to read in the volume.  (Hint: to see the images in the 3D View, hit the "V" for visibility buttons in the 3D window.)
-
+	<li type="square">Press <b>Add Volume</b> in the <b>Data</b> panel. This
+will take you to the <b>Props</b> tab of the <b>Volumes</b> panel.      
+   
+    <p><img src="images/dicom-load.jpg">
+    </p>
+  </li>
+	<li type="square">In the <b>Properties </b>pull down menu select<b> Dicom</b>.</li>
+	<li type="square">Press <b>Select DICOM Volume</b> button.</li>
+	<li type="square">A dialog box appears. Select the start directory for searching
+for the volumes and press <b>OK</b>. After pressing <b>OK</b>, the whole directory
+structure will be traversed and every files will be checked whether they
+are DICOM files or not. Important information, such as the name and ID of
+the patient, the study UID (unique identifier), and the series UID will be
+extracted from each DICOM file.&nbsp;<b>Note</b> if you have a large number
+of files this is a&nbsp; slow process.</li>
+        
+  <p><img src="images/dicom-select.jpg">
+			</p>
+  <li type="square">After the search, a new dialog box appears. Here you can
+select a patient, a study of this patient, a series of this study, and the
+files of this series. By default, all files of the first series of the first
+study of the first patient will be selected, and an interface similar to
+the following will appear.</li>
+        
+  <p><img src="images/dicom_if.jpg">
+			</p>
+			<li type="square">After pressing <b>OK</b>, the header data of the first
+file will be extracted. Additional files may be selected. Pressing the <b>Extract
+Header</b> button will show their header info. You can check and modify the
+extracted values by pressing the <b>Header</b> button.</li>
+			<li type="square">With the <b>Image Data</b> buttons in the <b>Basic</b>
+section, select whether your images are grayscale or label maps (an output
+of a segmentation).</li>
+	<li type="square">The <b>Name</b> field is the name that your volume will
+have within the Slicer. You may change this to something descriptive, for
+example "presurgical SPGR".</li>
+	<li type="square">You may enter a description in the optional <b>Description</b>
+field.</li>
+  <li type="square"> Now hit the <b>apply</b> to set your <b>Name</b> and
+    <b>Description</b> fields.</li>
+	<li type="square">Finally, hit the <b>Apply</b> button to read in the volume.&nbsp;Your
+data will now be displayed in the 2D portion of the <b>Viewer</b> window.
+    </li>
 </ul>
-
-<p>
-Note that DICOM is a HUGE standard and we don't intend to read all flavours of
-it. We assume that the slices of the volume are stored in seperate files,
-are not compressed, and that the header data is correct (contains
-the correct values of study and series UIDs).<br>
-For determining the correct slice order, we use the following heuristic.
-First, we try to find the Image Number (0x0020,0x0013) data element. If this is not
-present, we try the Slice Location (0x0020,0x1041) data element.
-If none of them is available, the files will be ordered as they were
-found - and that is possibly not the correct order.
-If you have such a volume, please send us.<br>
-A restriction of Slicer is that slice thickness and slice spacing
-must be the same for every slices.
-</p>
+<p>DICOM is a complicated standard. The 3D Slicer is not capable of reading
+all flavors of it.<br>
+It is assumed that the slices of the volume are stored in seperate files,
+and they are not compressed, and that the header data is correct . Contains
+the correct values of the study and the series UIDs.<br>
+For determining the correct slice order, the Slicer uses the following method.
+First, it tries to find the Image Number (0x0020,0x0013) data element. When
+that is not present, it tries the Slice Location (0x0020,0x1041) data element.
+When none of them are available, the files will be ordered as they were found,
+possibly not in correct order.<br>
+There is a restriction of the Slicer that the slice thickness and spacing
+must be the same for every slice.</p>

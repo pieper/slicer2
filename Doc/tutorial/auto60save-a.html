@@ -1,40 +1,51 @@
 <title>Save MRML</title>
 
 
-<table border=0 cellspacing=0 cellpadding=0'>
-<tr>
-<td valign=top>
-To save a description of the scene you are viewing, click on <b>File</b> in the pulldown menu.  
-The first time, click on <b>Save Scene As</b> to choose a filename.  
-Then to save later changes, click on <b>Save Scene</b>.
+<table border="0" cellspacing="0" cellpadding="0">
+	<tbody>
+    <tr>
+		<td valign="top">					                                                
+      <ul>
+						<li type="square">To save a description of the current scene, click
+on <b>File</b> in the pulldown menu and click on <b>Save Scene</b>. By default,
+slicer will save the description of the scene in a file called data.xml. To
+choose a filename other than the default data.xml filename, choose <b>Save
+Scene As</b> and give a your own descriptive filename for the scene. 						</li>
+        <li type="square"><b>Save Scene With Options</b> will include Options
+in the scene description. These are View Presets, background color, and other
+preferences you have set in this Slicer session. 						</li>
+        <li type="square"><b>To open a scene later</b>, click on File, then
+Open. Find the scene .xml file, double click it, and wait for the volumes
+and models to be loaded. 					</li>
+      
+      </ul>
+ 					<br>
+					       		</td>
+	</tr>
+	<tr>
+		<td valign="top">			                                                 
+      <p class="tidbit"><i>Saving Volumes and Models</i><br>
+Note that you should save any new volumes and models you've created first,
+before saving the scene.</p>
+			                                                 
+      <p class="tidbit"><i>What is the Deal Here?</i><br>
+When you save a XML file, you are saving the "scene." This means that you
+are saving the pathnames to the volumes and models, not the volumes and models
+themselves. This is great because it allows you to open them all again, just
+by opening the scene file!</p>
+		</td>
+	</tr>
+                    
+  </tbody>
+</table>
 <p>
-<b>Save Scene With Options</b> will include Options in the scene description. These are View Presets, background color, and other preferences you have set in this Slicer session.
-
-<p>
-<b>Note:</b> If you hit <b>Save Scene</b> the first time you save, without choosing a filename first through <b>Save Scene As</b>, a MRML file will be saved with the default name of Data.xml in the current directory.
-
-<p>
-<b>To open the scene again later:</b> Click on File, then Open.  Find the file you saved, double click it, and wait for the volumes and models to load.  Congratulations!
-</td>
-
-<!-- Space -->
-<td>&nbsp;&nbsp;&nbsp;</td>
-
-<!------------------------------- Tidbit ----------------------------------->
-<td valign=top width=35%>
-    <p class=tidbit><em>What is the Deal Here?</em><br><br>
-<small>
-When you save a MRML file, you are saving the "scene."  
-This means that you are saving the pathnames to the volumes and models, not the volumes and models themselves.
-This is great because it allows you to open them all again, just by opening the MRML file!
-</small>
-    </p>
-
-    <p class=tidbit><em>Saving Volumes and Models</em><br><br>
-<small>
-Note that you should save any new volumes and models you've created first, before saving the scene.
-</small>
-    </p>
-</td>
-</tr>
+<table border="0" cols="2" width="100%">
+	<tbody>
+    <tr>
+		<td align="left" valign="top" width="260"><img
+ src="images/save-scene.jpg">
+      </td>
+		 	     </tr>
+                    
+  </tbody>
 </table>
