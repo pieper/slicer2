@@ -62,7 +62,7 @@ proc SaveInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.11 $} {$Date: 2003/01/22 17:10:19 $}]
+            {$Revision: 1.12 $} {$Date: 2003/02/18 22:40:48 $}]
 
     SaveInitTables
 
@@ -91,6 +91,7 @@ proc SaveInitTables {} {
     set imtype(prn)  "PostScript"
     set imtype(tif)  "TIFF"
     set imtype(tiff) "TIFF"
+    set imtype(ppm)  "PNM"
     set imtype(pnm)  "PNM"
     set imtype(png)  "PNG"
     set imtype(bmp)  "BMP"
@@ -103,7 +104,7 @@ proc SaveInitTables {} {
     set ext(BMP)  "bmp"
     set ext(JPEG) {"jpg" "jpeg"}
     set ext(PNG)  "png"
-    set ext(PNM)  {"pnm"}
+    set ext(PNM)  {"ppm" "pnm"}
     set ext(PostScript) {"ps" "eps" "prn"}
     set ext(TIFF) {"tif" "tiff"}
 
