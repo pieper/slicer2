@@ -21,7 +21,7 @@
 
 
 
-vtkCxxRevisionMacro(vtkTractShapeFeatures, "$Revision: 1.1 $");
+vtkCxxRevisionMacro(vtkTractShapeFeatures, "$Revision: 1.2 $");
 vtkStandardNewMacro(vtkTractShapeFeatures);
 
 vtkCxxSetObjectMacro(vtkTractShapeFeatures, InputStreamlines, vtkCollection);
@@ -346,6 +346,8 @@ void vtkTractShapeFeatures::ComputeFeaturesMeanAndCovariance()
     {
       // Get the tract path's points on an itk list sample object
       this->GetPointsFromHyperStreamlinePointsSubclass(sample, currStreamline);
+      
+      vtkDebugMacro("num points: " << sample->Size() );
 
       // now compute the covariance of all of the points in this sample (tract)
       covarianceAlgorithm->SetInputSample( sample );
