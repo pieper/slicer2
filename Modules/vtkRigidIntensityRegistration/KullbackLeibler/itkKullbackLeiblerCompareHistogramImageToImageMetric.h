@@ -3,8 +3,8 @@
   Program:   Insight Segmentation & Registration Toolkit
   Module:    $RCSfile: itkKullbackLeiblerCompareHistogramImageToImageMetric.h,v $
   Language:  C++
-  Date:      $Date: 2004/01/13 21:41:18 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2004/01/13 21:44:07 $
+  Version:   $Revision: 1.2 $
 
   Copyright (c) Insight Software Consortium. All rights reserved.
   See ITKCopyright.txt or http://www.itk.org/HTML/Copyright.htm for details.
@@ -40,7 +40,9 @@ namespace itk
     *  pp. 525 - 532.
     *
     *  The metric is given by KL(P_test||P_train) 
-    * = Sum_{i1,i2} P_test(i1,i2) log (P_test(i1,i2)/P_train(i1,i2))
+    *  = Sum_{i1,i2} P_test(i1,i2) log (P_test(i1,i2)/P_train(i1,i2))
+    *  where P_test and P_train are probabilities given my normalized
+    *  histograms, and i1 and i2 are the intensity bins in the histogram.
     *
     *  \par PARAMETERS 
     *  Epsilon is added to every bin in both histograms. This prevents
