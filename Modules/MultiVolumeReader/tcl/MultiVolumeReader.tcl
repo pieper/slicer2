@@ -71,7 +71,7 @@ proc MultiVolumeReaderInit {} {
     #  Set the level of development that this module falls under, from the list defined in Main.tcl,
     #  Module(categories) or pick your own
     #  This is included in the Help->Module Categories menu item
-    set Module($m,category) "IO"
+    set Module($m,category) "I/O"
 
     # Define Tabs
     #------------------------------------
@@ -149,7 +149,7 @@ proc MultiVolumeReaderInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.6.2.2 $} {$Date: 2004/11/30 20:47:24 $}]
+        {$Revision: 1.6.2.3 $} {$Date: 2004/12/07 21:22:53 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -187,9 +187,10 @@ proc MultiVolumeReaderInit {} {
 # Creates UI for for user input 
 # .ARGS
 # parent the parent frame 
+# status whether you want to turn on (1) or off (0) the status message
 # .END
 #-------------------------------------------------------------------------------
-proc MultiVolumeReaderBuildGUI {parent} {
+proc MultiVolumeReaderBuildGUI {parent {status 0}} {
     global Gui MultiVolumeReader Module Volume Model
    
     set f $parent
@@ -266,7 +267,7 @@ proc MultiVolumeReaderBuildGUI {parent} {
         "Don't need to input anything here. This\n\
         entry is used to display loading status."
     pack $f.lVName $f.eVName -side top -padx $Gui(pad) -pady 2 
-    if { [ info exists MultiVolumeReaser(loadStatusEntry)] } {
+    if {$status == 1} {
         set MultiVolumeReader(loadStatusEntry) $f.eVName
     }
     
@@ -282,7 +283,7 @@ proc MultiVolumeReaderBuildGUI {parent} {
         the same values for the entire sequence."
  
     DevAddLabel $f.lVolNo "Vol Index:"
-    eval { scale $f.sSlider \
+    eval {scale $f.sSlider \
         -orient horizontal \
         -from 0 -to 0 \
         -resolution 1 \
@@ -423,7 +424,7 @@ proc MultiVolumeReaderLoad {} {
     unset -nocomplain MultiVolumeReader(lastMRMLid)
     unset -nocomplain MultiVolumeReader(volumeExtent)
 
-    if { [ info exists MultiVolumeReaser(loadStatusEntry)] } {
+    if {[info exists MultiVolumeReader(loadStatusEntry)]} {
         $MultiVolumeReader(loadStatusEntry) configure -textvariable \
             Volume(name)
     }
@@ -448,13 +449,13 @@ proc MultiVolumeReaderLoad {} {
     }
  
     # Sets range for the volume slider
-    if { [info exists ::MultiVolumeReader(slider)] } {
+    if {[info exists MultiVolumeReader(slider)]} {
         $MultiVolumeReader(slider) configure -from 1 -to $MultiVolumeReader(noOfVolumes)
     }
     # Sets the first volume in the sequence as the active volume
     MainVolumesSetActive $MultiVolumeReader(firstMRMLid)
 
-    if { [ info exists MultiVolumeReaser(loadStatusEntry)] } {
+    if {[info exists MultiVolumeReader(loadStatusEntry)]} {
         $MultiVolumeReader(loadStatusEntry) configure -textvariable \
             MultiVolumeReader(emptyLoadStatus)
     }
