@@ -12,3 +12,24 @@ Furthermore, with one button click, the result of manual registration can be use
 as an initial pose for automatic registration by maximization of mutual information.  
 This method is of general utility, and other implementations of it have performed 
 well in an NIH-sponsored test.  
+
+<p>
+The registration in the Slicer is found under the <b>Matrices</b> panel.
+The following steps show how to add a <b>Transform</b> to the MRML scene.
+<ul>
+&nbsp;<li>
+Go to the Data panel. (Click <b>Data</b> on the Main Menu.)
+<br>&nbsp;<li>
+Highlight the volume(s) and/or model(s) that you would like to move with this transform.
+<br>&nbsp;<li>
+Click <b>Add Transform</b> to surround them with a transform.
+<br>&nbsp;<li>
+Now, change the values in the <b>Matrix</b> at the top of the transform: double click the Matrix to go to the <b>Matrices</b> panel.
+<br>&nbsp;<li>
+Play with the translation and rotation sliders to set the Matrix.
+<br>&nbsp;<li>
+Alternatively, translate and/or rotate the volume with the mouse in the slice windows.  
+When aligning one volume with another, it helps to display one volume in the Background and the other in the Foreground, and use the Image Fusion slider to make both visible. 
+</li>
+</ul>
+

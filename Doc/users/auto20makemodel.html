@@ -1,9 +1,32 @@
 <title>Making Models</title>
 
 The output of the segmentation process is a set of label maps, where pixels 
-take on values corresponding to tissue type.  The bounding surfaces of the 
+take on values corresponding to tissue type.  In our model creation pipeline, the bounding surfaces of the 
 label maps are extracted and represented as a collection of triangles using 
-marching cubes.  Decimation reduces the number of triangles to a quantity 
+marching cubes.  Decimation then reduces the number of triangles to a quantity 
 that can be more quickly rendered with little observable loss in detail.  
 For example, a typical brain surface is reduced 
 from approximately 500,000 triangles to 150,000.
+
+<p>
+
+<ul>
+<li>To create a model from a labelmap that you have made, click on the <b>ModelMaker</b> button on the Main Menu. 
+<br>&nbsp;<li>
+In the <b>Create</b> tab, use the <b>Volume</b> pulldown menu to select the labelmap you would like to use to create the model.
+<br>&nbsp;<li>
+The largest label in this volume will be automatically selected.  If you would like to make a model from another pixel value, either click the <b>Label</b> button to choose a color, or enter the label value in the box.
+<br>&nbsp;<li>
+Next type in the <b>Name</b> you would like the model to have.
+<br>&nbsp;<li>
+Change the <b>Smooth</b> and <b>Decimate</b> parameters if necessary.
+<br>&nbsp;<li>
+Finally, click the <b>Create</b> button and wait for the model to be created.
+<br>&nbsp;<li>
+The model will then appear in the 3D Viewer.
+<br>&nbsp;<li>
+To save the model, click on the <b>Save</b> tab in ModelMaker, choose the model from the pulldown menu, optionally type in a filename, and click <b>Save</b>.  Then a dialog box will pop up for saving.
+<br>&nbsp;<li>
+Then save the scene, including the new model: click <b>File</b>, then <b>Save</b> or <b>Save As</b>.
+</li>
+</ul>
