@@ -6,39 +6,57 @@
 # somewhere else (see the README file).
 
 # NOTE: You must compile Tcl, Tk, and VTK first and set 
-# their paths below.
+# their paths below.  You should also set the BWH_INSTALL variable
+# for whether we are doing an internal (with MI) or external (up for 
+# ftp) install.  Finally, set the MY_OLD_SLICER variable to point
+# to a previous version of the slicer where we will grab executables not
+# in CVS (program/loc.txt, program/mi-bin and servers/SignaSP/spl_server)
+#
 
-# NOTE for BWH installs:  the following need to be manually grabbed and put 
-# into the install package (or added to this script)...
+# --------------------------------------------------------------
+#  Edit these variables before running the tarup script
+# --------------------------------------------------------------
 
+# Whether this install should contain code only for bwh (MI)
+setenv BWH_INSTALL 1
+
+# Set the directory of an older version of the slicer
+# where we will look for the following things:
 # program/loc.txt
-# program/bin/print_header
+# program/bin/print_header  (NO: this is in CVS now...)
 # for BWH only : program/mi-bin and servers/SignaSP/spl_server
-
-
-echo Slicer tarup script '$Revision: 1.14 $'...
+setenv MY_OLD_SLICER /local/pkg/slicer-1.0.1
 
 # Set the version number of the slicer directory to create
-setenv MY_SLICER_VERSION 1.0.2
+setenv MY_SLICER_VERSION 1.2.1
 
 # Set these paths to your Tcl and Tk
-setenv MY_TCL /local/src/tcl8.3.0/
-setenv MY_TK /local/src/tk8.3.0/
-echo Tcl path: $MY_TCL
-echo Tk path: $MY_TK
+setenv MY_TCL /local/src/tcl8.3.0
+setenv MY_TK /local/src/tk8.3.0
 
 # Set the version number of your Tcl and Tk
 setenv MY_VER_NUM 8.3
-echo Tcl/Tk version: MY_VER_NUM
 
 # Set the path to your VTK
-setenv MY_VTK /local/src/vtk31
+setenv MY_VTK /projects/slicer/vtk/vtkTest/vtk31_lisa_phase
+
+# Set your CVSROOT for checking out slicer through cvs
+# This should be anonymous for nice external CVS access
+# Make sure you are already logged in (cvs login) first!
+if (${?CVSROOT} == 0) then
+    setenv CVSROOT :pserver:anonymous@cvs.spl.harvard.edu:/projects/cvs/slicer
+endif
+
+# --------------------------------------------------------------
+#  End of variables to edit before running the tarup script.
+# --------------------------------------------------------------
+
+echo Slicer tarup script '$Revision: 1.15 $'...
+echo Tcl path: $MY_TCL
+echo Tk path: $MY_TK
+echo Tcl/Tk version: MY_VER_NUM
 echo VTK path: $MY_VTK
 
-# Set your CVSROOT for checking out slicer through cvs (if needed)
-if (${?CVSROOT} == 0) then
-    setenv CVSROOT /projects/cvs/slicer
-endif
 
 # Get the latest source code from CVS.
 echo Checking out slicer from CVS...
@@ -48,6 +66,18 @@ cvs checkout slicer
 echo Moving to slicer install directory
 mv slicer slicer-$MY_SLICER_VERSION
 cd  slicer-$MY_SLICER_VERSION
+
+# Make the tmp directory for use by MI registration
+mkdir program/tmp
+chmod 777 program/tmp
+
+# Now copy things not in CVS into the install directory
+echo Copying things not in CVS into the install directory
+cp ${MY_OLD_SLICER}/program/loc.txt program
+if (${BWH_INSTALL} == 1) then
+    cp -rp ${MY_OLD_SLICER}/program/mi-bin program
+endif
+cp ${MY_OLD_SLICER}/servers/SignaSP/spl_server servers/SignaSP
 
 # Now copy Tcl, Tk, and VTK stuff into the install directory
 echo Copying tcl and tk binaries
