@@ -51,8 +51,8 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 //#include <iostream.h>
 //#include <fstream.h>
-#include "vtkMrmlNode.h"
 #include "vtkSlicer.h"
+#include "vtkMrmlNode.h"
 
 class VTK_SLICER_BASE_EXPORT vtkMrmlColorNode : public vtkMrmlNode
 {
@@ -79,23 +79,23 @@ public:
 
   // Description:
   // Get/Set for DiffuseColor
-  vtkGetVector3Macro(DiffuseColor, float);
-  vtkSetVector3Macro(DiffuseColor, float);
+  vtkGetVector3Macro(DiffuseColor, vtkFloatingPointType);
+  vtkSetVector3Macro(DiffuseColor, vtkFloatingPointType);
 
   // Description:
   // Factor of the affect of ambient light from 0 to 1
-  vtkGetMacro(Ambient, float);
-  vtkSetMacro(Ambient, float);
+  vtkGetMacro(Ambient, vtkFloatingPointType);
+  vtkSetMacro(Ambient, vtkFloatingPointType);
 
   // Description:
   // Factor of the affect of diffuse reflection from 0 to 1
-  vtkGetMacro(Diffuse, float);
-  vtkSetMacro(Diffuse, float);
+  vtkGetMacro(Diffuse, vtkFloatingPointType);
+  vtkSetMacro(Diffuse, vtkFloatingPointType);
 
   // Description:
   // Factor of the affect of specular reflection from 0 to 1
-  vtkGetMacro(Specular, float);
-  vtkSetMacro(Specular, float);
+  vtkGetMacro(Specular, vtkFloatingPointType);
+  vtkSetMacro(Specular, vtkFloatingPointType);
 
   // Description:
   // Specular power in the range of 1 to 100
@@ -117,13 +117,13 @@ protected:
   char *Labels;
 
   // Numbers
-  float Ambient;
-  float Diffuse;
-  float Specular;
+  vtkFloatingPointType Ambient;
+  vtkFloatingPointType Diffuse;
+  vtkFloatingPointType Specular;
   int Power;
 
   // Arrays
-  float DiffuseColor[3];
+  vtkFloatingPointType DiffuseColor[3];
 };
 
 #endif

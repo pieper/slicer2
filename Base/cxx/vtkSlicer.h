@@ -44,4 +44,8 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  */
 
 
+#ifndef vtkFloatingPointType
+#define vtkFloatingPointType float
+#endif
+
 #include "vtkSlicerBaseWin32Header.h"

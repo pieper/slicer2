@@ -45,6 +45,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 #include "vtkImageData.h"
 #include "vtkImageToImageFilter.h"
+
 #include "vtkSlicer.h"
 
 class VTK_SLICER_BASE_EXPORT vtkImageDouble2D : public vtkImageToImageFilter
