@@ -56,7 +56,10 @@ proc tarup { {destdir "auto"} } {
 
     puts "Creating distribution in $destdir..."
 
-    if { ![file exists $destdir] } {
+    if { [file exists $destdir] } {
+        set resp [tk_messageBox -message "$destdir exists\nDelete it?" -type okcancel]
+        if { $resp == "cancel" } {return}
+        file delete -force $destdir
         file mkdir $destdir
     }
     if { ![file writable $destdir] } {
@@ -277,7 +280,7 @@ proc tarup { {destdir "auto"} } {
         "solaris8" -
         "redhat7.3" - 
         "Darwin" {
-            exec xterm -e "scp $archroot.tar.gz pieper@gpop:slicer-dist" 
+            exec xterm -e scp $archroot.tar.gz pieper@gpop:slicer-dist
         }
         "Win32VC7" { 
             exec rxvt -e scp $archroot.zip pieper@gpop:slicer-dist
