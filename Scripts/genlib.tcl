@@ -287,12 +287,19 @@ if { ![file exists $itclTestFile] } {
     cd $SLICER_LIB/tcl/incrTcl
 
     exec chmod +x ../incrTcl/configure 
-    if {$isWindows} {
+
+    if { $isWindows } {
         # can't do windows
     } else {
         runcmd ../incrTcl/configure --with-tcl=$SLICER_LIB/tcl-build/lib --with-tk=$SLICER_LIB/tcl-build/lib --prefix=$SLICER_LIB/tcl-build
-        runcmd make all
-        runcmd make install
+    if { $isDarwin } {
+        # need to run ranlib separately on lib for Darwin
+        # file is created and ranlib is needed inside make all
+        catch "runcmd make all"
+        runcmd ranlib ../incrTcl/itcl/libitclstub3.2.a       
+    } 
+    runcmd make all
+    runcmd make install
     }
 }
 
