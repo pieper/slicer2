@@ -32,11 +32,14 @@
 #   MeasureVolEnter
 #   MeasureVolExit
 #   MeasureVolVolume
+#   MeasureVolDisplayExtents
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
 #  Description
 #  This module counts voxels, converts to mL, and outputs a file.
+#  If the extent for the input volume is changed by the user, only
+#  measures that part of the volume.
 #-------------------------------------------------------------------------------
 
 #-------------------------------------------------------------------------------
@@ -94,7 +97,7 @@ proc MeasureVolInit {} {
     # Set version info
     #------------------------------------
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.2 $} {$Date: 2000/10/27 20:49:17 $}]
+	    {$Revision: 1.3 $} {$Date: 2000/10/31 00:25:29 $}]
     
     # Initialize module-level variables
     #------------------------------------
@@ -117,15 +120,23 @@ proc MeasureVolBuildGUI {} {
     # Help
     # Setup
     #   Top
-    #     ActiveVolume
+    #     Choices 
+    #       SelectVolume
+    #       Tabs *
     #   Bottom
-    #     File
-    #     Measure
+    #     Basic *
+    #       File
+    #       Measure
+    #     Advanced *
+    #       Extents
     # Results
     #   Volume
     #   Output
     #     Label
     #     TextBox
+    #     
+    # Note: items marked with a * were built as
+    # part of a TabbedFrame (see tcl-shared/Widgets.tcl)
     #-------------------------------------------
     
     #-------------------------------------------
@@ -136,15 +147,28 @@ proc MeasureVolBuildGUI {} {
     # Refer to the documentation for details on the syntax.
     #
     set help "
-    The MeasureVol module measures the volume of segmented structures in a labelmap.  
+    The <B>MeasureVol</B> module measures the volume of segmented structures in a labelmap.  
     It outputs a file containing the total volume in milliliters for each label value.
     <P>
     Description by tab:
     <BR>
     <UL>
-    <LI><B>Measure:</B> First enter a filename.  Then click the Measure Button
-    to measure the volumes and output your file.
+    <LI><B>Measure:</B> First enter a filename.  Then click the 'Measure' button
+    to measure the volumes and output your file. 
     <LI><B>Results:</B> Go to 'Results' to see the output file.
+    <BR>
+    <BR>
+    <B>Note for advanced users:</B> 
+    The 'Advanced' Settings (under 'Measure') 
+    let you measure only part of a volume.  
+    The numbers are the number of voxels that will be measured along each axis.
+    Normally these numbers will be set automatically to measure the entire volume.
+    <BR>
+    <B>Example:</B> To measure only slice number 10 (counting from 0 like 
+    the numbers above the slices do), set the numbers to 0 255, 0 255, and 
+    10 10.  
+    The first four numbers say to measure entire (256x256) slices, 
+    and the last two numbers say to just measure the 10th slice.
     "
     regsub -all "\n" $help {} help
     # remove emacs indentation
@@ -161,59 +185,99 @@ proc MeasureVolBuildGUI {} {
     #-------------------------------------------
     set fSetup $Module(MeasureVol,fSetup)
     set f $fSetup
-    
-    foreach frame "Top Bottom" {
-	frame $f.f$frame -bg $Gui(activeWorkspace)
-	pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
-    }
-    
+
+    frame $f.fTop -bg $Gui(activeWorkspace)
+    pack $f.fTop -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
+
+    # fBottom needs height 310 to put a TabbedFrame inside!
+    frame $f.fBottom -bg $Gui(activeWorkspace) -height 310
+    pack $f.fBottom -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
+
+
     #-------------------------------------------
     # Setup->Top frame
     #-------------------------------------------
     set f $fSetup.fTop
     
-    foreach frame "ActiveVolume" {
+    foreach frame "Choices" {
 	frame $f.f$frame -bg $Gui(backdrop) -relief sunken -bd 2
 	pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
     }
     
     #-------------------------------------------
-    # Setup->Top->ActiveVolume frame
+    # Setup->Top->Choices frame
     #-------------------------------------------
     
-    set f $fSetup.fTop.fActiveVolume
+    set f $fSetup.fTop.fChoices
     
+    foreach frame "SelectVolume Tabs" {
+	frame $f.f$frame -bg $Gui(backdrop)
+	pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
+    }
+
+    #-------------------------------------------
+    # Setup->Top->Choices->SelectVolume frame
+    #-------------------------------------------
+
+    set f $fSetup.fTop.fChoices.fSelectVolume
+
     # Add menus that list volumes
     # The selected volume will become $Volume(activeID)
-    DevAddSelectButton  MeasureVol $f VolumeSelect "Volume:" Grid \
+    DevAddSelectButton  MeasureVol $f VolumeSelect "Volume:" Pack \
 	    "Volume to measure segmented regions of." 20 BLA
-    
+
+    # bind menubutton to update the extents.
+    bind $MeasureVol(mVolumeSelect) <ButtonRelease-1> \
+	    "MeasureVolDisplayExtents" 
+    # have this binding execute after menu updates active volume
+    bindtags $MeasureVol(mVolumeSelect) [list Menu \
+	    $MeasureVol(mVolumeSelect) all]
+
     # Append menus and buttons to lists that get refreshed during UpdateMRML
     lappend Volume(mbActiveList) $f.mbVolumeSelect
     lappend Volume(mActiveList) $f.mbVolumeSelect.m
-    
+
+
+    #-------------------------------------------
+    # Setup->Top->Choices->Tabs frame
+    #-------------------------------------------
+
+    set f $fSetup.fTop.fChoices.fTabs
+
+    # this makes the navigation menu (buttons) and the tabs (frames).
+    TabbedFrame MeasureVol $f $fSetup.fBottom "Settings:"\
+	    {Basic Advanced} {"Basic" "Advanced"} \
+	    {"Basic Settings" "The Advanced Settings let you measure only part of the volume."}
+
     #-------------------------------------------
     # Setup->Bottom frame
     #-------------------------------------------
     set f $fSetup.fBottom
     
+    # the frames inside this one were made with the TabbedFrame command above.
+
+    #-------------------------------------------
+    # Setup->Bottom->Basic frame
+    #-------------------------------------------
+    set f $fSetup.fBottom.fBasic
+
     foreach frame "File Measure" {
 	frame $f.f$frame -bg $Gui(activeWorkspace)
 	pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
     }
-    
+
     #-------------------------------------------
-    # Setup->Bottom->File frame
+    # Setup->Bottom->Basic->File frame
     #-------------------------------------------
-    set f $fSetup.fBottom.fFile
+    set f $fSetup.fBottom.fBasic.fFile
     
     DevAddFileBrowse $f MeasureVol fileName "Output File:" [] "txt" [] \
 	    "Save" "Output File" "Choose the file where the output will be written."
-    
+
     #-------------------------------------------
-    # Setup->Bottom->Measure frame
+    # Setup->Bottom->Basic->Measure frame
     #-------------------------------------------
-    set f $fSetup.fBottom.fMeasure
+    set f $fSetup.fBottom.fBasic.fMeasure
     
     # Measure button
     DevAddButton $f.bMeasure "Measure Volume" MeasureVolVolume 
@@ -222,6 +286,44 @@ proc MeasureVolBuildGUI {} {
     
     pack $f.bMeasure -side top -padx $Gui(pad) -pady $Gui(pad)
     
+
+    #-------------------------------------------
+    # Setup->Bottom->Advanced frame
+    #-------------------------------------------
+    set f $fSetup.fBottom.fAdvanced
+
+    foreach frame "Extents" {
+	frame $f.f$frame -bg $Gui(activeWorkspace) -relief groove -bd 3
+	pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
+    }
+    
+    #-------------------------------------------
+    # Setup->Bottom->Advanced->Extents frame
+    #-------------------------------------------
+    set f $fSetup.fBottom.fAdvanced.fExtents
+    
+    frame $f.fLabel -bg $Gui(activeWorkspace)
+    pack $f.fLabel -side top -padx $Gui(pad) -pady $Gui(pad)
+    eval {label $f.lExtents -text "Extent of volume to measure:"} $Gui(WLA)
+    pack $f.lExtents -side top -padx $Gui(pad)  -pady $Gui(pad)
+
+    # the 6 IJK extent entry boxes.
+    foreach {label n1 n2} {I 1 2   J 3 4   K 5 6} {
+	frame $f.fExt$n1 -bg $Gui(activeWorkspace)
+	pack $f.fExt$n1 -side top -padx 0 -pady $Gui(pad)
+
+	DevAddLabel $f.fExt$n1.lE$n1 "$label:"
+	pack $f.fExt$n1.lE$n1 -side left -padx $Gui(pad)  -pady $Gui(pad)
+
+	# add entry box for variable MeasureVol(Extent1), etc.
+	DevAddEntry MeasureVol Extent$n1 $f.fExt$n1.eE$n1
+	pack $f.fExt$n1.eE$n1 -side left -padx $Gui(pad)  -pady $Gui(pad)
+
+	DevAddEntry MeasureVol Extent$n2 $f.fExt$n1.eE$n2
+	pack $f.fExt$n1.eE$n2 -side left -padx $Gui(pad)  -pady $Gui(pad)
+    }
+
+
     ##########################################################
     #             Results
     ##########################################################
@@ -296,6 +398,7 @@ proc MeasureVolEnter {} {
     #   (See slicer/program/tcl-shared/Events.tcl for more details.)
     pushEventManager $MeasureVol(eventManager)
 
+    MeasureVolDisplayExtents
 }
 
 #-------------------------------------------------------------------------------
@@ -328,29 +431,52 @@ proc MeasureVolExit {} {
 proc MeasureVolVolume {} {
     global MeasureVol Volume Module
     
-    # validate inputs
+    # validate input from Basic tab
     if {$MeasureVol(fileName) == ""} {
 	DevErrorWindow "Please enter a filename first."
 	return
     }
     
+    # validate input from Advanced tab
+    set okay 1
+    for {set i 1} {$i < 7} {incr i} {
+	if {[ValidateInt $MeasureVol(Extent$i)] == 0} {
+	    set okay 0
+	}    
+    }
+    if {$okay == 0} {
+	tk_messageBox -message \
+		"The extent numbers (under the Advanced Settings tab) must be integers."
+	return
+    }    
+
     # clear the text box.
     $MeasureVol(textBox) delete 1.0 end
-    
-    puts "Lauren clip volume to measure parts and make a UI for this!"
 
     # currently selected volume
     set v $Volume(activeID)
+    
+    # if the user has changed the full extent in the entry
+    # boxes, clip and only measure part of the volume.
+    vtkImageClip clip
+    clip SetInput [Volume($v,vol) GetImageData]
+    clip SetOutputWholeExtent  $MeasureVol(Extent1) \
+	    $MeasureVol(Extent2)  $MeasureVol(Extent3) \
+	    $MeasureVol(Extent4)  $MeasureVol(Extent5) \
+	    $MeasureVol(Extent6)
+    clip ClipDataOn
+    clip ReleaseDataFlagOff
 
     # pipeline
     vtkImageMeasureVoxels measure
-    measure SetInput [Volume($v,vol) GetImageData]
+    #measure SetInput [Volume($v,vol) GetImageData]
+    measure SetInput [clip GetOutput]
     measure SetFileName $MeasureVol(fileName)
     measure Update
 
     # delete objects we created
     measure Delete
-
+    clip Delete
     puts "Lauren check file exists"
 
     # display the output that was written to the file.
@@ -367,5 +493,26 @@ proc MeasureVolVolume {} {
 	    "Done measuring volume [Volume($v,node) GetName].\nView output file?" \
 	    {Tab MeasureVol row1 Results}
 
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MeasureVolDisplayExtents
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MeasureVolDisplayExtents {} {
+
+    global MeasureVol Volume
+
+    # currently selected volume
+    set v $Volume(activeID)
+
+    # set extent to that of the current volume.
+    # this sets the entry boxes too.
+    scan [[Volume($v,vol) GetImageData] GetWholeExtent] \
+	    "%d %d %d %d %d %d" \
+	    MeasureVol(Extent1) MeasureVol(Extent2) MeasureVol(Extent3) \
+	    MeasureVol(Extent4) MeasureVol(Extent5) MeasureVol(Extent6)
 }
 
