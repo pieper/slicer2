@@ -57,6 +57,8 @@ ELSE (WIN32)
         vtkMrmlSegmenterGraphNode.cxx 
         vtkMrmlSegmenterNode.cxx 
         vtkMrmlSegmenterPCAEigenNode.cxx
+
+        vtkImageEMMarkov.cxx
     )
 ENDIF (WIN32)
 

@@ -410,6 +410,7 @@ proc EMSegmentTrainCIMField {} {
         return
     }
     foreach i $EMSegment(GlobalSuperClassList) {
+        catch "EMCIM Delete"
        vtkImageEMMarkov EMCIM    
        # EM Specific Information
        set NumClasses [llength $EMSegment(Cattrib,$i,ClassList)]
@@ -445,6 +446,11 @@ proc EMSegmentTrainCIMField {} {
            for {set z 0} {$z < 6} {incr z} {
                # Error made in x,y coordinates in EMSegment - I checked everything - it workes in XML and CIM Display in correct order - so do not worry - it is just a little bit strange - but strange things happen
                set temp [$data $::getScalarComponentAs $yindex $xindex  $z 0]
+               if {[catch {set mytestvar [expr int($temp)]} err]} {
+                   # probably temp is too large to be an int, max it
+                   set temp 10000
+                   if {$::Module(verbose)} { puts "capped temp: $temp" }
+               }
                set EMSegment(Cattrib,$i,CIMMatrix,$x,$y,[lindex $EMSegment(CIMList) $z]) [expr round($temp*100000)/100000.0]        
            }
            incr yindex
