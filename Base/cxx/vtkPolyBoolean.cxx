@@ -374,7 +374,7 @@ void vtkPolyBoolean::Execute()
   if ( this->XformA != NULL )
     {
     this->XformA->Invert( *this->XformA, *XformAInverse );
-    dummyxform->Multiply4x4( *XformAInverse, *this->XformB, *XformBtoA );
+    vtkMatrix4x4::Multiply4x4( XformAInverse, this->XformB, XformBtoA );
     }
   else
     this->XformB->DeepCopy(XformBtoA);
@@ -1112,7 +1112,7 @@ void vtkPolyBoolean::DisplayIntersectionGeometry()
         pntIds->SetId( jj, thisEdge->Points[1] );
         thisEdge = thisEdge->Next[0];
         }
-      this->NewLines->InsertNextCell( *pntIds );
+      this->NewLines->InsertNextCell( pntIds );
       if ( lastEdge->Next[0] == NULL )
         {
         this->NewLines->InsertNextCell( 2 );
@@ -1185,7 +1185,7 @@ void vtkPolyBoolean::ProcessNewEdges()
         pntIds->SetId( jj, thisEdge->Points[1] );
         thisEdge = thisEdge->Next[0];
         }
-      this->NewLines->InsertNextCell( *pntIds );
+      this->NewLines->InsertNextCell( pntIds );
       }
     }
   pntIds->Delete();
@@ -1248,7 +1248,7 @@ void vtkPolyBoolean::ClassifyCells()
                  continue;
                p0 -= minId;
                p1 -= minId;
-               dataset->GetCellEdgeNeighbors( cellId, p0, p1, *cellNeighbors );
+               dataset->GetCellEdgeNeighbors( cellId, p0, p1, cellNeighbors );
                if ( cellNeighbors->GetNumberOfIds() == 1 )
                  {
                  neighborId = cellNeighbors->GetId( 0 );
@@ -1294,7 +1294,7 @@ void vtkPolyBoolean::ClassifyCells()
                   p1 = thisEdge->Points[0];
                   p0 = thisEdge->Points[1];
                   }
-                dataset->GetCellEdgeNeighbors( cellId, p0, p1, *cellNeighbors );
+                dataset->GetCellEdgeNeighbors( cellId, p0, p1, cellNeighbors );
                 if ( cellNeighbors->GetNumberOfIds() == 1 )
                   {
                   neighborId = cellNeighbors->GetId( 0 );
@@ -1378,7 +1378,7 @@ void vtkPolyBoolean::GatherMarkCellNeighbors( int AorB, vtkPolyData *dataset,
       p1 = ptIds[(ii+1)%numPts];
       if ( this->CellFlags[AorB] != NULL )
         {
-        dataset->GetCellEdgeNeighbors( thisId, p0, p1, *cellNeighbors );
+        dataset->GetCellEdgeNeighbors( thisId, p0, p1, cellNeighbors );
         for ( jj=0; jj<cellNeighbors->GetNumberOfIds(); jj++ )
           {
           neighborId = cellNeighbors->GetId( jj );
@@ -1394,7 +1394,7 @@ void vtkPolyBoolean::GatherMarkCellNeighbors( int AorB, vtkPolyData *dataset,
     if ( depth > maxDepth )
       maxDepth = depth;
     if ( marker == BOOL_CELL_IN_RESULT )
-      newId = this->NewPolys->InsertNextCell( *offsetIds );
+      newId = this->NewPolys->InsertNextCell( offsetIds );
     }
   if ( this->CellFlags[AorB] != NULL )
     {
@@ -1661,10 +1661,10 @@ void vtkPolyBoolean::AddNewPolygons( vtkBoolTri *thisTri )
     areavec[0] = areavec[1] = areavec[2] = 0.0;
     do {
       nPts = thisLoop->Points->GetNumberOfIds();
-      p0 = this->NewPoints->GetPointer( thisLoop->Points->GetId(nPts-1) );
+      p0 = this->NewPoints->GetPoint( thisLoop->Points->GetId(nPts-1) );
       for ( ii=0; ii<nPts; ii++ )
         {
-        p1 = this->NewPoints->GetPointer( thisLoop->Points->GetId(ii) );
+        p1 = this->NewPoints->GetPoint( thisLoop->Points->GetId(ii) );
         vtkMath::Cross( p0, p1, xprod );
         areavec[0] += xprod[0];
         areavec[1] += xprod[1];
@@ -1692,12 +1692,12 @@ void vtkPolyBoolean::AddNewPolygons( vtkBoolTri *thisTri )
   nPts = thisLoop->Points->GetNumberOfIds();
   if ( thisLoop->Next == NULL && nPts == 3 && addOuterLoop == 0 )
     { // Simple Triangle
-    this->NewPolys->InsertNextCell( *thisLoop->Points );
+    this->NewPolys->InsertNextCell( thisLoop->Points );
     }
   else
     { // Must triangulate it first.
     tess->Reset();
-    tess->SetPoints( this->NewPoints->GetPointer(0) );
+    tess->SetPoints( this->NewPoints->GetData()->GetTuple(0) );
     if ( addOuterLoop )
       tess->AddContour( 3, outerLoop );
     do {
@@ -1778,7 +1778,7 @@ void vtkPolyBoolean::AddCellTriangles( int cellId, int *ptIds, int type,
         this->CellFlagsB[ii] = 0;
       }
     // trick to build links
-    dataset->GetPointCells( ptIds[0], *cellNeighbors );
+    dataset->GetPointCells( ptIds[0], cellNeighbors );
     }
 
   thisTriDirectory = this->TriDirectory[AorB];
@@ -1817,7 +1817,7 @@ void vtkPolyBoolean::AddCellTriangles( int cellId, int *ptIds, int type,
         for ( jj=0; jj<3; jj++ )
           {
           p0 = triPts[jj]; p1 = triPts[(jj+1)%3];
-          dataset->GetCellEdgeNeighbors( cellId, p0, p1, *cellNeighbors );
+          dataset->GetCellEdgeNeighbors( cellId, p0, p1, cellNeighbors );
           thisEdge = NULL;
           if ( cellNeighbors->GetNumberOfIds() == 1 )
             {
@@ -1904,11 +1904,11 @@ void vtkPolyBoolean::BuildBPoints( vtkMatrix4x4 *XformBtoA )
   vtkTransform *Xform = vtkTransform::New();
   int numPts;
 
-  Xform->SetMatrix( *XformBtoA );
+  Xform->SetMatrix( XformBtoA );
   numPts = this->PolyDataB->GetNumberOfPoints();
   this->BPoints = vtkPoints::New();
   this->BPoints->Allocate( numPts, 1 );
-  Xform->MultiplyPoints( this->PolyDataB->GetPoints(),
+  Xform->TransformPoints( this->PolyDataB->GetPoints(),
                         this->BPoints );
   Xform->Delete();
   }
