@@ -1,3 +1,59 @@
+#=auto==========================================================================
+# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
+#
+# This software ("3D Slicer") is provided by The Brigham and Women's 
+# Hospital, Inc. on behalf of the copyright holders and contributors. 
+# Permission is hereby granted, without payment, to copy, modify, display 
+# and distribute this software and its documentation, if any, for 
+# research purposes only, provided that (1) the above copyright notice and 
+# the following four paragraphs appear on all copies of this software, and 
+# (2) that source code to any modifications to this software be made 
+# publicly available under terms no more restrictive than those in this 
+# License Agreement. Use of this software constitutes acceptance of these 
+# terms and conditions.
+# 
+# 3D Slicer Software has not been reviewed or approved by the Food and 
+# Drug Administration, and is for non-clinical, IRB-approved Research Use 
+# Only.  In no event shall data or images generated through the use of 3D 
+# Slicer Software be used in the provision of patient care.
+# 
+# IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND CONTRIBUTORS BE LIABLE TO 
+# ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL 
+# DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, 
+# EVEN IF THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE BEEN ADVISED OF THE 
+# POSSIBILITY OF SUCH DAMAGE.
+# 
+# THE COPYRIGHT HOLDERS AND CONTRIBUTORS SPECIFICALLY DISCLAIM ANY EXPRESS 
+# OR IMPLIED WARRANTIES INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+# WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND 
+# NON-INFRINGEMENT.
+# 
+# THE SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS 
+# IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
+# PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+# 
+#
+#===============================================================================
+# FILE:        fMRIEngineHelpText.tcl
+# PROCEDURES:  
+#   fMRIEngineHelpLoadSequence
+#   fMRIEngineHelpLoadVolumeAdjust
+#   fMRIEngineHelpSetupChooseDetector
+#   fMRIEngineHelpSetup
+#   fMRIEngineHelpSetupBlockEventMixed
+#   fMRIEngineHelpSetupWaveform
+#   fMRIEngineHelpSetupHRFConvolution
+#   fMRIEngineHelpSetupTempDerivative
+#   fMRIEngineHelpSetupHighpassFilter
+#   fMRIEngineHelpSetupLowpassFilter
+#   fMRIEngineHelpSetupGlobalFX
+#   fMRIEngineHelpSetupCustomFX
+#   fMRIEngineHelpSetupEstimate
+#   fMRIEngineHelpSetupContrasts
+#   fMRIEngineHelpComputeActivationVolume
+#   fMRIEngineHelpInspectActivationThreshold
+#   fMRIEngineHelpInspectPlotting
+#==========================================================================auto=
 
 proc fMRIEngineGetHelpWinID { } {
     if {! [info exists ::fMRIEngine(newID) ]} {
@@ -8,6 +64,12 @@ proc fMRIEngineGetHelpWinID { } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineHelpLoadSequence
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIEngineHelpLoadSequence { } {
     #--- Sequence->Load
     #--- loading sequences
@@ -20,6 +82,12 @@ proc fMRIEngineHelpLoadSequence { } {
     DevCreateTextPopup infowin$i "fMRIEngine information" 100 100 18 $txt
 }
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineHelpLoadVolumeAdjust
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIEngineHelpLoadVolumeAdjust { } {
     #--- Sequence->Select
     #--- applying window/level/threshold.
@@ -33,6 +101,12 @@ proc fMRIEngineHelpLoadVolumeAdjust { } {
     DevCreateTextPopup infowin$i "fMRIEngine information" 100 100 25 $txt
 }
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineHelpSetupChooseDetector
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIEngineHelpSetupChooseDetector { } {
     #--- Setup
     #--- Choose a method of activation detection
@@ -47,6 +121,12 @@ proc fMRIEngineHelpSetupChooseDetector { } {
     DevCreateTextPopup infowin$i "fMRIEngine information" 100 100 25 $txt
 }
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineHelpSetup
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIEngineHelpSetup { } {
     #--- Setup ->Specify [paradigm design, signal modeling, contrasts ]
     #--- Explain what we are specifying
@@ -75,6 +155,12 @@ proc fMRIEngineHelpSetup { } {
     DevCreateTextPopup infowin$i "fMRIEngine information" 100 100 25 $txt
 }
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineHelpSetupBlockEventMixed
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIEngineHelpSetupBlockEventMixed { } {
     #--- Setup->Paradigm
     #--- Design type: blocked/event-related/mixed
@@ -89,6 +175,12 @@ proc fMRIEngineHelpSetupBlockEventMixed { } {
     DevCreateTextPopup infowin$i "fMRIEngine information" 100 100 25 $txt
 }
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineHelpSetupWaveform
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIEngineHelpSetupWaveform { } {
     #--- Setup->Signal
     #--- What is waveform?
@@ -100,6 +192,12 @@ proc fMRIEngineHelpSetupWaveform { } {
     DevCreateTextPopup infowin$i "fMRIEngine information" 100 100 25 $txt
 }
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineHelpSetupHRFConvolution
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIEngineHelpSetupHRFConvolution { } {
     #--- Setup->Signal
     #--- What is HRF convolution?
@@ -113,6 +211,12 @@ proc fMRIEngineHelpSetupHRFConvolution { } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineHelpSetupTempDerivative
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIEngineHelpSetupTempDerivative { } {
     #--- Setup->Signal
     #--- What is adding temporal derivatives?
@@ -123,6 +227,12 @@ proc fMRIEngineHelpSetupTempDerivative { } {
     DevCreateTextPopup infowin$i "fMRIEngine information" 100 100 25 $txt
 }
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineHelpSetupHighpassFilter
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIEngineHelpSetupHighpassFilter { } {
     #--- Setup->Signal
     #--- What is highpass filtering?
@@ -135,6 +245,12 @@ proc fMRIEngineHelpSetupHighpassFilter { } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineHelpSetupLowpassFilter
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIEngineHelpSetupLowpassFilter { } {
     #--- Setup->Signal
     #--- What is Lowpass filter?
@@ -145,6 +261,12 @@ proc fMRIEngineHelpSetupLowpassFilter { } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineHelpSetupGlobalFX
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIEngineHelpSetupGlobalFX { } {
     #--- Setup->Signal
     #--- What is remove global effects?
@@ -155,6 +277,12 @@ proc fMRIEngineHelpSetupGlobalFX { } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineHelpSetupCustomFX
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIEngineHelpSetupCustomFX { } {
     #--- Setup->Signal
     #--- What are custom regresssors?
@@ -165,6 +293,12 @@ proc fMRIEngineHelpSetupCustomFX { } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineHelpSetupEstimate
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIEngineHelpSetupEstimate { } {
     #--- Setup->Signal
     #--- Estimate the model's fit to the data.
@@ -176,6 +310,12 @@ proc fMRIEngineHelpSetupEstimate { } {
     DevCreateTextPopup infowin$i "fMRIEngine information" 100 100 25 $txt    
 }
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineHelpSetupContrasts
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIEngineHelpSetupContrasts { } {
     #--- Setup->Contrasts
     #--- Number of elements = columns in design matrix
@@ -189,6 +329,12 @@ proc fMRIEngineHelpSetupContrasts { } {
     DevCreateTextPopup infowin$i "fMRIEngine information" 100 100 25 $txt    
 }
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineHelpComputeActivationVolume
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIEngineHelpComputeActivationVolume { } {
     #--- Compute->computing
     #--- How to threshold activation?
@@ -203,6 +349,12 @@ proc fMRIEngineHelpComputeActivationVolume { } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineHelpInspectActivationThreshold
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIEngineHelpInspectActivationThreshold { } {
     #--- Inspect
     #--- How to threshold activation?
@@ -217,6 +369,12 @@ proc fMRIEngineHelpInspectActivationThreshold { } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineHelpInspectPlotting
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIEngineHelpInspectPlotting { } {
     #--- Inspect
     #--- Types of plotting
