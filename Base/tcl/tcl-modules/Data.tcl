@@ -69,12 +69,12 @@ proc DataInit {} {
 	set Module($m,procEnter) DataEnter
 	set Module($m,procExit) DataExit
 
-        # Define Dependencies
-        set Module($m,depend) "Events"
+	# Define Dependencies
+	set Module($m,depend) "Events"
 
-        # Set version info
-        lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.19 $} {$Date: 2000/02/22 17:56:10 $}]
+	# Set version info
+	lappend Module(versions) [ParseCVSInfo $m \
+		{$Revision: 1.20 $} {$Date: 2000/02/22 21:37:48 $}]
 
 	set Data(index) ""
 	set Data(clipboard) ""
@@ -113,9 +113,21 @@ proc DataBuildGUI {} {
 	# Help frame
 	#-------------------------------------------
 	set help "
-Models are fun. Do you like models, Ron?
+The 3D Slicer can be thought of as a MRML browser.  MRML is the 3D Slicer's 
+language for describing 3D scenes of medical data. 
+<P>
+The <B>List</B> tab 
+lists the contents of the MRML file currently being viewed.  To save the 
+current file, or open a different one, use the <B>File</B> menu. 
+<P>
+To view or edit an item's properties, double-click on it's name in the list. 
+To copy, delete, or move it, click on it with the right mouse button to 
+show a menu of options. 
+<BR><B>TIP:</B> Observe the keyboard shortcuts on the menu and use these 
+to quickly cut and paste items.
+
 "
-	regsub -all "\n" $help {} help
+	regsub -all "\n" $help { } help
 	MainHelpApplyTags Data $help
 	MainHelpBuildGUI Data
 

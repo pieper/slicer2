@@ -61,9 +61,9 @@ proc ViewInit {} {
 	# Define Dependencies
 	set Module($m,depend) ""
 
-        # Set version info
-        lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.8 $} {$Date: 2000/02/22 17:56:15 $}]
+	# Set version info
+	lappend Module(versions) [ParseCVSInfo $m \
+		{$Revision: 1.9 $} {$Date: 2000/02/22 21:37:52 $}]
 }
 
 #-------------------------------------------------------------------------------
@@ -88,9 +88,21 @@ proc ViewBuildGUI {} {
 	# Help frame
 	#-------------------------------------------
 	set help "
-Models are fun. Do you like models, Ron?
+<UL>
+<LI><B>Size</B> If you want to save the 3D view as an image on disk 
+(using the <B>Save 3D</B> command from the <B>File</B> menu), first
+set the size of the window to the desired size of the saved image.
+<BR><LI><B>Closeup</B> The Closeup window magnifies the slice window
+around the mouse cursor.  This option is not presently available on PCs.
+<BR><LI><B>Stereo</B> The Stereo mode allows viewing the 3D window in
+3D if you have Red/Blue glasses.  If you have chrystal eyes glasses,
+then edit the Slicer's TCL code to change the stereo mode in VTK.
+</UL>
+<BR><LI><B>Background Color</B> When you threshold graylevel volumes,
+the view will look better if the background is black.
+</UL>
 "
-	regsub -all "\n" $help {} help
+	regsub -all "\n" $help { } help
 	MainHelpApplyTags View $help
 	MainHelpBuildGUI View
 

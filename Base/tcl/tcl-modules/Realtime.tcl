@@ -70,9 +70,9 @@ proc RealtimeInit {} {
 	# Define Dependencies
 	set Module($m,depend) "Locator"
 
-        # Set version info
-        lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.10 $} {$Date: 2000/02/22 17:56:14 $}]
+	# Set version info
+	lappend Module(versions) [ParseCVSInfo $m \
+		{$Revision: 1.11 $} {$Date: 2000/02/22 21:37:51 $}]
 
 	# Initialize globals
 	set Realtime(idRealtime)     $Volume(idNone)
@@ -194,9 +194,18 @@ proc RealtimeBuildGUI {} {
 	# Help frame
 	#-------------------------------------------
 	set help "
-Models are fun. Do you like models, Ron?
-"
-	regsub -all "\n" $help {} help
+This module allows real-time processing of images that are acquired using
+the <B>Locator</B> module.  When the <B>Mode</B> is set to <I>On</I>, when
+each image is acquired, the selected <B>Effect</B> is applied.  Sometimes,
+a <B>Baseline</B> image is involved in the computation, such as subtracting
+the <B>Realtime</B> image from the <B>Baseline</B> to form the <B>Result</B>
+, for example.
+<BR>
+If there is no <B>Baseline</B> image, or its size does not match that of
+<B>Realtime</B>, the the <B>Realtime</B> image is copied to form a new
+<B>Baseline</B>.  This can also be achieved by pressing the <B>Make Baseline</B>
+button."
+	regsub -all "\n" $help { } help
 	MainHelpApplyTags Realtime $help
 	MainHelpBuildGUI Realtime
 

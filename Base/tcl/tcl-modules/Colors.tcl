@@ -67,9 +67,9 @@ proc ColorsInit {} {
 	# Define Dependencies
 	set Module($m,depend) ""
 
-        # Set version info
-        lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.10 $} {$Date: 2000/02/22 17:56:10 $}]
+	# Set version info
+	lappend Module(versions) [ParseCVSInfo $m \
+		{$Revision: 1.11 $} {$Date: 2000/02/22 21:37:47 $}]
 }
 
 #-------------------------------------------------------------------------------
@@ -98,9 +98,16 @@ proc ColorsBuildGUI {} {
 	# Help frame
 	#-------------------------------------------
 	set help "
-Models are fun. Do you like models, Ron?
+Click on the name of a color in the <B>Color Name</B> listbox to view the
+<B>Label</B> values associated with this color.  Use the <B>Add</B> and
+<B>Delete</B> buttons to create/remove new colors or labels for colors.
+<P>
+Your changes will not take effect until you click the <B>Apply</B> button.
+<P>
+The colors are saved in the MRML file when you select the <B>Save</B> option
+from the <B>File</B> menu if they differ from the default colors.
 "
-	regsub -all "\n" $help {} help
+	regsub -all "\n" $help { } help
 	MainHelpApplyTags Colors $help
 	MainHelpBuildGUI Colors
 

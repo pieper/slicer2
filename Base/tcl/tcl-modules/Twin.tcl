@@ -61,9 +61,9 @@ proc TwinInit {} {
 	# Define Dependencies
 	set Module($m,depend) ""
 
-        # Set version info
-        lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.5 $} {$Date: 2000/02/22 17:56:14 $}]
+	# Set version info
+	lappend Module(versions) [ParseCVSInfo $m \
+		{$Revision: 1.6 $} {$Date: 2000/02/22 21:37:52 $}]
 }
 
 #-------------------------------------------------------------------------------
@@ -112,9 +112,12 @@ proc TwinBuildGUI {} {
 	# Help frame
 	#-------------------------------------------
 	set help "
-Models are fun. Do you like models, Ron?
-"
-	regsub -all "\n" $help {} help
+The Twin window mirrors the 3D view, and can be set to appear on a different
+screen number on UNIX systems.  If you have 2 graphics cards in your computer,
+then they are numbered 0 and 1.  To change the screen of the Twin window,
+you need to change the number on the interface, AND toggle the Twin window
+off and on."
+	regsub -all "\n" $help { } help
 	MainHelpApplyTags Twin $help
 	MainHelpBuildGUI Twin
 

@@ -64,9 +64,10 @@ proc ModelsInit {} {
 	# Define Dependencies
 	set Module($m,depend) "Labels"
 
-        # Set Version Info
-        lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.17 $} {$Date: 2000/02/22 17:56:13 $}]
+	# Set Version Info
+	lappend Module(versions) [ParseCVSInfo $m \
+		{$Revision: 1.18 $} {$Date: 2000/02/22 21:37:50 $}]
+
 	# Props
 	set Model(propertyType) Basic
 
@@ -143,9 +144,25 @@ proc ModelsBuildGUI {} {
 	# Help frame
 	#-------------------------------------------
 	set help "
-Models are fun. Do you like models, Ron?
-"
-	regsub -all "\n" $help {} help
+Description by tab:<BR>
+<UL>
+<LI><B>Display:</B> Click the button with the model's name to
+set it visibility, and move the slider to affect its opacity.
+For a menu of additional options, click the button with the
+<B>Right</B> mouse button.<BR>
+<LI><B>Props:</B> Another way of setting the model's properties
+than via the menu on the <B>Display</B> tab. You must click the
+<B>Apply</B> button for your changes to take effect.<BR>
+<LI><B>Clip:</B> The reformatted slice planes can act as clipping
+planes to give you vision inside the model. Select whether to clip
+the portion of the model lying on the positive or negative side of
+each slice plane.
+<BR><B>TIP</B> Clip the skin to see the other models inside the
+body while still retaining the skin as a landmark.<BR>
+<LI><B>Meter:</B> Click the <B>Measure Performance</B> button
+to display the number of polygons in each model and the time
+to render them all."
+	regsub -all "\n" $help { } help
 	MainHelpApplyTags Models $help
 	MainHelpBuildGUI Models
 

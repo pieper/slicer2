@@ -61,9 +61,9 @@ proc OptionsInit {} {
 	# Define Dependencies
 	set Module($m,depend) ""
 
-        # Set Version Info
-        lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.10 $} {$Date: 2000/02/22 17:56:13 $}]
+	# Set Version Info
+	lappend Module(versions) [ParseCVSInfo $m \
+		{$Revision: 1.11 $} {$Date: 2000/02/22 21:37:51 $}]
 
 	# Initialize Globals
 	set Options(propertyType) Basic
@@ -117,7 +117,7 @@ The order of modules will be determined by their order on
 the tab.  Click the <B>Up</B> and <B>Down</B> buttons to 
 organize them.
 "
-	regsub -all "\n" $help {} help
+	regsub -all "\n" $help { } help
 	MainHelpApplyTags Options $help
 	MainHelpBuildGUI Options
 

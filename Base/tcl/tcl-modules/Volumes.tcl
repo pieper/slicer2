@@ -55,10 +55,10 @@ proc VolumesInit {} {
 	# Define Procedures
 	set Module($m,procGUI)  VolumesBuildGUI
 
-        # For now, never display histograms to avoid bug in histWin Render
-        # call in MainVolumesSetActive. (This happened when starting slicer,
-        # switching to Volumes panel, switching back to Data, and then 
-        # adding 2 transforms.)
+	# For now, never display histograms to avoid bug in histWin Render
+	# call in MainVolumesSetActive. (This happened when starting slicer,
+	# switching to Volumes panel, switching back to Data, and then 
+	# adding 2 transforms.)
 	# Windows98 Version II can't render histograms
 	set Volume(histogram) Off
 #	if {$Gui(pc) == 1} {
@@ -68,9 +68,9 @@ proc VolumesInit {} {
 	# Define Dependencies
 	set Module($m,depend) ""
 
-        # Set version info
-        lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.27 $} {$Date: 2000/02/22 17:56:15 $}]
+	# Set version info
+	lappend Module(versions) [ParseCVSInfo $m \
+		{$Revision: 1.28 $} {$Date: 2000/02/22 21:37:52 $}]
 
 	# Props
 	set Volume(propertyType) Basic
@@ -83,7 +83,6 @@ proc VolumesInit {} {
 	set Volume(scanOrderList) "LR RL SI IS AP PA OB" 
 	
 	MainVolumesSetGUIDefaults
-
 }
 
 #-------------------------------------------------------------------------------
@@ -112,9 +111,29 @@ proc VolumesBuildGUI {} {
 	# Help frame
 	#-------------------------------------------
 	set help "
-Ron, the interpolation button won't work without downloading dll's again.
-"
-	regsub -all "\n" $help {} help
+Description by tab:
+<P>
+<UL>
+<LI><B>Display:</B> Set the volume you wish to change as the 
+<B>Active Volume</B>.  Then adjust these:
+<BR><B>Window/Level:</B> sets which pixel values will have the most
+visible range of color values.
+<BR><B>Threshold:</B> pixels that do not satisfy the threshold appear
+transparent on the reformatted slices.  Use this to clip away occluding
+slice planes.
+<BR><B>Palette:</B> select the color scheme for the data. Overlay colored
+functional data on graylevel anatomical data.
+<BR><B>Interpolate:</B> indicate whether to interpolate between voxels
+on the reformatted slices.
+<BR><LI><B>Props</B> set the header information
+<BR><LI><B>Other</B> The <B>Slider Range</B> for the Window/Level/Threshold
+sliders is normally automatically set according to the min and max voxel 
+values in the volume.  However, some applications, such as monitoring 
+thermal surgery, requires setting these manually to retain the same color 
+scheme as the volume's data changes over time due to realtime data
+acquisition.
+ "
+	regsub -all "\n" $help { } help
 	MainHelpApplyTags Volumes $help
 	MainHelpBuildGUI  Volumes
 

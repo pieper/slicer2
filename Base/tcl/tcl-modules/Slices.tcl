@@ -46,9 +46,9 @@ proc SlicesInit {} {
 	# Define Dependencies
 	set Module($m,depend) ""
 
-        # Set version info
-        lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.9 $} {$Date: 2000/02/22 17:56:14 $}]
+	# Set version info
+	lappend Module(versions) [ParseCVSInfo $m \
+		{$Revision: 1.10 $} {$Date: 2000/02/22 21:37:51 $}]
 
 	# Props
 	set Slice(prefix) slice
@@ -74,8 +74,15 @@ proc SlicesBuildGUI {} {
 	#-------------------------------------------
 	set help "
 Use these slice controls when the <B>View Mode</B> is set to 3D.
+<BR>
+The <B>Active Slice</B> is the slice you last clicked on with the mouse.
+<BR>
+<B>TIP</B></BR>
+The AxiSlice, SagSlice, CorSlice, and OrigSlice orientations
+produces slices relative to the originally scanned volume.
+The other options produces slices at arbitrary orientations in millimeter space.
 "
-	regsub -all "\n" $help {} help
+	regsub -all "\n" $help { } help
 	MainHelpApplyTags Slices $help
 	MainHelpBuildGUI Slices
 

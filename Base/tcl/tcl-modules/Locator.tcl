@@ -88,9 +88,9 @@ proc LocatorInit {} {
 	# Define Dependencies
 	set Module($m,depend) ""
 
-        # Set version info
-        lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.15 $} {$Date: 2000/02/22 17:56:12 $}]
+	# Set version info
+	lappend Module(versions) [ParseCVSInfo $m \
+		{$Revision: 1.16 $} {$Date: 2000/02/22 21:37:49 $}]
 
 	# Patient/Table position
 	set Locator(tblPosList)   "Front Side"
@@ -283,9 +283,33 @@ proc LocatorBuildGUI {} {
 	# Help frame
 	#-------------------------------------------
 	set help "
-Models are fun. Do you like models, Ron?
-"
-	regsub -all "\n" $help {} help
+Description by Tab:<BR>
+<UL>
+<LI><B>Tracking:</B> Connect to a server that feeds the 3D Slicer a realtime
+stream of coordinates of a tracked device called the <B>Locator</B>.
+Press in the <B>Connect</B> button to begin tracking. If there is an error 
+connecting to the server, the button will pop back out. 
+<BR>
+The reformatted slices can be driven (positioned) either by the the user
+moving the sliders in the Viewer window, or by the Locator. For the latter, 
+set the <B>Driver</B> to <B>Locator</B>.
+<BR><LI><B>Server:</B> There are several ways to acquire realtime information
+about a Locator or images:
+<BR><B>File</B> will read Locator positions from a text file.
+<BR><B>SignaSP</B> will read Locator positions and realtime images from
+a server process running on the GE Signa SP workstation.
+<BR><B>Images</B> will read images on disk as if to emulate realtime images
+coming from a Signa SP scanner.
+<BR><LI><B>Handpiece</B> Specify how the Locator is rendered in the 3D view
+window.  The <B>Normal</B> is the direction along the tip of the Locator's
+needle.  The <B>Transverse</B> is angled 90 degrees away from the Normal
+and along the handle.  The <B>N x T</B> is the cross-product of the other 2
+and is angled 90 degrees from both of them as governed by the right-hand rule.
+<BR><B>TIP:</B> Use the <B>Offset from Tip</B> to simulate having a longer
+Locator.  Perhaps the Locator is afixed to a surgical device and you wish to
+know the location of the tip of this device rather than the Locator.
+</UL>"
+	regsub -all "\n" $help { } help
 	MainHelpApplyTags Locator $help
 	MainHelpBuildGUI Locator
 

@@ -52,9 +52,9 @@ proc AnnoInit {} {
 	# Define Dependencies
 	set Module($m,depend) ""
 
-        # Set version info
-        lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.7 $} {$Date: 2000/02/22 17:56:09 $}]
+	# Set version info
+	lappend Module(versions) [ParseCVSInfo $m \
+		{$Revision: 1.8 $} {$Date: 2000/02/22 21:37:47 $}]
 }
 
 #-------------------------------------------------------------------------------
@@ -89,9 +89,10 @@ proc AnnoBuildGUI {} {
 	# Help frame
 	#-------------------------------------------
 	set help "
-Models are fun. Do you like models, Ron?
+Press a button in to make its corresponding type of annotation visible.
+Note that there is 3D annotation and 2D annotation for the slice windows.
 "
-	regsub -all "\n" $help {} help
+	regsub -all "\n" $help { } help
 	MainHelpApplyTags Anno $help
 	MainHelpBuildGUI Anno
 

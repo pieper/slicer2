@@ -65,9 +65,9 @@ proc ModelMakerInit {} {
 	# Define Dependencies
 	set Module($m,depend) "Labels"
 
-        # Set Version Info
-        lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.20 $} {$Date: 2000/02/22 17:56:13 $}]
+	# Set Version Info
+	lappend Module(versions) [ParseCVSInfo $m \
+		{$Revision: 1.21 $} {$Date: 2000/02/22 21:37:50 $}]
 
 	# Create
 	set ModelMaker(idVolume) $Volume(idNone)
@@ -136,9 +136,28 @@ proc ModelMakerBuildGUI {} {
 	# Help frame
 	#-------------------------------------------
 	set help "
-Models are fun. Do you like models, Ron?
+Description by Tab:<BR>
+<UL>
+<LI><B>Create:</B><BR>Set the <B>Volume</B> to the labelmap you wish to
+create a surface model from.  When you press the <B>Create</B> button
+a surface will be created that bounds all voxels with value equal to
+<B>Label</B>. Use the <B>Edit</B> tab to apply additional smoothing,
+or change the model's position.  The new model will not be written to 
+hard disk until you save it using the <B>Save</B> tab.
+<BR><LI><B>Edit:</B><BR> Select the model you wish to edit as <B>Active Model</B>
+and then apply one of the effects listed. To transform the polygon points
+by a transform, select a <B>Matrix</B> that already exists.  If you need to
+create one first, go to the <B>Data</B> module, and press the <B>Add Transform</B>
+button.<BR>
+<B>TIP</B> If you created a model using the voxel size, but no other header
+information, such as the volume's position and orientation in space, then
+transform the model to align with the volume under the <B>Transform from 
+ScaledIJK to RAS</B> section.
+<BR><LI><B>Save:</B> Write the model's polygon (*.vtk) file to disk.
+Also save your MRML file by selecting <B>Save</B> from the <B>File</B> menu.
+</UL>
 "
-	regsub -all "\n" $help {} help
+	regsub -all "\n" $help { } help
 	MainHelpApplyTags ModelMaker $help
 	MainHelpBuildGUI ModelMaker
 

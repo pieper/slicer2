@@ -72,9 +72,9 @@ proc MatricesInit {} {
 	# Define Dependencies
 	set Module($m,depend) ""
 
-        # Set version info
-        lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.13 $} {$Date: 2000/02/22 17:56:12 $}]
+	# Set version info
+	lappend Module(versions) [ParseCVSInfo $m \
+		{$Revision: 1.14 $} {$Date: 2000/02/22 21:37:50 $}]
 
 	# Props
 	set Matrix(propertyType) Basic
@@ -166,9 +166,26 @@ proc MatricesBuildGUI {} {
 	# Help frame
 	#-------------------------------------------
 	set help "
-Ron is nice.
-"
-	regsub -all "\n" $help {} help
+Description by tab:<BR>
+<UL>
+<LI><B>Props:</B> Directly set the matrix. The line of 16 numbers are
+in order of the first row, second row, etc. Click <B>Advanced</B> to
+copy one of the matrices derived from the header of a volume.
+<BR><LI><B>Manual:</B> Set the matrix using manual rigid registration
+with 6 degrees of freedom (3 translation, 3 rotation). 
+Either move the sliders, or click the left mouse button on a slice window 
+and drag it.  The <B>Mouse Action</B> buttons indicate whether to translate
+or rotate. 
+<BR><B>TIP:</B> The <B>Render</B> buttons indicate which windows to render
+as you move the sliders or mouse.  Rendering just one slice is much faster.
+<BR><LI><B>Auto:</B> Automatic registration using the method of Mutual 
+Information (MI) will set the matrix to the transformation matrix needed
+to align the <B>Volume to Move</B> with the <B>Reference Vol.</B>. 
+<BR><B>TIP:</B> Set the <B>Run Speed</B> to <I>Fast</I> if the 2 volumes 
+are already roughly aligned.
+<BR><B>Fiducial:</B> Fiducial registration is not available in this version.
+</UL>"
+	regsub -all "\n" $help { } help
 	MainHelpApplyTags Matrices $help
 	MainHelpBuildGUI  Matrices
 

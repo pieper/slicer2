@@ -89,9 +89,9 @@ proc EditorInit {} {
 	# Define Dependencies
 	set Module($m,depend) "Labels"
 
-        # Set version info
-        lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.21 $} {$Date: 2000/02/22 17:56:11 $}]
+	# Set version info
+	lappend Module(versions) [ParseCVSInfo $m \
+		{$Revision: 1.22 $} {$Date: 2000/02/22 21:37:48 $}]
 
 	# Initialize globals
 	set Editor(idOriginal)  $Volume(idNone)
@@ -280,9 +280,28 @@ proc EditorBuildGUI {} {
 	# Help frame
 	#-------------------------------------------
 	set help "
-Models are fun. Do you like models, Ron?
+The Editor module allows editing volumes to create labelmaps, where a unique
+number, or label, is assigned to each tissue type.
+<P>
+Description by Tab:
+<UL>
+<LI><B>Volumes:</B> Set the <B>Original Volume</B> to the volume you wish
+to construct the labelmap from, and then click the <B>Effects</B> tab to 
+begin editing.
+<BR><B>TIP:</B> If you started editing earlier, and now wish to continue where
+you left off, then select the <B>Working Volume</B> from before.
+<LI><B>Effects:</B> Editing is performed by applying a series of effects
+to the data.  Effects can be applied to the entire volume, each slice one at
+a time, or to just one slice. 
+<BR><LI><B>Details:</B> This tab contains the detailed parameters for each
+effect. 
+<BR><B>TIP:</B> When changing from one effect to another, you can avoid the
+extra work of clicking the <B>Effects</B> tab by clicking on the 2-letter
+abreviation for the effect at the top of the <B>Details</B> tab.
+</UL>
+<P>
 "
-	regsub -all "\n" $help {} help
+	regsub -all "\n" $help { } help
 	MainHelpApplyTags Editor $help
 	MainHelpBuildGUI Editor
 

@@ -73,9 +73,9 @@ proc GuidanceInit {} {
 	# Define Dependencies
 	set Module($m,depend) ""
 
-        # Set version info
-        lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.9 $} {$Date: 2000/02/22 17:56:11 $}]
+	# Set version info
+	lappend Module(versions) [ParseCVSInfo $m \
+		{$Revision: 1.10 $} {$Date: 2000/02/22 21:37:49 $}]
 
 	# Target
 	set Target(idList) "0 1"
@@ -157,9 +157,22 @@ proc GuidanceBuildGUI {} {
 	# Help frame
 	#-------------------------------------------
 	set help "
-Models are fun. Do you like models, Ron?
+This module allows you to position 2 spherical targets (red and yellow) 
+in the 3D view window.
+<P>Button descriptions:<BR>
+<UL>
+<LI><B>Show Target</B> Set the visibility of the active target.
+<BR><LI><B>Use as Focal Point</B> Move the focal point (the center of
+rotation in the 3D window) to the position of the active target).
+Use this to examine an off-center model more easily.
+<BR><LI><B>View Trajectory</B> Set the reformatted slices to be oriented
+along, and perpendicular to, the trajectory between the 2 targets.
+<BR><B>TIP:</B> Perform surgical planning by setting one target to the
+desired entry point into the patient, and the other on the target tissue,
+and click the <B>View Trajectory</B> button.
+</UL>
 "
-	regsub -all "\n" $help {} help
+	regsub -all "\n" $help { } help
 	MainHelpApplyTags Guidance $help
 	MainHelpBuildGUI Guidance
 

@@ -114,8 +114,8 @@ proc CustomInit {} {
 	#   The strings with the $ symbol tell CVS to automatically insert the
 	#   appropriate info when the module is checked in.
 	#   
-        lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.8 $} {$Date: 2000/02/22 17:56:10 $}]
+	lappend Module(versions) [ParseCVSInfo $m \
+		{$Revision: 1.9 $} {$Date: 2000/02/22 21:37:48 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -161,9 +161,11 @@ proc CustomBuildGUI {} {
 	# Refer to the documentation for details on the syntax.
 	#
 	set help "
-Models are fun. Do you like models, Ron?
+The <B>Custom</B> module is a well-commented example of how you 
+can create your own customized modules.  You can find its source 
+code in slicer/program/tcl-modules/Custom.tcl 
 "
-	regsub -all "\n" $help {} help
+	regsub -all "\n" $help { } help
 	MainHelpApplyTags Custom $help
 	MainHelpBuildGUI Custom
 
