@@ -1,20 +1,42 @@
-/*=========================================================================
+/*=auto=========================================================================
+(c) Copyright 2003 Massachusetts Institute of Technology (MIT) All Rights Reserved.
 
-  Program:   Insight Segmentation & Registration Toolkit
-  Module:    $RCSfile: vtkITKMutualInformationTransform.cxx,v $
-  Language:  C++
-  Date:      $Date: 2003/07/14 22:19:16 $
-  Version:   $Revision: 1.1 $
+This software ("3D Slicer") is provided by The Brigham and Women's 
+Hospital, Inc. on behalf of the copyright holders and contributors.
+Permission is hereby granted, without payment, to copy, modify, display 
+and distribute this software and its documentation, if any, for  
+research purposes only, provided that (1) the above copyright notice and 
+the following four paragraphs appear on all copies of this software, and 
+(2) that source code to any modifications to this software be made 
+publicly available under terms no more restrictive than those in this 
+License Agreement. Use of this software constitutes acceptance of these 
+terms and conditions.
 
-  Copyright (c) 2002 Insight Consortium. All rights reserved.
-  See ITKCopyright.txt or http://www.itk.org/HTML/Copyright.htm for details.
+3D Slicer Software has not been reviewed or approved by the Food and 
+Drug Administration, and is for non-clinical, IRB-approved Research Use 
+Only.  In no event shall data or images generated through the use of 3D 
+Slicer Software be used in the provision of patient care.
 
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
+IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND CONTRIBUTORS BE LIABLE TO 
+ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL 
+DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, 
+EVEN IF THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE BEEN ADVISED OF THE 
+POSSIBILITY OF SUCH DAMAGE.
 
-=========================================================================*/
+THE COPYRIGHT HOLDERS AND CONTRIBUTORS SPECIFICALLY DISCLAIM ANY EXPRESS 
+OR IMPLIED WARRANTIES INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND 
+NON-INFRINGEMENT.
+
+THE SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS 
+IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
+PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+
+
+=========================================================================auto=*/
+
 #include "vtkITKMutualInformationTransform.h"
+
 #include "vtkImageData.h"
 #include "vtkObjectFactory.h"
 #include "vtkImageExport.h"
@@ -23,7 +45,23 @@
 #include "itkVTKImageImport.h"
 #include "vtkITKUtility.h"
 
+// All the MI Registration Stuff
+#include "MIRegistration.h"
 #include "itkExceptionObject.h"
+
+// Some of this may be necessary, but I doubt it.
+#include "itkObject.h"
+#include "itkMultiResolutionImageRegistrationMethod.h"
+#include "itkAffineTransform.h"
+
+#include "itkQuaternionRigidTransform.h"
+#include "itkMutualInformationImageToImageMetric.h"
+#include "itkLinearInterpolateImageFunction.h"
+#include "itkQuaternionRigidTransformGradientDescentOptimizer.h"
+#include "itkRecursiveMultiResolutionPyramidImageFilter.h"
+
+#include "itkArray.h"
+
 // turn itk exceptions into vtk errors
 #undef itkExceptionMacro  
 #define itkExceptionMacro(x) \
@@ -52,14 +90,16 @@
 #include "itkLinearInterpolateImageFunction.h"
 #include "itkImageRegistrationMethod.h"
 #include "itkNumericTraits.h"
+#include "MIRegistration.txx"
 #include "vnl/vnl_math.h"
 
-vtkCxxRevisionMacro(vtkITKMutualInformationTransform, "$Revision: 1.1 $");
+vtkCxxRevisionMacro(vtkITKMutualInformationTransform, "$Revision: 1.2 $");
 vtkStandardNewMacro(vtkITKMutualInformationTransform);
 
 //----------------------------------------------------------------------------
 vtkITKMutualInformationTransform::vtkITKMutualInformationTransform()
 {
+  // Default Parameters
   this->SourceImage=NULL;
   this->TargetImage=NULL;
   this->SourceStandardDeviation = 2.0;
@@ -73,10 +113,11 @@ vtkITKMutualInformationTransform::vtkITKMutualInformationTransform()
 }
 
 //----------------------------------------------------------------------------
+
 vtkITKMutualInformationTransform::~vtkITKMutualInformationTransform()
 {
   if(this->SourceImage)
-    { 
+    {
     this->SourceImage->Delete();
     }
   if(this->TargetImage)
@@ -86,10 +127,12 @@ vtkITKMutualInformationTransform::~vtkITKMutualInformationTransform()
 }
 
 //----------------------------------------------------------------------------
+
 void vtkITKMutualInformationTransform::PrintSelf(ostream& os, vtkIndent indent)
 {
   this->Superclass::PrintSelf(os, indent);
 
+  os << "This needs a complete rewrite" << endl;
   os << "SourceStandardDeviation: " << this->SourceStandardDeviation  << endl;
   os << "TargetStandardDeviation: " << this->SourceStandardDeviation  << endl;
   os << "LearningRate: " << this->LearningRate  << endl;
@@ -99,155 +142,109 @@ void vtkITKMutualInformationTransform::PrintSelf(ostream& os, vtkIndent indent)
   os << "MetricValue: " << this->MetricValue  << endl;
 
   os << "SourceImage: " << this->SourceImage << "\n";
-  if(this->SourceImage) 
+  if(this->SourceImage)
     {
     this->SourceImage->PrintSelf(os,indent.GetNextIndent());
     }
   os << "TargetImage: " << this->TargetImage << "\n";
   if(this->TargetImage)
-    { 
+    {
     this->TargetImage->PrintSelf(os,indent.GetNextIndent());
     }
 }
 
 //----------------------------------------------------------------------------
+
 // This templated function executes the filter for any type of data.
+// But, actually we use only float...
 template <class T>
 static void vtkITKMutualInformationExecute(vtkITKMutualInformationTransform *self,
                                vtkImageData *source,
                                vtkImageData *target,
                                vtkMatrix4x4 *matrix,
-                               T vtkNotUsed(dummy2))
-                               
+                               T vtkNotUsed(dummy))
 {
+  self->Print(cout);
+
   // Declare the input and output types
-  typedef itk::Image<T,3> OutputType;
+  typedef itk::Image<T,3>                       OutputImageType;
+  typedef itk::VTKImageImport<OutputImageType>  ImageImportType;
 
-  // Declare the registration types
-  typedef itk::QuaternionRigidTransform<double> TransformType;
-  typedef itk::QuaternionRigidTransformGradientDescentOptimizer OptimizerType;
-  typedef itk::MutualInformationImageToImageMetric<OutputType, OutputType> MetricType;
-  typedef itk::LinearInterpolateImageFunction<OutputType, double> InterpolatorType;
-  typedef itk::ImageRegistrationMethod<OutputType,OutputType> RegistrationType;
+  // ----------------------------------------
+  // Sources to ITK MIRegistration
+  // ----------------------------------------
 
-  // Source
+  // Source Image that is moving
   vtkImageExport *movingVtkExporter = vtkImageExport::New();
     movingVtkExporter->SetInput(source);
 
-  typedef itk::VTKImageImport<OutputType> ImageImportType;
-
-  typename ImageImportType::Pointer movingItkImporter = ImageImportType::New();
+  // Source Image that is moving into ITK
+  ImageImportType::Pointer movingItkImporter = ImageImportType::New();
   ConnectPipelines(movingVtkExporter, movingItkImporter);
 
-  // Target
+  // Source Image that is not moving
   vtkImageExport *fixedVtkExporter = vtkImageExport::New();
     fixedVtkExporter->SetInput(target);
 
-  typename ImageImportType::Pointer fixedItkImporter = ImageImportType::New();
+  // Source Image that is not moving into ITK
+  ImageImportType::Pointer fixedItkImporter = ImageImportType::New();
   ConnectPipelines(fixedVtkExporter, fixedItkImporter);
-
-//-----------------------------------------------------------
-// Set up the registrator
-//-----------------------------------------------------------
-  typename MetricType::Pointer metric = MetricType::New();
-  typename TransformType::Pointer transform = TransformType::New();
-  typename OptimizerType::Pointer optimizer = OptimizerType::New();
-  typename InterpolatorType::Pointer interpolator  = InterpolatorType::New();
-  typename RegistrationType::Pointer registration  = RegistrationType::New();
-  typename RegistrationType::ParametersType guess(transform->GetNumberOfParameters() );
-
-  // the guess is derived from the current matrix.
-  vnl_matrix<double> matrix3x4(3,4);
-  matrix3x4[0][0] = matrix->Element[0][0];
-  matrix3x4[0][1] = matrix->Element[0][1];
-  matrix3x4[0][2] = matrix->Element[0][2];
-  matrix3x4[0][3] = matrix->Element[0][3];
-  matrix3x4[1][0] = matrix->Element[1][0];
-  matrix3x4[1][1] = matrix->Element[1][1];
-  matrix3x4[1][2] = matrix->Element[1][2];
-  matrix3x4[1][3] = matrix->Element[1][3];
-  matrix3x4[2][0] = matrix->Element[2][0];
-  matrix3x4[2][1] = matrix->Element[2][1];
-  matrix3x4[2][2] = matrix->Element[2][2];
-  matrix3x4[2][3] = matrix->Element[2][3];
-
-  vnl_quaternion<double> matrixAsQuaternion(matrix3x4);
-  
-  guess[0]= matrixAsQuaternion.x();
-  guess[1]= matrixAsQuaternion.y();
-  guess[2]= matrixAsQuaternion.z();
-  guess[3]= matrixAsQuaternion.r();
-  guess[4] = matrix->Element[0][3];
-  guess[5] = matrix->Element[1][3];
-  guess[6] = matrix->Element[2][3];
-  
-  // The guess is: a quaternion followed by a translation
-  registration->SetInitialTransformParameters (guess);
-  
-  // Set translation scale
-  typedef OptimizerType::ScalesType ScaleType;
-
-  ScaleType scales(transform->GetNumberOfParameters());
-  scales.Fill( 1.0 );
-  for( unsigned j = 4; j < 7; j++ )
-    {
-    scales[j] = 1.0 / vnl_math_sqr(self->GetTranslateScale());
-    }
-
-  // Set metric related parameters
-  metric->SetMovingImageStandardDeviation( self->GetSourceStandardDeviation() );
-  metric->SetFixedImageStandardDeviation( self->GetTargetStandardDeviation() );
-  metric->SetNumberOfSpatialSamples( self->GetNumberOfSamples() );
 
   fixedItkImporter->Update();
   movingItkImporter->Update();
 
-  // Connect up the components
-  registration->SetMetric(metric);
-  registration->SetOptimizer(optimizer);
-  registration->SetTransform(transform);
-  registration->SetInterpolator(interpolator);
-  registration->SetFixedImage(fixedItkImporter->GetOutput());
-  registration->SetMovingImage(movingItkImporter->GetOutput());
+  // Create the Registrator
+  typedef itk::MIRegistration<OutputImageType,OutputImageType> RegistratorType;
+  typename RegistratorType::Pointer MIRegistrator = RegistratorType::New();
 
-  // Setup the optimizer
-  optimizer->SetScales(scales);
-  optimizer->MaximizeOn();
+  MIRegistrator->SetFixedImage(fixedItkImporter->GetOutput());
+  MIRegistrator->SetMovingImage(movingItkImporter->GetOutput());
 
-  optimizer->SetNumberOfIterations( self->GetNumberOfIterations() );
-  optimizer->SetLearningRate( self->GetLearningRate() );
+  // ----------------------------------------
+  // Do the Registratioon Configuration
+  // ----------------------------------------
+
+  // Initialize
+  MIRegistrator->InitializeRegistration(matrix);
+
+ // Setup the optimizer
+
+//  // This is the scale on translation
+//  for (int j=4; j<7; j++)
+//    {
+//    scales[j] = MIReg_TranslationScale;
+//    // This was chosen by Steve. I'm not sure why.
+//    // scales[j] = 1.0 / vnl_math_sqr(self->GetTranslateScale());
+//    }
+
+  // Set metric related parameters
+  MIRegistrator->SetMovingImageStandardDeviation(self->GetSourceStandardDeviation());
+  MIRegistrator->SetFixedImageStandardDeviation(self->GetTargetStandardDeviation());
+  MIRegistrator->SetNumberOfSpatialSamples(self->GetNumberOfSamples());
+
+  //
+  // THIS NEEDS TO BE AN ARRAY
+  // Temporary hack for single layer multi-res structure
+  //
+  typedef typename RegistratorType::UnsignedIntArray UnsignedIntArray;
+  typedef typename RegistratorType::DoubleArray      DoubleArray;
+  
+  DoubleArray      LearnRates(1);
+  LearnRates.Fill(self->GetLearningRate());
+  MIRegistrator->SetLearningRates(LearnRates);
+  
+  UnsignedIntArray NumIterations(1);
+  NumIterations.Fill(self->GetNumberOfIterations());
+  MIRegistrator->SetNumberOfIterations(NumIterations);
 
   // Start registration
+  MIRegistrator->Execute();
 
-  registration->StartRegistration();
+  MIRegistrator->ResultsToMatrix(matrix);
 
-  // Get the results
-  typename RegistrationType::ParametersType solution = 
-    registration->GetLastTransformParameters();
-
-  self->SetMetricValue(metric->GetValue(solution));
-  //self->SetMetricValue(optimizer->GetValue());
-
-  vnl_quaternion<double> quat(solution[0],solution[1],solution[2],solution[3]);
-  vnl_matrix_fixed<double,3,3> mat = quat.rotation_matrix();
-  
-  // Convert the vnl matrix to a vtk mtrix
-  matrix->Element[0][0] = mat(0,0);
-  matrix->Element[0][1] = mat(0,1);
-  matrix->Element[0][2] = mat(0,2);
-  matrix->Element[0][3] = solution[4];
-  matrix->Element[1][0] = mat(1,0);
-  matrix->Element[1][1] = mat(1,1);
-  matrix->Element[1][2] = mat(1,2);
-  matrix->Element[1][3] = solution[5];
-  matrix->Element[2][0] = mat(2,0);
-  matrix->Element[2][1] = mat(2,1);
-  matrix->Element[2][2] = mat(2,2);
-  matrix->Element[2][3] = solution[6];
-  matrix->Element[3][0] = 0;
-  matrix->Element[3][1] = 0;
-  matrix->Element[3][2] = 0;
-  matrix->Element[3][3] = 1;
+  // Get the Value of the agreement
+  self->SetMetricValue(MIRegistrator->GetMetricValue());
+  // self->SetMetricValue(optimizer->GetValue());
 
   self->Modified();
 }
@@ -297,7 +294,7 @@ void vtkITKMutualInformationTransform::Identity()
 //------------------------------------------------------------------------
 void vtkITKMutualInformationTransform::Initialize(vtkLinearTransform *initial)
 {
-  this->Matrix->DeepCopy( initial->GetMatrix());
+  this->Matrix->DeepCopy(initial->GetMatrix());
 }
 
 //------------------------------------------------------------------------
@@ -316,7 +313,7 @@ unsigned long vtkITKMutualInformationTransform::GetMTime()
     }
   if (this->TargetImage)
     {
-    mtime = this->TargetImage->GetMTime(); 
+    mtime = this->TargetImage->GetMTime();
     if (mtime > result)
       {
       result = mtime;
@@ -384,9 +381,14 @@ void vtkITKMutualInformationTransform::InternalDeepCopy(vtkAbstractTransform *tr
 
   this->SetSourceStandardDeviation(t->SourceStandardDeviation);
   this->SetTargetStandardDeviation(t->TargetStandardDeviation);
+
+  //
+  // ========= This Needs rewriting!!!
+  //
+
   this->SetLearningRate(t->LearningRate);
   this->SetTranslateScale(t->TranslateScale);
-  this->SetNumberOfSamples(t->NumberOfSamples);    
+  this->SetNumberOfSamples(t->NumberOfSamples);
 
   this->Modified();
 }

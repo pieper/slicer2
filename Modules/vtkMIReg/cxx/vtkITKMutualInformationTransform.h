@@ -1,25 +1,43 @@
-/*=========================================================================
+/*=auto=========================================================================
+(c) Copyright 2003 Massachusetts Institute of Technology (MIT) All Rights Reserved.
 
-  Program:   Insight Segmentation & Registration Toolkit
-  Module:    $RCSfile: vtkITKMutualInformationTransform.h,v $
-  Language:  C++
-  Date:      $Date: 2003/07/14 22:19:16 $
-  Version:   $Revision: 1.1 $
+This software ("3D Slicer") is provided by The Brigham and Women's 
+Hospital, Inc. on behalf of the copyright holders and contributors.
+Permission is hereby granted, without payment, to copy, modify, display 
+and distribute this software and its documentation, if any, for  
+research purposes only, provided that (1) the above copyright notice and 
+the following four paragraphs appear on all copies of this software, and 
+(2) that source code to any modifications to this software be made 
+publicly available under terms no more restrictive than those in this 
+License Agreement. Use of this software constitutes acceptance of these 
+terms and conditions.
 
-  Copyright (c) 2002 Insight Consortium. All rights reserved.
-  See ITKCopyright.txt or http://www.itk.org/HTML/Copyright.htm for details.
+3D Slicer Software has not been reviewed or approved by the Food and 
+Drug Administration, and is for non-clinical, IRB-approved Research Use 
+Only.  In no event shall data or images generated through the use of 3D 
+Slicer Software be used in the provision of patient care.
 
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
+IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND CONTRIBUTORS BE LIABLE TO 
+ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL 
+DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, 
+EVEN IF THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE BEEN ADVISED OF THE 
+POSSIBILITY OF SUCH DAMAGE.
 
-=========================================================================*/
+THE COPYRIGHT HOLDERS AND CONTRIBUTORS SPECIFICALLY DISCLAIM ANY EXPRESS 
+OR IMPLIED WARRANTIES INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND 
+NON-INFRINGEMENT.
+
+THE SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS 
+IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
+PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+
+
+=========================================================================auto=*/
 #ifndef __vtkITKMutualInformationTransform_h
 #define __vtkITKITKMutualInformationTransform_h
 // .NAME vtkITKMutualInformationTransform - a linear transform specified by two images
-
 // .SECTION Description
-
 // MutualInformationTransform computes a transformation that will align
 // the source image with the target image.  The transform can be
 // initialized with a vtkLinearTransform or reset with the Identity
@@ -27,10 +45,19 @@
 // The algorithm is described in the paper: Viola, P. and Wells III,
 // W. (1997).  "Alignment by Maximization of Mutual Information"
 // International Journal of Computer Vision, 24(2):137-154
+//
+// This class was adopted by a transform first written by
+// Steve Pieper. It was also strongly derived from one of
+// the ITK application Examples: the MultiResolutionMIRegistration.
+//
 // .SECTION see also
 // vtkLinearTransform
+//
+// .SECTION Thanks
+// Thanks to Samson Timoner who wrote this class.
 
 #include "vtkLinearTransform.h"
+
 class vtkImageData;
 
 class VTK_EXPORT vtkITKMutualInformationTransform : public vtkLinearTransform
@@ -99,6 +126,7 @@ public:
   // Get the MTime.
   unsigned long GetMTime();
 
+
 protected:
   vtkITKMutualInformationTransform();
   ~vtkITKMutualInformationTransform();
@@ -128,7 +156,7 @@ protected:
   double MetricValue;
   
 private:
-  vtkITKMutualInformationTransform(const vtkITKMutualInformationTransform&);  // Not implemented.
+  vtkITKMutualInformationTransform(const vtkITKMutualInformationTransform&); // Not implemented.
   void operator=(const vtkITKMutualInformationTransform&);  // Not implemented.
 };
   
