@@ -46,8 +46,8 @@ proc ITKFiltersInit {} {
     #   row2,tab = like row1 
     #
 
-    set Module($m,row1List) "Help Main"
-    set Module($m,row1Name) "{Help} {Main}"
+    set Module($m,row1List) "Help Main SpatialObjects"
+    set Module($m,row1Name) "{Help} {Main} {SpatialObjects}"
     set Module($m,row1,tab) Main
 
     # Define Procedures
@@ -105,7 +105,7 @@ proc ITKFiltersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1 $} {$Date: 2004/12/10 13:27:29 $}]
+        {$Revision: 1.2 $} {$Date: 2005/01/23 21:06:32 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -279,9 +279,9 @@ proc ITKFiltersBuildGUI {} {
     set f $fMain
     
     foreach frame "Top Middle Floating Bottom" {
-    frame $f.f$frame -bg $Gui(activeWorkspace)
+        frame $f.f$frame -bg $Gui(activeWorkspace)
 
-    pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
+        pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
     }
     
     #-------------------------------------------
@@ -316,22 +316,22 @@ proc ITKFiltersBuildGUI {} {
     set f $fMain.fMiddle
 
     proc ITKFiltersSelectFilter {} {
-    global Module ITKFilters
-    set fFloating $Module(ITKFilters,fMain).fFloating
-    set ITKFilters(filter) [$Module(ITKFilters,fMain).fMiddle.filters get]
-    raise $fFloating.f$ITKFilters(filter)
-    focus $fFloating.f$ITKFilters(filter)
+        global Module ITKFilters
+        set fFloating $Module(ITKFilters,fMain).fFloating
+        set ITKFilters(filter) [$Module(ITKFilters,fMain).fMiddle.filters get]
+        raise $fFloating.f$ITKFilters(filter)
+        focus $fFloating.f$ITKFilters(filter)
     }    
         
     iwidgets::optionmenu $f.filters \
-    -labeltext "Filters:" \
-    -command ITKFiltersSelectFilter \
-    -background "#e2cdba" -foreground "#000000" 
+        -labeltext "Filters:" \
+        -command ITKFiltersSelectFilter \
+        -background "#e2cdba" -foreground "#000000" 
 
     pack $f.filters -side top 
     
     foreach filter $ITKFilters(filters) {
-    $f.filters insert end $filter
+        $f.filters insert end $filter
     }
 
  
@@ -345,14 +345,14 @@ proc ITKFiltersBuildGUI {} {
     $f config -height 100
     foreach filter $ITKFilters(filters) {
         frame $f.f$filter -bg $Gui(activeWorkspace)
-    #for raising one frame at a time
-    place $f.f$filter -in $f -relheight 1.0 -relwidth 1.0
+        #for raising one frame at a time
+        place $f.f$filter -in $f -relheight 1.0 -relwidth 1.0
     }
     
     raise $fMain.fFloating.f$ITKFilters(filter)
  
     foreach filter $ITKFilters(filters) {
-      vtkITKGUIFilter $filter
+        vtkITKGUIFilter $filter
     }
 
     #-------------------------------------------
@@ -365,7 +365,13 @@ proc ITKFiltersBuildGUI {} {
     TooltipAdd $f.bApply "Apply a filter"
     pack $f.bApply 
    
+    #-------------------------------------------
+    # SpatialObjects frame
+    #-------------------------------------------
+    set fSpatialObjects $Module(ITKFilters,fSpatialObjects)
+    set f $fSpatialObjects
 
+    
 }
 #-------------------------------------------------------------------------------
 # .PROC ITKFiltersBuildVTK
@@ -378,60 +384,53 @@ proc ITKFiltersBuildVTK {} {
 }
 
 proc vtkITKGUIFilter { filter } {
+    global Module ITKFilters Gui
 
-global Module ITKFilters Gui
-
-set f $Module(ITKFilters,fMain).fFloating.f$filter
+    set f $Module(ITKFilters,fMain).fFloating.f$filter
    
-puts "Making GUI filter: $filter"
+    puts "Making GUI filter: $filter"
 
-   foreach param $ITKFilters($filter,params) {
-     frame $f.f$param
-     pack $f.f$param -side top -padx 0 -pady $Gui(pad) -fill both
-     set fwidget $f.f$param
-     switch -exact -- $ITKFilters($filter,$param,widget) {
+    foreach param $ITKFilters($filter,params) {
+        frame $f.f$param
+        pack $f.f$param -side top -padx 0 -pady $Gui(pad) -fill both
+        set fwidget $f.f$param
      
-     "scale" {
-       eval {label $fwidget.l$param -text $ITKFilters($filter,$param,text)\
-          -width 12 -justify right } $Gui(WLA)
+        switch -exact -- $ITKFilters($filter,$param,widget) {
+            "scale" {
+                eval {label $fwidget.l$param -text $ITKFilters($filter,$param,text)\
+                    -width 12 -justify right } $Gui(WLA)
 
-       eval {entry $fwidget.e$param -justify right -width 4 \
-          -textvariable ITKFilters($filter,$param)  } $Gui(WEA)
+                eval {entry $fwidget.e$param -justify right -width 4 \
+                    -textvariable ITKFilters($filter,$param)  } $Gui(WEA)
 
-       eval {scale $fwidget.s$param -from [lindex $ITKFilters($filter,$param,maxmin) 0] \
-                          -to [lindex $ITKFilters($filter,$param,maxmin) 1]    \
-          -variable  ITKFilters($filter,$param)\
-          -orient vertical     \
-          -resolution $ITKFilters($filter,$param,res)      \
-          } $Gui(WSA)
+                eval {scale $fwidget.s$param -from [lindex $ITKFilters($filter,$param,maxmin) 0] \
+                    -to [lindex $ITKFilters($filter,$param,maxmin) 1]    \
+                    -variable  ITKFilters($filter,$param)\
+                    -orient vertical     \
+                    -resolution $ITKFilters($filter,$param,res)      \
+                } $Gui(WSA)
 
-      pack $fwidget.l$param $fwidget.e$param $fwidget.s$param -side left -padx $Gui(pad) -pady 0
-      
-      
-    }
-    
-    "boolean" {
-       DevAddLabel $fwidget.l$param $ITKFilters($filter,$param,text)
-    
-      foreach val $ITKFilters($filter,$param,maxmin) \
-            text "On Off" {
-    
-        eval {radiobutton $fwidget.r$param$val \
-            -text "$text" \
-            -value "$val" \
-            -variable ITKFilters($filter,$param) \
-            -indicatoron 0} $Gui(WCA) \
-        {-width 3}
-    pack $fwidget.l$param $fwidget.r$param$val -side left -padx 0 -pady 0
-    
-       }
-    }
-    
-    
-    }
-    
-    }
+                pack $fwidget.l$param $fwidget.e$param $fwidget.s$param \
+                    -side left -padx $Gui(pad) -pady 0
+            }
+        
+            "boolean" {
+                DevAddLabel $fwidget.l$param $ITKFilters($filter,$param,text)
 
+                foreach val $ITKFilters($filter,$param,maxmin) text "On Off" {
+
+                    eval {radiobutton $fwidget.r$param$val \
+                        -text "$text" \
+                        -value "$val" \
+                        -variable ITKFilters($filter,$param) \
+                        -indicatoron 0} $Gui(WCA) \
+                        {-width 3}
+                    pack $fwidget.l$param $fwidget.r$param$val -side left -padx 0 -pady 0
+
+                }
+            }
+        }
+    }
 }
 
 
@@ -484,90 +483,77 @@ proc ITKFiltersExit {} {
 
 
 proc ITKFiltersApply {} {
+    global ITKFilters Volume
 
-global ITKFilters Volume
-
-
-set filter $ITKFilters(filter)
-set v1 $ITKFilters(inVolume)
-set v2 $ITKFilters(outVolume)
-puts $v2
-if {$v2 == -5} {
-  set name [Volume($v1,node) GetName]
-  set v2 [DevCreateNewCopiedVolume $v1 ""  ${name}_filter ]
+    set filter $ITKFilters(filter)
+    set v1 $ITKFilters(inVolume)
+    set v2 $ITKFilters(outVolume)
+    puts $v2
+    if {$v2 == -5} {
+        set name [Volume($v1,node) GetName]
+        set v2 [DevCreateNewCopiedVolume $v1 ""  ${name}_filter ]
         set node [Volume($v2,vol) GetMrmlNode]
         Mrml(dataTree) RemoveItem $node 
         set nodeBefore [Volume($v1,vol) GetMrmlNode]
         Mrml(dataTree) InsertAfterItem $nodeBefore $node
         MainUpdateMRML
-} else {
+    } else {
 
         set v2name  [Volume($v2,node) GetName]
         set continue [DevOKCancel "Overwrite $v2name?"]
         if {$continue == "cancel"} { return 1 }
         # They say it is OK, so overwrite!
         Volume($v2,node) Copy Volume($v1,node)
-}
- 
-#Caster 
-vtkImageCast _cast
-_cast SetOutputScalarTypeToFloat
-_cast SetInput [Volume($v1,vol) GetOutput]
-_cast Update
-#Create Object
+    }
 
-vtkITK$filter _filter
+    #Caster 
+    vtkImageCast _cast
+    _cast SetOutputScalarTypeToFloat
+    _cast SetInput [Volume($v1,vol) GetOutput]
+    _cast Update
+    #Create Object
 
-foreach param $ITKFilters($filter,params) {
+    catch "_filter Delete"
+    vtkITK$filter _filter
 
-_filter $param $ITKFilters($filter,$param)
+    foreach param $ITKFilters($filter,params) {
+        _filter $param $ITKFilters($filter,$param)
+    }
 
-}
-
-
-
-_filter SetInput [_cast GetOutput]
+    _filter SetInput [_cast GetOutput]
 
 
-ITKFiltersBeforeUpdate
+    ITKFiltersBeforeUpdate
 
-_filter AddObserver StartEvent MainStartProgress
-_filter AddObserver EndEvent MainEndProgress
-_filter AddObserver ProgressEvent "MainShowProgress _filter"
-_filter Update
+    _filter AddObserver StartEvent MainStartProgress
+    _filter AddObserver EndEvent MainEndProgress
+    _filter AddObserver ProgressEvent "MainShowProgress _filter"
+    _filter Update
 
+    ITKFiltersAfterUpdate
 
+    #Assign output
+    [Volume($v2,vol) GetOutput] DeepCopy [_filter GetOutput]
 
-ITKFiltersAfterUpdate
+    #Disconnect pipeline
 
-#Assign output
-[Volume($v2,vol) GetOutput] DeepCopy [_filter GetOutput]
-
-#Disconnect pipeline
-
-_cast Delete
-_filter SetOutput ""
-_filter Delete
-
-
+    _cast Delete
+    _filter SetOutput ""
+    _filter Delete
 }
 
 proc ITKFiltersBeforeUpdate { } {
 
-global ITKFilters
+    global ITKFilters
 
-switch -exact -- $ITKFilters(filter) {
-   
-   "GrayscaleGeodesicErodeImageFilter" {
-     _filter SetMaskMarkerImage [_filter GetInput]
-   
-   }
-   
- }  
+    switch -exact -- $ITKFilters(filter) {
+
+        "GrayscaleGeodesicErodeImageFilter" {
+            _filter SetMaskMarkerImage [_filter GetInput]
+        }
+    }  
 }
 
 proc ITKFiltersAfterUpdate { } { 
 
 }
-
-
