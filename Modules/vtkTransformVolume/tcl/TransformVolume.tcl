@@ -106,7 +106,7 @@ proc TransformVolumeInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.15 $} {$Date: 2005/03/29 23:02:29 $}]
+        {$Revision: 1.16 $} {$Date: 2005/03/30 15:07:14 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -484,7 +484,7 @@ proc TransformVolumeBuildGUI {} {
     lappend TransformVolume(resampleConrols) $f.bAutoDimension 
 
     set TransformVolume(fResample) $fResample
-    TransformVolumeEnter
+#    TransformVolumeEnter
     TransformVolumeResampleMode
 }
 
