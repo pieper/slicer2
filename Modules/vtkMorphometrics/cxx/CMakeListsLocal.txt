@@ -26,6 +26,7 @@ vtkBooksteinSphereFit.cxx
 vtkLargeLeastSquaresProblem.cxx
 vtkFemurMetric.cxx
 vtkPelvisMetric.cxx
+vtkAxisSource.cxx
 )
 
 ## classes that one does not want tcl wrapped
