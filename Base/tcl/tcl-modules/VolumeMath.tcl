@@ -123,7 +123,7 @@ proc VolumeMathInit {} {
 	#   appropriate info when the module is checked in.
 	#   
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.14 $} {$Date: 2001/07/03 16:11:37 $}]
+		{$Revision: 1.15 $} {$Date: 2001/08/03 12:21:08 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -886,7 +886,7 @@ proc VolumeMathDoResample {} {
 
     [Reslice GetOutput] Print
     Volume($v3,vol) SetImageData [Reslice GetOutput]
-    [Volume($v3,vol) GetImageData] Print
+#    [Volume($v3,vol) GetOutput] Print
     puts "$v3 $v2 $v1"
 
     MainVolumesUpdate $v3

@@ -27,13 +27,16 @@
 #   TetraMeshEnter
 #   TetraMeshExit
 #   TetraMeshUpdateGUI
+#   TetraMeshSetProcessType
+#   TetraMeshProcessTetraMesh
 #   TetraMeshFileNameEntered
 #   TetraMeshGetData
 #   SetModelMoveOriginMatrix n matrix
 #   TetraMeshGetTransform
-#   TetraMeshProcessEdges
 #   TetraMeshProcessEdges2
-#   TetraMeshProcessVField
+#   TetraMeshProcessEdges
+#   TetraMeshProcessScalarField
+#   TetraMeshProcessVectorField
 #   TetraMeshProcessSurface
 #   TetraMeshCreateModel
 #==========================================================================auto=
@@ -84,13 +87,13 @@ proc TetraMeshInit {} {
 	#   row2,tab = like row1 
 	#
 	set m TetraMesh
-	set Module($m,row1List) "Help Surface Edges View"
-        set Module($m,row1Name) "{Help} {Surfaces} {Edges} {View}"
+	set Module($m,row1List) "Help Surface View"
+        set Module($m,row1Name) "{Help} {Process} {View}"
 	set Module($m,row1,tab) Surface
 
-	set Module($m,row2List) "SField VField"
-        set Module($m,row2Name) "{Scalar Field} {Vector Field}"
-	set Module($m,row2,tab) SField
+#        set Module($m,row2List) "SField VField"
+#        set Module($m,row2Name) "{Scalar Field} {Vector Field}"
+#        set Module($m,row2,tab) SField
 
 	# Define Procedures
 	#------------------------------------
@@ -145,7 +148,7 @@ proc TetraMeshInit {} {
 	#   appropriate revision number and date when the module is checked in.
 	#   
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.17 $} {$Date: 2001/06/12 18:43:40 $}]
+		{$Revision: 1.18 $} {$Date: 2001/08/03 12:21:08 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -163,7 +166,10 @@ proc TetraMeshInit {} {
         set TetraMesh(TetraTubeRadius) 0.01
         set TetraMesh(ArrowScale) 9.5
         set TetraMesh(ArrowSkip) 2
+        set TetraMesh(SphereScale) 9.5
+        set TetraMesh(SphereSkip) 2
 
+        set TetraMesh(ProcessType) Surface
         # 
         #
         # The following matrix exists to move the origin
@@ -199,21 +205,17 @@ proc TetraMeshBuildGUI {} {
 	# Help
 	# Surface
 	#   Top
-	#   Alignment
-        #   Bottom
-        # Edges
-	#   Top
-	#   Alignment
+        #   Middle
+        #   Alignment
+        #   Select
+        #   Options
+        #      Surface
+        #      Edges
+        #      Nodes
+        #      ...
         #   Bottom
         # View
         #   Top
-        #   Bottom
-        # SField 
-        # Vfield
-	#   Top
-        #   Scale
-        #   Skip
-	#   Alignment
         #   Bottom
 	#-------------------------------------------
 
@@ -250,7 +252,15 @@ The TetraMesh module allows a user to read in a Tetrahedral Mesh.  The Mesh is c
 	set fSurface $Module(TetraMesh,fSurface)
 	set f $fSurface
 
-	foreach frame "Top Middle Alignment Bottom" {
+	foreach frame "Top Middle Alignment Select" {
+		frame $f.f$frame -bg $Gui(activeWorkspace)
+		pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
+	}
+
+        frame $f.fOptions -bg $Gui(activeWorkspace) -height 100
+        pack $f.fOptions -side top -padx 0 -pady $Gui(pad) -fill x
+
+	foreach frame "Bottom" {
 		frame $f.f$frame -bg $Gui(activeWorkspace)
 		pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
 	}
@@ -271,7 +281,7 @@ The TetraMesh module allows a user to read in a Tetrahedral Mesh.  The Mesh is c
 	frame $f  -bg $Gui(activeWorkspace) 
         pack $f -side top -padx 0 -pady $Gui(pad) -fill x
 
-        DevAddLabel  $f.l "Model Base Name"
+        DevAddLabel  $f.l "Model Name"
 	eval {entry $f.eModelName -textvariable TetraMesh(modelbasename) -width 50} $Gui(WEA)
         
         pack $f.l $f.eModelName -side left -padx $Gui(pad)
@@ -287,78 +297,154 @@ The TetraMesh module allows a user to read in a Tetrahedral Mesh.  The Mesh is c
         lappend Volume(mActiveList)  $f.mbAlignmentVolume.m
 
 	#-------------------------------------------
-	# Surface->Bottom frame
+	# Surface->Select
 	#-------------------------------------------
-	set f $fSurface.fBottom
+	set f $fSurface.fSelect
+
+        eval {label $f.l -text " Process Type: "} $Gui(BLA)
+	frame $f.f -bg $Gui(backdrop)
+
+        # the first row and second row
+        frame $f.f.1 -bg $Gui(inactiveWorkspace)
+        frame $f.f.2 -bg $Gui(inactiveWorkspace)
+        pack $f.f.1 $f.f.2 -side top -fill x -anchor w
+
+        #
+        # NOTE: As you want more functions, don't forget
+        #       to add more rows above.
+        #
+
+        set row 1
+	foreach p "Surface Edges Nodes ScalarField VectorField" {
+            eval {radiobutton $f.f.$row.r$p \
+			-text "$p" -command "TetraMeshSetProcessType" \
+			-variable TetraMesh(ProcessType) -value $p -width 10 \
+			-indicatoron 0} $Gui(WCA)
+		pack $f.f.$row.r$p -side left -pady 0
+            if { $p == "Nodes" } {incr row};
+	}
+
+	pack $f.l $f.f -side top -padx $Gui(pad) -fill x -anchor w
+
+
+	#-------------------------------------------
+	# Surface->Options
+	#-------------------------------------------
+
+	set f $fSurface.fOptions
+
+	foreach type "Surface Edges Nodes ScalarField VectorField" {
+		frame $f.f${type} -bg $Gui(activeWorkspace)
+		place $f.f${type} -in $f -relheight 1.0 -relwidth 1.0
+		set TetraMesh(f${type}) $f.f${type}
+	}
+
+	raise $TetraMesh(fSurface)
+
+	#-------------------------------------------
+	# Surface->Options->Surface
+	#-------------------------------------------
+        set f $fSurface.fOptions.fSurface
+
+        DevAddLabel $f.l "Grab Surfaces of the mesh"
+        pack $f.l -side left -padx $Gui(pad)
+
+	#-------------------------------------------
+	# Surface->Options->Edges
+	#-------------------------------------------
+        set f $fSurface.fOptions.fEdges
+
+        DevAddLabel $f.l "Grab the Edges of the mesh"
+        pack $f.l -side left -padx $Gui(pad)
+
+	#-------------------------------------------
+	# Surface->Options->Nodes
+	#-------------------------------------------
+        set f $fSurface.fOptions.fNodes
+
+        DevAddLabel $f.l "Nodes: Not Implemented. Use Scalar Field"
+        pack $f.l -side left -padx $Gui(pad)
+
+	#-------------------------------------------
+	# Surface->Options->ScalarField
+	#-------------------------------------------
+        set ff $fSurface.fOptions.fScalarField
+        set  f $ff
+
+	foreach frame "Scale Skip" {
+		frame $f.f$frame -bg $Gui(activeWorkspace)
+		pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
+	}
+
+           #-------------------------------------------
+           # SField->Scale
+           #-------------------------------------------
+           set f $ff.fScale
+   
+           DevAddLabel  $f.lSphereScale "Sphere Scaling"
+           eval {entry $f.eSphereScale -textvariable TetraMesh(SphereScale) -width 5} $Gui(WEA)
+   
+           pack $f.lSphereScale $f.eSphereScale -side left -padx $Gui(pad)
+   
+           #-------------------------------------------
+           # SField->Skip
+           #-------------------------------------------
+   
+           set f $ff.fSkip
+   
+           DevAddLabel  $f.lSphereSkip "Keep Every Nth Node:"
+           eval {entry $f.eSphereSkip -textvariable TetraMesh(SphereSkip) -width 5} $Gui(WEA)
+   
+           pack $f.lSphereSkip $f.eSphereSkip -side left -padx $Gui(pad)
+
+	#-------------------------------------------
+	# Surface->Options->VectorField
+	#-------------------------------------------
+        set ff $fSurface.fOptions.fVectorField
+        set f $ff
+
+	foreach frame "Scale Skip" {
+		frame $f.f$frame -bg $Gui(activeWorkspace)
+		pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
+	}
+
+           #-------------------------------------------
+           # VField->Scale
+           #-------------------------------------------
+           set f $ff.fScale
+   
+           DevAddLabel  $f.lArrowScale "Arrow Scaling"
+           eval {entry $f.eArrowScale -textvariable TetraMesh(ArrowScale) -width 5} $Gui(WEA)
+   
+           pack $f.lArrowScale $f.eArrowScale -side left -padx $Gui(pad)
+   
+           #-------------------------------------------
+           # VField->Skip
+           #-------------------------------------------
+   
+           set f $ff.fSkip
+   
+           DevAddLabel  $f.lArrowSkip "Keep Every Nth Arrow:"
+           eval {entry $f.eArrowSkip -textvariable TetraMesh(ArrowSkip) -width 5} $Gui(WEA)
+   
+           pack $f.lArrowSkip $f.eArrowSkip -side left -padx $Gui(pad)
+      
+
+        #-------------------------------------------
+        # Surface->Bottom frame
+        #-------------------------------------------
+        set f $fSurface.fBottom
 
 #	eval {label $f.lSurface -text "You clicked 0 times."} $Gui(WLA)
 #        pack $f.lSurface -side top -padx $Gui(pad) -fill x
 #	set TetraMesh(lSurface) $f.lSurface
 
-        DevAddButton $f.bGo Process TetraMeshProcessSurface
+        DevAddButton $f.bGo Process TetraMeshProcessTetraMesh
 
         # Tooltip example: Add a tooltip for the button
         TooltipAdd $f.bGo "Press this button to start Processing the Mesh into its Surfaces"
 
-	pack $f.bGo  -side top -padx $Gui(pad) -pady $Gui(pad)
-
-	#-------------------------------------------
-	# Edges frame
-	#-------------------------------------------
-	set fEdges $Module(TetraMesh,fEdges)
-	set f $fEdges
-
-	foreach frame "Top Middle Alignment Bottom" {
-		frame $f.f$frame -bg $Gui(activeWorkspace)
-		pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
-	}
-
-	#-------------------------------------------
-	# Edges->Top frame
-	#-------------------------------------------
-	set f $fEdges.fTop
-
-	frame $f.f -bg $Gui(activeWorkspace)
-	pack $f.f -side top -pady $Gui(pad)
-
-        DevAddFileBrowse $f.f TetraMesh FileName "Tetrahedral Mesh:" "TetraMeshFileNameEntered" "vtk"\
-                "\$TetraMesh(DefaultDir)" "Browse for a Tetrahedral Mesh"
-
-	set f $fEdges.fTop.fBaseName
-
-	frame $f  -bg $Gui(activeWorkspace) 
-        pack $f -side top -padx 0 -pady $Gui(pad) -fill x
-
-        DevAddLabel  $f.l "Model Name"
-	eval {entry $f.eModelName -textvariable TetraMesh(modelbasename) -width 50} $Gui(WEA)
-        
-        pack $f.l $f.eModelName -side left -padx $Gui(pad)
-
-	#-------------------------------------------
-	# Edges->Alignment frame
-	#-------------------------------------------
-	set f $fEdges.fAlignment
-
-        DevAddSelectButton TetraMesh $f AlignmentVolume "Alignment Volume(Optional)" Pack
-
-        lappend Volume(mbActiveList) $f.mbAlignmentVolume
-        lappend Volume(mActiveList)  $f.mbAlignmentVolume.m
-
-	#-------------------------------------------
-	# Edges->Bottom frame
-	#-------------------------------------------
-	set f $fEdges.fBottom
-
-#	eval {label $f.lEdges -text "You clicked 0 times."} $Gui(WLA)
-#        pack $f.lEdges -side top -padx $Gui(pad) -fill x
-#	set TetraMesh(lEdges) $f.lEdges
-
-        DevAddButton $f.bGo Process TetraMeshProcessEdges2
-
-        # Tooltip example: Add a tooltip for the button
-        TooltipAdd $f.bGo "Press this button to start Processing the Mesh into its Edges"
-
-	pack $f.bGo  -side top -padx $Gui(pad) -pady $Gui(pad)
+        pack $f.bGo  -side top -padx $Gui(pad) -pady $Gui(pad)
 
         #-------------------------------------------
         # View frame
@@ -425,146 +511,6 @@ constrains of at least one clipping plane.\n"} $Gui(WLA)
                 } $Gui(WCA) 
         grid $f.r$p -padx 0 -pady 0
     }
-
-
-	#-------------------------------------------
-	# SField frame
-	#-------------------------------------------
-	set fSField $Module(TetraMesh,fSField)
-	set f $fSField
-
-	foreach frame "Top Middle Alignment Bottom" {
-		frame $f.f$frame -bg $Gui(activeWorkspace)
-		pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
-	}
-
-	#-------------------------------------------
-	# SField->Top frame
-	#-------------------------------------------
-	set f $fSField.fTop
-
-	frame $f.f -bg $Gui(activeWorkspace)
-	pack $f.f -side top -pady $Gui(pad)
-
-        DevAddFileBrowse $f.f TetraMesh FileName "Tetrahedral Mesh:" "TetraMeshFileNameEntered" "vtk"\
-                "\$TetraMesh(DefaultDir)" "Browse for a Tetrahedral Mesh"
-
-	set f $fSField.fTop.fBaseName
-
-	frame $f  -bg $Gui(activeWorkspace) 
-        pack $f -side top -padx 0 -pady $Gui(pad) -fill x
-
-        DevAddLabel  $f.l "Model Base Name"
-	eval {entry $f.eModelName -textvariable TetraMesh(modelbasename) -width 50} $Gui(WEA)
-        
-        pack $f.l $f.eModelName -side left -padx $Gui(pad)
-
-	#-------------------------------------------
-	# SField->Alignment frame
-	#-------------------------------------------
-	set f $fSField.fAlignment
-
-        DevAddSelectButton TetraMesh $f AlignmentVolume "Alignment Volume(Optional)" Pack
-
-        lappend Volume(mbActiveList) $f.mbAlignmentVolume
-        lappend Volume(mActiveList)  $f.mbAlignmentVolume.m
-
-	#-------------------------------------------
-	# SField->Bottom frame
-	#-------------------------------------------
-	set f $fSField.fBottom
-
-#	eval {label $f.lSField -text "You clicked 0 times."} $Gui(WLA)
-#        pack $f.lSField -side top -padx $Gui(pad) -fill x
-#	set TetraMesh(lSField) $f.lSField
-
-        DevAddButton $f.bGo Process TetraMeshProcessSurface
-
-        # Tooltip example: Add a tooltip for the button
-        TooltipAdd $f.bGo "Press this button to start Processing the Mesh into its Scalar Fields"
-
-	pack $f.bGo  -side top -padx $Gui(pad) -pady $Gui(pad)
-
-
-	#-------------------------------------------
-	# VField frame
-	#-------------------------------------------
-	set fVField $Module(TetraMesh,fVField)
-	set f $fVField
-
-	foreach frame "Top Middle Scale Skip Alignment Bottom" {
-		frame $f.f$frame -bg $Gui(activeWorkspace)
-		pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
-	}
-
-	#-------------------------------------------
-	# VField->Top frame
-	#-------------------------------------------
-	set f $fVField.fTop
-
-	frame $f.f -bg $Gui(activeWorkspace)
-	pack $f.f -side top -pady $Gui(pad)
-
-        DevAddFileBrowse $f.f TetraMesh FileName "Tetrahedral Mesh:" "TetraMeshFileNameEntered" "vtk"\
-                "\$TetraMesh(DefaultDir)" "Browse for a Tetrahedral Mesh"
-
-	set f $fVField.fTop.fBaseName
-
-	frame $f  -bg $Gui(activeWorkspace) 
-        pack $f -side top -padx 0 -pady $Gui(pad) -fill x
-
-        DevAddLabel  $f.l "Model Base Name"
-	eval {entry $f.eModelName -textvariable TetraMesh(modelbasename) -width 50} $Gui(WEA)
-
-       pack $f.l $f.eModelName -side left -padx $Gui(pad)
-
-
-	#-------------------------------------------
-	# VField->Scale
-	#-------------------------------------------
-        set f $fVField.fScale
-
-        DevAddLabel  $f.lArrowScale "Arrow Scaling"
-	eval {entry $f.eArrowScale -textvariable TetraMesh(ArrowScale) -width 5} $Gui(WEA)
-
-        pack $f.lArrowScale $f.eArrowScale -side left -padx $Gui(pad)
-
-	#-------------------------------------------
-	# VField->Skip
-	#-------------------------------------------
-
-        set f $fVField.fSkip
-
-        DevAddLabel  $f.lArrowSkip "Keep Every Nth Arrow:"
-	eval {entry $f.eArrowSkip -textvariable TetraMesh(ArrowSkip) -width 5} $Gui(WEA)
-
-        pack $f.lArrowSkip $f.eArrowSkip -side left -padx $Gui(pad)
-
-	#-------------------------------------------
-	# VField->Alignment frame
-	#-------------------------------------------
-	set f $fVField.fAlignment
-
-        DevAddSelectButton TetraMesh $f AlignmentVolume "Alignment Volume(Optional)" Pack
-
-        lappend Volume(mbActiveList) $f.mbAlignmentVolume
-        lappend Volume(mActiveList)  $f.mbAlignmentVolume.m
-
-	#-------------------------------------------
-	# VField->Bottom frame
-	#-------------------------------------------
-	set f $fVField.fBottom
-
-#	eval {label $f.lVField -text "You clicked 0 times."} $Gui(WLA)
-#        pack $f.lVField -side top -padx $Gui(pad) -fill x
-#	set TetraMesh(lVField) $f.lVField
-
-        DevAddButton $f.bGo Process TetraMeshProcessVField
-
-        # Tooltip example: Add a tooltip for the button
-        TooltipAdd $f.bGo "Press this button to start Processing the Mesh into its Vector Fields"
-
-	pack $f.bGo  -side top -padx $Gui(pad) -pady $Gui(pad)
 }
 
 #-------------------------------------------------------------------------------
@@ -625,6 +571,37 @@ proc TetraMeshUpdateGUI {} {
 #   DevUpdateNodeSelectButton Volume TetraMesh AlignmentVolume AlignmentVolume DevSelectNode
 #"   DevUpdateNodeSelectButton Volume TetraMesh AlignmentVolume AlignmentVolume DevSelectNode
 }
+
+#-------------------------------------------------------------------------------
+# .PROC TetraMeshSetProcessType
+# 
+# Called to Alter the Gui based on the processing type.
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc TetraMeshSetProcessType {} {
+    global TetraMesh
+    
+    raise $TetraMesh(f$TetraMesh(ProcessType))
+    focus $TetraMesh(f$TetraMesh(ProcessType))
+}
+
+#-------------------------------------------------------------------------------
+# .PROC TetraMeshProcessTetraMesh
+#
+# Calls the correct processing routine for the TetraMesh.
+#
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc TetraMeshProcessTetraMesh {} {
+    global TetraMesh
+
+    TetraMeshProcess${TetraMesh(ProcessType)}
+}
+
 
 #-------------------------------------------------------------------------------
 # .PROC TetraMeshFileNameEntered
@@ -843,13 +820,13 @@ proc TetraMeshGetTransform {} {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC TetraMeshProcessEdges
+# .PROC TetraMeshProcessEdges2
 #
 # This Routine Reads in the TetraMesh and produces
 # a Model for the edges in the mesh
 # .END
 #-------------------------------------------------------------------------------
-proc TetraMeshProcessEdges {} {
+proc TetraMeshProcessEdges2 {} {
 	global TetraMesh Model Volume Module
 
 ######################################################################
@@ -972,13 +949,13 @@ set TetraMesh(modelbasename) ""
 }      
 
 #-------------------------------------------------------------------------------
-# .PROC TetraMeshProcessEdges2
+# .PROC TetraMeshProcessEdges
 #
 # This Routine Reads in the TetraMesh and produces
 # a Model of lines for each scalar in the TetraMesh.
 # .END
 #-------------------------------------------------------------------------------
-proc TetraMeshProcessEdges2 {} {
+proc TetraMeshProcessEdges {} {
 	global TetraMesh Model Volume Module
 
 ######################################################################
@@ -1189,14 +1166,105 @@ Render3D
 set TetraMesh(modelbasename) ""
 }   
 
+
 #-------------------------------------------------------------------------------
-# .PROC TetraMeshProcessVField
+# .PROC TetraMeshProcessScalarField
+#
+# This Routine Reads in the TetraMesh and produces
+# a Model for the Scalar Field of the nodes in the mesh. 
+# It assumes the nodes have scalar labels
+# .END
+#-------------------------------------------------------------------------------
+proc TetraMeshProcessScalarField {} {
+	global TetraMesh Model Volume Module
+
+######################################################################
+#### Get the data
+######################################################################
+
+    if {![TetraMeshGetData]} {
+      return;
+    }
+
+    set modelbasename "$TetraMesh(modelbasename)"
+
+    set CurrentTetraMesh [TetraReader GetOutput]
+    $CurrentTetraMesh Update
+
+    set TetraMeshFractionOn $TetraMesh(SphereSkip)
+    set TetraMeshArrowScale $TetraMesh(SphereScale)
+
+######################################################################
+#### Get the range of the data, not exactly thread safe. See vtkDataSet.h
+#### But, since we are not concurrently modifying the dataset, we should
+#### be OK.
+######################################################################
+
+#######################################################################
+#### Setup the pipeline: Cones -> PointMaskSelection -> Glyph data
+#######################################################################
+
+  TetraMeshGetTransform
+  set v $Volume(activeID)
+
+vtkMaskPoints PointSelection
+  PointSelection SetInput $CurrentTetraMesh
+  PointSelection SetOnRatio $TetraMeshFractionOn
+  PointSelection RandomModeOff
+vtkTransformFilter TransPoints
+  TransPoints SetTransform TheTransform
+  TransPoints SetInput [PointSelection GetOutput]
+vtkSphereSource TetraSphere
+  TetraSphere SetPhiResolution 5
+  TetraSphere SetThetaResolution 5
+  TetraSphere SetRadius 0.15
+vtkGlyph3D ScalarGlyph
+  ScalarGlyph SetInput [TransPoints GetOutput]
+  ScalarGlyph SetSource [TetraSphere GetOutput]
+  ScalarGlyph SetScaleModeToScaleByScalar
+  ScalarGlyph SetScaleFactor $TetraMeshArrowScale
+ScalarGlyph Update
+
+  #set m [ TetraMeshCreateModel ${modelbasename}Scalars $LOWSCALAR $HIGHSCALAR $v ]
+  set m [ TetraMeshCreateModel ${modelbasename}Scalars 0 10 $v ]
+
+  ### Need to copy the output of the pipeline so that the results
+  ### Don't get over-written later. Also, when we delete the inputs,
+  ### We don't want the outputs deleted. These lines should prevent this.
+  set result [ScalarGlyph GetOutput]
+  vtkPolyData ModelPolyData$m
+  set Model($m,polyData) ModelPolyData$m
+  $Model($m,polyData) CopyStructure $result
+  [ $Model($m,polyData) GetPointData] PassData [$result GetPointData]
+  [ $Model($m,polyData) GetCellData] PassData  [$result GetCellData]
+
+foreach r $Module(Renderers) {
+    Model($m,mapper,$r) SetInput $Model($m,polyData)
+}
+
+TheTransform Delete
+TransPoints Delete
+TetraReader Delete
+TetraSphere Delete
+PointSelection Delete
+ScalarGlyph Delete
+
+MainModelsUpdateMRML 
+MainUpdateMRML
+Render3D
+
+set TetraMesh(modelbasename) ""
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC TetraMeshProcessVectorField
 #
 # This Routine Reads in the TetraMesh and produces
 # a Model for the vector field in the point data
 # .END
 #-------------------------------------------------------------------------------
-proc TetraMeshProcessVField {} {
+proc TetraMeshProcessVectorField {} {
 	global TetraMesh Model Volume Module
 
 ######################################################################
