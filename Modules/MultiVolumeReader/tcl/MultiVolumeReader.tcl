@@ -149,7 +149,7 @@ proc MultiVolumeReaderInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.7 $} {$Date: 2004/11/24 19:05:42 $}]
+        {$Revision: 1.8 $} {$Date: 2004/11/24 19:07:30 $}]
 
     # Initialize module-level variables
     #------------------------------------
