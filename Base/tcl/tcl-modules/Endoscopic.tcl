@@ -1489,19 +1489,34 @@ bind $f.eCreateList <Return> {EndoscopicCreateAndActivatePath $Fiducials(newList
 
     pack $f.lCreateList $f.eCreateList -side left -padx $Gui(pad) -pady $Gui(pad)
     
-    
-    
     set f $Endoscopic(tabbedFrame).fManual.fStep2
     eval {label $f.lTitle -text "Step 2: Create Landmarks "} $Gui(WTA)
     eval {label $f.lTitle2 -text "Place the endoscope and then press:"} $Gui(WLA)
+    pack $f.lTitle $f.lTitle2   -side top -pady 2
+
+
+    frame $f.1   -bg $Gui(activeWorkspace) 
+    frame $f.2   -bg $Gui(activeWorkspace) 
+    pack $f.1 $f.2 -side top 
+
+    set f $f.1
     eval {button $f.bAdd -text "Add Landmark" \
         -command "EndoscopicAddLandmarkDirectionSpecified; MainUpdateMRML; Render3D"} $Gui(WBA)
     TooltipAdd $f.bAdd "place the endoscope in the desired position and 
 orientation and click the 'Add' button. A little sphere is 
 created at the position of the camera and a vector shows 
 the direction of view."
-     
-    pack $f.lTitle $f.lTitle2 $f.bAdd  -side top -pady 2
+     eval {label $f.l -text "(at the end of path)"} $Gui(WLA)
+     pack $f.bAdd $f.l -side left 
+
+    set f $Endoscopic(tabbedFrame).fManual.fStep2.2
+    eval {button $f.bAdd -text "Insert Landmark" \
+        -command "EndoscopicInsertLandmarkDirectionSpecified; MainUpdateMRML; Render3D"} $Gui(WBA)
+    TooltipAdd $f.bAdd "Select a Landmark in the 3D screen by pointing at it with the mouse and press 'q'.
+Place the endoscope in the desired position and 
+orientation and click the 'Insert' button. A new point on the path is inserted after the selected point."
+     eval {label $f.l -text "(after selected landmark)"} $Gui(WLA)
+     pack $f.bAdd $f.l -side left 
 
     set f $Endoscopic(tabbedFrame).fManual.fStep3
     eval {label $f.lTitle -text "Step 3: Edit Landmarks "} $Gui(WTA)
@@ -3162,6 +3177,72 @@ proc EndoscopicAddLandmarkNoDirectionSpecified {x y z {list ""}} {
 }
 
 #-------------------------------------------------------------------------------
+# .PROC EndoscopicInsertLandmarkNoDirectionSpecified
+#
+# this procedure is called when the user adds a landmark after the landmark with id "previousPid" 
+# on a slice or on a model and we don't know yet what direction of view we 
+# should save along with the landmark. There are 2 cases:
+#  i = 1 => the direction vector is [0 1 0]
+#  i > 1 => The direction vector is tangential to the curve 
+# [(position of landmark i - 1) - (position of last interpolated point on the path]
+# 
+# The user can then change the direction vector interactively through the 
+# user interface.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+
+proc EndoscopicInsertLandmarkNoDirectionSpecified {afterPid x y z {list ""}} {
+    global Endoscopic Point Fiducials
+    
+    
+    ########### GET THE RIGHT LIST TO ADD THE POINT TO ############
+    # if the list is not of type endoscopic, create a new endoscopic list
+    if { $list == "" } {
+        # add point to active path otherwise use the default path
+        if { $Endoscopic(path,activeId) == "None" } {
+            set numList $Endoscopic(path,nextAvailableId)
+            set list Path${numList}_
+        EndoscopicCreateAndActivatePath $Path${numList}_
+        incr Endoscopic(path,nextAvailableId)
+        } else {
+        set id $Endoscopic(path,activeId)
+        set list $Endoscopic($id,path,name)
+    }
+    } else {
+    if {[info exists Fiducials($list,fid)] == 0} {    
+        # if the list doesn't exist, create it
+        EndoscopicCreateAndActivatePath $list
+    }
+    }
+    # make that list active
+    FiducialsSetActiveList $list
+
+    set pid [FiducialsInsertPointFromWorldXYZ "endoscopic" $afterPid $x $y $z $list]
+    
+    # this is now the direction of the vector
+    # if i = 0, give it the default direction 0 1 0
+    # else if i > 0, give it the tangential direction
+    if { $pid == 0 } {
+        Point($pid,node) SetFXYZ $x [expr $y + 1]  $z
+    } else {
+    
+        set prev [expr $pid - 1]
+        set prevList [Point($prev,node) GetXYZ]
+        
+        set d(x) [expr ($x - [lindex $prevList 0])]
+        set d(y) [expr ($y - [lindex $prevList 1])]
+        set d(z) [expr ($z - [lindex $prevList 2])]
+        
+        Normalize d
+        Point($pid,node) SetFXYZ [expr $x + $d(x)] [expr $y + $d(y)] [expr $z + $d(z)]
+    }
+}
+
+
+
+
+#-------------------------------------------------------------------------------
 # .PROC EndoscopicAddLandmarkDirectionSpecified
 #
 # This procedure is called when we want to add a landmark at position i and 
@@ -3223,6 +3304,62 @@ proc EndoscopicAddLandmarkDirectionSpecified {{coords ""} {list ""}} {
 
 }
 
+
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicInsertLandmarkDirectionSpecified
+#
+# This procedure is called when we want to add a landmark at position after the currently selected landmark and 
+# we know that the direction of view to save along with the landmark is the
+# current view direction of the endoscope
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc EndoscopicInsertLandmarkDirectionSpecified {{coords ""} {list ""}} {
+
+    global Endoscopic Point Fiducials 
+    
+    # get the ids of the selected fiducial
+    set afterPid $Endoscopic(selectedFiducialPoint) 
+    set fid $Endoscopic(selectedFiducialList) 
+    
+
+    if { $afterPid == "" } {
+    EndoscopicAddLandmarkDirectionSpecified
+    tk_messageBox -message "No Landmark selected. Choosing the last landmark on the path by default "
+    } elseif { $fid == "" } {
+    EndoscopicAddLandmarkDirectionSpecified
+    tk_messageBox -message "No Landmark selected. Choosing the last landmark on the path by default "
+    } else {
+    set list $Fiducials($fid,name) 
+    # make that list active
+    FiducialsSetActiveList $list
+    
+    ########## GET THE COORDINATES ################
+    if { $coords == "" } {
+        set cam_mat [Endoscopic(cam,actor) GetMatrix]   
+        set fp_mat [Endoscopic(fp,actor) GetMatrix]   
+        set x [$cam_mat GetElement 0 3]
+        set y [$cam_mat GetElement 1 3]
+        set z [$cam_mat GetElement 2 3]
+        set fx [$fp_mat GetElement 0 3]
+        set fy [$fp_mat GetElement 1 3]
+        set fz [$fp_mat GetElement 2 3]
+    } else {
+        set x [lindex $coords 0]
+        set y [lindex $coords 1]
+        set z [lindex $coords 2]
+        set fx [lindex $coords 3]
+        set fy [lindex $coords 4]
+        set fz [lindex $coords 5]
+    }
+
+    set pid [FiducialsInsertPointFromWorldXYZ "endoscopic" $afterPid $x $y $z $list]
+    if { $pid != "" } {
+        Point($pid,node) SetFXYZ $fx $fy $fz
+    }
+  }
+}
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicUpdateLandmark

@@ -101,7 +101,7 @@ proc FiducialsInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.43 $} {$Date: 2004/01/01 20:32:27 $}]
+        {$Revision: 1.44 $} {$Date: 2004/01/05 22:35:50 $}]
     
     # Initialize module-level variables
     
@@ -1329,6 +1329,134 @@ proc FiducialsCreatePointFromWorldXYZ { type x y z  {listName ""} {name ""} {sel
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC FiducialsInsertPointFromWorldXYZ
+#  Create a Point at the xyz location for the Fiducials list that is currently active and add it to the MRML tree (but does not call UpdateMRML) and insert it after the point with the id previousPid
+#
+# .ARGS
+#       float x the x world coordinate of the new point
+#       float y the y world coordinate of the new point
+#       float z the z world coordinate of the new point
+#       str name (optional) name of that new point
+#       str listName (optional) the name of the Fiducials list you want to add this point to. If a list with that name doesn't exist, it is created automatically.
+# 
+# .END
+#-------------------------------------------------------------------------------
+proc FiducialsInsertPointFromWorldXYZ {type previousPid x y z  {listName ""} {name ""} } {
+
+
+    global Fiducials Point Module Select
+
+    # if the user specified a list, use that name
+    # otherwise, if the user specified a default list for their module/tab, 
+    # use that name
+    # otherwise, use the active list
+
+    
+    if {[info exists Select(actor)] != 0} {
+        set actor $Select(actor)
+        set cellId $Select(cellId)
+    } else {
+        set actor ""
+        set cellId ""
+    }
+
+    if {$listName != ""} {
+        # check that the name exists, if not, create new list
+        if { [lsearch $Fiducials(listOfNames) $listName] == -1 } {
+            FiducialsCreateFiducialsList $type $listName
+            FiducialsSetActiveList $listName
+        }
+    } else {
+    
+        set module $Module(activeID) 
+        set row $Module($module,row) 
+        set tab $Module($module,$row,tab) 
+        
+        if { [info exists Fiducials($module,$tab,defaultList)] == 1 } {
+            set listName $Fiducials($module,$tab,defaultList)
+            # check that the name exists, if not, create new list
+            if { [lsearch $Fiducials(listOfNames) $listName] == -1 } {
+                FiducialsCreateFiducialsList $type $listName
+            }
+            FiducialsSetActiveList $listName
+            
+        }  else {
+            if { $Fiducials(activeList) == "None" } {
+                FiducialsCreateFiducialsList $type "default"
+                FiducialsSetActiveList "default"
+            } else {
+                # if the active list string is not empty, but it doesn't exist, create it (in Mrml)
+                if {[lsearch $Fiducials(listOfNames) $Fiducials(activeList)] == -1} {
+                    FiducialsCreateFiducialsList $type $Fiducials(activeList)
+                }
+            }
+        }
+    }
+    
+    # now use the id of the active list 
+    set fid $Fiducials($Fiducials(activeList),fid)
+
+    # find out its position in the list
+    set index [llength $Fiducials($fid,pointIdList)]
+    
+    set pid [[MainMrmlInsertAfterNode Point($previousPid,node) Point] GetID]
+    # set its world coordinates
+
+    Point($pid,node) SetXYZ $x $y $z
+    Point($pid,node) SetIndex $index
+    Point($pid,node) SetName [concat $Fiducials($fid,name) $index]
+    
+    # calculate FXYZ
+    # if the actor and cell Id is not empty, get the normal of that cell
+    if {$actor != ""} {
+       set normals [[[[$actor GetMapper] GetInput] GetPointData] GetNormals]
+       if {$normals != ""} {
+           set cell [[[$actor GetMapper] GetInput] GetCell $cellId]
+           set pointIds [$cell GetPointIds]
+           
+           # average the normals
+           set count 0
+           set sumX 0
+           set sumY 0
+           set sumZ 0
+           set num [$pointIds GetNumberOfIds]
+           while {$num > 0} {
+               set num [expr $num - 1]
+               incr count
+               set id [$pointIds GetId $num]
+              # set normal [$normals GetNormal $id]
+               set normal [$normals GetTuple3 $id]
+
+               set sumX [expr $sumX + [lindex $normal 0]]
+               set sumY [expr $sumY + [lindex $normal 1]]
+               set sumZ [expr $sumZ + [lindex $normal 2]]
+               
+           }
+           # now average
+           set avSumX [expr $sumX/$count]
+           set avSumY [expr $sumY/$count]
+           set avSumZ [expr $sumZ/$count]
+           
+           # set the camera position to be a distance of 10 units in the direction of the normal from the picked point
+           
+           set fx [expr $x + 30 * $avSumX]
+           set fy [expr $y + 30 * $avSumY]
+           set fz [expr $z + (30 * $avSumZ)]
+           Point($pid,node) SetFXYZ $fx $fy $fz
+       }
+   }
+   
+   
+   # callback for modules who wish to know a point was created
+   foreach m $Module(idList) {
+       if {[info exists Module($m,fiducialsPointCreatedCallback)] == 1} {
+           if {$Module(verbose) == 1} {puts "Fiducials Point Created Callback: $m"}
+               $Module($m,fiducialsPointCreatedCallback) $type $fid $pid
+           }
+   }
+   return $pid
+}
 
 
 ############################## DELETION ################################
