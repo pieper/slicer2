@@ -2,7 +2,8 @@
 package require Tk
 wm withdraw .
 
-set env(SLICER_HOME) [file dir [file dir [info script]]]
+#set env(SLICER_HOME) [file dir [file dir [info script]]]
+set env(SLICER_HOME) [file dir [info nameofexecutable]]
 
 set msg "
 Slicer is an experimental software package.
