@@ -25,8 +25,7 @@
 #   ModelsInit
 #   ModelsUpdateMRML
 #   ModelsBuildGUI
-#   ModelsBuildScrolledGUI
-#   ModelsConfigScrolledGUI
+#   ModelsConfigScrolledGUI canvasScrolledGUI fScrolledGUI
 #   ModelsSetPropertyType
 #   ModelsSetFileName
 #   ModelsPropsApplyButNotToNew
@@ -63,7 +62,7 @@ proc ModelsInit {} {
 
 	# Set Version Info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.39 $} {$Date: 2001/12/12 03:06:43 $}]
+		{$Revision: 1.40 $} {$Date: 2001/12/26 18:20:25 $}]
 
 	# Props
 	set Model(propertyType) Basic
@@ -72,6 +71,8 @@ proc ModelsInit {} {
 	set Model(meter,first) 1
 
         set Model(DefaultDir) "";
+
+        # Scroll Bar Interation
 }
 
 #-------------------------------------------------------------------------------
@@ -150,7 +151,8 @@ proc ModelsUpdateMRML {} {
 
 	# Tell the scrollbar to update if the gui height changed
 	if {$gui > 0} {
-		ModelsConfigScrolledGUI
+            ModelsConfigScrolledGUI $Model(canvasScrolledGUI) \
+                                    $Model(fScrolledGUI)
 	}
 
 	# Refresh  GUIs (in case color changed)
@@ -655,69 +657,34 @@ constrains of at least one clipping plane.\n"} $Gui(WLA)
 	set Model(meter,msgLeft) $f.lL
 	set Model(meter,msgRight) $f.lR
 
-	
-
-	ModelsBuildScrolledGUI 
-}
-
-#-------------------------------------------------------------------------------
-# .PROC ModelsBuildScrolledGUI
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc ModelsBuildScrolledGUI {} {
-	global Model Gui Module
-	
-	set f $Module(Models,fDisplay).fScroll
-
-        # Delete everything from last time
-        set canvas $f.cGrid
-	set Model(canvasScrolledGUI) $canvas
-        catch {destroy $canvas}
-        set sy $f.syGrid
-        set sx $f.sxGrid
-        catch {destroy $sy}
-        catch {destroy $sx}
-
-        canvas $canvas -yscrollcommand "$sy set" -xscrollcommand "$sx set" -bg $Gui(activeWorkspace)
-        eval "scrollbar $sy -command \"ModelsCheckScrollLimits $canvas yview\"	\
-		$Gui(WSBA)"
-	eval "scrollbar $sx -command \"$canvas xview\" -orient horizontal $Gui(WSBA)"
-        pack $sy -side right -fill y
-        pack $sx -side bottom -fill x
-        pack $canvas -side top -fill both -expand true
-
-        set f $canvas.fModels
-        frame $f -bd 0 -bg $Gui(activeWorkspace)
-    
-        # put the frame inside the canvas (so it can scroll)
-        $canvas create window 0 0 -anchor nw -window $f
-
-        # y spacing important for calculation of frame height for scrolling
-        set pady 2
-
-	set Model(fScrolledGUI) $f
-	foreach m $Model(idList) {
-		MainModelsCreateGUI $f $m
-	}
-
-	ModelsConfigScrolledGUI
+	set Model(canvasScrolledGUI)  $Module(Models,fDisplay).fScroll.cGrid
+        set Model(fScrolledGUI)       $Model(canvasScrolledGUI).fListItems
+        DevCreateScrollList $Module(Models,fDisplay).fScroll \
+                            MainModelsCreateGUI \
+                            ModelsConfigScrolledGUI \
+                            "$Model(idList)"
 }
 
 #-------------------------------------------------------------------------------
 # .PROC ModelsConfigScrolledGUI
 # 
+# Set the dimensions of the scrolledGUI
+#
 # .ARGS
-# .END
+#
+# frame  canvasScrolledGUI  The canvas around the scrolled frame
+# frame  fScrolledGUI       The frame with the item list of models
+# .END   
 #-------------------------------------------------------------------------------
-proc ModelsConfigScrolledGUI {} {
+proc ModelsConfigScrolledGUI {canvasScrolledGUI fScrolledGUI} {
 	global Model ModelGroup RemovedModels
 
-	set f $Model(fScrolledGUI)
-	set canvas $Model(canvasScrolledGUI)
+	set f      $fScrolledGUI
+	set canvas $canvasScrolledGUI
 	set m [lindex $Model(idList) 0]
-	set pady 2
+
+        # y spacing important for calculation of frame height for scrolling
+        set pady 2
 
 	if {$m != ""} {
 	    # Find the height of a single button
@@ -746,21 +713,6 @@ proc ModelsConfigScrolledGUI {} {
 	    $canvas config -xscrollincrement 1 -confine true
 	}
 }
-
-# This procedure allows scrolling only if the entire frame is not visible
-proc ModelsCheckScrollLimits {args} {
-
-    set canvas [lindex $args 0]
-    set view   [lindex $args 1]
-    set fracs [$canvas $view]
-
-    if {double([lindex $fracs 0]) == 0.0 && \
-	    double([lindex $fracs 1]) == 1.0} {
-	return
-    }
-    eval $args
-}
-
 
 #-------------------------------------------------------------------------------
 # .PROC ModelsSetPropertyType
