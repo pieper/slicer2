@@ -51,12 +51,16 @@ vtkMrmlNode \
 vtkMrmlVolumeNode \
 vtkMrmlModelNode \
 vtkXDisplayWindow \
+vtkMrmlEndTransformNode \
+vtkMrmlColorNode \
+vtkMrmlOptionsNode \
+vtkMrmlTree \
 
-#vtkMrmlTransformNode \
-#vtkMrmlColorNode \
 #vtkMrmlColorLutNode \
-#vtkMrmlOptionsNode \
-
+#vtkMrmlRotateNode \
+#vtkMrmlScaleNode \
+#vtkMrmlTransformNode \
+#vtkMrmlTranslateNode \
 
 #------------------------------------------------------------------------------
 # Autoconfig defines that can be overridden in user.make
