@@ -245,7 +245,7 @@ proc EMSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.38 $} {$Date: 2004/09/03 21:46:22 $}]
+        {$Revision: 1.39 $} {$Date: 2004/09/08 22:29:53 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -2324,7 +2324,7 @@ proc EMSegmentSaveSetting {FileFlag {FileName -1} {CheckToProceed 1} } {
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentSaveSettingSuperClass {SuperClass LastNode} {
-   global EMSegment Volume
+   global EMSegment Volume Mrml
    if {$SuperClass > -1} {
        set SuperClassClassList $EMSegment(Cattrib,$SuperClass,ClassList)
    } else  {
@@ -2455,14 +2455,16 @@ proc EMSegmentSaveSettingSuperClass {SuperClass LastNode} {
    # -------------------------------------------------------------------
    # Save CIM Setting for the SuperClass 
    # -------------------------------------------------------------------
-    foreach dir $EMSegment(CIMList) {
-      # Set Values
+   # puts "------- Start EMSegmentSaveSettingSuperClass --------- "
+   set CIMNodeList "" 
+   foreach dir $EMSegment(CIMList) {
       if {[ catch {set pid [$EMSegment(Cattrib,$SuperClass,CIMMatrix,$dir,Node) GetID]}]} {
-      set EMSegment(Cattrib,$SuperClass,CIMMatrix,$dir,Node) [MainMrmlInsertAfterNode $LastNode SegmenterCIM] 
+          set EMSegment(Cattrib,$SuperClass,CIMMatrix,$dir,Node) [MainMrmlInsertAfterNode $LastNode SegmenterCIM] 
           set pid [$EMSegment(Cattrib,$SuperClass,CIMMatrix,$dir,Node) GetID]
           SegmenterCIM($pid,node) SetName $dir
       }
       set LastNode $EMSegment(Cattrib,$SuperClass,CIMMatrix,$dir,Node)
+      lappend CIMNodeList $LastNode 
       set CIMMatrix ""
       foreach y $EMSegment(Cattrib,$SuperClass,ClassList) {
          foreach x $EMSegment(Cattrib,$SuperClass,ClassList) {
@@ -2474,11 +2476,22 @@ proc EMSegmentSaveSettingSuperClass {SuperClass LastNode} {
           SegmenterCIM($pid,node) SetCIMMatrix "[lrange $CIMMatrix 0 [expr [llength $CIMMatrix]-2]]"  
       } 
     }
-   
+    
     if {[ catch {$EMSegment(Cattrib,$SuperClass,EndNode)  GetID}]} {
-    set EMSegment(Cattrib,$SuperClass,EndNode) [MainMrmlInsertAfterNode $LastNode EndSegmenterSuperClass] 
-    }
+       # Carefull If CIM order is different from the order of the CIM MrmlNodes you have a problem
+       # So go through tree and find last node
+       Mrml(dataTree) InitTraversal
+       set NextItem blubber
+       while {([llength $CIMNodeList] > 1) && ($NextItem != "") } {
+       set NextItem  [Mrml(dataTree) GetNextItem]
+       set index [lsearch $CIMNodeList $NextItem]
+       if {$index > -1} { set CIMNodeList [lreplace $CIMNodeList $index $index] }
+       }  
+       set LastNode [lindex $CIMNodeList 0]
+       set EMSegment(Cattrib,$SuperClass,EndNode) [MainMrmlInsertAfterNode $LastNode EndSegmenterSuperClass] 
+    } 
     set LastNode $EMSegment(Cattrib,$SuperClass,EndNode)
+    # puts "------- End EMSegmentSaveSettingSuperClass --------- "
 
     return $LastNode
 }
