@@ -143,6 +143,14 @@ public:
   vtkSetStringMacro(PrintDir);
 
 
+  // Description:
+  // Define what kind of interpolation you want for the registration function - 
+  // 1 = Linear Affine Registration 
+  // 2 = Nearest Neighbour Affine Registration
+   vtkSetMacro(RegistrationInterpolationType, int);
+   vtkGetMacro(RegistrationInterpolationType, int);
+
+
   // Legacy Variables : 
   // The tree is a 1D list of nodes, it does not know anything about hireachies 
   //  => Never delete variables from vtkMrml..Node.h if for some XML files you use them 
@@ -178,6 +186,7 @@ protected:
   int    SegmentationBoundaryMin[3];
   int    SegmentationBoundaryMax[3];
 
+  int    RegistrationInterpolationType;
   // These are legacy definitions - we leave them in so we keep compatibility with older versions
   int    NumClasses; //  From July 04 the HeadClass will be defined seperatly from SegmenterNode so that there is no overlap anymore between SuperClassNode and SegmenterNode
 

@@ -76,6 +76,7 @@ vtkMrmlSegmenterNode::vtkMrmlSegmenterNode()
     this->SegmentationBoundaryMin[i] = 0; // Lower bound of the boundary box where the image gets segments.
     this->SegmentationBoundaryMax[i] = 0;// Upper bound of the boundary box where the image gets segments.
   }
+  this->RegistrationInterpolationType = 0;
 
   // Legacy variables to stay compatibale with older versions - cannot delete it 
   this->NumClasses         = 0;
@@ -120,6 +121,7 @@ void vtkMrmlSegmenterNode::Write(ofstream& of, int nIndent)
 
   if (this->PrintDir && strcmp(this->PrintDir, "")) 
   of << " PrintDir ='"                   << this->PrintDir << "'";
+  if (this->RegistrationInterpolationType) of << " RegistrationInterpolationType ='"<< this->RegistrationInterpolationType << "'";
   of << ">\n";;
 }
 
@@ -143,6 +145,8 @@ void vtkMrmlSegmenterNode::Copy(vtkMrmlNode *anode)
 
   memcpy(this->SegmentationBoundaryMin, node->SegmentationBoundaryMin, sizeof(int)*3);
   memcpy(this->SegmentationBoundaryMax, node->SegmentationBoundaryMax, sizeof(int)*3);
+
+  this->RegistrationInterpolationType = node->RegistrationInterpolationType;
 }
 
 //----------------------------------------------------------------------------
@@ -159,13 +163,16 @@ void vtkMrmlSegmenterNode::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "SmSigma: "                   << this->SmSigma <<  "\n"; 
   os << indent << "DisplayProb: "               << this->DisplayProb <<  "\n"; 
   os << indent << "NumberOfTrainingSamples: "   << this->NumberOfTrainingSamples <<  "\n"; 
-  os << indent << "IntensityAvgClass:"          << this->IntensityAvgClass << "\n";
-  os << indent << "PrintDir:"                   << this->PrintDir << "\n"; 
-  os << indent << "SegmentationBoundaryMin:    " ;
-  for (int i=0; i < 3; i++) os << this->SegmentationBoundaryMin[i]<< " " ; // Upper bound of the boundary box where the image gets segments.
+  os << indent << "IntensityAvgClass: "         << this->IntensityAvgClass << "\n";
+  os << indent << "PrintDir: "                  << this->PrintDir << "\n"; 
+  os << indent << "SegmentationBoundaryMin: " ;
+  for (int i=0; i < 3; i++) os << this->SegmentationBoundaryMin[i] << " " ; // Upper bound of the boundary box where the image gets segments.
   os << "\n";
 
-  os << indent << "SegmentationBoundaryMax:    " ;
-  for (int i=0; i < 3; i++) os << this->SegmentationBoundaryMax[i]<< " " ; // Upper bound of the boundary box where the image gets segments.
+  os << indent << "SegmentationBoundaryMax: " ;
+  for (int i=0; i < 3; i++) os << this->SegmentationBoundaryMax[i] << " " ; // Upper bound of the boundary box where the image gets segments.
+
+  os << indent << "RegistrationInterpolationType: " << this->RegistrationInterpolationType << "\n";  
   os << "\n";
+
 }

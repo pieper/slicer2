@@ -324,7 +324,7 @@ proc EMSegmentAlgorithmStart { } {
    # How many input images do you have
    EMSegment(vtkEMSegment) SetNumInputImages $EMSegment(NumInputChannel) 
    EMSegment(vtkEMSegment) SetNumberOfTrainingSamples $EMSegment(NumberOfTrainingSamples)
-   # EMSegment(vtkEMSegment) SetBiasPrint $EMSegment(BiasPrint)
+
    if {$EMSegment(SegmentMode)} {
     EMSegment(vtkEMSegment) SetNumEMShapeIter  $EMSegment(EMShapeIter)  
        if {[EMSegmentSetVtkPrivateSuperClassSetting 0]} { return 0 }
@@ -365,7 +365,10 @@ proc EMSegmentAlgorithmStart { } {
    EMSegment(vtkEMSegment) SetSmoothingWidth  $EMSegment(SmWidth)    
    EMSegment(vtkEMSegment) SetSmoothingSigma  $EMSegment(SmSigma)      
 
-  
+   if {$EMSegment(SegmentMode)}  {
+       # New Private Variables 
+       EMSegment(vtkEMSegment) SetRegistrationInterpolationType  $EMSegment(RegistrationInterpolationType)      
+   }  
    # EMSegment(vtkEMSegment) SetPrintIntermediateResults    $EMSegment(PrintIntermediateResults) 
    # EMSegment(vtkEMSegment) SetPrintIntermediateSlice      $EMSegment(PrintIntermediateSlice) 
    # EMSegment(vtkEMSegment) SetPrintIntermediateFrequency  $EMSegment(PrintIntermediateFrequency) 
