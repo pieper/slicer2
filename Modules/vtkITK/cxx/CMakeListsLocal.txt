@@ -10,6 +10,7 @@ ENDIF(USE_ITK_FILE)
 SET( LOCAL_MODULE_SRCS
 vtkITKAntiAliasBinaryImageFilter.h
 vtkITKBilateralImageFilter.h
+vtkITKBSplineImageFilter.cxx
 vtkITKConfidenceConnectedImageFilter.cxx
 vtkITKConnectedThresholdImageFilter.cxx
 vtkITKCurvatureAnisotropicDiffusionImageFilter.h
