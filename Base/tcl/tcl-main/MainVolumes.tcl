@@ -72,7 +72,7 @@ proc MainVolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.59 $} {$Date: 2003/06/03 21:52:29 $}]
+    {$Revision: 1.60 $} {$Date: 2003/06/06 19:30:33 $}]
 
     set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -379,7 +379,7 @@ proc MainVolumesWrite {v prefix} {
                 "This volume should not be saved\nbecause it has not been changed\n\
  since the last time it was saved.\nDo you really want to save it?"]
         if {$answer == "no"} {
-        return
+            return
         }
     }
     
