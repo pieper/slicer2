@@ -1,0 +1,506 @@
+/*=auto=========================================================================
+Copyright (c) 1999 Surgical Planning Lab, Brigham and Women's Hospital
+ 
+Direct all questions on this copyright to slicer@ai.mit.edu.
+The following terms apply to all files associated with the software unless
+explicitly disclaimed in individual files.   
+
+The authors hereby grant permission to use, copy, and distribute this
+software and its documentation for any NON-COMMERCIAL purpose, provided
+that existing copyright notices are retained verbatim in all copies.
+The authors grant permission to modify this software and its documentation 
+for any NON-COMMERCIAL purpose, provided that such modifications are not 
+distributed without the explicit consent of the authors and that existing
+copyright notices are retained in all copies. Some of the algorithms
+implemented by this software are patented, observe all applicable patent law.
+
+IN NO EVENT SHALL THE AUTHORS OR DISTRIBUTORS BE LIABLE TO ANY PARTY FOR
+DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING OUT
+OF THE USE OF THIS SOFTWARE, ITS DOCUMENTATION, OR ANY DERIVATIVES THEREOF,
+EVEN IF THE AUTHORS HAVE BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+THE AUTHORS AND DISTRIBUTORS SPECIFICALLY DISCLAIM ANY WARRANTIES, INCLUDING,
+BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+PARTICULAR PURPOSE, AND NON-INFRINGEMENT.  THIS SOFTWARE IS PROVIDED ON AN
+'AS IS' BASIS, AND THE AUTHORS AND DISTRIBUTORS HAVE NO OBLIGATION TO PROVIDE
+MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+=========================================================================auto=*/
+#include "vtkImagePlot.h"
+#include "vtkObjectFactory.h"
+
+#define SET_PIXEL(x,y,color){ptr=&outPtr[(y)*nxnc+(x)*nc];memcpy(ptr,color,3);}
+
+//------------------------------------------------------------------------------
+vtkImagePlot* vtkImagePlot::New()
+{
+  // First try to create the object from the vtkObjectFactory
+  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkImagePlot");
+  if(ret)
+  {
+    return (vtkImagePlot*)ret;
+  }
+  // If the factory was unable to create the object, then create it here.
+  return new vtkImagePlot;
+}
+
+//----------------------------------------------------------------------------
+// Constructor: Sets default filter to be identity.
+vtkImagePlot::vtkImagePlot()
+{
+  this->Height = 256;
+  this->Thickness = 1;
+
+  this->DataRange[0] = 0;
+  this->DataRange[1] = 100;
+  this->DataDomain[0] = 0;
+  this->DataDomain[1] = 100;
+
+	this->Color[0] = 1;
+	this->Color[1] = 1;
+	this->Color[2] = 0;
+
+  this->LookupTable = NULL;
+}
+
+//----------------------------------------------------------------------------
+int vtkImagePlot::MapBinToScalar(int bin)
+{
+  float delta, v;
+  int outExt[6];
+
+  this->GetOutput()->GetWholeExtent(outExt);
+  delta = (float)(this->DataDomain[1]-this->DataDomain[0]) / 
+    (float)(outExt[1]-outExt[0]);
+  v = (float)this->DataDomain[0] + delta * bin;
+  return (int)v;
+}
+
+//----------------------------------------------------------------------------
+int vtkImagePlot::MapScalarToBin(int v)
+{
+  float delta, bin;
+  int outExt[6];
+
+  this->GetOutput()->GetWholeExtent(outExt);
+  delta = (float)(this->DataDomain[1]-this->DataDomain[0]) / 
+    (float)(outExt[1]-outExt[0]);
+  bin = (float)(v - this->DataDomain[0]) / delta;
+  return (int)bin;
+}
+
+//----------------------------------------------------------------------------
+vtkImagePlot::~vtkImagePlot()
+{
+  if (this->LookupTable != NULL) 
+  {
+    this->LookupTable->UnRegister(this);
+  }
+}
+
+//----------------------------------------------------------------------------
+void vtkImagePlot::PrintSelf(ostream& os, vtkIndent indent)
+{
+  vtkImageToImageFilter::PrintSelf(os,indent);
+
+  os << indent << "Thickness:     " << this->Thickness;
+  os << indent << "Height:        " << this->Height;
+  os << indent << "Color[0]:      " << this->Color[0];
+  os << indent << "Color[1]:      " << this->Color[1];
+  os << indent << "Color[2]:      " << this->Color[2];
+  os << indent << "DataDomain[0]: " << this->DataDomain[0];
+  os << indent << "DataDomain[1]: " << this->DataDomain[1];
+  os << indent << "DataRange[0]:  " << this->DataRange[0];
+  os << indent << "DataRange[1]:  " << this->DataRange[1];
+
+  // vtkSetObjectMacro
+  os << indent << "LookupTable: " << this->LookupTable << "\n";
+  if (this->LookupTable)
+  {
+    this->LookupTable->PrintSelf(os,indent.GetNextIndent());
+  }
+}
+
+//----------------------------------------------------------------------------
+unsigned long vtkImagePlot::GetMTime()
+{
+  unsigned long t1, t2;
+
+  t1 = this->vtkImageToImageFilter::GetMTime();
+  if (this->LookupTable)
+  {
+    t2 = this->LookupTable->GetMTime();
+    if (t2 > t1)
+    {
+      t1 = t2;
+    }
+  }
+  return t1;
+}
+
+//----------------------------------------------------------------------------
+// Get ALL of the input.
+// By default,this filter will try to fetch an input the same size as the
+// output.  However, the output is 2D and the input is 1D.
+// So we have to override this function here.
+void vtkImagePlot::ComputeRequiredInputUpdateExtent(int inExt[6], 
+							  int outExt[6])
+{
+  int *wholeExtent;
+
+  wholeExtent = this->GetInput()->GetWholeExtent();
+  memcpy(inExt, wholeExtent, 6*sizeof(int));
+}
+
+// Change the WholeExtent
+//----------------------------------------------------------------------------
+void vtkImagePlot::ExecuteInformation(vtkImageData *inData, 
+				      vtkImageData *outData)
+{
+  int extent[6];
+  float spacing[3], origin[3];
+  
+  inData->GetWholeExtent(extent);
+  inData->GetSpacing(spacing);
+  inData->GetOrigin(origin);
+
+  extent[2] = extent[4] = extent[5] = 0;
+  extent[3] = this->Height - 1 ;
+
+  outData->SetWholeExtent(extent);
+  outData->SetSpacing(spacing);
+  outData->SetOrigin(origin);
+  outData->SetNumberOfScalarComponents(3);
+  outData->SetScalarType(VTK_UNSIGNED_CHAR);
+}
+
+// Draw line including first, but not second end point
+static void DrawThickLine(int xx1, int yy1, int xx2, int yy2, 
+						  unsigned char color[3],
+						  unsigned char *outPtr, int pNxnc, int pNc, int radius)
+{
+	unsigned char *ptr;
+	int r, dx, dy, dy2, dx2, dydx2;
+	int x, y, xInc;
+	int nxnc = pNxnc, nc=pNc;
+	int x1, y1, x2, y2;
+	int rad=radius, rx1, rx2, ry1, ry2, rx, ry;
+
+	// Sort points so x1,y1 is below x2,y2
+	if (yy1 <= yy2) 
+  {
+		x1 = xx1;
+		y1 = yy1;
+		x2 = xx2;
+		y2 = yy2;
+	} 
+  else 
+  {
+		x1 = xx2;
+		y1 = yy2;
+		x2 = xx1;
+		y2 = yy1;
+	}
+	dx = abs(x2 - x1);
+	dy = abs(y2 - y1);
+	dx2 = dx << 1;
+	dy2 = dy << 1;
+	if (x1 < x2)
+  {
+		xInc = 1;
+  }
+	else
+  {
+		xInc = -1;
+  }
+	x = x1;
+	y = y1;
+
+	// Draw first point
+	rx1 = x - rad; ry1 = y - rad;
+	rx2 = x + rad; ry2 = y + rad;
+  for (ry=ry1; ry <= ry2; ry++)
+  {
+		for (rx=rx1; rx <= rx2; rx++)
+    {
+			SET_PIXEL(rx, ry, color);
+    }
+  }
+
+	// < 45 degree slope
+	if (dy <= dx)
+	{
+		dydx2 = (dy-dx) << 1;
+		r = dy2 - dx;
+
+		// Draw up to (not including) end point
+		if (x1 < x2)
+		{
+			while (x < x2)
+			{
+				x += xInc;
+				if (r <= 0)
+        {
+					r += dy2;
+        }
+				else 
+        {
+					// Draw here for a thick line
+					rx1 = x - rad; ry1 = y - rad;
+					rx2 = x + rad; ry2 = y + rad;
+					for (ry=ry1; ry <= ry2; ry++)
+          {
+						for (rx=rx1; rx <= rx2; rx++)
+            {
+							SET_PIXEL(rx, ry, color);
+            }
+          }
+					y++;
+					r += dydx2;
+				}
+				rx1 = x - rad; ry1 = y - rad;
+				rx2 = x + rad; ry2 = y + rad;
+				for (ry=ry1; ry <= ry2; ry++)
+        {
+					for (rx=rx1; rx <= rx2; rx++)
+          {
+						SET_PIXEL(rx, ry, color);
+          }
+        }
+			}
+		}
+		else
+		{
+			while (x > x2)
+			{
+				x += xInc;
+				if (r <= 0)
+        {
+					r += dy2;
+        }
+				else 
+        {
+					// Draw here for a thick line
+					rx1 = x - rad; ry1 = y - rad;
+					rx2 = x + rad; ry2 = y + rad;
+					for (ry=ry1; ry <= ry2; ry++)
+          {
+						for (rx=rx1; rx <= rx2; rx++)
+            {
+							SET_PIXEL(rx, ry, color);
+            }
+          }
+					y++;
+					r += dydx2;
+				}
+				rx1 = x - rad; ry1 = y - rad;
+				rx2 = x + rad; ry2 = y + rad;
+				for (ry=ry1; ry <= ry2; ry++)
+        {
+					for (rx=rx1; rx <= rx2; rx++)
+          {
+						SET_PIXEL(rx, ry, color);
+          }
+        }
+			}
+		}
+	}
+
+	// > 45 degree slope
+	else
+	{
+		dydx2 = (dx-dy) << 1;
+		r = dx2 - dy;
+
+		// Draw up to (not including) end point
+		while (y < y2)
+		{
+			y++;
+			if (r <= 0)
+      {
+				r += dx2;
+      }
+			else 
+      {
+				// Draw here for a thick line
+				rx1 = x - rad; ry1 = y - rad;
+				rx2 = x + rad; ry2 = y + rad;
+				for (ry=ry1; ry <= ry2; ry++)
+        {
+					for (rx=rx1; rx <= rx2; rx++)
+          {
+						SET_PIXEL(rx, ry, color);
+          }
+        }
+				x += xInc;
+				r += dydx2;
+			}
+			rx1 = x - rad; ry1 = y - rad;
+			rx2 = x + rad; ry2 = y + rad;
+			for (ry=ry1; ry <= ry2; ry++)
+      {
+				for (rx=rx1; rx <= rx2; rx++)
+        {
+					SET_PIXEL(rx, ry, color);
+        }
+      }
+		}
+	}
+}
+
+//----------------------------------------------------------------------------
+static void ConvertColor(float *f, unsigned char *c)
+{
+	c[0] = (int)(f[0] * 255.0);
+	c[1] = (int)(f[1] * 255.0);
+	c[2] = (int)(f[2] * 255.0);
+}
+
+//----------------------------------------------------------------------------
+template <class T>
+static void vtkImagePlotExecute(vtkImagePlot *self,
+				  vtkImageData *inData,  T *inPtr,  int inExt[6],
+				  vtkImageData *outData, unsigned char *outPtr, int outExt[6])
+{
+	unsigned char color[3];
+  int idxX, idxY, maxY, maxX;
+  int inIncX, inIncY, inIncZ;
+  int outIncX, outIncY, outIncZ;
+	int nx, ny, nc, nxnc;
+  int y1, y2, r=self->GetThickness();
+  int range[2], domain[2];
+  float delta;
+  vtkScalarsToColors *lookupTable = self->GetLookupTable();
+  unsigned char *rgba;
+	unsigned char *ptr;
+
+  // find the region to loop over
+  maxX = outExt[1] - outExt[0]; 
+  maxY = outExt[3] - outExt[2]; 
+	nx = maxX + 1;
+  ny = maxY + 1;
+	nc = outData->GetNumberOfScalarComponents();
+	nxnc = nx*nc;
+
+  ConvertColor(self->GetColor(), color);
+
+  // Scale all bins
+	self->GetDataDomain(domain);
+  self->GetDataRange(range);
+  
+  // Get increments to march through data 
+  inData->GetContinuousIncrements(outExt, inIncX, inIncY, inIncZ);
+  outData->GetContinuousIncrements(outExt, outIncX, outIncY, outIncZ);
+
+  // Color scale
+  // Loop through ouput pixels
+  delta = (float)(domain[1]-domain[0]) / (float)(maxX);
+  float v;
+  for (idxX = 0; idxX <= maxX; idxX++) 
+  {
+    v = (float)domain[0] + delta * idxX;
+    rgba = lookupTable->MapValue(v);
+
+    for (idxY = 0; idxY <= maxY; idxY++)
+    {
+      SET_PIXEL(idxX, idxY, rgba);
+    }
+  }
+
+  // Plot lines
+  delta = (float)(ny) / (float)(range[1]-range[0]+1);
+  for (idxX = 0; idxX <= maxX; idxX++) 
+  {
+    y1 = (int)(range[0] + delta * (float)inPtr[0]);
+    y2 = (int)(range[0] + delta * (float)inPtr[1]);
+
+    // Clip at boundary
+    if (y1 < r)
+    {
+      y1 = r;
+    }
+    else if (y1 > maxY-r)
+    {
+      y1 = maxY-r;
+    }
+    if (y2 < r)
+    {
+      y2 = r;
+    }
+    else if (y2 > maxY-r)
+    {
+      y2 = maxY-r;
+    }
+    if (idxX >= r && idxX <= maxX-r-1)
+    {
+      DrawThickLine(idxX, y1, idxX+1, y2, color, outPtr, nxnc, nc, r);
+    }
+    inPtr++;
+	}
+}
+
+//----------------------------------------------------------------------------
+void vtkImagePlot::Execute(vtkImageData *inData, vtkImageData *outData)
+{
+  int inExt[6], outExt[6];
+  outData->GetExtent(outExt);
+  this->ComputeRequiredInputUpdateExtent(inExt, outExt);
+  void *inPtr = inData->GetScalarPointerForExtent(inExt);
+  unsigned char *outPtr = (unsigned char*)
+    outData->GetScalarPointerForExtent(outExt);
+  
+  // this filter expects that input is the same type as output.
+  if (outData->GetScalarType() != VTK_UNSIGNED_CHAR)
+  {
+    vtkErrorMacro(<< "Execute: output ScalarType, " << outData->GetScalarType()
+      << ", must be VTK_UNSIGNED_CHAR");
+    return;
+  }
+    
+  switch (inData->GetScalarType())
+  {
+    case VTK_DOUBLE:
+      vtkImagePlotExecute(this, inData, (double *)(inPtr), inExt,
+			     outData, outPtr, outExt);
+      break;
+    case VTK_FLOAT:
+      vtkImagePlotExecute(this, inData, (float *)(inPtr), inExt,
+			     outData, outPtr, outExt);
+      break;
+    case VTK_LONG:
+      vtkImagePlotExecute(this, inData, (long *)(inPtr), inExt,
+			     outData, outPtr, outExt);
+      break;
+    case VTK_UNSIGNED_LONG:
+      vtkImagePlotExecute(this, inData, (unsigned long *)(inPtr), inExt,
+			     outData, outPtr, outExt);
+      break;
+    case VTK_INT:
+      vtkImagePlotExecute(this, inData, (int *)(inPtr), inExt,
+			     outData, outPtr, outExt);
+      break;
+    case VTK_UNSIGNED_INT:
+      vtkImagePlotExecute(this, inData, (unsigned int *)(inPtr), inExt,
+			     outData, outPtr, outExt);
+      break;
+    case VTK_SHORT:
+      vtkImagePlotExecute(this, inData, (short *)(inPtr), inExt,
+			     outData, outPtr, outExt);
+      break;
+    case VTK_UNSIGNED_SHORT:
+      vtkImagePlotExecute(this, inData, (unsigned short *)(inPtr), inExt,
+			     outData, outPtr, outExt);
+      break;
+    case VTK_CHAR:
+      vtkImagePlotExecute(this, inData, (char *)(inPtr), inExt,
+			     outData, outPtr, outExt);
+      break;
+    case VTK_UNSIGNED_CHAR:
+      vtkImagePlotExecute(this, inData, (unsigned char *)(inPtr), inExt,
+			     outData, outPtr, outExt);
+      break;
+    default:
+      vtkErrorMacro(<< "Execute: Unknown ScalarType");
+      return;
+  }
+}
+

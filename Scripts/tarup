@@ -1,0 +1,20 @@
+#! /bin/csh
+
+echo cp slicer
+cp -r /local/share/src/slicer_12_99 slicer
+
+echo cp script
+cp /local/bin/slicer2k slicer/slicer2k
+
+echo cp local
+cp -r /local/share/src/vtk3.01/local slicer/local
+
+echo cp vtk
+cp -r /local/pkg/vtk3.01 slicer/slicer_1299/vtk3.01
+
+echo cp tcltk
+cp /local/share/src/tcl8.2.2/unix/libtcl8.2.so slicer
+cp /local/share/src/tk8.2.2/unix/libtk8.2.so slicer
+
+echo change VTK_HOME to SLICER_HOME/vtk3.01
+

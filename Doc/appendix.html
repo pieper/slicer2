@@ -1,0 +1,478 @@
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=windows-1252">
+<TITLE>3D Slicer Appendix</TITLE>
+<META NAME="keywords" CONTENT="Image Guided Surgery, Surgical Planning Lab, 3D Slicer">
+<META NAME="description" CONTENT="3D Slicer">
+<META NAME="distribution" CONTENT="global">
+</HEAD>
+<BODY LINK="#0000ff" VLINK="#800080" BGCOLOR="#ffffff">
+<P>&nbsp; </P>
+
+<!-- HEADER TABLE -->
+<TABLE CELLSPACING=0 BORDER=0 WIDTH="100%">
+<TR>
+<TD VALIGN="TOP">
+	<!-- TITLE TABLE -->
+	<TABLE CELLSPACING=0 BORDER=0>
+	<TR>
+	<TD VALIGN="TOP">
+	<IMG SRC="slicer.jpg" WIDTH=175 HEIGHT=175>&nbsp;
+	</TD>
+	</TR>
+
+	<TR>
+	<TD VALIGN="BOTTOM" BGCOLOR="#0000ff">
+	<P ALIGN="CENTER">
+	<B><FONT SIZE=6 COLOR="#ffffff">Appendix</B></FONT>
+	</TD>
+	</TR>
+	</TABLE>
+</TD>
+
+<TD VALIGN="TOP" ALIGN="LEFT">
+<B><I><P>Table of Contents</B></I> <BR>
+<BR><A HREF="#slicer.init">slicer.init</A>
+<BR><A HREF="#slicer.config">slicer.config</A>
+<BR><A HREF="#slicer.tabs">slicer.tabs</A>
+</TD>
+</TR>
+</TABLE>
+
+<!-- CONTENT TABLE -->
+<TABLE CELLSPACING=0 BORDER=0 WIDTH=100%>
+<TR>
+
+<TD VALIGN="TOP">
+<P>&nbsp;<BR>
+
+<H1>Overview</H1>
+The <I>3D Slicer</I> has several initialization files.  Each file is a
+set of key-value pairs where the key is the first word on the line,
+and the key's value is the remainder of the line.  Key-value pairs are
+grouped into categories.  Each category consists of a collection of lines
+inside parenthesis, as in the following example.
+<P>
+CategoryName (
+<BR>key1 value1
+<BR>key2 value2
+<BR>)
+&nbsp;<BR>
+<P>
+All colors are designated as 3 numbers between 0 and 1 for the
+red, green, and blue components.
+
+<!-- FILES TABLE -->
+
+<TABLE BORDER=0 CELLSPACING=2 CELLPADDING=5 WIDTH="95%">
+<TR>
+<TH ALIGN=LEFT BGCOLOR="#A6CAF0"><FONT FACE="Arial"><FONT SIZE=-1><B>
+Initialization File</B>&nbsp;</FONT></FONT></TH>
+<TH ALIGN=LEFT BGCOLOR="#A6CAF0"><FONT FACE="Arial"><FONT SIZE=-1><B>
+File's Purpose</B>&nbsp;</FONT></FONT></TH></TR>
+
+<TR>
+<TD>slicer.init</TD><TD>
+This file contains parameters that typically would be
+set once during program installation.
+</TD></TR>
+<TR><TD>slicer.config</TD><TD>
+This file contains parameters that control the program's appearance.
+Users may wish to change these parameters for giving a special
+demonstration, for example.
+</TD></TR>
+<TR><TD>slicer.tabs</TD><TD>
+This file configures the program's main menu and tabs.  This file can
+be edited to reorder tabs, or add new ones.
+</TD></TR>
+</TABLE>
+
+<!-- slicer.init -->
+
+<A NAME="slicer.init"></A>
+<H1>slicer.init</H1>
+<P>
+The <I>slicer.init</I> file contains parameters that typically would be set once
+during program installation.
+
+<H2>Path Category</H2>
+<TABLE BORDER=0 CELLSPACING=2 CELLPADDING=5 WIDTH="95%">
+<TR>
+<TH ALIGN=LEFT BGCOLOR="#A6CAF0"><FONT FACE="Arial"><FONT SIZE=-1><B>
+Key</B>&nbsp;</FONT></FONT></TH>
+<TH ALIGN=LEFT BGCOLOR="#A6CAF0"><FONT FACE="Arial"><FONT SIZE=-1><B>
+Value</B>&nbsp;</FONT></FONT></TH>
+</TR>
+<TR><TD>smgPath</TD><TD>Path to SMG's mrml.tcl file</TD></TR>
+<TR><TD>removeHost</TD><TD>Host name of a machine that has more memory for running SMG</TD></TR>
+<TR><TD>tmpDir</TD><TD>Directory for temporary working files</TD></TR>
+<TR><TD>printHeaderPath</TD><TD>Path to the print_header program</TD></TR>
+<TR><TD>printHeaderFirstWord</TD><TD>First word of a print_header's output file</TD></TR>
+<TR><TD>browserPath</TD><TD>Path to browser to use when viewing documentation</TD></TR>
+<TR><TD>browserUrl</TD><TD>Path to Slicer's User Guide file</TD></TR>
+</TABLE>
+
+<H2>Gui Category</H2>
+<TABLE BORDER=0 CELLSPACING=2 CELLPADDING=5 WIDTH="95%">
+<TR>
+<TH ALIGN=LEFT BGCOLOR="#A6CAF0"><FONT FACE="Arial"><FONT SIZE=-1><B>
+Key</B>&nbsp;</FONT></FONT></TH>
+<TH ALIGN=LEFT BGCOLOR="#A6CAF0"><FONT FACE="Arial"><FONT SIZE=-1><B>
+Value</B>&nbsp;</FONT></FONT></TH>
+</TR>
+<TR><TD>smallFont</TD><TD>1=small fonts, 0=large</TD></TR>
+<TR><TD>pc</TD><TD>1=PC, 0=UNIX</TD></TR>
+<TR><TD>viewerX</TD><TD>X-coordinate of Viewer window (contains
+3D window and slice windows)</TD></TR>
+</TABLE>
+
+<H2>Locator Category</H2>
+<TABLE BORDER=0 CELLSPACING=2 CELLPADDING=5 WIDTH="95%">
+<TR>
+<TH ALIGN=LEFT BGCOLOR="#A6CAF0"><FONT FACE="Arial"><FONT SIZE=-1><B>
+Key</B>&nbsp;</FONT></FONT></TH>
+<TH ALIGN=LEFT BGCOLOR="#A6CAF0"><FONT FACE="Arial"><FONT SIZE=-1><B>
+Value</B>&nbsp;</FONT></FONT></TH>
+</TR>
+<TR><TD>mrt</TD><TD>1=In the Open MR suite, 0=in a lab</TD></TR>
+<TR><TD>test</TD><TD>1=Test mode, 0=Run mode</TD></TR>
+<TR><TD>portNum</TD><TD>Port number of the mrt workstation</TD></TR>
+<TR><TD>machineNum</TD><TD>Machine name of the mrt workstation</TD></TR>
+<TR><TD>px, py, pz</TD><TD>RAS coordinates for the initial locator tip</TD></TR>
+<TR><TD>queryConnect</TD><TD>1=Query user when connecting to the mrt workstation.
+0=no</TD></TR>
+<TR><TD>updatePeriodInMs</TD><TD>Milliseconds between each polling of the
+the locator</TD></TR>
+<TR><TD>diffuseOk</TD><TD>Diffuse color of the locator when the connection is ok</TD></TR>
+<TR><TD>diffuseBlocked</TD><TD>Diffuse color of the locator when the connection is blocked</TD></TR>
+<TR><TD>normalLen</TD><TD>Length (mm) of the locator along the length of its normal vector (toward needle)</TD></TR>
+<TR><TD>transverseLen</TD><TD>Length (mm) of the locator along the length of its transverse component (handle, toward user)</TD></TR>
+<TR><TD>visibility</TD><TD>1=Locator visible in the 3D view, 0=invisible</TD></TR>
+<TR><TD>radius</TD><TD>Radius (mm) of the locator shaft rendered in the 3D window</TD></TR>
+<TR><TD>normalOffset, transverseOffset, crossOffset</TD><TD>
+Offset (mm) of the reported position of the locator tip in 3 orthogonal directions</TD></TR>
+<TR><TD>tblPos</TD><TD>Table Position in the Open MR suite (one of Front, Side)</TD></TR>
+<TR><TD>patEntry</TD><TD>Patient Entry (one of Head-First, Feet-First)</TD></TR>
+<TR><TD>patPos</TD><TD>Patient Position (one of Supine, Prone, Left-Decub (left-side down), Right-Decub)</TD></TR>
+</TABLE>
+
+<H2>View Category</H2>
+<TABLE BORDER=0 CELLSPACING=2 CELLPADDING=5 WIDTH="95%">
+<TR>
+<TH ALIGN=LEFT BGCOLOR="#A6CAF0"><FONT FACE="Arial"><FONT SIZE=-1><B>
+Key</B>&nbsp;</FONT></FONT></TH>
+<TH ALIGN=LEFT BGCOLOR="#A6CAF0"><FONT FACE="Arial"><FONT SIZE=-1><B>
+Value</B>&nbsp;</FONT></FONT></TH>
+</TR>
+<TR><TD>boreDisplay</TD><TD>The 3D Slicer may generate a second 3D window for purposes
+such as having a display inside the bore of an Open MR magnet.  The type of Bore Display
+may be one of None, Image, or Render.  When 'Render', the 3D graphics are rendered
+a second time.  When 'Image', the 2D output of the 3D renderer is taken from the
+graphics card's frame buffer and copied onto the bore window.</TD></TR>
+<TR><TD>boreScreen</TD><TD>Screen number (0 or 1) of the
+X window display for the Bore Window</TD></TR>
+<TR><TD>boreWidth</TD><TD>Width of Bore window (the Bore window
+is an optional, additional 3D window)</TD></TR>
+<TR><TD>boreHeight</TD><TD>Height of Bore window</TD></TR>
+<TR><TD>borePosition</TD><TD>X Y position of Bore window</TD></TR>
+<TR><TD>rotateDegrees</TD><TD>Number of degrees of rotation
+each time the rotation pad (picture with 4 arrows) is clicked on the View
+controls panel</TD></TR>
+<TR><TD>letterSize</TD><TD>Size of R,L,A,P,S,I letters in 3D Window</TD></TR>
+<TR><TD>baselineClippingRange</TD><TD>Clipping range to use
+when the 3D view is reset</TD></TR>
+<TR><TD>viewUp</TD><TD>3-component unit vector in the direction
+of "up" for the 3D Window</TD></TR>
+<TR><TD>position</TD><TD>X Y Z coordinates for camera</TD></TR>
+<TR><TD>focalPoint</TD><TD>X Y Z coordinates for focal point
+(center of rotation of the 3D view)</TD></TR>
+<TR><TD>clippingRange</TD><TD>objects between the a near and far
+distance from the camera are visible in the 3D view</TD></TR>
+<TR><TD>viewUp1</TD><TD>viewUp, position, focalPoint, and
+clippingRange have values for each preset button (1, 2, 3)</TD></TR>
+</TABLE>
+
+<H2>Info Category</H2>
+<P>
+The <I>Info</I> tabs in the <I>3D Slicer</I> contain hypertext.  Segments
+of text are tagged as Normal, Italic, Bold, etc to designate how 
+they are to be displayed.  The meanings of each tag are defined here.
+<P> 
+<TABLE BORDER=0 CELLSPACING=2 CELLPADDING=5 WIDTH="95%">
+<TR>
+<TH ALIGN=LEFT BGCOLOR="#A6CAF0"><FONT FACE="Arial"><FONT SIZE=-1><B>
+Key</B>&nbsp;</FONT></FONT></TH>
+<TH ALIGN=LEFT BGCOLOR="#A6CAF0"><FONT FACE="Arial"><FONT SIZE=-1><B>
+Value</B>&nbsp;</FONT></FONT></TH>
+</TR>
+<TR><TD>tagNormal</TD><TD>Normal text</TD></TR>
+<TR><TD>tagBold</TD><TD>Bold text</TD></TR>
+<TR><TD>tagItalic</TD><TD>Italic text</TD></TR>
+<TR><TD>tagHeading3</TD><TD>Large headers</TD></TR>
+<TR><TD>tagHeading4</TD><TD>Medium headers</TD></TR>
+<TR><TD>tagHeading5</TD><TD>Small headers</TD></TR>
+<TR><TD>tagLink</TD><TD>Link to a Large Header</TD></TR>
+</TABLE>
+
+
+<H2>Anno Category</H2>
+<TABLE BORDER=0 CELLSPACING=2 CELLPADDING=5 WIDTH="95%">
+<TR>
+<TH ALIGN=LEFT BGCOLOR="#A6CAF0"><FONT FACE="Arial"><FONT SIZE=-1><B>
+Key</B>&nbsp;</FONT></FONT></TH>
+<TH ALIGN=LEFT BGCOLOR="#A6CAF0"><FONT FACE="Arial"><FONT SIZE=-1><B>
+Value</B>&nbsp;</FONT></FONT></TH>
+</TR>
+<TR><TD>color</TD><TD>Color of image annotation.</TD></TR>
+</TABLE>
+
+<H2>Volume Category</H2>
+<TABLE BORDER=0 CELLSPACING=2 CELLPADDING=5 WIDTH="95%">
+<TR>
+<TH ALIGN=LEFT BGCOLOR="#A6CAF0"><FONT FACE="Arial"><FONT SIZE=-1><B>
+Key</B>&nbsp;</FONT></FONT></TH>
+<TH ALIGN=LEFT BGCOLOR="#A6CAF0"><FONT FACE="Arial"><FONT SIZE=-1><B>
+Value</B>&nbsp;</FONT></FONT></TH>
+</TR>
+<TR><TD>defaultOptions</TD><TD>List of space-delimited key-value
+pairs that the <I>3D Slicer</I> will understand when the key-value
+pairs are given in the <I>options</I> field of a Volume node in a 
+MRML file.
+</TD></TR>
+</TABLE>
+
+<H2>Lut Category</H2>
+<P>
+The <I>3D Slicer</I> uses various lookup tables (LUT) of colors for shading
+gray-scale data.  Each table is specified here as a <I>Lut</I> category.
+<P>
+<TABLE BORDER=0 CELLSPACING=2 CELLPADDING=5 WIDTH="95%">
+<TR>
+<TH ALIGN=LEFT BGCOLOR="#A6CAF0"><FONT FACE="Arial"><FONT SIZE=-1><B>
+Key</B>&nbsp;</FONT></FONT></TH>
+<TH ALIGN=LEFT BGCOLOR="#A6CAF0"><FONT FACE="Arial"><FONT SIZE=-1><B>
+Value</B>&nbsp;</FONT></FONT></TH>
+</TR>
+<TR><TD>id</TD><TD>Each LUT has a unique ID number.</TD></TR>
+<TR><TD>name</TD><TD>Name for the LUT to appear on the user interface.</TD></TR>
+<TR><TD>grayScale</TD><TD>1 if the colors are all gray, else 0.  
+If 1, then ignore hueRange, saturationRange, and valueRange</TD></TR>
+<TR><TD>numberOfColors</TD><TD>Size of LUT</TD></TR>
+<TR><TD>hueRange</TD><TD>Low and high values (between 0 and 1) that
+specify a color range from red (0) to blue (1)</TD></TR>
+<TR><TD>saturationRange</TD><TD>Low and high values (between 0 and 1) that
+specify a saturation range from gray (0) to bright color (1)</TD></TR>
+<TR><TD>valueRange</TD><TD>Low and high values (between 0 and 1) that
+specify a value range from dark (0) to intense (1)</TD></TR>
+<TR><TD>annoColor</TD><TD>Color for image annotation when an image is
+colored using this LUT. (currently not supported)</TD></TR>
+</TABLE>
+
+<H2>Target Category</H2>
+<P>
+There is a category for specifying the parameters for each of 2
+targets used for trajectory guidance.
+<P>
+<TABLE BORDER=0 CELLSPACING=2 CELLPADDING=5 WIDTH="95%">
+<TR>
+<TH ALIGN=LEFT BGCOLOR="#A6CAF0"><FONT FACE="Arial"><FONT SIZE=-1><B>
+Key</B>&nbsp;</FONT></FONT></TH>
+<TH ALIGN=LEFT BGCOLOR="#A6CAF0"><FONT FACE="Arial"><FONT SIZE=-1><B>
+Value</B>&nbsp;</FONT></FONT></TH>
+</TR>
+<TR><TD>id</TD><TD>Unique ID number for each target</TD></TR>
+<TR><TD>name</TD><TD>Name for the targed displayed on the user interface</TD></TR>
+<TR><TD>diffuseColor</TD><TD>Color of the target</TD></TR>
+</TABLE>
+
+<!-- slicer.config -->
+
+<A NAME="slicer.config"></A>
+<H1>slicer.config</H1>
+<P>
+The <I>slicer.config</I> file contains parameters that control the program's appearance.
+Users may wish to change these parameters for giving a special
+demonstration, for example.
+
+<H2>View Category</H2>
+<TABLE BORDER=0 CELLSPACING=2 CELLPADDING=5 WIDTH="95%">
+<TR>
+<TH ALIGN=LEFT BGCOLOR="#A6CAF0"><FONT FACE="Arial"><FONT SIZE=-1><B>
+Key</B>&nbsp;</FONT></FONT></TH>
+<TH ALIGN=LEFT BGCOLOR="#A6CAF0"><FONT FACE="Arial"><FONT SIZE=-1><B>
+Value</B>&nbsp;</FONT></FONT></TH>
+</TR>
+<TR><TD>mode</TD><TD>The display mode which determines where the Slice
+Windows are positioned relative to the 3D Window, and what the window
+sizes are.  Options are Normal, Quad256, Quad512, and 3D.</TD></TR>
+<TR><TD>viewerWidth</TD><TD>Width of the Viewer Window when the view mode
+is 3D</TD></TR>
+<TR><TD>viewerHeight</TD><TD>Height of the Viewer Window when the view mode
+is 3D</TD></TR>
+<TR><TD>viewerHeightNormal</TD><TD>Height of the Viewer Window when the view mode
+is Normal</TD></TR>
+<TR><TD>toolbarPosition</TD><TD>Position of the Toolbar and Close-up Window (Top or Bottom)</TD></TR>
+<TR><TD>bgColorR, bgColorG, bgColorB</TD><TD>Color of 3D background</TD></TR>
+<TR><TD>fov</TD><TD>Field Of View in millimeters</TD></TR>
+<TR><TD>spin</TD><TD>1 if the 3D view is spinning, else 0</TD></TR>
+<TR><TD>spinDir</TD><TD>Direction of spin when the "Spin" button is pushed
+on the View controls.  Options are Right, Left, Up, Down.</TD></TR>
+<TR><TD>spinMs</TD><TD>Time in milliseconds before each rotation
+when Spin is on.</TD></TR>
+<TR><TD>spinDegrees</TD><TD>Degrees of rotation of each spin</TD></TR>
+<TR><TD>stereo</TD><TD>1 if the 3D view is in stereo, else 0</TD></TR>
+<TR><TD>stereoType</TD><TD>Options are ChrystalEyes and RedBlue</TD></TR>
+</TABLE>
+
+<H2>Anno Category</H2>
+<TABLE BORDER=0 CELLSPACING=2 CELLPADDING=5 WIDTH="95%">
+<TR>
+<TH ALIGN=LEFT BGCOLOR="#A6CAF0"><FONT FACE="Arial"><FONT SIZE=-1><B>
+Key</B>&nbsp;</FONT></FONT></TH>
+<TH ALIGN=LEFT BGCOLOR="#A6CAF0"><FONT FACE="Arial"><FONT SIZE=-1><B>
+Value</B>&nbsp;</FONT></FONT></TH>
+</TR>
+<TR><TD>box</TD><TD>1 if 3D box around the FOV is visible, else 0</TD></TR>
+<TR><TD>axes</TD><TD>1 if 3 axes are visibile in the 3D view</TD></TR>
+<TR><TD>letters</TD><TD>1 if the R,L,A,P,S,I letters are visible in the 3D view</TD></TR>
+<TR><TD>outline</TD><TD>1 if the outline around slices in the 3D
+view are visible</TD></TR>
+<TR><TD>cross</TD><TD>1 if the crosshair in the Slice Windows is visible</TD></TR>
+<TR><TD>hashes</TD><TD>1 if hash marks are visible on the Slice Windows</TD></TR>
+<TR><TD>mmHashGap</TD><TD>Length of the gap in the crosshair on the Slice Windows
+in millimeters</TD></TR>
+<TR><TD>mmHashDist</TD><TD>Distance between the hash marks in millimeters</TD></TR>
+<TR><TD>numHashes</TD><TD>Number of hash marks along each axis on the Slice Windows</TD></TR>
+<TR><TD>boxFollowFocalPoint</TD><TD>1 if 3D box around the FOV should move with the focal point, else 0 if fixed</TD></TR>
+<TR><TD>axesFollowFocalPoint</TD><TD>1 if the axis and R,L,A,P,S,I letters around the FOV should move with the focal point, else 0 if fixed</TD></TR>
+</TABLE>
+
+<H2>Slice Category</H2>
+<P>
+There is a Slice Category for each of the 3 slices.
+The backVolID, foreVolID, and labelVolID specify which volumes
+are displayed on a slice.  0 specifies none.  Numbers 1 or greater
+specify volumes in the order that they appear in the MRML file.
+<P>
+<TABLE BORDER=0 CELLSPACING=2 CELLPADDING=5 WIDTH="95%">
+<TR>
+<TH ALIGN=LEFT BGCOLOR="#A6CAF0"><FONT FACE="Arial"><FONT SIZE=-1><B>
+Key</B>&nbsp;</FONT></FONT></TH>
+<TH ALIGN=LEFT BGCOLOR="#A6CAF0"><FONT FACE="Arial"><FONT SIZE=-1><B>
+Value</B>&nbsp;</FONT></FONT></TH>
+</TR>
+<TR><TD>id</TD><TD>Unique ID number: 0, 1, or 2</TD></TR>
+<TR><TD>visibility</TD><TD>1 if visible, else 0</TD></TR>
+<TR><TD>zoom</TD><TD>Zoom factor: 1, 2, 4, 8</TD></TR>
+<TR><TD>driver</TD><TD>"User" if the user controls the slice position,
+and "Locator" otherwise</TD></TR>
+<TR><TD>orient</TD><TD>One of: Axial, Sagittal, Coronal, InPlane,
+InPlane0, InPlaneNeg90, Perp, Orig, Axi, Cor, Sag</TD></TR>
+<TR><TD>offsetAxial</TD><TD>Offset of axial slices in millimeters from the
+focal point.  Similar parameters exist for each possible orientation.</TD></TR>
+<TR><TD>backVolID</TD><TD>Specifies the background volume on the slice
+with a number where 1 refers to the first volume in the input MRML file.
+0 indicates that no volume should be used.  Similar parameters exist
+for the foreground and label volumes.</TD></TR>
+</TABLE>
+
+<H2>Target Category</H2>
+<TABLE BORDER=0 CELLSPACING=2 CELLPADDING=5 WIDTH="95%">
+<TR>
+<TH ALIGN=LEFT BGCOLOR="#A6CAF0"><FONT FACE="Arial"><FONT SIZE=-1><B>
+Key</B>&nbsp;</FONT></FONT></TH>
+<TH ALIGN=LEFT BGCOLOR="#A6CAF0"><FONT FACE="Arial"><FONT SIZE=-1><B>
+Value</B>&nbsp;</FONT></FONT></TH>
+</TR>
+<TR><TD>id</TD><TD>0 or 1</TD></TR>
+<TR><TD>x</TD><TD>x coordinate of the target's 3D position.
+Similar parameters exist for y and z.</TD></TR>
+<TR><TD>visibility</TD><TD>1 if visible, else 0</TD></TR>
+<TR><TD>radius</TD><TD>Radius of the ball that marks the target's position
+in the 3D Window</TD></TR>
+</TABLE>
+
+<!-- slicer.tabs -->
+
+<A NAME="slicer.tabs"></A>
+<H1>slicer.tabs</H1>
+<P>
+This file configures the program's main menu and tabs.  This file can
+be edited to reorder tabs, or add new ones.
+<P>
+One Tabs category exists with one key-value pair to specify which button on the main
+menu is initially pressed (designated as <I>activeID</I>.  Then, there is one Tabs category for each button on the
+main menu.  If there are more buttons then would fit, then some can exist in a menu
+of menu list of more options.  These have their <I>more</I> key set to 1.  The order
+of Tabs categories determines the order of buttons.  Also, all the "more" Tabs should
+be listed last.
+<P>
+<H2>Tabs Category</H2>
+<TABLE BORDER=0 CELLSPACING=2 CELLPADDING=5 WIDTH="95%">
+<TR>
+<TH ALIGN=LEFT BGCOLOR="#A6CAF0"><FONT FACE="Arial"><FONT SIZE=-1><B>
+Key</B>&nbsp;</FONT></FONT></TH>
+<TH ALIGN=LEFT BGCOLOR="#A6CAF0"><FONT FACE="Arial"><FONT SIZE=-1><B>
+Value</B>&nbsp;</FONT></FONT></TH>
+</TR>
+<TR><TD>id</TD><TD>Unique ID (typically same as the name).</TD></TR>
+<TR><TD>name</TD><TD>Name that appears on the button on the main menu</TD></TR>
+<TR><TD>row1List</TD><TD>List of tabs that appear when the button is pressed</TD></TR>
+<TR><TD>row1Short</TD><TD>Same as row1List but with shorter names to use when
+a tab is not pressed (only necessary when short of space)</TD></TR>
+<TR><TD>row1,tab</TD><TD>Selected tab on the first row of tabs.</TD></TR>
+<TR><TD>row2List</TD><TD>List of tabs on the second row.  If a second row is not
+needed, then leave this blank</TD></TR>
+<TR><TD>row2Short</TD><TD>Abbreviated version of row2List</TD></TR>
+<TR><TD>row2,tab</TD><TD>Active tab on the second row of tabs</TD></TR>
+<TR><TD>row</TD><TD>"row1" or "row2", whichever row is visible</TD></TR>
+<TR><TD>more</TD><TD>0 for a button on the main menu, else 1 for an item
+in a list of more options on the main menu</TD></TR>
+</TABLE>
+
+
+</TD>
+</TR>
+</TABLE>
+
+
+<P>&nbsp; </P>
+
+<!-- FOOTER TABLE -->
+<TABLE CELLSPACING=0 BORDER=0 WIDTH=100%>
+<TR>
+<TD VALIGN="TOP" COLSPAN=2>
+<P ALIGN="CENTER">
+<I><FONT SIZE=2>This page was last updated January 20, 1999</I></FONT><P>
+</TD>
+</TR>
+
+<TR>
+<TD VALIGN="TOP" COLSPAN=2>
+<HR NOSHADE>
+<CENTER>
+<A HREF="#slicer.init">slicer.init</A> |
+<A HREF="#slicer.config">slicer.config</A> |
+<A HREF="#slicer.tabs">slicer.tabs</A>
+</CENTER>
+<HR NOSHADE>
+</TD>
+</TR>
+
+<TR>
+<TD>
+<P ALIGN="LEFT">
+<FONT SIZE=2>For information, email:</FONT>&nbsp;<BR>
+<A HREF="mailto:slicer@ai.mit.edu"><FONT SIZE=2>slicer@ai.mit.edu</FONT></A>
+</TD>
+
+<TD>
+<P ALIGN="RIGHT">
+<FONT SIZE=1>Copyright &copy; 1999 David Gering</FONT>&nbsp;<BR>
+<FONT SIZE=1>All Rights Reserved.</FONT>&nbsp;
+</TD>
+</TR>
+
+</TABLE>
+
+</HTML>
