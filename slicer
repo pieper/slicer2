@@ -1,26 +1,27 @@
-#! /bin/csh -f
+#! /bin/csh -fvx
 
+### Set the directory in which your slicer is installed
 if (${?SLICER_HOME} == 0) then
-    setenv SLICER_HOME /export/bigsur/slicer
+    setenv SLICER_HOME /projects/cvs/slicer2
 endif
 
 if (${?LD_LIBRARY_PATH} == 0) then
-    setenv LD_LIBRARY_PATH ${SLICER_HOME}/lib:/local/lib
-else
-    setenv LD_LIBRARY_PATH ${SLICER_HOME}/lib:/local/lib:${LD_LIBRARY_PATH}
+    setenv LD_LIBRARY_PATH " "
 endif
 
-if (${?DISPLAY} == 0) then
-    setenv DISPLAY `${SLICER_HOME}/program/bin/finddisplay`
-endif
-setenv FINDDISPLAY `${SLICER_HOME}/program/bin/finddisplay`
-
-setenv ANAPI_DATADICT ${SLICER_HOME}/program/bin/datadict
+### Set the library path to look in the build that you created
+setenv LD_LIBRARY_PATH ${SLICER_HOME}/Base/builds/debian-gcc/bin:${LD_LIBRARY_PATH}
 
 setenv TCL_LIBRARY ${SLICER_HOME}/lib/tcl8.3
 setenv TK_LIBRARY ${SLICER_HOME}/lib/tk8.3
- 
-setenv VTK_RENDERER OpenGL
+
+#### Set the Tcl Lib Path to look in VTK_HOME/Wrapping/Tcl
+
+if (${?TCLLIBPATH} == 0) then
+    setenv TCLLIBPATH " "
+endif
+
+setenv TCLLIBPATH "Base/Wrapping/Tcl/vtkSlicerBase /usr/local/src/vtk4/VTK/Wrapping/Tcl ${TCLLIBPATH}"
 
 setenv SLICER_LOCAL 0
 
@@ -30,4 +31,5 @@ echo SLICER_HOME  is $SLICER_HOME
 echo DISPLAY      is $DISPLAY
 echo LD_LIBRARY_PATH is $LD_LIBRARY_PATH
 echo SLICER_LOCAL is $SLICER_LOCAL
-exec $SLICER_HOME/program/vtk $SLICER_HOME/program/Go.tcl $1
+
+exec wish $SLICER_HOME/Base/tcl/Go.tcl $*
