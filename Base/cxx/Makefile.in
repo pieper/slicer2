@@ -65,6 +65,9 @@ vtkMrmlPathNode \
 vtkMrmlEndPathNode \
 vtkMrmlLandmarkNode 
 
+#vtkImageSimpleEdge \
+#vtkImageLiveWire
+
 #vtkSurfaceProps \
 #vtkMathUtils \
 #vtkBoolTess \
