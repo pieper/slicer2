@@ -68,8 +68,8 @@ proc VolumeMathInit {} {
 	#   row2,tab = like row1 
 	#
 	set m VolumeMath
-        set Module($m,row1List) "Help Math Distance"
-        set Module($m,row1Name) "{Help} {Math} {Distance}"
+        set Module($m,row1List) "Help Math Distance Logic"
+    set Module($m,row1Name) "{Help} {Math} {Distance} {Logic}"
 	set Module($m,row1,tab) Math
 
 	# Define Procedures
@@ -106,6 +106,7 @@ proc VolumeMathInit {} {
 	#   
 	set Module($m,procGUI)   VolumeMathBuildGUI
 	set Module($m,procMRML)  VolumeMathUpdateGUI
+	set Module($m,procEnter)  VolumeMathEnter
 
 
 	# Define Dependencies
@@ -124,7 +125,7 @@ proc VolumeMathInit {} {
 	#   appropriate info when the module is checked in.
 	#   
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.18 $} {$Date: 2001/12/21 00:00:02 $}]
+		{$Revision: 1.19 $} {$Date: 2002/01/11 22:00:52 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -170,6 +171,17 @@ proc VolumeMathUpdateGUI {} {
     DevUpdateNodeSelectButton Volume VolumeMath Volume1 Volume1 DevSelectNode
     DevUpdateNodeSelectButton Volume VolumeMath Volume2 Volume2 DevSelectNode
     DevUpdateNodeSelectButton Volume VolumeMath Volume3 Volume3 DevSelectNode 0 1 1
+
+    # for the Logic buttons
+    # these have to not be named the same as the above since Developer.tcl
+    # stores the widget path in VolumeMath(mbVolume1) so creating
+    # the second menu like this will overwrite the first's saved
+    # widget path...
+    DevUpdateNodeSelectButton Volume VolumeMath Volume1L Volume1 DevSelectNode
+    DevUpdateNodeSelectButton Volume VolumeMath Volume2L Volume2 DevSelectNode
+    DevUpdateNodeSelectButton Volume VolumeMath Volume3L Volume3 DevSelectNode 0 1 1
+
+
 }
 
 #-------------------------------------------------------------------------------
@@ -179,7 +191,7 @@ proc VolumeMathUpdateGUI {} {
 # .END
 #-------------------------------------------------------------------------------
 proc VolumeMathBuildGUI {} {
-	global Gui VolumeMath Module
+	global Gui VolumeMath Module Label
 
 	# A frame has already been constructed automatically for each tab.
 	# A frame named "Stuff" can be referenced as follows:
@@ -219,6 +231,14 @@ proc VolumeMathBuildGUI {} {
         #            eMagnitude
 	#	fPack
         #           ltop
+        # fLogic
+        #       fSelectMath
+	#	fGrid
+	#	    mbVolume1
+	#	    mbVolume2
+	#	    mbVolume3
+	#	fPack
+	#	    bRun
 	#-------------------------------------------
 
 	#-------------------------------------------
@@ -471,6 +491,92 @@ files. Sometimes it doesn't work.
 
          grid $f.lMagnitude $f.eMagnitude -padx $Gui(pad) -pady $Gui(pad)
          grid $f.lMagnitude -sticky e 
+
+
+	#-------------------------------------------
+	# Logic frame
+	#-------------------------------------------
+
+	set fLogic $Module(VolumeMath,fLogic)
+	set f $fLogic
+
+	frame $f.fSelectMath  -bg $Gui(backdrop) -relief sunken -bd 2
+	frame $f.fLabel -bg $Gui(activeWorkspace)
+	frame $f.fGrid -bg $Gui(activeWorkspace)
+	frame $f.fPack -bg $Gui(activeWorkspace)
+	pack $f.fSelectMath $f.fLabel $f.fGrid $f.fPack -side top -padx 0 -pady $Gui(pad)
+
+	#-------------------------------------------
+	# Logic->SelectMath
+	#-------------------------------------------
+	set f $fLogic.fSelectMath
+
+	frame $f.f -bg $Gui(backdrop)
+
+        # the first row and second row
+        frame $f.f.1 -bg $Gui(inactiveWorkspace)
+        frame $f.f.2 -bg $Gui(inactiveWorkspace)
+        pack $f.f.1 $f.f.2 -side top -fill x -anchor w
+
+        #
+        # NOTE: As you want more functions, don't forget
+        #       to add more rows above.
+        #
+
+        set row 1
+	foreach p "And" {
+            eval {radiobutton $f.f.$row.r$p \
+			-text "$p" -command "VolumeMathSetLogicType" \
+			-variable VolumeMath(LogicType) -value $p -width 10 \
+			-indicatoron 0} $Gui(WCA)
+		pack $f.f.$row.r$p -side left -pady 0
+            #if { $p == "Resample" } {incr row};
+	}
+
+	pack $f.f -side left -padx $Gui(pad) -fill x -anchor w
+
+        set VolumeMath(LogicType) And
+
+	#-------------------------------------------
+	# Logic->Label
+	#-------------------------------------------
+	set f $fLogic.fLabel
+
+	# Output label
+	eval {button $f.bOutput -text "Label:" \
+		-command "ShowLabels"} $Gui(WBA)
+	eval {entry $f.eOutput -width 6 \
+		-textvariable Label(label)} $Gui(WEA)
+	eval {entry $f.eName -width 14 \
+		-textvariable Label(name)} $Gui(WEA) \
+		{-bg $Gui(activeWorkspace) -state disabled}
+	grid $f.bOutput $f.eOutput $f.eName -padx 2 -pady $Gui(pad)
+	grid $f.eOutput $f.eName -sticky w
+
+	lappend Label(colorWidgetList) $f.eName
+
+
+
+	#-------------------------------------------
+	# Logic->Grid frame
+	#-------------------------------------------
+
+	set f $fLogic.fGrid
+
+        DevAddSelectButton VolumeMath $f Volume2L "Volume2:"   Grid
+        DevAddSelectButton VolumeMath $f Volume1L "- Volume1:" Grid
+        DevAddSelectButton VolumeMath $f Volume3L "= Volume3:" Grid
+
+	#-------------------------------------------
+	# Logic->Pack frame
+	#-------------------------------------------
+
+	set f $fLogic.fPack
+
+        DevAddButton $f.bRun "Run" "VolumeMathDoLogic"
+
+	pack $f.bRun
+
     }   
 
 #-------------------------------------------------------------------------------
@@ -480,10 +586,13 @@ files. Sometimes it doesn't work.
 # .END
 #-------------------------------------------------------------------------------
 proc VolumeMathEnter {} { 
-    global VolumeMath
+    global VolumeMath Label
 
-    array set mgr $VolumeMath(eventMgr)
-    pushEventManager mgr
+    #array set mgr $VolumeMath(eventMgr)
+    #pushEventManager mgr
+
+    # color in the label selection widget in the Logic panel
+    LabelsColorWidgets
 
 }
 
@@ -498,22 +607,24 @@ proc VolumeMathExit {} {
     popEventManager
 }
 
+
 #-------------------------------------------------------------------------------
 # .PROC VolumeMathSetMathType
 #   Set the type of Math to be Done
 # .END
 #-------------------------------------------------------------------------------
-proc VolumeMathSetMathType {}  {
+proc VolumeMathSetMathType {} {
 
     global Module VolumeMath
-	set fMath $Module(VolumeMath,fMath)
-	set f $fMath.fGrid
 
+    set fMath $Module(VolumeMath,fMath)
+    set f $fMath.fGrid
+    
     set a $f.lVolume2 
     set b $f.lVolume1 
     set c $f.lVolume3 
 
-
+    
     if {$VolumeMath(MathType) == "Subtract" } {
         $a configure -text "Volume2:"
         $b configure -text "- Volume1:"
@@ -538,6 +649,28 @@ proc VolumeMathSetMathType {}  {
         $a configure -text "Undir. Par. Haus. Dist. V2"
         $b configure -text "V1"
         $c configure -text "and put the results in"
+    } elseif {$VolumeMath(MathType) == "And" } {
+        $a configure -text "Volume2"
+        $b configure -text "AND Volume1"
+        $c configure -text "and put the results in"
+    }
+}
+
+proc VolumeMathSetLogicType {} {
+
+    global Module VolumeMath
+
+    set fLogic $Module(VolumeMath,fLogic)
+    set f $fLogic.fGrid
+    
+    set a $f.lVolume2L
+    set b $f.lVolume1L
+    set c $f.lVolume3L
+
+    if {$VolumeMath(LogicType) == "And" } {
+        $a configure -text "Volume2"
+        $b configure -text "AND Volume1"
+        $c configure -text "and put the results in"
     }
 }
 
@@ -547,7 +680,7 @@ proc VolumeMathSetMathType {}  {
 #   returns 1 if there are errors, 0 otherwise
 # .END
 #-------------------------------------------------------------------------------
-proc VolumeMathPrepareResultVolume {}  {
+proc VolumeMathPrepareResultVolume {{logic "0"}}  {
     global VolumeMath
 
     set v3 $VolumeMath(Volume3)
@@ -558,8 +691,12 @@ proc VolumeMathPrepareResultVolume {}  {
     # If so, let's do it.
     
     if {$v3 == -5 } {
-        set v3 [DevCreateNewCopiedVolume $v2 "" \
-                "VolumeMath$VolumeMath(MathType)Result" ]
+	if {$logic == "0"} {
+	    set name  "VolumeMath$VolumeMath(MathType)Result" 
+	} else {
+	    set name  "VolumeMath$VolumeMath(LogicType)Result" 
+	}
+        set v3 [DevCreateNewCopiedVolume $v2 "" $name]
         set node [Volume($v3,vol) GetMrmlNode]
         Mrml(dataTree) RemoveItem $node 
         set nodeBefore [Volume($v1,vol) GetMrmlNode]
@@ -618,6 +755,18 @@ proc VolumeMathDoMath {} {
     if { $VolumeMath(MathType) == "Abs" }      {VolumeMathDoAbs}
     if { $VolumeMath(MathType) == "DistMap" }  {VolumeMathDoDistMap}
     if { $VolumeMath(MathType) == "Hausdorff"} {VolumeMathDoHausdorff}
+
+    # This is necessary so that the data is updated correctly.
+    # If the programmers forgets to call it, it looks like nothing
+    # happened.
+    set v3 $VolumeMath(Volume3)
+    MainVolumesUpdate $v3
+}
+
+proc VolumeMathDoLogic {} {
+	global VolumeMath Volume
+
+    if { $VolumeMath(LogicType) == "And"}       {VolumeMathDoAnd}
 
     # This is necessary so that the data is updated correctly.
     # If the programmers forgets to call it, it looks like nothing
@@ -834,42 +983,79 @@ proc VolumeMathDoDistMap {} {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC VolumeMathDoAbs
+# .PROC VolumeMathDoAnd
 #   Actually do the VolumeMath
 #
 # .END
 #-------------------------------------------------------------------------------
-proc VolumeMathDoAbs {} {
-	global VolumeMath Volume
-
-        # Check to make sure no volume is none
+proc VolumeMathDoAnd {} {
+    global VolumeMath Volume Label
+    
+    # Check to make sure no volume is none
 
     if {[VolumeMathCheckErrors] == 1} {
         return
     }
-    if {[VolumeMathPrepareResultVolume] == 1} {
+    # the parameter 1 tells it to use the name from the 
+    # logic operation selected, instead of the math op.
+    if {[VolumeMathPrepareResultVolume 1] == 1} {
         return
+    }
+
+
+    # Validate input
+    if {[ValidateInt $Label(label)] == 0} {
+	tk_messageBox -message "Label of interest is not an integer."
+	return
     }
 
     set v3 $VolumeMath(Volume3)
     set v2 $VolumeMath(Volume2)
     set v1 $VolumeMath(Volume1)
 
-    # Set up the VolumeMath Abs
+    # set up labels of interest
+    set l3 $Label(label)
+    set l2 $Label(label)
+    set l1 $Label(label)
 
-    vtkImageMathematics SubMath
-    SubMath SetInput1 [Volume($v2,vol) GetOutput]
-    SubMath SetInput2 [Volume($v1,vol) GetOutput]
-    SubMath SetOperationToAbsoluteValue
+    # Set up the VolumeMath And
+
+    # first replace label of interest with a 1 in both volumes
+    vtkImageThreshold thresh1
+    thresh1 ThresholdBetween  $l1 $l1
+    thresh1 SetInValue 1
+    thresh1 SetOutValue 0
+    thresh1 ReplaceInOn
+    thresh1 ReplaceOutOn
+    thresh1 SetInput [Volume($v1,vol) GetOutput]
+    thresh1 SetOutputScalarTypeToShort
+
+    vtkImageThreshold thresh2
+    thresh2 ThresholdBetween  $l2 $l2
+    thresh2 SetInValue 1
+    thresh2 SetOutValue 0
+    thresh2 ReplaceInOn
+    thresh2 ReplaceOutOn
+    thresh2 SetInput [Volume($v2,vol) GetOutput]
+    thresh2 SetOutputScalarTypeToShort
+
+    vtkImageLogic AndMath
+    AndMath SetInput1 [thresh1 GetOutput]
+    AndMath SetInput2 [thresh2 GetOutput]
+    AndMath SetOperationToAnd
+    AndMath SetOutputTrueValue $l3
 
     # Start copying in the output data.
     # Taken from MainVolumesCopyData
 
-    Volume($v3,vol) SetImageData [SubMath GetOutput]
+    Volume($v3,vol) SetImageData [AndMath GetOutput]
     MainVolumesUpdate $v3
 
-    SubMath Delete
+    AndMath Delete
+    thresh1 Delete
+    thresh2 Delete
 }
+
 
 
 #-------------------------------------------------------------------------------
@@ -951,3 +1137,4 @@ proc VolumeMathCount {} {
 	incr VolumeMath(count)
 	$VolumeMath(lStuff) config -text "You clicked the button $VolumeMath(count) times"
 }
+
