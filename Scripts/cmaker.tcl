@@ -88,6 +88,9 @@ switch $tcl_platform(os) {
     }
 }
 
+# ass SLICER_HOME variable to ctest
+set CTEST_SLICER_HOME "-DCTEST_SLICER_HOME:STRING=$SLICER_HOME" 
+
 # get executable name for each platform to pass to ctest
 switch $tcl_platform(os) {
     "SunOS" {
@@ -296,7 +299,7 @@ foreach target $TARGETS {
             $VTK_ARG1 $VTK_ARG2 $VTK_ARG3 $VTK_ARG4 $VTK_ARG5 \
             $VTK_ARG6 $VTK_ARG7 $VTK_ARG8 $VTK_ARG9 $VTK_ARG_VERBOSE $VTK_ARG_DEBUG $VTK_ARG_ENDIAN \
             $VTK_ARG_CONFIGURATIONS \
-            $SLICER_ARG1 $SLICER_ARG2 $SLICER_ARG3 $SLICER_ARG4 $SLICER_ARG5 $SLICER_ARG6 $SLICER_ARG7 $SLICER_ARG8 $SLICER_EXECUTABLE] 
+            $SLICER_ARG1 $SLICER_ARG2 $SLICER_ARG3 $SLICER_ARG4 $SLICER_ARG5 $SLICER_ARG6 $SLICER_ARG7 $SLICER_ARG8 $SLICER_EXECUTABLE $CTEST_SLICER_HOME] 
 
         if {[file exists [file join $target cmaker_local.tcl]]} {
             # Define SLICER_MODULE_ARG in cmaker_local.tcl
