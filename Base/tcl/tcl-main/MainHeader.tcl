@@ -47,7 +47,7 @@
 #     space byte_order bytes_per_pixel coord_center_r coord_center_a
 #     coord_center_s coord_r_top_left coord_a_top_left coord_s_top_left
 #     coord_r_top_right coord_a_top_right coord_s_top_right
-#     coord_r_bottom_right coord_a_bottom_right coord_s_bottom_right"
+#     coord_r_bottom_right coord_a_bottom_right coord_s_bottom_right
 #
 # xDim yDim have problems
 # littleEndian has problems
@@ -55,7 +55,7 @@
 # need to have error message for no header
 # only handles signa and genesis
 #
-#
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc ReadHeaderTcl { filename } {
@@ -360,6 +360,7 @@ proc ReadHeaderTcl { filename } {
 # for the possible eventuality that ReadHeaderTCl does
 # not handle some type of file.
 #
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc ReadHeader {image run utility tk} {
@@ -393,6 +394,7 @@ proc ReadHeader {image run utility tk} {
 # This routine is obsolete. It exists only
 # for the possible eventuality that ReadHeaderTCl does
 # not handle some type of file.
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc ParsePrintHeader {text aHeader} {
@@ -574,6 +576,7 @@ proc DumpHeader {aHeader} {
 #-------------------------------------------------------------------------------
 # .PROC GetHeaderInfo
 # Return an error message if files don't exist, else empty list.
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc GetHeaderInfo {img1 num2 node tk} {
