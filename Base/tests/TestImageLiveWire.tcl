@@ -23,34 +23,44 @@ reader SetDataMask 0x7fff
 # get just one slice
 vtkImageClip clip
 clip SetInput [reader GetOutput]
-clip SetOutputWholeExtent 0 255 0 255 0 0
+clip SetOutputWholeExtent 0 255 0 255 10 10
 clip ClipDataOn
 clip ReleaseDataFlagOff
-
-# get vertical and horizontal edges...
-vtkImageSimpleEdge hEdge
-hEdge SetKernelToHorizontal
-hEdge SetInput [clip GetOutput]
-
-vtkImageSimpleEdge vEdge
-vEdge SetKernelToVertical
-vEdge SetInput [clip GetOutput]
-
-# Lauren uh the horiz and vert seem to be switched????...
 
 # pipeline
 puts "Images loaded and Go!"
 vtkImageLiveWire lw
 lw SetVerbose 1
-lw SetTopEdges [hEdge GetOutput]
-lw SetRightEdges [vEdge GetOutput]
+
+foreach dir {0 1 2 3} name {Up Down Left Right} {
+    vtkImageLiveWireEdgeWeights lwedge$dir
+    lwedge$dir SetInput [clip GetOutput]
+    lwedge$dir SetEdgeDirection $dir
+    lwedge$dir Update
+
+    # set livewire's 4 edge inputs
+    lw Set${name}Edges [lwedge$dir GetOutput]
+
+    puts "update ext [[lwedge$dir GetOutput] GetUpdateExtent]"
+    puts "whole ext [[lwedge$dir GetOutput] GetWholeExtent]"
+}
+
+# also set livewire's original image input.
+lw SetOriginalImage [clip GetOutput]
+
 # problems with 0 (inf loop?) and 256 (dump core) as coords.
 puts "1"
-#lw SetStartPoint 253 253
+lw SetStartPoint 253 253
 puts "2"
 lw SetEndPoint 1 1
 puts "3"
 
+puts "out update ext [[lw GetOutput] GetUpdateExtent]"
+puts "out whole ext [[lw GetOutput] GetWholeExtent]"
+puts "in update ext [[lw GetInput] GetUpdateExtent]"
+puts "in whole ext [[lw GetInput] GetWholeExtent]"
+
+# Update lw so we can grab the points info
 puts "---"
 lw Update
 puts "---"
@@ -62,53 +72,12 @@ puts "numPoints: $numPoints"
 puts "bounds: [$points GetBounds]"
 ############################
 
-##############  junk to imitate slicer. ####################
-# have to input overlay (lots of imgs) to draw roi...
-#vtkLookupTable l
-#vtkIndirectLookupTable lut
-#lut DirectOn
-#lut SetLowerThreshold 1
-#lut SetLookupTable l
-
-vtkLookupTable lut
-
-vtkImageMapToColors mapper
-mapper SetOutputFormatToRGBA
-mapper SetInput [hEdge GetOutput]
-mapper SetLookupTable lut
-
-puts "hEdge extent (should become 2D): [[hEdge GetOutput] GetUpdateExtent]"
-
-vtkImageOverlay overlay
-overlay SetInput 0 [mapper GetOutput]
-overlay SetInput 1 [mapper GetOutput]
-#overlay SetInput 2 [mapper GetOutput]
-overlay SetOpacity 1 0.5
-#overlay SetOpacity 2 0.5
-puts [[overlay GetOutput] GetNumberOfScalarComponents]
-overlay Update
-puts [[overlay GetOutput] GetNumberOfScalarComponents]
-vtkImageDrawROI draw
-draw SetInput [overlay GetOutput]
-
-# output is hard to see but who cares.
-########################## end imitation slicer stuff ###########
-
-for {set i 0} {$i < $numPoints} {incr i} {
-    #puts [$points GetPoint $i]
-    scan [$points GetPoint $i] "%d %d %d" x y z
-    draw InsertAfterSelectedPoint $x $y
-}
-
 # viewer
 vtkImageViewer viewer
-viewer SetInput [draw GetOutput]
+viewer SetInput [lw GetOutput]
 viewer SetZSlice 15
-# note: play with the W/L to see dark and light edges.
-# make this visible at all!
-viewer SetColorWindow 2485
-viewer SetColorLevel 91
-
+viewer SetColorWindow 10
+viewer SetColorLevel 0
 
 # Gui
 toplevel .top
@@ -120,7 +89,6 @@ BindTkImageViewer .top.f.v
 
 #make interface
 source WindowLevelInterface.tcl
-
 
 # bindings
 bind .top.f.v <Button-1> {addPoint %x %y}
@@ -138,6 +106,7 @@ proc addPoint { x y } {
     puts "-----------------------------------------------"
 
 }
+
 
 
 
