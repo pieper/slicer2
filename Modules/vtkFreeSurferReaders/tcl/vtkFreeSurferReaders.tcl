@@ -99,13 +99,14 @@ proc vtkFreeSurferReadersInit {} {
     set vtkFreeSurferReaders(QAVolFiles) ""
     set vtkFreeSurferReaders(QAUseSubjectsFile) 0
     set vtkFreeSurferReaders(QADefaultView) "Normal"
-    set vtkFreeSurferReaders(QAResultsList) {approve exclude resegment review}
+    set vtkFreeSurferReaders(QAResultsList) {Approve Exclude Resegment Review}
     set vtkFreeSurferReaders(scan) 0
     set vtkFreeSurferReaders(scanStep) 1
     set vtkFreeSurferReaders(scanStartCOR) -128
     set vtkFreeSurferReaders(scanStartSAG) -128
     set vtkFreeSurferReaders(scanMs) 100
     set vtkFreeSurferReaders(QAEdit) 0
+    set vtkFreeSurferReaders(QASubjectFileName) "QA.log"
 
     lappend Module($m,fiducialsPointCreatedCallback) FreeSurferReadersFiducialsPointCreatedCallback
 
@@ -203,7 +204,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.14 $} {$Date: 2005/03/11 23:23:15 $}]
+        {$Revision: 1.15 $} {$Date: 2005/03/12 00:30:02 $}]
 
 }
 
@@ -4297,10 +4298,15 @@ proc vtkFreeSurferReadersStartQA {} {
 
     foreach subject $subjects {
         set response ok
+
+
         foreach vol $vtkFreeSurferReaders(QAVolFiles) {
             if {$response == "cancel"} {
                 break
             }
+
+            vtkFreeSurferReadersBuildQAInteractor $subject $vol
+
             set subfilename [file join $vtkFreeSurferReaders(QADirName) $subject mri $vol]
             set filetoload ""
             # check to see if there's an mgh file there
@@ -4361,16 +4367,20 @@ proc vtkFreeSurferReadersStartQA {} {
                     RenderBoth 2
                     set vtkFreeSurferReaders(scan) 1
                     vtkFreeSurferReadersScan 2
-                    # that exits too quickly, going through to the next one right away, try devinfowindow
+                    # that exits too quickly, going through to the next one right away, 
+                    # put in a hack in scanning that will start scanning 1 after done with 2
+                    if {0} {
 
-                    DevInfoWindow "Click when ready to start auto scanning in SAG"
+                        DevInfoWindow "Click when ready to start auto scanning in SAG"
 
-                    # then in saggital mode
-                    MainViewerSetMode "Single512SAG"                   
-                    MainSlicesSetOffset 1 $vtkFreeSurferReaders(scanStartSAG)
-                    RenderBoth 1
-                    set vtkFreeSurferReaders(scan) 1
-                    vtkFreeSurferReadersScan 1
+                        # then in saggital mode
+                        MainViewerSetMode "Single512SAG"                   
+                        MainSlicesSetOffset 1 $vtkFreeSurferReaders(scanStartSAG)
+                        RenderBoth 1
+                        set vtkFreeSurferReaders(scan) 1
+                        vtkFreeSurferReadersScan 1
+                    }
+
                     DevInfoWindow "Click when ready to go to manual mode"
 
                     # reset the slices
@@ -4383,6 +4393,7 @@ proc vtkFreeSurferReadersStartQA {} {
                     set response [tk_messageBox -type okcancel \
                         -message "Click when you're ready to go onto the next one\nCurrently viewing:\n$filetoload" \
                                       -title "QA $subject $vol"]
+                
                 }
                 # stop spinning
                 # set ::View(spinDir) 0
@@ -4462,6 +4473,15 @@ proc vtkFreeSurferReadersScan { slice } {
             # stop the loop
             set vtkFreeSurferReaders(scan) 0
             puts "Done scanning through slice $slice"
+            # ooh, a hack, start the second scan here
+            if {$slice == 2} {
+                # then in saggital mode
+                MainViewerSetMode "Single512SAG"                   
+                MainSlicesSetOffset 1 $vtkFreeSurferReaders(scanStartSAG)
+                RenderBoth 1
+                set vtkFreeSurferReaders(scan) 1
+                vtkFreeSurferReadersScan 1
+            } 
         } else {
             MainSlicesSetOffset $slice [expr $::Slice(${slice},offset) + $vtkFreeSurferReaders(scanStep)]
             RenderSlice $slice
@@ -4479,3 +4499,74 @@ proc vtkFreeSurferReadersSetQAEdit {} {
     }
 }
 
+proc vtkFreeSurferReadersBuildQAInteractor { subject vol } {
+    global vtkFreeSurferReaders Gui
+
+    if {$::Module(verbose)} {
+        puts "Building interactor window for subject $subject and vol $vol"
+    }
+
+    if {[info command .top${subject}${vol}] !=  ""} {
+        puts "Already have a .top${subject}${vol}"
+        wm deiconify .top${subject}${vol}
+        return
+    }
+
+    toplevel .top${subject}${vol}
+    
+
+    frame .top${subject}${vol}.f1 -bg $Gui(activeWorkspace)
+    pack .top${subject}${vol}.f1  -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
+
+    set f .top${subject}${vol}.f1
+
+    eval {label $f.lSubject -text "Subject = $subject"} $Gui(WLA)
+    pack $f.lSubject
+
+    eval {label $f.lVol -text "Volume = $vol"} $Gui(WLA)
+    pack $f.lVol
+
+    frame $f.fNotes -bg $Gui(activeWorkspace)
+    frame $f.fEval -bg $Gui(activeWorkspace)
+
+    pack $f.fNotes -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
+    pack $f.fEval -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
+
+
+    set f .top${subject}${vol}.f1.fNotes
+    eval {label $f.lNotes -text "Notes:"} $Gui(WLA)
+    eval {entry $f.eNotes -textvariable vtkFreeSurferReaders($subject,$vol,Notes) -width 50} $Gui(WEA)
+    pack $f.lNotes -side left -padx 0
+    pack $f.eNotes -side left -padx $Gui(pad) -expand 1 -fill x
+
+    set f .top${subject}${vol}.f1.fEval
+    foreach eval $vtkFreeSurferReaders(QAResultsList) {
+        DevAddButton $f.b$eval $eval "vtkFreeSurferReadersRecordSubjectQA $subject $vol $eval"
+        pack $f.b$eval -side left -padx $Gui(pad) -expand 1
+    }
+}
+
+proc vtkFreeSurferReadersRecordSubjectQA { subject vol eval } {
+    global vtkFreeSurferReaders 
+
+    if {$::Module(verbose)} {
+        puts "vtkFreeSurferReadersRecordSubjectQA subject = $subject, eval = $eval, vol = $vol"
+    }
+
+    # open the file for appending
+    set fname [file join $vtkFreeSurferReaders(QADirName) $subject $vtkFreeSurferReaders(QASubjectFileName)]
+    if {$::Module(verbose)} { puts "vtkFreeSurferReadersRecordSubjectQA fname = $fname" }
+
+    if {[catch {set fid [open $fname "a"]} errmsg] == 1} {
+        DevErrorWindow "Cannot open subject's file for appending this QA run:\nfilename = $fname\n$errMsg"
+        return 
+    }
+    
+    # write it out
+    puts $fid "[clock format [clock seconds] -format "%D-%T-%Z"] $::env(USER) Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.15 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
+    close $fid
+
+    # now close down the window that called me
+    puts "Closing .top${subject}${vol}"
+    wm withdraw .top${subject}${vol}
+}
