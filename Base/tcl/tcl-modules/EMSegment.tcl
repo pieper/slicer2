@@ -30,18 +30,14 @@
 #   EMSegmentShowFile
 #   EMSegmentBindingCallback
 #   EMSegmentStartEM
-#   EMSegmentStartEM
+#   EMSegmentImportCIM
 #   EMSegmentClickLabel
-#   EMSegmentSegClassDefinition
 #   EMSegmentDisplayClassDefinition
 #   EMSegmentUseSamples
 #   EMSegmentChangeClass
-#   EMSegmentChangeClass
 #   EMSegmentUpdateSettingButton 
 #   EMSegmentUpdateClassButton 
-#   EMSegmentCalculateClassMeanSigm 
 #   EMSegmentCalculateClassMeanSigma
-#   EMSegmentCalcProb  
 #   EMSegmentCalcProb
 #   EMSegmentWriteTextBox  
 #   EMSegmentReadTextBox  
@@ -148,6 +144,7 @@ proc EMSegmentInit {} {
     #   set Module($m,presets) "key1='val1' key2='val2' ..."
     #   
     set Module($m,procGUI) EMSegmentBuildGUI
+    set Module($m,procMRML) EMSegmentUpdateGUI
     set Module($m,procEnter) EMSegmentEnter
     set Module($m,procExit) EMSegmentExit
 
@@ -167,7 +164,7 @@ proc EMSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.1 $} {$Date: 2001/12/06 22:19:54 $}]
+	    {$Revision: 1.2 $} {$Date: 2001/12/19 17:39:13 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -177,10 +174,11 @@ proc EMSegmentInit {} {
     #   the procedures in this module and others need to access.
     #
 
-    set EMSegment(Volume1) $Volume(idNone)
-    set EMSegment(Model1)  $Model(idNone)
+    set EMSegment(ProbVolumeSelect) $Volume(idNone)
     set EMSegment(FileCIM) ""
 
+    # For later version where we can use local prios
+    set EMSegment(UseLocalPrior) 0
 
     vtkImageEMSegmenter vtkEMInit
     # Default Paramter from vtkEMSegm
@@ -198,29 +196,29 @@ proc EMSegmentInit {} {
     # with    'set EMSegment(EMiteration) 10
 
     # Kilian : Set for debugging
-    set EMSegment(NumClasses)   4
+    set EMSegment(NumClasses)   [vtkEMInit GetNumClasses]
+    # set EMSegment(NumClasses)   4
     set EMSegment(NumClassesNew) -1 
-    # set EMSegment(EMiteration)  [vtkEMInit GetNumIter]
+    set EMSegment(EMiteration)  [vtkEMInit GetNumIter]
     # set EMSegment(EMiteration)  3
-    set EMSegment(EMiteration)  3
-    # set EMSegment(MFAiteration) [vtkEMInit GetNumRegIter]
     set EMSegment(MFAiteration) 1
+    # set EMSegment(MFAiteration) [vtkEMInit GetNumRegIter]
     set EMSegment(Alpha)        [vtkEMInit GetAlpha]
     set EMSegment(SmWidth)      [vtkEMInit GetSmoothingWidth]
     set EMSegment(SmSigma)      [vtkEMInit GetSmoothingSigma]
     # Debugging set EMSegment(StartSlice)   [vtkEMInit GetStartSlice]
     set EMSegment(StartSlice)   1
-    # set Volume(lastNum)  [MainFileFindImageNumber Last [file join $Mrml(dir) $Volume(firstFile)]]
-    # set EMSegment(EndSlice)     [vtkEMInit GetEndSlice]
-    set EMSegment(EndSlice)     1
-    # set EMSegment(ImgTestNo)        [vtkEMInit GetImgTestNo]
-    set EMSegment(ImgTestNo)        -1
-    # set EMSegment(ImgTestDivision)  [vtkEMInit GetImgTestDivision]
-    set EMSegment(ImgTestDivision)  $EMSegment(NumClasses)
-    # set EMSegment(ImgTestPixel)     [vtkEMInit GetImgTestPixel]
-    set EMSegment(ImgTestPixel)     2
+    set EMSegment(EndSlice)     [vtkEMInit GetEndSlice]
+    # set EMSegment(EndSlice)     1
+    set EMSegment(ImgTestNo)        [vtkEMInit GetImgTestNo]
+    #set EMSegment(ImgTestNo)        -1
+    set EMSegment(ImgTestDivision)  [vtkEMInit GetImgTestDivision]
+    # set EMSegment(ImgTestDivision)  $EMSegment(NumClasses)
+    set EMSegment(ImgTestPixel)     [vtkEMInit GetImgTestPixel]
+    # set EMSegment(ImgTestPixel)     2
     set EMSegment(PrintIntermediateResults)   [vtkEMInit GetPrintIntermediateResults] 
-
+    set EMSegment(PrintIntermediateSlice)   [vtkEMInit GetPrintIntermediateSlice] 
+    set EMSegment(PrintIntermediateFrequency)   [vtkEMInit GetPrintIntermediateFrequency] 
     vtkEMInit Delete
 
     # Should the Forgorund ( = 0 ) or Background (= 1) be read for the sample inputs
@@ -263,6 +261,7 @@ proc EMSegmentInit {} {
 
     # Define for Class 0 for Histogram
     set EMSegment(Cattrib,0,Graph) 0
+    set EMSegment(Cattrib,0,Label) H
     set EMSegment(Cattrib,0,ColorCode) #ffff00
     set EMSegment(Graph,0,VolumeID) -1 
     set EMSegment(Graph,0,XMin)     -1
@@ -314,7 +313,6 @@ proc EMSegmentInit {} {
     set EMSegment(eventManager)  { \
 	    {all <Control-Button-1> {EMSegmentBindingCallback Shift-3 %W %X %Y %x %y %t}}}
   #	    all <Control-Button-1> EMSegmentBindingCallback Shift-1 %W %X %Y %x %y %t
-
 }
 
 
@@ -373,19 +371,18 @@ proc EMSegmentBuildGUI {} {
     # Write the "help" in the form of psuedo-html.  
     # Refer to the documentation for details on the syntax.
     #
-    set help "
-    The EMSegment module is a realization of the EM-MRF EMSegment algortihm defined in
-    Tina Kapur's PhD Thesis. Her thesis can be found on the web : 
-    http://www.ai.mit.edu/people/tkapur/publications.html
-    Kilian Pohl 15-Oct-2001 
-    <P>
-    Description by tab:
-    <BR>
+    set help "The EMSegment module is a realization of the EM-MRF EMSegment algortihm defined in
+    Tina Kapur's PhD Thesis. Her thesis can be found on the web :<BR> 
+    http://www.ai.mit.edu/people/tkapur/publications.html<P>
+Description of the tabs:
     <UL>
-    <LI><B>MRF-EM:</B> This tab is a user interface to run the algorithm.
-    <LI><B>Advenced:</B> This tab is for advenced user to change the default
-    attributes defined for the algorith.
-    "
+    <LI><B>EM:</B> Beginner users should just use this panel. It guides one through the steps of segmentation.
+    <LI><B>Class:</B> This tab allowes one to define the class distribition. Their are two ways how to define a class distribution:
+    <BR> - \"Use Sample\" is raised: the data can be entered manually on the right side of the panel.
+    <BR> - \"Use Sample\" is lowered: the class distribution is defined by taking samples from the lower image panel. Just press CTRL-Left Mouse Button to take a sample.
+    <BR> The differnet distributions and the histogram of the image can be viewd in the graph.
+    <LI><B>CIM:</B> The Class interaction matrix is defined in this tab. The matrix's row represents the neighbour and the colume defines the current voxel, i.e P(voxel) = CIM * P(neighbour) where P defines the probability of the different tissue classes
+    <LI><B>Setting:</B>One can tune the algorithm and define paramters about the graph can be done her."
     regsub -all "\n" $help {} help
     MainHelpApplyTags EMSegment $help
     MainHelpBuildGUI EMSegment
@@ -396,30 +393,46 @@ proc EMSegmentBuildGUI {} {
     set fEM $Module(EMSegment,fEM)
     set f $fEM
     
-    for {set i 1} {$i < 4} {incr i} {
+    for {set i 1} {$i < 5} {incr i} {
 	frame $f.fStep$i -bg $Gui(activeWorkspace)
 	pack $f.fStep$i -side top -padx 0 -pady $Gui(pad) -fill x
     }
     
     #-------------------------------------------
-    # EM->Step1 frame: Load CIM Field
+    # EM->Step1 frame: Volume Selection
     #-------------------------------------------
     set f $fEM.fStep1
+    $f config -relief groove -bd 3
+
+    DevAddLabel $f.l "Step 1: Select Volume to be segmented"
+    pack $f.l -side top -padx $Gui(pad) -pady $Gui(pad)
+    frame $f.fSelection -bg $Gui(activeWorkspace) 
+    pack $f.fSelection -side top -padx $Gui(pad) -pady $Gui(pad)
+
+    DevAddSelectButton  EMSegment $f.fSelection VolumeSelect "" Pack "Select Volume to be segmented"
+    # Append menus and buttons to lists that get refreshed during UpdateMRML
+    lappend Volume(mbActiveList) $f.fSelection.mbVolumeSelect
+    lappend Volume(mActiveList) $f.fSelection.mbVolumeSelect.m
+
+    #-------------------------------------------
+    # EM->Step2 frame: Load CIM Field
+    #-------------------------------------------
+    set f $fEM.fStep2
     
-    DevAddLabel $f.lHead "Step 1: Load Class Interaction Matrix"
+    DevAddLabel $f.lHead "Step 2: Load Class Interaction Matrix"
     pack $f.lHead -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
     # file browse box
     DevAddFileBrowse $f EMSegment FileCIM "File" "" "mrf"  "." "" "Load File with Class Interation Matrix"
 
     #-------------------------------------------
-    # EM->Step2 frame : Select and Define Classes
+    # EM->Step3 frame : Select and Define Classes
     #-------------------------------------------
-    set f $fEM.fStep2
+    set f $fEM.fStep3
 
-    # Make a box around class 2
+    # Make a box around class 3
     $f config -relief groove -bd 3
  
-    DevAddLabel $f.lHead1 "Step 2: Select Class"
+    DevAddLabel $f.lHead1 "Step 3: Select Class"
     frame $f.fSelect -bg $Gui(activeWorkspace)
     pack $f.lHead1 $f.fSelect -side top -padx $Gui(pad) -pady $Gui(pad)
 
@@ -427,15 +440,14 @@ proc EMSegmentBuildGUI {} {
     # General Information on how to create menubtton
     # Gui = defines general setting for buttons, menues, ..., eg. font size ...
     # Through the eval command a list is created with {..} $Gui(..) 
-    # and afterwards executed
-    
+    # and afterwards executed   
     set menu $f.fSelect.mbClasses.m 
     set Sclass $EMSegment(Class) 
 
     DevAddLabel $f.fSelect.lText "Class:"
 
     #Define Menu button
-    eval {menubutton $f.fSelect.mbClasses -text $Sclass -menu $menu -width 10} $Gui(WMBA)
+    eval {menubutton $f.fSelect.mbClasses -text $EMSegment(Cattrib,$Sclass,Label) -menu $menu -width 10} $Gui(WMBA)
 
     $f.fSelect.mbClasses configure -bg $EMSegment(Cattrib,$Sclass,ColorCode) -activebackground $EMSegment(Cattrib,$Sclass,ColorCode)
     
@@ -448,11 +460,11 @@ proc EMSegmentBuildGUI {} {
     # Add Selection entry
     for {set i 1} {$i <= $EMSegment(NumClasses)} {incr i 1} {
         # change Menu Button when selected
-	$menu add command -label "$i" -command "EMSegmentChangeClass $i" \
+	$menu add command -label "$EMSegment(Cattrib,$i,Label)" -command "EMSegmentChangeClass $i" \
 		-background $EMSegment(Cattrib,$i,ColorCode) -activebackground $EMSegment(Cattrib,$i,ColorCode)
     } 
 
-    DevAddLabel $f.lHead2 "Step 3: Take Samples:"
+    DevAddLabel $f.lHead2 "Step 4: Take Samples:"
     frame $f.fPicture -bg $Gui(activeWorkspace)
     frame $f.fDefine -bg $Gui(activeWorkspace)
 
@@ -495,7 +507,7 @@ proc EMSegmentBuildGUI {} {
     #-------------------------------------------
     # EM->Step4 Frame: Run Algorithm
     #-------------------------------------------
-    set f $fEM.fStep3
+    set f $fEM.fStep4
         
     # Define Button to start algorithm
     DevAddButton $f.bStart Segement EMSegmentStartEM 
@@ -524,7 +536,7 @@ proc EMSegmentBuildGUI {} {
 
     #Define Menu button
     set menu $f.mbClasses.m 
-    eval {menubutton $f.mbClasses -text "Class $Sclass" -menu $menu -width 10} $Gui(WMBA)
+    eval {menubutton $f.mbClasses -text "$EMSegment(Cattrib,$Sclass,Label)" -menu $menu -width 10} $Gui(WMBA)
     
     $f.mbClasses configure -bg $EMSegment(Cattrib,$Sclass,ColorCode) -activebackground $EMSegment(Cattrib,$Sclass,ColorCode)
 
@@ -537,8 +549,14 @@ proc EMSegmentBuildGUI {} {
     # Add Selection entry
     for {set i 1} {$i <= $EMSegment(NumClasses)} {incr i 1} {
         # change Menu Button when selected
-	$menu add command -label "Class $i" -command  "EMSegmentChangeClass $i" \
+	$menu add command -label "$EMSegment(Cattrib,$i,Label)" -command  "EMSegmentChangeClass $i" \
 		-background $EMSegment(Cattrib,$i,ColorCode) -activebackground $EMSegment(Cattrib,$i,ColorCode)
+    } 
+    
+    if  {$EMSegment(UseLocalPrior) == 1} {
+	frame $f.fProbSelect -bg $Gui(activeWorkspace) 
+	pack $f.fProbSelect -side top -padx $Gui(pad) -pady $Gui(pad)
+	DevAddSelectButton  EMSegment $f.fProbSelect ProbVolumeSelect "Probability Volume Map" Pack "Select Probability Volume Map"
     } 
 
     #--------------------------------------------
@@ -617,7 +635,7 @@ proc EMSegmentBuildGUI {} {
     EMSegmentWriteTextBox
 
     # Depending on the Situation we want to en- or disable certain fields
-    EMSegmentUseSamples 1
+    EMSegmentUseSamples 0
 
     #-------------------------------------------
     # Class->Section 3: Display Graph   
@@ -632,7 +650,7 @@ proc EMSegmentBuildGUI {} {
 
     # Create Button for Histogram
     for {set i 0} {$i <= $EMSegment(NumClasses)} {incr i} {
-	EMSegmentCreateGraphButton $i $EMSegment(Cattrib,$i,ColorCode)
+	EMSegmentCreateGraphButton $i $EMSegment(Cattrib,$i,Label) $EMSegment(Cattrib,$i,ColorCode)
     }
 
     canvas $f.caGraph -width $EMSegment(Graph,Cxle) -height $EMSegment(Graph,Cyle)      
@@ -679,16 +697,16 @@ proc EMSegmentBuildGUI {} {
     #-------------------------------------------
     set fMa $Module(EMSegment,fCIM)
     set f $fMa
-    set CIMMenu {Load Train Edit Save}
+    set CIMMenu {Import Train Edit Export}
 
     #-------------------------------------------
     # CIM->Sec1 Frame: Menu Selection      
     #-------------------------------------------
     TabbedFrame EMSegment $f "" $CIMMenu $CIMMenu \
-	    {"Load File defining Class Interaction Matrix" \
+	    {"Import from File defining Class Interaction Matrix" \
 	     "Define a new Class Interaction Matrix by training at already images"\
 	     "Edit Matrix defining Class Interaction"\
-             "Save Class Interaction Matrix to a file"}\
+             "Export Class Interaction Matrix to a file"}\
 	    0 Edit
 
     foreach i $CIMMenu {
@@ -701,9 +719,9 @@ proc EMSegmentBuildGUI {} {
     set EMSegment(Ma-fCIM) $f
 
     #-------------------------------------------
-    # CIM->Sec2 Frame: Load CIM Random Field 
+    # CIM->Sec2 Frame: Import CIM Random Field 
     #-------------------------------------------
-    set f $EMSegment(Ma-fCIM).fLoad
+    set f $EMSegment(Ma-fCIM).fImport
 
     DevAddLabel $f.lLoadText "Selecting File defining Class Interaction Matrix"
     pack $f.lLoadText -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
@@ -801,11 +819,11 @@ proc EMSegmentBuildGUI {} {
     EMSegmentCreateCIMRowsColumns 1 $EMSegment(NumClasses)
     
     #-------------------------------------------
-    # CIM->Sec5 Frame: Save CIM Random Field 
+    # CIM->Sec5 Frame: Export CIM Random Field 
     #-------------------------------------------
-    set f $EMSegment(Ma-fCIM).fSave
+    set f $EMSegment(Ma-fCIM).fExport
 
-    DevAddLabel $f.lSaveText "Saving Class Interaction Matrix to a file"
+    DevAddLabel $f.lSaveText "Export Class Interaction Matrix to a file"
     pack $f.lSaveText -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
     set EMSegment(Ma-lSaveText) $f.lSaveText
 
@@ -860,7 +878,15 @@ proc EMSegmentBuildGUI {} {
 		-text "$text" -value "$value" -variable EMSegment(PrintIntermediateResults) } $Gui(WCA)
     }
     TooltipAdd $f.fSect1.fCol2.fCreateFile "Create Matlab Files (EMSegmResult<iter>.m) for displaying intermediate results"
-   
+
+    DevAddLabel $f.fSect1.fCol1.lWriteSlice "Print Slice:"
+    eval {entry $f.fSect1.fCol2.eWriteSlice -width 4 -textvariable EMSegment(PrintIntermediateSlice) } $Gui(WEA)
+    TooltipAdd $f.fSect1.fCol2.eWriteSlice "Print out the result of which slice ?"
+
+    DevAddLabel $f.fSect1.fCol1.lWriteFrequency "Printing Frequency:"
+    eval {entry $f.fSect1.fCol2.eWriteFrequency -width 4 -textvariable EMSegment(PrintIntermediateFrequency) } $Gui(WEA)
+    TooltipAdd $f.fSect1.fCol2.eWriteFrequency "Print out the result after how many steps ?"
+
     DevAddLabel $f.fSect1.fCol1.lStartSlice "Start Slice:"
     eval {entry $f.fSect1.fCol2.eStartSlice -width 4 -textvariable EMSegment(StartSlice) } $Gui(WEA)
     TooltipAdd $f.fSect1.fCol2.eStartSlice "Slice Number to start EM-EMSegment"
@@ -931,6 +957,9 @@ proc EMSegmentBuildGUI {} {
 
     DevAddLabel $f.fSect1.fCol1.lEmpty6 ""
     DevAddLabel $f.fSect1.fCol2.lEmpty6 ""
+
+    DevAddLabel $f.fSect1.fCol1.lEmpty7 ""
+    DevAddLabel $f.fSect1.fCol2.lEmpty7 ""
    
     # Pack 1 Block
     pack $f.fSect1.fCol1.lNumClasses -side top -padx $Gui(pad) -pady 2 -anchor w 
@@ -949,20 +978,25 @@ proc EMSegmentBuildGUI {} {
     pack $f.fSect1.fCol2.fEndSlice.e $f.fSect1.fCol2.fEndSlice.b -side left
 
     #Pack 4.Block
-    pack $f.fSect1.fCol1.lSmWidth $f.fSect1.fCol1.lSmSigma $f.fSect1.fCol1.lCreateFile -side top -padx $Gui(pad) -pady 2 -anchor w 
-    pack $f.fSect1.fCol2.eSmWidth $f.fSect1.fCol2.eSmSigma $f.fSect1.fCol2.fCreateFile -side top -anchor w
+    pack $f.fSect1.fCol1.lSmWidth $f.fSect1.fCol1.lSmSigma -side top -padx $Gui(pad) -pady 2 -anchor w 
+    pack $f.fSect1.fCol2.eSmWidth $f.fSect1.fCol2.eSmSigma -side top -anchor w
     pack $f.fSect1.fCol1.lEmpty4 $f.fSect1.fCol2.lEmpty4 -side top -padx $Gui(pad) -pady 1 -anchor w 
+
+    #Pack 5.Block
+    pack $f.fSect1.fCol1.lCreateFile  $f.fSect1.fCol1.lWriteSlice $f.fSect1.fCol1.lWriteFrequency -side top -padx $Gui(pad) -pady 2 -anchor w 
+    pack $f.fSect1.fCol2.fCreateFile  $f.fSect1.fCol2.eWriteSlice $f.fSect1.fCol2.eWriteFrequency -side top -anchor w
+    pack $f.fSect1.fCol1.lEmpty5 $f.fSect1.fCol2.lEmpty5 -side top -padx $Gui(pad) -pady 1 -anchor w 
 
     pack $f.fSect1.fCol2.fCreateFile.r1  $f.fSect1.fCol2.fCreateFile.r0 -side left -fill x
 
-    #Pack 5.Block
+    #Pack 6.Block
     pack $f.fSect1.fCol1.lXMin $f.fSect1.fCol1.lXMax $f.fSect1.fCol1.lXSca $f.fSect1.fCol1.lUseProb  -side top -padx $Gui(pad) -pady 2 -anchor w 
     pack $f.fSect1.fCol2.eXMin $f.fSect1.fCol2.eXMax $f.fSect1.fCol2.eXSca $f.fSect1.fCol2.fUseProb -side top -anchor w
-    pack $f.fSect1.fCol1.lEmpty5 $f.fSect1.fCol2.lEmpty5 -side top -padx $Gui(pad) -pady 1 -anchor w 
+    pack $f.fSect1.fCol1.lEmpty6 $f.fSect1.fCol2.lEmpty6 -side top -padx $Gui(pad) -pady 1 -anchor w 
    
     pack $f.fSect1.fCol2.fUseProb.r1  $f.fSect1.fCol2.fUseProb.r0 -side left -fill x
 
-    #Pack 6.Block
+    #Pack 7.Block
     pack $f.fSect1.fCol1.lTNo $f.fSect1.fCol1.lTDiv $f.fSect1.fCol1.lTPix  -side top -padx $Gui(pad) -pady 2 -anchor w 
     pack $f.fSect1.fCol2.eTNo $f.fSect1.fCol2.eTDiv $f.fSect1.fCol2.eTPix  -side top -anchor w
     # pack $f.fSect1.fCol1.lEmpty6 $f.fSect1.fCol2.lEmpty6 -side top -padx $Gui(pad) -pady 1 -anchor w 
@@ -1025,9 +1059,9 @@ proc EMSegmentExit {} {
 #-------------------------------------------------------------------------------
 proc EMSegmentUpdateGUI {} {
     global EMSegment Volume
-    
-    DevUpdateNodeSelectButton Volume EMSegment Volume1 Volume1 DevSelectNode
-    DevUpdateNodeSelectButton Model  EMSegment Model1  Model1  DevSelectNode
+    if {$EMSegment(UseLocalPrior) == 1 } {
+	DevUpdateNodeSelectButton Volume EMSegment  ProbVolumeSelect ProbVolumeSelect DevSelectNode
+    }
 }
 
 
@@ -1075,20 +1109,9 @@ proc EMSegmentBindingCallback { event W X Y x y t } {
 proc EMSegmentStartEM { } {
    global EMSegment Volume Mrml Module
    set clist {}
-   # Kilian: For Debugging 
+   # Kilian: For Debugging
    # set EMSegment(FileCIM) knee.mrf
-   # if {[DevFileExists $EMSegment(FileCIM)]} {
-   #    $EMSegment(Ma-lLoadText) configure -text "Reading from file ...."
-   #    if {[EMSegmentReadCIMFile 0]} {
-   #	   $EMSegment(Ma-lLoadText) configure -text "Finished reading CIM parameters from from file."
-   #	   EMSegmentExecuteCIM Edit
-   #	   set EMSegment(TabbedFrame,$EMSegment(Ma-tabCIM),tab) Edit
-   #    } else {
-   #	   $EMSegment(Ma-lLoadText) configure -text "Error: MRF-File was not correct!"
-   #    }
-   #} else {
-   #    $EMSegment(Ma-lLoadText) configure -text "Error: Could not read file !"
-   #}
+   # EMSegmentImportCIM 0
 
    # Update Values
    EMSegmentCalculateClassMeanSigma
@@ -1132,10 +1155,13 @@ proc EMSegmentStartEM { } {
    EMStart SetSmoothingSigma  $EMSegment(SmSigma)      
    EMStart SetStartSlice      $EMSegment(StartSlice)
    EMStart SetEndSlice        $EMSegment(EndSlice)
+   # EMStart SetEndSlice        3
    EMStart SetImgTestNo       $EMSegment(ImgTestNo)
    EMStart SetImgTestDivision $EMSegment(ImgTestDivision)
    EMStart SetImgTestPixel    $EMSegment(ImgTestPixel)
    EMStart SetPrintIntermediateResults  $EMSegment(PrintIntermediateResults) 
+   EMStart SetPrintIntermediateSlice  $EMSegment(PrintIntermediateSlice) 
+   EMStart SetPrintIntermediateFrequency  $EMSegment(PrintIntermediateFrequency) 
 
    for {set i 1} { $i<= $EMSegment(NumClasses)} {incr i} {
        EMStart SetProbability  $EMSegment(Cattrib,$i,Prob) $i
@@ -1146,8 +1172,12 @@ proc EMSegmentStartEM { } {
        # Reads in the value for each class individually
        for {set j 1} { $j<= $EMSegment(NumClasses)} {incr j} {
 	   for {set k 0} { $k< 6} {incr k} {
+	       EMStart SetMarkovMatrix $EMSegment(CIMMatrix,$i,$j,[lindex $EMSegment(CIMList) $k]) [expr $k+1] $j $i
 	       # Input for SetCIMMatrix : value z y x
-	       EMStart SetMarkovMatrix $EMSegment(CIMMatrix,$i,$j,[lindex $EMSegment(CIMList) $k]) [expr $k+1] $j $i 
+	       #if {$EMSegment(CIMMatrix,$i,$j,[lindex $EMSegment(CIMList) $k]) > 0} {
+	       #   EMStart SetMarkovMatrix [expr log($EMSegment(CIMMatrix,$i,$j,[lindex $EMSegment(CIMList) $k]))] [expr $k+1] $j $i
+	       #} else { EMStart SetMarkovMatrix [expr log(0.00001)] [expr $k+1] $j $i
+	       #}
 	   }
        }
    }  
@@ -1184,9 +1214,31 @@ proc EMSegmentStartEM { } {
 
    # Delete instance
    EMStart Delete
-
-
 }
+
+#-------------------------------------------------------------------------------
+# .PROC EMSegmentImportCIM
+# Imports the CIM Matrix and other paramters 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc EMSegmentImportCIM {flag} {
+   global EMSegment
+   if {[DevFileExists $EMSegment(FileCIM)]} {
+      $EMSegment(Ma-lLoadText) configure -text "Reading from file ...."
+      if {[EMSegmentReadCIMFile $flag]} {
+   	   $EMSegment(Ma-lLoadText) configure -text "Finished reading CIM parameters from from file."
+   	   EMSegmentExecuteCIM Edit
+   	   set EMSegment(TabbedFrame,$EMSegment(Ma-tabCIM),tab) Edit
+      } else {
+   	   $EMSegment(Ma-lLoadText) configure -text "Error: MRF-File was not correct!"
+      }
+   } else {
+      $EMSegment(Ma-lLoadText) configure -text "Error: Could not read file !"
+   }
+}
+
+
 #-------------------------------------------------------------------------------
 # .PROC EMSegmentClickLabel
 # Sets everything correctly after user choosed label number and color 
@@ -1194,9 +1246,9 @@ proc EMSegmentStartEM { } {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc EMSegmentClickLabel {{label ""} {colorcode ""}} {
+proc EMSegmentClickLabel {{Sclass ""} {label ""} {colorcode ""}} {
     global EMSegment Label Mrml 
-    set Sclass $EMSegment(Class)
+    if {$Sclass == ""} {set  Sclass $EMSegment(Class)}
     # if label ="" it was called back from Label.tcl
     if {$label == ""} {
 	set EMSegment(Cattrib,$Sclass,Label) $Label(label)	
@@ -1215,19 +1267,23 @@ proc EMSegmentClickLabel {{label ""} {colorcode ""}} {
     }
     # Change Color of button
     $EMSegment(EM-mbClasses) configure -bg $EMSegment(Cattrib,$Sclass,ColorCode) \
-	    -activebackground $EMSegment(Cattrib,$Sclass,ColorCode)
+	    -activebackground $EMSegment(Cattrib,$Sclass,ColorCode) -text $EMSegment(Cattrib,$Sclass,Label)
     $EMSegment(EM-mbClasses).m entryconfigure [expr $Sclass-1] -background $EMSegment(Cattrib,$Sclass,ColorCode) \
-	    -activebackground $EMSegment(Cattrib,$Sclass,ColorCode)
+	    -activebackground $EMSegment(Cattrib,$Sclass,ColorCode) -label $EMSegment(Cattrib,$Sclass,Label)
 
     $EMSegment(Cl-mbClasses) configure -bg $EMSegment(Cattrib,$Sclass,ColorCode) \
-	    -activebackground $EMSegment(Cattrib,$Sclass,ColorCode)
+	    -activebackground $EMSegment(Cattrib,$Sclass,ColorCode) -text $EMSegment(Cattrib,$Sclass,Label)
     $EMSegment(Cl-mbClasses).m entryconfigure [expr $Sclass-1] -background $EMSegment(Cattrib,$Sclass,ColorCode) \
-	    -activebackground $EMSegment(Cattrib,$Sclass,ColorCode)
+	    -activebackground $EMSegment(Cattrib,$Sclass,ColorCode) -label $EMSegment(Cattrib,$Sclass,Label)
 
-    $EMSegment(Cl-bColorLabel) configure -text  $EMSegment(Cattrib,$Sclass,Label) -bg $EMSegment(Cattrib,$Sclass,ColorCode) \
-	    -activebackground $EMSegment(Cattrib,$Sclass,ColorCode)
+    $EMSegment(Cl-bColorLabel) configure -text $EMSegment(Cattrib,$Sclass,Label) -bg $EMSegment(Cattrib,$Sclass,ColorCode) \
+	    -activebackground $EMSegment(Cattrib,$Sclass,ColorCode) 
     $EMSegment(Cl-fGraphButtons).bGraphButton$Sclass configure -bg $EMSegment(Cattrib,$Sclass,ColorCode) \
-	    -activebackground $EMSegment(Cattrib,$Sclass,ColorCode)
+	    -activebackground $EMSegment(Cattrib,$Sclass,ColorCode) -text $EMSegment(Cattrib,$Sclass,Label)
+
+    set f $EMSegment(CIM-fMatrix)
+    $f.fLineL.l$Sclass configure -text "$EMSegment(Cattrib,$Sclass,Label)"
+    $f.fLine$Sclass.lLabel configure -text "$EMSegment(Cattrib,$Sclass,Label)"
 }
 
 #-------------------------------------------------------------------------------
@@ -1243,14 +1299,14 @@ proc EMSegmentDisplayClassDefinition {} {
    #--------------------- 
    # Update panel EM
    #--------------------- 
-   $EMSegment(EM-mbClasses) config -text $Sclass    
+   $EMSegment(EM-mbClasses) config -text $EMSegment(Cattrib,$Sclass,Label)    
    $EMSegment(EM-lSampvar)  config -text [llength $EMSegment(Cattrib,$Sclass,Sample)]
    $EMSegment(EM-lMeanvar)  config -text [expr int($EMSegment(Cattrib,$Sclass,Mean)*10000+0.5)/10000.0] 
 
    #---------------------
    #Update panel Class
    #---------------------
-   $EMSegment(Cl-mbClasses) config -text "Class $Sclass"
+   $EMSegment(Cl-mbClasses) config -text "$EMSegment(Cattrib,$Sclass,Label)"
    
    EMSegmentWriteTextBox   
 }
@@ -1523,7 +1579,7 @@ proc EMSegmentScrolledText {f} {
 proc EMSegmentCreateDeleteClasses {} {
     global EMSegment
     set ColorLabelLength [expr [llength $EMSegment(ColorLabelList)] / 2]
-
+    set CIMflag 0
     # Class never has changed befor
     if {$EMSegment(NumClassesNew) == -1} {
 	set Cstart 1
@@ -1587,10 +1643,11 @@ proc EMSegmentCreateDeleteClasses {} {
       # Add Menu buttons
       for {set i $Cstart} {$i < $Cfinish} {incr i 1} {
           # change Menu Button when selected
+	  set label [lindex $EMSegment(ColorLabelList) [expr 2*(($i-1)%$ColorLabelLength)+1]]
 	  set color [lindex $EMSegment(ColorLabelList) [expr 2*(($i-1)%$ColorLabelLength)]]
-	  $EMSegment(Cl-mbClasses).m add command -label "Class $i" -command  "EMSegmentChangeClass $i" \
+	  $EMSegment(Cl-mbClasses).m add command -label "$label" -command  "EMSegmentChangeClass $i" \
 		  -background $color -activebackground $color 
-	  $EMSegment(EM-mbClasses).m add command -label "$i" -command  "EMSegmentChangeClass $i" \
+	  $EMSegment(EM-mbClasses).m add command -label "$label" -command  "EMSegmentChangeClass $i" \
 		  -background $color -activebackground $color 
 
           # Add fields to Marcov Matrix
@@ -1604,10 +1661,9 @@ proc EMSegmentCreateDeleteClasses {} {
 	  }
 
 	  # Create Graph button
-	  EMSegmentCreateGraphButton $i $color
+	  EMSegmentCreateGraphButton $i $label $color
       }
-      # Add new Rows and lines to the CIM Matrix 
-      EMSegmentCreateCIMRowsColumns $Cstart $EMSegment(NumClassesNew)              
+      set CIMflag 1
   }
   # Set all parameter for each class
   # it is always defined as EMSegment(Catribute,<Class>,<Attribute>)
@@ -1635,6 +1691,9 @@ proc EMSegmentCreateDeleteClasses {} {
   # where the "Relation of the Pixels" can be set as Pixel with "left", 
   # "right", "up" or "down" Neighbour  
   # EMSegment(CIMMatrix,<y>,<x>,<Type>)
+
+  # Add new Rows and lines to the CIM Matrix 
+  if {$CIMflag == 1} {EMSegmentCreateCIMRowsColumns $Cstart $EMSegment(NumClassesNew) } 
   for {set i 1} {$i < $Cfinish } {incr i 1} {
       # Just update only new Row elements or whole line 
       if { $i < $Cstart} { set jstart $Cstart 
@@ -1686,17 +1745,15 @@ proc EMSegmentReadGreyValue {x y} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc EMSegmentCreateGraphButton {Sclass Color} {
+proc EMSegmentCreateGraphButton {Sclass Label Color} {
     global EMSegment Gui
     if {$Sclass == 0 } {
-	set buttonText "H"
 	set TooltipText "Press button to display histogram of current active volume" 
     } else {
-	set buttonText "$Sclass"
 	set TooltipText "Press button to display Gaussian of class $Sclass" 
     }
 
-    eval {button $EMSegment(Cl-fGraphButtons).bGraphButton$Sclass -text $buttonText -width 3 \
+    eval {button $EMSegment(Cl-fGraphButtons).bGraphButton$Sclass -text $Label -width 3 \
 	    -command "EMSegmentDrawDeleteCurve $Sclass"} $Gui(WBA)
 
     $EMSegment(Cl-fGraphButtons).bGraphButton$Sclass configure -bg $Color
@@ -2130,26 +2187,14 @@ proc EMSegmentExecuteCIM {command} {
     focus $EMSegment(Ma-fCIM).f$command
 	
     switch $command {
-       Load {   $EMSegment(Ma-lLoadText) configure -text "Selecting File defining Class Interaction Matrix"
-                set EMSegment(FileCIM) [ DevGetFile $EMSegment(FileCIM) 1 mrf "." "Load File with Class Interaction Matrix"  "" " " ]; 
-	        
-                if {[DevFileExists $EMSegment(FileCIM)]} {
-		    $EMSegment(Ma-lLoadText) configure -text "Reading from file ...."
-		    if {[EMSegmentReadCIMFile 1]} {
-			$EMSegment(Ma-lLoadText) configure -text "Finished reading Class Interaction parameters from from file."
-			EMSegmentExecuteCIM Edit
-			set EMSegment(TabbedFrame,$EMSegment(Ma-tabCIM),tab) Edit
-		    } else {
-			$EMSegment(Ma-lLoadText) configure -text "Error: MRF-File was not correct!"
-		    }
-		} else {
-		     $EMSegment(Ma-lLoadText) configure -text "Error: Could not read file !"
-		}
+       Import { $EMSegment(Ma-lLoadText) configure -text "Selecting File defining Class Interaction Matrix"
+                set EMSegment(FileCIM) [ DevGetFile $EMSegment(FileCIM) 1 mrf "." "Import File with Class Interaction Matrix"  "" " " ]; 
+	        EMSegmentImportCIM 1
 	    }
 	    
-       Save { 	        
-	        $EMSegment(Ma-lSaveText) configure -text "Saving Class Interaction Matrix to a file" 
-	        set EMSegment(FileCIM) [ DevGetFile $EMSegment(FileCIM) 1 mrf "." "Save Class Interaction Matrix to a file" Save "" ];  
+       Export { 	        
+	        $EMSegment(Ma-lSaveText) configure -text "Export Class Interaction Matrix to a file" 
+	        set EMSegment(FileCIM) [ DevGetFile $EMSegment(FileCIM) 1 mrf "." "Export Class Interaction Matrix to a file" Save "" ];  
                 EMSegmentSaveCIMFile
 	        $EMSegment(Ma-lSaveText) configure -text "Finished saving. \nUse other buttons for further actions!" 
             }
@@ -2173,13 +2218,13 @@ proc EMSegmentCreateCIMRowsColumns {start end} {
       frame $f.fLineL -bg $Gui(activeWorkspace)
       pack $f.fLineL -side top -padx 0 -pady 0 -fill x
     
-      eval {label $f.fLineL.lLabel  -text "" -width 7} $Gui(WLA)
+      eval {label $f.fLineL.lLabel  -text "" -width 4} $Gui(WLA)
       pack $f.fLineL.lLabel -side left -padx $Gui(pad) -pady 1 
    }
 
    # Add row text
    for {set i $start} {$i < $end} {incr i} {
-       eval {label $f.fLineL.l$i -text "$i" -width 4} $Gui(WLA)
+       eval {label $f.fLineL.l$i -text "$EMSegment(Cattrib,$i,Label)" -width 4} $Gui(WLA)
        pack $f.fLineL.l$i -side left -padx 3  -pady 1 
    }
 
@@ -2197,7 +2242,7 @@ proc EMSegmentCreateCIMRowsColumns {start end} {
           frame $f.fLine$i -bg $Gui(activeWorkspace)
           pack $f.fLine$i -side top -padx 0 -pady 0 -fill x
 
-          eval {label $f.fLine$i.lLabel  -text "Class $i" -width 7} $Gui(WLA)
+          eval {label $f.fLine$i.lLabel  -text "$EMSegment(Cattrib,$i,Label)" -width 4} $Gui(WLA)
           pack $f.fLine$i.lLabel -side left -padx $Gui(pad) -pady 1 
           # Add new columns to the matrix
           for {set j 1} {$j < $end} {incr j} {
@@ -2234,6 +2279,23 @@ proc EMSegmentChangeCIMMatrix {CIMType} {
 #-------------------------------------------------------------------------------
 proc EMSegmentTrainCIMField {} {
     global EMSegment Volume
+
+    # Kilian: For Debugging 
+    # set EMSegment(FileCIM) brain.mrf
+    set EMSegment(FileCIM) knee.mrf
+    if {[DevFileExists $EMSegment(FileCIM)]} {
+	$EMSegment(Ma-lLoadText) configure -text "Reading from file ...."
+	if {[EMSegmentReadCIMFile 0]} {
+	    $EMSegment(Ma-lLoadText) configure -text "Finished reading CIM parameters from from file."
+	    EMSegmentExecuteCIM Edit
+	    set EMSegment(TabbedFrame,$EMSegment(Ma-tabCIM),tab) Edit
+	} else {
+	    $EMSegment(Ma-lLoadText) configure -text "Error: MRF-File was not correct!"
+	}
+    } else {
+	$EMSegment(Ma-lLoadText) configure -text "Error: Could not read file !"
+    }
+
     # Transferring Information
     vtkImageEMMarkov EMCIM    
     # EM Specific Information
@@ -2244,7 +2306,6 @@ proc EMSegmentTrainCIMField {} {
     EMCIM SetImgTestDivision $EMSegment(ImgTestDivision)
     EMCIM SetImgTestPixel    $EMSegment(ImgTestPixel)
 
-    #Debugging
     for {set i 1} { $i<= $EMSegment(NumClasses)} {incr i} {
 	if {$EMSegment(ImgTestNo) < 1} { 
 	    EMCIM SetMu           $EMSegment(Cattrib,$i,Mean) $i
@@ -2261,8 +2322,8 @@ proc EMSegmentTrainCIMField {} {
     set data [EMCIM GetInput]
     $data Update
  
-    # $EMSegment(data) SetWholeExtent 0 1 0 1 0 5
-    # EMCIM SetComponentExtent 0 1 0 1 0 5
+    # $data_blub SetWholeExtent 0 $EMSegment(NumClasses) 0 $EMSegment(NumClasses) 0 5
+    # EMCIM SetComponentExtent 0 $EMSegment(NumClasses) 0 $EMSegment(NumClasses) 0 5
 
     set data [EMCIM GetOutput]
     # This Command calls the Thread Execute function
@@ -2273,9 +2334,9 @@ proc EMSegmentTrainCIMField {} {
 	# EMCIM traines the matrix (y=t, x=t-1) just the other way EMSegment (y=t-1, x=t) needs it - Sorry !
 	for {set y 1} {$y <=  $EMSegment(NumClasses) } {incr y} {
 	    for {set z 0} {$z < 6} {incr z} {
-               set EMSegment(CIMMatrix,$x,$y,[lindex $EMSegment(CIMList) $z]) \
-		       [expr int([EMCIM GetMarkovMatrix $y $x [expr $z+1]]*10000+0.5)/10000.0]  
-	# set EMSegment(CIMMatrix,[expr $x+1],[expr $y+1],[lindex $EMSegment(CIMList) $z]) [$EMSegment(TData) GetScalarComponentAsFloat $x $y  $z 0]		
+              set EMSegment(CIMMatrix,$x,$y,[lindex $EMSegment(CIMList) $z]) \
+	         [expr int([EMCIM GetMarkovMatrix $y $x [expr $z+1]]*10000+0.5)/10000.0]  
+	# set EMSegment(CIMMatrix,[expr $x+1],[expr $y+1],[lindex $EMSegment(CIMList) $z]) [$data_blub GetScalarComponentAsFloat $x $y  $z 0]		
 	    }
 	}
     }
@@ -2319,10 +2380,7 @@ proc EMSegmentReadCIMFile {PermissionFlag} {
    set ErrorFlag 0 
 
    # Read Class Paramters
-   if {$EMSegment(UseSamples) == 1} {
-       $EMSegment(Cl-eMeanvar) configure -state normal
-       $EMSegment(Cl-eSigmavar) configure -state normal
-   }
+   if {$EMSegment(UseSamples) == 1} {EMSegmentUseSamples 1}
 
    while { [expr ![eof $FileID] && !$ErrorFlag && ($LineNumber < $EMSegment(NumClasses))] } {
        gets $FileID LineInput
@@ -2348,13 +2406,14 @@ proc EMSegmentReadCIMFile {PermissionFlag} {
 	   } else { 
 	       if {$OverwriteSetting == "yes"} { 
 		   # Read Class Probability and Distribution		   
-		   if { [llength $LineInput] < 3} {
+		   if { [llength $LineInput] < 5} {
 		       DevErrorWindow "Error(5) - while loading file:\nFile does not define enough Class paramters !" 
 		       set ErrorFlag 5
 		   }
-		   set EMSegment(Cattrib,$LineNumber,Prob)  [lindex $LineInput 0]
-		   set EMSegment(Cattrib,$LineNumber,Mean)  [lindex $LineInput 1]
-		   set EMSegment(Cattrib,$LineNumber,Sigma) [lindex $LineInput 2]
+                   EMSegmentClickLabel $LineNumber [lindex $LineInput 0] [lindex $LineInput 1]
+		   set EMSegment(Cattrib,$LineNumber,Prob)  [lindex $LineInput 2]
+		   set EMSegment(Cattrib,$LineNumber,Mean)  [lindex $LineInput 3]
+		   set EMSegment(Cattrib,$LineNumber,Sigma) [lindex $LineInput 4]
 	       }
 	   }
        }
@@ -2362,11 +2421,6 @@ proc EMSegmentReadCIMFile {PermissionFlag} {
 
    gets $FileID LineInput 
    set LineNumber 0
-
-   if {$EMSegment(UseSamples) == 1} {
-       $EMSegment(Cl-eMeanvar) configure -state normal
-       $EMSegment(Cl-eSigmavar) configure -state normal
-   }
 
    # Read CIM Paramters
    while { [expr ![eof $FileID] && !$ErrorFlag] } {
@@ -2468,7 +2522,7 @@ proc EMSegmentSaveCIMFile {} {
 
     for {set i 1} {$i <= $EMSegment(NumClasses) } {incr i} { 	
 	puts $FileID "# Paramters of Class $i"
-	puts $FileID "$EMSegment(Cattrib,$i,Prob) $EMSegment(Cattrib,$i,Mean) $EMSegment(Cattrib,$i,Sigma)"
+	puts $FileID "$EMSegment(Cattrib,$i,Label) $EMSegment(Cattrib,$i,ColorCode) $EMSegment(Cattrib,$i,Prob) $EMSegment(Cattrib,$i,Mean) $EMSegment(Cattrib,$i,Sigma)"
     }
     # Empty Line for seperation of Class Paramters with CIM Matrix
     puts $FileID " "
