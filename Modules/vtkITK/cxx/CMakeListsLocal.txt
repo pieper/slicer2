@@ -26,7 +26,6 @@ vtkITKImageToImageFilterUSUL.h
 vtkITKImageToImageFilterUSUS.h
 vtkITKIsolatedConnectedImageFilter.cxx
 vtkITKLaplacianSegmentationLevelSetImageFilter.h
-vtkITKMutualInformationTransform.cxx
 vtkITKNeighborhoodConnectedImageFilter.h
 vtkITKNormalizeImageFilter.cxx
 vtkITKPDEDeformableRegistrationFilter.h
