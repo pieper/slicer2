@@ -14,7 +14,7 @@
 #define volumeBox 3
 
 #ifndef VTK_IMPLEMENT_MESA_CXX
-vtkCxxRevisionMacro(vtkOpenGLVolumeTextureMapper3D, "$Revision: 1.2 $");
+vtkCxxRevisionMacro(vtkOpenGLVolumeTextureMapper3D, "$Revision: 1.3 $");
 vtkStandardNewMacro(vtkOpenGLVolumeTextureMapper3D);
 #endif
 
@@ -515,9 +515,6 @@ void vtkOpenGLVolumeTextureMapper3D::RenderQuads(vtkRenderer *ren, vtkVolume *vo
   int numQuads = this->GetNumberOfPlanes();
   float diagonal = sqrt(boxSize*boxSize+boxSize*boxSize+boxSize*boxSize);
   
-  //translate so that the focalPoint becomes origin
-  // glTranslatef(focalPoint[0], focalPoint[1], focalPoint[2]);
-
   //calculate the normalvector
   normal[0] = (cameraPosition[0]-focalPoint[0]); 
   normal[1] = (cameraPosition[1]-focalPoint[1]);
@@ -531,10 +528,21 @@ void vtkOpenGLVolumeTextureMapper3D::RenderQuads(vtkRenderer *ren, vtkVolume *vo
     startpos[axis] = -normal[axis]*diagonal/2;
   }
 
+
+
+  //--------------------------------------------
+
+
+
+
+
+
   for(int num = 0; num < numQuads; num++)
   {
     for (int vols = 0; vols < maxVolumes; vols++)
     {
+
+
       if (enableVol[vols] == 1)
       {
     if (vols > 0) 
@@ -549,6 +557,8 @@ void vtkOpenGLVolumeTextureMapper3D::RenderQuads(vtkRenderer *ren, vtkVolume *vo
       nz[axis] = normal[axis]*(diagonal/numQuads)*num;
       planePoint[axis]= startpos[axis]+nz[axis];
     }
+
+
     
     float vertex[12][3];
     float result[4];
@@ -622,8 +632,11 @@ void vtkOpenGLVolumeTextureMapper3D::RenderQuads(vtkRenderer *ren, vtkVolume *vo
     glEnable(GL_BLEND);                
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glBindTexture(GL_TEXTURE_3D_EXT, tempIndex3d[vols]);
-    //glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_);
+    //glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_BLEND);
     
+
+
+
     if (vertexnums >= 3)
     {
       glBegin(GL_POLYGON);
@@ -652,15 +665,18 @@ void vtkOpenGLVolumeTextureMapper3D::RenderQuads(vtkRenderer *ren, vtkVolume *vo
           tx = tx/texSize[vols][0];
           ty = ty/texSize[vols][1];
           tz = tz/textureSizeZ[vols];
-          
+     
+          fprintf(fm, "texCoords tx %f, ty %f, tz %f\n", tx, ty, tz);
+          fflush(fm);
           
           //set texture coordinate
           glTexCoord3f(tx, ty, tz);
-          
+
           float vx = vertex[vertexOrder[v]][0]+origin[0];
           float vy = vertex[vertexOrder[v]][1]+origin[1];
           float vz = vertex[vertexOrder[v]][2]+origin[2];
-          
+          fprintf(fm, "VertexCoords vx %f, vy %f, vz %f\n", vx, vy, vz);
+          fflush(fm);
           //set vertex coordinates
           glVertex3f(vx, vy, vz);    
         }
@@ -675,7 +691,7 @@ void vtkOpenGLVolumeTextureMapper3D::RenderQuads(vtkRenderer *ren, vtkVolume *vo
       }
     }
   }
-  //glTranslatef(-focalPoint[0], -focalPoint[1], -focalPoint[2]);
+ 
   zVal = 0;
   if (using_palette != 1)
   {
@@ -870,18 +886,16 @@ void vtkOpenGLVolumeTextureMapper3D::CreateSubImages( unsigned char* texture,   
 
       for (int y = 0; y < textureSizeY[counter]; y++)
       {
-    pixPtr = (y+1)*textureSizeX[counter]*4-4;
-
     for (int x = 0; x < textureSizeX[counter]; x++) 
     {     
       pix[pixPtr]=texture[texPtr];
-      pixPtr--;
+      pixPtr++;
       pix[pixPtr]=texture[texPtr];
-      pixPtr--;
+      pixPtr++;
       pix[pixPtr]=texture[texPtr];
-      pixPtr--;
+      pixPtr++;
       pix[pixPtr]=texture[texPtr];
-      pixPtr--;
+      pixPtr++;
       texPtr++;
     }
       }

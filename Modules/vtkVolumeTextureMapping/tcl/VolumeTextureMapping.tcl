@@ -1573,13 +1573,14 @@ proc VolumeTextureMappingRefresh {} {
     
 
     ##-----------VOLUME1
-    set currentVolume 0
-    if {$VolumeTextureMapping(idOriginal1) != $Volume(idNone)} {
    
-VolumeTextureMapping(imageCast1) SetInput [Volume($VolumeTextureMapping(idOriginal1),vol) GetOutput]
-VolumeTextureMapping(imageCast1) SetOutputScalarTypeToUnsignedShort    
-VolumeTextureMapping(volume) SetMapper VolumeTextureMapping(texturevolumeMapper)
-VolumeTextureMapping(texturevolumeMapper) SetInput [VolumeTextureMapping(imageCast1) GetOutput]
+    if {$VolumeTextureMapping(idOriginal1) != $Volume(idNone)} {
+
+    set currentVolume 0
+    VolumeTextureMapping(imageCast1) SetInput [Volume($VolumeTextureMapping(idOriginal1),vol) GetOutput]
+    VolumeTextureMapping(imageCast1) SetOutputScalarTypeToUnsignedShort    
+    VolumeTextureMapping(volume) SetMapper VolumeTextureMapping(texturevolumeMapper)
+    VolumeTextureMapping(texturevolumeMapper) SetInput [VolumeTextureMapping(imageCast1) GetOutput]
     
     if {[info commands t1] == ""} {
         vtkTransform t1
@@ -1721,83 +1722,56 @@ VolumeTextureMappingCameraMotion
 #-------------------------------------------------------------------------------
 proc VolumeTextureMappingCameraMotion {} {
 global View currentVolume VolumeTextureMapping Volume
-  set fp [$View(viewCam) GetFocalPoint]
-  set xFP [lindex $fp 0]
-  set yFP [lindex $fp 1]
-  set zFP [lindex $fp 2]
 
+    set id $VolumeTextureMapping(idOriginal[expr $currentVolume +1])
+    set extent [[Volume($id,vol) GetOutput] GetExtent]
 
-vtkMatrix4x4 scalingMatrix
-vtkMatrix4x4 transformMatrix
-vtkMatrix4x4 resultMatrix
+    set x2 [expr [lindex $extent 1] + 1] 
+    set x4 [expr [lindex $extent 3] + 1] 
+    set x6 [expr [lindex $extent 5]+ 1] 
 
-set id $VolumeTextureMapping(idOriginal[expr $currentVolume +1])
-scan [Volume($id,node) GetSpacing] "%g %g %g" res_x res_y res_z
+    #puts "get scan order [Volume($id,node) GetScanOrder]"
 
+    set fp [$View(viewCam) GetFocalPoint]
+    set xFP [lindex $fp 0]        
+    set yFP [lindex $fp 1]
+    set zFP [lindex $fp 2]
+    VolumeTextureMapping(texturevolumeMapper) SetOrigin $xFP $yFP $zFP
 
-    set id $VolumeTextureMapping(idOriginal1)
-    switch [Volume($id,node) GetScanOrder] {
-      #                  -R        -A        -S
-    "LR" { set axes {  0  0  1   1  0  0   0  1  0 } }
-    "RL" { set axes {  0  0  1  -1  0  0   0  1  0 } }
-    "IS" { set axes {  1  0  0   0  1  0   0  0  1 } }
-    "SI" { set axes {  1  0  0   0  1  0   0  0 -1 } }
-    "PA" { set axes {  1  0  0   0  0  1   0  1  0 } }
-    "AP" { set axes {  1  0  0   0  0  1   0 -1  0 } }
-    #TODO - gantry tilt not supported
-    }
+    vtkMatrix4x4 resultMatrix
+    vtkMatrix4x4 DisplaceMatrix
+    vtkMatrix4x4 IjkToWld
 
-#puts "get scan order [Volume($id,node) GetScanOrder]"
-
-    catch "transformmatrix Delete"
-    vtkMatrix4x4 scanOrdermatrix
-
-scanOrdermatrix Identity
-set ii 0
-   for {set i 0} {$i < 3} {incr i} {
-    for {set j 0} {$j < 3} {incr j} {
-        scanOrdermatrix SetElement $i $j [lindex $axes $ii]
-        incr ii
-    }
-    }
-
-set fp [$View(viewCam) GetFocalPoint]
-set xFP [lindex $fp 0]        
-set yFP [lindex $fp 1]
-set zFP [lindex $fp 2]
-VolumeTextureMapping(texturevolumeMapper) SetOrigin $xFP $yFP $zFP
-
-scalingMatrix Identity
-scalingMatrix SetElement 0 0 $res_x
-scalingMatrix SetElement 1 1 $res_y
-scalingMatrix SetElement 2 2 $res_z
+    resultMatrix Identity
+    DisplaceMatrix Identity
  
-transformMatrix DeepCopy [Volume($id,node) GetRasToWld]
-
-vtkMatrix4x4 translateMatrix 
-translateMatrix Identity
-
-translateMatrix SetElement 0 3 $xFP
-translateMatrix SetElement 1 3 $yFP
-translateMatrix SetElement 2 3 $zFP
-
-resultMatrix Identity
-translateMatrix Invert
-
-resultMatrix Multiply4x4 scalingMatrix resultMatrix resultMatrix
-resultMatrix Multiply4x4 scanOrdermatrix resultMatrix resultMatrix
-resultMatrix Multiply4x4 transformMatrix resultMatrix resultMatrix
-
-resultMatrix Multiply4x4 translateMatrix resultMatrix resultMatrix
-VolumeTextureMapping(texturevolumeMapper) UpdateTransformMatrix 0 resultMatrix
-
-scalingMatrix Delete
-translateMatrix Delete
-transformMatrix Delete
-scanOrdermatrix Delete
-resultMatrix Delete
-VolumeTextureMapping(texturevolumeMapper) Update
-RenderAll
+    #get the local and global transformation (instead of geting IJK->RAS and RAS->WLD)
+    IjkToWld DeepCopy [Volume($id,node) GetWldToIjk]
+    #invert since we want to go from IJK->WLD instead of WLD->IJK
+    IjkToWld Invert
+    
+    #displace since the coordinates in the volume renderer goes from -extent/2 -> extent/2 instead of 0 -> extent
+    DisplaceMatrix  DeepCopy \
+    1  0  0  [expr $x2/2] \
+    0  1  0  [expr $x4/2] \
+    0  0  1  [expr $x6/2] \
+    0  0  0  1    
+    
+    
+    resultMatrix Multiply4x4 DisplaceMatrix resultMatrix resultMatrix
+    resultMatrix Multiply4x4 IjkToWld resultMatrix resultMatrix
+    
+    #update the transformmatrix in the volume renerer
+    VolumeTextureMapping(texturevolumeMapper) UpdateTransformMatrix 0 resultMatrix
+    
+    
+    DisplaceMatrix Delete
+    IjkToWld Delete
+    resultMatrix Delete
+   
+ 
+    VolumeTextureMapping(texturevolumeMapper) Update
+    RenderAll
 
 }
 
