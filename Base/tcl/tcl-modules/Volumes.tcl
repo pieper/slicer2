@@ -25,7 +25,12 @@
 #   VolumesInit
 #   VolumesBuildVTK
 #   VolumesBuildGUI
+#   VolumesCheckForManualChanges n
+#   VolumesManualSetPropertyType n
+#   VolumesAutomaticSetPropertyType n
 #   VolumesSetPropertyType
+#   VolumesPropsApply
+#   VolumesPropsApply
 #   VolumesPropsCancel
 #   VolumesSetFirst
 #   VolumesSetScanOrder
@@ -151,7 +156,7 @@ DICOMDataDictFile='$Volumes(DICOMDataDictFile)'"
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-                {$Revision: 1.48 $} {$Date: 2001/05/12 15:50:43 $}]
+                {$Revision: 1.49 $} {$Date: 2001/06/03 14:34:03 $}]
 
 	# Props
 	set Volume(propertyType) Basic
@@ -562,7 +567,7 @@ acquisition.
 		width "9 9 " {
 		eval {radiobutton $f.fBtns.rMode$value -width $width \
 			-text "$text" -value "$value" -variable Volume(labelMap) \
-			-indicatoron 0} $Gui(WCA)
+			-indicatoron 0 } $Gui(WCA)
 		pack $f.fBtns.rMode$value -side left -padx 0 -pady 0
 	}
 
@@ -694,8 +699,9 @@ acquisition.
 	pack $f.l $f.f -side left -pady $Gui(pad) -padx $Gui(pad) -fill x
 
 	foreach value "1 0" text "Yes No" width "4 3" {
-		eval {radiobutton $f.f.r$value -width $width -indicatoron 0\
-			-text $text -value $value -variable Volume(littleEndian)} $Gui(WCA)
+		eval {radiobutton $f.f.r$value -width $width \
+                        -indicatoron 0 -text $text -value $value \
+                        -variable Volume(littleEndian) } $Gui(WCA)
 		pack $f.f.r$value -side left -fill x
 	}
 
@@ -855,6 +861,109 @@ acquisition.
 }
 
 #-------------------------------------------------------------------------------
+# .PROC VolumesCheckForManualChanges
+# 
+# This Procedure is called to see if any important properties
+# were changed that might require re-reading the volume.
+#
+# .ARGS
+#  vtkMrmlVolumeNode n is the vtkMrmlVolumeNode to edit.
+# .END
+#-------------------------------------------------------------------------------
+proc VolumesCheckForManualChanges {n} {
+    global Lut Volume Label Module Mrml
+
+    if { !$Volume(isDICOM)} {
+        if {[$n GetFilePrefix] != [file root $Volume(firstFile)] } { 
+            return 1 
+        }
+    set firstNum [MainFileFindImageNumber First [file join $Mrml(dir) $Volume(firstFile)]]
+        if {[lindex [$n GetImageRange] 0 ]  != $firstNum }  { return 1 }
+    
+        if {[lindex [$n GetImageRange] 1 ]  != $Volume(lastNum) } { return 1 }
+        if {[$n GetLabelMap] != $Volume(labelMap)} { return 1 }
+        if {[$n GetFilePattern] != $Volume(filePattern) } { return 1 }
+        if {[lindex [$n GetDimensions] 1 ]  != $Volume(height) } { return 1 }
+        if {[lindex [$n GetDimensions] 0 ]  != $Volume(width) } { return 1 }
+        if {[$n GetScanOrder] != $Volume(scanOrder)} { return 1 }
+        if {[$n GetScalarTypeAsString] != $Volume(scalarType)} { return 1 }
+        if {[$n GetNumScalars] != $Volume(numScalars)} { return 1 }
+        if {[$n GetLittleEndian] != $Volume(littleEndian)} { return 1 }
+    }
+    return 0
+}
+
+#-------------------------------------------------------------------------------
+# .PROC VolumesManualSetPropertyType
+# 
+# This procedure is called when manually setting the properties
+# to read in a volume
+#
+# .ARGS
+#  vtkMrmlVolumeNode n is the vtkMrmlVolumeNode to edit.
+# .END
+#-------------------------------------------------------------------------------
+proc VolumesManualSetPropertyType {n} {
+    global Lut Volume Label Module Mrml
+
+    # These get set down below, but we need them before MainUpdateMRML
+    $n SetFilePrefix [file root $Volume(firstFile)]
+    $n SetFilePattern $Volume(filePattern)
+    $n SetFullPrefix [file join $Mrml(dir) [$n GetFilePrefix]]
+    if { !$Volume(isDICOM) } {
+        set firstNum [MainFileFindImageNumber First [file join $Mrml(dir) $Volume(firstFile)]]
+    }
+    $n SetImageRange $firstNum $Volume(lastNum)
+    $n SetDimensions $Volume(width) $Volume(height)
+    eval $n SetSpacing $Volume(pixelSize) $Volume(pixelSize) \
+            [expr $Volume(sliceSpacing) + $Volume(sliceThickness)]
+    $n SetScalarTypeTo$Volume(scalarType)
+    $n SetNumScalars $Volume(numScalars)
+    $n SetLittleEndian $Volume(littleEndian)
+    $n SetTilt $Volume(gantryDetectorTilt)
+    $n ComputeRasToIjkFromScanOrder $Volume(scanOrder)
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC VolumesAutomaticSetPropertyType
+# 
+# This procedure is called when reading the header of a volume
+# to get the header information. Returns 1 on success
+#
+# .ARGS
+#  vtkMrmlVolumeNode n is the vtkMrmlVolumeNode to edit.
+# .END
+#-------------------------------------------------------------------------------
+proc VolumesAutomaticSetPropertyType {n} {
+    global Lut Volume Label Module Mrml
+
+    set errmsg [GetHeaderInfo [file join $Mrml(dir) $Volume(firstFile)] \
+            $Volume(lastNum) $n 1]
+    if {$errmsg == "-1"} {
+        set msg "No header information found. Please enter header info manually."
+        puts $msg
+        tk_messageBox -message $msg
+        # set readHeaders to manual
+        set Volume(readHeaders) 0
+        # switch to vols->props->header frame
+        set Volume(propertyType) Header
+        VolumesSetPropertyType
+        # Remove node
+        MainMrmlUndoAddNode Volume $n
+        return 0
+    } elseif {$errmsg != ""} {
+        # File not found, most likely
+        puts $errmsg
+        tk_messageBox -message $errmsg
+        # Remove node
+        MainMrmlUndoAddNode Volume $n
+        return 0
+    }
+   return 1
+}
+
+#-------------------------------------------------------------------------------
 # .PROC VolumesSetPropertyType
 # 
 # .ARGS
@@ -866,191 +975,204 @@ proc VolumesSetPropertyType {} {
     raise $Volume(f$Volume(propertyType))
     focus $Volume(f$Volume(propertyType))
 }
- 
-proc VolumesPropsApply {} {
-	global Lut Volume Label Module Mrml
 
-	set m $Volume(activeID)
-	if {$m == ""} {return}
+#-------------------------------------------------------------------------------
+# .PROC VolumesPropsApply
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+
+#-------------------------------------------------------------------------------
+# .PROC VolumesPropsApply
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc VolumesPropsApply {} {
+    global Lut Volume Label Module Mrml
+
+    set m $Volume(activeID)
+    if {$m == ""} {return}
 
     set Volume(isDICOM) [expr [llength $Volume(dICOMFileList)] > 0]
-	
-	# Validate name
-	if {$Volume(name) == ""} {
-		tk_messageBox -message "Please enter a name that will allow you to distinguish this model."
-		return
-	}
-	if {[ValidateName $Volume(name)] == 0} {
-		tk_messageBox -message "The name can consist of letters, digits, dashes, or underscores"
-		return
-	}
-	# lastNum
-    if { $Volume(isDICOM) == 0 } {
-	if {[ValidateInt $Volume(lastNum)] == 0} {
-		tk_messageBox -message "The last number must be an integer."
-		return
-	}
+        
+    # Validate name
+    if {$Volume(name) == ""} {
+        tk_messageBox -message "Please enter a name that will allow you to distinguish this model."
+        return
     }
-	# resolution
-	if {[ValidateInt $Volume(width)] == 0} {
-		tk_messageBox -message "The width must be an integer."
-		return
-	}
-	if {[ValidateInt $Volume(height)] == 0} {
-		tk_messageBox -message "The height must be an integer."
-		return
-	}
-	# pixel size
-	if {[ValidateFloat $Volume(pixelSize)] == 0} {
-		tk_messageBox -message "The pixel size must be a number."
-		return
-	}
-	# slice thickness
-	if {[ValidateFloat $Volume(sliceThickness)] == 0} {
-		tk_messageBox -message "The slice thickness must be a number."
-		return
-	}
-	# slice spacing
-	if {[ValidateFloat $Volume(sliceSpacing)] == 0} {
-		tk_messageBox -message "The slice spacing must be a number."
-		return
-	}
-	# tilt
-	if {[ValidateFloat $Volume(gantryDetectorTilt)] == 0} {
-		tk_messageBox -message "The tilt must be a number."
-		return
-	}
-	# num scalars
-	if {[ValidateInt $Volume(numScalars)] == 0} {
-		tk_messageBox -message "The number of scalars must be an integer."
-		return
-	}
+    if {[ValidateName $Volume(name)] == 0} {
+        tk_messageBox -message "The name can consist of letters, digits, dashes, or underscores"
+        return
+    }
+    # lastNum
+    if { $Volume(isDICOM) == 0 } {
+        if {[ValidateInt $Volume(lastNum)] == 0} {
+            tk_messageBox -message "The last number must be an integer."
+            return
+        }
+    }
+    # resolution
+    if {[ValidateInt $Volume(width)] == 0} {
+        tk_messageBox -message "The width must be an integer."
+        return
+    }
+    if {[ValidateInt $Volume(height)] == 0} {
+        tk_messageBox -message "The height must be an integer."
+        return
+    }
+    # pixel size
+    if {[ValidateFloat $Volume(pixelSize)] == 0} {
+        tk_messageBox -message "The pixel size must be a number."
+        return
+    }
+    # slice thickness
+    if {[ValidateFloat $Volume(sliceThickness)] == 0} {
+        tk_messageBox -message "The slice thickness must be a number."
+        return
+    }
+    # slice spacing
+    if {[ValidateFloat $Volume(sliceSpacing)] == 0} {
+        tk_messageBox -message "The slice spacing must be a number."
+        return
+    }
+    # tilt
+    if {[ValidateFloat $Volume(gantryDetectorTilt)] == 0} {
+        tk_messageBox -message "The tilt must be a number."
+        return
+    }
+    # num scalars
+    if {[ValidateInt $Volume(numScalars)] == 0} {
+        tk_messageBox -message "The number of scalars must be an integer."
+        return
+    }
 
     if { $Volume(isDICOM) } {
-	set Volume(readHeaders) 0
+        set Volume(readHeaders) 0
     }
 
-	# Manual headers
-	if {$Volume(readHeaders) == "0"} {
-		# if on basic frame, switch to header frame.
-	    if {$Volume(propertyType) != "Header"} {
-			set Volume(propertyType) Header
-			VolumesSetPropertyType
-			return
-	    }
-	}
+    # Manual headers
+    if {$Volume(readHeaders) == "0"} {
+        # if on basic frame, switch to header frame.
+        if {$Volume(propertyType) != "Header"} {
+            set Volume(propertyType) Header
+            VolumesSetPropertyType
+            return
+        }
+    }
 
-	if {$m == "NEW"} {
-		set n [MainMrmlAddNode Volume]
-		set i [$n GetID]
-	   
+    if {$m == "NEW"} {
+        set n [MainMrmlAddNode Volume]
+        set i [$n GetID]
+           
         # Added by Attila Tanacs 10/11/2000
 
         $n DeleteDICOMFileNames
         for  {set j 0} {$j < [llength $Volume(dICOMFileList)]} {incr j} {
             $n AddDICOMFileName [$Volume(dICOMFileListbox) get $j]
         }
-	    
-	if { $Volume(isDICOM) } {
-	    #$Volume(dICOMFileListbox) insert 0 [$n GetNumberOfDICOMFiles];
-	    set firstNum 1
-	    set Volume(lastNum) [llength $Volume(dICOMFileList)]
-	}	    
+            
+        if { $Volume(isDICOM) } {
+            #$Volume(dICOMFileListbox) insert 0 [$n GetNumberOfDICOMFiles];
+            set firstNum 1
+            set Volume(lastNum) [llength $Volume(dICOMFileList)]
+        }	    
 
-	# End
+        # End of Part added by Attila Tanacs
 
         # Manual headers
 
-		if {$Volume(readHeaders) == "0"} {
-		    # These get set down below, but we need them before MainUpdateMRML
-			$n SetFilePrefix [file root $Volume(firstFile)]
-			$n SetFilePattern $Volume(filePattern)
-			$n SetFullPrefix [file join $Mrml(dir) [$n GetFilePrefix]]
-			if { !$Volume(isDICOM) } {
-			set firstNum [MainFileFindImageNumber First [file join $Mrml(dir) $Volume(firstFile)]]
-			}
-			$n SetImageRange $firstNum $Volume(lastNum)
-			$n SetDimensions $Volume(width) $Volume(height)
-			eval $n SetSpacing $Volume(pixelSize) $Volume(pixelSize) \
-				[expr $Volume(sliceSpacing) + $Volume(sliceThickness)]
-			$n SetScalarTypeTo$Volume(scalarType)
-			$n SetNumScalars $Volume(numScalars)
-			$n SetLittleEndian $Volume(littleEndian)
-			$n SetTilt $Volume(gantryDetectorTilt)
-			$n ComputeRasToIjkFromScanOrder $Volume(scanOrder)
-		
-		# Read headers
-		} else {
-			set errmsg [GetHeaderInfo [file join $Mrml(dir) $Volume(firstFile)] \
-				$Volume(lastNum) $n 1]
-			if {$errmsg == "-1"} {
-			    set msg "No header information found. Please enter header info manually."
-			    puts $msg
-			    tk_messageBox -message $msg
-			    # set readHeaders to manual
-			    set Volume(readHeaders) 0
-			    # switch to vols->props->header frame
-			    set Volume(propertyType) Header
-			    VolumesSetPropertyType
-				# Remove node
-				MainMrmlUndoAddNode Volume $n
-			    return
-			} elseif {$errmsg != ""} {
-				# File not found, most likely
-			    puts $errmsg
-			    tk_messageBox -message $errmsg
-				# Remove node
-				MainMrmlUndoAddNode Volume $n
-				return
-			}
-		}
+        if {$Volume(readHeaders) == "0"} {
+            # These setting are set down below, 
+            # but we need them before MainUpdateMRML
+            
+            VolumesManualSetPropertyType $n
+        } else {
+            # Read headers
+            if {[VolumesAutomaticSetPropertyType $n] == 0} {
+                return
+            }
+        }
+        # end Read Headers
 
-		$n SetName $Volume(name)
-		$n SetDescription $Volume(desc)
-		$n SetLabelMap $Volume(labelMap)
+        $n SetName $Volume(name)
+        $n SetDescription $Volume(desc)
+        $n SetLabelMap $Volume(labelMap)
 
-		MainUpdateMRML
-		# If failed, then it's no longer in the idList
-		if {[lsearch $Volume(idList) $i] == -1} {
-			return
-		}
-		set Volume(freeze) 0
-		MainVolumesSetActive $i
-		set m $i
+        MainUpdateMRML
+        # If failed, then it's no longer in the idList
+        if {[lsearch $Volume(idList) $i] == -1} {
+            return
+        }
+        set Volume(freeze) 0
+        MainVolumesSetActive $i
+        set m $i
 
-		MainSlicesSetVolumeAll Back $i
-	}
+        MainSlicesSetVolumeAll Back $i
+    } else {
+        # End   if the Volume is NEW
+        ## Maybe we would like to do a reread of the file?
+        if {$m != $Volume(idNone) } {
+            if {[VolumesCheckForManualChanges Volume($m,node)] == 1} {
+                set ReRead [ DevYesNo "Reread the Image?" ]
+                puts "ReRead"
+                if {$ReRead == "yes"} {
+                    set Volume(readHeaders) 0
+                    if {$Volume(readHeaders) == "0"} {
+                        # These setting are set down below, 
+                        # but we need them before MainUpdateMRML
 
-	# Update all fields that the user changed (not stuff that would 
-	# need a file reread)
+                        VolumesManualSetPropertyType  Volume($m,node)
+                    } else {
+                        # Read headers
+                if {[VolumesAutomaticSetPropertyType Volume($m,node)] == 0} {
+                            return
+                        }
+                    }
+                    if {[MainVolumesRead $m]<0 } {
+                        DevErrorWindow "Error reading volume!"
+                        return 0
+                    }
+                }
+                # end if they chose to reread
+            }
+            # end if they should be asked to reread
+        }
+        # end if the volume id is not none.
+    }
+    # End thinking about rereading.
 
-	Volume($m,node) SetName $Volume(name)
-	Volume($m,node) SetDescription $Volume(desc)
-	Volume($m,node) SetLabelMap $Volume(labelMap)
-	eval Volume($m,node) SetSpacing $Volume(pixelSize) $Volume(pixelSize) \
-		[expr $Volume(sliceSpacing) + $Volume(sliceThickness)]
-	Volume($m,node) SetTilt $Volume(gantryDetectorTilt)
 
-	# This line can't be allowed to overwrite a RasToIjk matrix made
-	# from headers when the volume is first created.
-	#
-	if {$Volume(readHeaders) == "0"} {
-		Volume($m,node) ComputeRasToIjkFromScanOrder $Volume(scanOrder)
-	}
+    # Update all fields that the user changed (not stuff that would 
+    # need a file reread)
+    
+    Volume($m,node) SetName $Volume(name)
+    Volume($m,node) SetDescription $Volume(desc)
+    Volume($m,node) SetLabelMap $Volume(labelMap)
+    eval Volume($m,node) SetSpacing $Volume(pixelSize) $Volume(pixelSize) \
+            [expr $Volume(sliceSpacing) + $Volume(sliceThickness)]
+    Volume($m,node) SetTilt $Volume(gantryDetectorTilt)
+    
+    # This line can't be allowed to overwrite a RasToIjk matrix made
+    # from headers when the volume is first created.
+    #
+    if {$Volume(readHeaders) == "0"} {
+        Volume($m,node) ComputeRasToIjkFromScanOrder $Volume(scanOrder)
+    }
 
-	# If tabs are frozen, then 
-	if {$Module(freezer) != ""} {
-		set cmd "Tab $Module(freezer)"
-		set Module(freezer) ""
-		eval $cmd
-	}
-	
-	# Update pipeline
-	MainVolumesUpdate $m
+    # If tabs are frozen, then 
+    if {$Module(freezer) != ""} {
+        set cmd "Tab $Module(freezer)"
+        set Module(freezer) ""
+        eval $cmd
+    }
+        
+    # Update pipeline
+    MainVolumesUpdate $m
 
-	MainUpdateMRML
+    MainUpdateMRML
 }
-
 #-------------------------------------------------------------------------------
 # .PROC VolumesPropsCancel
 # 
@@ -1104,11 +1226,12 @@ proc VolumesSetScanOrder {order} {
 	global Volume
     
 
-        set Volume(scanOrder) $order
+    set Volume(scanOrder) $order
 
-        # set the button text to the matching order from the scanOrderMenu
-        $Volume(mbscanOrder) config -text [lindex $Volume(scanOrderMenu)\
-		[lsearch $Volume(scanOrderList) $order]]
+    # set the button text to the matching order from the scanOrderMenu
+    $Volume(mbscanOrder) config -text [lindex $Volume(scanOrderMenu)\
+            [lsearch $Volume(scanOrderList) $order]]
+
 }
 
 #-------------------------------------------------------------------------------
@@ -1118,12 +1241,13 @@ proc VolumesSetScanOrder {order} {
 # .END
 #-------------------------------------------------------------------------------
 proc VolumesSetScalarType {type} {
-	global Volume
+    global Volume
 
-        set Volume(scalarType) $type
+    set Volume(scalarType) $type
 
-        # update the button text
-        $Volume(mbscalarType) config -text $type
+    # update the button text
+    $Volume(mbscalarType) config -text $type
+
 }
 
 #-------------------------------------------------------------------------------
