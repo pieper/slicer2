@@ -134,6 +134,7 @@ proc MainMrmlReadVersion2.x {fileName {verbose 1}} {
             [lsearch "VolumeState /VolumeState" $tag] != -1 || \
             [lsearch "Path /Path" $tag] != -1 || \
             [lsearch "Segmenter /Segmenter" $tag] != -1 || \
+            [lsearch "SegmenterClass /SegmenterClass" $tag] != -1 || \
             [lsearch "SegmenterSuperClass /SegmenterSuperClass" $tag] != -1 } {
             # set str "<$tag>" doesn't work with tags which have attributes
             set str ">"
@@ -190,6 +191,11 @@ proc MainMrmlReadVersion2.x {fileName {verbose 1}} {
         # Give the EndSegmenter tag a name
         if {$tag == "/Segmenter"} {
             set tag EndSegmenter
+        }
+
+        # Give the EndSegmenter tag a name
+        if {$tag == "/SegmenterClass"} {
+            set tag EndSegmenterClass
         }
 
         # Give the EndSegmenter tag a name
