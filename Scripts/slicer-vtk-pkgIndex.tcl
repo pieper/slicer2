@@ -35,9 +35,14 @@ package ifneeded vtkinit {4.2} {
 foreach kit { Common Filtering IO Imaging Graphics
               Rendering Hybrid 
               Patented  } {
+  if { $::tcl_platform(platform) == "windows" } {
+    set libPrefix ""
+  } else {
+    set libPrefix "lib"
+  }
   package ifneeded "vtk${kit}TCL" {4.2} "
     package require -exact vtkinit {4.2}
-    ::vtk::init::load_library_package {vtk${kit}TCL} {$::env(VTK_BIN_DIR)/bin}
+    ::vtk::init::load_library_package {vtk${kit}TCL} {$::env(VTK_BIN_DIR)/bin} $libPrefix
   "
   package ifneeded "vtk[string tolower ${kit}]" {4.2} "
     package require -exact vtkinit {4.2}
