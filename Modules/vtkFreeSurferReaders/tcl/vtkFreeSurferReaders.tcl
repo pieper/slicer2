@@ -95,13 +95,17 @@ proc vtkFreeSurferReadersInit {} {
     }
     set vtkFreeSurferReaders(QAVolTypes) {aseg brain filled nu norm orig T1 wm}
     set vtkFreeSurferReaders(QADefaultVolTypes) {aseg norm}
+    set vtkFreeSurferReaders(QAVolTypeNew) ""
     set vtkFreeSurferReaders(QAVolFiles) ""
     set vtkFreeSurferReaders(QAUseSubjectsFile) 0
     set vtkFreeSurferReaders(QADefaultView) "Normal"
     set vtkFreeSurferReaders(QAResultsList) {approve exclude resegment review}
     set vtkFreeSurferReaders(scan) 0
     set vtkFreeSurferReaders(scanStep) 1
+    set vtkFreeSurferReaders(scanStartCOR) -128
+    set vtkFreeSurferReaders(scanStartSAG) -128
     set vtkFreeSurferReaders(scanMs) 100
+    set vtkFreeSurferReaders(QAEdit) 0
 
     lappend Module($m,fiducialsPointCreatedCallback) FreeSurferReadersFiducialsPointCreatedCallback
 
@@ -199,7 +203,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.13 $} {$Date: 2005/03/11 01:22:17 $}]
+        {$Revision: 1.14 $} {$Date: 2005/03/11 23:23:15 $}]
 
 }
 
@@ -538,6 +542,18 @@ proc vtkFreeSurferReadersBuildGUI {} {
     #---------------
     set f $fQA.fVolumes
 
+    frame $f.fVolSelect  -bg $Gui(activeWorkspace)
+    frame $f.fVolAdd  -bg $Gui(activeWorkspace)
+
+    pack $f.fVolSelect  -side top -padx $Gui(pad) -pady 0 -fill x
+    pack  $f.fVolAdd  -side top -padx $Gui(pad) -pady 0 -fill x
+
+    #----------------------------
+    # QA -> Volumes  -> VolSelect
+    #----------------------------
+
+    set f $fQA.fVolumes.fVolSelect
+
     DevAddLabel $f.lVolumesSelect "Volumes you wish to load for each subject:"
     pack $f.lVolumesSelect  -side top -padx $Gui(pad) -pady 0
 
@@ -557,6 +573,21 @@ proc vtkFreeSurferReadersBuildGUI {} {
         vtkFreeSurferReadersQASetLoad $voltype
         pack $f.c$voltype -side left -padx 0
     }
+
+    #-------------------------
+    # QA -> Volumes  -> VolAdd
+    #-------------------------
+
+    set f $fQA.fVolumes.fVolAdd
+
+    # let the user specify other volume names
+    DevAddLabel $f.lVolumesAdd "Add a volume name:"
+    pack $f.lVolumesAdd -side left -padx $Gui(pad)
+    eval {entry $f.eVolumesAdd -textvariable vtkFreeSurferReaders(QAVolTypeNew)  -width 5} $Gui(WEA)
+    pack $f.eVolumesAdd -side left -padx $Gui(pad) -expand 1 -fill x
+    TooltipAdd $f.eVolumesAdd "Put the prefix of a volume you wish to load here, no extension (ie aseg2)"
+    # now bind a proc to add this to the vol types list
+    bind $f.eVolumesAdd <Return> "vtkFreeSurferReadersQASetLoadAddNew"
 
     #-----------
     # QA -> Btns
@@ -579,11 +610,18 @@ proc vtkFreeSurferReadersBuildGUI {} {
     #-----------
     set f $fQA.fOptions
 
+    eval {label $f.ltitle -text "Options:"} $Gui(WLA)
+    pack $f.ltitle
+
     frame $f.fScanPause -bg $Gui(activeWorkspace)
     frame $f.fScanStep -bg $Gui(activeWorkspace)
+    frame $f.fScanStart -bg $Gui(activeWorkspace)
+    frame $f.fEdit -bg $Gui(activeWorkspace)
 
     pack $f.fScanPause -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
     pack $f.fScanStep -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
+    pack $f.fScanStart -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
+    pack $f.fEdit -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
 
     # QA -> Options -> ScanPause
     set f $fQA.fOptions.fScanPause
@@ -603,7 +641,29 @@ proc vtkFreeSurferReadersBuildGUI {} {
     pack $f.lscanstep -side left -padx $Gui(pad) 
     pack $f.escanstep -side left -padx $Gui(pad) -expand 1 -fill x
 
+    # QA -> Options -> ScanStart
+    set f $fQA.fOptions.fScanStart
+    # which slice to start at?
+    eval {label $f.lscanstartCOR -text "Start at COR slice"} $Gui(WLA)
+    eval {entry $f.escanstartCOR -textvariable vtkFreeSurferReaders(scanStartCOR) -width 4} $Gui(WEA)
+    pack $f.lscanstartCOR -side left -padx 0
+    pack $f.escanstartCOR -side left -padx $Gui(pad) -expand 1 -fill x
+
+    eval {label $f.lscanstartSAG -text "at SAG"} $Gui(WLA)
+    eval {entry $f.escanstartSAG -textvariable vtkFreeSurferReaders(scanStartSAG) -width 4} $Gui(WEA)
+    pack $f.lscanstartSAG -side left -padx 0
+    pack $f.escanstartSAG -side left -padx $Gui(pad) -expand 1 -fill x
+
+    # QA -> Options -> Edit
+    set f $fQA.fOptions.fEdit
     # have editing enabled?
+    eval {checkbutton $f.cQAEdit \
+              -text "Allow Editing" -command "vtkFreeSurferReadersSetQAEdit" \
+              -variable vtkFreeSurferReaders(QAEdit) \
+              -width 13 \
+              -indicatoron 0} $Gui(WCA)
+    pack $f.cQAEdit -side top -padx 0
+
     # opacity for aseg volume overlay
 
     
@@ -975,7 +1035,7 @@ proc vtkFreeSurferReadersMGHApply {} {
     # Set up the reading
     if {[info command Volume($i,vol,rw)] != ""} {
         # have to delete it first, needs to be cleaned up
-        DevErrorWindow "Problem: reader for this new volume number $i already exists, deleting it"
+        puts "Problem: reader for this new volume number $i already exists, deleting it"
         Volume($i,vol,rw) Delete
     }
     vtkMGHReader Volume($i,vol,rw)
@@ -1101,6 +1161,7 @@ proc vtkFreeSurferReadersMGHApply {} {
     # x_a y_a z_a c_a
     # x_s y_s z_s c_s
     #  0   0   0   1
+    catch "rasmat$i Delete"
     vtkMatrix4x4 rasmat$i
 
     # x_r
@@ -1179,12 +1240,14 @@ proc vtkFreeSurferReadersMGHApply {} {
     }
 
     # set up the Position matrix for the node, with a 128 shift
+    catch "posmat$i Delete"
     vtkMatrix4x4 posmat$i
     posmat$i Identity
     posmat$i SetElement 0 3 -128
     set curPos [Volume($i,node) GetPosition]
     $curPos DeepCopy posmat$i
     # doubly sure? sometimes works?
+    catch "mymat Delete"
     vtkMrmlMatrixNode mymat
     Volume($i,node) SetPositionMatrix [mymat GetMatrixToString posmat$i]
     mymat Delete
@@ -1945,36 +2008,12 @@ proc vtkFreeSurferReadersDisplayPopup {modelID} {
 proc vtkFreeSurferReadersMainFileCloseUpdate {} {
     global vtkFreeSurferReaders Volume viewRen Module
 
-    set savedval $::Module(verbose)
-    set ::Module(verbose) 1
-
     # delete stuff that's been created in this module
     if {$Module(verbose) == 1} {
         puts "vtkFreeSurferReadersMainFileCloseUpdate"
     }
-    foreach f $Volume(idList) {
-        if {$Module(verbose) == 1} {}
-            puts "vtkFreeSurferReadersMainFileCloseUpdate: Checking volume $f"
-        
-        if {[info exists vtkFreeSurferReaders($f,curveactor)] == 1} {
-            if {$Module(verbose) == 1} {
-                puts "Removing surface actor for free surfer reader id $f"
-            }
-            viewRen RemoveActor  vtkFreeSurferReaders($f,curveactor)
-            vtkFreeSurferReaders($f,curveactor) Delete
-            vtkFreeSurferReaders($f,mapper) Delete
-            Volume($f,vol,rw) Delete
-#            MainMrmlDeleteNode Volume $f
-        }
-        if {[info exists Volume($f,vol,rw)] == 1} {
-            if {$Module(verbose) == 1} {
-                puts "Removing volume reader for volume id $f"
-            }
-            Volume($f,vol,rw) Delete
-        }
-    }
-    # all that doesn't work since by the time we get here, there 
-    # are no id's in the volume idlist. So, find the stuff we made:
+    
+    # no id's in the volume idlist. So, find the stuff we made:
     foreach ca [info command vtkFreeSurferReaders(*,curveactor)] {
         if {$::Module(verbose) == 1} {
             puts "Removing surface actor for free surfer $ca"
@@ -2005,8 +2044,6 @@ proc vtkFreeSurferReadersMainFileCloseUpdate {} {
         }
         $rasmat Delete
     }
-
-set ::Module(verbose) $savedval
 }
 
 #-------------------------------------------------------------------------------
@@ -4198,8 +4235,33 @@ proc vtkFreeSurferReadersQASetLoad {voltype} {
             set vtkFreeSurferReaders(QAVolFiles) [lreplace $vtkFreeSurferReaders(QAVolFiles) $ind $ind]
         }
     }
+
+
     if {$::Module(verbose)} {
         puts "vtkFreeSurferReadersQASetLoad: new: loading: $vtkFreeSurferReaders(QAVolFiles)"
+    }
+}
+
+proc vtkFreeSurferReadersQASetLoadAddNew {} {
+    global vtkFreeSurferReaders
+
+    # if the QAVolTypeNew isn't empty, and not on the list of types to check for, add it
+    if {$vtkFreeSurferReaders(QAVolTypeNew) != ""} {
+        # has more than one been added?
+        foreach newvol $vtkFreeSurferReaders(QAVolTypeNew) {
+            if {[lsearch $vtkFreeSurferReaders(QAVolFiles) $newvol] == -1} {
+                # if it's a new aseg, add it to the front
+                if {[regexp "^aseg.*" $newvol matchVar] == 1} {
+                    set vtkFreeSurferReaders(QAVolFiles) [linsert $vtkFreeSurferReaders(QAVolFiles) 0 $newvol]
+                } else {
+                    # put it at the end
+                    lappend vtkFreeSurferReaders(QAVolFiles) $newvol
+                }
+            }
+        }
+    }
+    if {$::Module(verbose)} {
+        puts "vtkFreeSurferReadersQASetLoadAddNew: now loading $vtkFreeSurferReaders(QAVolFiles)"
     }
 }
 
@@ -4221,7 +4283,11 @@ proc vtkFreeSurferReadersStartQA {} {
 
     # turn off casting to short, as we're just viewing
     set cast $vtkFreeSurferReaders(castToShort)
-    set vtkFreeSurferReaders(castToShort) 0
+    if {$vtkFreeSurferReaders(QAEdit)} {
+         set vtkFreeSurferReaders(castToShort) 1
+    } else {
+        set vtkFreeSurferReaders(castToShort) 0
+    }
     # turn it into a better viewing set up
     set viewmode $::View(mode)
     MainViewerSetMode $vtkFreeSurferReaders(QADefaultView)
@@ -4257,7 +4323,9 @@ proc vtkFreeSurferReadersStartQA {} {
                 # load it up
                 puts "Loading $filetoload"
                         
-                if {$vol == "aseg"} {
+                # if it's an aseg volume (could be an added one) it's a label map, so keep it 
+                # loaded in the foreground as well
+                if {$vol == "aseg" || [regexp "^aseg.*" $vol matchVar] == 1} {
                     set islabelmap 1
                     vtkFreeSurferReadersLoadVolume $filetoload $islabelmap ${subject}-${vol}-lb
                     # but, load it as a regular volume too
@@ -4289,7 +4357,7 @@ proc vtkFreeSurferReadersStartQA {} {
                     # first, in cor mode
                     MainViewerSetMode "Single512COR"
 #                    DevInfoWindow "auto scanning in COR"
-                    MainSlicesSetOffset 2 -128
+                    MainSlicesSetOffset 2 $vtkFreeSurferReaders(scanStartCOR)
                     RenderBoth 2
                     set vtkFreeSurferReaders(scan) 1
                     vtkFreeSurferReadersScan 2
@@ -4297,9 +4365,9 @@ proc vtkFreeSurferReadersStartQA {} {
 
                     DevInfoWindow "Click when ready to start auto scanning in SAG"
 
-                    # then in sagital mode
+                    # then in saggital mode
                     MainViewerSetMode "Single512SAG"                   
-                    MainSlicesSetOffset 1 -128
+                    MainSlicesSetOffset 1 $vtkFreeSurferReaders(scanStartSAG)
                     RenderBoth 1
                     set vtkFreeSurferReaders(scan) 1
                     vtkFreeSurferReadersScan 1
@@ -4313,30 +4381,21 @@ proc vtkFreeSurferReadersStartQA {} {
                     MainViewerSetMode "Quad512"
                     RenderAll
                     set response [tk_messageBox -type okcancel \
-                        -message "Click when you're ready to go onto the next one\nCurrently viewing:\n$corfilename" \
+                        -message "Click when you're ready to go onto the next one\nCurrently viewing:\n$filetoload" \
                                       -title "QA $subject $vol"]
                 }
                 # stop spinning
                 # set ::View(spinDir) 0
                 
-                # if it was a label map, take it off the label
-                # if {$islabelmap} {
-                 #   MainSlicesSetVolumeAll Label None
-                 #   RenderAll
-                #}
-
-                # should probably unload the file now
-                # MainFileClose
-                
             } else {
-                puts "Can't find a file to load for $subject and $vol, skipping"
+                puts "Can't find a file to load for $subject $vol, skipping"
             }
         }
         # done the volumes for this subject
         
         # close the volumes loaded for this subject
         # this will remove the label maps
-        
+        # MainFileClose
     }
     # now done all subjects
 
@@ -4409,6 +4468,14 @@ proc vtkFreeSurferReadersScan { slice } {
             update idletasks
             after $vtkFreeSurferReaders(scanMs) "vtkFreeSurferReadersScan $slice"
         }
+    }
+}
+
+proc vtkFreeSurferReadersSetQAEdit {} {
+    global vtkFreeSurferReaders
+
+    if {$::Module(verbose)} {
+        puts $vtkFreeSurferReaders(QAEdit)
     }
 }
 
