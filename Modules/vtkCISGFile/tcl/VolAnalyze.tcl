@@ -46,8 +46,8 @@ proc VolAnalyzeInit {} {
 
     # some local global variables
     set Volume(VolAnalyze,FileType) Radiological
-    set Volume(VolAnalyze,FileTypeList) {Radiological Neurological}
-    set Volume(VolAnalyze,FileTypeList,tooltips) {"File contains radiological convention images" "File contains a neurological convention images"}
+    set Volume(VolAnalyze,FileTypeList) {Radiological Neurological Flipped}
+    set Volume(VolAnalyze,FileTypeList,tooltips) {"File contains radiological convention images" "File contains a neurological convention images" "File uses custom flipping sequence 0,1,2 for X, Y, Z"}
 
     # for closing out a scene
     set Volume(VolAnalyze,idList) ""
