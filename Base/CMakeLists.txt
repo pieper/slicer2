@@ -45,15 +45,15 @@ IF (VTKSLICER_CAN_BUILD)
   #
 
   SUBDIRS (
-    # sp - put everything in Core for now
-    Core
+    # sp - put everything in cxx for now
+    cxx
   )
 
   #
   # You can put your include path(s) here
   #
 
-  INCLUDE_DIRECTORIES (${VTKSLICER_SOURCE_DIR}/Core)
+  INCLUDE_DIRECTORIES (${VTKSLICER_SOURCE_DIR}/cxx)
 
   #
   # Common configuration settings
