@@ -9,7 +9,7 @@
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicEnter {} {
-    global Endoscopic View viewWin viewRen Fiducials
+    global Endoscopic View viewWin viewRen Fiducials Csys
     
     # Push event manager
     #------------------------------------
@@ -31,6 +31,7 @@ proc EndoscopicEnter {} {
     foreach a $Endoscopic(actors) {
         viewRen AddActor $a
     }
+    set Csys(active) 1
     Render3D
     if {$Endoscopic(endoview,visibility) == 1} {
         EndoscopicAddEndoscopicView
@@ -46,7 +47,7 @@ proc EndoscopicEnter {} {
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicExit {} {
-    global Endoscopic
+    global Endoscopic Csys
     # Pop event manager
     #------------------------------------
     # Description:
@@ -55,20 +56,21 @@ proc EndoscopicExit {} {
     #   previous ones.
     #
     if {$Endoscopic(endoview,hideOnExit) == 1} {
-    # reset the slice driver
-    EndoscopicSetSliceDriver User
-    
-    # set all endoscopic actors to be invisible, without changing their 
-    # visibility parameters
-    foreach a $Endoscopic(actors) {
-    viewRen RemoveActor $a
-        EndoscopicSetPickable $a 0
-            
+        # reset the slice driver
+        EndoscopicSetSliceDriver User
+        
+        # set all endoscopic actors to be invisible, without changing their 
+        # visibility parameters
+        foreach a $Endoscopic(actors) {
+            viewRen RemoveActor $a
+            EndoscopicSetPickable $a 0
+                    
+        }
+        set Csys(active) 0
+        Render3D
+        EndoscopicRemoveEndoscopicView
     }
-    Render3D
-    EndoscopicRemoveEndoscopicView
-}
-EndoscopicPopBindings
+    EndoscopicPopBindings
 }
 
 #-------------------------------------------------------------------------------
