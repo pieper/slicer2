@@ -89,6 +89,8 @@ proc MIRegInit {} {
     #   Record any other modules that this one depends on.  This is used 
     #   to check that all necessary modules are loaded when Slicer runs.
     #   
+
+    ## Should be ITK or vtkITK, but this does not seem to work.
     set Module($m,depend) ""
 
     # Set version info
@@ -99,7 +101,7 @@ proc MIRegInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.2 $} {$Date: 2003/07/15 16:08:19 $}]
+        {$Revision: 1.3 $} {$Date: 2003/08/12 14:25:06 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -260,22 +262,20 @@ proc MIRegBuildSubGui {f} {
 
     set f $fadvanced
 
-    foreach param {{SampleSize} \
-                   {SigmaUU} \
-                   {SigmaVV} \
-                   {SigmaV} \
-                   {Pmin} \
+    foreach param { \
                    {UpdateIterations}  \
                    {LearningRate} \
                    {SourceStandardDeviation} \
                    {TargetStandardDeviation} \
                    {NumberOfSamples} \
                    {TranslateScale} \
+                   {SampleSize} \
+                   {SigmaUU} \
+                   {SigmaVV} \
+                   {SigmaV} \
+                   {Pmin} \
                    } name \
-                  {{SampleSize}  \
-                   {SigmaUU}  \
-                   {SigmaVV}  \
-                   {SigmaV}  \
+                  {
                    {Pmin}  \
                    {Update Iterations} \
                    {Learning Rate} \
@@ -283,7 +283,11 @@ proc MIRegBuildSubGui {f} {
                    {Target Standard Deviation} \
                    {Number Of Samples} \
                    {Translate Scale} \
-                    } {
+                   {SampleSize}  \
+                   {SigmaUU} \
+                   {SigmaVV} \
+                   {SigmaV}  \
+                   } {
         set f $fadvanced
         frame $f.f$param   -bg $Gui(activeWorkspace)
         pack $f.f$param -side top -fill x -pady 2
@@ -370,17 +374,17 @@ proc MIRegExit {} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc MiRegAutoRun {} {
+proc MIRegAutoRun {} {
     if { [info command vtkITKMutualInformationTransform] == "" } {
-        MIRegAutoRun_vtk 
+        MIRegAutoRun_Vtk 
     } else {
-        MIRegAutoRun_itk 
+        MIRegAutoRun_Itk 
     }
 }
 
 
 #-------------------------------------------------------------------------------
-# .PROC MIRegAutoRun_itk
+# .PROC MIRegAutoRun_Itk
 #
 # use the vtkITK interface to the ITK MI registration routines
 # - builds a new user interface panel to control the process
@@ -389,7 +393,7 @@ proc MiRegAutoRun {} {
 # .END
 #-------------------------------------------------------------------------------
 
-proc MIRegAutoRun_itk {} {
+proc MIRegAutoRun_Itk {} {
     global Path env Gui Matrix Volume MIReg
 
     # v = ID of volume to register (moving)
@@ -416,19 +420,14 @@ proc MIRegAutoRun_itk {} {
         -transform $t \
         -moving [Volume($v,node) GetName] \
         -reference [Volume($r,node) GetName] \
-        -resolution      $MiReg(Resolution)     \
-        -iterations      $MiReg(UpdateIterations)     \
+        -resolution      $MIReg(Resolution)     \
+        -iterations      $MIReg(UpdateIterations)     \
         -samples         $MIReg(NumberOfSamples)      \
         -learningrate    $MIReg(LearningRate)         \
         -translatescale  $MIReg(TranslateScale)       
 
 #                         $MIReg(SourceStandardDeviation) \
 #                         $MIReg(TargetStandardDeviation) \
-                   
-                   
-                   
-                   
-
 
     pack .mi.reg -fill both -expand true
 }
@@ -457,16 +456,17 @@ proc MIRegAutoUndo {} {
 
 
 #-------------------------------------------------------------------------------
-# .PROC MIRegAutoRun_vtk
+# .PROC MIRegAutoRun_Vtk
 #
 #
 # These are the tools written by Dave Gering (and implemented by Hanifa Dostmohamed)
 # They are not currently used, though they should work.
+# But, I'm not really sure.
 #
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc MIRegAutoRun_vtk {} {
+proc MIRegAutoRun_Vtk {} {
     global Path env Gui Matrix Volume MIReg
 
     # v = ID of volume to register
