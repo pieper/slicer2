@@ -123,7 +123,7 @@ proc EditorInit {} {
     
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.70 $} {$Date: 2003/07/18 15:27:39 $}]
+        {$Revision: 1.71 $} {$Date: 2003/08/14 19:41:13 $}]
     
     # Initialize globals
     set Editor(idOriginal)  $Volume(idNone)
@@ -572,7 +572,7 @@ proc EditorBuildGUI {} {
     #-------------------------------------------
     set f $fVolumes.fTabbedFrame.fMerge.fHelp
     
-    eval {label $f.l -text "Merge two label maps:\nthe first will be copied onto the second."} $Gui(WLA)
+    eval {label $f.l -text "Merge two label maps:\nthe first will be copied onto the second.\nSet Original and Working in the\nEditor->Volumes->Setup pane."} $Gui(WLA)
     pack $f.l
     
     #-------------------------------------------
