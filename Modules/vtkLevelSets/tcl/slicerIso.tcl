@@ -382,6 +382,31 @@ proc SAniso {imname sd th it} {
 }
 
 
+======================================================================
+proc SSubVol {imname x1 x2 y1 y2 z1 z2 } {
+#    -------
+  global Volume
+
+  set  I [SGetImage $imname]
+
+  vtkImageData sI 
+  sI SetScalarType [$I GetScalarType]
+  sI SetNumberOfScalarComponents [$I GetNumberOfScalarComponents]
+  set spacing [$I GetSpacing]
+  sI SetSpacing [lindex $spacing 0] [lindex $spacing 1] [lindex $spacing 2]
+  sI SetDimensions [expr $x2-$x1+1] [expr $y2-$y1+1] [expr $z2-$z1+1]
+
+  sI CopyAndCastFrom $I $x1 $x2 $y1 $y2 $z1 $z2
+
+  set newvol [SAddMrmlImage $imname "_subvol"]
+
+  Volume($newvol,vol) SetImageData [sI]
+  MainVolumesUpdate $newvol
+
+  return [append $imname "_subvol"]
+}
+
+
 #-------------------------------------------------------------------------------
 # .PROC SModelMakerCreate
 # 
@@ -1086,6 +1111,59 @@ proc SModelLine_Scale { modelname newmodelname sx sy sz} {
 
 } 
 # SModelLine_Scale
+
+#----------------------------------------------------------------------
+proc SModelLine_Smooth { modelname newmodelname length } {
+#
+# Not tested yet ...
+#
+    global Model ModelMaker Label Module
+
+    set ModelMaker(name)     $newmodelname
+    if {[ValidateName $ModelMaker(name)] == 0} {
+        tk_messageBox -message "The name can consist of letters, digits, dashes, or underscores"
+        return
+    }
+    # Create the model's MRML node
+    set n [MainMrmlAddNode Model]
+    $n SetName  $ModelMaker(name)
+    $n SetColor $Label(name)
+
+    # Guess the prefix
+    set ModelMaker(prefix) $ModelMaker(name)
+
+    # Create the model
+    set m [$n GetID]
+    MainModelsCreate $m
+
+    # Here process the conversion
+    # 1. get the transformation
+    # Read orientation matrix and permute the images if necessary.
+    vtkSplineFilter Tsmooth
+    Tsmooth   SetInput [SGetSurface $modelname]
+    Tsmooth SetSubdivideToLength
+    Tsmooth SetLength $length
+    [Tsmooth  GetOutput] ReleaseDataFlagOff
+
+    # polyData will survive as long as it's the input to the mapper
+    set Model($m,polyData) [Tsmooth GetOutput]
+    $Model($m,polyData) Update
+    foreach r $Module(Renderers) {
+        Model($m,mapper,$r) SetInput $Model($m,polyData)
+    }
+
+    Tsmooth SetOutput ""
+    Tsmooth SetInput ""
+    Tsmooth Delete
+
+    MainUpdateMRML
+    MainModelsSetActive $m
+    $ModelMaker(bCreate) config -state normal
+    set name [Model($m,node) GetName]
+    tk_messageBox -message "The model '$newmodelname' has been created."
+
+} 
+# SModelLine_Smooth
 
 #----------------------------------------------------------------------
 proc SModelLine_FlipY { modelname newmodelname ty} {
