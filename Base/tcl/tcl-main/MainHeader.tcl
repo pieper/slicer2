@@ -438,17 +438,27 @@ proc ParsePrintHeader {text aHeader} {
         return $errmsg
     }
 
-    catch { set Header(zSpacing) [expr $Header(sliceThick) + $Header(sliceSpace)] } errmsg1
+    set errmsg ""
+
+    if {[catch { set Header(zSpacing) [expr $Header(sliceThick) + $Header(sliceSpace)] } errmsgTmp]} {
+        lappend errmsg $errmsgTmp
+    }
 
     # Not in print_header
-    catch { set Header(scalarType) Short } errmsg2
-    catch { set Header(numScalars) 1 } errmsg3
-    catch { set Header(sliceTilt) 0 } errmsg4
-    catch { set Header(order) "" } errmsg5
+    if {[catch { set Header(scalarType) Short } errmsgTmp]} {
+        lappend errmsg $errmsgTmp
+    }
+    if {[catch { set Header(numScalars) 1 } errmsgTmp]} {
+        lappend errmsg $errmsgTmp
+    }
+    if {[catch { set Header(sliceTilt) 0 } errmsgTmp]} {
+        lappend errmsg $errmsgTmp
+    }
+    if {[catch { set Header(order) "" } errmsgTmp]} {
+        lappend errmsg $errmsgTmp
+    }
 
 
-    set errmsg ""
-    lappend errmsg $errmsg1 $errmsg2 $errmsg3 $errmsg4 $errmsg5
     if {$errmsg != ""} {
         set errmsg "Error reading header, missing a field:\n$errmsg"
     }
