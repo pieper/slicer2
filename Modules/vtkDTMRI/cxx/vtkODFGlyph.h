@@ -1,6 +1,7 @@
 #ifndef __vtkODFGlyph_h
 #define __vtkODFGlyph_h
 
+#include "vtkDTMRIConfigure.h"
 #include <vtkStructuredPointsToPolyDataFilter.h>
 #include "vtkImageReformat.h"
 #include "vtkImageExtractComponents.h"
@@ -11,7 +12,7 @@ class vtkPolyData;
 
 
 
-class vtkODFGlyph : public vtkStructuredPointsToPolyDataFilter {
+class VTK_DTMRI_EXPORT vtkODFGlyph : public vtkStructuredPointsToPolyDataFilter {
 
  public:
   vtkTypeMacro(vtkODFGlyph,vtkStructuredPointsToPolyDataFilter);
