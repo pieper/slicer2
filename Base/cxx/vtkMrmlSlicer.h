@@ -268,9 +268,11 @@ public:
   // the volumes in the slicer.  Use the editor (vtkImageEditorEffects)
   // for that.
   void SetFirstFilter(int s, vtkImageToImageFilter *filter);
-  void SetLastFilter(int s, vtkImageToImageFilter *filter);
+  // LastFilter is of type vtkImageSource, a superclass of 
+  // both vtkImageToImage and vtkMultipleInput filters.
+  void SetLastFilter(int s, vtkImageSource *filter);
   vtkImageToImageFilter* GetFirstFilter(int s) {return this->FirstFilter[s];};
-  vtkImageToImageFilter* GetLastFilter(int s) {return this->LastFilter[s];};
+  vtkImageSource* GetLastFilter(int s) {return this->LastFilter[s];};
 
   // Description:
   // Whether to apply pipeline defined by first, last filter
@@ -288,7 +290,7 @@ public:
 
   // Description:
   // Whether to apply pipeline defined by first, last filter
-  // to any slice.
+  // only to Active slice or to all three slices
   vtkGetMacro(FilterActive, int);
   vtkSetMacro(FilterActive, int);
   vtkBooleanMacro(FilterActive, int);
@@ -421,7 +423,7 @@ protected:
   vtkIndirectLookupTable *LabelIndirectLUT;
 
   vtkImageToImageFilter *FirstFilter[NUM_SLICES];
-  vtkImageToImageFilter *LastFilter[NUM_SLICES];
+  vtkImageSource *LastFilter[NUM_SLICES];
   int BackFilter;
   int ForeFilter;
   int FilterActive;

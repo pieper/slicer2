@@ -618,7 +618,7 @@ void vtkMrmlSlicer::SetFirstFilter(int s, vtkImageToImageFilter *filter)
     this->BuildUpperTime.Modified();
   } 
 }
-void vtkMrmlSlicer::SetLastFilter(int s, vtkImageToImageFilter *filter)
+void vtkMrmlSlicer::SetLastFilter(int s, vtkImageSource *filter)
 {
   if (this->LastFilter[s] != filter) 
   {
@@ -650,6 +650,10 @@ void vtkMrmlSlicer::BuildUpper(int s)
     vtkErrorMacro(<<"BuildUpper: NULL NoneVolume");
     return;
   }
+
+  // if we are displaying filter output over a slice, AND
+  // either this slice is the only one we are filtering
+  // OR we are filtering all slices, then make sure the filter is set.
   if ((this->BackFilter || this->ForeFilter) && 
      ((this->FilterActive && s == this->ActiveSlice) || !this->FilterActive))
   {
