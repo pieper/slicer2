@@ -74,7 +74,7 @@ proc MainModelsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainModels \
-		{$Revision: 1.45 $} {$Date: 2001/12/26 15:36:19 $}]
+		{$Revision: 1.46 $} {$Date: 2001/12/27 15:46:56 $}]
 
 	set Model(idNone) -1
 	set Model(activeID) ""
@@ -510,7 +510,7 @@ proc MainModelsCreateGUI {f m {hlevel 0}} {
 	global Gui Model Color
 
 
-    puts "Creating GUI for model $m"		
+        # puts "Creating GUI for model $m"		
 	# If the GUI already exists, then just change name.
 	if {[info command $f.c$m] != ""} {
 		$f.c$m config -text "[Model($m,node) GetName]"
@@ -738,6 +738,7 @@ proc MainModelsSetActive {m} {
 		# Use defaults
 		vtkMrmlModelNode default
 		set Model(name)             [default GetName]
+                set Model(FileName)         ""
 		set Model(prefix)           [file root [default GetFileName]]
 		set Model(visibility)       [default GetVisibility]
 		set Model(opacity)          [default GetOpacity]
@@ -753,6 +754,7 @@ proc MainModelsSetActive {m} {
 			$mb config -text [Model($m,node) GetName]
 		}
 		set Model(name)             [Model($m,node) GetName]
+                set Model(FileName)         [Model($m,node) GetFileName]
 		set Model(prefix)           [file root [Model($m,node) GetFileName]]
 		set Model(visibility)       [Model($m,node) GetVisibility]
 		set Model(clipping)         [Model($m,node) GetClipping]
