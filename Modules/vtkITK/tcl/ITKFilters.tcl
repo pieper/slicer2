@@ -105,7 +105,7 @@ proc ITKFiltersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.2 $} {$Date: 2005/01/23 21:06:32 $}]
+        {$Revision: 1.3 $} {$Date: 2005/01/23 21:19:37 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -371,7 +371,13 @@ proc ITKFiltersBuildGUI {} {
     set fSpatialObjects $Module(ITKFilters,fSpatialObjects)
     set f $fSpatialObjects
 
-    
+    DevAddFileBrowse $f ITKFilters SpatialObjects,filename "SpatialObject File" "" "" "" "Open" "Select SpatialObject File" "Pick file to add to scene"
+
+    DevAddButton $f.bApply "Apply"  "ITKFiltersSpatialObjectsApply"
+
+    TooltipAdd $f.bApply "Load the spatial object file and add contents to the view"
+    pack $f.bApply 
+
 }
 #-------------------------------------------------------------------------------
 # .PROC ITKFiltersBuildVTK
@@ -556,4 +562,18 @@ proc ITKFiltersBeforeUpdate { } {
 
 proc ITKFiltersAfterUpdate { } { 
 
+}
+
+proc ITKFiltersSpatialObjectsApply {} {
+
+    if { [info command vtkITKSceneSpatialObjectVisualizer] == "" } {
+        DevWarningWindow "SpatialObjects not available in this version of vtkITK"
+        return
+    }
+
+    catch "ssov Delete"
+    vtkITKSceneSpatialObjectVisualizer ssov
+    ssov SetRenderer viewRen
+    ssov SetFileName $::ITKFilters(SpatialObjects,filename)
+    sov AddActors
 }
