@@ -12,23 +12,26 @@
 
 # note: - SET replaced SOURCE_FILES for cmake 1.6
 SET(LOCAL_MODULE_SRCS
-vtkCISGAnalyzeReader
-vtkCISGAnalyzeWriter
-vtkCISGCifstream
-vtkCISGCofstream
-vtkCISGGiplReader
-vtkCISGGiplWriter
-vtkCISGInterfileReader
-vtkCISGInterfileWriter
-vtkCISGMultiReader
-vtkCISGMultiWriter
-vtkCISGRREPReader
-vtkCISGVersion
+vtkCISGCifstream.cxx
+vtkCISGCofstream.cxx
+vtkCISGAnalyzeReader.cxx
+vtkCISGAnalyzeWriter.cxx
+vtkCISGGiplReader.cxx
+vtkCISGGiplWriter.cxx
+vtkCISGInterfileReader.cxx
+vtkCISGInterfileWriter.cxx
+vtkCISGMultiReader.cxx
+vtkCISGMultiWriter.cxx
+vtkCISGRREPReader.cxx
+vtkCISGVersion.cxx
 )
 
-WRAP_EXCLUDE_FILES(
+
+SET_SOURCE_FILES_PROPERTIES(
 vtkCISGCifstream
 vtkCISGCofstream
+PROPERTIES
+WRAP_EXCLUDE TRUE
 )
 
 # Place names of abstract class implementations here. No file suffixes.
@@ -41,9 +44,9 @@ vtkCISGCofstream
 # )
 
 # You can add additional include paths here
-INCLUDE_DIRECTORIES(
-${VTKCISGFILE_SOURCE_DIR}/include
-)
+#INCLUDE_DIRECTORIES(
+#${VTKCISGFILE_SOURCE_DIR}/include
+#)
 
 #### if you code depends on SlicerBase, uncomment the 
 #### INCLUDE_DIRECTORIES and LINK_LIBRARIES
@@ -57,9 +60,9 @@ ${VTKCISGFILE_SOURCE_DIR}/include
 
 
 # Add additional directories to look in for libraries
-LINK_DIRECTORIES(
-${VTKCISGFILE_SOURCE_DIR}/lib
-)
+#LINK_DIRECTORIES(
+#${VTKCISGFILE_SOURCE_DIR}/lib
+#)
 
 
 
