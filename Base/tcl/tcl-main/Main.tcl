@@ -31,6 +31,7 @@
 #   MainInit
 #   MainBuildVTK
 #   MainBuildGUI
+#   MainBuildModuleTabs ModuleName
 #   MainUpdateMRML
 #   MainSetup
 #   IsModule
@@ -331,7 +332,7 @@ proc MainInit {} {
 
         # Set version info
 	lappend Module(versions) [ParseCVSInfo Main \
-		{$Revision: 1.44 $} {$Date: 2000/07/20 18:24:18 $}]
+		{$Revision: 1.45 $} {$Date: 2000/08/08 15:49:14 $}]
 
 	# Call each "Init" routine that's not part of a module
 	#-------------------------------------------
@@ -605,36 +606,7 @@ proc MainBuildGUI {} {
 	set f .tMain.fControls.fTabs
 
 	foreach m $Module(idList) {
-
-		# Make page frames for each tab
-		foreach tab "$Module($m,row1List) $Module($m,row2List)" {
-			frame $fWork.f${m}${tab} -bg $Gui(activeWorkspace)
-			place $fWork.f${m}${tab} -in $fWork -relheight 1.0 -relwidth 1.0
-			set Module($m,f${tab}) $fWork.f${m}${tab}
-		}
-
-		foreach row "row1 row2" {
-			
-			# Make tab-row frame for each row
-			frame $f.f${m}${row} -bg $Gui(activeWorkspace)
-			place $f.f${m}${row} -in $f -relheight 1.0 -relwidth 1.0
-			set Module($m,f$row) $f.f${m}${row}
-
-			foreach tab $Module($m,${row}List) name $Module($m,${row}Name) {
-				set Module($m,b$tab) $Module($m,f$row).b$tab
-				eval {button $Module($m,b$tab) -text "$name" \
-					-command "Tab $m $row $tab" \
-					-width [expr [string length "$name"] + 1]} $Gui(TA)
-				pack $Module($m,b$tab) -side left -expand 1 -fill both
-			}
-
-			# "More..." if more than one row exists
-			if {$Module($m,row2List) != ""} {
-				eval {button $Module($m,f$row).bMore -text "More..." \
-					-command "Tab More"} $Gui(TA)
-				pack $Module($m,f$row).bMore -side left -expand 1 -fill both
-			}
-		}
+            MainBuildModuleTabs $m
 	}
 		
 	# Blank page to show during boot
@@ -750,6 +722,54 @@ proc MainBuildGUI {} {
 		}
 		$p
 	}
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MainBuildModuleTabs
+# 
+# Builds the Tabs for a Module.
+#
+# .ARGS
+# str ModuleName the name of the Module.
+# .END
+#-------------------------------------------------------------------------------
+proc MainBuildModuleTabs {ModuleName}  {
+    global Module Gui
+
+    set m $ModuleName
+    set fWork .tMain.fControls.fWorkspace
+    set f .tMain.fControls.fTabs
+
+
+    # Make page frames for each tab
+    foreach tab "$Module($m,row1List) $Module($m,row2List)" {
+        frame $fWork.f${m}${tab} -bg $Gui(activeWorkspace)
+        place $fWork.f${m}${tab} -in $fWork -relheight 1.0 -relwidth 1.0
+        set Module($m,f${tab}) $fWork.f${m}${tab}
+    }
+
+    foreach row "row1 row2" {
+        # Make tab-row frame for each row
+        puts $f.f${m}${row}
+        frame $f.f${m}${row} -bg $Gui(activeWorkspace)
+        place $f.f${m}${row} -in $f -relheight 1.0 -relwidth 1.0
+        set Module($m,f$row) $f.f${m}${row}
+        
+        foreach tab $Module($m,${row}List) name $Module($m,${row}Name) {
+            set Module($m,b$tab) $Module($m,f$row).b$tab
+            eval {button $Module($m,b$tab) -text "$name" \
+                    -command "Tab $m $row $tab" \
+                    -width [expr [string length "$name"] + 1]} $Gui(TA)
+            pack $Module($m,b$tab) -side left -expand 1 -fill both
+        }
+        
+        # "More..." if more than one row exists
+        if {$Module($m,row2List) != ""} {
+            eval {button $Module($m,f$row).bMore -text "More..." \
+                    -command "Tab More"} $Gui(TA)
+            pack $Module($m,f$row).bMore -side left -expand 1 -fill both
+        }
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -870,6 +890,10 @@ proc IsModule {m} {
 #-------------------------------------------------------------------------------
 # .PROC Tab
 # 
+# Command for switching to a new Row or Tab
+# Checks to see if we might be frozen -- i.e. not supposed to switch to
+# a new frame.
+#
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
