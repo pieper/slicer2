@@ -67,6 +67,16 @@ class VTK_DTMRI_EXPORT vtkImageExtractSlices : public vtkImageToImageFilter
   vtkSetMacro(MosaicTiles,int);
   vtkGetMacro(MosaicTiles,int);
 
+  vtkSetMacro(NumberOfRepetitions,int);
+  vtkGetMacro(NumberOfRepetitions,int);
+  
+  vtkSetClampMacro(Repetition,int,1,NumberOfRepetitions);
+  vtkGetMacro(Repetition,int);
+  
+  vtkBooleanMacro(AverageRepetitions,int);
+  vtkSetMacro(AverageRepetitions,int);
+  vtkGetMacro(AverageRepetitions,int);
+
  protected:
   vtkImageExtractSlices();
   ~vtkImageExtractSlices() {};
@@ -79,6 +89,9 @@ class VTK_DTMRI_EXPORT vtkImageExtractSlices : public vtkImageToImageFilter
   int Mode;
   int MosaicSlices;
   int MosaicTiles;
+  int NumberOfRepetitions;
+  int Repetition;
+  int AverageRepetitions;
 
   void ExecuteInformation(vtkImageData *input, 
               vtkImageData *output);
