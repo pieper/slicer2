@@ -195,7 +195,7 @@ proc EndoscopicInit {} {
     # Initialize module-level variables
     #------------------------------------
     
-    
+    set Endoscopic(coincide) 0
     set Endoscopic(count) 0
     set Endoscopic(eventManager)  ""
     
@@ -640,6 +640,7 @@ proc EndoscopicBuildGUI {} {
     lappend Endoscopic(eventManager) {$Gui(fSl1Win) <KeyPress-l> \
 	    { if { [SelectPick2D %W %x %y] != 0 } \
 	    { eval EndoscopicAddLandmarkAtWorldPos $Select(xyz);Render3D } } }
+    
     lappend Endoscopic(eventManager) {$Gui(fSl2Win) <KeyPress-l> \
 	    { if { [SelectPick2D %W %x %y] != 0 } \
 	    { eval EndoscopicAddLandmarkAtWorldPos $Select(xyz);Render3D } } }
@@ -647,6 +648,23 @@ proc EndoscopicBuildGUI {} {
     lappend Endoscopic(eventManager) {$Gui(fViewWin)  <KeyPress-l> \
 	    { if { [SelectPick picker %W %x %y] != 0 } \
 	    { eval EndoscopicAddLandmarkAtWorldPos $Select(xyz);Render3D } } }
+
+    lappend Endoscopic(eventManager) {$Gui(fSl0Win) <KeyPress-l> \
+	    { if { [SelectPick2D %W %x %y] != 0 } \
+	    { eval EndoscopicAddLandmarkAtWorldPos $Select(xyz); Render3D } } }
+    lappend Endoscopic(eventManager) {$Gui(fSl1Win) <KeyPress-c> \
+	    { if { [SelectPick2D %W %x %y] != 0 } \
+	    { eval EndoscopicSetWorldPosition $Select(xyz);Render3D }} }
+
+    lappend Endoscopic(eventManager) {$Gui(fSl2Win) <KeyPress-c> \
+	    { if { [SelectPick2D %W %x %y] != 0 } \
+	    { eval EndoscopicSetWorldPosition $Select(xyz);Render3D }}}
+
+    
+    lappend Endoscopic(eventManager) {$Gui(fViewWin)  <KeyPress-c> \
+	    { if { [SelectPick picker %W %x %y] != 0 } \
+	    { eval EndoscopicSetWorldPosition $Select(xyz);Render3D }}   }
+
 
     lappend Endoscopic(eventManager) {$Gui(fViewWin)  <KeyPress-c> \
 	    { if { [SelectPick picker %W %x %y] != 0 } \
@@ -2046,10 +2064,12 @@ proc EndoscopicAddLandmarkAtWorldPos {x y z} {
     set Endoscopic(fLand,$i,z) [expr $z]
     
     set Endoscopic(positionLandmarkFromEventMgr) 1
+    set Endoscopic(coincide) 1
     # FIXME find a more elegant solution
-    set Path(random) 1
 
     EndoscopicAddLandmark
+    set Endoscopic(positionLandmarkFromEventMgr) 0
+    
 }
 
 #-------------------------------------------------------------------------------
@@ -2065,7 +2085,7 @@ proc EndoscopicAddLandmark {} {
     global Endoscopic Model Path View Point EndPath Landmark
     
     # if the path already existing is random, delete it
-    if { $Path(random) == 1  &&  $Endoscopic(positionLandmarkFromEventMgr) == 0 } {
+    if { $Path(random) == 1  &&  $Endoscopic(coincide) == 0 } {
 	EndoscopicDeletePath
     }
     if { $Path(numLandmarks) < 0} {
@@ -2082,10 +2102,10 @@ proc EndoscopicAddLandmark {} {
 	set Endoscopic(fLand,$i,x) $Endoscopic(fp,x)
 	set Endoscopic(fLand,$i,y) $Endoscopic(fp,y)
 	set Endoscopic(fLand,$i,z) $Endoscopic(fp,z)
-    } else {
+    #} else {
 	# reset the flag
-	set Endoscopic(positionLandmarkFromEventMgr) 0
-    }
+	#set Endoscopic(positionLandmarkFromEventMgr) 0
+    #}
 	
     
     $Path(fLandmarkList) insert end "$Endoscopic(cLand,$i,x) $Endoscopic(cLand,$i,y) $Endoscopic(cLand,$i,z)"
@@ -2243,6 +2263,7 @@ proc EndoscopicComputePath {{m ""}} {
 proc EndoscopicDeletePath {} {
 	global Endoscopic Path Point Model Landmark EndPath
 
+    set Endoscopic(coincide) 0
     if { $Path(exists) == 1 } {
 
 	for {set d 0} {$d<$Path(numLandmarks)} {incr d 1} {
@@ -2463,7 +2484,7 @@ proc EndoscopicSetPathFrame {} {
     }
     if { $Path(exists) == 1 } {
 	
-	if {$Path(random) == 1} {
+	if {$Path(random) == 1 || $Endoscopic(coincide) == 1} {
 	    set var 4
 	    set which "c"
 	} else {
@@ -2767,7 +2788,7 @@ proc EndoscopicUpdateMRML {} {
 	    if {$Endoscopic(fLand,$i,x) == $Endoscopic(cLand,$i,x) &&
 	    $Endoscopic(fLand,$i,y) == $Endoscopic(cLand,$i,y) &&
 	    $Endoscopic(fLand,$i,z) == $Endoscopic(cLand,$i,z) } {
-		set Path(random) 1
+		set Endoscopic(coincide) 1
 	    }
 	}
 
@@ -2809,6 +2830,7 @@ proc EndoscopicUpdateMRML {} {
 	set Path(showPath) 0
 	set Path(landmarkExists) 0
 	set Path(random) 0
+	set Endoscopic(coincide) 0
     } else {
 	# create the path and reset the variable for the next MrmlUpdate
 	set Path(vtkNodeRead) 0
