@@ -164,8 +164,10 @@ proc EndoscopicEnter {} {
     #}
     foreach a $Endoscopic(actors) {
         viewRen AddActor $a
+    EndoscopicSetPickable $a 1
     }
     set Csys(active) 1
+    
     Render3D
     if {$Endoscopic(endoview,visibility) == 1} {
         EndoscopicAddEndoscopicView
@@ -201,6 +203,7 @@ proc EndoscopicExit {} {
                     
         }
         set Csys(active) 0
+    
         Render3D
         EndoscopicRemoveEndoscopicView
     }
@@ -259,7 +262,7 @@ proc EndoscopicInit {} {
     set Module($m,category) "Visualisation"
     
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.81 $} {$Date: 2004/11/22 18:23:05 $}] 
+    {$Revision: 1.82 $} {$Date: 2004/12/07 18:37:51 $}] 
        
     # Define Procedures
     #------------------------------------
@@ -3801,23 +3804,22 @@ proc EndoscopicComputeRandomPath {} {
 #-------------------------------------------------------------------------------
 proc EndoscopicShowPath {} {
     global Path Endoscopic
-    puts "TEMPORARILY DISABLED - pending bugfix"
-    if {0} {
+
     if {$Endoscopic(path,exists) == 1} {
+#jeanette    
+    set id $Endoscopic(path,activeId)
+    
         if {$Endoscopic(path,showPath) == 1} {
             
-            foreach m {c f} {
-                endoscopicScreen AddActor Endoscopic(${m}Land,actor)
-                endoscopicScreen AddActor Endoscopic(${m}Path,actor)
-            }
+            endoscopicScreen AddActor Endoscopic($id,path,actor)
+    
         } else {
-            foreach m {c f} {
-                endoscopicScreen RemoveActor Endoscopic(${m}Land,actor)
-                endoscopicScreen RemoveActor Endoscopic(${m}Path,actor)
-            }
-        }
+    
+        endoscopicScreen RemoveActor Endoscopic($id,path,actor)
+        
     }
     }
+
 }
 
 #-------------------------------------------------------------------------------
