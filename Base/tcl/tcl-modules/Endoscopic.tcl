@@ -1843,12 +1843,11 @@ proc EndoscopicBuildFlyThroughGUI {} {
     #-------------------------------------------
     set f $w.fTop.fInterp
     
-    eval {label $f.linterp -text "You can change the number of \n interpolated points per mm: \n (more points will decrease the \n fly speed)"} $Gui(WLA)
+    eval {label $f.linterp -text "You can change the number of \n interpolated points per mm \n (a higher number of points per mm means \n that the speed will be decreased):"} $Gui(WLA)
     eval {entry $f.einterp \
         -textvariable Endoscopic(path,interpolationStr) -width 4} $Gui(WEA) {-bg $Endoscopic(path,sColor)}
     bind $f.einterp <Return> \
-        {EndoscopicBuildInterpolatedPath $Endoscopic(path,activeId); Render3D}
-    
+        {MainUpdateMRML; Render3D}
     pack $f.linterp $f.einterp -side top -padx $Gui(pad) -pady $Gui(pad)
 
 
@@ -3119,15 +3118,22 @@ proc EndoscopicBuildInterpolatedPath {id} {
             } else {
                 set di $Endoscopic($id,fpath,dist,$i)
             }
-            
             # take into account the interpolation factor
-            # step is the distance between all the interpolated landmarks
-            # i.e if interpolation = 1, this means we have steps of 1mm
-            # if interpolation = .5, this means we have steps every .5mm
+        # di is the distance between 2 control points in mm
+            # step is the number of interpolated landmarks between each 
+        # control point
+        # interpolationStr is the number of landmarks per mm
+            # i.e if interpolationStr = 1, and di = 10mm, 
+        # this means we have a step of 1/10 
+            # if interpolation = 2, and di = 10mm
+        # this means that we have a step of 1/20
+        # (note that the distance between interpolated landmarks is given 
+        # by interpolationStr * di).
+
             if { $di <.1 } {
                 set step 0
             } else {
-                set step [expr $Endoscopic(path,interpolationStr)/$di]
+                set step [expr 1/($Endoscopic(path,interpolationStr) * $di)]
             }
 
             # if no interpolation wanted or distance is too small, only
