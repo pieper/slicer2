@@ -68,7 +68,7 @@ proc MainMrmlInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainMrml \
-		{$Revision: 1.38 $} {$Date: 2001/02/19 17:53:23 $}]
+		{$Revision: 1.39 $} {$Date: 2001/04/02 22:46:23 $}]
 
 	set Mrml(filePrefix) data
 	set Mrml(colorsUnsaved) 0
@@ -754,6 +754,13 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 						$n SetLittleEndian 0
 					}
 				}
+				    "dicomFileNameList" {
+					set filelist {}
+					eval {lappend filelist} $val
+					foreach file $filelist {
+					    $n AddDICOMFileName $file
+					}
+				    }
 				}
 			}
 
