@@ -175,12 +175,24 @@ foreach target $TARGETS {
     puts "enter directory $build..."
 
     puts "running cmake ..."
-    puts "$CMAKE $target -G$GENERATOR \
-        $VTK_ARG1 $VTK_ARG2 $VTK_ARG3 $VTK_ARG4 $VTK_ARG5 $VTK_ARG6 $VTK_ARG7 \
-        $VTK_ARG8 $SLICER_ARG1 $SLICER_ARG2 $SLICER_ARG3 $SLICER_ARG4"
-    exec $CMAKE $target -G$GENERATOR \
-        $VTK_ARG1 $VTK_ARG2 $VTK_ARG3 $VTK_ARG4 $VTK_ARG5 $VTK_ARG6 $VTK_ARG7 \
-        $VTK_ARG8 $SLICER_ARG1 $SLICER_ARG2 $SLICER_ARG3 $SLICER_ARG4
+
+    if {[file exists [file join $target cmaker_local.tcl]]} {
+        # Define SLICER_MODULE_ARG1 to 3 in cmaker_local.tcl
+        source [file join $target cmaker_local.tcl]
+        puts "$CMAKE $target -G$GENERATOR \
+            $VTK_ARG1 $VTK_ARG2 $VTK_ARG3 $VTK_ARG4 $VTK_ARG5 $VTK_ARG6 $VTK_ARG7 \
+            $SLICER_ARG1 $SLICER_ARG2 $SLICER_ARG3 $SLICER_ARG4 $SLICER_MODULE_ARG1 $SLICER_MODULE_ARG2 $SLICER_MODULE_ARG3 $SLICER_MODULE_ARG4"
+        exec $CMAKE $target -G$GENERATOR \
+            $VTK_ARG1 $VTK_ARG2 $VTK_ARG3 $VTK_ARG4 $VTK_ARG5 $VTK_ARG6 $VTK_ARG7 \
+            $SLICER_ARG1 $SLICER_ARG2 $SLICER_ARG3 $SLICER_ARG4 $SLICER_MODULE_ARG1 $SLICER_MODULE_ARG2 $SLICER_MODULE_ARG3 $SLICER_MODULE_ARG4
+    } else {
+        puts "$CMAKE $target -G$GENERATOR \
+            $VTK_ARG1 $VTK_ARG2 $VTK_ARG3 $VTK_ARG4 $VTK_ARG5 $VTK_ARG6 $VTK_ARG7 \
+            $SLICER_ARG1 $SLICER_ARG2 $SLICER_ARG3 $SLICER_ARG4 "
+        exec $CMAKE $target -G$GENERATOR \
+            $VTK_ARG1 $VTK_ARG2 $VTK_ARG3 $VTK_ARG4 $VTK_ARG5 $VTK_ARG6 $VTK_ARG7 \
+            $SLICER_ARG1 $SLICER_ARG2 $SLICER_ARG3 $SLICER_ARG4
+    }
 
     switch $tcl_platform(os) {
         "SunOS" -
