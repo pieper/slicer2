@@ -51,4 +51,4 @@ pack .top.f -fill both -expand t
 BindTkImageViewer .top.f.v
 
 #make interface
-source WindowLevelInterface.tcl
+source [file join [file dirname [info script]] WindowLevelInterface.tcl]

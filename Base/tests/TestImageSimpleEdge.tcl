@@ -25,7 +25,7 @@ viewer SetColorLevel 1000
 # note: play with the W/L to see dark and light edges.
 
 #make interface
-source WindowLevelInterface.tcl
+source [file join [file dirname [info script]] WindowLevelInterface.tcl]
 
 
 

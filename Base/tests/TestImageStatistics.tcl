@@ -17,7 +17,7 @@ viewer SetColorWindow 163
 viewer SetColorLevel 360
 
 #make interface
-source WindowLevelInterface.tcl
+source [file join [file dirname [info script]] WindowLevelInterface.tcl]
 
 puts [stats GetQuartile1]
 puts [stats GetMedian   ]

@@ -36,5 +36,5 @@ puts "---"
 #sum SetWeightForInput 1 2
 
 #make interface
-source WindowLevelInterface.tcl
+source [file join [file dirname [info script]] WindowLevelInterface.tcl]
 

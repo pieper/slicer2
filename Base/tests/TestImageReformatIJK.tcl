@@ -31,9 +31,6 @@ ref Update
 #viewer SetColorWindow 2000
 #viewer SetColorLevel 1000
 
-#make interface
-#source WindowLevelInterface.tcl
-
 set ijk "10 10 10"
 puts "ijk = $ijk"
 eval ref SetIJKPoint $ijk

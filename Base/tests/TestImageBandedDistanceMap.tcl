@@ -47,4 +47,4 @@ viewer SetColorWindow 50
 viewer SetColorLevel 0
 
 #make interface
-source WindowLevelInterface.tcl
+source [file join [file dirname [info script]] WindowLevelInterface.tcl]

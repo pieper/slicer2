@@ -542,7 +542,7 @@ if {$EMSegment(DisplayWindow) } {
     # Where are they centered around 
     viewer SetColorLevel $max_half
     viewer SetInput $SegmentationResult
-    source ../../imaging/examplesTcl/WindowLevelInterface.tcl 
+source [file join [file dirname [info script]] WindowLevelInterface.tcl]
 } else {
     EMStart Delete
     exit 1
