@@ -59,6 +59,12 @@ switch $tcl_platform(os) {
         # that if it doesn't match above it must be windows
         # (VC7 is Visual C++ 7.0, also known as the .NET version)
         set env(BUILD) Win32VC7
+        # take out any spaces in the slicer home dir
+        if {[regexp { } $env(SLICER_HOME) match] != 0} {
+            # set it to the short name
+            set env(SLICER_HOME) [file attributes $env(SLICER_HOME) -shortname]
+            puts "Set SLICER_HOME environment variable to shortname: $env(SLICER_HOME)"
+        }
     }
 }
 puts "\nSlicer build directory set to $env(BUILD)"
