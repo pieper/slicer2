@@ -85,7 +85,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.72 $} {$Date: 2002/10/24 22:41:45 $}]
+            {$Revision: 1.73 $} {$Date: 2002/11/07 03:20:25 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -1226,7 +1226,6 @@ proc VolumesEnter {} {
     # push the Fiducials event manager onto the events stack so that user 
     # can add Fiducials with keys/mouse
     pushEventManager $Fiducials(eventManager)
-    FiducialsSetActiveList "reformat"
     pushEventManager $Volumes(eventManager)
 
     DataExit
