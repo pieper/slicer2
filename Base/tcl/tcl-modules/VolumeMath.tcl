@@ -89,7 +89,7 @@ proc VolumeMathInit {} {
     #   row2,tab = like row1 
     #
     set m VolumeMath
-        set Module($m,row1List) "Help Math Distance Logic"
+    set Module($m,row1List) "Help Math Distance Logic"
     set Module($m,row1Name) "{Help} {Math} {Distance} {Logic}"
     set Module($m,row1,tab) Math
 
@@ -155,7 +155,7 @@ proc VolumeMathInit {} {
     #   appropriate info when the module is checked in.
     #   
         lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.30 $} {$Date: 2003/04/11 22:48:21 $}]
+        {$Revision: 1.31 $} {$Date: 2003/05/28 20:42:29 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -170,28 +170,28 @@ proc VolumeMathInit {} {
     set VolumeMath(Volume2) $Volume(idNone)
     set VolumeMath(Volume3) $Volume(idNone)
 
-   # For Distance Calculations
-   set VolumeMath(CurrentPoint) 2
+    # For Distance Calculations
+    set VolumeMath(CurrentPoint) 2
 
-       # Coordinates, in mm, of selected points 2 and 1
-   set VolumeMath(Point1x)  0
-   set VolumeMath(Point1y)  0
-   set VolumeMath(Point1z)  0
-   set VolumeMath(Point2x)  0
-   set VolumeMath(Point2y)  0
-   set VolumeMath(Point2z)  0
-      # Difference of Point2 - Point1
-   set VolumeMath(Differencex)  0
-   set VolumeMath(Differencey)  0
-   set VolumeMath(Differencez)  0
-      # Magnitude of the difference
-   set VolumeMath(Magnitude)  0
+    # Coordinates, in mm, of selected points 2 and 1
+    set VolumeMath(Point1x)  0
+    set VolumeMath(Point1y)  0
+    set VolumeMath(Point1z)  0
+    set VolumeMath(Point2x)  0
+    set VolumeMath(Point2y)  0
+    set VolumeMath(Point2z)  0
+    # Difference of Point2 - Point1
+    set VolumeMath(Differencex)  0
+    set VolumeMath(Differencey)  0
+    set VolumeMath(Differencez)  0
+    # Magnitude of the difference
+    set VolumeMath(Magnitude)  0
 
-   #Hanifa 
-   #Set the default interpolation mode to linear
-   set VolumeMath(interpolationMode) Linear
-   #A check to see if the popup box is open
-   set VolumeMath(resampMenuOpen) 0
+    #Hanifa 
+    #Set the default interpolation mode to linear
+    set VolumeMath(interpolationMode) Linear
+    #A check to see if the popup box is open
+    set VolumeMath(resampMenuOpen) 0
 }
 
 #-------------------------------------------------------------------------------
@@ -273,7 +273,7 @@ proc VolumeMathBuildGUI {} {
         #            eDifferencez
         #           lMagnitude
         #            eMagnitude
-    #    fPack
+        #    fPack
         #           ltop
         # fLogic
         #       fSelectMath
@@ -350,7 +350,7 @@ files. Sometimes it doesn't work.
 
     frame $f.fSelectMath  -bg $Gui(backdrop) -relief sunken -bd 2
     frame $f.fGrid -bg $Gui(activeWorkspace)
- #Hanifa
+    #Hanifa
     frame $f.fResampButton -bg $Gui(activeWorkspace)
     frame $f.fPack -bg $Gui(activeWorkspace)
   
@@ -374,18 +374,18 @@ files. Sometimes it doesn't work.
         #
 
         set row 1
-    foreach p "Subtract Add Resample Abs DistMap Hausdorff" {
+        foreach p "Subtract Add Resample Abs DistMap Hausdorff" {
             eval {radiobutton $f.f.$row.r$p \
             -text "$p" -command "VolumeMathSetMathType" \
             -variable VolumeMath(MathType) -value $p -width 10 \
             -indicatoron 0} $Gui(WCA)
         pack $f.f.$row.r$p -side left -pady 0
-            if { $p == "Resample" } {incr row};
+        if { $p == "Resample" } {incr row};
     }
 
     pack $f.f -side left -padx $Gui(pad) -fill x -anchor w
 
-        set VolumeMath(MathType) Subtract
+    set VolumeMath(MathType) Subtract
 
     #-------------------------------------------
     # Math->Grid frame
@@ -393,9 +393,9 @@ files. Sometimes it doesn't work.
 
     set f $fMath.fGrid
 
-        DevAddSelectButton VolumeMath $f Volume2 "Volume2:"   Grid
-        DevAddSelectButton VolumeMath $f Volume1 "- Volume1:" Grid
-        DevAddSelectButton VolumeMath $f Volume3 "= Volume3:" Grid
+    DevAddSelectButton VolumeMath $f Volume2 "Volume2:"   Grid
+    DevAddSelectButton VolumeMath $f Volume1 "- Volume1:" Grid
+    DevAddSelectButton VolumeMath $f Volume3 "= Volume3:" Grid
 
     #-------------------------------------------
     # Math->Pack frame
@@ -403,7 +403,7 @@ files. Sometimes it doesn't work.
 
     set f $fMath.fPack
 
-        DevAddButton $f.bRun "Run" "VolumeMathDoMath"
+    DevAddButton $f.bRun "Run" "VolumeMathDoMath"
 
     pack $f.bRun
 
@@ -517,7 +517,7 @@ files. Sometimes it doesn't work.
         pack $f.fPack $f.fGrid -side top -padx 0 -pady $Gui(pad)
 
         eval  {label $f.fPack.ltop -text "Coordinates are RAS in mm" \
-             } $Gui(WLA)
+         } $Gui(WLA)
 
         pack $f.fPack.ltop
 
@@ -554,7 +554,7 @@ files. Sometimes it doesn't work.
 
         # Show the Difference = Point2 - Point 1
         # First the label
-    eval  {label $f.ldifference -text "Difference" } $Gui(WLA)
+        eval  {label $f.ldifference -text "Difference" } $Gui(WLA)
 
         # Now the difference itself
 
@@ -570,7 +570,7 @@ files. Sometimes it doesn't work.
 
        # Show the magnitude of the difference
        # First the label
-    eval  {label $f.lMagnitude -text "Magnitude" } $Gui(WLA)
+        eval  {label $f.lMagnitude -text "Magnitude" } $Gui(WLA)
 
         eval  {entry $f.eMagnitude \
               -textvariable VolumeMath(Magnitude) \
@@ -600,17 +600,17 @@ files. Sometimes it doesn't work.
 
     frame $f.f -bg $Gui(backdrop)
 
-        # the first row and second row
-        frame $f.f.1 -bg $Gui(inactiveWorkspace)
-        frame $f.f.2 -bg $Gui(inactiveWorkspace)
-        pack $f.f.1 $f.f.2 -side top -fill x -anchor w
+    # the first row and second row
+    frame $f.f.1 -bg $Gui(inactiveWorkspace)
+    frame $f.f.2 -bg $Gui(inactiveWorkspace)
+    pack $f.f.1 $f.f.2 -side top -fill x -anchor w
 
-        #
-        # NOTE: As you want more functions, don't forget
-        #       to add more rows above.
-        #
+    #
+    # NOTE: As you want more functions, don't forget
+    #       to add more rows above.
+    #
 
-        set row 1
+    set row 1
     set tips {"Label all pixels that are labeled in BOTH of the input Volumes (1 and 2).\nUseful for thresholding within a segmented region only."}
     foreach p "And" tip $tips {
             eval {radiobutton $f.f.$row.r$p \
@@ -619,7 +619,7 @@ files. Sometimes it doesn't work.
             -indicatoron 0} $Gui(WCA)
         pack $f.f.$row.r$p -side left -pady 0
         TooltipAdd $f.f.$row.r$p $tip
-            #if { $p == "Resample" } {incr row};
+        #if { $p == "Resample" } {incr row};
     }
 
     pack $f.f -side left -padx $Gui(pad) -fill x -anchor w
@@ -673,7 +673,7 @@ files. Sometimes it doesn't work.
     pack $f.bRun
     TooltipAdd $f.bRun "Do the logical operation and output Volume3."
 
-    }   
+}   
 
 
 #Hanifa
@@ -693,7 +693,7 @@ proc VolumeMathBuildResampParamPopup {} {
     wm iconname $w Dialog
     wm protocol $w WM_DELETE_WINDOW "wm withdraw $w"
     if {$Gui(pc) == "0"} {
-    wm transient $w .
+        wm transient $w .
     }
     wm withdraw $w
     
@@ -826,28 +826,28 @@ proc VolumeMathUpdateInterpParams {} {
 
     # Ensure origin is 3 numbers
     if {[llength $VolumeMath(originValTemp)] != 3} {
-    tk_messageBox -message \
-        "The origin of the volume must be specified by 3 values representing the x, y, z coordinates"
-    #Cancel any changes
-    VolumeMathCancelInterpParams
+        tk_messageBox -message \
+            "The origin of the volume must be specified by 3 values representing the x, y, z coordinates"
+        #Cancel any changes
+        VolumeMathCancelInterpParams
         return
     }
 
     # Ensure extent is 6 numbers
     if {[llength $VolumeMath(extentValTemp)] != 6} {
-    tk_messageBox -message \
-        "The extent of the volume must be specified by 6 values"
-    #Cancel any changes
-    VolumeMathCancelInterpParams
+        tk_messageBox -message \
+            "The extent of the volume must be specified by 6 values"
+        #Cancel any changes
+        VolumeMathCancelInterpParams
         return
     }
     
     # Ensure spacing is 3 numbers
     if {[llength $VolumeMath(spacingValTemp)] != 3} {
-    tk_messageBox -message \
-        "The spacing of the volume must be specified by 3 values"
-    #Cancel any changes
-    VolumeMathCancelInterpParams
+        tk_messageBox -message \
+            "The spacing of the volume must be specified by 3 values"
+        #Cancel any changes
+        VolumeMathCancelInterpParams
         return
     }
 
@@ -946,7 +946,7 @@ proc VolumeMathSetMathType {} {
     #If the Resample Menu is not being shown, hide the button that calls the 
     #resampling adjust parameter popup box
     if {$VolumeMath(resampMenuOpen) == 1} {
-    pack forget $VolumeMath(ResampParamButton)
+        pack forget $VolumeMath(ResampParamButton)
     }
     
     if {$VolumeMath(MathType) == "Subtract" } {
@@ -961,7 +961,7 @@ proc VolumeMathSetMathType {} {
         $a configure -text "Resample"
         $b configure -text "in the coordinates of"
         $c configure -text "and put the results in"
-    pack $VolumeMath(ResampParamButton)
+        pack $VolumeMath(ResampParamButton)
     } elseif {$VolumeMath(MathType) == "Abs" } {
         $a configure -text "Absolute Value"
         $b configure -text "(not used)"
@@ -1021,16 +1021,23 @@ proc VolumeMathPrepareResultVolume {{logic "0"}}  {
     # If so, let's do it.
     
     if {$v3 == -5 } {
-    if {$logic == "0"} {
-        set name  "VolumeMath$VolumeMath(MathType)Result" 
-    } else {
-        set name  "VolumeMath$VolumeMath(LogicType)Result" 
-    }
+        # give each one a uniqe name
+        if { ![info exists VolumeMath(ImageSerialNumber)] } {
+            set VolumeMath(ImageSerialNumber) 1
+        } else {
+            incr VolumeMath(ImageSerialNumber)
+        }
+
+        if {$logic == "0"} {
+            set name  "VolumeMath$VolumeMath(MathType)Result-$VolumeMath(ImageSerialNumber)" 
+        } else {
+            set name  "VolumeMath$VolumeMath(LogicType)Result-$VolumeMath(ImageSerialNumber)" 
+        }
         set v3 [DevCreateNewCopiedVolume $v2 "" $name]
         set node [Volume($v3,vol) GetMrmlNode]
         Mrml(dataTree) RemoveItem $node 
         set nodeBefore [Volume($v1,vol) GetMrmlNode]
-    Mrml(dataTree) InsertAfterItem $nodeBefore $node
+        Mrml(dataTree) InsertAfterItem $nodeBefore $node
         MainUpdateMRML
     } else {
 
@@ -1038,7 +1045,7 @@ proc VolumeMathPrepareResultVolume {{logic "0"}}  {
         # If so, let's ask. If no, return.
          
         set v3name  [Volume($v3,node) GetName]
-    set continue [DevOKCancel "Overwrite $v3name?"]
+        set continue [DevOKCancel "Overwrite $v3name?"]
           
         if {$continue == "cancel"} { return 1 }
         # They say it is OK, so overwrite!
@@ -1120,7 +1127,7 @@ proc VolumeMathDoLogic {} {
 proc VolumeMathDoSubtract {} {
     global VolumeMath Volume
 
-        # Check to make sure no volume is none
+    # Check to make sure no volume is none
 
     if {[VolumeMathCheckErrors] == 1} {
         return
