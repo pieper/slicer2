@@ -163,7 +163,7 @@ static void vtkImageMeasureVoxelsExecute(vtkImageMeasureVoxels *self,
 		//file.setiosflags(ios::right);
 		////int width = 15 - (label>=10) - (label>=100);
 		//file << setw(15)  << vol2 << '\n';
-		file.width(5);
+		file.width(15);
 		file << vol2 << "\n";
 		// << End of modifications 7/27/01
 	      }
