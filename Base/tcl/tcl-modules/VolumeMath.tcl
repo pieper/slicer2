@@ -155,7 +155,7 @@ proc VolumeMathInit {} {
     #   appropriate info when the module is checked in.
     #   
         lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.31 $} {$Date: 2003/05/28 20:42:29 $}]
+        {$Revision: 1.32 $} {$Date: 2003/07/22 21:39:47 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -366,7 +366,8 @@ files. Sometimes it doesn't work.
         # the first row and second row
         frame $f.f.1 -bg $Gui(inactiveWorkspace)
         frame $f.f.2 -bg $Gui(inactiveWorkspace)
-        pack $f.f.1 $f.f.2 -side top -fill x -anchor w
+        frame $f.f.3 -bg $Gui(inactiveWorkspace)
+        pack $f.f.1 $f.f.2 $f.f.3 -side top -fill x -anchor w
 
         #
         # NOTE: As you want more functions, don't forget
@@ -374,13 +375,13 @@ files. Sometimes it doesn't work.
         #
 
         set row 1
-        foreach p "Subtract Add Resample Abs DistMap Hausdorff" {
+        foreach p "Subtract Add Resample Abs DistMap Hausdorff Multiply" {
             eval {radiobutton $f.f.$row.r$p \
             -text "$p" -command "VolumeMathSetMathType" \
             -variable VolumeMath(MathType) -value $p -width 10 \
             -indicatoron 0} $Gui(WCA)
         pack $f.f.$row.r$p -side left -pady 0
-        if { $p == "Resample" } {incr row};
+        if { $p == "Resample" || $p == "Hausdorff" } {incr row};
     }
 
     pack $f.f -side left -padx $Gui(pad) -fill x -anchor w
@@ -974,6 +975,10 @@ proc VolumeMathSetMathType {} {
         $a configure -text "Undir. Par. Haus. Dist. V2"
         $b configure -text "V1"
         $c configure -text "and put the results in"
+    } elseif {$VolumeMath(MathType) == "Multiply" } {
+        $a configure -text "Volume2:"
+        $b configure -text "Volume1:"
+        $c configure -text "=Volume3"
     }
 }
 
@@ -1092,6 +1097,7 @@ proc VolumeMathDoMath {} {
     if { $VolumeMath(MathType) == "Abs" }      {VolumeMathDoAbs}
     if { $VolumeMath(MathType) == "DistMap" }  {VolumeMathDoDistMap}
     if { $VolumeMath(MathType) == "Hausdorff"} {VolumeMathDoHausdorff}
+    if { $VolumeMath(MathType) == "Multiply"} {VolumeMathDoMultiply}
 
     # This is necessary so that the data is updated correctly.
     # If the programmers forgets to call it, it looks like nothing
@@ -1496,6 +1502,44 @@ proc VolumeMathDoResample {} {
     #Set the text on the output button to be the newly resampled volume 
     $VolumeMath(mbVolume3) config -text [Volume($v3,node) GetName]
 
+}
+
+#-------------------------------------------------------------------------------
+# .PROC VolumeMathDoMultiply
+#   Actually do the VolumeMath Multiply
+#
+# .END
+#-------------------------------------------------------------------------------
+proc VolumeMathDoMultiply {} {
+    global VolumeMath Volume
+
+        # Check to make sure no volume is none
+
+    if {[VolumeMathCheckErrors] == 1} {
+        return
+    }
+    if {[VolumeMathPrepareResultVolume] == 1} {
+        return
+    }
+
+    set v3 $VolumeMath(Volume3)
+    set v2 $VolumeMath(Volume2)
+    set v1 $VolumeMath(Volume1)
+
+    # Set up the VolumeMath Multiply
+
+    vtkImageMathematics MultMath
+    MultMath SetInput1 [Volume($v2,vol) GetOutput]
+    MultMath SetInput2 [Volume($v1,vol) GetOutput]
+    MultMath SetOperationToMultiply
+
+    # Start copying in the output data.
+    # Taken from MainVolumesCopyData
+
+    Volume($v3,vol) SetImageData [MultMath GetOutput]
+    MainVolumesUpdate $v3
+
+    MultMath Delete
 }
 
 ################# Procedures from Logic Tab #################
