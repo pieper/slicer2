@@ -344,6 +344,13 @@ proc VolAnalyzeApply {} {
         return
     }
 
+    if {$Module(verbose) == 1} {
+        puts "VolAnalyze: after mainupdatemrml volume node  $i:"
+        Volume($i,node) Print
+        set badval [[Volume($i,node) GetPosition] GetElement 1 3]
+        puts "VolAnalyze: volume $i position 1 3: $badval"
+    }
+
     # allow use of other module GUIs
     set Volume(freeze) 0
 
