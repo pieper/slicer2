@@ -136,7 +136,7 @@ proc CorCTAInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.2 $} {$Date: 2003/12/18 20:20:51 $}]
+        {$Revision: 1.3 $} {$Date: 2004/03/02 15:28:21 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -217,7 +217,10 @@ proc CorCTABuildGUI {} {
     <BR>
     <UL>
     <LI><B>Centerlines:</B> Select input volume, enter a model name, and
-    press the button to extract the centerlines.
+    press the button to extract the centerlines.<BR>
+    Currently, only line endpoints are supported.<BR>
+    Check 'Smooth lines' to smooth the extracted centerlines. The spline segment length can
+    be set in the respective input box.
     "
     regsub -all "\n" $help {} help
     MainHelpApplyTags CorCTA $help
