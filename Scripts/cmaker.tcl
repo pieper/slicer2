@@ -215,7 +215,7 @@ foreach target $TARGETS {
             # Define SLICER_MODULE_ARG in cmaker_local.tcl
             source [file join $target cmaker_local.tcl]
             foreach elem $SLICER_MODULE_ARG  {
-                lappend command $elem 
+                lappend cmakecmd $elem 
             }
         }
         puts $cmakecmd
