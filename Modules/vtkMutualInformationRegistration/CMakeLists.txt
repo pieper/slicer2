@@ -71,11 +71,10 @@ IF (VTKMUTUALINFORMATIONREGISTRATION_CAN_BUILD)
   # Build examples too ?
   #
 
-#  OPTION(BUILD_EXAMPLES "Build examples." ON)
-#  IF (BUILD_EXAMPLES)
-#    SUBDIRS(Examples)
-#  ENDIF (BUILD_EXAMPLES)
-
+  OPTION(BUILD_EXAMPLES "Build examples." ON)
+  IF (BUILD_EXAMPLES)
+    SUBDIRS(test/cxx)
+  ENDIF (BUILD_EXAMPLES)
 
   #
   # Common configuration settings

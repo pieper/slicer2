@@ -59,6 +59,7 @@ IF (VTK@MODULENAME@_CAN_BUILD)
 
   SUBDIRS (
     cxx
+    test
   )
 
   #
