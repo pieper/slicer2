@@ -338,31 +338,24 @@ proc EdDrawApply {} {
 	EdSetupBeforeApplyEffect $v $Ed($e,scope) Active
 
 	# Only draw on native slices
-# Lauren
-	puts "Apply v $v scope $Ed($e,scope)"
-#	if {[set native [EdIsNativeSlice]] != ""} {
-#		tk_messageBox -message "Please draw on the slice with orient = $native."
-#		return
-#	}
+	if {[set native [EdIsNativeSlice]] != ""} {
+		tk_messageBox -message "Please draw on the slice with orient = $native."
+		return
+	}
 
 	set Gui(progressText) "Draw on [Volume($v,node) GetName]"
 	
 	set label    $Label(label)
 	set radius   $Ed($e,radius)
 	set shape    $Ed($e,shape)
-#	set points   [Slicer DrawGetPoints]
-# Lauren
-	set oldpoints   [Slicer DrawGetPoints]
-	Slicer DrawComputeIjkPoints
-	set points [Slicer GetDrawIjkPoints]
-
+	set points   [Slicer DrawGetPoints]
 	Ed(editor)   Draw $label $points $radius $shape
 
 	# Dump points
-	set n [$points GetNumberOfPoints]
-	for {set i 0} {$i < $n} {incr i} {
-		puts "ijk: [$points GetPoint $i] 2D: [$oldpoints GetPoint $i]"
-	}
+#	set n [$points GetNumberOfPoints]
+#	for {set i 0} {$i < $n} {incr i} {
+#		puts [$points GetPoint $i]
+#	}
 
 	Ed(editor)   SetInput ""
 	Ed(editor)   UseInputOff
