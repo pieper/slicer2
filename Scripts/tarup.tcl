@@ -43,6 +43,18 @@ proc tarup { {destdir "auto"} } {
     set cwd [pwd]
     cd $::env(SLICER_HOME)
 
+    ### Some simple error checking to see if the directories exist
+
+    foreach dirname "VTK_BIN_DIR ITK_BIN_DIR TCL_BIN_DIR VTK_BIN_DIR" {
+       set dir $::env($dirname)
+       eval { \
+             if {[file exist $dir] == 0} { \
+               puts "$dirname is set to $dir which does not exist"; \
+               return
+           } \ 
+        }
+    }
+
     set exe ""
     switch $::env(BUILD) {
         "solaris8" { set target solaris-sparc }
