@@ -28,7 +28,7 @@ proc OsteoPlanInit {} {
 
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.5 $} {$Date: 2003/05/01 17:55:31 $}]
+        {$Revision: 1.6 $} {$Date: 2003/05/16 18:47:45 $}]
 
     # Initialize module-level variables
     set Osteo(pointlabels) 1
@@ -567,7 +567,7 @@ proc SelectModelMenu { fRoot variable {create 0}} {
     set mb $fRoot.mb$variable
 
     if { $create == 1 } {
-        set c { menubutton $mb -text $none -relief raised -bd 2 -width 20 -menu $mb.m $Gui(WMBA) }
+        set c { menubutton $mb -text "$none" -relief raised -bd 2 -width 20 -menu $mb.m $Gui(WMBA) }
         eval [subst $c]
         
         set c { menu $mb.m $Gui(WMA) }
@@ -589,12 +589,12 @@ proc SelectModelMenu { fRoot variable {create 0}} {
         
         $m add radiobutton -label $name -indicatoron 0 \
             -variable $variable -value $id -command \
-            "$mb config -text $name"
+            "$mb config -text \"$name\""
     }
     
     
     $m add radiobutton -label $none -variable $variable -indicatoron 0 \
-        -value -1 -command "$mb config -text $none"
+        -value -1 -command "$mb config -text \"$none\""
     
     set varID [subst $$variable]
     
@@ -602,9 +602,9 @@ proc SelectModelMenu { fRoot variable {create 0}} {
         set currModel [Mrml(dataTree) GetNthModel $varID]
         set name [$currModel GetName]
         
-        $mb config -text $name
+        $mb config -text "$name"
     } else {
-        $mb config -text $none
+        $mb config -text "$none"
     }
     
 
