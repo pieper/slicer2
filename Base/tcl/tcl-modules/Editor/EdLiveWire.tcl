@@ -92,8 +92,8 @@ proc EdLiveWireInit {} {
 
     # training vars
     set Ed($e,trainingRadius) 0
-    set Ed($e,trainingOutputFileName) "LiveWireSettings.txt"
-    set Ed($e,trainingInputFileName) "LiveWireSettings.txt"
+    set Ed($e,trainingOutputFileName) "LiveWireSettings.xml"
+    set Ed($e,trainingInputFileName) "LiveWireSettings.xml"
 
     # slider range
     set Ed($e,sliderLow) 0.0
@@ -117,6 +117,8 @@ proc EdLiveWireInit {} {
     # edge direction displayed and modified in advanced gui
     set Ed(EdLiveWire,activeEdgeDirection) 0
 
+    # for writing settings as option
+    set Ed(EdLiveWire,contents) "LiveWireSettings"
 }
 
 #-------------------------------------------------------------------------------
@@ -153,22 +155,17 @@ proc EdLiveWireBuildVTK {} {
 	# debug
 	Ed(EdLiveWire,lwPath$s)  SetVerbose 0
 
-	# pipeline
+	# pipeline:
 	Ed(EdLiveWire,lwSetup$s) SetLiveWire Ed(EdLiveWire,lwPath$s)
+
+	# Lauren is this needed?
+	# give a blank input for now, just to get things connected
+	Ed(EdLiveWire,lwSetup$s) SetInput $fakeInput
+	# now hook up edge filters and livewire filters
+	Ed(EdLiveWire,lwSetup$s) InitializePipeline
+
+	# LiveWire short path filter gets 0th input from setup filter
 	Ed(EdLiveWire,lwPath$s) SetOriginalImage [Ed(EdLiveWire,lwSetup$s) GetOutput]
-
-	# Each slice's livewire filter needs five inputs.
-	# But it won't get them until the edge filters get their input 
-	# from the Slicer (through the wrapper class) and execute.
-	# However, the Slicer will ask the LastFilter (LiveWire) for output
-	# earlier than this.  So give the LiveWire filters the None
-	# volume as (multiple) input until they get something better.
-	# 4 edge filters come after input 0, the original image data: 
-	set numInputs [expr $Ed(EdLiveWire,numEdgeFilters) +1]
-	for {set f 1} {$f < $numInputs} {incr f} {
-	    Ed(EdLiveWire,lwPath$s) SetInput $f $fakeInput
-	}
-
 
 	# for looking at edge weight image
 	vtkImageViewer Ed(EdLiveWire,viewer$s)
@@ -191,6 +188,8 @@ proc EdLiveWireBuildVTK {} {
     for {set i 0} {$i < $Ed(EdLiveWire,numEdgeFilters)} {incr i} {
 	lappend  Ed(EdLiveWire,edgeIDList) $i
     }
+
+
 }
 
 #-------------------------------------------------------------------------------
@@ -306,7 +305,7 @@ proc EdLiveWireBuildGUI {} {
 
     DevAddFileBrowse $f Ed "EdLiveWire,trainingInputFileName" \
 	    "Open Settings File:" EdLiveWireReadFeatureParams \
-	    "txt" [] "Open" "Open LiveWire Settings File" \
+	    "xml" [] "Open" "Open LiveWire Settings File" \
 	    "Read LiveWire settings for the structure you want to segment."\
 	    "Absolute"
 
@@ -332,7 +331,7 @@ proc EdLiveWireBuildGUI {} {
     set f $Ed(EdLiveWire,frame).fTabbedFrame.fTraining.fTrainingFile
 
     DevAddFileBrowse $f Ed "EdLiveWire,trainingOutputFileName" \
-	    "Save Settings As:" [] "txt" [] \
+	    "Save Settings As:" [] "xml" [] \
 	    "Save" "Output File" \
 	    "Choose the file where the training information will be written."\
 	    "Absolute"
@@ -456,8 +455,8 @@ proc EdLiveWireBuildGUI {} {
     set widths "2 2 3 3 3 3 3 3"
 
     # chop lists if not this many edge filters
-    puts "edges: $Ed(EdLiveWire,numEdgeFilters)"
-    puts "length: [llength $tips]"
+    #puts "edges: $Ed(EdLiveWire,numEdgeFilters)"
+    #puts "length: [llength $tips]"
     if {$Ed(EdLiveWire,numEdgeFilters) < [llength $tips] } {
 	set tips [lreplace $tips $Ed(EdLiveWire,numEdgeFilters) end]
 	set texts [lreplace $texts $Ed(EdLiveWire,numEdgeFilters) end]
@@ -563,7 +562,7 @@ proc EdLiveWireBuildGUI {} {
 
     DevAddFileBrowse $f Ed "EdLiveWire,trainingOutputFileName" \
 	    "Save Settings:" EdLiveWireWriteFeatureParams \
-	    "txt" [] "Save" "Save LiveWire Settings" \
+	    "xml" [] "Save" "Save LiveWire Settings" \
 	    "Save LiveWire settings for the structure you are segmenting."\
 	    "Absolute"
 	    
@@ -842,15 +841,13 @@ proc EdLiveWireGetFeatureParams {} {
 #-------------------------------------------------------------------------------
 # .PROC EdLiveWireSetFeatureParams
 # set vtkImageLiveWireEdgeWeights filters settings from tcl variables
+# sets one of the active slice's filters
 # .ARGS
+# int edgedir edge filter to set parameters in (optional, defaults to active one)
 # .END
 #-------------------------------------------------------------------------------
 proc EdLiveWireSetFeatureParams {{edgedir ""}} {
     global Ed Slice
-
-    # Lauren do this for all slices or just active?
-    # Lauren need to check bounds better, and also make filters modified...
-    # Lauren do for just the right filter or all!
 
     if {$edgedir == ""} {
 	set edgedir $Ed(EdLiveWire,activeEdgeDirection)
@@ -965,7 +962,9 @@ proc EdLiveWireStartPipeline {} {
     foreach s $Slice(idList) {
 	Slicer SetFirstFilter $s Ed(EdLiveWire,lwSetup$s)
 	Slicer SetLastFilter  $s Ed(EdLiveWire,lwPath$s)  
+
     }
+
     # Layers: Back=Original, Fore=Working
     # The original volume needs to be the filter input
     Slicer BackFilterOn
@@ -976,7 +975,6 @@ proc EdLiveWireStartPipeline {} {
 
     Slicer ReformatModified
     Slicer Update
-
 }
 
 
@@ -994,7 +992,6 @@ proc EdLiveWireStopPipeline {} {
     Slicer ForeFilterOff
     Slicer ReformatModified
     Slicer Update
-
 }
 
 #-------------------------------------------------------------------------------
@@ -1008,13 +1005,15 @@ proc EdLiveWireEnter {} {
     global Ed Label Slice
 
     # all 4 edge filters need to execute
-    set Ed(EdLiveWire,numEdgeFiltersReady) 0
+    #set Ed(EdLiveWire,numEdgeFiltersReady) 0
     # ignore mouse clicks until we are all ready
-    set Ed(EdLiveWire,pipelineActive) 0
-    # ignore mouse movement until we are all ready
+    #set Ed(EdLiveWire,pipelineActive) 0
+    # ignore mouse movement until we have a start point
     set Ed(EdLiveWire,pipelineActiveAndContourStarted) 0
 
-    # set up Slicer pipeline and force edge filters to execute.
+    # Lauren reset this slice's contour?
+
+    # set up Slicer pipeline
     EdLiveWireStartPipeline
 
     # keep track of active slice to reset contour if slice changes
@@ -1160,9 +1159,9 @@ proc EdLiveWireB1 {x y} {
     switch $Ed(EdLiveWire,mode) {
 	"LiveWire" {
 	    # if pipeline not set up yet do nothing
-	    if {$Ed(EdLiveWire,pipelineActive) == 0} {
-		return
-	    }
+	    #if {$Ed(EdLiveWire,pipelineActive) == 0} {
+	#	return
+	#    }
 	    set Ed(EdLiveWire,pipelineActiveAndContourStarted) 1
 	    
 	    # if we just changed to this slice
@@ -1411,7 +1410,6 @@ proc EdLiveWireShowProgress {filter} {
 # .PROC EdLiveWireEndProgress
 #
 # Wrapper around MainEndProgress.
-# Then when all edge filters have executed, allows mouse clicks.
 # 
 # .END
 #-------------------------------------------------------------------------------
@@ -1420,13 +1418,6 @@ proc EdLiveWireEndProgress {} {
 
     MainEndProgress
     
-    # all 4 edge filters need to execute
-    incr Ed(EdLiveWire,numEdgeFiltersReady)
-
-    if {$Ed(EdLiveWire,numEdgeFiltersReady) == $Ed(EdLiveWire,numEdgeFilters)} {
-	# we are all ready: pay attention to mouse clicks
-	set Ed(EdLiveWire,pipelineActive) 1
-    }
 }
 
 #-------------------------------------------------------------------------------
@@ -1812,7 +1803,9 @@ proc EdLiveWireTrain {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdLiveWireReadFeatureParams
-# 
+# Reads the options-format file that contains the livewire
+# settings, and applies the settings to the filters of the 
+# current slice.  NOTE: this does not apply to all slices
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -1824,33 +1817,80 @@ proc EdLiveWireReadFeatureParams {} {
     if {$Ed($e,trainingInputFileName) == ""} {
 	return
     }
+    
+    # read in the settings
+    set tags [MainMrmlReadVersion2.0 $Ed($e,trainingInputFileName)]
+    set node(program) ""
+    set node(contents) ""
 
-    # Lauren these should really be options....
-    set in [open $Ed($e,trainingInputFileName)]
-    set numbers [read $in]
-    close $in
-
-    # Lauren need more error checking in case num params changes!
-
-    # current number in list
-    set index 0
-
-    # loop over features
-    for {set feat 0} {$feat < $Ed(EdLiveWire,numFeatures)} {incr feat} {
+    foreach pair $tags {
+	set tag  [lindex $pair 0]
+	set attr [lreplace $pair 0 0]
 	
-	# set weight (importance given to feature)	
-	set Ed(EdLiveWire,feature$feat,weight) [lindex $numbers $index]
-	set index [expr $index + 1]
-
-	# loop over params for each feature
-	for {set p 0} {$p < $Ed(EdLiveWire,feature$feat,numParams)} {incr p} {
-	    set Ed($e,feature$feat,param$p) [lindex $numbers $index]
-	    set index [expr $index + 1]
+	switch $tag {
+	    "Options" {
+		foreach a $attr {
+		    set key [lindex $a 0]
+		    set val [lreplace $a 0 0]
+		    set node($key) $val
+		}
+	    }    
 	}
     }
+    
+    # check program and contents
+    if {$node(program) != "slicer"} {
+	puts "This is not a LiveWire settings file. It is from $program"
+    }
+    if {$node(contents) != $Ed(EdLiveWire,contents)} {
+	puts "This is not a LiveWire settings file. It is $contents."
+    }
 
-    # Apply the settings too.
-    EdLiveWireSetFeatureParams
+    set filters [array names node "filter*"]
+    foreach filter $filters {
+	# find filter number
+	set number ""
+	regexp "filter(.*)" $filter match number
+	
+	# make a list of settings for the filter
+	set settings [split $node($filter) ","]
+	
+	# see how many features, how many parameters for each feature:
+	set numFeatures [llength $settings]
+	# subtract one since the weight is the first number and not a "param"
+	set numParams [expr [llength [lindex $settings 0]] - 1]
+	# check to make sure we don't have too many
+	if {$numFeatures > $Ed(EdLiveWire,numFeatures)} {
+	    set numFeatures $Ed(EdLiveWire,numFeatures)
+	}
+	if {$numParams > $Ed(EdLiveWire,feature$number,numParams)} {
+	    set numParams $Ed(EdLiveWire,feature$number,numParams)
+	}
+
+	# get this filter (the right number)
+	set s $Slice(activeID)
+	set filter [Ed(EdLiveWire,lwSetup$s) GetEdgeFilter $number]
+
+	# use the settings: loop over features
+	for {set feat 0} {$feat < $numFeatures} {incr feat} {
+	    # get this feature's info from the list
+	    set params [lindex $settings $feat]
+
+	    # set weight (importance given to feature)	
+	    set Ed(EdLiveWire,feature$feat,weight) [lindex $params 0]
+
+	    set index 1
+	    # loop over params for the feature
+	    for {set p 0} {$p < $numParams} {incr p} {
+		set Ed($e,feature$feat,param$p) [lindex $params $index]
+		set index [expr $index + 1]
+	    }
+	}
+
+	# Apply the settings to this filter
+	EdLiveWireSetFeatureParams $number
+    }
+
 
     puts "Read settings from file $Ed($e,trainingInputFileName)"
 }
@@ -1863,37 +1903,66 @@ proc EdLiveWireReadFeatureParams {} {
 # .END
 #-------------------------------------------------------------------------------
 proc EdLiveWireWriteFeatureParams {} {
-    global Ed Slice
+    global Ed Slice Options
 
-    set e EdLiveWire
-
-    if {$Ed($e,trainingOutputFileName) == ""} {
+    if {$Ed(EdLiveWire,trainingOutputFileName) == ""} {
 	return
     }
 
-    set out [open $Ed($e,trainingOutputFileName) w]
+    # these lines wrote the plain numbers to a file
+    #Ed(EdLiveWire,lwSetup$s) SetSettingsFileName $Ed($e,trainingOutputFileName)
+    #Ed(EdLiveWire,lwSetup$s) WriteFilterSettings
 
-    # Lauren need more error checking in case num params changes!
+    # use the Options format instead:
+    vtkMrmlOptionsNode node
+    node SetProgram $Options(program)
+    node SetContents $Ed(EdLiveWire,contents)
 
-    set index 0
+    set s $Slice(activeID)
+    set settings ""
 
-    # loop over features
-    for {set feat 0} {$feat < $Ed(EdLiveWire,numFeatures)} {incr feat} {
-	
-	# output weight (importance given to feature)
-	puts -nonewline $out $Ed(EdLiveWire,feature$feat,weight)
+    # loop over edge filters  
+    for {set e 0} {$e < $Ed(EdLiveWire,numEdgeFilters)} {incr e} {
+	set filter [Ed(EdLiveWire,lwSetup$s) GetEdgeFilter $e]
+	set settings "${settings}filter$e=\n'"
 
-	# loop over params for each feature
-	for {set p 0} {$p < $Ed(EdLiveWire,feature$feat,numParams)} {incr p} {
-	    puts -nonewline $out " $Ed($e,feature$feat,param$p)"
+	# loop over features
+	for {set f 0} {$f < $Ed(EdLiveWire,numFeatures)} {incr f} {
+
+	    # get weight (importance given to feature)
+	    set settings "$settings[$filter GetWeightForFeature $f]"
+	    
+	    # loop over params for each feature
+	    for {set p 0} {$p < $Ed(EdLiveWire,feature$f,numParams)} {incr p} {
+		set settings "$settings [$filter GetParamForFeature $f $p]"
+	    }
+
+	    set settings "$settings,\n"
 	}
-	# newline
-	puts $out ""
-    }
+	# remove newline and last comma
+	set settings [string trimright $settings]
+	set settings [string trimright $settings ,]
+	set settings "$settings'\n"
 
-    close $out
+	#puts "e: $e"
+	#puts $settings
+    } 
 
-    puts "Saved settings to file $Ed($e,trainingOutputFileName)"
+    # fill in the options info
+    node SetOptions $settings
+
+    # temp tree for writing
+    vtkMrmlTree tempTree
+    tempTree AddItem node
+
+    # tell the tree to write
+    tempTree Write $Ed(EdLiveWire,trainingOutputFileName)
+    tempTree RemoveAllItems
+
+    tempTree Delete
+    node Delete
+
+    puts "Saved settings to file $Ed(EdLiveWire,trainingOutputFileName)"
 }
 
 #-------------------------------------------------------------------------------
