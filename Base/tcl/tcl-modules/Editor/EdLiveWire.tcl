@@ -984,7 +984,6 @@ proc EdLiveWireStartPipeline {} {
     foreach s $Slice(idList) {
 	Slicer SetFirstFilter $s Ed(EdLiveWire,lwSetup$s)
 	Slicer SetLastFilter  $s Ed(EdLiveWire,lwPath$s)  
-
     }
 
     # Layers: Back=Original, Fore=Working
@@ -1406,7 +1405,6 @@ proc EdLiveWireApply {} {
 
     # always delete points for now...
     Slicer DrawDeleteAll
-
 }
 
 
@@ -1418,9 +1416,9 @@ proc EdLiveWireApply {} {
 # .END
 #-------------------------------------------------------------------------------
 proc EdLiveWireStartProgress {} {
+    global Gui
 
-    MainStartProgress
-
+    puts -nonewline $Gui(progressText)
 }
 
 #-------------------------------------------------------------------------------
@@ -1431,7 +1429,7 @@ proc EdLiveWireStartProgress {} {
 #-------------------------------------------------------------------------------
 proc EdLiveWireShowProgress {filter} {
 
-    MainShowProgress $filter
+    puts -nonewline "."
 
 }
 
@@ -1445,7 +1443,7 @@ proc EdLiveWireShowProgress {filter} {
 proc EdLiveWireEndProgress {} {
     global Ed
 
-    MainEndProgress
+    puts ""
     
 }
 
@@ -1714,6 +1712,9 @@ proc EdLiveWireTrain {} {
 
     set s $Slice(activeID)
     set e EdLiveWire
+
+    # clear any old contour drawn with old settings
+    EdLiveWireResetSlice $s
 
     # set the training image input to the edge filter.
     for {set f 0} {$f < $Ed($e,numEdgeFilters)} {incr f} {
