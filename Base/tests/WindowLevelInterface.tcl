@@ -32,7 +32,7 @@ proc InitializeWindowLevelInterface {} {
    frame .wl.f2
    label .wl.f2.levelLabel -text "Level"
    scale .wl.f2.level -from [expr $l - $w] -to [expr $l + $w] \
-     -orient horizontal -command SetLevel
+     -orient horizontal -command SetLevel -variable level
    checkbutton .wl.video -text "Inverse Video" -command SetInverseVideo
 
    # resolutions less than 1.0
