@@ -1,0 +1,80 @@
+
+<title>Image registration of one dataset to another dataset. </title>
+
+<p>
+It is sometimes useful to register one dataset to another. This can be
+done for a number of reasons such as viewing data for one patient from several
+timepoints or viewing data for one patient using multiple imaging modalities
+such as CT and MR for the same patient. The registration technique used in
+the slicer is a <em>rigid registration</em>, which means that one of the datasets
+is shifted into the imaging plane of the other dataset via 2 simple movements,
+rotation and translation. No non-rigid processing such as warping is done. This means that the slicer's current registration method is best-suited to registering multiple datasets for the same patient.
+In order to begin the registration process, you will need to perform the
+following steps:
+</p>
+<ol>
+<li>load both datasets into the slicer
+<li>click on the data tab
+<li>click on one of the volumes - this will highlight the volume
+<li>click on the Add Transform tab - this will create an <em> identity matrix</em>
+<li> click on the Matrices tab
+<li> select the Manual tab
+<li> now move the slider in the interaction panel at the bottom-left that is
+labelled Exit at the top and Fade at the bottom. Adjust this tab so that
+both volumes are visible. We can now begin a manual registration. We will
+use the sliders on the registration page to move one dataset into alignment
+with the other. We can also
+literally drag the dataset we are applying the matrix to with the mouse to put it into alignment with the other dataset.
+</ol>
+<p> We will show a pre-and post registation view below. First we have
+a view of the scene after performing the steps listed above.
+<center>
+<a href="images/misregister.jpg">
+<p><img SRC="images/misregister_small.jpg" ></center> </a>
+<center>
+<p><b>Illustration of Misregistration Problem<p>(click on image for a larger picture)</B>
+</center>
+
+<br>
+This scene above shows two datasets, one of the top and the other of the bottom of a skull. We can use the registration program to "align" or register the
+two datasets. In many cases the two datasets will be more closely aligned than
+this one but in principle we will be solving the same problem: we  will move
+one dataset, applying a rigid transform, so that it aligns in the manner we
+want with the other dataset.
+<p>
+Below we can see the scene after manually moving the top of the skull.
+We move the top of the skull because this is the dataset we selected to
+apply our transformation matrix to. We can see that the data is now approximately aligned. The white strip is where the two datasets overlap.
+<center>
+<a href="images/registered.jpg">
+<p><img SRC="images/registered_small.jpg" ></center> </a>
+<center>
+<p><b>data after registration <p>(click on image for a larger picture)</B>
+</center>
+
+
+If we now save our scene and view the resulting xml file describing the scene, we can see a text entry similar to the following:
+<blockquote>  Matrix name='manual7' matrix='1 0 0 -9 0 1 0 -12 0 0 1 105 0 0 0 1' </blockquote>
+This Matrix precedes one of the Volumes and describes the rigid transform that
+moves the top part of the head into alignment with the bottom part. It is
+important to understand that the slicer does not actually reslice the
+data, but infact loads in the two misaligned datasets and then applies
+the transform to create the <em>scene</em> with the data properly aligned.
+<p>
+Sometimes it is useful to refine the manual registration with an automatic
+registration.  The automatic registration uses the matrix above as a starting
+point for the rigid registration so manual registration must be done first.
+Auto registration is straight-forward. Select the Matrices tab and the Auto
+tab. Next select one of the matrices generated in the manual registration
+phase. Then select the volume to move and the reference volume. Now hit the
+Run button and the registration will run. It will take a few minutes to run
+and after some initialization, a series of displays will appear on and
+dissappear from your
+monitor, which is part of the registration process.
+It might be useful for some user to note the change in the matrix:
+
+<blockquote>Matrix name='manual7' matrix='0.999995 0.001058 0.003264 -8.39007 -0.001059 1 0.000422 -11.1639 -0.003263 -0.000425 0.999996 102.155 0 0 0 1'
+</blockquote>
+Note that this matrix resulting from the automatic registration uses floating
+point numbers and is now more precise than the manual registration matrix.
+

@@ -1,0 +1,154 @@
+
+<title>Viewing your data in the Slicer</title>
+
+<p>
+The slicer can be used to create scenes as simple as a single series of
+grayscale images to a complex scene comprised of several grayscale and
+segmented datasets as well as 3d models such as the composite scene below of a
+grayscale MR dataset of an orange and several 3D models including a single
+slice of an orange in red an the rest of the orange colored orange. The scene
+has two parts in both the Normal mode(shown below)  and the 4x512 mode which seem to be
+the two most popular viewing modes. The top portion is the 3D scene and below
+is the slices scene.
+</p>
+
+<center>
+<p><img SRC="images/orange.gif" ></center></p>
+</center>
+<center>
+ <b> The 3D scene(top) and slices scene </b>
+</center>
+<p>
+The slicer has many controls over the 3d scene and slices scene	. We will list and explain
+how to use them here:
+
+
+ <div class="section">
+ <h3>1. Adjusting the View scene</h3>
+
+You have control over the way the scene above is displayed. To change this, put
+the left mouse button on the View tab at the top of the user interface panel.
+You will see several choices here. The normal setting is what you see above.
+Try the choices to see what is best for your situation. It seems most people
+prefer the normal or 4D view for observing data after they are done editing
+and creating a scene, and the 4x512 view is preferred during the editing
+process.
+
+ <div class="subsection">
+ <h3>1-1. Annotation on your scene</h3>
+You have control over the annotation that the slicer displays over your images
+when you move the mouse over the scene to edit/view your data. To change this
+feature, put the left mouse over the interface and select  the More: button and
+choose the Anno choice from the list. You will see a new panel and 7 choices.
+The top four adjust the 3D view scene and the bottom three affect the slice
+views. These choices are entirely up to the user. You can decide which options
+are best for you by
+these by trial and error. Many people keep the defaults as they are but a lot
+of people prefer to turn Crosshair off as it blocks the view under the mouse.
+
+You can save your options by using mouse on the File tab at the top of the
+interface and selecting the Save Current Options tab. This will save your
+options to a file called <em>Options.xml</em>
+ <div class="section">
+ <H1>2. Controlling the 3D portion of the scene </H1>
+Control over the 3D portion of the scene is fairly straightforward as each
+mouse button has a distinct function.
+<ul>
+<li> left button rotates the scene
+<li> middle button will move the scene left and right and up and down
+<li> right button will adjust the scaling or size of the scene
+</ul>
+
+<br> <br>
+
+ <h3>2-1 Controlling the slices portion of the scene </h3>
+<center>
+<p><img SRC="images/bigslider.gif" ></center>
+
+<center>
+ <h3> The Slices Interface and Scene Display</h3>
+</center>
+
+<p>
+The slices portion of the scene is very flexible and powerful and allows
+a variety of ways to display multiple datasets. Manipulating the  slices scene also affects
+the 3D scene. When your data is loaded, a view from all 3 major axes is displayed in the three  separate windows. Here are some of the functions of the slices scene:
+</p>
+<ul>
+<li>To make the slices visible in the 3D scene as
+well, click the V button next to the slider and that plane will become visible
+on the 3D scene. This is useful to view the orientation of multiple
+datasets and models with respect to each other.
+<li> To move through the volumes, simply move the
+slider above each of the planes. If this plane is visible,(see step above)
+then the 3D scene will be updated as well.
+<li>You can view multiple datasets (up to three) at one time. After you
+have loaded your datasets into the slicer
+The slices display is controlled by four tabs on each of the three views.
+The tabs stand for:
+<ul>
+<li> Bg: the dataset to display in the background
+<li> Fg: the dataset to display in the foreground
+<li> Lb: you can load a <em> labelmap </em> which will have the label outline
+overlaid on top of the background and foreground display
+<li> Or: change the default orientation of the data
+</ul>
+</ul>
+To change the data that is displayed,  click the left mouse over the tab
+and choose the dataset that you want associated with that tab.
+To change the window/level for one of the views, click the right mouse over
+the tab. A window will pop up and show sliders that you can adjust to
+optimize the display.
+<p>
+In the view above we have three different combinations of datasets displayed:
+In the first (Axial) view, the grayscale data is displayed in the background, the
+skin in the foreground, and the label of a single slice of orange is loaded as
+a labelmap (blue outline). In the second(Saggital) view, there two segmented datasets are
+loaded, the skin in the background and the slice in the foreground. The third
+(Coronal) view is a grayscale and segmented orange slice combination.
+
+
+ <h3>2-1 Controlling the scene from the user interface panel </h3>
+When you move the cursor over the Slicer icon  which is part of the user interface panel:
+<center>
+<p><img SRC="images/welcome.gif" ></center>
+</a>
+<center>
+ <b> The Slicer icon</b>
+</center>
+The following panel appears:
+<center>
+<p><img SRC="images/lowpanel.gif" ></center>
+<center>
+ <h3> Secondary Scene Controller</h3>
+</center>
+There are several useful features of the scene controller shown above.
+
+<ul>
+<li>The slider on the left between the Fade and Exit buttons is a very useful
+feature. When you have data loaded in the foreground and background, you can
+use this slider to <em> blend </em> the datasets. When the slider is at the
+bottom, it will display the background dataset, and when it is at the top
+it will display the foreground dataset. It will blend the two datasets when the
+slider is in between the top and bottom. This slider will have no effect unless
+there is a foreground and a background dataset loaded. This feature is
+particularly when you are <em>registering</em>two datasets and want to see how accurate the registration is.
+<li>The FOV label. The FOV stands for Field Of View. This describes the "size"
+of your image. Sometimes you will need to adjust this value. If your Pixel Size is small, then the FOV will be small and the images that the slicer displays will be small. Change FOV to a larger value until it fills the window. Conversely,
+if the Pixel Size is very large the image will not fit in the window so you will need to change the FOV to a smaller value.
+<li> The arrows pointing north, south, east, and west can rotate the 3D scene in
+the appropriate direction. Click on the arrow and the 3D scene will rotate in that
+direction
+<li> The Parallel tab will toggle the projection between parallel and perspective projections. A parallel projection preserves parallel lines, making the object
+appear the same size regardless of how far away it is from the viewer. A perspective projection allows closer objects to appear larger than objects farther
+away.
+<li>The Save 3D button will save the current 3D scene. Change the word view to
+be the word that you want the 3D scene to be called. It is important to note
+here that the slicer will attempt to save the scene to <em> the directory
+from which you started the slicer</em> so you need to be careful where you
+start the slicer! If you dont have privileges to write to this directory, the
+scene wont be saved and slicer will send no message.
+the wi
+<li> You can use the icon of the head to rotate the 3d scene by clicking on the
+letters (R)Right, (L)Left,(P)Posterior,(A)Anterior,(I)Inferior, and (S)Superior.
+</ul>
