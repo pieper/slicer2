@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkFSSurfaceScalarReader.cxx,v $
   Language:  C++
-  Date:      $Date: 2002/10/07 20:39:51 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2002/10/07 22:02:32 $
+  Version:   $Revision: 1.2 $
 
 =========================================================================*/
 #include "vtkFSSurfaceScalarReader.h"
@@ -35,7 +35,7 @@ vtkFSSurfaceScalarReader::~vtkFSSurfaceScalarReader()
 }
 
 
-void vtkFSSurfaceScalarReader::Execute()
+void vtkFSSurfaceScalarReader::ReadFSScalars()
 {
   FILE* scalarFile;
   int magicNumber;
@@ -123,7 +123,7 @@ void vtkFSSurfaceScalarReader::Execute()
   fclose (scalarFile);
 
   // Set the array in our output.
-  output->SetArray (scalars, VTK_FLOAT, 1);
+  output->SetArray (scalars, numValues, 0);
 }
 
 void vtkFSSurfaceScalarReader::PrintSelf(ostream& os, vtkIndent indent)

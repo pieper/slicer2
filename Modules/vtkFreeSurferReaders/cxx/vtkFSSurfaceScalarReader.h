@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkFSSurfaceScalarReader.h,v $
   Language:  C++
-  Date:      $Date: 2002/10/07 20:39:51 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2002/10/07 22:02:32 $
+  Version:   $Revision: 1.2 $
 
 =========================================================================*/
 // .NAME vtkFSSurfaceScalarReader - read a surface scalar file from
@@ -39,11 +39,12 @@ public:
   void SetOutput(vtkFloatArray *output)
     {this->SetNthOutput(0, (vtkDataObject*)output);}
 
+  void ReadFSScalars();
+
 protected:
   vtkFSSurfaceScalarReader();
   ~vtkFSSurfaceScalarReader();
 
-  void Execute();
 
   int ReadInt3 (FILE* iFile, int& oInt);
   int ReadInt2 (FILE* iFile, int& oInt);
