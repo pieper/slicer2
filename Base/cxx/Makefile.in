@@ -98,12 +98,12 @@ vtkImageStatistics \
 vtkImageLabelVOI \
 vtkImageEMMarkov \
 vtkImageEMSegmenter \
+vtkBoolTess \
+vtkPolyBoolean \
+vtkSurfaceProps \
 vtkFog
 
-#vtkSurfaceProps \
 #vtkMathUtils \
-#vtkBoolTess \
-#vtkPolyBoolean
 
 
 #------------------------------------------------------------------------------

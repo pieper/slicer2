@@ -1,6 +1,6 @@
 /*=auto=========================================================================
 
-(c) Copyright 2002 Massachusetts Institute of Technology
+(c) Copyright 2001 Massachusetts Institute of Technology
 
 Permission is hereby granted, without payment, to copy, modify, display 
 and distribute this software and its documentation, if any, for any purpose, 
@@ -29,6 +29,18 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 vtkSurfaceProps::vtkSurfaceProps()
   {
   }
+
+
+void vtkSurfaceProps::Update()
+{
+  this->SurfaceArea = 0.0;
+  this->MinCellArea = VTK_LARGE_FLOAT;
+  this->MaxCellArea = 0.0;
+  this->Volume = 0.0;
+  this->VolumeError = 0.0;
+  this->Execute();
+
+}
 
 // Description:
 // Specifies the input data...
@@ -132,3 +144,4 @@ void vtkSurfaceProps::Execute()
   else
     this->VolumeError = tot_vol2 - tot_vol;
   }
+

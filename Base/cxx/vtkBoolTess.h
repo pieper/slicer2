@@ -1,6 +1,6 @@
 /*=auto=========================================================================
 
-(c) Copyright 2002 Massachusetts Institute of Technology
+(c) Copyright 2001 Massachusetts Institute of Technology
 
 Permission is hereby granted, without payment, to copy, modify, display 
 and distribute this software and its documentation, if any, for any purpose, 
@@ -23,6 +23,8 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 =========================================================================auto=*/
 #ifndef __vtkBoolTess_h
 #define __vtkBoolTess_h
+
+#include "vtkObject.h"
 
 //
 //BTX - begin tcl exclude
@@ -56,34 +58,37 @@ typedef struct booltesspair {
 //ETX - end tcl exclude
 //
 
-class vtkBoolTess { //; prevent man page generation
+class VTK_EXPORT vtkBoolTess { //; prevent man page generation
 public:
   vtkBoolTess();
   ~vtkBoolTess();
 
-  inline static vtkBoolTess *New();
-  inline void Delete();
+  /*  inline */ static vtkBoolTess *New() {return (new vtkBoolTess);}
+  /*  inline */ void Delete() { delete this; }
   void SetPoints( float *points );
   int AddContour( int nPts, int *ptIds );
   void Reset();
   int Triangulate( int **tris );
 
 protected:
-  GenerateTriangles();
-  static int SortCompare( void *arg1, void *arg2 );
+  int GenerateTriangles();
+  static int SortCompare(const void *arg1, const void *arg2 );
 
   // this is the input data
   int NumContours;
   int NLoopPts[VTK_BOOL_MAX_CONTOURS];
   int *Contours[VTK_BOOL_MAX_CONTOURS];
+  
+  //BTX - begin tcl exclude
   float (*Points)[3];
+  //ETX - end tcl exclude
 
   // this data is used for the algorithm
   int ProjAxis;
   int SortAxis;
   int YAxis;
   int Orient;
-
+  
   int NumInputEdges;
   int NumNewEdges;
   vtkBoolTessVtx *Vertices;
@@ -101,14 +106,4 @@ protected:
   void TriangulateMonotone( vtkBoolTessEdge *firstEdge );
   int PrevNumInputEdges;
   };
-
-inline vtkBoolTess * vtkBoolTess::New()
-  {
-  return( new vtkBoolTess );
-  }
-
-inline void vtkBoolTess::Delete()
-  {
-  delete this;
-  }
 #endif

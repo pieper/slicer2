@@ -1,6 +1,6 @@
 /*=auto=========================================================================
 
-(c) Copyright 2002 Massachusetts Institute of Technology
+(c) Copyright 2001 Massachusetts Institute of Technology
 
 Permission is hereby granted, without payment, to copy, modify, display 
 and distribute this software and its documentation, if any, for any purpose, 
@@ -21,6 +21,19 @@ THE SOFTWARE IS PROVIDED "AS IS."  MIT HAS NO OBLIGATION TO PROVIDE
 MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 =========================================================================auto=*/
+
+#define kcyDebug(x) \
+{ cout << x << endl; }
+
+#define vtkDebugMacro(x) \
+{ if (1==1) \
+    { char *vtkmsgbuff; \
+      ostrstream vtkmsg; \
+      vtkmsg << "Debug: In " __FILE__ ", line " << __LINE__ << "\n" << this->GetClassName() << " (" << this << "): " x  << "\n\n" << ends; \
+      vtkmsgbuff = vtkmsg.str(); \
+      vtkOutputWindowDisplayText(vtkmsgbuff);\
+      vtkmsg.rdbuf()->freeze(0);}}
+
 #include <math.h>
 #include "vtkPolyBoolean.h"
 #include "vtkLine.h"
@@ -42,6 +55,7 @@ vtkPolyBoolean::vtkPolyBoolean()
   this->XformA = NULL;
   this->XformB = NULL;
   this->IntersectionCount = 0;
+  this->TestCount=69;
   this->TriangleCount = 0;
   this->NodeCount = 0;
   this->TriDirectory[0] = this->TriDirectory[1] = NULL;
@@ -93,6 +107,55 @@ void vtkPolyBoolean::SetOperation( int operation )
   this->Modified();
 }
 
+
+// sets this->TestCount to be the number of intersecting triangles
+// between Model A and Model B
+// This is found by determining the number of interesecting bounding
+// boxes surrounding each cell (?)
+void vtkPolyBoolean::SPLTestIntersection() {
+  cout << "Declaring Input A Data Input" << endl;
+  vtkPolyData *inputA = (vtkPolyData *)this->Inputs[0];
+  cout << "0" << endl;
+  vtkPolyData *inputB = this->PolyDataB;
+  cout << "1" << endl;
+  vtkPolyData *output = this->GetOutput();
+  cout << "2" << endl;
+  vtkPointData *outputPD = output->GetPointData();
+  cout << "3" << endl;
+  vtkPointData *pdA = inputA->GetPointData(),
+               *pdB = inputB->GetPointData();
+  cout << "4" << endl;
+  vtkCellData *outputCD = output->GetCellData();
+  cout << "5" << endl;
+  vtkCellData *cdA, *cdB;
+
+  cout << "Declaring Xform Data Input" << endl;
+  vtkMatrix4x4 *XformBtoA = vtkMatrix4x4::New();
+  vtkMatrix4x4 *XformAInverse = vtkMatrix4x4::New();
+  // make dummy transform because of but that Multiply4x4 isn't static fcn
+  vtkTransform *dummyxform = vtkTransform::New();
+
+  cout << "Declaring Xform Num Data Input" << endl;
+  int numInputPointsA, numInputPointsB, numNewPoints,edgeCount;
+  int numNewPointsExpected, operationOutputs3D;
+
+  vtkDebugMacro(<< "Performing polyhedron boolean.");
+  cout << "Initializing Data" << endl;
+  this->ExecutionCount++;
+  this->IntersectionCount = 0;
+  this->TriangleCount = 0;
+  this->NodeCount = 0;
+
+  cout << "NumPoints in A set" << endl;
+  this->TestCount = -90;
+  numInputPointsA = inputA->GetNumberOfPoints();
+
+
+
+  cout << "Testing C++ cout" << endl;
+}
+
+
 void vtkPolyBoolean::DeleteTriDirectory( int AorB )
 {
   vtkPolyData *dataset;
@@ -131,18 +194,18 @@ void vtkPolyBoolean::DeleteTriDirectory( int AorB )
     }
 }
 
-void vtkPolyBoolean::SetInput( vtkPolyData *input )
-{
-  if ( this->Inputs[0] != input )
-    {
-    this->DeleteTriDirectory( 0 );
-    vtkDebugMacro(<<" setting Input to " << (void *)input);
-    if (this->Inputs[0]) {this->Inputs[0]->UnRegister(this);}
-    this->Inputs[0] = input;
-    if (this->Inputs[0]) {this->Inputs[0]->Register(this);}
-    this->Modified();
-    }
-}
+
+/*
+  void vtkPolyBoolean::SetInput2( vtkPolyData *input )
+  {
+  this->DeleteTriDirectory(0);
+  cout << " setting Input to " << (void *)input << endl;
+  this->Inputs;
+  this->Inputs[0] = input;
+  this->Inputs[0]->Register(this);
+  
+  }
+*/
 
 void vtkPolyBoolean::SetPolyDataB( vtkPolyData *polyDataB )
 {
@@ -184,14 +247,15 @@ unsigned long vtkPolyBoolean::GetMTime()
   return mTime;
 }
 
-void vtkPolyBoolean::Update()
+
+void vtkPolyBoolean::UpdateCutter()
 {
   unsigned long int mtime, pdMtime;
   int AorB;
   vtkPolyData *pd[2];
 
   // make sure input is available
-  if ( this->Inputs[0] == NULL || this->PolyDataB == NULL )
+    if ( this->Inputs[0] == NULL || this->PolyDataB == NULL )
     {
     vtkErrorMacro(<< "No input...can't execute!");
     return;
@@ -228,15 +292,17 @@ void vtkPolyBoolean::Update()
       {
       if ( pd[AorB]->GetDataReleased() )
     {
-    pd[AorB]->ForceUpdate();
+    pd[AorB]->Update();
     }
       }
-
-    if ( this->StartMethod )
+    /*
+      if ( this->StartMethod )
       {
       (*this->StartMethod)(this->StartMethodArg);
       }
-    this->Output->Initialize(); //clear output
+    */
+
+    //    this->Output->Initialize(); //clear output
     // reset AbortExecute flag and Progress
     this->AbortExecute = 0;
     this->Progress = 0.0;
@@ -246,11 +312,13 @@ void vtkPolyBoolean::Update()
       {
       this->UpdateProgress(1.0);
       }
-    this->SetDataReleased(0);
-    if ( this->EndMethod )
-      {
+    //    this->SetDataReleased(0);
+    /*
+      if ( this->EndMethod )
+      { 
       (*this->EndMethod)(this->EndMethodArg);
       }
+    */
     }
 
   for (AorB=0; AorB<2; AorB++)
@@ -261,6 +329,8 @@ void vtkPolyBoolean::Update()
       }
     }
 }
+
+
 
 #define CELLS_PER_BUCKET 15
 //
@@ -307,7 +377,8 @@ void vtkPolyBoolean::Execute()
     dummyxform->Multiply4x4( *XformAInverse, *this->XformB, *XformBtoA );
     }
   else
-    *XformBtoA = *this->XformB;
+    this->XformB->DeepCopy(XformBtoA);
+  //    *XformBtoA = *this->XformB;
 
   vtkDebugMacro(<< "InputA npts=" << numInputPointsA << " InputB npts=" << \
                 numInputPointsB );
@@ -576,9 +647,13 @@ int vtkPolyBoolean::ProcessTwoNodes( vtkOBBNode *nodeA,
   vtkPolyData *InputA;
   int ii, jj, numA, numB, cellIdA, cellIdB, numPts, type;
   int *ptIds;
-  static vtkIdList cellIdsA(CELLS_PER_BUCKET+10),
-                   cellIdsB(CELLS_PER_BUCKET+10);
+  static vtkIdList *cellIdsA = vtkIdList::New();
+  static vtkIdList *cellIdsB = vtkIdList::New();
   float *p[3];
+
+  cellIdsA->Allocate(CELLS_PER_BUCKET+10);
+  cellIdsB->Allocate(CELLS_PER_BUCKET+10);
+
   vtkMatrix4x4 *XformAtoB = vtkMatrix4x4::New();
   int new_edges, n_edges = 0;
 
@@ -599,7 +674,7 @@ int vtkPolyBoolean::ProcessTwoNodes( vtkOBBNode *nodeA,
   if ( pbool->BPoints == NULL )
     pbool->BuildBPoints( XformBtoA );
 
-  cellIdsB.Reset();
+  cellIdsB->Reset();
   numB = nodeB->Cells->GetNumberOfIds();
   for ( ii=0; ii<numB; ii++ )
     {
@@ -617,7 +692,7 @@ int vtkPolyBoolean::ProcessTwoNodes( vtkOBBNode *nodeA,
         if ( pbool->OBBTreeA->vtkOBBTree::TriangleIntersectsNode(
                                          nodeA, p[0], p[1], p[2], NULL ) )
           { // This cell qualifies for further testing
-          cellIdsB.InsertNextId( cellIdB );
+          cellIdsB->InsertNextId( cellIdB );
           pbool->AddCellTriangles( cellIdB, ptIds, type, numPts, 1 );
           }
         break;
@@ -632,13 +707,13 @@ int vtkPolyBoolean::ProcessTwoNodes( vtkOBBNode *nodeA,
       }
     }
 
-  numB = cellIdsB.GetNumberOfIds();
+  numB = cellIdsB->GetNumberOfIds();
   if ( numB == 0 )
     return( 0 ); // Can return early. No intersection.
 
   XformBtoA->Invert( *XformBtoA, *XformAtoB );
 
-  cellIdsA.Reset();
+  cellIdsA->Reset();
   numA = nodeA->Cells->GetNumberOfIds();
   InputA = pbool->GetInput();
   for ( ii=0; ii<numA; ii++ )
@@ -657,7 +732,7 @@ int vtkPolyBoolean::ProcessTwoNodes( vtkOBBNode *nodeA,
       if ( pbool->OBBTreeB->vtkOBBTree::TriangleIntersectsNode(
                                         nodeB, p[0], p[1], p[2], XformAtoB ) )
         { // This cell qualifies for further testing
-        cellIdsA.InsertNextId( cellIdA );
+        cellIdsA->InsertNextId( cellIdA );
         pbool->AddCellTriangles( cellIdA, ptIds, type, numPts, 0 );
         }
       break;
@@ -671,12 +746,12 @@ int vtkPolyBoolean::ProcessTwoNodes( vtkOBBNode *nodeA,
 
   XformAtoB->Delete();
 
-  numA = cellIdsA.GetNumberOfIds();
+  numA = cellIdsA->GetNumberOfIds();
   for ( ii=0; ii<numA; ii++ )
     for ( jj=0; jj<numB; jj++ )
       {
-      new_edges = pbool->IntersectCellPair( cellIdsA.GetId(ii),
-                                           cellIdsB.GetId(jj) );
+      new_edges = pbool->IntersectCellPair( cellIdsA->GetId(ii),
+                                           cellIdsB->GetId(jj) );
       if ( new_edges < 0 )
         return( new_edges );
       n_edges += new_edges;
@@ -1642,6 +1717,26 @@ void vtkPolyBoolean::SortLoops( vtkBoolTri *thisTri )
   {
   }
 
+
+#define vtkCELLTRIANGLES(CELLPTIDS, TYPE, IDX, PTID0, PTID1, PTID2) \
+    { switch( TYPE ) \
+      { \
+      case VTK_TRIANGLE: \
+      case VTK_POLYGON: \
+      case VTK_QUAD: \
+        PTID0 = CELLPTIDS[0]; \
+        PTID1 = CELLPTIDS[(IDX)+1]; \
+        PTID2 = CELLPTIDS[(IDX)+2]; \
+        break; \
+      case VTK_TRIANGLE_STRIP: \
+        PTID0 = CELLPTIDS[IDX]; \
+        PTID1 = CELLPTIDS[(IDX)+1+((IDX)&1)]; \
+        PTID2 = CELLPTIDS[(IDX)+2-((IDX)&1)]; \
+        break; \
+      default: \
+        PTID0 = PTID1 = PTID2 = -1; \
+      } }
+
 void vtkPolyBoolean::AddCellTriangles( int cellId, int *ptIds, int type,
                                        int numPts, int AorB )
   {
@@ -1695,7 +1790,7 @@ void vtkPolyBoolean::AddCellTriangles( int cellId, int *ptIds, int type,
       newTri->CellId = cellId;
       newTri->AorB = AorB;
 
-      CELLTRIANGLES( ptIds, type, ii, triPts[0], triPts[1], triPts[2] );
+      vtkCELLTRIANGLES( ptIds, type, ii, triPts[0], triPts[1], triPts[2] );
       if ( triPts[0] > -1 )
         {
         nextTri = thisTriDirectory[cellId];
