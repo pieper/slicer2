@@ -38,6 +38,10 @@
 # PROCEDURES:  
 #   FMRIEngineInit
 #   FMRIEngineBuildGUI
+#   FMRIEngineBuildUIForSelect the
+#   FMRIEngineSelectSequence
+#   FMRIEngineUpdateSequences
+#   FMRIEngineBuildUIForLoad the
 #   FMRIEngineScaleActivation the
 #   FMRIEngineSetImageFormat the
 #   FMRIEngineBuildUIForAnalyze the
@@ -105,9 +109,9 @@ proc FMRIEngineInit {} {
     #   row2Name = like row1
     #   row2,tab = like row1 
     #
-    set Module($m,row1List) "Help Load Compute Display"
-    set Module($m,row1Name) "{Help} {Load} {Compute} {Display}"
-    set Module($m,row1,tab) Load
+    set Module($m,row1List) "Help Input Compute Display"
+    set Module($m,row1Name) "{Help} {Input} {Compute} {Display}"
+    set Module($m,row1,tab) Input 
 
     # Define Procedures
     #------------------------------------
@@ -163,7 +167,7 @@ proc FMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.12 $} {$Date: 2004/07/06 15:34:08 $}]
+        {$Revision: 1.13 $} {$Date: 2004/07/08 22:03:35 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -186,6 +190,7 @@ proc FMRIEngineInit {} {
     # Source all appropriate tcl files here. 
     source "$FMRIEngine(modulePath)/tcl/FMRIEnginePlot.tcl"
     source "$FMRIEngine(modulePath)/tcl/FMRIEngineParadigmParser.tcl"
+    source "$FMRIEngine(modulePath)/tcl/notebook.tcl"
 }
 
 
@@ -270,100 +275,31 @@ proc FMRIEngineBuildGUI {} {
     MainHelpBuildGUI FMRIEngine
     
     #-------------------------------------------
-    # Load tab 
+    # Input tab 
     #-------------------------------------------
-    set fLoad $Module(FMRIEngine,fLoad)
-    set f $fLoad
+    set fInput $Module(FMRIEngine,fInput)
+    set f $fInput
 
-    frame $f.fTop -bg $Gui(backdrop) -relief sunken -bd 2  
-    frame $f.fMiddle -bg $Gui(activeWorkspace) -height 280  
-    frame $f.fBot -bg $Gui(activeWorkspace)   
-
-    grid $f.fTop -row 0 -column 0 -sticky ew 
-    grid $f.fMiddle -row 1 -column 0 -sticky ew 
-    grid $f.fBot -row 3 -column 0 -sticky ew -pady 0 
-
+    frame $f.fOption -bg $Gui(activeWorkspace) 
+    grid $f.fOption -row 0 -column 0 -sticky ew 
+    
     #------------------------------
-    # Load->Bottom frame
+    # Input->Option frame
     #------------------------------
-    set f $fLoad.fBot
-    frame $f.fLogos  -bg $Gui(activeWorkspace)
-    pack $f.fLogos \
-        -side bottom -fill x -pady $Gui(pad)
+    set f $fInput.fOption
 
-    # Load->Bottom->Logos frame
-    set f $fLoad.fBot.fLogos
-    set uselogo [image create photo -file \
-        $FMRIEngine(modulePath)/tcl/images/LogosForIbrowser.gif]
-    eval {label $f.lLogoImages -width 200 -height 45 \
-        -image $uselogo -justify center} $Gui(BLA)
-    pack $f.lLogoImages -side bottom -padx 0 -pady $Gui(pad) -expand 0
+    Notebook:create $f.fNotebook \
+                    -pages {{Load Seq.} {Select Seq.}} \
+                    -pad 2 \
+                    -bg $Gui(activeWorkspace) \
+                    -height 356 \
+                    -width 240
+    pack $f.fNotebook -fill both -expand 1
+    set w [Notebook:frame $f.fNotebook {Load Seq.}]
+    FMRIEngineBuildUIForLoad $w
+    set w [Notebook:frame $f.fNotebook {Select Seq.}]
+    FMRIEngineBuildUIForSelect $w
 
-    #------------------------------
-    # Load->Middle frame
-    #------------------------------
-    set f $fLoad.fMiddle
-
-    # All image formats supported
-    set imgFormatList {Analyze BXH}
-
-    # Makes a frame for each reader submodule
-    foreach m $imgFormatList {
-        frame $f.f${m} -bg $Gui(activeWorkspace)
-        place $f.f${m} -in $f -relheight 1.0 -relwidth 1.0
-
-        switch $m {
-            "Analyze" {
-                FMRIEngineBuildUIForAnalyze $f.f${m}
-            }
-            "BXH" {
-                VolBXHBuildGUI $f.f${m}
-            }
-        }
-        set FMRIEngine(f$m) $f.f${m}
-    }
-    # raise the default one 
-    raise $FMRIEngine(fAnalyze)
-
-    #------------------------------
-    # Load->Top frame
-    #------------------------------
-    set f $fLoad.fTop
-
-    frame $f.fType   -bg $Gui(backdrop)
-    pack $f.fType -side top -fill x -pady $Gui(pad) -padx $Gui(pad)
-
-    # Load->Top->Type frame
-    set f $fLoad.fTop.fType
-
-    # Build pulldown menu image format 
-    eval {label $f.l -text "Image Format:"} $Gui(BLA)
-    pack $f.l -side left -padx $Gui(pad) -fill x -anchor w
-
-    # Analyze is default format 
-    set df [lindex $imgFormatList 0] 
-    eval {menubutton $f.mbType -text $df \
-          -relief raised -bd 2 -width 20 \
-          -menu $f.mbType.m} $Gui(WMBA)
-    eval {menu $f.mbType.m} $Gui(WMA)
-    pack  $f.mbType -side left -pady 1 -padx $Gui(pad)
-
-    # Add menu items
-    foreach m $imgFormatList  {
-        $f.mbType.m add command -label $m \
-            -command "FMRIEngineSetImageFormat $m"
-    }
-
-    # save menubutton for config
-    set FMRIEngine(gui,mbImgFormat) $f.mbType
-    # put a tooltip over the menu
-    # TooltipAdd $f.mbType \
-    #        "Choose the type of file information to display."
-
-    # Analyze is default format
-    FMRIEngineSetImageFormat $df
-    set FMRIEngine(imageFormat) $df
-  
     #-------------------------------------------
     # Compute tab 
     #-------------------------------------------
@@ -419,6 +355,190 @@ proc FMRIEngineBuildGUI {} {
         grid $f.l$param $f.e$param -padx $Gui(pad) -pady $Gui(pad) -sticky e
         grid $f.e$param -sticky w
     }
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC FMRIEngineBuildUIForSelect
+# Creates UI for Select page 
+# .ARGS
+# parent the parent frame 
+# .END
+#-------------------------------------------------------------------------------
+proc FMRIEngineBuildUIForSelect {parent} {
+    global FMRIEngine Gui
+
+    frame $parent.fTop    -bg $Gui(activeWorkspace) 
+    frame $parent.fMiddle -bg $Gui(activeWorkspace) 
+    frame $parent.fBottom -bg $Gui(activeWorkspace) 
+    pack $parent.fTop $parent.fMiddle $parent.fBottom \
+        -side top -padx 10 
+
+    set f $parent.fTop
+    DevAddLabel $f.l "Sequence list from Ibrowser:"
+    pack $f.l -side top -pady 10   
+
+    set f $parent.fMiddle
+    listbox $f.lb -yscrollcommand "$parent.fMiddle.sb set" -bg $Gui(activeWorkspace) 
+    scrollbar $f.sb -orient vertical -bg $Gui(activeWorkspace) -command "$parent.fMiddle.lb yview"
+    pack $f.lb -side left -expand 1 -fill both
+    pack $f.sb -side left -fill y
+
+    set FMRIEngine(seqsListBox) $f.lb
+    FMRIEngineUpdateSequences
+
+    set f $parent.fBottom
+    DevAddButton $f.bSelect "Select" "FMRIEngineSelectSequence" 10 
+    DevAddButton $f.bUpdate "Update" "FMRIEngineUpdateSequences" 10 
+    pack $f.bUpdate $f.bSelect -side left -expand 1 -pady 10 -padx 5 -fill both
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC FMRIEngineSelectSequence
+# Chooses one sequence from the sequence list loaded within the Ibrowser 
+# .END
+#-------------------------------------------------------------------------------
+proc FMRIEngineSelectSequence {} {
+    global FMRIEngine 
+
+    set curIndex [$FMRIEngine(seqsListBox) cursel]
+    if {[string length $curIndex] > 0} { 
+        set curContent [$FMRIEngine(seqsListBox) get $curIndex]
+        set id $Ibrowser($curContent,id)
+        set FMRIEngine(currentSequenceID) $id
+    }
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC FMRIEngineUpdateSequences
+# Updates sequence list loaded within the Ibrowser 
+# .END
+#-------------------------------------------------------------------------------
+proc FMRIEngineUpdateSequences {} {
+    global FMRIEngine Ibrowser 
+
+    # clear the listbox
+    set size [$FMRIEngine(seqsListBox) size]
+    $FMRIEngine(seqsListBox) delete 0 [expr $size-1]
+
+    if {[info exists Ibrowser(idList)]} {
+       set n [llength $Ibrowser(idList)]
+       if {$n > 0} {
+           set i 0
+           while {$i < $n} {
+               set id [lindex $Ibrowder(idList) $i]
+               $FMRIEngine(seqsListBox) insert end $Ibrowser($id,name) 
+               incr i
+           }
+       } else {
+           $FMRIEngine(seqsListBox) insert end None 
+       }
+    } else {
+        $FMRIEngine(seqsListBox) insert end One Two Three 
+    }
+}
+
+ 
+#-------------------------------------------------------------------------------
+# .PROC FMRIEngineBuildUIForLoad
+# Creates UI for Load page 
+# .ARGS
+# parent the parent frame 
+# .END
+#-------------------------------------------------------------------------------
+proc FMRIEngineBuildUIForLoad {parent} {
+    global FMRIEngine Gui
+
+    frame $parent.fTop -bg $Gui(backdrop) -relief sunken -bd 2  
+    frame $parent.fMiddle -bg $Gui(activeWorkspace) -height 270  
+    frame $parent.fBot -bg $Gui(activeWorkspace)   
+
+    grid $parent.fTop    -row 1 -column 0 -sticky ew 
+    grid $parent.fMiddle -row 2 -column 0 -sticky ew 
+    grid $parent.fBot    -row 4 -column 0 -sticky ew -pady 0 
+ 
+    #------------------------------
+    # Bottom frame
+    #------------------------------
+    set f $parent.fBot
+    frame $f.fLogos  -bg $Gui(activeWorkspace)
+    pack $f.fLogos \
+        -side bottom -fill x -pady $Gui(pad)
+
+    # Bottom->Logos frame
+    set f $parent.fBot.fLogos
+    set uselogo [image create photo -file \
+        $FMRIEngine(modulePath)/tcl/images/LogosForIbrowser.gif]
+    eval {label $f.lLogoImages -width 200 -height 45 \
+        -image $uselogo -justify center} $Gui(BLA)
+    pack $f.lLogoImages -side bottom -padx 0 -pady $Gui(pad) -expand 0
+
+    #------------------------------
+    # Middle frame
+    #------------------------------
+    set f $parent.fMiddle
+
+    # All image formats supported
+    set imgFormatList {Analyze BXH}
+
+    # Makes a frame for each reader submodule
+    foreach m $imgFormatList {
+        frame $f.f${m} -bg $Gui(activeWorkspace)
+        place $f.f${m} -in $f -relheight 1.0 -relwidth 1.0
+
+        switch $m {
+            "Analyze" {
+                FMRIEngineBuildUIForAnalyze $f.f${m}
+            }
+            "BXH" {
+                VolBXHBuildGUI $f.f${m}
+            }
+        }
+        set FMRIEngine(f$m) $f.f${m}
+    }
+    # raise the default one 
+    raise $FMRIEngine(fAnalyze)
+
+    #------------------------------
+    # Top frame
+    #------------------------------
+    set f $parent.fTop
+
+    frame $f.fType   -bg $Gui(backdrop)
+    pack $f.fType -side top -fill x -pady $Gui(pad) -padx $Gui(pad)
+
+    # Top->Type frame
+    set f $parent.fTop.fType
+
+    # Build pulldown menu image format 
+    eval {label $f.l -text "Image Format:"} $Gui(BLA)
+    pack $f.l -side left -padx $Gui(pad) -fill x -anchor w
+
+    # Analyze is default format 
+    set df [lindex $imgFormatList 0] 
+    eval {menubutton $f.mbType -text $df \
+          -relief raised -bd 2 -width 20 \
+          -menu $f.mbType.m} $Gui(WMBA)
+    eval {menu $f.mbType.m} $Gui(WMA)
+    pack  $f.mbType -side left -pady 1 -padx $Gui(pad)
+
+    # Add menu items
+    foreach m $imgFormatList  {
+        $f.mbType.m add command -label $m \
+            -command "FMRIEngineSetImageFormat $m"
+    }
+
+    # save menubutton for config
+    set FMRIEngine(gui,mbImgFormat) $f.mbType
+    # put a tooltip over the menu
+    # TooltipAdd $f.mbType \
+    #        "Choose the type of file information to display."
+
+    # Analyze is default format
+    FMRIEngineSetImageFormat $df
+    set FMRIEngine(imageFormat) $df
 }
 
 
