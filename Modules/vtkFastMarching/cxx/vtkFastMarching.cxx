@@ -99,7 +99,7 @@ void JIT::setSigma(float s)
 
 }
 
-void JIT::setStdev(int stdev)
+void JIT::setStdev(float stdev)
 {
   // max value of the volume
   this->stdev=stdev;
@@ -137,6 +137,7 @@ inline float JIT::avg( int idx )
     // if this value has not been computed, compute it
     {
       // gaussian filtering
+      
       _avg[idx]=0.0;
       for(int i=-MASK_SIZE;i<=MASK_SIZE;i++)
     for(int j=-MASK_SIZE;j<=MASK_SIZE;j++)
@@ -147,6 +148,7 @@ inline float JIT::avg( int idx )
         *1.0/(float)depth*(float)data[idx+index(i,j,k)];
         }
    
+      
 
       // median filtering
       /*
@@ -166,7 +168,7 @@ inline float JIT::avg( int idx )
     sizeof(int), JIT::medianCompare);
      
     _avg[idx]=tabindex[ ((2*MASK_SIZE+1)*(2*MASK_SIZE+1)*(2*MASK_SIZE+1))/2  ];
-      */
+      */      
        
       // now we have it
       status[idx] |= AVG;
@@ -233,7 +235,7 @@ static void vtkFastMarchingExecute(vtkFastMarching *self,
   double sumT=0.0;
   int n=0;
 
-#define ITERMAX 30000
+#define ITERMAX 1500000
 
   self->setInData( (short *)inPtr );
   self->setOutData( (short *)outPtr );
@@ -547,7 +549,7 @@ void vtkFastMarching::setSigma(float s)
   jit->setSigma(s);
 }
 
-void vtkFastMarching::setStdev(int stdev) 
+void vtkFastMarching::setStdev(float stdev) 
 {
   //printf("vtkFastMarching::setStdev(%d)\n",stdev);
   jit->setStdev(stdev);

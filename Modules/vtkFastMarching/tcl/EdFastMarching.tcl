@@ -223,10 +223,16 @@ proc EdFastMarchingBuildGUI {} {
     
     eval {button $f.bBack1Step -text "Back 1 step" \
           -command "EdFastMarchingBack1Step" } $Gui(WBA)   
-    
+
     $f.bBack1Step configure -state disabled
 
-    pack $f.bBack1Step -side top -fill x -pady $Gui(pad)
+    eval {button $f.bDemoLoad -text "Load Data" \
+          -command "EdFastMarchingDemoLoadData" } $Gui(WBA)   
+
+    eval {button $f.bDemoSegment -text "Segment Brain" \
+          -command "EdFastMarchingDemoSegmentBrain" } $Gui(WBA)   
+    
+    pack $f.bBack1Step $f.bDemoLoad $f.bDemoSegment -side top -fill x -pady $Gui(pad)
 
     # create an empty mask
     EdFastMarchingMaskCreate "none" "" "" "" "" "" ""
@@ -611,6 +617,8 @@ proc EdFastMarchingLabel {} {
 proc EdFastMarchingToggleWaitingCenterClick {} {
     global Ed
 
+
+
     set e EdFastMarching
 
     if {$Ed($e,waitingCenterClick)==1} {
@@ -629,6 +637,10 @@ proc EdFastMarchingToggleWaitingCenterClick {} {
 #
 proc EdFastMarchingApply {} {
     global Ed Volume Label Gui EdFastMarching
+
+#    # this function is disabled in the hard-wired demo
+#    return
+
 
     #puts " EdFastMarchingApply "
 
@@ -739,4 +751,18 @@ proc EdFastMarchingApply {} {
     EdUpdateAfterApplyEffect $v
 }
 
+proc EdFastMarchingDemoLoadData {} {
 
+
+    
+
+    Volume($v,vol) SetImageData [copy GetOutput]
+
+    EditorSetOriginal Volume($v,vol)
+
+    # Mark the volume as changed
+    set Volume($v,dirty) 1
+    
+    MainVolumesUpdate $v
+    RenderAll
+}

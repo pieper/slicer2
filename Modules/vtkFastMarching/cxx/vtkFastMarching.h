@@ -51,7 +51,7 @@ struct JIT
   int depth;
 
   // estimated stdev of the zone to segment
-  int stdev;
+  float stdev;
 
   // stdev of the blurring mask (in pixels)
   float sigma;
@@ -73,7 +73,7 @@ struct JIT
   JIT( int dimX, int dimY, int dimZ );
 
   void setDepth(int depth);
-  void setStdev(int stdev);
+  void setStdev(float stdev);
   void setSigma(float sigma);
 
   void setInData( short* indata );
@@ -223,7 +223,7 @@ class VTK_FASTMARCHING_EXPORT vtkFastMarching : public vtkImageToImageFilter
 
   void setSeed(void);
   void setDepth(int depth);
-  void setStdev(int stdev);
+  void setStdev(float stdev);
   void setSigma(float sigma);
 
   void setInData(short* data);
