@@ -2574,7 +2574,7 @@ void vtkLevelSets::Evolve3D( int first_band, int last_band)
 
       //ut = min(max(StepDt*ut,-Band),Band);
       newU[p]=u0+StepDt*ut;
-      if ((fabsf(newU[p])>Band+1)&&(verbose)) {
+      if ((fabs(newU[p])>Band+1)&&(verbose)) {
     fprintf(stderr,"pb: absf(newU[p])>Band+1, p=%d, newU[p] = %f \n",p,newU[p]);
     fprintf(stderr,"pb: curvterm = %f, imcomp = %f, balloonterm = %f, vel = %f, \n",curvterm, imcomp,balloonterm, vel);
       }
