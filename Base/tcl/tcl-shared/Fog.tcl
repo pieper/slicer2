@@ -77,33 +77,31 @@ proc FogApply {renwin} {
   }
 
 
-  if {$Fog(mode) == "linear"}  {
+    if {$Fog(mode) == "linear"}  {
+
+        vtkFog f
+        
+        f SetFogEnabled [expr  {$Fog(Enabled) == "On"}]
+        
+        set renderers [$renwin GetRenderers]
+        set numRenderers [$renderers GetNumberOfItems]
+        
+        $renderers InitTraversal
+        for {set i 0} {$i < $numRenderers} {incr i} {
+            set ren  [$renderers GetNextItem]
+
+            set fov   [expr $View(fov) ]
+            set fov2  [expr $fov / 2   ]
+            set dist  [[$ren GetActiveCamera] GetDistance]
+
+            f SetFogStart [expr $dist - $fov2 + $Fog(start) * $fov ]
+            f SetFogEnd   [expr $dist - $fov2 + $Fog(end)   * $fov ]
+
+            f Render  $ren
+        }
       
-      vtkFog f
-    
-    f SetFogEnabled [expr  {$Fog(Enabled) == "On"}]
-    
-    set renderers [$renwin GetRenderers]
-    set numRenderers [$renderers GetNumberOfItems]
-    
-    $renderers InitTraversal
-    for {set i 0} {$i < $numRenderers} {incr i} {
-        set ren  [$renderers GetNextItem]
-
-        set fov   [expr $View(fov) ]
-        set fov2  [expr $fov / 2   ]
-        set dist  [[$ren GetActiveCamera] GetDistance]
-
-        f SetFogStart [expr $dist - $fov2 + $Fog(start) * $fov ]
-        f SetFogEnd   [expr $dist - $fov2 + $Fog(end)   * $fov ]
-
-        f Render  $ren
+        f Delete
     }
-      
-    f Delete
-  }
-  
-
 } 
 # end FogApply
 
@@ -120,12 +118,14 @@ proc FogApply {renwin} {
 proc FogBuildGui {fFog} {
 #    -----------
 
-  global Gui Fog
+    global Gui Fog
+
+    FogCheckGlobal ;# set defaults
+    set Fog(Enabled) Off
   
     #-------------------------------------------
     # Fog frame
     #-------------------------------------------
-
     # Setup the fog parameters
 #    set fFog $Module(View,fFog)
     set f $fFog
