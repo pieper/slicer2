@@ -104,7 +104,7 @@ proc EditorInit {} {
     
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.50 $} {$Date: 2001/04/09 22:12:10 $}]
+	    {$Revision: 1.51 $} {$Date: 2001/04/27 15:35:03 $}]
     
     # Initialize globals
     set Editor(idOriginal)  $Volume(idNone)
@@ -846,7 +846,7 @@ proc EditorBuildGUI {} {
 		-text  "Outline Labelmap" -variable Editor(display,labelOn) \
 		-width 21 -indicatoron 0 -command "EditorResetDisplay"} $Gui(WCA)
     pack $f.cEditorDisplayLabel -side right -pady $Gui(pad) -padx $Gui(pad)
-    TooltipAdd $f.cEditorDisplayLabel "Press to show the label layer (the outline around your labelmap)."
+    TooltipAdd $f.cEditorDisplayLabel "Press to show/hide the label layer (the outline around your labelmap)."
 
     #-------------------------------------------
     # Effects->Model frame
