@@ -4,6 +4,9 @@ set ::Validation(SubjectFolder) /nas/nas0/miriad/subjects
 set ::Validation(Subject) ""
 set ::Validation(XMLPrefix) Visit_001/Study_0001/DerivedData/SPL/EM-reg_LONIbAb__params_params-sp-duke-2004-02-19_ic/Validation.xml
 
+
+set Validation(PreSelectedSubjectList) "000300742113 000303985208 000304856067 000305619085 000307120185 000307356304 000308257133 000314718325 000317154938 000318468632 000326206804 000329531884 000330850754 000334951552 000337129879 000338221247 000338715174 000342712406 000349481087 000350391081 000353106219 000354708511 000358323055 000359838929 000362037702 000362391770 000364087376 000370767640 000371631918 000375528332 000380582348 000382166785 000386884553 000389545720 000390978520 000393911440 000397921927"
+
 proc ValidationLoadSubject {} {
     if { $::Validation(Subject) != "" } { 
     set ::Mrml(dir) [file join $::Validation(SubjectFolder) $::Validation(Subject)] 
@@ -71,9 +74,13 @@ proc ValidationSelectWindow {} {
     eval {label $f.fSelect.lText -text "Select Subject:  " } $::Gui(WTA)
     eval {menubutton $f.fSelect.mbSubject -text "None"  -menu $f.fSelect.mbSubject.m -width 13} $::Gui(WMBA) 
     pack $f.fSelect.lText  $f.fSelect.mbSubject -side left
+    if {$::Validation(PreSelectedSubjectList) == "" } { 
     if {[catch { set SubjectList [glob $::Validation(SubjectFolder)/* ] } ErrorMessage] } {
-       DevErrorWindow "No subjects in $::Validation(SubjectFolder) ErrorMessage: $ErrorMessage" 
-       return
+        DevErrorWindow "No subjects in $::Validation(SubjectFolder) ErrorMessage: $ErrorMessage" 
+        return
+    }
+    } else {
+    set SubjectList $::Validation(PreSelectedSubjectList)
     }
     set NewSubjectList ""
     foreach SUBJECT $SubjectList {
