@@ -121,8 +121,14 @@ switch $::tcl_platform(os) {
             }
        }
     }
+    "Darwin" {
+        set BUILD darwin-ppc
+    }
     "windows" {
         set BUILD win32
+    }
+    default {
+        error "unknown platform $::tcl_platform(os)"
     }
 }
 
@@ -192,7 +198,7 @@ if { ![file exists $LIB/tcl-build/bin/wish8.4] } {
     runcmd make install
 }
 
-if { ![file exists $LIB/tcl-build/lib/libitcl3.2.so] } {
+if { ![file exists $LIB/tcl-build/lib/libitclstub3.2.so] } {
     cd $LIB/tcl
 
     runcmd cvs -d :pserver:anonymous:@cvs.sourceforge.net:/cvsroot/incrtcl login
@@ -226,7 +232,8 @@ if { ![file exists $LIB/VTK-build/bin/vtk] } {
     cd $LIB
 
     runcmd cvs -d :pserver:anonymous:vtk@public.kitware.com:/cvsroot/VTK login
-    runcmd cvs -z3 -d :pserver:anonymous@public.kitware.com:/cvsroot/VTK checkout -r release-4-2-6 VTK
+    #runcmd cvs -z3 -d :pserver:anonymous@public.kitware.com:/cvsroot/VTK checkout -r release-4-2-6 VTK
+    runcmd cvs -z3 -d :pserver:anonymous@public.kitware.com:/cvsroot/VTK checkout -r release-4-4-2 VTK
 
     file mkdir $LIB/VTK-build
     cd $LIB/VTK-build
@@ -234,6 +241,8 @@ if { ![file exists $LIB/VTK-build/bin/vtk] } {
     runcmd $CMAKE \
         -DBUILD_SHARED_LIBS:BOOL=ON \
         -DBUILD_TESTING:BOOL=OFF \
+        -DVTK_USE_CARBON:BOOL=OFF \
+        -DVTK_USE_X:BOOL=ON \
         -DVTK_WRAP_TCL:BOOL=ON \
         -DVTK_USE_HYBRID:BOOL=ON \
         -DVTK_USE_PATENTED:BOOL=ON \
@@ -256,7 +265,7 @@ if { ![file exists $LIB/Insight-build/lib/vtk] } {
     cd $LIB
 
     runcmd cvs -d :pserver:anoncvs:@www.itk.org:/cvsroot/Insight login
-    runcmd cvs -z3 -d :pserver:anoncvs@www.itk.org:/cvsroot/Insight checkout -r ITK-1-6-0 Insight
+    runcmd cvs -z3 -d :pserver:anoncvs@www.itk.org:/cvsroot/Insight checkout -r ITK-1-8 Insight
 
     file mkdir $LIB/Insight-build
     cd $LIB/Insight-build
