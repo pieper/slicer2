@@ -173,10 +173,12 @@ proc VolDicomBuildGUI {parentFrame} {
     pack $f.fSelect $f.fFiles $f.fOptions \
             $f.fDesc -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
     
-    # Select
+    # Load, Select, or Extract
+    DevAddButton $f.fSelect.bLoad "Load DICOM Study" {VolumesPropsCancel; update; DICOMLoadStudy "choose"}
+
     DevAddButton $f.fSelect.bSelect "Select DICOM Volume" [list DICOMSelectMain $fileNameListbox]
     DevAddButton $f.fSelect.bExtractHeader "Extract Header" { HandleExtractHeader }
-    pack $f.fSelect.bSelect $f.fSelect.bExtractHeader -padx $Gui(pad) -pady $Gui(pad)
+    pack $f.fSelect.bLoad $f.fSelect.bSelect $f.fSelect.bExtractHeader -padx $Gui(pad) -pady $Gui(pad)
     
     # Files
     
@@ -213,6 +215,60 @@ proc VolDicomBuildGUI {parentFrame} {
 
 }
 
+#-------------------------------------------------------------------------------
+# .PROC DICOMLoadStudy
+# sp 2003-07-10 support for loading directories full of dicom
+# images via the --load-dicom command line argument
+# .ARGS dir - start dir for loading
+# .END
+#-------------------------------------------------------------------------------
+proc DICOMLoadStudy { dir } {
+    #
+    # read dicom volume(s), e.g. specified on command line
+    # - if it's a dir full of files, load that dir as a volume
+    # - if it's a dir full of dirs, load each dir as a volume
+    #
+
+    if { $dir == "choose" } {
+        if { $::Volumes(DICOMStartDir) == "" } {
+            set ::Volumes(DICOMStartDir) $::env(SLICER_HOME)
+        }
+        set dir [tk_chooseDirectory \
+            -initialdir $::Volumes(DICOMStartDir) \
+            -mustexist true \
+            -title "Select Directory Containing DICOM Files" \
+            -parent .tMain ]
+    }
+
+    if { $dir != "" } {
+        set files [glob $dir/*]
+        if { [file isdirectory [lindex $files 0]] } {
+            set dirs $files
+        } else {
+            set dirs $dir
+        }
+
+        foreach d $dirs { 
+            VolumesSetPropertyType VolDicom
+            MainVolumesSetActive NEW
+            Tab Volumes row1 Props
+            set ::Volumes(DICOMStartDir) $d
+            DICOMSelectMain $::Volume(dICOMFileListbox) "autoload"
+            VolumesSetPropertyType VolHeader
+            if { [info exists ::Volume(seriesDesc)] &&
+                    $::Volume(seriesDesc) != "" } {
+                set seriestag $::Volume(seriesDesc)
+            } else {
+                set seriestag [file tail $d]
+            }
+            regsub -all " " $seriestag "_" seriestag
+            set ::Volume(name) $seriestag-$::Volume(name)
+            VolumesPropsApply
+            RenderAll
+            Tab Data
+        }
+    }
+}
 
 #-------------------------------------------------------------------------------
 # DICOM related procedures
@@ -1238,6 +1294,7 @@ proc DICOMSelectMain { fileNameListbox {autoload "noautoload"} } {
         set Pressed "OK"
     }
 
+
     # >> AT 1/4/02
       if { $Pressed == "OK" } {
           #puts $DICOMFileNameList
@@ -1254,62 +1311,63 @@ proc DICOMSelectMain { fileNameListbox {autoload "noautoload"} } {
           set Volume(DICOMMultiFrameFile) 0
           DICOMReadHeaderValues [lindex $Volume(dICOMFileList) 0]
           if {[llength $Volume(dICOMFileList)] == "1"} {
-  #        set file [lindex $Volume(dICOMFileList) 0]
+      #        set file [lindex $Volume(dICOMFileList) 0]
 
-          vtkDCMParser Volumes(parser)
-          Volumes(parser) OpenFile [lindex $DICOMFileNameList 0]
-          set numberofslices 1
-          if { [Volumes(parser) FindElement 0x0054 0x0081] == "1" } {
-              Volumes(parser) ReadElement
-              set numberofslices [Volumes(parser) ReadUINT16]
-          }
-
-          set Volume(DICOMMultiFrameFile) 0
-          if {$numberofslices > 1} {
-              set Volume(DICOMMultiFrameFile) $numberofslices
-
-              set height 0
-              if { [Volumes(parser) FindElement 0x0028 0x0010] == "1" } {
+              vtkDCMParser Volumes(parser)
+              Volumes(parser) OpenFile [lindex $DICOMFileNameList 0]
+              set numberofslices 1
+              if { [Volumes(parser) FindElement 0x0054 0x0081] == "1" } {
                   Volumes(parser) ReadElement
-                  set height [Volumes(parser) ReadUINT16]
+                  set numberofslices [Volumes(parser) ReadUINT16]
               }
 
-              set width 0
-              if { [Volumes(parser) FindElement 0x0028 0x0011] == "1" } {
-                  Volumes(parser) ReadElement
-                  set width [Volumes(parser) ReadUINT16]
-              }
+              set Volume(DICOMMultiFrameFile) 0
+              if {$numberofslices > 1} {
+                  set Volume(DICOMMultiFrameFile) $numberofslices
 
-              set bitsallocated 16
-              if { [Volumes(parser) FindElement 0x0028 0x0100] == "1" } {
+                  set height 0
+                  if { [Volumes(parser) FindElement 0x0028 0x0010] == "1" } {
+                      Volumes(parser) ReadElement
+                      set height [Volumes(parser) ReadUINT16]
+                  }
+
+                  set width 0
+                  if { [Volumes(parser) FindElement 0x0028 0x0011] == "1" } {
+                      Volumes(parser) ReadElement
+                      set width [Volumes(parser) ReadUINT16]
+                  }
+
+                  set bitsallocated 16
+                  if { [Volumes(parser) FindElement 0x0028 0x0100] == "1" } {
+                      Volumes(parser) ReadElement
+                      set bitsallocated [Volumes(parser) ReadUINT16]
+                  }
+                  set bytesallocated [expr 1 + int(($bitsallocated - 1) / 8)]
+                  set slicesize [expr $width * $height * $bytesallocated]
+
+
+                  set Volume(DICOMSliceNumbers) {}
+                  if { [Volumes(parser) FindElement 0x0054 0x0080] == "1" } {
+      #            set NextBlock [lindex [split [Volumes(parser) ReadElement]] 4]
                   Volumes(parser) ReadElement
-                  set bitsallocated [Volumes(parser) ReadUINT16]
+                  for {set j 0} {$j < $numberofslices} {incr j} {
+                      set ImageNumber [Volumes(parser) ReadUINT16]
+                      lappend Volume(DICOMSliceOffsets) [expr ($ImageNumber - 1) * $slicesize]
+      #                $fileNameListbox insert end [expr ($ImageNumber - 1) * $slicesize]
+                  }
+                  } else {
+                    for {set j 0} {$j < $numberofslices} {incr j} {
+                        lappend Volume(DICOMSliceOffsets) [expr $j * $slicesize]
+        #                $fileNameListbox insert end $j
+                    }
+                  }
               }
-              set bytesallocated [expr 1 + int(($bitsallocated - 1) / 8)]
-              set slicesize [expr $width * $height * $bytesallocated]
               
-              set Volume(DICOMSliceNumbers) {}
-              if { [Volumes(parser) FindElement 0x0054 0x0080] == "1" } {
-  #            set NextBlock [lindex [split [Volumes(parser) ReadElement]] 4]
-              Volumes(parser) ReadElement
-              for {set j 0} {$j < $numberofslices} {incr j} {
-                  set ImageNumber [Volumes(parser) ReadUINT16]
-                  lappend Volume(DICOMSliceOffsets) [expr ($ImageNumber - 1) * $slicesize]
-  #                $fileNameListbox insert end [expr ($ImageNumber - 1) * $slicesize]
-              }
-              } else {
-                for {set j 0} {$j < $numberofslices} {incr j} {
-                    lappend Volume(DICOMSliceOffsets) [expr $j * $slicesize]
-    #                $fileNameListbox insert end $j
-                }
-              }
-          }
-          
-          Volumes(parser) CloseFile
-          Volumes(parser) Delete
+              Volumes(parser) CloseFile
+              Volumes(parser) Delete
 
-          # TODO: predict scan order
-          VolumesSetScanOrder "IS"
+              # TODO: predict scan order
+              VolumesSetScanOrder "IS"
           } else {
             # use the second and the third
             # set file1 [lindex $DICOMFileNameList 1]
@@ -1380,6 +1438,16 @@ proc DICOMReadHeaderValues { filename } {
         }
         #regsub -all {\ |\t|\n} $PatientName "_" Volume(name)
         regsub -all {[^a-zA-Z0-9]} $PatientName "_" Volume(name)
+
+          # sp 2003-07-09 - capture the series description to name volume
+          set seriesdesc ""
+          if { [parser FindElement 0x0008 0x103e] == "1" } {
+              set len [parser ReadElementLength]
+              set seriesdesc [parser ReadText $len]
+          }
+          regsub -all {[^a-zA-Z0-9]} $seriesdesc "_" Volume(seriesDesc)
+          puts "got seriesdesc $::Volume(seriesDesc)"
+
         
         if { [parser FindElement 0x0028 0x0010] == "1" } {
             #set Length [lindex [split [parser ReadElement]] 3]
