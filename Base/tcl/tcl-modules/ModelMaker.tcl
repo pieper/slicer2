@@ -63,7 +63,7 @@ proc ModelMakerInit {} {
 
 	# Set Version Info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.28 $} {$Date: 2001/05/18 20:48:11 $}]
+		{$Revision: 1.29 $} {$Date: 2001/06/06 12:30:18 $}]
 
 	# Create
 	set ModelMaker(idVolume) $Volume(idNone)
@@ -869,7 +869,7 @@ proc ModelMakerMarch {m v decimateIterations smoothIterations} {
 
 	# Do normals need reversing?
 	set mm [rot GetMatrix] 
-	if {[$mm Determinant $mm] < 0} {
+	if {[$mm Determinant] < 0} {
 	tk_messageBox -message Reverse
 		set p reverser
 		$p SetInput [decimator GetOutput]
