@@ -27,8 +27,7 @@
 #   TesterEnter
 #   TesterExit
 #   TesterSourceModule Module type
-#   TesterRebuildGui ModuleName
-#   TesterRebuildGui
+#   TesterRebuildModuleGui ModuleName
 #   TesterReadNewModule Filename
 #==========================================================================auto=
 
@@ -134,7 +133,7 @@ proc TesterInit {} {
 	#   appropriate revision number and date when the module is checked in.
 	#   
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.7 $} {$Date: 2001/02/19 17:53:32 $}]
+		{$Revision: 1.8 $} {$Date: 2001/09/05 22:01:14 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -362,7 +361,7 @@ proc TesterSourceModule {type Module} {
 	set Tester(MainFileName) $Module
     }
     if {$type == "Shared"} { 
-        set path [GetFullPath $Module tcl tcl-shared] 
+        set path [GetFullPath $Module tcl tcl-shared]
 	set Tester(SharedFileName) $Module
     }
 
@@ -370,6 +369,9 @@ proc TesterSourceModule {type Module} {
 	set path [GetFullPath $Module tcl tcl-modules]
 	set Tester(ModuleFileName) $Module
     }
+
+#    puts "b$path"
+#    puts "b$Tester(ModuleFileName)"
 
     ## Source the file
 
@@ -384,7 +386,7 @@ proc TesterSourceModule {type Module} {
     ## Rebuild Gui on Modules
 
     if {$type == "Module"} { 
-	TesterRebuildGui $Module
+	TesterRebuildModuleGui $Module
     }
 
     ## Send message that we update Stuff.
@@ -392,8 +394,9 @@ proc TesterSourceModule {type Module} {
 	$Tester(lSource) config -text "Updated $Module."
     }
 }
+
 #-------------------------------------------------------------------------------
-# .PROC TesterRebuildGui
+# .PROC TesterRebuildModuleGui
 # 
 # Erase the old Gui and rebuild a new one.
 #
@@ -401,14 +404,7 @@ proc TesterSourceModule {type Module} {
 # str ModuleName The name of the module
 # .END
 #-------------------------------------------------------------------------------
-
-#-------------------------------------------------------------------------------
-# .PROC TesterRebuildGui
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc TesterRebuildGui {ModuleName} {
+proc TesterRebuildModuleGui {ModuleName} {
     global Module Gui
 
     if {[info exists Module($ModuleName,row1List)] == 1} {
@@ -438,7 +434,8 @@ proc TesterRebuildGui {ModuleName} {
     MainUpdateMRML
 
 #    $Module(Tester,procEnter)
-#    Tab Tester row1 Source
+#    set Module(btn) Tester
+     Tab $ModuleName
 }
 
 
@@ -468,8 +465,6 @@ proc TesterReadNewModule {Filename} {
         puts yo
         return
     }
-
-
 
     # m is the name of the module
     set m [file rootname [file tail $Filename]]
