@@ -20,10 +20,21 @@ if {[info exists env(SLICER_HOME)] == 0 || $env(SLICER_HOME) == ""} {
     # temporary fix for print_header call to use in GetHeaderInfo
     set Gui(pc) 1
 } else {
-    set prog [file join $env(SLICER_HOME) program]
+    set prog [file join $env(SLICER_HOME) Base/tcl]
     # temporary fix for print_header call to use in GetHeaderInfo
     set Gui(pc) 0
 }
+
+# need to source vtk stuff here
+#
+# set statup options - convert backslashes from windows
+# version of SLICER_HOME var into to regular slashes
+#
+regsub -all {\\} $env(SLICER_HOME) / slicer_home
+regsub -all {\\} $env(VTK_SRC_DIR) / vtk_src_dir
+set auto_path "$slicer_home/Base/tcl $slicer_home/Base/Wrapping/Tcl/vtkSlicerBase $vtk_src_dir/Wrapping/Tcl $auto_path"
+
+package require vtkSlicerBase
 
 # Read source files
 set Mrml(dir) [file dirname [lindex $argv 0]]
