@@ -105,6 +105,11 @@ class VTK_EXPORT vtkMrmlTetraMeshNode : public vtkMrmlNode
   vtkSetMacro(DisplayVectors, unsigned short);
   vtkGetMacro(DisplayVectors, unsigned short);
 
+  // Description
+  // Surfaces Use Cell Data or Point Data?
+  vtkSetMacro(SurfacesUseCellData, unsigned short);
+  vtkGetMacro(SurfacesUseCellData, unsigned short);
+
   // Description:
   // Parameters to display
   vtkSetMacro(NodeScaling, float);
@@ -141,6 +146,7 @@ protected:
   
   // Numbers
   unsigned short DisplaySurfaces;
+  unsigned short   SurfacesUseCellData;
   unsigned short DisplayEdges;
   unsigned short DisplayNodes;
   float            NodeScaling;

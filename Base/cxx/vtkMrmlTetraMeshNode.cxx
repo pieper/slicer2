@@ -54,6 +54,7 @@ vtkMrmlTetraMeshNode::vtkMrmlTetraMeshNode()
 
   // Defaults are don't display anything
   this->DisplaySurfaces = 0;
+    this->SurfacesUseCellData = 1; // default, use cell data
   this->DisplayEdges    = 0;
   this->DisplayNodes    = 0;
     this->NodeScaling     = 9.5;
@@ -130,6 +131,10 @@ void vtkMrmlTetraMeshNode::Write(ofstream& of, int nIndent)
   {
     of << " DisplaySurfaces='" << (this->DisplaySurfaces ? y : n) << "'";
   }
+  if (this->SurfacesUseCellData != 0)
+  {
+    of << " SurfacesUseCellData'" << (this->SurfacesUseCellData ? y : n)<< "'";
+  }
   if (this->DisplayEdges != 0)
   {
     of << " DisplayEdges='" << (this->DisplayEdges ? y : n) << "'";
@@ -187,6 +192,7 @@ void vtkMrmlTetraMeshNode::Copy(vtkMrmlNode *anode)
   this->Opacity         = node->Opacity;
 
   this->DisplaySurfaces = node->DisplaySurfaces;
+    this->SurfacesUseCellData = node->SurfacesUseCellData;
   this->DisplayEdges    = node->DisplayEdges;
   this->DisplayNodes    = node->DisplayNodes;
     this->NodeScaling     = node->NodeScaling;
@@ -214,6 +220,7 @@ void vtkMrmlTetraMeshNode::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "Clipping: " << this->Clipping << "\n";
   os << indent << "Opacity: " << this->Opacity << "\n";
   os << indent << "DisplaySurfaces: " << this->DisplaySurfaces << "\n";
+  os << indent << "  SurfacesUseCellData: "<< this->SurfacesUseCellData<<"\n";
   os << indent << "DisplayEdges: " << this->DisplayEdges << "\n";
   os << indent << "DisplayNodes: " << this->DisplayNodes << "\n";
   os << indent << "  NodeScaling: " << this->NodeScaling << "\n";
