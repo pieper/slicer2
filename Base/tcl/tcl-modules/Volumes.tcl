@@ -78,14 +78,14 @@ proc VolumesInit {} {
     # switching to Volumes panel, switching back to Data, and then 
     # adding 2 transforms.)
     # Windows98 Version II can't render histograms
-    set Volume(histogram) Off
+    set Volume(histogram) On
 
     # Define Dependencies
     set Module($m,depend) Fiducials
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.73 $} {$Date: 2002/11/07 03:20:25 $}]
+            {$Revision: 1.74 $} {$Date: 2002/11/25 16:15:15 $}]
 
     # Props
     set Volume(propertyType) VolBasic

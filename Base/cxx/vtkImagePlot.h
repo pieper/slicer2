@@ -100,9 +100,7 @@ protected:
   void ExecuteInformation(vtkImageData *inData, vtkImageData *outData);
   void ExecuteInformation(){this->vtkImageToImageFilter::ExecuteInformation();};
   void ExecuteData(vtkDataObject *);
-  void vtkImagePlotExecute(
-                  vtkImageData *inData,  unsigned char *inPtr,  int inExt[6],
-                  vtkImageData *outData, unsigned char *outPtr, int outExt[6]);
+  // void vtkImagePlotExecute(vtkImageData *inData,  unsigned char *inPtr,  int inExt[6], vtkImageData *outData, unsigned char *outPtr, int outExt[6]);
 };
 
 #endif

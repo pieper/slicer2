@@ -44,7 +44,7 @@ vtkImagePlot* vtkImagePlot::New()
 vtkImagePlot::vtkImagePlot()
 {
   this->Height = 256;
-  this->Thickness = 1;
+  this->Thickness = 0;
 
   this->DataRange[0] = 0;
   this->DataRange[1] = 100;
@@ -352,39 +352,36 @@ static void ConvertColor(float *f, unsigned char *c)
 }
 
 //----------------------------------------------------------------------------
-//template <class T>
-//static void vtkImagePlotExecute(vtkImagePlot *self,
-//                  vtkImageData *inData,  T *inPtr,  int inExt[6],
-//                  vtkImageData *outData, unsigned char *outPtr, int outExt[6])
-void vtkImagePlot::vtkImagePlotExecute(
-                  vtkImageData *inData,  unsigned char *inPtr,  int inExt[6],
-                  vtkImageData *outData, unsigned char *outPtr, int outExt[6])
-{
-    unsigned char color[3];
+
+// void vtkImagePlot::vtkImagePlotExecute(vtkImageData *inData,  unsigned char *inPtr,  int inExt[6], vtkImageData *outData, unsigned char *outPtr, int outExt[6])
+template <class T> 
+static  void vtkImagePlotExecute(vtkImagePlot *self, vtkImageData *inData,  T *inPtr,  int inExt[6], vtkImageData *outData, unsigned char *outPtr, int outExt[6]) {
+
+  unsigned char color[3];
   int idxX, idxY, maxY, maxX;
   int inIncX, inIncY, inIncZ;
   int outIncX, outIncY, outIncZ;
-    int nx, ny, nc, nxnc;
-  int y1, y2, r=this->GetThickness();
+  int nx, ny, nc, nxnc;
+  int y1, y2, r=self->GetThickness();
   int range[2], domain[2];
   float delta;
-  vtkScalarsToColors *lookupTable = this->GetLookupTable();
+  vtkScalarsToColors *lookupTable = self->GetLookupTable();
   unsigned char *rgba;
-    unsigned char *ptr;
+  unsigned char *ptr;
 
   // find the region to loop over
   maxX = outExt[1] - outExt[0]; 
   maxY = outExt[3] - outExt[2]; 
-    nx = maxX + 1;
+  nx = maxX + 1;
   ny = maxY + 1;
-    nc = outData->GetNumberOfScalarComponents();
-    nxnc = nx*nc;
+  nc = outData->GetNumberOfScalarComponents();
+  nxnc = nx*nc;
 
-  ConvertColor(this->GetColor(), color);
+  ConvertColor(self->GetColor(), color);
 
   // Scale all bins
-    this->GetDataDomain(domain);
-  this->GetDataRange(range);
+  self->GetDataDomain(domain);
+  self->GetDataRange(range);
   
   // Get increments to march through data 
   inData->GetContinuousIncrements(outExt, inIncX, inIncY, inIncZ);
@@ -407,6 +404,7 @@ void vtkImagePlot::vtkImagePlotExecute(
 
   // Plot lines
   delta = (float)(ny) / (float)(range[1]-range[0]+1);
+
   for (idxX = 0; idxX <= maxX; idxX++) 
   {
     y1 = (int)(range[0] + delta * (float)inPtr[0]);
@@ -454,63 +452,49 @@ void vtkImagePlot::ExecuteData(vtkDataObject *)
     outData->GetScalarPointerForExtent(outExt);
   
   // this filter expects that input is the same type as output.
-  if (outData->GetScalarType() != VTK_UNSIGNED_CHAR)
-  {
-    vtkErrorMacro(<< "ExecuteData: output ScalarType, " << outData->GetScalarType()
-      << ", must be VTK_UNSIGNED_CHAR");
+  if (outData->GetScalarType() != VTK_UNSIGNED_CHAR) {
+    vtkErrorMacro(<< "ExecuteData: output ScalarType, " << outData->GetScalarType() << ", must be VTK_UNSIGNED_CHAR (" << VTK_UNSIGNED_CHAR << ")" );
     return;
   }
-    
-      vtkImagePlotExecute(inData, (unsigned char *)(inPtr), inExt,
-                 outData, outPtr, outExt);
 
-           /*
+  // You shold also check than if inPtr is of type unsigned char !    
+  // vtkImagePlotExecute(inData, (unsigned char*)(inPtr), inExt, outData, outPtr, outExt);
+
   switch (inData->GetScalarType())
   {
     case VTK_DOUBLE:
-      vtkImagePlotExecute(this, inData, (double *)(inPtr), inExt,
-                 outData, outPtr, outExt);
+      vtkImagePlotExecute(this, inData, (double *)(inPtr), inExt, outData, outPtr, outExt);
       break;
     case VTK_FLOAT:
-      vtkImagePlotExecute(this, inData, (float *)(inPtr), inExt,
-                 outData, outPtr, outExt);
+      vtkImagePlotExecute(this, inData, (float *)(inPtr), inExt, outData, outPtr, outExt);
       break;
     case VTK_LONG:
-      vtkImagePlotExecute(this, inData, (long *)(inPtr), inExt,
-                 outData, outPtr, outExt);
+      vtkImagePlotExecute(this, inData, (long *)(inPtr), inExt, outData, outPtr, outExt);
       break;
     case VTK_UNSIGNED_LONG:
-      vtkImagePlotExecute(this, inData, (unsigned long *)(inPtr), inExt,
-                 outData, outPtr, outExt);
+      vtkImagePlotExecute(this, inData, (unsigned long *)(inPtr), inExt, outData, outPtr, outExt);
       break;
     case VTK_INT:
-      vtkImagePlotExecute(this, inData, (int *)(inPtr), inExt,
-                 outData, outPtr, outExt);
+      vtkImagePlotExecute(this, inData, (int *)(inPtr), inExt, outData, outPtr, outExt);
       break;
     case VTK_UNSIGNED_INT:
-      vtkImagePlotExecute(this, inData, (unsigned int *)(inPtr), inExt,
-                 outData, outPtr, outExt);
+      vtkImagePlotExecute(this, inData, (unsigned int *)(inPtr), inExt,outData, outPtr, outExt);
       break;
     case VTK_SHORT:
-      vtkImagePlotExecute(this, inData, (short *)(inPtr), inExt,
-                 outData, outPtr, outExt);
+      vtkImagePlotExecute(this, inData, (short *)(inPtr), inExt, outData, outPtr, outExt);
       break;
     case VTK_UNSIGNED_SHORT:
-      vtkImagePlotExecute(this, inData, (unsigned short *)(inPtr), inExt,
-                 outData, outPtr, outExt);
+      vtkImagePlotExecute(this, inData, (unsigned short *)(inPtr), inExt, outData, outPtr, outExt);
       break;
     case VTK_CHAR:
-      vtkImagePlotExecute(this, inData, (char *)(inPtr), inExt,
-                 outData, outPtr, outExt);
+      vtkImagePlotExecute(this, inData, (char *)(inPtr), inExt, outData, outPtr, outExt);
       break;
     case VTK_UNSIGNED_CHAR:
-      vtkImagePlotExecute(this, inData, (unsigned char *)(inPtr), inExt,
-                 outData, outPtr, outExt);
+      vtkImagePlotExecute(this, inData, (unsigned char *)(inPtr), inExt, outData, outPtr, outExt);
       break;
     default:
       vtkErrorMacro(<< "ExecuteData: Unknown ScalarType");
       return;
-  }
-  */
+   } 
 }
 
