@@ -85,6 +85,7 @@ proc Usage { {msg ""} } {
     set msg "$msg\n   --no-threads : disables multi threading"
     set msg "$msg\n   --no-tkcon : disables tk console"
     set msg "$msg\n   --load-dicom <dir> : read dicom files from <dir> at startup"
+    set msg "$msg\n   --load-analyze <dir> : read analyze files from <dir> at startup"
     set msg "$msg\n   --script <file.tcl> : script to execute after slicer loads"
     set msg "$msg\n   --exec <tcl code> : some code to execute after slicer loads"
     set msg "$msg\n   --all-info : print out all of the version info and continue"
@@ -100,6 +101,7 @@ set SLICER(tkcon) "true"
 set verbose 0
 set Module(verbose) 0
 set SLICER(load-dicom) ""
+set SLICER(load-analyze) ""
 set SLICER(script) ""
 set SLICER(exec) ""
 set SLICER(versionInfo) ""
@@ -129,11 +131,21 @@ for {set i 0} {$i < $argc} {incr i} {
             if { $i == $argc } {
                 Usage "missing argument for $a\n"
             } else {
-                set SLICER(load-dicom) [lindex $argv $i]
-                if { [file type $SLICER(load-dicom)] == "file" } {
+                set dicomarg [lindex $argv $i]
+                if { [file type $dicomarg] == "file" } {
                     # user picked a file, load all dicoms in same dir
-                    set SLICER(load-dicom) [file dir $SLICER(load-dicom)]
+                    lappend SLICER(load-dicom) [file dir $dicomarg]
+                } else {
+                    lappend SLICER(load-dicom) $dicomarg
                 }
+            }
+        }
+        "--load-analyze" {
+            incr i
+            if { $i == $argc } {
+                Usage "missing argument for $a\n"
+            } else {
+                lappend SLICER(load-analyze) [lindex $argv $i]
             }
         }
         "--script" {
@@ -176,6 +188,7 @@ for {set i 0} {$i < $argc} {incr i} {
         }
         "-*" {
             Usage "unknown option $a\n"
+            exit 1
         }
         default {
             lappend strippedargs $a
@@ -577,17 +590,33 @@ if { $SLICER(versionInfo) != "" } {
     set compilerName [Slicer GetCompilerName]
     set vtkVersion [Slicer GetVTKVersion]
     set libVersions "LibName1: VTK LibVersion1: ${vtkVersion} LibName2: TCL LibVersion2: ${tcl_patchLevel} LibName3: TK LibVersion2: ${tk_patchLevel}"
-    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: [ParseCVSInfo "" {$Name:  $}] CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.67 2003/10/03 22:14:24 nicole Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: [ParseCVSInfo "" {$Name:  $}] CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.68 2003/10/04 15:09:29 pieper Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
 #
-# read a dicom volume specified on command line
+# read dicom volumes specified on command line
 # - if it's a dir full of files, load that dir as a volume
 # - if it's a dir full of dirs, load each dir as a volume
 # - if it's "", it will be ignored
 #
-DICOMLoadStudy $SLICER(load-dicom)
+foreach arg $SLICER(load-dicom) {
+    DICOMLoadStudy $arg
+}
+
+#
+# read analyze volumes specified on command line
+#
+foreach arg $SLICER(load-analyze) {
+    if { [catch "package require vtkCISGFile"] } {
+        DevErrorWindow "vtkCISGFile Module required for --load-analyze option."
+        break
+    }
+    set ::Volume(VolAnalyze,FileName) $arg
+    set ::Volume(name) [file root [file tail $arg]]
+    VolAnalyzeApply
+}
+
 
 #
 # override the built in exit routine to provide cleanup
