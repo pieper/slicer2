@@ -25,7 +25,7 @@
 #   VolFreeSurferReadersBuildGUI
 #   VolFreeSurferReadersEnter
 #   VolFreeSurferReadersExit
-#   VolFreeSurferReadersSetFileName
+#   VolFreeSurferReadersSetVolumeFileName
 #   VolFreeSurferReadersApply
 #   VolFreeSurferReadersBuildSurface
 #   VolFreeSurferReadersSetSurfaceVisibility
@@ -48,17 +48,21 @@ proc VolFreeSurferReadersInit {} {
     set Volume(readerModules,$e,procExit) ${e}Exit
 #    set Volume(readerModules,$e,procColor) ${e}AddColors
 
-    # some local global variables
-    set Volume(VolFreeSurferReaders,FileType) Surface
-    set Volume(VolFreeSurferReaders,FileTypeList) {Surface Volume}
-    set Volume(VolFreeSurferReaders,FileTypeList,tooltips) {"File contains a surface" "File contains a volume"}
-
     # for closing out a scene
     set Volume(VolFreeSurferReaders,idList) ""
     set Module($e,procMainFileCloseUpdateEntered) VolFreeSurferReadersMainFileCloseUpdate
 
     # set up the mapping between the surface labels and umls ids
     VolFreeSurferReadersSetUMLSMapping
+
+    # for loading associated model files
+    set Volume(VolFreeSurferReaders,assocFiles) ""
+    set Volume(VolFreeSurferReaders,scalars) "thickness curv sulc area"
+    set Volume(VolFreeSurferReaders,surfaces) "inflated pial smoothwm sphere"
+    set Volume(VolFreeSurferReaders,annots) "aparc cma_aparc" 
+
+    # the default colour table file name
+    set Volume(VolFreeSurferReaders,colorTableFilename) [ExpandPath [file join $::PACKAGE_DIR_VTKFREESURFERREADERS ".." ".." ".." tcl "Simple_surface_labels2002.txt"]]
 }
 
 
@@ -75,14 +79,21 @@ proc VolFreeSurferReadersBuildGUI {parentFrame} {
     if {$Module(verbose) == 1} {
         puts  "VolFreeSurferReadersBuildGUI"
     }
+    package require Iwidgets
+    iwidgets::scrolledframe $parentFrame.sfFreeSurferReaders \
+        -vscrollmode static -hscrollmode dynamic \
+        -background $Gui(activeWorkspace)  -activebackground $Gui(activeButton) -troughcolor $Gui(normalButton)  -highlightthickness 0 -relief flat -sbwidth 10
 
-    set f $parentFrame
+    pack $parentFrame.sfFreeSurferReaders -expand 1 -fill both
+    set f [$parentFrame.sfFreeSurferReaders childsite]
+    # hack
+    set parentFrame  [$parentFrame.sfFreeSurferReaders childsite]
 
     frame $f.fVolume  -bg $Gui(activeWorkspace) -relief groove -bd 1
-    frame $f.fFileType -bg $Gui(activeWorkspace)
-    frame $f.fApply   -bg $Gui(activeWorkspace)
+    frame $f.fModel -bg $Gui(activeWorkspace) -relief groove -bd 1
     frame $f.fLogo -bg $Gui(activeWorkspace)
-    pack $f.fLogo $f.fVolume $f.fFileType $f.fApply  \
+    frame $f.fDemo -bg $Gui(activeWorkspace) -relief groove -bd 1
+    pack $f.fLogo $f.fVolume $f.fModel $f.fDemo \
         -side top -fill x -pady $Gui(pad)
 
     #-------------------------------------------
@@ -108,16 +119,18 @@ proc VolFreeSurferReadersBuildGUI {parentFrame} {
     DevAddFileBrowse $f Volume "VolFreeSurferReaders,FileName" "FreeSurfer File:" "VolFreeSurferReadersSetFileName" "" "\$Volume(DefaultDir)" "Open" "Browse for a FreeSurfer file (.info or a surface)" 
 
     frame $f.fLabelMap -bg $Gui(activeWorkspace)
-
     frame $f.fDesc     -bg $Gui(activeWorkspace)
-
     frame $f.fName -bg $Gui(activeWorkspace)
+    frame $f.fApply  -bg $Gui(activeWorkspace)
 
     pack $f.fLabelMap -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
     pack $f.fDesc -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
     pack $f.fName -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
+    pack $f.fApply -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
 
-    # Name row
+    #---------
+    # Volume->Name 
+    #---------
     set f $parentFrame.fVolume.fName
     eval {label $f.lName -text "Name:"} $Gui(WLA)
     eval {entry $f.eName -textvariable Volume(name) -width 13} $Gui(WEA)
@@ -125,7 +138,9 @@ proc VolFreeSurferReadersBuildGUI {parentFrame} {
     pack $f.eName -side left -padx $Gui(pad) -expand 1 -fill x
     pack $f.lName -side left -padx $Gui(pad) 
 
-    # Desc row
+    #---------
+    # Volume->Desc
+    #---------
     set f $parentFrame.fVolume.fDesc
 
     eval {label $f.lDesc -text "Optional Description:"} $Gui(WLA)
@@ -133,7 +148,9 @@ proc VolFreeSurferReadersBuildGUI {parentFrame} {
     pack $f.lDesc -side left -padx $Gui(pad)
     pack $f.eDesc -side left -padx $Gui(pad) -expand 1 -fill x
 
-    # LabelMap
+    #---------
+    # Volume->LabelMap
+    #---------
     set f $parentFrame.fVolume.fLabelMap
 
     frame $f.fTitle -bg $Gui(activeWorkspace)
@@ -157,42 +174,113 @@ proc VolFreeSurferReadersBuildGUI {parentFrame} {
         puts "Done packing the label map stuff"
     }
 
-    #-------------------------------------------
-    # f->FileType
-    #-------------------------------------------
-    set f $parentFrame.fFileType
-
-    DevAddLabel $f.l "File Type: "
-    pack $f.l -side left -padx $Gui(pad) -pady 0
-    #set gridList $f.l
-
-    foreach type $Volume(VolFreeSurferReaders,FileTypeList) tip $Volume(VolFreeSurferReaders,FileTypeList,tooltips) {
-        eval {radiobutton $f.rMode$type \
-                  -text "$type" -value "$type" \
-                  -variable Volume(VolFreeSurferReaders,FileType)\
-                  -indicatoron 0} $Gui(WCA) 
-        pack $f.rMode$type -side left -padx $Gui(pad) -pady 0
-        TooltipAdd  $f.rMode$type $tip
-    }   
-
-
-    #-------------------------------------------
-    # Apply frame
-    #-------------------------------------------
-    set f $parentFrame.fApply
+    #------------
+    # Volume->Apply 
+    #------------
+    set f $parentFrame.fVolume.fApply
         
     DevAddButton $f.bApply "Apply" "VolFreeSurferReadersApply; RenderAll" 8
     DevAddButton $f.bCancel "Cancel" "VolumesPropsCancel" 8
     grid $f.bApply $f.bCancel -padx $Gui(pad)
 
+    #-------------------------------------------
+    # fModel frame
+    #-------------------------------------------
+
+    set f $parentFrame.fModel
+
+    DevAddFileBrowse $f Volume "VolFreeSurferReaders,ModelFileName" "Model File:" "VolFreeSurferReadersSetModelFileName" "orig" "\$Volume(DefaultDir)"  "Browse for a FreeSurfer surface file (orig ${Volume(VolFreeSurferReaders,surfaces)})"
+    frame $f.fName -bg $Gui(activeWorkspace)
+    frame $f.fSurface -bg $Gui(activeWorkspace)
+    frame $f.fScalar -bg $Gui(activeWorkspace)
+    frame $f.fAnnotation -bg $Gui(activeWorkspace)
+    frame $f.fAnnotColor -bg $Gui(activeWorkspace)
+    frame $f.fApply  -bg $Gui(activeWorkspace)
+ 
+    pack $f.fName -side top -padx $Gui(pad) -pady $Gui(pad) -fill x -expand 1
+    pack $f.fSurface -side top -padx $Gui(pad) -pady $Gui(pad) -fill x -expand 1
+    pack $f.fScalar -side top -padx $Gui(pad) -pady $Gui(pad) -fill x -expand 1
+    pack $f.fAnnotation -side top -padx $Gui(pad) -pady $Gui(pad) -fill x -expand 1
+    pack $f.fAnnotColor -side top -padx $Gui(pad) -pady $Gui(pad) -fill x -expand 1
+    DevAddFileBrowse $f.fAnnotColor Volume "VolFreeSurferReaders,colorTableFilename" "Annotation Color file:" "VolFreeSurferReadersSetAnnotColorFileName" "txt" "\$Volume(DefaultDir)"  "Browse for a FreeSurfer annotation colour table file (txt)"
+
+    pack $f.fApply -side top -padx $Gui(pad) -pady $Gui(pad) -fill x -expand 1
+
+    #------------
+    # Model->Name
+    #------------
+    set f $parentFrame.fModel.fName
+    eval {label $f.lName -text "Name:"} $Gui(WLA)
+    eval {entry $f.eName -textvariable Volume(VolFreeSurferReaders,ModelName) -width 8} $Gui(WEA)
+    pack  $f.lName -side left -padx $Gui(pad) 
+    pack $f.eName -side left -padx $Gui(pad) -expand 1 -fill x
+    pack $f.lName -side left -padx $Gui(pad) 
+
+
+    if {0} {
+        # need to work this out still, for now you can load these instead of origs
+    #------------
+    # Model->Surface 
+    #------------
+    # surface files (mesh): e.g., lh.inflated, lh.pial, lh.smoothwm, lh.sphere
+    set f $parentFrame.fModel.fSurface
+    DevAddLabel $f.lTitle "Load Associated Surface Models:"
+    pack $f.lTitle -side top -padx $Gui(pad) -pady 0
+    foreach surface $Volume(VolFreeSurferReaders,surfaces) {
+        eval {checkbutton $f.c$surface \
+                  -text $surface -command "VolFreeSurferReadersSetLoad $surface " \
+                  -variable Volume(VolFreeSurferReaders,assocFiles,$surface) \
+                  -width 9 \
+                  -indicatoron 0} $Gui(WCA)
+        pack $f.c$surface -side top -padx 0
+    }
+}
+    #------------
+    # Model->Scalar 
+    #------------
+    # curvature (scalar): e.g., lh.thickness, lh.curv, lh.sulc, lh.area
+    set f $parentFrame.fModel.fScalar
+    DevAddLabel $f.lTitle "Load Associated Scalar files:"
+    pack $f.lTitle -side top -padx $Gui(pad) -pady 0
+    foreach scalar $Volume(VolFreeSurferReaders,scalars) {
+        eval {checkbutton $f.r$scalar \
+                  -text "$scalar" -command "VolFreeSurferReadersSetLoad $scalar" \
+                  -variable Volume(VolFreeSurferReaders,assocFiles,$scalar) \
+                  -width 9 \
+                  -indicatoron 0} $Gui(WCA)
+        pack $f.r$scalar -side top -padx 0
+    }
+
+    #------------
+    # Model->Annotation 
+    #------------
+    # e)annotation files: lh.xxx.annot
+    set f $parentFrame.fModel.fAnnotation
+    DevAddLabel $f.lTitle "Load Associated Annotation files:"
+    pack $f.lTitle -side top -padx $Gui(pad) -pady 0
+    foreach annot $Volume(VolFreeSurferReaders,annots) {
+        eval {checkbutton $f.c$annot \
+                  -text "$annot" -command "VolFreeSurferReadersSetLoad $annot" \
+                  -variable Volume(VolFreeSurferReaders,assocFiles,$annot) -width 9 \
+                  -indicatoron 0} $Gui(WCA)
+        pack $f.c$annot -side top -padx 0
+    }
+
+    #------------
+    # Model->Apply 
+    #------------
+    set f $parentFrame.fModel.fApply
+        
+    DevAddButton $f.bApply "Apply" "VolFreeSurferReadersModelApply; RenderAll" 8
+    DevAddButton $f.bCancel "Cancel" "VolFreeSurferReadersModelCancel" 8
+    grid $f.bApply $f.bCancel -padx $Gui(pad)
 
     #-------------------------------------------
     # Demo Button
     #-------------------------------------------
-#    set f $parentFrame.fDemo
-#    eval button $f.bDemo -text Demo -command "VolFreeSurferDemo" $Gui(WBA)
-#    pack $f.bDemo 
-# -side left -padx $Gui(pad) -pady 0
+    set f $parentFrame.fDemo
+    eval button $f.bDemo -text Demo -command "VolFreeSurferDemo" $Gui(WBA)
+    pack $f.bDemo  -side left -padx $Gui(pad) -pady 0
 
 }
 
@@ -237,33 +325,55 @@ proc VolFreeSurferReadersExit {} {
 
 
 #-------------------------------------------------------------------------------
-# .PROC VolFreeSurferReadersSetFileName
-# The filename is set elsehwere, in variable Volume(VolFreeSurferReaders,FileName)
+# .PROC VolFreeSurferReadersSetVolumeFileName
+# The filename is set elsehwere, in variable Volume(VolFreeSurferReaders,VolumeFileName)
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc VolFreeSurferReadersSetFileName {} {
+proc VolFreeSurferReadersSetVolumeFileName {} {
     global Volume Module
 
     if {$Module(verbose) == 1} {
-        puts "FreeSurferReaders filename: $Volume(VolFreeSurferReaders,FileName)"
+        puts "FreeSurferReaders filename: $Volume(VolFreeSurferReaders,VolumeFileName)"
     }
-    set Volume(name) [file tail $Volume(VolFreeSurferReaders,FileName)]
+    set Volume(name) [file tail $Volume(VolFreeSurferReaders,VolumeFileName)]
     # replace . with -
     regsub -all {[.]} $Volume(name) {-} Volume(name)
 }
 
+
+#-------------------------------------------------------------------------------
+# .PROC VolFreeSurferReadersSetModelFileName
+# The filename is set elsehwere, in variable Volume(VolFreeSurferReaders,ModelFileName)
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc VolFreeSurferReadersSetModelFileName {} {
+    global Volume Model Module
+
+    if {$Module(verbose) == 1} {
+        puts "FreeSurferReaders filename: $Volume(VolFreeSurferReaders,ModelFileName)"
+    }
+    set Model(name) [file tail $Volume(VolFreeSurferReaders,ModelFileName)]
+    # replace . with -
+    regsub -all {[.]} $Model(name) {-} Model(name)
+}
+
+proc VolFreeSurferReadersSetAnnotColorFileName {} {
+    global Volume
+    if {$::Module(verbose)} {
+        puts "VolFreeSurferReadersSetAnnotColorFileName: annotation colour file name set to $Volume(VolFreeSurferReaders,colorTableFilename)"
+    }
+}
+
 #-------------------------------------------------------------------------------
 # .PROC VolFreeSurferReadersApply
-# Check the file type variable and build the appropriate model or volume
+# Read in the volume specified.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc VolFreeSurferReadersApply {} {
     global Module Volume
-    if {$Module(verbose) == 1} {
-        puts "proc VolFreeSurferReaders Apply\nFiletype -s $Volume(VolFreeSurferReaders,FileType)"
-    }
 
     # Validate name
     if {$Volume(name) == ""} {
@@ -272,17 +382,6 @@ proc VolFreeSurferReadersApply {} {
     }
     if {[ValidateName $Volume(name)] == 0} {
         tk_messageBox -message "The name can consist of letters, digits, dashes, or underscores"
-        return
-    }
-
-    ################
-    # This is a cheat, do the model building stuff here for surfaces and then return
-    if {[string equal $Volume(VolFreeSurferReaders,FileType) Surface]} {
-        # add a mrml node
-        set n [MainMrmlAddNode Model]
-        set i [$n GetID]
-
-        VolFreeSurferReadersBuildSurface $i
         return
     }
 
@@ -298,23 +397,21 @@ proc VolFreeSurferReadersApply {} {
     # puts "VolFreeSurferReadersApply: NOT calling MainVolumes create on $i"
     # MainVolumesCreate $i
   
-    if {[string equal $Volume(VolFreeSurferReaders,FileType) Volume]} {
-        # read in the COR file
-        # Set up the reading
-        if {[info command Volume($i,vol,rw)] != ""} {
-            # have to delete it first, needs to be cleaned up
-            DevErrorWindow "Problem: reader for this new volume number $i already exists, deleting it"
-            Volume($i,vol,rw) Delete
-        }
-        vtkCORReader Volume($i,vol,rw)
+    # read in the COR file
+    # Set up the reading
+    if {[info command Volume($i,vol,rw)] != ""} {
+        # have to delete it first, needs to be cleaned up
+        DevErrorWindow "Problem: reader for this new volume number $i already exists, deleting it"
+        Volume($i,vol,rw) Delete
+    }
+    vtkCORReader Volume($i,vol,rw)
     
-        # get the directory name from the filename
-        Volume($i,vol,rw) SetFilePrefix [file dirname $Volume(VolFreeSurferReaders,FileName)]
-        if {$Module(verbose) == 1} {
-            puts "VolFreeSurferReadersApply: set COR prefix to [Volume($i,vol,rw) GetFilePrefix]\nCalling Update on volume $i"
-        }
-        Volume($i,vol,rw) Update
-    } 
+    # get the directory name from the filename
+    Volume($i,vol,rw) SetFilePrefix [file dirname $Volume(VolFreeSurferReaders,VolumeFileName)]
+    if {$Module(verbose) == 1} {
+        puts "VolFreeSurferReadersApply: set COR prefix to [Volume($i,vol,rw) GetFilePrefix]\nCalling Update on volume $i"
+    }
+    Volume($i,vol,rw) Update
 
     # set the name and description of the volume
     $n SetName $Volume(name)
@@ -322,7 +419,7 @@ proc VolFreeSurferReadersApply {} {
     
    
     # set the volume properties: read the header first: sets the Volume array values we need
-    VolFreeSurferReadersCORHeaderRead $Volume(VolFreeSurferReaders,FileName)
+    VolFreeSurferReadersCORHeaderRead $Volume(VolFreeSurferReaders,VolumeFileName)
     Volume($i,node) SetName $Volume(name)
     Volume($i,node) SetDescription $Volume(desc)
     Volume($i,node) SetLabelMap $Volume(labelMap)
@@ -335,7 +432,7 @@ proc VolFreeSurferReadersApply {} {
     Volume($i,node) SetNumScalars $Volume(numScalars)
     Volume($i,node) SetLittleEndian $Volume(littleEndian)
     # this is the file prefix that will be used to build the image file names, needs to go up to COR
-    Volume($i,node) SetFilePrefix [string trimright [file rootname $Volume(VolFreeSurferReaders,FileName)] "-"]
+    Volume($i,node) SetFilePrefix [string trimright [file rootname $Volume(VolFreeSurferReaders,VolumeFileName)] "-"]
 # [Volume($i,vol,rw) GetFilePrefix]
     Volume($i,node) SetImageRange [lindex $Volume(imageRange) 0] [lindex $Volume(imageRange) 1]
     Volume($i,node) SetScalarTypeToUnsignedChar
@@ -346,7 +443,7 @@ proc VolFreeSurferReadersApply {} {
     if {$Module(verbose) == 1} {
         puts "VolFreeSurferReaders: setting full prefix for volume node $i"
     }
-    Volume($i,node) SetFullPrefix [string trimright [file rootname $Volume(VolFreeSurferReaders,FileName)] "-"]
+    Volume($i,node) SetFullPrefix [string trimright [file rootname $Volume(VolFreeSurferReaders,VolumeFileName)] "-"]
 
     if {$Module(verbose) == 1} {
         puts "VolFreeSurferReaders: set up volume node for $i:"
@@ -360,8 +457,8 @@ proc VolFreeSurferReadersApply {} {
     MainUpdateMRML
     # If failed, then it's no longer in the idList
     if {[lsearch $Volume(idList) $i] == -1} {
-        puts "VolFreeSurferReaders: failed to read in the volume $i, $Volume(VolFreeSurferReaders,FileName)"
-        DevErrorWindow "VolFreeSurferReaders: failed to read in the volume $i, $Volume(VolFreeSurferReaders,FileName)"
+        puts "VolFreeSurferReaders: failed to read in the volume $i, $Volume(VolFreeSurferReaders,VolumeFileName)"
+        DevErrorWindow "VolFreeSurferReaders: failed to read in the volume $i, $Volume(VolFreeSurferReaders,VolumeFileName)"
         return
     }
     if {$Module(verbose) == 1} {
@@ -414,7 +511,7 @@ proc VolFreeSurferReadersBuildSurface {m} {
     }
     # set up the reader
     vtkFSSurfaceReader Model($m,reader)
-    Model($m,reader) SetFileName $Volume(VolFreeSurferReaders,FileName)
+    Model($m,reader) SetFileName $Volume(VolFreeSurferReaders,ModelFileName)
 
     vtkPolyDataNormals Model($m,normals)
     Model($m,normals) SetSplitting 0
@@ -426,6 +523,8 @@ proc VolFreeSurferReadersBuildSurface {m} {
     # should be vtk model
     foreach r $Module(Renderers) {
         # Mapper
+        if {$::Module(verbose)} { puts "Deleting Model($m,mapper,$r)" }
+        catch "Model($m,mapper,$r) Delete"
         vtkPolyDataMapper Model($m,mapper,$r)
 #Model($m,mapper,$r) SetInput [Model($m,reader) GetOutput]
     }
@@ -433,30 +532,120 @@ proc VolFreeSurferReadersBuildSurface {m} {
     # Delete the src, leaving the data in Model($m,polyData)
     # polyData will survive as long as it's the input to the mapper
     #
-    Model($m,node) SetName $Volume(name)
+    Model($m,node) SetName $Volume(VolFreeSurferReaders,ModelName)
     Model($m,node) SetFileName $Volume(VolFreeSurferReaders,FileName)
     set Model($m,polyData) [Model($m,stripper) GetOutput]
     $Model($m,polyData) Update
 
-    # always read in the thickness file
-    set thicknessFileName [file rootname $Volume(VolFreeSurferReaders,FileName)].thickness
-    if [file exists $thicknessFileName] {
-        DevInfoWindow "Reading in thickness file associated with this surface $thicknessFileName"
-        # need to delete these so that if close the scene and reopen a surface file, these won't still exist
-        vtkFloatArray Model($m,floatArray)
-        vtkFSSurfaceScalarReader Model($m,ssr)
-        
-        Model($m,ssr) SetFileName $thicknessFileName
-        
-        # this doesn't work on solaris, can't cast float array to vtkdataobject
-        Model($m,ssr) SetOutput Model($m,floatArray)
-        
-        Model($m,ssr) ReadFSScalars
-        [$Model($m,polyData) GetPointData] SetScalars Model($m,floatArray)
-    } else {
-        DevWarningWindow "Thickness file does not exist: $thicknessFileName"
-    }
+    #-------------------------
+    # read in the other surface files somehow, as additional vectors doesn't work
 
+    if {0} {
+
+    set numSurfaces 0
+    foreach s $Volume(VolFreeSurferReaders,surfaces) {
+        if {[lsearch $Volume(VolFreeSurferReaders,assocFiles) $s] != -1} {
+            incr numSurfaces
+        }
+    }
+    if {$::Module(verbose)} {
+        DevInfoWindow "Have $numSurfaces vector arrays associated with this model, call:\nVolFreeSurferReadersSetModelVector $m vectorName"
+    }
+    set numSurfacesAdded 0
+    foreach s $Volume(VolFreeSurferReaders,surfaces) {
+        if {[lsearch $Volume(VolFreeSurferReaders,assocFiles) $s] != -1} {
+            set surfaceFileName [file rootname $Volume(VolFreeSurferReaders,ModelFileName)].$s
+            if [file exists $surfaceFileName] {
+                DevInfoWindow "Model $m: Reading in $s file associated with this surface: $surfaceFileName"
+                # need to delete these so that if close the scene and reopen a surface file, these won't still exist
+                if {$::Module(verbose)} {
+                    puts "Deleting Model($m,floatArray$s)..."
+                }
+                catch "Model($m,floatArray$s) Delete"
+                vtkFloatArray Model($m,floatArray$s)
+                Model($m,floatArray$s) SetName $s
+                vtkFSSurfaceReader Model($m,sr$s)
+                
+                Model($m,sr$s) SetFileName $surfaceFileName
+                Model($m,sr$s) SetOutput Model($m,floatArray$s)
+                Model($m,sr$s) Update
+                # may need to call Model($m,sr$s) Execute
+                
+                if {$::Module(verbose)} {
+                    DevInfoWindow "Adding surface named $s to model id $m"
+                }
+                [$Model($m,polyData) GetPointData] AddVector Model($m,floatArray$s)
+                # may have some missing files
+                incr numSurfacesAdded 
+                if {$numSurfacesAdded == 1} {
+                    # set the first one active
+                    [$Model($m,polyData) GetPointData] SetActiveVectors $s
+                }   
+                # may need to set reader output to "" and delete
+            } else {
+                 DevWarningWindow "Surface file does not exist: $surfaceFileName"
+            }
+        }
+    }
+} 
+    #-------------------------
+    # read in the scalar files
+    # check if there's more than one
+    set numScalars 0
+    foreach s $Volume(VolFreeSurferReaders,scalars) {
+        if {[lsearch $Volume(VolFreeSurferReaders,assocFiles) $s] != -1} {
+            incr numScalars
+        }
+    }
+    if {$::Module(verbose)} {
+        DevInfoWindow "Have $numScalars scalar arrays associated with this model, call:\nVolFreeSurferReadersSetModelScalar $m scalarName"
+    }
+    set numScalarsAdded 0
+    foreach s $Volume(VolFreeSurferReaders,scalars) {
+        if {[lsearch $Volume(VolFreeSurferReaders,assocFiles) $s] != -1} {
+            set scalarFileName [file rootname $Volume(VolFreeSurferReaders,ModelFileName)].$s
+            if [file exists $scalarFileName] {
+                DevInfoWindow "Model $m: Reading in $s file associated with this surface: $scalarFileName"
+                # need to delete these so that if close the scene and reopen a surface file, these won't still exist
+                if {$::Module(verbose)} {
+                    puts "Deleting Model($m,floatArray$s)..."
+                }
+                catch "Model($m,floatArray$s) Delete"
+                vtkFloatArray Model($m,floatArray$s)
+                Model($m,floatArray$s) SetName $s
+                catch "Model($m,ssr$s) Delete"
+                vtkFSSurfaceScalarReader Model($m,ssr$s)
+
+                Model($m,ssr$s) SetFileName $scalarFileName
+                # this doesn't work on solaris, can't cast float array to vtkdataobject
+                Model($m,ssr$s) SetOutput Model($m,floatArray$s)
+                
+                Model($m,ssr$s) ReadFSScalars
+
+                # if there's going to be more than one, use add array, otherwise just set it
+                if {$numScalars == 1} {
+                    [$Model($m,polyData) GetPointData] SetScalars Model($m,floatArray$s)
+                } else {
+                    if {$::Module(verbose)} {
+                        DevInfoWindow "Adding scalar named $s to model id $m"
+                    }
+                    [$Model($m,polyData) GetPointData] AddArray Model($m,floatArray$s)
+                    # may have some missing files
+                    incr numScalarsAdded 
+                    if {$numScalarsAdded == 1} {
+                        # set the first one active
+                        [$Model($m,polyData) GetPointData] SetActiveScalars $s
+                    }
+                }
+                # may need to set reader output to "" and delete here
+            } else {
+                DevWarningWindow "Scalar file does not exist: $scalarFileName"
+            }
+        }
+    }
+    
+
+    
     foreach r $Module(Renderers) {
         Model($m,mapper,$r) SetInput $Model($m,polyData)
    
@@ -543,35 +732,6 @@ proc VolFreeSurferReadersBuildSurface {m} {
 
     MainUpdateMRML
     MainModelsSetActive $m
-
-    # old version, not treating the surface file like a model
-    if {0} {
-        # Read in a freesurfer surface file
-        # Set up the reading
-        vtkFSSurfaceReader  Volume($i,vol,rw)
-        # get the directory name from the filename
-        Volume($i,vol,rw) SetFileName $Volume(VolFreeSurferReaders,FileName)
-        puts "VolFreeSurferReadersApply: set surface $i filename to [Volume($i,vol,rw) GetFileName]"
-        
-        vtkPolyDataMapper Volume(VolFreeSurferReaders,$i,mapper)
-        Volume(VolFreeSurferReaders,$i,mapper) SetInput [Volume($i,vol,rw) GetOutput]
-        vtkActor Volume(VolFreeSurferReaders,$i,curveactor)
-        Volume(VolFreeSurferReaders,$i,curveactor) SetMapper Volume(VolFreeSurferReaders,$i,mapper)
-        viewRen AddActor Volume(VolFreeSurferReaders,$i,curveactor)
-        Volume(VolFreeSurferReaders,$i,curveactor) SetVisibility 1
-        
-        # triangle stripping stuff
-        if {0} {
-            vtkTriangleFilter Volume(VolFreeSurferReaders,$i,stripfilter)
-            Volume(VolFreeSurferReaders,$i,stripfilter) SetInput [Volume($i,vol,rw) GetOutput]
-            
-            vtkDecimate Volume(VolFreeSurferReaders,$i,decimate)
-            Volume(VolFreeSurferReaders,$i,decimate) SetInput [Volume(VolFreeSurferReaders,$i,stripfilter) GetOutput]
-            Volume(VolFreeSurferReaders,$i,decimate) SetTargetReduction 0.8
-            Volume(VolFreeSurferReaders,$i,decimate) SetMaximumIterations 6
-            Volume(VolFreeSurferReaders,$i,mapper) SetInput [ Volume(VolFreeSurferReaders,$i,decimate) GetOutput]
-        }
-    }
 }
 
 #-------------------------------------------------------------------------------
@@ -586,6 +746,113 @@ proc VolFreeSurferReadersSetSurfaceVisibility {i vis} {
     global Volume
     # set the visibility of volume i to visibility vis
     Volume(VolFreeSurferReaders,$i,curveactor) SetVisibility $vis
+}
+
+#-------------------------------------------------------------------------------
+# .PROC VolFreeSurferReadersSetModelScalar
+# Set the model's active scalars. If an invalid scalar name is passed, will pop up an info box.
+# .ARGS
+# modelID the model id
+# scalarName the name given to the scalar field
+# .END
+#-------------------------------------------------------------------------------
+proc VolFreeSurferReadersSetModelScalar {modelID {scalarName ""}} {
+    global Volume VolFreeSurferReaders
+    if {$scalarName == ""} {
+        foreach s "$Volume(VolFreeSurferReaders,scalars) $Volume(VolFreeSurferReaders,annots)" {
+            if {$VolFreeSurferReaders(current$s)} {
+                set scalarName $s
+                puts "Displaying $s"
+            }
+        }
+    }
+    if {$::Module(verbose)} {
+        puts "set model scalar, model $modelID -> $scalarName"
+    }
+    if {$scalarName != ""} {
+        set retval [[$::Model(${modelID},polyData) GetPointData] SetActiveScalars $scalarName]
+        if {$retval == -1} {
+            DevInfoWindow "Model $modelID does not have a scalar field named $scalarName.\nPossible options are: $::Volume(VolFreeSurferReaders,scalars)"
+        } else {
+            # reset the scalar range here
+            Render3D
+        }
+    }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC VolFreeSurferReadersSetModelVector
+# Set the model's active vector. If an invalid vector name is passed, will pop up an info box.
+# .ARGS
+# modelID the model id
+# vectorName the name given to the vector field
+# .END
+#-------------------------------------------------------------------------------
+proc VolFreeSurferReadersSetModelVector {modelID {vectorName ""}} {
+    if {$vectorName == ""} {
+        set vectorName $VolFreeSurferReaders(currentSurface)
+    }
+    if {$::Module(verbose)} {
+        puts "set model vector, model $modelID -> $vectorName"
+    }
+    set retval [[$::Model(${modelID},polyData) GetPointData] SetActiveVectors $vectorName]
+    if {$retval == -1} {
+        DevInfoWindow "Model $modelID does not have a vector field named $vectorName.\nPossible options are: orig $::Volume(VolFreeSurferReaders,surfaces)"
+    } else {
+        Render3D
+    }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC VolFreeSurferReadersDisplayPopup
+# A convenience pop up window that will allow you to set the active vectors and scalars for a model
+# .ARGS
+# modelID the id of the model to build the gui for
+# .END
+#-------------------------------------------------------------------------------
+proc VolFreeSurferReadersDisplayPopup {modelID} {
+    global Volume Model Gui
+
+    DevInfoWindow "Not working 100%... use at your own risk"
+
+    set _w .freeSurferDisplay$modelID
+    catch "destroy $_w"
+    toplevel $_w
+    wm title $_w "FreeSurfer Model $modelID Display Options"
+    frame $_w.fSurfaces -bg $Gui(activeWorkspace) -relief groove -bd 1
+    frame $_w.fScalars -bg $Gui(activeWorkspace) -relief groove -bd 1
+    pack $_w.fSurfaces $_w.fScalars -side top -fill x -pady $Gui(pad) -expand 1
+
+    #--------
+    # surfaces
+    #--------
+    if {0} {
+    set f $_w.fSurfaces
+    DevAddLabel $f.lTitle "Possible Surface Models:"
+    pack $f.lTitle -side top -padx $Gui(pad) -pady 0
+    foreach surface {orig $Volume(VolFreeSurferReaders,surfaces)} {
+        eval {checkbutton $f.c$surface \
+                  -text $surface -command "VolFreeSurferReadersSetModelVector $modelID" \
+                  -variable VolFreeSurferReaders(currentSurface)
+                  -width 9 \
+                  -indicatoron 0} $Gui(WCA)
+        pack $f.c$surface -side top -padx 0
+    }
+    }
+    #---------
+    # scalars
+    #---------
+    set f $_w.fScalars
+    DevAddLabel $f.lTitle "Possible Scalar Models:"
+    pack $f.lTitle -side top -padx $Gui(pad) -pady 0
+    foreach scalar "$Volume(VolFreeSurferReaders,scalars) $Volume(VolFreeSurferReaders,annots)" {
+        eval {checkbutton $f.c$scalar \
+                  -text $scalar -command "VolFreeSurferReadersSetModelScalar $modelID" \
+                  -variable VolFreeSurferReaders(current$scalar) \
+                  -width 9 \
+                  -indicatoron 0} $Gui(WCA)
+        pack $f.c$scalar -side top -padx 0
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -911,4 +1178,186 @@ proc VolFreeSurferReadersSetUMLSMapping {} {
     set VolFreeSurferReadersSurface(84,surfacelabel) S_transverse_frontopolar
 
     return
+}
+
+#-------------------------------------------------------------------------------
+# .PROC VolFreeSurferReadersReadAnnotations 
+# Read in the annotations specified.
+# .ARGS
+# _id model id
+# .END
+#-------------------------------------------------------------------------------
+proc VolFreeSurferReadersReadAnnotations {_id} {
+    global Volume Model
+
+    # read in this annot file, it's one up from the surf dir, then down into label
+    set dir [file split [file dirname $Volume(VolFreeSurferReaders,ModelFileName)]]
+    set dir [lrange $dir 0 [expr [llength $dir] - 2]]
+    lappend dir label
+    set dir [eval file join $dir]
+    set fname [lrange [file split [file rootname $Volume(VolFreeSurferReaders,ModelFileName)]] end end]
+
+    foreach a $Volume(VolFreeSurferReaders,annots) {
+        if {[lsearch $Volume(VolFreeSurferReaders,assocFiles) $a] != -1} {
+            set annotFileName [eval file join $dir $fname.$a.annot]
+            if [file exists $annotFileName] {
+                DevInfoWindow "Model $_id: Reading in $a file associated with this model: $annotFileName"
+                set scalaridx [[$Model($_id,polyData) GetPointData] SetActiveScalars "labels"] 
+                    
+                if { $scalaridx == "-1" } {
+                    if {$::Module(verbose)} {
+                        DevInfoWindow "labels scalar doesn't exist for model $_id, creating"
+                    }
+                    set scalars scalars_$a
+                    catch "$scalars Delete"
+                    vtkIntArray $scalars
+                    $scalars SetName "labels"
+                    [$Model($_id,polyData) GetPointData] AddArray $scalars
+                    [$Model($_id,polyData) GetPointData] SetActiveScalars "labels"
+                } else {
+                    set scalars [[$Model($_id,polyData) GetPointData] GetScalars $scalaridx]
+                }
+                set lut [Model($_id,mapper,viewRen) GetLookupTable]
+                $lut SetRampToLinear
+                
+                set fssar fssar_$a
+                catch "$fssar Delete"
+                vtkFSSurfaceAnnotationReader $fssar
+                $fssar SetFileName $annotFileName
+                $fssar SetOutput $scalars
+                $fssar SetColorTableOutput $lut
+                # set the optional colour table filename
+                if [file exists $Volume(VolFreeSurferReaders,colorTableFilename)] {
+                    if {$::Module(verbose)} {
+                        puts "Color table file exists: $Volume(VolFreeSurferReaders,colorTableFilename)"
+                    }
+                    $fssar SetColorTableFileName $Volume(VolFreeSurferReaders,colorTableFilename)
+                    $fssar UseExternalColorTableFileOn
+                } else {
+                    if {$::Module(verbose)} {
+                        puts "Color table file does not exist: $Volume(VolFreeSurferReaders,colorTableFilename)"
+                    }
+                    $fssar UseExternalColorTableFileOff
+                }
+                set retval [$fssar ReadFSAnnotation]
+                if {$::Module(verbose)} {
+                    puts "Return value from reading $annotFileName = $retval"
+                }
+                if {[VolFreeSurferReadersCheckAnnotError $retval] != 0} {
+                     [$Model($_id,polyData) GetPointData] RemoveArray "labels"
+                    return
+                }
+                
+                set ::Model(scalarVisibilityAuto) 0
+
+                array unset _labels
+                array set _labels [$fssar GetColorTableNames]
+                set entries [lsort -integer [array names _labels]]
+                if {$::Module(verbose)} {
+                    puts "Label entries:\n$entries"
+                    puts "0th: [lindex $entries 0], last:  [lindex $entries end]"
+                }
+                MainModelsSetScalarRange $_id [lindex $entries 0] [lindex $entries end]
+                MainModelsSetScalarVisibility $_id 1
+                Render3D
+            } else {
+                DevInfoWindow "Model $_id: $a file does not exist: $annotFileName"
+            }
+        }
+    }
+}
+
+# references vtkFSSurfaceAnnotationReader.h. Returns error value (0 means success)
+proc VolFreeSurferReadersCheckAnnotError {val} {
+    if {$val == 1} {
+        DevErrorWindow "ERROR: error loading colour table"
+    }
+    if {$val == 2} {
+        DevErrorWindow "ERROR: error loading annotation"
+    }
+    if {$val == 3} {
+        DevErrorWindow "ERROR: error parsing color table"
+    }
+    if {$val == 4} {
+        DevErrorWindow "ERROR: error parsing annotation"
+    }
+    if {$val == 5} {
+        DevErrorWindow "WARNING: Unassigned labels"
+        return 0
+    }
+    if {$val == 6} {
+        DevErrorWindow "ERROR: no colour table defined"
+    }
+    return $val
+}
+#-------------------------------------------------------------------------------
+# .PROC VolFreeSurferReadersModelApply
+# Read in the model specified. Used in place of the temp ModelsFreeSurferPropsApply.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc VolFreeSurferReadersModelApply {} {
+    global Module Model Volume
+    # Validate name
+    set Model(name) $Volume(VolFreeSurferReaders,ModelName)
+    if {$Model(name) == ""} {
+        tk_messageBox -message "Please enter a name that will allow you to distinguish this model."
+        return
+    }
+    if {[ValidateName $Model(name)] == 0} {
+        tk_messageBox -message "The name can consist of letters, digits, dashes, or underscores"
+        return
+    }
+    if {$::Module(verbose)} {
+        puts "VolFreeSurferReadersModelApply: Also loading these assoc files if they exist: $Volume(VolFreeSurferReaders,assocFiles)"
+    }
+    # add a mrml node
+    set n [MainMrmlAddNode Model]
+    set i [$n GetID]
+
+    VolFreeSurferReadersBuildSurface $i
+    VolFreeSurferReadersReadAnnotations $i
+    # pop up a window allowing you to choose which vectors and scalars to see
+    # VolFreeSurferReadersDisplayPopup $i
+
+    # allow use of other module GUIs
+    set Volumes(freeze) 0
+    # If tabs are frozen, then return to the "freezer"
+    if {$Module(freezer) != ""} {
+        set cmd "Tab $Module(freezer)"
+        set Module(freezer) ""
+        eval $cmd
+    }
+    return
+}
+proc VolFreeSurferReadersModelCancel {} {
+    global Module Model Volume
+    # model this after VolumePropsCancel - ModelPropsCancel?
+    if {$Module(verbose)} {
+        puts "VolFreeSurferReadersModelCancel, calling ModelPropsCancel"
+    }
+    ModelsPropsCancel
+}
+
+proc VolFreeSurferReadersSetLoad {param} {
+    global Volume
+
+    if {$::Module(verbose)} {
+        puts "VolFreeSurferReadersSetLoad: start: loading: $Volume(VolFreeSurferReaders,assocFiles)"
+    }
+    set ind [lsearch $Volume(VolFreeSurferReaders,assocFiles) $param]
+    if {$Volume(VolFreeSurferReaders,assocFiles,$param) == 1} {
+        if {$ind == -1} {
+            # add it to the list
+            lappend Volume(VolFreeSurferReaders,assocFiles) $param
+        }
+    } else {
+        if {$ind != -1} {
+            # remove it from the list
+            set Volume(VolFreeSurferReaders,assocFiles) [lreplace $Volume(VolFreeSurferReaders,assocFiles) $ind $ind]
+        }
+    }
+    if {$::Module(verbose)} {
+        puts "VolFreeSurferReadersSetLoad: new: loading: $Volume(VolFreeSurferReaders,assocFiles)"
+    }
 }
