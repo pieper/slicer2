@@ -149,7 +149,7 @@ proc MultiVolumeReaderInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.6.2.5 $} {$Date: 2005/01/20 20:22:05 $}]
+        {$Revision: 1.6.2.6 $} {$Date: 2005/01/20 22:44:08 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -544,6 +544,8 @@ proc MultiVolumeReaderLoadAnalyze {} {
     set MultiVolumeReader(noOfVolumes) [llength $AnalyzeCache(MRMLid)] 
     set MultiVolumeReader(volumeExtent) $AnalyzeCache(volumeExtent) 
 
+    MainUpdateMRML
+
     # show the first volume by default
     MainSlicesSetVolumeAll Back $MultiVolumeReader(firstMRMLid)
     RenderAll
@@ -571,6 +573,12 @@ proc MultiVolumeReaderLoadBXH {} {
     set MultiVolumeReader(lastMRMLid) [lindex $VolBXH(MRMLid) end] 
     set MultiVolumeReader(noOfVolumes) [llength $VolBXH(MRMLid)] 
     set MultiVolumeReader(volumeExtent) $VolBXH(volumeExtent) 
+
+    MainUpdateMRML
+
+    # show the first volume by default
+    MainSlicesSetVolumeAll Back $MultiVolumeReader(firstMRMLid)
+    RenderAll
 
     return 0
 }
@@ -602,6 +610,8 @@ proc MultiVolumeReaderLoadDICOM {} {
     set MultiVolumeReader(lastMRMLid) [lindex $DICOMHelper(MRMLid) end] 
     set MultiVolumeReader(noOfVolumes) [llength $DICOMHelper(MRMLid)] 
     set MultiVolumeReader(volumeExtent) $DICOMHelper(volumeExtent) 
+
+    MainUpdateMRML
 
     # show the first volume by default
     MainSlicesSetVolumeAll Back $MultiVolumeReader(firstMRMLid)
