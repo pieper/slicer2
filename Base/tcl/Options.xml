@@ -17,7 +17,7 @@ ordered='Data
 	Colors 
 	Custom'
 suppressed='EMSegment
-        PolyBoolean
-'
+        Measure'
+
 </Options>
 </MRML>
