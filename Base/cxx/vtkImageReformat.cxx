@@ -1558,9 +1558,10 @@ void vtkImageReformat::ThreadedExecute(vtkImageData *inData,
 {
     int *inExt = inData->GetExtent();
     void *inPtr = inData->GetScalarPointerForExtent(inExt);
-    int wExt[6], ext[6];
+    int wExt[6];
+    // int ext[6];
     this->GetOutput()->GetWholeExtent(wExt);
-    int i, numComps = inData->GetNumberOfScalarComponents();
+    int numComps = inData->GetNumberOfScalarComponents();
 
     // Example values for the extents (for a 4-processor machine on a 124 slice volume) are:
     // id: 0 outExt: 0 255 0 63 0 0,    inExt: 0 255 0 255 0 123  wExt: 0 255 0 255 0 0

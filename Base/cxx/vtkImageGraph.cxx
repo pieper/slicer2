@@ -806,7 +806,6 @@ void vtkImageGraph::ExecuteData(vtkDataObject *output) {
   // 1. Step: Initialize and check
   //-------------------------------------------------
   vtkImageData        *data = this->AllocateOutputData(output);
-  int                 TempIncX, TempIncY, TempIncZ;
   int                 *TempExt;
   GraphEntryList      *ListPtr;
   vtkImageData        *TempCurve;
