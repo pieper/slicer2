@@ -692,9 +692,23 @@ if { $SLICER(versionInfo) != "" } {
         catch "vtkitkver Delete"
     }
     set libVersions "LibName1: VTK LibVersion1: ${vtkVersion} LibName2: TCL LibVersion2: ${tcl_patchLevel} LibName3: TK LibVersion2: ${tk_patchLevel} LibName4: ITK LibVersion4: ${itkVersion}"
-    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: [ParseCVSInfo "" {$Name:  $}] CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.81.2.1 2004/11/24 17:06:11 nicole Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: [ParseCVSInfo "" {$Name:  $}] CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.81.2.2 2004/12/02 23:46:19 nicole Exp $}] "
     puts "$SLICER(versionInfo)"
 }
+
+#
+# adpat to the vtk version
+#
+catch "__vtkVersionInstance Delete"
+vtkVersion __vtkVersionInstance
+if { [string match "4.2*" [__vtkVersionInstance GetVTKVersion]] } {
+    set ::getScalarComponentAs GetScalarComponentAsFloat
+    set ::setScalarComponentFrom SetScalarComponentFromFloat
+} else {
+    set ::getScalarComponentAs GetScalarComponentAsDouble
+    set ::setScalarComponentFrom SetScalarComponentFromDouble
+}
+__vtkVersionInstance Delete
 
 #
 # read dicom volumes specified on command line
