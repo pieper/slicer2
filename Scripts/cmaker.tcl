@@ -46,7 +46,7 @@ switch $tcl_platform(os) {
         set SLICER_HOME /home/pieper/slicer2/latest/slicer2
         set VTK_BINARY_PATH $SLICER_HOME/Lib/$BUILD/vtk/VTK-build
         set VTK_DIR $VTK_BINARY_PATH
-        set ITK_BINARY_PATH /home/pieper/downloads/itk/itk-build
+        set ITK_BINARY_PATH /home/pieper/downloads/itk/itk-1.4-build
         set VTKSLICERBASE_BUILD_LIB $SLICER_HOME/Base/builds/$BUILD/bin/vtkSlicerBase.so
         set GENERATOR "Unix Makefiles" 
         set COMPILER "g++"
@@ -226,7 +226,10 @@ foreach target $TARGETS {
                 gets $fp line
                 puts $line
             }
-            close $fp
+            if { [catch "close $fp" res] } {
+                lappend failed [file tail $target]
+                puts $res
+            }
         }
         default {
             if { [file tail $target] == "Base" } {
