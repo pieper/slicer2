@@ -146,7 +146,7 @@ proc AlignmentsInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.17 $} {$Date: 2003/06/06 19:32:11 $}]
+            {$Revision: 1.17.2.1 $} {$Date: 2003/08/06 23:24:13 $}]
 
     # Props
     set Matrix(propertyType) Basic
@@ -315,7 +315,7 @@ proc AlignmentsBuildGUI {} {
 
     <BR>
     <LI><B>Auto:
-    </B> Automatic and semi-automatic registration mechanisms. The <B>FidAlign</B> tab allows selection of corresponding fiducial points on the volume to move and the reference volume. Once this button is pressed, the screen is split into half and the volume to move is displayed in the screen on the right while the reference volume is displayed on the left. The screen color indicates which screen is the active one (yellow) and which one is the inactive one (blue). The active screen is set either by the motion of the mouse or the radio buttons found on the control panel. It is important to note that only the control panel for the active volume is shown. In the FidAlign mode, pick at least three corresponding points on each of the volumes and click the apply button to obtain a coarse registration of the two volumes. Click the cancel button to exit the fiducial selection mode. The matrix is set to the transformation matrix that was used to coarsly align the volume to move with the reference volume. This matrix can be set as the active matrix for MI or it can be manually adjusted using the sliders on the manual tab. The <B>TPS</B> button will be used to access registration using the thin plate spline method in the future. It is currently not available in this version. Clicking on the <B>MI<\B> button performs automatic registration using the method of Mutual Information (MI). This will set the matrix to the transformation matrix needed to align the <B>Volume to Move</B> with the <B>Reference Vol.</B>.<BR><B>TIP:</B> Set the <B>Run Speed</B> to <I>Fast</I> if the 2 volumes are already roughly aligned. Click on the <I>View color correspondence between the two overlayed images</I> button to visually assess the quality of registration. When the reference volume(red) and the volume to move(blue) overlap, they form a pink color.
+    </B> Automatic and semi-automatic registration mechanisms. The <B>FidAlign</B> tab allows selection of corresponding fiducial points on the volume to move and the reference volume. Once this button is pressed, the screen is split into half and the volume to move is displayed in the screen on the right while the reference volume is displayed on the left. The screen color indicates which screen is the active one (yellow) and which one is the inactive one (blue). The active screen is set either by the motion of the mouse or the radio buttons found on the control panel. It is important to note that only the control panel for the active volume is shown. In the FidAlign mode, pick at least three corresponding points on each of the volumes and click the apply button to obtain a coarse registration of the two volumes. Click the cancel button to exit the fiducial selection mode. The matrix is set to the transformation matrix that was used to coarsly align the volume to move with the reference volume. This matrix can be set as the active matrix for MI or it can be manually adjusted using the sliders on the manual tab. The <B>TPS</B> button will be used to access registration using the thin plate spline method in the future. It is currently not available in this version. Clicking on the <B>MI</B> button performs automatic registration using the method of Mutual Information (MI). This will set the matrix to the transformation matrix needed to align the <B>Volume to Move</B> with the <B>Reference Vol.</B>.<BR><B>TIP:</B> Set the <B>Run Speed</B> to <I>Fast</I> if the 2 volumes are already roughly aligned. Click on the <I>View color correspondence between the two overlayed images</I> button to visually assess the quality of registration. When the reference volume(red) and the volume to move(blue) overlap, they form a pink color.
     </UL>"
     regsub -all "\n" $help { } help
     MainHelpApplyTags Alignments $help
@@ -1580,6 +1580,22 @@ proc AlignmentsManualTranslateDual {param1 value1 param2 value2} {
 proc AlignmentsManualRotate {param {value ""} {mouse 0}} {
     global Matrix
 
+    #
+    # catch a callback loop caused when updating the scale and entry
+    # widgets for the rotation - set the inManualRotate flag here
+    # and reset it at the end of the proc
+    #
+    if { ![info exists Matrix(inManualRotate)] } {
+        set Matrix(inManualRotate) 0
+    } 
+    if { $Matrix(inManualRotate) } {
+        if { $::Module(verbose) } {
+            puts "********************** already in manual rotate - returning"
+        }
+        return
+    } 
+    set Matrix(inManualRotate) 1
+
     # "value" is blank if used entry field instead of slider
     if {$value == ""} {
         set value $Matrix($param)
@@ -1606,22 +1622,29 @@ proc AlignmentsManualRotate {param {value ""} {mouse 0}} {
     #
     set axis [string range $param 6 7]
     if {$axis != $Matrix(rotAxis)} {
-        [Matrix($t,node) GetTransform] GetMatrix Matrix(rotMatrix)
-        set Matrix(rotAxis) $axis
-        # O-out the rotation in the other 2 axes
-        switch $axis {
-            "LR" {
-                set Matrix(regRotPA) 0
-                set Matrix(regRotIS) 0
+        set matrixTransform [Matrix($t,node) GetTransform] 
+        if {[info commands $matrixTransform] != ""} { 
+            $matrixTransform GetMatrix Matrix(rotMatrix)
+            $matrixTransform Delete
+            set Matrix(rotAxis) $axis
+            # O-out the rotation in the other 2 axes
+            switch $axis {
+                "LR" {
+                    set Matrix(regRotPA) 0
+                    set Matrix(regRotIS) 0
+                }
+                "PA" {
+                    set Matrix(regRotLR) 0
+                    set Matrix(regRotIS) 0
+                }
+                "IS" {
+                    set Matrix(regRotPA) 0
+                    set Matrix(regRotLR) 0
+                }
             }
-            "PA" {
-                set Matrix(regRotLR) 0
-                set Matrix(regRotIS) 0
-            }
-            "IS" {
-                set Matrix(regRotPA) 0
-                set Matrix(regRotLR) 0
-            }
+        } else {
+            DevErrorWindow "AlignmentsManualRotate: Matrix $t node does not have a tranform, using identity"
+            Matrix(rotMatrix) Identity
         }
     }
 
@@ -1662,6 +1685,7 @@ proc AlignmentsManualRotate {param {value ""} {mouse 0}} {
             Render$Matrix(render)
         }
     }
+    set Matrix(inManualRotate) 0
 }
 
 #-------------------------------------------------------------------------------
