@@ -259,7 +259,7 @@ proc EndoscopicInit {} {
     set Module($m,category) "Visualisation"
     
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.60 $} {$Date: 2004/06/20 18:21:39 $}] 
+    {$Revision: 1.61 $} {$Date: 2004/06/21 17:24:24 $}] 
        
     # Define Procedures
     #------------------------------------
@@ -1145,14 +1145,15 @@ proc EndoscopicCreateBindings {} {
 
 # <KeyPress-t> allows the user to select a target on the 3D colon, and in the 2D slices
    EvDeclareEventHandler EndoKeySelectSlicesEvents <KeyPress-t> { if {[SelectPick2D %W %x %y] != 0} \
-   {eval EndoscopicAddLandmarkFromSlices [lindex $Select(xyz) 0] [lindex $Select(xyz) 1] [lindex $Select(xyz) 2]} }
+   {eval EndoscopicAddTargetFromSlices [lindex $Select(xyz) 0] [lindex $Select(xyz) 1] [lindex $Select(xyz) 2]} }
 
    EvAddWidgetToBindingSet Slice0Events $Gui(fSl0Win) {{EndoKeySelectSlicesEvents} {EndoKeyMoveSlicesEvents}}
    EvAddWidgetToBindingSet Slice1Events $Gui(fSl1Win) {{EndoKeySelectSlicesEvents} {EndoKeyMoveSlicesEvents}}
    EvAddWidgetToBindingSet Slice2Events $Gui(fSl2Win) {{EndoKeySelectSlicesEvents} {EndoKeyMoveSlicesEvents}}
-   
+
+#  Activated in TkInteractor
    EvDeclareEventHandler EndoKeySelect3DEvents <KeyPress-t> { if { [SelectPick Endoscopic(picker) %W %x %y] != 0 } \
-    { eval EndoscopicAddLandmarkFromWorldCoordinates [lindex $Select(xyz) 0] [lindex $Select(xyz) 1] [lindex $Select(xyz) 2] }}
+    { eval EndoscopicAddTargetFromWorldCoordinates [lindex $Select(xyz) 0] [lindex $Select(xyz) 1] [lindex $Select(xyz) 2] }}
     
    EvAddWidgetToBindingSet 3DEvents $Gui(fViewWin) {EndoKeySelect3DEvents}
    
@@ -1248,11 +1249,11 @@ proc EndoscopicBuildGUI {} {
     <BR> * <B>IN 2D</B>
     <BR> - You need to have greyscale images loaded along with the model, otherwise this option won't work
     <BR> - position the mouse in the slice window of your choice until the cross hair is on top of the region where you want to add a landmark
-    <BR> - press the <B>c</B> key
+    <BR> - press the <B>m</B> key, and the endoscope will jump to the corresponding location in 3D. You can then Click the button <I>AddLandmark</I>.
     <BR> - by default, both a camera and focal point landmark will be added at this position
     <BR><B>To constrain the camera on the path</B>:
     <BR> -After a path or centerline is created, you can manually insert visible fiducials on the model while constrain the camera along the path.
-    <BR> -You can double click any mouse button on the 3D model, in the 2D slices, or on the flat colon. The endoscope will jump to the closet point along the path and aim at the selected location. Press <I>InsertTarget</I> to insert a visible fiducial point on the 3D model.
+    <BR> -Point the cursor on the 3D model or on the 2D slices below, and press the key 't', the endoscope will jump to the closet point along the path and aim at the selected location. If you have the flattened colon open, just double click on the intended location, and the endoscope will perform the same task. Press <I>CreateTarget</I> to insert a visible fiducial point on the 3D model.
     <BR><B>To select a landmark</B>:
     <BR> - Click on the landmark position in the scrollable text area, the line will be highlighted in red and the camera will jump to that landmark in the 3D view.
     <BR> - or Point the mouse at a landmark in the 3D view and press 'p'.
@@ -1681,8 +1682,14 @@ Rotate the axis by pressing the right mouse button and moving the mouse."
     eval {button $f.bHow -text " ? "} $Gui(WBA)
     TooltipAdd $f.bHow "Use the functions in this step to modify the targets to examine while travelling along a selected path
     
-    --Create Targets:Double click on the 3D models, or on the 2D slices below, or on the flattened colon, and
-    the endoscope will jump to the closest landmark on the path and aim itself at the selected location. 
+    --Load Targets: If you have previously created and saved targets along a path, click 'Load Targets',
+    and the endoscope will jump to the first target with respect to the path you have selected in Step 2.
+    
+    --Create Targets: Point the cursor on the 3D models or on the 2D slices below, and press the key 't',
+    the endoscope will jump to the closest landmark on the path and aim itself at the selected location.
+    If you have the flattened colon open, just Double Click on the location, and the endoscope will perform
+    the same task.
+    
     You can further adjust the endoscope's location or oriention as wish. When you are ready, click 'Create Target',
     a fiducial point will be added on the surface of the 3D model. Repeat this procedure and create a series of targets.
     Click the fast forward '>>>' and backward '<<<' button to jump between targets.
@@ -1690,11 +1697,12 @@ Rotate the axis by pressing the right mouse button and moving the mouse."
     --Update: Re-orient or move the endoscope and click the 'Update' button to apply the new information 
     
     -- Delete: Click 'Delete' to remove the active target. "
-    pack $f.lTitle $f.lTitle2 $f.bHow -side left -padx 2
+    eval {button $f.bLoad -text "Load Targets" -command "EndoscopicLoadTargets"} $Gui(WBA)
+    pack $f.lTitle $f.lTitle2 $f.bHow $f.bLoad -side left -padx 1
         
     set f $Endoscopic(tabbedFrame).fManual.fStep5.fStep5-2
     eval {button $f.bInsert -text "Create Targets" \
-        -command "EndoscopicInsertTargets; Render3D;"} $Gui(WBA)
+        -command "EndoscopicCreateTargets; Render3D;"} $Gui(WBA)
     eval {label $f.lTar -text "Target#"} $Gui(WLA)
     eval {entry $f.lTarNum \
         -textvariable Endoscopic(selectedTarget) -width 2} $Gui(WEA) {-bg $Endoscopic(path,sColor)}
@@ -4355,7 +4363,7 @@ proc EndoscopicCreateAndActivatePath {name} {
 
 # this is a callback from the fiducials module telling us which list
 # is active
-# we update the path menus only if the active list in an endoscopic
+# we update the path menus only if the active list is an endoscopic
 # one
 proc EndoscopicFiducialsActivatedListCallback {type name id} {
     global Endoscopic Fiducials
@@ -4366,23 +4374,7 @@ proc EndoscopicFiducialsActivatedListCallback {type name id} {
     
         set Endoscopic(path,activeId) $id
     
-#jeanette: check to see if the path comes with a targetlist
-    set targetlistname $Endoscopic($id,path,name)
-    append targetlistname -targets
-    
-    if {[lsearch $Fiducials(listOfNames) $targetlistname] != -1} {
-        
-    set targetlist [FiducialsGetPointIdListFromName $targetlistname]
-    set num [llength $targetlist]
-
-    set Endoscopic(selectedTarget) 1
-    EndoscopicSelectTarget
-    set Endoscopic(totalTargets) $num
-
-    }
-#---------------------------------------------------------------------------    
-        
-        # change the text on menu buttons
+     # change the text on menu buttons
         foreach mb $Endoscopic(mbPathList) {
             $mb config -text $Endoscopic($id,path,name) 
         }
@@ -4392,14 +4384,15 @@ proc EndoscopicFiducialsActivatedListCallback {type name id} {
             set Endoscopic(path,stepStr) 0
             set numberOfOutputPoints [Endoscopic($id,cpath,graphicalInterpolatedPoints) GetNumberOfPoints]
             $Endoscopic(path,stepScale) config -to [expr $numberOfOutputPoints - 1]
-        }
-    } else {
+    
+       } else {
     set Endoscopic(path,activeId) "None"
     # change the text on menu buttons
         foreach mb $Endoscopic(mbPathList) {
             $mb config -text "None"
         }
     $Endoscopic(mbPath4Fly) config -text "None"
+        }
     }
 }
 
@@ -4416,22 +4409,6 @@ proc EndoscopicSelectActivePath {id} {
     # make that list active
     FiducialsSetActiveList $Endoscopic($id,path,name)
     
-#jeanette: check to see if the path comes with a targetlist
-    set targetlistname $Endoscopic($id,path,name)
-    append targetlistname -targets
-    
-    if {[lsearch $Fiducials(listOfNames) $targetlistname] != -1} {
-        
-    set targetlist [FiducialsGetPointIdListFromName $targetlistname]
-    set num [llength $targetlist]
-
-    set Endoscopic(selectedTarget) 1
-    EndoscopicSelectTarget
-    set Endoscopic(totalTargets) $num
-
-    }
-
-#---------------------------------------------------------------------------    
 
     # change the text on menu buttons
     foreach mb $Endoscopic(mbPathList) {
@@ -4444,6 +4421,7 @@ proc EndoscopicSelectActivePath {id} {
         set numberOfOutputPoints [Endoscopic($id,cpath,graphicalInterpolatedPoints) GetNumberOfPoints]
         $Endoscopic(path,stepScale) config -to [expr $numberOfOutputPoints - 1]
     }
+        
 }
 
 ############################################################################
@@ -5154,7 +5132,7 @@ proc EndoscopicCreateFlatBindings {widget} {
  #    bind $widget <KeyPress-c> {EndoscopicPickFlatPoint %W %x %y}
 
     EvDeclareEventHandler FlatWindowEvents <Double-Any-ButtonPress> {EndoscopicPickFlatPoint %W %x %y; \
-    EndoscopicAddLandmarkFromFlatColon $Select(cellId)}
+    EndoscopicAddTargetFromFlatColon $Select(cellId)}
 
     EvAddWidgetToBindingSet bindFlatWindowEvents $widget {FlatWindowEvents}
 
@@ -5180,14 +5158,14 @@ proc EndoscopicPickFlatPoint {widget xcoord ycoord} {
     
     set fx [lindex $Select(xyz) 0]
     
-    EndoscopicAddLandmarkInFlatWindow $widget $fx
+    EndoscopicAddTargetInFlatWindow $widget $fx
     
     }
     
     TempCellPicker Delete
 }
 
-proc EndoscopicAddLandmarkInFlatWindow {widget x} {
+proc EndoscopicAddTargetInFlatWindow {widget x} {
 
     global Select Endoscopic
 
@@ -5221,7 +5199,7 @@ proc EndoscopicAddLandmarkInFlatWindow {widget x} {
 
 
 
-proc EndoscopicAddLandmarkFromFlatColon {ScellId} {
+proc EndoscopicAddTargetFromFlatColon {ScellId} {
 
     global Endoscopic Point Fiducials Select Model View Path Slice
     
@@ -5295,7 +5273,7 @@ proc EndoscopicAddLandmarkFromFlatColon {ScellId} {
     Render3D
 }
 
-proc EndoscopicAddLandmarkFromSlices {x y z} {
+proc EndoscopicAddTargetFromSlices {x y z} {
 
     global Endoscopic Point Fiducials Select Model View Slice
     
@@ -5379,9 +5357,17 @@ tempPointLocator Delete
 cellList Delete
 }
 
-proc EndoscopicAddLandmarkFromWorldCoordinates {sx sy sz} {
+proc EndoscopicAddTargetFromWorldCoordinates {sx sy sz} {
      global Endoscopic Point Fiducials Select Model View Slice
-     
+
+#  If no path selected, do nothing.
+
+    if {$Endoscopic(path,activeId) == "None"} {
+
+    return
+    }
+
+           
      if {[info exists Select(actor)] != 0} {
         set actor $Select(actor)
         set cellId $Select(cellId)
@@ -5391,12 +5377,6 @@ proc EndoscopicAddLandmarkFromWorldCoordinates {sx sy sz} {
     }
 
       set Select(xyz) [list $sx $sy $sz]
-
-#  active list (should be the default path just created from the automatic tab)
-    if {$Endoscopic(path,activeId) == "None"} {
-
-    return
-    }
 
       set fid $Fiducials($Fiducials(activeList),fid)
       set listName $Fiducials(activeList)
@@ -5450,7 +5430,37 @@ proc EndoscopicAddLandmarkFromWorldCoordinates {sx sy sz} {
     Render3D
 }
 
-proc EndoscopicInsertTargets {} {
+proc EndoscopicLoadTargets { }  {
+
+     global Endoscopic Fiducials
+     
+     if {$Endoscopic(path,activeId) == "None"} {
+       tk_messageBox -type ok -message "Please select a path that corresponds to the existing targets"
+
+     } else {
+ 
+#jeanette: check to see if the path comes with a targetlist
+      set id $Endoscopic(path,activeId)
+      set targetlistname $Endoscopic($id,path,name)
+      append targetlistname -targets
+    
+         if {[lsearch $Fiducials(listOfNames) $targetlistname] != -1} {
+        
+         set targetlist [FiducialsGetPointIdListFromName $targetlistname]
+         set num [llength $targetlist]
+
+         set Endoscopic(selectedTarget) 1
+         EndoscopicSelectTarget
+         set Endoscopic(totalTargets) $num
+
+         } else {
+         return
+         }
+    }
+
+}
+
+proc EndoscopicCreateTargets {} {
 
     global Endoscopic Point Fiducials Module
    
