@@ -43,6 +43,9 @@ proc VolTensorInit {} {
     # procedure for building GUI in this module's frame
     set Volume(readerModules,$m,procGUI)  ${m}BuildGUI
 
+    # callback for when 'Tensor' FileType is found in Mrml Volume Node
+    set ::Module(Volumes,readerProc,Tensor) VolTensorReaderProc
+
     # Define Module Description to be used by Volumes.tcl
     #---------------------------------------------
 
@@ -179,6 +182,21 @@ proc VolTensorSetFileName {} {
 
 }
 
+#
+# Patch -- sp - 2005-01-16  allows mrml volume nodes with fileType='Tensor' to
+# trigger automatic loading so that canned data files can be created and 
+# users don't need to re-run the conversion step each time.
+# TODO: 1) process creates new volumes, when it should overwrite node v
+#       2) the Tensor volume type should be added to mrml file when conversion is run
+#
+proc VolTensorReaderProc {v} {
+
+    set ::Volume(activeID) "NEW"
+    set ::Volume(VolTensor,FileName) [Volume($v,node) GetFullPrefix]
+    set ::Volume(scanOrder) [Volume($v,node) GetScanOrder]
+    VolTensorApply
+}
+
 proc VolTensorApply {} {
     global Volume Module
     
@@ -191,7 +209,7 @@ proc VolTensorApply {} {
     
      # first file
     if {[file exists $Volume(VolTensor,FileName)] == 0} {
-        tk_messageBox -message "The vtk file must exist."
+        tk_messageBox -message "The vtk file $Volume(VolTensor,FileName) does not exist."
         return
     }
     
@@ -297,6 +315,8 @@ proc VolTensorApply {} {
            } else {
            # Activate the new data object
             MainVolumesSetActive $v
+            MainSlicesSetVolumeAll Back $v
+            RenderAll
            }
     
         }
@@ -318,8 +338,6 @@ proc VolTensorApply {} {
        }
  
     }
-
-
 }
 
 
@@ -368,6 +386,7 @@ proc VolTensorMake9ComponentTensorVolIntoTensors {v} {
     } else {
         # Activate the new data object
         MainDataSetActive Tensor $n
+        DTMRISetActive $n
     }
 
     # DAN if the volume read in does not have scalars, only
@@ -499,6 +518,7 @@ proc VolTensorMake6ComponentScalarVolIntoTensors {v} {
     } else {
         # Activate the new data object
         MainDataSetActive Tensor $n
+        DTMRISetActive $n
     }
 
     # Delete all temporary vtk objects
