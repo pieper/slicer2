@@ -22,7 +22,7 @@
 #===============================================================================
 # FILE:        TkInteractor.tcl
 # PROCEDURES:  
-#   CreateAndBindTkEvents
+#   CreateAndBindTkEvents 
 #   Expose
 #   UpdateRenderer
 #   Enter
