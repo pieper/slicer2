@@ -148,7 +148,7 @@ proc DTMRIInit {} {
 
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.63 $} {$Date: 2005/03/23 16:26:50 $}]
+                  {$Revision: 1.64 $} {$Date: 2005/03/25 23:30:33 $}]
 
     # Define Tabs
     #------------------------------------
@@ -251,6 +251,19 @@ proc DTMRIInit {} {
     #Specific variables for Mosaic format (This should be extracted from Dicom header)
     set DTMRI(convert,mosaicTiles) 8
     set DTMRI(convert,mosaicSlices) 60
+
+    #Variables to control the number of repetitions in the DWI volume
+    set DTMRI(convert,numberOfRepetitions) 1
+    set DTMRI(convert,numberOfRepetitions,min) 1
+    set DTMRI(convert,numberOfRepetitions,max) 10
+    set DTMRI(convert,repetition) 1
+    set DTMRI(convert,averageRepetitions) 1
+    set DTMRI(convert,averageRepetitionsList) {On Off}
+    set DTMRI(convert,averageRepetitionsValue) {1 0}
+    set DTMRI(convert,averageRepetitionsList,tooltips) [list \
+                                 "Average the diffusion weighted images across repetitions."\
+                 "If off having several repetitions means that the first repetition is used to compute the tensor" \
+                 ]
     
     #This variable is used by Create-Pattern button and indicates weather it has to hide or show the create pattern frame. On status 0 --> show. On status 1 --> hide.
     set DTMRI(convert,show) 0
@@ -1335,7 +1348,7 @@ especially Diffusion DTMRI MRI.
     #-------------------------------------------
     set f $Glyph.fVisMethods.fGlyphs.fResolution
     
-    eval {label $f.l -text "Resolution (fine->gross):"\
+    eval {label $f.l -text "Density(H<->L):"\
           -width 12 -justify right } $Gui(WLA)
 
     eval {scale $f.s -from $DTMRI(mode,glyphResolution,min) \
@@ -2226,7 +2239,7 @@ especially Diffusion DTMRI MRI.
     #-------------------------------------------
     set f $fConvert.fConvert
 
-    foreach frame "Title Select Pattern Apply" {
+    foreach frame "Title Select Pattern Repetitions Average Apply" {
         frame $f.f$frame -bg $Gui(activeWorkspace)
         $f.fTitle configure -bg $Gui(backdrop)
         pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
@@ -2281,8 +2294,46 @@ especially Diffusion DTMRI MRI.
     pack $f.lLabel $f.bProp -side left -padx $Gui(pad) -pady $Gui(pad)
     DTMRILoadPattern
     TooltipAdd $f.lLabel "Choose a protocol to convert tensors.\n If desired does not exist, create one in the frame below."
-    
 
+
+    #-------------------------------------------
+    # Convert->Convert->Repetitions frame
+    #-------------------------------------------
+    set f $fConvert.fConvert.fRepetitions
+    
+    DevAddLabel $f.l "Num. Repetitions:"
+    $f.l configure -bg $Gui(backdrop) -fg white
+    eval {entry $f.e -width 3 \
+          -textvariable DTMRI(convert,numberOfRepetitions)} \
+        $Gui(WEA)
+    eval {scale $f.s -from $DTMRI(convert,numberOfRepetitions,min) \
+                          -to $DTMRI(convert,numberOfRepetitions,max)    \
+          -variable  DTMRI(convert,numberOfRepetitions)\
+          -orient vertical     \
+          -resolution 1      \
+          } $Gui(WSA)
+      
+     pack $f.l $f.e $f.s -side left -padx $Gui(pad) -pady $Gui(pad)
+     
+    #-------------------------------------------
+    # Convert->Convert->Average frame
+    #-------------------------------------------
+    set f $fConvert.fConvert.fAverage
+    
+    DevAddLabel $f.l "Average Repetitions: "
+    pack $f.l -side left -pady $Gui(pad) -padx $Gui(pad)  
+    # Add menu items
+    foreach vis $DTMRI(convert,averageRepetitionsList) val $DTMRI(convert,averageRepetitionsValue) \
+            tip $DTMRI(convert,averageRepetitionsList,tooltips) {
+        eval {radiobutton $f.r$vis \
+              -text "$vis" \
+              -value $val \
+              -variable DTMRI(convert,averageRepetitions) \
+              -indicatoron 0} $Gui(WCA)
+        pack $f.r$vis -side left -padx 0 -pady 0
+        TooltipAdd  $f.r$vis $tip     
+    }
+              
 #    #-------------------------------------------
 #    # Convert->Convert->Apply frame
 #    #-------------------------------------------
@@ -5819,6 +5870,8 @@ proc ConvertVolumeToTensors {} {
         extract$slice SetModeTo$DTMRI(convert,order)
         extract$slice SetSliceOffset $slice
         extract$slice SetSlicePeriod $slicePeriod
+    extract$slice SetNumberOfRepetitions $DTMRI(convert,numberOfRepetitions)
+    extract$slice SetAverageRepetitions $DTMRI(convert,averageRepetitions)
         
         if {$DTMRI(convert,order) == "MOSAIC"} {
           extract$slice SetSliceOffset [lindex $mosaicIndx $slice]   
@@ -5894,6 +5947,9 @@ proc ConvertVolumeToTensors {} {
         extract$slice SetModeTo$DTMRI(convert,order)
         extract$slice SetSliceOffset $slice
         extract$slice SetSlicePeriod $slicePeriod
+    extract$slice SetNumberOfRepetitions $DTMRI(convert,numberOfRepetitions)
+    extract$slice SetAverageRepetitions $DTMRI(convert,averageRepetitions)
+        
         
         if {$DTMRI(convert,order) == "MOSAIC"} {
           puts "[lindex $mosaicIndx $slice]"
