@@ -256,9 +256,9 @@ static void vtkImageReformatExecuteInt(vtkImageReformat *self,
     return;
   }
 	
-  // find the region to loop over
-	maxX = outExt[1]-outExt[0]; 
-	maxY = outExt[3]-outExt[2];
+  // find the region to loop over: this is the max pixel coordinate
+	maxX = outExt[1]; 
+	maxY = outExt[3];
   
 	// Get pointer to output for this extent
 	outPtr = (T*)outData->GetScalarPointerForExtent(outExt);
@@ -314,16 +314,16 @@ static void vtkImageReformatExecuteInt(vtkImageReformat *self,
 
 	// Advance to the origin of this output extent (used for threading)
 	// x
- 	scale = (float)(outExt[0]-wExt[0])/(float)res;
-	begin[0] = origin[0] + scale*mx[0] * res;
-	begin[1] = origin[1] + scale*mx[1] * res;
-	begin[2] = origin[2] + scale*mx[2] * res;
+ 	scale = (float)(outExt[0]-wExt[0]);
+	begin[0] = origin[0] + scale*mx[0];
+	begin[1] = origin[1] + scale*mx[1];
+	begin[2] = origin[2] + scale*mx[2];
 	begin[3] = 1.0;
 	// y
- 	scale = (float)(outExt[2]-wExt[2])/(float)res;	
-	begin[0] = begin[0] + scale*my[0] * res;
-	begin[1] = begin[1] + scale*my[1] * res;
-	begin[2] = begin[2] + scale*my[2] * res;
+ 	scale = (float)(outExt[2]-wExt[2]);	
+	begin[0] = begin[0] + scale*my[0];
+	begin[1] = begin[1] + scale*my[1];
+	begin[2] = begin[2] + scale*my[2];
 	begin[3] = 1.0;
 
 	// Convert origin from RAS IJK space
@@ -589,9 +589,9 @@ static void vtkImageReformatExecute(vtkImageReformat *self,
     return;
   }
 	
-  // find the region to loop over
-	maxX = outExt[1]-outExt[0]; 
-	maxY = outExt[3]-outExt[2];
+  // find the region to loop over: this is the max pixel coordinate
+	maxX = outExt[1]; 
+	maxY = outExt[3];
   
 	// Get pointer to output for this extent
 	outPtr = (T*)outData->GetScalarPointerForExtent(outExt);
@@ -647,16 +647,16 @@ static void vtkImageReformatExecute(vtkImageReformat *self,
 
 	// Advance to the origin of this output extent (used for threading)
 	// x
- 	scale = (float)(outExt[0]-wExt[0])/(float)res;
-	begin[0] = origin[0] + scale*mx[0] * res;
-	begin[1] = origin[1] + scale*mx[1] * res;
-	begin[2] = origin[2] + scale*mx[2] * res;
+ 	scale = (float)(outExt[0]-wExt[0]);
+	begin[0] = origin[0] + scale*mx[0];
+	begin[1] = origin[1] + scale*mx[1];
+	begin[2] = origin[2] + scale*mx[2];
 	begin[3] = 1.0;
 	// y
- 	scale = (float)(outExt[2]-wExt[2])/(float)res;	
-	begin[0] = begin[0] + scale*my[0] * res;
-	begin[1] = begin[1] + scale*my[1] * res;
-	begin[2] = begin[2] + scale*my[2] * res;
+ 	scale = (float)(outExt[2]-wExt[2]);	
+	begin[0] = begin[0] + scale*my[0];
+	begin[1] = begin[1] + scale*my[1];
+	begin[2] = begin[2] + scale*my[2];
 	begin[3] = 1.0;
 
 	// Convert origin from RAS IJK space
@@ -874,6 +874,12 @@ void vtkImageReformat::ThreadedExecute(vtkImageData *inData,
 	int wExt[6], ext[6];
 	this->GetOutput()->GetWholeExtent(wExt);
 	int i, numComps = inData->GetNumberOfScalarComponents();
+
+	// Example values for the extents (for a 4-processor machine on a 124 slice volume) are:
+	// id: 0 outExt: 0 255 0 63 0 0,    inExt: 0 255 0 255 0 123  wExt: 0 255 0 255 0 0
+	// id: 1 outExt: 0 255 64 127 0 0,  inExt: 0 255 0 255 0 123  wExt: 0 255 0 255 0 0
+	// id: 2 outExt: 0 255 128 191 0 0, inExt: 0 255 0 255 0 123  wExt: 0 255 0 255 0 0
+	// id: 3 outExt: 0 255 192 255 0 0, inExt: 0 255 0 255 0 123  wExt: 0 255 0 255 0 0
 
 	// If no matrices provided, then create defaults
 	if (!this->ReformatMatrix) 
