@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkCORReader.cxx,v $
   Language:  C++
-  Date:      $Date: 2002/10/04 17:43:12 $
-  Version:   $Revision: 1.2 $
+  Date:      $Date: 2002/11/04 20:36:39 $
+  Version:   $Revision: 1.3 $
 
 =========================================================================*/
 #include "vtkCORReader.h"
@@ -45,7 +45,7 @@ vtkCORReader::~vtkCORReader()
 
 void vtkCORReader::ExecuteInformation()
 {
-  vtkStructuredPoints *output = this->GetOutput();
+  vtkImageData *output = this->GetOutput();
   
   // Read the header.
   this->ReadVolumeHeader();
@@ -63,7 +63,7 @@ void vtkCORReader::ExecuteInformation()
     
 void vtkCORReader::Execute()
 {
-  vtkStructuredPoints *output = this->GetOutput();
+  vtkImageData *output = this->GetOutput();
 
   // Read the header.
   this->ReadVolumeHeader();
@@ -88,7 +88,7 @@ void vtkCORReader::Execute()
     }
 }
 
-vtkStructuredPoints *vtkCORReader::GetImage(int ImageNumber)
+vtkImageData *vtkCORReader::GetImage(int ImageNumber)
 {
   cerr << "vtkCORReader::GetImage() called. uh oh." << endl;
   return NULL;
