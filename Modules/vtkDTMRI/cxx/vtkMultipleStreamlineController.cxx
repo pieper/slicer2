@@ -29,6 +29,8 @@ vtkMultipleStreamlineController::vtkMultipleStreamlineController()
 //----------------------------------------------------------------------------
 vtkMultipleStreamlineController::~vtkMultipleStreamlineController()
 {
+  // Delete everything
+
 }
 
 //----------------------------------------------------------------------------
@@ -44,11 +46,10 @@ void vtkMultipleStreamlineController::SeedStreamlinesFromROI()
   short *inPtr;
   vtkHyperStreamline *newStreamline;
 
-  // currently this is not multithreaded.
+  // currently this filter is not multithreaded, though in the future 
+  // it could be (if it inherits from an image filter class)
   this->InputROI->GetWholeExtent(inExt);
-  // This gives all 0 increments. (why?)
   this->InputROI->GetContinuousIncrements(inExt, inIncX, inIncY, inIncZ);
-  //this->InputROI->GetIncrements(inIncX, inIncY, inIncZ);
 
   // find the region to loop over
   maxX = inExt[1] - inExt[0];
@@ -80,11 +81,12 @@ void vtkMultipleStreamlineController::SeedStreamlinesFromROI()
           
           for (idxX = 0; idxX <= maxX; idxX++)
             {
+              // If the point is equal to the ROI value then seed here.
               if (*inPtr == this->InputROIValue)
                 {
                   cout << "***** multiple streamline " << idxX << " " <<
                     idxY << " " << idxZ << " *****" << endl;
-                  // if the point is equal to the ROI value then seed here.
+
                   // First transform to world space.
                   point[0]=idxX;
                   point[1]=idxY;
@@ -97,7 +99,7 @@ void vtkMultipleStreamlineController::SeedStreamlinesFromROI()
                   newStreamline=vtkHyperStreamlineDTMRI::New();
                   this->Streamlines->AddItem((vtkObject *)newStreamline);
 
-                  // Set its input information
+                  // Set its input information.
                   newStreamline->SetInput(this->InputTensorField);
                   newStreamline->SetStartPosition(point[0],point[1],point[2]);
 
