@@ -555,8 +555,8 @@ static void DrawLines(int nx, int ny, int z, int radius,
 
 template <class T>
 static void DrawPoints(int nx, int ny, int z, int radius,
-                       int nPts, int *xPts, int *yPts,
-                       T value, vtkImageData *outData)
+        int nPts, int *xPts, int *yPts,
+        T value, vtkImageData *outData)
 {
     int i, x, y, x1, y1;
     T *outPtr;
@@ -570,9 +570,9 @@ static void DrawPoints(int nx, int ny, int z, int radius,
     {
         x1 = xPts[i];
         y1 = yPts[i];
-  
+
         if (x1-r >= min0 && x1+r <= max0 && 
-            y1-r >= min1 && y1+r <= max1)
+                y1-r >= min1 && y1+r <= max1)
         {
             for (y = y1-r; y <= y1+r; y++)
             {
@@ -617,12 +617,12 @@ static void vtkImageFillROIExecute(vtkImageFillROI* self,
         x = (int)(pt[0]);
         y = (int)(pt[1]);
         if (x >= outExt[0] && x <= outExt[1] && 
-            y >= outExt[2] && y <= outExt[3])
+                y >= outExt[2] && y <= outExt[3])
         {
             xPts[j] = x;
-          yPts[j] = y;
-          j++;
-    }
+            yPts[j] = y;
+            j++;
+        }
     }
     nPts = j;
 
@@ -630,28 +630,28 @@ static void vtkImageFillROIExecute(vtkImageFillROI* self,
 
     switch (self->GetShape())
     {
-    case SHAPE_POLYGON:
-        if (nPts >= 3)
-    {
-          vtkImageFillROIDrawPolygon(nx, ny, nPts, xPts, yPts, (short)value, (short*)outPtr);
-          // Draw lines too because polygons don't include top, right edges
-          DrawLinesFast(nx, ny, nPts, xPts, yPts, value, (short*)outPtr);
-    }
-        break;
+        case SHAPE_POLYGON:
+            if (nPts >= 3)
+            {
+                vtkImageFillROIDrawPolygon(nx, ny, nPts, xPts, yPts, (short)value, (short*)outPtr);
+                // Draw lines too because polygons don't include top, right edges
+                DrawLinesFast(nx, ny, nPts, xPts, yPts, value, (short*)outPtr);
+            }
+            break;
 
-    case SHAPE_LINES:
-        if (nPts >= 2)
-    {
-          DrawLines(nx, ny, z, r, nPts, xPts, yPts, value, outData);
-    }
-        break;
+        case SHAPE_LINES:
+            if (nPts >= 2)
+            {
+                DrawLines(nx, ny, z, r, nPts, xPts, yPts, value, outData);
+            }
+            break;
 
-    case SHAPE_POINTS:
-        if (nPts >= 1) 
-    {
-          DrawPoints(nx, ny, z, r, nPts, xPts, yPts, value, outData);
-    }
-        break;
+        case SHAPE_POINTS:
+            if (nPts >= 1) 
+            {
+                DrawPoints(nx, ny, z, r, nPts, xPts, yPts, value, outData);
+            }
+            break;
     }
 
     delete [] xPts;
@@ -659,11 +659,10 @@ static void vtkImageFillROIExecute(vtkImageFillROI* self,
 }
 
 //----------------------------------------------------------------------------
-void vtkImageFillROI::Execute(vtkImageData *vtkNotUsed(inData), 
-                   vtkImageData *outData)
+void vtkImageFillROI::ExecuteData(vtkDataObject *)
 {
     void *ptr = NULL;
-        int x1, *inExt;
+    int x1, *inExt;
   
     // ensure 1 component data
     x1 = this->GetInput()->GetNumberOfScalarComponents();
@@ -675,20 +674,21 @@ void vtkImageFillROI::Execute(vtkImageData *vtkNotUsed(inData),
 
     // Ensure intput is 2D
     inExt = this->GetInput()->GetWholeExtent();
-    if (inExt[5] != inExt[4]) {
+    if (inExt[5] != inExt[4]) 
+    {
         vtkErrorMacro("Input must be 2D.");
         return;
     }
 
-        if(outData->GetScalarType() == VTK_SHORT)
-      {
-            vtkImageFillROIExecute(this, outData, (short *)(ptr));
-      }
+    if(this->GetOutput()->GetScalarType() == VTK_SHORT)
+    {
+        vtkImageFillROIExecute(this, this->GetOutput(), (short *)(ptr));
+    }
     else 
-          {
-                vtkErrorMacro(<< "Execute: Illegal ScalarType");
-      }
+    {
+        vtkErrorMacro(<< "Execute: Illegal ScalarType");
+    }
 
-        return;    
+    return;    
 }
 

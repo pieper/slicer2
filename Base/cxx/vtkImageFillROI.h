@@ -90,6 +90,6 @@ protected:
     int shape;
 
     // not threaded because too simple a filter
-        void Execute(vtkImageData *inData, vtkImageData *outData);
+    void ExecuteData(vtkDataObject *);
 };
 #endif

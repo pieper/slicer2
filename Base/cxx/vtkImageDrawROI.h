@@ -161,7 +161,7 @@ protected:
     void DrawBoxes(vtkImageData *outData, int extent[6]);
     //<< AT 01/17/01 01/19/01
     // Not threaded because its too simple of a filter
-    void Execute(vtkImageData *inData, vtkImageData *outData);
+    void ExecuteData(vtkDataObject *);
 };
 
 #endif

@@ -911,12 +911,16 @@ void vtkImageDrawROI::DrawBoxes(vtkImageData *outData, int outExt[6])
 //----------------------------------------------------------------------------
 // Description:
 // this is cool
-void vtkImageDrawROI::Execute(vtkImageData *vtkNotUsed(inData), 
-                   vtkImageData *outData)
+void vtkImageDrawROI::ExecuteData(vtkDataObject *)
 {
-    int *outExt = outData->GetExtent();
 
-int x1, *inExt;
+    vtkImageData *inData = this->GetInput();
+    vtkImageData *outData = this->GetOutput();
+
+    int *outExt = outData->GetWholeExtent();
+    outData->SetExtent(outExt);
+
+    int x1, *inExt;
   
     // ensure 3 component data
     x1 = this->GetInput()->GetNumberOfScalarComponents();
