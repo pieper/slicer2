@@ -227,25 +227,20 @@ if { ![file exists $CMAKE] } {
     runcmd cvs -z3 -d :pserver:anonymous@www.cmake.org:/cvsroot/CMake checkout -r $cmakeTag CMake
 
     if {$isWindows} {
-        puts stderr "-- genlib.tcl cannot generate the cmake binaries for windows --"
-        puts stderr "1) Get a copy of cmake 2.0.1 from www.cmake.org."
-        puts stderr "2) Set the CMAKE_PATH in slicer_variables.tcl."
+        puts stderr "-- genlib.tcl cannot generate the cmake, tcl, or gsl binaries for windows --"
         puts stderr ""
-        puts stderr "-- genlib.tcl cannot generate the tcl binaries for windows --"
-        puts stderr "1) Get a copy of Tcl 8.4 from tcl.activestate.com."
-        puts stderr "2) Set the TCL_BIN_DIR, TCL_LIB_DIR and TCL_INCLUDE_DIR in slicer_variables.tcl."
-        puts stderr "3) Get BLT from http://prdownloads.sourceforge.net/blt/blt24z-for-tcl84.exe?download"
-        puts stderr "4) Install BLT to a *different* directory than where you installed activetcl"
-        puts stderr "5) copy BLT24.dll and BLT24lite24.dll to TCL_BIN_DIR"
-        puts stderr "6) copy blt2.4 to TCL_LIB_DIR"
+        puts stderr "Follow the instructions at the following link"
+        puts stderr "to download precompiled versions of parts of the windows Lib"
+        puts stderr "http://www.na-mic.org/Wiki/index.php/Slicer:Slicer2.4_Building"
         puts stderr ""
-        puts stderr "With these pieces in place, genlib can build VTK and ITK"
+        puts stderr "Then re-run genlib.tcl to build VTK and ITK"
+        puts stderr ""
         exit
 
     } else {
         cd $CMAKE_PATH
         runcmd $SLICER_LIB/CMake/bootstrap
-        runcmd $::MAKE
+        eval runcmd $::MAKE
     }
 }
 
@@ -281,8 +276,8 @@ if { ![file exists $tclTestFile] } {
         cd $SLICER_LIB/tcl/tcl/unix
 
         runcmd ./configure --enable-threads --prefix=$SLICER_LIB/tcl-build
-        runcmd $::MAKE
-        runcmd $::MAKE install
+        eval runcmd $::MAKE
+        eval runcmd $::MAKE install
     }
 }
 
@@ -320,8 +315,8 @@ if { ![file exists $tkTestFile] } {
         cd $SLICER_LIB/tcl/tk/unix
 
         runcmd ./configure --with-tcl=$SLICER_LIB/tcl-build/lib --prefix=$SLICER_LIB/tcl-build
-        runcmd $::MAKE
-        runcmd $::MAKE install
+        eval runcmd $::MAKE
+        eval runcmd $::MAKE install
     }
 }
 
@@ -342,11 +337,11 @@ if { ![file exists $itclTestFile] } {
         if { $isDarwin } {
             # need to run ranlib separately on lib for Darwin
             # file is created and ranlib is needed inside make all
-            catch "runcmd $::MAKE all"
+            catch "eval runcmd $::MAKE all"
             runcmd ranlib ../incrTcl/itcl/libitclstub3.2.a
         }
-        runcmd $::MAKE all
-        runcmd $::MAKE install
+        eval runcmd $::MAKE all
+        eval runcmd $::MAKE install
     }
 }
 
@@ -363,8 +358,8 @@ if { ![file exists $iwidgetsTestFile] } {
         cd $SLICER_LIB/tcl/iwidgets
         runcmd ../iwidgets/configure --with-tcl=$SLICER_LIB/tcl-build/lib --with-tk=$SLICER_LIB/tcl-build/lib --with-itcl=$SLICER_LIB/tcl/incrTcl --prefix=$SLICER_LIB/tcl-build
         # make all doesn't do anything... 
-        runcmd $::MAKE all
-        runcmd $::MAKE install
+        eval runcmd $::MAKE all
+        eval runcmd $::MAKE install
     }
 }
 
@@ -385,13 +380,13 @@ if { ![file exists $bltTestFile] } {
         # this fails, but gets blt far enough along to build what is needed 
         cd $SLICER_LIB/tcl/blt
         runcmd ./configure --with-tcl=$SLICER_LIB/tcl-build --with-tk=$SLICER_LIB/tcl-build --prefix=$SLICER_LIB/tcl-build 
-        catch "runcmd $::MAKE"
-        catch "runcmd $::MAKE install"
+        catch "eval runcmd $::MAKE"
+        catch "eval runcmd $::MAKE install"
     } else {
         cd $SLICER_LIB/tcl/blt
         runcmd ./configure --with-tcl=$SLICER_LIB/tcl-build --with-tk=$SLICER_LIB/tcl-build --prefix=$SLICER_LIB/tcl-build 
-        runcmd $::MAKE
-        runcmd $::MAKE install
+        eval runcmd $::MAKE
+        eval runcmd $::MAKE install
     }
 }
 
@@ -423,8 +418,8 @@ if { ![file exists $gslTestFile] } {
         }   
         runcmd ./configure --prefix=$SLICER_LIB/gsl
         runcmd touch doc/version-ref.texi
-        runcmd $::MAKE
-        runcmd $::MAKE install
+        eval runcmd $::MAKE
+        eval runcmd $::MAKE install
     }
 }
 
@@ -463,7 +458,7 @@ if { ![file exists $vtkTestFile] } {
 
     if { $isDarwin } {
         # Darwin will fail on the first make, then succeed on the second
-        catch "runcmd $::MAKE -j4"
+        catch "eval runcmd $::MAKE -j4"
         set OpenGLString "-framework OpenGL -lgl"
         runcmd $CMAKE -G$GENERATOR -DOPENGL_gl_LIBRARY:STRING=$OpenGLString -DVTK_USE_SYSTEM_ZLIB:BOOL=ON ../VTK
     }
@@ -471,7 +466,7 @@ if { ![file exists $vtkTestFile] } {
     if { $isWindows } {
         runcmd $::MAKE VTK.SLN /build  $::VTK_BUILD_TYPE
     } else {
-        runcmd $::MAKE
+        eval runcmd $::MAKE
     }
 }
 
@@ -500,7 +495,7 @@ if { ![file exists $itkTestFile] } {
     if {$isWindows} {
         runcmd $::MAKE ITK.SLN /build  $::VTK_BUILD_TYPE
     } else {
-        runcmd $::MAKE 
+        eval runcmd $::MAKE 
     }
 }
 
