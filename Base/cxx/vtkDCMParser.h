@@ -99,7 +99,9 @@ class VTK_EXPORT vtkDCMParser : public vtkObject
 
   void Skip(unsigned int length);
   unsigned short ReadUINT16();
+  short ReadINT16();
   unsigned int ReadUINT32();
+  int ReadINT32();
   float ReadFL();
   double ReadFD();
   float ReadFloatAsciiNumeric(unsigned int next_block);
@@ -134,13 +136,16 @@ class VTK_EXPORT vtkDCMParser : public vtkObject
   FILE *GetFileID();
   long GetFilePosition();
   int SetFilePosition(long position);
-  char * GetTCLPreviewRow(int width, int SkipColumn, int max);
+  int IsStatusOK();
+
+  //char * GetTCLPreviewRow(int width, int SkipColumn, int max);
 
  protected:
   void Init();
   char *stringncopy(char *dest, const char *src, long max);
 
- private:
+  //  char *aux_ret;
+
   FILE *file_in;
 
   char MediaStorageSOPClassUID[65];
@@ -158,8 +163,7 @@ class VTK_EXPORT vtkDCMParser : public vtkObject
   
   long PrevFilePos;
   long HeaderStartPos;
-
-  char *aux_ret;
+ private:
 };
 
 #endif

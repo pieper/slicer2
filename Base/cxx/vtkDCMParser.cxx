@@ -82,7 +82,7 @@ vtkDCMParser::vtkDCMParser(const char *filename)
 vtkDCMParser::~vtkDCMParser()
 {
   CloseFile();
-  delete [] aux_ret;
+  //delete [] aux_ret;
 }
 
 void vtkDCMParser::Init()
@@ -108,7 +108,7 @@ void vtkDCMParser::Init()
   
   PrevFilePos = HeaderStartPos = 0;
 
-  aux_ret = NULL;
+  //aux_ret = NULL;
 }
 
 void vtkDCMParser::Skip(unsigned int Length)
@@ -146,6 +146,31 @@ unsigned short vtkDCMParser::ReadUINT16()
   return id;
 }
 
+short vtkDCMParser::ReadINT16()
+{
+  unsigned char *ptr;
+  unsigned char ch;
+  short id;
+
+  if(this->file_in)
+    {
+      if(fread(&id, 2, 1, file_in)!=1)
+	{
+	  FileIOMessage=3;
+	}
+      
+      if(MustSwap)
+	{
+	  ptr = (unsigned char *)&id;
+	  ch = ptr[0];
+	  ptr[0] = ptr[1];
+	  ptr[1] = ch;
+	}
+    }
+  
+  return id;
+}
+
 unsigned int vtkDCMParser::ReadUINT32()
 {
   unsigned char *ptr;
@@ -167,6 +192,30 @@ unsigned int vtkDCMParser::ReadUINT32()
 	}
     }
 
+  return id;
+}
+
+int vtkDCMParser::ReadINT32()
+{
+  unsigned char *ptr;
+  unsigned char ch;
+  int id;
+
+  if(this->file_in)
+    {
+      if(fread(&id, 4, 1, file_in)!=1)
+	{
+	  FileIOMessage=3;
+	}
+      
+      if(MustSwap)
+	{
+	  ptr=(unsigned char *)&id;
+	  ch=ptr[0]; ptr[0]=ptr[3]; ptr[3]=ch;
+	  ch=ptr[1]; ptr[1]=ptr[2]; ptr[2]=ch;
+	}
+    }
+  
   return id;
 }
 
@@ -801,30 +850,14 @@ int vtkDCMParser::SetFilePosition(long position)
     return -1;
 }
 
-char * vtkDCMParser::GetTCLPreviewRow(int width, int SkipColumn, int max)
+int vtkDCMParser::IsStatusOK()
 {
-  int i, idx;
-  int pix, grey;
-  double sc;
-
-  if(this->aux_ret == NULL)
-    this->aux_ret = new char [65535];
-
-  this->aux_ret[0] = '\0';
-
-  sc = 255.0 / double(max);
-  for(i=0, idx = 0; i < width; i++, idx += 8)
-    {
-      pix = this->ReadUINT16();
-      grey = int(pix * sc);
-      if(grey < 0)
-	grey = 0;
-      if(grey > 255)
-	grey = 255;
-      sprintf(this->aux_ret + idx, "#%02x%02x%02x ", grey, grey, grey);
-      //this->Skip(6);
-      this->Skip(SkipColumn);
-    }
+  int ret = 0;
+  if(this->file_in)
+    if(!feof(file_in) && (FileIOMessage == 0))
+      {
+	ret = 1;
+      }
   
-  return this->aux_ret;
+  return ret;
 }
