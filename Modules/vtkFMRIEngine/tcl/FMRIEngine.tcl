@@ -148,7 +148,7 @@ proc FMRIEngineInit {} {
     #   Record any other modules that this one depends on.  This is used 
     #   to check that all necessary modules are loaded when Slicer runs.
     #   
-    set Module($m,depend) ""
+    set Module($m,depend) "CISGFile"
 
     # Set version info
     #------------------------------------
@@ -158,7 +158,7 @@ proc FMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1 $} {$Date: 2004/04/14 21:46:01 $}]
+        {$Revision: 1.2 $} {$Date: 2004/04/14 22:12:29 $}]
 
     # Initialize module-level variables
     #------------------------------------
