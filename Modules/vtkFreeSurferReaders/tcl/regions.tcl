@@ -150,6 +150,7 @@ itcl::body regions::constructor {args} {
     set mozpaths { 
         "/usr/bin/mozilla" 
         "/usr/local/mozilla/bin/mozilla" 
+        "/local/os/bin/mozilla" 
         "c:/Program Files/mozilla.org/Mozilla/mozilla.exe"
     } 
     foreach mozpath $mozpaths {
