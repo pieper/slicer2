@@ -67,18 +67,18 @@ proc ModelMakerInit {} {
 
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.36 $} {$Date: 2002/11/13 23:16:53 $}]
+        {$Revision: 1.37 $} {$Date: 2003/01/17 13:12:11 $}]
 
     # Create
     set ModelMaker(idVolume) $Volume(idNone)
     set ModelMaker(name) skin
-    set ModelMaker(smooth) 5
+    set ModelMaker(smooth) 20
     set ModelMaker(decimate) 1
     set ModelMaker(marching) 0
     set ModelMaker(label2) 0
 
     # Edit
-    set ModelMaker(edit,smooth) 5
+    set ModelMaker(edit,smooth) 20
     set ModelMaker(prefix) ""
 
 }
@@ -539,6 +539,7 @@ proc ModelMakerSetVolume {v} {
     LabelsFindLabel
     ModelMakerLabelCallback
     set ModelMaker(label2) [Volume($v,vol) GetRangeLow]
+    set ModelMaker(UseSinc) 1
 }
 
 #-------------------------------------------------------------------------------
@@ -658,15 +659,21 @@ proc ModelMakerSmooth {m iterations} {
     set name [Model($m,node) GetName]
 
     set p smoother
-    vtkSmoothPolyDataFilter $p
+    if { $ModelMaker(UseSinc) == 1} {
+        vtkWindowedSincPolyDataFilter $p
+        $p SetPassBand .1
+    } else {
+        vtkSmoothPolyDataFilter $p
+    # This next line massively rounds corners
+        $p SetRelaxationFactor .33
+        $p SetFeatureAngle 60
+        $p SetConvergence 0
+    }
+    
     $p SetInput $Model($m,polyData)
     $p SetNumberOfIterations $iterations
-    # This next line massively rounds corners
-    $p SetRelaxationFactor 0.33
-    $p SetFeatureAngle 60
     $p FeatureEdgeSmoothingOff
     $p BoundarySmoothingOff
-    $p SetConvergence 0
     [$p GetOutput] ReleaseDataFlagOn
     set Gui(progressText) "Smoothing $name"
     $p SetStartMethod     MainStartProgress
@@ -891,16 +898,22 @@ proc ModelMakerMarch {m v decimateIterations smoothIterations} {
         $p SetEndMethod       MainEndProgress
     }
 
-    vtkSmoothPolyDataFilter smoother
+    if { $ModelMaker(UseSinc) == 1} {
+        vtkWindowedSincPolyDataFilter smoother
+        smoother SetPassBand .1
+    } else {
+        vtkSmoothPolyDataFilter smoother
+    # This next line massively rounds corners
+        smoother SetRelaxationFactor .33
+        smoother SetFeatureAngle 60
+        smoother SetConvergence 0
+    }
     smoother SetInput [$p GetOutput]
     set p smoother
     $p SetNumberOfIterations $smoothIterations
     # This next line massively rounds corners
-    $p SetRelaxationFactor 0.33
-    $p SetFeatureAngle 60
     $p FeatureEdgeSmoothingOff
     $p BoundarySmoothingOff
-    $p SetConvergence 0
     [$p GetOutput] ReleaseDataFlagOn
     set Gui(progressText) "Smoothing $name"
     $p SetStartMethod     MainStartProgress
