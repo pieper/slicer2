@@ -180,6 +180,10 @@ $desc
 # .PROC DocumentFile
 # 
 # .ARGS
+# docdir the top level of the documentation directory
+# dir  the subdir to put this documentation into
+# filename the name of the file to produce documentation for
+# level if level is one, look for the default style in ../../style.css
 # .END
 #-------------------------------------------------------------------------------
 proc DocumentFile {docdir dir filename {level "1"}} {
@@ -200,7 +204,7 @@ proc DocumentFile {docdir dir filename {level "1"}} {
     set default "../../style.css"
     set styleFile $default
     for {set i "1"} { $i < $level} { incr i} {
-        set styleFile "../$styleFile"   
+        set styleFile "../$styleFile" 
     }
     HtmlHead $fid $name $styleFile
 
@@ -233,6 +237,7 @@ proc DocumentFile {docdir dir filename {level "1"}} {
 # .PROC DocumentIndex
 # 
 # .ARGS
+# docdir the top level documentation directory in which to build an index.html
 # .END
 #-------------------------------------------------------------------------------
 proc DocumentIndex {docdir} {
@@ -487,7 +492,7 @@ ving a file: ${errorMessage}"
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc DocumentAll {prog {outputdir ""} {what "doc tcl"}} {
+proc DocumentAll {prog {outputdir ""} {what "doc tcl"} {moduleName ""}} {
     global Index
 
     # Document the guides
@@ -544,7 +549,7 @@ proc DocumentAll {prog {outputdir ""} {what "doc tcl"}} {
         set Index(dirList) ""
         set dirs "tcl-main tcl-modules tcl-shared tcl-modules/Editor tcl-modules/Volumes" 
         # levels we are deep in the directory structure, 
-        # relative to slicer/program
+        # relative to slicer/Base
         set levels " 1 1 1 2 2"
 
         foreach dir $dirs level $levels {
@@ -564,6 +569,46 @@ proc DocumentAll {prog {outputdir ""} {what "doc tcl"}} {
                 puts $file
                 lappend Index($dir) [file root [file tail $file]]
                 DocumentFile $docdir $dir $file $level
+            }
+        }
+        # Build an index
+        # DocumentIndex $docdir
+
+        if {$::doModsFlag} {
+            if {$::verbose} {
+                puts "\nTrying to create tcl docs for the modules as well\n\tdocdir = $docdir\n\tSLICER_HOME = $::SLICER_HOME"
+            }
+            set modDir [file join $::SLICER_HOME Modules]
+            if {$moduleName != ""} {
+                set moduleTclPaths [file join $modDir $moduleName tcl]
+                if {$::verbose} {
+                    puts "moduleTclPaths $moduleTclPaths"
+                }
+            } else {
+                # grab the module tcl dirs and the paths to them
+                set moduleTclPaths [glob -nocomplain $modDir/*/tcl]
+            }
+            foreach modpath $moduleTclPaths {
+                set modName [file tail [file dirname $modpath]]
+                set level 1
+                # create the output doc subdir if needed 
+                set dir [file join $docdir $modName]
+                if {[file exists $dir] == 0} {
+                    puts "Creating directory $dir"
+                    if {[catch {file mkdir $dir} errmsg] == 1} {
+                        puts "Cannot create directory $dir: $errmsg"
+                        exit
+                    }
+                }
+                puts $modName
+                set Index($modName) ""
+                lappend Index(dirList) $modName
+                foreach file [glob -nocomplain $modpath/*.tcl] {
+                    if {$::verbose} { puts "Calling DocumentFile $docdir $modName $file $level" }
+                    puts $file
+                    lappend Index($modName) [file root [file tail $file]]
+                    DocumentFile $docdir $modName $file $level
+                }
             }
         }
         # Build an index
