@@ -214,7 +214,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.19 $} {$Date: 2005/03/18 22:25:24 $}]
+        {$Revision: 1.20 $} {$Date: 2005/03/30 21:56:15 $}]
 
 }
 
@@ -495,16 +495,11 @@ proc vtkFreeSurferReadersBuildGUI {} {
     DevAddLabel $f.lWarning "UNDER CONSTRUCTION"
     pack $f.lWarning  -side top -padx $Gui(pad) -pady 0
 
-    frame $f.fSubjects  -bg $Gui(activeWorkspace)
-    frame $f.fVolumes -bg $Gui(activeWorkspace)
-    frame $f.fBtns -bg $Gui(activeWorkspace)
-    frame $f.fOptions -bg $Gui(activeWorkspace)
-
-    pack $f.fSubjects -side top  -padx $Gui(pad) -pady $Gui(pad) -fill x -expand 1
-    pack $f.fVolumes -side top  -padx $Gui(pad) -pady $Gui(pad) -fill x -expand 1
-    pack $f.fBtns -side top  -padx $Gui(pad) -pady $Gui(pad) -fill x -expand 1
-    pack $f.fOptions  -side top  -padx $Gui(pad) -pady $Gui(pad) -fill x -expand 1
-
+    foreach subframe {Subjects Volumes Btns Options} {
+        frame $f.f${subframe} -bg $Gui(activeWorkspace)
+        pack $f.f${subframe} -side top  -padx $Gui(pad) -pady $Gui(pad) -fill x -expand 1
+    }
+    
     #---------------
     # QA -> Subjects
     #---------------
@@ -536,7 +531,11 @@ proc vtkFreeSurferReadersBuildGUI {} {
     pack $f.lClick  -side top -padx $Gui(pad) -pady 0
 
     # alternately, read in the list of subjects from a file
-    DevAddFileBrowse $f vtkFreeSurferReaders "QASubjectsFileName" "File with subject list:" {vtkFreeSurferReadersSetQASubjectsFileName ; vtkFreeSurferReadersSetQASubjects } "csh" "\$vtkFreeSurferReaders(QADirName)" "Open" "Browse for the subjects.csh containing a list of subjects"
+    DevAddFileBrowse $f vtkFreeSurferReaders "QASubjectsFileName" "File with subject list:" {vtkFreeSurferReadersSetQASubjectsFileName ; vtkFreeSurferReadersSetQASubjects ; vtkFreeSurferReadersQAResetSubjectsListBox } "csh" "\$vtkFreeSurferReaders(QADirName)" "Open" "Browse for the subjects.csh containing a list of subjects"
+
+    DevAddButton $f.bSummary "Summarise QA results" vtkFreeSurferReadersQASummary
+    TooltipAdd $f.bSummary "Summarise QA tests run in this subjects directory, set up new subjects.csh"
+    pack $f.bSummary
 
     #---------------
     # QA -> Volumes
@@ -4302,7 +4301,7 @@ proc vtkFreeSurferReadersSetQASubjects {} {
     if {$::Module(verbose)} {
         puts "vtkFreeSurferReadersSetQASubjects: dirs =\n$dirs\nnames = \n$subjectnames"
     }
-    # sort them alpah
+    # sort them alpha
     set vtkFreeSurferReaders(QASubjectNames) [lsort $subjectnames]
 }
 
@@ -4475,6 +4474,10 @@ proc vtkFreeSurferReadersContinueQA {} {
 
 proc vtkFreeSurferReadersQAResetSubjectsListBox {} {
     global vtkFreeSurferReaders
+    
+    if {$::Module(verbose)} {
+        puts "vtkFreeSurferReadersQAResetSubjectsListBox"
+    }
 
     if {[info exist vtkFreeSurferReaders(QASubjectNames)] && $vtkFreeSurferReaders(QASubjectNames) != "" && [info exist vtkFreeSurferReaders(qaSubjectsListbox)]} {
         if {$::Module(verbose)} { puts "vtkFreeSurferReadersQAResetSubjectsListBox: Using already set QASubjectNames" }
@@ -4486,6 +4489,14 @@ proc vtkFreeSurferReadersQAResetSubjectsListBox {} {
             $vtkFreeSurferReaders(qaSubjectsListbox) insert end $sub
             # for now make them all active as add them
             $vtkFreeSurferReaders(qaSubjectsListbox) selection set end end
+        }
+    } else {
+        if {$::Module(verbose)} { puts "Clearing the box if there's an empty list" }
+        if {[info exist vtkFreeSurferReaders(QASubjectNames)] && $vtkFreeSurferReaders(QASubjectNames) == "" && [info exist vtkFreeSurferReaders(qaSubjectsListbox)]} {
+            # have an empty subjects list, clear the box 
+            $vtkFreeSurferReaders(qaSubjectsListbox) delete 0 end
+        } else { 
+            puts "hunh?"
         }
     }
 }
@@ -4628,7 +4639,7 @@ proc vtkFreeSurferReadersRecordSubjectQA { subject vol eval } {
     set fname [file join $vtkFreeSurferReaders(QADirName) $subject $vtkFreeSurferReaders(QASubjectFileName)]
     if {$::Module(verbose)} { puts "vtkFreeSurferReadersRecordSubjectQA fname = $fname" }
 
-    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $::env(USER) Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.19 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
+    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $::env(USER) Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.20 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
     
     if {[catch {set fid [open $fname "a"]} errmsg] == 1} {
         puts "Can't write to subject file $fname.\nCopy and paste this if you want to save it:\n$msg"
@@ -5007,4 +5018,188 @@ proc vtkFreeSurferReadersQAStop {} {
 
     # close the window that called us
     wm withdraw .topStopQA
+}
+
+proc vtkFreeSurferReadersQASummary {} {
+    global vtkFreeSurferReaders Module Gui
+
+    if {$Module(verbose)} {
+        puts "vtkFreeSurferReadersQASummary"
+    }
+
+    # check to see that the subjects directory is set
+    set subjectsDir  $vtkFreeSurferReaders(QADirName)
+    if {$subjectsDir == ""} {
+        DevWarningWindow "No subjects directory set, can't summarise results"
+        return
+    }
+
+    set summaryName [file tail [file dirname $subjectsDir]]
+
+    # check to see if we already built a summary window
+    if {[info command .top${summaryName}] != ""} {
+        if {$::Module(verbose)} {
+            puts "Already have a .top${summaryName}, showing and returning"
+        }
+        wm withdraw .top${summaryName}
+        wm deiconify .top${summaryName}
+        
+    } else {
+        # make the window
+        toplevel .top${summaryName}
+    
+        foreach fname {Summary Display NewQA} {
+            frame .top${summaryName}.f${fname} -bg $Gui(activeWorkspace)
+            pack .top${summaryName}.f${fname}  -side top -padx $Gui(pad) -pady 0 -fill x
+        }
+
+
+        set f .top${summaryName}.fSummary
+
+        eval {label $f.lDirname -text "Subjects directory = $subjectsDir"} $Gui(WLA)
+        pack $f.lDirname
+
+        # make a scrolled pane to display things in
+        set f .top${summaryName}.fDisplay
+
+        iwidgets::scrolledhtml $f.shDisplay \
+            -height 200 -width 700 \
+            -background $Gui(activeWorkspace)
+        pack $f.shDisplay -side top -fill x 
+
+        # make some buttons to create new subjects.csh files
+        set f .top${summaryName}.fNewQA
+        DevAddLabel $f.lnewqa "Make a new subjects file, using the most recent addition to the log file for each volume:"
+        pack $f.lnewqa -side top
+        foreach newqa $vtkFreeSurferReaders(QAResultsList) {
+            DevAddButton $f.b$newqa "QA $newqa" "vtkFreeSurferReadersQAMakeNewSubjectsCsh $subjectsDir $newqa"
+            TooltipAdd $f.b$newqa "Create a new subjects.csh file to review subjects with volumes marked as $newqa"
+            pack $f.b$newqa -side left -padx $Gui(pad) -expand 1
+        }
+    }
+
+    set summaryHTMLString "<h2>QA Summary for $subjectsDir</h2>"
+
+    # find the information in the QA logs in the subjects directories
+    foreach subject $vtkFreeSurferReaders(QASubjectNames) {
+        set topdir [file join $subjectsDir $subject]
+
+        if {$::Module(verbose)} { 
+            puts "QA logs for $subject, dir $topdir"
+        }
+        # find the file named QA.log
+        set qaFileName [file join $topdir $vtkFreeSurferReaders(QASubjectFileName)]
+        if {[file exists $qaFileName] == 1 } {
+            if {$::Module(verbose)} { 
+                puts "Found a QA log file for subject $subject: $qaFileName"
+            }
+            append summaryHTMLString "<h3>$subject</h3>"
+            # read the qa log file
+            if {[catch {set fid [open $qaFileName "r"]} errmsg] == 1} {
+                puts "Can't open file $qaFileName for reading"
+            } else {
+                # make the table header
+                append summaryHTMLString "<table>"
+                append summaryHTMLString "<tr><td><b>Volume</b></td> <td><b>Evaluation</b></td> <td><b>Notes</b></td> <td><b>User</b></td> <td><b>Time</b></td> <td><b>Slicer Version</b></td> <td><b>Script Version</b></td> <td><b>Machine</b></td> <td><b>OS</b></td> <td><b>OS Version</b></td>  </tr>"
+                # read in line by line
+                while {![eof $fid]} {
+                    set line [gets $fid]
+                                        
+                    # break up the line
+                    set newline [split $line \"]
+                    # get bits of the line that are in quotes and reassemble them
+                    # they're the second and fourth tokens in the line, leave them alone
+                    # and split the first and third tokens by spaces
+                    set dateuserver [split [string trim [lindex $newline 0]]]
+                    set filerev [lindex $newline 1]
+                    set machosvervoleval [split [string trim [lindex $newline 2]]]
+                    set notes [lindex $newline 3]
+
+                    # save the tokens for this user in an array, used later for building new review files
+                    foreach token [split $dateuserver] fld {time user slicerver} { 
+                        set $fld $token
+                    }
+                    foreach token [split $machosvervoleval] fld {machine os osver vol eval} {
+                        set $fld $token
+                    }
+                    # save the information - the file may contain multiple evals of a volume,
+                    # just interested in the last one, so over writing is fine (only overwrites in the variable, prints out all of them)
+                    # will put the specific volumes in the comments of the new subjects.csh 
+                    append summaryHTMLString "<tr>"
+                    append summaryHTMLString "<td>${vol}</td>"
+                    foreach fld {eval notes user time slicerver filerev machine os osver} {
+                        set val [subst $$fld]
+                        set ::vtkFreeSurferReaders(NewQA,$subject,$vol,$fld) $val
+                        append summaryHTMLString "<td>${val}</td>"
+                    }
+                    append summaryHTMLString "</tr>"
+                }
+                close $fid
+                append summaryHTMLString "</table>"
+            }
+        } else {
+            puts "Warning: no $vtkFreeSurferReaders(QASubjectFileName) file found in $topdir, skipping sujbect $subject" 
+        }
+
+    }
+
+    # display the information
+    .top${summaryName}.fDisplay.shDisplay render $summaryHTMLString
+}
+
+proc vtkFreeSurferReadersQAMakeNewSubjectsCsh { subjectsDir { subset  "Review" } } {
+    global vtkFreeSurferReaders 
+
+    if {$::Module(verbose)} {
+        puts "vtkFreeSurferReadersQAMakeNewSubjectsCsh  subjectsDir = $subjectsDir ; subset = $subset"
+    }
+    
+    # write a time stamped subset csh
+    set fname [file join $subjectsDir scripts subjects${subset}-[clock format [clock seconds] -format "%Y-%m-%d-%T-%Z"].csh]
+
+    if {$::Module(verbose)} { puts "fname = $fname" }
+    if {[catch {set fid [open $fname "w"]} errmsg] == 1} {
+        DevErrorWindow "Can't open $fname for writing, file contents will be on stderr"
+        set fid stderr
+    }
+
+    puts $fid "\# These subjects have already been QA'd, with a most recent result of $subset"
+    puts $fid "setenv SUBJECTS_DIR $subjectsDir"
+
+    puts -nonewline $fid "set SUBJECTS = ("
+    set subjlineList ""
+    set comments "\# Volumes rated $subset for each subject: "
+    foreach subject $vtkFreeSurferReaders(QASubjectNames) {
+        set subjAdded 0
+        foreach vol $vtkFreeSurferReaders(QAVolTypes) {
+            if {[info exist vtkFreeSurferReaders(NewQA,$subject,$vol,eval)] &&
+                $vtkFreeSurferReaders(NewQA,$subject,$vol,eval) == $subset} {
+                if {!$subjAdded} {
+                    if {$::Module(verbose)} { puts "need to add subject $subject vol $vol to file" }
+                    lappend subjlineList $subject
+                    set subjAdded 1
+                }
+                append comments "$subject:$vol "
+            }
+        }
+    }
+    foreach sub $subjlineList {
+        puts -nonewline $fid $sub
+        # only add a space if there's another one
+        if {[lsearch $subjlineList $sub] < [expr [llength $subjlineList] - 1]} {
+            puts -nonewline $fid " "
+        }
+    }
+    # close the braces
+    puts $fid ")"
+    # put in the comments 
+    puts $fid $comments
+    close $fid
+
+    # close the window that called me
+    set summaryName [file tail [file dirname $subjectsDir]]
+    set resp [tk_messageBox -type yesno -message "File written: $fname.\nDo you want to close the summary window?"]
+    if {$resp == "yes"} {
+        wm withdraw .top${summaryName}
+    }
 }
