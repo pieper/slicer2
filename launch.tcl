@@ -335,7 +335,7 @@ if {$::env(BUILD) == $solaris ||
         # - need to run the specially modified tcl interp in the executable 'vtk' on unix
         # - don't put process in background so that jdemo can track its status
         regsub -all "{|}" $argv "\\\"" argv
-        set fp [open "| csh -c \"$::env(VTK_DIR)/bin/vtk $mainscript $argv \" |& cat" r]
+        set fp [open "| csh -f -c \"$::env(VTK_DIR)/bin/vtk $mainscript $argv \" |& cat" r]
     } elseif {$::env(BUILD) == $linux} {
         regsub -all "{|}" $argv "\\\"" argv
         update
