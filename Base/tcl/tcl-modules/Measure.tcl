@@ -109,7 +109,7 @@ proc MeasureInit {} {
     
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.23.2.1 $} {$Date: 2004/12/23 23:11:30 $}]
+        {$Revision: 1.23.2.2 $} {$Date: 2004/12/23 23:22:40 $}]
     
     # Initialize module-level variables
     #    set Measure(Model1) $Model(idNone)
@@ -335,7 +335,8 @@ proc TopFrameBuildGUI {} {
         -relief raised -bd 2 -width 9} $Gui(WMBA)
     eval {menu $f.mb.menu -tearoff 0} $Gui(WMA)
     
-    foreach item { Position Distance Angle Intersection Volume Surface } {
+    # Note: Intersection removed for release-2-4 due to PolyBoolean bugs -sp
+    foreach item { Position Distance Angle Volume Surface } {
     $f.mb.menu add command -label $item -command Measure$item
     }
     
