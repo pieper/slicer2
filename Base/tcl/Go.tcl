@@ -84,8 +84,11 @@ proc Usage { {msg ""} } {
     set msg "$msg\n   --verbose : turns on extra debugging output"
     set msg "$msg\n   --no-threads : disables multi threading"
     set msg "$msg\n   --no-tkcon : disables tk console"
-    set msg "$msg\n   --load-dicom <dir> : read dicom files from <dir> at startup"
-    set msg "$msg\n   --load-analyze <dir> : read analyze files from <dir> at startup"
+    set msg "$msg\n   --load-dicom <dir> : read dicom files from <dir>"
+    set msg "$msg\n   --load-analyze <file.hdr> : read analyze file from <file.hdr>"
+    set msg "$msg\n   --load-freesurfer-volume <COR-.info> : read freesurfer files"
+    set msg "$msg\n   --load-freesurfer-label-volume <COR-.info> : read freesurfer label files"
+    set msg "$msg\n   --load-freesurfer-model <file> : read freesurfer model file"
     set msg "$msg\n   --script <file.tcl> : script to execute after slicer loads"
     set msg "$msg\n   --exec <tcl code> : some code to execute after slicer loads"
     set msg "$msg\n   --all-info : print out all of the version info and continue"
@@ -104,6 +107,9 @@ set Module(verbose) 0
 set SLICER(load-dicom) ""
 set SLICER(crystal-eyes-stereo) "false"
 set SLICER(load-analyze) ""
+set SLICER(load-freesurfer-volume) ""
+set SLICER(load-freesurfer-label-volume) ""
+set SLICER(load-freesurfer-model) ""
 set SLICER(script) ""
 set SLICER(exec) ""
 set SLICER(versionInfo) ""
@@ -153,6 +159,30 @@ for {set i 0} {$i < $argc} {incr i} {
                 Usage "missing argument for $a\n"
             } else {
                 lappend SLICER(load-analyze) [lindex $argv $i]
+            }
+        }
+        "--load-freesurfer-volume" {
+            incr i
+            if { $i == $argc } {
+                Usage "missing argument for $a\n"
+            } else {
+                lappend SLICER(load-freesurfer-volume) [lindex $argv $i]
+            }
+        }
+        "--load-freesurfer-label-volume" {
+            incr i
+            if { $i == $argc } {
+                Usage "missing argument for $a\n"
+            } else {
+                lappend SLICER(load-freesurfer-label-volume) [lindex $argv $i]
+            }
+        }
+        "--load-freesurfer-model" {
+            incr i
+            if { $i == $argc } {
+                Usage "missing argument for $a\n"
+            } else {
+                lappend SLICER(load-freesurfer-model) [lindex $argv $i]
             }
         }
         "--script" {
@@ -607,7 +637,7 @@ if { $SLICER(versionInfo) != "" } {
     set compilerName [Slicer GetCompilerName]
     set vtkVersion [Slicer GetVTKVersion]
     set libVersions "LibName1: VTK LibVersion1: ${vtkVersion} LibName2: TCL LibVersion2: ${tcl_patchLevel} LibName3: TK LibVersion2: ${tk_patchLevel}"
-    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: [ParseCVSInfo "" {$Name:  $}] CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.71 2004/02/03 20:50:42 nicole Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: [ParseCVSInfo "" {$Name:  $}] CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.72 2004/02/29 18:40:53 pieper Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
@@ -632,6 +662,39 @@ foreach arg $SLICER(load-analyze) {
     set ::Volume(VolAnalyze,FileName) $arg
     set ::Volume(name) [file root [file tail $arg]]
     VolAnalyzeApply
+}
+
+#
+# read freesurfer data command line
+#
+foreach arg $SLICER(load-freesurfer-volume) {
+    if { [catch "package require vtkFreeSurferReaders"] } {
+        DevErrorWindow "vtkFreeSurferReaders Module required for --load-freesufer-volume option."
+        break
+    }
+    vtkFreeSurferReadersLoadVolume $arg
+}
+
+#
+# read freesurfer data command line
+#
+foreach arg $SLICER(load-freesurfer-label-volume) {
+    if { [catch "package require vtkFreeSurferReaders"] } {
+        DevErrorWindow "vtkFreeSurferReaders Module required for --load-freesufer-label-volume option."
+        break
+    }
+    vtkFreeSurferReadersLoadVolume $arg 1
+}
+
+#
+# read freesurfer data command line
+#
+foreach arg $SLICER(load-freesurfer-model) {
+    if { [catch "package require vtkFreeSurferReaders"] } {
+        DevErrorWindow "vtkFreeSurferReaders Module required for --load-freesufer-model option."
+        break
+    }
+    vtkFreeSurferReadersLoadModel $arg
 }
 
 
