@@ -38,6 +38,9 @@
 #   DevCreateNewCopiedVolume VolumeId Description VolName
 #   DevGetFile filename MustPop DefaultExt DefaultDir Title Action
 #   DevAddFileBrowse Frame ArrayName VarFileName Message Command DefaultExt DefaultDir Action Title Tooltip PathType
+#   DevCreateScrollList ScrollFrame ItemCreateGui ScrollListConfigScrolledGUI: ItemList
+#   DevCheckScrollLimits 
+#   DevCheckScrollLimits
 #   DevFileExists
 #==========================================================================auto=
 # This file exists specifically for user to help fast development
@@ -722,6 +725,102 @@ proc DevGetFile { filename { MustPop 0} { DefaultExt "" } { DefaultDir "" } {Tit
 
         pack $f.efile -side top -pady $Gui(pad) -padx $Gui(pad) \
                 -expand 1 -fill x
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC DevCreateScrollList
+#
+# Creates a Scrolled List. The programmer can pass a procedure on how
+# to create each line in the list. 
+# Note: Checks if the list already exists and deletes it if it does.
+#
+# Creates $ScrollFrame.cGrid which is the canvas.
+# Creates $ScrollFrame.cGrid.fListItems which is the item frame
+#
+# Example Usage : See Models.tcl
+#   frame $f.fScroll -bg $Gui(activeWorkspace)
+#   pack  .... $f.fScroll -side top -pady 1
+#
+#   DevCreateScrollList $Module(Models,fDisplay).fScroll MainModelsCreateGUI \
+#                       ModelsConfigScrolledGUI "$Model(idList)"
+#
+#
+# 
+# .ARGS
+#   frame ScrollFrame
+#   func  ItemCreateGui 2 args: the frame for the Item list and the item. 
+#   func  ScrollListConfigScrolledGUI: 2 args: canvas and item frame.
+#   func  ItemList list of items
+# .END
+#-------------------------------------------------------------------------------
+proc DevCreateScrollList {ScrollFrame ItemCreateGui ScrollListConfigScrolledGUI ItemList} {
+    global Mrml Gui Module
+
+    #################################
+    # Delete everything from last time, if there was a last time.
+    #################################
+    set f $ScrollFrame
+    set canvas $f.cGrid
+    catch {destroy $canvas}
+    set sy $f.syGrid
+    set sx $f.sxGrid
+    catch {destroy $sy}
+    catch {destroy $sx}
+
+    #################################
+    # Create the new canvas
+    #################################
+    canvas $canvas -yscrollcommand "$sy set" \
+                   -xscrollcommand "$sx set" -bg $Gui(activeWorkspace)
+    eval "scrollbar $sy -command \"DevCheckScrollLimits $canvas yview\" \
+            $Gui(WSBA)"
+    eval "scrollbar $sx -command \"$canvas xview\" \
+            -orient horizontal $Gui(WSBA)"
+
+    pack $sy -side right -fill y
+    pack $sx -side bottom -fill x
+    pack $canvas -side top -fill both -expand true
+
+    set f $canvas.fListItems
+    frame $f -bd 0 -bg $Gui(activeWorkspace)
+    
+    # put the frame inside the canvas (so it can scroll)
+    $canvas create window 0 0 -anchor nw -window $f
+
+    foreach m $ItemList {
+        $ItemCreateGui $f $m
+    }
+
+    $ScrollListConfigScrolledGUI $canvas $f
+}
+
+#-------------------------------------------------------------------------------
+# .PROC DevCheckScrollLimits 
+# 
+# This procedure allows scrolling only if the entire frame is not visible
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+
+#-------------------------------------------------------------------------------
+# .PROC DevCheckScrollLimits
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc DevCheckScrollLimits {args} {
+
+    set canvas [lindex $args 0]
+    set view   [lindex $args 1]
+    set fracs [$canvas $view]
+
+    if {double([lindex $fracs 0]) == 0.0 && \
+	    double([lindex $fracs 1]) == 1.0} {
+	return
+    }
+    eval $args
 }
 
 
