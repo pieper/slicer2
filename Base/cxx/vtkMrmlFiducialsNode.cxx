@@ -46,11 +46,22 @@ vtkMrmlFiducialsNode::vtkMrmlFiducialsNode()
 {
   // vtkMrmlNode's attributes
   this->Indent = 1;
+  this->SymbolSize = 6.0;
+  this->TextSize = 4.5;
+  this->Visibility = 1.0;
+  this->Type = NULL;
+  this->SetType("default");
+
 }
 
 //----------------------------------------------------------------------------
 vtkMrmlFiducialsNode::~vtkMrmlFiducialsNode()
 {
+  if (this->Type) {
+    delete [] this->Type;
+    this->Type = NULL;
+  }
+
 }
 
 //----------------------------------------------------------------------------
@@ -70,20 +81,62 @@ void vtkMrmlFiducialsNode::Write(ofstream& of, int nIndent)
     {
       of << " description='" << this->Description << "'";
     }
-  of << ">\n";
+     of << " type='" << this->Type << "'";
+     of << " symbol size='" << this->SymbolSize << "'";
+     of << " text size='" << this->TextSize << "'";
+     of << " visibility='" << this->Visibility << "'";
+  
+   of << ">\n";
 }
 
 //----------------------------------------------------------------------------
 // Copy the node's attributes to this object.
 // Does NOT copy: ID, FilePrefix, Name
-void vtkMrmlFiducialsNode::Copy(vtkMrmlNode *node)
+void vtkMrmlFiducialsNode::Copy(vtkMrmlNode *anode)
 {
-  vtkMrmlNode::MrmlNodeCopy(node);
+  vtkMrmlNode::MrmlNodeCopy(anode);
+  vtkMrmlFiducialsNode *node = (vtkMrmlFiducialsNode *) anode;
+
+  this->SymbolSize = node->SymbolSize;
+  this->TextSize = node->TextSize;
+  this->Visibility = node->Visibility;
+  this->Type = node->Type;
 }
 
 //----------------------------------------------------------------------------
 void vtkMrmlFiducialsNode::PrintSelf(ostream& os, vtkIndent indent)
 {
   vtkMrmlNode::PrintSelf(os,indent);
+    os << indent << "Name: " <<
+    (this->Name ? this->Name : "(none)") << "\n";
+  
+  os << indent << "Type: ";
+  os << indent << this->SymbolSize << " \n ";
+  
+  os << indent << "Symbol size: (";
+  os << indent << this->SymbolSize << ") \n ";
+
+  os << indent << "Text size: (";
+  os << indent << this->SymbolSize << ") \n ";
 
 }
+
+void vtkMrmlFiducialsNode::SetTypeToEndoscopic() {
+
+  this->SetType("endoscopic");
+
+}
+
+void vtkMrmlFiducialsNode::SetTypeToMeasurement(){
+
+  this->SetType("measurement");
+
+}
+
+void vtkMrmlFiducialsNode::SetTypeToDefault(){
+
+  this->SetType("default");
+
+}
+
+
