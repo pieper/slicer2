@@ -86,7 +86,7 @@ void vtkImageEMMarkov::ExecuteInformation(vtkImageData *inData, vtkImageData *ou
 {
   
   int ext[6];
-  float spacing[3], origin[3];
+  vtkFloatingPointType spacing[3], origin[3];
   spacing[0] = 1.0;
   spacing[1] = 1.0;
   spacing[2] = 1.0;
