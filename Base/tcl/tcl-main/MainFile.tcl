@@ -86,7 +86,7 @@ proc MainFileInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainFile \
-        {$Revision: 1.48 $} {$Date: 2003/05/18 15:30:02 $}]
+        {$Revision: 1.49 $} {$Date: 2003/05/28 22:55:18 $}]
 
     set File(filePrefix) data
 }
@@ -264,7 +264,7 @@ proc MainFileClose {} {
     MainSetup
     RenderAll
     # Restore default MRML file name
-    MainMrmlSetFile "data"
+    # MainMrmlSetFile "data"
     # Restore default colors
     MainMrmlBuildTreesVersion2.0 [MainMrmlAddColors ""]   
 }
@@ -382,8 +382,10 @@ proc MainFileSaveWithOptions {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainFileSaveOptions {} {
-    global Mrml Preset File Options
-    puts "save options"    
+    global Mrml Preset File Options Module
+    if {$Module(verbose) == 1} {
+        puts "save options"
+    }
     # Get presets
     set options [MainOptionsUnparsePresets $Preset(userOptions)]
     
@@ -413,7 +415,9 @@ proc MainFileSaveOptions {} {
     tree Delete
     pre Delete
     mod Delete
-puts "save options done"
+    if {$Module(verbose) == 1} {
+        puts "save options done"
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -739,6 +743,84 @@ proc MainFileGetRelativeDirPrefix {dir} {
 }
 
 #-------------------------------------------------------------------------------
+# .PROC MainFileGetRelativePrefixNew
+# Get the dir and file prefix relative to Mrml(dir), where the Mrml file was last
+# saved.  If there is no way to make a relative path, returns the 
+# absolute path. Returns an empty string if Mrml(dir) and dir are the same. Returns just a 
+# relative dir (with trailing file separator) if no file name specified at the end of dir.
+# 
+# This is an update to GetRelativeDirPrefix to work with generally relative files (works going up the tree as well as down)
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MainFileGetRelativePrefixNew {dir} {
+    global Mrml Gui
+    
+    # check that dir is actually a directory
+    if {[file isdirectory $dir] != 1} {
+        set prefix [file tail $dir]
+        set justdir [file dirname $dir]
+        if {$::Module(verbose)} {
+            puts "***************\nWARNING: MainFileGetRelativePrefixNew input $dir is not a directory, stripping to parent dir, $justdir, and saving prefix, $prefix"
+        }
+    } else {
+        set justdir $dir
+        set prefix ""
+    }
+
+    # check that dir is an absolute path, then split it into directories
+    # file pathtype will return absolute even if have ..'s in the path, 
+    # as long as it starts from the root dir, so just normalize - but normalize on a relative path starting from a non root dir won't work. So if the pathtype is relative, prepend the mrml dir. Problem now is if it was previously saved and is actually relative to another Mrml(dir)
+    if {[file pathtype $justdir] == "relative"} {
+        set dirlist [file split ${Mrml(dir)}[file separator]${justdir}]
+    } else {
+        set dirlist [file split [file normalize $justdir]]
+    }
+    # split the Mrml(dir) into directories
+    set rootlist [file split [file normalize $Mrml(dir)]]
+
+    # replace first drive letter with lowercase drive letter on windows
+    if {$Gui(pc) == "1"} {
+        set dirlist [lreplace $dirlist 0 0 [string tolower [lindex $dirlist 0]]]
+        set rootlist [lreplace $rootlist 0 0 [string tolower [lindex $rootlist 0]]]
+    }
+
+    # find the common part of the paths, working from the beginning
+    set indexOfCommon 0
+    while { ($indexOfCommon < [llength $dirlist])
+            && ($indexOfCommon < [llength $rootlist])
+            && ([lindex $dirlist $indexOfCommon] == [lindex $rootlist $indexOfCommon])} {
+        incr indexOfCommon
+    }
+
+    # make new lists with just the not common bits
+    set uniquedirlist [lrange $dirlist $indexOfCommon end]
+    set uniquerootlist [lrange $rootlist $indexOfCommon end]
+    set relPath ""
+    # note to self: algorithm taken from jdemo's FileMovement proc, f1=rootlist, f2=dirlist
+    # for each directory that's not in dirlist's path, add .. to the relative path
+    foreach d $uniquerootlist {
+        lappend relPath ".."
+    }
+
+    # for each directory that's not in rootlist's path, add the dir from dirlist 
+    # to the relative path
+    foreach d $uniquedirlist {
+        lappend relPath $d
+    }
+
+    # put the path together with the system file separator - add the prefix if it's not empty
+    if {$prefix != ""} {
+        lappend relPath $prefix
+    }
+    if {$::Module(verbose)} {
+        puts "MainFileGetRelativePrefixNew: Done.\n\tfile dir = $justdir with prefix $prefix,\n\tmrml dir = $Mrml(dir),\n\trelative path = [join $relPath [file separator]]"
+    }
+    return [join $relPath [file separator]]
+
+}
+
+#-------------------------------------------------------------------------------
 # .PROC MainFileFindUniqueName
 # Form an absolute filename by concatenating the root, name, and ext.
 # If a file of this name already exists, then find a number to add before the
@@ -813,8 +895,9 @@ proc CheckVolumeExists {filePrefix filePattern firstNum lastNum  {verbose 0} } {
 
     # Check that it's a prefix, not a directory
     if {[file isdirectory $filePrefix] == 1} {
+        # if the file pattern is from a dicom, the prefix may be  a directory
         tk_messageBox -icon error -title $Gui(title) -message \
-            "'$filePrefix' is a directory instead of a prefix."
+            "CheckVolumeExists: '$filePrefix' is a directory instead of a prefix\n(pattern = $filePattern)."
         return ERROR
     }
 
@@ -849,13 +932,20 @@ proc CheckVolumeExists {filePrefix filePattern firstNum lastNum  {verbose 0} } {
 #-------------------------------------------------------------------------------
 proc CheckFileExists {filename {verbose 1}} {
     global Gui
-
+    set mrmlFilename ""
     if {[file exists $filename] == 0} {
-        if {$verbose == 1} {
-            tk_messageBox -icon info -type ok -title $Gui(title) -message \
-                "File '$filename' does not exist."
+        if {[file pathtype $filename] == "relative"} {
+            # try prepending the mrml dir to it
+            set mrmlFilename [file join $::Mrml(dir) $filename]
+            if {[file exists $mrmlFilename] == 0} {
+                if {$verbose == 1} {
+                    tk_messageBox -icon info -type ok -title $Gui(title) -message \
+                        "CheckFileExists: File '$filename' does not exist, and nor does $mrmlFilename]."
+                    puts "CheckFileExists: File '$filename' does not exist, and nor does $mrmlFilename."
+                }
+                return 0
+            }
         }
-        return 0
     }
     if {[file isdirectory $filename] == 1} {
         if {$verbose == 1} {
@@ -865,11 +955,15 @@ proc CheckFileExists {filename {verbose 1}} {
         return 0
     }
     if {[file readable $filename] == 0} {
-        if {$verbose == 1} {
-            tk_messageBox -icon info -type ok -title $Gui(title) -message \
-                "'$filename' exists, but is unreadable."
+        if {$mrmlFilename != ""} {
+            if {[file readable $mrmlFilename] == 0} {
+                if {$verbose == 1} {
+                    tk_messageBox -icon info -type ok -title $Gui(title) -message \
+                        "'$filename' exists, but is unreadable."
+                }
+                return 0
+            }
         }
-        return 0
     }
     return 1
 }
@@ -892,39 +986,66 @@ proc CheckFileExists {filename {verbose 1}} {
 proc MainFileParseImageFile {ImageFile {postfixFlag 1}} {
 
     # skip empty filenames - these come, for example, in dicom files
-    if {$ImageFile == ""} {return}
-
-    ##  Parse the file into its prefix, number, and perhaps stuff afterwards
-    ##   Note: find the last consecutive string of digits
-    ## Added support for - as well as . as a file separator, to add another one, 
-    ##   replace the instances of [\.-] in the following regexp
-    set filePostfix ""
-    if {[regexp {^(.+)[\.-]([0-9]+)([\.-][^[0-9]*)?$} $ImageFile match filePrefix num filePostfix] == 0} {
-        DevErrorWindow "Could not parse \"$ImageFile\" in MainFileParseImageFile (postfixFlag = $postfixFlag)"
-        return ""
+    if {$ImageFile == ""} {
+        if {$::Module(verbose)} {
+           puts "MainFileParseImageFile: passed emtpy filename, returning nothing"
+        }
+        return
     }
     
-    # Get rid of unnecessary 0's
-    set ZerolessNum [string trimleft $num "0"]
-    if {$ZerolessNum == ""} {set ZerolessNum 0}
-    # find the separator character
-    if {[regexp "^${filePrefix}(.*)${num}" $ImageFile match sepChars] == 0} {
-        DevErrorWindow "Could not find the seperator character in \"$ImageFile\" between ${filePrefix} and ${num}"
-        return ""
-    }
-    ## Did we trim zeros? This tells us how to look for files
-    if { [string equal $ZerolessNum $num] == 1 } {
-        set pattern "%s${sepChars}%d";        
+    # two possibilities: a file name that has the numbers after a separator character, or before, with a constant extention
+    set ftail [file tail $ImageFile]
+    if {[regexp {^[a-zA-Z]+} $ftail] == 1} {
+        # the file starts with letters
+
+        ##  Parse the file into its prefix, number, and perhaps stuff afterwards
+        
+        ##   Note: find the last consecutive string of digits
+        ## Added support for - as well as . as a file separator, to add another one, 
+        ##   replace the instances of [\.-] in the following regexp
+        set filePostfix ""
+        if {[regexp {^(.+)[\.-]([0-9]+)([\.-][^[0-9]*)?$} $ImageFile match filePrefix num filePostfix] == 0} {
+            DevErrorWindow "Could not parse \"$ImageFile\" in MainFileParseImageFile (postfixFlag = $postfixFlag)"
+            return ""
+        }
+        
+        # Get rid of unnecessary 0's
+        set ZerolessNum [string trimleft $num "0"]
+        if {$ZerolessNum == ""} {set ZerolessNum 0}
+        # find the separator character
+        if {[regexp "^${filePrefix}(.*)${num}" $ImageFile match sepChars] == 0} {
+            # try assuming characters after num
+            
+            DevErrorWindow "Could not find the seperator character in \"$ImageFile\" between ${filePrefix} and ${num}"
+            return ""
+        }
+        ## Did we trim zeros? This tells us how to look for files
+        if { [string equal $ZerolessNum $num] == 1 } {
+            set pattern "%s${sepChars}%d";        
+        } else {
+            ## Someday, we'll have to check for things other than 001... used to be %03d, try counting the number of chars in num
+            set pattern "%s${sepChars}%0[string length $num]d";
+        }
+        # if we're going to check for postfix strings on the file name after the number, ie .gz, append a string variable to the pattern
+        if {$postfixFlag} {
+            append pattern "%s"
+        }
     } else {
-        ## Someday, we'll have to check for things other than 001...
-        set pattern "%s${sepChars}%03d";
-    }
-    # if we're going to check for postfix strings on the file name after the number, ie .gz, append a string variable to the pattern
-    if {$postfixFlag} {
-        append pattern "%s"
+        # assume that the number part is first, then a constant extenion
+        puts "Trying to parse as a dicom file"
+        set filePrefix [file dirname $ImageFile][file separator]
+        set num [file rootname [file tail $ImageFile]]
+        set ZerolessNum [string trimleft $num "0"]
+        if {$ZerolessNum == ""} {set ZerolessNum 0}
+        set filePostfix ""
+        set pattern "%s%0[string length $num]d[file extension $ImageFile]"
     }
     set a ""
+    
     lappend a  $pattern $filePrefix $ZerolessNum $filePostfix
+    if {$::Module(verbose)} {
+        puts "MainFileParseImageFile: returning parsed imge file $a"
+    }
     return $a
 }
 
