@@ -1,0 +1,194 @@
+#
+# Source files
+#
+# Here is where you can add the name of your local core classes.
+#
+
+SOURCE_FILES (Base_SRCS
+	vtkBoolTess.cxx vtkDCMLister.cxx vtkDCMParser.cxx 
+	vtkFastCellPicker.cxx vtkFog.cxx vtkImageAccumulateDiscrete.cxx
+	vtkImageBimodalAnalysis.cxx
+	vtkImageClipInteractive.cxx vtkImageClipper.cxx vtkImageCloseUp2D.cxx
+	vtkImageConnectivity.cxx vtkImageCopy.cxx vtkImageCrossHair2D.cxx vtkImageDICOMReader.cxx
+	vtkImageDouble2D.cxx vtkImageDrawROI.cxx vtkImageEMMarkov.cxx 
+	vtkImageEditor.cxx vtkImageEditorEffects.cxx vtkImageErode.cxx
+	vtkImageFillROI.cxx
+	vtkImageFrameSource.cxx vtkImageLabelChange.cxx vtkImageLabelOutline.cxx
+	vtkImageLabelVOI.cxx vtkImageLiveWire.cxx 
+	vtkImageLiveWireScale.cxx vtkImageMeasureVoxels.cxx
+	vtkImageNeighborhoodFilter.cxx vtkImageOverlay.cxx vtkImagePlot.cxx
+	vtkImageRealtimeScan.cxx vtkImageReformat.cxx vtkImageReformatIJK.cxx
+	vtkImageReplaceRegion.cxx vtkImageResize.cxx vtkImageStatistics.cxx
+	vtkImageThresholdBeyond.cxx vtkImageWeightedSum.cxx vtkImageZoom2D.cxx
+	vtkIndirectLookupTable.cxx vtkMathUtils.cxx vtkMrmlColorNode.cxx
+	vtkMrmlCrossSectionNode.cxx vtkMrmlData.cxx vtkMrmlDataTetraMesh.cxx
+	vtkMrmlDataVolume.cxx vtkMrmlEndFiducialsNode.cxx vtkMrmlEndHierarchyNode.cxx
+	vtkMrmlEndModelGroupNode.cxx vtkMrmlEndPathNode.cxx vtkMrmlEndScenesNode.cxx
+	vtkMrmlEndTransformNode.cxx vtkMrmlEndVolumeStateNode.cxx vtkMrmlFiducialsNode.cxx
+	vtkMrmlHierarchyNode.cxx vtkMrmlLandmarkNode.cxx vtkMrmlLocatorNode.cxx
+	vtkMrmlMatrixNode.cxx vtkMrmlModelGroupNode.cxx vtkMrmlModelNode.cxx
+	vtkMrmlModelRefNode.cxx vtkMrmlModelStateNode.cxx vtkMrmlNode.cxx
+	vtkMrmlOptionsNode.cxx vtkMrmlPathNode.cxx vtkMrmlPointNode.cxx
+	vtkMrmlSceneOptionsNode.cxx vtkMrmlScenesNode.cxx vtkMrmlSlicer.cxx
+	vtkMrmlTetraMeshNode.cxx vtkMrmlTransformNode.cxx vtkMrmlTree.cxx
+	vtkMrmlVolumeNode.cxx vtkMrmlVolumeStateNode.cxx vtkMrmlWindowLevelNode.cxx
+	vtkResliceImage.cxx vtkSurfaceProps.cxx vtkXDisplayWindow.cxx
+	# vtkPolyBoolean.cxx 
+	# vtkImageEMSegmenter.cxx
+	# vtkDistractorSource.cxx
+	# vtkImageEuclideanDistanceTransformation.cxx 
+)
+
+# --------------------------------------------------------------------------
+# You probably do not need to modify anything below this line
+
+#
+# Create the vtkSlicerBase C++ library
+#
+
+ADD_LIBRARY (vtkSlicerBase Base_SRCS)
+
+#
+# Create the vtkSlicerBase Tcl library
+#
+
+IF (VTK_WRAP_TCL AND VTKSLICER_WRAP_TCL)
+
+  VTK_WRAP_TCL (vtkSlicerBaseTCL BaseTCL_SRCS Base_SRCS)
+  ADD_LIBRARY (vtkSlicerBaseTCL SHARED BaseTCL_SRCS)
+  TARGET_LINK_LIBRARIES (vtkSlicerBaseTCL 
+                         vtkIOTCL 
+                         vtkGraphicsTCL 
+                         vtkImagingTCL 
+                         vtkFilteringTCL 
+                         vtkCommonTCL
+                         ${TCL_LIBRARY})
+  IF (VTK_USE_HYBRID)
+    TARGET_LINK_LIBRARIES (vtkSlicerBaseTCL vtkHybridTCL)
+  ENDIF (VTK_USE_HYBRID)
+
+  IF (VTK_USE_PARALLEL)
+    TARGET_LINK_LIBRARIES (vtkSlicerBaseTCL vtkParallelTCL)
+  ENDIF (VTK_USE_PARALLEL)
+
+  IF (VTK_USE_PATENTED)
+    TARGET_LINK_LIBRARIES (vtkSlicerBaseTCL vtkPatentedTCL)
+  ENDIF (VTK_USE_PATENTED)
+
+  IF (VTK_USE_RENDERING)
+    TARGET_LINK_LIBRARIES (vtkSlicerBaseTCL vtkRenderingTCL)
+  ENDIF (VTK_USE_RENDERING)
+
+ENDIF (VTK_WRAP_TCL AND VTKSLICER_WRAP_TCL)
+
+#
+# Create the vtkSlicerBase Python library
+#
+
+IF (VTK_WRAP_PYTHON AND VTKSLICER_WRAP_PYTHON)
+
+  VTK_WRAP_PYTHON (vtkSlicerBasePython BasePython_SRCS Base_SRCS)
+
+  IF (APPLE)
+    ADD_LIBRARY (vtkSlicerBasePython MODULE BasePython_SRCS)
+  ELSE (APPLE)
+    ADD_LIBRARY (vtkSlicerBasePython SHARED BasePython_SRCS)
+  ENDIF (APPLE)
+
+  IF (WIN32)
+    TARGET_LINK_LIBRARIES (vtkSlicerBasePython 
+                           vtkIOPython
+                           vtkGraphicsPython
+                           vtkImagingPython
+                           vtkFilteringPython
+                           vtkCommonPython
+                           debug ${PYTHON_DEBUG_LIBRARY} 
+                           optimized ${PYTHON_LIBRARY})
+  ELSE (WIN32)
+    TARGET_LINK_LIBRARIES (vtkSlicerBasePython 
+                           vtkIOPython
+                           vtkGraphicsPython
+                           vtkImagingPython
+                           vtkFilteringPython
+                           vtkCommonPython
+                           ${PYTHON_LIBRARY})
+  ENDIF (WIN32)
+
+  IF (VTK_USE_HYBRID)
+    TARGET_LINK_LIBRARIES (vtkSlicerBasePython vtkHybridPython)
+  ENDIF (VTK_USE_HYBRID)
+
+  IF (VTK_USE_PARALLEL)
+    TARGET_LINK_LIBRARIES (vtkSlicerBasePython vtkParallelPython)
+  ENDIF (VTK_USE_PARALLEL)
+
+  IF (VTK_USE_PATENTED)
+    TARGET_LINK_LIBRARIES (vtkSlicerBasePython vtkPatentedPython)
+  ENDIF (VTK_USE_PATENTED)
+
+  IF (VTK_USE_RENDERING)
+    TARGET_LINK_LIBRARIES (vtkSlicerBasePython vtkRenderingPython)
+  ENDIF (VTK_USE_RENDERING)
+
+ENDIF (VTK_WRAP_PYTHON AND VTKSLICER_WRAP_PYTHON)
+
+#
+# Create the vtkSlicerBase Java library
+#
+
+IF (VTK_WRAP_JAVA AND VTKSLICER_WRAP_JAVA)
+
+  VTK_WRAP_JAVA (vtkSlicerBaseJava BaseJava_SRCS Base_SRCS)
+  ADD_LIBRARY (vtkSlicerBaseJava SHARED BaseJava_SRCS)
+  TARGET_LINK_LIBRARIES (vtkSlicerBaseJava 
+                         vtkIOJava
+                         vtkGraphicsJava
+                         vtkImagingJava 
+                         vtkFilteringJava
+                         vtkCommonJava)
+  IF (VTK_USE_HYBRID)
+    TARGET_LINK_LIBRARIES (vtkSlicerBaseJava vtkHybridJava)
+  ENDIF (VTK_USE_HYBRID)
+
+  IF (VTK_USE_PARALLEL)
+    TARGET_LINK_LIBRARIES (vtkSlicerBaseJava vtkParallelJava)
+  ENDIF (VTK_USE_PARALLEL)
+
+  IF (VTK_USE_PATENTED)
+    TARGET_LINK_LIBRARIES (vtkSlicerBaseJava vtkPatentedJava)
+  ENDIF (VTK_USE_PATENTED)
+
+  IF (VTK_USE_RENDERING)
+    TARGET_LINK_LIBRARIES (vtkSlicerBaseJava vtkRenderingJava)
+  ENDIF (VTK_USE_RENDERING)
+
+ENDIF (VTK_WRAP_JAVA AND VTKSLICER_WRAP_JAVA)
+
+#
+# Link to VTK and local
+#
+
+LINK_LIBRARIES (
+  vtkSlicerBase
+  vtkIO
+  vtkGraphics
+  vtkImaging 
+  vtkFiltering
+  vtkCommon
+)
+
+IF (VTK_USE_HYBRID)
+  LINK_LIBRARIES (vtkHybrid)
+ENDIF (VTK_USE_HYBRID)
+
+IF (VTK_USE_PARALLEL)
+  LINK_LIBRARIES (vtkParallel)
+ENDIF (VTK_USE_PARALLEL)
+
+IF (VTK_USE_PATENTED)
+  LINK_LIBRARIES (vtkPatented)
+ENDIF (VTK_USE_PATENTED)
+
+IF (VTK_USE_RENDERING)
+  LINK_LIBRARIES (vtkRendering)
+ENDIF (VTK_USE_RENDERING)
