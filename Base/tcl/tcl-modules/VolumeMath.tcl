@@ -120,7 +120,7 @@ proc VolumeMathInit {} {
 	#   appropriate info when the module is checked in.
 	#   
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.9 $} {$Date: 2001/06/12 18:43:40 $}]
+		{$Revision: 1.10 $} {$Date: 2001/06/13 15:32:54 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -513,7 +513,13 @@ proc VolumeMathPrepareResultVolume {}  {
     # If so, let's do it.
     
     if {$v3 == -5 } {
-        set v3 [DevCreateNewCopiedVolume $v2 "" "VolumeMathResult" ]
+        set v3 [DevCreateNewCopiedVolume $v2 "" \
+                "VolumeMath$VolumeMath(MathType)Result" ]
+        set node [Volume($v3,vol) GetMrmlNode]
+        Mrml(dataTree) RemoveItem $node 
+        set nodeBefore [Volume($v1,vol) GetMrmlNode]
+	Mrml(dataTree) InsertAfterItem $nodeBefore $node
+        MainUpdateMRML
     } else {
 
         # Are We Overwriting a volume?
@@ -529,6 +535,7 @@ proc VolumeMathPrepareResultVolume {}  {
     }
 
     set VolumeMath(Volume3) $v3
+    
 
     return 0
 }
