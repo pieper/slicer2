@@ -13,6 +13,9 @@
 # note: - SET replaced SOURCE_FILES for cmake 1.6
 SET(LOCAL_MODULE_SRCS
 vtkHyperStreamlinePoints.cxx
+vtkPreciseHyperStreamlinePoints.cxx
+vtkTensorImplicitFunctionToFunctionSet.cxx
+vtkBSplineInterpolateImageFunction.cxx
 vtkInteractiveTensorGlyph.cxx
 vtkTensorMask.cxx
 vtkTensorMathematics.cxx
