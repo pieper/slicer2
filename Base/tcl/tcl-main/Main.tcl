@@ -450,7 +450,7 @@ proc MainInit {} {
 
         # Set version info
     lappend Module(versions) [ParseCVSInfo Main \
-        {$Revision: 1.97 $} {$Date: 2003/03/19 19:16:23 $}]
+        {$Revision: 1.98 $} {$Date: 2003/05/01 17:51:05 $}]
 
     # Call each "Init" routine that's not part of a module
     #-------------------------------------------
@@ -965,11 +965,11 @@ proc MainBuildModuleTabs {ModuleName}  {
 
     # Make page frames for each tab
     foreach tab "$Module($m,row1List) $Module($m,row2List)" {
-    # create the frame for that module/tab, but don't pack it yet, 
-    # it is done in MainPackModuleTabs called at the end of MainBoot 
-    # once we know their required height
+        # create the frame for that module/tab, but don't pack it yet, 
+        # it is done in MainPackModuleTabs called at the end of MainBoot 
+        # once we know their required height
         frame $fWork.f${m}${tab} -bg $Gui(activeWorkspace)
-    $fWork create window 0 0 -anchor nw -width $Module(.tMain.fControls,winsMinWidth) -window $fWork.f${m}${tab}     
+        $fWork create window 0 0 -anchor nw -width $Module(.tMain.fControls,winsMinWidth) -window $fWork.f${m}${tab}     
         set Module($m,f${tab}) $fWork.f${m}${tab}
     }
     
