@@ -410,7 +410,7 @@ void vtkMrmlVolumeNode::Copy(vtkMrmlNode *anode)
   this->RasToIjk->DeepCopy(node->RasToIjk);
   this->RasToWld->DeepCopy(node->RasToWld);
   this->WldToIjk->DeepCopy(node->WldToIjk);
-  this->Position->DeepCopy(node->WldToIjk);
+  this->Position->DeepCopy(node->Position);
 }
 
 //----------------------------------------------------------------------------
