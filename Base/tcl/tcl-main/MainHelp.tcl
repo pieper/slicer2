@@ -56,7 +56,7 @@ proc MainHelpInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainHelp \
-        {$Revision: 1.18 $} {$Date: 2003/03/19 19:16:24 $}]
+        {$Revision: 1.19 $} {$Date: 2004/12/22 16:57:52 $}]
 
     set Help(tagNormal)   "-font {times 10}"
     set Help(tagItalic)   "-font {times 10 italic}"
@@ -84,8 +84,23 @@ proc MainHelpInit {} {
     }
 
     # for launching web browser from Help
-    set Path(browserPath) "netscape"
+    
     set Path(browserUrl) "http://www.slicer.org/"
+
+    # try to use the standard url launch mechanism per platform
+    # Windows: apparently figures out how to open directly with exec
+    switch $::tcl_platform(os) {
+        "SunOS" -
+        "Linux" { 
+            if { [info exists ::env(BROWSER)] } {
+                set Path(browserPath) $::env(BROWSER)
+            } else {
+                set Path(browserPath) "unknown"
+            }
+        }
+        "Darwin" { set Path(browserPath) "open" }
+        default { set Path(browserPath) [auto_execok start] } 
+    }
 }
 
 # All the Modules have the same Help Button Style.
@@ -124,12 +139,10 @@ proc MainHelpBuildGUI {ModuleName} {
     pack $f.bHome -side left -padx $Gui(pad)
 
     # make a button that pops up the slicer home page
-    if {$Gui(pc) == 0} {
     eval {button $f.bWeb -text "www.slicer.org" -width 15 \
         -command MainHelpLaunchBrowser} $Gui(WBA)
     
     pack  $f.bWeb -side left -padx $Gui(pad)
-    }
 }
 
 #-------------------------------------------------------------------------------
@@ -330,12 +343,31 @@ proc MainHelpLink {w id linkTag} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainHelpLaunchBrowser {{section ""}} {
-    global Path
 
     if {$section == ""} {
-        catch {exec "$Path(browserPath)" $Path(browserUrl) &}
+        set url "$::Path(browserUrl)"
     } else {
-        catch {exec "$Path(browserPath)" $Path(browserUrl)#$section &}
+        set url "$::Path(browserUrl)#$section"
+    }
+    MainHelpLaunchBrowserURL $url
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MainHelpLaunchBrowserURL
+#
+#
+#  Tries to launch a Web Browser with a specified URL
+# .END
+#-------------------------------------------------------------------------------
+proc MainHelpLaunchBrowserURL {url} {
+
+    if { $::Path(browserPath) != "unknown" } {
+        set ret [catch "exec $::Path(browserPath) $url &" res]
+        if { $ret } {
+            DevErrorWindow "Could not launch browser.\n\n$res"
+        }
+    } else {
+        DevWarningWindow "Could not detect your default browser.\n\nYou may need to set your BROWSER environment variable.\n\nPlease open $url manually."
     }
 }
 
