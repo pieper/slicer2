@@ -105,7 +105,7 @@ proc FiducialsInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.47 $} {$Date: 2004/03/15 21:04:47 $}]
+        {$Revision: 1.48 $} {$Date: 2004/03/16 00:59:48 $}]
     
     # Initialize module-level variables
     
@@ -1336,6 +1336,17 @@ proc FiducialsCreatePointFromWorldXYZ { type x y z  {listName ""} {name ""} {sel
 
     # select fiducial after creation
     FiducialsSelectionUpdate $fid $pid $selected
+
+    #
+    # support automatically setting anatomical label description 
+    # for fiducials created on the 2D slice windows
+    #
+    if { [info exists ::Fiducial(Pick2D)] } {
+        if { $::Fiducial(Pick2D) == 1 } {
+            Point($pid,node) SetDescription $::Anno(curFore,label)
+        }
+    }
+
 
    # callback for modules who wish to know a point was created
    foreach m $Module(idList) {
