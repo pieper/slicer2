@@ -70,19 +70,27 @@ proc IbrowserBuildDisplayFrame { } {
     # Select volume frame
     #-------------------------------------------
     set f $w.fSelect
-    DevAddLabel $f.lSelect "Select:"
+    DevAddLabel $f.lSelect "Volume:"
     eval { scale $f.index -orient horizontal \
                -from 0 -to $::Ibrowser(MaxDrops) -resolution 1 \
-               -bigincrement 1 -length 150 -state disabled -showvalue 1 \
+               -bigincrement 10 -length 150 -state disabled -showvalue 1 \
                -variable ::Ibrowser(ViewDrop) } \
                $Gui(WSA) { -showvalue 1 }
 
     #--- Save a ref to the scale so we can find it later
     #--- Update the main viewer based on slider motion
     #--- and update the IbrowserController slider too.
-    set ::Ibrowser(indexSlider) $f.index
+    set ::Ibrowser(displaySlider) $f.index
+    bind $f.index <ButtonPress-1> {
+        IbrowserUpdateIndexFromGUI
+        IbrowserUpdateMainViewer $::Ibrowser(ViewDrop)
+    }
+    bind $f.index <ButtonRelease-1> {
+        IbrowserUpdateIndexFromGUI
+        IbrowserUpdateMainViewer $::Ibrowser(ViewDrop)
+    }
     bind $f.index <B1-Motion> {
-        IbrowserUpdateIndexFromDisplayGUI
+        IbrowserUpdateIndexFromGUI
         IbrowserUpdateMainViewer $::Ibrowser(ViewDrop)
     }
     grid $f.lSelect $f.index -pady $Gui(pad) -padx $Gui(pad) -sticky e
@@ -343,8 +351,10 @@ proc IbrowserSetIntervalParam { setThis { thing -10} } {
     if { $activeIval != $::Ibrowser(idNone) } {
         for { set i $start } { $i <= $stop } { incr i } {
             #--- set up the progress bar
-            set progress [ expr double ($pcount) / double ($numvols) ]
-            IbrowserUpdateProgressBar $progress "::"
+            if { $numvols != 0 } {
+                set progress [ expr double ($pcount) / double ($numvols) ]
+                IbrowserUpdateProgressBar $progress "::"
+            }
             #--- without something to make the application idle,
             #--- tk will not handle the drawing of progress bar.
             #--- Instead of calling update, which could cause
