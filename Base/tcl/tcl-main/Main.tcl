@@ -424,8 +424,9 @@ proc MainInit {} {
 
     # In each module's Init procedure, set Module(moduleName,category) to one of these strings.
     # If you use lindex, larger indices will indicate less tested modules.
-    set Module(categories) {Core Beta Experimental Example Unfiled}
-
+    # set Module(categories) {Core Beta Experimental Example Unfiled}
+    set Module(categories) {Favourites Settings IO Application Filtering Segmentation Registration Measurement Visualisation Example Unfiled}
+    # set Module(categories) {Data Processing Settings Other Unfiled}
     foreach m $Module(idList) {
         set Module($m,more) 0
         set Module($m,row1List) ""
@@ -454,7 +455,7 @@ proc MainInit {} {
 
         # Set version info
     lappend Module(versions) [ParseCVSInfo Main \
-        {$Revision: 1.105 $} {$Date: 2004/03/15 20:50:55 $}]
+        {$Revision: 1.106 $} {$Date: 2004/03/24 17:36:49 $}]
 
     # Call each "Init" routine that's not part of a module
     #-------------------------------------------
@@ -569,6 +570,13 @@ proc MainBuildGUI {} {
     $f config -menu .menubar
     # Create more cascade menus
     foreach m {File View Help} {
+        eval {menu .menubar.m$m} $Gui(SMA)
+        set Gui(m$m) .menubar.m$m
+        .menubar add cascade -label $m -menu .menubar.m$m
+    }
+
+    if {$::Module(verbose)} {
+        set m Modules
         eval {menu .menubar.m$m} $Gui(SMA)
         set Gui(m$m) .menubar.m$m
         .menubar add cascade -label $m -menu .menubar.m$m
@@ -691,6 +699,35 @@ proc MainBuildGUI {} {
         set Module(rMore)  $f.rMore
     }
 
+
+    # Modules Menu - delayed till here, for now, so that can change the text on Module(rMore) 
+    MainBuildCategoryIDLists
+    if {$::Module(verbose)} {
+    foreach category $Module(categories) {
+        if {[info exists Module(idList,$category)]} {
+            # create a cascade menu for it
+            eval {menu $Gui(mModules).m$category} $Gui(SMA)
+            $Gui(mModules) add cascade -label "$category" -menu $Gui(mModules).m$category
+            # then add it's modules
+            foreach module $Module(idList,$category) {
+                # for now, just switch to the tab for this module, if it has a gui
+                if { [info exists Module($module,procGUI)] } {
+                    if {$Module(more) == 1} {
+                        $Gui(mModules).m$category add command -label "$module" \
+                            -command "set Module(btn) More; Tab $module; $Module(rMore) config -text $module"
+                    } else {
+                        # just tab to the module, don't have to reset the Module(rMore) text 
+                        # because no More button exists
+                        $Gui(mModules).m$category add command -label "$module" -command "Tab $module"
+                    }
+                }
+            }
+        } else {
+            puts "Modules Menu: no modules in ID list for $category"
+        }
+    }
+    }
+
     # Add the arrow image (the one that makes the scrollbar appear) 
     # at the end of the row 
     set Module(scrollbar,image) [image create photo -file \
@@ -715,20 +752,7 @@ proc MainBuildGUI {} {
         $moreMenu delete 0 end
         set firstMore ""
     }
-    # Grab all the modules and put them in categories
-    foreach mod $Module(idList) {
-        if {[info exists Module($mod,category)]} {
-            lappend Module(idList,$Module($mod,category)) $mod
-        } else {
-            lappend Module(idList,Unfiled) $mod
-        }
-    }
-    # put all but the core modules in alpha order
-    for {set catid 1} {$catid < [llength $Module(categories)]} {incr catid} {
-        set cat [lindex $Module(categories) $catid]
-        set tempList [lsort -dictionary $Module(idList,$cat)]
-        set Module(idList,$cat) $tempList
-    }
+
 
     # Display up to 3 module buttons (m1,m2,m3) on each row 
     foreach {m1 m2 m3} $Module(idList) {
@@ -2019,4 +2043,37 @@ proc FormatModuleCategories {} {
     }
 
     return $s
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MainBuildCategoryIDLists
+# Takes module ids from the Module(idList), checks to see if they have a category defined in
+# the variable Module($module,category), and if so, adds the module id to the list being built in
+# Module(idList,$category).
+# Also alphabetises the modules lists, except for the Core one.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MainBuildCategoryIDLists {} {
+    global Module
+
+    # Grab all the modules and put them in categories
+    foreach mod $Module(idList) {
+        if {[info exists Module($mod,category)]} {
+            lappend Module(idList,$Module($mod,category)) $mod
+        } else {
+            lappend Module(idList,Unfiled) $mod
+        }
+    }
+    # put all but the core modules in alpha order (there may not be any Unfiled ones)
+    foreach cat  $Module(categories) {
+        if {$cat != "Core" &&
+            [info exists Module(idList,$cat)]} {
+            set tempList [lsort -dictionary $Module(idList,$cat)]
+            set Module(idList,$cat) $tempList
+        } else {
+            if {$Module(verbose)} { puts "Not sorting module list, category = $cat"}
+        }
+    }
+
 }
