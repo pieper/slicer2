@@ -64,19 +64,25 @@ void vtkMultipleStreamlineController::CreateGraphicsObjects()
   vtkPolyDataMapper *currMapper;
   vtkActor *currActor;
   vtkTransform *currTransform;
+  vtkRenderer *currRenderer;
 
+  // Find out how many streamlines we have, and if they all have actors
   numStreamlines = this->Streamlines->GetNumberOfItems();
   numActorsCreated = this->Actors->GetNumberOfItems();
 
+  cout << "in CreateGraphicsObjects " << numActorsCreated << "  " << numStreamlines << endl;
+
+  if (numActorsCreated == numStreamlines) 
+    return;
+
+  // Create transformation matrix to place actors in scene
   currTransform=vtkTransform::New();
   currTransform->SetMatrix(this->WorldToTensorScaledIJK->GetMatrix());
   currTransform->Inverse();
-  
-  cout << "----------------in CreateGraphicsObjects " << numActorsCreated << "  " << numStreamlines << endl;
 
+  // Make actors and etc. for all streamlines that need them
   while (numActorsCreated < numStreamlines) 
     {
-      cout << "creating objects " << numActorsCreated << endl;
       // Get the streamline
       currStreamline = (vtkHyperStreamline *)
         this->Streamlines->GetItemAsObject(numActorsCreated);
@@ -94,19 +100,37 @@ void vtkMultipleStreamlineController::CreateGraphicsObjects()
       currMapper->SetLookupTable(currLookupTable);
       currActor->SetMapper(currMapper);
       
-      // Place the actor in the scene
-      // NOTE: in future there may be multiple tensor inputs/input matrices
+      // Place the actor correctly in the scene
       currActor->SetUserMatrix(currTransform->GetMatrix());
 
+      // add to the scene (to each renderer)
+      // This is the same as MainAddActor in Main.tcl.
+      this->InputRenderers->InitTraversal();
+      currRenderer= (vtkRenderer *)this->InputRenderers->GetNextItemAsObject();
+      while(currRenderer)
+        {
+          currRenderer->AddActor(currActor);
+          currRenderer= (vtkRenderer *)this->InputRenderers->GetNextItemAsObject();
+        }
+      
       // Increment the count of actors we have created
       numActorsCreated++;
     }
+
+
+  // For debugging print this info again
+  // Find out how many streamlines we have, and if they all have actors
+  numStreamlines = this->Streamlines->GetNumberOfItems();
+  numActorsCreated = this->Actors->GetNumberOfItems();
+
+  cout << "in CreateGraphicsObjects " << numActorsCreated << "  " << numStreamlines << endl;
+
 }
 
+//----------------------------------------------------------------------------
 void vtkMultipleStreamlineController::AddStreamlinesToScene()
 {
   vtkActor *currActor;
-  vtkRenderer *currRenderer;
 
   // make objects if needed
   this->CreateGraphicsObjects();
@@ -116,23 +140,74 @@ void vtkMultipleStreamlineController::AddStreamlinesToScene()
   currActor= (vtkActor *)this->Actors->GetNextItemAsObject();
   while(currActor)
     {
-      cout << "Actor " << endl;
       currActor->VisibilityOn();
       currActor= (vtkActor *)this->Actors->GetNextItemAsObject();      
 
-      // add to the scene (to each renderer)
-      // MainAddActor in Main.tcl adds actor to each renderer.
-      // For speed we cannot call this function (?)
+    }
+
+}
+
+//----------------------------------------------------------------------------
+void vtkMultipleStreamlineController::DeleteStreamline(vtkActor *pickedActor)
+{
+  int index;
+  vtkRenderer *currRenderer;
+  vtkLookupTable *currLookupTable;
+  vtkPolyDataMapper *currMapper;
+  vtkHyperStreamline *currStreamline;
+
+  cout << "Picked actor (present?): " << pickedActor << endl;
+  // find the actor on the collection and remove and delete all
+  // corresponding objects. nonzero index means item was found.
+  index = this->Actors->IsItemPresent(pickedActor);
+  if (index)
+    {
+      // the index returned was 1-based but actually to get items
+      // from the list we must use 0-based indices.  Very
+      // strange but this is necessary.
+      index--;
+
+      cout << "Actor " << index << " present." << endl;
+      pickedActor->VisibilityOff();
+
+      // Remove from the scene (from each renderer)
+      // MainRemoveActor in Main.tcl removes actor from each renderer.
+      // For speed we cannot call this function.
       this->InputRenderers->InitTraversal();
       currRenderer= (vtkRenderer *)this->InputRenderers->GetNextItemAsObject();
       while(currRenderer)
         {
-          currRenderer->AddActor(currActor);
+          cout << "rm actor from renderer " << currRenderer << endl;
+          currRenderer->RemoveActor(pickedActor);
           currRenderer= (vtkRenderer *)this->InputRenderers->GetNextItemAsObject();
         }
-      
-    }
 
+      cout << "actor" << endl;
+      this->Actors->RemoveItem(index);
+      //pickedActor->SetMapper(NULL);
+      pickedActor->Delete();
+
+      cout << "stream" << endl;
+      currStreamline = (vtkHyperStreamline *)
+        this->Streamlines->GetItemAsObject(index);
+      this->Streamlines->RemoveItem(index);
+      //currStreamline->Delete();
+
+      cout << "mapper" << endl;
+      currMapper = (vtkPolyDataMapper *) this->Mappers->GetItemAsObject(index);
+      this->Mappers->RemoveItem(index);
+      //currMapper->SetInput(NULL);
+      //currMapper->SetLookupTable(NULL);
+      currMapper->Delete();
+
+      cout << "lut" << endl;
+      currLookupTable = (vtkLookupTable *) this->LookupTables->GetItemAsObject(index);
+      this->LookupTables->RemoveItem(index);
+      currLookupTable->Delete();
+
+      cout << "Done" << endl;
+
+    }
 }
 
 

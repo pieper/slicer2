@@ -13,6 +13,7 @@
 #include "vtkTransform.h"
 #include "vtkHyperStreamline.h"
 #include "vtkHyperStreamlinePoints.h"
+#include "vtkActor.h"
 
 
 class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
@@ -35,6 +36,19 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   // Description
   // Make all of the streamlines visible in the renderer.
   void AddStreamlinesToScene();
+
+  // Description
+  // Hide all streamlines (turn off their visibility);
+  //void RemoveStreamlinesFromScene();
+
+  // Description
+  // Delete one streamline
+  void DeleteStreamline(vtkActor *pickedActor);
+
+  // Description
+  // Delete all streamlines
+  //void DeleteAllStreamlines();
+
 
 
   // Description
