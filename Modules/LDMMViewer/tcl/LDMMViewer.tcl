@@ -155,7 +155,7 @@ proc LDMMViewerInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1 $} {$Date: 2003/09/04 23:48:38 $}]
+        {$Revision: 1.2 $} {$Date: 2003/09/05 13:20:25 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -264,8 +264,8 @@ proc LDMMViewerBuildGUI {} {
     set f $fLDMM.fMiddle
     DevAddButton $f.build "Make Models" LDMMViewerMakeModels 
     DevAddButton $f.showvectors "Show Vectors" LDMMViewerShowVectors 
-    
-    pack $f.build $f.showvectors
+    DevAddButton $f.hidevectors "Hide Vectors" LDMMViewerHideVectors 
+    pack $f.build $f.showvectors $f.hidevectors
 
     #-------------------------------------------
     # LDMM->Bottom frame
@@ -301,6 +301,26 @@ proc LDMMViewerEnter {} {
 proc LDMMViewerExit {} {
 }
 
+#-------------------------------------------------------------------------------
+# .PROC LDMMViewerSetDirectory
+#
+# set the LDMM source directory and read the image data
+# .END
+#-------------------------------------------------------------------------------
+proc LDMMViewerSetDirectory { {dir ""} } {
+    
+    if { $dir == "" } {
+        set dir [tk_chooseDirectory]
+    }
+    if { ![file isdirectory $dir/deformed_template] } {
+        DevErrorWindow "$dir doesn't appear to be an LDMM directory"
+        return
+    }
+    set ::LDMMViewer(dir) $dir
+
+    LDMMViewerLoadVolumes
+}
+
 
 #-------------------------------------------------------------------------------
 # .PROC LDMMViewerLoadStructuredPoints 
@@ -326,7 +346,7 @@ proc LDMMViewerLoadStructuredPoints { vtkfile } {
     $n SetDescription "$vtkfile"
 
     eval Volume($i,node) SetSpacing [$id GetSpacing]
-    Volume($i,node) SetScanOrder IS
+    Volume($i,node) SetScanOrder PA
     Volume($i,node) SetNumScalars [$id GetNumberOfScalarComponents]
     set ext [$id GetWholeExtent]
     Volume($i,node) SetImageRange [lindex $ext 4] [lindex $ext 5]
@@ -397,26 +417,71 @@ proc LDMMViewerMakeModels { } {
     MainSlicesSetVisibilityAll 0
 }
 
-
 #-------------------------------------------------------------------------------
-# .PROC LDMMViewerSetDirectory
+# .PROC LDMMViewerShowVectors 
 #
-# set the LDMM source directory and read the image data
+# create vector glyphs from ldmm files
 # .END
 #-------------------------------------------------------------------------------
-proc LDMMViewerSetDirectory { {dir ""} } {
-    
-    if { $dir == "" } {
-        set dir [tk_chooseDirectory]
-    }
-    if { ![file isdirectory $dir/deformed_template] } {
-        DevErrorWindow "$dir doesn't appear to be an LDMM directory"
-        return
-    }
-    set ::LDMMViewer(dir) $dir
+proc LDMMViewerShowVectors {} {
 
-    LDMMViewerLoadVolumes
+    LDMMViewerHideVectors 
+
+    set ::LDMMViewer(vectorfiles) [lsort -dictionary [glob $::LDMMViewer(dir)/velocity_fields/*]]
+
+    foreach f $::LDMMViewer(vectorfiles) { 
+        puts "reading $f"
+        catch "LDMMspr_$f Delete"
+        vtkStructuredPointsReader LDMMspr_$f
+        LDMMspr_$f SetFileName $f
+        LDMMspr_$f Update
+        [LDMMspr_$f GetOutput] SetOrigin -32 -32 -32
+    }
+
+    set f0 [lindex $::LDMMViewer(vectorfiles) 0]
+    vtkExtractVOI LDMMevoi
+    LDMMevoi SetSampleRate 4 4 4
+    LDMMevoi SetInput [LDMMspr_$f0 GetOutput]
+
+    vtkGlyph3D LDMMg3d
+    LDMMg3d SetInput [LDMMevoi GetOutput]
+    LDMMg3d SetColorModeToColorByVector
+    LDMMg3d SetScaleModeToScaleByVector
+    LDMMg3d SetScaleFactor 2
+
+    vtkPolyDataMapper LDMMgmapper
+    LDMMgmapper SetInput [LDMMg3d GetOutput]
+
+    vtkActor LDMMgactor
+    LDMMgactor SetMapper LDMMgmapper
+
+    viewRen AddActor LDMMgactor
+
 }
+
+#-------------------------------------------------------------------------------
+# .PROC LDMMViewerHideVectors 
+#
+# remove vector glyphs from scene
+# .END
+#-------------------------------------------------------------------------------
+proc LDMMViewerHideVectors {} {
+
+    catch "viewRen RemoveActor LDMMgactor"
+    if { [info exists ::LDMMViewer(vectorfiles)] } { 
+        foreach f $::LDMMViewer(vectorfiles) { 
+            catch "LDMMspr_$f Delete"
+        }
+    }
+    catch "LDMMspr Delete"
+    catch "LDMMevoi Delete"
+    catch "LDMMg3d Delete"
+    catch "LDMMgmapper Delete"
+    catch "LDMMgactor Delete"
+}
+
+
+
 
 
 #-------------------------------------------------------------------------------
@@ -437,25 +502,47 @@ proc LDMMViewerSetTime { {t ""} } {
         return
     }
 
+    # turn off all models
     for {set tt 0} {$tt <= $::LDMMViewer(lastindex)} {incr tt} {
-        Model($::LDMMViewer($tt,m),node) VisibilityOff
         if { [info exists ::LDMMViewer($tt,m)] } {
             MainModelsSetVisibility $::LDMMViewer($tt,m) 0
         }
     }
+    # then turn on the one for the current time
     if { [info exists ::LDMMViewer($t,m)] } {
         MainModelsSetVisibility $::LDMMViewer($t,m) 1
     }
+
+    # set the background volume to this time step
     MainSlicesSetVolumeAll Back $::LDMMViewer($t,id)
+
+    # set the vector input 
+    if { [info commands LDMMevoi] != "" } {
+        set f [lindex $::LDMMViewer(vectorfiles) $t]
+        LDMMevoi SetInput [LDMMspr_$f GetOutput]
+    }
+
     RenderAll
 }
 
+#-------------------------------------------------------------------------------
+# .PROC LDMMViewerRenderNTimes 
+#
+# to stretch out scenes in the movie or add pauses
+# .END
+#-------------------------------------------------------------------------------
 proc LDMMViewerRenderNTimes {N} {
     for {set n 0} {$n < $N} {incr n} {
         RenderAll
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC LDMMViewerMovie 
+#
+# make an animated series of views
+# .END
+#-------------------------------------------------------------------------------
 proc LDMMViewerMovie {} {
     
     set directions "R L A P S I"
@@ -490,6 +577,13 @@ proc LDMMViewerMovie {} {
     LDMMViewerRenderNTimes 5
 }
 
+#-------------------------------------------------------------------------------
+# .PROC LDMMViewerBatchRender 
+#
+# save a movie of ldmm views to an mpeg file.  Meant to be used with the
+# --exec command line flag but could be typed to the console
+# .END
+#-------------------------------------------------------------------------------
 proc LDMMViewerBatchRender { dir } {
 
     if { ![info exists ::env(IMAGEMAGICK_CONVERT)] } {
@@ -536,3 +630,4 @@ proc LDMMViewerBatchRender { dir } {
     file delete -force $::Save(imageDirectory)
 
 }
+
