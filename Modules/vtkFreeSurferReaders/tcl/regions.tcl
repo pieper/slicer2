@@ -414,14 +414,24 @@ itcl::body regions::findptscalars {} {
            $_labellistbox insert end "pt $id $_labels($s) ($s) - Freesurfer UMLS ID $umlsid"
         }
         $this talairach
+        set umlslabel0 [lindex $_Blabel 0]
+        set umlsid ""
+        $this umls
+        if { [lindex $_Blabel 2] != "" && $umlsid == "" } {
+            $_labellistbox insert end "pt $id [lindex $_Blabel 0] "
+        } elseif { [lindex $_Blabel 2] != "" && $umlsid != "" } {
+            $_labellistbox insert end "pt $id [lindex $_Blabel 0] - Talairach UMLS ID $umlsid"
+        }
         set umlslabel0 [lindex $_Blabel 2]
         set umlsid ""
         $this umls
         if { [lindex $_Blabel 2] != "" && $umlsid == "" } {
-            $_labellistbox insert end "pt $id $_Blabel mm"
+            $_labellistbox insert end "pt $id [lindex $_Blabel 2] - [lindex $_Blabel 3] mm"
+
         } elseif { [lindex $_Blabel 2] != "" && $umlsid != "" } {
-            $_labellistbox insert end "pt $id $_Blabel mm - Talairach UMLS ID $umlsid"
+            $_labellistbox insert end "pt $id [lindex $_Blabel 2] - [lindex $_Blabel 3]mm - Talairach UMLS ID $umlsid"
         }
+
 }
 }
 
@@ -565,11 +575,17 @@ itcl::body regions::talairach {} {
     set tal(1) [expr round($tal(1))]
     set tal(2) [expr round($tal(2))]
     set tal(3) [expr round($tal(3))]
-
+    set path "/home/ajoyner/docs/regions/java/talairach"
     puts "Talairached Coord $tal(1) $tal(2) $tal(3)"
     puts "MNI Coord $mtal(1) $mtal(2) $mtal(3)"
     #open socket, send coordinate to Talairach Daemon query
-    set sock [socket localhost 19000]
+    if {[catch {set sock [socket localhost 19000]}]} {
+         exec "$path/runtd.sh" &
+         }
+    while {[catch {set sock [socket localhost 19000]}]} {
+         after 500
+         }
+    #set sock [socket localhost 19000]
     puts $sock "$tal(1) $tal(2) $tal(3)          "
     flush $sock
 
