@@ -148,7 +148,7 @@ proc TetraMeshInit {} {
 	#   appropriate revision number and date when the module is checked in.
 	#   
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.19 $} {$Date: 2001/08/08 08:01:14 $}]
+		{$Revision: 1.20 $} {$Date: 2001/09/03 16:19:46 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -1406,7 +1406,10 @@ proc TetraMeshProcessSurface {} {
 #### be OK.
 ######################################################################
 
-set range [$CurrentTetraMesh GetScalarRange]
+#  This did the range of the scalar data and point data
+#set range [$CurrentTetraMesh GetScalarRange]
+# This is what we want
+set range [[[$CurrentTetraMesh GetCellData] GetScalars] GetRange]
 set lowscalar [ lindex $range 0 ] 
 set highscalar [ lindex $range 1 ] 
 
