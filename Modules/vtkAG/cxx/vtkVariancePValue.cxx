@@ -7,6 +7,11 @@
 #include <float.h>
 #endif 
 
+// isnan() is broken in /usr/include/gcc/darwin/3.3/c++/cmath
+#if defined(__APPLE__) && defined(__MACH__)
+extern "C" int isnan (double);
+#endif
+
 #include <gsl/gsl_sf.h>
 
 // #include <vtkStructuredPointsWriter.h>

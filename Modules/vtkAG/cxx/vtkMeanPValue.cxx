@@ -8,8 +8,9 @@
 #include <float.h>
 #endif
 
-#ifdef __APPLE_CC__
-#include <math.h>
+// isnan() is broken in /usr/include/gcc/darwin/3.3/c++/cmath
+#if defined(__APPLE__) && defined(__MACH__)
+extern "C" int isnan (double);
 #endif
 
 // #include <vtkStructuredPointsWriter.h>
