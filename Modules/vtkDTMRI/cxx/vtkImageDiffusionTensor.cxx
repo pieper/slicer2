@@ -78,9 +78,9 @@ void vtkImageDiffusionTensor::PrintSelf(ostream& os, vtkIndent indent)
     {
       float *g = this->GetDiffusionGradient(i);
       os << indent << "Gradient " << i << ": (" 
-	 << g[0] << ", "
-	 << g[1] << ", "
-	 << g[2] << ")" << "\n";
+         << g[0] << ", "
+         << g[1] << ", "
+         << g[2] << ")" << "\n";
       
     }  
 }
@@ -133,7 +133,7 @@ void vtkImageDiffusionTensor::SetNumberOfGradients(int num)
 //----------------------------------------------------------------------------
 //
 void vtkImageDiffusionTensor::ExecuteInformation(vtkImageData **inDatas, 
-					     vtkImageData *outData)
+                                             vtkImageData *outData)
 {
   // We always want to output float scalars
   outData->SetScalarType(VTK_FLOAT);
@@ -181,11 +181,11 @@ void vtkImageDiffusionTensor::ExecuteData(vtkDataObject *out)
 // This templated function executes the filter for any type of data.
 template <class T>
 static void vtkImageDiffusionTensorExecute(vtkImageDiffusionTensor *self,
-					   vtkImageData **inDatas, 
-					   T ** inPtrs,
-					   vtkImageData *outData, 
-					   float * outPtr,
-					   int outExt[6], int id)
+                                           vtkImageData **inDatas, 
+                                           T ** inPtrs,
+                                           vtkImageData *outData, 
+                                           float * outPtr,
+                                           int outExt[6], int id)
 {
   int idxX, idxY, idxZ;
   int maxX, maxY, maxZ;
@@ -214,12 +214,13 @@ static void vtkImageDiffusionTensorExecute(vtkImageDiffusionTensor *self,
   // This is the id in the input and output datasets.
  //ptId = outExt[0] + outExt[2]*(outExt[1]-outExt[0]) + outExt[4]*(outExt[3]-outExt[2]);
 
-  int outInc[3],outFullUpdateExt[3];
-  self->GetOutput()->GetIncrements(outInc);
-  self->GetOutput()->GetUpdateExtent(outFullUpdateExt); //We are only working over the update extent
+  // changed from arrays to pointers
+  int *outInc,*outFullUpdateExt;
+  outInc = self->GetOutput()->GetIncrements();
+  outFullUpdateExt = self->GetOutput()->GetUpdateExtent(); //We are only working over the update extent
   ptId = ((outExt[0] - outFullUpdateExt[0]) * outInc[0]
-	 + (outExt[2] - outFullUpdateExt[2]) * outInc[1]
-	 + (outExt[4] - outFullUpdateExt[4]) * outInc[2]);
+         + (outExt[2] - outFullUpdateExt[2]) * outInc[1]
+         + (outExt[4] - outFullUpdateExt[4]) * outInc[2]);
 
 
   // find the region to loop over
@@ -227,7 +228,7 @@ static void vtkImageDiffusionTensorExecute(vtkImageDiffusionTensor *self,
   maxY = outExt[3] - outExt[2]; 
   maxZ = outExt[5] - outExt[4];
   target = (unsigned long)(outData->GetNumberOfScalarComponents()*
-			   (maxZ+1)*(maxY+1)/50.0);
+                           (maxZ+1)*(maxY+1)/50.0);
   target++;
 
   // Get increments to march through image data 
@@ -244,110 +245,110 @@ static void vtkImageDiffusionTensorExecute(vtkImageDiffusionTensor *self,
   for (idxZ = 0; idxZ <= maxZ; idxZ++)
     {
       for (idxY = 0; !self->AbortExecute && idxY <= maxY; idxY++)
-	{
-	  if (!id) 
-	    {
-	      if (!(count%target)) 
-		{
-		  self->UpdateProgress(count/(50.0*target) 
-				       + (maxZ+1)*(maxY+1));
-		}
-	      count++;
-	    }
-	  for (idxX = 0; idxX <= maxX; idxX++)
-	    {
+        {
+          if (!id) 
+            {
+              if (!(count%target)) 
+                {
+                  self->UpdateProgress(count/(50.0*target) 
+                                       + (maxZ+1)*(maxY+1));
+                }
+              count++;
+            }
+          for (idxX = 0; idxX <= maxX; idxX++)
+            {
 
-	      // Lauren should this be the outer loop instead (better caching?)
-	      //outTensors->GetTuple(ptId,(float *)outT);
+              // Lauren should this be the outer loop instead (better caching?)
+              //outTensors->GetTuple(ptId,(float *)outT);
 
-	      // init output tensor to 0's for summing
-	      for (i = 0; i < 3; i++)
-		{
-		  for (j = 0; j < 3; j++)
-		    {
-		      outT[i][j] = 0;
-		    }
-		}
+              // init output tensor to 0's for summing
+              for (i = 0; i < 3; i++)
+                {
+                  for (j = 0; j < 3; j++)
+                    {
+                      outT[i][j] = 0;
+                    }
+                }
 
-	      // no diffusion image
-	      So = (double)*inPtrs[0]/inputScaling;
-	      // make sure not less than 0
-	      if (So < 0)
-		So = 0;
+              // no diffusion image
+              So = (double)*inPtrs[0]/inputScaling;
+              // make sure not less than 0
+              if (So < 0)
+                So = 0;
 
-	      // create tensor from combination of gradient inputs
-	      for (k = 1; k < numInputs; k++)
-		{
-		  // diffusion from kth gradient
-		  Sk = (double)*inPtrs[k]/inputScaling;
-		  
-		  // make sure not less than 0
-		  if (Sk < 0)
-		    Sk = 0;
+              // create tensor from combination of gradient inputs
+              for (k = 1; k < numInputs; k++)
+                {
+                  // diffusion from kth gradient
+                  Sk = (double)*inPtrs[k]/inputScaling;
+                  
+                  // make sure not less than 0
+                  if (Sk < 0)
+                    Sk = 0;
 
-		  // remove noise, gradient signal must be smaller
-		  // than the non-gradient signal since diffusion
-		  // introduces signal loss.
-		  // so do max(0, logSo-logSk)
-		  if (So < Sk) 
-		    Sk = So;
+                  // remove noise, gradient signal must be smaller
+                  // than the non-gradient signal since diffusion
+                  // introduces signal loss.
+                  // so do max(0, logSo-logSk)
+                  if (So < Sk) 
+                    Sk = So;
 
-		  if (Sk == 0)
-		    {
-		      fk = 0;
-		    }
-		  else 
-		    {
-		      // regularization factor is large when Sk is 
-		      // small.  Remove noise where there's little signal.
-		      r = alpha*exp(-beta*Sk);
-		      fk = (log(So+r) - log(Sk+r))/b;
-		    }
-		  // add contribution in the proper direction
-		  gradientIdx = k-1; // row of G is the current gradient
-		  idx = 0;           // step along columns of G
-		  for (i = 0; i < 3; i++)
-		    {
-		      for (j = 0; j < 3; j++)
-			{
-			  val = fk*G[gradientIdx][idx];
-			  //outT->AddComponent(i,j,val);
-			  outT[i][j] += val;
-			  idx++;
-			}
-		    }
-
-
-		  // increment the kth pointer
-		  inPtrs[k]++;
-		}
+                  if (Sk == 0)
+                    {
+                      fk = 0;
+                    }
+                  else 
+                    {
+                      // regularization factor is large when Sk is 
+                      // small.  Remove noise where there's little signal.
+                      r = alpha*exp(-beta*Sk);
+                      fk = (log(So+r) - log(Sk+r))/b;
+                    }
+                  // add contribution in the proper direction
+                  gradientIdx = k-1; // row of G is the current gradient
+                  idx = 0;           // step along columns of G
+                  for (i = 0; i < 3; i++)
+                    {
+                      for (j = 0; j < 3; j++)
+                        {
+                          val = fk*G[gradientIdx][idx];
+                          //outT->AddComponent(i,j,val);
+                          outT[i][j] += val;
+                          idx++;
+                        }
+                    }
 
 
-	      // Pixel operation	      
-	      outTensors->SetTuple(ptId,(float *)outT);
-	      // copy no diffusion data through for scalars
-	      //*outPtr = *inPtrs[0];
-	      // use the trace as the scalar
-	      *outPtr = (outT[0][0]+outT[1][1]+outT[2][2]);
-			     
-	      ptId ++;
-	      inPtrs[0]++;
-	      outPtr++;
-	    }
-	  outPtr += outIncY;
-	  ptId += outIncY;
-	  for (k = 0; k < numInputs; k++)
-	    {
-	      inPtrs[k] += inIncY;
-	    }
-	}
+                  // increment the kth pointer
+                  inPtrs[k]++;
+                }
+
+
+              // Pixel operation              
+              outTensors->SetTuple(ptId,(float *)outT);
+              // copy no diffusion data through for scalars
+              //*outPtr = *inPtrs[0];
+              // use the trace as the scalar
+              *outPtr = (outT[0][0]+outT[1][1]+outT[2][2]);
+                             
+              ptId ++;
+              inPtrs[0]++;
+              outPtr++;
+            }
+          outPtr += outIncY;
+          ptId += outIncY;
+          for (k = 0; k < numInputs; k++)
+            {
+              inPtrs[k] += inIncY;
+            }
+        }
       outPtr += outIncZ;
       ptId += outIncZ;
 
       for (k = 0; k < numInputs; k++)
-	{
-	  inPtrs[k] += inIncZ;
-	}
+        {
+          inPtrs[k] += inIncZ;
+        }
     }
 }
 
@@ -357,8 +358,8 @@ static void vtkImageDiffusionTensorExecute(vtkImageDiffusionTensor *self,
 // It just executes a switch statement to call the correct function for
 // the regions data types.
 void vtkImageDiffusionTensor::ThreadedExecute(vtkImageData **inDatas, 
-					      vtkImageData *outData,
-					      int outExt[6], int id)
+                                              vtkImageData *outData,
+                                              int outExt[6], int id)
 {
   int idx;
   void **inPtrs;
@@ -382,32 +383,32 @@ void vtkImageDiffusionTensor::ThreadedExecute(vtkImageData **inDatas,
   for (idx = 0; idx < this->NumberOfInputs; ++idx)
     {
       if (inDatas[idx] != NULL)
-	{
-	  // this filter expects all inputs to have the same extent
-	  // Lauren check the above.
+        {
+          // this filter expects all inputs to have the same extent
+          // Lauren check the above.
 
-	  // this filter expects 1 scalar component input
-	  if (inDatas[idx]->GetNumberOfScalarComponents() != 1)
-	    {
-	      vtkErrorMacro(<< "Execute: input" << idx << " has " << 
-	      inDatas[idx]->GetNumberOfScalarComponents() << 
-	      " instead of 1 scalar component");
-	      return;
-	    }
+          // this filter expects 1 scalar component input
+          if (inDatas[idx]->GetNumberOfScalarComponents() != 1)
+            {
+              vtkErrorMacro(<< "Execute: input" << idx << " has " << 
+              inDatas[idx]->GetNumberOfScalarComponents() << 
+              " instead of 1 scalar component");
+              return;
+            }
 
 
-	  // this filter expects that output is float
-	  if (outData->GetScalarType() != VTK_FLOAT)
-	    {
-	      vtkErrorMacro(<< "Execute: output ScalarType (" << 
-	      outData->GetScalarType() << 
-	      "), must be float");
-	      return;
-	    }
-	  
-	}
+          // this filter expects that output is float
+          if (outData->GetScalarType() != VTK_FLOAT)
+            {
+              vtkErrorMacro(<< "Execute: output ScalarType (" << 
+              outData->GetScalarType() << 
+              "), must be float");
+              return;
+            }
+          
+        }
       else {
-	vtkErrorMacro(<< "Execute: input" << idx << " is NULL");
+        vtkErrorMacro(<< "Execute: input" << idx << " is NULL");
       }
     }
 
@@ -425,9 +426,9 @@ void vtkImageDiffusionTensor::ThreadedExecute(vtkImageData **inDatas,
   switch (inDatas[0]->GetScalarType())
     {
       vtkTemplateMacro7(vtkImageDiffusionTensorExecute, this, 
-			inDatas, (VTK_TT **)(inPtrs),
-			outData, (float *)(outPtr), 
-			outExt, id);
+                        inDatas, (VTK_TT **)(inPtrs),
+                        outData, (float *)(outPtr), 
+                        outExt, id);
     default:
       vtkErrorMacro(<< "Execute: Unknown ScalarType");
       return;
