@@ -1,4 +1,11 @@
-#!tclsh
+#!/bin/sh
+# the next line restarts using tclsh \
+exec tclsh "$0" "$@"
+
+# 
+# usage: cmaker.tcl [list of modules]
+# by default, run cmake and make on each of the slicer modules
+# but you can override the default and only run on specified modules
 #
 # make slicerbase and all the modules using the same configurations
 # - sp 2003-01-25
@@ -73,11 +80,28 @@ foreach dir $modulePaths {
         # if it's not the custom one, append it to the list of targets
         if {[string first Custom $moduleName] == -1} {
             if {[file isdirectory ${baseModulePath}/${moduleName}] == 1} {
-                puts "Adding module to target list: ${moduleName}"
                 lappend TARGETS Modules/${moduleName}
             }
         }
     }
+}
+
+#
+# by default, all modules are built.  If some are listed on commandline, only
+# those are built.
+#
+if { $argv != "" } {
+    set newtargets ""
+    foreach argmodule $argv {
+        set idx [lsearch -glob $TARGETS *$argmodule]
+        if { $idx == -1 } {
+            puts stderr "can't find module $argmodule in search path (options are: $TARGETS)"
+            exit
+        } else {
+            lappend newtargets [lindex $TARGETS $idx]
+        }
+    }
+    set TARGETS $newtargets
 }
 
 # use an already built version of vtk
@@ -108,7 +132,7 @@ set SLICER_ARG3 "-DVTKSLICERBASE_BUILD_LIB:PATH=$SLICER_HOME/Base/builds/$BUILD/
 
 foreach target $TARGETS {
 
-    puts "processing $target..."
+    puts "\n----\nprocessing $target..."
 
     set build $SLICER_HOME/$target/builds/$BUILD 
     catch "file mkdir $build"
