@@ -62,7 +62,6 @@
 #   DTMRIAddPreciseStreamline
 #   DTMRIUpdateTractingMethod
 #   DTMRIUpdateBSplineOrder
-#   DTMRIConfigureStreamline
 #   DTMRIUpdateTractColor
 #   DTMRIRemoveAllStreamlines
 #   DTMRIAddAllStreamlines
@@ -123,7 +122,7 @@ proc DTMRIInit {} {
     set Module($m,author) "Lauren O'Donnell"
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.34 $} {$Date: 2004/10/27 22:01:42 $}]
+                  {$Revision: 1.35 $} {$Date: 2004/11/12 02:24:45 $}]
 
      # Define Tabs
     #------------------------------------
@@ -299,7 +298,7 @@ proc DTMRIInit {} {
     set DTMRI(mode,glyphEigenvectorList,tooltips) {{When displaying DTMRIs as Lines, use the eigenvector corresponding to the largest eigenvalue.} {When displaying DTMRIs as Lines, use the eigenvector corresponding to the middle eigenvalue.} {When displaying DTMRIs as Lines, use the eigenvector corresponding to the smallest eigenvalue.}}
 
     # type of glyph coloring
-    set DTMRI(mode,glyphColor) Direction; # default to direction
+    set DTMRI(mode,glyphColor) Linear; # default linear matches the vtk class
     set DTMRI(mode,glyphColorList) {Linear Planar Spherical Max Middle Min MaxMinusMiddle RA FA Direction}
     set DTMRI(mode,glyphColorList,tooltip) "Color DTMRIs according to\nLinear, Planar, or Spherical measures,\nwith the Max, Middle, or Min eigenvalue,\nwith relative or fractional anisotropy (RA or FA),\nor by direction of major eigenvector."
 
@@ -326,9 +325,9 @@ proc DTMRIInit {} {
     set DTMRI(mode,reformat) 0
 
     # display properties of the actors
-    set DTMRI(actor,ambient) 1
-    set DTMRI(actor,diffuse) .2
-    set DTMRI(actor,specular) .4
+    #set DTMRI(actor,ambient) 1
+    #set DTMRI(actor,diffuse) .2
+    #set DTMRI(actor,specular) .4
 
     # Whether to remove actors on module exit
     set DTMRI(vtk,actors,removeOnExit) 1
@@ -449,14 +448,6 @@ proc DTMRIInit {} {
     # Variables for auto streamline display
     #------------------------------------
     set DTMRI(mode,autoTractsLabel,tooltip) "A tract will be seeded in each voxel of the ROI which is colored with this label."
-
-    #------------------------------------
-    # Variables for vtk object creation
-    #------------------------------------
-    
-    # ID of the last streamline created
-    set DTMRI(vtk,streamline,currentID) -1
-    set DTMRI(vtk,streamline,idList) ""
 
     #------------------------------------
     # Variables for preprocessing
@@ -592,7 +583,20 @@ proc DTMRIInit {} {
 # .END
 #-------------------------------------------------------------------------------
 proc DTMRIUpdateMRML {} {
-    #puts "Lauren in DTMRIUpdateMRML"
+    global Tensor
+
+    set t $Tensor(activeID)
+    
+    if {$t != "" } {
+        # in case transformation matrices have moved around
+        # our tensor data, set up the tractography matrix again.
+        # transform from World coords to scaledIJK of the tensors
+        vtkTransform transform
+        DTMRICalculateActorMatrix transform $t    
+        transform Inverse
+        DTMRI(vtk,streamlineControl) SetWorldToTensorScaledIJK transform
+        transform Delete 
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -1437,7 +1441,7 @@ set FrameOption3 [Notebook:frame $f {Option 3}]
     #-------------------------------------------
     set f $fParams.fTracts.fColors.fChooseColor
 
-    DevAddButton $f.b "Color:" "ShowColors"
+    DevAddButton $f.b "Color:" {ShowColors DTMRIUpdateTractColorToSolid}
     eval {entry $f.e -width 20 \
           -textvariable Label(name)} $Gui(WEA) \
     {-bg $Gui(activeWorkspace) -state disabled}
@@ -2385,59 +2389,6 @@ set FrameOption3 [Notebook:frame $f {Option 3}]
     TooltipAdd $f.bCreate "Click this button to create a new protocol after filling in parameters entries"
     
 
-
-#
-#    foreach frame "Top Middle Bottom" {
-#    frame $f.f$frame -bg $Gui(activeWorkspace)
-#    pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
-#    }
-#    pack $f -side top -padx 3 -pady $Gui(pad) -fill x
-#    $f configure  -relief groove -bd 3 ###
-#
-#
-#    #-------------------------------------------
-#    # Convert->Pattern->Parameters frame->top (frame title)
-#    #-------------------------------------------
-#    set f $fConvert.fConvert.fParameter.fTop
-#    DevAddLabel $f.l "Conversion Parameters:"
-#    pack $f.l -side top -padx $Gui(pad) -pady 0 -fill x
-#
-#    #-------------------------------------------
-#    # Convert->Pattern->Parameters frame->Middle (LeBihan)
-#    #-------------------------------------------
-#    set f $fConvert.fConvert.fParameter.fMiddle
-#    DevAddLabel $f.l "LeBihan factor (b):"
-#    eval {entry $f.eEntry -textvariable DTMRI(convert,lebihan) -width 20} $Gui(WEA)
-#     pack $f.l -side top -padx $Gui(pad) -pady 0 -fill x
-
-
-#Raul: Depreceated funcionality
-    #-------------------------------------------
-    # Convert->Top frame
-    #-------------------------------------------
-#    set f $fConvert.fTop
-    # file browse box: widget, array, var, label, proc, "", startdir
-#    DevAddFileBrowse $f DTMRI FileName "File"    DTMRISetFileName "" {\$DTMRI(defaultDir)}
-
-    # Lauren does default dir work?
-
-    #-------------------------------------------
-    # Convert->Bottom frame
-    #-------------------------------------------
-#    set f $fConvert.fBottom
-    # Lauren test
-#    DevAddButton $f.bTest "Add" MainTensorAddTensor 8
-
-#    DevAddButton $f.bApply "Apply" "DTMRIPropsApply; Render3D" 8
-#    DevAddButton $f.bCancel "Cancel" "DTMRIPropsCancel" 8
-
-    # Lauren test
-#    grid $f.bTest $f.bApply $f.bCancel -padx $Gui(pad) -pady $Gui(pad)
-#    grid $f.bApply $f.bCancel -padx $Gui(pad) -pady $Gui(pad)
-
-
-
-
 ######################################################################################
 ######################################################################################
 ######################################################################################
@@ -2611,25 +2562,6 @@ set FrameOption3 [Notebook:frame $f {Option 3}]
     frame $f.fEntry2  -bg $Gui(activeWorkspace)
     frame $f.fButton  -bg $Gui(activeWorkspace)
     pack $f.fEntry $f.fEntry2 $f.fButton -side top -padx $Gui(pad) -pady $Gui(pad)
-
-    #     set rows {0 1 2 3}
-    #     set cols {0 1 2 3}    
-    #     foreach row $rows {
-    #         set f $fDevel.fMiddle.fEntry
-    #         frame $f.f$row
-    #         pack $f.f$row -side top -padx $Gui(pad) -pady $Gui(pad)
-    #         set f $f.f$row
-    #         foreach col $cols {
-    #             eval {entry $f.e$col -width 5 \
-    #                     -textvariable \
-    #                     DTMRI(recalculate,userMatrix,$row,$col) \
-    #                 } $Gui(WEA)
-    #             pack $f.e$col -side left -padx $Gui(pad) -pady 2        
-    #         }
-    #     }    
-    #     set f $fDevel.fMiddle.fButton
-    #     DevAddButton $f.bApply "Recalculate DTMRIs" {DTMRIRecalculateDTMRIs}
-    #     pack $f.bApply -side top -padx $Gui(pad) -pady $Gui(pad) 
 
     set f $fSave.fMiddle.fEntry
     
@@ -3318,7 +3250,7 @@ proc DTMRIPropsApply {} {
         set DTMRI(freeze) 0
 
         # Activate the new data object
-        MainDataSetActive Tensor $i
+        DTMRISetActive $i
 
     } else {
         # do we do a re-read of the object if user changed certain things?
@@ -3626,22 +3558,6 @@ proc DTMRIUpdateMaskLabel {} {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC DTMRIUpdateActor
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc DTMRIUpdateActor {actor} {
-    global DTMRI
-    
-    [$actor GetProperty] SetAmbient $DTMRI(actor,ambient)
-    [$actor GetProperty] SetDiffuse $DTMRI(actor,diffuse)
-    [$actor GetProperty] SetSpecular $DTMRI(actor,specular)
-    [$actor GetProperty] SetOpacity $DTMRI(actor,opacity)
-
-}
-
-#-------------------------------------------------------------------------------
 # .PROC DTMRISpecificVisualizationSettings
 # Set up visualization to see DTMRIs well.
 # Transparent 3D slices and black background...
@@ -3859,24 +3775,6 @@ proc DTMRIUpdateGlyphScalarRange {{not_used ""}} {
     set DTMRI(mode,glyphScalarRange,hi) \
     [DTMRIRoundFloatingPoint $s2]
 
-    # If we are doing streamlines, tell them how to build LUT
-    # Get scalar range from the data since this is how we
-    # are coloring streamlines now
-    set t $Tensor(activeID)
-    scan [[Tensor($t,data) GetOutput] GetScalarRange]  \
-        "%f %f" s1 s2
-    # make sure that the scalars hi and low are not equal since
-    # this causes an error from the mapper
-    if {$s2 == $s1} {
-    set s1 0
-    set s2 1
-    }
-    foreach id $DTMRI(vtk,streamline,idList) {
-        set streamline streamln,$id
-        eval {DTMRI(vtk,$streamline,mapper)   SetScalarRange}  \
-        $s1 $s2
-    }
-
     # This causes multiple renders since for some reason
     # the scalar bar does not update on the first one
     Render3D
@@ -3903,14 +3801,7 @@ proc DTMRISelectRemoveHyperStreamline {x y z} {
     # see which actor was picked
     set actor [DTMRI(vtk,picker) GetActor]
 
-    # if it's one of our streamlines, remove it from the scene
-    foreach id $DTMRI(vtk,streamline,idList) {
-        set streamline streamln,$id
-    if {[string compare $actor "DTMRI(vtk,$streamline,actor)"] == 0} {
-        MainRemoveActor $actor
-            $actor SetVisibility 0
-    }
-    }    
+    DTMRI(vtk,streamlineControl) DeleteStreamline $actor
 }
 
 #-------------------------------------------------------------------------------
@@ -3946,10 +3837,8 @@ proc DTMRISelectStartTractography {x y z {render "true"} } {
 # .END
 #-------------------------------------------------------------------------------
 proc DTMRISelectStartHyperStreamline {x y z {render "true"} } {
-    global DTMRI Tensor
+    global DTMRI Tensor Color Label Volume
     global Select
-
-    #puts "Select Picker  (x,y,z):  $x $y $z"
 
 
     set t $Tensor(activeID)
@@ -3957,47 +3846,13 @@ proc DTMRISelectStartHyperStreamline {x y z {render "true"} } {
         puts "DTMRISelect: No DTMRIs have been read into the slicer"
         return
     }
-
-    # Get coordinates in scaled-ijk land
-    #------------------------------------
-    set point [DTMRIGetScaledIjkCoordinatesFromWorldCoordinates $x $y $z]
-
-    # check if inside data set (return value -1 if not)
-    #------------------------------------
-    foreach p $point {
-        if {$p < 0} {
-            puts "Point $x $y $z outside of DTMRI dataset"
-            return
-        }
-    }
-
-    #puts "Point $point inside of DTMRI dataset"
-
-    # make new hyperstreamline 
-    #------------------------------------
-    DTMRIAddStreamline
-    set streamln streamln,$DTMRI(vtk,streamline,currentID)
-
-    # start pipeline (never use reformatted data here)
-    #------------------------------------
-    DTMRI(vtk,$streamln) SetInput [Tensor($t,data) GetOutput]
     
-    # start hyperstreamline here
-    #------------------------------------
-    eval {DTMRI(vtk,$streamln) SetStartPosition} $point
-    
-    # Make actor visible now that it has inputs
-    #------------------------------------
-    MainAddActor DTMRI(vtk,$streamln,actor) 
-    DTMRI(vtk,$streamln,actor) VisibilityOn
+    # set mode to On (the Display Tracts button will go On)
+    set DTMRI(mode,visualizationType,tractsOn) On
 
-    # Put the output streamline's actor in the right place.
-    # Just use the same matrix we use to position the DTMRIs.
-    #------------------------------------
-    vtkTransform transform
-    DTMRICalculateActorMatrix transform $t
-    DTMRI(vtk,$streamln,actor) SetUserMatrix [transform GetMatrix]
-    transform Delete
+    # actually create and display the streamlines
+    DTMRI(vtk,streamlineControl) SeedStreamlineFromPoint $x $y $z
+    DTMRI(vtk,streamlineControl) AddStreamlinesToScene
 
     # Force pipeline execution and render scene
     #------------------------------------
@@ -4108,97 +3963,6 @@ proc DTMRIUpdateStreamlines {} {
 
 
 
-#-------------------------------------------------------------------------------
-# .PROC DTMRIAddStreamline
-# Add a streamline to the scene. Called by SelectStartHyperStreamline, etc.
-# makes all the vtk objects for a new streamline
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc DTMRIAddStreamline {} {
-    global DTMRI Label Tensor Volume
-
-    # Make sure we have streamline actors visible now before 
-    # adding a new one
-    set DTMRI(mode,visualizationType,tractsOn) On
-    DTMRIUpdateStreamlines
-
-    incr DTMRI(vtk,streamline,currentID)
-    set id $DTMRI(vtk,streamline,currentID)
-    lappend DTMRI(vtk,streamline,idList) $id
-
-    #---------------------------------------------------------------
-    # Pipeline for display of tractography
-    #---------------------------------------------------------------
-    set streamline streamln,$id
-    #DTMRIMakeVTKObject vtkHyperStreamline $streamline
-    # use our subclass which makes (i,j,k) points available
-    DTMRIMakeVTKObject vtkHyperStreamlinePoints $streamline
-
-    foreach var $DTMRI(stream,variableList) {
-    DTMRI(vtk,$streamline) Set$var $DTMRI(stream,$var)
-    }
-
-    #DTMRI(vtk,$streamline) DebugOn
-
-    DTMRI(vtk,$streamline) AddObserver StartEvent MainStartProgress
-    DTMRI(vtk,$streamline) AddObserver ProgressEvent "MainShowProgress DTMRI(vtk,$streamline)"
-    DTMRI(vtk,$streamline) AddObserver EndEvent MainEndProgress
-
-
-    # Display of DTMRI streamline: LUT and Mapper
-    #------------------------------------
-    set object $streamline,lut
-    # Lauren we may want to use this once have no neg eigenvalues
-    #DTMRIMakeVTKObject vtkLogLookupTable $object
-    DTMRIMakeVTKObject vtkLookupTable $object
-    DTMRI(vtk,$object) SetHueRange .6667 0.0
-    #    DTMRIAddObjectProperty $object HueRange \
-    #        {.6667 0.0} float {Hue Range}
-
-    set object $streamline,mapper
-    DTMRIMakeVTKObject vtkPolyDataMapper $object
-    DTMRI(vtk,$streamline,mapper) SetInput [DTMRI(vtk,$streamline) GetOutput]
-    DTMRI(vtk,$streamline,mapper) SetLookupTable DTMRI(vtk,$streamline,lut)
-    DTMRIAddObjectProperty $object ImmediateModeRendering \
-    1 bool {Immediate Mode Rendering}    
-
-    # Display of DTMRI streamline: Actor
-    #------------------------------------
-    set object $streamline,actor
-    DTMRIMakeVTKObject vtkActor $object
-    DTMRI(vtk,$streamline,actor) SetMapper DTMRI(vtk,$streamline,mapper)
-    [DTMRI(vtk,$streamline,actor) GetProperty] SetAmbient 1
-    [DTMRI(vtk,$streamline,actor) GetProperty] SetDiffuse 0
-
-    # Update the scalar range of everything
-    # this makes the tube's mapper display the streamline in colors
-    DTMRIUpdateGlyphScalarRange
-
-    # if we are coloring a solid color do so
-    # save the color from when this was created
-    set DTMRI(vtk,$streamline,color) $Label(name)
-    switch $DTMRI(mode,tractColor) {
-        "SolidColor" {
-            DTMRIConfigureStreamline $streamline ScalarVisibility 0
-            DTMRIConfigureStreamline $streamline Color \
-                $DTMRI(vtk,$streamline,color)
-        }
-        "MultiColor" {
-            # put the volume we wish to color by as the Scalars field 
-            # in the tensor volume.
-            set t $Tensor(activeID)            
-            set v $Volume(activeID)
-            # make sure they have the same extent
-            set ext1 [[Tensor($t,data) GetOutput] GetWholeExtent]
-            set ext2 [[Volume($v,vol) GetOutput] GetWholeExtent]
-            if {[string equal $ext1 $ext2]} {
-                # put the scalars there
-                [[Tensor($t,data) GetOutput] GetPointData] SetScalars [[[Volume($v,vol) GetOutput] GetPointData] GetScalars]
-            }
-        }
-    }
-}
 
 #-------------------------------------------------------------------------------
 # .PROC DTMRIAddPreciseStreamline
@@ -4321,7 +4085,7 @@ proc DTMRIAddPreciseStreamline {} {
 # .END
 #-------------------------------------------------------------------------------
 proc DTMRIUpdateTractingMethod { TractingMethod } {
-    global DTMRI
+    global DTMRI Tensor
     if { $TractingMethod != $DTMRI(stream,tractingMethod) } {
     set DTMRI(stream,tractingMethod) $TractingMethod
     switch $DTMRI(stream,tractingMethod) {
@@ -4335,18 +4099,36 @@ proc DTMRIUpdateTractingMethod { TractingMethod } {
         raise $DTMRI(stream,tractingFrame,BSpline)
         focus $DTMRI(stream,tractingFrame,BSpline)
         $DTMRI(gui,mbTractingMethod)    config -text $TractingMethod
-        if { $DTMRI(vtk,BSpline,init) == 0 && $DTMRI(vtk,BSpline,data) == 1} {
+        #if  $DTMRI(vtk,BSpline,init) == 0 && $DTMRI(vtk,BSpline,data) == 1 
+        # The above logic with the init and the data flags was wrong.
+        # The data flag was only ever set to 1 when creating tensors in the slicer
+        # as opposed to loading in a vtk file, so with a .vtk file it core dumped
+        # when trying to use bspline tracts.
+        # In addition there would have been a bug when changing the active tensor since 
+        # this code would never execute.
+        # So I have just removed the if statement.
+
+            # these lines added by odonnell
+            # this makes sure we are using the active tensor
+            # this is taken from code in the convert volume to tensors procedure
+            set DTMRI(vtk,BSpline,data) 1
+            set t $Tensor(activeID) 
+            DTMRI(vtk,itf) SetDataBounds [Tensor($t,data) GetOutput]
+            for {set i 0} {$i < 6} {incr i} {
+                DTMRI(vtk,extractor($i)) SetInput [Tensor($t,data) GetOutput]
+            }
+
+            # this code was here before
             set DTMRI(vtk,BSpline,init) 1;
             for {set i 0} {$i < 6} {incr i} {
             DTMRI(vtk,extractor($i)) Update
             DTMRI(vtk,bspline($i)) SetInput [DTMRI(vtk,extractor($i)) GetOutput]
-            }
+            }          
             DTMRIUpdateBSplineOrder $DTMRI(stream,BSplineOrder)
             for {set i 0} {$i < 6} {incr i} {
             DTMRI(vtk,bspline($i)) Update
             DTMRI(vtk,impComp($i)) SetInput [DTMRI(vtk,bspline($i)) GetOutput]
             }
-        }
         }
     }
     }
@@ -4376,45 +4158,13 @@ proc DTMRIUpdateBSplineOrder { SplineOrder } {
     }
 }
 
-#-------------------------------------------------------------------------------
-# .PROC DTMRIConfigureStreamline
-# called by DTMRIUpdateTractColor
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc DTMRIConfigureStreamline {streamline operation parameter} {
-    global DTMRI Color
 
-    switch $operation {
-        "Color" {
-            set prop [DTMRI(vtk,$streamline,actor) GetProperty] 
-            # find color from the name we have saved; use 1st as default
-            set c [lindex $Color(idList) 1]
-            foreach id $Color(idList) {
-                if {[Color($id,node) GetName] == $parameter} {
-                    set c $id
-                }
-            }
-            
-            $prop SetAmbient       [Color($c,node) GetAmbient]
-            $prop SetDiffuse       [Color($c,node) GetDiffuse]
-            $prop SetSpecular      [Color($c,node) GetSpecular]
-            $prop SetSpecularPower [Color($c,node) GetPower]
-            eval $prop SetColor    [Color($c,node) GetDiffuseColor] 
-        }
-        "ScalarVisibility" {
-            DTMRI(vtk,$streamline,mapper) SetScalarVisibility $parameter  
+proc DTMRIUpdateTractColorToSolid {} {
+    DTMRIUpdateTractColor SolidColor
+}
 
-            # By default make them brighter than slicer default colors
-            # slicer's colors have ambient 0, diffuse 1, and specular 0
-            set prop [DTMRI(vtk,$streamline,actor) GetProperty] 
-            $prop SetAmbient       0.5
-            $prop SetDiffuse       0.1
-            $prop SetSpecular      0.2
-
-        }
-    }
-
+proc DTMRIUpdateTractColorToMulti {} {
+    DTMRIUpdateTractColor MultiColor
 }
 
 #-------------------------------------------------------------------------------
@@ -4423,27 +4173,75 @@ proc DTMRIConfigureStreamline {streamline operation parameter} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc DTMRIUpdateTractColor {} {
-    global DTMRI
+proc DTMRIUpdateTractColor {{mode ""}} {
+    global DTMRI Volume Tensor Color Label
 
-    set mode $DTMRI(mode,tractColor)
+    if {$mode == ""} {
+        set mode $DTMRI(mode,tractColor)
+    }
     
-    # display new mode while we are working...
-    $DTMRI(gui,mbTractColor)    config -text $mode
-    
+    # whether scalars should be displayed
     switch $mode {
         "SolidColor" {
-            foreach id $DTMRI(vtk,streamline,idList) {
-                set streamline streamln,$id
-                DTMRIConfigureStreamline $streamline ScalarVisibility 0
-                DTMRIConfigureStreamline $streamline Color \
-                    $DTMRI(vtk,$streamline,color)
+
+            # display new mode while we are working...
+            $DTMRI(gui,mbTractColor)    config -text $mode
+
+            # find color from the name we have saved; use 1st as default
+            set c [lindex $Color(idList) 1]
+            foreach id $Color(idList) {
+                if {[Color($id,node) GetName] == $Label(name)} {
+                    set c $id
+                }
             }
+            # set up properties of the new actors we will create
+            set prop [DTMRI(vtk,streamlineControl) GetStreamlineProperty] 
+            #$prop SetAmbient       [Color($c,node) GetAmbient]
+            #$prop SetDiffuse       [Color($c,node) GetDiffuse]
+            #$prop SetSpecular      [Color($c,node) GetSpecular]
+            #$prop SetSpecularPower [Color($c,node) GetPower]
+            eval $prop SetColor    [Color($c,node) GetDiffuseColor] 
+
+            # display solid colors instead of scalars
+            DTMRI(vtk,streamlineControl) ScalarVisibilityOff
         }
         "MultiColor" {
-            foreach id $DTMRI(vtk,streamline,idList) {
-                set streamline streamln,$id
-                DTMRIConfigureStreamline $streamline ScalarVisibility 1
+            # put the volume we wish to color by as the Scalars field 
+            # in the tensor volume.
+            set t $Tensor(activeID)            
+            set v $Volume(activeID)
+
+            # make sure they have the same extent
+            set ext1 [[Tensor($t,data) GetOutput] GetWholeExtent]
+            set ext2 [[Volume($v,vol) GetOutput] GetWholeExtent]
+            if {[string equal $ext1 $ext2]} {
+
+                $DTMRI(gui,mbTractColor)    config -text $mode
+
+                # put the scalars there
+                DTMRI(vtk,streamline,merge) SetScalars [Volume($v,vol) GetOutput]
+
+                # setting scalars like this caused a crash in
+                # the vtkMrmlDataVolume's vtkImageAccumulateDiscrete. why??
+                #[[Tensor($t,data) GetOutput] GetPointData] SetScalars \
+                #    [[[Volume($v,vol) GetOutput] GetPointData] GetScalars]
+
+                DTMRI(vtk,streamlineControl) ScalarVisibilityOn
+                eval {[DTMRI(vtk,streamlineControl) GetStreamlineLookupTable] \
+                          SetRange} [[Volume($v,vol) GetOutput] GetScalarRange]
+                
+                # set up properties of the new actors we will create
+                set prop [DTMRI(vtk,streamlineControl) GetStreamlineProperty] 
+                # By default make them brighter than slicer default colors
+                # slicer's colors have ambient 0, diffuse 1, and specular 0
+                #$prop SetAmbient       0.5
+                #$prop SetDiffuse       0.1
+                #$prop SetSpecular      0.2
+
+            } else {
+                set message "Please select a volume with the same dimensions as the DTMRI dataset (for example one you have created from the Scalars tab)."
+                set result [tk_messageBox  -message $message]
+
             }
         }
     }
@@ -4462,17 +4260,8 @@ proc DTMRIUpdateTractColor {} {
 proc DTMRIRemoveAllStreamlines {} {
     global DTMRI
 
-    # guard against duplicate add/remove actors
-    if {$DTMRI(vtk,streamline,actorsAdded) == "1"} {
-        #puts "Removing"
-        foreach id $DTMRI(vtk,streamline,idList) {
-            set streamline streamln,$id
-            MainRemoveActor DTMRI(vtk,$streamline,actor) 
-        }
-        set DTMRI(vtk,streamline,actorsAdded) 0
-        Render3D
-    }
-    
+    DTMRI(vtk,streamlineControl) RemoveStreamlinesFromScene
+    Render3D
 }
 
 #-------------------------------------------------------------------------------
@@ -4484,17 +4273,8 @@ proc DTMRIRemoveAllStreamlines {} {
 proc DTMRIAddAllStreamlines {} {
     global DTMRI
 
-    # guard against duplicate add/remove actors
-    if {$DTMRI(vtk,streamline,actorsAdded) == "0"} {
-        #puts "Adding"
-        foreach id $DTMRI(vtk,streamline,idList) {
-            set streamline streamln,$id
-            MainAddActor DTMRI(vtk,$streamline,actor) 
-        }
-        set DTMRI(vtk,streamline,actorsAdded) 1
-        Render3D
-    }
-
+    DTMRI(vtk,streamlineControl) AddStreamlinesToScene
+    Render3D
 }
 
 #-------------------------------------------------------------------------------
@@ -4506,57 +4286,20 @@ proc DTMRIAddAllStreamlines {} {
 proc DTMRIDeleteAllStreamlines {} {
     global DTMRI
 
-    foreach id $DTMRI(vtk,streamline,idList) {
-        set streamline streamln,$id
-
-        # guard against duplicate add/remove actors
-    if {$DTMRI(vtk,streamline,actorsAdded) == "1"} {
-        #puts "Removing"
-        MainRemoveActor DTMRI(vtk,$streamline,actor) 
-    }
-
-    # Remove node's ID from idList
-    #set i [lsearch $DTMRI(vtk,streamline,idList) $id]
-    #set newList [lreplace $newList $i $i]
-
-    #---------------------------------------------------------------
-    # Pipeline for display of tractography
-    #---------------------------------------------------------------
-    set streamline streamln,$id
-    DTMRIDeleteVTKObject $streamline
-
-    # Display of DTMRI streamline: LUT and Mapper
-    #------------------------------------
-    set object $streamline,lut
-    DTMRIDeleteVTKObject $object
-    
-    set object $streamline,mapper
-    DTMRIDeleteVTKObject $object
-
-    # Display of DTMRI streamline: Actor
-    #------------------------------------
-    set object $streamline,actor
-    DTMRIDeleteVTKObject $object
-    }
-    
-    # reset the list with all removed
-    set DTMRI(vtk,streamline,idList) ""
-
-    # guard against duplicate add/remove actors    
-    set DTMRI(vtk,streamline,actorsAdded) 0
-
+    DTMRI(vtk,streamlineControl) DeleteAllStreamlines
     Render3D
 }
 
 #-------------------------------------------------------------------------------
 # .PROC DTMRISeedStreamlinesFromSegmentation
-# In conjunction with DTMRIExecuteForProgrammableFilter, seeds
-# streamlines at all points in a segmentation.
+# Seeds streamlines at all points in a segmentation.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc DTMRISeedStreamlinesFromSegmentation {{verbose 1}} {
-    global DTMRI Volume Tensor
+    global DTMRI Label Tensor Volume
+
+    set t $Tensor(activeID)
     set v $Volume(activeID)
 
     # ask for user confirmation first
@@ -4568,122 +4311,46 @@ proc DTMRISeedStreamlinesFromSegmentation {{verbose 1}} {
         }
     }
 
-    # filter to grab list of points in the segmentation
-    catch "DTMRI(vtk,programmableFilt) Delete"
-    vtkProgrammableAttributeDataFilter DTMRI(vtk,programmableFilt)
+    # set mode to On (the Display Tracts button will go On)
+    set DTMRI(mode,visualizationType,tractsOn) On
+    
+    DTMRI(vtk,streamlineControl) SetInputROI [Volume($v,vol) GetOutput] 
+    DTMRI(vtk,streamlineControl) SetInputROIValue $Label(label)
+    #DTMRI(vtk,streamlineControl) SetInputTensorField [Tensor($t,data) GetOutput] 
+    DTMRI(vtk,streamline,merge) SetTensors [Tensor($t,data) GetOutput]
+    DTMRI(vtk,streamline,merge) SetGeometry [Tensor($t,data) GetOutput]
+    DTMRI(vtk,streamline,merge) SetScalars [Tensor($t,data) GetOutput]
+    DTMRI(vtk,streamline,merge) SetVectors [Tensor($t,data) GetOutput]
+    DTMRI(vtk,streamline,merge) SetNormals [Tensor($t,data) GetOutput]
+    DTMRI(vtk,streamline,merge) SetTCoords [Tensor($t,data) GetOutput]
+    DTMRI(vtk,streamline,merge) Update
+    DTMRI(vtk,streamlineControl) SetInputTensorField \
+        [DTMRI(vtk,streamline,merge) GetOutput] 
 
-    set t $Tensor(activeID)
-    set v $Volume(activeID)
-
-    #DTMRI(vtk,programmableFilt) SetInput [Tensor($t,data) GetOutput] 
-    DTMRI(vtk,programmableFilt) SetInput [Volume($v,vol) GetOutput] 
-    DTMRI(vtk,programmableFilt) SetExecuteMethod \
-    DTMRIExecuteForProgrammableFilter
-
-    set DTMRI(streamlineList) ""
-
-    DTMRI(vtk,programmableFilt) Update
-    DTMRI(vtk,programmableFilt) Delete
-
-    # Now do a streamline at each point
+    # transform from ROI coords to World coords
     # Get positioning information from the MRML node
     # world space (what you see in the viewer) to ijk (array) space
-    vtkTransform trans
-    set v $Volume(activeID)
-    set node Volume($v,node)
-    trans SetMatrix [$node GetWldToIjk]
+    vtkTransform transform
+    transform SetMatrix [Volume($v,node) GetWldToIjk]
     # now it's ijk to world
-    trans Inverse
-    foreach point $DTMRI(streamlineList) {
-        #puts "..$point"
+    transform Inverse
+    DTMRI(vtk,streamlineControl) SetROIToWorld transform
+    transform Delete
 
-        # find out where the point actually is in world space
-        set world [eval {trans TransformPoint} $point]
-        puts $world
-        flush stdout
-        eval {DTMRISelectStartTractography} $world "false"
-        
-        # if we are keeping track of all of the points that 
-        # were calculated in the streamline
-        #set streamln streamln,$DTMRI(vtk,streamline,currentID)
-        #puts "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"
-        #puts [[DTMRI(vtk,$streamln) GetHyperStreamline0] Print]
-        #puts "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"    
-    }
+    # transform from World coords to scaledIJK of the tensors
+    vtkTransform transform
+    DTMRICalculateActorMatrix transform $t    
+    transform Inverse
+    DTMRI(vtk,streamlineControl) SetWorldToTensorScaledIJK transform
+    transform Delete    
 
-    trans Delete
-}
+    # create all streamlines
+    puts [[DTMRI(vtk,streamlineControl) GetStreamlines] GetNumberOfItems]
+    DTMRI(vtk,streamlineControl) SeedStreamlinesFromROI
+    puts [[DTMRI(vtk,streamlineControl) GetStreamlines] GetNumberOfItems]
 
-
-
-#-------------------------------------------------------------------------------
-# .PROC DTMRIExecuteForProgrammableFilter
-# Just makes a tcl list of nonzero points in the input volume.
-# Used as execute proc of a programmable attribute data filter.
-# We call this to figure out where to seed the streamlines.
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc DTMRIExecuteForProgrammableFilter {} {
-    global Volume DTMRI Label
-
-    # proc for ProgrammableAttributeDataFilter.  Note the use of "double()"
-    # in the calculations.  This protects us from Tcl using ints and 
-    # overflowing.
-
-    puts "Programmable filter executing"
-    set input [DTMRI(vtk,programmableFilt) GetInput]
-    set numPts [$input GetNumberOfPoints]
-    
-    set scalars [[$input GetPointData] GetScalars]
-    
-    set extent [$input GetExtent]
-    puts $extent
-    set xmin [lindex $extent 0]
-    set xmax [expr [lindex $extent 1] + 1]
-
-    set ymin [lindex $extent 2]
-    set ymax [expr [lindex $extent 3] + 1]
-
-    set zmin [lindex $extent 4]
-    set zmax [expr [lindex $extent 5] + 1]
-
-    # this programmable filter is amazing, we are really
-    # looping through the pixels in tcl code here:
-    set i 0
-    
-    for {set z $zmin} {$z < $zmax} {incr z} {
-        puts "Slice $z"
-        for {set y $ymin} {$y < $ymax} {incr y} {
-            
-            for {set x $xmin} {$x < $xmax} {incr x} {
-                
-                set s [$scalars GetTuple1 $i]
-                
-                # if this matches the selected label
-                if {$s == $Label(label)} {
-                    
-                    # for each labelled point in the segmentation
-                    # we want to start a streamline
-                    #puts $s
-
-                    # save on the list of points for later use
-                    lappend DTMRI(streamlineList) "$x $y $z"
-                }
-                
-                # point index
-                incr i
-                
-            } 
-        } 
-    } 
-    
-    # should we pass the input through (points)?
-    #[$output GetPointData] PassData [$input GetPointData]
-
-    puts "done $x $y $z $i"
-    # ignore output for now, we don't care
-    #[[DTMRI(vtk,programmableFilt) GetOutput] GetPointData] SetScalars scalars
+    # actually display streamlines
+    DTMRI(vtk,streamlineControl) AddStreamlinesToScene
 }
 
 
@@ -5264,7 +4931,7 @@ proc DTMRIAddObjectProperty {object parameter value type desc} {
 # .END
 #-------------------------------------------------------------------------------
 proc DTMRIBuildVTK {} {
-    global DTMRI
+    global DTMRI Module
 
     # Lauren: maybe this module should kill its objects on exit.
     # We must be hogging a ton of memory all over the slicer.
@@ -5496,44 +5163,19 @@ proc DTMRIBuildVTK {} {
     #---------------------------------------------------------------
     # Pipeline for display of tractography
     #---------------------------------------------------------------
-    # we don't really use this one, should rm this code
-    set object streamln
-    #DTMRIMakeVTKObject vtkHyperStreamline $object
-    DTMRIMakeVTKObject vtkHyperStreamlinePoints $object
-    
-    DTMRI(vtk,$object) AddObserver StartEvent MainStartProgress
-    DTMRI(vtk,$object) AddObserver ProgressEvent "MainShowProgress DTMRI(vtk,$object)"
-    DTMRI(vtk,$object) AddObserver EndEvent MainEndProgress
+    vtkMultipleStreamlineController DTMRI(vtk,streamlineControl)
+    #DTMRI(vtk,streamlineControl) DebugOn
+    # give it the renderers in which we display streamlines
+    vtkCollection DTMRI(vtk,renderers)
+    foreach r $Module(Renderers) {
+        DTMRI(vtk,renderers) AddItem $r
+    }
+    DTMRI(vtk,streamlineControl) SetInputRenderers DTMRI(vtk,renderers)
+    # This will be the input to the streamline controller. It lets us merge 
+    # scalars from various datasets with the input tensor field
+    vtkMergeFilter DTMRI(vtk,streamline,merge)
 
-    #DTMRIAddObjectProperty $object StartPosition {9 9 -9} float {Start Pos}
-    #DTMRIAddObjectProperty $object IntegrateMinorEigenvector \
-    #1 bool IntegrateMinorEv
-    DTMRIAddObjectProperty $object MaximumPropagationDistance 60.0 \
-    float {Max Propagation Distance}
-    DTMRIAddObjectProperty $object IntegrationStepLength 0.01 \
-    float {Integration Step Length}
-    DTMRIAddObjectProperty $object StepLength 0.0001 \
-    float {Step Length}        
-    DTMRIAddObjectProperty $object Radius 0.25 \
-    float {Radius}
-    DTMRIAddObjectProperty $object  NumberOfSides 30 \
-    int {Number of Sides}
-    DTMRIAddObjectProperty $object  IntegrationDirection 2 \
-    int {Integration Direction}
-    
-    # Display of DTMRI streamline: LUT and Mapper
-    #------------------------------------
-    set object streamln,lut
 
-    DTMRIMakeVTKObject vtkLookupTable $object
-    DTMRI(vtk,$object) SetHueRange .6667 0.0
-
-    set object streamln,mapper
-    DTMRIMakeVTKObject vtkPolyDataMapper $object
-    DTMRI(vtk,streamln,mapper) SetInput [DTMRI(vtk,streamln) GetOutput]
-    DTMRI(vtk,streamln,mapper) SetLookupTable DTMRI(vtk,streamln,lut)
-    DTMRIAddObjectProperty $object ImmediateModeRendering \
-    1 bool {Immediate Mode Rendering}    
 
     # Apply all settings from tcl variables that were
     # created above using calls to DTMRIAddObjectProperty
@@ -5565,26 +5207,26 @@ proc ConvertVolumeToTensors {} {
     # DTMRI creation filter
     vtkImageDiffusionTensor DTMRI
 
-if {[info exists DTMRI(selectedpattern)]} {
-
-    set DTMRI(convert,numberOfGradients) [lindex $DTMRI($DTMRI(selectedpattern),parameters) 0]
-    set DTMRI(convert,firstGradientImage) [lindex $DTMRI($DTMRI(selectedpattern),parameters) 1]
-    set DTMRI(convert,lastGradientImage) [lindex $DTMRI($DTMRI(selectedpattern),parameters) 2]
-    set DTMRI(convert,firstNoGradientImage) [lindex $DTMRI($DTMRI(selectedpattern),parameters) 3]
-    set DTMRI(convert,lastNoGradientImage) [lindex $DTMRI($DTMRI(selectedpattern),parameters) 4]
-    set DTMRI(convert,lebihan) [lindex $DTMRI($DTMRI(selectedpattern),parameters) 5]
-    set DTMRI(convert,gradients) [lindex $DTMRI($DTMRI(selectedpattern),parameters) 6]
-    set DTMRI(convert,order) [lindex $DTMRI($DTMRI(selectedpattern),parameters) 7]
-    
+    if {[info exists DTMRI(selectedpattern)]} {
+        
+        set DTMRI(convert,numberOfGradients) [lindex $DTMRI($DTMRI(selectedpattern),parameters) 0]
+        set DTMRI(convert,firstGradientImage) [lindex $DTMRI($DTMRI(selectedpattern),parameters) 1]
+        set DTMRI(convert,lastGradientImage) [lindex $DTMRI($DTMRI(selectedpattern),parameters) 2]
+        set DTMRI(convert,firstNoGradientImage) [lindex $DTMRI($DTMRI(selectedpattern),parameters) 3]
+        set DTMRI(convert,lastNoGradientImage) [lindex $DTMRI($DTMRI(selectedpattern),parameters) 4]
+        set DTMRI(convert,lebihan) [lindex $DTMRI($DTMRI(selectedpattern),parameters) 5]
+        set DTMRI(convert,gradients) [lindex $DTMRI($DTMRI(selectedpattern),parameters) 6]
+        set DTMRI(convert,order) [lindex $DTMRI($DTMRI(selectedpattern),parameters) 7]
+        
         #Set b-factor
         DTMRI SetB $DTMRI(convert,lebihan)
-
-} else {
-    DevErrorWindow "Please select a protocol"
-    DTMRI Delete
-    return
-
-}
+        
+    } else {
+        DevErrorWindow "Please select a protocol"
+        DTMRI Delete
+        return
+        
+    }
 
 # define if the conversion is volume interleaved or slice interleaved depending on the pattern
 
@@ -5756,6 +5398,21 @@ if {[info exists DTMRI(selectedpattern)]} {
 
         # update slicer internals
         MainVolumesUpdate $id
+
+        # Registration
+        # put the new volume inside the same transform as the Original volume
+        # by inserting it right after that volume in the mrml file
+        set nitems [Mrml(dataTree) GetNumberOfItems]
+        for {set widx 0} {$widx < $nitems} {incr widx} {
+            if { [Mrml(dataTree) GetNthItem $widx] == "Volume($id,node)" } {
+                break
+            }
+        }
+        if { $widx < $nitems } {
+            Mrml(dataTree) RemoveItem $widx
+            Mrml(dataTree) InsertAfterItem Volume($v,node) Volume($id,node)
+            MainUpdateMRML
+        }
         
     }
     # save ids in case we recalculate the DTMRIs
@@ -5792,6 +5449,26 @@ if {[info exists DTMRI(selectedpattern)]} {
 
         # update slicer internals
         MainVolumesUpdate $id
+
+
+        # Registration
+        # put the new volume inside the same transform as the Original volume
+        # by inserting it right after that volume in the mrml file
+        set nitems [Mrml(dataTree) GetNumberOfItems]
+        for {set widx 0} {$widx < $nitems} {incr widx} {
+            if { [Mrml(dataTree) GetNthItem $widx] == "Volume($id,node)" } {
+                break
+            }
+        }
+        if { $widx < $nitems } {
+            Mrml(dataTree) RemoveItem $widx
+            Mrml(dataTree) InsertAfterItem Volume($v,node) Volume($id,node)
+            MainUpdateMRML
+        }
+
+
+        # display this volume so the user knows something happened
+        MainSlicesSetVolumeAll Back $id
     }
 
     # average the two slices of no gradient 
@@ -5849,6 +5526,22 @@ if {[info exists DTMRI(selectedpattern)]} {
     DTMRI Update
     #Tensor($n,data) SetData [DTMRI GetOutput]
     Tensor($n,data) SetImageData [DTMRI GetOutput]
+
+    # Registration
+    # put the new tensor volume inside the same transform as the Original volume
+    # by inserting it right after that volume in the mrml file
+    set nitems [Mrml(dataTree) GetNumberOfItems]
+    for {set widx 0} {$widx < $nitems} {incr widx} {
+        if { [Mrml(dataTree) GetNthItem $widx] == "Tensor($n,node)" } {
+            break
+        }
+    }
+    if { $widx < $nitems } {
+        Mrml(dataTree) RemoveItem $widx
+        Mrml(dataTree) InsertAfterItem Volume($v,node) Tensor($n,node)
+        MainUpdateMRML
+    }
+    
     set DTMRI(vtk,BSpline,data) 1
 
     DTMRI(vtk,itf) SetDataBounds [DTMRI GetOutput]
@@ -5876,7 +5569,7 @@ if {[info exists DTMRI(selectedpattern)]} {
         puts "Lauren node doesn't exist, should unfreeze and fix volumes.tcltoo"
     } else {
         # Activate the new data object
-        MainDataSetActive Tensor $n
+        DTMRISetActive $n
     }
 
 
@@ -5900,6 +5593,8 @@ if {[info exists DTMRI(selectedpattern)]} {
     DTMRI SetOutput ""
     DTMRI Delete
 
+    # display the new volume in the slices
+    RenderSlices
 }
 
 
@@ -6095,7 +5790,7 @@ proc ConvertLSDIrecon {} {
         puts "Lauren node doesn't exist, should unfreeze and fix volumes.tcltoo"
     } else {
         # Activate the new data object
-        MainDataSetActive Tensor $n
+        DTMRISetActive $n
     }
 
 
@@ -6113,178 +5808,6 @@ proc ConvertLSDIrecon {} {
     DTMRI Delete
 
 }
-
-
-
-#-------------------------------------------------------------------------------
-# .PROC MyConvertVolumeToTensors
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc MyConvertVolumeToTensors {} {
-    global DTMRI Volume Tensor
-
-    set v $Volume(activeID)
-    if {$v == "" || $v == $Volume(idNone)} {
-        puts "Can't create DTMRIs from None volume"
-        return
-    }
-
-    # DTMRI creation filter
-    vtkLSDIreconDTMRI DTMRI
-    DTMRI SetInputScaleFactor 10000000
-
-    set count 0
-    for {set i $DTMRI(convert,firstGradientImage)} \
-    {$i  <= $DTMRI(convert,lastGradientImage) } \
-    {incr i} {
-        # 0-based offsets, so subtract 1
-        lappend offsetsGradient [expr $i -1]
-        incr count
-    } 
-    set numberOfGradientImages $count
-
-    set numberOfNoGradientImages 0
-
-    set slicePeriod [expr $numberOfGradientImages]
-    
-    set numberOfGradientImages $DTMRI(convert,numberOfGradients) 
-    DTMRI SetNumberOfGradients $numberOfGradientImages
-
-    for {set i 0} {$i < $DTMRI(convert,numberOfGradients)} {incr i} {
-    eval {DTMRI SetDiffusionGradient $i} [lindex $DTMRI(convert,gradients) $i]
-    }
-
-    # volume we use for input
-    set input [Volume($v,vol) GetOutput]
-
-    # transform gradient directions to make DTMRIs in ijk
-    vtkTransform trans    
-    puts "bla bla"
-    set swap [Volume($v,node) GetFrequencyPhaseSwap]
-    if {$swap == 0} {
-    set elements "\
-                   {0 1 0 0}  \
-                    {1 0 0 0}  \
-                    {0 0 -1 0}  \
-                    {0 0 0 1}  "
-
-    set rows {0 1 2 3}
-    set cols {0 1 2 3}    
-    foreach row $rows {
-        foreach col $cols {
-        [trans GetMatrix] SetElement $row $col \
-            [lindex [lindex $elements $row] $col]
-        }
-    }
-    }   else { 
-    puts "Creating DTMRIs with -y for vtk compliance"
-    trans Scale 1 -1 1
-    }
-    DTMRI SetTransform trans
-    trans Delete
-
-    # produce input vols for DTMRI creation
-    set inputNum 0
-    set DTMRI(recalculate,gradientVolumes) ""
-    foreach slice $offsetsGradient {
-        vtkImageExtractSlices extract$slice
-        extract$slice SetInput $input
-        extract$slice SetSliceOffset $slice
-        extract$slice SetSlicePeriod $slicePeriod
-
-        #puts "----------- slice $slice update --------"    
-        extract$slice Update
-        #puts [[extract$slice GetOutput] Print]
-
-        # pass along in pipeline
-        DTMRI SetDiffusionImage $inputNum [extract$slice GetOutput]
-        incr inputNum
-        
-        # put the filter output into a slicer volume
-        # Lauren this should be optional
-        # make a MRMLVolume for this output
-        set name [Volume($v,node) GetName]
-        set description "$slice gradient volume derived from volume $name"
-        set name gradient${slice}_$name
-        set id [DevCreateNewCopiedVolume $v $description $name]
-        # save id in case we recalculate the DTMRIs
-        lappend DTMRI(recalculate,gradientVolumes) $id
-        puts "created volume $id"
-        Volume($id,vol) SetImageData [extract$slice GetOutput]
-        # fix the image range in the node (less slices than the original)
-        set extent [[Volume($id,vol) GetOutput] GetExtent]
-        set range "[expr [lindex $extent 4] +1] [expr [lindex $extent 5] +1]"
-        eval {Volume($id,node) SetImageRange} $range
-        # recompute the matrices using this offset to center vol in the cube
-        # for some reason this uses the wrong node spacing!
-        # Lauren test 
-        eval {Volume($id,node) SetSpacing} [Volume($id,node) GetSpacing]
-
-        set order [Volume($id,node) GetScanOrder]
-        puts "-------computing ras to ijk from scan order----"
-        Volume($id,node) ComputeRasToIjkFromScanOrder $order
-
-
-        # update slicer internals
-        MainVolumesUpdate $id
-        
-    }
-
-    
-    puts "2----------- DTMRI update --------"
-    DTMRI Update
-    puts "----------- after DTMRI update --------"
-
-
-    # put output into a DTMRI volume
-    # Lauren if volumes and DTMRIs are the same
-    # this should be done like the above
-    # Create the node (vtkMrmlVolumeNode class)
-    set newvol [MainMrmlAddNode Volume Tensor]
-    $newvol Copy Volume($v,node)
-    $newvol SetDescription "DTMRI volume"
-    $newvol SetName [Volume($v,node) GetName]
-    set n [$newvol GetID]
-
-    puts "SPACING [$newvol GetSpacing] DIMS [$newvol GetDimensions] MAT [$newvol GetRasToIjkMatrix]"
-    # fix the image range in the node (less slices than the original)
-    set extent [[Volume($id,vol) GetOutput] GetExtent]
-    set range "[expr [lindex $extent 4] +1] [expr [lindex $extent 5] +1]"
-    eval {$newvol SetImageRange} $range
-    # recompute the matrices using this offset to center vol in the cube
-    set order [$newvol GetScanOrder]
-    
-    $newvol ComputeRasToIjkFromScanOrder $order
-    
-    puts "SPACING [$newvol GetSpacing] DIMS [$newvol GetDimensions] MAT [$newvol GetRasToIjkMatrix]"
-    MainDataCreate Tensor $n Volume
-    
-    # Set the slicer object's image data to what we created
-    DTMRI Update
-    Tensor($n,data) SetImageData [DTMRI GetOutput]
-
-    # This updates all the buttons to say that the
-    # Volume List has changed.
-    MainUpdateMRML
-    # If failed, then it's no longer in the idList
-    if {[lsearch $Tensor(idList) $n] == -1} {
-        puts "Lauren node doesn't exist, should unfreeze and fix volumes.tcl too"
-    } else {
-        # Activate the new data object
-        MainDataSetActive Tensor $n
-    }
-
-
-    # kill objects
-    foreach slice $offsetsGradient {
-        extract$slice SetOutput ""
-        extract$slice Delete
-    }
-}
-
-
 
 
 
@@ -6865,3 +6388,47 @@ proc DTMRICalculateIJKtoRASRotationMatrix {transform t} {
 
 }
 
+
+#-------------------------------------------------------------------------------
+# .PROC DTMRI SetActive
+# Set the active tensor on the menus, and make it input to the 
+# tractography pipeline. (The glyph pipeline input is set up when 
+# the glyph button is pressed, in the procedure DTMRIUpdate. It could
+# be faster to set it up here also.)
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc DTMRISetActive {n} {
+    global Tensor
+
+    # Call the procedure that puts this tensor on the menus
+    MainDataSetActive Tensor $n
+
+    # get the active ID (index into tensor list)
+    set t $Tensor(activeID)
+
+    # set up the tractography pipeline with both data and location
+    # information from the active tensor dataset
+    DTMRI(vtk,streamline,merge) SetTensors [Tensor($t,data) GetOutput]
+    DTMRI(vtk,streamline,merge) SetGeometry [Tensor($t,data) GetOutput]
+    DTMRI(vtk,streamline,merge) SetScalars [Tensor($t,data) GetOutput]
+    DTMRI(vtk,streamline,merge) SetVectors [Tensor($t,data) GetOutput]
+    DTMRI(vtk,streamline,merge) SetNormals [Tensor($t,data) GetOutput]
+    DTMRI(vtk,streamline,merge) SetTCoords [Tensor($t,data) GetOutput]
+    DTMRI(vtk,streamline,merge) Update
+    DTMRI(vtk,streamlineControl) SetInputTensorField \
+        [DTMRI(vtk,streamline,merge) GetOutput] 
+ 
+    # set correct transformation from World coords to scaledIJK of the tensors
+    vtkTransform transform
+    DTMRICalculateActorMatrix transform $t    
+    transform Inverse
+    DTMRI(vtk,streamlineControl) SetWorldToTensorScaledIJK transform
+    transform Delete    
+
+    # start with solid colors since we can't be sure selected volume
+    # is okay to color tracts with (i.e. may not have same size).
+    # this also sets up the correct color for the first tract.
+    DTMRIUpdateTractColorToSolid
+
+}
