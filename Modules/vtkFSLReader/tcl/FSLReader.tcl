@@ -162,7 +162,7 @@ proc FSLReaderInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.5 $} {$Date: 2004/08/30 17:01:49 $}]
+        {$Revision: 1.6 $} {$Date: 2004/08/30 19:48:19 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -241,15 +241,25 @@ proc FSLReaderBuildGUI {} {
     # Refer to the documentation for details on the syntax.
     #
     set help "
-    The FSLReader module is intended to display activation \
+    The FSLReader module is intended to view activation \
     results out of FSL from Univeristy of Oxford, UK.
     <P>
-    Description by tab:
-    <BR>
-    <UL>
-    <LI><B>Report:</B> View FSL report.
-    <LI><B>Volumes:</B> Display Analyze volumes - usually \
-    an activation overlay onto a structural or standard scan.
+    The <B>Report</B> tab allows you to choose an FSL output \
+    directory and to read the html report by specifying any \
+    web browser available on your system.
+    <BR><BR>
+    You can load the time series (filtered_func_data.hdr) on \
+    <B>Time Series</B> tab. You have options to turn on or off \
+    the time series plotting.
+    <P>
+    On <B>Act Overlay</B> tab, you can overlay an activation \
+    onto any background volume. For better display, you need \
+    to make sure they are co-registered. If you already enabled \
+    time series plotting on the previous tab, you may see voxel \
+    time course plotting in a separate window as you move the \
+    mouse over any of the three slice windows. Again, you need \
+    verify that the activation, background volume and time series \
+    are all in the same space. 
     "
     regsub -all "\n" $help {} help
     MainHelpApplyTags FSLReader $help
