@@ -380,7 +380,7 @@ proc MainInit {} {
 
         # Set version info
     lappend Module(versions) [ParseCVSInfo Main \
-        {$Revision: 1.91 $} {$Date: 2002/12/02 14:41:52 $}]
+        {$Revision: 1.92 $} {$Date: 2002/12/03 00:28:06 $}]
 
     # Call each "Init" routine that's not part of a module
     #-------------------------------------------
@@ -550,6 +550,8 @@ proc MainBuildGUI {} {
         "MainViewSetBackgroundColor White; Render3D"
 
     # Help menu
+    $Gui(mHelp) add command -label "Show Splash Screen" -command \
+        "SplashShow cancel" ;# 'cancel' means stay up until clicked on
     $Gui(mHelp) add command -label "About..." -command \
         "MainMenu Help About"
     $Gui(mHelp) add command -label "Documentation..." -command \
