@@ -215,15 +215,13 @@ proc VolAnalyzeSetFileName {} {
 #-------------------------------------------------------------------------------
 proc VolAnalyzeApply {} {
     global Module Volume
+
     if {$Module(verbose) == 1} {
         puts "proc VolAnalyze Apply\nFiletype -s $Volume(VolAnalyze,FileType)"
     }
 
-    # Validate name
-    if {$Volume(name) == ""} {
-        tk_messageBox -message "Please enter a name that will allow you to distinguish this volume."
-        return
-    }
+    if { ![info exists Volume(name)] } { set Volume(name) "Analyze"}
+
     if {[ValidateName $Volume(name)] == 0} {
         tk_messageBox -message "The name can consist of letters, digits, dashes, or underscores"
         return
@@ -259,7 +257,6 @@ proc VolAnalyzeApply {} {
 
     set Volume(isDICOM) 0
     set Volume($i,type) "Analyze"
-    if { ![info exists Volume(name)] } { set Volume(name) "Analyze"}
 
     set dims [$imdata GetDimensions]
     set Volume(lastNum) [expr [lindex $dims 2] - 1]
@@ -275,7 +272,6 @@ proc VolAnalyzeApply {} {
     set Volume(gantryDetectorTilt) 0
     set Volume(numScalars) 1
     set Volume(littleEndian) 1
-    # scan order is Coronal   Posterior Anterior
     set Volume(scanOrder) {IS}
     set Volume(scalarType) {Short}
     set Volume(readHeaders) 0
@@ -311,28 +307,16 @@ proc VolAnalyzeApply {} {
         puts "VolAnalyze: setting full prefix for volume node $i"
     }
 
-    if {$Module(verbose) == 1} {
-        puts "VolAnalyze: set up volume node for $i:"
-        Volume($i,node) Print
-        set badval [[Volume($i,node) GetPosition] GetElement 1 3]
-        puts "VolAnalyze: volume $i position 1 3: $badval"
-    
-        puts "VolAnalyze: calling MainUpdateMRML"
-    }
     # Reads in the volume via the Execute procedure
     MainUpdateMRML
+
     # If failed, then it's no longer in the idList
     if {[lsearch $Volume(idList) $i] == -1} {
         puts "VolAnalyze: failed to read in the volume $i, $Volume(VolAnalyze,FileName)"
         DevErrorWindow "VolAnalyze: failed to read in the volume $i, $Volume(VolAnalyze,FileName)"
         return
     }
-    if {$Module(verbose) == 1} {
-        puts "VolAnalyze: after mainupdatemrml volume node  $i:"
-        Volume($i,node) Print
-        set badval [[Volume($i,node) GetPosition] GetElement 1 3]
-        puts "VolAnalyze: volume $i position 1 3: $badval"
-    }
+
     # allow use of other module GUIs
     set Volumes(freeze) 0
 
