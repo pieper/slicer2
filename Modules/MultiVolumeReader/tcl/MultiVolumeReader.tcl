@@ -149,7 +149,7 @@ proc MultiVolumeReaderInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.18 $} {$Date: 2005/03/17 18:38:19 $}]
+        {$Revision: 1.19 $} {$Date: 2005/03/18 14:38:22 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -234,7 +234,7 @@ proc MultiVolumeReaderBuildGUI {parent {status 0}} {
         -variable MultiVolumeReader(fileChoice) -value single \
         -relief flat -offrelief flat -overrelief raised \
         -selectcolor white} $Gui(WEA)
-    grid $f.bHelp $f.r1  -padx 1 -pady 3 -sticky w
+    grid $f.bHelp $f.r1  -padx 1 -pady 2 -sticky w
 
     set f $parent.fReaderConfig.fFile.fMultiple
     eval {radiobutton $f.r2 -width 27 -text {Load multiple files} \
@@ -247,9 +247,9 @@ proc MultiVolumeReaderBuildGUI {parent {status 0}} {
         -textvariable MultiVolumeReader(filter)} $Gui(WEA)
 
     #The "sticky" option aligns items to the left (west) side
-    grid $f.r2 -row 0 -column 0 -columnspan 2 -padx 5 -pady 3 -sticky w
-    grid $f.lFilter -row 1 -column 0 -padx 1 -pady 3 -sticky w
-    grid $f.eFilter -row 1 -column 1 -padx 1 -pady 3 -sticky w
+    grid $f.r2 -row 0 -column 0 -columnspan 2 -padx 5 -pady 2 -sticky w
+    grid $f.lFilter -row 1 -column 0 -padx 1 -pady 1 -sticky w
+    grid $f.eFilter -row 1 -column 1 -padx 1 -pady 2 -sticky w
 
     set MultiVolumeReader(fileChoice) single
     set MultiVolumeReader(singleRadiobutton) $f.r1
@@ -262,12 +262,12 @@ proc MultiVolumeReaderBuildGUI {parent {status 0}} {
         eval {entry $f.eName -width 16 \
             -textvariable MultiVolumeReader(sequenceName)} $Gui(WEA)
         bind $f.eName <Return> "MultiVolumeReaderLoad $status" 
-        grid $f.lName $f.eName  -padx 3 -pady 3 -sticky w
+        grid $f.lName $f.eName  -padx 3 -pady 2 -sticky w
     }
 
     set f $parent.fReaderConfig.fApply
     DevAddButton $f.bApply "Apply" "MultiVolumeReaderLoad $status" 12 
-    pack $f.bApply -side top -pady 5 
+    pack $f.bApply -side top -pady 3 
 
     set f $parent.fReaderConfig.fStatus
     DevAddLabel $f.lVName "Load status (latest loaded volume):"
