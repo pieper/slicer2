@@ -257,7 +257,7 @@ void vtkImageCrossHair2D::DrawCursor(vtkImageData *outData, int outExt[6])
     x = this->Cursor[0];
     y = this->Cursor[1];
     
-  outData->GetSpacing(mmSpacing);
+    outData->GetSpacing(mmSpacing);
     // Conversions between mm and pixels:
     //   mm = pix * mmSpacing / mag
     //   pix = mm / mmSpacing * mag
@@ -274,9 +274,9 @@ void vtkImageCrossHair2D::DrawCursor(vtkImageData *outData, int outExt[6])
 
     // Check bounds
     if (x < xMin || x > xMax || y < yMin || y > yMax)
-  {
+    {
         return;
-  }
+    }
 
     // Draw horizontal cross
     if (this->IntersectCross)
@@ -286,13 +286,13 @@ void vtkImageCrossHair2D::DrawCursor(vtkImageData *outData, int outExt[6])
     else 
     {
         if (x-gapx >= xMin)
-    {
+        {
             DrawLine(0, y, x-gapx, y, color, outPtr, nxnc, nc);
-    }
+        }
         if (x+gapx <= xMax)
-    {
+        {
             DrawLine(x+gapx, y, nx1, y, color, outPtr, nxnc, nc);
-    }
+        }
     }
 
     // Draw vertical cross
@@ -303,13 +303,13 @@ void vtkImageCrossHair2D::DrawCursor(vtkImageData *outData, int outExt[6])
     else 
     {
         if (y-gapy >= yMin)
-    {
+        {
             DrawLine(x, 0, x, y-gapy, color, outPtr, nxnc, nc);
-    }
+        }
         if (y+gapy <= yMax)
-    {
+        {
             DrawLine(x, y+gapy, x, ny1, color, outPtr, nxnc, nc);
-    }
+        }
     }
 
     // Hashes along horizontal cross
@@ -358,7 +358,7 @@ void vtkImageCrossHair2D::DrawCursor(vtkImageData *outData, int outExt[6])
         eye = this->BullsEyeWidth;
         e = eye / 2;
         if (x-e >= xMin && x+e <= xMax && y-e >= yMin && y+e <= yMax) 
-    {
+        {
             DrawLine(x-e, y-e, x+e, y-e, color, outPtr, nxnc, nc); //bottom
             DrawLine(x+e, y-e, x+e, y+e, color, outPtr, nxnc, nc); //right
             DrawLine(x+e, y+e, x-e, y+e, color, outPtr, nxnc, nc); //top
