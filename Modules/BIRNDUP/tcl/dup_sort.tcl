@@ -178,22 +178,21 @@ itcl::body dup_sort::fill {dir} {
 
     if { [catch "exec java -jar $birnid_manager -create -p $inst -l $linktable -c $patient" err] } {
         DevErrorWindow "Cannot execute BIRN ID manager.  Ensure that UPLOAD2_DIR preference is correct and that Java is installed on your machine."
-        return
-    }
+    } else {
 
-    set resp [exec java -jar $birnid_manager -find -l $linktable -c $patient]
-    if { [catch "exec java -jar $birnid_manager -find -l $linktable -c $patient" err] } {
-        DevErrorWindow "Cannot execute BIRN ID manager to access BIRN ID.  Ensure that LINKTABLE preference is correct."
-        return
-    }
+        if { [catch "exec java -jar $birnid_manager -find -l $linktable -c $patient" err] } {
+            DevErrorWindow "Cannot execute BIRN ID manager to access BIRN ID.  Ensure that LINKTABLE preference is correct."
+            set birnid ""
+        } else {
 
-    scan $resp {Birn ID=%[^,]s} birnid
-    
-    set _study(birnid) $birnid
-    $infocs.birnid configure -state normal
-    $infocs.birnid delete 0 end
-    $infocs.birnid insert end $birnid
-    $infocs.birnid configure -state readonly
+            scan $resp {Birn ID=%[^,]s} birnid
+            set _study(birnid) $birnid
+            $infocs.birnid configure -state normal
+            $infocs.birnid delete 0 end
+            $infocs.birnid insert end $birnid
+            $infocs.birnid configure -state readonly
+        }
+    }
 
 
     #
