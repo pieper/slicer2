@@ -34,12 +34,13 @@
 #   DevAddLabel
 #   DevAddButton ButtonName Message Command Width
 #   DevAddSelectButton TabName Label Message Pack
-#   DevUpdateSelectButton ArrayName type Label Name CommandSet None New LabelMap
-#   DevUpdateSelectButton
-#   DevSelect type id ArrayName VolumeLabel VolumeName
-#   DevSelect
+#   DevUpdateNodeSelectButton ArrayName type Label Name CommandSet None New LabelMap
+#   DevUpdateNodeSelectButton
+#   DevUpdateSelectButton ArrayName Label Name ChoiceList Command
+#   DevSelectNode type id ArrayName ModelLabel ModelName
 #   DevCreateNewCopiedVolume VolumeId Description VolName
-#   DevGetFile filename DefaultExt DefaultDir Title
+#   DevGetFile filename MustPop DefaultExt DefaultDir Title
+#   DevAddFileBrowse Frame ArrayName VarFileName Message Command DefaultExt DefaultDir Title
 #==========================================================================auto=
 # This file exists specifically for user to help fast development
 # of Slicer modules
@@ -226,7 +227,7 @@ proc DevAddSelectButton { TabName f aLabel message pack } {
 }   
 
 #-------------------------------------------------------------------------------
-# .PROC DevUpdateSelectButton
+# .PROC DevUpdateNodeSelectButton
 #
 #  Call this routine from MyModuleUpdateDev or its eqivalent.
 #  Example: DevUpdateSelectButton Volume MyModule Volume1 Volume1 DevSelect
@@ -292,12 +293,12 @@ proc DevAddSelectButton { TabName f aLabel message pack } {
 #}   
 
 #-------------------------------------------------------------------------------
-# .PROC DevUpdateSelectButton
+# .PROC DevUpdateNodeSelectButton
 # 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc DevUpdateSelectButton { type ArrayName Label Name { CommandSet "DevSelect" } { None 1 } { New 0 } { LabelMap 1 }  } {
+proc DevUpdateNodeSelectButton { type ArrayName Label Name { CommandSet "DevSelect" } { None 1 } { New 0 } { LabelMap 1 }  } {
 
 	global Volume Model
         upvar $ArrayName LocalArray
@@ -337,10 +338,44 @@ proc DevUpdateSelectButton { type ArrayName Label Name { CommandSet "DevSelect" 
         }
 }
 
+
 #-------------------------------------------------------------------------------
-# .PROC DevSelect
+# .PROC DevUpdateSelectButton
 #
-# Usually called when a VolumeSelect button has been
+# Updates a Simple Select Button.
+# Note that ArrayName(Name) and ArrayName(ChoiceList) must exist.
+#
+# .ARGS
+#  array ArrayName The array name containing the Volume Choice. Usually the module name.
+#  str Label This is the label of the buttons.
+#  str Name  The Current choice is stored in ArrayName(Name)
+#  array ChoiceList The possible choices are ArrayName(ChoiceList)
+#  str Command  The command to run. The default is no command. (Though, in both cases, the Button display is updated).  Arguments sent to it are the selected choice. Note that if the command requires other arguments, you can do this by setting Command to \"YourCommand arg1 arg2\" You should be able to deal with a \"\" selection. 
+#
+# .END
+#-------------------------------------------------------------------------------
+proc DevUpdateSelectButton { ArrayName Label Name ChoiceList {Command ""} } {
+
+        upvar $ArrayName LocalArray
+
+	# Delete all the current options and create the new ones
+	# ------------------------------------
+	set m $LocalArray(mb$Label).m
+	$m delete 0 end
+
+	foreach v $LocalArray($ChoiceList) {
+            if {$Command != ""} {
+                $m add command -label $v -command "$LocalArray(mb$Label) config -text $v; $Command $v"
+            } else {
+                $m add command -label $v -command "$LocalArray(mb$Label) config -text $v"
+            }
+        }
+    }
+
+#-------------------------------------------------------------------------------
+# .PROC DevSelectNode
+#
+# Usually called when a Select button has been
 # clicked on. Sets the text to put on the button as well as setting
 # the variable to the volume id chosen.
 # 
@@ -348,39 +383,11 @@ proc DevUpdateSelectButton { type ArrayName Label Name { CommandSet "DevSelect" 
 # str type \"Volume\" or \"Model\"
 # int id the id of the selected volume
 # Array ArrayName The name of the array whose variables will be changed.
-# str VolumeLabel The name of the menubutton, without the \"mb\".
-# str VolumeName  The name of the variable to set.
+# str ModelLabel The name of the menubutton, without the \"mb\".
+# str ModelName  The name of the variable to set.
 # .END
 #-------------------------------------------------------------------------------
-#proc DevSetVolume { type id ArrayName VolumeLabel VolumeName} {
-#        global Volume 
-#        upvar $ArrayName LocalArray
-#
-#    if {0 == [info exists LocalArray]} {
-#        upvar 2 $ArrayName LocalArray 
-#    }
-#
-#    if {0 == [info exists LocalArray]} {
-#        DevErrorWindow "Error finding $TabName in DevAddSelectButton"
-#        return
-#    }
-#        if {$id == ""} {
-#                set id $LocalArray($VolumeName)
-#        } else {
-#                set LocalArray($VolumeName) $id
-#        }
-#
-#        $LocalArray(mb$VolumeLabel) config -text "[Volume($id,node) GetName]"
-#}
-
-
-#-------------------------------------------------------------------------------
-# .PROC DevSelect
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc DevSelect { type id ArrayName ModelLabel ModelName} {
+proc DevSelectNode { type id ArrayName ModelLabel ModelName} {
     global Model Volume
     upvar $ArrayName LocalArray
 
@@ -487,14 +494,19 @@ proc DevCreateNewCopiedVolume { OrigId {Description ""} { VolName ""} } {
 #
 # .ARGS
 # str filename The name of the file entered so far
+# int MustPop  1 means that we will pop up a window even if \"filename\" exists. 
 # str DefaultExt The name of the extension for the type of file: Default \"\"
 # str DefaultDir The name of the default directory to choose from: Default is the directory Slicer was started from.
 # str Title      The title of the window to display
 # .END
 #-------------------------------------------------------------------------------
-proc DevGetFile { filename { DefaultExt "" } { DefaultDir "" } {Title "Choose File"} } {
+proc DevGetFile { filename { MustPop 0} { DefaultExt "" } { DefaultDir "" } {Title "Choose File"} } {
 	global Mrml
-puts "got here"
+#        puts "filename: $filename"
+#        puts "DefaultExt $DefaultExt"
+#        puts "DefaultDir $DefaultDir"
+#        puts "Title $Title"
+
 	# Default Directory Choice
 	if {$DefaultDir == ""} {
             set DefaultDir $Mrml(dir);
@@ -507,7 +519,7 @@ puts "got here"
        ######  Do this only if the filename is not "" and is not a dir.
        ############################################################
 
-        if {$filename != "" && ![file isdir $filename] } {
+        if {$filename != "" && ![file isdir $filename] && !$MustPop} {
             if [file exists $filename]  {
                 return [MainFileGetRelativePrefix $filename][file \
                         extension $filename]
@@ -566,3 +578,58 @@ puts "got here"
 	return [MainFileGetRelativePrefix $filename][file \
 		extension $filename]
     }   
+
+#-------------------------------------------------------------------------------
+# .PROC DevAddFileBrowse
+# 
+# Make a typical button for browsing for files
+#  Example:  DevAddFileBrowse $f.fPrefix Custom Prefix \"File\"
+#  Example:  DevAddFileBrowse $f.fPrefix Custom Prefix \"vtk File\" \"vtk\" \"\" \"Browse for a model\"
+#
+# Calls DevGetFile, so defaults for Optional Arguments are set there.
+# ArrayName(VarFileName) must exist already!
+#
+# .ARGS
+# str Frame      The name of the existing frame to modify.
+# Array ArrayName The name of the array whose variables will be changed.
+# str VarFileName The name of the file name variable within the array.
+# str Message     The message to display near the "Browse" button.
+# str Command     A command to run when a file name is entered AND the file entered exists. 
+# str DefaultExt The name of the extension for the type of file. Optional
+# str DefaultDir The name of the default directory to choose from. Optional
+# str Title      The title of the window to display. Optional
+# .END
+#-------------------------------------------------------------------------------
+
+    proc DevAddFileBrowse {Frame ArrayName VarFileName Message { Command ""} { DefaultExt "" } { DefaultDir "" } {Title ""} } {
+
+	global Gui $ArrayName Model
+
+        set f $Frame
+        $f configure  -relief groove -bd 3 -bg $Gui(activeWorkspace)
+
+	frame $f.f -bg $Gui(activeWorkspace)
+	pack $f.f -side top -pady $Gui(pad)
+
+        ## Need to make the string that will become the command.
+
+       set SetVarString  "set $ArrayName\($VarFileName\) \[ DevGetFile \"\$$ArrayName\($VarFileName\)\" 1  \"$DefaultExt\" \"$DefaultDir\" \"$Title\" \]; if \[file exists \$$ArrayName\($VarFileName\)\]  \{ $Command \}"
+
+#        puts $SetVarString
+
+        DevAddLabel  $f.f.l $Message
+        DevAddButton $f.f.b "Browse..." $SetVarString
+
+       set SetVarString  "set $ArrayName\($VarFileName\) \[ DevGetFile \"\$$ArrayName\($VarFileName\)\" 0  \"$DefaultExt\" \"$DefaultDir\" \"$Title\" \]; if \[file exists \$$ArrayName\($VarFileName\)\]  \{ $Command \}"
+
+        pack $f.f.l $f.f.b -side left -padx $Gui(pad)
+
+    eval {entry $f.efile -textvariable "$ArrayName\($VarFileName\)" -width 50} $Gui(WEA)
+        bind $f.efile <Return> $SetVarString
+
+        pack $f.efile -side top -pady $Gui(pad) -padx $Gui(pad) \
+                -expand 1 -fill x
+}
+
+
+

@@ -120,7 +120,7 @@ proc VolumeMathInit {} {
 	#   appropriate info when the module is checked in.
 	#   
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.4 $} {$Date: 2000/07/26 19:07:58 $}]
+		{$Revision: 1.5 $} {$Date: 2000/08/08 15:32:40 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -163,9 +163,9 @@ proc VolumeMathInit {} {
 proc VolumeMathUpdateGUI {} {
 	global VolumeMath Volume
 
-    DevUpdateSelectButton Volume VolumeMath Volume1 Volume1 DevSelect
-    DevUpdateSelectButton Volume VolumeMath Volume2 Volume2 DevSelect
-    DevUpdateSelectButton Volume VolumeMath Volume3 Volume3 DevSelect 0 1 1
+    DevUpdateNodeSelectButton Volume VolumeMath Volume1 Volume1 DevSelectNode
+    DevUpdateNodeSelectButton Volume VolumeMath Volume2 Volume2 DevSelectNode
+    DevUpdateNodeSelectButton Volume VolumeMath Volume3 Volume3 DevSelectNode 0 1 1
 }
 
 #-------------------------------------------------------------------------------
