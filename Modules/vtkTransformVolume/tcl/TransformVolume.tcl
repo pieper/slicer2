@@ -105,7 +105,7 @@ proc TransformVolumeInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.3 $} {$Date: 2005/03/12 17:55:38 $}]
+        {$Revision: 1.4 $} {$Date: 2005/03/14 22:55:50 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -115,6 +115,10 @@ proc TransformVolumeInit {} {
     #   the procedures in this module and others need to access.
     #
     set TransformVolume(resultPrefix) "xformed"
+    set TransformVolume(ForceOutputOrientation) ""
+    set TransformVolume(VolIDs) ""
+    set TransformVolume(RefVolume) ""
+    set TransformVolume(DispVolume) ""
 }
 
 # NAMING CONVENTION:
@@ -224,7 +228,7 @@ proc TransformVolumeBuildGUI {} {
     istransformoption  $f.matopt -labeltext "Transform Node" -labelpos w \
         -background "#e2cdba" -foreground "#000000" \
         -labelfont {helvetica 8} -labelmargin 5 \
-        -command TransformVolumeUpdateResample
+        -command TransformVolumeTransform
 
     set TransformVolume(transform) $f.matopt
     
@@ -233,7 +237,8 @@ proc TransformVolumeBuildGUI {} {
     # Displacement volume
     isvolumeoption  $f.volopt -labeltext "Deformation Volume" -labelpos w \
         -background "#e2cdba" -foreground "#000000" \
-        -labelfont {helvetica 8} -labelmargin 5
+        -labelfont {helvetica 8} -labelmargin 5 \
+        -command TransformVolumeDispVolume
     set TransformVolume(displacementVol) $f.volopt
     
     $TransformVolume(displacementVol) numScalars 3
@@ -243,7 +248,7 @@ proc TransformVolumeBuildGUI {} {
     isvolumeoption  $f.volref -labeltext "Reference(like) Volume" -labelpos w \
         -background "#e2cdba" -foreground "#000000" \
         -labelfont {helvetica 8} -labelmargin 5 \
-        -command TransformVolumeUpdateResample
+        -command TransformVolumeRefVolume
 
     set TransformVolume(referenceVol) $f.volref
 
@@ -305,12 +310,12 @@ proc TransformVolumeBuildGUI {} {
         -labelfont {helvetica 8} -orient horizontal \
         -command TransformVolumeOrientation
 
-    set TransformVolume(orientation) $f.rborient
-
     foreach or {"LR" "RL" "PA" "AP" "IS" "SI"} {
         $f.rborient add $or -text $or
     }
     pack $f.rborient -side top -padx $Gui(pad) -pady $Gui(pad)
+    set TransformVolume(orientation) $f.rborient
+
 
     # Resample->Spacing
     set f $fResample.fOutputSpacing
@@ -364,7 +369,13 @@ proc TransformVolumeBuildGUI {} {
     DevAddButton $f.bAutoDimension "Auto Dimension"  AutoDimension
     pack $f.bAutoDimension -side left -padx $Gui(pad) -pady $Gui(pad)
 
-    
+    catch "destroy .isv"
+
+    isvolume $fResample.isv
+    pack $fResample.isv -side top -padx $Gui(pad) -pady $Gui(pad)
+
+    set TransformVolume(isv) $fResample.isv
+
 }
 
 proc TransformVolumeUpdateGUI {} {
@@ -378,15 +389,13 @@ proc TransformVolumeRun {} {
     global TransformVolume Volume
     
     # get displacement volume
-    set vDisp [$TransformVolume(displacementVol) selectedID]
-    
-    # get volumes to transform under a transform node
-    set volIDs [TransformVolumeGetVolumes [$TransformVolume(transform) selectedID]]
-    catch "destroy .isv"
+    set vDisp $TransformVolume(DispVolume)
     
     isvolume .isv
     
-    foreach v $volIDs {
+    .isv volmenu_update
+
+    foreach v $TransformVolume(VolIDs) {
         
         puts " TransformVolume : transforming volume [Volume($v,node) GetName]"
         
@@ -492,10 +501,43 @@ proc TransformVolumeVolumeExists {name} {
 }
 
 #-----------------------------
+proc TransformVolumeTransform {} {
+    global TransformVolume
+
+    set TransformVolume(VolIDs) [TransformVolumeGetVolumes [$TransformVolume(transform) selectedID]]
+    set TransformVolume(ForceOutputOrientation) ""
+
+    TransformVolumeUpdateResample
+    TransformVolumeUpdatePreview
+}
+
+#-----------------------------
+proc TransformVolumeDispVolume {} {
+    global TransformVolume
+
+    set TransformVolume(DispVolume) [$TransformVolume(displacementVol) selectedID]
+
+    TransformVolumeUpdatePreview
+}
+
+#-----------------------------
+proc TransformVolumeRefVolume {} {
+    global TransformVolume
+
+    set TransformVolume(RefVolume) [$TransformVolume(referenceVol) selectedID]
+    set TransformVolume(ForceOutputOrientation) ""
+
+    TransformVolumeUpdateResample
+    TransformVolumeUpdatePreview
+}
+
+#-----------------------------
 proc TransformVolumeOrientation {} {
     global TransformVolume
 
     set TransformVolume(OutputOrientation) [$TransformVolume(orientation) get]
+    set TransformVolume(ForceOutputOrientation) "1"
+    TransformVolumeUpdatePreview
 }
 
 #-----------------------------
@@ -503,10 +545,10 @@ proc TransformVolumeUpdateResample {} {
     global TransformVolume Volume
 
     # set reference volume
-    set vRef [$TransformVolume(referenceVol) selectedID]
+    set vRef $TransformVolume(RefVolume)
 
     # get volumes to transform under a transform node
-    set volIDs [TransformVolumeGetVolumes [$TransformVolume(transform) selectedID]]
+    set volIDs $TransformVolume(VolIDs)
         
     set v $Volume(idNone)
 
@@ -533,20 +575,234 @@ proc TransformVolumeUpdateResample {} {
         set TransformVolume(OutputDimensionJ) [expr round(abs([lindex $dimension 1]))]
         set TransformVolume(OutputDimensionK) [expr round(abs([lindex $dimension 2]))]
 
-        set TransformVolume(OutputOrientation) [Volume($v,node) GetScanOrder]
-        $TransformVolume(orientation) select $TransformVolume(OutputOrientation)
+        if {$TransformVolume(ForceOutputOrientation) == ""} {
+            set TransformVolume(OutputOrientation) [Volume($v,node) GetScanOrder]
+        }
     }
+    set TransformVolume(ForceOutputOrientation) ""
+    $TransformVolume(orientation) select $TransformVolume(OutputOrientation)
 }
 
+#-----------------------------
+proc TransformVolumeUpdatePreview {} {
+    global TransformVolume Volume
+
+    # get volumes to transform under a transform node
+    set volIDs $TransformVolume(VolIDs)
+        
+    set v $Volume(idNone)
+
+    if {[llength $volIDs] != 0} {
+        set v [lindex $volIDs 0]
+    }
+    
+    # get displacement volume
+    set vDisp $TransformVolume(DispVolume)
+    
+    if {$v != $Volume(idNone)} {
+
+        set isv $TransformVolume(isv)
+
+        $isv volmenu_update
+
+        $isv configure -volume [Volume($v,node) GetName]
+        
+        $isv configure -orientation $TransformVolume(OutputOrientation)
+
+        $isv configure -interpolation $TransformVolume(InterpolationMode)
+
+        $isv set_spacing $TransformVolume(OutputSpacingI) \
+            $TransformVolume(OutputSpacingJ) \
+            $TransformVolume(OutputSpacingK)
+        $isv set_dimensions $TransformVolume(OutputDimensionI) \
+            $TransformVolume(OutputDimensionJ) \
+            $TransformVolume(OutputDimensionK)
+        
+        if {$vDisp != "" && $vDisp != $Volume(idNone)} {
+            $isv configure -warpvolume [Volume($vDisp,node) GetName]
+        }
+        
+        $isv configure -slice [expr int(0.5*$TransformVolume(OutputDimensionK))]
+    }
+        
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC AutoExtent
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc AutoDimension {} {
-    tk_messageBox -message "NOT IMPLEMENTED YET"
+    global TransformVolume Module Matrix Volume
+
+    set volIDs [TransformVolumeGetVolumes [$TransformVolume(transform) selectedID]]
+        
+    set v $Volume(idNone)
+
+    if {[llength $volIDs] != 0} {
+        set v [lindex $volIDs 0]
+    }
+    if {$v != $Volume(idNone)} {
+        
+        #Set default values
+        # Make a RAS to VTK matrix for realign resample
+        # based on the position matrix
+        catch "ModelRasToVtk Delete"
+        vtkMatrix4x4 ModelRasToVtk
+        set position [Volume($v,node) GetPositionMatrix]
+        
+        ModelRasToVtk Identity
+        set ii 0
+        for {set i 0} {$i < 4} {incr i} {
+            for {set j 0} {$j < 4} {incr j} {
+                # Put the element from the position string
+                ModelRasToVtk SetElement $i $j [lindex $position $ii]
+                incr ii
+            }
+            # Remove the translation elements
+            ModelRasToVtk SetElement $i 3 0
+        }
+        # add a 1 at the for  M(4,4)
+        ModelRasToVtk SetElement 3 3 1
+        
+        # Now we can build the Vtk1ToVtk2 matrix based on
+        # ModelRasToVtk and ras1toras2
+        # vtk1tovtk2 = inverse(rastovtk) ras1toras2 rastovtk
+        # RasToVtk
+        catch "RasToVtk Delete"
+        vtkMatrix4x4 RasToVtk
+        RasToVtk DeepCopy ModelRasToVtk    
+        # Inverse Matrix RasToVtk
+        catch "InvRasToVtk Delete"
+        vtkMatrix4x4 InvRasToVtk
+        InvRasToVtk DeepCopy ModelRasToVtk
+        InvRasToVtk Invert
+        # Ras1toRas2 given by the slicer MRML tree
+        catch "Ras1ToRas2 Delete"    
+        vtkMatrix4x4 Ras1ToRas2
+        #Ras1ToRas2 DeepCopy [[Matrix($Matrix(activeID),node) GetTransform] GetMatrix]
+        Ras1ToRas2 DeepCopy [Volume($v,node) GetRasToWld]
+        # Now build Vtk1ToVtk2
+        catch "Vtk1ToVtk2 Delete"    
+        vtkMatrix4x4 Vtk1ToVtk2
+        Vtk1ToVtk2 Identity
+        Vtk1ToVtk2 Multiply4x4 Ras1ToRas2 RasToVtk  Vtk1ToVtk2
+        Vtk1ToVtk2 Multiply4x4 InvRasToVtk  Vtk1ToVtk2 Vtk1ToVtk2
+        
+        # Get the origin, spacing and extent of the input volume
+        catch "InVolume Delete"
+        vtkImageData InVolume
+        InVolume DeepCopy [Volume($v,vol) GetOutput]
+        catch "ici Delete"    
+        vtkImageChangeInformation ici
+        ici CenterImageOn
+        ici SetInput InVolume
+        ici Update
+        set volume [ici GetOutput]
+        set inorigin [split [$volume GetOrigin]]
+        set inwholeExtent [split [$volume GetWholeExtent]]
+        set inspacing [split [$volume GetSpacing]]
+        
+        # Transforms the corners of the extent according to Vtk1ToVtk2
+        # and finds the min/max coordinates in each dimension
+        for {set i 0} {$i < 3} {incr i} {
+            set bounds([expr 2 * $i]) 10000000
+            set bounds([expr 2*$i+1])  -10000000
+        }
+        for {set i 0} {$i < 8} {incr i} {
+            # setup the bounding box with origin and spacing
+            set point(0) [expr [lindex $inorigin 0] + [expr [lindex $inwholeExtent [expr $i %  2]] * [lindex $inspacing 0] ]]
+            set point(1) [expr [lindex $inorigin 1] + [expr [lindex $inwholeExtent [expr 2 + ($i / 2) % 2]] * [lindex $inspacing 1]]]
+            set point(2) [expr [lindex $inorigin 2] + [expr [lindex $inwholeExtent [expr 4 + ($i / 4) % 2]] * [lindex $inspacing 2]]]
+            # applies the transform 
+            set newpoint [Vtk1ToVtk2 MultiplyPoint $point(0) $point(1) $point(2) 1]
+            set point(0) [lindex $newpoint 0]
+            set point(1) [lindex $newpoint 1]
+            set point(2) [lindex $newpoint 2]
+            # finds max/min in each dimension
+            for {set j 0}  {$j < 3} {incr j} {
+                if {$point($j) > $bounds([expr 2*$j+1])} {
+                    set bounds([expr 2*$j+1]) $point($j)
+                }
+                if {$point($j) < $bounds([expr 2*$j])} {
+                    set bounds([expr 2*$j]) $point($j)
+                }
+            }
+        }
+        
+        # Transforms in RAS space
+        set outspacing [InvRasToVtk MultiplyPoint $TransformVolume(OutputSpacingI) $TransformVolume(OutputSpacingJ) $TransformVolume(OutputSpacingK) 1]
+        set spacing(0) [expr abs([lindex $outspacing 0])]
+        set spacing(1) [expr abs([lindex $outspacing 1])]
+        set spacing(2) [expr abs([lindex $outspacing 2])]
+        # Compute the new extent
+        for {set i 0} {$i < 3} {incr i} {
+            set outExt($i) [expr round (( $bounds([expr 2*$i+1])- $bounds([expr 2 * $i])) / $spacing($i))] 
+        }
+        # Go back in RAS space 
+        set outExtRAS [RasToVtk MultiplyPoint $outExt(0) $outExt(1) $outExt(2) 1]
+        set TransformVolume(OutputDimensionI) [expr 1 + round(abs([lindex $outExtRAS 0]))]
+        set TransformVolume(OutputDimensionJ) [expr 1 + round(abs([lindex $outExtRAS 1]))]
+        set TransformVolume(OutputDimensionK) [expr 1 + round(abs([lindex $outExtRAS 2]))]
+        
+        InVolume Delete
+        ici Delete
+        ModelRasToVtk Delete
+        Ras1ToRas2 Delete
+        RasToVtk Delete
+        InvRasToVtk Delete
+        Vtk1ToVtk2 Delete
+
+    }
+    TransformVolumeUpdatePreview
 }
+
+#-------------------------------------------------------------------------------
+# .PROC AutoDimensionI
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc AutoDimensionI {} {
-    tk_messageBox -message "NOT IMPLEMENTED YET"
-}
+    global TransformVolume
+    set tmpZ $TransformVolume(OutputDimensionJ)
+    set tmpY $TransformVolume(OutputDimensionK)
+    AutoDimension
+    set TransformVolume(OutputDimensionJ) $tmpZ
+    set TransformVolume(OutputDimensionK) $tmpY
+    TransformVolumeUpdatePreview
+}  
+
+#-------------------------------------------------------------------------------
+# .PROC AutoDimensionJ
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc AutoDimensionJ {} {
-    tk_messageBox -message "NOT IMPLEMENTED YET"
-}
+    global TransformVolume
+    set tmpY $TransformVolume(OutputDimensionK)
+    set tmpX $TransformVolume(OutputDimensionI)
+    AutoDimension
+    set TransformVolume(OutputDimensionK) $tmpY
+    set TransformVolume(OutputDimensionI) $tmpX
+    TransformVolumeUpdatePreview
+} 
+
+#-------------------------------------------------------------------------------
+# .PROC AutoDimensionK
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc AutoDimensionK {} {
-    tk_messageBox -message "NOT IMPLEMENTED YET"
-}
+    global TransformVolume
+    set tmpZ $TransformVolume(OutputDimensionJ)
+    set tmpX $TransformVolume(OutputDimensionI)
+    AutoDimension
+    set TransformVolume(OutputDimensionJ) $tmpZ
+    set TransformVolume(OutputDimensionI) $tmpX
+    TransformVolumeUpdatePreview   
+} 
