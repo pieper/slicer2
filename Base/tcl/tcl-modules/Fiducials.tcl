@@ -101,7 +101,7 @@ proc FiducialsInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.39 $} {$Date: 2003/06/06 19:32:53 $}]
+        {$Revision: 1.40 $} {$Date: 2003/06/06 19:55:20 $}]
     
     # Initialize module-level variables
     
@@ -2035,8 +2035,15 @@ proc FiducialsInteractActiveStart {} {
     __fid_iren SetInteractorStyle __fid_istyle
 
     vtkOutlineSource __fid_source
-    set halffov [expr $::View(fov) / 2.0]
-    __fid_source SetBounds -$halffov $halffov -$halffov $halffov -$halffov $halffov 
+    set bound [expr $::View(fov) / 2.0]
+    foreach dim [Point($Fiducials(activePointID),node) GetXYZ] {
+        set dim [expr abs($dim)]
+        if { $dim > $bound } {
+            set bound $dim
+        }
+    }
+    set bound [expr 1.2 * $bound]
+    __fid_source SetBounds -$bound $bound -$bound $bound -$bound $bound 
 
     vtkPointWidget __fid_pw
     __fid_pw SetInteractor __fid_iren
