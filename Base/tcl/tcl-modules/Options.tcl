@@ -48,8 +48,8 @@ proc OptionsInit {} {
 
 	# Define Tabs
 	set m Options
-	set Module($m,row1List) "Help Props"
-	set Module($m,row1Name) "{Help} {Props}"
+	set Module($m,row1List) "Help Props Modules"
+        set Module($m,row1Name) "{Help} {Props} {Modules}"
 	set Module($m,row1,tab) Props
 
 	# Define Procedures
@@ -59,11 +59,19 @@ proc OptionsInit {} {
 	# Define Dependencies
 	set Module($m,depend) ""
 
+        # Set version info
+        lappend Module(versions) [ParseCVSInfo $m \
+		{$Revision: 1.3 $} {$Date: 2000/02/14 15:33:06 $}]
+
 	# Props
 	set Options(propertyType) Basic
 	set Options(program) "slicer"
 	set Options(contents) "presets"
 #	set Options(options) ""
+
+	foreach m $Module(idList) {
+		set Module($m,visibility) 1
+	}
 }
 
 #-------------------------------------------------------------------------------
@@ -85,10 +93,6 @@ proc OptionsBuildGUI {} {
 	# Frame Hierarchy:
 	#-------------------------------------------
 	# Help
-	# Display
-	#   Title
-	#   All
-	#   Grid
 	# Props
 	#   Top
 	#     Active
@@ -96,10 +100,7 @@ proc OptionsBuildGUI {} {
 	#   Bot
 	#     Basic
 	#     Advanced
-	# Clip
-	#   Help
-	#   Grid
-	# Meter
+	# Modules
 	#   
 	#-------------------------------------------
 
@@ -107,7 +108,12 @@ proc OptionsBuildGUI {} {
 	# Help frame
 	#-------------------------------------------
 	set help "
-Options are fun. Do you like models, Ron?
+The next time you start the Slicer, it will load only the 
+modules that have their buttons pressed in on the <B>Order</B> tab.
+<P>
+The order of modules will be determined by their order on 
+the tab.  Click the <B>Up</B> and <B>Down</B> buttons to 
+organize them.
 "
 	regsub -all "\n" $help {} help
 	MainHelpApplyTags Options $help
@@ -238,6 +244,50 @@ Options are fun. Do you like models, Ron?
 		-command "OptionsPropsCancel"} $Gui(WBA) {-width 8}
 	grid $f.bApply $f.bCancel -padx $Gui(pad) -pady $Gui(pad)
 
+	#-------------------------------------------
+	# Modules frame
+	#-------------------------------------------
+	set fModules $Module(Options,fModules)
+	set f $fModules
+
+	frame $f.fTitle -bg $Gui(activeWorkspace)
+	frame $f.fApply -bg $Gui(activeWorkspace)
+	frame $f.fGrid -bg $Gui(activeWorkspace)
+	pack $f.fTitle $f.fApply -side top -pady $Gui(pad)
+        pack $f.fGrid -side bottom -pady $Gui(pad) -fill y -expand true
+	#-------------------------------------------
+	# Modules->Title frame
+	#-------------------------------------------
+	set f $fModules.fTitle
+
+	eval {label $f.lTitle -text "\
+Leave a button unpressed (out) for the 
+Slicer to ignore that module the next 
+time it runs."} \
+		$Gui(WLA)
+	pack $f.lTitle
+
+	#-------------------------------------------
+	# Modules->Apply frame
+	#-------------------------------------------
+	set f $fModules.fApply
+
+	eval {button $f.bApply -text "Apply" \
+		-command "OptionsModulesApply"} $Gui(WBA)
+	eval {button $f.bAll -text "Load ALL Modules" \
+		-command "OptionsModulesAll"} $Gui(WBA)
+	pack $f.bApply $f.bAll -side left -padx $Gui(pad)
+	set Options(bModulesApply) $f.bApply
+	set Options(bModulesAll) $f.bAll
+
+	#-------------------------------------------
+	# Modules->Grid frame
+	#-------------------------------------------
+	set f $fModules.fGrid
+	set Options(fModules) $f
+
+	OptionsModulesGUI
+
 }
 
 #-------------------------------------------------------------------------------
@@ -325,6 +375,44 @@ proc OptionsPropsApply {} {
 	MainUpdateMRML
 }
 
+proc OptionsModulesApply {} {
+
+        global Module Options
+
+	set ordList ""
+	set supList ""
+	foreach m $Module(idList) {
+		if {$Module($m,visibility) == 1} {
+			lappend ordList $m
+		} else {
+			lappend supList $m
+		}
+	}
+
+	# Write the modules into 2 lists: ordered, suppressed
+	if {$ordList != ""} {
+		if {[catch {set ord [open OrderedModules.txt w]} errmsg] == 1} {
+			puts $errmsg
+			return
+		}
+		foreach m $ordList {
+			puts $ord $m
+		}
+		close $ord
+	}
+	if {$supList != ""} {
+		if {[catch {set sup [open SuppressedModules.txt w]} errmsg] == 1} {
+			puts $errmsg
+			return
+		}
+		foreach m $supList {
+			puts $sup $m
+		}
+		close $sup
+	}
+
+}
+
 #-------------------------------------------------------------------------------
 # .PROC OptionsPropsCancel
 # .END
@@ -346,4 +434,136 @@ proc OptionsPropsCancel {} {
 		set Module(freezer) ""
 		eval $cmd
 	}
+}
+
+#-------------------------------------------------------------------------------
+# .PROC OptionsModulesAll
+# .END
+#-------------------------------------------------------------------------------
+proc OptionsModulesAll {} {
+	global Options Module
+
+	if {[catch {file delete OrderedModules.txt} errmsg] == 1} {
+		puts $errmsg
+	}
+	if {[catch {file delete SuppressedModules.txt} errmsg] == 1} {
+		puts $errmsg
+	}
+	$Options(bModulesApply) config -state disabled
+	$Options(bModulesAll) config -state disabled
+	foreach m $Module(idList) {
+		set Module($m,visibility) 1
+	}
+	OptionsModulesGUI
+}
+
+#-------------------------------------------------------------------------------
+# .PROC ModulesOrderGUI
+# .END
+#-------------------------------------------------------------------------------
+proc OptionsModulesGUI {} {
+	global Module Gui Options
+	
+	set f $Options(fModules)
+
+        # Delete everything from last time
+        set canvas $f.cGrid
+        catch {destroy $canvas}
+        set s $f.sGrid
+        catch {destroy $s}
+
+        canvas $canvas -yscrollcommand "$s set" -bg $Gui(activeWorkspace)
+        eval "scrollbar $s -command \"CheckScrollLimits $canvas yview\"	\
+		$Gui(WSBA)"
+        pack $s -side right -fill y
+        pack $canvas -side top -fill both -expand true
+
+        set f $canvas.fModules
+        frame $f -bd 0 -bg $Gui(activeWorkspace)
+    
+        # put the frame inside the canvas (so it can scroll)
+        $canvas create window 0 0 -anchor nw -window $f
+
+        # y spacing important for calculation of frame height for scrolling
+        set pady 2
+
+	foreach m $Module(idList) {
+
+		# Name / Visible
+		set c {checkbutton $f.c$m \
+			-text $m -variable Module($m,visibility) -width 17 \
+			-indicatoron 0 $Gui(WCA)}
+			eval [subst $c]
+
+		# Move buttons
+		set c {button $f.bUp$m -text "Up" -width 3 \
+			-command "OptionsModulesUp $m" $Gui(WBA)}; eval [subst $c]
+		set c {button $f.bDown$m -text "Down" -width 5\
+			-command "OptionsModulesDown $m" $Gui(WBA)}; eval [subst $c]
+		
+		grid $f.c$m $f.bUp$m $f.bDown$m -pady $pady -padx 5
+	}
+
+	if {[info exists m] == 1} {
+	    # Find the height of a single button
+	    set lastButton $f.bUp$m
+	    set width [winfo reqwidth $lastButton]
+	    # Find how many modules (lines) in the frame
+	    set numLines [llength $Module(idList)]
+	    # Find the height of a line
+	    set incr [expr {[winfo reqheight $lastButton] + 2*$pady}]
+	    # Find the total height that should scroll
+	    set height [expr {$numLines * $incr}]
+
+	    $canvas config -scrollregion "0 0 1 $height"
+	    $canvas config -yscrollincrement $incr -confine true
+	}
+}
+
+# This procedure allows scrolling only if the entire frame is not visible
+proc CheckScrollLimits {args} {
+
+    set canvas [lindex $args 0]
+    set view   [lindex $args 1]
+    set fracs [$canvas $view]
+
+    if {double([lindex $fracs 0]) == 0.0 && \
+	    double([lindex $fracs 1]) == 1.0} {
+	return
+    }
+    eval $args
+}
+
+#-------------------------------------------------------------------------------
+# .PROC ModulesUp
+# .END
+#-------------------------------------------------------------------------------
+proc OptionsModulesUp {m} {
+	global Module
+
+	set j [lsearch $Module(idList) $m]
+	if {$j == 0} {return}
+	set i [expr $j - 1]
+	set n [lindex $Module(idList) $i]
+	set Module(idList) [lreplace $Module(idList) $i $j $n]
+	set Module(idList) [linsert  $Module(idList) $i $m]
+
+	OptionsModulesGUI
+}
+
+#-------------------------------------------------------------------------------
+# .PROC ModulesDown
+# .END
+#-------------------------------------------------------------------------------
+proc OptionsModulesDown {m} {
+	global Module
+
+	set i [lsearch $Module(idList) $m]
+	if {$i == [expr [llength $Module(idList)] - 1]} {return}
+	set j [expr $i + 1]
+	set n [lindex $Module(idList) $j]
+	set Module(idList) [lreplace $Module(idList) $i $j $m]
+	set Module(idList) [linsert  $Module(idList) $i $n]
+
+	OptionsModulesGUI
 }
