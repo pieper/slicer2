@@ -154,7 +154,7 @@ proc FluxDiffusionInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.6 $} {$Date: 2003/05/30 14:40:22 $}]
+        {$Revision: 1.7 $} {$Date: 2003/12/10 23:57:39 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -172,8 +172,9 @@ proc FluxDiffusionInit {} {
     set FluxDiffusion(Attachment)    "0.05"
     set FluxDiffusion(Iterations)    "5"
     set FluxDiffusion(IsoCoeff)      "0.2"
-    set FluxDiffusion(TruncNegValues)  "0"
-    set FluxDiffusion(NumberOfThreads) "4"
+    set FluxDiffusion(TruncNegValues)  "1"
+    vtkMultiThreader v
+    set FluxDiffusion(NumberOfThreads) [v GetGlobalDefaultNumberOfThreads]
 
     set FluxDiffusion(TangCoeff)     "1"
 
@@ -745,15 +746,13 @@ proc FluxDiffusionPrepareResultVolume {}  {
 #-------------------------------------------------------------------------------
 proc RunFluxDiffusion {} {
 
-  global FluxDiffusion Volume Gui
+  global FluxDiffusion Volume Gui Slice
 
-  puts "RunFluxDiffusion 1"
 
   if {[FluxDiffusionPrepareResultVolume] == 1} {
       return
   }
 
-  puts "RunFluxDiffusion 2"
 
   if {[FluxDiffusionCheckErrors] == 1} {
       return
@@ -761,8 +760,6 @@ proc RunFluxDiffusion {} {
 
   set input $FluxDiffusion(InputVol);
   set res $FluxDiffusion(ResultVol);
-
-  puts "RunFluxDiffusion 3"
 
   vtkAnisoGaussSeidel aniso
 
@@ -782,12 +779,10 @@ proc RunFluxDiffusion {} {
   aniso SetMaxcurvCoeff        $FluxDiffusion(MaxcurvCoeff)
 
 
-  set Gui(progressText)     "executing one iteration"
+  set Gui(progressText)     "Processing Flux Diffusion"
   aniso SetStartMethod      MainStartProgress
   aniso SetProgressMethod  "MainShowProgress aniso"
   aniso SetEndMethod        MainEndProgress
-
-  puts "RunFluxDiffusion 4"
 
   aniso SetNumberOfThreads     $FluxDiffusion(NumberOfThreads)
   aniso SetTruncNegValues      $FluxDiffusion(TruncNegValues)
@@ -797,14 +792,24 @@ proc RunFluxDiffusion {} {
   # If the programmers forgets to call it, it looks like nothing
   # happened.
 
-  puts "RunFluxDiffusion 5"
-
   Volume($res,vol) SetImageData [aniso GetOutput]
   MainVolumesUpdate $res
 
-  puts "RunFluxDiffusion 6"
-
   aniso UnRegisterAllOutputs
   aniso Delete
+
+  #
+  #  update display  
+  #
+  foreach s $Slice(idList) {
+    set Slice($s,backVolID)  $input
+    set Slice($s,foreVolID)  $res
+  }
+
+  Volume($res,vol)  SetRangeHigh [Volume($input,vol)  GetRangeHigh]
+  Volume($res,vol)  SetRangeLow  [Volume($input,vol)  GetRangeLow]
+  Volume($res,node) SetWindow    [Volume($input,node) GetWindow]
+  Volume($res,node) SetLevel     [Volume($input,node) GetLevel]
+  RenderAll
 
 }
