@@ -74,7 +74,7 @@ proc DataInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.36 $} {$Date: 2002/01/26 23:34:31 $}]
+		{$Revision: 1.37 $} {$Date: 2002/02/19 00:24:04 $}]
 
 	set Data(index) ""
 	set Data(clipboard) ""
@@ -602,6 +602,13 @@ proc DataEditNode {} {
 		if {[IsModule Models] == 1} {
 			set Model(propertyType) Basic
 			Tab Models row1 Props
+		}
+	}
+	"vtkMrmlTetraMeshNode" {
+		set id [DataGetIdFromNode $node]
+		MainTetraMeshSetActive $id
+		if {[IsModule TetraMesh] == 1} {
+			Tab TetraMesh row1 Visualize
 		}
 	}
 	"vtkMrmlMatrixNode" {
