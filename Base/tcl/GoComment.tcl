@@ -25,7 +25,7 @@ if {$file != ""} {
     ProcessFile $filename
 } else {
     # Process all files
-    set dirs "tcl-main tcl-modules tcl-shared ../vtksrc"
+    set dirs "tcl-main tcl-modules tcl-shared ../cxx"
     if {[file exists [file join $prog \
         [file join tcl-modules Editor]]] == 1} {
         set dirs "$dirs tcl-modules/Editor"
