@@ -16,11 +16,12 @@ proc CISGFileInit {} {
     # Description:
     #  Give a brief overview of what your module does, for inclusion in the 
     #  Help->Module Summaries menu item.
-    set Module($m,overview) "This module is an example of how to add modules to slicer."
+    set Module($m,overview) "Wrapper for the Analyze volume reader"
     #  Provide your name, affiliation and contact information so you can be 
     #  reached for any questions people may have regarding your module. 
     #  This is included in the  Help->Module Credits menu item.
-    set Module($m,author) "First name, last name, affiliation, email"
+    set Module($m,author) "Steve Pieper, SPL, pieper@bwh.harvard.edu"
+    set Module($m,category) [lindex $Module(categories) 2]
 
     # Define Tabs
     #------------------------------------
@@ -99,7 +100,7 @@ proc CISGFileInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1 $} {$Date: 2003/08/14 17:41:45 $}]
+        {$Revision: 1.2 $} {$Date: 2004/03/15 21:07:59 $}]
 
     # Initialize module-level variables
     #------------------------------------
