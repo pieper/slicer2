@@ -1,32 +1,27 @@
-/*=auto=========================================================================
+/*=========================================================================
 
-(c) Copyright 2001 Massachusetts Institute of Technology
+  Program:   Samson Timoner TetraMesh Library
+  Module:    $RCSfile: vtkResliceImage.h,v $
+  Language:  C++
+  Date:      $Date: 2002/03/14 01:56:55 $
+  Version:   $Revision: 1.6 $
+  
+Copyright (c) 2001 Samson Timoner
 
-Permission is hereby granted, without payment, to copy, modify, display 
-and distribute this software and its documentation, if any, for any purpose, 
-provided that the above copyright notice and the following three paragraphs 
-appear on all copies of this software.  Use of this software constitutes 
-acceptance of these terms and conditions.
+This software is not to be edited, distributed, copied, moved, etc.
+without express permission of the author. 
 
-IN NO EVENT SHALL MIT BE LIABLE TO ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, 
-INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE 
-AND ITS DOCUMENTATION, EVEN IF MIT HAS BEEN ADVISED OF THE POSSIBILITY OF 
-SUCH DAMAGE.
-
-MIT SPECIFICALLY DISCLAIMS ANY EXPRESS OR IMPLIED WARRANTIES INCLUDING, 
-BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR 
-A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
-
-THE SOFTWARE IS PROVIDED "AS IS."  MIT HAS NO OBLIGATION TO PROVIDE 
-MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-
-=========================================================================auto=*/
-// .NAME vtkDeformImage - Deforms an image according to a tetrahedral mesh
+========================================================================= */
+// .NAME vtkResliceImage - Reslices an image in another coordinate system
 // .SECTION Description
-// This filter takes in an image, an input mesh, a final mesh
-// and 1 transforms. The input mesh and output mesh is assumed to be in the 
-// input volumes meters coordinate system. The transform takes the output mesh
-// into the second volumes' meter coordinate system
+// This filter takes in a volume, and resamples it in the coordinates of
+// the next volume. A transform that takes the coordinates (mm) in the image
+// whose coordinates we will use into the input image coordinates (mm) is 
+// possible.
+//
+// Please note that this program (by Samson Timoner) is also in his
+// personal CVS tree. If you make changes, please let him know.
+//
 
 #ifndef __vtkDeformImage_h
 #define __vtkDeformImage_h
@@ -72,6 +67,8 @@ public:
 
   // Helper Functions:
   //
+
+  //BTX
   static void FindInputIJK(float OtherIJK[4],
                            vtkMatrix4x4 *IJKtoIJK,
                            int i, int j, int k);
@@ -100,7 +97,6 @@ protected:
   void ExecuteInformation(){this->vtkImageToImageFilter::ExecuteInformation();};
   void ThreadedExecute(vtkImageData *inData, vtkImageData *outData,
 		       int outExt[6], int id);
-
-
+  //ETX
 };
 #endif /* DeformImage_h */

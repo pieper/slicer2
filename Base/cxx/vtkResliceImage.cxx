@@ -1,26 +1,18 @@
-/*=auto=========================================================================
+/*=========================================================================
 
-(c) Copyright 2001 Massachusetts Institute of Technology
+  Program:   Samson Timoner TetraMesh Library
+  Module:    $RCSfile: vtkResliceImage.cxx,v $
+  Language:  C++
+  Date:      $Date: 2002/03/14 01:56:55 $
+  Version:   $Revision: 1.5 $
+  
+Copyright (c) 2001 Samson Timoner
 
-Permission is hereby granted, without payment, to copy, modify, display 
-and distribute this software and its documentation, if any, for any purpose, 
-provided that the above copyright notice and the following three paragraphs 
-appear on all copies of this software.  Use of this software constitutes 
-acceptance of these terms and conditions.
+This software is not to be edited, distributed, copied, moved, etc.
+without express permission of the author. 
 
-IN NO EVENT SHALL MIT BE LIABLE TO ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, 
-INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE 
-AND ITS DOCUMENTATION, EVEN IF MIT HAS BEEN ADVISED OF THE POSSIBILITY OF 
-SUCH DAMAGE.
+========================================================================= */
 
-MIT SPECIFICALLY DISCLAIMS ANY EXPRESS OR IMPLIED WARRANTIES INCLUDING, 
-BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR 
-A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
-
-THE SOFTWARE IS PROVIDED "AS IS."  MIT HAS NO OBLIGATION TO PROVIDE 
-MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-
-=========================================================================auto=*/
 #include "vtkResliceImage.h"
 #include "vtkImageToImageFilter.h"
 #include "vtkObjectFactory.h"
@@ -156,10 +148,10 @@ void vtkResliceImage::ComputeInputUpdateExtent(int InExt[6],
   float InSpace[3];   this->GetInput() ->GetSpacing(InSpace);
   float OutSpace[3];  this->GetOutput()->GetSpacing(OutSpace);
   float InOrigin[3];  this->GetInput() ->GetOrigin(InOrigin);
-  float OutOrigin[3]; this->GetOutput()->GetOrigin(OutOrigin);
+  float OutOrigin_[3]; this->GetOutput()->GetOrigin(OutOrigin_);
 
-  vtkMatrix4x4 *IJKtoIJK = 
-    vtkResliceImage::GetIJKtoIJKMatrix(OutSpace,OutOrigin,
+  vtkMatrix4x4 *IJKtoIJK_ = 
+    vtkResliceImage::GetIJKtoIJKMatrix(OutSpace,OutOrigin_,
                                        this->GetTransformOutputToInput(),
                                        InSpace,InOrigin);
 
@@ -180,7 +172,7 @@ void vtkResliceImage::ComputeInputUpdateExtent(int InExt[6],
           point[0]=(float)OutExt[0+i];
           point[1]=(float)OutExt[2+j];
           point[2]=(float)OutExt[4+k];
-          IJKtoIJK->MultiplyPoint(point,result);
+          IJKtoIJK_->MultiplyPoint(point,result);
           if (floor(result[0]) < InExt[0]) InExt[0] = (int)floor(result[0]);
           if (floor(result[1]) < InExt[2]) InExt[2] = (int)floor(result[1]);
           if (floor(result[2]) < InExt[4]) InExt[4] = (int)floor(result[2]);
@@ -197,18 +189,18 @@ void vtkResliceImage::ComputeInputUpdateExtent(int InExt[6],
   if(InExt[3] > WholeExt[3]) InExt[3] = WholeExt[3];
   if(InExt[5] > WholeExt[5]) InExt[5] = WholeExt[5];
 
-  IJKtoIJK->Delete();
+  IJKtoIJK_->Delete();
 }
 
 
 //----------------------------------------------------------------------------
 // This templated function executes the filter for any type of data.
 template <class T>
-static void vtkResliceImageExecute(vtkResliceImage *self, int id,
-                                  vtkImageData *inData, T *inPtr,
-                                  int *InExt,
-                                  vtkImageData *outData, T *outPtr,
-                                  int *OutExt)
+void vtkResliceImageExecute(vtkResliceImage *self, int id,
+                            vtkImageData *inData, T *inPtr,
+                            int *InExt,
+                            vtkImageData *outData, T *outPtr,
+                            int *OutExt)
 {
   //
   // Variables for handling the image data
