@@ -10,7 +10,7 @@
 // the superclass had these classes in the vtkHyperStreamline.cxx file:
 #include "vtkHyperPointandArray.cxx"
 
-vtkCxxRevisionMacro(vtkHyperStreamlineDTMRI, "$Revision: 1.1 $");
+vtkCxxRevisionMacro(vtkHyperStreamlineDTMRI, "$Revision: 1.2 $");
 vtkStandardNewMacro(vtkHyperStreamlineDTMRI);
 
 // Construct object with initial starting position (0,0,0); integration step 
@@ -18,7 +18,7 @@ vtkStandardNewMacro(vtkHyperStreamlineDTMRI);
 // number of sides 6; radius 0.5; and logarithmic scaling off.
 vtkHyperStreamlineDTMRI::vtkHyperStreamlineDTMRI()
 {
-  /*
+  // defaults copied from superclass for now:
   this->StartFrom = VTK_START_FROM_POSITION;
   this->StartPosition[0] = this->StartPosition[1] = this->StartPosition[2] = 0.0;
 
@@ -37,17 +37,12 @@ vtkHyperStreamlineDTMRI::vtkHyperStreamlineDTMRI()
   this->Radius = 0.5;
   this->LogScaling = 0;
   this->IntegrationEigenvector = VTK_INTEGRATE_MAJOR_EIGENVECTOR;
-  */
+
 }
 
 vtkHyperStreamlineDTMRI::~vtkHyperStreamlineDTMRI()
 {
-  /*
-  if ( this->Streamers )
-    {
-    delete [] this->Streamers;
-    }
-  */
+
 }
 
 // copied from superclass
@@ -241,8 +236,9 @@ void vtkHyperStreamlineDTMRI::Execute()
       inScalars->GetTuples(cell->PointIds, cellScalars);
       for (sPtr->S=0, i=0; i < cell->GetNumberOfPoints(); i++)
         {
-          //sPtr->S += cellScalars->GetTuple(i)[0] * w[i];
-          sPtr->S =0;
+          sPtr->S += cellScalars->GetTuple(i)[0] * w[i];
+          // for curvature coloring for debugging purposes:
+          //sPtr->S =0;
         }
       }
 
@@ -304,8 +300,6 @@ void vtkHyperStreamlineDTMRI::Execute()
             // from p1 to p3
             // kn=2*(u2-u1)/(norm(v1)+norm(v2));
             // absk=norm(kn);  % absolute value of the curvature
-
-            //sPrev sPrevPrev sPtr
 
             sPrev = this->Streamers[ptId].GetHyperPoint(pointCount-1);
             sPrevPrev = this->Streamers[ptId].GetHyperPoint(pointCount-2);
@@ -448,8 +442,9 @@ void vtkHyperStreamlineDTMRI::Execute()
           {
           for (sNext->S=0.0, i=0; i < cell->GetNumberOfPoints(); i++)
             {
-              //sNext->S += cellScalars->GetTuple(i)[0] * w[i];
-              sNext->S =K;
+              sNext->S += cellScalars->GetTuple(i)[0] * w[i];
+              // for curvature coloring for debugging purposes:
+              //sNext->S =K;
 
             }
           }
