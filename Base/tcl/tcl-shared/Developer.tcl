@@ -780,7 +780,7 @@ proc DevCreateScrollList {ScrollFrame ItemCreateGui ScrollListConfigScrolledGUI 
 
     pack $sy -side right -fill y
     pack $sx -side bottom -fill x
-    pack $canvas -side top -fill both -expand true
+    pack $canvas -side top  -fill both -expand true
 
     set f $canvas.fListItems
     frame $f -bd 0 -bg $Gui(activeWorkspace)
