@@ -68,7 +68,7 @@ proc MainMrmlInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainMrml \
-		{$Revision: 1.41 $} {$Date: 2001/07/19 09:48:13 $}]
+		{$Revision: 1.42 $} {$Date: 2001/08/22 15:20:47 $}]
 
 	set Mrml(filePrefix) data
 	set Mrml(colorsUnsaved) 0
@@ -283,6 +283,12 @@ proc MainMrmlInsertBeforeNode {nodeBefore nodeType} {
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlUndoAddNode
 # 
+
+# use this routine to remove a node that was accidentally added.
+#
+# Don't call this routine to delete a node, it should only
+# happen if adding one fails (i.e reading a volume from disk fails).
+#
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
