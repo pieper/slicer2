@@ -30,7 +30,6 @@
 #   RenderBoth
 #==========================================================================auto=
 
-
 #-------------------------------------------------------------------------------
 # .PROC Render3D
 # 
@@ -59,86 +58,72 @@ proc Render3D {{scale ""}} {
         VideoSave
     }
 
-    # Kilian 16-Sep-02: Changed strucutre a little bit for saving Images to update to VTK4.0 
-    # Compute filename add additional once     
-    set ext(BMP) bmp
-    set ext(JPEG) jpg 
-    set ext(PNG) png
-    set ext(PNM) pnm
-    set ext(PostScript) ps
-    set ext(TIFF) tif
-    set filename [format %04d.$ext($View(movieFileType)) $View(movieFrame)]
-    set filename [file join $View(movieDirectory) $filename]
+    if { $View(movie) > 0 } {
 
-    if { $View(movie) > 0 && $View(movieSlices) == 0} {
-        # Write file
-        vtkWindowToImageFilter filter
-        filter SetInput $viewWin
-        vtk${View(movieFileType)}Writer writer
-        writer SetInput [filter GetOutput]
-        writer SetFileName $filename
-        writer Write
-        filter Delete
-        writer Delete
-    } elseif { $View(movie) > 0 && $View(movieSlices) > 0} {
+        # directory and extension get added on later by the Save commands
+        set filename [format "%04d" $View(movieFrame)]
 
-        # first append the 3 slices horizontally
-        vtkImageAppend imAppendSl
-        imAppendSl SetAppendAxis 0
-        foreach s $Slice(idList) {
-            vtkWindowToImageFilter IFSl$s
-            IFSl$s SetInput sl${s}Win
-            imAppendSl AddInput [IFSl$s GetOutput]
+        if { $View(movieSlices) == 0} {
+            # no slices, just 3D image
+            SaveWindowToFile $View(movieDirectory) $filename \
+                $View(movieFileType) $viewWin
+
+        } else { 
+            # save slices too
+
+            # first append the 3 slices horizontally
+            vtkImageAppend imAppendSl
+            imAppendSl SetAppendAxis 0
+            foreach s $Slice(idList) {
+                vtkWindowToImageFilter IFSl$s
+                IFSl$s SetInput sl${s}Win
+                imAppendSl AddInput [IFSl$s GetOutput]
+            }
+
+            set w [winfo width .tViewer]
+            # translate if viewer width is bigger
+            vtkImageTranslateExtent imTrans
+            imTrans SetTranslation [expr ($w - 768)/2] 0 0
+            imTrans SetInput [imAppendSl GetOutput]
+            #pad them with the width of the viewer
+            vtkImageConstantPad imPad
+            imPad SetInput [imTrans GetOutput]
+            imPad SetOutputWholeExtent 0 $w 0 256 0 0
+            
+            
+            # then append the image of the 3 slices to the viewWin screen
+            # vertically
+            vtkImageAppend imAppendAll
+            imAppendAll SetAppendAxis 1
+            vtkWindowToImageFilter IFVW
+            IFVW SetInput $viewWin
+            imAppendAll AddInput [imPad GetOutput]
+            imAppendAll AddInput [IFVW GetOutput]
+
+
+            #vtkImageClip imClip
+            #imClip SetInput [imAppendSl GetOutput]
+            #set h [winfo height .tViewer]
+            #set w [winfo width .tViewer]
+            #puts "width $w height $h"
+            #imClip SetOutputWholeExtent 0 $w 0 $h 0 0
+            #imClip ReleaseDataFlagOff
+
+            SaveImageToFile $View(movieDirectory) $filename \
+                $View(movieFileType) [imAppendAll GetOutput]
+
+            imAppendSl Delete
+            imAppendAll Delete
+            IFVW Delete
+            IFSl0 Delete
+            IFSl1 Delete
+            IFSl2 Delete
+            imPad Delete
+            imTrans Delete
+            #imClip Delete
         }
-
-        set w [winfo width .tViewer]
-        # translate if viewer width is bigger
-        vtkImageTranslateExtent imTrans
-        imTrans SetTranslation [expr ($w - 768)/2] 0 0
-        imTrans SetInput [imAppendSl GetOutput]
-        #pad them with the width of the viewer
-        vtkImageConstantPad imPad
-        imPad SetInput [imTrans GetOutput]
-        imPad SetOutputWholeExtent 0 $w 0 256 0 0
-        
-        
-        # then append the image of the 3 slices to the viewWin screen
-        # vertically
-        vtkImageAppend imAppendAll
-        imAppendAll SetAppendAxis 1
-        vtkWindowToImageFilter IFVW
-        IFVW SetInput $viewWin
-        imAppendAll AddInput [imPad GetOutput]
-        imAppendAll AddInput [IFVW GetOutput]
-
-
-
-        #vtkImageClip imClip
-        #imClip SetInput [imAppendSl GetOutput]
-        #set h [winfo height .tViewer]
-        #set w [winfo width .tViewer]
-        #puts "width $w height $h"
-        #imClip SetOutputWholeExtent 0 $w 0 $h 0 0
-        #imClip ReleaseDataFlagOff
-
-        # Write file
-        vtk${View(movieFileType)}Writer writer
-        writer SetInput [imAppendAll GetOutput]
-        writer SetFileName $filename
-        writer Write
-        writer Delete
-
-        imAppendSl Delete
-        imAppendAll Delete
-        IFVW Delete
-        IFSl0 Delete
-        IFSl1 Delete
-        IFSl2 Delete
-        imPad Delete
-        imTrans Delete
-        #imClip Delete
-     }
      incr View(movieFrame)
+    }
 }
 #-------------------------------------------------------------------------------
 # .PROC RenderSlice
