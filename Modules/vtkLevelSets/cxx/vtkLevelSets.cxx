@@ -1160,6 +1160,7 @@ unsigned char vtkLevelSets::CheckConvergence( )
    // cnt1 number of point which passed from negative to positive value
    // cnt2 number of point which passed from positive to negative value
 
+   // loop over the band instead ...
    for (p = 0; p < imsize; p++) {
 
      if (this->u[p] <= 0) total++;
@@ -2248,15 +2249,17 @@ void vtkLevelSets::Evolve3D( int first_band, int last_band)
       D0y=(upy-umy)*(doubyspacing);
       D0z=(upz-umz)*(doubzspacing);
       
-      // Second order derivatives
-      Dpmx=(upx-u0-u0+umx)*sqxspacing;
-      Dpmy=(upy-u0-u0+umy)*sqyspacing;
-      Dpmz=(upz-u0-u0+umz)*sqzspacing;
+      if (coeff_curvature>0) {
+    // Second order derivatives
+    Dpmx=(upx-u0-u0+umx)*sqxspacing;
+    Dpmy=(upy-u0-u0+umy)*sqyspacing;
+    Dpmz=(upz-u0-u0+umz)*sqzspacing;
       
-      // Crossed derivatives
-      D0xy=(Up[px+py]+Up[mx+my]-Up[px+my]-Up[mx+py])*xyspacing;
-      D0yz=(Up[py+pz]+Up[my+mz]-Up[py+mz]-Up[my+pz])*yzspacing;
-      D0zx=(Up[pz+px]+Up[mz+mx]-Up[pz+mx]-Up[mz+px])*xzspacing;
+    // Crossed derivatives
+    D0xy=(Up[px+py]+Up[mx+my]-Up[px+my]-Up[mx+py])*xyspacing;
+    D0yz=(Up[py+pz]+Up[my+mz]-Up[py+mz]-Up[my+pz])*yzspacing;
+    D0zx=(Up[pz+px]+Up[mz+mx]-Up[pz+mx]-Up[mz+px])*xzspacing;
+      }
     
       //
       dxsq = D0x*D0x;      
@@ -2287,16 +2290,18 @@ void vtkLevelSets::Evolve3D( int first_band, int last_band)
       D0y= (upy-umy)/2;  // /2
       D0z= (upz-umz)/2;  // /2
       
-      // Second order derivatives
-      Dpmx=upx-u0-u0+umx;
-      Dpmy=upy-u0-u0+umy;
-      Dpmz=upz-u0-u0+umz;
+      if (coeff_curvature>0) {
+        // Second order derivatives
+        Dpmx=upx-u0-u0+umx;
+        Dpmy=upy-u0-u0+umy;
+        Dpmz=upz-u0-u0+umz;
       
-      // Crossed derivatives
-      // divide by 4 later
-      D0xy=(Up[px+py]+Up[mx+my]-Up[px+my]-Up[mx+py])/4;  // /4
-      D0yz=(Up[py+pz]+Up[my+mz]-Up[py+mz]-Up[my+pz])/4;  // /4
-      D0zx=(Up[pz+px]+Up[mz+mx]-Up[pz+mx]-Up[mz+px])/4;  // /4
+        // Crossed derivatives
+        // divide by 4 later
+        D0xy=(Up[px+py]+Up[mx+my]-Up[px+my]-Up[mx+py])/4;  // /4
+        D0yz=(Up[py+pz]+Up[my+mz]-Up[py+mz]-Up[my+pz])/4;  // /4
+        D0zx=(Up[pz+px]+Up[mz+mx]-Up[pz+mx]-Up[mz+px])/4;  // /4
+      }
     
       //
       dxsq = D0x*D0x;  // /4
@@ -2456,10 +2461,15 @@ void vtkLevelSets::Evolve3D( int first_band, int last_band)
       balloonterm *= this->ExpansionMap(im[p]);
     }
     else
-    if (balloon_image != NULL) 
+     if (balloon_image != NULL) 
       balloonterm = ((float*)balloon_image->GetScalarPointer())[p];
+    if ((p==2842505)&&(step==17)) {
+      printf("examine this case \n");
+    }
 
-    if (fabs(balloon_coeff)>1E-10) {
+    // bug fixed, replaced balloon_coeff by balloonterm:
+    //  in case of an balloon_image, the balloon_coeff is 0 ...
+    if (fabs(balloonterm)>1E-10) {
       if (balloonterm>0) {
         Gx = Gy = Gz = 0;
         if (D_x>=0) Gx = D_x;
@@ -2536,8 +2546,8 @@ void vtkLevelSets::Evolve3D( int first_band, int last_band)
       }
 
       this->mean_vel       += vel;
-      ut -= vel;
     }
+    ut -= vel;
 
     //--------------------------------------------------
     // new intensity
@@ -2552,8 +2562,13 @@ void vtkLevelSets::Evolve3D( int first_band, int last_band)
       if (balloon_data  !=NULL) balloon_data  [p] = -balloonterm*StepDt;
 
 
-      ut = min(max(StepDt*ut,-Band),Band);
-      newU[p]=u0+ut;
+      //ut = min(max(StepDt*ut,-Band),Band);
+      newU[p]=u0+StepDt*ut;
+      if (fabsf(newU[p])>Band+1) {
+    fprintf(stderr,"pb: absf(newU[p])>Band+1, p=%d, newU[p] = %f \n",p,newU[p]);
+    fprintf(stderr,"pb: curvterm = %f, imcomp = %f, balloonterm = %f, vel = %f, \n",curvterm, imcomp,balloonterm, vel);
+      }
+      newU[p] = min(max(newU[p],-Band-1),Band+1);
 
       /*
     }

@@ -840,64 +840,64 @@ void vtkImageFastSignedChamfer::FastSignedChamfer3D( )
   for(z=zmax;z>zmin;z--) {
     for(y=ymax;y>ymin;y--) {
       buf = (float*) outputImage ->GetScalarPointer(xmax,y,z);
-      for(x=xmax;x>xmin;x--) {
+      for(x=xmax;x>xmin;x--) { 
 
     if (*buf>= maxdist1) { buf--; continue; }
     if (*buf<=-maxdist1) { buf--; continue; }
 
-        if (*buf>-coeff_a) {
+    if (*buf>-coeff_a) {
 
       // C6 neighbors
       val = *buf+coeff_a;
       
-      buf1 = buf+n10; if (val < *buf1) *buf1 = val;
-      buf1 = buf+n11; if (val < *buf1) *buf1 = val;
-      buf1 = buf+n12; if (val < *buf1) *buf1 = val;
+      buf1 = buf+n10; if (val < *buf1)  *buf1 = val;
+      buf1 = buf+n11; if (val < *buf1)  *buf1 = val;
+      buf1 = buf+n12; if (val < *buf1)  *buf1 = val;
       
       // C18 neighbors
       val = *buf+coeff_b;
       
-      buf1 = buf+n20; if (val < *buf1) *buf1 = val;
-      buf1 = buf+n21; if (val < *buf1) *buf1 = val;
-      buf1 = buf+n22; if (val < *buf1) *buf1 = val;
-      buf1 = buf+n23; if (val < *buf1) *buf1 = val;
-      buf1 = buf+n24; if (val < *buf1) *buf1 = val;
-      buf1 = buf+n25; if (val < *buf1) *buf1 = val;
+      buf1 = buf+n20; if (val < *buf1)  *buf1 = val;
+      buf1 = buf+n21; if (val < *buf1)  *buf1 = val;
+      buf1 = buf+n22; if (val < *buf1)  *buf1 = val;
+      buf1 = buf+n23; if (val < *buf1)  *buf1 = val;
+      buf1 = buf+n24; if (val < *buf1)  *buf1 = val;
+      buf1 = buf+n25; if (val < *buf1)  *buf1 = val;
       
       // C26 neighbors
       val = *buf+coeff_c;
       
-      buf1 = buf+n30; if (val < *buf1) *buf1 = val;
-      buf1 = buf+n31; if (val < *buf1) *buf1 = val;
-      buf1 = buf+n32; if (val < *buf1) *buf1 = val;
-      buf1 = buf+n33; if (val < *buf1) *buf1 = val;
+      buf1 = buf+n30; if (val < *buf1)  *buf1 = val;
+      buf1 = buf+n31; if (val < *buf1)  *buf1 = val;
+      buf1 = buf+n32; if (val < *buf1)  *buf1 = val;
+      buf1 = buf+n33; if (val < *buf1)  *buf1 = val;
     }
         if (*buf<coeff_a) {
 
       // C6 neighbors
       val = *buf-coeff_a;
       
-      buf1 = buf+n10; if (val > *buf1) *buf1 = val;
-      buf1 = buf+n11; if (val > *buf1) *buf1 = val;
-      buf1 = buf+n12; if (val > *buf1) *buf1 = val;
+      buf1 = buf+n10; if (val > *buf1)  *buf1 = val;
+      buf1 = buf+n11; if (val > *buf1)  *buf1 = val;
+      buf1 = buf+n12; if (val > *buf1)  *buf1 = val;
       
       // C18 neighbors
       val = *buf-coeff_b;
       
-      buf1 = buf+n20; if (val > *buf1) *buf1 = val;
-      buf1 = buf+n21; if (val > *buf1) *buf1 = val;
-      buf1 = buf+n22; if (val > *buf1) *buf1 = val;
-      buf1 = buf+n23; if (val > *buf1) *buf1 = val;
-      buf1 = buf+n24; if (val > *buf1) *buf1 = val;
-      buf1 = buf+n25; if (val > *buf1) *buf1 = val;
+      buf1 = buf+n20; if (val > *buf1)  *buf1 = val;
+      buf1 = buf+n21; if (val > *buf1)  *buf1 = val;
+      buf1 = buf+n22; if (val > *buf1)  *buf1 = val;
+      buf1 = buf+n23; if (val > *buf1)  *buf1 = val;
+      buf1 = buf+n24; if (val > *buf1)  *buf1 = val;
+      buf1 = buf+n25; if (val > *buf1)  *buf1 = val;
       
       // C26 neighbors
       val = *buf-coeff_c;
       
-      buf1 = buf+n30; if (val > *buf1) *buf1 = val;
-      buf1 = buf+n31; if (val > *buf1) *buf1 = val;
-      buf1 = buf+n32; if (val > *buf1) *buf1 = val;
-      buf1 = buf+n33; if (val > *buf1) *buf1 = val;
+      buf1 = buf+n30; if (val > *buf1)  *buf1 = val;
+      buf1 = buf+n31; if (val > *buf1)  *buf1 = val;
+      buf1 = buf+n32; if (val > *buf1)  *buf1 = val;
+      buf1 = buf+n33; if (val > *buf1)  *buf1 = val;
     }
 
     buf--;
@@ -945,7 +945,7 @@ void vtkImageFastSignedChamfer::FastSignedChamfer3DBorders( )
   for(z=0;z<=tz-1;z++) 
     for(y=0;y<=ty-1;y++)
       for(x=0;x<=tx-1;x++) {
-    if ((x==0)||(x==tx-1)||
+     if ((x==0)||(x==tx-1)||
             (y==0)||(y==ty-1)||
             (z==0)||(z==tz-1)) {
 
