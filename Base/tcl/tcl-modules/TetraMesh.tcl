@@ -34,7 +34,6 @@
 #   TetraMeshUpdateGUI
 #   TetraMeshProcess
 #   TetraMeshCreateModel
-#   TetraMeshCreateModel
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -122,6 +121,7 @@ proc TetraMeshInit {} {
 	set Module($m,procGUI) TetraMeshBuildGUI
 	set Module($m,procEnter) TetraMeshEnter
 	set Module($m,procExit) TetraMeshExit
+	set Module($m,procMRML) TetraMeshUpdateGUI
 
 	# Define Dependencies
 	#------------------------------------
@@ -129,7 +129,7 @@ proc TetraMeshInit {} {
 	#   Record any other modules that this one depends on.  This is used 
 	#   to check that all necessary modules are loaded when Slicer runs.
 	#   
-	set Module($m,depend) ""
+	set Module($m,depend) "Data"
 
         # Set version info
 	#------------------------------------
@@ -139,7 +139,7 @@ proc TetraMeshInit {} {
 	#   appropriate revision number and date when the module is checked in.
 	#   
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.2 $} {$Date: 2000/08/01 21:39:03 $}]
+		{$Revision: 1.3 $} {$Date: 2000/08/09 21:10:56 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -149,9 +149,10 @@ proc TetraMeshInit {} {
 	#   the procedures in this module and others need to access.
 	#
 	set TetraMesh(count) 0
-	set TetraMesh(prefix) ""
+	set TetraMesh(FileName) ""
         set TetraMesh(modelbasename) ""
 	set TetraMesh(eventManager)  ""
+	set TetraMesh(AlignmentVolume) $Volume(idNone)
 }
 
 
@@ -178,7 +179,8 @@ proc TetraMeshBuildGUI {} {
 	# Help
 	# Props
 	#   Top
-	#   Bottom
+	#   Alignment
+        #   Bottom
 	#-------------------------------------------
 
 	#-------------------------------------------
@@ -201,7 +203,7 @@ The TetraMesh module allows a user to read in a Tetrahedral Mesh.  The Mesh is a
 	set fProps $Module(TetraMesh,fProps)
 	set f $fProps
 
-	foreach frame "Top Middle Bottom" {
+	foreach frame "Top Middle Alignment Bottom" {
 		frame $f.f$frame -bg $Gui(activeWorkspace)
 		pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
 	}
@@ -211,27 +213,10 @@ The TetraMesh module allows a user to read in a Tetrahedral Mesh.  The Mesh is a
 	#-------------------------------------------
 	set f $fProps.fTop
 
-	frame $f.fPrefix  -bg $Gui(activeWorkspace) -relief groove -bd 3
-        set f $f.fPrefix
-
-        pack $f -side top -padx 0 -pady $Gui(pad) -fill x
-
 	frame $f.f -bg $Gui(activeWorkspace)
 	pack $f.f -side top -pady $Gui(pad)
-        
-        DevAddLabel  $f.l "File"
-        DevAddButton $f.b "Browse..." {
-            set TetraMesh(prefix) [ DevGetFile $TetraMesh(prefix) ]
-        }
-        pack $f.l $f.b -side left -padx $Gui(pad)
 
-	eval {entry $f.eTMfile -textvariable TetraMesh(prefix) -width 50} $Gui(WEA)
-	bind $f.eTMfile <Return> {
-            set TetraMesh(prefix) [ DevGetFile $TetraMesh(prefix) ]
-        }
-	pack $f.eTMfile -side top -pady $Gui(pad) -padx $Gui(pad) \
-                -expand 1 -fill x
-
+        DevAddFileBrowse $f.f TetraMesh FileName "Tetrahedral Mesh:" "" "vtk" "" "Browse for a Tetrahedral Mesh"
 
 	set f $fProps.fTop.fBaseName
 
@@ -242,6 +227,13 @@ The TetraMesh module allows a user to read in a Tetrahedral Mesh.  The Mesh is a
 	eval {entry $f.eModelName -textvariable TetraMesh(modelbasename) -width 50} $Gui(WEA)
         
         pack $f.l $f.eModelName -side left -padx $Gui(pad)
+
+	#-------------------------------------------
+	# Props->Alignment frame
+	#-------------------------------------------
+	set f $fProps.fAlignment
+
+        DevAddSelectButton TetraMesh $f AlignmentVolume "Alignment Volume(Optional)" Pack
 
 	#-------------------------------------------
 	# Props->Bottom frame
@@ -255,7 +247,7 @@ The TetraMesh module allows a user to read in a Tetrahedral Mesh.  The Mesh is a
         DevAddButton $f.bGo Process TetraMeshProcess
 
         # Tooltip example: Add a tooltip for the button
-        TooltipAdd $f.bGo "Press this button to start Processing"
+        TooltipAdd $f.bGo "Press this button to start Processing the Mesh into Models"
 
 	pack $f.bGo  -side top -padx $Gui(pad) -pady $Gui(pad)
 }
@@ -300,7 +292,6 @@ proc TetraMeshExit {} {
     popEventManager
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC TetraMeshUpdateGUI
 # 
@@ -316,6 +307,7 @@ proc TetraMeshExit {} {
 proc TetraMeshUpdateGUI {} {
 	global TetraMesh Volume
 
+   DevUpdateNodeSelectButton Volume TetraMesh AlignmentVolume AlignmentVolume DevSelectNode
 }
 
 
@@ -327,10 +319,10 @@ proc TetraMeshUpdateGUI {} {
 # .END
 #-------------------------------------------------------------------------------
 proc TetraMeshProcess {} {
-	global TetraMesh
+	global TetraMesh Model Volume
 
-    puts "$TetraMesh(prefix) $TetraMesh(modelbasename)"
-    set fileName "$TetraMesh(prefix)"
+    puts "$TetraMesh(FileName) $TetraMesh(modelbasename)"
+    set fileName "$TetraMesh(FileName)"
     set modelbasename "$TetraMesh(modelbasename)"
 
 ######################################################################
@@ -354,13 +346,13 @@ proc TetraMeshProcess {} {
 ######################################################################
 #### Read the tetrahedral mesh
 ######################################################################
+
 vtkUnstructuredGridReader tetra_reader
   tetra_reader SetFileName $fileName
   tetra_reader Update
 #  tetra_reader SetStartMethod     MainStartProgress
 #  tetra_reader SetProgressMethod "MainShowProgress reader"
 #  tetra_reader SetEndMethod       MainEndProgress
-
 
 set CurrentTetraMesh [tetra_reader GetOutput]
 $CurrentTetraMesh Update
@@ -381,7 +373,7 @@ set LOWSCALAR $lowscalar
 set HIGHSCALAR $highscalar
 
 ######################################################################
-### Setup the pipeline: Threshold the data, convert to PolyData, Write it.
+### Setup the pipeline: Threshold the data, convert to PolyData
 ######################################################################
 
   #############################################################
@@ -407,16 +399,22 @@ vtkGeometryFilter gf
 ######################################################################
 
 set i 0
+set first $Model(idNone)
 
 while { [$CurrentTetraMesh GetNumberOfPoints] > 0 } {
-  puts "starting new"
+#  puts "starting new"
   ### Get the lowest Scalar Data
   Thresh ThresholdBetween $lowscalar $lowscalar
   ### Finish the pipeline
   gf Update
 
   ### Create the new Model
-  set m [ TetraMeshCreateModel $modelbasename$i $LOWSCALAR $HIGHSCALAR]
+  set m [ TetraMeshCreateModel $modelbasename$i $LOWSCALAR $HIGHSCALAR \
+          $TetraMesh(AlignmentVolume) ]
+
+  if { $first == $Model(idNone) }  { 
+     set first $m
+  }
 
   ### Need to copy the output of the pipeline so that the results
   ### Don't get over-written later. Also, when we delete the inputs,
@@ -431,8 +429,9 @@ while { [$CurrentTetraMesh GetNumberOfPoints] > 0 } {
   ### deleting the inputs causing the results to be deleted.
   #  set Model($m,polyData) [gf GetOutput]
   #  $Model($m,polyData) Update
-#  puts [ $Model($m,polyData) GetNumberOfPolys]
+  #  puts [ $Model($m,polyData) GetNumberOfPolys]
   Model($m,mapper) SetInput $Model($m,polyData)
+
   ### Get the remaining Data ###
   Thresh ThresholdBetween [ expr { $lowscalar + 0.01} ] $highscalar
   set CurrentTetraMesh [Thresh GetOutput]
@@ -450,28 +449,53 @@ Thresh Delete
 gf Delete
 tetra_reader Delete
 
+######################################################################
+#### Now, add a transform
+#### by putting a transform around the newly created models
+#### 
+######################################################################
+
+if {$TetraMesh(AlignmentVolume) != "" && \
+        $TetraMesh(AlignmentVolume) != $Volume(idNone) } {
+    
+    set last $m
+
+    set matrixnum [ DataAddTransform 0 Model($first,node) Model($last,node) ]
+    Matrix($matrixnum,node) SetName "TetraMeshTransform"
+
+
+######################################################################
+#### Now, transform the data appropriately
+#### By editing the new matrix
+######################################################################
+
+      Matrix($matrixnum,node) SetMatrix \
+              [Volume($TetraMesh(AlignmentVolume),node) GetPositionMatrix]
+
+#      [Matrix($matrixnum,node) GetTransform] Inverse
+}
+######################################################################
+#### Update and Redraw
+######################################################################
+
 MainModelsUpdateMRML 
 MainUpdateMRML
 Render3D
 
-#   puts [ $Model($m,polyData) GetNumberOfPolys]
 }   
 
 #-------------------------------------------------------------------------------
 # .PROC TetraMeshCreateModel
 #
-# This Routine Creates a new model and returns the id.
-# .END
-#-------------------------------------------------------------------------------
-
-#-------------------------------------------------------------------------------
-# .PROC TetraMeshCreateModel
-# 
+# This file has almost everything you need to create a model.
+# You still need to assign the PolyData and finish the pipeline
+# through to the mapper.
+#
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc TetraMeshCreateModel  {name scalarLo scalarHi} {
-    global Model Mrml Label
+proc TetraMeshCreateModel  {name scalarLo scalarHi v} {
+    global Model Volume Mrml Label
 
  set n [MainMrmlAddNode Model]
  set i [$n GetID]
@@ -493,7 +517,7 @@ proc TetraMeshCreateModel  {name scalarLo scalarHi} {
  set Model($m,dirty) 0
 
  Model($m,node) SetName $name
- Model($m,node) SetFileName "$Model(prefix).vtk"
+ Model($m,node) SetFileName $Model(FileName)
  Model($m,node) SetFullFileName [file join $Mrml(dir) [Model($m,node) GetFileName]]
  Model($m,node) SetDescription "Generated from Tetrahedral Mesh"
 
