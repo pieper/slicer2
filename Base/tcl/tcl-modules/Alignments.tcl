@@ -146,7 +146,7 @@ proc AlignmentsInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.15 $} {$Date: 2003/03/19 19:16:29 $}]
+            {$Revision: 1.16 $} {$Date: 2003/06/02 19:47:50 $}]
 
     # Props
     set Matrix(propertyType) Basic
@@ -1448,15 +1448,19 @@ proc AlignmentsManualTranslate {param {value ""}} {
 
     # Update all MRML only if the values changed
     if {$oldVal != $value} {
+        set delta [expr $value - $oldVal]
         switch $param {
             "regTranLR" {
-                $mat SetElement 0 3 $value
+                #$mat SetElement 0 3 $value
+                $tran Translate $delta 0 0
             }
             "regTranPA" {
-                $mat SetElement 1 3 $value
+                #$mat SetElement 1 3 $value
+                $tran Translate 0 $delta 0
             }
             "regTranIS" {
-                $mat SetElement 2 3 $value
+                #$mat SetElement 2 3 $value
+                $tran Translate 0 0 $delta
             }
         }
         set Matrix(rotAxis) "XX"

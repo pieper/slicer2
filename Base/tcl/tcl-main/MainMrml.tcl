@@ -98,7 +98,7 @@ proc MainMrmlInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainMrml \
-        {$Revision: 1.82 $} {$Date: 2003/05/30 21:50:52 $}]
+        {$Revision: 1.83 $} {$Date: 2003/06/02 19:47:49 $}]
 
     set Mrml(colorsUnsaved) 0
 }
@@ -783,6 +783,12 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
                 "matrix" {$n SetMatrix      $val}
                 }
             }
+            # special trick to avoid vtk 4.2 legacy hack message 
+            # (adds a concatenated identity transform to the transform)
+            if { [info commands __dummy_transform] == "" } {
+                vtkTransform __dummy_transform
+            }
+            [$n GetTransform] SetInput __dummy_transform
         }
 
         "Color" {

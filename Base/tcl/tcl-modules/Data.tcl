@@ -88,7 +88,7 @@ proc DataInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.48 $} {$Date: 2003/05/28 12:42:01 $}]
+        {$Revision: 1.49 $} {$Date: 2003/06/02 19:47:51 $}]
 
     set Data(index) ""
     set Data(clipboard) ""
@@ -724,8 +724,10 @@ proc DataAddMatrix {} {
 
     # special trick to avoid vtk 4.2 legacy hack message 
     # (adds a concatenated identity transform to the transform)
-    [Matrix($i,node) GetTransform] Scale 2 2 2
-    [Matrix($i,node) GetTransform] Scale .5 .5 .5
+    if { [info commands __dummy_transform] == "" } {
+        vtkTransform __dummy_transform
+    }
+    [Matrix($i,node) GetTransform] SetInput __dummy_transform
 
     set n Matrix($i,node)
     $n SetID $i
@@ -834,8 +836,10 @@ proc DataAddTransform {append firstSel lastSel {CallUpdate "1"} } {
 
     # special trick to avoid vtk 4.2 legacy hack message 
     # (adds a concatenated identity transform to the transform)
-    [Matrix($i,node) GetTransform] Scale 2 2 2
-    [Matrix($i,node) GetTransform] Scale .5 .5 .5
+    if { [info commands __dummy_transform] == "" } {
+        vtkTransform __dummy_transform
+    }
+    [Matrix($i,node) GetTransform] SetInput __dummy_transform
 
     set n Matrix($m,node)
     $n SetID $m
