@@ -148,7 +148,7 @@ proc TetraMeshInit {} {
 	#   appropriate revision number and date when the module is checked in.
 	#   
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.18 $} {$Date: 2001/08/03 12:21:08 $}]
+		{$Revision: 1.19 $} {$Date: 2001/08/08 08:01:14 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -1279,6 +1279,18 @@ proc TetraMeshProcessVectorField {} {
 
     set CurrentTetraMesh [TetraReader GetOutput]
     $CurrentTetraMesh Update
+
+######################################################################
+#### Check that the Vectors are there
+######################################################################
+
+
+set tmpvectors [[$CurrentTetraMesh GetPointData] GetVectors] 
+if { $tmpvectors == ""} {
+    DevErrorWindow "No Vector Data in Mesh"
+    TetraReader Delete
+    return
+}
 
 ######################################################################
 #### Get the range of the data, not exactly thread safe. See vtkDataSet.h
