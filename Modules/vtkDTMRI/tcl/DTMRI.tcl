@@ -135,7 +135,7 @@ proc DTMRIInit {} {
     set Module($m,author) "Lauren O'Donnell"
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.50 $} {$Date: 2004/11/23 22:31:43 $}]
+                  {$Revision: 1.51 $} {$Date: 2005/01/09 23:44:50 $}]
 
      # Define Tabs
     #------------------------------------
@@ -4313,6 +4313,7 @@ proc DTMRIUpdate {} {
 
         # calculate trace or whatever we are thresholding by
         $math SetInput 0 [Tensor($t,data) GetOutput]
+    $math SetInput 1 [Tensor($t,data) GetOutput]
         $math SetOperationTo$DTMRI(mode,threshold)
 
         # threshold to make a mask of the area of interest
@@ -4680,6 +4681,7 @@ proc DTMRIDoMath {{operation ""}} {
     vtkTensorMathematics math
     math SetScaleFactor $DTMRI(scalars,scaleFactor)
     math SetInput 0 $input
+    math SetInput 1 $input
     math SetOperationTo$operation
     math AddObserver StartEvent MainStartProgress
     math AddObserver ProgressEvent "MainShowProgress math"
@@ -4694,9 +4696,9 @@ proc DTMRIDoMath {{operation ""}} {
     # tell the node what type of data so MRML file will be okay
     Volume($v,node) SetScalarType [[math GetOutput] GetScalarType]
 
-
-    math SetInput 0 ""    
+    math SetInput 0 ""
     math SetInput 1 ""
+    
     # this is to disconnect the pipeline
     # this object hangs around, so try this trick from Editor.tcl:
     math SetOutput ""
