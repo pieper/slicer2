@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkTensorImplicitFunctionToFunctionSet.h,v $
   Language:  C++
-  Date:      $Date: 2004/07/27 16:52:19 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2004/08/05 00:16:56 $
+  Version:   $Revision: 1.2 $
 */
 // .NAME vtkTensorImplicitFunctionToFunctionSet - Wrapper class around itk::BSplineInterpolateImageFuntion
 // .SECTION Description
@@ -18,11 +18,12 @@
 #define VTK_INTEGRATE_MEDIUM_EIGENVECTOR 1
 #define VTK_INTEGRATE_MINOR_EIGENVECTOR  2
 
+#include "vtkTensorUtilConfigure.h"
 #include "vtkImplicitFunction.h"
 #include "vtkFunctionSet.h"
 #include "vtkImageData.h"
 
-class VTK_COMMON_EXPORT vtkTensorImplicitFunctionToFunctionSet : public vtkFunctionSet
+class VTK_TENSORUTIL_EXPORT vtkTensorImplicitFunctionToFunctionSet : public vtkFunctionSet
 {
  public:
   static vtkTensorImplicitFunctionToFunctionSet *New();

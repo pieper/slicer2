@@ -3,8 +3,8 @@
 Program:   Visualization Toolkit
 Module:    $RCSfile: vtkPreciseHyperStreamline.h,v $
 Language:  C++
-Date:      $Date: 2004/07/27 16:52:19 $
-Version:   $Revision: 1.1 $
+Date:      $Date: 2004/08/05 00:16:56 $
+Version:   $Revision: 1.2 $
 
 Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen 
 All rights reserved.
@@ -48,6 +48,7 @@ PURPOSE.  See the above copyright notice for more information.
 #ifndef __vtkPreciseHyperStreamline_h
 #define __vtkPreciseHyperStreamline_h
 
+#include "vtkTensorUtilConfigure.h"
 #include "vtkDataSetToPolyDataFilter.h"
 #include "vtkInitialValueProblemSolver.h" // to get the function set
 
@@ -62,7 +63,7 @@ PURPOSE.  See the above copyright notice for more information.
 
 class vtkPreciseHyperArray;
 
-class VTK_GRAPHICS_EXPORT vtkPreciseHyperStreamline : public vtkDataSetToPolyDataFilter
+class VTK_TENSORUTIL_EXPORT vtkPreciseHyperStreamline : public vtkDataSetToPolyDataFilter
 {
  public:
   vtkTypeRevisionMacro(vtkPreciseHyperStreamline,vtkDataSetToPolyDataFilter);
