@@ -8,20 +8,20 @@ if {$argc > 1} {
 
 # Determine Slicer's home directory from the SLICER_HOME environment 
 # variable, or the root directory of this script ($argv0).
-if {[info exists env(SLICER_HOME)] == 0 || $env(SLICER_HOME) == ""} {
+if {[info exists ::SLICER_HOME] == 0 || $::SLICER_HOME == ""} {
     set prog [file dirname $argv0]
 } else {
-    set prog [file join $env(SLICER_HOME) Base/tcl]
+    set prog [file join $::SLICER_HOME Base/tcl]
 }
 
 # Set the SLICER_DOC environment variable to output html files 
 # into another doc directory.  If you want them to go into /mystuff/Doc,
 # set SLICER_DOC to mystuff/Doc.
 
-if {[info exists env(SLICER_DOC)] == 0 || $env(SLICER_DOC) == ""} {
-    set outputdir [file join $env(SLICER_HOME) Doc]
+if {[info exists ::SLICER_DOC] == 0 || $::SLICER_DOC == ""} {
+    set outputdir [file join $::SLICER_HOME Doc]
 } else {
-    set outputdir $env(SLICER_DOC)
+    set outputdir $::SLICER_DOC
 }
 
 puts "prog $prog output $outputdir"
@@ -35,4 +35,4 @@ if {$argv == ""} {
     set argv "doc tcl"
 }
 DocumentAll $prog $outputdir $argv
-exit
+# exit
