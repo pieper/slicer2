@@ -101,7 +101,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.98 $} {$Date: 2004/08/13 19:18:34 $}]
+            {$Revision: 1.99 $} {$Date: 2004/09/16 19:34:48 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -122,9 +122,9 @@ proc VolumesInit {} {
     vtkImageWriter Volumes(writer)
     vtkImageReformat Volumes(reformatter)
     Volumes(writer) SetFileDimensionality 2
-    Volumes(writer) SetStartMethod      MainStartProgress
-    Volumes(writer) SetProgressMethod  "MainShowProgress Volumes(writer)"
-    Volumes(writer) SetEndMethod        MainEndProgress
+    Volumes(writer) AddObserver StartEvent MainStartProgress
+    Volumes(writer) AddObserver ProgressEvent  "MainShowProgress Volumes(writer)"
+    Volumes(writer) AddObserver EndEvent        MainEndProgress
 
     set Volumes(prefixSave) ""
 

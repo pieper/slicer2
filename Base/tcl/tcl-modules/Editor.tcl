@@ -125,7 +125,7 @@ proc EditorInit {} {
     
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.73 $} {$Date: 2004/04/13 21:00:05 $}]
+        {$Revision: 1.74 $} {$Date: 2004/09/16 19:39:28 $}]
     
     # Initialize globals
     set Editor(idOriginal)  $Volume(idNone)
@@ -235,9 +235,9 @@ proc EditorBuildVTK {} {
     global Editor Ed Module
 
     vtkImageEditorEffects Ed(editor)
-    Ed(editor) SetStartMethod     MainStartProgress
-    Ed(editor) SetProgressMethod "MainShowProgress Ed(editor)"
-    Ed(editor) SetEndMethod       MainEndProgress
+    Ed(editor) AddObserver StartEvent     MainStartProgress
+    Ed(editor) AddObserver ProgressEvent "MainShowProgress Ed(editor)"
+    Ed(editor) AddObserver EndEvent       MainEndProgress
 
     # Initialize effects
     if {$Module(verbose) == 1} {
