@@ -55,11 +55,12 @@ vtkMrmlEndTransformNode \
 vtkMrmlColorNode \
 vtkMrmlOptionsNode \
 vtkMrmlTree \
+vtkMrmlTransformNode \
 
 #vtkMrmlColorLutNode \
 #vtkMrmlRotateNode \
 #vtkMrmlScaleNode \
-#vtkMrmlTransformNode \
+
 #vtkMrmlTranslateNode \
 
 #------------------------------------------------------------------------------
