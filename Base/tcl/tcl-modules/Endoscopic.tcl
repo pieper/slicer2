@@ -149,8 +149,9 @@ proc EndoscopicExit {} {
 proc EndoscopicInit {} {
     global Endoscopic Module Model Path Advanced View Gui
     
+    #FIXME TkInteractor has direct reference to Endoscopic, change
+    #that!
 
-    
     set m Endoscopic
     set Module($m,row1List) "Help Init Camera Path Advanced"
     set Module($m,row1Name) "{Help} {Init} {Camera} {Path} {Advanced}"
@@ -190,8 +191,6 @@ proc EndoscopicInit {} {
     eval $View(endCam) SetClippingRange $View(endoscopicClippingRange)
     
 
-
-    
         
     # Initialize module-level variables
     #------------------------------------
@@ -250,7 +249,11 @@ proc EndoscopicInit {} {
     set Endoscopic(fp,y) 30
     set Endoscopic(fp,z) 0
     set Endoscopic(fp,driver) 0
-    
+
+    set Endoscopic(intersection,driver) 0    
+    set Endoscopic(intersection,x) 0    
+    set Endoscopic(intersection,y) 0    
+    set Endoscopic(intersection,z) 0    
     # if it is absolute, the camera will move along the 
     #  RA/IS/LR axis
     # if it is relative, the camera will move along its
@@ -287,7 +290,9 @@ proc EndoscopicInit {} {
     #Advanced variables
     set Endoscopic(ModelsVisibilityInside) 1
     set Endoscopic(positionLandmarkFromEventMgr) 0
-
+    set Endoscopic(collision) 0
+    set Endoscopic(collDistLabel) ""
+    set Endoscopic(collMenu) ""
     # Path variable
     set Path(flyDirection) "Forward"
     set Path(speed) 1
@@ -322,6 +327,9 @@ proc EndoscopicInit {} {
 #-------------------------------------------------------------------------------
 proc EndoscopicBuildVTK {} {
         global Endoscopic Model
+
+    # vtkPointPicker doesn't work like this one, why?
+	vtkCellPicker picker
 
         # create the focal point actor
         EndoscopicCreateFocalPoint
@@ -545,11 +553,8 @@ proc EndoscopicCreateLandmarks {} {
 
     foreach l "cLand fLand" {
 
-	vtkPoints    Endoscopic($l,inputPoints)  
-	vtkPoints    Endoscopic($l,points)
-	Endoscopic($l,inputPoints)  SetDataTypeToFloat
-	Endoscopic($l,points) SetDataTypeToFloat
-
+	vtkFloatPoints    Endoscopic($l,inputPoints)  
+	vtkFloatPoints    Endoscopic($l,points)
 	vtkPolyData       Endoscopic($l,polyData)       
 	vtkSphereSource   Endoscopic($l,source)        
 	vtkGlyph3D        Endoscopic($l,glyph)        
@@ -629,17 +634,24 @@ proc EndoscopicBuildGUI {} {
     # create the event manager for the ability to add landmarks with
     # the key-press e on 2D slices
     
-    lappend Endoscopic(eventManager) {$Gui(fSl0Win) <KeyPress-c> \
+    lappend Endoscopic(eventManager) {$Gui(fSl0Win) <KeyPress-l> \
 	    { if { [SelectPick2D %W %x %y] != 0 } \
 	    { eval EndoscopicAddLandmarkAtWorldPos $Select(xyz); Render3D } } }
-    lappend Endoscopic(eventManager) {$Gui(fSl1Win) <KeyPress-c> \
+    lappend Endoscopic(eventManager) {$Gui(fSl1Win) <KeyPress-l> \
 	    { if { [SelectPick2D %W %x %y] != 0 } \
 	    { eval EndoscopicAddLandmarkAtWorldPos $Select(xyz);Render3D } } }
-    lappend Endoscopic(eventManager) {$Gui(fSl2Win) <KeyPress-c> \
+    lappend Endoscopic(eventManager) {$Gui(fSl2Win) <KeyPress-l> \
 	    { if { [SelectPick2D %W %x %y] != 0 } \
 	    { eval EndoscopicAddLandmarkAtWorldPos $Select(xyz);Render3D } } }
     
-	
+    lappend Endoscopic(eventManager) {$Gui(fViewWin)  <KeyPress-l> \
+	    { if { [SelectPick picker %W %x %y] != 0 } \
+	    { eval EndoscopicAddLandmarkAtWorldPos $Select(xyz);Render3D } } }
+
+    lappend Endoscopic(eventManager) {$Gui(fViewWin)  <KeyPress-c> \
+	    { if { [SelectPick picker %W %x %y] != 0 } \
+	    { eval EndoscopicSetWorldPosition $Select(xyz);Render3D } } }
+
         set LposTexts "{L<->R } {P<->A } {I<->S }"
         set RposTexts "{Pitch  } {Roll  } {Yaw  }"
         set posAxi "x y z"
@@ -857,24 +869,27 @@ If you need help, go to the Help tab"
 	
         set f $fAdvanced.fMid.fVis
 
-       EndoscopicCreateCheckbutton $f "Path" "Show Inside Models" Endoscopic(ModelsVisibilityInside) 18 0 "EndoscopicSetModelsVisibilityInside"
+EndoscopicCreateCheckbutton $f "Path" "Show Inside Models" Endoscopic(ModelsVisibilityInside) 18 0 "EndoscopicSetModelsVisibilityInside"
 
 
         #-------------------------------------------
 	# Advanced->Mid->Toggle frame
 	#-------------------------------------------
 
-        set f $fAdvanced.fMid.fToggle
+set f $fAdvanced.fMid.fToggle
 
-	eval {label $f.l -height 2 -text "Cam Direction:"} $Gui(WTA)
-	foreach value "relative absolute" width "9 8" {
-	    eval {radiobutton $f.r$value -width $width \
-		    -text "$value" -value "$value" -variable Endoscopic(flyDirection)\
-		    -indicatoron 0 -command "EndoscopicSetCameraAxis $value; Render3D"} $Gui(WCA) 
-	}       
-	$f.rabsolute select
+eval {label $f.l -height 2 -text "Collision Detection:"} $Gui(WTA)
+eval {menubutton $f.fMBtns -text "off" -menu $f.fMBtns.fMenu} $Gui(WMBA)  
+eval {menu $f.fMBtns.fMenu} $Gui(WMA) 
 
-	grid $f.l $f.rabsolute $f.rrelative  -padx $Gui(pad) -pady $Gui(pad)
+$f.fMBtns.fMenu add command -label "off" -command {EndoscopicSetCollision 0;}
+$f.fMBtns.fMenu add command -label "on" -command {EndoscopicSetCollision 1}
+
+eval {label $f.l2 -height 2 -text "distance: 0"} $Gui(WTA)
+set Endoscopic(collMenu) $f.fMBtns
+set Endoscopic(collDistLabel) $f.l2
+grid $f.l $f.fMBtns $f.l2 -padx 1 -pady 1
+
 	
 
         #-------------------------------------------
@@ -1170,7 +1185,7 @@ If you need help, go to the Help tab"
 		set Endoscopic(mDriver) $f.mbDriver.m
 		set Endoscopic(mbDriver) $f.mbDriver
 		eval {menu $f.mbDriver.m} $Gui(WMA) {-bg $Path(eColor)}
-		foreach item "User Camera FocalPoint" {
+		foreach item "User Camera FocalPoint Intersection" {
 			$Endoscopic(mDriver) add command -label $item \
 				-command "EndoscopicSetSliceDriver $item"
 		}
@@ -1469,15 +1484,16 @@ proc EndoscopicSetCameraPosition {{value ""}} {
 		tk_messageBox -message "LR is not a floating point number."
 		return
 	}
-	if {[ValidateFloat $Endoscopic(cam,yStr)] == 0} {
-		tk_messageBox -message "PA is not a floating point number."
-		return
-	}
+#	if {[ValidateFloat $Endoscopic(cam,yStr)] == 0} {
+#		tk_messageBox -message "PA is not a floating point number."
+#		return
+#	}
 	if {[ValidateFloat $Endoscopic(cam,zStr)] == 0} {
 		tk_messageBox -message "IS is not a floating point number."
 		return
 	}
 
+	set collision 0
 
 	# get the View plane of the virtual camera because we want to move 
 	# in and out along that plane
@@ -1530,31 +1546,108 @@ proc EndoscopicSetCameraPosition {{value ""}} {
 	set Endoscopic(fp,y) [expr $Endoscopic(cam,y) + $IO(y) * $Endoscopic(fp,distance)]
 	set Endoscopic(fp,z) [expr $Endoscopic(cam,z) + $IO(z) * $Endoscopic(fp,distance)]
 	
-
-	# store current x,y,z string
-	set Endoscopic(cam,tempX) $Endoscopic(cam,xStr)
-	set Endoscopic(cam,tempY) $Endoscopic(cam,yStr)
-	set Endoscopic(cam,tempZ) $Endoscopic(cam,zStr)
-
-
-	Endoscopic(cam,actor) SetPosition $Endoscopic(cam,x) $Endoscopic(cam,y) $Endoscopic(cam,z)
-	Endoscopic(fp,actor) SetPosition $Endoscopic(fp,x) $Endoscopic(fp,y) $Endoscopic(fp,z)
-	EndoscopicUpdateCamera
-
-
-    #*******************************************************************
-    #
-    # STEP 3: if the user decided to have the camera drive the slice, 
-    #         then do it!
-    #
-    #*******************************************************************
-
-	if { $Endoscopic(fp,driver) == 1 } {
-	    EndoscopicSetSlicePosition fp 
-	} elseif { $Endoscopic(cam,driver) == 1 } {
-	    EndoscopicSetSlicePosition cam 
+	if { $Endoscopic(collision) == 1 } {
+	    
+	    # Do collision detection if the user wants it
+	    # First hack: temporarily set the focal point to where we are going 
+	    #             (and keep the camera in that position)
+	    set Endoscopic(tmp) [$View(endCam) GetFocalPoint]
+	    $View(endCam) SetFocalPoint $Endoscopic(cam,x) $Endoscopic(cam,y) $Endoscopic(cam,z) 
+	    # Send the ray from the current camera position (the old position) 
+	    # through the center of the screen
+	    # Get the point coordinate of the first thing the ray intersects
+	    # If the point is in between the current camera position and the 
+	    # new position, then we've just detected a collision, so we only move 
+	    # to the point of collision
+	    
+	    set l [endRen GetCenter]
+	    set l0 [expr [lindex $l 0]]
+	    set l1 [expr [lindex $l 1]]
+	    set l2 [expr [lindex $l 2]]
+	    set p [picker Pick $l0 $l1 $l2 endRen]
+	    
+	    
+	    if { $p == 1} {
+		set selPt [picker GetPickPosition]
+		set selPtX [expr [lindex $selPt 0]]
+		set selPtY [expr [lindex $selPt 1]]
+		set selPtZ [expr [lindex $selPt 2]]
+		
+		
+		# calculate the difference in distance between the old and new position and
+		# the old and pick position
+		set distCamX [expr $Endoscopic(cam,x) - $Endoscopic(cam,tempX)]
+		set distCamY [expr $Endoscopic(cam,y) - $Endoscopic(cam,tempY)]
+		set distCamZ [expr $Endoscopic(cam,z) - $Endoscopic(cam,tempZ)]
+		
+		set distCam [ expr sqrt(($distCamX * $distCamX) +( $distCamY * $distCamY) + ($distCamZ * $distCamZ))]
+		
+		
+		set distPickX [expr $selPtX - $Endoscopic(cam,tempX)]
+		set distPickY [expr $selPtY - $Endoscopic(cam,tempY)]
+		set distPickZ [expr $selPtZ - $Endoscopic(cam,tempZ)]
+		
+		set distPick [ expr sqrt(($distPickX * $distPickX) +($distPickY * $distPickY) + ($distPickZ * $distPickZ))]
+		
+		$Endoscopic(collDistLabel) config -text "distance: $distPick"
+		
+		if { [expr $distPick - $distCam] < 0.2 } {
+		    puts "collision detection!!"
+		    set collision 1
+		}
+		#set a [picker GetActor]
+	    }
+	    # re-change the focal point 
+	    $View(endCam) SetFocalPoint [lindex $Endoscopic(tmp) 0] [lindex $Endoscopic(tmp) 1] [lindex $Endoscopic(tmp) 2]
 	}
 	
+	if { $collision == 0 } {
+	    # store current x,y,z string
+	    set Endoscopic(cam,tempX) $Endoscopic(cam,xStr)
+	    set Endoscopic(cam,tempY) $Endoscopic(cam,yStr)
+	    set Endoscopic(cam,tempZ) $Endoscopic(cam,zStr)
+	    
+	    
+	    Endoscopic(cam,actor) SetPosition $Endoscopic(cam,x) $Endoscopic(cam,y) $Endoscopic(cam,z)
+	    Endoscopic(fp,actor) SetPosition $Endoscopic(fp,x) $Endoscopic(fp,y) $Endoscopic(fp,z)
+	    EndoscopicUpdateCamera
+	    
+	    #*******************************************************************
+	    #
+	    # STEP 3: if the user decided to have the camera drive the slice, 
+	    #         then do it!
+	    #
+	    #*******************************************************************
+	    
+	    if { $Endoscopic(fp,driver) == 1 } {
+		EndoscopicSetSlicePosition fp 
+	    } elseif { $Endoscopic(cam,driver) == 1 } {
+		EndoscopicSetSlicePosition cam 
+	    } elseif { $Endoscopic(intersection,driver) == 1 } {
+		# get the intersection
+		set l [endRen GetCenter]
+		set l0 [expr [lindex $l 0]]
+		set l1 [expr [lindex $l 1]]
+		set l2 [expr [lindex $l 2]]
+		set p [picker Pick $l0 $l1 $l2 endRen]
+		
+		
+		if { $p == 1} {
+		    set selPt [picker GetPickPosition]
+		    set Endoscopic(intersection,x) [expr [lindex $selPt 0]]
+		    set Endoscopic(intersection,y) [expr [lindex $selPt 1]]
+		    set Endoscopic(intersection,z) [expr [lindex $selPt 2]]
+		    EndoscopicSetSlicePosition intersection
+		}
+		    
+	    }
+	    
+	} else {
+	    # since we are not moving, reset the position to the old one
+	    set Endoscopic(cam,x) $Endoscopic(cam,tempX) 
+	    set Endoscopic(cam,y) $Endoscopic(cam,tempY) 
+	    set Endoscopic(cam,z) $Endoscopic(cam,tempZ) 
+	}
     }
 
 
@@ -1674,7 +1767,7 @@ proc EndoscopicSetCameraDirection {{value ""}} {
 #-------------------------------------------------------------------------------
 proc EndoscopicSetFocalAndCameraPosition {x y z FPx FPy FPz} {
 	global Endoscopic View Path Model
-
+    
     
     # set the new x,y,z strings for the sliders
     set Endoscopic(cam,xStr) $x
@@ -1701,7 +1794,7 @@ proc EndoscopicSetFocalAndCameraPosition {x y z FPx FPy FPz} {
     set Endoscopic(fp,x) $FPx
     set Endoscopic(fp,y) $FPy
     set Endoscopic(fp,z) $FPz
-
+    
     EndoscopicUpdateCamera
     
     #*********************************************************************
@@ -1729,7 +1822,7 @@ proc EndoscopicSetFocalAndCameraPosition {x y z FPx FPy FPz} {
     
     # first set the rotation matrix based on the Virtual Camera's 
     # coordinate axis (orthogonal unit vectors):
-
+    
     # Uy = ViewPlaneNormal
     set Uy(x) $Endoscopic(cam,viewPlaneNormalX)
     set Uy(y) $Endoscopic(cam,viewPlaneNormalY)
@@ -1780,10 +1873,12 @@ proc EndoscopicSetFocalAndCameraPosition {x y z FPx FPy FPz} {
     # STEP 2.2: rotate the actor according to the rotation of the virtual 
     #         camera
     transform Concatenate matrix
+    
 
     # STEP 2.3: translate the actor to its new position
     transform Translate [expr $Endoscopic(cam,x)] [expr $Endoscopic(cam,y)] [expr $Endoscopic(cam,z)]
-     
+   
+
     # STEP 2.4: set the user matrix
     #transform GetMatrix Endoscopic(actor,matrix)
     #Endoscopic(actor,matrix) Modified
@@ -1792,6 +1887,7 @@ proc EndoscopicSetFocalAndCameraPosition {x y z FPx FPy FPz} {
     # can call GetOrientation)
 
     set l [transform GetOrientation]
+   
     set Endoscopic(cam,xRotation) [expr [lindex $l 0]]
     set Endoscopic(cam,yRotation) [expr [lindex $l 1]]
     set Endoscopic(cam,zRotation) [expr [lindex $l 2]]
@@ -1818,10 +1914,26 @@ proc EndoscopicSetFocalAndCameraPosition {x y z FPx FPy FPz} {
 	EndoscopicSetSlicePosition fp 
     } elseif { $Endoscopic(cam,driver) == 1 } {
 	EndoscopicSetSlicePosition cam 
+    } elseif { $Endoscopic(intersection,driver) == 1 } {
+	# get the intersection
+	set l [endRen GetCenter]
+	set l0 [expr [lindex $l 0]]
+	set l1 [expr [lindex $l 1]]
+	set l2 [expr [lindex $l 2]]
+	set p [picker Pick $l0 $l1 $l2 endRen]
+	
+	
+	if { $p == 1} {
+	    set selPt [picker GetPickPosition]
+	    set Endoscopic(intersection,x) [expr [lindex $selPt 0]]
+	    set Endoscopic(intersection,y) [expr [lindex $selPt 1]]
+	    set Endoscopic(intersection,z) [expr [lindex $selPt 2]]
+	    
+	    EndoscopicSetSlicePosition intersection 
+	}
+	
     }
-    
 }
-
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicUpdateCamera
@@ -1920,20 +2032,23 @@ proc EndoscopicAddLandmarkAtWorldPos {x y z} {
 
     global Endoscopic Model Path
 
+
     if { $Path(numLandmarks) < 0} {
 	puts "we have a problem!!! numLandmarks < 0"
     }
     set i $Path(numLandmarks)
    
-    set Endoscopic(cLand,$i,x) $x
-    set Endoscopic(cLand,$i,y) $y
-    set Endoscopic(cLand,$i,z) $z
-    set Endoscopic(fLand,$i,x) $x
-    set Endoscopic(fLand,$i,y) $y
-    set Endoscopic(fLand,$i,z) $z
+    set Endoscopic(cLand,$i,x) [expr $x]
+    set Endoscopic(cLand,$i,y) [expr $y]
+    set Endoscopic(cLand,$i,z) [expr $z]
+    set Endoscopic(fLand,$i,x) [expr $x]
+    set Endoscopic(fLand,$i,y) [expr $y]
+    set Endoscopic(fLand,$i,z) [expr $z]
     
     set Endoscopic(positionLandmarkFromEventMgr) 1
-    
+    # FIXME find a more elegant solution
+    set Path(random) 1
+
     EndoscopicAddLandmark
 }
 
@@ -1950,7 +2065,7 @@ proc EndoscopicAddLandmark {} {
     global Endoscopic Model Path View Point EndPath Landmark
     
     # if the path already existing is random, delete it
-    if { $Path(random) == 1 } {
+    if { $Path(random) == 1  &&  $Endoscopic(positionLandmarkFromEventMgr) == 0 } {
 	EndoscopicDeletePath
     }
     if { $Path(numLandmarks) < 0} {
@@ -2129,6 +2244,7 @@ proc EndoscopicDeletePath {} {
 	global Endoscopic Path Point Model Landmark EndPath
 
     if { $Path(exists) == 1 } {
+
 	for {set d 0} {$d<$Path(numLandmarks)} {incr d 1} {
 	    MainMrmlUndoAddNode Landmark $Endoscopic(cam,$d,LandmarkNode)	   
 	}
@@ -2356,10 +2472,11 @@ proc EndoscopicSetPathFrame {} {
 	}
 	
 	if { $Path(flyDirection) == "Forward" } {
-	    
+	   
 	    set Path(i) $Path(stepStr)
 	    set l [Endoscopic(cLand,points) GetPoint $Path(i)] 
 	    set l2 [Endoscopic(${which}Land,points) GetPoint [expr $Path(i) + $var ]]
+	    
 	    EndoscopicSetFocalAndCameraPosition [lindex $l 0] [lindex $l 1] [lindex $l 2] [lindex $l2 0] [lindex $l2 1] [lindex $l2 2]	    
 
 	} elseif { $Path(flyDirection) == "Backward" } {
@@ -2553,6 +2670,7 @@ proc EndoscopicSetSliceDriver {name} {
 	}
 	set Endoscopic(fp,driver) 0
 	set Endoscopic(cam,driver) 0
+	set Endoscopic(intersection,driver) 0
     } else {
 	foreach s $Slice(idList) {
 	    Slicer SetDriver $s 1
@@ -2561,11 +2679,19 @@ proc EndoscopicSetSliceDriver {name} {
 	    set m cam
 	    set Endoscopic(fp,driver) 0
 	    set Endoscopic(cam,driver) 1
+	    set Endoscopic(intersection,driver) 0
 	} elseif { $name == "FocalPoint"} {
 	    set m fp 
 	    set Endoscopic(fp,driver) 1
 	    set Endoscopic(cam,driver) 0
+	    set Endoscopic(intersection,driver) 0
+	} elseif { $name == "Intersection"} {
+	    set m intersection 
+	    set Endoscopic(fp,driver) 0
+	    set Endoscopic(cam,driver) 0
+	    set Endoscopic(intersection,driver) 1
 	}
+	
 	EndoscopicSetSlicePosition $m
     }    
 }
@@ -2637,6 +2763,12 @@ proc EndoscopicUpdateMRML {} {
 	    set Endoscopic(cam,$i,LandmarkNode) $item
 	    $Path(fLandmarkList) insert end "$l"
 	    set Path(numLandmarks) [expr $i + 1]
+	    # FIXME find a more elegant solution
+	    if {$Endoscopic(fLand,$i,x) == $Endoscopic(cLand,$i,x) &&
+	    $Endoscopic(fLand,$i,y) == $Endoscopic(cLand,$i,y) &&
+	    $Endoscopic(fLand,$i,z) == $Endoscopic(cLand,$i,z) } {
+		set Path(random) 1
+	    }
 	}
 
 	if { [$item GetClassName] == "vtkMrmlEndPathNode" } {
@@ -2827,7 +2959,45 @@ proc EndoscopicCameraMotionFromUser {} {
 	EndoscopicSetSlicePosition fp 
     } elseif { $Endoscopic(cam,driver) == 1 } {
 	EndoscopicSetSlicePosition cam 
+    } elseif { $Endoscopic(intersection,driver) == 1 } {
+	# get the intersection
+	set l [endRen GetCenter]
+	set l0 [expr [lindex $l 0]]
+	set l1 [expr [lindex $l 1]]
+	set l2 [expr [lindex $l 2]]
+	set p [picker Pick $l0 $l1 $l2 endRen]
+	
+	
+	if { $p == 1} {
+	    set selPt [picker GetPickPosition]
+	    set Endoscopic(intersection,x) [expr [lindex $selPt 0]]
+	    set Endoscopic(intersection,y) [expr [lindex $selPt 1]]
+	    set Endoscopic(intersection,z) [expr [lindex $selPt 2]]
+	    
+	    EndoscopicSetSlicePosition intersection 
+	}
     }
-    
 }
+}
+
+proc EndoscopicSetCollision {value} {
+    global Endoscopic
+
+    set Endoscopic(collision) $value
+    if { $value == 0 } {
+	$Endoscopic(collMenu) config -text "off"
+    } else {
+	$Endoscopic(collMenu) config -text "on"
+    }
+}
+
+proc EndoscopicSetWorldPosition {x y z} {
+    global Endoscopic
+
+    set Endoscopic(cam,xStr) $x
+    set Endoscopic(cam,yStr) $y
+    set Endoscopic(cam,zStr) $z
+
+    EndoscopicSetCameraPosition
+
 }

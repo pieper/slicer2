@@ -51,8 +51,12 @@ proc BindTkRenderWidget {widget} {
     bind $widget <B1-Motion> {Rotate %W %x %y}
     bind $widget <B2-Motion> {Pan %W %x %y}
     bind $widget <B3-Motion> {Zoom %W %x %y}
-    bind $widget <Shift-B1-Motion> {Pan %W %x %y}
-    bind $widget <Shift-B3-Motion> {PitchYaw %W %x %y}
+    bind $widget <Control-B1-Motion> {LR %W %x %y}
+    bind $widget <Control-B2-Motion> {UD %W %x %y}
+    bind $widget <Control-B3-Motion> {BF %W %x %y}
+    bind $widget <Shift-B1-Motion> {Pitch %W %x %y}
+    bind $widget <Shift-B2-Motion> {Roll %W %x %y}
+    bind $widget <Shift-B3-Motion> {Yaw %W %x %y}
     bind $widget <KeyPress-r> {Reset %W %x %y}
     bind $widget <KeyPress-u> {wm deiconify .vtkInteract}
     bind $widget <KeyPress-w> Wireframe
@@ -226,36 +230,155 @@ proc Rotate {widget x y} {
 
 
 #-------------------------------------------------------------------------------
-# .PROC PitchYaw
+# .PROC Pitch
 # 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc PitchYaw {widget x y} {
+proc Pitch {widget x y} {
     global CurrentCamera 
     global LastX LastY
     global RendererFound
-	global View Module
+    global View Module Endoscopic
+
+    if { ! $RendererFound } { return }
+    if {[info exists Module(Endoscopic,procEnter)] == 1} {
+	set tmp $Endoscopic(cam,rxStr) 
+	set Endoscopic(cam,rxStr) [expr $tmp + (-$LastY + $y)]
+	EndoscopicSetCameraDirection "rx"
+	Render3D
+	set LastY $y
+    }
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC Yaw
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc Yaw {widget x y} {
+    
+    global CurrentCamera 
+    global LastX LastY
+    global RendererFound
+    global View Module Endoscopic
+    
+    if { ! $RendererFound } { return }
+    
+    if {[info exists Module(Endoscopic,procEnter)] == 1} {
+	
+	
+	set tmp $Endoscopic(cam,rzStr) 
+	set Endoscopic(cam,rzStr) [expr $tmp + (-$LastX + $x)]
+	EndoscopicSetCameraDirection "rz"
+	Render3D
+	set LastX $x
+    }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC Roll
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc Roll {widget x y} {
+    global CurrentCamera 
+    global LastX LastY
+    global RendererFound
+    global View Module Endoscopic
+    
+    if { ! $RendererFound } { return }
+   
+    if {[info exists Module(Endoscopic,procEnter)] == 1} {
+	
+	set tmp $Endoscopic(cam,ryStr) 
+	set Endoscopic(cam,ryStr) [expr $tmp + (-$LastX + $x)]
+	EndoscopicSetCameraDirection "ry"
+	Render3D
+	set LastX $x
+    }
+    
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC LR
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc LR {widget x y} {
+    global CurrentCamera 
+    global LastX LastY
+    global RendererFound
+    global View Module Endoscopic
+
+
+    if { ! $RendererFound } { return }
+    if {[info exists Module(Endoscopic,procEnter)] == 1} {    
+	
+	set tmp $Endoscopic(cam,xStr) 
+	set Endoscopic(cam,xStr) [expr $tmp + ($LastX - $x)]
+	EndoscopicSetCameraPosition
+	Render3D
+	
+	set LastX $x
+    }
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC BF
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc BF {widget x y} {
+    global CurrentCamera 
+    global LastX LastY
+    global RendererFound
+    global View Module Endoscopic
+
 
     if { ! $RendererFound } { return }
     
-    $CurrentCamera Yaw [expr ($LastX - $x)]
-    $CurrentCamera Pitch [expr ($y - $LastY)]
-    $CurrentCamera OrthogonalizeViewUp
-
-    set LastX $x
-    set LastY $y
-
-    # Call each Module's "CameraMotion" routine
-    #-------------------------------------------
-    foreach m $Module(idList) {
-	if {[info exists Module($m,procCameraMotion)] == 1} {
-	    if {$Module(verbose) == 1} {puts "CameraMotion: $m"}
-	    $Module($m,procCameraMotion)
-	}
+    if {[info exists Module(Endoscopic,procEnter)] == 1} {   
+	set tmp $Endoscopic(cam,yStr) 
+	set Endoscopic(cam,yStr) [expr $tmp + (-$LastY + $y)]
+	EndoscopicSetCameraPosition
+	Render3D
+	set LastY $y    
     }
+    
+}
 
-    Render
+
+#-------------------------------------------------------------------------------
+# .PROC UD
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc UD {widget x y} {
+    global CurrentCamera 
+    global LastX LastY
+    global RendererFound
+    global View Module Endoscopic
+
+
+    if { ! $RendererFound } { return }
+    
+    if {[info exists Module(Endoscopic,procEnter)] == 1} {   
+	set tmp $Endoscopic(cam,zStr) 
+	set Endoscopic(cam,zStr) [expr $tmp + ($LastY - $y)]
+	EndoscopicSetCameraPosition
+	Render3D
+	
+	set LastY $y
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -334,6 +457,8 @@ proc Pan {widget x y} {
 
     Render
 }
+
+
 
 
 #-------------------------------------------------------------------------------
