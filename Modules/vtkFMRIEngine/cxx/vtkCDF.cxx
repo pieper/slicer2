@@ -52,7 +52,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "vtkObjectFactory.h"
 #include "vtkCDF.h"
-#include <gsl_cdf.h>
+#include <gsl/gsl_cdf.h>
 
 
 vtkStandardNewMacro(vtkCDF);
