@@ -78,7 +78,7 @@ proc MainMrmlInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainMrml \
-        {$Revision: 1.64 $} {$Date: 2002/09/12 23:31:35 $}]
+        {$Revision: 1.65 $} {$Date: 2002/10/07 20:56:32 $}]
 
     set Mrml(colorsUnsaved) 0
 }
@@ -659,6 +659,56 @@ proc MainMrmlRead {mrmlFile} {
     set i [lsearch $Volume(idList) $Volume(idNone)]
     set Volume(idList) "[lreplace $Volume(idList) $i $i] $Volume(idNone)"
 }
+
+#-------------------------------------------------------------------------------
+# .PROC MainMrmlImport 
+# Bring nodes from a mrml file into the current tree
+# .ARGS filename
+# .END
+#-------------------------------------------------------------------------------
+proc MainMrmlImport {filename} {
+    global Mrml
+
+    set tags [MainMrmlReadVersion2.0 $filename]
+
+    set outtags ""
+    foreach pair $tags {
+        set tag  [lindex $pair 0]
+        set attr [lreplace $pair 0 0]
+        set outattr ""
+
+        switch $tag {
+            "Volume" {
+                foreach a $attr {
+                    set key [lindex $a 0]
+                    set val [lreplace $a 0 0]
+                    switch [string tolower $key] {
+                        "fileprefix"      {
+                            set mrmlpath [file split $Mrml(dir)]
+                            set filepath [lrange [file split [file dir $filename]] 1 end]
+                            set dots ""
+                            for {set dotscount 0} {$dotscount < [expr [llength $mrmlpath] - 1]} {incr dotscount} {
+                                lappend dots ".."
+                            }
+                            set prefixlist [file split $val] 
+                            lappend outattr [list $key [eval file join $dots $filepath $prefixlist]]
+                        }
+                        default {
+                            lappend outattr [eval list $key $val]
+                        }
+                    }
+                }
+            }
+            detault {
+                set outattr $attr
+            }
+        }
+        eval lappend outtags $tag $outattr
+    }
+    MainMrmlBuildTreesVersion2.0 [list $outtags]
+    MainUpdateMRML
+}
+
 
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlBuildTreesVersion2.0
