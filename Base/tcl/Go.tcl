@@ -89,6 +89,7 @@ proc Usage { {msg ""} } {
     set msg "$msg\n   --script <file.tcl> : script to execute after slicer loads"
     set msg "$msg\n   --exec <tcl code> : some code to execute after slicer loads"
     set msg "$msg\n   --all-info : print out all of the version info and continue"
+    set msg "$msg\n   --enable-stereo : set the flag to allow use of frame sequential stereo"
     puts stderr $msg
     tk_messageBox -message $msg -title $SLICER(version) -type ok
 }
@@ -101,6 +102,7 @@ set SLICER(tkcon) "true"
 set verbose 0
 set Module(verbose) 0
 set SLICER(load-dicom) ""
+set SLICER(crystal-eyes-stereo) "false"
 set SLICER(load-analyze) ""
 set SLICER(script) ""
 set SLICER(exec) ""
@@ -119,6 +121,11 @@ for {set i 0} {$i < $argc} {incr i} {
         "-h" {
             Usage
             exit 1
+        }
+        "--enable-stereo" {
+            # this needs to be set when using frame sequential stereo, interlaced and
+            # red blue stereo work without this flag being set
+            set SLICER(crystal-eyes-stereo) "true"
         }
         "--no-threads" {
             set SLICER(threaded) "false"
@@ -600,7 +607,7 @@ if { $SLICER(versionInfo) != "" } {
     set compilerName [Slicer GetCompilerName]
     set vtkVersion [Slicer GetVTKVersion]
     set libVersions "LibName1: VTK LibVersion1: ${vtkVersion} LibName2: TCL LibVersion2: ${tcl_patchLevel} LibName3: TK LibVersion2: ${tk_patchLevel}"
-    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: [ParseCVSInfo "" {$Name:  $}] CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.70 2003/11/14 19:08:21 pieper Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: [ParseCVSInfo "" {$Name:  $}] CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.71 2004/02/03 20:50:42 nicole Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
