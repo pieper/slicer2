@@ -147,12 +147,15 @@ proc EMSegmentInit {} {
     # For later version where we can use local prios
     # Public Version  = 1
     # Private Version = 2
+
     if { [catch "package require vtkEMPrivateSegment"] } {
-      set EMSegment(SegmentMode) 1
+      set EMSegment(SegmentMode) 0
     } else {
       puts "Load Private EM-Version"
-      set EMSegment(SegmentMode) 2
+      set EMSegment(SegmentMode) 1
     } 
+
+    set EMSegment(SegmentMode) 0
 
     # Source EMSegmentAlgorithm.tcl File 
     source $::PACKAGE_DIR_VTKEMLocalSegment/../../../tcl/EMSegmentAlgorithm.tcl
@@ -242,7 +245,7 @@ proc EMSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.34 $} {$Date: 2004/07/29 23:44:59 $}]
+        {$Revision: 1.35 $} {$Date: 2004/07/31 23:01:26 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -273,14 +276,6 @@ proc EMSegmentInit {} {
     set EMSegment(AllVolList,VolumeList) {}
     set EMSegment(SelVolList,VolumeList) {}
 
-    vtkImageEMLocalSegmenter vtkEMInit
-    # Default Paramter from vtkEMSegm
-    # set EMSegment(EMiteration)  1  
-    # set EMSegment(MFAiteration) 1 
-    # set EMSegment(Alpha)       0.7
-    # set EMSegment(SmWidth)    11 
-    # set EMSegment(SmSigma)    5
-
    # Sequence of how CIM values are represented
     # Where                      pixel to the North  
     #                                    |
@@ -302,11 +297,11 @@ proc EMSegmentInit {} {
     set EMSegment(NumInputChannel) 0
 
     set EMSegment(EMShapeIter)    1
-    set EMSegment(EMiteration)    [vtkEMInit GetNumIter]
-    set EMSegment(MFAiteration)   [vtkEMInit GetNumRegIter]
-    set EMSegment(Alpha)          [vtkEMInit GetAlpha]
-    set EMSegment(SmWidth)        [vtkEMInit GetSmoothingWidth]
-    set EMSegment(SmSigma)        [vtkEMInit GetSmoothingSigma]
+    set EMSegment(EMiteration)    1 
+    set EMSegment(MFAiteration)   1 
+    set EMSegment(Alpha)          0.7 
+    set EMSegment(SmWidth)        11
+    set EMSegment(SmSigma)        5 
 
     set EMSegment(SegmentationBoundaryMin,0) 1
     set EMSegment(SegmentationBoundaryMin,1) 1
@@ -329,7 +324,6 @@ proc EMSegmentInit {} {
     
 
     set EMSegment(SegmentIndex) 0
-    vtkEMInit Delete
 
     # How did I come up with the number 82 ? It is a long story ....
     set EMSegment(NumberOfTrainingSamples) 82
@@ -975,7 +969,12 @@ Description of the tabs:
     DevUpdateNodeSelectButton Volume EMSegment Cl-ReferenceStandardSelect ReferenceStandardSelect EMSegmenReferenceStandardSelectNode
 
     set EMSegment(Cl-f0-fPrintParameter)  $f.fparameters
-    pack $f.fparameters.cWeight $f.fparameters.cPCA $f.fparameters.cQuality  $f.fparameters.mReferenceStandardSelect -side left -anchor n -pady 4 -padx 3
+
+    pack $f.fparameters.cWeight -side left -anchor n -pady 4 -padx 3
+    if {$EMSegment(SegmentMode)} {
+      pack $f.fparameters.cPCA -side left -anchor n -pady 4 -padx 3
+    }
+    pack $f.fparameters.cQuality  $f.fparameters.mReferenceStandardSelect -side left -anchor n -pady 4 -padx 3
 
     EMSegmentCreateGraphDisplayButton $EMSegment(Cl-fClass).f0
     EMSegmentCreateClassOverviewButton $EMSegment(Cl-fClass).f0
@@ -2092,6 +2091,23 @@ proc EMSegmentReferenceStandardSelectNode { type id ArrayName ModelLabel ModelNa
     $EMSegment(mbCl-ReferenceStandardSelect) config -text $Text
 }
 
+proc EMSegmentFindParentClass {Sclass SuperClass} {
+    global EMSegment
+    # puts "EMSegmentFindParentClass $Sclass $SuperClass" 
+    if {$Sclass } {
+    if {[lsearch $EMSegment(Cattrib,$SuperClass,ClassList) $Sclass] > -1} { return $SuperClass }
+    set ParentClass -1 
+        foreach CLASS  $EMSegment(Cattrib,$SuperClass,ClassList) {
+        if { ($ParentClass < 0) && $EMSegment(Cattrib,$CLASS,IsSuperClass)} {
+        set ParentClass [EMSegmentFindParentClass $Sclass $CLASS ]
+               }
+    }
+    return $ParentClass
+    }
+    puts stderr "Error:EMSegmentFindParentClass: Class 0 does not have a parent class !"
+    return -1
+}
+
 
 #-------------------------------------------------------------------------------
 # .PROC EMSegmentClassNavigation
@@ -2102,24 +2118,35 @@ proc EMSegmentReferenceStandardSelectNode { type id ArrayName ModelLabel ModelNa
 proc EMSegmentClassNavigation {direction} {
     global EMSegment
     switch $direction {
-    "Previous" {    set position [lsearch $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList) $EMSegment(Class)]
+    "Previous" {      if {($EMSegment(SuperClass) ==  $EMSegment(Class)) &&  $EMSegment(Class) } {
+                       set ParentClass [EMSegmentFindParentClass $EMSegment(Class) 0] 
+                       } else {set ParentClass  $EMSegment(SuperClass)}
+                   set position [lsearch $EMSegment(Cattrib,$ParentClass,ClassList) $EMSegment(Class)]
                         if {$position < 0 } {return}
-                        if {$position > 0} {EMSegmentChangeClass [lindex $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList) [expr $position -1]]
+                        if {$position > 0} {EMSegmentChangeClass [lindex $EMSegment(Cattrib,$ParentClass,ClassList) [expr $position -1]]
                         } else { puts "Error: No previous class in class list" }
                    }
-     "Next"     {     set position [lsearch $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList) $EMSegment(Class)]
+     "Next"     {     if {($EMSegment(SuperClass) ==  $EMSegment(Class)) &&  $EMSegment(Class) } {
+                       set ParentClass [EMSegmentFindParentClass $EMSegment(Class) 0] 
+                       } else {set ParentClass  $EMSegment(SuperClass)}
+                       set position [lsearch $EMSegment(Cattrib,$ParentClass,ClassList) $EMSegment(Class)]
                           if {$position < 0 } {return}
                           incr position
-                          if {$position < [llength $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList)]} {
-                              EMSegmentChangeClass [lindex $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList) $position]
+                          if {$position < [llength $EMSegment(Cattrib,$ParentClass,ClassList)]} {
+                              EMSegmentChangeClass [lindex $EMSegment(Cattrib,$ParentClass,ClassList) $position]
                           } else {
                              puts "Error: No next class in class list"
                           }
                 }
-        "Up"     {    if {$EMSegment(Class) } {EMSegmentChangeClass  $EMSegment(SuperClass)
-                       } else { 
+        "Up"     {    if {$EMSegment(Class) } {
+                    if {$EMSegment(Cattrib,$EMSegment(Class),IsSuperClass)} {
+                            EMSegmentChangeClass [EMSegmentFindParentClass $EMSegment(Class) 0]
+                    } else {
+                           EMSegmentChangeClass  $EMSegment(SuperClass)
+                    }
+                      } else { 
                               puts "Error: No class above" 
-               }
+                      }
                   }
             "Down" {   if {$EMSegment(Cattrib,$EMSegment(SuperClass),IsSuperClass) && [llength $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList)]} {EMSegmentChangeClass  [lindex $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList) 0]
                    } else { puts "Error: No class below" 
@@ -3501,25 +3528,31 @@ proc EMSegmentChangeClass {Sclass} {
 
 proc EMSegmentUpdateClassNavigationButton { } {
     global EMSegment
-    set position [lsearch $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList) $EMSegment(Class)]
+    if {($EMSegment(SuperClass) ==  $EMSegment(Class)) &&  $EMSegment(Class) } {
+    set ParentClass [EMSegmentFindParentClass $EMSegment(Class) 0] 
+    } else {
+    set ParentClass $EMSegment(SuperClass)
+    }
+   
+    set position [lsearch $EMSegment(Cattrib,$ParentClass,ClassList) $EMSegment(Class)]
     if {$position < 1} { $EMSegment(EM-bNavigationPrevious) configure -state disabled
     } else { $EMSegment(EM-bNavigationPrevious) configure -state normal }
     incr position
-    if {($position == 0) || ($position == [llength $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList)])} { 
+    if {($position == 0) || ($position == [llength $EMSegment(Cattrib,$ParentClass,ClassList)])} { 
        $EMSegment(EM-bNavigationNext) configure -state disabled
     } else { $EMSegment(EM-bNavigationNext) configure -state normal }
 
 
     if {$EMSegment(Class) } { 
-    $EMSegment(EM-bNavigationUp) configure -state normal 
+        $EMSegment(EM-bNavigationUp) configure -state normal 
     } else {
         $EMSegment(EM-bNavigationUp) configure -state disable 
     } 
     
     if {$EMSegment(Cattrib,$EMSegment(Class),IsSuperClass) && [llength $EMSegment(Cattrib,$EMSegment(Class),ClassList)] } {
-    $EMSegment(EM-bNavigationDown) configure -state normal 
+       $EMSegment(EM-bNavigationDown) configure -state normal 
     } else {
-    $EMSegment(EM-bNavigationDown) configure -state disable 
+       $EMSegment(EM-bNavigationDown) configure -state disable 
     }
 }
 #-------------------------------------------------------------------------------
@@ -5302,7 +5335,7 @@ proc EMSegmentMakeModels { } {
           set m [ModelMakerCreate]
 
           set oldMrmlDir $Mrml(dir)
-      set Mrml(dir) [file dirname [Volume($ModelMaker(idVolume),node) GetFullPrefix]]
+          set Mrml(dir) [file dirname [Volume($ModelMaker(idVolume),node) GetFullPrefix]]
           MainModelsWrite $m $ModelMaker(name)
           MainModelsSetActive $m 
           set Mrml(dir) $oldMrmlDir

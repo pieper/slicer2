@@ -30,7 +30,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkImageEMGeneral.h" 
 #include <vtkEMLocalSegmentConfigure.h> 
 #include "vtkImageData.h"
-#include "vtkImageEMSuperClass.h"
+#include "vtkImageEMLocalSuperClass.h"
 
 // Just for debugging purposes
 #define EM_DEBUG 1
@@ -38,11 +38,6 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 // Do you want to run the code with all the print outs (set 1) or not (0)
 #define EMVERBOSE 0
 // ---------------------------------------------------
-// Kilian through out later 
-# // Definition for PCA
-#define EMSEGMENT_PCA_GREATER_MAX_DIST     1 
-#define EMSEGMENT_PCA_EIGENVECTORS_ZERO    2
-
 
 //BTX  
 // Needed to parallelise the algorithm
@@ -144,20 +139,20 @@ class VTK_EMLOCALSEGMENT_EXPORT vtkImageEMLocalSegmenter : public vtkImageEMGene
   // -----------------------------------------------------  
   // Description:
   // Defines the Label map of a given image
-  static void DetermineLabelMap(short *LabelMap, int NumTotalTypeCLASS, int* NumChildClasses, vtkImageEMSuperClass* head,  short* ROI,int ImageMax, float **w_m);
+  static void DetermineLabelMap(short *LabelMap, int NumTotalTypeCLASS, int* NumChildClasses, vtkImageEMLocalSuperClass* head,  short* ROI,int ImageMax, float **w_m);
 
   // Desciption:
   // Special function for parallelise MF part -> Creating Threads 
   int MF_Approx_Workpile(float **w_m_input,unsigned char* MapVector, float *cY_M, int imgXY,double ***InvLogCov,
                          double *InvSqrtDetLogCov, int NumTotalTypeCLASS, int* NumChildClasses, int NumClasses, void** ProbDataPtr, 
                          int* ProbDataIncY, int* ProbDataIncZ, float* ProbDataWeight, float *ProbDataMinusWeight, double** LogMu, 
-                         double* TissueProbability, int *VirtualNumInputImages, vtkImageEMSuperClass* head, float **_m_output);
+                         double* TissueProbability, int *VirtualNumInputImages, vtkImageEMLocalSuperClass* head, float **_m_output);
 
   // Description:
   // Print out intermediate result of the algorithm in a  file
   // The file is called  this->PrintIntermediateDir/EM*.m
   void PrintIntermediateResultsToFile(int iter, float **w_m, short *ROI, unsigned char* OutputVector, int NumTotalTypeCLASS, int* NumChildClasses, 
-                      vtkImageEMSuperClass* actSupCl, char* LevelName, void **ClassList, classType *ClassListType, int* LabelList, 
+                      vtkImageEMLocalSuperClass* actSupCl, char* LevelName, void **ClassList, classType *ClassListType, int* LabelList, 
                       FILE** QualityFile);
 
   // -----------------------------------------------------
@@ -165,10 +160,10 @@ class VTK_EMLOCALSEGMENT_EXPORT vtkImageEMLocalSegmenter : public vtkImageEMGene
   // -----------------------------------------------------
 
   // Sets the class given as intensity class 
-  void SetIntensityAvgClass(vtkImageEMClass *init) {this->IntensityAvgClass = init;}
+  void SetIntensityAvgClass(vtkImageEMLocalClass *init) {this->IntensityAvgClass = init;}
 
   //BTX
-  vtkImageEMClass* GetIntensityAvgClass() {return this->IntensityAvgClass;}
+  vtkImageEMLocalClass* GetIntensityAvgClass() {return this->IntensityAvgClass;}
   //ETX  
   double GetIntensityAvgValuePreDef(int index) {return this->IntensityAvgValuePreDef[index];}
   void SetIntensityAvgValuePreDef(double value, int index);
@@ -177,10 +172,10 @@ class VTK_EMLOCALSEGMENT_EXPORT vtkImageEMLocalSegmenter : public vtkImageEMGene
   void SetIntensityAvgValueCurrent(double value, int index) {this->IntensityAvgValueCurrent[index] = value;}
  
   //BTX
-  vtkImageEMSuperClass* GetActiveSuperClass() {return this->activeSuperClass;}
-  vtkImageEMSuperClass* GetHeadClass() {return this->HeadClass;}
+  vtkImageEMLocalSuperClass* GetActiveSuperClass() {return this->activeSuperClass;}
+  vtkImageEMLocalSuperClass* GetHeadClass() {return this->HeadClass;}
   //ETX
-  int HierarchicalSegmentation(vtkImageEMSuperClass* head, float** InputVector,short *ROI, short *OutputVector, EMTriVolume & iv_m, EMVolume *r_m, char* LevelName);
+  int HierarchicalSegmentation(vtkImageEMLocalSuperClass* head, float** InputVector,short *ROI, short *OutputVector, EMTriVolume & iv_m, EMVolume *r_m, char* LevelName);
 
   //Kilian rewrite it 
   void PrintSuperClass () {
@@ -189,7 +184,7 @@ class VTK_EMLOCALSEGMENT_EXPORT vtkImageEMLocalSegmenter : public vtkImageEMGene
 
   // Desciption:
   // Head Class is the inital class under which all subclasses are attached  
-  void SetHeadClass(vtkImageEMSuperClass *InitHead) {
+  void SetHeadClass(vtkImageEMLocalSuperClass *InitHead) {
     InitHead->Update(); 
     if (InitHead->GetErrorFlag()) {
       // This is done before this->Update() so we cannot use Error Message Report;
@@ -253,17 +248,17 @@ protected:
   int NumberOfTrainingSamples;    // Number of Training Samples Probability Image has been summed up over !  
 
   //BTX
-  vtkImageEMClass *IntensityAvgClass;          // Label of Tissue class for which Intensity value is defined, = -1 => no intensity correction
+  vtkImageEMLocalClass *IntensityAvgClass;          // Label of Tissue class for which Intensity value is defined, = -1 => no intensity correction
 
   //ETX 
   double* IntensityAvgValuePreDef;  // Average intensity gray value (not log gray value) for the class and every input channel - this is predefined
   double* IntensityAvgValueCurrent; // Average intensity gray value (not log gray value) of the current image 
   //BTX
 
-  vtkImageEMSuperClass *activeSuperClass;   // Currently Active Super Class -> Important for interface with TCL
+  vtkImageEMLocalSuperClass *activeSuperClass;   // Currently Active Super Class -> Important for interface with TCL
   classType    activeClassType;
 
-  vtkImageEMSuperClass *HeadClass;          // Initial Class
+  vtkImageEMLocalSuperClass *HeadClass;          // Initial Class
   //ETX 
   void *activeClass;               // Currently Active Class -> Important for interface with TCL
 

@@ -37,8 +37,8 @@ ELSE (WIN32)
         vtkFileOps.cxx
         vtkThread.cxx
         vtkImageEMGenericClass.cxx
-        vtkImageEMClass.cxx
-        vtkImageEMSuperClass.cxx
+        vtkImageEMLocalClass.cxx
+        vtkImageEMLocalSuperClass.cxx
         vtkImageEMGeneral.cxx
         vtkImageEMLocalSegmenter.cxx
     	vtkMrmlEndSegmenterNode.cxx 

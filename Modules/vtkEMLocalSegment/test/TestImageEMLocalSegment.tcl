@@ -83,37 +83,37 @@ proc EMSegmentSetVtkSuperClassSetting {SuperClass} {
   global EMSegment Volume
   # Reads in the value for each class individually
   # puts "EMSegmentSetVtkSuperClassSetting $SuperClass"
-  catch { EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) destroy}
-  vtkImageEMSuperClass EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass)      
+  catch { EMSegment(Cattrib,$SuperClass,vtkImageEMLocalSuperClass) destroy}
+  vtkImageEMLocalSuperClass EMSegment(Cattrib,$SuperClass,vtkImageEMLocalSuperClass)      
 
-  EMSegmentSetVtkGenericClassSetting EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) $SuperClass
+  EMSegmentSetVtkGenericClassSetting EMSegment(Cattrib,$SuperClass,vtkImageEMLocalSuperClass) $SuperClass
 
   set ClassIndex 0
   foreach i $EMSegment(Cattrib,$SuperClass,ClassList) {
     if {$EMSegment(Cattrib,$i,IsSuperClass)} {
-        if {[EMSegmentSetVtkSuperClassSetting $i]} {return [EMSegment(Cattrib,$i,vtkImageEMSuperClass) GetErrorFlag]}
-          EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) AddSubClass EMSegment(Cattrib,$i,vtkImageEMSuperClass) $ClassIndex
+        if {[EMSegmentSetVtkSuperClassSetting $i]} {return [EMSegment(Cattrib,$i,vtkImageEMLocalSuperClass) GetErrorFlag]}
+          EMSegment(Cattrib,$SuperClass,vtkImageEMLocalSuperClass) AddSubClass EMSegment(Cattrib,$i,vtkImageEMLocalSuperClass) $ClassIndex
     } else {
-      catch {EMSegment(Cattrib,$i,vtkImageEMClass) destroy}
-      vtkImageEMClass EMSegment(Cattrib,$i,vtkImageEMClass)      
-      EMSegmentSetVtkGenericClassSetting EMSegment(Cattrib,$i,vtkImageEMClass) $i
+      catch {EMSegment(Cattrib,$i,vtkImageEMLocalClass) destroy}
+      vtkImageEMLocalClass EMSegment(Cattrib,$i,vtkImageEMLocalClass)      
+      EMSegmentSetVtkGenericClassSetting EMSegment(Cattrib,$i,vtkImageEMLocalClass) $i
 
-      EMSegment(Cattrib,$i,vtkImageEMClass) SetLabel             $EMSegment(Cattrib,$i,Label) 
-      EMSegment(Cattrib,$i,vtkImageEMClass) SetShapeParameter    $EMSegment(Cattrib,$i,ShapeParameter)
+      EMSegment(Cattrib,$i,vtkImageEMLocalClass) SetLabel             $EMSegment(Cattrib,$i,Label) 
+      EMSegment(Cattrib,$i,vtkImageEMLocalClass) SetShapeParameter    $EMSegment(Cattrib,$i,ShapeParameter)
 
       if {$EMSegment(Cattrib,$i,ProbabilityData) != $Volume(idNone)} {
-          EMSegment(Cattrib,$i,vtkImageEMClass) SetProbDataPtr [Volume($EMSegment(Cattrib,$i,ProbabilityData),vol) GetOutput]
+          EMSegment(Cattrib,$i,vtkImageEMLocalClass) SetProbDataPtr [Volume($EMSegment(Cattrib,$i,ProbabilityData),vol) GetOutput]
       } 
       for {set y 0} {$y < $EMSegment(NumInputChannel)} {incr y} {
-          EMSegment(Cattrib,$i,vtkImageEMClass) SetLogMu $EMSegment(Cattrib,$i,LogMean,$y) $y
+          EMSegment(Cattrib,$i,vtkImageEMLocalClass) SetLogMu $EMSegment(Cattrib,$i,LogMean,$y) $y
           for {set x 0} {$x < $EMSegment(NumInputChannel)} {incr x} {
-            EMSegment(Cattrib,$i,vtkImageEMClass) SetLogCovariance $EMSegment(Cattrib,$i,LogCovariance,$y,$x) $y $x
+            EMSegment(Cattrib,$i,vtkImageEMLocalClass) SetLogCovariance $EMSegment(Cattrib,$i,LogCovariance,$y,$x) $y $x
           }
       }
       if {$EMSegment(IntensityAvgClass) == $EMSegment(Cattrib,$i,Label)} {
           # Transfere Intensity correction filter stuff
           set index 0
-          EMSegment(vtkEMSegment) EMSetIntensityAvgClass  EMSegment(Cattrib,$i,vtkImageEMClass)
+          EMSegment(vtkEMSegment) EMSetIntensityAvgClass  EMSegment(Cattrib,$i,vtkImageEMLocalClass)
           foreach v $EMSegment(SelVolList,VolumeList) {       
              EMSegment(vtkEMSegment) SetIntensityAvgValuePreDef $EMSegment(IntensityAvgValue,$v) $index
              incr index
@@ -121,31 +121,31 @@ proc EMSegmentSetVtkSuperClassSetting {SuperClass} {
       }
       # Setup DICE Related information
       # if {($EMSegment(Cattrib,$i,DICEData) !=  $Volume(idNone)) && $EMSegment(PrintDICEResults) } {
-      #    EMSegment(Cattrib,$i,vtkImageEMClass) SetReferenceStandardPtr [Volume($EMSegment(Cattrib,$i,DICEData),vol) GetOutput]
+      #    EMSegment(Cattrib,$i,vtkImageEMLocalClass) SetReferenceStandardPtr [Volume($EMSegment(Cattrib,$i,DICEData),vol) GetOutput]
       # } 
       # Setup PCA parameter
       if {$EMSegment(Cattrib,$i,PCAMeanData) !=  $Volume(idNone) } {
             set NumEigenModes [llength $EMSegment(Cattrib,$i,PCAEigen)]
             # Kilan: first Rotate and translate the image before setting them 
             # Remember to first calculathe first the inverse of the two because we go from case2 to patient and data is given form patient to case2
-            EMSegment(Cattrib,$i,vtkImageEMClass) SetPCANumberOfEigenModes $NumEigenModes
-            EMSegment(Cattrib,$i,vtkImageEMClass) SetPCAMeanShape [Volume($EMSegment(Cattrib,$i,PCAMeanData),vol) GetOutput]
+            EMSegment(Cattrib,$i,vtkImageEMLocalClass) SetPCANumberOfEigenModes $NumEigenModes
+            EMSegment(Cattrib,$i,vtkImageEMLocalClass) SetPCAMeanShape [Volume($EMSegment(Cattrib,$i,PCAMeanData),vol) GetOutput]
 
             set NumInputImagesSet 0
             foreach EigenList $EMSegment(Cattrib,$i,PCAEigen) {
-              EMSegment(Cattrib,$i,vtkImageEMClass) SetPCAEigenVector [Volume([lindex $EigenList 2],vol) GetOutput] $NumInputImagesSet  
+              EMSegment(Cattrib,$i,vtkImageEMLocalClass) SetPCAEigenVector [Volume([lindex $EigenList 2],vol) GetOutput] $NumInputImagesSet  
               incr NumInputImagesSet
             } 
           
             # Have to do it seperate otherwise EigenValues get deleted 
             foreach EigenList $EMSegment(Cattrib,$i,PCAEigen) {
-              EMSegment(Cattrib,$i,vtkImageEMClass)  SetPCAEigenValue [lindex $EigenList 0] [lindex $EigenList 1] 
+              EMSegment(Cattrib,$i,vtkImageEMLocalClass)  SetPCAEigenValue [lindex $EigenList 0] [lindex $EigenList 1] 
            }
-           eval EMSegment(Cattrib,$i,vtkImageEMClass) SetPCAScale   $EMSegment(Cattrib,$i,PCAScale)
-           EMSegment(Cattrib,$i,vtkImageEMClass) SetPCAMaxDist      $EMSegment(Cattrib,$i,PCAMaxDist)
-           EMSegment(Cattrib,$i,vtkImageEMClass) SetPCADistVariance $EMSegment(Cattrib,$i,PCADistVariance)
+           eval EMSegment(Cattrib,$i,vtkImageEMLocalClass) SetPCAScale   $EMSegment(Cattrib,$i,PCAScale)
+           EMSegment(Cattrib,$i,vtkImageEMLocalClass) SetPCAMaxDist      $EMSegment(Cattrib,$i,PCAMaxDist)
+           EMSegment(Cattrib,$i,vtkImageEMLocalClass) SetPCADistVariance $EMSegment(Cattrib,$i,PCADistVariance)
       } 
-      EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) AddSubClass EMSegment(Cattrib,$i,vtkImageEMClass) $ClassIndex
+      EMSegment(Cattrib,$SuperClass,vtkImageEMLocalSuperClass) AddSubClass EMSegment(Cattrib,$i,vtkImageEMLocalClass) $ClassIndex
     }
     incr ClassIndex
   }
@@ -156,15 +156,15 @@ proc EMSegmentSetVtkSuperClassSetting {SuperClass} {
       set y 0
       foreach j $EMSegment(Cattrib,$SuperClass,ClassList) {
         for {set k 0} { $k < 6} {incr k} {
-           EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetMarkovMatrix $EMSegment(Cattrib,$SuperClass,CIMMatrix,$i,$j,[lindex $EMSegment(CIMList) $k]) $k $y $x
+           EMSegment(Cattrib,$SuperClass,vtkImageEMLocalSuperClass) SetMarkovMatrix $EMSegment(Cattrib,$SuperClass,CIMMatrix,$i,$j,[lindex $EMSegment(CIMList) $k]) $k $y $x
         }
         incr y
       }
       incr x
   }
   # Automatically all the subclass are updated too and checked if values are set correctly 
-  EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) Update
-  return [EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) GetErrorFlag] 
+  EMSegment(Cattrib,$SuperClass,vtkImageEMLocalSuperClass) Update
+  return [EMSegment(Cattrib,$SuperClass,vtkImageEMLocalSuperClass) GetErrorFlag] 
 }
 
 proc EMSegmentStartEM {} {
@@ -202,7 +202,7 @@ proc EMSegmentStartEM {} {
         }
      } 
    }
-   EMSegment(vtkEMSegment) SetHeadClass          EMSegment(Cattrib,0,vtkImageEMSuperClass)
+   EMSegment(vtkEMSegment) SetHeadClass          EMSegment(Cattrib,0,vtkImageEMLocalSuperClass)
 
    #----------------------------------------------------------------------------
    # Transfering General Information
