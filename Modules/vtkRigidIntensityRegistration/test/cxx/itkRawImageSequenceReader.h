@@ -3,8 +3,8 @@
   Program:   Insight Segmentation & Registration Toolkit
   Module:    $RCSfile: itkRawImageSequenceReader.h,v $
   Language:  C++
-  Date:      $Date: 2003/12/07 22:32:42 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2004/09/17 17:41:00 $
+  Version:   $Revision: 1.2 $
 
   Copyright (c) 2002 Insight Consortium. All rights reserved.
   See ITKCopyright.txt or http://www.itk.org/HTML/Copyright.htm for details.
