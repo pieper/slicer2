@@ -1245,7 +1245,7 @@ Rotate the axis by pressing the right mouse button and moving the mouse."
     pack $fPath.fTop $fPath.fBot -side top -pady 2 
 
     set f $fPath.fBot
-    FiducialsAddActiveListFrame $f 15 25   
+    FiducialsAddActiveListFrame $f 15 25  
     
     set f $fPath.fTop
     set PathMenu {Manual Automatic Advanced}
@@ -1393,12 +1393,19 @@ extraction algorithm (for more info, see references on www.slicer.org)"
 
 
     set f $Endoscopic(tabbedFrame).fAutomatic.fStep1
+frame $f.fRow1 -bg $Gui(activeWorkspace) 
+frame $f.fRow2  -bg $Gui(activeWorkspace)
+pack  $f.fRow1 $f.fRow2 -side top -pady 2
+
+set f $Endoscopic(tabbedFrame).fAutomatic.fStep1.fRow1
 eval {label $f.lActive1 -text "Step 1. "} $Gui(WTA)
 eval {label $f.lActive2 -text "Choose an Active Model: "} $Gui(WLA)
+pack $f.lActive1 $f.lActive2 -side left
+
+set f $Endoscopic(tabbedFrame).fAutomatic.fStep1.fRow2
     eval {menubutton $f.mbActive -text "None" -relief raised -bd 2 -width 20 \
         -menu $f.mbActive.m} $Gui(WMBA)
     eval {menu $f.mbActive.m} $Gui(WMA)
-    pack $f.lActive1 $f.lActive2 -side left
 pack $f.mbActive -side top
 
     # Append widgets to list that gets refreshed during UpdateMRML
@@ -1413,11 +1420,12 @@ pack  $f.fExplain $f.fSource $f.fSink -side top -pady 2
 
 set f $Endoscopic(tabbedFrame).fAutomatic.fStep2.fExplain
 eval {label $f.lTitle -text "Step 2. "} $Gui(WTA)
-eval {label $f.lTitle2 -text "Select a start point by pointing 
-on the model and press the 'p' key. 
+eval {label $f.lTitle2 -text "Select a start point 
+by pointing on the model 
+and press the 'p' key. 
 Repeat for the end point."} $Gui(WLA)
    
-    pack $f.lTitle $f.lTitle2 -side left -padx $Gui(pad) -pady 0 
+    pack $f.lTitle $f.lTitle2 -side left -padx 0 -pady 0 
 
 
     set f $Endoscopic(tabbedFrame).fAutomatic.fStep2.fSource
@@ -1841,7 +1849,7 @@ proc EndoscopicBuildFlyThroughGUI {} {
     eval {entry $f.einterp \
         -textvariable Endoscopic(path,interpolationStr) -width 4} $Gui(WEA) {-bg $Endoscopic(path,sColor)}
     bind $f.einterp <Return> \
-        "EndoscopicBuildInterpolatedPath $Endoscopic(path,activeId); Render3D"
+        {EndoscopicBuildInterpolatedPath $Endoscopic(path,activeId); Render3D}
     
     pack $f.linterp $f.einterp -side top -padx $Gui(pad) -pady $Gui(pad)
 
