@@ -162,7 +162,7 @@ proc EdWatershedEnter {} {
   
         vtkITKCurvatureAnisotropicDiffusionImageFilter ws_diffusion 
         ws_diffusion SetTimeStep 0.125
-        ws_diffusion SetIterations 5
+        ws_diffusion SetNumberOfIterations 5
         ws_diffusion SetConductanceParameter 1
         ws_diffusion SetInput [ws_cast GetOutput]
         
