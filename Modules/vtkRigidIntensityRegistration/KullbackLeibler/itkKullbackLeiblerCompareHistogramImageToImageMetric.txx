@@ -1,10 +1,10 @@
 /*=========================================================================
 
   Program:   Insight Segmentation & Registration Toolkit
-  Module:    $RCSfile: itkKLCompareHistogramImageToImageMetric.txx,v $
+  Module:    $RCSfile: itkKullbackLeiblerCompareHistogramImageToImageMetric.txx,v $
   Language:  C++
-  Date:      $Date: 2004/01/01 01:55:31 $
-  Version:   $Revision: 1.4 $
+  Date:      $Date: 2004/01/13 21:41:18 $
+  Version:   $Revision: 1.1 $
 
   Copyright (c) Insight Software Consortium. All rights reserved.
   See ITKCopyright.txt or http://www.itk.org/HTML/Copyright.htm for details.
@@ -14,10 +14,10 @@
      PURPOSE.  See the above copyright notices for more information.
 
 =========================================================================*/
-#ifndef __itkKLCompareHistogramImageToImageMetric_txx
-#define __itkKLCompareHistogramImageToImageMetric_txx
+#ifndef __itkKullbackLeiblerCompareHistogramImageToImageMetric_txx
+#define __itkKullbackLeiblerCompareHistogramImageToImageMetric_txx
 
-#include "itkKLCompareHistogramImageToImageMetric.h"
+#include "itkKullbackLeiblerCompareHistogramImageToImageMetric.h"
 #include "itkHistogram.h"
 
 // Todo: need to access Use_Padding in parent. Make in protected
@@ -27,32 +27,32 @@
 namespace itk
 {
 template <class TFixedImage, class TMovingImage>
-KLCompareHistogramImageToImageMetric<TFixedImage, TMovingImage>::
-KLCompareHistogramImageToImageMetric() 
+KullbackLeiblerCompareHistogramImageToImageMetric<TFixedImage, TMovingImage>::
+KullbackLeiblerCompareHistogramImageToImageMetric() 
 {
   m_Epsilon                = 1e-12; // should be smaller than 1/numBins^2
 }
 
 template <class TFixedImage, class TMovingImage>
 void 
-KLCompareHistogramImageToImageMetric<TFixedImage, TMovingImage>
+KullbackLeiblerCompareHistogramImageToImageMetric<TFixedImage, TMovingImage>
 ::Initialize()  throw (ExceptionObject)
 {
   Superclass::Initialize();
 }
 
 template <class TFixedImage, class TMovingImage>
-typename KLCompareHistogramImageToImageMetric<TFixedImage, \
-TMovingImage>::MeasureType
-KLCompareHistogramImageToImageMetric<TFixedImage, \
-TMovingImage>
+typename KullbackLeiblerCompareHistogramImageToImageMetric<TFixedImage, \
+                                                           TMovingImage>::MeasureType
+KullbackLeiblerCompareHistogramImageToImageMetric<TFixedImage, \
+                                                  TMovingImage>
 ::EvaluateMeasure(HistogramType& histogram) const
 {
   // Two terms.
   // First the term that measures the entropy of the term
   // p(x,y) log p(x,y) - p(x,y) log q(x,y)
 
-  MeasureType    KL = NumericTraits<MeasureType>::Zero;
+  MeasureType    KullbackLeibler = NumericTraits<MeasureType>::Zero;
 
   HistogramIteratorType measured_it   = histogram.Begin();
   HistogramIteratorType measured_end  = histogram.End();
@@ -61,16 +61,16 @@ TMovingImage>
   HistogramIteratorType training_end  = m_TrainingHistogram->End();
 
   while (measured_it != measured_end)
-  {
-  // Every bin gets epsilon added to it
-  double TrainingFreq = training_it.GetFrequency()+m_Epsilon;
-  double MeasuredFreq = measured_it.GetFrequency()+m_Epsilon;
+    {
+    // Every bin gets epsilon added to it
+    double TrainingFreq = training_it.GetFrequency()+m_Epsilon;
+    double MeasuredFreq = measured_it.GetFrequency()+m_Epsilon;
 
-  KL += MeasuredFreq*log(MeasuredFreq/TrainingFreq);
+    KullbackLeibler += MeasuredFreq*log(MeasuredFreq/TrainingFreq);
 
-  ++measured_it;
-  ++training_it;
-  }
+    ++measured_it;
+    ++training_it;
+    }
 
   if (training_it != training_end)
     itkWarningMacro("The Measured and Training Histograms have different number of bins.");
@@ -86,23 +86,22 @@ TMovingImage>
   double AdjustedTotalMeasuredFreq = totalMeasuredFreq +
     m_HistogramSize[0]*m_HistogramSize[1]*m_Epsilon;
 
-  KL = KL/static_cast<MeasureType>(AdjustedTotalMeasuredFreq)
-  - log(AdjustedTotalMeasuredFreq/AdjustedTotalTrainingFreq);
+  KullbackLeibler = KullbackLeibler/static_cast<MeasureType>(AdjustedTotalMeasuredFreq)
+    - log(AdjustedTotalMeasuredFreq/AdjustedTotalTrainingFreq);
 
-  return KL;
+  return KullbackLeibler;
 }
 
 template <class TFixedImage, class TMovingImage>
-void KLCompareHistogramImageToImageMetric<TFixedImage, TMovingImage>::
+void KullbackLeiblerCompareHistogramImageToImageMetric<TFixedImage, TMovingImage>::
 PrintSelf(std::ostream& os, Indent indent) const
 {
   Superclass::PrintSelf(os, indent);
 
-  os << indent << "Epsilon: ";
-  os << m_Epsilon << std::endl;
+  os << indent << "Epsilon: " << m_Epsilon << std::endl;
 }
 
 
 } // End namespace itk
 
-#endif // itkKLCompareHistogramImageToImageMetric_txx
+#endif // itkKullbackLeiblerCompareHistogramImageToImageMetric_txx

@@ -1,10 +1,10 @@
 /*=========================================================================
 
   Program:   Insight Segmentation & Registration Toolkit
-  Module:    $RCSfile: itkKLCompareHistogramImageToImageMetric.h,v $
+  Module:    $RCSfile: itkKullbackLeiblerCompareHistogramImageToImageMetric.h,v $
   Language:  C++
-  Date:      $Date: 2004/01/02 21:45:01 $
-  Version:   $Revision: 1.4 $
+  Date:      $Date: 2004/01/13 21:41:18 $
+  Version:   $Revision: 1.1 $
 
   Copyright (c) Insight Software Consortium. All rights reserved.
   See ITKCopyright.txt or http://www.itk.org/HTML/Copyright.htm for details.
@@ -14,14 +14,14 @@
      PURPOSE.  See the above copyright notices for more information.
 
 =========================================================================*/
-#ifndef __itkKLCompareHistogramImageToImageMetric_h
-#define __itkKLCompareHistogramImageToImageMetric_h
+#ifndef __itkKullbackLeiblerCompareHistogramImageToImageMetric_h
+#define __itkKullbackLeiblerCompareHistogramImageToImageMetric_h
 
 #include "itkCompareHistogramImageToImageMetric.h"
 
 namespace itk
 {
-  /** \class KLCompareHistogramImageToImageMetric 
+  /** \class KullbackLeiblerCompareHistogramImageToImageMetric 
     *  \brief Computes the Kubler Lieblach(KL) metric between the histogram
     *  of the two images to be registered and a training histogram.
     *
@@ -38,6 +38,9 @@ namespace itk
     *  Minimising Kullback-Leibler Distance, In Medical Image Computing
     *  and Computer-Assisted Intervention - MICCAI 2002, LNCS 2489,
     *  pp. 525 - 532.
+    *
+    *  The metric is given by KL(P_test||P_train) 
+    * = Sum_{i1,i2} P_test(i1,i2) log (P_test(i1,i2)/P_train(i1,i2))
     *
     *  \par PARAMETERS 
     *  Epsilon is added to every bin in both histograms. This prevents
@@ -62,12 +65,12 @@ namespace itk
     */
 
 template <class TFixedImage, class TMovingImage>
-class ITK_EXPORT KLCompareHistogramImageToImageMetric :
+class ITK_EXPORT KullbackLeiblerCompareHistogramImageToImageMetric :
 public CompareHistogramImageToImageMetric<TFixedImage, TMovingImage>
 {
  public:
   /** Standard class typedefs. */
-  typedef KLCompareHistogramImageToImageMetric Self;
+  typedef KullbackLeiblerCompareHistogramImageToImageMetric Self;
   typedef CompareHistogramImageToImageMetric<TFixedImage, TMovingImage> Superclass;
   typedef SmartPointer<Self>                                     Pointer;
   typedef SmartPointer<const Self>                               ConstPointer;
@@ -76,7 +79,7 @@ public CompareHistogramImageToImageMetric<TFixedImage, TMovingImage>
   itkNewMacro(Self);
 
   /** Run-time type information (and related methods). */
-  itkTypeMacro(KLCompareHistogramImageToImageMetric,
+  itkTypeMacro(KullbackLeiblerCompareHistogramImageToImageMetric,
     HistogramImageToImageMetric);
 
   /** Types transferred from the base class */
@@ -125,8 +128,8 @@ public CompareHistogramImageToImageMetric<TFixedImage, TMovingImage>
 protected:
   /** Constructor is protected to ensure that \c New() function is used to
       create instances. */
-  KLCompareHistogramImageToImageMetric();
-  virtual ~KLCompareHistogramImageToImageMetric(){}
+  KullbackLeiblerCompareHistogramImageToImageMetric();
+  virtual ~KullbackLeiblerCompareHistogramImageToImageMetric(){}
   void PrintSelf(std::ostream& os, Indent indent) const;
 
   /** Form the Histogram for the Training data */
@@ -139,14 +142,14 @@ protected:
 
 private:
   // Purposely not implemented.
-  KLCompareHistogramImageToImageMetric(Self const&);
+  KullbackLeiblerCompareHistogramImageToImageMetric(Self const&);
   void operator=(Self const&); // Purposely not implemented.
 };
 
 } // End namespace itk.
 
 #ifndef ITK_MANUAL_INSTANTIATION
-#include "itkKLCompareHistogramImageToImageMetric.txx"
+#include "itkKullbackLeiblerCompareHistogramImageToImageMetric.txx"
 #endif
 
-#endif // __itkKLCompareHistogramImageToImageMetric_h
+#endif // __itkKullbackLeiblerCompareHistogramImageToImageMetric_h

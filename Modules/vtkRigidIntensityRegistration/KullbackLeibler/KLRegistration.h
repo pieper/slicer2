@@ -43,7 +43,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 //
 // It uses the ITK registration framework with
 // the following combination of components:
-//   - KLCompareHistogramImageToImageMetric
+//   - KullbackLeiblerCompareHistogramImageToImageMetric
 //   - QuaternionRigidTransform
 //   - QuaternionRigidTransformGradientDescentOptimizer
 //   - LinearInterpolateImageFunction
@@ -79,7 +79,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 // .SECTION Thanks
 // Thanks to Samson Timoner who created this class.
 
-#include "itkKLCompareHistogramImageToImageMetric.h"
+#include "itkKullbackLeiblerCompareHistogramImageToImageMetric.h"
 #include "RigidRegistrationBase.h"
 
 class vtkMatrix4x4;
@@ -90,13 +90,13 @@ namespace itk
 {
 
 template <typename TFixedImage, typename TMovingImage>
- class KLRegistration : public RigidRegistrationBase<TFixedImage,TMovingImage,KLCompareHistogramImageToImageMetric<TFixedImage, TMovingImage> >
+ class KLRegistration : public RigidRegistrationBase<TFixedImage,TMovingImage,KullbackLeiblerCompareHistogramImageToImageMetric<TFixedImage, TMovingImage> >
 {
 public:
 
   /** Standard class typedefs. */
   typedef KLRegistration Self;
-  typedef RigidRegistrationBase<TFixedImage,TMovingImage,KLCompareHistogramImageToImageMetric<TFixedImage, TMovingImage> > Superclass;
+  typedef RigidRegistrationBase<TFixedImage,TMovingImage,KullbackLeiblerCompareHistogramImageToImageMetric<TFixedImage, TMovingImage> > Superclass;
   typedef SmartPointer<Self> Pointer;
   typedef SmartPointer<const Self>  ConstPointer;
 

@@ -59,7 +59,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "itkImageRegionIterator.h"
 #include "itkQuaternionRigidTransform.h"
 #include "itkQuaternionRigidTransformGradientDescentOptimizer.h"
-#include "itkKLCompareHistogramImageToImageMetric.h"
+#include "itkKullbackLeiblerCompareHistogramImageToImageMetric.h"
 #include "itkLinearInterpolateImageFunction.h"
 #include "itkImageRegistrationMethod.h"
 #include "itkNumericTraits.h"
