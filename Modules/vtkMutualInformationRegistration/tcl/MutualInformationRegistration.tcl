@@ -101,7 +101,7 @@ proc MutualInformationRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.11 $} {$Date: 2003/11/25 03:24:10 $}]
+        {$Revision: 1.12 $} {$Date: 2003/11/25 20:08:17 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -218,13 +218,13 @@ proc MutualInformationRegistrationBuildSubGui {f} {
     <LI><B>Easiest way to begin</B>
     Select a \"Volume to Move\" and a \"Reference Volume\" and click \"Start\".
     <LI><B>Normal: Coarse</B>
-    The Coarse method will generally do a good job on all images. It takes 5 to 10 minutes to run. It requires no user intervention; and will finish on its own. Though, it updates regularly so that the user can stop the algorithm is she is satisfied.
+    The Coarse method will generally do a good job on all images. It takes 5 to 10 minutes to run. It requires no user intervention; though, it updates regularly so that the user can stop the algorithm is she is satisfied. 
     <LI><B>Normal: Fine</B>
-    The Fine method can be run after the Coarse method to fine tune the result. Again, the Fine method updates regularly so that the user can stop the algorithm if she is satified. Otherwise, it will run until finished.
+    The Fine method can be run after the Coarse method to fine tune the result. Again, the Fine method updates regularly so that the user can stop the algorithm if she is satified. Otherwise, it never stops.
     <LI><B>Normal: Good and Slow</B>
-    This method is designed for the user to be able to walk away, and come back and find a good registration. This method can be slow, but almost always yields a good result. It does not update the alignment until finished.
+    This method is designed for the user to be able to walk away, and come back and find a good registration. This method sometimes yields a good result. It does not update the alignment until finished.
     <LI><B>Normal: Very Good and Very Slow</B>
-    This method is designed for the user to be able to walk away, and come back and find a good registration. This method can be very slow, but it works very, very well. It does not update the alignment until finished.
+    This method is designed for the user to be able to walk away, and come back and find a good registration. This method can be very slow, but it generally works very, very well. It does not update the alignment until finished.
     <LI><B>Advanced</B>
     Change these at your own risk. The input images are normalized, so that the source and target standard deviations should generally be smaller than 1. There are arguments they should be much smaller than 1, but changing them does not seem to make a big difference. The number of samples per iteration can be increased, but also does not seem to help alot. The translation scale is roughly a measure of how much to scale translations over rotations. A variety of numbers may work here. The learning rate should generally be less than 0.001, and often much smaller. The number of update iterations is generally between 100 and 2500
     <LI><B>Known Bugs</B>
@@ -424,7 +424,7 @@ proc MutualInformationRegistrationCoarseParam {} {
     global MutualInformationRegistration
 
     set MutualInformationRegistration(Resolution)       128
-    set MutualInformationRegistration(LearningRate)    .0001
+    set MutualInformationRegistration(LearningRate)    3e-5
     set MutualInformationRegistration(UpdateIterations) 100
     set MutualInformationRegistration(NumberOfSamples)  50
     set MutualInformationRegistration(TranslateScale)   320
@@ -454,7 +454,7 @@ proc MutualInformationRegistrationFineParam {} {
     global MutualInformationRegistration
 
     set MutualInformationRegistration(Resolution)       128
-    set MutualInformationRegistration(LearningRate)    .00001
+    set MutualInformationRegistration(LearningRate)     3e-6
     set MutualInformationRegistration(UpdateIterations) 100
     set MutualInformationRegistration(NumberOfSamples)  50
     set MutualInformationRegistration(TranslateScale)   320
