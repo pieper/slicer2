@@ -105,16 +105,16 @@ proc DTMRIInit {} {
     set Module($m,author) "Lauren O'Donnell"
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.11 $} {$Date: 2004/05/17 20:02:05 $}]
+            {$Revision: 1.12 $} {$Date: 2004/05/18 20:35:22 $}]
 
     # Define Tabs
     #------------------------------------
-    set Module($m,row1List) "Help Display ROI Scalars Props"
-    set Module($m,row1Name) "{Help} {Disp} {ROI} {Scalars} {Props}"
+    set Module($m,row1List) "Help Convert Display ROI Scalars "
+    set Module($m,row1Name) "{Help} {Convert} {Disp} {ROI} {Scalars} "
     set Module($m,row1,tab) Display
     # Use these lines to add a second row of tabs
-    set Module($m,row2List) "Diffuse Advanced Devel"
-    set Module($m,row2Name) "{Diffuse} {Advanced} {Devel}"
+    set Module($m,row2List) " Save Advanced Devel"
+    set Module($m,row2Name) "{Save} {Advanced} {Devel}"
     set Module($m,row2,tab) Advanced
     
     # Define Procedures
@@ -422,7 +422,7 @@ proc DTMRIUpdateMRML {} {
 proc DTMRIEnter {} {
     global DTMRI Slice View
     
-    # set global flag to avoid possible render loop
+   # set global flag to avoid possible render loop
     set View(resetCameraClippingRange) 0
 
     # add event handling for 3D
@@ -1406,45 +1406,23 @@ especially Diffusion DTMRI MRI.
     pack $f.bApply -side top -padx 0 -pady 0
 
     #-------------------------------------------
-    # Props frame
+    # Convert frame
     #-------------------------------------------
-    set fProps $Module(DTMRI,fProps)
-    set f $fProps
+    set fConvert $Module(DTMRI,fConvert)
+    set f $fConvert
     
-    foreach frame "Top Middle Bottom Convert" {
+    foreach frame "Convert Top Middle Bottom " {
         frame $f.f$frame -bg $Gui(activeWorkspace)
         pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
     }
 
     $f.fConvert configure  -relief groove -bd 3 
 
-    #-------------------------------------------
-    # Props->Top frame
-    #-------------------------------------------
-    set f $fProps.fTop
-    # file browse box: widget, array, var, label, proc, "", startdir
-    DevAddFileBrowse $f DTMRI FileName "File" \
-            DTMRISetFileName "" {\$DTMRI(defaultDir)}
-    # Lauren does default dir work?
 
     #-------------------------------------------
-    # Props->Bottom frame
+    # Convert->Convert frame
     #-------------------------------------------
-    set f $fProps.fBottom
-    # Lauren test
-    DevAddButton $f.bTest "Add" MainTensorAddTensor 8
-
-    DevAddButton $f.bApply "Apply" "DTMRIPropsApply; Render3D" 8
-    DevAddButton $f.bCancel "Cancel" "DTMRIPropsCancel" 8
-
-    # Lauren test
-    grid $f.bTest $f.bApply $f.bCancel -padx $Gui(pad) -pady $Gui(pad)
-    #grid $f.bApply $f.bCancel -padx $Gui(pad) -pady $Gui(pad)
-
-    #-------------------------------------------
-    # Props->Convert frame
-    #-------------------------------------------
-    set f $fProps.fConvert
+    set f $fConvert.fConvert
 
     foreach frame "Select GradientNum GradientImages NoGradientImages Gradients Apply" {
         frame $f.f$frame -bg $Gui(activeWorkspace)
@@ -1452,9 +1430,9 @@ especially Diffusion DTMRI MRI.
     }
 
     #-------------------------------------------
-    # Props->Convert->Select frame
+    # Convert->Convert->Select frame
     #-------------------------------------------
-    set f $fProps.fConvert.fSelect
+    set f $fConvert.fConvert.fSelect
     # Lauren test
     # menu to select a volume: will set Volume(activeID)
     DevAddSelectButton  Volume $f Active "Input Volume:" Grid \
@@ -1466,9 +1444,9 @@ especially Diffusion DTMRI MRI.
     lappend Volume(mActiveList) $f.mbActive.m
 
     #-------------------------------------------
-    # Props->Convert->GradientNum frame
+    # Convert->Convert->GradientNum frame
     #-------------------------------------------
-    set f $fProps.fConvert.fGradientNum
+    set f $fConvert.fConvert.fGradientNum
     
     DevAddLabel $f.l "Number of Gradient Directions:"
     eval {entry $f.eEntry -textvariable DTMRI(convert,numberOfGradients) \
@@ -1476,9 +1454,9 @@ especially Diffusion DTMRI MRI.
     pack $f.l $f.eEntry -side left -padx $Gui(pad) -pady 0 -fill x
 
     #-------------------------------------------
-    # Props->Convert->GradientImages frame
+    # Convert->Convert->GradientImages frame
     #-------------------------------------------
-    set f $fProps.fConvert.fGradientImages
+    set f $fConvert.fConvert.fGradientImages
     DevAddLabel $f.l "Gradient:"
     eval {entry $f.eEntry1 \
           -textvariable DTMRI(convert,firstGradientImage) \
@@ -1493,9 +1471,9 @@ especially Diffusion DTMRI MRI.
     "Last gradient (diffusion-weighted)\niimage number at first slice location"
 
     #-------------------------------------------
-    # Props->Convert->NoGradientImages frame
+    # Convert->Convert->NoGradientImages frame
     #-------------------------------------------
-    set f $fProps.fConvert.fNoGradientImages
+    set f $fConvert.fConvert.fNoGradientImages
     DevAddLabel $f.l "Baseline:"
     eval {entry $f.eEntry1 \
           -textvariable DTMRI(convert,firstNoGradientImage) \
@@ -1510,20 +1488,45 @@ especially Diffusion DTMRI MRI.
     "Last NO gradient (not diffusion-weighted)\n image number at first slice location"
 
     #-------------------------------------------
-    # Props->Convert->Gradients frame
+    # Convert->Convert->Gradients frame
     #-------------------------------------------
-    set f $fProps.fConvert.fGradients
+    set f $fConvert.fConvert.fGradients
     eval {entry $f.eEntry -textvariable DTMRI(convert,gradients) \
           -width 20} $Gui(WEA)
     pack $f.eEntry -side top -padx 0 -pady $Gui(pad) -fill x
     TooltipAdd $f.eEntry "List of diffusion gradient directions"
 
     #-------------------------------------------
-    # Props->Convert->Apply frame
+    # Convert->Convert->Apply frame
     #-------------------------------------------
-    set f $fProps.fConvert.fApply
+    set f $fConvert.fConvert.fApply
     DevAddButton $f.bTest "Convert Volume" ConvertVolumeToTensors 20
     pack $f.bTest -side top -padx 0 -pady $Gui(pad) -fill x
+
+
+#Raul: Depreceated funcionality
+    #-------------------------------------------
+    # Convert->Top frame
+    #-------------------------------------------
+#    set f $fConvert.fTop
+    # file browse box: widget, array, var, label, proc, "", startdir
+#    DevAddFileBrowse $f DTMRI FileName "File" \
+#            DTMRISetFileName "" {\$DTMRI(defaultDir)}
+    # Lauren does default dir work?
+
+    #-------------------------------------------
+    # Convert->Bottom frame
+    #-------------------------------------------
+#    set f $fConvert.fBottom
+    # Lauren test
+#    DevAddButton $f.bTest "Add" MainTensorAddTensor 8
+
+#    DevAddButton $f.bApply "Apply" "DTMRIPropsApply; Render3D" 8
+#    DevAddButton $f.bCancel "Cancel" "DTMRIPropsCancel" 8
+
+    # Lauren test
+#    grid $f.bTest $f.bApply $f.bCancel -padx $Gui(pad) -pady $Gui(pad)
+    #grid $f.bApply $f.bCancel -padx $Gui(pad) -pady $Gui(pad)
 
     #-------------------------------------------
     # Advanced frame
@@ -1642,10 +1645,10 @@ especially Diffusion DTMRI MRI.
     pack $fAdvanced.fMiddle.bApply -side top -padx $Gui(pad) -pady $Gui(pad)
 
     #-------------------------------------------
-    # Diffuse frame
+    # Devel frame
     #-------------------------------------------
-    set fDiffuse $Module(DTMRI,fDiffuse)
-    set f $fDiffuse
+    set fDevel $Module(DTMRI,fDevel)
+    set f $fDevel
     
     foreach frame "Top Middle Bottom" {
         frame $f.f$frame -bg $Gui(activeWorkspace)
@@ -1653,9 +1656,9 @@ especially Diffusion DTMRI MRI.
     }
 
     #-------------------------------------------
-    # Diffuse->Top frame
+    # Devel->Top frame
     #-------------------------------------------
-    set f $fDiffuse.fTop
+    set f $fDevel.fTop
     # menu to select a volume: will set Volume(activeID)
     DevAddSelectButton  Volume $f Active "Input Volume:" Grid \
             "Input Volume: heat distribution." 13 BLA
@@ -1666,19 +1669,22 @@ especially Diffusion DTMRI MRI.
     lappend Volume(mActiveList) $f.mbActive.m
 
     #-------------------------------------------
-    # Diffuse->Middle frame
+    # Devel->Middle frame
     #-------------------------------------------
-    set f $fDiffuse.fMiddle
+    set f $fDevel.fMiddle
 
     DevAddButton $f.bRun "Run Diffusion" {DTMRIDoDiffusion}
     pack $f.bRun -side top -padx $Gui(pad) -pady $Gui(pad)
 
 
     #-------------------------------------------
-    # Devel frame
+    # Save frame
     #-------------------------------------------
-    set fDevel $Module(DTMRI,fDevel)
-    set f $fDevel
+    set fSave $Module(DTMRI,fSave)
+    set f $fSave
+    
+    frame $f.fActive    -bg $Gui(backdrop) -relief sunken -bd 2
+    pack $f.fActive -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
     
     foreach frame "Top Middle Bottom" {
         frame $f.f$frame -bg $Gui(activeWorkspace)
@@ -1687,19 +1693,33 @@ especially Diffusion DTMRI MRI.
     $f.fTop configure  -relief groove -bd 3 
     $f.fMiddle configure  -relief groove -bd 3 
 
+   #-------------------------------------------
+    # Scalars->Active frame
     #-------------------------------------------
-    # Devel->Top frame
-    #-------------------------------------------
-    set f $fDevel.fTop
+    set f $fSave.fActive
 
-    DevAddButton $f.bSave "Save Structured Points" {DTMRIWriteStructuredPoints $DTMRI(devel,fileName)}
+    # menu to select active DTMRI
+    DevAddSelectButton  Tensor $f Active "Active DTMRI:" Grid \
+            "Active DTMRI" 13 BLA
+    
+    # Append these menus and buttons to lists 
+    # that get refreshed during UpdateMRML
+    lappend Tensor(mbActiveList) $f.mbActive
+    lappend Tensor(mActiveList) $f.mbActive.m
+
+    #-------------------------------------------
+    # Save->Top frame
+    #-------------------------------------------
+    set f $fSave.fTop
+
+    DevAddButton $f.bSave "Save Tensor" {DTMRIWriteStructuredPoints $DTMRI(devel,fileName)}
     pack $f.bSave -side top -padx $Gui(pad) -pady $Gui(pad)
-    TooltipAdd $f.bSave "Save DTMRIs.vtk"
+    TooltipAdd $f.bSave "Save Tensor to vtk file format"
 
     #-------------------------------------------
-    # Devel->Middle frame
+    # Save->Middle frame
     #-------------------------------------------
-    set f $fDevel.fMiddle
+    set f $fSave.fMiddle
     frame $f.fEntry  -bg $Gui(activeWorkspace)
     frame $f.fEntry2  -bg $Gui(activeWorkspace)
     frame $f.fButton  -bg $Gui(activeWorkspace)
@@ -1724,7 +1744,7 @@ especially Diffusion DTMRI MRI.
 #     DevAddButton $f.bApply "Recalculate DTMRIs" {DTMRIRecalculateDTMRIs}
 #     pack $f.bApply -side top -padx $Gui(pad) -pady $Gui(pad) 
 
-    set f $fDevel.fMiddle.fEntry
+    set f $fSave.fMiddle.fEntry
     
     DevAddLabel $f.l "dir:"
     eval {entry $f.e -width 25 -textvariable \
@@ -1733,7 +1753,7 @@ especially Diffusion DTMRI MRI.
     pack $f.l $f.e -side left -padx $Gui(pad) -pady 2        
     TooltipAdd $f.e "Directory where text files with points will be saved"
 
-    set f $fDevel.fMiddle.fEntry2
+    set f $fSave.fMiddle.fEntry2
     DevAddLabel $f.l "name:"
     eval {entry $f.e -width 25 -textvariable \
               DTMRI(devel,fileNamePoints) \
@@ -1741,7 +1761,7 @@ especially Diffusion DTMRI MRI.
     pack $f.l $f.e -side left -padx $Gui(pad) -pady 2        
     TooltipAdd $f.e "Filename prefix of text files with points"
 
-    set f $fDevel.fMiddle.fButton
+    set f $fSave.fMiddle.fButton
     DevAddButton $f.bApply "Save streamlines in scaled IJK" \
         {DTMRISaveStreamlinesAsIJKPoints $DTMRI(devel,subdir) $DTMRI(devel,fileNamePoints)}
 
