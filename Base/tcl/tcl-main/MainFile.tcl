@@ -69,7 +69,7 @@ proc MainFileInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainFile \
-        {$Revision: 1.39 $} {$Date: 2002/08/21 14:08:49 $}]
+        {$Revision: 1.40 $} {$Date: 2002/09/16 17:26:54 $}]
 
     set File(filePrefix) data
 }
@@ -778,10 +778,19 @@ proc MainFileCreateDirectory {filename} {
 # .PROC CheckVolumeExists
 # 
 # .ARGS
+# filePrefix the directory path and file name up to the separator
+# filePattern the argument passed to format that builds the full file name
+# firstNum the number of the first file in the volume
+# lastNum the number of the last file in the volume
+# verbose set to 1 if you wish more information about execution
+# afterStuff the final characters in the file name pattern
 # .END
 #-------------------------------------------------------------------------------
-proc CheckVolumeExists {filePrefix filePattern firstNum lastNum {verbose 0}} {
+proc CheckVolumeExists {filePrefix filePattern firstNum lastNum  {verbose 0} } {
     global Gui
+
+
+
 
     # Check that it's a prefix, not a directory
     if {[file isdirectory $filePrefix] == 1} {
@@ -857,32 +866,42 @@ proc CheckFileExists {filename {verbose 1}} {
 #
 # .ARGS
 # str ImageFile the file name
+# int postfixFlag set to true by default, processes the filename with a postfix after the number
 # .END
 # 
 #-------------------------------------------------------------------------------
-proc MainFileParseImageFile {ImageFile} {
+proc MainFileParseImageFile {ImageFile {postfixFlag 1}} {
     ##  Parse the file into its prefix, number, and perhaps stuff afterwards
     ##   Note: find the last consecutive string of digits
-    if {[regexp {^(.+)\.([0-9]+)(\.[^\.0-9]*)?$} $ImageFile match filePrefix \
-            num afterStuff] == 0} {
-        DevErrorWindow "Could not parse $ImageFile in MainFileFindImageNumber"
+    ## Added support for - as well as . as a file separator, to add another one, 
+    ##   replace the instances of [\.-] in the following regexp
+    set filePostfix ""
+    if {[regexp {^(.+)[\.-]([0-9]+)([\.-][^[0-9]*)?$} $ImageFile match filePrefix num filePostfix] == 0} {
+        DevErrorWindow "Could not parse \"$ImageFile\" in MainFileParseImageFile (postfixFlag = $postfixFlag)"
         return ""
     }
-
-    # Rid unnecessary 0's
+    
+    # Get rid of unnecessary 0's
     set ZerolessNum [string trimleft $num "0"]
     if {$ZerolessNum == ""} {set ZerolessNum 0}
-
+    # find the separator character
+    if {[regexp "^${filePrefix}(.*)${num}" $ImageFile match sepChars] == 0} {
+        DevErrorWindow "Could not find the seperator character in \"$ImageFile\" between ${filePrefix} and ${num}"
+        return ""
+    }
     ## Did we trim zeros? This tells us how to look for files
     if { [string equal $ZerolessNum $num] == 1 } {
-        set pattern "%s.%d%s";        
+        set pattern "%s${sepChars}%d";        
     } else {
         ## Someday, we'll have to check for things other than 001...
-        set pattern "%s.%03d%s";
+        set pattern "%s${sepChars}%03d";
     }
-
+    # if we're going to check for postfix strings on the file name after the number, ie .gz, append a string variable to the pattern
+    if {$postfixFlag} {
+        append pattern "%s"
+    }
     set a ""
-    lappend a  $pattern $filePrefix $ZerolessNum $afterStuff
+    lappend a  $pattern $filePrefix $ZerolessNum $filePostfix
     return $a
 }
 
@@ -901,18 +920,18 @@ proc MainFileFindImageNumber {which firstFile} {
     set pattern    [lindex $parsing 0]
     set filePrefix [lindex $parsing 1]
     set firstNum   [lindex $parsing 2]
-    set afterStuff [lindex $parsing 3]
+    set filePostfix [lindex $parsing 3]
 
     ## Do they just want the first number?
     if {$which == "First"} { return $firstNum  }
 
-    # puts "Pattern: $pattern"
-    # puts "firstFile: $firstFile "
-    set firstFile [format $pattern $filePrefix $firstNum $afterStuff]
-    #puts "firstFile: $firstFile "
+#    puts "MainFileFindImageNumber: Pattern: $pattern"
+    set firstFile [format $pattern $filePrefix $firstNum $filePostfix]
+#    puts "MainFileFindImageNumber: firstFile: \"$firstFile\" "
 
     # See if first file exists.  If not, then we're powerless.
     if {[CheckFileExists $firstFile 0] == 0} {
+        DevErrorWindow "MainFileFindImageNumber: First file $firstFile does not exist"
         return ""
     }
 
@@ -921,12 +940,13 @@ proc MainFileFindImageNumber {which firstFile} {
     set done 0
     set num $firstNum
     while {$done == 0} {
-        set fileName [format $pattern $filePrefix $num $afterStuff]
+        set fileName [format $pattern $filePrefix $num $filePostfix]
         if {[CheckFileExists $fileName 0] == 0} {
             set done 1
             set lastNum [expr $num - 1]
         }
         incr num
     }
+    # puts "MainFileFindImageNumber: last number $lastNum"
     return $lastNum
 }
