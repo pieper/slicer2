@@ -85,7 +85,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.70 $} {$Date: 2002/09/16 17:28:31 $}]
+            {$Revision: 1.71 $} {$Date: 2002/10/04 17:49:45 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -118,7 +118,20 @@ proc VolumesInit {} {
 
     # Find all tcl files in subdirectory and source them
     set dir [file join tcl-modules Volumes]
+
+    # save the already loaded volume readers (from modules)
+    set cmds [info command Vol*Init]
+
     set Volume(readerModules,idList) [DevSourceTclFilesInDirectory $dir]
+
+    # get the init functions from the modules, skipping base tcl file init procedures
+    foreach c $cmds {
+        if {$Module(verbose) == 1} {puts "vol-init = $c"}
+        if {$c != "VolumesInit" && $c != "VolumeMathInit" && $c != "VolRendInit"} {
+            scan $c "%\[^I\]sInit" name
+            lappend Volume(readerModules,idList) $name
+        }
+    }
 
     # Call each submodule's init function if it exists
     foreach m $Volume(readerModules,idList) {
