@@ -175,7 +175,7 @@ proc tarup { {destdir "auto"} } {
             foreach lib $libs {
                 file copy $lib $destdir/Lib/$::env(BUILD)/VTK-build/bin
             }
-            file copy $::env(VTK_DIR)/vtk $destdir/Lib/$::env(BUILD)/VTK-build/bin
+            file copy $::env(VTK_DIR)/bin/vtk $destdir/Lib/$::env(BUILD)/VTK-build/bin
             file copy -force $::env(SLICER_HOME)/Scripts/slicer-vtk-pkgIndex.tcl $destdir/Lib/$::env(BUILD)/VTK-build/Wrapping/Tcl/pkgIndex.tcl
         }
         default { 
