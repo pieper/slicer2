@@ -21,7 +21,13 @@ reader SetDataMask 0x7fff
 #reader SetFilePrefix "/home/ai/odonnell/imtest/test_image"
 
 vtkImageLiveWireEdgeWeights lwedge
-lwedge SetInput [reader GetOutput]
+lwedge SetInput 0 [reader GetOutput]
+lwedge SetInput 1 [reader GetOutput]
+lwedge SetInput 2 [reader GetOutput]
+
+#lwedge TrainingModeOn
+
+#lwedge SetEdgeDirection 2
 
 # viewer
 vtkImageViewer viewer
