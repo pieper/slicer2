@@ -96,26 +96,29 @@ proc VolHeaderBuildGUI {parentFrame} {
         set Volume(entryBoxWidth) 7
 
         # two entry boxes per line to save space
-        foreach params "{height width} \
-                {pixelHeight pixelWidth } "\
-                name "{Image Size} \
-                {Pixel Size}" \
-                tip1 "{height width } {height width }" \
-                tip "{units are pixels} \
-                {units are mm}" {
+        # Change: 05/06/03 NA: pack it left to right, width height so 
+        # that when tabbing through the boxes the next box will follow 
+        # in a left to right manner
+        foreach params "{width height} {pixelWidth pixelHeight } "\
+                name "{Image Size} {Pixel Size}" \
+                tip1 "{width height } {width height }" \
+                tip "{units are pixels} {units are mm}" {
 
             set f $parentFrame.fEntry
             set param [lindex $params 0]
             frame $f.f$param   -bg $Gui(activeWorkspace)
             pack $f.f$param -side top -fill x -pady 2 
 
+            # name label
             set f $f.f$param
             eval {label $f.l$param -text "$name:"} $Gui(WLA)
             pack $f.l$param -side left -padx $Gui(pad) -fill x -anchor w
+
+            # value entry boxes with tool tips
             foreach param $params t $tip1 {
                 eval {entry $f.e$param -width $Volume(entryBoxWidth) \
                         -textvariable Volume($param)} $Gui(WEA)
-                pack $f.e$param -side right -padx $Gui(pad) 
+                pack $f.e$param -side left -padx $Gui(pad) -fill x -expand yes 
                 TooltipAdd $f.e$param "$t: $tip"
             }
         }
