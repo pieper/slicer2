@@ -262,7 +262,7 @@ proc EndoscopicInit {} {
     set Module($m,category) "Visualisation"
     
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.81.2.3 $} {$Date: 2005/01/04 19:40:11 $}] 
+    {$Revision: 1.81.2.4 $} {$Date: 2005/01/11 21:02:47 $}] 
        
     # Define Procedures
     #------------------------------------
@@ -4854,6 +4854,8 @@ proc EndoscopicSetFlatFileName {} {
    }
 
 # name the flattened view based on the entered file name.
+    set Endoscopic(flatColon,filePath) [file root $Endoscopic(FlatSelect)]
+    #puts "file path is $root"
     set Endoscopic(flatColon,name) [file root [file tail $Endoscopic(FlatSelect)]]
 }
 
@@ -5124,6 +5126,11 @@ proc EndoscopicAddFlatView {} {
     Endoscopic($name,FlatColonActor) SetMapper Endoscopic($name,FlatColonMapper)
     Endoscopic($name,renderer) AddActor Endoscopic($name,FlatColonActor)
     
+    # create 2 vtkActors for the boundary of the flatcolon, since the flat colon we loaded above has overlap
+    EndoscopicBuildFlatBoundary $name
+#    Endoscopic($name,renderer) AddActor Endoscopic(flatColon,$name,aPolyLineActor1)
+    
+    
     #create Outline
     vtkOutlineFilter colonOutline
       colonOutline SetInput [TempPolyReader GetOutput]
@@ -5370,7 +5377,9 @@ proc EndoscopicBuildFlatColonLookupTable {{name ""}} {
      # for the next 128 slots in the table, set the color to be in transition from skin to green
      # i.e., green value increases to 1, and both the red and the blue values decrease to 0
      for {set i $transL} {$i < $transH} {incr i} {
-         set numSteps [expr [expr $transH - $transL] + 1]
+     
+     set numSteps [expr [expr $transH - $transL] + 1]
+     
      set redDecr [expr 1.0 / $numSteps]
      set greenIncr [expr [expr 1.0 - 0.8] / $numSteps]
      set blueDecr [expr 0.7 / $numSteps]
@@ -5387,6 +5396,101 @@ proc EndoscopicBuildFlatColonLookupTable {{name ""}} {
         eval Endoscopic(flatColon,lookupTable,$name) SetTableValue $i 0.0 1.0 0.0 1
       }
 
+}
+
+proc EndoscopicBuildFlatBoundary {{name ""}} {
+
+     global Endoscopic
+     
+     set line1name $Endoscopic(flatColon,filePath)
+     set line2name $Endoscopic(flatColon,filePath)
+     append line1name _Line1.txt
+     append line2name _Line2.txt
+# Create the 1st boundary line     
+     set fp1 [open $line1name r]
+     set data1 [read $fp1]
+     set line1s [split [string trim $data1] "\n"]
+     
+     set line1numP [lindex $line1s 0]
+     puts "line1 number of points: $line1numP"
+     
+     vtkPoints Line1Points
+     Line1Points SetNumberOfPoints $line1numP
+     for {set i 1} {$i <= $line1numP} {incr i} {
+       set point [lindex $line1s $i]
+     
+       set x [lindex $point 0]
+       set y [lindex $point 1]
+       set z [lindex $point 2]
+     
+       Line1Points InsertPoint $i $x $y $z
+     }
+         
+     vtkCellArray Line1Cells
+     Line1Cells InsertNextCell $line1numP
+     
+     for {set i 1} {$i <= $line1numP} {incr i} {
+        Line1Cells InsertCellPoint $i
+     }
+     
+     vtkPolyData Line1
+       Line1 SetPoints Line1Points
+       Line1 SetLines Line1Cells
+     
+     
+     vtkPolyDataMapper Line1Mapper
+     Line1Mapper SetInput Line1
+
+     vtkActor Endoscopic(flatColon,$name,Line1Actor)
+     Endoscopic(flatColon,$name,Line1Actor) SetMapper Line1Mapper
+     
+     [Endoscopic(flatColon,$name,Line1Actor) GetProperty] SetColor 0 0 0
+     
+    Endoscopic($name,renderer) AddActor Endoscopic(flatColon,$name,Line1Actor)
+    
+# Create the 2nd boundary line
+
+     set fp2 [open $line2name r]
+     set data2 [read $fp2]
+     set line2s [split [string trim $data2] "\n"]
+     
+     set line2numP [lindex $line2s 0]
+     puts "line2 number of points: $line2numP"
+     
+     vtkPoints Line2Points
+     Line2Points SetNumberOfPoints $line2numP
+     for {set i 1} {$i <= $line2numP} {incr i} {
+       set point [lindex $line2s $i]
+     
+       set x [lindex $point 0]
+       set y [lindex $point 1]
+       set z [lindex $point 2]
+     
+       Line2Points InsertPoint $i $x $y $z
+     }
+         
+     vtkCellArray Line2Cells
+     Line2Cells InsertNextCell $line2numP
+     
+     for {set i 1} {$i <= $line2numP} {incr i} {
+        Line2Cells InsertCellPoint $i
+     }
+     
+     vtkPolyData Line2
+       Line2 SetPoints Line2Points
+       Line2 SetLines Line2Cells
+     
+     
+     vtkPolyDataMapper Line2Mapper
+     Line2Mapper SetInput Line2
+
+     vtkActor Endoscopic(flatColon,$name,Line2Actor)
+     Endoscopic(flatColon,$name,Line2Actor) SetMapper Line2Mapper
+     
+     [Endoscopic(flatColon,$name,Line2Actor) GetProperty] SetColor 0 0 0
+     
+    Endoscopic($name,renderer) AddActor Endoscopic(flatColon,$name,Line2Actor)
+    
 }
 
 
