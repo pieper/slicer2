@@ -64,11 +64,13 @@ proc CustomInit {} {
     # Module Summary Info
     #------------------------------------
     # Description:
-    #   This summary info will be displayed on the main menu
-    #   under Help->Module Summaries
-    #   and under Help->Module Credits
-    set Module($m,overview) "Example module for developers."
-    set Module($m,author) "various, MIT AI Lab/SPL"
+    #  Give a brief overview of what your module does, for inclusion in the 
+    #  Help->Module Summaries menu item.
+    set Module($m,overview) "This module is an example of how to add modules to slicer."
+    #  Provide your name, affiliation and contact information so you can be 
+    #  reached for any questions people may have regarding your module. 
+    #  This is included in the  Help->Module Credits menu item.
+    set Module($m,author) "First name, last name, affiliation, email"
 
     # Define Tabs
     #------------------------------------
@@ -92,6 +94,8 @@ proc CustomInit {} {
     set Module($m,row1List) "Help Stuff"
     set Module($m,row1Name) "{Help} {Tons o' Stuff}"
     set Module($m,row1,tab) Stuff
+
+
 
     # Define Procedures
     #------------------------------------
@@ -147,7 +151,7 @@ proc CustomInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.26 $} {$Date: 2002/01/26 23:34:30 $}]
+	    {$Revision: 1.27 $} {$Date: 2002/02/26 17:03:21 $}]
 
     # Initialize module-level variables
     #------------------------------------
