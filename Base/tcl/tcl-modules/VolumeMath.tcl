@@ -25,6 +25,10 @@
 #   VolumeMathInit
 #   VolumeMathUpdateGUI
 #   VolumeMathBuildGUI
+#   VolumeMathBuildResampParamPopup
+#   VolumeMathShowPopup
+#   VolumeMathUpdateInterpParams
+#   VolumeMathGetInitParams
 #   VolumeMathEnter
 #   VolumeMathExit
 #   VolumeMathSetMathType
@@ -136,7 +140,7 @@ proc VolumeMathInit {} {
     #   appropriate info when the module is checked in.
     #   
         lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.25 $} {$Date: 2002/03/21 23:05:28 $}]
+        {$Revision: 1.26 $} {$Date: 2002/10/17 21:21:05 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -168,6 +172,11 @@ proc VolumeMathInit {} {
       # Magnitude of the difference
    set VolumeMath(Magnitude)  0
 
+   #Hanifa 
+   #Set the default interpolation mode to linear
+   set VolumeMath(interpolationMode) Linear
+   #A check to see if the popup box is open
+   set VolumeMath(resampMenuOpen) 0
 }
 
 #-------------------------------------------------------------------------------
@@ -179,20 +188,21 @@ proc VolumeMathInit {} {
 proc VolumeMathUpdateGUI {} {
     global VolumeMath Volume
 
-    DevUpdateNodeSelectButton Volume VolumeMath Volume1 Volume1 DevSelectNode
-    DevUpdateNodeSelectButton Volume VolumeMath Volume2 Volume2 DevSelectNode
+    #Hanifa
+    #I changed the following line so that the GUI picks up the initial extent origin and spacing
+    #values as soon as they are selected on the menu. This also required a change in Developer.tcl
+    DevUpdateNodeSelectButton Volume VolumeMath Volume1 Volume1 DevSelectNode 1 0 1 VolumeMathGetInitParams
+    DevUpdateNodeSelectButton Volume VolumeMath Volume2 Volume2 DevSelectNode 
     DevUpdateNodeSelectButton Volume VolumeMath Volume3 Volume3 DevSelectNode 0 1 1
-
+    
     # for the Logic buttons
     # these have to not be named the same as the above since Developer.tcl
     # stores the widget path in VolumeMath(mbVolume1) so creating
     # the second menu like this will overwrite the first's saved
     # widget path...
-    DevUpdateNodeSelectButton Volume VolumeMath Volume1L Volume1 DevSelectNode
+    DevUpdateNodeSelectButton Volume VolumeMath Volume1L Volume1 DevSelectNode 
     DevUpdateNodeSelectButton Volume VolumeMath Volume2L Volume2 DevSelectNode
     DevUpdateNodeSelectButton Volume VolumeMath Volume3L Volume3 DevSelectNode 0 1 1
-
-
 }
 
 #-------------------------------------------------------------------------------
@@ -204,7 +214,15 @@ proc VolumeMathUpdateGUI {} {
 proc VolumeMathBuildGUI {} {
     global Gui VolumeMath Module Label
 
-    # A frame has already been constructed automatically for each tab.
+    #Hanifa
+    #The following popup allows the user to see the currently set volumes for resampling
+    #ie.origin, extent and spacing values. This GUI allows the user to input new values.
+    #-------------------------------------------
+    # Popup->Options frame for Resampling 
+    #-------------------------------------------
+    VolumeMathBuildResampParamPopup
+
+       # A frame has already been constructed automatically for each tab.
     # A frame named "Stuff" can be referenced as follows:
     #   
     #     $Module(<Module name>,f<Tab name>)
@@ -317,8 +335,11 @@ files. Sometimes it doesn't work.
 
     frame $f.fSelectMath  -bg $Gui(backdrop) -relief sunken -bd 2
     frame $f.fGrid -bg $Gui(activeWorkspace)
+ #Hanifa
+    frame $f.fResampButton -bg $Gui(activeWorkspace)
     frame $f.fPack -bg $Gui(activeWorkspace)
-    pack $f.fSelectMath $f.fGrid $f.fPack -side top -padx 0 -pady $Gui(pad)
+  
+    pack $f.fSelectMath $f.fGrid $f.fResampButton $f.fPack  -side top -padx 0 -pady $Gui(pad)
 
     #-------------------------------------------
     # Math->SelectMath
@@ -370,6 +391,19 @@ files. Sometimes it doesn't work.
         DevAddButton $f.bRun "Run" "VolumeMathDoMath"
 
     pack $f.bRun
+
+    #Hanifa 
+    #-------------------------------------------
+    # Math->Resampling Button 
+    #-------------------------------------------
+    set f $fMath.fResampButton
+
+        DevAddButton $f.bResampParamPopup "View/change Resampling Params" \
+             "set VolumeMath(resampMenuOpen) 1; VolumeMathShowPopup"
+
+    #Save the path to the widget so that it can be accessed later
+    set VolumeMath(ResampParamButton) $f.bResampParamPopup
+
 
 #        #-------------------------------------------
 #        # Resample frame
@@ -626,6 +660,228 @@ files. Sometimes it doesn't work.
 
     }   
 
+
+#Hanifa
+#-------------------------------------------------------------------------------
+# .PROC VolumeMathBuildResampParamPopup
+#   Create the popup box that allows the user to change/view the resampling
+#   parameters
+# .END
+#-------------------------------------------------------------------------------
+proc VolumeMathBuildResampParamPopup {} {
+    global Gui VolumeMath Module
+    
+    set w .wResamplingParams
+    set Gui(wResamplingParams) $w
+    toplevel $w -class Dialog -bg $Gui(inactiveWorkspace)
+    wm title $w "VolumeMath Resample Parameters"
+    wm iconname $w Dialog
+    wm protocol $w WM_DELETE_WINDOW "wm withdraw $w"
+    if {$Gui(pc) == "0"} {
+    wm transient $w .
+    }
+    wm withdraw $w
+    
+    # Frames
+    frame $w.fOptions -bg $Gui(activeWorkspace) -relief groove -bd 2
+    pack $w.fOptions -side top -fill x -pady $Gui(pad) -padx $Gui(pad)
+
+    set f $w.fOptions
+    frame $f.fInterpolationMode -bg $Gui(activeWorkspace) -relief groove -bd 1
+    frame $f.fTitle -bg $Gui(activeWorkspace)
+    frame $f.fOrigin -bg $Gui(activeWorkspace) 
+    frame $f.fExtent -bg $Gui(activeWorkspace)
+    frame $f.fSpacing -bg $Gui(activeWorkspace)   
+    frame $f.fApplyOrCancel -bg $Gui(activeWorkspace) 
+
+    pack $f.fInterpolationMode $f.fTitle $f.fOrigin $f.fExtent $f.fSpacing \
+    $f.fApplyOrCancel -side top -fill x -pady $Gui(pad) -padx $Gui(pad)
+
+    #-------------------------------------------
+    # Options->InterpolationMode frame
+    #-------------------------------------------
+    set f $w.fOptions.fInterpolationMode
+    eval {label $f.lInterpolationMode -text "Interpolation Mode:"} $Gui(WLA) -foreground blue
+    pack $f.lInterpolationMode -pady $Gui(pad) -padx 25 -side left -fill x
+    
+    set VolumeMath(interpolationMode) Linear
+   
+    foreach mode "Linear Nearest_Neighbour" \
+    text "Linear Nearest_Neighbour" {
+        eval {radiobutton $f.r$mode \
+              -text "$text" -value "$mode"\
+              -variable VolumeMath(interpolationMode)\
+              -indicatoron 1} $Gui(WCA)
+        pack $f.r$mode -side left -ipadx 10 -fill x
+    }
+           
+    #-------------------------------------------
+    # Options->Title/Instructions frame
+    #-------------------------------------------
+    set f $w.fOptions.fTitle
+    eval {label $f.lTitle -text "These are the Parameters that will be Applied to the Volume to Be Resampled"} $Gui(WLA) 
+    eval {label $f.lTitle2 -text "To Change the Parameters Insert the Desired Values and Click Update"} $Gui(WLA)
+    eval {label $f.lTitle3 -text "Click Cancel to Exit this Window Without Changing the Parameters"} $Gui(WLA)
+
+    pack $f.lTitle -pady $Gui(pad)
+    pack $f.lTitle2 
+    pack $f.lTitle3
+
+    #-------------------------------------------
+    # Options->Origin frame
+    #-------------------------------------------
+    set f $w.fOptions.fOrigin
+    eval {label $f.lOriginTitle -text "Origin: "} $Gui(WLA) -foreground blue
+    eval {entry $f.eOriginVal -textvariable VolumeMath(originValTemp) \
+          -width 28} $Gui(WEA)
+    grid $f.lOriginTitle $f.eOriginVal -pady 2
+    
+    #Save the path to the entrybox so that we can configure it later
+    set VolumeMath(OriginValEntryBox) $f.eOriginVal
+    
+    #-------------------------------------------
+    # Options->Extent frame
+    #-------------------------------------------
+    set f $w.fOptions.fExtent
+    eval {label $f.lExtentTitle -text "Extent: "} $Gui(WLA) -foreground blue
+    eval {entry $f.eExtentVal -textvariable VolumeMath(extentValTemp) \
+          -width 28} $Gui(WEA)
+    grid $f.lExtentTitle $f.eExtentVal -pady 2
+    
+    #Save the path to the entrybox so that we can configure it later
+    set VolumeMath(ExtentValEntryBox) $f.eExtentVal
+
+    #-------------------------------------------
+    # Options->Spacing frame
+    #------------------------------------------- 
+    set f $w.fOptions.fSpacing
+    eval {label $f.lSpacingTitle -text "Spacing: "} $Gui(WLA) -foreground blue
+    eval {entry $f.eSpacingVal -textvariable VolumeMath(spacingValTemp) \
+          -width 28} $Gui(WEA)
+    grid $f.lSpacingTitle $f.eSpacingVal -pady 2
+    
+    #Save the path to the entrybox so that we can configure it later
+    set VolumeMath(SpacingValEntryBox) $f.eSpacingVal
+
+    #-------------------------------------------
+    # Options->Apply frame
+    #-------------------------------------------
+    set f $w.fOptions.fApplyOrCancel
+    eval {button $f.bApply -text "Apply"  \
+          -command "VolumeMathUpdateInterpParams"} $Gui(WBA) {-width 25}
+    eval {button $f.bCancel -text "Cancel"  \
+          -command "VolumeMathCancelInterpParams; wm withdraw $w"} $Gui(WBA) {-width 25}
+    grid $f.bApply $f.bCancel -padx 10 -pady 2 
+ }
+
+#Hanifa
+#-------------------------------------------------------------------------------
+# .PROC VolumeMathShowPopup
+#   Show the popup box that allows the user to change/view the resampling
+#   parameters
+# .END
+#-------------------------------------------------------------------------------
+proc VolumeMathShowPopup {{x 255} {y 0}} {
+    global Gui VolumeMath
+ 
+    if {[VolumeMathCheckErrors] == 1} {
+        return
+    }
+   
+    # Recreate popup if user killed it
+    if {[winfo exists $Gui(wResamplingParams)] == 0} {
+    VolumeMathBuildResampParamPopup 
+    }
+    # Show the popup box
+    ShowPopup $Gui(wResamplingParams) $x $y
+}
+
+#Hanifa
+#-------------------------------------------------------------------------------
+# .PROC VolumeMathUpdateInterpParams
+#  Update the resampling parameters. Tests are done to ensure that the values
+#  entered are valid. Note: The parameters are only updated if the user clicks
+#  the Apply button on the resampling parameters popup box.
+# .END
+#-------------------------------------------------------------------------------
+proc VolumeMathUpdateInterpParams {} {
+    global VolumeMath Gui
+
+    # Validate Input
+
+    # Ensure origin is 3 numbers
+    if {[llength $VolumeMath(originValTemp)] != 3} {
+    tk_messageBox -message \
+        "The origin of the volume must be specified by 3 values representing the x, y, z coordinates"
+    #Cancel any changes
+    VolumeMathCancelInterpParams
+        return
+    }
+
+    # Ensure extent is 6 numbers
+    if {[llength $VolumeMath(extentValTemp)] != 6} {
+    tk_messageBox -message \
+        "The extent of the volume must be specified by 6 values"
+    #Cancel any changes
+    VolumeMathCancelInterpParams
+        return
+    }
+    
+    # Ensure spacing is 3 numbers
+    if {[llength $VolumeMath(spacingValTemp)] != 3} {
+    tk_messageBox -message \
+        "The spacing of the volume must be specified by 3 values"
+    #Cancel any changes
+    VolumeMathCancelInterpParams
+        return
+    }
+
+    #Now if the tests are passed then set the new origin, extent and spacing values
+    set VolumeMath(originVal) $VolumeMath(originValTemp)
+    set VolumeMath(extentVal) $VolumeMath(extentValTemp)
+    set VolumeMath(spacingVal) $VolumeMath(spacingValTemp)
+
+    #Close the popup window
+    wm withdraw $Gui(wResamplingParams)
+}
+
+#Hanifa
+#-------------------------------------------------------------------------------
+# .PROC VolumeMathCancelInterpParams
+#   Reset the resampling parameters to what they were before the user started to
+#   enter new paramters. Note: This is only done if the user presses the cancel
+#   button on the resampling parameters popup box.
+# .END
+#-------------------------------------------------------------------------------
+proc VolumeMathCancelInterpParams {} {
+    global VolumeMath
+
+    set VolumeMath(originValTemp) $VolumeMath(originVal)
+    set VolumeMath(extentValTemp) $VolumeMath(extentVal)
+    set VolumeMath(spacingValTemp) $VolumeMath(spacingVal)
+}
+
+#Hanifa
+#-------------------------------------------------------------------------------
+# .PROC VolumeMathGetInitParams
+#   Get and set initial resampling parameters for a volume when the user selects 
+#   it on the menu button.
+# .END
+#-------------------------------------------------------------------------------
+proc VolumeMathGetInitParams {} {
+    global VolumeMath Volume 
+    
+    set volID $VolumeMath(Volume1)
+
+    set VolumeMath(originVal) [[Volume($volID,vol) GetOutput] GetOrigin]
+    set VolumeMath(spacingVal) [[Volume($volID,vol) GetOutput] GetSpacing]
+    set VolumeMath(extentVal) [[Volume($volID,vol) GetOutput] GetExtent] 
+
+    set VolumeMath(originValTemp) $VolumeMath(originVal)
+    set VolumeMath(extentValTemp) $VolumeMath(extentVal)
+    set VolumeMath(spacingValTemp) $VolumeMath(spacingVal)
+}
+
 #-------------------------------------------------------------------------------
 # .PROC VolumeMathEnter
 # 
@@ -671,6 +927,12 @@ proc VolumeMathSetMathType {} {
     set b $f.lVolume1 
     set c $f.lVolume3 
 
+    #Hanifa
+    #If the Resample Menu is not being shown, hide the button that calls the 
+    #resampling adjust parameter popup box
+    if {$VolumeMath(resampMenuOpen) == 1} {
+    pack forget $VolumeMath(ResampParamButton)
+    }
     
     if {$VolumeMath(MathType) == "Subtract" } {
         $a configure -text "Volume2:"
@@ -684,6 +946,7 @@ proc VolumeMathSetMathType {} {
         $a configure -text "Resample"
         $b configure -text "in the coordinates of"
         $c configure -text "and put the results in"
+    pack $VolumeMath(ResampParamButton)
     } elseif {$VolumeMath(MathType) == "Abs" } {
         $a configure -text "Absolute Value"
         $b configure -text "(not used)"
@@ -1088,7 +1351,7 @@ proc VolumeMathDoAbs {} {
 proc VolumeMathDoResample {} {
     global VolumeMath Volume
 
-        # Check to make sure no volume is none
+    # Check to make sure no volume is none
 
     if {[VolumeMathCheckErrors] == 1} {
         return
@@ -1103,6 +1366,7 @@ proc VolumeMathDoResample {} {
 
     puts "$v3 $v2 $v1"
 
+
     # Set up the VolumeMath Resampling
 
     # You would think we would want 
@@ -1113,8 +1377,19 @@ proc VolumeMathDoResample {} {
     # (RasToWld2*ScaledIJKToWld2)^-1 (RasToWld1*ScaledIJKToWld1)
 
     # Get ScaledIJKs
+    #vtkMatrix4x4 tIJK1
+    #tIJK1 DeepCopy [Volume($v1,node) GetRasToVtkMatrix]
+    #tIJK1 Invert
+    #set sIJK1 tIJK1    
+
+    #vtkMatrix4x4 tIJK2
+    #tIJK2 DeepCopy [Volume($v2,node) GetRasToVtkMatrix]
+    #tIJK2 Invert
+
+    #set sIJK2 tIJK2
     set sIJK2 [Volume($v2,node) GetPosition]
     set sIJK1 [Volume($v1,node) GetPosition]
+
     # Get RasToWlds
     set RasWld2 [Volume($v2,node) GetRasToWld]
     set RasWld1 [Volume($v1,node) GetRasToWld]
@@ -1124,24 +1399,75 @@ proc VolumeMathDoResample {} {
     Amatrix Invert
     Amatrix Multiply4x4 Amatrix $RasWld1 Amatrix
     Amatrix Multiply4x4 Amatrix $sIJK1   Amatrix
-
     Amatrix Print
-    # Resampling
 
-    vtkResliceImage Reslice
-     Reslice SetInput            [Volume($v2,vol) GetOutput]
-     Reslice SetOutputImageParam [Volume($v1,vol) GetOutput]
-     Reslice SetTransformOutputToInput Amatrix
-     Reslice Update
+
+#    Resampling
+#    Samson's version
+#    vtkResliceImage Reslice
+#    Reslice SetInput            [Volume($v2,vol) GetOutput]
+#    Reslice SetOutputImageParam [Volume($v1,vol) GetOutput]
+#    Reslice SetTransformOutputToInput Amatrix
+#    Reslice Update
+    
+#    [Reslice GetOutput] Print
+#    Volume($v3,vol) SetImageData [Reslice GetOutput]
+#    [Volume($v3,vol) GetOutput] Print
+    
+    #Hanifa Changed to use vtkImageReslice class 
+    vtkImageReslice Reslice
+
+    #check to see which mode is currently selected
+    if {$VolumeMath(interpolationMode) == "Linear"} {
+    Reslice SetInterpolationModeToLinear
+    } else {
+    Reslice SetInterpolationModeToNearestNeighbor
+    }
+
+    Reslice SetInput [Volume($v2,vol) GetOutput]
+    
+    #set the origin values  
+    Reslice SetOutputOrigin [lindex $VolumeMath(originVal) 0] \
+        [lindex $VolumeMath(originVal) 1] [lindex $VolumeMath(originVal) 2]
+    #print the origin values 
+    set OriginVals [Reslice GetOutputOrigin]
+    puts "Origin values: $OriginVals"
+
+    #set the extent values
+    Reslice SetOutputExtent [lindex $VolumeMath(extentVal) 0]  [lindex $VolumeMath(extentVal) 1] [lindex $VolumeMath(extentVal) 2] [lindex $VolumeMath(extentVal) 3] [lindex $VolumeMath(extentVal) 4] [lindex $VolumeMath(extentVal) 5] 
+    #print the extent values
+    set ExtentVals [Reslice GetOutputExtent]
+    puts "Extent Values: $ExtentVals"
+
+    #set the spacing values
+    Reslice SetOutputSpacing [lindex $VolumeMath(spacingVal) 0] \
+        [lindex $VolumeMath(spacingVal) 1] [lindex $VolumeMath(spacingVal) 2] 
+    #print the spacing values
+    set SpacingVals [Reslice GetOutputSpacing]
+    puts "Spacing Values: $SpacingVals"
+
+    puts [Amatrix Print]
+  
+    vtkMatrixToLinearTransform trans
+    trans SetInput Amatrix
+    Reslice SetResliceTransform trans 
+    Reslice Update
 
     [Reslice GetOutput] Print
     Volume($v3,vol) SetImageData [Reslice GetOutput]
-#    [Volume($v3,vol) GetOutput] Print
+    [Volume($v3,vol) GetOutput] Print
+
     puts "$v3 $v2 $v1"
 
     MainVolumesUpdate $v3
     Amatrix Delete
     Reslice Delete
+    trans Delete
+
+    #Hanifa 
+    #Set the text on the output button to be the newly resampled volume 
+    $VolumeMath(mbVolume3) config -text [Volume($v3,node) GetName]
+
 }
 
 ################# Procedures from Logic Tab #################

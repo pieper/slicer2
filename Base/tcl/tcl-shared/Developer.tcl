@@ -361,7 +361,7 @@ proc DevAddSelectButton { TabName f aLabel message pack {tooltip ""} \
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc DevUpdateNodeSelectButton { type ArrayName Label Name { CommandSet "DevSelect" } { None 1 } { New 0 } { LabelMap 1 }  } {
+proc DevUpdateNodeSelectButton { type ArrayName Label Name { CommandSet "DevSelect" } { None 1 } { New 0 } { LabelMap 1 } {Command2Set ""} } {
 
     global Volume Model
         upvar $ArrayName LocalArray
@@ -392,7 +392,7 @@ proc DevUpdateNodeSelectButton { type ArrayName Label Name { CommandSet "DevSele
             }
             if $test {
                 $m add command -label [${type}($v,node) GetName] \
-                -command "$CommandSet $type $v $ArrayName $Label $Name"
+            -command "$CommandSet $type $v $ArrayName $Label $Name; $Command2Set"
         }
     }
         if {$New} {
