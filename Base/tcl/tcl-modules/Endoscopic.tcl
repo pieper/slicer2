@@ -128,9 +128,9 @@ proc EndoscopicAddEndoscopicView {} {
 	# set the endoscopic actors' visibility according to their prior visibility
 		
 	EndoscopicUpdateCamera
-        $viewWin AddRenderer endRen	
+        $viewWin AddRenderer endoscopicRen	
 	viewRen SetViewport 0 0 .5 1
-        endRen SetViewport .5 0 1 1
+        endoscopicRen SetViewport .5 0 1 1
         MainViewerSetEndoscopicViewOn
         MainViewerSetMode $View(mode) 
     }
@@ -147,7 +147,7 @@ proc EndoscopicAddMainView {} {
 
     $viewWin AddRenderer viewRen	
     viewRen SetViewport 0 0 .5 1
-    endRen SetViewport .5 0 1 1
+    endoscopicRen SetViewport .5 0 1 1
     MainViewerSetEndoscopicViewOn
     MainViewerSetMode $View(mode) 
     
@@ -172,9 +172,9 @@ proc EndoscopicAddEndoscopicViewRemoveMainView {} {
 	}
 	
 	EndoscopicUpdateCamera
-        $viewWin AddRenderer endRen
+        $viewWin AddRenderer endoscopicRen
 	$viewWin RemoveRenderer viewRen
-        endRen SetViewport 0 0 1 1
+        endoscopicRen SetViewport 0 0 1 1
         MainViewerSetEndoscopicViewOn
         MainViewerSetMode $View(mode) 
     }
@@ -192,7 +192,7 @@ proc EndoscopicRemoveEndoscopicView {} {
     if { $View(EndoscopicViewOn) == 1} {
 
 
-        $viewWin RemoveRenderer endRen	
+        $viewWin RemoveRenderer endoscopicRen	
 	viewRen SetViewport 0 0 1 1
         MainViewerSetEndoscopicViewOff
         MainViewerSetMode $View(mode) 
@@ -207,10 +207,10 @@ proc EndoscopicRemoveEndoscopicView {} {
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicRemoveMainView {} {
-    global Endoscopic View viewWin viewRen endRen
+    global Endoscopic View viewWin viewRen endoscopicRen
     
     $viewWin RemoveRenderer viewRen	
-    endRen SetViewport 0 0 1 1
+    endoscopicRen SetViewport 0 0 1 1
     MainViewerSetEndoscopicViewOn
     MainViewerSetMode $View(mode) 
 
@@ -238,7 +238,7 @@ proc EndoscopicAddMainViewRemoveEndoscopicView {} {
             
 	}
 	$viewWin AddRenderer viewRen
-        $viewWin RemoveRenderer endRen	
+        $viewWin RemoveRenderer endoscopicRen	
 	viewRen SetViewport 0 0 1 1
         MainViewerSetEndoscopicViewOff
         MainViewerSetMode $View(mode) 
@@ -300,18 +300,18 @@ proc EndoscopicInit {} {
     # create a second renderer here in Init so that it is added to the list 
     # of Renderers before MainActorAdd is called anywhere
     # That way any actor added to viewRen (the MainView's renderer) is also 
-    # added to endRen and will appear on the second window once we decide 
+    # added to endoscopicRen and will appear on the second window once we decide 
     # to show it
     
-    vtkRenderer endRen
-    lappend Module(Renderers) endRen    
-    eval endRen SetBackground $View(bgColor)
+    vtkRenderer endoscopicRen
+    lappend Module(Renderers) endoscopicRen    
+    eval endoscopicRen SetBackground $View(bgColor)
 
     vtkLight endLight
     vtkLight endLight2
-    endRen AddLight endLight
-    endRen AddLight endLight2
-    set View(endCam) [endRen GetActiveCamera]
+    endoscopicRen AddLight endLight
+    endoscopicRen AddLight endLight2
+    set View(endCam) [endoscopicRen GetActiveCamera]
     # initial settings. 
     # These parameters are then set in EndoscopicUpdateCamera
     $View(endCam) SetPosition 0 0 0
@@ -400,7 +400,7 @@ proc EndoscopicInit {} {
     #  RA/IS/LR axis
     # if it is relative, the camera will move along its
     #  own axis 
-    set Endoscopic(cam,axis) absolute
+    set Endoscopic(cam,axis) relative
     
     # Endoscopic variables
     
@@ -539,7 +539,7 @@ proc EndoscopicBuildVTK {} {
     vtkPolyDataMapper Endoscopic(implicitModeller,mapper)
     vtkActor Endoscopic(implicitModeller,actor)
 
-    # add the camera, fp, gyro actors only to viewRen, not endRen
+    # add the camera, fp, gyro actors only to viewRen, not endoscopicRen
     # set their visibility to 0 until we enter the module
     viewRen AddActor Endoscopic(cam,actor)
     Endoscopic(cam,actor) SetVisibility 0
@@ -552,10 +552,15 @@ proc EndoscopicBuildVTK {} {
     EndoscopicSetPickable gyro 0
 
     viewRen AddActor Endoscopic(cLand,actor)
+    Endoscopic(cLand,actor) SetVisibility 0
     viewRen AddActor Endoscopic(fLand,actor)
+    Endoscopic(fLand,actor) SetVisibility 0
     viewRen AddActor Endoscopic(cPath,actor)
+    Endoscopic(cPath,actor) SetVisibility 0
     viewRen AddActor Endoscopic(fPath,actor)
+    Endoscopic(fPath,actor) SetVisibility 0
     viewRen AddActor Endoscopic(vector,actor)
+    Endoscopic(vector,actor) SetVisibility 0
 
     viewRen AddActor Endoscopic(voxelModeller,actor)
     viewRen AddActor Endoscopic(implicitModeller,actor)
@@ -2318,11 +2323,11 @@ proc EndoscopicSetCameraPosition {{value ""}} {
 	    # new position, then we've just detected a collision, so we only move 
 	    # to the point of collision
 
-	    set l [endRen GetCenter]
+	    set l [endoscopicRen GetCenter]
 	    set l0 [expr [lindex $l 0]]
 	    set l1 [expr [lindex $l 1]]
 	    set l2 [expr [lindex $l 2]]
-	    set p [Endoscopic(picker) Pick $l0 $l1 $l2 endRen]
+	    set p [Endoscopic(picker) Pick $l0 $l1 $l2 endoscopicRen]
 	    
 	    
 	    if { $p == 1} {
@@ -2799,7 +2804,7 @@ proc EndoscopicLightFollowEndoCamera {} {
     
     # 3D Viewer
     
-    set endoLights [endRen GetLights]
+    set endoLights [endoscopicRen GetLights]
     
     $endoLights InitTraversal
     set endoCurrentLight [$endoLights GetNextItem]
@@ -3588,13 +3593,13 @@ proc EndoscopicShowPath {} {
     if {$Endoscopic(path,exists) == 1} {
 	if {$Endoscopic(path,showPath) == 1} {
 	    foreach m {c f} {
-		endRen AddActor Endoscopic(${m}Land,actor)
-		endRen AddActor Endoscopic(${m}Path,actor)
+		endoscopicRen AddActor Endoscopic(${m}Land,actor)
+		endoscopicRen AddActor Endoscopic(${m}Path,actor)
 	    }
 	} else {
 	    foreach m {c f} {
-		endRen RemoveActor Endoscopic(${m}Land,actor)
-		endRen RemoveActor Endoscopic(${m}Path,actor)
+		endoscopicRen RemoveActor Endoscopic(${m}Land,actor)
+		endoscopicRen RemoveActor Endoscopic(${m}Path,actor)
 	    }
 	}
     }
@@ -3769,11 +3774,11 @@ global Endoscopic
 	EndoscopicSetSlicePosition cam 
     } elseif { $Endoscopic(intersection,driver) == 1 } {
 	# get the intersection
-	set l [endRen GetCenter]
+	set l [endoscopicRen GetCenter]
 	set l0 [expr [lindex $l 0]]
 	set l1 [expr [lindex $l 1]]
 	set l2 [expr [lindex $l 2]]
-	set p [Endoscopic(picker) Pick $l0 $l1 $l2 endRen]
+	set p [Endoscopic(picker) Pick $l0 $l1 $l2 endoscopicRen]
 	
 	
 	if { $p == 1} {
@@ -4072,13 +4077,13 @@ proc EndoscopicSetSlicesVisibility {} {
 
     if { $Endoscopic(SlicesVisibility) == 0 } {
 	foreach s "0 1 2" {
-	    endRen RemoveActor Slice($s,outlineActor)
-	    endRen RemoveActor Slice($s,planeActor)
+	    endoscopicRen RemoveActor Slice($s,outlineActor)
+	    endoscopicRen RemoveActor Slice($s,planeActor)
 	}
     } else {
 	foreach s "0 1 2" {
-	    endRen AddActor Slice($s,outlineActor)
-	    endRen AddActor Slice($s,planeActor)
+	    endoscopicRen AddActor Slice($s,outlineActor)
+	    endoscopicRen AddActor Slice($s,planeActor)
 	}
     }
     Render3D
