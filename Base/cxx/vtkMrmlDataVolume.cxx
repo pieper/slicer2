@@ -467,7 +467,6 @@ int vtkMrmlDataVolume::Read()
 
   // Update W/L
   this->Update();
-  cout << '6' << endl;
   // Right now how no way to deal with failure
   return 1;
 }
