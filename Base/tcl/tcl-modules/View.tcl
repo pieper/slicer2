@@ -64,7 +64,7 @@ proc ViewInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.27 $} {$Date: 2002/03/25 17:26:15 $}]
+        {$Revision: 1.28 $} {$Date: 2002/03/26 20:29:06 $}]
 
     set View(movie) 0
     set View(movieDirectory) "/tmp"
@@ -114,6 +114,11 @@ frame is recorded as /tmp/movieNNNN.ppm. These frames can be converted into
 a movie using various utilities. One way is to use <I>convert</I> which accepts
 a command line like: <I>convert movie*.ppm movie.mpg</I> to create a movie
 called <I>movie.mpg</I>.
+<BR><LI><B>Fog</B> The fog allows to mix the  color of the 3D object
+with the background depending on its distance to the camera.
+The transformation is linear with two parameters <I>Start</I> and <I>End</I>.
+The value 0 is the closest position of the bounding box and
+the value 1 is the furthest position of the bounding box.
 </UL>
 "
     regsub -all "\n" $help { } help
