@@ -1,36 +1,118 @@
 #=auto==========================================================================
-# (c) Copyright 2002 Massachusetts Institute of Technology
+# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
 #
+# This software ("3D Slicer") is provided by The Brigham and Women's 
+# Hospital, Inc. on behalf of the copyright holders and contributors. 
 # Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for any purpose, 
-# provided that the above copyright notice and the following three paragraphs 
-# appear on all copies of this software.  Use of this software constitutes 
-# acceptance of these terms and conditions.
-#
-# IN NO EVENT SHALL MIT BE LIABLE TO ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, 
-# INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE 
-# AND ITS DOCUMENTATION, EVEN IF MIT HAS BEEN ADVISED OF THE POSSIBILITY OF 
-# SUCH DAMAGE.
-#
-# MIT SPECIFICALLY DISCLAIMS ANY EXPRESS OR IMPLIED WARRANTIES INCLUDING, 
-# BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR 
-# A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
-#
-# THE SOFTWARE IS PROVIDED "AS IS."  MIT HAS NO OBLIGATION TO PROVIDE 
-# MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS. 
+# and distribute this software and its documentation, if any, for 
+# research purposes only, provided that (1) the above copyright notice and 
+# the following four paragraphs appear on all copies of this software, and 
+# (2) that source code to any modifications to this software be made 
+# publicly available under terms no more restrictive than those in this 
+# License Agreement. Use of this software constitutes acceptance of these 
+# terms and conditions.
+# 
+# 3D Slicer Software has not been reviewed or approved by the Food and 
+# Drug Administration, and is for non-clinical, IRB-approved Research Use 
+# Only.  In no event shall data or images generated through the use of 3D 
+# Slicer Software be used in the provision of patient care.
+# 
+# IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND CONTRIBUTORS BE LIABLE TO 
+# ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL 
+# DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, 
+# EVEN IF THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE BEEN ADVISED OF THE 
+# POSSIBILITY OF SUCH DAMAGE.
+# 
+# THE COPYRIGHT HOLDERS AND CONTRIBUTORS SPECIFICALLY DISCLAIM ANY EXPRESS 
+# OR IMPLIED WARRANTIES INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+# WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND 
+# NON-INFRINGEMENT.
+# 
+# THE SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS 
+# IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
+# PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+# 
 #
 #===============================================================================
 # FILE:        vtkFreeSurferReaders.tcl
 # PROCEDURES:  
-#   vtkFreeSurferReadersBuildGUI
+#   vtkFreeSurferReadersInit
+#   vtkFreeSurferReadersBuildGUI the
+#   vtkFreeSurferDemo
+#   vtkFreeSurferReaderBuildVTK
 #   vtkFreeSurferReadersEnter
 #   vtkFreeSurferReadersExit
 #   vtkFreeSurferReadersSetVolumeFileName
+#   vtkFreeSurferReadersSetModelFileName
+#   vtkFreeSurferReadersSetAnnotColorFileName
 #   vtkFreeSurferReadersApply
-#   vtkFreeSurferReadersBuildSurface
-#   vtkFreeSurferReadersSetSurfaceVisibility
+#   vtkFreeSurferReadersCORApply
+#   vtkFreeSurferReadersMGHApply
+#   vtkFreeSurferReadersMGHUpdateMRML
+#   vtkFreeSurferReadersShowMGH the
+#   vtkFreeSurferReadersVolumesPropsApplyPre
+#   vtkFreeSurferReadersBfloatApply
+#   vtkFreeSurferReadersBuildSurface the
+#   vtkFreeSurferReadersSetSurfaceVisibility the the
+#   vtkFreeSurferReadersSetModelScalar the the
+#   vtkFreeSurferReadersSetModelVector the the
+#   vtkFreeSurferReadersDisplayPopup the
 #   vtkFreeSurferReadersMainFileCloseUpdate
-#   vtkFreeSurferReadersAddColors
+#   vtkFreeSurferReadersAddColors the
+#   vtkFreeSurferReadersCORHeaderRead the
+#   vtkFreeSurferReadersSetUMLSMapping
+#   vtkFreeSurferReadersReadAnnotations  model
+#   vtkFreeSurferReadersCheckAnnotError
+#   vtkFreeSurferReadersModelApply
+#   vtkFreeSurferReadersModelCancel
+#   vtkFreeSurferReadersSetLoad -
+#   vtkFreeSurferReadersLoadVolume volume the the
+#   vtkFreeSurferReadersLoadModel model name
+#   FreeSurferReadersFiducialsPointCreatedCallback
+#   vtkFreeSurferReadersReadMGH
+#   vtkFreeSurferReadersReadBfloat
+#   vtkFreeSurferReadersSetCast
+#   vtkFreeSurferReadersCast
+#   vtkFreeSurferReadersSetLoadColours
+#   vtkFreeSurferReadersSetColourFileName
+#   vtkFreeSurferReadersGDFInit
+#   vtkFreeSurferReadersGDFPlotBuildWindow window
+#   vtkFreeSurferReadersGDFPlotUnhilightElement
+#   vtkFreeSurferReadersGDFPlotFocusElement
+#   vtkFreeSurferReadersGDFPlotGetClassIndexFromLabel
+#   vtkFreeSurferReadersGDFPlotCBLegendEnter
+#   vtkFreeSurferReadersGDFPlotCBLegendLeave
+#   vtkFreeSurferReadersGDFPlotCBLegendClick
+#   vtkFreeSurferReadersGDFPlotCBGraphMotion
+#   vtkFreeSurferReadersPlotHideWindow
+#   vtkFreeSurferReadersPlotSetNthClassColor
+#   vtkFreeSurferReadersPlotBeginPointList
+#   vtkFreeSurferReadersPlotAddPoint
+#   vtkFreeSurferReadersPlotEndPointList
+#   vtkFreeSurferReadersSetPlotFileName
+#   vtkFreeSurferReadersPlotApply
+#   vtkFreeSurferReadersPlotCancel
+#   vtkFreeSurferReadersUncompressMGH 
+#   vtkFreeSurferReadersSetQADirName a
+#   vtkFreeSurferReadersSetQASubjectsFileName
+#   vtkFreeSurferReadersSetQASubjects
+#   vtkFreeSurferReadersLoadQA the
+#   vtkFreeSurferReadersQASetLoad -
+#   vtkFreeSurferReadersQASetLoadAddNew
+#   vtkFreeSurferReadersStartQA
+#   vtkFreeSurferReadersQAResetSubjectsListBox
+#   vtkFreeSurferReadersSetQAEdit
+#   vtkFreeSurferReadersBuildQAInteractor
+#   vtkFreeSurferReadersRecordSubjectQA
+#   vtkFreeSurferReadersResetTimeScale
+#   vtkFreeSurferReadersQAResetTaskDelay
+#   vtkFreeSurferReadersQASetTime the
+#   vtkFreeSurferReadersStepFrame
+#   vtkFreeSurferReadersReviewNextSubject
+#   vtkFreeSurferReadersQAReviewSubject
+#   vtkFreeSurferReadersQAStop
+#   vtkFreeSurferReadersQASummary
+#   vtkFreeSurferReadersQAMakeNewSubjectsCsh
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -214,7 +296,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.22 $} {$Date: 2005/03/31 19:15:56 $}]
+        {$Revision: 1.23 $} {$Date: 2005/04/01 22:49:16 $}]
 
 }
 
@@ -222,7 +304,7 @@ proc vtkFreeSurferReadersInit {} {
 # .PROC vtkFreeSurferReadersBuildGUI
 # Builds the GUI for the free surfer readers, as a submodule of the Volumes module
 # .ARGS
-# parentFrame the frame in which to build this Module's GUI
+# windowpath parentFrame the frame in which to build this Module's GUI
 # .END
 #-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersBuildGUI {} {
@@ -596,13 +678,6 @@ proc vtkFreeSurferReadersBuildGUI {} {
 
     DevAddButton $f.bStart "Run QA" vtkFreeSurferReadersStartQA
     TooltipAdd $f.bStart "Start the QA process, loading the volumes for the selected subjects (if they exist)"
-
-#    DevAddButton $f.bPause "Pause QA" vtkFreeSurferReadersPauseQA
-#    TooltipAdd $f.bPause "Pause the QA process, hitting Continue QA again will continue"
-
-#    DevAddButton $f.bContinue "Continue QA" vtkFreeSurferReadersContinueQA
-#    TooltipAdd $f.bContinue "Continue the QA process from pause point"
-
     pack $f.bStart -side top -padx $Gui(pad) -expand 1
 
     DevAddLabel $f.lTime "Scan through slices manually"
@@ -739,7 +814,7 @@ proc vtkFreeSurferReadersEnter {} {
 
 #-------------------------------------------------------------------------------
 # .PROC vtkFreeSurferReadersExit
-# Does nothing yet.
+# Deletes any gdfReaders
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -1451,7 +1526,7 @@ proc vtkFreeSurferReadersUpdateMRML {} {
 # .PROC vtkFreeSurferReadersShowMGH
 # A debugging tool, opens a new window with slices shown of the MGH volume i
 # .ARGS
-# i the volume id
+# int i the volume id
 # .END
 #-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersShowMGH {i} {
@@ -1512,7 +1587,8 @@ proc vtkFreeSurferReadersShowMGH {i} {
 
 #-------------------------------------------------------------------------------
 # .PROC vtkFreeSurferReadersVolumesPropsApplyPre
-# Encapsulates the stuff that volume props apply does before the custom stuff here
+# Encapsulates the stuff that volume props apply does before the custom stuff here.
+# So far only validates the voluem name.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -1751,7 +1827,7 @@ proc vtkFreeSurferReadersBfloatApply {} {
 # .PROC vtkFreeSurferReadersBuildSurface
 # Builds a model, a surface from a Freesurfer file.
 # .ARGS
-# m the model id
+# int m the model id
 # .END
 #-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersBuildSurface {m} {
@@ -1989,8 +2065,8 @@ proc vtkFreeSurferReadersBuildSurface {m} {
 # .PROC vtkFreeSurferReadersSetSurfaceVisibility
 # Set the model's visibility flag.
 # .ARGS
-# i the model id
-# vis the boolean flag determining this model's visibility
+# int i the model id
+# boolean vis the boolean flag determining this model's visibility
 # .END
 #-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersSetSurfaceVisibility {i vis} {
@@ -2003,8 +2079,8 @@ proc vtkFreeSurferReadersSetSurfaceVisibility {i vis} {
 # .PROC vtkFreeSurferReadersSetModelScalar
 # Set the model's active scalars. If an invalid scalar name is passed, will pop up an info box.
 # .ARGS
-# modelID the model id
-# scalarName the name given to the scalar field
+# int modelID the model id
+# string scalarName the name given to the scalar field
 # .END
 #-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersSetModelScalar {modelID {scalarName ""}} {
@@ -2035,8 +2111,8 @@ proc vtkFreeSurferReadersSetModelScalar {modelID {scalarName ""}} {
 # .PROC vtkFreeSurferReadersSetModelVector
 # Set the model's active vector. If an invalid vector name is passed, will pop up an info box.
 # .ARGS
-# modelID the model id
-# vectorName the name given to the vector field
+# int modelID the model id
+# string vectorName the name given to the vector field
 # .END
 #-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersSetModelVector {modelID {vectorName ""}} {
@@ -2058,7 +2134,7 @@ proc vtkFreeSurferReadersSetModelVector {modelID {vectorName ""}} {
 # .PROC vtkFreeSurferReadersDisplayPopup
 # A convenience pop up window that will allow you to set the active vectors and scalars for a model
 # .ARGS
-# modelID the id of the model to build the gui for
+# int modelID the id of the model to build the gui for
 # .END
 #-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersDisplayPopup {modelID} {
@@ -2108,7 +2184,8 @@ proc vtkFreeSurferReadersDisplayPopup {modelID} {
 
 #-------------------------------------------------------------------------------
 # .PROC vtkFreeSurferReadersMainFileCloseUpdate
-# Called to clean up anything created in this sub module. Deletes Volumes read in, along with their actors.
+# Called to clean up anything created in this sub module. Deletes Volumes read in, 
+# along with their actors. Deletes matrices, and sets the colours loaded flag to 0
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -2163,7 +2240,7 @@ proc vtkFreeSurferReadersMainFileCloseUpdate {} {
 # .PROC vtkFreeSurferReadersAddColors
 # Reads in the freesurfer colour file, ColorsFreesurfer.xml, and appends the color tags to the input argument, returning them all. TODO: check for duplicate colour tags and give a warning. 
 # .ARGS
-# tags the already set tags, append to this variable.
+# list tags the already set tags, append to this variable.
 # .END
 #-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersAddColors {tags} {
@@ -2192,7 +2269,7 @@ proc vtkFreeSurferReadersAddColors {tags} {
 # .PROC vtkFreeSurferReadersCORHeaderRead
 # Reads in the freesurfer coronal volume's header file.
 # .ARGS
-# file the full path to the COR-.info file
+# path file the full path to the COR-.info file
 # .END
 #-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersCORHeaderRead {filename} {
@@ -2453,7 +2530,7 @@ proc vtkFreeSurferReadersSetUMLSMapping {} {
 # .PROC vtkFreeSurferReadersReadAnnotations 
 # Read in the annotations specified.
 # .ARGS
-# _id model id
+# int _id model id
 # .END
 #-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersReadAnnotations {_id} {
@@ -2625,7 +2702,7 @@ proc vtkFreeSurferReadersModelCancel {} {
 # .PROC vtkFreeSurferReadersSetLoad
 # Add this kind of associated file to the list of files to load when reading in a model
 # .ARGS
-# param - the kind of associated file to read in, added to vtkFreeSurferReaders(assocFiles)
+# string param - the kind of associated file to read in, added to vtkFreeSurferReaders(assocFiles)
 # .END
 #-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersSetLoad {param} {
@@ -2657,9 +2734,9 @@ proc vtkFreeSurferReadersSetLoad {param} {
 # example: 
 # ./slicer2-win32.exe --load-freesurfer-model c:/pieper/bwh/data/MGH-Siemens15-SP.1-uw/surf/lh.pial --load-freesurfer-volume c:/pieper/bwh/data/MGH-Siemens15-SP.1-uw/mri/orig/COR-.info --load-freesurfer-label-volume c:/pieper/bwh/data/MGH-Siemens15-SP.1-uw/mri/aseg/COR-.info &
 # .ARGS 
-# filename volume file to load
-# labelMap the label map associated with this volume
-# name the volume name
+# path filename volume file to load
+# string labelMap the label map associated with this volume
+# string name the volume name
 # .END
 #-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersLoadVolume { filename {labelMap 0} {name ""} } {
@@ -2679,8 +2756,8 @@ proc vtkFreeSurferReadersLoadVolume { filename {labelMap 0} {name ""} } {
 # .PROC vtkFreeSurferReadersLoadModel
 # Scriptable load function -- tied into command line arguments
 # .ARGS 
-# filename model file to load
-# name name of the model
+# path filename model file to load
+# string name name of the model
 # .END
 #-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersLoadModel { filename {name ""} } {
@@ -2698,6 +2775,9 @@ proc vtkFreeSurferReadersLoadModel { filename {name ""} } {
 # This procedures is a callback procedule called when a Fiducial Point is
 # created - use this to update the query atlas window
 # .ARGS 
+# string type not used
+# int fid not used
+# int pid not used
 # .END
 #-------------------------------------------------------------------------------
 proc FreeSurferReadersFiducialsPointCreatedCallback {type fid pid} {
@@ -2716,7 +2796,8 @@ proc FreeSurferReadersFiducialsPointCreatedCallback {type fid pid} {
 # .PROC vtkFreeSurferReadersReadMGH
 # Called by MainVolumes.tcl MainVolumesRead to read in an MGH volume, returns -1
 # if there is no vtkMGHReader. Assumes that the volume has been read already
-# .ARGS v volume ID
+# .ARGS
+# int v volume ID
 # .END
 #-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersReadMGH {v} {
@@ -2739,7 +2820,8 @@ proc vtkFreeSurferReadersReadMGH {v} {
 #-------------------------------------------------------------------------------
 # .PROC vtkFreeSurferReadersReadBfloat
 # Called by MainVolumes.tcl MainVolumesRead to read in a bfloat volume
-# .ARGS v volume ID
+# .ARGS
+# int v volume ID
 # .END
 #-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersReadBfloat {v} {
@@ -2792,6 +2874,8 @@ proc vtkFreeSurferReadersSetCast {} {
 # vtkFreeSurferReadersCast
 # Casts the given input volume v to toType. Returns new volume id on success, -1 on failure.
 # .ARGS
+# int v input volume
+# string toType the output type, valid values are Float Double Int UnsignedInt Long UnsignedLong Short UnsignedShort Char UnsignedChar
 # .END
 #-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersCast {v {toType "Short"}} {
@@ -2954,7 +3038,7 @@ proc vtkFreeSurferReadersGDFInit {} {
 #       window
 #         geometry - if hidden and reshown, will appear with same geometry
 # .ARGS
-# iID window id 
+# int iID window id 
 # .END
 #-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersGDFPlotBuildWindow { iID } {
@@ -3059,8 +3143,15 @@ proc vtkFreeSurferReadersGDFPlotBuildWindow { iID } {
     set vtkFreeSurferReaders(gWidgets,$iID,bWindowBuilt) 1
 }
 
+
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersGDFFPlotBuildDynamicWindowElements
 # Builds the window elements that are dependant on data, including the
 # variable menu and the class configuration section.
+# .ARGS
+# int iID the id of the window
+# .END
+#-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersGDFFPlotBuildDynamicWindowElements { iID } {
     global vtkFreeSurferReaders
 
@@ -3125,22 +3216,15 @@ proc vtkFreeSurferReadersGDFFPlotBuildDynamicWindowElements { iID } {
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersPlotParseHeader
 # Parse the header file, using the gdf functions to read it and pull
 # data out of it. Returns -1 if there was an error, else it returns an
 # ID number for the fsgdf.
+#  .ARGS
+# path ifnHeader name of header file
+# .END
+#-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersPlotParseHeader { ifnHeader } {
     global vtkFreeSurferReaders
 
@@ -3415,9 +3499,15 @@ proc vtkFreeSurferReadersPlotParseHeader { ifnHeader } {
     return $ID
 }
 
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersPlotPlotData
 # This plots the current data on the graph. It is fast enough that it
 # can be called any time the data is changed to completely redraw it
 # from scratch.
+# .ARGS
+# int iID the id of the window
+# .END
+#-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersPlotPlotData { iID } {
     global vtkFreeSurferReaders
 
@@ -3582,9 +3672,15 @@ proc vtkFreeSurferReadersPlotPlotData { iID } {
     set vtkFreeSurferReaders(gPlot,$iID,state,pointsChanged) 0
 }
 
-
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersPlotCalculateSubjectMeasurement
 # Accesses and calculates the (averaged if necessary) measurment
 # values at the current point(s). Stores the values in gPlot.
+# .ARGS
+# int iID the id of the window
+# string inSubject the subject to calculate for
+# .END
+#-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersPlotCalculateSubjectMeasurement { iID inSubject } {
     global vtkFreeSurferReaders
 
@@ -3611,26 +3707,52 @@ proc vtkFreeSurferReadersPlotCalculateSubjectMeasurement { iID inSubject } {
 }
 
 
-
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersGDFPlotHilightElement
 # Hilight/UnhilightElement works on an element by name (which could be
 # a subject or class, depending on viewing mode). It will
 # select/unselect the element name in the legend and change the
 # drawing pen of the element in the graph, which if activated draws it
 # with a red circle around it.
-proc vtkFreeSurferReadersGDFPloHilightElement { iID iElement } {
+# .ARGS
+# int iID the id of the window
+# int iElement element to hilight
+# .END
+#-------------------------------------------------------------------------------
+proc vtkFreeSurferReadersGDFPlotHilightElement { iID iElement } {
     global vtkFreeSurferReaders
     $vtkFreeSurferReaders(gWidgets,$iID,gwPlot) legend activate $iElement
     $vtkFreeSurferReaders(gWidgets,$iID,gwPlot) element activate $iElement
 }
 
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersGDFPlotUnhilightElement
+# Hilight/UnhilightElement works on an element by name (which could be
+# a subject or class, depending on viewing mode). It will
+# select/unselect the element name in the legend and change the
+# drawing pen of the element in the graph, which if activated draws it
+# with a red circle around it.
+# .ARGS
+# int iID the id of the window
+# int iElement element to unhilight
+# .END
+#-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersGDFPlotUnhilightElement { iID iElement } {
     global vtkFreeSurferReaders
     $vtkFreeSurferReaders(gWidgets,$iID,gwPlot) legend deactivate $iElement
     $vtkFreeSurferReadersgWidgets,$iID,gwPlot) element deactivate $iElement
 }
 
+
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersGDFPlotToggleVisibility
 # Shows or hide an element by name, in subject or class mode. Changes
 # the value of the gPlot visibility flag.
+# .ARGS
+# int iID the id of the window
+# int iElement the element to show or hide
+# .END
+#-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersGDFPlotToggleVisibility { iID iElement } {
     global vtkFreeSurferReaders
 
@@ -3655,9 +3777,15 @@ proc vtkFreeSurferReadersGDFPlotToggleVisibility { iID iElement } {
     }
 }
 
-# Focus/Unfocus is called to 'mouseover' an element. It
-# Hilight/Unhilights an element and puts or removes the subject name
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersGDFPlotUnfocusElement
+# Unfocus is called to 'mouseover' an element. It
+# Unhilights an element and puts or removes the subject name
 # in a text marker in the graph.
+# .ARGS
+# int iID the id of the window
+# .END
+#-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersGDFPlotUnfocusElement { iID } {
     global vtkFreeSurferReaders
 
@@ -3672,6 +3800,19 @@ proc vtkFreeSurferReadersGDFPlotUnfocusElement { iID } {
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersGDFPlotFocusElement
+# Focus/Unfocus is called to 'mouseover' an element. It
+# Hilight/Unhilights an element and puts or removes the subject name
+# in a text marker in the graph.
+# .ARGS
+# int iID the id of the window
+# int iElement the element to unfocus
+# string inSubjInClass
+# int iX
+# int iY
+# .END
+#-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersGDFPlotFocusElement { iID iElement inSubjInClass iX iY } {
     global vtkFreeSurferReaders
 
@@ -3697,8 +3838,15 @@ proc vtkFreeSurferReadersGDFPlotFocusElement { iID iElement inSubjInClass iX iY 
         -coords [list $iX $iY]
 }
 
-
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersGDFPlotFindMousedElement
 # Finds the element under the mouse.
+# .ARGS
+# int iID the id of the window
+# int iX
+# int iY
+# .END
+#-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersGDFPlotFindMousedElement { iID iX iY } {
     global vtkFreeSurferReaders
     set bFound [$vtkFreeSurferReaders(gWidgets,$iID,gwPlot) element closest $iX $iY aFound -halo 10]
@@ -3708,8 +3856,14 @@ proc vtkFreeSurferReadersGDFPlotFindMousedElement { iID iX iY } {
     return ""
 }
 
-
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersGDFPlotGetSubjectIndexFromID
 # Converts from subject or class names to indicies.
+# .ARGS
+# int iID the id of the window
+# int iSubjID the subject to convert from
+# .END
+#-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersGDFPlotGetSubjectIndexFromID { iID iSubjID } {
     global vtkFreeSurferReaders
     for { set nSubj 0 } { $nSubj < $vtkFreeSurferReaders(gGDF,$iID,cSubjects) } { incr nSubj } {
@@ -3720,6 +3874,14 @@ proc vtkFreeSurferReadersGDFPlotGetSubjectIndexFromID { iID iSubjID } {
     return -1
 }
 
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersGDFPlotGetClassIndexFromLabel
+# 
+# .ARGS
+# int iID the id of the window
+# string iLabel 
+# .END
+#-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersGDFPlotGetClassIndexFromLabel { iID iLabel } {
     global vtkFreeSurferReaders
     for { set nClass 0 } { $nClass < $vtkFreeSurferReaders(gGDF,$iID,cClasses) } { incr nClass } {
@@ -3731,24 +3893,66 @@ proc vtkFreeSurferReadersGDFPlotGetClassIndexFromLabel { iID iLabel } {
 }
 
 # GDF callbacks.
+
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersGDFPlotCBCloseWindow
+# 
+# .ARGS
+# int iID the id of the window
+# .END
+#-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersGDFPlotCBCloseWindow { iID } {
     global vtkFreeSurferReaders
     set vtkFreeSurferReaders(gWidgets,$iID,bWindowBuilt) 0
 }
 
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersGDFPlotCBLegendEnter
+# Highlight the current element
+# .ARGS
+# int iID window id
+# int igw graph widget id
+# .END
+#-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersGDFPlotCBLegendEnter { iID igw } {
     vtkFreeSurferReadersGDFPlotHilightElement $iID [$igw legend get current]
 }
 
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersGDFPlotCBLegendLeave
+# Un-highlight the current element.
+# .ARGS
+# int iID window id
+# int igw graph widget id
+# .END
+#-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersGDFPlotCBLegendLeave { iID igw } {
     vtkFreeSurferReadersGDFPlotUnhilightElement $iID [$igw legend get current]
 }
 
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersGDFPlotCBLegendClick
+# Toggle the visibiity of the current element, then plot again
+# .ARGS
+# int iID window id
+# int igw graph widget id
+# .END
+#-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersGDFPlotCBLegendClick { iID igw } {
     vtkFreeSurferReadersGDFPlotToggleVisibility $iID [$igw legend get current]
     vtkFreeSurferReadersGDFPlotPlotData $iID
 }
 
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersGDFPlotCBGraphMotion
+# Update the graph after mouse motion.
+# .ARGS
+# int iID window id
+# int igw graph widget id
+# int iX
+# int iY
+# .END
+#-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersGDFPlotCBGraphMotion { iID igw iX iY } {
     vtkFreeSurferReadersGDFPlotUnfocusElement $iID
     set lResult [vtkFreeSurferReadersGDFPlotFindMousedElement $iID $iX $iY]
@@ -3761,7 +3965,14 @@ proc vtkFreeSurferReadersGDFPlotCBGraphMotion { iID igw iX iY } {
     }
 }
 
-# Read a header file.
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersGDFPlotRead
+# If the graphing library has been loaded, read the header of a graph. Returns
+# the ID of the plot.
+# .ARGS
+# path ifnHeader the name of the header file
+# .END
+#-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersGDFPlotRead { ifnHeader } {
     global vtkFreeSurferReaders
     if { !$vtkFreeSurferReaders(gbLibLoaded) } { 
@@ -3771,7 +3982,13 @@ proc vtkFreeSurferReadersGDFPlotRead { ifnHeader } {
     return $ID
 }
 
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersGDFPlotPrint
 # Print information about the header.
+# .ARGS
+# int iID the id of the plot to print out
+# .END
+#-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersGDFPlotPrint { iID } {
     global vtkFreeSurferReaders
     if { !$vtkFreeSurferReaders(gbLibLoaded) } { 
@@ -3786,9 +4003,14 @@ proc vtkFreeSurferReadersGDFPlotPrint { iID } {
 }
 
 
-
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersPlotShowWindow
 # Show or hide the window. If it hasn't been built, builds the window
 # first.
+# .ARGS
+# int iID the id of the plot window
+# .END
+#-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersPlotShowWindow { iID } {
     global vtkFreeSurferReaders
     if { !$vtkFreeSurferReaders(gbLibLoaded) } { 
@@ -3809,6 +4031,13 @@ proc vtkFreeSurferReadersPlotShowWindow { iID } {
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersPlotHideWindow
+# Hides the plot window via a wm withdraw.
+# .ARGS
+# int iID the identifier of the window
+# .END
+#-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersPlotHideWindow { iID } {
     global vtkFreeSurferReaders
     if { !$vtkFreeSurferReaders(gbLibLoaded) } { return }
@@ -3823,8 +4052,14 @@ proc vtkFreeSurferReadersPlotHideWindow { iID } {
     }
 }
 
-
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersPlotSetVariable
 # Set the current variable.
+#  .ARGS
+# int iID window identifier
+# string inVariable input value to use in setting the current variable.
+# .END
+#-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersPlotSetVariable { iID inVariable } {
     global vtkFreeSurferReaders 
     if { !$vtkFreeSurferReaders(gbLibLoaded) } { 
@@ -3841,8 +4076,14 @@ proc vtkFreeSurferReadersPlotSetVariable { iID inVariable } {
     vtkFreeSurferReadersPlotPlotData $iID
 }
 
-
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersPlotSetVariable
 # Set legend mode to subject or class.
+#  .ARGS
+# int iID window identifier
+# string iMode legend mode, valid values are subject and class
+# .END
+#-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersPlotSetMode { iID iMode } {
     global vtkFreeSurferReaders
     if { !$vtkFreeSurferReaders(gbLibLoaded) } { 
@@ -3862,8 +4103,15 @@ proc vtkFreeSurferReadersPlotSetMode { iID iMode } {
     vtkFreeSurferReadersPlotPlotData $iID
 }
 
-
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersPlotSetNthClassMarker
 # Set display settings for a class.
+#  .ARGS
+# int iID window identifier
+# string inClass class to see settings for 
+# string iMarker value to set, needs to be in the list vtkFreeSurferReaders(kValid,lMarkers)
+# .END
+#-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersPlotSetNthClassMarker { iID inClass iMarker } {
     global vtkFreeSurferReaders
     if { !$vtkFreeSurferReaders(gbLibLoaded) } { 
@@ -3886,6 +4134,15 @@ proc vtkFreeSurferReadersPlotSetNthClassMarker { iID inClass iMarker } {
     vtkFreeSurferReadersPlotPlotData $iID
 }
 
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersPlotSetNthClassColor
+# 
+# .ARGS
+# int iID window id
+# string inClass class to set the colour for, must be an id between 0 and vtkFreeSurferReaders(gGDF,$iID,cClasses)
+# string iColor colour to set nth class to, must appear in vtkFreeSurferReaders(kValid,lColors) 
+# .END
+#-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersPlotSetNthClassColor { iID inClass iColor } {
     global vtkFreeSurferReaders 
     if { !$vtkFreeSurferReaders(gbLibLoaded) } { 
@@ -3908,9 +4165,17 @@ proc vtkFreeSurferReadersPlotSetNthClassColor { iID inClass iColor } {
     vtkFreeSurferReadersPlotPlotData $iID
 }
 
-
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersPlotSetPoint
 # Choose a point to be displayed. Either choose one point or make a
 # point list to be averaged.
+#  .ARGS
+# int iID window id
+# int iX point location in x
+# int iY point location in y
+# int iZ point location in z
+# .END
+#-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersPlotSetPoint { iID iX iY iZ } {
     global vtkFreeSurferReaders 
     if { !$vtkFreeSurferReaders(gbLibLoaded) } { 
@@ -3926,6 +4191,13 @@ proc vtkFreeSurferReadersPlotSetPoint { iID iX iY iZ } {
     vtkFreeSurferReadersPlotEndPointList $iID
 }
 
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersPlotBeginPointList
+# Resets the point list to empty.
+# .ARGS
+# int iID the id of the window
+# .END
+#-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersPlotBeginPointList { iID } {
     global vtkFreeSurferReaders
     if { !$vtkFreeSurferReaders(gbLibLoaded) } { 
@@ -3939,6 +4211,16 @@ proc vtkFreeSurferReadersPlotBeginPointList { iID } {
     set vtkFreeSurferReaders(gPlot,$iID,state,lPoints) {}
 }
 
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersPlotAddPoint
+# Adds the point to the point list for the given window
+# .ARGS
+# int iID the id of the window
+# int iX the x coordinate of the point to add
+# int iY the y coordinate of the point to add
+# int iZ the z coordinate of the point to add
+# .END
+#-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersPlotAddPoint { iID iX iY iZ } {
     global vtkFreeSurferReaders
     if { !$vtkFreeSurferReaders(gbLibLoaded) } { 
@@ -3953,6 +4235,13 @@ proc vtkFreeSurferReadersPlotAddPoint { iID iX iY iZ } {
     set vtkFreeSurferReaders(gPlot,$iID,state,pointsChanged) 1
 }
 
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersPlotEndPointList
+# Plots the data after the list is done
+# .ARGS
+# int iID the id of the window to plot
+# .END
+#-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersPlotEndPointList { iID } {
     global vtkFreeSurferReaders
     if { !$vtkFreeSurferReaders(gbLibLoaded) } { 
@@ -3966,8 +4255,14 @@ proc vtkFreeSurferReadersPlotEndPointList { iID } {
     vtkFreeSurferReadersPlotPlotData $iID
 }
 
-
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersPlotSetInfo
 # Set the info string displayed under the graph.
+# .ARGS
+# int iID the id of the window
+# string isInfo the input information string
+# .END
+#-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersPlotSetInfo { iID isInfo } {
     global vtkFreeSurferReaders
     if { !$vtkFreeSurferReaders(gbLibLoaded) } { 
@@ -3981,8 +4276,14 @@ proc vtkFreeSurferReadersPlotSetInfo { iID isInfo } {
     set vtkFreeSurferReaders(gPlot,$iID,state,info) $isInfo
 }
 
-
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersPlotSaveToTable
 # Save the currently plotted data to a table.
+# .ARGS
+# int iID the id of the window
+# path ifnTable the name of the table file to save to
+# .END
+#-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersPlotSaveToTable { iID ifnTable } {
     global vtkFreeSurferReaders
     if { [lsearch $vtkFreeSurferReaders(gGDF,lID) $iID] == -1 } { 
@@ -4018,8 +4319,14 @@ proc vtkFreeSurferReadersPlotSaveToTable { iID ifnTable } {
     close $fp
 }
 
-
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersPlotSaveToPostscript
 # Save the current plot graphic to a postscript file.
+# .ARGS
+# int iID the id of the window
+# path ifnPS the name of the postscript file to write into
+# .END
+#-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersPlotSaveToPostscript { iID ifnPS } {
     global vtkFreeSurferReaders
     if { !$vtkFreeSurferReaders(gbLibLoaded) } { 
@@ -4150,7 +4457,7 @@ proc vtkFreeSurferReadersUncompressMGH {} {
 # .PROC vtkFreeSurferReadersSetQADirName
 # Set the directory name that contains a series of subjects, then populates a frame with the subject names for selection.
 # .ARGS
-# startdir a default directory to start looking from
+# path startdir a default directory to start looking from
 # .END
 #-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersSetQADirName { { startdir $::env(SLICER_HOME) } } {
@@ -4194,6 +4501,14 @@ proc vtkFreeSurferReadersSetQASubjectsFileName {} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersSetQASubjects
+# Add subdirectories of vtkFreeSurferReaders(QADirName), which should be the names of subjects, 
+# to vtkFreeSurferReaders(QASubjectNames), or else read them from a subjects.csh file if the 
+# $vtkFreeSurferReaders(QAUseSubjectsFile) flag is set.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersSetQASubjects {} {
     global vtkFreeSurferReaders Module
 
@@ -4279,7 +4594,7 @@ proc vtkFreeSurferReadersSetQASubjects {} {
 # .PROC vtkFreeSurferReadersLoadQA
 # Called when reading in a subjects.csh file from the command line
 # .ARGS
-# fname the name of the subjects.csh file, full path to it
+# path fname the name of the subjects.csh file, full path to it
 # .END
 #-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersLoadQA { fname } {
@@ -4303,7 +4618,7 @@ proc vtkFreeSurferReadersLoadQA { fname } {
 # .PROC vtkFreeSurferReadersQASetLoad
 # Add this kind of volume to the list of volumes to load when doing a QA process.
 # .ARGS
-# voltype - the kind of volume file to read in, added to vtkFreeSurferReaders(QAVolFiles)
+# string voltype - the kind of volume file to read in, added to vtkFreeSurferReaders(QAVolFiles)
 # .END
 #-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersQASetLoad {voltype} {
@@ -4337,6 +4652,14 @@ proc vtkFreeSurferReadersQASetLoad {voltype} {
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersQASetLoadAddNew
+# If the vtkFreeSurferReaders(QAVolTypeNew) isn't empty, and is not on the list 
+# of types to check for, add it to the list kept in vtkFreeSurferReaders(QAVolTypeNew).
+# Makes sure that label map volumes (asegs) are always at the front of the list.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersQASetLoadAddNew {} {
     global vtkFreeSurferReaders
 
@@ -4366,7 +4689,6 @@ proc vtkFreeSurferReadersQASetLoadAddNew {} {
 # This will set up the interface for the first subject. Once it's done, the pop up
 # panel button push will launch the next subject
 # .ARGS
-# 
 # .END
 #-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersStartQA {} {
@@ -4418,30 +4740,15 @@ proc vtkFreeSurferReadersStartQA {} {
     vtkFreeSurferReadersQAReviewSubject [lindex  $vtkFreeSurferReaders(QASubjects) 0]    
 }
 
-proc vtkFreeSurferReadersPauseQA {} {
-    global vtkFreeSurferReaders Module
 
-    if {$::Module(verbose)} {
-        puts "vtkFreeSurferReadersPauseQA"
-    }
-    DevInfoWindow "Not Implemented"
-
-    # stop scanning
-    set vtkFreeSurferReaders(scan) 0
-}
-
-proc vtkFreeSurferReadersContinueQA {} {
-    global vtkFreeSurferReaders Module
-
-    if {$::Module(verbose)} {
-        puts "vtkFreeSurferReadersContinueQA"
-    }
-    DevInfoWindow "Not Implemented"
-    
-    # continue scanning
-    set vtkFreeSurferReaders(scan) 1
-}
-
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersQAResetSubjectsListBox
+# Called when vtkFreeSurferReaders(QASubjectNames) has been changed (not automatic),
+# updates the list box that displays the names for selection. Will empty the box if the
+# list of subjects is empty.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersQAResetSubjectsListBox {} {
     global vtkFreeSurferReaders
     
@@ -4470,34 +4777,13 @@ proc vtkFreeSurferReadersQAResetSubjectsListBox {} {
 }
 
 
-proc vtkFreeSurferReadersScan { slice } {
-    global vtkFreeSurferReaders
-
-    if {$::Module(verbose)} { puts "Scan $slice offset = $::Slice(${slice},offset)" }
-
-    if {$vtkFreeSurferReaders(scan) == "1"} {
-        if {$::Slice(${slice},offset) >= 128} {
-            # stop the loop
-            set vtkFreeSurferReaders(scan) 0
-            puts "Done scanning through slice $slice"
-            # ooh, a hack, start the second scan here
-            if {$slice == 2} {
-                # then in saggital mode
-                MainViewerSetMode "Single512SAG"                   
-                MainSlicesSetOffset 1 $vtkFreeSurferReaders(scanStartSAG)
-                RenderBoth 1
-                set vtkFreeSurferReaders(scan) 1
-                vtkFreeSurferReadersScan 1
-            } 
-        } else {
-            MainSlicesSetOffset $slice [expr $::Slice(${slice},offset) + $vtkFreeSurferReaders(scanStep)]
-            RenderSlice $slice
-            update idletasks
-            after $vtkFreeSurferReaders(scanMs) "vtkFreeSurferReadersScan $slice"
-        }
-    }
-}
-
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersSetQAEdit
+# The value of vtkFreeSurferReaders(QAEdit) is set elsewhere, it's a flag that
+# determines if volumes read in for QA purposes are cast to short or not
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersSetQAEdit {} {
     global vtkFreeSurferReaders
 
@@ -4506,6 +4792,16 @@ proc vtkFreeSurferReadersSetQAEdit {} {
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersBuildQAInteractor
+# Build a new top level window, named .top$subject$vol and populate it with a comment
+# entry box and a series of buttons to enter the qa result. When the button is pressed,
+# it will call a procedure to record this volume's qa result.
+# .ARGS
+# string subject the subject we are qa-ing
+# string vol the volume we're qa-ing
+# .END
+#-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersBuildQAInteractor { subject vol } {
     global vtkFreeSurferReaders Gui
 
@@ -4559,7 +4855,14 @@ proc vtkFreeSurferReadersBuildQAInteractor { subject vol } {
     }
 }
 
-# this provides the button that will go onto the next subject
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersBuildQAInteractorNextSubject
+# This provides the button that will go onto the next subject.
+# Calls the proc to review the next subject when the button is pressed.
+#.ARGS
+# string subject the next subject we are going to QA
+# .END
+#-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersBuildQAInteractorNextSubject { subject } {
     global vtkFreeSurferReaders Gui
 
@@ -4596,6 +4899,15 @@ proc vtkFreeSurferReadersBuildQAInteractorNextSubject { subject } {
     pack $f.bNext -side left -padx $Gui(pad) -expand 1
 }
 
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersRecordSubjectQA
+# Appends to the QA log for this subject the evaluation and some data provenance information.
+# .ARGS
+# string subject the subject name
+# string vol  the name of the volume 
+# string eval the evaluation of the volume
+# .END
+#-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersRecordSubjectQA { subject vol eval } {
     global vtkFreeSurferReaders 
 
@@ -4607,7 +4919,7 @@ proc vtkFreeSurferReadersRecordSubjectQA { subject vol eval } {
     set fname [file join $vtkFreeSurferReaders(QADirName) $subject $vtkFreeSurferReaders(QASubjectFileName)]
     if {$::Module(verbose)} { puts "vtkFreeSurferReadersRecordSubjectQA fname = $fname" }
 
-    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $::env(USER) Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.22 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
+    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $::env(USER) Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.23 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
     
     if {[catch {set fid [open $fname "a"]} errmsg] == 1} {
         puts "Can't write to subject file $fname.\nCopy and paste this if you want to save it:\n$msg"
@@ -4680,7 +4992,7 @@ proc vtkFreeSurferReadersQAResetTaskDelay { } {
 #
 #  Show the slice and view for the current time
 # .ARGS
-# t the time step
+# int t the time step
 # .END
 #-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersQASetTime { {t ""} } {
@@ -4788,6 +5100,14 @@ proc vtkFreeSurferReadersStepFrame {} {
     vtkFreeSurferReadersQASetTime $t
 }
 
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersReviewNextSubject
+# Figures out if there is a subject to do next, and calls vtkFreeSurferReadersQAReviewSubject
+# for it if so. Stops the slice scanning playback for this subject as well.
+# .ARGS
+# string subject the current subject
+# .END
+#-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersReviewNextSubject { subject } {
     global vtkFreeSurferReaders
 
@@ -4821,6 +5141,17 @@ proc vtkFreeSurferReadersReviewNextSubject { subject } {
     vtkFreeSurferReadersQAReviewSubject $nextsubject
 }
 
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersQAReviewSubject
+# Loads all the volumes selected for review that exist in this subject's mri directory,
+# then sets up the scanning through the slices and kicks it off.
+# Will preferentially load the mgh volumes over COR ones.
+# Will load the free surfer colours if this is a label map, and load the label map into
+# both the label map and the foreground volume, all other volumes go in the background.
+# .ARGS
+# string subject the subject we are reviewing
+# .END
+#-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersQAReviewSubject { subject } {
     global vtkFreeSurferReaders
 
@@ -4917,7 +5248,13 @@ proc vtkFreeSurferReadersQAReviewSubject { subject } {
     }
 }
 
-# basically builds a button to stop everything
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersBuildQAInteractorStop
+# Builds a button that stops everything by calling vtkFreeSurferReadersBuildQAStop 
+# when the button is pressed.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersBuildQAInteractorStop {} {
     global vtkFreeSurferReaders Gui
 
@@ -4949,6 +5286,13 @@ proc vtkFreeSurferReadersBuildQAInteractorStop {} {
 
 }
 
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersQAStop
+# Writes results to a file. Turns off slice scanning, resets editing, view options. 
+# Closes all volumes.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersQAStop {} {
     global vtkFreeSurferReaders 
 
@@ -4988,6 +5332,16 @@ proc vtkFreeSurferReadersQAStop {} {
     wm withdraw .topStopQA
 }
 
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersQASummary
+# Builds a window that will display a series of html tables, one for each subject
+# in the vtkFreeSurferReaders(QADirName) directory, showing all the QA results
+# done so far. Buttons at the bottom will call vtkFreeSurferReadersQAMakeNewSubjectsCsh
+# that will let you run a new qa session on a subset of the subjects, picked by the 
+# evoluation. It resorts the fields from the QA logs to a more useful order for display.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersQASummary {} {
     global vtkFreeSurferReaders Module Gui
 
@@ -5115,15 +5469,34 @@ proc vtkFreeSurferReadersQASummary {} {
     .top${summaryName}.fDisplay.shDisplay render $summaryHTMLString
 }
 
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersQAMakeNewSubjectsCsh
+# Writes out a new .csh file to the subjectsDir/scripts directory. Will try to create
+# the directory if it doesn't exist. Adds each subject once, with notes in the comments
+# about which volumes got this evaluation
+# .ARGS
+# string subjectsDir the directory above where to write the new file
+# string subset the evaluation that defines the subset of subjects to write into the new csh file, valid values are defined in  vtkFreeSurferReaders(QAResultsList)
+# .END
+#-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersQAMakeNewSubjectsCsh { subjectsDir { subset  "Review" } } {
     global vtkFreeSurferReaders 
 
     if {$::Module(verbose)} {
         puts "vtkFreeSurferReadersQAMakeNewSubjectsCsh  subjectsDir = $subjectsDir ; subset = $subset"
     }
-    
+
+    set scriptsDirName  [file join $subjectsDir scripts]
+    if {![info isdirectory $scriptsDirName]} {
+        # create the scripts directory
+        if {[catch {file mkdir $scriptsDirName} errmsg] == 1} {
+            DevErrorWindow "Can't create directory $scriptsDirName: $errmsg\nWill write to standard error."
+            set fid stderr
+        }
+    }
+
     # write a time stamped subset csh
-    set fname [file join $subjectsDir scripts subjects${subset}-[clock format [clock seconds] -format "%Y-%m-%d-%T-%Z"].csh]
+    set fname [file join $scriptsDirName subjects${subset}-[clock format [clock seconds] -format "%Y-%m-%d-%T-%Z"].csh]
 
     if {$::Module(verbose)} { puts "fname = $fname" }
     if {[catch {set fid [open $fname "w"]} errmsg] == 1} {
