@@ -4,8 +4,14 @@
 #include "vtkFastMarchingConfigure.h"
 #include "vtkImageToImageFilter.h"
 
+#ifdef _WIN32
+#include <assert.h>
+#include <vector>
+#include <iostream>
+#else
 #include <vector.h>
 #include <algo.h>
+#endif
 
 
 //----------------------------------------------------------
@@ -103,8 +109,9 @@ struct JIT
 ///////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////
 
-typedef enum { DONE, KNOWN, TRIAL, FAR, OUT } FMstatus;
+typedef enum fmstatus { fmsDONE, fmsKNOWN, fmsTRIAL, fmsFAR, fmsOUT } FMstatus;
 #define MASK_BIT 256
+
 
 struct FMnode {
   FMstatus status;
@@ -116,10 +123,11 @@ struct FMleaf {
   int nodeIndex;
 };
 
+
 // these typedef are for tclwrapper...
-typedef vector<FMleaf> VecFMleaf;
-typedef vector<int> VecInt;
-typedef vector<VecInt> VecVecInt;
+typedef std::vector<FMleaf> VecFMleaf;
+typedef std::vector<int> VecInt;
+typedef std::vector<VecInt> VecVecInt;
 
 ///////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////
@@ -239,7 +247,7 @@ class VTK_FASTMARCHING_EXPORT vtkFastMarching : public vtkImageToImageFilter
   */
 
   /* perform one step of fast marching
-     return the leaf which has just been added to KNOWN */
+     return the leaf which has just been added to fmsKNOWN */
   double step( void );
 
   void back1Step( void );

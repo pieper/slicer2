@@ -1,14 +1,18 @@
+
+
+#ifdef _WIN32
+#define _USE_MATH_DEFINES
+#endif
+
 #include <stdio.h>
 #include <math.h>
-#include <algorithm>
-#include <iostream.h>
+#include <vector>
 #include "vtkObjectFactory.h"
 
 #include "vtkFastMarching.h"
 
 ///////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////
-
 
 JIT::JIT()
 {
@@ -24,7 +28,11 @@ JIT::JIT( int dimX, int dimY, int dimZ )
   this->dimXY=dimX*dimY;
 
   // allocate status and set everything to to 0
+#ifdef _WIN32
+  status = new unsigned char [ dimX*dimY*dimZ ];
+#else
   status = new (unsigned char)[ dimX*dimY*dimZ ];
+#endif
   assert( status!=NULL );
   memset( status, 0, dimX*dimY*dimZ*sizeof(unsigned char) );
 
@@ -44,7 +52,7 @@ JIT::JIT( int dimX, int dimY, int dimZ )
 
     {
       gaussian[MASK_SIZE+i][MASK_SIZE+j][MASK_SIZE+k]
-        =pow(2.0*M_PI*sigma*sigma,-3/2)
+        =pow( 2.0 * M_PI * sigma*sigma, -3/2)
         *exp( -(i*i+j*j+k*k)/(2.0*sigma*sigma) );
     }
 
@@ -240,7 +248,7 @@ static void vtkFastMarchingExecute(vtkFastMarching *self,
     break;
     }
 
-  cout << "Fast Marching : " << n << " steps" << endl;
+  std::cout << "Fast Marching : " << n << " steps" << endl;
 
 }
 
@@ -254,14 +262,14 @@ void vtkFastMarching::setSeed(void)
 
   int index=xSeed+ySeed*dimY+zSeed*dimXY;
   node[index].T=0.0;
-  node[index].status=KNOWN;
+  node[index].status=fmsKNOWN;
 
   for(int nei=1;nei<=nNeighbors;nei++)
     {
       FMleaf f;
       f.nodeIndex=index+shiftNeighbor(nei);
 
-      node[f.nodeIndex].status=TRIAL;
+      node[f.nodeIndex].status=fmsTRIAL;
       node[f.nodeIndex].T=dx/jit->value(f.nodeIndex);    
       
       insert( f );
@@ -515,11 +523,11 @@ void vtkFastMarching::init(int dimX, int dimY, int dimZ)
       for(int i=0;i<dimX;i++)
     {
       node[index].T=INF;
-      node[index].status=FAR;
+      node[index].status=fmsFAR;
     
       if( (i<BAND_OUT) || (j<BAND_OUT) ||  (k<BAND_OUT) ||
           (i>=dimX-BAND_OUT) || (j>=dimY-BAND_OUT) || (k>=dimZ-BAND_OUT) )
-        node[index].status=OUT;
+        node[index].status=fmsOUT;
 
       index++;
     }
@@ -629,7 +637,7 @@ void vtkFastMarching::show( void )
   
   //   for(int index=0;index<dimX*dimY*dimZ;index++)
   //     {
-  //       if( node[index].status==KNOWN )
+  //       if( node[index].status==fmsKNOWN )
   //     outdata[ index ]=label;
   //     }
 
@@ -646,7 +654,7 @@ void vtkFastMarching::show( void )
       index=points[n];
 
       outdata[ index ]=label;
-      node[ index ].status=DONE;      
+      node[ index ].status=fmsDONE;      
     }
   
   /*
@@ -669,7 +677,7 @@ void vtkFastMarching::show( void )
   index=points[n];
 
   outdata[ index ]=1+float(1000.0)*(node[ index ].T-min)/(max-min);
-  node[ index ].status=DONE;      
+  node[ index ].status=fmsDONE;      
   }
 
   */
@@ -747,7 +755,7 @@ void vtkFastMarching::show( void )
   for(j=0;j<dimY;j++)
   for(i=0;i<dimX;i++)
   {
-  if( node[index].status==KNOWN )
+  if( node[index].status==fmsKNOWN )
   {
         
   if( node[index].T>max )
@@ -768,7 +776,7 @@ void vtkFastMarching::show( void )
   for(j=0;j<dimY;j++)
   for(i=0;i<dimX;i++)
   {
-  if( node[index].status==KNOWN )
+  if( node[index].status==fmsKNOWN )
   {
   outdata[index]=(short int)(jit->depth-jit->depth*(node[index].T-min)/(max-min));
   }
@@ -878,8 +886,8 @@ double vtkFastMarching::step( void )
 
   FMleaf min;
 
-  /* find point in TRIAL with smallest T, remove it from TRIAL and put
-     it in KNOWN */
+  /* find point in fmsTRIAL with smallest T, remove it from fmsTRIAL and put
+     it in fmsKNOWN */
 
   if( emptyTree() )
     {
@@ -889,7 +897,7 @@ double vtkFastMarching::step( void )
 
   min=removeSmallest();
 
-  node[min.nodeIndex].status=KNOWN;
+  node[min.nodeIndex].status=fmsKNOWN;
   knownPoints[nEvolutions].push_back(min.nodeIndex);
 
   while(  updateEstim(min.nodeIndex)==false )
@@ -902,7 +910,7 @@ double vtkFastMarching::step( void )
 
       min=removeSmallest(); 
 
-      node[min.nodeIndex].status=KNOWN;
+      node[min.nodeIndex].status=fmsKNOWN;
       knownPoints[nEvolutions].push_back(min.nodeIndex);
     }
 
@@ -916,22 +924,22 @@ double vtkFastMarching::step( void )
       
       /*
        * Check the status of the neighbors. If
-       * they are TRIAL, recompute their crossing time values and
+       * they are fmsTRIAL, recompute their crossing time values and
        * adjust their position in the tree with an UpHeap (Note that 
        * recomputed value must be less than or equal to the original). 
-       * If they are FAR, recompute their crossing times, and move 
-       * them into TRIAL.
+       * If they are fmsFAR, recompute their crossing times, and move 
+       * them into fmsTRIAL.
        */
-      if( node[indexN].status==FAR )
+      if( node[indexN].status==fmsFAR )
     {
       FMleaf f;
       node[indexN].T=computeT(indexN);
       f.nodeIndex=indexN;
 
       insert( f );
-      node[indexN].status=TRIAL;
+      node[indexN].status=fmsTRIAL;
     }
-      else if( node[indexN].status==TRIAL )
+      else if( node[indexN].status==fmsTRIAL )
     {
       node[indexN].T=computeT(indexN);
       upTree( node[indexN].leafIndex );
@@ -955,7 +963,7 @@ double vtkFastMarching::computeT(int index)
   Tij = node[index].T;
 
   /* we know that all neighbors are defined
-     because this node is not OUT */
+     because this node is not fmsOUT */
   Txm = node[index+shiftNeighbor(4)].T;
   Txp = node[index+shiftNeighbor(2)].T;
   Tym = node[index+shiftNeighbor(1)].T;
@@ -1179,7 +1187,7 @@ void vtkFastMarching::back1Step( void )
       points.pop_back();
 
       outdata[ index ]=0;
-      node[ index ].status=FAR;
+      node[ index ].status=fmsFAR;
       node[index].T=INF; 
     }
       
