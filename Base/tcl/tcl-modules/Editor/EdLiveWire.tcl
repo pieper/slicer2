@@ -79,11 +79,15 @@ proc EdLiveWireInit {} {
     set Ed($e,scope)  Single
     # Original volume is input to our filters.
     set Ed($e,input)  Original
-
-    set Ed($e,trainingRadius) 0
+    
+    # drawing vars
     set Ed($e,radius) 0
     set Ed($e,shape)  Polygon
     set Ed($e,render) Active
+
+    # training vars
+    set Ed($e,trainingRadius) 0
+    set Ed($e,trainingFileName) "TrainMeansVars.txt"
     
     # slider range
     set Ed($e,sliderLow) 0.0
@@ -142,8 +146,6 @@ proc EdLiveWireBuildVTK {} {
 	#Ed(EdLiveWire,viewer$s) SetInput [Slicer GetActiveOutput $s]
 	Ed(EdLiveWire,viewer$s) SetColorWindow 256
 	Ed(EdLiveWire,viewer$s) SetColorLevel 127.5
-	#Ed(EdLiveWire,viewer$s) SetColorWindow 5
-	#Ed(EdLiveWire,viewer$s) SetColorLevel 0
 	[Ed(EdLiveWire,viewer$s) GetImageWindow] DoubleBufferOn
     }
     
@@ -340,6 +342,20 @@ proc EdLiveWireBuildGUI {} {
     eval {button $f.bTrain -text "Train" \
 	    -command "EdLiveWireTrain"} $Gui(WBA) {-width 20}
     pack $f.bTrain
+
+    #-------------------------------------------
+    # TabbedFrame->Advanced->Settings->Read frame
+    #-------------------------------------------
+    set f $Ed(EdLiveWire,frame).fTabbedFrame.fAdvanced.fSettings
+
+    frame $f.fRead   -bg $Gui(activeWorkspace)
+    pack $f.fRead -side top -pady $Gui(pad) -fill x
+    set f $f.fRead
+
+    eval {button $f.bRead -text "Read" \
+	    -command "EdLiveWireReadTrainedValues"} $Gui(WBA) {-width 20}
+    pack $f.bRead
+
 }
 
 
@@ -374,23 +390,50 @@ proc EdLiveWireRaiseEdgeImageWin {} {
     pack $f -side top -fill both
     bind $f.v$s <Expose> {ExposeTkImageViewer %W %x %y %w %h}
     pack $f.v$s -side top
-    set viewer $f.v$s
+    set viewerWidget $f.v$s
 
     # radiobuttons switch between edge images
     frame $w.fedgeBtns
     set f $w.fedgeBtns
+    label $f.lradio -text "Edge Direction"
+    pack $f.lradio -side left
     #Ed(EdLiveWire,viewer$s) SetInput [Ed(EdLiveWire,lwSetup$s) GetEdgeImage 0]
     foreach edge "0 1 2 3" text "0 1 2 3" width "2 2 2 2" {
 	radiobutton $f.r$edge -width $width -indicatoron 0\
 		-text "$text" -value "$edge" \
 		-variable Ed(EdLiveWire,edge$s) \
-		-command "Ed(EdLiveWire,viewer$s) SetInput [Ed(EdLiveWire,lwSetup$s) GetEdgeImage $edge]; $viewer Render" 
+		-command "Ed(EdLiveWire,viewer$s) SetInput [Ed(EdLiveWire,lwSetup$s) GetEdgeImage $edge]; $viewerWidget Render" 
 	pack $f.r$edge -side left -fill x -anchor e
     }
     pack $f -side top
 
-#"Ed(EdLiveWire,viewer$s) SetInput [Ed(EdLiveWire,lwSetup$s) GetEdgeImage $edge]; $viewer Render" 
-#"Ed(EdLiveWire,viewer$s) SetInput [Slicer GetActiveOutput $s]; $viewer Render" 
+    # window/level controls   
+    set win [Ed(EdLiveWire,viewer$s) GetColorWindow]
+    set lev [Ed(EdLiveWire,viewer$s) GetColorLevel]
+    set Ed(EdLiveWire,viewerWindow$s) $win
+    set Ed(EdLiveWire,viewerLevel$s) $lev
+
+    frame $w.fwinlevel
+    set f $w.fwinlevel
+    frame $f.f1
+    label $f.f1.windowLabel -text "Window"
+    scale $f.f1.window -from 1 -to [expr $win * 2]  \
+	    -variable Ed(EdLiveWire,viewerWindow$s) \
+	    -orient horizontal \
+	    -command "Ed(EdLiveWire,viewer$s) SetColorWindow"
+    frame $f.f2
+    label $f.f2.levelLabel -text "Level"
+    scale $f.f2.level -from [expr $lev - $win] -to [expr $lev + $win] \
+	    -variable Ed(EdLiveWire,viewerLevel$s) \
+	    -orient horizontal \
+	    -command "Ed(EdLiveWire,viewer$s) SetColorLevel"
+    pack $f -side top
+    pack $f.f1 $f.f2 -side top
+    pack $f.f1.windowLabel $f.f1.window -side left
+    pack $f.f2.levelLabel $f.f2.level -side left
+    
+    #"Ed(EdLiveWire,viewer$s) SetInput [Ed(EdLiveWire,lwSetup$s) GetEdgeImage $edge]; $viewer Render" 
+    #"Ed(EdLiveWire,viewer$s) SetInput [Slicer GetActiveOutput $s]; $viewer Render" 
     # make close button
     frame $w.fcloseBtn
     set f $w.fcloseBtn
@@ -1086,15 +1129,10 @@ proc EdLiveWireTrain {} {
     }
 
     set s $Slice(activeID)
-
-    for {set f 0} {$f < $Ed(EdLiveWire,numEdgeFilters)} {incr f} {
-	set filt [Ed(EdLiveWire,lwSetup$s) GetEdgeFilter $f]
+    set e EdLiveWire
+    for {set f 0} {$f < $Ed($e,numEdgeFilters)} {incr f} {
+	set filt [Ed($e,lwSetup$s) GetEdgeFilter $f]
 	$filt TrainingModeOn
-
-	# need to get all points...
-	# perhaps give this filter another input with the points marked!
-	# Lauren remove this
-	$filt SetTrainingPoints [Slicer DrawGetPoints]
 	
 	# Lauren for now set the 2nd input to this too!
 	$filt SetPreviousContourImage [Slicer GetActiveOutput $s]
@@ -1104,7 +1142,7 @@ proc EdLiveWireTrain {} {
 	vtkImageFillROI fillroi
 	fillroi SetInput [Volume($Volume(idNone),vol) GetImageData]
 	fillroi SetValue 1
-	fillroi SetRadius $Ed(EdLiveWire,trainingRadius)
+	fillroi SetRadius $Ed($e,trainingRadius)
 
 	fillroi SetShapeString Lines
 	fillroi SetPoints [Slicer DrawGetPoints]
@@ -1112,7 +1150,39 @@ proc EdLiveWireTrain {} {
 	$filt SetTrainingPointsImage [fillroi GetOutput]
 
 	fillroi Delete
+
+	# output means, averages:
+	$filt SetTrainingFileName $Ed($e,trainingFileName)
     }
 
     Slicer Update
+}
+
+proc EdLiveWireReadTrainedValues {} {
+    global Ed Slice
+
+    set e EdLiveWire
+
+    # Lauren these should really be options....
+    set in [open $Ed($e,trainingFileName)]
+    set numbers [read $in]
+    
+    # Lauren need more error checking in case num params changes!
+
+    set index 0
+
+    # loop over features
+    for {set feat 0} {$feat < $Ed(EdLiveWire,numFeatures)} {incr feat} {
+	
+	# set weight (importance given to feature)
+	#$filt SetWeightForFeature $feat $Ed(EdLiveWire,feature$feat,weight)
+
+	# loop over params for each feature
+	for {set p 0} {$p < $Ed(EdLiveWire,feature$feat,numParams)} {incr p} {
+	    puts "$index: [lindex $numbers $index]"
+
+	    set Ed($e,feature$feat,param$p) [lindex $numbers $index]
+	    set index [expr $index + 1]
+	}
+    }
 }
