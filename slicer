@@ -29,5 +29,6 @@ echo TK_LIBRARY  is $TK_LIBRARY
 echo SLICER_HOME  is $SLICER_HOME
 echo DISPLAY      is $DISPLAY
 echo LD_LIBRARY_PATH is $LD_LIBRARY_PATH
+echo TCLLIBPATH is $TCLLIBPATH
 
 exec /local/os/src/vtk-4.0/bin/vtk $SLICER_HOME/Base/tcl/Go.tcl $*
