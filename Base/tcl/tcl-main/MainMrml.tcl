@@ -61,8 +61,8 @@ proc MainMrmlInit {} {
         TFPoint ColorLUT Options Fiducials EndFiducials \
         Point Path EndPath Landmark \
         Hierarchy EndHierarchy ModelGroup EndModelGroup ModelRef \
-        Scenes EndScenes VolumeState EndVolumeState CrossSection \
-        SceneOptions ModelState Locator TetraMesh"
+        Scenes EndScenes VolumeState EndVolumeState CrossSection SceneOptions ModelState \
+    Locator TetraMesh Segmenter EndSegmenter SegmenterGraph SegmenterInput SegmenterClass SegmenterCIM"
 
     MainMrmlInitIdLists 
 
@@ -78,7 +78,7 @@ proc MainMrmlInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainMrml \
-        {$Revision: 1.57 $} {$Date: 2002/03/27 15:51:31 $}]
+        {$Revision: 1.58 $} {$Date: 2002/04/23 23:11:22 $}]
 
     set Mrml(colorsUnsaved) 0
 }
@@ -153,7 +153,7 @@ proc MainMrmlPrint {tags} {
         set attr [lreplace $pair 0 0]
 
         # Process EndTransform & EndFiducials & EndPath & EndModelGroup & EndHierarchy
-        if {$tag == "EndTransform" || $tag == "EndFiducials" || $tag == "EndPath" || $tag == "EndModelGroup" || $tag == "EndHierarchy"} {
+        if {$tag == "EndTransform" || $tag == "EndFiducials" || $tag == "EndPath" || $tag == "EndModelGroup" || $tag == "EndHierarchy" || $tag == "EndSegmenter"} {
             set level [expr $level - 1]
         }
         set indent ""
@@ -164,7 +164,7 @@ proc MainMrmlPrint {tags} {
         puts "${indent}$tag"
 
         # Process Transform & Fiducials & Path & ModelGroup & Hierarchy
-        if {$tag == "Transform" || $tag == "Fiducials" || $tag == "Path" || $tag == "ModelGroup" || $tag == "Hierarchy"} {
+        if {$tag == "Transform" || $tag == "Fiducials" || $tag == "Path" || $tag == "ModelGroup" || $tag == "Hierarchy" || $tag == "Segmenter"} {
             incr level
         }
         set indent ""
@@ -1224,6 +1224,86 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
                     "radius" {$n SetRadius $val}
                 }
             }
+        }
+    "Segmenter" {
+            set n [MainMrmlAddNode Segmenter]
+            foreach a $attr {
+                set key [lindex $a 0]
+                set val [lreplace $a 0 0]
+                switch [string tolower $key] {
+                    "numclasses" {$n SetNumClasses $val}
+                    "maxinputchanneldef" {$n SetMaxInputChannelDef $val}
+                    "emiteration" {$n SetEMiteration $val}
+                    "mfaiteration" {$n SetMFAiteration $val}
+                    "alpha" {$n SetAlpha $val}
+                    "smwidth" {$n SetSmWidth $val}
+                    "smsigma" {$n SetSmSigma $val}
+                    "printintermediateresults" {$n SetPrintIntermediateResults $val}
+                    "printintermediateslice" {$n SetPrintIntermediateSlice $val}
+                    "printintermediatefrequency" {$n SetPrintIntermediateFrequency $val}
+                    "startslice" {$n SetStartSlice $val}
+                    "endslice" {$n SetEndSlice $val}
+                    "displayprob" {$n SetDisplayProb $val}
+                    "numberoftrainingsamples" {$n SetNumberOfTrainingSamples $val}
+        }
+        }
+    }
+    "EndSegmenter" {
+            set n [MainMrmlAddNode EndSegmenter]
+    }
+    "SegmenterGraph" {
+            set n [MainMrmlAddNode SegmenterGraph]
+            foreach a $attr {
+                set key [lindex $a 0]
+                set val [lreplace $a 0 0]
+                switch [string tolower $key] {
+                    "name" {$n SetName $val}
+                    "xmin" {$n SetXmin $val}
+                    "xmax" {$n SetXmax $val}
+                    "xsca" {$n SetXsca $val}
+                }
+        }
+    } 
+    "SegmenterInput" {
+            set n [MainMrmlAddNode SegmenterInput]
+            foreach a $attr {
+                set key [lindex $a 0]
+                set val [lreplace $a 0 0]
+                switch [string tolower $key] {
+                    "name"        {$n SetName $val}
+                    "fileprefix"  {$n SetFilePrefix $val}
+                    "filename"    {$n SetFileName $val}
+                    "imagerange"  {eval $n SetImageRange  $val}
+                }
+            }
+    }
+    "SegmenterClass" {
+            set n [MainMrmlAddNode SegmenterClass]
+            foreach a $attr {
+                set key [lindex $a 0]
+                set val [lreplace $a 0 0]
+                switch [string tolower $key] {
+                    "name"              {$n SetName $val}
+                    "localpriorprefix"  {$n SetLocalPriorPrefix $val}
+                    "localpriorname"    {$n SetLocalPriorName $val}
+                    "localpriorrange"   {eval $n SetLocalPriorRange  $val}
+                    "logmean"           {$n SetLogMean $val}
+                    "logcovariance"     {$n SetLogCovariance $val}
+                    "label"             {$n SetLabel $val}
+                    "prob"              {$n SetProb $val}
+                }
+            }
+        }
+    "SegmenterCIM" {
+            set n [MainMrmlAddNode SegmenterCIM]
+            foreach a $attr {
+                set key [lindex $a 0]
+                set val [lreplace $a 0 0]
+                switch [string tolower $key] {
+                    "name"       {$n SetName $val}
+                    "cimmatrix"  {$n SetCIMMatrix $val}
+                }
+        }
         }
         }
         }

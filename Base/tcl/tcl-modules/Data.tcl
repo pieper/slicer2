@@ -74,7 +74,7 @@ proc DataInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.40 $} {$Date: 2002/04/09 19:17:53 $}]
+        {$Revision: 1.41 $} {$Date: 2002/04/23 23:13:43 $}]
 
     set Data(index) ""
     set Data(clipboard) ""
@@ -633,6 +633,28 @@ proc DataEditNode {} {
         if {[IsModule ModelHierarchy] == 1} {
             Tab ModelHierarchy row1 HDisplay
         }
+    }
+    "vtkMrmlSegmenterNode" -
+    "vtkMrmlEndSegmenterNode" -
+    "vtkMrmlSegmenterGraphNode" {
+        if {[IsModule EMSegment] == 1} {
+            Tab EMSegment row1 Setting
+        }
+    }
+    "vtkMrmlSegmenterInputNode" {
+        if {[IsModule EMSegment] == 1} {
+            Tab EMSegment row1 EM
+        }    
+    }
+    "vtkMrmlSegmenterClassNode" {
+        if {[IsModule EMSegment] == 1} {
+            Tab EMSegment row1 Class
+        }
+    }
+    "vtkMrmlSegmenterCIMNode" {
+        if {[IsModule EMSegment] == 1} {
+           Tab EMSegment row1 CIM
+    }
     }
     }
 }
