@@ -457,7 +457,7 @@ void vtkMultipleStreamlineController::SaveStreamlinesAsPolyData(char *filename,
   int arraySize=1000;
   int lastColor;
   int currColor, newColor, idx;
-  float rgb[3];
+  vtkFloatingPointType rgb[3];
   char fileName[101];
   vtkMrmlTree *tree;
   vtkMrmlModelNode *currNode;
