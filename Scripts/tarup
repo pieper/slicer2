@@ -1,46 +1,69 @@
 #! /bin/csh
 
-# Usage: Copy this file to /d/bigdaily, and then run it.
+# USAGE: Copy this file to /d/bigdaily (at BWH), and then run it.
+# It will create a complete installation of the Slicer. 
+# You may then tar up the slicer directory and install it
+# somewhere else (see the README file).
 
+# NOTE: You must compile Tcl, Tk, and VTK first and set 
+# their paths below.
+
+# Paths to your Tcl and Tk
+setenv MY_TCL /export/bigsur/vtk/tcl8.3.0/
+setenv MY_TK /export/bigsur/vtk/tk8.3.0/
+
+# Version number of your Tcl and Tk
+setenv MY_VER_NUM 8.3.0
+
+# Path to your VTK
+setenv MY_VTK /export/bigsur/vtk/vtk_nightly
+
+# Your CVSROOT for checking out slicer through cvs
+if (${?CVSROOT} == 0) then
+    setenv CVSROOT /projects/cvs/slicer
+endif
+
+
+# Get the latest source code from CVS.
 echo Checkout into cvs directory
-setenv CVSROOT /projects/cvs/slicer
 mkdir cvs
 cd cvs
 cvs checkout slicer
 cd ..
 echo CVS DONE
 
+# Make the installation directory
 echo Making slicer directory
 mkdir slicer
 cd slicer
 
+# Copy stuff from cvs to install directory
 echo Copy the program directory
 cp -r ../cvs/slicer/program .
-
 echo Copy the doc directory
 cp -r ../cvs/slicer/doc .
 
-echo Copy tcl tcl binaries
-mkdir lib
-cp /local/share/src/tcl8.2.2/unix/libtcl8.2.so lib
-cp /local/share/src/tk8.2.2/unix/libtk8.2.so lib
+# Now copy Tcl, Tk, and VTK stuff into the install directory
 
-echo Copy tcl library directory
-cp -r /local/share/src/tcl8.2.2/library lib/tcl8.2
-cp -r /local/share/src/tk8.2.2/library lib/tk8.2
+echo Copy tcl and tk binaries
+mkdir lib
+cp ${MY_TCL}/unix/libtcl*.so lib
+cp ${MY_TK}/unix/libtk*.so lib
+
+echo Copy tcl and tk library directories
+mkdir lib/tcl${MY_VER_NUM}
+mkdir lib/tk${MY_VER_NUM}
+cp -r ${MY_TCL}/library lib/tcl${MY_VER_NUM}
+cp -r ${MY_TK}/library lib/tk${MY_VER_NUM}
 
 echo Copy vtk binaries
-cp /local/src/vtk3.01/common/*.so lib
-cp /local/src/vtk3.01/graphics/*.so lib
-cp /local/src/vtk3.01/imaging/*.so lib
-cp /local/src/vtk3.01/patented/*.so lib
-cp /local/src/vtk3.01/local/*.so lib
+cp ${MY_VTK}/*/*.so lib
 
 echo Copy vtk executable
-cp /local/src/vtk3.01/tcl/vtk program
+cp ${MY_VTK}/tcl/vtk program
 
 echo Copy tclsh
-cp /local/share/src/tcl8.2.2/unix/tclsh program
+cp ${MY_TCL}/unix/tclsh program
 
 echo Copy vtk scripts 
 cp ../cvs/slicer/slicer2k .
@@ -48,8 +71,7 @@ cp ../cvs/slicer/mrmlize .
 cp ../cvs/slicer/printmrml .
 
 echo Copy the VTK Sources
-cp -r ../cvs/slicer/vtksrc slicer/vtksrc
+cp -r ../cvs/slicer/vtksrc vtksrc
 
-echo Finished.
-echo NOT, just change SLICER_HOME when you install. 
+echo Finished.  Please change SLICER_HOME when you install. 
 
