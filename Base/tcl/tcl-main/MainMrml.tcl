@@ -98,7 +98,7 @@ proc MainMrmlInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo MainMrml \
-    {$Revision: 1.105 $} {$Date: 2005/01/28 21:45:44 $}]
+    {$Revision: 1.106 $} {$Date: 2005/02/11 21:56:34 $}]
 
     set Mrml(colorsUnsaved) 0
 }
@@ -792,6 +792,14 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
             
             "Transform" {
                 set n [MainMrmlAddNode Transform]
+                foreach a $attr {
+                    set key [lindex $a 0]
+                    set val [lreplace $a 0 0]
+                    switch [string tolower $key] {
+                        "desc"   {$n SetDescription $val}
+                        "name"   {$n SetName        $val}
+                    }
+                }
             }
             
             "EndTransform" {
