@@ -82,7 +82,7 @@ proc FiducialsInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.19 $} {$Date: 2002/07/17 14:37:49 $}]
+        {$Revision: 1.20 $} {$Date: 2002/07/19 01:21:21 $}]
     
     # Initialize module-level variables
     
@@ -720,14 +720,12 @@ proc FiducialsUpdateMRML {} {
     Mrml(dataTree) ComputeTransforms
     Mrml(dataTree) InitTraversal
     set item [Mrml(dataTree) GetNextItem]
-    puts "IN FIDUCIALSUPDATEMRML "
-
+ 
     #reset all data
     FiducialsResetVariables
     set readOldNodesForCompatibility 0
     set gui 0
     set Fiducials(removeDisplayList) $Fiducials(displayList)
-    puts "remove $Fiducials(removeDisplayList) bef"
     
     while { $item != "" } {
     
@@ -739,7 +737,7 @@ proc FiducialsUpdateMRML {} {
         $item SetName "Fiducials$fid"
         }
         set name [$item GetName]
-    puts "IN FIDUCIALSUPDATEMRML name $name"
+
         lappend Fiducials(listOfNames) $name
         lappend Fiducials(listOfIds) $fid
     # reset/create variables for that list
@@ -832,7 +830,6 @@ proc FiducialsUpdateMRML {} {
 Render3D
     
 # Remove the display for the fiducials not on the list
-puts "remove $Fiducials(removeDisplayList)"
 foreach i $Fiducials(removeDisplayList) {
     FiducialsDeleteGUI $Fiducials(fScrolledGUI) $i
 }
