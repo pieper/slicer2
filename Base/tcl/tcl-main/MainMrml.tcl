@@ -98,7 +98,7 @@ proc MainMrmlInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainMrml \
-        {$Revision: 1.87 $} {$Date: 2003/06/03 22:25:02 $}]
+        {$Revision: 1.88 $} {$Date: 2003/06/06 19:29:14 $}]
 
     set Mrml(colorsUnsaved) 0
 }
@@ -817,41 +817,41 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
                 set key [lindex $a 0]
                 set val [lreplace $a 0 0]
                 switch [string tolower $key] {
-                "id"               {$n SetModelID      $val}
-                "desc"             {$n SetDescription  $val}
-                "name"             {$n SetName         $val}
-                "filename"         {$n SetFileName     $val}
-                "color"            {$n SetColor        $val}
-                "opacity"          {$n SetOpacity      $val}
-                "scalarrange"      {eval $n SetScalarRange $val}
-                "visibility" {
-                    if {$val == "yes" || $val == "true"} {
-                        $n SetVisibility 1
-                    } else {
-                        $n SetVisibility 0
+                    "id"               {$n SetModelID      $val}
+                    "desc"             {$n SetDescription  $val}
+                    "name"             {$n SetName         $val}
+                    "filename"         {$n SetFileName     $val}
+                    "color"            {$n SetColor        $val}
+                    "opacity"          {$n SetOpacity      $val}
+                    "scalarrange"      {eval $n SetScalarRange $val}
+                    "visibility" {
+                        if {$val == "yes" || $val == "true"} {
+                            $n SetVisibility 1
+                        } else {
+                            $n SetVisibility 0
+                        }
                     }
-                }
-                "clipping" {
-                    if {$val == "yes" || $val == "true"} {
-                        $n SetClipping 1
-                    } else {
-                        $n SetClipping 0
+                    "clipping" {
+                        if {$val == "yes" || $val == "true"} {
+                            $n SetClipping 1
+                        } else {
+                            $n SetClipping 0
+                        }
                     }
-                }
-                "backfaceculling" {
-                    if {$val == "yes" || $val == "true"} {
-                        $n SetBackfaceCulling 1
-                    } else {
-                        $n SetBackfaceCulling 0
+                    "backfaceculling" {
+                        if {$val == "yes" || $val == "true"} {
+                            $n SetBackfaceCulling 1
+                        } else {
+                            $n SetBackfaceCulling 0
+                        }
                     }
-                }
-                "scalarvisibility" {
-                    if {$val == "yes" || $val == "true"} {
-                        $n SetScalarVisibility 1
-                    } else {
-                        $n SetScalarVisibility 0
+                    "scalarvisibility" {
+                        if {$val == "yes" || $val == "true"} {
+                            $n SetScalarVisibility 1
+                        } else {
+                            $n SetScalarVisibility 0
+                        }
                     }
-                }
                 }
             }
 
