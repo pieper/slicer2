@@ -5,14 +5,14 @@
 package require vtk;
 package require vtkRigidIntensityRegistration;# this pulls in the package
 
-#set SLICER_DATA_ROOT ${SLICER_DATA_ROOT}
-set DATA1    /projects/test/xtrans/tt
+set SLICER_DATA_ROOT ${SLICER_DATA_ROOT}
+set DATA1    $SLICER_DATA_ROOT/RigidRegData/MRT
 set NumX     256
 set NumY     256
 set NumZ     60
 set SpaceX   0.9375
 set SpaceY   0.9375
-set SpaceZ   2.5
+set SpaceZ   3
 
 ## transferring matricies to itk OK?
 source TestParamToMatrix.tcl
@@ -52,4 +52,4 @@ TestMutualInformationTransform $DATA1 $NumX $NumY $NumZ \
 # TestMutualInformationTransform $DATA1 $NumX $NumY $NumZ \
 #	 			$SpaceX $SpaceY $SpaceZ 
 
-exit 0
+exit
