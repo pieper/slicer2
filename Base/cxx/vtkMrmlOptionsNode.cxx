@@ -113,7 +113,7 @@ void vtkMrmlOptionsNode::Copy(vtkMrmlNode *anode)
 //----------------------------------------------------------------------------
 void vtkMrmlOptionsNode::PrintSelf(ostream& os, vtkIndent indent)
 {
-  vtkObject::PrintSelf(os,indent);
+  this->vtkObject::PrintSelf(os,indent);
 
   os << indent << "Name: " <<
     (this->Options ? this->Options : "(none)") << "\n";

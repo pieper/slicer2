@@ -61,7 +61,7 @@ vtkDCMParser* vtkDCMParser::New()
 
 void vtkDCMParser::PrintSelf(ostream& os, vtkIndent indent)
 {
-  vtkObject::PrintSelf(os,indent);
+  this->vtkObject::PrintSelf(os,indent);
 
   os << indent << "vtkDCMParser::PrintSelf()" << "\n";
   if(file_in) os << indent << "File is open.\n";

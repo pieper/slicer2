@@ -390,7 +390,7 @@ void vtkMrmlSlicer::PrintSelf(ostream& os, vtkIndent indent)
 {
   int s;
   
-  vtkObject::PrintSelf(os, indent);
+  this->vtkObject::PrintSelf(os, indent);
 
   os << indent << "FOV:             " << this->FieldOfView << "\n";
   os << indent << "BuildLower Time: " <<this->BuildLowerTime.GetMTime()<<"\n";

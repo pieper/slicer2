@@ -638,7 +638,7 @@ void vtkRasToIjkTransform::IjkToRasGradient(vtkVector3 *Ras, vtkVector3 *Ijk)
 //----------------------------------------------------------------------------
 void vtkRasToIjkTransform::PrintSelf(ostream& os, vtkIndent indent)
 {
-  vtkObject::PrintSelf(os, indent);
+  this->vtkObject::PrintSelf(os, indent);
 
   // SlicerMatrix
   os << indent << "SlicerMatrix: (" << this->SlicerMatrix << ")\n";

@@ -151,7 +151,7 @@ void vtkMrmlNode::MrmlNodeCopy(vtkMrmlNode *node)
 //----------------------------------------------------------------------------
 void vtkMrmlNode::PrintSelf(ostream& os, vtkIndent indent)
 {
-  vtkObject::PrintSelf(os,indent);
+  this->vtkObject::PrintSelf(os,indent);
 
   os << indent << "ID:          " << this->ID << "\n";
 
