@@ -149,7 +149,7 @@ proc MultiVolumeReaderInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.11 $} {$Date: 2005/01/07 15:51:58 $}]
+        {$Revision: 1.12 $} {$Date: 2005/01/07 17:17:59 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -228,7 +228,7 @@ proc MultiVolumeReaderBuildGUI {parent {status 0}} {
     eval {radiobutton $f.r1 -width 27 -text {Load a single file} \
         -variable MultiVolumeReader(filterChoice) -value single \
         -relief flat -offrelief flat -overrelief raised \
-        -selectcolor blue} $Gui(WEA)
+        -selectcolor white} $Gui(WEA)
     pack $f.r1 -side top -pady 2 
     TooltipAdd $f.r1 $filter 
     frame $f.fMulti -bg $Gui(activeWorkspace) -relief groove -bd 1 
@@ -237,7 +237,7 @@ proc MultiVolumeReaderBuildGUI {parent {status 0}} {
     eval {radiobutton $f.r2 -width 27 -text {Load multiple files} \
         -variable MultiVolumeReader(filterChoice) -value multiple \
         -relief flat -offrelief flat -overrelief raised \
-        -selectcolor blue} $Gui(WEA)
+        -selectcolor white} $Gui(WEA)
     TooltipAdd $f.r2 $filter 
 
     DevAddLabel $f.lFilter " Filter:"
