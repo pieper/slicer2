@@ -1,37 +1,48 @@
-catch {load vtktcl}
-source vtkImageInclude.tcl
+package require vtk
+package require vtkSlicerBase
 
 # Image pipeline
 
 vtkImageReader reader
 reader ReleaseDataFlagOff
 reader SetDataByteOrderToLittleEndian
-reader SetDataExtent 0 255 0 255 1 93
-reader SetFilePrefix "../../../vtkdata/fullHead/headsq"
+reader SetDataExtent 0 63 0 63 1 93
+reader SetFilePrefix ${VTK_DATA_ROOT}/Data/headsq/quarter
 reader SetDataMask 0x7fff
+
+vtkImageMagnify mag
+  mag SetInput [reader GetOutput]
+  mag SetMagnificationFactors 4 4 1
+
+# this script tests vtkImageReformatIJK.tcl
 
 vtkImageReformatIJK ref
 ref SetInput [reader GetOutput]
 ref SetInputOrderString SI
 ref SetOutputOrderString SI
 ref SetSlice 22
-# this function is not getting wrapped (why?)
-#ref ComputeTransform
-ref ComputeTransform2
+ref ComputeTransform
 ref ComputeOutputExtent
 ref Update
 
-vtkImageViewer viewer
-viewer SetInput [ref GetOutput]
-#viewer SetZSlice 0
-viewer SetColorWindow 2000
-viewer SetColorLevel 1000
+#vtkImageViewer viewer
+#viewer SetInput [ref GetOutput]
+##viewer SetZSlice 0
+#viewer SetColorWindow 2000
+#viewer SetColorLevel 1000
 
 #make interface
-source WindowLevelInterface.tcl
+#source WindowLevelInterface.tcl
 
 set ijk "10 10 10"
 puts "ijk = $ijk"
 eval ref SetIJKPoint $ijk
-puts "xy = [ref GetXYPoint]"
+set xy  [ref GetXYPoint]
 
+if {[lindex $xy 0] != "11"} {
+  error "Didn't get right answer for \"x\"!"
+}
+
+if {[lindex $xy 1] != "11"} {
+  error "Didn't get right answer for \"y\"!"
+}
