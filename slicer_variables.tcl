@@ -32,7 +32,7 @@ puts "SLICER_HOME is $::SLICER_HOME"
 set solaris "solaris8"
 set linux "linux-x86"
 set darwin "darwin-ppc"
-set windows "Win32VC7"
+set windows "win32"
 #
 # set the default locations for the main components
 #
@@ -56,7 +56,6 @@ set ::CMAKE_PATH $::SLICER_LIB/CMake-build
 
 switch $tcl_platform(os) {
     "SunOS" {
-        # used for compilation
         set ::VTKSLICERBASE_BUILD_LIB $::SLICER_HOME/Base/builds/$::env(BUILD)/bin/vtkSlicerBase.so
         set ::VTKSLICERBASE_BUILD_TCL_LIB $::SLICER_HOME/Base/builds/$::env(BUILD)/bin/vtkSlicerBaseTCL.so
         set ::GENERATOR "Unix Makefiles"
@@ -87,12 +86,16 @@ switch $tcl_platform(os) {
         # different windows machines say different things, so assume
         # that if it doesn't match above it must be windows
         # (VC7 is Visual C++ 7.0, also known as the .NET version)
-        set ::VTKSLICERBASE_BUILD_LIB $::SLICER_HOME/Base/builds/$::env(BUILD)/bin/debug/vtkSlicerBase.lib
-        set ::VTKSLICERBASE_BUILD_TCL_LIB $::SLICER_HOME/Base/builds/$::env(BUILD)/bin/debug/vtkSlicerBaseTCL.lib
+        # set VTK_BUILD_TYPE RelWithDebInfo
+        set ::VTK_BUILD_TYPE Debug
+        set ::env(VTK_BUILD_TYPE) $VTK_BUILD_TYPE
+        set ::VTKSLICERBASE_BUILD_LIB $::SLICER_HOME/Base/builds/$::env(BUILD)/bin/$::VTK_BUILD_TYPE/vtkSlicerBase.lib
+        set ::VTKSLICERBASE_BUILD_TCL_LIB $::SLICER_HOME/Base/builds/$::env(BUILD)/bin/$::VTK_BUILD_TYPE/vtkSlicerBaseTCL.lib
         set ::GENERATOR "Visual Studio 7" 
         set ::COMPILER "cl"
         set ::CMAKE $::CMAKE_PATH/bin/cmake.exe
         set ::MAKE make
+
     }
 }
 
