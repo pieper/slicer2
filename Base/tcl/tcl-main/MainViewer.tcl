@@ -62,7 +62,7 @@ proc MainViewerInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo MainViewer \
-    {$Revision: 1.33 $} {$Date: 2003/03/19 19:16:26 $}]
+    {$Revision: 1.34 $} {$Date: 2004/02/03 20:52:24 $}]
 
     # Props
     set Gui(midHeight) 1
@@ -115,7 +115,14 @@ proc MainViewerBuildGUI {} {
     set Gui(fViewWin) $Gui(fViewer).fViewWin
 
     update
-    vtkTkRenderWidget $Gui(fViewWin) -width $View(viewerHeight) -height $View(viewerHeightNormal)
+    vtkRenderWindow ViewWinRenderWindow
+
+    if { "$::SLICER(crystal-eyes-stereo)" == "true" } {
+        ViewWinRenderWindow StereoCapableWindowOn
+    }
+
+    vtkTkRenderWidget $Gui(fViewWin) -rw ViewWinRenderWindow \
+        -width $View(viewerHeight) -height $View(viewerHeightNormal)
     CreateAndBindTkEvents $Gui(fViewWin) 
     $Gui(fViewWin) Render
 
