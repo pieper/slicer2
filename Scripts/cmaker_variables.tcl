@@ -16,6 +16,7 @@ switch $tcl_platform(os) {
         set VTK_DIR /projects/birn/slicer2/Lib/solaris8/vtk/VTK-build-4.2.3
         set ITK_BINARY_PATH /projects/birn/itk/itk-1.2/itk-build
         set VTKSLICERBASE_BUILD_LIB $SLICER_HOME/Base/builds/$BUILD/bin/vtkSlicerBase.so
+        set VTKSLICERBASE_BUILD_TCL_LIB $SLICER_HOME/Base/builds/$BUILD/bin/vtkSlicerBaseTCL.so
         set GENERATOR "Unix Makefiles"
         set COMPILER "g++"
         set CMAKE cmake
@@ -28,6 +29,7 @@ switch $tcl_platform(os) {
         set VTK_DIR $VTK_BINARY_PATH
         set ITK_BINARY_PATH /home/pieper/downloads/itk/itk-build
         set VTKSLICERBASE_BUILD_LIB $SLICER_HOME/Base/builds/$BUILD/bin/vtkSlicerBase.so
+        set VTKSLICERBASE_BUILD_TCL_LIB $SLICER_HOME/Base/builds/$BUILD/bin/vtkSlicerBaseTCL.so
         set GENERATOR "Unix Makefiles" 
         set COMPILER "g++"
         set CMAKE cmake
@@ -39,6 +41,7 @@ switch $tcl_platform(os) {
         set ITK_BINARY_PATH /Users/pieper/downloads/itk/itk-build
         set VTK_SRC_PATH /Users/pieper/downloads/vtk/vtk4.2/VTK-4.2.1
         set VTKSLICERBASE_BUILD_LIB $SLICER_HOME/Base/builds/$BUILD/bin/vtkSlicerBase.dylib
+        set VTKSLICERBASE_BUILD_TCL_LIB $SLICER_HOME/Base/builds/$BUILD/bin/vtkSlicerBaseTCL.dylib
         set GENERATOR "Unix Makefiles" 
         set COMPILER "c++"
         set CMAKE cmake
@@ -55,6 +58,7 @@ switch $tcl_platform(os) {
         set VTK_DIR $VTK_BINARY_PATH
         set ITK_BINARY_PATH "c:/downloads/itk/InsightToolkit-1.4.0-build"
         set VTKSLICERBASE_BUILD_LIB $SLICER_HOME/Base/builds/$BUILD/bin/debug/vtkSlicerBase.lib
+        set VTKSLICERBASE_BUILD_TCL_LIB $SLICER_HOME/Base/builds/$BUILD/bin/debug/vtkSlicerBaseTCL.lib
         set GENERATOR "Visual Studio 7" 
         set COMPILER "cl"
         set CMAKE "c:/Program Files/CMake/bin/cmake.exe"
