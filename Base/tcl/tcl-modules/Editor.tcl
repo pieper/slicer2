@@ -92,7 +92,7 @@ proc EditorInit {} {
     
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.31 $} {$Date: 2000/07/28 18:44:46 $}]
+	    {$Revision: 1.32 $} {$Date: 2000/08/28 15:50:30 $}]
     
     # Initialize globals
     set Editor(idOriginal)  $Volume(idNone)
@@ -367,11 +367,11 @@ abreviation for the effect at the top of the <B>Details</B> tab.
 
 	# Volume menu
 	eval {label $f.lOriginal -text "Original Volume:"} $Gui(WTA)
-	TooltipAdd $f.lOriginal "Choose the input grayscale volume for editing."
 
 	eval {menubutton $f.mbOriginal -text "None" -relief raised -bd 2 -width 18 \
 		-menu $f.mbOriginal.m} $Gui(WMBA)
 	eval {menu $f.mbOriginal.m} $Gui(WMA)
+	TooltipAdd $f.mbOriginal "Choose the input grayscale volume for editing."
 	pack $f.lOriginal -padx $Gui(pad) -side left -anchor e
 	pack $f.mbOriginal -padx $Gui(pad) -side left -anchor w
 
@@ -402,11 +402,11 @@ abreviation for the effect at the top of the <B>Details</B> tab.
 
 	# Volume menu
 	eval {label $f.lWorking -text "Working Volume:"} $Gui(WTA)
-	TooltipAdd $f.lWorking "Choose a labelmap to edit, or NEW for a new one."
 
 	eval {menubutton $f.mbWorking -text "NEW" -relief raised -bd 2 -width 18 \
 		-menu $f.mbWorking.m} $Gui(WMBA)
 	eval {menu $f.mbWorking.m} $Gui(WMA)
+	TooltipAdd $f.mbWorking "Choose a labelmap to edit, or NEW for a new one."
 	pack $f.lWorking $f.mbWorking -padx $Gui(pad) -side left
 
 	# Save widgets for changing
@@ -420,8 +420,8 @@ abreviation for the effect at the top of the <B>Details</B> tab.
 	set f $fVolumes.fWorking.fPrefix
 
 	eval {label $f.l -text "Filename Prefix:"} $Gui(WLA)
-	TooltipAdd $f.l "To save the Working Volume, enter the prefix here or just click Save."
 	eval {entry $f.e -textvariable Editor(prefixWorking)} $Gui(WEA)
+	TooltipAdd $f.e "To save the Working Volume, enter the prefix here or just click Save."
 	pack $f.l -padx 3 -side left
 	pack $f.e -padx 3 -side left -expand 1 -fill x
 
@@ -431,8 +431,8 @@ abreviation for the effect at the top of the <B>Details</B> tab.
 	set f $fVolumes.fWorking.fName
 
 	eval {label $f.l -text "Descriptive Name:"} $Gui(WLA)
-	TooltipAdd $f.l "You may name your NEW volume."
 	eval {entry $f.e -textvariable Editor(nameWorking)} $Gui(WEA)
+	TooltipAdd $f.e "You may name your NEW volume."
 	pack $f.l -padx 3 -side left
 	pack $f.e -padx 3 -side left -expand 1 -fill x
 
