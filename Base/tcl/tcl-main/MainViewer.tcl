@@ -46,13 +46,13 @@ proc MainViewerInit {} {
 
     # Don't register the BuildGUI routine, because it gets called specifically
 
-        # Set version info
-        lappend Module(versions) [ParseCVSInfo MainViewer \
-        {$Revision: 1.28 $} {$Date: 2002/08/19 15:01:25 $}]
+    # Set version info
+    lappend Module(versions) [ParseCVSInfo MainViewer \
+    {$Revision: 1.29 $} {$Date: 2002/08/22 19:47:41 $}]
 
-        # Props
+    # Props
     set Gui(midHeight) 1
-        set View(SecondViewOn) 0
+    set View(SecondViewOn) 0
 }
 
 #-------------------------------------------------------------------------------
@@ -67,6 +67,14 @@ proc MainViewerBuildGUI {} {
     #-------------------------------------------
     # Viewer window
     #-------------------------------------------
+
+    # clean up to allow re-creation
+    foreach w {sl0Win sl1Win sl2Win} {
+        catch "$w Delete"
+    }
+    catch "destroy .tViewer"
+
+
     toplevel     .tViewer -visual {truecolor 24} -bg $Gui(backdrop)
 
     wm title     .tViewer "Viewer"
@@ -86,7 +94,7 @@ proc MainViewerBuildGUI {} {
     set Gui(fBot) $f.fBot
     set Gui(fMid) $f.fMid
     
-    pack $Gui(fTop) -side top
+    pack $Gui(fTop) -side top -expand 1 -fill both
     pack $Gui(fMid) -side top -expand 1 -fill x
     pack $Gui(fBot) -side top
 
@@ -217,20 +225,24 @@ proc MainViewerBuildGUI {} {
     set Gui(midHeight) [winfo height $Gui(fMid)]
 
     #---------------------------------------------
-        # VIEWPORT SEPARATOR
-        #---------------------------------------------
+    # VIEWPORT SEPARATOR
+    #---------------------------------------------
 
-        vtkLineSource Gui(viewport,source)
-        Gui(viewport,source) SetPoint1 [expr $View(viewerWidth) / 2] $View(viewerHeight) 0
-        Gui(viewport,source) SetPoint2 [expr $View(viewerWidth) / 2] 0 0
-        vtkPolyDataMapper2D Gui(viewport,mapper)
-        Gui(viewport,mapper) SetInput [Gui(viewport,source) GetOutput]
-        vtkActor2D Gui(viewport,actor)
-        Gui(viewport,actor) SetMapper Gui(viewport,mapper)
-        Gui(viewport,actor) SetLayerNumber 1
-        eval [Gui(viewport,actor) GetProperty] SetColor "1 1 0.5"
-        Gui(viewport,actor) SetVisibility 1
-        viewRen AddActor2D Gui(viewport,actor)
+    catch "Gui(viewport,source) Delete"
+    vtkLineSource Gui(viewport,source)
+    Gui(viewport,source) SetPoint1 [expr $View(viewerWidth) / 2] $View(viewerHeight) 0
+    Gui(viewport,source) SetPoint2 [expr $View(viewerWidth) / 2] 0 0
+    catch "Gui(viewport,mapper) Delete"
+    vtkPolyDataMapper2D Gui(viewport,mapper)
+    Gui(viewport,mapper) SetInput [Gui(viewport,source) GetOutput]
+    catch "Gui(viewport,actor) Delete"
+    vtkActor2D Gui(viewport,actor)
+    Gui(viewport,actor) SetMapper Gui(viewport,mapper)
+    Gui(viewport,actor) SetLayerNumber 1
+    eval [Gui(viewport,actor) GetProperty] SetColor "1 1 0.5"
+    Gui(viewport,actor) SetVisibility 1
+    viewRen AddActor2D Gui(viewport,actor)
+
 }
 
 #-------------------------------------------------------------------------------
@@ -270,7 +282,7 @@ proc MainViewerUserResize {} {
 
     regexp {([^x]*)x([^\+]*)} [wm geometry .tViewer] match w h
 
-        if {$View(mode) == "3D"} {
+    if {$View(mode) == "3D"} {
         # Find the smallest dimension
         set d $w
         if {$h < $w} {
@@ -323,15 +335,15 @@ proc MainViewerAddViewsSeparation {p1 p2} {
     global Gui View
     
     if { $View(SecondViewOn) == 1 } {
-    Gui(viewport,actor) SetVisibility 1
-    Gui(viewport,source) SetPoint1 [expr ($p1 / 2) - 2] $p2 0
-    Gui(viewport,source) SetPoint2 [expr ($p1/ 2) - 2] 0 0
+        Gui(viewport,actor) SetVisibility 1
+        Gui(viewport,source) SetPoint1 [expr ($p1 / 2) - 2] $p2 0
+        Gui(viewport,source) SetPoint2 [expr ($p1/ 2) - 2] 0 0
     } else {
-    # make the separation invisible by putting it on the border of the
-    # MainView window
-    Gui(viewport,actor) SetVisibility 0
-    #Gui(viewport,source) SetPoint1 $p1 $p2 0
-    #Gui(viewport,source) SetPoint2 $p1 0 0
+        # make the separation invisible by putting it on the border of the
+        # MainView window
+        Gui(viewport,actor) SetVisibility 0
+        #Gui(viewport,source) SetPoint1 $p1 $p2 0
+        #Gui(viewport,source) SetPoint2 $p1 0 0
     }
 }
  
@@ -381,12 +393,12 @@ proc MainViewerSetMode {{mode ""} {verbose ""}} {
 
     # set View(mode) if called with an argument
     if {$mode != ""} {
-    if {$mode == "Normal" || $mode == "Quad256"  || $mode == "Quad512" \
-        || $mode == "3D" || $mode == "Single512"} {
-        set View(mode) $mode
-    } else {
-        return
-    }   
+        if {$mode == "Normal" || $mode == "Quad256"  || $mode == "Quad512" \
+            || $mode == "3D" || $mode == "Single512"} {
+            set View(mode) $mode
+        } else {
+            return
+        }   
     }
     
     set f $Gui(fViewer)
@@ -395,104 +407,104 @@ proc MainViewerSetMode {{mode ""} {verbose ""}} {
 
     # Pack the image windows depending on mode
     switch $View(mode) {
-    "Normal" {
-        pack $f.fSlice0 $f.fSlice1 $f.fSlice2  -in $Gui(fBot) -side left
-        pack $f.fViewWin -in $Gui(fTop) -side left
-        pack $Gui(fTop) -side top
-        pack $Gui(fMid) -side top -expand 1 -fill x
-        pack $Gui(fBot) -side top
+        "Normal" {
+            pack $f.fSlice0 $f.fSlice1 $f.fSlice2  -in $Gui(fBot) -side left
+            pack $f.fViewWin -in $Gui(fTop) -side left -expand 1 -fill both
+            pack $Gui(fTop) -side top
+            pack $Gui(fMid) -side top -expand 1 -fill x
+            pack $Gui(fBot) -side top
 
-        set w [expr $View(viewerHeightNormal) + $Gui(midHeight) + 256]
-        wm geometry .tViewer $View(viewerWidth)x$w
+            set w [expr $View(viewerHeightNormal) + $Gui(midHeight) + 256]
+            wm geometry .tViewer $View(viewerWidth)x$w
 
-        $Gui(fSl0Win)  config -width 256 -height 256
-        $Gui(fSl1Win)  config -width 256 -height 256
-        $Gui(fSl2Win)  config -width 256 -height 256
-        $Gui(fViewWin) config -width 768 -height $View(viewerHeightNormal)
+            $Gui(fSl0Win)  config -width 256 -height 256
+            $Gui(fSl1Win)  config -width 256 -height 256
+            $Gui(fSl2Win)  config -width 256 -height 256
+            $Gui(fViewWin) config -width 768 -height $View(viewerHeightNormal)
 
             MainViewerAddViewsSeparation $View(viewerWidth) $View(viewerHeightNormal)
 
-        # Do NOT show the thumbnails on top of the slice images
-        foreach s $Slice(idList) {
-            raise $Gui(fSlice$s).fImage
-            MainViewerAnno $s 256
+            # Do NOT show the thumbnails on top of the slice images
+            foreach s $Slice(idList) {
+                raise $Gui(fSlice$s).fImage
+                MainViewerAnno $s 256
+            }
         }
-    }
-    "3D" {
-        set hReq $View(viewerHeight)
-        set wReq $View(viewerWidth)
+        "3D" {
+            set hReq $View(viewerHeight)
+            set wReq $View(viewerWidth)
 
-        pack $Gui(fTop) -side top
-        pack $Gui(fViewWin) -in $Gui(fTop) -side left -expand 1 -fill both
+            pack $Gui(fTop) -side top
+            pack $Gui(fViewWin) -in $Gui(fTop) -side left -expand 1 -fill both
 
-        wm geometry .tViewer ${wReq}x$hReq
-        $Gui(fViewWin) config -width $wReq -height $hReq
-                   
+            wm geometry .tViewer ${wReq}x$hReq
+            $Gui(fViewWin) config -width $wReq -height $hReq
+                       
             # Delphine
             MainViewerAddViewsSeparation $wReq $hReq
-    }
-    "Quad256" {
-        pack $Gui(fTop) $Gui(fBot) -side top
-        pack $f.fSlice0 $f.fViewWin -in $Gui(fTop) -side left
-        pack $f.fSlice1 $f.fSlice2  -in $Gui(fBot) -side left
+        }
+        "Quad256" {
+            pack $Gui(fTop) $Gui(fBot) -side top
+            pack $f.fSlice0 $f.fViewWin -in $Gui(fTop) -side left
+            pack $f.fSlice1 $f.fSlice2  -in $Gui(fBot) -side left
 
-        wm geometry .tViewer 512x512
-        $Gui(fViewWin) config -width 256 -height 256
-        $Gui(fSl0Win)  config -width 256 -height 256
-        $Gui(fSl1Win)  config -width 256 -height 256
-        $Gui(fSl2Win)  config -width 256 -height 256
+            wm geometry .tViewer 512x512
+            $Gui(fViewWin) config -width 256 -height 256
+            $Gui(fSl0Win)  config -width 256 -height 256
+            $Gui(fSl1Win)  config -width 256 -height 256
+            $Gui(fSl2Win)  config -width 256 -height 256
 
             # Delphine
             MainViewerAddViewsSeparation 256 256
         
             # Show the control thumbnails on top of the slice images
-        foreach s $Slice(idList) {
-            raise $Gui(fSlice$s).fThumb
-            MainViewerAnno $s 256
+            foreach s $Slice(idList) {
+                raise $Gui(fSlice$s).fThumb
+                MainViewerAnno $s 256
+            }
         }
-    }
-    "Quad512" {
-        pack $Gui(fTop) $Gui(fBot) -side top
-        pack $f.fSlice0 $f.fViewWin -in $Gui(fTop) -side left
-        pack $f.fSlice1 $f.fSlice2  -in $Gui(fBot) -side left
+        "Quad512" {
+            pack $Gui(fTop) $Gui(fBot) -side top
+            pack $f.fSlice0 $f.fViewWin -in $Gui(fTop) -side left
+            pack $f.fSlice1 $f.fSlice2  -in $Gui(fBot) -side left
 
-        wm geometry .tViewer 1024x1024
-        $Gui(fViewWin) config -width 512 -height 512
-        $Gui(fSl0Win)  config -width 512 -height 512
-        $Gui(fSl1Win)  config -width 512 -height 512
-        $Gui(fSl2Win)  config -width 512 -height 512
-        
+            wm geometry .tViewer 1024x1024
+            $Gui(fViewWin) config -width 512 -height 512
+            $Gui(fSl0Win)  config -width 512 -height 512
+            $Gui(fSl1Win)  config -width 512 -height 512
+            $Gui(fSl2Win)  config -width 512 -height 512
+            
             # Delphine
             MainViewerAddViewsSeparation 512 512
 
-        # Show the control thumbnails on top of the slice images
-        foreach s $Slice(idList) {
-            raise $Gui(fSlice$s).fThumb
-            MainViewerAnno $s 512
+            # Show the control thumbnails on top of the slice images
+            foreach s $Slice(idList) {
+                raise $Gui(fSlice$s).fThumb
+                MainViewerAnno $s 512
+            }
         }
-    }
-    "Single512" {
-        pack $Gui(fTop) $Gui(fBot) -side top -anchor w
-        pack $f.fSlice0 $f.fViewWin -in $Gui(fTop) -side left -anchor n
-        pack $f.fSlice1 $f.fSlice2  -in $Gui(fBot) -side left -anchor w
+        "Single512" {
+            pack $Gui(fTop) $Gui(fBot) -side top -anchor w
+            pack $f.fSlice0 $f.fViewWin -in $Gui(fTop) -side left -anchor n
+            pack $f.fSlice1 $f.fSlice2  -in $Gui(fBot) -side left -anchor w
 
-        wm geometry .tViewer 768x768
-        $Gui(fViewWin) config -width 256 -height 256
-        $Gui(fSl0Win)  config -width 512 -height 512
-        $Gui(fSl1Win)  config -width 256 -height 256
-        $Gui(fSl2Win)  config -width 256 -height 256
+            wm geometry .tViewer 768x768
+            $Gui(fViewWin) config -width 256 -height 256
+            $Gui(fSl0Win)  config -width 512 -height 512
+            $Gui(fSl1Win)  config -width 256 -height 256
+            $Gui(fSl2Win)  config -width 256 -height 256
 
             # Delphine
             MainViewerAddViewsSeparation 256 256
 
 
-        # Show the control thumbnails on top of the slice images
-        foreach s $Slice(idList) {
-            raise $Gui(fSlice$s).fThumb
-            MainViewerAnno $s 256
+            # Show the control thumbnails on top of the slice images
+            foreach s $Slice(idList) {
+                raise $Gui(fSlice$s).fThumb
+                MainViewerAnno $s 256
+            }
+            MainViewerAnno 0 512
         }
-        MainViewerAnno 0 512
-    }
     }
     # Double the slice size in 512 mode
 
