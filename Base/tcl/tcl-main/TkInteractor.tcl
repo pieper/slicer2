@@ -359,11 +359,11 @@ proc Pitch {widget x y} {
 
     if { ! $RendererFound } { return }
     if {[info exists Module(Endoscopic,procEnter)] == 1} {
-    set tmp $Endoscopic(cam,rxStr) 
-    set Endoscopic(cam,rxStr) [expr $tmp + (-$LastY + $y)]
-    EndoscopicSetCameraDirection "rx"
-    Render3D
-    set LastY $y
+        set tmp $Endoscopic(cam,rxStr) 
+        set Endoscopic(cam,rxStr) [expr $tmp + (-$LastY + $y)]
+        EndoscopicSetCameraDirection "rx"
+        Render3D
+        set LastY $y
     }
 }
 
@@ -384,13 +384,11 @@ proc Yaw {widget x y} {
     if { ! $RendererFound } { return }
     
     if {[info exists Module(Endoscopic,procEnter)] == 1} {
-    
-    
-    set tmp $Endoscopic(cam,rzStr) 
-    set Endoscopic(cam,rzStr) [expr $tmp + (-$LastX + $x)]
-    EndoscopicSetCameraDirection "rz"
-    Render3D
-    set LastX $x
+        set tmp $Endoscopic(cam,rzStr) 
+        set Endoscopic(cam,rzStr) [expr $tmp + (-$LastX + $x)]
+        EndoscopicSetCameraDirection "rz"
+        Render3D
+        set LastX $x
     }
 }
 
@@ -409,12 +407,11 @@ proc Roll {widget x y} {
     if { ! $RendererFound } { return }
    
     if {[info exists Module(Endoscopic,procEnter)] == 1} {
-    
-    set tmp $Endoscopic(cam,ryStr) 
-    set Endoscopic(cam,ryStr) [expr $tmp + (-$LastX + $x)]
-    EndoscopicSetCameraDirection "ry"
-    Render3D
-    set LastX $x
+        set tmp $Endoscopic(cam,ryStr) 
+        set Endoscopic(cam,ryStr) [expr $tmp + (-$LastX + $x)]
+        EndoscopicSetCameraDirection "ry"
+        Render3D
+        set LastX $x
     }
     
 }
@@ -435,7 +432,6 @@ proc LR {widget x y} {
 
     if { ! $RendererFound } { return }
     if {[info exists Module(Endoscopic,procEnter)] == 1} {    
-        
         set tmp $Endoscopic(cam,xStr) 
         set Endoscopic(cam,xStr) [expr $tmp + ($LastX - $x)]
         EndoscopicSetCameraPosition
@@ -518,14 +514,14 @@ proc Pan {widget x y} {
     }
 
     set FPoint [$CurrentCamera GetFocalPoint]
-        set FPoint0 [lindex $FPoint 0]
-        set FPoint1 [lindex $FPoint 1]
-        set FPoint2 [lindex $FPoint 2]
+    set FPoint0 [lindex $FPoint 0]
+    set FPoint1 [lindex $FPoint 1]
+    set FPoint2 [lindex $FPoint 2]
 
     set PPoint [$CurrentCamera GetPosition]
-        set PPoint0 [lindex $PPoint 0]
-        set PPoint1 [lindex $PPoint 1]
-        set PPoint2 [lindex $PPoint 2]
+    set PPoint0 [lindex $PPoint 0]
+    set PPoint1 [lindex $PPoint 1]
+    set PPoint2 [lindex $PPoint 2]
 
     $CurrentRenderer SetWorldPoint $FPoint0 $FPoint1 $FPoint2 1.0
     $CurrentRenderer WorldToDisplay
@@ -538,10 +534,10 @@ proc Pan {widget x y} {
     $CurrentRenderer SetDisplayPoint $APoint0 $APoint1 $focalDepth
     $CurrentRenderer DisplayToWorld
     set RPoint [$CurrentRenderer GetWorldPoint]
-        set RPoint0 [lindex $RPoint 0]
-        set RPoint1 [lindex $RPoint 1]
-        set RPoint2 [lindex $RPoint 2]
-        set RPoint3 [lindex $RPoint 3]
+    set RPoint0 [lindex $RPoint 0]
+    set RPoint1 [lindex $RPoint 1]
+    set RPoint2 [lindex $RPoint 2]
+    set RPoint3 [lindex $RPoint 3]
     if { $RPoint3 != 0.0 } {
         set RPoint0 [expr $RPoint0 / $RPoint3]
         set RPoint1 [expr $RPoint1 / $RPoint3]
@@ -662,7 +658,7 @@ proc Reset {widget x y} {
     set vpxmax [lindex $viewport 2]
     set vpymax [lindex $viewport 3]
     if { $vx >= $vpxmin && $vx <= $vpxmax && \
-    $vy >= $vpymin && $vy <= $vpymax} {
+                $vy >= $vpymin && $vy <= $vpymax} {
             set RendererFound 1
             break
         }

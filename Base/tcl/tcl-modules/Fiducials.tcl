@@ -101,7 +101,7 @@ proc FiducialsInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.41 $} {$Date: 2003/07/17 16:35:47 $}]
+        {$Revision: 1.42 $} {$Date: 2003/12/03 01:40:27 $}]
     
     # Initialize module-level variables
     
@@ -169,7 +169,6 @@ proc FiducialsDisplayDescriptionActive {} {
     if {[lsearch $Fiducials($Fiducials(activeListID),selectedPointIdList) $Fiducials(activePointID)] != -1} { 
         if { [info command Point($Fiducials(activePointID),node)] != "" } {
             set Fiducials(activeName) [Point($Fiducials(activePointID),node) GetName]
-
             foreach {x y z} [Point($Fiducials(activePointID),node) GetXYZ] { break }
             set Fiducials(activeXYZ) [format "(%.2f, %.2f, %.2f)" $x $y $z]
             set Fiducials(activeDescription) [Point($Fiducials(activePointID),node) GetDescription]
@@ -187,7 +186,6 @@ proc FiducialsDescriptionActiveUpdated {} {
 
         Point($Fiducials(activePointID),node) SetName $Fiducials(activeName)
         Point($Fiducials(activePointID),node) SetDescription $Fiducials(activeDescription)
-
         set Fiducials($Fiducials(activeListID),selectedPointIdList) ""
         FiducialsUpdateMRML
     }

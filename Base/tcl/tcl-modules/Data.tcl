@@ -88,7 +88,7 @@ proc DataInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.50 $} {$Date: 2003/10/03 14:23:12 $}]
+        {$Revision: 1.51 $} {$Date: 2003/12/03 01:39:53 $}]
 
     set Data(index) ""
     set Data(clipboard) ""
@@ -904,16 +904,16 @@ proc DataCountTransforms {selection {start ""} {end ""}} {
     
     set T "0"
     foreach line $selection {
-    set node [Mrml(dataTree) GetNthItem $line]
-    set class [$node GetClassName]
-    switch $class {
-        vtkMrmlTransformNode {
-            incr T
+        set node [Mrml(dataTree) GetNthItem $line]
+        set class [$node GetClassName]
+        switch $class {
+            vtkMrmlTransformNode {
+                incr T
+            }
+            vtkMrmlEndTransformNode {
+                incr T -1
+            } 
         }
-        vtkMrmlEndTransformNode {
-            incr T -1
-        } 
-    }
     }
     return $T
 }
