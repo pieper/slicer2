@@ -528,7 +528,7 @@ proc DevCreateNewCopiedVolume { OrigId {Description ""} { VolName ""} } {
 # str Action     Whether to Open (file must exist) or Save.  Default is \"Open\".
 # .END
 #-------------------------------------------------------------------------------
-proc DevGetFile { filename { MustPop 0} { DefaultExt "" } { DefaultDir "" } {Title "Choose File"} {Action "Open"}} {
+proc DevGetFile { filename { MustPop 0} { DefaultExt "" } { DefaultDir "" } {Title "Choose File"} {Action "Open"} {PathType "Relative"}} {
 	global Mrml
 #        puts "filename: $filename"
 #        puts "DefaultExt $DefaultExt"
@@ -612,7 +612,12 @@ proc DevGetFile { filename { MustPop 0} { DefaultExt "" } { DefaultDir "" } {Tit
 		set filename "$filename.$DefaultExt"
 	    }   
 	}
-
+	
+	# If the file is not to be stored relative to the Mrml dir.
+	if {$PathType == "Absolute"} {
+	    return $filename
+	}
+	    
 	# Store first image file as a relative filename to the root 
 	# Return the relative Directory Path
 	return [MainFileGetRelativePrefix $filename][file \
@@ -647,10 +652,12 @@ proc DevGetFile { filename { MustPop 0} { DefaultExt "" } { DefaultDir "" } {Tit
 # str Action     Whether this is \"Open\" or \"Save\".  Optional
 # str Title      The title of the window to display. Optional
 # str Tooltip    The tooltip to display over the button. Optional
+# str PathType   Default is filename is relative to Mrml(dir).  Use
+#                "Absolute" for absolute pathnames
 # .END
 #-------------------------------------------------------------------------------
 
-    proc DevAddFileBrowse {Frame ArrayName VarFileName Message { Command ""} { DefaultExt "" } { DefaultDir "" } {Action ""} {Title ""} {Tooltip ""} } {
+    proc DevAddFileBrowse {Frame ArrayName VarFileName Message { Command ""} { DefaultExt "" } { DefaultDir "" } {Action ""} {Title ""} {Tooltip ""} {PathType ""}} {
 
 	global Gui $ArrayName Model
 
@@ -662,7 +669,7 @@ proc DevGetFile { filename { MustPop 0} { DefaultExt "" } { DefaultDir "" } {Tit
 
         ## Need to make the string that will become the command.
 	# this pops up file browser when the button is pressed.
-       set SetVarString  "set $ArrayName\($VarFileName\) \[ DevGetFile \"\$$ArrayName\($VarFileName\)\" 1  \"$DefaultExt\" \"$DefaultDir\" \"$Title\"  \"$Action\"\]; if \{\[file exists \$$ArrayName\($VarFileName\)\] || \"$Action\" == \"Save\"\}  \{ $Command \}"
+       set SetVarString  "set $ArrayName\($VarFileName\) \[ DevGetFile \"\$$ArrayName\($VarFileName\)\" 1  \"$DefaultExt\" \"$DefaultDir\" \"$Title\"  \"$Action\" \"$PathType\" \]; if \{\[file exists \$$ArrayName\($VarFileName\)\] || \"$Action\" == \"Save\"\}  \{ $Command \}"
 #$Action == Save
 #        puts $SetVarString
 
@@ -677,7 +684,7 @@ proc DevGetFile { filename { MustPop 0} { DefaultExt "" } { DefaultDir "" } {Tit
 	}
 
 	# this pops up file browser when return is hit.
-	set SetVarString  "set $ArrayName\($VarFileName\) \[ DevGetFile \"\$$ArrayName\($VarFileName\)\" 0  \"$DefaultExt\" \"$DefaultDir\" \"$Title\" \"$Action\" \]; if \{\[file exists \$$ArrayName\($VarFileName\)\] || \"$Action\" == \"Save\"\}  \{ $Command \}"
+	set SetVarString  "set $ArrayName\($VarFileName\) \[ DevGetFile \"\$$ArrayName\($VarFileName\)\" 0  \"$DefaultExt\" \"$DefaultDir\" \"$Title\" \"$Action\" \"$PathType\" \]; if \{\[file exists \$$ArrayName\($VarFileName\)\] || \"$Action\" == \"Save\"\}  \{ $Command \}"
 
     eval {entry $f.efile -textvariable "$ArrayName\($VarFileName\)" -width 50} $Gui(WEA)
         bind $f.efile <Return> $SetVarString

@@ -197,7 +197,7 @@ proc EdLiveWireBuildGUI {} {
     #set label "Settings:"
     set label ""
     set subframes {Basic Training Advanced}
-    set buttonText {"Basic" "Training" "Settings"}
+    set buttonText {"Basic" "Train" "Settings"}
     set tooltips {"Basic: For Users" \
 	    "Train LiveWire using segmented slices and save the settings." \
 	    "Current LiveWire Settings: Advanced"}
@@ -284,7 +284,8 @@ proc EdLiveWireBuildGUI {} {
     DevAddFileBrowse $f Ed "EdLiveWire,trainingInputFileName" \
 	    "Open Settings File:" EdLiveWireReadFeatureParams \
 	    "txt" [] "Open" "Open LiveWire Settings File" \
-	    "Read LiveWire settings for the structure you want to segment."
+	    "Read LiveWire settings for the structure you want to segment."\
+	    "Absolute"
 
     #-------------------------------------------
     # TabbedFrame->Training frame
@@ -307,8 +308,11 @@ proc EdLiveWireBuildGUI {} {
     #-------------------------------------------
     set f $Ed(EdLiveWire,frame).fTabbedFrame.fTraining.fTrainingFile
 
-    DevAddFileBrowse $f Ed "EdLiveWire,trainingOutputFileName" "Save Settings As:" [] "txt" [] \
-	    "Save" "Output File" "Choose the file where the training information will be written."
+    DevAddFileBrowse $f Ed "EdLiveWire,trainingOutputFileName" \
+	    "Save Settings As:" [] "txt" [] \
+	    "Save" "Output File" \
+	    "Choose the file where the training information will be written."\
+	    "Absolute"
 
     #-------------------------------------------
     # TabbedFrame->Training->Grid frame
@@ -511,7 +515,9 @@ proc EdLiveWireBuildGUI {} {
     DevAddFileBrowse $f Ed "EdLiveWire,trainingOutputFileName" \
 	    "Save Settings:" EdLiveWireWriteFeatureParams \
 	    "txt" [] "Save" "Save LiveWire Settings" \
-	    "Save LiveWire settings for the structure you are segmenting."
+	    "Save LiveWire settings for the structure you are segmenting."\
+	    "Absolute"
+	    
 }
 
 #-------------------------------------------------------------------------------
@@ -742,6 +748,27 @@ proc EdLiveWireSetFeatureParams {} {
     # Lauren do this for all slices or just active?
     # Lauren need to check bounds better, and also make filters modified...
 
+    # Validate input:
+    # loop over features
+    for {set feat 0} {$feat < $Ed(EdLiveWire,numFeatures)} {incr feat} {
+	
+	# weight (importance given to feature)
+	if {[ValidateFloat $Ed(EdLiveWire,feature$feat,weight)] == 0} {
+	    tk_messageBox -message "Weight for feature $feat is not a number."
+	    return
+	}
+	
+	# loop over params for each feature
+	for {set p 0} {$p < $Ed(EdLiveWire,feature$feat,numParams)} {incr p} {
+
+	    if {[ValidateFloat $Ed(EdLiveWire,feature$feat,param$p)] == 0} {
+		tk_messageBox -message "Parameter $p for feature $feat is not a number."
+		return
+	    }    
+	}
+    }
+
+    # Set in vtk-land:
     # loop over slices
     foreach s $Slice(idList) {    
 	# loop over edge filters
@@ -767,7 +794,7 @@ proc EdLiveWireSetFeatureParams {} {
 #-------------------------------------------------------------------------------
 # .PROC EdLiveWireAdvancedApply
 # Changes filter settings:
-# validates input and calls EdLiveWireSetFeatureParams.
+# calls EdLiveWireSetFeatureParams and makes Slicer update.
 # Called using Apply button in advanced tab.
 # .ARGS
 # .END
@@ -775,27 +802,6 @@ proc EdLiveWireSetFeatureParams {} {
 proc EdLiveWireAdvancedApply {} {
     global Ed
 
-    # Validate input:
-
-    # loop over features
-    for {set feat 0} {$feat < $Ed(EdLiveWire,numFeatures)} {incr feat} {
-	
-	# weight (importance given to feature)
-	if {[ValidateFloat $Ed(EdLiveWire,feature$feat,weight)] == 0} {
-	    tk_messageBox -message "Weight for feature $feat is not a number."
-	    return
-	}
-	
-	# loop over params for each feature
-	for {set p 0} {$p < $Ed(EdLiveWire,feature$feat,numParams)} {incr p} {
-
-	    if {[ValidateFloat $Ed(EdLiveWire,feature$feat,param$p)] == 0} {
-		tk_messageBox -message "Parameter $p for feature $feat is not a number."
-		return
-	    }    
-	}
-    }
- 
     EdLiveWireSetFeatureParams
 
     Slicer ReformatModified
@@ -1717,6 +1723,9 @@ proc EdLiveWireReadFeatureParams {} {
 	    set index [expr $index + 1]
 	}
     }
+
+    # Apply the settings too.
+    EdLiveWireSetFeatureParams
 
     puts "Read settings from file $Ed($e,trainingInputFileName)"
 }

@@ -92,7 +92,7 @@ proc MeasureVolInit {} {
     # Set version info
     #------------------------------------
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.11 $} {$Date: 2001/02/22 15:20:33 $}]
+	    {$Revision: 1.12 $} {$Date: 2001/02/26 19:41:08 $}]
     
     # Initialize module-level variables
     #------------------------------------
@@ -234,7 +234,7 @@ proc MeasureVolBuildGUI {} {
     set f $fSetup.fTabbedFrame.fBasic.fFile
     
     DevAddFileBrowse $f MeasureVol fileName "Output File:" [] "txt" [] \
-	    "Save" "Output File" "Choose the file where the output will be written."
+	    "Save" "Output File" "Choose the file where the output will be written." "Absolute"
 
     #-------------------------------------------
     # Setup->TabbedFrame->Basic->Measure frame
