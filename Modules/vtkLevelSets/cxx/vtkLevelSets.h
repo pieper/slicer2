@@ -69,6 +69,10 @@ public:
   vtkTypeMacro(vtkLevelSets,vtkImageToImageFilter);
   void PrintSelf(ostream& os, vtkIndent indent);
   
+  vtkSetMacro(isotropic_voxels,int);
+  vtkGetMacro(isotropic_voxels,int);
+  vtkBooleanMacro(isotropic_voxels,int);
+
   // Description
   // Rescale data to 0-255
   vtkSetMacro(RescaleImage,int);
@@ -502,7 +506,7 @@ protected:
   float doubxspacing,doubyspacing,doubzspacing;
   float xyspacing,yzspacing,xzspacing;
 
-  unsigned char isotropic_voxels;
+  int isotropic_voxels;
 
   // statistics per iteration
   double mean_curv     ;
