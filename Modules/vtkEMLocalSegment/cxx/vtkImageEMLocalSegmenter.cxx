@@ -462,6 +462,7 @@ void vtkImageEMLocalSegmenter::SetNumClasses(int NumberOfClasses)
 int vtkImageEMLocalSegmenter::checkValues()
 {
   int i,k,j;
+  double ***LogCovariance   = this->GetLogCovariance();
   for (i=0;i < this->NumClasses; i++) {
     if (this->Label[i] < 0) {
       vtkEMLocalSetErrorMessage(this->ErrorMessage,this->ErrorFlag, "Color[" << i+1 <<"] = " << this->Label[i] << " is not defined");
@@ -495,6 +496,24 @@ int vtkImageEMLocalSegmenter::checkValues()
     //      cout << "vtkImageEMLocalSegmenter:checkValues:  Covariance for tissue class " << i+1 << "is a singular matrix, almost singular (must be regular) or not positiv definit!"<< endl;
     //      return -3;
     // }
+
+    // This is just for additional checking so we can tell the user propally 
+    double **InvLogCov = new double*[NumInputImages];
+    for (j=0; j<NumInputImages; j++) InvLogCov[j] = new double[NumInputImages];
+
+    if (vtkImageEMGeneral::InvertMatrix(LogCovariance[i],InvLogCov,NumInputImages) == 0) {
+      vtkEMLocalSetErrorMessage(this->ErrorMessage,this->ErrorFlag,"Could not caluclate the Inverse of the Log Covariance of tissue class "<<i <<". Covariance Matrix is probably almost signular!");
+      for (j=0; j<NumInputImages; j++) delete[] InvLogCov[j];
+      delete[] InvLogCov;
+      return -4;
+    } 
+    for (j=0; j<NumInputImages; j++) delete[] InvLogCov[j];
+    delete[] InvLogCov;
+    if  (vtkImageEMGeneral::determinant(LogCovariance[i],NumInputImages) <= 0.0) {; 
+      vtkEMLocalSetErrorMessage(this->ErrorMessage,this->ErrorFlag,"Coveriance Matrix for tissue class "<<i<<" is probably almost signular or not positiv! Could not calculate the inverse determinant of it ");
+      return -6;
+    }
+
  
     for (j = 0; j < this->NumClasses; j++) {
        for (k = 0; k < 6; k++) {
@@ -1173,7 +1192,7 @@ static void vtkImageEMLocalAlgorithm(vtkImageEMLocalSegmenter *self,T **ProbData
     } 
     InvSqrtDetLogCov[i] = vtkImageEMGeneral::determinant(LogCovariance[i],NumInputImages);
     if  (InvSqrtDetLogCov[i] <= 0.0) {
-      cout << "Coveriance Matrix (value= " << InvSqrtDetLogCov[i] <<") for tissue class "<<i<<" is probably almost signular or not positiv! Could not calculate the inverse determinant of it " << endl;
+      cerr << "Coveriance Matrix (value= " << InvSqrtDetLogCov[i] <<") for tissue class "<<i<<" is probably almost signular or not positiv! Could not calculate the inverse determinant of it " << endl;
       return;
     } 
     InvSqrtDetLogCov[i] = sqrt(1/InvSqrtDetLogCov[i]);
