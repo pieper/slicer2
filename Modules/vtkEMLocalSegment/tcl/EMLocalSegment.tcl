@@ -141,11 +141,11 @@ proc EMSegmentInit {} {
     # Public Version  = 1
     # Private Version = 2
 
-    if {[info exists env(SLICER_HOME)] != 0 && $env(SLICER_HOME) != "" && [file exist [file join $env(SLICER_HOME) Modules/vtkEMPrivateSegment/builds/$env(BUILD)/bin]]} {
+    if { [catch "package require vtkEMPrivateSegment"] } {
+      set EMSegment(SegmentMode) 1
+    } else {
       puts "Load Private EM-Version"
       set EMSegment(SegmentMode) 2
-    } else {
-      set EMSegment(SegmentMode) 1
     } 
     # EMSegment(SegmentMode) == 0 <=> Set all Probabilty maps to none, EMSegment(SegmentMode) == 1
 
@@ -236,7 +236,7 @@ proc EMSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.17 $} {$Date: 2003/12/17 18:56:15 $}]
+        {$Revision: 1.18 $} {$Date: 2004/01/28 19:52:45 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -993,7 +993,7 @@ Description of the tabs:
     EMSegmentAddSuperClassName $f.fRight -1
     set EMSegment(ClSuper-eName) $f.fRight.eName 
 
-    DevAddLabel $f.fLeft.lProb "Class Porbability:"
+    DevAddLabel $f.fLeft.lProb "Class Probability:"
     EMSegmentAddGlobalProbEntry $f.fRight $Sclass 1 
 
     DevAddLabel $f.fLeft.lNumClasses "Number of Classes:"  
