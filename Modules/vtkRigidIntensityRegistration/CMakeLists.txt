@@ -61,6 +61,10 @@ IF (VTKRIGIDINTENSITYREGISTRATION_CAN_BUILD)
   SUBDIRS(KullbackLeibler)
   SUBDIRS(MutualInformation)
 
+  CONFIGURE_FILE(${VTKRIGIDINTENSITYREGISTRATION_SOURCE_DIR}/test/tcl/TestBase.tcl.in
+                 ${VTKRIGIDINTENSITYREGISTRATION_SOURCE_DIR}/test/tcl/TestBase.tcl
+                 IMMEDIATE)
+
   #
   # You can put your include path(s) here
   #
