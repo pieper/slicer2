@@ -157,7 +157,7 @@ for {set i 0} {$i < $argc} {incr i} {
                 }
             }
             # add in the compiler info after MainBoot is called
-            set SLICER(versionInfo)  "$execName $argv\n${SLICER(version)} CVS: {$Id: Go.tcl,v 1.48 2003/03/19 22:55:57 nicole Exp $} Platform: $tcl_platform(os)"
+            set SLICER(versionInfo)  "$execName $argv\n${SLICER(version)} Platform: $tcl_platform(os)"
 
         }
         "-*" {
@@ -603,7 +603,7 @@ if { $SLICER(versionInfo) != "" } {
     # have to get the compiler information after MainBoot
     set compilerVersion [Slicer GetCompilerVersion]
     set compilerName [Slicer GetCompilerName]
-    set SLICER(versionInfo) "$SLICER(versionInfo) ${compilerName}: $compilerVersion"
+    set SLICER(versionInfo) "$SLICER(versionInfo) CVS: [ParseCVSInfo Go {$Id: Go.tcl,v 1.49 2003/03/19 23:00:27 nicole Exp $}] ${compilerName}: $compilerVersion"
     puts "$SLICER(versionInfo)"
 }
 
