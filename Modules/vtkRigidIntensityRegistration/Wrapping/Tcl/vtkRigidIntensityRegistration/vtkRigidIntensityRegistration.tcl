@@ -12,13 +12,16 @@ if {[::vtk::load_component vtkMutualInformationRegistrationTCL] == "" &&
     package provide vtkRigidIntensityRegistration 1.0
 
     # source all the files
-    source [file join $PACKAGE_DIR_VTKRigidIntensityRegistration/../../../tcl/MutualInformationRegistration.tcl]
     source [file join $PACKAGE_DIR_VTKRigidIntensityRegistration/../../../tcl/ItkToSlicerTransform.tcl]
     source [file join $PACKAGE_DIR_VTKRigidIntensityRegistration/../../../tcl/RigidIntensityRegistration.tcl]
+    source [file join $PACKAGE_DIR_VTKRigidIntensityRegistration/../../../tcl/MutualInformationRegistration.tcl]
+    source [file join $PACKAGE_DIR_VTKRigidIntensityRegistration/../../../tcl/KullbackLeiblerRegistration.tcl]
 
     # add this module's name to the list of custom modules in order 
     # to have it's init procedure get called, @ModuleName@Init will be 
     # called by the Slicer Base code
     global Module
     lappend Module(customModules) RigidIntensityRegistration
+    lappend Module(customModules) MutualInformationRegistration
+    lappend Module(customModules) KullbackLeiblerRegistration
 }
