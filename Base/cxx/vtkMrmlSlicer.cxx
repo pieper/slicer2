@@ -327,10 +327,10 @@ vtkMrmlSlicer::vtkMrmlSlicer()
   this->VolumesToReformat = vtkCollection::New();
   this->VolumeReformatters = vtkVoidArray::New();
   this->MaxNumberOfVolumesToReformat = 20;
-  this->VolumeReformatters->SetNumberOfValues(this->MaxNumberOfVolumesToReformat);
+  this->VolumeReformatters->SetNumberOfPointers(this->MaxNumberOfVolumesToReformat);
   for (int i = 0; i < this->MaxNumberOfVolumesToReformat; i++)
     {
-      this->VolumeReformatters->SetValue(i,NULL);
+      this->VolumeReformatters->SetVoidPointer(i,NULL);
     }
 
   // Active slice has polygon drawing (return with GetActiveOutput)
@@ -2449,7 +2449,7 @@ void vtkMrmlSlicer::AddVolumeToReformat(vtkMrmlDataVolume *v)
 
   // bookkeeping: the index of the reformatter and volume will be the same:
   // add to list of reformatters
-  this->VolumeReformatters->InsertValue(index, reformat);
+  this->VolumeReformatters->InsertVoidPointer(index, reformat);
 
   // for now only allow reformatting along with the active slice
   reformat->SetReformatMatrix(this->ReformatMatrix[this->GetActiveSlice()]);
@@ -2472,12 +2472,12 @@ void vtkMrmlSlicer::RemoveAllVolumesToReformat()
   for (int i = 0; i < this->MaxNumberOfVolumesToReformat; i++)
     {
       vtkImageReformat *reformat = 
-    (vtkImageReformat *) this->VolumeReformatters->GetValue(i);
+    (vtkImageReformat *) this->VolumeReformatters->GetVoidPointer(i);
       if (reformat != NULL) 
     {
       // kill it 
       reformat->Delete();
-      this->VolumeReformatters->SetValue(i,NULL);
+      this->VolumeReformatters->SetVoidPointer(i,NULL);
     }
     }
 }
@@ -2492,7 +2492,7 @@ vtkImageReformat *vtkMrmlSlicer::GetVolumeReformatter(vtkMrmlDataVolume *v)
     {
       // get pointer to reformatter
       vtkImageReformat *reformat;
-      reformat = (vtkImageReformat *) this->VolumeReformatters->GetValue(index);
+      reformat = (vtkImageReformat *) this->VolumeReformatters->GetVoidPointer(index);
       return reformat;
     }
   else
@@ -2510,12 +2510,12 @@ vtkImageReformat *vtkMrmlSlicer::GetVolumeReformatter(vtkMrmlDataVolume *v)
 // three slices in the slicer's slice windows).
 void vtkMrmlSlicer::VolumeReformattersModified()
 {
-  int max = this->VolumeReformatters->GetNumberOfTuples();
+  int max = this->VolumeReformatters->GetNumberOfPointers();
 
   for (int i = 0; i < max; i++)
     {
       vtkImageReformat *ref = 
-    (vtkImageReformat *)this->VolumeReformatters->GetValue(i);
+    (vtkImageReformat *)this->VolumeReformatters->GetVoidPointer(i);
       if (ref != NULL)
     {
       // for now only allow reformatting along with the active slice
@@ -2527,12 +2527,12 @@ void vtkMrmlSlicer::VolumeReformattersModified()
 
 void vtkMrmlSlicer::VolumeReformattersSetFieldOfView(float fov)
 {
-  int max = this->VolumeReformatters->GetNumberOfTuples();
+  int max = this->VolumeReformatters->GetNumberOfPointers();
 
   for (int i = 0; i < max; i++)
     {
       vtkImageReformat *ref = 
-    (vtkImageReformat *)this->VolumeReformatters->GetValue(i);
+    (vtkImageReformat *)this->VolumeReformatters->GetVoidPointer(i);
       if (ref != NULL)
     {
       ref->SetFieldOfView(fov);
