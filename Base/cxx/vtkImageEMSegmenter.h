@@ -22,7 +22,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 =========================================================================auto=*/
 // .NAME vtkImageEMSegmenter
-
+ 
 #ifndef __vtkImageEMSegmenter_h
 #define __vtkImageEMSegmenter_h
 
@@ -31,19 +31,17 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 class VTK_EXPORT vtkImageEMSegmenter : public vtkImageToImageFilter
 {
   public:
+
   static vtkImageEMSegmenter *New();
   vtkTypeMacro(vtkImageEMSegmenter,vtkObject);
   void PrintSelf(ostream& os);
 
+//BTX
   // Description:
   // Segmentats the Image using the EM-MF Algorithm   
-  void vtkImageEMAlgorithm(vtkImageEMMatrix3D & Image, int ImageMax);
-  // Description:
-  //Caluclates the Gaussian with mean m, sigma s and input x 
-  double Gauss(double x,double m,double s); 
-  // Description:
-  // Before EM Algorithm is started it checks of all values are set correctly
-  int checkValues(vtkImageEMMatrix3D Volume); 
+  template <class T> void vtkImageEMAlgorithm(T *in1Ptr, T *outPtr,int imgX,int imgY, int  NumSlices, int inIncY, int inIncZ, int outIncY, int outIncZ );
+  // void vtkImageEMAlgorithm(T *in1Ptr, T *outPtr,int imgX,int imgY, int  NumSlices, int inIncY, int inIncZ, int outIncY, int outIncZ );
+//ETX
  
   // Description:
   // Changing NumClasses re-defines also all the arrays which depon the number of classes e.g. prob
@@ -92,6 +90,15 @@ class VTK_EXPORT vtkImageEMSegmenter : public vtkImageToImageFilter
   // the algorithm in a matlab file. The file is called  EMSegmResult<iteration>.m  
   vtkSetMacro(PrintIntermediateResults, int); 
   vtkGetMacro(PrintIntermediateResults, int); 
+  // Description:
+  // Print out the result of which slice 
+  vtkSetMacro(PrintIntermediateSlice, int); 
+  vtkGetMacro(PrintIntermediateSlice, int); 
+  // Description:
+  // Print out the result after how many iteration steps
+  vtkSetMacro(PrintIntermediateFrequency, int); 
+  vtkGetMacro(PrintIntermediateFrequency, int); 
+
  
   void SetProbability(double prob, int index);
   void SetMu(double mu, int index);
@@ -150,7 +157,9 @@ protected:
   int ImgTestDivision; // Number of divisions/colors of the picture
   int ImgTestPixel;    // Pixel lenght on one diviosn (pixel == -1 => max pixel length for devision)
 
-  int PrintIntermediateResults; //  Print intermediate results in a Matlab File (No = 0, Yes = 1)
+  int PrintIntermediateResults;    //  Print intermediate results in a Matlab File (No = 0, Yes = 1)
+  int PrintIntermediateSlice;      //  Print out the result of which slide 
+  int PrintIntermediateFrequency;   //  Print out the result after how many steps 
 
   // Do not Tcl the following lines 
 //BTX
@@ -160,13 +169,21 @@ protected:
   vtkImageEMMatrix3D MrfParams; // Markov Model Parameters: Matrix3D mrfparams(this->NumClasses,this->NumClasses,4);
 
   // Description:
+  //Caluclates the Gaussian with mean m, sigma s and input x 
+  inline double Gauss(double x,double m,double s); 
+
+  // Description:
+  // Before EM Algorithm is started it checks of all values are set correctly
+  int checkValues(vtkImageEMMatrix3D Volume); 
+
+  // Description:
   // Print out intermediate result of the algorithm in a matlab file
   // The file is called  EMSegmResult<iteration>.m
-  void PrintMatlabGraphResults(int iter,int slice,int FullProgram, int ImgXY, int ImgY, int ImgX, vtkImageEMMatrix3D ind_m, vtkImageEMMatrix w_m, vtkImageEMMatrix3D b_m); 
+  template <class T>  void PrintMatlabGraphResults(int iter,int slice,int FullProgram,int imgXY, int imgY, int imgX,T *outPtr,int outIncY, int outIncZ, vtkImageEMMatrix w_m,vtkImageEMMatrix3D b_m);
 
   // Description:
   // Defines the Label map of a given image
-  void DeterminLabelMap(vtkImageEMMatrix3D & Image, vtkImageEMMatrix w_m, int NumClassPlus, int NumSlicesPlus, int imgY, int imgXY, int imgXPlus, int imgYPlus);           // Calculate label map !
+  template <class T> void DeterminLabelMap(T *outPtr, vtkImageEMMatrix w_m, int imgX,int imgY, int  NumSlices, int imgXY,  int NumClassPlus, int outIncY, int outIncZ);
 
 //ETX
 };
