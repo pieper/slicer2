@@ -24,6 +24,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #ifndef vtkImageMIReg_H
 #define vtkImageMIReg_H
 
+#include "vtkProcessObject.h"
 #include "vtkImageData.h"
 #include "vtkMatrix4x4.h"
 #include "vtkRasToIjkTransform.h"
@@ -33,7 +34,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkQuaternion.h"
 #include "vtkPose.h"
 
-class VTK_EXPORT vtkImageMIReg : public vtkObject
+class VTK_EXPORT vtkImageMIReg : public vtkProcessObject
 {
 public:
   // VTK requisites
@@ -144,3 +145,4 @@ protected:
     vtkImageData *data, vtkRasToIjkTransform *rasToIjk, vtkVector3 *ras);
 };
 #endif
+

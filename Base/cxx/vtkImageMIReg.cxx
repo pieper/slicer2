@@ -23,7 +23,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 =========================================================================auto=*/
 #include <time.h>
 #include "vtkVersion.h"
-#if (VTK_MAJOR_VERSION == 3 && VTK_MINOR_VERSION == 2)
+#if ( (VTK_MAJOR_VERSION == 3 && VTK_MINOR_VERSION == 2) || VTK_MAJOR_VERSION == 4 )
 #include "vtkCommand.h"
 #endif
 #include "vtkObjectFactory.h"
@@ -198,6 +198,16 @@ void vtkImageMIReg::Update()
     if (this->Initialize()) return;
     this->RunTime += clock() - tStart;
 
+    // Start progress reporting
+    #if ( (VTK_MAJOR_VERSION == 3 && VTK_MINOR_VERSION == 2) || VTK_MAJOR_VERSION == 4 )
+      this->InvokeEvent(vtkCommand::StartEvent,NULL);
+    #else
+      if (this->StartMethod)
+      {
+        (*this->StartMethod)(this->StartMethodArg);
+      }
+    #endif  
+
     // Don't enter this loop again until something changes
     this->UTime.Modified();
     return;
@@ -210,8 +220,27 @@ void vtkImageMIReg::Update()
     this->Execute();
     this->RunTime += clock() - tStart;
 
+    // Report progress
+    int curIter=0, totIter=0, i;
+    for (i=0; i<4; i++) {
+      curIter += this->CurIteration[i];
+      totIter += this->NumIterations[i];
+    }
+    this->UpdateProgress((float)curIter/(float)totIter);
+
     // If that ends it, de-allocate memory
-    if (!this->InProgress) {
+    if (!this->InProgress) 
+    {
+      // End progress reporting
+      #if ( (VTK_MAJOR_VERSION == 3 && VTK_MINOR_VERSION == 2) || VTK_MAJOR_VERSION == 4 )
+        this->InvokeEvent(vtkCommand::EndEvent,NULL);
+      #else
+        if (this->EndMethod)
+        {
+          (*this->EndMethod)(this->EndMethodArg);
+        } 
+      #endif
+
       this->Cleanup();
     }
   }
