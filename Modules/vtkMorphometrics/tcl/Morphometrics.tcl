@@ -34,7 +34,7 @@
 # 
 #
 #===============================================================================
-# FILE:        Workflow.tcl
+# FILE:        Morphometrics.tcl
 # PROCEDURES:  
 #    MorphometricsInit
 #    MorphometricsBuildVTK
@@ -193,7 +193,7 @@ proc MorphometricsInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.5 $} {$Date: 2004/01/29 00:08:13 $}]
+        {$Revision: 1.6 $} {$Date: 2004/02/07 23:53:59 $}]
 
     # Initialize module-level variables
     #------------------------------------
