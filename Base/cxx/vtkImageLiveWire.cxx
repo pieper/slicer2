@@ -442,23 +442,24 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
   array2D<bool> &L = (*self->L);
   array2D<bool> &B = (*self->B);
 
-  // Lauren just use #define..
-  // since this isn't a member of the class:
   const int NONE = self->NONE;
   const int UP = self->UP;
   const int DOWN = self->DOWN;
   const int LEFT = self->LEFT;
   const int RIGHT = self->RIGHT;
   
-  // neighbors, arrows, and edges match:
-  int neighbors[4][2] = {{0,1},{0,-1},{-1,0},{1,0}};
+  // arrows, neighbors, offsets, and colors match with edges below.
   int arrows[4] = {UP, DOWN, LEFT, RIGHT};
+  // to test path to 4 neighbors of current pixel corner
+  int neighbors[4][2] = {{0,1},{0,-1},{-1,0},{1,0}};
   // to access edge images (not perfectly aligned)
   int offset[4][2] = {{-1,-1},{0,0},{-1,-1},{0,0}};
+
   // to color in the correct pixel relative to the edge
-  // Lauren bugs on boundary?
-  int color[4][2] = {{0,1},{-1,0},{-1,1},{0,0}};
-  //int color[4][2] = {{0,0},{0,0},{0,0},{0,0}};
+  //int color[4][2] = {{0,1},{-1,0},{-1,1},{0,0}};
+  // the edge is stored at the lower left hand corner of each pixel
+  // (when looking at the image).  so using this and the bel type:
+  int color[4][2] = {{0,0},{-1,-1},{-1,0},{0,-1}};
   
   vtkImageData *upEdge, *downEdge, *leftEdge, *rightEdge;
   upEdge = self->GetUpEdges();
@@ -550,7 +551,7 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
 	      // if edge cost in (shifted) edge image
 	      if (ey < numrows && ex < numcols && ex >= 0 && ey >= 0) 
 		{
-		  tempCC = currentCC + (int)edge[x + y*numcols];
+		  tempCC = currentCC + (int)edge[ex + ey*numcols];
 		}
 	      else
 		{
@@ -611,7 +612,8 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
   int colorX, colorY;
 
   // Insert first points into lists
-  newEdges->InsertNextPoint(traceX,traceY,0);
+  //newEdges->InsertNextPoint(traceX,traceY,0);
+  newEdges->InsertNextPoint(traceX,traceY,Dir(traceX,traceY));
   colorX = traceX + color[Dir(traceX,traceY)][0];
   colorY = traceY + color[Dir(traceX,traceY)][1];
   tempPixels->InsertNextPoint(colorX,colorY,0);
@@ -645,8 +647,8 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
 
       // add to path lists
       tempPixels->InsertNextPoint(colorX,colorY,0);
-      newEdges->InsertNextPoint(traceX,traceY,0);
-
+      //newEdges->InsertNextPoint(traceX,traceY,0);
+      newEdges->InsertNextPoint(traceX,traceY,Dir(traceX,traceY));
     } // end while
 
   if (self->GetVerbose() > 0) 
@@ -678,6 +680,7 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
       //cout << (int)point[0] + ((int)point[1])*sizeX << endl;
       outPtr[(int)point[0] + ((int)point[1])*sizeX] = outLabel;
     }
+
   // draw previously chosen contour over image
   vtkPoints *contour = self->GetContourPixels();
   numPoints = contour->GetNumberOfPoints();
@@ -691,14 +694,16 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
 
 
   // ------------- test --------------
-//    numPoints = newEdges->GetNumberOfPoints();
-//    for (int i=0; i<numPoints; i++)
-//      {
-//        //cout << ".";
-//        point = newEdges->GetPoint(i);
-//        //cout << (int)point[0] + ((int)point[1])*sizeX << endl;
-//        outPtr[(int)point[0] + ((int)point[1])*sizeX] += 5;
-//      }
+  numPoints = newEdges->GetNumberOfPoints();
+  for (int i=0; i<numPoints; i++)
+    {
+      //cout << ".";
+      point = newEdges->GetPoint(i);
+      //cout << (int)point[0] + ((int)point[1])*sizeX << endl;
+      //outPtr[(int)point[0] + ((int)point[1])*sizeX] += 10;
+      // color depending on direction followed...
+      //outPtr[(int)point[0] + ((int)point[1])*sizeX] = (T)((point[2]+1)*2);
+    }
   // ------------- end test --------------
 
   // test points
