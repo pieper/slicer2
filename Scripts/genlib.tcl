@@ -400,9 +400,9 @@ if { ![file exists $gslTestFile] } {
     file mkdir $SLICER_LIB/gsl
 
     cd $SLICER_LIB/gsl-build
-    
-    runcmd cvs -d:pserver:anoncvs:anoncvs@sources.redhat.com:/cvs/gsl login
-    runcmd cvs -z3 -d:pserver:anoncvs:anoncvs@sources.redhat.com:/cvs/gsl co -r $gslTag gsl
+
+    runcmd cvs -z3 -d:ext:anoncvs@savannah.gnu.org:/cvsroot/gsl login
+    runcmd cvs -z3 -d:ext:anoncvs@savannah.gnu.org:/cvsroot/gsl co -r $gslTag gsl
 
     if { !$isWindows } {
         # can't do Windows
