@@ -476,6 +476,7 @@ itcl::body regions::query {} {
                 puts "Close $browser in order to continue using Slicer.\nOpening $browser with URL \$searchURL"
                 catch "exec \"$browser\" $searchURL"
             }
+        }
         "ibvd" {
             catch "exec \"$browser\" http://www.cma.mgh.harvard.edu/ibvd/search.php?f_submission=true&f_free=$terms &"
         }
@@ -1014,6 +1015,3 @@ itcl::body regions::getUMLS {} {
     
     return $umls
 }
-
-}
-
