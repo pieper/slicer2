@@ -176,31 +176,48 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
   // (instead of 256x256)
 
   // >> AT 02/16/01 3/26/01
-  //void SetDouble(int s, int yes) {
-  //  this->DoubleSliceSize[s] = yes; this->BuildLowerTime.Modified();};
+  //  void SetDouble(int s, int yes) {
+  // this->DoubleSliceSize[s] = yes; this->BuildLowerTime.Modified();};
   // Should be moved to vtkMrmlSlicer.cxx
   void SetDouble(int s, int yes) {
     if(this->DrawDoubleApproach == 0)
       {
-    this->DoubleSliceSize[s] = yes;
-    this->BackReformat[s]->SetResolution(256);
+        this->DoubleSliceSize[s] = yes;
+        this->BackReformat[s]->SetResolution(256);
     this->ForeReformat[s]->SetResolution(256);
     this->LabelReformat[s]->SetResolution(256);
       }
     else
       {
     this->DoubleSliceSize[s] = 0;
+    vtkMrmlVolumeNode *node = (vtkMrmlVolumeNode*) this->BackVolume[s]->GetMrmlNode();
+    int *dimension =node->GetDimensions();
+    int resolution;
+    if (dimension[0]>dimension[1]){
+      resolution = dimension[0];
+    }
+    else {
+      resolution= dimension[1];
+    }
     if(yes == 1)
       {
-        this->BackReformat[s]->SetResolution(512);
-        this->ForeReformat[s]->SetResolution(512);
-        this->LabelReformat[s]->SetResolution(512);
+        if (resolution>=512){
+          this->BackReformat[s]->SetResolution(512);
+          this->ForeReformat[s]->SetResolution(512);
+          this->LabelReformat[s]->SetResolution(512);
+    }
+    else{
+      this->DoubleSliceSize[s] = yes;
+      this->BackReformat[s]->SetResolution(256);
+      this->ForeReformat[s]->SetResolution(256);
+      this->LabelReformat[s]->SetResolution(256);      
+    }
       }
     else
-      {
-        this->BackReformat[s]->SetResolution(256);
-        this->ForeReformat[s]->SetResolution(256);
-        this->LabelReformat[s]->SetResolution(256);
+      {    
+    this->BackReformat[s]->SetResolution(256);
+    this->ForeReformat[s]->SetResolution(256);
+    this->LabelReformat[s]->SetResolution(256);
       }
       }
  
