@@ -4,7 +4,7 @@
 # Here is where you can add the name of your local core classes.
 #
 
-SOURCE_FILES (Base_SRCS
+SET (Base_SRCS
 	vtkBoolTess.cxx vtkDCMLister.cxx vtkDCMParser.cxx 
 	vtkFastCellPicker.cxx vtkFog.cxx vtkImageAccumulateDiscrete.cxx
 	vtkImageBimodalAnalysis.cxx
