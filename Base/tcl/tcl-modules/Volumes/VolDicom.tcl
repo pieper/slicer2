@@ -552,7 +552,7 @@ proc FindDICOM2 { StartDir AddDir Pattern } {
         pack [label $w.label -textvariable ::DICOMlabel] 
         pack [button $w.cancel -text "Stop Looking" -command {set ::DICOMabort "true"} ]
         update ;# make sure the window exists before grabbing events
-        grab -global $w
+        catch "grab -global $w"
     }
     
     vtkDCMParser parser
