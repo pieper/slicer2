@@ -616,9 +616,18 @@ if {[info exists Module(customModules)]  == 1} {
         }
     }
 }
+# Kilian : For some reason my EMSegment is in there a couple of times 
+#          creating problems later when going into Main.tcl 
+#          Make sure every module is included only once in ordered
+
 
 # Ordered list only contains modules that exist
-set ordered $foundOrdered
+set ordered ""
+foreach Entry $foundOrdered {
+    if {[lsearch $ordered $Entry] < 0} {
+    lappend ordered $Entry
+    }
+}  
 
 # Source shared stuff either locally or globally
 # For example for a module MyModule, we looks for
@@ -669,7 +678,7 @@ if { $SLICER(versionInfo) != "" } {
     set compilerName [Slicer GetCompilerName]
     set vtkVersion [Slicer GetVTKVersion]
     set libVersions "LibName1: VTK LibVersion1: ${vtkVersion} LibName2: TCL LibVersion2: ${tcl_patchLevel} LibName3: TK LibVersion2: ${tk_patchLevel}"
-    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: [ParseCVSInfo "" {$Name:  $}] CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.78 2004/07/28 16:41:50 pieper Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: [ParseCVSInfo "" {$Name:  $}] CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.79 2004/09/21 02:08:37 pohl Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
