@@ -8,7 +8,7 @@ package require vtk
 
 if {[info commands vtkFastMarching] != "" ||
     [::vtk::load_component vtkFastMarchingTCL] == ""} {
-    global PACKAGE_DIR
-    source  [file join $PACKAGE_DIR/../../../tcl/EdFastMarching.tcl]
+    global PACKAGE_DIR_VTKFASTMARCHING
+    source  [file join $PACKAGE_DIR_VTKFASTMARCHING/../../../tcl/EdFastMarching.tcl]
     package provide vtkFastMarching 1.0
 }

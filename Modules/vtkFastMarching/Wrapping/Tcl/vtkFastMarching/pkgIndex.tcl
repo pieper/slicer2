@@ -8,8 +8,8 @@
 # script is sourced, the variable $dir must contain the
 # full path name of this file's directory.
 
-global PACKAGE_DIR
-set PACKAGE_DIR $dir
+global PACKAGE_DIR_VTKFASTMARCHING
+set PACKAGE_DIR_VTKFASTMARCHING $dir
 package ifneeded vtkFastMarching 1.0 [list source [file join $dir vtkFastMarching.tcl]]
 ###unset PACKAGE_DIR
 
