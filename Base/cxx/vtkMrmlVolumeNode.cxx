@@ -238,6 +238,17 @@ void vtkMrmlVolumeNode::Write(ofstream& of, int nIndent)
     this->Description = new char[3];
     strcpy(this->Description, this->ScanOrder);
   }
+
+  if (this->FilePattern == NULL)
+  { this->FilePattern = new char[10];
+    strcpy(this->FilePattern, "%s.%03d");
+  }
+  if (this->FullPrefix == NULL)
+  { this->FullPrefix = new char[10];
+    strcpy(this->FullPrefix, "");
+  }
+    
+
   char CheckVolumeFile[1000];
   if(this->GetNumberOfDICOMFiles() == 0)
   {
