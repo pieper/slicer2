@@ -227,7 +227,7 @@ proc EMSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.23 $} {$Date: 2003/04/11 22:48:20 $}]
+        {$Revision: 1.24 $} {$Date: 2003/05/06 18:45:59 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -2012,7 +2012,6 @@ proc EMSegmentStartEM { } {
      # Update MRML Tree
      EMSegmentSaveSetting 0
    }
-
    # Update MRML
    MainUpdateMRML
    
@@ -2048,8 +2047,10 @@ proc EMSegmentStartEM { } {
    # ----------------------------------------------
    # 7. Run Dice measure if necessary 
    # ----------------------------------------------
-   set EMSegment(DICELabeledVolume) $result
-   EMSegmentCalcDice 
+   if {$EMSegment(SegmentMode) > 0} {
+     set EMSegment(DICELabeledVolume) $result
+     EMSegmentCalcDice 
+   }
 }
 
 #-------------------------------------------------------------------------------
