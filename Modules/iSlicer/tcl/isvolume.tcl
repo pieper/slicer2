@@ -22,8 +22,8 @@ isvolume - a widget for looking at Slicer volumes
     - default key and mouse bindings
     - overlay/label options
     - split controls to different widget class
-    
-
+    - it is not a good idea to access volumes by Name
+      because names are not unique. By Id number is appropriate.    
 }
 #
 #########################################################
@@ -62,7 +62,6 @@ if { [itcl::find class isvolume] == "" } {
       itk_option define -interpolation interpolation Interpolation {linear}
       itk_option define -resolution resolution Resolution {256}
 
-
       # widgets for the control area
       variable _controls
       variable _slider
@@ -84,17 +83,16 @@ if { [itcl::find class isvolume] == "" } {
       variable _xform
       variable _changeinfo
 
-
       # internal state variables
-      variable _volidmap
+      variable _VolIdMap
 
       # methods
-      method expose {} {}
-      method actor {} {return $_actor}
-      method mapper {} {return $_mapper}
-      method ren {} {return $_ren}
-      method tkrw {} {return $_tkrw}
-      method rw {} {return [$_tkrw GetRenderWindow]}
+      method expose {}   {}
+      method actor  {}   {return $_actor}
+      method mapper {}   {return $_mapper}
+      method ren    {}   {return $_ren}
+      method tkrw   {}   {return $_tkrw}
+      method rw     {}   {return [$_tkrw GetRenderWindow]}
 
       # Note: use SetUpdateExtent to get full volume in the imagedata
       method imagedata {} {return [$_reslice GetOutput]}
@@ -212,14 +210,14 @@ itcl::body isvolume::constructor {args} {
     catch "$_reslice Delete"
     catch "$_xform Delete"
     catch "$_changeinfo Delete"
+
     vtkMatrix4x4 $_ijkmatrix
     vtkImageReslice $_reslice
-    $_reslice SetInput $_None_ImageData 
-    $_reslice SetInterpolationModeToLinear
+      $_reslice SetInput $_None_ImageData
+      $_reslice SetInterpolationModeToLinear
     vtkTransform $_xform
     vtkImageChangeInformation $_changeinfo
-    $_changeinfo CenterImageOn
-
+      $_changeinfo CenterImageOn
 
     #
     # Initialize the widget based on the command line options.
@@ -278,15 +276,18 @@ itcl::configbody isvolume::slice {
 # OPTION: -volume
 #
 # DESCRIPTION: which slicer volume to display in this isvolume
+# The argument can be the volume name or the volume Id. The volume
+# Id is strongly preferedbecause it is unique.
 #-------------------------------------------------------------------------------
 itcl::configbody isvolume::volume {
+    global Volume
 
-    if { ![info exists _volidmap($itk_option(-volume))] } {
+    if { ![info exists _VolIdMap($itk_option(-volume))] } {
         error "bad volume id"
     }
-    set id $_volidmap($itk_option(-volume))
 
-    if { $itk_option(-volume) == "" || $itk_option(-volume) == "None" } {
+    set id $_VolIdMap($itk_option(-volume))
+    if { $itk_option(-volume) == "" || $itk_option(-volume) == "None" || $itk_option(-volume) == $Volume(idNone)} {
         $_changeinfo SetInput $_None_ImageData 
     } else {
         $_changeinfo SetInput [Volume($id,vol) GetOutput]
@@ -319,7 +320,7 @@ itcl::configbody isvolume::orientation {
     } else {
         $_mapper SetInput [$_reslice GetOutput]
     }
-    set id $_volidmap($itk_option(-volume))
+    set id $_VolIdMap($itk_option(-volume))
 
     # first, make the transform to put the images
     # into axial RAS space.  Center the volume resliced output
@@ -422,20 +423,32 @@ itcl::body isvolume::expose {} {
     $_tkrw Render
 }
 
+# ------------------------------------------------------------------
+
+#-------------------------------------------------------------------------------
+# METHOD: volmenu_update
+#
+# DESCRIPTION: create the array of volume names and ids
+#              The array canbe accessed by volume Id or volume name.
+#              However, should two names be the same, the second one
+#              overwrites the first.
+#-------------------------------------------------------------------------------
 itcl::body isvolume::volmenu_update {} {
     global Volume
 
     $_volmenu delete 0 end
-    array unset _volidmap
+    array unset _VolIdMap
 
     foreach id $Volume(idList) {
         set name [Volume($id,node) GetName]
-        set _volidmap($name) $id
-        set _volidmap($id) $id
-        $_volmenu insert end $name
+        set _VolIdMap($name)  $id
+        set _VolIdMap($id)    $id
+        $_volmenu insert end  $name
     }
     $_volmenu select 0
 }
+
+# ------------------------------------------------------------------
 
 itcl::body isvolume::screensave { filename } {
 # TODO should be moved to superclass
@@ -456,6 +469,7 @@ itcl::body isvolume::screensave { filename } {
     $wif Delete
 } 
 
+# ------------------------------------------------------------------
 
 proc isvolume_demo {} {
 
