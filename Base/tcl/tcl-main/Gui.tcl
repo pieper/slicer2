@@ -58,7 +58,7 @@ proc GuiInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo Gui \
-		{$Revision: 1.33 $} {$Date: 2002/02/25 18:33:11 $}]
+		{$Revision: 1.32.2.1 $} {$Date: 2002/02/28 19:15:59 $}]
 
 
     # enable tooltips by default.  This should check user preferences somehow.
@@ -258,6 +258,11 @@ proc GuiInit {} {
 	    foreach a $attr {
 		regsub {helvetica 8} $Gui($a) $newfont Gui($a)
 	    } 
+	} else {
+	    set newfont {helvetica 7 bold} 
+	    foreach a $attr {
+		regsub {helvetica 8} $Gui($a) $newfont Gui($a)
+	    } 
 	}
 
 	# Workspace Scrollbar Attributes (WSBA)
@@ -272,13 +277,14 @@ proc GuiInit {} {
 
 #-------------------------------------------------------------------------------
 # .PROC ValidateFloat
-# Return 1 if valid, else 0
 # 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc ValidateFloat { var } {
- return [expr ![ catch { expr $var + 1.0 } ] ]
+proc ValidateFloat {s} {
+	# Return 1 if valid, else 0
+	if {$s == ""} {return 0}
+	return [regexp {^([0-9-]+|([0-9-]*\.[0-9]*))$} $s]
 }
 
 #-------------------------------------------------------------------------------
