@@ -64,7 +64,7 @@ proc LabelsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.20 $} {$Date: 2002/03/21 23:05:30 $}]
+        {$Revision: 1.21 $} {$Date: 2002/10/24 22:31:36 $}]
 
     # Props
     set Label(nameBrowse) ""
@@ -269,7 +269,7 @@ proc LabelsBuildGUI {} {
     
     frame $f.fName -bg $Gui(activeWorkspace)
     eval {label $f.fName.lName -text "Color:"} $Gui(WTA)
-    eval {entry $f.fName.eName -textvariable Label(nameBrowse) -width 20} \
+    eval {entry $f.fName.eName -textvariable Label(nameBrowse) -width 35} \
         $Gui(WEA) {-state disabled}
     pack $f.fName.lName $f.fName.eName -side left -padx $Gui(pad) -pady 0
 
@@ -460,7 +460,7 @@ proc LabelsBrowseColor {x y} {
     if {$c == ""} {
         set Label(nameBrowse) ""
     } else {
-        set Label(nameBrowse) [Color($c,node) GetName]
+        set Label(nameBrowse) "[Color($c,node) GetName]=[Color($c,node) GetLabels]"
     }
 }
 
