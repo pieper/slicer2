@@ -373,7 +373,7 @@ void vtkImageOverlay::ThreadedExecute(vtkImageData **inData,
       // matches what the output has
 
       memcpy(inExt, outExt, 6*sizeof(int));
-      this->ComputeRequiredInputUpdateExtent(inExt, outExt, layer);
+      this->ComputeInputUpdateExtent(inExt, outExt, layer);
       s2 = inData[layer]->GetScalarType();
       c2 = inData[layer]->GetNumberOfScalarComponents();
       x2 = inExt[1]-inExt[0]+1;
