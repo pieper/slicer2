@@ -82,7 +82,7 @@ proc Render3D {{scale ""}} {
     }
 
     ## TODO - this should be made a module callback
-    if {[info exists vtkSortCommandHelper] == 1} {
+    if {[info command vtkSortCommandHelper] != ""} {
         foreach sch [vtkSortCommandHelper ListInstances] {
             $sch DepthSort
         }
