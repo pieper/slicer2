@@ -2,6 +2,7 @@ Data
 Volumes
 Models
 Matrices
+Editor
 ModelMaker
 Slices
 View
