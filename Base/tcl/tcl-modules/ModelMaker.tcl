@@ -81,7 +81,7 @@ proc ModelMakerInit {} {
 
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.44 $} {$Date: 2003/07/08 17:32:05 $}]
+        {$Revision: 1.45 $} {$Date: 2003/09/04 15:15:25 $}]
 
     # Create
     set ModelMaker(idVolume) $Volume(idNone)
@@ -729,6 +729,8 @@ $ModelMaker(n,mcubes) polygons reduced to $ModelMaker(n,decimator)."
 
     set name [Model($m,node) GetName]
     # tk_messageBox -message "The model '$name' has been created."
+
+    return $m
 }
 
 #-------------------------------------------------------------------------------
