@@ -4,7 +4,7 @@ if (${?OS} == 0) then
     setenv OS $OSTYPE
 endif
 
-setenv SLICER_HOME /projects/medvis/kpohl/slicer_with_samson
+setenv SLICER_HOME ../../..
 
 if ($OS == Linux) then   
     setenv VTK_EXE $SLICER_HOME/slicer2-linux-x86
