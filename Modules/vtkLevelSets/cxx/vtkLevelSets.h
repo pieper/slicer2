@@ -232,6 +232,10 @@ public:
   vtkSetMacro(ProbabilityThreshold,float);
   vtkGetMacro(ProbabilityThreshold,float);
 
+  //
+  vtkSetMacro(verbose,unsigned char);
+  vtkGetMacro(verbose,unsigned char);
+
   void SetNumInitPoints( int n);
   void SetInitPoint(int num, int x, int y, int z, int radius);
 
@@ -297,6 +301,9 @@ public:
   void Evolve3D(int first_band, int last_band);
 
   void PrintParameters();
+
+  // Updates the resulting image so that it contains the current result
+  int UpdateResult();
 
 protected:
   vtkLevelSets();
@@ -401,6 +408,8 @@ protected:
   int touched; // if the contour touched the outer narrow band
 
   int EvolveThreads; // number of threads for Evolve()
+
+  unsigned char verbose;
 
   // Precomputed data attachment vector field  H*DI/|DI|
   float*        data_attach_x;
