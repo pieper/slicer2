@@ -214,6 +214,8 @@ itcl::body dup::prefs { } {
     set _prefs(DEFACE_DIR,help) "Staging directory for files to upload"
     set _prefs(LINKTABLE) /opt/birn/deface/linktable
     set _prefs(LINKTABLE,help) "Link table for storing the map between clinical ID and BIRN ID"
+    set _prefs(DCANON_DIR) /opt/birn/structure/birn-dicom/anonym_scripts/dcanon
+    set _prefs(DCANON_DIR,help) "Location of dcanon programs."
     set _prefs(UPLOAD2_DIR) /opt/birn/upload2
     set _prefs(UPLOAD2_DIR,help) "Location of upload2 programs."
 
@@ -231,12 +233,28 @@ itcl::body dup::prefs { } {
     }
 
     set fp [open $::env(HOME)/.birndup/prefs r]
-    array set _prefs [read $fp]
+    array set userprefs [read $fp]
     close $fp
+
+    foreach n [array names _prefs] {
+        if { [string match *,help $n] } { continue }
+        if { ![info exists userprefs($n)] } {
+            DevInfoWindow "New preference field in updated software: $n will be set to $_prefs($n).  Use File->Preferences... to customize."
+            set userprefs($n) $_prefs($n)
+            set userprefs($n,help) $_prefs($n,help)
+        }
+    }
+    array set _prefs [array get userprefs]
+    $this pref_save
 }
 
 itcl::body dup::pref_save { } {
-    set fp [open $::env(HOME)/.birndup/prefs w]
+    set preffile $::env(HOME)/.birndup/prefs
+    if { ![file writable $preffile] } {
+        DevErrorWindow "$pref file not writable - preferences not saved"
+        return
+    }
+    set fp [open $preffile w]
     foreach n [lsort -dictionary [array names _prefs]] {
         puts $fp "$n \"$_prefs($n)\""
     }
