@@ -5,7 +5,7 @@
 # abstract files noted below in this list too. Do not include file
 # suffixes.
 
-SOURCE_FILES (LOCAL_MODULE_SRCS
+SET (LOCAL_MODULE_SRCS
 vtkAnisoGaussSeidel
 )
 

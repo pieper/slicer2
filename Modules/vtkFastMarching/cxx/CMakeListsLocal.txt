@@ -5,7 +5,8 @@
 # abstract files noted below in this list too. Do not include file
 # suffixes.
 
-SOURCE_FILES (LOCAL_MODULE_SRCS
+# for cmake after version 1.6, SET replaced the other SOURCE_FILES:
+SET(LOCAL_MODULE_SRCS
 vtkFastMarching
 )
 

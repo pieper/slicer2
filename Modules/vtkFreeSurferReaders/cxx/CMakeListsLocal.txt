@@ -5,7 +5,7 @@
 # abstract files noted below in this list too. Do not include file
 # suffixes.
 
-SOURCE_FILES (LOCAL_MODULE_SRCS
+SET(LOCAL_MODULE_SRCS
 vtkFSIO
 vtkCORReader
 vtkMGHReader
@@ -17,9 +17,9 @@ vtkFSSurfaceScalarReader
 # Place names of abstract class implementations here. No file suffixes.
 # Comment this out if there are no abstracts.
 
-ABSTRACT_FILES (
-vtkMyAbstractClass1
-)
+#ABSTRACT_FILES (
+#vtkMyAbstractClass1
+#)
 
 # To add a list of additional libraries you need to link with, uncomment
 # the following line.  The library names should omit the "lib" and any

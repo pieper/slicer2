@@ -10,7 +10,8 @@
 # and 'MYCLASS' to your module name (all CAPS)
 #
 
-SOURCE_FILES (LOCAL_MODULE_SRCS
+# note: - SET replaced SOURCE_FILES for cmake 1.6
+SET(LOCAL_MODULE_SRCS
 vtkMyClass1
 vtkMyClass2
 ...
@@ -20,9 +21,10 @@ vtkMyClass2
 # Place names of abstract class implementations here. No file suffixes.
 # Comment this out if there are no abstracts.
 
-ABSTRACT_FILES (
+# replaced ABSTRACT_FILES from cmake before 1.6
+SET_SOURCE_FILES_PROPERTIES (
 vtkMyAbstractClass1
-...
+ABSTRACT
 )
 
 # You can add additional include paths here
