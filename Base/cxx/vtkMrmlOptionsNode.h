@@ -60,7 +60,7 @@ public:
   vtkGetStringMacro(Options);
   vtkSetStringMacro(Options);
 
-public:
+protected:
   vtkMrmlOptionsNode();
   ~vtkMrmlOptionsNode();
   vtkMrmlOptionsNode(const vtkMrmlOptionsNode&) {};
