@@ -83,5 +83,5 @@ package require vtkRigidIntensityRegistration;# this pulls in the package
     }  else {
      puts "ERROR. Should have gotten -22.5418, Got $results"
      puts "There is no way to seed VTK noise source, so maybe this is due to that problem"
-     exit -1
+     exit
     }

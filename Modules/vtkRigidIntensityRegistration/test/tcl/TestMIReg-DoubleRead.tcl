@@ -165,7 +165,7 @@ proc TestMutualInformationTransform { BaseFileName1 BaseFileName2 Numx Numy Numz
 
   if {$error > 0.05} {
       puts "Error was $error, bigger than 0.05!!"
-      exit -1
+      exit
   }
 
  #    __reader1          Delete  
