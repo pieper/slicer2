@@ -98,7 +98,7 @@ proc MainMrmlInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo MainMrml \
-    {$Revision: 1.102 $} {$Date: 2004/02/20 13:41:25 $}]
+    {$Revision: 1.103 $} {$Date: 2004/03/16 00:58:39 $}]
 
     set Mrml(colorsUnsaved) 0
 }
@@ -1640,6 +1640,7 @@ proc MainMrmlDeleteColors {} {
         Color($id,node) Delete
     }
     MainUpdateMRML
+    MainColorsUpdateMRML 
 
     MainMrmlClearList
 }
