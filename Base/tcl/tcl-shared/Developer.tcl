@@ -959,7 +959,7 @@ proc DevSourceTclFilesInDirectory {dir {verbose "0"}} {
 #  that dismisses the window.
 #
 # .ARGS
-#  stringe topicWinName (=unique window name)
+#  string topicWinName (=unique window name)
 #  string title (=window title)
 #  int x y (=position of window)
 #  int textBoxHit (=number of textlines that set initial window height)
@@ -1000,8 +1000,9 @@ proc DevCreateTextPopup { topicWinName title x y textBoxHit txt  } {
     #--- make scrolled text widget to contain text
     set f $w.fMsg
     set helpt [ text $f.tMessage -height $textBoxHit -width 35 -setgrid true -wrap word \
-                -yscrollcommand "$f.sy set" -cursor arrow -insertontime 0 ]
-    scrollbar $f.sy -orient vert -command "$f.tMessage yview"
+                -yscrollcommand "$f.sy set" -cursor arrow -insertontime 0 -bg #FFFFFF ]
+    scrollbar $f.sy -orient vert -command "$f.tMessage yview" -background #DDDDDD \
+                    -activebackground #DDDDDD
     pack $f.sy -side right -anchor e -fill y
     pack $f.tMessage -side left -fill both -expand true -padx 4 -pady 4
     
