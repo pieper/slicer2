@@ -48,7 +48,7 @@ proc MainViewerInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainViewer \
-        {$Revision: 1.27 $} {$Date: 2002/08/19 14:52:21 $}]
+        {$Revision: 1.28 $} {$Date: 2002/08/19 15:01:25 $}]
 
         # Props
     set Gui(midHeight) 1
@@ -69,11 +69,6 @@ proc MainViewerBuildGUI {} {
     #-------------------------------------------
     toplevel     .tViewer -visual {truecolor 24} -bg $Gui(backdrop)
 
-    wm resizable .tViewer 0 1
-    # never allow resize for Ron's laptop
-    if {$Gui(pc) == "1"} {
-    wm resizable .tViewer 0 0
-    }
     wm title     .tViewer "Viewer"
     # sum heights of 3d window, slice, and middle button frame
     set h [expr $View(viewerHeightNormal) + 256 + $Gui(midHeight)]
@@ -410,12 +405,6 @@ proc MainViewerSetMode {{mode ""} {verbose ""}} {
         set w [expr $View(viewerHeightNormal) + $Gui(midHeight) + 256]
         wm geometry .tViewer $View(viewerWidth)x$w
 
-        wm resizable .tViewer 0 1
-        # never allow resize for Ron's laptop
-        if {$Gui(pc) == "1"} {
-        wm resizable .tViewer 0 0
-        }
-
         $Gui(fSl0Win)  config -width 256 -height 256
         $Gui(fSl1Win)  config -width 256 -height 256
         $Gui(fSl2Win)  config -width 256 -height 256
@@ -437,7 +426,6 @@ proc MainViewerSetMode {{mode ""} {verbose ""}} {
         pack $Gui(fViewWin) -in $Gui(fTop) -side left -expand 1 -fill both
 
         wm geometry .tViewer ${wReq}x$hReq
-        wm resizable .tViewer 1 1
         $Gui(fViewWin) config -width $wReq -height $hReq
                    
             # Delphine
@@ -449,7 +437,6 @@ proc MainViewerSetMode {{mode ""} {verbose ""}} {
         pack $f.fSlice1 $f.fSlice2  -in $Gui(fBot) -side left
 
         wm geometry .tViewer 512x512
-        wm resizable .tViewer 0 0
         $Gui(fViewWin) config -width 256 -height 256
         $Gui(fSl0Win)  config -width 256 -height 256
         $Gui(fSl1Win)  config -width 256 -height 256
@@ -470,22 +457,11 @@ proc MainViewerSetMode {{mode ""} {verbose ""}} {
         pack $f.fSlice1 $f.fSlice2  -in $Gui(fBot) -side left
 
         wm geometry .tViewer 1024x1024
-        wm resizable .tViewer 0 0
         $Gui(fViewWin) config -width 512 -height 512
         $Gui(fSl0Win)  config -width 512 -height 512
         $Gui(fSl1Win)  config -width 512 -height 512
         $Gui(fSl2Win)  config -width 512 -height 512
         
-        # Ron's laptop
-        if {$Gui(pc) == "1"} {
-            # allow user to maximize window which can help
-            wm resizable .tViewer 0 1
-            # this does not work though it's in the man pgs
-            # if the user does a maximize in the upper
-            # right corner all things will render okay.
-            #wm state .tViewer zoomed
-        }    
-
             # Delphine
             MainViewerAddViewsSeparation 512 512
 
@@ -501,21 +477,10 @@ proc MainViewerSetMode {{mode ""} {verbose ""}} {
         pack $f.fSlice1 $f.fSlice2  -in $Gui(fBot) -side left -anchor w
 
         wm geometry .tViewer 768x768
-        wm resizable .tViewer 0 0
         $Gui(fViewWin) config -width 256 -height 256
         $Gui(fSl0Win)  config -width 512 -height 512
         $Gui(fSl1Win)  config -width 256 -height 256
         $Gui(fSl2Win)  config -width 256 -height 256
-
-        # Ron's laptop
-        if {$Gui(pc) == "1"} {
-            # allow user to maximize window which can help
-            wm resizable .tViewer 0 1
-            # this does not work though it's in the man pgs
-            # if the user does a maximize in the upper
-            # right corner all things will render okay.
-            #wm state .tViewer zoomed
-        }    
 
             # Delphine
             MainViewerAddViewsSeparation 256 256
