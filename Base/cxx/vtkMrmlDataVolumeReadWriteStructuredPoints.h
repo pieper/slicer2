@@ -45,7 +45,7 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlDataVolumeReadWriteStructuredPoints : public
 {
   public:
   static vtkMrmlDataVolumeReadWriteStructuredPoints *New();
-  vtkTypeMacro(vtkMrmlDataVolumeReadWriteStructuredPoints,vtkObject);
+  vtkTypeMacro(vtkMrmlDataVolumeReadWriteStructuredPoints,vtkMrmlDataVolumeReadWrite);
   void PrintSelf(ostream& os, vtkIndent indent);
   
   // Return code indicates success (1) or error (0)

@@ -29,7 +29,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkMatrix4x4.h"
 #include "vtkSlicer.h"
 
-class VTK_EXPORT vtkMathUtils : public vtkObject
+class VTK_SLICER_BASE_EXPORT vtkMathUtils : public vtkObject
 {
   public:
   static vtkMathUtils *New() {return new vtkMathUtils;};

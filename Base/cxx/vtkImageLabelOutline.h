@@ -37,7 +37,7 @@ class VTK_SLICER_BASE_EXPORT vtkImageLabelOutline : public vtkImageNeighborhoodF
 {
  public:
   static vtkImageLabelOutline *New();
-  vtkTypeMacro(vtkImageLabelOutline,vtkImageSpatialFilter);
+  vtkTypeMacro(vtkImageLabelOutline,vtkImageNeighborhoodFilter);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:

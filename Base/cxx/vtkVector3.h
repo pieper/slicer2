@@ -27,10 +27,11 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #define vtkVector3_H
 
 #include "vtkObject.h"
+#include "vtkSlicer.h"
 
 #define VECTOR3_EPSILON 0.000001f
 
-class VTK_EXPORT vtkVector3 : public vtkObject
+class VTK_SLICER_BASE_EXPORT vtkVector3 : public vtkObject
 {
 public:
   // VTK requisites

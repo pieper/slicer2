@@ -40,7 +40,7 @@ class VTK_SLICER_BASE_EXPORT vtkImageBandedDistanceMap : public vtkImageNeighbor
 {
 public:
   static vtkImageBandedDistanceMap *New();
-  vtkTypeMacro(vtkImageBandedDistanceMap,vtkImageSpatialFilter);
+  vtkTypeMacro(vtkImageBandedDistanceMap,vtkImageNeighborhoodFilter);
     
   // Description: 
   // Background and foreground pixel values in the image.

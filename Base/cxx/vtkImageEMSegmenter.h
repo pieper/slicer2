@@ -28,18 +28,19 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 #include <math.h>
 #include <cmath>
+#include "vtkSlicer.h"
 #include "vtkImageData.h"
 #include "vtkImageToImageFilter.h"
 
 #define EMSEGMENT_ONE_OVER_2_PI 0.5/3.14159265358979
 #define EMSEGMENT_ONE_OVER_ROOT_2_PI sqrt(EMSEGMENT_ONE_OVER_2_PI)
 
-class VTK_EXPORT vtkImageEMSegmenter : public vtkImageToImageFilter
+class VTK_SLICER_BASE_EXPORT vtkImageEMSegmenter : public vtkImageToImageFilter
 {
   public:
 
   static vtkImageEMSegmenter *New();
-  vtkTypeMacro(vtkImageEMSegmenter,vtkObject);
+  vtkTypeMacro(vtkImageEMSegmenter,vtkImageToImageFilter);
   void PrintSelf(ostream& os);
 
   // Description:

@@ -58,7 +58,7 @@ class VTK_SLICER_BASE_EXPORT vtkDCMLister : public vtkDCMParser
 {
  public:
   static vtkDCMLister *New();
-  vtkTypeMacro(vtkDCMLister,vtkObject);
+  vtkTypeMacro(vtkDCMLister,vtkDCMParser);
   void PrintSelf(ostream& os, vtkIndent indent);
   
   vtkDCMLister();

@@ -41,11 +41,12 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #ifndef __vtkRasToIjkTransform_h
 #define __vtkRasToIjkTransform_h
 
+#include "vtkSlicer.h"
 #include "vtkVector3.h"
 #include "vtkMatrix4x4.h"
 #include "vtkObject.h"
 
-class VTK_EXPORT vtkRasToIjkTransform : public vtkObject
+class VTK_SLICER_BASE_EXPORT vtkRasToIjkTransform : public vtkObject
 {
 public:
   // VTK requisites

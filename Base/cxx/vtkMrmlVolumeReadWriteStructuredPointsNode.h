@@ -42,7 +42,7 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlVolumeReadWriteStructuredPointsNode : public
 {
   public:
   static vtkMrmlVolumeReadWriteStructuredPointsNode *New();
-  vtkTypeMacro(vtkMrmlVolumeReadWriteStructuredPointsNode,vtkMrmlNode);
+  vtkTypeMacro(vtkMrmlVolumeReadWriteStructuredPointsNode,vtkMrmlVolumeReadWriteNode);
   void PrintSelf(ostream& os, vtkIndent indent);
   
   //--------------------------------------------------------------------------

@@ -24,6 +24,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #ifndef vtkImageMIReg_H
 #define vtkImageMIReg_H
 
+#include "vtkSlicer.h"
 #include "vtkProcessObject.h"
 #include "vtkImageData.h"
 #include "vtkMatrix4x4.h"
@@ -34,12 +35,12 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkQuaternion.h"
 #include "vtkPose.h"
 
-class VTK_EXPORT vtkImageMIReg : public vtkProcessObject
+class VTK_SLICER_BASE_EXPORT vtkImageMIReg : public vtkProcessObject
 {
 public:
   // VTK requisites
   static vtkImageMIReg *New();
-  vtkTypeMacro(vtkImageMIReg,vtkObject);
+  vtkTypeMacro(vtkImageMIReg,vtkProcessObject);
   void PrintSelf(ostream& os, vtkIndent indent);
   
   // Inputs/Outputs

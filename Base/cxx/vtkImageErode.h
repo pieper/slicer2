@@ -37,7 +37,7 @@ class VTK_SLICER_BASE_EXPORT vtkImageErode : public vtkImageNeighborhoodFilter
 {
 public:
   static vtkImageErode *New();
-  vtkTypeMacro(vtkImageErode,vtkImageSpatialFilter);
+  vtkTypeMacro(vtkImageErode,vtkImageNeighborhoodFilter);
     
   // Description: 
   // Background and foreground pixel values in the image.

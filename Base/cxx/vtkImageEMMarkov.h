@@ -49,11 +49,11 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 
 
-class VTK_EXPORT vtkImageEMMarkov : public vtkImageToImageFilter
+class VTK_SLICER_BASE_EXPORT vtkImageEMMarkov : public vtkImageToImageFilter
 {
   public:
   static vtkImageEMMarkov *New();
-  vtkTypeMacro(vtkImageEMMarkov,vtkObject);
+  vtkTypeMacro(vtkImageEMMarkov,vtkImageToImageFilter);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:

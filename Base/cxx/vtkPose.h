@@ -31,8 +31,9 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkQuaternion.h"
 #include "vtkVector3.h"
 #include "vtkMatrix4x4.h"
+#include "vtkSlicer.h"
 
-class VTK_EXPORT vtkPose : public vtkObject
+class VTK_SLICER_BASE_EXPORT vtkPose : public vtkObject
 {
 public:
   // VTK requisites
