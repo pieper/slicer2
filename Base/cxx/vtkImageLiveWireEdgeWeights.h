@@ -114,7 +114,8 @@ public:
   // Set a parameter used to compute this feature
   // Note that a variance of 0 should NOT be used.
   void SetParamForFeature(int featureNum, int paramNum, float param) 
-    {this->FeatureSettings[featureNum].TransformParams[paramNum] = param;};
+    {this->FeatureSettings[featureNum].TransformParams[paramNum] = param;
+    this->Modified();};
   // Get total number of parameters used to compute this feature
   int GetNumberOfParamsForFeature(int f) 
     {return this->FeatureSettings[f].NumberOfParams;};
@@ -122,7 +123,8 @@ public:
   float GetParamForFeature(int f, int p)
     {return this->FeatureSettings[f].TransformParams[p];};
   float GetWeightForFeature(int f)
-    {return this->FeatureSettings[f].Weight;};
+    {return this->FeatureSettings[f].Weight;
+    this->Modified();};
   void SetWeightForFeature(int f, float w)
     {this->FeatureSettings[f].Weight = w;};
 
