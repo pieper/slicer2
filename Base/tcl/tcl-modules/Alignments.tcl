@@ -144,7 +144,7 @@ proc AlignmentsInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.24 $} {$Date: 2003/07/30 21:20:29 $}]
+            {$Revision: 1.25 $} {$Date: 2003/08/01 22:40:03 $}]
 
     # Props
     set Matrix(propertyType) Basic
@@ -596,7 +596,7 @@ proc AlignmentsBuildGUI {} {
 
         eval {scale $f.s${slider} -from -240 -to 240 -length 120 \
                 -command "AlignmentsManualTranslate regTran${slider}" \
-                -variable Matrix(regTran${slider}) -resolution 0.01 -digits 5} $Gui(WSA)
+                -variable Matrix(regTran${slider}) -resolution 0.1 -digits 5} $Gui(WSA)
         bind $f.s${slider} <Leave> "AlignmentsManualTranslate regTran$slider"
 
         grid $f.l${slider} $f.e${slider} $f.s${slider} -pady 2
@@ -623,7 +623,7 @@ proc AlignmentsBuildGUI {} {
 
         eval {scale $f.s${slider} -from -180 -to 180 -length 120 \
                 -command "AlignmentsManualRotate regRot${slider}" \
-                -variable Matrix(regRot${slider}) -resolution 0.01 -digits 5} $Gui(WSA)
+                -variable Matrix(regRot${slider}) -resolution 0.1 -digits 5} $Gui(WSA)
 
         grid $f.l${slider} $f.e${slider} $f.s${slider} -pady 2
     }
@@ -1401,6 +1401,7 @@ proc AlignmentsManualTranslate {param {value ""}} {
 
     # Transfer values from GUI to active transform
     set tran [Matrix($t,node) GetTransform]
+    $tran PostMultiply
     set mat  [$tran GetMatrix]
 
     switch $param {
@@ -1468,6 +1469,7 @@ proc AlignmentsManualTranslateDual {param1 value1 param2 value2} {
 
     # Transfer values from GUI to active transform
     set tran [Matrix($t,node) GetTransform]
+    $tran PostMultiply
     set mat  [$tran GetMatrix]
 
     switch $param1 {
@@ -1619,6 +1621,7 @@ proc AlignmentsManualRotate {param {value ""} {mouse 0}} {
     # Now, concatenate the rotation with the stored transform
     set tran [Matrix($t,node) GetTransform]
     $tran SetMatrix Matrix(rotMatrix)
+    $tran PostMultiply
     switch $param {
         "regRotLR" {
             $tran RotateX $value
