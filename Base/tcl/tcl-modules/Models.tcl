@@ -82,7 +82,7 @@ proc ModelsInit {} {
 
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.57 $} {$Date: 2004/03/01 15:49:06 $}]
+            {$Revision: 1.58 $} {$Date: 2004/03/14 18:43:06 $}]
 
     # Props
     set Model(propertyType) Basic
@@ -572,10 +572,11 @@ proc ModelsBuildGUI {} {
     set f $fProps.fBot.fAdvanced.fScalars
 
     DevAddButton $f.bPick "Pick Scalars" "ModelsPickScalars $f.bPick; Render3D" 12
+    DevAddButton $f.bPickLut "Pick Palette" "ModelsPickScalarsLut $f.bPickLut; Render3D" 12
     frame $f.fVisible -bg $Gui(activeWorkspace)
     frame $f.fAutoRange   -bg $Gui(activeWorkspace)
     frame $f.fRange   -bg $Gui(activeWorkspace)
-    pack $f.bPick $f.fVisible $f.fAutoRange $f.fRange -side top -pady $Gui(pad)
+    pack $f.bPick $f.fVisible $f.fAutoRange $f.fRange $f.bPickLut -side top -pady $Gui(pad)
     set fVisible $f.fVisible
     set fRange $f.fRange
     set fAutoRange $f.fAutoRange
@@ -625,6 +626,8 @@ proc ModelsBuildGUI {} {
     bind $f.eHi <Return> "ModelsPropsApplyButNotToNew; Render3D"
     bind $f.eHi <FocusOut> "ModelsPropsApplyButNotToNew; Render3D"
     pack $f.l $f.eLo $f.eHi -side left -padx $Gui(pad)
+
+
 
     #-------------------------------------------
     # Props->Bot->Advanced->Desc frame
@@ -1080,7 +1083,7 @@ proc ModelsPickScalars { parentButton } {
         } else {
             set ll $s
         }
-        .mpickscalars insert end command -command "$ptdata SetActiveScalars \"$s\" \; Render3D" -label $ll
+        .mpickscalars insert end command -command "ModelsPickScalarsCallback $m $ptdata \"$s\"" -label $ll
     }
     .mpickscalars insert end separator
     .mpickscalars insert end command -command ModelsAddScalars -label "Add New..."
@@ -1089,6 +1092,99 @@ proc ModelsPickScalars { parentButton } {
     set y [expr [winfo rooty $parentButton] + 10]
     
     .mpickscalars post $x $y
+}
+
+#-------------------------------------------------------------------------------
+# .PROC ModelsPickScalarsCallback
+# 
+#  set the appropriate scalars and scalar range with defaults if needed
+#
+# TODO - this has hardcoded special case for freesurfer labels
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc ModelsPickScalarsCallback { mid ptdata scalars } {
+
+    $ptdata SetActiveScalars $scalars
+
+    if { $scalars == "labels" } {
+        set lutid [MainLutsGetLutIDByName "Freesurfer"]
+        if { $lutid != "" } {
+            ModelsSetScalarsLut $mid $lutid "false"
+        }
+    } else {
+        ModelsSetScalarsLut $mid "" "false" ;# tells it to use the default
+    }
+
+    if { $::Model(scalarVisibilityAuto) } {
+        ModelsPropsApplyButNotToNew
+    }
+
+    Render3D
+} 
+
+
+#-------------------------------------------------------------------------------
+# .PROC ModelsPickScalarsLut
+# 
+#  Pick which color lookup table to use with model
+#
+# TODO - this lut and scalars need to be added to mrml
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc ModelsPickScalarsLut { parentButton } {
+    global Gui
+
+    set m $::Model(activeID)
+    if {$m == ""} { return }
+    
+    catch "destroy .mpickscalarslut"
+    eval menu .mpickscalarslut $Gui(WMA)
+
+    set ren [lindex $::Module(Renderers) 0]
+    set currlut [Model($m,mapper,$ren) GetLookupTable]
+
+    foreach l $::Lut(idList) {
+        if { "Lut($l,lut)" == $currlut } {
+            set labeltext "* $::Lut($l,name) *"
+        } else {
+            set labeltext "$::Lut($l,name)"
+        }
+        .mpickscalarslut insert end command -label $labeltext \
+            -command "ModelsSetScalarsLut $m $l \; Render3D"
+    }
+    
+    set x [expr [winfo rootx $parentButton] + 10]
+    set y [expr [winfo rooty $parentButton] + 10]
+    
+    .mpickscalarslut post $x $y
+}
+
+proc ModelsSetScalarsLut { mid lutid {setDefault "true"} } {
+
+    #
+    # 1) set a default for this model if one hasn't been set yet
+    # 2) if no id specified, use default
+    # 3) if setDefault specified, save the value
+    # 4) set all lut for all the renderers
+    #
+    if { ![info exists ::Models($mid,defaultLut)] } {
+        set ::Models($mid,defaultLut) 0
+    }
+
+    if { $lutid == "" } {
+        set lutid $::Models($mid,defaultLut)
+    } 
+
+    if { $setDefault == "true" } {
+        set ::Models($mid,defaultLut) $lutid
+    }
+
+    foreach r $::Module(Renderers) {
+        Model($mid,mapper,$r) SetLookupTable Lut($lutid,lut)
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -1103,6 +1199,7 @@ proc ModelsAddScalars { {scalarfile ""} } {
     global Model 
 
     set m $Model(activeID)
+    if {$m == ""} { return }
     set mnpts [$Model($m,polyData) GetNumberOfPoints]
     set mptdata [$Model($m,polyData) GetPointData]
 
