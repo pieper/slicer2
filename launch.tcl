@@ -84,7 +84,7 @@ foreach v $envVars {
 #
 set localvarsfile [file dirname [info script]]/slicer_variables.tcl
 if { [file exists $localvarsfile] } {
-    puts "Sourcing $localvarsfile"
+    puts stderr "Sourcing $localvarsfile"
     source $localvarsfile
 } else {
     puts stderr "Cannot find $localvarsfile"
@@ -127,7 +127,7 @@ foreach v $envVars {
         set ::env($v) [subst $$v]
     } else {
         # it's already been set, don't over-ride
-        puts "NOT Overriding current $v $::env($v)"
+        puts stderr "NOT Overriding current $v $::env($v)"
         if {$::env(SLICER_CUSTOM_CONFIG) != "true"} {
             tk_messageBox -type ok -message "NOT Overriding current $v $::env($v) $bypass_msg"
         }
@@ -167,7 +167,7 @@ if {$::env(BUILD) == $solaris ||
         set ::env(Path) $::env(SLICER_HOME)/Base/builds/$::env(BUILD)/bin/$::env(VTK_BUILD_TYPE)\;$::env(Path)
         set ::env(Path) $::env(TCL_BIN_DIR)\;$::env(Path)
     } else {
-        puts "Libraries: unknown build $::env(BUILD)"
+        puts stderr "Libraries: unknown build $::env(BUILD)"
     }
 
 
@@ -189,7 +189,7 @@ if {$::env(BUILD) == $solaris ||
 } elseif {$::env(BUILD) == $windows} {
     set ::env(TCLLIBPATH) "$::env(VTK_DIR)/Wrapping/Tcl/$::env(VTK_BUILD_TYPE) $::env(TCLLIBPATH)"
 } else {
-    puts "TCLLIBPATH: Invalid build $::env(BUILD)"
+    puts stderr "TCLLIBPATH: Invalid build $::env(BUILD)"
     exit
 }
 
@@ -244,7 +244,7 @@ foreach modulePath $modulePaths {
                 set ::env(Path) $modulePath/$moduleName/builds/$::env(BUILD)/bin/$::env(VTK_BUILD_TYPE)\;$::env(Path)
                 set ::env(TCLLIBPATH) "$modulePath/$moduleName/Wrapping/Tcl $::env(TCLLIBPATH)"
             } else {
-                    puts "Modules: Invalid build $::env(BUILD)"
+                    puts stderr "Modules: Invalid build $::env(BUILD)"
                     exit
             }
         }
@@ -310,7 +310,7 @@ proc file_event {fp} {
         set END 1
     } else {
         gets $fp line
-        catch "puts $line"
+        catch "puts stderr $line"
     }
 }
 
@@ -340,7 +340,7 @@ if {$::env(BUILD) == $solaris ||
         regsub -all "{|}" $argv "\\\"" argv
         update
         catch "eval exec \"$::env(VTK_DIR)/bin/vtk $mainscript $argv\"" res
-        puts $res
+        puts stderr $res
     } elseif {$::env(BUILD) == $windows} {
         # put slicer in the background on windows so it won't be "Not Responding" in
         # task manager
