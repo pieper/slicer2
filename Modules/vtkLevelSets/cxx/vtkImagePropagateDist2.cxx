@@ -851,8 +851,8 @@ void vtkImagePropagateDist2::PropagateDanielsson2D( )
                 neighbor.SetPrevNeighbor(l);
           }
         } // end if
-        else
-          fprintf(stderr," *bufn == 0 ! \n");
+    //        else
+          //fprintf(stderr," *bufn == 0 ! \n");
         break;
         
       case POINT_SET_FRONT:
@@ -1251,8 +1251,8 @@ void vtkImagePropagateDist2::PropagateDanielsson3D( )
                 neighbor.SetPrevNeighbor(l);
           }
         } // end if
-        else
-          fprintf(stderr," *bufn == 0 ! \n");
+    //        else
+        //  fprintf(stderr," *bufn == 0 ! \n");
         break;
         
       case POINT_SET_FRONT:
