@@ -124,7 +124,7 @@ proc VolDicomInit {} {
     set Volumes(DICOMDataDictFile) $dir/datadict.txt
 
     set Module(Volumes,presets) "DICOMStartDir='$Path(program)' FileNameSortParam='incr' \
-DICOMPreviewWidth='64' DICOMPreviewHeight='64' DICOMPreviewHighestValue='2048' \
+DICOMPreviewWidth='64' DICOMPreviewHeight='64' DICOMPreviewHighestValue='256' \
 DICOMDataDictFile='$Volumes(DICOMDataDictFile)'"
 
     # End
