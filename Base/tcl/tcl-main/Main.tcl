@@ -357,7 +357,7 @@ proc MainInit {} {
 
         # Set version info
     lappend Module(versions) [ParseCVSInfo Main \
-        {$Revision: 1.75 $} {$Date: 2002/05/09 20:29:12 $}]
+        {$Revision: 1.76 $} {$Date: 2002/05/10 15:29:36 $}]
 
     # Call each "Init" routine that's not part of a module
     #-------------------------------------------
@@ -1680,6 +1680,17 @@ proc MainExitProgram { } {
 #### see: http://www.kitware.com/vtkhtml/vtkdata/html/class_vtkdebugleaks.html
 #    vtkDebugLeaks DebugLeaks
 #    DebugLeaks PrintCurrentLeaks
+
+
+    # as of vtk4, you want to close all your vtk/tk windows before
+    # exiting to avoid a crash
+
+    foreach w [info commands .*] {
+        if {[winfo class $w] == "vtkTkRenderWidget"} {
+            destroy $w
+        }
+    }
+
     exit
 }
 
