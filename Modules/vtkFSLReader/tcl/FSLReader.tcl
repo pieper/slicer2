@@ -38,14 +38,21 @@
 # PROCEDURES:  
 #   FSLReaderInit
 #   FSLReaderBuildGUI
+#   FSLReaderLoadAnalyze4D 
 #   FSLReaderWarn
-#   FSLReaderShowVolumes
+#   FSLReaderLoadBackgroundVolume
+#   FSLReaderCreateModels
+#   FSLReaderLoadDesignFSF
+#   FSLReaderLoadForegroundVolume
 #   FSLReaderLoadVolume a
 #   FSLReaderSetDirectory
 #   FSLReaderLaunchBrowser
 #   FSLReaderBuildVTK
 #   FSLReaderEnter
 #   FSLReaderExit
+#   FSLReaderPushBindings 
+#   FSLReaderPopBindings 
+#   FSLReaderCreateBindings  
 #==========================================================================auto=
 #-------------------------------------------------------------------------------
 # .PROC FSLReaderInit
@@ -56,7 +63,7 @@
 # .END
 #-------------------------------------------------------------------------------
 proc FSLReaderInit {} {
-    global FSLReader Module Volume Model
+    global FSLReader Module Volume Model env
 
     set m FSLReader
 
@@ -154,7 +161,7 @@ proc FSLReaderInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1 $} {$Date: 2004/07/30 15:47:23 $}]
+        {$Revision: 1.2 $} {$Date: 2004/08/23 18:58:03 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -168,6 +175,13 @@ proc FSLReaderInit {} {
     set FSLReader(Model1)  $Model(idNone)
     set FSLReader(FileName)  ""
 
+    # Creates bindings
+    FSLReaderCreateBindings 
+
+    set FSLReader(modulePath) "$env(SLICER_HOME)/Modules/vtkFSLReader"
+
+    # Source all appropriate tcl files here. 
+    source "$FSLReader(modulePath)/tcl/FSLReaderPlot.tcl"
 }
 
 # NAMING CONVENTION:
@@ -297,7 +311,7 @@ proc FSLReaderBuildGUI {} {
     set fVolumes $Module(FSLReader,fVolumes)
     set f $fVolumes
 
-    foreach frame "Top Middle Bottom" {
+    foreach frame "Top Middle Bottom Status" {
         frame $f.f$frame -bg $Gui(activeWorkspace)
         pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
     }
@@ -308,17 +322,56 @@ proc FSLReaderBuildGUI {} {
     pack $f.label $f.bWarn -side left -padx $Gui(pad) -pady $Gui(pad)  
 
     set f $fVolumes.fMiddle
+    DevAddLabel $f.lNote \
+    "Note: To view time series, load in 
+    filtered_func_data.hdr as backgroud.
+    "
+    pack $f.lNote -side top -padx $Gui(pad) -pady $Gui(pad)  
+
     DevAddFileBrowse $f FSLReader "bgFileName" "Background Volume:" \
         "" "hdr" "\$FSLReader(FSLDir)" \
         "Open" "Browse for a background volume" "" "Absolute"
+
+    DevAddButton $f.bApply "Load" "FSLReaderLoadBackgroundVolume" 8 
+    pack $f.bApply -side top -padx $Gui(pad) -pady $Gui(pad)  
 
     set f $fVolumes.fBottom
     DevAddFileBrowse $f FSLReader "fgFileName" \
         "Activation Volume:" "" "hdr" "\$FSLReader(FSLDir)" \
         "Open" "Browse for an activation volume" "" "Absolute"
 
-    DevAddButton $fVolumes.bApply "Apply" "FSLReaderShowVolumes" 8 
-    pack $fVolumes.bApply -side top -padx $Gui(pad) -pady $Gui(pad)  
+    DevAddButton $f.bApply "Load" "FSLReaderLoadForegroundVolume" 8 
+    pack $f.bApply -side top -padx $Gui(pad) -pady $Gui(pad)  
+
+    set f $fVolumes.fStatus
+    set FMRIEngine(name) " "
+    eval {label $f.lStatus -textvariable FMRIEngine(name) -width 50} $Gui(WLA)
+    pack $f.lStatus -side top -padx 0 -pady 25
+}
+
+#-------------------------------------------------------------------------------
+# .PROC FSLReaderLoadAnalyze4D 
+# Reads an Analyze 4D file
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc FSLReaderLoadAnalyze4D {} {
+    global AnalyzeCache FSLReader Volume Mrml
+
+    unset -nocomplain AnalyzeCache(MRMLid)
+    unset -nocomplain FSLReader(firstMRMLid)
+    unset -nocomplain FSLReader(lastMRMLid)
+
+    set AnalyzeCache(fileName) $FSLReader(bgFileName) 
+    AnalyzeApply
+
+    set FSLReader(firstMRMLid) [lindex $AnalyzeCache(MRMLid) 0] 
+    set FSLReader(lastMRMLid) [lindex $AnalyzeCache(MRMLid) end] 
+    set FSLReader(noOfAnalyzeVolumes) [llength $AnalyzeCache(MRMLid)] 
+
+    # show the first volume by default
+    MainSlicesSetVolumeAll Back [lindex $AnalyzeCache(MRMLid) 0] 
+    RenderAll
 }
 
 
@@ -332,21 +385,22 @@ proc FSLReaderWarn {} {
 
     DevWarningWindow \
     "Before overlaying an activation onto \
-    a structrual or standard scan, you need \
-    co-register them first using FSL tool named \
-    \"flirt.\" For more information, check \
+    a structrual or standard brain, you need \
+    make sure they are co-registered. FSL tool \
+    named \"flirt.\" can easily perform \
+    co-registration. For more information, check \
     http://www.fmrib.ox.ac.uk/fsl/flirt/index.html
     "
 }
 
- 
+  
 #-------------------------------------------------------------------------------
-# .PROC FSLReaderShowVolumes
-# Show volumes 
+# .PROC FSLReaderLoadBackgroundVolume
+# Loads a background volume 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc FSLReaderShowVolumes {} {
+proc FSLReaderLoadBackgroundVolume {} {
     global FSLReader 
 
     if {! [info exists FSLReader(bgFileName)]} {
@@ -358,6 +412,208 @@ proc FSLReaderShowVolumes {} {
         return
     }
 
+    set fileName [file tail $FSLReader(bgFileName)]
+    if {$fileName == "filtered_func_data.hdr"} {
+
+        # Loads design.fsf to retrieve EV model parameters 
+        FSLReaderLoadDesignFSF
+
+        # Creates models for EVs
+        FSLReaderCreateModels
+
+        # Analyze 4D file
+        FSLReaderLoadAnalyze4D
+
+    } else {
+        FSLReaderLoadVolume 1 
+    }
+}
+
+   
+#-------------------------------------------------------------------------------
+# .PROC FSLReaderCreateModels
+# Creates models for all EVs 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc FSLReaderCreateModels {} {
+    global FSLReader 
+
+    set i 1
+    while {$i <= $FSLReader(nevs)} {
+
+        # if the stimulus array exists, remove it
+        if {[info command FSLReader(ev$i,model)] != ""} {
+            FSLReader(ev$i,model) Delete
+            unset -nocomplain FSLReader(ev$i,model)
+        }
+
+        vtkFloatArray FSLReader(ev$i,model)     
+        FSLReader(ev$i,model) SetNumberOfTuples $FSLReader(totalVolumes) 
+        FSLReader(ev$i,model) SetNumberOfComponents 1
+
+#        puts "\n$i\n"
+
+        # 0 : Square waveform
+        # 1 : Sinusoid
+        if {$FSLReader(ev$i,shape) == 0} {
+
+            set offset [expr $FSLReader(ev$i,skip) + $FSLReader(ev$i,phase)]
+            set rem [expr $offset % ($FSLReader(ev$i,off) + $FSLReader(ev$i,on))]
+            if {$rem < $FSLReader(ev$i,off)} {
+                set sVols [expr {($FSLReader(ev$i,off) - $rem)/$FSLReader(tr)}]
+            } else {
+                set sVols [expr {($FSLReader(ev$i,on) + $FSLReader(ev$i,off) \
+                    - $rem) / $FSLReader(tr)}]
+            }
+
+            set count 0
+            set doTask [expr {$rem < $FSLReader(ev$i,off) ? 0 : 1}]
+
+            while {$count < $FSLReader(totalVolumes)} {
+                if {$count == 0} {
+                    set length $sVols 
+                } else {
+                    set length [expr {$doTask ? ($FSLReader(ev$i,on) / $FSLReader(tr)) : \
+                        ($FSLReader(ev$i,off) / $FSLReader(tr))}]
+                }
+
+                set ii 0
+                while {$ii < $length && $count < $FSLReader(totalVolumes)} {
+
+                    set val [expr {$doTask ? 1.0 : 0.0}] 
+                    puts $val
+                    FSLReader(ev$i,model) SetComponent $count 0 $val 
+                    incr count 
+                    incr ii
+                }
+                set doTask [expr {!$doTask}] 
+            }
+        } elseif {$FSLReader(ev$i,shape) == 1} {
+            
+            set w [expr {2 * 3.14 / $FSLReader(ev$i,period)}]
+            set fi [expr {$FSLReader(ev$i,phase) * 2 * 3.14 / $FSLReader(ev$i,period)}]
+            set count 0
+            set t 0
+            while {$count < $FSLReader(totalVolumes)} {
+
+                set val [expr {sin($w * $t + $fi)}]  
+                set flipVal [expr $val * (-1)]
+                FSLReader(ev$i,model) SetComponent $count 0 $flipVal 
+                
+                set t [expr {$t + $FSLReader(tr)}]
+                incr count 
+            }
+
+        }
+
+        incr i
+    }
+}
+ 
+
+#-------------------------------------------------------------------------------
+# .PROC FSLReaderLoadDesignFSF
+# Loads design.fsf 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc FSLReaderLoadDesignFSF {} {
+    global FSLReader 
+
+#    if {! [info exists FSLReader(FSLDir)] ||
+#        ! [file exists $FSLReader(FSLDir)]} {
+#        set FSLReader(FSLDir) [file dirname $FSLReader(bgFileName)]
+#        set FSLReader(designFSFFileName) [file join $FSLReader(FSLDir) design.fsf] 
+#    }
+
+    set FSLReader(FSLDir) [file dirname $FSLReader(bgFileName)]
+    set FSLReader(designFSFFileName) [file join $FSLReader(FSLDir) design.fsf] 
+    set FSLReader(htmlFile) [file join $FSLReader(FSLDir) report.html]
+
+    if {! [file exists $FSLReader(designFSFFileName)]} {
+        DevErrorWindow "Design file doesn't exist: $FSLReader(designFSFFileName)."
+        return
+    }
+
+    # Reads file
+    set fp [open $FSLReader(designFSFFileName) r]
+    set data [read $fp]
+    set lines [split $data "\n"]
+    close $fp
+
+    # General info
+    set start [string first "# TR(s)" $data]
+    set end [string first "# Number of first-level analyses" $data]
+    set generalInfo [split [string range $data $start $end] "\n"]
+    foreach line $generalInfo {
+
+        set index [string first "set" $line]
+        if {$index != -1} {
+            set item [split $line " "]
+            set name [lindex $item 1]
+            set value [lindex $item 2]
+            if {$name == "fmri(tr)"} {
+                set FSLReader(tr) $value
+            } elseif {$name == "fmri(npts)"} {
+                set FSLReader(npts) $value
+            } else {
+                set FSLReader(ndelete) $value
+            }
+        }
+    }
+    set FSLReader(totalVolumes) [expr $FSLReader(npts)-$FSLReader(ndelete)]
+
+    # Number of EVs
+    set start [string first "set fmri(evs_orig)" $data]
+    set end [string first "\n" $data $start]
+    set evs [split [string range $data $start $end] " "]
+    set FSLReader(nevs) [lindex $evs 2]
+
+    # Info for each EV
+    set i 1
+    while {$i <= $FSLReader(nevs)} {
+
+        set start [string first "# Basic waveform shape (EV $i)" $data]
+        set end [string first "# Stop (EV $i)" $data]
+        set EV($i) [split [string range $data $start $end] "\n"]
+        foreach line $EV($i) {
+
+            set index [string first "set" $line]
+            if {$index != -1} {
+                set item [split $line " "]
+                set name [lindex $item 1]
+                set value [lindex $item 2]
+                if {$name == "fmri(shape$i)"} {
+                    set FSLReader(ev$i,shape) $value
+                } elseif {$name == "fmri(skip$i)"} {
+                    set FSLReader(ev$i,skip) $value
+                } elseif {$name == "fmri(period$i)"} {
+                    set FSLReader(ev$i,period) $value
+                } elseif {$name == "fmri(phase$i)"} {
+                    set FSLReader(ev$i,phase) $value
+                } elseif {$name == "fmri(off$i)"} {
+                    set FSLReader(ev$i,off) $value
+                } elseif {$name == "fmri(on$i)"} {
+                    set FSLReader(ev$i,on) $value
+                }
+            }
+        }
+
+        incr i
+    }
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC FSLReaderLoadForegroundVolume
+# Loads a foreground volume 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc FSLReaderLoadForegroundVolume {} {
+    global FSLReader 
+
     if {! [info exists FSLReader(fgFileName)]} {
         DevErrorWindow "Please input an activation volume."
         return
@@ -367,7 +623,6 @@ proc FSLReaderShowVolumes {} {
         return
     }
 
-    FSLReaderLoadVolume 1 
     FSLReaderLoadVolume 0 
 }
 
@@ -423,8 +678,11 @@ proc FSLReaderSetDirectory {} {
 
     set newdir [tk_chooseDirectory -initialdir $Volume(DefaultDir)]
     set FSLReader(FSLDir) $newdir
+    set FSLReader(htmlFile) [file join $FSLReader(FSLDir) report.html]
 
-    set FSLReader(htmlFile) $FSLReader(FSLDir)/report.html
+    set fsf [file join $FSLReader(FSLDir) *.fsf]
+    set file [glob -nocomplain $fsf]
+    set FSLReader(designFSFFileName) $file 
 }
 
 
@@ -497,6 +755,7 @@ proc FSLReaderEnter {} {
     # $FSLReader(textBox) delete 1.0 end
     # $FSLReader(textBox) insert end "Shift-Click anywhere!\n"
 
+    FSLReaderPushBindings
 }
 
 
@@ -516,5 +775,57 @@ proc FSLReaderExit {} {
     #   bindings when the user exits the module, and replaces the 
     #   previous ones.
     #
-    popEventManager
+    # popEventManager
+    FSLReaderPopBindings
 }
+
+
+#-------------------------------------------------------------------------------
+# .PROC FSLReaderPushBindings 
+# Pushes onto the event stack a new event manager that
+# deals with events when the FSLReader module is active
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc FSLReaderPushBindings {} {
+   global Ev Csys
+
+    EvActivateBindingSet FSLSlice0Events
+    EvActivateBindingSet FSLSlice1Events
+    EvActivateBindingSet FSLSlice2Events
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC FSLReaderPopBindings 
+# Removes bindings when FSLReader module is inactive
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc FSLReaderPopBindings {} {
+    global Ev Csys
+
+    EvDeactivateBindingSet FSLSlice0Events
+    EvDeactivateBindingSet FSLSlice1Events
+    EvDeactivateBindingSet FSLSlice2Events
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC FSLReaderCreateBindings  
+# Creates FSLReader event bindings for the three slice windows 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc FSLReaderCreateBindings {} {
+    global Gui Ev
+
+    EvDeclareEventHandler FSLReaderSlicesEvents <Motion> \
+        {FSLReaderPopUpPlot %x %y}
+            
+    EvAddWidgetToBindingSet FSLSlice0Events $Gui(fSl0Win) {FSLReaderSlicesEvents}
+    EvAddWidgetToBindingSet FSLSlice1Events $Gui(fSl1Win) {FSLReaderSlicesEvents}
+    EvAddWidgetToBindingSet FSLSlice2Events $Gui(fSl2Win) {FSLReaderSlicesEvents}    
+}
+
+
