@@ -11,7 +11,7 @@ switch $tcl_platform(os) {
         set BUILD solaris8
         set VTKSLICERBASE_BUILD_LIB $SLICER_HOME/Base/builds/$BUILD/bin/vtkSlicerBase.so
         set GENERATOR "Unix Makefiles"
-    set COMPILER "/usr/bin/g++"
+        set COMPILER "/usr/bin/g++"
     }
     "Linux" {
         set SLICER_HOME /home/nicole/slicer2
@@ -27,7 +27,7 @@ switch $tcl_platform(os) {
         set BUILD Darwin
         set VTKSLICERBASE_BUILD_LIB $SLICER_HOME/Base/builds/$BUILD/bin/vtkSlicerBase.dylib
         set GENERATOR "Unix Makefiles" 
-    set COMPILER "c++"
+        set COMPILER "c++"
     }
     default {
         # different windows machines say different things, so assume
@@ -39,7 +39,7 @@ switch $tcl_platform(os) {
         set BUILD Win32VC7
         set VTKSLICERBASE_BUILD_LIB $SLICER_HOME/Base/builds/$BUILD/bin/debug/vtkSlicerBase.lib
         set GENERATOR "Visual Studio 7" 
-    set COMPILER "cl"
+        set COMPILER "cl"
     }
 }
 
@@ -61,7 +61,7 @@ foreach dir $modulePaths {
                 puts "Adding module to target list: ${moduleName}"
                 lappend TARGETS Modules/${moduleName}
             }
-    }
+        }
     }
 }
 # puts "Using TARGETS = ${TARGETS}"
@@ -69,12 +69,21 @@ foreach dir $modulePaths {
 # use an already built version of vtk
 set VTK_ARG1 "-DUSE_BUILT_VTK:BOOL=ON"
 set VTK_ARG2 "-DVTK_BINARY_PATH:PATH=$VTK_BINARY_PATH"
-# in order to bypass warnings about Source files
-set VTK_ARG3 "-DCMAKE_BACKWARDS_COMPATIBILITY:STRING=1.2"
-# explicitly specify the compiler used to compile the version of vtk that 
-# we link with
-set VTK_ARG4 "-DCMAKE_CXX_COMPILER:STRING=$COMPILER"
-set VTK_ARG5 "-DCMAKE_CXX_COMPILER_FULLPATH:FILEPATH=$COMPILER"
+switch $tcl_platform(os) {
+    "SunOS" {
+        # in order to bypass warnings about Source files
+        set VTK_ARG3 "-DCMAKE_BACKWARDS_COMPATIBILITY:STRING=1.2"
+        # explicitly specify the compiler used to compile the version of vtk that 
+        # we link with
+        set VTK_ARG4 "-DCMAKE_CXX_COMPILER:STRING=g++"
+        set VTK_ARG5 "-DCMAKE_CXX_COMPILER_FULLPATH:FILEPATH=/usr/bin/g++"
+    }
+    default {
+        set VTK_ARG3 ""
+        set VTK_ARG4 ""
+        set VTK_ARG5 ""
+    }
+}
 # make sure to generate shared libraries
 set VTK_ARG6 "-DBUILD_SHARED_LIBS:BOOL=ON"
 
