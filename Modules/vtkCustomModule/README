@@ -19,6 +19,8 @@ your module.  Name it while you're doing so.
    will get the name of the module from the directory name.
 
     ./vtkNameModule
+    (if tclsh isn't in your path, you can run this script
+     manually, for example:   tclsh8.4 ./vtkNameModule )
 
 4. change to the cxx directory.
     
@@ -59,7 +61,7 @@ your module.  Name it while you're doing so.
    "c" a couple of times until the "g" option becomes available, then
    type "g" and files will generate and the program will complete.
 
-11. Make.
+11. Make (or otherwise build) your code.
 
      make
 
