@@ -23,6 +23,7 @@
 # FILE:        Gui.tcl
 # PROCEDURES:  
 #   GuiInit
+#   GuiApplyStyle
 #   ValidateFloat
 #   ValidateName
 #   ValidateInt
@@ -45,6 +46,9 @@
 #   WaitPopup
 #   WaitDestroy
 #   IsInt
+#   tkHorizontalLine
+#   tkVerticalLine
+#   tkSpace
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -58,7 +62,7 @@ proc GuiInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo Gui \
-    {$Revision: 1.41 $} {$Date: 2003/01/21 19:24:01 $}]
+    {$Revision: 1.42 $} {$Date: 2003/01/21 22:25:10 $}]
 
 
     # enable tooltips by default.  This should check user preferences somehow.
@@ -272,12 +276,15 @@ proc GuiInit {} {
 # Apply a Gui style to a list of widgets
 # 
 # .ARGS
+# list stylenames a list of stylenames to apply (in order)
 # .END
 #-------------------------------------------------------------------------------
-proc GuiApplyStyle {stylename args} {
+proc GuiApplyStyle {stylenames args} {
     global Gui
     foreach widget $args {
-        eval $widget config $Gui($stylename)
+        foreach style $stylenames {
+            eval $widget config $Gui($style)
+        }
     }
 }
 
@@ -834,4 +841,43 @@ proc IsInt {str} {
         if {$n == 0} {return 0}
     }
     return 1
+}
+
+#-------------------------------------------------------------------------------
+# .PROC tkHorizontalLine
+# 
+#  Draw a Tk horizontal line widget
+# .ARGS
+# str name name of the widget
+# list args list of widget arguments
+# .END
+#-------------------------------------------------------------------------------
+proc tkHorizontalLine {name args} {
+    return [eval frame $name -class TkHorizontalLine -relief sunken -height 2 -borderwidth 2 $args]
+}
+
+#-------------------------------------------------------------------------------
+# .PROC tkVerticalLine
+# 
+#  Draw a Tk vertical line widget
+# .ARGS
+# str name name of the widget
+# list args list of widget arguments
+# .END
+#-------------------------------------------------------------------------------
+proc tkVerticalLine {name args} {
+    return [eval frame $name -class TkVerticalLine -relief sunken -width 2  -borderwidth 2 $args]
+}
+
+#-------------------------------------------------------------------------------
+# .PROC tkSpace
+# 
+#  Draw a Tk space (an empty widget)
+# .ARGS
+# str name name of the widget
+# list args list of widget arguments
+# .END
+#-------------------------------------------------------------------------------
+proc tkSpace {name args} {
+    return [eval frame $name -class TkSpace -relief flat $args]
 }
