@@ -773,8 +773,6 @@ static void vtkImageDICOMReaderUpdate2(vtkImageDICOMReader *self, vtkImageData *
 
   // read the data row by row
 
-  vtkGenericWarningMacro("dataExtent[4]: " << dataExtent[4] << "dataExtent[5]: " << dataExtent[5] << "\n");
-
   if (self->GetFileDimensionality() == 3)
     {
     self->OpenAndSeekFile(dataExtent,0);
