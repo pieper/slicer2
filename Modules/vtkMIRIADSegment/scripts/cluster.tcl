@@ -6,6 +6,8 @@ proc echo {args} {puts "$args"}
 
 
 proc init {} {
+
+    puts "collecting jobs"
     set ::ids [exec ssh gpop.bwh.harvard.edu \
           ls -1 /nas/nas0/pieper/data/MIRIAD/Project_0002]
 
@@ -65,8 +67,8 @@ proc run_job {compute job} {
     set birnid [lindex $job 0]
     set visit [lindex $job 1]
 
-    if { 1 } {
-        set fp [open "| csh -c \"ssh $compute ~/birn/bin/runvnc :2 \
+    if { 0 } {
+        set fp [open "| csh -c \"ssh $compute ~/birn/bin/runvnc \
                     --wm /usr/X11R6/bin/xterm -- \
                     ~/birn/slicer2/slicer2-linux-x86 --no-tkcon \
                         --exec exit \
@@ -95,6 +97,13 @@ proc file_event {fp job} {
     }
 }
 
+proc dump_logs {} {
+    set fp [open "cluster-logs" "w"]
+    foreach log [array names ::logs] {
+        puts $fp $::logs($log)
+    }
+    close $fp
+} 
 
 proc run_jobs {} {
 
@@ -109,11 +118,16 @@ proc run_jobs {} {
         set fps($job) [run_job $compute $job]
         fileevent $fps($job) readable "file_event $fps($job) \"$job\""
         set pids($job) [pid $fps($job)]
-        set ::logs($job) ""
+        set ::logs($job) "$job on $compute: "
+        
+        if { [llength [array names pids]] > 10 } {
+            break
+        }
     }
     puts "done launching"
 
 
+    set iter 0
     while { [array names pids] != "" } {
         update
         foreach job [array names pids] {
@@ -123,14 +137,11 @@ proc run_jobs {} {
             }
         }
         after 1000
-        puts "[llength [array names pids]] still running..."
+        incr iter
+        puts "$iter: [llength [array names pids]] still running..."
+        dump_logs
     }
 
-    set fp [open "cluster-logs" "w"]
-    foreach log [array names ::logs] {
-        puts $fp $::logs($log)
-    }
-    close $fp
 
     puts "done"
     return
