@@ -104,7 +104,7 @@ proc FiducialsInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.53.2.1 $} {$Date: 2004/12/22 19:06:25 $}]
+        {$Revision: 1.53.2.2 $} {$Date: 2004/12/23 18:02:06 $}]
     
     # Initialize module-level variables
     
@@ -1079,9 +1079,7 @@ proc FiducialsUpdateMRML {} {
     if {$readOldNodesForCompatibility == 1} {
 
         # tell the user to save the file
-        tk_messageBox -message "The file read uses a deprecated version of the endoscopic path. 
-The current data was updated to use the new version. 
-Please save the scene and use that new file instead to not get this message again."
+        puts "The file read uses a deprecated version of the endoscopic path.\nThe current data was updated to use the new version.\nPlease save the scene and use that new file instead to not get this message again.\n"
         MainUpdateMRML
     }
 
