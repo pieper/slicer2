@@ -262,7 +262,7 @@ proc EndoscopicInit {} {
     set Module($m,category) "Visualisation"
     
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.89 $} {$Date: 2005/01/18 22:10:53 $}] 
+    {$Revision: 1.90 $} {$Date: 2005/01/21 17:29:11 $}] 
        
     # Define Procedures
     #------------------------------------
@@ -6650,10 +6650,15 @@ proc EndoscopicUpdateTargetsInFlatWindow {widget} {
              set x2 [lindex $pointT2(xyz) 0]
              set y2 [lindex $pointT2(xyz) 1]
              set z2 [lindex $pointT2(xyz) 2]
+         
+         set diff1 [expr abs([expr $y1 - $Endoscopic(flatColon,yMid)])]
+         set diff2 [expr abs([expr $y2 - $Endoscopic(flatColon,yMid)])]
 
-             
+             if {$diff1 <= $diff2} {
              EndoscopicAddTargetInFlatWindow $widget $x1 $y1 $z1
+         } else {
              EndoscopicAddTargetInFlatWindow $widget $x2 $y2 $z2
+         }
 
                     }
          }
