@@ -67,8 +67,8 @@ public:
 
 
     // Description:
-    // Sets properties for the plot with specified paradigm and voxel time course.
-    void SetPlot(vtkFloatArray *timeCourse, vtkFloatArray *stimulus);
+    // Sets properties for the plot with voxel time course, model and waveform.
+    void SetPlot(vtkFloatArray *timeCourse, vtkFloatArray *model, int waveform);
 
 private:
     // Voxel index

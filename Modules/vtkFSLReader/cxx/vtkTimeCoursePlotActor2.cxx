@@ -87,7 +87,7 @@ vtkDataSet* vtkTimeCoursePlotActor2::CreateDataSet(vtkFloatArray *yPoints, float
 }
 
 
-void vtkTimeCoursePlotActor2::SetPlot(vtkFloatArray *timeCourse, vtkFloatArray *model)
+void vtkTimeCoursePlotActor2::SetPlot(vtkFloatArray *timeCourse, vtkFloatArray *model, int waveform)
 {
     // Creates x points
     float *xPoints = new float [timeCourse->GetNumberOfTuples()];
@@ -121,11 +121,31 @@ void vtkTimeCoursePlotActor2::SetPlot(vtkFloatArray *timeCourse, vtkFloatArray *
     vtkFloatArray *tc = vtkFloatArray::New();
     tc->SetNumberOfTuples(size);
     tc->SetNumberOfComponents(1);
-    for (int i = 0; i < size; i++)
+    if (waveform == 0) // square waveform 
     {
-        float tmp = middle + (stimPtr[i] / 2) * (max - middle);
-        tc->SetComponent(i, 0, tmp);
+        float tmp;
+        for (int i = 0; i < size; i++)
+        {
+            if (stimPtr[i] != 0.0)
+            {
+                tmp = (max + min) / 2;
+            }
+            else
+            {
+                tmp = min;
+            }
+            tc->SetComponent(i, 0, tmp);
+        }
     }
+    else if (waveform == 1) // sinusoid
+    {
+        for (int i = 0; i < size; i++)
+        {
+            float tmp = middle + (stimPtr[i] / 2) * (max - middle);
+            tc->SetComponent(i, 0, tmp);
+        }
+    }
+
     // Creates data set for model 
     vtkDataSet* stimDataSet = CreateDataSet(tc, xPoints);
  
