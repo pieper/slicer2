@@ -136,26 +136,26 @@ proc tarup { {destdir "auto"} } {
     switch $::env(BUILD) {
         "solaris8" -
         "redhat7.3" { 
-            set libs [glob Lib/$::env(BUILD)/vtk/VTK-build/bin/*.so]
+            set libs [glob $::env(VTK_BIN_DIR)/bin/*.so]
             foreach lib $libs {
                 file copy $lib $destdir/Lib/$::env(BUILD)/vtk/VTK-build/bin
                 set ll [file tail $lib]
                 exec strip $destdir/Lib/$::env(BUILD)/vtk/VTK-build/bin/$ll
             }
-            file copy Lib/$::env(BUILD)/vtk/VTK-build/bin/vtk $destdir/Lib/$::env(BUILD)/vtk/VTK-build/bin
+            file copy $::env(VTK_BIN_DIR)/bin/vtk $destdir/Lib/$::env(BUILD)/vtk/VTK-build/bin
             file copy -force $::env(SLICER_HOME)/Scripts/slicer-vtk-pkgIndex.tcl $destdir/Lib/$::env(BUILD)/vtk/VTK-build/Wrapping/Tcl/pkgIndex.tcl
         }
         "Darwin" {
-            set libs [glob Lib/$::env(BUILD)/vtk/VTK-build/bin/*.dylib]
+            set libs [glob $::env(VTK_BIN_DIR)/bin/*.dylib]
             foreach lib $libs {
                 file copy $lib $destdir/Lib/$::env(BUILD)/vtk/VTK-build/bin
             }
-            file copy Lib/$::env(BUILD)/vtk/VTK-build/bin/vtk $destdir/Lib/$::env(BUILD)/vtk/VTK-build/bin
+            file copy $::env(VTK_BIN_DIR)/bin/vtk $destdir/Lib/$::env(BUILD)/vtk/VTK-build/bin
             file copy -force $::env(SLICER_HOME)/Scripts/slicer-vtk-pkgIndex.tcl $destdir/Lib/$::env(BUILD)/vtk/VTK-build/Wrapping/Tcl/pkgIndex.tcl
         }
         "Win32VC7" { 
             file mkdir $destdir/Lib/$::env(BUILD)/vtk/VTK-build/bin/debug
-            set libs [glob Lib/$::env(BUILD)/vtk/VTK-build/bin/debug/*.dll]
+            set libs [glob $::env(VTK_BIN_DIR)/bin/debug/*.dll]
             foreach lib $libs {
                 file copy $lib $destdir/Lib/$::env(BUILD)/vtk/VTK-build/bin/debug
             }
