@@ -3,8 +3,8 @@
   Program:   Insight Segmentation & Registration Toolkit
   Module:    $RCSfile: itkKLHistogramImageToImageMetric.h,v $
   Language:  C++
-  Date:      $Date: 2003/12/08 23:12:17 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2003/12/09 16:51:36 $
+  Version:   $Revision: 1.2 $
 
   Copyright (c) Insight Software Consortium. All rights reserved.
   See ITKCopyright.txt or http://www.itk.org/HTML/Copyright.htm for details.
@@ -126,7 +126,7 @@ public HistogramImageToImageMetric<TFixedImage, TMovingImage>
   /** Set epsilon, the histogram frequency to use if the frequency is 0 */
   itkSetMacro( Epsilon, double );
 
-  /** Get the region over which the given histogram will be computed */
+  /** Get epsilon, the histogram frequency to use if the frequency is 0 */
   itkGetConstMacro( Epsilon, double );
 
   /** Return the number of parameters required by the Transform */
