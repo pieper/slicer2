@@ -100,7 +100,7 @@ class VTK_EXPORT vtkImageReformat : public vtkImageToImageFilter
   // Description:
   // When determining the modified time of the filter, 
   // this checks the modified time of the matrices.
-  unsigned long int GetMTime();
+  unsigned long GetMTime();
 
 protected:
 	vtkImageReformat();

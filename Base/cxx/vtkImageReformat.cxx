@@ -1032,7 +1032,7 @@ void vtkImageReformat::ThreadedExecute(vtkImageData *inData,
 //----------------------------------------------------------------------------
 // Account for the MTime of the transform and its matrix when determinging
 // the MTime of the filter
-unsigned long int vtkImageReformat::GetMTime()
+unsigned long vtkImageReformat::GetMTime()
 {
   unsigned long mTime=this->vtkObject::GetMTime();
   unsigned long time;
