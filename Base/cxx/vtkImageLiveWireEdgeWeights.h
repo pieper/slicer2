@@ -33,7 +33,32 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #ifndef __vtkImageLiveWireEdgeWeights_h
 #define __vtkImageLiveWireEdgeWeights_h
 
+//  #define LIVEWIRE_TRAINING_EXPERIMENT
+
 #include "vtkImageNeighborhoodFilter.h"
+
+//BTX
+
+// This class contains all info necessary to use a computed feature
+class featureProperties
+{
+ public:
+  // pointer to member function to  convert image feature to cost (0<=cost<=1)
+  float (featureProperties:: * Transform)(float val); 
+  // parameters of this transform function
+  float * TransformParams;
+  int NumberOfParams;
+  // weight, or importance, of this feature in the overall edge cost
+  float Weight;
+  featureProperties();
+  ~featureProperties();
+
+ protected:
+  float GaussianCost(float x);
+
+};
+
+//ETX
 
 class VTK_EXPORT vtkImageLiveWireEdgeWeights : public vtkImageNeighborhoodFilter
 {
@@ -61,6 +86,27 @@ public:
   vtkGetMacro(OutsidePixel, float);
   vtkSetMacro(OutsidePixel, float);
 
+  // Description: 
+  // Set/Get the filename where the feature values will be written
+  // Used for feature training experiments
+  vtkSetStringMacro(FileName);
+  vtkGetStringMacro(FileName);
+
+  // Description:
+  // Number of features computed per voxel
+  vtkGetMacro(NumberOfFeatures, int);
+  //vtkSetMacro(NumberOfFeatures, int);
+
+  // Description:
+  // Set a parameter used to compute this feature
+  // Lauren check bounds?
+  void SetTransformParam(int featureNum, int paramNum, float param) 
+    {this->FeatureSettings[featureNum].TransformParams[paramNum] = param;};
+
+  // Description:
+  // Get all parameters used to compute the ith feature
+  featureProperties *GetFeatureSettings(int i) {return &this->FeatureSettings[i];};
+
 protected:
   vtkImageLiveWireEdgeWeights();
   ~vtkImageLiveWireEdgeWeights();
@@ -71,6 +117,16 @@ protected:
   float Difference;
   float InsidePixel;
   float OutsidePixel;
+
+  // Total number of features to compute
+  int NumberOfFeatures;
+
+  // Array containing all settings for each feature
+  // The intention is to make adding new features simple and general
+  featureProperties *FeatureSettings;
+
+  // for testing
+  char *FileName;
 
   void ThreadedExecute(vtkImageData *inData, vtkImageData *outData, 
     int extent[6], int id);

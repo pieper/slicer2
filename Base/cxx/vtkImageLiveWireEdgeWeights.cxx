@@ -28,6 +28,37 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkImageLiveWireEdgeWeights.h"
 #include <time.h>
 #include "vtkObjectFactory.h"
+#include <math.h>
+
+featureProperties::featureProperties()
+{
+  this->Transform = &featureProperties::GaussianCost;
+  this->NumberOfParams = 2;
+  this->TransformParams = new float[this->NumberOfParams];
+  this->TransformParams[0] = 0;
+  this->TransformParams[1] = 1;
+  this->Weight = 1;
+}
+
+featureProperties::~featureProperties()
+{
+  if (this->TransformParams != NULL) 
+    {
+      delete [] this->TransformParams;
+    }
+}
+
+float featureProperties::GaussianCost(float x)
+{
+  float mean = this->TransformParams[0];
+  float var = this->TransformParams[1];
+  return(exp(-((x-mean)*(x-mean))/(2*var*var))/sqrt(2*3.14159*var));  
+}
+
+float GaussianC(float x, float mean, float var)
+{
+  return(exp(-((x-mean)*(x-mean))/(2*var*var))/sqrt(2*3.14159*var));  
+}
 
 //------------------------------------------------------------------------------
 vtkImageLiveWireEdgeWeights* vtkImageLiveWireEdgeWeights::New()
@@ -42,29 +73,45 @@ vtkImageLiveWireEdgeWeights* vtkImageLiveWireEdgeWeights::New()
   return new vtkImageLiveWireEdgeWeights;
 }
 
-
-//----------------------------------------------------------------------------
-
-
-
 //----------------------------------------------------------------------------
 // Description:
 // Constructor sets default values
 vtkImageLiveWireEdgeWeights::vtkImageLiveWireEdgeWeights()
 {
+  this->FileName = NULL;
+
   this->MaxEdgeWeight = 255;
   
   this->Difference = 0.25;
   this->InsidePixel = 0.1;
   this->OutsidePixel = 0.1;
 
+  this->NumberOfFeatures = 6;
+
+  this->FeatureSettings = new featureProperties[this->NumberOfFeatures];
+
+  // Lauren ?
+  // Really, 3D kernel might make more sense!  
+  // but would need 3D input and need to reformat output...
+  // for now ignore mask, maybe change class inheritance later
+
+  //this->SetKernelSize(5,5,1);
+  this->SetKernelSize(3,3,1);
 }
 
 
 //----------------------------------------------------------------------------
 vtkImageLiveWireEdgeWeights::~vtkImageLiveWireEdgeWeights()
 {
-  
+  if (this->FileName != NULL)
+    {
+      delete [] this->FileName;
+    }
+
+  if (this->FeatureSettings != NULL)
+    {
+      delete [] this->FeatureSettings;
+    }
 }
 
 
@@ -93,7 +140,8 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
   int hoodIdx0, hoodIdx1, hoodIdx2;
   T *hoodPtr0, *hoodPtr1, *hoodPtr2;
   // For looping through the mask.
-  unsigned char *maskPtr, *maskPtr0, *maskPtr1, *maskPtr2;
+  float  *hoodCopyPtr, *hoodCopyPtr0, *hoodCopyPtr1, *hoodCopyPtr2;
+  // Lauren should loop through hoodCopy nicer!
   int maskInc0, maskInc1, maskInc2;
   // The extent of the whole input image
   int inImageMin0, inImageMin1, inImageMin2;
@@ -107,22 +155,43 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
   clock_t tStart, tEnd, tDiff;
   tStart = clock();
 
+#ifdef LIVEWIRE_TRAINING_EXPERIMENT
+  ofstream file;
+  char *filename;
+  filename = self->GetFileName();
+  if (filename==NULL)
+    {
+      printf("Execute: Set the filename first");
+      return;
+    }
+  file.open(filename);
+  if (file.fail())
+    {
+    printf("Execute: Could not open file %", filename);
+    return;
+    }  
+#endif
+
   // Get information to march through data
   inData->GetIncrements(inInc0, inInc1, inInc2); 
   self->GetInput()->GetWholeExtent(inImageMin0, inImageMax0, inImageMin1,
 				   inImageMax1, inImageMin2, inImageMax2);
+  cout << inImageMin2 << " " << inImageMax2 << endl;
   outData->GetIncrements(outInc0, outInc1, outInc2); 
   outMin0 = outExt[0];   outMax0 = outExt[1];
   outMin1 = outExt[2];   outMax1 = outExt[3];
   outMin2 = outExt[4];   outMax2 = outExt[5];
   numComps = outData->GetNumberOfScalarComponents();
 
+  // Lauren do this like regular filter?  (change inheritance?)
   // Neighborhood around current voxel
   self->GetRelativeHoodExtent(hoodMin0, hoodMax0, hoodMin1, 
 			      hoodMax1, hoodMin2, hoodMax2);
-
+  cout << hoodMin0<<hoodMax0<<hoodMin1 <<hoodMax1 << hoodMin2 <<hoodMax2 << endl;
   // Set up mask info
-  maskPtr = (unsigned char *)(self->GetMaskPointer());
+  //  maskPtr = (unsigned char *)(self->GetMaskPointer());
+  // Lauren use to loop through hoodCopy
+  // Lauren fix this!
   self->GetMaskIncrements(maskInc0, maskInc1, maskInc2);
 
   // in and out should be marching through corresponding pixels.
@@ -137,9 +206,15 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
   int maxEdge = self->GetMaxEdgeWeight();
 
   // multipliers set by user
-  float diff = self->GetDifference();
-  float inpix = self->GetInsidePixel();
-  float outpix = self->GetOutsidePixel();
+  //float diff = self->GetDifference();
+  //float inpix = self->GetInsidePixel();
+  //float outpix = self->GetOutsidePixel();
+
+  // temporary storage of features computed at a voxel
+  float features[self->GetNumberOfFeatures()];
+
+  // for temporary storage of neighbors for calculations
+  float n[self->GetKernelSize()[0]*self->GetKernelSize()[1]*self->GetKernelSize()[2]];
 
   // loop through components
   for (outIdxC = 0; outIdxC < numComps; ++outIdxC)
@@ -166,59 +241,210 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
 
 		  // ---- Neighborhood Operations ---- //
 
-		  // Lauren is this needed?
 		  // Default output equal to max edge value
-		  *outPtr0 = self->GetMaxEdgeWeight();
+		  *outPtr0 = maxEdge;
 
-		  // Loop through neighborhood pixels (kernel radius=1)
-		  // Note: input pointer marches out of bounds.
-
-		  // find beginning of neighborhood, relative to 
-		  // the current voxel.
-		  hoodPtr2 = inPtr0 + inInc0*hoodMin0 + inInc1*hoodMin1 + inInc2*hoodMin2;
-		  maskPtr2 = maskPtr;
-		  for (hoodIdx2 = hoodMin2; hoodIdx2 <= hoodMax2; ++hoodIdx2)
+		  // make sure entire kernel is within boundaries.
+		  // Note this means that a 3-D kernel won't 
+		  // work on 2-D input!
+		  // Lauren this is faster but better other way?
+	  	  if (outIdx0 + hoodMin0 >= inImageMin0 &&
+		      outIdx0 + hoodMax0 <= inImageMax0 &&
+		      outIdx1 + hoodMin1 >= inImageMin1 &&
+		      outIdx1 + hoodMax1 <= inImageMax1 &&
+		      outIdx2 + hoodMin2 >= inImageMin2 &&
+		      outIdx2 + hoodMax2 <= inImageMax2)
 		    {
-		      hoodPtr1 = hoodPtr2;
-		      maskPtr1 = maskPtr2;
-		      for (hoodIdx1 = hoodMin1; hoodIdx1 <= hoodMax1; ++hoodIdx1)
+
+		      //Lauren leftover from testing 5 like it's 3.
+//  		  if (outIdx0 - 1 >= inImageMin0 &&
+//  		      outIdx0 + 1 <= inImageMax0 &&
+//  		      outIdx1 - 1 >= inImageMin1 &&
+//  		      outIdx1 + 1 <= inImageMax1)
+//  		    {
+		      // loop through neighborhood pixels.
+		      // Lauren copy them into n, neighborhood temp array
+		      hoodPtr2 = inPtr0 + inInc0*hoodMin0 + inInc1*hoodMin1 
+			+ inInc2*hoodMin2;
+		      hoodCopyPtr2 = n;
+		      for (hoodIdx2 = hoodMin2; hoodIdx2 <= hoodMax2; ++hoodIdx2)
 			{
-			  hoodPtr0 = hoodPtr1;
-			  maskPtr0 = maskPtr1;
-			  for (hoodIdx0 = hoodMin0; hoodIdx0 <= hoodMax0; ++hoodIdx0)
+			  hoodPtr1 = hoodPtr2;
+			  hoodCopyPtr1 = hoodCopyPtr2;
+			  for (hoodIdx1 = hoodMin1; hoodIdx1 <= hoodMax1; ++hoodIdx1)
 			    {
-			      if (*maskPtr0)
+			      hoodPtr0 = hoodPtr1;
+			      hoodCopyPtr0 = hoodCopyPtr1;
+			      for (hoodIdx0 = hoodMin0; hoodIdx0 <= hoodMax0; ++hoodIdx0)
 				{
-				  // handle boundaries
-				  if (outIdx0 + hoodIdx0 >= inImageMin0 &&
-				      outIdx0 + hoodIdx0 <= inImageMax0 &&
-				      outIdx1 + hoodIdx1 >= inImageMin1 &&
-				      outIdx1 + hoodIdx1 <= inImageMax1 &&
-				      outIdx2 + hoodIdx2 >= inImageMin2 &&
-				      outIdx2 + hoodIdx2 <= inImageMax2)
-				    {
-				      // Compute various features.
+				  *hoodCopyPtr0 = (float)*hoodPtr0;
+				  
+				  hoodPtr0 += inInc0;
+				  hoodCopyPtr0 += maskInc0;
+				}//for0
+			      hoodPtr1 += inInc1;
+			      hoodCopyPtr1 += maskInc1;
+			    }//for1
+			  hoodPtr2 += inInc2;
+			  hoodCopyPtr2 += maskInc2;
+			}//for2  
+		  
+		      // this filter assumes bel
+		      // | out | in |
+		      //       V
+		      // rotate input for all bels.
 
-				      // Lauren what if input is float, etc? 
-				      // Lauren accept only short input, or something.
-				      // Lauren output MUST be positive!
-				      //*outPtr0 = *inPtr0 - *hoodPtr0;
+		      // Compute various features.
+		      
+		      if (self->GetKernelSize()[0] == 3) 
+			{
+			  // The "in" features correspond to 
+			  // the side of the bel with higher intensity.
+			  // inpix-outpix = p-q
+			  features[2] = n[3]-n[4];
+			  features[3] = .333333*(n[3]+n[0]+n[6]-n[1]-n[4]-n[7]);
+			  if (features[3] > 0)
+			    {
+			      // in pix magnitude = q
+			      features[0] = n[4];
+			      // out pix magnitude = p
+			      features[1] = n[3];
+			    }
+			  else 
+			    {
+			      // in pix magnitude = p
+			      features[0] = n[3];
+			      // out pix magnitude = q
+			      features[1] = n[4];
+			    }
+			      
+			  // inpix-outpix = p-q
+			  //features[2] = n[3]-n[4];
+			  // gradient = (1/3)*(p+t+v-u-q-w)
+			  features[3] = .333333*(n[3]+n[0]+n[6]-n[1]-n[4]-n[7]);
+			  // gradient = (1/2)*(p+t/2+v/2 -u-q/2-w/2)
+			  features[4] = .5*(n[3]+n[0]/2+n[6]/2
+					    -n[1]-n[4]/2-n[7]/2);
+			  // gradient = (1/4)*(p-u + t-q + p-w + v-q)
+			  features[5] = .25*(n[3]-n[1] + n[0]-n[4] + 
+					     n[3]-n[7] + n[6]-n[4]);
 
-				      // Lauren int for now...?  short?
-				      float sum = (diff*fabs((float)(*inPtr0 - *hoodPtr0)) + inpix*((float)*inPtr0) + outpix*((float)*hoodPtr0) + 1);
-				      *outPtr0 = maxEdge/(int)sum;
-				      //cout << hoodIdx0 << ": " << *outPtr0 << endl;
-				    }
-				}
-			      hoodPtr0 += inInc0;
-			      maskPtr0 += maskInc0;
-			    }//for0
-			  hoodPtr1 += inInc1;
-			  maskPtr1 += maskInc1;
-			}//for1
-		      hoodPtr2 += inInc2;
-		      maskPtr2 += maskInc2;
-		    }//for2
+			}
+		      else
+			if (self->GetKernelSize()[0] == 5) 
+			  {
+			    // compute same stuff as above smaller kernel
+			    
+			    // in pix magnitude = p
+			    features[0] = n[12];
+			    // out pix magnitude = q
+			    features[1] = n[11];
+			    // inpix-outpix = p-q
+			    features[2] = n[12]-n[11];
+			    // gradient = (1/3)*(p+t+v-u-q-w)
+			    features[3] = .333333*(n[11]+n[6]+n[16]
+						   -n[7]-n[12]-n[17]);
+			    // gradient = (1/2)*(p+t/2+v/2 -u-q/2-w/2)
+			    features[4] = .5*(n[11]+n[6]/2+n[16]/2
+					      -n[7]-n[12]/2-n[17]/2);
+			    // gradient = (1/4)*(p-u + t-q + p-w + v-q)
+			    features[5] = .25*(n[11]-n[7] + n[6]-n[12] + 
+					       n[11]-n[17] + n[16]-n[12]);
+
+			    // compute larger kernel size things
+			    // 2 in pix avg magnitude
+			    features[6] = .5*(n[12] + n[13]);
+			    // 2 out pix avg magnitude
+			    features[7] = .5*(n[10] + n[11]);
+			    // 4 in pix avg magnitude
+			    features[8] = .25*(n[12]+n[13]+n[8]+n[18]);
+			    // 4 out pix avg magnitude
+			    features[9] = .25*(n[10]+n[11]+n[5]+n[15]);
+
+			    // weird: sort of std. dev (in)
+			    features[10] = n[8]+n[13]+n[18]-3*n[12];
+			    features[11] = n[5]+n[10]+n[15]-3*n[11];
+
+			    // variances...
+			    // 2 in pix var
+			    float m = features[6];
+			    features[12] = .5*((n[12]-m)*(n[12]-m) + 
+					       (n[13]-m)*(n[13]-m));
+			    // 2 out pix var
+			    m = features[9];
+			    features[13] = .5*((n[10]-m)*(n[10]-m) + 
+					       (n[11]-m)*(n[11]-m));
+			    // 4 in pix var
+			    m = features[8];
+			    features[14] = .25*((n[12]-m)*(n[12]-m) + 
+						(n[13]-m)*(n[13]-m) +
+						(n[8]-m)*(n[8]-m) +
+						(n[18]-m)*(n[18]-m));
+
+			    // 4 out pix var
+			    m = features[9];
+			    features[15] = .25*((n[10]-m)*(n[10]-m) + 
+						(n[11]-m)*(n[11]-m) +
+						(n[5]-m)*(n[5]-m) +
+						(n[15]-m)*(n[15]-m));
+			    // Lauren need to do in/out depending on gradient dir!
+			    
+			    //also 3 pix mean, var?
+			    
+
+						
+			  }			
+		      // Lauren 3D kernel someday!!!!!!
+
+#ifdef LIVEWIRE_TRAINING_EXPERIMENT		      
+		      // Don't do this for an entire dataset!
+		      // Output them to a file. 
+		      for (int i=0;i<self->GetNumberOfFeatures();i++)
+			{
+			  file << features[i] << ' ';
+			}
+		      file << endl;
+#endif
+		      
+		      // Lauren fix this!
+
+		      // convert features to an edge weight
+#define callMemberFunction(object,ptrToMember)  ((object).*(ptrToMember)) 
+		      featureProperties *props;
+		      float sum = 0;
+		      for (int i=0;i<self->GetNumberOfFeatures();i++)
+			{
+			  //sum += GaussianCost(features[i], 0, 1);
+			  props = self->GetFeatureSettings(i);
+			  //(props->*Transform)();
+			  //sum += (props->*Transform)(features[i]);
+			  //sum += callMemberFunction(props,props.Transform);
+			  
+			  sum += GaussianC(features[i],props->TransformParams[0],props->TransformParams[1]);
+			}
+
+		      // each feature is between 0 and 1.  normalize sum to 1 
+		      // then multiply by max edge cost.
+		      *outPtr0 = (sum/self->GetNumberOfFeatures())*maxEdge;
+
+		      if (*outPtr > maxEdge) 
+			{
+			  cout << "ERROR in vtkImageLWEdgeWeights: edge cost too high " << *outPtr << endl;
+			}
+		      
+		    }
+		  else
+		    {
+#ifdef LIVEWIRE_TRAINING_EXPERIMENT		      
+		      // Output something to file if pix out of bounds
+		      // (won't matter unless segmenting region right at edge of img)
+		      for (int i=0;i<self->GetNumberOfFeatures();i++)
+			{
+			  file << 0 << ' ';
+			}
+		      file << endl;
+#endif
+		    }
 		  // ---- End Neighborhood Operations ---- //
 		  
 		  inPtr0 += inInc0;
@@ -233,6 +459,10 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
       inPtr++;
       outPtr++;
     }
+
+#ifdef LIVEWIRE_TRAINING_EXPERIMENT
+  file.close();
+#endif
 
   tEnd = clock();
   tDiff = tEnd - tStart;
@@ -249,6 +479,15 @@ void vtkImageLiveWireEdgeWeights::ThreadedExecute(vtkImageData *inData,
 						 vtkImageData *outData,
 						 int outExt[6], int id)
 {
+
+  // Lauren allocate additional outputs here.
+  // done like this in vtkImageToImageFilter:
+  //    vtkImageData *output = this->GetOutput();
+  
+  //    output->SetExtent(output->GetUpdateExtent());
+  //    output->AllocateScalars();
+  //    this->Execute(this->GetInput(), output);
+
   void *inPtr = inData->GetScalarPointerForExtent(outExt);
   
   switch (inData->GetScalarType())
