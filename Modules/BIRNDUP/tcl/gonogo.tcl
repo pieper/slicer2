@@ -306,9 +306,7 @@ proc mpCloseAll {} {
     global VIEW_LIST mp_out
 
     foreach view $VIEW_LIST {
-        if {$mp_out($view) ne ""} {
-            mpClose $view
-        }
+        catch "mpClose $view"
     }
 }
 
