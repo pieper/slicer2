@@ -143,9 +143,8 @@ class VTK_SLICER_BASE_EXPORT vtkPolyBoolean : public vtkPolyDataToPolyDataFilter
 {
 public:
 //  vtkPolyBoolean(vtkPolyData *pd=NULL);
-  vtkPolyBoolean();
-  ~vtkPolyBoolean();
   static vtkPolyBoolean *New() {return new vtkPolyBoolean;};
+  vtkTypeMacro(vtkPolyBoolean,vtkPolyDataToPolyDataFilter);
   const char *GetClassName() {return "vtkPolyBoolean";};
   void PrintSelf(ostream& os, vtkIndent indent);
 
@@ -197,6 +196,8 @@ public:
   void UpdateCutter();
 
 protected:
+  vtkPolyBoolean();
+  ~vtkPolyBoolean();
   void Execute();
 
   static int ProcessTwoNodes(vtkOBBNode *nodeA, vtkOBBNode *nodeB,
