@@ -17,8 +17,6 @@ set windows "Win32VC7"
 ## variables that are the same for all systems
 set SLICER_DATA_ROOT ""
 
-set env(SLICER_HOME) "C:/slicer2-checkout/slicer2-2004-03-23-checkout/slicer2"
-
 if {[info exists env(SLICER_HOME)]} {
     # already set by the launcher
     set SLICER_HOME $env(SLICER_HOME)
