@@ -77,9 +77,9 @@ proc VolumesInit {} {
     set Module($m,row1Name) "{Help} {Display} {Props} {Reformat}"
     set Module($m,row1,tab) Display
     
-    set Module($m,row2List) "Other" 
-    set Module($m,row2Name) "{Other}"
-    set Module($m,row2,tab) Other
+    set Module($m,row2List) "Export Other" 
+    set Module($m,row2Name) "{Export} {Other}"
+    set Module($m,row2,tab) Export
 
     # Module Summary Info
     set Module($m,overview) "Load/display 3d volumes (grayscale or label) in the slicer."
@@ -99,7 +99,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.91 $} {$Date: 2003/12/19 13:41:45 $}]
+            {$Revision: 1.92 $} {$Date: 2004/01/31 23:32:03 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -125,6 +125,10 @@ proc VolumesInit {} {
     Volumes(writer) SetEndMethod        MainEndProgress
 
     set Volumes(prefixSave) ""
+
+    set Volumes(exportFileType) Radiological
+    set Volumes(exportFileTypeList) {Radiological Neurological}
+    set Volumes(exportFileTypeList,tooltips) {"File contains radiological convention images" "File contains a neurological convention images"}
 
 
     # Submodules for reading various volume types
@@ -685,6 +689,66 @@ you need to create and select 2 fiducials and then press the 'define new axis' b
         -command "VolumesReformatSave"} $Gui(WBA)
     TooltipAdd $f.bWrite "Save the Volume."
     pack $f.bWrite
+
+
+    #-------------------------------------------
+    # Export frame
+    #-------------------------------------------
+    set fExport $Module(Volumes,fExport)
+    set f $fExport
+
+    # Frames
+    frame $f.fActive -bg $Gui(backdrop) -relief sunken -bd 2
+    frame $f.fFile -bg $Gui(activeWorkspace) -relief groove -bd 3
+
+    pack $f.fActive -side top -pady $Gui(pad) -padx $Gui(pad)
+    pack $f.fFile  -side top -pady $Gui(pad) -padx $Gui(pad) -fill x
+
+    #-------------------------------------------
+    # Export->Active frame
+    #-------------------------------------------
+    set f $fExport.fActive
+
+    eval {label $f.lActive -text "Active Volume: "} $Gui(BLA)
+    eval {menubutton $f.mbActive -text "None" -relief raised -bd 2 -width 20 \
+        -menu $f.mbActive.m} $Gui(WMBA)
+    eval {menu $f.mbActive.m} $Gui(WMA)
+    pack $f.lActive $f.mbActive -side left -pady $Gui(pad) -padx $Gui(pad)
+
+    # Append widgets to list that gets refreshed during UpdateMRML
+    lappend Volume(mbActiveList) $f.mbActive
+    lappend Volume(mActiveList)  $f.mbActive.m
+
+
+    #-------------------------------------------
+    # Export->Filename frame
+    #-------------------------------------------
+
+    set f $fExport.fFile
+
+    eval {label $fExport.l -text "Export Analyze Format\nWarning: there is a pixel shift\nbug in the output"} $Gui(WLA)
+    pack  $fExport.l -side top -padx $Gui(pad)    
+
+    eval {button $f.bWrite -text "Save" -width 5 \
+        -command "VolumesExport"} $Gui(WBA)
+    TooltipAdd $f.bWrite "Save the Volume."
+    pack  $f.bWrite -side bottom -padx $Gui(pad)    
+
+    DevAddFileBrowse $f Volumes "prefixSave" "Analyze File:" "" "hdr" "\$Volume(DefaultDir)" "Save" "Browse for a Analyze save file (will save .hdr and .img)" "Absolute"
+
+
+    DevAddLabel $f.l "File Type: "
+    pack $f.l -side left -padx $Gui(pad) -pady 0
+    #set gridList $f.l
+
+    foreach type $Volumes(exportFileTypeList) tip $Volumes(exportFileTypeList,tooltips) {
+        eval {radiobutton $f.rMode$type \
+                  -text "$type" -value "$type" \
+                  -variable Volumes(exportFileType)\
+                  -indicatoron 0} $Gui(WCA) 
+        pack $f.rMode$type -side left -padx $Gui(pad) -pady 0
+        TooltipAdd  $f.rMode$type $tip
+    }   
     
     #-------------------------------------------
     # Other frame
@@ -1816,5 +1880,94 @@ proc VolumesReformatSave {} {
     set spacing [expr $maxfov / (1. * $resolution)]
     DevInfoWindow "Reformat complete: pixel spacing is $spacing x $spacing x 1.0 mm"
     
+}
+
+#-------------------------------------------------------------------------------
+# .PROC VolumesExport
+# - export to Analyze Format 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc VolumesExport {} {
+    
+    global Volume Volumes
+    
+    # get the chosen volume
+    set v $Volume(activeID)
+
+    if { $v == 0 } {
+        DevInfoWindow "VolumesExport: Please select a volume to export."
+    }
+
+    
+    # set initial directory to dir where vol last opened if unset
+    if {$Volumes(prefixSave) == ""} {
+        set Volumes(prefixSave) \
+            [file join $Volume(DefaultDir) [Volume($v,node) GetName]]
+    }
+
+    if { [catch "package require vtkCISGFile"] } {
+        DevErrorWindow "VolumesExport: vtkCISGFile Module is missing.  Cannot export Analyze format."
+        return;
+    }
+
+    if { [file extension $Volumes(prefixSave)] != ".hdr" } {
+        set Volumes(prefixSave) ${Volumes(prefixSave)}.hdr
+    }
+    
+    if { [catch "package require iSlicer"] } {
+        DevErrorWindow "VolumesExport: iSlicer Module missing.  Cannot export Analyze format."
+        return;
+    }
+
+    set width [lindex [Volume($v,node) GetDimensions] 0]
+    set height [lindex [Volume($v,node) GetDimensions] 1]
+    if { $width > $height } {set max $width} else {set max $height}
+
+    if { [Volume($v,node) GetInterpolate] == 1 } {
+        set interpolation linear
+    } else {
+        set interpolation nearest
+    }
+
+    set w .volumesexport
+    catch "destroy $w"
+    toplevel $w
+    wm geometry $w [expr 20+ $width]x[expr 40 + $height]
+
+    # pack [isvolume $w.isv] -fill both -expand true
+    wm withdraw $w
+    isvolume $w.isv
+
+    $w.isv configure -volume $v -resolution $max -interpolation $interpolation
+    $w.isv configure -orientation coronal
+    $w.isv configure -orientation axial
+
+    eval [$w.isv imagedata] SetUpdateExtent [[$w.isv imagedata] GetWholeExtent]
+
+    catch "export_flipY Delete"
+    vtkImageFlip export_flipY
+    export_flipY SetInput [$w.isv imagedata]
+    export_flipY SetFilteredAxis 1
+
+    catch "export_flipX Delete"
+    vtkImageFlip export_flipX
+    export_flipX SetInput [export_flipY GetOutput]
+    export_flipX SetFilteredAxis 0
+    
+    catch "export_aw Delete"
+    vtkCISGAnalyzeWriter export_aw 
+    export_aw SetFileName $Volumes(prefixSave)
+    if { $::Volumes(exportFileType) == "Neurological" } {
+        export_aw SetInput [export_flipY GetOutput]
+    } else {
+        export_aw SetInput [export_flipX GetOutput]
+    }
+    export_aw Update
+
+    export_aw Delete
+    export_flipX Delete
+    export_flipY Delete
+    catch "destroy $w"
 }
 
