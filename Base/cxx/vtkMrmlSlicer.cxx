@@ -2536,3 +2536,50 @@ void vtkMrmlSlicer::VolumeReformattersSetFieldOfView(float fov)
     }
 }
 
+//----------------------------------------------------------------------------
+// Description:
+// Returns the compiler version used to compile the Slicer code
+// For GCC returns VVRRPP, where VV=Version, RR=Revision, PP=Patchlevel
+// For Microsoft compiler, returns value of _MSC_VER which has some arcane
+//relationship to the major and minor version numbers
+// Else returns 0
+int vtkMrmlSlicer::GetCompilerVersion()
+{
+
+#if defined(__GNUC__)
+#if defined(__GNU_PATCHLEVEL__)
+    return (__GNUC__ * 10000 \
+            + __GNUC_MINOR__ * 100 \
+            + __GNUC_PATCHLEVEL__);
+# else
+    return (__GNUC__ * 10000 \
+            + __GNUC_MINOR__ * 100);
+# endif
+#endif
+
+#if defined(_MSC_VER)
+    return (_MSC_VER);
+#endif
+    
+    return 0;
+}
+//----------------------------------------------------------------------------
+// Description:
+// Returns the compiler used to compile the Slicer code
+// For GCC returns GCC
+// For Microsoft compiler, MSC
+// Else returns UNKNOWN
+
+char * vtkMrmlSlicer::GetCompilerName()
+{
+
+#if defined(__GNUC__)
+    return "GCC";
+#endif
+
+#if defined(_MSC_VER)
+    return "MSC";
+#endif
+    
+    return "UKNOWN";
+}

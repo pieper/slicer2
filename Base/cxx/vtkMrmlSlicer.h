@@ -509,6 +509,13 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
   // 
   void ReformatModified() {this->BuildUpperTime.Modified();};
 
+    // Description:
+    // return the version number of the compiler
+   int GetCompilerVersion();
+    // Description:
+    // return the name of the compiler
+    char *GetCompilerName();
+    
 protected:
   vtkMrmlSlicer();
   ~vtkMrmlSlicer();
@@ -633,6 +640,7 @@ protected:
   // set field of view in al reformatters when slicer's FOV updates
   void VolumeReformattersSetFieldOfView(float fov);
 
+    
 };
 
 #endif
