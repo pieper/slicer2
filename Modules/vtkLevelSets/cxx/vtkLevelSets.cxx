@@ -2177,36 +2177,36 @@ void vtkLevelSets::Evolve3D( int first_band, int last_band)
     float* im   = (float*) this->inputImage->GetScalarPointer();
 
     register short i,j,k;
-    register float u0,upx,upy,upz,umx,umy,umz;
-    register float D0x,D0y,D0z;
-    register float i0x,i0y,i0z;
-    register float delta0,sqrtdelta0;
-    register float imx,imy,imz;
-    register float D0xy,D0yz,D0zx;
-    register float normcompsq;
-    register float D_x,Dx,D_y,Dy,D_z,Dz;
-    register float Dpmx=0;
-    register float Dpmy=0;
-    register float Dpmz=0;
-    //    register float dxy2, dyz2, dxz2;
-    register float dxy, dyz, dxz;
-    register float meancurv_grad;
-    register float gausscurv_grad2;
-    register float smallercurv_grad;
-    register float biggercurv_grad;
-    float discriminant=0, dxsq=0,dysq=0,dzsq=0;
-    float imcomp=0,costerm,ut;
-    float curvterm;
-    float balloonterm;
+    register double u0,upx,upy,upz,umx,umy,umz;
+    register double D0x,D0y,D0z;
+    register double i0x,i0y,i0z;
+    register double delta0,sqrtdelta0;
+    register double imx,imy,imz;
+    register double D0xy,D0yz,D0zx;
+    register double normcompsq;
+    register double D_x,Dx,D_y,Dy,D_z,Dz;
+    register double Dpmx=0;
+    register double Dpmy=0;
+    register double Dpmz=0;
+    //    register double dxy2, dyz2, dxz2;
+    register double dxy, dyz, dxz;
+    register double meancurv_grad;
+    register double gausscurv_grad2;
+    register double smallercurv_grad;
+    register double biggercurv_grad;
+    double discriminant=0, dxsq=0,dysq=0,dzsq=0;
+    double imcomp=0,costerm,ut;
+    double curvterm;
+    double balloonterm;
 
     register int mx,my,mz,px,py,pz;
 
-    float adv;
+    double adv;
 
-    float Vx,Vy,Vz;
+    double Vx,Vy,Vz;
 
-    float vel;
-    float Gx,Gy,Gz,Gnorm,sp,norm_vel;
+    double vel;
+    double Gx,Gy,Gz,Gnorm,sp,norm_vel;
  
 
     //  if (GB_debug) {
