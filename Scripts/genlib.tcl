@@ -174,11 +174,11 @@ switch $tcl_platform(os) {
         set itclTestFile $TCL_LIB_DIR/itcl3.2/itcl32.dll
         set iwidgetsTestFile $TCL_LIB_DIR/iwidgets4.0.2/iwidgets.tcl
         set bltTestFile $TCL_BIN_DIR/BLT24.dll
-        set vtkTestFile $VTK_DIR/bin/vtk.exe
+        set vtkTestFile $VTK_DIR/bin/$VTK_BUILD_TYPE/vtk.exe
         set vtkTclLib $TCL_LIB_DIR/tcl84.lib
         set vtkTkLib $TCL_LIB_DIR/tk84.lib
         set vtkTclsh $TCL_BIN_DIR/tclsh84.exe
-        set itkTestFile $ITK_BINARY_PATH/bin/libITKCommon.dll
+        set itkTestFile $ITK_BINARY_PATH/bin/$VTK_BUILD_TYPE/libITKCommon.dll
     }
 }
 
