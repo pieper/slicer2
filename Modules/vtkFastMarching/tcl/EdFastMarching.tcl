@@ -137,12 +137,20 @@ When satisfied with the segmentation use other editing modules on the labelmap (
     #-------------------------------------------
     set f $Ed(EdFastMarching,frame).fTabbedFrame.fBasic
  
+    frame $f.fLogo     -bg $Gui(activeWorkspace)
     frame $f.fGrid     -bg $Gui(activeWorkspace)
     frame $f.fExpand   -bg $Gui(activeWorkspace)
     frame $f.fUserExpand   -bg $Gui(activeWorkspace)
 
-    pack $f.fGrid $f.fExpand $f.fUserExpand \
+    pack $f.fLogo $f.fGrid $f.fExpand $f.fUserExpand \
     -side top -fill x 
+
+    #-------------------------------------------
+    # FastMarching->Logo Frame
+    #-------------------------------------------
+    set f $Ed(EdFastMarching,frame).fTabbedFrame.fBasic.fLogo
+    set im [image create photo -file $::env(SLICER_HOME)/Modules/vtkFastMarching/images/gatech.ppm]
+    pack [label $f.logo -image $im]
 
     #-------------------------------------------
     # FastMarching->Grid frame
@@ -302,90 +310,90 @@ proc EdFastMarchingEnter {} {
 
     if {$EdFastMarching(fastMarchingInitialized) == 0} {
 
-    set e EdFastMarching
+        set e EdFastMarching
 
-    set EdFastMarching(label) -1
+        set EdFastMarching(label) -1
 
-    EdFastMarchingLabel         
+        EdFastMarchingLabel         
 
-    # Make sure we're colored
-    LabelsColorWidgets
+        # Make sure we're colored
+        LabelsColorWidgets
 
-    set v [EditorGetInputID $Ed($e,input)]
-    set depth [Volume($v,vol) GetRangeHigh]
+        set v [EditorGetInputID $Ed($e,input)]
+        set depth [Volume($v,vol) GetRangeHigh]
 
-    set dim [[Volume($v,vol) GetOutput] GetWholeExtent]
-    scan [Volume($v,node) GetSpacing] "%f %f %f" dx dy dz
+        set dim [[Volume($v,vol) GetOutput] GetWholeExtent]
+        scan [Volume($v,node) GetSpacing] "%f %f %f" dx dy dz
 
-    # create the vtk object 
-    vtkFastMarching EdFastMarching(FastMarching) 
+        # create the vtk object 
+        vtkFastMarching EdFastMarching(FastMarching) 
 
-    vtkImageCast EdFastMarching(castToShort)
-    EdFastMarching(castToShort) SetOutputScalarTypeToShort
-    EdFastMarching(FastMarching) SetInput [EdFastMarching(castToShort) GetOutput]
+        vtkImageCast EdFastMarching(castToShort)
+        EdFastMarching(castToShort) SetOutputScalarTypeToShort
+        EdFastMarching(FastMarching) SetInput [EdFastMarching(castToShort) GetOutput]
 
-    set EdFastMarching(majorVersionCXX) [EdFastMarching(FastMarching) cxxMajorVersion]
-    set EdFastMarching(versionCXX) [EdFastMarching(FastMarching) cxxVersionString]
+        set EdFastMarching(majorVersionCXX) [EdFastMarching(FastMarching) cxxMajorVersion]
+        set EdFastMarching(versionCXX) [EdFastMarching(FastMarching) cxxVersionString]
 
-    if $EdFastMarching(majorVersionTCL)==$EdFastMarching(majorVersionCXX) {
+        if $EdFastMarching(majorVersionTCL)==$EdFastMarching(majorVersionCXX) {
+            set EdFastMarching(shouldDisplayWarningVersion) 0
+        }
+
+        if $EdFastMarching(shouldDisplayWarningVersion)==1 {
+        tk_messageBox -message "The module binaries are outdated, you should probably recompile them.\n\n You can have a look at the 'advanced' tab for more info and at the on-line tutorial (URL given in the 'help' tab) to learn more about re-compiling the module."
         set EdFastMarching(shouldDisplayWarningVersion) 0
-    }
+        }
 
-    if $EdFastMarching(shouldDisplayWarningVersion)==1 {
-    tk_messageBox -message "The module binaries are outdated, you should probably recompile them.\n\n You can have a look at the 'advanced' tab for more info and at the on-line tutorial (URL given in the 'help' tab) to learn more about re-compiling the module."
-    set EdFastMarching(shouldDisplayWarningVersion) 0
-    }
+        # initialize the object
+        EdFastMarching(FastMarching) init \
+            [expr [lindex $dim 1] + 1] [expr [lindex $dim 3] + 1] [expr [lindex $dim 5] + 1] $depth $dx $dy $dz
 
-    # initialize the object
-    EdFastMarching(FastMarching) init \
-        [expr [lindex $dim 1] + 1] [expr [lindex $dim 3] + 1] [expr [lindex $dim 5] + 1] $depth $dx $dy $dz
+        set EdFastMarching(fastMarchingInitialized) 1
 
-    set EdFastMarching(fastMarchingInitialized) 1
+        set EdFastMarching(fidFiducialList) \
+            [ FiducialsCreateFiducialsList "default" "FastMarching-seeds" 0 3 ]
 
-    set EdFastMarching(fidFiducialList) \
-        [ FiducialsCreateFiducialsList "default" "FastMarching-seeds" 0 3 ]
+        # Required
+        set Ed($e,scope)  3D 
+        set Ed($e,input)  Original
+        set Ed($e,interact) Active
 
-    # Required
-    set Ed($e,scope)  3D 
-    set Ed($e,input)  Original
-    set Ed($e,interact) Active
+        EditorActivateUndo 0
+        
+        EditorClear Working
+        
+        set v [EditorGetInputID $Ed($e,input)]
 
-    EditorActivateUndo 0
-    
-    EditorClear Working
-    
-    set v [EditorGetInputID $Ed($e,input)]
+        EdSetupBeforeApplyEffect $v $Ed($e,scope) Native
+        Ed(editor)  UseInputOn
 
-    EdSetupBeforeApplyEffect $v $Ed($e,scope) Native
-    Ed(editor)  UseInputOn
+        set Gui(progressText) "FastMarching: initializing"
 
-    set Gui(progressText) "FastMarching: initializing"
+        MainStartProgress
 
-    MainStartProgress
+        # insert a cast to SHORT before the editor
+        # note: no effect if data already SHORT
+        EdFastMarching(castToShort) SetInput [Ed(editor) GetInput]
+        Ed(editor)  SetInput [EdFastMarching(castToShort) GetOutput]
 
-    # insert a cast to SHORT before the editor
-    # note: no effect if data already SHORT
-    EdFastMarching(castToShort) SetInput [Ed(editor) GetInput]
-    Ed(editor)  SetInput [EdFastMarching(castToShort) GetOutput]
+        EdFastMarching(FastMarching) Modified
 
-    EdFastMarching(FastMarching) Modified
+    #note: that would work too but would screw up the progress bar
+    #Ed(editor) Apply EdFastMarching(castToShort) EdFastMarching(FastMarching)
 
-#note: that would work too but would screw up the progress bar
-#Ed(editor) Apply EdFastMarching(castToShort) EdFastMarching(FastMarching)
+        Ed(editor) Apply  EdFastMarching(FastMarching) EdFastMarching(FastMarching)
 
-    Ed(editor) Apply  EdFastMarching(FastMarching) EdFastMarching(FastMarching)
+        # necessary for init
+        EdFastMarchingLabel 
+        # Make sure we're colored
+        LabelsColorWidgets
 
-    # necessary for init
-    EdFastMarchingLabel 
-    # Make sure we're colored
-    LabelsColorWidgets
+        MainEndProgress
 
-    MainEndProgress
+        Ed(editor)  SetInput ""
+        Ed(editor)  UseInputOff
 
-    Ed(editor)  SetInput ""
-    Ed(editor)  UseInputOff
-
-    EdUpdateAfterApplyEffect $v
+        EdUpdateAfterApplyEffect $v
     }    
     FiducialsSetActiveList "FastMarching-seeds"
 }
