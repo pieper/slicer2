@@ -4,21 +4,19 @@
 package require vtk
 package require vtkinteraction
 
-load ../builds/bin/libvtkFreeSurferReadersTCL.so
+load ../bin/libvtkFreeSurferReadersTCL.so
 
 # This loads the scalar file.
-set reader [vtkFSSurfaceScalarReader _curv]
+set scalars [vtkFloatArray _scalars]
+set reader [vtkFSSurfaceScalarReader _reader]
 $reader SetFileName "/home/kteich/subjects/anders/surf/lh.curv"
-$reader Update
+$reader SetOutput $scalars
+$reader ReadFSScalars
 
 # check some values
-set curv [$reader GetOutput]
-if { $curv != "" } {
-    set lRange [$curv GetRange]
-    puts "Range: [lindex $lRange 0] -> [lindex $lRange 1]"
-} else {
-    puts "Didn't get it."
-}
+set lRange [$scalars GetRange]
+puts "Range: [lindex $lRange 0] -> [lindex $lRange 1]"
+
 
 
 exit
