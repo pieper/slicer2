@@ -134,7 +134,7 @@ proc DTMRIInit {} {
     set Module($m,author) "Lauren O'Donnell"
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.41 $} {$Date: 2004/11/15 19:25:40 $}]
+                  {$Revision: 1.42 $} {$Date: 2004/11/15 20:41:18 $}]
 
      # Define Tabs
     #------------------------------------
@@ -381,19 +381,19 @@ proc DTMRIInit {} {
                                "Magnitude of the correction bias added for tractography" ]
     set DTMRI(stream,variableList) [list \
                     MaximumPropagationDistance IntegrationStepLength \
-                    StepLength Radius  NumberOfSides IntegrationDirection]
+                    StepLength Radius  NumberOfSides MaxCurvature]
     set DTMRI(stream,precisevariableList) [list \
                            MaximumPropagationDistance MinimumPropagationDistance TerminalEigenvalue \
                            IntegrationStepLength \
-                           StepLength Radius  NumberOfSides IntegrationDirection \
+                           StepLength Radius  NumberOfSides  \
                            MaxStep MinStep MaxError MaxAngle LengthOfMaxAngle]
     set DTMRI(stream,variableList,text) [list \
                          "Max Length" "Step Size" \
-                         "Smoothness (along)" "Radius"  "Smoothness (around)" "Direction"]
+                         "Smoothness (along)" "Radius"  "Smoothness (around)" "Curvature Threshold"]
     set DTMRI(stream,precisevariableList,text) [list \
                             "Max Length" "Min Length" "Terminal Eigenvalue"\
                             "Step Size" \
-                            "Smoothness (along)" "Radius"  "Smoothness (around)" "Direction" \
+                            "Smoothness (along)" "Radius"  "Smoothness (around)" \
                             "Max Step" "Min Step" "Max Error" "Max Angle" "Length for Max Angle"]
     set DTMRI(stream,variableList,tooltips) [list \
                          "MaximumPropagationDistance: Tractography will stop after this distance" \
@@ -401,7 +401,7 @@ proc DTMRIInit {} {
                          "StepLength: Length of each displayed tube segment" \
                          "Radius: Initial radius (thickness) of displayed tube" \
                          "NumberOfSides: Number of sides of displayed tube" \
-                         "IntegrationDirection: Number of directions to follow from initial point (1 or 2)"]
+                         "Curvature Threshold: Max curvature allowed in tracking"]
     
     set DTMRI(stream,precisevariableList,tooltips) [list \
                             "MaximumPropagationDistance: Tractography will stop after this distance" \
@@ -411,7 +411,6 @@ proc DTMRIInit {} {
                             "StepLength: Length of each displayed tube segment" \
                             "Radius: Initial radius (thickness) of displayed tube" \
                             "NumberOfSides: Number of sides of displayed tube" \
-                            "IntegrationDirection: Number of directions to follow from initial point (1 or 2)"\
                             "MaxStep: Maximum step size when following path" \
                             "MinStep: Minimum step size when following path" \
                             "MaxError: Maximum Error of each step" \
@@ -425,7 +424,7 @@ proc DTMRIInit {} {
     # Magnitude of the correction bias
     set DTMRI(stream,CorrectionBias)  0.5
 
-    set DTMRI(stream,MaximumPropagationDistance)  100.0
+    set DTMRI(stream,MaximumPropagationDistance)  600.0
     set DTMRI(stream,MinimumPropagationDistance)  30.0
     # Terminal Eigenvalue
     set DTMRI(stream,TerminalEigenvalue)  0.0
@@ -454,8 +453,7 @@ proc DTMRIInit {} {
     # sides of tube
     #set DTMRI(stream,NumberOfSides)  4
     set DTMRI(stream,NumberOfSides)  6
-    # 2 means SetIntegrationDirectionToIntegrateBothDirections
-    set DTMRI(stream,IntegrationDirection)  2
+    set DTMRI(stream,MaxCurvature) 1.3
 
     #------------------------------------
     # Variables for auto streamline display

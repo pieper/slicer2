@@ -388,6 +388,9 @@ vtkHyperStreamline * vtkMultipleStreamlineController::CreateHyperStreamline()
           currHSP->SetRadius(this->VtkHyperStreamlinePointsSettings->GetRadius());
           // NumberOfSides
           currHSP->SetNumberOfSides(this->VtkHyperStreamlinePointsSettings->GetNumberOfSides());
+          // MaxCurvature
+          currHSP->SetMaxCurvature(this->VtkHyperStreamlinePointsSettings->GetMaxCurvature());
+
           // IntegrationDirection (set in this class, default both ways)
           currHSP->SetIntegrationDirection(this->IntegrationDirection);
 
