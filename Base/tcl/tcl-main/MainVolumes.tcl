@@ -58,7 +58,7 @@ proc MainVolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.51 $} {$Date: 2002/08/22 19:50:10 $}]
+    {$Revision: 1.52 $} {$Date: 2002/10/24 22:33:19 $}]
 
     set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -122,16 +122,25 @@ proc MainVolumesBuildVTK {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainVolumesUpdateMRML {} {
-    global Volume Lut Gui
+    global Volume Lut Gui Module
 
     # Build any new volumes
     #--------------------------------------------------------
     foreach v $Volume(idList) {
+        if {$Module(verbose) == 1} {
+            puts "MainVolumesUpdateMRML: checking volume $v"
+        }
         if {[MainVolumesCreate $v] > 0} {
             # Mark it as not being created on the fly 
             # since it was added from the Data module or read in from MRML
             set Volume($v,fly) 0
+            if {$Module(verbose) == 1} {
+                puts "MainVolumesUpdateMRML: about to call MainVolumesRead for $v"
+            }
             set retval [MainVolumesRead $v]
+            if {$Module(verbose) == 1} { 
+                puts "MainVolumesUpdateMRML: retval from MainVolumesRead for $v = $retval" 
+            }
             if {$retval < 0} {
                 # Let the user know about the error
                 tk_messageBox -message "Could not read volume [Volume($v,node) GetFullPrefix] - return value $retval."
@@ -139,7 +148,7 @@ proc MainVolumesUpdateMRML {} {
                 MainMrmlDeleteNodeDuringUpdate Volume $v
                 
             }
-        }
+        } 
     }  
 
     # Delete any old volumes
@@ -173,6 +182,9 @@ proc MainVolumesUpdateMRML {} {
     # Registration
     foreach v $Volume(idList) {
         if {$v != $Volume(idList)} {
+            if {$Module(verbose) == 1} {
+                puts "MainVolumesUpdateMRML: calling MainVolumesUpdate on v=$v"
+            }
             MainVolumesUpdate $v
         }
     }
@@ -214,8 +226,10 @@ proc MainVolumesCopyData {dst src clear} {
 proc MainVolumesCreate {v} {
     global View Volume Gui Dag Lut
 
+    # puts "MainVolumesCreate: checking Volume $v "
     # If we've already built this volume, then do nothing
     if {[info command Volume($v,vol)] != ""} {
+        # puts "Volume $v already exists - returning"
         return 0
     }
 
