@@ -98,8 +98,8 @@ protected:
   void ExecuteInformation(vtkImageData *inData, vtkImageData *outData);
   void Execute(vtkImageData *inData, vtkImageData *outData);
   void vtkImagePlotExecute(
-				  vtkImageData *inData,  unsigned char *inPtr,  int inExt[6],
-				  vtkImageData *outData, unsigned char *outPtr, int outExt[6]);
+                  vtkImageData *inData,  unsigned char *inPtr,  int inExt[6],
+                  vtkImageData *outData, unsigned char *outPtr, int outExt[6]);
 };
 
 #endif

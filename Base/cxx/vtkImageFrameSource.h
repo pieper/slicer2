@@ -34,27 +34,27 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 class VTK_EXPORT vtkImageFrameSource : public vtkImageSource 
 {
 public:
-	static vtkImageFrameSource *New();
+    static vtkImageFrameSource *New();
   vtkTypeMacro(vtkImageFrameSource,vtkImageSource);
- 	void PrintSelf(ostream& os, vtkIndent indent);
+     void PrintSelf(ostream& os, vtkIndent indent);
 
-	void SetExtent(int xMin, int xMax, int yMin, int yMax);
+    void SetExtent(int xMin, int xMax, int yMin, int yMax);
 
-	void ExecuteInformation();
+    void ExecuteInformation();
 
-	vtkSetObjectMacro(RenderWindow, vtkRenderWindow);
-	vtkGetObjectMacro(RenderWindow, vtkRenderWindow);
+    vtkSetObjectMacro(RenderWindow, vtkRenderWindow);
+    vtkGetObjectMacro(RenderWindow, vtkRenderWindow);
 
 protected:
-	vtkImageFrameSource();
-	~vtkImageFrameSource();
+    vtkImageFrameSource();
+    ~vtkImageFrameSource();
   vtkImageFrameSource(const vtkImageFrameSource&) {};
   void operator=(const vtkImageFrameSource&) {};
 
-	int WholeExtent[6];
-	vtkRenderWindow *RenderWindow;
+    int WholeExtent[6];
+    vtkRenderWindow *RenderWindow;
 
-	void Execute(vtkImageData *data);
+    void Execute(vtkImageData *data);
 };
 
 

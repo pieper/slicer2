@@ -36,7 +36,7 @@ class VTK_EXPORT vtkImageErode : public vtkImageNeighborhoodFilter
 public:
   static vtkImageErode *New();
   vtkTypeMacro(vtkImageErode,vtkImageSpatialFilter);
-	
+    
   // Description: 
   // Background and foreground pixel values in the image.
   // Usually 0 and some label value, respectively.

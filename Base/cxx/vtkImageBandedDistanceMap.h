@@ -41,7 +41,7 @@ class VTK_EXPORT vtkImageBandedDistanceMap : public vtkImageNeighborhoodFilter
 public:
   static vtkImageBandedDistanceMap *New();
   vtkTypeMacro(vtkImageBandedDistanceMap,vtkImageSpatialFilter);
-	
+    
   // Description: 
   // Background and foreground pixel values in the image.
   // Usually 0 and some label value, respectively.

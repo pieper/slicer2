@@ -52,9 +52,9 @@ vtkImageLabelVOI::vtkImageLabelVOI()
 // This templated function executes the filter for any type of data.
 template <class T>
 static void vtkImageLabelVOIExecute(vtkImageLabelVOI *self,
-				     vtkImageData *inData, T *inPtr,
-				     vtkImageData *outData, 
-				     int outExt[6], int id)
+                     vtkImageData *inData, T *inPtr,
+                     vtkImageData *outData, 
+                     int outExt[6], int id)
 {
   T *outPtr = (T *)outData->GetScalarPointerForExtent(outExt);
   // looping
@@ -106,32 +106,32 @@ static void vtkImageLabelVOIExecute(vtkImageLabelVOI *self,
   for (idxZ = outExt[4]; idxZ <= outExt[5]; idxZ++)
     {
       for (idxY = outExt[2]; !self->AbortExecute && idxY <= outExt[3]; idxY++)
-	{
-	  for (idxX = outExt[0]; idxX <= outExt[1]; idxX++)
-	    {
-	      if((idxX >= minX) && (idxX <= maxX)
-		 && (idxY >= minY) && (idxY <= maxY)
-		 && (idxZ >= minZ) && (idxZ <= maxZ))
-		{
-		  if(method == 0)
-		    *outPtr = *inPtr;
-		  else
-		    *outPtr = (T)0;
-		}
-	      else
-		{
-		  if(method == 0)
-		    *outPtr = (T)0;
-		  else
-		    *outPtr = *inPtr;
-		}
-	      
-	      outPtr++;
-	      inPtr++;
-	    }
-	  outPtr += outIncY;
-	  inPtr += outIncY;
-	}
+    {
+      for (idxX = outExt[0]; idxX <= outExt[1]; idxX++)
+        {
+          if((idxX >= minX) && (idxX <= maxX)
+         && (idxY >= minY) && (idxY <= maxY)
+         && (idxZ >= minZ) && (idxZ <= maxZ))
+        {
+          if(method == 0)
+            *outPtr = *inPtr;
+          else
+            *outPtr = (T)0;
+        }
+          else
+        {
+          if(method == 0)
+            *outPtr = (T)0;
+          else
+            *outPtr = *inPtr;
+        }
+          
+          outPtr++;
+          inPtr++;
+        }
+      outPtr += outIncY;
+      inPtr += outIncY;
+    }
       outPtr += outIncZ;
       inPtr += outIncZ;
     }
@@ -144,8 +144,8 @@ static void vtkImageLabelVOIExecute(vtkImageLabelVOI *self,
 // It just executes a switch statement to call the correct function for
 // the datas data types.
 void vtkImageLabelVOI::ThreadedExecute(vtkImageData *inData, 
-				       vtkImageData *outData,
-				       int outExt[6], int id)
+                       vtkImageData *outData,
+                       int outExt[6], int id)
 {
   // Check Single component
   int x1;
@@ -161,43 +161,43 @@ void vtkImageLabelVOI::ThreadedExecute(vtkImageData *inData,
     {
     case VTK_DOUBLE:
       vtkImageLabelVOIExecute(this, inData, (double *)(inPtr), 
-			      outData, outExt, id);
+                  outData, outExt, id);
       break;
     case VTK_FLOAT:
       vtkImageLabelVOIExecute(this, inData, (float *)(inPtr), 
-			      outData, outExt, id);
-      break;		
+                  outData, outExt, id);
+      break;        
     case VTK_LONG:
       vtkImageLabelVOIExecute(this, inData, (long *)(inPtr), 
-			      outData, outExt, id);
+                  outData, outExt, id);
       break;
     case VTK_UNSIGNED_LONG:
       vtkImageLabelVOIExecute(this, inData, (unsigned long *)(inPtr), 
-			      outData, outExt, id);
+                  outData, outExt, id);
       break;
     case VTK_INT:
       vtkImageLabelVOIExecute(this, inData, (int *)(inPtr), 
-			      outData, outExt, id);
+                  outData, outExt, id);
       break;
     case VTK_UNSIGNED_INT:
       vtkImageLabelVOIExecute(this, inData, (unsigned int *)(inPtr), 
-			      outData, outExt, id);
+                  outData, outExt, id);
       break;
     case VTK_SHORT:
       vtkImageLabelVOIExecute(this, inData, (short *)(inPtr), 
-			      outData, outExt, id);
+                  outData, outExt, id);
       break;
     case VTK_UNSIGNED_SHORT:
       vtkImageLabelVOIExecute(this, inData, (unsigned short *)(inPtr), 
-			      outData, outExt, id);
+                  outData, outExt, id);
       break;
     case VTK_CHAR:
       vtkImageLabelVOIExecute(this, inData, (char *)(inPtr), 
-			      outData, outExt, id);
+                  outData, outExt, id);
       break;
     case VTK_UNSIGNED_CHAR:
       vtkImageLabelVOIExecute(this, inData, (unsigned char *)(inPtr), 
-			      outData, outExt, id);
+                  outData, outExt, id);
       break;
     default:
       vtkErrorMacro(<< "Execute: Unknown input ScalarType");

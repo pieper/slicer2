@@ -167,26 +167,26 @@ class VTK_EXPORT vtkMrmlSlicer : public vtkObject
   void SetDouble(int s, int yes) {
     if(this->DrawDoubleApproach == 0)
       {
-	this->DoubleSliceSize[s] = yes;
-	this->BackReformat[s]->SetResolution(256);
-	this->ForeReformat[s]->SetResolution(256);
-	this->LabelReformat[s]->SetResolution(256);
+    this->DoubleSliceSize[s] = yes;
+    this->BackReformat[s]->SetResolution(256);
+    this->ForeReformat[s]->SetResolution(256);
+    this->LabelReformat[s]->SetResolution(256);
       }
     else
       {
-	this->DoubleSliceSize[s] = 0;
-	if(yes == 1)
-	  {
-	    this->BackReformat[s]->SetResolution(512);
-	    this->ForeReformat[s]->SetResolution(512);
-	    this->LabelReformat[s]->SetResolution(512);
-	  }
-	else
-	  {
-	    this->BackReformat[s]->SetResolution(256);
-	    this->ForeReformat[s]->SetResolution(256);
-	    this->LabelReformat[s]->SetResolution(256);
-	  }
+    this->DoubleSliceSize[s] = 0;
+    if(yes == 1)
+      {
+        this->BackReformat[s]->SetResolution(512);
+        this->ForeReformat[s]->SetResolution(512);
+        this->LabelReformat[s]->SetResolution(512);
+      }
+    else
+      {
+        this->BackReformat[s]->SetResolution(256);
+        this->ForeReformat[s]->SetResolution(256);
+        this->LabelReformat[s]->SetResolution(256);
+      }
       }
  
     this->BuildLowerTime.Modified();
@@ -201,11 +201,11 @@ class VTK_EXPORT vtkMrmlSlicer : public vtkObject
     {
       if((this->DoubleSliceSize[s] == 1) || (this->BackReformat[s]->GetResolution() == 512))
       {
-	SetDouble(s, 1);
+    SetDouble(s, 1);
       }
       else
       {
-	SetDouble(s, 0);
+    SetDouble(s, 0);
       }
     }
     this->Update();
@@ -298,7 +298,7 @@ class VTK_EXPORT vtkMrmlSlicer : public vtkObject
   void InitOffset(int s, char *str, float offset);
   float GetOffset(int s) {return this->Offset[s][this->Orient[s]];};
   float GetOffset(int s, char *str) {return 
-	  this->Offset[s][ConvertStringToOrient(str)];};
+      this->Offset[s][ConvertStringToOrient(str)];};
 
   // Description:
   // Matrix
@@ -411,8 +411,8 @@ class VTK_EXPORT vtkMrmlSlicer : public vtkObject
   // PolyDraw.
   //
   void DrawSetColor(float r, float g, float b) {
-	  this->PolyDraw->SetPointColor(r, g, b);
-	  this->PolyDraw->SetLineColor(r, g, b);};
+      this->PolyDraw->SetPointColor(r, g, b);
+      this->PolyDraw->SetLineColor(r, g, b);};
   void DrawSelectAll() {
     this->PolyDraw->SelectAllPoints();};
   void DrawDeselectAll() {
@@ -423,7 +423,7 @@ class VTK_EXPORT vtkMrmlSlicer : public vtkObject
     this->PolyDraw->DeleteAllPoints();};
   void DrawShowPoints(int s) {
     if (s) this->PolyDraw->SetPointRadius(1); 
-	else this->PolyDraw->SetPointRadius(0);};
+    else this->PolyDraw->SetPointRadius(0);};
   void DrawSetRadius(int r) {
     this->PolyDraw->SetPointRadius(r); };
   int DrawGetRadius() {
@@ -431,9 +431,9 @@ class VTK_EXPORT vtkMrmlSlicer : public vtkObject
   void DrawInsertPoint(int x, int y) {
     this->PolyDraw->InsertAfterSelectedPoint(x, y);};
   void DrawMoveInit(int x, int y) {
-	  this->DrawX = x; this->DrawY = y;};
+      this->DrawX = x; this->DrawY = y;};
   void DrawMove(int x, int y) {
-	this->PolyDraw->MoveSelectedPoints(x-this->DrawX, y-this->DrawY);
+    this->PolyDraw->MoveSelectedPoints(x-this->DrawX, y-this->DrawY);
     this->DrawX = x; this->DrawY = y;};
   int DrawGetNumPoints() {
     return this->PolyDraw->GetNumPoints();};

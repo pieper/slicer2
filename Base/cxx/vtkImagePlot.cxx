@@ -51,9 +51,9 @@ vtkImagePlot::vtkImagePlot()
   this->DataDomain[0] = 0;
   this->DataDomain[1] = 100;
 
-	this->Color[0] = 1;
-	this->Color[1] = 1;
-	this->Color[2] = 0;
+    this->Color[0] = 1;
+    this->Color[1] = 1;
+    this->Color[2] = 0;
 
   this->LookupTable = NULL;
 }
@@ -139,7 +139,7 @@ unsigned long vtkImagePlot::GetMTime()
 // output.  However, the output is 2D and the input is 1D.
 // So we have to override this function here.
 void vtkImagePlot::ComputeInputUpdateExtent(int inExt[6], 
-							  int outExt[6])
+                              int outExt[6])
 {
   int *wholeExtent;
 
@@ -150,7 +150,7 @@ void vtkImagePlot::ComputeInputUpdateExtent(int inExt[6],
 // Change the WholeExtent
 //----------------------------------------------------------------------------
 void vtkImagePlot::ExecuteInformation(vtkImageData *inData, 
-				      vtkImageData *outData)
+                      vtkImageData *outData)
 {
   int extent[6];
   float spacing[3], origin[3];
@@ -171,219 +171,219 @@ void vtkImagePlot::ExecuteInformation(vtkImageData *inData,
 
 // Draw line including first, but not second end point
 static void DrawThickLine(int xx1, int yy1, int xx2, int yy2, 
-						  unsigned char color[3],
-						  unsigned char *outPtr, int pNxnc, int pNc, int radius)
+                          unsigned char color[3],
+                          unsigned char *outPtr, int pNxnc, int pNc, int radius)
 {
-	unsigned char *ptr;
-	int r, dx, dy, dy2, dx2, dydx2;
-	int x, y, xInc;
-	int nxnc = pNxnc, nc=pNc;
-	int x1, y1, x2, y2;
-	int rad=radius, rx1, rx2, ry1, ry2, rx, ry;
+    unsigned char *ptr;
+    int r, dx, dy, dy2, dx2, dydx2;
+    int x, y, xInc;
+    int nxnc = pNxnc, nc=pNc;
+    int x1, y1, x2, y2;
+    int rad=radius, rx1, rx2, ry1, ry2, rx, ry;
 
-	// Sort points so x1,y1 is below x2,y2
-	if (yy1 <= yy2) 
+    // Sort points so x1,y1 is below x2,y2
+    if (yy1 <= yy2) 
   {
-		x1 = xx1;
-		y1 = yy1;
-		x2 = xx2;
-		y2 = yy2;
-	} 
+        x1 = xx1;
+        y1 = yy1;
+        x2 = xx2;
+        y2 = yy2;
+    } 
   else 
   {
-		x1 = xx2;
-		y1 = yy2;
-		x2 = xx1;
-		y2 = yy1;
-	}
-	dx = abs(x2 - x1);
-	dy = abs(y2 - y1);
-	dx2 = dx << 1;
-	dy2 = dy << 1;
-	if (x1 < x2)
+        x1 = xx2;
+        y1 = yy2;
+        x2 = xx1;
+        y2 = yy1;
+    }
+    dx = abs(x2 - x1);
+    dy = abs(y2 - y1);
+    dx2 = dx << 1;
+    dy2 = dy << 1;
+    if (x1 < x2)
   {
-		xInc = 1;
+        xInc = 1;
   }
-	else
+    else
   {
-		xInc = -1;
+        xInc = -1;
   }
-	x = x1;
-	y = y1;
+    x = x1;
+    y = y1;
 
-	// Draw first point
-	rx1 = x - rad; ry1 = y - rad;
-	rx2 = x + rad; ry2 = y + rad;
+    // Draw first point
+    rx1 = x - rad; ry1 = y - rad;
+    rx2 = x + rad; ry2 = y + rad;
   for (ry=ry1; ry <= ry2; ry++)
   {
-		for (rx=rx1; rx <= rx2; rx++)
+        for (rx=rx1; rx <= rx2; rx++)
     {
-			SET_PIXEL(rx, ry, color);
+            SET_PIXEL(rx, ry, color);
     }
   }
 
-	// < 45 degree slope
-	if (dy <= dx)
-	{
-		dydx2 = (dy-dx) << 1;
-		r = dy2 - dx;
+    // < 45 degree slope
+    if (dy <= dx)
+    {
+        dydx2 = (dy-dx) << 1;
+        r = dy2 - dx;
 
-		// Draw up to (not including) end point
-		if (x1 < x2)
-		{
-			while (x < x2)
-			{
-				x += xInc;
-				if (r <= 0)
+        // Draw up to (not including) end point
+        if (x1 < x2)
         {
-					r += dy2;
-        }
-				else 
-        {
-					// Draw here for a thick line
-					rx1 = x - rad; ry1 = y - rad;
-					rx2 = x + rad; ry2 = y + rad;
-					for (ry=ry1; ry <= ry2; ry++)
-          {
-						for (rx=rx1; rx <= rx2; rx++)
+            while (x < x2)
             {
-							SET_PIXEL(rx, ry, color);
+                x += xInc;
+                if (r <= 0)
+        {
+                    r += dy2;
+        }
+                else 
+        {
+                    // Draw here for a thick line
+                    rx1 = x - rad; ry1 = y - rad;
+                    rx2 = x + rad; ry2 = y + rad;
+                    for (ry=ry1; ry <= ry2; ry++)
+          {
+                        for (rx=rx1; rx <= rx2; rx++)
+            {
+                            SET_PIXEL(rx, ry, color);
             }
           }
-					y++;
-					r += dydx2;
-				}
-				rx1 = x - rad; ry1 = y - rad;
-				rx2 = x + rad; ry2 = y + rad;
-				for (ry=ry1; ry <= ry2; ry++)
+                    y++;
+                    r += dydx2;
+                }
+                rx1 = x - rad; ry1 = y - rad;
+                rx2 = x + rad; ry2 = y + rad;
+                for (ry=ry1; ry <= ry2; ry++)
         {
-					for (rx=rx1; rx <= rx2; rx++)
+                    for (rx=rx1; rx <= rx2; rx++)
           {
-						SET_PIXEL(rx, ry, color);
+                        SET_PIXEL(rx, ry, color);
           }
         }
-			}
-		}
-		else
-		{
-			while (x > x2)
-			{
-				x += xInc;
-				if (r <= 0)
-        {
-					r += dy2;
+            }
         }
-				else 
+        else
         {
-					// Draw here for a thick line
-					rx1 = x - rad; ry1 = y - rad;
-					rx2 = x + rad; ry2 = y + rad;
-					for (ry=ry1; ry <= ry2; ry++)
-          {
-						for (rx=rx1; rx <= rx2; rx++)
+            while (x > x2)
             {
-							SET_PIXEL(rx, ry, color);
+                x += xInc;
+                if (r <= 0)
+        {
+                    r += dy2;
+        }
+                else 
+        {
+                    // Draw here for a thick line
+                    rx1 = x - rad; ry1 = y - rad;
+                    rx2 = x + rad; ry2 = y + rad;
+                    for (ry=ry1; ry <= ry2; ry++)
+          {
+                        for (rx=rx1; rx <= rx2; rx++)
+            {
+                            SET_PIXEL(rx, ry, color);
             }
           }
-					y++;
-					r += dydx2;
-				}
-				rx1 = x - rad; ry1 = y - rad;
-				rx2 = x + rad; ry2 = y + rad;
-				for (ry=ry1; ry <= ry2; ry++)
+                    y++;
+                    r += dydx2;
+                }
+                rx1 = x - rad; ry1 = y - rad;
+                rx2 = x + rad; ry2 = y + rad;
+                for (ry=ry1; ry <= ry2; ry++)
         {
-					for (rx=rx1; rx <= rx2; rx++)
+                    for (rx=rx1; rx <= rx2; rx++)
           {
-						SET_PIXEL(rx, ry, color);
+                        SET_PIXEL(rx, ry, color);
           }
         }
-			}
-		}
-	}
+            }
+        }
+    }
 
-	// > 45 degree slope
-	else
-	{
-		dydx2 = (dx-dy) << 1;
-		r = dx2 - dy;
+    // > 45 degree slope
+    else
+    {
+        dydx2 = (dx-dy) << 1;
+        r = dx2 - dy;
 
-		// Draw up to (not including) end point
-		while (y < y2)
-		{
-			y++;
-			if (r <= 0)
-      {
-				r += dx2;
-      }
-			else 
-      {
-				// Draw here for a thick line
-				rx1 = x - rad; ry1 = y - rad;
-				rx2 = x + rad; ry2 = y + rad;
-				for (ry=ry1; ry <= ry2; ry++)
+        // Draw up to (not including) end point
+        while (y < y2)
         {
-					for (rx=rx1; rx <= rx2; rx++)
+            y++;
+            if (r <= 0)
+      {
+                r += dx2;
+      }
+            else 
+      {
+                // Draw here for a thick line
+                rx1 = x - rad; ry1 = y - rad;
+                rx2 = x + rad; ry2 = y + rad;
+                for (ry=ry1; ry <= ry2; ry++)
+        {
+                    for (rx=rx1; rx <= rx2; rx++)
           {
-						SET_PIXEL(rx, ry, color);
+                        SET_PIXEL(rx, ry, color);
           }
         }
-				x += xInc;
-				r += dydx2;
-			}
-			rx1 = x - rad; ry1 = y - rad;
-			rx2 = x + rad; ry2 = y + rad;
-			for (ry=ry1; ry <= ry2; ry++)
+                x += xInc;
+                r += dydx2;
+            }
+            rx1 = x - rad; ry1 = y - rad;
+            rx2 = x + rad; ry2 = y + rad;
+            for (ry=ry1; ry <= ry2; ry++)
       {
-				for (rx=rx1; rx <= rx2; rx++)
+                for (rx=rx1; rx <= rx2; rx++)
         {
-					SET_PIXEL(rx, ry, color);
+                    SET_PIXEL(rx, ry, color);
         }
       }
-		}
-	}
+        }
+    }
 }
 
 //----------------------------------------------------------------------------
 static void ConvertColor(float *f, unsigned char *c)
 {
-	c[0] = (int)(f[0] * 255.0);
-	c[1] = (int)(f[1] * 255.0);
-	c[2] = (int)(f[2] * 255.0);
+    c[0] = (int)(f[0] * 255.0);
+    c[1] = (int)(f[1] * 255.0);
+    c[2] = (int)(f[2] * 255.0);
 }
 
 //----------------------------------------------------------------------------
 //template <class T>
 //static void vtkImagePlotExecute(vtkImagePlot *self,
-//				  vtkImageData *inData,  T *inPtr,  int inExt[6],
-//				  vtkImageData *outData, unsigned char *outPtr, int outExt[6])
+//                  vtkImageData *inData,  T *inPtr,  int inExt[6],
+//                  vtkImageData *outData, unsigned char *outPtr, int outExt[6])
 void vtkImagePlot::vtkImagePlotExecute(
-				  vtkImageData *inData,  unsigned char *inPtr,  int inExt[6],
-				  vtkImageData *outData, unsigned char *outPtr, int outExt[6])
+                  vtkImageData *inData,  unsigned char *inPtr,  int inExt[6],
+                  vtkImageData *outData, unsigned char *outPtr, int outExt[6])
 {
-	unsigned char color[3];
+    unsigned char color[3];
   int idxX, idxY, maxY, maxX;
   int inIncX, inIncY, inIncZ;
   int outIncX, outIncY, outIncZ;
-	int nx, ny, nc, nxnc;
+    int nx, ny, nc, nxnc;
   int y1, y2, r=this->GetThickness();
   int range[2], domain[2];
   float delta;
   vtkScalarsToColors *lookupTable = this->GetLookupTable();
   unsigned char *rgba;
-	unsigned char *ptr;
+    unsigned char *ptr;
 
   // find the region to loop over
   maxX = outExt[1] - outExt[0]; 
   maxY = outExt[3] - outExt[2]; 
-	nx = maxX + 1;
+    nx = maxX + 1;
   ny = maxY + 1;
-	nc = outData->GetNumberOfScalarComponents();
-	nxnc = nx*nc;
+    nc = outData->GetNumberOfScalarComponents();
+    nxnc = nx*nc;
 
   ConvertColor(this->GetColor(), color);
 
   // Scale all bins
-	this->GetDataDomain(domain);
+    this->GetDataDomain(domain);
   this->GetDataRange(range);
   
   // Get increments to march through data 
@@ -434,7 +434,7 @@ void vtkImagePlot::vtkImagePlotExecute(
       DrawThickLine(idxX, y1, idxX+1, y2, color, outPtr, nxnc, nc, r);
     }
     inPtr++;
-	}
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -456,50 +456,50 @@ void vtkImagePlot::Execute(vtkImageData *inData, vtkImageData *outData)
   }
     
       vtkImagePlotExecute(inData, (unsigned char *)(inPtr), inExt,
-			     outData, outPtr, outExt);
+                 outData, outPtr, outExt);
 
            /*
   switch (inData->GetScalarType())
   {
     case VTK_DOUBLE:
       vtkImagePlotExecute(this, inData, (double *)(inPtr), inExt,
-			     outData, outPtr, outExt);
+                 outData, outPtr, outExt);
       break;
     case VTK_FLOAT:
       vtkImagePlotExecute(this, inData, (float *)(inPtr), inExt,
-			     outData, outPtr, outExt);
+                 outData, outPtr, outExt);
       break;
     case VTK_LONG:
       vtkImagePlotExecute(this, inData, (long *)(inPtr), inExt,
-			     outData, outPtr, outExt);
+                 outData, outPtr, outExt);
       break;
     case VTK_UNSIGNED_LONG:
       vtkImagePlotExecute(this, inData, (unsigned long *)(inPtr), inExt,
-			     outData, outPtr, outExt);
+                 outData, outPtr, outExt);
       break;
     case VTK_INT:
       vtkImagePlotExecute(this, inData, (int *)(inPtr), inExt,
-			     outData, outPtr, outExt);
+                 outData, outPtr, outExt);
       break;
     case VTK_UNSIGNED_INT:
       vtkImagePlotExecute(this, inData, (unsigned int *)(inPtr), inExt,
-			     outData, outPtr, outExt);
+                 outData, outPtr, outExt);
       break;
     case VTK_SHORT:
       vtkImagePlotExecute(this, inData, (short *)(inPtr), inExt,
-			     outData, outPtr, outExt);
+                 outData, outPtr, outExt);
       break;
     case VTK_UNSIGNED_SHORT:
       vtkImagePlotExecute(this, inData, (unsigned short *)(inPtr), inExt,
-			     outData, outPtr, outExt);
+                 outData, outPtr, outExt);
       break;
     case VTK_CHAR:
       vtkImagePlotExecute(this, inData, (char *)(inPtr), inExt,
-			     outData, outPtr, outExt);
+                 outData, outPtr, outExt);
       break;
     case VTK_UNSIGNED_CHAR:
       vtkImagePlotExecute(this, inData, (unsigned char *)(inPtr), inExt,
-			     outData, outPtr, outExt);
+                 outData, outPtr, outExt);
       break;
     default:
       vtkErrorMacro(<< "Execute: Unknown ScalarType");

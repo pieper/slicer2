@@ -146,16 +146,16 @@ void vtkImageLiveWire::ClearLastContourSegment()
     {
       point = this->ContourPixels->GetPoint(index);
       if ((int)point[2] == 1)
-	{
-	  // we have hit an endpoint at index
-	  done = 1;
-	  // we would like to start here from now on
-	  this->StartPoint[0] = (int)point[0];
-	  this->StartPoint[1] = (int)point[1];
-	  this->EndPoint[0] = (int)point[0];
-	  this->EndPoint[1] = (int)point[1];
-	  this->DeallocatePathInformation();
-	}
+    {
+      // we have hit an endpoint at index
+      done = 1;
+      // we would like to start here from now on
+      this->StartPoint[0] = (int)point[0];
+      this->StartPoint[1] = (int)point[1];
+      this->EndPoint[0] = (int)point[0];
+      this->EndPoint[1] = (int)point[1];
+      this->DeallocatePathInformation();
+    }
     }  
   // remove all things after the index by resetting, copying, etc.
   for (i = 0; i <= index; i++)
@@ -217,9 +217,9 @@ void vtkImageLiveWire::AllocatePathInformation(int xsize, int ysize)
       this->Q = new circularQueue(xsize, ysize, this->GetMaxEdgeCost());
       // debug
       if (this->Verbose > 1) 
-	{
-	  this->Q->VerboseOn();
-	}
+    {
+      this->Q->VerboseOn();
+    }
     }
   if (!this->CC)
     {
@@ -249,8 +249,8 @@ void vtkImageLiveWire::AllocatePathInformation(int xsize, int ysize)
 //----------------------------------------------------------------------------
 // This method computes the input extent necessary to generate the output.
 void vtkImageLiveWire::ComputeInputUpdateExtent(int inExt[6],
-							  int outExt[6],
-							  int whichInput)
+                              int outExt[6],
+                              int whichInput)
 {
   int *wholeExtent;
   int idx;
@@ -268,11 +268,11 @@ void vtkImageLiveWire::ComputeInputUpdateExtent(int inExt[6],
     // we must clip extent with whole extent is we hanlde boundaries.
     if (inExt[idx*2] < wholeExtent[idx*2])
       {
-	inExt[idx*2] = wholeExtent[idx*2];
+    inExt[idx*2] = wholeExtent[idx*2];
       }
     if (inExt[idx*2 + 1] > wholeExtent[idx*2 + 1])
       {
-	inExt[idx*2 + 1] = wholeExtent[idx*2 + 1];
+    inExt[idx*2 + 1] = wholeExtent[idx*2 + 1];
       }
     }
 }
@@ -302,9 +302,9 @@ void vtkImageLiveWire::SetStartPoint(int x, int y)
 
       // if end point of current contour doesn't match where the user clicked.
       if (x != this->EndPoint[0] || y != this->EndPoint[1])
-	{
-	  cout << "click: ("<<x<<","<<y<<") end: ("<<this->EndPoint[0]<<","<<this->EndPoint[1]<<")"<<endl;
-	}
+    {
+      cout << "click: ("<<x<<","<<y<<") end: ("<<this->EndPoint[0]<<","<<this->EndPoint[1]<<")"<<endl;
+    }
 
       // we have a contour already.  Start adding to its end:
       x  = this->EndPoint[0];
@@ -313,37 +313,37 @@ void vtkImageLiveWire::SetStartPoint(int x, int y)
       // append new points to the saved contour
       int numPoints = this->NewPixels->GetNumberOfPoints();
       for (i = 0; i < numPoints; i++)
-	{
-	  this->ContourPixels->InsertNextPoint(this->NewPixels->GetPoint(i));
-	}
+    {
+      this->ContourPixels->InsertNextPoint(this->NewPixels->GetPoint(i));
+    }
     }
   else
     {
       // start a brand new contour.
       // crop clicked-on point with image extent:
       if (this->GetInput(1)) 
-	{
-	  // all inputs should have the same extent
-	  this->GetInput(1)->GetExtent(extent);
-	}
+    {
+      // all inputs should have the same extent
+      this->GetInput(1)->GetExtent(extent);
+    }
       else
-	{
-	  // the pipeline isn't all set up yet
-	  cout << "LiveWire SetStartPoint: No input 1 yet!" << endl;
-	  memset(extent, 0, 6*sizeof(int));
-	}
+    {
+      // the pipeline isn't all set up yet
+      cout << "LiveWire SetStartPoint: No input 1 yet!" << endl;
+      memset(extent, 0, 6*sizeof(int));
+    }
       
       if (x < extent[0]) 
-	x = extent[0];
+    x = extent[0];
       else
-	if (x > extent[1]) 
-	  x = extent[1];
+    if (x > extent[1]) 
+      x = extent[1];
       
       if (y < extent[2]) 
-	y = extent[2];
+    y = extent[2];
       else
-	if (y > extent[3])
-	  y = extent[3];
+    if (y > extent[3])
+      y = extent[3];
 
       // also put the end point here since starting a 
       // new contour from this spot.  As soon as mouse moves,
@@ -414,11 +414,11 @@ void vtkImageLiveWire::SetEndPoint(int x, int y)
       cout << "Coords (" << x << "," << y << ") are outside of image!" << endl;      
       if (x < extent[0]) x = extent[0];
       else
-	if (x > extent[1]) x = extent[1];
+    if (x > extent[1]) x = extent[1];
       
       if (y < extent[2]) y = extent[2];
       else
-	if (y > extent[3]) y = extent[3];
+    if (y > extent[3]) y = extent[3];
     }
 
   //cout << "Coords of end point: (" << x << "," << y << ")" << endl;      
@@ -465,8 +465,8 @@ void vtkImageLiveWire::ClearContour()
 // This templated function executes the filter for any type of data.
 template <class T>
 static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
-				     vtkImageData **inDatas, T **inPtrs,
-				     vtkImageData *outData, T* outPtr)
+                     vtkImageData **inDatas, T **inPtrs,
+                     vtkImageData *outData, T* outPtr)
 {
   int *extent = inDatas[0]->GetWholeExtent();
   int xsize = extent[1] - extent[0] + 1;
@@ -527,11 +527,11 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
 
   // directions the path takes to the neighbors
   int arrows[8] = {UP, DOWN, LEFT, RIGHT, UP_LEFT, UP_RIGHT, 
-		   DOWN_LEFT, DOWN_RIGHT};
+           DOWN_LEFT, DOWN_RIGHT};
 
   // to look for path to 4 or 8 neighbors of current pixel corner
   int neighbors[8][2] = {{0,1},{0,-1},{-1,0},{1,0},{-1,1},
-			 {1,1},{-1,-1},{1,-1}};
+             {1,1},{-1,-1},{1,-1}};
 
   // sqrt two factor: diagonal edges cost more.
 #define SQRT_TWO 1.4142
@@ -591,13 +591,13 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
 
       // debug: test if same as last point.
       if (min->Coord[0] == currentX && min->Coord[1] == currentY)
-	{
-	  cout << "ERROR in vtkImageLiveWireExecute: same point as last time!" << endl;
-	  cout << "-- CC: " << CC(min->Coord[0],min->Coord[1]) << " --  (" << min->Coord[0]
-	       << "," << min->Coord[1]<< ") -- L: " << L(end[0],end[1]) 
-	       <<" --" << endl;
-	  return;
-	}
+    {
+      cout << "ERROR in vtkImageLiveWireExecute: same point as last time!" << endl;
+      cout << "-- CC: " << CC(min->Coord[0],min->Coord[1]) << " --  (" << min->Coord[0]
+           << "," << min->Coord[1]<< ") -- L: " << L(end[0],end[1]) 
+           <<" --" << endl;
+      return;
+    }
 
       // update the current location
       currentX = min->Coord[0];
@@ -619,69 +619,69 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
       int totalNeighbors = self->GetNumberOfNeighbors();
 
       for (int n=0; n < totalNeighbors; n++) 
-	{
-	  x = currentX + neighbors[n][0];
-	  y = currentY + neighbors[n][1];
+    {
+      x = currentX + neighbors[n][0];
+      y = currentY + neighbors[n][1];
 
-	  // if neighbor in image
-	  if (y < ysize && x < xsize && x >= 0 && y >= 0) 
-	    {
-	      // save previous cost to reach this point
-	      oldCC = CC(x,y);
-	      edge = edges[n];
+      // if neighbor in image
+      if (y < ysize && x < xsize && x >= 0 && y >= 0) 
+        {
+          // save previous cost to reach this point
+          oldCC = CC(x,y);
+          edge = edges[n];
 
-	      // find new path's cost.
-	      // (first handle shift in UP and LEFT edge images)
-	      int ex = x + offset[n][0];
-	      int ey = y + offset[n][1];
-	      // if edge cost in (shifted) edge image
-	      if (ey < ysize && ex < xsize && ex >= 0 && ey >= 0) 
-		{
-		  // if we are running w/ regular 4-connected path
-		  if (totalNeighbors == 4) 
-		    {
-		      tempCC = currentCC + (int)edge[ex + ey*xsize];
-		    }
-		  else
-		    {
-		      // error checking
-		      //  if ((int)edge[ex + ey*numcols] > self->GetMaxEdgeCost())
-//  			{
-//  			  cout << "lw: " << (int)edge[ex + ey*numcols];
-//  			}
-		      
-		      // extra cost for 8-connected corner path
-		      int edgeCost = (int)(edge[ex + ey*xsize]*factor[n]);
-		      if (edgeCost > self->GetMaxEdgeCost()) 
-			edgeCost = self->GetMaxEdgeCost();
-		      tempCC = currentCC + edgeCost;
-		    }
+          // find new path's cost.
+          // (first handle shift in UP and LEFT edge images)
+          int ex = x + offset[n][0];
+          int ey = y + offset[n][1];
+          // if edge cost in (shifted) edge image
+          if (ey < ysize && ex < xsize && ex >= 0 && ey >= 0) 
+        {
+          // if we are running w/ regular 4-connected path
+          if (totalNeighbors == 4) 
+            {
+              tempCC = currentCC + (int)edge[ex + ey*xsize];
+            }
+          else
+            {
+              // error checking
+              //  if ((int)edge[ex + ey*numcols] > self->GetMaxEdgeCost())
+//              {
+//                cout << "lw: " << (int)edge[ex + ey*numcols];
+//              }
+              
+              // extra cost for 8-connected corner path
+              int edgeCost = (int)(edge[ex + ey*xsize]*factor[n]);
+              if (edgeCost > self->GetMaxEdgeCost()) 
+            edgeCost = self->GetMaxEdgeCost();
+              tempCC = currentCC + edgeCost;
+            }
 
-		}
-	      else
-		{
-		  // handle boundary
-		  tempCC = currentCC + self->GetMaxEdgeCost();
-		}
+        }
+          else
+        {
+          // handle boundary
+          tempCC = currentCC + self->GetMaxEdgeCost();
+        }
 
-	      // if path from current point shorter than old path
-	      if (tempCC < oldCC) 
-		{
-		  // lower the cumulative cost to reach this neighbor
-		  CC(x,y) = tempCC;
+          // if path from current point shorter than old path
+          if (tempCC < oldCC) 
+        {
+          // lower the cumulative cost to reach this neighbor
+          CC(x,y) = tempCC;
 
-		  // store new short path direction
-		  Dir(x,y) = arrows[n];
+          // store new short path direction
+          Dir(x,y) = arrows[n];
 
-		  // remove this neighbor from Q if in it
-		  Q->Remove(x,y);
+          // remove this neighbor from Q if in it
+          Q->Remove(x,y);
 
-		  // then put it in the proper place in Q for its new cost
-		  Q->Insert(x,y,CC(x,y));
-		}
+          // then put it in the proper place in Q for its new cost
+          Q->Insert(x,y,CC(x,y));
+        }
 
-	    } // end if neighbor in image
-	} // end loop over neighbors
+        } // end if neighbor in image
+    } // end loop over neighbors
     } // end while
 
   // save cost for next time (essentially pointer to current location in Q)
@@ -717,10 +717,10 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
       // arrow is NONE, UP, DOWN, LEFT, or RIGHT
       int arrow = Dir(traceX,traceY);
       if (arrow == NONE)
-	{
-	  cout << "ERROR in vtkImageLiveWire: broken path" << endl;
-	  return;      
-	}
+    {
+      cout << "ERROR in vtkImageLiveWire: broken path" << endl;
+      return;      
+    }
 
       traceX -= neighbors[arrow][0];
       traceY -= neighbors[arrow][1];
@@ -729,9 +729,9 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
       colorY = traceY + color[arrow][1];
 
       if (self->GetVerbose() > 2) 
-	{
-	  cout << arrow;
-	}
+    {
+      cout << arrow;
+    }
 
       // add to path lists
       tempPixels->InsertNextPoint(colorX,colorY,0);
@@ -768,24 +768,24 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
     {
       // draw last segment
       for (i=0; i<numPoints; i++)
-	{
+    {
       
-	  for (i=0; i<numPoints; i++)
-	    {
-	      //cout << ".";
-	      point = newPixels->GetPoint(i);
-	      //cout << (int)point[0] + ((int)point[1])*sizeX << endl;
-	      if ((int)point[2] == 1)
-		{
-		  // color endpoints differently
-		  outPtr[(int)point[0] + ((int)point[1])*sizeX] = clickLabel;
-		}
-	      else
-		{
-		  outPtr[(int)point[0] + ((int)point[1])*sizeX] = outLabel;
-		}
-	    }
-	}
+      for (i=0; i<numPoints; i++)
+        {
+          //cout << ".";
+          point = newPixels->GetPoint(i);
+          //cout << (int)point[0] + ((int)point[1])*sizeX << endl;
+          if ((int)point[2] == 1)
+        {
+          // color endpoints differently
+          outPtr[(int)point[0] + ((int)point[1])*sizeX] = clickLabel;
+        }
+          else
+        {
+          outPtr[(int)point[0] + ((int)point[1])*sizeX] = outLabel;
+        }
+        }
+    }
 
     }
   // draw previously chosen contour over image
@@ -798,15 +798,15 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
 
 
       if ((int)point[2] == 1)
-	{
-	  // color endpoints differently
-	  outPtr[(int)point[0] + ((int)point[1])*sizeX] = clickLabel;	  
-	}
+    {
+      // color endpoints differently
+      outPtr[(int)point[0] + ((int)point[1])*sizeX] = clickLabel;      
+    }
       else
-	{
-	//cout << (int)point[0] + ((int)point[1])*sizeX << endl;
-	  outPtr[(int)point[0] + ((int)point[1])*sizeX] = outLabel;
-	}
+    {
+    //cout << (int)point[0] + ((int)point[1])*sizeX << endl;
+      outPtr[(int)point[0] + ((int)point[1])*sizeX] = outLabel;
+    }
     }  
 
   tEnd = clock();
@@ -824,7 +824,7 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
 // It just executes a switch statement to call the correct function for
 // the datas data types.
 void vtkImageLiveWire::Execute(vtkImageData **inDatas, 
-			       vtkImageData *outData)
+                   vtkImageData *outData)
 {
   void **inPtrs = new void*[this->NumberOfInputs];
   void *outPtr;
@@ -846,23 +846,23 @@ void vtkImageLiveWire::Execute(vtkImageData **inDatas,
     {
       // Scalar type of all inputs should be the same
       if (this->GetInput(i)->GetScalarType() != type) {
-	vtkErrorMacro(<<"Inputs are not same scalar type");
-	return;
+    vtkErrorMacro(<<"Inputs are not same scalar type");
+    return;
       }
 
       // Single component input is required
       int c = this->GetInput(i)->GetNumberOfScalarComponents();
       if (c != 1) {
-	vtkErrorMacro(<<"Input " << i << "  has "<< c <<" instead of 1 scalar component.");
-	return;
+    vtkErrorMacro(<<"Input " << i << "  has "<< c <<" instead of 1 scalar component.");
+    return;
       }
 
       // 2D input is required
       int ext[6];
       inDatas[i]->GetExtent(ext);
       if (ext[4] != ext[5]) {
-	vtkErrorMacro(<<"Input is not 2D");
-	return;
+    vtkErrorMacro(<<"Input is not 2D");
+    return;
       }
 
       // input pointers        
@@ -913,7 +913,7 @@ void vtkImageLiveWire::Execute(vtkImageData **inDatas,
 // Make sure all the inputs are the same size. Doesn't really change 
 // the output. Just performs a sanity check
 void vtkImageLiveWire::ExecuteInformation(vtkImageData **inputs,
-					    vtkImageData *vtkNotUsed(output))
+                        vtkImageData *vtkNotUsed(output))
 {
   int *in1Ext, *in2Ext;
   
@@ -933,17 +933,17 @@ void vtkImageLiveWire::ExecuteInformation(vtkImageData **inputs,
       in2Ext = inputs[i]->GetWholeExtent();
       
       if (in1Ext[0] != in2Ext[0] || in1Ext[1] != in2Ext[1] || 
-	  in1Ext[2] != in2Ext[2] || in1Ext[3] != in2Ext[3] || 
-	  in1Ext[4] != in2Ext[4] || in1Ext[5] != in2Ext[5])
-	{
-	  vtkErrorMacro("ExecuteInformation: Inputs 0 and " << i <<
-			" are not the same size. " 
-			<< in1Ext[0] << " " << in1Ext[1] << " " 
-			<< in1Ext[2] << " " << in1Ext[3] << " vs: "
-			<< in2Ext[0] << " " << in2Ext[1] << " " 
-			<< in2Ext[2] << " " << in2Ext[3] );
-	  return;
-	}
+      in1Ext[2] != in2Ext[2] || in1Ext[3] != in2Ext[3] || 
+      in1Ext[4] != in2Ext[4] || in1Ext[5] != in2Ext[5])
+    {
+      vtkErrorMacro("ExecuteInformation: Inputs 0 and " << i <<
+            " are not the same size. " 
+            << in1Ext[0] << " " << in1Ext[1] << " " 
+            << in1Ext[2] << " " << in1Ext[3] << " vs: "
+            << in2Ext[0] << " " << in2Ext[1] << " " 
+            << in2Ext[2] << " " << in2Ext[3] );
+      return;
+    }
     }
 }
 
@@ -1012,10 +1012,10 @@ linkedList::linkedList(int x, int y)
   array2D<listElement>(x,y)
 {
   for (int i = 0; i < x; i++) {
-	for (int j = 0; j < y; j++) {
-	  this->Element(i,j)->Coord[0] = i;
-	  this->Element(i,j)->Coord[1] = j;
-	}
+    for (int j = 0; j < y; j++) {
+      this->Element(i,j)->Coord[0] = i;
+      this->Element(i,j)->Coord[1] = j;
+    }
   }
 }  
 
@@ -1058,7 +1058,7 @@ void circularQueue::Insert(int x, int y, int cost)
   if (this->Verbose)
     {
       cout << "Q_INSERT " << "b: " << bucket << " " << "c: " 
-	   << cost << " (" << x << "," << y << ")" << endl;
+       << cost << " (" << x << "," << y << ")" << endl;
     }
 }
 
@@ -1080,30 +1080,30 @@ void circularQueue::Remove(listElement *el)
     {
       
       if (el->Next == NULL)
-	{
-	  cout <<"ERROR in vtkImageLiveWire.  el->Next is NULL."<< endl;
-	  return;
-	}
+    {
+      cout <<"ERROR in vtkImageLiveWire.  el->Next is NULL."<< endl;
+      return;
+    }
       el->Next->Prev = el->Prev;
       el->Prev->Next = el->Next;
-	
+    
       // clear el's pointers
       el->Prev = el->Next = NULL;
     }
   else
     {
       if (this->Verbose)
-	{
-	  cout <<"Q_REMOVE: el->Prev is NULL, el (" << el->Coord[0] << "," 
-	       << el->Coord[1] << ") not in Q."<< endl;
-	  return;
-	}
+    {
+      cout <<"Q_REMOVE: el->Prev is NULL, el (" << el->Coord[0] << "," 
+           << el->Coord[1] << ") not in Q."<< endl;
+      return;
+    }
     }
       
   if (this->Verbose)
     {
       cout << "Q_REMOVE " << "(" << el->Coord[0] << "," 
-	   << el->Coord[1] <<")" << endl;
+       << el->Coord[1] <<")" << endl;
     }
 
   return;
@@ -1126,7 +1126,7 @@ listElement * circularQueue::GetListElement(int cost)
     {
       int x = this->Circle[bucket].Prev->Coord[0];
       int y = this->Circle[bucket].Prev->Coord[1];
-      cout << "Q_GET b: " << bucket << ", point: ("<< x << "," << y << ")" << endl;	  
+      cout << "Q_GET b: " << bucket << ", point: ("<< x << "," << y << ")" << endl;      
     }
   return this->Circle[bucket].Prev;
 }

@@ -39,21 +39,21 @@
 # .END
 #-------------------------------------------------------------------------------
 proc MainColorsInit {} {
-	global Color Gui
+    global Color Gui
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainColors \
-		{$Revision: 1.14 $} {$Date: 2001/02/19 17:53:21 $}]
+        {$Revision: 1.15 $} {$Date: 2002/03/18 20:54:48 $}]
 
-	set Color(activeID) ""
-	set Color(name) ""
-	set Color(label) ""
-	set Color(ambient) 0
-	set Color(diffuse) 1
-	set Color(specular) 0
-	set Color(power) 1
-	set Color(labels) ""
-	set Color(diffuseColor) "1 1 1"
+    set Color(activeID) ""
+    set Color(name) ""
+    set Color(label) ""
+    set Color(ambient) 0
+    set Color(diffuse) 1
+    set Color(specular) 0
+    set Color(power) 1
+    set Color(labels) ""
+    set Color(diffuseColor) "1 1 1"
 }
 
 #-------------------------------------------------------------------------------
@@ -63,49 +63,49 @@ proc MainColorsInit {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainColorsUpdateMRML {} {
-	global Lut Color Mrml
+    global Lut Color Mrml
 
-	# Build any new colors
-	#--------------------------------------------------------
-	# (nothing to be done)
+    # Build any new colors
+    #--------------------------------------------------------
+    # (nothing to be done)
 
-	# Delete any old colors
-	#--------------------------------------------------------
-	# (nothing to be done)
+    # Delete any old colors
+    #--------------------------------------------------------
+    # (nothing to be done)
 
-	# Did we delete the active color?
-	if {[lsearch $Color(idList) $Color(activeID)] == -1} {
-		MainColorsSetActive [lindex $Color(idList) 1]
-	}
+    # Did we delete the active color?
+    if {[lsearch $Color(idList) $Color(activeID)] == -1} {
+        MainColorsSetActive [lindex $Color(idList) 1]
+    }
 
-	# Refresh GUI 
-	#--------------------------------------------------------
-	set lut  Lut($Lut(idLabel),lut)
-	set iLut Lut($Lut(idLabel),indirectLUT)
+    # Refresh GUI 
+    #--------------------------------------------------------
+    set lut  Lut($Lut(idLabel),lut)
+    set iLut Lut($Lut(idLabel),indirectLUT)
 
-	# Set default color to white, and thresholded color to clear black.
-	set num [llength $Color(idList)]
-	$lut SetNumberOfTableValues [expr $num + 2]
-	$lut SetTableValue 0 0.0 0.0 0.0 0.0
-	$lut SetTableValue 1 1.0 1.0 1.0 1.0
+    # Set default color to white, and thresholded color to clear black.
+    set num [llength $Color(idList)]
+    $lut SetNumberOfTableValues [expr $num + 2]
+    $lut SetTableValue 0 0.0 0.0 0.0 0.0
+    $lut SetTableValue 1 1.0 1.0 1.0 1.0
 
-	# Set colors for each label value
-	$iLut InitDirect
-	set tree Mrml(colorTree) 
-	set node [$tree InitColorTraversal]
-	set n 0
-	while {$node != ""} {
-		set diffuseColor [$node GetDiffuseColor]
-		eval $lut SetTableValue [expr $n+2] $diffuseColor 1.0
+    # Set colors for each label value
+    $iLut InitDirect
+    set tree Mrml(colorTree) 
+    set node [$tree InitColorTraversal]
+    set n 0
+    while {$node != ""} {
+        set diffuseColor [$node GetDiffuseColor]
+        eval $lut SetTableValue [expr $n+2] $diffuseColor 1.0
 
-		set values [$node GetLabels]
-		foreach v $values {
-			$iLut MapDirect $v [expr $n+2]
-		}
-		set node [$tree GetNextColor]
-		incr n
-	}
-	$iLut Build
+        set values [$node GetLabels]
+        foreach v $values {
+            $iLut MapDirect $v [expr $n+2]
+        }
+        set node [$tree GetNextColor]
+        incr n
+    }
+    $iLut Build
 }
  
 #-------------------------------------------------------------------------------
@@ -113,20 +113,20 @@ proc MainColorsUpdateMRML {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainColorsSetActive {c} {
-	global Color
+    global Color
 
-	set Color(activeID) $c
+    set Color(activeID) $c
 
-	if {$c == ""} {return}
+    if {$c == ""} {return}
 
-	# Update GUI
-	set Color(name) [Color($c,node) GetName]
-	scan [Color($c,node) GetDiffuseColor] "%g %g %g" \
-		Color(red) Color(green) Color(blue)
-	foreach param "Ambient Diffuse Specular Power" {
-		set Color([Uncap $param]) [Color($c,node) Get$param]
-	}
-	
+    # Update GUI
+    set Color(name) [Color($c,node) GetName]
+    scan [Color($c,node) GetDiffuseColor] "%g %g %g" \
+        Color(red) Color(green) Color(blue)
+    foreach param "Ambient Diffuse Specular Power" {
+        set Color([Uncap $param]) [Color($c,node) Get$param]
+    }
+    
 }
 
 #-------------------------------------------------------------------------------
@@ -137,35 +137,35 @@ proc MainColorsSetActive {c} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainColorsAddLabel {c newLabel} {
-	global Color Gui Mrml
+    global Color Gui Mrml
 
-	if {$c == ""} {return} 
+    if {$c == ""} {return} 
 
-	# Convert to integer
-	if {$newLabel >= -32768 && $newLabel <= 32767} {
-	} else {
-		tk_messageBox -icon error -title $Gui(title) \
-			-message "Label '$newLabel' must be a short integer."
-		return 0
-	}
+    # Convert to integer
+    if {$newLabel >= -32768 && $newLabel <= 32767} {
+    } else {
+        tk_messageBox -icon error -title $Gui(title) \
+            -message "Label '$newLabel' must be a short integer."
+        return 0
+    }
 
-	# Don't allow duplicate labels
-	set labels [Color($c,node) GetLabels]
-	if {[lsearch $labels $newLabel] != "-1"} {
-		tk_messageBox -icon error -title $Gui(title) \
-			-message "Label '$newLabel' already exists."
-		return 0
-	}
+    # Don't allow duplicate labels
+    set labels [Color($c,node) GetLabels]
+    if {[lsearch $labels $newLabel] != "-1"} {
+        tk_messageBox -icon error -title $Gui(title) \
+            -message "Label '$newLabel' already exists."
+        return 0
+    }
 
-	# Append the new label and sort the list of labels
-	lappend labels $newLabel
-	set labels [lsort -increasing $labels]
-	set index  [lsearch $labels $newLabel]
+    # Append the new label and sort the list of labels
+    lappend labels $newLabel
+    set labels [lsort -increasing $labels]
+    set index  [lsearch $labels $newLabel]
 
-	# Update the node
-	Color($c,node) SetLabels $labels
+    # Update the node
+    Color($c,node) SetLabels $labels
 
-	return 1
+    return 1
 }
 
 #-------------------------------------------------------------------------------
@@ -176,49 +176,49 @@ proc MainColorsAddLabel {c newLabel} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainColorsAddColor {name diffuseColor \
-	{ambient ""} {diffuse ""} {specular ""} {power ""}} {
-	global Color Mrml Gui
+    {ambient ""} {diffuse ""} {specular ""} {power ""}} {
+    global Color Mrml Gui
 
-	# Don't allow duplicate colors
-	set colors ""
+    # Don't allow duplicate colors
+    set colors ""
     set tree Mrml(colorTree) 
     set node [$tree InitColorTraversal]
     while {$node != ""} {
-		set colors "$colors [$node GetName]"
+        set colors "$colors [$node GetName]"
         set node [$tree GetNextColor]
     }
-	if {[lsearch $colors $name] != "-1"} {
-		tk_messageBox -icon error -title $Gui(title) \
-			-message "Color '$name' already exists."
-		return ""
-	}
+    if {[lsearch $colors $name] != "-1"} {
+        tk_messageBox -icon error -title $Gui(title) \
+            -message "Color '$name' already exists."
+        return ""
+    }
 
-	# Create new node
-	set c $Color(nextID)
-	incr Color(nextID)
-	lappend Color(idList) $c
-	vtkMrmlColorNode Color($c,node)
-	set n Color($c,node)
-	$n SetID           $c
-	$n SetDescription  ""
-	$n SetName         $name
-	eval $n SetDiffuseColor $diffuseColor
-	if {$ambient != ""} {
-		$n SetAmbient      $ambient
-	}
-	if {$diffuse != ""} {
-		$n SetDiffuse      $diffuse
-	}
-	if {$specular != ""} {
-		$n SetSpecular     $specular
-	}
-	if {$power != ""} {
-		$n SetPower        $power
-	}
+    # Create new node
+    set c $Color(nextID)
+    incr Color(nextID)
+    lappend Color(idList) $c
+    vtkMrmlColorNode Color($c,node)
+    set n Color($c,node)
+    $n SetID           $c
+    $n SetDescription  ""
+    $n SetName         $name
+    eval $n SetDiffuseColor $diffuseColor
+    if {$ambient != ""} {
+        $n SetAmbient      $ambient
+    }
+    if {$diffuse != ""} {
+        $n SetDiffuse      $diffuse
+    }
+    if {$specular != ""} {
+        $n SetSpecular     $specular
+    }
+    if {$power != ""} {
+        $n SetPower        $power
+    }
 
-	Mrml(colorTree) AddItem $n
+    Mrml(colorTree) AddItem $n
 
-	return $c
+    return $c
 }
 
 #-------------------------------------------------------------------------------
@@ -227,15 +227,15 @@ proc MainColorsAddColor {name diffuseColor \
 # Deletes "delLabel" from Color node "node"
 #-------------------------------------------------------------------------------
 proc MainColorsDeleteLabel {c delLabel} {
-	global Color
+    global Color
 
-	if {$c == ""} {return}
-	
-	set labels [Color($c,node) GetLabels]
+    if {$c == ""} {return}
+    
+    set labels [Color($c,node) GetLabels]
 
-	set i  [lsearch $labels $delLabel]
-	set labels [lreplace $labels $i $i]
-	Color($c,node) SetLabels $labels
+    set i  [lsearch $labels $delLabel]
+    set labels [lreplace $labels $i $i]
+    Color($c,node) SetLabels $labels
 }
 
 #-------------------------------------------------------------------------------
@@ -245,19 +245,19 @@ proc MainColorsDeleteLabel {c delLabel} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainColorsGetColorFromLabel {label} {
-	global Color Mrml
+    global Color Mrml
 
-	set tree Mrml(colorTree) 
+    set tree Mrml(colorTree) 
     set node [$tree InitColorTraversal]
     while {$node != ""} {
-		set labels [$node GetLabels]
-		foreach l $labels {
-			if {$l == $label} {
-				return [$node GetID]
-			}
-		}
-		set node [$tree GetNextColor]
-	}
-	return ""
+        set labels [$node GetLabels]
+        foreach l $labels {
+            if {$l == $label} {
+                return [$node GetID]
+            }
+        }
+        set node [$tree GetNextColor]
+    }
+    return ""
 }
 

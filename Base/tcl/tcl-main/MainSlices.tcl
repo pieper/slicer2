@@ -73,16 +73,16 @@
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesInit {} {
-	global Slice Module
+    global Slice Module
 
-	# Define Procedures
-	lappend Module(procVTK)  MainSlicesBuildVTK
-	lappend Module(procMRML) MainSlicesUpdateMRML
-	lappend Module(procStorePresets) MainSlicesStorePresets
-	lappend Module(procRecallPresets) MainSlicesRecallPresets
+    # Define Procedures
+    lappend Module(procVTK)  MainSlicesBuildVTK
+    lappend Module(procMRML) MainSlicesUpdateMRML
+    lappend Module(procStorePresets) MainSlicesStorePresets
+    lappend Module(procRecallPresets) MainSlicesRecallPresets
 
-	# Preset Defaults
-	set Module(Slices,presets) "opacity='1.0' fade='0' \
+    # Preset Defaults
+    set Module(Slices,presets) "opacity='1.0' fade='0' \
 0,visibility='0' 0,backVolID='0' 0,foreVolID='0' 0,labelVolID='0' \
 0,orient='Axial' 0,offset='0' 0,zoom='1.0' 0,clipState='1'\
 1,visibility='0' 1,backVolID='0' 1,foreVolID='0' 1,labelVolID='0' \
@@ -92,53 +92,53 @@ proc MainSlicesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainSlices \
-		{$Revision: 1.38 $} {$Date: 2002/02/19 21:06:59 $}]
+        {$Revision: 1.39 $} {$Date: 2002/03/18 20:54:49 $}]
 
-	# Initialize Variables
-	set Slice(idList) "0 1 2"
+    # Initialize Variables
+    set Slice(idList) "0 1 2"
 
-	set Slice(opacity) 0.5
-	set Slice(visibilityAll) 0
-	set Slice(activeID) 0 
-	set Slice(0,controls) ""
-	set Slice(1,controls) ""
-	set Slice(2,controls) ""
-	set Slice(0,offset) 0
-	set Slice(1,offset) 0
-	set Slice(2,offset) 0
-	set Slice(0,addedFunction) 0
-	set Slice(1,addedFunction) 0
-	set Slice(2,addedFunction) 0
+    set Slice(opacity) 0.5
+    set Slice(visibilityAll) 0
+    set Slice(activeID) 0 
+    set Slice(0,controls) ""
+    set Slice(1,controls) ""
+    set Slice(2,controls) ""
+    set Slice(0,offset) 0
+    set Slice(1,offset) 0
+    set Slice(2,offset) 0
+    set Slice(0,addedFunction) 0
+    set Slice(1,addedFunction) 0
+    set Slice(2,addedFunction) 0
 
-	set Slice(xAnno) 0  
-	set Slice(yAnno) 0 
-	set Slice(xScrAnno) 0 
-	set Slice(yScrAnno) 0
+    set Slice(xAnno) 0  
+    set Slice(yAnno) 0 
+    set Slice(xScrAnno) 0 
+    set Slice(yScrAnno) 0
 
-	foreach s $Slice(idList) {
-		set Slice($s,id) 0
-		set Slice($s,visibility) 0
-		set Slice($s,clipState) 1
-		set Slice($s,zoom) 1 
-		set Slice($s,driver) User
-		set Slice($s,orient) Axial
-		set Slice($s,offsetAxia) 0
-		set Slice($s,offsetSagittal) 0
-		set Slice($s,offsetCoronal) 0
-		set Slice($s,offsetInPlane) 0
-		set Slice($s,offsetInPlane90) 0
-		set Slice($s,offsetInPlaneNeg90) 0
-		set Slice($s,offsetPerp) 0
-	        set Slice($s,offsetUser) 0
-		set Slice($s,offsetOrigSlice) Auto
-		set Slice($s,offsetAxiSlice) Auto
-		set Slice($s,offsetCorSlice) Auto
-		set Slice($s,offsetSagSlice) Auto
-		set Slice($s,backVolID) 0
-		set Slice($s,foreVolID) 0
-		set Slice($s,labelVolID) 0
-		set Slice($s,offsetIncrement) 1
-	}
+    foreach s $Slice(idList) {
+        set Slice($s,id) 0
+        set Slice($s,visibility) 0
+        set Slice($s,clipState) 1
+        set Slice($s,zoom) 1 
+        set Slice($s,driver) User
+        set Slice($s,orient) Axial
+        set Slice($s,offsetAxia) 0
+        set Slice($s,offsetSagittal) 0
+        set Slice($s,offsetCoronal) 0
+        set Slice($s,offsetInPlane) 0
+        set Slice($s,offsetInPlane90) 0
+        set Slice($s,offsetInPlaneNeg90) 0
+        set Slice($s,offsetPerp) 0
+            set Slice($s,offsetUser) 0
+        set Slice($s,offsetOrigSlice) Auto
+        set Slice($s,offsetAxiSlice) Auto
+        set Slice($s,offsetCorSlice) Auto
+        set Slice($s,offsetSagSlice) Auto
+        set Slice($s,backVolID) 0
+        set Slice($s,foreVolID) 0
+        set Slice($s,labelVolID) 0
+        set Slice($s,offsetIncrement) 1
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -194,65 +194,65 @@ proc MainSlicesInit {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesBuildVTK {} {
-	global View Volume Slice Model Gui View
+    global View Volume Slice Model Gui View
 
-	# Clipping
-	vtkImplicitBoolean Slice(clipPlanes)
-		Slice(clipPlanes) SetOperationTypeToIntersection
+    # Clipping
+    vtkImplicitBoolean Slice(clipPlanes)
+        Slice(clipPlanes) SetOperationTypeToIntersection
 
         set Slice(clipType) "Intersection"
 
-	foreach s $Slice(idList) {
-		vtkPlane Slice($s,clipPlane)
-		Slice(clipPlanes) AddFunction Slice($s,clipPlane)
-		MainSlicesRefreshClip $s
-	}
+    foreach s $Slice(idList) {
+        vtkPlane Slice($s,clipPlane)
+        Slice(clipPlanes) AddFunction Slice($s,clipPlane)
+        MainSlicesRefreshClip $s
+    }
 
-	foreach s $Slice(idList) {
-		vtkTexture Slice($s,texture)
-		Slice($s,texture) SetInput [Slicer GetOutput $s]
+    foreach s $Slice(idList) {
+        vtkTexture Slice($s,texture)
+        Slice($s,texture) SetInput [Slicer GetOutput $s]
 
-		vtkPlaneSource Slice($s,planeSource)
+        vtkPlaneSource Slice($s,planeSource)
 
-		vtkPolyDataMapper Slice($s,planeMapper)
-		Slice($s,planeMapper) SetInput [Slice($s,planeSource) GetOutput]
+        vtkPolyDataMapper Slice($s,planeMapper)
+        Slice($s,planeMapper) SetInput [Slice($s,planeSource) GetOutput]
 
-		vtkActor Slice($s,planeActor)
-		Slice($s,planeActor) SetScale      $View(fov) $View(fov) 1.0
-		Slice($s,planeActor) SetPickable   1
-		Slice($s,planeActor) SetTexture    Slice($s,texture)
-		Slice($s,planeActor) SetMapper     Slice($s,planeMapper)
-		Slice($s,planeActor) SetUserMatrix [Slicer GetReformatMatrix $s]
-		Slice($s,planeActor) SetVisibility $Slice($s,visibility) 
-		[Slice($s,planeActor) GetProperty] SetAmbient 1
-		[Slice($s,planeActor) GetProperty] SetDiffuse 0
-		[Slice($s,planeActor) GetProperty] SetSpecular 0
+        vtkActor Slice($s,planeActor)
+        Slice($s,planeActor) SetScale      $View(fov) $View(fov) 1.0
+        Slice($s,planeActor) SetPickable   1
+        Slice($s,planeActor) SetTexture    Slice($s,texture)
+        Slice($s,planeActor) SetMapper     Slice($s,planeMapper)
+        Slice($s,planeActor) SetUserMatrix [Slicer GetReformatMatrix $s]
+        Slice($s,planeActor) SetVisibility $Slice($s,visibility) 
+        [Slice($s,planeActor) GetProperty] SetAmbient 1
+        [Slice($s,planeActor) GetProperty] SetDiffuse 0
+        [Slice($s,planeActor) GetProperty] SetSpecular 0
 
-		vtkOutlineSource Slice($s,outlineSource)
-		Slice($s,outlineSource) SetBounds -0.5 0.5 -0.5 0.5 0.0 0.0
+        vtkOutlineSource Slice($s,outlineSource)
+        Slice($s,outlineSource) SetBounds -0.5 0.5 -0.5 0.5 0.0 0.0
 
-		vtkPolyDataMapper Slice($s,outlineMapper)
-		Slice($s,outlineMapper) SetInput [Slice($s,outlineSource) GetOutput]
-		Slice($s,outlineMapper) ImmediateModeRenderingOn
+        vtkPolyDataMapper Slice($s,outlineMapper)
+        Slice($s,outlineMapper) SetInput [Slice($s,outlineSource) GetOutput]
+        Slice($s,outlineMapper) ImmediateModeRenderingOn
 
-		vtkActor Slice($s,outlineActor)
-		Slice($s,outlineActor) SetMapper     Slice($s,outlineMapper)
-		Slice($s,outlineActor) SetScale      $View(fov) $View(fov) 1.0
-		Slice($s,outlineActor) SetPickable   0
-		Slice($s,outlineActor) SetUserMatrix [Slicer GetReformatMatrix $s]
-		Slice($s,outlineActor) SetVisibility $Slice($s,visibility) 
+        vtkActor Slice($s,outlineActor)
+        Slice($s,outlineActor) SetMapper     Slice($s,outlineMapper)
+        Slice($s,outlineActor) SetScale      $View(fov) $View(fov) 1.0
+        Slice($s,outlineActor) SetPickable   0
+        Slice($s,outlineActor) SetUserMatrix [Slicer GetReformatMatrix $s]
+        Slice($s,outlineActor) SetVisibility $Slice($s,visibility) 
 
-		MainAddActor Slice($s,outlineActor)
-		MainAddActor Slice($s,planeActor)
+        MainAddActor Slice($s,outlineActor)
+        MainAddActor Slice($s,planeActor)
 
-		# Clip
-		MainSlicesSetClipState $s
-	}
+        # Clip
+        MainSlicesSetClipState $s
+    }
 
-	# Color of slice outline
-	[Slice(0,outlineActor) GetProperty] SetColor 0.9 0.1 0.1
-	[Slice(1,outlineActor) GetProperty] SetColor 0.9 0.9 0.1
-	[Slice(2,outlineActor) GetProperty] SetColor 0.1 0.9 0.1
+    # Color of slice outline
+    [Slice(0,outlineActor) GetProperty] SetColor 0.9 0.1 0.1
+    [Slice(1,outlineActor) GetProperty] SetColor 0.9 0.9 0.1
+    [Slice(2,outlineActor) GetProperty] SetColor 0.1 0.9 0.1
 }
 
 #-------------------------------------------------------------------------------
@@ -266,29 +266,29 @@ proc MainSlicesBuildVTK {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesBuildControlsForVolume {f s layer text} {
-	global Gui
+    global Gui
 
-	# All Slices
-	eval {menubutton $f.mb${layer}Volume -text "${text}:" -width 3 \
-		-menu $f.mb${layer}Volume.m} $Gui(WMBA)
-	eval {menu $f.mb${layer}Volume.m} $Gui(WMA)
-	bind $f.mb${layer}Volume <Button-3> "MainVolumesPopupGo $layer $s %X %Y"
-	# tooltip for slices in this layer
-	TooltipAdd $f.mb${layer}Volume "Volume selection: choose a volume \
-		to appear\nin the $layer layer in all three slice windows.\n\
-		Right-click for volume display menu."
+    # All Slices
+    eval {menubutton $f.mb${layer}Volume -text "${text}:" -width 3 \
+        -menu $f.mb${layer}Volume.m} $Gui(WMBA)
+    eval {menu $f.mb${layer}Volume.m} $Gui(WMA)
+    bind $f.mb${layer}Volume <Button-3> "MainVolumesPopupGo $layer $s %X %Y"
+    # tooltip for slices in this layer
+    TooltipAdd $f.mb${layer}Volume "Volume selection: choose a volume \
+        to appear\nin the $layer layer in all three slice windows.\n\
+        Right-click for volume display menu."
 
-	# This Slice
-	eval {menubutton $f.mb${layer}Volume${s} -text None -width 13 \
-		-menu $f.mb${layer}Volume${s}.m} $Gui(WMBA) {-bg $Gui(slice$s)}
-	eval {menu $f.mb${layer}Volume${s}.m} $Gui(WMA)
-	bind $f.mb${layer}Volume$s <Button-3> "MainVolumesPopupGo $layer $s %X %Y"			
-	# tooltip for this slice in this layer
-	TooltipAdd $f.mb${layer}Volume${s} "Volume Selection: choose a volume\
-		to appear\nin the $layer layer in just this slice window.\n\
-		Right-click for volume display menu."	
-	pack $f.mb${layer}Volume $f.mb${layer}Volume${s} \
-		-pady 0 -padx 2 -side left -fill x
+    # This Slice
+    eval {menubutton $f.mb${layer}Volume${s} -text None -width 13 \
+        -menu $f.mb${layer}Volume${s}.m} $Gui(WMBA) {-bg $Gui(slice$s)}
+    eval {menu $f.mb${layer}Volume${s}.m} $Gui(WMA)
+    bind $f.mb${layer}Volume$s <Button-3> "MainVolumesPopupGo $layer $s %X %Y"            
+    # tooltip for this slice in this layer
+    TooltipAdd $f.mb${layer}Volume${s} "Volume Selection: choose a volume\
+        to appear\nin the $layer layer in just this slice window.\n\
+        Right-click for volume display menu."    
+    pack $f.mb${layer}Volume $f.mb${layer}Volume${s} \
+        -pady 0 -padx 2 -side left -fill x
 }
 
 #-------------------------------------------------------------------------------
@@ -303,136 +303,136 @@ proc MainSlicesBuildControlsForVolume {f s layer text} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesBuildControls {s F} {
-	global Gui View Slice
+    global Gui View Slice
 
-	lappend Slice($s,controls) $F
+    lappend Slice($s,controls) $F
 
-	frame $F.fOffset -bg $Gui(activeWorkspace)
-	frame $F.fOrient -bg $Gui(activeWorkspace)
-	frame $F.fVolume -bg $Gui(activeWorkspace)
+    frame $F.fOffset -bg $Gui(activeWorkspace)
+    frame $F.fOrient -bg $Gui(activeWorkspace)
+    frame $F.fVolume -bg $Gui(activeWorkspace)
 
-	pack $F.fOffset $F.fOrient $F.fVolume \
-		-fill x -side top -padx 0 -pady 3
+    pack $F.fOffset $F.fOrient $F.fVolume \
+        -fill x -side top -padx 0 -pady 3
 
-	# Offset
-	#-------------------------------------------
-	set f $F.fOffset
-	set fov2 [expr $View(fov) / 2]
+    # Offset
+    #-------------------------------------------
+    set f $F.fOffset
+    set fov2 [expr $View(fov) / 2]
 
-	eval {entry $f.eOffset -width 4 -textvariable Slice($s,offset)} $Gui(WEA)
-		bind $f.eOffset <Return>   "MainSlicesSetOffset $s; RenderBoth $s"
-		bind $f.eOffset <FocusOut> "MainSlicesSetOffset $s; RenderBoth $s"
+    eval {entry $f.eOffset -width 4 -textvariable Slice($s,offset)} $Gui(WEA)
+        bind $f.eOffset <Return>   "MainSlicesSetOffset $s; RenderBoth $s"
+        bind $f.eOffset <FocusOut> "MainSlicesSetOffset $s; RenderBoth $s"
 
-	# tooltip for entry box
-	set tip "Current slice: in mm or slice increments,\n \
-		depending on the slice orientation you have chosen.\n \
-		The default (AxiSagCor orientation) is in mm. \n \
-		When editing (Slices orientation), slice numbers are shown.\n\
-		To change the distance between slices from the default\n\
-		1 mm, right-click on the V button."
+    # tooltip for entry box
+    set tip "Current slice: in mm or slice increments,\n \
+        depending on the slice orientation you have chosen.\n \
+        The default (AxiSagCor orientation) is in mm. \n \
+        When editing (Slices orientation), slice numbers are shown.\n\
+        To change the distance between slices from the default\n\
+        1 mm, right-click on the V button."
 
-	TooltipAdd $f.eOffset $tip
+    TooltipAdd $f.eOffset $tip
 
-	eval {scale $f.sOffset -from -$fov2 -to $fov2 \
-		-variable Slice($s,offset) -length 160 -resolution 1.0 -command \
-		"MainSlicesSetOffsetInit $s $f.sOffset"} $Gui(WSA) \
-		{-troughcolor $Gui(slice$s)}
-
-
-	pack $f.sOffset $f.eOffset -side left -anchor w -padx 2 -pady 0
-
-	# Visibility
-	#-------------------------------------------
-
-	# This Slice
-	eval {checkbutton $f.cVisibility${s} \
-		-variable Slice($s,visibility) -indicatoron 0 -text "V" -width 2 \
-		-command "MainSlicesSetVisibility ${s}; \
-		MainViewerHideSliceControls; Render3D"} $Gui(WCA) \
-		{-selectcolor $Gui(slice$s)}
-	# tooltip for Visibility checkbutton
-	TooltipAdd $f.cVisibility${s} "Click to make this slice visible.\n \
-		Right-click for menu: \nzoom, slice increments, \
-		volume display."
+    eval {scale $f.sOffset -from -$fov2 -to $fov2 \
+        -variable Slice($s,offset) -length 160 -resolution 1.0 -command \
+        "MainSlicesSetOffsetInit $s $f.sOffset"} $Gui(WSA) \
+        {-troughcolor $Gui(slice$s)}
 
 
-	eval {button $f.cReformat${s} \
-		-text "R" -width 2 \
-		-command "MainSlicesUserReformat ${s}"} $Gui(WBA) 
-	pack $f.cVisibility${s} $f.cReformat${s} -side left -padx 2
-	TooltipAdd $f.cReformat${s} "Press to reformat this slice"	
+    pack $f.sOffset $f.eOffset -side left -anchor w -padx 2 -pady 0
 
-	# Menu on the Visibility checkbutton
-	eval {menu $f.cVisibility${s}.men} $Gui(WMA)
-	set men $f.cVisibility${s}.men
-	$men add command -label "All Visible" \
-		-command "MainSlicesSetVisibilityAll 1; MainViewerHideSliceControls; Render3D"
-	$men add command -label "All Invisible" \
-		-command "MainSlicesSetVisibilityAll 0; MainViewerHideSliceControls; Render3D"
-	$men add command -label "Reset zoom" -command \
-		"MainSlicesResetZoomAll; MainViewerHideSliceControls; RenderSlices"
-	$men add command -label "Zoom all x2" -command \
-		"MainSlicesSetZoomAll 2; MainViewerHideSliceControls; RenderSlices"
-	$men add command -label "Zoom all x3" -command \
-		"MainSlicesSetZoomAll 3; MainViewerHideSliceControls; RenderSlices"
-	$men add command -label "Auto Window/Level" -command \
-		"MainSlicesVolumeParam $s AutoWindowLevel 1"
-	$men add command -label "No Threshold" -command \
-		"MainSlicesVolumeParam $s AutoThreshold -1"
-	$men add command -label "Set Zoom" -command \
-		"MainSlicesAdvancedControlsPopup $s"
-	$men add command -label "Set Slice Increment" -command \
-		"MainSlicesAdvancedControlsPopup $s"
-	$men add command -label "-- Close Menu --" -command "$men unpost"
-	bind $f.cVisibility${s} <Button-3> "$men post %X %Y"
+    # Visibility
+    #-------------------------------------------
 
-	# Orientation
-	#-------------------------------------------
-	set f $F.fOrient
+    # This Slice
+    eval {checkbutton $f.cVisibility${s} \
+        -variable Slice($s,visibility) -indicatoron 0 -text "V" -width 2 \
+        -command "MainSlicesSetVisibility ${s}; \
+        MainViewerHideSliceControls; Render3D"} $Gui(WCA) \
+        {-selectcolor $Gui(slice$s)}
+    # tooltip for Visibility checkbutton
+    TooltipAdd $f.cVisibility${s} "Click to make this slice visible.\n \
+        Right-click for menu: \nzoom, slice increments, \
+        volume display."
 
-	# All Slices
-	eval {menubutton $f.mbOrient -text "Or:" -width 3 -menu $f.mbOrient.m} \
-		$Gui(WMBA) {-anchor e}
-	pack $f.mbOrient -side left -pady 0 -padx 2 -fill x
-	# tooltip for orientation menu
-	TooltipAdd $f.mbOrient "Set Orientation of all slices."
 
-	eval {menu $f.mbOrient.m} $Gui(WMA)
-	foreach item "AxiSagCor Orthogonal Slices ReformatAxiSagCor" {
-		$f.mbOrient.m add command -label $item -command \
-			"MainSlicesSetOrientAll $item; MainViewerHideSliceControls; RenderAll"
-	}
+    eval {button $f.cReformat${s} \
+        -text "R" -width 2 \
+        -command "MainSlicesUserReformat ${s}"} $Gui(WBA) 
+    pack $f.cVisibility${s} $f.cReformat${s} -side left -padx 2
+    TooltipAdd $f.cReformat${s} "Press to reformat this slice"    
 
-	# This slice
-	eval {menubutton $f.mbOrient${s} -text INIT -menu $f.mbOrient${s}.m \
-		-width 13} $Gui(WMBA) {-bg $Gui(slice$s)}
-	pack $f.mbOrient${s} -side left -pady 0 -padx 2 -fill x
+    # Menu on the Visibility checkbutton
+    eval {menu $f.cVisibility${s}.men} $Gui(WMA)
+    set men $f.cVisibility${s}.men
+    $men add command -label "All Visible" \
+        -command "MainSlicesSetVisibilityAll 1; MainViewerHideSliceControls; Render3D"
+    $men add command -label "All Invisible" \
+        -command "MainSlicesSetVisibilityAll 0; MainViewerHideSliceControls; Render3D"
+    $men add command -label "Reset zoom" -command \
+        "MainSlicesResetZoomAll; MainViewerHideSliceControls; RenderSlices"
+    $men add command -label "Zoom all x2" -command \
+        "MainSlicesSetZoomAll 2; MainViewerHideSliceControls; RenderSlices"
+    $men add command -label "Zoom all x3" -command \
+        "MainSlicesSetZoomAll 3; MainViewerHideSliceControls; RenderSlices"
+    $men add command -label "Auto Window/Level" -command \
+        "MainSlicesVolumeParam $s AutoWindowLevel 1"
+    $men add command -label "No Threshold" -command \
+        "MainSlicesVolumeParam $s AutoThreshold -1"
+    $men add command -label "Set Zoom" -command \
+        "MainSlicesAdvancedControlsPopup $s"
+    $men add command -label "Set Slice Increment" -command \
+        "MainSlicesAdvancedControlsPopup $s"
+    $men add command -label "-- Close Menu --" -command "$men unpost"
+    bind $f.cVisibility${s} <Button-3> "$men post %X %Y"
 
-	# tooltip for orientation menu for slice
-	TooltipAdd $f.mbOrient${s} "Set Orientation of just this slice."
+    # Orientation
+    #-------------------------------------------
+    set f $F.fOrient
 
-	eval {menu $f.mbOrient${s}.m} $Gui(WMA)
-	set Slice($s,menu) $f.mbOrient${s}.m
-	foreach item "[Slicer GetOrientList]" {
-		$f.mbOrient${s}.m add command -label $item -command \
-			"MainSlicesSetOrient ${s} $item; MainViewerHideSliceControls; RenderBoth $s"
-	}
-	#$f.mbOrient${s}.m add command -label "Arbitrary" -command \
-		#	"MainSlicesSetOrient Arbitrary $item; MainViewerHideSliceControls; RenderBoth $s"
-	
+    # All Slices
+    eval {menubutton $f.mbOrient -text "Or:" -width 3 -menu $f.mbOrient.m} \
+        $Gui(WMBA) {-anchor e}
+    pack $f.mbOrient -side left -pady 0 -padx 2 -fill x
+    # tooltip for orientation menu
+    TooltipAdd $f.mbOrient "Set Orientation of all slices."
+
+    eval {menu $f.mbOrient.m} $Gui(WMA)
+    foreach item "AxiSagCor Orthogonal Slices ReformatAxiSagCor" {
+        $f.mbOrient.m add command -label $item -command \
+            "MainSlicesSetOrientAll $item; MainViewerHideSliceControls; RenderAll"
+    }
+
+    # This slice
+    eval {menubutton $f.mbOrient${s} -text INIT -menu $f.mbOrient${s}.m \
+        -width 13} $Gui(WMBA) {-bg $Gui(slice$s)}
+    pack $f.mbOrient${s} -side left -pady 0 -padx 2 -fill x
+
+    # tooltip for orientation menu for slice
+    TooltipAdd $f.mbOrient${s} "Set Orientation of just this slice."
+
+    eval {menu $f.mbOrient${s}.m} $Gui(WMA)
+    set Slice($s,menu) $f.mbOrient${s}.m
+    foreach item "[Slicer GetOrientList]" {
+        $f.mbOrient${s}.m add command -label $item -command \
+            "MainSlicesSetOrient ${s} $item; MainViewerHideSliceControls; RenderBoth $s"
+    }
+    #$f.mbOrient${s}.m add command -label "Arbitrary" -command \
+        #    "MainSlicesSetOrient Arbitrary $item; MainViewerHideSliceControls; RenderBoth $s"
     
-	# Background Volume
-	#-------------------------------------------
-	MainSlicesBuildControlsForVolume $f $s Back Bg
+    
+    # Background Volume
+    #-------------------------------------------
+    MainSlicesBuildControlsForVolume $f $s Back Bg
 
-	# Foreground/Label Volumes row
-	#-------------------------------------------
-	set f $F.fVolume
+    # Foreground/Label Volumes row
+    #-------------------------------------------
+    set f $F.fVolume
 
-	MainSlicesBuildControlsForVolume $f $s Label Lb
-	MainSlicesBuildControlsForVolume $f $s Fore  Fg
+    MainSlicesBuildControlsForVolume $f $s Label Lb
+    MainSlicesBuildControlsForVolume $f $s Fore  Fg
 
-	MainSlicesBuildAdvancedControlsPopup $s
+    MainSlicesBuildAdvancedControlsPopup $s
 
 }
 
@@ -453,9 +453,9 @@ proc MainSlicesBuildAdvancedControlsPopup {s} {
     # once on the Viewer and once in the module panel.
     # So build the popup only once
     if {[info exists Gui(wSlicesAdv$s)] == 1} {
-	if {[winfo exists $Gui(wSlicesAdv$s)] == 1} {
-	    return
-	}
+    if {[winfo exists $Gui(wSlicesAdv$s)] == 1} {
+        return
+    }
     }
 
     #-------------------------------------------
@@ -468,21 +468,21 @@ proc MainSlicesBuildAdvancedControlsPopup {s} {
     wm iconname $w Dialog
     wm protocol $w WM_DELETE_WINDOW "wm withdraw $w"
     if {$Gui(pc) == "0"} {
-	wm transient $w .
+    wm transient $w .
     }
     wm withdraw $w
     set f $w
     
     # Close button
     eval {button $f.bClose -text "Close" \
-	    -command "wm withdraw $w"} $Gui(WBA)
+        -command "wm withdraw $w"} $Gui(WBA)
 
     # Frames
     frame $f.fTop -bg $Gui(activeWorkspace)
     frame $f.fZoom -bg $Gui(activeWorkspace)
     frame $f.fIncrement -bg $Gui(activeWorkspace)
     pack $f.fTop $f.fZoom $f.fIncrement -side top \
-	    -pady $Gui(pad) -padx $Gui(pad) -fill x -expand true
+        -pady $Gui(pad) -padx $Gui(pad) -fill x -expand true
 
     pack $f.bClose -side top -pady $Gui(pad)
     
@@ -492,7 +492,7 @@ proc MainSlicesBuildAdvancedControlsPopup {s} {
     set f $w.fTop
     
     eval {label $f.lTop -text "Controls for Slice $s"} \
-	    $Gui(WLA) {-bg $Gui(slice$s)}
+        $Gui(WLA) {-bg $Gui(slice$s)}
     pack $f.lTop
 
     #-------------------------------------------
@@ -503,14 +503,14 @@ proc MainSlicesBuildAdvancedControlsPopup {s} {
     eval {label $f.lZoom -text "Zoom: "} $Gui(WLA)
 
     eval {entry $f.eZoom -width 7 \
-	    -textvariable Slice($s,zoom)} $Gui(WEA)
+        -textvariable Slice($s,zoom)} $Gui(WEA)
     bind $f.eZoom <Return>   \
-	    "MainSlicesSetZoom $s; RenderSlices"
+        "MainSlicesSetZoom $s; RenderSlices"
     TooltipAdd $f.eZoom "Manually enter zoom value for slice\n\
-	    and hit Enter."
+        and hit Enter."
 
     grid $f.lZoom $f.eZoom \
-	    -pady $Gui(pad) -padx $Gui(pad)
+        -pady $Gui(pad) -padx $Gui(pad)
     grid $f.lZoom -sticky e
     grid $f.eZoom -sticky e
 
@@ -522,17 +522,17 @@ proc MainSlicesBuildAdvancedControlsPopup {s} {
     eval {label $f.lIncrement -text "Slice Increment: "} $Gui(WLA)
 
     eval {entry $f.eIncrement -width 7 \
-	    -textvariable Slice($s,offsetIncrement)} $Gui(WEA)
+        -textvariable Slice($s,offsetIncrement)} $Gui(WEA)
     bind $f.eIncrement <Return>   \
-	    "MainSlicesSetOffsetIncrement $s"
+        "MainSlicesSetOffsetIncrement $s"
 
     grid $f.lIncrement $f.eIncrement \
-	    -pady $Gui(pad) -padx $Gui(pad)
+        -pady $Gui(pad) -padx $Gui(pad)
     grid $f.lIncrement -sticky e
     grid $f.eIncrement -sticky e
 
     TooltipAdd $f.eIncrement "Enter increment between reformatted\n\
-	    slices in mm, and hit Enter.\nThe slider will morve by this amount."
+        slices in mm, and hit Enter.\nThe slider will morve by this amount."
 }
 
 #-------------------------------------------------------------------------------
@@ -542,55 +542,55 @@ proc MainSlicesBuildAdvancedControlsPopup {s} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesUpdateMRML {} {
-	global Gui Slice Volume Module
+    global Gui Slice Volume Module
 
-	# See if the volume for each layer actually exists.
-	# If not, use the None volume
-	#
-	set n $Volume(idNone)
-	foreach s $Slice(idList) {
- 		foreach layer "back fore label" {
-			if {[lsearch $Volume(idList) $Slice($s,${layer}VolID)] == -1} {
-				MainSlicesSetVolume [Cap $layer] $s $n
-			}
-		}
-	}
+    # See if the volume for each layer actually exists.
+    # If not, use the None volume
+    #
+    set n $Volume(idNone)
+    foreach s $Slice(idList) {
+         foreach layer "back fore label" {
+            if {[lsearch $Volume(idList) $Slice($s,${layer}VolID)] == -1} {
+                MainSlicesSetVolume [Cap $layer] $s $n
+            }
+        }
+    }
 
-	foreach s $Slice(idList) {
-		
-		# Volumes on slice
-		#----------------------------
-		foreach layer "Back Fore Label" baseSuffix "Orient Volume Volume" {
-	
-			# All Slices
-			set suffix "f${baseSuffix}.mb${layer}Volume.m"
-			
-			foreach pre "$Slice($s,controls)" {
-				set m $pre.$suffix
+    foreach s $Slice(idList) {
+        
+        # Volumes on slice
+        #----------------------------
+        foreach layer "Back Fore Label" baseSuffix "Orient Volume Volume" {
+    
+            # All Slices
+            set suffix "f${baseSuffix}.mb${layer}Volume.m"
+            
+            foreach pre "$Slice($s,controls)" {
+                set m $pre.$suffix
 
-				$m delete 0 end
-				foreach v $Volume(idList) {
-					$m add command -label [Volume($v,node) GetName] \
-						-command "MainSlicesSetVolumeAll $layer $v; \
-						MainViewerHideSliceControls; RenderAll"
-				}
-			}
+                $m delete 0 end
+                foreach v $Volume(idList) {
+                    $m add command -label [Volume($v,node) GetName] \
+                        -command "MainSlicesSetVolumeAll $layer $v; \
+                        MainViewerHideSliceControls; RenderAll"
+                }
+            }
 
-			# Current Slice
-			set suffix "f${baseSuffix}.mb${layer}Volume${s}.m"
+            # Current Slice
+            set suffix "f${baseSuffix}.mb${layer}Volume${s}.m"
 
-			foreach pre "$Slice($s,controls)" {
-				set m $pre.$suffix
+            foreach pre "$Slice($s,controls)" {
+                set m $pre.$suffix
 
-				$m delete 0 end
-				foreach v $Volume(idList) {
-					$m add command -label [Volume($v,node) GetName] \
-						-command "MainSlicesSetVolume ${layer} ${s} $v; \
-						MainViewerHideSliceControls; RenderBoth $s"
-				}
-			}
-		}
-	}
+                $m delete 0 end
+                foreach v $Volume(idList) {
+                    $m add command -label [Volume($v,node) GetName] \
+                        -command "MainSlicesSetVolume ${layer} ${s} $v; \
+                        MainViewerHideSliceControls; RenderBoth $s"
+                }
+            }
+        }
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -605,10 +605,10 @@ proc MainSlicesUpdateMRML {} {
 #-------------------------------------------------------------------------------
 proc MainSlicesVolumeParam {s param value} {
 
-	set v [[[Slicer GetBackVolume $s] GetMrmlNode] GetID]
-	MainVolumesSetActive $v
-	MainVolumesSetParam $param $value
-	RenderAll
+    set v [[[Slicer GetBackVolume $s] GetMrmlNode] GetID]
+    MainVolumesSetActive $v
+    MainVolumesSetParam $param $value
+    RenderAll
 }
 
 #-------------------------------------------------------------------------------
@@ -625,29 +625,29 @@ proc MainSlicesVolumeParam {s param value} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesSetClipState {s {state ""}} {
-	global Gui Slice
+    global Gui Slice
 
-	if {$state != ""} {
-		set Slice($s,clipState) $state
-	}
-	set state $Slice($s,clipState)
+    if {$state != ""} {
+        set Slice($s,clipState) $state
+    }
+    set state $Slice($s,clipState)
 
-	if {$state == "1"} {
-		MainSlicesRefreshClip $s
-		if {$Slice($s,addedFunction) == 0} {
-			Slice(clipPlanes) AddFunction Slice($s,clipPlane)
-			set Slice($s,addedFunction) 1
-		}
-	} elseif {$state == "2"} {
-		MainSlicesRefreshClip $s
-		if {$Slice($s,addedFunction) == 0} {
-			Slice(clipPlanes) AddFunction Slice($s,clipPlane)
-			set Slice($s,addedFunction) 1
-		}
-	} else {
-		Slice(clipPlanes) RemoveFunction Slice($s,clipPlane)
-		set Slice($s,addedFunction) 0
-	}
+    if {$state == "1"} {
+        MainSlicesRefreshClip $s
+        if {$Slice($s,addedFunction) == 0} {
+            Slice(clipPlanes) AddFunction Slice($s,clipPlane)
+            set Slice($s,addedFunction) 1
+        }
+    } elseif {$state == "2"} {
+        MainSlicesRefreshClip $s
+        if {$Slice($s,addedFunction) == 0} {
+            Slice(clipPlanes) AddFunction Slice($s,clipPlane)
+            set Slice($s,addedFunction) 1
+        }
+    } else {
+        Slice(clipPlanes) RemoveFunction Slice($s,clipPlane)
+        set Slice($s,addedFunction) 0
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -660,30 +660,30 @@ proc MainSlicesSetClipState {s {state ""}} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesRefreshClip {s} {
-	global Slice
-	
-	# Set normal and orient of slice
-	if {$Slice($s,clipState) == "1"} {
-		set sign 1
-	} elseif {$Slice($s,clipState) == "2"} {
-		set sign -1
-	} else {
-		return
-	}
-	set mat [Slicer GetReformatMatrix $s]
+    global Slice
+    
+    # Set normal and orient of slice
+    if {$Slice($s,clipState) == "1"} {
+        set sign 1
+    } elseif {$Slice($s,clipState) == "2"} {
+        set sign -1
+    } else {
+        return
+    }
+    set mat [Slicer GetReformatMatrix $s]
 
-	set origin "[$mat GetElement 0 3] \
-		[$mat GetElement 1 3] [$mat GetElement 2 3]"
+    set origin "[$mat GetElement 0 3] \
+        [$mat GetElement 1 3] [$mat GetElement 2 3]"
 
-	set normal "[expr $sign*[$mat GetElement 0 2]] \
-		[expr $sign*[$mat GetElement 1 2]] \
-		[expr $sign*[$mat GetElement 2 2]]"
+    set normal "[expr $sign*[$mat GetElement 0 2]] \
+        [expr $sign*[$mat GetElement 1 2]] \
+        [expr $sign*[$mat GetElement 2 2]]"
 
-	# WARNING: objects may not exist yet!
-	if {[info command Slice($s,clipPlane)] != ""} {
-		eval Slice($s,clipPlane) SetOrigin  $origin	 
-		eval Slice($s,clipPlane) SetNormal $normal
-	}
+    # WARNING: objects may not exist yet!
+    if {[info command Slice($s,clipPlane)] != ""} {
+        eval Slice($s,clipPlane) SetOrigin  $origin     
+        eval Slice($s,clipPlane) SetNormal $normal
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -694,13 +694,13 @@ proc MainSlicesRefreshClip {s} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesSetFov {} {
-	global Slice View
+    global Slice View
 
-	foreach s $Slice(idList) {
-		MainSlicesSetSliderRange $s
-		Slice($s,planeActor)   SetScale $View(fov) $View(fov) 1.0
-		Slice($s,outlineActor) SetScale $View(fov) $View(fov) 1.0
-	}
+    foreach s $Slice(idList) {
+        MainSlicesSetSliderRange $s
+        Slice($s,planeActor)   SetScale $View(fov) $View(fov) 1.0
+        Slice($s,outlineActor) SetScale $View(fov) $View(fov) 1.0
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -714,13 +714,13 @@ proc MainSlicesSetFov {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesCenterCursor {s} {
-	global View
+    global View
 
-	if {$View(mode) == "Quad512"} {
-		Slicer SetCursorPosition $s 256 256
-	} else {
-		Slicer SetCursorPosition $s 128 128
-	}
+    if {$View(mode) == "Quad512"} {
+        Slicer SetCursorPosition $s 256 256
+    } else {
+        Slicer SetCursorPosition $s 128 128
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -736,37 +736,37 @@ proc MainSlicesCenterCursor {s} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesKeyPress {key} {
-	global View Slice Toolbar Edit
+    global View Slice Toolbar Edit
 
-	# Determine which slice this is
-	set win $View(inWin)
-	if {$win == "none"} {return}
-	set s [string index $win 2]
-	switch $key {
-	  "Up" {
-	    MainSlicesSetOffset $s Next; SliceMouseAnno;
-		MainSlicesRefreshClip $s
-		# I could Render3D here, but I'd prefer speed.
-	  }
-	  "Down" {
-	    MainSlicesSetOffset $s Prev; SliceMouseAnno;
-		MainSlicesRefreshClip $s
-	  }
-	  "Left" {
-		if {[IsModule Edit] == 1} {
-			if {$Toolbar(mode) == "Edit" && $Edit(op) == "Draw"} {
-				EditApplyFilter Draw
-			}
-		}
-	  }
-	  "Right" {
-		if {[IsModule Edit] == 1} {
-			if {$Toolbar(mode) == "Edit" && $Edit(op) == "Draw"} {
-				EditApplyFilter Draw
-			}
-		}
-	  }
-	}
+    # Determine which slice this is
+    set win $View(inWin)
+    if {$win == "none"} {return}
+    set s [string index $win 2]
+    switch $key {
+      "Up" {
+        MainSlicesSetOffset $s Next; SliceMouseAnno;
+        MainSlicesRefreshClip $s
+        # I could Render3D here, but I'd prefer speed.
+      }
+      "Down" {
+        MainSlicesSetOffset $s Prev; SliceMouseAnno;
+        MainSlicesRefreshClip $s
+      }
+      "Left" {
+        if {[IsModule Edit] == 1} {
+            if {$Toolbar(mode) == "Edit" && $Edit(op) == "Draw"} {
+                EditApplyFilter Draw
+            }
+        }
+      }
+      "Right" {
+        if {[IsModule Edit] == 1} {
+            if {$Toolbar(mode) == "Edit" && $Edit(op) == "Draw"} {
+                EditApplyFilter Draw
+            }
+        }
+      }
+    }
 }
 
  
@@ -780,22 +780,22 @@ proc MainSlicesKeyPress {key} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesSetActive {{s ""}} {
-	global Edit Slice View Gui
+    global Edit Slice View Gui
 
-	if {$s == $Slice(activeID)} {return}
-	
-	if {$s == ""} {
-		set s $Slice(activeID)
-	} else {
-		set Slice(activeID) $s
-	}
+    if {$s == $Slice(activeID)} {return}
+    
+    if {$s == ""} {
+        set s $Slice(activeID)
+    } else {
+        set Slice(activeID) $s
+    }
 
-	Slicer SetActiveSlice $s
-	Slicer Update
+    Slicer SetActiveSlice $s
+    Slicer Update
 
-	# Redraw mag with polygon drawing
-	RenderSlices
-	MainViewSetWelcome sl$s
+    # Redraw mag with polygon drawing
+    RenderSlices
+    MainViewSetWelcome sl$s
 }
 
 #-------------------------------------------------------------------------------
@@ -809,35 +809,35 @@ proc MainSlicesSetActive {{s ""}} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesSetVolumeAll {Layer v} {
-	global Slice Volume
+    global Slice Volume
 
-	# Check if volume exists and use the None if not
-	if {[lsearch $Volume(idList) $v] == -1} {
-		set v $Volume(idNone)
-	}
-	
-	# Fields in the Slice array are uncapitalized
-	set layer [Uncap $Layer]
+    # Check if volume exists and use the None if not
+    if {[lsearch $Volume(idList) $v] == -1} {
+        set v $Volume(idNone)
+    }
+    
+    # Fields in the Slice array are uncapitalized
+    set layer [Uncap $Layer]
 
-	# Set the volume in the Slicer
-	Slicer Set${Layer}Volume Volume($v,vol)
-	Slicer Update
+    # Set the volume in the Slicer
+    Slicer Set${Layer}Volume Volume($v,vol)
+    Slicer Update
 
-	foreach s $Slice(idList) {
-		set Slice($s,${layer}VolID) $v
+    foreach s $Slice(idList) {
+        set Slice($s,${layer}VolID) $v
 
-		# Change button text
-		if {$Layer == "Back"} {
-			MainSlicesConfigGui $s fOrient.mb${Layer}Volume$s \
-				"-text [Volume($v,node) GetName]"
-		} else {
-			MainSlicesConfigGui $s fVolume.mb${Layer}Volume$s \
-				"-text [Volume($v,node) GetName]"
-		}
+        # Change button text
+        if {$Layer == "Back"} {
+            MainSlicesConfigGui $s fOrient.mb${Layer}Volume$s \
+                "-text [Volume($v,node) GetName]"
+        } else {
+            MainSlicesConfigGui $s fVolume.mb${Layer}Volume$s \
+                "-text [Volume($v,node) GetName]"
+        }
 
-		# Always update Slider Range when change volume or orient
-		MainSlicesSetSliderRange $s
-	}
+        # Always update Slider Range when change volume or orient
+        MainSlicesSetSliderRange $s
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -851,35 +851,35 @@ proc MainSlicesSetVolumeAll {Layer v} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesSetVolume {Layer s v} {
-	global Slice Volume Model Lut
+    global Slice Volume Model Lut
 
-	# Check if volume exists and use the None if not
-	if {[lsearch $Volume(idList) $v] == -1} {
-		set v $Volume(idNone)
-	}
-	
-	# Fields in the Slice array are uncapitalized
-	set layer [Uncap $Layer]
-	
-	# If no change, return
-	if {$v == $Slice($s,${layer}VolID)} {return}
-	set Slice($s,${layer}VolID) $v
+    # Check if volume exists and use the None if not
+    if {[lsearch $Volume(idList) $v] == -1} {
+        set v $Volume(idNone)
+    }
+    
+    # Fields in the Slice array are uncapitalized
+    set layer [Uncap $Layer]
+    
+    # If no change, return
+    if {$v == $Slice($s,${layer}VolID)} {return}
+    set Slice($s,${layer}VolID) $v
 
-	# Change button text
-	if {$Layer == "Back"} {
-		MainSlicesConfigGui $s fOrient.mb${Layer}Volume$s \
-			"-text [Volume($v,node) GetName]"
-	} else {
-		MainSlicesConfigGui $s fVolume.mb${Layer}Volume$s \
-			"-text [Volume($v,node) GetName]"
-	}
+    # Change button text
+    if {$Layer == "Back"} {
+        MainSlicesConfigGui $s fOrient.mb${Layer}Volume$s \
+            "-text [Volume($v,node) GetName]"
+    } else {
+        MainSlicesConfigGui $s fVolume.mb${Layer}Volume$s \
+            "-text [Volume($v,node) GetName]"
+    }
 
-	# Set the volume in the Slicer
-	Slicer Set${Layer}Volume $s Volume($v,vol)
-	Slicer Update
+    # Set the volume in the Slicer
+    Slicer Set${Layer}Volume $s Volume($v,vol)
+    Slicer Update
 
-	# Always update Slider Range when change volume or orient
-	MainSlicesSetSliderRange $s
+    # Always update Slider Range when change volume or orient
+    MainSlicesSetSliderRange $s
 }
 
 #-------------------------------------------------------------------------------
@@ -890,10 +890,10 @@ proc MainSlicesSetVolume {Layer s v} {
 #-------------------------------------------------------------------------------
 proc MainSlicesSetOffsetInit {s widget {value ""}} {
 
-	# This prevents Tk from calling RenderBoth when it first creates
-	# the slider, but before a user uses it.
+    # This prevents Tk from calling RenderBoth when it first creates
+    # the slider, but before a user uses it.
 
-	$widget config -command "MainSlicesSetOffset $s; RenderBoth $s"
+    $widget config -command "MainSlicesSetOffset $s; RenderBoth $s"
 }
 
 #-------------------------------------------------------------------------------
@@ -912,20 +912,20 @@ proc MainSlicesSetOffset {s {value ""}} {
 
     # figure out what offset to use
     if {$value == ""} {
-	# this means we were called directly from the slider w/ no value param
-	# and the variable Slice($s,offset) has already been set by user
-	set value $Slice($s,offset)
+    # this means we were called directly from the slider w/ no value param
+    # and the variable Slice($s,offset) has already been set by user
+    set value $Slice($s,offset)
     } elseif {$value == "Prev"} {
-	set value [expr $Slice($s,offset) - 1]
+    set value [expr $Slice($s,offset) - 1]
     } elseif {$value == "Next"} {
-	set value [expr $Slice($s,offset) + 1]
+    set value [expr $Slice($s,offset) + 1]
     }
     
     # validate value
     if {[ValidateFloat $value] == 0}  {
-	# don't change slice offset if value is bad
-	# Set slider to the last used offset for this orient
-	set value [Slicer GetOffset $s]
+    # don't change slice offset if value is bad
+    # Set slider to the last used offset for this orient
+    set value [Slicer GetOffset $s]
     } 
 
     set Slice($s,offset) $value
@@ -945,15 +945,15 @@ proc MainSlicesSetOffset {s {value ""}} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesSetSliderRange {s} {
-	global Slice 
+    global Slice 
 
-	set lo [Slicer GetOffsetRangeLow  $s]
-	set hi [Slicer GetOffsetRangeHigh $s]
+    set lo [Slicer GetOffsetRangeLow  $s]
+    set hi [Slicer GetOffsetRangeHigh $s]
 
-	MainSlicesConfigGui $s fOffset.sOffset "-from $lo -to $hi"
+    MainSlicesConfigGui $s fOffset.sOffset "-from $lo -to $hi"
 
-	# Update Offset 
-	set Slice($s,offset) [Slicer GetOffset $s]
+    # Update Offset 
+    set Slice($s,offset) [Slicer GetOffset $s]
 }
 
 #-------------------------------------------------------------------------------
@@ -963,76 +963,76 @@ proc MainSlicesSetSliderRange {s} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesSetOrientAll {orient} {
-	global Slice View
+    global Slice View
 
     
-	Slicer ComputeNTPFromCamera $View(viewCam)
+    Slicer ComputeNTPFromCamera $View(viewCam)
 
-	Slicer SetOrientString $orient
+    Slicer SetOrientString $orient
 
-	foreach s $Slice(idList) {
-		set orient [Slicer GetOrientString $s]
-		set Slice($s,orient) $orient
+    foreach s $Slice(idList) {
+        set orient [Slicer GetOrientString $s]
+        set Slice($s,orient) $orient
 
-		# Always update Slider Range when change Back volume or orient
-		MainSlicesSetSliderRange $s
+        # Always update Slider Range when change Back volume or orient
+        MainSlicesSetSliderRange $s
 
-		# Set slider increments
-		MainSlicesSetOffsetIncrement $s
+        # Set slider increments
+        MainSlicesSetOffsetIncrement $s
 
-		# Set slider to the last used offset for this orient
-		set Slice($s,offset) [Slicer GetOffset $s]
+        # Set slider to the last used offset for this orient
+        set Slice($s,offset) [Slicer GetOffset $s]
 
-		# Change text on menu button
-		MainSlicesConfigGui $s fOrient.mbOrient$s "-text $orient"
-		$Slice($s,lOrient) config -text $orient
+        # Change text on menu button
+        MainSlicesConfigGui $s fOrient.mbOrient$s "-text $orient"
+        $Slice($s,lOrient) config -text $orient
 
-		# Anno
-		switch $Slice($s,orient) {
-			"Axial" {
-				Anno($s,top,mapper)   SetInput A
-				Anno($s,bot,mapper)   SetInput P
-				Anno($s,left,mapper)  SetInput R
-				Anno($s,right,mapper) SetInput L
-			}
-			"AxiSlice" {
-				Anno($s,top,mapper)   SetInput A
-				Anno($s,bot,mapper)   SetInput P
-				Anno($s,left,mapper)  SetInput R
-				Anno($s,right,mapper) SetInput L
-			}
-			"Sagittal" {
-				Anno($s,top,mapper)   SetInput S
-				Anno($s,bot,mapper)   SetInput I
-				Anno($s,left,mapper)  SetInput A 
-				Anno($s,right,mapper) SetInput P 
-			}
-			"SagSlice" {
-				Anno($s,top,mapper)   SetInput S
-				Anno($s,bot,mapper)   SetInput I
-				Anno($s,left,mapper)  SetInput A 
-				Anno($s,right,mapper) SetInput P 
-			}
-			"Coronal" {
-				Anno($s,top,mapper)   SetInput S
-				Anno($s,bot,mapper)   SetInput I
-				Anno($s,left,mapper)  SetInput R
-				Anno($s,right,mapper) SetInput L
-			}
-			"CorSlice" {
-				Anno($s,top,mapper)   SetInput S
-				Anno($s,bot,mapper)   SetInput I
-				Anno($s,left,mapper)  SetInput R
-				Anno($s,right,mapper) SetInput L
-			}
-			default {
-				Anno($s,top,mapper)   SetInput " " 
-				Anno($s,bot,mapper)   SetInput " " 
-				Anno($s,left,mapper)  SetInput " " 
-				Anno($s,right,mapper) SetInput " " 
-			}
-		}
-	}
+        # Anno
+        switch $Slice($s,orient) {
+            "Axial" {
+                Anno($s,top,mapper)   SetInput A
+                Anno($s,bot,mapper)   SetInput P
+                Anno($s,left,mapper)  SetInput R
+                Anno($s,right,mapper) SetInput L
+            }
+            "AxiSlice" {
+                Anno($s,top,mapper)   SetInput A
+                Anno($s,bot,mapper)   SetInput P
+                Anno($s,left,mapper)  SetInput R
+                Anno($s,right,mapper) SetInput L
+            }
+            "Sagittal" {
+                Anno($s,top,mapper)   SetInput S
+                Anno($s,bot,mapper)   SetInput I
+                Anno($s,left,mapper)  SetInput A 
+                Anno($s,right,mapper) SetInput P 
+            }
+            "SagSlice" {
+                Anno($s,top,mapper)   SetInput S
+                Anno($s,bot,mapper)   SetInput I
+                Anno($s,left,mapper)  SetInput A 
+                Anno($s,right,mapper) SetInput P 
+            }
+            "Coronal" {
+                Anno($s,top,mapper)   SetInput S
+                Anno($s,bot,mapper)   SetInput I
+                Anno($s,left,mapper)  SetInput R
+                Anno($s,right,mapper) SetInput L
+            }
+            "CorSlice" {
+                Anno($s,top,mapper)   SetInput S
+                Anno($s,bot,mapper)   SetInput I
+                Anno($s,left,mapper)  SetInput R
+                Anno($s,right,mapper) SetInput L
+            }
+            default {
+                Anno($s,top,mapper)   SetInput " " 
+                Anno($s,bot,mapper)   SetInput " " 
+                Anno($s,left,mapper)  SetInput " " 
+                Anno($s,right,mapper) SetInput " " 
+            }
+        }
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -1045,72 +1045,72 @@ proc MainSlicesSetOrientAll {orient} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesSetOrient {s orient} {
-	global Slice Volume View Module
+    global Slice Volume View Module
 
-	Slicer ComputeNTPFromCamera $View(viewCam)
+    Slicer ComputeNTPFromCamera $View(viewCam)
 
-	Slicer SetOrientString $s $orient
-	set Slice($s,orient) [Slicer GetOrientString $s]
+    Slicer SetOrientString $s $orient
+    set Slice($s,orient) [Slicer GetOrientString $s]
 
-	# Always update Slider Range when change Back volume or orient
-	MainSlicesSetSliderRange $s
+    # Always update Slider Range when change Back volume or orient
+    MainSlicesSetSliderRange $s
 
-	# Set slider increments
-	MainSlicesSetOffsetIncrement $s
-	
+    # Set slider increments
+    MainSlicesSetOffsetIncrement $s
+    
         # Set slider to the last used offset for this orient
         set Slice($s,offset) [Slicer GetOffset $s]
     
 
     # Change text on menu button
-	MainSlicesConfigGui $s fOrient.mbOrient$s "-text $orient"
-	$Slice($s,lOrient) config -text $orient
+    MainSlicesConfigGui $s fOrient.mbOrient$s "-text $orient"
+    $Slice($s,lOrient) config -text $orient
 
-	# Anno
-	switch $orient {
-		"Axial" {
-			Anno($s,top,mapper)   SetInput A
-			Anno($s,bot,mapper)   SetInput P
-			Anno($s,left,mapper)  SetInput R
-			Anno($s,right,mapper) SetInput L
-		}
-		"AxiSlice" {
-			Anno($s,top,mapper)   SetInput A
-			Anno($s,bot,mapper)   SetInput P
-			Anno($s,left,mapper)  SetInput R
-			Anno($s,right,mapper) SetInput L
-		}
-		"Sagittal" {
-			Anno($s,top,mapper)   SetInput S
-			Anno($s,bot,mapper)   SetInput I
-			Anno($s,left,mapper)  SetInput A 
-			Anno($s,right,mapper) SetInput P 
-		}
-		"SagSlice" {
-			Anno($s,top,mapper)   SetInput S
-			Anno($s,bot,mapper)   SetInput I
-			Anno($s,left,mapper)  SetInput A 
-			Anno($s,right,mapper) SetInput P 
-		}
-		"Coronal" {
-			Anno($s,top,mapper)   SetInput S
-			Anno($s,bot,mapper)   SetInput I
-			Anno($s,left,mapper)  SetInput R
-			Anno($s,right,mapper) SetInput L
-		}
-		"CorSlice" {
-			Anno($s,top,mapper)   SetInput S
-			Anno($s,bot,mapper)   SetInput I
-			Anno($s,left,mapper)  SetInput R
-			Anno($s,right,mapper) SetInput L
-		}
-		default {
-			Anno($s,top,mapper)   SetInput " " 
-			Anno($s,bot,mapper)   SetInput " " 
-			Anno($s,left,mapper)  SetInput " " 
-			Anno($s,right,mapper) SetInput " " 
-		}
-	}
+    # Anno
+    switch $orient {
+        "Axial" {
+            Anno($s,top,mapper)   SetInput A
+            Anno($s,bot,mapper)   SetInput P
+            Anno($s,left,mapper)  SetInput R
+            Anno($s,right,mapper) SetInput L
+        }
+        "AxiSlice" {
+            Anno($s,top,mapper)   SetInput A
+            Anno($s,bot,mapper)   SetInput P
+            Anno($s,left,mapper)  SetInput R
+            Anno($s,right,mapper) SetInput L
+        }
+        "Sagittal" {
+            Anno($s,top,mapper)   SetInput S
+            Anno($s,bot,mapper)   SetInput I
+            Anno($s,left,mapper)  SetInput A 
+            Anno($s,right,mapper) SetInput P 
+        }
+        "SagSlice" {
+            Anno($s,top,mapper)   SetInput S
+            Anno($s,bot,mapper)   SetInput I
+            Anno($s,left,mapper)  SetInput A 
+            Anno($s,right,mapper) SetInput P 
+        }
+        "Coronal" {
+            Anno($s,top,mapper)   SetInput S
+            Anno($s,bot,mapper)   SetInput I
+            Anno($s,left,mapper)  SetInput R
+            Anno($s,right,mapper) SetInput L
+        }
+        "CorSlice" {
+            Anno($s,top,mapper)   SetInput S
+            Anno($s,bot,mapper)   SetInput I
+            Anno($s,left,mapper)  SetInput R
+            Anno($s,right,mapper) SetInput L
+        }
+        default {
+            Anno($s,top,mapper)   SetInput " " 
+            Anno($s,bot,mapper)   SetInput " " 
+            Anno($s,left,mapper)  SetInput " " 
+            Anno($s,right,mapper) SetInput " " 
+        }
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -1120,12 +1120,12 @@ proc MainSlicesSetOrient {s orient} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesResetZoomAll {} {
-	global Slice
+    global Slice
 
-	foreach s $Slice(idList) {
-		MainSlicesSetZoom $s 1
-		Slicer SetZoomAutoCenter $s 1
-	}
+    foreach s $Slice(idList) {
+        MainSlicesSetZoom $s 1
+        Slicer SetZoomAutoCenter $s 1
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -1138,17 +1138,17 @@ proc MainSlicesResetZoomAll {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesSetZoomAll {zoom} {
-	global Slice
+    global Slice
 
-	# Change Slice's Zoom variable
-	foreach s $Slice(idList) {
-		set Slice($s,zoom) $zoom
+    # Change Slice's Zoom variable
+    foreach s $Slice(idList) {
+        set Slice($s,zoom) $zoom
 
-	    # Attila's new zooming function
-	    Slicer SetZoomNew $s $zoom
-	}
-	#Slicer SetZoom $zoom
-	Slicer Update
+        # Attila's new zooming function
+        Slicer SetZoomNew $s $zoom
+    }
+    #Slicer SetZoom $zoom
+    Slicer Update
 }
 
 #-------------------------------------------------------------------------------
@@ -1166,11 +1166,11 @@ proc MainSlicesSetZoomAll {zoom} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesConfigGui {s gui config} {
-	global Gui Module Slice
+    global Gui Module Slice
 
-	foreach f $Slice($s,controls) {
-		eval $f.$gui config $config
-	}
+    foreach f $Slice($s,controls) {
+        eval $f.$gui config $config
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -1187,15 +1187,15 @@ proc MainSlicesSetZoom {s {zoom ""}} {
     
     # if called without a zoom arg it's from user entry
     if {$zoom == ""} {
-	if {[ValidateFloat $Slice($s,zoom)] == 0} {
-	    tk_messageBox -message "The zoom must be a number."
-	    
-	    # reset the zoom
-	    set Slice($s,zoom) [Slicer GetZoom $s]
-	    return
-	}
-	# if user-entered zoom is okay then do the rest of the procedure
-	set zoom $Slice($s,zoom)
+    if {[ValidateFloat $Slice($s,zoom)] == 0} {
+        tk_messageBox -message "The zoom must be a number."
+        
+        # reset the zoom
+        set Slice($s,zoom) [Slicer GetZoom $s]
+        return
+    }
+    # if user-entered zoom is okay then do the rest of the procedure
+    set zoom $Slice($s,zoom)
     }
 
     # Change Slice's Zoom variable
@@ -1216,21 +1216,21 @@ proc MainSlicesSetZoom {s {zoom ""}} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesSetVisibilityAll {{value ""}} {
-	global Slice Anno
+    global Slice Anno
 
-	if {$value != ""} {
-		set Slice(visibilityAll) $value
-	}
+    if {$value != ""} {
+        set Slice(visibilityAll) $value
+    }
 
-	foreach s $Slice(idList) {
-		set Slice($s,visibility) $Slice(visibilityAll)
+    foreach s $Slice(idList) {
+        set Slice($s,visibility) $Slice(visibilityAll)
 
-		Slice($s,planeActor) SetVisibility $Slice($s,visibility) 
+        Slice($s,planeActor) SetVisibility $Slice($s,visibility) 
 
-		if {$Anno(outline) == 1} {
-			Slice($s,outlineActor) SetVisibility $Slice($s,visibility)
-		}
-	}
+        if {$Anno(outline) == 1} {
+            Slice($s,outlineActor) SetVisibility $Slice($s,visibility)
+        }
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -1241,21 +1241,21 @@ proc MainSlicesSetVisibilityAll {{value ""}} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesSetVisibility {s} {
-	global Slice Anno
+    global Slice Anno
 
-	Slice($s,planeActor)   SetVisibility $Slice($s,visibility) 
+    Slice($s,planeActor)   SetVisibility $Slice($s,visibility) 
 
-	if {$Anno(outline) == 1} {
-		Slice($s,outlineActor) SetVisibility $Slice($s,visibility)
-	} 
-	
-	# If any slice is invisible, then Slice(visibilityAll) should be 0
-	set Slice(visibilityAll) 1
-	foreach s $Slice(idList) {
-		if {$Slice($s,visibility) == 0} {
-			set Slice(visibilityAll) 0
-		}
-	}
+    if {$Anno(outline) == 1} {
+        Slice($s,outlineActor) SetVisibility $Slice($s,visibility)
+    } 
+    
+    # If any slice is invisible, then Slice(visibilityAll) should be 0
+    set Slice(visibilityAll) 1
+    foreach s $Slice(idList) {
+        if {$Slice($s,visibility) == 0} {
+            set Slice(visibilityAll) 0
+        }
+    }
 }
 
 
@@ -1275,7 +1275,7 @@ proc MainSlicesUserReformat {s} {
     MainSlicesSetActive $s
     Render3D
     if {[info exists Module(Volumes,fReformat)] == 1} {   
-	Tab Volumes row1 Reformat
+    Tab Volumes row1 Reformat
     }
 }
 
@@ -1292,14 +1292,14 @@ proc MainSlicesUserReformat {s} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesSetOpacityAll {{value ""}} {
-	global Slice
-	
-	if {$value == ""} {
-		set value $Slice(opacity)
-	} else {
-		set Slice(opacity) $value
-	}
-	Slicer SetForeOpacity $value
+    global Slice
+    
+    if {$value == ""} {
+        set value $Slice(opacity)
+    } else {
+        set Slice(opacity) $value
+    }
+    Slicer SetForeOpacity $value
 }
 
 #-------------------------------------------------------------------------------
@@ -1313,14 +1313,14 @@ proc MainSlicesSetOpacityAll {{value ""}} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesSetFadeAll {{value ""}} {
-	global Slice
-	
-	if {$value == ""} {
-		set value $Slice(fade)
-	} else {
-		set Slice(fade) $value
-	}
-	Slicer SetForeFade $value
+    global Slice
+    
+    if {$value == ""} {
+        set value $Slice(fade)
+    } else {
+        set Slice(fade) $value
+    }
+    Slicer SetForeFade $value
 }
 
 #-------------------------------------------------------------------------------
@@ -1331,18 +1331,18 @@ proc MainSlicesSetFadeAll {{value ""}} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesSave {} {
-	global Mrml Slice
+    global Mrml Slice
 
     # Prefix cannot be blank
-	if {$Slice(prefix) == ""} {
-		tk_messageBox -message "Please specify a file name."
-		return
-	}
+    if {$Slice(prefix) == ""} {
+        tk_messageBox -message "Please specify a file name."
+        return
+    }
 
-	# Get a unique filename by appending a number to the prefix
-	set filename [MainFileFindUniqueName $Mrml(dir) $Slice(prefix) $Slice(ext)]
+    # Get a unique filename by appending a number to the prefix
+    set filename [MainFileFindUniqueName $Mrml(dir) $Slice(prefix) $Slice(ext)]
 
-	MainSlicesWrite $filename
+    MainSlicesWrite $filename
 }
 
 #-------------------------------------------------------------------------------
@@ -1352,29 +1352,29 @@ proc MainSlicesSave {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesSavePopup {} {
-	global Slice Mrml Gui
+    global Slice Mrml Gui
 
-	# Cannot have blank prefix
-	if {$Slice(prefix) == ""} {
-		set Slice(prefix) view
-	}
+    # Cannot have blank prefix
+    if {$Slice(prefix) == ""} {
+        set Slice(prefix) view
+    }
 
- 	# Show popup initialized to the last file saved
-	set filename [file join $Mrml(dir) $Slice(prefix)]
-	set dir [file dirname $filename]
-	set typelist {
-		{"TIFF File" {".tif"}}
-		{"PPM File" {".ppm"}}
-		{"BMP File" {".bmp"}}
-		{"All Files" {*}}
-	}
-	set filename [tk_getSaveFile -title "Save Slice" -defaultextension $Slice(ext)\
-		-filetypes $typelist -initialdir "$dir" -initialfile $filename]
+     # Show popup initialized to the last file saved
+    set filename [file join $Mrml(dir) $Slice(prefix)]
+    set dir [file dirname $filename]
+    set typelist {
+        {"TIFF File" {".tif"}}
+        {"PPM File" {".ppm"}}
+        {"BMP File" {".bmp"}}
+        {"All Files" {*}}
+    }
+    set filename [tk_getSaveFile -title "Save Slice" -defaultextension $Slice(ext)\
+        -filetypes $typelist -initialdir "$dir" -initialfile $filename]
 
-	# Do nothing if the user cancelled
-	if {$filename == ""} {return}
+    # Do nothing if the user cancelled
+    if {$filename == ""} {return}
 
-	MainSlicesWrite $filename
+    MainSlicesWrite $filename
 }
 
 #-------------------------------------------------------------------------------
@@ -1384,71 +1384,71 @@ proc MainSlicesSavePopup {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesWrite {filename} {
-	global viewWin Mrml Slice Gui
+    global viewWin Mrml Slice Gui
 
-	MainFileCreateDirectory $filename
-	
-	# Write it
-	set s $Slice(activeID)
-	set ext [file extension $filename]
+    MainFileCreateDirectory $filename
+    
+    # Write it
+    set s $Slice(activeID)
+    set ext [file extension $filename]
     set success 0
-	switch $ext {
-	".tif" {
-	    set success 1
-		vtkWindowToImageFilter filter
-		filter SetInput sl${s}Win
+    switch $ext {
+    ".tif" {
+        set success 1
+        vtkWindowToImageFilter filter
+        filter SetInput sl${s}Win
 
-		vtkTIFFWriter writer
-		writer SetInput [filter GetOutput]
-		writer SetFileName $filename
-		writer Write
-		filter Delete
-		writer Delete
-	}
-	".bmp" {
-	    set success 1
-		vtkWindowToImageFilter filter
-		filter SetInput sl${s}Win
+        vtkTIFFWriter writer
+        writer SetInput [filter GetOutput]
+        writer SetFileName $filename
+        writer Write
+        filter Delete
+        writer Delete
+    }
+    ".bmp" {
+        set success 1
+        vtkWindowToImageFilter filter
+        filter SetInput sl${s}Win
 
-		vtkBMPWriter writer
-		writer SetInput [filter GetOutput]
-		writer SetFileName $filename
-		writer Write
-		filter Delete
-		writer Delete
-	}
-	".ppm" {
-	    set success 1
-		vtkWindowToImageFilter filter
-		filter SetInput sl${s}Win
+        vtkBMPWriter writer
+        writer SetInput [filter GetOutput]
+        writer SetFileName $filename
+        writer Write
+        filter Delete
+        writer Delete
+    }
+    ".ppm" {
+        set success 1
+        vtkWindowToImageFilter filter
+        filter SetInput sl${s}Win
 
-		vtkPNMWriter writer
-		writer SetInput [filter GetOutput]
-		writer SetFileName $filename
-		writer Write
-		filter Delete
-		writer Delete
-	}
-	}
-	if {$success == "0"} {
-	    puts "Unable to save view.  Did you choose a filename extension?"
-	    return
-	}
-	puts "Saved view: $filename"
+        vtkPNMWriter writer
+        writer SetInput [filter GetOutput]
+        writer SetFileName $filename
+        writer Write
+        filter Delete
+        writer Delete
+    }
+    }
+    if {$success == "0"} {
+        puts "Unable to save view.  Did you choose a filename extension?"
+        return
+    }
+    puts "Saved view: $filename"
 
-	# Store the new prefix and extension for next time
-	set root $Mrml(dir)
-	set absPrefix [file rootname $filename]
-	if {$Gui(pc) == 1} {
-		set absPrefix [string tolower $absPrefix]
-		set root [string tolower $Mrml(dir)]
-	}
-	if {[regexp "^$root/(\[^0-9\]*)(\[0-9\]*)" $absPrefix match relPrefix num] == 1} {
-		set Slice(prefix) $relPrefix
-	} else {
-		set Slice(prefix) [file rootname $absPrefix]
-	}
-	set Slice(ext) [file extension $filename]
+    # Store the new prefix and extension for next time
+    set root $Mrml(dir)
+    set absPrefix [file rootname $filename]
+    if {$Gui(pc) == 1} {
+        set absPrefix [string tolower $absPrefix]
+        set root [string tolower $Mrml(dir)]
+    }
+    if {[regexp "^$root/(\[^0-9\]*)(\[0-9\]*)" $absPrefix match relPrefix num] == 1} {
+        set Slice(prefix) $relPrefix
+    } else {
+        set Slice(prefix) [file rootname $absPrefix]
+    }
+    set Slice(ext) [file extension $filename]
 }
 
 #-------------------------------------------------------------------------------
@@ -1458,20 +1458,20 @@ proc MainSlicesWrite {filename} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesStorePresets {p} {
-	global Preset Slice
+    global Preset Slice
 
-	foreach s $Slice(idList) {
-		set Preset(Slices,$p,$s,visibility) $Slice($s,visibility)
-		set Preset(Slices,$p,$s,orient)     $Slice($s,orient)
-		set Preset(Slices,$p,$s,offset)     $Slice($s,offset)
-		set Preset(Slices,$p,$s,zoom)       $Slice($s,zoom)
-		set Preset(Slices,$p,$s,clipState)  $Slice($s,clipState)
-		set Preset(Slices,$p,$s,backVolID)  $Slice($s,backVolID)
-		set Preset(Slices,$p,$s,foreVolID)  $Slice($s,foreVolID)
-		set Preset(Slices,$p,$s,labelVolID) $Slice($s,labelVolID)
-	}
-	set Preset(Slices,$p,opacity) $Slice(opacity)
-	set Preset(Slices,$p,fade) $Slice(fade)
+    foreach s $Slice(idList) {
+        set Preset(Slices,$p,$s,visibility) $Slice($s,visibility)
+        set Preset(Slices,$p,$s,orient)     $Slice($s,orient)
+        set Preset(Slices,$p,$s,offset)     $Slice($s,offset)
+        set Preset(Slices,$p,$s,zoom)       $Slice($s,zoom)
+        set Preset(Slices,$p,$s,clipState)  $Slice($s,clipState)
+        set Preset(Slices,$p,$s,backVolID)  $Slice($s,backVolID)
+        set Preset(Slices,$p,$s,foreVolID)  $Slice($s,foreVolID)
+        set Preset(Slices,$p,$s,labelVolID) $Slice($s,labelVolID)
+    }
+    set Preset(Slices,$p,opacity) $Slice(opacity)
+    set Preset(Slices,$p,fade) $Slice(fade)
 }
 
 
@@ -1483,21 +1483,21 @@ proc MainSlicesStorePresets {p} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesRecallPresets {p} {
-	global Preset Slice
+    global Preset Slice
 
-	foreach s $Slice(idList) {
-		set Slice($s,visibility) $Preset(Slices,$p,$s,visibility)
-		MainSlicesSetVisibility $s
-		MainSlicesSetVolume Back $s $Preset(Slices,$p,$s,backVolID)
-		MainSlicesSetVolume Fore $s $Preset(Slices,$p,$s,foreVolID)
-		MainSlicesSetVolume Label $s $Preset(Slices,$p,$s,labelVolID)
-		MainSlicesSetOrient $s $Preset(Slices,$p,$s,orient)
-		MainSlicesSetOffset	$s $Preset(Slices,$p,$s,offset)
-		MainSlicesSetZoom $s $Preset(Slices,$p,$s,zoom)
-		MainSlicesSetClipState $s $Preset(Slices,$p,$s,clipState)
-	}
-	MainSlicesSetOpacityAll $Preset(Slices,$p,opacity)
-	MainSlicesSetFadeAll $Preset(Slices,$p,fade)
+    foreach s $Slice(idList) {
+        set Slice($s,visibility) $Preset(Slices,$p,$s,visibility)
+        MainSlicesSetVisibility $s
+        MainSlicesSetVolume Back $s $Preset(Slices,$p,$s,backVolID)
+        MainSlicesSetVolume Fore $s $Preset(Slices,$p,$s,foreVolID)
+        MainSlicesSetVolume Label $s $Preset(Slices,$p,$s,labelVolID)
+        MainSlicesSetOrient $s $Preset(Slices,$p,$s,orient)
+        MainSlicesSetOffset    $s $Preset(Slices,$p,$s,offset)
+        MainSlicesSetZoom $s $Preset(Slices,$p,$s,zoom)
+        MainSlicesSetClipState $s $Preset(Slices,$p,$s,clipState)
+    }
+    MainSlicesSetOpacityAll $Preset(Slices,$p,opacity)
+    MainSlicesSetFadeAll $Preset(Slices,$p,fade)
 }
 
 #-------------------------------------------------------------------------------
@@ -1508,45 +1508,45 @@ proc MainSlicesRecallPresets {p} {
 # NOTICE: THIS CODE SHOULD BE REMOVED THE INSTANT
 # THAT vtkMrmlSlicer SUPPORTS IT. The internallogic
 # of the reformatter should not be duplicated here.
-# YOU HAVE BEEN WARNED. Here is the replacement code:	
+# YOU HAVE BEEN WARNED. Here is the replacement code:    
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesOffsetToPoint { s x y z } {
-	#
-	# NOTICE: THIS CODE SHOULD BE REMOVED THE INSTANT
-	# THAT vtkMrmlSlicer SUPPORTS IT. The internallogic
-	# of the reformatter should not be duplicated here.
-	# YOU HAVE BEEN WARNED. Here is the replacement code:
-	#
-	# set offset [Slicer GetOffsetFromPoint $s $x $y $z]
-	# MainSlicesSetOffset $s $offset
-	#
-	if { [lsearch [Slicer ListMethods] "GetOffsetFromPoint"] != -1 } {
-		puts "Warning: Read comment in tcl-main/MainSlicesOffsetToPoint"
-	}
+    #
+    # NOTICE: THIS CODE SHOULD BE REMOVED THE INSTANT
+    # THAT vtkMrmlSlicer SUPPORTS IT. The internallogic
+    # of the reformatter should not be duplicated here.
+    # YOU HAVE BEEN WARNED. Here is the replacement code:
+    #
+    # set offset [Slicer GetOffsetFromPoint $s $x $y $z]
+    # MainSlicesSetOffset $s $offset
+    #
+    if { [lsearch [Slicer ListMethods] "GetOffsetFromPoint"] != -1 } {
+        puts "Warning: Read comment in tcl-main/MainSlicesOffsetToPoint"
+    }
 
-	set drive [Slicer GetDriver $s]
-	if { $drive == 0 } {
-		set fp [Slicer GetCamP]
-	} else {
-		set fp [Slicer GetDirP]
-	}
-	set mat [Slicer GetReformatMatrix $s]
-	set vecx [$mat GetElement 0 2]
-	set vecy [$mat GetElement 1 2]
-	set vecz [$mat GetElement 2 2]
-	set difx [expr $x - [lindex $fp 0]]
-	set dify [expr $y - [lindex $fp 1]]
-	set difz [expr $z - [lindex $fp 2]]
-	set offset [expr $vecx * $difx + $vecy * $dify + $vecz * $difz]
-	# Weird kludge for axial & sagittal. For explanation,
-	# see vtkMrmlSlicer:GetOffsetForComputation
-	set orient [Slicer GetOrientString $s]
-	if { $orient == "Axial" || $orient == "Sagittal" } {
-		set offset [expr -1.0 * $offset]
-	}
-	MainSlicesSetOffset $s $offset
+    set drive [Slicer GetDriver $s]
+    if { $drive == 0 } {
+        set fp [Slicer GetCamP]
+    } else {
+        set fp [Slicer GetDirP]
+    }
+    set mat [Slicer GetReformatMatrix $s]
+    set vecx [$mat GetElement 0 2]
+    set vecy [$mat GetElement 1 2]
+    set vecz [$mat GetElement 2 2]
+    set difx [expr $x - [lindex $fp 0]]
+    set dify [expr $y - [lindex $fp 1]]
+    set difz [expr $z - [lindex $fp 2]]
+    set offset [expr $vecx * $difx + $vecy * $dify + $vecz * $difz]
+    # Weird kludge for axial & sagittal. For explanation,
+    # see vtkMrmlSlicer:GetOffsetForComputation
+    set orient [Slicer GetOrientString $s]
+    if { $orient == "Axial" || $orient == "Sagittal" } {
+        set offset [expr -1.0 * $offset]
+    }
+    MainSlicesSetOffset $s $offset
 }
 
 #-------------------------------------------------------------------------------
@@ -1556,12 +1556,12 @@ proc MainSlicesOffsetToPoint { s x y z } {
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesAllOffsetToPoint { x y z } {
-	global Slice
+    global Slice
 
-	foreach s $Slice(idList) {
-		MainSlicesOffsetToPoint $s $x $y $z
-	}
-	RenderAll
+    foreach s $Slice(idList) {
+        MainSlicesOffsetToPoint $s $x $y $z
+    }
+    RenderAll
 }
 
 
@@ -1577,7 +1577,7 @@ proc MainSlicesAdvancedControlsPopup {s} {
     
     # Recreate window if user killed it
     if {[winfo exists $Gui(wSlicesAdv$s)] == 0} {
-	MainSlicesBuildAdvancedControlsPopup $s
+    MainSlicesBuildAdvancedControlsPopup $s
     }
     
     ShowPopup $Gui(wSlicesAdv$s) 0 0
@@ -1601,21 +1601,21 @@ proc MainSlicesSetOffsetIncrement {s {incr ""}} {
     # set slider increments to 1 if in original orientation
     set orient [Slicer GetOrientString $s]
     if {$orient == "AxiSlice" || $orient == "CorSlice" \
-	    || $orient == "SagSlice" || $orient == "OrigSlice" } {
-	set incr 1	
+        || $orient == "SagSlice" || $orient == "OrigSlice" } {
+    set incr 1    
     }
     
     # if called without an incr arg it's from user entry
     if {$incr == ""} {
-	if {[ValidateFloat $Slice($s,offsetIncrement)] == 0} {
-	    tk_messageBox -message "The increment must be a number."
-	    
-	    # reset the incr
-	    set Slice($s,offsetIncrement) 1
-	    return
-	}
-	# if user-entered incr is okay then do the rest of the procedure
-	set incr $Slice($s,offsetIncrement)
+    if {[ValidateFloat $Slice($s,offsetIncrement)] == 0} {
+        tk_messageBox -message "The increment must be a number."
+        
+        # reset the incr
+        set Slice($s,offsetIncrement) 1
+        return
+    }
+    # if user-entered incr is okay then do the rest of the procedure
+    set incr $Slice($s,offsetIncrement)
     }
 
     # Change Slice's offset increment variable
@@ -1671,7 +1671,7 @@ proc MainSlicesSet3DOpacityAll  {opacity} {
     global Slice
 
     foreach s $Slice(idList) {
-	[Slice($s,planeActor) GetProperty] SetOpacity $opacity
+    [Slice($s,planeActor) GetProperty] SetOpacity $opacity
     }
     Render3D
 }

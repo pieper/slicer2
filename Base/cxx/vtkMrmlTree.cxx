@@ -197,8 +197,8 @@ void vtkMrmlTree::ComputeTransforms()
   vtkMrmlMatrixNode *t;
   vtkCollectionElement *elem;
 
-	// Set the vtkTransform to PostMultiply so a concatenated matrix, C,
-	// is multiplied by the existing matrix, M: C*M (not M*C)
+    // Set the vtkTransform to PostMultiply so a concatenated matrix, C,
+    // is multiplied by the existing matrix, M: C*M (not M*C)
   tran->PostMultiply();
 
   elem = this->Top;
@@ -253,8 +253,8 @@ void vtkMrmlTree::ComputeNodeTransform( vtkMrmlNode *node, vtkMatrix4x4 *xform )
   vtkMrmlMatrixNode *t;
   vtkCollectionElement *elem;
 
-	// Set the vtkTransform to PostMultiply so a concatenated matrix, C,
-	// is multiplied by the existing matrix, M: C*M (not M*C)
+    // Set the vtkTransform to PostMultiply so a concatenated matrix, C,
+    // is multiplied by the existing matrix, M: C*M (not M*C)
   tran->PostMultiply();
 
   elem = this->Top;

@@ -102,9 +102,9 @@ void vtkImageThresholdBeyond::ThresholdBeyond(float lower, float upper)
 // This templated function executes the filter for any type of data.
 template <class IT, class OT>
 static void vtkImageThresholdBeyondExecute(vtkImageThresholdBeyond *self,
-				     vtkImageData *inData, IT *inPtr,
-				     vtkImageData *outData, OT *outPtr, 
-				     int outExt[6], int id)
+                     vtkImageData *inData, IT *inPtr,
+                     vtkImageData *outData, OT *outPtr, 
+                     int outExt[6], int id)
 {
   int idxR, idxY, idxZ;
   int maxY, maxZ;
@@ -168,7 +168,7 @@ static void vtkImageThresholdBeyondExecute(vtkImageThresholdBeyond *self,
             {
               *outPtr = outValue;
             }
-            outPtr++;			
+            outPtr++;            
             inPtr++;
           }
         }
@@ -185,7 +185,7 @@ static void vtkImageThresholdBeyondExecute(vtkImageThresholdBeyond *self,
             {
               *outPtr = (OT)(temp);
             }
-            outPtr++;			
+            outPtr++;            
             inPtr++;
           }
         }
@@ -202,7 +202,7 @@ static void vtkImageThresholdBeyondExecute(vtkImageThresholdBeyond *self,
             {
               *outPtr = outValue;
             }
-            outPtr++;			
+            outPtr++;            
             inPtr++;
           }
         }
@@ -212,7 +212,7 @@ static void vtkImageThresholdBeyondExecute(vtkImageThresholdBeyond *self,
           for (idxR = 0; idxR < rowLength; idxR++) 
           {
             *outPtr = (OT)(*inPtr);
-            outPtr++;			
+            outPtr++;            
             inPtr++;
           }
         }
@@ -233,7 +233,7 @@ static void vtkImageThresholdBeyondExecute(vtkImageThresholdBeyond *self,
             {
               *outPtr = outValue;
             }
-            outPtr++;			
+            outPtr++;            
             inPtr++;
           }
         }
@@ -250,7 +250,7 @@ static void vtkImageThresholdBeyondExecute(vtkImageThresholdBeyond *self,
             {
               *outPtr = (OT)(temp);
             }
-            outPtr++;			
+            outPtr++;            
             inPtr++;
           }
         }
@@ -267,7 +267,7 @@ static void vtkImageThresholdBeyondExecute(vtkImageThresholdBeyond *self,
             {
               *outPtr = outValue;
             }
-            outPtr++;			
+            outPtr++;            
             inPtr++;
           }
         }
@@ -277,7 +277,7 @@ static void vtkImageThresholdBeyondExecute(vtkImageThresholdBeyond *self,
           for (idxR = 0; idxR < rowLength; idxR++) 
           {
             *outPtr = (OT)(*inPtr);
-            outPtr++;			
+            outPtr++;            
             inPtr++;
           }
         }
@@ -298,7 +298,7 @@ static void vtkImageThresholdBeyondExecute(vtkImageThresholdBeyond *self,
             {
               *outPtr = outValue;
             }
-            outPtr++;			
+            outPtr++;            
             inPtr++;
           }
         }
@@ -315,7 +315,7 @@ static void vtkImageThresholdBeyondExecute(vtkImageThresholdBeyond *self,
             {
               *outPtr = (OT)(temp);
             }
-            outPtr++;			
+            outPtr++;            
             inPtr++;
           }
         }
@@ -332,7 +332,7 @@ static void vtkImageThresholdBeyondExecute(vtkImageThresholdBeyond *self,
             {
               *outPtr = outValue;
             }
-            outPtr++;			
+            outPtr++;            
             inPtr++;
           }
         }
@@ -342,7 +342,7 @@ static void vtkImageThresholdBeyondExecute(vtkImageThresholdBeyond *self,
           for (idxR = 0; idxR < rowLength; idxR++) 
           {
             *outPtr = (OT)(*inPtr);
-            outPtr++;			
+            outPtr++;            
             inPtr++;
           }
         }
@@ -363,7 +363,7 @@ static void vtkImageThresholdBeyondExecute(vtkImageThresholdBeyond *self,
             {
               *outPtr = outValue;
             }
-            outPtr++;			
+            outPtr++;            
             inPtr++;
           }
         }
@@ -380,7 +380,7 @@ static void vtkImageThresholdBeyondExecute(vtkImageThresholdBeyond *self,
             {
               *outPtr = (OT)(temp);
             }
-            outPtr++;			
+            outPtr++;            
             inPtr++;
           }
         }
@@ -397,7 +397,7 @@ static void vtkImageThresholdBeyondExecute(vtkImageThresholdBeyond *self,
             {
               *outPtr = outValue;
             }
-            outPtr++;			
+            outPtr++;            
             inPtr++;
           }
         }
@@ -407,7 +407,7 @@ static void vtkImageThresholdBeyondExecute(vtkImageThresholdBeyond *self,
           for (idxR = 0; idxR < rowLength; idxR++) 
           {
             *outPtr = (OT)(*inPtr);
-            outPtr++;			
+            outPtr++;            
             inPtr++;
           }
         }
@@ -416,18 +416,18 @@ static void vtkImageThresholdBeyondExecute(vtkImageThresholdBeyond *self,
 
       outPtr += outIncY;
       inPtr += inIncY;
-		}
+        }
     outPtr += outIncZ;
     inPtr += inIncZ;
-	}
+    }
 }
 
 //----------------------------------------------------------------------------
 template <class T>
 static void vtkImageThresholdBeyondExecute1(vtkImageThresholdBeyond *self,
-				      vtkImageData *inData, T *inPtr,
-				      vtkImageData *outData,
-				      int outExt[6], int id)
+                      vtkImageData *inData, T *inPtr,
+                      vtkImageData *outData,
+                      int outExt[6], int id)
 {
   void *outPtr = outData->GetScalarPointerForExtent(outExt);
   
@@ -435,43 +435,43 @@ static void vtkImageThresholdBeyondExecute1(vtkImageThresholdBeyond *self,
     {
     case VTK_DOUBLE:
       vtkImageThresholdBeyondExecute(self, inData, inPtr,
-			       outData, (double *)(outPtr),outExt, id);
+                   outData, (double *)(outPtr),outExt, id);
       break;
     case VTK_FLOAT:
       vtkImageThresholdBeyondExecute(self, inData, inPtr,
-			       outData, (float *)(outPtr),outExt, id);
+                   outData, (float *)(outPtr),outExt, id);
       break;
     case VTK_LONG:
       vtkImageThresholdBeyondExecute(self, inData, inPtr, 
-			       outData, (long *)(outPtr),outExt, id);
+                   outData, (long *)(outPtr),outExt, id);
       break;
     case VTK_UNSIGNED_LONG:
       vtkImageThresholdBeyondExecute(self, inData, inPtr, 
-			       outData, (unsigned long *)(outPtr),outExt, id);
+                   outData, (unsigned long *)(outPtr),outExt, id);
       break;
     case VTK_INT:
       vtkImageThresholdBeyondExecute(self, inData, inPtr, 
-			       outData, (int *)(outPtr),outExt, id);
+                   outData, (int *)(outPtr),outExt, id);
       break;
     case VTK_UNSIGNED_INT:
       vtkImageThresholdBeyondExecute(self, inData, inPtr, 
-			       outData, (unsigned int *)(outPtr),outExt, id);
+                   outData, (unsigned int *)(outPtr),outExt, id);
       break;
     case VTK_SHORT:
       vtkImageThresholdBeyondExecute(self, inData, inPtr, 
-			       outData, (short *)(outPtr),outExt, id);
+                   outData, (short *)(outPtr),outExt, id);
       break;
     case VTK_UNSIGNED_SHORT:
       vtkImageThresholdBeyondExecute(self, inData, inPtr, 
-			       outData, (unsigned short *)(outPtr),outExt, id);
+                   outData, (unsigned short *)(outPtr),outExt, id);
       break;
     case VTK_CHAR:
       vtkImageThresholdBeyondExecute(self, inData, inPtr, 
-			       outData, (char *)(outPtr),outExt, id);
+                   outData, (char *)(outPtr),outExt, id);
       break;
     case VTK_UNSIGNED_CHAR:
       vtkImageThresholdBeyondExecute(self, inData, inPtr, 
-			       outData, (unsigned char *)(outPtr),outExt, id);
+                   outData, (unsigned char *)(outPtr),outExt, id);
       break;
     default:
       vtkGenericWarningMacro("Execute: Unknown input ScalarType");
@@ -487,8 +487,8 @@ static void vtkImageThresholdBeyondExecute1(vtkImageThresholdBeyond *self,
 // It just executes a switch statement to call the correct function for
 // the datas data types.
 void vtkImageThresholdBeyond::ThreadedExecute(vtkImageData *inData, 
-					vtkImageData *outData,
-					int outExt[6], int id)
+                    vtkImageData *outData,
+                    int outExt[6], int id)
 {
   void *inPtr = inData->GetScalarPointerForExtent(outExt);
   
@@ -496,43 +496,43 @@ void vtkImageThresholdBeyond::ThreadedExecute(vtkImageData *inData,
     {
     case VTK_DOUBLE:
       vtkImageThresholdBeyondExecute1(this, inData, (double *)(inPtr), 
-			       outData, outExt, id);
+                   outData, outExt, id);
       break;
     case VTK_FLOAT:
       vtkImageThresholdBeyondExecute1(this, inData, (float *)(inPtr), 
-			       outData, outExt, id);
+                   outData, outExt, id);
       break;
     case VTK_LONG:
       vtkImageThresholdBeyondExecute1(this, inData, (long *)(inPtr), 
-			       outData, outExt, id);
+                   outData, outExt, id);
       break;
     case VTK_UNSIGNED_LONG:
       vtkImageThresholdBeyondExecute1(this, inData, (unsigned long *)(inPtr), 
-			       outData, outExt, id);
+                   outData, outExt, id);
       break;
     case VTK_INT:
       vtkImageThresholdBeyondExecute1(this, inData, (int *)(inPtr), 
-			       outData, outExt, id);
+                   outData, outExt, id);
       break;
     case VTK_UNSIGNED_INT:
       vtkImageThresholdBeyondExecute1(this, inData, (unsigned int *)(inPtr), 
-			       outData, outExt, id);
+                   outData, outExt, id);
       break;
     case VTK_SHORT:
       vtkImageThresholdBeyondExecute1(this, inData, (short *)(inPtr), 
-			       outData, outExt, id);
+                   outData, outExt, id);
       break;
     case VTK_UNSIGNED_SHORT:
       vtkImageThresholdBeyondExecute1(this, inData, (unsigned short *)(inPtr), 
-			       outData, outExt, id);
+                   outData, outExt, id);
       break;
     case VTK_CHAR:
       vtkImageThresholdBeyondExecute1(this, inData, (char *)(inPtr), 
-			       outData, outExt, id);
+                   outData, outExt, id);
       break;
     case VTK_UNSIGNED_CHAR:
       vtkImageThresholdBeyondExecute1(this, inData, (unsigned char *)(inPtr), 
-			       outData, outExt, id);
+                   outData, outExt, id);
       break;
     default:
       vtkErrorMacro(<< "Execute: Unknown input ScalarType");

@@ -241,11 +241,11 @@ void vtkMrmlVolumeNode::Write(ofstream& of, int nIndent)
       int i;
       int num = GetNumberOfDICOMFiles();
       for(i = 0; i < num; i++)
-	{
-	  if(i > 0)
-	    of << " ";
-	  of << GetDICOMFileName(i);
-	}
+    {
+      if(i > 0)
+        of << " ";
+      of << GetDICOMFileName(i);
+    }
       of << "'";
     }
 
@@ -259,11 +259,11 @@ void vtkMrmlVolumeNode::Write(ofstream& of, int nIndent)
       int i;
       int num = GetNumberOfDICOMMultiFrameOffsets();
       for(i = 0; i < num; i++)
-	{
-	  if(i > 0)
-	    of << " ";
-	  of << GetDICOMMultiFrameOffset(i);
-	}
+    {
+      if(i > 0)
+        of << " ";
+      of << GetDICOMMultiFrameOffset(i);
+    }
       of << "'";
     }
 
@@ -394,18 +394,18 @@ void vtkMrmlVolumeNode::Copy(vtkMrmlNode *anode)
   
   // Numbers
   this->SetTilt(node->Tilt);
-	this->SetLabelMap(node->LabelMap);
-	this->SetLittleEndian(node->LittleEndian);
-	this->SetScalarType(node->ScalarType);
-	this->SetNumScalars(node->NumScalars);
-	this->SetAutoWindowLevel(node->AutoWindowLevel);
-	this->SetWindow(node->Window);
-	this->SetLevel(node->Level);
-	this->SetAutoThreshold(node->AutoThreshold);
-	this->SetApplyThreshold(node->ApplyThreshold);
-	this->SetUpperThreshold(node->UpperThreshold);
-	this->SetLowerThreshold(node->LowerThreshold);
-	this->SetInterpolate(node->Interpolate);
+    this->SetLabelMap(node->LabelMap);
+    this->SetLittleEndian(node->LittleEndian);
+    this->SetScalarType(node->ScalarType);
+    this->SetNumScalars(node->NumScalars);
+    this->SetAutoWindowLevel(node->AutoWindowLevel);
+    this->SetWindow(node->Window);
+    this->SetLevel(node->Level);
+    this->SetAutoThreshold(node->AutoThreshold);
+    this->SetApplyThreshold(node->ApplyThreshold);
+    this->SetUpperThreshold(node->UpperThreshold);
+    this->SetLowerThreshold(node->LowerThreshold);
+    this->SetInterpolate(node->Interpolate);
 
   // Matrices
   this->RasToIjk->DeepCopy(node->RasToIjk);
@@ -933,8 +933,8 @@ void vtkMrmlVolumeNode::DeleteDICOMFileNames()
   for(i=0; i<500; i++)
     if(DICOMFileList[i] != NULL)
       {
-	delete [] DICOMFileList[i];
-	DICOMFileList[i] = NULL;
+    delete [] DICOMFileList[i];
+    DICOMFileList[i] = NULL;
       }
 
   DICOMFiles = 0;

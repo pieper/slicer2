@@ -36,21 +36,21 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 class VTK_EXPORT vtkImageReformatIJK : public vtkImageToImageFilter
 {
 public:
-	static vtkImageReformatIJK *New();
+    static vtkImageReformatIJK *New();
   vtkTypeMacro(vtkImageReformatIJK,vtkImageToImageFilter);
-	void PrintSelf(ostream& os, vtkIndent indent);
+    void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:
   // 
-	vtkGetVector4Macro(XStep, float);
-	vtkGetVector4Macro(YStep, float);
-	vtkGetVector4Macro(ZStep, float);
-	vtkGetVector4Macro(Origin, float);
+    vtkGetVector4Macro(XStep, float);
+    vtkGetVector4Macro(YStep, float);
+    vtkGetVector4Macro(ZStep, float);
+    vtkGetVector4Macro(Origin, float);
 
   // Description:
   // 
-	vtkSetMacro(Slice, int);
-	vtkGetMacro(Slice, int);
+    vtkSetMacro(Slice, int);
+    vtkGetMacro(Slice, int);
 
   // Description:
   // 
@@ -64,17 +64,17 @@ public:
   void SetInputOrderString(char *str);
   void SetOutputOrderString(char *str);
 
-	vtkGetObjectMacro(Indices, vtkIntArray);
+    vtkGetObjectMacro(Indices, vtkIntArray);
 
-	vtkGetObjectMacro(WldToIjkMatrix, vtkMatrix4x4);
-	vtkSetObjectMacro(WldToIjkMatrix, vtkMatrix4x4);
+    vtkGetObjectMacro(WldToIjkMatrix, vtkMatrix4x4);
+    vtkSetObjectMacro(WldToIjkMatrix, vtkMatrix4x4);
 
   void ComputeReformatMatrix(vtkMatrix4x4 *ref);
 
   void SetIJKPoint(int i, int j, int k);
   vtkGetVectorMacro(XYPoint, int, 2);
 
-	vtkMatrix4x4* WldToIjkMatrix;
+    vtkMatrix4x4* WldToIjkMatrix;
   int NumSlices;
   vtkGetMacro(NumSlices, int);
   float XStep[4];
@@ -98,17 +98,17 @@ public:
 protected:
   vtkImageReformatIJK();
   ~vtkImageReformatIJK();
-	vtkImageReformatIJK(const vtkImageReformatIJK&) {};
-	void operator=(const vtkImageReformatIJK&) {};
+    vtkImageReformatIJK(const vtkImageReformatIJK&) {};
+    void operator=(const vtkImageReformatIJK&) {};
 
   vtkTimeStamp TransformTime;
   int OutputExtent[6];
 
-	// Override this function since inExt != outExt
-	void ComputeInputUpdateExtent(int inExt[6],int outExt[6]);
-	void ExecuteInformation(vtkImageData *inData, vtkImageData *outData);
+    // Override this function since inExt != outExt
+    void ComputeInputUpdateExtent(int inExt[6],int outExt[6]);
+    void ExecuteInformation(vtkImageData *inData, vtkImageData *outData);
 
-	void Execute(vtkImageData *inData, vtkImageData *outData);
+    void Execute(vtkImageData *inData, vtkImageData *outData);
 };
 
 #endif

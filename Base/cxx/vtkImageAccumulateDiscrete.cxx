@@ -48,7 +48,7 @@ vtkImageAccumulateDiscrete::vtkImageAccumulateDiscrete()
 #define  MAX_ACCUMULATION_BIN 65535
 //----------------------------------------------------------------------------
 void vtkImageAccumulateDiscrete::ExecuteInformation(vtkImageData *vtkNotUsed(input), 
-					    vtkImageData *output)
+                        vtkImageData *output)
 {
   int ext[6];
   memset(ext, 0, 6*sizeof(int));
@@ -70,7 +70,7 @@ void vtkImageAccumulateDiscrete::ExecuteInformation(vtkImageData *vtkNotUsed(inp
 //----------------------------------------------------------------------------
 // Get ALL of the input.
 void vtkImageAccumulateDiscrete::ComputeInputUpdateExtent(int inExt[6], 
-							  int outExt[6])
+                              int outExt[6])
 {
   int *wholeExtent;
 
@@ -92,8 +92,8 @@ void vtkImageAccumulateDiscrete::EnlargeOutputUpdateExtents(vtkDataObject *vtkNo
 // This templated function executes the filter for any type of data.
 template <class T>
 static void vtkImageAccumulateDiscreteExecute(vtkImageAccumulateDiscrete *self,
-				      vtkImageData *inData, T *inPtr,
-				      vtkImageData *outData, int *outPtr)
+                      vtkImageData *inData, T *inPtr,
+                      vtkImageData *outData, int *outPtr)
 {
   int min0, max0, min1, max1, min2, max2;
   int idx0, idx1, idx2;
@@ -108,7 +108,7 @@ static void vtkImageAccumulateDiscreteExecute(vtkImageAccumulateDiscrete *self,
   // Zero count in every bin
   outData->GetExtent(min0, max0, min1, max1, min2, max2);
   memset((void *)outPtr, 0, 
-	 (max0-min0+1)*(max1-min1+1)*(max2-min2+1)*sizeof(int));
+     (max0-min0+1)*(max1-min1+1)*(max2-min2+1)*sizeof(int));
     
   // Get information to march through data 
   numC = inData->GetNumberOfScalarComponents();
@@ -142,7 +142,7 @@ static void vtkImageAccumulateDiscreteExecute(vtkImageAccumulateDiscrete *self,
         int a = (int)(*inPtr0) + offset;
         if ((a<MAX_ACCUMULATION_BIN)&&(a>0))
           outPtr[a]++;
-	      inPtr0 += inInc0;
+          inPtr0 += inInc0;
       }
       inPtr1 += inInc1;
     }
@@ -150,7 +150,7 @@ static void vtkImageAccumulateDiscreteExecute(vtkImageAccumulateDiscrete *self,
   }
 }
 
-	
+    
 
 //----------------------------------------------------------------------------
 // This method is passed a input and output Data, and executes the filter
@@ -158,7 +158,7 @@ static void vtkImageAccumulateDiscreteExecute(vtkImageAccumulateDiscrete *self,
 // It just executes a switch statement to call the correct function for
 // the Datas data types.
 void vtkImageAccumulateDiscrete::Execute(vtkImageData *inData, 
-				 vtkImageData *outData)
+                 vtkImageData *outData)
 {
   void *inPtr;
   int *outPtr;
@@ -170,7 +170,7 @@ void vtkImageAccumulateDiscrete::Execute(vtkImageData *inData,
   if (outData->GetScalarType() != VTK_INT)
   {
     vtkErrorMacro(<< "Execute: out ScalarType " << outData->GetScalarType()
-		  << " must be int\n");
+          << " must be int\n");
     return;
   }
   
@@ -178,43 +178,43 @@ void vtkImageAccumulateDiscrete::Execute(vtkImageData *inData,
   {
     case VTK_CHAR:
       vtkImageAccumulateDiscreteExecute(this, 
-			  inData, (char *)(inPtr), outData, outPtr);
+              inData, (char *)(inPtr), outData, outPtr);
       break;
     case VTK_UNSIGNED_CHAR:
       vtkImageAccumulateDiscreteExecute(this, 
-			  inData, (unsigned char *)(inPtr), outData, outPtr);
+              inData, (unsigned char *)(inPtr), outData, outPtr);
       break;
     case VTK_SHORT:
       vtkImageAccumulateDiscreteExecute(this, 
-			  inData, (short *)(inPtr), outData, outPtr);
+              inData, (short *)(inPtr), outData, outPtr);
       break;
     case VTK_UNSIGNED_SHORT:
       vtkImageAccumulateDiscreteExecute(this, 
-			  inData, (unsigned short *)(inPtr), outData, outPtr);
+              inData, (unsigned short *)(inPtr), outData, outPtr);
       break;
     case VTK_INT:
       vtkImageAccumulateDiscreteExecute(this, 
-			  inData, (int *)(inPtr), outData, outPtr);
+              inData, (int *)(inPtr), outData, outPtr);
       break;
     case VTK_UNSIGNED_INT:
       vtkImageAccumulateDiscreteExecute(this, 
-			  inData, (unsigned int *)(inPtr), outData, outPtr);
+              inData, (unsigned int *)(inPtr), outData, outPtr);
       break;
     case VTK_LONG:
       vtkImageAccumulateDiscreteExecute(this, 
-			  inData, (long *)(inPtr), outData, outPtr);
+              inData, (long *)(inPtr), outData, outPtr);
       break;
     case VTK_UNSIGNED_LONG:
       vtkImageAccumulateDiscreteExecute(this, 
-			  inData, (unsigned long *)(inPtr), outData, outPtr);
+              inData, (unsigned long *)(inPtr), outData, outPtr);
       break;
     case VTK_FLOAT:
       vtkImageAccumulateDiscreteExecute(this, 
-			  inData, (float *)(inPtr), outData, outPtr);
+              inData, (float *)(inPtr), outData, outPtr);
       break;
     case VTK_DOUBLE:
       vtkImageAccumulateDiscreteExecute(this, 
-			  inData, (double *)(inPtr), outData, outPtr);
+              inData, (double *)(inPtr), outData, outPtr);
       break;
     default:
       vtkErrorMacro(<< "Execute: Unsupported ScalarType");

@@ -46,27 +46,27 @@
 # .END
 #-------------------------------------------------------------------------------
 proc ColorsInit {} {
-	global Color Gui Module
+    global Color Gui Module
 
-	# Define Tabs
-	set m Colors
-	set Module($m,row1List) "Help Colors"
-	set Module($m,row1Name) "Help {Edit Colors}"
-	set Module($m,row1,tab) Colors
+    # Define Tabs
+    set m Colors
+    set Module($m,row1List) "Help Colors"
+    set Module($m,row1Name) "Help {Edit Colors}"
+    set Module($m,row1,tab) Colors
 
     # Module Summary Info
     set Module($m,overview) "Add new colors, view color lookup table."
 
-	# Define Procedures
-	set Module($m,procGUI)  ColorsBuildGUI
-	set Module($m,procMRML) ColorsUpdateMRML
+    # Define Procedures
+    set Module($m,procGUI)  ColorsBuildGUI
+    set Module($m,procMRML) ColorsUpdateMRML
 
-	# Define Dependencies
-	set Module($m,depend) ""
+    # Define Dependencies
+    set Module($m,depend) ""
 
-	# Set version info
-	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.18 $} {$Date: 2002/01/26 23:34:30 $}]
+    # Set version info
+    lappend Module(versions) [ParseCVSInfo $m \
+        {$Revision: 1.19 $} {$Date: 2002/03/18 20:52:37 $}]
 }
 
 #-------------------------------------------------------------------------------
@@ -76,25 +76,25 @@ proc ColorsInit {} {
 # .END
 #-------------------------------------------------------------------------------
 proc ColorsBuildGUI {} {
-	global Gui Module Color Colors
+    global Gui Module Color Colors
 
-	#-------------------------------------------
-	# Frame Hierarchy:
-	#-------------------------------------------
-	# Help
-	# Colors
-	#   Top
-	#     Colors
-	#     Labels
-	#   Bot
-	#     Attr
-	#     Apply
-	#-------------------------------------------
+    #-------------------------------------------
+    # Frame Hierarchy:
+    #-------------------------------------------
+    # Help
+    # Colors
+    #   Top
+    #     Colors
+    #     Labels
+    #   Bot
+    #     Attr
+    #     Apply
+    #-------------------------------------------
 
-	#-------------------------------------------
-	# Help frame
-	#-------------------------------------------
-	set help "
+    #-------------------------------------------
+    # Help frame
+    #-------------------------------------------
+    set help "
 Click on the name of a color in the <B>Color Name</B> listbox to view the
 <B>Label</B> values associated with this color.  Use the <B>Add</B> and
 <B>Delete</B> buttons to create/remove new colors or labels for colors.
@@ -104,117 +104,117 @@ Your changes will not take effect until you click the <B>Apply</B> button.
 The colors are saved in the MRML file when you select the <B>Save</B> option
 from the <B>File</B> menu if they differ from the default colors.
 "
-	regsub -all "\n" $help { } help
-	MainHelpApplyTags Colors $help
-	MainHelpBuildGUI Colors
+    regsub -all "\n" $help { } help
+    MainHelpApplyTags Colors $help
+    MainHelpBuildGUI Colors
 
-	#-------------------------------------------
-	# Colors frame
-	#-------------------------------------------
-	set fColors $Module(Colors,fColors)
-	set f $fColors
+    #-------------------------------------------
+    # Colors frame
+    #-------------------------------------------
+    set fColors $Module(Colors,fColors)
+    set f $fColors
 
-	frame $f.fTop -bg $Gui(activeWorkspace)
-	frame $f.fBot -bg $Gui(activeWorkspace)
-	pack $f.fTop $f.fBot -side top -padx $Gui(pad) -fill x
+    frame $f.fTop -bg $Gui(activeWorkspace)
+    frame $f.fBot -bg $Gui(activeWorkspace)
+    pack $f.fTop $f.fBot -side top -padx $Gui(pad) -fill x
 
-	#-------------------------------------------
-	# Colors->Top
-	#-------------------------------------------
-	set f $fColors.fTop
+    #-------------------------------------------
+    # Colors->Top
+    #-------------------------------------------
+    set f $fColors.fTop
 
-	frame $f.fColors -bg $Gui(activeWorkspace) -relief groove -bd 2
-	frame $f.fLabels -bg $Gui(activeWorkspace) -relief groove -bd 2
-	pack $f.fColors $f.fLabels -side left -padx 2 -pady 1 -fill x
+    frame $f.fColors -bg $Gui(activeWorkspace) -relief groove -bd 2
+    frame $f.fLabels -bg $Gui(activeWorkspace) -relief groove -bd 2
+    pack $f.fColors $f.fLabels -side left -padx 2 -pady 1 -fill x
 
-	#-------------------------------------------
-	# Colors->Top->Colors frame
-	#-------------------------------------------
-	set f $fColors.fTop.fColors
+    #-------------------------------------------
+    # Colors->Top->Colors frame
+    #-------------------------------------------
+    set f $fColors.fTop.fColors
 
-	eval {label $f.lTitle -text "Color Name"} $Gui(WTA)
+    eval {label $f.lTitle -text "Color Name"} $Gui(WTA)
 
-	set Color(fColorList) [ScrolledListbox $f.list 1 1 -height 5 -width 15]
-	bind $Color(fColorList) <ButtonRelease-1> {ColorsSelectColor}
+    set Color(fColorList) [ScrolledListbox $f.list 1 1 -height 5 -width 15]
+    bind $Color(fColorList) <ButtonRelease-1> {ColorsSelectColor}
 
-	eval {entry $f.eName -textvariable Color(name) -width 18} $Gui(WEA)
-	bind $f.eName <Return> "ColorsAddColor"
-	
-	frame $f.fBtns -bg $Gui(activeWorkspace)
-	eval {button $f.fBtns.bAdd -text "Add" -width 4 \
-		-command "ColorsAddColor"} $Gui(WBA)
-	eval {button $f.fBtns.bDelete -text "Delete" -width 7 \
-		-command "ColorsDeleteColor"} $Gui(WBA)
-	pack $f.fBtns.bAdd $f.fBtns.bDelete -side left -padx $Gui(pad)
+    eval {entry $f.eName -textvariable Color(name) -width 18} $Gui(WEA)
+    bind $f.eName <Return> "ColorsAddColor"
+    
+    frame $f.fBtns -bg $Gui(activeWorkspace)
+    eval {button $f.fBtns.bAdd -text "Add" -width 4 \
+        -command "ColorsAddColor"} $Gui(WBA)
+    eval {button $f.fBtns.bDelete -text "Delete" -width 7 \
+        -command "ColorsDeleteColor"} $Gui(WBA)
+    pack $f.fBtns.bAdd $f.fBtns.bDelete -side left -padx $Gui(pad)
 
-	pack $f.lTitle -side top -pady 2
-	pack $f.list $f.eName $f.fBtns -side top -pady $Gui(pad)
+    pack $f.lTitle -side top -pady 2
+    pack $f.list $f.eName $f.fBtns -side top -pady $Gui(pad)
 
-	#-------------------------------------------
-	# Colors->Top->Labels frame
-	#-------------------------------------------
-	set f $fColors.fTop.fLabels
+    #-------------------------------------------
+    # Colors->Top->Labels frame
+    #-------------------------------------------
+    set f $fColors.fTop.fLabels
 
-	eval {label $f.lTitle -text "Label"} $Gui(WTA)
+    eval {label $f.lTitle -text "Label"} $Gui(WTA)
 
-	set Color(fLabelList) [ScrolledListbox $f.list 1 1 -height 5 -width 6]
-		bind $Color(fLabelList) <ButtonRelease-1> "ColorsSelectLabel"
+    set Color(fLabelList) [ScrolledListbox $f.list 1 1 -height 5 -width 6]
+        bind $Color(fLabelList) <ButtonRelease-1> "ColorsSelectLabel"
 
-	eval {entry $f.eName -textvariable Color(label) -width 9} $Gui(WEA)
-	bind $f.eName <Return> "ColorsAddLabel"
+    eval {entry $f.eName -textvariable Color(label) -width 9} $Gui(WEA)
+    bind $f.eName <Return> "ColorsAddLabel"
 
-	frame $f.fBtns -bg $Gui(activeWorkspace)
-	eval {button $f.fBtns.bAdd -text "Add" -width 4 \
-		-command "ColorsAddLabel"} $Gui(WBA)
-	eval {button $f.fBtns.bDelete -text "Del" -width 4 \
-		-command "ColorsDeleteLabel"} $Gui(WBA)
-	pack $f.fBtns.bAdd $f.fBtns.bDelete -side left -padx $Gui(pad)
+    frame $f.fBtns -bg $Gui(activeWorkspace)
+    eval {button $f.fBtns.bAdd -text "Add" -width 4 \
+        -command "ColorsAddLabel"} $Gui(WBA)
+    eval {button $f.fBtns.bDelete -text "Del" -width 4 \
+        -command "ColorsDeleteLabel"} $Gui(WBA)
+    pack $f.fBtns.bAdd $f.fBtns.bDelete -side left -padx $Gui(pad)
 
-	pack $f.lTitle -side top -pady 2
-	pack $f.list $f.eName $f.fBtns -side top -pady $Gui(pad) 
+    pack $f.lTitle -side top -pady 2
+    pack $f.list $f.eName $f.fBtns -side top -pady $Gui(pad) 
 
-	#-------------------------------------------
-	# Colors->Bot frame
-	#-------------------------------------------
-	set f $fColors.fBot
+    #-------------------------------------------
+    # Colors->Bot frame
+    #-------------------------------------------
+    set f $fColors.fBot
 
-	frame $f.fAttr  -bg $Gui(activeWorkspace)
-	frame $f.fApply -bg $Gui(activeWorkspace)
-	pack $f.fAttr $f.fApply -side left -padx $Gui(pad) -fill x
+    frame $f.fAttr  -bg $Gui(activeWorkspace)
+    frame $f.fApply -bg $Gui(activeWorkspace)
+    pack $f.fAttr $f.fApply -side left -padx $Gui(pad) -fill x
 
-	#-------------------------------------------
-	# Colors->Bot->Attr frame
-	#-------------------------------------------
-	set f $fColors.fBot.fAttr
+    #-------------------------------------------
+    # Colors->Bot->Attr frame
+    #-------------------------------------------
+    set f $fColors.fBot.fAttr
 
-	foreach slider "Red Green Blue Ambient Diffuse Specular Power" {
+    foreach slider "Red Green Blue Ambient Diffuse Specular Power" {
 
-		eval {label $f.l${slider} -text "${slider}"} $Gui(WLA)
+        eval {label $f.l${slider} -text "${slider}"} $Gui(WLA)
 
-		eval {entry $f.e${slider} -textvariable Color([Uncap $slider]) \
-			-width 3} $Gui(WEA)
-			bind $f.e${slider} <Return>   "ColorsSetColor"
-			bind $f.e${slider} <FocusOut> "ColorsSetColor"
+        eval {entry $f.e${slider} -textvariable Color([Uncap $slider]) \
+            -width 3} $Gui(WEA)
+            bind $f.e${slider} <Return>   "ColorsSetColor"
+            bind $f.e${slider} <FocusOut> "ColorsSetColor"
 
-		eval {scale $f.s${slider} -from 0.0 -to 1.0 -length 40 \
-			-variable Color([Uncap $slider]) -command "ColorsSetColor" \
-			-resolution 0.1} $Gui(WSA) {-sliderlength 15}
-		set Color(s$slider) $f.s$slider
+        eval {scale $f.s${slider} -from 0.0 -to 1.0 -length 40 \
+            -variable Color([Uncap $slider]) -command "ColorsSetColor" \
+            -resolution 0.1} $Gui(WSA) {-sliderlength 15}
+        set Color(s$slider) $f.s$slider
 
-		grid $f.l${slider} $f.e${slider} $f.s${slider} \
-			-pady 1 -padx 1 -sticky e
-	}
-	$f.sPower config -from 0 -to 100 -resolution 1 
+        grid $f.l${slider} $f.e${slider} $f.s${slider} \
+            -pady 1 -padx 1 -sticky e
+    }
+    $f.sPower config -from 0 -to 100 -resolution 1 
 
 
-	#-------------------------------------------
-	# Colors->Bot->Apply frame
-	#-------------------------------------------
-	set f $fColors.fBot.fApply
+    #-------------------------------------------
+    # Colors->Bot->Apply frame
+    #-------------------------------------------
+    set f $fColors.fBot.fApply
 
-	eval {button $f.bApply -text "Update" -width 7 \
-		-command "ColorsApply; RenderAll"} $Gui(WBA)
-	pack $f.bApply -side top -pady $Gui(pad) 
+    eval {button $f.bApply -text "Update" -width 7 \
+        -command "ColorsApply; RenderAll"} $Gui(WBA)
+    pack $f.bApply -side top -pady $Gui(pad) 
 }
 
 #-------------------------------------------------------------------------------
@@ -224,9 +224,9 @@ from the <B>File</B> menu if they differ from the default colors.
 # .END
 #-------------------------------------------------------------------------------
 proc ColorsApply {} {
-	global Color
+    global Color
 
-	MainUpdateMRML
+    MainUpdateMRML
 }
 
 #-------------------------------------------------------------------------------
@@ -236,15 +236,15 @@ proc ColorsApply {} {
 # .END
 #-------------------------------------------------------------------------------
 proc ColorsUpdateMRML {} {
-	global Color
+    global Color
 
-	if {$Color(idList) == ""} {
-		return
-	}
-	
-	ColorsDisplayColors
-	ColorsSelectColor $Color(activeID)
-	ColorsSelectLabel 0
+    if {$Color(idList) == ""} {
+        return
+    }
+    
+    ColorsDisplayColors
+    ColorsSelectColor $Color(activeID)
+    ColorsSelectLabel 0
 }
 
 #-------------------------------------------------------------------------------
@@ -253,18 +253,18 @@ proc ColorsUpdateMRML {} {
 # .END
 #-------------------------------------------------------------------------------
 proc ColorsDisplayColors {} {
-	global Color Mrml
+    global Color Mrml
 
-	# Clear old
-	$Color(fColorList) delete 0 end
+    # Clear old
+    $Color(fColorList) delete 0 end
 
-	# Append new
+    # Append new
     set tree Mrml(colorTree) 
     set node [$tree InitColorTraversal]
     while {$node != ""} {
-		$Color(fColorList) insert end [$node GetName]
+        $Color(fColorList) insert end [$node GetName]
         set node [$tree GetNextColor]
-	}
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -275,19 +275,19 @@ proc ColorsDisplayColors {} {
 # .END
 #-------------------------------------------------------------------------------
 proc ColorsSelectColor {{i ""}} {
-	global Color Mrml
+    global Color Mrml
 
-	if {$i == ""} {
-		set i [$Color(fColorList) curselection]
-	}
-	if {$i == ""} {return}
-	$Color(fColorList) selection set $i $i
-	set c [lindex $Color(idList) $i]
+    if {$i == ""} {
+        set i [$Color(fColorList) curselection]
+    }
+    if {$i == ""} {return}
+    $Color(fColorList) selection set $i $i
+    set c [lindex $Color(idList) $i]
 
-	MainColorsSetActive $c
+    MainColorsSetActive $c
 
-	ColorsColorSample
-	ColorsDisplayLabels
+    ColorsColorSample
+    ColorsDisplayLabels
 }
 
 #-------------------------------------------------------------------------------
@@ -297,19 +297,19 @@ proc ColorsSelectColor {{i ""}} {
 # .END
 #-------------------------------------------------------------------------------
 proc ColorsSetColor {{value ""}} {
-	global Color
+    global Color
 
-	# Set the new color from the GUI into the node
-	set c $Color(activeID)
-	if {$c == ""} {return}
+    # Set the new color from the GUI into the node
+    set c $Color(activeID)
+    if {$c == ""} {return}
 
-	Color($c,node) SetDiffuseColor $Color(red) $Color(green) $Color(blue)
-	foreach param "Ambient Diffuse Specular Power" {
-		Color($c,node) Set$param $Color([Uncap $param])
-	}
+    Color($c,node) SetDiffuseColor $Color(red) $Color(green) $Color(blue)
+    foreach param "Ambient Diffuse Specular Power" {
+        Color($c,node) Set$param $Color([Uncap $param])
+    }
 
-	# Draw Sample
-	ColorsColorSample
+    # Draw Sample
+    ColorsColorSample
 }
 
 #-------------------------------------------------------------------------------
@@ -321,13 +321,13 @@ proc ColorsAddColor {} {
     global Color Gui
     
     set c [MainColorsAddColor $Color(name) $Color(diffuseColor) \
-	    $Color(ambient) $Color(diffuse) $Color(specular) $Color(power)]
+        $Color(ambient) $Color(diffuse) $Color(specular) $Color(power)]
     
     if {$c != ""} {
-	# make sure new color is selected on GUI
-	MainColorsSetActive $c
+    # make sure new color is selected on GUI
+    MainColorsSetActive $c
 
-	MainUpdateMRML
+    MainUpdateMRML
     }
 }
 
@@ -336,10 +336,10 @@ proc ColorsAddColor {} {
 # .END
 #-------------------------------------------------------------------------------
 proc ColorsDeleteColor {} {
-	global Color
+    global Color
 
-	MainMrmlDeleteNode Color $Color(activeID)
-	RenderAll
+    MainMrmlDeleteNode Color $Color(activeID)
+    RenderAll
 }
 
 #-------------------------------------------------------------------------------
@@ -351,7 +351,7 @@ proc ColorsColorSample {} {
     
     set color "$Color(red) $Color(green) $Color(blue)"
     foreach slider "Red Green Blue" {
-	ColorSlider $Color(s$slider) $color
+    ColorSlider $Color(s$slider) $color
     }
 }
 
@@ -360,19 +360,19 @@ proc ColorsColorSample {} {
 # .END
 #-------------------------------------------------------------------------------
 proc ColorsDisplayLabels {} {
-	global Color
+    global Color
 
-	# Clear old
-	$Color(fLabelList) delete 0 end
+    # Clear old
+    $Color(fLabelList) delete 0 end
 
-	# Append new
-	set c $Color(activeID)
-	if {$c == ""} {return}
+    # Append new
+    set c $Color(activeID)
+    if {$c == ""} {return}
 
-	set Color(label) ""
-	foreach label [Color($c,node) GetLabels] {
-		$Color(fLabelList) insert end $label
-	}
+    set Color(label) ""
+    foreach label [Color($c,node) GetLabels] {
+        $Color(fLabelList) insert end $label
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -380,21 +380,21 @@ proc ColorsDisplayLabels {} {
 # .END
 #-------------------------------------------------------------------------------
 proc ColorsSelectLabel {{i ""}} {
-	global Color
+    global Color
 
-	if {$i == ""} {
-		set i [$Color(fLabelList) curselection]
-	}
-	if {$i == ""} {return}
-	$Color(fLabelList) selection set $i $i
-	
-	set c $Color(activeID)
-	if {$c == ""} {
-		set Color(label) ""
-	} else {
-		set labels [Color($c,node) GetLabels]
-		set Color(label) [lindex $labels $i]
-	}
+    if {$i == ""} {
+        set i [$Color(fLabelList) curselection]
+    }
+    if {$i == ""} {return}
+    $Color(fLabelList) selection set $i $i
+    
+    set c $Color(activeID)
+    if {$c == ""} {
+        set Color(label) ""
+    } else {
+        set labels [Color($c,node) GetLabels]
+        set Color(label) [lindex $labels $i]
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -404,14 +404,14 @@ proc ColorsSelectLabel {{i ""}} {
 # .END
 #-------------------------------------------------------------------------------
 proc ColorsAddLabel {} {
-	global Color Color Gui
+    global Color Color Gui
 
-	# Convert to integer
-	set index [MainColorsAddLabel $Color(activeID) $Color(label)]
+    # Convert to integer
+    set index [MainColorsAddLabel $Color(activeID) $Color(label)]
 
-	ColorsDisplayLabels
-	ColorsSelectLabel $index
-	return 1
+    ColorsDisplayLabels
+    ColorsSelectLabel $index
+    return 1
 }
 
 #-------------------------------------------------------------------------------
@@ -419,10 +419,10 @@ proc ColorsAddLabel {} {
 # .END
 #-------------------------------------------------------------------------------
 proc ColorsDeleteLabel {} {
-	global Color Color
+    global Color Color
 
-	MainColorsDeleteLabel $Color(activeID) $Color(label)
+    MainColorsDeleteLabel $Color(activeID) $Color(label)
 
-	ColorsDisplayLabels
-	ColorsSelectLabel 0
+    ColorsDisplayLabels
+    ColorsSelectLabel 0
 }

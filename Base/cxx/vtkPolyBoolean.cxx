@@ -227,9 +227,9 @@ void vtkPolyBoolean::Update()
     for (AorB=0; AorB<2; AorB++)
       {
       if ( pd[AorB]->GetDataReleased() )
-	{
-	pd[AorB]->ForceUpdate();
-	}
+    {
+    pd[AorB]->ForceUpdate();
+    }
       }
 
     if ( this->StartMethod )
@@ -485,7 +485,7 @@ void vtkPolyBoolean::Execute()
         }
       else if ( ii < this->IdOffsetNew )
         {
-	if ( ii == this->IdOffsetB)
+    if ( ii == this->IdOffsetB)
           {
           vtkDebugMacro( << "...from B..." );
           }
@@ -493,7 +493,7 @@ void vtkPolyBoolean::Execute()
         }
       else
         { // new point: figure out something
-	if ( ii == this->IdOffsetNew)
+    if ( ii == this->IdOffsetNew)
           {
           vtkDebugMacro( << "...new points..." );
           }
@@ -778,8 +778,8 @@ int vtkPolyBoolean::IntersectBoolTriPair( vtkBoolTri *triA, vtkBoolTri *triB )
       if ( thisPP == NULL )
         { // make a new tmpPP
         thisPP = &tmpPPs[AorB][ii];
-	thisPP->NewId = -2; // -2 marks it as a local temporary variable
-	thisPP->Next = thisPP->Prev = thisPP->Merge = NULL;
+    thisPP->NewId = -2; // -2 marks it as a local temporary variable
+    thisPP->Next = thisPP->Prev = thisPP->Merge = NULL;
         thisPP->NextEdge[0] = thisPP->NextEdge[1] = NULL;
         thisPP->Triangle = otherTri;
         thisPP->Edge = thisEdge;
@@ -1369,7 +1369,7 @@ void vtkPolyBoolean::FormLoops()
             nextPP = thisEdge->PPoints[1-AorB];
             if ( thisEdge->Next[AorB] == NULL )
               { // Repair connectivity across one-sided edge
-	      vtkDebugMacro( << "Unlinked edge on " << ( AorB ? "A" : "B" )
+          vtkDebugMacro( << "Unlinked edge on " << ( AorB ? "A" : "B" )
                              << " in triangle " << thisTri->CellId << ".\n" );
               for ( jj=0; jj<numEdges; jj++ )
                 {

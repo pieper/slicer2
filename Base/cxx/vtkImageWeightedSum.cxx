@@ -133,9 +133,9 @@ void vtkImageWeightedSum::CheckWeights() {
 // This templated function executes the filter for any type of data.
 template <class T>
 static void vtkImageWeightedSumExecute(vtkImageWeightedSum *self,
-					      vtkImageData **inDatas, T **inPtrs,
-					      vtkImageData *outData,
-					      int outExt[6], int id)
+                          vtkImageData **inDatas, T **inPtrs,
+                          vtkImageData *outData,
+                          int outExt[6], int id)
 {
   // For looping though output (and input) pixels.
   int outMin0, outMax0, outMin1, outMax1, outMin2, outMax2;
@@ -165,7 +165,7 @@ static void vtkImageWeightedSumExecute(vtkImageWeightedSum *self,
   inPtrs2 = new T*[numberOfInputs];
 
   self->GetInput()->GetWholeExtent(inImageMin0, inImageMax0, inImageMin1,
-				   inImageMax1, inImageMin2, inImageMax2);
+                   inImageMax1, inImageMin2, inImageMax2);
 
   outData->GetIncrements(outInc0, outInc1, outInc2); 
   outMin0 = outExt[0];   outMax0 = outExt[1];
@@ -174,7 +174,7 @@ static void vtkImageWeightedSumExecute(vtkImageWeightedSum *self,
 
   // in and out should be marching through corresponding pixels.
   target = (unsigned long)((outMax2-outMin2+1)*
-			   (outMax1-outMin1+1)/50.0);
+               (outMax1-outMin1+1)/50.0);
   target++;
 
   // make sure that weights have been set adequately.
@@ -190,45 +190,45 @@ static void vtkImageWeightedSumExecute(vtkImageWeightedSum *self,
     {
       outPtr1 = outPtr2;
       for (i = 0; i < numberOfInputs; i++) {
-	inPtrs1[i] = inPtrs2[i];
+    inPtrs1[i] = inPtrs2[i];
       }
       for (outIdx1 = outMin1; 
-	   !self->AbortExecute && outIdx1 <= outMax1; outIdx1++)
-	{
-	  if (!id) 
-	    {
-	      if (!(count%target))
-		{
-		  self->UpdateProgress(count/(50.0*target));
-		}
-	      count++;
-	    }
-	      
-	  outPtr0 = outPtr1;
-	  for (i = 0; i < numberOfInputs; i++) {
-	    inPtrs0[i] = inPtrs1[i];
-	  }
-	  for (outIdx0 = outMin0; outIdx0 <= outMax0; outIdx0++)
-	    {
-	      T sum = 0;
-	      for (i = 0; i < numberOfInputs; i++) {
-		 sum += (*inPtrs0[i]) * self->GetNormalizedWeightForInput(i);
-
-	      }
-	      *outPtr0 = sum;
-
-	      for (i = 0; i < numberOfInputs; i++) {
-		inPtrs0[i] += inInc0;
-	      }
-	      outPtr0 += outInc0;
-	    }//for0
-	  for (i = 0; i < numberOfInputs; i++) {
-	    inPtrs1[i] += inInc1;
-	  }
-	  outPtr1 += outInc1;
-	}//for1
+       !self->AbortExecute && outIdx1 <= outMax1; outIdx1++)
+    {
+      if (!id) 
+        {
+          if (!(count%target))
+        {
+          self->UpdateProgress(count/(50.0*target));
+        }
+          count++;
+        }
+          
+      outPtr0 = outPtr1;
       for (i = 0; i < numberOfInputs; i++) {
-	inPtrs2[i] += inInc2;
+        inPtrs0[i] = inPtrs1[i];
+      }
+      for (outIdx0 = outMin0; outIdx0 <= outMax0; outIdx0++)
+        {
+          T sum = 0;
+          for (i = 0; i < numberOfInputs; i++) {
+         sum += (*inPtrs0[i]) * self->GetNormalizedWeightForInput(i);
+
+          }
+          *outPtr0 = sum;
+
+          for (i = 0; i < numberOfInputs; i++) {
+        inPtrs0[i] += inInc0;
+          }
+          outPtr0 += outInc0;
+        }//for0
+      for (i = 0; i < numberOfInputs; i++) {
+        inPtrs1[i] += inInc1;
+      }
+      outPtr1 += outInc1;
+    }//for1
+      for (i = 0; i < numberOfInputs; i++) {
+    inPtrs2[i] += inInc2;
       }
       outPtr2 += outInc2;
     }//for2
@@ -245,8 +245,8 @@ static void vtkImageWeightedSumExecute(vtkImageWeightedSum *self,
 // It just executes a switch statement to call the correct function for
 // the datas data types.
 void vtkImageWeightedSum::ThreadedExecute(vtkImageData **inDatas, 
-						 vtkImageData *outData,
-						 int outExt[6], int id)
+                         vtkImageData *outData,
+                         int outExt[6], int id)
 {
   void **inPtrs = new void*[this->NumberOfInputs];
   void *outPtr;
@@ -262,7 +262,7 @@ void vtkImageWeightedSum::ThreadedExecute(vtkImageData **inDatas,
     {
     case VTK_FLOAT:
       vtkImageWeightedSumExecute(this, inDatas, (float **)(inPtrs), 
-					outData, outExt, id);
+                    outData, outExt, id);
       break;
     default:
       vtkErrorMacro(<< "Execute: Bad input ScalarType, float needed");
@@ -276,7 +276,7 @@ void vtkImageWeightedSum::ThreadedExecute(vtkImageData **inDatas,
 // Make sure all the inputs are the same size. Doesn't really change 
 // the output. Just performs a sanity check
 void vtkImageWeightedSum::ExecuteInformation(vtkImageData **inputs,
-						     vtkImageData *output)
+                             vtkImageData *output)
 {
   int *in1Ext, *in2Ext;
 
@@ -294,17 +294,17 @@ void vtkImageWeightedSum::ExecuteInformation(vtkImageData **inputs,
       in2Ext = inputs[i]->GetWholeExtent();
       
       if (in1Ext[0] != in2Ext[0] || in1Ext[1] != in2Ext[1] || 
-	  in1Ext[2] != in2Ext[2] || in1Ext[3] != in2Ext[3] || 
-	  in1Ext[4] != in2Ext[4] || in1Ext[5] != in2Ext[5])
-	{
-	  vtkErrorMacro("ExecuteInformation: Inputs 0 and " << i <<
-			" are not the same size. " 
-			<< in1Ext[0] << " " << in1Ext[1] << " " 
-			<< in1Ext[2] << " " << in1Ext[3] << " vs: "
-			<< in2Ext[0] << " " << in2Ext[1] << " " 
-			<< in2Ext[2] << " " << in2Ext[3] );
-	  return;
-	}
+      in1Ext[2] != in2Ext[2] || in1Ext[3] != in2Ext[3] || 
+      in1Ext[4] != in2Ext[4] || in1Ext[5] != in2Ext[5])
+    {
+      vtkErrorMacro("ExecuteInformation: Inputs 0 and " << i <<
+            " are not the same size. " 
+            << in1Ext[0] << " " << in1Ext[1] << " " 
+            << in1Ext[2] << " " << in1Ext[3] << " vs: "
+            << in2Ext[0] << " " << in2Ext[1] << " " 
+            << in2Ext[2] << " " << in2Ext[3] );
+      return;
+    }
     }
 
   // we like floats

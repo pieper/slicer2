@@ -159,7 +159,7 @@ public:
   // overhead.
   vtkGetMacro(RunTime, float);
   vtkGetMacro(TotalTime, float);
-	
+    
 protected:
   vtkImageEditor();
   ~vtkImageEditor();

@@ -38,53 +38,53 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 class VTK_EXPORT vtkImageClipper : public vtkImageToImageFilter
 {
 public:
-	static vtkImageClipper *New();
+    static vtkImageClipper *New();
   vtkTypeMacro(vtkImageClipper,vtkImageToImageFilter);
-	void PrintSelf(ostream& os, vtkIndent indent);
+    void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:
   void SetOutputWholeExtent(int extent[6]);
   void SetOutputWholeExtent(int minX, int maxX, int minY, int maxY, 
-			    int minZ, int maxZ);
+                int minZ, int maxZ);
   vtkGetVectorMacro(OutputWholeExtent, int, 6);
 
         // Description:
-	// Determines whether to replace the pixel in range with InValue
-	vtkSetMacro(ReplaceIn, int);
-	vtkGetMacro(ReplaceIn, int);
-	vtkBooleanMacro(ReplaceIn, int);
+    // Determines whether to replace the pixel in range with InValue
+    vtkSetMacro(ReplaceIn, int);
+    vtkGetMacro(ReplaceIn, int);
+    vtkBooleanMacro(ReplaceIn, int);
 
-	// Description:
-	// Replace the in range pixels with this value.
-	vtkSetMacro(InValue, float);
-	vtkGetMacro(InValue, float);
+    // Description:
+    // Replace the in range pixels with this value.
+    vtkSetMacro(InValue, float);
+    vtkGetMacro(InValue, float);
   
-	// Description:
-	// Determines whether to replace the pixel out of range with OutValue
-	vtkSetMacro(ReplaceOut, int);
-	vtkGetMacro(ReplaceOut, int);
-	vtkBooleanMacro(ReplaceOut, int);
+    // Description:
+    // Determines whether to replace the pixel out of range with OutValue
+    vtkSetMacro(ReplaceOut, int);
+    vtkGetMacro(ReplaceOut, int);
+    vtkBooleanMacro(ReplaceOut, int);
 
-	// Description:
-	// Replace the in range pixels with this value.
-	vtkSetMacro(OutValue, float);
-	vtkGetMacro(OutValue, float);
+    // Description:
+    // Replace the in range pixels with this value.
+    vtkSetMacro(OutValue, float);
+    vtkGetMacro(OutValue, float);
   
 protected:
-	vtkImageClipper();
-	~vtkImageClipper(){};
-	vtkImageClipper(const vtkImageClipper&) {};
-	void operator=(const vtkImageClipper&) {};
+    vtkImageClipper();
+    ~vtkImageClipper(){};
+    vtkImageClipper(const vtkImageClipper&) {};
+    void operator=(const vtkImageClipper&) {};
 
-	int ReplaceIn;
-	float InValue;
-	int ReplaceOut;
-	float OutValue;
-	int OutputWholeExtent[6];
+    int ReplaceIn;
+    float InValue;
+    int ReplaceOut;
+    float OutValue;
+    int OutputWholeExtent[6];
 
-	void ExecuteInformation(vtkImageData *inData, vtkImageData *outData);
-	void ThreadedExecute(vtkImageData *inData, vtkImageData *outData, 
-		int extent[6], int id);
+    void ExecuteInformation(vtkImageData *inData, vtkImageData *outData);
+    void ThreadedExecute(vtkImageData *inData, vtkImageData *outData, 
+        int extent[6], int id);
 };
 
 #endif

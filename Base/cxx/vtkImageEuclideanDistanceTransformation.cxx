@@ -26,11 +26,11 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkImageEuclideanDistanceTransformation.cxx,v $
   Language:  C++
-  Date:      $Date: 2001/07/03 16:12:27 $
-  Version:   $Revision: 1.3 $
+  Date:      $Date: 2002/03/18 21:02:53 $
+  Version:   $Revision: 1.4 $
   Thanks:    Olivier Cuisenaire who developed this class
              URL: http://ltswww.epfl.ch/~cuisenai
-	     Email: Olivier.Cuisenaire@epfl.ch
+         Email: Olivier.Cuisenaire@epfl.ch
 
 Copyright (c)  Olivier Cuisenaire
 
@@ -89,7 +89,7 @@ void vtkImageEuclideanDistanceTransformation::ExecuteInformation(vtkImageData *i
 // This method tells the superclass that the whole input array is needed
 // to compute any output region.
 void vtkImageEuclideanDistanceTransformation::ComputeInputUpdateExtent(int inExt[6], 
-						   int outExt[6])
+                           int outExt[6])
 {
   int *extent;
   
@@ -106,9 +106,9 @@ void vtkImageEuclideanDistanceTransformation::ComputeInputUpdateExtent(int inExt
 template <class T>
 /* static */
 void vtkImageEuclideanDistanceTransformationExecute(vtkImageEuclideanDistanceTransformation *self,
-			 vtkImageData *inData, int inExt[6], T *inPtr,
-			 vtkImageData *outData, int outExt[6], float *outPtr,
-			 int id)
+             vtkImageData *inData, int inExt[6], T *inPtr,
+             vtkImageData *outData, int outExt[6], float *outPtr,
+             int id)
 {
 
   int inMin0, inMax0;
@@ -169,180 +169,180 @@ void vtkImageEuclideanDistanceTransformationExecute(vtkImageEuclideanDistanceTra
       inPtr2 = inPtr;
       outPtr2 = outPtr;
       for (idx2 = outMin2; idx2 <= outMax2; ++idx2)
-	{
-	  inPtr1 = inPtr2;
-	  outPtr1 = outPtr2;
-	  for (idx1 = outMin1; idx1 <= outMax1; ++idx1)
-	    {
-	      inPtr0 = inPtr1;
-	      outPtr0 = outPtr1;
-	      
-	      for (idx0 = outMin0; idx0 <= outMax0; ++idx0)
-		{
-		  if( *inPtr0 == 0 )
-		    *outPtr0 = 0;
-		  else
-		    *outPtr0 = maxDist;
-		  
-		  inPtr0 += inInc0;
-		  outPtr0 += outInc0;
-		}
-	      
-	      inPtr1 += inInc1;
-	      outPtr1 += outInc1;
-	    }
-	  inPtr2 += inInc2;
-	  outPtr2 += outInc2;
-	}
+    {
+      inPtr1 = inPtr2;
+      outPtr1 = outPtr2;
+      for (idx1 = outMin1; idx1 <= outMax1; ++idx1)
+        {
+          inPtr0 = inPtr1;
+          outPtr0 = outPtr1;
+          
+          for (idx0 = outMin0; idx0 <= outMax0; ++idx0)
+        {
+          if( *inPtr0 == 0 )
+            *outPtr0 = 0;
+          else
+            *outPtr0 = maxDist;
+          
+          inPtr0 += inInc0;
+          outPtr0 += outInc0;
+        }
+          
+          inPtr1 += inInc1;
+          outPtr1 += outInc1;
+        }
+      inPtr2 += inInc2;
+      outPtr2 += outInc2;
+    }
     }
   else   // Other iterations are normal. We just copy inData to outData.
     {
       inPtr2 = inPtr;
       outPtr2 = outPtr;
       for (idx2 = outMin2; idx2 <= outMax2; ++idx2)
-	{
-	  inPtr1 = inPtr2;
-	  outPtr1 = outPtr2;
-	  for (idx1 = outMin1; idx1 <= outMax1; ++idx1)
-	    {
-	      inPtr0 = inPtr1;
-	      outPtr0 = outPtr1;
-	      
-	      for (idx0 = outMin0; idx0 <= outMax0; ++idx0)
-		{
-		  *outPtr0 = *inPtr0 ;
-		  inPtr0 += inInc0;
-		  outPtr0 += outInc0;
-		}
-	      inPtr1 += inInc1;
-	      outPtr1 += outInc1;
-	    }
-	  inPtr2 += inInc2;
-	  outPtr2 += outInc2;
-	}
+    {
+      inPtr1 = inPtr2;
+      outPtr1 = outPtr2;
+      for (idx1 = outMin1; idx1 <= outMax1; ++idx1)
+        {
+          inPtr0 = inPtr1;
+          outPtr0 = outPtr1;
+          
+          for (idx0 = outMin0; idx0 <= outMax0; ++idx0)
+        {
+          *outPtr0 = *inPtr0 ;
+          inPtr0 += inInc0;
+          outPtr0 += outInc0;
+        }
+          inPtr1 += inInc1;
+          outPtr1 += outInc1;
+        }
+      inPtr2 += inInc2;
+      outPtr2 += outInc2;
+    }
     }
 
   if( self->GetIteration() == 0 ) // First iteration is special 
     {
       outPtr2 = outPtr;
       for (idx2 = outMin2; idx2 <= outMax2; ++idx2)
-	{
-	  outPtr1 = outPtr2;
-	  for (idx1 = outMin1; idx1 <= outMax1; ++idx1)
-	    {
-	      outPtr0 = outPtr1;
-	      df= inSize0 ;
-	      for (idx0 = outMin0; idx0 <= outMax0; ++idx0)
-		{
-		  if(*outPtr0 != 0)
-		    {
-		      df++ ;
-		      if(sq[df] < *outPtr0) 
-			*outPtr0 = sq[df];
-		    }
-		  else df=0;
+    {
+      outPtr1 = outPtr2;
+      for (idx1 = outMin1; idx1 <= outMax1; ++idx1)
+        {
+          outPtr0 = outPtr1;
+          df= inSize0 ;
+          for (idx0 = outMin0; idx0 <= outMax0; ++idx0)
+        {
+          if(*outPtr0 != 0)
+            {
+              df++ ;
+              if(sq[df] < *outPtr0) 
+            *outPtr0 = sq[df];
+            }
+          else df=0;
 
-		  outPtr0 += outInc0;
-		}
-	      
-	      outPtr0 -= outInc0;
-	      df= inSize0 ;
-	      for (idx0 = outMax0; idx0 >= outMin0; --idx0)
-		{
-		  if(*outPtr0 != 0)
-		    {
-		      df++ ;
-		      if(sq[df] < *outPtr0) 
-			*outPtr0 = sq[df];
-		    }
-		  else df=0;
-		  
-		  outPtr0 -= outInc0;
-		}
+          outPtr0 += outInc0;
+        }
+          
+          outPtr0 -= outInc0;
+          df= inSize0 ;
+          for (idx0 = outMax0; idx0 >= outMin0; --idx0)
+        {
+          if(*outPtr0 != 0)
+            {
+              df++ ;
+              if(sq[df] < *outPtr0) 
+            *outPtr0 = sq[df];
+            }
+          else df=0;
+          
+          outPtr0 -= outInc0;
+        }
 
-	      outPtr1 += outInc1;
-	    }
-	  outPtr2 += outInc2;
-	}      
+          outPtr1 += outInc1;
+        }
+      outPtr2 += outInc2;
+    }      
     }
   else // next iterations are all identical. 
     {     
       
      outPtr2 = outPtr;
       for (idx2 = outMin2; idx2 <= outMax2; ++idx2)
-	{
-	
-	  outPtr1 = outPtr2;
-	  for (idx1 = outMin1; idx1 <= outMax1; ++idx1)
-	    {
-
-	      outPtr0 = outPtr1;
-
-	      // Buffer current values 
-
-	      for (idx0 = outMin0; idx0 <= outMax0; ++idx0)
-		{
-		  buff[idx0]= *outPtr0;
-		  outPtr0 += outInc0;
-		}
+    {
     
-	      // forward scan 
+      outPtr1 = outPtr2;
+      for (idx1 = outMin1; idx1 <= outMax1; ++idx1)
+        {
 
-	      a=0; buffer=buff[ outMin0 ];
-    	      outPtr0 = outPtr1;
-	      outPtr0 += outInc0;
+          outPtr0 = outPtr1;
 
-	      for (idx0 = outMin0+1; idx0 <= outMax0; ++idx0)
-		{
-		  if(a>0) a--;
-		  if(buff[idx0]>buffer+sq[1]) 
-		    {
-		      b=(int)(floor)((((buff[idx0]-buffer)/spacing2)-1)/2); 
-		      if((idx0+b)>outMax0) b=(outMax0)-idx0;
-		      
-		      for(n=a;n<=b;n++) 
-			{
-			  m=buffer+sq[n+1];
-			  if(buff[idx0+n]<=m) n=b;  
-			  else if(m<*(outPtr0+n*outInc0)) *(outPtr0+n*outInc0)=m;
-			}
-		      a=b; 
-		    }
-		  else
-		    a=0;
-		  
-		  buffer=buff[idx0];
-		  outPtr0 += outInc0;
-		}
-	      
-	      outPtr0 -= 2*outInc0;
-	      a=0;
-	      buffer=buff[outMax0];
+          // Buffer current values 
+
+          for (idx0 = outMin0; idx0 <= outMax0; ++idx0)
+        {
+          buff[idx0]= *outPtr0;
+          outPtr0 += outInc0;
+        }
     
-	      for(idx0=outMax0-1;idx0>=outMin0; --idx0) 
-		{
-		  if(a>0) a--;
-		  if(buff[idx0]>buffer+sq[1]) {
-		    b=(int)(floor)((((buff[idx0]-buffer)/spacing2)-1)/2); 
-		    if((idx0-b)<outMin0) b=idx0-outMin0;
-		    
-		    for(n=a;n<=b;n++) {
-		      m=buffer+sq[n+1];
-		      if(buff[idx0-n]<=m) 
-			n=b;
-			else if(m<*(outPtr0-n*outInc0)) *(outPtr0-n*outInc0)=m;
-		    }
-		    a=b;  
-		  }
-		  else
-		    a=0;
-		  buffer=buff[idx0];
-		  outPtr0 -= outInc0;
-		}
-	      outPtr1 += outInc1;
-	    }
-	  outPtr2 += outInc2;	     
-	}	
+          // forward scan 
+
+          a=0; buffer=buff[ outMin0 ];
+              outPtr0 = outPtr1;
+          outPtr0 += outInc0;
+
+          for (idx0 = outMin0+1; idx0 <= outMax0; ++idx0)
+        {
+          if(a>0) a--;
+          if(buff[idx0]>buffer+sq[1]) 
+            {
+              b=(int)(floor)((((buff[idx0]-buffer)/spacing2)-1)/2); 
+              if((idx0+b)>outMax0) b=(outMax0)-idx0;
+              
+              for(n=a;n<=b;n++) 
+            {
+              m=buffer+sq[n+1];
+              if(buff[idx0+n]<=m) n=b;  
+              else if(m<*(outPtr0+n*outInc0)) *(outPtr0+n*outInc0)=m;
+            }
+              a=b; 
+            }
+          else
+            a=0;
+          
+          buffer=buff[idx0];
+          outPtr0 += outInc0;
+        }
+          
+          outPtr0 -= 2*outInc0;
+          a=0;
+          buffer=buff[outMax0];
+    
+          for(idx0=outMax0-1;idx0>=outMin0; --idx0) 
+        {
+          if(a>0) a--;
+          if(buff[idx0]>buffer+sq[1]) {
+            b=(int)(floor)((((buff[idx0]-buffer)/spacing2)-1)/2); 
+            if((idx0-b)<outMin0) b=idx0-outMin0;
+            
+            for(n=a;n<=b;n++) {
+              m=buffer+sq[n+1];
+              if(buff[idx0-n]<=m) 
+            n=b;
+            else if(m<*(outPtr0-n*outInc0)) *(outPtr0-n*outInc0)=m;
+            }
+            a=b;  
+          }
+          else
+            a=0;
+          buffer=buff[idx0];
+          outPtr0 -= outInc0;
+        }
+          outPtr1 += outInc1;
+        }
+      outPtr2 += outInc2;         
+    }    
       }
     
   free(buff);
@@ -357,7 +357,7 @@ void vtkImageEuclideanDistanceTransformationExecute(vtkImageEuclideanDistanceTra
 // algorithm to fill the output from the input.
 // Not threaded yet.
 void vtkImageEuclideanDistanceTransformation::ThreadedExecute(vtkImageData *inData, vtkImageData *outData,
-				  int outExt[6], int threadId)
+                  int outExt[6], int threadId)
 {
   void *inPtr, *outPtr;
   int inExt[6];
@@ -387,23 +387,23 @@ void vtkImageEuclideanDistanceTransformation::ThreadedExecute(vtkImageData *inDa
     {
     case VTK_FLOAT:
       vtkImageEuclideanDistanceTransformationExecute(this, inData, inExt, (float *)(inPtr), 
-			 outData, outExt, (float *)(outPtr), threadId);
+             outData, outExt, (float *)(outPtr), threadId);
       break;
     case VTK_INT:
       vtkImageEuclideanDistanceTransformationExecute(this, inData, inExt, (int *)(inPtr),
-			 outData, outExt, (float *)(outPtr), threadId);
+             outData, outExt, (float *)(outPtr), threadId);
       break;
     case VTK_SHORT:
       vtkImageEuclideanDistanceTransformationExecute(this, inData, inExt, (short *)(inPtr),
-			 outData, outExt, (float *)(outPtr), threadId);
+             outData, outExt, (float *)(outPtr), threadId);
       break;
     case VTK_UNSIGNED_SHORT:
       vtkImageEuclideanDistanceTransformationExecute(this, inData, inExt, (unsigned short *)(inPtr), 
-			 outData, outExt, (float *)(outPtr), threadId);
+             outData, outExt, (float *)(outPtr), threadId);
       break;
     case VTK_UNSIGNED_CHAR:
       vtkImageEuclideanDistanceTransformationExecute(this, inData, inExt, (unsigned char *)(inPtr),
-			 outData, outExt, (float *)(outPtr), threadId);
+             outData, outExt, (float *)(outPtr), threadId);
       break;
     default:
       vtkErrorMacro(<< "Execute: Unknown ScalarType");
@@ -421,15 +421,15 @@ void vtkImageEuclideanDistanceTransformation::ThreadedExecute(vtkImageData *inDa
 // This can be from 1 to "total".  
 // If 1 is returned, the extent cannot be split.
 int vtkImageEuclideanDistanceTransformation::SplitExtent(int splitExt[6], int startExt[6], 
-			     int num, int total)
+                 int num, int total)
 {
   int splitAxis;
   int min, max;
 
   vtkDebugMacro("SplitExtent: ( " << startExt[0] << ", " << startExt[1] << ", "
-		<< startExt[2] << ", " << startExt[3] << ", "
-		<< startExt[4] << ", " << startExt[5] << "), " 
-		<< num << " of " << total);
+        << startExt[2] << ", " << startExt[3] << ", "
+        << startExt[4] << ", " << startExt[5] << "), " 
+        << num << " of " << total);
 
   // start with same extent
   memcpy(splitExt, startExt, 6 * sizeof(int));
@@ -458,7 +458,7 @@ int vtkImageEuclideanDistanceTransformation::SplitExtent(int splitExt[6], int st
   if (num >= total)
     {
     vtkDebugMacro("  SplitRequest (" << num 
-		  << ") larger than total: " << total);
+          << ") larger than total: " << total);
     return total;
     }
   
@@ -474,8 +474,8 @@ int vtkImageEuclideanDistanceTransformation::SplitExtent(int splitExt[6], int st
     }
   
   vtkDebugMacro("  Split Piece: ( " <<splitExt[0]<< ", " <<splitExt[1]<< ", "
-		<< splitExt[2] << ", " << splitExt[3] << ", "
-		<< splitExt[4] << ", " << splitExt[5] << ")");
+        << splitExt[2] << ", " << splitExt[3] << ", "
+        << splitExt[4] << ", " << splitExt[5] << ")");
   fflush(stderr);
 
   return total;

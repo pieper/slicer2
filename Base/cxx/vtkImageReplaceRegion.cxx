@@ -84,7 +84,7 @@ void vtkImageReplaceRegion::PrintSelf(ostream& os, vtkIndent indent)
 // This templated function executes the filter for any type of data.
 template <class T>
 static void vtkImageReplaceRegionExecute(vtkImageReplaceRegion *self,
-				     vtkImageData *outData, T *outPtr)
+                     vtkImageData *outData, T *outPtr)
 {
   vtkImageData *inData = self->GetRegion();
   int size, *ext = inData->GetExtent();
@@ -92,17 +92,17 @@ static void vtkImageReplaceRegionExecute(vtkImageReplaceRegion *self,
   int i, idx, maxX, maxY, maxZ;
   T* inPtr;
   
-	outPtr = (T *)(outData->GetScalarPointer());
+    outPtr = (T *)(outData->GetScalarPointer());
   inPtr = (T *)(inData->GetScalarPointer());
 
   maxX = ext[1] - ext[0]; 
-	maxY = ext[3] - ext[2];
+    maxY = ext[3] - ext[2];
   maxZ = ext[5] - ext[4];
   size = (maxX+1)*(maxY+1)*(maxZ+1);
 
   // Copy output to region, and then copy input to output
   //
-	for (i = 0; i < size; i++)
+    for (i = 0; i < size; i++)
   {
     idx = indices->GetValue(i);
     if (idx >= 0)
@@ -120,7 +120,7 @@ static void vtkImageReplaceRegionExecute(vtkImageReplaceRegion *self,
 // It just executes a switch statement to call the correct function for
 // the datas data types.
 void vtkImageReplaceRegion::Execute(vtkImageData *vtkNotUsed(inData), 
-				 vtkImageData *outData)
+                 vtkImageData *outData)
 {
   void *ptr = NULL;
   int s1, s2;
@@ -147,33 +147,33 @@ void vtkImageReplaceRegion::Execute(vtkImageData *vtkNotUsed(inData),
   
   switch (outData->GetScalarType())
   {
-	  case VTK_CHAR:
-		  vtkImageReplaceRegionExecute(this, outData, (char *)ptr);
-		  break;
-	  case VTK_UNSIGNED_CHAR:
-		  vtkImageReplaceRegionExecute(this, outData, (unsigned char *)ptr);
-		  break;
-	  case VTK_SHORT:
-		  vtkImageReplaceRegionExecute(this, outData, (short *)ptr);
-		  break;
-	  case VTK_UNSIGNED_SHORT:
-		  vtkImageReplaceRegionExecute(this, outData, (unsigned short *)ptr);
-		  break;
-  	case VTK_INT:
-		  vtkImageReplaceRegionExecute(this, outData, (int *)ptr);
-		  break;
-  	case VTK_UNSIGNED_INT:
-		  vtkImageReplaceRegionExecute(this, outData, (unsigned int *)ptr);
-		  break;
-	  case VTK_FLOAT:
-		  vtkImageReplaceRegionExecute(this, outData, (float *)ptr);
-		  break;
-	  case VTK_DOUBLE:
-		  vtkImageReplaceRegionExecute(this, outData, (double *)ptr);
-		  break;
-	  default:
-		  vtkErrorMacro(<< "Execute: Unknown input ScalarType");
-		  return;
+      case VTK_CHAR:
+          vtkImageReplaceRegionExecute(this, outData, (char *)ptr);
+          break;
+      case VTK_UNSIGNED_CHAR:
+          vtkImageReplaceRegionExecute(this, outData, (unsigned char *)ptr);
+          break;
+      case VTK_SHORT:
+          vtkImageReplaceRegionExecute(this, outData, (short *)ptr);
+          break;
+      case VTK_UNSIGNED_SHORT:
+          vtkImageReplaceRegionExecute(this, outData, (unsigned short *)ptr);
+          break;
+      case VTK_INT:
+          vtkImageReplaceRegionExecute(this, outData, (int *)ptr);
+          break;
+      case VTK_UNSIGNED_INT:
+          vtkImageReplaceRegionExecute(this, outData, (unsigned int *)ptr);
+          break;
+      case VTK_FLOAT:
+          vtkImageReplaceRegionExecute(this, outData, (float *)ptr);
+          break;
+      case VTK_DOUBLE:
+          vtkImageReplaceRegionExecute(this, outData, (double *)ptr);
+          break;
+      default:
+          vtkErrorMacro(<< "Execute: Unknown input ScalarType");
+          return;
   }
 }
 

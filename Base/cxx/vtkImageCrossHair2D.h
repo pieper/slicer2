@@ -34,90 +34,90 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 class VTK_EXPORT vtkImageCrossHair2D : public vtkImageInPlaceFilter
 {
 public:
-	static vtkImageCrossHair2D *New();
+    static vtkImageCrossHair2D *New();
   vtkTypeMacro(vtkImageCrossHair2D,vtkImageInPlaceFilter);
-	void PrintSelf(ostream& os, vtkIndent indent);
+    void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:
   // Set/Get the RGB CursorColor
-	vtkSetVector3Macro(CursorColor, float);
-	vtkGetVectorMacro(CursorColor, float, 3);
+    vtkSetVector3Macro(CursorColor, float);
+    vtkGetVectorMacro(CursorColor, float, 3);
 
   // Description:
   // Get/Set the Number of Hash marks on the Cross Hair
-	vtkGetMacro(NumHashes, int);
-	vtkSetMacro(NumHashes, int);
+    vtkGetMacro(NumHashes, int);
+    vtkSetMacro(NumHashes, int);
 
   // Description:
   // Get/Set the BullsEyeWidth in pixels.
-	vtkGetMacro(BullsEyeWidth, int);
-	vtkSetMacro(BullsEyeWidth, int);
+    vtkGetMacro(BullsEyeWidth, int);
+    vtkSetMacro(BullsEyeWidth, int);
 
   // Description:
   // Turn the BullsEye on and off
-	vtkGetMacro(BullsEye, int);
-	vtkSetMacro(BullsEye, int);
-	vtkBooleanMacro(BullsEye, int);
+    vtkGetMacro(BullsEye, int);
+    vtkSetMacro(BullsEye, int);
+    vtkBooleanMacro(BullsEye, int);
 
   // Description:
   // Get/Set the Spacing between Hash Marks in mm.
-	vtkGetMacro(HashGap, float);
-	vtkSetMacro(HashGap, float);
+    vtkGetMacro(HashGap, float);
+    vtkSetMacro(HashGap, float);
 
   // Description:
   // Get/Set the Length of a hash mark in mm.
-	vtkGetMacro(HashLength, float);
-	vtkSetMacro(HashLength, float);
+    vtkGetMacro(HashLength, float);
+    vtkSetMacro(HashLength, float);
 
   // Description:
   // Get/Set the Magnification
   // NOTE: This should not be used.  Instead, specify the magnification
   // implicitly in the spacing.
-	vtkGetMacro(Magnification, float);
-	vtkSetMacro(Magnification, float);
+    vtkGetMacro(Magnification, float);
+    vtkSetMacro(Magnification, float);
 
   // Description:
   // Set whether or not the cursor should be shown
   // If not, this filter does nothing.
-	vtkGetMacro(ShowCursor, int);
-	vtkSetMacro(ShowCursor, int);
-	vtkBooleanMacro(ShowCursor, int);
+    vtkGetMacro(ShowCursor, int);
+    vtkSetMacro(ShowCursor, int);
+    vtkBooleanMacro(ShowCursor, int);
 
   // Description 
   // Set the cross to intersect or not. 
   // If not, the result is perpendicular lines
   // with their intersection removed.
-	vtkGetMacro(IntersectCross, int);
-	vtkSetMacro(IntersectCross, int);
-	vtkBooleanMacro(IntersectCross, int);
+    vtkGetMacro(IntersectCross, int);
+    vtkSetMacro(IntersectCross, int);
+    vtkBooleanMacro(IntersectCross, int);
 
   // Description 
   // Get/Set The Cursor Position.
-	vtkSetVector2Macro(Cursor, int);
-	vtkGetVectorMacro(Cursor, int, 2);
+    vtkSetVector2Macro(Cursor, int);
+    vtkGetVectorMacro(Cursor, int, 2);
 
 protected:
-	vtkImageCrossHair2D();
-	~vtkImageCrossHair2D() {};
+    vtkImageCrossHair2D();
+    ~vtkImageCrossHair2D() {};
 
   vtkImageCrossHair2D(const vtkImageCrossHair2D&) {};
   void operator=(const vtkImageCrossHair2D&) {};
 
-	int ShowCursor;
-	int NumHashes;
-	int IntersectCross;
-	int Cursor[2];
-	float CursorColor[3];
-	float Magnification;
-	float HashGap;
-	float HashLength;
-	int BullsEye;
-	int BullsEyeWidth;
+    int ShowCursor;
+    int NumHashes;
+    int IntersectCross;
+    int Cursor[2];
+    float CursorColor[3];
+    float Magnification;
+    float HashGap;
+    float HashLength;
+    int BullsEye;
+    int BullsEyeWidth;
 
-	void DrawCursor(vtkImageData *outData, int outExt[6]);
+    void DrawCursor(vtkImageData *outData, int outExt[6]);
 
-	// Not threaded because its too simple of a filter
-	void Execute(vtkImageData *inData, vtkImageData *outData);
+    // Not threaded because its too simple of a filter
+    void Execute(vtkImageData *inData, vtkImageData *outData);
 };
 
 #endif

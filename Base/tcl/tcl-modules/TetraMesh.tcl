@@ -71,103 +71,103 @@
 # .END
 #-------------------------------------------------------------------------------
 proc TetraMeshInit {} {
-	global TetraMesh Module Model
+    global TetraMesh Module Model
 
-	# Define Tabs
-	#------------------------------------
-	# Description:
-	#   Each module is given a button on the Slicer's main menu.
-	#   When that button is pressed a row of tabs appear, and there is a panel
-	#   on the user interface for each tab.  If all the tabs do not fit on one
-	#   row, then the last tab is automatically created to say "More", and 
-	#   clicking it reveals a second row of tabs.
-	#
-	#   Define your tabs here as shown below.  The options are:
-	#   
-	#   row1List = list of ID's for tabs. (ID's must be unique single words)
-	#   row1Name = list of Names for tabs. (Names appear on the user interface
-	#              and can be non-unique with multiple words.)
-	#   row1,tab = ID of initial tab
-	#   row2List = an optional second row of tabs if the first row is too small
-	#   row2Name = like row1
-	#   row2,tab = like row1 
-	#
-	set m TetraMesh
-	set Module($m,row1List) "Help Read Props Visualize View"
+    # Define Tabs
+    #------------------------------------
+    # Description:
+    #   Each module is given a button on the Slicer's main menu.
+    #   When that button is pressed a row of tabs appear, and there is a panel
+    #   on the user interface for each tab.  If all the tabs do not fit on one
+    #   row, then the last tab is automatically created to say "More", and 
+    #   clicking it reveals a second row of tabs.
+    #
+    #   Define your tabs here as shown below.  The options are:
+    #   
+    #   row1List = list of ID's for tabs. (ID's must be unique single words)
+    #   row1Name = list of Names for tabs. (Names appear on the user interface
+    #              and can be non-unique with multiple words.)
+    #   row1,tab = ID of initial tab
+    #   row2List = an optional second row of tabs if the first row is too small
+    #   row2Name = like row1
+    #   row2,tab = like row1 
+    #
+    set m TetraMesh
+    set Module($m,row1List) "Help Read Props Visualize View"
     set Module($m,row1Name) "{Help} {Read/Write} {Props} {Vis} {View}"
-	set Module($m,row1,tab) Read
+    set Module($m,row1,tab) Read
 
 #        set Module($m,row2List) "SField VField"
 #        set Module($m,row2Name) "{Scalar Field} {Vector Field}"
 #        set Module($m,row2,tab) SField
 
-	# Define Procedures
-	#------------------------------------
-	# Description:
-	#   The Slicer sources all *.tcl files, and then it calls the Init
-	#   functions of each module, followed by the VTK functions, and finally
-	#   the GUI functions. A MRML function is called whenever the MRML tree
-	#   changes due to the creation/deletion of nodes.
-	#   
-	#   While the Init procedure is required for each module, the other 
-	#   procedures are optional.  If they exist, then their name (which
-	#   can be anything) is registered with a line like this:
-	#
-	#   set Module($m,procVTK) TetraMeshBuildVTK
-	#
-	#   All the options are:
-	#
-	#   procGUI   = Build the graphical user interface
-	#   procVTK   = Construct VTK objects
-	#   procMRML  = Update after the MRML tree changes due to the creation
-	#               of deletion of nodes.
-	#   procEnter = Called when the user enters this module by clicking
-	#               its button on the main menu
-	#   procExit  = Called when the user leaves this module by clicking
-	#               another modules button
-	#   procStorePresets  = Called when the user holds down one of the Presets
-	#               buttons.
-	#   procRecallPresets  = Called when the user clicks one of the Presets buttons
-	#               
-	#   Note: if you use presets, make sure to give a preset defaults
-	#   string in your init function, of the form: 
-	#   set Module($m,presets) "key1='val1' key2='val2' ..."
-	#   
-	set Module($m,procGUI) TetraMeshBuildGUI
-	set Module($m,procEnter) TetraMeshEnter
-	set Module($m,procExit) TetraMeshExit
-	set Module($m,procMRML) TetraMeshUpdateGUI
+    # Define Procedures
+    #------------------------------------
+    # Description:
+    #   The Slicer sources all *.tcl files, and then it calls the Init
+    #   functions of each module, followed by the VTK functions, and finally
+    #   the GUI functions. A MRML function is called whenever the MRML tree
+    #   changes due to the creation/deletion of nodes.
+    #   
+    #   While the Init procedure is required for each module, the other 
+    #   procedures are optional.  If they exist, then their name (which
+    #   can be anything) is registered with a line like this:
+    #
+    #   set Module($m,procVTK) TetraMeshBuildVTK
+    #
+    #   All the options are:
+    #
+    #   procGUI   = Build the graphical user interface
+    #   procVTK   = Construct VTK objects
+    #   procMRML  = Update after the MRML tree changes due to the creation
+    #               of deletion of nodes.
+    #   procEnter = Called when the user enters this module by clicking
+    #               its button on the main menu
+    #   procExit  = Called when the user leaves this module by clicking
+    #               another modules button
+    #   procStorePresets  = Called when the user holds down one of the Presets
+    #               buttons.
+    #   procRecallPresets  = Called when the user clicks one of the Presets buttons
+    #               
+    #   Note: if you use presets, make sure to give a preset defaults
+    #   string in your init function, of the form: 
+    #   set Module($m,presets) "key1='val1' key2='val2' ..."
+    #   
+    set Module($m,procGUI) TetraMeshBuildGUI
+    set Module($m,procEnter) TetraMeshEnter
+    set Module($m,procExit) TetraMeshExit
+    set Module($m,procMRML) TetraMeshUpdateGUI
 
-	# Define Dependencies
-	#------------------------------------
-	# Description:
-	#   Record any other modules that this one depends on.  This is used 
-	#   to check that all necessary modules are loaded when Slicer runs.
-	#   
-	set Module($m,depend) "Data"
+    # Define Dependencies
+    #------------------------------------
+    # Description:
+    #   Record any other modules that this one depends on.  This is used 
+    #   to check that all necessary modules are loaded when Slicer runs.
+    #   
+    set Module($m,depend) "Data"
 
         # Set version info
-	#------------------------------------
-	# Description:
-	#   Record the version number for display under Help->Version Info.
-	#   The strings with the $ symbol tell CVS to automatically insert the
-	#   appropriate revision number and date when the module is checked in.
-	#   
-	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.32 $} {$Date: 2002/02/25 13:42:35 $}]
+    #------------------------------------
+    # Description:
+    #   Record the version number for display under Help->Version Info.
+    #   The strings with the $ symbol tell CVS to automatically insert the
+    #   appropriate revision number and date when the module is checked in.
+    #   
+    lappend Module(versions) [ParseCVSInfo $m \
+        {$Revision: 1.33 $} {$Date: 2002/03/18 20:52:41 $}]
 
-	# Initialize module-level variables
-	#------------------------------------
-	# Description:
-	#   Keep a global array with the same name as the module.
-	#   This is a handy method for organizing the global variables that
-	#   the procedures in this module and others need to access.
-	#
-	set TetraMesh(count) 0
-	set TetraMesh(FileName) ""
-	set TetraMesh(OtherMesh) ""
+    # Initialize module-level variables
+    #------------------------------------
+    # Description:
+    #   Keep a global array with the same name as the module.
+    #   This is a handy method for organizing the global variables that
+    #   the procedures in this module and others need to access.
+    #
+    set TetraMesh(count) 0
+    set TetraMesh(FileName) ""
+    set TetraMesh(OtherMesh) ""
         set TetraMesh(modelbasename) ""
-	set TetraMesh(eventManager)  ""
+    set TetraMesh(eventManager)  ""
         set TetraMesh(DefaultDir) ""
 
         set TetraMesh(PolyDataNum) 0
@@ -190,23 +190,23 @@ proc TetraMeshInit {} {
 # .END
 #-------------------------------------------------------------------------------
 proc TetraMeshBuildGUI {} {
-	global Gui TetraMesh Module Volume Model View
+    global Gui TetraMesh Module Volume Model View
 
-	# A frame has already been constructed automatically for each tab.
-	# A frame named "Props" can be referenced as follows:
-	#   
-	#     $Module(<Module name>,f<Tab name>)
-	#
-	# ie: $Module(TetraMesh,fProps)
+    # A frame has already been constructed automatically for each tab.
+    # A frame named "Props" can be referenced as follows:
+    #   
+    #     $Module(<Module name>,f<Tab name>)
+    #
+    # ie: $Module(TetraMesh,fProps)
 
-	# This is a useful comment block that makes reading this easy for all:
-	#-------------------------------------------
-	# Frame Hierarchy:
-	#-------------------------------------------
-	# Help
+    # This is a useful comment block that makes reading this easy for all:
+    #-------------------------------------------
+    # Frame Hierarchy:
+    #-------------------------------------------
+    # Help
         # Read/Write
-	# Properties
-	#   Top
+    # Properties
+    #   Top
         #   Middle
         #   Alignment
         #   Select
@@ -221,16 +221,16 @@ proc TetraMeshBuildGUI {} {
         # View
         #   Top
         #   Bottom
-	#-------------------------------------------
+    #-------------------------------------------
 
-	#-------------------------------------------
-	# Help frame
-	#-------------------------------------------
+    #-------------------------------------------
+    # Help frame
+    #-------------------------------------------
 
-	# Write the "help" in the form of psuedo-html.  
-	# Refer to the documentation for details on the syntax.
-	#
-	set help "
+    # Write the "help" in the form of psuedo-html.  
+    # Refer to the documentation for details on the syntax.
+    #
+    set help "
 The TetraMesh module allows a user to read in a Tetrahedral Mesh.  The Mesh is converted into a model in one of two ways. 
 
 <UL>
@@ -246,75 +246,75 @@ The TetraMesh module allows a user to read in a Tetrahedral Mesh.  The Mesh is c
 
 </LI>
 "
-	regsub -all "\n" $help {} help
-	MainHelpApplyTags TetraMesh $help
-	MainHelpBuildGUI TetraMesh
+    regsub -all "\n" $help {} help
+    MainHelpApplyTags TetraMesh $help
+    MainHelpBuildGUI TetraMesh
 
-	#-------------------------------------------
-	# Read/Write frame
-	#-------------------------------------------
-	set fRead $Module(TetraMesh,fRead)
-	set f $fRead
+    #-------------------------------------------
+    # Read/Write frame
+    #-------------------------------------------
+    set fRead $Module(TetraMesh,fRead)
+    set f $fRead
 
-	foreach frame "Top Middle Name Bottom Bot " {
-		frame $f.f$frame -bg $Gui(activeWorkspace)
-		pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
-	}
+    foreach frame "Top Middle Name Bottom Bot " {
+        frame $f.f$frame -bg $Gui(activeWorkspace)
+        pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
+    }
 
-	#-------------------------------------------
-	# Read->Top frame
-	#-------------------------------------------
-	set f $fRead.fTop
+    #-------------------------------------------
+    # Read->Top frame
+    #-------------------------------------------
+    set f $fRead.fTop
 
-	frame $f.fActive -bg $Gui(backdrop)
-	pack $f.fActive -side top -fill x -pady $Gui(pad) -padx $Gui(pad)
-	#-------------------------------------------
-	# Read->Top->Active frame
-	#-------------------------------------------
-	set f $fRead.fTop.fActive
+    frame $f.fActive -bg $Gui(backdrop)
+    pack $f.fActive -side top -fill x -pady $Gui(pad) -padx $Gui(pad)
+    #-------------------------------------------
+    # Read->Top->Active frame
+    #-------------------------------------------
+    set f $fRead.fTop.fActive
 
         eval {label $f.lActive -text "Active TetraMesh: "} $Gui(BLA)
-	eval {menubutton $f.mbActive -text "None" -relief raised -bd 2 -width 20 \
-		-menu $f.mbActive.m} $Gui(WMBA)
-	eval {menu $f.mbActive.m} $Gui(WMA)
-	pack $f.lActive $f.mbActive -side left
+    eval {menubutton $f.mbActive -text "None" -relief raised -bd 2 -width 20 \
+        -menu $f.mbActive.m} $Gui(WMBA)
+    eval {menu $f.mbActive.m} $Gui(WMA)
+    pack $f.lActive $f.mbActive -side left
 
-	# Append widgets to list that gets refreshed during UpdateMRML
-	lappend TetraMesh(mbActiveList) $f.mbActive
-	lappend TetraMesh(mActiveList)  $f.mbActive.m
+    # Append widgets to list that gets refreshed during UpdateMRML
+    lappend TetraMesh(mbActiveList) $f.mbActive
+    lappend TetraMesh(mActiveList)  $f.mbActive.m
 
-	#-------------------------------------------
-	# Read->Middle
-	#-------------------------------------------
-	set f $fRead.fMiddle
+    #-------------------------------------------
+    # Read->Middle
+    #-------------------------------------------
+    set f $fRead.fMiddle
 
-	frame $f.f -bg $Gui(activeWorkspace)
-	pack $f.f -side top -pady $Gui(pad)
+    frame $f.f -bg $Gui(activeWorkspace)
+    pack $f.f -side top -pady $Gui(pad)
 
         DevAddFileBrowse $f.f TetraMesh FileName "Tetrahedral Mesh:" "TetraMeshFileNameEntered" "vtk"\
                 "\$TetraMesh(DefaultDir)" "Browse for a Tetrahedral Mesh"
 
-	#-------------------------------------------
-	# Read->Name
-	#-------------------------------------------
-	set f $fRead.fName
+    #-------------------------------------------
+    # Read->Name
+    #-------------------------------------------
+    set f $fRead.fName
 
-	DevAddLabel $f.l "Name:" 
-	eval {entry $f.e -textvariable TetraMesh(Name)} $Gui(WEA)
-	pack $f.l -side left -padx $Gui(pad)
-	pack $f.e -side left -padx $Gui(pad) -expand 1 -fill x
+    DevAddLabel $f.l "Name:" 
+    eval {entry $f.e -textvariable TetraMesh(Name)} $Gui(WEA)
+    pack $f.l -side left -padx $Gui(pad)
+    pack $f.e -side left -padx $Gui(pad) -expand 1 -fill x
 
-	#-------------------------------------------
-	#Read->Bottom
-	#-------------------------------------------
-	set f $fRead.fBottom
+    #-------------------------------------------
+    #Read->Bottom
+    #-------------------------------------------
+    set f $fRead.fBottom
 
         DevAddSelectButton TetraMesh $f AlignmentVolume "Alignment Volume(Optional)" Pack
 
         lappend Volume(mbActiveList) $f.mbAlignmentVolume
         lappend Volume(mActiveList)  $f.mbAlignmentVolume.m
 
-	set f $fRead.fBot
+    set f $fRead.fBot
 
         DevAddButton $f.bRead   Read  TetraMeshReadMesh
         DevAddButton $f.bWrite  Write TetraMeshWriteMesh
@@ -326,174 +326,174 @@ The TetraMesh module allows a user to read in a Tetrahedral Mesh.  The Mesh is c
         pack $f.bRead $f.bWrite $f.bCreate \
                 -side top -padx $Gui(pad) -pady $Gui(pad)
 
-	#-------------------------------------------
-	# Props frame
-	#-------------------------------------------
-	set fProps $Module(TetraMesh,fProps)
-	set f $fProps
+    #-------------------------------------------
+    # Props frame
+    #-------------------------------------------
+    set fProps $Module(TetraMesh,fProps)
+    set f $fProps
 
-	foreach frame "Top Bot" {
-		frame $f.f$frame -bg $Gui(activeWorkspace)
-		pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
-	}
+    foreach frame "Top Bot" {
+        frame $f.f$frame -bg $Gui(activeWorkspace)
+        pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
+    }
 
-	#-------------------------------------------
-	# Props->Top frame
-	#-------------------------------------------
-	set f $fProps.fTop
+    #-------------------------------------------
+    # Props->Top frame
+    #-------------------------------------------
+    set f $fProps.fTop
 
-	frame $f.fActive -bg $Gui(backdrop)
-	pack $f.fActive -side top -fill x -pady $Gui(pad) -padx $Gui(pad)
-	#-------------------------------------------
-	# Props->Top->Active frame
-	#-------------------------------------------
-	set f $fProps.fTop.fActive
+    frame $f.fActive -bg $Gui(backdrop)
+    pack $f.fActive -side top -fill x -pady $Gui(pad) -padx $Gui(pad)
+    #-------------------------------------------
+    # Props->Top->Active frame
+    #-------------------------------------------
+    set f $fProps.fTop.fActive
 
         eval {label $f.lActive -text "Active TetraMesh: "} $Gui(BLA)
-	eval {menubutton $f.mbActive -text "None" -relief raised -bd 2 -width 20 \
-		-menu $f.mbActive.m} $Gui(WMBA)
-	eval {menu $f.mbActive.m} $Gui(WMA)
-	pack $f.lActive $f.mbActive -side left
+    eval {menubutton $f.mbActive -text "None" -relief raised -bd 2 -width 20 \
+        -menu $f.mbActive.m} $Gui(WMBA)
+    eval {menu $f.mbActive.m} $Gui(WMA)
+    pack $f.lActive $f.mbActive -side left
 
-	# Append widgets to list that gets refreshed during UpdateMRML
-	lappend TetraMesh(mbActiveList) $f.mbActive
-	lappend TetraMesh(mActiveList)  $f.mbActive.m
+    # Append widgets to list that gets refreshed during UpdateMRML
+    lappend TetraMesh(mbActiveList) $f.mbActive
+    lappend TetraMesh(mActiveList)  $f.mbActive.m
 
-	#-------------------------------------------
-	# Props->Bot
-	#-------------------------------------------
-	set f $fProps.fBot
+    #-------------------------------------------
+    # Props->Bot
+    #-------------------------------------------
+    set f $fProps.fBot
 
-	frame $f.fFileName -bg $Gui(activeWorkspace) -relief groove -bd 3
-	frame $f.fName    -bg $Gui(activeWorkspace)
-	frame $f.fGrid    -bg $Gui(activeWorkspace)
-	frame $f.fModelName -bg $Gui(activeWorkspace)
-	frame $f.fAlignment -bg $Gui(activeWorkspace)
-	frame $f.fApply   -bg $Gui(activeWorkspace)
-	pack $f.fFileName $f.fName $f.fGrid $f.fModelName $f.fAlignment \
+    frame $f.fFileName -bg $Gui(activeWorkspace) -relief groove -bd 3
+    frame $f.fName    -bg $Gui(activeWorkspace)
+    frame $f.fGrid    -bg $Gui(activeWorkspace)
+    frame $f.fModelName -bg $Gui(activeWorkspace)
+    frame $f.fAlignment -bg $Gui(activeWorkspace)
+    frame $f.fApply   -bg $Gui(activeWorkspace)
+    pack $f.fFileName $f.fName $f.fGrid $f.fModelName $f.fAlignment \
                 $f.fApply -side top -fill x -pady $Gui(pad)
 
-	#-------------------------------------------
-	# Props->Bot->Name frame
-	#-------------------------------------------
-	set f $fProps.fBot.fName
+    #-------------------------------------------
+    # Props->Bot->Name frame
+    #-------------------------------------------
+    set f $fProps.fBot.fName
 
-	DevAddLabel $f.l "Name:" 
-	eval {entry $f.e -textvariable TetraMesh(Name)} $Gui(WEA)
-	pack $f.l -side left -padx $Gui(pad)
-	pack $f.e -side left -padx $Gui(pad) -expand 1 -fill x
+    DevAddLabel $f.l "Name:" 
+    eval {entry $f.e -textvariable TetraMesh(Name)} $Gui(WEA)
+    pack $f.l -side left -padx $Gui(pad)
+    pack $f.e -side left -padx $Gui(pad) -expand 1 -fill x
 
-	#-------------------------------------------
-	# Props->Bot->ModelName frame
-	#-------------------------------------------
-	set f $fProps.fBot.fModelName
+    #-------------------------------------------
+    # Props->Bot->ModelName frame
+    #-------------------------------------------
+    set f $fProps.fBot.fModelName
 
         DevAddLabel  $f.l "Model Name"
-	eval {entry $f.eModelName -textvariable TetraMesh(modelbasename) -width 50} $Gui(WEA)
+    eval {entry $f.eModelName -textvariable TetraMesh(modelbasename) -width 50} $Gui(WEA)
         
         pack $f.l $f.eModelName -side left -padx $Gui(pad)
 
 
-	#-------------------------------------------
-	# Props->Bot->Alignment
-	#-------------------------------------------
-	set f $fProps.fBot.fAlignment
+    #-------------------------------------------
+    # Props->Bot->Alignment
+    #-------------------------------------------
+    set f $fProps.fBot.fAlignment
 
         DevAddSelectButton TetraMesh $f AlignmentVolume "Alignment Volume(Optional)" Pack
 
         lappend Volume(mbActiveList) $f.mbAlignmentVolume
         lappend Volume(mActiveList)  $f.mbAlignmentVolume.m
 
-	#-------------------------------------------
-	# Props->Bot->FileName frame
-	#-------------------------------------------
-	set f $fProps.fBot.fFileName
+    #-------------------------------------------
+    # Props->Bot->FileName frame
+    #-------------------------------------------
+    set f $fProps.fBot.fFileName
 
-	frame $f.f -bg $Gui(activeWorkspace)
-	pack $f.f -side top -pady $Gui(pad)
+    frame $f.f -bg $Gui(activeWorkspace)
+    pack $f.f -side top -pady $Gui(pad)
 
         DevAddFileBrowse $f.f TetraMesh FileName "Tetrahedral Mesh:" "TetraMeshFileNameEntered" "vtk"\
                 "\$TetraMesh(DefaultDir)" "Browse for a Tetrahedral Mesh"
 
-	#-------------------------------------------
-	# Props->Bot->Grid frame
-	#-------------------------------------------
-	set f $fProps.fBot.fGrid
+    #-------------------------------------------
+    # Props->Bot->Grid frame
+    #-------------------------------------------
+    set f $fProps.fBot.fGrid
 
-	DevAddLabel $f.lV "Clipping:"
-	eval {checkbutton $f.c \
-		 -variable TetraMesh(Clipping) -indicatoron 1} $Gui(WCA)
+    DevAddLabel $f.lV "Clipping:"
+    eval {checkbutton $f.c \
+         -variable TetraMesh(Clipping) -indicatoron 1} $Gui(WCA)
 
-	# Opacity
-	DevAddLabel $f.lO "Opacity:"
-	eval {entry $f.e -textvariable TetraMesh(Opacity) \
-		-width 3} $Gui(WEA)
-	eval {scale $f.s -from 0.0 -to 1.0 -length 50 \
-		-variable TetraMesh(Opacity) \
-		-resolution 0.1} $Gui(WSA) {-sliderlength 14}
+    # Opacity
+    DevAddLabel $f.lO "Opacity:"
+    eval {entry $f.e -textvariable TetraMesh(Opacity) \
+        -width 3} $Gui(WEA)
+    eval {scale $f.s -from 0.0 -to 1.0 -length 50 \
+        -variable TetraMesh(Opacity) \
+        -resolution 0.1} $Gui(WSA) {-sliderlength 14}
 
-	grid $f.lV $f.c $f.lO $f.e $f.s
+    grid $f.lV $f.c $f.lO $f.e $f.s
 
-	#-------------------------------------------
-	# Props->Bot->Apply frame
-	#-------------------------------------------
-	set f $fProps.fBot.fApply
+    #-------------------------------------------
+    # Props->Bot->Apply frame
+    #-------------------------------------------
+    set f $fProps.fBot.fApply
 
         DevAddButton $f.bApply  "Apply"  "TetraMeshPropsApply; Render3D" 8
-	DevAddButton $f.bCancel "Cancel" "TetraMeshPropsCancel" 8
-	grid $f.bApply $f.bCancel -padx $Gui(pad) -pady $Gui(pad)
+    DevAddButton $f.bCancel "Cancel" "TetraMeshPropsCancel" 8
+    grid $f.bApply $f.bCancel -padx $Gui(pad) -pady $Gui(pad)
 
-	#-------------------------------------------
-	# Visualize frame
-	#-------------------------------------------
-	set fVisualize $Module(TetraMesh,fVisualize)
-	set f $fVisualize
+    #-------------------------------------------
+    # Visualize frame
+    #-------------------------------------------
+    set fVisualize $Module(TetraMesh,fVisualize)
+    set f $fVisualize
 
-	foreach frame "Top Middle Select" {
-		frame $f.f$frame -bg $Gui(activeWorkspace)
-		pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
-	}
+    foreach frame "Top Middle Select" {
+        frame $f.f$frame -bg $Gui(activeWorkspace)
+        pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
+    }
 
         frame $f.fOptions -bg $Gui(activeWorkspace) -height 100
         pack $f.fOptions -side top -padx 0 -pady $Gui(pad) -fill x
 
-	foreach frame "Bottom" {
-		frame $f.f$frame -bg $Gui(activeWorkspace)
-		pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
-	}
+    foreach frame "Bottom" {
+        frame $f.f$frame -bg $Gui(activeWorkspace)
+        pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
+    }
 
-	#-------------------------------------------
-	# Visualize->Top frame
-	#-------------------------------------------
+    #-------------------------------------------
+    # Visualize->Top frame
+    #-------------------------------------------
 
-	set f $fVisualize.fTop
+    set f $fVisualize.fTop
 
         eval {label $f.lActive -text "Active TetraMesh: "} $Gui(BLA)
-	eval {menubutton $f.mbActive -text "None" -relief raised -bd 2 -width 20 \
-		-menu $f.mbActive.m} $Gui(WMBA)
-	eval {menu $f.mbActive.m} $Gui(WMA)
-	pack $f.lActive $f.mbActive -side left
+    eval {menubutton $f.mbActive -text "None" -relief raised -bd 2 -width 20 \
+        -menu $f.mbActive.m} $Gui(WMBA)
+    eval {menu $f.mbActive.m} $Gui(WMA)
+    pack $f.lActive $f.mbActive -side left
 
-	# Append widgets to list that gets refreshed during UpdateMRML
-	lappend TetraMesh(mbActiveList) $f.mbActive
-	lappend TetraMesh(mActiveList)  $f.mbActive.m
+    # Append widgets to list that gets refreshed during UpdateMRML
+    lappend TetraMesh(mbActiveList) $f.mbActive
+    lappend TetraMesh(mActiveList)  $f.mbActive.m
 
-	#-------------------------------------------
-	# Visualize->Middle frame
-	#-------------------------------------------
-	set f $fVisualize.fMiddle
+    #-------------------------------------------
+    # Visualize->Middle frame
+    #-------------------------------------------
+    set f $fVisualize.fMiddle
         DevAddLabel  $f.l "Model Name"
-	eval {entry $f.eModelName -textvariable TetraMesh(modelbasename) -width 50} $Gui(WEA)
+    eval {entry $f.eModelName -textvariable TetraMesh(modelbasename) -width 50} $Gui(WEA)
         
         pack $f.l $f.eModelName -side left -padx $Gui(pad)
 
-	#-------------------------------------------
-	# Visualize->Select
-	#-------------------------------------------
-	set f $fVisualize.fSelect
+    #-------------------------------------------
+    # Visualize->Select
+    #-------------------------------------------
+    set f $fVisualize.fSelect
 
         eval {label $f.l -text " Process Type: "} $Gui(BLA)
-	frame $f.f -bg $Gui(backdrop)
+    frame $f.f -bg $Gui(backdrop)
 
         # the first row and second row
         frame $f.f.1 -bg $Gui(inactiveWorkspace)
@@ -506,77 +506,77 @@ The TetraMesh module allows a user to read in a Tetrahedral Mesh.  The Mesh is c
         #
 
         set row 1
-	foreach p "Surfaces Edges Nodes Scalars Vectors" {
+    foreach p "Surfaces Edges Nodes Scalars Vectors" {
             eval {radiobutton $f.f.$row.r$p \
-			-text "$p" -command "TetraMeshSetProcessType" \
-			-variable TetraMesh(ProcessType) -value $p -width 10 \
-			-indicatoron 0} $Gui(WCA)
-		pack $f.f.$row.r$p -side left -pady 0
+            -text "$p" -command "TetraMeshSetProcessType" \
+            -variable TetraMesh(ProcessType) -value $p -width 10 \
+            -indicatoron 0} $Gui(WCA)
+        pack $f.f.$row.r$p -side left -pady 0
             if { $p == "Nodes" } {incr row};
-	}
+    }
 
-	pack $f.l $f.f -side top -padx $Gui(pad) -fill x -anchor w
+    pack $f.l $f.f -side top -padx $Gui(pad) -fill x -anchor w
 
-	#-------------------------------------------
-	# Visualize->Options
-	#-------------------------------------------
+    #-------------------------------------------
+    # Visualize->Options
+    #-------------------------------------------
 
-	set f $fVisualize.fOptions
+    set f $fVisualize.fOptions
 
-	foreach type "Surfaces Edges Nodes Scalars Vectors" {
-		frame $f.f${type} -bg $Gui(activeWorkspace)
-		place $f.f${type} -in $f -relheight 1.0 -relwidth 1.0
-		set TetraMesh(f${type}) $f.f${type}
-	}
+    foreach type "Surfaces Edges Nodes Scalars Vectors" {
+        frame $f.f${type} -bg $Gui(activeWorkspace)
+        place $f.f${type} -in $f -relheight 1.0 -relwidth 1.0
+        set TetraMesh(f${type}) $f.f${type}
+    }
 
-	raise $TetraMesh(fSurfaces)
+    raise $TetraMesh(fSurfaces)
 
-	#-------------------------------------------
-	# Visualize->Options->Surface
-	#-------------------------------------------
+    #-------------------------------------------
+    # Visualize->Options->Surface
+    #-------------------------------------------
         set f $fVisualize.fOptions.fSurfaces
         set ff $f
 
-	foreach frame "Label CD SN" {
+    foreach frame "Label CD SN" {
             frame $f.f$frame -bg $Gui(activeWorkspace)
             pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
-	}
+    }
 
         set f $ff.fLabel
         DevAddLabel $f.l "Grab Surfaces of the mesh"
         pack $f.l -side left -padx $Gui(pad)
 
         set f $ff.fCD
-	DevAddLabel $f.lCD "Use Cell Data:"
-	eval {checkbutton $f.cCD \
-		 -variable TetraMesh(SurfacesUseCellData) -indicatoron 1} $Gui(WCA)
+    DevAddLabel $f.lCD "Use Cell Data:"
+    eval {checkbutton $f.cCD \
+         -variable TetraMesh(SurfacesUseCellData) -indicatoron 1} $Gui(WCA)
         pack $f.lCD $f.cCD -side left -padx $Gui(pad)
 
         set f $ff.fSN
-	DevAddLabel $f.lSN "Smooth Normals:"
-	eval {checkbutton $f.cSN \
-		 -variable TetraMesh(SurfacesSmoothNormals) -indicatoron 1} $Gui(WCA)
+    DevAddLabel $f.lSN "Smooth Normals:"
+    eval {checkbutton $f.cSN \
+         -variable TetraMesh(SurfacesSmoothNormals) -indicatoron 1} $Gui(WCA)
 
         pack $f.lSN $f.cSN -side left -padx $Gui(pad)
 
-	#-------------------------------------------
-	# Visualize->Options->Edges
-	#-------------------------------------------
+    #-------------------------------------------
+    # Visualize->Options->Edges
+    #-------------------------------------------
         set f $fVisualize.fOptions.fEdges
 
         DevAddLabel $f.l "Grab the Edges of the mesh"
         pack $f.l -side left -padx $Gui(pad)
 
-	#-------------------------------------------
-	# Visualize->Options->Nodes
-	#-------------------------------------------
+    #-------------------------------------------
+    # Visualize->Options->Nodes
+    #-------------------------------------------
         set ff $fVisualize.fOptions.fNodes
         set  f $ff
 
-	foreach frame "Scale Skip" {
-		frame $f.f$frame -bg $Gui(activeWorkspace)
-		pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
-	}
+    foreach frame "Scale Skip" {
+        frame $f.f$frame -bg $Gui(activeWorkspace)
+        pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
+    }
 
            #-------------------------------------------
            # SField->Scale
@@ -599,16 +599,16 @@ The TetraMesh module allows a user to read in a Tetrahedral Mesh.  The Mesh is c
    
            pack $f.lSphereSkip $f.eSphereSkip -side left -padx $Gui(pad)
 
-	#-------------------------------------------
-	# Visualize->Options->ScalarField
-	#-------------------------------------------
+    #-------------------------------------------
+    # Visualize->Options->ScalarField
+    #-------------------------------------------
         set ff $fVisualize.fOptions.fScalars
         set  f $ff
 
-	foreach frame "Scale Skip" {
-		frame $f.f$frame -bg $Gui(activeWorkspace)
-		pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
-	}
+    foreach frame "Scale Skip" {
+        frame $f.f$frame -bg $Gui(activeWorkspace)
+        pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
+    }
 
            #-------------------------------------------
            # SField->Scale
@@ -631,16 +631,16 @@ The TetraMesh module allows a user to read in a Tetrahedral Mesh.  The Mesh is c
    
            pack $f.lSphereSkip $f.eSphereSkip -side left -padx $Gui(pad)
 
-	#-------------------------------------------
-	# Visualize->Options->VectorField
-	#-------------------------------------------
+    #-------------------------------------------
+    # Visualize->Options->VectorField
+    #-------------------------------------------
         set ff $fVisualize.fOptions.fVectors
         set f $ff
 
-	foreach frame "Scale Skip" {
-		frame $f.f$frame -bg $Gui(activeWorkspace)
-		pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
-	}
+    foreach frame "Scale Skip" {
+        frame $f.f$frame -bg $Gui(activeWorkspace)
+        pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
+    }
 
            #-------------------------------------------
            # VField->Scale
@@ -668,9 +668,9 @@ The TetraMesh module allows a user to read in a Tetrahedral Mesh.  The Mesh is c
         #-------------------------------------------
         set f $fVisualize.fBottom
 
-#	eval {label $f.lSurface -text "You clicked 0 times."} $Gui(WLA)
+#    eval {label $f.lSurface -text "You clicked 0 times."} $Gui(WLA)
 #        pack $f.lSurface -side top -padx $Gui(pad) -fill x
-#	set TetraMesh(lSurface) $f.lSurface
+#    set TetraMesh(lSurface) $f.lSurface
 
         DevAddButton $f.bGo Process TetraMeshProcessTetraMesh
 
@@ -695,45 +695,45 @@ The TetraMesh module allows a user to read in a Tetrahedral Mesh.  The Mesh is c
         #-------------------------------------------
         set f $fView.fTop
 
-	# Parallel button
+    # Parallel button
          # Copied from MainView.tcl
 
-	eval {label $f.lParallelViewing  -justify left -text \
+    eval {label $f.lParallelViewing  -justify left -text \
 " Parallel, rather than perspective,\n\
 viewing can be helpful:\n"} $Gui(WLA)
 
         pack $f.lParallelViewing -side top
 
-	eval {checkbutton $f.cParallel \
+    eval {checkbutton $f.cParallel \
         -text "Parallel" -variable View(parallelProjection) -width 7 \
         -indicatoron 0 -command "MainViewSetParallelProjection"} $Gui(WCA)
         TooltipAdd $f.cParallel "Toggle parallel/perspective projection"
 
-	DevAddLabel $f.lblank "         "
+    DevAddLabel $f.lblank "         "
 
-	# Scale Label
-	DevAddLabel $f.lParallelScale "Scale:"
+    # Scale Label
+    DevAddLabel $f.lParallelScale "Scale:"
 
-	#  Scale entry box
-	DevAddEntry View parallelScale $f.eParallelScale
+    #  Scale entry box
+    DevAddEntry View parallelScale $f.eParallelScale
         TooltipAdd $f.eParallelScale "Scale for parallel projection"
 
-	pack $f.lblank $f.cParallel $f.lParallelScale $f.eParallelScale \
-		-side left -padx 3
+    pack $f.lblank $f.cParallel $f.lParallelScale $f.eParallelScale \
+        -side left -padx 3
 
         #-------------------------------------------
         # View->Bottom frame
         #-------------------------------------------
         set f $fView.fBottom
 
-	eval {label $f.l  -justify left -text \
+    eval {label $f.l  -justify left -text \
 " Clipping can either be done as Intersection\n\
 or Union. Intersection clips all regions that\n\
 satisfy the constraints of all clipping planes.\n\
 Union clips all regions that satisfy the\n\
 constrains of at least one clipping plane.\n"} $Gui(WLA)
 
-	grid $f.l
+    grid $f.l
 
         foreach p "Union Intersection" {
             eval {radiobutton $f.r$p -width 10 \
@@ -899,7 +899,7 @@ proc TetraMeshExit {} {
 # .END
 #-------------------------------------------------------------------------------
 proc TetraMeshUpdateGUI {} {
-	global TetraMesh 
+    global TetraMesh 
 
     set TetraMesh(modelbasename) $TetraMesh(Name)
 }
@@ -977,7 +977,7 @@ proc TetraMeshProcessTetraMesh {} {
 # .END
 #-------------------------------------------------------------------------------
 proc TetraMeshFileNameEntered {} {
-	global TetraMesh 
+    global TetraMesh 
 
     set TetraMesh(DefaultDir) [file dirname $TetraMesh(FileName)]
     if  {$TetraMesh(modelbasename) == "" } {
@@ -1000,7 +1000,7 @@ proc TetraMeshFileNameEntered {} {
 # .END
 #-------------------------------------------------------------------------------
 proc TetraMeshGetData {} {
-	global TetraMesh Model
+    global TetraMesh Model
 
     set modelbasename "$TetraMesh(modelbasename)"
 
@@ -1211,7 +1211,7 @@ proc TetraMeshGetTransform {} {
 # .END
 #-------------------------------------------------------------------------------
 proc TetraMeshProcessEdges {} {
-	global TetraMesh Model Module
+    global TetraMesh Model Module
 
 ######################################################################
 #### Get the input mesh
@@ -1352,7 +1352,7 @@ return $ReturnVal
 # .END
 #-------------------------------------------------------------------------------
 proc TetraMeshProcessScalars {} {
-	global TetraMesh Model Module
+    global TetraMesh Model Module
 
 ######################################################################
 #### Get the data
@@ -1432,7 +1432,7 @@ return $m
 # .END
 #-------------------------------------------------------------------------------
 proc TetraMeshProcessNodes {} {
-	global TetraMesh Model Module
+    global TetraMesh Model Module
 
 ######################################################################
 #### Get the data
@@ -1507,7 +1507,7 @@ return $m
 # .END
 #-------------------------------------------------------------------------------
 proc TetraMeshProcessVectors {} {
-	global TetraMesh Model Module
+    global TetraMesh Model Module
 
 ######################################################################
 #### Get the data
@@ -1616,7 +1616,7 @@ return $m
 # .END
 #-------------------------------------------------------------------------------
 proc TetraMeshProcessSurfaces {} {
-	global TetraMesh Model Module
+    global TetraMesh Model Module
 
 ######################################################################
 #### Get the data

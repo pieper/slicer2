@@ -59,7 +59,7 @@ vtkImageStatistics::vtkImageStatistics()
 
 //----------------------------------------------------------------------------
 void vtkImageStatistics::ExecuteInformation(vtkImageData *input, 
-					    vtkImageData *output)
+                        vtkImageData *output)
 {
   int min0,max0,min1,max1,min2,max2;
   input->GetWholeExtent(min0, max0, min1, max1, min2, max2);
@@ -120,8 +120,8 @@ public:
 // This templated function executes the filter for any type of data.
 template <class T>
 static void vtkImageStatisticsExecute(vtkImageStatistics *self,
-				      vtkImageData *inData, T *inPtr,
-				      vtkImageData *outData, T *outPtr)
+                      vtkImageData *inData, T *inPtr,
+                      vtkImageData *outData, T *outPtr)
 {
   int min0, max0, min1, max1, min2, max2;
   int Amin0, Amax0, Amin1, Amax1, Amin2, Amax2;
@@ -288,7 +288,7 @@ static void vtkImageStatisticsExecute(vtkImageStatistics *self,
 //  cout  << "Igore Zero? "<<self->GetIgnoreZero()   << "\n";
 }
 
-	
+    
 
 //----------------------------------------------------------------------------
 // This method is passed a input and output Data, and executes the filter
@@ -296,7 +296,7 @@ static void vtkImageStatisticsExecute(vtkImageStatistics *self,
 // It just executes a switch statement to call the correct function for
 // the Datas data types.
 void vtkImageStatistics::Execute(vtkImageData *inData, 
-				 vtkImageData *outData)
+                 vtkImageData *outData)
 {
   void *inPtr;
   int *outPtr;
@@ -308,7 +308,7 @@ void vtkImageStatistics::Execute(vtkImageData *inData,
   if (outData->GetScalarType() != inData->GetScalarType())
   {
     vtkErrorMacro(<< "Execute: out ScalarType " << outData->GetScalarType()
-		  << "must be the same as in ScalarType" 
+          << "must be the same as in ScalarType" 
                   << inData->GetScalarType() 
                   <<"\n");
     return;
@@ -318,7 +318,7 @@ void vtkImageStatistics::Execute(vtkImageData *inData,
   {
     vtkErrorMacro(<< "Execute: Number of scalar components " 
                   << outData->GetScalarType()
-		  << " is not 1\n");
+          << " is not 1\n");
     return;
   }
 

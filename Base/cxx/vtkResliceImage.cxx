@@ -3,8 +3,8 @@
   Program:   Samson Timoner TetraMesh Library
   Module:    $RCSfile: vtkResliceImage.cxx,v $
   Language:  C++
-  Date:      $Date: 2002/03/14 01:56:55 $
-  Version:   $Revision: 1.5 $
+  Date:      $Date: 2002/03/18 21:04:52 $
+  Version:   $Revision: 1.6 $
   
 Copyright (c) 2001 Samson Timoner
 
@@ -128,7 +128,7 @@ inline void vtkResliceImage::FindInputIJK(float OtherIJK[4],
 
 //----------------------------------------------------------------------------
 void vtkResliceImage::ExecuteInformation(vtkImageData *inData, 
-				      vtkImageData *outData)
+                      vtkImageData *outData)
 {
   outData->SetOrigin(this->OutOrigin);
   outData->SetWholeExtent(this->OutExtent);
@@ -363,8 +363,8 @@ void vtkResliceImageExecute(vtkResliceImage *self, int id,
 
 
 void vtkResliceImage::ThreadedExecute(vtkImageData *inData, 
-				      vtkImageData *outData,
-				      int outExt[6], int id)
+                      vtkImageData *outData,
+                      int outExt[6], int id)
 {
   int inExt[6];
   this->ComputeInputUpdateExtent(inExt,outExt);

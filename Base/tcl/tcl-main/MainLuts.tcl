@@ -34,43 +34,43 @@
 # .END
 #-------------------------------------------------------------------------------
 proc MainLutsInit {} {
-	global Module Lut
+    global Module Lut
 
-	# Define Procedures
-	lappend Module(procVTK) MainLutsBuildVTK
+    # Define Procedures
+    lappend Module(procVTK) MainLutsBuildVTK
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainLuts \
-		{$Revision: 1.12 $} {$Date: 2002/02/28 01:29:38 $}]
+        {$Revision: 1.13 $} {$Date: 2002/03/18 20:54:48 $}]
 
-	# Create an ID for Labels
-	set Lut(idLabel) -1
+    # Create an ID for Labels
+    set Lut(idLabel) -1
 
-	set Lut(idList) " 0 1 2 $Lut(idLabel)"
+    set Lut(idList) " 0 1 2 $Lut(idLabel)"
 
-	set Lut(0,name) Gray
-	set Lut(0,fileName) ""
-	set Lut(0,numberOfColors) 256
-	set Lut(0,hueRange) "0 0"
-	set Lut(0,saturationRange) "0 0"
-	set Lut(0,valueRange) "0 1"
-	set Lut(0,annoColor) "1 0 0"
+    set Lut(0,name) Gray
+    set Lut(0,fileName) ""
+    set Lut(0,numberOfColors) 256
+    set Lut(0,hueRange) "0 0"
+    set Lut(0,saturationRange) "0 0"
+    set Lut(0,valueRange) "0 1"
+    set Lut(0,annoColor) "1 0 0"
 
-	set Lut(1,name) Iron
-	set Lut(1,fileName) ""
-	set Lut(1,numberOfColors) 156
-	set Lut(1,hueRange) "0 .15"
-	set Lut(1,saturationRange) "1 1"
-	set Lut(1,valueRange) "1 1"
-	set Lut(1,annoColor) "1 1 1"
+    set Lut(1,name) Iron
+    set Lut(1,fileName) ""
+    set Lut(1,numberOfColors) 156
+    set Lut(1,hueRange) "0 .15"
+    set Lut(1,saturationRange) "1 1"
+    set Lut(1,valueRange) "1 1"
+    set Lut(1,annoColor) "1 1 1"
 
-	set Lut(2,name) Rainbow
-	set Lut(2,fileName) ""
-	set Lut(2,numberOfColors) 256
-	set Lut(2,hueRange) "0 .8"
-	set Lut(2,saturationRange) "1 1"
-	set Lut(2,valueRange) "1 1"
-	set Lut(2,annoColor) "1 1 1"
+    set Lut(2,name) Rainbow
+    set Lut(2,fileName) ""
+    set Lut(2,numberOfColors) 256
+    set Lut(2,hueRange) "0 .8"
+    set Lut(2,saturationRange) "1 1"
+    set Lut(2,valueRange) "1 1"
+    set Lut(2,annoColor) "1 1 1"
 }
 
 #-------------------------------------------------------------------------------
@@ -80,72 +80,72 @@ proc MainLutsInit {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainLutsBuildVTK {} {
-	global Volume Lut Dag
+    global Volume Lut Dag
 
-	foreach l $Lut(idList) {
-		if {$l >= 0} {
-		
-		# Hue, Saturation, Intensity
-		if {$Lut($l,fileName) == ""} {
-		
-			vtkLookupTable Lut($l,lut)
-			foreach param "NumberOfColors HueRange SaturationRange ValueRange" {
-				eval Lut($l,lut) Set${param} $Lut($l,[Uncap ${param}])
-			}
-			Lut($l,lut) Build
-		
-		# File
-		} else {
-			vtkLookupTable Lut($l,lut)
+    foreach l $Lut(idList) {
+        if {$l >= 0} {
+        
+        # Hue, Saturation, Intensity
+        if {$Lut($l,fileName) == ""} {
+        
+            vtkLookupTable Lut($l,lut)
+            foreach param "NumberOfColors HueRange SaturationRange ValueRange" {
+                eval Lut($l,lut) Set${param} $Lut($l,[Uncap ${param}])
+            }
+            Lut($l,lut) Build
+        
+        # File
+        } else {
+            vtkLookupTable Lut($l,lut)
 
-			# Open palette file
-			set filename $Lut($l,fileName)
-			if {[CheckFileExists $filename] == 0} {
-				puts "Cannot open file '$filename'"
-				return
-			}
-			set fid [open $filename r]
+            # Open palette file
+            set filename $Lut($l,fileName)
+            if {[CheckFileExists $filename] == 0} {
+                puts "Cannot open file '$filename'"
+                return
+            }
+            set fid [open $filename r]
 
-			# Read colors represented by 3 numbers (RGB) on a line
-			set numColors 0
-			gets $fid line
-			while {[eof $fid] == "0"} {
-				if {[llength $line] == 3} {
-					set colors($numColors) $line
-					incr numColors
-				}
-				gets $fid line
-			}
-			if {[catch {close $fid} errorMessage]} {
+            # Read colors represented by 3 numbers (RGB) on a line
+            set numColors 0
+            gets $fid line
+            while {[eof $fid] == "0"} {
+                if {[llength $line] == 3} {
+                    set colors($numColors) $line
+                    incr numColors
+                }
+                gets $fid line
+            }
+            if {[catch {close $fid} errorMessage]} {
                            tk_messageBox -type ok -message "The following error occurred saving a file: ${errorMessage}" 
                            puts "Aborting due to : ${errorMessage}"
                            exit 1
                         }
 
-			# Set colors into the Lut
-			set Lut($l,numberOfColors) $numColors
-			Lut($l,lut) SetNumberOfTableValues $Lut($l,numberOfColors)
-			Lut($l,lut) SetNumberOfColors $Lut($l,numberOfColors)
-			for {set n 0} {$n < $numColors} {incr n} {
-				eval Lut($l,lut) SetTableValue $n $colors($n) 1
-			}
-		}
-		}
-	}
+            # Set colors into the Lut
+            set Lut($l,numberOfColors) $numColors
+            Lut($l,lut) SetNumberOfTableValues $Lut($l,numberOfColors)
+            Lut($l,lut) SetNumberOfColors $Lut($l,numberOfColors)
+            for {set n 0} {$n < $numColors} {incr n} {
+                eval Lut($l,lut) SetTableValue $n $colors($n) 1
+            }
+        }
+        }
+    }
 
-	# Add a lut for Labels
-	#--------------------------------------
+    # Add a lut for Labels
+    #--------------------------------------
 
-	# Give it a name
-	set l $Lut(idLabel)
-	set Lut($l,name) "Label"
-	set Lut($l,annoColor) "1.0 1.0 0.5"
+    # Give it a name
+    set l $Lut(idLabel)
+    set Lut($l,name) "Label"
+    set Lut($l,annoColor) "1.0 1.0 0.5"
 
-	# Make a LookupTable, vtkIndirectLookupTable
-	vtkLookupTable Lut($l,lut)
+    # Make a LookupTable, vtkIndirectLookupTable
+    vtkLookupTable Lut($l,lut)
 
-	vtkIndirectLookupTable Lut($l,indirectLUT)
-	Lut($l,indirectLUT) DirectOn
+    vtkIndirectLookupTable Lut($l,indirectLUT)
+    Lut($l,indirectLUT) DirectOn
     Lut($l,indirectLUT) SetLowerThreshold 1
-	Lut($l,indirectLUT) SetLookupTable Lut($l,lut)
+    Lut($l,indirectLUT) SetLookupTable Lut($l,lut)
 }

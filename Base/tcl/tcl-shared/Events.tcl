@@ -59,7 +59,7 @@ proc EventsInit {} {
     
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.11 $} {$Date: 2001/04/02 18:23:22 $}]
+        {$Revision: 1.12 $} {$Date: 2002/03/18 20:46:14 $}]
     
     # Props
     set Events(managerStack) ""
@@ -81,14 +81,14 @@ proc pushHandler { widget event script } {
 
     set oldHandler [bind $widget $event]
     if { [info exists Events(handlers,$widget,$event)] } {
-	set Events(handlers,$widget,$event) \
-		[linsert $Events(handlers,$widget,$event) 0 $oldHandler]
+    set Events(handlers,$widget,$event) \
+        [linsert $Events(handlers,$widget,$event) 0 $oldHandler]
     } else {
-	set Events(handlers,$widget,$event) [list $oldHandler]
+    set Events(handlers,$widget,$event) [list $oldHandler]
     }
     bind $widget $event $script
 }
-	
+    
 #-------------------------------------------------------------------------------
 # .PROC popHandler
 # Pops the handler off the stack and binds it.
@@ -100,12 +100,12 @@ proc pushHandler { widget event script } {
 proc popHandler { widget event } {
     global Events
     if { [llength $Events(handlers,$widget,$event)] == 0 } {
-	unset Events(handlers,$widget,$event)
+    unset Events(handlers,$widget,$event)
     } else {
-	set script [lindex $Events(handlers,$widget,$event) 0]
-	set Events(handlers,$widget,$event) \
-		[lreplace $Events(handler,$widget,$event) 0 0]
-	bind $widget $event $script
+    set script [lindex $Events(handlers,$widget,$event) 0]
+    set Events(handlers,$widget,$event) \
+        [lreplace $Events(handler,$widget,$event) 0 0]
+    bind $widget $event $script
     }
 }
 
@@ -124,18 +124,18 @@ proc pushEventManager { manager } {
 #    upvar 1 $mgr manager
 
 #    foreach entry [array names manager] {
-#	set item [split $entry ,]
-#	set widget [lindex $item 0]
-#	set event [lindex $item 1]
-#	set command $manager($entry)
-#	pushHandler $widget $event $command
+#    set item [split $entry ,]
+#    set widget [lindex $item 0]
+#    set event [lindex $item 1]
+#    set command $manager($entry)
+#    pushHandler $widget $event $command
 #    }
 
     foreach entry $manager {
-	set widget [subst [lindex $entry 0]]
-	set event [lindex $entry 1]
-	set command [lindex $entry 2]	
-	pushHandler $widget $event $command
+    set widget [subst [lindex $entry 0]]
+    set event [lindex $entry 1]
+    set command [lindex $entry 2]    
+    pushHandler $widget $event $command
     }
     set Events(managerStack) [concat $manager $Events(managerStack)]
 }
@@ -155,11 +155,11 @@ proc popEventManager {} {
     
     set manager [lindex $Events(managerStack) 0]
     foreach entry [array names $manager] {
-	set item [split $entry ,]
-	set widget [subst [lindex $item 0]]
-	set event [lindex $item 1]
-	set command [subst $${manager}($entry)]
-	popHandler $widget $event
+    set item [split $entry ,]
+    set widget [subst [lindex $item 0]]
+    set event [lindex $item 1]
+    set command [subst $${manager}($entry)]
+    popHandler $widget $event
     }
     set Events(managerStack) [lreplace $Events(managerStack) 0 0]
 }

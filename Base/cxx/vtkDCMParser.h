@@ -61,8 +61,8 @@ typedef unsigned long ULONG;*/
 #define ULONG unsigned long
 
 //typedef void (*dcm_callback)(FILE *file_in, unsigned short group_code,
-//			     unsigned short element_code, unsigned int length,
-//			     char *vr, int *stop);
+//                 unsigned short element_code, unsigned int length,
+//                 char *vr, int *stop);
 
 struct DCMDataElementStruct
 {
@@ -111,7 +111,7 @@ class VTK_EXPORT vtkDCMParser : public vtkObject
   char *ReadElement();
   unsigned long ReadElementLength();
   //void ReadElement(char *vr, char *group_code,
-  //		   char *element_code, char *length);
+  //           char *element_code, char *length);
   void ReadElement(DCMDataElementStruct *des);
   void UnreadLastElement();
   void ReadDICOMMetaHeaderInfo();

@@ -78,7 +78,7 @@ void vtkImageEditorEffects::Threshold(float min, float max,
 
 //----------------------------------------------------------------------------
 void vtkImageEditorEffects::Draw(int value, vtkPoints *points, int radius, 
-	char *shape)
+    char *shape)
 {
   vtkImageFillROI *fill = vtkImageFillROI::New();
 
@@ -103,7 +103,7 @@ void vtkImageEditorEffects::Erode(float fg, float bg, int neighbors,
   erode->SetForeground(fg);
   erode->SetBackground(bg);
 
-	if (neighbors == 8) 
+    if (neighbors == 8) 
   {
     erode->SetNeighborTo8();
   }
@@ -132,13 +132,13 @@ void vtkImageEditorEffects::Dilate(float fg, float bg, int neighbors,
   erode->SetForeground(bg);
   erode->SetBackground(fg);
 
-	if (neighbors == 8) 
+    if (neighbors == 8) 
   {
-		erode->SetNeighborTo8();
+        erode->SetNeighborTo8();
   }
-	else
+    else
   {
-		erode->SetNeighborTo4();
+        erode->SetNeighborTo4();
   }
 
   for (int i=0; i<iterations; i++)
@@ -164,22 +164,22 @@ void vtkImageEditorEffects::ErodeDilate(float fg, float bg, int neighbors,
   dilate->SetBackground(fg);
   dilate->SetInput(erode->GetOutput());
 
-	if (neighbors == 8)
+    if (neighbors == 8)
   {
-		dilate->SetNeighborTo8();
+        dilate->SetNeighborTo8();
   }
-	else
+    else
   {
-		  dilate->SetNeighborTo4();
+          dilate->SetNeighborTo4();
   }
 
-	if (neighbors == 8) 
+    if (neighbors == 8) 
   {
-		erode->SetNeighborTo8();
+        erode->SetNeighborTo8();
   }
-	else
+    else
   {
-		erode->SetNeighborTo4();
+        erode->SetNeighborTo4();
   }
 
   for (int i=0; i<iterations; i++)
@@ -209,11 +209,11 @@ void vtkImageEditorEffects::DilateErode(float fg, float bg, int neighbors,
   dilate->SetBackground(fg);
   erode->SetInput(dilate->GetOutput());
 
-	if (neighbors == 8) 
+    if (neighbors == 8) 
   {
     erode->SetNeighborTo8();
   }
-	else
+    else
   {
     erode->SetNeighborTo4();
   }
@@ -324,13 +324,13 @@ void vtkImageEditorEffects::RemoveIslands(int bg, int fgMin, int fgMax,
 
 //----------------------------------------------------------------------------
 void vtkImageEditorEffects::ChangeIsland(int outputLabel, 
-	int xSeed, int ySeed, int zSeed)
+    int xSeed, int ySeed, int zSeed)
 {
   vtkImageConnectivity *con  = vtkImageConnectivity::New();
 
-	con->SetFunctionToChangeIsland();
-	con->SetOutputLabel(outputLabel);
-	con->SetSeed(xSeed, ySeed, zSeed);
+    con->SetFunctionToChangeIsland();
+    con->SetOutputLabel(outputLabel);
+    con->SetSeed(xSeed, ySeed, zSeed);
   con->SetBackground(0);
 
   this->Apply(con, con);
@@ -345,8 +345,8 @@ void vtkImageEditorEffects::MeasureIsland(int xSeed, int ySeed, int zSeed)
 {
   vtkImageConnectivity *con  = vtkImageConnectivity::New();
 
-	con->SetFunctionToMeasureIsland();
-	con->SetSeed(xSeed, ySeed, zSeed);
+    con->SetFunctionToMeasureIsland();
+    con->SetSeed(xSeed, ySeed, zSeed);
   con->SetBackground(0);
 
   this->Apply(con, con);
@@ -364,8 +364,8 @@ void vtkImageEditorEffects::SaveIsland(int xSeed, int ySeed, int zSeed)
 {
   vtkImageConnectivity *con  = vtkImageConnectivity::New();
 
-	con->SetFunctionToSaveIsland();
-	con->SetSeed(xSeed, ySeed, zSeed);
+    con->SetFunctionToSaveIsland();
+    con->SetSeed(xSeed, ySeed, zSeed);
   con->SetBackground(0);
 
   this->Apply(con, con);
@@ -381,7 +381,7 @@ void vtkImageEditorEffects::ChangeLabel(int inputLabel, int outputLabel)
   vtkImageLabelChange *change  = vtkImageLabelChange::New();
 
   change->SetInputLabel(inputLabel);
-	change->SetOutputLabel(outputLabel);
+    change->SetOutputLabel(outputLabel);
 
   this->Apply(change, change);
 

@@ -63,17 +63,17 @@ proc TooltipAdd {widget tip} {
     # just swap the first two list elements
     set btags [bindtags $widget]
     if {[llength $btags] > 1} {
-	set class [lindex $btags 1]
-	set btags [lreplace $btags 1 1 [lindex $btags 0]]
-	set btags [lreplace $btags 0 0 $class]
+    set class [lindex $btags 1]
+    set btags [lreplace $btags 1 1 [lindex $btags 0]]
+    set btags [lreplace $btags 0 0 $class]
     }
     bindtags $widget $btags
 
     # if the button is pressed, this should be like a Leave event
     # (otherwise the tooltip will come up incorrectly)
     if {$class == "Button" || $class == "Radiobutton"} {
-	set cmd [$widget cget -command]
-	set cmd "TooltipExitWidget; $cmd"
+    set cmd [$widget cget -command]
+    set cmd "TooltipExitWidget; $cmd"
     }
 }
 
@@ -91,7 +91,7 @@ proc TooltipEnterWidget {widget tip X Y} {
 
     # do nothing if tooltips disabled
     if {$Tooltips(enabled) == 0} {
-	return
+    return
     }
 
     # We are over the widget
@@ -99,7 +99,7 @@ proc TooltipEnterWidget {widget tip X Y} {
 
     # reset Tooltips(stillOverWidget) after a delay (to end the "vwait")
     set id [after 500 \
-	    {if {$Tooltips(stillOverWidget) == 1} {set Tooltips(stillOverWidget) 1}}]
+        {if {$Tooltips(stillOverWidget) == 1} {set Tooltips(stillOverWidget) 1}}]
 
     # wait until Tooltips(stillOverWidget) is set (by us or by exiting the widget).
     # "vwait" allows event loop to be entered (but using an "after" does not)
@@ -108,10 +108,10 @@ proc TooltipEnterWidget {widget tip X Y} {
     # if Tooltips(stillOverWidget) is 1, the mouse is still over widget.
     # So pop up the tooltip!
     if {$Tooltips(stillOverWidget) == 1} {
-	TooltipPopUp $widget $tip $X $Y
+    TooltipPopUp $widget $tip $X $Y
     } else {
-	# the mouse exited the widget already, so cancel the waiting.
-	after cancel $id
+    # the mouse exited the widget already, so cancel the waiting.
+    after cancel $id
     }
 
 }
@@ -144,7 +144,7 @@ proc TooltipPopUp {widget tip X Y} {
 
     # set tooltip window name
     if {[info exists Tooltips(window)] == 0} {
-	set Tooltips(window) .wTooltips
+    set Tooltips(window) .wTooltips
     }
 
     # get rid of any other existing tooltip
@@ -216,8 +216,8 @@ proc TooltipToggle {} {
     global Tooltips
 
     if {$Tooltips(enabled) == 1} {
-	set Tooltips(enabled) 0
+    set Tooltips(enabled) 0
     } else {
-	set Tooltips(enabled) 1
+    set Tooltips(enabled) 1
     } 
 }

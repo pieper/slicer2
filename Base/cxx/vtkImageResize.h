@@ -44,7 +44,7 @@ public:
   // The whole extent of the output has to be set explicitely.
   void SetOutputWholeExtent(int extent[6]);
   void SetOutputWholeExtent(int minX, int maxX, int minY, int maxY, 
-			    int minZ, int maxZ);
+                int minZ, int maxZ);
   void GetOutputWholeExtent(int extent[6]);
   int *GetOutputWholeExtent() {return this->OutputWholeExtent;}
 
@@ -52,7 +52,7 @@ public:
   // The whole extent of the input has to be set explicitely.
   void SetInputClipExtent(int extent[6]);
   void SetInputClipExtent(int minX, int maxX, int minY, int maxY, 
-			    int minZ, int maxZ);
+                int minZ, int maxZ);
   void GetInputClipExtent(int extent[6]);
   int *GetInputClipExtent() {return this->InputClipExtent;}
 

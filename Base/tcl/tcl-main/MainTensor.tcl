@@ -42,18 +42,18 @@ proc MainTensorAddTensor {} {
 
     #puts "in MainTensorAddTensor"
     if {[IsModule Tensor] == 1} {
-	# Lauren simplify this junk, put something in MainData.tcl?
-	#set Tensor(propertyType) Basic
-	set Tensor(propertyType) Props
-	TensorSetPropertyType
-	MainDataSetActive Tensor NEW
-	#MainTensorSetActive NEW
-	# disallow some user actions while adding a data object
-	set Tensor(freeze) 1
-	# show the props tab
-	Tab Tensor row1 Props
-	# tab to return to after the freeze
-	set Module(freezer) "Data row1 List"
+    # Lauren simplify this junk, put something in MainData.tcl?
+    #set Tensor(propertyType) Basic
+    set Tensor(propertyType) Props
+    TensorSetPropertyType
+    MainDataSetActive Tensor NEW
+    #MainTensorSetActive NEW
+    # disallow some user actions while adding a data object
+    set Tensor(freeze) 1
+    # show the props tab
+    Tab Tensor row1 Props
+    # tab to return to after the freeze
+    set Module(freezer) "Data row1 List"
     }
     #puts "exiting MainTensorAddTensor"
 }
@@ -83,7 +83,7 @@ proc MainTensorInit {} {
     # Set version info
     #-------------------------------------------
     lappend Module(versions) [ParseCVSInfo MainTensor \
-	    {$Revision: 1.6 $} {$Date: 2002/02/26 02:28:52 $}]
+        {$Revision: 1.7 $} {$Date: 2002/03/18 20:54:49 $}]
 
 
     # List variables that shadow the active MRML node 
@@ -130,23 +130,23 @@ proc MainTensorValidateUserInput {} {
     global Tensor
 
     puts "Lauren move the validation and node-set/get into MainData.tcl, \
-	    then write wrappers around them for extra module junk"
+        then write wrappers around them for extra module junk"
 
     # Lauren perhaps this should be in module file
     foreach variableInfo $Tensor(MrmlNode,tclVars) {
-	set variable [lindex $variableInfo 0]
-	set type [lindex $variableInfo 1]
+    set variable [lindex $variableInfo 0]
+    set type [lindex $variableInfo 1]
 
-	set ok 1
+    set ok 1
 
-	if {$type != "String"} {
-	    set ok [Validate$type $Tensor($variable)]
-	}
+    if {$type != "String"} {
+        set ok [Validate$type $Tensor($variable)]
+    }
 
-	if {$ok != "1"} {
-	    puts "Lauren ERROR, $variable did not validate as $type"
-	    return 0
-	}
+    if {$ok != "1"} {
+        puts "Lauren ERROR, $variable did not validate as $type"
+        return 0
+    }
     }
 
     # Lauren need to write wrappers around validate fcns
@@ -177,14 +177,14 @@ proc MainTensorSetAllVariablesToNode {{n \$Tensor(activeID)}} {
     #-------------------------------------------
     #set errcode [MainTensorValidateUserInput]
     #if {$errcode != "1"} {
-	#return $errcode
+    #return $errcode
     #}
 
     # Check the node exists
     #-------------------------------------------
     if {$n == $Tensor(idNone)} {
-	puts "Trying to set vars of none node"
-	return 0
+    puts "Trying to set vars of none node"
+    return 0
     } 
 
     # Get vtk node object
@@ -194,8 +194,8 @@ proc MainTensorSetAllVariablesToNode {{n \$Tensor(activeID)}} {
     # Set into the node all TCL vars which shadow it
     #-------------------------------------------
     foreach variableInfo $Tensor(MrmlNode,tclVars) {
-	set variable [lindex $variableInfo 0]
-	$node Set$variable $Tensor($variable)
+    set variable [lindex $variableInfo 0]
+    $node Set$variable $Tensor($variable)
     }
 }
 
@@ -222,31 +222,31 @@ proc MainTensorGetAllVariablesFromNode {n} {
     #-------------------------------------------
     set deleteNode 0
     if {$n == "default" || $n == $Tensor(idNone)} {
-	# make temporary default node
-	vtkMrmlTensorNode tmp
-	set node tmp
-	set deleteNode 1
+    # make temporary default node
+    vtkMrmlTensorNode tmp
+    set node tmp
+    set deleteNode 1
     } else {
-	# get active node
-	set node Tensor($n,node)
+    # get active node
+    set node Tensor($n,node)
     }
 
     # Get all TCL vars which shadow this node
     #-------------------------------------------
     foreach variableInfo $Tensor(MrmlNode,tclVars) {
-	set variable [lindex $variableInfo 0]
-	puts $variable
-	# Get the value from the node and save in tcl-land
-	set err [catch {set Tensor($variable) [$node Get$variable]}]
-	if {$err != "0" } {
-	    puts "MainTensor Set all vars to node error: $err"
-	}
+    set variable [lindex $variableInfo 0]
+    puts $variable
+    # Get the value from the node and save in tcl-land
+    set err [catch {set Tensor($variable) [$node Get$variable]}]
+    if {$err != "0" } {
+        puts "MainTensor Set all vars to node error: $err"
+    }
     }
     
     # Remove temporary node if created
     #-------------------------------------------
     if {$deleteNode == "1"} {
-	$node Delete
+    $node Delete
     }
 }
 

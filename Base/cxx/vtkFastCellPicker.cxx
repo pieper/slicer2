@@ -36,12 +36,12 @@ vtkFastCellPicker::vtkFastCellPicker()
 
 #if (VTK_MAJOR_VERSION == 3 && VTK_MINOR_VERSION == 2)
 float vtkFastCellPicker::IntersectWithLine(float p1[3], float p2[3], float tol, 
-				      vtkAssemblyPath *assem, vtkActor *a, 
-				      vtkMapper *m)
+                      vtkAssemblyPath *assem, vtkActor *a, 
+                      vtkMapper *m)
 #else
 float vtkFastCellPicker::IntersectWithLine(float p1[3], float p2[3], float tol, 
-				      vtkActor *assem, vtkActor *a, 
-				      vtkMapper *m)
+                      vtkActor *assem, vtkActor *a, 
+                      vtkMapper *m)
 #endif
 {
   int numCells, ii, nOBBTrees;

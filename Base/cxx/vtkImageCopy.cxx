@@ -49,9 +49,9 @@ vtkImageCopy::vtkImageCopy()
 
 template <class T>
 static void vtkImageCopyExecute(vtkImageCopy *self,
-				     vtkImageData *inData, T *inPtr,
-				     vtkImageData *outData, T *outPtr, 
-				     int outExt[6], int id)
+                     vtkImageData *inData, T *inPtr,
+                     vtkImageData *outData, T *outPtr, 
+                     int outExt[6], int id)
 {
   int rowLength, rowSize, size;
   int inIncX, inIncY, inIncZ;
@@ -108,8 +108,8 @@ static void vtkImageCopyExecute(vtkImageCopy *self,
 // It just executes a switch statement to call the correct function for
 // the datas data types.
 void vtkImageCopy::ThreadedExecute(vtkImageData *inData, 
-					vtkImageData *outData,
-					int outExt[6], int id)
+                    vtkImageData *outData,
+                    int outExt[6], int id)
 {
   void *inPtr = inData->GetScalarPointerForExtent(outExt);
   void *outPtr = outData->GetScalarPointerForExtent(outExt);
@@ -118,43 +118,43 @@ void vtkImageCopy::ThreadedExecute(vtkImageData *inData,
     {
     case VTK_FLOAT:
       vtkImageCopyExecute(this, inData, (float *)(inPtr), 
-			       outData, (float *)(outPtr), outExt, id);
+                   outData, (float *)(outPtr), outExt, id);
       break;
     case VTK_DOUBLE:
       vtkImageCopyExecute(this, inData, (double *)(inPtr), 
-			       outData, (double *)(outPtr), outExt, id);
+                   outData, (double *)(outPtr), outExt, id);
       break;
     case VTK_INT:
       vtkImageCopyExecute(this, inData, (int *)(inPtr), 
-			       outData, (int *)(outPtr), outExt, id);
+                   outData, (int *)(outPtr), outExt, id);
       break;
     case VTK_SHORT:
       vtkImageCopyExecute(this, inData, (short *)(inPtr), 
-			       outData, (short *)(outPtr), outExt, id);
+                   outData, (short *)(outPtr), outExt, id);
       break;
     case VTK_UNSIGNED_SHORT:
       vtkImageCopyExecute(this, inData, (unsigned short *)(inPtr), 
-			       outData, (unsigned short *)(outPtr), outExt, id);
+                   outData, (unsigned short *)(outPtr), outExt, id);
       break;
     case VTK_UNSIGNED_CHAR:
       vtkImageCopyExecute(this, inData, (unsigned char *)(inPtr), 
-			       outData, (unsigned char *)(outPtr), outExt, id);
+                   outData, (unsigned char *)(outPtr), outExt, id);
       break;
     case VTK_CHAR:
       vtkImageCopyExecute(this, inData, (char *)(inPtr), 
-			       outData, (char *)(outPtr), outExt, id);
+                   outData, (char *)(outPtr), outExt, id);
       break;
     case VTK_LONG:
       vtkImageCopyExecute(this, inData, (long *)(inPtr), 
-			       outData, (long *)(outPtr), outExt, id);
+                   outData, (long *)(outPtr), outExt, id);
       break;
     case VTK_UNSIGNED_LONG:
       vtkImageCopyExecute(this, inData, (unsigned long *)(inPtr), 
-			       outData, (unsigned long *)(outPtr), outExt, id);
+                   outData, (unsigned long *)(outPtr), outExt, id);
       break;
     case VTK_UNSIGNED_INT:
       vtkImageCopyExecute(this, inData, (unsigned int *)(inPtr), 
-			       outData, (unsigned int *)(outPtr), outExt, id);
+                   outData, (unsigned int *)(outPtr), outExt, id);
       break;
 
     default:
@@ -166,6 +166,6 @@ void vtkImageCopy::ThreadedExecute(vtkImageData *inData,
 void vtkImageCopy::PrintSelf(ostream& os, vtkIndent indent)
 {
 
-	vtkImageToImageFilter::PrintSelf(os,indent);
-	os << indent << "Clear: " << this->Clear;
+    vtkImageToImageFilter::PrintSelf(os,indent);
+    os << indent << "Clear: " << this->Clear;
 }

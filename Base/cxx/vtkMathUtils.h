@@ -54,7 +54,7 @@ class VTK_EXPORT vtkMathUtils : public vtkObject
   // General matrix multiplication.  You must allocate
   // output storage.
   static void MatrixMultiply(double **A, double **B, double **C, int rowA, 
-			     int colA, int rowB, int colB);
+                 int colA, int rowB, int colB);
   // Description:
   // Dump matrix contents to cout
   static void PrintMatrix(double **A, int rowA, int colA);

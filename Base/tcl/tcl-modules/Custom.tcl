@@ -151,7 +151,7 @@ proc CustomInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.27 $} {$Date: 2002/02/26 17:03:21 $}]
+        {$Revision: 1.28 $} {$Date: 2002/03/18 20:52:37 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -167,9 +167,9 @@ proc CustomInit {} {
 
     # Event bindings! (see CustomEnter, CustomExit, tcl-shared/Events.tcl)
     set Custom(eventManager)  { \
-	    {all <Shift-1> {CustomBindingCallback Shift-1 %W %X %Y %x %y %t}} \
-	    {all <Shift-2> {CustomBindingCallback Shift-2 %W %X %Y %x %y %t}} \
-	    {all <Shift-3> {CustomBindingCallback Shift-3 %W %X %Y %x %y %t}} }
+        {all <Shift-1> {CustomBindingCallback Shift-1 %W %X %Y %x %y %t}} \
+        {all <Shift-2> {CustomBindingCallback Shift-2 %W %X %Y %x %y %t}} \
+        {all <Shift-3> {CustomBindingCallback Shift-3 %W %X %Y %x %y %t}} }
     
 }
 
@@ -210,7 +210,7 @@ proc CustomBuildGUI {} {
     
     # This is a useful comment block that makes reading this easy for all:
     #-------------------------------------------
-	# Frame Hierarchy:
+    # Frame Hierarchy:
     #-------------------------------------------
     # Help
     # Stuff
@@ -249,8 +249,8 @@ proc CustomBuildGUI {} {
     set f $fStuff
     
     foreach frame "Top Middle Bottom" {
-	frame $f.f$frame -bg $Gui(activeWorkspace)
-	pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
+    frame $f.f$frame -bg $Gui(activeWorkspace)
+    pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
     }
     
     #-------------------------------------------
@@ -292,8 +292,8 @@ proc CustomBuildGUI {} {
     
     # make frames inside the Bottom frame for nice layout
     foreach frame "CountDemo TextBox" {
-	frame $f.f$frame -bg $Gui(activeWorkspace) 
-	pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
+    frame $f.f$frame -bg $Gui(activeWorkspace) 
+    pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
     }
 
     $f.fTextBox config -relief groove -bd 3 
@@ -332,7 +332,7 @@ proc CustomBuildGUI {} {
     # here's the text box widget from tcl-shared/Widgets.tcl
     set Custom(textBox) [ScrolledText $f.tText]
     pack $f.tText -side top -pady $Gui(pad) -padx $Gui(pad) \
-	    -fill x -expand true
+        -fill x -expand true
     
 }
 
@@ -445,12 +445,12 @@ proc CustomBindingCallback { event W X Y x y t } {
     set insertText "$event at: $X $Y\n"
     
     switch $event {
-	"Shift-2" {
-	    set insertText "Don't poke the Slicer!\n"
-	}
-	"Shift-3" {
-	    set insertText "Ouch!\n"
-	}
+    "Shift-2" {
+        set insertText "Don't poke the Slicer!\n"
+    }
+    "Shift-3" {
+        set insertText "Ouch!\n"
+    }
 
     }
     $Custom(textBox) insert end $insertText

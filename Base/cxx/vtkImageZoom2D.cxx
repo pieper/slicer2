@@ -59,7 +59,7 @@ vtkImageZoom2D::vtkImageZoom2D()
 //----------------------------------------------------------------------------
 
 void vtkImageZoom2D::ExecuteInformation(vtkImageData *inData, 
-					   vtkImageData *outData)
+                       vtkImageData *outData)
 {
   int i;
   float *spacing, outSpacing[3];
@@ -139,7 +139,7 @@ static void vtkImageZoom2DExecute(vtkImageZoom2D *self,
   // step vector
   step[0] = invMag;
   step[1] = invMag;
-	
+    
   // If AutoCenter is on, then use the center of the input
   if (self->GetAutoCenter()) 
   {
@@ -150,7 +150,7 @@ static void vtkImageZoom2DExecute(vtkImageZoom2D *self,
   // Find origin (upper left) of zoom space in terms of xy space coordinates
   origin[0] = center[0] - nx*step[0] / 2.0;
   origin[1] = center[1] - ny*step[1] / 2.0;
-	
+    
   // Return points to the user
   for (i=0; i<2; i++) 
   {
@@ -162,7 +162,7 @@ static void vtkImageZoom2DExecute(vtkImageZoom2D *self,
   // x
   scale = (float)(outExt[0]-wExt[0])/(float)(wExt[1]-wExt[0]+1);
   origin[0] = origin[0] + scale*nx*step[0];
-  scale = (float)(outExt[2]-wExt[2])/(float)(wExt[3]-wExt[2]+1);	
+  scale = (float)(outExt[2]-wExt[2])/(float)(wExt[3]-wExt[2]+1);    
   origin[1] = origin[1] + scale*ny*step[1];
 
   // Initialize zoom coords x, y to origin

@@ -37,37 +37,37 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 class VTK_EXPORT vtkImageReformat : public vtkImageToImageFilter
 {
   public:
-	static vtkImageReformat *New();
+    static vtkImageReformat *New();
   vtkTypeMacro(vtkImageReformat,vtkImageToImageFilter);
-	void PrintSelf(ostream& os, vtkIndent indent);
+    void PrintSelf(ostream& os, vtkIndent indent);
 
-	vtkGetMacro(Interpolate, int);
-	vtkSetMacro(Interpolate, int);
-	vtkBooleanMacro(Interpolate, int);
+    vtkGetMacro(Interpolate, int);
+    vtkSetMacro(Interpolate, int);
+    vtkBooleanMacro(Interpolate, int);
 
-	//Description: Wld stands for the world coordinates
-	vtkGetObjectMacro(WldToIjkMatrix, vtkMatrix4x4);
-	vtkSetObjectMacro(WldToIjkMatrix, vtkMatrix4x4);
+    //Description: Wld stands for the world coordinates
+    vtkGetObjectMacro(WldToIjkMatrix, vtkMatrix4x4);
+    vtkSetObjectMacro(WldToIjkMatrix, vtkMatrix4x4);
 
-	vtkGetObjectMacro(ReformatMatrix, vtkMatrix4x4);
-	vtkSetObjectMacro(ReformatMatrix, vtkMatrix4x4);
+    vtkGetObjectMacro(ReformatMatrix, vtkMatrix4x4);
+    vtkSetObjectMacro(ReformatMatrix, vtkMatrix4x4);
 
-	//Description: reformatted image in pixels
-	// more stuff
-	vtkGetMacro(Resolution, int);
-	vtkSetMacro(Resolution, int);
-	
-	//Description: plane in world space
-	vtkGetMacro(FieldOfView, float);
-	vtkSetMacro(FieldOfView, float);
-	
-	void SetPoint(int x, int y);
-	vtkGetVector3Macro(WldPoint, float);
-	vtkGetVector3Macro(IjkPoint, float);
+    //Description: reformatted image in pixels
+    // more stuff
+    vtkGetMacro(Resolution, int);
+    vtkSetMacro(Resolution, int);
+    
+    //Description: plane in world space
+    vtkGetMacro(FieldOfView, float);
+    vtkSetMacro(FieldOfView, float);
+    
+    void SetPoint(int x, int y);
+    vtkGetVector3Macro(WldPoint, float);
+    vtkGetVector3Macro(IjkPoint, float);
 
-	float YStep[3];
-	float XStep[3];
-	float Origin[3];
+    float YStep[3];
+    float XStep[3];
+    float Origin[3];
   
   // >> AT 11/07/01
 
@@ -103,10 +103,10 @@ class VTK_EXPORT vtkImageReformat : public vtkImageToImageFilter
   unsigned long GetMTime();
 
 protected:
-	vtkImageReformat();
-	~vtkImageReformat();
-	vtkImageReformat(const vtkImageReformat&) {};
-	void operator=(const vtkImageReformat&) {};
+    vtkImageReformat();
+    ~vtkImageReformat();
+    vtkImageReformat(const vtkImageReformat&) {};
+    void operator=(const vtkImageReformat&) {};
 
   // >> AT 11/07/01
   float OriginShift[2];
@@ -115,21 +115,21 @@ protected:
   vtkMatrix4x4 *OriginShiftMtx;
   // << AT 11/07/01
 
-	int RunTime;
-	float IjkPoint[3];
-	float WldPoint[3];
-	int Resolution;
-	float FieldOfView;
-	int Interpolate;
-	vtkMatrix4x4* ReformatMatrix;
-	vtkMatrix4x4* WldToIjkMatrix;
+    int RunTime;
+    float IjkPoint[3];
+    float WldPoint[3];
+    int Resolution;
+    float FieldOfView;
+    int Interpolate;
+    vtkMatrix4x4* ReformatMatrix;
+    vtkMatrix4x4* WldToIjkMatrix;
 
-	// Override this function since inExt != outExt
-	void ComputeInputUpdateExtent(int inExt[6],int outExt[6]);
+    // Override this function since inExt != outExt
+    void ComputeInputUpdateExtent(int inExt[6],int outExt[6]);
   
-	void ExecuteInformation(vtkImageData *inData, vtkImageData *outData);
-	void ThreadedExecute(vtkImageData *inData, vtkImageData *outData, 
-		int extent[6], int id);
+    void ExecuteInformation(vtkImageData *inData, vtkImageData *outData);
+    void ThreadedExecute(vtkImageData *inData, vtkImageData *outData, 
+        int extent[6], int id);
 };
 
 #endif

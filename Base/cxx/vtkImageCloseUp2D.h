@@ -33,39 +33,39 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 class VTK_EXPORT vtkImageCloseUp2D : public vtkImageToImageFilter
 {
 public:
-	static vtkImageCloseUp2D *New();
+    static vtkImageCloseUp2D *New();
   vtkTypeMacro(vtkImageCloseUp2D,vtkImageToImageFilter);
-	void PrintSelf(ostream& os, vtkIndent indent);
+    void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:
   // Set the Center of the window (X,Y) that we zoom in on.
   // Set the Magnification
   // Set the half-width of the region to zoom in on (radius)
   // The half-length is set to the same value.
-	vtkSetMacro(X, int);
-	vtkSetMacro(Y, int);
-	vtkSetMacro(Radius, int);
-	vtkSetMacro(Magnification, int);
+    vtkSetMacro(X, int);
+    vtkSetMacro(Y, int);
+    vtkSetMacro(Radius, int);
+    vtkSetMacro(Magnification, int);
 
-	int Magnification;
-	int Radius;
-	int X;
-	int Y;
+    int Magnification;
+    int Radius;
+    int X;
+    int Y;
 
 protected:
-	vtkImageCloseUp2D();
-	~vtkImageCloseUp2D() {};
+    vtkImageCloseUp2D();
+    ~vtkImageCloseUp2D() {};
         vtkImageCloseUp2D(const vtkImageCloseUp2D&) {};
         void operator=(const vtkImageCloseUp2D&) {};
 
         void ExecuteInformation(vtkImageData *inData, 
                                 vtkImageData *outData);
 
-	// Override this function since inExt != outExt
-	void ComputeInputUpdateExtent(int inExt[6], int outExt[6]);
+    // Override this function since inExt != outExt
+    void ComputeInputUpdateExtent(int inExt[6], int outExt[6]);
   
-	void ThreadedExecute(vtkImageData *inData, vtkImageData *outData, 
-		int extent[6], int id);
+    void ThreadedExecute(vtkImageData *inData, vtkImageData *outData, 
+        int extent[6], int id);
 };
 
 #endif

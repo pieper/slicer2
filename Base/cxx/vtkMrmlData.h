@@ -122,7 +122,7 @@ class VTK_EXPORT vtkMrmlData : public vtkProcessObject {
   // Description:
   // Set LookupTable
   void SetLookupTable(vtkLookupTable *lut) {
-	  this->IndirectLUT->SetLookupTable(lut);};
+      this->IndirectLUT->SetLookupTable(lut);};
   vtkLookupTable *GetLookupTable() {
     return this->IndirectLUT->GetLookupTable();};
 

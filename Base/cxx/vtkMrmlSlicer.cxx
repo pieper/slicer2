@@ -81,7 +81,7 @@ vtkMrmlSlicer::vtkMrmlSlicer()
   this->NoneNode->SetDescription("NoneVolume created by vtkMrmlSlicer");
   this->NoneNode->SetName("None");
 
-	// Create a NoneVolume
+    // Create a NoneVolume
   this->NoneVolume = vtkMrmlDataVolume::New();
   this->NoneVolume->Register(this);
   this->NoneVolume->Delete();
@@ -98,9 +98,9 @@ vtkMrmlSlicer::vtkMrmlSlicer()
     // Volumes
     this->BackVolume[s]  = NULL;
     this->SetBackVolume(s, this->NoneVolume);
-	  this->ForeVolume[s]  = NULL;
+      this->ForeVolume[s]  = NULL;
     this->SetForeVolume(s, this->NoneVolume);
-	  this->LabelVolume[s] = NULL;
+      this->LabelVolume[s] = NULL;
     this->SetLabelVolume(s, this->NoneVolume);
 
     // Reformatters
@@ -171,28 +171,28 @@ vtkMrmlSlicer::vtkMrmlSlicer()
     // Upper Pipeline
     
     // Double
-	  this->Double[s] = vtkImageDouble2D::New();
+      this->Double[s] = vtkImageDouble2D::New();
     this->DoubleSliceSize[s] = 0;
 
     // Zoom
-	  this->Zoom[s] = vtkImageZoom2D::New();
+      this->Zoom[s] = vtkImageZoom2D::New();
 
     // Cursor
     this->Cursor[s] = vtkImageCrossHair2D::New();
-	  // DAVE need a SetAnnoColor
-	  this->Cursor[s]->SetCursorColor(1.0, 1.0, 0.5);
-	  this->Cursor[s]->SetCursor(127, 127);
-	  this->Cursor[s]->SetHashGap(10);
-	  this->Cursor[s]->SetHashLength(6);
+      // DAVE need a SetAnnoColor
+      this->Cursor[s]->SetCursorColor(1.0, 1.0, 0.5);
+      this->Cursor[s]->SetCursor(127, 127);
+      this->Cursor[s]->SetHashGap(10);
+      this->Cursor[s]->SetHashLength(6);
 
-	  // Offset and Orient
+      // Offset and Orient
 
-	  this->ComputeOffsetRangeIJK(s);
+      this->ComputeOffsetRangeIJK(s);
     for (int j=0; j<MRML_SLICER_NUM_ORIENT; j++)
     {
       this->InitOffset(s, this->GetOrientString(j), 0.0);
     }
-	  this->Driver[s] = 0;
+      this->Driver[s] = 0;
     this->SetOrient(s, MRML_SLICER_ORIENT_ORIGSLICE);
 
     // Filter
@@ -249,8 +249,8 @@ vtkMrmlSlicer::vtkMrmlSlicer()
 
   // set the user defined matrix for each slice
   for (int ss=0; ss<NUM_SLICES; ss++)  
-	  // sp 2002-02-13 changed var to ss since s declared above 
-	  // doesn't work on windows compiler
+      // sp 2002-02-13 changed var to ss since s declared above 
+      // doesn't work on windows compiler
     { 
       this->NewOrientN[ss][0] = 0;
       this->NewOrientN[ss][1] = 0;
@@ -313,9 +313,9 @@ vtkMrmlSlicer::~vtkMrmlSlicer()
 {
   for (int s=0; s<NUM_SLICES; s++)
   {
-	  this->BackReformat[s]->Delete();
-	  this->ForeReformat[s]->Delete();
-	  this->LabelReformat[s]->Delete();
+      this->BackReformat[s]->Delete();
+      this->ForeReformat[s]->Delete();
+      this->LabelReformat[s]->Delete();
     this->Overlay[s]->Delete();
     this->BackMapper[s]->Delete();
     this->ForeMapper[s]->Delete();
@@ -332,11 +332,11 @@ vtkMrmlSlicer::~vtkMrmlSlicer()
     this->LabelOutline3DView[s]->Delete();
     // << AT 11/09/01
 
-	  this->ReformatMatrix[s]->Delete();
-	  this->LabelOutline[s]->Delete();
-	  this->Cursor[s]->Delete();
-	  this->Zoom[s]->Delete();
-	  this->Double[s]->Delete();
+      this->ReformatMatrix[s]->Delete();
+      this->LabelOutline[s]->Delete();
+      this->Cursor[s]->Delete();
+      this->Zoom[s]->Delete();
+      this->Double[s]->Delete();
 
     // Unregister objects others allocated
 
@@ -517,9 +517,9 @@ int vtkMrmlSlicer::IsOrientIJK(int s)
 {
   if (
     this->Orient[s] == MRML_SLICER_ORIENT_ORIGSLICE ||
-	  this->Orient[s] == MRML_SLICER_ORIENT_AXISLICE ||
-	  this->Orient[s] == MRML_SLICER_ORIENT_CORSLICE ||
-	  this->Orient[s] == MRML_SLICER_ORIENT_SAGSLICE) 
+      this->Orient[s] == MRML_SLICER_ORIENT_AXISLICE ||
+      this->Orient[s] == MRML_SLICER_ORIENT_CORSLICE ||
+      this->Orient[s] == MRML_SLICER_ORIENT_SAGSLICE) 
   {
     return 1;
   }
@@ -602,7 +602,7 @@ void vtkMrmlSlicer::SetActiveSlice(int s)
   // no change
   if (this->ActiveSlice == s)
   {
-	  return;
+      return;
   }
   this->ActiveSlice = s;
   this->BuildUpperTime.Modified();
@@ -619,7 +619,7 @@ void vtkMrmlSlicer::SetBackVolume(vtkMrmlDataVolume *vol)
 {
   for (int s=0; s<NUM_SLICES; s++)
   {
-	  this->SetBackVolume(s, vol);
+      this->SetBackVolume(s, vol);
   }
 }
 void vtkMrmlSlicer::SetBackVolume(int s, vtkMrmlDataVolume *vol)
@@ -648,7 +648,7 @@ void vtkMrmlSlicer::SetForeVolume(vtkMrmlDataVolume *vol)
 {
   for (int s=0; s<NUM_SLICES; s++)
   {
-	  this->SetForeVolume(s, vol);
+      this->SetForeVolume(s, vol);
   }
 }
 void vtkMrmlSlicer::SetForeVolume(int s, vtkMrmlDataVolume *vol)
@@ -676,7 +676,7 @@ void vtkMrmlSlicer::SetLabelVolume(vtkMrmlDataVolume *vol)
 {
   for (int s=0; s<NUM_SLICES; s++)
   {
-	  this->SetLabelVolume(s, vol);
+      this->SetLabelVolume(s, vol);
   }
 }
 void vtkMrmlSlicer::SetLabelVolume(int s, vtkMrmlDataVolume *vol)
@@ -852,7 +852,7 @@ void vtkMrmlSlicer::BuildUpper(int s)
       // Active filter?
       if (filter)
       {
-	// Filter
+    // Filter
         if (this->ForeFilter)
         {
           this->FirstFilter[s]->SetInput(this->ForeReformat[s]->GetOutput());
@@ -861,18 +861,18 @@ void vtkMrmlSlicer::BuildUpper(int s)
         {
           this->FirstFilter[s]->SetInput(this->BackReformat[s]->GetOutput());
         }
-	// Mapper
-	if (this->FilterOverlay)
-	  {
-	    // If filter is being overlayed in label layer,
-	    // don't display the filter's output in the fore layer.
-	    this->ForeMapper[s]->SetInput(this->ForeReformat[s]->GetOutput());
-	  }
-	else
-	  {
-	    // default display: just replace fore layer with filter output
-	    this->ForeMapper[s]->SetInput(this->LastFilter[s]->GetOutput());
-	  }
+    // Mapper
+    if (this->FilterOverlay)
+      {
+        // If filter is being overlayed in label layer,
+        // don't display the filter's output in the fore layer.
+        this->ForeMapper[s]->SetInput(this->ForeReformat[s]->GetOutput());
+      }
+    else
+      {
+        // default display: just replace fore layer with filter output
+        this->ForeMapper[s]->SetInput(this->LastFilter[s]->GetOutput());
+      }
       } // end if filter
       else 
       {
@@ -915,7 +915,7 @@ void vtkMrmlSlicer::BuildUpper(int s)
       if (filter)
       {
         // Outline
-	this->LabelOutline[s]->SetInput(this->LastFilter[s]->GetOutput());
+    this->LabelOutline[s]->SetInput(this->LastFilter[s]->GetOutput());
       }
       else 
       {
@@ -989,7 +989,7 @@ void vtkMrmlSlicer::BuildLower(int s)
   // 2.) Overlay --> PolyDraw --> Zoom   --> Cursor
   // 3.) Overlay --> PolyDraw --> Double --> Cursor
   // 4.) Overlay --> PolyDraw --> Zoom   --> Double --> Cursor
-  	
+      
   float ctr[2];
   this->Zoom[s]->GetCenter(ctr);
   if (this->Zoom[s]->GetMagnification() != 1.0 || 
@@ -1006,11 +1006,11 @@ void vtkMrmlSlicer::BuildLower(int s)
   if (this->ActiveSlice == s)
   {
     switch (mode)
-	  {
+      {
     case 1:
       this->PolyDraw->SetInput(this->Overlay[s]->GetOutput());
       this->Cursor[s]->SetInput(this->PolyDraw->GetOutput());
-	    break;
+        break;
     case 2:
       this->PolyDraw->SetInput(this->Overlay[s]->GetOutput());
             this->Zoom[s]->SetInput(this->PolyDraw->GetOutput());
@@ -1018,38 +1018,38 @@ void vtkMrmlSlicer::BuildLower(int s)
       break;
     case 3:
       this->PolyDraw->SetInput(this->Overlay[s]->GetOutput());
-  	  this->Double[s]->SetInput(this->PolyDraw->GetOutput());
+        this->Double[s]->SetInput(this->PolyDraw->GetOutput());
       this->Cursor[s]->SetInput(this->Double[s]->GetOutput());
-  	  break;
+        break;
     case 4:
       this->PolyDraw->SetInput(this->Overlay[s]->GetOutput());
       this->Zoom[s]->SetInput(this->PolyDraw->GetOutput());
       this->Double[s]->SetInput(this->Zoom[s]->GetOutput());
       this->Cursor[s]->SetInput(this->Double[s]->GetOutput());
       break;
-	  }
+      }
   }
   else
   {
     switch (mode)
-	  {
+      {
     case 1:
       this->Cursor[s]->SetInput(this->Overlay[s]->GetOutput());
-	    break;
+        break;
     case 2:
       this->Zoom[s]->SetInput(this->Overlay[s]->GetOutput());
       this->Cursor[s]->SetInput(this->Zoom[s]->GetOutput());
       break;
     case 3:
-  	  this->Double[s]->SetInput(this->Overlay[s]->GetOutput());
+        this->Double[s]->SetInput(this->Overlay[s]->GetOutput());
       this->Cursor[s]->SetInput(this->Double[s]->GetOutput());
-  	  break;
+        break;
     case 4:
       this->Zoom[s]->SetInput(this->Overlay[s]->GetOutput());
       this->Double[s]->SetInput(this->Zoom[s]->GetOutput());
       this->Cursor[s]->SetInput(this->Double[s]->GetOutput());
       break;
-	  }
+      }
   }
 }
 
@@ -1118,12 +1118,12 @@ void vtkMrmlSlicer::ComputeOffsetRangeIJK(int s)
   this->OffsetRange[s][MRML_SLICER_ORIENT_ORIGSLICE][0] = zMin;
   this->OffsetRange[s][MRML_SLICER_ORIENT_ORIGSLICE][1] = zMax;
 
-	// Sagittal
+    // Sagittal
   if (!strcmp(order,"LR") || !strcmp(order,"RL")) 
   {
-	  this->SetOffsetRange(s, MRML_SLICER_ORIENT_AXISLICE, xMin, xMax, &modified);
-	  this->SetOffsetRange(s, MRML_SLICER_ORIENT_SAGSLICE, zMin, zMax, &modified);
-	  this->SetOffsetRange(s, MRML_SLICER_ORIENT_CORSLICE, xMin, xMax, &modified);
+      this->SetOffsetRange(s, MRML_SLICER_ORIENT_AXISLICE, xMin, xMax, &modified);
+      this->SetOffsetRange(s, MRML_SLICER_ORIENT_SAGSLICE, zMin, zMax, &modified);
+      this->SetOffsetRange(s, MRML_SLICER_ORIENT_CORSLICE, xMin, xMax, &modified);
 
     if (modified)
     {
@@ -1132,13 +1132,13 @@ void vtkMrmlSlicer::ComputeOffsetRangeIJK(int s)
       this->Offset[s][MRML_SLICER_ORIENT_SAGSLICE]  = zAvg;
       this->Offset[s][MRML_SLICER_ORIENT_CORSLICE]  = xAvg;
     }
-	}
+    }
   // Coronal
-	else if (!strcmp(order,"AP") || !strcmp(order,"PA")) 
+    else if (!strcmp(order,"AP") || !strcmp(order,"PA")) 
   {
-	  this->SetOffsetRange(s, MRML_SLICER_ORIENT_AXISLICE, xMin, xMax, &modified);
-	  this->SetOffsetRange(s, MRML_SLICER_ORIENT_SAGSLICE, xMin, xMax, &modified);
-	  this->SetOffsetRange(s, MRML_SLICER_ORIENT_CORSLICE, zMin, zMax, &modified);
+      this->SetOffsetRange(s, MRML_SLICER_ORIENT_AXISLICE, xMin, xMax, &modified);
+      this->SetOffsetRange(s, MRML_SLICER_ORIENT_SAGSLICE, xMin, xMax, &modified);
+      this->SetOffsetRange(s, MRML_SLICER_ORIENT_CORSLICE, zMin, zMax, &modified);
 
     if (modified)
     {
@@ -1147,13 +1147,13 @@ void vtkMrmlSlicer::ComputeOffsetRangeIJK(int s)
       this->Offset[s][MRML_SLICER_ORIENT_SAGSLICE]  = xAvg;
       this->Offset[s][MRML_SLICER_ORIENT_CORSLICE]  = zAvg;
     }
-	}
+    }
   // Axial (and oblique)
-	else 
+    else 
   {
-	  this->SetOffsetRange(s, MRML_SLICER_ORIENT_AXISLICE, zMin, zMax, &modified);
-	  this->SetOffsetRange(s, MRML_SLICER_ORIENT_SAGSLICE, xMin, xMax, &modified);
-	  this->SetOffsetRange(s, MRML_SLICER_ORIENT_CORSLICE, xMin, xMax, &modified);
+      this->SetOffsetRange(s, MRML_SLICER_ORIENT_AXISLICE, zMin, zMax, &modified);
+      this->SetOffsetRange(s, MRML_SLICER_ORIENT_SAGSLICE, xMin, xMax, &modified);
+      this->SetOffsetRange(s, MRML_SLICER_ORIENT_CORSLICE, xMin, xMax, &modified);
 
     if (modified)
     {
@@ -1162,7 +1162,7 @@ void vtkMrmlSlicer::ComputeOffsetRangeIJK(int s)
       this->Offset[s][MRML_SLICER_ORIENT_SAGSLICE]  = xAvg;
       this->Offset[s][MRML_SLICER_ORIENT_CORSLICE]  = xAvg;
     }
-	}
+    }
 }
 
 void vtkMrmlSlicer::InitOffset(int s, char *str, float offset)
@@ -1178,21 +1178,21 @@ void vtkMrmlSlicer::SetOrient(int orient)
 {
   if (orient == MRML_SLICER_ORIENT_AXISAGCOR) 
   {
-	  this->SetOrient(0, MRML_SLICER_ORIENT_AXIAL);
-	  this->SetOrient(1, MRML_SLICER_ORIENT_SAGITTAL);
-	  this->SetOrient(2, MRML_SLICER_ORIENT_CORONAL);
+      this->SetOrient(0, MRML_SLICER_ORIENT_AXIAL);
+      this->SetOrient(1, MRML_SLICER_ORIENT_SAGITTAL);
+      this->SetOrient(2, MRML_SLICER_ORIENT_CORONAL);
   } 
   else if (orient == MRML_SLICER_ORIENT_SLICES) 
   {
-	  this->SetOrient(0, MRML_SLICER_ORIENT_AXISLICE);
-	  this->SetOrient(1, MRML_SLICER_ORIENT_SAGSLICE);
-	  this->SetOrient(2, MRML_SLICER_ORIENT_CORSLICE);
+      this->SetOrient(0, MRML_SLICER_ORIENT_AXISLICE);
+      this->SetOrient(1, MRML_SLICER_ORIENT_SAGSLICE);
+      this->SetOrient(2, MRML_SLICER_ORIENT_CORSLICE);
   } 
   else if (orient == MRML_SLICER_ORIENT_ORTHO) 
   {
-	  this->SetOrient(0, MRML_SLICER_ORIENT_PERP);
-	  this->SetOrient(1, MRML_SLICER_ORIENT_INPLANE);
-	  this->SetOrient(2, MRML_SLICER_ORIENT_INPLANE90);
+      this->SetOrient(0, MRML_SLICER_ORIENT_PERP);
+      this->SetOrient(1, MRML_SLICER_ORIENT_INPLANE);
+      this->SetOrient(2, MRML_SLICER_ORIENT_INPLANE90);
   }
   if (orient == MRML_SLICER_ORIENT_REFORMAT_AXISAGCOR) 
     {
@@ -1212,15 +1212,15 @@ void vtkMrmlSlicer::SetOrient(int s, int orient)
 void vtkMrmlSlicer::SetOrientString(char *str)
 {
   if (strcmp(str, "AxiSagCor") == 0)
- 	  this->SetOrient(MRML_SLICER_ORIENT_AXISAGCOR);
+       this->SetOrient(MRML_SLICER_ORIENT_AXISAGCOR);
   else if (strcmp(str, "Orthogonal") == 0)
- 	  this->SetOrient(MRML_SLICER_ORIENT_ORTHO);
+       this->SetOrient(MRML_SLICER_ORIENT_ORTHO);
   else if (strcmp(str, "Slices") == 0)
- 	  this->SetOrient(MRML_SLICER_ORIENT_SLICES);
+       this->SetOrient(MRML_SLICER_ORIENT_SLICES);
   else if (strcmp(str, "ReformatAxiSagCor") == 0)
- 	  this->SetOrient(MRML_SLICER_ORIENT_REFORMAT_AXISAGCOR);
+       this->SetOrient(MRML_SLICER_ORIENT_REFORMAT_AXISAGCOR);
   else
- 	  this->SetOrient(MRML_SLICER_ORIENT_AXISAGCOR);
+       this->SetOrient(MRML_SLICER_ORIENT_AXISAGCOR);
 }
 
 char* vtkMrmlSlicer::GetOrientString(int s)
@@ -1237,38 +1237,38 @@ void vtkMrmlSlicer::SetOrientString(int s, char *str)
 int vtkMrmlSlicer::ConvertStringToOrient(char *str)
 {
   if      (strcmp(str, "Axial") == 0)
- 	  return MRML_SLICER_ORIENT_AXIAL;
+       return MRML_SLICER_ORIENT_AXIAL;
   else if (strcmp(str, "Sagittal") == 0)
- 	  return MRML_SLICER_ORIENT_SAGITTAL;
+       return MRML_SLICER_ORIENT_SAGITTAL;
   else if (strcmp(str, "Coronal") == 0)
- 	  return MRML_SLICER_ORIENT_CORONAL;
+       return MRML_SLICER_ORIENT_CORONAL;
   else if (strcmp(str, "InPlane") == 0)
- 	  return MRML_SLICER_ORIENT_INPLANE;
+       return MRML_SLICER_ORIENT_INPLANE;
   else if (strcmp(str, "InPlane90") == 0)
- 	  return MRML_SLICER_ORIENT_INPLANE90;
+       return MRML_SLICER_ORIENT_INPLANE90;
   else if (strcmp(str, "InPlaneNeg90") == 0)
- 	  return MRML_SLICER_ORIENT_INPLANENEG90;
+       return MRML_SLICER_ORIENT_INPLANENEG90;
   else if (strcmp(str, "Perp") == 0)
- 	  return MRML_SLICER_ORIENT_PERP;
+       return MRML_SLICER_ORIENT_PERP;
   else if (strcmp(str, "OrigSlice") == 0)
- 	  return MRML_SLICER_ORIENT_ORIGSLICE;
+       return MRML_SLICER_ORIENT_ORIGSLICE;
   else if (strcmp(str, "AxiSlice") == 0)
- 	  return MRML_SLICER_ORIENT_AXISLICE;
+       return MRML_SLICER_ORIENT_AXISLICE;
   else if (strcmp(str, "CorSlice") == 0)
- 	  return MRML_SLICER_ORIENT_CORSLICE;
+       return MRML_SLICER_ORIENT_CORSLICE;
   else if (strcmp(str, "SagSlice") == 0)
- 	  return MRML_SLICER_ORIENT_SAGSLICE;
+       return MRML_SLICER_ORIENT_SAGSLICE;
   else if (strcmp(str, "NewOrient") == 0)
- 	  return MRML_SLICER_ORIENT_NEW_ORIENT;
+       return MRML_SLICER_ORIENT_NEW_ORIENT;
   else if (strcmp(str, "ReformatAxial") == 0)
- 	  return MRML_SLICER_ORIENT_REFORMAT_AXIAL;
+       return MRML_SLICER_ORIENT_REFORMAT_AXIAL;
   else if (strcmp(str, "ReformatSagittal") == 0)
           return MRML_SLICER_ORIENT_REFORMAT_SAGITTAL;
   else if (strcmp(str, "ReformatCoronal") == 0)
- 	  return MRML_SLICER_ORIENT_REFORMAT_CORONAL;
+       return MRML_SLICER_ORIENT_REFORMAT_CORONAL;
 
   else
- 	  return MRML_SLICER_ORIENT_AXIAL;
+       return MRML_SLICER_ORIENT_AXIAL;
 }
 
 char* vtkMrmlSlicer::ConvertOrientToString(int orient)
@@ -1306,8 +1306,8 @@ char* vtkMrmlSlicer::ConvertOrientToString(int orient)
     case MRML_SLICER_ORIENT_REFORMAT_CORONAL:
       return "ReformatCoronal";
         default:
-	  return "Axial";
-  }	  
+      return "Axial";
+  }      
 }
 
 
@@ -1317,7 +1317,7 @@ char* vtkMrmlSlicer::ConvertOrientToString(int orient)
 
 
 void vtkMrmlSlicer::ComputeReformatMatrixIJK(int s, 
-	float offset, vtkMatrix4x4 *ref)
+    float offset, vtkMatrix4x4 *ref)
 {
   char orderString[3];
   vtkMrmlDataVolume *vol = this->GetIJKVolume(s);
@@ -1326,7 +1326,7 @@ void vtkMrmlSlicer::ComputeReformatMatrixIJK(int s,
 
   if (this->IsOrientIJK(s) == 0)
   {
-	  vtkErrorMacro(<<"ComputeReformatMatrixIJK: orient is "<<this->Orient[s]);
+      vtkErrorMacro(<<"ComputeReformatMatrixIJK: orient is "<<this->Orient[s]);
     return;
   }
 
@@ -1500,7 +1500,7 @@ void vtkMrmlSlicer::ComputeReformatMatrix(int s)
   else
   {
     switch (this->Orient[s])
-	  {
+      {
     case MRML_SLICER_ORIENT_AXIAL:
       Ux[0] = -1.0;
       Ux[1] =  0.0;
@@ -1508,7 +1508,7 @@ void vtkMrmlSlicer::ComputeReformatMatrix(int s)
       Uy[0] =  0.0;
       Uy[1] =  1.0;
       Uy[2] =  0.0;
-	  break;
+      break;
 
     case MRML_SLICER_ORIENT_SAGITTAL:
       Ux[0] =  0.0;
@@ -1517,7 +1517,7 @@ void vtkMrmlSlicer::ComputeReformatMatrix(int s)
       Uy[0] =  0.0;
       Uy[1] =  0.0;
       Uy[2] =  1.0;
-	  break;
+      break;
 
     case MRML_SLICER_ORIENT_CORONAL:
       Ux[0] = -1.0;
@@ -1526,7 +1526,7 @@ void vtkMrmlSlicer::ComputeReformatMatrix(int s)
       Uy[0] =  0.0;
       Uy[1] =  0.0;
       Uy[2] =  1.0;
-	  break;
+      break;
 
     case MRML_SLICER_ORIENT_INPLANE:
       // In the plane of N, and normal to T
@@ -1584,7 +1584,7 @@ void vtkMrmlSlicer::ComputeReformatMatrix(int s)
       Ux[1] = T[1];
       Ux[2] = T[2];
       Cross(Uy,N,T);
-	  break;
+      break;
 
     case MRML_SLICER_ORIENT_REFORMAT_SAGITTAL:
       N[0] = this->ReformatSagittalN[0];
@@ -1597,7 +1597,7 @@ void vtkMrmlSlicer::ComputeReformatMatrix(int s)
       Ux[1] = T[1];
       Ux[2] = T[2];
       Cross(Uy,N,T);
-	  break;
+      break;
 
     case MRML_SLICER_ORIENT_REFORMAT_CORONAL:
       N[0] = this->ReformatCoronalN[0];
@@ -1630,14 +1630,14 @@ void vtkMrmlSlicer::ComputeReformatMatrix(int s)
       Cross(Uy,N,T);
 
       break;
-	  }//switch
+      }//switch
 
     // Form Uz
-	  Cross(Uz, Ux, Uy);
+      Cross(Uz, Ux, Uy);
     Normalize(Ux);
     Normalize(Uy);
     Normalize(Uz);
-		
+        
     // Set ReformatMatrix
     for(i=0; i<3; i++) 
     {
@@ -1645,11 +1645,11 @@ void vtkMrmlSlicer::ComputeReformatMatrix(int s)
       ref->SetElement(i, 1, Uy[i]);
       ref->SetElement(i, 2, Uz[i]);
       ref->SetElement(i, 3, P[i] + offset * Uz[i]);
-	  }
+      }
     for(i=0; i<3; i++) 
     {
       ref->SetElement(3, i, 0.0);
-	  }
+      }
     ref->SetElement(3, 3, 1.0);
 
   }//else
@@ -1830,7 +1830,7 @@ void vtkMrmlSlicer::SetShowCursor(int vis)
 {
   for (int s=0; s<NUM_SLICES; s++)
   {
-	  this->Cursor[s]->SetShowCursor(vis);
+      this->Cursor[s]->SetShowCursor(vis);
   }
 }
 
@@ -1839,7 +1839,7 @@ void vtkMrmlSlicer::SetCursorColor(float red, float green, float blue)
 {
   for (int s=0; s<NUM_SLICES; s++)
   {
-	  this->Cursor[s]->SetCursorColor(red, green, blue);
+      this->Cursor[s]->SetCursorColor(red, green, blue);
   }
 }
 
@@ -1847,7 +1847,7 @@ void vtkMrmlSlicer::SetNumHashes(int hashes)
 {
   for (int s=0; s<NUM_SLICES; s++)
   {
-	  this->Cursor[s]->SetNumHashes(hashes);
+      this->Cursor[s]->SetNumHashes(hashes);
   }
 }
 
@@ -1863,7 +1863,7 @@ void vtkMrmlSlicer::ComputeNTPFromCamera(vtkCamera *camera)
 
   if (camera == NULL)
   {
-	  vtkErrorMacro(<< "ComputeNTPFromCamera: NULL camera");
+      vtkErrorMacro(<< "ComputeNTPFromCamera: NULL camera");
   }
   VPN = camera->GetViewPlaneNormal();
   VU  = camera->GetViewUp();
@@ -1880,7 +1880,7 @@ void vtkMrmlSlicer::ComputeNTPFromCamera(vtkCamera *camera)
 
   for (i=0; i<3; i++)
   {
-	  this->CamN[i] = -VPN[i];
+      this->CamN[i] = -VPN[i];
   }
   Cross(this->CamT, VPN, VU);
 
@@ -1889,7 +1889,7 @@ void vtkMrmlSlicer::ComputeNTPFromCamera(vtkCamera *camera)
 
   for (i=0; i<3; i++)
   {
-	  this->CamP[i] = FP[i];
+      this->CamP[i] = FP[i];
   }
 
   for (i=0; i<3; i++)
@@ -2126,7 +2126,7 @@ void vtkMrmlSlicer::SetZoom(float mag)
 {
   for (int s=0; s<NUM_SLICES; s++)
   {
-	  this->SetZoom(s, mag);
+      this->SetZoom(s, mag);
   }
 }
 
@@ -2141,7 +2141,7 @@ void vtkMrmlSlicer::SetZoomNew(float mag)
 {
   for (int s=0; s<NUM_SLICES; s++)
   {
-	  this->SetZoomNew(s, mag);
+      this->SetZoomNew(s, mag);
   }
 }
 
@@ -2237,9 +2237,9 @@ void vtkMrmlSlicer::SetForeFade(int fade)
 {
   for (int s=0; s<NUM_SLICES; s++)
   {
-	  this->Overlay[s]->SetFade(1, fade);
+      this->Overlay[s]->SetFade(1, fade);
     // >> AT 11/09/01
-	  this->Overlay3DView[s]->SetFade(1, fade);
+      this->Overlay3DView[s]->SetFade(1, fade);
     // << AT 11/09/01
   }
 }
@@ -2334,13 +2334,13 @@ void vtkMrmlSlicer::RemoveAllVolumesToReformat()
   for (int i = 0; i < this->MaxNumberOfVolumesToReformat; i++)
     {
       vtkImageReformat *reformat = 
-	(vtkImageReformat *) this->VolumeReformatters->GetValue(i);
+    (vtkImageReformat *) this->VolumeReformatters->GetValue(i);
       if (reformat != NULL) 
-	{
-	  // kill it 
-	  reformat->Delete();
-	  this->VolumeReformatters->SetValue(i,NULL);
-	}
+    {
+      // kill it 
+      reformat->Delete();
+      this->VolumeReformatters->SetValue(i,NULL);
+    }
     }
 }
 
@@ -2377,13 +2377,13 @@ void vtkMrmlSlicer::VolumeReformattersModified()
   for (int i = 0; i < max; i++)
     {
       vtkImageReformat *ref = 
-	(vtkImageReformat *)this->VolumeReformatters->GetValue(i);
+    (vtkImageReformat *)this->VolumeReformatters->GetValue(i);
       if (ref != NULL)
-	{
-	  // for now only allow reformatting along with the active slice
-	  ref->SetReformatMatrix(this->ReformatMatrix[this->GetActiveSlice()]);
-	  ref->Modified();
-	}
+    {
+      // for now only allow reformatting along with the active slice
+      ref->SetReformatMatrix(this->ReformatMatrix[this->GetActiveSlice()]);
+      ref->Modified();
+    }
     }
 }
 
@@ -2394,11 +2394,11 @@ void vtkMrmlSlicer::VolumeReformattersSetFieldOfView(float fov)
   for (int i = 0; i < max; i++)
     {
       vtkImageReformat *ref = 
-	(vtkImageReformat *)this->VolumeReformatters->GetValue(i);
+    (vtkImageReformat *)this->VolumeReformatters->GetValue(i);
       if (ref != NULL)
-	{
-	  ref->SetFieldOfView(fov);
-	}
+    {
+      ref->SetFieldOfView(fov);
+    }
     }
 }
 

@@ -38,7 +38,7 @@ class VTK_EXPORT vtkImageNeighborhoodFilter : public vtkImageSpatialFilter
 public:
   static vtkImageNeighborhoodFilter *New();
   vtkTypeMacro(vtkImageNeighborhoodFilter,vtkImageSpatialFilter);
-	
+    
   // Description:
   // Mask that defines area of interest in the neighborhood.
   // Value is 1 for voxels of interest, 0 otherwise.
@@ -61,7 +61,7 @@ public:
   // offsets from the current voxel.  (So these numbers may be negative.)
   // For use when looping through the neighborhood.
   void GetRelativeHoodExtent(int &hoodMin0, int &hoodMax0, int &hoodMin1,
-			     int &hoodMax1, int &hoodMin2, int &hoodMax2);
+                 int &hoodMax1, int &hoodMin2, int &hoodMax2);
 
   // Description: 
   // Get the increments to use when looping through the mask.

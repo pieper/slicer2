@@ -71,8 +71,8 @@ void vtkImageMeasureVoxels::EnlargeOutputUpdateExtents(vtkDataObject *vtkNotUsed
 // This templated function executes the filter for any type of data.
 template <class T>
 static void vtkImageMeasureVoxelsExecute(vtkImageMeasureVoxels *self,
-				      vtkImageData *inData, T *inPtr,
-				      vtkImageData *outData, int *outPtr)
+                      vtkImageData *inData, T *inPtr,
+                      vtkImageData *outData, int *outPtr)
 {
   int idxR, idxY, idxZ;
   int maxY, maxZ;
@@ -137,39 +137,39 @@ static void vtkImageMeasureVoxelsExecute(vtkImageMeasureVoxels *self,
     {
     for (idxY = 0; !self->AbortExecute && idxY <= maxY; idxY++)
       {
-	if (!(count%target))
-	  {
-	    self->UpdateProgress(count/(50.0*target));
-	  }
-	count++;
-	for (idxR = 0; idxR < rowLength; idxR++)
-	  {
-	    // Pixel operation	    
-	    if (*histPtr > 0)
-	      {
-		label = idxR+(int)origin[0];
-		volume = *histPtr * voxelVolume;
-		// round to 3 decimal places
-		char vol2[30];
-		sprintf(vol2, "%.3f", volume);
-		
-		// >> Modified by Attila Tanacs 7/27/01
-		// Instead of manipulators, member functions are used.
-		//file << setw(5) << label;
-		file.width(5);
-		file << label;
-		//file << setiosflags(ios::right);
-		file.setf(ios::right);
-		//file.setiosflags(ios::right);
-		////int width = 15 - (label>=10) - (label>=100);
-		//file << setw(15)  << vol2 << '\n';
-		file.width(15);
-		file << vol2 << "\n";
-		// << End of modifications 7/27/01
-	      }
-	    histPtr++;
-	  }
-	histPtr += IncY;
+    if (!(count%target))
+      {
+        self->UpdateProgress(count/(50.0*target));
+      }
+    count++;
+    for (idxR = 0; idxR < rowLength; idxR++)
+      {
+        // Pixel operation        
+        if (*histPtr > 0)
+          {
+        label = idxR+(int)origin[0];
+        volume = *histPtr * voxelVolume;
+        // round to 3 decimal places
+        char vol2[30];
+        sprintf(vol2, "%.3f", volume);
+        
+        // >> Modified by Attila Tanacs 7/27/01
+        // Instead of manipulators, member functions are used.
+        //file << setw(5) << label;
+        file.width(5);
+        file << label;
+        //file << setiosflags(ios::right);
+        file.setf(ios::right);
+        //file.setiosflags(ios::right);
+        ////int width = 15 - (label>=10) - (label>=100);
+        //file << setw(15)  << vol2 << '\n';
+        file.width(15);
+        file << vol2 << "\n";
+        // << End of modifications 7/27/01
+          }
+        histPtr++;
+      }
+    histPtr += IncY;
       }
     histPtr += IncZ;
     }
@@ -177,7 +177,7 @@ static void vtkImageMeasureVoxelsExecute(vtkImageMeasureVoxels *self,
   file.close();
 }
 
-	
+    
 
 //----------------------------------------------------------------------------
 // This method is passed a input and output Data, and executes the filter
@@ -185,7 +185,7 @@ static void vtkImageMeasureVoxelsExecute(vtkImageMeasureVoxels *self,
 // It just executes a switch statement to call the correct function for
 // the Datas data types.
 void vtkImageMeasureVoxels::Execute(vtkImageData *inData, 
-				 vtkImageData *outData)
+                 vtkImageData *outData)
 {
   void *inPtr;
   int *outPtr;
@@ -197,43 +197,43 @@ void vtkImageMeasureVoxels::Execute(vtkImageData *inData,
   {
     case VTK_CHAR:
       vtkImageMeasureVoxelsExecute(this, 
-			  inData, (char *)(inPtr), outData, outPtr);
+              inData, (char *)(inPtr), outData, outPtr);
       break;
     case VTK_UNSIGNED_CHAR:
       vtkImageMeasureVoxelsExecute(this, 
-			  inData, (unsigned char *)(inPtr), outData, outPtr);
+              inData, (unsigned char *)(inPtr), outData, outPtr);
       break;
     case VTK_SHORT:
       vtkImageMeasureVoxelsExecute(this, 
-			  inData, (short *)(inPtr), outData, outPtr);
+              inData, (short *)(inPtr), outData, outPtr);
       break;
     case VTK_UNSIGNED_SHORT:
       vtkImageMeasureVoxelsExecute(this, 
-			  inData, (unsigned short *)(inPtr), outData, outPtr);
+              inData, (unsigned short *)(inPtr), outData, outPtr);
       break;
     case VTK_INT:
       vtkImageMeasureVoxelsExecute(this, 
-			  inData, (int *)(inPtr), outData, outPtr);
+              inData, (int *)(inPtr), outData, outPtr);
       break;
     case VTK_UNSIGNED_INT:
       vtkImageMeasureVoxelsExecute(this, 
-			  inData, (unsigned int *)(inPtr), outData, outPtr);
+              inData, (unsigned int *)(inPtr), outData, outPtr);
       break;
     case VTK_LONG:
       vtkImageMeasureVoxelsExecute(this, 
-			  inData, (long *)(inPtr), outData, outPtr);
+              inData, (long *)(inPtr), outData, outPtr);
       break;
     case VTK_UNSIGNED_LONG:
       vtkImageMeasureVoxelsExecute(this, 
-			  inData, (unsigned long *)(inPtr), outData, outPtr);
+              inData, (unsigned long *)(inPtr), outData, outPtr);
       break;
     case VTK_FLOAT:
       vtkImageMeasureVoxelsExecute(this, 
-			  inData, (float *)(inPtr), outData, outPtr);
+              inData, (float *)(inPtr), outData, outPtr);
       break;
     case VTK_DOUBLE:
       vtkImageMeasureVoxelsExecute(this, 
-			  inData, (double *)(inPtr), outData, outPtr);
+              inData, (double *)(inPtr), outData, outPtr);
       break;
     default:
       vtkErrorMacro(<< "Execute: Unsupported ScalarType");

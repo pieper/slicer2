@@ -43,10 +43,10 @@ vtkImageClipper* vtkImageClipper::New()
 // Constructor sets default values
 vtkImageClipper::vtkImageClipper()
 {
-	this->ReplaceIn = 1;
-	this->InValue = 1.0;
-	this->ReplaceOut = 1;
-	this->OutValue = 0.0;
+    this->ReplaceIn = 1;
+    this->InValue = 1.0;
+    this->ReplaceOut = 1;
+    this->OutValue = 0.0;
 }
 
 //----------------------------------------------------------------------------
@@ -66,8 +66,8 @@ void vtkImageClipper::SetOutputWholeExtent(int extent[6])
 
 //----------------------------------------------------------------------------
 void vtkImageClipper::SetOutputWholeExtent(int minX, int maxX, 
-					     int minY, int maxY,
-					     int minZ, int maxZ)
+                         int minY, int maxY,
+                         int minZ, int maxZ)
 {
   int extent[6];
   
@@ -87,36 +87,36 @@ void vtkImageClipper::ExecuteInformation(vtkImageData *inData, vtkImageData *out
 // This templated function executes the filter for any type of data.
 template <class T>
 static void vtkImageClipperExecute(vtkImageClipper *self,
-				     vtkImageData *inData, T *inPtr,
-				     vtkImageData *outData, T *outPtr, 
-				     int outExt[6], int id)
+                     vtkImageData *inData, T *inPtr,
+                     vtkImageData *outData, T *outPtr, 
+                     int outExt[6], int id)
 {
-	int idxX, idxY, idxZ;
-	int cminX, cminY, cminZ, cmaxX, cmaxY, cmaxZ, clip[6];
-	int minX, minY, minZ, maxX, maxY, maxZ;
-	int inIncX, inIncY, inIncZ;
-	int outIncX, outIncY, outIncZ;
-	//int replaceIn = self->GetReplaceIn();
-	//T  inValue = (T)(self->GetInValue());
-	//int replaceOut = self->GetReplaceOut();
-	T  outValue = (T)(self->GetOutValue());
+    int idxX, idxY, idxZ;
+    int cminX, cminY, cminZ, cmaxX, cmaxY, cmaxZ, clip[6];
+    int minX, minY, minZ, maxX, maxY, maxZ;
+    int inIncX, inIncY, inIncZ;
+    int outIncX, outIncY, outIncZ;
+    //int replaceIn = self->GetReplaceIn();
+    //T  inValue = (T)(self->GetInValue());
+    //int replaceOut = self->GetReplaceOut();
+    T  outValue = (T)(self->GetOutValue());
   unsigned long count = 0;
   unsigned long target;
 
   self->GetOutputWholeExtent(clip);
-	cmaxX = clip[1];
+    cmaxX = clip[1];
   cminX = clip[0];
-	cmaxY = clip[3];
+    cmaxY = clip[3];
   cminY = clip[2]; 
-	cmaxZ = clip[5];
+    cmaxZ = clip[5];
   cminZ = clip[4];
 
   // find the region to loop over
-	maxX = outExt[1];
+    maxX = outExt[1];
   minX = outExt[0];
-	maxY = outExt[3];
+    maxY = outExt[3];
   minY = outExt[2]; 
-	maxZ = outExt[5];
+    maxZ = outExt[5];
   minZ = outExt[4];
   target = (unsigned long)((maxZ-minZ+1)*(maxY-minY+1)/50.0);
   target++;
@@ -125,29 +125,29 @@ static void vtkImageClipperExecute(vtkImageClipper *self,
   inData->GetContinuousIncrements(outExt, inIncX, inIncY, inIncZ);
   outData->GetContinuousIncrements(outExt, outIncX, outIncY, outIncZ);
 
-	for (idxZ = minZ; idxZ <= maxZ; idxZ++) {
-	  for (idxY = minY; !self->AbortExecute && idxY <= maxY; idxY++) {
-		  if (!id) {
-			  if (!(count%target))
-				  self->UpdateProgress(count/(50.0*target));
-			  count++;
-		  }
-		  for (idxX = minX; idxX <= maxX; idxX++) {
-			  if (idxX >= cminX && idxX <= cmaxX &&
+    for (idxZ = minZ; idxZ <= maxZ; idxZ++) {
+      for (idxY = minY; !self->AbortExecute && idxY <= maxY; idxY++) {
+          if (!id) {
+              if (!(count%target))
+                  self->UpdateProgress(count/(50.0*target));
+              count++;
+          }
+          for (idxX = minX; idxX <= maxX; idxX++) {
+              if (idxX >= cminX && idxX <= cmaxX &&
             idxY >= cminY && idxY <= cmaxY &&
-            idxZ >= cminZ && idxZ <= cmaxZ)		
-				  *outPtr = *inPtr;
-			  else
-				  *outPtr = outValue;
-			  outPtr++;			
-			  inPtr++;
-		  }
-		  outPtr += outIncY;
-		  inPtr += inIncY;
-		}
-		outPtr += outIncZ;
-		inPtr += inIncZ;
-	}
+            idxZ >= cminZ && idxZ <= cmaxZ)        
+                  *outPtr = *inPtr;
+              else
+                  *outPtr = outValue;
+              outPtr++;            
+              inPtr++;
+          }
+          outPtr += outIncY;
+          inPtr += inIncY;
+        }
+        outPtr += outIncZ;
+        inPtr += inIncZ;
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -159,74 +159,74 @@ static void vtkImageClipperExecute(vtkImageClipper *self,
 void vtkImageClipper::ThreadedExecute(vtkImageData *inData, 
     vtkImageData *outData, int outExt[6], int id)
 {
-	void *inPtr = inData->GetScalarPointerForExtent(outExt);
-	void *outPtr = outData->GetScalarPointerForExtent(outExt);
+    void *inPtr = inData->GetScalarPointerForExtent(outExt);
+    void *outPtr = outData->GetScalarPointerForExtent(outExt);
   
-	switch (inData->GetScalarType())
-	{
-	case VTK_DOUBLE:
-		vtkImageClipperExecute(this, inData, (double *)(inPtr), 
-			outData, (double *)(outPtr), outExt, id);
-		break;
-	case VTK_FLOAT:
-		vtkImageClipperExecute(this, inData, (float *)(inPtr), 
-			outData, (float *)(outPtr), outExt, id);
-		break;
-	case VTK_LONG:
-		vtkImageClipperExecute(this, inData, (long *)(inPtr), 
-			outData, (long *)(outPtr), outExt, id);
-		break;
-	case VTK_UNSIGNED_LONG:
-		vtkImageClipperExecute(this, inData, (unsigned long *)(inPtr), 
-			outData, (unsigned long *)(outPtr), outExt, id);
-		break;
-	case VTK_INT:
-		vtkImageClipperExecute(this, inData, (int *)(inPtr), 
-			outData, (int *)(outPtr), outExt, id);
-	case VTK_UNSIGNED_INT:
-		vtkImageClipperExecute(this, inData, (unsigned int *)(inPtr), 
-			outData, (unsigned int *)(outPtr), outExt, id);
-		break;
-		break;
-	case VTK_SHORT:
-		vtkImageClipperExecute(this, inData, (short *)(inPtr), 
-			outData, (short *)(outPtr), outExt, id);
-		break;
-	case VTK_UNSIGNED_SHORT:
-		vtkImageClipperExecute(this, inData, (unsigned short *)(inPtr), 
-			outData, (unsigned short *)(outPtr), outExt, id);
-		break;
-	case VTK_CHAR:
-		vtkImageClipperExecute(this, inData, (char *)(inPtr), 
-			outData, (char *)(outPtr), outExt, id);
-		break;
-	case VTK_UNSIGNED_CHAR:
-		vtkImageClipperExecute(this, inData, (unsigned char *)(inPtr), 
-			outData, (unsigned char *)(outPtr), outExt, id);
-		break;
-	default:
-		vtkErrorMacro(<< "Execute: Unknown input ScalarType");
-		return;
-	}
+    switch (inData->GetScalarType())
+    {
+    case VTK_DOUBLE:
+        vtkImageClipperExecute(this, inData, (double *)(inPtr), 
+            outData, (double *)(outPtr), outExt, id);
+        break;
+    case VTK_FLOAT:
+        vtkImageClipperExecute(this, inData, (float *)(inPtr), 
+            outData, (float *)(outPtr), outExt, id);
+        break;
+    case VTK_LONG:
+        vtkImageClipperExecute(this, inData, (long *)(inPtr), 
+            outData, (long *)(outPtr), outExt, id);
+        break;
+    case VTK_UNSIGNED_LONG:
+        vtkImageClipperExecute(this, inData, (unsigned long *)(inPtr), 
+            outData, (unsigned long *)(outPtr), outExt, id);
+        break;
+    case VTK_INT:
+        vtkImageClipperExecute(this, inData, (int *)(inPtr), 
+            outData, (int *)(outPtr), outExt, id);
+    case VTK_UNSIGNED_INT:
+        vtkImageClipperExecute(this, inData, (unsigned int *)(inPtr), 
+            outData, (unsigned int *)(outPtr), outExt, id);
+        break;
+        break;
+    case VTK_SHORT:
+        vtkImageClipperExecute(this, inData, (short *)(inPtr), 
+            outData, (short *)(outPtr), outExt, id);
+        break;
+    case VTK_UNSIGNED_SHORT:
+        vtkImageClipperExecute(this, inData, (unsigned short *)(inPtr), 
+            outData, (unsigned short *)(outPtr), outExt, id);
+        break;
+    case VTK_CHAR:
+        vtkImageClipperExecute(this, inData, (char *)(inPtr), 
+            outData, (char *)(outPtr), outExt, id);
+        break;
+    case VTK_UNSIGNED_CHAR:
+        vtkImageClipperExecute(this, inData, (unsigned char *)(inPtr), 
+            outData, (unsigned char *)(outPtr), outExt, id);
+        break;
+    default:
+        vtkErrorMacro(<< "Execute: Unknown input ScalarType");
+        return;
+    }
 }
 
 void vtkImageClipper::PrintSelf(ostream& os, vtkIndent indent)
 {
-	vtkImageToImageFilter::PrintSelf(os,indent);
+    vtkImageToImageFilter::PrintSelf(os,indent);
 
-	os << indent << "ReplaceIn: " << this->ReplaceIn << "\n";
-	os << indent << "InValue: " << this->InValue << "\n";
-	os << indent << "ReplaceOut: " << this->ReplaceOut << "\n";
-	os << indent << "OutValue: " << this->OutValue << "\n";
+    os << indent << "ReplaceIn: " << this->ReplaceIn << "\n";
+    os << indent << "InValue: " << this->InValue << "\n";
+    os << indent << "ReplaceOut: " << this->ReplaceOut << "\n";
+    os << indent << "OutValue: " << this->OutValue << "\n";
 
-	int idx;
-	os << indent << "OutputWholeExtent: (" << this->OutputWholeExtent[0]<< "," << this->OutputWholeExtent[1];
+    int idx;
+    os << indent << "OutputWholeExtent: (" << this->OutputWholeExtent[0]<< "," << this->OutputWholeExtent[1];
 
-	for (idx = 1; idx < 3; ++idx)
-	  {
-	    os << indent << ", " << this->OutputWholeExtent[idx * 2]<< "," << this->OutputWholeExtent[idx*2 + 1];
-	  }
-	os << ")\n";
+    for (idx = 1; idx < 3; ++idx)
+      {
+        os << indent << ", " << this->OutputWholeExtent[idx * 2]<< "," << this->OutputWholeExtent[idx*2 + 1];
+      }
+    os << ")\n";
  
 }
 

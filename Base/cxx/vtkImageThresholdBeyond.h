@@ -62,7 +62,7 @@ protected:
   int Algo;
 
   void ThreadedExecute(vtkImageData *inData, vtkImageData *outData, 
-		       int extent[6], int id);
+               int extent[6], int id);
 };
 
 #endif

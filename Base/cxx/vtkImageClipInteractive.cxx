@@ -46,8 +46,8 @@ vtkImageClipInteractive* vtkImageClipInteractive::New()
 // Constructor sets default values
 vtkImageClipInteractive::vtkImageClipInteractive()
 {
-	this->ReformatMatrix = NULL;
-	this->WldToIjkMatrix = NULL;
+    this->ReformatMatrix = NULL;
+    this->WldToIjkMatrix = NULL;
   this->FieldOfView = 240.0;
   memset(ClipExtent, 0, 6*sizeof(int));
 }
@@ -69,7 +69,7 @@ vtkImageClipInteractive::~vtkImageClipInteractive()
 
 void vtkImageClipInteractive::PrintSelf(ostream& os, vtkIndent indent)
 {
-	vtkImageToImageFilter::PrintSelf(os,indent);
+    vtkImageToImageFilter::PrintSelf(os,indent);
 
   // vtkSetObjectMacro
   os << indent << "ReformatMatrix: " << this->ReformatMatrix << "\n";
@@ -96,10 +96,10 @@ void vtkImageClipInteractive::PrintSelf(ostream& os, vtkIndent indent)
 //----------------------------------------------------------------------------
 void vtkImageClipInteractive::ExecuteInformation(vtkImageData *inData, vtkImageData *outData)
 {
-	// Must have matrices provided
-	if (!(this->ReformatMatrix || this->WldToIjkMatrix)) {
-		vtkErrorMacro(<<"Must have matrices set.");
-	}
+    // Must have matrices provided
+    if (!(this->ReformatMatrix || this->WldToIjkMatrix)) {
+        vtkErrorMacro(<<"Must have matrices set.");
+    }
 }
 
 void vtkImageClipInteractive::ComputeInputUpdateExtent(int inExt[6], int outExt[6])
@@ -113,169 +113,169 @@ void vtkImageClipInteractive::ComputeInputUpdateExtent(int inExt[6], int outExt[
 // This templated function executes the filter for any type of data.
 template <class T>
 static void vtkImageClipInteractiveExecute(vtkImageClipInteractive *self,
-				     vtkImageData *inData, T *inPtr,
-				     vtkImageData *outData, 
-				     int outExt[6], int wExt[6], int id)
+                     vtkImageData *inData, T *inPtr,
+                     vtkImageData *outData, 
+                     int outExt[6], int wExt[6], int id)
 {
-	int nxy, idxX, idxY, maxY, maxX;
-	int inIncX, inIncY, inIncZ, outIncX, outIncY, outIncZ;
-	float begin[4], origin[4], mx[4], my[4], mc[4], zero[4]={0.0,0.0,0.0,1.0};
-	float origin_ijk[4], mx_ijk[4], my_ijk[4], zero_ijk[4];
-	float xStep[3], yStep[3], xRewind[3];
-	float x, y, z, scale;
-	int nx, ny, nz, nx2, ny2, nz2, xi, yi, zi;
-	T *outPtr;
-	int inExt[6], Resolution;
+    int nxy, idxX, idxY, maxY, maxX;
+    int inIncX, inIncY, inIncZ, outIncX, outIncY, outIncZ;
+    float begin[4], origin[4], mx[4], my[4], mc[4], zero[4]={0.0,0.0,0.0,1.0};
+    float origin_ijk[4], mx_ijk[4], my_ijk[4], zero_ijk[4];
+    float xStep[3], yStep[3], xRewind[3];
+    float x, y, z, scale;
+    int nx, ny, nz, nx2, ny2, nz2, xi, yi, zi;
+    T *outPtr;
+    int inExt[6], Resolution;
   int clipExt[6];
   vtkMatrix4x4 *WldToIjkMatrix = self->GetWldToIjkMatrix();
   vtkMatrix4x4 *ReformatMatrix = self->GetReformatMatrix();
 
   self->GetClipExtent(clipExt);
 
-	// find the region to loop over
-	maxX = outExt[1]; 
-	maxY = outExt[3];
+    // find the region to loop over
+    maxX = outExt[1]; 
+    maxY = outExt[3];
  
-	// Find input dimensions
-	inData->GetExtent(inExt);
-	nz = inExt[5] - inExt[4] + 1;
-	ny = inExt[3] - inExt[2] + 1;
-	nx = inExt[1] - inExt[0] + 1;
+    // Find input dimensions
+    inData->GetExtent(inExt);
+    nz = inExt[5] - inExt[4] + 1;
+    ny = inExt[3] - inExt[2] + 1;
+    nx = inExt[1] - inExt[0] + 1;
   Resolution = nx;
-	nxy = nx * ny;
-	nx2 = nx-2;
-	ny2 = ny-2;
-	nz2 = nz-2;
+    nxy = nx * ny;
+    nx2 = nx-2;
+    ny2 = ny-2;
+    nz2 = nz-2;
 
-	// Get pointer to output for this extent
-	outPtr = (T*)outData->GetScalarPointerForExtent(outExt);
+    // Get pointer to output for this extent
+    outPtr = (T*)outData->GetScalarPointerForExtent(outExt);
 
-	// Get increments to march through data 
-	outData->GetContinuousIncrements(outExt, outIncX, outIncY, outIncZ);
-	inData->GetContinuousIncrements(inExt, inIncX, inIncY, inIncZ);
+    // Get increments to march through data 
+    outData->GetContinuousIncrements(outExt, outIncX, outIncY, outIncZ);
+    inData->GetContinuousIncrements(inExt, inIncX, inIncY, inIncZ);
 
-	// RAS-to-IJK Matrix looks like:
-	//
-	// mx0 my0 mz0 mc0
-	// mx1 my1 mz1 mc1
-	// mx2 my2 mz2 mc3
-	//   0   0   0   1
-	//
-	// Where:
-	// mx = normal vector along the x-direction of the output image
-	// my = normal vector along the y-direction of the output image
-	// mc = center of image
-	//
-	// Note:
-	// The bottom row of the matrix needs to be "1"s
-	// to treat each column as a homogeneous point for
-	// matrix multiplication.
-	//
+    // RAS-to-IJK Matrix looks like:
+    //
+    // mx0 my0 mz0 mc0
+    // mx1 my1 mz1 mc1
+    // mx2 my2 mz2 mc3
+    //   0   0   0   1
+    //
+    // Where:
+    // mx = normal vector along the x-direction of the output image
+    // my = normal vector along the y-direction of the output image
+    // mc = center of image
+    //
+    // Note:
+    // The bottom row of the matrix needs to be "1"s
+    // to treat each column as a homogeneous point for
+    // matrix multiplication.
+    //
 
-	// Scale mx, my by FOV/RESOLUTION
-	scale = self->FieldOfView / Resolution;
+    // Scale mx, my by FOV/RESOLUTION
+    scale = self->FieldOfView / Resolution;
 
-	mx[0] = ReformatMatrix->Element[0][0] * scale;
-	mx[1] = ReformatMatrix->Element[1][0] * scale;
-	mx[2] = ReformatMatrix->Element[2][0] * scale;
-	mx[3] = 1.0;
-	my[0] = ReformatMatrix->Element[0][1] * scale;
-	my[1] = ReformatMatrix->Element[1][1] * scale;
-	my[2] = ReformatMatrix->Element[2][1] * scale;
-	my[3] = 1.0;
-	mc[0] = ReformatMatrix->Element[0][3];
-	mc[1] = ReformatMatrix->Element[1][3];
-	mc[2] = ReformatMatrix->Element[2][3];
-	mc[3] = 1.0;
+    mx[0] = ReformatMatrix->Element[0][0] * scale;
+    mx[1] = ReformatMatrix->Element[1][0] * scale;
+    mx[2] = ReformatMatrix->Element[2][0] * scale;
+    mx[3] = 1.0;
+    my[0] = ReformatMatrix->Element[0][1] * scale;
+    my[1] = ReformatMatrix->Element[1][1] * scale;
+    my[2] = ReformatMatrix->Element[2][1] * scale;
+    my[3] = 1.0;
+    mc[0] = ReformatMatrix->Element[0][3];
+    mc[1] = ReformatMatrix->Element[1][3];
+    mc[2] = ReformatMatrix->Element[2][3];
+    mc[3] = 1.0;
 
-	// Find the RAS origin (upper-left corner of reformated image).
-	// The direction from the center to the origin is backwards from
-	// the sum of the x-dir, y-dir vectors.
-	// The length is half the OUTPUT image size.
+    // Find the RAS origin (upper-left corner of reformated image).
+    // The direction from the center to the origin is backwards from
+    // the sum of the x-dir, y-dir vectors.
+    // The length is half the OUTPUT image size.
 
-	origin[0] = mc[0] - (mx[0] + my[0]) * Resolution / 2.0;
-	origin[1] = mc[1] - (mx[1] + my[1]) * Resolution / 2.0;
-	origin[2] = mc[2] - (mx[2] + my[2]) * Resolution / 2.0;
-	origin[3] = 1.0;
+    origin[0] = mc[0] - (mx[0] + my[0]) * Resolution / 2.0;
+    origin[1] = mc[1] - (mx[1] + my[1]) * Resolution / 2.0;
+    origin[2] = mc[2] - (mx[2] + my[2]) * Resolution / 2.0;
+    origin[3] = 1.0;
 
-	// Advance to the origin of this output extent (used for threading)
-	// x
- 	scale = (float)(outExt[0]-wExt[0])/(float)(Resolution);
-	begin[0] = origin[0] + scale*mx[0] * Resolution;
-	begin[1] = origin[1] + scale*mx[1] * Resolution;
-	begin[2] = origin[2] + scale*mx[2] * Resolution;
-	begin[3] = 1.0;
-	// y
- 	scale = (float)(outExt[2]-wExt[2])/(float)(Resolution);	
-	begin[0] = begin[0] + scale*my[0] * Resolution;
-	begin[1] = begin[1] + scale*my[1] * Resolution;
-	begin[2] = begin[2] + scale*my[2] * Resolution;
-	begin[3] = 1.0;
+    // Advance to the origin of this output extent (used for threading)
+    // x
+     scale = (float)(outExt[0]-wExt[0])/(float)(Resolution);
+    begin[0] = origin[0] + scale*mx[0] * Resolution;
+    begin[1] = origin[1] + scale*mx[1] * Resolution;
+    begin[2] = origin[2] + scale*mx[2] * Resolution;
+    begin[3] = 1.0;
+    // y
+     scale = (float)(outExt[2]-wExt[2])/(float)(Resolution);    
+    begin[0] = begin[0] + scale*my[0] * Resolution;
+    begin[1] = begin[1] + scale*my[1] * Resolution;
+    begin[2] = begin[2] + scale*my[2] * Resolution;
+    begin[3] = 1.0;
 
-	// Convert origin from RAS IJK space
-	WldToIjkMatrix->MultiplyPoint(begin, origin_ijk);
-	WldToIjkMatrix->MultiplyPoint(zero,  zero_ijk);
-	WldToIjkMatrix->MultiplyPoint(mx,    mx_ijk);
-	WldToIjkMatrix->MultiplyPoint(my,    my_ijk);
-	
-	// step vector in x direction
-	xStep[0] = mx_ijk[0] - zero_ijk[0];
-	xStep[1] = mx_ijk[1] - zero_ijk[1];
-	xStep[2] = mx_ijk[2] - zero_ijk[2];
+    // Convert origin from RAS IJK space
+    WldToIjkMatrix->MultiplyPoint(begin, origin_ijk);
+    WldToIjkMatrix->MultiplyPoint(zero,  zero_ijk);
+    WldToIjkMatrix->MultiplyPoint(mx,    mx_ijk);
+    WldToIjkMatrix->MultiplyPoint(my,    my_ijk);
+    
+    // step vector in x direction
+    xStep[0] = mx_ijk[0] - zero_ijk[0];
+    xStep[1] = mx_ijk[1] - zero_ijk[1];
+    xStep[2] = mx_ijk[2] - zero_ijk[2];
 
-	// step vector in y direction
-	yStep[0] = my_ijk[0] - zero_ijk[0];
-	yStep[1] = my_ijk[1] - zero_ijk[1];
-	yStep[2] = my_ijk[2] - zero_ijk[2];
-	
-	// Initialize volume coords x, y, z to origin
-	x = origin_ijk[0];
-	y = origin_ijk[1];
-	z = origin_ijk[2];
+    // step vector in y direction
+    yStep[0] = my_ijk[0] - zero_ijk[0];
+    yStep[1] = my_ijk[1] - zero_ijk[1];
+    yStep[2] = my_ijk[2] - zero_ijk[2];
+    
+    // Initialize volume coords x, y, z to origin
+    x = origin_ijk[0];
+    y = origin_ijk[1];
+    z = origin_ijk[2];
 
-	// rewind steps in x direction
-	xRewind[0] = xStep[0] * Resolution;
-	xRewind[1] = xStep[1] * Resolution;
-	xRewind[2] = xStep[2] * Resolution;
+    // rewind steps in x direction
+    xRewind[0] = xStep[0] * Resolution;
+    xRewind[1] = xStep[1] * Resolution;
+    xRewind[2] = xStep[2] * Resolution;
 
-		// Loop through output pixels
-		for (idxY = outExt[2]; idxY <= maxY; idxY++)
-		{
-			for (idxX = outExt[0]; idxX <= maxX; idxX++)
-			{
-				// Compute integer parts of volume coordinates
-				xi = (int)(x + 0.5);
-				yi = (int)(y + 0.5);
-				zi = (int)(z + 0.5);
-				
-				// Test if coordinates are outside extent
-				if ((xi < clipExt[0]) || (yi < clipExt[2]) || (zi < clipExt[4]) ||
-					(xi > clipExt[1]) || (yi > clipExt[3]) || (zi > clipExt[5]))
-				{
-					*outPtr = 0; 
-				}
-				else {
-					*outPtr = 1;
-				}
-				outPtr++;
+        // Loop through output pixels
+        for (idxY = outExt[2]; idxY <= maxY; idxY++)
+        {
+            for (idxX = outExt[0]; idxX <= maxX; idxX++)
+            {
+                // Compute integer parts of volume coordinates
+                xi = (int)(x + 0.5);
+                yi = (int)(y + 0.5);
+                zi = (int)(z + 0.5);
+                
+                // Test if coordinates are outside extent
+                if ((xi < clipExt[0]) || (yi < clipExt[2]) || (zi < clipExt[4]) ||
+                    (xi > clipExt[1]) || (yi > clipExt[3]) || (zi > clipExt[5]))
+                {
+                    *outPtr = 0; 
+                }
+                else {
+                    *outPtr = 1;
+                }
+                outPtr++;
 
-				// Step volume coordinates in xs direction
-				x += xStep[0];
-				y += xStep[1];
-				z += xStep[2];
-			}
-			outPtr  += outIncY;
+                // Step volume coordinates in xs direction
+                x += xStep[0];
+                y += xStep[1];
+                z += xStep[2];
+            }
+            outPtr  += outIncY;
 
-			// Rewind volume coordinates back to first column
-			x -= xRewind[0];
-			y -= xRewind[1];
-			z -= xRewind[2];
+            // Rewind volume coordinates back to first column
+            x -= xRewind[0];
+            y -= xRewind[1];
+            z -= xRewind[2];
 
-			// Step volume coordinates in ys direction
-			x += yStep[0];
-			y += yStep[1];
-			z += yStep[2];
-		}
+            // Step volume coordinates in ys direction
+            x += yStep[0];
+            y += yStep[1];
+            z += yStep[2];
+        }
 }
 
 //----------------------------------------------------------------------------
@@ -285,63 +285,63 @@ static void vtkImageClipInteractiveExecute(vtkImageClipInteractive *self,
 // It just executes a switch statement to call the correct function for
 // the datas data types.
 void vtkImageClipInteractive::ThreadedExecute(vtkImageData *inData, 
-					vtkImageData *outData,
-					int outExt[6], int id)
+                    vtkImageData *outData,
+                    int outExt[6], int id)
 //void vtkImageClipInteractive::Execute(vtkImageData *inData, vtkImageData *outData)
 {
-//	int outExt[6], id=0;
-//	this->Output->GetWholeExtent(outExt);
-	int *inExt = inData->GetExtent();
-	void *inPtr = inData->GetScalarPointerForExtent(inExt);
-	int wExt[6];
-	outData->GetWholeExtent(wExt);
+//    int outExt[6], id=0;
+//    this->Output->GetWholeExtent(outExt);
+    int *inExt = inData->GetExtent();
+    void *inPtr = inData->GetScalarPointerForExtent(inExt);
+    int wExt[6];
+    outData->GetWholeExtent(wExt);
 
-		switch (inData->GetScalarType())
-		{
+        switch (inData->GetScalarType())
+        {
                 case VTK_DOUBLE:
-			vtkImageClipInteractiveExecute(this, inData, (double *)(inPtr), 
-				outData, outExt, wExt, id);
-			break;
-		case VTK_FLOAT:
-			vtkImageClipInteractiveExecute(this, inData, (float *)(inPtr), 
-				outData, outExt, wExt, id);
-			break;
-	        case VTK_LONG:
-			vtkImageClipInteractiveExecute(this, inData, (long *)(inPtr), 
-				outData, outExt, wExt, id);
-			break;
-	        case VTK_UNSIGNED_LONG:
-			vtkImageClipInteractiveExecute(this, inData, (unsigned long *)(inPtr), 
-				outData, outExt, wExt, id);
-			break;
-		case VTK_INT:
-			vtkImageClipInteractiveExecute(this, inData, (int *)(inPtr), 
-				outData, outExt, wExt, id);
-			break;
-        	case VTK_UNSIGNED_INT:
-			vtkImageClipInteractiveExecute(this, inData, (unsigned int *)(inPtr), 
-				outData, outExt, wExt, id);
-			break;
-		case VTK_SHORT:
-			vtkImageClipInteractiveExecute(this, inData, (short *)(inPtr), 
-				outData, outExt, wExt, id);
-			break;
-		case VTK_UNSIGNED_SHORT:
-			vtkImageClipInteractiveExecute(this, inData, (unsigned short *)(inPtr), 
-				outData, outExt, wExt, id);
-			break;
-	        case VTK_CHAR:
-			vtkImageClipInteractiveExecute(this, inData, (char *)(inPtr), 
-				outData, outExt, wExt, id);
-			break;
-		case VTK_UNSIGNED_CHAR:
-			vtkImageClipInteractiveExecute(this, inData, (unsigned char *)(inPtr), 
-				outData, outExt, wExt, id);
-			break;
-		default:
-			vtkErrorMacro(<< "Execute: Unknown input ScalarType");
-			return;
-		}
+            vtkImageClipInteractiveExecute(this, inData, (double *)(inPtr), 
+                outData, outExt, wExt, id);
+            break;
+        case VTK_FLOAT:
+            vtkImageClipInteractiveExecute(this, inData, (float *)(inPtr), 
+                outData, outExt, wExt, id);
+            break;
+            case VTK_LONG:
+            vtkImageClipInteractiveExecute(this, inData, (long *)(inPtr), 
+                outData, outExt, wExt, id);
+            break;
+            case VTK_UNSIGNED_LONG:
+            vtkImageClipInteractiveExecute(this, inData, (unsigned long *)(inPtr), 
+                outData, outExt, wExt, id);
+            break;
+        case VTK_INT:
+            vtkImageClipInteractiveExecute(this, inData, (int *)(inPtr), 
+                outData, outExt, wExt, id);
+            break;
+            case VTK_UNSIGNED_INT:
+            vtkImageClipInteractiveExecute(this, inData, (unsigned int *)(inPtr), 
+                outData, outExt, wExt, id);
+            break;
+        case VTK_SHORT:
+            vtkImageClipInteractiveExecute(this, inData, (short *)(inPtr), 
+                outData, outExt, wExt, id);
+            break;
+        case VTK_UNSIGNED_SHORT:
+            vtkImageClipInteractiveExecute(this, inData, (unsigned short *)(inPtr), 
+                outData, outExt, wExt, id);
+            break;
+            case VTK_CHAR:
+            vtkImageClipInteractiveExecute(this, inData, (char *)(inPtr), 
+                outData, outExt, wExt, id);
+            break;
+        case VTK_UNSIGNED_CHAR:
+            vtkImageClipInteractiveExecute(this, inData, (unsigned char *)(inPtr), 
+                outData, outExt, wExt, id);
+            break;
+        default:
+            vtkErrorMacro(<< "Execute: Unknown input ScalarType");
+            return;
+        }
 }
 
 

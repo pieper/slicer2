@@ -46,12 +46,12 @@ proc ScrolledText { f args } {
 
     frame $f -bg $Gui(activeWorkspace)
     eval {text $f.text \
-	    -xscrollcommand [list $f.xscroll set] \
-	    -yscrollcommand [list $f.yscroll set] -bg} $Gui(normalButton)
+        -xscrollcommand [list $f.xscroll set] \
+        -yscrollcommand [list $f.yscroll set] -bg} $Gui(normalButton)
     eval {scrollbar $f.xscroll -orient horizontal \
-	    -command [list $f.text xview]} $Gui(WSBA)
+        -command [list $f.text xview]} $Gui(WSBA)
     eval {scrollbar $f.yscroll -orient vertical \
-	    -command [list $f.text yview]} $Gui(WSBA)
+        -command [list $f.text yview]} $Gui(WSBA)
     grid $f.text $f.yscroll -sticky news
     grid $f.xscroll -sticky news
     grid rowconfigure $f 0 -weight 1
@@ -86,7 +86,7 @@ proc ScrolledText { f args } {
 # .END
 #-------------------------------------------------------------------------------
 proc TabbedFrame {arrayName containerFrame buttonsLabel tabs titles \
-	{tooltips ""} {extraTopFrame "0"} {firstTab ""}} {
+    {tooltips ""} {extraTopFrame "0"} {firstTab ""}} {
     global Gui Widgets $arrayName
 
     # get the global array.
@@ -115,14 +115,14 @@ proc TabbedFrame {arrayName containerFrame buttonsLabel tabs titles \
     set f $fTop
     set topFrames ""
     if {$extraTopFrame == 1} {
-	lappend topFrames Extra
+    lappend topFrames Extra
     }
     lappend topFrames Buttons
 
     foreach frame $topFrames {
-	frame $f.fTabbedFrame$frame -bg $Gui(backdrop)
-	pack $f.fTabbedFrame$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
-	set f$frame $f.fTabbedFrame$frame
+    frame $f.fTabbedFrame$frame -bg $Gui(backdrop)
+    pack $f.fTabbedFrame$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
+    set f$frame $f.fTabbedFrame$frame
     }
 
     #-------------------------------------------
@@ -133,7 +133,7 @@ proc TabbedFrame {arrayName containerFrame buttonsLabel tabs titles \
     # above the buttons for tabbing.
     # For example, MeasureVol puts in a Volume Select menu.
     if {$extraTopFrame == 1} {
-	set globalArray(TabbedFrame,$containerFrame,extraFrame) $fExtra
+    set globalArray(TabbedFrame,$containerFrame,extraFrame) $fExtra
     }
 
     #-------------------------------------------
@@ -144,9 +144,9 @@ proc TabbedFrame {arrayName containerFrame buttonsLabel tabs titles \
     # set button width to max word length
     set width 0
     foreach title $titles {
-	if {[expr [string length $title] +2] > $width} {
-	    set width [expr [string length $title] +2]
-	}
+    if {[expr [string length $title] +2] > $width} {
+        set width [expr [string length $title] +2]
+    }
     }
     # label next to the buttons
     eval {label $f.l -text $buttonsLabel} $Gui(BLA)
@@ -154,21 +154,21 @@ proc TabbedFrame {arrayName containerFrame buttonsLabel tabs titles \
     # make buttons for navigation btwn frames
     frame $f.f -bg $Gui(backdrop)
     foreach tab $tabs title $titles {
-	eval {radiobutton $f.f.r$tab \
-		-text "$title" \
-		-command "TabbedFrameTab $fBottom.f$tab" \
-		-variable "$arrayName\(TabbedFrame,$containerFrame,tab)" \
-		-value $tab -width  $width \
-		-indicatoron 0} $Gui(WCA)
-	pack $f.f.r$tab -side left -padx 0
+    eval {radiobutton $f.f.r$tab \
+        -text "$title" \
+        -command "TabbedFrameTab $fBottom.f$tab" \
+        -variable "$arrayName\(TabbedFrame,$containerFrame,tab)" \
+        -value $tab -width  $width \
+        -indicatoron 0} $Gui(WCA)
+    pack $f.f.r$tab -side left -padx 0
     }
     pack $f.l $f.f -side left -padx $Gui(pad) -fill x -anchor w
 
     # add tooltips, if there's one for every tab
     if {[llength $tooltips] == [llength $tabs]} {
-	foreach tab $tabs tip $tooltips {
-	    TooltipAdd $f.f.r$tab $tip
-	}
+    foreach tab $tabs tip $tooltips {
+        TooltipAdd $f.f.r$tab $tip
+    }
     }
 
     #-------------------------------------------
@@ -177,15 +177,15 @@ proc TabbedFrame {arrayName containerFrame buttonsLabel tabs titles \
     set f $fBottom
     
     foreach tab $tabs {
-	frame $f.f$tab -bg $Gui(activeWorkspace)
-	place $f.f$tab -in $f -relheight 1.0 -relwidth 1.0
-	set globalArray(TabbedFrame,$containerFrame,f$tab) $f.f$tab
+    frame $f.f$tab -bg $Gui(activeWorkspace)
+    place $f.f$tab -in $f -relheight 1.0 -relwidth 1.0
+    set globalArray(TabbedFrame,$containerFrame,f$tab) $f.f$tab
     }
 
 
     ###### Make the first tab active #####
     if {$firstTab == ""} {
-	set firstTab [lindex $tabs 0]
+    set firstTab [lindex $tabs 0]
     }
     # press first button
     set globalArray(TabbedFrame,$containerFrame,tab) $firstTab

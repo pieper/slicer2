@@ -344,7 +344,7 @@ protected:
   void DeallocatePathInformation();
   void ExecuteInformation(vtkImageData **inputs, vtkImageData *output); 
   void ComputeInputUpdateExtent(int inExt[6], int outExt[6],
-				int whichInput);
+                int whichInput);
   void ExecuteInformation(){this->vtkImageMultipleInputFilter::ExecuteInformation();};
   virtual void Execute(vtkImageData **inDatas, vtkImageData *outData);  
 };

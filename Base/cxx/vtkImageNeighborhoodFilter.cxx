@@ -93,11 +93,11 @@ void vtkImageNeighborhoodFilter::SetKernelSize(int size0, int size1, int size2)
   if (modified)
     {
       if (this->Mask != NULL)
-	{
-	  delete [] this->Mask;
-	}
+    {
+      delete [] this->Mask;
+    }
       this->Mask = new unsigned char[this->KernelSize[0]*
-				    this->KernelSize[1]*this->KernelSize[2]];      
+                    this->KernelSize[1]*this->KernelSize[2]];      
       this->Modified();
     }
   //cout << "kernel middle: " <<KernelMiddle[0]<<" "<<KernelMiddle[1]<<" "<<KernelMiddle[2]<<endl;
@@ -108,19 +108,19 @@ void vtkImageNeighborhoodFilter::SetKernelSize(int size0, int size1, int size2)
 void vtkImageNeighborhoodFilter::SetNeighborTo4()
 {
   this->SetKernelSize(3,3,3);
-	
+    
   this->Neighbor = 4;
 
   // clear
   memset(this->Mask, 0, this->KernelSize[0]*this->KernelSize[1]*
-	 this->KernelSize[2]);
+     this->KernelSize[2]);
 
   // set 4 neighbors in center slice
   int z = 0;
   for (int y=-1; y <= 1; y++)
     for (int x=-1; x <= 1; x++)
       if (x*y == 0)
-	Mask[(1+z)*9+(1+y)*3+(1+x)] = 1;
+    Mask[(1+z)*9+(1+y)*3+(1+x)] = 1;
 
   // unset center (current) pixel
   Mask[1*9+1*3+1] = 0;
@@ -140,7 +140,7 @@ void vtkImageNeighborhoodFilter::SetNeighborTo8()
 
   // set
   memset(this->Mask, 1, this->KernelSize[0]*this->KernelSize[1]*
-	 this->KernelSize[2]);
+     this->KernelSize[2]);
 
   // only unset current (center) pixel
   Mask[1*9+1*3+1] = 0;
@@ -152,8 +152,8 @@ void vtkImageNeighborhoodFilter::SetNeighborTo8()
 // Description:
 // increments to loop through mask.
 void vtkImageNeighborhoodFilter::GetMaskIncrements(int &maskInc0, 
-						   int &maskInc1, 
-						   int &maskInc2)
+                           int &maskInc1, 
+                           int &maskInc2)
 {
   maskInc0 = 1;
   maskInc1 = this->KernelSize[0];
@@ -165,11 +165,11 @@ void vtkImageNeighborhoodFilter::GetMaskIncrements(int &maskInc0,
 // This is like the extent of the neighborhood, but relative to the 
 // current voxel
 void vtkImageNeighborhoodFilter::GetRelativeHoodExtent(int &hoodMin0, 
-						       int &hoodMax0, 
-						       int &hoodMin1, 
-						       int &hoodMax1, 
-						       int &hoodMin2, 
-						       int &hoodMax2)
+                               int &hoodMax0, 
+                               int &hoodMin1, 
+                               int &hoodMax1, 
+                               int &hoodMin2, 
+                               int &hoodMax2)
 {
   // Neighborhood around current pixel (kernel has radius 1)
   hoodMin0 = - this->KernelMiddle[0];

@@ -47,7 +47,7 @@ proc MainDataInitialize {ModuleArray} {
     # If the module is not loaded in the Slicer, do nothing.
     #--------------------------------------------------------
     if {[IsModule $ModuleArray] == "0"} {
-	return
+    return
     }
 
     # Get access to the global module array
@@ -91,12 +91,12 @@ proc MainDataInitialize {ModuleArray} {
 
     # create dummy procs to give warnings if called
     foreach procedure $procedures {
-	if {[info procs $procedure] != $procedure} {
-	    set message "SLICER WARNING: Developer has not written \
-		    proc $procedure needed by MainData.tcl."
-	    set command "proc $procedure {args} {puts \"$message\"}"
-	    eval $command
-	}
+    if {[info procs $procedure] != $procedure} {
+        set message "SLICER WARNING: Developer has not written \
+            proc $procedure needed by MainData.tcl."
+        set command "proc $procedure {args} {puts \"$message\"}"
+        eval $command
+    }
     }
 }
 
@@ -118,7 +118,7 @@ proc MainDataUpdateMRML {ModuleArray} {
     # If the module is not loaded in the Slicer, do nothing.
     #--------------------------------------------------------
     if {[IsModule $ModuleArray] == "0"} {
-	return
+    return
     }
 
     # Get access to the global module array
@@ -128,52 +128,52 @@ proc MainDataUpdateMRML {ModuleArray} {
     # Build any new data objects
     #--------------------------------------------------------
     foreach d $Array(idList) {
-	if {[MainDataCreate $ModuleArray $d] > 0} {
+    if {[MainDataCreate $ModuleArray $d] > 0} {
 
-	    # Lauren improve this on the fly thing using MRML DATA object
-	    # Mark it as not being created on the fly 
-	    # since it was added from the Data module or read in from MRML
-	    set Array($d,fly) 0
-	    
-	    # Read
-	    if {[MainDataRead $ModuleArray $d] < 0} {
-		# Let the user know about the error
-		# Lauren general filename we can print from node/data object?
-		tk_messageBox -message "Could not read [$Array($d,node) GetTitle]"
-		# Remove the objects we have created
-		MainMrmlDeleteNodeDuringUpdate $ModuleArray $d
-	    }
-	}
+        # Lauren improve this on the fly thing using MRML DATA object
+        # Mark it as not being created on the fly 
+        # since it was added from the Data module or read in from MRML
+        set Array($d,fly) 0
+        
+        # Read
+        if {[MainDataRead $ModuleArray $d] < 0} {
+        # Let the user know about the error
+        # Lauren general filename we can print from node/data object?
+        tk_messageBox -message "Could not read [$Array($d,node) GetTitle]"
+        # Remove the objects we have created
+        MainMrmlDeleteNodeDuringUpdate $ModuleArray $d
+        }
+    }
     }
     
     # Delete any old data objects
     #--------------------------------------------------------
     foreach m $Array(idListDelete) {
-	MainDataDelete $d
+    MainDataDelete $d
     }
     # Did we delete the active data?
     if {[lsearch $Array(idList) $Array(activeID)] == -1} {
-	MainDataSetActive $ModuleArray [lindex $Array(idList) 0]
+    MainDataSetActive $ModuleArray [lindex $Array(idList) 0]
     }
     
     # Update any menus that list all data objects 
     #--------------------------------------------------------
     if {[info exists Array(mActiveList)] == "1"} {
-	foreach menu $Array(mActiveList) {
-	    # clear out menu
-	    $menu delete 0 end
-	    # add all current data objects to menu
-	    foreach d $Array(idList) {
-		set node ${ModuleArray}($d,node)
-		$menu add command -label [$node GetName] \
-			-command "Main${ModuleArray}SetActive $ModuleArray $d"
-	    }
-	}
+    foreach menu $Array(mActiveList) {
+        # clear out menu
+        $menu delete 0 end
+        # add all current data objects to menu
+        foreach d $Array(idList) {
+        set node ${ModuleArray}($d,node)
+        $menu add command -label [$node GetName] \
+            -command "Main${ModuleArray}SetActive $ModuleArray $d"
+        }
+    }
     } else {
-	puts "Developer: you have not put menus on ModuleArray(mActiveList),\
-		which is a convenience for updating menus listing all \
-		$ModuleArray objects.  See MainData.tcl, proc MainDataUpdateMRML \
-		for information on how to stop this message from appearing."
+    puts "Developer: you have not put menus on ModuleArray(mActiveList),\
+        which is a convenience for updating menus listing all \
+        $ModuleArray objects.  See MainData.tcl, proc MainDataUpdateMRML \
+        for information on how to stop this message from appearing."
     }
 
     # In case we changed the name of the active data object
@@ -193,7 +193,7 @@ proc MainDataCreate {ModuleArray d} {
     # If the module is not loaded in the Slicer, do nothing.
     #--------------------------------------------------------
     if {[IsModule $ModuleArray] == "0"} {
-	return
+    return
     }
 
     # Get access to the global module array
@@ -211,8 +211,8 @@ proc MainDataCreate {ModuleArray d} {
     # See if this data object already exists
     #--------------------------------------------------------
     if {[info command $data] != ""} {
-	puts "MainDataCreate: $ModuleArray $d data exists"
-	return 0
+    puts "MainDataCreate: $ModuleArray $d data exists"
+    return 0
     }
 
     # Create vtkMrmlData* object 
@@ -268,7 +268,7 @@ proc MainDataRead {ModuleArray d} {
     # If the module is not loaded in the Slicer, do nothing.
     #--------------------------------------------------------
     if {[IsModule $ModuleArray] == "0"} {
-	return
+    return
     }
 
     # Get access to the global module array
@@ -291,7 +291,7 @@ proc MainDataRead {ModuleArray d} {
     if {$fileName == ""} {return}
     
     if {[CheckFileExists $fileName] == 0} {
-	return -1
+    return -1
     }
     
     # Display appropriate text over progress bar while reading
@@ -333,7 +333,7 @@ proc MainDataDelete {ModuleArray d} {
     # If the module is not loaded in the Slicer, do nothing.
     #--------------------------------------------------------
     if {[IsModule $ModuleArray] == "0"} {
-	return
+    return
     }
 
     # Get access to the global module array
@@ -347,14 +347,14 @@ proc MainDataDelete {ModuleArray d} {
     # Make sure we are not deleting the idNone
     #--------------------------------------------------------
     if {$d == $Array(idNone)} {
-	puts "Warning: MainDataDelete, trying to delete the none $moduleArray"
-	return 0
+    puts "Warning: MainDataDelete, trying to delete the none $moduleArray"
+    return 0
     }
 
     # See if this data object exists
     #--------------------------------------------------------
     if {[info command $data] != ""} {
-	return 0
+    return 0
     }
 
     # Remove actors from renderers
@@ -370,9 +370,9 @@ proc MainDataDelete {ModuleArray d} {
     # Delete all TCL variables of the form: Array($d,<whatever>)
     #--------------------------------------------------------
     foreach name [array names Array] {
-	if {[string first "$d," $name] == 0} {
-	    unset Array($name)
-	}
+    if {[string first "$d," $name] == 0} {
+        unset Array($name)
+    }
     }
     
     return 1
@@ -392,7 +392,7 @@ proc MainDataSetActive {ModuleArray d} {
     # If the module is not loaded in the Slicer, do nothing.
     #--------------------------------------------------------
     if {[IsModule $ModuleArray] == "0"} {
-	return
+    return
     }
 
     # Get access to the global module array
@@ -403,8 +403,8 @@ proc MainDataSetActive {ModuleArray d} {
     # new data object, so unable to activate another)?
     #--------------------------------------------------------
     if {$Array(freeze) == 1} {
-	puts "Frozen: can't activate $ModuleArray $d"
-	return
+    puts "Frozen: can't activate $ModuleArray $d"
+    return
     }
     
     # Lauren this is from volumes.  1st time this proc is
@@ -412,11 +412,11 @@ proc MainDataSetActive {ModuleArray d} {
     # none volume exists.  then its node is used below to get name.
     # this is a difference btwn volumes and models...
     #if {$d == ""} {
-	#set Array(activeID) $Array(idNone)
+    #set Array(activeID) $Array(idNone)
     #} else {
-	#set Array(activeID) $d
+    #set Array(activeID) $d
     #}
-	
+    
     # Update ID number of active object
     #--------------------------------------------------------
     set Array(activeID) $d    
@@ -424,35 +424,35 @@ proc MainDataSetActive {ModuleArray d} {
     # Decide which button text and node settings to use
     #--------------------------------------------------------
     if {$d == "NEW"} {
-	# If d is NEW, we are starting to add a new node.
+    # If d is NEW, we are starting to add a new node.
 
-	# Menu button text reads "NEW"
-	set mbText "NEW"
-	# Update the Module's GUI with default node settings
-	set nodeID "default"
+    # Menu button text reads "NEW"
+    set mbText "NEW"
+    # Update the Module's GUI with default node settings
+    set nodeID "default"
 
     } elseif {$d == ""} {
 
-	# Menu button text reads "None"
-	set mbText "None"
-	# Update the Module's GUI with default node settings
-	set nodeID "default"
-	
+    # Menu button text reads "None"
+    set mbText "None"
+    # Update the Module's GUI with default node settings
+    set nodeID "default"
+    
     } else {
 
-	# Get current MRML node
-	set node ${ModuleArray}($d,node)
+    # Get current MRML node
+    set node ${ModuleArray}($d,node)
 
-	# Menu button text shows active object's name
-	set mbText [$node GetName]
-	# Update the Module's GUI with settings from active node
-	set nodeID $d
+    # Menu button text shows active object's name
+    set mbText [$node GetName]
+    # Update the Module's GUI with settings from active node
+    set nodeID $d
     }
 
     # Change menu button text
     #--------------------------------------------------------
     foreach mb $Array(mbActiveList) {
-	$mb config -text $mbText
+    $mb config -text $mbText
     }
     
     # Update the Module's GUI (all the tcl vars that shadow the node)

@@ -54,102 +54,102 @@
 # .END
 #-------------------------------------------------------------------------------
 proc TesterInit {} {
-	global Tester Module Volume Model
+    global Tester Module Volume Model
 
-	# Define Tabs
-	#------------------------------------
-	# Description:
-	#   Each module is given a button on the Slicer's main menu.
-	#   When that button is pressed a row of tabs appear, and there is a panel
-	#   on the user interface for each tab.  If all the tabs do not fit on one
-	#   row, then the last tab is automatically created to say "More", and 
-	#   clicking it reveals a second row of tabs.
-	#
-	#   Define your tabs here as shown below.  The options are:
-	#   
-	#   row1List = list of ID's for tabs. (ID's must be unique single words)
-	#   row1Name = list of Names for tabs. (Names appear on the user interface
-	#              and can be non-unique with multiple words.)
-	#   row1,tab = ID of initial tab
-	#   row2List = an optional second row of tabs if the first row is too small
-	#   row2Name = like row1
-	#   row2,tab = like row1 
-	#
-	set m Tester
-	set Module($m,row1List) "Help Source Watch"
+    # Define Tabs
+    #------------------------------------
+    # Description:
+    #   Each module is given a button on the Slicer's main menu.
+    #   When that button is pressed a row of tabs appear, and there is a panel
+    #   on the user interface for each tab.  If all the tabs do not fit on one
+    #   row, then the last tab is automatically created to say "More", and 
+    #   clicking it reveals a second row of tabs.
+    #
+    #   Define your tabs here as shown below.  The options are:
+    #   
+    #   row1List = list of ID's for tabs. (ID's must be unique single words)
+    #   row1Name = list of Names for tabs. (Names appear on the user interface
+    #              and can be non-unique with multiple words.)
+    #   row1,tab = ID of initial tab
+    #   row2List = an optional second row of tabs if the first row is too small
+    #   row2Name = like row1
+    #   row2,tab = like row1 
+    #
+    set m Tester
+    set Module($m,row1List) "Help Source Watch"
         set Module($m,row1Name) "{Help} {Source} {Watch}"
-	set Module($m,row1,tab) Source
+    set Module($m,row1,tab) Source
 
     # Module Summary Info
     #------------------------------------
     set Module($m,overview) "Reload a module for software development testing."
 
-	# Define Procedures
-	#------------------------------------
-	# Description:
-	#   The Slicer sources all *.tcl files, and then it calls the Init
-	#   functions of each module, followed by the VTK functions, and finally
-	#   the GUI functions. A MRML function is called whenever the MRML tree
-	#   changes due to the creation/deletion of nodes.
-	#   
-	#   While the Init procedure is required for each module, the other 
-	#   procedures are optional.  If they exist, then their name (which
-	#   can be anything) is registered with a line like this:
-	#
-	#   set Module($m,procVTK) TesterBuildVTK
-	#
-	#   All the options are:
-	#
-	#   procGUI   = Build the graphical user interface
-	#   procVTK   = Construct VTK objects
-	#   procMRML  = Update after the MRML tree changes due to the creation
-	#               of deletion of nodes.
-	#   procEnter = Called when the user enters this module by clicking
-	#               its button on the main menu
-	#   procExit  = Called when the user leaves this module by clicking
-	#               another modules button
-	#   procStorePresets  = Called when the user holds down one of the Presets
-	#               buttons.
-	#   procRecallPresets  = Called when the user clicks one of the Presets buttons
-	#               
-	#   Note: if you use presets, make sure to give a preset defaults
-	#   string in your init function, of the form: 
-	#   set Module($m,presets) "key1='val1' key2='val2' ..."
-	#   
-	set Module($m,procGUI) TesterBuildGUI
-	set Module($m,procEnter) TesterEnter
-	set Module($m,procExit) TesterExit
+    # Define Procedures
+    #------------------------------------
+    # Description:
+    #   The Slicer sources all *.tcl files, and then it calls the Init
+    #   functions of each module, followed by the VTK functions, and finally
+    #   the GUI functions. A MRML function is called whenever the MRML tree
+    #   changes due to the creation/deletion of nodes.
+    #   
+    #   While the Init procedure is required for each module, the other 
+    #   procedures are optional.  If they exist, then their name (which
+    #   can be anything) is registered with a line like this:
+    #
+    #   set Module($m,procVTK) TesterBuildVTK
+    #
+    #   All the options are:
+    #
+    #   procGUI   = Build the graphical user interface
+    #   procVTK   = Construct VTK objects
+    #   procMRML  = Update after the MRML tree changes due to the creation
+    #               of deletion of nodes.
+    #   procEnter = Called when the user enters this module by clicking
+    #               its button on the main menu
+    #   procExit  = Called when the user leaves this module by clicking
+    #               another modules button
+    #   procStorePresets  = Called when the user holds down one of the Presets
+    #               buttons.
+    #   procRecallPresets  = Called when the user clicks one of the Presets buttons
+    #               
+    #   Note: if you use presets, make sure to give a preset defaults
+    #   string in your init function, of the form: 
+    #   set Module($m,presets) "key1='val1' key2='val2' ..."
+    #   
+    set Module($m,procGUI) TesterBuildGUI
+    set Module($m,procEnter) TesterEnter
+    set Module($m,procExit) TesterExit
 
-	# Define Dependencies
-	#------------------------------------
-	# Description:
-	#   Record any other modules that this one depends on.  This is used 
-	#   to check that all necessary modules are loaded when Slicer runs.
-	#   
-	set Module($m,depend) ""
+    # Define Dependencies
+    #------------------------------------
+    # Description:
+    #   Record any other modules that this one depends on.  This is used 
+    #   to check that all necessary modules are loaded when Slicer runs.
+    #   
+    set Module($m,depend) ""
 
         # Set version info
-	#------------------------------------
-	# Description:
-	#   Record the version number for display under Help->Version Info.
-	#   The strings with the $ symbol tell CVS to automatically insert the
-	#   appropriate revision number and date when the module is checked in.
-	#   
-	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.11 $} {$Date: 2002/01/26 23:34:33 $}]
+    #------------------------------------
+    # Description:
+    #   Record the version number for display under Help->Version Info.
+    #   The strings with the $ symbol tell CVS to automatically insert the
+    #   appropriate revision number and date when the module is checked in.
+    #   
+    lappend Module(versions) [ParseCVSInfo $m \
+        {$Revision: 1.12 $} {$Date: 2002/03/18 20:52:40 $}]
 
-	# Initialize module-level variables
-	#------------------------------------
-	# Description:
-	#   Keep a global array with the same name as the module.
-	#   This is a handy method for organizing the global variables that
-	#   the procedures in this module and others need to access.
-	#
+    # Initialize module-level variables
+    #------------------------------------
+    # Description:
+    #   Keep a global array with the same name as the module.
+    #   This is a handy method for organizing the global variables that
+    #   the procedures in this module and others need to access.
+    #
         set Tester(SourceFileName) ""
         set Tester(NewModuleFileName) ""
-	set Tester(ModuleFileName) ""
-	set Tester(MainFileName)   ""
-	set Tester(SharedFileName) ""
+    set Tester(ModuleFileName) ""
+    set Tester(MainFileName)   ""
+    set Tester(SharedFileName) ""
 
         set Tester(MainModuleList)   $Module(mainList)
         set Tester(SharedModuleList) $Module(sharedList) 
@@ -157,7 +157,7 @@ proc TesterInit {} {
         set Tester(ModuleModuleList) $Module(allList)
 
         set Tester(Count) 0
-	set Tester(eventManager)  ""
+    set Tester(eventManager)  ""
         set Tester(verbose) 1
 
 }
@@ -361,16 +361,16 @@ proc TesterSourceModule {type Module} {
 
     if {$type == "Main"} { 
         set path [GetFullPath $Module tcl tcl-main] 
-	set Tester(MainFileName) $Module
+    set Tester(MainFileName) $Module
     }
     if {$type == "Shared"} { 
         set path [GetFullPath $Module tcl tcl-shared]
-	set Tester(SharedFileName) $Module
+    set Tester(SharedFileName) $Module
     }
 
     if {$type == "Module"} { 
-	set path [GetFullPath $Module tcl tcl-modules]
-	set Tester(ModuleFileName) $Module
+    set path [GetFullPath $Module tcl tcl-modules]
+    set Tester(ModuleFileName) $Module
     }
 
 #    puts "b$path"
@@ -382,14 +382,14 @@ proc TesterSourceModule {type Module} {
         source $path 
     } else {
         DevWarningWindow "Didn't find that module!"
-	$Tester(lSource) config -text ""
+    $Tester(lSource) config -text ""
         Return
     }
 
     ## Rebuild Gui on Modules
 
     if {$type == "Module"} { 
-	MainRebuildModuleGui $Module
+    MainRebuildModuleGui $Module
         # Other Stuff that is Useful
         MainUpdateMRML
         # set Module(btn) Tester
@@ -399,7 +399,7 @@ proc TesterSourceModule {type Module} {
 
     ## Send message that we update Stuff.
     if {$Module != "Tester"} {
-	$Tester(lSource) config -text "Updated $Module."
+    $Tester(lSource) config -text "Updated $Module."
     }
 }
 

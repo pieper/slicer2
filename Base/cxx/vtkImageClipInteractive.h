@@ -34,42 +34,42 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 class VTK_EXPORT vtkImageClipInteractive : public vtkImageToImageFilter
 {
 public:
-	static vtkImageClipInteractive *New();
+    static vtkImageClipInteractive *New();
   vtkTypeMacro(vtkImageClipInteractive,vtkImageToImageFilter);
-	void PrintSelf(ostream& os, vtkIndent indent);
+    void PrintSelf(ostream& os, vtkIndent indent);
 
-	vtkGetObjectMacro(WldToIjkMatrix, vtkMatrix4x4);
-	vtkSetObjectMacro(WldToIjkMatrix, vtkMatrix4x4);
+    vtkGetObjectMacro(WldToIjkMatrix, vtkMatrix4x4);
+    vtkSetObjectMacro(WldToIjkMatrix, vtkMatrix4x4);
 
-	vtkGetObjectMacro(ReformatMatrix, vtkMatrix4x4);
-	vtkSetObjectMacro(ReformatMatrix, vtkMatrix4x4);
+    vtkGetObjectMacro(ReformatMatrix, vtkMatrix4x4);
+    vtkSetObjectMacro(ReformatMatrix, vtkMatrix4x4);
 
-	vtkGetMacro(FieldOfView, float);
-	vtkSetMacro(FieldOfView, float);	
-	float FieldOfView;
+    vtkGetMacro(FieldOfView, float);
+    vtkSetMacro(FieldOfView, float);    
+    float FieldOfView;
 
-	vtkSetVectorMacro(ClipExtent, int, 6);
-	vtkGetVectorMacro(ClipExtent, int, 6);
+    vtkSetVectorMacro(ClipExtent, int, 6);
+    vtkGetVectorMacro(ClipExtent, int, 6);
 
 protected:
-	vtkImageClipInteractive();
-	~vtkImageClipInteractive();
-	vtkImageClipInteractive(const vtkImageClipInteractive&) {};
-	void operator=(const vtkImageClipInteractive&) {};
+    vtkImageClipInteractive();
+    ~vtkImageClipInteractive();
+    vtkImageClipInteractive(const vtkImageClipInteractive&) {};
+    void operator=(const vtkImageClipInteractive&) {};
 
   vtkMatrix4x4* ReformatMatrix;
-	vtkMatrix4x4* WldToIjkMatrix;
+    vtkMatrix4x4* WldToIjkMatrix;
 
   int ClipExtent[6];
 
-	// Override this function since inExt != outExt
-	void ComputeInputUpdateExtent(int inExt[6],int outExt[6]);
+    // Override this function since inExt != outExt
+    void ComputeInputUpdateExtent(int inExt[6],int outExt[6]);
   
-	void ExecuteInformation(vtkImageData *inData, vtkImageData *outData);
+    void ExecuteInformation(vtkImageData *inData, vtkImageData *outData);
 
-//	void Execute(vtkImageData *inData, vtkImageData *outData);
-	void ThreadedExecute(vtkImageData *inData, vtkImageData *outData, 
-		int extent[6], int id);
+//    void Execute(vtkImageData *inData, vtkImageData *outData);
+    void ThreadedExecute(vtkImageData *inData, vtkImageData *outData, 
+        int extent[6], int id);
 };
 
 #endif

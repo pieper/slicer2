@@ -107,7 +107,7 @@ proc EditorInit {} {
     
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.56 $} {$Date: 2002/01/26 23:34:31 $}]
+        {$Revision: 1.57 $} {$Date: 2002/03/18 20:52:38 $}]
     
     # Initialize globals
     set Editor(idOriginal)  $Volume(idNone)
@@ -140,58 +140,58 @@ proc EditorInit {} {
 
     # Look locally
     foreach fullname [glob -nocomplain $local/*] {
-	if {[regexp "$local/(\.*).tcl$" $fullname match name] == 1} {
-	    lappend names $name
-	}
+    if {[regexp "$local/(\.*).tcl$" $fullname match name] == 1} {
+        lappend names $name
+    }
     }
     # Look centrally
     foreach fullname [glob -nocomplain $central/*] {
-	if {[regexp "$central/(\.*).tcl$" $fullname match name] == 1} {
-	    if {[lsearch $names $name] == -1} {
-		lappend names $name
-	    }
-	}
+    if {[regexp "$central/(\.*).tcl$" $fullname match name] == 1} {
+        if {[lsearch $names $name] == -1} {
+        lappend names $name
+        }
+    }
     }
 
     # source them
     set found ""
     foreach name $names {
-	
-	set path [GetFullPath $name tcl $local]
-	if {$path != ""} {
-	    #puts "source $path"
+    
+    set path [GetFullPath $name tcl $local]
+    if {$path != ""} {
+        #puts "source $path"
 
-	    # If there's an error, print the fullname:
-	    if {[catch {source $path} errmsg] == 1} {
-		puts "ERROR in $path:\n $errmsg"
-	    }
+        # If there's an error, print the fullname:
+        if {[catch {source $path} errmsg] == 1} {
+        puts "ERROR in $path:\n $errmsg"
+        }
 
-	    lappend Ed(idList) $name
-	} 
+        lappend Ed(idList) $name
+    } 
     }
 
     # Initialize effects
     if {$Module(verbose) == 1} {
-	puts Editor-Init:
+    puts Editor-Init:
     }
     foreach m $Ed(idList) {
-	if {[info command ${m}Init] != ""} {
-	    if {$Module(verbose) == 1} {
-		puts ${m}Init
-	    }
-	    ${m}Init
-	}
+    if {[info command ${m}Init] != ""} {
+        if {$Module(verbose) == 1} {
+        puts ${m}Init
+        }
+        ${m}Init
+    }
     }
     
     # Order effects by increasing rank
     set pairs ""
     foreach m $Ed(idList) {
-	lappend pairs "$m $Ed($m,rank)"
+    lappend pairs "$m $Ed($m,rank)"
     }
     set pairs [lsort -index 1 -integer -increasing $pairs]
     set Ed(idList) ""
     foreach p $pairs {
-	lappend Ed(idList) [lindex $p 0]
+    lappend Ed(idList) [lindex $p 0]
     }
 }
 
@@ -213,15 +213,15 @@ proc EditorBuildVTK {} {
 
     # Initialize effects
     if {$Module(verbose) == 1} {
-	    puts Editor-VTK:
+        puts Editor-VTK:
     }
     foreach e $Ed(idList) {
-	    if {[info exists Ed($e,procVTK)] == 1} {
-		    if {$Module(verbose) == 1} {
-			    puts $Ed($e,procVTK)
-		    }
-		    $Ed($e,procVTK)
-	    }
+        if {[info exists Ed($e,procVTK)] == 1} {
+            if {$Module(verbose) == 1} {
+                puts $Ed($e,procVTK)
+            }
+            $Ed($e,procVTK)
+        }
     }
 
     # Node to store for undo
@@ -243,15 +243,15 @@ proc EditorUpdateMRML {} {
     #
     set n $Volume(idNone)
     if {[lsearch $Volume(idList) $Editor(idOriginal)] == -1} {
-	    EditorSetOriginal $n
+        EditorSetOriginal $n
     }
     if {$Editor(idWorking) != "NEW" && \
-	    [lsearch $Volume(idList) $Editor(idWorking)] == -1} {
-	    EditorSetWorking NEW
+        [lsearch $Volume(idList) $Editor(idWorking)] == -1} {
+        EditorSetWorking NEW
     }
     if {$Editor(idComposite) != "NEW" && \
-	    [lsearch $Volume(idList) $Editor(idComposite)] == -1} {
-	    EditorSetComposite NEW
+        [lsearch $Volume(idList) $Editor(idComposite)] == -1} {
+        EditorSetComposite NEW
     }
 
     # Original Volume menu
@@ -259,8 +259,8 @@ proc EditorUpdateMRML {} {
     set m $Editor(mOriginal)
     $m delete 0 end
     foreach v $Volume(idList) {
-	    $m add command -label [Volume($v,node) GetName] -command \
-		    "EditorSetOriginal $v; RenderAll"
+        $m add command -label [Volume($v,node) GetName] -command \
+            "EditorSetOriginal $v; RenderAll"
     }
 
     # Working Volume menu
@@ -269,10 +269,10 @@ proc EditorUpdateMRML {} {
     $m delete 0 end
     set idWorking ""
     foreach v $Volume(idList) {
-	    if {$v != $Volume(idNone) && $v != $Editor(idComposite)} {
-		    $m add command -label [Volume($v,node) GetName] -command \
-			    "EditorSetWorking $v; RenderAll"
-	    }
+        if {$v != $Volume(idNone) && $v != $Editor(idComposite)} {
+            $m add command -label [Volume($v,node) GetName] -command \
+                "EditorSetWorking $v; RenderAll"
+        }
     }
 
     # Always add a NEW option
@@ -285,9 +285,9 @@ proc EditorUpdateMRML {} {
     #---------------------------------------------------------------------------
     set v $Editor(idWorking)
     if {$v != "NEW"} {
-	set Editor(nameWorking) [Volume($v,node) GetName]
+    set Editor(nameWorking) [Volume($v,node) GetName]
     } else {
-	set Editor(nameWorking) Working
+    set Editor(nameWorking) Working
     }
 
     # Composite Volume menu
@@ -296,28 +296,28 @@ proc EditorUpdateMRML {} {
     $m delete 0 end
     set idComposite ""
     foreach v $Volume(idList) {
-	    if {$v != $Volume(idNone) && $v != $Editor(idWorking)} {
-		    $m add command -label [Volume($v,node) GetName] -command \
-			    "EditorSetComposite $v; RenderAll"
-	    }
-	    if {[Volume($v,node) GetName] == "Composite"} {
-		    set idComposite $v
-	    }
+        if {$v != $Volume(idNone) && $v != $Editor(idWorking)} {
+            $m add command -label [Volume($v,node) GetName] -command \
+                "EditorSetComposite $v; RenderAll"
+        }
+        if {[Volume($v,node) GetName] == "Composite"} {
+            set idComposite $v
+        }
     }
     # If there is composite, then select it, else add a NEW option
     if {$idComposite != ""} {
-	    EditorSetComposite $idComposite
+        EditorSetComposite $idComposite
     } else {
-	    $m add command -label NEW -command "EditorSetComposite NEW; RenderAll"
+        $m add command -label NEW -command "EditorSetComposite NEW; RenderAll"
     }
 
     # Composite Volume name field 
     #---------------------------------------------------------------------------
     set v $Editor(idComposite)
     if {$v != "NEW"} {
-	set Editor(nameComposite) [Volume($v,node) GetName]
+    set Editor(nameComposite) [Volume($v,node) GetName]
     } else {
-	set Editor(nameComposite) Composite
+    set Editor(nameComposite) Composite
     }
 
 }
@@ -419,10 +419,10 @@ proc EditorBuildGUI {} {
     
     # this makes the navigation menu (buttons) and the tabs.
     TabbedFrame MeasureVol $f ""\
-	    {Setup Merge Undo File} {"Setup" "Merge" "Undo" "Save"} \
-	    {"Choose volumes before editing." \
-	    "Merge two labelmaps." "Clear or re-read a labelmap from disk." \
-	    "Save a labelmap."}
+        {Setup Merge Undo File} {"Setup" "Merge" "Undo" "Save"} \
+        {"Choose volumes before editing." \
+        "Merge two labelmaps." "Clear or re-read a labelmap from disk." \
+        "Save a labelmap."}
 
     #-------------------------------------------
     # Volumes->TabbedFrame->Setup frame
@@ -435,7 +435,7 @@ proc EditorBuildGUI {} {
     frame $f.fStart   -bg $Gui(activeWorkspace) 
 
     pack  $f.fHelp $f.fOriginal  $f.fWorking $f.fStart\
-	    -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
+        -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
     
     #-------------------------------------------
     # Volumes->TabbedFrame->Setup->Help
@@ -443,8 +443,8 @@ proc EditorBuildGUI {} {
     set f $fVolumes.fTabbedFrame.fSetup.fHelp
     
     eval {label $f.l -text \
-	    "First choose the volumes to edit.\n Type a name for any NEW labelmap.\nThen click `Start Editing'."} \
-	    $Gui(WLA)
+        "First choose the volumes to edit.\n Type a name for any NEW labelmap.\nThen click `Start Editing'."} \
+        $Gui(WLA)
     pack $f.l
 
     #-------------------------------------------
@@ -465,7 +465,7 @@ proc EditorBuildGUI {} {
     eval {label $f.lOriginal -text "Original Grayscale:"} $Gui(WTA)
     
     eval {menubutton $f.mbOriginal -text "None" -relief raised -bd 2 -width 18 \
-	    -menu $f.mbOriginal.m} $Gui(WMBA)
+        -menu $f.mbOriginal.m} $Gui(WMBA)
     eval {menu $f.mbOriginal.m} $Gui(WMA)
     TooltipAdd $f.mbOriginal "Choose the input grayscale volume for editing."
     pack $f.lOriginal -padx $Gui(pad) -side left -anchor e
@@ -495,7 +495,7 @@ proc EditorBuildGUI {} {
     eval {label $f.lWorking -text "Working Labelmap:"} $Gui(WTA)
     
     eval {menubutton $f.mbWorking -text "NEW" -relief raised -bd 2 -width 18 \
-	    -menu $f.mbWorking.m} $Gui(WMBA)
+        -menu $f.mbWorking.m} $Gui(WMBA)
     eval {menu $f.mbWorking.m} $Gui(WMA)
     TooltipAdd $f.mbWorking "Choose a labelmap to edit, or NEW for a new one."
     pack $f.lWorking $f.mbWorking -padx $Gui(pad) -side left
@@ -539,7 +539,7 @@ proc EditorBuildGUI {} {
     frame $f.fMerge     -bg $Gui(activeWorkspace) -relief groove -bd 3
     
     pack $f.fHelp $f.fComposite $f.fMerge \
-	    -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
+        -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
     
     #-------------------------------------------
     # Volumes->TabbedFrame->Merge->Help
@@ -568,7 +568,7 @@ proc EditorBuildGUI {} {
     eval {label $f.lComposite -text "Composite Labelmap:"} $Gui(WTA)
     
     eval {menubutton $f.mbComposite -text "NEW" -relief raised -bd 2 -width 18 \
-	    -menu $f.mbComposite.m} $Gui(WMBA)
+        -menu $f.mbComposite.m} $Gui(WMBA)
     eval {menu $f.mbComposite.m} $Gui(WMA)
     TooltipAdd $f.mbComposite "Choose a labelmap, or NEW for a new one."
     pack $f.lComposite $f.mbComposite -padx $Gui(pad) -side left
@@ -599,7 +599,7 @@ proc EditorBuildGUI {} {
     eval {label $f.lTitle -text "Combine 2 Label Maps"} $Gui(WTA)
     frame $f.f  -bg $Gui(activeWorkspace)
     eval {button $f.b -text "Merge" -width 6 \
-	    -command "EditorMerge merge 0; RenderAll"} $Gui(WBA)
+        -command "EditorMerge merge 0; RenderAll"} $Gui(WBA)
     pack $f.lTitle $f.f $f.b -pady $Gui(pad) -side top
 
     TooltipAdd $f.b "Merge the labelmaps."
@@ -609,23 +609,23 @@ proc EditorBuildGUI {} {
     eval {label $f.l1 -text "Write"} $Gui(WLA)
     
     eval {menubutton $f.mbFore -text "$Editor(fgName)" -relief raised -bd 2 -width 9 \
-	    -menu $f.mbFore.m} $Gui(WMBA)
+        -menu $f.mbFore.m} $Gui(WMBA)
     eval {menu $f.mbFore.m} $Gui(WMA)
     set Editor(mbFore) $f.mbFore
     set m $Editor(mbFore).m
     foreach v "Working Composite Original" {
-	$m add command -label $v -command "EditorMerge Fore $v"
+    $m add command -label $v -command "EditorMerge Fore $v"
     }
     
     eval {label $f.l2 -text "over"} $Gui(WLA)
     
     eval {menubutton $f.mbBack -text "$Editor(bgName)" -relief raised -bd 2 -width 9 \
-	    -menu $f.mbBack.m} $Gui(WMBA)
+        -menu $f.mbBack.m} $Gui(WMBA)
     eval {menu $f.mbBack.m} $Gui(WMA)
     set Editor(mbBack) $f.mbBack
     set m $Editor(mbBack).m
     foreach v "Working Composite" {
-	$m add command -label $v -command "EditorMerge Back $v"
+    $m add command -label $v -command "EditorMerge Back $v"
     }
 
     TooltipAdd $f.mbFore "Choose a labelmap to go on top."
@@ -643,7 +643,7 @@ proc EditorBuildGUI {} {
     frame $f.fComposite -bg $Gui(activeWorkspace) -relief groove -bd 3
 
     pack $f.fHelp $f.fWorking $f.fComposite  \
-	    -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
+        -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
     
     #-------------------------------------------
     # Volumes->TabbedFrame->Undo->Help
@@ -677,10 +677,10 @@ proc EditorBuildGUI {} {
     set f $fVolumes.fTabbedFrame.fUndo.fWorking.fBtns
 
     eval {button $f.bClear -text "Clear to 0's" -width 12 \
-	    -command "EditorClear Working; RenderAll"} $Gui(WBA)
+        -command "EditorClear Working; RenderAll"} $Gui(WBA)
     TooltipAdd $f.bClear "Clear the Working Volume."
     eval {button $f.bRead -text "Re-read" -width 7 \
-	    -command "EditorRead Working; RenderAll"} $Gui(WBA)
+        -command "EditorRead Working; RenderAll"} $Gui(WBA)
     TooltipAdd $f.bRead "Re-read the Working Volume from disk."
     pack  $f.bRead $f.bClear -side left -padx $Gui(pad)    
 
@@ -708,10 +708,10 @@ proc EditorBuildGUI {} {
     set f $fVolumes.fTabbedFrame.fUndo.fComposite.fBtns
 
     eval {button $f.bClear -text "Clear to 0's" -width 12 \
-	    -command "EditorClear Composite; RenderAll"} $Gui(WBA)
+        -command "EditorClear Composite; RenderAll"} $Gui(WBA)
     TooltipAdd $f.bClear "Clear the Composite Volume."
     eval {button $f.bRead -text "Re-read" -width 7 \
-	    -command "EditorRead Composite; RenderAll"} $Gui(WBA)
+        -command "EditorRead Composite; RenderAll"} $Gui(WBA)
     TooltipAdd $f.bRead "Re-read the Composite Volume from disk."
     pack  $f.bRead $f.bClear -side left -padx $Gui(pad)    
     
@@ -723,7 +723,7 @@ proc EditorBuildGUI {} {
     frame $f.fHelp      -bg $Gui(activeWorkspace)    
     frame $f.fVol   -bg $Gui(activeWorkspace) -relief groove -bd 3
     pack $f.fHelp $f.fVol \
-	    -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
+        -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
 
     #-------------------------------------------
     # Volumes->TabbedFrame->File->Help
@@ -753,14 +753,14 @@ proc EditorBuildGUI {} {
     
     # Volume menu
     DevAddSelectButton  Editor $f VolumeSelect "Volume to save:" Pack \
-	    "Volume to save." 14
+        "Volume to save." 14
 
     # bind menubutton to update stuff when volume changes.
     bind $Editor(mVolumeSelect) <ButtonRelease-1> \
-	    "EditorSetSaveVolume" 
+        "EditorSetSaveVolume" 
     # have this binding execute after the menu updates
     bindtags $Editor(mVolumeSelect) [list Menu \
-	    $Editor(mVolumeSelect) all]
+        $Editor(mVolumeSelect) all]
 
     # Append menu and button to lists that get refreshed during UpdateMRML
     lappend Volume(mbActiveList) $f.mbVolumeSelect
@@ -784,7 +784,7 @@ proc EditorBuildGUI {} {
     set f $fVolumes.fTabbedFrame.fFile.fVol.fBtns
     
     eval {button $f.bWrite -text "Save" -width 5 \
-	    -command "EditorWriteVolume"} $Gui(WBA)
+        -command "EditorWriteVolume"} $Gui(WBA)
     TooltipAdd $f.bWrite "Save the Volume."
     pack  $f.bWrite -side left -padx $Gui(pad)    
 
@@ -804,7 +804,7 @@ proc EditorBuildGUI {} {
     frame $f.fModel    -bg $Gui(activeWorkspace)
     frame $f.fDisplay    -bg $Gui(activeWorkspace)
     pack $f.fEffects $f.fActive $f.fTime $f.fDisplay $f.fModel \
-	    -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
+        -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
     
     #-------------------------------------------
     # Effects->Active frame
@@ -815,10 +815,10 @@ proc EditorBuildGUI {} {
     pack $f.l -side left -pady $Gui(pad) -padx $Gui(pad) -fill x
     
     foreach s $Slice(idList) text "Red Yellow Green" width "4 7 6" {
-	eval {radiobutton $f.r$s -width $width -indicatoron 0\
-		-text "$text" -value "$s" -variable Slice(activeID) \
-		-command "MainSlicesSetActive"} $Gui(WCA) {-selectcolor $Gui(slice$s)}
-	pack $f.r$s -side left -fill x -anchor e
+    eval {radiobutton $f.r$s -width $width -indicatoron 0\
+        -text "$text" -value "$s" -variable Slice(activeID) \
+        -command "MainSlicesSetActive"} $Gui(WCA) {-selectcolor $Gui(slice$s)}
+    pack $f.r$s -side left -fill x -anchor e
     }
     
     #-------------------------------------------
@@ -831,7 +831,7 @@ proc EditorBuildGUI {} {
     eval {label $f.lTotal -text "Total:"} $Gui(WLA)
     eval {label $f.lTotalTime -text "0 sec"} $Gui(WLA)
     pack $f.lRun $f.lRunTime $f.lTotal $f.lTotalTime \
-	    -side left -pady $Gui(pad) -padx $Gui(pad) -fill x
+        -side left -pady $Gui(pad) -padx $Gui(pad) -fill x
     
     set Editor(lRunTime) $f.lRunTime
     set Editor(lTotalTime) $f.lTotalTime
@@ -846,8 +846,8 @@ proc EditorBuildGUI {} {
     pack $f.lDisplay -side left -pady $Gui(pad) -padx $Gui(pad)
     
     eval {checkbutton $f.cEditorDisplayLabel \
-		-text  "Outline Labelmap" -variable Editor(display,labelOn) \
-		-width 21 -indicatoron 0 -command "EditorResetDisplay"} $Gui(WCA)
+        -text  "Outline Labelmap" -variable Editor(display,labelOn) \
+        -width 21 -indicatoron 0 -command "EditorResetDisplay"} $Gui(WCA)
     pack $f.cEditorDisplayLabel -side right -pady $Gui(pad) -padx $Gui(pad)
     TooltipAdd $f.cEditorDisplayLabel "Press to show/hide the label layer (the outline around your labelmap)."
 
@@ -857,8 +857,8 @@ proc EditorBuildGUI {} {
     set f $fEffects.fModel
     
     if {[IsModule ModelMaker] == 1} {
-	eval {button $f.b -text "Make Model" -command "EditorMakeModel"} $Gui(WBA)
-	pack $f.b
+    eval {button $f.b -text "Make Model" -command "EditorMakeModel"} $Gui(WBA)
+    pack $f.b
     }
 
     #-------------------------------------------
@@ -879,29 +879,29 @@ proc EditorBuildGUI {} {
     # Have 10 effects visible, and hide the rest under "More"
     set cnt 0
     foreach e $Ed(idList) {
-	set Ed($e,more) 0
-	if {$cnt > [expr 10 - 1]} {
-	    set Ed($e,more) 1
-	}
-	incr cnt
-    }		
+    set Ed($e,more) 0
+    if {$cnt > [expr 10 - 1]} {
+        set Ed($e,more) 1
+    }
+    incr cnt
+    }        
     
     # Don't make the more button unless we'll use it
     set Editor(more) 0
     foreach e $Ed(idList) {
-	if {$Ed($e,more) == 1} {set Editor(more) 1}
+    if {$Ed($e,more) == 1} {set Editor(more) 1}
     }
     if {$Editor(more) == 1} {
-	eval {menubutton $f.mbMore -text "More:" -relief raised -bd 2 \
-		-width 6 -menu $f.mbMore.m} $Gui(WMBA)
-	eval {menu $f.mbMore.m} $Gui(WMA)
-	eval {radiobutton $f.rMore -width 13 \
-		-text "None" -variable Editor(moreBtn) -value 1 \
-		-command "EditorSetEffect Menu" -indicatoron 0} $Gui(WCA)
-	pack $f.mbMore $f.rMore -side left -padx $Gui(pad) -pady 0 
-	
-	set Editor(mbMore) $f.mbMore
-	set Editor(rMore)  $f.rMore
+    eval {menubutton $f.mbMore -text "More:" -relief raised -bd 2 \
+        -width 6 -menu $f.mbMore.m} $Gui(WMBA)
+    eval {menu $f.mbMore.m} $Gui(WMA)
+    eval {radiobutton $f.rMore -width 13 \
+        -text "None" -variable Editor(moreBtn) -value 1 \
+        -command "EditorSetEffect Menu" -indicatoron 0} $Gui(WCA)
+    pack $f.mbMore $f.rMore -side left -padx $Gui(pad) -pady 0 
+    
+    set Editor(mbMore) $f.mbMore
+    set Editor(rMore)  $f.rMore
     }
     
     #-------------------------------------------
@@ -911,35 +911,35 @@ proc EditorBuildGUI {} {
     
     set row 0
     if {$Editor(more) == 1} {
-	set moreMenu $Editor(mbMore).m
-	$moreMenu delete 0 end
-	set firstMore ""
+    set moreMenu $Editor(mbMore).m
+    $moreMenu delete 0 end
+    set firstMore ""
     }
     # Display up to 2 effect buttons (e1,e2) on each row 
     foreach {e1 e2} $Ed(idList) {
-	frame $f.$row -bg $Gui(inactiveWorkspace)
-	
-	foreach e "$e1 $e2" {
-	    # Either make a button for it, or add it to the "more" menu
-	    if {$Ed($e,more) == 0} {
-		eval {radiobutton $f.$row.r$e -width 13 \
-			-text "$Ed($e,name)" -variable Editor(btn) -value $e \
-			-command "EditorSetEffect $e" -indicatoron 0} $Gui(WCA)
-		pack $f.$row.r$e -side left -padx 0 -pady 0
-	    } else {
-		if {$firstMore == ""} {
-		    set firstMore $e
-		}
-		$moreMenu add command -label $Ed($e,name) \
-			-command "EditorSetEffect $e"
-	    }
-	}
-	pack $f.$row -side top -padx 0 -pady 0
-	
-	incr row
+    frame $f.$row -bg $Gui(inactiveWorkspace)
+    
+    foreach e "$e1 $e2" {
+        # Either make a button for it, or add it to the "more" menu
+        if {$Ed($e,more) == 0} {
+        eval {radiobutton $f.$row.r$e -width 13 \
+            -text "$Ed($e,name)" -variable Editor(btn) -value $e \
+            -command "EditorSetEffect $e" -indicatoron 0} $Gui(WCA)
+        pack $f.$row.r$e -side left -padx 0 -pady 0
+        } else {
+        if {$firstMore == ""} {
+            set firstMore $e
+        }
+        $moreMenu add command -label $Ed($e,name) \
+            -command "EditorSetEffect $e"
+        }
+    }
+    pack $f.$row -side top -padx 0 -pady 0
+    
+    incr row
     }
     if {$Editor(more) == 1} {
-	$Editor(rMore) config -text "$firstMore"
+    $Editor(rMore) config -text "$firstMore"
     }
     
     #-------------------------------------------
@@ -948,7 +948,7 @@ proc EditorBuildGUI {} {
     set f $fEffects.fEffects.fUndo
     
     eval {button $f.bUndo -text "Undo last effect" -width 17 \
-	    -command "EditorUndo; RenderAll"} $Gui(WBA) {-state disabled}
+        -command "EditorUndo; RenderAll"} $Gui(WBA) {-state disabled}
     pack $f.bUndo -side left -padx $Gui(pad) -pady 0
     
     set Editor(bUndo) $f.bUndo
@@ -981,15 +981,15 @@ proc EditorBuildGUI {} {
     # List top 8 effects on a button bar across the top
     set f $fDetails.fTitle.fBar
     foreach e [lrange $Ed(idList) 0 7] {
-	eval {radiobutton $f.r$e -width 2 -indicatoron 0\
-		-text $Ed($e,initials) -value $e -variable Editor(btn) \
-		-command "EditorSetEffect $e"} $Gui(WCA)
-	TooltipAdd $f.r$e $Ed($e,name)
-	pack $f.r$e -side left -fill x -anchor e
+    eval {radiobutton $f.r$e -width 2 -indicatoron 0\
+        -text $Ed($e,initials) -value $e -variable Editor(btn) \
+        -command "EditorSetEffect $e"} $Gui(WCA)
+    TooltipAdd $f.r$e $Ed($e,name)
+    pack $f.r$e -side left -fill x -anchor e
     }
     # Add an Undo button
     eval {button $f.bUndo -width 2 -text Un -command "EditorUndo; RenderAll"} \
-	    $Gui(WBA) {-state disabled}
+        $Gui(WBA) {-state disabled}
     TooltipAdd $f.bUndo "Undo last effect applied"
     pack $f.bUndo -side left -fill x -anchor e
     set Editor(bUndo2) $f.bUndo
@@ -1008,9 +1008,9 @@ proc EditorBuildGUI {} {
     set f $fDetails.fEffect
     
     foreach e $Ed(idList) {
-	frame $f.f$e -bg $Gui(activeWorkspace)
-	place $f.f$e -in $f -relheight 1.0 -relwidth 1.0
-	set Ed($e,frame) $f.f$e
+    frame $f.f$e -bg $Gui(activeWorkspace)
+    place $f.f$e -in $f -relheight 1.0 -relwidth 1.0
+    set Ed($e,frame) $f.f$e
     }
 
     
@@ -1019,15 +1019,15 @@ proc EditorBuildGUI {} {
     ############################################################################
     
     if {$Module(verbose) == 1} {
-	puts Editor-GUI:
+    puts Editor-GUI:
     }
     foreach e $Ed(idList) {
-	if {[info exists Ed($e,procGUI)] == 1} {
-	    if {$Module(verbose) == 1} {
-		puts $Ed($e,procGUI)
-	    }
-	    $Ed($e,procGUI)
-	}
+    if {[info exists Ed($e,procGUI)] == 1} {
+        if {$Module(verbose) == 1} {
+        puts $Ed($e,procGUI)
+        }
+        $Ed($e,procGUI)
+    }
     }
     
     # Initialize to the first effect
@@ -1052,13 +1052,13 @@ proc EditorEnter {} {
     # otherwise the first volume in the mrml tree.
 
     if {[EditorGetOriginalID] == $Volume(idNone)} {
-	    set v [[[Slicer GetBackVolume $Slice(activeID)] GetMrmlNode] GetID]
-	    if {$v == $Volume(idNone)} {
-		    set v [lindex $Volume(idList) 0]
-	    }
-	    if {$v != $Volume(idNone)} {
-		    EditorSetOriginal $v
-	    }
+        set v [[[Slicer GetBackVolume $Slice(activeID)] GetMrmlNode] GetID]
+        if {$v == $Volume(idNone)} {
+            set v [lindex $Volume(idList) 0]
+        }
+        if {$v != $Volume(idNone)} {
+            EditorSetOriginal $v
+        }
     }
 
     # use the bindings stack for adding new bindings.
@@ -1104,13 +1104,13 @@ proc EditorMakeModel {} {
     global Editor
 
     if {$Editor(idComposite) == "NEW"} {
-	    if {$Editor(idWorking) == "NEW"} {
-		    MainVolumesSetActive [EditorGetOriginalID]
-	    } else {
-		    MainVolumesSetActive [EditorGetWorkingID]
-	    }
+        if {$Editor(idWorking) == "NEW"} {
+            MainVolumesSetActive [EditorGetOriginalID]
+        } else {
+            MainVolumesSetActive [EditorGetWorkingID]
+        }
     } else {
-	    MainVolumesSetActive [EditorGetCompositeID]
+        MainVolumesSetActive [EditorGetCompositeID]
     }
     Tab ModelMaker row1 Create
 }
@@ -1130,16 +1130,16 @@ proc EditorMotion {x y} {
     global Ed Editor 
 
     switch $Editor(activeID) {
-	"EdLiveWire" {
-	    EdLiveWireMotion $x $y
-	    # log this event since it's used by the module
-	    EditorIncrementAndLogEvent "motion"    
-	}
-	"EdPhaseWire" {
-	    EdPhaseWireMotion $x $y
-	    # log this event since it's used by the module
-	    EditorIncrementAndLogEvent "motion"    
-	}
+    "EdLiveWire" {
+        EdLiveWireMotion $x $y
+        # log this event since it's used by the module
+        EditorIncrementAndLogEvent "motion"    
+    }
+    "EdPhaseWire" {
+        EdPhaseWireMotion $x $y
+        # log this event since it's used by the module
+        EditorIncrementAndLogEvent "motion"    
+    }
     }
     
 }
@@ -1156,50 +1156,50 @@ proc EditorB1 {x y} {
     EditorIncrementAndLogEvent "b1click"
     
     switch $Editor(activeID) {
-	"EdDraw" {
-	    # Mark point for moving
-	    Slicer DrawMoveInit $x $y
-	    
-	    # Act depending on the draw mode:
-	    #  - Draw:   Insert a point
-	    #  - Select: Select/deselect a point
-	    #
-	    switch $Ed(EdDraw,mode) {
-		"Draw" {
-		    Slicer DrawInsertPoint $x $y
-		}
-		"Select" {
-		    Slicer DrawStartSelectBox $x $y
-		}
-	    }
-	}
-	"EdLiveWire" {
-	    EdLiveWireB1 $x $y
-	}
-	"EdPhaseWire" {
-	    EdPhaseWireB1 $x $y
-	}
-	"EdChangeIsland" {
-	    EditorChangeInputLabel $x $y
-	}
-	"EdMeasureIsland" {
-	    EditorChangeInputLabel $x $y
-	}
-	"EdSaveIsland" {
-	    EditorChangeInputLabel $x $y
-	}
-	"EdChangeLabel" {
-	    EditorChangeInputLabel $x $y
-	}
-	"EdRemoveIslands" {
-	    EditorChangeInputLabel $x $y
-	}
-	"EdIdentifyIslands" {
-	    EditorChangeInputLabel $x $y
-	}
-	"EdLabelVOI" {
-	    EdLabelVOIB1 $x $y
-	}
+    "EdDraw" {
+        # Mark point for moving
+        Slicer DrawMoveInit $x $y
+        
+        # Act depending on the draw mode:
+        #  - Draw:   Insert a point
+        #  - Select: Select/deselect a point
+        #
+        switch $Ed(EdDraw,mode) {
+        "Draw" {
+            Slicer DrawInsertPoint $x $y
+        }
+        "Select" {
+            Slicer DrawStartSelectBox $x $y
+        }
+        }
+    }
+    "EdLiveWire" {
+        EdLiveWireB1 $x $y
+    }
+    "EdPhaseWire" {
+        EdPhaseWireB1 $x $y
+    }
+    "EdChangeIsland" {
+        EditorChangeInputLabel $x $y
+    }
+    "EdMeasureIsland" {
+        EditorChangeInputLabel $x $y
+    }
+    "EdSaveIsland" {
+        EditorChangeInputLabel $x $y
+    }
+    "EdChangeLabel" {
+        EditorChangeInputLabel $x $y
+    }
+    "EdRemoveIslands" {
+        EditorChangeInputLabel $x $y
+    }
+    "EdIdentifyIslands" {
+        EditorChangeInputLabel $x $y
+    }
+    "EdLabelVOI" {
+        EdLabelVOIB1 $x $y
+    }
     }
 }
 
@@ -1218,31 +1218,31 @@ proc EditorB1Motion {x y} {
     set s $Slice(activeID)
 
     switch $Editor(activeID) {
-	"EdDraw" {
-	    # Act depending on the draw mode:
-	    #  - Move:   move points
-	    #  - Draw:   Insert a point
-	    #  - Select: draw the "select" box
-	    #
-	    switch $Ed(EdDraw,mode) {
-		"Draw" {
-		    Slicer DrawInsertPoint $x $y
-		    
-		    # Lauren this would be better:
-		    
-		    # DAVE: allow drawing on non-native slices someday
-		    #			Slicer SetReformatPoint $s $x $y
-		    #			scan [Slicer GetIjkPoint] "%g %g %g" i j k
-		    #			puts "Slicer DrawInsertPoint $x $y ijk=$i $j $k s=$s"
-		}
-		"Select" {
-		    Slicer DrawDragSelectBox $x $y
-		}
-		"Move" {
-		    Slicer DrawMove $x $y
-		}
-	    }
-	}
+    "EdDraw" {
+        # Act depending on the draw mode:
+        #  - Move:   move points
+        #  - Draw:   Insert a point
+        #  - Select: draw the "select" box
+        #
+        switch $Ed(EdDraw,mode) {
+        "Draw" {
+            Slicer DrawInsertPoint $x $y
+            
+            # Lauren this would be better:
+            
+            # DAVE: allow drawing on non-native slices someday
+            #            Slicer SetReformatPoint $s $x $y
+            #            scan [Slicer GetIjkPoint] "%g %g %g" i j k
+            #            puts "Slicer DrawInsertPoint $x $y ijk=$i $j $k s=$s"
+        }
+        "Select" {
+            Slicer DrawDragSelectBox $x $y
+        }
+        "Move" {
+            Slicer DrawMove $x $y
+        }
+        }
+    }
     }
     
 }
@@ -1258,16 +1258,16 @@ proc EditorB1Release {x y} {
     global Ed Editor
     
     switch $Editor(activeID) {
-	"EdDraw" {
-	    # Act depending on the draw mode:
-	    #  - Select: stop drawing the "select" box
-	    #
-	    switch $Ed(EdDraw,mode) {
-		"Select" {
-		    Slicer DrawEndSelectBox $x $y
-		}
-	    }
-	}
+    "EdDraw" {
+        # Act depending on the draw mode:
+        #  - Select: stop drawing the "select" box
+        #
+        switch $Ed(EdDraw,mode) {
+        "Select" {
+            Slicer DrawEndSelectBox $x $y
+        }
+        }
+    }
     }
 }
 
@@ -1285,18 +1285,18 @@ proc EditorChangeInputLabel {x y} {
     # Determine the input label
     set s [Slicer GetActiveSlice]
     if {[info exists Ed($e,input)] == 1 && $Ed($e,input) == "Original"} {
-	set Ed($e,inputLabel) [Slicer GetBackPixel $s $x $y]
+    set Ed($e,inputLabel) [Slicer GetBackPixel $s $x $y]
     } else {
-	set Ed($e,inputLabel) [Slicer GetForePixel $s $x $y]
+    set Ed($e,inputLabel) [Slicer GetForePixel $s $x $y]
     }
     
     # Get the seed
     set s [Slicer GetActiveSlice]
     Slicer SetReformatPoint $s $x $y
     if {$Ed($e,scope) == "Single"} {
-	scan [Slicer GetSeed2D] "%d %d %d" xSeed ySeed zSeed
+    scan [Slicer GetSeed2D] "%d %d %d" xSeed ySeed zSeed
     } else {
-	scan [Slicer GetSeed] "%d %d %d" xSeed ySeed zSeed
+    scan [Slicer GetSeed] "%d %d %d" xSeed ySeed zSeed
     }
     set Ed($e,xSeed) $xSeed
     set Ed($e,ySeed) $ySeed
@@ -1322,8 +1322,8 @@ proc EditorSetOriginal {v} {
     global Editor Volume
     
     if {$v == $Editor(idWorking)} {
-	tk_messageBox -message "The Original and Working volumes must differ."
-	return
+    tk_messageBox -message "The Original and Working volumes must differ."
+    return
     }
     set Editor(idOriginal) $v
     
@@ -1332,11 +1332,11 @@ proc EditorSetOriginal {v} {
     
     # Update the display and the effect.
     if {$Editor(activeID) != "EdNone"} {
-	# Display the original in the background layer of the slices
-	EditorResetDisplay
-	
-	# Refresh the effect, if it's an interactive one
-	EditorUpdateEffect
+    # Display the original in the background layer of the slices
+    EditorResetDisplay
+    
+    # Refresh the effect, if it's an interactive one
+    EditorUpdateEffect
     }
 }
 
@@ -1350,28 +1350,28 @@ proc EditorSetWorking {v} {
     global Editor Volume Gui
     
     if {$v == [EditorGetOriginalID]} {
-	tk_messageBox -message "The Original and Working volumes must differ."
-	return
+    tk_messageBox -message "The Original and Working volumes must differ."
+    return
     }
     if {$v == $Editor(idComposite) && $v != "NEW"} {
-	tk_messageBox -message "The Composite and Working volumes must differ."
-	return
+    tk_messageBox -message "The Composite and Working volumes must differ."
+    return
     }
     set Editor(idWorking) $v
     
     # Change button text, show name and file prefix
     if {$v == "NEW"} {
-	$Editor(mbWorking) config -text $v
-	set Editor(prefixWorking) ""
-	set Editor(nameWorking) Working
-	eval {$Editor(eNameWorking) configure -state normal}  $Gui(WEA)
+    $Editor(mbWorking) config -text $v
+    set Editor(prefixWorking) ""
+    set Editor(nameWorking) Working
+    eval {$Editor(eNameWorking) configure -state normal}  $Gui(WEA)
     } else {
-	$Editor(mbWorking) config -text [Volume($v,node) GetName]
-	set Editor(prefixWorking) [MainFileGetRelativePrefix \
-		[Volume($v,node) GetFilePrefix]]
-	set Editor(nameWorking) [Volume($v,node) GetName]
-	# Disable name entry field if not NEW volume
-	eval {$Editor(eNameWorking) configure -state disabled} $Gui(WEDA)
+    $Editor(mbWorking) config -text [Volume($v,node) GetName]
+    set Editor(prefixWorking) [MainFileGetRelativePrefix \
+        [Volume($v,node) GetFilePrefix]]
+    set Editor(nameWorking) [Volume($v,node) GetName]
+    # Disable name entry field if not NEW volume
+    eval {$Editor(eNameWorking) configure -state disabled} $Gui(WEDA)
     }
     
     # Refresh the effect, if it's an interactive one
@@ -1388,28 +1388,28 @@ proc EditorSetComposite {v} {
     global Editor Volume Gui
 
     if {$v == [EditorGetOriginalID]} {
-	tk_messageBox -message "The Original and Composite volumes must differ."
-	return
+    tk_messageBox -message "The Original and Composite volumes must differ."
+    return
     }
     if {$v == $Editor(idWorking) && $v != "NEW"} {
-	tk_messageBox -message "The Working and Composite volumes must differ."
-	return
+    tk_messageBox -message "The Working and Composite volumes must differ."
+    return
     }
     set Editor(idComposite) $v
     
     # Change button text, and show file prefix
     if {$v == "NEW"} {
-	$Editor(mbComposite) config -text $v
-	set Editor(prefixComposite) ""
-	set Editor(nameComposite) Composite
-	eval {$Editor(eNameComposite) configure -state normal}  $Gui(WEA)
+    $Editor(mbComposite) config -text $v
+    set Editor(prefixComposite) ""
+    set Editor(nameComposite) Composite
+    eval {$Editor(eNameComposite) configure -state normal}  $Gui(WEA)
     } else {
-	$Editor(mbComposite) config -text [Volume($v,node) GetName]
-	set Editor(prefixComposite) [MainFileGetRelativePrefix \
-		[Volume($v,node) GetFilePrefix]]
-	set Editor(nameComposite) [Volume($v,node) GetName]
-	# Disable name entry field if not NEW volume
-	eval {$Editor(eNameComposite) configure -state disabled} $Gui(WEDA)
+    $Editor(mbComposite) config -text [Volume($v,node) GetName]
+    set Editor(prefixComposite) [MainFileGetRelativePrefix \
+        [Volume($v,node) GetFilePrefix]]
+    set Editor(nameComposite) [Volume($v,node) GetName]
+    # Disable name entry field if not NEW volume
+    eval {$Editor(eNameComposite) configure -state disabled} $Gui(WEDA)
     }
     
     # Refresh the effect, if it's an interactive one
@@ -1432,7 +1432,7 @@ proc EditorUpdateEffect {} {
     # Call the Enter procedure of the active effect
     set e $Editor(activeID)
     if {[info exists Ed($e,procEnter)] == 1} {
-	$Ed($e,procEnter)
+    $Ed($e,procEnter)
     }
 
 }
@@ -1447,7 +1447,7 @@ proc EditorSameExtents {dst src} {
     set dstExt [[Volume($dst,vol) GetOutput] GetExtent]
     set srcExt [[Volume($src,vol) GetOutput] GetExtent]
     if {$dstExt == $srcExt} {
-	return 1
+    return 1
     }
     return 0
 }
@@ -1491,7 +1491,7 @@ proc EditorGetWorkingID {} {
 
     # If there is no Working volume, then create one
     if {$Editor(idWorking) != "NEW"} {
-	return $Editor(idWorking)
+    return $Editor(idWorking)
     }
     
     # Create the node
@@ -1505,10 +1505,10 @@ proc EditorGetWorkingID {} {
     
     # Make sure the name entered is okay, else use default
     if {[ValidateName $Editor(nameWorking)] == 0} {
-	tk_messageBox -message "The Descriptive Name can consist of letters, digits, dashes, or underscores only. Using default name Working"
-	$n SetName Working
+    tk_messageBox -message "The Descriptive Name can consist of letters, digits, dashes, or underscores only. Using default name Working"
+    $n SetName Working
     } else {
-	$n SetName $Editor(nameWorking)   
+    $n SetName $Editor(nameWorking)   
     }
     
     # Create the volume
@@ -1536,7 +1536,7 @@ proc EditorGetCompositeID {} {
 
     # If there is no Composite volume, then create one
     if {$Editor(idComposite) != "NEW"} {
-	return $Editor(idComposite)
+    return $Editor(idComposite)
     }
     
     # Create the node
@@ -1550,10 +1550,10 @@ proc EditorGetCompositeID {} {
 
     # Make sure the name entered is okay, else use default
     if {[ValidateName $Editor(nameComposite)] == 0} {
-	tk_messageBox -message "The Descriptive Name can consist of letters, digits, dashes, or underscores only. Using default name Composite"
-	$n SetName Composite
+    tk_messageBox -message "The Descriptive Name can consist of letters, digits, dashes, or underscores only. Using default name Composite"
+    $n SetName Composite
     } else {
-	$n SetName $Editor(nameComposite)   
+    $n SetName $Editor(nameComposite)   
     }
 
     # Create the volume
@@ -1583,7 +1583,7 @@ proc EditorResetDisplay {} {
     set s1 [Slicer GetOrientString 1]
     set s2 [Slicer GetOrientString 2]
     if {$s0 != "AxiSlice" || $s1 != "SagSlice" || $s2 != "CorSlice"} {
-	MainSlicesSetOrientAll Slices
+    MainSlicesSetOrientAll Slices
     }
 
     # Set slice volumes
@@ -1592,39 +1592,39 @@ proc EditorResetDisplay {} {
 
     # display label layer only if the user wants it shown
     if {$Editor(display,labelOn) == 1} {
-	set lab $w
+    set lab $w
     } else {
-	set lab $Volume(idNone)
+    set lab $Volume(idNone)
     }
 
     set ok 1
     foreach s $Slice(idList) {
-	set b [[[Slicer GetBackVolume  $s] GetMrmlNode] GetID]
-	set f [[[Slicer GetForeVolume  $s] GetMrmlNode] GetID]
-	set l [[[Slicer GetLabelVolume $s] GetMrmlNode] GetID]
-	if {$b != $o} {set ok 0}
-	if {$f != $w} {set ok 0}
-	if {$l != $lab} {set ok 0}
+    set b [[[Slicer GetBackVolume  $s] GetMrmlNode] GetID]
+    set f [[[Slicer GetForeVolume  $s] GetMrmlNode] GetID]
+    set l [[[Slicer GetLabelVolume $s] GetMrmlNode] GetID]
+    if {$b != $o} {set ok 0}
+    if {$f != $w} {set ok 0}
+    if {$l != $lab} {set ok 0}
     }
     if {$ok == 0} {
-	MainSlicesSetVolumeAll Back  $o
-	MainSlicesSetVolumeAll Fore  $w
-	MainSlicesSetVolumeAll Label $lab	
+    MainSlicesSetVolumeAll Back  $o
+    MainSlicesSetVolumeAll Fore  $w
+    MainSlicesSetVolumeAll Label $lab    
     }
 
     # Do these things only once
     if {$Editor(firstReset) == 0} {
-	set Editor(firstReset) 1
-	
-	# Slice opacity
-	MainSlicesSetOpacityAll 0.3
-	MainSlicesSetFadeAll 0
-	
-	# Cursor
-	MainAnnoSetHashesVisibility slices 0
-	
-	# Show all slices in 3D
-	MainSlicesSetVisibilityAll 1
+    set Editor(firstReset) 1
+    
+    # Slice opacity
+    MainSlicesSetOpacityAll 0.3
+    MainSlicesSetFadeAll 0
+    
+    # Cursor
+    MainAnnoSetHashesVisibility slices 0
+    
+    # Show all slices in 3D
+    MainSlicesSetVisibilityAll 1
     }
 }
 
@@ -1638,9 +1638,9 @@ proc EditorToggleWorking {} {
     global Editor
     
     if {$Editor(toggleWorking) == 1} {
-	EditorHideWorking
+    EditorHideWorking
     } else {
-	EditorShowWorking
+    EditorShowWorking
     }
 }
 
@@ -1686,12 +1686,12 @@ proc EditorSetEffect {e} {
     
     # If "menu" then use currently selected menu item
     if {$e == "Menu"} {
-	set name [$Editor(rMore) cget -text]
-	foreach ee $Ed(idList) {
-	    if {$Ed($ee,name) == $name} {
-		set e $ee
-	    }
-	}
+    set name [$Editor(rMore) cget -text]
+    foreach ee $Ed(idList) {
+        if {$Ed($ee,name) == $name} {
+        set e $ee
+        }
+    }
     }
     
     # Remember prev
@@ -1703,16 +1703,16 @@ proc EditorSetEffect {e} {
 
     # Toggle more radio button
     if {$Ed($e,more) == 1} {
-	set Editor(moreBtn) 1
-	$Editor(rMore) config -text $Ed($e,name)	
+    set Editor(moreBtn) 1
+    $Editor(rMore) config -text $Ed($e,name)    
     } else {
-	set Editor(moreBtn) 0
+    set Editor(moreBtn) 0
     }
     
     # Reset Display
     if {$e != "EdNone"} {
-	EditorResetDisplay
-	RenderAll
+    EditorResetDisplay
+    RenderAll
     }
     
     # Describe effect atop the "Details" frame
@@ -1721,7 +1721,7 @@ proc EditorSetEffect {e} {
     
     # Jump there
     if {$e != "EdNone"} {
-	Tab Editor row1 Details
+    Tab Editor row1 Details
     }
 
     # Execute Exit procedure (if one exists for the prevID module)
@@ -1729,13 +1729,13 @@ proc EditorSetEffect {e} {
     # But don't do this if there's no change.
     #
     if {$e != $prevID} {
-	EditorExitEffect $prevID
+    EditorExitEffect $prevID
 
-	# Show "Details" frame (GUI for the new effect)
-	raise $Ed($e,frame)
+    # Show "Details" frame (GUI for the new effect)
+    raise $Ed($e,frame)
 
-	# execute enter procedure
-	EditorUpdateEffect
+    # execute enter procedure
+    EditorUpdateEffect
     }
 }
 
@@ -1749,7 +1749,7 @@ proc EditorExitEffect {effect} {
     global Ed
 
     if {[info exists Ed($effect,procExit)] == 1} {
-	$Ed($effect,procExit)
+    $Ed($effect,procExit)
     }
 
     # logging
@@ -1767,9 +1767,9 @@ proc EditorGetInputID {input} {
     global Editor
 
     if {$input == "Original"} {
-	set v [EditorGetOriginalID]
+    set v [EditorGetOriginalID]
     } else {
-	set v [EditorGetWorkingID]
+    set v [EditorGetWorkingID]
     }
     return $v
 }
@@ -1786,11 +1786,11 @@ proc EditorActivateUndo {active} {
 
     set Editor(undoActive) $active
     if {$Editor(undoActive) == 0} {
-	$Editor(bUndo) config -state disabled
-	$Editor(bUndo2) config -state disabled
+    $Editor(bUndo) config -state disabled
+    $Editor(bUndo2) config -state disabled
     } else {
-	$Editor(bUndo) config -state normal
-	$Editor(bUndo2) config -state normal
+    $Editor(bUndo) config -state normal
+    $Editor(bUndo2) config -state normal
     }
 }
 
@@ -1858,35 +1858,35 @@ proc EdBuildScopeGUI {f var {not ""}} {
     global Gui
     
     switch $not {
-	Single {
-	    set modes "Multi 3D"
-	    set names "{Multi Slice} {3D}"
-	    set tips "{Apply effect to each slice} {Apply effect in 3D}"
-	}
-	Multi {
-	    set modes "Single 3D"
-	    set names "{1 Slice} {3D}"
-	    set tips "{Apply effect to one slice only} {Apply effect in 3D}"
-	}
-	3D {
-	    set modes "Single Multi"
-	    set names "{1 Slice} {Multi Slice}"
-	    set tips "{Apply effect to one slice only} {Apply effect to each slice}"
-	}
-	default {
-	    set modes "Single Multi 3D"
-	    set names "{1 Slice} {Multi Slice} {3D}"
-	    set tips "{Apply effect to one slice only} {Apply effect to each slice} {Apply effect in 3D}"
-	}
+    Single {
+        set modes "Multi 3D"
+        set names "{Multi Slice} {3D}"
+        set tips "{Apply effect to each slice} {Apply effect in 3D}"
+    }
+    Multi {
+        set modes "Single 3D"
+        set names "{1 Slice} {3D}"
+        set tips "{Apply effect to one slice only} {Apply effect in 3D}"
+    }
+    3D {
+        set modes "Single Multi"
+        set names "{1 Slice} {Multi Slice}"
+        set tips "{Apply effect to one slice only} {Apply effect to each slice}"
+    }
+    default {
+        set modes "Single Multi 3D"
+        set names "{1 Slice} {Multi Slice} {3D}"
+        set tips "{Apply effect to one slice only} {Apply effect to each slice} {Apply effect in 3D}"
+    }
     }
     eval {label $f.l -text "Scope:"} $Gui(WLA)
     frame $f.f -bg $Gui(activeWorkspace)
     foreach mode $modes name $names tip $tips {
-	eval {radiobutton $f.f.r$mode -width [expr [string length $name]+1]\
-		-text "$name" -variable $var -value $mode \
-		-indicatoron 0} $Gui(WCA)
-	pack $f.f.r$mode -side left -padx 0 -pady 0
-	TooltipAdd $f.f.r$mode $tip
+    eval {radiobutton $f.f.r$mode -width [expr [string length $name]+1]\
+        -text "$name" -variable $var -value $mode \
+        -indicatoron 0} $Gui(WCA)
+    pack $f.f.r$mode -side left -padx 0 -pady 0
+    TooltipAdd $f.f.r$mode $tip
     }
     pack $f.l $f.f -side left -padx $Gui(pad) -fill x -anchor w
 }
@@ -1904,9 +1904,9 @@ proc EdBuildMultiGUI {f var} {
     pack $f.l -side left -pady $Gui(pad) -padx $Gui(pad) -fill x
     
     foreach s "Native Active" text "Native Active" width "7 7" {
-	eval {radiobutton $f.r$s -width $width -indicatoron 0\
-		-text "$text" -value "$s" -variable $var} $Gui(WCA)
-	pack $f.r$s -side left -fill x -anchor e
+    eval {radiobutton $f.r$s -width $width -indicatoron 0\
+        -text "$text" -value "$s" -variable $var} $Gui(WCA)
+    pack $f.r$s -side left -fill x -anchor e
     }
 }
 
@@ -1922,14 +1922,14 @@ proc EdBuildInputGUI {f var {options ""}} {
     eval {label $f.l -text "Input Volume:"} $Gui(WLA)
     frame $f.f -bg $Gui(activeWorkspace)
     set tips "{Apply effect to Original volume} \
-	    {Apply effect to Working labelmap}"
+        {Apply effect to Working labelmap}"
 
     foreach input "Original Working" tip $tips {
-	eval {radiobutton $f.f.r$input \
-		-text "$input" -variable $var -value $input -width 8 \
-		-indicatoron 0} $options $Gui(WCA)
-	pack $f.f.r$input -side left -padx 0
-	TooltipAdd $f.f.r$input $tip
+    eval {radiobutton $f.f.r$input \
+        -text "$input" -variable $var -value $input -width 8 \
+        -indicatoron 0} $options $Gui(WCA)
+    pack $f.f.r$input -side left -padx 0
+    TooltipAdd $f.f.r$input $tip
     }
     pack $f.l $f.f -side left -padx $Gui(pad) -fill x -anchor w
 }
@@ -1946,17 +1946,17 @@ proc EdBuildInteractGUI {f var {options ""}} {
     set modes "Active Slices All"
     set names "{1 Slice} {3 Slices} {3D}"
     set tips "{Render (re-draw) one slice when you change settings} \
-	    {Render (re-draw) all three slices when you change settings} \
-	    {Render (re-draw) all slices and 3D window when you change settings}"
+        {Render (re-draw) all three slices when you change settings} \
+        {Render (re-draw) all slices and 3D window when you change settings}"
     
     eval {label $f.l -text "Interact:"} $Gui(WLA)
     frame $f.f -bg $Gui(activeWorkspace)
     foreach mode $modes name $names tip $tips {
-	eval {radiobutton $f.f.r$mode -width [expr [string length $name]+1]\
-		-text "$name" -variable $var -value $mode \
-		-indicatoron 0} $options $Gui(WCA)
-	pack $f.f.r$mode -side left -padx 0 -pady 0
-	TooltipAdd $f.f.r$mode $tip
+    eval {radiobutton $f.f.r$mode -width [expr [string length $name]+1]\
+        -text "$name" -variable $var -value $mode \
+        -indicatoron 0} $options $Gui(WCA)
+    pack $f.f.r$mode -side left -padx 0 -pady 0
+    TooltipAdd $f.f.r$mode $tip
     }
     pack $f.l $f.f -side left -padx $Gui(pad) -fill x -anchor w
 }
@@ -1973,17 +1973,17 @@ proc EdBuildRenderGUI {f var {options ""}} {
     set modes "Active Slices All"
     set names "{1 Slice} {3 Slices} {3D}"
     set tips "{Render (re-draw) one slice when you apply} \
-	    {Render (re-draw) all three slices when you apply} \
-	    {Render (re-draw) all slices and 3D window when you apply}"
+        {Render (re-draw) all three slices when you apply} \
+        {Render (re-draw) all slices and 3D window when you apply}"
 
     eval {label $f.l -text "Render:"} $Gui(WLA)
     frame $f.f -bg $Gui(activeWorkspace)
     foreach mode $modes name $names tip $tips {
-	eval {radiobutton $f.f.r$mode -width [expr [string length $name]+1]\
-		-text "$name" -variable $var -value $mode \
-		-indicatoron 0} $options $Gui(WCA)
-	pack $f.f.r$mode -side left -padx 0 -pady 0
-	TooltipAdd $f.f.r$mode $tip
+    eval {radiobutton $f.f.r$mode -width [expr [string length $name]+1]\
+        -text "$name" -variable $var -value $mode \
+        -indicatoron 0} $options $Gui(WCA)
+    pack $f.f.r$mode -side left -padx 0 -pady 0
+    TooltipAdd $f.f.r$mode $tip
     }
     pack $f.l $f.f -side left -padx $Gui(pad) -fill x -anchor w
 }
@@ -2005,16 +2005,16 @@ proc EdIsNativeSlice {} {
     if {$inOrder == "AP"} {set inOrder PA}
     if {$inOrder == "SI"} {set inOrder IS}
     if {$outOrder != $inOrder} {
-	if {$inOrder == "LR"} {
-	    set native SagSlice
-	}
-	if {$inOrder == "PA"} {
-	    set native CorSlice
-	}
-	if {$inOrder == "IS"} {
-	    set native AxiSlice
-	}
-	return $native
+    if {$inOrder == "LR"} {
+        set native SagSlice
+    }
+    if {$inOrder == "PA"} {
+        set native CorSlice
+    }
+    if {$inOrder == "IS"} {
+        set native AxiSlice
+    }
+    return $native
     }
     return ""
 }
@@ -2032,29 +2032,29 @@ proc EdSetupBeforeApplyEffect {v scope multi} {
     set w [EditorGetWorkingID]
     
     if {[EditorSameExtents $w $o] != 1} {
-	EditorCopyNode $w $o
-	MainVolumesCopyData $w $o On
-	# >> AT 12/20/01
-	# force the working volume to be of type short
-	set workvol [Volume($w,vol) GetOutput]
-	set worktype [$workvol GetScalarType]
-	# 4 is the ID of short in VTK
-	if {$worktype != "4"} {
-	    $workvol SetScalarType 4
-	    $workvol AllocateScalars
-	}
-	# << AT 12/20/01
+    EditorCopyNode $w $o
+    MainVolumesCopyData $w $o On
+    # >> AT 12/20/01
+    # force the working volume to be of type short
+    set workvol [Volume($w,vol) GetOutput]
+    set worktype [$workvol GetScalarType]
+    # 4 is the ID of short in VTK
+    if {$worktype != "4"} {
+        $workvol SetScalarType 4
+        $workvol AllocateScalars
+    }
+    # << AT 12/20/01
     }
     
     # Set the editor's input & output
     Ed(editor) SetInput [Volume($o,vol) GetOutput]
     if {$v == $w} {
-	Ed(editor) SetOutput [Volume($w,vol) GetOutput]
-	Ed(editor) UseInputOff
+    Ed(editor) SetOutput [Volume($w,vol) GetOutput]
+    Ed(editor) UseInputOff
     } else {
-	Ed(editor) UseInputOn
+    Ed(editor) UseInputOn
     }
-	
+    
     Ed(editor) SetDimensionTo$scope
     
     # Set the slice orientation and number
@@ -2065,37 +2065,37 @@ proc EdSetupBeforeApplyEffect {v scope multi} {
     set slice  [Slicer GetOffset $s]
     
     if {[lsearch "AxiSlice CorSlice SagSlice" $orient] == -1} {
-	tk_messageBox -icon warning -title $Gui(title) -message \
-		"The orientation of the active slice\n\
-		must be one of: AxiSlice, CorSlice, SagSlice"
-	return
+    tk_messageBox -icon warning -title $Gui(title) -message \
+        "The orientation of the active slice\n\
+        must be one of: AxiSlice, CorSlice, SagSlice"
+    return
     }
     switch $orient {
-	"AxiSlice" {
-	    set order IS
-	}
-	"SagSlice" {
-	    set order LR
-	}
-	"CorSlice" {
-	    set order PA
-	}
+    "AxiSlice" {
+        set order IS
+    }
+    "SagSlice" {
+        set order LR
+    }
+    "CorSlice" {
+        set order PA
+    }
     }
     
     # Does the user want the orien of the active slice or native slices?
     if {$scope == "Multi" && $multi == "Native"} {
-	set order [Volume($o,node) GetScanOrder]
+    set order [Volume($o,node) GetScanOrder]
     }
     switch $order {
-	"SI" {
-	    set order IS
-	}
-	"RL" {
-	    set order LR
-	}
-	"AP" {
-	    set order PA
-	}
+    "SI" {
+        set order IS
+    }
+    "RL" {
+        set order LR
+    }
+    "AP" {
+        set order PA
+    }
     }
     
     Ed(editor) SetOutputSliceOrder $order
@@ -2121,7 +2121,7 @@ proc EdUpdateAfterApplyEffect {v {render All}} {
     
     # w copies o's MrmlNode if the Input was the Original
     if {$v == $o} {
-	EditorCopyNode $w $o
+    EditorCopyNode $w $o
     }
     
     # Keep a copy for undo
@@ -2137,9 +2137,9 @@ proc EdUpdateAfterApplyEffect {v {render All}} {
     set Volume($w,dirty) 1
     
     $Editor(lRunTime)   config -text \
-	    "[format "%.2f" [Ed(editor) GetRunTime]] sec,"
+        "[format "%.2f" [Ed(editor) GetRunTime]] sec,"
     $Editor(lTotalTime) config -text \
-	    "[format "%.2f" [Ed(editor) GetTotalTime]] sec"
+        "[format "%.2f" [Ed(editor) GetTotalTime]] sec"
 }
 
 
@@ -2158,13 +2158,13 @@ proc EditorWrite {data} {
     
     # If the volume doesn't exist yet, then don't write it, duh!
     if {$Editor(id$data) == "NEW"} {
-	tk_messageBox -message "Nothing to write."
-	return
+    tk_messageBox -message "Nothing to write."
+    return
     }
     
     switch $data {
-	Composite {set v [EditorGetCompositeID]}
-	Working   {set v [EditorGetWorkingID]}
+    Composite {set v [EditorGetCompositeID]}
+    Working   {set v [EditorGetWorkingID]}
     }
     
     # Show user a File dialog box
@@ -2194,7 +2194,7 @@ proc EditorSetSaveVolume {} {
 
     # update File (Save) GUI
     set Editor(prefixSave) [MainFileGetRelativePrefix \
-	    [Volume($v,node) GetFilePrefix]]
+        [Volume($v,node) GetFilePrefix]]
 }
 
 #-------------------------------------------------------------------------------
@@ -2214,8 +2214,8 @@ proc EditorWriteVolume {} {
 
     # set initial directory to dir where vol last opened if unset
     if {$Editor(prefixSave) == ""} {
-	set Editor(prefixSave) \
-		[file join $Volume(DefaultDir) [Volume($v,node) GetName]]
+    set Editor(prefixSave) \
+        [file join $Volume(DefaultDir) [Volume($v,node) GetName]]
     }
     
     # Show user a File dialog box
@@ -2230,11 +2230,11 @@ proc EditorWriteVolume {} {
 
     # if we just saved Working or Composite, keep track for re-reading
     if {$v == $Editor(idWorking)} {
-	set Editor(prefixWorking) $Editor(prefixSave)
+    set Editor(prefixWorking) $Editor(prefixSave)
     } else {
-	if {$v == $Editor(idComposite)} {
-	    set Editor(prefixComposite) $Editor(prefixSave)
-	}
+    if {$v == $Editor(idComposite)} {
+        set Editor(prefixComposite) $Editor(prefixSave)
+    }
     }
 }
 
@@ -2249,13 +2249,13 @@ proc EditorRead {data} {
     
     # If the volume doesn't exist yet, then don't read it, duh!
     if {$Editor(id$data) == "NEW"} {
-	tk_messageBox -message "Nothing to read."
-	return
+    tk_messageBox -message "Nothing to read."
+    return
     }
     
     switch $data {
-	Composite {set v $Editor(idComposite)}
-	Working   {set v $Editor(idWorking)}
+    Composite {set v $Editor(idComposite)}
+    Working   {set v $Editor(idWorking)}
     }
     
     # Show user a File dialog box
@@ -2265,9 +2265,9 @@ proc EditorRead {data} {
     # Read
     Volume($v,node) SetFilePrefix $Editor(prefix$data)
     Volume($v,node) SetFullPrefix \
-	    [file join $Mrml(dir) [Volume($v,node) GetFilePrefix]]
+        [file join $Mrml(dir) [Volume($v,node) GetFilePrefix]]
     if {[MainVolumesRead $v] < 0} {
-	return
+    return
     }
     
     # Update pipeline and GUI
@@ -2288,13 +2288,13 @@ proc EditorClear {data} {
     
     # If the volume doesn't exist yet, then don't write it, duh!
     if {$Editor(id$data) == "NEW"} {
-	tk_messageBox -message "Nothing to clear."
-	return
+    tk_messageBox -message "Nothing to clear."
+    return
     }
     
     switch $data {
-	Composite {set v $Editor(idComposite)}
-	Working   {set v $Editor(idWorking)}
+    Composite {set v $Editor(idComposite)}
+    Working   {set v $Editor(idWorking)}
     }
     
     vtkImageCopy copy
@@ -2312,7 +2312,7 @@ proc EditorClear {data} {
     MainVolumesUpdate $v
     RenderAll
 }
-	
+    
 #-------------------------------------------------------------------------------
 # .PROC EditorMerge
 # 
@@ -2323,64 +2323,64 @@ proc EditorMerge {op arg} {
     global Ed Volume Gui Lut Slice Editor
     
     if {$op == "Fore"} {
-	set Editor(fgName) $arg
-	$Editor(mbFore) config -text $Editor(fgName)
-	return
+    set Editor(fgName) $arg
+    $Editor(mbFore) config -text $Editor(fgName)
+    return
     } elseif {$op == "Back"} {
-	set Editor(bgName) $arg
-	$Editor(mbBack) config -text $Editor(bgName)
-	return
+    set Editor(bgName) $arg
+    $Editor(mbBack) config -text $Editor(bgName)
+    return
     }
     
     # bg = back (overwritten), fg = foreground (merged in)
     
     switch $Editor(fgName) {
-	Original  {set fg [EditorGetOriginalID]}
-	Working   {set fg [EditorGetWorkingID]}
-	Composite {set fg [EditorGetCompositeID]}
-	default   {tk_messageBox \
-		-message "Merge the Original, Working, or Composite, not '$fgName'";\
-		return}
+    Original  {set fg [EditorGetOriginalID]}
+    Working   {set fg [EditorGetWorkingID]}
+    Composite {set fg [EditorGetCompositeID]}
+    default   {tk_messageBox \
+        -message "Merge the Original, Working, or Composite, not '$fgName'";\
+        return}
     }
     switch $Editor(bgName) {
-	Working   {set bg [EditorGetWorkingID]}
-	Composite {set bg [EditorGetCompositeID]}
-	default   {tk_messageBox \
-		-message "Merge with the Working or Composite, not '$bgName'";\
-		return}
+    Working   {set bg [EditorGetWorkingID]}
+    Composite {set bg [EditorGetCompositeID]}
+    default   {tk_messageBox \
+        -message "Merge with the Working or Composite, not '$bgName'";\
+        return}
     }
     
     # Do nothing if fg=bg
     if {$fg == $bg} {
-	return
+    return
     }
     
     # Disable Undo if we're overwriting working
     if {$bg == [EditorGetWorkingID]} {
-	Ed(editor) SetUndoable 0
-	EditorActivateUndo 0
+    Ed(editor) SetUndoable 0
+    EditorActivateUndo 0
     }
     
     # If extents are equal, then overlay, else copy.
     # If we copy the data, then we also have to copy the nodes.
     
     if {[EditorSameExtents $bg $fg] != 1} {
-	# copy node from fg to bg
-	EditorCopyNode $bg $fg
-	
-	# copy data
-	MainVolumesCopyData $bg $fg Off
+    # copy node from fg to bg
+    EditorCopyNode $bg $fg
+    
+    # copy data
+    MainVolumesCopyData $bg $fg Off
     } else {
-	vtkImageOverlay over
-	over SetInput 0 [Volume($bg,vol) GetOutput]
-	over SetInput 1 [Volume($fg,vol) GetOutput]
-	over SetOpacity 1 1.0
-	over Update
-	over SetInput 0 ""
-	over SetInput 1 ""
-	Volume($bg,vol) SetImageData [over GetOutput]
-	over SetOutput ""
-	over Delete
+    vtkImageOverlay over
+    over SetInput 0 [Volume($bg,vol) GetOutput]
+    over SetInput 1 [Volume($fg,vol) GetOutput]
+    over SetOpacity 1 1.0
+    over Update
+    over SetInput 0 ""
+    over SetInput 1 ""
+    Volume($bg,vol) SetImageData [over GetOutput]
+    over SetOutput ""
+    over Delete
     }
     
     # Mark the volume as changed
@@ -2408,16 +2408,16 @@ proc EditorLog {} {
     # the syntax is complicated b/c first item in the description
     # pairs is the name of the database column (which will be auto generated)
     foreach v $Volume(idList) {
-	set name [Volume($v,node) GetName]
-	set file [Volume($v,node) GetFullPrefix]
-	set datatype "{info,volume}"
-	set id "{volumeid,$v}"
-	set infotype "{infotype,name}"
-	set var "\{$datatype,$id,$infotype\}"
-	set Editor(log,$var) $name
-	set infotype "{infotype,filename}"
-	set var "\{$datatype,$id,$infotype\}"
-	set Editor(log,$var) $file
+    set name [Volume($v,node) GetName]
+    set file [Volume($v,node) GetFullPrefix]
+    set datatype "{info,volume}"
+    set id "{volumeid,$v}"
+    set infotype "{infotype,name}"
+    set var "\{$datatype,$id,$infotype\}"
+    set Editor(log,$var) $name
+    set infotype "{infotype,filename}"
+    set var "\{$datatype,$id,$infotype\}"
+    set Editor(log,$var) $file
     }
 
     # use the generic logging procedure 
@@ -2449,7 +2449,7 @@ proc EditorIncrementAndLogEvent {event} {
     set var "\{$datatype,$module,$submodule,$workingid,$originalid,$label,$slice\}"
     # initialize the count of these events
     if {[info exists Editor(log,$var)] == 0} {
-	set Editor(log,$var) 0
+    set Editor(log,$var) 0
     }
     # increment number of events
     # (if this overflows, it will wrap negative, not give an error)
@@ -2474,8 +2474,8 @@ proc EditorLogEventOnce {event value {info ""}} {
 
     # log only if event has not happened already
     if {[info exists Editor(log,$var)] == 0} {
-	set Editor(log,$var) $value
-	#puts "$var: $Editor(log,$var)"
+    set Editor(log,$var) $value
+    #puts "$var: $Editor(log,$var)"
     }
 
 }
@@ -2526,12 +2526,12 @@ proc EditorStopTiming {m} {
 
     # can't stop if we never started
     if {[info exists Editor(logInfo,$m,startTime)] == 0} {
-	return
+    return
     }
 
     set Editor(logInfo,$m,endTime) [clock seconds]
     set elapsed \
-	    [expr $Editor(logInfo,$m,endTime) - $Editor(logInfo,$m,startTime)]
+        [expr $Editor(logInfo,$m,endTime) - $Editor(logInfo,$m,startTime)]
     
     # variable name is a list describing the exact event
     # the first thing is datatype: time is the database table
@@ -2540,7 +2540,7 @@ proc EditorStopTiming {m} {
 
     # initialize the variable if needed
     if {[info exists Editor(log,$var)] == 0} {
-	set Editor(log,$var) 0
+    set Editor(log,$var) 0
     }
     
     # increment total time

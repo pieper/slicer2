@@ -44,31 +44,31 @@
 # .END
 #-------------------------------------------------------------------------------
 proc CorrespondenceInit {} {
-	global Correspondence Module Volume Model
+    global Correspondence Module Volume Model
 
-	# Define Tabs
-	#------------------------------------
-	# Description:
-	#   Each module is given a button on the Slicer's main menu.
-	#   When that button is pressed a row of tabs appear, and there is a panel
-	#   on the user interface for each tab.  If all the tabs do not fit on one
-	#   row, then the last tab is automatically created to say "More", and 
-	#   clicking it reveals a second row of tabs.
-	#
-	#   Define your tabs here as shown below.  The options are:
-	#   
-	#   row1List = list of ID's for tabs. (ID's must be unique single words)
-	#   row1Name = list of Names for tabs. (Names appear on the user interface
-	#              and can be non-unique with multiple words.)
-	#   row1,tab = ID of initial tab
-	#   row2List = an optional second row of tabs if the first row is too small
-	#   row2Name = like row1
-	#   row2,tab = like row1 
-	#
-	set m Correspondence
-	set Module($m,row1List) "Help Correspond"
+    # Define Tabs
+    #------------------------------------
+    # Description:
+    #   Each module is given a button on the Slicer's main menu.
+    #   When that button is pressed a row of tabs appear, and there is a panel
+    #   on the user interface for each tab.  If all the tabs do not fit on one
+    #   row, then the last tab is automatically created to say "More", and 
+    #   clicking it reveals a second row of tabs.
+    #
+    #   Define your tabs here as shown below.  The options are:
+    #   
+    #   row1List = list of ID's for tabs. (ID's must be unique single words)
+    #   row1Name = list of Names for tabs. (Names appear on the user interface
+    #              and can be non-unique with multiple words.)
+    #   row1,tab = ID of initial tab
+    #   row2List = an optional second row of tabs if the first row is too small
+    #   row2Name = like row1
+    #   row2,tab = like row1 
+    #
+    set m Correspondence
+    set Module($m,row1List) "Help Correspond"
         set Module($m,row1Name) "{Help} {Correspond}"
-	set Module($m,row1,tab) Correspond
+    set Module($m,row1,tab) Correspond
 
 #        set Module($m,row2List) "SField VField"
 #        set Module($m,row2Name) "{Scalar Field} {Vector Field}"
@@ -78,68 +78,68 @@ proc CorrespondenceInit {} {
     #------------------------------------
     set Module($m,overview) "Point correspondences between models."
 
-	# Define Procedures
-	#------------------------------------
-	# Description:
-	#   The Slicer sources all *.tcl files, and then it calls the Init
-	#   functions of each module, followed by the VTK functions, and finally
-	#   the GUI functions. A MRML function is called whenever the MRML tree
-	#   changes due to the creation/deletion of nodes.
-	#   
-	#   While the Init procedure is required for each module, the other 
-	#   procedures are optional.  If they exist, then their name (which
-	#   can be anything) is registered with a line like this:
-	#
-	#   set Module($m,procVTK) CorrespondenceBuildVTK
-	#
-	#   All the options are:
-	#
-	#   procGUI   = Build the graphical user interface
-	#   procVTK   = Construct VTK objects
-	#   procMRML  = Update after the MRML tree changes due to the creation
-	#               of deletion of nodes.
-	#   procEnter = Called when the user enters this module by clicking
-	#               its button on the main menu
-	#   procExit  = Called when the user leaves this module by clicking
-	#               another modules button
-	#   procStorePresets  = Called when the user holds down one of the Presets
-	#               buttons.
-	#   procRecallPresets  = Called when the user clicks one of the Presets buttons
-	#               
-	#   Note: if you use presets, make sure to give a preset defaults
-	#   string in your init function, of the form: 
-	#   set Module($m,presets) "key1='val1' key2='val2' ..."
-	#   
-	set Module($m,procGUI) CorrespondenceBuildGUI
-#	set Module($m,procEnter) CorrespondenceEnter
-#	set Module($m,procExit) CorrespondenceExit
-	set Module($m,procMRML) CorrespondenceUpdateGUI
+    # Define Procedures
+    #------------------------------------
+    # Description:
+    #   The Slicer sources all *.tcl files, and then it calls the Init
+    #   functions of each module, followed by the VTK functions, and finally
+    #   the GUI functions. A MRML function is called whenever the MRML tree
+    #   changes due to the creation/deletion of nodes.
+    #   
+    #   While the Init procedure is required for each module, the other 
+    #   procedures are optional.  If they exist, then their name (which
+    #   can be anything) is registered with a line like this:
+    #
+    #   set Module($m,procVTK) CorrespondenceBuildVTK
+    #
+    #   All the options are:
+    #
+    #   procGUI   = Build the graphical user interface
+    #   procVTK   = Construct VTK objects
+    #   procMRML  = Update after the MRML tree changes due to the creation
+    #               of deletion of nodes.
+    #   procEnter = Called when the user enters this module by clicking
+    #               its button on the main menu
+    #   procExit  = Called when the user leaves this module by clicking
+    #               another modules button
+    #   procStorePresets  = Called when the user holds down one of the Presets
+    #               buttons.
+    #   procRecallPresets  = Called when the user clicks one of the Presets buttons
+    #               
+    #   Note: if you use presets, make sure to give a preset defaults
+    #   string in your init function, of the form: 
+    #   set Module($m,presets) "key1='val1' key2='val2' ..."
+    #   
+    set Module($m,procGUI) CorrespondenceBuildGUI
+#    set Module($m,procEnter) CorrespondenceEnter
+#    set Module($m,procExit) CorrespondenceExit
+    set Module($m,procMRML) CorrespondenceUpdateGUI
 
-	# Define Dependencies
-	#------------------------------------
-	# Description:
-	#   Record any other modules that this one depends on.  This is used 
-	#   to check that all necessary modules are loaded when Slicer runs.
-	#   
-	set Module($m,depend) "Data Models TetraMesh"
+    # Define Dependencies
+    #------------------------------------
+    # Description:
+    #   Record any other modules that this one depends on.  This is used 
+    #   to check that all necessary modules are loaded when Slicer runs.
+    #   
+    set Module($m,depend) "Data Models TetraMesh"
 
         # Set version info
-	#------------------------------------
-	# Description:
-	#   Record the version number for display under Help->Version Info.
-	#   The strings with the $ symbol tell CVS to automatically insert the
-	#   appropriate revision number and date when the module is checked in.
-	#   
-	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.1 $} {$Date: 2002/01/31 21:20:43 $}]
+    #------------------------------------
+    # Description:
+    #   Record the version number for display under Help->Version Info.
+    #   The strings with the $ symbol tell CVS to automatically insert the
+    #   appropriate revision number and date when the module is checked in.
+    #   
+    lappend Module(versions) [ParseCVSInfo $m \
+        {$Revision: 1.2 $} {$Date: 2002/03/18 20:52:37 $}]
 
-	# Initialize module-level variables
-	#------------------------------------
-	# Description:
-	#   Keep a global array with the same name as the module.
-	#   This is a handy method for organizing the global variables that
-	#   the procedures in this module and others need to access.
-	#
+    # Initialize module-level variables
+    #------------------------------------
+    # Description:
+    #   Keep a global array with the same name as the module.
+    #   This is a handy method for organizing the global variables that
+    #   the procedures in this module and others need to access.
+    #
         set Correspondence(Model1) ""
         set Correspondence(Model2) ""
         set Correspondence(CorSphereScale) 9.5
@@ -154,31 +154,31 @@ proc CorrespondenceInit {} {
 # .END
 #-------------------------------------------------------------------------------
 proc CorrespondenceBuildGUI {} {
-	global Gui Correspondence Module Volume Model View
+    global Gui Correspondence Module Volume Model View
 
-	# A frame has already been constructed automatically for each tab.
-	# A frame named "Props" can be referenced as follows:
-	#   
-	#     $Module(<Module name>,f<Tab name>)
-	#
-	# ie: $Module(Correspondence,fProps)
+    # A frame has already been constructed automatically for each tab.
+    # A frame named "Props" can be referenced as follows:
+    #   
+    #     $Module(<Module name>,f<Tab name>)
+    #
+    # ie: $Module(Correspondence,fProps)
 
-	# This is a useful comment block that makes reading this easy for all:
-	#-------------------------------------------
-	# Frame Hierarchy:
-	#-------------------------------------------
-	# Help
+    # This is a useful comment block that makes reading this easy for all:
+    #-------------------------------------------
+    # Frame Hierarchy:
+    #-------------------------------------------
+    # Help
         # Correspond
-	#-------------------------------------------
+    #-------------------------------------------
 
-	#-------------------------------------------
-	# Help frame
-	#-------------------------------------------
+    #-------------------------------------------
+    # Help frame
+    #-------------------------------------------
 
-	# Write the "help" in the form of psuedo-html.  
-	# Refer to the documentation for details on the syntax.
-	#
-	set help "
+    # Write the "help" in the form of psuedo-html.  
+    # Refer to the documentation for details on the syntax.
+    #
+    set help "
 The Correspondence module allows a user to show point correspondences between models.
 
 <UL>
@@ -188,23 +188,23 @@ The Correspondence module allows a user to show point correspondences between mo
 
 </LI></UL>
 "
-	regsub -all "\n" $help {} help
-	MainHelpApplyTags Correspondence $help
-	MainHelpBuildGUI Correspondence
+    regsub -all "\n" $help {} help
+    MainHelpApplyTags Correspondence $help
+    MainHelpBuildGUI Correspondence
 
 
-	#-------------------------------------------
-	# Correspond frame
-	#-------------------------------------------
-	set fCorrespond $Module(Correspondence,fCorrespond)
-	set f $fCorrespond
+    #-------------------------------------------
+    # Correspond frame
+    #-------------------------------------------
+    set fCorrespond $Module(Correspondence,fCorrespond)
+    set f $fCorrespond
 
-	frame $f.fTop    -bg $Gui(activeWorkspace)
-	frame $f.fScroll   -bg $Gui(activeWorkspace)
-	frame $f.fMiddle -bg $Gui(activeWorkspace)
-	frame $f.fBottom -bg $Gui(activeWorkspace)
-	frame $f.fRun    -bg $Gui(activeWorkspace)
-	pack $f.fTop $f.fScroll $f.fMiddle $f.fBottom $f.fRun \
+    frame $f.fTop    -bg $Gui(activeWorkspace)
+    frame $f.fScroll   -bg $Gui(activeWorkspace)
+    frame $f.fMiddle -bg $Gui(activeWorkspace)
+    frame $f.fBottom -bg $Gui(activeWorkspace)
+    frame $f.fRun    -bg $Gui(activeWorkspace)
+    pack $f.fTop $f.fScroll $f.fMiddle $f.fBottom $f.fRun \
                 -side top -padx 0 -pady $Gui(pad)
 
         #-------------------------------------------
@@ -215,47 +215,47 @@ The Correspondence module allows a user to show point correspondences between mo
 
         pack $f.lCorrespond -side left -padx $Gui(pad)
 
-	set f $fCorrespond.fScroll
+    set f $fCorrespond.fScroll
 
-	set Correspondence(canvasScrolledGUI)  $f.cGrid
+    set Correspondence(canvasScrolledGUI)  $f.cGrid
         set Correspondence(fScrolledGUI)       $f.cGrid.fListItems
         DevCreateScrollList $f \
                             CorrespondenceCreateModelGUI \
                             CorrespondenceConfigScrolledGUI \
                             "$Model(idList)"
 
-	#-------------------------------------------
-	# Correspond->Middle frame
-	#-------------------------------------------
+    #-------------------------------------------
+    # Correspond->Middle frame
+    #-------------------------------------------
 
-	set f $fCorrespond.fMiddle
+    set f $fCorrespond.fMiddle
 
         DevAddLabel  $f.lSphereScale "Sphere Scaling"
         eval {entry $f.eSphereScale -textvariable Correspondence(CorSphereScale) -width 5} $Gui(WEA)
    
         pack $f.lSphereScale $f.eSphereScale -side left -padx $Gui(pad)
 
-	#-------------------------------------------
-	# Correspond->Bottom frame
-	#-------------------------------------------
+    #-------------------------------------------
+    # Correspond->Bottom frame
+    #-------------------------------------------
 
 
-	set f $fCorrespond.fBottom
+    set f $fCorrespond.fBottom
 
         DevAddLabel  $f.lSphereSkip "Keep Every Nth Node:"
         eval {entry $f.eSphereSkip -textvariable Correspondence(CorSphereSkip) -width 5} $Gui(WEA)
    
         pack $f.lSphereSkip $f.eSphereSkip -side left -padx $Gui(pad)
 
-	#-------------------------------------------
-	# Correspond->Bottom frame
-	#-------------------------------------------
+    #-------------------------------------------
+    # Correspond->Bottom frame
+    #-------------------------------------------
 
-	set f $fCorrespond.fRun
+    set f $fCorrespond.fRun
 
         DevAddButton $f.bRun "Run" "CorrespondenceCorrespondSurfaces"
 
-	pack $f.bRun
+    pack $f.bRun
 
 }
 
@@ -273,35 +273,35 @@ The Correspondence module allows a user to show point correspondences between mo
 # .END
 #-------------------------------------------------------------------------------
 proc CorrespondenceCreateModelGUI {f m } {
-	global Gui Model Color Correspondence 
+    global Gui Model Color Correspondence 
 
 
-        # puts "Creating GUI for model $m"		
-	# If the GUI already exists, then just change name.
-	if {[info command $f.c$m] != ""} {
-		$f.c$m config -text "[Model($m,node) GetName]"
-		return 0
-	}
+        # puts "Creating GUI for model $m"        
+    # If the GUI already exists, then just change name.
+    if {[info command $f.c$m] != ""} {
+        $f.c$m config -text "[Model($m,node) GetName]"
+        return 0
+    }
 
-	# Name / Visible
-	set Correspondence($m,match) 0
-	eval {checkbutton $f.c$m \
-		-text [Model($m,node) GetName] -variable Correspondence($m,match) \
-		-width 17 -indicatoron 0} $Gui(WCA)
+    # Name / Visible
+    set Correspondence($m,match) 0
+    eval {checkbutton $f.c$m \
+        -text [Model($m,node) GetName] -variable Correspondence($m,match) \
+        -width 17 -indicatoron 0} $Gui(WCA)
 #        $f.c$m configure -bg [MakeColorNormalized \
 #                        [Color($Model($m,colorID),node) GetDiffuseColor]]
 #        $f.c$m configure -selectcolor [MakeColorNormalized \
 #                        [Color($Model($m,colorID),node) GetDiffuseColor]]
-			
-	# Add a tool tip if the string is too long for the button
-	if {[string length [Model($m,node) GetName]] > [$f.c$m cget -width]} {
-		TooltipAdd $f.c$m [Model($m,node) GetName]
-	}
-	
-#	eval grid $l1_command $c_command $f.e${m} $f.s${m} -pady 2 -padx 2 -sticky we
+            
+    # Add a tool tip if the string is too long for the button
+    if {[string length [Model($m,node) GetName]] > [$f.c$m cget -width]} {
+        TooltipAdd $f.c$m [Model($m,node) GetName]
+    }
+    
+#    eval grid $l1_command $c_command $f.e${m} $f.s${m} -pady 2 -padx 2 -sticky we
 
         eval grid $f.c$m -pady 2 -padx 2 -sticky we
-	return 1
+    return 1
 }
 
 #-------------------------------------------------------------------------------
@@ -316,41 +316,41 @@ proc CorrespondenceCreateModelGUI {f m } {
 # .END   
 #-------------------------------------------------------------------------------
 proc CorrespondenceConfigScrolledGUI {canvasScrolledGUI fScrolledGUI} {
-	global Model ModelGroup RemovedModels
+    global Model ModelGroup RemovedModels
 
-	set f      $fScrolledGUI
-	set canvas $canvasScrolledGUI
-	set m [lindex $Model(idList) 0]
+    set f      $fScrolledGUI
+    set canvas $canvasScrolledGUI
+    set m [lindex $Model(idList) 0]
 
         # y spacing important for calculation of frame height for scrolling
         set pady 2
 
-	if {$m != ""} {
-	    # Find the height of a single button
-	    # Must use $f.s$m since the scrollbar ("s") fields are tallest
-	    set lastButton $f.c$m
-	    # Find how many modules (lines) in the frame
-	    set numLines 0
-	    foreach m $Model(idList) {
-	    	if {$RemovedModels($m) == 0} {
-	    		incr numLines
-	    	}
-	    }
-	    incr numLines [llength $ModelGroup(idList)]
-	    #set numLines [expr [llength $Model(idList)] + [llength $ModelGroup(idList)]]
-	    # Find the height of a line
-	    set incr [expr {[winfo reqheight $lastButton] + 2*$pady}]
-	    # Find the total height that should scroll
-	    set height [expr {$numLines * $incr}]
-	    # Find the width of the scrolling region
-	    update; 	# wait for some stuff to be done before requesting
-	    		# window positions
-	    set last_x [winfo x $lastButton]
-	    set width [expr $last_x + [winfo reqwidth $lastButton]]
-	    $canvas config -scrollregion "0 0 $width $height"
-	    $canvas config -yscrollincrement $incr -confine true
-	    $canvas config -xscrollincrement 1 -confine true
-	}
+    if {$m != ""} {
+        # Find the height of a single button
+        # Must use $f.s$m since the scrollbar ("s") fields are tallest
+        set lastButton $f.c$m
+        # Find how many modules (lines) in the frame
+        set numLines 0
+        foreach m $Model(idList) {
+            if {$RemovedModels($m) == 0} {
+                incr numLines
+            }
+        }
+        incr numLines [llength $ModelGroup(idList)]
+        #set numLines [expr [llength $Model(idList)] + [llength $ModelGroup(idList)]]
+        # Find the height of a line
+        set incr [expr {[winfo reqheight $lastButton] + 2*$pady}]
+        # Find the total height that should scroll
+        set height [expr {$numLines * $incr}]
+        # Find the width of the scrolling region
+        update;     # wait for some stuff to be done before requesting
+                # window positions
+        set last_x [winfo x $lastButton]
+        set width [expr $last_x + [winfo reqwidth $lastButton]]
+        $canvas config -scrollregion "0 0 $width $height"
+        $canvas config -yscrollincrement $incr -confine true
+        $canvas config -xscrollincrement 1 -confine true
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -387,7 +387,7 @@ proc CorrespondenceDeleteModelGUI {f m} {
 # .END
 #-------------------------------------------------------------------------------
 proc CorrespondenceUpdateGUI {} {
-	global Correspondence Model
+    global Correspondence Model
 
     set gui 0
 
@@ -491,7 +491,7 @@ proc CorrespondenceCorrespondSurfaces {} {
 # .END
 #-------------------------------------------------------------------------------
 proc CorrespondenceMatchSurface {m} {
-	global Correspondence Model Volume Module
+    global Correspondence Model Volume Module
 
     set PD  $Model($m,polyData)
     set NumNode [$PD GetNumberOfPoints]

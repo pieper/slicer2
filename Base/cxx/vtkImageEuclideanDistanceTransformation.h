@@ -26,11 +26,11 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkImageEuclideanDistanceTransformation.h,v $
   Language:  C++
-  Date:      $Date: 2001/07/03 16:12:27 $
-  Version:   $Revision: 1.3 $
+  Date:      $Date: 2002/03/18 21:02:55 $
+  Version:   $Revision: 1.4 $
   Thanks:    Olivier Cuisenaire who developed this class
              URL: http://ltswww.epfl.ch/~cuisenai
-	     Email: Olivier.Cuisenaire@epfl.ch
+         Email: Olivier.Cuisenaire@epfl.ch
 
 Copyright (c) Olivier Cuisenaire.
 
@@ -113,7 +113,7 @@ public:
   // successful split.  This can be from 1 to "total".  
   // If 1 is returned, the extent cannot be split.
   int SplitExtent(int splitExt[6], int startExt[6], 
-		  int num, int total);
+          int num, int total);
 
   // Description:
   // Used to set all non-zero voxels to MaximumDistance before starting
@@ -145,7 +145,7 @@ protected:
   void ExecuteInformation(vtkImageData *input, vtkImageData *output);
   void ComputeInputUpdateExtent(int inExt[6], int outExt[6]);
   void ThreadedExecute(vtkImageData *inData, vtkImageData *outData,
-		       int outExt[6], int threadId);
+               int outExt[6], int threadId);
 };
 
 #endif

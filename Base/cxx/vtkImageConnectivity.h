@@ -39,69 +39,69 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 class VTK_EXPORT vtkImageConnectivity : public vtkImageToImageFilter
 {
 public:
-	static vtkImageConnectivity *New();
+    static vtkImageConnectivity *New();
   vtkTypeMacro(vtkImageConnectivity,vtkImageToImageFilter);
-	void PrintSelf(ostream& os, vtkIndent indent);
+    void PrintSelf(ostream& os, vtkIndent indent);
 
   // Function
   void SetFunction(int func) {
-	  this->function = func;};
+      this->function = func;};
   void SetFunctionToIdentifyIslands() {
-	  this->SetFunction(CONNECTIVITY_IDENTIFY);};
+      this->SetFunction(CONNECTIVITY_IDENTIFY);};
   void SetFunctionToRemoveIslands() {
-	  this->SetFunction(CONNECTIVITY_REMOVE);};
+      this->SetFunction(CONNECTIVITY_REMOVE);};
   void SetFunctionToChangeIsland() {
-	  this->SetFunction(CONNECTIVITY_CHANGE);};
+      this->SetFunction(CONNECTIVITY_CHANGE);};
   void SetFunctionToMeasureIsland() {
-	  this->SetFunction(CONNECTIVITY_MEASURE);};
+      this->SetFunction(CONNECTIVITY_MEASURE);};
   void SetFunctionToSaveIsland() {
-	  this->SetFunction(CONNECTIVITY_SAVE);};
+      this->SetFunction(CONNECTIVITY_SAVE);};
   int GetFunction() {return this->function;}
   char* GetFunctionString();
 
-	// outputs of MeasureIsland
-	vtkGetMacro(IslandSize, int);
-	vtkSetMacro(IslandSize, int);
-	vtkGetMacro(LargestIslandSize, int);
-	vtkSetMacro(LargestIslandSize, int);
+    // outputs of MeasureIsland
+    vtkGetMacro(IslandSize, int);
+    vtkSetMacro(IslandSize, int);
+    vtkGetMacro(LargestIslandSize, int);
+    vtkSetMacro(LargestIslandSize, int);
 
   // Description:
-	vtkGetMacro(SliceBySlice, int);
-	vtkSetMacro(SliceBySlice, int);
-	vtkBooleanMacro(SliceBySlice, int);
+    vtkGetMacro(SliceBySlice, int);
+    vtkSetMacro(SliceBySlice, int);
+    vtkBooleanMacro(SliceBySlice, int);
 
   vtkSetVector3Macro(Seed, int);
-	vtkGetVector3Macro(Seed, int);
+    vtkGetVector3Macro(Seed, int);
 
-	vtkSetMacro(OutputLabel, int);
-	vtkGetMacro(OutputLabel, int);
-	vtkSetMacro(MinSize, int);
-	vtkGetMacro(MinSize, int);
-	vtkSetMacro(Background, float);
-	vtkGetMacro(Background, float);
-	vtkSetMacro(MinForeground, float);
-	vtkGetMacro(MinForeground, float);
-	vtkSetMacro(MaxForeground, float);
-	vtkGetMacro(MaxForeground, float);
+    vtkSetMacro(OutputLabel, int);
+    vtkGetMacro(OutputLabel, int);
+    vtkSetMacro(MinSize, int);
+    vtkGetMacro(MinSize, int);
+    vtkSetMacro(Background, float);
+    vtkGetMacro(Background, float);
+    vtkSetMacro(MinForeground, float);
+    vtkGetMacro(MinForeground, float);
+    vtkSetMacro(MaxForeground, float);
+    vtkGetMacro(MaxForeground, float);
 
 protected:
-	vtkImageConnectivity();
-	~vtkImageConnectivity(){};
-	vtkImageConnectivity(const vtkImageConnectivity&) {};
-	void operator=(const vtkImageConnectivity&) {};
+    vtkImageConnectivity();
+    ~vtkImageConnectivity(){};
+    vtkImageConnectivity(const vtkImageConnectivity&) {};
+    void operator=(const vtkImageConnectivity&) {};
 
-	float Background;
-	float MinForeground;
-	float MaxForeground;
-	int LargestIslandSize;
-	int IslandSize;
-	int MinSize;
-	int OutputLabel;
-	int Seed[3];
-	int function;
+    float Background;
+    float MinForeground;
+    float MaxForeground;
+    int LargestIslandSize;
+    int IslandSize;
+    int MinSize;
+    int OutputLabel;
+    int Seed[3];
+    int function;
   int SliceBySlice;
-	
-	void Execute(vtkImageData *inData, vtkImageData *outData);
+    
+    void Execute(vtkImageData *inData, vtkImageData *outData);
 };
 
 #endif

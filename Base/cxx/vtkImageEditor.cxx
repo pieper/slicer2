@@ -133,8 +133,8 @@ void vtkImageEditor::PrintSelf(ostream& os, vtkIndent indent)
   
   vtkProcessObject::PrintSelf(os,indent);
 
-	os << indent << "RunTime:       " << this->RunTime << "\n";
-	os << indent << "TotalTime:     " << this->TotalTime << "\n";
+    os << indent << "RunTime:       " << this->RunTime << "\n";
+    os << indent << "TotalTime:     " << this->TotalTime << "\n";
   os << indent << "Clip:          " << this->Clip << "\n";
   os << indent << "UseInput:      " << this->UseInput << "\n";
   os << indent << "Slice:         " << this->Slice << "\n";

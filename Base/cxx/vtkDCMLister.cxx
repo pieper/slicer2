@@ -129,9 +129,9 @@ char * vtkDCMLister::GetTCLPreviewRow(int width, int SkipColumn, int max)
       pix = this->ReadUINT16();
       grey = int(pix * sc);
       if(grey < 0)
-	grey = 0;
+    grey = 0;
       if(grey > 255)
-	grey = 255;
+    grey = 255;
       sprintf(this->aux_ret + idx, "#%02x%02x%02x ", grey, grey, grey);
       //this->Skip(6);
       this->Skip(SkipColumn);
@@ -157,7 +157,7 @@ int vtkDCMLister::ReadList(const char *filename)
   
   if((fin = fopen(filename, "rt")) == NULL)
   {
-	return -1;
+    return -1;
   }
 
   while(1)
@@ -193,11 +193,11 @@ int vtkDCMLister::ReadList(const char *filename)
     dummy = new DataElement;
     if(FirstElement == NULL)
       {
-	FirstElement = dummy;
+    FirstElement = dummy;
       }
     else
       {
-	last->Next = dummy;
+    last->Next = dummy;
       }
     
     dummy->Group = gn;
@@ -254,19 +254,19 @@ char * vtkDCMLister::PrintList()
 }
 
 void vtkDCMLister::ListElement(unsigned short Group,
-	      unsigned short Element, unsigned long length,
-	      char *VR, char *Name)
+          unsigned short Element, unsigned long length,
+          char *VR, char *Name)
 {
   if((strcmp(VR, "OB") != 0) &&
      (strcmp(VR, "OW") != 0) &&
      (strcmp(VR, "OX") != 0))
     if(((length + 1) > buff_maxlen) && (length != 0xffffffff))
-	{
-		delete [] buff;
-		buff_maxlen = length + 1;
-		buff = new char [buff_maxlen];
-	}
-			
+    {
+        delete [] buff;
+        buff_maxlen = length + 1;
+        buff = new char [buff_maxlen];
+    }
+            
   if((strcmp(VR, "PN") == 0) 
      || (strcmp(VR, "LO") == 0)
      || (strcmp(VR, "AE") == 0)
@@ -286,7 +286,7 @@ void vtkDCMLister::ListElement(unsigned short Group,
     {
       ReadText(buff, length);
       sprintf(aux_str, "(%04x,%04x) %s %s (%u): %s\n", Group, Element,
-	     VR, Name, length, buff);
+         VR, Name, length, buff);
     }
   else if(strcmp(VR, "FL") == 0)
     {
@@ -295,14 +295,14 @@ void vtkDCMLister::ListElement(unsigned short Group,
       long next_block = ftell(file_in) + length;
       int num = length / sizeof(float);
       sprintf(aux_str, "(%04x,%04x) %s %s (%u): ", Group, Element,
-	     VR, Name, length);
+         VR, Name, length);
       int j = strlen(aux_str);
       for(i = 0; i < num; i++)
-	{
-	  fl = ReadFL();
-	  sprintf(aux_str + j, "%f ", fl);
-	  j = strlen(aux_str);
-	}
+    {
+      fl = ReadFL();
+      sprintf(aux_str + j, "%f ", fl);
+      j = strlen(aux_str);
+    }
       sprintf(aux_str + j, "\n");
       fseek(file_in, next_block, SEEK_SET);
     }
@@ -313,14 +313,14 @@ void vtkDCMLister::ListElement(unsigned short Group,
       long next_block = ftell(file_in) + length;
       int num = length / sizeof(double);
       sprintf(aux_str, "(%04x,%04x) %s %s (%u): ", Group, Element,
-	      VR, Name, length);
+          VR, Name, length);
       int j = strlen(aux_str);
       for(i = 0; i < num; i++)
-	{
-	  fl = ReadFD();
-	  sprintf(aux_str + j, "%f ", fl);
-	  j = strlen(aux_str);
-	}
+    {
+      fl = ReadFD();
+      sprintf(aux_str + j, "%f ", fl);
+      j = strlen(aux_str);
+    }
       sprintf(aux_str + j, "\n");
       fseek(file_in, next_block, SEEK_SET);
     }
@@ -331,14 +331,14 @@ void vtkDCMLister::ListElement(unsigned short Group,
       long next_block = ftell(file_in) + length;
       int num = length / sizeof(UINT32);
       sprintf(aux_str, "(%04x,%04x) %s %s (%u): ", Group, Element,
-	      VR, Name, length);
+          VR, Name, length);
       int j = strlen(aux_str);
       for(i = 0; i < num; i++)
-	{
-	  ui = ReadUINT32();
-	  sprintf(aux_str + j, "%u ", ui);
-	  j = strlen(aux_str);
-	}
+    {
+      ui = ReadUINT32();
+      sprintf(aux_str + j, "%u ", ui);
+      j = strlen(aux_str);
+    }
       sprintf(aux_str + j, "\n");
       fseek(file_in, next_block, SEEK_SET);
     }
@@ -349,14 +349,14 @@ void vtkDCMLister::ListElement(unsigned short Group,
       long next_block = ftell(file_in) + length;
       int num = length / sizeof(INT32);
       sprintf(aux_str, "(%04x,%04x) %s %s (%u): ", Group, Element,
-	      VR, Name, length);
+          VR, Name, length);
       int j = strlen(aux_str);
       for(i = 0; i < num; i++)
-	{
-	  ui = ReadINT32();
-	  sprintf(aux_str + j, "%d ", ui);
-	  j = strlen(aux_str);
-	}
+    {
+      ui = ReadINT32();
+      sprintf(aux_str + j, "%d ", ui);
+      j = strlen(aux_str);
+    }
       sprintf(aux_str + j, "\n");
       fseek(file_in, next_block, SEEK_SET);
     }
@@ -367,14 +367,14 @@ void vtkDCMLister::ListElement(unsigned short Group,
       long next_block = ftell(file_in) + length;
       int num = length / sizeof(UINT16);
       sprintf(aux_str, "(%04x,%04x) %s %s (%u): ", Group, Element,
-	      VR, Name, length);
+          VR, Name, length);
       int j = strlen(aux_str);
       for(i = 0; i < num; i++)
-	{
-	  ui = ReadUINT16();
-	  sprintf(aux_str + j, "%u ", ui);
-	  j = strlen(aux_str);
-	}
+    {
+      ui = ReadUINT16();
+      sprintf(aux_str + j, "%u ", ui);
+      j = strlen(aux_str);
+    }
       sprintf(aux_str + j, "\n");
       fseek(file_in, next_block, SEEK_SET);
     }
@@ -385,14 +385,14 @@ void vtkDCMLister::ListElement(unsigned short Group,
       long next_block = ftell(file_in) + length;
       int num = length / sizeof(INT16);
       sprintf(aux_str, "(%04x,%04x) %s %s (%u): ", Group, Element,
-	      VR, Name, length);
+          VR, Name, length);
       int j = strlen(aux_str);
       for(i = 0; i < num; i++)
-	{
-	  ui = ReadINT16();
-	  sprintf(aux_str + j, "%d ", ui);
-	  j = strlen(aux_str);
-	}
+    {
+      ui = ReadINT16();
+      sprintf(aux_str + j, "%d ", ui);
+      j = strlen(aux_str);
+    }
       sprintf(aux_str + j, "\n");
       fseek(file_in, next_block, SEEK_SET);
     }
@@ -403,24 +403,24 @@ void vtkDCMLister::ListElement(unsigned short Group,
       long next_block = ftell(file_in) + length;
       int num = length / sizeof(UINT16);
       sprintf(aux_str, "(%04x,%04x) %s %s (%u): ", Group, Element,
-	      VR, Name, length);
+          VR, Name, length);
       int j = strlen(aux_str);
       for(i = 0; i < num; i++)
-	{
-	  ui = ReadUINT16();
-	  sprintf(aux_str + j, "%04x ", ui);
-	  j = strlen(aux_str);
-	}
+    {
+      ui = ReadUINT16();
+      sprintf(aux_str + j, "%04x ", ui);
+      j = strlen(aux_str);
+    }
       sprintf(aux_str + j, "\n");
       fseek(file_in, next_block, SEEK_SET);
     }
   else if((strcmp(VR, "OB") == 0) ||
-	  (strcmp(VR, "OW") == 0) ||
-	  (strcmp(VR, "OX") == 0)
-	  )
+      (strcmp(VR, "OW") == 0) ||
+      (strcmp(VR, "OX") == 0)
+      )
     {
       sprintf(aux_str, "(%04x,%04x) %s %s (%u): Data starts at position %d\n", Group, Element,
-	      VR, Name, length, ftell(file_in));
+          VR, Name, length, ftell(file_in));
     }
   else if(strcmp(VR, "SQ") == 0)
     {
@@ -430,20 +430,20 @@ void vtkDCMLister::ListElement(unsigned short Group,
     {
       Skip(length);
       sprintf(aux_str, "\t(%04x,%04x) %s of VR %s not interpreted.\n",
-	      Group, Element, Name, VR);
+          Group, Element, Name, VR);
     }
 }
 
 char * vtkDCMLister::callback(unsigned short group_code,
-			    unsigned short element_code,
-			    unsigned long length,
-			    char *vr)
+                unsigned short element_code,
+                unsigned long length,
+                char *vr)
 {
   struct DataElement *dummy;
   int found;
   long next_element;
   //printf("(%04x,%04x) %s (%lu bytes)",
-  //	 group_code, element_code, vr, length);
+  //     group_code, element_code, vr, length);
   
   if(length != 0xffffffff)
     next_element = GetFilePosition() + length;
@@ -454,15 +454,15 @@ char * vtkDCMLister::callback(unsigned short group_code,
   while((dummy != NULL) && (!found))
     {
       if((dummy->Group == group_code) && (dummy->Element == element_code))
-	{
-	  if(strcmp(vr, "??") == 0)
-	    ListElement(group_code, element_code, length, dummy->VR, dummy->Name);
-	  else
-	    ListElement(group_code, element_code, length, vr, dummy->Name);
-	  
-	  found = 1;
-	  break;
-	}
+    {
+      if(strcmp(vr, "??") == 0)
+        ListElement(group_code, element_code, length, dummy->VR, dummy->Name);
+      else
+        ListElement(group_code, element_code, length, vr, dummy->Name);
+      
+      found = 1;
+      break;
+    }
       
       dummy = dummy->Next;
     }
@@ -470,14 +470,14 @@ char * vtkDCMLister::callback(unsigned short group_code,
   if(!found && ListAll)
     { // element not found in list
       if(strcmp(vr, "??") == 0)
-	{
-	  sprintf(aux_str, "(%04x,%04x) %s (%lu bytes)\n",
-	   group_code, element_code, vr, length);
-	}
+    {
+      sprintf(aux_str, "(%04x,%04x) %s (%lu bytes)\n",
+       group_code, element_code, vr, length);
+    }
       else
-	{
-	  ListElement(group_code, element_code, length, vr, "Unknown");
-	}
+    {
+      ListElement(group_code, element_code, length, vr, "Unknown");
+    }
     }
 
   if(length != 0xffffffff)
@@ -508,9 +508,9 @@ void vtkDCMLister::getelement(int *i)
     {
       do
       {
-	element[j]=line[*i];
-	j++;
-	(*i)++;
+    element[j]=line[*i];
+    j++;
+    (*i)++;
       }
       while((isname(line[*i])) && (j<999));
     }
@@ -518,9 +518,9 @@ void vtkDCMLister::getelement(int *i)
     {
       do
       {
-	element[j]=line[*i];
-	j++;
-	(*i)++;
+    element[j]=line[*i];
+    j++;
+    (*i)++;
       }
       while((!isalnum(line[*i])) && (!isspace(line[*i])) && (j<999));
     }

@@ -2,10 +2,10 @@
 if {$argc != 2} {
     puts "UNIX Usage: vtk GoMrmlize.tcl <img1> <num2>"
     puts "Windows Usage: wish82.exe GoMrmlize.tcl <img1> <num2>"
-	puts "where: <img1> = full pathname of the first image in the volume."
-	puts "       <num2> = just the number of the last image"
-	puts "Example: vtk GoMrmlize.tcl /data/mr/I.001 124"
-	puts "Output: output.mrml is written in the current directory."
+    puts "where: <img1> = full pathname of the first image in the volume."
+    puts "       <num2> = just the number of the last image"
+    puts "Example: vtk GoMrmlize.tcl /data/mr/I.001 124"
+    puts "Output: output.mrml is written in the current directory."
     exit
 }
 
@@ -16,13 +16,13 @@ wm withdraw .
 # Determine Slicer's home directory from the SLICER_HOME environment 
 # variable, or the root directory of this script ($argv0).
 if {[info exists env(SLICER_HOME)] == 0 || $env(SLICER_HOME) == ""} {
-	set prog [file dirname $argv0]
-	# temporary fix for print_header call to use in GetHeaderInfo
-	set Gui(pc) 1
+    set prog [file dirname $argv0]
+    # temporary fix for print_header call to use in GetHeaderInfo
+    set Gui(pc) 1
 } else {
-	set prog [file join $env(SLICER_HOME) program]
-	# temporary fix for print_header call to use in GetHeaderInfo
-	set Gui(pc) 0
+    set prog [file join $env(SLICER_HOME) program]
+    # temporary fix for print_header call to use in GetHeaderInfo
+    set Gui(pc) 0
 }
 
 # Read source files
@@ -32,9 +32,9 @@ source [file join $prog [file join tcl-main MainHeader.tcl]]
 
 # Find print_header
 if {$tcl_platform(platform) == "windows"} {
-	set Path(printHeader) [file join $prog [file join bin print_header_NT]]
+    set Path(printHeader) [file join $prog [file join bin print_header_NT]]
 } else {
-	set Path(printHeader) [file join $prog [file join bin print_header]]
+    set Path(printHeader) [file join $prog [file join bin print_header]]
 }
 
 # Read headers

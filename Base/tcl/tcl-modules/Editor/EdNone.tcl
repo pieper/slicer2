@@ -32,12 +32,12 @@
 # .END
 #-------------------------------------------------------------------------------
 proc EdNoneInit {} {
-	global Ed
+    global Ed
 
-	set e EdNone
-	set Ed($e,name)      "None"
-	set Ed($e,initials)  "No"
-	set Ed($e,desc)      "First, select an effect."
-	set Ed($e,rank)      100
+    set e EdNone
+    set Ed($e,name)      "None"
+    set Ed($e,initials)  "No"
+    set Ed($e,desc)      "First, select an effect."
+    set Ed($e,rank)      100
 }
 

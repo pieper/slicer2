@@ -67,7 +67,7 @@ vtkImageReformatIJK::vtkImageReformatIJK()
 
 vtkImageReformatIJK::~vtkImageReformatIJK()
 {
-	this->Indices->Delete();
+    this->Indices->Delete();
   this->tran->Delete();
 
   // We must UnRegister any object that has a vtkSetObjectMacro
@@ -79,20 +79,20 @@ vtkImageReformatIJK::~vtkImageReformatIJK()
 
 void vtkImageReformatIJK::PrintSelf(ostream& os, vtkIndent indent)
 {
-	vtkImageToImageFilter::PrintSelf(os,indent);
+    vtkImageToImageFilter::PrintSelf(os,indent);
 
-	os << indent << "YStep[0]:    " << this->YStep[0] << "\n";
-	os << indent << "YStep[1]:    " << this->YStep[1] << "\n";
-	os << indent << "YStep[2]:    " << this->YStep[2] << "\n";
-	os << indent << "XStep[0]:    " << this->XStep[0] << "\n";
-	os << indent << "XStep[1]:    " << this->XStep[1] << "\n";
-	os << indent << "XStep[2]:    " << this->XStep[2] << "\n";
-	os << indent << "ZStep[0]:    " << this->ZStep[0] << "\n";
-	os << indent << "ZStep[1]:    " << this->ZStep[1] << "\n";
-	os << indent << "ZStep[2]:    " << this->ZStep[2] << "\n";
-	os << indent << "Origin[0]:   " << this->Origin[0] << "\n";
-	os << indent << "Origin[1]:   " << this->Origin[1] << "\n";
-	os << indent << "Origin[2]:   " << this->Origin[2] << "\n";
+    os << indent << "YStep[0]:    " << this->YStep[0] << "\n";
+    os << indent << "YStep[1]:    " << this->YStep[1] << "\n";
+    os << indent << "YStep[2]:    " << this->YStep[2] << "\n";
+    os << indent << "XStep[0]:    " << this->XStep[0] << "\n";
+    os << indent << "XStep[1]:    " << this->XStep[1] << "\n";
+    os << indent << "XStep[2]:    " << this->XStep[2] << "\n";
+    os << indent << "ZStep[0]:    " << this->ZStep[0] << "\n";
+    os << indent << "ZStep[1]:    " << this->ZStep[1] << "\n";
+    os << indent << "ZStep[2]:    " << this->ZStep[2] << "\n";
+    os << indent << "Origin[0]:   " << this->Origin[0] << "\n";
+    os << indent << "Origin[1]:   " << this->Origin[1] << "\n";
+    os << indent << "Origin[2]:   " << this->Origin[2] << "\n";
 
   // vtkSetObjectMacro
   os << indent << "WldToIjkMatrix: " << this->WldToIjkMatrix << "\n";
@@ -156,7 +156,7 @@ void vtkImageReformatIJK::ComputeTransform()
   {
     for (x=0; x<4; x++)
     {
-  		input->SetElement(x, y, (float)str[this->InputOrder][y*4+x]);
+          input->SetElement(x, y, (float)str[this->InputOrder][y*4+x]);
     }
   }
 
@@ -165,7 +165,7 @@ void vtkImageReformatIJK::ComputeTransform()
   {
     for (x=0; x<4; x++)
     {
-  		output->SetElement(x, y, (float)str[this->OutputOrder][y*4+x]);
+          output->SetElement(x, y, (float)str[this->OutputOrder][y*4+x]);
     }
   }
 
@@ -173,8 +173,8 @@ void vtkImageReformatIJK::ComputeTransform()
   this->tran = vtkTransform::New();
   this->tran->SetMatrix(*output);
   this->tran->Inverse();
-	// Set the vtkTransform to PreMultiply so a concatenated matrix, C,
-	// is multiplied by the existing matrix, M, to form M`= M*C (not C*M)
+    // Set the vtkTransform to PreMultiply so a concatenated matrix, C,
+    // is multiplied by the existing matrix, M, to form M`= M*C (not C*M)
   this->tran->PreMultiply();
   this->tran->Concatenate(input);
   // Now convert it to OutputToInput
@@ -197,17 +197,17 @@ void vtkImageReformatIJK::ComputeOutputExtent()
   // Output is XYZ, input is IJK
   // tran: XYZ->IJK
   
-	// Convert origin from XYZ to IJK space
-	this->tran->MultiplyPoint(x, this->XStep);
-	this->tran->MultiplyPoint(y, this->YStep);
-	this->tran->MultiplyPoint(z, this->ZStep);
+    // Convert origin from XYZ to IJK space
+    this->tran->MultiplyPoint(x, this->XStep);
+    this->tran->MultiplyPoint(y, this->YStep);
+    this->tran->MultiplyPoint(z, this->ZStep);
 
   if (inExt[0] != 0 || inExt[2] != 0 || inExt[4] != 0) 
   {
     vtkErrorMacro(<<"The input extent needs to be 0-based.");
     return;
   }
-	
+    
   ijk[0] = inExt[1];
   ijk[1] = inExt[3];
   ijk[2] = inExt[5];
@@ -262,11 +262,11 @@ void vtkImageReformatIJK::ComputeOutputExtent()
   this->Origin[1] += this->ZStep[1] * this->Slice;
   this->Origin[2] += this->ZStep[2] * this->Slice;
 
-	// Create array of indices
+    // Create array of indices
   int size = (this->OutputExtent[3]-this->OutputExtent[2]+1)*
     (this->OutputExtent[1]-this->OutputExtent[0]+1);
-	this->Indices->SetNumberOfComponents(1);
-	this->Indices->SetNumberOfValues(size);
+    this->Indices->SetNumberOfComponents(1);
+    this->Indices->SetNumberOfValues(size);
 
 }
 
@@ -347,7 +347,7 @@ void vtkImageReformatIJK::ComputeReformatMatrix(vtkMatrix4x4 *ref)
   trans->Inverse();
   trans->GetMatrix(ijkToRas);
 
-	// C (center of output image)
+    // C (center of output image)
   // C = Origin + Step * Extent/2
   for (i=0; i<3; i++) 
   {
@@ -357,7 +357,7 @@ void vtkImageReformatIJK::ComputeReformatMatrix(vtkMatrix4x4 *ref)
   trans->SetPoint(C);
   trans->GetPoint(C);
 
-	// X (right)
+    // X (right)
   //
   for (i=0; i<3; i++) 
   {
@@ -367,7 +367,7 @@ void vtkImageReformatIJK::ComputeReformatMatrix(vtkMatrix4x4 *ref)
   trans->SetPoint(X);
   trans->GetPoint(X);
 
-	// Y (lower)
+    // Y (lower)
   for (i=0; i<3; i++) 
   {
     Y[i] = this->Origin[i] + this->YStep[i];
@@ -444,84 +444,84 @@ void vtkImageReformatIJK::ComputeInputUpdateExtent(int inExt[6], int outExt[6])
 // This templated function executes the filter for any type of data.
 template <class T>
 static void vtkImageReformatIJKExecute(vtkImageReformatIJK *self,
-				     vtkImageData *inData, T *inPtr,
-				     vtkImageData *outData, T *outPtr, 
-				     int outExt[6], int id)
+                     vtkImageData *inData, T *inPtr,
+                     vtkImageData *outData, T *outPtr, 
+                     int outExt[6], int id)
 {
-	int inIncX, inIncY, inIncZ, outIncX, outIncY, outIncZ;
+    int inIncX, inIncY, inIncZ, outIncX, outIncY, outIncZ;
   int xStep[3], yStep[3], xRewind[3], origin[3];
-	int i, x, y, z, nx, ny, nxy, maxX, maxY, idxX, idxY, idx;
-	int inExt[6];
+    int i, x, y, z, nx, ny, nxy, maxX, maxY, idxX, idxY, idx;
+    int inExt[6];
 
-	// find the region to loop over
-	maxX = outExt[1]-outExt[0]; 
-	maxY = outExt[3]-outExt[2];
+    // find the region to loop over
+    maxX = outExt[1]-outExt[0]; 
+    maxY = outExt[3]-outExt[2];
  
-	// Find input dimensions
-	inData->GetExtent(inExt);
+    // Find input dimensions
+    inData->GetExtent(inExt);
   nx = inExt[1]-inExt[0]+1;
   ny = inExt[3]-inExt[2]+1;
   nxy=nx*ny;
 
-	// Get increments to march through data 
-	outData->GetContinuousIncrements(outExt, outIncX, outIncY, outIncZ);
-	inData->GetContinuousIncrements(inExt, inIncX, inIncY, inIncZ);
+    // Get increments to march through data 
+    outData->GetContinuousIncrements(outExt, outIncX, outIncY, outIncZ);
+    inData->GetContinuousIncrements(inExt, inIncX, inIncY, inIncZ);
 
   // Get pointer to indices
-	int *indices = self->GetIndices()->GetPointer(0);
+    int *indices = self->GetIndices()->GetPointer(0);
 
   for (i=0; i<3; i++)
   {
     xStep[i]  = (int)(self->XStep[i]);
     yStep[i]  = (int)(self->YStep[i]);
     origin[i] = (int)(self->Origin[i]);
-	
+    
     // rewind steps in x direction
-	  xRewind[i] = xStep[i] * (maxX+1);
+      xRewind[i] = xStep[i] * (maxX+1);
   }
 
   x = origin[0];
   y = origin[1];
   z = origin[2];
 
-	// Loop through output pixels
-	for (idxY = 0; idxY <= maxY; idxY++)
-	{
-		for (idxX = 0; idxX <= maxX; idxX++)
-		{				
-			// Test if coordinates are outside extent
-			if ((x < inExt[0]) || (y < inExt[2]) || (z < inExt[4]) ||
-					(x > inExt[1]) || (y > inExt[3]) || (z > inExt[5]))
-			{
-				*outPtr = 0;
-				*indices = -1;
-			}
-			else 
+    // Loop through output pixels
+    for (idxY = 0; idxY <= maxY; idxY++)
+    {
+        for (idxX = 0; idxX <= maxX; idxX++)
+        {                
+            // Test if coordinates are outside extent
+            if ((x < inExt[0]) || (y < inExt[2]) || (z < inExt[4]) ||
+                    (x > inExt[1]) || (y > inExt[3]) || (z > inExt[5]))
+            {
+                *outPtr = 0;
+                *indices = -1;
+            }
+            else 
       {
         idx = z*nxy+y*nx+x;
-				*outPtr = inPtr[idx];
+                *outPtr = inPtr[idx];
         *indices = idx;
-			}
-			outPtr++;
+            }
+            outPtr++;
        indices++;
 
-			// Step volume coordinates in xs direction
-			x += xStep[0];
-			y += xStep[1];
-			z += xStep[2];
-		}
-		outPtr  += outIncY;
+            // Step volume coordinates in xs direction
+            x += xStep[0];
+            y += xStep[1];
+            z += xStep[2];
+        }
+        outPtr  += outIncY;
 
-		// Rewind volume coordinates back to first column
-		x -= xRewind[0];
-		y -= xRewind[1];
-		z -= xRewind[2];
+        // Rewind volume coordinates back to first column
+        x -= xRewind[0];
+        y -= xRewind[1];
+        z -= xRewind[2];
 
-		// Step volume coordinates in ys direction
-		x += yStep[0];
-		y += yStep[1];
-		z += yStep[2];
-	}
+        // Step volume coordinates in ys direction
+        x += yStep[0];
+        y += yStep[1];
+        z += yStep[2];
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -532,57 +532,57 @@ static void vtkImageReformatIJKExecute(vtkImageReformatIJK *self,
 // the datas data types.
 void vtkImageReformatIJK::Execute(vtkImageData *inData, vtkImageData *outData)
 {
-	int outExt[6], id=0;
-	this->GetOutput()->GetWholeExtent(outExt);
-	void *inPtr = inData->GetScalarPointerForExtent(outExt);
-	void *outPtr = outData->GetScalarPointerForExtent(outExt);
+    int outExt[6], id=0;
+    this->GetOutput()->GetWholeExtent(outExt);
+    void *inPtr = inData->GetScalarPointerForExtent(outExt);
+    void *outPtr = outData->GetScalarPointerForExtent(outExt);
   
-	switch (inData->GetScalarType())
-	{
-	case VTK_DOUBLE:
-		vtkImageReformatIJKExecute(this, inData, (double *)(inPtr), 
-			outData, (double *)(outPtr), outExt, id);
-		break;
-	case VTK_FLOAT:
-		vtkImageReformatIJKExecute(this, inData, (float *)(inPtr), 
-			outData, (float *)(outPtr), outExt, id);
-		break;
-	case VTK_LONG:
-		vtkImageReformatIJKExecute(this, inData, (long *)(inPtr), 
-			outData, (long *)(outPtr), outExt, id);
-		break;
-	case VTK_UNSIGNED_LONG:
-		vtkImageReformatIJKExecute(this, inData, (unsigned long *)(inPtr), 
-			outData, (unsigned long *)(outPtr), outExt, id);
-		break;
-	case VTK_INT:
-		vtkImageReformatIJKExecute(this, inData, (int *)(inPtr), 
-			outData, (int *)(outPtr), outExt, id);
-		break;
-	case VTK_UNSIGNED_INT:
-		vtkImageReformatIJKExecute(this, inData, (unsigned int *)(inPtr), 
-			outData, (unsigned int *)(outPtr), outExt, id);
-		break;
-	case VTK_SHORT:
-		vtkImageReformatIJKExecute(this, inData, (short *)(inPtr), 
-			outData, (short *)(outPtr), outExt, id);
-		break;
-	case VTK_UNSIGNED_SHORT:
-		vtkImageReformatIJKExecute(this, inData, (unsigned short *)(inPtr), 
-			outData, (unsigned short *)(outPtr), outExt, id);
-		break;
-	case VTK_CHAR:
-		vtkImageReformatIJKExecute(this, inData, (char *)(inPtr), 
-			outData, (char *)(outPtr), outExt, id);
-		break;
-	case VTK_UNSIGNED_CHAR:
-		vtkImageReformatIJKExecute(this, inData, (unsigned char *)(inPtr), 
-			outData, (unsigned char *)(outPtr), outExt, id);
-		break;
-	default:
-		vtkErrorMacro(<< "Execute: Unknown input ScalarType");
-		return;
-	}
+    switch (inData->GetScalarType())
+    {
+    case VTK_DOUBLE:
+        vtkImageReformatIJKExecute(this, inData, (double *)(inPtr), 
+            outData, (double *)(outPtr), outExt, id);
+        break;
+    case VTK_FLOAT:
+        vtkImageReformatIJKExecute(this, inData, (float *)(inPtr), 
+            outData, (float *)(outPtr), outExt, id);
+        break;
+    case VTK_LONG:
+        vtkImageReformatIJKExecute(this, inData, (long *)(inPtr), 
+            outData, (long *)(outPtr), outExt, id);
+        break;
+    case VTK_UNSIGNED_LONG:
+        vtkImageReformatIJKExecute(this, inData, (unsigned long *)(inPtr), 
+            outData, (unsigned long *)(outPtr), outExt, id);
+        break;
+    case VTK_INT:
+        vtkImageReformatIJKExecute(this, inData, (int *)(inPtr), 
+            outData, (int *)(outPtr), outExt, id);
+        break;
+    case VTK_UNSIGNED_INT:
+        vtkImageReformatIJKExecute(this, inData, (unsigned int *)(inPtr), 
+            outData, (unsigned int *)(outPtr), outExt, id);
+        break;
+    case VTK_SHORT:
+        vtkImageReformatIJKExecute(this, inData, (short *)(inPtr), 
+            outData, (short *)(outPtr), outExt, id);
+        break;
+    case VTK_UNSIGNED_SHORT:
+        vtkImageReformatIJKExecute(this, inData, (unsigned short *)(inPtr), 
+            outData, (unsigned short *)(outPtr), outExt, id);
+        break;
+    case VTK_CHAR:
+        vtkImageReformatIJKExecute(this, inData, (char *)(inPtr), 
+            outData, (char *)(outPtr), outExt, id);
+        break;
+    case VTK_UNSIGNED_CHAR:
+        vtkImageReformatIJKExecute(this, inData, (unsigned char *)(inPtr), 
+            outData, (unsigned char *)(outPtr), outExt, id);
+        break;
+    default:
+        vtkErrorMacro(<< "Execute: Unknown input ScalarType");
+        return;
+    }
 }
 
 

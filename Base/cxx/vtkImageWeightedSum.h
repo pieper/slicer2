@@ -66,7 +66,7 @@ class VTK_EXPORT vtkImageWeightedSum : public vtkImageMultipleInputFilter
   void ExecuteInformation(vtkImageData **inputs, vtkImageData *output); 
 
   void ThreadedExecute(vtkImageData **inDatas, vtkImageData *outData, 
-		       int extent[6], int id);
+               int extent[6], int id);
 };
 
 #endif

@@ -166,88 +166,88 @@ proc MRMLInit {} {
 # Reads file 'filename' to create array 'MRMLDefaults' which contains default
 # key-value pairs.  For example, print the default name for models as:
 #   MRMLReadDefaults 'Defaults.mrml'
-#	puts name=[MRMLGetDefault Model name]
+#    puts name=[MRMLGetDefault Model name]
 # Returns the MRML version on success, or '' on error.
 # .END
 #-------------------------------------------------------------------------------
 proc MRMLReadDefaults {filename} { 
-	global MRMLDefaults
+    global MRMLDefaults
 
-	# Init
-	set MRMLDefaults(nodeList) ""
-	set debug 0
+    # Init
+    set MRMLDefaults(nodeList) ""
+    set debug 0
     set nLine 0
-	
-	# Open file and check that is a MRML file
-	if {[MRMLCheckFileExists $filename] == 0} {
-		return ""
-	}
-	set fid [open $filename r]
-	gets $fid line; incr nLine
-        if {[lindex $line 0] != "MRML"} {
-		puts "Not a MRML file: '$filename'"
-		if {[catch {close $fid} errorMessage]} {
-			tk_messageBox -type ok -message "The following error occurred saving a file named ${filename} : ${errorMessage}"
-			puts "Aborting due to : ${errorMessage}"
-			exit 1
-		}
-		return ""
+    
+    # Open file and check that is a MRML file
+    if {[MRMLCheckFileExists $filename] == 0} {
+        return ""
     }
-	# Store version number for checking other files read
-	set MRMLDefaults(version) [lindex $line 1]
-	gets $fid line; incr nLine
-
-	# Skip comments
-	while {[eof $fid] == 0 && [string range $line 0 0] == "#"} {
-		gets $fid line; incr nLine
-	}
-
-	# Read Nodes
-	while {[eof $fid] == 0} {
-
-		# Read node type
-		set node [lindex $line 0]
-
-		# Check for open brace
-		if {[lindex $line 1] != "("} {
-			puts "Error: missing open brace on line $nLine."
-			if {[catch {close $fid} errorMessage]} {
-                        	tk_messageBox -type ok -message "The following error occurred saving a file : ${errorMessage}"
-	                        puts "Aborting due to : ${errorMessage}"
-       	                        exit 1
-                	}
-			return ""
-		}
-		# Record node type
-		lappend MRMLDefaults(nodeList) $node
-		gets $fid line; incr nLine
-
-		# Read attributes until closing brace
-		set MRMLDefaults($node,keyList) ""
-		while {[eof $fid] == 0 && [lindex $line 0] != ")" } {
-
-			# Read attribute
-			set key   [lindex   $line 0]
-			set value [lreplace $line 0 0]
-			lappend MRMLDefaults($node,keyList) $key
-			set MRMLDefaults($node,$key) $value
-			if {$debug == "1"} {puts "$node: $key=$value"}
-
-			# Read next line
-			gets $fid line; incr nLine
-		}
-
-		# Read next node
-		gets $fid line; incr nLine
-	}
-
-	# Cleanup
-	if {[catch {close $fid} errorMessage]} {
-    		tk_messageBox -type ok -message "The following error occurred saving a file : ${errorMessage}"
-        	puts "Aborting due to : ${errorMessage}"
-        	exit 1
+    set fid [open $filename r]
+    gets $fid line; incr nLine
+        if {[lindex $line 0] != "MRML"} {
+        puts "Not a MRML file: '$filename'"
+        if {[catch {close $fid} errorMessage]} {
+            tk_messageBox -type ok -message "The following error occurred saving a file named ${filename} : ${errorMessage}"
+            puts "Aborting due to : ${errorMessage}"
+            exit 1
         }
-	return $MRMLDefaults(version)
+        return ""
+    }
+    # Store version number for checking other files read
+    set MRMLDefaults(version) [lindex $line 1]
+    gets $fid line; incr nLine
+
+    # Skip comments
+    while {[eof $fid] == 0 && [string range $line 0 0] == "#"} {
+        gets $fid line; incr nLine
+    }
+
+    # Read Nodes
+    while {[eof $fid] == 0} {
+
+        # Read node type
+        set node [lindex $line 0]
+
+        # Check for open brace
+        if {[lindex $line 1] != "("} {
+            puts "Error: missing open brace on line $nLine."
+            if {[catch {close $fid} errorMessage]} {
+                            tk_messageBox -type ok -message "The following error occurred saving a file : ${errorMessage}"
+                            puts "Aborting due to : ${errorMessage}"
+                                   exit 1
+                    }
+            return ""
+        }
+        # Record node type
+        lappend MRMLDefaults(nodeList) $node
+        gets $fid line; incr nLine
+
+        # Read attributes until closing brace
+        set MRMLDefaults($node,keyList) ""
+        while {[eof $fid] == 0 && [lindex $line 0] != ")" } {
+
+            # Read attribute
+            set key   [lindex   $line 0]
+            set value [lreplace $line 0 0]
+            lappend MRMLDefaults($node,keyList) $key
+            set MRMLDefaults($node,$key) $value
+            if {$debug == "1"} {puts "$node: $key=$value"}
+
+            # Read next line
+            gets $fid line; incr nLine
+        }
+
+        # Read next node
+        gets $fid line; incr nLine
+    }
+
+    # Cleanup
+    if {[catch {close $fid} errorMessage]} {
+            tk_messageBox -type ok -message "The following error occurred saving a file : ${errorMessage}"
+            puts "Aborting due to : ${errorMessage}"
+            exit 1
+        }
+    return $MRMLDefaults(version)
 }
 
 #-------------------------------------------------------------------------------
@@ -260,13 +260,13 @@ proc MRMLReadDefaults {filename} {
 # .END
 #-------------------------------------------------------------------------------
 proc MRMLGetDefault {nodeType {key ""}} {
-	global MRMLDefaults
+    global MRMLDefaults
 
-	if {$key == ""} {
-		return $MRMLDefaults($nodeType)
-	} else {
-		return $MRMLDefaults($nodeType,$key)
-	}
+    if {$key == ""} {
+        return $MRMLDefaults($nodeType)
+    } else {
+        return $MRMLDefaults($nodeType,$key)
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -279,292 +279,292 @@ proc MRMLGetDefault {nodeType {key ""}} {
 # .END
 #-------------------------------------------------------------------------------
 proc MRMLRead {filename} {
-	global MRMLDefaults
-	
-	# Init
-	set dag ""
-	set depth 0
+    global MRMLDefaults
+    
+    # Init
+    set dag ""
+    set depth 0
     set nLine 0
-	
-	# Open file and check that is a MRML file
-	if {[MRMLCheckFileExists $filename] == 0} {
-		return -1 
-	}
-	set fid [open $filename r]
-	gets $fid line; incr nLine
-    if {[lindex $line 0] != "MRML"} {
-		puts "Not a MRML file: '$filename'"
-		if {[catch {close $fid} errorMessage]} {
-                        tk_messageBox -type ok -message "The following error occurred saving a file named ${filename} : ${errorMessage}"
-                        puts "Aborting due to : ${errorMessage}"
-                        exit 1
-                }
-		return -1 
+    
+    # Open file and check that is a MRML file
+    if {[MRMLCheckFileExists $filename] == 0} {
+        return -1 
     }
-	# Check MRML version
-	set version [lindex $line 1]
-	if {$version != [MRMLGetDefault version]} {
-		puts "MRML file '$filename' is version '$version' instead of \
-		'[MRMLGetDefault version]'."
-		if {[catch {close $fid} errorMessage]} {
+    set fid [open $filename r]
+    gets $fid line; incr nLine
+    if {[lindex $line 0] != "MRML"} {
+        puts "Not a MRML file: '$filename'"
+        if {[catch {close $fid} errorMessage]} {
                         tk_messageBox -type ok -message "The following error occurred saving a file named ${filename} : ${errorMessage}"
                         puts "Aborting due to : ${errorMessage}"
                         exit 1
                 }
-		return -1 
-	}
-	gets $fid line; incr nLine
+        return -1 
+    }
+    # Check MRML version
+    set version [lindex $line 1]
+    if {$version != [MRMLGetDefault version]} {
+        puts "MRML file '$filename' is version '$version' instead of \
+        '[MRMLGetDefault version]'."
+        if {[catch {close $fid} errorMessage]} {
+                        tk_messageBox -type ok -message "The following error occurred saving a file named ${filename} : ${errorMessage}"
+                        puts "Aborting due to : ${errorMessage}"
+                        exit 1
+                }
+        return -1 
+    }
+    gets $fid line; incr nLine
 
-	# Skip comments
-	while {[eof $fid] == 0 && [string range $line 0 0] == "#"} {
-		gets $fid line; incr nLine
-	}
+    # Skip comments
+    while {[eof $fid] == 0 && [string range $line 0 0] == "#"} {
+        gets $fid line; incr nLine
+    }
 
-	# Read Nodes
-	while {[eof $fid] == 0} {
+    # Read Nodes
+    while {[eof $fid] == 0} {
 
-		# Read node type
-		set type [lindex $line 0]
+        # Read node type
+        set type [lindex $line 0]
 
-		if {$type != ")"} {
-			# Check for open brace
-			if {[lindex $line 1] != "("} {
-				puts "Error: missing open brace on line $nLine."
-				if {[catch {close $fid} errorMessage]} {
-                        		tk_messageBox -type ok -message "The following error occurred saving a file : ${errorMessage}"
-	                       		puts "Aborting due to : ${errorMessage}"
-       	                        	exit 1
-                		}
-				return -1 
-			}
+        if {$type != ")"} {
+            # Check for open brace
+            if {[lindex $line 1] != "("} {
+                puts "Error: missing open brace on line $nLine."
+                if {[catch {close $fid} errorMessage]} {
+                                tk_messageBox -type ok -message "The following error occurred saving a file : ${errorMessage}"
+                                   puts "Aborting due to : ${errorMessage}"
+                                       exit 1
+                        }
+                return -1 
+            }
 
-			# Validate node type
-			if {[lsearch [MRMLGetDefault nodeList] $type] == -1} {
-				puts "Error: unknown node type: $type."
-				if {[catch {close $fid} errorMessage]} {
-                        		tk_messageBox -type ok -message "The following error occurred saving a file : ${errorMessage}"
-	                       		puts "Aborting due to : ${errorMessage}"
-       	                        	exit 1
-                		}
-				return -1 
-			}
-		}
-
-		# Process node
-
-		# Separator
-		if {$type == "Separator"} {
-			set node "Separator"
-			incr depth
-
-		# End of Separator
-		} elseif {$type == ")"} {
-			set node "End"
-			set depth [expr $depth - 1]
-			if {$depth < 0} {
-				puts "Error: Extra separator end on line $nLine."
-				if {[catch {close $fid} errorMessage]} {
-                        		tk_messageBox -type ok -message "The following error occurred saving a file : ${errorMessage}"
-	                       		puts "Aborting due to : ${errorMessage}"
-       	                        	exit 1
-                		}
-				return -1 
-			}
-
-		# Transform
-		} elseif {$type == "Transform"} {
-			# Concatenate operations onto the current transform
-		
-			set node [MRMLCreateNode $type]
-			gets $fid line; incr nLine
-
-			# Read attributes until closing brace
-			while {[eof $fid] == 0 && [lindex $line 0] != ")" } {
-		
-				# Read attribute's key
-				set key [lindex $line 0]
-				
-				# Validate key
-				if {[lsearch [MRMLGetDefault $type keyList] $key] == "-1"} {
-					puts "Error: invalid key '$key' for node '$type' on \
-						line $nLine"
-					if {[catch {close $fid} errorMessage]} {
-                        			tk_messageBox -type ok -message "The following error occurred saving a file : ${errorMessage}"
-	                       			puts "Aborting due to : ${errorMessage}"
-       	                        		exit 1
-                			}
-					return -1 
-				}
-
-				# Read Attribute's value
-				set value [lreplace $line 0 0]
-				set node [MRMLSetValue $node $key $value]
-
-				# Validate value
-				set lenRequired [llength $value]
-				switch $key {
-					matrix    {set len 16}
-					translate {set len 3}
-					scale     {set len 3}
-					rotateX   {set len 1}
-					rotateY   {set len 1}
-					rotateZ   {set len 1}
-					default   {set len -1}
-				}
-				if {$len != -1} {
-					if {$len != $lenRequired} {
-						puts "The '$key' attribute requires $lenRequired \
-							numbers, but $len were given."
-						if {[catch {close $fid} errorMessage]} {
-                        				tk_messageBox -type ok -message "The following error occurred saving a file : ${errorMessage}"
-	                       				puts "Aborting due to : ${errorMessage}"
-       	                        			exit 1
-                				}
-						return -1 
-					}
-				}	
-				# Read next line
-				gets $fid line; incr nLine
-			}
-
-			# Check for close brace
-			if {[lindex $line 0] != ")"} {
-				puts "Error: missing close brace on line $nLine."
-				if {[catch {close $fid} errorMessage]} {
-                        		tk_messageBox -type ok -message "The following error occurred saving a file : ${errorMessage}"
-	                       		puts "Aborting due to : ${errorMessage}"
-       	                       		exit 1
-                		}
-				return -1 
-			}
-
-		# Url
-		} elseif {$type == "Url"} {
-		
-			set node [MRMLCreateNode $type]
-			gets $fid line; incr nLine
-
-			# Read attributes until closing brace
-			while {[eof $fid] == 0 && [lindex $line 0] != ")" } {
-		
-				# Read attribute's key
-				set key [lindex $line 0]
-				
-				# Validate key
-				if {[lsearch [MRMLGetDefault $type keyList] $key] == "-1"} {
-					puts "Error: invalid key '$key' for node '$type' on \
-						line $nLine"
-					if {[catch {close $fid} errorMessage]} {
-                        	 		tk_messageBox -type ok -message "The following error occurred saving a file : ${errorMessage}"
-	                       			puts "Aborting due to : ${errorMessage}"
-       	                       			exit 1
-                			}
-					return -1 
-				}
-
-				# Read Attribute's value
-				set value [lreplace $line 0 0]
-				set node [MRMLSetValue $node $key $value]
-
-				# Read next line
-				gets $fid line; incr nLine
-			}
-
-			# Check for close brace
-			if {[lindex $line 0] != ")"} {
-				puts "Error: missing close brace on line $nLine."
-				if {[catch {close $fid} errorMessage]} {
-                         		tk_messageBox -type ok -message "The following error occurred saving a file : ${errorMessage}"
-	                      		puts "Aborting due to : ${errorMessage}"
-       	                       		exit 1
-                		}
-				return -1 
-			}
-
-		# Volume, Model, Color, Config
-		} else {
-
-			set node [MRMLCreateNode $type]
-			gets $fid line; incr nLine
-
-			# Read attributes until closing brace
-			while {[eof $fid] == 0 && [lindex $line 0] != ")" } {
-	
-				# Read attribute's key
-				set key [lindex $line 0]
-
-				# Validate key
-				if {[lsearch [MRMLGetDefault $type keyList] $key] == "-1"} {
-					puts "Error: invalid key '$key' for node '$type' on \
-						line $nLine"
-					if {[catch {close $fid} errorMessage]} {
-                         			tk_messageBox -type ok -message "The following error occurred saving a file : ${errorMessage}"
-	                      			puts "Aborting due to : ${errorMessage}"
-       	                       			exit 1
-                			}
-					return -1 
-				}
-
-				# Read attribute's value
-				set value [lreplace $line 0 0]
-				set node [MRMLSetValue $node $key $value]
-	
-				# Read next line
-				gets $fid line; incr nLine
-			}
-
-			# Check for close brace
-			if {[lindex $line 0] != ")"} {
-				puts "Error: missing close brace on line $nLine."
-				if {[catch {close $fid} errorMessage]} {
-                         		tk_messageBox -type ok -message "The following error occurred saving a file : ${errorMessage}"
-	                      		puts "Aborting due to : ${errorMessage}"
-       	                       		exit 1
-                		}
-				return -1 
-			}
-
-		}
-
-		# Append a Volume or Model to DAG if we're not ignoring it
-		if {[lsearch "Volume Model" $type] != "-1"} {
-			if {[MRMLGetValue $node "ignore"] == 0} {
-				set dag [MRMLAppendNode $dag $node]
-			}
-		} else {
-			set dag [MRMLAppendNode $dag $node]
-		}
-
-		# Read next node
-		gets $fid line; incr nLine
-	}
-
-	if {$depth > 0} {
-		puts "Error: extra separator."
-		if {[catch {close $fid} errorMessage]} {
-                       	tk_messageBox -type ok -message "The following error occurred saving a file : ${errorMessage}"
-	               	puts "Aborting due to : ${errorMessage}"
-       	                exit 1
-               	}
-		return -1 
-	}
-	if {$depth < 0} {
-		puts "Error: extra close brace."
-		if {[catch {close $fid} errorMessage]} {
-                       	tk_messageBox -type ok -message "The following error occurred saving a file : ${errorMessage}"
-	               	puts "Aborting due to : ${errorMessage}"
-       	                exit 1
-               	}
-		return -1 
-	}
-
-	# Cleanup
-	if {[catch {close $fid} errorMessage]} {
-                   tk_messageBox -type ok -message "The following error occurred saving a file : ${errorMessage}"
-	           puts "Aborting due to : ${errorMessage}"
-       	           exit 1
+            # Validate node type
+            if {[lsearch [MRMLGetDefault nodeList] $type] == -1} {
+                puts "Error: unknown node type: $type."
+                if {[catch {close $fid} errorMessage]} {
+                                tk_messageBox -type ok -message "The following error occurred saving a file : ${errorMessage}"
+                                   puts "Aborting due to : ${errorMessage}"
+                                       exit 1
+                        }
+                return -1 
+            }
         }
-	return $dag
+
+        # Process node
+
+        # Separator
+        if {$type == "Separator"} {
+            set node "Separator"
+            incr depth
+
+        # End of Separator
+        } elseif {$type == ")"} {
+            set node "End"
+            set depth [expr $depth - 1]
+            if {$depth < 0} {
+                puts "Error: Extra separator end on line $nLine."
+                if {[catch {close $fid} errorMessage]} {
+                                tk_messageBox -type ok -message "The following error occurred saving a file : ${errorMessage}"
+                                   puts "Aborting due to : ${errorMessage}"
+                                       exit 1
+                        }
+                return -1 
+            }
+
+        # Transform
+        } elseif {$type == "Transform"} {
+            # Concatenate operations onto the current transform
+        
+            set node [MRMLCreateNode $type]
+            gets $fid line; incr nLine
+
+            # Read attributes until closing brace
+            while {[eof $fid] == 0 && [lindex $line 0] != ")" } {
+        
+                # Read attribute's key
+                set key [lindex $line 0]
+                
+                # Validate key
+                if {[lsearch [MRMLGetDefault $type keyList] $key] == "-1"} {
+                    puts "Error: invalid key '$key' for node '$type' on \
+                        line $nLine"
+                    if {[catch {close $fid} errorMessage]} {
+                                    tk_messageBox -type ok -message "The following error occurred saving a file : ${errorMessage}"
+                                       puts "Aborting due to : ${errorMessage}"
+                                           exit 1
+                            }
+                    return -1 
+                }
+
+                # Read Attribute's value
+                set value [lreplace $line 0 0]
+                set node [MRMLSetValue $node $key $value]
+
+                # Validate value
+                set lenRequired [llength $value]
+                switch $key {
+                    matrix    {set len 16}
+                    translate {set len 3}
+                    scale     {set len 3}
+                    rotateX   {set len 1}
+                    rotateY   {set len 1}
+                    rotateZ   {set len 1}
+                    default   {set len -1}
+                }
+                if {$len != -1} {
+                    if {$len != $lenRequired} {
+                        puts "The '$key' attribute requires $lenRequired \
+                            numbers, but $len were given."
+                        if {[catch {close $fid} errorMessage]} {
+                                        tk_messageBox -type ok -message "The following error occurred saving a file : ${errorMessage}"
+                                           puts "Aborting due to : ${errorMessage}"
+                                               exit 1
+                                }
+                        return -1 
+                    }
+                }    
+                # Read next line
+                gets $fid line; incr nLine
+            }
+
+            # Check for close brace
+            if {[lindex $line 0] != ")"} {
+                puts "Error: missing close brace on line $nLine."
+                if {[catch {close $fid} errorMessage]} {
+                                tk_messageBox -type ok -message "The following error occurred saving a file : ${errorMessage}"
+                                   puts "Aborting due to : ${errorMessage}"
+                                          exit 1
+                        }
+                return -1 
+            }
+
+        # Url
+        } elseif {$type == "Url"} {
+        
+            set node [MRMLCreateNode $type]
+            gets $fid line; incr nLine
+
+            # Read attributes until closing brace
+            while {[eof $fid] == 0 && [lindex $line 0] != ")" } {
+        
+                # Read attribute's key
+                set key [lindex $line 0]
+                
+                # Validate key
+                if {[lsearch [MRMLGetDefault $type keyList] $key] == "-1"} {
+                    puts "Error: invalid key '$key' for node '$type' on \
+                        line $nLine"
+                    if {[catch {close $fid} errorMessage]} {
+                                     tk_messageBox -type ok -message "The following error occurred saving a file : ${errorMessage}"
+                                       puts "Aborting due to : ${errorMessage}"
+                                              exit 1
+                            }
+                    return -1 
+                }
+
+                # Read Attribute's value
+                set value [lreplace $line 0 0]
+                set node [MRMLSetValue $node $key $value]
+
+                # Read next line
+                gets $fid line; incr nLine
+            }
+
+            # Check for close brace
+            if {[lindex $line 0] != ")"} {
+                puts "Error: missing close brace on line $nLine."
+                if {[catch {close $fid} errorMessage]} {
+                                 tk_messageBox -type ok -message "The following error occurred saving a file : ${errorMessage}"
+                                  puts "Aborting due to : ${errorMessage}"
+                                          exit 1
+                        }
+                return -1 
+            }
+
+        # Volume, Model, Color, Config
+        } else {
+
+            set node [MRMLCreateNode $type]
+            gets $fid line; incr nLine
+
+            # Read attributes until closing brace
+            while {[eof $fid] == 0 && [lindex $line 0] != ")" } {
+    
+                # Read attribute's key
+                set key [lindex $line 0]
+
+                # Validate key
+                if {[lsearch [MRMLGetDefault $type keyList] $key] == "-1"} {
+                    puts "Error: invalid key '$key' for node '$type' on \
+                        line $nLine"
+                    if {[catch {close $fid} errorMessage]} {
+                                     tk_messageBox -type ok -message "The following error occurred saving a file : ${errorMessage}"
+                                      puts "Aborting due to : ${errorMessage}"
+                                              exit 1
+                            }
+                    return -1 
+                }
+
+                # Read attribute's value
+                set value [lreplace $line 0 0]
+                set node [MRMLSetValue $node $key $value]
+    
+                # Read next line
+                gets $fid line; incr nLine
+            }
+
+            # Check for close brace
+            if {[lindex $line 0] != ")"} {
+                puts "Error: missing close brace on line $nLine."
+                if {[catch {close $fid} errorMessage]} {
+                                 tk_messageBox -type ok -message "The following error occurred saving a file : ${errorMessage}"
+                                  puts "Aborting due to : ${errorMessage}"
+                                          exit 1
+                        }
+                return -1 
+            }
+
+        }
+
+        # Append a Volume or Model to DAG if we're not ignoring it
+        if {[lsearch "Volume Model" $type] != "-1"} {
+            if {[MRMLGetValue $node "ignore"] == 0} {
+                set dag [MRMLAppendNode $dag $node]
+            }
+        } else {
+            set dag [MRMLAppendNode $dag $node]
+        }
+
+        # Read next node
+        gets $fid line; incr nLine
+    }
+
+    if {$depth > 0} {
+        puts "Error: extra separator."
+        if {[catch {close $fid} errorMessage]} {
+                           tk_messageBox -type ok -message "The following error occurred saving a file : ${errorMessage}"
+                       puts "Aborting due to : ${errorMessage}"
+                           exit 1
+                   }
+        return -1 
+    }
+    if {$depth < 0} {
+        puts "Error: extra close brace."
+        if {[catch {close $fid} errorMessage]} {
+                           tk_messageBox -type ok -message "The following error occurred saving a file : ${errorMessage}"
+                       puts "Aborting due to : ${errorMessage}"
+                           exit 1
+                   }
+        return -1 
+    }
+
+    # Cleanup
+    if {[catch {close $fid} errorMessage]} {
+                   tk_messageBox -type ok -message "The following error occurred saving a file : ${errorMessage}"
+               puts "Aborting due to : ${errorMessage}"
+                      exit 1
+        }
+    return $dag
 }
 
 #-------------------------------------------------------------------------------
@@ -583,72 +583,72 @@ proc MRMLRead {filename} {
 #-------------------------------------------------------------------------------
 proc MRMLExpandUrls {dag fileDir {depth 0}} {
 
-	set numNodes [MRMLGetNumNodes $dag]
-	set UrlRoot(0) "$fileDir"
-	set n 0
-	while {$n < $numNodes} {
+    set numNodes [MRMLGetNumNodes $dag]
+    set UrlRoot(0) "$fileDir"
+    set n 0
+    while {$n < $numNodes} {
 
-		# Get node
-		set node [MRMLGetNode $dag $n]
-		set type [MRMLGetNodeType $node]
+        # Get node
+        set node [MRMLGetNode $dag $n]
+        set type [MRMLGetNodeType $node]
 
-		# Separator
-		if {$type == "Separator"} {
-			incr depth
-			set UrlRoot($depth) $UrlRoot([expr $depth-1])
+        # Separator
+        if {$type == "Separator"} {
+            incr depth
+            set UrlRoot($depth) $UrlRoot([expr $depth-1])
 
-		# End of Separator
-		} elseif {$type == "End"} {
-			set depth [expr $depth - 1]
+        # End of Separator
+        } elseif {$type == "End"} {
+            set depth [expr $depth - 1]
 
-		# Url
-		} elseif {$type == "Url"} {
-		
-			# Get this Url's attributes
-			foreach key "url link" {
-				set $key [MRMLGetValue $node $key]
-			}
+        # Url
+        } elseif {$type == "Url"} {
+        
+            # Get this Url's attributes
+            foreach key "url link" {
+                set $key [MRMLGetValue $node $key]
+            }
 
-			# If this Url is relative, then concatenate it with the root Url
-			set url [file join $UrlRoot($depth) $url]
-			set node [MRMLSetValue $node "url" $url]
+            # If this Url is relative, then concatenate it with the root Url
+            set url [file join $UrlRoot($depth) $url]
+            set node [MRMLSetValue $node "url" $url]
 
-			# If this is not a link Url, then store it as the root Url
-			if {$link == 0} {
-				set UrlRoot($depth) $url
-			} else {
-				# Else, expand this Url (read it in)
+            # If this is not a link Url, then store it as the root Url
+            if {$link == 0} {
+                set UrlRoot($depth) $url
+            } else {
+                # Else, expand this Url (read it in)
 
-				set urlDag [MRMLRead $url]
-				if {$urlDag != "-1"} {
-					set urlDag [MRMLExpandUrls $urlDag $fileDir $depth]
+                set urlDag [MRMLRead $url]
+                if {$urlDag != "-1"} {
+                    set urlDag [MRMLExpandUrls $urlDag $fileDir $depth]
 
-					set dag [MRMLDeleteNode $dag $n]
-					set dag [MRMLInsertDag $dag $urlDag $n]
+                    set dag [MRMLDeleteNode $dag $n]
+                    set dag [MRMLInsertDag $dag $urlDag $n]
 
-					set urlNumNodes [expr [MRMLGetNumNodes $urlDag] - 1]
-					set n           [expr $n + $urlNumNodes]
-					set numNodes    [expr $numNodes + $urlNumNodes]
-				}
-			}
+                    set urlNumNodes [expr [MRMLGetNumNodes $urlDag] - 1]
+                    set n           [expr $n + $urlNumNodes]
+                    set numNodes    [expr $numNodes + $urlNumNodes]
+                }
+            }
 
-		# Model, Volume
-		} elseif {$type == "Model" || $type == "Volume"} {
+        # Model, Volume
+        } elseif {$type == "Model" || $type == "Volume"} {
 
-			# Apply root url to Volumes and Models
-			foreach nodeType "Volume Model" urlName "filePrefix fileName" {
-				if {$nodeType == $type} {
-					set url [file join $UrlRoot($depth) \
-						[MRMLGetValue $node $urlName]]
-					set node [MRMLSetValue $node $urlName $url]
-					set dag  [MRMLSetNode $dag $n $node]
-				}
-			}
-		}
+            # Apply root url to Volumes and Models
+            foreach nodeType "Volume Model" urlName "filePrefix fileName" {
+                if {$nodeType == $type} {
+                    set url [file join $UrlRoot($depth) \
+                        [MRMLGetValue $node $urlName]]
+                    set node [MRMLSetValue $node $urlName $url]
+                    set dag  [MRMLSetNode $dag $n $node]
+                }
+            }
+        }
 
-		incr n
-	}
-	return $dag
+        incr n
+    }
+    return $dag
 }
 
 #-------------------------------------------------------------------------------
@@ -667,178 +667,178 @@ proc MRMLExpandUrls {dag fileDir {depth 0}} {
 # .END
 #-------------------------------------------------------------------------------
 proc MRMLComputeRelationships {dag \
-	{nextVolumeID 1} {nextModelID 0} {nextColorID 0} {nextConfigID 0}} {
+    {nextVolumeID 1} {nextModelID 0} {nextColorID 0} {nextConfigID 0}} {
 
-	# Init
-	set depth 0
-	set volumeID($depth) "-1"
-	set labelID($depth) "-1"
-	
-	# Initialize transform stack
-	vtkTransform trans
-	trans Identity
-	vtkMatrix4x4 mat
+    # Init
+    set depth 0
+    set volumeID($depth) "-1"
+    set labelID($depth) "-1"
+    
+    # Initialize transform stack
+    vtkTransform trans
+    trans Identity
+    vtkMatrix4x4 mat
   
-	# Set the vtkTransform to PostMultiply so a concatenated matrix, C,
-	# is multiplied by the existing matrix, M: C*M (not M*C)
+    # Set the vtkTransform to PostMultiply so a concatenated matrix, C,
+    # is multiplied by the existing matrix, M: C*M (not M*C)
     trans PostMultiply
 
-	set numNodes [MRMLGetNumNodes $dag]
-	set n 0
-	while {$n < $numNodes} {
+    set numNodes [MRMLGetNumNodes $dag]
+    set n 0
+    while {$n < $numNodes} {
 
-		# Get node
-		set node [MRMLGetNode $dag $n]
-		set type [MRMLGetNodeType $node]
+        # Get node
+        set node [MRMLGetNode $dag $n]
+        set type [MRMLGetNodeType $node]
 
-		# Separator
-		if {$type == "Separator"} {
+        # Separator
+        if {$type == "Separator"} {
 
-			# Push the current transform
-			trans Push
-			incr depth
-			set volumeID($depth) "-1"
-			set labelID($depth) "-1"
+            # Push the current transform
+            trans Push
+            incr depth
+            set volumeID($depth) "-1"
+            set labelID($depth) "-1"
 
-		# End of Separator
-		} elseif {$type == "End"} {
+        # End of Separator
+        } elseif {$type == "End"} {
 
-			# Pop transform
-			trans Pop
-			set depth [expr $depth - 1]
+            # Pop transform
+            trans Pop
+            set depth [expr $depth - 1]
 
-		# Transform
-		} elseif {$type == "Transform"} {
+        # Transform
+        } elseif {$type == "Transform"} {
 
-			# Process each attribute to concatenate operations onto the
-			# current transform
-			set numAttr [MRMLGetNumAttributes $node]
-			for {set i 0} {$i < $numAttr} {incr i} {
-		
-				# Get attribute
-				set attr  [MRMLGetAttribute $node $i]
-				set key   [MRMLGetAttributeKey $attr]
-				set value [MRMLGetAttributeValue $attr]
+            # Process each attribute to concatenate operations onto the
+            # current transform
+            set numAttr [MRMLGetNumAttributes $node]
+            for {set i 0} {$i < $numAttr} {incr i} {
+        
+                # Get attribute
+                set attr  [MRMLGetAttribute $node $i]
+                set key   [MRMLGetAttributeKey $attr]
+                set value [MRMLGetAttributeValue $attr]
 
-				# Concatenate the operation to the current transformation
-				set defaultValue [MRMLGetDefault $type $key]
-				if {$defaultValue != $value} {
-					switch $key {
-						matrix {
-							for {set i 0} {$i < 4} {incr i} {
-								for {set j 0} {$j < 4} {incr j} {
-									mat SetElement $i $j \
-										[lindex $value [expr $i*4+$j]]
-								}
-							}
-							trans Concatenate mat 
-						}
-						scale {
-							eval trans Scale $value
-						}
-						rotateX {
-							trans RotateX $value
-						}
-						rotateY {
-							trans RotateY $value
-						}
-						rotateZ {
-							trans RotateZ $value
-						}
-						translate {
-							eval trans Translate $value
-						}
-					}
-				}
-			}
+                # Concatenate the operation to the current transformation
+                set defaultValue [MRMLGetDefault $type $key]
+                if {$defaultValue != $value} {
+                    switch $key {
+                        matrix {
+                            for {set i 0} {$i < 4} {incr i} {
+                                for {set j 0} {$j < 4} {incr j} {
+                                    mat SetElement $i $j \
+                                        [lindex $value [expr $i*4+$j]]
+                                }
+                            }
+                            trans Concatenate mat 
+                        }
+                        scale {
+                            eval trans Scale $value
+                        }
+                        rotateX {
+                            trans RotateX $value
+                        }
+                        rotateY {
+                            trans RotateY $value
+                        }
+                        rotateZ {
+                            trans RotateZ $value
+                        }
+                        translate {
+                            eval trans Translate $value
+                        }
+                    }
+                }
+            }
 
-		# Url
-		} elseif {$type == "Url"} {
-			# Nichts
+        # Url
+        } elseif {$type == "Url"} {
+            # Nichts
 
-		# Volume, Model, Color, Config
-		} else {
+        # Volume, Model, Color, Config
+        } else {
 
-			# Set ID to the next one available
-			switch $type {
-				Volume  {set id $nextVolumeID}
-				Model   {set id $nextModelID}
-				Color   {set id $nextColorID}
-				Config  {set id $nextConfigID}
-				default {
-					puts "Error: invalid node type: '$type' on line $nLine"
-					if {[catch {close $fid} errorMessage]} {
-                        			tk_messageBox -type ok -message "The following error occurred saving a file : ${errorMessage}"
-	                       			puts "Aborting due to : ${errorMessage}"
-       	                        		exit 1
-                			}
-					trans Delete
-					mat Delete
-					return ""
-				}
-			}
-			incr next${type}ID
+            # Set ID to the next one available
+            switch $type {
+                Volume  {set id $nextVolumeID}
+                Model   {set id $nextModelID}
+                Color   {set id $nextColorID}
+                Config  {set id $nextConfigID}
+                default {
+                    puts "Error: invalid node type: '$type' on line $nLine"
+                    if {[catch {close $fid} errorMessage]} {
+                                    tk_messageBox -type ok -message "The following error occurred saving a file : ${errorMessage}"
+                                       puts "Aborting due to : ${errorMessage}"
+                                           exit 1
+                            }
+                    trans Delete
+                    mat Delete
+                    return ""
+                }
+            }
+            incr next${type}ID
 
-			# Add the ID to the node
-			set node [MRMLAddAttribute $node "id" $id]
+            # Add the ID to the node
+            set node [MRMLAddAttribute $node "id" $id]
 
-			# Update the volumeID
-			if {$type == "Volume"} {
-				if {[MRMLGetValue $node labelMap] != "1"} {
-					set volumeID($depth) $id
-				}
-			}
+            # Update the volumeID
+            if {$type == "Volume"} {
+                if {[MRMLGetValue $node labelMap] != "1"} {
+                    set volumeID($depth) $id
+                }
+            }
 
-			# Update the labelID
-			if {$type == "Volume"} {
-				if {[MRMLGetValue $node labelMap] == "1"} {
-					set labelID($depth) $id
-				}
-			}
+            # Update the labelID
+            if {$type == "Volume"} {
+                if {[MRMLGetValue $node labelMap] == "1"} {
+                    set labelID($depth) $id
+                }
+            }
 
-			# Attach a Model or Label to a Volume
-			if {$type == "Model"} {
-				set node [MRMLAddAttribute $node "volumeID" $volumeID($depth)]
-			}
-			if {$type == "Volume"} {
-				if {[MRMLGetValue $node labelMap] == "1"} {
-					set node [MRMLAddAttribute $node "volumeID" \
-						$volumeID($depth)]
-				} else {
-					set node [MRMLAddAttribute $node "volumeID" "-1"]
-				}
-			}
+            # Attach a Model or Label to a Volume
+            if {$type == "Model"} {
+                set node [MRMLAddAttribute $node "volumeID" $volumeID($depth)]
+            }
+            if {$type == "Volume"} {
+                if {[MRMLGetValue $node labelMap] == "1"} {
+                    set node [MRMLAddAttribute $node "volumeID" \
+                        $volumeID($depth)]
+                } else {
+                    set node [MRMLAddAttribute $node "volumeID" "-1"]
+                }
+            }
 
-			# Attach a Model to a Label
-			if {$type == "Model"} {
-				set node [MRMLAddAttribute $node "labelID" $labelID($depth)]
-			}
+            # Attach a Model to a Label
+            if {$type == "Model"} {
+                set node [MRMLAddAttribute $node "labelID" $labelID($depth)]
+            }
  
-			# If type is a Volume or Model
-			# then store the ras-to-reference 
-			# matrix that positions the node within the reference  space
-			#
-			if {[lsearch "Volume Model" $type] != "-1"} {
-				set matrix [trans GetMatrix]
-				set rasToRefStr ""
-				for {set i 0} {$i < 4} {incr i} {
-					for {set j 0} {$j < 4} {incr j} {
-						lappend rasToRefStr [$matrix GetElement $i $j]
-					}
-				}
-				set node [MRMLAddAttribute $node "rasToRefMatrix" $rasToRefStr]
-			}
-		}
+            # If type is a Volume or Model
+            # then store the ras-to-reference 
+            # matrix that positions the node within the reference  space
+            #
+            if {[lsearch "Volume Model" $type] != "-1"} {
+                set matrix [trans GetMatrix]
+                set rasToRefStr ""
+                for {set i 0} {$i < 4} {incr i} {
+                    for {set j 0} {$j < 4} {incr j} {
+                        lappend rasToRefStr [$matrix GetElement $i $j]
+                    }
+                }
+                set node [MRMLAddAttribute $node "rasToRefMatrix" $rasToRefStr]
+            }
+        }
 
-		# Save changes to this node
-		set dag [MRMLSetNode $dag $n $node]
+        # Save changes to this node
+        set dag [MRMLSetNode $dag $n $node]
 
-		incr n
-	}
+        incr n
+    }
 
-	trans Delete
-	mat Delete
-	return $dag
+    trans Delete
+    mat Delete
+    return $dag
 }
 
 #-------------------------------------------------------------------------------
@@ -865,145 +865,145 @@ proc MRMLComputeRelationships {dag \
 # .END
 #-------------------------------------------------------------------------------
 proc MRMLParseDagIntoArray {dag typeArray type {programName ""} \
-	{defaultOptions ""}} { 
+    {defaultOptions ""}} { 
 
-	# Init
-	upvar $typeArray array
-	set debug 0
-	set numNodes [llength $dag]
+    # Init
+    upvar $typeArray array
+    set debug 0
+    set numNodes [llength $dag]
 
-	if {$programName != ""} {
-		set array(optionsList) ""
-		foreach {key value} $defaultOptions {
-			set array(optionsList) "$array(optionsList) $key"
-		}
-	}
+    if {$programName != ""} {
+        set array(optionsList) ""
+        foreach {key value} $defaultOptions {
+            set array(optionsList) "$array(optionsList) $key"
+        }
+    }
 
-	# Read Nodes
-	for {set n 0} {$n < $numNodes} {incr n} {
+    # Read Nodes
+    for {set n 0} {$n < $numNodes} {incr n} {
 
-		# Read node name
-		set node     [MRMLGetNode $dag $n]
-		set nodeType [MRMLGetNodeType $node]
-		
-		if {$type == $nodeType} {
+        # Read node name
+        set node     [MRMLGetNode $dag $n]
+        set nodeType [MRMLGetNodeType $node]
+        
+        if {$type == $nodeType} {
 
-			# Append ID to idList if its not already there.
-			#
-			set id [MRMLGetValue $node id]
-			if {$id == ""} {
-				puts "MRMLComputeRelationships must be called before \
-					MRMLParseDagIntoArray!"
-				return ""
-			}
-			if {[lsearch $array(idList) $id] == -1} {
-				lappend array(idList) $id
-			}
+            # Append ID to idList if its not already there.
+            #
+            set id [MRMLGetValue $node id]
+            if {$id == ""} {
+                puts "MRMLComputeRelationships must be called before \
+                    MRMLParseDagIntoArray!"
+                return ""
+            }
+            if {[lsearch $array(idList) $id] == -1} {
+                lappend array(idList) $id
+            }
 
-			# Set (key,value) pairs for each attribute
-			#
-			set numAttr [MRMLGetNumAttributes $node]
-			for {set i 0} {$i < $numAttr} {incr i} {
-				set attr  [MRMLGetAttribute $node $i]
-				set key   [MRMLGetAttributeKey $attr]
-				set value [MRMLGetAttributeValue $attr]
-				if {$debug == "1"} {puts "$type: $key=$value"}
-				set array($id,$key) $value
-			}
+            # Set (key,value) pairs for each attribute
+            #
+            set numAttr [MRMLGetNumAttributes $node]
+            for {set i 0} {$i < $numAttr} {incr i} {
+                set attr  [MRMLGetAttribute $node $i]
+                set key   [MRMLGetAttributeKey $attr]
+                set value [MRMLGetAttributeValue $attr]
+                if {$debug == "1"} {puts "$type: $key=$value"}
+                set array($id,$key) $value
+            }
 
-			# Assign options their default values (if not set already).
-			#
-			foreach {key value} $defaultOptions {
-				set array($id,$key) $value
-			}
+            # Assign options their default values (if not set already).
+            #
+            foreach {key value} $defaultOptions {
+                set array($id,$key) $value
+            }
 
-			# Optionally parse options (ignore options for other programs)
-			#
-			if {$programName != ""} {
-				set program [lindex $array($id,options) 0]
-				set options [lrange $array($id,options) 1 end]
-				if {$program == $programName} {
-					# Parse options in format: key1 value1 key2 value2 ...
-					# Verify that options exist in the list of defaults.
-					foreach {key value} $options {
-						if {[lsearch $array(optionsList) $key] == "-1"} {
-							puts "Unknown option: '$key' for node '$type'."
-						} else {
-							set array($id,$key) $value
-						}
-					}
-				}
-			}
-		}
-	}
+            # Optionally parse options (ignore options for other programs)
+            #
+            if {$programName != ""} {
+                set program [lindex $array($id,options) 0]
+                set options [lrange $array($id,options) 1 end]
+                if {$program == $programName} {
+                    # Parse options in format: key1 value1 key2 value2 ...
+                    # Verify that options exist in the list of defaults.
+                    foreach {key value} $options {
+                        if {[lsearch $array(optionsList) $key] == "-1"} {
+                            puts "Unknown option: '$key' for node '$type'."
+                        } else {
+                            set array($id,$key) $value
+                        }
+                    }
+                }
+            }
+        }
+    }
 
-	# Store number of IDs in array
-	set array(num) [llength $array(idList)]
+    # Store number of IDs in array
+    set array(num) [llength $array(idList)]
 
-	# Determine next ID
-	set maxId -1
-	for {set i 0} {$i < $array(num)} {incr i} {
-		set id [lindex $array(idList) $i]
-		if {$id > $maxId} {
-			set maxId $id
-		}
-	}
-	set array(nextID) [expr $maxId + 1]
+    # Determine next ID
+    set maxId -1
+    for {set i 0} {$i < $array(num)} {incr i} {
+        set id [lindex $array(idList) $i]
+        if {$id > $maxId} {
+            set maxId $id
+        }
+    }
+    set array(nextID) [expr $maxId + 1]
 }
 
 #-------------------------------------------------------------------------------
 # These utility routines are used by the MRMLWrite procedure
 #-------------------------------------------------------------------------------
 proc MRMLIndent {fid text indents} {
-	set tabs ""
-	for {set i 0} {$i < $indents} {incr i} {
-		set tabs "${tabs}\t"
-	}
-	puts $fid "${tabs}${text}"
+    set tabs ""
+    for {set i 0} {$i < $indents} {incr i} {
+        set tabs "${tabs}\t"
+    }
+    puts $fid "${tabs}${text}"
 }
 proc MRMLWriteAttribute {fid key value depth} {
-	MRMLIndent $fid "$key $value" [expr $depth + 1]
+    MRMLIndent $fid "$key $value" [expr $depth + 1]
 }
 proc MRMLStartNode {fid name depth} {
-	MRMLIndent $fid "$name (" $depth
+    MRMLIndent $fid "$name (" $depth
 }
 proc MRMLEndNode {fid depth} {
-	MRMLIndent $fid ")" $depth
+    MRMLIndent $fid ")" $depth
 }
 proc MRMLWriteNode {fid type depth node} {
 
-	# There are extra keys created by the MRMLRead procedure
-	# so I don't want to have to write these out.
-	set extraKeys "volumeID labelID id rasToRefMatrix"
-	
-	MRMLStartNode $fid $type $depth
-	set numAttr [MRMLGetNumAttributes $node]
-	for {set i 0} {$i < $numAttr} {incr i} {
-		set attr  [MRMLGetAttribute $node $i]
-		set key   [MRMLGetAttributeKey $attr]
-		set value [MRMLGetAttributeValue $attr]
+    # There are extra keys created by the MRMLRead procedure
+    # so I don't want to have to write these out.
+    set extraKeys "volumeID labelID id rasToRefMatrix"
+    
+    MRMLStartNode $fid $type $depth
+    set numAttr [MRMLGetNumAttributes $node]
+    for {set i 0} {$i < $numAttr} {incr i} {
+        set attr  [MRMLGetAttribute $node $i]
+        set key   [MRMLGetAttributeKey $attr]
+        set value [MRMLGetAttributeValue $attr]
 
-		# Validate key
-		if {[lsearch [MRMLGetDefault $type keyList] $key] == "-1"} {
-			if {[lsearch $extraKeys $key] == "-1"} {
-				if {[catch {close $fid} errorMessage]} {
-                        		tk_messageBox -type ok -message "The following error occurred saving a file : ${errorMessage}"
-	                       		puts "Aborting due to : ${errorMessage}"
-       	                        	exit 1
-                		}
-				puts "Invalid key: '$key' for node type: '$type'"
-				return "$type $key"
-			}
-		}
+        # Validate key
+        if {[lsearch [MRMLGetDefault $type keyList] $key] == "-1"} {
+            if {[lsearch $extraKeys $key] == "-1"} {
+                if {[catch {close $fid} errorMessage]} {
+                                tk_messageBox -type ok -message "The following error occurred saving a file : ${errorMessage}"
+                                   puts "Aborting due to : ${errorMessage}"
+                                       exit 1
+                        }
+                puts "Invalid key: '$key' for node type: '$type'"
+                return "$type $key"
+            }
+        }
 
-		# Write value if it differs from the default
-		if {[lsearch $extraKeys $key] == "-1"} {		
-			if {$value != [MRMLGetDefault $type $key]} {
-				MRMLWriteAttribute $fid $key $value $depth
-			}
-		}
-	}
-	MRMLEndNode $fid $depth
+        # Write value if it differs from the default
+        if {[lsearch $extraKeys $key] == "-1"} {        
+            if {$value != [MRMLGetDefault $type $key]} {
+                MRMLWriteAttribute $fid $key $value $depth
+            }
+        }
+    }
+    MRMLEndNode $fid $depth
 }
 
 #-------------------------------------------------------------------------------
@@ -1016,49 +1016,49 @@ proc MRMLWriteNode {fid type depth node} {
 #-------------------------------------------------------------------------------
 proc MRMLWrite {dag filename} {
 
-	# Init
-	set depth 0
-	set numNodes [MRMLGetNumNodes $dag]
-	set fid [open $filename w]
-	puts $fid "MRML [MRMLGetDefault version]"
+    # Init
+    set depth 0
+    set numNodes [MRMLGetNumNodes $dag]
+    set fid [open $filename w]
+    puts $fid "MRML [MRMLGetDefault version]"
 
-	# Read Nodes
-	for {set n 0} {$n < $numNodes} {incr n} {
+    # Read Nodes
+    for {set n 0} {$n < $numNodes} {incr n} {
 
-		# Validate node type
-		set node [MRMLGetNode $dag $n]
-		set type [MRMLGetNodeType $node]
-		if {[lsearch [MRMLGetDefault nodeList] $type] == -1 && $type != "End"} {
-			if {[catch {close $fid} errorMessage]} {
-                        	tk_messageBox -type ok -message "The following error occurred saving a file : ${errorMessage}"
-	                       	puts "Aborting due to : ${errorMessage}"
-       	                       	exit 1
-                	}
-			puts "Invalid node type: '$type'"
-			return $type
-		}
-		
-		if {$type == "Separator"} {
-
-			MRMLStartNode $fid $type $depth
-			incr depth
-
-		} elseif {$type == "End"} {
-
-			set depth [expr $depth - 1]
-			MRMLEndNode $fid $depth
-
-		} else {
-
-			MRMLWriteNode $fid $type $depth $node
-		}
-	}
-	if {[catch {close $fid} errorMessage]} {
-                 tk_messageBox -type ok -message "The following error occurred saving a file : ${errorMessage}"
-	         puts "Aborting due to : ${errorMessage}"
-       	         exit 1
+        # Validate node type
+        set node [MRMLGetNode $dag $n]
+        set type [MRMLGetNodeType $node]
+        if {[lsearch [MRMLGetDefault nodeList] $type] == -1 && $type != "End"} {
+            if {[catch {close $fid} errorMessage]} {
+                            tk_messageBox -type ok -message "The following error occurred saving a file : ${errorMessage}"
+                               puts "Aborting due to : ${errorMessage}"
+                                      exit 1
+                    }
+            puts "Invalid node type: '$type'"
+            return $type
         }
-	return ""
+        
+        if {$type == "Separator"} {
+
+            MRMLStartNode $fid $type $depth
+            incr depth
+
+        } elseif {$type == "End"} {
+
+            set depth [expr $depth - 1]
+            MRMLEndNode $fid $depth
+
+        } else {
+
+            MRMLWriteNode $fid $type $depth $node
+        }
+    }
+    if {[catch {close $fid} errorMessage]} {
+                 tk_messageBox -type ok -message "The following error occurred saving a file : ${errorMessage}"
+             puts "Aborting due to : ${errorMessage}"
+                    exit 1
+        }
+    return ""
 }
 
 #-------------------------------------------------------------------------------
@@ -1070,19 +1070,19 @@ proc MRMLWrite {dag filename} {
 #-------------------------------------------------------------------------------
 proc MRMLCheckFileExists {filename} {
 
-	if {[file exists $filename] == 0} {
-		puts "File '$filename' does not exist."
-		return 0
-	}
-	if {[file isdirectory $filename] == 1} {
-		puts "'$filename' is a directory, not a file."
-		return 0
-	}
-	if {[file readable $filename] == 0} {
-		puts "'$filename' exists, but is unreadable."
-		return 0
-	}
-	return 1
+    if {[file exists $filename] == 0} {
+        puts "File '$filename' does not exist."
+        return 0
+    }
+    if {[file isdirectory $filename] == 1} {
+        puts "'$filename' is a directory, not a file."
+        return 0
+    }
+    if {[file readable $filename] == 0} {
+        puts "'$filename' exists, but is unreadable."
+        return 0
+    }
+    return 1
 }
 
 #-------------------------------------------------------------------------------
@@ -1092,7 +1092,7 @@ proc MRMLCheckFileExists {filename} {
 # .END
 #-------------------------------------------------------------------------------
 proc MRMLCreateDag {} {
-	return ""
+    return ""
 }
 
 #-------------------------------------------------------------------------------
@@ -1103,7 +1103,7 @@ proc MRMLCreateDag {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MRMLClearDag {dag} {
-	return ""
+    return ""
 }
 
 #-------------------------------------------------------------------------------
@@ -1114,7 +1114,7 @@ proc MRMLClearDag {dag} {
 # .END
 #-------------------------------------------------------------------------------
 proc MRMLAppendDag {dag newDag} {
-	return [concat $dag $newDag]
+    return [concat $dag $newDag]
 }
 
 #-------------------------------------------------------------------------------
@@ -1126,17 +1126,17 @@ proc MRMLAppendDag {dag newDag} {
 # .END
 #-------------------------------------------------------------------------------
 proc MRMLInsertDag {dag newDag {i ""}} {
-	if {$i < 0 || $i >= [llength $dag] || $i == "" || $i == "end"} {
-		set dag [MRMLAppendDag $dag $newDag]
-	} else {
-		set numNodes [llength $newDag]
-		for {set n 0} {$n < $numNodes} {incr n} {
-			set node [lindex $newDag $n]
-			set dag [linsert $dag $i $node]
-			incr i
-		}
-	}
-	return $dag
+    if {$i < 0 || $i >= [llength $dag] || $i == "" || $i == "end"} {
+        set dag [MRMLAppendDag $dag $newDag]
+    } else {
+        set numNodes [llength $newDag]
+        for {set n 0} {$n < $numNodes} {incr n} {
+            set node [lindex $newDag $n]
+            set dag [linsert $dag $i $node]
+            incr i
+        }
+    }
+    return $dag
 }
 
 #-------------------------------------------------------------------------------
@@ -1153,23 +1153,23 @@ proc MRMLInsertDag {dag newDag {i ""}} {
 #-------------------------------------------------------------------------------
 proc MRMLCreateNode {type} {
 
-	# Separator Ends are a special case because they aren't in the Defaults.
-	if {$type == "End"} {
-		return "End"
-	}
-	
-	if {[lsearch [MRMLGetDefault nodeList] $type] == "-1"} {
-		puts "Error: '$type' is an invalid node type"
-		return ""
-	}
-	# Set all the node's unspecified attributes to defaults
-	set node $type
-	foreach key [MRMLGetDefault $type keyList] {
-		if {[MRMLGetIndexOfAttributeInNode $node $key] == ""} {
-			lappend node [concat $key [MRMLGetDefault $type $key]]
-		}
-	}
-	return $node
+    # Separator Ends are a special case because they aren't in the Defaults.
+    if {$type == "End"} {
+        return "End"
+    }
+    
+    if {[lsearch [MRMLGetDefault nodeList] $type] == "-1"} {
+        puts "Error: '$type' is an invalid node type"
+        return ""
+    }
+    # Set all the node's unspecified attributes to defaults
+    set node $type
+    foreach key [MRMLGetDefault $type keyList] {
+        if {[MRMLGetIndexOfAttributeInNode $node $key] == ""} {
+            lappend node [concat $key [MRMLGetDefault $type $key]]
+        }
+    }
+    return $node
 }
 
 #-------------------------------------------------------------------------------
@@ -1181,8 +1181,8 @@ proc MRMLCreateNode {type} {
 # .END
 #-------------------------------------------------------------------------------
 proc MRMLAppendNode {dag node } {
-	lappend dag $node
-	return $dag
+    lappend dag $node
+    return $dag
 }
 
 #-------------------------------------------------------------------------------
@@ -1195,12 +1195,12 @@ proc MRMLAppendNode {dag node } {
 # .END
 #-------------------------------------------------------------------------------
 proc MRMLInsertNode {dag node {i ""}} {
-	if {$i < 0 || $i >= [llength $dag] || $i == "" || $i == "end"} {
-		set dag [MRMLAppendNode $dag $node]
-	} else {
-		set dag [linsert $dag $i $node]
-	}
-	return $dag
+    if {$i < 0 || $i >= [llength $dag] || $i == "" || $i == "end"} {
+        set dag [MRMLAppendNode $dag $node]
+    } else {
+        set dag [linsert $dag $i $node]
+    }
+    return $dag
 }
 
 #-------------------------------------------------------------------------------
@@ -1212,33 +1212,33 @@ proc MRMLInsertNode {dag node {i ""}} {
 # .END
 #-------------------------------------------------------------------------------
 proc MRMLDeleteNode {dag i} {
-	# Validate i
-	if {$i < 0 || $i > [llength $dag]} {return $dag}
+    # Validate i
+    if {$i < 0 || $i > [llength $dag]} {return $dag}
 
-	# See if this is an end node, which can't be deleted
-	set type [MRMLGetNodeType [MRMLGetNode $dag $i]]
-	if {$type == "End"} {return $dag}
+    # See if this is an end node, which can't be deleted
+    set type [MRMLGetNodeType [MRMLGetNode $dag $i]]
+    if {$type == "End"} {return $dag}
 
-	# Delete matching end too (get the one at this depth, dude)
-	if {$type == "Separator"} {
-		set depth 1
-		set numNodes [llength $dag]
-		for {set n [expr $i + 1]} {$n < $numNodes} {incr n} {
-			set type [MRMLGetNodeType [MRMLGetNode $dag $n]]
-			if {$type == "End"} {
-				set depth [expr $depth - 1]
-				if {$depth == 0} {
-					set dag [lreplace $dag $n $n]
-				}
-			} elseif {$type == "Separator"} {
-				incr depth
-			}
-		}
-	}
+    # Delete matching end too (get the one at this depth, dude)
+    if {$type == "Separator"} {
+        set depth 1
+        set numNodes [llength $dag]
+        for {set n [expr $i + 1]} {$n < $numNodes} {incr n} {
+            set type [MRMLGetNodeType [MRMLGetNode $dag $n]]
+            if {$type == "End"} {
+                set depth [expr $depth - 1]
+                if {$depth == 0} {
+                    set dag [lreplace $dag $n $n]
+                }
+            } elseif {$type == "Separator"} {
+                incr depth
+            }
+        }
+    }
 
-	set cutNode [lindex $dag $i]
-	set dag [lreplace $dag $i $i]
-	return $dag
+    set cutNode [lindex $dag $i]
+    set dag [lreplace $dag $i $i]
+    return $dag
 }
 
 #-------------------------------------------------------------------------------
@@ -1249,10 +1249,10 @@ proc MRMLDeleteNode {dag i} {
 # .END
 #-------------------------------------------------------------------------------
 proc MRMLSetNode {dag i node} {
-	if {$i < 0 || $i >= [llength $dag]} {return $dag}
+    if {$i < 0 || $i >= [llength $dag]} {return $dag}
 
-	set dag [lreplace $dag $i $i $node]
-	return $dag
+    set dag [lreplace $dag $i $i $node]
+    return $dag
 }
 
 #-------------------------------------------------------------------------------
@@ -1262,11 +1262,11 @@ proc MRMLSetNode {dag i node} {
 # .END
 #-------------------------------------------------------------------------------
 proc MRMLGetNode {dag i} {
-	if {$i < 0 || $i >= [llength $dag]} {
-		return ""
-	}
-	set node [lindex $dag $i]
-	return $node
+    if {$i < 0 || $i >= [llength $dag]} {
+        return ""
+    }
+    set node [lindex $dag $i]
+    return $node
 }
 
 #-------------------------------------------------------------------------------
@@ -1276,7 +1276,7 @@ proc MRMLGetNode {dag i} {
 # .END
 #-------------------------------------------------------------------------------
 proc MRMLGetNumNodes {dag} {
-	return [llength $dag]
+    return [llength $dag]
 }
 
 #-------------------------------------------------------------------------------
@@ -1287,16 +1287,16 @@ proc MRMLGetNumNodes {dag} {
 #-------------------------------------------------------------------------------
 proc MRMLCountTypeOfNode {dag type} {
 
-	set numNodes [llength $dag]
-	set cnt 0
-	for {set n 0} {$n < $numNodes} {incr n} {
-		set node [lindex $dag $n]
-		set name [lindex $node 0]
-		if {$name == $type} {
-			incr cnt
-		}
-	}
-	return $cnt
+    set numNodes [llength $dag]
+    set cnt 0
+    for {set n 0} {$n < $numNodes} {incr n} {
+        set node [lindex $dag $n]
+        set name [lindex $node 0]
+        if {$name == $type} {
+            incr cnt
+        }
+    }
+    return $cnt
 }
 
 #-------------------------------------------------------------------------------
@@ -1309,19 +1309,19 @@ proc MRMLCountTypeOfNode {dag type} {
 # .END
 #-------------------------------------------------------------------------------
 proc MRMLGetIndexOfNodeInDag {dag i type} {
-	set index -1
-	set numNodes [llength $dag]
-	for {set n 0} {$n < $numNodes} {incr n} {
-		set node [lindex $dag $n]
-		set nodeType [lindex $node 0]
-		if {$type == $nodeType} {
-			incr index
-		}
-		if {$i == $index} {
-			return $n
-		}
-	}
-	return ""
+    set index -1
+    set numNodes [llength $dag]
+    for {set n 0} {$n < $numNodes} {incr n} {
+        set node [lindex $dag $n]
+        set nodeType [lindex $node 0]
+        if {$type == $nodeType} {
+            incr index
+        }
+        if {$i == $index} {
+            return $n
+        }
+    }
+    return ""
 }
 
 #-------------------------------------------------------------------------------
@@ -1332,30 +1332,30 @@ proc MRMLGetIndexOfNodeInDag {dag i type} {
 # .END
 #-------------------------------------------------------------------------------
 proc MRMLGetIndexOfAttributeInNode {node key} {
-	# Find all attributes where key appears somewhere and see if key is right.
-	set index ""
-	set done 0
-	set falseAlarms 0
-	set n $node
-	while {$done == 0} {
-		set i [lsearch -regexp $n $key]
-		if {$i == "-1"} {
-			set done 1
-		} else {
-			set attr [lindex $n $i]
-			set n [lreplace $n $i $i]
-			if {[lindex $attr 0] == $key} {
-				set index $i
-				set done 1
-			} else {
-				incr falseAlarms
-			}
-		}
-	}
-	if {$index != ""} {
-		set index [expr $index + $falseAlarms]
-	}
-	return $index
+    # Find all attributes where key appears somewhere and see if key is right.
+    set index ""
+    set done 0
+    set falseAlarms 0
+    set n $node
+    while {$done == 0} {
+        set i [lsearch -regexp $n $key]
+        if {$i == "-1"} {
+            set done 1
+        } else {
+            set attr [lindex $n $i]
+            set n [lreplace $n $i $i]
+            if {[lindex $attr 0] == $key} {
+                set index $i
+                set done 1
+            } else {
+                incr falseAlarms
+            }
+        }
+    }
+    if {$index != ""} {
+        set index [expr $index + $falseAlarms]
+    }
+    return $index
 }
 
 #-------------------------------------------------------------------------------
@@ -1365,7 +1365,7 @@ proc MRMLGetIndexOfAttributeInNode {node key} {
 # .END
 #-------------------------------------------------------------------------------
 proc MRMLGetNodeType {node} {
-	return [lindex $node 0]
+    return [lindex $node 0]
 }
 
 #-------------------------------------------------------------------------------
@@ -1376,10 +1376,10 @@ proc MRMLGetNodeType {node} {
 # .END
 #-------------------------------------------------------------------------------
 proc MRMLGetValue {node key} {
-	set i [MRMLGetIndexOfAttributeInNode $node $key]
-	if {$i == ""} {return ""}
+    set i [MRMLGetIndexOfAttributeInNode $node $key]
+    if {$i == ""} {return ""}
 
-	return [lreplace [lindex $node $i] 0 0]
+    return [lreplace [lindex $node $i] 0 0]
 }
 
 #-------------------------------------------------------------------------------
@@ -1390,11 +1390,11 @@ proc MRMLGetValue {node key} {
 # .END
 #-------------------------------------------------------------------------------
 proc MRMLSetValue {node key value} {
-	set i [MRMLGetIndexOfAttributeInNode $node $key]
-	if {$i == ""} {return ""}
+    set i [MRMLGetIndexOfAttributeInNode $node $key]
+    if {$i == ""} {return ""}
 
-	set node [lreplace $node $i $i "$key $value"]
-	return $node
+    set node [lreplace $node $i $i "$key $value"]
+    return $node
 }
 
 #-------------------------------------------------------------------------------
@@ -1408,8 +1408,8 @@ proc MRMLSetValue {node key value} {
 # .END
 #-------------------------------------------------------------------------------
 proc MRMLAddAttribute {node key value} {
-	lappend node [concat $key $value]
-	return $node
+    lappend node [concat $key $value]
+    return $node
 }
 
 #-------------------------------------------------------------------------------
@@ -1419,7 +1419,7 @@ proc MRMLAddAttribute {node key value} {
 # .END
 #-------------------------------------------------------------------------------
 proc MRMLGetNumAttributes {node} {
-	return [expr [llength $node] - 1]
+    return [expr [llength $node] - 1]
 }
 
 #-------------------------------------------------------------------------------
@@ -1429,7 +1429,7 @@ proc MRMLGetNumAttributes {node} {
 # .END
 #-------------------------------------------------------------------------------
 proc MRMLGetAttribute {node i} {
-	return [lindex $node [expr $i + 1]]
+    return [lindex $node [expr $i + 1]]
 }
 
 #-------------------------------------------------------------------------------
@@ -1439,7 +1439,7 @@ proc MRMLGetAttribute {node i} {
 # .END
 #-------------------------------------------------------------------------------
 proc MRMLGetAttributeKey {attribute} {
-	return [lindex $attribute 0]
+    return [lindex $attribute 0]
 }
 
 #-------------------------------------------------------------------------------
@@ -1449,5 +1449,5 @@ proc MRMLGetAttributeKey {attribute} {
 # .END
 #-------------------------------------------------------------------------------
 proc MRMLGetAttributeValue {attribute} {
-	return [lreplace $attribute 0 0]
+    return [lreplace $attribute 0 0]
 }

@@ -37,9 +37,9 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 class VTK_EXPORT vtkImageLabelVOI : public vtkImageToImageFilter
 {
 public:
-	static vtkImageLabelVOI *New();
+    static vtkImageLabelVOI *New();
   vtkTypeMacro(vtkImageLabelVOI,vtkImageToImageFilter);
-	void PrintSelf(ostream& os, vtkIndent indent);
+    void PrintSelf(ostream& os, vtkIndent indent);
 
   vtkGetMacro(Method, int);
   vtkSetMacro(Method, int);
@@ -69,10 +69,10 @@ public:
   }
 
 protected:
-	vtkImageLabelVOI();
-	~vtkImageLabelVOI() {};
-	vtkImageLabelVOI(const vtkImageLabelVOI&) {};
-	void operator=(const vtkImageLabelVOI&) {};
+    vtkImageLabelVOI();
+    ~vtkImageLabelVOI() {};
+    vtkImageLabelVOI(const vtkImageLabelVOI&) {};
+    void operator=(const vtkImageLabelVOI&) {};
 
   int c1x;
   int c1y;
@@ -83,8 +83,8 @@ protected:
 
   int Method;
 
-	void ThreadedExecute(vtkImageData *inData, vtkImageData *outData, 
-		int extent[6], int id);
+    void ThreadedExecute(vtkImageData *inData, vtkImageData *outData, 
+        int extent[6], int id);
 };
 
 #endif

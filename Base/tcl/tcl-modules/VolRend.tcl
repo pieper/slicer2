@@ -75,7 +75,7 @@ proc VolRendInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.5 $} {$Date: 2002/01/26 23:34:33 $}]
+        {$Revision: 1.6 $} {$Date: 2002/03/18 20:52:41 $}]
 
     set Module($m,row1List) "Help Settings Transfer"
     set Module($m,row1Name) "{Help} {Settings} {Transfer Functions}"
@@ -178,9 +178,9 @@ Description by tabs:
     set f $fSettings
 
     foreach frame "Top HideOnExit Interpolation RenderMethod Texture Buttons" {
-	frame $f.f$frame -bg $Gui(activeWorkspace)
-#	pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
-	pack $f.f$frame -side top -padx 0 -pady $Gui(pad)
+    frame $f.f$frame -bg $Gui(activeWorkspace)
+#    pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
+    pack $f.f$frame -side top -padx 0 -pady $Gui(pad)
     }
     
     #-------------------------------------------
@@ -197,9 +197,9 @@ Description by tabs:
     set f $fSettings.fHideOnExit
 
     eval {checkbutton $f.rHideOnExit \
-	      -text "Hide Volume on Module Exit" -command "" \
-		  -variable VolRend(hideOnExit) \
-		  -indicatoron 1} $Gui(WCA)
+          -text "Hide Volume on Module Exit" -command "" \
+          -variable VolRend(hideOnExit) \
+          -indicatoron 1} $Gui(WCA)
     pack $f.rHideOnExit -side top -padx $Gui(pad)
 
     #-------------------------------------------
@@ -208,10 +208,10 @@ Description by tabs:
     set f $fSettings.fInterpolation
 
     foreach value "Nearest Linear" text "{Nearest Neighbor} {Linear Interpolation}" width "15 15" {
-	eval {radiobutton $f.r$value -width $width -indicatoron 0\
-		  -text "$text" -value "$value" -variable VolRend(interpolationMethod) \
-		  -command ""} $Gui(WCA)
-	pack $f.r$value -side left -fill x
+    eval {radiobutton $f.r$value -width $width -indicatoron 0\
+          -text "$text" -value "$value" -variable VolRend(interpolationMethod) \
+          -command ""} $Gui(WCA)
+    pack $f.r$value -side left -fill x
     }
     
     #-------------------------------------------
@@ -242,8 +242,8 @@ Description by tabs:
     set text "Ray Casting"
     set width 25
     eval {radiobutton $f.r$value -width $width -indicatoron 0\
-	      -text "$text" -value "$value" -variable VolRend(renderType) \
-	      -command ""} $Gui(WCA)
+          -text "$text" -value "$value" -variable VolRend(renderType) \
+          -command ""} $Gui(WCA)
     pack $f.r$value -side top
 
     #-------------------------------------------
@@ -253,7 +253,7 @@ Description by tabs:
 
     eval {label $f.lSampleDist -text "Sample Distance:"} $Gui(WLA)
     eval {entry $f.eSampleDist -width 6 \
-	      -textvariable VolRend(sampleDistance)} $Gui(WEA)
+          -textvariable VolRend(sampleDistance)} $Gui(WEA)
 
     pack $f.lSampleDist $f.eSampleDist -side left -fill x
 
@@ -267,25 +267,25 @@ Description by tabs:
     set text "Composite"
     set width 10
     eval {radiobutton $f.r$value -width $width -indicatoron 0\
-	      -text "$text" -value "$value" -variable VolRend(renderMethod) \
-	      -command "VolRendSelectRenderMethod"} $Gui(WCA)
+          -text "$text" -value "$value" -variable VolRend(renderMethod) \
+          -command "VolRendSelectRenderMethod"} $Gui(WCA)
     pack $f.r$value -side left -fill x
     
     frame $fBottom.f$value -bg $Gui(activeWorkspace)
 #    place $fBottom.f${value} -in $fBottom -relheight 1.0 -relwidth 1.0
     pack $fBottom.f$value -side top -padx 0 -pady 0
-    #	place $fBottom.f${value} -in $fBottom -height 300 -relwidth 1.0
+    #    place $fBottom.f${value} -in $fBottom -height 300 -relwidth 1.0
     set VolRend(f${value}) $fBottom.f${value}
     
     foreach value "mip isosurface" text "MIP Isosurface" width "5 10" {
-	eval {radiobutton $f.r$value -width $width -indicatoron 0\
-		  -text "$text" -value "$value" -variable VolRend(renderMethod) \
-		  -command "VolRendSelectRenderMethod"} $Gui(WCA)
-	pack $f.r$value -side left -fill x
+    eval {radiobutton $f.r$value -width $width -indicatoron 0\
+          -text "$text" -value "$value" -variable VolRend(renderMethod) \
+          -command "VolRendSelectRenderMethod"} $Gui(WCA)
+    pack $f.r$value -side left -fill x
 
-	frame $fBottom.f$value -bg $Gui(activeWorkspace)
-	place $fBottom.f${value} -in $fBottom -relheight 1.0 -relwidth 1.0
-	set VolRend(f${value}) $fBottom.f${value}
+    frame $fBottom.f$value -bg $Gui(activeWorkspace)
+    place $fBottom.f${value} -in $fBottom -relheight 1.0 -relwidth 1.0
+    set VolRend(f${value}) $fBottom.f${value}
     }
     raise $VolRend(f$VolRend(renderMethod))
 
@@ -295,10 +295,10 @@ Description by tabs:
     set f $fSettings.fRenderMethod.fBottom.fcomposite
 
     foreach value "interpolate classify" text "{Interpolate First} {Classify First}" width "15 15" {
-	eval {radiobutton $f.r$value -width $width -indicatoron 0\
-		  -text "$text" -value "$value" -variable VolRend(compositeMethod) \
-		  -command ""} $Gui(WCA)
-	pack $f.r$value -side left -fill x
+    eval {radiobutton $f.r$value -width $width -indicatoron 0\
+          -text "$text" -value "$value" -variable VolRend(compositeMethod) \
+          -command ""} $Gui(WCA)
+    pack $f.r$value -side left -fill x
     }
 
     #-------------------------------------------
@@ -307,10 +307,10 @@ Description by tabs:
     set f $fSettings.fRenderMethod.fBottom.fmip
 
     foreach value "ScalarValue Opacity" text "{Max. Scalar Value} {Max. Opacity}" width "15 15" {
-	eval {radiobutton $f.r$value -width $width -indicatoron 0\
-		  -text "$text" -value "$value" -variable VolRend(mipMaxMethod) \
-		  -command ""} $Gui(WCA)
-	pack $f.r$value -side left -fill x
+    eval {radiobutton $f.r$value -width $width -indicatoron 0\
+          -text "$text" -value "$value" -variable VolRend(mipMaxMethod) \
+          -command ""} $Gui(WCA)
+    pack $f.r$value -side left -fill x
     }
 
     #-------------------------------------------
@@ -320,7 +320,7 @@ Description by tabs:
 
     eval {label $f.lIsoValue -text "    Iso Value:" -width 15} $Gui(WLA)
     eval {entry $f.eIsoValue -width 6 \
-	      -textvariable VolRend(isoValue)} $Gui(WEA)
+          -textvariable VolRend(isoValue)} $Gui(WEA)
 
     pack $f.lIsoValue $f.eIsoValue -side left -fill x
 
@@ -346,8 +346,8 @@ Description by tabs:
     set text "2D Texture Mapping"
     set width 25
     eval {radiobutton $f.r$value -width $width -indicatoron 0\
-	      -text "$text" -value "$value" -variable VolRend(renderType) \
-	      -command ""} $Gui(WCA)
+          -text "$text" -value "$value" -variable VolRend(renderType) \
+          -command ""} $Gui(WCA)
     pack $f.r$value -side top
 
     #-------------------------------------------
@@ -373,13 +373,13 @@ Description by tabs:
     set f $fTransfer
 
     foreach frame "ScalarOpacity ColorTransfer GradientOpacity MessageBox" {
-	frame $f.f$frame -bg $Gui(activeWorkspace)
-	pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
+    frame $f.f$frame -bg $Gui(activeWorkspace)
+    pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
     }
 
     foreach frame "Buttons IO" {
-	frame $f.f$frame -bg $Gui(activeWorkspace)
-	pack $f.f$frame -side top -padx 0 -pady $Gui(pad)
+    frame $f.f$frame -bg $Gui(activeWorkspace)
+    pack $f.f$frame -side top -padx 0 -pady $Gui(pad)
     }
 
     #-------------------------------------------
@@ -499,40 +499,40 @@ proc VolRendRefresh {} {
     global VolRend Slice Volume
 
     if {$VolRend(idOriginal) == $Volume(idNone)} {
- 	return
+     return
     }
 
     VolRend(opacityTransferFunction) RemoveAllPoints
     set go 1
     for {set i 2} {$go == 1} {incr i} {
-	set line [$VolRend(ScalarOpacityBox) get $i.0 $i.end]
-	if {$line == "end"} {
-	    set go 0
-	} else {
-	    eval VolRend(opacityTransferFunction) AddPoint $line
-	}
+    set line [$VolRend(ScalarOpacityBox) get $i.0 $i.end]
+    if {$line == "end"} {
+        set go 0
+    } else {
+        eval VolRend(opacityTransferFunction) AddPoint $line
+    }
     }
 
     VolRend(colorTransferFunction) RemoveAllPoints
     set go 1
     for {set i 2} {$go == 1} {incr i} {
-	set line [$VolRend(ColorTransferBox) get $i.0 $i.end]
-	if {$line == "end"} {
-	    set go 0
-	} else {
-	    eval VolRend(colorTransferFunction) AddRGBPoint $line
-	}
+    set line [$VolRend(ColorTransferBox) get $i.0 $i.end]
+    if {$line == "end"} {
+        set go 0
+    } else {
+        eval VolRend(colorTransferFunction) AddRGBPoint $line
+    }
     }
 
     VolRend(GradientOpacityTRansferFunction) RemoveAllPoints
     set go 1
     for {set i 2} {$go == 1} {incr i} {
-	set line [$VolRend(GradientOpacityBox) get $i.0 $i.end]
-	if {$line == "end"} {
-	    set go 0
-	} else {
-	    eval VolRend(GradientOpacityTRansferFunction) AddPoint $line
-	}
+    set line [$VolRend(GradientOpacityBox) get $i.0 $i.end]
+    if {$line == "end"} {
+        set go 0
+    } else {
+        eval VolRend(GradientOpacityTRansferFunction) AddPoint $line
+    }
     }
 
     VolRend(imageCast) SetInput [Volume($VolRend(idOriginal),vol) GetOutput]
@@ -541,60 +541,60 @@ proc VolRendRefresh {} {
 #    VolRend(volume) SetMapper VolRend(${VolRend(renderType)}volumeMapper)
 
     if {$VolRend(renderType) == "raycast"} {
-	VolRend(volume) SetMapper VolRend(raycastvolumeMapper)
-	[VolRend(volume) GetProperty] SetInterpolationTypeTo$VolRend(interpolationMethod)
-	VolRend(raycastvolumeMapper) SetSampleDistance $VolRend(sampleDistance)
-	VolRend(raycastvolumeMapper) SetInput [VolRend(imageCast) GetOutput]
+    VolRend(volume) SetMapper VolRend(raycastvolumeMapper)
+    [VolRend(volume) GetProperty] SetInterpolationTypeTo$VolRend(interpolationMethod)
+    VolRend(raycastvolumeMapper) SetSampleDistance $VolRend(sampleDistance)
+    VolRend(raycastvolumeMapper) SetInput [VolRend(imageCast) GetOutput]
 
-	switch $VolRend(renderMethod) {
-	    "composite" {
-		if {$VolRend(compositeMethod) == "interpolate"} {
-		    VolRend(compositeFunction) SetCompositeMethodToInterpolateFirst
-		} else {
-		    VolRend(compositeFunction) SetCompositeMethodToClassifyFirst
-		}
-		VolRend(raycastvolumeMapper) SetVolumeRayCastFunction VolRend(compositeFunction)
-	    }
-	    
-	    "mip" {
-		VolRend(mipFunction) SetMaximizeMethodTo$VolRend(mipMaxMethod)
-		VolRend(raycastvolumeMapper) SetVolumeRayCastFunction VolRend(mipFunction)
-	    }
-	    
-	    "isosurface" {
-		VolRend(isosurfaceFunction) SetIsoValue $VolRend(isoValue)
-		VolRend(raycastvolumeMapper) SetVolumeRayCastFunction VolRend(isosurfaceFunction)
-	    }
-	}
+    switch $VolRend(renderMethod) {
+        "composite" {
+        if {$VolRend(compositeMethod) == "interpolate"} {
+            VolRend(compositeFunction) SetCompositeMethodToInterpolateFirst
+        } else {
+            VolRend(compositeFunction) SetCompositeMethodToClassifyFirst
+        }
+        VolRend(raycastvolumeMapper) SetVolumeRayCastFunction VolRend(compositeFunction)
+        }
+        
+        "mip" {
+        VolRend(mipFunction) SetMaximizeMethodTo$VolRend(mipMaxMethod)
+        VolRend(raycastvolumeMapper) SetVolumeRayCastFunction VolRend(mipFunction)
+        }
+        
+        "isosurface" {
+        VolRend(isosurfaceFunction) SetIsoValue $VolRend(isoValue)
+        VolRend(raycastvolumeMapper) SetVolumeRayCastFunction VolRend(isosurfaceFunction)
+        }
+    }
 
-	if {[info commands t1] == ""} {
-	    vtkTransform t1
-	}
-	t1 Identity
-	t1 PreMultiply
-	t1 SetMatrix [Volume($VolRend(idOriginal),node) GetWldToIjk]
-	t1 Inverse
-	scan [Volume($VolRend(idOriginal),node) GetSpacing] "%g %g %g" res_x res_y res_z
-	t1 PostMultiply
-	t1 Scale [expr 1.0 / $res_x] [expr 1.0 / $res_y] [expr 1.0 / $res_z]
+    if {[info commands t1] == ""} {
+        vtkTransform t1
+    }
+    t1 Identity
+    t1 PreMultiply
+    t1 SetMatrix [Volume($VolRend(idOriginal),node) GetWldToIjk]
+    t1 Inverse
+    scan [Volume($VolRend(idOriginal),node) GetSpacing] "%g %g %g" res_x res_y res_z
+    t1 PostMultiply
+    t1 Scale [expr 1.0 / $res_x] [expr 1.0 / $res_y] [expr 1.0 / $res_z]
     }
 
     if {$VolRend(renderType) == "texture"} {
-	VolRend(volume) SetMapper VolRend(texturevolumeMapper)
-	[VolRend(volume) GetProperty] SetInterpolationTypeTo$VolRend(interpolationMethod)
-#	VolRend(texturevolumeMapper) SetSampleDistance $VolRend(sampleDistance)
-	VolRend(texturevolumeMapper) SetInput [VolRend(imageCast) GetOutput]
+    VolRend(volume) SetMapper VolRend(texturevolumeMapper)
+    [VolRend(volume) GetProperty] SetInterpolationTypeTo$VolRend(interpolationMethod)
+#    VolRend(texturevolumeMapper) SetSampleDistance $VolRend(sampleDistance)
+    VolRend(texturevolumeMapper) SetInput [VolRend(imageCast) GetOutput]
 
-	if {[info commands t1] == ""} {
-	    vtkTransform t1
-	}
-	t1 Identity
-	t1 PreMultiply
-	t1 SetMatrix [Volume($VolRend(idOriginal),node) GetWldToIjk]
-	t1 Inverse
-	scan [Volume($VolRend(idOriginal),node) GetSpacing] "%g %g %g" res_x res_y res_z
-	t1 PreMultiply
-	t1 Scale [expr 1.0 / $res_x] [expr 1.0 / $res_y] [expr 1.0 / $res_z]
+    if {[info commands t1] == ""} {
+        vtkTransform t1
+    }
+    t1 Identity
+    t1 PreMultiply
+    t1 SetMatrix [Volume($VolRend(idOriginal),node) GetWldToIjk]
+    t1 Inverse
+    scan [Volume($VolRend(idOriginal),node) GetSpacing] "%g %g %g" res_x res_y res_z
+    t1 PreMultiply
+    t1 Scale [expr 1.0 / $res_x] [expr 1.0 / $res_y] [expr 1.0 / $res_z]
     }
 
     VolRend(volume) SetUserMatrix [t1 GetMatrix]
@@ -622,28 +622,28 @@ proc VolRendEnter {} {
     # otherwise the first volume in the mrml tree.
 
     if {$VolRend(idOriginal) == $Volume(idNone)} {
-	    set v [[[Slicer GetBackVolume $Slice(activeID)] GetMrmlNode] GetID]
-	    if {$v == $Volume(idNone)} {
-		    set v [lindex $Volume(idList) 0]
-	    }
-	    if {$v != $Volume(idNone)} {
-		    VolRendSetOriginal $v
-	    }
+        set v [[[Slicer GetBackVolume $Slice(activeID)] GetMrmlNode] GetID]
+        if {$v == $Volume(idNone)} {
+            set v [lindex $Volume(idList) 0]
+        }
+        if {$v != $Volume(idNone)} {
+            VolRendSetOriginal $v
+        }
     }
 
     pushEventManager $VolRend(eventManager)
 
 #     if {$VolRend(idOriginal) != $Volume(idNone)} {
-# 	VolRend(volumeMapper) SetInput [Volume($VolRend(idOriginal),vol) GetOutput]
-# 	VolRend(volumeMapper) Update
+#     VolRend(volumeMapper) SetInput [Volume($VolRend(idOriginal),vol) GetOutput]
+#     VolRend(volumeMapper) Update
 #     }
 
     if {$VolRend(volumeVisible) == "0"} {
-	#    MainAddActor VolRend(volume)
-	foreach r $Module(Renderers) {
-	    $r AddVolume VolRend(volume)
-	    #	$r AddActor VolRend(outlineActor)
-	}
+    #    MainAddActor VolRend(volume)
+    foreach r $Module(Renderers) {
+        $r AddVolume VolRend(volume)
+        #    $r AddActor VolRend(outlineActor)
+    }
     }
     set VolRend(volumeVisible) "1"
 
@@ -661,15 +661,15 @@ proc VolRendExit {} {
      global VolRend Module Volume
 
     if {$VolRend(hideOnExit)} {
-	#    MainRemoveActor VolRend(volume)
-	foreach r $Module(Renderers) {
-	    $r RemoveVolume VolRend(volume)
-	    #	$r RemoveActor VolRend(outlineActor)
-	}   
-	VolRend(imageCast) SetInput [Volume($Volume(idNone),vol) GetOutput]
-	set VolRend(volumeVisible) "0"
+    #    MainRemoveActor VolRend(volume)
+    foreach r $Module(Renderers) {
+        $r RemoveVolume VolRend(volume)
+        #    $r RemoveActor VolRend(outlineActor)
+    }   
+    VolRend(imageCast) SetInput [Volume($Volume(idNone),vol) GetOutput]
+    set VolRend(volumeVisible) "0"
 
-	RenderAll
+    RenderAll
     }
 
     popEventManager
@@ -689,7 +689,7 @@ proc VolRendUpdateMRML {} {
     #
     set n $Volume(idNone)
     if {[lsearch $Volume(idList) $VolRend(idOriginal)] == -1} {
-	    VolRendSetOriginal $n
+        VolRendSetOriginal $n
     }
 
     # Original Volume menu
@@ -697,8 +697,8 @@ proc VolRendUpdateMRML {} {
     set m $VolRend(mOriginal)
     $m delete 0 end
     foreach v $Volume(idList) {
-	    $m add command -label [Volume($v,node) GetName] -command \
-		    "VolRendSetOriginal $v; RenderAll"
+        $m add command -label [Volume($v,node) GetName] -command \
+            "VolRendSetOriginal $v; RenderAll"
     }
 }
 
@@ -731,7 +731,7 @@ proc VolRendSaveTransferFunctions {} {
     set VolRend(transferFunctionReadFileName) [tk_getSaveFile -title "Save file" -filetypes "{{XML} {.xml}} {{All files} {*}}" -initialdir [file dirname $VolRend(transferFunctionSaveFileName)] -initialfile $VolRend(transferFunctionSaveFileName)]
 
     if {$VolRend(transferFunctionSaveFileName) == ""} {
-	return
+    return
     }
 
     vtkMrmlOptionsNode node
@@ -743,36 +743,36 @@ proc VolRendSaveTransferFunctions {} {
     set settings "OpacityTransferFunction='\n"
     set go 1
     for {set i 2} {$go == 1} {incr i} {
-	set line [$VolRend(ScalarOpacityBox) get $i.0 $i.end]
-	if {$line == "end"} {
-	    set go 0
-	} else {
-	    set settings "${settings}${line}\n"
-	}
+    set line [$VolRend(ScalarOpacityBox) get $i.0 $i.end]
+    if {$line == "end"} {
+        set go 0
+    } else {
+        set settings "${settings}${line}\n"
+    }
     }
     set settings "$settings'\n"
 
     set settings "${settings}ColorTransferFunction='\n"
     set go 1
     for {set i 2} {$go == 1} {incr i} {
-	set line [$VolRend(ColorTransferBox) get $i.0 $i.end]
-	if {$line == "end"} {
-	    set go 0
-	} else {
-	    set settings "${settings}${line}\n"
-	}
+    set line [$VolRend(ColorTransferBox) get $i.0 $i.end]
+    if {$line == "end"} {
+        set go 0
+    } else {
+        set settings "${settings}${line}\n"
+    }
     }
     set settings "$settings'\n"
 
     set settings "${settings}GradientOpacityTransferFunction='\n"
     set go 1
     for {set i 2} {$go == 1} {incr i} {
-	set line [$VolRend(GradientOpacityBox) get $i.0 $i.end]
-	if {$line == "end"} {
-	    set go 0
-	} else {
-	    set settings "${settings}${line}\n"
-	}
+    set line [$VolRend(GradientOpacityBox) get $i.0 $i.end]
+    if {$line == "end"} {
+        set go 0
+    } else {
+        set settings "${settings}${line}\n"
+    }
     }
     set settings "$settings'\n"
 
@@ -803,7 +803,7 @@ proc VolRendReadTransferFunctions {} {
     set VolRend(transferFunctionReadFileName) [tk_getOpenFile -title "Input file" -filetypes "{{XML} {.xml}} {{All files} {*}}" -initialdir [file dirname $VolRend(transferFunctionReadFileName)] -initialfile $VolRend(transferFunctionReadFileName)]
 
     if {$VolRend(transferFunctionReadFileName) == ""} {
-	return
+    return
     }
     
     # read in the settings
@@ -812,56 +812,56 @@ proc VolRendReadTransferFunctions {} {
     set node(contents) ""
 
     foreach pair $tags {
-	set tag  [lindex $pair 0]
-	set attr [lreplace $pair 0 0]
-	
-	switch $tag {
-	    "Options" {
-		foreach a $attr {
-		    set key [lindex $a 0]
-		    set val [lreplace $a 0 0]
-		    set node($key) $val
-		}
-	    }    
-	}
+    set tag  [lindex $pair 0]
+    set attr [lreplace $pair 0 0]
+    
+    switch $tag {
+        "Options" {
+        foreach a $attr {
+            set key [lindex $a 0]
+            set val [lreplace $a 0 0]
+            set node($key) $val
+        }
+        }    
+    }
     }
     
     # check program and contents
     if {$node(program) != "slicer"} {
-	set msg "This is not a Slicer file. It is from $node(program)."
-	puts $msg
-	tk_messageBox -message "$msg"
+    set msg "This is not a Slicer file. It is from $node(program)."
+    puts $msg
+    tk_messageBox -message "$msg"
     }
     if {$node(contents) != $VolRend(contents)} {
-	set msg "This is not a VolRend settings file. It is $node(contents)."
-	puts $msg
-	tk_messageBox -message "$msg"
+    set msg "This is not a VolRend settings file. It is $node(contents)."
+    puts $msg
+    tk_messageBox -message "$msg"
     }
 
     $VolRend(ScalarOpacityBox) delete 1.0 end
     $VolRend(ScalarOpacityBox) insert insert "ScalarOpacityBox\n"
     if {[info exists node(OpacityTransferFunction)] == "1"} {
-	foreach {scalar opacity} $node(OpacityTransferFunction) {
-	    $VolRend(ScalarOpacityBox) insert insert "$scalar $opacity\n"
-	}
+    foreach {scalar opacity} $node(OpacityTransferFunction) {
+        $VolRend(ScalarOpacityBox) insert insert "$scalar $opacity\n"
+    }
     }
     $VolRend(ScalarOpacityBox) insert insert "end"
 
     $VolRend(ColorTransferBox) delete 1.0 end
     $VolRend(ColorTransferBox) insert insert "ColorTransferBox\n"
     if {[info exists node(ColorTransferFunction)] == "1"} {
-	foreach {scalar R G B} $node(ColorTransferFunction) {
-	    $VolRend(ColorTransferBox) insert insert "$scalar $R $G $B\n"
-	}
+    foreach {scalar R G B} $node(ColorTransferFunction) {
+        $VolRend(ColorTransferBox) insert insert "$scalar $R $G $B\n"
+    }
     }
     $VolRend(ColorTransferBox) insert insert "end"
 
     $VolRend(GradientOpacityBox) delete 1.0 end
     $VolRend(GradientOpacityBox) insert insert "GradientOpacityBox\n"
     if {[info exists node(GradientOpacityTransferFunction)] == "1"} {
-	foreach {gradient value} $node(GradientOpacityTransferFunction) {
-	    $VolRend(GradientOpacityBox) insert insert "$gradient $value\n"
-	}
+    foreach {gradient value} $node(GradientOpacityTransferFunction) {
+        $VolRend(GradientOpacityBox) insert insert "$gradient $value\n"
+    }
     }
     $VolRend(GradientOpacityBox) insert insert "end"
 }
@@ -903,36 +903,36 @@ proc VolRendStorePresets {p} {
     set settings ""
     set go 1
     for {set i 2} {$go == 1} {incr i} {
-	set line [$VolRend(ScalarOpacityBox) get $i.0 $i.end]
-	if {$line == "end"} {
-	    set go 0
-	} else {
-	    set settings "${settings}${line} "
-	}
+    set line [$VolRend(ScalarOpacityBox) get $i.0 $i.end]
+    if {$line == "end"} {
+        set go 0
+    } else {
+        set settings "${settings}${line} "
+    }
     }
     regsub -all "\n" $settings {} Preset(VolRend,$p,opacityTransferFunction)
 
     set settings ""
     set go 1
     for {set i 2} {$go == 1} {incr i} {
-	set line [$VolRend(ColorTransferBox) get $i.0 $i.end]
-	if {$line == "end"} {
-	    set go 0
-	} else {
-	    set settings "${settings}${line} "
-	}
+    set line [$VolRend(ColorTransferBox) get $i.0 $i.end]
+    if {$line == "end"} {
+        set go 0
+    } else {
+        set settings "${settings}${line} "
+    }
     }
     regsub -all "\n" $settings {} Preset(VolRend,$p,colorTransferFunction)
 
     set settings ""
     set go 1
     for {set i 2} {$go == 1} {incr i} {
-	set line [$VolRend(GradientOpacityBox) get $i.0 $i.end]
-	if {$line == "end"} {
-	    set go 0
-	} else {
-	    set settings "${settings}${line} "
-	}
+    set line [$VolRend(GradientOpacityBox) get $i.0 $i.end]
+    if {$line == "end"} {
+        set go 0
+    } else {
+        set settings "${settings}${line} "
+    }
     }
     regsub -all "\n" $settings {} Preset(VolRend,$p,gradientOpacityTransferFunction)
 }
@@ -959,27 +959,27 @@ proc VolRendRecallPresets {p} {
     $VolRend(ScalarOpacityBox) delete 1.0 end
     $VolRend(ScalarOpacityBox) insert insert "ScalarOpacityBox\n"
     if {[info exists Preset(VolRend,$p,opacityTransferFunction)] == "1"} {
-	foreach {scalar opacity} $Preset(VolRend,$p,opacityTransferFunction) {
-	    $VolRend(ScalarOpacityBox) insert insert "$scalar $opacity\n"
-	}
+    foreach {scalar opacity} $Preset(VolRend,$p,opacityTransferFunction) {
+        $VolRend(ScalarOpacityBox) insert insert "$scalar $opacity\n"
+    }
     }
     $VolRend(ScalarOpacityBox) insert insert "end"
 
     $VolRend(ColorTransferBox) delete 1.0 end
     $VolRend(ColorTransferBox) insert insert "ColorTransferBox\n"
     if {[info exists Preset(VolRend,$p,colorTransferFunction)] == "1"} {
-	foreach {scalar R G B} $Preset(VolRend,$p,colorTransferFunction) {
-	    $VolRend(ColorTransferBox) insert insert "$scalar $R $G $B\n"
-	}
+    foreach {scalar R G B} $Preset(VolRend,$p,colorTransferFunction) {
+        $VolRend(ColorTransferBox) insert insert "$scalar $R $G $B\n"
+    }
     }
     $VolRend(ColorTransferBox) insert insert "end"
 
     $VolRend(GradientOpacityBox) delete 1.0 end
     $VolRend(GradientOpacityBox) insert insert "GradientOpacityBox\n"
     if {[info exists Preset(VolRend,$p,gradientOpacityTransferFunction)] == "1"} {
-	foreach {gradient value} $Preset(VolRend,$p,gradientOpacityTransferFunction) {
-	    $VolRend(GradientOpacityBox) insert insert "$gradient $value\n"
-	}
+    foreach {gradient value} $Preset(VolRend,$p,gradientOpacityTransferFunction) {
+        $VolRend(GradientOpacityBox) insert insert "$gradient $value\n"
+    }
     }
     $VolRend(GradientOpacityBox) insert insert "end"
 }

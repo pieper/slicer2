@@ -49,46 +49,46 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 class VTK_EXPORT vtkImageFillROI : public vtkImageInPlaceFilter
 {
 public:
-	static vtkImageFillROI *New();
+    static vtkImageFillROI *New();
   vtkTypeMacro(vtkImageFillROI,vtkImageInPlaceFilter);
-	void PrintSelf(ostream& os, vtkIndent indent);
+    void PrintSelf(ostream& os, vtkIndent indent);
 
-	vtkSetMacro(Value, float);
-	vtkGetMacro(Value, float);
+    vtkSetMacro(Value, float);
+    vtkGetMacro(Value, float);
 
-	void SetShapeToPolygon() {this->shape = SHAPE_POLYGON;};
-	void SetShapeToLines() {this->shape = SHAPE_LINES;};
-	void SetShapeToPoints() {this->shape = SHAPE_POINTS;};
-	void SetShape(int s) {this->shape = s;};
-	int GetShape() {return this->shape;};
-	char *GetShapeString() {switch (this->shape) {
-		case SHAPE_POLYGON: return "Polygon";
-		case SHAPE_LINES: return "Lines";
-		case SHAPE_POINTS: return "Points";
-		default: return "None";};};
-	void SetShapeString(char *str) {
-		if (strcmp(str,"Polygon") == 0) this->SetShapeToPolygon();
-		else if (strcmp(str,"Lines") == 0) this->SetShapeToLines();
-		else this->SetShapeToPoints();};
+    void SetShapeToPolygon() {this->shape = SHAPE_POLYGON;};
+    void SetShapeToLines() {this->shape = SHAPE_LINES;};
+    void SetShapeToPoints() {this->shape = SHAPE_POINTS;};
+    void SetShape(int s) {this->shape = s;};
+    int GetShape() {return this->shape;};
+    char *GetShapeString() {switch (this->shape) {
+        case SHAPE_POLYGON: return "Polygon";
+        case SHAPE_LINES: return "Lines";
+        case SHAPE_POINTS: return "Points";
+        default: return "None";};};
+    void SetShapeString(char *str) {
+        if (strcmp(str,"Polygon") == 0) this->SetShapeToPolygon();
+        else if (strcmp(str,"Lines") == 0) this->SetShapeToLines();
+        else this->SetShapeToPoints();};
 
-	vtkSetMacro(Radius, int);
-	vtkGetMacro(Radius, int);
+    vtkSetMacro(Radius, int);
+    vtkGetMacro(Radius, int);
 
-	vtkSetObjectMacro(Points, vtkPoints);
-	vtkGetObjectMacro(Points, vtkPoints);
+    vtkSetObjectMacro(Points, vtkPoints);
+    vtkGetObjectMacro(Points, vtkPoints);
 
 protected:
-	vtkImageFillROI();
+    vtkImageFillROI();
   ~vtkImageFillROI();
   vtkImageFillROI(const vtkImageFillROI&) {};
-	void operator=(const vtkImageFillROI&) {};
+    void operator=(const vtkImageFillROI&) {};
 
-	vtkPoints *Points;
-	float Value;
-	int Radius;
-	int shape;
+    vtkPoints *Points;
+    float Value;
+    int Radius;
+    int shape;
 
-	// not threaded because too simple a filter
+    // not threaded because too simple a filter
         void Execute(vtkImageData *inData, vtkImageData *outData);
 };
 #endif

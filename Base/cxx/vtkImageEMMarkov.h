@@ -116,7 +116,7 @@ class VTK_EXPORT vtkImageEMMarkov : public vtkImageToImageFilter
 
   void SetComponentExtent(int extent[6]);
   void SetComponentExtent(int minX, int maxX, int minY, int maxY, 
-			  int minZ, int maxZ);
+              int minZ, int maxZ);
 
   void GetComponentExtent(int extent[6]);
   int *GetComponentExtent() {return this->ComponentExtent;}

@@ -75,64 +75,64 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 class VTK_EXPORT vtkImageRealtimeScan : public vtkImageSource 
 {
 public:
-	static vtkImageRealtimeScan *New();
+    static vtkImageRealtimeScan *New();
   vtkTypeMacro(vtkImageRealtimeScan,vtkImageSource);
-	void PrintSelf(ostream& os, vtkIndent indent);
+    void PrintSelf(ostream& os, vtkIndent indent);
 
-	void ExecuteInformation();
+    void ExecuteInformation();
   
-	vtkGetObjectMacro(LocatorMatrix,vtkMatrix4x4);
-	vtkGetObjectMacro(ImageMatrix,vtkMatrix4x4);
+    vtkGetObjectMacro(LocatorMatrix,vtkMatrix4x4);
+    vtkGetObjectMacro(ImageMatrix,vtkMatrix4x4);
 
-	int OpenConnection(char *name, int port);
-	int CheckConnection();
-	int PollRealtime();
-	void CloseConnection();
-	void SetRefreshImage(int refresh);
-	int GetRefreshImage() {return RefreshImage;}
+    int OpenConnection(char *name, int port);
+    int CheckConnection();
+    int PollRealtime();
+    void CloseConnection();
+    void SetRefreshImage(int refresh);
+    int GetRefreshImage() {return RefreshImage;}
 
-	vtkGetMacro(LocatorStatus, int);
-	vtkGetMacro(NewLocator, short);
-	vtkGetMacro(NewImage, short);
-	vtkGetMacro(PatientPosition, short);
-	vtkGetMacro(PatientEntry, short);
-	vtkGetMacro(TablePosition, short);
-	vtkGetMacro(MinValue, short);
-	vtkGetMacro(MaxValue, short);
-	vtkGetMacro(Recon, long);
-	vtkGetMacro(ImageNum, long);
-	
-	vtkGetMacro(Test, int);
-	vtkSetMacro(Test, int);
+    vtkGetMacro(LocatorStatus, int);
+    vtkGetMacro(NewLocator, short);
+    vtkGetMacro(NewImage, short);
+    vtkGetMacro(PatientPosition, short);
+    vtkGetMacro(PatientEntry, short);
+    vtkGetMacro(TablePosition, short);
+    vtkGetMacro(MinValue, short);
+    vtkGetMacro(MaxValue, short);
+    vtkGetMacro(Recon, long);
+    vtkGetMacro(ImageNum, long);
+    
+    vtkGetMacro(Test, int);
+    vtkSetMacro(Test, int);
 
-	vtkSetStringMacro(TestPrefix);
+    vtkSetStringMacro(TestPrefix);
 
-	int SetPosition(short tblPos, short patEntry, short patPos);
+    int SetPosition(short tblPos, short patEntry, short patPos);
 
 protected:
-	vtkImageRealtimeScan();
-	~vtkImageRealtimeScan();
-	long SendServer(int cmd);
-	void Execute(vtkImageData *data);
+    vtkImageRealtimeScan();
+    ~vtkImageRealtimeScan();
+    long SendServer(int cmd);
+    void Execute(vtkImageData *data);
 
-	/* Modified is automatically set for NewImage, but not NewLocator. */
+    /* Modified is automatically set for NewImage, but not NewLocator. */
 
-	short RefreshImage;
-	short NewImage;
-	short NewLocator;
-	short LocatorStatus;
-	short TablePosition;
-	short PatientPosition;
-	short PatientEntry;
-	short MinValue;
-	short MaxValue;
-	long ImageNum;
-	long Recon;
-	int Test;
-	int sockfd;
-	char *TestPrefix;
-	vtkMatrix4x4 *LocatorMatrix;
-	vtkMatrix4x4 *ImageMatrix;
+    short RefreshImage;
+    short NewImage;
+    short NewLocator;
+    short LocatorStatus;
+    short TablePosition;
+    short PatientPosition;
+    short PatientEntry;
+    short MinValue;
+    short MaxValue;
+    long ImageNum;
+    long Recon;
+    int Test;
+    int sockfd;
+    char *TestPrefix;
+    vtkMatrix4x4 *LocatorMatrix;
+    vtkMatrix4x4 *ImageMatrix;
 };
 
 

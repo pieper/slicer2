@@ -244,9 +244,9 @@ void vtkMathUtils::Outer3(float x[3], float y[3], float A[3][3])
   for (int i=0; i < 3; i++)
     {
       for (int j=0; j < 3; j++)
-	{
-	  A[i][j] = x[i]*y[j];
-	}
+    {
+      A[i][j] = x[i]*y[j];
+    }
     }
 }
 
@@ -255,14 +255,14 @@ void vtkMathUtils::Outer2(float x[2], float y[2], float A[2][2])
   for (int i=0; i < 2; i++)
     {
       for (int j=0; j < 2; j++)
-	{
-	  A[i][j] = x[i]*y[j];
-	}
+    {
+      A[i][j] = x[i]*y[j];
+    }
     }
 }
 
 static void vtkMathUtils::MatrixMultiply(double **A, double **B, double **C, int rowA, 
-			   int colA, int rowB, int colB)
+               int colA, int rowB, int colB)
 {
   // we need colA == rowB 
   if (colA != rowB)
@@ -277,18 +277,18 @@ static void vtkMathUtils::MatrixMultiply(double **A, double **B, double **C, int
     {
       // output col
       for (int j=0; j < colB; j++)
-	{
-	  C[i][j] = 0;
-	  //cout << C[i][j] << " ";
-	  // sum for this point
-	  for (int k=0; k < colA; k++)
-	    {
-	      C[i][j] += A[i][k]*B[k][j];
-	      //cout << A[i][k]*B[k][j] << " ";
-	    }
-	  //cout << "=" << C[i][j] << " ";
-	  //cout << endl;	  
-	}
+    {
+      C[i][j] = 0;
+      //cout << C[i][j] << " ";
+      // sum for this point
+      for (int k=0; k < colA; k++)
+        {
+          C[i][j] += A[i][k]*B[k][j];
+          //cout << A[i][k]*B[k][j] << " ";
+        }
+      //cout << "=" << C[i][j] << " ";
+      //cout << endl;      
+    }
     }
 }
 
@@ -299,9 +299,9 @@ static void vtkMathUtils::PrintMatrix(double **A, int rowA, int colA)
   for (j = 0; j < rowA; j++)
     {
       for (k = 0; k < colA; k++)
-	{
-	  cout << A[j][k] << " ";
-	}
+    {
+      cout << A[j][k] << " ";
+    }
       cout << endl;
     }
 

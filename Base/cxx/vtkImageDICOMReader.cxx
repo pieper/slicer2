@@ -520,7 +520,7 @@ void vtkImageDICOMReader::ExecuteInformation()
   ext = output->GetExtent();
 
   vtkDebugMacro("Reading extent: " << ext[0] << ", " << ext[1] << ", " 
-  	<< ext[2] << ", " << ext[3] << ", " << ext[4] << ", " << ext[5]);
+      << ext[2] << ", " << ext[3] << ", " << ext[4] << ", " << ext[5]);
   
 
 
@@ -697,7 +697,7 @@ void vtkImageDICOMReader::OpenAndSeekFile(int dataExtent[6], int idx)
     vtkWarningMacro("File operation failed.");
     return;
     }
-	
+    
 }
 
 //----------------------------------------------------------------------------
@@ -705,7 +705,7 @@ void vtkImageDICOMReader::OpenAndSeekFile(int dataExtent[6], int idx)
 // templated to handle different data types.
 template <class IT, class OT>
 static void vtkImageDICOMReaderUpdate2(vtkImageDICOMReader *self, vtkImageData *data,
-				  IT *inPtr, OT *outPtr)
+                  IT *inPtr, OT *outPtr)
 {
   int inIncr[3], outIncr[3];
   OT *outPtr0, *outPtr1, *outPtr2;
@@ -768,7 +768,7 @@ static void vtkImageDICOMReaderUpdate2(vtkImageDICOMReader *self, vtkImageData *
   buf = new unsigned char[streamRead];
   
   target = (unsigned long)((dataExtent[5]-dataExtent[4]+1)*
-			   (dataExtent[3]-dataExtent[2]+1)/50.0);
+               (dataExtent[3]-dataExtent[2]+1)/50.0);
   target++;
 
   // read the data row by row
@@ -787,75 +787,75 @@ static void vtkImageDICOMReaderUpdate2(vtkImageDICOMReader *self, vtkImageData *
       }
     outPtr1 = outPtr2;
     for (idx1 = dataExtent[2]; 
-	 !self->AbortExecute && idx1 <= dataExtent[3]; ++idx1)
+     !self->AbortExecute && idx1 <= dataExtent[3]; ++idx1)
       {
       if (!(count%target))
-	{
-	self->UpdateProgress(count/(50.0*target));
-	}
+    {
+    self->UpdateProgress(count/(50.0*target));
+    }
       count++;
       outPtr0 = outPtr1;
   
       // read the row.
       if ( ! self->GetFile()->read((char *)buf, streamRead))
-	{
-	vtkGenericWarningMacro("File operation failed. row = " << idx1
-			       << ", Read = " << streamRead
-			       << ", Skip0 = " << streamSkip0
-			       << ", Skip1 = " << streamSkip1
-			       << ", FilePos = " << self->GetFile()->tellg());
-	return;
-	}
+    {
+    vtkGenericWarningMacro("File operation failed. row = " << idx1
+                   << ", Read = " << streamRead
+                   << ", Skip0 = " << streamSkip0
+                   << ", Skip1 = " << streamSkip1
+                   << ", FilePos = " << self->GetFile()->tellg());
+    return;
+    }
 
       // handle swapping
       if (self->GetSwapBytes())
-	{
-	// pixelSkip is the number of components in data
-	vtkByteSwap::SwapVoidRange(buf, pixelRead*pixelSkip, sizeof(IT));
-	}
+    {
+    // pixelSkip is the number of components in data
+    vtkByteSwap::SwapVoidRange(buf, pixelRead*pixelSkip, sizeof(IT));
+    }
       
       // copy the bytes into the typed data
       inPtr = (IT *)(buf);
       for (idx0 = dataExtent[0]; idx0 <= dataExtent[1]; ++idx0)
-	{
-	// Copy pixel into the output.
-	if (DataMask == 0xffff)
-	  {
-	  for (comp = 0; comp < pixelSkip; comp++)
-	    {
-	    outPtr0[comp] = (OT)(inPtr[comp]);
-	    }
-	  }
-	else
-	  {
-	  // left over from short reader (what about other types.
-	  for (comp = 0; comp < pixelSkip; comp++)
-	    {
-	    outPtr0[comp] = (OT)((short)(inPtr[comp]) & DataMask);
-	    }
-	  }
-	// move to next pixel
-	inPtr += pixelSkip;
-	outPtr0 += outIncr[0];
-	}
+    {
+    // Copy pixel into the output.
+    if (DataMask == 0xffff)
+      {
+      for (comp = 0; comp < pixelSkip; comp++)
+        {
+        outPtr0[comp] = (OT)(inPtr[comp]);
+        }
+      }
+    else
+      {
+      // left over from short reader (what about other types.
+      for (comp = 0; comp < pixelSkip; comp++)
+        {
+        outPtr0[comp] = (OT)((short)(inPtr[comp]) & DataMask);
+        }
+      }
+    // move to next pixel
+    inPtr += pixelSkip;
+    outPtr0 += outIncr[0];
+    }
       // move to the next row in the file and data
       filePos = self->GetFile()->tellg();
       // watch for case where we might rewind too much
       // if that happens, store the value in correction and apply later
       if (filePos + streamSkip0 >= 0)
-	{
-	self->GetFile()->seekg(self->GetFile()->tellg() + streamSkip0, ios::beg);
-	correction = 0;
-	}
+    {
+    self->GetFile()->seekg(self->GetFile()->tellg() + streamSkip0, ios::beg);
+    correction = 0;
+    }
       else
-	{
-	correction = streamSkip0;
-	}
+    {
+    correction = streamSkip0;
+    }
       outPtr1 += outIncr[1];
       }
     // move to the next image in the file and data
     self->GetFile()->seekg(self->GetFile()->tellg() + streamSkip1 + correction, 
-		      ios::beg);
+              ios::beg);
     outPtr2 += outIncr[2];
     }
 
@@ -869,7 +869,7 @@ static void vtkImageDICOMReaderUpdate2(vtkImageDICOMReader *self, vtkImageData *
 // templated to handle different data types.
 template <class T>
 static void vtkImageDICOMReaderUpdate1(vtkImageDICOMReader *self, 
-				  vtkImageData *data, T *inPtr)
+                  vtkImageData *data, T *inPtr)
 {
   void *outPtr;
 
@@ -928,7 +928,7 @@ void vtkImageDICOMReader::Execute(vtkImageData *data)
   ext = data->GetExtent();
 
   vtkDebugMacro("Reading extent: " << ext[0] << ", " << ext[1] << ", " 
-  	<< ext[2] << ", " << ext[3] << ", " << ext[4] << ", " << ext[5]);
+      << ext[2] << ", " << ext[3] << ", " << ext[4] << ", " << ext[5]);
   
   this->ComputeDataIncrements();
   
@@ -1042,21 +1042,21 @@ void vtkImageDICOMReader::ComputeTransformedOrigin (float origin[3])
     for (int i = 0; i < 3; i++) 
       {
       if (transformedSpacing[i] < 0)
-	{
-	origin[i] = transformedOrigin[i] + transformedSpacing[i]*
-	  (transformedExtent[i*2+1] -  transformedExtent[i*2]);
-	}
+    {
+    origin[i] = transformedOrigin[i] + transformedSpacing[i]*
+      (transformedExtent[i*2+1] -  transformedExtent[i*2]);
+    }
       else
-	{
-	origin[i] = transformedOrigin[i];
-	}
+    {
+    origin[i] = transformedOrigin[i];
+    }
       }
     vtkDebugMacro("Transformed Origin " << origin[0] << ", " << origin[1] << ", " << origin[2]);
     }
 }
 
 void vtkImageDICOMReader::ComputeTransformedExtent(int inExtent[6],
-					      int outExtent[6])
+                          int outExtent[6])
 {
   float transformedExtent[4];
   int temp;
@@ -1093,11 +1093,11 @@ void vtkImageDICOMReader::ComputeTransformedExtent(int inExtent[6],
     for (idx = 0; idx < 6; idx += 2)
       {
       if (dataExtent[idx] > dataExtent[idx+1]) 
-	{
-	temp = dataExtent[idx];
-	dataExtent[idx] = dataExtent[idx+1];
-	dataExtent[idx+1] = temp;
-	}
+    {
+    temp = dataExtent[idx];
+    dataExtent[idx] = dataExtent[idx+1];
+    dataExtent[idx+1] = temp;
+    }
       }
 
     // now transform the inExtent
@@ -1140,7 +1140,7 @@ void vtkImageDICOMReader::ComputeTransformedExtent(int inExtent[6],
 }
 
 void vtkImageDICOMReader::ComputeInverseTransformedExtent(int inExtent[6],
-						     int outExtent[6])
+                             int outExtent[6])
 {
   float transformedExtent[4];
   int temp;
@@ -1182,11 +1182,11 @@ void vtkImageDICOMReader::ComputeInverseTransformedExtent(int inExtent[6],
     for (idx = 0; idx < 6; idx += 2)
       {
       if (dataExtent[idx] > dataExtent[idx+1]) 
-	{
-	temp = dataExtent[idx];
-	dataExtent[idx] = dataExtent[idx+1];
-	dataExtent[idx+1] = temp;
-	}
+    {
+    temp = dataExtent[idx];
+    dataExtent[idx] = dataExtent[idx+1];
+    dataExtent[idx+1] = temp;
+    }
       }
 
     for (idx = 0; idx < 6; idx += 2)
@@ -1221,11 +1221,11 @@ void vtkImageDICOMReader::ComputeInverseTransformedExtent(int inExtent[6],
     for (idx = 0; idx < 6; idx += 2)
       {
       if (outExtent[idx] > outExtent[idx+1]) 
-	{
-	temp = outExtent[idx];
-	outExtent[idx] = outExtent[idx+1];
-	outExtent[idx+1] = temp;
-	}
+    {
+    temp = outExtent[idx];
+    outExtent[idx] = outExtent[idx+1];
+    outExtent[idx+1] = temp;
+    }
       }
     }
     
@@ -1236,7 +1236,7 @@ void vtkImageDICOMReader::ComputeInverseTransformedExtent(int inExtent[6],
 }
 
 void vtkImageDICOMReader::ComputeTransformedIncrements(int inIncr[3],
-						  int outIncr[3])
+                          int outIncr[3])
 {
   float transformedIncr[4];
   
@@ -1262,7 +1262,7 @@ void vtkImageDICOMReader::ComputeTransformedIncrements(int inIncr[3],
 
 
 void vtkImageDICOMReader::ComputeInverseTransformedIncrements(int inIncr[3],
-							 int outIncr[3])
+                             int outIncr[3])
 {
   float transformedIncr[4];
   

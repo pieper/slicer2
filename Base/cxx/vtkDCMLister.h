@@ -67,12 +67,12 @@ class VTK_EXPORT vtkDCMLister : public vtkDCMParser
   void ClearList();
   char * PrintList();
   void ListElement(unsigned short Group,
-		   unsigned short Element, unsigned long length,
-		   char *VR, char *Name);
+           unsigned short Element, unsigned long length,
+           char *VR, char *Name);
   char * callback(unsigned short group_code,
-		unsigned short element_code,
-		unsigned long length,
-		char *vr);
+        unsigned short element_code,
+        unsigned long length,
+        char *vr);
 
   int GetListAll() { return this->ListAll; }
   void SetListAll(int l) { this->ListAll = l; }

@@ -49,7 +49,7 @@
 # .END
 #-------------------------------------------------------------------------------
 proc BindTkRenderWidget {widget} {
-	global Gui
+    global Gui
 
     bind $widget <Any-ButtonPress> {StartMotion %W %x %y}
     bind $widget <Any-ButtonRelease> {EndMotion %W %x %y}
@@ -68,7 +68,7 @@ proc BindTkRenderWidget {widget} {
     bind $widget <KeyPress-s> Surface
     bind $widget <Enter> {Enter %W %x %y;}
     bind $widget <Leave> {focus $oldFocus;}
-	bind $widget <Expose> {Expose %W}
+    bind $widget <Expose> {Expose %W}
 }
 
 #-------------------------------------------------------------------------------
@@ -95,12 +95,12 @@ set RendererFound 0
 #
 proc Render {} {
     global CurrentCamera CurrentLight CurrentRenderWindow
-	global View
+    global View
 
     eval $CurrentLight SetPosition [$CurrentCamera GetPosition]
     eval $CurrentLight SetFocalPoint [$CurrentCamera GetFocalPoint]
 
-	Render3D
+    Render3D
 }
 
 #-------------------------------------------------------------------------------
@@ -126,21 +126,21 @@ proc UpdateRenderer {widget x y} {
 
     $renderers InitTraversal; set RendererFound 0
     for {set i 0} {$i < $numRenderers} {incr i} {
-	set CurrentRenderer [$renderers GetNextItem]
-	set vx [expr double($x) / $WindowX]
-	set vy [expr ($WindowY - double($y)) / $WindowY]
-	set viewport [$CurrentRenderer GetViewport]
-	set vpxmin [lindex $viewport 0]
-	set vpymin [lindex $viewport 1]
-	set vpxmax [lindex $viewport 2]
-	set vpymax [lindex $viewport 3]
-	if { $vx >= $vpxmin && $vx <= $vpxmax && \
-	$vy >= $vpymin && $vy <= $vpymax} {
+    set CurrentRenderer [$renderers GetNextItem]
+    set vx [expr double($x) / $WindowX]
+    set vy [expr ($WindowY - double($y)) / $WindowY]
+    set viewport [$CurrentRenderer GetViewport]
+    set vpxmin [lindex $viewport 0]
+    set vpymin [lindex $viewport 1]
+    set vpxmax [lindex $viewport 2]
+    set vpymax [lindex $viewport 3]
+    if { $vx >= $vpxmin && $vx <= $vpxmax && \
+    $vy >= $vpymin && $vy <= $vpymax} {
             set RendererFound 1
             set WindowCenterX [expr double($WindowX)*(($vpxmax - $vpxmin)/2.0\
                                 + $vpxmin)]
             set WindowCenterY [expr double($WindowY)*(($vpymax - $vpymin)/2.0\
-		                + $vpymin)]
+                        + $vpymin)]
             break
         }
     }
@@ -210,7 +210,7 @@ proc Rotate {widget x y} {
     global CurrentCamera 
     global LastX LastY
     global RendererFound
-	global View Module
+    global View Module
 
     if { ! $RendererFound } { return }
     
@@ -224,10 +224,10 @@ proc Rotate {widget x y} {
     # Call each Module's "CameraMotion" routine
     #-------------------------------------------
     foreach m $Module(idList) {
-	if {[info exists Module($m,procCameraMotion)] == 1} {
-	    if {$Module(verbose) == 1} {puts "CameraMotion: $m"}
-	    $Module($m,procCameraMotion)
-	}
+    if {[info exists Module($m,procCameraMotion)] == 1} {
+        if {$Module(verbose) == 1} {puts "CameraMotion: $m"}
+        $Module($m,procCameraMotion)
+    }
     }
 
     Render
@@ -248,11 +248,11 @@ proc Pitch {widget x y} {
 
     if { ! $RendererFound } { return }
     if {[info exists Module(Endoscopic,procEnter)] == 1} {
-	set tmp $Endoscopic(cam,rxStr) 
-	set Endoscopic(cam,rxStr) [expr $tmp + (-$LastY + $y)]
-	EndoscopicSetCameraDirection "rx"
-	Render3D
-	set LastY $y
+    set tmp $Endoscopic(cam,rxStr) 
+    set Endoscopic(cam,rxStr) [expr $tmp + (-$LastY + $y)]
+    EndoscopicSetCameraDirection "rx"
+    Render3D
+    set LastY $y
     }
 }
 
@@ -273,13 +273,13 @@ proc Yaw {widget x y} {
     if { ! $RendererFound } { return }
     
     if {[info exists Module(Endoscopic,procEnter)] == 1} {
-	
-	
-	set tmp $Endoscopic(cam,rzStr) 
-	set Endoscopic(cam,rzStr) [expr $tmp + (-$LastX + $x)]
-	EndoscopicSetCameraDirection "rz"
-	Render3D
-	set LastX $x
+    
+    
+    set tmp $Endoscopic(cam,rzStr) 
+    set Endoscopic(cam,rzStr) [expr $tmp + (-$LastX + $x)]
+    EndoscopicSetCameraDirection "rz"
+    Render3D
+    set LastX $x
     }
 }
 
@@ -298,12 +298,12 @@ proc Roll {widget x y} {
     if { ! $RendererFound } { return }
    
     if {[info exists Module(Endoscopic,procEnter)] == 1} {
-	
-	set tmp $Endoscopic(cam,ryStr) 
-	set Endoscopic(cam,ryStr) [expr $tmp + (-$LastX + $x)]
-	EndoscopicSetCameraDirection "ry"
-	Render3D
-	set LastX $x
+    
+    set tmp $Endoscopic(cam,ryStr) 
+    set Endoscopic(cam,ryStr) [expr $tmp + (-$LastX + $x)]
+    EndoscopicSetCameraDirection "ry"
+    Render3D
+    set LastX $x
     }
     
 }
@@ -324,13 +324,13 @@ proc LR {widget x y} {
 
     if { ! $RendererFound } { return }
     if {[info exists Module(Endoscopic,procEnter)] == 1} {    
-	
-	set tmp $Endoscopic(cam,xStr) 
-	set Endoscopic(cam,xStr) [expr $tmp + ($LastX - $x)]
-	EndoscopicSetCameraPosition
-	Render3D
-	
-	set LastX $x
+    
+    set tmp $Endoscopic(cam,xStr) 
+    set Endoscopic(cam,xStr) [expr $tmp + ($LastX - $x)]
+    EndoscopicSetCameraPosition
+    Render3D
+    
+    set LastX $x
     }
 }
 
@@ -351,11 +351,11 @@ proc BF {widget x y} {
     if { ! $RendererFound } { return }
     
     if {[info exists Module(Endoscopic,procEnter)] == 1} {   
-	set tmp $Endoscopic(cam,yStr) 
-	set Endoscopic(cam,yStr) [expr $tmp + (-$LastY + $y)]
-	EndoscopicSetCameraPosition
-	Render3D
-	set LastY $y    
+    set tmp $Endoscopic(cam,yStr) 
+    set Endoscopic(cam,yStr) [expr $tmp + (-$LastY + $y)]
+    EndoscopicSetCameraPosition
+    Render3D
+    set LastY $y    
     }
     
 }
@@ -377,12 +377,12 @@ proc UD {widget x y} {
     if { ! $RendererFound } { return }
     
     if {[info exists Module(Endoscopic,procEnter)] == 1} {   
-	set tmp $Endoscopic(cam,zStr) 
-	set Endoscopic(cam,zStr) [expr $tmp + ($LastY - $y)]
-	EndoscopicSetCameraPosition
-	Render3D
-	
-	set LastY $y
+    set tmp $Endoscopic(cam,zStr) 
+    set Endoscopic(cam,zStr) [expr $tmp + ($LastY - $y)]
+    EndoscopicSetCameraPosition
+    Render3D
+    
+    set LastY $y
     }
 }
 
@@ -396,7 +396,7 @@ proc Pan {widget x y} {
     global CurrentRenderer CurrentCamera
     global WindowCenterX WindowCenterY LastX LastY
     global RendererFound
-	global View Module
+    global View Module
 
     if { ! $RendererFound } { return }
 
@@ -446,18 +446,18 @@ proc Pan {widget x y} {
 
    # only move the annotations if the mainView camera is panning
     if {[info exists View(viewCam)] == 1} {
-	if {$CurrentCamera == $View(viewCam)} {
-	    MainAnnoUpdateFocalPoint $FPoint0 $FPoint1 $FPoint2
-	}
+    if {$CurrentCamera == $View(viewCam)} {
+        MainAnnoUpdateFocalPoint $FPoint0 $FPoint1 $FPoint2
+    }
     }
 
     # Call each Module's "CameraMotion" routine
     #-------------------------------------------
     foreach m $Module(idList) {
-	if {[info exists Module($m,procCameraMotion)] == 1} {
-	    if {$Module(verbose) == 1} {puts "CameraMotion: $m"}
-	    $Module($m,procCameraMotion)
-	}
+    if {[info exists Module($m,procCameraMotion)] == 1} {
+        if {$Module(verbose) == 1} {puts "CameraMotion: $m"}
+        $Module($m,procCameraMotion)
+    }
     }
 
     Render
@@ -476,7 +476,7 @@ proc Zoom {widget x y} {
     global CurrentCamera
     global LastX LastY
     global RendererFound
-	global View Module
+    global View Module
 
     if { ! $RendererFound } { return }
 
@@ -489,16 +489,16 @@ proc Zoom {widget x y} {
                                     [expr $maxRange / $zoomFactor]
     $CurrentCamera Dolly $zoomFactor
 
-	set LastX $x
+    set LastX $x
     set LastY $y
 
     # Call each Module's "CameraMotion" routine
     #-------------------------------------------
     foreach m $Module(idList) {
-	if {[info exists Module($m,procCameraMotion)] == 1} {
-	    if {$Module(verbose) == 1} {puts "CameraMotion: $m"}
-	    $Module($m,procCameraMotion)
-	}
+    if {[info exists Module($m,procCameraMotion)] == 1} {
+        if {$Module(verbose) == 1} {puts "CameraMotion: $m"}
+        $Module($m,procCameraMotion)
+    }
     }
 
 
@@ -529,17 +529,17 @@ proc Reset {widget x y} {
 
     $renderers InitTraversal; set RendererFound 0
     for {set i 0} {$i < $numRenderers} {incr i} {
-	set CurrentRenderer [$renderers GetNextItem]
-	set vx [expr double($x) / $WindowX]
-	set vy [expr ($WindowY - double($y)) / $WindowY]
+    set CurrentRenderer [$renderers GetNextItem]
+    set vx [expr double($x) / $WindowX]
+    set vy [expr ($WindowY - double($y)) / $WindowY]
 
-	set viewport [$CurrentRenderer GetViewport]
-	set vpxmin [lindex $viewport 0]
-	set vpymin [lindex $viewport 1]
-	set vpxmax [lindex $viewport 2]
-	set vpymax [lindex $viewport 3]
-	if { $vx >= $vpxmin && $vx <= $vpxmax && \
-	$vy >= $vpymin && $vy <= $vpymax} {
+    set viewport [$CurrentRenderer GetViewport]
+    set vpxmin [lindex $viewport 0]
+    set vpymin [lindex $viewport 1]
+    set vpxmax [lindex $viewport 2]
+    set vpymax [lindex $viewport 3]
+    if { $vx >= $vpxmin && $vx <= $vpxmax && \
+    $vy >= $vpymin && $vy <= $vpymax} {
             set RendererFound 1
             break
         }

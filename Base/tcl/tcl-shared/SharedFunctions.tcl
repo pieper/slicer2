@@ -37,16 +37,16 @@
 # .END
 #-------------------------------------------------------------------------------
 proc SharedModelLookup {ModelRefID} {
-	global Model
-	
-	set ModelID -1
-	
-	foreach m $Model(idList) {
-		if {[Model($m,node) GetModelID] == $ModelRefID} {
-			set ModelID [Model($m,node) GetID]
-		}
-	}
-	return $ModelID
+    global Model
+    
+    set ModelID -1
+    
+    foreach m $Model(idList) {
+        if {[Model($m,node) GetModelID] == $ModelRefID} {
+            set ModelID [Model($m,node) GetID]
+        }
+    }
+    return $ModelID
 }
 
 
@@ -57,16 +57,16 @@ proc SharedModelLookup {ModelRefID} {
 # .END
 #-------------------------------------------------------------------------------
 proc SharedVolumeLookup {VolumeRefID} {
-	global Volume
-	
-	set VolumeID -1
-	
-	foreach v $Volume(idList) {
-		if {[Volume($v,node) GetVolumeID] == $VolumeRefID} {
-			set VolumeID [Volume($v,node) GetID]
-		}
-	}
-	return $VolumeID
+    global Volume
+    
+    set VolumeID -1
+    
+    foreach v $Volume(idList) {
+        if {[Volume($v,node) GetVolumeID] == $VolumeRefID} {
+            set VolumeID [Volume($v,node) GetID]
+        }
+    }
+    return $VolumeID
 }
 
 
@@ -81,41 +81,41 @@ proc SharedVolumeLookup {VolumeRefID} {
 # .END
 #-------------------------------------------------------------------------------
 proc SharedGetModelsInGroup {modelgroup umodels {changeExpansion -1}} {
-	global Mrml(dataTree) Model
-	
-	upvar $umodels models
-	
-	Mrml(dataTree) InitTraversal
-	set node [Mrml(dataTree) GetNextItem]
-	
-	set traversingModelGroup 0
-	set models {}
-	
-	while {$node != ""} {
+    global Mrml(dataTree) Model
+    
+    upvar $umodels models
+    
+    Mrml(dataTree) InitTraversal
+    set node [Mrml(dataTree) GetNextItem]
+    
+    set traversingModelGroup 0
+    set models {}
+    
+    while {$node != ""} {
 
-		if {[string compare -length 10 $node "ModelGroup"] == 0} {
-			if {$traversingModelGroup > 0} {
-				incr traversingModelGroup
-			}
-			if {[$node GetID] == $modelgroup} {
-				incr traversingModelGroup
-			}
-		}
-		if {[string compare -length 13 $node "EndModelGroup"] == 0} {
-			if {$traversingModelGroup > 0} {
-				incr traversingModelGroup -1
-			}
-		}
-		
-		if {([string compare -length 8 $node "ModelRef"] == 0) && ($traversingModelGroup > 0)} {
-			set m [SharedModelLookup [$node GetModelRefID]]
-			lappend models $m
-			if {($traversingModelGroup == 1) && ($changeExpansion >= 0)} {
-				set Model($m,expansion) $changeExpansion
-			}			
-		}
-		set node [Mrml(dataTree) GetNextItem]
-	}
+        if {[string compare -length 10 $node "ModelGroup"] == 0} {
+            if {$traversingModelGroup > 0} {
+                incr traversingModelGroup
+            }
+            if {[$node GetID] == $modelgroup} {
+                incr traversingModelGroup
+            }
+        }
+        if {[string compare -length 13 $node "EndModelGroup"] == 0} {
+            if {$traversingModelGroup > 0} {
+                incr traversingModelGroup -1
+            }
+        }
+        
+        if {([string compare -length 8 $node "ModelRef"] == 0) && ($traversingModelGroup > 0)} {
+            set m [SharedModelLookup [$node GetModelRefID]]
+            lappend models $m
+            if {($traversingModelGroup == 1) && ($changeExpansion >= 0)} {
+                set Model($m,expansion) $changeExpansion
+            }            
+        }
+        set node [Mrml(dataTree) GetNextItem]
+    }
 }
 
 
@@ -128,37 +128,37 @@ proc SharedGetModelsInGroup {modelgroup umodels {changeExpansion -1}} {
 # .END
 #-------------------------------------------------------------------------------
 proc SharedGetModelsInGroupOnly {modelgroup umodels} {
-	global Model
-	
-	upvar $umodels models
-	
-	Mrml(dataTree) InitTraversal
-	set node [Mrml(dataTree) GetNextItem]
-	
-	set traversingModelGroup 0
-	set models ""
-	
-	while {$node != ""} {
-		if {[string equal -length 10 $node "ModelGroup"] == 1} {
-			if {$traversingModelGroup > 0} {
-				incr traversingModelGroup
-			}
-			if {[$node GetID] == $modelgroup} {
-				incr traversingModelGroup
-			}
-		}
-		if {[string equal -length 13 $node "EndModelGroup"] == 1} {
-			if {$traversingModelGroup > 0} {
-				incr traversingModelGroup -1
-			}
-		}
-		
-		if {([string equal -length 8 $node "ModelRef"] == 1) && ($traversingModelGroup == 1)} {
-			set m [SharedModelLookup [$node GetModelRefID]]
-			lappend models $m
-		}
-		set node [Mrml(dataTree) GetNextItem]
-	}
+    global Model
+    
+    upvar $umodels models
+    
+    Mrml(dataTree) InitTraversal
+    set node [Mrml(dataTree) GetNextItem]
+    
+    set traversingModelGroup 0
+    set models ""
+    
+    while {$node != ""} {
+        if {[string equal -length 10 $node "ModelGroup"] == 1} {
+            if {$traversingModelGroup > 0} {
+                incr traversingModelGroup
+            }
+            if {[$node GetID] == $modelgroup} {
+                incr traversingModelGroup
+            }
+        }
+        if {[string equal -length 13 $node "EndModelGroup"] == 1} {
+            if {$traversingModelGroup > 0} {
+                incr traversingModelGroup -1
+            }
+        }
+        
+        if {([string equal -length 8 $node "ModelRef"] == 1) && ($traversingModelGroup == 1)} {
+            set m [SharedModelLookup [$node GetModelRefID]]
+            lappend models $m
+        }
+        set node [Mrml(dataTree) GetNextItem]
+    }
 }
 
 
@@ -169,32 +169,32 @@ proc SharedGetModelsInGroupOnly {modelgroup umodels} {
 # .END
 #-------------------------------------------------------------------------------
 proc SharedGetModelGroupsInGroup {modelgroup umodelgroups} {
-	global Mrml(dataTree)
-	
-	upvar $umodelgroups mgs
-	
-	Mrml(dataTree) InitTraversal
-	set node [Mrml(dataTree) GetNextItem]
-	
-	set traversingModelGroup 0
-	set mgs {}
-	
-	while {$node != ""} {
+    global Mrml(dataTree)
+    
+    upvar $umodelgroups mgs
+    
+    Mrml(dataTree) InitTraversal
+    set node [Mrml(dataTree) GetNextItem]
+    
+    set traversingModelGroup 0
+    set mgs {}
+    
+    while {$node != ""} {
 
-		if {[string compare -length 10 $node "ModelGroup"] == 0} {
-			if {$traversingModelGroup > 0} {
-				incr traversingModelGroup
-				lappend mgs [$node GetID]
-			}
-			if {[$node GetID] == $modelgroup} {
-				incr traversingModelGroup
-			}
-		}
-		if {[string compare -length 13 $node "EndModelGroup"] == 0} {
-			if {$traversingModelGroup > 0} {
-				incr traversingModelGroup -1
-			}
-		}
-		set node [Mrml(dataTree) GetNextItem]
-	}
+        if {[string compare -length 10 $node "ModelGroup"] == 0} {
+            if {$traversingModelGroup > 0} {
+                incr traversingModelGroup
+                lappend mgs [$node GetID]
+            }
+            if {[$node GetID] == $modelgroup} {
+                incr traversingModelGroup
+            }
+        }
+        if {[string compare -length 13 $node "EndModelGroup"] == 0} {
+            if {$traversingModelGroup > 0} {
+                incr traversingModelGroup -1
+            }
+        }
+        set node [Mrml(dataTree) GetNextItem]
+    }
 }

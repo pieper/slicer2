@@ -113,7 +113,7 @@ public:
   // can be either specified directly or by Window/Level.
   // These functions set/get which method to use.
   vtkGetMacro(Direct, int);
-  vtkSetMacro(Direct, int);	
+  vtkSetMacro(Direct, int);    
   vtkBooleanMacro(Direct, int);
 
   // Description:

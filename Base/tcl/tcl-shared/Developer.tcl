@@ -172,7 +172,7 @@ proc DevAddEntry { ArrayName Variable EntryName {Width 10}} {
     global Gui $ArrayName
 
     eval {entry $EntryName -textvariable "$ArrayName\($Variable\)" \
-	    -width $Width } $Gui(WEA)
+        -width $Width } $Gui(WEA)
 }
 
 
@@ -195,7 +195,7 @@ proc DevAddEntry { ArrayName Variable EntryName {Width 10}} {
 # .END
 #-------------------------------------------------------------------------------
 proc DevAddButton { ButtonName Message Command {Width 0} } {
-	global Gui
+    global Gui
     if {$Width == 0 } {
         set Width [expr [string length $Message] +2]
     }
@@ -235,7 +235,7 @@ proc DevAddButton { ButtonName Message Command {Width 0} } {
 # .END
 #-------------------------------------------------------------------------------
 proc DevAddSelectButton { TabName f aLabel message pack {tooltip ""} \
-	{width 13} {color WLA}} {
+    {width 13} {color WLA}} {
 
     global Gui Module 
     upvar 1 $TabName LocalArray
@@ -262,14 +262,14 @@ proc DevAddSelectButton { TabName f aLabel message pack {tooltip ""} \
     eval {menu $menu} $Gui(WMA)
 
     if {$pack == "Pack"} {
-	pack $Label $menubutton -side left -padx $Gui(pad) -pady 0 
+    pack $Label $menubutton -side left -padx $Gui(pad) -pady 0 
     } else {
         grid $Label $menubutton -sticky e -padx $Gui(pad) -pady $Gui(pad)
         grid $menubutton -sticky w
     }
 
     if {$tooltip != ""} {
-	TooltipAdd $menubutton $tooltip
+    TooltipAdd $menubutton $tooltip
     }
     
     set LocalArray(mb$aLabel) $menubutton
@@ -362,25 +362,25 @@ proc DevAddSelectButton { TabName f aLabel message pack {tooltip ""} \
 #-------------------------------------------------------------------------------
 proc DevUpdateNodeSelectButton { type ArrayName Label Name { CommandSet "DevSelect" } { None 1 } { New 0 } { LabelMap 1 }  } {
 
-	global Volume Model
+    global Volume Model
         upvar $ArrayName LocalArray
         upvar 0 $type NodeType
 
-	# See if the NodeType for each menu actually exists.
-	# If not, use the None NodeType
-	set v $NodeType(idNone)
+    # See if the NodeType for each menu actually exists.
+    # If not, use the None NodeType
+    set v $NodeType(idNone)
 
-	if {[lsearch $NodeType(idList) $LocalArray($Name) ] == -1} {
+    if {[lsearch $NodeType(idList) $LocalArray($Name) ] == -1} {
             $CommandSet $type [lindex $NodeType(idList) 0]  $ArrayName $Label $Name
-	}
+    }
 
-	# Menu of NodeTypes
-	# ------------------------------------
-	set m $LocalArray(mb$Label).m
-	$m delete 0 end
-	# All volumes except none
+    # Menu of NodeTypes
+    # ------------------------------------
+    set m $LocalArray(mb$Label).m
+    $m delete 0 end
+    # All volumes except none
 
-	foreach v $NodeType(idList) {
+    foreach v $NodeType(idList) {
             set test 1
             # Show NodeType(idNone)?
             if {$None==0}      { set test [expr $v != $NodeType(idNone)] }
@@ -392,8 +392,8 @@ proc DevUpdateNodeSelectButton { type ArrayName Label Name { CommandSet "DevSele
             if $test {
                 $m add command -label [${type}($v,node) GetName] \
                 -command "$CommandSet $type $v $ArrayName $Label $Name"
-		}
-	}
+        }
+    }
         if {$New} {
             $m add command -label "Create New" \
            -command "$CommandSet $type -5 $ArrayName $Label $Name"
@@ -420,12 +420,12 @@ proc DevUpdateSelectButton { ArrayName Label Name ChoiceList {Command ""} } {
 
         upvar $ArrayName LocalArray
 
-	# Delete all the current options and create the new ones
-	# ------------------------------------
-	set m $LocalArray(mb$Label).m
-	$m delete 0 end
+    # Delete all the current options and create the new ones
+    # ------------------------------------
+    set m $LocalArray(mb$Label).m
+    $m delete 0 end
 
-	foreach v $LocalArray($ChoiceList) {
+    foreach v $LocalArray($ChoiceList) {
             if {$Command != ""} {
                 $m add command -label $v -command "$LocalArray(mb$Label) config -text $v; $Command $v"
             } else {
@@ -461,9 +461,9 @@ proc DevSelectNode { type id ArrayName ModelLabel ModelName} {
         DevErrorWindow "Error finding $TabName in DevAddSelectButton"
         return
     }
-	if {$id == ""} {
+    if {$id == ""} {
             $LocalArray(mb$ModelLabel) config -text "None"
-	} elseif {$id == -5} {
+    } elseif {$id == -5} {
             set LocalArray($ModelName) $id
             $LocalArray(mb$ModelLabel) config -text \
                     "Create New"
@@ -471,7 +471,7 @@ proc DevSelectNode { type id ArrayName ModelLabel ModelName} {
            set LocalArray($ModelName) $id
             $LocalArray(mb$ModelLabel) config -text \
                     "[${type}($id,node) GetName]"
-	}
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -487,7 +487,7 @@ proc DevSelectNode { type id ArrayName ModelLabel ModelName} {
 # .END
 #-------------------------------------------------------------------------------
 proc DevCreateNewCopiedVolume { OrigId {Description ""} { VolName ""} } {
-	global Volume Lut
+    global Volume Lut
 
     # Create the new node
     # newvol is now a vtkMrmlVolumeNode, a subclass of vtkMrmlNode. 
@@ -564,16 +564,16 @@ proc DevCreateNewCopiedVolume { OrigId {Description ""} { VolName ""} } {
 # .END
 #-------------------------------------------------------------------------------
 proc DevGetFile { filename { MustPop 0} { DefaultExt "" } { DefaultDir "" } {Title "Choose File"} {Action "Open"} {PathType "Relative"}} {
-	global Mrml
+    global Mrml
 #        puts "filename: $filename"
 #        puts "DefaultExt $DefaultExt"
 #        puts "DefaultDir $DefaultDir"
 #        puts "Title $Title"
 
-	# Default Directory Choice
-	if {$DefaultDir == ""} {
+    # Default Directory Choice
+    if {$DefaultDir == ""} {
             set DefaultDir $Mrml(dir);
-	}
+    }
 
        ############################################################
        ######  Check if the filename exists
@@ -611,7 +611,7 @@ proc DevGetFile { filename { MustPop 0} { DefaultExt "" } { DefaultDir "" } {Tit
 #            set typelist [ eval $typelist ]
         } else {
             set typelist {
-		{"All Files" {*}}
+        {"All Files" {*}}
             }
         }
 
@@ -623,40 +623,40 @@ proc DevGetFile { filename { MustPop 0} { DefaultExt "" } { DefaultDir "" } {Tit
         if { $filename == "" && $DefaultDir != "" } { set dir $DefaultDir }
         if { [file isdir $filename] } { set dir $filename }
 
-	# if we are saving, the file doesn't have to exist yet.
-	if {$Action == "Save"} {
-	    set filename [tk_getSaveFile -title $Title \
-		    -filetypes $typelist -initialdir "$dir" -initialfile $filename]
-	} else {
-	    set filename [tk_getOpenFile -title $Title \
-		    -filetypes $typelist -initialdir "$dir" -initialfile $filename]
-	}
-	
+    # if we are saving, the file doesn't have to exist yet.
+    if {$Action == "Save"} {
+        set filename [tk_getSaveFile -title $Title \
+            -filetypes $typelist -initialdir "$dir" -initialfile $filename]
+    } else {
+        set filename [tk_getOpenFile -title $Title \
+            -filetypes $typelist -initialdir "$dir" -initialfile $filename]
+    }
+    
 
        ############################################################
        ######  Return Nothing is nothing was selected
        ######  Return the file relative to the current path otherwise
        ############################################################
 
-	# Return nothing if the user cancelled
-	if {$filename == ""} {return "" }
+    # Return nothing if the user cancelled
+    if {$filename == ""} {return "" }
 
-	# if the file will be Saved (not Opened) make sure it has an extension
-	if {$Action == "Save"} {
-	    if {[file extension $filename] == ""} {
-		set filename "$filename.$DefaultExt"
-	    }   
-	}
-	
-	# If the file is not to be stored relative to the Mrml dir.
-	if {$PathType == "Absolute"} {
-	    return $filename
-	}
-	    
-	# Store first image file as a relative filename to the root 
-	# Return the relative Directory Path
-	return [MainFileGetRelativePrefix $filename][file \
-		extension $filename]
+    # if the file will be Saved (not Opened) make sure it has an extension
+    if {$Action == "Save"} {
+        if {[file extension $filename] == ""} {
+        set filename "$filename.$DefaultExt"
+        }   
+    }
+    
+    # If the file is not to be stored relative to the Mrml dir.
+    if {$PathType == "Absolute"} {
+        return $filename
+    }
+        
+    # Store first image file as a relative filename to the root 
+    # Return the relative Directory Path
+    return [MainFileGetRelativePrefix $filename][file \
+        extension $filename]
     }   
 
 #-------------------------------------------------------------------------------
@@ -693,16 +693,16 @@ proc DevGetFile { filename { MustPop 0} { DefaultExt "" } { DefaultDir "" } {Tit
 
     proc DevAddFileBrowse {Frame ArrayName VarFileName Message { Command ""} { DefaultExt "" } { DefaultDir "" } {Action ""} {Title ""} {Tooltip ""} {PathType ""}} {
 
-	global Gui $ArrayName Model
+    global Gui $ArrayName Model
 
         set f $Frame
         $f configure  -relief groove -bd 3 -bg $Gui(activeWorkspace)
 
-	frame $f.f -bg $Gui(activeWorkspace)
-	pack $f.f -side top -padx $Gui(pad) -pady $Gui(pad)
+    frame $f.f -bg $Gui(activeWorkspace)
+    pack $f.f -side top -padx $Gui(pad) -pady $Gui(pad)
 
         ## Need to make the string that will become the command.
-	# this pops up file browser when the button is pressed.
+    # this pops up file browser when the button is pressed.
        set SetVarString  "set $ArrayName\($VarFileName\) \[ DevGetFile \"\$$ArrayName\($VarFileName\)\" 1  \"$DefaultExt\" \"$DefaultDir\" \"$Title\"  \"$Action\" \"$PathType\" \]; if \{\[DevFileExists \$$ArrayName\($VarFileName\)\] || \"$Action\" == \"Save\"\}  \{ $Command \}"
 #$Action == Save
 #        puts $SetVarString
@@ -711,14 +711,14 @@ proc DevGetFile { filename { MustPop 0} { DefaultExt "" } { DefaultDir "" } {Tit
         DevAddButton $f.f.b "Browse..." $SetVarString
 
         pack $f.f.l $f.f.b -side left -padx $Gui(pad)
-	
-	# tooltip over the button.
-	if {$Tooltip != ""} {
-	    TooltipAdd $f.f.b $Tooltip
-	}
+    
+    # tooltip over the button.
+    if {$Tooltip != ""} {
+        TooltipAdd $f.f.b $Tooltip
+    }
 
-	# this pops up file browser when return is hit.
-	set SetVarString  "set $ArrayName\($VarFileName\) \[ DevGetFile \"\$$ArrayName\($VarFileName\)\" 0  \"$DefaultExt\" \"$DefaultDir\" \"$Title\" \"$Action\" \"$PathType\" \]; if \{\[DevFileExists \$$ArrayName\($VarFileName\)\] || \"$Action\" == \"Save\"\}  \{ $Command \}"
+    # this pops up file browser when return is hit.
+    set SetVarString  "set $ArrayName\($VarFileName\) \[ DevGetFile \"\$$ArrayName\($VarFileName\)\" 0  \"$DefaultExt\" \"$DefaultDir\" \"$Title\" \"$Action\" \"$PathType\" \]; if \{\[DevFileExists \$$ArrayName\($VarFileName\)\] || \"$Action\" == \"Save\"\}  \{ $Command \}"
 
     eval {entry $f.efile -textvariable "$ArrayName\($VarFileName\)" -width 50} $Gui(WEA)
         bind $f.efile <Return> $SetVarString
@@ -817,8 +817,8 @@ proc DevCheckScrollLimits {args} {
     set fracs [$canvas $view]
 
     if {double([lindex $fracs 0]) == 0.0 && \
-	    double([lindex $fracs 1]) == 1.0} {
-	return
+        double([lindex $fracs 1]) == 1.0} {
+    return
     }
     eval $args
 }
@@ -836,11 +836,11 @@ proc DevFileExists {filename} {
     # returns 1 if file exists, either relative to mrml directory or not
 
     if {[file exists $filename]} {
-	return 1
+    return 1
     }
 
     if {[file exists [file join $Mrml(dir) $filename]]} {
-	return 1
+    return 1
     }
 
     return 0

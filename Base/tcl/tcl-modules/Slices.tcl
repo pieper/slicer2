@@ -26,30 +26,30 @@
 #==========================================================================auto=
 
 proc SlicesInit {} {
-	global Module Slice
+    global Module Slice
 
-	# Define Tabs
-	set m Slices
-	set Module($m,row1List) "Help Controls"
-	set Module($m,row1Name) "{Help} {Controls}"
-	set Module($m,row1,tab) Controls
+    # Define Tabs
+    set m Slices
+    set Module($m,row1List) "Help Controls"
+    set Module($m,row1Name) "{Help} {Controls}"
+    set Module($m,row1,tab) Controls
 
     # Module Summary Info
     set Module($m,overview) "Display of the 3 slices."
 
-	# Define Procedures
-	set Module($m,procGUI) SlicesBuildGUI
+    # Define Procedures
+    set Module($m,procGUI) SlicesBuildGUI
 
-	# Define Dependencies
-	set Module($m,depend) ""
+    # Define Dependencies
+    set Module($m,depend) ""
 
-	# Set version info
-	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.16 $} {$Date: 2002/01/28 03:05:38 $}]
+    # Set version info
+    lappend Module(versions) [ParseCVSInfo $m \
+        {$Revision: 1.17 $} {$Date: 2002/03/18 20:52:40 $}]
 
-	# Props
-	set Slice(prefix) slice
-	set Slice(ext) .tif
+    # Props
+    set Slice(prefix) slice
+    set Slice(ext) .tif
 }
 
 #-------------------------------------------------------------------------------
@@ -59,19 +59,19 @@ proc SlicesInit {} {
 # .END
 #-------------------------------------------------------------------------------
 proc SlicesBuildGUI {} {
-	global Slice Module Gui
+    global Slice Module Gui
 
-	#-------------------------------------------
-	# Frame Hierarchy:
-	#-------------------------------------------
-	# Help
-	# Controls
-	#-------------------------------------------
+    #-------------------------------------------
+    # Frame Hierarchy:
+    #-------------------------------------------
+    # Help
+    # Controls
+    #-------------------------------------------
 
-	#-------------------------------------------
-	# Help frame
-	#-------------------------------------------
-	set help "
+    #-------------------------------------------
+    # Help frame
+    #-------------------------------------------
+    set help "
 Use these slice controls when the <B>View Mode</B> is set to 3D.
 <BR>
 The <B>Active Slice</B> is the slice you last clicked on with the mouse.
@@ -81,67 +81,67 @@ The AxiSlice, SagSlice, CorSlice, and OrigSlice orientations
 produces slices relative to the originally scanned volume.
 The other options produces slices at arbitrary orientations in millimeter space.
 "
-	regsub -all "\n" $help { } help
-	MainHelpApplyTags Slices $help
-	MainHelpBuildGUI Slices
+    regsub -all "\n" $help { } help
+    MainHelpApplyTags Slices $help
+    MainHelpBuildGUI Slices
 
-	#-------------------------------------------
-	# Controls frame
-	#-------------------------------------------
-	set fControls $Module(Slices,fControls)
-	set f $fControls
+    #-------------------------------------------
+    # Controls frame
+    #-------------------------------------------
+    set fControls $Module(Slices,fControls)
+    set f $fControls
 
-	# Controls->Slice$s frames
-	#-------------------------------------------
-	foreach s $Slice(idList) {
+    # Controls->Slice$s frames
+    #-------------------------------------------
+    foreach s $Slice(idList) {
 
-		frame $f.fSlice$s -bg $Gui(activeWorkspace)
-		pack $f.fSlice$s -side top -pady $Gui(pad) -expand 1 -fill both
+        frame $f.fSlice$s -bg $Gui(activeWorkspace)
+        pack $f.fSlice$s -side top -pady $Gui(pad) -expand 1 -fill both
 
-		MainSlicesBuildControls $s $f.fSlice$s
-	}
+        MainSlicesBuildControls $s $f.fSlice$s
+    }
 
-	frame $f.fActive -bg $Gui(activeWorkspace)
-	frame $f.fSave   -bg $Gui(activeWorkspace)
-	frame $f.fAdv   -bg $Gui(activeWorkspace)
-	pack $f.fActive $f.fSave $f.fAdv -side top -pady $Gui(pad) \
-		-expand 1 -fill x
+    frame $f.fActive -bg $Gui(activeWorkspace)
+    frame $f.fSave   -bg $Gui(activeWorkspace)
+    frame $f.fAdv   -bg $Gui(activeWorkspace)
+    pack $f.fActive $f.fSave $f.fAdv -side top -pady $Gui(pad) \
+        -expand 1 -fill x
 
-	#-------------------------------------------
-	# Active frame
-	#-------------------------------------------
-	set f $fControls.fActive
+    #-------------------------------------------
+    # Active frame
+    #-------------------------------------------
+    set f $fControls.fActive
 
-	eval {label $f.lActive -text "Active Slice:"} $Gui(WLA)
-	pack $f.lActive -side left -pady $Gui(pad) -padx $Gui(pad) -fill x
+    eval {label $f.lActive -text "Active Slice:"} $Gui(WLA)
+    pack $f.lActive -side left -pady $Gui(pad) -padx $Gui(pad) -fill x
 
-	foreach s $Slice(idList) text "Red Yellow Green" width "4 7 6" {
-		eval {radiobutton $f.r$s -width $width -indicatoron 0\
-			-text "$text" -value "$s" -variable Slice(activeID) \
-			-command "MainSlicesSetActive"} $Gui(WCA) {-selectcolor $Gui(slice$s)}
-		pack $f.r$s -side left -fill x -anchor e
-	}
+    foreach s $Slice(idList) text "Red Yellow Green" width "4 7 6" {
+        eval {radiobutton $f.r$s -width $width -indicatoron 0\
+            -text "$text" -value "$s" -variable Slice(activeID) \
+            -command "MainSlicesSetActive"} $Gui(WCA) {-selectcolor $Gui(slice$s)}
+        pack $f.r$s -side left -fill x -anchor e
+    }
 
-	#-------------------------------------------
-	# Save frame
-	#-------------------------------------------
-	set f $fControls.fSave
+    #-------------------------------------------
+    # Save frame
+    #-------------------------------------------
+    set f $fControls.fSave
 
-	eval {button $f.bSave -text "Save Active" -width 12 \
-		-command "MainSlicesSave"} $Gui(WBA)
-	eval {entry $f.eSave -textvariable Slice(prefix)} $Gui(WEA)
-	bind $f.eSave <Return> {MainSlicesSavePopup}
-	pack $f.bSave -side left -padx 3
-	pack $f.eSave -side left -padx 2 -expand 1 -fill x
+    eval {button $f.bSave -text "Save Active" -width 12 \
+        -command "MainSlicesSave"} $Gui(WBA)
+    eval {entry $f.eSave -textvariable Slice(prefix)} $Gui(WEA)
+    bind $f.eSave <Return> {MainSlicesSavePopup}
+    pack $f.bSave -side left -padx 3
+    pack $f.eSave -side left -padx 2 -expand 1 -fill x
 
-	#-------------------------------------------
-	# Adv frame
-	#-------------------------------------------
-	set f $fControls.fAdv
+    #-------------------------------------------
+    # Adv frame
+    #-------------------------------------------
+    set f $fControls.fAdv
 
-	eval {button $f.bAdv -text "Show Advanced Slice Controls" \
-		-command "MainSlicesAdvancedControlsPopup \$Slice(activeID)"} $Gui(WBA)
-	pack $f.bAdv -side left -padx 3
+    eval {button $f.bAdv -text "Show Advanced Slice Controls" \
+        -command "MainSlicesAdvancedControlsPopup \$Slice(activeID)"} $Gui(WBA)
+    pack $f.bAdv -side left -padx 3
 
 }
 

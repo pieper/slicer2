@@ -41,22 +41,22 @@ set verbose 0
 # Determine Slicer's home directory from the SLICER_HOME environment 
 # variable, or the root directory of this script ($argv0).
 if {[info exists env(SLICER_HOME)] == 0 || $env(SLICER_HOME) == ""} {
-	set prog [file dirname $argv0]
+    set prog [file dirname $argv0]
 } else {
-	set prog [file join $env(SLICER_HOME) program]
+    set prog [file join $env(SLICER_HOME) program]
 }
 # Don't use "."
 if {$prog == "."} {
-	set prog [pwd]
+    set prog [pwd]
 }
 # Ensure the program directory exists
 if {[file exists $prog] == 0} {
-	tk_messageBox -message "The directory '$prog' does not exist."
-	exit
+    tk_messageBox -message "The directory '$prog' does not exist."
+    exit
 }
 if {[file isdirectory $prog] == 0} {
-	tk_messageBox -message "'$prog' is not a directory."
-	exit
+    tk_messageBox -message "'$prog' is not a directory."
+    exit
 }
 set Path(program) $prog
 
@@ -88,9 +88,9 @@ catch {load vtktcl}
 
 # turn of warnings about old function use
 if { $tcl_platform(platform) == "windows" } {
-	vtkObject o
-	o SetGlobalWarningDisplay 0
-	o Delete
+    vtkObject o
+    o SetGlobalWarningDisplay 0
+    o Delete
 }
 
 
@@ -107,31 +107,31 @@ if { $tcl_platform(platform) == "windows" } {
 proc ReadModuleNames {filename} {
 
     if {$filename == ""} {
-	return [list "" ""]
+    return [list "" ""]
     }
 
     set tags [MainMrmlReadVersion2.0 $filename 0]
     if {$tags == 0} {
-	return [list "" ""]
+    return [list "" ""]
     }
 
     foreach pair $tags {
-	set tag  [lindex $pair 0]
-	set attr [lreplace $pair 0 0]
-	
-	switch $tag {
-	    
-	    "Options" {
-		foreach a $attr {
-		    set key [lindex $a 0]
-		    set val [lreplace $a 0 0]
-		    set node($key) $val
-		}
-		if {$node(program) == "slicer" && $node(contents) == "modules"} {
-		    return [list $node(ordered) $node(suppressed)]
-		}
-	    }
-	}
+    set tag  [lindex $pair 0]
+    set attr [lreplace $pair 0 0]
+    
+    switch $tag {
+        
+        "Options" {
+        foreach a $attr {
+            set key [lindex $a 0]
+            set val [lreplace $a 0 0]
+            set node($key) $val
+        }
+        if {$node(program) == "slicer" && $node(contents) == "modules"} {
+            return [list $node(ordered) $node(suppressed)]
+        }
+        }
+    }
     }
     return [list "" ""]
 }
@@ -146,29 +146,29 @@ proc ReadModuleNames {filename} {
 # .END
 #-------------------------------------------------------------------------------
 proc FindNames {dir} {
-	global prog
-	set names ""
+    global prog
+    set names ""
 
-	# Form a full path by appending the name (ie: Volumes) to
+    # Form a full path by appending the name (ie: Volumes) to
         # a local, and then central, directory.
-	set local   $dir
-	set central [file join $prog $dir]
+    set local   $dir
+    set central [file join $prog $dir]
 
-	# Look locally
-	foreach fullname [glob -nocomplain $local/*] {
-		if {[regexp "$local/(\.*).tcl$" $fullname match name] == 1} {
-			lappend names $name
-		}
-	}
-	# Look centrally
-	foreach fullname [glob -nocomplain $central/*] {
-		if {[regexp "$central/(\.*).tcl$" $fullname match name] == 1} {
-			if {[lsearch $names $name] == -1} {
-				lappend names $name
-			}
-		}
-	}
-	return $names
+    # Look locally
+    foreach fullname [glob -nocomplain $local/*] {
+        if {[regexp "$local/(\.*).tcl$" $fullname match name] == 1} {
+            lappend names $name
+        }
+    }
+    # Look centrally
+    foreach fullname [glob -nocomplain $central/*] {
+        if {[regexp "$central/(\.*).tcl$" $fullname match name] == 1} {
+            if {[lsearch $names $name] == -1} {
+                lappend names $name
+            }
+        }
+    }
+    return $names
 }
 
 #-------------------------------------------------------------------------------
@@ -178,7 +178,7 @@ proc FindNames {dir} {
 # .END
 #-------------------------------------------------------------------------------
 proc ReadModuleNamesLocalOrCentral {name ext} {
-	global prog verbose
+    global prog verbose
 
     set path [GetFullPath $name $ext "" 0]
     set names [ReadModuleNames $path]
@@ -192,25 +192,25 @@ proc ReadModuleNamesLocalOrCentral {name ext} {
 # .END
 #-------------------------------------------------------------------------------
 proc GetFullPath {name ext {dir "" } {verbose 1}} {
-	global prog
+    global prog
 
-	# Form a full path by appending the name (ie: Volumes) to
-	# a local, and then central, directory.
-	set local   [file join $dir $name].$ext
-	set central [file join [file join $prog $dir] $name].$ext
+    # Form a full path by appending the name (ie: Volumes) to
+    # a local, and then central, directory.
+    set local   [file join $dir $name].$ext
+    set central [file join [file join $prog $dir] $name].$ext
 
-	if {[file exists $local] == 1} {
-		return $local
-	} elseif {[file exists $central] == 1} {
-		return $central
-	} else {
-	        if {$verbose == 1} {
-		    set msg "File '$name.$ext' cannot be found"
-		    puts $msg
-		    tk_messageBox -message $msg
-		}
-		return ""
-	}
+    if {[file exists $local] == 1} {
+        return $local
+    } elseif {[file exists $central] == 1} {
+        return $central
+    } else {
+            if {$verbose == 1} {
+            set msg "File '$name.$ext' cannot be found"
+            puts $msg
+            tk_messageBox -message $msg
+        }
+        return ""
+    }
 }
 
 
@@ -256,28 +256,28 @@ if {$verbose == 1} {
 
 # Append found names to ordered names
 foreach name $found {
-	if {[lsearch $ordered $name] == -1} {
-		lappend ordered $name
-	}
+    if {[lsearch $ordered $name] == -1} {
+        lappend ordered $name
+    }
 }
 
 # Suppress unwanted (need a more PC term for this) modules
 foreach name $suppressed {
-	set i [lsearch $ordered $name]
-	if {$i != -1} {
-		set ordered [lreplace $ordered $i $i]
-	}
+    set i [lsearch $ordered $name]
+    if {$i != -1} {
+        set ordered [lreplace $ordered $i $i]
+    }
 }
 
 # Source the modules
 set foundOrdered ""
 foreach name $ordered {
-	set path [GetFullPath $name tcl tcl-modules]
-	if {$path != ""} {
-		if {$verbose == 1} {puts "source $path"}
-		source $path
-		lappend foundOrdered $name
-	} 
+    set path [GetFullPath $name tcl tcl-modules]
+    if {$path != ""} {
+        if {$verbose == 1} {puts "source $path"}
+        source $path
+        lappend foundOrdered $name
+    } 
 }
 # Ordered list only contains modules that exist
 set ordered $foundOrdered
@@ -289,21 +289,21 @@ set ordered $foundOrdered
 
 set shared [FindNames tcl-shared]
 foreach name $shared {
-	set path [GetFullPath $name tcl tcl-shared]
-	if {$path != ""} {
-		if {$verbose == 1} {puts "source $path"}
-		source $path
-	}
+    set path [GetFullPath $name tcl tcl-shared]
+    if {$path != ""} {
+        if {$verbose == 1} {puts "source $path"}
+        source $path
+    }
 }
 
 # Source main stuff either locally or globally
 set main [FindNames tcl-main]
 foreach name $main {
-	set path [GetFullPath $name tcl tcl-main]
-	if {$path != ""} {
-		if {$verbose == 1} {puts "source $path"}
-		source $path
-	}
+    set path [GetFullPath $name tcl tcl-main]
+    if {$path != ""} {
+        if {$verbose == 1} {puts "source $path"}
+        source $path
+    }
 }
 
 # Set global variables
@@ -314,9 +314,9 @@ set Module(supList)    $suppressed
 set Module(allList)    [concat $ordered $suppressed]
 
 if {$verbose == 1} {
-	puts "ordered=$ordered"
-	puts "main=$main"
-	puts "shared=$shared"
+    puts "ordered=$ordered"
+    puts "main=$main"
+    puts "shared=$shared"
 }
 
 # Bootup

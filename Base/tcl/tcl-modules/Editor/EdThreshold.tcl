@@ -45,39 +45,39 @@
 # .END
 #-------------------------------------------------------------------------------
 proc EdThresholdInit {} {
-	global Ed Gui
+    global Ed Gui
 
-	set e EdThreshold
-	set Ed($e,name)      "Threshold"
-	set Ed($e,initials)  "Th"
-	set Ed($e,desc)      "Threshold: assign a label to a pixel range."
-	set Ed($e,rank)      1
-	set Ed($e,procGUI)   EdThresholdBuildGUI
-	set Ed($e,procVTK)   EdThresholdBuildVTK
-	set Ed($e,procEnter) EdThresholdEnter
-	set Ed($e,procExit)  EdThresholdExit
+    set e EdThreshold
+    set Ed($e,name)      "Threshold"
+    set Ed($e,initials)  "Th"
+    set Ed($e,desc)      "Threshold: assign a label to a pixel range."
+    set Ed($e,rank)      1
+    set Ed($e,procGUI)   EdThresholdBuildGUI
+    set Ed($e,procVTK)   EdThresholdBuildVTK
+    set Ed($e,procEnter) EdThresholdEnter
+    set Ed($e,procExit)  EdThresholdExit
 
-	# Required
-	set Ed($e,scope)  3D 
-	set Ed($e,input)  Original
+    # Required
+    set Ed($e,scope)  3D 
+    set Ed($e,input)  Original
 
-	# Windows98 Version II can't render histograms
-	# the histogram is broken
-	set Ed($e,histogram) Off
-	#set Ed($e,histogram) On
-	if {$Gui(pc) == 1} {
-		set Ed($e,histogram) Off
-	}
+    # Windows98 Version II can't render histograms
+    # the histogram is broken
+    set Ed($e,histogram) Off
+    #set Ed($e,histogram) On
+    if {$Gui(pc) == 1} {
+        set Ed($e,histogram) Off
+    }
 
-	set Ed($e,interact) Active
+    set Ed($e,interact) Active
 
-	set Ed($e,lower) 50
-	set Ed($e,upper) 150
-	set Ed($e,replaceIn) 1
-	set Ed($e,replaceOut) 1
-	set Ed($e,bg) 0
-	set Ed($e,rangeLow) 0
-	set Ed($e,rangeHigh) 500
+    set Ed($e,lower) 50
+    set Ed($e,upper) 150
+    set Ed($e,replaceIn) 1
+    set Ed($e,replaceOut) 1
+    set Ed($e,bg) 0
+    set Ed($e,rangeLow) 0
+    set Ed($e,rangeHigh) 500
 }
 
 #-------------------------------------------------------------------------------
@@ -87,15 +87,15 @@ proc EdThresholdInit {} {
 # .END
 #-------------------------------------------------------------------------------
 proc EdThresholdBuildVTK {} {
-	global Ed Label Slice
+    global Ed Label Slice
 
-	foreach s $Slice(idList) {
-		vtkImageThresholdBeyond Ed(EdThreshold,thresh$s)
-		Ed(EdThreshold,thresh$s) SetReplaceIn  $Ed(EdThreshold,replaceIn)
-		Ed(EdThreshold,thresh$s) SetReplaceOut $Ed(EdThreshold,replaceOut)
-		Ed(EdThreshold,thresh$s) SetInValue    0
-		Ed(EdThreshold,thresh$s) SetOutValue   $Ed(EdThreshold,bg)
-	}
+    foreach s $Slice(idList) {
+        vtkImageThresholdBeyond Ed(EdThreshold,thresh$s)
+        Ed(EdThreshold,thresh$s) SetReplaceIn  $Ed(EdThreshold,replaceIn)
+        Ed(EdThreshold,thresh$s) SetReplaceOut $Ed(EdThreshold,replaceOut)
+        Ed(EdThreshold,thresh$s) SetInValue    0
+        Ed(EdThreshold,thresh$s) SetOutValue   $Ed(EdThreshold,bg)
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -105,110 +105,110 @@ proc EdThresholdBuildVTK {} {
 # .END
 #-------------------------------------------------------------------------------
 proc EdThresholdBuildGUI {} {
-	global Ed Gui Label Volume
+    global Ed Gui Label Volume
 
-	#-------------------------------------------
-	# Threshold frame
-	#-------------------------------------------
-	set f $Ed(EdThreshold,frame)
+    #-------------------------------------------
+    # Threshold frame
+    #-------------------------------------------
+    set f $Ed(EdThreshold,frame)
 
-	frame $f.fInput     -bg $Gui(activeWorkspace)
-	frame $f.fScope     -bg $Gui(activeWorkspace)
-	frame $f.fInteract  -bg $Gui(activeWorkspace)
-	frame $f.fHistogram -bg $Gui(activeWorkspace)
-	frame $f.fGrid      -bg $Gui(activeWorkspace)
-	frame $f.fSliders   -bg $Gui(activeWorkspace)
-	frame $f.fApply     -bg $Gui(activeWorkspace)
-	pack $f.fGrid $f.fSliders $f.fHistogram $f.fInput $f.fScope \
-		$f.fInteract $f.fApply \
-		-side top -pady $Gui(pad) -fill x
+    frame $f.fInput     -bg $Gui(activeWorkspace)
+    frame $f.fScope     -bg $Gui(activeWorkspace)
+    frame $f.fInteract  -bg $Gui(activeWorkspace)
+    frame $f.fHistogram -bg $Gui(activeWorkspace)
+    frame $f.fGrid      -bg $Gui(activeWorkspace)
+    frame $f.fSliders   -bg $Gui(activeWorkspace)
+    frame $f.fApply     -bg $Gui(activeWorkspace)
+    pack $f.fGrid $f.fSliders $f.fHistogram $f.fInput $f.fScope \
+        $f.fInteract $f.fApply \
+        -side top -pady $Gui(pad) -fill x
 
-	EdBuildScopeGUI $Ed(EdThreshold,frame).fScope Ed(EdThreshold,scope) Multi
+    EdBuildScopeGUI $Ed(EdThreshold,frame).fScope Ed(EdThreshold,scope) Multi
 
-	EdBuildInputGUI $Ed(EdThreshold,frame).fInput Ed(EdThreshold,input) \
-		"-command EdThresholdSetInput"
+    EdBuildInputGUI $Ed(EdThreshold,frame).fInput Ed(EdThreshold,input) \
+        "-command EdThresholdSetInput"
 
-	EdBuildInteractGUI $Ed(EdThreshold,frame).fInteract Ed(EdThreshold,interact) \
-		"-command EdThresholdSetInteract"
+    EdBuildInteractGUI $Ed(EdThreshold,frame).fInteract Ed(EdThreshold,interact) \
+        "-command EdThresholdSetInteract"
 
-	#-------------------------------------------
-	# Threshold->Histogram frame
-	#-------------------------------------------
-	set f $Ed(EdThreshold,frame).fHistogram
+    #-------------------------------------------
+    # Threshold->Histogram frame
+    #-------------------------------------------
+    set f $Ed(EdThreshold,frame).fHistogram
 
-	if {$Ed(EdThreshold,histogram) == "On"} {
-		eval {label $f.l -text "Histogram:"} $Gui(WLA)
-		frame $f.fHistBorder -bg $Gui(activeWorkspace) -relief sunken -bd 2
-		pack $f.l $f.fHistBorder -side left -padx $Gui(pad) -pady $Gui(pad)
+    if {$Ed(EdThreshold,histogram) == "On"} {
+        eval {label $f.l -text "Histogram:"} $Gui(WLA)
+        frame $f.fHistBorder -bg $Gui(activeWorkspace) -relief sunken -bd 2
+        pack $f.l $f.fHistBorder -side left -padx $Gui(pad) -pady $Gui(pad)
 
-		#-------------------------------------------
-		# Threshold->Histogram->HistBorder frame
-		#-------------------------------------------
-		set f $Ed(EdThreshold,frame).fHistogram.fHistBorder
+        #-------------------------------------------
+        # Threshold->Histogram->HistBorder frame
+        #-------------------------------------------
+        set f $Ed(EdThreshold,frame).fHistogram.fHistBorder
 
-		MakeVTKImageWindow editThreshHist
-		editThreshHistMapper SetInput [Volume(0,vol) GetHistogramPlot]
+        MakeVTKImageWindow editThreshHist
+        editThreshHistMapper SetInput [Volume(0,vol) GetHistogramPlot]
 
-		vtkTkImageWindowWidget $f.fHist -iw editThreshHistWin \
-			-width $Volume(histWidth) -height $Volume(histHeight)  
-		bind $f.fHist <Expose> {ExposeTkImageViewer %W %x %y %w %h}
-		pack $f.fHist
-	}
+        vtkTkImageWindowWidget $f.fHist -iw editThreshHistWin \
+            -width $Volume(histWidth) -height $Volume(histHeight)  
+        bind $f.fHist <Expose> {ExposeTkImageViewer %W %x %y %w %h}
+        pack $f.fHist
+    }
 
-	#-------------------------------------------
-	# Threshold->Grid frame
-	#-------------------------------------------
-	set f $Ed(EdThreshold,frame).fGrid
+    #-------------------------------------------
+    # Threshold->Grid frame
+    #-------------------------------------------
+    set f $Ed(EdThreshold,frame).fGrid
 
-	# Output label
-	eval {button $f.bOutput -text "Output:" \
-		-command "ShowLabels EdThresholdLabel"} $Gui(WBA)
-	eval {entry $f.eOutput -width 6 -textvariable Label(label)} $Gui(WEA)
-	bind $f.eOutput <Return>   "EdThresholdLabel"
-	bind $f.eOutput <FocusOut> "EdThresholdLabel"
-	eval {entry $f.eName -width 14 -textvariable Label(name)} $Gui(WEA) \
-		{-bg $Gui(activeWorkspace) -state disabled}
-	grid $f.bOutput $f.eOutput $f.eName -padx 2 -pady $Gui(pad)
-	grid $f.eOutput $f.eName -sticky w
+    # Output label
+    eval {button $f.bOutput -text "Output:" \
+        -command "ShowLabels EdThresholdLabel"} $Gui(WBA)
+    eval {entry $f.eOutput -width 6 -textvariable Label(label)} $Gui(WEA)
+    bind $f.eOutput <Return>   "EdThresholdLabel"
+    bind $f.eOutput <FocusOut> "EdThresholdLabel"
+    eval {entry $f.eName -width 14 -textvariable Label(name)} $Gui(WEA) \
+        {-bg $Gui(activeWorkspace) -state disabled}
+    grid $f.bOutput $f.eOutput $f.eName -padx 2 -pady $Gui(pad)
+    grid $f.eOutput $f.eName -sticky w
 
-	lappend Label(colorWidgetList) $f.eName
+    lappend Label(colorWidgetList) $f.eName
 
-	# Whether to Replace the output
-#	eval {checkbutton $f.cReplaceOutput \
-#		-text "Replace Output" -width 14 -variable Ed(EdThreshold,replaceIn) \
-#		-indicatoron 0} $Gui(WCA) {-command "EdThresholdUpdate; RenderAll"}
-#	grid $f.cReplaceOutput -columnspan 2 -pady $Gui(pad) -sticky e
+    # Whether to Replace the output
+#    eval {checkbutton $f.cReplaceOutput \
+#        -text "Replace Output" -width 14 -variable Ed(EdThreshold,replaceIn) \
+#        -indicatoron 0} $Gui(WCA) {-command "EdThresholdUpdate; RenderAll"}
+#    grid $f.cReplaceOutput -columnspan 2 -pady $Gui(pad) -sticky e
 
-	#-------------------------------------------
-	# Threshold->Sliders frame
-	#-------------------------------------------
-	set f $Ed(EdThreshold,frame).fSliders
+    #-------------------------------------------
+    # Threshold->Sliders frame
+    #-------------------------------------------
+    set f $Ed(EdThreshold,frame).fSliders
 
-	foreach slider "Lower Upper" text "Lo Hi" {
-		eval {label $f.l$slider -text "$text:"} $Gui(WLA)
-		eval {entry $f.e$slider -width 6 \
-			-textvariable Ed(EdThreshold,[Uncap $slider])} $Gui(WEA)
-		bind $f.e$slider <Return>   "EdThresholdUpdate; RenderActive;"
-		bind $f.e$slider <FocusOut> "EdThresholdUpdate; RenderActive;"
-		eval {scale $f.s$slider -from $Ed(EdThreshold,rangeLow) -to $Ed(EdThreshold,rangeHigh)\
-			-length 220 -variable Ed(EdThreshold,[Uncap $slider])  -resolution 1 \
-			-command "EdThresholdUpdateInit $f.s$slider"} \
-			$Gui(WSA) {-sliderlength 22}
-		grid $f.l$slider $f.e$slider -padx 2 -pady 2 -sticky w
-		grid $f.l$slider -sticky e
-		grid $f.s$slider -columnspan 2 -pady 2 
+    foreach slider "Lower Upper" text "Lo Hi" {
+        eval {label $f.l$slider -text "$text:"} $Gui(WLA)
+        eval {entry $f.e$slider -width 6 \
+            -textvariable Ed(EdThreshold,[Uncap $slider])} $Gui(WEA)
+        bind $f.e$slider <Return>   "EdThresholdUpdate; RenderActive;"
+        bind $f.e$slider <FocusOut> "EdThresholdUpdate; RenderActive;"
+        eval {scale $f.s$slider -from $Ed(EdThreshold,rangeLow) -to $Ed(EdThreshold,rangeHigh)\
+            -length 220 -variable Ed(EdThreshold,[Uncap $slider])  -resolution 1 \
+            -command "EdThresholdUpdateInit $f.s$slider"} \
+            $Gui(WSA) {-sliderlength 22}
+        grid $f.l$slider $f.e$slider -padx 2 -pady 2 -sticky w
+        grid $f.l$slider -sticky e
+        grid $f.s$slider -columnspan 2 -pady 2 
 
-		set Ed(EdThreshold,slider$slider) $f.s$slider
-	}
+        set Ed(EdThreshold,slider$slider) $f.s$slider
+    }
 
-	#-------------------------------------------
-	# Threshold->Apply frame
-	#-------------------------------------------
-	set f $Ed(EdThreshold,frame).fApply
+    #-------------------------------------------
+    # Threshold->Apply frame
+    #-------------------------------------------
+    set f $Ed(EdThreshold,frame).fApply
 
-	eval {button $f.bApply -text "Apply" \
-		-command "EdThresholdApply"} $Gui(WBA) {-width 8}
-	pack $f.bApply
+    eval {button $f.bApply -text "Apply" \
+        -command "EdThresholdApply"} $Gui(WBA) {-width 8}
+    pack $f.bApply
 
 }
 
@@ -219,14 +219,14 @@ proc EdThresholdBuildGUI {} {
 # .END
 #-------------------------------------------------------------------------------
 proc EdThresholdEnter {} {
-	global Ed Label
+    global Ed Label
 
-	# Make sure we're colored
-	LabelsColorWidgets
+    # Make sure we're colored
+    LabelsColorWidgets
 
-	EdThresholdUpdateSliderRange
-	EdThresholdUpdateInteractive
-	EdThresholdUpdate
+    EdThresholdUpdateSliderRange
+    EdThresholdUpdateInteractive
+    EdThresholdUpdate
 }
 
 #-------------------------------------------------------------------------------
@@ -236,13 +236,13 @@ proc EdThresholdEnter {} {
 # .END
 #-------------------------------------------------------------------------------
 proc EdThresholdExit {} {
-	global Ed
+    global Ed
 
-	Slicer BackFilterOff
-	Slicer ForeFilterOff
-	Slicer ReformatModified
-	Slicer Update
-	EdThresholdRenderInteractive
+    Slicer BackFilterOff
+    Slicer ForeFilterOff
+    Slicer ReformatModified
+    Slicer Update
+    EdThresholdRenderInteractive
 }
 
 #-------------------------------------------------------------------------------
@@ -252,26 +252,26 @@ proc EdThresholdExit {} {
 # .END
 #-------------------------------------------------------------------------------
 proc EdThresholdUpdateSliderRange {} {
-	global Volume Ed
+    global Volume Ed
 
-	set v [EditorGetInputID $Ed(EdThreshold,input)]
+    set v [EditorGetInputID $Ed(EdThreshold,input)]
 
-	set lo [Volume($v,vol) GetRangeLow]
-	set hi [Volume($v,vol) GetRangeHigh]
-	set th [Volume($v,vol) GetBimodalThreshold]
+    set lo [Volume($v,vol) GetRangeLow]
+    set hi [Volume($v,vol) GetRangeHigh]
+    set th [Volume($v,vol) GetBimodalThreshold]
 
-	$Ed(EdThreshold,sliderLower) config -from $lo -to $hi
-	$Ed(EdThreshold,sliderUpper) config -from $lo -to $hi
+    $Ed(EdThreshold,sliderLower) config -from $lo -to $hi
+    $Ed(EdThreshold,sliderUpper) config -from $lo -to $hi
 
-	# Auto EdThresholdold
-	set Ed(EdThreshold,lower) $th
-	set Ed(EdThreshold,upper) $hi
+    # Auto EdThresholdold
+    set Ed(EdThreshold,lower) $th
+    set Ed(EdThreshold,upper) $hi
 
-	# Refresh Histogram
-	if {$Ed(EdThreshold,histogram) == "On"} {
-		editThreshHistMapper SetInput [Volume($v,vol) GetHistogramPlot]
-		editThreshHistWin Render
-	}
+    # Refresh Histogram
+    if {$Ed(EdThreshold,histogram) == "On"} {
+        editThreshHistMapper SetInput [Volume($v,vol) GetHistogramPlot]
+        editThreshHistWin Render
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -281,31 +281,31 @@ proc EdThresholdUpdateSliderRange {} {
 # .END
 #-------------------------------------------------------------------------------
 proc EdThresholdUpdateInteractive {} {
-	global Ed Slice
-	
-	foreach s $Slice(idList) {
-		Slicer SetFirstFilter $s Ed(EdThreshold,thresh$s)
-		Slicer SetLastFilter  $s Ed(EdThreshold,thresh$s)
-	}
+    global Ed Slice
+    
+    foreach s $Slice(idList) {
+        Slicer SetFirstFilter $s Ed(EdThreshold,thresh$s)
+        Slicer SetLastFilter  $s Ed(EdThreshold,thresh$s)
+    }
 
-	# Layers: Back=Original, Fore=Working
-	if {$Ed(EdThreshold,input) == "Original"} {
-		Slicer BackFilterOn
-		Slicer ForeFilterOff
-	} else {
-		Slicer BackFilterOff
-		Slicer ForeFilterOn
-	}
+    # Layers: Back=Original, Fore=Working
+    if {$Ed(EdThreshold,input) == "Original"} {
+        Slicer BackFilterOn
+        Slicer ForeFilterOff
+    } else {
+        Slicer BackFilterOff
+        Slicer ForeFilterOn
+    }
 
-	# Just active slice?
-	if {$Ed(EdThreshold,interact) == "Active"} {
-		Slicer FilterActiveOn
-	} else {
-		Slicer FilterActiveOff
-	}
+    # Just active slice?
+    if {$Ed(EdThreshold,interact) == "Active"} {
+        Slicer FilterActiveOn
+    } else {
+        Slicer FilterActiveOff
+    }
 
-	Slicer ReformatModified
-	Slicer Update
+    Slicer ReformatModified
+    Slicer Update
 }
 
 #-------------------------------------------------------------------------------
@@ -315,11 +315,11 @@ proc EdThresholdUpdateInteractive {} {
 # .END
 #-------------------------------------------------------------------------------
 proc EdThresholdSetInput {} {
-	global Ed Label
+    global Ed Label
 
-	EdThresholdUpdateSliderRange
-	EdThresholdUpdateInteractive
-	EdThresholdUpdate
+    EdThresholdUpdateSliderRange
+    EdThresholdUpdateInteractive
+    EdThresholdUpdate
 }
 
 #-------------------------------------------------------------------------------
@@ -329,11 +329,11 @@ proc EdThresholdSetInput {} {
 # .END
 #-------------------------------------------------------------------------------
 proc EdThresholdSetInteract {} {
-	global Ed Label
+    global Ed Label
 
-	EdThresholdUpdateInteractive
-	EdThresholdUpdate
-	RenderAll
+    EdThresholdUpdateInteractive
+    EdThresholdUpdate
+    RenderAll
 }
 
 #-------------------------------------------------------------------------------
@@ -344,7 +344,7 @@ proc EdThresholdSetInteract {} {
 #-------------------------------------------------------------------------------
 proc EdThresholdUpdateInit {widget {value ""}} {
 
-	$widget config -command "EdThresholdUpdate; RenderActive"
+    $widget config -command "EdThresholdUpdate; RenderActive"
 }
 
 #-------------------------------------------------------------------------------
@@ -354,29 +354,29 @@ proc EdThresholdUpdateInit {widget {value ""}} {
 # .END
 #-------------------------------------------------------------------------------
 proc EdThresholdUpdate {{value ""}} {
-	global Ed Label Slice
+    global Ed Label Slice
 
-	# Validate input
-	if {[ValidateInt $Ed(EdThreshold,lower)] == 0} {
-		tk_messageBox -message "Lo threshold is not an integer."
-		return
-	}
-	if {[ValidateInt $Ed(EdThreshold,upper)] == 0} {
-		tk_messageBox -message "Hi threshold is not an integer."
-		return
-	}
-	if {$Label(label) == ""} {
-		return
-	}
+    # Validate input
+    if {[ValidateInt $Ed(EdThreshold,lower)] == 0} {
+        tk_messageBox -message "Lo threshold is not an integer."
+        return
+    }
+    if {[ValidateInt $Ed(EdThreshold,upper)] == 0} {
+        tk_messageBox -message "Hi threshold is not an integer."
+        return
+    }
+    if {$Label(label) == ""} {
+        return
+    }
 
-	foreach s $Slice(idList) {
-		Ed(EdThreshold,thresh$s) SetReplaceIn     $Ed(EdThreshold,replaceIn)
-		Ed(EdThreshold,thresh$s) SetReplaceOut    $Ed(EdThreshold,replaceOut)
-		Ed(EdThreshold,thresh$s) SetInValue       $Label(label)
-		Ed(EdThreshold,thresh$s) SetOutValue      $Ed(EdThreshold,bg)
-		Ed(EdThreshold,thresh$s) ThresholdBetween $Ed(EdThreshold,lower) $Ed(EdThreshold,upper)
-	}
-	EdThresholdRenderInteractive
+    foreach s $Slice(idList) {
+        Ed(EdThreshold,thresh$s) SetReplaceIn     $Ed(EdThreshold,replaceIn)
+        Ed(EdThreshold,thresh$s) SetReplaceOut    $Ed(EdThreshold,replaceOut)
+        Ed(EdThreshold,thresh$s) SetInValue       $Label(label)
+        Ed(EdThreshold,thresh$s) SetOutValue      $Ed(EdThreshold,bg)
+        Ed(EdThreshold,thresh$s) ThresholdBetween $Ed(EdThreshold,lower) $Ed(EdThreshold,upper)
+    }
+    EdThresholdRenderInteractive
 }
 
 #-------------------------------------------------------------------------------
@@ -386,9 +386,9 @@ proc EdThresholdUpdate {{value ""}} {
 # .END
 #-------------------------------------------------------------------------------
 proc EdThresholdRenderInteractive {} {
-	global Ed
+    global Ed
 
-	Render$Ed(EdThreshold,interact)
+    Render$Ed(EdThreshold,interact)
 }
 
 #-------------------------------------------------------------------------------
@@ -398,10 +398,10 @@ proc EdThresholdRenderInteractive {} {
 # .END
 #-------------------------------------------------------------------------------
 proc EdThresholdLabel {} {
-	global Ed
+    global Ed
 
-	LabelsFindLabel
-	EdThresholdUpdate
+    LabelsFindLabel
+    EdThresholdUpdate
 }
 
 #-------------------------------------------------------------------------------
@@ -411,45 +411,45 @@ proc EdThresholdLabel {} {
 # .END
 #-------------------------------------------------------------------------------
 proc EdThresholdApply {} {
-	global Ed Volume Label Gui
+    global Ed Volume Label Gui
 
-	set e EdThreshold
-	set v [EditorGetInputID $Ed($e,input)]
+    set e EdThreshold
+    set v [EditorGetInputID $Ed($e,input)]
 
-	# Validate input
-	if {[ValidateInt $Ed($e,lower)] == 0} {
-		tk_messageBox -message "Lo threshold is not an integer."
-		return
-	}
-	if {[ValidateInt $Ed($e,upper)] == 0} {
-		tk_messageBox -message "Hi threshold is not an integer."
-		return
-	}
-	if {[ValidateInt $Label(label)] == 0} {
-		tk_messageBox -message "Output label is not an integer."
-		return
-	}
+    # Validate input
+    if {[ValidateInt $Ed($e,lower)] == 0} {
+        tk_messageBox -message "Lo threshold is not an integer."
+        return
+    }
+    if {[ValidateInt $Ed($e,upper)] == 0} {
+        tk_messageBox -message "Hi threshold is not an integer."
+        return
+    }
+    if {[ValidateInt $Label(label)] == 0} {
+        tk_messageBox -message "Output label is not an integer."
+        return
+    }
 
-	EdSetupBeforeApplyEffect $v $Ed($e,scope) Native
+    EdSetupBeforeApplyEffect $v $Ed($e,scope) Native
 
-	set Gui(progressText) "Threshold [Volume($v,node) GetName]"	
+    set Gui(progressText) "Threshold [Volume($v,node) GetName]"    
 
-	set min        $Ed($e,lower)
-	set max        $Ed($e,upper)
-	set in         $Label(label)
-	set out        $Ed($e,bg)
-	set replaceIn  $Ed($e,replaceIn)
-	set replaceOut $Ed($e,replaceOut)
-	Ed(editor)     Threshold $min $max $in $out $replaceIn $replaceOut
-	Ed(editor)     SetInput ""
-	Ed(editor)     UseInputOff
+    set min        $Ed($e,lower)
+    set max        $Ed($e,upper)
+    set in         $Label(label)
+    set out        $Ed($e,bg)
+    set replaceIn  $Ed($e,replaceIn)
+    set replaceOut $Ed($e,replaceOut)
+    Ed(editor)     Threshold $min $max $in $out $replaceIn $replaceOut
+    Ed(editor)     SetInput ""
+    Ed(editor)     UseInputOff
 
-	EdUpdateAfterApplyEffect $v
+    EdUpdateAfterApplyEffect $v
 
-	# Reset sliders if the input was working, because that means
-	# it changed.
-	if {$v == [EditorGetWorkingID]} {
-		EdThresholdSetInput
-	}
+    # Reset sliders if the input was working, because that means
+    # it changed.
+    if {$v == [EditorGetWorkingID]} {
+        EdThresholdSetInput
+    }
 }
 

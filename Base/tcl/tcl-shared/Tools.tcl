@@ -46,11 +46,11 @@ proc ToolsInit {} {
     set pwd [pwd]
     cd [file join $home gui bitmaps]
     foreach foo [glob -nocomplain *.bmp] {
-	#if { [file extension $foo] == ".bmp" } {}
-	if {![file isdirectory $foo]} {
-	    image create bitmap $foo -file [file join $homebitmaps $foo]
-	    #tk_messageBox -type ok -message $foo -icon info
-	}
+    #if { [file extension $foo] == ".bmp" } {}
+    if {![file isdirectory $foo]} {
+        image create bitmap $foo -file [file join $homebitmaps $foo]
+        #tk_messageBox -type ok -message $foo -icon info
+    }
     }
     
     cd $pwd
@@ -65,50 +65,50 @@ proc ToolsInit {} {
 # each tool in the toolbar, respectively.
 #-------------------------------------------------------------------------------
 proc ToolBar { frame barname args } {
-	global $barname Gui
+    global $barname Gui
 
-	set f [frame $frame -bg $Gui(activeWorkspace) -cursor hand2]
-	set ${barname}(frame) $f
-	foreach tool $args {
-		set toolname [lindex $tool 0]
-		set toolimage [lindex $tool 1]
-		set toolenter [lindex $tool 2]
-		set toolexit [lindex $tool 3]
-		set tooltip [lindex $tool 4]
-		if { $toolenter == "" } {
-			set toolenter ToolStub
-			}
-		if { $toolexit == "" } {
-			set toolexit ToolStub
-			}
-		if { $tooltip == "" } {
-			set tooltip $toolname
-			}
+    set f [frame $frame -bg $Gui(activeWorkspace) -cursor hand2]
+    set ${barname}(frame) $f
+    foreach tool $args {
+        set toolname [lindex $tool 0]
+        set toolimage [lindex $tool 1]
+        set toolenter [lindex $tool 2]
+        set toolexit [lindex $tool 3]
+        set tooltip [lindex $tool 4]
+        if { $toolenter == "" } {
+            set toolenter ToolStub
+            }
+        if { $toolexit == "" } {
+            set toolexit ToolStub
+            }
+        if { $tooltip == "" } {
+            set tooltip $toolname
+            }
 
-		if { $toolimage == "" } {
-			set c {radiobutton $f.rb$toolname -indicatoron 0 \
-				-command "ToolUpdate $barname $toolenter $toolexit" \
-				-text $toolname $Gui(WCA) \
-				-variable ${barname}(tool) \
-				-value $toolname }
-			eval [subst $c]
-		} else {
-			set c {radiobutton $f.rb$toolname -indicatoron 0 \
-				-command "ToolUpdate $barname $toolenter $toolexit" \
-				-image $toolimage $Gui(WCA) \
-				-variable ${barname}(tool) \
-				-value $toolname }
-			eval [subst $c]
-			}
-		pack $f.rb$toolname -side left
-		TooltipAdd $f.rb$toolname $tooltip
-		}
+        if { $toolimage == "" } {
+            set c {radiobutton $f.rb$toolname -indicatoron 0 \
+                -command "ToolUpdate $barname $toolenter $toolexit" \
+                -text $toolname $Gui(WCA) \
+                -variable ${barname}(tool) \
+                -value $toolname }
+            eval [subst $c]
+        } else {
+            set c {radiobutton $f.rb$toolname -indicatoron 0 \
+                -command "ToolUpdate $barname $toolenter $toolexit" \
+                -image $toolimage $Gui(WCA) \
+                -variable ${barname}(tool) \
+                -value $toolname }
+            eval [subst $c]
+            }
+        pack $f.rb$toolname -side left
+        TooltipAdd $f.rb$toolname $tooltip
+        }
 
-	set ${barname}(prevtool) ""
-	set ${barname}(toolexit) ""
-	pack $f
+    set ${barname}(prevtool) ""
+    set ${barname}(toolexit) ""
+    pack $f
 
-	return $f
+    return $f
 }
 
 #-------------------------------------------------------------------------------
@@ -118,25 +118,25 @@ proc ToolBar { frame barname args } {
 # .END
 #-------------------------------------------------------------------------------
 proc ToolUpdate { barname toolenter toolexit } {
-	global $barname
+    global $barname
 
-	# For debugging:
-	# puts "ToolUpdate $barname $toolenter $toolexit"
+    # For debugging:
+    # puts "ToolUpdate $barname $toolenter $toolexit"
 
-	set toolname [subst $${barname}(tool)]
-	set prevtool [subst $${barname}(prevtool)]
-	if { $prevtool != $toolname } {
-		set prevexit [subst $${barname}(toolexit)]
-		if { $prevexit != "" } {
-			$prevexit $prevtool
-			}
-		set ${barname}(toolexit) $toolexit
-		set ${barname}(prevtool) $toolname
-		if { $toolenter != "" } {
-			$toolenter $toolname
-			}
-		}
-	}
+    set toolname [subst $${barname}(tool)]
+    set prevtool [subst $${barname}(prevtool)]
+    if { $prevtool != $toolname } {
+        set prevexit [subst $${barname}(toolexit)]
+        if { $prevexit != "" } {
+            $prevexit $prevtool
+            }
+        set ${barname}(toolexit) $toolexit
+        set ${barname}(prevtool) $toolname
+        if { $toolenter != "" } {
+            $toolenter $toolname
+            }
+        }
+    }
 
 #-------------------------------------------------------------------------------
 # .PROC ToolStub
@@ -145,4 +145,4 @@ proc ToolUpdate { barname toolenter toolexit } {
 # .END
 #-------------------------------------------------------------------------------
 proc ToolStub { args } {
-	}
+    }

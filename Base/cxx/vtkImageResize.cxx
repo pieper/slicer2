@@ -69,8 +69,8 @@ void vtkImageResize::SetOutputWholeExtent(int extent[6])
 
 //----------------------------------------------------------------------------
 void vtkImageResize::SetOutputWholeExtent(int minX, int maxX, 
-					     int minY, int maxY,
-					     int minZ, int maxZ)
+                         int minY, int maxY,
+                         int minZ, int maxZ)
 {
   int extent[6];
   extent[0] = minX;  extent[1] = maxX;
@@ -105,8 +105,8 @@ void vtkImageResize::SetInputClipExtent(int extent[6])
 
 //----------------------------------------------------------------------------
 void vtkImageResize::SetInputClipExtent(int minX, int maxX, 
-					     int minY, int maxY,
-					     int minZ, int maxZ)
+                         int minY, int maxY,
+                         int minZ, int maxZ)
 {
   int extent[6];
   extent[0] = minX;  extent[1] = maxX;
@@ -129,7 +129,7 @@ void vtkImageResize::GetInputClipExtent(int extent[6])
 // Change the WholeExtent
 //----------------------------------------------------------------------------
 void vtkImageResize::ExecuteInformation(vtkImageData *inData, 
-				      vtkImageData *outData)
+                      vtkImageData *outData)
 {
   int idx, extent[6];
   float spacing[3], origin[3];
@@ -152,15 +152,15 @@ void vtkImageResize::ExecuteInformation(vtkImageData *inData,
         extent[idx*2] = this->OutputWholeExtent[idx*2];
       }
       if (this->OutputWholeExtent[idx*2+1] >= extent[idx*2] && 
-	      this->OutputWholeExtent[idx*2+1] <= extent[idx*2+1])
-	    {
-	      extent[idx*2+1] = this->OutputWholeExtent[idx*2+1];
-	    }
+          this->OutputWholeExtent[idx*2+1] <= extent[idx*2+1])
+        {
+          extent[idx*2+1] = this->OutputWholeExtent[idx*2+1];
+        }
       // make sure the order is correct
       if (extent[idx*2] > extent[idx*2+1])
-	    {
-	      extent[idx*2] = extent[idx*2+1];
-	    }
+        {
+          extent[idx*2] = extent[idx*2+1];
+        }
     }
 
     // Scale spacing according to the input clip extent
@@ -203,8 +203,8 @@ static void vtkImageResizeExecute1D(vtkImageResize *self,
   long idx, nx, nx2, xi;
   float magX;
   // interpolation
-	float x0, x1;
-	// multiple components
+    float x0, x1;
+    // multiple components
   int idxC, numComps, scalarSize, inRowLength;
   // whole input extent
   int wExt[6];
@@ -254,12 +254,12 @@ static void vtkImageResizeExecute1D(vtkImageResize *self,
   // step vector is the inverse magnification
   magX = (magX == 0.0) ? 1.0 : magX;
   step[0] = 1.0 / magX;
-	
+    
   // Find origin (upper left) of output space in terms of input space coordinates
   // (NOTE: relative to the ScalarPointerForExtent(inExt))
   // Therefore: set origin[0] to inExt[0] if inExt=wExt, else 0
   origin[0] = 0;
-	
+    
   // Advance to the origin of this output extent (used for threading)
   // x
   // DAVE THREAD 
@@ -286,23 +286,23 @@ static void vtkImageResizeExecute1D(vtkImageResize *self,
         }
         else 
         {
-					x1 = x - xi;
+                    x1 = x - xi;
  
-					x0 = 1.0 - x1;
+                    x0 = 1.0 - x1;
 
-					// Interpolate in X 
-					//
-					idx = xi;
+                    // Interpolate in X 
+                    //
+                    idx = xi;
           idx *= numComps;
 
-					for (idxC = 0; idxC < numComps; idxC++)
-					{
-						// Interpolate in X and Y
-						ptr = &tmp[idx+idxC];
-						*outPtr = (T)(x0*ptr[0] + x1*ptr[numComps]);
+                    for (idxC = 0; idxC < numComps; idxC++)
+                    {
+                        // Interpolate in X and Y
+                        ptr = &tmp[idx+idxC];
+                        *outPtr = (T)(x0*ptr[0] + x1*ptr[numComps]);
         
             outPtr++;
-					}//for c
+                    }//for c
         }
         x += step[0];
       }
@@ -325,8 +325,8 @@ static void vtkImageResizeExecute2D(vtkImageResize *self,
   long idx, nx, ny, nx2, ny2, xi, yi;
   float magX, magY;
   // interpolation
-	float x0, y0, x1, y1, dx0, dx1;
-	// multiple components
+    float x0, y0, x1, y1, dx0, dx1;
+    // multiple components
   int nxc, idxC, numComps, scalarSize, inRowLength;
   // whole input extent
   int wExt[6];
@@ -341,7 +341,7 @@ static void vtkImageResizeExecute2D(vtkImageResize *self,
 
   // find the region to loop over
   numComps = inData->GetNumberOfScalarComponents();
-	nxc = nx * numComps;
+    nxc = nx * numComps;
   maxX = outExt[1];
   maxY = outExt[3];
   inMaxX = inExt[1] - inExt[0]; 
@@ -361,20 +361,20 @@ static void vtkImageResizeExecute2D(vtkImageResize *self,
   magY = (magY == 0.0) ? 1.0 : magY;
   step[0] = 1.0 / magX;
   step[1] = 1.0 / magY;
-	
+    
   // Find origin (upper left) of output space in terms of input space coordinates
   // (NOTE: relative to the ScalarPointerForExtent(inExt))
   // Therefore: set origin[0] to inExt[0] if inExt=wExt, else 0
   origin[0] = 0;
   origin[1] = 0;
-	
+    
   // Advance to the origin of this output extent (used for threading)
   // x
   //DAVE THREAD
 //  scale = (float)(outExt[0]-wExt[0])/(float)(wExt[1]-wExt[0]+1);
 //  origin[0] = origin[0] + scale*nx*step[0];
   // y
-//  scale = (float)(outExt[2]-wExt[2])/(float)(wExt[3]-wExt[2]+1);	
+//  scale = (float)(outExt[2]-wExt[2])/(float)(wExt[3]-wExt[2]+1);    
 //  origin[1] = origin[1] + scale*ny*step[1];
 
   // Initialize output coords x, y to origin
@@ -402,27 +402,27 @@ static void vtkImageResizeExecute2D(vtkImageResize *self,
         }
         else 
         {
-					x1 = x - xi;
-					y1 = y - yi;
+                    x1 = x - xi;
+                    y1 = y - yi;
  
-					x0 = 1.0 - x1;
-					y0 = 1.0 - y1;
+                    x0 = 1.0 - x1;
+                    y0 = 1.0 - y1;
 
-					// Interpolate in X and Y at Z0
-					//
-					idx = yi*nx + xi;
+                    // Interpolate in X and Y at Z0
+                    //
+                    idx = yi*nx + xi;
           idx *= numComps;
 
-					for (idxC = 0; idxC < numComps; idxC++)
-					{
-						// Interpolate in X and Y
-						ptr = &inPtr[idx+idxC];
-						dx0 = x0*ptr[0] + x1*ptr[numComps]; ptr += nxc;
-						dx1 = x0*ptr[0] + x1*ptr[numComps];
+                    for (idxC = 0; idxC < numComps; idxC++)
+                    {
+                        // Interpolate in X and Y
+                        ptr = &inPtr[idx+idxC];
+                        dx0 = x0*ptr[0] + x1*ptr[numComps]; ptr += nxc;
+                        dx1 = x0*ptr[0] + x1*ptr[numComps];
         
-						*outPtr = (T)(y0*dx0 + y1*dx1);
+                        *outPtr = (T)(y0*dx0 + y1*dx1);
             outPtr++;
-					}//for c
+                    }//for c
         }
         x += step[0];
       }
@@ -445,9 +445,9 @@ static void vtkImageResizeExecute3D(vtkImageResize *self,
 //----------------------------------------------------------------------------
 template <class T>
 static void vtkImageResizeExecute(vtkImageResize *self,
-				  vtkImageData *inData, T *inPtr, int inExt[6],
-				  vtkImageData *outData, T *outPtr,
-				  int outExt[6], int id)
+                  vtkImageData *inData, T *inPtr, int inExt[6],
+                  vtkImageData *outData, T *outPtr,
+                  int outExt[6], int id)
 {
   if (outExt[5] == outExt[4])
   {
@@ -473,7 +473,7 @@ static void vtkImageResizeExecute(vtkImageResize *self,
 
 //----------------------------------------------------------------------------
 void vtkImageResize::ThreadedExecute(vtkImageData *inData, 
-				      vtkImageData *outData, int outExt[6], int id)
+                      vtkImageData *outData, int outExt[6], int id)
 {
   int inExt[6];
   outData->GetExtent(outExt);
@@ -502,53 +502,53 @@ void vtkImageResize::ThreadedExecute(vtkImageData *inData,
     {
     case VTK_DOUBLE:
       vtkImageResizeExecute(this, 
-			     inData, (double *)(inPtr), inExt,
-			     outData, (double *)(outPtr), outExt, id);
+                 inData, (double *)(inPtr), inExt,
+                 outData, (double *)(outPtr), outExt, id);
       break;
     case VTK_FLOAT:
       vtkImageResizeExecute(this, 
-			     inData, (float *)(inPtr), inExt,
-			     outData, (float *)(outPtr), outExt, id);
+                 inData, (float *)(inPtr), inExt,
+                 outData, (float *)(outPtr), outExt, id);
       break;
     case VTK_LONG:
       vtkImageResizeExecute(this, 
-			     inData, (long *)(inPtr), inExt,
-			     outData, (long *)(outPtr), outExt, id);
+                 inData, (long *)(inPtr), inExt,
+                 outData, (long *)(outPtr), outExt, id);
       break;
     case VTK_UNSIGNED_LONG:
       vtkImageResizeExecute(this, 
-			     inData, (unsigned long *)(inPtr), inExt,
-			     outData, (unsigned long *)(outPtr), outExt, id);
+                 inData, (unsigned long *)(inPtr), inExt,
+                 outData, (unsigned long *)(outPtr), outExt, id);
       break;
     case VTK_INT:
       vtkImageResizeExecute(this, 
-			     inData, (int *)(inPtr), inExt,
-			     outData, (int *)(outPtr), outExt, id);
+                 inData, (int *)(inPtr), inExt,
+                 outData, (int *)(outPtr), outExt, id);
       break;
     case VTK_UNSIGNED_INT:
       vtkImageResizeExecute(this, 
-			     inData, (unsigned int *)(inPtr), inExt,
-			     outData, (unsigned int *)(outPtr), outExt, id);
+                 inData, (unsigned int *)(inPtr), inExt,
+                 outData, (unsigned int *)(outPtr), outExt, id);
       break;
     case VTK_SHORT:
       vtkImageResizeExecute(this, 
-			     inData, (short *)(inPtr), inExt,
-			     outData, (short *)(outPtr), outExt, id);
+                 inData, (short *)(inPtr), inExt,
+                 outData, (short *)(outPtr), outExt, id);
       break;
     case VTK_UNSIGNED_SHORT:
       vtkImageResizeExecute(this, 
-			     inData, (unsigned short *)(inPtr), inExt,
-			     outData, (unsigned short *)(outPtr), outExt, id);
+                 inData, (unsigned short *)(inPtr), inExt,
+                 outData, (unsigned short *)(outPtr), outExt, id);
       break;
     case VTK_CHAR:
       vtkImageResizeExecute(this, 
-			     inData, (char *)(inPtr), inExt,
-			     outData, (char *)(outPtr), outExt, id);
+                 inData, (char *)(inPtr), inExt,
+                 outData, (char *)(outPtr), outExt, id);
       break;
     case VTK_UNSIGNED_CHAR:
       vtkImageResizeExecute(this, 
-			     inData, (unsigned char *)(inPtr), inExt,
-			     outData, (unsigned char *)(outPtr), outExt, id);
+                 inData, (unsigned char *)(inPtr), inExt,
+                 outData, (unsigned char *)(outPtr), outExt, id);
       break;
     default:
       vtkErrorMacro(<< "Execute: Unknown ScalarType");

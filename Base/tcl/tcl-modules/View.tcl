@@ -44,31 +44,31 @@
 # .END
 #-------------------------------------------------------------------------------
 proc ViewInit {} {
-	global View Module
+    global View Module
 
-	# Define Tabs
-	set m View
-	set Module($m,row1List) "Help View Lights"
-	set Module($m,row1Name) "Help View Lights"
-	set Module($m,row1,tab) View
+    # Define Tabs
+    set m View
+    set Module($m,row1List) "Help View Lights"
+    set Module($m,row1Name) "Help View Lights"
+    set Module($m,row1,tab) View
 
     # Module Summary Info
     set Module($m,overview) "Settings for 3D View, stereo, make movies."
 
-	# Define Procedures
-	set Module($m,procGUI) ViewBuildGUI
+    # Define Procedures
+    set Module($m,procGUI) ViewBuildGUI
 
-	# Define Dependencies
-	set Module($m,depend) ""
+    # Define Dependencies
+    set Module($m,depend) ""
 
-	# Set version info
-	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.23 $} {$Date: 2002/02/26 16:07:20 $}]
+    # Set version info
+    lappend Module(versions) [ParseCVSInfo $m \
+        {$Revision: 1.24 $} {$Date: 2002/03/18 20:52:41 $}]
 
-	set View(movie) 0
-	set View(movieDirectory) "/tmp"
-	set View(movieFrame) 1
-	set View(movieFileType) "PPM"
+    set View(movie) 0
+    set View(movieDirectory) "/tmp"
+    set View(movieFrame) 1
+    set View(movieFileType) "PPM"
 }
 
 #-------------------------------------------------------------------------------
@@ -78,23 +78,23 @@ proc ViewInit {} {
 # .END
 #-------------------------------------------------------------------------------
 proc ViewBuildGUI {} {
-	global Gui View Module
+    global Gui View Module
 
-	#-------------------------------------------
-	# Frame Hierarchy:
-	#-------------------------------------------
-	# Help
-	# View
-	#   Size     : Size of window in 3D mode
-	#   Closeup  : Turns on/off Close-up Window
-	#   Stereo   : Turns on/off Stereo 3D
-	#
-	#-------------------------------------------
+    #-------------------------------------------
+    # Frame Hierarchy:
+    #-------------------------------------------
+    # Help
+    # View
+    #   Size     : Size of window in 3D mode
+    #   Closeup  : Turns on/off Close-up Window
+    #   Stereo   : Turns on/off Stereo 3D
+    #
+    #-------------------------------------------
 
-	#-------------------------------------------
-	# Help frame
-	#-------------------------------------------
-	set help "
+    #-------------------------------------------
+    # Help frame
+    #-------------------------------------------
+    set help "
 <UL>
 <LI><B>Size</B> If you want to save the 3D view as an image on disk 
 (using the <B>Save 3D</B> command from the <B>File</B> menu), first
@@ -114,165 +114,165 @@ a command line like: <I>convert movie*.ppm movie.mpg</I> to create a movie
 called <I>movie.mpg</I>.
 </UL>
 "
-	regsub -all "\n" $help { } help
-	MainHelpApplyTags View $help
-	MainHelpBuildGUI View
+    regsub -all "\n" $help { } help
+    MainHelpApplyTags View $help
+    MainHelpBuildGUI View
 
-	#-------------------------------------------
-	# View frame
-	#-------------------------------------------
-	set fView $Module(View,fView)
-	set f $fView
+    #-------------------------------------------
+    # View frame
+    #-------------------------------------------
+    set fView $Module(View,fView)
+    set f $fView
 
-	frame $f.fSize    -bg $Gui(activeWorkspace) -relief groove -bd 3
-	frame $f.fBg      -bg $Gui(activeWorkspace)
-	frame $f.fStereo  -bg $Gui(activeWorkspace) -relief groove -bd 3
-	frame $f.fCloseup -bg $Gui(activeWorkspace)
-	frame $f.fMovie   -bg $Gui(activeWorkspace) -relief groove -bd 3
-	frame $f.fMovieSlices   -bg $Gui(activeWorkspace) -relief groove -bd 3
-	pack $f.fSize $f.fBg $f.fCloseup $f.fStereo $f.fMovie $f.fMovieSlices\
-		-side top -pady $Gui(pad) -padx $Gui(pad) -fill x
+    frame $f.fSize    -bg $Gui(activeWorkspace) -relief groove -bd 3
+    frame $f.fBg      -bg $Gui(activeWorkspace)
+    frame $f.fStereo  -bg $Gui(activeWorkspace) -relief groove -bd 3
+    frame $f.fCloseup -bg $Gui(activeWorkspace)
+    frame $f.fMovie   -bg $Gui(activeWorkspace) -relief groove -bd 3
+    frame $f.fMovieSlices   -bg $Gui(activeWorkspace) -relief groove -bd 3
+    pack $f.fSize $f.fBg $f.fCloseup $f.fStereo $f.fMovie $f.fMovieSlices\
+        -side top -pady $Gui(pad) -padx $Gui(pad) -fill x
 
-	#-------------------------------------------
-	# View->Bg Frame
-	#-------------------------------------------
-	set f $fView.fBg
-	
+    #-------------------------------------------
+    # View->Bg Frame
+    #-------------------------------------------
+    set f $fView.fBg
+    
     eval {label $f.l -text "Background: "} $Gui(WLA)
-	pack $f.l -side left -padx $Gui(pad) -pady 0
+    pack $f.l -side left -padx $Gui(pad) -pady 0
 
-	foreach value "Blue Black Midnight" width "5 6 9" {
-		eval {radiobutton $f.r$value -width $width \
-			-text "$value" -value "$value" -variable View(bgName) \
-			-indicatoron 0 -command "MainViewSetBackgroundColor; Render3D"} $Gui(WCA)
-		pack $f.r$value -side left -padx 0 -pady 0
-	}
-	
-	#-------------------------------------------
-	# View->Closeup Frame
-	#-------------------------------------------
-	set f $fView.fCloseup
-	
+    foreach value "Blue Black Midnight" width "5 6 9" {
+        eval {radiobutton $f.r$value -width $width \
+            -text "$value" -value "$value" -variable View(bgName) \
+            -indicatoron 0 -command "MainViewSetBackgroundColor; Render3D"} $Gui(WCA)
+        pack $f.r$value -side left -padx 0 -pady 0
+    }
+    
+    #-------------------------------------------
+    # View->Closeup Frame
+    #-------------------------------------------
+    set f $fView.fCloseup
+    
     eval {label $f.lCloseup -text "Closeup Window: "} $Gui(WLA)
-	pack $f.lCloseup -side left -padx $Gui(pad) -pady 0
+    pack $f.lCloseup -side left -padx $Gui(pad) -pady 0
 
-	foreach value "On Off" width "4 4" {
-		eval {radiobutton $f.rCloseup$value -width $width \
-			-text "$value" -value "$value" -variable View(closeupVisibility) \
-			-indicatoron 0 -command "MainViewSetWelcome Welcome"} $Gui(WCA)
-		pack $f.rCloseup$value -side left -padx 0 -pady 0
-	}
-	
-	#-------------------------------------------
-	# View->Size Frame
-	#-------------------------------------------
-	set f $fView.fSize
-	
-	frame $f.fTitle -bg $Gui(activeWorkspace)
-	frame $f.fBtns -bg $Gui(activeWorkspace)
-   	pack $f.fTitle $f.fBtns -side top -pady 5
+    foreach value "On Off" width "4 4" {
+        eval {radiobutton $f.rCloseup$value -width $width \
+            -text "$value" -value "$value" -variable View(closeupVisibility) \
+            -indicatoron 0 -command "MainViewSetWelcome Welcome"} $Gui(WCA)
+        pack $f.rCloseup$value -side left -padx 0 -pady 0
+    }
+    
+    #-------------------------------------------
+    # View->Size Frame
+    #-------------------------------------------
+    set f $fView.fSize
+    
+    frame $f.fTitle -bg $Gui(activeWorkspace)
+    frame $f.fBtns -bg $Gui(activeWorkspace)
+       pack $f.fTitle $f.fBtns -side top -pady 5
 
     eval {label $f.fTitle.lTitle -text "Window Size in 3D Mode:"} $Gui(WLA)
-	pack $f.fTitle.lTitle -side left -padx $Gui(pad) -pady 0
+    pack $f.fTitle.lTitle -side left -padx $Gui(pad) -pady 0
 
     eval {label $f.fBtns.lW -text "Width:"} $Gui(WLA)
     eval {label $f.fBtns.lH -text "Height:"} $Gui(WLA)
-	eval {entry $f.fBtns.eWidth -width 5 -textvariable View(viewerWidth)} $Gui(WEA)
-	eval {entry $f.fBtns.eHeight -width 5 -textvariable View(viewerHeight)} $Gui(WEA)
-		bind $f.fBtns.eWidth  <Return> {MainViewerSetMode}
-		bind $f.fBtns.eHeight <Return> {MainViewerSetMode}
-	pack $f.fBtns.lW $f.fBtns.eWidth $f.fBtns.lH $f.fBtns.eHeight \
-		-side left -padx $Gui(pad)
+    eval {entry $f.fBtns.eWidth -width 5 -textvariable View(viewerWidth)} $Gui(WEA)
+    eval {entry $f.fBtns.eHeight -width 5 -textvariable View(viewerHeight)} $Gui(WEA)
+        bind $f.fBtns.eWidth  <Return> {MainViewerSetMode}
+        bind $f.fBtns.eHeight <Return> {MainViewerSetMode}
+    pack $f.fBtns.lW $f.fBtns.eWidth $f.fBtns.lH $f.fBtns.eHeight \
+        -side left -padx $Gui(pad)
 
-	#-------------------------------------------
-	# View->Stereo Frame
-	#-------------------------------------------
-	set f $fView.fStereo
+    #-------------------------------------------
+    # View->Stereo Frame
+    #-------------------------------------------
+    set f $fView.fStereo
 
-	frame $f.fStereoType -bg $Gui(activeWorkspace)
-	frame $f.fStereoOn -bg $Gui(activeWorkspace)
-   	pack $f.fStereoType $f.fStereoOn -side top -pady 5
+    frame $f.fStereoType -bg $Gui(activeWorkspace)
+    frame $f.fStereoOn -bg $Gui(activeWorkspace)
+       pack $f.fStereoType $f.fStereoOn -side top -pady 5
 
-	#-------------------------------------------
-	# View->Stereo->StereoType Frame
-	#-------------------------------------------
-	set f $fView.fStereo.fStereoType
+    #-------------------------------------------
+    # View->Stereo->StereoType Frame
+    #-------------------------------------------
+    set f $fView.fStereo.fStereoType
 
-	foreach value "RedBlue CrystalEyes Interlaced" {
-		eval {radiobutton $f.r$value \
-			-text "$value" -value "$value" \
-			-variable View(stereoType) \
-			-indicatoron 0 \
-			-command "MainViewSetStereo; Render3D"} \
-			$Gui(WCA)
-		pack $f.r$value -side left -padx 0 -pady 0
-	}
+    foreach value "RedBlue CrystalEyes Interlaced" {
+        eval {radiobutton $f.r$value \
+            -text "$value" -value "$value" \
+            -variable View(stereoType) \
+            -indicatoron 0 \
+            -command "MainViewSetStereo; Render3D"} \
+            $Gui(WCA)
+        pack $f.r$value -side left -padx 0 -pady 0
+    }
 
-	#-------------------------------------------
-	# View->Stereo->StereoOn Frame
-	#-------------------------------------------
-	set f $fView.fStereo.fStereoOn
-	
-	# Stereo button
+    #-------------------------------------------
+    # View->Stereo->StereoOn Frame
+    #-------------------------------------------
+    set f $fView.fStereo.fStereoOn
+    
+    # Stereo button
     eval {checkbutton $f.cStereo \
         -text "Stereo" -variable View(stereo) -width 6 \
         -indicatoron 0 -command "MainViewSetStereo; Render3D"} $Gui(WCA)
  
-	pack $f.cStereo -side top -padx 0 -pady 2
+    pack $f.cStereo -side top -padx 0 -pady 2
 
-	#-------------------------------------------
-	# View->Movie Frame
-	#-------------------------------------------
-	
+    #-------------------------------------------
+    # View->Movie Frame
+    #-------------------------------------------
+    
 
 
 
 
         set f $fView.fMovie
-    	eval {checkbutton $f.cMovie -text "Save View" -variable View(movie) \
-		-width 22 -indicatoron 0 } $Gui(WCA)
-	TooltipAdd $f.cMovie "When this button is selected, you can save the 
+        eval {checkbutton $f.cMovie -text "Save View" -variable View(movie) \
+        -width 22 -indicatoron 0 } $Gui(WCA)
+    TooltipAdd $f.cMovie "When this button is selected, you can save the 
 current View (with or without the slice windows) by 
 left-clicking in 3D View. If you leave this button selected, 
 a frame will be saved everytime the 3D View is rendered "
-	
-	eval {checkbutton $f.cMovieSlices -text "with slice windows (not ppm)" -variable View(movieSlices) -indicatoron 1 } $Gui(WCA)
-	TooltipAdd $f.cMovieSlices "When this button is selected, the frames saved will contain the 2D window slices"
+    
+    eval {checkbutton $f.cMovieSlices -text "with slice windows (not ppm)" -variable View(movieSlices) -indicatoron 1 } $Gui(WCA)
+    TooltipAdd $f.cMovieSlices "When this button is selected, the frames saved will contain the 2D window slices"
 
-	eval {label $f.lFrame -text "Next frame #:"} $Gui(WLA)
-	eval {entry $f.eFrame -width 6 -textvariable View(movieFrame)} $Gui(WEA)
+    eval {label $f.lFrame -text "Next frame #:"} $Gui(WLA)
+    eval {entry $f.eFrame -width 6 -textvariable View(movieFrame)} $Gui(WEA)
  
-	eval {label $f.lPrefix -text "Directory:"} $Gui(WLA)
+    eval {label $f.lPrefix -text "Directory:"} $Gui(WLA)
 
-	eval {entry $f.ePrefix -width 16 -textvariable View(movieDirectory)} $Gui(WEA)
+    eval {entry $f.ePrefix -width 16 -textvariable View(movieDirectory)} $Gui(WEA)
 
-	grid $f.cMovie -columnspan 2 -padx $Gui(pad) -pady $Gui(pad)
-	grid $f.cMovieSlices -columnspan 2 -padx $Gui(pad) -pady $Gui(pad)
-	grid $f.lFrame $f.eFrame -sticky w -padx $Gui(pad) -pady $Gui(pad)
-	grid $f.lPrefix $f.ePrefix -sticky w -padx $Gui(pad) -pady $Gui(pad)
+    grid $f.cMovie -columnspan 2 -padx $Gui(pad) -pady $Gui(pad)
+    grid $f.cMovieSlices -columnspan 2 -padx $Gui(pad) -pady $Gui(pad)
+    grid $f.lFrame $f.eFrame -sticky w -padx $Gui(pad) -pady $Gui(pad)
+    grid $f.lPrefix $f.ePrefix -sticky w -padx $Gui(pad) -pady $Gui(pad)
         grid configure $f.lFrame -sticky e
         grid configure $f.lPrefix -sticky e
 
-	# File type
-	eval {label $f.lFile -text "File type:"} $Gui(WLA)
-	eval {menubutton $f.mbFile -text $View(movieFileType) -width 5 -menu $f.mbFile.m} \
-		$Gui(WMBA)
-	grid $f.lFile $f.mbFile -sticky w -padx $Gui(pad) -pady $Gui(pad)
+    # File type
+    eval {label $f.lFile -text "File type:"} $Gui(WLA)
+    eval {menubutton $f.mbFile -text $View(movieFileType) -width 5 -menu $f.mbFile.m} \
+        $Gui(WMBA)
+    grid $f.lFile $f.mbFile -sticky w -padx $Gui(pad) -pady $Gui(pad)
     grid configure $f.lFile -sticky e
-	eval {menu $f.mbFile.m} $Gui(WMA)
-	foreach item "PPM TIFF BMP" {
-		$f.mbFile.m add command -label $item -command "ViewSetMovieFileType $item"
-	}
+    eval {menu $f.mbFile.m} $Gui(WMA)
+    foreach item "PPM TIFF BMP" {
+        $f.mbFile.m add command -label $item -command "ViewSetMovieFileType $item"
+    }
 
 
-	#-------------------------------------------
-	# Lights frame
-	#-------------------------------------------
-	set fLights $Module(View,fLights)
-	set f $fLights
-	
-	eval {label $f.l -text "This is a nice place\n to put lighting controls\n for the light kit. "} $Gui(WLA)
-	pack $f.l -side left -padx $Gui(pad) -pady 0
+    #-------------------------------------------
+    # Lights frame
+    #-------------------------------------------
+    set fLights $Module(View,fLights)
+    set f $fLights
+    
+    eval {label $f.l -text "This is a nice place\n to put lighting controls\n for the light kit. "} $Gui(WLA)
+    pack $f.l -side left -padx $Gui(pad) -pady 0
 }
 
 #-------------------------------------------------------------------------------
@@ -282,14 +282,14 @@ a frame will be saved everytime the 3D View is rendered "
 # .END
 #-------------------------------------------------------------------------------
 proc ViewSetMovieFileType {item} {
-	global View Module
+    global View Module
 
-	# Update variable
-	set View(movieFileType) $item
+    # Update variable
+    set View(movieFileType) $item
 
-	# Update GUI
-	set f $Module(View,fView).fMovie
-	eval $f.mbFile config "-text $item"
+    # Update GUI
+    set f $Module(View,fView).fMovie
+    eval $f.mbFile config "-text $item"
 }
 
 

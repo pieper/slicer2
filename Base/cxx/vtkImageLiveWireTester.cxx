@@ -64,12 +64,12 @@ vtkImageLiveWireTester::~vtkImageLiveWireTester()
   if (this->EdgeFilters)
     {
       for (int i = 0; i < this->NumberOfEdgeFilters; i++)
-	{
-	  if (this->EdgeFilters[i])
-	    {
-	      this->EdgeFilters[i]->Delete();
-	    }
-	}
+    {
+      if (this->EdgeFilters[i])
+        {
+          this->EdgeFilters[i]->Delete();
+        }
+    }
 
       delete [] this->EdgeFilters;
     }
@@ -94,17 +94,17 @@ void vtkImageLiveWireTester::SetNumberOfEdgeFilters(int number)
     {
       // kill the old ones
       if (this->EdgeFilters)
-	{
-	  for (int i = 0; i < this->NumberOfEdgeFilters; i++)
-	    {
-	      if (this->EdgeFilters[i])
-		{
-		  this->EdgeFilters[i]->Delete();
-		}
-	    }
+    {
+      for (int i = 0; i < this->NumberOfEdgeFilters; i++)
+        {
+          if (this->EdgeFilters[i])
+        {
+          this->EdgeFilters[i]->Delete();
+        }
+        }
 
-	  delete [] this->EdgeFilters;
-	}
+      delete [] this->EdgeFilters;
+    }
   
       // make the new ones
       this->NumberOfEdgeFilters = number;
@@ -112,10 +112,10 @@ void vtkImageLiveWireTester::SetNumberOfEdgeFilters(int number)
       this->EdgeFilters = new vtkImageLiveWireEdgeWeights*[this->NumberOfEdgeFilters];
   
       for (int i = 0; i < this->NumberOfEdgeFilters; i++)
-	{
-	  this->EdgeFilters[i] = vtkImageLiveWireEdgeWeights::New();
-	  this->EdgeFilters[i]->SetEdgeDirection(i);
-	}
+    {
+      this->EdgeFilters[i] = vtkImageLiveWireEdgeWeights::New();
+      this->EdgeFilters[i]->SetEdgeDirection(i);
+    }
 
     }
   else
@@ -152,10 +152,10 @@ void vtkImageLiveWireTester::WriteFilterSettings()
     {
       file.open(this->SettingsFileName);
       if (file.fail())
-	{
-	  vtkErrorMacro("Could not open file %" << this->SettingsFileName);
-	  return;
-	}  
+    {
+      vtkErrorMacro("Could not open file %" << this->SettingsFileName);
+      return;
+    }  
     }
   else 
     {
@@ -225,9 +225,9 @@ void vtkImageLiveWireTester::InitializePipeline()
 // input[1] - input[4]: edges
 //
 static void vtkImageLiveWireTesterExecute(vtkImageLiveWireTester *self,
-				     vtkImageData *inData, short *inPtr,
-				     vtkImageData *outData, short *outPtr, 
-				     int outExt[6])
+                     vtkImageData *inData, short *inPtr,
+                     vtkImageData *outData, short *outPtr, 
+                     int outExt[6])
 {
   if (!self->GetLiveWire())
     {

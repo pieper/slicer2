@@ -37,27 +37,27 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 class VTK_EXPORT vtkImageLabelChange : public vtkImageToImageFilter
 {
 public:
-	static vtkImageLabelChange *New();
+    static vtkImageLabelChange *New();
   vtkTypeMacro(vtkImageLabelChange,vtkImageToImageFilter);
-	void PrintSelf(ostream& os, vtkIndent indent);
+    void PrintSelf(ostream& os, vtkIndent indent);
 
-	vtkSetMacro(InputLabel, float);
-	vtkGetMacro(InputLabel, float);
+    vtkSetMacro(InputLabel, float);
+    vtkGetMacro(InputLabel, float);
 
-	vtkSetMacro(OutputLabel, float);
-	vtkGetMacro(OutputLabel, float);
+    vtkSetMacro(OutputLabel, float);
+    vtkGetMacro(OutputLabel, float);
 
 protected:
-	vtkImageLabelChange();
-	~vtkImageLabelChange() {};
-	vtkImageLabelChange(const vtkImageLabelChange&) {};
-	void operator=(const vtkImageLabelChange&) {};
+    vtkImageLabelChange();
+    ~vtkImageLabelChange() {};
+    vtkImageLabelChange(const vtkImageLabelChange&) {};
+    void operator=(const vtkImageLabelChange&) {};
 
-	float InputLabel;
-	float OutputLabel;
+    float InputLabel;
+    float OutputLabel;
 
-	void ThreadedExecute(vtkImageData *inData, vtkImageData *outData, 
-		int extent[6], int id);
+    void ThreadedExecute(vtkImageData *inData, vtkImageData *outData, 
+        int extent[6], int id);
 };
 
 #endif

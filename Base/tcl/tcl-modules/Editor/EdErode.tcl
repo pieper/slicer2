@@ -35,24 +35,24 @@
 # .END
 #-------------------------------------------------------------------------------
 proc EdErodeInit {} {
-	global Ed
+    global Ed
 
-	set e EdErode
-	set Ed($e,name)      "Erode"
-	set Ed($e,initials)  "Er"
-	set Ed($e,desc)      "Erode: re-label perimeter pixels."
-	set Ed($e,rank)      2
-	set Ed($e,procGUI)   EdErodeBuildGUI
-	set Ed($e,procEnter) EdErodeEnter
+    set e EdErode
+    set Ed($e,name)      "Erode"
+    set Ed($e,initials)  "Er"
+    set Ed($e,desc)      "Erode: re-label perimeter pixels."
+    set Ed($e,rank)      2
+    set Ed($e,procGUI)   EdErodeBuildGUI
+    set Ed($e,procEnter) EdErodeEnter
 
-	# Required
-	set Ed($e,scope) Multi 
-	set Ed($e,input) Working
+    # Required
+    set Ed($e,scope) Multi 
+    set Ed($e,input) Working
 
-	set Ed($e,multi) Native
-	set Ed($e,fill) 0
-	set Ed($e,iterations) 1
-	set Ed($e,neighbors) 4
+    set Ed($e,multi) Native
+    set Ed($e,fill) 0
+    set Ed($e,iterations) 1
+    set Ed($e,neighbors) 4
 }
 
 #-------------------------------------------------------------------------------
@@ -62,53 +62,53 @@ proc EdErodeInit {} {
 # .END
 #-------------------------------------------------------------------------------
 proc EdErodeBuildGUI {} {
-	global Ed Gui Label
+    global Ed Gui Label
 
-	set e EdErode
-	#-------------------------------------------
-	# Erode frame
-	#-------------------------------------------
-	set f $Ed(EdErode,frame)
+    set e EdErode
+    #-------------------------------------------
+    # Erode frame
+    #-------------------------------------------
+    set f $Ed(EdErode,frame)
 
-	frame $f.fInput   -bg $Gui(activeWorkspace)
-	frame $f.fScope   -bg $Gui(activeWorkspace)
-	frame $f.fMulti   -bg $Gui(activeWorkspace)
-	frame $f.fGrid    -bg $Gui(activeWorkspace)
-	frame $f.fApply   -bg $Gui(activeWorkspace)
-	pack $f.fGrid $f.fInput $f.fScope $f.fMulti $f.fApply \
-		-side top -pady $Gui(pad) -fill x
+    frame $f.fInput   -bg $Gui(activeWorkspace)
+    frame $f.fScope   -bg $Gui(activeWorkspace)
+    frame $f.fMulti   -bg $Gui(activeWorkspace)
+    frame $f.fGrid    -bg $Gui(activeWorkspace)
+    frame $f.fApply   -bg $Gui(activeWorkspace)
+    pack $f.fGrid $f.fInput $f.fScope $f.fMulti $f.fApply \
+        -side top -pady $Gui(pad) -fill x
 
-	EdBuildInputGUI $Ed($e,frame).fInput Ed($e,input)
-	EdBuildScopeGUI $Ed($e,frame).fScope Ed($e,scope) 
-	EdBuildMultiGUI $Ed($e,frame).fMulti Ed($e,multi) 
+    EdBuildInputGUI $Ed($e,frame).fInput Ed($e,input)
+    EdBuildScopeGUI $Ed($e,frame).fScope Ed($e,scope) 
+    EdBuildMultiGUI $Ed($e,frame).fMulti Ed($e,multi) 
 
-	#-------------------------------------------
-	# Erode->Grid frame
-	#-------------------------------------------
-	set f $Ed(EdErode,frame).fGrid
+    #-------------------------------------------
+    # Erode->Grid frame
+    #-------------------------------------------
+    set f $Ed(EdErode,frame).fGrid
 
-	# Fields for background, foreground pixel values
-	eval {button $f.bBack -text "Value to Erode:" \
-		-command "ShowLabels"} $Gui(WBA)
-	eval {entry $f.eBack -width 6 -textvariable Label(label)} $Gui(WEA)
-	bind $f.eBack <Return>   "LabelsFindLabel"
-	bind $f.eBack <FocusOut> "LabelsFindLabel"
-	eval {entry $f.eName -width 6 \
-		-textvariable Label(name)} $Gui(WEA) \
-		{-bg $Gui(activeWorkspace) -state disabled}
-	eval {label $f.lFore -text "Fill value: "} $Gui(WLA)
-	eval {entry $f.eFore -width 6 \
-		-textvariable Ed(EdErode,fill)} $Gui(WEA)
-	eval {label $f.lIter -text "Iterations: "} $Gui(WLA)
-	eval {entry $f.eIter -width 6 \
-		-textvariable Ed(EdErode,iterations)} $Gui(WEA)
-	grid $f.bBack $f.eBack $f.eName -padx $Gui(pad) -pady $Gui(pad) -sticky e
-	grid $f.lFore $f.eFore -padx $Gui(pad) -pady $Gui(pad) -sticky e
-	grid $f.lIter $f.eIter -padx $Gui(pad) -pady $Gui(pad) -sticky e
+    # Fields for background, foreground pixel values
+    eval {button $f.bBack -text "Value to Erode:" \
+        -command "ShowLabels"} $Gui(WBA)
+    eval {entry $f.eBack -width 6 -textvariable Label(label)} $Gui(WEA)
+    bind $f.eBack <Return>   "LabelsFindLabel"
+    bind $f.eBack <FocusOut> "LabelsFindLabel"
+    eval {entry $f.eName -width 6 \
+        -textvariable Label(name)} $Gui(WEA) \
+        {-bg $Gui(activeWorkspace) -state disabled}
+    eval {label $f.lFore -text "Fill value: "} $Gui(WLA)
+    eval {entry $f.eFore -width 6 \
+        -textvariable Ed(EdErode,fill)} $Gui(WEA)
+    eval {label $f.lIter -text "Iterations: "} $Gui(WLA)
+    eval {entry $f.eIter -width 6 \
+        -textvariable Ed(EdErode,iterations)} $Gui(WEA)
+    grid $f.bBack $f.eBack $f.eName -padx $Gui(pad) -pady $Gui(pad) -sticky e
+    grid $f.lFore $f.eFore -padx $Gui(pad) -pady $Gui(pad) -sticky e
+    grid $f.lIter $f.eIter -padx $Gui(pad) -pady $Gui(pad) -sticky e
 
-	lappend Label(colorWidgetList) $f.eName
+    lappend Label(colorWidgetList) $f.eName
 
-	# Neighborhood Size
+    # Neighborhood Size
     eval {label $f.lNeighbor -text "Neighborhood Size: "} $Gui(WLA)
     frame $f.fNeighbor -bg $Gui(activeWorkspace)
     foreach mode "4 8" {
@@ -118,24 +118,24 @@ proc EdErodeBuildGUI {} {
         pack $f.fNeighbor.r$mode -side left -padx 0
     }
     grid $f.lNeighbor $f.fNeighbor -padx $Gui(pad) -pady $Gui(pad) -sticky e
-	grid $f.fNeighbor -sticky w
+    grid $f.fNeighbor -sticky w
 
 
-	#-------------------------------------------
-	# Erode->Apply frame
-	#-------------------------------------------
-	set f $Ed(EdErode,frame).fApply
+    #-------------------------------------------
+    # Erode->Apply frame
+    #-------------------------------------------
+    set f $Ed(EdErode,frame).fApply
 
-	eval {button $f.bErode -text "Erode" \
-		-command "EdErodeApply Erode"} $Gui(WBA)
-	eval {button $f.bDilate -text "Dilate" \
-		-command "EdErodeApply Dilate"} $Gui(WBA)
-	eval {button $f.bED -text "Erode & Dilate" \
-		-command "EdErodeApply ErodeDilate"} $Gui(WBA)
-	eval {button $f.bDE -text "Dilate & Erode" \
-		-command "EdErodeApply DilateErode"} $Gui(WBA)
-	grid $f.bErode  $f.bED -padx $Gui(pad) -pady $Gui(pad)
-	grid $f.bDilate $f.bDE -padx $Gui(pad) -pady $Gui(pad)
+    eval {button $f.bErode -text "Erode" \
+        -command "EdErodeApply Erode"} $Gui(WBA)
+    eval {button $f.bDilate -text "Dilate" \
+        -command "EdErodeApply Dilate"} $Gui(WBA)
+    eval {button $f.bED -text "Erode & Dilate" \
+        -command "EdErodeApply ErodeDilate"} $Gui(WBA)
+    eval {button $f.bDE -text "Dilate & Erode" \
+        -command "EdErodeApply DilateErode"} $Gui(WBA)
+    grid $f.bErode  $f.bED -padx $Gui(pad) -pady $Gui(pad)
+    grid $f.bDilate $f.bDE -padx $Gui(pad) -pady $Gui(pad)
 
 }
 
@@ -146,9 +146,9 @@ proc EdErodeBuildGUI {} {
 # .END
 #-------------------------------------------------------------------------------
 proc EdErodeEnter {} {
-	global Ed
+    global Ed
 
-	LabelsColorWidgets
+    LabelsColorWidgets
 }
 
 #-------------------------------------------------------------------------------
@@ -158,37 +158,37 @@ proc EdErodeEnter {} {
 # .END
 #-------------------------------------------------------------------------------
 proc EdErodeApply {effect} {
-	global Ed Volume Label Gui
+    global Ed Volume Label Gui
 
-	set e EdErode
-	set v [EditorGetInputID $Ed($e,input)]
+    set e EdErode
+    set v [EditorGetInputID $Ed($e,input)]
 
-	# Validate input
-	if {[ValidateInt $Ed($e,fill)] == 0} {
-		tk_messageBox -message "Fill value is not an integer."
-		return
-	}
-	if {[ValidateInt $Ed($e,iterations)] == 0} {
-		tk_messageBox -message "Iterations is not an integer."
-		return
-	}
-	if {[ValidateInt $Label(label)] == 0} {
-		tk_messageBox -message "Value To Erode is not an integer."
-		return
-	}
+    # Validate input
+    if {[ValidateInt $Ed($e,fill)] == 0} {
+        tk_messageBox -message "Fill value is not an integer."
+        return
+    }
+    if {[ValidateInt $Ed($e,iterations)] == 0} {
+        tk_messageBox -message "Iterations is not an integer."
+        return
+    }
+    if {[ValidateInt $Label(label)] == 0} {
+        tk_messageBox -message "Value To Erode is not an integer."
+        return
+    }
 
-	EdSetupBeforeApplyEffect $v $Ed($e,scope) $Ed($e,multi)
+    EdSetupBeforeApplyEffect $v $Ed($e,scope) $Ed($e,multi)
 
-	set Gui(progressText) "$effect [Volume($v,node) GetName]"
-	
-	set fg         $Label(label)
-	set bg         $Ed($e,fill)
-	set neighbors  $Ed($e,neighbors)     
-	set iterations $Ed($e,iterations)
-	Ed(editor)     $effect $fg $bg $neighbors $iterations
-	Ed(editor)     SetInput ""
-	Ed(editor)     UseInputOff
+    set Gui(progressText) "$effect [Volume($v,node) GetName]"
+    
+    set fg         $Label(label)
+    set bg         $Ed($e,fill)
+    set neighbors  $Ed($e,neighbors)     
+    set iterations $Ed($e,iterations)
+    Ed(editor)     $effect $fg $bg $neighbors $iterations
+    Ed(editor)     SetInput ""
+    Ed(editor)     UseInputOff
 
-	EdUpdateAfterApplyEffect $v
+    EdUpdateAfterApplyEffect $v
 }
 

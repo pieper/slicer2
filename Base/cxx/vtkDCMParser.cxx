@@ -117,7 +117,7 @@ void vtkDCMParser::Skip(unsigned int Length)
   if(this->file_in)
     if(fseek(this->file_in, Length, SEEK_CUR)!=0)
       {
-	FileIOMessage=1;
+    FileIOMessage=1;
       }
 }
 
@@ -130,17 +130,17 @@ unsigned short vtkDCMParser::ReadUINT16()
   if(this->file_in)
     {
       if(fread(&id, 2, 1, this->file_in)!=1)
-	{
-	  FileIOMessage=2;
-	}
+    {
+      FileIOMessage=2;
+    }
       
       if(MustSwap)
-	{
-	  ptr = (unsigned char *)&id;
-	  ch = ptr[0];
-	  ptr[0] = ptr[1];
-	  ptr[1] = ch;
-	}
+    {
+      ptr = (unsigned char *)&id;
+      ch = ptr[0];
+      ptr[0] = ptr[1];
+      ptr[1] = ch;
+    }
     }
 
   return id;
@@ -155,17 +155,17 @@ short vtkDCMParser::ReadINT16()
   if(this->file_in)
     {
       if(fread(&id, 2, 1, file_in)!=1)
-	{
-	  FileIOMessage=3;
-	}
+    {
+      FileIOMessage=3;
+    }
       
       if(MustSwap)
-	{
-	  ptr = (unsigned char *)&id;
-	  ch = ptr[0];
-	  ptr[0] = ptr[1];
-	  ptr[1] = ch;
-	}
+    {
+      ptr = (unsigned char *)&id;
+      ch = ptr[0];
+      ptr[0] = ptr[1];
+      ptr[1] = ch;
+    }
     }
   
   return id;
@@ -180,16 +180,16 @@ unsigned int vtkDCMParser::ReadUINT32()
   if(this->file_in)
     {
       if(fread(&id, 4, 1, this->file_in)!=1)
-	{
-	  FileIOMessage=3;
-	}
+    {
+      FileIOMessage=3;
+    }
       
       if(MustSwap)
-	{
-	  ptr=(unsigned char *)&id;
-	  ch=ptr[0]; ptr[0]=ptr[3]; ptr[3]=ch;
-	  ch=ptr[1]; ptr[1]=ptr[2]; ptr[2]=ch;
-	}
+    {
+      ptr=(unsigned char *)&id;
+      ch=ptr[0]; ptr[0]=ptr[3]; ptr[3]=ch;
+      ch=ptr[1]; ptr[1]=ptr[2]; ptr[2]=ch;
+    }
     }
 
   return id;
@@ -204,16 +204,16 @@ int vtkDCMParser::ReadINT32()
   if(this->file_in)
     {
       if(fread(&id, 4, 1, file_in)!=1)
-	{
-	  FileIOMessage=3;
-	}
+    {
+      FileIOMessage=3;
+    }
       
       if(MustSwap)
-	{
-	  ptr=(unsigned char *)&id;
-	  ch=ptr[0]; ptr[0]=ptr[3]; ptr[3]=ch;
-	  ch=ptr[1]; ptr[1]=ptr[2]; ptr[2]=ch;
-	}
+    {
+      ptr=(unsigned char *)&id;
+      ch=ptr[0]; ptr[0]=ptr[3]; ptr[3]=ch;
+      ch=ptr[1]; ptr[1]=ptr[2]; ptr[2]=ch;
+    }
     }
   
   return id;
@@ -228,16 +228,16 @@ float vtkDCMParser::ReadFL()
   if(this->file_in)
     {
       if(fread(&id, 4, 1, this->file_in)!=1)
-	{
-	  FileIOMessage=3;
-	}
+    {
+      FileIOMessage=3;
+    }
       
       if(MustSwap)
-	{
-	  ptr=(unsigned char *)&id;
-	  ch=ptr[0]; ptr[0]=ptr[3]; ptr[3]=ch;
-	  ch=ptr[1]; ptr[1]=ptr[2]; ptr[2]=ch;
-	}
+    {
+      ptr=(unsigned char *)&id;
+      ch=ptr[0]; ptr[0]=ptr[3]; ptr[3]=ch;
+      ch=ptr[1]; ptr[1]=ptr[2]; ptr[2]=ch;
+    }
     }
 
   return id;
@@ -252,18 +252,18 @@ double vtkDCMParser::ReadFD()
   if(this->file_in)
     {
       if(fread(&id, 8, 1, this->file_in)!=1)
-	{
-	  FileIOMessage=3;
-	}
+    {
+      FileIOMessage=3;
+    }
       
       if(MustSwap)
-	{
-	  ptr=(unsigned char *)&id;
-	  ch=ptr[0]; ptr[0]=ptr[7]; ptr[7]=ch;
-	  ch=ptr[1]; ptr[1]=ptr[6]; ptr[6]=ch;
-	  ch=ptr[2]; ptr[2]=ptr[5]; ptr[5]=ch;
-	  ch=ptr[3]; ptr[3]=ptr[4]; ptr[4]=ch;
-	}
+    {
+      ptr=(unsigned char *)&id;
+      ch=ptr[0]; ptr[0]=ptr[7]; ptr[7]=ch;
+      ch=ptr[1]; ptr[1]=ptr[6]; ptr[6]=ch;
+      ch=ptr[2]; ptr[2]=ptr[5]; ptr[5]=ch;
+      ch=ptr[3]; ptr[3]=ptr[4]; ptr[4]=ch;
+    }
     }
 
   return id;
@@ -276,10 +276,10 @@ void vtkDCMParser::ReadText(char *str, unsigned int Length)
   if(this->file_in)
     {
       if(fread(str, 1, Length, file_in)!=Length)
-	{
-	  str[0] = '\0';
-	  FileIOMessage=4;
-	}
+    {
+      str[0] = '\0';
+      FileIOMessage=4;
+    }
       else str[Length]='\0';
     }
 }
@@ -294,10 +294,10 @@ char *vtkDCMParser::ReadText(unsigned int Length)
   if(this->file_in)
     {
       if(fread(str, 1, length, file_in)!=length)
-	{
-	  str[0] = '\0';
-	  FileIOMessage=4;
-	}
+    {
+      str[0] = '\0';
+      FileIOMessage=4;
+    }
       else str[length]='\0';
     }
 
@@ -316,11 +316,11 @@ float vtkDCMParser::ReadFloatAsciiNumeric(unsigned int NextBlock)
       i=0;
       flag=1;
       while(flag && i<19 && ftell(file_in)<NextBlock)
-	{
-	  ch=getc(file_in);
-	  if(ch=='\\') flag=0;
-	  else buff[i++]=ch;
-	}
+    {
+      ch=getc(file_in);
+      if(ch=='\\') flag=0;
+      else buff[i++]=ch;
+    }
       
       buff[i]='\0';
 
@@ -341,11 +341,11 @@ int vtkDCMParser::ReadIntAsciiNumeric(unsigned int NextBlock)
       i=0;
       flag=1;
       while(flag && i<19 && ftell(file_in)<NextBlock)
-	{
-	  ch=getc(file_in);
-	  if(ch=='\\') flag=0;
-	  else buff[i++]=ch;
-	}
+    {
+      ch=getc(file_in);
+      if(ch=='\\') flag=0;
+      else buff[i++]=ch;
+    }
       
       buff[i]='\0';
 
@@ -367,7 +367,7 @@ char *vtkDCMParser::ReadElement()
     {
       ReadElement(&des);
       sprintf(buff, "%s 0x%04x 0x%04x %d %lu", des.VR, des.GroupCode,
-	      des.ElementCode, des.Length, des.NextBlock);
+          des.ElementCode, des.Length, des.NextBlock);
     }
 
   return buff;
@@ -403,80 +403,80 @@ void vtkDCMParser::ReadElement(DCMDataElementStruct *des)
       PrevFileIOMessage = FileIOMessage;
 
       switch(TransferSyntax)
-	{
-	case TFS_IVRLE:
-	  /*if(MachineLittleEndian)
-	    MustSwap = 0;
-	  else
-	  MustSwap = 1;*/
-	  
-	  des->GroupCode = ReadUINT16();
-	  des->ElementCode = ReadUINT16();
-	  des->Length = ReadUINT32();
+    {
+    case TFS_IVRLE:
+      /*if(MachineLittleEndian)
+        MustSwap = 0;
+      else
+      MustSwap = 1;*/
+      
+      des->GroupCode = ReadUINT16();
+      des->ElementCode = ReadUINT16();
+      des->Length = ReadUINT32();
 
-	  des->NextBlock = ftell(file_in);
-	  if(des->Length != 0xffffffff)
-	    des->NextBlock += des->Length;
+      des->NextBlock = ftell(file_in);
+      if(des->Length != 0xffffffff)
+        des->NextBlock += des->Length;
 
-	  sprintf(des->VR, "??");
-	  
-	  break;
-	  
-	case TFS_EVRLE:
-	case TFS_EVRBE:
-	  /*if((MachineLittleEndian && (TransferSyntax == TFS_EVRLE)) ||
-	     (!MachineLittleEndian && (TransferSyntax == TFS_EVRBE)))
-	    MustSwap = 0;
-	  else
-	  MustSwap = 1;*/
-	  
-	  des->GroupCode = ReadUINT16();
-	  des->ElementCode = ReadUINT16();
-	  
-	  if((des->GroupCode) == 0xfffe)
-	    {
-	      if((des->ElementCode == 0xe000) ||
-		 (des->ElementCode == 0xe00d) ||
-		 (des->ElementCode == 0xe0dd))
-		{ // must be implicit VR always
-		  des->Length = ReadUINT32();
+      sprintf(des->VR, "??");
+      
+      break;
+      
+    case TFS_EVRLE:
+    case TFS_EVRBE:
+      /*if((MachineLittleEndian && (TransferSyntax == TFS_EVRLE)) ||
+         (!MachineLittleEndian && (TransferSyntax == TFS_EVRBE)))
+        MustSwap = 0;
+      else
+      MustSwap = 1;*/
+      
+      des->GroupCode = ReadUINT16();
+      des->ElementCode = ReadUINT16();
+      
+      if((des->GroupCode) == 0xfffe)
+        {
+          if((des->ElementCode == 0xe000) ||
+         (des->ElementCode == 0xe00d) ||
+         (des->ElementCode == 0xe0dd))
+        { // must be implicit VR always
+          des->Length = ReadUINT32();
 
-		  des->NextBlock = ftell(file_in);
-		  if(des->Length != 0xffffffff)
-		    des->NextBlock += des->Length;
+          des->NextBlock = ftell(file_in);
+          if(des->Length != 0xffffffff)
+            des->NextBlock += des->Length;
 
-		  sprintf(des->VR, "??");
+          sprintf(des->VR, "??");
 
-		  return;
-		}
-	    }
-	  
-	  ReadText(des->VR, 2); // getting VR
-	  
-	  if((strcmp(des->VR, "OB") == 0) ||
-	     (strcmp(des->VR, "OW") == 0) ||
-	     (strcmp(des->VR, "SQ") == 0) ||
-	     (strcmp(des->VR, "UN") == 0) ||
-	     (strcmp(des->VR, "UT") == 0)
-	     )
-	    {
-	      des->Length = ReadUINT16(); // reserved field
-	      des->Length = ReadUINT32();
-	      des->NextBlock = ftell(file_in);
-	      if(des->Length != 0xffffffff)
-		des->NextBlock += des->Length;
-	    }
-	  else
-	    {
-	      //MustSwap = 1;
-	      des->Length = ReadUINT16();
-	      des->NextBlock = ftell(file_in);
-	      if(des->Length != 0xffffffff)
-		des->NextBlock += des->Length;
-	    }
-	  
-	  break;
-	}
+          return;
+        }
+        }
+      
+      ReadText(des->VR, 2); // getting VR
+      
+      if((strcmp(des->VR, "OB") == 0) ||
+         (strcmp(des->VR, "OW") == 0) ||
+         (strcmp(des->VR, "SQ") == 0) ||
+         (strcmp(des->VR, "UN") == 0) ||
+         (strcmp(des->VR, "UT") == 0)
+         )
+        {
+          des->Length = ReadUINT16(); // reserved field
+          des->Length = ReadUINT32();
+          des->NextBlock = ftell(file_in);
+          if(des->Length != 0xffffffff)
+        des->NextBlock += des->Length;
+        }
+      else
+        {
+          //MustSwap = 1;
+          des->Length = ReadUINT16();
+          des->NextBlock = ftell(file_in);
+          if(des->Length != 0xffffffff)
+        des->NextBlock += des->Length;
+        }
+      
+      break;
+    }
     }
 }
 
@@ -521,81 +521,81 @@ void vtkDCMParser::ReadDICOMMetaHeaderInfo()
      && (buff[130] == 'C') && (buff[131] == 'M'))
     {  
       do
-	{
-	  //file_pos = ftell(file_in);
-	  ReadElement(&des);
+    {
+      //file_pos = ftell(file_in);
+      ReadElement(&des);
 
-	  if(des.GroupCode != 0x0002)
-	    {
-	      UnreadLastElement();
-	      HeaderStartPos = ftell(file_in);
-	      break;
-	    }
+      if(des.GroupCode != 0x0002)
+        {
+          UnreadLastElement();
+          HeaderStartPos = ftell(file_in);
+          break;
+        }
 
-	  switch(des.ElementCode)
-	    {
-	    case 0x0002:
-	      ReadText(buff, des.Length);
-	      //printf("Media Storage SOP Class UID (%04x,%04x):\n\t%s\n",
-	      //     GroupCode, ElementCode, buff);
-	      stringncopy(MediaStorageSOPClassUID, buff, 64);
+      switch(des.ElementCode)
+        {
+        case 0x0002:
+          ReadText(buff, des.Length);
+          //printf("Media Storage SOP Class UID (%04x,%04x):\n\t%s\n",
+          //     GroupCode, ElementCode, buff);
+          stringncopy(MediaStorageSOPClassUID, buff, 64);
 
-	      break;
+          break;
 
-	    case 0x0003:
-	      ReadText(buff, des.Length);
-	      //printf("Media Storage SOP Instance UID (%04x,%04x):\n\t%s\n",
-	      //     GroupCode, ElementCode, buff);	      
-	      stringncopy(MediaStorageSOPInstanceUID, buff, 64);
+        case 0x0003:
+          ReadText(buff, des.Length);
+          //printf("Media Storage SOP Instance UID (%04x,%04x):\n\t%s\n",
+          //     GroupCode, ElementCode, buff);          
+          stringncopy(MediaStorageSOPInstanceUID, buff, 64);
 
-	      break;
+          break;
 
-	    case 0x0010:
-	      ReadText(buff, des.Length);
-	      //printf("Transfer Syntax UID (%04x,%04x):\n\t%s\n",
-	      //     GroupCode, ElementCode, buff);
-	      stringncopy(TransferSyntaxUID, buff, 64);
+        case 0x0010:
+          ReadText(buff, des.Length);
+          //printf("Transfer Syntax UID (%04x,%04x):\n\t%s\n",
+          //     GroupCode, ElementCode, buff);
+          stringncopy(TransferSyntaxUID, buff, 64);
 
-	      if(strcmp(buff, "1.2.840.10008.1.2") == 0)
-		{
-		  //printf("\tImplicit VR Little Endian\n");
-		  tfs = TFS_IVRLE; // not necessary to set here
-		}
-	      else
-	      if(strcmp(buff, "1.2.840.10008.1.2.1") == 0)
-		{
-		  //printf("\tExplicit VR Little Endian\n");
-		  tfs = TFS_EVRLE;
-		}
-	      else
-	      if(strcmp(buff, "1.2.840.10008.1.2.2") == 0)
-		{
-		  //printf("\tExplicit VR Big Endian\n");
-		  tfs = TFS_EVRBE;
-		}
-	      else
-		{
-		  //printf("\tNot found: assuming explicit VR Little Endian\n");
-		  tfs = TFS_EVRLE;
-		}
+          if(strcmp(buff, "1.2.840.10008.1.2") == 0)
+        {
+          //printf("\tImplicit VR Little Endian\n");
+          tfs = TFS_IVRLE; // not necessary to set here
+        }
+          else
+          if(strcmp(buff, "1.2.840.10008.1.2.1") == 0)
+        {
+          //printf("\tExplicit VR Little Endian\n");
+          tfs = TFS_EVRLE;
+        }
+          else
+          if(strcmp(buff, "1.2.840.10008.1.2.2") == 0)
+        {
+          //printf("\tExplicit VR Big Endian\n");
+          tfs = TFS_EVRBE;
+        }
+          else
+        {
+          //printf("\tNot found: assuming explicit VR Little Endian\n");
+          tfs = TFS_EVRLE;
+        }
 
-	      break;
+          break;
 
-	    case 0x0012:
-	      ReadText(buff, des.Length);
-	      //printf("Implementation Class UID (%04x,%04x):\n\t%s\n",
-	      //     GroupCode, ElementCode, buff);
-	      stringncopy(ImplementationClassUID, buff, 64);
-	      
-	      break;
-	      
-	    default:
-	      //printf("skipping (%04x,%04x) %s (%lu bytes)\n",
-	      //     GroupCode, ElementCode, vr, Length);
-	      Skip(des.Length);
-	    }
-	}
-	while(1);
+        case 0x0012:
+          ReadText(buff, des.Length);
+          //printf("Implementation Class UID (%04x,%04x):\n\t%s\n",
+          //     GroupCode, ElementCode, buff);
+          stringncopy(ImplementationClassUID, buff, 64);
+          
+          break;
+          
+        default:
+          //printf("skipping (%04x,%04x) %s (%lu bytes)\n",
+          //     GroupCode, ElementCode, vr, Length);
+          Skip(des.Length);
+        }
+    }
+    while(1);
     }
   else
     {
@@ -634,24 +634,24 @@ void vtkDCMParser::ReadDICOMHeaderInfo(dcm_callback dcm_funct)
       ReadElement(&des);
       
       if(feof(file_in) || (FileIOMessage != 0))
-	{
-	  stop = 1;
-	  break;
-	}
-	
+    {
+      stop = 1;
+      break;
+    }
+    
       if(des.Length != 0xffffffff)
-	des.NextBlock = ftell(file_in) + des.Length;
+    des.NextBlock = ftell(file_in) + des.Length;
       else
-	des.NextBlock = ftell(file_in);
+    des.NextBlock = ftell(file_in);
 
       (*dcm_funct)(des, &stop, this);
 
       fseek(file_in, des.NextBlock, SEEK_SET);
       if(feof(file_in) || (FileIOMessage != 0))
-	{
-	  stop = 1;
-	  break;
-	}
+    {
+      stop = 1;
+      break;
+    }
     }
 }
 
@@ -686,28 +686,28 @@ int vtkDCMParser::FindNextElement(unsigned short group, unsigned short element)
       ReadElement(&des);
       
       if(feof(file_in) || (FileIOMessage != 0))
-	{
-	  stop = 1;
-	  break;
-	}
-	
+    {
+      stop = 1;
+      break;
+    }
+    
       if(des.Length != 0xffffffff)
-	des.NextBlock = ftell(file_in) + des.Length;
+    des.NextBlock = ftell(file_in) + des.Length;
       else
-	des.NextBlock = ftell(file_in);
+    des.NextBlock = ftell(file_in);
 
       if((des.GroupCode == group) && (des.ElementCode == element))
-	{
-	  found = stop = 1;
-	  break;
-	}
+    {
+      found = stop = 1;
+      break;
+    }
 
       fseek(file_in, des.NextBlock, SEEK_SET);
       if(feof(file_in) || (FileIOMessage != 0))
-	{
-	  break;
-	  stop = 1;
-	}
+    {
+      break;
+      stop = 1;
+    }
     }
 
   if(found)
@@ -792,16 +792,16 @@ char *vtkDCMParser::stringncopy(char *dest, const char *src, long max)
     {
       if(src == NULL) memset(dest, 0, max + 1);
       else
-	{
-	  length = strlen(src);
-	  n = (length < max) ? length : max;
-	  for(j=n-1; (j>=0) && (isspace(src[j])); j--);
-	  for(i=0; (i<n) && (isspace(src[i])); i++);
-	  for(p=src+i; (i<=j) && ((*p)!='\0'); i++, p++)
-	    dest[i] = *p;
-	  for(; i<=max; i++)
-	    dest[i]='\0';
-	}
+    {
+      length = strlen(src);
+      n = (length < max) ? length : max;
+      for(j=n-1; (j>=0) && (isspace(src[j])); j--);
+      for(i=0; (i<n) && (isspace(src[i])); i++);
+      for(p=src+i; (i<=j) && ((*p)!='\0'); i++, p++)
+        dest[i] = *p;
+      for(; i<=max; i++)
+        dest[i]='\0';
+    }
     }
 
   return dest;
@@ -860,7 +860,7 @@ int vtkDCMParser::IsStatusOK()
   if(this->file_in)
     if(!feof(file_in) && (FileIOMessage == 0))
       {
-	ret = 1;
+    ret = 1;
       }
   
   return ret;

@@ -160,7 +160,7 @@ char* vtkMrmlNode::GetMatrixToString(vtkMatrix4x4 *mat)
  
   for (i=0; i<4; i++)
   {
-	  for (j=0; j<4; j++)
+      for (j=0; j<4; j++)
     {
       m[i*4+j] = mat->GetElement(i, j);
     }

@@ -158,7 +158,7 @@ void vtkMrmlDataVolume::CheckImageData()
     this->SetImageData(copy->GetOutput());
     copy->SetOutput(NULL);
     copy->Delete();
-	  canvas->Delete();
+      canvas->Delete();
   }
 }
 
@@ -350,8 +350,8 @@ void vtkMrmlDataVolume::DicomReaderSetup(vtkImageDICOMReader *dcmreader,
 
   dcmreader->SetDICOMFileNames(node->GetNumberOfDICOMFiles(),
                                node->GetDICOMFileNamesPointer(),
-			       node->GetNumberOfDICOMMultiFrameOffsets(),
-			       node->GetDICOMMultiFrameOffsetPointer());
+                   node->GetNumberOfDICOMMultiFrameOffsets(),
+                   node->GetDICOMMultiFrameOffsetPointer());
 }
 
 //----------------------------------------------------------------------------

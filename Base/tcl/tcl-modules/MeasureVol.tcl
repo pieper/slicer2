@@ -97,7 +97,7 @@ proc MeasureVolInit {} {
     # Set version info
     #------------------------------------
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.13 $} {$Date: 2002/01/26 23:34:32 $}]
+        {$Revision: 1.14 $} {$Date: 2002/03/18 20:52:39 $}]
     
     # Initialize module-level variables
     #------------------------------------
@@ -188,9 +188,9 @@ proc MeasureVolBuildGUI {} {
 
     # this makes the navigation menu (buttons) and the tabs (frames).
     TabbedFrame MeasureVol $f "Settings:"\
-	    {Basic Advanced} {"Basic" "Advanced"} \
-	    {"Basic Settings" "Advanced Settings: Measure only part of the volume."}\
-	    1
+        {Basic Advanced} {"Basic" "Advanced"} \
+        {"Basic Settings" "Advanced Settings: Measure only part of the volume."}\
+        1
 
     #-------------------------------------------
     # Setup->Top->Choices->SelectVolume frame
@@ -202,14 +202,14 @@ proc MeasureVolBuildGUI {} {
     # Add menus that list volumes
     # The selected volume will become $Volume(activeID)
     DevAddSelectButton  MeasureVol $f VolumeSelect "Volume:" Pack \
-	    "Volume to measure segmented regions of." 20 BLA
+        "Volume to measure segmented regions of." 20 BLA
 
     # bind menubutton to update the extents.
     bind $MeasureVol(mVolumeSelect) <ButtonRelease-1> \
-	    "MeasureVolSelectVol" 
+        "MeasureVolSelectVol" 
     # have this binding execute after menu updates active volume
     bindtags $MeasureVol(mVolumeSelect) [list Menu \
-	    $MeasureVol(mVolumeSelect) all]
+        $MeasureVol(mVolumeSelect) all]
 
     # Append menus and buttons to lists that get refreshed during UpdateMRML
     lappend Volume(mbActiveList) $f.mbVolumeSelect
@@ -229,8 +229,8 @@ proc MeasureVolBuildGUI {} {
     set f $fSetup.fTabbedFrame.fBasic
 
     foreach frame "File Measure" {
-	frame $f.f$frame -bg $Gui(activeWorkspace)
-	pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
+    frame $f.f$frame -bg $Gui(activeWorkspace)
+    pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
     }
 
     #-------------------------------------------
@@ -239,7 +239,7 @@ proc MeasureVolBuildGUI {} {
     set f $fSetup.fTabbedFrame.fBasic.fFile
     
     DevAddFileBrowse $f MeasureVol fileName "Output File:" [] "txt" [] \
-	    "Save" "Output File" "Choose the file where the output will be written." "Absolute"
+        "Save" "Output File" "Choose the file where the output will be written." "Absolute"
 
     #-------------------------------------------
     # Setup->TabbedFrame->Basic->Measure frame
@@ -260,8 +260,8 @@ proc MeasureVolBuildGUI {} {
     set f $fSetup.fTabbedFrame.fAdvanced
 
     foreach frame "Extents" {
-	frame $f.f$frame -bg $Gui(activeWorkspace) -relief groove -bd 3
-	pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
+    frame $f.f$frame -bg $Gui(activeWorkspace) -relief groove -bd 3
+    pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
     }
     
     #-------------------------------------------
@@ -276,18 +276,18 @@ proc MeasureVolBuildGUI {} {
 
     # the 6 IJK extent entry boxes.
     foreach {label n1 n2} {I 1 2   J 3 4   K 5 6} {
-	frame $f.fExt$n1 -bg $Gui(activeWorkspace)
-	pack $f.fExt$n1 -side top -padx 0 -pady $Gui(pad)
+    frame $f.fExt$n1 -bg $Gui(activeWorkspace)
+    pack $f.fExt$n1 -side top -padx 0 -pady $Gui(pad)
 
-	DevAddLabel $f.fExt$n1.lE$n1 "$label:"
-	pack $f.fExt$n1.lE$n1 -side left -padx $Gui(pad)  -pady $Gui(pad)
+    DevAddLabel $f.fExt$n1.lE$n1 "$label:"
+    pack $f.fExt$n1.lE$n1 -side left -padx $Gui(pad)  -pady $Gui(pad)
 
-	# add entry box for variable MeasureVol(Extent1), etc.
-	DevAddEntry MeasureVol Extent$n1 $f.fExt$n1.eE$n1
-	pack $f.fExt$n1.eE$n1 -side left -padx $Gui(pad)  -pady $Gui(pad)
+    # add entry box for variable MeasureVol(Extent1), etc.
+    DevAddEntry MeasureVol Extent$n1 $f.fExt$n1.eE$n1
+    pack $f.fExt$n1.eE$n1 -side left -padx $Gui(pad)  -pady $Gui(pad)
 
-	DevAddEntry MeasureVol Extent$n2 $f.fExt$n1.eE$n2
-	pack $f.fExt$n1.eE$n2 -side left -padx $Gui(pad)  -pady $Gui(pad)
+    DevAddEntry MeasureVol Extent$n2 $f.fExt$n1.eE$n2
+    pack $f.fExt$n1.eE$n2 -side left -padx $Gui(pad)  -pady $Gui(pad)
     }
 
 
@@ -323,8 +323,8 @@ proc MeasureVolBuildGUI {} {
     set f $fResults.fOutput
 
     foreach frame "Label  TextBox" {
-	frame $f.f$frame -bg $Gui(activeWorkspace) 
-	pack $f.f$frame -side top -padx $Gui(pad) -pady 0 -fill x
+    frame $f.f$frame -bg $Gui(activeWorkspace) 
+    pack $f.f$frame -side top -padx $Gui(pad) -pady 0 -fill x
     }
 
     #-------------------------------------------
@@ -404,24 +404,24 @@ proc MeasureVolVolume {} {
     
     # validate input from Basic tab
     if {$MeasureVol(fileName) == ""} {
-	DevErrorWindow "Please enter a filename first."
-	return
+    DevErrorWindow "Please enter a filename first."
+    return
     }
     if {[file extension $MeasureVol(fileName)] != ".txt"} {
-	set MeasureVol(fileName) "$MeasureVol(fileName).txt"
+    set MeasureVol(fileName) "$MeasureVol(fileName).txt"
     }
 
     # validate input from Advanced tab
     set okay 1
     for {set i 1} {$i < 7} {incr i} {
-	if {[ValidateInt $MeasureVol(Extent$i)] == 0} {
-	    set okay 0
-	}    
+    if {[ValidateInt $MeasureVol(Extent$i)] == 0} {
+        set okay 0
+    }    
     }
     if {$okay == 0} {
-	tk_messageBox -message \
-		"The extent numbers (under the Advanced Settings tab) must be integers."
-	return
+    tk_messageBox -message \
+        "The extent numbers (under the Advanced Settings tab) must be integers."
+    return
     }    
 
     # clear the text box.
@@ -435,9 +435,9 @@ proc MeasureVolVolume {} {
     vtkImageClip clip
     clip SetInput [Volume($v,vol) GetOutput]
     clip SetOutputWholeExtent  $MeasureVol(Extent1) \
-	    $MeasureVol(Extent2)  $MeasureVol(Extent3) \
-	    $MeasureVol(Extent4)  $MeasureVol(Extent5) \
-	    $MeasureVol(Extent6)
+        $MeasureVol(Extent2)  $MeasureVol(Extent3) \
+        $MeasureVol(Extent4)  $MeasureVol(Extent5) \
+        $MeasureVol(Extent6)
     clip ClipDataOn
     clip ReleaseDataFlagOff
 
@@ -459,12 +459,12 @@ proc MeasureVolVolume {} {
 
     # label output in Results frame
     $MeasureVol(lResultVol) configure -text \
-	    "Results for [Volume($v,node) GetName] volume:"
+        "Results for [Volume($v,node) GetName] volume:"
 
     # tab to Results frame if desired
     YesNoPopup test1 100 100 \
-	    "Done measuring volume [Volume($v,node) GetName].\nView output file?" \
-	    {Tab MeasureVol row1 Results}
+        "Done measuring volume [Volume($v,node) GetName].\nView output file?" \
+        {Tab MeasureVol row1 Results}
 
 }
 
@@ -494,8 +494,8 @@ proc MeasureVolSelectVol {} {
     # set extent to that of the current volume.
     # this sets the entry boxes too.
     scan [[Volume($v,vol) GetOutput] GetWholeExtent] \
-	    "%d %d %d %d %d %d" \
-	    MeasureVol(Extent1) MeasureVol(Extent2) MeasureVol(Extent3) \
-	    MeasureVol(Extent4) MeasureVol(Extent5) MeasureVol(Extent6)
+        "%d %d %d %d %d %d" \
+        MeasureVol(Extent1) MeasureVol(Extent2) MeasureVol(Extent3) \
+        MeasureVol(Extent4) MeasureVol(Extent5) MeasureVol(Extent6)
 }
 

@@ -201,7 +201,7 @@ void vtkIndirectLookupTable::WindowLevel()
   //
   outLo = 1;
   outHi = this->LookupTable->GetNumberOfColors() - 1;
-	
+    
   // Only update the portion of the map that changes since the last
   // time we ran this routine.  The range between [inLo, inHi] always
   // gets updated.  If inLo is greater than the previous inLo, then update
@@ -212,7 +212,7 @@ void vtkIndirectLookupTable::WindowLevel()
   //
   if (this->outLoPrev == outLo)
   {
-	  inFirst = this->inLoPrev;
+      inFirst = this->inLoPrev;
   }
   else
   {
@@ -235,11 +235,11 @@ void vtkIndirectLookupTable::WindowLevel()
   this->inHiPrev  = inHi;
   this->outLoPrev = outLo;
   this->outHiPrev = outHi;
-		
+        
   // Delta is the step in output corresponding to each step in input
   //
   delta = (double)(outHi - outLo + 1) / (double)(inHi - inLo + 1);
-		
+        
   // Integers between 'inLo' and 'inHi' are mapped linearly into the
   // range between 'outLo' and 'outHi'
   //
@@ -252,7 +252,7 @@ void vtkIndirectLookupTable::WindowLevel()
   // Save time by shifting now instead of later
   outLo = outLo << 2;
   outHi = outHi << 2;
-		
+        
   // All integer values below 'inLo' are mapped to 'outLo'
   // 
   for (i = inFirst; i <= inLo; i++)
@@ -337,12 +337,12 @@ void vtkIndirectLookupTable::Build()
   //
   if (this->Direct) 
   {
-	  memcpy(map, directMap, (max-min+1)*sizeof(short));
+      memcpy(map, directMap, (max-min+1)*sizeof(short));
   } 
   else 
   {
     this->WindowLevel();
-	  memcpy(map, winLvlMap, (max-min+1)*sizeof(short));
+      memcpy(map, winLvlMap, (max-min+1)*sizeof(short));
   }
 
   // Apply threshold if desired
@@ -458,10 +458,10 @@ static void vtkIndirectLookupTableMapShortData(vtkIndirectLookupTable *self,
 }
 
 void vtkIndirectLookupTable::MapScalarsThroughTable2(void *input, 
-					    unsigned char *output,
-					    int inputDataType, 
-					    int numberOfValues,
-					    int inputIncrement,
+                        unsigned char *output,
+                        int inputDataType, 
+                        int numberOfValues,
+                        int inputIncrement,
                                             int outputFormat)
 {
   switch (inputDataType)

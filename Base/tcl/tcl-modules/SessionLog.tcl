@@ -103,7 +103,7 @@ proc SessionLogInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.12 $} {$Date: 2002/01/26 23:34:32 $}]
+        {$Revision: 1.13 $} {$Date: 2002/03/18 20:52:40 $}]
 
     # Initialize module-level variables
     set SessionLog(fileName)  ""
@@ -116,9 +116,9 @@ proc SessionLogInit {} {
     set SessionLog(defaultDir) ""
 
     if {[file isdirectory $SessionLog(defaultDir)] == 0} {
-	puts $SessionLog(defaultDir) 
-	#puts "No logging enabled"
-	set SessionLog(defaultDir) ""
+    puts $SessionLog(defaultDir) 
+    #puts "No logging enabled"
+    set SessionLog(defaultDir) ""
     }
     
     # event bindings
@@ -132,14 +132,14 @@ proc SessionLogInit {} {
     # if we know who this user is
     if {[info exists env(LOGNAME)] == 1} {
 
-	# if the logging directory exists
-	if {[file isdirectory $SessionLog(defaultDir)]} {
+    # if the logging directory exists
+    if {[file isdirectory $SessionLog(defaultDir)]} {
 
-	    puts "Automatically logging user $env(LOGNAME).  Thanks!"
-	    set SessionLog(autoLogging) 1
-	    SessionLogStartLogging
-	    SessionLogSetFilenameAutomatically
-	}
+        puts "Automatically logging user $env(LOGNAME).  Thanks!"
+        set SessionLog(autoLogging) 1
+        SessionLogStartLogging
+        SessionLogSetFilenameAutomatically
+    }
     }
 }
 
@@ -159,36 +159,36 @@ proc SessionLogShouldWeLog {} {
 
     # if username is set in the env global array
     if {[info exists env(LOGNAME)] == 1} {
-	#puts "logname: $env(LOGNAME)"
-	set logname $env(LOGNAME)
+    #puts "logname: $env(LOGNAME)"
+    set logname $env(LOGNAME)
 
 
-	# if the file listing which users to log exists
-	# ExpandPath looks first in current dir then in program directory
-	set filename [ExpandPath "UsersToAutomaticallyLog"]
-	if {[file exists $filename]} {
+    # if the file listing which users to log exists
+    # ExpandPath looks first in current dir then in program directory
+    set filename [ExpandPath "UsersToAutomaticallyLog"]
+    if {[file exists $filename]} {
 
-	    #puts "file $filename found"
-	    set in [open $filename]
-	    set users [read $in]
-	    close $in
+        #puts "file $filename found"
+        set in [open $filename]
+        set users [read $in]
+        close $in
 
-	    # check and see if this user in file (then should be logged)
-	    foreach user $users {
-		#puts $user
-		if {$logname == $user} {
-		    #puts "match: $user == $logname"
+        # check and see if this user in file (then should be logged)
+        foreach user $users {
+        #puts $user
+        if {$logname == $user} {
+            #puts "match: $user == $logname"
 
-		    # automatically log this user
-		    set SessionLog(autoLogging) 1
-		    puts "Automatically logging user $user.  Thanks!"
-		    SessionLogStartLogging
-		    SessionLogSetFilenameAutomatically
+            # automatically log this user
+            set SessionLog(autoLogging) 1
+            puts "Automatically logging user $user.  Thanks!"
+            SessionLogStartLogging
+            SessionLogSetFilenameAutomatically
 
-		    return 1
-		}
-	    }
-	}
+            return 1
+        }
+        }
+    }
     }
 
     return 0
@@ -212,7 +212,7 @@ proc SessionLogBuildGUI {} {
     
     # This is a useful comment block that makes reading this easy for all:
     #-------------------------------------------
-	# Frame Hierarchy:
+    # Frame Hierarchy:
     #-------------------------------------------
     # Help
     # Start
@@ -254,8 +254,8 @@ proc SessionLogBuildGUI {} {
     set f $fStart
     
     foreach frame "Top Middle Bottom" {
-	frame $f.f$frame -bg $Gui(activeWorkspace)
-	pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
+    frame $f.f$frame -bg $Gui(activeWorkspace)
+    pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
     }
     
     #-------------------------------------------
@@ -265,9 +265,9 @@ proc SessionLogBuildGUI {} {
 
     # file browse box
     DevAddFileBrowse $f SessionLog fileName "Log File:" [] \
-	    "txt" [] "Save" "Select Log File" \
-	    "Choose the log file for this grayscale volume."\
-	    "Absolute"
+        "txt" [] "Save" "Select Log File" \
+        "Choose the log file for this grayscale volume."\
+        "Absolute"
     
     #-------------------------------------------
     # Start->Middle frame
@@ -280,10 +280,10 @@ proc SessionLogBuildGUI {} {
     
     # if we are already logging (automatically)
     if {$SessionLog(currentlyLogging) == "1"} {
-	set red [MakeColor "200 60 60"]
-	$SessionLog(lLogging) config -text \
-		"Logging is on." \
-		-fg $red
+    set red [MakeColor "200 60 60"]
+    $SessionLog(lLogging) config -text \
+        "Logging is on." \
+        -fg $red
     }
 
     #-------------------------------------------
@@ -293,8 +293,8 @@ proc SessionLogBuildGUI {} {
     
     # make frames inside the Bottom frame for nice layout
     foreach frame "Start" {
-	frame $f.f$frame -bg $Gui(activeWorkspace) 
-	pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
+    frame $f.f$frame -bg $Gui(activeWorkspace) 
+    pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
     }
 
     #-------------------------------------------
@@ -314,8 +314,8 @@ proc SessionLogBuildGUI {} {
     set f $fLog
 
     foreach frame "TextBox" {
-	frame $f.f$frame -bg $Gui(activeWorkspace) 
-	pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
+    frame $f.f$frame -bg $Gui(activeWorkspace) 
+    pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
     }
 
     $f.fTextBox config -relief groove -bd 3 
@@ -332,7 +332,7 @@ proc SessionLogBuildGUI {} {
     # here's the text box widget from tcl-shared/Widgets.tcl
     set SessionLog(textBox) [ScrolledText $f.tText]
     pack $f.tText -side top -pady $Gui(pad) -padx $Gui(pad) \
-	    -fill x -expand true
+        -fill x -expand true
 
     
 }
@@ -393,20 +393,20 @@ proc SessionLogStartLogging {{tk "0"}} {
 
     # if this proc was called by hitting a button, $tk ==1
     if {$tk == "1"} {
-	if {$SessionLog(currentlyLogging) == 1} {
-	    tk_messageBox -message "Already logging."
-	    return
-	}
-	# make sure we have a filename.
-	if {$SessionLog(fileName) == ""} {
-	    tk_messageBox -message "Please choose a filename first."
-	    return
-	}
-	# let users know we are logging
-	set red [MakeColor "200 60 60"]
-	$SessionLog(lLogging) config -text \
-		"Logging is on." \
-		-fg $red
+    if {$SessionLog(currentlyLogging) == 1} {
+        tk_messageBox -message "Already logging."
+        return
+    }
+    # make sure we have a filename.
+    if {$SessionLog(fileName) == ""} {
+        tk_messageBox -message "Please choose a filename first."
+        return
+    }
+    # let users know we are logging
+    set red [MakeColor "200 60 60"]
+    $SessionLog(lLogging) config -text \
+        "Logging is on." \
+        -fg $red
     }
     
     # make a funny joke
@@ -424,7 +424,7 @@ proc SessionLogStartLogging {{tk "0"}} {
     set datatype "{{misc,user}}"
     set SessionLog(log,$datatype) ""
     if {[info exists env(LOGNAME)] == 1} {
-	set SessionLog(log,$datatype) $env(LOGNAME)
+    set SessionLog(log,$datatype) $env(LOGNAME)
     }
 
     SessionLogTraceSliceOffsets
@@ -443,13 +443,13 @@ proc SessionLogGetVersionInfo {}  {
     # extract version info for each module
     # dependent on string formatting in $Module(versions)
     foreach ver $Module(versions) {
-	set module [lindex $ver 0]
-	set revision [lindex [lindex $ver 1] 1]
-	set date [lindex [lindex $ver 2] 1]
-	set time [lindex [lindex $ver 2] 2]
-	set var "\{\{modversion,$module\},\{date,$date\},\{time,$time\}\}"
-	set value "$revision"
-	set SessionLog(log,$var) $value
+    set module [lindex $ver 0]
+    set revision [lindex [lindex $ver 1] 1]
+    set date [lindex [lindex $ver 2] 1]
+    set time [lindex [lindex $ver 2] 2]
+    set var "\{\{modversion,$module\},\{date,$date\},\{time,$time\}\}"
+    set value "$revision"
+    set SessionLog(log,$var) $value
     }
 }
 
@@ -471,8 +471,8 @@ proc SessionLogSetFilenameAutomatically {} {
     
     # test if this has worked
     if {[file exists $wholename] == 1} {
-	set wholename [file join $SessionLog(defaultDir) "$SessionLog(log,userName)${unique}Error.log"]
-	puts "Automatically generated log filename already exists!"
+    set wholename [file join $SessionLog(defaultDir) "$SessionLog(log,userName)${unique}Error.log"]
+    puts "Automatically generated log filename already exists!"
     }
 
     puts "Session log will be automatically saved as $wholename"
@@ -511,9 +511,9 @@ proc SessionLogShowLog {} {
     # display the output that will be written to the file.
     set log ""
     foreach m $Module(idList) {
-	if {[info exists Module($m,procSessionLog)] == 1} {
-	    set log "${log}Module: $m\n[$Module($m,procSessionLog)]"
-	}
+    if {[info exists Module($m,procSessionLog)] == 1} {
+        set log "${log}Module: $m\n[$Module($m,procSessionLog)]"
+    }
     }
 
     # clear the text box
@@ -533,11 +533,11 @@ proc SessionLogEndSession {} {
     global SessionLog
 
     if {$SessionLog(currentlyLogging) == 0} {
-	return
+    return
     }
-	
+    
     if {$SessionLog(fileName) == ""} {
-	SessionLogSetFilenameAutomatically
+    SessionLogSetFilenameAutomatically
     }
 
     # make sure we record final times
@@ -563,16 +563,16 @@ proc SessionLogWriteLog {} {
     
     # get the goods:
     foreach m $Module(idList) {
-	if {[info exists Module($m,procSessionLog)] == 1} {
-	    puts "LOGGING: $m"
-	    set info [$Module($m,procSessionLog)]
+    if {[info exists Module($m,procSessionLog)] == 1} {
+        puts "LOGGING: $m"
+        set info [$Module($m,procSessionLog)]
 
-	    set info "\{\n\{_Module $m\}\n\{$info\}\n\}\n"
-	    #puts $out "\n_Module $m"
-	    #puts $out "\n_ModuleLogItems"
-	    puts $out $info
-	    #puts $out "\n_EndModule"
-	}
+        set info "\{\n\{_Module $m\}\n\{$info\}\n\}\n"
+        #puts $out "\n_Module $m"
+        #puts $out "\n_ModuleLogItems"
+        puts $out $info
+        #puts $out "\n_EndModule"
+    }
     }
 
     close $out
@@ -612,9 +612,9 @@ proc SessionLogShowRandomFortune {{tk "0"}} {
 
     set message "Thanks for logging!\n\n$fortune\n"
     if {$tk == "1"} {
-	tk_messageBox -message $message
+    tk_messageBox -message $message
     } else {
-	puts $message
+    puts $message
     }
     
 }
@@ -629,7 +629,7 @@ proc SessionLogInitRandomFortune {} {
     global SessionLog
 
     set SessionLog(fortunes) {\
-	    {'Outside of a dog, a book is man's best friend. Inside of a dog, it's too dark to read.'
+        {'Outside of a dog, a book is man's best friend. Inside of a dog, it's too dark to read.'
     Groucho Marx} 
     {'I told my psychiatrist that everyone hates me. He said I was being ridiculous - everyone hasn't met me yet.'
     Rodney Dangerfield.}
@@ -668,14 +668,14 @@ proc SessionLogRecallPresets {p} {
     
     # test if the default dir exists
     if {[info exists Preset(SessionLog,defaultDir)] == 1} {
-	set dir $Preset(SessionLog,defaultDir)
-	if {[file isdirectory $dir] == 1} {
-	    set SessionLog(defaultDir) $dir
-	} else {
-	    puts "Error in SessionLog: default directory from Options.xml does not exist"
-	}
+    set dir $Preset(SessionLog,defaultDir)
+    if {[file isdirectory $dir] == 1} {
+        set SessionLog(defaultDir) $dir
     } else {
-	puts "SessionLog: no default dir in Options.xml."
+        puts "Error in SessionLog: default directory from Options.xml does not exist"
+    }
+    } else {
+    puts "SessionLog: no default dir in Options.xml."
     }
     # get the user names we should log for. ???
 }
@@ -704,14 +704,14 @@ proc SessionLogGenericLog {m} {
 
     # format the things this module will log
     foreach item $loglist {
-	set name ""
-	# get name without leading 'log,'
-	regexp {log,(.*)} $item match name
-	# get matching value stored in array
-	eval {set val} \$${m}($item)
-	# append to list
-	lappend log "\{$name   \{$val\}\}"
-	#set log "${log}\{${name}: ${val}\}\n"
+    set name ""
+    # get name without leading 'log,'
+    regexp {log,(.*)} $item match name
+    # get matching value stored in array
+    eval {set val} \$${m}($item)
+    # append to list
+    lappend log "\{$name   \{$val\}\}"
+    #set log "${log}\{${name}: ${val}\}\n"
     }
 
     # alphabetize the list
@@ -720,7 +720,7 @@ proc SessionLogGenericLog {m} {
     # add newlines between items so it's readable
     set final ""
     foreach item $alpha {
-	set final "$final\n$item"
+    set final "$final\n$item"
     }
 
     return $final
@@ -739,13 +739,13 @@ proc SessionLogTraceSliceOffsets {}  {
     global Slice SessionLog
     global Module Editor Label
     foreach s $Slice(idList) {
-	# callback will be called whenever variable is written to ("w")
-	trace variable Slice($s,offset) w SessionLogTraceSliceOffsetsCallback
+    # callback will be called whenever variable is written to ("w")
+    trace variable Slice($s,offset) w SessionLogTraceSliceOffsetsCallback
 
-	# initialize vars
-	if {[info exists SessionLog(trace,prevSlice$s)] == 0} {
-	    set SessionLog(trace,prevSlice$s) ""
-	}
+    # initialize vars
+    if {[info exists SessionLog(trace,prevSlice$s)] == 0} {
+        set SessionLog(trace,prevSlice$s) ""
+    }
     }
 
     # trace all variables we are using as part of the slice time description
@@ -754,12 +754,12 @@ proc SessionLogTraceSliceOffsets {}  {
     # changes and none of this will work.
 
     set varlist "{Module(activeID)} {Editor(activeID)} {Editor(idWorking)} \
-	    {Editor(idOriginal)} {Label(label)} {Slice(activeID)}"
+        {Editor(idOriginal)} {Label(label)} {Slice(activeID)}"
 
     foreach var $varlist {
-	trace variable $var w SessionLogTraceSliceDescriptionCallback
-	#puts $var
-	#eval {puts } \$$var
+    trace variable $var w SessionLogTraceSliceDescriptionCallback
+    #puts $var
+    #eval {puts } \$$var
     }
 
     return
@@ -785,7 +785,7 @@ proc SessionLogTraceSliceOffsetsCallback {variableName indexIfArray operation} {
 
     # we only care about editing time per slice
     if {$Module(activeID) != "Editor"} {
-	return
+    return
     }
 
     # Lauren what if slice is not active?
@@ -845,14 +845,14 @@ proc SessionLogStartTimingSlice {s} {
     # actually record the time
     if {$var != $prev} {
 
-	SessionLogStartTiming $var
-	
-	# stop timing previous slice
-	if {$prev != ""} {
-	    SessionLogStopTiming $prev
-	}
-	# remember this one for next time
-	set SessionLog(trace,prevSlice$s)  $var
+    SessionLogStartTiming $var
+    
+    # stop timing previous slice
+    if {$prev != ""} {
+        SessionLogStopTiming $prev
+    }
+    # remember this one for next time
+    set SessionLog(trace,prevSlice$s)  $var
     }
 }
 
@@ -867,7 +867,7 @@ proc SessionLogStartTimingAllSlices {} {
     global SessionLog Slice
     
     foreach s $Slice(idList) {
-	SessionLogStartTimingSlice $s
+    SessionLogStartTimingSlice $s
     }
 
 }
@@ -884,13 +884,13 @@ proc SessionLogStopTimingAllSlices {} {
     
     foreach s $Slice(idList) {
 
-	# stop timing previous slice
-	set prev $SessionLog(trace,prevSlice$s)
-	if {$prev != ""} {
-	    SessionLogStopTiming $prev
-	}
-	# clear the previous slice since we are not timing one
-	set SessionLog(trace,prevSlice$s)  ""
+    # stop timing previous slice
+    set prev $SessionLog(trace,prevSlice$s)
+    if {$prev != ""} {
+        SessionLogStopTiming $prev
+    }
+    # clear the previous slice since we are not timing one
+    set SessionLog(trace,prevSlice$s)  ""
 
     }
 
@@ -921,12 +921,12 @@ proc SessionLogStopTiming {d} {
 
     # can't stop if we never started
     if {[info exists SessionLog(logInfo,$d,startTime)] == 0} {
-	return
+    return
     }
 
     set SessionLog(logInfo,$d,endTime) [clock seconds]
     set elapsed \
-	    [expr $SessionLog(logInfo,$d,endTime) - $SessionLog(logInfo,$d,startTime)]
+        [expr $SessionLog(logInfo,$d,endTime) - $SessionLog(logInfo,$d,startTime)]
     
     # variable name is a list describing the exact event
     # the first thing is datatype: time is the database table
@@ -935,7 +935,7 @@ proc SessionLogStopTiming {d} {
 
     # initialize the variable if needed
     if {[info exists SessionLog(log,$var)] == 0} {
-	set SessionLog(log,$var) 0
+    set SessionLog(log,$var) 0
     }
     
     # increment total time

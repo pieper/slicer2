@@ -152,15 +152,15 @@ proc EdPhaseWireSetOmega {omega} {
     #puts "$width $height"
     
     #if {$width != $height} {
-	#puts "Can't work on non-square images now!"
-	#return 1
+    #puts "Can't work on non-square images now!"
+    #return 1
     #}
 
     #if {$width != "255"} {
-	#puts "Only 256x256 images supported!"
-	#return 1
+    #puts "Only 256x256 images supported!"
+    #return 1
     #}
-	
+    
     #set width1 [expr $width + 1]
 
     set width 255
@@ -176,34 +176,34 @@ proc EdPhaseWireSetOmega {omega} {
     # Lauren should be created in slicer soon
     foreach o $Ed($e,phaseOrientions,idList) {
 
-	set prefix [file join kernel$width1 omega$omega kernel]
-	# try local
-	set fullpath [file join $local $prefix]
-	if {[file exists $fullpath.001] != "1"} {
-	    # go central
-	    set fullpath [file join $central $prefix]
-	}
+    set prefix [file join kernel$width1 omega$omega kernel]
+    # try local
+    set fullpath [file join $local $prefix]
+    if {[file exists $fullpath.001] != "1"} {
+        # go central
+        set fullpath [file join $central $prefix]
+    }
 
 
-	Ed($e,phase,reader$o) SetFilePattern "%s.%03d"
-	Ed($e,phase,reader$o) SetDataByteOrderToBigEndian
-	Ed($e,phase,reader$o) SetDataExtent 0 $width 0 $width $o $o
-	Ed($e,phase,reader$o) SetFilePrefix $fullpath
-	#reader SetDataScalarTypeToFloat
-	
-	# cast to float to match output of fft of image
-	Ed($e,phase,cast$o) SetOutputScalarTypeToFloat
-	Ed($e,phase,cast$o) SetInput [Ed($e,phase,reader$o) GetOutput]
-	
-	# since we are using regular multiply
-	# make both components the same (so real part
-	# will multiply both real and imag parts
-	# of the fft of the image this way)
-	#-------------------------------------------
-	foreach input {1 2} {
-	    Ed($e,phase,kernel$o) SetInput$input [ Ed($e,phase,cast$o) GetOutput]
-	}
-	
+    Ed($e,phase,reader$o) SetFilePattern "%s.%03d"
+    Ed($e,phase,reader$o) SetDataByteOrderToBigEndian
+    Ed($e,phase,reader$o) SetDataExtent 0 $width 0 $width $o $o
+    Ed($e,phase,reader$o) SetFilePrefix $fullpath
+    #reader SetDataScalarTypeToFloat
+    
+    # cast to float to match output of fft of image
+    Ed($e,phase,cast$o) SetOutputScalarTypeToFloat
+    Ed($e,phase,cast$o) SetInput [Ed($e,phase,reader$o) GetOutput]
+    
+    # since we are using regular multiply
+    # make both components the same (so real part
+    # will multiply both real and imag parts
+    # of the fft of the image this way)
+    #-------------------------------------------
+    foreach input {1 2} {
+        Ed($e,phase,kernel$o) SetInput$input [ Ed($e,phase,cast$o) GetOutput]
+    }
+    
     }
 
     set Ed($e,omega,id) $omega
@@ -244,7 +244,7 @@ proc EdPhaseWireBuildVTK {} {
     # Lauren the phase computation should be a vtk class
     #-------------------------------------------
 
-	
+    
     # ids for directions we are computing phase in
     #-------------------------------------------
     set Ed($e,phaseOrientions,idList) {1 2 3 4}
@@ -255,9 +255,9 @@ proc EdPhaseWireBuildVTK {} {
     # in a vtk class
     #-------------------------------------------
     foreach o $Ed($e,phaseOrientions,idList) {
-	vtkImageReader Ed($e,phase,reader$o)
-	vtkImageCast  Ed($e,phase,cast$o)
-	vtkImageAppendComponents Ed($e,phase,kernel$o)
+    vtkImageReader Ed($e,phase,reader$o)
+    vtkImageCast  Ed($e,phase,cast$o)
+    vtkImageAppendComponents Ed($e,phase,kernel$o)
     }
 
     #-------------------------------------------
@@ -299,29 +299,29 @@ proc EdPhaseWireBuildVTK {} {
     # objects we need for each of 4 filter pairs
     #-------------------------------------------
     foreach o $Ed($e,phaseOrientions,idList) {
-	
-	# for filtering in fourier domain 
-	#-------------------------------------------
-	vtkImageMathematics Ed($e,phase,mult$o)
-	Ed($e,phase,mult$o) SetOperationToMultiply
-	Ed($e,phase,mult$o) SetInput1 [Ed($e,phase,fftSlice) GetOutput]
-	Ed($e,phase,mult$o) SetInput2 [Ed($e,phase,kernel$o) GetOutput]
-	
-	# reverse fft: back to spatial domain
-	#-------------------------------------------
-	vtkImageRFFT Ed($e,phase,rfft$o)
-	Ed($e,phase,rfft$o) SetDimensionality 2
-	Ed($e,phase,rfft$o) SetInput [Ed($e,phase,mult$o) GetOutput]
-	
-	# separate odd, even filter responses in spatial domain
-	#-------------------------------------------
-	vtkImageExtractComponents Ed($e,phase,even$o)
-	Ed($e,phase,even$o) SetComponents 0
-	Ed($e,phase,even$o) SetInput [Ed($e,phase,rfft$o) GetOutput]
-	
-	vtkImageExtractComponents Ed($e,phase,odd$o)
-	Ed($e,phase,odd$o) SetComponents 1
-	Ed($e,phase,odd$o) SetInput [Ed($e,phase,rfft$o) GetOutput]
+    
+    # for filtering in fourier domain 
+    #-------------------------------------------
+    vtkImageMathematics Ed($e,phase,mult$o)
+    Ed($e,phase,mult$o) SetOperationToMultiply
+    Ed($e,phase,mult$o) SetInput1 [Ed($e,phase,fftSlice) GetOutput]
+    Ed($e,phase,mult$o) SetInput2 [Ed($e,phase,kernel$o) GetOutput]
+    
+    # reverse fft: back to spatial domain
+    #-------------------------------------------
+    vtkImageRFFT Ed($e,phase,rfft$o)
+    Ed($e,phase,rfft$o) SetDimensionality 2
+    Ed($e,phase,rfft$o) SetInput [Ed($e,phase,mult$o) GetOutput]
+    
+    # separate odd, even filter responses in spatial domain
+    #-------------------------------------------
+    vtkImageExtractComponents Ed($e,phase,even$o)
+    Ed($e,phase,even$o) SetComponents 0
+    Ed($e,phase,even$o) SetInput [Ed($e,phase,rfft$o) GetOutput]
+    
+    vtkImageExtractComponents Ed($e,phase,odd$o)
+    Ed($e,phase,odd$o) SetComponents 1
+    Ed($e,phase,odd$o) SetInput [Ed($e,phase,rfft$o) GetOutput]
     }
     
     # Now combine the quadrature filter outputs to create 
@@ -345,9 +345,9 @@ proc EdPhaseWireBuildVTK {} {
     # get the abs value of all imaginary (odd) responses
     #------------------------------------------------------
     foreach o $Ed($e,phaseOrientions,idList) {
-	vtkImageMathematics Ed($e,phase,iabs$o)
-	Ed($e,phase,iabs$o) SetOperationToAbsoluteValue
-	Ed($e,phase,iabs$o) SetInput 0 [Ed($e,phase,odd$o) GetOutput]
+    vtkImageMathematics Ed($e,phase,iabs$o)
+    Ed($e,phase,iabs$o) SetOperationToAbsoluteValue
+    Ed($e,phase,iabs$o) SetInput 0 [Ed($e,phase,odd$o) GetOutput]
     }
     
     # add the abs imaginary responses
@@ -383,12 +383,12 @@ proc EdPhaseWireBuildVTK {} {
     vtkImageShiftScale Ed($e,phase,phase)
     #Ed($e,phase,phaseScale) SetShift -1.5707963 ; # -pi/2
     Ed($e,phase,phase) SetScale 1000
-    Ed($e,phase,phase) SetInput [Ed($e,phase,phaseAngle) GetOutput]	
+    Ed($e,phase,phase) SetInput [Ed($e,phase,phaseAngle) GetOutput]    
     
     # abs value of phase
     #vtkImageMathematics Ed($e,phase,phaseAbs)
     #Ed($e,phase,phaseAbs) SetOperationToAbsoluteValue
-    #Ed($e,phase,phaseAbs) SetInput 0 [phase GetOutput]	
+    #Ed($e,phase,phaseAbs) SetInput 0 [phase GetOutput]    
       
     #------------------------------------------------------
     # CERT:
@@ -411,91 +411,91 @@ proc EdPhaseWireBuildVTK {} {
     
 
     foreach s $Slice(idList) {
-	#-------------------------------------------
-	# Create objects for computing shortest paths.
-	#-------------------------------------------
+    #-------------------------------------------
+    # Create objects for computing shortest paths.
+    #-------------------------------------------
 
-	# maybe not used: for training, though
-	# currently this is the filter that the slicer
-	# gets to start off our pipeline
-	#vtkImageGradientMagnitude Ed($e,gradMag$s)
-	
-	# for combining phase, cert, and any other inputs
-	vtkImageWeightedSum Ed($e,imageSumFilter$s)
-	
-	# for normalization of the phase and cert inputs
-	vtkImageLiveWireScale Ed($e,phaseNorm$s)
-	vtkImageLiveWireScale Ed($e,certNorm$s)
-	#vtkImageLiveWireScale Ed($e,gradNorm$s)
+    # maybe not used: for training, though
+    # currently this is the filter that the slicer
+    # gets to start off our pipeline
+    #vtkImageGradientMagnitude Ed($e,gradMag$s)
+    
+    # for combining phase, cert, and any other inputs
+    vtkImageWeightedSum Ed($e,imageSumFilter$s)
+    
+    # for normalization of the phase and cert inputs
+    vtkImageLiveWireScale Ed($e,phaseNorm$s)
+    vtkImageLiveWireScale Ed($e,certNorm$s)
+    #vtkImageLiveWireScale Ed($e,gradNorm$s)
 
-	# for shifting the phase image to find edges at different grayscales
-	vtkImageShiftScale Ed($e,phaseScale$s)
-	Ed($e,phaseScale$s) SetShift [EdPhaseConvertToRadians $Ed($e,phaseOffset)]
-	Ed($e,phaseScale$s) SetScale 1
+    # for shifting the phase image to find edges at different grayscales
+    vtkImageShiftScale Ed($e,phaseScale$s)
+    Ed($e,phaseScale$s) SetShift [EdPhaseConvertToRadians $Ed($e,phaseOffset)]
+    Ed($e,phaseScale$s) SetScale 1
 
-	# for abs value of phase image
-	vtkImageMathematics Ed($e,phaseAbs$s)
-	Ed($e,phaseAbs$s) SetOperationToAbsoluteValue
-	Ed($e,phaseAbs$s) SetInput 0 [Ed($e,phaseScale$s) GetOutput]
+    # for abs value of phase image
+    vtkImageMathematics Ed($e,phaseAbs$s)
+    Ed($e,phaseAbs$s) SetOperationToAbsoluteValue
+    Ed($e,phaseAbs$s) SetInput 0 [Ed($e,phaseScale$s) GetOutput]
 
-	Ed($e,phaseNorm$s) SetInput [Ed($e,phaseAbs$s) GetOutput]
+    Ed($e,phaseNorm$s) SetInput [Ed($e,phaseAbs$s) GetOutput]
 
-	# pipeline (rest done in EdPhaseWireEnter)
-	#Ed($e,gradNorm$s)  SetInput [Ed($e,gradMag$s) GetOutput]
-	
-	# transformation functions to emphasize desired features of the
-	# phase and cert inputs
-	#certNorm SetTransformationFunctionToOneOverX
-	Ed($e,certNorm$s) SetTransformationFunctionToInverseLinearRamp
-	#Ed($e,gradNorm$s) SetTransformationFunctionToOneOverX
-	
-	# weighted sum of all inputs
-	set sum Ed(EdPhaseWire,imageSumFilter$s)
-	# pipeline
-	$sum SetInput 0 [Ed($e,phaseNorm$s) GetOutput]
-	$sum SetInput 1 [Ed($e,certNorm$s) GetOutput]
-	#$sum SetInput 2 [Ed($e,gradNorm$s) GetOutput]
-	
-	# this filter finds short paths in the image and draws the wire
-	vtkImageLiveWire Ed(EdPhaseWire,lwPath$s)
-	# we want our path to be able to go to diagonal pixel neighbors
-	Ed(EdPhaseWire,lwPath$s) SetNumberOfNeighbors 8
-	# debug
-	Ed(EdPhaseWire,lwPath$s) SetVerbose 0
+    # pipeline (rest done in EdPhaseWireEnter)
+    #Ed($e,gradNorm$s)  SetInput [Ed($e,gradMag$s) GetOutput]
+    
+    # transformation functions to emphasize desired features of the
+    # phase and cert inputs
+    #certNorm SetTransformationFunctionToOneOverX
+    Ed($e,certNorm$s) SetTransformationFunctionToInverseLinearRamp
+    #Ed($e,gradNorm$s) SetTransformationFunctionToOneOverX
+    
+    # weighted sum of all inputs
+    set sum Ed(EdPhaseWire,imageSumFilter$s)
+    # pipeline
+    $sum SetInput 0 [Ed($e,phaseNorm$s) GetOutput]
+    $sum SetInput 1 [Ed($e,certNorm$s) GetOutput]
+    #$sum SetInput 2 [Ed($e,gradNorm$s) GetOutput]
+    
+    # this filter finds short paths in the image and draws the wire
+    vtkImageLiveWire Ed(EdPhaseWire,lwPath$s)
+    # we want our path to be able to go to diagonal pixel neighbors
+    Ed(EdPhaseWire,lwPath$s) SetNumberOfNeighbors 8
+    # debug
+    Ed(EdPhaseWire,lwPath$s) SetVerbose 0
 
-	# for looking at the input to the livewire filter
-	vtkImageViewer Ed(EdPhaseWire,viewer$s)
-	Ed(EdPhaseWire,viewer$s) SetInput \
-		[Ed(EdPhaseWire,lwPath$s) GetInput 0]
-	Ed(EdPhaseWire,viewer$s) SetColorWindow 256
-	Ed(EdPhaseWire,viewer$s) SetColorLevel 127.5
-	[Ed(EdPhaseWire,viewer$s) GetImageWindow] DoubleBufferOn
-	
-	# pipeline
-	set totalInputs 9
-	for {set i 0} {$i < $totalInputs} {incr i} {   
-	    
-	    # set all lw inputs (for all 8 directions) 
-	    # to be from phase info
-	    Ed(EdPhaseWire,lwPath$s) SetInput $i [$sum GetOutput]
-	}
-	
-	# figure out what the max value is that the filters can output
-	# this is needed for shortest path computation
-	set scale [Ed(EdPhaseWire,lwPath$s) GetMaxEdgeCost]
-	# make sure this is max val output by these filters:
-	Ed($e,phaseNorm$s) SetScaleFactor $scale
-	Ed($e,certNorm$s) SetScaleFactor  $scale
-	#Ed($e,gradNorm$s) SetScaleFactor  $scale
-	
+    # for looking at the input to the livewire filter
+    vtkImageViewer Ed(EdPhaseWire,viewer$s)
+    Ed(EdPhaseWire,viewer$s) SetInput \
+        [Ed(EdPhaseWire,lwPath$s) GetInput 0]
+    Ed(EdPhaseWire,viewer$s) SetColorWindow 256
+    Ed(EdPhaseWire,viewer$s) SetColorLevel 127.5
+    [Ed(EdPhaseWire,viewer$s) GetImageWindow] DoubleBufferOn
+    
+    # pipeline
+    set totalInputs 9
+    for {set i 0} {$i < $totalInputs} {incr i} {   
+        
+        # set all lw inputs (for all 8 directions) 
+        # to be from phase info
+        Ed(EdPhaseWire,lwPath$s) SetInput $i [$sum GetOutput]
+    }
+    
+    # figure out what the max value is that the filters can output
+    # this is needed for shortest path computation
+    set scale [Ed(EdPhaseWire,lwPath$s) GetMaxEdgeCost]
+    # make sure this is max val output by these filters:
+    Ed($e,phaseNorm$s) SetScaleFactor $scale
+    Ed($e,certNorm$s) SetScaleFactor  $scale
+    #Ed($e,gradNorm$s) SetScaleFactor  $scale
+    
     }
 
     #-------------------------------------------
     # hook up phase computation to path computation
     #-------------------------------------------
     foreach s $Slice(idList) {
-	Ed($e,phaseScale$s)  SetInput [Ed($e,phase,phase) GetOutput]
-	Ed($e,certNorm$s)  SetInput [Ed($e,phase,cert) GetOutput]
+    Ed($e,phaseScale$s)  SetInput [Ed($e,phase,phase) GetOutput]
+    Ed($e,certNorm$s)  SetInput [Ed($e,phase,cert) GetOutput]
     }
 
 
@@ -535,13 +535,13 @@ proc EdPhaseWireBuildGUI {} {
     set subframes {Help Basic Advanced}
     set buttonText {"Help" "Basic" "Advanced"}
     set tooltips { "Help: We all need it sometimes." \
-	    "Basic: For Users" \
-	    "Advanced: Current PhaseWire Settings and Stuff for Developers"}
+        "Basic: For Users" \
+        "Advanced: Current PhaseWire Settings and Stuff for Developers"}
     set extraFrame 0
     set firstTab Basic
 
     TabbedFrame EdPhaseWire $f $label $subframes $buttonText \
-	    $tooltips $extraFrame $firstTab
+        $tooltips $extraFrame $firstTab
 
     #-------------------------------------------
     # TabbedFrame->Help frame
@@ -573,8 +573,8 @@ proc EdPhaseWireBuildGUI {} {
     frame $f.fApply     -bg $Gui(activeWorkspace)
     frame $f.fSettings     -bg $Gui(activeWorkspace)
     pack $f.fGrid $f.fRender $f.fContour $f.fReset  \
-	    $f.fSettings $f.fPhaseMenu $f.fApply \
-	    -side top -pady $Gui(pad)
+        $f.fSettings $f.fPhaseMenu $f.fApply \
+        -side top -pady $Gui(pad)
 
     # Standard Editor interface buttons
     EdBuildRenderGUI $Ed(EdPhaseWire,frame).fTabbedFrame.fBasic.fRender Ed(EdPhaseWire,render)
@@ -586,14 +586,14 @@ proc EdPhaseWireBuildGUI {} {
     
     # Output label
     eval {button $f.bOutput -text "Output:" \
-	    -command "ShowLabels EdPhaseWireLabel"} $Gui(WBA)
+        -command "ShowLabels EdPhaseWireLabel"} $Gui(WBA)
     TooltipAdd $f.bOutput \
-	    "Choose output label value to draw on the slice"
+        "Choose output label value to draw on the slice"
     eval {entry $f.eOutput -width 6 -textvariable Label(label)} $Gui(WEA)
     bind $f.eOutput <Return>   "EdPhaseWireLabel"
     bind $f.eOutput <FocusOut> "EdPhaseWireLabel"
     eval {entry $f.eName -width 14 -textvariable Label(name)} $Gui(WEA) \
-	    {-bg $Gui(activeWorkspace) -state disabled}
+        {-bg $Gui(activeWorkspace) -state disabled}
     grid $f.bOutput $f.eOutput $f.eName -padx 2 -pady $Gui(pad)
     grid $f.eOutput $f.eName -sticky w
     
@@ -605,25 +605,25 @@ proc EdPhaseWireBuildGUI {} {
     #-------------------------------------------
     set f $Ed(EdPhaseWire,frame).fTabbedFrame.fBasic.fContour
     eval {button $f.bContour -text "Stay near last slice's contour" \
-	    -command {puts "this feature is coming soon."}} $Gui(WBA)
+        -command {puts "this feature is coming soon."}} $Gui(WBA)
     # Lauren implement this!
     #pack $f.bContour
     #TooltipAdd $f.bContour \
-	    "Keep the PhaseWire near the contour you drew on the previous slice."
+        "Keep the PhaseWire near the contour you drew on the previous slice."
 
     #-------------------------------------------
     # TabbedFrame->Basic->Reset Frame
     #-------------------------------------------
     set f $Ed(EdPhaseWire,frame).fTabbedFrame.fBasic.fReset
     eval {button $f.bReset -text "Clear Contour" \
-	    -command "EdPhaseWireClearCurrentSlice"} $Gui(WBA)
+        -command "EdPhaseWireClearCurrentSlice"} $Gui(WBA)
     TooltipAdd $f.bReset \
-	    "Reset the PhaseWire for this slice."
+        "Reset the PhaseWire for this slice."
 
     eval {button $f.bResetSeg -text "Undo Last Click" \
-	    -command "EdPhaseWireClearLastSegment"} $Gui(WBA)
+        -command "EdPhaseWireClearLastSegment"} $Gui(WBA)
         TooltipAdd $f.bResetSeg \
-	    "Clear the latest part of the PhaseWire."
+        "Clear the latest part of the PhaseWire."
 
     pack $f.bReset $f.bResetSeg -side left -pady $Gui(pad) -padx $Gui(pad)
 
@@ -643,10 +643,10 @@ proc EdPhaseWireBuildGUI {} {
     eval {menu $menu} $Gui(WMA)
 
     TooltipAdd $menubutton \
-	    "Choose the size of the structure you are segmenting."
+        "Choose the size of the structure you are segmenting."
 
     foreach id $Ed(EdPhaseWire,omega,idList) name $Ed(EdPhaseWire,omega,nameList) {
-	$menu add command -label $name -command "EdPhaseWireSetOmega $id"
+    $menu add command -label $name -command "EdPhaseWireSetOmega $id"
     }
     grid $label $menubutton -padx $Gui(pad)
     # save menu to configure later
@@ -665,18 +665,18 @@ proc EdPhaseWireBuildGUI {} {
 
     # "Line" drawing button really draws our wire of points
     foreach shape "Polygon Lines" draw "Polygon Points" {
-	eval {radiobutton $f.f.r$shape -width [expr [string length $shape]+1] \
-		-text "$shape" -variable Ed(EdPhaseWire,shape) -value $draw \
-		-command "EdPhaseWireUpdate SetShape" \
-		-indicatoron 0} $Gui(WCA)
-	pack $f.f.r$shape -side left 
+    eval {radiobutton $f.f.r$shape -width [expr [string length $shape]+1] \
+        -text "$shape" -variable Ed(EdPhaseWire,shape) -value $draw \
+        -command "EdPhaseWireUpdate SetShape" \
+        -indicatoron 0} $Gui(WCA)
+    pack $f.f.r$shape -side left 
     }
     
     # Apply
     eval {button $f.bApply -text "Apply" \
-	    -command "EdPhaseWireApply"} $Gui(WBA) {-width 8}
+        -command "EdPhaseWireApply"} $Gui(WBA) {-width 8}
     TooltipAdd $f.bApply \
-	    "Apply the PhaseWire contour you have drawn."
+        "Apply the PhaseWire contour you have drawn."
     
     
     pack $f.f $f.bApply -side top -padx $Gui(pad) -pady $Gui(pad)
@@ -721,14 +721,14 @@ proc EdPhaseWireBuildGUI {} {
     
     # Output label
     eval {button $f.bOutput -text "Click Color:" \
-	    -command "ShowLabels EdPhaseWireClickLabel"} $Gui(WBA)
+        -command "ShowLabels EdPhaseWireClickLabel"} $Gui(WBA)
     TooltipAdd $f.bOutput \
-	    "Choose output label value to draw on the slice"
+        "Choose output label value to draw on the slice"
     eval {entry $f.eOutput -width 6 -textvariable Label(label)} $Gui(WEA)
     bind $f.eOutput <Return>   "EdPhaseWireClickLabel"
     bind $f.eOutput <FocusOut> "EdPhaseWireClickLabel"
     eval {entry $f.eName -width 14 -textvariable Label(name)} $Gui(WEA) \
-	    {-bg $Gui(activeWorkspace) -state disabled}
+        {-bg $Gui(activeWorkspace) -state disabled}
     grid $f.bOutput $f.eOutput $f.eName -padx 2 -pady $Gui(pad)
     grid $f.eOutput $f.eName -sticky w
     
@@ -740,51 +740,51 @@ proc EdPhaseWireBuildGUI {} {
     set f $Ed(EdPhaseWire,frame).fTabbedFrame.fAdvanced.fSettings.fSlider
 
     foreach slider "PhaseOffset" text "phase" {
-	eval {label $f.l$slider -text "$text:"} $Gui(WLA)
-	eval {entry $f.e$slider -width 4 \
-		-textvariable Ed(EdPhaseWire,[Uncap $slider])} $Gui(WEA)
-	bind $f.e$slider <Return>   "EdPhaseWireUpdate $slider"
-	bind $f.e$slider <FocusOut> "EdPhaseWireUpdate $slider"
-	eval {scale $f.s$slider -from $Ed(EdPhaseWire,[Uncap $slider]Low) \
-		-to $Ed(EdPhaseWire,[Uncap $slider]High) \
-		-length 50 -variable Ed(EdPhaseWire,[Uncap $slider])  \
-		-resolution 1 \
-		-command "EdPhaseWireUpdate $slider"} \
-		$Gui(WSA) {-sliderlength 22}
+    eval {label $f.l$slider -text "$text:"} $Gui(WLA)
+    eval {entry $f.e$slider -width 4 \
+        -textvariable Ed(EdPhaseWire,[Uncap $slider])} $Gui(WEA)
+    bind $f.e$slider <Return>   "EdPhaseWireUpdate $slider"
+    bind $f.e$slider <FocusOut> "EdPhaseWireUpdate $slider"
+    eval {scale $f.s$slider -from $Ed(EdPhaseWire,[Uncap $slider]Low) \
+        -to $Ed(EdPhaseWire,[Uncap $slider]High) \
+        -length 50 -variable Ed(EdPhaseWire,[Uncap $slider])  \
+        -resolution 1 \
+        -command "EdPhaseWireUpdate $slider"} \
+        $Gui(WSA) {-sliderlength 22}
 
-	pack $f.l$slider $f.s$slider $f.e$slider \
-		-side left -pady $Gui(pad) -padx $Gui(pad)
-	#grid $f.l$slider $f.e$slider -padx 2 -pady 2 -sticky w
-	#grid $f.l$slider -sticky e
-	#grid $f.s$slider -columnspan 2 -pady 2 
-	
-	set Ed(EdPhaseWire,slider$slider) $f.s$slider
+    pack $f.l$slider $f.s$slider $f.e$slider \
+        -side left -pady $Gui(pad) -padx $Gui(pad)
+    #grid $f.l$slider $f.e$slider -padx 2 -pady 2 -sticky w
+    #grid $f.l$slider -sticky e
+    #grid $f.s$slider -columnspan 2 -pady 2 
+    
+    set Ed(EdPhaseWire,slider$slider) $f.s$slider
     }
 
     set tooltip \
-	    "Phase value to follow in the phase image. \n \
-	    This controls whether to segment towards lighter or darker pixels.\n \
-	    Or you may use the Pick button to select a phase value \n \
-	    on the desired contour."
+        "Phase value to follow in the phase image. \n \
+        This controls whether to segment towards lighter or darker pixels.\n \
+        Or you may use the Pick button to select a phase value \n \
+        on the desired contour."
 
     TooltipAdd $Ed(EdPhaseWire,sliderPhaseOffset) $tooltip
     TooltipAdd $f.ePhaseOffset $tooltip
 
     eval {checkbutton $f.cClickPhase -text "Pick" \
-	    -variable Ed(EdPhaseWire,clickSetsPhase) \
-	    -indicatoron 0  } $Gui(WCA)
+        -variable Ed(EdPhaseWire,clickSetsPhase) \
+        -indicatoron 0  } $Gui(WCA)
     TooltipAdd $f.cClickPhase \
-	    "Use to segment darker or lighter pixels.  \n \
-	    Press button, then click on image to train. \n \
-	    (When button is pressed, your next click on the slice \n \
-	    will set the phase value to follow in the image.)"
+        "Use to segment darker or lighter pixels.  \n \
+        Press button, then click on image to train. \n \
+        (When button is pressed, your next click on the slice \n \
+        will set the phase value to follow in the image.)"
 
     pack $f.cClickPhase -side left -pady $Gui(pad) -padx $Gui(pad)
     
     eval {button $f.bResetPhase -text "Reset" \
-	    -command "EdLiveWireResetPhaseDefaults"} $Gui(WBA)
+        -command "EdLiveWireResetPhaseDefaults"} $Gui(WBA)
         TooltipAdd $f.bResetPhase \
-	    "Reset the phase setting to the default value"
+        "Reset the phase setting to the default value"
 
     pack $f.bResetPhase -side left -pady $Gui(pad) -padx $Gui(pad)
 
@@ -795,10 +795,10 @@ proc EdPhaseWireBuildGUI {} {
     set f $Ed(EdPhaseWire,frame).fTabbedFrame.fAdvanced.fSettings.fInputImages
 
     eval {button $f.bPopup -text "View Edges" \
-	    -command "EdPhaseWireRaiseEdgeImageWin"} $Gui(WBA) {-width 12}
+        -command "EdPhaseWireRaiseEdgeImageWin"} $Gui(WBA) {-width 12}
     pack $f.bPopup -side top -pady $Gui(pad) 
     TooltipAdd $f.bPopup \
-	    "View input weighted graph to PhaseWire.\nImages should emphasize desired features as low costs, or dark areas."
+        "View input weighted graph to PhaseWire.\nImages should emphasize desired features as low costs, or dark areas."
 
 
     #-------------------------------------------
@@ -808,10 +808,10 @@ proc EdPhaseWireBuildGUI {} {
 
     # PHASE
     eval {button $f.bClr -text " invisible PhaseWire tail " \
-	    -command "EdPhaseWirePrettyPicture"} $Gui(WBA)
+        -command "EdPhaseWirePrettyPicture"} $Gui(WBA)
     pack $f.bClr -side top -pady $Gui(pad)
     TooltipAdd $f.bClr \
-	    "Don't show the tail of the PhaseWire, for screen shots"
+        "Don't show the tail of the PhaseWire, for screen shots"
    
     eval {label $f.lPW -text "P:"} $Gui(WLA)
     eval {label $f.lCW -text "C:"} $Gui(WLA)
@@ -831,9 +831,9 @@ proc EdPhaseWireBuildGUI {} {
     set f $Ed(EdPhaseWire,frame).fTabbedFrame.fAdvanced.fSettings.fWL
 
     eval {checkbutton $f.cWindowLevel \
-	    -text "Window Level Image Before Phase Comp." \
-	    -variable Ed(EdPhaseWire,useWindowLevel) \
-	    -indicatoron 0 -command "EdPhaseUseWindowLevel"} $Gui(WCA)
+        -text "Window Level Image Before Phase Comp." \
+        -variable Ed(EdPhaseWire,useWindowLevel) \
+        -indicatoron 0 -command "EdPhaseUseWindowLevel"} $Gui(WCA)
     pack $f.cWindowLevel -side left -padx 2 
     TooltipAdd $f.cWindowLevel "Toggle window leveling of data before phase computation"
 
@@ -851,33 +851,33 @@ proc EdPhaseUseWindowLevel {} {
     set e EdPhaseWire
 
     if $Ed($e,useWindowLevel) {
-	puts "USING WL"
-	# get original volume and its current w/l
-	#-------------------------------------------
-	set v [EditorGetOriginalID]
-	set window [Volume($v,node) GetWindow]
-	set level  [Volume($v,node) GetLevel]
-	
-	# imitate this display in our pipeline
-	#-------------------------------------------
-	Ed($e,phase,windowLevel) SetWindow $window
-	Ed($e,phase,windowLevel) SetLevel $level
-	# get the lookup table we are using already for this volume
-	Ed($e,phase,windowLevel) SetLookupTable Lut([Volume($v,node) GetLUTName],lut)
-	
-	# set up pipeline
-	#-------------------------------------------
-	foreach s $Slice(idList) {
-	    Ed($e,phase,fftSlice) SetInput [Ed($e,phase,wlComp)  GetOutput]
-	    Slicer SetFirstFilter $s Ed($e,phase,windowLevel)
-	}
-	puts "win: $window lev: $level"
-	
+    puts "USING WL"
+    # get original volume and its current w/l
+    #-------------------------------------------
+    set v [EditorGetOriginalID]
+    set window [Volume($v,node) GetWindow]
+    set level  [Volume($v,node) GetLevel]
+    
+    # imitate this display in our pipeline
+    #-------------------------------------------
+    Ed($e,phase,windowLevel) SetWindow $window
+    Ed($e,phase,windowLevel) SetLevel $level
+    # get the lookup table we are using already for this volume
+    Ed($e,phase,windowLevel) SetLookupTable Lut([Volume($v,node) GetLUTName],lut)
+    
+    # set up pipeline
+    #-------------------------------------------
+    foreach s $Slice(idList) {
+        Ed($e,phase,fftSlice) SetInput [Ed($e,phase,wlComp)  GetOutput]
+        Slicer SetFirstFilter $s Ed($e,phase,windowLevel)
+    }
+    puts "win: $window lev: $level"
+    
     } else {
-	puts "NO WL"
-	foreach s $Slice(idList) {
-	    Slicer SetFirstFilter $s Ed($e,phase,fftSlice) 
-	}
+    puts "NO WL"
+    foreach s $Slice(idList) {
+        Slicer SetFirstFilter $s Ed($e,phase,fftSlice) 
+    }
     }
 }
 
@@ -927,11 +927,11 @@ proc EdPhaseWirePrettyPicture {}  {
 
     set invis [Ed(EdPhaseWire,lwPath$s) GetInvisibleLastSegment]
     if {$invis == 1} {
-	puts "turning invis off"
-	set invis 0
+    puts "turning invis off"
+    set invis 0
     } else {
-	puts "turning invis on"
-	set invis 1
+    puts "turning invis on"
+    set invis 1
     }
 
     Ed(EdPhaseWire,lwPath$s) SetInvisibleLastSegment $invis
@@ -955,8 +955,8 @@ proc EdPhaseWireRaiseEdgeImageWin {} {
 
     # if already created, raise and return
     if {[winfo exists $w] != 0} {
-	raise $w
-	return
+    raise $w
+    return
     }
 
     # make the pop up window
@@ -986,7 +986,7 @@ proc EdPhaseWireRaiseEdgeImageWin {} {
     #frame $w.fTop
     set f $w.fTop.fLeft
     vtkTkImageViewerWidget $f.v$s -width 256 -height 256 \
-	    -iv Ed(EdPhaseWire,viewer$s)
+        -iv Ed(EdPhaseWire,viewer$s)
     pack $f.v$s -side left -fill both
     bind $f.v$s <Expose> {ExposeTkImageViewer %W %x %y %w %h}
     set viewerWidget $f.v$s
@@ -1025,15 +1025,15 @@ proc EdPhaseWireRaiseEdgeImageWin {} {
     frame $f.f1
     label $f.f1.windowLabel -text "Window"
     scale $f.f1.window -from 1 -to [expr $win * 2]  \
-	    -variable Ed(EdPhaseWire,viewerWindow$s) \
-	    -orient horizontal \
-	    -command "Ed(EdPhaseWire,viewer$s) SetColorWindow"
+        -variable Ed(EdPhaseWire,viewerWindow$s) \
+        -orient horizontal \
+        -command "Ed(EdPhaseWire,viewer$s) SetColorWindow"
     frame $f.f2
     label $f.f2.levelLabel -text "Level"
     scale $f.f2.level -from [expr $lev - $win] -to [expr $lev + $win] \
-	    -variable Ed(EdPhaseWire,viewerLevel$s) \
-	    -orient horizontal \
-	    -command "Ed(EdPhaseWire,viewer$s) SetColorLevel"
+        -variable Ed(EdPhaseWire,viewerLevel$s) \
+        -orient horizontal \
+        -command "Ed(EdPhaseWire,viewer$s) SetColorLevel"
     pack $f -side top
     pack $f.f1 $f.f2 -side top
     pack $f.f1.windowLabel $f.f1.window -side left
@@ -1049,11 +1049,11 @@ proc EdPhaseWireRaiseEdgeImageWin {} {
     set edges {0 1 2 3 4 5 6 7}
     set Ed(EdPhaseWire,edge$s) 0
     foreach edge $edges text $edges {
-	radiobutton $f.r$edge -width 2 -indicatoron 0\
-		-text "$text" -value "$edge" \
-		-variable Ed(EdPhaseWire,edge$s) \
-		-command "EdPhaseWireUpdateEdgeImageWin $viewerWidget $edge"
-	pack $f.r$edge -side left -fill x -anchor e
+    radiobutton $f.r$edge -width 2 -indicatoron 0\
+        -text "$text" -value "$edge" \
+        -variable Ed(EdPhaseWire,edge$s) \
+        -command "EdPhaseWireUpdateEdgeImageWin $viewerWidget $edge"
+    pack $f.r$edge -side left -fill x -anchor e
     }
     pack $f -side top
 
@@ -1099,11 +1099,11 @@ proc EdPhaseWireUpdateEdgeImageWin {viewerWidget edgeNum} {
 
     # histogram
     #HistogramWidgetSetInput $Ed(EdPhaseWire,edgeHistWidget$s) \
-#	    [Ed(EdPhaseWire,viewer$s) GetInput]
+#        [Ed(EdPhaseWire,viewer$s) GetInput]
     #scan [[Ed(EdPhaseWire,viewer$s) GetInput] GetExtent] \
-	#    "%d %d %d %d %d %d" x1 x2 y1 y2 z1 z2
+    #    "%d %d %d %d %d %d" x1 x2 y1 y2 z1 z2
     #HistogramWidgetSetExtent $Ed(EdPhaseWire,edgeHistWidget$s) \
-	#    $x1 $x2 $y1 $y2 $z1 $z2
+    #    $x1 $x2 $y1 $y2 $z1 $z2
     #HistogramWidgetRender $Ed(EdPhaseWire,edgeHistWidget$s)
 }
 
@@ -1121,7 +1121,7 @@ proc EdPhaseWireWriteEdgeImage {} {
     # currently chosen edge dir on GUI
     set edge $Ed(EdPhaseWire,edge$s)
     if {$edge == ""} {
-	set edge 0
+    set edge 0
     }
     # get filename
     set filename "edgeImage${edge}.001"
@@ -1143,7 +1143,7 @@ proc EdPhaseWireWriteEdgeImage {} {
     cast Delete
     writer Delete
     tk_messageBox -message \
-	    "Saved image as $filename in dir where slicer was run.\nOpen image as unsigned char to view in slicer."
+        "Saved image as $filename in dir where slicer was run.\nOpen image as unsigned char to view in slicer."
 
 }
 
@@ -1157,7 +1157,7 @@ proc EdPhaseWireWriteEdgeImage {} {
 proc EdPhaseWireStartPipeline {} {
     global Ed Slice Gui Volume
 
-    set Gui(progressText) "PhaseWire Initialization"	
+    set Gui(progressText) "PhaseWire Initialization"    
 
     set e EdPhaseWire
 
@@ -1216,24 +1216,24 @@ proc EdPhaseWireEnter {} {
     # Create filter kernels
     #-------------------------------------------
     if {[EdPhaseWireSetOmega $Ed(EdPhaseWire,omega,id)] == 1} {
-	puts "Unable to create filter kernels"
-	# give up the ghost
-	return
+    puts "Unable to create filter kernels"
+    # give up the ghost
+    return
     }
     
     # make sure we've got phase
     #if {[EdPhaseWireFindInputPhaseVolumes] == "" } {
-	#	tk_messageBox -message "Cannot find phase and cert volumes"
-	# Lauren don't let the user enter this effect.
-	
-	#	return
-	#    }
-	
+    #    tk_messageBox -message "Cannot find phase and cert volumes"
+    # Lauren don't let the user enter this effect.
+    
+    #    return
+    #    }
+    
     # we are drawing in the label layer, so it had
     # better be visible
     if {$Editor(display,labelOn) == 0} {
-	MainSlicesSetVolumeAll Label [EditorGetWorkingID]
-	# Lauren then variable is wrong?
+    MainSlicesSetVolumeAll Label [EditorGetWorkingID]
+    # Lauren then variable is wrong?
     }
 
     # ignore mouse movement until we have a start point
@@ -1250,7 +1250,7 @@ proc EdPhaseWireEnter {} {
 
     # make sure we're drawing the right color
     foreach s $Slice(idList) {
-	Ed(EdPhaseWire,lwPath$s) SetLabel $Label(label)
+    Ed(EdPhaseWire,lwPath$s) SetLabel $Label(label)
     }
 
     # use slicer object to draw (like in EdDraw)
@@ -1258,10 +1258,10 @@ proc EdPhaseWireEnter {} {
     Slicer DrawSetRadius $Ed($e,radius)
     Slicer DrawSetShapeTo$Ed($e,shape)
     if {$Label(activeID) != ""} {
-	set color [Color($Label(activeID),node) GetDiffuseColor]
-	eval Slicer DrawSetColor $color
+    set color [Color($Label(activeID),node) GetDiffuseColor]
+    eval Slicer DrawSetColor $color
     } else {
-	Slicer DrawSetColor 0 0 0
+    Slicer DrawSetColor 0 0 0
     }
 }
 
@@ -1279,7 +1279,7 @@ proc EdPhaseWireExit {} {
 
     # reset PhaseWire drawing
     foreach s $Slice(idList) {
-	EdPhaseWireResetSlice $s
+    EdPhaseWireResetSlice $s
     }
 
     # no more filter pipeline
@@ -1300,20 +1300,20 @@ proc EdPhaseWireUpdate {type {param ""}} {
     set e EdPhaseWire
     
     switch $type {
-	SetShape {
-	    Slicer DrawSetShapeTo$Ed($e,shape)
-	    set Ed($e,shape) [Slicer GetShapeString]
-	}
-	PhaseOffset {
-	    foreach s $Slice(idList) {
-		Ed($e,phaseScale$s) SetShift \
-			[EdPhaseConvertToRadians $Ed($e,phaseOffset)]
-		Ed($e,phaseScale$s) Update
+    SetShape {
+        Slicer DrawSetShapeTo$Ed($e,shape)
+        set Ed($e,shape) [Slicer GetShapeString]
+    }
+    PhaseOffset {
+        foreach s $Slice(idList) {
+        Ed($e,phaseScale$s) SetShift \
+            [EdPhaseConvertToRadians $Ed($e,phaseOffset)]
+        Ed($e,phaseScale$s) Update
 
-		# clear the cached information in livewire
-		Ed(EdPhaseWire,lwPath$s) ClearContourTail		
-	    }
-	}
+        # clear the cached information in livewire
+        Ed(EdPhaseWire,lwPath$s) ClearContourTail        
+        }
+    }
     }
 
 }
@@ -1333,7 +1333,7 @@ proc EdPhaseWireB1 {x y} {
     
     # if we just changed to this slice
     if {$Ed(EdPhaseWire,activeSlice) != $s} {
-	set Ed(EdPhaseWire,activeSlice) $s
+    set Ed(EdPhaseWire,activeSlice) $s
     }
 
     # tell the livewire filter its new start point
@@ -1341,26 +1341,26 @@ proc EdPhaseWireB1 {x y} {
     
     # set new value of phase offset if needed
     if {$Ed(EdPhaseWire,clickSetsPhase) == 1} {
-	puts "Lauren implement clicking!"
-	return
-	# we are not using the slicer reformatting anymore:
+    puts "Lauren implement clicking!"
+    return
+    # we are not using the slicer reformatting anymore:
 
-	# grab phase (grayscale value of pixel) at this point
-	set v Volume($Ed(EdPhaseWire,phaseVol),vol)
-	set data [Slicer GetReformatOutputFromVolume $v]
-	# turn off display of error if we click outside of the image
-	$data GlobalWarningDisplayOff
-	# phase value:
-	set pixel [$data GetScalarComponentAsFloat $x $y 0 0]
-	$data GlobalWarningDisplayOn
-	puts $pixel
-	
-	# follow this value phase isocontour now. 
-	# (0 means we clicked out of image, and we won't follow that value)
-	if {$pixel != 0} {
-	    set Ed(EdPhaseWire,phaseOffset) [EdPhaseConvertToDegrees $pixel]
-	}
-	EdPhaseWireUpdate PhaseOffset
+    # grab phase (grayscale value of pixel) at this point
+    set v Volume($Ed(EdPhaseWire,phaseVol),vol)
+    set data [Slicer GetReformatOutputFromVolume $v]
+    # turn off display of error if we click outside of the image
+    $data GlobalWarningDisplayOff
+    # phase value:
+    set pixel [$data GetScalarComponentAsFloat $x $y 0 0]
+    $data GlobalWarningDisplayOn
+    puts $pixel
+    
+    # follow this value phase isocontour now. 
+    # (0 means we clicked out of image, and we won't follow that value)
+    if {$pixel != 0} {
+        set Ed(EdPhaseWire,phaseOffset) [EdPhaseConvertToDegrees $pixel]
+    }
+    EdPhaseWireUpdate PhaseOffset
     }
 
 }
@@ -1379,9 +1379,9 @@ proc EdPhaseWireMotion {x y} {
     
     # if no first click to begin contour, do nothing
     if {$Ed(EdPhaseWire,pipelineActiveAndContourStarted) == 0} {
-	return
+    return
     }
-	    
+        
     Ed(EdPhaseWire,lwPath$s) SetEndPoint $x $y
 }
 
@@ -1408,11 +1408,11 @@ proc EdPhaseWireClickLabel {{label ""} } {
     global Label Slice
 
     if {$label == ""} {
-	set label $Label(label)	
+    set label $Label(label)    
     }
     # set the label for the clicked-on points
     foreach s $Slice(idList) {
-	Ed(EdPhaseWire,lwPath$s) SetClickLabel  $label
+    Ed(EdPhaseWire,lwPath$s) SetClickLabel  $label
     }
 }
 
@@ -1427,17 +1427,17 @@ proc EdPhaseWireLabel {} {
     global Color Label Slice
     
     LabelsFindLabel
-	
+    
     if {$Label(activeID) != ""} {
-	set color [Color($Label(activeID),node) GetDiffuseColor]
-	eval Slicer DrawSetColor $color
+    set color [Color($Label(activeID),node) GetDiffuseColor]
+    eval Slicer DrawSetColor $color
     } else {
-	Slicer DrawSetColor 0 0 0
+    Slicer DrawSetColor 0 0 0
     }
 
     # update filter stuff    
     foreach s $Slice(idList) {
-	Ed(EdPhaseWire,lwPath$s) SetLabel $Label(label)	
+    Ed(EdPhaseWire,lwPath$s) SetLabel $Label(label)    
     }
 
     # render whatever we are supposed to (slice, 3slice, or 3D)
@@ -1527,8 +1527,8 @@ proc EdPhaseWireApply {} {
     # if there are no points, do nothing
     set rasPoints [Ed(EdPhaseWire,lwPath$s) GetContourPixels]
     if {[$rasPoints GetNumberOfPoints] == 0} {
-	puts "no points to apply!"
-	return
+    puts "no points to apply!"
+    return
     }
     
     set e EdPhaseWire
@@ -1539,19 +1539,19 @@ proc EdPhaseWireApply {} {
 
     # Validate input    
     if {[ValidateInt $Label(label)] == 0} {
-	tk_messageBox -message "Output label is not an integer."
-	return
+    tk_messageBox -message "Output label is not an integer."
+    return
     }
     if {[ValidateInt $Ed($e,radius)] == 0} {
-	tk_messageBox -message "Point Radius is not an integer."
-	return
+    tk_messageBox -message "Point Radius is not an integer."
+    return
     }
 
     # standard editor function must be called
     EdSetupBeforeApplyEffect $v $Ed($e,scope) Active
 
     # text over blue progress bar
-    set Gui(progressText) "PhaseWire [Volume($v,node) GetName]"	
+    set Gui(progressText) "PhaseWire [Volume($v,node) GetName]"    
 
     # attributes of region to draw
     set label    $Label(label)
@@ -1561,8 +1561,8 @@ proc EdPhaseWireApply {} {
     # Give points to slicer object to convert to ijk
     set numPoints [$rasPoints GetNumberOfPoints]
     for {set p 0} {$p < $numPoints} {incr p} {
-	scan [$rasPoints GetPoint $p] "%d %d %d" x y z
-	Slicer DrawInsertPoint $x $y
+    scan [$rasPoints GetPoint $p] "%d %d %d" x y z
+    Slicer DrawInsertPoint $x $y
     }
     Slicer DrawComputeIjkPoints
     set points [Slicer GetDrawIjkPoints]
@@ -1678,20 +1678,20 @@ proc EdPhaseWireFindInputPhaseVolumes {} {
     set cert "cert"
 
     foreach v $Volume(idList) {
-	set n Volume($v,node)
-	set name [$n GetName]
-	#puts $name
-	if {$name == $phase} {
-	    set phaseVol $v
-	}
-	if {$name == $cert} {
-	    set certVol $v
-	}
+    set n Volume($v,node)
+    set name [$n GetName]
+    #puts $name
+    if {$name == $phase} {
+        set phaseVol $v
+    }
+    if {$name == $cert} {
+        set certVol $v
+    }
     }
     
     if {$phaseVol == "" || $certVol == ""} {
-	puts "can't find phase and cert volumes named $phase and $cert"
-	return ""
+    puts "can't find phase and cert volumes named $phase and $cert"
+    return ""
     }
 
     set Ed(EdPhaseWire,phaseVol) $phaseVol
@@ -1713,46 +1713,46 @@ proc EdPhaseWireUsePhasePipeline {} {
     set e EdPhaseWire
 
     foreach s $Slice(idList) {
-	
+    
 
-	# get input grayscale images from Slicer object
-	# (grab reformatted image to compute its phase)
-	#-------------------------------------------    
-	if $Ed($e,useWindowLevel) {
-	    Ed($e,phase,fftSlice) SetInput [Ed($e,phase,wlComp)  GetOutput]
-	    Slicer SetFirstFilter $s Ed($e,phase,windowLevel)
-	} else {
-	    Slicer SetFirstFilter $s Ed($e,phase,fftSlice) 
-	}
-	#Slicer SetFirstFilter $s Ed($e,gradMag$s)
-	
+    # get input grayscale images from Slicer object
+    # (grab reformatted image to compute its phase)
+    #-------------------------------------------    
+    if $Ed($e,useWindowLevel) {
+        Ed($e,phase,fftSlice) SetInput [Ed($e,phase,wlComp)  GetOutput]
+        Slicer SetFirstFilter $s Ed($e,phase,windowLevel)
+    } else {
+        Slicer SetFirstFilter $s Ed($e,phase,fftSlice) 
+    }
+    #Slicer SetFirstFilter $s Ed($e,gradMag$s)
+    
 
-	# put our output over the slice (so the wire is visible)
-	Slicer SetLastFilter  $s Ed(EdPhaseWire,lwPath$s)  
+    # put our output over the slice (so the wire is visible)
+    Slicer SetLastFilter  $s Ed(EdPhaseWire,lwPath$s)  
 
-	# test this: all input vals > 1000 will be set to 1000.
-	Ed($e,certNorm$s) SetLowerCutoff $Ed(EdPhaseWire,certLowerCutoff)
-	Ed($e,certNorm$s) SetUpperCutoff $Ed(EdPhaseWire,certUpperCutoff)
+    # test this: all input vals > 1000 will be set to 1000.
+    Ed($e,certNorm$s) SetLowerCutoff $Ed(EdPhaseWire,certLowerCutoff)
+    Ed($e,certNorm$s) SetUpperCutoff $Ed(EdPhaseWire,certUpperCutoff)
 
-	# NOTE: no on-the-fly training is in use for now.
-	# Lauren try training someday
-	# training setup:
-	# train on all pixels from current wire (can limit number later)
-	# Ed($e,gradNorm$s) SetLookupPoints [Ed(EdPhaseWire,lwPath$s) GetContourPixels]
-	# Ed($e,gradNorm$s) SetUseLookupTable 1; # estimate distribution
-	#Ed($e,gradNorm)  SetUseGaussianLookup 1; # use simple gaussian model
-	
-	# use current settings from Advanced GUI for combining images
-	set sum Ed($e,imageSumFilter$s)
-	$sum SetWeightForInput 0 $Ed($e,phaseWeight)
-	$sum SetWeightForInput 1 $Ed($e,certWeight)
-	$sum SetWeightForInput 2 $Ed($e,gradWeight)
+    # NOTE: no on-the-fly training is in use for now.
+    # Lauren try training someday
+    # training setup:
+    # train on all pixels from current wire (can limit number later)
+    # Ed($e,gradNorm$s) SetLookupPoints [Ed(EdPhaseWire,lwPath$s) GetContourPixels]
+    # Ed($e,gradNorm$s) SetUseLookupTable 1; # estimate distribution
+    #Ed($e,gradNorm)  SetUseGaussianLookup 1; # use simple gaussian model
+    
+    # use current settings from Advanced GUI for combining images
+    set sum Ed($e,imageSumFilter$s)
+    $sum SetWeightForInput 0 $Ed($e,phaseWeight)
+    $sum SetWeightForInput 1 $Ed($e,certWeight)
+    $sum SetWeightForInput 2 $Ed($e,gradWeight)
 
     } 
     
     # get current w/l and use in our pipeline
     if {$Ed($e,useWindowLevel) == "1"} {
-	EdPhaseUseWindowLevel
+    EdPhaseUseWindowLevel
     }
 
     # update slicer

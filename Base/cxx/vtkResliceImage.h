@@ -3,8 +3,8 @@
   Program:   Samson Timoner TetraMesh Library
   Module:    $RCSfile: vtkResliceImage.h,v $
   Language:  C++
-  Date:      $Date: 2002/03/14 01:56:55 $
-  Version:   $Revision: 1.6 $
+  Date:      $Date: 2002/03/18 21:04:55 $
+  Version:   $Revision: 1.7 $
   
 Copyright (c) 2001 Samson Timoner
 
@@ -96,7 +96,7 @@ protected:
   void ComputeInputUpdateExtent(int inExt[6], int outExt[6]);
   void ExecuteInformation(){this->vtkImageToImageFilter::ExecuteInformation();};
   void ThreadedExecute(vtkImageData *inData, vtkImageData *outData,
-		       int outExt[6], int id);
+               int outExt[6], int id);
   //ETX
 };
 #endif /* DeformImage_h */

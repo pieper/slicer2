@@ -47,31 +47,31 @@
 # .END
 #-------------------------------------------------------------------------------
 proc VolumeMathInit {} {
-	global VolumeMath Module Volume
+    global VolumeMath Module Volume
 
-	# Define Tabs
-	#------------------------------------
-	# Description:
-	#   Each module is given a button on the Slicer's main menu.
-	#   When that button is pressed a row of tabs appear, and there is a panel
-	#   on the user interface for each tab.  If all the tabs do not fit on one
-	#   row, then the last tab is automatically created to say "More", and 
-	#   clicking it reveals a second row of tabs.
-	#
-	#   Define your tabs here as shown below.  The options are:
-	#   
-	#   row1List = list of ID's for tabs. (ID's must be unique single words)
-	#   row1Name = list of Names for tabs. (Names appear on the user interface
-	#              and can be non-unique with multiple words.)
-	#   row1,tab = ID of initial tab
-	#   row2List = an optional second row of tabs if the first row is too small
-	#   row2Name = like row1
-	#   row2,tab = like row1 
-	#
-	set m VolumeMath
+    # Define Tabs
+    #------------------------------------
+    # Description:
+    #   Each module is given a button on the Slicer's main menu.
+    #   When that button is pressed a row of tabs appear, and there is a panel
+    #   on the user interface for each tab.  If all the tabs do not fit on one
+    #   row, then the last tab is automatically created to say "More", and 
+    #   clicking it reveals a second row of tabs.
+    #
+    #   Define your tabs here as shown below.  The options are:
+    #   
+    #   row1List = list of ID's for tabs. (ID's must be unique single words)
+    #   row1Name = list of Names for tabs. (Names appear on the user interface
+    #              and can be non-unique with multiple words.)
+    #   row1,tab = ID of initial tab
+    #   row2List = an optional second row of tabs if the first row is too small
+    #   row2Name = like row1
+    #   row2,tab = like row1 
+    #
+    set m VolumeMath
         set Module($m,row1List) "Help Math Distance Logic"
     set Module($m,row1Name) "{Help} {Math} {Distance} {Logic}"
-	set Module($m,row1,tab) Math
+    set Module($m,row1,tab) Math
 
     # Module Summary Info
     #------------------------------------
@@ -82,73 +82,73 @@ proc VolumeMathInit {} {
     set Module($m,overview) "Math on volumes: addition, etc."
     set Module($m,author) "Samson Timoner, MIT AI Lab"
 
-	# Define Procedures
-	#------------------------------------
-	# Description:
-	#   The Slicer sources all *.tcl files, and then it calls the Init
-	#   functions of each module, followed by the VTK functions, and finally
-	#   the GUI functions. A MRML function is called whenever the MRML tree
-	#   changes due to the creation/deletion of nodes.
-	#   
-	#   While the Init procedure is required for each module, the other 
-	#   procedures are optional.  If they exist, then their name (which
-	#   can be anything) is registered with a line like this:
-	#
-	#   set Module($m,procVTK) VolumeMathBuildVTK
-	#
-	#   All the options are:
-	#
-	#   procGUI   = Build the graphical user interface
-	#   procVTK   = Construct VTK objects
-	#   procMRML  = Update after the MRML tree changes due to the creation
-	#               of deletion of nodes.
-	#   procEnter = Called when the user enters this module by clicking
-	#               its button on the main menu
-	#   procExit  = Called when the user leaves this module by clicking
-	#               another modules button
-	#   procStorePresets  = Called when the user holds down one of the Presets
-	#               buttons.
-	#   procRecallPresets  = Called when the user clicks one of the Presets buttons
-	#               
-	#   Note: if you use presets, make sure to give a preset defaults
-	#   string in your init function, of the form: 
-	#   set Module($m,presets) "key1='val1' key2='val2' ..."
-	#   
-	set Module($m,procGUI)   VolumeMathBuildGUI
-	set Module($m,procMRML)  VolumeMathUpdateGUI
-	set Module($m,procEnter)  VolumeMathEnter
+    # Define Procedures
+    #------------------------------------
+    # Description:
+    #   The Slicer sources all *.tcl files, and then it calls the Init
+    #   functions of each module, followed by the VTK functions, and finally
+    #   the GUI functions. A MRML function is called whenever the MRML tree
+    #   changes due to the creation/deletion of nodes.
+    #   
+    #   While the Init procedure is required for each module, the other 
+    #   procedures are optional.  If they exist, then their name (which
+    #   can be anything) is registered with a line like this:
+    #
+    #   set Module($m,procVTK) VolumeMathBuildVTK
+    #
+    #   All the options are:
+    #
+    #   procGUI   = Build the graphical user interface
+    #   procVTK   = Construct VTK objects
+    #   procMRML  = Update after the MRML tree changes due to the creation
+    #               of deletion of nodes.
+    #   procEnter = Called when the user enters this module by clicking
+    #               its button on the main menu
+    #   procExit  = Called when the user leaves this module by clicking
+    #               another modules button
+    #   procStorePresets  = Called when the user holds down one of the Presets
+    #               buttons.
+    #   procRecallPresets  = Called when the user clicks one of the Presets buttons
+    #               
+    #   Note: if you use presets, make sure to give a preset defaults
+    #   string in your init function, of the form: 
+    #   set Module($m,presets) "key1='val1' key2='val2' ..."
+    #   
+    set Module($m,procGUI)   VolumeMathBuildGUI
+    set Module($m,procMRML)  VolumeMathUpdateGUI
+    set Module($m,procEnter)  VolumeMathEnter
 
 
-	# Define Dependencies
-	#------------------------------------
-	# Description:
-	#   Record any other modules that this one depends on.  This is used 
-	#   to check that all necessary modules are loaded when Slicer runs.
-	#   
-	set Module($m,depend) ""
+    # Define Dependencies
+    #------------------------------------
+    # Description:
+    #   Record any other modules that this one depends on.  This is used 
+    #   to check that all necessary modules are loaded when Slicer runs.
+    #   
+    set Module($m,depend) ""
 
         # Set version info
-	#------------------------------------
-	# Description:
-	#   Record the version number for display under Help->Version Info.
-	#   The strings with the $ symbol tell CVS to automatically insert the
-	#   appropriate info when the module is checked in.
-	#   
+    #------------------------------------
+    # Description:
+    #   Record the version number for display under Help->Version Info.
+    #   The strings with the $ symbol tell CVS to automatically insert the
+    #   appropriate info when the module is checked in.
+    #   
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.23 $} {$Date: 2002/02/19 22:38:48 $}]
+        {$Revision: 1.24 $} {$Date: 2002/03/18 20:52:41 $}]
 
-	# Initialize module-level variables
-	#------------------------------------
-	# Description:
-	#   Keep a global array with the same name as the module.
-	#   This is a handy method for organizing the global variables that
-	#   the procedures in this module and others need to access.
-	#
+    # Initialize module-level variables
+    #------------------------------------
+    # Description:
+    #   Keep a global array with the same name as the module.
+    #   This is a handy method for organizing the global variables that
+    #   the procedures in this module and others need to access.
+    #
 
         # Volume3 = Volume2 operation Volume1
-	set VolumeMath(Volume1) $Volume(idNone)
-	set VolumeMath(Volume2) $Volume(idNone)
-	set VolumeMath(Volume3) $Volume(idNone)
+    set VolumeMath(Volume1) $Volume(idNone)
+    set VolumeMath(Volume2) $Volume(idNone)
+    set VolumeMath(Volume3) $Volume(idNone)
 
    # For Distance Calculations
    set VolumeMath(CurrentPoint) 2
@@ -176,7 +176,7 @@ proc VolumeMathInit {} {
 # .END
 #-------------------------------------------------------------------------------
 proc VolumeMathUpdateGUI {} {
-	global VolumeMath Volume
+    global VolumeMath Volume
 
     DevUpdateNodeSelectButton Volume VolumeMath Volume1 Volume1 DevSelectNode
     DevUpdateNodeSelectButton Volume VolumeMath Volume2 Volume2 DevSelectNode
@@ -201,29 +201,29 @@ proc VolumeMathUpdateGUI {} {
 # .END
 #-------------------------------------------------------------------------------
 proc VolumeMathBuildGUI {} {
-	global Gui VolumeMath Module Label
+    global Gui VolumeMath Module Label
 
-	# A frame has already been constructed automatically for each tab.
-	# A frame named "Stuff" can be referenced as follows:
-	#   
-	#     $Module(<Module name>,f<Tab name>)
-	#
-	# ie: $Module(VolumeMath,fStuff)
+    # A frame has already been constructed automatically for each tab.
+    # A frame named "Stuff" can be referenced as follows:
+    #   
+    #     $Module(<Module name>,f<Tab name>)
+    #
+    # ie: $Module(VolumeMath,fStuff)
 
-	# This is a useful comment block that makes reading this easy for all:
-	#-------------------------------------------
-	# Frame Hierarchy:
-	#-------------------------------------------
-	# fHelp
+    # This is a useful comment block that makes reading this easy for all:
+    #-------------------------------------------
+    # Frame Hierarchy:
+    #-------------------------------------------
+    # fHelp
         # fMath
         #       fSelectMath
-	#	fGrid
-	#	    mbVolume1
-	#	    mbVolume2
-	#	    mbVolume3
-	#	fPack
-	#	    bRun
-	# fDistance
+    #    fGrid
+    #        mbVolume1
+    #        mbVolume2
+    #        mbVolume3
+    #    fPack
+    #        bRun
+    # fDistance
         #       fGrid
         #           rPoint1
         #            ePoint1x
@@ -239,26 +239,26 @@ proc VolumeMathBuildGUI {} {
         #            eDifferencez
         #           lMagnitude
         #            eMagnitude
-	#	fPack
+    #    fPack
         #           ltop
         # fLogic
         #       fSelectMath
-	#	fGrid
-	#	    mbVolume1
-	#	    mbVolume2
-	#	    mbVolume3
-	#	fPack
-	#	    bRun
-	#-------------------------------------------
+    #    fGrid
+    #        mbVolume1
+    #        mbVolume2
+    #        mbVolume3
+    #    fPack
+    #        bRun
+    #-------------------------------------------
 
-	#-------------------------------------------
-	# Help frame
-	#-------------------------------------------
+    #-------------------------------------------
+    # Help frame
+    #-------------------------------------------
 
-	# Write the "help" in the form of psuedo-html.  
-	# Refer to the documentation for details on the syntax.
-	#
-	set help "
+    # Write the "help" in the form of psuedo-html.  
+    # Refer to the documentation for details on the syntax.
+    #
+    set help "
 This Module Exists to do things like subtract and add volumes.
 It also exists to find the distance between two points in a volume.
 Currently, the distance finder is not functional.
@@ -303,28 +303,28 @@ original segmentation.
 <P><B>Known Bugs</B> Don't set the output to be one of the input
 files. Sometimes it doesn't work.
 "
-	regsub -all "\n" $help " " help
-	MainHelpApplyTags VolumeMath $help
-	MainHelpBuildGUI VolumeMath
+    regsub -all "\n" $help " " help
+    MainHelpApplyTags VolumeMath $help
+    MainHelpBuildGUI VolumeMath
 
-	#-------------------------------------------
-	# Math frame
-	#-------------------------------------------
+    #-------------------------------------------
+    # Math frame
+    #-------------------------------------------
 
-	set fMath $Module(VolumeMath,fMath)
-	set f $fMath
+    set fMath $Module(VolumeMath,fMath)
+    set f $fMath
 
-	frame $f.fSelectMath  -bg $Gui(backdrop) -relief sunken -bd 2
-	frame $f.fGrid -bg $Gui(activeWorkspace)
-	frame $f.fPack -bg $Gui(activeWorkspace)
-	pack $f.fSelectMath $f.fGrid $f.fPack -side top -padx 0 -pady $Gui(pad)
+    frame $f.fSelectMath  -bg $Gui(backdrop) -relief sunken -bd 2
+    frame $f.fGrid -bg $Gui(activeWorkspace)
+    frame $f.fPack -bg $Gui(activeWorkspace)
+    pack $f.fSelectMath $f.fGrid $f.fPack -side top -padx 0 -pady $Gui(pad)
 
-	#-------------------------------------------
-	# Math->SelectMath
-	#-------------------------------------------
-	set f $fMath.fSelectMath
+    #-------------------------------------------
+    # Math->SelectMath
+    #-------------------------------------------
+    set f $fMath.fSelectMath
 
-	frame $f.f -bg $Gui(backdrop)
+    frame $f.f -bg $Gui(backdrop)
 
         # the first row and second row
         frame $f.f.1 -bg $Gui(inactiveWorkspace)
@@ -337,38 +337,38 @@ files. Sometimes it doesn't work.
         #
 
         set row 1
-	foreach p "Subtract Add Resample Abs DistMap Hausdorff" {
+    foreach p "Subtract Add Resample Abs DistMap Hausdorff" {
             eval {radiobutton $f.f.$row.r$p \
-			-text "$p" -command "VolumeMathSetMathType" \
-			-variable VolumeMath(MathType) -value $p -width 10 \
-			-indicatoron 0} $Gui(WCA)
-		pack $f.f.$row.r$p -side left -pady 0
+            -text "$p" -command "VolumeMathSetMathType" \
+            -variable VolumeMath(MathType) -value $p -width 10 \
+            -indicatoron 0} $Gui(WCA)
+        pack $f.f.$row.r$p -side left -pady 0
             if { $p == "Resample" } {incr row};
-	}
+    }
 
-	pack $f.f -side left -padx $Gui(pad) -fill x -anchor w
+    pack $f.f -side left -padx $Gui(pad) -fill x -anchor w
 
         set VolumeMath(MathType) Subtract
 
-	#-------------------------------------------
-	# Math->Grid frame
-	#-------------------------------------------
+    #-------------------------------------------
+    # Math->Grid frame
+    #-------------------------------------------
 
-	set f $fMath.fGrid
+    set f $fMath.fGrid
 
         DevAddSelectButton VolumeMath $f Volume2 "Volume2:"   Grid
         DevAddSelectButton VolumeMath $f Volume1 "- Volume1:" Grid
         DevAddSelectButton VolumeMath $f Volume3 "= Volume3:" Grid
 
-	#-------------------------------------------
-	# Math->Pack frame
-	#-------------------------------------------
+    #-------------------------------------------
+    # Math->Pack frame
+    #-------------------------------------------
 
-	set f $fMath.fPack
+    set f $fMath.fPack
 
         DevAddButton $f.bRun "Run" "VolumeMathDoMath"
 
-	pack $f.bRun
+    pack $f.bRun
 
 #        #-------------------------------------------
 #        # Resample frame
@@ -400,9 +400,9 @@ files. Sometimes it doesn't work.
 #
 #        pack $f.bRun
 
-	#-------------------------------------------
-	# Distance Frame
-	#-------------------------------------------
+    #-------------------------------------------
+    # Distance Frame
+    #-------------------------------------------
 
         set fDistance $Module(VolumeMath,fDistance)
         set f $fDistance
@@ -412,7 +412,7 @@ files. Sometimes it doesn't work.
 #                # Get RAS coordinates
 #                Slicer SetReformatPoint $s $x $y
 #                scan [Slicer GetRasPoint] "%g %g %g" xRas yRas zRas
-##		ViewSetFocalPoint $xRas $yRas $zRas
+##        ViewSetFocalPoint $xRas $yRas $zRas
 #
 #                # Zoom
 #                Slicer SetZoomCenter $s $x $y
@@ -426,7 +426,7 @@ files. Sometimes it doesn't work.
 #                # Get RAS coordinates
 #                Slicer SetReformatPoint $s $x $y
 #                scan [Slicer GetRasPoint] "%g %g %g" xRas yRas zRas
-##		ViewSetFocalPoint $xRas $yRas $zRas
+##        ViewSetFocalPoint $xRas $yRas $zRas
 #
 #                SliceMouseAnno $xScr $yScr $x $y
 #
@@ -473,14 +473,14 @@ files. Sometimes it doesn't work.
 
         set f $f.fGrid
 
-	foreach i "2 1" {
+    foreach i "2 1" {
                 # Radio Button For Each Point
 #        DevAddRadiobutton $f.rPoint$i "Point $i" VolumeMath(CurrentPoint) 
 
-		eval  {radiobutton $f.rPoint$i -width 9  \
-			-text "Point $i" -value $i    \
+        eval  {radiobutton $f.rPoint$i -width 9  \
+            -text "Point $i" -value $i    \
                         -variable VolumeMath(CurrentPoint) \
-			-indicatoron 0 } $Gui(WCA)
+            -indicatoron 0 } $Gui(WCA)
 
                 eval  {label $f.lPoint$i -textvariable VolumeMath(Point$i) \
                      } $Gui(WLA)
@@ -504,7 +504,7 @@ files. Sometimes it doesn't work.
 
         # Show the Difference = Point2 - Point 1
         # First the label
-	eval  {label $f.ldifference -text "Difference" } $Gui(WLA)
+    eval  {label $f.ldifference -text "Difference" } $Gui(WLA)
 
         # Now the difference itself
 
@@ -520,7 +520,7 @@ files. Sometimes it doesn't work.
 
        # Show the magnitude of the difference
        # First the label
-	eval  {label $f.lMagnitude -text "Magnitude" } $Gui(WLA)
+    eval  {label $f.lMagnitude -text "Magnitude" } $Gui(WLA)
 
         eval  {entry $f.eMagnitude \
               -textvariable VolumeMath(Magnitude) \
@@ -530,25 +530,25 @@ files. Sometimes it doesn't work.
          grid $f.lMagnitude -sticky e 
 
 
-	#-------------------------------------------
-	# Logic frame
-	#-------------------------------------------
+    #-------------------------------------------
+    # Logic frame
+    #-------------------------------------------
 
-	set fLogic $Module(VolumeMath,fLogic)
-	set f $fLogic
+    set fLogic $Module(VolumeMath,fLogic)
+    set f $fLogic
 
-	frame $f.fSelectMath  -bg $Gui(backdrop) -relief sunken -bd 2
-	frame $f.fLabel -bg $Gui(activeWorkspace)
-	frame $f.fGrid -bg $Gui(activeWorkspace)
-	frame $f.fPack -bg $Gui(activeWorkspace)
-	pack $f.fSelectMath $f.fLabel $f.fGrid $f.fPack -side top -padx 0 -pady $Gui(pad)
+    frame $f.fSelectMath  -bg $Gui(backdrop) -relief sunken -bd 2
+    frame $f.fLabel -bg $Gui(activeWorkspace)
+    frame $f.fGrid -bg $Gui(activeWorkspace)
+    frame $f.fPack -bg $Gui(activeWorkspace)
+    pack $f.fSelectMath $f.fLabel $f.fGrid $f.fPack -side top -padx 0 -pady $Gui(pad)
 
-	#-------------------------------------------
-	# Logic->SelectMath
-	#-------------------------------------------
-	set f $fLogic.fSelectMath
+    #-------------------------------------------
+    # Logic->SelectMath
+    #-------------------------------------------
+    set f $fLogic.fSelectMath
 
-	frame $f.f -bg $Gui(backdrop)
+    frame $f.f -bg $Gui(backdrop)
 
         # the first row and second row
         frame $f.f.1 -bg $Gui(inactiveWorkspace)
@@ -561,67 +561,67 @@ files. Sometimes it doesn't work.
         #
 
         set row 1
-	set tips {"Label all pixels that are labeled in BOTH of the input Volumes (1 and 2).\nUseful for thresholding within a segmented region only."}
-	foreach p "And" tip $tips {
+    set tips {"Label all pixels that are labeled in BOTH of the input Volumes (1 and 2).\nUseful for thresholding within a segmented region only."}
+    foreach p "And" tip $tips {
             eval {radiobutton $f.f.$row.r$p \
-			-text "$p" -command "VolumeMathSetLogicType" \
-			-variable VolumeMath(LogicType) -value $p -width 10 \
-			-indicatoron 0} $Gui(WCA)
-		pack $f.f.$row.r$p -side left -pady 0
-	    TooltipAdd $f.f.$row.r$p $tip
+            -text "$p" -command "VolumeMathSetLogicType" \
+            -variable VolumeMath(LogicType) -value $p -width 10 \
+            -indicatoron 0} $Gui(WCA)
+        pack $f.f.$row.r$p -side left -pady 0
+        TooltipAdd $f.f.$row.r$p $tip
             #if { $p == "Resample" } {incr row};
-	}
+    }
 
-	pack $f.f -side left -padx $Gui(pad) -fill x -anchor w
+    pack $f.f -side left -padx $Gui(pad) -fill x -anchor w
 
         set VolumeMath(LogicType) And
 
-	#-------------------------------------------
-	# Logic->Label
-	#-------------------------------------------
-	set f $fLogic.fLabel
+    #-------------------------------------------
+    # Logic->Label
+    #-------------------------------------------
+    set f $fLogic.fLabel
 
-	# Output label
-	set tip "Label of interest (input/output TRUE value)."
-	eval {button $f.bOutput -text "Label:" \
-		-command "ShowLabels"} $Gui(WBA)
-	TooltipAdd  $f.bOutput $tip
-	eval {entry $f.eOutput -width 6 \
-		-textvariable Label(label)} $Gui(WEA)
-	TooltipAdd  $f.eOutput $tip
-	eval {entry $f.eName -width 14 \
-		-textvariable Label(name)} $Gui(WEA) \
-		{-bg $Gui(activeWorkspace) -state disabled}
-	TooltipAdd  $f.eName $tip
-	grid $f.bOutput $f.eOutput $f.eName -padx 2 -pady $Gui(pad)
-	grid $f.eOutput $f.eName -sticky w
+    # Output label
+    set tip "Label of interest (input/output TRUE value)."
+    eval {button $f.bOutput -text "Label:" \
+        -command "ShowLabels"} $Gui(WBA)
+    TooltipAdd  $f.bOutput $tip
+    eval {entry $f.eOutput -width 6 \
+        -textvariable Label(label)} $Gui(WEA)
+    TooltipAdd  $f.eOutput $tip
+    eval {entry $f.eName -width 14 \
+        -textvariable Label(name)} $Gui(WEA) \
+        {-bg $Gui(activeWorkspace) -state disabled}
+    TooltipAdd  $f.eName $tip
+    grid $f.bOutput $f.eOutput $f.eName -padx 2 -pady $Gui(pad)
+    grid $f.eOutput $f.eName -sticky w
 
-	lappend Label(colorWidgetList) $f.eName
+    lappend Label(colorWidgetList) $f.eName
 
 
 
-	#-------------------------------------------
-	# Logic->Grid frame
-	#-------------------------------------------
+    #-------------------------------------------
+    # Logic->Grid frame
+    #-------------------------------------------
 
-	set f $fLogic.fGrid
+    set f $fLogic.fGrid
 
-	set tip "Input Volume"
+    set tip "Input Volume"
         DevAddSelectButton VolumeMath $f Volume2L "Volume2:"   Grid $tip
         DevAddSelectButton VolumeMath $f Volume1L "AND Volume1:" Grid $tip
-	set tip "Output Volume"
+    set tip "Output Volume"
         DevAddSelectButton VolumeMath $f Volume3L "= Volume3:" Grid $tip
 
-	#-------------------------------------------
-	# Logic->Pack frame
-	#-------------------------------------------
+    #-------------------------------------------
+    # Logic->Pack frame
+    #-------------------------------------------
 
-	set f $fLogic.fPack
+    set f $fLogic.fPack
 
         DevAddButton $f.bRun "Run" "VolumeMathDoLogic"
 
-	pack $f.bRun
-	TooltipAdd $f.bRun "Do the logical operation and output Volume3."
+    pack $f.bRun
+    TooltipAdd $f.bRun "Do the logical operation and output Volume3."
 
     }   
 
@@ -742,16 +742,16 @@ proc VolumeMathPrepareResultVolume {{logic "0"}}  {
     # If so, let's do it.
     
     if {$v3 == -5 } {
-	if {$logic == "0"} {
-	    set name  "VolumeMath$VolumeMath(MathType)Result" 
-	} else {
-	    set name  "VolumeMath$VolumeMath(LogicType)Result" 
-	}
+    if {$logic == "0"} {
+        set name  "VolumeMath$VolumeMath(MathType)Result" 
+    } else {
+        set name  "VolumeMath$VolumeMath(LogicType)Result" 
+    }
         set v3 [DevCreateNewCopiedVolume $v2 "" $name]
         set node [Volume($v3,vol) GetMrmlNode]
         Mrml(dataTree) RemoveItem $node 
         set nodeBefore [Volume($v1,vol) GetMrmlNode]
-	Mrml(dataTree) InsertAfterItem $nodeBefore $node
+    Mrml(dataTree) InsertAfterItem $nodeBefore $node
         MainUpdateMRML
     } else {
 
@@ -759,7 +759,7 @@ proc VolumeMathPrepareResultVolume {{logic "0"}}  {
         # If so, let's ask. If no, return.
          
         set v3name  [Volume($v3,node) GetName]
-	set continue [DevOKCancel "Overwrite $v3name?"]
+    set continue [DevOKCancel "Overwrite $v3name?"]
           
         if {$continue == "cancel"} { return 1 }
         # They say it is OK, so overwrite!
@@ -797,7 +797,7 @@ proc VolumeMathCheckErrors {} {
 # .END
 #-------------------------------------------------------------------------------
 proc VolumeMathDoMath {} {
-	global VolumeMath Volume
+    global VolumeMath Volume
 
 
     if { $VolumeMath(MathType) == "Subtract" } {VolumeMathDoSubtract}
@@ -821,7 +821,7 @@ proc VolumeMathDoMath {} {
 # .END
 #-------------------------------------------------------------------------------
 proc VolumeMathDoLogic {} {
-	global VolumeMath Volume
+    global VolumeMath Volume
 
     if { $VolumeMath(LogicType) == "And"}       {VolumeMathDoAnd}
 
@@ -839,7 +839,7 @@ proc VolumeMathDoLogic {} {
 # .END
 #-------------------------------------------------------------------------------
 proc VolumeMathDoSubtract {} {
-	global VolumeMath Volume
+    global VolumeMath Volume
 
         # Check to make sure no volume is none
 
@@ -877,7 +877,7 @@ proc VolumeMathDoSubtract {} {
 # .END
 #-------------------------------------------------------------------------------
 proc VolumeMathDoAdd {} {
-	global VolumeMath Volume
+    global VolumeMath Volume
 
         # Check to make sure no volume is none
 
@@ -915,7 +915,7 @@ proc VolumeMathDoAdd {} {
 # .END
 #-------------------------------------------------------------------------------
 proc VolumeMathDoHausdorff {} {
-	global VolumeMath Volume
+    global VolumeMath Volume
 
         # Check to make sure no volume is none
 
@@ -1002,7 +1002,7 @@ proc VolumeMathDoHausdorff {} {
 # .END
 #-------------------------------------------------------------------------------
 proc VolumeMathDoDistMap {} {
-	global VolumeMath Volume
+    global VolumeMath Volume
 
         # Check to make sure no volume is none
 
@@ -1046,7 +1046,7 @@ proc VolumeMathDoDistMap {} {
 # .END
 #-------------------------------------------------------------------------------
 proc VolumeMathDoAbs {} {
-	global VolumeMath Volume
+    global VolumeMath Volume
 
         # Check to make sure no volume is none
 
@@ -1085,7 +1085,7 @@ proc VolumeMathDoAbs {} {
 # .END
 #-------------------------------------------------------------------------------
 proc VolumeMathDoResample {} {
-	global VolumeMath Volume
+    global VolumeMath Volume
 
         # Check to make sure no volume is none
 
@@ -1169,8 +1169,8 @@ proc VolumeMathDoAnd {} {
 
     # Validate input
     if {[ValidateInt $Label(label)] == 0} {
-	tk_messageBox -message "Label of interest is not an integer."
-	return
+    tk_messageBox -message "Label of interest is not an integer."
+    return
     }
 
     set v3 $VolumeMath(Volume3)

@@ -40,7 +40,7 @@ proc InitializeWindowLevelInterface {} {
       set res [expr 0.05 * $w]
       .wl.f1.window configure -resolution $res -from $res -to [expr 2.0 * $w]
       .wl.f2.level configure -resolution $res \
-	-from [expr 0.0 + $l - $w] -to [expr 0.0 + $l + $w] 
+    -from [expr 0.0 + $l - $w] -to [expr 0.0 + $l + $w] 
    }
 
    .wl.f1.window set $w
