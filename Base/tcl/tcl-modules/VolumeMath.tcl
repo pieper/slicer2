@@ -118,7 +118,7 @@ proc VolumeMathInit {} {
 	#   appropriate info when the module is checked in.
 	#   
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.2 $} {$Date: 2000/03/02 01:38:08 $}]
+		{$Revision: 1.3 $} {$Date: 2000/03/04 22:25:32 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -270,7 +270,6 @@ Also, this module only does subtraction.
 
 #### Junk that I hope will turn into the getting info from a mouse.
 #        # VolumeMathDistance
-#        "VolumeMathDistance" {
 #                # Get RAS coordinates
 #                Slicer SetReformatPoint $s $x $y
 #                scan [Slicer GetRasPoint] "%g %g %g" xRas yRas zRas
@@ -390,7 +389,7 @@ Also, this module only does subtraction.
 
          grid $f.lMagnitude $f.eMagnitude -padx $Gui(pad) -pady $Gui(pad)
          grid $f.lMagnitude -sticky e 
-}   
+    }   
 
 proc VolumeMathEnter {} { 
     global VolumeMath
