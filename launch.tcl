@@ -50,44 +50,77 @@
 #                   /ITK-build - itk in bin for distribution
 #
 
-
 #
-# add the necessary library directories, both Base and Modules, to the 
-# LD_LIBRARY_PATH environment variable
+# Note: the local vars file overrides the default values in this script
+# - use it to set your local environment and then your change won't 
+#   be overwritten when this file is updated
 #
 
-# set up variables for the OS Builds, to facilitate the move to solaris9
-# can be solaris8 or solaris9
-set solaris "solaris8"
-set linux "redhat7.3"
-set darwin "Darwin"
-set windows "Win32VC7"
-
-# check the build os: SunOS, Linux, Windows NT are possible responses
-switch $tcl_platform(os) {
-    "SunOS" {
-        set env(BUILD) $solaris
-    }
-    "Linux" {
-        set env(BUILD) $linux
-    }
-    "Darwin" {
-        set env(BUILD) $darwin
-    }
-    default {
-        # different windows machines say different things, so assume
-        # that if it doesn't match above it must be windows
-        # (VC7 is Visual C++ 7.0, also known as the .NET version)
-        set env(BUILD) $windows
-        # take out any spaces in the slicer home dir
-        if {[regexp { } $env(SLICER_HOME) match] != 0} {
-            # set it to the short name
-            set env(SLICER_HOME) [file attributes $env(SLICER_HOME) -shortname]
-            puts "Set SLICER_HOME environment variable to shortname: $env(SLICER_HOME)"
-        }
+# Check for a custom configuration, setting the environment variables 
+# on the system level
+if {![info exists env(SLICER_CUSTOM_CONFIG)]} {
+    # set it to simplify futher checking
+    set env(SLICER_CUSTOM_CONFIG) "false"
+}
+if {$env(SLICER_CUSTOM_CONFIG) != "true"} {
+    set bypass_msg "\n\n(Set environment variable SLICER_CUSTOM_CONFIG to true to bypass this message)"
+}
+# The environment variables that we need to have set for slicer 
+# to start up properly
+set envVars {VTK_DIR ITK_BINARY_PATH TCL_BIN_DIR TCL_LIB_DIR}
+# Make up a list of the environment variables that haven't been set already,
+# that we need to set
+set envVarsToSet {}
+foreach v $envVars {
+    if {![info exists env($v)] || $env($v) == "" } {
+        lappend envVarsToSet $v
     }
 }
-puts "\nSlicer build directory set to $env(BUILD)"
+
+# Source the local variables file, if it exists, or set defaults here
+set localvarsfile [file dirname [info script]]/slicer_variables.tcl
+if { [file exists $localvarsfile] } {
+    puts "Sourcing $localvarsfile"
+    source $localvarsfile
+} else {
+    
+    # Set your custom values here
+    set VTK_DIR ${env(SLICER_HOME)}/Lib/${env(BUILD)}/vtk/VTK-build
+    set ITK_BINARY_PATH ${env(SLICER_HOME)}/Lib/${env(BUILD)}/itk/ITK-build
+    set TCL_BIN_DIR ${env(SLICER_HOME)}/Lib/${env(BUILD)}/tcl/TCL/bin
+    set TCL_LIB_DIR ${env(SLICER_HOME)}/Lib/${env(BUILD)}/tcl/TCL/lib
+    # set up variables for the OS Builds, this is all done in the slicer_variables file if it exists
+    set solaris "solaris8"
+    set linux "redhat7.3"
+    set darwin "Darwin"
+    set windows "Win32VC7"
+
+    # check the build os: SunOS, Linux, Windows NT are possible responses
+    switch $tcl_platform(os) {
+        "SunOS" {
+            set env(BUILD) $solaris
+        }
+        "Linux" {
+            set env(BUILD) $linux
+        }
+        "Darwin" {
+            set env(BUILD) $darwin
+        }
+        default {
+            # different windows machines say different things, so assume
+            # that if it doesn't match above it must be windows
+            # (VC7 is Visual C++ 7.0, also known as the .NET version)
+            set env(BUILD) $windows
+            # take out any spaces in the slicer home dir
+            if {[regexp { } $env(SLICER_HOME) match] != 0} {
+                # set it to the short name
+                set env(SLICER_HOME) [file attributes $env(SLICER_HOME) -shortname]
+                puts "Set SLICER_HOME environment variable to shortname: $env(SLICER_HOME)"
+            }
+        }
+    }
+    puts "\nSlicer build directory set to $env(BUILD)"
+}
 
 # if it is an empty string or doesn't exist, set the LD_LIBRARY_PATH 
 if {[catch {
@@ -116,50 +149,57 @@ if { $env(BUILD) == $darwin && [catch {
 #
 # VTK source and binary dirs and tcl dirs should be in the Lib directory
 #
-if { ![info exists env(VTK_SRC_DIR)] || $env(VTK_SRC_DIR) == "" } {
-    set env(VTK_SRC_DIR) ${env(SLICER_HOME)}/Lib/${env(BUILD)}/vtk/VTK
-}
-if { ![info exists env(VTK_BIN_DIR)] || $env(VTK_BIN_DIR) == "" } {
-    set env(VTK_BIN_DIR) ${env(SLICER_HOME)}/Lib/${env(BUILD)}/vtk/VTK-build
-}
-if { ![info exists env(ITK_BIN_DIR)] || $env(ITK_BIN_DIR) == "" } {
-    set env(ITK_BIN_DIR) ${env(SLICER_HOME)}/Lib/${env(BUILD)}/itk/ITK-build
-}
-if { ![info exists env(TCL_BIN_DIR)] || $env(TCL_BIN_DIR) == "" } {
-    set env(TCL_BIN_DIR) ${env(SLICER_HOME)}/Lib/${env(BUILD)}/tcl/bin
-}
-if { ![info exists env(TCL_LIB_DIR)] || $env(TCL_LIB_DIR) == "" } {
-    set env(TCL_LIB_DIR) ${env(SLICER_HOME)}/Lib/${env(BUILD)}/tcl/lib
+
+# Set up the VTK and TCL environment variables
+foreach v $envVars {
+    if {[lsearch $envVarsToSet $v] != -1} {
+        # it's not set already, use our values, either from the variables file, 
+        # or our defaults set above, ie set env(VTK_DIR) $VTK_DIR
+        set env($v) [subst $$v]
+    } else {
+        # it's already been set, don't over-ride
+        puts "NOT Overriding current $v $env($v)"
+        if {$env(SLICER_CUSTOM_CONFIG) != "true"} {
+            tk_messageBox -type ok -message "NOT Overriding current $v $env($v) $bypass_msg"
+        }
+    }
 }
 
-
+#
+# add the necessary library directories, both Base and Modules, to the 
+# LD_LIBRARY_PATH environment variable
+#
 #
 # set the base library paths for this build 
 # 
-if { $env(BUILD) == $solaris || 
-     $env(BUILD) == $linux } {
+if {$env(BUILD) == $solaris || 
+    $env(BUILD) == $linux} {
         # add vtk, slicer, and tcl bins
-        set env(LD_LIBRARY_PATH) $env(VTK_BIN_DIR)/bin:$env(LD_LIBRARY_PATH)
-        set env(LD_LIBRARY_PATH) $env(ITK_BIN_DIR)/bin:$env(LD_LIBRARY_PATH)
+        set env(LD_LIBRARY_PATH) $env(VTK_DIR)/bin:$env(LD_LIBRARY_PATH)
+        set env(LD_LIBRARY_PATH) $env(ITK_BINARY_PATH)/bin:$env(LD_LIBRARY_PATH)
         set env(LD_LIBRARY_PATH) $env(SLICER_HOME)/Base/builds/$env(BUILD)/bin:$env(LD_LIBRARY_PATH)
         set env(LD_LIBRARY_PATH) $env(TCL_LIB_DIR):$env(LD_LIBRARY_PATH)
-    } elseif { $env(BUILD) == $darwin} {
+    } elseif {$env(BUILD) ==  $darwin} { 
         # add vtk, slicer, and tcl bins
-        set env(DYLD_LIBRARY_PATH) $env(VTK_BIN_DIR)/bin:$env(DYLD_LIBRARY_PATH)
-        set env(DYLD_LIBRARY_PATH) $env(ITK_BIN_DIR)/bin:$env(DYLD_LIBRARY_PATH)
+        set env(DYLD_LIBRARY_PATH) $env(VTK_DIR)/bin:$env(DYLD_LIBRARY_PATH)
+        set env(DYLD_LIBRARY_PATH) $env(ITK_BINARY_PATH)/bin:$env(DYLD_LIBRARY_PATH)
         set env(DYLD_LIBRARY_PATH) $env(SLICER_HOME)/Base/builds/$env(BUILD)/bin:$env(DYLD_LIBRARY_PATH)
         set env(DYLD_LIBRARY_PATH) $env(TCL_LIB_DIR):$env(DYLD_LIBRARY_PATH)
     } elseif {$env(BUILD) == $windows} {
         # add vtk, slicer, and tcl bins
-        set env(Path) $env(VTK_BIN_DIR)/bin/debug\;$env(Path)
-        set env(Path) $env(ITK_BIN_DIR)/bin/debug\;$env(Path)
+        set env(Path) $env(VTK_DIR)/bin/debug\;$env(Path)
+        set env(Path) $env(ITK_BINARY_PATH)/bin/debug\;$env(Path)
         set env(Path) $env(SLICER_HOME)/Base/builds/$env(BUILD)/bin/debug\;$env(Path)
         set env(Path) $env(TCL_BIN_DIR)\;$env(Path)
     } else {
         puts "Libraries: unknown build $env(BUILD)"
     }
 
+
 # set the base tcl/tk library paths, using the previously defined TCL_LIB_DIR
+# TODO: try out the following so that we're not tied to a TCL version number:
+# set env(TCL_LIBRARY) [glob $env(TCL_LIB_DIR)/tcl?.?]
+# set env(TK_LIBRARY) [glob $env(TCL_LIB_DIR)/tk?.?]
 set env(TCL_LIBRARY) $env(TCL_LIB_DIR)/tcl8.4
 set env(TK_LIBRARY) $env(TCL_LIB_DIR)/tk8.4
 
@@ -170,9 +210,12 @@ set env(TK_LIBRARY) $env(TCL_LIB_DIR)/tk8.4
 if {$env(BUILD) == $solaris || 
     $env(BUILD) == $linux ||
     $env(BUILD) == $darwin} {
-        set env(TCLLIBPATH) "$env(VTK_BIN_DIR)/Wrapping/Tcl $env(TCLLIBPATH)"
+        set env(TCLLIBPATH) "$env(VTK_DIR)/Wrapping/Tcl $env(TCLLIBPATH)"
 } elseif {$env(BUILD) == $windows} {
-    set env(TCLLIBPATH) "$env(VTK_BIN_DIR)/Wrapping/Tcl/Debug $env(TCLLIBPATH)"
+    set env(TCLLIBPATH) "$env(VTK_DIR)/Wrapping/Tcl/Debug $env(TCLLIBPATH)"
+} else {
+    puts "TCLLIBPATH: Invalid build $env(BUILD)"
+    exit
 }
 
 # same for all platforms
@@ -204,7 +247,7 @@ foreach modulePath $modulePaths {
     foreach dir $modules {
         if { ![file exists $dir/Wrapping/Tcl] } {
             continue ;# without this dir then it's not one we want
-        }
+        }        
         # get the module name
         regexp "$modulePath/(\.\*)" $dir match moduleName
         # if it's not the custom one, append it to the path
@@ -220,6 +263,9 @@ foreach modulePath $modulePaths {
             } elseif {$env(BUILD) == $windows} {
                 set env(Path) $modulePath/$moduleName/builds/$env(BUILD)/bin/debug\;$env(Path)
                 set env(TCLLIBPATH) "$modulePath/$moduleName/Wrapping/Tcl $env(TCLLIBPATH)"
+            } else {
+                    puts "Modules: Invalid build $env(BUILD)"
+                    exit
             }
         }
     }
@@ -304,20 +350,20 @@ foreach a $argv {
 }
 set argv $newargv
 
-if {$env(BUILD) == $solaris ||
+if {$env(BUILD) == $solaris || 
     $env(BUILD) == $darwin ||
     $env(BUILD) == $linux} {
         # - need to run the specially modified tcl interp in the executable 'vtk' on unix
         # - don't put process in background so that jdemo can track its status
         regsub -all "{|}" $argv "\\\"" argv
-        set fp [open "| csh -c \"$env(VTK_BIN_DIR)/bin/vtk $mainscript $argv \" |& cat" r]
+        set fp [open "| csh -c \"$env(VTK_DIR)/bin/vtk $mainscript $argv \" |& cat" r]
     } elseif {$env(BUILD) == $windows} {
         # put slicer in the background on windows so it won't be "Not Responding" in
         # task manager
         regsub -all "{|}" $argv "" argv
         set fp [open "| $env(TCL_BIN_DIR)/wish84.exe $mainscript $argv" r]
     } else {
-        puts stderr "Unknown build: $env(BUILD)"
+        puts stderr "Run: Unknown build: $env(BUILD)"
         exit
     }
 
