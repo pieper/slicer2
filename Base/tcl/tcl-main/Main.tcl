@@ -450,7 +450,7 @@ proc MainInit {} {
 
         # Set version info
     lappend Module(versions) [ParseCVSInfo Main \
-        {$Revision: 1.99 $} {$Date: 2003/05/07 21:46:13 $}]
+        {$Revision: 1.100 $} {$Date: 2003/06/09 18:09:21 $}]
 
     # Call each "Init" routine that's not part of a module
     #-------------------------------------------
@@ -1377,6 +1377,20 @@ proc Tab {m {row ""} {tab ""}} {
         set Module(moreBtn) 1
     } else {
         set Module(moreBtn) 0
+    }
+
+    #
+    # Execute Tab Exit and Entrance procedures
+    # (we only get here if the tab has changed, so these are
+    # the right procs to call)
+    #
+    if {$prevID != ""} {
+        if { [info exists Module($m,$prevTab,procExit)] } {
+            $Module($m,$prevTab,procExit)
+        }
+    }
+    if { [info exists Module($m,$tab,procEnter)] } {
+        $Module($m,$tab,procEnter)
     }
 }
 
