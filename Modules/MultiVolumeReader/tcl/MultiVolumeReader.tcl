@@ -149,7 +149,7 @@ proc MultiVolumeReaderInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.17 $} {$Date: 2005/03/02 22:43:04 $}]
+        {$Revision: 1.18 $} {$Date: 2005/03/17 18:38:19 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -229,7 +229,7 @@ proc MultiVolumeReaderBuildGUI {parent {status 0}} {
     pack $f.fSingle $f.fMultiple $f.fName -side top -pady 1 
 
     set f $parent.fReaderConfig.fFile.fSingle
-    DevAddButton $f.bHelp "?" "" 2 
+    DevAddButton $f.bHelp "?" "fMRIEngineHelpLoadSequence" 2 
     eval {radiobutton $f.r1 -width 23 -text {Load a single file} \
         -variable MultiVolumeReader(fileChoice) -value single \
         -relief flat -offrelief flat -overrelief raised \
@@ -300,6 +300,19 @@ proc MultiVolumeReaderBuildGUI {parent {status 0}} {
     #The "sticky" option aligns items to the left (west) side
     grid $f.lVolNo -row 1 -column 0 -padx 1 -pady 1 -sticky w
     grid $f.sSlider -row 1 -column 1 -padx 1 -pady 1 -sticky w
+}
+
+
+proc fMRIEngineHelpLoadSequence { } {
+    #--- Sequence->Load
+    #--- loading sequences
+    set i [ fMRIEngineGetHelpWinID ]
+    set txt "<H3>Loading sequences</H3>
+ <P> A single file may be loaded by selecting the <I> single file </I> radio button within the Load GUI, and either typing the filename (including its complete path) or using the <I> Browse </I> button to select the file.
+<P> A sequence of files may be loaded by selecting the <I> multiple files </I> radio button and specifying an appropriate file filter in the Load GUI, and then using the <I> Browse </I> button to select one of the files.
+<P><B>Supported file formats</B>
+<P> Currently the fMRIEngine supports the loading of Analyze, DICOM and BXH single- and multi-volume sequences."
+    DevCreateTextPopup infowin$i "fMRIEngine information" 100 100 18 $txt
 }
 
 
@@ -428,8 +441,13 @@ proc MultiVolumeReaderLoad {{status 0}} {
         set sequenceName $MultiVolumeReader(sequenceName)
         set sequenceName [string trim $sequenceName]
         if {$sequenceName == ""} {
-            DevErrorWindow "Sequence name is empty."
-            return 1
+            if {[info exists MultiVolumeReader(defaultSequenceName)]} {
+                set name [incr MultiVolumeReader(defaultSequenceName)]
+            } else {
+                set name 1
+                set MultiVolumeReader(defaultSequenceName) $name
+            }
+            set sequenceName "defSeqName$name" 
         }
         if {[info exists MultiVolumeReader(sequenceNames)]} {
             set found [lsearch -exact $MultiVolumeReader(sequenceNames) $sequenceName]
