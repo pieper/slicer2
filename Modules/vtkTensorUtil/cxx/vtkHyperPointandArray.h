@@ -14,10 +14,10 @@ public:
     vtkHyperPoint(); // method sets up storage
     vtkHyperPoint &operator=(const vtkHyperPoint& hp); //for resizing
     
-    double   X[3];    // position 
+    vtkFloatingPointType   X[3];    // position 
     vtkIdType     CellId;  // cell
     int     SubId; // cell sub id
-    double   P[3];    // parametric coords in cell 
+    vtkFloatingPointType   P[3];    // parametric coords in cell 
     float   W[3];    // eigenvalues (sorted in decreasing value)
     float   *V[3];   // pointers to eigenvectors (also sorted)
     float   V0[3];   // storage for eigenvectors
