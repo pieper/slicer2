@@ -4,15 +4,18 @@ proc ReadHeader {image run utility tk} {
 	# Run a header reading utility
 	if {$run == 1} {
 		if {[catch {set hdr [exec $utility $image]} errmsg] == 1} {
-			puts $errmsg
-			if {$tk == 1} {
-				tk_messageBox -icon error -message $errmsg
+		    # errmsg contains the appropriate result so return it 
+			return $errmsg
+#			puts $errmsg
+#			if {$tk == 1} {
+#				tk_messageBox -icon error -message $errmsg
 			}
-			return
+#			return ""
 		}
 	} else {
 		set fid [open $utility]
 		set hdr [read $fid]
+	        close $fid
 	}
 	return $hdr
 }
@@ -21,6 +24,15 @@ proc ParsePrintHeader {text aHeader} {
 	
 	upvar $aHeader Header
 	set text "$text\n"
+
+	# These are commentys
+	# 'text' was read from the file
+	# This routine parses 'text' to set variables in the Header array.
+	# For each key, find it in the 'text', and set the corresponding
+	# value in the array.
+	#
+	# fKey = the key in the file (text)
+	# aKey = the key in the Header array
 
 	foreach  \
 		fKey "x_resolution y_resolution pixel_xsize pixel_ysize thick space \
@@ -36,6 +48,8 @@ proc ParsePrintHeader {text aHeader} {
 		{
 		if {[regexp "$fKey \*= \*\(\[\^ \]\*\)\n" $text match item] == 1} {
 			set Header($aKey) $item
+		} else {
+			puts "Can't find $fKey"
 		}
 	}
 
@@ -192,6 +206,10 @@ proc GetHeaderInfo {img1 num2 node tk} {
 	set hdr1 [ReadHeader $img1 1 $Path(printHeader) $tk]
 	set hdr2 [ReadHeader $img2 1 $Path(printHeader) $tk]
 
+	puts "hdr1     $hdr1"
+	puts ""
+	puts "hdr2     $hdr2"
+
 	# Parse headers
 	ParsePrintHeader $hdr1 Header1
 	ParsePrintHeader $hdr2 Header2
@@ -214,4 +232,11 @@ proc GetHeaderInfo {img1 num2 node tk} {
 		$Header1(rBR) $Header1(aBR) $Header1(sBR) \
 		$Header2(rC)  $Header2(aC)  $Header2(sC) \
 		$Header2(rTL) $Header2(aTL) $Header2(sTL)
+	
+	# check for error in finding orientation
+	if {[$node GetScanOrder] == "ER"} {
+	    return "-1" 
+	} else {
+		return "0"
+	    }
 }

@@ -36,3 +36,4 @@ node SetName [file tail [file root $img1]]
 vtkMrmlTree tree
 tree AddItem node
 tree Write "output.xml"
+exit

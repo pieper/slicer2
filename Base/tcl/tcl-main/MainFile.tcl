@@ -1,8 +1,12 @@
 
 proc MainFileInit {} {
-	global Module File Path
+	global Module File Path Gui
 
-	set Path(printHeader) [file join $Path(program) [file join bin print_header_NT]]
+	if {$Gui(pc) == 1} {
+		set Path(printHeader) [file join $Path(program) [file join bin print_header_NT]]
+	} else {
+		set Path(printHeader) [file join $Path(program) [file join bin print_header]]
+	}
 
 	lappend Module(procGUI) MainFileBuildGUI
 

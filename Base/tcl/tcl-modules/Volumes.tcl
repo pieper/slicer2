@@ -712,7 +712,9 @@ proc VolumesPropsApply {} {
 		
 		# Read headers
 		} else {
-			GetHeaderInfo [file join $Path(root) $Volume(first)] $Volume(last) $n 1
+			if {[GetHeaderInfo [file join $Path(root) $Volume(first)] \
+				$Volume(last) $n 1] == "-1"} {
+			    puts "error: no header info"}
 		}
 
 		$n SetName $Volume(name)

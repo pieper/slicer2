@@ -204,13 +204,13 @@ proc MainMrmlRead {mrmlFile} {
 	if {[file extension $fileName] != ".mrml" && [file extension $fileName] != ".xml"} {
 		if {[file exists $fileName.xml] == 1} {
 			set fileName $fileName.xml
-		} else {
+		} elseif {[file exists $fileName.mrml] == 1} {
 			set fileName "$fileName.mrml"
 		}
 	}
 
 	# Check the file exists
-	if {[CheckFileExists $fileName] == "0"} {
+	if {$fileName != "" && [CheckFileExists $fileName] == "0"} {
 		set errmsg "Unable to read input MRML file '$fileName'"
 		puts $errmsg
 		tk_messageBox -message $errmsg
@@ -236,14 +236,22 @@ proc MainMrmlRead {mrmlFile} {
 	MainMrmlDeleteAll
 
 	# Open the file to determine it's type
-	set fid [open $fileName r]
-	gets $fid line
- 	close $fid
-	if {[lindex $line 0] == "MRML"} {
+	set version 2
+	if {$fileName == ""} {
+		set version 1
+	} else {
+		set fid [open $fileName r]
+		gets $fid line
+ 		close $fid
+		if {[lindex $line 0] == "MRML"} {
+			set version 1
+		}
+	}
+	if {$version == 1} {
 		puts "MRML V1.0"
 		MainMrmlReadVersion1.0 $fileName
 		MainMrmlBuildTreesVersion1.0
-    } else {
+	} else {
 		puts "MRML V2.0"
 		set tags [MainMrmlReadVersion2.0 $fileName]
 		set tags [MainMrmlAddColors $tags]
@@ -259,11 +267,15 @@ proc MainMrmlReadVersion1.0 {fileName} {
 	global Lut Dag Volume Model Config Color Gui Path env Transform
 
 	# Read file
-	set Dag(read) [MRMLRead $fileName]
-	if {$Dag(read) == "-1"} {
-		tk_messageBox -message "Error reading MRML file: '$fileName'\n\
-			See message written in console." 
-		return
+	if {$fileName == ""} {
+		set Dag(read) [MRMLCreateDag]
+	} else {
+		set Dag(read) [MRMLRead $fileName]
+		if {$Dag(read) == "-1"} {
+			tk_messageBox -message "Error reading MRML file: '$fileName'\n\
+				See message written in console." 
+			return
+		}
 	}
 
 	# Expand URLs
