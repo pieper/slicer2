@@ -25,18 +25,23 @@
 # 'AS IS' BASIS, AND THE AUTHORS AND DISTRIBUTORS HAVE NO OBLIGATION TO PROVIDE
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
-# FILE:        /usr/local/bin/comment
-# DATE:        11/20/1999 15:03
-# LAST EDITOR: gering
+# FILE:        Comment.tcl
 # PROCEDURES:  
-#   PrintCopyright
-#   CopyrightFile
-#   CommentFile
-#   Polish
+#   PrintCopyright fid isTcl
+#   ProcessFile file
+#   CopyrightFile filename
+#   CommentFile filename verbose
+#   Polish data
+#   Comment data
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
 # .PROC PrintCopyright
+#
+# Prints the copyright notice on the top of the file.
+# .ARGS
+# str fid  File ID returned from opening the file
+# int isTcl 1 if this is a TCL file, and 0 otherwise
 # .END
 #-------------------------------------------------------------------------------
 proc PrintCopyright {fid isTcl} {
@@ -99,10 +104,11 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 #-------------------------------------------------------------------------------
 # .PROC ProcessFile
+#
 # This procedure processes a file to call either CommentFile or CopyrightFile
 # depending on the file's type.
 # .ARGS
-# str file    the path of the file to parse, relative to slicer/program
+# str file  the path of the file to parse, relative to slicer/program
 # .END
 #-------------------------------------------------------------------------------
 proc ProcessFile {file} {
@@ -118,6 +124,11 @@ proc ProcessFile {file} {
 
 #-------------------------------------------------------------------------------
 # .PROC CopyrightFile
+#
+# Adds the copyright to any file by stripping off any existing automatically
+# generated comments, and adding new ones.
+# .ARGS
+# str filename the name of the file to edit
 # .END
 #-------------------------------------------------------------------------------
 proc CopyrightFile {filename} {
@@ -147,6 +158,12 @@ proc CopyrightFile {filename} {
 
 #-------------------------------------------------------------------------------
 # .PROC CommentFile
+#
+# This procedure does everything CopyrightFile does except it also adds
+# skeleton procedural comments. The file must be TCL source code.
+# .ARGS
+# str filename the full pathname of the TCL file to comment
+# int verbose prints debug info if 1
 # .END
 #-------------------------------------------------------------------------------
 proc CommentFile {filename {verbose 0}} {
@@ -214,6 +231,44 @@ proc CommentFile {filename {verbose 0}} {
 
 #-------------------------------------------------------------------------------
 # .PROC Polish
+#
+# For each procedure in a file, this routine polishes the procedural comments
+# if the existing comments fall into one of 3 pathological cases.
+# The polished output looks like the following:
+# <code><pre>
+# #------------------------------
+# # .PROC MyProc
+# #
+# # .ARGS
+# # .END
+# #------------------------------
+# proc MyProc {} {
+# }
+# </code></pre>
+# <p>
+# The 3 pathological cases are:
+# <p>
+# <code><pre>
+# proc MyProc {} {
+# }
+# 
+# #-----------------------------
+# # MyProc
+# #-----------------------------
+# proc MyProc {} {
+# }
+#
+# #-----------------------------
+# # .PROC MyProc
+# # .END
+# #-----------------------------
+# proc MyProc {} {
+# }
+#
+# </code></pre>
+#
+# .ARGS
+# str data the text for the entire file
 # .END
 #-------------------------------------------------------------------------------
 proc Polish {data} {
@@ -245,6 +300,7 @@ proc Polish {data} {
 
 #-------------------------------------------------------------------------------
 # .PROC Commment
+#
 # This procedure forms a global array 'Comments' containing the contents of
 # the comments at the procedure level in the file
 # .ARGS
