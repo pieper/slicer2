@@ -38,11 +38,11 @@
 # .END
 #-------------------------------------------------------------------------------
 proc MainHelpInit {} {
-	global Help Module
+	global Help Module Path
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainFile \
-		{$Revision: 1.11 $} {$Date: 2001/02/19 17:53:22 $}]
+		{$Revision: 1.12 $} {$Date: 2001/04/05 23:42:35 $}]
 
 	set Help(tagNormal)   "-font {times 10}"
 	set Help(tagItalic)   "-font {times 10 italic}"
@@ -68,6 +68,10 @@ proc MainHelpInit {} {
 			}
 		}
 	}
+
+	# for launching web browser from Help
+	set Path(browserPath) "netscape"
+	set Path(browserUrl) "http://www.slicer.org/"
 }
 
 # All the Modules have the same Help Button Style.
@@ -100,9 +104,18 @@ proc MainHelpBuildGUI {ModuleName} {
 	MainHelpShow $ModuleArray(helpWidget) $ModuleName
 
 	set f $f.fBtns
-	eval {button $f.bHome -text "Home" -width 5 \
+	eval {button $f.bHome -text "Top" -width 5 \
 		-command "$ModuleArray(helpWidget) see 0.0"} $Gui(WBA)
+
 	pack $f.bHome -side left -padx $Gui(pad)
+
+    # make a button that pops up the slicer home page
+    if {$Gui(pc) == 0} {
+	eval {button $f.bWeb -text "www.slicer.org" -width 15 \
+		-command MainHelpLaunchBrowser} $Gui(WBA)
+	
+	pack  $f.bWeb -side left -padx $Gui(pad)
+    }
 }
 
 #-------------------------------------------------------------------------------
