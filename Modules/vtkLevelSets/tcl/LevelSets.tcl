@@ -158,7 +158,7 @@ proc LevelSetsInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.12 $} {$Date: 2003/07/08 20:29:50 $}]
+        {$Revision: 1.13 $} {$Date: 2003/07/16 20:52:40 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -1002,21 +1002,6 @@ proc LevelSetsBindingCallback { event W X Y x y t } {
     
     scan [$Interactor(activeSlicer) GetIjkPoint] "%g %g %g" xi yi zi
     
-    if {[string compare $event "KeyPress-l"] == 0} {
-        set LevelSets(P0x) [expr round($xi)]
-        set LevelSets(P0y) [expr round($yi)]
-        set LevelSets(P0z) [expr round($zi)]
-    }
-    if {[string compare $event "KeyPress-L"] == 0} {
-        set LevelSets(P1x) [expr round($xi)]
-        set LevelSets(P1y) [expr round($yi)]
-        set LevelSets(P1z) [expr round($zi)]
-    } 
-    if {[string compare $event "Control-KeyPress-l"] == 0} {
-        set LevelSets(P2x) [expr round($xi)]
-        set LevelSets(P2y) [expr round($yi)]
-        set LevelSets(P2z) [expr round($zi)]
-    }
     if {[string compare $event "KeyPress-p"] == 0} {
         puts "Adding Fiducial..."
     }
