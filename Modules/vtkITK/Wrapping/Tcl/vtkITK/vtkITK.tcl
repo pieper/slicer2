@@ -8,6 +8,6 @@ package require vtk
 if {[info commands vtkITK] != "" ||
     [::vtk::load_component vtkITKTCL] == ""} {
     global PACKAGE_DIR_VTKITK
-    source  [file join $PACKAGE_DIR_VTKITK/../../../tcl/EdWatershed.tcl]
+#    source  [file join $PACKAGE_DIR_VTKITK/../../../tcl/EdWatershed.tcl]
     package provide vtkITK 1.0
 }
