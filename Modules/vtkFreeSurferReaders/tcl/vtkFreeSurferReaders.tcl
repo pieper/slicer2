@@ -112,8 +112,8 @@ proc vtkFreeSurferReadersInit {} {
     #   row2,tab = like row1 
     #
 
-    set Module($m,row1List) "Help Volumes Models"
-    set Module($m,row1Name) "{Help} {Volumes} {Models}"
+    set Module($m,row1List) "Help Volumes Models Plot"
+    set Module($m,row1Name) "{Help} {Volumes} {Models} {Plot}"
     set Module($m,row1,tab) Volumes
 
     # Define Procedures
@@ -175,7 +175,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.8 $} {$Date: 2005/01/21 18:10:32 $}]
+        {$Revision: 1.9 $} {$Date: 2005/02/04 22:30:02 $}]
 
 }
 
@@ -196,7 +196,7 @@ proc vtkFreeSurferReadersBuildGUI {} {
     #-------------------------------------------
     # Help frame
     #-------------------------------------------
-    set help "The vtkFreeSuferReaders module allows you to read in FreeSufer format files.<P>Description by tab:<BR><UL><LI><B>Volumes</B>: Load in COR. mgh volumes.<LI><B>Models</B>: Load in model files (${vtkFreeSurferReaders(surfaces)}) and associate scalars with them.(${vtkFreeSurferReaders(scalars)})."
+    set help "The vtkFreeSuferReaders module allows you to read in FreeSufer format files.<P>Description by tab:<BR><UL><LI><B>Volumes</B>: Load in COR. mgh volumes.<LI><B>Models</B>: Load in model files (${vtkFreeSurferReaders(surfaces)}) and associate scalars with them.(${vtkFreeSurferReaders(scalars)}).<LI><B>Plot</B>: under development: plot statistical data"
     regsub -all "\n" $help {} help
     MainHelpApplyTags vtkFreeSurferReaders $help
     MainHelpBuildGUI vtkFreeSurferReaders
@@ -424,7 +424,25 @@ proc vtkFreeSurferReadersBuildGUI {} {
     DevAddButton $f.bCancel "Cancel" "vtkFreeSurferReadersModelCancel" 8
     grid $f.bApply $f.bCancel -padx $Gui(pad)
 
+    #-------------------------------------------
+    # Plot frame
+    #-------------------------------------------
+    set fPlot $Module(vtkFreeSurferReaders,fPlot)
+    set f $fPlot
 
+    DevAddFileBrowse $f vtkFreeSurferReaders "PlotFileName" "Plot header file:" "vtkFreeSurferReadersSetPlotFileName" "fsgd" "\$Volume(DefaultDir)" "Open" "Browse for a plot header file (fsgd)"
+    frame $f.fApply -bg $Gui(activeWorkspace)
+
+    pack $f.fApply -side top -padx $Gui(pad) -pady $Gui(pad) -fill x -expand 1
+
+    #------------
+    # Plot->Apply 
+    #------------
+    set f $Module(vtkFreeSurferReaders,fPlot).fApply
+
+    DevAddButton $f.bApply "Apply" "vtkFreeSurferReadersPlotApply" 8
+    DevAddButton $f.bCancel "Cancel" "vtkFreeSurferReadersPlotCancel" 8
+    grid $f.bApply $f.bCancel -padx $Gui(pad)
 }
 
 #-------------------------------------------------------------------------------
@@ -475,6 +493,9 @@ proc vtkFreeSurferReadersEnter {} {
 proc vtkFreeSurferReadersExit {} {
     global vtkFreeSurferReaders Module
     if {$Module(verbose) == 1} {puts "proc vtkFreeSurferReaders EXIT"}
+    if {[info exist vtkFreeSurferReaders(gdfReader)]} {
+        vtkFreeSurferReaders(gdfReader) Delete
+    }
 }
 
 
@@ -2440,7 +2461,17 @@ proc vtkFreeSurferReadersGDFInit {} {
     set vtkFreeSurferReaders(kValid,lColors) {red blue green yellow black purple orange pink brown}
     set vtkFreeSurferReaders(gGDF,lID) {}
     # should check to see here if the library is loaded
-
+    # incorporate it into the vtkFreeSurferReaders library, then change this to 1
+    set vtkFreeSurferReaders(gbLibLoaded) 0
+    if {[info command vtkGDFReader] == ""} {
+        # the library wasn't loaded in properly
+        set vtkFreeSurferReaders(gbLibLoaded) 0
+    } else {
+        # declare a variable and save it
+        catch "vtkFreeSurferReaders(gdfReader) Delete"
+        vtkGDFReader vtkFreeSurferReaders(gdfReader)
+        set vtkFreeSurferReaders(gbLibLoaded) 1
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -2694,9 +2725,10 @@ proc vtkFreeSurferReadersPlotParseHeader { ifnHeader } {
     set ID 0
     while { [lsearch -exact $vtkFreeSurferReaders(gGDF,lID) $ID] != -1 } { incr ID }
 
-    set err [catch {set vtkFreeSurferReaders(gGDF,$ID,object) [gdfRead $ifnHeader 1]}]
+    set err [catch {set vtkFreeSurferReaders(gGDF,$ID,object) [vtkFreeSurferReaders(gdfReader) ReadHeader $ifnHeader 1]} errMsg]
     if { $err } {
-        puts "vtkFreeSurferReadersPlotParseHeader: Couldn't init GDF."
+        puts "vtkFreeSurferReadersPlotParseHeader: Couldn't read header file $ifnHeader (ID = $ID)"
+        puts "Error: $errMsg"
         return -1
     }
 
@@ -2704,7 +2736,7 @@ proc vtkFreeSurferReadersPlotParseHeader { ifnHeader } {
     # functions return a list of results. The first is an integer
     # representing a result code. The second -> whatever is the actual
     # result of the function.
-    set lResults [gdfGetTitle $vtkFreeSurferReaders(gGDF,$ID,object) ignore]
+    set lResults [vtkFreeSurferReaders(gdfReader) GetTitle $vtkFreeSurferReaders(gGDF,$ID,object) ignore]
     set err [lindex $lResults 0]
     if { 0 == $err } {
         set vtkFreeSurferReaders(gGDF,$ID,title)  [lindex $lResults 1]
@@ -2713,7 +2745,7 @@ proc vtkFreeSurferReadersPlotParseHeader { ifnHeader } {
         set vtkFreeSurferReaders(gGDF,$ID,title)  "Untitled graph"
     }
 
-    set lResults [gdfGetMeasurementName $vtkFreeSurferReaders(gGDF,$ID,object) ignore]
+    set lResults [vtkFreeSurferReaders(gdfReader) GetMeasurementName $vtkFreeSurferReaders(gGDF,$ID,object) ignore]
     set err [lindex $lResults 0]
     if { 0 == $err } {
         set vtkFreeSurferReaders(gGDF,$ID,measurementName)  [lindex $lResults 1]
@@ -2722,7 +2754,7 @@ proc vtkFreeSurferReadersPlotParseHeader { ifnHeader } {
         set vtkFreeSurferReaders(gGDF,$ID,measurementName)  "Measurement"
     }
 
-    set lResults [gdfGetSubjectName $vtkFreeSurferReaders(gGDF,$ID,object) ignore]
+    set lResults [vtkFreeSurferReaders(gdfReader) GetSubjectName $vtkFreeSurferReaders(gGDF,$ID,object) ignore]
     set err [lindex $lResults 0]
     if { 0 == $err } {
         set vtkFreeSurferReaders(gGDF,$ID,subjectName)  [lindex $lResults 1]
@@ -2732,7 +2764,7 @@ proc vtkFreeSurferReadersPlotParseHeader { ifnHeader } {
     }
 
 
-    set lResults [gdfGetDataFileName $vtkFreeSurferReaders(gGDF,$ID,object) ignore]
+    set lResults [vtkFreeSurferReaders(gdfReader) GetDataFileName $vtkFreeSurferReaders(gGDF,$ID,object) ignore]
     set err [lindex $lResults 0]
     if { 0 == $err } {
         set vtkFreeSurferReaders(gGDF,$ID,dataFileName)  [lindex $lResults 1]
@@ -2742,7 +2774,7 @@ proc vtkFreeSurferReadersPlotParseHeader { ifnHeader } {
     }
 
 
-    set lResults [gdfGetNumClasses $vtkFreeSurferReaders(gGDF,$ID,object)]
+    set lResults [vtkFreeSurferReaders(gdfReader) GetNumClasses $vtkFreeSurferReaders(gGDF,$ID,object)]
     set err [lindex $lResults 0]
     if { 0 == $err } {
         set vtkFreeSurferReaders(gGDF,$ID,cClasses)  [lindex $lResults 1]
@@ -2754,7 +2786,7 @@ proc vtkFreeSurferReadersPlotParseHeader { ifnHeader } {
 
         for { set nClass 0 } { $nClass < $vtkFreeSurferReaders(gGDF,$ID,cClasses) } { incr nClass } {
 
-            set lResults [gdfGetNthClassLabel $vtkFreeSurferReaders(gGDF,$ID,object) $nClass ignore]
+            set lResults [vtkFreeSurferReaders(gdfReader) GetNthClassLabel $vtkFreeSurferReaders(gGDF,$ID,object) $nClass ignore]
             set err [lindex $lResults 0]
             if { 0 == $err } {
                 set vtkFreeSurferReaders(gGDF,$ID,classes,$nClass,label)  [lindex $lResults 1]
@@ -2763,7 +2795,7 @@ proc vtkFreeSurferReadersPlotParseHeader { ifnHeader } {
                 set vtkFreeSurferReaders(gGDF,$ID,classes,$nClass,label) "Class $nClass"
             }
             
-            set lResults [gdfGetNthClassMarker $vtkFreeSurferReaders(gGDF,$ID,object) $nClass ignore]
+            set lResults [vtkFreeSurferReaders(gdfReader) GetNthClassMarker $vtkFreeSurferReaders(gGDF,$ID,object) $nClass ignore]
             set err [lindex $lResults 0]
             if { 0 == $err } {
                 set vtkFreeSurferReaders(gGDF,$ID,classes,$nClass,marker)  [lindex $lResults 1]
@@ -2786,7 +2818,7 @@ proc vtkFreeSurferReadersPlotParseHeader { ifnHeader } {
                 if { $nMarker >= [llength $vtkFreeSurferReaders(kValid,lMarkers)] } {set nMarker 0 }
             }
             
-            set lResults [gdfGetNthClassColor $vtkFreeSurferReaders(gGDF,$ID,object) $nClass ignore]
+            set lResults [vtkFreeSurferReaders(gdfReader) GetNthClassColor $vtkFreeSurferReaders(gGDF,$ID,object) $nClass ignore]
             set err [lindex $lResults 0]
             if { 0 == $err } {
                 set vtkFreeSurferReaders(gGDF,$ID,classes,$nClass,color)  [lindex $lResults 1]
@@ -2821,7 +2853,7 @@ proc vtkFreeSurferReadersPlotParseHeader { ifnHeader } {
     }
 
 
-    set lResults [gdfGetNumVariables $vtkFreeSurferReaders(gGDF,$ID,object)]
+    set lResults [vtkFreeSurferReaders(gdfReader) GetNumVariables $vtkFreeSurferReaders(gGDF,$ID,object)]
     set err [lindex $lResults 0]
     if { 0 == $err } {
         set vtkFreeSurferReaders(gGDF,$ID,cVariables)  [lindex $lResults 1]
@@ -2829,7 +2861,7 @@ proc vtkFreeSurferReadersPlotParseHeader { ifnHeader } {
         for { set nVariable 0 } \
             { $nVariable < $vtkFreeSurferReaders(gGDF,$ID,cVariables) } { incr nVariable } {
                 
-                set lResults [gdfGetNthVariableLabel $vtkFreeSurferReaders(gGDF,$ID,object) $nVariable ignore]
+                set lResults [vtkFreeSurferReaders(gdfReader) GetNthVariableLabel $vtkFreeSurferReaders(gGDF,$ID,object) $nVariable ignore]
                 set err [lindex $lResults 0]
                 if { 0 == $err } {
                     set vtkFreeSurferReaders(gGDF,$ID,variables,$nVariable,label)  [lindex $lResults 1]
@@ -2845,7 +2877,7 @@ proc vtkFreeSurferReadersPlotParseHeader { ifnHeader } {
     }
     
 
-    set lResults [gdfGetDefaultVariable $vtkFreeSurferReaders(gGDF,$ID,object) ignore]
+    set lResults [vtkFreeSurferReaders(gdfReader) GetDefaultVariable $vtkFreeSurferReaders(gGDF,$ID,object) ignore]
     set err [lindex $lResults 0]
     if { 0 == $err } {
         set vtkFreeSurferReaders(gGDF,$ID,defaultVariable)  [lindex $lResults 1]
@@ -2854,7 +2886,7 @@ proc vtkFreeSurferReadersPlotParseHeader { ifnHeader } {
         set vtkFreeSurferReaders(gGDF,$ID,defaultVariable) $vtkFreeSurferReaders(gGDF,$ID,variables,0,label)
     }
 
-    set lResults [gdfGetDefaultVariableIndex $vtkFreeSurferReaders(gGDF,$ID,object)]
+    set lResults [vtkFreeSurferReaders(gdfReader) GetDefaultVariableIndex $vtkFreeSurferReaders(gGDF,$ID,object)]
     set err [lindex $lResults 0]
     if { 0 == $err } {
         set vtkFreeSurferReaders(gGDF,$ID,nDefaultVariable)  [lindex $lResults 1]
@@ -2863,7 +2895,7 @@ proc vtkFreeSurferReadersPlotParseHeader { ifnHeader } {
         set vtkFreeSurferReaders(gGDF,$ID,defaultVariable) 0
     }
 
-    set lResults [gdfGetNumSubjects $vtkFreeSurferReaders(gGDF,$ID,object)]
+    set lResults [vtkFreeSurferReaders(gdfReader) GetNumSubjects $vtkFreeSurferReaders(gGDF,$ID,object)]
     set err [lindex $lResults 0]
     if { 0 == $err } {
         set vtkFreeSurferReaders(gGDF,$ID,cSubjects)  [lindex $lResults 1]
@@ -2871,7 +2903,7 @@ proc vtkFreeSurferReadersPlotParseHeader { ifnHeader } {
         for { set nSubject 0 } \
             { $nSubject < $vtkFreeSurferReaders(gGDF,$ID,cSubjects) } { incr nSubject } {
                 
-                set lResults [gdfGetNthSubjectID $vtkFreeSurferReaders(gGDF,$ID,object) $nSubject ignore]
+                set lResults [vtkFreeSurferReaders(gdfReader) GetNthSubjectID $vtkFreeSurferReaders(gGDF,$ID,object) $nSubject ignore]
                 set err [lindex $lResults 0]
                 if { 0 == $err } {
                     set vtkFreeSurferReaders(gGDF,$ID,subjects,$nSubject,id)  [lindex $lResults 1]
@@ -2880,7 +2912,7 @@ proc vtkFreeSurferReadersPlotParseHeader { ifnHeader } {
                     set vtkFreeSurferReaders(gGDF,$ID,classes,$nClass,label) "Subject $nSubject"
                 }
                 
-                set lResults [gdfGetNthSubjectClass $vtkFreeSurferReaders(gGDF,$ID,object) $nSubject]
+                set lResults [vtkFreeSurferReaders(gdfReader) GetNthSubjectClass $vtkFreeSurferReaders(gGDF,$ID,object) $nSubject]
                 set err [lindex $lResults 0]
                 if { 0 == $err } {
                     set vtkFreeSurferReaders(gGDF,$ID,subjects,$nSubject,nClass)  [lindex $lResults 1]
@@ -2893,7 +2925,7 @@ proc vtkFreeSurferReadersPlotParseHeader { ifnHeader } {
                 for { set nVariable 0 } \
                     { $nVariable < $vtkFreeSurferReaders(gGDF,$ID,cVariables) } { incr nVariable } {
                         
-                        set lResults [gdfGetNthSubjectNthValue \
+                        set lResults [vtkFreeSurferReaders(gdfReader) GetNthSubjectNthValue \
                                           $vtkFreeSurferReaders(gGDF,$ID,object) $nSubject $nVariable]
                         set err [lindex $lResults 0]
                         if { 0 == $err } {
@@ -3094,7 +3126,7 @@ proc vtkFreeSurferReadersPlotPlotData { iID } {
                 set cGood 0
                 foreach lPoint $vtkFreeSurferReaders(gPlot,$iID,state,lPoints) {
                     scan $lPoint "%d %d %d" x y z
-                    set lResults [gdfOffsetSlope $vtkFreeSurferReaders(gGDF,$iID,object) \
+                    set lResults [vtkFreeSurferReaders(gdfReader) OffsetSlope $vtkFreeSurferReaders(gGDF,$iID,object) \
                                       $nClass $nVar $x $y $z]
                     set err [lindex $lResults 0]
                     if { 0 == $err } {
@@ -3139,7 +3171,7 @@ proc vtkFreeSurferReadersPlotCalculateSubjectMeasurement { iID inSubject } {
     foreach lPoint $vtkFreeSurferReaders(gPlot,$iID,state,lPoints) {
     
         scan $lPoint "%d %d %d" x y z
-        set lResults [gdfGetNthSubjectMeasurement $vtkFreeSurferReaders(gGDF,$iID,object) \
+        set lResults [vtkFreeSurferReaders(gdfReader) GetNthSubjectMeasurement $vtkFreeSurferReaders(gGDF,$iID,object) \
                           $inSubject $x $y $z]
         set err [lindex $lResults 0]
         if { 0 == $err } {
@@ -3310,7 +3342,7 @@ proc vtkFreeSurferReadersGDFPlotCBGraphMotion { iID igw iX iY } {
 proc vtkFreeSurferReadersGDFPlotRead { ifnHeader } {
     global vtkFreeSurferReaders
     if { !$vtkFreeSurferReaders(gbLibLoaded) } { 
-        return -1 
+        return -1
     }
     set ID [vtkFreeSurferReadersGDFPlotParseHeader $ifnHeader]
     return $ID
@@ -3608,5 +3640,58 @@ proc vtkFreeSurferReadersPlotSaveToPostscript { iID ifnPS } {
     set err [catch {$vtkFreeSurferReaders(gWidgets,$iID,gwPlot) postscript output $ifnPS} sResult]
     if { $err } {
         puts "vtkFreeSurferReadersPlotSaveToPostscript: Could not save postscript file: $sResult"
+    }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersSetPlotFileName
+# The filename is set elsehwere, in variable vtkFreeSurferReaders(PlotFileName)
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc vtkFreeSurferReadersSetPlotFileName {} {
+    global vtkFreeSurferReaders Module
+
+    if {$Module(verbose) == 1} {
+        puts "FreeSurferReaders Plot filename: $vtkFreeSurferReaders(PlotFileName)"
+    }
+    # vtkFreeSurferReaders(gdfReader) SetHeaderFileName $vtkFreeSurferReaders(PlotFileName)
+}
+
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersPlotApply
+# Read in the plot specified. 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc vtkFreeSurferReadersPlotApply {} {
+    global vtkFreeSurferReaders
+    if {!$::Module(verbose)} {
+        DevInfoWindow "In development... probably not working"
+    }
+    if {$::Module(verbose)} {
+        puts "vtkFreeSurferReadersPlotApply: starting"
+    }
+    vtkFreeSurferReadersGDFInit
+    if {$::Module(verbose)} {
+        vtkFreeSurferReaders(gdfReader) DebugOn
+    }
+#    set fsgdfID [vtkFreeSurferReadersPlotParseHeader $vtkFreeSurferReaders(PlotFileName)]
+
+    if {$::Module(verbose)} {
+        vtkFreeSurferReaders(gdfReader) DebugOff
+    }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersPlotCancel
+# Cancel reading in the plot
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc vtkFreeSurferReadersPlotCancel {} {
+    global vtkFreeSurferReaders
+    if {$::Module(verbose)} {
+       puts "vtkFreeSurferReadersPlotCancel: does nothing"
     }
 }
