@@ -32,6 +32,8 @@
 #   MainAnnoSetHashesVisibility
 #   MainAnnoSetColor
 #   MainAnnoStorePresets
+#   MainAnnoRecallPresets
+#   MainAnnoSetPixelDisplayFormat mode
 #==========================================================================auto=
 
 
@@ -50,7 +52,7 @@ proc MainAnnoInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainAnno \
-		{$Revision: 1.14 $} {$Date: 2002/01/26 21:45:23 $}]
+		{$Revision: 1.15 $} {$Date: 2002/02/06 16:40:42 $}]
 
 	# Preset Defaults
 	set Module(Anno,presets) "box='1' axes='0' outline='0' letters='1' cross='1'\
@@ -441,7 +443,13 @@ proc MainAnnoStorePresets {p} {
 		set Preset(Anno,$p,$key) $Anno($key)
 	}
 }
-	    
+
+#-------------------------------------------------------------------------------
+# .PROC MainAnnoRecallPresets
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc MainAnnoRecallPresets {p} {
 	global Preset Anno
 
@@ -451,3 +459,36 @@ proc MainAnnoRecallPresets {p} {
 	MainAnnoSetVisibility
 }
 
+
+#-------------------------------------------------------------------------------
+# .PROC MainAnnoSetPixelDisplayFormat
+#  Set the display formatting used when the pixel values
+# are shown above the 2D slices.  Options are int display,
+# two decimal points, or full floating-point display.
+# This procedure is here in case a module in the slicer
+# wants to set things up to view non-standard data, say floats.
+#
+# FUTURE IDEAS:
+# It would be nice if this sort of setting could be pushed/
+# popped like the bindings stack that Peter wrote (Events.tcl).
+# This would allow modules to control the visualization
+# but not interfere with other modules.
+# .ARGS
+# str mode can be default, decimal, or full
+# .END
+#-------------------------------------------------------------------------------
+proc MainAnnoSetPixelDisplayFormat {mode} {
+    global Anno
+
+    switch $mode {
+	"default" {
+	    set Anno(pixelDispFormat) %.f
+	} 
+	"decimal" {
+	    set Anno(pixelDispFormat) %6.2f
+	} 
+	"full" {	    
+	    set Anno(pixelDispFormat) %f
+	} 
+    }
+}
