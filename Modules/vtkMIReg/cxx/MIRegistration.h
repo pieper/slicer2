@@ -254,7 +254,19 @@ public:
 
   // Description:
   // Set the Matrix using the current results of the registration
-  void ResultsToMatrix(vtkMatrix4x4 *matrix);
+  void ResultsToMatrix(vtkMatrix4x4 *matrix)
+    { ParamToMatrix(this->GetTransformParameters(),matrix);}
+
+  // Description:
+  // Set the Matrix using the Parameters.
+  // Note that m_Transform is updated with the parameters.
+  // This is really only for testing purposes, do not use.
+  void ParamToMatrix(const ParametersType &Param,
+                     vtkMatrix4x4 *matrix);
+  // Description:
+  // Test the ParamToMatrix function
+  // with the InitializeRegistration function
+  void Test();
 
   // Description:
   // How good was the alignment

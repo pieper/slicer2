@@ -99,6 +99,8 @@ MIRegistration<TFixedImage,TMovingImage>::MIRegistration()
   typename CommandType::Pointer command = CommandType::New();
   command->SetCallbackFunction( this, &Self::StartNewLevel );
   m_Tag = m_Registration->AddObserver( IterationEvent(), command );
+
+  this->Test();
 }
 
 //----------------------------------------------------------------------
@@ -119,18 +121,10 @@ void MIRegistration<TFixedImage,TMovingImage>::InitializeRegistration(
                          vtkMatrix4x4 *matrix)
 {
   vnl_matrix<double> matrix3x4(3,4);
-  matrix3x4[0][0] = matrix->Element[0][0];
-  matrix3x4[0][1] = matrix->Element[0][1];
-  matrix3x4[0][2] = matrix->Element[0][2];
-  matrix3x4[0][3] = matrix->Element[0][3];
-  matrix3x4[1][0] = matrix->Element[1][0];
-  matrix3x4[1][1] = matrix->Element[1][1];
-  matrix3x4[1][2] = matrix->Element[1][2];
-  matrix3x4[1][3] = matrix->Element[1][3];
-  matrix3x4[2][0] = matrix->Element[2][0];
-  matrix3x4[2][1] = matrix->Element[2][1];
-  matrix3x4[2][2] = matrix->Element[2][2];
-  matrix3x4[2][3] = matrix->Element[2][3];
+
+  for(int i=0;i<3;i++)
+    for(int j=0;j<4;j++)
+      matrix3x4[i][j] = matrix->Element[i][j];
 
   vnl_quaternion<double> matrixAsQuaternion(matrix3x4);
 
@@ -152,34 +146,64 @@ void MIRegistration<TFixedImage,TMovingImage>::InitializeRegistration(
 
 //----------------------------------------------------------------------------
 
-// Go from the Registration Results to a Matrix
+// Go from the Param to Matrix
 template <typename TFixedImage, typename TMovingImage>
-void MIRegistration<TFixedImage,TMovingImage>::ResultsToMatrix(
+void MIRegistration<TFixedImage,TMovingImage>::ParamToMatrix(
+                         const ParametersType &Param,
                          vtkMatrix4x4 *matrix)
 {
-  // Get the results
-  ParametersType solution = this->GetTransformParameters();
+  m_Transform->SetParameters(Param);
+  m_Transform->GetRotationMatrix();
 
-  vnl_quaternion<double> quat(solution[0],solution[1],solution[2],solution[3]);
-  vnl_matrix_fixed<double,3,3> mat = quat.rotation_matrix();
-  
-  // Convert the vnl matrix to a vtk mtrix
-  matrix->Element[0][0] = mat(0,0);
-  matrix->Element[0][1] = mat(0,1);
-  matrix->Element[0][2] = mat(0,2);
-  matrix->Element[0][3] = solution[4];
-  matrix->Element[1][0] = mat(1,0);
-  matrix->Element[1][1] = mat(1,1);
-  matrix->Element[1][2] = mat(1,2);
-  matrix->Element[1][3] = solution[5];
-  matrix->Element[2][0] = mat(2,0);
-  matrix->Element[2][1] = mat(2,1);
-  matrix->Element[2][2] = mat(2,2);
-  matrix->Element[2][3] = solution[6];
+  const TransformType::MatrixType ResMat   =m_Transform->GetRotationMatrix();
+  const TransformType::OffsetType ResOffset=m_Transform->GetOffset();
+
+  // Copy the Rotation Matrix
+  for(int i=0;i<3;i++)
+    for(int j=0;j<3;j++)
+      matrix->Element[i][j] = ResMat[i][j];
+
+  // Copy the Offset
+  for(int s=0;s<3;s++)
+    matrix->Element[s][3] = ResOffset[s];
+
+  // Fill in the rest
   matrix->Element[3][0] = 0;
   matrix->Element[3][1] = 0;
   matrix->Element[3][2] = 0;
   matrix->Element[3][3] = 1;
+}
+
+//----------------------------------------------------------------------------
+
+template <typename TFixedImage, typename TMovingImage>
+void MIRegistration<TFixedImage,TMovingImage>::Test()
+{
+  ParametersType test = ParametersType(m_Transform->GetNumberOfParameters());
+  test[0] = 0.08428825861139;
+  test[1] = 0.11238434481518;  
+  test[2] = 0.14048043101898;
+  test[3] = 0.98006657784124;
+  test[4] = 3.1;
+  test[5] = 6.1;
+  test[6] = 5.2;
+
+  vtkMatrix4x4 *mat = vtkMatrix4x4::New();
+  ParamToMatrix(test,mat);
+  InitializeRegistration(mat);
+
+  cerr << "Testing for initial stuff" 
+       << m_InitialParameters[0] << ' '
+       << m_InitialParameters[1] << ' '
+       << m_InitialParameters[2] << ' '
+       << m_InitialParameters[3] << ' '
+       << m_InitialParameters[4] << ' '
+       << m_InitialParameters[5] << ' '
+       << m_InitialParameters[6] << endl;
+
+  cout << m_InitialParameters << endl;
+
+  mat->Delete(); 
 }
 
 //----------------------------------------------------------------------
