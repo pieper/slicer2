@@ -82,7 +82,7 @@ proc MainMrmlInit {} {
         Point Path EndPath Landmark \
         Hierarchy EndHierarchy ModelGroup EndModelGroup ModelRef \
         Scenes EndScenes VolumeState EndVolumeState CrossSection SceneOptions ModelState \
-        Locator TetraMesh"
+        Locator TetraMesh Tensor"
  
     MainMrmlInitIdLists
 
@@ -98,7 +98,7 @@ proc MainMrmlInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo MainMrml \
-    {$Revision: 1.103 $} {$Date: 2004/03/16 00:58:39 $}]
+    {$Revision: 1.104 $} {$Date: 2004/11/03 22:13:16 $}]
 
     set Mrml(colorsUnsaved) 0
 }
