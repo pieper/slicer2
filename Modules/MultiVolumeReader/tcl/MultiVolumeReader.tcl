@@ -149,7 +149,7 @@ proc MultiVolumeReaderInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.2 $} {$Date: 2004/11/12 19:07:16 $}]
+        {$Revision: 1.3 $} {$Date: 2004/11/12 20:29:59 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -199,38 +199,46 @@ proc MultiVolumeReaderBuildGUI {parent} {
 
     # The Volume frame
     set f $parent.fVols
+    DevAddLabel $f.lNote "Configure the reader:"
+    frame $f.fConfig -bg $Gui(activeWorkspace) -relief groove -bd 2 
+    pack $f.lNote -side top -pady 6 
+    pack $f.fConfig -side top
 
-    DevAddLabel $f.lNote "Input a volume file:"
-    pack $f.lNote -side top -pady 2 
-
+    set f $parent.fVols.fConfig
     set MultiVolumeReader(fileTypes) {hdr .bxh}
     DevAddFileBrowse $f MultiVolumeReader "fileName" "File Name:" \
-        "MultiVolumeReaderSetFileFilter" "\$MultiVolumeReader(fileTypes)" "\$Volume(DefaultDir)" \
-        "Open" "Browse for a file" \
-        "" "Absolute"
+        "MultiVolumeReaderSetFileFilter" "\$MultiVolumeReader(fileTypes)" \
+        "\$Volume(DefaultDir)" "Open" "Browse for a volume file" "" "Absolute"
 
     frame $f.fFilter -bg $Gui(activeWorkspace)
     pack $f.fFilter -pady $Gui(pad)
     set f $f.fFilter
 
-    DevAddLabel $f.lNote "Use file filter:"
+    set filter \
+        "Load a single file: Only read the above input file.\n\
+        Load multiple files: Read files in the same directory\n\
+        matching the pattern in the Filter field.              "
+
     eval {radiobutton $f.r1 -width 27 -text {Load a single file} \
         -variable MultiVolumeReader(filterChoice) -value single \
         -relief flat -offrelief flat -overrelief raised \
         -selectcolor blue} $Gui(WEA)
-    pack $f.lNote $f.r1 -side top -pady 2 
-
-    frame $f.fMulti -bg $Gui(activeWorkspace) -relief groove -bd 3
+    pack $f.r1 -side top -pady 2 
+    TooltipAdd $f.r1 $filter 
+    frame $f.fMulti -bg $Gui(activeWorkspace) -relief groove -bd 1 
     pack $f.fMulti -pady 3
     set f $f.fMulti
     eval {radiobutton $f.r2 -width 27 -text {Load multiple files} \
         -variable MultiVolumeReader(filterChoice) -value multiple \
         -relief flat -offrelief flat -overrelief raised \
         -selectcolor blue} $Gui(WEA)
+    TooltipAdd $f.r2 $filter 
+
     DevAddLabel $f.lFilter " Filter:"
     eval {entry $f.eFilter -width 24 \
         -textvariable MultiVolumeReader(filter)} $Gui(WEA)
     bind $f.eFilter <Return> "MultiVolumeReaderLoad" 
+    TooltipAdd $f.eFilter $filter 
 
     #The "sticky" option aligns items to the left (west) side
     grid $f.r2 -row 0 -column 0 -columnspan 2 -padx 5 -pady 3 -sticky w
@@ -241,20 +249,23 @@ proc MultiVolumeReaderBuildGUI {parent} {
     set MultiVolumeReader(singleRadiobutton) $f.r1
     set MultiVolumeReader(multipleRadiobutton) $f.r2
     set MultiVolumeReader(filterEntry) $f.eFilter
-
-    set f $parent.fVols
-    DevAddButton $f.bApply "Apply" "MultiVolumeReaderLoad" 12 
-    pack $f.bApply -side top -pady 2 
-
+    
     set f $parent.fVols
     frame $f.fVName -bg $Gui(activeWorkspace)
-    pack $f.fVName  -pady 2 
+    pack $f.fVName  -pady 5 
     set f $f.fVName
-    DevAddLabel $f.lVName "Active Volume Name (FYI):"
+    DevAddLabel $f.lVName "Active Volume Name:"
     eval {entry $f.eVName -width 30 \
         -state normal \
         -textvariable Volume(name)} $Gui(WEA)
+    TooltipAdd $f.eVName \
+        "Don't need to input anything here. This\n\
+        entry is used to display loading status."
     pack $f.lVName $f.eVName -side top -padx $Gui(pad) -pady 2 
+
+    set f $parent.fVols
+    DevAddButton $f.bApply "Apply" "MultiVolumeReaderLoad" 12 
+    pack $f.bApply -side top -pady 5 
 
     # The Navigate frame
     set f $parent.fNav
@@ -417,6 +428,7 @@ proc MultiVolumeReaderLoad {} {
         }
         default {
             DevErrorWindow "Can't read this file for a volume sequence: $fileName."
+            return
         }
     }
 
