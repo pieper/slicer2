@@ -234,7 +234,7 @@ proc EMSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.14 $} {$Date: 2003/10/31 03:50:16 $}]
+        {$Revision: 1.15 $} {$Date: 2003/11/06 19:36:55 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -2748,9 +2748,9 @@ proc EMSegmentAddClassToOverview {cl} {
      $EMSegment(fTableOverview)$cl.fLocalProb $EMSegment(fTableOverview)$cl.lLocalProb2  -side left -padx 0 -pady 0
 
     if {$EMSegment(Cattrib,$cl,IsSuperClass)} {
-    EMSegmentDefineSuperClassInOverview $cl
+       EMSegmentDefineSuperClassInOverview $cl
     } else {
-    EMSegmentDefineClassInOverview $cl
+       EMSegmentDefineClassInOverview $cl
     }
 }
 
@@ -2782,7 +2782,7 @@ proc EMSegmentDefineSuperClassInOverview {cl} {
     global EMSegment Gui
     # Destory Class specific parameters
     destroy $EMSegment(fTableOverview)$cl.$EMSegment(TO-bColorLabel)
-    destroy $EMSegment(mbOT-ProbVolumeSelect,$cl)
+    if [info exists EMSegment(mbOT-ProbVolumeSelect,$cl) ] { destroy $EMSegment(mbOT-ProbVolumeSelect,$cl) }
     # Define Superclass paramters
     eval {label $EMSegment(fTableOverview)$cl.fLocalProb.lLocalProb -text "" -width 9} $Gui(WLA)  
     EMSegmentAddSuperClassName $EMSegment(fTableOverview)$cl.fLabel $cl
