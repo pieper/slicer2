@@ -46,7 +46,7 @@
 #   FMRIEngineLoadVolumes 
 #   FMRIEngineLoadAnalyzeVolumes 
 #   FMRIEngineComputeActivationVolume 
-#   FMRIEngineSetWindowAndLevel
+#   FMRIEngineSetWindowLevelThresholds
 #   FMRIEnginePushBindings 
 #   FMRIEnginePopBindings 
 #   FMRIEngineCreateBindings  
@@ -162,7 +162,7 @@ proc FMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.10 $} {$Date: 2004/06/23 21:56:09 $}]
+        {$Revision: 1.11 $} {$Date: 2004/06/26 19:58:01 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -420,11 +420,11 @@ proc FMRIEngineBuildUIForAnalyze {parent} {
     global FMRIEngine Gui Volume 
 
     set f $parent
-    frame $f.fVolume   -bg $Gui(activeWorkspace) -relief groove -bd 3
-    frame $f.fSlider   -bg $Gui(activeWorkspace)
-    frame $f.fWinLevel -bg $Gui(activeWorkspace)
-    frame $f.fApply    -bg $Gui(activeWorkspace)
-    frame $f.fStatus   -bg $Gui(activeWorkspace)
+    frame $f.fVolume     -bg $Gui(activeWorkspace) -relief groove -bd 3
+    frame $f.fSlider     -bg $Gui(activeWorkspace)
+    frame $f.fWinLevel   -bg $Gui(activeWorkspace)
+    frame $f.fApply      -bg $Gui(activeWorkspace)
+    frame $f.fStatus     -bg $Gui(activeWorkspace)
  
     pack $f.fVolume $f.fSlider $f.fWinLevel $f.fApply $f.fStatus \
         -side top -fill x -pady $Gui(pad)
@@ -451,8 +451,8 @@ proc FMRIEngineBuildUIForAnalyze {parent} {
     pack $f.label $f.slider -side left -expand false -fill x
 
     set f $parent.fWinLevel
-    DevAddButton $f.bWL "Adjust Window/Level" "FMRIEngineSetWindowAndLevel" 20 
-    pack $f.bWL -side top -pady 8 
+    DevAddButton $f.bThrlds "Adjust Window/Level/Thresholds" "FMRIEngineSetWindowLevelThresholds" 30 
+    pack $f.bThrlds -side top -pady 8 
 
     set f $parent.fApply
     DevAddButton $f.bApply "Apply" "FMRIEngineLoadVolumes" 8 
@@ -598,7 +598,8 @@ proc FMRIEngineLoadAnalyzeVolumes {} {
         
         # VolAnalyzeApply without argument is for Cindy's data (IS scan order) 
         # VolAnalyzeApply "PA" is for Chandlee's data (PA scan order) 
-        set id [VolAnalyzeApply "PA"]
+        # set id [VolAnalyzeApply "PA"]
+        set id [VolAnalyzeApply]
         set FMRIEngine($t,id) $id
 
         incr t
@@ -675,6 +676,9 @@ proc FMRIEngineComputeActivationVolume {} {
     detector SetStimulus $FMRIEngine(stimulus) 
     set FMRIEngine(detector) detector
 
+    if {[info exists FMRIEngine(lowerThreshold)]} {
+        $FMRIEngine(actvolgen) SetLowerThreshold $FMRIEngine(lowerThreshold)
+    }
     $FMRIEngine(actvolgen) SetDetector detector  
     $FMRIEngine(actvolgen) Update
     set id [$FMRIEngine(actvolgen) GetOutput]
@@ -686,8 +690,8 @@ proc FMRIEngineComputeActivationVolume {} {
     MainVolumesCreate $i
 
     # set the name and description of the volume
-    $n SetName "Activation"
-    $n SetDescription "Activation"
+    $n SetName "act"
+    $n SetDescription "act"
 
     eval Volume($i,node) SetSpacing [$id GetSpacing]
     Volume($i,node) SetScanOrder [Volume($FMRIEngine(1,id),node) GetScanOrder]
@@ -707,28 +711,36 @@ proc FMRIEngineComputeActivationVolume {} {
 
 
 #-------------------------------------------------------------------------------
-# .PROC FMRIEngineSetWindowAndLevel
-# For a time series, set window and level for all volumes
+# .PROC FMRIEngineSetWindowLevelThresholds
+# For a time series, set window, level, and low/high thresholds for all volumes
 # with the first volume's values
 # .END
 #-------------------------------------------------------------------------------
-proc FMRIEngineSetWindowAndLevel {} {
+proc FMRIEngineSetWindowLevelThresholds {} {
    global FMRIEngine Volume 
 
     if {[info exists FMRIEngine(noOfAnalyzeVolumes)] == 0} {
         DevErrorWindow "Please load volumes first."
         return
     }
+
+    set len $FMRIEngine(noOfAnalyzeVolumes)
+    set low [Volume(1,node) GetLowerThreshold]
     set win [Volume(1,node) GetWindow]
     set level [Volume(1,node) GetLevel]
-    set len $FMRIEngine(noOfAnalyzeVolumes)
+    set FMRIEngine(lowerThreshold) $low
 
     set i 1 
     while {$i <= $len} {
-        # If AutoWindowLevel is ON, we can't set new values for window and level.
+        # If AutoWindowLevel is ON, 
+        # we can't set new values for window and level.
         Volume($i,node) AutoWindowLevelOff
         Volume($i,node) SetWindow $win 
         Volume($i,node) SetLevel $level 
+ 
+        Volume($i,node) AutoThresholdOff
+        Volume($i,node) ApplyThresholdOn
+        Volume($i,node) SetLowerThreshold $low 
         incr i
     }
 }
