@@ -32,7 +32,6 @@
 #   CustomCount
 #==========================================================================auto=
 
-
 #-------------------------------------------------------------------------------
 # .PROC CustomInit
 # 
@@ -40,7 +39,7 @@
 # .END
 #-------------------------------------------------------------------------------
 proc CustomInit {} {
-	global Custom Module
+	global Custom Module Volume Model
 
 	# Define Tabs
 	#------------------------------------
@@ -116,7 +115,7 @@ proc CustomInit {} {
 	#   appropriate info when the module is checked in.
 	#   
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.11 $} {$Date: 2000/02/28 17:56:15 $}]
+		{$Revision: 1.12 $} {$Date: 2000/03/01 22:38:25 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -126,7 +125,10 @@ proc CustomInit {} {
 	#   the procedures in this module and others need to access.
 	#
 	set Custom(count) 0
+	set Custom(Volume1) $Volume(idNone)
+	set Custom(Model1)  $Model(idNone)
 }
+
 
 #-------------------------------------------------------------------------------
 # .PROC CustomBuildGUI
@@ -162,11 +164,9 @@ proc CustomBuildGUI {} {
 	# Refer to the documentation for details on the syntax.
 	#
 	set help "
-The <B>Custom</B> module is a well-commented example of how you 
-can create your own customized modules.  You can find its source 
-code in slicer/program/tcl-modules/Custom.tcl 
+Models are fun. Do you like models, Ron?
 "
-	regsub -all "\n" $help { } help
+	regsub -all "\n" $help {} help
 	MainHelpApplyTags Custom $help
 	MainHelpBuildGUI Custom
 
@@ -186,20 +186,49 @@ code in slicer/program/tcl-modules/Custom.tcl
 	#-------------------------------------------
 	set f $fStuff.fTop
         
-	eval {label $f.lStuff -text "You clicked 0 times."} $Gui(WLA)
-    pack $f.lStuff -side top -padx $Gui(pad) -fill x
-	set Custom(lStuff) $f.lStuff
+#         grid $f.lStuff -padx $Gui(pad) -pady $Gui(pad)
+#        grid $menubutton -sticky w
+
+        
+        DevAddSelectButton  Custom $f Volume1 "Ref Volume" Grid
+        DevAddSelectButton  Custom $f Model1  "Ref Model"  Grid
 
 	#-------------------------------------------
 	# Stuff->Bottom frame
 	#-------------------------------------------
 	set f $fStuff.fBottom
 
-	eval {button $f.bCount -text "Count" -command "CustomCount"} $Gui(WBA)
-	eval {entry $f.eCount -width 5 -textvariable Custom(count)} $Gui(WEA)
-	pack $f.bCount $f.eCount -side left -padx $Gui(pad) -pady $Gui(pad)
+	eval {label $f.lStuff -text "You clicked 0 times."} $Gui(WLA)
+        pack $f.lStuff -side top -padx $Gui(pad) -fill x
+	set Custom(lStuff) $f.lStuff
 
+        # Here's a button with text "Count" that calls "CustomCount" when
+        # pressed.
+        DevAddButton $f.bCount Count CustomCount 
+
+	eval {entry $f.eCount -width 5 -textvariable Custom(count) } \
+                $Gui(WEA)
+
+	pack $f.bCount $f.bCount $f.eCount -side left -padx $Gui(pad) -pady $Gui(pad)
 }
+
+#-------------------------------------------------------------------------------
+# .PROC CustomUpdateGUI
+# 
+# This procedure is called to update the buttons
+# due to such things as volumes or models being added or subtracted.
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc CustomUpdateGUI {} {
+	global Custom Volume
+
+   DevUpdateSelectButton Volume Custom Volume1 Volume1 DevSelect
+   DevUpdateSelectButton Model  Custom Model1  Model1  DevSelect
+}
+
+
 
 #-------------------------------------------------------------------------------
 # .PROC CustomCount
