@@ -33,7 +33,7 @@
 #include <string.h>
 #include "Python.h"
 
-extern  "C" {PyObject *PyVTKClass_vtkFastMarchingNew(char *); }
+extern  "C" {PyObject *PyVTKClass_vtkLevelSetFastMarchingNew(char *); }
 extern  "C" {PyObject *PyVTKClass_vtkImageIsoContourDistNew(char *); }
 extern  "C" {PyObject *PyVTKClass_vtkImageFastSignedChamferNew(char *); }
 extern  "C" {PyObject *PyVTKClass_vtkImageCURVESNew(char *); }
@@ -52,9 +52,9 @@ void initlibvtkLevelSetsPython()
   d = PyModule_GetDict(m);
   if (!d) Py_FatalError("can't get dictionary for module vtkLevelSetsPython!");
 
-  if ((c = PyVTKClass_vtkFastMarchingNew(modulename)))
-    if (-1 == PyDict_SetItemString(d, "vtkFastMarching", c))
-      Py_FatalError("can't add class vtkFastMarching to dictionary!");
+  if ((c = PyVTKClass_vtkLevelSetFastMarchingNew(modulename)))
+    if (-1 == PyDict_SetItemString(d, "vtkLevelSetFastMarching", c))
+      Py_FatalError("can't add class vtkLevelSetFastMarching to dictionary!");
 
   if ((c = PyVTKClass_vtkImageIsoContourDistNew(modulename)))
     if (-1 == PyDict_SetItemString(d, "vtkImageIsoContourDist", c))

@@ -45,7 +45,7 @@
 #include "vtkImageData.h"
 #include "vtkImageToImageFilter.h"
 
-#include "vtkFastMarching.h"
+#include "vtkLevelSetFastMarching.h"
 #include "vtkImageIsoContourDist.h"
 #include "vtkImageFastSignedChamfer.h"
 #include "vtkImagePropagateDist2.h"
@@ -457,7 +457,7 @@ protected:
   vtkImageData *SkeletonImage;
   unsigned char SkeletonImage_allocated;
 
-  vtkFastMarching* fm;
+  vtkLevelSetFastMarching* fm;
 
   vtkImageIsoContourDist*    isodist;
   vtkImageFastSignedChamfer* chamfer;

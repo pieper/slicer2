@@ -146,7 +146,7 @@ vtkLevelSets::vtkLevelSets()
   savesecdergrad   = 0;
   advection_scheme = ADVECTION_UPWIND_VECTORS;
 
-  fm      = vtkFastMarching::New();
+  fm      = vtkLevelSetFastMarching::New();
   isodist = vtkImageIsoContourDist::New();
   chamfer = vtkImageFastSignedChamfer::New();
   shape   = vtkImagePropagateDist2::New();  
@@ -702,7 +702,7 @@ void vtkLevelSets::DistanceMapCurves()
 //----------------------------------------------------------------------------
 //
 // Method to estimate the distance's map
-// use vtkFastMarching class
+// use vtkLevelSetFastMarching class
 //
 // Input Parameters:
 //
@@ -771,7 +771,7 @@ void vtkLevelSets::DistanceMapFMOld()
 //----------------------------------------------------------------------------
 //
 // Method to estimate the distance's map
-// use vtkFastMarching class
+// use vtkLevelSetFastMarching class
 //
 // Input Parameters:
 //

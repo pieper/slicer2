@@ -31,9 +31,9 @@
 */
 
 #include "vtkTclUtil.h"
-int vtkFastMarchingCommand(ClientData cd, Tcl_Interp *interp,
+int vtkLevelSetFastMarchingCommand(ClientData cd, Tcl_Interp *interp,
              int argc, char *argv[]);
-ClientData vtkFastMarchingNewCommand();
+ClientData vtkLevelSetFastMarchingNewCommand();
 int vtkImageIsoContourDistCommand(ClientData cd, Tcl_Interp *interp,
              int argc, char *argv[]);
 ClientData vtkImageIsoContourDistNewCommand();
@@ -67,8 +67,8 @@ int VTK_EXPORT Vtklevelsetstcl_SafeInit(Tcl_Interp *interp)
 int VTK_EXPORT Vtklevelsetstcl_Init(Tcl_Interp *interp)
 {
 
-  vtkTclCreateNew(interp,(char *) "vtkFastMarching", vtkFastMarchingNewCommand,
-                  vtkFastMarchingCommand);
+  vtkTclCreateNew(interp,(char *) "vtkLevelSetFastMarching", vtkLevelSetFastMarchingNewCommand,
+                  vtkLevelSetFastMarchingCommand);
   vtkTclCreateNew(interp,(char *) "vtkImageIsoContourDist", vtkImageIsoContourDistNewCommand,
                   vtkImageIsoContourDistCommand);
   vtkTclCreateNew(interp,(char *) "vtkImageFastSignedChamfer", vtkImageFastSignedChamferNewCommand,
