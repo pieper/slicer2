@@ -1,0 +1,56 @@
+<!ELEMENT MRML (Transform | Volume | Model | Color)*>
+
+<!ELEMENT Transform (Transform | Matrix | Volume | Model)*>
+
+<!ELEMENT Matrix (Options)*>
+<!ATTLIST Matrix name NMTOKEN "Matrix">
+<!ATTLIST Matrix description CDATA "">
+<!ATTLIST Matrix matrix NMTOKENS "1 0 0 0  0 1 0 0  0 0 1 0  0 0 0 1">
+
+<!ELEMENT Volume (Options)*>
+<!ATTLIST Volume name NMTOKEN "">
+<!ATTLIST Volume filePattern CDATA "s.03d">
+<!ATTLIST Volume filePrefix CDATA #REQUIRED>
+<!ATTLIST Volume rasToIjkMatrix NMTOKENS "1 0 0 0  0 1 0 0  0 0 1 0  0 0 0 1">
+<!ATTLIST Volume rasToVtkMatrix NMTOKENS "1 0 0 0  0 -1 0 0  0 0 1 0  0 0 0 1">
+<!ATTLIST Volume colorLUT NMTOKEN "">
+<!ATTLIST Volume description CDATA "">
+<!ATTLIST Volume scalarType (Char | UnsignedChar | Short | UnsignedShort | Int | UnsignedInt | Long | UnsignedLong | Float | Double) "Short">
+<!ATTLIST Volume numScalars NMTOKEN "1">
+<!ATTLIST Volume littleEndian (yes | no) "no">
+<!ATTLIST Volume interpolate (yes | no) "no">
+<!ATTLIST Volume labelMap (yes | no) "no">
+<!ATTLIST Volume tilt NMTOKEN "0.0">
+<!ATTLIST Volume autoWindowLevel (yes | no) "yes">
+<!ATTLIST Volume window CDATA "127">
+<!ATTLIST Volume level CDATA "64">
+<!ATTLIST Volume autoThreshold (yes | no) "no">
+<!ATTLIST Volume lowerThreshold CDATA "-32768">
+<!ATTLIST Volume upperThreshold CDATA "32767">
+<!ATTLIST Volume ignore (yes | no) "no">
+<!ATTLIST Volume imageRange NMTOKENS "1 1">
+<!ATTLIST Volume dimensions NMTOKENS "256 256">
+<!ATTLIST Volume spacing NMTOKENS "1 1 1">
+
+<!ELEMENT Model (Options)*>
+<!ATTLIST Model name NMTOKEN "">
+<!ATTLIST Model fileName CDATA  #REQUIRED>
+<!ATTLIST Model color NMTOKEN "">
+<!ATTLIST Model description CDATA "">
+<!ATTLIST Model opacity NMTOKEN "1.0">
+<!ATTLIST Model visibility (yes | no) "yes">
+<!ATTLIST Model clipping (yes | no) "no">
+<!ATTLIST Model backfaceCulling (yes | no) "yes">
+<!ATTLIST Model scalarVisibility (yes | no) "no">
+<!ATTLIST Model ignore (yes | no) "no">
+<!ATTLIST Model scalarRange NMTOKENS "0 100">
+
+<!ELEMENT Color (Options)*>
+<!ATTLIST Color name NMTOKEN #REQUIRED>
+<!ATTLIST Color description CDATA "">
+<!ATTLIST Color diffuseColor NMTOKENS "1.0 1.0 1.0">
+<!ATTLIST Color ambient NMTOKEN "0.0">
+<!ATTLIST Color diffuse NMTOKEN "1.0">
+<!ATTLIST Color specular NMTOKEN "0.0">
+<!ATTLIST Color power NMTOKEN "1">
+<!ATTLIST Color labels NMTOKEN "">

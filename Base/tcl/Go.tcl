@@ -5,7 +5,7 @@
 # The following terms apply to all files associated with the software unless
 # explicitly disclaimed in individual files.   
 # 
-# The authors hereby grant permission to use and copy (but not distribute) this
+# The authors hereby grant permission to use, copy, and distribute this
 # software and its documentation for any NON-COMMERCIAL purpose, provided
 # that existing copyright notices are retained verbatim in all copies.
 # The authors grant permission to modify this software and its documentation 
@@ -26,7 +26,7 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        Go.tcl
-# DATE:        12/10/1999 08:39
+# DATE:        12/09/1999 14:07
 # LAST EDITOR: gering
 # PROCEDURES:  
 #   ReadModuleNames
@@ -34,8 +34,6 @@
 #   ReadModuleNamesLocalOrCentral
 #   GetFullPath
 #==========================================================================auto=
-
-#set argv c:/run/dave/dave.mrml
 
 # Load vtktcl.dll on PCs
 catch {load vtktcl}
@@ -46,17 +44,31 @@ if {$argc > 1} {
 }
 
 # verbose
-set verbose 1 
+set verbose 0
 
 # Determine Slicer's home directory where the program is installed
 # If the SLICER_HOME environment is not defined, then use the 
-# directory of this script.
+# root directory of this script ($argv0).
+#
 if {[info exists env(SLICER_HOME)] == 0} {
 	set prog [file dirname $argv0]
 } elseif {$env(SLICER_HOME) == ""} {
 	set prog [file dirname $argv0]
 } else {
 	set prog [file join $env(SLICER_HOME) program]
+}
+# Don't use "."
+if {$prog == "."} {
+	set prog [pwd]
+}
+# Ensure the program directory exists
+if {[file exists $prog] == 0} {
+	tk_messageBox -message "The directory '$prog' does not exist."
+	exit
+}
+if {[file isdirectory $prog] == 0} {
+	tk_messageBox -message "'$prog' is not a directory."
+	exit
 }
 set Path(program) $prog
 
@@ -100,13 +112,13 @@ proc FindNames {dir} {
 
 	# Look locally
 	foreach fullname [glob -nocomplain $local/*] {
-		if {[regexp "$local/(\.*).tcl" $fullname match name] == 1} {
+		if {[regexp "$local/(\.*).tcl$" $fullname match name] == 1} {
 			lappend names $name
 		}
 	}
 	# Look centrally
 	foreach fullname [glob -nocomplain $central/*] {
-		if {[regexp "$central/(\.*).tcl" $fullname match name] == 1} {
+		if {[regexp "$central/(\.*).tcl$" $fullname match name] == 1} {
 			if {[lsearch $names $name] == -1} {
 				lappend names $name
 			}
