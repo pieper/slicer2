@@ -72,7 +72,7 @@ proc MainVolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.68 $} {$Date: 2004/01/27 18:26:46 $}]
+    {$Revision: 1.69 $} {$Date: 2004/02/19 13:25:02 $}]
 
     set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -453,7 +453,13 @@ proc MainVolumesWrite {v prefix} {
     Volume($v,node) SetFullPrefix $fileFull
 
     if { [Volume($v,node) GetFilePattern] == "" } {
+        # no readwrite means it'll use the ImageWriter which needs this pattern
         Volume($v,node) SetFilePattern "%s.%d"
+    }
+    if { [Volume($v,vol) GetReadWrite] == "" } {
+        # no readwrite means it'll use the ImageWriter which needs this pattern and type
+        Volume($v,node) SetFilePattern "%s.%d"
+        Volume($v,node) SetFileType "Headerless"
     }
 
     # Determine if littleEndian
