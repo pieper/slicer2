@@ -134,7 +134,7 @@ proc DTMRIInit {} {
     set Module($m,author) "Lauren O'Donnell"
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.40 $} {$Date: 2004/11/12 07:20:11 $}]
+                  {$Revision: 1.41 $} {$Date: 2004/11/15 19:25:40 $}]
 
      # Define Tabs
     #------------------------------------
@@ -4140,15 +4140,7 @@ proc DTMRISeedStreamlinesFromSegmentation {{verbose 1}} {
     set t $Tensor(activeID)
     set v $Volume(activeID)
 
-    # ask for user confirmation first
-    if {$verbose == "1"} {
-        set name [Volume($v,node) GetName]
-        set msg "About to seed streamlines in all labelled voxels of volume $name.  This may take a while, so make sure the Tracts settings are what you want first. Go ahead?"
-        if {[tk_messageBox -type yesno -message $msg] == "no"} {
-            return
-        }
-    }
-
+    # make sure they are using a segmentation (labelmap)
     if {[Volume($v,node) GetLabelMap] != 1} {
         set name [Volume($v,node) GetName]
         set msg "The volume $name is not a label map (segmented ROI). Continue anyway?"
@@ -4156,6 +4148,15 @@ proc DTMRISeedStreamlinesFromSegmentation {{verbose 1}} {
             return
         }
 
+    }
+
+    # ask for user confirmation first
+    if {$verbose == "1"} {
+        set name [Volume($v,node) GetName]
+        set msg "About to seed streamlines in all labelled voxels of volume $name.  This may take a while, so make sure the Tracts settings are what you want first. Go ahead?"
+        if {[tk_messageBox -type yesno -message $msg] == "no"} {
+            return
+        }
     }
 
     # set mode to On (the Display Tracts button will go On)
@@ -6005,6 +6006,10 @@ proc DTMRISetActive {n} {
     # is okay to color tracts with (i.e. may not have same size).
     # this also sets up the correct color for the first tract.
     DTMRIUpdateTractColorToSolid
+
+    # initial setup of the streamline control object for the
+    # type of streamline to create.
+    DTMRIUpdateStreamlineSettings
 
 #     # set up the BSpline tractography pipeline
 #     set DTMRI(vtk,BSpline,data) 1
