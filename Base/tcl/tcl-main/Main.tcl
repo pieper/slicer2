@@ -329,7 +329,7 @@ proc MainInit {} {
 
         # Set version info
 	lappend Module(versions) [ParseCVSInfo Main \
-		{$Revision: 1.32 $} {$Date: 2000/02/22 04:17:54 $}]
+		{$Revision: 1.33 $} {$Date: 2000/02/22 05:03:35 $}]
 
 	# Call each "Init" routine that's not part of a module
 	#-------------------------------------------
@@ -456,7 +456,7 @@ proc MainBuildGUI {} {
 	$Gui(mFile) add command -label "Save with Options" -command \
 		"MainMenu File SaveWithOptions"
 	$Gui(mFile) add separator
-	$Gui(mFile) add command -label "Save Current Settings" -command \
+	$Gui(mFile) add command -label "Save Current Options" -command \
 		"MainMenu File SaveOptions"
 	$Gui(mFile) add separator
 	$Gui(mFile) add command -label "Save 3D View" -command \
