@@ -517,7 +517,8 @@ proc DICOMScrolledTextbox {f xAlways yAlways variable {labeltext "labeltext"} {a
 
 #-------------------------------------------------------------------------------
 # .PROC FindDICOM2
-# 
+# Note - this is a recursive directory search that parses the dicom 
+# files as it goes.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -527,6 +528,11 @@ proc FindDICOM2 { StartDir AddDir Pattern } {
     global DICOMPatientNames
     global DICOMPatientIDsNames
 
+    # bail out early 
+    if { [info exists ::DICOMabort] && $::DICOMabort == "true" } {
+        return
+    }
+
     set pwd [pwd]
     if [expr [string length $AddDir] > 0] {
         if [catch {cd $AddDir} err] {
@@ -534,9 +540,28 @@ proc FindDICOM2 { StartDir AddDir Pattern } {
             return
         }
     }
+
+    # add progress indicator
+    set w .dicomprogress
+    set ::DICOMabort "false"
+    if { ![winfo exists $w] } {
+        toplevel $w
+        wm title $w "Collecting DICOM Files..."
+        wm geometry $w 400x150
+        set ::DICOMlabel "working..."
+        pack [label $w.label -textvariable ::DICOMlabel] 
+        pack [button $w.cancel -text "Stop Looking" -command {set ::DICOMabort "true"} ]
+        grab -global $w
+    }
     
     vtkDCMParser parser
     foreach match [glob -nocomplain -- $Pattern] {
+        wm title $w "Searching [pwd]"
+        set ::DICOMlabel "\n\nExamining $match\n\n$::FindDICOMCounter DICOM files so far.\n"
+        update
+        if { $::DICOMabort == "true" } {
+            break
+        } 
         #puts stdout [file join $StartDir $match]
         if {[file isdirectory $match]} {
             continue
@@ -630,9 +655,11 @@ proc FindDICOM2 { StartDir AddDir Pattern } {
     }
     parser Delete
     
-    foreach file [glob -nocomplain *] {
-        if [file isdirectory $file] {
-            FindDICOM2 [file join $StartDir $AddDir] $file $Pattern
+    if { $::DICOMabort != "true" } {
+        foreach file [glob -nocomplain *] {
+            if [file isdirectory $file] {
+                FindDICOM2 [file join $StartDir $AddDir] $file $Pattern
+            }
         }
     }
     cd $pwd
@@ -675,6 +702,9 @@ proc FindDICOM { StartDir Pattern } {
         return
     }
     FindDICOM2 $StartDir "" $Pattern
+    catch "grab relase .dicomprogress"
+    catch "destroy .dicomprogress"
+    catch "unset ::DICOMabort"
     cd $pwd
 }
 
@@ -1104,10 +1134,20 @@ files will be collected into a list."
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc DICOMSelectDir { top } {
+proc DICOMSelectDir {} {
     global DICOMStartDir
     global Pressed
     global Gui
+
+    # sp-2003-05-06 simplified for slicer2.1
+
+    set DICOMStartDir [tk_chooseDirectory \
+        -initialdir $DICOMStartDir \
+        -mustexist true \
+        -title "Select Directory Containing DICOM Files" \
+        -parent .tMain ]
+    return
+
     
     toplevel $top -bg $Gui(activeWorkspace)
     wm minsize $top 100 100
@@ -1176,36 +1216,28 @@ proc DICOMSelectMain { fileNameListbox {autoload "noautoload"} } {
         return
     }
 
-    set pwd [pwd]
     set DICOMStartDir $Volumes(DICOMStartDir)
     set DICOMFileNameList {}
     set DICOMFileNameSelected {}
     set Volume(dICOMFileList) {}
-    DICOMSelectDir .select
-    
     if { $autoload != "autoload" } {
-        focus .select
-        grab .select
-        tkwait window .select
-    } else {
-        set Pressed "OK"
-        destroy .select
+        DICOMSelectDir 
     }
     
-    if { $Pressed == "OK" } {
-        FindDICOM $DICOMStartDir *
-        
-        DICOMListSelect .list $DICOMPatientIDsNames
-        
-        if { $autoload != "autoload" } {
-            focus .list
-            grab .list
-            tkwait window .list
-        } else {
-            destroy .list
-        }
+    FindDICOM $DICOMStartDir *
+    
+    DICOMListSelect .list $DICOMPatientIDsNames
+    
+    if { $autoload != "autoload" } {
+        focus .list
+        grab .list
+        tkwait window .list
+    } else {
+        destroy .list
+        set Pressed "OK"
+    }
 
-        # >> AT 1/4/02
+    # >> AT 1/4/02
       if { $Pressed == "OK" } {
           #puts $DICOMFileNameList
           $fileNameListbox delete 0 end
@@ -1289,10 +1321,7 @@ proc DICOMSelectMain { fileNameListbox {autoload "noautoload"} } {
           
           set Volumes(DICOMStartDir) $DICOMStartDir
       }
-    }
     # << AT 1/4/02
-
-    cd $pwd
 }
 
 #-------------------------------------------------------------------------------
