@@ -112,7 +112,7 @@ proc AlignmentsInit {} {
     set Module($m,row1,tab) Manual
 
     # Module Summary Info
-    set Module($m,overview) "Edit transformation matrices to move volumes/models. Use the Auto tab perform registrations using embedded algorithms. Select the FidAlign option to select corresponding points on two volumes so as to get a coarse alignment of the two volumes. Use the MI option to perform registration by mutual information."
+    set Module($m,overview) "Edit transformation matrices to move volumes/models.\n\t\tUse the Auto tab to perform registrations using embedded algorithms. \n\t\tSelect the FidAlign option to select corresponding points on two volumes so as to \n\t\t get a coarse alignment of the two volumes. Use the MI option \n\t\tto perform registration by mutual information."
 
     # Define Procedures
     set Module($m,procGUI)   AlignmentsBuildGUI
@@ -129,7 +129,7 @@ proc AlignmentsInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.12 $} {$Date: 2003/01/22 16:52:47 $}]
+            {$Revision: 1.13 $} {$Date: 2003/02/25 21:40:28 $}]
 
     # Props
     set Matrix(propertyType) Basic
