@@ -101,7 +101,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.97 $} {$Date: 2004/07/22 15:46:09 $}]
+            {$Revision: 1.98 $} {$Date: 2004/08/13 19:18:34 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -1734,6 +1734,14 @@ proc VolumesRotateSlicePlane {orientation} {
             }
         } 
         set s $Slice(activeID)
+        # check that Slice($s,reformatPlaneCoeff,?) values have been set by VolumesReformatSlicePlane.
+        if {[info exists Slice($s,reformatPlaneCoeff,A)] == 0 ||
+            [info exists Slice($s,reformatPlaneCoeff,B)] == 0 || 
+            [info exists Slice($s,reformatPlaneCoeff,C)] == 0 ||
+            [info exists Slice($s,reformatPlaneCoeff,D)] == 0} {
+            DevErrorWindow "Error: reformat plane coefficients haven't been set, Reformat Saggital Plane first"
+            return
+        }
         set A $Slice($s,reformatPlaneCoeff,A) 
         set B $Slice($s,reformatPlaneCoeff,B) 
         set C $Slice($s,reformatPlaneCoeff,C) 
