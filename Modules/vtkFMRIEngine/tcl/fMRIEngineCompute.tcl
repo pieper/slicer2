@@ -137,8 +137,10 @@ proc fMRIEngineComputeContrasts {} {
                 set obs2 [fMRIEngine(actVolumeGenerator) AddObserver ProgressEvent \
                     "MainShowProgress fMRIEngine(actVolumeGenerator)"]
                 set obs3 [fMRIEngine(actVolumeGenerator) AddObserver EndEvent MainEndProgress]
-                set Gui(progressText) "Computing contrast $name..."
                 set fMRIEngine(actVolName) $name 
+
+                set Gui(progressText) "Computing contrast $name..."
+                puts $Gui(progressText)
 
                 set vec $fMRIEngine($name,contrastVector) 
                 # trim white spaces at beginning and end
@@ -168,6 +170,12 @@ proc fMRIEngineComputeContrasts {} {
                 $act Update
                 set fMRIEngine(act) $act
 
+                fMRIEngine(actVolumeGenerator) RemoveObserver $obs1 
+                fMRIEngine(actVolumeGenerator) RemoveObserver $obs2 
+                fMRIEngine(actVolumeGenerator) RemoveObserver $obs3 
+                MainStartProgress
+                MainShowProgress fMRIEngine(actVolumeGenerator) 
+ 
                 # add a mrml node
                 set n [MainMrmlAddNode Volume]
                 set i [$n GetID]
@@ -203,7 +211,9 @@ proc fMRIEngineComputeContrasts {} {
                 set fMRIEngine($i,actHigh) [fMRIEngine(actVolumeGenerator) GetHighRange] 
                 # puts "low = $fMRIEngine($i,actLow)"
                 # puts "high = $fMRIEngine($i,actHigh)"
-                
+
+                MainEndProgress
+                puts "...done"
             }
         } 
 
@@ -212,18 +222,50 @@ proc fMRIEngineComputeContrasts {} {
         puts $Gui(progressText)
         MainStartProgress
         MainShowProgress fMRIEngine(actVolumeGenerator) 
-        MainUpdateMRML
-        # RenderAll
+        fMRIEngineUpdateMRML
+        RenderAll
         MainEndProgress
-
-        fMRIEngine(actVolumeGenerator) RemoveObserver $obs1 
-        fMRIEngine(actVolumeGenerator) RemoveObserver $obs2 
-        fMRIEngine(actVolumeGenerator) RemoveObserver $obs3 
 
         puts "...done"
 
     } else {
         DevWarningWindow "There is no contrast to compute."
+    }
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineUpdateMRML 
+# Updates the MRML tree following addition of volume(s). This version will speed 
+# up the updating process if Slicer has loaded many volumes in memory. Proc
+# MainVolumesUpdateMRML takes time to complete.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc fMRIEngineUpdateMRML {} {
+    global Module Label
+        
+    # Call each "MRML" routine that's not part of a module
+    #-------------------------------------------
+    MainMrmlUpdateMRML
+    MainColorsUpdateMRML
+#    MainVolumesUpdateMRML
+    MainTensorUpdateMRML
+    MainModelsUpdateMRML
+    MainTetraMeshUpdateMRML
+
+    MainAlignmentsUpdateMRML
+
+    foreach p $Module(procMRML) {
+        $p
+    }
+
+    # Call each Module's "MRML" routine
+    #-------------------------------------------
+    foreach m $Module(idList) {
+        if {[info exists Module($m,procMRML)] == 1} {
+            $Module($m,procMRML)
+        }
     }
 }
 
