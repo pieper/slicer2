@@ -349,11 +349,17 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
 
           
 
-          // regularization to compensate for small eigenvalues
+          // regularization to compensate for small trace values
           //float r = 0.000001;
           float r = 0.0001;
-          trace += r;
-
+          
+          // we are not interested in regions with trace < r
+          int ignore = 0;
+          if (trace < r ) 
+            ignore = 1;
+          
+          trace +=r;
+          
           // Lauren note that RA and LA could be computed
           // without diagonalization.  This should be implementred
           // instead for speed.
@@ -401,16 +407,24 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
           break;
 
         case VTK_TENS_COLOR_ORIENTATION:
-
+          if (ignore) 
+            {
+              memset(outPtr,0,4*sizeof(unsigned char));
+              outPtr++;
+              outPtr++;
+              outPtr++;
+            } 
+          else
+            {
               // map 0..1 values into the range a char takes on
               const int scale = 255;
               
               // If the user has set the rotation matrix
               // then transform the eigensystem first
               if (useTransform)
-            {
-              trans->TransformPoint(v0,v0);
-            }
+                {
+                 trans->TransformPoint(v0,v0);
+                }
               // Color R, G, B depending on max eigenvector
               *outPtr = (T)(scale*fabs(v[0][0]));
               outPtr++;
@@ -426,9 +440,14 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
               
               // this is 1 - spherical anisotropy measure:
               *outPtr = (T)(scale*(1 - 3*w[2]/trace));
-              break;
+              }
+           break;
 
         }
+
+        // we are not interested in regions with trace < r
+        if (ignore)
+          *outPtr = (T) 0;
 
           // scale floats if the user requested this
           if (scaleFactor != 1 && op != VTK_TENS_COLOR_ORIENTATION)
@@ -442,7 +461,7 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
           inPtId++;
         }
       outPtr += outIncY;
-          inPtId += inIncY;
+      inPtId += inIncY;
     }
       outPtr += outIncZ;
       inPtId += outIncZ;
