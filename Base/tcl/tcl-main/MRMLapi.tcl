@@ -184,9 +184,13 @@ proc MRMLReadDefaults {filename} {
 	}
 	set fid [open $filename r]
 	gets $fid line; incr nLine
-    if {[lindex $line 0] != "MRML"} {
+        if {[lindex $line 0] != "MRML"} {
 		puts "Not a MRML file: '$filename'"
-		close $fid
+		if {[catch {close $fid} errorMessage]} {
+			tk_messageBox -type ok -message "The following error occurred saving a file named ${filename} : ${errorMessage}"
+			puts "Aborting due to : ${errorMessage}"
+			exit 1
+		}
 		return ""
     }
 	# Store version number for checking other files read
@@ -207,7 +211,11 @@ proc MRMLReadDefaults {filename} {
 		# Check for open brace
 		if {[lindex $line 1] != "("} {
 			puts "Error: missing open brace on line $nLine."
-			close $fid
+			if {[catch {close $fid} errorMessage]} {
+                        	tk_messageBox -type ok -message "The following error occurred saving a file : ${errorMessage}"
+	                        puts "Aborting due to : ${errorMessage}"
+       	                        exit 1
+                	}
 			return ""
 		}
 		# Record node type
@@ -234,7 +242,11 @@ proc MRMLReadDefaults {filename} {
 	}
 
 	# Cleanup
-    close $fid
+	if {[catch {close $fid} errorMessage]} {
+    		tk_messageBox -type ok -message "The following error occurred saving a file : ${errorMessage}"
+        	puts "Aborting due to : ${errorMessage}"
+        	exit 1
+        }
 	return $MRMLDefaults(version)
 }
 
@@ -282,7 +294,11 @@ proc MRMLRead {filename} {
 	gets $fid line; incr nLine
     if {[lindex $line 0] != "MRML"} {
 		puts "Not a MRML file: '$filename'"
-		close $fid
+		if {[catch {close $fid} errorMessage]} {
+                        tk_messageBox -type ok -message "The following error occurred saving a file named ${filename} : ${errorMessage}"
+                        puts "Aborting due to : ${errorMessage}"
+                        exit 1
+                }
 		return -1 
     }
 	# Check MRML version
@@ -290,7 +306,11 @@ proc MRMLRead {filename} {
 	if {$version != [MRMLGetDefault version]} {
 		puts "MRML file '$filename' is version '$version' instead of \
 		'[MRMLGetDefault version]'."
-		close $fid
+		if {[catch {close $fid} errorMessage]} {
+                        tk_messageBox -type ok -message "The following error occurred saving a file named ${filename} : ${errorMessage}"
+                        puts "Aborting due to : ${errorMessage}"
+                        exit 1
+                }
 		return -1 
 	}
 	gets $fid line; incr nLine
@@ -310,14 +330,22 @@ proc MRMLRead {filename} {
 			# Check for open brace
 			if {[lindex $line 1] != "("} {
 				puts "Error: missing open brace on line $nLine."
-				close $fid
+				if {[catch {close $fid} errorMessage]} {
+                        		tk_messageBox -type ok -message "The following error occurred saving a file : ${errorMessage}"
+	                       		puts "Aborting due to : ${errorMessage}"
+       	                        	exit 1
+                		}
 				return -1 
 			}
 
 			# Validate node type
 			if {[lsearch [MRMLGetDefault nodeList] $type] == -1} {
 				puts "Error: unknown node type: $type."
-				close $fid
+				if {[catch {close $fid} errorMessage]} {
+                        		tk_messageBox -type ok -message "The following error occurred saving a file : ${errorMessage}"
+	                       		puts "Aborting due to : ${errorMessage}"
+       	                        	exit 1
+                		}
 				return -1 
 			}
 		}
@@ -335,7 +363,11 @@ proc MRMLRead {filename} {
 			set depth [expr $depth - 1]
 			if {$depth < 0} {
 				puts "Error: Extra separator end on line $nLine."
-				close $fid
+				if {[catch {close $fid} errorMessage]} {
+                        		tk_messageBox -type ok -message "The following error occurred saving a file : ${errorMessage}"
+	                       		puts "Aborting due to : ${errorMessage}"
+       	                        	exit 1
+                		}
 				return -1 
 			}
 
@@ -356,7 +388,11 @@ proc MRMLRead {filename} {
 				if {[lsearch [MRMLGetDefault $type keyList] $key] == "-1"} {
 					puts "Error: invalid key '$key' for node '$type' on \
 						line $nLine"
-					close $fid
+					if {[catch {close $fid} errorMessage]} {
+                        			tk_messageBox -type ok -message "The following error occurred saving a file : ${errorMessage}"
+	                       			puts "Aborting due to : ${errorMessage}"
+       	                        		exit 1
+                			}
 					return -1 
 				}
 
@@ -379,7 +415,11 @@ proc MRMLRead {filename} {
 					if {$len != $lenRequired} {
 						puts "The '$key' attribute requires $lenRequired \
 							numbers, but $len were given."
-						close $fid
+						if {[catch {close $fid} errorMessage]} {
+                        				tk_messageBox -type ok -message "The following error occurred saving a file : ${errorMessage}"
+	                       				puts "Aborting due to : ${errorMessage}"
+       	                        			exit 1
+                				}
 						return -1 
 					}
 				}	
@@ -390,7 +430,11 @@ proc MRMLRead {filename} {
 			# Check for close brace
 			if {[lindex $line 0] != ")"} {
 				puts "Error: missing close brace on line $nLine."
-				close $fid
+				if {[catch {close $fid} errorMessage]} {
+                        		tk_messageBox -type ok -message "The following error occurred saving a file : ${errorMessage}"
+	                       		puts "Aborting due to : ${errorMessage}"
+       	                       		exit 1
+                		}
 				return -1 
 			}
 
@@ -410,7 +454,11 @@ proc MRMLRead {filename} {
 				if {[lsearch [MRMLGetDefault $type keyList] $key] == "-1"} {
 					puts "Error: invalid key '$key' for node '$type' on \
 						line $nLine"
-					close $fid
+					if {[catch {close $fid} errorMessage]} {
+                        	 		tk_messageBox -type ok -message "The following error occurred saving a file : ${errorMessage}"
+	                       			puts "Aborting due to : ${errorMessage}"
+       	                       			exit 1
+                			}
 					return -1 
 				}
 
@@ -425,7 +473,11 @@ proc MRMLRead {filename} {
 			# Check for close brace
 			if {[lindex $line 0] != ")"} {
 				puts "Error: missing close brace on line $nLine."
-				close $fid
+				if {[catch {close $fid} errorMessage]} {
+                         		tk_messageBox -type ok -message "The following error occurred saving a file : ${errorMessage}"
+	                      		puts "Aborting due to : ${errorMessage}"
+       	                       		exit 1
+                		}
 				return -1 
 			}
 
@@ -445,7 +497,11 @@ proc MRMLRead {filename} {
 				if {[lsearch [MRMLGetDefault $type keyList] $key] == "-1"} {
 					puts "Error: invalid key '$key' for node '$type' on \
 						line $nLine"
-					close $fid
+					if {[catch {close $fid} errorMessage]} {
+                         			tk_messageBox -type ok -message "The following error occurred saving a file : ${errorMessage}"
+	                      			puts "Aborting due to : ${errorMessage}"
+       	                       			exit 1
+                			}
 					return -1 
 				}
 
@@ -460,7 +516,11 @@ proc MRMLRead {filename} {
 			# Check for close brace
 			if {[lindex $line 0] != ")"} {
 				puts "Error: missing close brace on line $nLine."
-				close $fid
+				if {[catch {close $fid} errorMessage]} {
+                         		tk_messageBox -type ok -message "The following error occurred saving a file : ${errorMessage}"
+	                      		puts "Aborting due to : ${errorMessage}"
+       	                       		exit 1
+                		}
 				return -1 
 			}
 
@@ -481,17 +541,29 @@ proc MRMLRead {filename} {
 
 	if {$depth > 0} {
 		puts "Error: extra separator."
-		close $fid
+		if {[catch {close $fid} errorMessage]} {
+                       	tk_messageBox -type ok -message "The following error occurred saving a file : ${errorMessage}"
+	               	puts "Aborting due to : ${errorMessage}"
+       	                exit 1
+               	}
 		return -1 
 	}
 	if {$depth < 0} {
 		puts "Error: extra close brace."
-		close $fid
+		if {[catch {close $fid} errorMessage]} {
+                       	tk_messageBox -type ok -message "The following error occurred saving a file : ${errorMessage}"
+	               	puts "Aborting due to : ${errorMessage}"
+       	                exit 1
+               	}
 		return -1 
 	}
 
 	# Cleanup
-    close $fid
+	if {[catch {close $fid} errorMessage]} {
+                   tk_messageBox -type ok -message "The following error occurred saving a file : ${errorMessage}"
+	           puts "Aborting due to : ${errorMessage}"
+       	           exit 1
+        }
 	return $dag
 }
 
@@ -695,7 +767,11 @@ proc MRMLComputeRelationships {dag \
 				Config  {set id $nextConfigID}
 				default {
 					puts "Error: invalid node type: '$type' on line $nLine"
-					close $fid
+					if {[catch {close $fid} errorMessage]} {
+                        			tk_messageBox -type ok -message "The following error occurred saving a file : ${errorMessage}"
+	                       			puts "Aborting due to : ${errorMessage}"
+       	                        		exit 1
+                			}
 					trans Delete
 					mat Delete
 					return ""
@@ -910,7 +986,11 @@ proc MRMLWriteNode {fid type depth node} {
 		# Validate key
 		if {[lsearch [MRMLGetDefault $type keyList] $key] == "-1"} {
 			if {[lsearch $extraKeys $key] == "-1"} {
-				close $fid
+				if {[catch {close $fid} errorMessage]} {
+                        		tk_messageBox -type ok -message "The following error occurred saving a file : ${errorMessage}"
+	                       		puts "Aborting due to : ${errorMessage}"
+       	                        	exit 1
+                		}
 				puts "Invalid key: '$key' for node type: '$type'"
 				return "$type $key"
 			}
@@ -949,7 +1029,11 @@ proc MRMLWrite {dag filename} {
 		set node [MRMLGetNode $dag $n]
 		set type [MRMLGetNodeType $node]
 		if {[lsearch [MRMLGetDefault nodeList] $type] == -1 && $type != "End"} {
-			close $fid
+			if {[catch {close $fid} errorMessage]} {
+                        	tk_messageBox -type ok -message "The following error occurred saving a file : ${errorMessage}"
+	                       	puts "Aborting due to : ${errorMessage}"
+       	                       	exit 1
+                	}
 			puts "Invalid node type: '$type'"
 			return $type
 		}
@@ -969,7 +1053,11 @@ proc MRMLWrite {dag filename} {
 			MRMLWriteNode $fid $type $depth $node
 		}
 	}
-	close $fid
+	if {[catch {close $fid} errorMessage]} {
+                 tk_messageBox -type ok -message "The following error occurred saving a file : ${errorMessage}"
+	         puts "Aborting due to : ${errorMessage}"
+       	         exit 1
+        }
 	return ""
 }
 

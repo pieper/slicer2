@@ -41,7 +41,7 @@ proc MainLutsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainLuts \
-		{$Revision: 1.11 $} {$Date: 2001/02/19 17:53:23 $}]
+		{$Revision: 1.12 $} {$Date: 2002/02/28 01:29:38 $}]
 
 	# Create an ID for Labels
 	set Lut(idLabel) -1
@@ -116,7 +116,11 @@ proc MainLutsBuildVTK {} {
 				}
 				gets $fid line
 			}
-			close $fid
+			if {[catch {close $fid} errorMessage]} {
+                           tk_messageBox -type ok -message "The following error occurred saving a file: ${errorMessage}" 
+                           puts "Aborting due to : ${errorMessage}"
+                           exit 1
+                        }
 
 			# Set colors into the Lut
 			set Lut($l,numberOfColors) $numColors

@@ -126,7 +126,11 @@ proc CopyrightFile {filename} {
 		exit
 	}
 	set data [read $fid]
-	close $fid
+	if {[catch {close $fid} errorMessage]} {
+	   tk_messageBox -type ok -message "The following error occurred saving the input file: ${errorMessage}"
+	   puts "Aborting due to : ${errorMessage}"
+	   exit 1
+	}
 
 	# Strip auto commment block off
 	regsub {/\*=auto===.*===auto=\*/} $data REPLACE-AND-CONQUER data
@@ -139,7 +143,12 @@ proc CopyrightFile {filename} {
 	}
 	PrintCopyright $fid 0
 	puts -nonewline $fid $data
-	close $fid
+
+	if {[catch {close $fid} errorMessage]} {
+	   tk_messageBox -type ok -message "The following error occurred saving the commented file: ${errorMessage}"
+	   puts "Aborting due to : ${errorMessage}"
+	   exit 1
+	}
 }
 
 #-------------------------------------------------------------------------------
@@ -161,7 +170,11 @@ proc CommentFile {filename {verbose 0}} {
 		exit
 	}
 	set data [read $fid]
-	close $fid
+	if {[catch {close $fid} errorMessage]} {
+	   tk_messageBox -type ok -message "The following error occurred while saving the input file: ${errorMessage}"
+	   puts "Aborting due to : ${errorMessage}"
+	   exit 1
+	}
 
 	# Strip auto commment block off
 	regsub  "#=auto===.*===auto=\n" $data {} data
@@ -191,7 +204,11 @@ proc CommentFile {filename {verbose 0}} {
 	}
 	puts $fid "#==========================================================================auto="
 	puts -nonewline $fid $data
-	close $fid
+	if {[catch {close $fid} errorMessage]} {
+	   tk_messageBox -type ok -message "The following error occurred saving a file: ${errorMessage}" 
+	   puts "Aborting due to : ${errorMessage}"
+	   exit 1
+	   }
 
 	# Print comments to stdout
 	if {$verbose == 0} {

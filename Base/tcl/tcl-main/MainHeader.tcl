@@ -385,7 +385,11 @@ proc ReadHeader {image run utility tk} {
 	} else {
 		set fid [open $utility]
 		set hdr [read $fid]
-	       close $fid
+		if {[catch {close $fid} errorMessage]} {
+               	 tk_messageBox -type ok -message "The following error occurred saving a file: ${errorMessage}"
+                 puts "Aborting due to: ${errorMessage}"
+                 exit 1
+        	}
 	}
 	return $hdr
 }

@@ -47,7 +47,11 @@ proc ReadInput {filename} {
 		return ""
 	}
 	set data [read $fid]
-	close $fid
+	if {[catch {close $fid} errorMessage]} {
+    		tk_messageBox -type ok -message "The following error occurred saving a file : ${errorMessage}" 
+		puts "Aborting due to : ${errorMessage}"
+    		exit 1
+  	}
 	return $data
 }
 
@@ -204,7 +208,11 @@ proc DocumentFile {docdir dir filename {level "1"}} {
 	}
 
 	HtmlFoot $fid
-	close $fid
+	if {[catch {close $fid} errorMessage]} {
+		tk_messageBox -type ok -message "The following error occurred saving a file: ${errorMessage}"
+		puts "Aborting due to: ${errorMessage}"
+		exit 1
+	}
 }
 
 #-------------------------------------------------------------------------------
@@ -240,7 +248,12 @@ proc DocumentIndex {docdir} {
 	}
 
 	HtmlFoot $fid
-	close $fid
+	if {[catch {close $fid} errorMessage]} {
+                tk_messageBox -type ok -message "The following error occurred sa
+ving a file: ${errorMessage}"
+                puts "Aborting due to: ${errorMessage}"
+                exit 1
+        }
 }
 
 #-------------------------------------------------------------------------------
@@ -446,7 +459,12 @@ $Contents($index,html)
 	}
 
 	HtmlFoot $fid
-	close $fid
+	if {[catch {close $fid} errorMessage]} {
+                tk_messageBox -type ok -message "The following error occurred sa
+ving a file: ${errorMessage}"
+                puts "Aborting due to: ${errorMessage}"
+                exit 1
+        }
 }
 
 #-------------------------------------------------------------------------------
