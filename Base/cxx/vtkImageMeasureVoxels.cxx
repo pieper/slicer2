@@ -127,13 +127,13 @@ static void vtkImageMeasureVoxelsExecute(vtkImageMeasureVoxels *self,
 
   // amount input histogram is shifted by
   histogram->GetOrigin(origin);
-  printf("origin: %f %f %f\n", origin[0], origin[1], origin[2]);
+  //printf("origin: %f %f %f\n", origin[0], origin[1], origin[2]);
 
   // Get voxel dimensions (in mm)
   inData->GetSpacing(dimension);
   // Convert to voxel volume (in mL)
   voxelVolume = dimension[0]*dimension[1]*dimension[2]/1000;
-  printf("dimensions: %f %f %f, vol: %f \n", dimension[0], dimension[1], dimension[2], voxelVolume);
+  // printf("dimensions: %f %f %f, vol: %f \n", dimension[0], dimension[1], dimension[2], voxelVolume);
 
   // Loop through histogram pixels (really histogram is 1D, only X matters.)
   for (idxZ = 0; idxZ <= maxZ; idxZ++)
@@ -152,24 +152,13 @@ static void vtkImageMeasureVoxelsExecute(vtkImageMeasureVoxels *self,
 	      {
 		label = idxR+(int)origin[0];
 		volume = *histPtr * voxelVolume;
-		//cout << setprecision(3);
 		// round to 3 decimal places
-		//volume = (floor(volume*1000 + 0.5))/1000;
 		char vol2[30];
-		// round to 3 decimal places
 		sprintf(vol2, "%.3f", volume);
-		cout << setw(5) << label;
-		cout << setiosflags(ios::right);
-		int width = 15 - (label>=10) - (label>=100);
-		cout << setw(15)  << vol2 << '\n';
-	
 		file << setw(5) << label;
 		file << setiosflags(ios::right);
-		//		int width = 15 - (label>=10) - (label>=100);
+		int width = 15 - (label>=10) - (label>=100);
 		file << setw(15)  << vol2 << '\n';
-
-	
-		//		file << label << '\t' << volume << '\n';
 	      }
 	    histPtr++;
 	  }
