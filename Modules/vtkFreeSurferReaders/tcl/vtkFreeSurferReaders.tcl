@@ -204,7 +204,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.15 $} {$Date: 2005/03/12 00:30:02 $}]
+        {$Revision: 1.16 $} {$Date: 2005/03/15 00:15:22 $}]
 
 }
 
@@ -1029,7 +1029,7 @@ proc vtkFreeSurferReadersMGHApply {} {
 
     if {$::Module(verbose)} {
         # turn debugging on in this node - causes a seg fault
-        Volume($i,node) DebugOn
+        # Volume($i,node) DebugOn
     }
 
     # read in the MGH file
@@ -1045,10 +1045,16 @@ proc vtkFreeSurferReadersMGHApply {} {
     # set the filename
     Volume($i,vol,rw) SetFileName $vtkFreeSurferReaders(VolumeFileName)
 
+#----------------
+set saveverbose $Module(verbose)
+set Module(verbose) 0
+set usePos 0
+set useMatrices 0
+
     # have to fudge it a little here, read the header to get the info needed
     if {$::Module(verbose)} {
         # set it up to be debugging on
-        Volume($i,vol,rw) DebugOn
+        # Volume($i,vol,rw) DebugOn
         puts "vtkFreeSurferReadersMGHApply:\n\tReading volume header"
     }
 
@@ -1059,9 +1065,16 @@ proc vtkFreeSurferReadersMGHApply {} {
         DevErrorWindow "vtkMGHReader: update on volume $i failed."
     }
 
+    # set the name and description of the volume
+    $n SetName $Volume(name)
+    $n SetDescription $Volume(desc)
+
    
     set Volume(isDICOM) 0
     set Volume($i,type) "MGH"
+
+
+    # Set up the Volume(x) variables
 
     set dims [Volume($i,vol,rw) GetDataDimensions]
     if {$::Module(verbose)} {
@@ -1076,7 +1089,9 @@ proc vtkFreeSurferReadersMGHApply {} {
     set Volume(pixelWidth) [lindex $spc 0]
     set Volume(pixelHeight) [lindex $spc 1]
     set Volume(sliceThickness) [lindex $spc 2]
-    set Volume(sliceSpacing) [lindex $spc 2]
+    # use a slice spacing of 0 since we don't want it doubled in the fov calc
+    set Volume(sliceSpacing) 0
+# [lindex $spc 2]
 
     set Volume(gantryDetectorTilt) 0
     set Volume(numScalars) 1
@@ -1086,7 +1101,9 @@ proc vtkFreeSurferReadersMGHApply {} {
     set Volume(littleEndian) 0
 
     # Sag:LR RL Ax:SI IS Cor: AP PA
-    set Volume(scanOrder) {RL}
+    # set Volume(scanOrder) {RL}
+    set Volume(scanOrder) {PA}
+
     set scalarType [Volume($i,vol,rw) GetScalarType]
     # Scalar type can be VTK_UNSIGNED_CHAR (3),  VTK_INT (6), VTK_FLOAT (10), VTK_SHORT (4), 
     # set it to the valid volume values of $Volume(scalarTypeMenu)
@@ -1104,6 +1121,7 @@ proc vtkFreeSurferReadersMGHApply {} {
     if {$::Module(verbose)} {
         puts "$vtkFreeSurferReaders(VolumeFileName) scalarType $Volume(scalarType)"
     }
+
     set Volume(readHeaders) 0
     set Volume(filePattern) %s
     set Volume(dimensions) "[lindex $dims 0] [lindex $dims 1]"
@@ -1112,14 +1130,14 @@ proc vtkFreeSurferReadersMGHApply {} {
     if {$::Module(verbose)} {
         puts "$vtkFreeSurferReaders(VolumeFileName) imageRange $Volume(imageRange)"
     }
-    # set the name and description of the volume
-    $n SetName $Volume(name)
-    $n SetDescription $Volume(desc)
 
-    # set the volume properties
+
+
+
+    # Set the volume node properties
     Volume($i,node) SetName $Volume(name)
     Volume($i,node) SetDescription $Volume(desc)
-    Volume($i,node) SetLabelMap $Volume(labelMap)
+    Volume($i,node) SetLabelMap $Volume(labelMap) 
     eval Volume($i,node) SetSpacing $Volume(pixelWidth) $Volume(pixelHeight) \
             [expr $Volume(sliceSpacing) + $Volume(sliceThickness)]
     Volume($i,node) SetTilt $Volume(gantryDetectorTilt)
@@ -1135,19 +1153,61 @@ proc vtkFreeSurferReadersMGHApply {} {
     Volume($i,node) SetDimensions [lindex $Volume(dimensions) 0] [lindex $Volume(dimensions) 1]
     # without these, getting a seg fault when debug is turned on in the vtkMrmlVolumeNode
     Volume($i,node) SetLUTName ""
-    Volume($i,node) SetFileType "MGH"
+    Volume($i,node) SetFileType  $Volume($i,type)
+
+
+    # now compute the RAS to IJK matrix from the values set above
+    # Volume($i,node) ComputeRasToIjkFromScanOrder $Volume(scanOrder)
+    # if that doesn't work, calculate corners
+    # it doesn't as this isn't a standard scan order
 
     # read in the matrix from the headers and use it
-     
+    
     # get the IJK to RAS matrix from the volume:
     # x_r x_a x_s y_r y_a y_s z_r z_a z_s c_r c_a c_s
     set ijkmat [Volume($i,vol,rw) GetRASMatrix]
     if {$::Module(verbose)} {
         puts "MGH Reader: IJK matrix for volume $i: $ijkmat"
     }
-    # fill in a matrix
-    if {[info command rasmat$i] != ""} {
-        rastmat$i Delete
+
+    # calcualte tr, ta, ts from cr, ca, cs - from solving this equation for t_ras
+    # xr yr zr tr    xspacing    0        0     0      width/2     cr
+    # xa ya za ta  *   0      yspacing    0     0   *  height/2  = ca
+    # xs ys zs ts      0         0     zspacing 0      depth/2     cs
+    # 0  0  0  1       0         0        0     1         1        1
+    # which yeilds
+    # xr*xspacing*width/2 + yr*yspacing*height/2 + zr*zspacing*depth/2 + tr = cr
+    # and similarly for xa... xs...
+    set xr [lindex $ijkmat 0]
+    set xa [lindex $ijkmat 1]
+    set xs [lindex $ijkmat 2]
+    set yr [lindex $ijkmat 3]
+    set ya [lindex $ijkmat 4]
+    set ys [lindex $ijkmat 5]
+    set zr [lindex $ijkmat 6]
+    set za [lindex $ijkmat 7]
+    set zs [lindex $ijkmat 8]
+    set cr [lindex $ijkmat 9]
+    set ca [lindex $ijkmat 10]
+    set cs [lindex $ijkmat 11]
+    set xspacing [lindex $spc 0]
+    set yspacing [lindex $spc 1]
+    set zspacing [lindex $spc 2]
+    set w2 [expr [lindex $dims 0] / 2]
+    set h2 [expr [lindex $dims 1] / 2]
+    set d2 [expr [lindex $dims 2] / 2]
+        
+    # try something - zero out the cras to take out the mgh shift away from origin
+    set cr 0
+    set ca 0
+    set cs 0
+
+    set tr [expr $cr - $xr*$xspacing*$w2 - $yr*$yspacing*$h2 - $zr*$zspacing*$d2]
+    set ta [expr $ca - $xa*$xspacing*$w2 - $ya*$yspacing*$h2 - $za*$zspacing*$d2]
+    set ts [expr $cs - $xs*$xspacing*$w2 - $ys*$yspacing*$h2 - $zs*$zspacing*$d2]
+
+    if {$::Module(verbose)} {
+        puts "tr = $tr, ta = $ta, ts = $ts"
     }
 
     # there's a problem with getting the MGH volume to display properly,
@@ -1157,22 +1217,27 @@ proc vtkFreeSurferReadersMGHApply {} {
     # y_r y_a y_s
     # z_r z_a z_s
     # c_r c_a c_s
-    # which we need to put into the form (rasmat):
-    # x_r y_r z_r c_r
-    # x_a y_a z_a c_a
-    # x_s y_s z_s c_s
-    #  0   0   0   1
+    # which, to compute the corners (ftl, ftr, fbr, ltl: first slice top left and right corners, first slice bottom right corner, and last slice top left corner) to pass to 
+    # ComputeRasToIjkFromCorners, we need to apply the transform
+    # xr yr zr tr
+    # xa ya za ta
+    # xs ys zs ts
+    # 0  0  0  1
+    # to the corners of the volume
+
     catch "rasmat$i Delete"
     vtkMatrix4x4 rasmat$i
+    rasmat$i Identity
 
+    # by rows:
     # x_r
     rasmat$i SetElement 0 0 [lindex $ijkmat 0]
     # y_r
     rasmat$i SetElement 0 1 [lindex $ijkmat 3]
     # z_r
     rasmat$i SetElement 0 2 [lindex $ijkmat 6]
-    # c_r
-    rasmat$i SetElement 0 3 [lindex $ijkmat 9]
+    # t_r 
+    rasmat$i SetElement 0 3 $tr
 
     # x_a
     rasmat$i SetElement 1 0 [lindex $ijkmat 1]
@@ -1180,8 +1245,8 @@ proc vtkFreeSurferReadersMGHApply {} {
     rasmat$i SetElement 1 1 [lindex $ijkmat 4]
     # z_a
     rasmat$i SetElement 1 2 [lindex $ijkmat 7]
-    # c_a
-    rasmat$i SetElement 1 3 [lindex $ijkmat 10]
+    # t_a
+    rasmat$i SetElement 1 3 $ta
 
     # x_s
     rasmat$i SetElement 2 0 [lindex $ijkmat 2]
@@ -1189,18 +1254,11 @@ proc vtkFreeSurferReadersMGHApply {} {
     rasmat$i SetElement 2 1 [lindex $ijkmat 5]
     # z_s
     rasmat$i SetElement 2 2 [lindex $ijkmat 8]
-    # c_s
-    rasmat$i SetElement 2 3 [lindex $ijkmat 11]
+    # t_s
+    rasmat$i SetElement 2 3 $ts
 
-    rasmat$i SetElement 3 0 0
-    rasmat$i SetElement 3 1 0
-    rasmat$i SetElement 3 2 0
-    rasmat$i SetElement 3 3 1
-
-    # set up the scaling factor from the voxel size
-    if {[info command scalemat$i] != ""} {
-        scalemat$i Delete
-    }
+    # now include the scaling factor, from the voxel size
+    catch "scalemat$i Delete"
     vtkMatrix4x4 scalemat$i
     scalemat$i Identity
     # s_x
@@ -1209,80 +1267,79 @@ proc vtkFreeSurferReadersMGHApply {} {
     scalemat$i SetElement 1 1 $Volume(pixelHeight)
     # s_z
     scalemat$i SetElement 2 2 $Volume(sliceThickness)
-
+    
     # now apply it to the rasmat
     rasmat$i Multiply4x4 rasmat$i scalemat$i rasmat$i
-
+    
     if {$::Module(verbose)} {
         if {[info command DevPrintMatrix4x4] != ""} {
             DevPrintMatrix4x4 rasmat$i "MGH vol $i RAS -> IJK (with scale)"
         }
     }
-    # rasmat$i Identity
 
-    # invert it to get the RAS to IJK
-    rasmat$i Invert
+    # To get the corners, find the max values of the volume, assume mins are 0
+    set maxx [lindex $dims 0]
+    set maxy [lindex $dims 1]
+    set maxz [lindex $dims 2]
+    # set maxx $w2
+    # set maxy $h2
+    # set maxz $d2
+
+    # first slice, top left corner = (minx,maxy,minz) 0,1,0 y axis
+    set ftl [rasmat$i MultiplyPoint 0 0 0 1]
+
+    # first slice, top right corner = (maxx,maxy,minz) 1,1,0
+    set ftr [rasmat$i MultiplyPoint $maxx 0 0 1]
+
+    # first slice, bottom right corner =(maxx,miny,minz) 1,0,0 x axis
+    set fbr [rasmat$i MultiplyPoint $maxx $maxy 0 1]
+
+    # last slice, top left corner = (minx,maxy,maxz) 0,1,1
+    set ltl [rasmat$i MultiplyPoint 0 0 $maxz 1]
+
+    # these aren't used
+    set fc [rasmat$i MultiplyPoint 0 0 0 1]
+    set lc [rasmat$i MultiplyPoint 0 0 0 1]
 
     if {$::Module(verbose)} {
         if {[info command DevPrintMatrix4x4] != ""} {
-            DevPrintMatrix4x4 rasmat$i "MGH vol $i RAS -> IJK (with scale) INVERTED"
-        }
+            DevPrintMatrix4x4 rasmat$i "MGH vol $i RAS -> IJK (with scaling, t_ras)"
+        } 
+        puts "dims $dims"
+        puts "spc $spc"
+        puts  "ftl $ftl"
+        puts  "ftr $ftr"
+        puts  "fbr $fbr"
+        puts  "ltl $ltl"
     }
+    # now do the magic bit
+    # Volume($i,node) ComputeRasToIjkFromCorners $fc $ftl $ftr $fbr $lc $ltl
+    Volume($i,node) ComputeRasToIjkFromCorners \
+        [lindex $fc 0]  [lindex $fc 1]  [lindex $fc 2] \
+        [lindex $ftl 0] [lindex $ftl 1] [lindex $ftl 2] \
+        [lindex $ftr 0] [lindex $ftr 1] [lindex $ftr 2] \
+        [lindex $fbr 0] [lindex $fbr 1] [lindex $fbr 2]  \
+        [lindex $lc 0]  [lindex $lc 1]  [lindex $lc 2] \
+        [lindex $ltl 0] [lindex $ltl 1] [lindex $ltl 2]
 
-    # the Slicer assumption shifts the MGH volume by 128 to the R
-    # the MGH volume center: (from http://www.nmr.mgh.harvard.edu/~tosa/#coords)
-    # the c_(r,a,s) value is the RAS coordinate position of (width/2, height/2, depth/2) in the voxel coordinates.
-    # rasmat$i SetElement 0 3 [expr [rasmat$i GetElement 0 3] - 128]
 
-    if {$Module(verbose)} {
-      if {[info command DevPrintMatrix4x4] != ""} {
-          DevPrintMatrix4x4 rasmat$i "MGH vol $i RAS -> IJK (with scale) INVERTED, SHIFTED"
-      }
-    }
-
-    # set up the Position matrix for the node, with a 128 shift
-    catch "posmat$i Delete"
-    vtkMatrix4x4 posmat$i
-    posmat$i Identity
-    posmat$i SetElement 0 3 -128
-    set curPos [Volume($i,node) GetPosition]
-    $curPos DeepCopy posmat$i
-    # doubly sure? sometimes works?
-    catch "mymat Delete"
-    vtkMrmlMatrixNode mymat
-    Volume($i,node) SetPositionMatrix [mymat GetMatrixToString posmat$i]
-    mymat Delete
-
-    # turn off using the ras to vtk matrix, as otherwise the MGH volume is flipped in Y
+    # Turn off using the ras to vtk matrix, as otherwise the MGH volume is flipped in Y
     if {$::Module(verbose)} {
         puts "Turning off UseRasToVtkMatrix on volume $i"
     }
     Volume($i,node) UseRasToVtkMatrixOff
 
-    # set the volume's RAS to IJK matrix
-#    Volume($i,node) SetRasToIjkMatrix rasmat$i
-    set curRasToIjk [Volume($i,node) GetRasToIjk]
-    $curRasToIjk DeepCopy rasmat$i
 
-
-    # set up a secondary window to view the slices
-    if {$::Module(verbose)} {
-#        vtkFreeSurferReadersShowMGH $i
-    }
-    if {[info command DevPrintMrmlDataTree] != ""} {
-        DevPrintMrmlDataTree
-    }
-
-    if {$::Module(verbose)} {
-        puts "vtkFreeSurferReaders: About  to call main update mrml for an MGH volume, \# $i"
-        DevErrorWindow "vtkFreeSurferReaders: About  to call main update mrml for an MGH volume"
-    }
 
     # Reads in the volume via the Execute procedure
     MainUpdateMRML
 
-    # try doing some manual reading here - necessary to show the data legibly
-    Volume($i,vol) SetImageData [Volume($i,vol,rw) GetOutput]
+    # Try doing some manual reading here - this is necessary to show the data legibly
+    # doesn't seem to be necessary after using compute ras to ijk  from corners
+    # Volume($i,vol) SetImageData [Volume($i,vol,rw) GetOutput]
+
+
+    # Clean up
 
     # If failed, then it's no longer in the idList
     if {[lsearch $Volume(idList) $i] == -1} {
@@ -1305,12 +1362,15 @@ proc vtkFreeSurferReadersMGHApply {} {
     # save the id for later use
     set m $i
 
-    # if we are successful set the FOV for correct display of this volume
+    # if we are successful set the FOV for correct display of this volume - tbd calc the max
+    # set dim     [lindex [Volume($i,node) GetImageRange] 1]
+    # set spacing [lindex [Volume($i,node) GetSpacing] 2]
     set dim     [lindex [Volume($i,node) GetDimensions] 0]
     set spacing [lindex [Volume($i,node) GetSpacing] 0]
-    set fov     [expr $dim*$spacing]
+
+    set fov     [expr $dim * $spacing]
     if {$::Module(verbose)} { 
-        puts "MGH Reader setting fov to $fov - should be 256 (dim $dim spacing $spacing)"
+        puts "MGH Reader setting fov to $fov - (dim $dim spacing $spacing)"
     }
     set View(fov) $fov
     MainViewSetFov
@@ -1321,6 +1381,11 @@ proc vtkFreeSurferReadersMGHApply {} {
     } else {
         MainSlicesSetVolumeAll Back $i
     }
+
+
+
+#-------------------
+set Module(verbose) $saveverbose
 
     # Update all fields that the user changed (not stuff that would need a file reread)
     return $i
@@ -4563,7 +4628,7 @@ proc vtkFreeSurferReadersRecordSubjectQA { subject vol eval } {
     }
     
     # write it out
-    puts $fid "[clock format [clock seconds] -format "%D-%T-%Z"] $::env(USER) Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.15 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
+    puts $fid "[clock format [clock seconds] -format "%D-%T-%Z"] $::env(USER) Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.16 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
     close $fid
 
     # now close down the window that called me
