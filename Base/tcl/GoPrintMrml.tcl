@@ -13,11 +13,14 @@ if {$argc != 1} {
 if {[info exists env(SLICER_HOME)] == 0 || $env(SLICER_HOME) == ""} {
     set prog [file dirname $argv0]
 } else {
-    set prog [file join $env(SLICER_HOME) program]
+    set prog [file join $env(SLICER_HOME) Base/tcl]
 }
 
 # Read source files
+# puts "Reading in file [file join $prog [file join tcl-main MainMrml.tcl]]"
 source [file join $prog [file join tcl-main MainMrml.tcl]]
+# puts "Reading in file [file join $prog [file join tcl-main Parse.tcl]]"
+source [file join $prog [file join tcl-main Parse.tcl]]
 
 # Run
 set tags [MainMrmlReadVersion2.0 $argv]
