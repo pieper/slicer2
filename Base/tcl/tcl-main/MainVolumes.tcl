@@ -58,7 +58,7 @@ proc MainVolumesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.44 $} {$Date: 2001/07/06 18:44:31 $}]
+		{$Revision: 1.45 $} {$Date: 2001/07/06 19:47:33 $}]
 
 	set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -323,12 +323,14 @@ proc MainVolumesWrite {v prefix} {
 
 	# So don't write it if it's not dirty.
 	if {$Volume($v,dirty) == 0} {
-		tk_messageBox -message \
-			"This volume will not be saved\nbecause it has not been changed\n\
-since the last time it was saved."
+	    set answer [tk_messageBox -type yesno -message \
+			    "This volume shold not be saved\nbecause it has not been changed\n\
+ since the last time it was saved.\nDo you really want to save it?"]
+	    if {$answer == "no"} {
 		return
+	    }
 	}
-
+    
 	# Form and check file prefix
 	set filePrefix $prefix
 	set fileFull [file join $Mrml(dir) $filePrefix]
