@@ -142,8 +142,25 @@ public:
 
   // Description:
   // Replacement for Start - EndSlice Bounding Box can be 3D
-  vtkSetVector3Macro(SegmentationBoundaryMin,int);
-  vtkSetVector3Macro(SegmentationBoundaryMax,int);
+  void vtkSetSegmentationBoundaryMin(int init0, int init1, int init2) {
+    int init[3]={init0,init1,init2};
+    this->SetSegmentationBoundaryMin(init);
+  }
+
+  void SetSegmentationBoundaryMin(int init[3]) {
+    for(int i = 0 ; i < 3; i++) {printf("%d ",init[i]); this->SegmentationBoundaryMin[i] = init[i];}
+    this->StartSlice = this->SegmentationBoundaryMin[2];
+  }
+
+  void vtkSetSegmentationBoundaryMax(int init0, int init1, int init2) {
+    int init[3]={init0,init1,init2};
+    this->SetSegmentationBoundaryMax(init);
+  }
+
+  void SetSegmentationBoundaryMax(int init[3]) {
+    for(int i = 0 ; i < 3; i++) this->SegmentationBoundaryMax[i] = init[i];
+    this->EndSlice = this->SegmentationBoundaryMax[2];
+  }
 
   vtkGetVector3Macro(SegmentationBoundaryMin,int);
   vtkGetVector3Macro(SegmentationBoundaryMax,int);
