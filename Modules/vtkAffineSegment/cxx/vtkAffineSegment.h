@@ -3,10 +3,10 @@
 
 
 
-#include <vtkAffineSegmentConfigure.h>
 #include <vtkImageToImageFilter.h>
 #include "vtkImageData.h"
 
+#include "vtkAffineSegmentConfigure.h"
 
 #ifdef _WIN32 // WINDOWS
 

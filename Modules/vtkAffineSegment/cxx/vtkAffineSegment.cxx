@@ -552,13 +552,15 @@ static void vtkAffineSegmentContract(vtkAffineSegment *self,
   dimXY = self->dimXY;
 
   kapa4 = 0.0;
-  float dx,dy,dz;
+  vtkFloatingPointType dx,dy,dz;
 
   //if the interface has less than ten points, then there is really nothing to contract
   if(self->seedPoints.size()<20)
       return;
 
-  inData->GetSpacing(dx,dy,dz);
+  dx = inData->GetSpacing()[0];
+  dy = inData->GetSpacing()[1];
+  dz = inData->GetSpacing()[2];
   if((dx <= 0) || (dy <= 0) || (dz <= 0))
       dx = dy = dz = 1.0;
 
@@ -1931,7 +1933,7 @@ vtkAffineSegment::~vtkAffineSegment()
   /* all the delete are done by unInit() */
 }
 
-inline int vtkAffineSegment::shiftNeighbor(int n)
+int vtkAffineSegment::shiftNeighbor(int n)
 {
   //assert(initialized);
   //assert(n>=0 && n<=nNeighbors);
@@ -1939,7 +1941,7 @@ inline int vtkAffineSegment::shiftNeighbor(int n)
   return arrayShiftNeighbor[n];
 }
 
-inline double vtkAffineSegment::distanceNeighbor(int n)
+double vtkAffineSegment::distanceNeighbor(int n)
 {
   //assert(initialized);
   //assert(n>=0 && n<=nNeighbors);
