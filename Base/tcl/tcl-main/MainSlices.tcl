@@ -84,7 +84,7 @@ proc MainSlicesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainSlices \
-		{$Revision: 1.28 $} {$Date: 2001/04/05 23:03:53 $}]
+		{$Revision: 1.29 $} {$Date: 2001/04/10 18:35:16 $}]
 
 	# Initialize Variables
 	set Slice(idList) "0 1 2"
@@ -718,22 +718,31 @@ proc MainSlicesSetOffsetInit {s widget {value ""}} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesSetOffset {s {value ""}} {
-	global Slice
+    global Slice
 
-	if {$value == ""} {
-		set value $Slice($s,offset)
-	} elseif {$value == "Prev"} {
-		set value [expr $Slice($s,offset) - 1]
-		set Slice($s,offset) $value
-	} elseif {$value == "Next"} {
-		set value [expr $Slice($s,offset) + 1]
-		set Slice($s,offset) $value
-	}
-	set Slice($s,offset) $value
-	
-	Slicer SetOffset $s $value
-
-	MainSlicesRefreshClip $s
+    # figure out what integer offset to use
+    if {$value == ""} {
+	# this means we were called directly from the slider w/ no value param
+	# and the variable Slice($s,offset) has already been set by user
+	set value $Slice($s,offset)
+    } elseif {$value == "Prev"} {
+	set value [expr $Slice($s,offset) - 1]
+    } elseif {$value == "Next"} {
+	set value [expr $Slice($s,offset) + 1]
+    }
+    
+    # validate value
+    if {[ValidateInt $value] == 0}  {
+	# don't change slice offset if value is bad
+	# Set slider to the last used offset for this orient
+	set value [Slicer GetOffset $s]
+    } 
+    
+    set Slice($s,offset) $value
+    
+    Slicer SetOffset $s $value
+    
+    MainSlicesRefreshClip $s
 }
 
 #-------------------------------------------------------------------------------
