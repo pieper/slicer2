@@ -26,6 +26,7 @@ switch $tcl_platform(os) {
     "SunOS" {
         set env(BUILD) $solaris
         set VTK_DIR  $SLICER_HOME/Lib/$env(BUILD)/vtk/VTK-build-4.2.2
+        set VTK_SRC_DIR $SLICER_HOME/Lib/$env(BUILD)/vtk/VTK-4.2.2
         set ITK_BINARY_PATH /projects/birn/itk/itk-1.2/itk-build
         # used for compilation
         set VTKSLICERBASE_BUILD_LIB $SLICER_HOME/Base/builds/$env(BUILD)/bin/vtkSlicerBase.so
@@ -43,6 +44,7 @@ switch $tcl_platform(os) {
         set env(BUILD) $linux
         set VTK_BINARY_PATH $SLICER_HOME/Lib/$env(BUILD)/vtk/VTK-build
         set VTK_DIR $VTK_BINARY_PATH
+        set VTK_SRC_DIR $SLICER_HOME/Lib/$env(BUILD)/vtk/VTK
         set ITK_BINARY_PATH /home/pieper/downloads/itk/itk-build
         set VTKSLICERBASE_BUILD_LIB $SLICER_HOME/Base/builds/$env(BUILD)/bin/vtkSlicerBase.so
         set VTKSLICERBASE_BUILD_TCL_LIB $SLICER_HOME/Base/builds/$env(BUILD)/bin/vtkSlicerBaseTCL.so
@@ -58,7 +60,7 @@ switch $tcl_platform(os) {
     "Darwin" {
         set env(BUILD) $darwin
         set ITK_BINARY_PATH /Users/pieper/downloads/itk/itk-build
-        set VTK_SRC_PATH /Users/pieper/downloads/vtk/vtk4.2/VTK-4.2.1
+        set VTK_SRC_DIR /Users/pieper/downloads/vtk/vtk4.2/VTK-4.2.1
         set VTKSLICERBASE_BUILD_LIB $SLICER_HOME/Base/builds/$env(BUILD)/bin/vtkSlicerBase.dylib
         set VTKSLICERBASE_BUILD_TCL_LIB $SLICER_HOME/Base/builds/$env(BUILD)/bin/vtkSlicerBaseTCL.dylib
         set GENERATOR "Unix Makefiles" 
@@ -77,6 +79,7 @@ switch $tcl_platform(os) {
 
         set env(BUILD) $windows
         set VTK_BINARY_PATH c:/downloads/vtk/VTK-4.2.5-build
+        set VTK_SRC_DIR c:/downloads/vtk/VTK-4.2.5
         set VTK_DIR $VTK_BINARY_PATH
         set ITK_BINARY_PATH "c:/downloads/itk/InsightToolkit-1.4.0-build"
         set VTKSLICERBASE_BUILD_LIB $SLICER_HOME/Base/builds/$env(BUILD)/bin/debug/vtkSlicerBase.lib
