@@ -161,7 +161,7 @@ proc AnatomyInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.9 $} {$Date: 2003/03/19 19:16:29 $}]
+        {$Revision: 1.10 $} {$Date: 2003/06/04 18:41:12 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -270,10 +270,10 @@ proc AnatomyBuildGUI {} {
     eval {entry $f.f1.eName} $Gui(WEA)
     eval {label $f.f1.lHtml -text "Output directory:"} $Gui(WLA)
     eval {entry $f.f1.eHtml} $Gui(WEA)
-    $f.f1.eHtml insert 1 "/projects/slicer/developers/ahans/AnatomyBrowser/html"
+    $f.f1.eHtml insert 1 "/"
     eval {label $f.f1.lTemp -text "Directory for temporary files:"} $Gui(WLA)
     eval {entry $f.f1.eTemp} $Gui(WEA)
-    $f.f1.eTemp insert 1 "/projects/slicer/developers/ahans/AnatomyBrowser/tmp"
+    $f.f1.eTemp insert 1 "/"
     eval {label $f.f2.lVolume -text "Volume:"} $Gui(WLA)
     eval {menubutton $f.f2.mbVolume -text "Select" -menu $f.f2.mbVolume.m} $Gui(WMBA)
     eval {menu $f.f2.mbVolume.m} $Gui(WMA)
