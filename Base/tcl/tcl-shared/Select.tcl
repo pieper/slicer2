@@ -115,7 +115,7 @@ proc SelectBuildGUI {} {
 	lappend SelectEventMgr1 {$Gui(fSl2Win) <KeyPress-x> \
 		{ if { [SelectPick2D %W %x %y] != 0 } \
 			  { eval MainSlicesAllOffsetToPoint $Select(xyz) } } }
-	puts $SelectEventMgr1
+	# puts $SelectEventMgr1
 	pushEventManager $SelectEventMgr1
 	}
 
@@ -194,7 +194,6 @@ proc SelectPick2D { widget x y } {
 
 	set s $Interactor(s)
 	if { $s != "" } {
-		puts "$s $x $y"
 		scan [MainInteractorXY $s $x $y] "%d %d %d %d" xs yz x y
 		Slicer SetReformatPoint $s $x $y
 		scan [Slicer GetWldPoint] "%g %g %g" xRas yRas zRas
