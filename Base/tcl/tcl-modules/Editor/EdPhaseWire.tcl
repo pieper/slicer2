@@ -58,7 +58,7 @@
 # .END
 #-------------------------------------------------------------------------------
 proc EdPhaseWireInit {} {
-    global Ed Gui
+    global Ed Gui Volume
     
     set e EdPhaseWire
     set Ed($e,name)      "PhaseWire"
@@ -87,6 +87,20 @@ proc EdPhaseWireInit {} {
     set Ed(EdPhaseWire,gradWeight) 0
     set Ed(EdPhaseWire,certLowerCutoff) 0
     set Ed(EdPhaseWire,certUpperCutoff) 150
+
+    # phase offset slider
+    set Ed($e,phaseOffsetLow) 0
+    set Ed($e,phaseOffsetHigh) 180
+    # default offset is 90 degrees == perfect edge in phase image
+    set Ed(EdPhaseWire,phaseOffset) 90
+
+    # phase and certainty volumes we are using
+    set Ed(EdPhaseWire,phaseVol) $Volume(idNone)
+    set Ed(EdPhaseWire,certVol) $Volume(idNone)
+
+    # whether the user's click defines the value 
+    # of the phase contour we follow
+    set Ed(EdPhaseWire,clickSetsPhase) 0
 }
 
 
@@ -125,6 +139,18 @@ proc EdPhaseWireBuildVTK {} {
 	vtkImageLiveWireScale Ed($e,phaseNorm$s)
 	vtkImageLiveWireScale Ed($e,certNorm$s)
 	vtkImageLiveWireScale Ed($e,gradNorm$s)
+
+	# for shifting the phase image to find edges at different grayscales
+	vtkImageShiftScale Ed($e,phaseScale$s)
+	Ed($e,phaseScale$s) SetShift [EdPhaseConvertToRadians $Ed($e,phaseOffset)]
+	Ed($e,phaseScale$s) SetScale 1
+
+	# for abs value of phase image
+	vtkImageMathematics Ed($e,phaseAbs$s)
+	Ed($e,phaseAbs$s) SetOperationToAbsoluteValue
+	Ed($e,phaseAbs$s) SetInput 0 [Ed($e,phaseScale$s) GetOutput]
+
+	Ed($e,phaseNorm$s) SetInput [Ed($e,phaseAbs$s) GetOutput]
 
 	# pipeline (rest done in EdPhaseWireEnter)
 	Ed($e,gradNorm$s)  SetInput [Ed($e,gradMag$s) GetOutput]
@@ -235,8 +261,9 @@ proc EdPhaseWireBuildGUI {} {
     frame $f.fContour   -bg $Gui(activeWorkspace)
     frame $f.fReset   -bg $Gui(activeWorkspace)
     frame $f.fApply     -bg $Gui(activeWorkspace)
+    frame $f.fSettings     -bg $Gui(activeWorkspace)
     pack $f.fGrid $f.fRender $f.fContour $f.fReset  \
-	    $f.fApply \
+	    $f.fSettings $f.fApply \
 	    -side top -pady $Gui(pad)
 
     # Standard Editor interface buttons
@@ -289,6 +316,60 @@ proc EdPhaseWireBuildGUI {} {
 	    "Clear the latest part of the PhaseWire."
 
     pack $f.bReset $f.bResetSeg -side left -pady $Gui(pad) -padx $Gui(pad)
+
+    #-------------------------------------------
+    # TabbedFrame->Basic->Settings Frame
+    #-------------------------------------------
+    set f $Ed(EdPhaseWire,frame).fTabbedFrame.fBasic.fSettings
+
+    foreach slider "PhaseOffset" text "phase" {
+	eval {label $f.l$slider -text "$text:"} $Gui(WLA)
+	eval {entry $f.e$slider -width 4 \
+		-textvariable Ed(EdPhaseWire,[Uncap $slider])} $Gui(WEA)
+	bind $f.e$slider <Return>   "EdPhaseWireUpdate $slider"
+	bind $f.e$slider <FocusOut> "EdPhaseWireUpdate $slider"
+	eval {scale $f.s$slider -from $Ed(EdPhaseWire,[Uncap $slider]Low) \
+		-to $Ed(EdPhaseWire,[Uncap $slider]High) \
+		-length 50 -variable Ed(EdPhaseWire,[Uncap $slider])  \
+		-resolution 1 \
+		-command "EdPhaseWireUpdate $slider"} \
+		$Gui(WSA) {-sliderlength 22}
+
+	pack $f.l$slider $f.s$slider $f.e$slider \
+		-side left -pady $Gui(pad) -padx $Gui(pad)
+	#grid $f.l$slider $f.e$slider -padx 2 -pady 2 -sticky w
+	#grid $f.l$slider -sticky e
+	#grid $f.s$slider -columnspan 2 -pady 2 
+	
+	set Ed(EdPhaseWire,slider$slider) $f.s$slider
+    }
+
+    set tooltip \
+	    "Phase value to follow in the phase image. \n \
+	    This controls whether to segment towards lighter or darker pixels.\n \
+	    Or you may use the Pick button to select a phase value \n \
+	    on the desired contour."
+
+    TooltipAdd $Ed(EdPhaseWire,sliderPhaseOffset) $tooltip
+    TooltipAdd $f.ePhaseOffset $tooltip
+
+    eval {checkbutton $f.cClickPhase -text "Pick" \
+	    -variable Ed(EdPhaseWire,clickSetsPhase) \
+	    -indicatoron 0  } $Gui(WCA)
+    TooltipAdd $f.cClickPhase \
+	    "Use to segment darker or lighter pixels.  \n \
+	    Press button, then click on image to train. \n \
+	    (When button is pressed, your next click on the slice \n \
+	    will set the phase value to follow in the image.)"
+
+    pack $f.cClickPhase -side left -pady $Gui(pad) -padx $Gui(pad)
+    
+    eval {button $f.bResetPhase -text "Reset" \
+	    -command "EdLiveWireResetPhaseDefaults"} $Gui(WBA)
+        TooltipAdd $f.bResetPhase \
+	    "Reset the phase setting to the default value"
+
+    pack $f.bResetPhase -side left -pady $Gui(pad) -padx $Gui(pad)
 
     #-------------------------------------------
     # TabbedFrame->Basic->Apply frame
@@ -377,6 +458,26 @@ proc EdPhaseWireBuildGUI {} {
     eval {entry $f.eCL -width 6 -textvariable Ed(EdPhaseWire,certLowerCutoff)} $Gui(WEA)
     pack $f.lPW $f.ePW $f.lCW $f.eCW  $f.lGW $f.eGW $f.lCL $f.eCL $f.lCU $f.eCU -side left
 
+}
+
+proc EdPhaseConvertToRadians {degrees} {
+    
+    # we want radians scaled by 1000, since that is how the
+    # phase image is scaled
+    # we also want to subtract this offset, so make it negative
+
+    # this is equivalent to:
+    #set rad [expr $degrees * 3.14159 / 180]
+    #return [expr -1 * $rad * 1000]        
+    return [expr $degrees * -17.453278]
+}
+
+proc EdPhaseConvertToDegrees {radians} {
+
+    # this is equivalent to:
+    #set deg [expr [expr $radians / 1000] * 180 / 3.14159]]
+    # note the hidden 1000 scaling to match phase data scaling
+    return [expr $radians * 0.057295828]
 }
 
 #-------------------------------------------------------------------------------
@@ -681,6 +782,8 @@ proc EdPhaseWireEnter {} {
     # make sure we've got phase
     if {[EdPhaseWireFindInputPhaseVolumes] == "" } {
 	tk_messageBox -message "Cannot find phase and cert volumes"
+	# Lauren don't let the user enter this effect.
+	
 	return
     }
 
@@ -748,15 +851,27 @@ proc EdPhaseWireExit {} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc EdPhaseWireUpdate {type} {
+proc EdPhaseWireUpdate {type {param ""}} {
     global Ed Label Slice
     
     set e EdPhaseWire
-
+    
     switch $type {
 	SetShape {
 	    Slicer DrawSetShapeTo$Ed($e,shape)
 	    set Ed($e,shape) [Slicer GetShapeString]
+	}
+	PhaseOffset {
+	    puts "var: $Ed(EdPhaseWire,phaseOffset) param: $param"
+	    foreach s $Slice(idList) {
+		Ed($e,phaseScale$s) SetShift \
+			[EdPhaseConvertToRadians $Ed($e,phaseOffset)]
+		puts "radians: [EdPhaseConvertToRadians $Ed($e,phaseOffset)]"
+		Ed($e,phaseScale$s) Update
+
+		# clear the cached information in livewire
+		Ed(EdPhaseWire,lwPath$s) ClearContourTail		
+	    }
 	}
     }
 
@@ -779,10 +894,30 @@ proc EdPhaseWireB1 {x y} {
     if {$Ed(EdPhaseWire,activeSlice) != $s} {
 	set Ed(EdPhaseWire,activeSlice) $s
     }
-    
-    # tell the livewire filter its start point
+
+    # tell the livewire filter its new start point
     Ed(EdPhaseWire,lwPath$s) SetStartPoint $x $y
     
+    # set new value of phase offset if needed
+    if {$Ed(EdPhaseWire,clickSetsPhase) == 1} {
+	# grab phase (grayscale value of pixel) at this point
+	set v Volume($Ed(EdPhaseWire,phaseVol),vol)
+	set data [Slicer GetReformatOutputFromVolume $v]
+	# turn off display of error if we click outside of the image
+	$data GlobalWarningDisplayOff
+	# phase value:
+	set pixel [$data GetScalarComponentAsFloat $x $y 0 0]
+	$data GlobalWarningDisplayOn
+	puts $pixel
+	
+	# follow this value phase isocontour now. 
+	# (0 means we clicked out of image, and we won't follow that value)
+	if {$pixel != 0} {
+	    set Ed(EdPhaseWire,phaseOffset) [EdPhaseConvertToDegrees $pixel]
+	}
+	EdPhaseWireUpdate PhaseOffset
+    }
+
 }
 
 #-------------------------------------------------------------------------------
@@ -859,6 +994,17 @@ proc EdPhaseWireClearCurrentSlice {} {
     EdPhaseWireResetSlice $s
     Slicer Update
     RenderSlice $s
+}
+
+
+proc EdLiveWireResetPhaseDefaults {} {
+    global Ed
+
+    # default is 90 degrees for an edge
+    set Ed(EdPhaseWire,phaseOffset) 90
+
+    EdPhaseWireUpdate PhaseOffset
+
 }
 
 
@@ -1126,7 +1272,8 @@ proc EdPhaseWireUsePhasePipeline {} {
     # tell the slicer to reformat this volume tracking the active slice
     Slicer AddVolumeToReformat $v
     foreach s $Slice(idList) {
-	Ed($e,phaseNorm$s)  SetInput [Slicer GetReformatOutputFromVolume $v]
+	#Ed($e,phaseNorm$s)  SetInput [Slicer GetReformatOutputFromVolume $v]
+	Ed($e,phaseScale$s)  SetInput [Slicer GetReformatOutputFromVolume $v]
     }
 
     set v Volume($Ed(EdPhaseWire,certVol),vol)
