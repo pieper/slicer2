@@ -55,7 +55,7 @@
 #   EdLiveWireUseDistanceFromPreviousContour
 #   EdLiveWireGetContourSlice
 #   EdLiveWireTrain
-#   EdLiveWireReadTrainedValues
+#   EdLiveWireReadFeatureParams
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -89,8 +89,8 @@ proc EdLiveWireInit {} {
 
     # training vars
     set Ed($e,trainingRadius) 0
-    set Ed($e,trainingFileName) "TrainMeansVars.txt"
-    set Ed(EdLiveWire,trainingEdgeDir)  0
+    set Ed($e,trainingOutputFileName) "LiveWireSettings.txt"
+    set Ed($e,trainingInputFileName) "LiveWireSettings.txt"
 
     # slider range
     set Ed($e,sliderLow) 0.0
@@ -177,12 +177,13 @@ proc EdLiveWireBuildGUI {} {
     set f $Ed(EdLiveWire,frame)
 
     # this makes the navigation menu (buttons) and the tabs (frames).
-    set label "Settings:"
+    #set label "Settings:"
+    set label ""
     set subframes {Basic Training Advanced}
-    set buttonText {"Basic" "Train" "Adv."}
+    set buttonText {"Basic" "Training" "Settings"}
     set tooltips {"Basic: For Users" \
-	    "Training: Teach LW to segment your data"\
-	    "Advanced: for Developers"}
+	    "Train LiveWire using segmented slices." \
+	    "Current LiveWire Settings"}
 
     TabbedFrame EdLiveWire $f $label $subframes $buttonText \
 	    $tooltips
@@ -197,9 +198,10 @@ proc EdLiveWireBuildGUI {} {
     frame $f.fInteract  -bg $Gui(activeWorkspace)
     frame $f.fGrid      -bg $Gui(activeWorkspace)
     frame $f.fContour   -bg $Gui(activeWorkspace)
+    frame $f.fPopup   -bg $Gui(activeWorkspace)
     frame $f.fApply     -bg $Gui(activeWorkspace)
     pack $f.fGrid $f.fInput \
-	    $f.fInteract $f.fContour $f.fApply \
+	    $f.fInteract $f.fContour $f.fPopup $f.fApply \
 	    -side top -pady $Gui(pad) -fill x
     
     # Standard Editor interface buttons
@@ -235,6 +237,16 @@ proc EdLiveWireBuildGUI {} {
     eval {button $f.bContour -text "Use previous segmented slice:" \
 	    -command "EdLiveWireUseDistanceFromPreviousContour"} $Gui(WBA)
     pack $f.bContour
+
+
+    #-------------------------------------------
+    # TabbedFrame->Advanced->Settings->Popup frame
+    #-------------------------------------------
+    set f $Ed(EdLiveWire,frame).fTabbedFrame.fBasic.fPopup
+    eval {button $f.bPopup -text "View Edge Images" \
+	    -command "EdLiveWireRaiseEdgeImageWin"} $Gui(WBA) {-width 20}
+    pack $f.bPopup
+
     
     #-------------------------------------------
     # TabbedFrame->Basic->Apply frame
@@ -250,38 +262,62 @@ proc EdLiveWireBuildGUI {} {
     #-------------------------------------------
     set f $Ed(EdLiveWire,frame).fTabbedFrame.fTraining
 
-    #-------------------------------------------
-    # TabbedFrame->Training->TrainingFile frame
-    #-------------------------------------------
-    set f $Ed(EdLiveWire,frame).fTabbedFrame.fTraining
     frame $f.fTrainingFile   -bg $Gui(activeWorkspace)
     pack $f.fTrainingFile -side top -pady $Gui(pad) -fill x
-    set f $f.fTrainingFile
-
-    DevAddFileBrowse $f Ed "EdLiveWire,trainingFileName" "Output File:" [] "txt" [] \
-	    "Save" "Output File" "Choose the file where the training information will be written."
-
-    #-------------------------------------------
-    # TabbedFrame->Training->Train frame
-    #-------------------------------------------
-    set f $Ed(EdLiveWire,frame).fTabbedFrame.fTraining
-
+    frame $f.fGrid   -bg $Gui(activeWorkspace)
+    pack $f.fGrid -side top -pady $Gui(pad) -fill x
     frame $f.fSlices   -bg $Gui(activeWorkspace)
     pack $f.fSlices -side top -pady $Gui(pad) -fill x
     frame $f.fTrain   -bg $Gui(activeWorkspace)
     pack $f.fTrain -side top -pady $Gui(pad) -fill x    
 
+    #-------------------------------------------
+    # TabbedFrame->Training->TrainingFile frame
+    #-------------------------------------------
+    set f $Ed(EdLiveWire,frame).fTabbedFrame.fTraining.fTrainingFile
+
+    DevAddFileBrowse $f Ed "EdLiveWire,trainingOutputFileName" "Output File:" [] "txt" [] \
+	    "Save" "Output File" "Choose the file where the training information will be written."
+
+    #-------------------------------------------
+    # TabbedFrame->Training->Grid frame
+    #-------------------------------------------
+    set f $Ed(EdLiveWire,frame).fTabbedFrame.fTraining.fGrid
+    
+    # Output label
+    eval {button $f.bOutput -text "Choose Label:" \
+	    -command "ShowLabels EdLiveWireLabel"} $Gui(WBA)
+    TooltipAdd $f.bOutput "Choose label to train on"
+    eval {entry $f.eOutput -width 6 -textvariable Label(label)} $Gui(WEA)
+    bind $f.eOutput <Return>   "EdLiveWireLabel"
+    bind $f.eOutput <FocusOut> "EdLiveWireLabel"
+    TooltipAdd $f.eOutput "Choose label to train on"
+    eval {entry $f.eName -width 14 -textvariable Label(name)} $Gui(WEA) \
+	    {-bg $Gui(activeWorkspace) -state disabled}
+    grid $f.bOutput $f.eOutput $f.eName -padx 2 -pady $Gui(pad)
+    grid $f.eOutput $f.eName -sticky w
+    
+    lappend Label(colorWidgetList) $f.eName
+
+    #-------------------------------------------
+    # TabbedFrame->Training->Slices frame
+    #-------------------------------------------
     set f $Ed(EdLiveWire,frame).fTabbedFrame.fTraining.fSlices
 
-    foreach lab {"first slice:" "last slice:"} s "1 2" {
+    set tips "{Slice number of the first slice to use for training}\
+	    {Slice number of the last slice to use for training}"
+
+    foreach lab {"first slice:" "last slice:"} s "1 2" tip $tips {
 	eval {label $f.lSlice$s -text $lab} $Gui(WLA)
-	#grid $f.lSlice$s -row $s -col 0
 	eval {entry $f.eSlice$s -width 3 \
 		-textvariable Ed(EdLiveWire,trainingSlice$s)} $Gui(WEA)
-	#grid $f.eSlice$s -row $s -col 1
+	TooltipAdd $f.eSlice$s $tip
 	pack $f.lSlice$s $f.eSlice$s -side left -pady $Gui(pad) -padx $Gui(pad)	
     }
 
+    #-------------------------------------------
+    # TabbedFrame->Training->Train frame
+    #-------------------------------------------
     set f $Ed(EdLiveWire,frame).fTabbedFrame.fTraining.fTrain
     #$f configure  -relief groove -bd 3 -bg $Gui(activeWorkspace)
 
@@ -292,24 +328,21 @@ proc EdLiveWireBuildGUI {} {
 
     set f $Ed(EdLiveWire,frame).fTabbedFrame.fTraining.fTrain.fTrainingMode
 
-    #eval {label $f.lTrainingMode -text "Training:"} $Gui(WLA)
-    #pack $f.lTrainingMode -side left
+    eval {label $f.lTrainingMode -text "Train on:"} $Gui(WLA)
+    pack $f.lTrainingMode -side left
 
-    set tips "{Draw on a slice to mark areas for training.}\
-	    {Use the contour from the current slice.}\
+    set tips "{Use the contour from the current slice.}\
 	    {Train from first slice to last slice.}"
 	    
-    foreach mode "DrawOnSlice CurrentSlice RangeOfSlices" \
-	    text {"Draw Contour" "Current Slice" "Several Slices" } \
-	    width "12 12 12" tip $tips {
+    foreach mode " CurrentSlice RangeOfSlices" \
+	    text { "Current Slice" "Several Slices" } \
+	    width "12 12" tip $tips {
 	eval {radiobutton $f.r$mode -width $width -indicatoron 0\
 		-text "$text" -value "$mode" \
 		-variable Ed(EdLiveWire,trainingMode)} $Gui(WCA)
 	pack $f.r$mode -side left -fill x -anchor e
 	TooltipAdd $f.r$mode $tip
     }
-
-    # the above did -command "EdLiveWireSetMode" before
 
     set f $Ed(EdLiveWire,frame).fTabbedFrame.fTraining.fTrain.fTrainingButton
 
@@ -322,22 +355,6 @@ proc EdLiveWireBuildGUI {} {
 
 
     #-------------------------------------------
-    # TabbedFrame->Training->Read frame
-    #-------------------------------------------
-    set f $Ed(EdLiveWire,frame).fTabbedFrame.fTraining
-
-    frame $f.fRead   -bg $Gui(activeWorkspace)
-    pack $f.fRead -side top -pady $Gui(pad) -fill x
-    set f $f.fRead
-
-    eval {button $f.bRead -text "Read LiveWire Settings" \
-	    -command "EdLiveWireReadTrainedValues"} $Gui(WBA) {-width 20}
-    pack $f.bRead
-
-    TooltipAdd $f.bRead \
-	    "Read LiveWire settings from the file you have selected."
-
-    #-------------------------------------------
     # TabbedFrame->Advanced frame
     #-------------------------------------------
     set f $Ed(EdLiveWire,frame).fTabbedFrame.fAdvanced
@@ -345,17 +362,24 @@ proc EdLiveWireBuildGUI {} {
     frame $f.fSettings   -bg $Gui(activeWorkspace)
     pack $f.fSettings -side top -pady $Gui(pad) -fill x
 
+    frame $f.fTrainingFile   -bg $Gui(activeWorkspace)
+    pack $f.fTrainingFile -side top -pady $Gui(pad) -fill x
+
     #-------------------------------------------
     # TabbedFrame->Advanced->Settings frame
     #-------------------------------------------
     set f $Ed(EdLiveWire,frame).fTabbedFrame.fAdvanced.fSettings
 
+    frame $f.fFeatures   -bg $Gui(activeWorkspace)
+    pack $f.fFeatures -side top -pady $Gui(pad) -fill x
+
+    frame $f.fApply   -bg $Gui(activeWorkspace)
+    pack $f.fApply -side top -pady $Gui(pad) -fill x
 
     #-------------------------------------------
     # TabbedFrame->Advanced->Settings->Features frame
     #-------------------------------------------
-    frame $f.fFeatures   -bg $Gui(activeWorkspace)
-    pack $f.fFeatures -side top -pady $Gui(pad) -fill x
+    set f $Ed(EdLiveWire,frame).fTabbedFrame.fAdvanced.fSettings
     set f $f.fFeatures
 
     # hard-coded feature names:
@@ -414,31 +438,50 @@ proc EdLiveWireBuildGUI {} {
     # TabbedFrame->Advanced->Settings->Apply frame
     #-------------------------------------------
     set f $Ed(EdLiveWire,frame).fTabbedFrame.fAdvanced.fSettings
-
-    frame $f.fApply   -bg $Gui(activeWorkspace)
-    pack $f.fApply -side top -pady $Gui(pad) -fill x
     set f $f.fApply
     eval {button $f.bApply -text "Apply Settings" \
 	    -command "EdLiveWireAdvancedApply"} $Gui(WBA) {-width 20}
     pack $f.bApply
 
     #-------------------------------------------
-    # TabbedFrame->Advanced->Settings->Popup frame
+    # TabbedFrame->Advanced->TrainingFile frame
     #-------------------------------------------
-    set f $Ed(EdLiveWire,frame).fTabbedFrame.fAdvanced.fSettings
+    set f $Ed(EdLiveWire,frame).fTabbedFrame.fAdvanced
+    frame $f.fRead   -bg $Gui(activeWorkspace)
+    pack $f.fRead -side top -pady $Gui(pad) -fill x
 
-    frame $f.fPopup   -bg $Gui(activeWorkspace)
-    pack $f.fPopup -side top -pady $Gui(pad) -fill x
-    set f $f.fPopup
-    eval {button $f.bPopup -text "View Edge Images" \
-	    -command "EdLiveWireRaiseEdgeImageWin"} $Gui(WBA) {-width 20}
-    pack $f.bPopup
+    set f $f.fTrainingFile
+
+    DevAddFileBrowse $f Ed "EdLiveWire,trainingInputFileName" \
+	    "Input File:" [] "txt" [] "Open"\
+	    "Open LiveWire Settings File" \
+	    "Choose LiveWire settings for the structure you are segmenting."
+
+    #-------------------------------------------
+    # TabbedFrame->Advanced->TrainingFile->Read frame
+    #-------------------------------------------
+    set f $Ed(EdLiveWire,frame).fTabbedFrame.fAdvanced.fRead
+
+    eval {button $f.bRead -text "Read Settings" \
+	    -command "EdLiveWireReadFeatureParams"} $Gui(WBA) {-width 15}
+    TooltipAdd $f.bRead \
+	    "Read LiveWire settings from the file you have selected."
+
+    eval {button $f.bWrite -text "Write Settings" \
+	    -command "EdLiveWireWriteFeatureParams"} $Gui(WBA) {-width 15}
+    TooltipAdd $f.bWrite \
+	    "WriteLiveWire settings to the file you have selected."
+    pack $f.bRead $f.bWrite -side left
+
+
 
 }
 
 #-------------------------------------------------------------------------------
 # .PROC EdLiveWireToggleWeight
-# 
+# Set weight for feature to 0 when the button is pressed,
+# then to 0 when unpressed.
+# Just for user's convenience.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -588,7 +631,8 @@ proc EdLiveWireRaiseEdgeImageWin {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdLiveWireUpdateEdgeImageWin
-# 
+# Display the edge image from the requested filter 
+# (up, down, left, or right edges can be shown).
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -598,13 +642,17 @@ proc EdLiveWireUpdateEdgeImageWin {viewerWidget edgeNum} {
     set s $Slice(activeID)
     
     # image window
-    Ed(EdLiveWire,viewer$s) SetInput [Ed(EdLiveWire,lwSetup$s) GetEdgeImage $edgeNum]
+    Ed(EdLiveWire,viewer$s) SetInput [Ed(EdLiveWire,lwSetup$s) \
+	    GetEdgeImage $edgeNum]
     $viewerWidget Render
 
     # histogram
-    HistogramWidgetSetInput $Ed(EdLiveWire,edgeHistWidget$s) [Ed(EdLiveWire,viewer$s) GetInput]
-    scan [[Ed(EdLiveWire,viewer$s) GetInput] GetExtent] "%d %d %d %d %d %d" x1 x2 y1 y2 z1 z2
-    HistogramWidgetSetExtent $Ed(EdLiveWire,edgeHistWidget$s) $x1 $x2 $y1 $y2 $z1 $z2
+    HistogramWidgetSetInput $Ed(EdLiveWire,edgeHistWidget$s) \
+	    [Ed(EdLiveWire,viewer$s) GetInput]
+    scan [[Ed(EdLiveWire,viewer$s) GetInput] GetExtent] \
+	    "%d %d %d %d %d %d" x1 x2 y1 y2 z1 z2
+    HistogramWidgetSetExtent $Ed(EdLiveWire,edgeHistWidget$s) \
+	    $x1 $x2 $y1 $y2 $z1 $z2
     HistogramWidgetRender $Ed(EdLiveWire,edgeHistWidget$s)
 }
 
@@ -1481,12 +1529,20 @@ proc EdLiveWireTrain {} {
     # set the training image input to the edge filter.
     # (for now, just train with the first edge filter)
     # $Ed($e,numEdgeFilters)
-    for {set f 0} {$f < $Ed($e,numEdgeFilters)} {incr f} {
-	set filt [Ed($e,lwSetup$s) GetEdgeFilter $f]
+    for {set f 0} {$f < 1} {incr f} {
 
+	set filt [Ed($e,lwSetup$s) GetEdgeFilter $f]
+	
+	puts "edge direction: [$filt GetEdgeDirection]"
+
+	# tell filter to do training calculations
 	$filt TrainingModeOn		
-	# output means, averages:
-	$filt SetTrainingFileName $Ed($e,trainingFileName)
+
+	# output means, variances to a file:
+	$filt SetTrainingFileName $Ed($e,trainingOutputFileName)
+	
+	# set the input file name to read these back in easier
+	set Ed($e,trainingInputFileName) $Ed($e,trainingOutputFileName)
 
 	puts "mode: $Ed(EdLiveWire,trainingMode)"
 
@@ -1525,8 +1581,6 @@ proc EdLiveWireTrain {} {
 		# Lauren for now set the 2nd input to this too!
 		$filt SetPreviousContourImage $Ed(EdLiveWire,contourSlice)
 
-		$filt SetEdgeDirection $Ed(EdLiveWire,trainingEdgeDir)
-
 		$filt Update		
 	    }
 	    "RangeOfSlices" {
@@ -1561,9 +1615,9 @@ proc EdLiveWireTrain {} {
 		    $filt SetOriginalImage [origReformat GetOutput]    
 
 		    # test image is okay
-		    Ed(EdLiveWire,viewer$s) SetColorWindow 8
-		    Ed(EdLiveWire,viewer$s) SetColorLevel 3
-		    Ed(EdLiveWire,viewer$s) SetInput $Ed(EdLiveWire,contourSlice)
+		    #Ed(EdLiveWire,viewer$s) SetColorWindow 8
+		    #Ed(EdLiveWire,viewer$s) SetColorLevel 3
+		    #Ed(EdLiveWire,viewer$s) SetInput $Ed(EdLiveWire,contourSlice)
 	    
 		    # Lauren for now set the 2nd input to this too!
 		    $filt SetPreviousContourImage $Ed(EdLiveWire,contourSlice)
@@ -1579,30 +1633,59 @@ proc EdLiveWireTrain {} {
 	    }
 	    
 	}
+	# turn computation of training data off for every filter.
+	$filt TrainingModeOff
+
     }
 
-    $filt TrainingModeOff
 
     Slicer ReformatModified
     Slicer Update
 }
 
 #-------------------------------------------------------------------------------
-# .PROC EdLiveWireReadTrainedValues
+# .PROC EdLiveWireReadFeatureParams
 # 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc EdLiveWireReadTrainedValues {} {
+proc EdLiveWireReadFeatureParams {} {
     global Ed Slice
 
     set e EdLiveWire
 
     # Lauren these should really be options....
-    set in [open $Ed($e,trainingFileName)]
+    set in [open $Ed($e,trainingInputFileName)]
     set numbers [read $in]
     close $in
 
+    # Lauren need more error checking in case num params changes!
+
+    # current number in list
+    set index 0
+
+    # loop over features
+    for {set feat 0} {$feat < $Ed(EdLiveWire,numFeatures)} {incr feat} {
+	
+	# set weight (importance given to feature)	
+	set Ed(EdLiveWire,feature$feat,weight) [lindex $numbers $index]
+	set index [expr $index + 1]
+
+	# loop over params for each feature
+	for {set p 0} {$p < $Ed(EdLiveWire,feature$feat,numParams)} {incr p} {
+	    set Ed($e,feature$feat,param$p) [lindex $numbers $index]
+	    set index [expr $index + 1]
+	}
+    }
+}
+
+
+proc EdLiveWireWriteFeatureParams {} {
+    global Ed Slice
+
+    set e EdLiveWire
+
+    set out [open $Ed($e,trainingInputFileName) w]
     # Lauren need more error checking in case num params changes!
 
     set index 0
@@ -1610,15 +1693,16 @@ proc EdLiveWireReadTrainedValues {} {
     # loop over features
     for {set feat 0} {$feat < $Ed(EdLiveWire,numFeatures)} {incr feat} {
 	
-	# set weight (importance given to feature)
-	#$filt SetWeightForFeature $feat $Ed(EdLiveWire,feature$feat,weight)
+	# output weight (importance given to feature)
+	puts -nonewline $out $Ed(EdLiveWire,feature$feat,weight)
 
 	# loop over params for each feature
 	for {set p 0} {$p < $Ed(EdLiveWire,feature$feat,numParams)} {incr p} {
-	    puts "$index: [lindex $numbers $index]"
-
-	    set Ed($e,feature$feat,param$p) [lindex $numbers $index]
-	    set index [expr $index + 1]
+	    puts -nonewline $out " $Ed($e,feature$feat,param$p)"
 	}
+	# newline
+	puts $out ""
     }
+
+    close $out
 }
