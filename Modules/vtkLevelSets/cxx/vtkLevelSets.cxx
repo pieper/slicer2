@@ -42,7 +42,11 @@
 //#include "vtkImageFastSignedChamfer.h"
 #include "vtkMultiThreader.h"
 
+#ifndef __APPLE__
+// apparently this header was left out of osx and isn't needed
 #include <malloc.h>
+#endif
+
 #ifdef _WIN32
 #include <string.h>
 #else

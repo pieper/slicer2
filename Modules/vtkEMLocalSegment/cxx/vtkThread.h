@@ -41,7 +41,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 // ----------------------------------------------------------------------------------------------
 // Definitions for paralising algorithm from
 // workpile.h Simon Warfield simonw@bwh.harvard.edu */
-// $Id: vtkThread.h,v 1.2 2003/05/12 19:46:01 pohl Exp $ */
+// $Id: vtkThread.h,v 1.3 2003/05/18 14:18:27 pieper Exp $ */
 // ----------------------------------------------------------------------------------------------
 
 #include <stdlib.h>
@@ -69,7 +69,11 @@ typedef struct workpile_struct {
     work_proc_t worker_proc;    /* work procedure */
 } *workpile_t;
 
+#ifdef _SC_NPROCESSORS_ONLN
 #define vtkThreadNumCpus(void) (int)(sysconf(_SC_NPROCESSORS_ONLN))
+#else
+#define vtkThreadNumCpus(void) 1
+#endif
 
 //ETX  
 class VTK_EXPORT vtkThread { //; prevent man page generation

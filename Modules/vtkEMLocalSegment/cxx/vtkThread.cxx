@@ -55,7 +55,7 @@ extern "C" {
 int vtkThread::thread_concurrency(int concurrencyLevel)
 {
   int code = 0;
-#ifndef linux
+#if !defined(linux) && !defined(__APPLE__)
   code = thr_setconcurrency(concurrencyLevel);
 #endif
   return code;
@@ -118,7 +118,7 @@ int pthread_mutex_init __P ((pthread_mutex_t *__mutex,
 // Stuff To paralise algorithm from workpile.c
 // ---------------------------------------------------------
 /* Simon Warfield simonw@bwh.harvard.edu */
-/* $Id: vtkThread.cxx,v 1.1 2003/05/12 17:38:58 pieper Exp $ */
+/* $Id: vtkThread.cxx,v 1.2 2003/05/18 14:18:27 pieper Exp $ */
 
 /* Forward declaration for worker function */
 // static void worker(workpile_t wp);
