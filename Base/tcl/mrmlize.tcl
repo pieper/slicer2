@@ -49,7 +49,7 @@ wm withdraw .
 
 # Find the Slicer's home from the root directory of this script ($argv0).
 set Path(program) [file dirname $argv0]
-set Path(root) [file dirname [lindex $argv 0]]
+set Mrml(dir) [file dirname [lindex $argv 0]]
 
 # Source Header.tcl
 source [file join $Path(program) [file join tcl-main MainHeader.tcl]]

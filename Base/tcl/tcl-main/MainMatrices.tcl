@@ -26,7 +26,7 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        MainMatrices.tcl
-# DATE:        01/18/2000 12:16
+# DATE:        01/20/2000 09:40
 # LAST EDITOR: gering
 # PROCEDURES:  
 #   MainMatricesInit

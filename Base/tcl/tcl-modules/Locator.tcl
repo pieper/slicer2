@@ -26,7 +26,7 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        Locator.tcl
-# DATE:        01/18/2000 12:17
+# DATE:        01/20/2000 09:41
 # LAST EDITOR: gering
 # PROCEDURES:  
 #   LocatorInit

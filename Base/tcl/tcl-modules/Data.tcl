@@ -26,7 +26,7 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        Data.tcl
-# DATE:        01/18/2000 12:17
+# DATE:        01/20/2000 09:41
 # LAST EDITOR: gering
 # PROCEDURES:  
 #   DataInit
@@ -39,13 +39,13 @@
 #   DataClipboardCopy
 #   DataClipboardPaste
 #   DataCutNode
+#   DataDeleteNode
 #   DataCopyNode
 #   DataPasteNode
 #   DataEditNode
 #   DataAddModel
 #   DataAddMatrix
 #   DataAddTransform
-#   DataEndTransform
 #   DataAddVolume
 #==========================================================================auto=
 
@@ -427,6 +427,10 @@ proc DataCutNode {} {
 	MainUpdateMRML
 }
 
+#-------------------------------------------------------------------------------
+# .PROC DataDeleteNode
+# .END
+#-------------------------------------------------------------------------------
 proc DataDeleteNode {} {
 	global Data Mrml Volume Model Transform EndTransform Matrix Color
 

@@ -26,10 +26,13 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        Slices.tcl
-# DATE:        01/18/2000 12:17
+# DATE:        01/20/2000 09:41
 # LAST EDITOR: gering
 # PROCEDURES:  
 #   SlicesBuildGUI
+#   SlicesSave
+#   SlicesSavePopup
+#   SlicesWrite
 #==========================================================================auto=
 
 proc SlicesInit {} {
@@ -173,6 +176,10 @@ proc SlicesSavePopup {} {
 	SlicesWrite $filename
 }
 
+#-------------------------------------------------------------------------------
+# .PROC SlicesWrite
+# .END
+#-------------------------------------------------------------------------------
 proc SlicesWrite {filename} {
 	global viewWin Mrml Slice Gui
 

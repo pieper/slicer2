@@ -26,12 +26,14 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        ModelMaker.tcl
-# DATE:        01/18/2000 12:17
+# DATE:        01/20/2000 09:41
 # LAST EDITOR: gering
 # PROCEDURES:  
 #   ModelMakerInit
 #   ModelMakerUpdateMRML
 #   ModelMakerBuildGUI
+#   ModelMakerSetPrefix
+#   ModelMakerWrite
 #   ModelMakerEnter
 #   ModelMakerSetVolume
 #   ModelMakerCreate
@@ -281,6 +283,10 @@ Models are fun. Do you like models, Ron?
 	pack $f.f.l $f.f.b -side left -padx $Gui(pad)
 }
 
+#-------------------------------------------------------------------------------
+# .PROC ModelMakerSetPrefix
+# .END
+#-------------------------------------------------------------------------------
 proc ModelMakerSetPrefix {} {
 	global ModelMaker Mrml
 
@@ -306,6 +312,10 @@ proc ModelMakerSetPrefix {} {
 	set ModelMaker(prefix) [MainFileGetRelativePrefix $filename]
 }
 
+#-------------------------------------------------------------------------------
+# .PROC ModelMakerWrite
+# .END
+#-------------------------------------------------------------------------------
 proc ModelMakerWrite {} {
 	global ModelMaker Model
 

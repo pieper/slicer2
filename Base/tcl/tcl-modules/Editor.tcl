@@ -26,13 +26,14 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        Editor.tcl
-# DATE:        01/18/2000 12:17
+# DATE:        01/20/2000 09:41
 # LAST EDITOR: gering
 # PROCEDURES:  
 #   EditorInit
 #   EditorBuildVTK
 #   EditorUpdateMRML
 #   EditorBuildGUI
+#   EditorSetPrefix
 #   EditorEnter
 #   EditorB1
 #   EditorB1Motion
@@ -627,6 +628,10 @@ Models are fun. Do you like models, Ron?
 
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EditorSetPrefix
+# .END
+#-------------------------------------------------------------------------------
 proc EditorSetPrefix {data} {
 	global Editor Mrml
 

@@ -26,18 +26,23 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        MainFile.tcl
-# DATE:        01/18/2000 12:16
+# DATE:        01/20/2000 09:40
 # LAST EDITOR: gering
 # PROCEDURES:  
 #   MainFileBuildGUI
+#   MainFileBuildOpenGUI
+#   MainFileBuildSaveAsGUI
+#   MainFileClose
+#   MainFileSaveAsPopup
+#   MainFileSaveAs
+#   MainFileSaveAsApply
+#   MainFileSave
 #   MainFileOpenPopup
 #   MainFileOpen
 #   MainFileOpenApply
-#   MainFileSaveAs
-#   MainFileSave
-#   FindUniqueFileName
-#   GetRelativeFileName
-#   DecodeFileName
+#   MainFileGetRelativePrefix
+#   MainFileFindUniqueName
+#   MainFileCreateDirectory
 #   CheckVolumeExists
 #==========================================================================auto=
 
@@ -66,6 +71,10 @@ proc MainFileBuildGUI {} {
 	MainFileBuildSaveAsGUI
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MainFileBuildOpenGUI
+# .END
+#-------------------------------------------------------------------------------
 proc MainFileBuildOpenGUI {} {
 	global Gui File
 
@@ -126,6 +135,10 @@ proc MainFileBuildOpenGUI {} {
 	pack $f.bApply $f.bCancel -side left -padx $Gui(pad)
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MainFileBuildSaveAsGUI
+# .END
+#-------------------------------------------------------------------------------
 proc MainFileBuildSaveAsGUI {} {
 	global Gui File
 
@@ -186,6 +199,10 @@ proc MainFileBuildSaveAsGUI {} {
 	pack $f.bApply $f.bCancel -side left -padx $Gui(pad)
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MainFileClose
+# .END
+#-------------------------------------------------------------------------------
 proc MainFileClose {} {
 
 	MainMrmlDeleteAll
@@ -358,6 +375,10 @@ proc MainFileOpenApply {} {
 	}
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MainFileGetRelativePrefix
+# .END
+#-------------------------------------------------------------------------------
 proc MainFileGetRelativePrefix {filename} {
 	global Mrml Gui
 	
@@ -413,6 +434,10 @@ proc MainFileFindUniqueName {root prefix ext} {
 	return $filename
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MainFileCreateDirectory
+# .END
+#-------------------------------------------------------------------------------
 proc MainFileCreateDirectory {filename} {
 	# Create directory if it does not exist.
 	# If this fails, then use the current directory

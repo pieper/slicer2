@@ -26,13 +26,14 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        Models.tcl
-# DATE:        01/18/2000 12:17
+# DATE:        01/20/2000 09:41
 # LAST EDITOR: gering
 # PROCEDURES:  
 #   ModelsInit
 #   ModelsUpdateMRML
 #   ModelsBuildGUI
 #   ModelsSetPropertyType
+#   ModelsSetPrefix
 #   ModelsPropsApply
 #   ModelsPropsCancel
 #   ModelsMeter
@@ -487,6 +488,10 @@ proc ModelsSetPropertyType {} {
 	raise $Model(f$Model(propertyType))
 }
 
+#-------------------------------------------------------------------------------
+# .PROC ModelsSetPrefix
+# .END
+#-------------------------------------------------------------------------------
 proc ModelsSetPrefix {} {
 	global Model Mrml Color
 

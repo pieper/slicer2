@@ -26,7 +26,7 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        MainInteractor.tcl
-# DATE:        01/18/2000 12:16
+# DATE:        01/20/2000 09:40
 # LAST EDITOR: gering
 # PROCEDURES:  
 #   MainInteractorInit
@@ -55,6 +55,9 @@
 #   MainInteractorStartMotion
 #   MainInteractorEndMotion
 #   MainInteractorReset
+#   PixelsToMm
+#   Distance3D
+#   Angle2D
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -753,6 +756,10 @@ proc MainInteractorReset {widget x y} {
 	RenderSlices
 }
 
+#-------------------------------------------------------------------------------
+# .PROC PixelsToMm
+# .END
+#-------------------------------------------------------------------------------
 proc PixelsToMm {pix fov dim mag} {
 	# mm = pix * fov/dim / mag
 	# pix = mm * dim/fox * mag
@@ -760,6 +767,10 @@ proc PixelsToMm {pix fov dim mag} {
 	return [expr int($pix * $fov/$dim / $mag + 0.5)]
 }
 
+#-------------------------------------------------------------------------------
+# .PROC Distance3D
+# .END
+#-------------------------------------------------------------------------------
 proc Distance3D {x1 y1 z1 x2 y2 z2} {
 	set dx [expr $x2 - $x1]
 	set dy [expr $y2 - $y1]
@@ -767,6 +778,10 @@ proc Distance3D {x1 y1 z1 x2 y2 z2} {
 	return [expr sqrt($dx*$dx + $dy*$dy + $dz*$dz)]
 }
 
+#-------------------------------------------------------------------------------
+# .PROC Angle2D
+# .END
+#-------------------------------------------------------------------------------
 proc Angle2D {ax1 ay1 ax2 ay2 bx1 by1 bx2 by2} {
 
 	# Form vector 'a'=[ax ay] with magnitude 'am' 

@@ -26,12 +26,13 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        MainView.tcl
-# DATE:        01/18/2000 12:16
+# DATE:        01/20/2000 09:41
 # LAST EDITOR: gering
 # PROCEDURES:  
 #   MainViewInit
 #   MainViewBuildVTK
 #   MainViewBuildGUI
+#   MainViewSetBackgroundColor
 #   MainViewSetFov
 #   MainViewLightFollowCamera
 #   MainMainViewPresetCallback
@@ -44,8 +45,9 @@
 #   MainViewSetWelcome
 #   MainViewResetFocalPoint
 #   MainViewSetFocalPoint
-#   SaveScreen
-#   SaveImage3D
+#   MainViewSaveView
+#   MainViewSaveViewPopup
+#   MainViewWriteView
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -326,6 +328,10 @@ proc MainViewBuildGUI {} {
 
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MainViewSetBackgroundColor
+# .END
+#-------------------------------------------------------------------------------
 proc MainViewSetBackgroundColor {} {
 	global View
 	
@@ -707,6 +713,10 @@ proc MainViewSaveViewPopup {} {
 	MainViewWriteView $filename
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MainViewWriteView
+# .END
+#-------------------------------------------------------------------------------
 proc MainViewWriteView {filename} {
 	global viewWin Mrml View Gui
 

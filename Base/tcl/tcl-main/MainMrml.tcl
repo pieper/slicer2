@@ -26,15 +26,17 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        MainMrml.tcl
-# DATE:        01/18/2000 12:16
+# DATE:        01/20/2000 09:40
 # LAST EDITOR: gering
 # PROCEDURES:  
 #   MainMrmlInit
 #   MainMrmlUpdateMRML
 #   MainMrmlDumpTree
 #   MainMrmlClearList
+#   MainMrmlDeleteNodeDuringUpdate
 #   MainMrmlDeleteNode
 #   MainMrmlDeleteAll
+#   MainMrmlSetFile
 #   MainMrmlRead
 #   MainMrmlReadVersion1.0
 #   MainMrmlReadVersion2.0
@@ -118,6 +120,10 @@ proc MainMrmlClearList {} {
 	}
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MainMrmlDeleteNodeDuringUpdate
+# .END
+#-------------------------------------------------------------------------------
 proc MainMrmlDeleteNodeDuringUpdate {nodeType id} {
 	global Mrml Model Volume Color Transform EndTransform Matrix
 	global TransferFunction WindowLevel TFPoint ColorLUT Options
@@ -242,6 +248,10 @@ proc MainMrmlDeleteAll {} {
 	MainMrmlClearList
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MainMrmlSetFile
+# .END
+#-------------------------------------------------------------------------------
 proc MainMrmlSetFile {filename} {
 	global Mrml File
 

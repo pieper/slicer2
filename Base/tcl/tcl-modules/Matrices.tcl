@@ -26,15 +26,18 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        Matrices.tcl
-# DATE:        01/18/2000 12:17
+# DATE:        01/20/2000 09:41
 # LAST EDITOR: gering
 # PROCEDURES:  
 #   MatricesInit
 #   MatricesUpdateMRML
 #   MatricesBuildGUI
+#   MatricesIdentity
+#   MatricesInvert
 #   MatricesSetPropertyType
 #   MatricesPropsCancel
 #   MatricesManualTranslate
+#   MatricesManualTranslateDual
 #   MatricesManualRotate
 #   MatricesSetRefVolume
 #   MatricesSetVolume
@@ -44,6 +47,9 @@
 #   MatricesPoll
 #   MatricesAutoApply
 #   MatricesAutoUndo
+#   MatricesB1
+#   MatricesB1Motion
+#   MatricesB1Release
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -570,6 +576,10 @@ Ron is nice.
 	set f $fFiducial.fPeter
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MatricesIdentity
+# .END
+#-------------------------------------------------------------------------------
 proc MatricesIdentity {} {
 	global Matrix
 	
@@ -580,6 +590,10 @@ proc MatricesIdentity {} {
 	MainUpdateMRML
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MatricesInvert
+# .END
+#-------------------------------------------------------------------------------
 proc MatricesInvert {} {
 	global Matrix
 	
@@ -746,6 +760,10 @@ proc MatricesManualTranslate {param {value ""}} {
 	update
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MatricesManualTranslateDual
+# .END
+#-------------------------------------------------------------------------------
 proc MatricesManualTranslateDual {param1 value1 param2 value2} {
 	global Matrix
 

@@ -26,10 +26,13 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        Gui.tcl
-# DATE:        01/18/2000 12:16
+# DATE:        01/20/2000 09:40
 # LAST EDITOR: gering
 # PROCEDURES:  
 #   GuiInit
+#   ValidateFloat
+#   ValidateName
+#   ValidateInt
 #   InfoWidget
 #   MailWidget
 #   MsgPopup
@@ -216,17 +219,29 @@ proc GuiInit {} {
 	}
 }
 
+#-------------------------------------------------------------------------------
+# .PROC ValidateFloat
+# .END
+#-------------------------------------------------------------------------------
 proc ValidateFloat {s} {
 	# Return 1 if valid, else 0
 	if {$s == ""} {return 0}
 	return [regexp {^([0-9-]+|([0-9-]*\.[0-9]*))$} $s]
 }
 
+#-------------------------------------------------------------------------------
+# .PROC ValidateName
+# .END
+#-------------------------------------------------------------------------------
 proc ValidateName {s} {
 	# Return 1 if valid, else 0
 	return [regexp {^([a-zA-Z0-9_-]*)$} $s]
 }
 
+#-------------------------------------------------------------------------------
+# .PROC ValidateInt
+# .END
+#-------------------------------------------------------------------------------
 proc ValidateInt {s} {
 	# Return 1 if valid, else 0
 	if {$s == ""} {return 0}

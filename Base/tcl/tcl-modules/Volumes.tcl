@@ -26,7 +26,7 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        Volumes.tcl
-# DATE:        01/18/2000 12:17
+# DATE:        01/20/2000 09:41
 # LAST EDITOR: gering
 # PROCEDURES:  
 #   VolumesInit
@@ -34,8 +34,11 @@
 #   VolumesSetPropertyType
 #   VolumesPropsCancel
 #   VolumesSetFirst
-#   VolumesSetOrder
+#   VolumesSetScanOrder
+#   VolumesSetScalarType
 #   VolumesSetLast
+#   VolumesGetDefaultScanOrder
+#   VolumesGetDefaultScalarType
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -840,6 +843,10 @@ proc VolumesSetScanOrder {order} {
 		[lsearch $Volume(scanOrderList) $order]]
 }
 
+#-------------------------------------------------------------------------------
+# .PROC VolumesSetScalarType
+# .END
+#-------------------------------------------------------------------------------
 proc VolumesSetScalarType {type} {
 	global Volume
 
@@ -861,6 +868,10 @@ proc VolumesSetLast {} {
 	set Volume(name) [file root [file tail $Volume(firstFile)]]
 }
 
+#-------------------------------------------------------------------------------
+# .PROC VolumesGetDefaultScanOrder
+# .END
+#-------------------------------------------------------------------------------
 proc VolumesGetDefaultScanOrder {} {
     global Volume
 
@@ -869,6 +880,10 @@ proc VolumesGetDefaultScanOrder {} {
 	    [lsearch $Volume(scanOrderList) $Volume(scanOrder)]]
 }
 
+#-------------------------------------------------------------------------------
+# .PROC VolumesGetDefaultScalarType
+# .END
+#-------------------------------------------------------------------------------
 proc VolumesGetDefaultScalarType {} {
     global Volume
 
