@@ -80,7 +80,7 @@ proc MainOptionsInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo MainOptions \
-    {$Revision: 1.24 $} {$Date: 2003/03/19 19:16:25 $}]
+    {$Revision: 1.25 $} {$Date: 2003/04/14 20:03:08 $}]
 
     # Props
     set Options(program) "slicer"
@@ -711,7 +711,7 @@ proc MainOptionsPreset {p state} {
 
     if {$state == "Press"} {
         set Preset($p,state) $state
-        after 250 "MainOptionsPresetCallback $p; RenderAll"
+        after 250 "MainOptionsPresetCallback $p; RenderAll" ;# TODO: eliminate this 'after'
     } else {
         set Preset($p,state) $state
         #$View(fPreset).c$p config -activebackground $Gui(activeButton) 
