@@ -47,7 +47,7 @@ proc Render3D {{scale ""}} {
 
 	$viewWin Render
 	
-	if {$Twin(mode) == "On"} {
+	if {[IsModule Twin] == 1 && $Twin(mode) == "On"} {
 		Twin(src) Modified
 		Twin(mapper) Modified
 		$twinWin Render
