@@ -70,7 +70,10 @@ namespace eval tclVectorUtils {
     proc VLen {a} {
         foreach {a0 a1 a2} $a {}
 
-        return [expr {sqrt(pow($a0*$a0,2) + pow($a1*$a1,2) + pow($a2*$a2,2))}]
+        # length is caculated by sqrt(vx*vx + vy*vy + vz*vz), the following
+        # line squares the vector elements a second time by using pow
+        # return [expr {sqrt(pow($a0*$a0,2) + pow($a1*$a1,2) + pow($a2*$a2,2))}]
+        return [expr {sqrt($a0*$a0 + $a1*$a1 + $a2*$a2)}]
     }
 
     proc VSub {a b} {
