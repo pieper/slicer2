@@ -54,20 +54,34 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "GeneralLinearModel.h"
 #include <stdio.h>
 #include <math.h>
-#include <gsl_multifit.h>
 
+gsl_matrix *GeneralLinearModel::X = NULL;
+gsl_matrix *GeneralLinearModel::cov = NULL;
+gsl_vector *GeneralLinearModel::y = NULL;
+gsl_vector *GeneralLinearModel::c = NULL;
+gsl_multifit_linear_workspace *GeneralLinearModel::work = NULL;
 
 float GeneralLinearModel::ComputeVoxelActivation(float **designMatrix, int *dims, float *timeCourse)
 {
     int i, j;
     double xi, yi, chisq, t;
-    gsl_matrix *X, *cov;
-    gsl_vector *y, *c;
 
-    X = gsl_matrix_alloc (dims[0], dims[1]);
-    y = gsl_vector_alloc (dims[0]);
-    c = gsl_vector_alloc (dims[1]);
-    cov = gsl_matrix_alloc (dims[1], dims[1]);
+    if (X == NULL)
+    {
+        X = gsl_matrix_alloc(dims[0], dims[1]);
+    }
+    if (y == NULL) 
+    {
+        y = gsl_vector_alloc(dims[0]);
+    }
+    if (c == NULL)
+    {
+        c = gsl_vector_alloc(dims[1]);
+    }
+    if (cov == NULL)
+    {
+        cov = gsl_matrix_alloc(dims[1], dims[1]);
+    }
 
     for (i = 0; i < dims[0]; i++)
     {
@@ -79,12 +93,32 @@ float GeneralLinearModel::ComputeVoxelActivation(float **designMatrix, int *dims
         }
     }
 
-    gsl_multifit_linear_workspace * work 
-        = gsl_multifit_linear_alloc (dims[0], dims[1]);
-    gsl_multifit_linear (X, y, c, cov, &chisq, work);
-    gsl_multifit_linear_free (work);
+    if (work == NULL)
+    {
+        work = gsl_multifit_linear_alloc(dims[0], dims[1]);
+    }
 
+    gsl_multifit_linear(X, y, c, cov, &chisq, work);
     t = gsl_vector_get(c, 1) / sqrt(gsl_matrix_get(cov, 1, 1));
 
     return (float)t;
 }
+
+
+void GeneralLinearModel::Free()
+{
+    gsl_matrix_free(X);
+    gsl_matrix_free(cov);
+    gsl_vector_free(y);
+    gsl_vector_free(c);
+    gsl_multifit_linear_free(work);
+
+    X = NULL;
+    cov = NULL;
+    y = NULL;
+    c = NULL;
+    work = NULL;
+}
+
+
+
