@@ -37,8 +37,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkAnisoGaussSeidel.cxx,v $
   Language:  C++
-  Date:      $Date: 2005/02/08 20:26:51 $
-  Version:   $Revision: 1.11 $
+  Date:      $Date: 2005/02/08 21:44:04 $
+  Version:   $Revision: 1.12 $
 
 =========================================================================*/
 
@@ -1920,7 +1920,7 @@ void vtkAnisoGaussSeidel::ThreadedExecute(vtkImageData *inData,
     //              &cycle, target, &count, total);
     break;
   case MODE_3D:
-    error = Iterate3D(inData, inExt, outData, outExt);
+    error = Iterate3D(inData, inExt, outData, outExt, id);
     break;
   }
 
