@@ -310,7 +310,7 @@ proc file_event {fp} {
         set END 1
     } else {
         gets $fp line
-        catch "puts $line"
+        catch {puts $line}
     }
 }
 
@@ -331,12 +331,14 @@ foreach a $argv {
 set argv $newargv
 
 if {$::env(BUILD) == $solaris || 
-    $::env(BUILD) == $darwin} {
+    $::env(BUILD) == $darwin ||
+    $::env(BUILD) == $linux} {
         # - need to run the specially modified tcl interp in the executable 'vtk' on unix
         # - don't put process in background so that jdemo can track its status
         regsub -all "{|}" $argv "\\\"" argv
         set fp [open "| csh -f -c \"$::env(VTK_DIR)/bin/vtk $mainscript $argv \" |& cat" r]
-    } elseif {$::env(BUILD) == $linux} {
+    } elseif {0 && $::env(BUILD) == $linux} {
+        ## note - this branch not currently used -- linux uses the branch above
         regsub -all "{|}" $argv "\\\"" argv
         update
         catch "eval exec \"$::env(VTK_DIR)/bin/vtk $mainscript $argv\"" res
