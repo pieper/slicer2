@@ -483,6 +483,20 @@ foreach name $ordered {
         lappend foundOrdered $name
     }
 }
+
+# Add any custom Modules to foundOrdered, they will have had to have added
+# their name to Module(customModules)
+# otherwise would have to leave out any that are loaded by 
+# sub sections of the interface, ie the Volumes or the Editors scripts 
+# ie no matches for Vol*Init or Ed*Init
+if {[info exists Module(customModules)]  == 1} {
+    puts "Custom modules we need to add: $Module(customModules)"
+    # it's already been sourced, so just add to the foundOrdered list
+    foreach customModule $Module(customModules) {
+        lappend foundOrdered $customModule
+    }
+}
+
 # Ordered list only contains modules that exist
 set ordered $foundOrdered
 
