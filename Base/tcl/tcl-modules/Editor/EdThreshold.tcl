@@ -62,7 +62,9 @@ proc EdThresholdInit {} {
 	set Ed($e,input)  Original
 
 	# Windows98 Version II can't render histograms
-	set Ed($e,histogram) On
+	# the histogram is broken
+	set Ed($e,histogram) Off
+	#set Ed($e,histogram) On
 	if {$Gui(pc) == 1} {
 		set Ed($e,histogram) Off
 	}
