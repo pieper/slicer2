@@ -54,10 +54,39 @@ proc Render3D {{scale ""}} {
 	}
 
 	if { $View(movie) > 0 } {
-		set filestring $View(moviePrefix)
-		append filestring [format %04d.ppm $View(movieFrame)]
-		$viewWin SetFileName $filestring
-		$viewWin SaveImageAsPPM
+		# Compute filename
+		set ext(PPM)  ppm
+		set ext(TIFF) tif
+		set ext(BMP)  bmp
+		set filename [format %04d.$ext($View(movieFileType)) $View(movieFrame)]
+		set filename [file join $View(movieDirectory) $filename]
+		# Write file
+		switch $View(movieFileType) {
+		"PPM" {
+			$viewWin SetFileName $filename
+			$viewWin SaveImageAsPPM
+		}
+		"TIFF" {
+			vtkWindowToImageFilter filter
+			filter SetInput $viewWin
+			vtkTIFFWriter writer
+			writer SetInput [filter GetOutput]
+			writer SetFileName $filename
+			writer Write
+			filter Delete
+			writer Delete
+		}
+		"BMP" {
+			vtkWindowToImageFilter filter
+			filter SetInput $viewWin
+			vtkBMPWriter writer
+			writer SetInput [filter GetOutput]
+			writer SetFileName $filename
+			writer Write
+			filter Delete
+			writer Delete
+		}
+		}
 		incr View(movieFrame)
 	}
 }

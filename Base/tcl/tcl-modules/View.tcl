@@ -59,11 +59,12 @@ proc ViewInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.15 $} {$Date: 2001/02/19 17:53:33 $}]
+		{$Revision: 1.16 $} {$Date: 2001/04/27 15:24:12 $}]
 
 	set View(movie) 0
-	set View(moviePrefix) "/tmp/movie"
+	set View(movieDirectory) "/tmp"
 	set View(movieFrame) 1
+	set View(movieFileType) "PPM"
 }
 
 #-------------------------------------------------------------------------------
@@ -200,9 +201,9 @@ called <I>movie.mpg</I>.
 	eval {label $f.lFrame -text "Next frame #:"} $Gui(WLA)
 	eval {entry $f.eFrame -width 6 -textvariable View(movieFrame)} $Gui(WEA)
  
-	eval {label $f.lPrefix -text "PPM file prefix:"} $Gui(WLA)
+	eval {label $f.lPrefix -text "Directory:"} $Gui(WLA)
 
-	eval {entry $f.ePrefix -width 16 -textvariable View(moviePrefix)} $Gui(WEA)
+	eval {entry $f.ePrefix -width 16 -textvariable View(movieDirectory)} $Gui(WEA)
 
 	grid $f.cMovie -columnspan 2 -padx $Gui(pad) -pady $Gui(pad)
 	grid $f.lFrame $f.eFrame -sticky w -padx $Gui(pad) -pady $Gui(pad)
@@ -210,5 +211,28 @@ called <I>movie.mpg</I>.
         grid configure $f.lFrame -sticky e
         grid configure $f.lPrefix -sticky e
 
+	# File type
+	eval {label $f.lFile -text "File type:"} $Gui(WLA)
+	eval {menubutton $f.mbFile -text $View(movieFileType) -width 5 -menu $f.mbFile.m} \
+		$Gui(WMBA)
+	grid $f.lFile $f.mbFile -sticky w -padx $Gui(pad) -pady $Gui(pad)
+    grid configure $f.lFile -sticky e
+	eval {menu $f.mbFile.m} $Gui(WMA)
+	foreach item "PPM TIFF BMP" {
+		$f.mbFile.m add command -label $item -command "ViewSetMovieFileType $item"
+	}
+
 }
+
+proc ViewSetMovieFileType {item} {
+	global View Module
+
+	# Update variable
+	set View(movieFileType) $item
+
+	# Update GUI
+	set f $Module(View,fView).fMovie
+	eval $f.mbFile config "-text $item"
+}
+
 
