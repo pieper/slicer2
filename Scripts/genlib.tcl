@@ -1,6 +1,6 @@
 #!/bin/sh
 # the next line restarts using tclsh \
-    exec tclsh "$0" "$@"
+exec tclsh "$0" "$@"
 
 ################################################################################
 #
@@ -378,17 +378,24 @@ if { ![file exists $gslTestFile] } {
     runcmd cvs -d:pserver:anoncvs:anoncvs@sources.redhat.com:/cvs/gsl login
     runcmd cvs -z3 -d:pserver:anoncvs:anoncvs@sources.redhat.com:/cvs/gsl co -r $gslTag gsl
 
-    if {$isWindows || $isDarwin} {
-        # can't do Windows or Darwin
-    } else {
-        cd $SLICER_LIB/gsl-build/gsl
-        runcmd ./autogen.sh
-        runcmd ./configure --prefix=$SLICER_LIB/gsl
-        runcmd touch doc/version-ref.texi
-        runcmd make
-        runcmd make install
-    }
+    if { !$isWindows } {
+        # can't do Windows
+    cd $SLICER_LIB/gsl-build/gsl
 
+    if { $isDarwin } {
+        # equivalent of autogen.sh for Darwin (libtoolize => glibtoolize)    
+        runcmd glibtoolize --automake
+        runcmd aclocal
+        runcmd automake --add-missing --gnu
+        runcmd autoconf
+    } else {
+        runcmd ./autogen.sh
+    }   
+    runcmd ./configure --prefix=$SLICER_LIB/gsl
+    runcmd touch doc/version-ref.texi
+    runcmd make
+    runcmd make install
+    }
 }
 
 ################################################################################
