@@ -86,7 +86,7 @@ proc MainFileInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainFile \
-        {$Revision: 1.56 $} {$Date: 2003/07/25 19:09:19 $}]
+        {$Revision: 1.57 $} {$Date: 2004/07/22 15:57:29 $}]
 
     set File(filePrefix) data
 }
@@ -1018,6 +1018,12 @@ proc MainFileParseImageFile {ImageFile {postfixFlag 1}} {
     # assumed that the file starts with a constant part
     if {$::Module(verbose)} {
         puts "MainFileParseImageFile: ftail = $ftail\n\tfdir = $fdir\n\tfext = \"$fext\""
+    }
+    if {$fext == ".mgh"} {
+        if {$::Module(verbose)} {
+            puts "MainFileParseImageFile: have a volume with only one file, returning a pattern of %s."
+        }
+        return "%s"
     }
     # this will fail if there's another volume in the directory with the same 
     # extension: second test = ftail is in the list, and any other elements
