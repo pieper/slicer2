@@ -20,7 +20,7 @@ SOURCE_FILES (Base_SRCS
 	vtkImageNeighborhoodFilter.cxx vtkImageOverlay.cxx vtkImagePlot.cxx
 	vtkImageRealtimeScan.cxx vtkImageReformat.cxx vtkImageReformatIJK.cxx
 	vtkImageReplaceRegion.cxx vtkImageResize.cxx vtkImageStatistics.cxx
-	vtkImageThresholdBeyond.cxx vtkImageWeightedSum.cxx vtkImageZoom2D.cxx
+	 vtkImageWeightedSum.cxx vtkImageZoom2D.cxx
 	vtkIndirectLookupTable.cxx vtkMathUtils.cxx vtkMrmlColorNode.cxx
 	vtkMrmlCrossSectionNode.cxx vtkMrmlData.cxx vtkMrmlDataTetraMesh.cxx
 	vtkMrmlDataVolume.cxx vtkMrmlEndFiducialsNode.cxx vtkMrmlEndHierarchyNode.cxx
