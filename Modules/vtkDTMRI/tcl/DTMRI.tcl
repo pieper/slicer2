@@ -104,7 +104,7 @@ proc DTMRIInit {} {
     set Module($m,author) "Lauren O'Donnell"
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.9 $} {$Date: 2004/04/09 19:55:28 $}]
+            {$Revision: 1.10 $} {$Date: 2004/05/13 21:58:11 $}]
 
     # Define Tabs
     #------------------------------------
@@ -4567,6 +4567,12 @@ proc DTMRISaveStreamlinesAsIJKPoints {subdir name {verbose "1"}} {
     set thelist $DTMRI(vtk,streamline,idList)
     set thePoints ""
     set filename "NONE"
+    
+    set name [tk_getSaveFile -defaultextension ".txt" -title "Save Streamlines. Prefix name"]
+    if { $name == "" } {
+       return
+    }
+    
     foreach id $thelist {
         set streamln streamln,$id
 
