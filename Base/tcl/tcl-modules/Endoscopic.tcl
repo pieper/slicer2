@@ -1376,57 +1376,83 @@ by selecting it in the scrolltext and right-click to get a menu. "
     #-------------------------------------------
     set f $Endoscopic(tabbedFrame).fAutomatic
     frame $f.fTitle   -bg $Gui(activeWorkspace) 
-    frame $f.fSource  -bg $Gui(activeWorkspace)
-    frame $f.fSink  -bg $Gui(activeWorkspace)
     frame $f.fStep1   -bg $Gui(activeWorkspace) -relief groove -bd 2
     frame $f.fStep2   -bg $Gui(activeWorkspace) -relief groove -bd 2
     frame $f.fStep3   -bg $Gui(activeWorkspace) -relief groove -bd 2
     frame $f.fStep4   -bg $Gui(activeWorkspace) -relief groove -bd 2
-    pack $f.fTitle $f.fSource $f.fSink $f.fStep1 $f.fStep2 $f.fStep3 $f.fStep4  -side top -pady 2     
+    pack $f.fTitle $f.fStep1 $f.fStep2 $f.fStep3 $f.fStep4  -side top -pady 2     
 
     set f $Endoscopic(tabbedFrame).fAutomatic.fTitle
     eval {label $f.lTitle -text "Automatic Path Creation"} $Gui(WTA)
     eval {button $f.fbhow -text " ? "} $Gui(WBA)
-    TooltipAdd $f.fbhow "more info soon"
+    TooltipAdd $f.fbhow "You can create an endoscopic path automatically
+by specifying two points on a model and running the automatic centerline
+extraction algorithm (for more info, see references on www.slicer.org)"
     pack $f.lTitle $f.fbhow -side left -padx $Gui(pad) -pady 0 
 
 
+
     set f $Endoscopic(tabbedFrame).fAutomatic.fStep1
-    eval {label $f.lActive -text "Active Model: "} $Gui(BLA)
+eval {label $f.lActive1 -text "Step 1. "} $Gui(WTA)
+eval {label $f.lActive2 -text "Choose an Active Model: "} $Gui(WLA)
     eval {menubutton $f.mbActive -text "None" -relief raised -bd 2 -width 20 \
         -menu $f.mbActive.m} $Gui(WMBA)
     eval {menu $f.mbActive.m} $Gui(WMA)
-    pack $f.lActive $f.mbActive -side left
+    pack $f.lActive1 $f.lActive2 -side left
+pack $f.mbActive -side top
 
     # Append widgets to list that gets refreshed during UpdateMRML
     lappend Model(mbActiveList) $f.mbActive
     lappend Model(mActiveList)  $f.mbActive.m
 
-    set f $Endoscopic(tabbedFrame).fAutomatic.fSource
+set f $Endoscopic(tabbedFrame).fAutomatic.fStep2
+frame $f.fExplain   -bg $Gui(activeWorkspace) 
+frame $f.fSource  -bg $Gui(activeWorkspace)
+frame $f.fSink  -bg $Gui(activeWorkspace)
+pack  $f.fExplain $f.fSource $f.fSink -side top -pady 2 
+
+set f $Endoscopic(tabbedFrame).fAutomatic.fStep2.fExplain
+eval {label $f.lTitle -text "Step 2. "} $Gui(WTA)
+eval {label $f.lTitle2 -text "Select a start point by pointing 
+on the model and press the 'p' key. 
+Repeat for the end point."} $Gui(WLA)
+   
+    pack $f.lTitle $f.lTitle2 -side left -padx $Gui(pad) -pady 0 
+
+
+    set f $Endoscopic(tabbedFrame).fAutomatic.fStep2.fSource
     eval {label $f.lsource -text "start point: "} $Gui(WLA)
-    eval {label $f.lsource2 -text " "} $Gui(WLA)
-    eval {checkbutton $f.lsourceSel -text "Select" -variable Endoscopic(sourceButton,on) -indicatoron 0 } $Gui(WBA)
+    eval {label $f.lsource2 -text " None "} $Gui(WLA)
+    eval {checkbutton $f.lsourceSel -text "Select another point" -variable Endoscopic(sourceButton,on) -indicatoron 0 } $Gui(WBA)
+TooltipAdd $f.lsourceSel "You can select an existing fiducial by pressing this
+button and then selecting the fiducial by pointing at it 
+and pressing the 'q' key." 
 
     set Endoscopic(sourceLabel) $f.lsource2
     pack $f.lsource $f.lsource2 $f.lsourceSel -side left 
 
-    set f $Endoscopic(tabbedFrame).fAutomatic.fSink
+    set f $Endoscopic(tabbedFrame).fAutomatic.fStep2.fSink
     eval {label $f.lsink -text "end point: "} $Gui(WLA)
-    eval {label $f.lsink2 -text " "} $Gui(WLA)
-    eval {checkbutton $f.lsinkSel -text "Select" -variable Endoscopic(sinkButton,on) -indicatoron 0 } $Gui(WBA)
+    eval {label $f.lsink2 -text " None "} $Gui(WLA)
+    eval {checkbutton $f.lsinkSel -text "Select another point" -variable Endoscopic(sinkButton,on) -indicatoron 0 } $Gui(WBA)
+TooltipAdd  $f.lsinkSel "You can select an existing fiducial by pressing this
+button and then selecting the fiducial by pointing at it 
+and pressing the 'q' key." 
 
     set Endoscopic(sinkLabel) $f.lsink2
     pack $f.lsink $f.lsink2 $f.lsinkSel -side left 
 
 
     set f $Endoscopic(tabbedFrame).fAutomatic.fStep3
+eval {label $f.lTitle -text "Step 3. "} $Gui(WTA)
     DevAddButton $f.bauto "Extract Centerline" PathPlanningExtractCenterline
-    pack $f.bauto -side top
+    pack $f.lTitle $f.bauto -side left -padx 2
 
 
     set f $Endoscopic(tabbedFrame).fAutomatic.fStep4
+eval {label $f.lTitle -text "Step 4. "} $Gui(WTA)
     eval {button $f.bpop -text "Show Fly Through Panel" -command "EndoscopicShowFlyThroughPopUp"} $Gui(WBA)
-    pack $f.bpop
+    pack $f.lTitle $f.bpop -side left -padx 2
 
 
 
@@ -3639,9 +3665,9 @@ proc EndoscopicEndCallbackFiducialsUpdateMRML {} {
     if {[lsearch $Endoscopic(path,activeIdList) $Endoscopic(path,activeId)] == -1} {
         set Endoscopic(path,activeId) NONE
         foreach mb $Endoscopic(mbPathList) {
-            $mb config -text "None"
+            $mb config -text "NONE"
         }
-        $Endoscopic(mbPath4Fly) config -text "None"
+        $Endoscopic(mbPath4Fly) config -text "NONE"
         # otherwise put the name of the current active list on the path selection 
         # menus
     } else {
