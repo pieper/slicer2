@@ -222,6 +222,8 @@ proc MainMrmlDeleteAll {} {
 			# Remove node from tree, and delete it
 			Mrml(dataTree) RemoveItem ${node}($id,node)
 			${node}($id,node) Delete
+
+		    puts "deleted node $node $id"
 		}
 	}
 
@@ -720,6 +722,7 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 		"Transform" {
 			set i $Transform(nextID)
 			incr Transform(nextID)
+			lappend Transform(idList) $i
 			vtkMrmlTransformNode Transform($i,node)
 			Mrml(dataTree) AddItem Transform($i,node)
 		}
@@ -727,6 +730,7 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 		"EndTransform" {
 			set i $EndTransform(nextID)
 			incr EndTransform(nextID)
+			lappend EndTransform(idList) $i
 			vtkMrmlEndTransformNode EndTransform($i,node)
 			Mrml(dataTree) AddItem EndTransform($i,node)
 		}
@@ -893,6 +897,7 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 
 		"Options" {
 		    puts "MainMrml Build Trees 2: Options found"
+		    # (Lauren) make a vtk object and all that here 
 
 		    foreach a $attr {
 			set key [lindex $a 0]
