@@ -138,6 +138,11 @@ proc FMRIEnginePopUpPlot {x y} {
 proc FMRIEngineCloseTimeCourseWindow {} {
     global FMRIEngine
 
+    # timer to remove the time course plot
+    if {[info exists FMRIEngine(timer)]} {
+        after cancel $FMRIEngine(timer)
+    }
+
     $FMRIEngine(tcPlot) Delete
     $FMRIEngine(render) Delete
     [$FMRIEngine(renWin) GetInteractor] Delete
