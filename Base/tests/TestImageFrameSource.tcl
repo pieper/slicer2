@@ -67,8 +67,13 @@ renWin Render
 # Render the copy.  Bring up the interactor and paste
 # the following in to render many times.
 frameSource Modified
-#copyMapper Modified
+frameSource Update
+#copyMapper Modified  (this line has no effect)
 $copyWin Render
+
+# On Solaris, the above frameSource Update is necessary,
+# else the first render will black out the image and 
+# the second will draw it...
 
 
 
