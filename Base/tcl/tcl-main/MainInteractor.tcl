@@ -149,7 +149,9 @@ proc MainInteractorBind {widget} {
     bind $widget <Up>                {MainInteractorKeyPress Up    %W %x %y}
     bind $widget <Down>              {MainInteractorKeyPress Down  %W %x %y}
     bind $widget <Left>              {MainInteractorKeyPress Left  %W %x %y}
+    bind $widget <Shift-Left>        {MainInteractorKeyPress Left  %W %x %y; MainInteractorShiftMotion %W %x %y}
     bind $widget <Right>             {MainInteractorKeyPress Right %W %x %y}
+    bind $widget <Shift-Right>       {MainInteractorKeyPress Right %W %x %y; MainInteractorShiftMotion %W %x %y}
     bind $widget <Delete>            {MainInteractorKeyPress Delete %W %x %y}
     bind $widget <KeyPress-0>        {MainInteractorKeyPress 0 %W %x %y}
     bind $widget <KeyPress-d>        {MainInteractorKeyPress d %W %x %y}
