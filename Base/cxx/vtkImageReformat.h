@@ -70,17 +70,28 @@ public:
 	float Origin[3];
   
   // >> AT 11/07/01
+
+  // Description
+  // XY vector from center of image to center of panned image
+  // comes from GUI (MainInteractorPan)
   vtkGetVector2Macro(OriginShift, float);
   vtkSetVector2Macro(OriginShift, float);
 
+  // Description
+  // Zoom factor coming from GUI (MainInteractorZoom)
   vtkGetMacro(Zoom, float);
   vtkSetMacro(Zoom, float);
 
+  // Description
+  // Pixel size of the reformatted image in mm
   vtkGetMacro(PanScale, float);
+  // Description
+  // For internal class use only
   vtkSetMacro(PanScale, float);
 
+  // Description
   vtkGetObjectMacro(OriginShiftMtx, vtkMatrix4x4);
-  vtkSetObjectMacro(OriginShiftMtx, vtkMatrix4x4);
+  //vtkSetObjectMacro(OriginShiftMtx, vtkMatrix4x4);
   // << AT 11/07/01
 
   vtkGetMacro(RunTime, int);
