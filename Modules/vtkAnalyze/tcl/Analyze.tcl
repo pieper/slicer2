@@ -162,7 +162,7 @@ proc AnalyzeInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.9 $} {$Date: 2004/11/12 21:51:50 $}]
+        {$Revision: 1.9.2.1 $} {$Date: 2005/01/20 22:45:24 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -492,14 +492,15 @@ proc AnalyzeCreateMrmlNodeForVolume {volName volData} {
     Volume($i,node) SetImageRange [expr 1 + [lindex $ext 4]] [expr 1 + [lindex $ext 5]]
 
     Volume($i,node) SetScalarType [$volData GetScalarType]
-    Volume($i,node) SetDimensions [lindex [$volData GetDimensions] 0] [lindex [$volData GetDimensions] 1]
+    Volume($i,node) SetDimensions [lindex [$volData GetDimensions] 0] \
+        [lindex [$volData GetDimensions] 1]
     Volume($i,node) ComputeRasToIjkFromScanOrder [Volume($i,node) GetScanOrder]
 
     Volume($i,vol) SetImageData $volData
     # Make sure to keep the following order for these two commands; You will not
     # see the right updates in the Volumes gui.
+
     MainVolumesSetActive $i
-    MainUpdateMRML
 
     return $i
 }

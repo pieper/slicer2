@@ -81,7 +81,6 @@ proc DICOMHelperCreateMrmlNodeForVolume {volName volData byteOrder zSpacing} {
         [lindex [$volData GetDimensions] 1]
     Volume($i,node) ComputeRasToIjkFromScanOrder [Volume($i,node) GetScanOrder]
 
-    MainUpdateMRML
     Volume($i,vol) SetImageData $volData
     MainVolumesSetActive $i
 
@@ -166,6 +165,7 @@ proc DICOMHelperLoadStudy {dir {Pattern "*"}} {
                 # set ::Volume(name) $seriestag-$::Volume(name)
                 lappend DICOMHelper(MRMLid) [VolumesPropsApply]
             }
+
             RenderAll
             # Tab Data
             set ::Volume(dICOMFileList) ""
