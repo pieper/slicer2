@@ -129,11 +129,14 @@ if { $DISPLAY == "" } {
 # start the server
 #
 
-if { ![file exists "/tmp/logs"] } {
-    file mkdir /tmp/logs
+set LOGDIR $::env(HOME)/runvnclogs
+if { ![file exists "$LOGDIR"] } {
+    file mkdir $LOGDIR
 }
 
 set STARTDATE [exec date -Iseconds]
+
+set LOGFILE $LOGDIR/runvnclog-[pid]-$STARTDATE
 
 #
 # look for the fonts - special trick for compute nodes that don't have
@@ -152,24 +155,25 @@ foreach fpdir $fpdirs {
 }
 
 if { $AUTHORIZATION == "-localhost" } {
-    set vncpid [exec $XVNC :$DISPLAY -fp $fparg -alwaysshared $LOCALHOST -depth 32 -geometry 1280x1024 >& /tmp/logs/vnclog$STARTDATE &]
+    set vncpid [exec $XVNC :$DISPLAY -fp $fparg -alwaysshared $AUTHORIZATION -depth 32 -geometry 1280x1024 >& $LOGFILE &]
 } else {
-    set vncpid [exec $XVNC :$DISPLAY -fp $fparg -alwaysshared -rfbauth /home/pieper/.vnc/passwd -depth 32 -geometry 1280x1024 >& /tmp/logs/vnclog$STARTDATE &]
+    # TODO - pass the passwd file in on the command line
+    set vncpid [exec $XVNC :$DISPLAY -fp $fparg -alwaysshared -rfbauth /home/pieper/.vnc/passwd -depth 32 -geometry 1280x1024 >& $LOGFILE &]
 }
 
 set cwd [pwd]
-cd /tmp/logs
-catch "exec rm vnclog"
-exec ln -s  vnclog$STARTDATE vnclog
+cd $LOGDIR
+catch "exec rm runvnclog"
+exec ln -s  $LOGFILE runvnclog
 cd $cwd 
 
 set tries 0
 
-while { [catch "exec grep Listening /tmp/logs/vnclog"] } {
+while { [catch "exec grep Listening $LOGFILE"] } {
     incr tries
     if { $tries > 50 } {
         puts stderr "vnc didn't start correctly (log follows)\n"
-        puts stderr [exec cat /tmp/logs/vnclog]
+        puts stderr [exec cat $LOGFILE]
         exit 1
     }
     after 100
