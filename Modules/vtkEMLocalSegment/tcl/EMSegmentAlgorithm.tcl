@@ -102,15 +102,21 @@ proc EMSegmentSetVtkPrivateSuperClassSetting {SuperClass} {
 
   EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPrintEMLabelMapConvergence  $EMSegment(Cattrib,$SuperClass,PrintEMLabelMapConvergence)
   EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPrintEMWeightsConvergence   $EMSegment(Cattrib,$SuperClass,PrintEMWeightsConvergence)
-  EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetBoundaryStopEMType          $EMSegment(Cattrib,$SuperClass,BoundaryStopEMType)
-  EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetBoundaryStopEMValue         $EMSegment(Cattrib,$SuperClass,BoundaryStopEMValue)
-  EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetBoundaryStopEMMaxIterations $EMSegment(Cattrib,$SuperClass,BoundaryStopEMMaxIterations)
+  EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetStopEMType                  $EMSegment(Cattrib,$SuperClass,StopEMType)
+  EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetStopEMValue                 $EMSegment(Cattrib,$SuperClass,StopEMValue)
+  # Current Legacy 
+  if {$EMSegment(Cattrib,$SuperClass,StopEMMaxIter) == 0} {set EMSegment(Cattrib,$SuperClass,StopEMMaxIter)  $EMSegment(Cattrib,0,StopEMMaxIter) }
+
+  EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetStopEMMaxIter               $EMSegment(Cattrib,$SuperClass,StopEMMaxIter)
 
   EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPrintMFALabelMapConvergence  $EMSegment(Cattrib,$SuperClass,PrintMFALabelMapConvergence)
   EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPrintMFAWeightsConvergence   $EMSegment(Cattrib,$SuperClass,PrintMFAWeightsConvergence)
-  EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetBoundaryStopMFAType          $EMSegment(Cattrib,$SuperClass,BoundaryStopMFAType)
-  EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetBoundaryStopMFAValue         $EMSegment(Cattrib,$SuperClass,BoundaryStopMFAValue)
-  EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetBoundaryStopMFAMaxIterations $EMSegment(Cattrib,$SuperClass,BoundaryStopMFAMaxIterations)
+  EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetStopMFAType                  $EMSegment(Cattrib,$SuperClass,StopMFAType)
+  EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetStopMFAValue                 $EMSegment(Cattrib,$SuperClass,StopMFAValue)
+
+  # Current Legacy - I have to fix gui
+  if {$EMSegment(Cattrib,$SuperClass,StopMFAMaxIter) == 0} {set EMSegment(Cattrib,$SuperClass,StopMFAMaxIter) $EMSegment(Cattrib,0,StopMFAMaxIter) }
+  EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetStopMFAMaxIter               $EMSegment(Cattrib,$SuperClass,StopMFAMaxIter)
 
   if {$EMSegment(SegmentMode)} {
       EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetRegistrationType              $EMSegment(Cattrib,$SuperClass,RegistrationType)
@@ -361,8 +367,6 @@ proc EMSegmentAlgorithmStart { } {
    #----------------------------------------------------------------------------
    # Transfering General Information
    #----------------------------------------------------------------------------
-   EMSegment(vtkEMSegment) SetNumIter         $EMSegment(EMiteration)  
-   EMSegment(vtkEMSegment) SetNumRegIter      $EMSegment(MFAiteration) 
    EMSegment(vtkEMSegment) SetAlpha           $EMSegment(Alpha) 
 
    EMSegment(vtkEMSegment) SetSmoothingWidth  $EMSegment(SmWidth)    
@@ -371,12 +375,14 @@ proc EMSegmentAlgorithmStart { } {
    if {$EMSegment(SegmentMode)}  {
        # New Private Variables 
        EMSegment(vtkEMSegment) SetRegistrationInterpolationType  $EMSegment(RegistrationInterpolationType)      
+       # Powell is more robust
        EMSegment(vtkEMSegment) SetRegistrationMAPAlgorithmToPowell 
+       # EMSegment(vtkEMSegment) SetRegistrationMAPAlgorithmToSimplex 
 
-   }  
-   # EMSegment(vtkEMSegment) SetPrintIntermediateResults    $EMSegment(PrintIntermediateResults) 
-   # EMSegment(vtkEMSegment) SetPrintIntermediateSlice      $EMSegment(PrintIntermediateSlice) 
-   # EMSegment(vtkEMSegment) SetPrintIntermediateFrequency  $EMSegment(PrintIntermediateFrequency) 
+   } else {
+       EMSegment(vtkEMSegment) SetNumIter         $EMSegment(Cattrib,0,StopEMMaxIter) 
+       EMSegment(vtkEMSegment) SetNumRegIter      $EMSegment(Cattrib,0,StopMFAMaxIter) 
+   }
 
    return  $EMSegment(NumInputChannel) 
 }

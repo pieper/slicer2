@@ -107,17 +107,17 @@ public:
   // 0 = fixed iterations 
   // 1 = Absolut measure 
   // 2 = Relative measure 
-  vtkGetMacro(BoundaryStopEMType,int); 
-  vtkSetMacro(BoundaryStopEMType,int); 
+  vtkGetMacro(StopEMType,int); 
+  vtkSetMacro(StopEMType,int); 
   
   // Description:  
   // What is the obundary value, note if the number of iterations 
   // extend EMiter than stops than
-  vtkGetMacro(BoundaryStopEMValue,float);      
-  vtkSetMacro(BoundaryStopEMValue,float); 
+  vtkGetMacro(StopEMValue,float);      
+  vtkSetMacro(StopEMValue,float); 
 
-  vtkGetMacro(BoundaryStopEMMaxIterations,int); 
-  vtkSetMacro(BoundaryStopEMMaxIterations,int); 
+  vtkGetMacro(StopEMMaxIter,int); 
+  vtkSetMacro(StopEMMaxIter,int); 
 
  // Description:
   // Prints out the number of voxels changed from last to this MFA iteration
@@ -134,17 +134,17 @@ public:
   // 0 = fixed iterations 
   // 1 = Absolut measure 
   // 2 = Relative measure 
-  vtkGetMacro(BoundaryStopMFAType,int); 
-  vtkSetMacro(BoundaryStopMFAType,int); 
+  vtkGetMacro(StopMFAType,int); 
+  vtkSetMacro(StopMFAType,int); 
   
   // Description:  
   // What is the obundary value, note if the number of iterations 
   // extend MFAiter than stops than
-  vtkGetMacro(BoundaryStopMFAValue,float);      
-  vtkSetMacro(BoundaryStopMFAValue,float); 
+  vtkGetMacro(StopMFAValue,float);      
+  vtkSetMacro(StopMFAValue,float); 
 
-  vtkGetMacro(BoundaryStopMFAMaxIterations,int); 
-  vtkSetMacro(BoundaryStopMFAMaxIterations,int); 
+  vtkGetMacro(StopMFAMaxIter,int); 
+  vtkSetMacro(StopMFAMaxIter,int); 
 
   // Description:
   // Activation of Registration within EM algorithm of atlas to image space 
@@ -173,21 +173,21 @@ protected:
   int PrintEMLabelMapConvergence;  // Prints out the number of voxels changed from last to this iteration
   int PrintEMWeightsConvergence; // Prints out the difference in percent 
 
-  int BoundaryStopEMType;       // After which criteria should be stopped   
+  int StopEMType;       // After which criteria should be stopped   
                                 // 0 = fixed iterations 
                                 // 1 = Absolut measure 
                                 // 2 = Relative measure
-  float BoundaryStopEMValue;    // What is the obundary value, note if the number of iterations 
+  float StopEMValue;    // What is the obundary value, note if the number of iterations 
                                 // extend EMiter than stops than
-                                // if (BoundaryStopEMType = 1) than it is percent
+                                // if (StopEMType = 1) than it is percent
 
-  int BoundaryStopEMMaxIterations;
+  int StopEMMaxIter;
 
   int PrintMFALabelMapConvergence;  
   int PrintMFAWeightsConvergence; 
-  int BoundaryStopMFAType;       
-  float BoundaryStopMFAValue;    
-  int BoundaryStopMFAMaxIterations;
+  int StopMFAType;       
+  float StopMFAValue;    
+  int StopMFAMaxIter;
 
   int    RegistrationType; 
   int GenerateBackgroundProbability;

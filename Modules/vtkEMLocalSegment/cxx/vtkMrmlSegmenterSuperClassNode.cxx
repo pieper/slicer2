@@ -67,15 +67,15 @@ vtkMrmlSegmenterSuperClassNode::vtkMrmlSegmenterSuperClassNode() {
 
   this->PrintEMLabelMapConvergence  = 0;
   this->PrintEMWeightsConvergence = 0;
-  this->BoundaryStopEMType  = 0;
-  this->BoundaryStopEMValue = 0.0; 
-  this->BoundaryStopEMMaxIterations = 0; 
+  this->StopEMType  = 0;
+  this->StopEMValue = 0.0; 
+  this->StopEMMaxIter = 0; 
 
   this->PrintMFALabelMapConvergence  = 0;
   this->PrintMFAWeightsConvergence = 0;
-  this->BoundaryStopMFAType  = 0;
-  this->BoundaryStopMFAValue = 0.0; 
-  this->BoundaryStopMFAMaxIterations = 0; 
+  this->StopMFAType  = 0;
+  this->StopMFAValue = 0.0; 
+  this->StopMFAMaxIter = 0; 
   this->RegistrationType = 0;
   this->GenerateBackgroundProbability = 0;
 }
@@ -102,15 +102,15 @@ void vtkMrmlSegmenterSuperClassNode::Write(ofstream& of, int nIndent)
 
   of << " PrintEMLabelMapConvergence='" << this->PrintEMLabelMapConvergence <<  "'";
   of << " PrintEMWeightsConvergence='" << this->PrintEMWeightsConvergence  <<  "'";
-  of << " BoundaryStopEMType='" << this->BoundaryStopEMType  <<  "'";
-  of << " BoundaryStopEMValue='" << this->BoundaryStopEMValue <<  "'";
-  of << " BoundaryStopEMMaxIterations='" << this->BoundaryStopEMMaxIterations <<  "'";
+  of << " StopEMType='" << this->StopEMType  <<  "'";
+  of << " StopEMValue='" << this->StopEMValue <<  "'";
+  of << " StopEMMaxIter='" << this->StopEMMaxIter <<  "'";
 
   of << " PrintMFALabelMapConvergence='" << this->PrintMFALabelMapConvergence <<  "'";
   of << " PrintMFAWeightsConvergence='" << this->PrintMFAWeightsConvergence  <<  "'";
-  of << " BoundaryStopMFAType='" << this->BoundaryStopMFAType  <<  "'";
-  of << " BoundaryStopMFAValue='" << this->BoundaryStopMFAValue <<  "'";
-  of << " BoundaryStopMFAMaxIterations='" << this->BoundaryStopMFAMaxIterations <<  "'";
+  of << " StopMFAType='" << this->StopMFAType  <<  "'";
+  of << " StopMFAValue='" << this->StopMFAValue <<  "'";
+  of << " StopMFAMaxIter='" << this->StopMFAMaxIter <<  "'";
   of << " GenerateBackgroundProbability='" << this->GenerateBackgroundProbability <<  "'";
 
   of << ">\n";
@@ -134,15 +134,15 @@ void vtkMrmlSegmenterSuperClassNode::Copy(vtkMrmlNode *anode)
 
   this->PrintEMLabelMapConvergence    = node->PrintEMLabelMapConvergence;
   this->PrintEMWeightsConvergence     = node->PrintEMWeightsConvergence;
-  this->BoundaryStopEMType            = node->BoundaryStopEMType;
-  this->BoundaryStopEMValue           = node->BoundaryStopEMValue; 
-  this->BoundaryStopEMMaxIterations   = node->BoundaryStopEMMaxIterations; 
+  this->StopEMType            = node->StopEMType;
+  this->StopEMValue           = node->StopEMValue; 
+  this->StopEMMaxIter   = node->StopEMMaxIter; 
 
   this->PrintMFALabelMapConvergence   = node->PrintMFALabelMapConvergence;
   this->PrintMFAWeightsConvergence    = node->PrintMFAWeightsConvergence;
-  this->BoundaryStopMFAType           = node->BoundaryStopMFAType;
-  this->BoundaryStopMFAValue          = node->BoundaryStopMFAValue; 
-  this->BoundaryStopMFAMaxIterations  = node->BoundaryStopMFAMaxIterations; 
+  this->StopMFAType           = node->StopMFAType;
+  this->StopMFAValue          = node->StopMFAValue; 
+  this->StopMFAMaxIter  = node->StopMFAMaxIter; 
 
   this->RegistrationType              = node->RegistrationType;
   this->GenerateBackgroundProbability = node->GenerateBackgroundProbability;
@@ -163,15 +163,15 @@ void vtkMrmlSegmenterSuperClassNode::PrintSelf(ostream& os, vtkIndent indent)
 
   os << indent << "PrintEMLabelMapConvergence:    " << this->PrintEMLabelMapConvergence << "\n";
   os << indent << "PrintEMWeightsConvergence:     " << this->PrintEMWeightsConvergence << "\n";
-  os << indent << "BoundaryStopEMType:            " << this->BoundaryStopEMType  << "\n";
-  os << indent << "BoundaryStopEMValue:           " << this->BoundaryStopEMValue << "\n";
-  os << indent << "BoundaryStopEMMaxIterations:   " << this->BoundaryStopEMMaxIterations << "\n";
+  os << indent << "StopEMType:            " << this->StopEMType  << "\n";
+  os << indent << "StopEMValue:           " << this->StopEMValue << "\n";
+  os << indent << "StopEMMaxIter:   " << this->StopEMMaxIter << "\n";
 
   os << indent << "PrintMFALabelMapConvergence:   " << this->PrintMFALabelMapConvergence << "\n";
   os << indent << "PrintMFAWeightsConvergence:    " << this->PrintMFAWeightsConvergence << "\n";
-  os << indent << "BoundaryStopMFAType:           " << this->BoundaryStopMFAType  << "\n";
-  os << indent << "BoundaryStopMFAValue:          " << this->BoundaryStopMFAValue << "\n";
-  os << indent << "BoundaryStopMFAMaxIterations:  " << this->BoundaryStopMFAMaxIterations << "\n";
+  os << indent << "StopMFAType:           " << this->StopMFAType  << "\n";
+  os << indent << "StopMFAValue:          " << this->StopMFAValue << "\n";
+  os << indent << "StopMFAMaxIter:  " << this->StopMFAMaxIter << "\n";
   os << indent << "GenerateBackgroundProbability: " << this->GenerateBackgroundProbability << "\n";
 }
 

@@ -87,12 +87,23 @@ public:
 
   // Description:
   // Get/Set for Segmenter
-  vtkSetMacro(EMiteration, int);
+  void SetEMiteration(int init) {
+    // the public version still works that way  - later do it 
+    //vtkWarningMacro(<<"You have an older XML Version for EMSegmenter - EMiteration is not defined anymore as part of vtMRMLSegmenterNode"<< endl 
+    //                <<"We still read in values but update your XML File to new structure to erase this error message" );
+    this->EMiteration  = init;
+  }
+
   vtkGetMacro(EMiteration, int);
 
   // Description:
   // Get/Set for Segmenter
-  vtkSetMacro(MFAiteration, int);
+  void SetMFAiteration(int init) {
+    // the public version still works that way  -later uncomment it 
+    //vtkWarningMacro(<<"You have an older XML Version for EMSegmenter - MFAiteration is not defined anymore as part of vtMRMLSegmenterNode"<< endl 
+    //                <<"We still read in values but update your XML File to new structure to erase this error message" );
+    this->MFAiteration  = init;
+  }
   vtkGetMacro(MFAiteration, int);
 
   // Description:

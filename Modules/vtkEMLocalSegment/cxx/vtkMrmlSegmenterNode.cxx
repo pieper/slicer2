@@ -63,8 +63,8 @@ vtkMrmlSegmenterNode::vtkMrmlSegmenterNode()
   this->AlreadyRead        = 0;
   this->MaxInputChannelDef    = 0;
   this->EMShapeIter        = 1;
-  this->EMiteration        = 1;
-  this->MFAiteration       = 1;
+  this->EMiteration        = 0;
+  this->MFAiteration       = 0;
   this->Alpha              = 0.0;   
   this->SmWidth     = 1;
   this->SmSigma     = 1;
@@ -102,8 +102,8 @@ void vtkMrmlSegmenterNode::Write(ofstream& of, int nIndent)
   of << i1 << "<Segmenter";
   of << " MaxInputChannelDef ='"         << this->MaxInputChannelDef << "'";
   of << " EMShapeIter ='"                << this->EMShapeIter << "'";
-  of << " EMiteration ='"                << this->EMiteration << "'";
-  of << " MFAiteration ='"               << this->MFAiteration << "'";
+  if (this->EMiteration)  of << " EMiteration ='"  << this->EMiteration << "'";
+  if (this->MFAiteration) of << " MFAiteration ='" << this->MFAiteration << "'";
   of << " Alpha ='"                      << this->Alpha << "'";
   of << " SmWidth ='"                    << this->SmWidth << "'";
   of << " SmSigma ='"                    << this->SmSigma << "'";
