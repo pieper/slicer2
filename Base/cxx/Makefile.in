@@ -44,7 +44,8 @@ vtkImageThresholdBeyond \
 vtkImageZoom2D \
 vtkIndirectLookupTable \
 vtkMrmlSlicer \
-vtkMrmlVolume \
+vtkMrmlData \
+vtkMrmlDataVolume \
 vtkMrmlMatrixNode \
 vtkMrmlNode \
 vtkMrmlVolumeNode \

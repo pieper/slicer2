@@ -42,9 +42,11 @@ public:
   vtkTypeMacro(vtkMrmlNode,vtkObject);
   void PrintSelf(ostream& os, vtkIndent indent);
   
+  // Description:
   // Copy the node's parameters to this object.
   // But don't copy: ID
-  void Copy(vtkMrmlNode *node);
+  // Instances of vtkMrmlNode should call vtkMrmlNode::Copy
+  virtual void Copy(vtkMrmlNode *node);
   
   // Description:
   // Set/Get a numerical ID for the calling program to use to keep track
@@ -84,7 +86,8 @@ protected:
 
   vtkSetMacro(Indent, int);
   vtkMrmlNode();
-  ~vtkMrmlNode();
+  // critical to have a virtual descructor!
+  virtual ~vtkMrmlNode();
   vtkMrmlNode(const vtkMrmlNode&) {};
   void operator=(const vtkMrmlNode&) {};
 

@@ -48,7 +48,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkTransform.h"
 #include "vtkPoints.h"
 #include "vtkLookupTable.h"
-#include "vtkMrmlVolume.h"
+#include "vtkMrmlDataVolume.h"
 #include "vtkMrmlVolumeNode.h"
 #include "vtkImageLabelOutline.h"
 #include "vtkImageCrossHair2D.h"
@@ -236,26 +236,26 @@ class VTK_EXPORT vtkMrmlSlicer : public vtkObject
   // Description:
   // The None volume is a single slice, all 0's, used as input to 
   // the pipeline when no volume is selected.
-  void SetNoneVolume(vtkMrmlVolume *vol);
-  vtkGetObjectMacro(NoneVolume, vtkMrmlVolume);
+  void SetNoneVolume(vtkMrmlDataVolume *vol);
+  vtkGetObjectMacro(NoneVolume, vtkMrmlDataVolume);
   // Description:
   // The Back volume is the one displayed in the background slice layer
-  void SetBackVolume(vtkMrmlVolume *vol);
+  void SetBackVolume(vtkMrmlDataVolume *vol);
   // Description:
   // The Fore volume is the one displayed in the foreground slice layer
-  void SetForeVolume(vtkMrmlVolume *vol);
+  void SetForeVolume(vtkMrmlDataVolume *vol);
   // Description:
   // The Label volume is displayed in the label slice layer.
   // It is passed through a vtkImageLabelOutline filter which shows only
   // the outline of the labeled regions.
-  void SetLabelVolume(vtkMrmlVolume *vol);
+  void SetLabelVolume(vtkMrmlDataVolume *vol);
 
-  void SetBackVolume( int s, vtkMrmlVolume *vol);
-  void SetForeVolume( int s, vtkMrmlVolume *vol);
-  void SetLabelVolume(int s, vtkMrmlVolume *vol);
-  vtkMrmlVolume* GetBackVolume( int s) {return this->BackVolume[s];};
-  vtkMrmlVolume* GetForeVolume( int s) {return this->ForeVolume[s];};
-  vtkMrmlVolume* GetLabelVolume(int s) {return this->LabelVolume[s];};
+  void SetBackVolume( int s, vtkMrmlDataVolume *vol);
+  void SetForeVolume( int s, vtkMrmlDataVolume *vol);
+  void SetLabelVolume(int s, vtkMrmlDataVolume *vol);
+  vtkMrmlDataVolume* GetBackVolume( int s) {return this->BackVolume[s];};
+  vtkMrmlDataVolume* GetForeVolume( int s) {return this->ForeVolume[s];};
+  vtkMrmlDataVolume* GetLabelVolume(int s) {return this->LabelVolume[s];};
 
 
   //--------- Slice reformatting, orientation, point conversion  -----------//
@@ -359,7 +359,7 @@ class VTK_EXPORT vtkMrmlSlicer : public vtkObject
 
   // Description:
   // Add a volume to the list we are reformatting.
-  void AddVolumeToReformat(vtkMrmlVolume * v);
+  void AddVolumeToReformat(vtkMrmlDataVolume * v);
 
   // Description:
   // Call this to clear out the volumes when your module is exited.
@@ -369,13 +369,13 @@ class VTK_EXPORT vtkMrmlSlicer : public vtkObject
   // Get the reformatted slice from this volume.  The volume
   // must have been added first.  Currently this reformats
   // along with the active slice in the Slicer.
-  vtkImageData *GetReformatOutputFromVolume(vtkMrmlVolume *v) {
+  vtkImageData *GetReformatOutputFromVolume(vtkMrmlDataVolume *v) {
     return this->GetVolumeReformatter(v)->GetOutput();
   };
   
   // Description:
   // Set reformat matrix same as that of this slice
-  void ReformatVolumeLikeSlice(vtkMrmlVolume * v, int s);
+  void ReformatVolumeLikeSlice(vtkMrmlDataVolume * v, int s);
 
   //-------------------- Draw ---------------------------//
   // Description:
@@ -467,7 +467,7 @@ protected:
 
   void ComputeOffsetRange();
   void ComputeOffsetRangeIJK(int s);
-  vtkMrmlVolume* GetIJKVolume(int s);
+  vtkMrmlDataVolume* GetIJKVolume(int s);
   vtkImageReformat* GetIJKReformat(int s);
   int IsOrientIJK(int s);
   void BuildLower(int s);
@@ -504,9 +504,9 @@ protected:
   vtkImageMapToColors  *ForeMapper[NUM_SLICES];
   vtkImageMapToColors  *LabelMapper[NUM_SLICES];
   vtkImageOverlay      *Overlay[NUM_SLICES];
-  vtkMrmlVolume        *BackVolume[NUM_SLICES];
-  vtkMrmlVolume        *ForeVolume[NUM_SLICES];
-  vtkMrmlVolume        *LabelVolume[NUM_SLICES];
+  vtkMrmlDataVolume        *BackVolume[NUM_SLICES];
+  vtkMrmlDataVolume        *ForeVolume[NUM_SLICES];
+  vtkMrmlDataVolume        *LabelVolume[NUM_SLICES];
   vtkMatrix4x4         *ReformatMatrix[NUM_SLICES];
   vtkImageLabelOutline *LabelOutline[NUM_SLICES];
   vtkImageCrossHair2D  *Cursor[NUM_SLICES];
@@ -514,7 +514,7 @@ protected:
   vtkImageDouble2D     *Double[NUM_SLICES];
   vtkImageDrawROI      *PolyDraw;
   vtkImageReformatIJK  *ReformatIJK;
-  vtkMrmlVolume        *NoneVolume;
+  vtkMrmlDataVolume        *NoneVolume;
   vtkMrmlVolumeNode    *NoneNode;
 
   // Colors
@@ -555,7 +555,7 @@ protected:
   // Additional Reformatting capabilities
   vtkVoidArray *VolumeReformatters;
   vtkCollection *VolumesToReformat;
-  vtkImageReformat *GetVolumeReformatter(vtkMrmlVolume *v);
+  vtkImageReformat *GetVolumeReformatter(vtkMrmlDataVolume *v);
   void VolumeReformattersModified();
   int MaxNumberOfVolumesToReformat;
   // Description:

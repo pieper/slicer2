@@ -82,7 +82,7 @@ vtkMrmlSlicer::vtkMrmlSlicer()
   this->NoneNode->SetName("None");
 
 	// Create a NoneVolume
-  this->NoneVolume = vtkMrmlVolume::New();
+  this->NoneVolume = vtkMrmlDataVolume::New();
   this->NoneVolume->Register(this);
   this->NoneVolume->Delete();
   this->NoneVolume->SetMrmlNode(this->NoneNode);
@@ -362,11 +362,11 @@ void vtkMrmlSlicer::PrintSelf(ostream& os, vtkIndent indent)
 }
 
 //----------------------------------------------------------------------------
-void vtkMrmlSlicer::SetNoneVolume(vtkMrmlVolume *vol)
+void vtkMrmlSlicer::SetNoneVolume(vtkMrmlDataVolume *vol)
 {
   int s;
   
-  // Only act if this is a different vtkMrmlVolume
+  // Only act if this is a different vtkMrmlDataVolume
   if (this->NoneVolume != vol) 
   {
     for (s=0; s<NUM_SLICES; s++)
@@ -407,7 +407,7 @@ void vtkMrmlSlicer::SetNoneVolume(vtkMrmlVolume *vol)
 
     if (vol != NULL) 
     {
-      this->NoneNode = vol->GetMrmlNode();
+      this->NoneNode = (vtkMrmlVolumeNode *) vol->GetMrmlNode();
     }
     else
     {
@@ -445,7 +445,7 @@ int vtkMrmlSlicer::IsOrientIJK(int s)
 //----------------------------------------------------------------------------
 // GetIJKVolume
 //----------------------------------------------------------------------------
-vtkMrmlVolume* vtkMrmlSlicer::GetIJKVolume(int s)
+vtkMrmlDataVolume* vtkMrmlSlicer::GetIJKVolume(int s)
 {
   if (this->BackVolume[s] != this->NoneVolume)
   {
@@ -531,14 +531,14 @@ void vtkMrmlSlicer::SetActiveSlice(int s)
 //----------------------------------------------------------------------------
 // Background Volume
 //----------------------------------------------------------------------------
-void vtkMrmlSlicer::SetBackVolume(vtkMrmlVolume *vol)
+void vtkMrmlSlicer::SetBackVolume(vtkMrmlDataVolume *vol)
 {
   for (int s=0; s<NUM_SLICES; s++)
   {
 	  this->SetBackVolume(s, vol);
   }
 }
-void vtkMrmlSlicer::SetBackVolume(int s, vtkMrmlVolume *vol)
+void vtkMrmlSlicer::SetBackVolume(int s, vtkMrmlDataVolume *vol)
 {
   if (this->BackVolume[s] != vol) 
   {
@@ -560,14 +560,14 @@ void vtkMrmlSlicer::SetBackVolume(int s, vtkMrmlVolume *vol)
 //----------------------------------------------------------------------------
 // Foreground Volume
 //----------------------------------------------------------------------------
-void vtkMrmlSlicer::SetForeVolume(vtkMrmlVolume *vol)
+void vtkMrmlSlicer::SetForeVolume(vtkMrmlDataVolume *vol)
 {
   for (int s=0; s<NUM_SLICES; s++)
   {
 	  this->SetForeVolume(s, vol);
   }
 }
-void vtkMrmlSlicer::SetForeVolume(int s, vtkMrmlVolume *vol)
+void vtkMrmlSlicer::SetForeVolume(int s, vtkMrmlDataVolume *vol)
 {
   if (this->ForeVolume[s] != vol) 
   {
@@ -588,14 +588,14 @@ void vtkMrmlSlicer::SetForeVolume(int s, vtkMrmlVolume *vol)
 //----------------------------------------------------------------------------
 // Label Volume
 //----------------------------------------------------------------------------
-void vtkMrmlSlicer::SetLabelVolume(vtkMrmlVolume *vol)
+void vtkMrmlSlicer::SetLabelVolume(vtkMrmlDataVolume *vol)
 {
   for (int s=0; s<NUM_SLICES; s++)
   {
 	  this->SetLabelVolume(s, vol);
   }
 }
-void vtkMrmlSlicer::SetLabelVolume(int s, vtkMrmlVolume *vol)
+void vtkMrmlSlicer::SetLabelVolume(int s, vtkMrmlDataVolume *vol)
 {
   if (this->LabelVolume[s] != vol) 
   {
@@ -656,7 +656,7 @@ void vtkMrmlSlicer::SetLastFilter(int s, vtkImageSource *filter)
 //----------------------------------------------------------------------------
 void vtkMrmlSlicer::BuildUpper(int s)
 {
-  vtkMrmlVolume *v;
+  vtkMrmlDataVolume *v;
   int filter = 0;
 
   // Error checking
@@ -689,11 +689,12 @@ void vtkMrmlSlicer::BuildUpper(int s)
   /////////////////////////////////////////////////////
   
   v = this->BackVolume[s];
+  vtkMrmlVolumeNode *node = (vtkMrmlVolumeNode*) v->GetMrmlNode();
 
   // Reformatter
   this->BackReformat[s]->SetInput(v->GetOutput());
-  this->BackReformat[s]->SetInterpolate(v->GetMrmlNode()->GetInterpolate());
-  this->BackReformat[s]->SetWldToIjkMatrix(v->GetMrmlNode()->GetWldToIjk());
+  this->BackReformat[s]->SetInterpolate(node->GetInterpolate());
+  this->BackReformat[s]->SetWldToIjkMatrix(node->GetWldToIjk());
 
   // If data has more than one scalar component, then don't use the mapper,
   if (v->GetOutput()->GetNumberOfScalarComponents() > 1)
@@ -725,8 +726,8 @@ void vtkMrmlSlicer::BuildUpper(int s)
   {
     // Reformatter
     this->ForeReformat[s]->SetInput(v->GetOutput());
-    this->ForeReformat[s]->SetInterpolate(v->GetMrmlNode()->GetInterpolate());
-    this->ForeReformat[s]->SetWldToIjkMatrix(v->GetMrmlNode()->GetWldToIjk());
+    this->ForeReformat[s]->SetInterpolate(node->GetInterpolate());
+    this->ForeReformat[s]->SetWldToIjkMatrix(node->GetWldToIjk());
 
     // If data has more than one scalar component, then don't use the mapper,
     if (v->GetOutput()->GetNumberOfScalarComponents() > 1)
@@ -808,7 +809,7 @@ void vtkMrmlSlicer::BuildUpper(int s)
       // Reformatter
       this->LabelReformat[s]->SetInput(v->GetOutput());
       this->LabelReformat[s]->InterpolateOff(); // never interpolate label
-      this->LabelReformat[s]->SetWldToIjkMatrix(v->GetMrmlNode()->GetWldToIjk());
+      this->LabelReformat[s]->SetWldToIjkMatrix(node->GetWldToIjk());
 
       // Outline
       this->LabelOutline[s]->SetInput(this->LabelReformat[s]->GetOutput());
@@ -939,7 +940,7 @@ void vtkMrmlSlicer::ComputeOffsetRange()
     {
       this->OffsetRange[s][orient][0] = -fov;
       this->OffsetRange[s][orient][1] =  fov;
-      this->Offset[s][orient] = 0.0;
+      this->Offset[s][orient] = 0;
     }
   }
 }
@@ -964,9 +965,10 @@ void vtkMrmlSlicer::ComputeOffsetRangeIJK(int s)
   float fov = this->FieldOfView / 2.0;
   int orient = this->GetOrient(s);
   int modified = 0;
-  vtkMrmlVolume *vol = this->GetIJKVolume(s);
+  vtkMrmlDataVolume *vol = this->GetIJKVolume(s);
   if (vol == NULL) return;
-  char* order = vol->GetMrmlNode()->GetScanOrder();
+  vtkMrmlVolumeNode *node = (vtkMrmlVolumeNode*) vol->GetMrmlNode();
+  char* order = node->GetScanOrder();
   if (order == NULL) return;
 
   ext = vol->GetOutput()->GetWholeExtent();
@@ -1032,7 +1034,7 @@ void vtkMrmlSlicer::ComputeOffsetRangeIJK(int s)
 
 void vtkMrmlSlicer::InitOffset(int s, char *str, float offset)
 {
-  int orient = ConvertStringToOrient(str);
+  int orient = (int) ConvertStringToOrient(str);
   this->Offset[s][orient] = offset;
 }
 
@@ -1160,7 +1162,9 @@ void vtkMrmlSlicer::ComputeReformatMatrixIJK(int s,
 	float offset, vtkMatrix4x4 *ref)
 {
   char orderString[3];
-  vtkMrmlVolume *vol = this->GetIJKVolume(s);
+  vtkMrmlDataVolume *vol = this->GetIJKVolume(s);
+  vtkMrmlVolumeNode *node = (vtkMrmlVolumeNode*) vol->GetMrmlNode();
+
 
   if (this->IsOrientIJK(s) == 0)
   {
@@ -1171,7 +1175,7 @@ void vtkMrmlSlicer::ComputeReformatMatrixIJK(int s,
   switch (this->Orient[s])
   {
     case MRML_SLICER_ORIENT_ORIGSLICE:
-      sprintf(orderString, "%s", vol->GetMrmlNode()->GetScanOrder());
+      sprintf(orderString, "%s", node->GetScanOrder());
       break;
     case MRML_SLICER_ORIENT_AXISLICE:
       sprintf(orderString, "IS");
@@ -1185,11 +1189,11 @@ void vtkMrmlSlicer::ComputeReformatMatrixIJK(int s,
   }//switch
 
   vtkImageReformatIJK *ijk = this->ReformatIJK;
-  ijk->SetWldToIjkMatrix(vol->GetMrmlNode()->GetWldToIjk());
+  ijk->SetWldToIjkMatrix(node->GetWldToIjk());
   ijk->SetInput(vol->GetOutput());
-  ijk->SetInputOrderString(vol->GetMrmlNode()->GetScanOrder());
+  ijk->SetInputOrderString(node->GetScanOrder());
   ijk->SetOutputOrderString(orderString);
-  ijk->SetSlice(offset);
+  ijk->SetSlice((int)offset);
   ijk->ComputeTransform();
   ijk->ComputeOutputExtent();
   ijk->ComputeReformatMatrix(ref);
@@ -1482,9 +1486,9 @@ void vtkMrmlSlicer::SetScreenPoint(int s, int x, int y)
 //----------------------------------------------------------------------------
 void vtkMrmlSlicer::SetReformatPoint(int s, int x, int y)
 {
-  vtkMrmlVolume *vol = this->GetIJKVolume(s);
+  vtkMrmlDataVolume *vol = this->GetIJKVolume(s);
   vtkImageReformat *ref = this->GetIJKReformat(s);
-  
+  vtkMrmlVolumeNode *node = (vtkMrmlVolumeNode*) vol->GetMrmlNode();
   // Convert (s,x,y) to (i,j,k), (r,a,s), and (x,y,z).
   // (s,x,y) = slice, x,y coordinate on slice
   // (r,a,s) = this->WldPoint = mm float
@@ -1510,7 +1514,7 @@ void vtkMrmlSlicer::SetReformatPoint(int s, int x, int y)
     switch (this->Orient[s])
     {
       case MRML_SLICER_ORIENT_ORIGSLICE:
-        sprintf(orderString, "%s", vol->GetMrmlNode()->GetScanOrder());
+        sprintf(orderString, "%s", node->GetScanOrder());
         break;
       case MRML_SLICER_ORIENT_AXISLICE:
         sprintf(orderString, "IS");
@@ -1524,9 +1528,9 @@ void vtkMrmlSlicer::SetReformatPoint(int s, int x, int y)
     }//switch
 
     vtkImageReformatIJK *ijk = this->ReformatIJK;
-    ijk->SetWldToIjkMatrix(vol->GetMrmlNode()->GetWldToIjk());
+    ijk->SetWldToIjkMatrix(node->GetWldToIjk());
     ijk->SetInput(vol->GetOutput());
-    ijk->SetInputOrderString(vol->GetMrmlNode()->GetScanOrder());
+    ijk->SetInputOrderString(node->GetScanOrder());
     ijk->SetOutputOrderString(orderString);
     ijk->SetSlice(this->Offset[s][this->Orient[s]]);
     ijk->ComputeTransform();
@@ -1852,7 +1856,7 @@ void vtkMrmlSlicer::SetForeFade(int fade)
 // (reformatter will update when slice number changes.)
 //
 // Currently this is not used.
-void vtkMrmlSlicer::ReformatVolumeLikeSlice(vtkMrmlVolume *v, int s)
+void vtkMrmlSlicer::ReformatVolumeLikeSlice(vtkMrmlDataVolume *v, int s)
 {
   // find the reformatter for this volume
   vtkImageReformat *reformat = this->GetVolumeReformatter(v);
@@ -1865,7 +1869,7 @@ void vtkMrmlSlicer::ReformatVolumeLikeSlice(vtkMrmlVolume *v, int s)
 // Description:
 // Add a volume for reformatting: this may be any volume in the 
 // slicer, and the reformatted output can be obtained by
-// Slicer->GetReformatOutputFromVolume(vtkMrmlVolume *v).
+// Slicer->GetReformatOutputFromVolume(vtkMrmlDataVolume *v).
 // Currently only reformatting along with the slices is 
 // supported, but code may be added to use arbitrary 
 // reformat matrices if needed.
@@ -1877,7 +1881,7 @@ void vtkMrmlSlicer::ReformatVolumeLikeSlice(vtkMrmlVolume *v, int s)
 // This happens automatically and the reformatters update when the 
 // active slice or slice offset change.  In the future this should
 // be made more general to allow arbitrary reformatting.
-void vtkMrmlSlicer::AddVolumeToReformat(vtkMrmlVolume *v)
+void vtkMrmlSlicer::AddVolumeToReformat(vtkMrmlDataVolume *v)
 {
   int index = this->VolumesToReformat->IsItemPresent(v);
   if (index) 
@@ -1896,9 +1900,10 @@ void vtkMrmlSlicer::AddVolumeToReformat(vtkMrmlVolume *v)
   vtkImageReformat *reformat = vtkImageReformat::New();
 
   // set its input to be this volume
+  vtkMrmlVolumeNode *node = (vtkMrmlVolumeNode*) v->GetMrmlNode();
   reformat->SetInput(v->GetOutput());
-  reformat->SetInterpolate(v->GetMrmlNode()->GetInterpolate());
-  reformat->SetWldToIjkMatrix(v->GetMrmlNode()->GetWldToIjk());
+  reformat->SetInterpolate(node->GetInterpolate());
+  reformat->SetWldToIjkMatrix(node->GetWldToIjk());
 
   // bookkeeping: add to list of volumes
   this->VolumesToReformat->AddItem(v);
@@ -1943,7 +1948,7 @@ void vtkMrmlSlicer::RemoveAllVolumesToReformat()
 //----------------------------------------------------------------------------
 // Description:
 // internal use: get the reformatter used for this volume.
-vtkImageReformat *vtkMrmlSlicer::GetVolumeReformatter(vtkMrmlVolume *v)
+vtkImageReformat *vtkMrmlSlicer::GetVolumeReformatter(vtkMrmlDataVolume *v)
 {
   int index = this->VolumesToReformat->IsItemPresent(v);
   if (index) 
