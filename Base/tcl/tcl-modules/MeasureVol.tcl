@@ -97,7 +97,7 @@ proc MeasureVolInit {} {
     # Set version info
     #------------------------------------
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.7 $} {$Date: 2000/11/09 01:07:57 $}]
+	    {$Revision: 1.8 $} {$Date: 2000/11/13 05:57:02 $}]
     
     # Initialize module-level variables
     #------------------------------------
@@ -186,40 +186,18 @@ proc MeasureVolBuildGUI {} {
     set fSetup $Module(MeasureVol,fSetup)
     set f $fSetup
 
-    frame $f.fTop -bg $Gui(activeWorkspace)
-    pack $f.fTop -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
-
-    # fBottom needs height 310 to put a TabbedFrame inside!
-    frame $f.fBottom -bg $Gui(activeWorkspace) -height 310
-    pack $f.fBottom -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
-
-
-    #-------------------------------------------
-    # Setup->Top frame
-    #-------------------------------------------
-    set f $fSetup.fTop
-    
-    foreach frame "Choices" {
-	frame $f.f$frame -bg $Gui(backdrop) -relief sunken -bd 2
-	pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
-    }
-    
-    #-------------------------------------------
-    # Setup->Top->Choices frame
-    #-------------------------------------------
-    
-    set f $fSetup.fTop.fChoices
-    
-    foreach frame "SelectVolume Tabs" {
-	frame $f.f$frame -bg $Gui(backdrop)
-	pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
-    }
+    # this makes the navigation menu (buttons) and the tabs (frames).
+    TabbedFrame MeasureVol $f "Settings:"\
+	    {Basic Advanced} {"Basic" "Advanced"} \
+	    {"Basic Settings" "Advanced Settings: Measure only part of the volume."}\
+	    1
 
     #-------------------------------------------
     # Setup->Top->Choices->SelectVolume frame
     #-------------------------------------------
 
-    set f $fSetup.fTop.fChoices.fSelectVolume
+    # Lauren fix this!!!
+    set f $fSetup.fTop.fTabbedFrameExtra
 
     # Add menus that list volumes
     # The selected volume will become $Volume(activeID)
@@ -239,27 +217,16 @@ proc MeasureVolBuildGUI {} {
 
 
     #-------------------------------------------
-    # Setup->Top->Choices->Tabs frame
+    # Setup->TabbedFrame frame
     #-------------------------------------------
-
-    set f $fSetup.fTop.fChoices.fTabs
-
-    # this makes the navigation menu (buttons) and the tabs (frames).
-    TabbedFrame MeasureVol $f $fSetup.fBottom "Settings:"\
-	    {Basic Advanced} {"Basic" "Advanced"} \
-	    {"Basic Settings" "The Advanced Settings let you measure only part of the volume."}
-
-    #-------------------------------------------
-    # Setup->Bottom frame
-    #-------------------------------------------
-    set f $fSetup.fBottom
+    set f $fSetup.fTabbedFrame
     
     # the frames inside this one were made with the TabbedFrame command above.
 
     #-------------------------------------------
-    # Setup->Bottom->Basic frame
+    # Setup->TabbedFrame->Basic frame
     #-------------------------------------------
-    set f $fSetup.fBottom.fBasic
+    set f $fSetup.fTabbedFrame.fBasic
 
     foreach frame "File Measure" {
 	frame $f.f$frame -bg $Gui(activeWorkspace)
@@ -267,17 +234,17 @@ proc MeasureVolBuildGUI {} {
     }
 
     #-------------------------------------------
-    # Setup->Bottom->Basic->File frame
+    # Setup->TabbedFrame->Basic->File frame
     #-------------------------------------------
-    set f $fSetup.fBottom.fBasic.fFile
+    set f $fSetup.fTabbedFrame.fBasic.fFile
     
     DevAddFileBrowse $f MeasureVol fileName "Output File:" [] "txt" [] \
 	    "Save" "Output File" "Choose the file where the output will be written."
 
     #-------------------------------------------
-    # Setup->Bottom->Basic->Measure frame
+    # Setup->TabbedFrame->Basic->Measure frame
     #-------------------------------------------
-    set f $fSetup.fBottom.fBasic.fMeasure
+    set f $fSetup.fTabbedFrame.fBasic.fMeasure
     
     # Measure button
     DevAddButton $f.bMeasure "Measure Volume" MeasureVolVolume 
@@ -288,9 +255,9 @@ proc MeasureVolBuildGUI {} {
     
 
     #-------------------------------------------
-    # Setup->Bottom->Advanced frame
+    # Setup->TabbedFrame->Advanced frame
     #-------------------------------------------
-    set f $fSetup.fBottom.fAdvanced
+    set f $fSetup.fTabbedFrame.fAdvanced
 
     foreach frame "Extents" {
 	frame $f.f$frame -bg $Gui(activeWorkspace) -relief groove -bd 3
@@ -298,9 +265,9 @@ proc MeasureVolBuildGUI {} {
     }
     
     #-------------------------------------------
-    # Setup->Bottom->Advanced->Extents frame
+    # Setup->TabbedFrame->Advanced->Extents frame
     #-------------------------------------------
-    set f $fSetup.fBottom.fAdvanced.fExtents
+    set f $fSetup.fTabbedFrame.fAdvanced.fExtents
     
     frame $f.fLabel -bg $Gui(activeWorkspace)
     pack $f.fLabel -side top -padx $Gui(pad) -pady $Gui(pad)

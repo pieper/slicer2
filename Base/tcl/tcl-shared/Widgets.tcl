@@ -86,15 +86,61 @@ proc ScrolledText { f args } {
 # str tooltips         list of tooltips to appear over buttons. optional.
 # .END
 #-------------------------------------------------------------------------------
-proc TabbedFrame {arrayName buttonsFrame tabsFrame buttonsLabel tabs titles {tooltips ""}} {
+proc TabbedFrame {arrayName containerFrame buttonsLabel tabs titles \
+	{tooltips ""} {extraTopFrame "0"} } {
     global Gui Widgets $arrayName
 
     # get the global array.
     upvar #0 $arrayName globalArray
 
-    
-    ###### First make the buttons inside the buttonsFrame. #####
-    set f $buttonsFrame
+    #-------------------------------------------
+    # Container frame
+    #-------------------------------------------
+    set f $containerFrame
+
+    ###### make the top frame (sunken with dark background) ####
+    frame $f.fTop -bg $Gui(backdrop) -relief sunken -bd 2
+    pack $f.fTop -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
+    set fTop $f.fTop
+
+    ##### make the bottom frame (lighter colored) ######
+    # height 310 needed to put the tab-to frames inside!
+    frame $f.fTabbedFrame -bg $Gui(activeWorkspace) -height 310
+    pack $f.fTabbedFrame -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
+    set fBottom $f.fTabbedFrame   
+
+
+    #-------------------------------------------
+    # Container->Top frame
+    #-------------------------------------------
+    set f $fTop
+    set topFrames ""
+    if {$extraTopFrame == 1} {
+	lappend topFrames Extra
+    }
+    lappend topFrames Buttons
+
+    foreach frame $topFrames {
+	frame $f.fTabbedFrame$frame -bg $Gui(backdrop)
+	pack $f.fTabbedFrame$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
+	set f$frame $f.fTabbedFrame$frame
+    }
+
+    #-------------------------------------------
+    # Container->Top->Extra frame
+    #-------------------------------------------
+
+    # With the extra frame, users can add their own things 
+    # above the buttons for tabbing.
+    # For example, MeasureVol puts in a Volume Select menu.
+    if {$extraTopFrame == 1} {
+	set globalArray(TabbedFrame,$containerFrame,extraFrame) $fExtra
+    }
+
+    #-------------------------------------------
+    # Container->Top->Buttons frame
+    #-------------------------------------------
+    set f $fButtons
 
     # set button width to max word length
     set width 0
@@ -103,7 +149,6 @@ proc TabbedFrame {arrayName buttonsFrame tabsFrame buttonsLabel tabs titles {too
 	    set width [expr [string length $title] +2]
 	}
     }
-
     # label next to the buttons
     eval {label $f.l -text $buttonsLabel} $Gui(BLA)
 
@@ -112,36 +157,44 @@ proc TabbedFrame {arrayName buttonsFrame tabsFrame buttonsLabel tabs titles {too
     foreach tab $tabs title $titles {
 	eval {radiobutton $f.f.r$tab \
 		-text "$title" \
-		-command "raise $tabsFrame.f$tab; focus $tabsFrame.f$tab" \
-		-variable "$arrayName\(TabbedFrame,$tabsFrame,tab)" \
+		-command "TabbedFrameTab $fBottom.f$tab" \
+		-variable "$arrayName\(TabbedFrame,$containerFrame,tab)" \
 		-value $tab -width  $width \
 		-indicatoron 0} $Gui(WCA)
 	pack $f.f.r$tab -side left -padx 0
     }
     pack $f.l $f.f -side left -padx $Gui(pad) -fill x -anchor w
 
-    # add tooltips 
+    # add tooltips, if there's one for every tab
     if {[llength $tooltips] == [llength $tabs]} {
 	foreach tab $tabs tip $tooltips {
 	    TooltipAdd $f.f.r$tab $tip
 	}
     }
 
-    ###### Next make the frames that the buttons will tab to #####
-    set f $tabsFrame
+    #-------------------------------------------
+    # Container->Bottom frame
+    #-------------------------------------------
+    set f $fBottom
     
     foreach tab $tabs {
 	frame $f.f$tab -bg $Gui(activeWorkspace)
 	place $f.f$tab -in $f -relheight 1.0 -relwidth 1.0
-	set globalArray(TabbedFrame,$tabsFrame,f$tab) $f.f$tab
+	set globalArray(TabbedFrame,$containerFrame,f$tab) $f.f$tab
     }
 
 
     ###### Make the first tab active #####
     set first [lindex $tabs 0]
     # press first button
-    set globalArray(TabbedFrame,$tabsFrame,tab) $first
+    set globalArray(TabbedFrame,$containerFrame,tab) $first
     # go to first tab
-    raise $tabsFrame.f$first
+    raise $fBottom.f$first
 }
 
+proc TabbedFrameTab {frame} {
+
+    raise $frame
+    focus $frame
+
+}
