@@ -85,7 +85,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.69 $} {$Date: 2002/07/16 17:31:53 $}]
+            {$Revision: 1.70 $} {$Date: 2002/09/16 17:28:31 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -768,20 +768,32 @@ proc VolumesManualSetPropertyType {n} {
     global Lut Volume Label Module Mrml
 
     # These get set down below, but we need them before MainUpdateMRML
-    $n SetFilePrefix [file root $Volume(firstFile)]
+    # parse out the filename
+    set parsing [MainFileParseImageFile $Volume(firstFile) 0]
+
+#    $n SetFilePrefix [file root $Volume(firstFile)]
+    $n SetFilePrefix [lindex $parsing 1]
+
+    # this check should be obsolete now
     if {[$n GetFilePrefix] == $Volume(firstFile)} {
         # file root didn't work in this case, trim the right hand numerals
         set tmpPrefix [string trimright $Volume(firstFile) 0123456789]
         # now take the assumed single separater character off of the end as well (works with more than one instance, ie if have --)
         $n SetFilePrefix [string trimright $tmpPrefix [string index $tmpPrefix end]]
     }
-    $n SetFilePattern $Volume(filePattern)
+#    $n SetFilePattern $Volume(filePattern)
+    $n SetFilePattern [lindex $parsing 0]
+
     $n SetFullPrefix [file join $Mrml(dir) [$n GetFilePrefix]]
     if { !$Volume(isDICOM) } {
         set firstNum [MainFileFindImageNumber First [file join $Mrml(dir) $Volume(firstFile)]]
     } else {
         set firstNum 1
     }
+    # can get this from the parsed out file name
+#    set firstNum [lindex $parsing 2]
+    set filePostfix [lindex $parsing 3]
+
     $n SetImageRange $firstNum $Volume(lastNum)
     $n SetDimensions $Volume(width) $Volume(height)
     eval $n SetSpacing $Volume(pixelWidth) $Volume(pixelHeight) \
@@ -873,7 +885,10 @@ proc VolumesPropsApply {} {
     global Lut Volume Label Module Mrml View
 
     set m $Volume(activeID)
-    if {$m == ""} {return}
+    if {$m == ""} {
+        DevErrorWindow "VolumesPropsApply: no active volume"
+        return
+    }
 
     set Volume(isDICOM) [expr [llength $Volume(dICOMFileList)] > 0]
         
