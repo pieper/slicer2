@@ -20,6 +20,7 @@ IF (VTK_WRAP_TCL AND VTKRIGIDINTENSITYREGISTRATION_WRAP_TCL)
   VTK_WRAP_TCL (vtkKullbackLeiblerRegistrationTCL RigidIntensityRegistrationTCL_SRCS LOCAL_MODULE_SRCS)
   ADD_LIBRARY (vtkKullbackLeiblerRegistrationTCL RigidIntensityRegistrationTCL_SRCS)
   TARGET_LINK_LIBRARIES (vtkKullbackLeiblerRegistrationTCL 
+                         vtkRigidIntensityRegistrationTCL
                          vtkIOTCL 
                          vtkGraphicsTCL 
                          vtkImagingTCL 
@@ -60,6 +61,7 @@ IF (VTK_WRAP_PYTHON AND VTKRIGIDINTENSITYREGISTRATION_WRAP_PYTHON)
 
   IF (WIN32)
     TARGET_LINK_LIBRARIES (vtkKullbackLeiblerRegistrationPython 
+                           vtkRigidIntensityRegistrationPython
                            vtkIOPython
                            vtkGraphicsPython
                            vtkImagingPython
@@ -133,6 +135,7 @@ ENDIF (VTK_WRAP_JAVA AND VTKRIGIDINTENSITYREGISTRATION_WRAP_JAVA)
 
 LINK_LIBRARIES (
   vtkKullbackLeiblerRegistration
+  vtkRigidIntensityRegistration
   vtkIO
   vtkGraphics
   vtkImaging 

@@ -80,17 +80,8 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 // .SECTION Thanks
 // Thanks to Samson Timoner who created this class.
 
-#include "itkObject.h"
-#include "itkMultiResolutionImageRegistrationMethod.h"
-
-#include "itkQuaternionRigidTransform.h"
-#include "itkAffineTransform.h"
 #include "itkKLHistogramImageToImageMetric.h"
-#include "itkLinearInterpolateImageFunction.h"
-#include "itkQuaternionRigidTransformGradientDescentOptimizerModified.h"
-#include "itkRecursiveMultiResolutionPyramidImageFilter.h"
-
-#include "itkArray.h"
+#include "RigidRegistrationBase.h"
 
 class vtkMatrix4x4;
 
@@ -100,13 +91,13 @@ namespace itk
 {
 
 template <typename TFixedImage, typename TMovingImage>
-class KLRegistration : public Object
+ class KLRegistration : public RigidRegistrationBase<TFixedImage,TMovingImage,KLHistogramImageToImageMetric<TFixedImage, TMovingImage> >
 {
 public:
 
   /** Standard class typedefs. */
   typedef KLRegistration Self;
-  typedef Object Superclass;
+  typedef RigidRegistrationBase<TFixedImage,TMovingImage,KLHistogramImageToImageMetric<TFixedImage, TMovingImage> > Superclass;
   typedef SmartPointer<Self> Pointer;
   typedef SmartPointer<const Self>  ConstPointer;
 
@@ -130,73 +121,36 @@ public:
   itkStaticConstMacro (ImageDimension, unsigned int, TFixedImage::ImageDimension);
 
   /** Transform Type. */
-  typedef AffineTransform< double, 3 >       AffineTransformType;
-  typedef QuaternionRigidTransform< double >       TransformType;
+  typedef Superclass::TransformType           TransformType;
 
   /** Optimizer Type. */
-  typedef QuaternionRigidTransformGradientDescentOptimizerModified 
-                                                         OptimizerType;
+  typedef Superclass::OptimizerType           OptimizerType;
 
   /** Metric Type. */
-  typedef KLHistogramImageToImageMetric< 
-                                    FixedImageType, 
-                                    MovingImageType >    MetricType;
+  typedef Superclass::MetricType              MetricType;
 
   /** Interpolation Type. */
-  typedef LinearInterpolateImageFunction< 
-                                    MovingImageType,
-                                    double          >    InterpolatorType;
+  typedef Superclass::InterpolatorType        InterpolatorType;
 
   /** Fixed Image Pyramid Type. */
-  typedef RecursiveMultiResolutionPyramidImageFilter<
-                                    FixedImageType,
-                                    FixedImageType  >    FixedImagePyramidType;
+  typedef Superclass::FixedImagePyramidType   FixedImagePyramidType;
 
   /** Moving Image Pyramid Type. */
-  typedef RecursiveMultiResolutionPyramidImageFilter<
-                                    MovingImageType,
-                                    MovingImageType  >   MovingImagePyramidType;
+  typedef Superclass::MovingImagePyramidType  MovingImagePyramidType;
 
   /** Registration Method. */
-  typedef MultiResolutionImageRegistrationMethod< 
-                                    FixedImageType, 
-                                    MovingImageType >    RegistrationType;
+  typedef Superclass::RegistrationType        RegistrationType;
 
   /** Transform parameters type. */
-  typedef typename RegistrationType::ParametersType     ParametersType;
+  typedef Superclass::ParametersType          ParametersType;
 
-  /** DoubleArray type. */
-  typedef Array<double>  DoubleArray;
-
-  /** UnsignedIntArray type. */
-   typedef Array<unsigned int> UnsignedIntArray;
-
-  /** ShrinkFactorsArray type. */
-  typedef FixedArray<unsigned int,itkGetStaticConstMacro(ImageDimension)> ShrinkFactorsArray;
+  /** Affine transform type. */
+  typedef Superclass::AffineTransformType    AffineTransformType;
+  typedef Superclass::AffineTransformPointer AffineTransformPointer;
 
   // ----------------------------------------------------------------------
-  // Set the Parameters for the Registration
+  // Set the Parameters for the Metric
   // ----------------------------------------------------------------------
-
-  /** Set the fixed image. */
-  itkSetObjectMacro( FixedImage, FixedImageType );
-
-  /** Get the fixed image. */
-  itkGetObjectMacro( FixedImage, FixedImageType );
-
-  /** Set the moving image. */
-  itkSetObjectMacro( MovingImage, MovingImageType );
-
-  /** Get the moving image. */
-  itkGetObjectMacro( MovingImage, MovingImageType );
-
-  /** Set the number of resolution levels. */
-  itkSetClampMacro( NumberOfLevels, unsigned short, 1,
-    NumericTraits<unsigned short>::max() );
-
-  /** Set the translation parameter scales. */
-  itkSetClampMacro( TranslationScale, double, 0.0,
-    NumericTraits<double>::max() );
 
   /** Set the image parzen window widths. */
   itkSetClampMacro( MovingImageStandardDeviation, double, 0.0,
@@ -208,72 +162,12 @@ public:
   itkSetClampMacro( NumberOfSpatialSamples, unsigned short, 1,
     NumericTraits<unsigned short>::max() );
 
-  /** Set the number of iterations per level. */
-  itkSetMacro( NumberOfIterations, UnsignedIntArray );
-
-  /** Set the learning rate per level. */
-  itkSetMacro( LearningRates, DoubleArray );
-
-  /** Set the initial transform parameters. */
-  itkSetMacro( InitialParameters, ParametersType );
-
-  /** Set the fixed and moving image shrink factors. */
-  itkSetMacro( FixedImageShrinkFactors, ShrinkFactorsArray );
-  itkSetMacro( MovingImageShrinkFactors, ShrinkFactorsArray );
-
-  // Description:
-  // Initialize the Registration using a matrix
-  void InitializeRegistration(vtkMatrix4x4 *matrix);
-
-  // ----------------------------------------------------------------------
-  // Run the Registration
-  // ----------------------------------------------------------------------
-
-  /** Method to execute the registration. */
-  virtual void Execute();
-
-  /** Initialize registration at the start of new level. */
-  void StartNewLevel();
-
-  // ----------------------------------------------------------------------
-  // Get Parameters/Results
-  // ----------------------------------------------------------------------
-
-  /** Get number of parameters. */
-  unsigned long GetNumberOfParameters()
-    { return m_Transform->GetNumberOfParameters(); }
-
-  /** Get computed transform parameters. */
-  const ParametersType& GetTransformParameters()
-    { return m_Registration->GetLastTransformParameters(); }
-
-  const ParametersType& GetInitialParameters()
-    { return m_InitialParameters; }
-
-  // Description:
-  // Set the Matrix using the current results of the registration
-  void ResultsToMatrix(vtkMatrix4x4 *matrix)
-    { ParamToMatrix(this->GetTransformParameters(),matrix);}
-
-  // Description:
-  // Set the Matrix using the Parameters.
-  // Note that m_Transform is updated with the parameters.
-  // This is really only for testing purposes, do not use.
-  void ParamToMatrix(const ParametersType &Param,
-                     vtkMatrix4x4 *matrix);
-  // Description:
-  // Test the ParamToMatrix function
-  // with the InitializeRegistration function
-  void Test();
-
-  // Description:
-  // How good was the alignment
-  double GetMetricValue()
-    {return m_Metric->GetValue(this->GetTransformParameters());}
+ /** Send the Metric Param to the Metric, and send the optimizer to minimize */
+  void SetMetricParam();
 
   // Information to form K-L histogram
-  typedef MetricType::HistogramType            HistogramType;
-  typedef MetricType::HistogramSizeType        SizeType;
+  typename MetricType::HistogramType            AHistogramType;
+  typename MetricType::HistogramSizeType        ASizeType;
 
   // Description:
   // Either set all the images and transform and interpolator, or
@@ -286,13 +180,13 @@ public:
     { m_Metric->SetTrainingTransform(TrainingTransform); }
   void SetTrainingInterpolator( const InterpolatorType::Pointer TrainingInterpolator )
     { m_Metric->SetTrainingInterpolator(TrainingInterpolator); }
-  void SetHistogram( const HistogramType TrainingHistogram )
+  void SetHistogram( const AHistogramType TrainingHistogram )
     { m_Metric->SetTrainingHistogram(TrainingHistogram); }
 
     // Description:
     // Set the size of the histogram for the metric
     // Default is 32 by 32
-  void SetHistogramSize( const SizeType histSize )
+  void SetHistogramSize( const ASizeType histSize )
     { m_Metric->SetHistogramSize(histSize); }
 
     // Description:
@@ -313,34 +207,9 @@ private:
   KLRegistration( const Self& ); //purposely not implemented
   void operator=( const Self& ); //purposely not implemented
 
-  typename FixedImageType::Pointer            m_FixedImage;
-  typename MovingImageType::Pointer           m_MovingImage;
-  typename TransformType::Pointer             m_Transform;
-  typename InterpolatorType::Pointer          m_Interpolator;
-
-  typename OptimizerType::Pointer             m_Optimizer;
-  typename MetricType::Pointer                m_Metric;
-  typename FixedImagePyramidType::Pointer     m_FixedImagePyramid;
-  typename MovingImagePyramidType::Pointer    m_MovingImagePyramid;
-  typename RegistrationType::Pointer          m_Registration;
-
-  unsigned short                       m_NumberOfLevels;
-  double                               m_TranslationScale;
-  unsigned short                       m_NumberOfSpatialSamples;
-
   double                               m_MovingImageStandardDeviation;
   double                               m_FixedImageStandardDeviation;
-                   
-  UnsignedIntArray                     m_NumberOfIterations;
-  DoubleArray                          m_LearningRates;
-                   
-  ShrinkFactorsArray                   m_MovingImageShrinkFactors;
-  ShrinkFactorsArray                   m_FixedImageShrinkFactors;
-
-  ParametersType                       m_InitialParameters;
-
-  unsigned long                        m_ObserverTag;
-  unsigned long                        m_OptimizeObserverTag;
+  unsigned short                       m_NumberOfSpatialSamples;
 };
 
 } // namespace itk
