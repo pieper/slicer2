@@ -101,7 +101,7 @@ proc FiducialsInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.32 $} {$Date: 2003/03/19 19:16:31 $}]
+        {$Revision: 1.33 $} {$Date: 2003/05/01 17:53:50 $}]
     
     # Initialize module-level variables
     
@@ -1157,7 +1157,7 @@ proc FiducialsCreateFiducialsList {type name {textSize ""} {symbolSize ""}} {
 # 
 # .END
 #-------------------------------------------------------------------------------
-proc FiducialsCreatePointFromWorldXYZ {type x y z  {listName ""} {name ""} } {
+proc FiducialsCreatePointFromWorldXYZ {type x y z  {listName ""} {name ""} {selected 1} } {
 
     global Fiducials Point Module Select
 
@@ -1265,7 +1265,9 @@ proc FiducialsCreatePointFromWorldXYZ {type x y z  {listName ""} {name ""} } {
        }
    }
 
-   
+    # select fiducial after creation
+    FiducialsSelectionUpdate $fid $pid $selected
+
    # callback for modules who wish to know a point was created
    foreach m $Module(idList) {
        if {[info exists Module($m,fiducialsPointCreatedCallback)] == 1} {
