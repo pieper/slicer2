@@ -70,5 +70,8 @@ IF (VTKSLICER_CAN_BUILD)
 
 ENDIF (VTKSLICER_CAN_BUILD)
 
+INCLUDE (${CMAKE_ROOT}/Modules/TestBigEndian.cmake)
+TEST_BIG_ENDIAN(CMAKE_WORDS_BIGENDIAN)
+
 # Include the standard Dart testing module
 INCLUDE (${CMAKE_ROOT}/Modules/Dart.cmake)
