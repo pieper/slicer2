@@ -63,7 +63,7 @@ viewMode='Normal' viewBgColor='Blue'"
 
         set m MainView
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.26 $} {$Date: 2001/02/19 17:53:25 $}]
+		{$Revision: 1.27 $} {$Date: 2001/04/04 03:11:28 $}]
 
 	set View(viewerHeightNormal) 656
 	set View(viewerWidth)  956 
@@ -222,14 +222,7 @@ proc MainViewBuildGUI {} {
 	frame $f.fRotate  -bg $Gui(activeWorkspace)
 	frame $f.fFov  -bg $Gui(activeWorkspace)
 
-# Comment out spin button to avoid bug when hit presets during spin	
-	# MainViewSpin button
-#    eval {checkbutton $f.cMainViewSpin \
-#        -text "Spin" -variable View(spin) -width 6 \
-#        -indicatoron 0 -command "MainViewSpin"} $Gui(WCA)
-
 	pack $f.fRotate $f.fFov -side top -pady 2 
-#	pack $f.fRotate $f.cMainViewSpin -side top -pady 3 
 	
 	#-------------------------------------------
 	# View->Nav->Top->Move->Rotate Frame
@@ -278,7 +271,7 @@ proc MainViewBuildGUI {} {
 	set f $Gui(fNav).fBot.fPreset
 	set View(fPreset) $f
 
-	eval {label $f.lPreset -text "View Presets:"} $Gui(WLA)
+	eval {label $f.lPreset -text "Views:"} $Gui(WLA)
 	pack $f.lPreset -side left -padx 5 -pady 0
 
 	# Preset Button
@@ -286,10 +279,17 @@ proc MainViewBuildGUI {} {
 	    eval {button $f.c$p -text $p -width 2} $Gui(WBA)
 	    bind $f.c$p <ButtonPress>   "MainOptionsPreset $p Press"
 	    bind $f.c$p <ButtonRelease> "MainOptionsPreset $p Release"
-	    TooltipAdd $f.c$p "Click to recall, hold down to save."
+	    TooltipAdd $f.c$p "Saved view number $p: click to recall, hold down to save."
 	    pack $f.c$p -side left -padx 2 
 	}
-	
+
+	# MainViewSpin button
+	eval {checkbutton $f.cMainViewSpin \
+		-text "Spin" -variable View(spin) -width 5 \
+		-indicatoron 0 -command "MainViewSpin"} $Gui(WCA)
+	pack $f.cMainViewSpin -side left -padx 2 
+	TooltipAdd $f.cMainViewSpin "Spin view: continuously rotate the 3D scene."
+
 	#-------------------------------------------
 	# View->Nav->Bot->Center Frame
 	#-------------------------------------------
