@@ -72,7 +72,7 @@ proc MainVolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.64 $} {$Date: 2003/08/11 19:23:31 $}]
+    {$Revision: 1.65 $} {$Date: 2003/09/04 15:14:46 $}]
 
     set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -983,7 +983,7 @@ proc MainVolumesSetParam {Param {value ""}} {
             set Volume(upperThreshold) [Volume($v,node) GetUpperThreshold]
         }
 
-        if {$Param == "ApplyoThreshold"} {
+        if {$Param == "ApplyThreshold"} {
             Volume($v,vol) Update
         }
 
