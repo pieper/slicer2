@@ -23,15 +23,16 @@ roiPoints InsertNextPoint 200 230 0
 roiPoints InsertNextPoint 220 50 0
 roiPoints InsertNextPoint 4 10 0
 
-
 #vtkImageLabelMerge flroi
 vtkImageFillROI flroi
 #flroi SetInput [reader GetOutput]
 flroi SetInput [clip GetOutput]
 flroi SetValue 1000
-flroi SetRadius 10 
+flroi SetRadius 10
 
-flroi SetShapeString Polygon
+#flroi SetShapeString Polygon
+flroi SetShapeString Lines
+#flroi SetShapeString Points
 flroi SetPoints roiPoints
 
 vtkImageViewer viewer
