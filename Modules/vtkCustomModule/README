@@ -6,6 +6,8 @@ Michael Halle -- 2002/05/17
 your module.  Name it while you're doing so.
     
     rsync -av vtkCustomModule/  /home/halazar/vtk/vtkTestModule
+      - or -
+    cp -r vtkCustomModule /home/halazar/vtk/vtkTestModule
 
 2. Change directories to your new module directory.
 
@@ -23,7 +25,7 @@ your module.  Name it while you're doing so.
     cd cxx
 
 5. Put your source and header files here.  All of your header files
-   should include the file of the form <vtk[ModuleName]Configure.h"> .
+   should include the file of the form "vtk[ModuleName]Configure.h" .
    They should also declare your classes exported appropriately for
    Windows platforms, with a line like the following:
 
@@ -62,4 +64,3 @@ your module.  Name it while you're doing so.
      make
 
 12.If all went well, your libraries will now be in the bin subdirectory.
-
