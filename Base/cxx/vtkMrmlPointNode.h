@@ -75,7 +75,14 @@ public:
   // Get/Set for endoscopic point
   vtkSetVector3Macro(FXYZ,float);
   vtkGetVectorMacro(FXYZ,float,3);
+
+  // Description:
+  // Get/Set for orientation 
+  vtkSetVector4Macro(OrientationWXYZ,float);
+  vtkGetVectorMacro(OrientationWXYZ,float,4);
   
+  void SetOrientationWXYZFromMatrix4x4(vtkMatrix4x4 *mat);
+
   vtkSetMacro(Index,int);
   vtkGetMacro(Index,int);
 
@@ -88,6 +95,7 @@ protected:
   int Index;
   float XYZ[3];
   float FXYZ[3];
+  float OrientationWXYZ[4];
 };
 
 #endif
