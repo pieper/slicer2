@@ -347,7 +347,7 @@ proc MainInit {} {
 
         # Set version info
 	lappend Module(versions) [ParseCVSInfo Main \
-		{$Revision: 1.61 $} {$Date: 2001/07/24 00:57:42 $}]
+		{$Revision: 1.62 $} {$Date: 2001/07/27 21:20:00 $}]
 
 	# Call each "Init" routine that's not part of a module
 	#-------------------------------------------
