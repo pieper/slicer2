@@ -54,7 +54,7 @@ SOURCE_FILES (Base_SRCS
 )
 
 IF(UNIX)
-SOURCE_FILES (Base_SRCS vtkXDisplayWindow.cxx)
+#SOURCE_FILES (Base_SRCS vtkXDisplayWindow.cxx)
 ENDIF(UNIX)
 
 # --------------------------------------------------------------------------
