@@ -58,7 +58,7 @@ proc MainVolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.52 $} {$Date: 2002/10/24 22:33:19 $}]
+    {$Revision: 1.53 $} {$Date: 2003/03/06 14:36:09 $}]
 
     set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -385,6 +385,10 @@ proc MainVolumesWrite {v prefix} {
     Volume($v,node) SetFilePrefix $name
     # Tell volume node where it should be written
     Volume($v,node) SetFullPrefix $fileFull
+
+    if { [Volume($v,node) GetFilePattern] == "" } {
+        Volume($v,node) SetFilePattern "%s.%d"
+    }
 
     # Determine if littleEndian
     if {$tcl_platform(byteOrder) == "littleEndian"} {
