@@ -152,9 +152,12 @@ itcl::body isvolume::constructor {args} {
     set _orientmenu $cs.orientmenu
     iwidgets::optionmenu $_orientmenu -labeltext "Or:" -labelpos w \
         -command "$this configure -orientation \[$_orientmenu get\]"
-    $cs.orientmenu insert end "Axial"
-    $cs.orientmenu insert end "Sagittal"
-    $cs.orientmenu insert end "Coronal"
+    $cs.orientmenu insert end "Axial(IS)"
+    $cs.orientmenu insert end "Axial(SI)"
+    $cs.orientmenu insert end "Sagittal(RL)"
+    $cs.orientmenu insert end "Sagittal(LR)"
+    $cs.orientmenu insert end "Coronal(PA)"
+    $cs.orientmenu insert end "Coronal(AP)"
 
     set _resmenu $cs.resmenu
     iwidgets::optionmenu $_resmenu -labeltext "Res:" -labelpos w
@@ -328,6 +331,9 @@ itcl::configbody isvolume::volume {
     $_mapper SetColorLevel [Volume($id,node) GetLevel]
 
     $this transform_update
+    if {$volname != "None" && $volname != ""} {
+        #$_volmenu select $volname
+    }
     $this expose
 }
 
@@ -375,6 +381,54 @@ itcl::configbody isvolume::orientation {
 
     $this transform_update
     $this configure -resolution $itk_option(-resolution)
+
+    switch $itk_option(-orientation) {
+        "IS" -
+        "axial" -
+        "Axial" -
+        "axial(IS)" -
+        "Axial(IS)" {
+            set orient "Axial(IS)"
+        }
+        "SI" -
+        "axial(SI)" -
+        "Axial(SI)" {
+            set orient "Axial(SI)" 
+        }
+        "RL" -
+        "sagittal" -
+        "Sagittal" - 
+        "sagittal(RL)" -
+        "Sagittal(RL)" {
+            set orient "Sagittal(RL)" 
+
+        }
+        "LR" -
+        "sagittal(LR)" -
+        "Sagittal(LR)" {
+            set orient "Sagittal(LR)"
+        }
+        "PA" -
+        "coronal" -
+        "Coronal" -
+        "coronal(PA)" -
+        "Coronal(PA)" {
+            set orient "Coronal(PA)" 
+        }
+        "AP" - 
+        "coronal(AP)" -
+        "Coronal(AP)" {
+            set orient "Coronal(AP)" 
+        }
+        "AxiSlice" -
+        "SagSlice" -
+        "CorSlice" -
+        default {
+            tk_messageBox -message "Unknown orientation: $itk_option(-orientation)"
+        }
+    }
+
+    $_orientmenu select $orient
 }
 
 # ------------------------------------------------------------------
@@ -418,6 +472,8 @@ itcl::configbody isvolume::resolution {
     $_tkrw configure -width $res -height $res
 
     $this transform_update
+
+    $_resmenu select $itk_option(-resolution)
 }
 
 # ------------------------------------------------------------------
@@ -537,14 +593,19 @@ itcl::body isvolume::transform_update {} {
     # desired orenation
     catch "transposematrix Delete"
     vtkMatrix4x4 transposematrix
+
     switch $itk_option(-orientation) {
         "IS" -
         "axial" -
-        "Axial" {
+        "Axial" -
+        "Axial(IS)" -
+        "axial(IS)" {
             # nothing, this is the default
             transposematrix Identity
         }
-        "SI" {
+        "SI" -
+        "Axial(SI)" -
+        "axial(SI)" {
             transposematrix DeepCopy \
                 1  0  0  0 \
                 0  1  0  0 \
@@ -553,13 +614,17 @@ itcl::body isvolume::transform_update {} {
         }
         "RL" -
         "sagittal" -
-        "Sagittal" {
+        "Sagittal" - 
+        "sagittal(RL)" -
+        "Sagittal(RL)" {
             transposematrix DeepCopy \
                 0  0  1  0 \
                -1  0  0  0 \
                 0  1  0  0 \
                 0  0  0  1    
         }
+        "sagittal(LR)" -
+        "Sagittal(LR)" -
         "LR" {
             transposematrix DeepCopy \
                 0  0 -1  0 \
@@ -569,13 +634,17 @@ itcl::body isvolume::transform_update {} {
         }
         "PA" -
         "coronal" -
-        "Coronal" {
+        "Coronal" -
+        "coronal(PA)" -
+        "Coronal(PA)" {
             transposematrix DeepCopy \
                 1  0  0  0 \
                 0  0  1  0 \
                 0  1  0  0 \
                 0  0  0  1    
         }
+        "coronal(AP)" -
+        "Coronal(AP)" -
         "AP" {
             transposematrix DeepCopy \
                 1  0  0  0 \
@@ -589,6 +658,7 @@ itcl::body isvolume::transform_update {} {
             # nothing yet
         }
     }
+
     #
     # need to invert the X axis to handle slicer transform
     #
