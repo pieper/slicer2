@@ -55,6 +55,7 @@ vtkMrmlDataVolume::vtkMrmlDataVolume()
   this->Resize = vtkImageResize::New();
   this->HistPlot = vtkImagePlot::New();
   this->ImageData = NULL;
+  this->ReadWrite = NULL;
 
   // W/L Slider range 
   this->RangeAuto = 1;
@@ -380,11 +381,11 @@ vtkImageSource *vtkMrmlDataVolume::ReaderHelper()
 
 
   // Create objects that don't already exist
-  this->CheckMrmlNode();
+  //this->CheckMrmlNode();
   vtkMrmlVolumeNode *node = (vtkMrmlVolumeNode*) this->MrmlNode;
 
   // Start progress reporting
-  this->InvokeEvent(vtkCommand::StartEvent,NULL);
+  //this->InvokeEvent(vtkCommand::StartEvent,NULL);
 
   range = node->GetImageRange();
   dim = node->GetDimensions();
@@ -432,7 +433,28 @@ vtkImageSource *vtkMrmlDataVolume::ReaderHelper()
 int vtkMrmlDataVolume::Read()
 {
 
-  vtkImageSource *reader = ReaderHelper();
+  // Start progress reporting
+  this->InvokeEvent(vtkCommand::StartEvent,NULL);
+
+  // Create objects that don't already exist
+  this->CheckMrmlNode();
+  vtkMrmlVolumeNode *node = (vtkMrmlVolumeNode*) this->MrmlNode;
+
+  // pointer to output of internally used read method
+  vtkImageSource *reader;
+
+  if (this->ReadWrite == NULL) 
+    {
+      // use old method
+      reader = ReaderHelper();
+    }
+  else
+    {
+      // use new object for read/write whichever file type it may be
+      // NOTE: should fix progress reporting
+      reader = NULL;
+      this->ReadWrite->Read(node,&reader);
+    }
 
   // Detach image data from reader
   this->SetImageData(reader->GetOutput());
@@ -445,7 +467,7 @@ int vtkMrmlDataVolume::Read()
 
   // Update W/L
   this->Update();
-
+  cout << '6' << endl;
   // Right now how no way to deal with failure
   return 1;
 }
@@ -462,6 +484,8 @@ int vtkMrmlDataVolume::Write()
   // Start progress reporting
   this->InvokeEvent(vtkCommand::StartEvent,NULL);
 
+  if (this->ReadWrite == NULL) 
+    {
   // Make the z extent equal the desired range of image numbers
   // so that the writer will start on the right image number (.001 not .000)
   int tmpExt[6], saveExt[6], range[2];
@@ -491,6 +515,12 @@ int vtkMrmlDataVolume::Write()
 
   // Reset the original extent of the data
   this->ImageData->SetExtent(saveExt);
+    }  // end if ReadWrite is NULL
+  else 
+    {
+      // use the new method of writing volumes.
+      this->ReadWrite->Write(node,this->ImageData);
+    }
 
   // End progress reporting
   this->InvokeEvent(vtkCommand::EndEvent,NULL);

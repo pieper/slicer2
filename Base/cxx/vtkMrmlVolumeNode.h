@@ -40,6 +40,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkMatrix4x4.h"
 #include "vtkTransform.h"
 #include "vtkSlicer.h"
+#include "vtkMrmlVolumeReadWriteNode.h"
 
 class VTK_SLICER_BASE_EXPORT vtkMrmlVolumeNode : public vtkMrmlNode
 {
@@ -60,6 +61,20 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlVolumeNode : public vtkMrmlNode
   // Write the node's attributes to a MRML file in XML format
   void Write(ofstream& of, int indent);
 
+
+  //--------------------------------------------------------------------------
+  // How to Read/Write volume data contained by this node.
+  // This sub-node should contain information specific to each
+  // type of volume that needs to be read in.  This can be used
+  // to clean up the special cases in this file which handle
+  // volumes of various types, such as dicom, header, etc.  In
+  // future these things can be moved to the sub-node specific for that
+  // type of volume.  The sub-nodes here that describe specific volume
+  // types each correspond to an implementation of the reader/writer,
+  // which can be found in a vtkMrmlDataVolumeReadWrite subclass.
+  //--------------------------------------------------------------------------
+  vtkSetObjectMacro(ReadWriteNode, vtkMrmlVolumeReadWriteNode);
+  vtkGetObjectMacro(ReadWriteNode, vtkMrmlVolumeReadWriteNode);
 
   //--------------------------------------------------------------------------
   // Non-Header Information
@@ -373,6 +388,9 @@ protected:
   int DICOMMultiFrameOffsets;
   int *DICOMMultiFrameOffsetList;
   // End
+  
+  // odonnell, 07/2002
+  vtkMrmlVolumeReadWriteNode *ReadWriteNode;
 };
 
 #endif

@@ -111,6 +111,11 @@ vtkMrmlVolumeNode::vtkMrmlVolumeNode()
   //AddDICOMFileName("second.dcm");
   
   // Ends
+
+  // odonnell, 07/2002
+  // this->ReadWriteNode = vtkMrmlVolumeReadWriteNode::New();
+  // this should be set by tcl code when user indicates volume type
+  this->ReadWriteNode = NULL;
 }
 
 //----------------------------------------------------------------------------
@@ -377,8 +382,18 @@ void vtkMrmlVolumeNode::Write(ofstream& of, int nIndent)
     of << " frequencyPhaseSwap='true'";
   }  
 
+
+  of << ">";
+
+  // odonnell 07/2002 
+  // Middle section for sub-nodes
+  if (this->ReadWriteNode != NULL) 
+    {
+      this->ReadWriteNode->Write(of,nIndent);
+    }
+
   //End
-  of << "></Volume>\n";;
+  of << "</Volume>\n";
 }
 
 //----------------------------------------------------------------------------

@@ -46,6 +46,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkImagePlot.h"
 #include "vtkImageData.h"
 #include "vtkSlicer.h"
+#include "vtkMrmlDataVolumeReadWrite.h"
 
 class vtkImageDICOMReader;
 class vtkImageReader;
@@ -75,6 +76,19 @@ public:
   // Read/Write image 
   int Read();
   int Write();
+
+  //--------------------------------------------------------------------------
+  // Read/Write volume data contained by this object.
+  // This sub-object is specific to each
+  // type of volume that needs to be read in.  This can be used
+  // to clean up the special cases which handle
+  // volumes of various types, such as dicom, header, etc.  In
+  // future these things can be moved here.  Each read/write 
+  // sub-object corresponds to a vtkMrmlVolumeReadWriteNode subclass.
+  // These subclasses write any needed info in the MRML file.
+  //--------------------------------------------------------------------------
+  vtkSetObjectMacro(ReadWrite,vtkMrmlDataVolumeReadWrite);
+  vtkGetObjectMacro(ReadWrite,vtkMrmlDataVolumeReadWrite);
 
   // Description:
   // Set Histogram attributes
@@ -140,6 +154,9 @@ void NonDicomReaderSetup(vtkImageReader *dcmreader,
 // Return the vtkImageSource already updated
 // used by this->Read() and this->ReRead()
  vtkImageSource *ReaderHelper();
+
+ // hook for developers to add any kind of volume reading
+ vtkMrmlDataVolumeReadWrite *ReadWrite;
 
 
 };

@@ -43,6 +43,11 @@ SOURCE_FILES (Base_SRCS
 	vtkImageFastGaussian.cxx vtkImageMIReg.cxx
 	# vtkDistractorSource.cxx
 	# vtkImageEuclideanDistanceTransformation.cxx 
+	# more general volume reading API
+	vtkMrmlDataVolumeReadWrite.cxx vtkMrmlVolumeReadWriteNode.cxx
+	# volume reading for structured points
+	vtkMrmlDataVolumeReadWriteStructuredPoints.cxx 
+	vtkMrmlVolumeReadWriteStructuredPointsNode.cxx
 )
 
 IF(UNIX)
