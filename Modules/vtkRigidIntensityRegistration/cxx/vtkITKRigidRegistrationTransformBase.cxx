@@ -292,6 +292,42 @@ void vtkITKRigidRegistrationTransformBase::Initialize(vtkMatrix4x4 *mat)
 
 //------------------------------------------------------------------------
 
+int vtkITKRigidRegistrationTransformBase::TestMatrixInitialize(vtkMatrix4x4 *aMat)
+{
+  // Initialize
+  typedef itk::Image<float,3>                       OutputImageType;
+  typedef itk::MIRegistration<OutputImageType,OutputImageType> RegistratorType;
+  RegistratorType::Pointer MIRegistrator = RegistratorType::New();
+
+  MIRegistrator->InitializeRegistration(aMat);
+
+  // A TEST!!!
+  {
+    vtkMatrix4x4 *matt = vtkMatrix4x4::New();
+    MIRegistrator->ParamToMatrix(MIRegistrator->GetInitialParameters(),matt);
+    double diff = 0.0;
+    for(int ii =0;ii<4;ii++)
+      for(int jj=0;jj<4;jj++)
+        diff += ((aMat->GetElement(ii,jj) - matt->GetElement(ii,jj))*
+                 (aMat->GetElement(ii,jj) - matt->GetElement(ii,jj)));
+    if (diff > 1e-6)
+      {
+        MIRegistrator->Print(std::cout);
+        std::cout << "Was unable to set initial matricies accurately" << std::endl;
+        std::cout << "Error was : " << diff << std::endl;
+        std::cout << "Printing initially set matrix" << endl;
+        aMat->Print(std::cout);
+        std::cout << "Printing actually set matrix" << endl;
+        matt->Print(std::cout);
+        matt->Delete();
+        return -1;
+      }
+  }
+  return MIRegistrator->TestParamToMatrix();
+}
+
+//------------------------------------------------------------------------
+
 vtkMatrix4x4 *vtkITKRigidRegistrationTransformBase::GetOutputMatrix()
 {
   if(this->FlipTargetZAxis)
@@ -393,3 +429,4 @@ void vtkITKRigidRegistrationTransformBase::Inverse()
   this->SourceImage = tmp2;
   this->Modified();
 }
+
