@@ -437,6 +437,11 @@ if { ![file exists $vtkTestFile] } {
     file mkdir $SLICER_LIB/VTK-build
     cd $SLICER_LIB/VTK-build
 
+    set USE_VTK_ANSI_STDLIB ""
+    if {$MSVC6} {
+    set USE_VTK_ANSI_STDLIB "-DVTK_USE_ANSI_STDLIB:BOOL=ON"
+    }
+    
     runcmd $CMAKE \
         -G$GENERATOR \
         -DCMAKE_BUILD_TYPE:STRING=$::VTK_BUILD_TYPE \
@@ -454,6 +459,7 @@ if { ![file exists $vtkTestFile] } {
         -DTCL_LIBRARY:FILEPATH=$vtkTclLib \
         -DTK_LIBRARY:FILEPATH=$vtkTkLib \
         -DTCL_TCLSH:FILEPATH=$vtkTclsh \
+         $USE_VTK_ANSI_STDLIB \
         ../VTK
 
 
@@ -465,7 +471,11 @@ if { ![file exists $vtkTestFile] } {
     }
     
     if { $isWindows } {
-        runcmd $::MAKE VTK.SLN /build  $::VTK_BUILD_TYPE
+       if { $MSVC6 } {
+       runcmd $::MAKE VTK.dsw /MAKE "ALL_BUILD - $::VTK_BUILD_TYPE"
+       } else {
+       runcmd $::MAKE VTK.SLN /build  $::VTK_BUILD_TYPE
+        }
     } else {
         eval runcmd $::MAKE
     }
@@ -497,8 +507,12 @@ if { ![file exists $itkTestFile] } {
         ../Insight
 
     if {$isWindows} {
+        if { $MSVC6 } {
+        runcmd $::MAKE ITK.dsw /MAKE "ALL_BUILD - $::VTK_BUILD_TYPE"
+        } else {
         runcmd $::MAKE ITK.SLN /build  $::VTK_BUILD_TYPE
-    } else {
+        }
+     } else {
         eval runcmd $::MAKE 
     }
 }
