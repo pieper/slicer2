@@ -207,7 +207,7 @@ proc DocumentIndex {docdir} {
 		exit
 	}
 
-	HtmlHead $fid "TCL Source Index" "../index.html" "../style.css"
+	HtmlHead $fid "TCL Source Index" "../style.css" "../index.html"
 
 	# List files
 	foreach dir [lsort $Index(dirList)] {
