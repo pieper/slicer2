@@ -95,6 +95,7 @@ regsub -all {\\} $env(VTK_SRC_DIR) / vtk_src_dir
 set auto_path "$slicer_home/Base/tcl $slicer_home/Base/Wrapping/Tcl/vtkSlicerBase $vtk_src_dir/Wrapping/Tcl $auto_path"
 
 package require vtkSlicerBase
+catch "package require vtkFastMarching"
 
 # turn of warnings about old function use
 if { $tcl_platform(platform) == "windows" } {
