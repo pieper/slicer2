@@ -53,12 +53,16 @@ if { [itcl::find class ismodel] == "" } {
 
       # polydata loaders
       method sphere {} {}
+      method cylinder { {center "0 0 0"} {radius 0.5} } {}
+      method plane { {cx 0} {cy 0} {size 1} {aspect ""} } {}
+      method subplane { {cx 0.5} {cy 0.5} {w 0.5} {h 0.5} } {}
       method loadvtk { vtkfile } {}
       method loadobj { objfile } {}
 
       # texture loaders
       method loadbmp { bmpfile } {}
       method loadppm { ppmfile } {}
+      method loadphoto { filename } {}
 
       # polydata saver
       method savevtk { vtkfile } {}
@@ -94,6 +98,7 @@ itcl::body ismodel::constructor {args} {
     $_mapper SetInput $_polydata
     $_actor SetMapper $_mapper
     $_actor SetTexture $_texture
+    $_texture SetInterpolate 1
 
 }
 
@@ -129,6 +134,21 @@ itcl::configbody ismodel::color {
 # ------------------------------------------------------------------
 
 
+# fill the polydata with a cylinder
+itcl::body ismodel::cylinder { {center "0 0 0"} {radius 0.5} } {
+
+    set c ::cyl_$_name
+    catch "$c Delete"
+
+    vtkCylinderSource $c
+    $c SetRadius $radius
+    eval $c SetCenter $center
+    $c SetOutput $_polydata
+    $c Update
+    $c SetOutput ""
+    $c Delete
+} 
+
 # fill the polydata with a sphere
 itcl::body ismodel::sphere { } {
 
@@ -140,6 +160,58 @@ itcl::body ismodel::sphere { } {
     $s Update
     $s SetOutput ""
     $s Delete
+} 
+
+# fill the polydata with a plane - use texture dimensions if loaded
+# - offset position to cx,cy
+# - make the plane width be of size 
+#
+itcl::body ismodel::plane { {cx 0} {cy 0} {size 1} {aspect ""} } {
+
+    set p ::plane_$_name
+    catch "$p Delete"
+
+    vtkPlaneSource $p
+    set id [$_texture GetInput]
+    if { $id != "" } {
+        $id Update
+        if { $aspect == "" } {
+            foreach "xx yy zz" [$id GetDimensions] {}
+            set aspect [expr (1.0 * $xx) / $yy]
+        }
+        set halfwidth [expr 0.5 * $size]
+        set halfheight [expr $halfwidth / $aspect]
+        $p SetOrigin [expr $cx + $halfwidth] [expr $cy - $halfheight] 0
+        $p SetPoint1 [expr $cx - $halfwidth] [expr $cy - $halfheight] 0
+        $p SetPoint2 [expr $cx + $halfwidth] [expr $cy + $halfheight] 0
+    }
+
+    $p SetOutput $_polydata
+    $p Update
+    $p SetOutput ""
+    $p Delete
+    return $aspect
+} 
+
+# 
+# set the texture coordinates to look at just a subplane of the texture image
+# center at cx,cy from 0 to 1 and of normalized dimenions w x h
+#
+itcl::body ismodel::subplane { {cx 0.5} {cy 0.5} {w 0.5} {h 0.5} } {
+
+    if { [$_polydata GetNumberOfPoints] != 4 } {
+        error "bad polydata"
+        return
+    }
+    set pd [$_polydata GetPointData]
+    set tc [$pd GetTCoords]
+
+    $tc SetTuple2 0 [expr $cx - 0.5 * $w] [expr $cy - 0.5 * $h]
+    $tc SetTuple2 1 [expr $cx + 0.5 * $w] [expr $cy - 0.5 * $h]
+    $tc SetTuple2 2 [expr $cx - 0.5 * $w] [expr $cy + 0.5 * $h]
+    $tc SetTuple2 3 [expr $cx + 0.5 * $w] [expr $cy + 0.5 * $h]
+
+    $_polydata Modified
 } 
 
 itcl::body ismodel::loadvtk { vtkfile } {
@@ -158,7 +230,11 @@ itcl::body ismodel::loadvtk { vtkfile } {
 
 itcl::body ismodel::loadobj { objfile } {
 
-    # count verts and faces
+    #
+    # need to read in two passes
+    # - first to count verts and faces
+    # - second to fill in data structures
+    #
     set fpo [open $objfile "r"]
     set vcount 0
     set fcount 0
@@ -263,6 +339,44 @@ itcl::body ismodel::loadppm { ppmfile } {
     $ppmr Update
     $ppmr SetOutput ""
     $ppmr Delete
+} 
+
+itcl::body ismodel::loadphoto { filename } {
+    
+    set ireader ::ireader_$_name
+    catch "$ireader Delete"
+
+    catch "$ireader Delete"
+    switch [string toupper [file extension $filename]] {
+        ".PNM" - ".PPM" {
+            vtkPNMReader $ireader
+        }
+        ".JPG" - ".JPEG" {
+            vtkJPEGReader $ireader
+        }
+        ".BMP" {
+            vtkBMPReader $ireader
+        }
+        ".PS" - ".POSTSCRIPt" {
+            vtkPostScriptReader $ireader
+        }
+        ".TIF" - ".TIFF" {
+            vtkTIFFReader $ireader
+        }
+        ".PNG" {
+            vtkPNGReader $ireader
+        }
+        default {
+            error "unknown image format for $filename: options are PNM, JPG, BMP, PS, TIFF, PNG"
+        }
+    }
+
+    $ireader SetFileName $filename
+    
+    $_texture SetInput [$ireader GetOutput]
+    $ireader Update
+    $ireader SetOutput ""
+    $ireader Delete
 } 
 
 itcl::body ismodel::savevtk { vtkfile } {
