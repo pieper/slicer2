@@ -33,6 +33,7 @@ vtkTensorMathematics::vtkTensorMathematics()
 
   this->ScaleFactor = 1.0;
   this->ExtractEigenvalues = 1;
+  this->TensorRotationMatrix = NULL;
 }
 
 
@@ -40,7 +41,7 @@ vtkTensorMathematics::vtkTensorMathematics()
 //----------------------------------------------------------------------------
 // 
 void vtkTensorMathematics::ExecuteInformation(vtkImageData **inDatas, 
-					     vtkImageData *outData)
+                         vtkImageData *outData)
 {
   int ext[6];
   //int ext[6], *ext2, idx;
@@ -77,9 +78,9 @@ void vtkTensorMathematics::ExecuteInformation(vtkImageData **inDatas,
 // Handles the ops where eigensystems are not computed.
 template <class T>
 static void vtkTensorMathematicsExecute1(vtkTensorMathematics *self,
-					vtkImageData *in1Data, 
-					vtkImageData *outData, T *outPtr,
-					int outExt[6], int id)
+                    vtkImageData *in1Data, 
+                    vtkImageData *outData, T *outPtr,
+                    int outExt[6], int id)
 {
   // image variables
   int idxR, idxY, idxZ;
@@ -137,66 +138,66 @@ static void vtkTensorMathematicsExecute1(vtkTensorMathematics *self,
   in1Data->GetIncrements(inInc);
   in1Data->GetExtent(inFullUpdateExt); //We are only working over the update extent
   inPtId = ((outExt[0] - inFullUpdateExt[0]) * inInc[0]
-	 + (outExt[2] - inFullUpdateExt[2]) * inInc[1]
-	 + (outExt[4] - inFullUpdateExt[4]) * inInc[2]);
+     + (outExt[2] - inFullUpdateExt[2]) * inInc[1]
+     + (outExt[4] - inFullUpdateExt[4]) * inInc[2]);
 
 
 
   for (idxZ = 0; idxZ <= maxZ; idxZ++)
     {
       for (idxY = 0; idxY <= maxY; idxY++)
-	{
-	  if (!id) 
-	    {
-	      if (!(count%target))
-		{
-		  self->UpdateProgress(count/(50.0*target));
-		}
-	      count++;
-	    }
+    {
+      if (!id) 
+        {
+          if (!(count%target))
+        {
+          self->UpdateProgress(count/(50.0*target));
+        }
+          count++;
+        }
 
-	  for (idxR = 0; idxR < rowLength; idxR++)
-	    {
-	      // tensor at this voxel
-	      inTensors->GetTuple(inPtId,(float *)tensor);
+      for (idxR = 0; idxR < rowLength; idxR++)
+        {
+          // tensor at this voxel
+          inTensors->GetTuple(inPtId,(float *)tensor);
 
-	      // pixel operation
-	      switch (op)
-		{
-		case VTK_TENS_D11:
-		  *outPtr = (T)(scaleFactor*tensor[0][0]);
-		  break;
+          // pixel operation
+          switch (op)
+        {
+        case VTK_TENS_D11:
+          *outPtr = (T)(scaleFactor*tensor[0][0]);
+          break;
 
-		case VTK_TENS_D22:
-		  *outPtr = (T)(scaleFactor*tensor[1][1]);
-		  break;
+        case VTK_TENS_D22:
+          *outPtr = (T)(scaleFactor*tensor[1][1]);
+          break;
 
-		case VTK_TENS_D33:
-		  *outPtr = (T)(scaleFactor*tensor[2][2]);
-		  break;
+        case VTK_TENS_D33:
+          *outPtr = (T)(scaleFactor*tensor[2][2]);
+          break;
 
-		case VTK_TENS_TRACE:
-		  *outPtr = (T)(scaleFactor*(tensor[0][0]
-					     +tensor[1][1]
-					     +tensor[2][2]));
-		  break;
+        case VTK_TENS_TRACE:
+          *outPtr = (T)(scaleFactor*(tensor[0][0]
+                         +tensor[1][1]
+                         +tensor[2][2]));
+          break;
 
-		case VTK_TENS_DETERMINANT:
-		  *outPtr = 
-		    (T)(scaleFactor*(vtkMath::Determinant3x3(tensor)));
-		  break;
-		}
+        case VTK_TENS_DETERMINANT:
+          *outPtr = 
+            (T)(scaleFactor*(vtkMath::Determinant3x3(tensor)));
+          break;
+        }
 
-	      if (inPtId > numPts) 
-		{
-		  vtkGenericWarningMacro(<<"not enough input pts for output extent "<<numPts<<" "<<inPtId);
-		}
-	      outPtr++;
-	      inPtId++;
-	    }
-	  outPtr += outIncY;
+          if (inPtId > numPts) 
+        {
+          vtkGenericWarningMacro(<<"not enough input pts for output extent "<<numPts<<" "<<inPtId);
+        }
+          outPtr++;
+          inPtId++;
+        }
+      outPtr += outIncY;
           inPtId += inIncY;
-	}
+    }
       outPtr += outIncZ;
       inPtId += outIncZ;
     }
@@ -210,10 +211,10 @@ static void vtkTensorMathematicsExecute1(vtkTensorMathematics *self,
 // Handles the ops where eigensystems are computed.
 template <class T>
 static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
-					      vtkImageData *in1Data, 
-					      vtkImageData *outData, 
-					      T *outPtr,
-					      int outExt[6], int id)
+                          vtkImageData *in1Data, 
+                          vtkImageData *outData, 
+                          T *outPtr,
+                          int outExt[6], int id)
 {
   // image variables
   int idxR, idxY, idxZ;
@@ -276,8 +277,8 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
   in1Data->GetIncrements(inInc);
   in1Data->GetExtent(inFullUpdateExt); //We are only working over the update extent
   inPtId = ((outExt[0] - inFullUpdateExt[0]) * inInc[0]
-	 + (outExt[2] - inFullUpdateExt[2]) * inInc[1]
-	 + (outExt[4] - inFullUpdateExt[4]) * inInc[2]);
+     + (outExt[2] - inFullUpdateExt[2]) * inInc[1]
+     + (outExt[4] - inFullUpdateExt[4]) * inInc[2]);
 
   // decide whether to extract eigenfunctions or just use input cols
   extractEigenvalues = self->GetExtractEigenvalues();
@@ -294,166 +295,166 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
   for (idxZ = 0; idxZ <= maxZ; idxZ++)
     {
       for (idxY = 0; idxY <= maxY; idxY++)
-	{
-	  if (!id) 
-	    {
-	      if (!(count%target))
-		{
-		  self->UpdateProgress(count/(50.0*target));
-		}
-	      count++;
-	    }
+    {
+      if (!id) 
+        {
+          if (!(count%target))
+        {
+          self->UpdateProgress(count/(50.0*target));
+        }
+          count++;
+        }
 
-	  for (idxR = 0; idxR < rowLength; idxR++)
-	    {
-	      // tensor at this voxel
-	      inTensors->GetTuple(inPtId,(float *)tensor);
+      for (idxR = 0; idxR < rowLength; idxR++)
+        {
+          // tensor at this voxel
+          inTensors->GetTuple(inPtId,(float *)tensor);
 
-	      // get eigenvalues and eigenvectors appropriately
-	      if (extractEigenvalues) 
-		{
-		  for (j=0; j<3; j++)
-		    {
-		      for (i=0; i<3; i++)
-			{
-			  // transpose
-			  m[i][j] = tensor[j][i];
-			}
-		    }
-		  // compute eigensystem
-		  vtkMath::Jacobi(m, w, v);
-		}
-	      else
-		{
-		  // tensor columns are evectors scaled by evals
-		  for (i=0; i<3; i++)
-		    {
-		      v0[i] = tensor[i][0];
-		      v1[i] = tensor[i][1];
-		      v2[i] = tensor[i][2];
-		    }
-		  w[0] = vtkMath::Normalize(v0);
-		  w[1] = vtkMath::Normalize(v1);
-		  w[2] = vtkMath::Normalize(v2);
-		}
+          // get eigenvalues and eigenvectors appropriately
+          if (extractEigenvalues) 
+        {
+          for (j=0; j<3; j++)
+            {
+              for (i=0; i<3; i++)
+            {
+              // transpose
+              m[i][j] = tensor[j][i];
+            }
+            }
+          // compute eigensystem
+          vtkMath::Jacobi(m, w, v);
+        }
+          else
+        {
+          // tensor columns are evectors scaled by evals
+          for (i=0; i<3; i++)
+            {
+              v0[i] = tensor[i][0];
+              v1[i] = tensor[i][1];
+              v2[i] = tensor[i][2];
+            }
+          w[0] = vtkMath::Normalize(v0);
+          w[1] = vtkMath::Normalize(v1);
+          w[2] = vtkMath::Normalize(v2);
+        }
 
-	      // trace is sum of eigenvalues
-	      trace = w[0]+w[1]+w[2];
+          // trace is sum of eigenvalues
+          trace = w[0]+w[1]+w[2];
 
-	      // we are not interested in regions with eigenvals<= 0
-	      int ignore = 0;
-	      if (trace <= 0 || w[2] < 0 || w[3] < 0) 
-		ignore = 1;
-	      
-	      // regularization to compensate for small eigenvalues
-	      float r = 0.001;
-	      trace += r;
+          // we are not interested in regions with eigenvals<= 0
+          int ignore = 0;
+          if (trace <= 0 || w[2] < 0 || w[3] < 0) 
+        ignore = 1;
+          
+          // regularization to compensate for small eigenvalues
+          float r = 0.001;
+          trace += r;
 
-	      // Lauren note that RA and LA could be computed
-	      // without diagonalization.  This should be implementred
-	      // instead for speed.
+          // Lauren note that RA and LA could be computed
+          // without diagonalization.  This should be implementred
+          // instead for speed.
 
-	      // pixel operation
-	      switch (op)
-		{
-		case VTK_TENS_RELATIVE_ANISOTROPY:
-		  *outPtr = (T)((0.70710678)*
-				(sqrt((w[0]-w[1])*(w[0]-w[1]) + 
-				      (w[2]-w[1])*(w[2]-w[1]) +
-				      (w[2]-w[0])*(w[2]-w[0])))/trace);
-		  break;
-		case VTK_TENS_FRACTIONAL_ANISOTROPY:
-		  norm = sqrt(w[0]*w[0]+ w[1]*w[1] +  w[2]*w[2]);
-		  norm += r;
-		  *outPtr = (T)((0.70710678)*
-				(sqrt((w[0]-w[1])*(w[0]-w[1]) + 
-				      (w[2]-w[1])*(w[2]-w[1]) +
-				      (w[2]-w[0])*(w[2]-w[0])))/norm);
-		  break;
+          // pixel operation
+          switch (op)
+        {
+        case VTK_TENS_RELATIVE_ANISOTROPY:
+          *outPtr = (T)((0.70710678)*
+                (sqrt((w[0]-w[1])*(w[0]-w[1]) + 
+                      (w[2]-w[1])*(w[2]-w[1]) +
+                      (w[2]-w[0])*(w[2]-w[0])))/trace);
+          break;
+        case VTK_TENS_FRACTIONAL_ANISOTROPY:
+          norm = sqrt(w[0]*w[0]+ w[1]*w[1] +  w[2]*w[2]);
+          norm += r;
+          *outPtr = (T)((0.70710678)*
+                (sqrt((w[0]-w[1])*(w[0]-w[1]) + 
+                      (w[2]-w[1])*(w[2]-w[1]) +
+                      (w[2]-w[0])*(w[2]-w[0])))/norm);
+          break;
 
-		case VTK_TENS_LINEAR_MEASURE:
-		  *outPtr = (T) ((w[0] - w[1])/trace);
-		  break;
+        case VTK_TENS_LINEAR_MEASURE:
+          *outPtr = (T) ((w[0] - w[1])/trace);
+          break;
 
-		case VTK_TENS_PLANAR_MEASURE:
-		  *outPtr = (T) (2*(w[1] - w[2])/trace);
-		  break;
+        case VTK_TENS_PLANAR_MEASURE:
+          *outPtr = (T) (2*(w[1] - w[2])/trace);
+          break;
 
-		case VTK_TENS_SPHERICAL_MEASURE:
-		  *outPtr = (T) (3*w[2]/trace);
-		  break;
+        case VTK_TENS_SPHERICAL_MEASURE:
+          *outPtr = (T) (3*w[2]/trace);
+          break;
 
-		case VTK_TENS_MAX_EIGENVALUE:
-		  *outPtr = (T)w[0];
-		  break;
+        case VTK_TENS_MAX_EIGENVALUE:
+          *outPtr = (T)w[0];
+          break;
 
-		case VTK_TENS_MID_EIGENVALUE:
-		  *outPtr = (T)w[1];
-		  break;
+        case VTK_TENS_MID_EIGENVALUE:
+          *outPtr = (T)w[1];
+          break;
 
-		case VTK_TENS_MIN_EIGENVALUE:
-		  *outPtr = (T)w[2];
-		  break;
+        case VTK_TENS_MIN_EIGENVALUE:
+          *outPtr = (T)w[2];
+          break;
 
-		case VTK_TENS_COLOR_ORIENTATION:
-		  if (ignore) 
-		    {
-		      memset(outPtr,0,4*sizeof(unsigned char));
-		      outPtr++;
-		      outPtr++;
-		      outPtr++;
-		    } 
-		  else
-		    {
-		      // map 0..1 values into the range a char takes on
-		      const int scale = 255;
-		      
-		      // If the user has set the rotation matrix
-		      // then transform the eigensystem first
-		      if (useTransform)
-			{
-			  trans->TransformPoint(v0,v0);
-			}
-		      // Color R, G, B depending on max eigenvector
-		      *outPtr = (T)(scale*fabs(v[0][0]));
-		      outPtr++;
-		      *outPtr = (T)(scale*fabs(v[1][0]));
-		      outPtr++;
-		      *outPtr = (T)(scale*fabs(v[2][0]));
-		      outPtr++;
-		      
-		      // A: alpha (opacity) depends on anisotropy
-		      // We want opacity to be less in spherical case.
-		      // Also in general less when trace is small.
-		      // 1 = opaque (high anisotropy), 0 = transparent
-		      
-		      // this is 1 - spherical anisotropy measure:
-		      *outPtr = (T)(scale*(1 - 3*w[2]/trace));
-		    }
-		  
-		  break;
+        case VTK_TENS_COLOR_ORIENTATION:
+          if (ignore) 
+            {
+              memset(outPtr,0,4*sizeof(unsigned char));
+              outPtr++;
+              outPtr++;
+              outPtr++;
+            } 
+          else
+            {
+              // map 0..1 values into the range a char takes on
+              const int scale = 255;
+              
+              // If the user has set the rotation matrix
+              // then transform the eigensystem first
+              if (useTransform)
+            {
+              trans->TransformPoint(v0,v0);
+            }
+              // Color R, G, B depending on max eigenvector
+              *outPtr = (T)(scale*fabs(v[0][0]));
+              outPtr++;
+              *outPtr = (T)(scale*fabs(v[1][0]));
+              outPtr++;
+              *outPtr = (T)(scale*fabs(v[2][0]));
+              outPtr++;
+              
+              // A: alpha (opacity) depends on anisotropy
+              // We want opacity to be less in spherical case.
+              // Also in general less when trace is small.
+              // 1 = opaque (high anisotropy), 0 = transparent
+              
+              // this is 1 - spherical anisotropy measure:
+              *outPtr = (T)(scale*(1 - 3*w[2]/trace));
+            }
+          
+          break;
 
-		}
+        }
 
 
-	      // we are not interested in regions with trace <= 0
-	      if (ignore)
-		*outPtr = (T) 0;
+          // we are not interested in regions with trace <= 0
+          if (ignore)
+        *outPtr = (T) 0;
 
-	      // scale floats if the user requested this
-	      if (scaleFactor != 1 && op != VTK_TENS_COLOR_ORIENTATION)
-		*outPtr = (T) ((*outPtr) * scaleFactor);
+          // scale floats if the user requested this
+          if (scaleFactor != 1 && op != VTK_TENS_COLOR_ORIENTATION)
+        *outPtr = (T) ((*outPtr) * scaleFactor);
 
-// 	      if (inPtId > numPts) 
-// 		{
-// 		  vtkGenericWarningMacro(<<"not enough input pts for output extent "<<numPts<<" "<<inPtId);
-// 		}
-	      outPtr++;
-	      inPtId++;
-	    }
-	  outPtr += outIncY;
+//           if (inPtId > numPts) 
+//         {
+//           vtkGenericWarningMacro(<<"not enough input pts for output extent "<<numPts<<" "<<inPtId);
+//         }
+          outPtr++;
+          inPtId++;
+        }
+      outPtr += outIncY;
           inPtId += inIncY;
-	}
+    }
       outPtr += outIncZ;
       inPtId += outIncZ;
     }
@@ -467,13 +468,13 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
 // It just executes a switch statement to call the correct function for
 // the datas data types.
 void vtkTensorMathematics::ThreadedExecute(vtkImageData **inData, 
-					  vtkImageData *outData,
-					  int outExt[6], int id)
+                      vtkImageData *outData,
+                      int outExt[6], int id)
 {
   void *outPtr;
   
   vtkDebugMacro(<< "Execute: inData = " << inData 
-		<< ", outData = " << outData);
+        << ", outData = " << outData);
   
 
   if (inData[0] == NULL)
@@ -498,18 +499,18 @@ void vtkTensorMathematics::ThreadedExecute(vtkImageData **inData,
     case VTK_TENS_TRACE:
     case VTK_TENS_DETERMINANT:
       switch (outData->GetScalarType())
-	{
-	  // we set the output data scalar type depending on the op
-	  // already.  And we only access the input tensors
-	  // which are float.  So this switch statement on output
-	  // scalar type is sufficient.
-	  vtkTemplateMacro6(vtkTensorMathematicsExecute1,
-			    this,inData[0], outData, 
-			    (VTK_TT *)(outPtr), outExt, id);
-	default:
-	  vtkErrorMacro(<< "Execute: Unknown ScalarType");
-	  return;
-	}
+    {
+      // we set the output data scalar type depending on the op
+      // already.  And we only access the input tensors
+      // which are float.  So this switch statement on output
+      // scalar type is sufficient.
+      vtkTemplateMacro6(vtkTensorMathematicsExecute1,
+                this,inData[0], outData, 
+                (VTK_TT *)(outPtr), outExt, id);
+    default:
+      vtkErrorMacro(<< "Execute: Unknown ScalarType");
+      return;
+    }
       break;
 
       // Operations where eigenvalues are computed      
@@ -523,14 +524,14 @@ void vtkTensorMathematics::ThreadedExecute(vtkImageData **inData,
     case VTK_TENS_MIN_EIGENVALUE:
     case VTK_TENS_COLOR_ORIENTATION:
       switch (outData->GetScalarType())
-	{
-	  vtkTemplateMacro6(vtkTensorMathematicsExecute1Eigen,
-			    this,inData[0], outData, 
-			    (VTK_TT *)(outPtr), outExt, id);
-	default:
-	  vtkErrorMacro(<< "Execute: Unknown ScalarType");
-	  return;
-	}
+    {
+      vtkTemplateMacro6(vtkTensorMathematicsExecute1Eigen,
+                this,inData[0], outData, 
+                (VTK_TT *)(outPtr), outExt, id);
+    default:
+      vtkErrorMacro(<< "Execute: Unknown ScalarType");
+      return;
+    }
       break;
     }
 
