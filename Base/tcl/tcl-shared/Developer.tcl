@@ -641,7 +641,7 @@ proc DevGetFile { filename { MustPop 0} { DefaultExt "" } { DefaultDir "" } {Tit
 # Array ArrayName The name of the array whose variables will be changed.
 # str VarFileName The name of the file name variable within the array.
 # str Message     The message to display near the "Browse" button.
-# str Command     A command to run when a file name is entered AND the file entered exists. 
+# str Command     A command to run when a file name is entered AND the file entered exists (unless Action is Save, when the file need not exist yet). 
 # str DefaultExt The name of the extension for the type of file. Optional
 # str DefaultDir The name of the default directory to choose from. Optional
 # str Action     Whether this is \"Open\" or \"Save\".  Optional
@@ -662,8 +662,8 @@ proc DevGetFile { filename { MustPop 0} { DefaultExt "" } { DefaultDir "" } {Tit
 
         ## Need to make the string that will become the command.
 	# this pops up file browser when the button is pressed.
-       set SetVarString  "set $ArrayName\($VarFileName\) \[ DevGetFile \"\$$ArrayName\($VarFileName\)\" 1  \"$DefaultExt\" \"$DefaultDir\" \"$Title\"  \"$Action\"\]; if \[file exists \$$ArrayName\($VarFileName\)\]  \{ $Command \}"
-
+       set SetVarString  "set $ArrayName\($VarFileName\) \[ DevGetFile \"\$$ArrayName\($VarFileName\)\" 1  \"$DefaultExt\" \"$DefaultDir\" \"$Title\"  \"$Action\"\]; if \{\[file exists \$$ArrayName\($VarFileName\)\] || \"$Action\" == \"Save\"\}  \{ $Command \}"
+#$Action == Save
 #        puts $SetVarString
 
         DevAddLabel  $f.f.l $Message
@@ -677,7 +677,7 @@ proc DevGetFile { filename { MustPop 0} { DefaultExt "" } { DefaultDir "" } {Tit
 	}
 
 	# this pops up file browser when return is hit.
-	set SetVarString  "set $ArrayName\($VarFileName\) \[ DevGetFile \"\$$ArrayName\($VarFileName\)\" 0  \"$DefaultExt\" \"$DefaultDir\" \"$Title\" \"$Action\" \]; if \[file exists \$$ArrayName\($VarFileName\)\]  \{ $Command \}"
+	set SetVarString  "set $ArrayName\($VarFileName\) \[ DevGetFile \"\$$ArrayName\($VarFileName\)\" 0  \"$DefaultExt\" \"$DefaultDir\" \"$Title\" \"$Action\" \]; if \{\[file exists \$$ArrayName\($VarFileName\)\] || \"$Action\" == \"Save\"\}  \{ $Command \}"
 
     eval {entry $f.efile -textvariable "$ArrayName\($VarFileName\)" -width 50} $Gui(WEA)
         bind $f.efile <Return> $SetVarString
