@@ -162,7 +162,7 @@ proc AnalyzeInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.3 $} {$Date: 2004/07/22 20:59:42 $}]
+        {$Revision: 1.4 $} {$Date: 2004/07/22 21:27:44 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -559,7 +559,7 @@ proc AnalyzeLoadVolumes {} {
 
     ir SetFileName $AnalyzeCache(fileName)
     ir SetDataByteOrder $AnalyzeCache(byteOrder) 
-    ir SetScalarType $AnalyzeCache(dataType)
+    ir SetDataScalarType $AnalyzeCache(dataType)
  
     # Spacing
     set pixDims $AnalyzeCache(pixDim)
