@@ -42,6 +42,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 //  #define LIVEWIRE_TRAINING_EXPERIMENT
 
+#include "vtkImageData.h"
 #include "vtkImageMultipleInputFilter.h"
 #include "vtkSlicer.h"
 

@@ -6,6 +6,7 @@
 #ifndef __vtkImageFastGaussian_h
 #define __vtkImageFastGaussian_h
 
+#include "vtkImageData.h"
 #include "vtkImageDecomposeFilter.h"
 
 class VTK_EXPORT vtkImageFastGaussian : public vtkImageDecomposeFilter

@@ -37,6 +37,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #ifndef __vtkImageFillROI_h
 #define __vtkImageFillROI_h
 
+#include "vtkImageData.h"
 #include "vtkImageInPlaceFilter.h"
 #include "vtkPoints.h"
 #include "point.h"

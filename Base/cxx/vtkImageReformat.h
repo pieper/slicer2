@@ -30,6 +30,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #ifndef __vtkImageReformat_h
 #define __vtkImageReformat_h
 
+#include "vtkImageData.h"
 #include "vtkImageToImageFilter.h"
 #include "vtkMatrix4x4.h"
 #include "vtkIntArray.h"

@@ -28,6 +28,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #ifndef __vtkImageRealtimeScan_h
 #define __vtkImageRealtimeScan_h
 
+#include "vtkImageData.h"
 #include "vtkImageSource.h"
 #include "vtkMatrix4x4.h"
 #include "vtkSlicer.h"

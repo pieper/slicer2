@@ -29,6 +29,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #ifndef __vtkImageErode_h
 #define __vtkImageErode_h
 
+#include "vtkImageData.h"
 #include "vtkImageNeighborhoodFilter.h"
 #include "vtkSlicer.h"
 

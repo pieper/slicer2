@@ -30,6 +30,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #ifndef __vtkImageOverlay_h
 #define __vtkImageOverlay_h
 
+#include "vtkImageData.h"
 #include "vtkImageMultipleInputFilter.h"
 #include "vtkSlicer.h"
 

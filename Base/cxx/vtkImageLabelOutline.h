@@ -29,6 +29,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #ifndef __vtkImageLabelOutline_h
 #define __vtkImageLabelOutline_h
 
+#include "vtkImageData.h"
 #include "vtkImageNeighborhoodFilter.h"
 #include "vtkSlicer.h"
 

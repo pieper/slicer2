@@ -33,6 +33,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 //#include <iostream.h>
 //#include <fstream.h>
+#include "vtkImageData.h"
 #include "vtkImageSource.h"
 #include "vtkTransform.h"
 #include "vtkSlicer.h"

@@ -30,6 +30,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #define __vtkPolyBoolean_h
 
 #include "vtkPoints.h"
+#include "vtkPolyData.h"
 #include "vtkPolyDataToPolyDataFilter.h"
 #include "vtkOBBTree.h"
 #include "vtkMatrix4x4.h"

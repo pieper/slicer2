@@ -32,6 +32,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #ifndef __vtkImageWeightedSum_h
 #define __vtkImageWeightedSum_h
 
+#include "vtkImageData.h"
 #include "vtkImageMultipleInputFilter.h"
 #include "vtkFloatArray.h"
 #include "vtkSlicer.h"

@@ -11,6 +11,7 @@
 #include "vtkIntArray.h"
 #include "vtkFloatArray.h"
 #include "vtkIdList.h"
+#include "vtkImageData.h"
 #include "vtkImageToImageFilter.h"
 #include "vtkPriorityQueue.h"
 #include "vtkSlicer.h"

@@ -18,6 +18,8 @@
 #include "vtkShortArray.h"
 #include "vtkIntArray.h"
 #include "vtkFloatArray.h"
+#include "vtkImageData.h"
+#include "vtkStructuredPoints.h"
 #include "vtkImageLogic.h"
 #include "vtkSlicer.h"
 

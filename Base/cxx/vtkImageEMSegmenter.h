@@ -28,6 +28,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 #include <math.h>
 #include <cmath>
+#include "vtkImageData.h"
 #include "vtkImageToImageFilter.h"
 
 #define EMSEGMENT_ONE_OVER_2_PI 0.5/3.14159265358979

@@ -28,6 +28,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #ifndef __vtkImageFrameSource_h
 #define __vtkImageFrameSource_h
 
+#include "vtkImageData.h"
 #include "vtkImageSource.h"
 #include "vtkRenderWindow.h"
 #include "vtkSlicer.h"

@@ -29,6 +29,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #ifndef __vtkImageCrossHair2D_h
 #define __vtkImageCrossHair2D_h
 
+#include "vtkImageData.h"
 #include "vtkImageInPlaceFilter.h"
 #include "vtkSlicer.h"
 

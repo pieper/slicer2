@@ -38,6 +38,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #ifndef __vtkImageLiveWire_h
 #define __vtkImageLiveWire_h
 
+#include "vtkImageData.h"
 #include "vtkImageMultipleInputFilter.h"
 #include "vtkSlicer.h"
 

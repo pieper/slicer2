@@ -35,6 +35,11 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #define __vtkFastCellPicker_h
 
 #include "vtkVersion.h"
+#include "vtkCollection.h"
+#include "vtkAssemblyPath.h"
+#include "vtkDataSet.h"
+#include "vtkMapper.h"
+#include "vtkActor.h"
 #include "vtkPicker.h"
 #include "vtkOBBTree.h"
 #include "vtkSlicer.h"
