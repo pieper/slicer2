@@ -265,6 +265,9 @@ if { $SLICER(tkcon) == "true" } {
     set argv $av
 }
 
+raise .splash
+update
+
 #
 # set statup options - convert backslashes from windows
 # version of SLICER_HOME var into to regular slashes
@@ -605,7 +608,7 @@ if { $SLICER(versionInfo) != "" } {
     set compilerName [Slicer GetCompilerName]
     set vtkVersion [Slicer GetVTKVersion]
     set libVersions "VTK: ${vtkVersion} TCL: ${tcl_patchLevel} TK: ${tk_patchLevel}"
-    set SLICER(versionInfo) "$SLICER(versionInfo) ${compilerName}: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.50 2003/04/01 20:15:46 nicole Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo) ${compilerName}: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.51 2003/04/14 19:58:08 pieper Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
