@@ -27,7 +27,7 @@ set __comment__ {
     
 
     NB: remember to check that all shared libraries are included in the appropriate
-    bin directory.  These should be placed in the VTK_BIN_DIR
+    bin directory.  These should be placed in the VTK_DIR
     for windows visual studio 7, the following files are needed for a debug build:
         msvci70d.dll msvcp70d.dll msvcr70d.dll
     for linux redhat7.3
@@ -45,7 +45,7 @@ proc tarup { {destdir "auto"} } {
 
     ### Some simple error checking to see if the directories exist
 
-    foreach dirname "VTK_BIN_DIR ITK_BIN_DIR TCL_BIN_DIR VTK_BIN_DIR" {
+    foreach dirname "VTK_DIR VTK_SRC_DIR ITK_BINARY_PATH TCL_BIN_DIR " {
        set dir $::env($dirname)
        eval { \
              if {[file exist $dir] == 0} { \
@@ -145,11 +145,11 @@ proc tarup { {destdir "auto"} } {
         "solaris8" -
         "redhat7.3" - 
         "Darwin" {
-            file copy -force $::env(VTK_BIN_DIR)/Wrapping/Tcl/pkgIndex.tcl $destdir/Lib/$::env(BUILD)/vtk/VTK-build/Wrapping/Tcl
+            file copy -force $::env(VTK_DIR)/Wrapping/Tcl/pkgIndex.tcl $destdir/Lib/$::env(BUILD)/vtk/VTK-build/Wrapping/Tcl
         }
         "Win32VC7" { 
             file mkdir $destdir/Lib/$::env(BUILD)/vtk/VTK-build/Wrapping/Tcl/Debug
-            file copy -force $::env(VTK_BIN_DIR)/Wrapping/Tcl/Debug/pkgIndex.tcl $destdir/Lib/$::env(BUILD)/vtk/VTK-build/Wrapping/Tcl/Debug
+            file copy -force $::env(VTK_DIR)/Wrapping/Tcl/Debug/pkgIndex.tcl $destdir/Lib/$::env(BUILD)/vtk/VTK-build/Wrapping/Tcl/Debug
         }
     }
 
@@ -157,26 +157,26 @@ proc tarup { {destdir "auto"} } {
     switch $::env(BUILD) {
         "solaris8" -
         "redhat7.3" { 
-            set libs [glob $::env(VTK_BIN_DIR)/bin/*.so*]
+            set libs [glob $::env(VTK_DIR)/bin/*.so*]
             foreach lib $libs {
                 file copy $lib $destdir/Lib/$::env(BUILD)/vtk/VTK-build/bin
                 set ll [file tail $lib]
                 exec strip $destdir/Lib/$::env(BUILD)/vtk/VTK-build/bin/$ll
             }
-            file copy $::env(VTK_BIN_DIR)/bin/vtk $destdir/Lib/$::env(BUILD)/vtk/VTK-build/bin
+            file copy $::env(VTK_DIR)/bin/vtk $destdir/Lib/$::env(BUILD)/vtk/VTK-build/bin
             file copy -force $::env(SLICER_HOME)/Scripts/slicer-vtk-pkgIndex.tcl $destdir/Lib/$::env(BUILD)/vtk/VTK-build/Wrapping/Tcl/pkgIndex.tcl
         }
         "Darwin" {
-            set libs [glob $::env(VTK_BIN_DIR)/bin/*.dylib]
+            set libs [glob $::env(VTK_DIR)/bin/*.dylib]
             foreach lib $libs {
                 file copy $lib $destdir/Lib/$::env(BUILD)/vtk/VTK-build/bin
             }
-            file copy $::env(VTK_BIN_DIR)/bin/vtk $destdir/Lib/$::env(BUILD)/vtk/VTK-build/bin
+            file copy $::env(VTK_DIR)/bin/vtk $destdir/Lib/$::env(BUILD)/vtk/VTK-build/bin
             file copy -force $::env(SLICER_HOME)/Scripts/slicer-vtk-pkgIndex.tcl $destdir/Lib/$::env(BUILD)/vtk/VTK-build/Wrapping/Tcl/pkgIndex.tcl
         }
         "Win32VC7" { 
             file mkdir $destdir/Lib/$::env(BUILD)/vtk/VTK-build/bin/debug
-            set libs [glob $::env(VTK_BIN_DIR)/bin/debug/*.dll]
+            set libs [glob $::env(VTK_DIR)/bin/debug/*.dll]
             foreach lib $libs {
                 file copy $lib $destdir/Lib/$::env(BUILD)/vtk/VTK-build/bin/debug
             }
@@ -193,7 +193,7 @@ proc tarup { {destdir "auto"} } {
     switch $::env(BUILD) {
         "solaris8" -
         "redhat7.3" { 
-            set libs [glob -nocomplain $::env(ITK_BIN_DIR)/bin/*.so]
+            set libs [glob -nocomplain $::env(ITK_BINARY_PATH)/bin/*.so]
             foreach lib $libs {
                 file copy $lib $destdir/Lib/$::env(BUILD)/itk/ITK-build/bin
                 set ll [file tail $lib]
@@ -201,14 +201,14 @@ proc tarup { {destdir "auto"} } {
             }
         }
         "Darwin" {
-            set libs [glob -nocomplain $::env(ITK_BIN_DIR)/bin/*.dylib]
+            set libs [glob -nocomplain $::env(ITK_BINARY_PATH)/bin/*.dylib]
             foreach lib $libs {
                 file copy $lib $destdir/Lib/$::env(BUILD)/itk/ITK-build/bin
             }
         }
         "Win32VC7" { 
             file mkdir $destdir/Lib/$::env(BUILD)/itk/ITK-build/bin/debug
-            set libs [glob -nocomplain $::env(ITK_BIN_DIR)/bin/debug/*.dll]
+            set libs [glob -nocomplain $::env(ITK_BINARY_PATH)/bin/debug/*.dll]
             foreach lib $libs {
                 file copy $lib $destdir/Lib/$::env(BUILD)/itk/ITK-build/bin/debug
             }
