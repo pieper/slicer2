@@ -441,11 +441,12 @@ char * vtkDCMLister::callback(unsigned short group_code,
 {
   struct DataElement *dummy;
   int found;
-
+  long next_element;
   //printf("(%04x,%04x) %s (%lu bytes)",
   //	 group_code, element_code, vr, length);
-
-  long next_element = GetFilePosition() + length;
+  
+  if(length != 0xffffffff)
+    next_element = GetFilePosition() + length;
   sprintf(aux_str, "Empty.");
 
   dummy = FirstElement;
@@ -479,7 +480,8 @@ char * vtkDCMLister::callback(unsigned short group_code,
 	}
     }
 
-  SetFilePosition(next_element);
+  if(length != 0xffffffff)
+    SetFilePosition(next_element);
 
   return aux_str;
 }
