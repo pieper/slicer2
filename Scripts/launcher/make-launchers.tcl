@@ -15,9 +15,10 @@ set __comment {
 
 }
 
-set starkitRelease "-200209"
+set starkitRelease "-200403"
 
 puts "making linux..."
+
 exec tclkitsh starkit${starkitRelease}/sdx.kit wrap slicer2 -runtime starkit${starkitRelease}/tclkit-linux-x86
 file rename -force slicer2 ../../slicer2-linux-x86
 
