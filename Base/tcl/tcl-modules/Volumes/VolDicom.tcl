@@ -175,8 +175,10 @@ proc VolDicomBuildGUI {parentFrame} {
     
     # Load, Select, or Extract
     DevAddButton $f.fSelect.bLoad "Load DICOM Study" {VolumesPropsCancel; update; DICOMLoadStudy "choose"}
+    TooltipAdd $f.fSelect.bLoad "Select directory containing hierarchy of dicom files.\nEach series will be loaded as a Volume."
 
     DevAddButton $f.fSelect.bSelect "Select DICOM Volume" [list DICOMSelectMain $fileNameListbox]
+    TooltipAdd $f.fSelect.bSelect "Select directory containing hierarchy of dicom files.\nA dialog will let you select the series to load."
     DevAddButton $f.fSelect.bExtractHeader "Extract Header" { HandleExtractHeader }
     pack $f.fSelect.bLoad $f.fSelect.bSelect $f.fSelect.bExtractHeader -padx $Gui(pad) -pady $Gui(pad)
     
@@ -245,7 +247,7 @@ proc DICOMLoadStudy { dir } {
         if { [file isdirectory [lindex $files 0]] } {
             set dirs $files
         } else {
-            set dirs $dir
+            set dirs [list $dir]
         }
 
         foreach d $dirs { 
