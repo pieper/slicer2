@@ -37,10 +37,11 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 // .SECTION Description
 // Stopping condition for MutualInformationRegistration algorithm
 
+#include "RigidRegistrationBase.h"
+
 #ifndef __NewStoppingCondition_h
 #define __NewStoppingCondition_h
 
-#include "MIRegistration.h"
 #include "vtkRigidIntensityRegistrationConfigure.h"
 #include "itkMutualInformationImageToImageMetric.h"
 

@@ -98,9 +98,10 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 #include "itkArray.h"
 
-class vtkMatrix4x4;
-
 #include "vtkRigidIntensityRegistrationConfigure.h"
+
+class vtkMatrix4x4;
+class vtkITKRigidRegistrationTransformBase;
 
 namespace itk
 {
@@ -232,7 +233,7 @@ public:
   //Description:
   //Initalize everything possible from the vtkITKRigidRegistrationTransformBase
   void Initialize(vtkITKRigidRegistrationTransformBase *self,
-          vtkMatrix4x4 *matrix);
+                  vtkMatrix4x4 *matrix);
 
   // ----------------------------------------------------------------------
   // Run the Registration

@@ -42,6 +42,15 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 #include "vtkMatrix4x4.h"
 #include "NewStoppingCondition.h"
+#include "vnl/vnl_math.h"
+
+
+#include "itkVTKImageImport.h"
+#include "vtkImageExport.h"
+#include "vtkITKUtility.h"
+#include "vtkUnsignedIntArray.h"
+#include "vtkDoubleArray.h"
+#include "vtkITKRigidRegistrationTransformBase.h"
 
 namespace itk
 {
@@ -116,13 +125,6 @@ RigidRegistrationBase<TFixedImage,TMovingImage,TMetricType>::~RigidRegistrationB
 }
 
 //----------------------------------------------------------------------------
-
-#include "itkVTKImageImport.h"
-#include "vtkITKUtility.h"
-#include "vtkUnsignedIntArray.h"
-#include "vtkDoubleArray.h"
-#include "vtkITKRigidRegistrationTransformBase.h"
-#include "vnl/vnl_math.h"
 
   // some memory leaks here...
 template <class itkImageType>

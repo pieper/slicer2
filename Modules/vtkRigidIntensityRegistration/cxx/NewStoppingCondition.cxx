@@ -33,7 +33,7 @@ IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO
 PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 =========================================================================auto=*/
-#include "MIRegistration.h"
+#include "vtkMatrix4x4.h"
 #include "NewStoppingCondition.h"
 
 namespace itk 
