@@ -459,9 +459,9 @@ proc EdLiveWireBuildGUI {} {
     puts "edges: $Ed(EdLiveWire,numEdgeFilters)"
     puts "length: [llength $tips]"
     if {$Ed(EdLiveWire,numEdgeFilters) < [llength $tips] } {
-	set tips [lreplace tips $Ed(EdLiveWire,numEdgeFilters) end]
-	set texts [lreplace texts $Ed(EdLiveWire,numEdgeFilters) end]
-	set widths [lreplace widths $Ed(EdLiveWire,numEdgeFilters) end]
+	set tips [lreplace $tips $Ed(EdLiveWire,numEdgeFilters) end]
+	set texts [lreplace $texts $Ed(EdLiveWire,numEdgeFilters) end]
+	set widths [lreplace $widths $Ed(EdLiveWire,numEdgeFilters) end]
     }
     foreach edge $Ed(EdLiveWire,edgeIDList) text $texts width $widths tip $tips {
 	eval {radiobutton $f.r$edge -width $width -indicatoron 0\
@@ -1356,15 +1356,7 @@ proc EdLiveWireApply {} {
     set radius   $Ed($e,radius)
     set shape    $Ed($e,shape)
 
-    # Apply points by first converting to IJK and then 
-    # giving them to the Editor object.    
-    #vtkPoints ijkPoints
-    #Slicer ComputeIjkPoints $rasPoints ijkPoints
-
-    puts "ras:  [$rasPoints GetNumberOfPoints]"
-    #puts "ijk: [ijkPoints GetNumberOfPoints]"
-
-    # test other way (like Draw):
+    # Give points to slicer object to convert to ijk
     set numPoints [$rasPoints GetNumberOfPoints]
     for {set p 0} {$p < $numPoints} {incr p} {
 	scan [$rasPoints GetPoint $p] "%d %d %d" x y z
@@ -1372,14 +1364,9 @@ proc EdLiveWireApply {} {
     }
     Slicer DrawComputeIjkPoints
     set points [Slicer GetDrawIjkPoints]
+    # give points to editor object to actually draw them
     Ed(editor)   Draw $label $points $radius $shape
     
-
-    # trouble with crashing here. why?
-    #Ed(editor)   Draw $label ijkPoints $radius $shape
-
-    #ijkPoints Delete
-
     # clear points that livewire object was storing
     EdLiveWireResetSlice $s
 
