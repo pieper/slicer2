@@ -40,10 +40,6 @@ SET (Base_SRCS
         vtkMrmlSegmenterCIMNode.cxx vtkMrmlSegmenterGraphNode.cxx vtkMrmlSegmenterNode.cxx 
         vtkMrmlSegmenterSuperClassNode.cxx vtkMrmlEndSegmenterSuperClassNode.cxx
         vtkImageCurveRegion.cxx vtkImageDrawObjects.cxx vtkImageGraph.cxx
-	# MI Registration
-	vtkVector3.cxx vtkQuaternion.cxx vtkPose.cxx 
-	vtkImageFastGaussian.cxx vtkImageMIReg.cxx
-        vtkRasToIjkTransform.cxx
 	# vtkDistractorSource.cxx
 	#vtkImageEuclideanDistanceTransformation.cxx 
 	# more general volume reading API
