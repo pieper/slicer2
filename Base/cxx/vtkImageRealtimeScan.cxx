@@ -31,8 +31,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include <iostream.h>
 #include <string.h>
 #include <fcntl.h>
-#define NOREALTIME
-#ifndef NOREALTIME
+#ifndef _WIN32
 #include <strings.h>
 #include <sys/param.h>
 #include <sys/types.h>
@@ -90,7 +89,7 @@ vtkImageRealtimeScan::~vtkImageRealtimeScan()
 	ImageMatrix->Delete();
 }
 
-#ifndef NOREALTIME
+#ifndef _WIN32
 
 /******************************************************************************
 readn
@@ -180,7 +179,7 @@ long vtkImageRealtimeScan::SendServer(int cmd)
 	// Return if not connected yet
 	if (sockfd < 0) return -1;
 
-#ifndef NOREALTIME
+#ifndef _WIN32
 	
 	sprintf(buf, "%d", cmd);
 	len = strlen(buf);
@@ -224,7 +223,7 @@ int vtkImageRealtimeScan::SetPosition(short tblPos, short patEntry,
 	// Return if not connected yet
 	if (sockfd < 0) return -1;
 
-#ifndef NOREALTIME
+#ifndef _WIN32
 
 	// Send command number	
 	sprintf(buf, "%d", CMD_POS);
@@ -288,7 +287,7 @@ OpenConnection
 ******************************************************************************/
 int vtkImageRealtimeScan::OpenConnection(char *hostname, int port)
 {
-#ifndef NOREALTIME
+#ifndef _WIN32
 	struct sockaddr_in serv_addr;
 	struct hostent *hostptr;
 #endif
@@ -304,7 +303,7 @@ int vtkImageRealtimeScan::OpenConnection(char *hostname, int port)
 		return CheckConnection();
 	}
 
-#ifndef NOREALTIME
+#ifndef _WIN32
 
 	if((hostptr = gethostbyname(hostname)) == NULL) {
 		fprintf(stderr,"Bad hostname: [%s]\n",hostname);
@@ -354,7 +353,7 @@ void vtkImageRealtimeScan::CloseConnection()
 	if (sockfd < 0) return;
 
 	SendServer(CMD_CLOSE);
-#ifndef NOREALTIME
+#ifndef _WIN32
 	close(sockfd);
 #endif
 	sockfd = -1;
@@ -393,7 +392,7 @@ int vtkImageRealtimeScan::PollRealtime()
 	float matrix[16];
 	int i,j;
 	
-#ifndef NOREALTIME
+#ifndef _WIN32
 
 	// Request the update info
 	nbytes = SendServer(CMD_UPDATE);
@@ -449,7 +448,7 @@ void vtkImageRealtimeScan::UpdateInformation()
 	
 	// Request header info
 	if (!Test && sockfd >= 0) {
-#ifndef NOREALTIME
+#ifndef _WIN32
 		nbytes = SendServer(CMD_HEADER);
 		if (nbytes < 0) return;
 		n = readn(sockfd, buf, nbytes);
@@ -476,7 +475,7 @@ void vtkImageRealtimeScan::UpdateInformation()
 	}
 	else
 	{
-#ifndef NOREALTIME
+#ifndef _WIN32
 		short patPos;
 		bcopy(&buf[OFFSET_IMG_TBLPOS],  &(this->TablePosition), LEN_IMG_TBLPOS);
 		bcopy(&buf[OFFSET_IMG_PATPOS],  &patPos, LEN_IMG_PATPOS);
@@ -570,7 +569,7 @@ void vtkImageRealtimeScan::Execute(vtkImageData *data)
 		}
 	}
 	else {
-#ifndef NOREALTIME
+#ifndef _WIN32
 		nbytes = SendServer(CMD_PIXELS);
 		if (nbytes < 0) return;
 		if (nbytes != numPoints * sizeof(short)) {

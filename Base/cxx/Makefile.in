@@ -54,10 +54,10 @@ vtkMrmlColorNode \
 vtkMrmlTree \
 vtkMrmlTransformNode \
 vtkMrmlOptionsNode \
-
+vtkXDisplayWindow \
 
 #vtkImageFrameSource \
-#vtkXDisplayWindow \
+
 
 
 #------------------------------------------------------------------------------

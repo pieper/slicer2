@@ -28,9 +28,11 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#ifndef _WIN32
 #include <X11/X.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
+#endif
 #include "vtkXDisplayWindow.h"
 #include "vtkObjectFactory.h"
 
@@ -76,7 +78,9 @@ vtkRenderWindow* vtkXDisplayWindow::GetRenderWindow(int screen)
   fprintf(stderr, "vtkXDisplayWindow: Creating display '%s'.\n", str);
 
   this->RenderWindow = vtkRenderWindow::New();
+#ifndef _WIN32
   this->RenderWindow->SetDisplayId(XOpenDisplay(str));
+#endif
   return this->RenderWindow;
 }
 
@@ -92,7 +96,9 @@ vtkImageWindow* vtkXDisplayWindow::GetImageWindow(int screen)
   fprintf(stderr, "vtkXDisplayWindow: Creating display '%s'.\n", str);
 
   this->ImageWindow = vtkImageWindow::New();
+#ifndef _WIN32
   this->ImageWindow->SetDisplayId(XOpenDisplay(str));
+#endif
   return this->ImageWindow;
 }
 
