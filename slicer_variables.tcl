@@ -62,7 +62,7 @@ set ::GSL_LIB_DIR $::SLICER_LIB/gsl/lib
 set ::GSL_INC_DIR $::SLICER_LIB/gsl/include
 set ::GSL_SRC_DIR $::SLICER_LIB/gsl-build/gsl-mirror/gsl
 set ::SOV_BINARY_DIR " "
-
+set ::XVNC_EXECUTABLE " "
 
 ## system dependent variables
 
