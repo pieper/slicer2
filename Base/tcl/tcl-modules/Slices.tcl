@@ -37,6 +37,9 @@
 # FILE:        Slices.tcl
 # PROCEDURES:  
 #   SlicesBuildGUI
+#   SlicesUpdateMRML
+#   SlicesSetIncrSource 
+#   SlicesSetIncrs 
 #==========================================================================auto=
 
 proc SlicesInit {} {
@@ -53,17 +56,19 @@ proc SlicesInit {} {
 
     # Define Procedures
     set Module($m,procGUI) SlicesBuildGUI
+    set Module($m,procMRML)  SlicesUpdateMRML
 
     # Define Dependencies
     set Module($m,depend) ""
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.20 $} {$Date: 2003/03/19 19:16:34 $}]
+        {$Revision: 1.21 $} {$Date: 2003/07/31 23:10:50 $}]
 
     # Props
     set Slice(prefix) slice
     set Slice(ext) .tif
+    set Slice(IncrsSource) $::Volume(idNone)
 }
 
 #-------------------------------------------------------------------------------
@@ -118,7 +123,8 @@ The other options produces slices at arbitrary orientations in millimeter space.
     frame $f.fActive -bg $Gui(activeWorkspace)
     frame $f.fSave   -bg $Gui(activeWorkspace)
     frame $f.fAdv   -bg $Gui(activeWorkspace)
-    pack $f.fActive $f.fSave $f.fAdv -side top -pady $Gui(pad) \
+    frame $f.fIncrs   -bg $Gui(activeWorkspace)
+    pack $f.fActive $f.fSave $f.fAdv $f.fIncrs -side top -pady $Gui(pad) \
         -expand 1 -fill x
 
     #-------------------------------------------
@@ -157,5 +163,66 @@ The other options produces slices at arbitrary orientations in millimeter space.
         -command "MainSlicesAdvancedControlsPopup \$Slice(activeID)"} $Gui(WBA)
     pack $f.bAdv -side left -padx 3
 
+    #-------------------------------------------
+    # Incrs frame
+    #-------------------------------------------
+    set f $fControls.fIncrs
+    # Volume menu
+    eval {label $f.lIncrs -text "Get Incrs:"} $Gui(WTA)
+    
+    eval {menubutton $f.mbIncrs -text "None" -relief raised -bd 2 -width 18 \
+        -menu $f.mbIncrs.m} $Gui(WMBA)
+    eval {menu $f.mbIncrs.m} $Gui(WMA)
+    TooltipAdd $f.mbIncrs "Choose the input volume for defining slice increments."
+    
+    eval {button $f.bIncrs -text "Set" -command SlicesSetIncrs} $Gui(WBA)
+    TooltipAdd $f.bIncrs "Set the slice increments to the smallest spacing in selected volume."
+
+    pack $f.lIncrs -padx $Gui(pad) -side left -anchor e
+    pack $f.mbIncrs -padx $Gui(pad) -side left -anchor w
+    pack $f.bIncrs -padx $Gui(pad) -side left -anchor w
+
+    # Save widgets for changing
+    set Slice(mbIncrs) $f.mbIncrs
+    set Slice(mIncrs)  $f.mbIncrs.m
+
 }
 
+proc SlicesUpdateMRML {} {
+    global Slice Volume
+    # Incr Volume menu - update with current list of volumes
+    #---------------------------------------------------------------------------
+    set m $Slice(mIncrs)
+    $m delete 0 end
+    foreach v $Volume(idList) {
+        $m add command -label [Volume($v,node) GetName] \
+            -command "SlicesSetIncrSource $v"
+    }
+}
+
+proc SlicesSetIncrSource {v} {
+    global Slice Volume
+    $Slice(mbIncrs) config -text [Volume($v,node) GetName]
+    set Slice(IncrsSource) $v
+}
+
+proc SlicesSetIncrs {} {
+    global Slice Volume
+
+    if { $Slice(IncrsSource) == $Volume(idNone) } {
+        return
+    }
+
+    set spacings [Volume($Slice(IncrsSource),node) GetSpacing]
+    set minspacing [lindex $spacings 0]
+    for {set i 1} {$i < 3} {incr i} {
+        set spi [lindex $spacings $i]
+        if { $spi < $minspacing } {
+            set minspacing $spi
+        }
+    }
+
+    for {set s 0} {$s < 3} {incr s} {
+        MainSlicesSetOffsetIncrement $s $minspacing
+    }
+}
