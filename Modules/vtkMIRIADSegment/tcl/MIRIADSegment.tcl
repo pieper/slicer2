@@ -151,7 +151,7 @@ proc MIRIADSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.16 $} {$Date: 2004/02/10 00:09:10 $}]
+        {$Revision: 1.17 $} {$Date: 2004/02/10 15:20:47 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -730,8 +730,10 @@ proc MIRIADSegmentLoadLONIWarpedAtlas { { atlas "bseANDbet" } {labels "full"} } 
 # .END
 #-------------------------------------------------------------------------------
 proc MIRIADSegmentSubTreeClassDefinition {SuperClass} {
-    EMSegmentChangeSuperClass $SuperClass 0
 
+    EMSegmentChangeSuperClass $SuperClass 0  ;# select this superclass
+
+    # set values for each of the subclasses using info from global arrays
     foreach \
         class $::EMSegment(Cattrib,$::EMSegment(SuperClass),ClassList) \
         probvol $::MIRIADSegment(probvols,$SuperClass) \
@@ -741,10 +743,12 @@ proc MIRIADSegmentSubTreeClassDefinition {SuperClass} {
             if {$::EMSegment(Cattrib,$class,IsSuperClass)} { 
                 MIRIADSegmentSubTreeClassDefinition $class ;# recursive call to this proc
             } else {
-                set ::EMSegment(ProbVolumeSelect) [MIRIADSegmentGetVolumeByName $probvol]   
-                EMSegmentProbVolumeSelectNode \
-                Volume [MIRIADSegmentGetVolumeByName $probvol] \
-                EMSegment EM-ProbVolumeSelect ProbVolumeSelect
+                if { $probvol != "none" } {
+                    set ::EMSegment(ProbVolumeSelect) [MIRIADSegmentGetVolumeByName $probvol]   
+                    EMSegmentProbVolumeSelectNode \
+                        Volume [MIRIADSegmentGetVolumeByName $probvol] \
+                        EMSegment EM-ProbVolumeSelect ProbVolumeSelect
+                }
 
                 set index 0
                 for {set y 0} {$y < $::EMSegment(NumInputChannel)} {incr y} {
@@ -771,7 +775,7 @@ proc MIRIADSegmentSetEMParameters {} {
     # Kilian: 08-Feb-04 To use Hierarchy Setting you currently need SegmentMode 2
     # Generally this variable should neve be set without running  EMSegmentBuildGUI  
     # Talk with Steve about it 
-    # set ::EMSegment(SegmentMode) 2
+    set ::EMSegment(SegmentMode) 2
     set ::EMSegment(DebugVolume) 1
 
     #
@@ -796,35 +800,38 @@ proc MIRIADSegmentSetEMParameters {} {
         }
     }
 
-    set ::EMSegment(EMiteration) 5
-    set ::EMSegment(MFAiteration) 2
-    
     #
     # set the global parameters
     #
-    # Tree is HEAD
-    #         |-> AIR
-    #         |-> Tissue (non brain, so skull, muscles, fat...)
-    #         |-> BRAIN
-    #             |-> CSF
-    #             |-> Gray
+    # Tree is HEAD (0)
+    #         |-> AIR (1)
+    #         |-> Tissue (2) (non brain, so skull, muscles, fat...)
+    #         |-> BRAIN (3)
+    #             |-> CSF (4)
+    #             |-> Gray (5)
     #                 |-> (TODO add subtree)
-    #             |-> White
+    #             |-> White (6)
     #                 |-> (TODO add normal and lesions)
 
     # Define SUPERCLASS Head with three subclasses
     EMSegmentChangeClass 0
     set ::EMSegment(NumClassesNew) 3
     EMSegmentCreateDeleteClasses 1 1
+    EMSegmentClickLabel 0 1 0 ""
     # class Air 
+    set ::EMSegment(Cattrib,1,Name) Air 
     set ::EMSegment(Cattrib,1,Prob) .05
+    EMSegmentClickLabel 1 1 1 ""
     # class Tissue
+    set ::EMSegment(Cattrib,2,Name) Tissue 
     set ::EMSegment(Cattrib,2,Prob) .20
+    EMSegmentClickLabel 2 1 2 ""
     # -------------------------------
     # SUPERCLASS: BRAIN
     # a.) Define general parameter
     set ::EMSegment(Cattrib,3,Name) BRAIN 
     set ::EMSegment(Cattrib,3,Prob) .50
+    EMSegmentClickLabel 3 1 3 ""
     EMSegmentSumGlobalUpdate                  ;# Update SuperClass before it is set to BRAIN
 
     # b.) Define SuperClass parameters
@@ -844,11 +851,17 @@ proc MIRIADSegmentSetEMParameters {} {
     # -------------------------------
 
     # CSF
+    set ::EMSegment(Cattrib,4,Name) CSF 
     set ::EMSegment(Cattrib,4,Prob) .25
+    EMSegmentClickLabel 4 1 4 ""
     # GM 
+    set ::EMSegment(Cattrib,5,Name) GrayMatter 
     set ::EMSegment(Cattrib,5,Prob) .25
+    EMSegmentClickLabel 5 1 5 ""
     # WM
+    set ::EMSegment(Cattrib,6,Name) WhiteMatter 
     set ::EMSegment(Cattrib,6,Prob) .25
+    EMSegmentClickLabel 6 1 6 ""
     EMSegmentSumGlobalUpdate                  
     
     #
@@ -859,24 +872,23 @@ proc MIRIADSegmentSetEMParameters {} {
 
     # ---------------------------------------------------------------------------------
     # Define parameters for children of HEAD
-    set ::MIRIADSegment(probvols,0) "resample_atlas-sumbackground resample_atlas-sumbackground blubber" 
-    #     set probvols(0) "resample_atlas-sumbackground  resample_atlas-sumwhitematter resample_atlas-sumcsf resample_atlas-sumgreymatter"
+    # Air, Tissue, Brain
+    set ::MIRIADSegment(probvols,0) "resample_atlas-sumbackground resample_atlas-sumbackground none" 
 
-    # TODO generate parameters for Tissue
     set ::MIRIADSegment(logmeans,0) {
-        {0.5711 0.4534} {6.3364 5.0624} {"not used"} 
+        {2.6544 2.5259} {63429 5.1534} {"not used"} 
     }
     set ::MIRIADSegment(logcovs,0) {
-        {2.915 1.9455 1.9455 1.9985} 
-        {0.0049 -0.0019 -0.0019 0.0711} 
+        {0.7816 0.6958 0.6958 1.1833} 
+        {0.1243 0.1911 0.1911 0.3905} 
         {"not used"} 
     }
 
     # ---------------------------------------------------------------------------------
     # Define parameters for children of BRAIN
+    # CSF WM GM
     set ::MIRIADSegment(probvols,3) "resample_atlas-sumcsf resample_atlas-sumgreymatter resample_atlas-sumwhitematter"
 
-    # TODO generate parameters for Tissue
     set ::MIRIADSegment(logmeans,3) {
         {4.5678 4.2802} {6.3836 5.1253} {6.3364 5.0624}
     }
@@ -887,6 +899,7 @@ proc MIRIADSegmentSetEMParameters {} {
     }
 
     EMSegmentChangeSuperClass 0 1 ;# change gui to show HEAD node
+
     MIRIADSegmentSubTreeClassDefinition 0 ;# call the recursive operation to set values
 }
 
@@ -901,8 +914,12 @@ proc MIRIADSegmentSetEMParameters {} {
 #-------------------------------------------------------------------------------
 proc MIRIADSegmentRunEM {} {
 
-    #set ::EMSegment(StartSlice) 29
-    #set ::EMSegment(EndSlice) 31
+    set ::EMSegment(StartSlice) 29
+    set ::EMSegment(EndSlice) 31
+
+    set ::EMSegment(EMiteration) 5
+    set ::EMSegment(MFAiteration) 2
+    
 
     EMSegmentSumGlobalUpdate
 
