@@ -43,9 +43,16 @@
 #   LevelSetsEnter
 #   LevelSetsExit
 #   LevelSetsUpdateGUI
-#   LevelSetsCount
-#   LevelSetsShowFile
 #   LevelSetsBindingCallback
+#   LevelSetsCheckErrors
+#   LevelSetsPrepareResultVolume
+#   LevelSetsUpdateResults
+#   RunLevelSetsBegin
+#   ReRunLevelSets
+#   RunLevelSetsEnd
+#   LevelSetsCreateModel
+#   SetSPGR_WM_Param
+#   SetMRAParam
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -56,7 +63,6 @@
 #  Variables
 #  These are (some of) the variables defined by this module.
 # 
-#  int LevelSets(count) counts the button presses for the demo 
 #  list LevelSets(eventManager)  list of event bindings used by this module
 #  widget LevelSets(textBox)  the text box widget
 #-------------------------------------------------------------------------------
@@ -154,7 +160,7 @@ proc LevelSetsInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.7 $} {$Date: 2003/05/27 21:39:39 $}]
+        {$Revision: 1.8 $} {$Date: 2003/05/28 23:41:49 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -165,53 +171,54 @@ proc LevelSetsInit {} {
     #
  
     # Initialization Paramaters
-    set LevelSets(InitVol)                $Volume(idNone)
-    set LevelSets(InitThreshold)          "30"
+    set LevelSets(InitVol)                    $Volume(idNone)
+    set LevelSets(InitThreshold)              "30"
 
-    set LevelSets(upsample_xcoeff)                    "1"
-    set LevelSets(upsample_ycoeff)                    "1"
-    set LevelSets(upsample_zcoeff)                    "1"
+    set LevelSets(upsample_xcoeff)            "1"
+    set LevelSets(upsample_ycoeff)            "1"
+    set LevelSets(upsample_zcoeff)            "1"
 
-    set LevelSets(LowIThreshold)          "-1"
-    set LevelSets(HighIThreshold)         "-1"
+    set LevelSets(LowIThreshold)              "-1"
+    set LevelSets(HighIThreshold)             "-1"
 
-
-    set LevelSets(FidPointList)          0
+    set LevelSets(FidPointList)               0
 
     # Remove this part ...
-    set LevelSets(NumInitPoints)          "0"
-    set LevelSets(InitRadius)             "4"
+    set LevelSets(NumInitPoints)              "0"
+    set LevelSets(InitRadius)                 "4"
 
     set LevelSets(MeanIntensity)              "100"
-    set LevelSets(SDIntensity)                 "15"
+    set LevelSets(SDIntensity)                "15"
     set LevelSets(BalloonCoeff)               "0.3"
     set LevelSets(ProbabilityThreshold)       "0.3"
     set LevelSets(ProbabilityHighThreshold)   "0"
 
     # Main Parameters
-    set LevelSets(InputVol)               $Volume(idNone)
-    set LevelSets(ResultVol)              $Volume(idNone)
+    set LevelSets(InputVol)                   $Volume(idNone)
+    set LevelSets(ResultVol)                  $Volume(idNone)
+    set LevelSets(LabelResultVol)             $Volume(idNone)
 
-    set LevelSets(Dimension)              "3"
+    set LevelSets(Dimension)                  "3"
 
 
-    set LevelSets(HistoGradThreshold)     "0.2"
-    set LevelSets(AttachCoeff)            "1"
-    set LevelSets(StepDt)                 "0.8"
+    set LevelSets(HistoGradThreshold)         "0.2"
+    set LevelSets(AttachCoeff)                "1"
+    set LevelSets(AdvectionScheme)            "2"
+    set LevelSets(StepDt)                     "0.8"
 
-    set LevelSets(ReinitFreq)             "6"
-    set LevelSets(CurvCoeff)              "0.2"
+    set LevelSets(ReinitFreq)                 "6"
+    set LevelSets(CurvCoeff)                  "0.2"
 
-    set LevelSets(DoMean)                 "1"
-    set LevelSets(DMethod)                "DISMAP_FASTMARCHING"
+    set LevelSets(DoMean)                     "1"
+    set LevelSets(DMethod)                    "DISMAP_FASTMARCHING"
 
-    set LevelSets(BandSize)               "3"
-    set LevelSets(TubeSize)               "2"
+    set LevelSets(BandSize)                   "3"
+    set LevelSets(TubeSize)                   "2"
 
-    set LevelSets(NumIters)               "50"
-    set LevelSets(NumberOfThreads)        "2"
+    set LevelSets(NumIters)                   "50"
+    set LevelSets(NumberOfThreads)            "2"
 
-    set LevelSets(Processing)             "OFF"
+    set LevelSets(Processing)                 "OFF"
 
     # Event bindings! (see LevelSetsEnter, LevelSetsExit, tcl-shared/Events.tcl)
     set LevelSets(eventManager)  { \
@@ -244,9 +251,10 @@ proc LevelSetsInit {} {
 proc LevelSetsUpdateGUI {} {
     global LevelSets Volume
     
-    DevUpdateNodeSelectButton Volume LevelSets InputVol   InputVol   DevSelectNode
-    DevUpdateNodeSelectButton Volume LevelSets InitVol    InitVol    DevSelectNode 
-    DevUpdateNodeSelectButton Volume LevelSets ResultVol  ResultVol  DevSelectNode 0 1 1
+    DevUpdateNodeSelectButton Volume LevelSets InputVol        InputVol        DevSelectNode
+    DevUpdateNodeSelectButton Volume LevelSets InitVol         InitVol         DevSelectNode 
+    DevUpdateNodeSelectButton Volume LevelSets ResultVol       ResultVol       DevSelectNode 0 1 1
+    DevUpdateNodeSelectButton Volume LevelSets LabelResultVol  LabelResultVol  DevSelectNode 0 1 1
 }
 
 
@@ -294,17 +302,10 @@ proc LevelSetsBuildGUI {} {
     #-------------------------------------------
     
     LevelSetsBuildHelpFrame
-       
     LevelSetsBuildMainFrame
-
     LevelSetsBuildInitFrame
-
     LevelSetsBuildProbFrame
-
     LevelSetsBuildEquFrame
-
-
-
 }
 
 #-------------------------------------------------------------------------------
@@ -343,8 +344,8 @@ proc LevelSetsBuildHelpFrame {} {
     <LI><B> Initial Level Set:</B> To specify an initial image (label map, etc...), not available yet
     <LI><B> Threshold:        </B> Starting threshold in case the number of initial points is 0.
 It should use the Initial Level Set image if there is one, or the Input image otherwise.
-    <LI><B> Radius:            </B> Radius of the initial spheres centeres on the selected initial points
-    <LI><B> LevelSets-seed:    </B> List of initial centers of spheres, all the fudicial of the list are used, use 'p' to add a point, 'd' to delete (check fiducials documentation).
+    <LI><B> Radius:            </B> Radii of the initial spheres centered on the selected initial points
+    <LI><B> LevelSets-seed:    </B> List of initial centers of spheres, all the fudicials of the list are used, use 'p' to add a point, 'd' to delete (check fiducials documentation).
     <LI><B> Low Intensity      </B> allows preprocessing the image by putting all points lower  than L to L, -1 means inactive
     <LI><B> High Intensity     </B> allows preprocessing the image by putting all points higher than H to H, -1 means inactive
     <LI><B> Mean Intensity        </B> mean intensity of the tissue to segment, use to design the expansion force.
@@ -359,7 +360,8 @@ It should use the Initial Level Set image if there is one, or the Input image ot
     MainHelpBuildGUI  LevelSets
 
 }
-# end LevelSetsBuildHelpFrame
+#----- LevelSetsBuildHelpFrame
+
 
 #-------------------------------------------------------------------------------
 # .PROC LevelSetsBuildInitFrame
@@ -369,6 +371,7 @@ It should use the Initial Level Set image if there is one, or the Input image ot
 # .END
 #-------------------------------------------------------------------------------
 proc LevelSetsBuildInitFrame {} {
+#    -----------------------
 
     global Gui LevelSets Module Volume
 
@@ -397,7 +400,7 @@ proc LevelSetsBuildInitFrame {} {
     set f $fInit.fInitImage
     
     # Add menus that list models and volumes
-    DevAddSelectButton  LevelSets $f InitVol "Initial Level Set" Grid
+    myDevAddSelectButton  LevelSets $f InitVol "Initial Level Set" Grid
 
      #-------------------------------------------
     # Parameters->Threshold
@@ -455,7 +458,7 @@ proc LevelSetsBuildInitFrame {} {
    grid $f.lHIT $f.eHIT -pady $Gui(pad) -padx $Gui(pad) -sticky e
 
 }
-# end LevelSetsBuildInitFrame
+#----- LevelSetsBuildInitFrame
 
 
 #-------------------------------------------------------------------------------
@@ -466,6 +469,7 @@ proc LevelSetsBuildInitFrame {} {
 # .END
 #-------------------------------------------------------------------------------
 proc LevelSetsBuildProbFrame {} {
+#    -----------------------
 
     global Gui LevelSets Module Volume
 
@@ -506,16 +510,71 @@ proc LevelSetsBuildProbFrame {} {
    grid $f.lProTh     $f.eProTh     -pady $Gui(pad) -padx $Gui(pad) -sticky e
    grid $f.lProHighTh $f.eProHighTh -pady $Gui(pad) -padx $Gui(pad) -sticky e
 }
-# end LevelSetsBuildProbFrame
+#----- LevelSetsBuildProbFrame
 
+#----------------------------------------------------------------------
+#
+#----------------------------------------------------------------------
+proc myDevAddSelectButton { TabName f aLabel message {tooltip ""} \
+                            {width 13} {color WLA}} {
+  
+  global Gui Module 
+  upvar 1 $TabName LocalArray
 
+  # if the variable is not 1 procedure up, try 2 procedures up.
+
+  if {0 == [info exists LocalArray]} {
+      upvar 2 $TabName LocalArray 
+  }
+
+  if {0 == [info exists LocalArray]} {
+      DevErrorWindow "Error finding $TabName in DevAddSelectButton"
+      return
+  }
+
+  set Label       "$f.l$aLabel"
+  set menubutton  "$f.mb$aLabel"
+  set menu        "$f.mb$aLabel.m"
+   
+  DevAddLabel $Label $message $color
+
+  eval {menubutton $menubutton -text "None" \
+            -relief raised -bd 2 -width $width -menu $menu} $Gui(WMBA)
+  eval {menu $menu} $Gui(WMA)
+
+#  pack $Label $menubutton -side left   -padx $Gui(pad) -pady 0 
+
+  grid $Label $menubutton -padx $Gui(pad) -pady $Gui(pad)
+
+#  grid $Label      -sticky n -padx $Gui(pad) -pady $Gui(pad)
+#  grid $menubutton -sticky e -padx $Gui(pad) -pady $Gui(pad)
+#  grid $menubutton -sticky w
+
+  if {$tooltip != ""} {
+    TooltipAdd $menubutton $tooltip
+  }
+    
+  set LocalArray(mb$aLabel) $menubutton
+  set LocalArray(m$aLabel) $menu
+
+  # Note: for the automatic updating, we can use
+  # lappend Volume(mbActiveList) $f.mb$VolLabel
+  # lappend Volume(mActiveList)  $f.mbActive.m
+  # 
+  # or we can use DevUpdateVolume in the MyModuleUpdate procedure
+}
+#----- myDevAddSelectButton
+
+   
 #-------------------------------------------------------------------------------
 # .PROC LevelSetsBuildMainFrame
 #
 #   Create the Main frame
+#
 # .END
 #-------------------------------------------------------------------------------
 proc LevelSetsBuildMainFrame {} {
+#    -----------------------
 
     global Gui LevelSets Module Volume
 
@@ -529,19 +588,16 @@ proc LevelSetsBuildMainFrame {} {
     frame $f.fIO                  -bg $Gui(activeWorkspace) -relief groove -bd 3
     frame $f.fDimension           -bg $Gui(activeWorkspace)
     frame $f.fUpSample            -bg $Gui(activeWorkspace)
-    frame $f.fHistoGradThreshold  -bg $Gui(activeWorkspace)
-    frame $f.fNumIters            -bg $Gui(activeWorkspace)
-    frame $f.fNumberOfThreads     -bg $Gui(activeWorkspace)
+    frame $f.fScaleParams         -bg $Gui(activeWorkspace)
     frame $f.fRun                 -bg $Gui(activeWorkspace) -relief groove -bd 3
+    frame $f.fModel               -bg $Gui(activeWorkspace)
 
     pack  $f.fProtocol \
       $f.fIO \
-      $f.fUpSample  \
+       $f.fUpSample  \
       $f.fDimension  \
-      $f.fHistoGradThreshold  \
-      $f.fNumIters \
-      $f.fNumberOfThreads \
-          $f.fRun \
+      $f.fScaleParams \
+          $f.fRun $f.fModel\
       -side top -padx 0 -pady 1 -fill x
     
     #-------------------------------------------
@@ -563,27 +619,9 @@ proc LevelSetsBuildMainFrame {} {
     # Parameters->Input/Output Frame
     #-------------------------------------------
     set f $fMain.fIO
-    
-    # Add menus that list models and volumes
-    DevAddSelectButton  LevelSets $f InputVol "Input Volume" Grid
-
-    # Append these menus and buttons to lists 
-    # that get refreshed during UpdateMRML
-#    lappend Volume(mbActiveList) $f.mbInputVol
-#    lappend Volume(mActiveList)  $f.mbInputVol.m
- 
-    #-------------------------------------------
-    # Parameters->ResultVol Frame
-    #-------------------------------------------
-#    set f $fMain.fResultVol
-    
-    # Add menus that list models and volumes
-    DevAddSelectButton  LevelSets $f ResultVol "Result Volume" Grid
-
-    # Append these menus and buttons to lists 
-    # that get refreshed during UpdateMRML
-#    lappend Volume(mbActiveList) $f.mbResultVol
-#    lappend Volume(mActiveList)  $f.mbResultVol.m
+    myDevAddSelectButton  LevelSets $f InputVol       "Input Volume"     Pack
+    myDevAddSelectButton  LevelSets $f ResultVol      "Greyscale Result" Pack
+    myDevAddSelectButton  LevelSets $f LabelResultVol "Labelmap result"  Pack
 
 
     #-------------------------------------------
@@ -641,11 +679,10 @@ proc LevelSetsBuildMainFrame {} {
     
 
     #-------------------------------------------
-    # Parameters->HistoGradThreshold Frame
+    # Parameters->HistoGradThreshold 
     #-------------------------------------------
-    set f $fMain.fHistoGradThreshold
-    
-    
+    set f $fMain.fScaleParams
+        
     eval {label $f.lHistoGradThreshold -text "GradHistoTh:"\
           -width 12 -justify right } $Gui(WTA)
     eval {entry $f.eHistoGradThreshold -justify right -width 4 \
@@ -658,15 +695,11 @@ proc LevelSetsBuildMainFrame {} {
           } $Gui(WSA)
 
     grid $f.lHistoGradThreshold $f.eHistoGradThreshold $f.sHistoGradThreshold 
-#-pady $Gui(pad) -padx $Gui(pad) -sticky e
-#    grid $f.eHistoGradThreshold  -sticky w
 
 
     #-------------------------------------------
-    # Parameters->NumIters Frame
+    # Parameters->NumIters 
     #-------------------------------------------
-    set f $fMain.fNumIters
-    
     
     eval {label $f.lNumIters -text "Iterations:"\
           -width 11 -justify right } $Gui(WTA)
@@ -685,10 +718,8 @@ proc LevelSetsBuildMainFrame {} {
 
 
     #-------------------------------------------
-    # Parameters->NumberOfThreads Frame
+    # Parameters->NumberOfThreads 
     #-------------------------------------------
-    set f $fMain.fNumberOfThreads
-    
     
     eval {label $f.lNumberOfThreads -text "Threads:"\
           -width 8 -justify right } $Gui(WLA)
@@ -711,27 +742,33 @@ proc LevelSetsBuildMainFrame {} {
     #-------------------------------------------
     set f $fMain.fRun
 
-    
     DevAddButton $f.bInitRun   "Init & Run"  "RunLevelSetsBegin"
     DevAddButton $f.bReRun     "ReRun"       "ReRunLevelSets"
     DevAddButton $f.bEnd       "End"         "RunLevelSetsEnd"
 
-    DevAddButton $f.bModel     "CreateModel" "LevelSetsCreateModel"
-    
-    pack $f.bInitRun $f.bReRun $f.bEnd $f.bModel
+    pack  $f.bInitRun $f.bReRun $f.bEnd -side left -padx 2 -pady 2 -expand 1
 
+    #-------------------------------------------
+    # Parameters->Model Frame
+    #-------------------------------------------
+    set f $fMain.fModel
+
+    DevAddButton $f.bModel     "CreateModel" "LevelSetsCreateModel"
+    pack  $f.bModel -side top -fill x -padx 2 -pady 2 -expand 1
 
 }
-# end LevelSetsBuildMainFrame
+#----- LevelSetsBuildMainFrame
 
 
 #-------------------------------------------------------------------------------
 # .PROC LevelSetsBuildEquFrame
 #
 #   Create the Equation frame
+#
 # .END
 #-------------------------------------------------------------------------------
 proc LevelSetsBuildEquFrame {} {
+#    ----------------------
 
     global Gui LevelSets Module Volume
 
@@ -741,20 +778,59 @@ proc LevelSetsBuildEquFrame {} {
     set fEqu $Module(LevelSets,fEqu)
     set f $fEqu
   
+    frame $f.fSmoothingParam     -bg $Gui(activeWorkspace) -relief groove -bd 3
+    frame $f.fAdvectionParam     -bg $Gui(activeWorkspace) -relief groove -bd 3
     frame $f.fEquationParam      -bg $Gui(activeWorkspace) -relief groove -bd 3
     frame $f.fNarrowBandParam    -bg $Gui(activeWorkspace) -relief groove -bd 3
 
     pack \
+    $f.fSmoothingParam \
+    $f.fAdvectionParam \
     $f.fEquationParam  \
     $f.fNarrowBandParam   \
     -side top -padx 0 -pady 2 -fill x
     
     #-------------------------------------------
+    # Parameters->SmoothingParam Frame
+    #-------------------------------------------
+    set f $fEqu.fSmoothingParam
+
+    eval {label $f.lSmoothingParam -text "Smoothing Parameters:"} $Gui(WLA)
+        
+    #--------------------------------------------------
+    eval {label $f.lCurvCoeff -text "CurvCoeff:" \
+          -width 16 -justify right } $Gui(WLA)
+    eval {entry $f.eCurvCoeff -justify right -width 6 \
+          -textvariable  LevelSets(CurvCoeff)  } $Gui(WEA)
+    grid $f.lCurvCoeff $f.eCurvCoeff     -pady 0 -padx $Gui(pad) -sticky e
+    grid $f.eCurvCoeff  -sticky w
+
+    grid $f.lSmoothingParam     -pady 2 -padx $Gui(pad) -sticky e
+
+
+    #-------------------------------------------
+    # Parameters->AdvectionParam Frame
+    #-------------------------------------------
+    set f $fEqu.fAdvectionParam
+
+    eval {label $f.lAdvectionParam -text "Advection Parameters:"} $Gui(WLA)
+        
+    #--------------------------------------------------
+#    eval {label $f.lCurvCoeff -text "CurvCoeff:" \
+          -width 16 -justify right } $Gui(WLA)
+#    eval {entry $f.eCurvCoeff -justify right -width 6 \
+          -textvariable  LevelSets(CurvCoeff)  } $Gui(WEA)
+#    grid $f.lCurvCoeff $f.eCurvCoeff     -pady 0 -padx $Gui(pad) -sticky e
+#    grid $f.eCurvCoeff  -sticky w
+
+#    grid $f.lAdvectionParam     -pady 2 -padx $Gui(pad) -sticky e
+
+    #-------------------------------------------
     # Parameters->EquationParam Frame
     #-------------------------------------------
     set f $fEqu.fEquationParam
 
-    eval {label $f.lEquationParam -text "Equation Params:"} $Gui(WLA)
+    eval {label $f.lEquationParam -text "Equation Parameters:"} $Gui(WLA)
         
     grid $f.lEquationParam     -pady 2 -padx $Gui(pad) -sticky e
 
@@ -783,14 +859,6 @@ proc LevelSetsBuildEquFrame {} {
           -textvariable  LevelSets(DoMean)  } $Gui(WEA)
     grid $f.lDoMean $f.eDoMean -pady 0 -padx $Gui(pad) -sticky e
     grid $f.eDoMean  -sticky w
-
-    #--------------------------------------------------
-    eval {label $f.lCurvCoeff -text "CurvCoeff:" \
-          -width 16 -justify right } $Gui(WLA)
-    eval {entry $f.eCurvCoeff -justify right -width 6 \
-          -textvariable  LevelSets(CurvCoeff)  } $Gui(WEA)
-    grid $f.lCurvCoeff $f.eCurvCoeff     -pady 0 -padx $Gui(pad) -sticky e
-    grid $f.eCurvCoeff  -sticky w
 
 
     #--------------------------------------------------
@@ -845,17 +913,21 @@ proc LevelSetsBuildEquFrame {} {
 
 
 }
-# end LevelSetsBuildEquFrame
+#----- LevelSetsBuildEquFrame
 
 
 #-------------------------------------------------------------------------------
 # .PROC LevelSetsEnter
+#
 # Called when this module is entered by the user.  Pushes the event manager
 # for this module. 
+#
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc LevelSetsEnter {} {
+#    --------------
+
     global LevelSets
     
     # Push event manager
@@ -869,21 +941,19 @@ proc LevelSetsEnter {} {
     pushEventManager $LevelSets(eventManager)
 
 
-#    puts
     if {$LevelSets(FidPointList) == 0} {
       set LevelSets(FidPointList) 1
       FiducialsCreateFiducialsList "default" "LevelSets-seed"
     }
     FiducialsSetActiveList "LevelSets-seed"
 
-    # clear the text box and put instructions there
-#    $LevelSets(textBox) delete 1.0 end
-#    $LevelSets(textBox) insert end "Shift-Click anywhere!\n"
-
 }
+#----- LevelSetsEnter
+
 
 #-------------------------------------------------------------------------------
 # .PROC LevelSetsExit
+#
 # Called when this module is exited by the user.  Pops the event manager
 # for this module.  
 # .ARGS
@@ -905,37 +975,11 @@ proc LevelSetsExit {} {
 }
 
 
-#-------------------------------------------------------------------------------
-# .PROC LevelSetsCount
-#
-# This routine demos how to make button callbacks and use global arrays
-# for object oriented programming.
-# .END
-#-------------------------------------------------------------------------------
-proc LevelSetsCount {} {
-    global LevelSets
-    
-    incr LevelSets(count)
-    $LevelSets(lParameters) config -text "You clicked the button $LevelSets(count) times"
-}
-
-
-#-------------------------------------------------------------------------------
-# .PROC LevelSetsShowFile
-#
-# This routine demos how to make button callbacks and use global arrays
-# for object oriented programming.
-# .END
-#-------------------------------------------------------------------------------
-proc LevelSetsShowFile {} {
-    global LevelSets
-    
-    $LevelSets(lfile) config -text "You entered: $LevelSets(FileName)"
-}
 
 
 #-------------------------------------------------------------------------------
 # .PROC LevelSetsBindingCallback
+#
 # Demo of callback routine for bindings
 # 
 # .ARGS
@@ -980,37 +1024,45 @@ proc LevelSetsBindingCallback { event W X Y x y t } {
 
 #-------------------------------------------------------------------------------
 # .PROC LevelSetsPrepareResult
+#
 #   Create the New Volume if necessary. Otherwise, ask to overwrite.
 #   returns 1 if there is are errors 0 otherwise
+#
 # .END
 #-------------------------------------------------------------------------------
 proc LevelSetsCheckErrors {} {
     global LevelSets Volume
 
-    if {  ($LevelSets(InputVol) == $Volume(idNone)) || \
-          ($LevelSets(ResultVol)   == $Volume(idNone))}  {
+    if { ($LevelSets(InputVol) == $Volume(idNone)) || \
+         ($LevelSets(ResultVol) == $Volume(idNone)) || \
+         ($LevelSets(LabelResultVol) == $Volume(idNone)) } {
+
         DevErrorWindow "You cannot use Volume \"None\""
         return 1
     }
     return 0
 }
+#----- LevelSetsCheckErrors
 
 
 #-------------------------------------------------------------------------------
 # .PROC LevelSetsPrepareResultVolume
+#
 #   Check for Errors in the setup
 #   returns 1 if there are errors, 0 otherwise
+#
 # .END
 #-------------------------------------------------------------------------------
 proc LevelSetsPrepareResultVolume {}  {
+#    ----------------------------
+
     global LevelSets
 
     set v1 $LevelSets(InputVol)
     set v2 $LevelSets(ResultVol)
+    set lm $LevelSets(LabelResultVol)
 
-    # Do we need to Create a New Volume?
-    # If so, let's do it.
-    
+    # Check for Greyscale result
     if {$v2 == -5 } {
         set v2 [DevCreateNewCopiedVolume $v1 ""  "LevelSetsResult" ]
         set node [Volume($v2,vol) GetMrmlNode]
@@ -1019,33 +1071,107 @@ proc LevelSetsPrepareResultVolume {}  {
         Mrml(dataTree) InsertAfterItem $nodeBefore $node
         MainUpdateMRML
     } else {
-
         # Are We Overwriting a volume?
         # If so, let's ask. If no, return.
-         
         set v2name  [Volume($v2,node) GetName]
         set continue [DevOKCancel "Overwrite $v2name?"]
-          
         if {$continue == "cancel"} { return 1 }
         # They say it is OK, so overwrite!
-              
         Volume($v2,node) Copy Volume($v1,node)
     }
-
     set LevelSets(ResultVol) $v2
     
 
+    # Check for Labelmap result
+    if {$lm == -5 } {
+        set lm [DevCreateNewCopiedVolume $v1 ""  "LS_labelmap" ]
+        set node [Volume($lm,vol) GetMrmlNode]
+        Mrml(dataTree) RemoveItem $node 
+        set nodeBefore [Volume($v1,vol) GetMrmlNode]
+        Mrml(dataTree) InsertAfterItem $nodeBefore $node
+        MainUpdateMRML
+    } else {
+        # Are We Overwriting a volume?
+        # If so, let's ask. If no, return.
+        set lmname  [Volume($lm,node) GetName]
+        set continue [DevOKCancel "Overwrite $lmname?"]
+        if {$continue == "cancel"} { return 1 }
+        # They say it is OK, so overwrite!
+        Volume($lm,node) Copy Volume($v1,node)
+    }
+    set LevelSets(LabelResultVol) $lm
+
     return 0
 }
+#----- LevelSetsPrepareResultVolume
+
+
+#-------------------------------------------------------------------------------
+# .PROC LevelSetsUpdateResults
+#
+#   Update the Greyscale, Labelmap results and
+#   the display
+#
+# .END
+#-------------------------------------------------------------------------------
+proc LevelSetsUpdateResults {} {
+#    ----------------------
+
+  global LevelSets Volume Gui Slice
+
+  set input $LevelSets(InputVol)
+  set res   $LevelSets(ResultVol)
+  set lm    $LevelSets(LabelResultVol)
+
+  [Volume($input,vol) GetOutput]  SetSpacing [lindex $LevelSets(spacing) 0] \
+     [lindex $LevelSets(spacing) 1] \
+     [lindex $LevelSets(spacing) 2]
+
+  LevelSets(output)       SetSpacing [lindex $LevelSets(spacing) 0] \
+     [lindex $LevelSets(spacing) 1] \
+     [lindex $LevelSets(spacing) 2]
+
+  # Set the Greyscale result
+  Volume($res,vol) SetImageData LevelSets(output)
+
+  # Set the LabelMap result
+  vtkImageThreshold vtk_th
+  vtk_th SetInput  LevelSets(output)
+  vtk_th ThresholdBetween 0 100000
+  vtk_th ReplaceInOn
+  vtk_th ReplaceOutOn
+  vtk_th SetInValue 0
+  vtk_th SetOutValue 10
+  vtk_th SetOutputScalarTypeToUnsignedChar
+  Volume($lm,vol) SetImageData [vtk_th GetOutput]
+  foreach s $Slice(idList) {
+    set Slice($s,labelVolID) $lm
+    set Slice($s,foreVolID)  0
+  }
+  set Slice(opacity) 0.2
+  MainSlicesSetOpacityAll
+  # set the window and level
+  set Volume(activeID) $lm
+  MainVolumesSetParam Window 10
+  MainVolumesSetParam Level  5
+  MainVolumesRender
+  MainVolumesUpdate $lm
+  RenderAll
+  vtk_th   Delete
+
+}
+#----- LevelSetsUpdateResults
 
 
 #-------------------------------------------------------------------------------
 # .PROC RunLevelSetsBegin
-#   Run the fast marching
+#
+#   Initialize and run the Level Set
 #
 # .END
 #-------------------------------------------------------------------------------
 proc RunLevelSetsBegin {} {
+#    -----------------
 
   global LevelSets Volume Gui Slice
 
@@ -1059,10 +1185,16 @@ proc RunLevelSetsBegin {} {
       return
   }
 
-  set input $LevelSets(InputVol);
-  set res $LevelSets(ResultVol);
+  set input $LevelSets(InputVol)
+  set res   $LevelSets(ResultVol)
+  set lm    $LevelSets(LabelResultVol)
 
-  if {($LevelSets(upsample_xcoeff) != "1")||($LevelSets(upsample_ycoeff) != "1")||($LevelSets(upsample_zcoeff) != "1")} {
+  #
+  # the upsampling should not be used: NOT TESTED YET ...
+  #
+  if {($LevelSets(upsample_xcoeff) != "1")||\
+      ($LevelSets(upsample_ycoeff) != "1")||\
+      ($LevelSets(upsample_zcoeff) != "1")} {
     vtkImageResample magnify
     magnify SetDimensionality 3
     magnify SetInput [Volume($input,vol) GetOutput]
@@ -1089,7 +1221,6 @@ proc RunLevelSetsBegin {} {
   # ------ Level Set instanciation --------------------
   #
   vtkLevelSets LevelSets(curv)
-
   set LevelSets(Processing) "ON"
 
   #
@@ -1103,21 +1234,16 @@ proc RunLevelSetsBegin {} {
 
   # Set the Dimension
   LevelSets(curv) SetDimension           $LevelSets(Dimension)
-
   # Threshold on the cumulative gradient histogram
   LevelSets(curv) SetHistoGradThreshold  $LevelSets(HistoGradThreshold)
-
   # Number of iterations
   LevelSets(curv) SetNumIters            $LevelSets(NumIters)
-
   # Scheme and Coefficient for the advection force
   LevelSets(curv) Setadvection_scheme    2
   LevelSets(curv) SetAdvectionCoeff      $LevelSets(AttachCoeff)
-
   # Coefficient for the curvature term
   LevelSets(curv) Setcoeff_curvature     $LevelSets(CurvCoeff)
   LevelSets(curv) SetDoMean              $LevelSets(DoMean)
-
   # Evolution step of the PDE
   LevelSets(curv) SetStepDt              $LevelSets(StepDt)
 
@@ -1208,7 +1334,6 @@ proc RunLevelSetsBegin {} {
   #
   # ---------- Set input image and evolve ---------------
   #
-#  LevelSets(curv) SetInput               $InputImage
   vtkImageData                           LevelSets(output)
   LevelSets(curv) InitParam              $InputImage LevelSets(output)
 
@@ -1220,62 +1345,12 @@ proc RunLevelSetsBegin {} {
     update
   }
 
-
-#  set Gui(progressText)     "executing one iteration"
+#  set Gui(progressText)   "executing one iteration"
 #  curv SetStartMethod      MainStartProgress
 #  curv SetProgressMethod  "MainShowProgress curv"
 #  curv SetEndMethod        MainEndProgress
 
-
-
-#  curv Update
-#  Volume($res,vol) SetImageData [curv GetOutput]
-
-  $InputImage  SetSpacing [lindex $LevelSets(spacing) 0] \
-    [lindex $LevelSets(spacing) 1] \
-    [lindex $LevelSets(spacing) 2]
-  LevelSets(output)       SetSpacing [lindex $LevelSets(spacing) 0] \
-     [lindex $LevelSets(spacing) 1] \
-     [lindex $LevelSets(spacing) 2]
-
-  vtkImageThreshold vtk_th
-  vtk_th SetInput  LevelSets(output)
-  vtk_th ThresholdBetween 0 100000
-  vtk_th ReplaceInOn
-  vtk_th ReplaceOutOn
-  vtk_th SetInValue 0
-  vtk_th SetOutValue 10
-  vtk_th SetOutputScalarTypeToUnsignedChar
-
-  Volume($res,vol) SetImageData [vtk_th GetOutput]
-
-  foreach s $Slice(idList) {
-    set Slice($s,labelVolID) $res
-    set Slice($s,foreVolID)  0
-  }
-
-  set Slice(opacity) 0.2
-  MainSlicesSetOpacityAll
-
-  # set the window and level
-  set Volume(activeID) $res
-  MainVolumesSetParam Window 10
-  MainVolumesSetParam Level  5
-  MainVolumesRender
-
-  MainVolumesUpdate $res
-
-  RenderAll
-  
-
-  vtk_th   Delete
-
-
-#  puts "RunLevelSets 6"
-
-#  set OutputImage [Volume($res,vol) GetOutput]
-
-
+  LevelSetsUpdateResults
 
 }
 #----- RunLevelSetsBegin
@@ -1283,16 +1358,19 @@ proc RunLevelSetsBegin {} {
 
 #-------------------------------------------------------------------------------
 # .PROC ReRunLevelSets
-#   Run the fast marching
+#
+#   Continues the current Level Set evolution
 #
 # .END
 #-------------------------------------------------------------------------------
 proc ReRunLevelSets {} {
+#    --------------
 
   global LevelSets Slice
 
   set input $LevelSets(InputVol)
-  set res $LevelSets(ResultVol)
+  set res   $LevelSets(ResultVol)
+  set lm    $LevelSets(LabelResultVol)
 
   [Volume($input,vol) GetOutput]   SetSpacing 1 1 1
   LevelSets(output)                SetSpacing 1 1 1
@@ -1303,46 +1381,7 @@ proc ReRunLevelSets {} {
     update
   }
 
-  [Volume($input,vol) GetOutput]  SetSpacing [lindex $LevelSets(spacing) 0] \
-    [lindex $LevelSets(spacing) 1] \
-    [lindex $LevelSets(spacing) 2]
-  LevelSets(output)       SetSpacing [lindex $LevelSets(spacing) 0] \
-     [lindex $LevelSets(spacing) 1] \
-     [lindex $LevelSets(spacing) 2]
-
-# give a thresholded output 
-
-  vtkImageThreshold vtk_th
-  vtk_th SetInput  LevelSets(output)
-  vtk_th ThresholdBetween 0 100000
-  vtk_th ReplaceInOn
-  vtk_th ReplaceOutOn
-  vtk_th SetInValue 0
-  vtk_th SetOutValue 10
-  vtk_th SetOutputScalarTypeToUnsignedChar
-
-  Volume($res,vol) SetImageData [vtk_th GetOutput]
-
-  foreach s $Slice(idList) {
-    set Slice($s,labelVolID) $res
-    set Slice($s,foreVolID)  0
-  }
-
-  set Slice(opacity) 0.2
-  MainSlicesSetOpacityAll
-
-
-  # set the window and level
-  set Volume(activeID) $res
-  MainVolumesSetParam Window 10
-  MainVolumesSetParam Level  5
-  MainVolumesRender
-
-  MainVolumesUpdate $res
-
-  RenderAll
-
-  vtk_th   Delete
+  LevelSetsUpdateResults
 
 }
 #----- ReRunLevelSets
@@ -1350,7 +1389,8 @@ proc ReRunLevelSets {} {
 
 #-------------------------------------------------------------------------------
 # .PROC RunLevelSetsEnd
-#   Run the fast marching
+#
+#   Ends the current evolution
 #
 # .END
 #-------------------------------------------------------------------------------
@@ -1372,29 +1412,19 @@ proc RunLevelSetsEnd {} {
 
   set LevelSets(Processing) "DONE"
 
-#  vtkImageFlip vtk_flip
-#  vtk_flip SetInput LevelSets(output)
-#  vtk_flip SetFilteredAxis 1
-
-#  vtkStructuredPointsWriter writer
-#  writer SetInput    [vtk_flip GetOutput]
-#  writer SetFileName /home/karl/projects/data/MRA-Florin/SPGR_LS.vtk
-#  writer SetFileTypeToBinary
-#  writer Write
-#  writer Delete
-#  vtk_flip Delete
-
 }
 #----- RunLevelSetsEnd
 
 
 #-------------------------------------------------------------------------------
 # .PROC LevelSetsCreateModel
+#
 #   Create a 3D model from the 0-isosurface
 #
 # .END
 #-------------------------------------------------------------------------------
 proc  LevelSetsCreateModel {} {
+#     --------------------
 
   global LevelSets 
 
@@ -1421,85 +1451,70 @@ proc  LevelSetsCreateModel {} {
 #----- LevelSetsCreateModel
 
 
+#----------------------------------------------------------------------
+# .PROC SetSPGR_WM_Param
+#
+#   Predefined parameters for White Matter Segmentation
+#
+# .END
+#----------------------------------------------------------------------
 proc SetSPGR_WM_Param {} {
+#    ----------------
 
   global LevelSets Volume Gui
 
   set LevelSets(Dimension)              "3"
-
   set LevelSets(HistoGradThreshold)     "0.2"
   set LevelSets(AttachCoeff)            "1"
   set LevelSets(StepDt)                 "0.8"
-
   set LevelSets(DoMean)                 "0"
   set LevelSets(ReinitFreq)             "6"
   set LevelSets(CurvCoeff)              "0.2"
   set LevelSets(DoMean)                 "1"
-
   set LevelSets(BandSize)               "3"
   set LevelSets(TubeSize)               "2"
-
   set LevelSets(NumIters)               "50"
-  
-  set LevelSets(MeanIntensity)              "100"
-  set LevelSets(SDIntensity)                "15"
-  set LevelSets(BalloonCoeff)               "0.3"
-  set LevelSets(ProbabilityThreshold)       "0.3"
-
-
+  set LevelSets(MeanIntensity)          "100"
+  set LevelSets(SDIntensity)            "15"
+  set LevelSets(BalloonCoeff)           "0.3"
+  set LevelSets(ProbabilityThreshold)   "0.3"
   set LevelSets(NumInitPoints)          "0"
   
-#  set LevelSets(InitThreshold)          "80"
-
-  
-  
-
-  
-
-#  curv SetNumInitPoints 1
-#  curv SetInitPoint 0 128  93  78 5
-  #curv SetInitPoint 1 137 102  42 5
-  #curv SetInitPoint 2 170 117  80 5
-  #curv SetInitPoint 3 178 119  48 5
-  #curv SetInitPoint 4 139 160  62 5
-
-  
 }
+#----- SetSPGR_WM_Param
 
 
+#----------------------------------------------------------------------
+# .PROC SetMRAParam
+#
+#   Predefined parameters for MRA Segmentation
+#
+# .END
 #----------------------------------------------------------------------
 proc SetMRAParam {} {
 #    -----------
 
   global LevelSets Volume Gui
 
-  
   #
-  set LevelSets(Dimension)              "3"
-
-  set LevelSets(HistoGradThreshold)     "0.4"
-  set LevelSets(AttachCoeff)            "0.8"
-  set LevelSets(StepDt)                 "0.8"
-
-  set LevelSets(DoMean)                 "0"
-  set LevelSets(ReinitFreq)             "6"
-  set LevelSets(CurvCoeff)              "0.1"
-  set LevelSets(DoMean)                 "0"
-
-  set LevelSets(BandSize)               "3"
-  set LevelSets(TubeSize)               "2"
-
-  set LevelSets(NumIters)               "100"
-  
+  set LevelSets(Dimension)                  "3"
+  set LevelSets(HistoGradThreshold)         "0.4"
+  set LevelSets(AttachCoeff)                "0.8"
+  set LevelSets(StepDt)                     "0.8"
+  set LevelSets(DoMean)                     "0"
+  set LevelSets(ReinitFreq)                 "6"
+  set LevelSets(CurvCoeff)                  "0.1"
+  set LevelSets(DoMean)                     "0"
+  set LevelSets(BandSize)                   "3"
+  set LevelSets(TubeSize)                   "2"
+  set LevelSets(NumIters)                   "100"
   set LevelSets(MeanIntensity)              "80"
   set LevelSets(SDIntensity)                "45"
   set LevelSets(BalloonCoeff)               "0.8"
   set LevelSets(ProbabilityThreshold)       "0.2"
   set LevelSets(ProbabilityHighThreshold)   "100"
-
-  set LevelSets(NumInitPoints)          "0"
-  
-  set LevelSets(InitThreshold)          "200"
-
+  set LevelSets(NumInitPoints)              "0"
+  set LevelSets(InitThreshold)              "200"
 
 }
+#----- SetMRAParam
