@@ -14,10 +14,13 @@
 IF (WIN32)
    LINK_DIRECTORIES( 
         ${VTKFMRIENGINE_SOURCE_DIR}/GSL/gsl-1.4/GSLLIBML/Release
+        "c:/Program Files/GSL/lib"
         )
    INCLUDE_DIRECTORIES(
          ${VTKFMRIENGINE_SOURCE_DIR}/GSL/gsl-1.4
          ${VTKFMRIENGINE_SOURCE_DIR}/GSL/gsl-1.4/gsl
+        "c:/Program Files/GSL/include"
+        "c:/Program Files/GSL/include/gsl"
     )
 ELSE (WIN32)
      LINK_DIRECTORIES(
