@@ -552,7 +552,7 @@ VTK_THREAD_RETURN_TYPE vtkImageIsoContourDist_ThreadedBand3D( void *arg )
 void vtkImageIsoContourDist::IsoSurfDist3D_band( )
 {
 
-  fprintf(stderr,"IsoSurfDist3D_band() threads %d \n",this->GetNumberOfThreads());
+  //  fprintf(stderr,"IsoSurfDist3D_band() threads %d \n",this->GetNumberOfThreads());
 
   IsoSurfDistInit( );
 
@@ -576,7 +576,7 @@ void vtkImageIsoContourDist::IsoSurfDist3D_band( )
     threader->SingleMethodExecute();
   }
 
-  fprintf(stderr,"; "); fflush(stderr);
+  //  fprintf(stderr,"; "); fflush(stderr);
 
 } // IsoSurfDist3D_band()
 
@@ -728,7 +728,7 @@ void vtkImageIsoContourDist::IsoSurfDist3D_band( int first_band, int last_band)
 
   } // end for i , parsing narrow band
 
-  fprintf(stderr,"; "); fflush(stderr);
+  //  fprintf(stderr,"; "); fflush(stderr);
 
 } // IsoSurfDist3D_band()
 
