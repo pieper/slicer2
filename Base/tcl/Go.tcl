@@ -48,7 +48,7 @@ set SLICER(major_version) 2
 
 # bump minor when features accumulate to a stable state for release
 
-set SLICER(minor_version) 2
+set SLICER(minor_version) 5
 
 # bump revision for something that has been given out to non-developers
 # (e.g. bump revsion before packaging, then again after packaging
@@ -692,7 +692,7 @@ if { $SLICER(versionInfo) != "" } {
         catch "vtkitkver Delete"
     }
     set libVersions "LibName1: VTK LibVersion1: ${vtkVersion} LibName2: TCL LibVersion2: ${tcl_patchLevel} LibName3: TK LibVersion2: ${tk_patchLevel} LibName4: ITK LibVersion4: ${itkVersion}"
-    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: [ParseCVSInfo "" {$Name:  $}] CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.81 2004/11/23 16:59:17 nicole Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: [ParseCVSInfo "" {$Name:  $}] CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.82 2005/01/13 01:03:02 pieper Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
