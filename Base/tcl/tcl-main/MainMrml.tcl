@@ -98,7 +98,7 @@ proc MainMrmlInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainMrml \
-        {$Revision: 1.80 $} {$Date: 2003/05/27 21:53:11 $}]
+        {$Revision: 1.81 $} {$Date: 2003/05/28 22:56:53 $}]
 
     set Mrml(colorsUnsaved) 0
 }
@@ -673,7 +673,7 @@ proc MainMrmlRead {mrmlFile} {
         set tags [MainMrmlAddColors $tags]
 
         MainMrmlBuildTreesVersion2.0 $tags
-    }
+    }    
 
     # Put the None volume at the end
     set i [lsearch $Volume(idList) $Volume(idNone)]
@@ -695,6 +695,9 @@ proc MainMrmlImport {filename} {
     foreach pair $tags {
         set tag  [lindex $pair 0]
         set attr [lreplace $pair 0 0]
+        if {$::Module(verbose)} { 
+            puts "MainMrlmImport: attr = $attr"
+        }
         set outattr ""
 
         switch $tag {
@@ -702,16 +705,26 @@ proc MainMrmlImport {filename} {
                 foreach a $attr {
                     set key [lindex $a 0]
                     set val [lreplace $a 0 0]
+                    if {$::Module(verbose)} {
+                        puts "\tkey = $key\n\tval = $val"
+                    }
                     switch [string tolower $key] {
                         "fileprefix"      {
+                            
                             set mrmlpath [file split $Mrml(dir)]
                             set filepath [lrange [file split [file dir $filename]] 1 end]
                             set dots ""
                             for {set dotscount 0} {$dotscount < [expr [llength $mrmlpath] - 1]} {incr dotscount} {
                                 lappend dots ".."
                             }
-                            set prefixlist [file split $val] 
-                            lappend outattr [list $key [eval file join $dots $filepath $prefixlist]]
+                            # set prefixlist [file split $val]
+                            # when the tags are read in, the file prefix (val) is set wrong, just use the filename
+                            # lappend outattr [list $key [eval file join $dots $filepath $prefixlist]]
+                            lappend outattr [list $key [eval file join $dots $filepath]]
+                            if {$::Module(verbose)} {
+                                puts "\tsetting file prefix: Mrml(dir) = $Mrml(dir), filename = $filename, fileprefix = [eval file join $dots $filepath]"
+                            }
+                            
                         }
                         default {
                             lappend outattr [eval list $key $val]
@@ -726,6 +739,7 @@ proc MainMrmlImport {filename} {
         }
         eval lappend outtags $tag $outattr
     }
+    puts "MainMrmlImport: outtags = $outtags"
     MainMrmlBuildTreesVersion2.0 [list $outtags]
     MainUpdateMRML
 }
@@ -741,6 +755,9 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
     global Mrml 
     eval {global} $Mrml(nodeTypeList)
 
+    if {$::Module(verbose)} { 
+        puts "\n\n*********\nMainMrmlBuildTreesVersion2.0 tags = $tags\n*************\n\n"
+    }
     foreach pair $tags {
         set tag  [lindex $pair 0]
         set attr [lreplace $pair 0 0]
@@ -832,6 +849,9 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 
             # Compute full path name relative to the MRML file
             $n SetFullFileName [file join $Mrml(dir) [$n GetFileName]]
+            if {$::Module(verbose)} { 
+                puts "MainMrmlBuildTreesVersion2.0: Model FullFileName set to [$n GetFullFileName]"
+            }
             # Generate model ID if necessary
            if {[$n GetModelID] == ""} {
                $n SetModelID "M[$n GetID]"
@@ -839,10 +859,17 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
         }
         
         "Volume" {
+            if {$::Module(verbose)} {
+                puts "Volume:"
+            }
             set n [MainMrmlAddNode Volume]
             foreach a $attr {
                 set key [lindex $a 0]
                 set val [lreplace $a 0 0]
+                if {$::Module(verbose)} {
+                    puts "attr = $a"
+                    puts "\tkey = $key\n\tval = $val"
+                }
                 switch [string tolower $key] {
                 "id"              {$n SetVolumeID       $val}
                 "desc"            {$n SetDescription    $val}
@@ -910,6 +937,13 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
                     eval {lappend filelist} $val
                     foreach file $filelist {
                         set DICOMName [file join $Mrml(dir) $file]
+                        if {$::Module(verbose) } {
+                            puts "MainMrmlBuildTreesVersion2.0: Added mrml dir to file $file, dicomname = $DICOMName (prefix = [$n GetFilePrefix])"
+                        }
+                        if {[file exists $DICOMName] == 0} {
+                            set DICOMName [file join [$n GetFilePrefix] $file]
+                            puts "MainMrmlBuildTreesVersion2.0: Reset dicomname to $DICOMName, because first try didn't exist: [file join $Mrml(dir) $file]"
+                        }
                         $n AddDICOMFileName $DICOMName
                     }
                 }
@@ -933,10 +967,26 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 
             # Compute full path name relative to the MRML file
             $n SetFullPrefix [file join $Mrml(dir) [$n GetFilePrefix]]
+            # if it's an absolute path, it may have ..'s in it, so normalize it
+            if {([file pathtype [$n GetFullPrefix]] == "absolute") 
+                && ([string first ".." [$n GetFullPrefix]] != -1)} {
+                $n SetFullPrefix [file normalize [$n GetFullPrefix]]
+                if  {$::Module(verbose)} { 
+                    puts "MainMrmlBuildTreesVersion2.0: Volume [$n GetVolumeID] normalised full prefix: [$n GetFullPrefix]"
+                }
+            }
             # Set volume ID if necessary
             if {[$n GetVolumeID] == ""} {
                 $n SetVolumeID "V[$n GetID]"
             }
+
+            if {$::Module(verbose)} { 
+                puts "MainMrmlBuildTreesVersion2.0: Volume [$n GetVolumeID] FullPrefix set to [$n GetFullPrefix]" 
+            }
+            # Compute the absolute directory that the volume lives in
+            # puts "MainMrmlBuildTreesVersion2.0: [file dirname [$n GetFullPrefix]]"
+            # set Volume([$n GetVolumeID],absDir) [file dirname [$n GetFullPrefix]]
+            # puts "Set Volume([$n GetVolumeID],absDir) to $Volume([$n GetVolumeID],absDir)"
 
             $n UseRasToVtkMatrixOn
         }
@@ -1594,7 +1644,9 @@ proc MainMrmlBuildTreesVersion1.0 {} {
             $n SetWindow           [MRMLGetValue $node window]
             $n SetLevel            [MRMLGetValue $node level]
             $n SetAutoWindowLevel  [MRMLGetValue $node autoWindowLevel]
-            puts "auto=[$n GetAutoWindowLevel]"
+            if {$::Module(verbose)} {
+                puts "auto=[$n GetAutoWindowLevel]"
+            }
             $n SetLabelMap         [MRMLGetValue $node labelMap]
             $n SetScanOrder        [MRMLGetValue $node scanOrder]
 
@@ -1622,7 +1674,9 @@ proc MainMrmlBuildTreesVersion1.0 {} {
 proc MainMrmlDeleteColors {} {
     global Module Mrml Color
 
-puts "MainMrmlDeleteColors"
+    if {$Module(verbose) == 1} {
+        puts "MainMrmlDeleteColors"
+    }
     set tree "colorTree"
     set nodeType Color
 
@@ -1658,7 +1712,9 @@ puts "MainMrmlDeleteColors"
 proc MainMrmlAddColorsFromFile {fileName} {
     global Module
 
-puts "MainMrmlAddColorsFromFile: reading colours from file \'$fileName\'"
+    if {$Module(verbose) == 1} {
+        puts "MainMrmlAddColorsFromFile: reading colours from file \'$fileName\'"
+    }
     set tagsColors [MainMrmlReadVersion2.x $fileName]
     if {$tagsColors == 0} {
         set msg "Unable to read file MRML color file '$fileName'"
@@ -1804,12 +1860,17 @@ proc MainMrmlCheckColors {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlRelativity
-# 
+# Traverses the mrml tree and sets the file prefix or full prefix for
+# volume and model nodes to a relative path from Mrml(dir), so that
+# when the mrml file is saved in Mrml(dir) it will contain relative
+# paths to the model and volume files if they are in directories below the mrml
+# save directory.
 # .ARGS
+# str oldRoot The path to the old directory in which the mrml file was saved. Ignored.
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlRelativity {oldRoot} {
-    global Mrml
+    global Mrml Module
 
     Mrml(dataTree) InitTraversal
     set node [Mrml(dataTree) GetNextItem]
@@ -1818,10 +1879,18 @@ proc MainMrmlRelativity {oldRoot} {
 
         if {$class == "vtkMrmlVolumeNode"} {
 
-            $node SetFilePrefix [MainFileGetRelativePrefix \
-                [file join $oldRoot [$node GetFilePrefix]]]
-            
+            if {$Module(verbose) == 1} {
+                puts "MainMrmlRelativity: volume node has file prefix [$node GetFilePrefix], oldroot = $oldRoot, full prefix [$node GetFullPrefix], Mrml(dir) = $Mrml(dir)"
+            }
+            # this proc will calculate the relative path between the file passed in and Mrml(dir) which was set before this proc was called, to the new mrml file save location, and return a true relative prefix
+            $node SetFilePrefix [MainFileGetRelativePrefixNew [$node GetFullPrefix]]
+            # Do I need to set the Full Prefix as well???? No.
+#            $node SetFilePrefix [MainFileGetRelativePrefix [file join $oldRoot [$node GetFilePrefix]]]
+            if {$Module(verbose) == 1} {
+                puts "MainMrml.tcl MainMrmlRelativity: set file prefix to [$node GetFilePrefix]"
+            }
             # Kilian 02/03 I do not know what old root is good for but I will just leave it here
+
             if {$oldRoot == $Mrml(dir)} { 
                 $node SetFullPrefix [file join $Mrml(dir) [$node GetFilePrefix]]
             } else { 
@@ -1833,24 +1902,29 @@ proc MainMrmlRelativity {oldRoot} {
             set num [$node GetNumberOfDICOMFiles]
             for {set i 0} {$i < $num} {incr i} {
                 set filename [$node GetDICOMFileName $i]
+                puts "MainMrmlRelativity: got dicom filename $filename"
                 #set dir [file dirname $filename]
                 #set name [file tail $filename]
                 #set reldir [MainFileGetRelativePrefix $dir]
-                set relname [lindex [MainFileGetRelativeDirPrefix $filename] 1]
+                # set relname [lindex [MainFileGetRelativeDirPrefix $filename] 1]
+                set relname [MainFileGetRelativePrefixNew $filename]
                 $node SetDICOMFileName $i $relname
             }
 
             # << AT 7/6/01, sp 2002-08-20
             # Kilian : Check if path exists 02/03
               
-        } elseif {$class == "vtkMrmlModelNode"} {
+            } elseif {$class == "vtkMrmlModelNode"} {
 
             set ext [file extension [$node GetFileName]]
-            $node SetFileName [MainFileGetRelativePrefix \
-                [file join $oldRoot [$node GetFileName]]]$ext
-            $node SetFullFileName [file join $Mrml(dir) \
-                [file join $oldRoot [$node GetFileName]]]$ext
-
+            if {1} {
+                $node SetFileName [MainFileGetRelativePrefix \
+                                       [file join $oldRoot [$node GetFileName]]]$ext
+                $node SetFullFileName [file join $Mrml(dir) \
+                                           [file join $oldRoot [$node GetFileName]]]$ext
+            }
+            # use the new version with real relative paths - doesn't work 
+            # $node SetFileName [MainFileGetRelativePrefixNew [$node GetFileName]]
         }
         set node [Mrml(dataTree) GetNextItem]
     }
@@ -1870,12 +1944,14 @@ proc MainMrmlWrite {filename} {
         return
     }
     # Store the new root and filePrefix
+    # NA - try not resetting it here, MainMrmlRelativity needs to know where it was opened originally in order to calculate the paths to the volumes when save it in a new place.
     set oldRoot $Mrml(dir)
+    # maybe we shouldn't set the filename yet...
     MainMrmlSetFile $filename
     # Rename all file with relative path names
     MainMrmlRelativity $oldRoot
-
-    # Check if all the volumes also have 
+    
+    # Check if all the volumes also have relative path names 
     MainMrmlCheckVolumes $filename
 }
 #-------------------------------------------------------------------------------
@@ -1912,6 +1988,7 @@ proc MainMrmlWriteProceed {filename} {
             set node [Mrml(colorTree) GetNextItem]
         }
 
+        # TODO: check that nodes can actually be written, files exist
         tree Write $filename
         tree RemoveAllItems
         tree Delete
@@ -1929,17 +2006,92 @@ proc MainMrmlWriteProceed {filename} {
 #-------------------------------------------------------------------------------
 proc MainMrmlCheckVolumes {filename} {
    global Mrml
+
+    puts "Starting MainMrmlCheckVolumes with filename $filename"
    Mrml(dataTree) InitTraversal
    set node [Mrml(dataTree) GetNextItem]
    set volumelist ""
    while {$node != ""} {
        set class [$node GetClassName]
-       if {($class == "vtkMrmlVolumeNode") && ([file exist [format [$node GetFilePattern] [$node GetFullPrefix] [lindex [$node GetImageRange] 0]]] == 0)} {
-          set volumelist "$volumelist [$node GetName] \n"
+       if {($class == "vtkMrmlVolumeNode")} {
+           if {[$node GetNumberOfDICOMFiles] == 0} {
+               # test the first non dicom volume file
+               set fname [format [$node GetFilePattern] [$node GetFullPrefix] [lindex [$node GetImageRange] 0]]
+               puts "MainMrmlCheckVolumes: non dicom file, set this node's file name to $fname"
+           } else {
+               puts "MainMrmlCheckVolumes: printing node:"
+               $node Print
+               puts "MainMrmlCheckVolumes: done printing node"
+               # test the first dicom volume file
+               set fname [$node GetDICOMFileName 0]
+               puts "MainMrmlCheckVolumes: dicom file, first name is $fname"
+               # if it's a relative file name, prepend the mrml dir
+               if {[file pathtype $fname] == "relative"} {
+                   puts "MainMrmlCheckVolumes: filename is relative $fname"
+                   set fname2 ${Mrml(dir)}[file separator]${fname}
+                   puts "MainMrmlCheckVolumes: prepended mrml dir to filename: $fname2"
+                   set fname [file normalize $fname2]
+                   puts "MainMrmlCheckVolumes: Set dicom filename to normalised name = $fname"
+               }
+           }
+           if {([file exist $fname] == 0)} {
+               set volumelist "$volumelist {[$node GetName]: $fname}\n"
+           }
        }
        set node [Mrml(dataTree) GetNextItem]
   }
   if {[string length $volumelist]} {
-      YesNoPopup MrmlCheckVolumes 20 50 "The following volumes will not be saved in the XML-file,\n because we could not read their volume file:\n $volumelist" "MainMrmlWriteProceed $filename" 
-  } else {MainMrmlWriteProceed $filename}
+      YesNoPopup MrmlCheckVolumes 20 50 "The following volumes will not be saved in the XML-file,\n because the first volume file does not exist:\n $volumelist\nWrite XML-file anyway?" "MainMrmlWriteProceed $filename" 
+  } else {
+      MainMrmlWriteProceed $filename
+      
+  }
+  # then reset the mrml tree to have absolute filenames
+  MainMrmlAbsolutivity 
+    
 } 
+
+#-------------------------------------------------------------------------------
+# .PROC MainMrmlAbsolutivity
+# Traverses the mrml tree and sets the file prefix or full prefix for
+# volume and model nodes to an abosolute path, starting any relative paths from Mrml(dir).
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MainMrmlAbsolutivity {} {
+    global Mrml Module
+
+    Mrml(dataTree) InitTraversal
+    set node [Mrml(dataTree) GetNextItem]
+    while {$node != ""} {
+        set class [$node GetClassName]
+
+        if {$class == "vtkMrmlVolumeNode"} {
+
+            if {$Module(verbose) == 1} {
+                puts "MainMrmlAbsolutivity: volume node has file prefix [$node GetFilePrefix], full prefix [$node GetFullPrefix], Mrml(dir) = $Mrml(dir)"
+            }
+             
+            set oldPrefix [$node GetFullPrefix]
+            if {[file pathtype $oldPrefix] == "relative"} {
+                set fname ${Mrml(dir)}[file separator]${oldPrefix}
+                puts "MainMrmlAbsolutivity: non dicom file \n\trelative old prefix $oldPrefix\n\tnew one wrt mrml dir $fname\n\tnormalized = [file normalize $fname]"
+                $node SetFilePrefix [file normalize $fname]
+            }
+            set num [$node GetNumberOfDICOMFiles]
+            for {set i 0} {$i < $num} {incr i} {
+                set filename [$node GetDICOMFileName $i]
+                puts "MainMrmlAbsolutivity: got dicom filename $filename"
+                if {[file pathtype $filename] == "relative"} {
+                    set absname ${Mrml(dir)}[file separator]${filename}
+                    puts "MainMrmlAbsolutivity: dicom file \n\trelative old filename $filename\n\tnew one wrt mrml dir $absname\n\tnormalized = [file normalize $absname]"
+                    $node SetDICOMFileName $i $absname
+                }
+            }
+              
+        } elseif {$class == "vtkMrmlModelNode"} {
+            # ignore these for now as they're not touched
+        }
+        set node [Mrml(dataTree) GetNextItem]
+    }
+}
