@@ -22,7 +22,7 @@ th SetInValue 1000
 th SetOutValue 2000 
 th ThresholdBetween 1000 2000
 
-vtkImageCCA cca
+vtkImageConnectivity cca
 cca SetInput [th GetOutput]
 cca SetSeed 100 100 100
 cca SetOutputLabel 100

@@ -1,11 +1,30 @@
-TestImageZoom2D.tcl    OK   bad_test    vtkImageZoom2D
-TestImageCloseUp2D.tcl OK   goot_test   vtkImageCloseUp2D
-TestPlot               ??   looks_good  vtkImageBimodalAnalysis_vtkImagePlot
-TestImageOverlay       OK   bad_test    vtkImageOverlay
-TestImageReformatIJK.tcl OK bad_test    vtkImageReformatIJK
-TestImageMeasureVoxels.tcl OK good_test vtkImageMeasureVoxels
-TestImageWeightedSum.tcl OK goot_test   vtkImageWeightedSum
-TestImageStatistics.tcl OK goot_test    vtkImageStatistics
-TestImageFIllROI.tcl    OK bad_test     vtkImageFillROI
-TestIndirectLookupTable OK not_sure     vtkIndirectLookupTable
-TestImageReformat       OK not_sure     vtkImageReformat
+TestAllMrml
+TestCopy
+TestImageBandedDistanceMap
+TestImageDouble2D
+TestImageDrawROI
+TestImageEMMarkov
+TestImageEMSegment
+TestImageEditor
+TestImageErode
+TestImageFrameSource
+TestImageLabelOutline
+TestImageLiveWire
+TestImageLiveWireEdgeWeights
+TestImageLiveWireScale
+TestImageLiveWireTester
+TestCrossHair2D         OK pretty_good  vtkImageCrossHair
+TestImageFIllROI        OK bad_test     vtkImageFillROI
+TestImageCloseUp2D      OK   good_test   vtkImageCloseUp2D
+TestImageMeasureVoxels  OK   good_test   vtkImageMeasureVoxels
+TestImageOverlay        OK   bad_test    vtkImageOverlay
+TestImageReformat       OK   not_sure     vtkImageReformat
+TestImageReformatIJK    OK   bad_test    vtkImageReformatIJK
+TestImageStatistics     OK   goot_test    vtkImageStatistics
+TestImageWeightedSum    OK   goot_test   vtkImageWeightedSum
+TestImageZoom2D         OK   bad_test    vtkImageZoom2D
+TestIndirectLookupTable OK   not_sure     vtkIndirectLookupTable
+TestLabelChange         OK   good_test    vtkImageLabelChange
+TestMrmlVolume
+TestPlot                ??  looks_good    vtkImageBimodalAnalysis_vtkImagePlot
+TestImageCCA            NO   ???????      vtkImageConnectivity
