@@ -54,7 +54,7 @@
 # .END
 #-------------------------------------------------------------------------------
 proc MultiVolumeReaderInit {} { 
-    global MultiVolumeReader Module Volume Model
+    global MultiVolumeReader Module Volume Model env
     
     set m MultiVolumeReader
 
@@ -149,7 +149,7 @@ proc MultiVolumeReaderInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.9 $} {$Date: 2004/12/07 21:11:00 $}]
+        {$Revision: 1.10 $} {$Date: 2004/12/20 21:26:07 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -162,6 +162,11 @@ proc MultiVolumeReaderInit {} {
 #    set MultiVolumeReader(Volume1) $Volume(idNone)
 #    set MultiVolumeReader(Model1)  $Model(idNone)
 #    set MultiVolumeReader(FileName)  ""
+
+    set MultiVolumeReader(modulePath) "$env(SLICER_HOME)/Modules/MultiVolumeReader"
+
+    # Source all appropriate tcl files here. 
+    source "$MultiVolumeReader(modulePath)/tcl/DICOMHelper.tcl"
 }
 
 
@@ -206,9 +211,9 @@ proc MultiVolumeReaderBuildGUI {parent {status 0}} {
     pack $f.fConfig -side top
 
     set f $parent.fVols.fConfig
-    set MultiVolumeReader(fileTypes) {hdr .bxh}
+    # set MultiVolumeReader(fileTypes) {bxh .dcm .hdr}
     DevAddFileBrowse $f MultiVolumeReader "fileName" "File Name:" \
-        "MultiVolumeReaderSetFileFilter" "\$MultiVolumeReader(fileTypes)" \
+        "MultiVolumeReaderSetFileFilter" "bxh .dcm .hdr" \
         "\$Volume(DefaultDir)" "Open" "Browse for a volume file" "" "Absolute"
 
     frame $f.fFilter -bg $Gui(activeWorkspace)
@@ -386,6 +391,10 @@ proc MultiVolumeReaderSetFileFilter {} {
             $MultiVolumeReader(multipleRadiobutton) configure -state active 
             $MultiVolumeReader(filterEntry) configure -state normal 
         }
+        ".dcm" {
+            $MultiVolumeReader(multipleRadiobutton) configure -state active 
+            $MultiVolumeReader(filterEntry) configure -state normal 
+        }
         ".bxh" {
             set MultiVolumeReader(filterChoice) single
             $MultiVolumeReader(multipleRadiobutton) configure -state disabled 
@@ -435,6 +444,9 @@ proc MultiVolumeReaderLoad {} {
         }
         ".bxh" {
             set val [MultiVolumeReaderLoadBXH]
+        }
+        ".dcm" {
+            set val [MultiVolumeReaderLoadDICOM]
         }
         default {
             DevErrorWindow "Can't read this file for a volume sequence: $fileName."
@@ -487,12 +499,13 @@ proc MultiVolumeReaderLoadAnalyze {} {
         string trim $filter
         set len [string length $filter]
         if {$len == 0} {
-            lappend analyzeFiles $fileName
-        } else {
+            set filter "*.*"
+
             set hdr ".hdr"
             set ext [file extension $filter]
 
             if {$ext == ".*"} {
+                set len [string length $filter]
                 set filter [string replace $filter [expr $len-2] end $hdr] 
             } elseif {$ext == $hdr} {
             } else {
@@ -556,4 +569,69 @@ proc MultiVolumeReaderLoadBXH {} {
 
     return 0
 }
+
+
+#-------------------------------------------------------------------------------
+# .PROC MultiVolumeReaderLoadDICOM 
+# Loads DICOM volume(s). It returns 0 if successful; 1 otherwise. 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MultiVolumeReaderLoadDICOM {} {
+    global MultiVolumeReader DICOMHelper Volume Mrml
+
+    set fileName $MultiVolumeReader(fileName)
+    set dcmFiles [list $fileName]
+ 
+    # file filter
+    if {$MultiVolumeReader(filterChoice) == "multiple"} {
+        set path [file dirname $fileName]
+        set name [file tail $fileName]
+
+        set filter $MultiVolumeReader(filter)
+        string trim $filter
+        set len [string length $filter]
+        if {$len == 0} {
+           set filter "*.*" 
+        } 
+
+        set dcm ".dcm"
+        set ext [file extension $filter]
+
+        if {$ext == ".*"} {
+            set len [string length $filter]
+            set filter [string replace $filter [expr $len-2] end $dcm] 
+        } elseif {$ext == $dcm} {
+        } else {
+            set filter $filter$dcm
+        }
+
+        set pattern [file join $path $filter]
+        set fileList [glob -nocomplain $pattern]
+        if {$fileList == ""} {
+            DevErrorWindow "No DICOM file is selected through your filter: $filter"
+            return 1
+        }
+
+        set dcmFiles [lsort -dictionary $fileList]
+
+    }
+
+    set val [DICOMHelperLoad $dcmFiles]
+    if {$val == 1} {
+        return 1
+    }
+
+    set MultiVolumeReader(firstMRMLid) [lindex $DICOMHelper(MRMLid) 0] 
+    set MultiVolumeReader(lastMRMLid) [lindex $DICOMHelper(MRMLid) end] 
+    set MultiVolumeReader(noOfVolumes) [llength $DICOMHelper(MRMLid)] 
+    set MultiVolumeReader(volumeExtent) $DICOMHelper(volumeExtent) 
+
+    # show the first volume by default
+    MainSlicesSetVolumeAll Back $MultiVolumeReader(firstMRMLid)
+    RenderAll
+
+    return 0
+}
+
 
