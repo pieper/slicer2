@@ -74,7 +74,7 @@ proc DataInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.42 $} {$Date: 2002/06/28 20:33:57 $}]
+        {$Revision: 1.43 $} {$Date: 2002/07/26 03:31:01 $}]
 
     set Data(index) ""
     set Data(clipboard) ""
@@ -613,9 +613,9 @@ proc DataEditNode {} {
     }
     "vtkMrmlMatrixNode" {
         set id [DataGetIdFromNode $node]
-        MainMatricesSetActive $id
-        if {[IsModule Matrices] == 1} {
-            Tab Matrices row1 Manual
+        MainAlignmentsSetActive $id
+        if {[IsModule Alignments] == 1} {
+            Tab Alignments row1 Manual
         }
     }
     "vtkMrmlOptionsNode" {
@@ -709,7 +709,7 @@ proc DataAddMatrix {} {
     $n SetName manual$i
     Mrml(dataTree) InsertAfterItem $lastSel $n
 
-    MainMatricesSetActive $i
+    MainAlignmentsSetActive $i
 
     MainUpdateMRML    
 }
@@ -816,7 +816,7 @@ proc DataAddTransform {append firstSel lastSel {CallUpdate "1"} } {
     } else {
     Mrml(dataTree) InsertBeforeItem $firstSel $n
     }
-    MainMatricesSetActive $m
+    MainAlignmentsSetActive $m
 
     ###########
     ### Make a new EndTransform and insert it into the Mrml Tree
