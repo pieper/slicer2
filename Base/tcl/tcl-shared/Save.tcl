@@ -51,7 +51,7 @@ proc SaveInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.7 $} {$Date: 2003/01/20 17:03:32 $}]
+            {$Revision: 1.8 $} {$Date: 2003/01/20 17:04:29 $}]
 
     SaveInitTables
 }
@@ -79,6 +79,7 @@ proc SaveInitTables {} {
 
     upvar \#0 SaveImageTypeToExtensionMap ext
 
+    # list of supported extensions, with preferred extension first.
     set ext(BMP)  "bmp"
     set ext(JPEG) {"jpg" "jpeg"}
     set ext(PNG)  "png"
