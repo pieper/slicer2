@@ -13,7 +13,7 @@
 #include "vtkHyperPointandArray.cxx"
 #endif
 
-vtkCxxRevisionMacro(vtkHyperStreamlineDTMRI, "$Revision: 1.9 $");
+vtkCxxRevisionMacro(vtkHyperStreamlineDTMRI, "$Revision: 1.10 $");
 vtkStandardNewMacro(vtkHyperStreamlineDTMRI);
 
 // Construct object with initial starting position (0,0,0); integration step 
@@ -246,11 +246,11 @@ void vtkHyperStreamlineDTMRI::Execute()
     FixVectors(NULL, sPtr->V, iv, ix, iy);
 
     // compute invariants                                                               
-    meanEV=(ev[0]+ev[1]+ev[2])/3;
-    this->FractionalAnisotropy[0]->InsertNextValue(sqrt3halves*sqrt(((ev[0]-meanEV)*(ev[0]-meanEV)+(ev[1]-meanEV)*(ev[1]-meanEV)+(ev[2]-meanEV)*(ev[2]-meanEV))/(ev[0]*ev[0]+ev[1]*ev[1]+ev[2]*ev[2])));
+    meanEV=(sPtr->W[0]+sPtr->W[1]+sPtr->W[2])/3;
+    this->FractionalAnisotropy[0]->InsertNextValue(sqrt3halves*sqrt(((sPtr->W[0]-meanEV)*(sPtr->W[0]-meanEV)+(sPtr->W[1]-meanEV)*(sPtr->W[1]-meanEV)+(sPtr->W[2]-meanEV)*(sPtr->W[2]-meanEV))/(sPtr->W[0]*sPtr->W[0]+sPtr->W[1]*sPtr->W[1]+sPtr->W[2]*sPtr->W[2])));
     if ( this->IntegrationDirection == VTK_INTEGRATE_BOTH_DIRECTIONS )
       {
-        this->FractionalAnisotropy[1]->InsertNextValue(sqrt3halves*sqrt(((ev[0]-meanEV)*(ev[0]-meanEV)+(ev[1]-meanEV)*(ev[1]-meanEV)+(ev[2]-meanEV)*(ev[2]-meanEV))/(ev[0]*ev[0]+ev[1]*ev[1]+ev[2]*ev[2])));
+        this->FractionalAnisotropy[1]->InsertNextValue(sqrt3halves*sqrt(((sPtr->W[0]-meanEV)*(sPtr->W[0]-meanEV)+(sPtr->W[1]-meanEV)*(sPtr->W[1]-meanEV)+(sPtr->W[2]-meanEV)*(sPtr->W[2]-meanEV))/(sPtr->W[0]*sPtr->W[0]+sPtr->W[1]*sPtr->W[1]+sPtr->W[2]*sPtr->W[2])));
       }
 
     if ( inScalars ) 
@@ -460,8 +460,8 @@ void vtkHyperStreamlineDTMRI::Execute()
         FixVectors(sPtr->V, sNext->V, iv, ix, iy);
 
         // compute invariants at final position                                         
-        meanEV=(ev[0]+ev[1]+ev[2])/3;
-        fa=sqrt3halves*sqrt(((ev[0]-meanEV)*(ev[0]-meanEV)+(ev[1]-meanEV)*(ev[1]-meanEV)+(ev[2]-meanEV)*(ev[2]-meanEV))/(ev[0]*ev[0]+ev[1]*ev[1]+ev[2]*ev[2]));
+        meanEV=(sNext->W[0]+sNext->W[1]+sNext->W[2])/3;
+        fa=sqrt3halves*sqrt(((sNext->W[0]-meanEV)*(sNext->W[0]-meanEV)+(sNext->W[1]-meanEV)*(sNext->W[1]-meanEV)+(sNext->W[2]-meanEV)*(sNext->W[2]-meanEV))/(sNext->W[0]*sNext->W[0]+sNext->W[1]*sNext->W[1]+sNext->W[2]*sNext->W[2]));
         this->FractionalAnisotropy[ptId]->InsertNextValue(fa);
 
         // test FA cutoff   
