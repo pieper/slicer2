@@ -211,7 +211,7 @@ switch $env(BUILD) {
     "redhat7.3" {
         # - need to run the specially modified tcl interp in the executable 'vtk' on unix
         # - don't put process in background so that jdemo can track its status
-        set fp [open "| $env(VTK_BIN_DIR)/bin/vtk $mainscript $argv" r]
+        set fp [open "| csh -c \"$env(VTK_BIN_DIR)/bin/vtk $mainscript $argv \" |& cat" r]
     }
     "Win32VC7" {
         # put slicer in the background on windows so it won't be "Not Responding" in
