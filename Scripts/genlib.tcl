@@ -429,7 +429,7 @@ if { ![file exists $gslTestFile] } {
     file mkdir $SLICER_LIB/gsl-build
     file mkdir $SLICER_LIB/gsl
 
-    cd $SLICER_LIB/gsl-build
+    cd $SLICER_LIB/gsl-build/
 
     runcmd $::CVS -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer login
     runcmd $::CVS -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer co gsl-mirror
@@ -438,7 +438,7 @@ if { ![file exists $gslTestFile] } {
 
     if { !$isWindows } {
         # can't do Windows
-        cd $SLICER_LIB/gsl-build/gsl
+        cd $SLICER_LIB/gsl-build/gsl-mirror
 
         if { $isDarwin } {
             # equivalent of autogen.sh for Darwin (libtoolize => glibtoolize)    
