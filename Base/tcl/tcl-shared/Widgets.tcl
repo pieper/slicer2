@@ -80,10 +80,13 @@ proc ScrolledText { f args } {
 # str tabs             list of the tabs to create. no whitespace in tab names.
 # str titles           list of titles corresponding to each tab.  shown on buttons.
 # str tooltips         list of tooltips to appear over buttons. optional.
+# int extraTopFrame    whether to make another frame at top for a module to use
+# str firstTab         name of tab to raise first (defaults to first tab in list)
+#
 # .END
 #-------------------------------------------------------------------------------
 proc TabbedFrame {arrayName containerFrame buttonsLabel tabs titles \
-	{tooltips ""} {extraTopFrame "0"} } {
+	{tooltips ""} {extraTopFrame "0"} {firstTab ""}} {
     global Gui Widgets $arrayName
 
     # get the global array.
@@ -181,11 +184,13 @@ proc TabbedFrame {arrayName containerFrame buttonsLabel tabs titles \
 
 
     ###### Make the first tab active #####
-    set first [lindex $tabs 0]
+    if {$firstTab == ""} {
+	set firstTab [lindex $tabs 0]
+    }
     # press first button
-    set globalArray(TabbedFrame,$containerFrame,tab) $first
+    set globalArray(TabbedFrame,$containerFrame,tab) $firstTab
     # go to first tab
-    raise $fBottom.f$first
+    raise $fBottom.f$firstTab
 }
 
 #-------------------------------------------------------------------------------
