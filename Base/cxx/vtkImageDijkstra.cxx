@@ -5,6 +5,7 @@
 #include "vtkIntArray.h"
 #include "vtkPriorityQueue.h"
 #include "vtkIntArray.h"
+#include "vtkVersion.h"
 
 
 
