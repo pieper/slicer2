@@ -151,7 +151,7 @@ proc MIRIADSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.22 $} {$Date: 2004/02/19 00:45:59 $}]
+        {$Revision: 1.23 $} {$Date: 2004/02/19 14:33:20 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -843,10 +843,16 @@ proc MIRIADSegmentSetEMParameters { } {
     # class Air 
     set ::EMSegment(Cattrib,1,Name) Air 
     set ::EMSegment(Cattrib,1,Prob) $mp(Air,prob)
+    set ::EMSegment(Cattrib,1,LocalPriorWeight) $mp(Air,ProbDataWeight)
+    set ::EMSegment(Cattrib,1,InputChannelWeights,0) $mp(Air,InputChannelWeight,PD)
+    set ::EMSegment(Cattrib,1,InputChannelWeights,1) $mp(Air,InputChannelWeight,T2)
     EMSegmentClickLabel 1 1 1 ""
     # class Tissue
     set ::EMSegment(Cattrib,2,Name) Tissue 
     set ::EMSegment(Cattrib,2,Prob) $mp(OtherTissue,prob)
+    set ::EMSegment(Cattrib,2,LocalPriorWeight) $mp(OtherTissue,ProbDataWeight)
+    set ::EMSegment(Cattrib,2,InputChannelWeights,0) $mp(OtherTissue,InputChannelWeight,PD)
+    set ::EMSegment(Cattrib,2,InputChannelWeights,1) $mp(OtherTissue,InputChannelWeight,T2)
     EMSegmentClickLabel 2 1 2 ""
 
     # -------------------------------
@@ -876,15 +882,17 @@ proc MIRIADSegmentSetEMParameters { } {
     # CSF
     set ::EMSegment(Cattrib,4,Name) CSF 
     set ::EMSegment(Cattrib,4,Prob) $mp(CSF,prob)
+    set ::EMSegment(Cattrib,4,LocalPriorWeight) $mp(CSF,ProbDataWeight)
+    set ::EMSegment(Cattrib,4,InputChannelWeights,0) $mp(CSF,InputChannelWeight,PD)
+    set ::EMSegment(Cattrib,4,InputChannelWeights,1) $mp(CSF,InputChannelWeight,T2)
     EMSegmentClickLabel 4 1 4 ""
     # GM 
     set ::EMSegment(Cattrib,5,Name) GrayMatter 
-    set ::EMSegment(Cattrib,5,Prob) $mp(CorticalGrayMatter,prob)
     EMSegmentClickLabel 5 1 5 ""
+
     # -------------------------------
     # SUPERCLASS: WM
     set ::EMSegment(Cattrib,6,Name) WhiteMatter 
-    set ::EMSegment(Cattrib,6,Prob) $mp(NormalWhiteMatter,prob)
     EMSegmentClickLabel 6 1 6 ""
 
     EMSegmentSumGlobalUpdate                  
@@ -892,6 +900,10 @@ proc MIRIADSegmentSetEMParameters { } {
     EMSegmentChangeClass 6                    ;# Set Active Class
     set ::EMSegment(Cattrib,6,IsSuperClass) 1
     EMSegmentTransfereClassType 1 1           ;# Transfer ClassType to Superclass
+    set ::EMSegment(Cattrib,6,Prob) $mp(NormalWhiteMatter,prob)
+    set ::EMSegment(Cattrib,6,LocalPriorWeight) $mp(NormalWhiteMatter,ProbDataWeight)
+    set ::EMSegment(Cattrib,6,InputChannelWeights,0) $mp(NormalWhiteMatter,InputChannelWeight,PD)
+    set ::EMSegment(Cattrib,6,InputChannelWeights,1) $mp(NormalWhiteMatter,InputChannelWeight,T2)
     # c.) Create subclasses 
     set ::EMSegment(NumClassesNew) 2      
     EMSegmentCreateDeleteClasses 1 1          ;# 1. Parameter = ChangeGui; 
@@ -900,10 +912,16 @@ proc MIRIADSegmentSetEMParameters { } {
     # WMNormal 
     set ::EMSegment(Cattrib,7,Name) WMNormal 
     set ::EMSegment(Cattrib,7,Prob) $mp(NormalWhiteMatter,prob)
+    set ::EMSegment(Cattrib,7,LocalPriorWeight) $mp(NormalWhiteMatter,ProbDataWeight)
+    set ::EMSegment(Cattrib,7,InputChannelWeights,0) $mp(NormalWhiteMatter,InputChannelWeight,PD)
+    set ::EMSegment(Cattrib,7,InputChannelWeights,1) $mp(NormalWhiteMatter,InputChannelWeight,T2)
     EMSegmentClickLabel 7 1 7 ""
     # WMLesion 
     set ::EMSegment(Cattrib,8,Name) WMLesion 
     set ::EMSegment(Cattrib,8,Prob) $mp(LesionedWhiteMatter,prob)
+    set ::EMSegment(Cattrib,8,LocalPriorWeight) $mp(LesionedWhiteMatter,ProbDataWeight)
+    set ::EMSegment(Cattrib,8,InputChannelWeights,0) $mp(LesionedWhiteMatter,InputChannelWeight,PD)
+    set ::EMSegment(Cattrib,8,InputChannelWeights,1) $mp(LesionedWhiteMatter,InputChannelWeight,T2)
     EMSegmentClickLabel 8 1 8 ""
 
 
@@ -913,6 +931,12 @@ proc MIRIADSegmentSetEMParameters { } {
     EMSegmentChangeClass 5                    ;# Set Active Class
     set ::EMSegment(Cattrib,5,IsSuperClass) 1
     EMSegmentTransfereClassType 1 1           ;# Transfer ClassType to Superclass
+    set ::EMSegment(Cattrib,5,Prob) $mp(CorticalGrayMatter,prob)
+    set ::EMSegment(Cattrib,5,LocalPriorWeight) $mp(CorticalGrayMatter,ProbDataWeight)
+    set ::EMSegment(Cattrib,5,InputChannelWeights,0) $mp(CorticalGrayMatter,InputChannelWeight,PD)
+    set ::EMSegment(Cattrib,5,InputChannelWeights,1) $mp(CorticalGrayMatter,InputChannelWeight,T2)
+
+
     # c.) Create subclasses 
     set ::EMSegment(NumClassesNew) 21
     EMSegmentCreateDeleteClasses 1 1          ;# 1. Parameter = ChangeGui; 
@@ -935,13 +959,18 @@ proc MIRIADSegmentSetEMParameters { } {
         set ::EMSegment(Cattrib,$l,Name) $gp
         if { [MIRIADParametersGrayType $gp] == "cortical" } {
             set ::EMSegment(Cattrib,$l,Prob) $mp(CorticalGrayMatter,prob)
+            set ::EMSegment(Cattrib,$l,LocalPriorWeight) $mp(CorticalGrayMatter,ProbDataWeight)
+            set ::EMSegment(Cattrib,$l,InputChannelWeights,0) $mp(CorticalGrayMatter,InputChannelWeight,PD)
+            set ::EMSegment(Cattrib,$l,InputChannelWeights,1) $mp(CorticalGrayMatter,InputChannelWeight,T2)
         } else {
             set ::EMSegment(Cattrib,$l,Prob) $mp(SubCorticalGrayMatter,prob)
+            set ::EMSegment(Cattrib,$l,LocalPriorWeight) $mp(SubCorticalGrayMatter,ProbDataWeight)
+            set ::EMSegment(Cattrib,$l,InputChannelWeights,0) $mp(SubCorticalGrayMatter,InputChannelWeight,PD)
+            set ::EMSegment(Cattrib,$l,InputChannelWeights,1) $mp(SubCorticalGrayMatter,InputChannelWeight,T2)
         }
         EMSegmentClickLabel $l 1 $l ""
         incr l
     }
-
 
 
     #
@@ -1031,6 +1060,8 @@ proc MIRIADSegmentSetEMParameters { } {
     EMSegmentChangeSuperClass 0 1 ;# change gui to show HEAD node
 
     MIRIADSegmentSubTreeClassDefinition 0 ;# call the recursive operation to set values
+    
+
 }
 
 
@@ -1050,22 +1081,23 @@ proc MIRIADSegmentRunEM { {mode "full"} } {
         set ::EMSegment(SegmentationBoundaryMin,2) 1
         set ::EMSegment(SegmentationBoundaryMax,0) 256
         set ::EMSegment(SegmentationBoundaryMax,1) 256
-        set ::EMSegment(SegmentationBoundaryMax,2) 256
+        set ::EMSegment(SegmentationBoundaryMax,2) 54
         set ::EMSegment(EMiteration) 5
         set ::EMSegment(MFAiteration) 2
     } else {
+        # preview mode
         set ::EMSegment(SegmentationBoundaryMin,0) 1
         set ::EMSegment(SegmentationBoundaryMin,1) 1
-        set ::EMSegment(SegmentationBoundaryMin,2) 27
+        set ::EMSegment(SegmentationBoundaryMin,2) 30
         set ::EMSegment(SegmentationBoundaryMax,0) 128
         set ::EMSegment(SegmentationBoundaryMax,1) 256
-        set ::EMSegment(SegmentationBoundaryMax,2) 27
-        set ::EMSegment(EMiteration) 3
+        set ::EMSegment(SegmentationBoundaryMax,2) 30
+        set ::EMSegment(EMiteration) 5
         set ::EMSegment(MFAiteration) 2
     }
 
 
-    set ::EMSegment(Alpha) 1.0
+    set ::EMSegment(Alpha) 0.5
 
 
     EMSegmentSumGlobalUpdate

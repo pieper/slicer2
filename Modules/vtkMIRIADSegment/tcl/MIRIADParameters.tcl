@@ -81,7 +81,7 @@ proc MIRIADParametersDefaults {} {
 proc MIRIADParametersLoad { {filename ""} } {
 
     if { $filename == "" } {
-        set filename [tk_getOpenFile]
+        set filename [tk_getOpenFile -initialdir $::env(SLICER_HOME)/Modules/vtkMIRIADSegment/data]
     }
     if { $filename == "" } return;
 
@@ -153,6 +153,9 @@ proc MIRIADParametersGrayType { p } {
 
 proc MIRIADParameters {} {
 
+    if { ![info exists ::MIRIADParameters] } {
+        MIRIADParametersDefaults
+    }
     upvar #0 MIRIADParameters mp  ;# for typing simplicity and readability
 
     catch "destroy .mp"
