@@ -78,11 +78,26 @@ proc VolFreeSurferReadersBuildGUI {parentFrame} {
 
     set f $parentFrame
 
-    frame $f.fVolume  -bg $Gui(activeWorkspace) -relief groove -bd 3
+    frame $f.fVolume  -bg $Gui(activeWorkspace) -relief groove -bd 1
     frame $f.fFileType -bg $Gui(activeWorkspace)
     frame $f.fApply   -bg $Gui(activeWorkspace)
-    pack $f.fVolume $f.fFileType $f.fApply \
+    frame $f.fLogo -bg $Gui(activeWorkspace)
+    pack $f.fLogo $f.fVolume $f.fFileType $f.fApply  \
         -side top -fill x -pady $Gui(pad)
+
+    #-------------------------------------------
+    # Logo frame
+    #-------------------------------------------
+    set f $parentFrame.fLogo
+    set logoFile [ExpandPath [file join $::PACKAGE_DIR_VTKFREESURFERREADERS ".." ".." ".." tcl images "mgh.ppm"]]
+    if {[file exists $logoFile]} {
+        image create photo iFSLogo -file $logoFile
+        eval {label $f.lLogo -image iFSLogo -width 62 -height 68 -anchor center} \
+            -bg $Gui(activeWorkspace)   -padx 0 -pady 0 
+    } else {
+        eval {label $f.lLogo -text "MGH" -anchor center} $Gui(WLA)
+    }
+    pack $f.lLogo 
 
     #-------------------------------------------
     # fVolume frame
@@ -170,12 +185,14 @@ proc VolFreeSurferReadersBuildGUI {parentFrame} {
     DevAddButton $f.bCancel "Cancel" "VolumesPropsCancel" 8
     grid $f.bApply $f.bCancel -padx $Gui(pad)
 
+
     #-------------------------------------------
     # Demo Button
     #-------------------------------------------
-    set f $parentFrame
-    eval button $f.demo -text Demo -command "VolFreeSurferDemo" $Gui(WBA)
-    pack $f.demo -side left -padx $Gui(pad) -pady 0
+#    set f $parentFrame.fDemo
+#    eval button $f.bDemo -text Demo -command "VolFreeSurferDemo" $Gui(WBA)
+#    pack $f.bDemo 
+# -side left -padx $Gui(pad) -pady 0
 
 }
 
@@ -189,6 +206,7 @@ proc VolFreeSurferDemo {} {
     global env
 
     source $env(SLICER_HOME)/Modules/vtkFreeSurferReaders/tcl/regions.tcl
+    source $env(SLICER_HOME)/Modules/vtkFreeSurferReaders/tcl/ccdb.tcl
     set r [regions #auto]
     $r demo
 }
