@@ -168,9 +168,6 @@ vtkMrmlSlicer::vtkMrmlSlicer()
     this->LastFilter[s] = NULL;
   }
 
-  // Active slice has polygon drawing (return with GetActiveOutput)
-  this->SetActiveSlice(0);
-
   this->BackFilter = 0;
   this->ForeFilter = 0;
   this->FilterActive = 0;
@@ -222,6 +219,19 @@ vtkMrmlSlicer::vtkMrmlSlicer()
   // Use the original approach by default.
   this->DrawDoubleApproach = 0;
   // << AT 3/26/01
+
+  // reformatting additions
+  this->VolumesToReformat = vtkCollection::New();
+  this->VolumeReformatters = vtkVoidArray::New();
+  this->MaxNumberOfVolumesToReformat = 20;
+  this->VolumeReformatters->SetNumberOfValues(this->MaxNumberOfVolumesToReformat);
+  for (int i = 0; i < this->MaxNumberOfVolumesToReformat; i++)
+    {
+      this->VolumeReformatters->SetValue(i,NULL);
+    }
+
+  // Active slice has polygon drawing (return with GetActiveOutput)
+  this->SetActiveSlice(0);
 
   this->Update();
 }
@@ -513,6 +523,9 @@ void vtkMrmlSlicer::SetActiveSlice(int s)
   this->ActiveSlice = s;
   this->BuildUpperTime.Modified();
   this->BuildLowerTime.Modified();
+  
+  // arbitrary reformatting
+  this->VolumeReformattersModified();
 }
 
 //----------------------------------------------------------------------------
@@ -806,7 +819,6 @@ void vtkMrmlSlicer::BuildUpper(int s)
       this->Overlay[s]->SetInput(2, this->LabelMapper[s]->GetOutput());
     }
   }
-
 
   // The IJK reformatting depends on the volumes
   /////////////////////////////////////////////////////
@@ -1286,6 +1298,9 @@ void vtkMrmlSlicer::SetOffset(int s, float userOffset)
   this->BackReformat[s]->Modified();
   this->ForeReformat[s]->Modified();
   this->LabelReformat[s]->Modified();
+
+  // Use reformat matrix for other arbitrary volumes we may be reformatting
+  this->VolumeReformattersModified();
 }
 
 //----------------------------------------------------------------------------
@@ -1823,4 +1838,143 @@ void vtkMrmlSlicer::SetForeFade(int fade)
 	  this->Overlay[s]->SetFade(1, fade);
   }
 }
+
+//----------------------------------------------------------------------------
+// Convenient reformatting functions: odonnell, 5/4/2001
+//----------------------------------------------------------------------------
+
+//----------------------------------------------------------------------------
+// Description:
+// Use the same reformat matrix as slice s.
+// Causes this volume to be reformatted along with this slice.
+// (reformatter will update when slice number changes.)
+//
+// Currently this is not used.
+void vtkMrmlSlicer::ReformatVolumeLikeSlice(vtkMrmlVolume *v, int s)
+{
+  // find the reformatter for this volume
+  vtkImageReformat *reformat = this->GetVolumeReformatter(v);
+
+  if (reformat != NULL)
+    reformat->SetReformatMatrix(this->ReformatMatrix[s]);
+}
+
+//----------------------------------------------------------------------------
+// Description:
+// Add a volume for reformatting: this may be any volume in the 
+// slicer, and the reformatted output can be obtained by
+// Slicer->GetReformatOutputFromVolume(vtkMrmlVolume *v).
+// Currently only reformatting along with the slices is 
+// supported, but code may be added to use arbitrary 
+// reformat matrices if needed.
+// Note that this does not allow duplicate entries: so now you may
+// only reformat a certain volume with one reformatter.
+//
+//
+// For now, only reformatting that mirrors the active slice is supported.
+// This happens automatically and the reformatters update when the 
+// active slice or slice offset change.  In the future this should
+// be made more general to allow arbitrary reformatting.
+void vtkMrmlSlicer::AddVolumeToReformat(vtkMrmlVolume *v)
+{
+  int index = this->VolumesToReformat->IsItemPresent(v);
+  if (index) 
+    {
+      //vtkErrorMacro("already reformatting volume " << v );  
+      return;
+    }
+
+  if (index > this->MaxNumberOfVolumesToReformat)
+    {
+      vtkErrorMacro("increase the number of volumes the slicer can reformat"); 
+      return;
+    }
+
+  // make a reformatter object to do this
+  vtkImageReformat *reformat = vtkImageReformat::New();
+
+  // set its input to be this volume
+  reformat->SetInput(v->GetOutput());
+  reformat->SetInterpolate(v->GetMrmlNode()->GetInterpolate());
+  reformat->SetWldToIjkMatrix(v->GetMrmlNode()->GetWldToIjk());
+
+  // bookkeeping: add to list of volumes
+  this->VolumesToReformat->AddItem(v);
+  index = this->VolumesToReformat->IsItemPresent(v);
+  vtkDebugMacro("add: index of volume:" << index );
+
+  // bookkeeping: the index of the reformatter and volume will be the same:
+  // add to list of reformatters
+  this->VolumeReformatters->InsertValue(index, reformat);
+
+  // for now only allow reformatting along with the active slice
+  reformat->SetReformatMatrix(this->ReformatMatrix[this->GetActiveSlice()]);
+  reformat->Modified();
+}
+
+//----------------------------------------------------------------------------
+// Description:
+// Stop reformatting all volumes.  Do this when your module is done
+// with this input (such as when it is exited).
+void vtkMrmlSlicer::RemoveAllVolumesToReformat()
+{
+  // clear all pointers to volumes
+  this->VolumesToReformat->RemoveAllItems();
+
+  // delete all reformatters
+  for (int i = 0; i < this->MaxNumberOfVolumesToReformat; i++)
+    {
+      vtkImageReformat *reformat = 
+	(vtkImageReformat *) this->VolumeReformatters->GetValue(i);
+      if (reformat != NULL) 
+	{
+	  // kill it 
+	  reformat->Delete();
+	  this->VolumeReformatters->SetValue(i,NULL);
+	}
+    }
+}
+
+//----------------------------------------------------------------------------
+// Description:
+// internal use: get the reformatter used for this volume.
+vtkImageReformat *vtkMrmlSlicer::GetVolumeReformatter(vtkMrmlVolume *v)
+{
+  int index = this->VolumesToReformat->IsItemPresent(v);
+  if (index) 
+    {
+      // get pointer to reformatter
+      vtkImageReformat *reformat;
+      reformat = (vtkImageReformat *) this->VolumeReformatters->GetValue(index);
+      return reformat;
+    }
+  else
+    vtkErrorMacro("Not reformatting this volume: " << v );  
+}
+
+//----------------------------------------------------------------------------
+// Description:
+// internal use: mark all reformatters as modified so their output
+// will update. (this is called when the reformat matrix for a slice
+// changes, so these reformatted slices can follow the original
+// three slices in the slicer's slice windows).
+void vtkMrmlSlicer::VolumeReformattersModified()
+{
+  int max = this->VolumeReformatters->GetNumberOfTuples();
+
+  for (int i = 0; i < max; i++)
+    {
+      vtkImageReformat *ref = 
+	(vtkImageReformat *)this->VolumeReformatters->GetValue(i);
+      if (ref != NULL)
+	{
+	  // for now only allow reformatting along with the active slice
+	  ref->SetReformatMatrix(this->ReformatMatrix[this->GetActiveSlice()]);
+	  ref->Modified();
+	}
+    }
+}
+
+
+
 

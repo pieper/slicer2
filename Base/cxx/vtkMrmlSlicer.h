@@ -56,6 +56,8 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkImageDouble2D.h"
 #include "vtkIndirectLookupTable.h"
 #include "vtkImageDrawROI.h"
+#include "vtkCollection.h"
+#include "vtkVoidArray.h"
 
 #define NUM_SLICES 3
 
@@ -351,6 +353,17 @@ class VTK_EXPORT vtkMrmlSlicer : public vtkObject
   vtkSetMacro(FilterOverlay, int);
   vtkBooleanMacro(FilterOverlay, int);
 
+  //-------------------- Additional Reformatting ---------------------------//
+  // Description:
+  // For developers: convenience functions that reformat volumes 
+  // in the slicer.
+  vtkImageData *GetReformatOutputFromVolume(vtkMrmlVolume *v) {
+    return this->GetVolumeReformatter(v)->GetOutput();
+  };
+  
+  void ReformatVolumeLikeSlice(vtkMrmlVolume * v, int s);
+  void AddVolumeToReformat(vtkMrmlVolume * v);
+  void RemoveAllVolumesToReformat();
 
   //-------------------- Draw ---------------------------//
   // Description:
@@ -526,6 +539,15 @@ protected:
   vtkTimeStamp UpdateTime;
   vtkTimeStamp BuildLowerTime;
   vtkTimeStamp BuildUpperTime;
+
+  // Additional Reformatting capabilities
+  vtkVoidArray *VolumeReformatters;
+  vtkCollection *VolumesToReformat;
+  vtkImageReformat *GetVolumeReformatter(vtkMrmlVolume *v);
+  void VolumeReformattersModified();
+  int MaxNumberOfVolumesToReformat;
+
 };
 
 #endif
+
