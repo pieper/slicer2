@@ -148,7 +148,7 @@ proc TetraMeshInit {} {
 	#   appropriate revision number and date when the module is checked in.
 	#   
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.22 $} {$Date: 2001/10/30 15:35:04 $}]
+		{$Revision: 1.23 $} {$Date: 2001/11/09 20:03:54 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -360,10 +360,35 @@ The TetraMesh module allows a user to read in a Tetrahedral Mesh.  The Mesh is c
 	#-------------------------------------------
 	# Surface->Options->Nodes
 	#-------------------------------------------
-        set f $fSurface.fOptions.fNodes
+        set ff $fSurface.fOptions.fNodes
+        set  f $ff
 
-        DevAddLabel $f.l "Nodes: Not Implemented. Use Scalar Field"
-        pack $f.l -side left -padx $Gui(pad)
+	foreach frame "Scale Skip" {
+		frame $f.f$frame -bg $Gui(activeWorkspace)
+		pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
+	}
+
+           #-------------------------------------------
+           # SField->Scale
+           #-------------------------------------------
+           set f $ff.fScale
+   
+           DevAddLabel  $f.lSphereScale "Sphere Scaling"
+           eval {entry $f.eSphereScale -textvariable TetraMesh(SphereScale) -width 5} $Gui(WEA)
+   
+           pack $f.lSphereScale $f.eSphereScale -side left -padx $Gui(pad)
+   
+           #-------------------------------------------
+           # SField->Skip
+           #-------------------------------------------
+   
+           set f $ff.fSkip
+   
+           DevAddLabel  $f.lSphereSkip "Keep Every Nth Node:"
+           eval {entry $f.eSphereSkip -textvariable TetraMesh(SphereSkip) -width 5} $Gui(WEA)
+   
+           pack $f.lSphereSkip $f.eSphereSkip -side left -padx $Gui(pad)
+
 
 	#-------------------------------------------
 	# Surface->Options->ScalarField
@@ -1242,12 +1267,107 @@ vtkSphereSource TetraSphere
 vtkGlyph3D ScalarGlyph
   ScalarGlyph SetInput [TransPoints GetOutput]
   ScalarGlyph SetSource [TetraSphere GetOutput]
+  ScalarGlyph SetScaleModeToDataScalingOff
   ScalarGlyph SetScaleModeToScaleByScalar
   ScalarGlyph SetScaleFactor $TetraMeshArrowScale
 ScalarGlyph Update
 
   #set m [ TetraMeshCreateModel ${modelbasename}Scalars $LOWSCALAR $HIGHSCALAR $v ]
   set m [ TetraMeshCreateModel ${modelbasename}Scalars 0 10 $v ]
+
+  ### Need to copy the output of the pipeline so that the results
+  ### Don't get over-written later. Also, when we delete the inputs,
+  ### We don't want the outputs deleted. These lines should prevent this.
+  set result [ScalarGlyph GetOutput]
+  vtkPolyData ModelPolyData$m
+  set Model($m,polyData) ModelPolyData$m
+  $Model($m,polyData) CopyStructure $result
+  [ $Model($m,polyData) GetPointData] PassData [$result GetPointData]
+  [ $Model($m,polyData) GetCellData] PassData  [$result GetCellData]
+
+foreach r $Module(Renderers) {
+    Model($m,mapper,$r) SetInput $Model($m,polyData)
+}
+
+TheTransform Delete
+TransPoints Delete
+TetraReader Delete
+TetraSphere Delete
+PointSelection Delete
+ScalarGlyph Delete
+
+MainModelsUpdateMRML 
+MainUpdateMRML
+Render3D
+
+set TetraMesh(modelbasename) ""
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC TetraMeshProcessNodes
+#
+# This Routine Reads in the TetraMesh and produces
+# a Model for the Scalar Field of the nodes in the mesh. 
+# It assumes the nodes have scalar labels
+#
+# Only one line difference between this and TetraMeshProcessScalar
+#
+# .END
+#-------------------------------------------------------------------------------
+proc TetraMeshProcessNodes {} {
+	global TetraMesh Model Volume Module
+
+######################################################################
+#### Get the data
+######################################################################
+
+    if {![TetraMeshGetData]} {
+      return;
+    }
+
+    set modelbasename "$TetraMesh(modelbasename)"
+
+    set CurrentTetraMesh [TetraReader GetOutput]
+    $CurrentTetraMesh Update
+
+    set TetraMeshFractionOn $TetraMesh(SphereSkip)
+    set TetraMeshArrowScale $TetraMesh(SphereScale)
+
+######################################################################
+#### Get the range of the data, not exactly thread safe. See vtkDataSet.h
+#### But, since we are not concurrently modifying the dataset, we should
+#### be OK.
+######################################################################
+
+#######################################################################
+#### Setup the pipeline: Cones -> PointMaskSelection -> Glyph data
+#######################################################################
+
+  TetraMeshGetTransform
+  set v $Volume(activeID)
+
+vtkMaskPoints PointSelection
+  PointSelection SetInput $CurrentTetraMesh
+  PointSelection SetOnRatio $TetraMeshFractionOn
+  PointSelection RandomModeOff
+vtkTransformFilter TransPoints
+  TransPoints SetTransform TheTransform
+  TransPoints SetInput [PointSelection GetOutput]
+vtkSphereSource TetraSphere
+  TetraSphere SetPhiResolution 5
+  TetraSphere SetThetaResolution 5
+  TetraSphere SetRadius 0.15
+vtkGlyph3D ScalarGlyph
+  ScalarGlyph SetInput [TransPoints GetOutput]
+  ScalarGlyph SetSource [TetraSphere GetOutput]
+  ScalarGlyph SetScaleModeToDataScalingOff
+#  ScalarGlyph SetScaleModeToScaleByScalar
+  ScalarGlyph SetScaleFactor $TetraMeshArrowScale
+ScalarGlyph Update
+
+  #set m [ TetraMeshCreateModel ${modelbasename}Nodes $LOWSCALAR $HIGHSCALAR $v ]
+  set m [ TetraMeshCreateModel ${modelbasename}Nodes 0 10 $v ]
 
   ### Need to copy the output of the pipeline so that the results
   ### Don't get over-written later. Also, when we delete the inputs,
@@ -1305,7 +1425,6 @@ proc TetraMeshProcessVectorField {} {
 #### Check that the Vectors are there
 ######################################################################
 
-
 set tmpvectors [[$CurrentTetraMesh GetPointData] GetVectors] 
 if { $tmpvectors == ""} {
     DevErrorWindow "No Vector Data in Mesh"
@@ -1346,8 +1465,9 @@ vtkGlyph3D VectorGlyph
   VectorGlyph SetInput [PointSelection GetOutput]
   VectorGlyph SetSource [TetraCone GetOutput]
   VectorGlyph SetScaleModeToScaleByVector
+#  VectorGlyph SetScaleModeToDataScalingOff
   VectorGlyph SetScaleFactor $TetraMeshArrowScale
-
+  VectorGlyph Print
   ######################################################################
   #### Now, determine the transform
   #### If a volume has been selected, use that volumes ScaledIJK to RAS
