@@ -71,6 +71,7 @@ public:
     y     = p.y;
     z     = p.z;
     value = p.value;
+    return *this;
   }
 
 
