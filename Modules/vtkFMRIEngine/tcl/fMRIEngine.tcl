@@ -186,7 +186,7 @@ proc fMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.3 $} {$Date: 2005/03/28 17:22:23 $}]
+        {$Revision: 1.4 $} {$Date: 2005/03/28 21:06:11 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -456,7 +456,7 @@ proc fMRIEngineInspectActVolume {} {
 # .END
 #-------------------------------------------------------------------------------
 proc fMRIEngineComputeContrasts {} {
-    global fMRIEngine Gui Volume
+    global fMRIEngine Gui MultiVolumeReader Volume
 
     set curs [$fMRIEngine(computeListBox) curselection] 
     if {$curs != ""} {
@@ -466,7 +466,14 @@ proc fMRIEngineComputeContrasts {} {
         }
 
         unset -nocomplain fMRIEngine(actVolumeNames)
- 
+
+        # total volumes from all runs
+        set totalVols 0
+        for {set r 1} {$r <= $fMRIEngine(noOfRuns)} {incr r} { 
+            set seqName $fMRIEngine($r,sequenceName)
+            set totalVols [expr $MultiVolumeReader($seqName,noOfVolumes) + $totalVols]
+        }
+
         set size [llength $curs]
         for {set ii 0} {$ii < $size} {incr ii} {
             set jj [lindex $curs $ii]
@@ -505,6 +512,7 @@ proc fMRIEngineComputeContrasts {} {
                     incr count
                 }
 
+                fMRIEngine(actVolumeGenerator) SetNumberOfVolumes $totalVols 
                 fMRIEngine(actVolumeGenerator) SetContrastVector fMRIEngine(contrast) 
                 fMRIEngine(actVolumeGenerator) SetInput $fMRIEngine(actBetaAndStd) 
                 set act [fMRIEngine(actVolumeGenerator) GetOutput]
@@ -685,7 +693,7 @@ proc fMRIEngineBuildUIForInspectTab {parent} {
 #   DevAddLabel $f.lactScale "Levels:"
    eval {scale $f.sactScale \
        -orient horizontal \
-           -from 1 -to 20 \
+           -from 1 -to 30 \
            -resolution 1 \
            -bigincrement 10 \
            -length 155 \
@@ -1342,8 +1350,7 @@ proc fMRIEngineScaleActivation {no} {
     global Volume fMRIEngine MultiVolumeReader
 
     if {! [info exists fMRIEngine(allPValues)]} {
-        
-        set i 10 
+        set i 20 
         while {$i >= 1} {
             set v [expr 1 / pow(10,$i)] 
             lappend fMRIEngine(allPValues) $v 
