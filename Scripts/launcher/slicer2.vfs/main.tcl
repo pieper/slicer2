@@ -39,14 +39,12 @@ if {[catch {
 # set the base library paths for this build
 set env(LD_LIBRARY_PATH) ${env(VTK_BIN_DIR)}/bin:${env(SLICER_HOME)}/Base/builds/${env(BUILD)}/bin:${env(SLICER_HOME)}/Lib/${env(BUILD)}/tcl:${env(LD_LIBRARY_PATH)}
 
-# set the base tcl/tk library paths if they are not set already, looking in the slicer home lib 
-# directory for this build
-if {[info exists env(TCL_LIBRARY)] == 0} { 
-    set env(TCL_LIBRARY) [glob -nocomplain ${env(SLICER_HOME)}/Lib/${env(BUILD)}/tcl/tcl*]
-}
-if {[info exists env(TK_LIBRARY)] == 0} { 
-    set env(TK_LIBRARY) [glob -nocomplain ${env(SLICER_HOME)}/Lib/${env(BUILD)}/tcl/tk*]
-}
+# set the base tcl/tk library paths, looking in the slicer home Lib 
+# subdirectory for this build. If the environment variable was already set, it
+# should revert, after slicer exits, to the user's default value
+set env(TCL_LIBRARY) [glob -nocomplain ${env(SLICER_HOME)}/Lib/${env(BUILD)}/tcl/tcl*]
+set env(TK_LIBRARY) [glob -nocomplain ${env(SLICER_HOME)}/Lib/${env(BUILD)}/tcl/tk*]
+
 # set env(TCL_LIBRARY) ${env(SLICER_HOME)}/Lib/${env(BUILD)}/tcl/tcl8.4
 # set env(TK_LIBRARY) ${env(SLICER_HOME)}/Lib/${env(BUILD)}/tk/tk8.4
 set env(TCLLIBPATH) "${env(VTK_SRC_DIR)} ${env(SLICER_HOME)}/Base/Wrapping/Tcl/vtkSlicerBase ${env(TCLLIBPATH)}"
