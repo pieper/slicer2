@@ -115,7 +115,7 @@
 # .END
 #-------------------------------------------------------------------------------
 proc MainBoot {{mrmlFile ""}} {
-    global Module Gui Dag Anno View Slice viewWin
+    global Module Gui Dag Anno View Slice viewWin verbose
 
     # See which module prevents a slice window from rendering
     set checkSliceRender 0
@@ -262,6 +262,9 @@ The 3D Slicer will exit so the problem can be corrected."
             }
         }
     }
+    if {$verbose} {
+        puts "Done Reading $fileName"; update
+    }
 
     #-------------------------------------------
     # Load MRML data
@@ -278,6 +281,9 @@ The 3D Slicer will exit so the problem can be corrected."
             set mrmlFile ""
         }
     }
+    if {$verbose} {
+        puts "Initializing MRML..."; update
+    }
     MainMrmlRead $mrmlFile
     MainUpdateMRML
     MainOptionsRetrievePresetValues
@@ -285,7 +291,13 @@ The 3D Slicer will exit so the problem can be corrected."
     #-------------------------------------------
     # Initialize the Program State
     #-------------------------------------------
+    if {$verbose} {
+        puts "MainSetup..."; update
+    }
     MainSetup
+    if {$verbose} {
+        puts "RenderAll..."; update
+    }
     RenderAll
 
     #-------------------------------------------
@@ -368,7 +380,7 @@ proc MainInit {} {
 
         # Set version info
     lappend Module(versions) [ParseCVSInfo Main \
-        {$Revision: 1.88 $} {$Date: 2002/11/05 17:47:50 $}]
+        {$Revision: 1.89 $} {$Date: 2002/11/13 23:14:50 $}]
 
     # Call each "Init" routine that's not part of a module
     #-------------------------------------------
