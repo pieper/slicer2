@@ -71,7 +71,7 @@ proc DataInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.32 $} {$Date: 2001/02/19 17:53:27 $}]
+		{$Revision: 1.33 $} {$Date: 2001/07/19 10:39:21 $}]
 
 	set Data(index) ""
 	set Data(clipboard) ""
@@ -261,107 +261,62 @@ to quickly cut and paste items.
 # .END
 #-------------------------------------------------------------------------------
 proc DataDisplayTree {{index end}} {
-	global Data
-
-	# Clear old
-	$Data(fNodeList) delete 0 end
-
-	# Insert new
-	set depth 0
+    global Data
+    
+    # Clear old
+    $Data(fNodeList) delete 0 end
+    
+    # Insert new: traverse the MRML tree and get Title for each node
+    set depth 0
     set tree Mrml(dataTree)
-	$tree InitTraversal
+    $tree InitTraversal
     set node [$tree GetNextItem]
     while {$node != ""} {
+	#if {[$node GetLabelMap] == "1"} {
+	#    set line "Label: $name"
+	#} else {	
+	#    set line "Volume: $name"
+	#}
+	#vtkMrmlOptionsNode {
+	#    set name [$node GetContents]
+	#    set line "Options: $name"
+	#}
+	#vtkMrmlLandmarkNode {
+	#    set name [$node GetName]
+	#    set line "Landmark: camera XYZ = [$node GetXYZ], focalPoint XYZ =[$node GetFXYZ], position = [$node GetPathPosition]"
+	#}
 
-		set class [$node GetClassName]
-		set classlen [string length $class]
-		set classnickname [string range $class 7 [expr $classlen - 5]]
+	# Update indentation for display of this node
+	set indent [$node GetIndent]
+	if {$indent < 0} {
+	    incr depth $indent
+	}
 
-		# Add node-dependent descriptions
-		switch $class {
-			vtkMrmlModelNode {
-				set desc [$node GetDescription]
-				set name [$node GetName]
-				if {$desc == ""} {
-					set desc [file root [file tail [$node GetFileName]]]
-				}
-				if {$name == ""} {set name $desc}
-				set line "Model: $name"
-			}
-			vtkMrmlVolumeNode {
-				set desc [$node GetDescription]
-				set name [$node GetName]
-				if {$desc == ""} {
-					set desc [file root [file tail [$node GetFilePrefix]]]
-				}
-				if {$name == ""} {set name $desc}
-				if {[$node GetLabelMap] == "1"} {
-					set line "Label: $name"
-				} else {	
-					set line "Volume: $name"
-				}
-			}
-			vtkMrmlColorNode {
-				set desc [$node GetDescription]
-				set name [$node GetName]
-				if {$name == ""} {set name $desc}
-				if {$desc == ""} {
-					set desc [$node GetDiffuseColor]
-				}
-				set line "Color: $name"
-			}
-			vtkMrmlMatrixNode {
-				set desc [$node GetDescription]
-				set name [$node GetName]
-				if {$name == ""} {set name $desc}
-				set line "Matrix: $name"
-			}
-			vtkMrmlTransformNode {
-				set line "Transform"
-			}
-			vtkMrmlEndTransformNode {
-				set line "EndTransform"
-			}
-			vtkMrmlOptionsNode {
-				set name [$node GetContents]
-				set line "Options: $name"
-			}
-			vtkMrmlLandmarkNode {
-			    set name [$node GetName]
-			    set line "Landmark: camera XYZ = [$node GetXYZ], focalPoint XYZ =[$node GetFXYZ], position = [$node GetPathPosition]"
-			}
-			default {
-				set name [$node GetName]
-				set desc [$node GetDescription]
-				set line "$classnickname: $name"
-			}
-		}
-		
-		if {$class == "vtkMrmlEndTransformNode" || \
-		    $class == "vtkMrmlEndFiducialsNode" || \
-		    $class == "vtkMrmlEndPathNode" } {
-			set depth [expr $depth - 1]
-		}
+	# Indentation using tabs
+	set tabs ""
+	for {set i 0} {$i < $depth} {incr i} {
+	    set tabs "${tabs}   "
+	}
 
-		set tabs ""
-		for {set i 0} {$i < $depth} {incr i} {
-			set tabs "${tabs}   "
-		}
-		$Data(fNodeList) insert end ${tabs}$line
+	# Get node's title
+	set title [$node GetTitle]
 
-		if {$class == "vtkMrmlTransformNode" || \
-	            $class == "vtkMrmlPathNode" || \
-		    $class == "vtkMrmlFiducialsNode" } {
-			incr depth
-		}
+	# Insert node's title into list with proper indentation
+	$Data(fNodeList) insert end ${tabs}$title
 
-		# Traverse
+	# Update indentation for display of the following nodes
+	if {$indent > 0} {
+	    incr depth $indent
+	}
+	
+	# Traverse
         set node [$tree GetNextItem]
-	}
-	if {$index == ""} {
-		set index "end"
-	}
-	$Data(fNodeList) selection set $index $index
+    }
+
+    if {$index == ""} {
+	set index "end"
+    }
+    $Data(fNodeList) selection set $index $index
 }
 
 #-------------------------------------------------------------------------------
