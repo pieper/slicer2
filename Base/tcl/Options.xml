@@ -17,7 +17,8 @@ ordered='Data
 	Colors
 	TwinDisplay
 	EMSegment'
-suppressed='Custom'
+suppressed='Custom
+	CrossSection'
 
 </Options>
 </MRML>
