@@ -18,12 +18,16 @@
 # --------------------------------------------------------------
 
 # Whether this install should contain code only for bwh (MI)
+# This is Sandy's code (executable the slicer calls) 
+# that we don't distribute outside the SPL/AI Lab.
 setenv BWH_INSTALL 1
 
 # Set the directory of an older version of the slicer
 # where we will look for the following things:
-# program/loc.txt
+# program/loc.txt  (this is a demo of locator)
 # program/bin/print_header  (NO: this is in CVS now...)
+# This is Mark's binary file, but his source is not in CVS 
+# so we have the binary there for now.
 # for BWH only : program/mi-bin and servers/SignaSP/spl_server
 setenv MY_OLD_SLICER /local/pkg/slicer-1.0.1
 
@@ -40,7 +44,9 @@ setenv MY_TK /local/src/tk8.3.0
 setenv MY_VER_NUM 8.3
 
 # Set the path to your VTK
-setenv MY_VTK /projects/slicer/vtk/vtk3.2
+#setenv MY_VTK /projects/slicer/vtk/vtk3.2
+#setenv MY_VTK /projects/slicer/vtk/vtk3.2_gcc
+setenv MY_VTK /projects/slicer/vtk/vtk3.2_nov_13
 
 # Set your CVSROOT for checking out slicer through cvs
 # This should be anonymous for nice external CVS access
@@ -52,7 +58,7 @@ setenv CVSROOT :pserver:anonymous@cvs.spl.harvard.edu:/projects/cvs/slicer
 #  End of variables to edit before running the tarup script.
 # --------------------------------------------------------------
 
-echo Slicer tarup script '$Revision: 1.17 $'...
+echo Slicer tarup script '$Revision: 1.18 $'...
 echo Tcl path: $MY_TCL
 echo Tk path: $MY_TK
 echo Tcl/Tk version: MY_VER_NUM
@@ -102,7 +108,8 @@ cp ${MY_TCL}/unix/tclsh program
 
 echo Finished.  
 echo Please change SLICER_HOME in the slicer2k script when you install. 
-echo For SPL versions: dont forget to make sure logging works!!!!!!!!!!
-echo For nightly versions: change the slicer-nightly link in /local/bin to point here.
+echo For SPL versions, dont forget to make sure logging works!!!!!!!!!!
+echo For nightly versions, change the slicer-nightly link in /local/bin to point here.
+
 
 
