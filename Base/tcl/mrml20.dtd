@@ -15,26 +15,27 @@
     filePrefix CDATA #REQUIRED
     rasToIjkMatrix NMTOKENS "1 0 0 0  0 1 0 0  0 0 1 0  0 0 0 1"
     rasToVtkMatrix NMTOKENS "1 0 0 0  0 -1 0 0  0 0 1 0  0 0 0 1"
+    positionMatrix NMTOKENS "1 0 0 0  0 1 0 0  0 0 1 0  0 0 0 1"
     colorLUT NMTOKEN ""
+    scanOrder (LR | RL | SI | IS | AP | PA) "SI"
     description CDATA ""
     scalarType (Char | UnsignedChar | Short | UnsignedShort | Int | UnsignedInt | Long | UnsignedLong | Float | Double) "Short"
     numScalars NMTOKEN "1"
-    littleEndian (1 | 0) "0"
-    interpolate (1 | 0) "0"
-    labelMap (1 | 0) "0"
+    labelMap (yes | no) "no"
+    interpolate (yes | no) "yes"
+    littleEndian (yes | no) "no"
     tilt NMTOKEN "0.0"
-    autoWindowLevel (1 | 0) "1"
-    window CDATA "127"
-    level CDATA "64"
-    autoThreshold (0 | 1) "0"
+    autoWindowLevel (yes | no) "yes
+    window CDATA "256"
+    level CDATA "128"
+    applyThreshold (yes | no) "no"
+    autoThreshold (yes | no) "no"
     lowerThreshold CDATA "-32768"
     upperThreshold CDATA "32767"
-    ignore (1 | 0) "0"
+    ignore (yes | no) "no"
     imageRange NMTOKENS "1 1"
     dimensions NMTOKENS "256 256"
-    spacing NMTOKENS "1 1 1"
-    scanOrder (LR | RL | SI | IS | AP | PA | OB) "SI"
-    positionMatrix NMTOKENS "1 0 0 0  0 1 0 0  0 0 1 0  0 0 0 1">
+    spacing NMTOKENS "1 1 1">
 
 <!ELEMENT Model (#PCDATA)>
 <!ATTLIST Model 
@@ -43,11 +44,11 @@
     color NMTOKEN ""
     description CDATA ""
     opacity NMTOKEN "1.0"
-    visibility (1 | 0) "1"
-    clipping (1 | 0) "0"
-    backfaceCulling (1 | 0) "1"
-    scalarVisibility (1 | 0) "0"
-    ignore (1 | 0) "0"
+    visibility (yes | no) "yes
+    clipping (yes | no) "no"
+    backfaceCulling (yes | no) "yes"
+    scalarVisibility (yes | no) "no"
+    ignore (yes | no) "no"
     scalarRange NMTOKENS "0 100">
 
 <!ELEMENT Color (#PCDATA)>

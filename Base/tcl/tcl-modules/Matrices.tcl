@@ -429,7 +429,7 @@ Ron is nice.
 			bind $f.e${slider} <FocusOut> \
 				"MatricesManualTranslate regTran${slider}"
 
-		set c {scale $f.s${slider} -from -180 -to 180 -length 120 \
+		set c {scale $f.s${slider} -from -240 -to 240 -length 120 \
 			-command "MatricesManualTranslate regTran${slider}" \
 			-variable Matrix(regTran${slider}) -resolution 1 $Gui(WSA)} 
 			eval [subst $c]

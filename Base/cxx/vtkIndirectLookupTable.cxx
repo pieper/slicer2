@@ -58,7 +58,7 @@ vtkIndirectLookupTable::vtkIndirectLookupTable()
   this->Level = 128;
   this->LowerThreshold = VTK_SHORT_MIN;
   this->UpperThreshold = VTK_SHORT_MAX;
-  this->ApplyThreshold = 0;
+  this->ApplyThreshold = 1;
 
   this->inLoPrev = 0;
   this->inHiPrev = 0;

@@ -38,7 +38,7 @@
 #   MainInteractorB1
 #   MainInteractorShiftB1
 #   MainInteractorB1Release
-#   MainInteractorControlB1Release
+#   MainInteractorShiftB1Release
 #   MainInteractorB1Motion
 #   MainInteractorControlB1Motion
 #   MainInteractorAltB1Motion
@@ -106,19 +106,19 @@ proc MainInteractorBind {widget} {
 	bind $widget <Shift-B1-Motion>        {MainInteractorB2Motion %W %x %y}
 	bind $widget <Shift-ButtonPress-1>    {MainInteractorShiftB1 %W %x %y}
 	bind $widget <Shift-ButtonRelease-1> \
-		{MainInteractorControlB1Release %W %x %y}
+		{MainInteractorShiftB1Release %W %x %y}
 
 	# Control-B1
 	bind $widget <Control-B1-Motion>      {MainInteractorControlB1Motion %W %x %y}
 	bind $widget <Control-ButtonPress-1>  {MainInteractorShiftB1 %W %x %y}
 	bind $widget <Control-ButtonRelease-1> \
-		{MainInteractorControlB1Release %W %x %y}
+		{MainInteractorShiftB1Release %W %x %y}
 
 	# Alt-B1
 	bind $widget <Alt-B1-Motion>          {MainInteractorAltB1Motion %W %x %y}
 	bind $widget <Alt-ButtonPress-1>      {MainInteractorShiftB1 %W %x %y}
 	bind $widget <Alt-ButtonRelease-1> \
-		{MainInteractorControlB1Release %W %x %y}
+		{MainInteractorShiftB1Release %W %x %y}
 
 	# Keyboard
 	bind $widget <KeyPress-r>        {MainInteractorReset %W %x %y}
@@ -362,10 +362,10 @@ proc MainInteractorB1Release {widget x y} {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC MainInteractorControlB1Release
+# .PROC MainInteractorShiftB1Release
 # .END
 #-------------------------------------------------------------------------------
-proc MainInteractorControlB1Release {widget x y} {
+proc MainInteractorShiftB1Release {widget x y} {
 	global Interactor Module
 	
 	set s $Interactor(s)

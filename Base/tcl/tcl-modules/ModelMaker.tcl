@@ -702,6 +702,8 @@ proc ModelMakerReverseNormals {{m ""}} {
 
 #-------------------------------------------------------------------------------
 # .PROC ModelMakerMarch
+# Polina Goland (polina@ai.mit.edu) helped create this routine.  The example
+# on Bill Lorensen's web site was adapted to exploit our vtkToRasMatrix.
 # .END
 #-------------------------------------------------------------------------------
 proc ModelMakerMarch {m v decimateIterations smoothIterations} {
@@ -732,8 +734,6 @@ proc ModelMakerMarch {m v decimateIterations smoothIterations} {
 	# so we have to remove it here, or mcubes will use it.
 	[Volume($v,vol) GetOutput] SetSpacing 1 1 1
 	[Volume($v,vol) GetOutput] SetOrigin 0 0 0
-
-	# Transform crap
 	
 	# Read orientation matrix and permute the images if necessary.
 	vtkTransform rot
@@ -746,40 +746,16 @@ proc ModelMakerMarch {m v decimateIterations smoothIterations} {
 	}
 	[rot GetMatrix] Invert
 
-	# Tramsform
-	vtkImageFlip flip
-	set mm [rot GetMatrix] 
-	if {[$mm Determinant $mm] < 0} {
-		for {set col 0} {$col < 4} {incr col} {
-			set el [[rot GetMatrix] GetElement $col 0]
-			[rot GetMatrix] SetElement $col 0 [expr -1*$el]
-		}
-		# We could either permute the matrix, or flip the data.
-		# puts permute
-		# vtkTransform permute
-		# [permute GetMatrix] SetElement 0 0 -1
-		# reader SetTransform permute
-		flip SetInput [Volume($v,vol) GetOutput]
-		flip SetFilteredAxis 1
-		set src flip
-	} else {
-		set src Volume($v,vol)
-	}
-
 	# Threshold so the only values are the desired label.
 	# But do this only for label maps
+# BUG crashes:	$p ThresholdBetween $Label(label) $ModelMaker(label2)
 	set p thresh
 	vtkImageThresholdBeyond $p
-	$p SetInput [$src GetOutput]
-	$p SetReplaceIn 0 
-	$p SetReplaceOut 0
-	if {[Volume($v,node) GetLabelMap] == 1 || 1 == 1} {
-		$p SetReplaceIn 1
-		$p SetReplaceOut 1
-	}
+	$p SetInput [Volume($v,vol) GetOutput]
+	$p SetReplaceIn 1
+	$p SetReplaceOut 1
 	$p SetInValue 100
 	$p SetOutValue 0
-# DAVE crashes:	$p ThresholdBetween $Label(label) $ModelMaker(label2)
 	$p ThresholdBetween $Label(label) $Label(label)
 	[$p GetOutput] ReleaseDataFlagOn
 	set Gui(progressText) "Threshold $name"
@@ -788,16 +764,13 @@ proc ModelMakerMarch {m v decimateIterations smoothIterations} {
 	$p SetEndMethod       MainEndProgress
 
 	vtkImageToStructuredPoints to
-	to SetInput [$p GetOutput]
+	to SetInput [thresh GetOutput]
+	to Update
 
 	set p mcubes
 	vtkMarchingCubes $p
 	$p SetInput [to GetOutput]
-	if {[Volume($v,node) GetLabelMap] == 1 || 1 == 1} {
-		$p SetValue 0 100
-	} else {
-		$p SetValue $Label(label) $ModelMaker(label2)
-	}
+	$p SetValue 0 100
 	$p ComputeScalarsOff
 	$p ComputeGradientsOff
 	$p ComputeNormalsOff
@@ -812,9 +785,9 @@ proc ModelMakerMarch {m v decimateIterations smoothIterations} {
 	# If there are no polygons, then the smoother gets mad, so stop.
 	if {$ModelMaker(n,$p) == 0} {
 		tk_messageBox -message "No polygons can be created."
+		flip SetInput ""
 		thresh SetInput ""
 		to SetInput ""
-		flip SetInput ""
 		mcubes SetInput ""
 		rot Delete
 		flip Delete
@@ -822,6 +795,8 @@ proc ModelMakerMarch {m v decimateIterations smoothIterations} {
 		to Delete
 		mcubes Delete
 		set ModelMaker(marching) 0
+		eval [Volume($v,vol) GetOutput] SetSpacing $spacing
+		eval [Volume($v,vol) GetOutput] SetOrigin $origin
 		return -1
 	}
 
@@ -846,9 +821,25 @@ proc ModelMakerMarch {m v decimateIterations smoothIterations} {
 	set ModelMaker(n,$p) [[$p GetOutput] GetNumberOfPolys]
 	$p GlobalWarningDisplayOn
 	
+	vtkReverseSense reverser
+
+	# Do normals need reversing?
+	set mm [rot GetMatrix] 
+	if {[$mm Determinant $mm] < 0} {
+	tk_messageBox -message Reverse
+		set p reverser
+		$p SetInput [decimator GetOutput]
+		$p ReverseNormalsOn
+		[$p GetOutput] ReleaseDataFlagOn
+		set Gui(progressText) "Reversing $name"
+		$p SetStartMethod     MainStartProgress
+		$p SetProgressMethod "MainShowProgress $p"
+		$p SetEndMethod       MainEndProgress
+	}
+
+	vtkSmoothPolyDataFilter smoother
+	smoother SetInput [$p GetOutput]
 	set p smoother
-	vtkSmoothPolyDataFilter $p
-    $p SetInput [decimator GetOutput]
     $p SetNumberOfIterations $smoothIterations
 	# This next line massively rounds corners
 	$p SetRelaxationFactor 0.33
@@ -900,7 +891,7 @@ proc ModelMakerMarch {m v decimateIterations smoothIterations} {
 	Model($m,mapper) SetInput $Model($m,polyData)
 
 	stripper SetOutput ""
-	foreach p "to thresh flip mcubes decimator transformer smoother normals stripper" {
+	foreach p "to thresh mcubes decimator reverser transformer smoother normals stripper" {
 		$p SetInput ""
 		$p Delete
 	}
