@@ -3,10 +3,7 @@ README file describing the scripts in the slicer2/Scripts directory.
 ----------------------------------------------------------
 
 NOTE TO WINDOWS USERS:
-Only advanced users/developers need to read this file, since the 
-windows installation puts all of these items on the program menu 
-for you.
-
+Only advanced users/developers need to read this file.
 
 BEFORE USING SCRIPTS ON UNIX:
 Set the SLICER_HOME environment variable in all scripts 
@@ -18,19 +15,20 @@ to the directory where you installed the slicer.
 ----------------------------------------------------------
 Runs the slicer, called from slicer2-[osname].
 
-UNIX usage: slicer2-[osname] <filename.mrml> OR slicer2-[osname] <filename.xml> OR slicer2-[osname] <filename>
-Windows Usage: wish82.exe Go.tcl <filename like above>
+Usage: slicer2-[osname] <filename.mrml> OR slicer2-[osname] <filename.xml> OR slicer2-[osname] <filename>
+
+To get the full list of command line options:
+slicer2-[osname] --help
 
 The filename argument is optional and is to conveniently
-load a mrml file when the slicer starts.  Also useful
-for Windows shortcuts to open a specific MRML file, as in:  
-wish82.exe Go.tcl <filename>
+load a mrml file when the slicer starts.  
 
 Under Unix, the slicer launch script runs the vtk shell and sources 
-slicer2/Base/tcl/Go.tcl.
+slicer2/Base/tcl/Go.tcl. Under Windows, it runs wish84.exe and sources
+Go.tcl as well.
 
 ----------------------------------------------------------
-##### comment #####
+##### slicer2/Scripts/comment.tcl #####
 ----------------------------------------------------------
 Comments tcl files:
 
@@ -42,8 +40,8 @@ all procedure names and variables at the top of the file.
 Runs slicer2/Base/tcl/GoComment.tcl.  Under Windows, sourcing
 GoComment.tcl has the same effect as running the script on UNIX.
 
-UNIX Usage: comment
-Windows Usage: wish82.exe GoComment.tcl
+Usage: comment.tcl [options] [filename]
+comment.tcl --help will give you a list of all the options.
 
 Please see slicer2/Base/tcl/tcl-modules/Custom.tcl (Developer's example 
 module) for how to fill in the automatic comment headers.
@@ -51,7 +49,7 @@ These headers are grabbed for the tcl documentation on
 the website (see document.tcl).
 
 ----------------------------------------------------------
-##### document.tcl #####
+##### slicer2/Scripts/document.tcl #####
 ----------------------------------------------------------
 Creates the website (same as www.slicer.org).
 
@@ -60,8 +58,8 @@ GoDocument.tcl has the same effect as running the script on UNIX.
 You can set your SLICER_DOC environment variable to select the
 directory in which to place the documentation. 
 
-UNIX Usage: document.tcl
-Windows Usage: wish82.exe GoDocument.tcl
+Usage: document.tcl 
+document.tcl --help will give you a list of all the options.
 
 For tcl web documentation, the above comment script should be
 run regularly and the headers filled in.
