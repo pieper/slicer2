@@ -1,5 +1,5 @@
 #=auto==========================================================================
-# (c) Copyright 2002 Massachusetts Institute of Technology
+# (c) Copyright 2001 Massachusetts Institute of Technology
 #
 # Permission is hereby granted, without payment, to copy, modify, display 
 # and distribute this software and its documentation, if any, for any purpose, 
@@ -60,6 +60,7 @@
 #   TensorRecalculateTensors
 #   TensorWriteStructuredPoints
 #   TensorCalculateActorMatrix transform t
+#   TensorCalculateIJKtoRASRotationMatrix
 #   TensorSpecificVisualizationSettings
 #   TensorResetDefaultVisualizationSettings
 #   TensorApplyVisualizationSettings mode
@@ -73,6 +74,7 @@
 #   TensorRemoveAllStreamlines
 #   TensorSeedStreamlinesFromSegmentation
 #   TensorExecuteForProgrammableFilter
+#   TensorMrmlizeStructuredPoints
 #==========================================================================auto=
 
 
@@ -105,7 +107,7 @@ proc TensorInit {} {
     set Module($m,procVTK) TensorBuildVTK
     set Module($m,procEnter) TensorEnter
     set Module($m,procExit) TensorExit
-   
+    
     # Define Dependencies
     #------------------------------------
     set Module($m,depend) ""
@@ -113,7 +115,7 @@ proc TensorInit {} {
     # Set Version Info
     #------------------------------------
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.12 $} {$Date: 2002/03/22 20:45:07 $}]
+            {$Revision: 1.13 $} {$Date: 2002/03/25 18:26:26 $}]
     
     # Props: GUI tab we are currently on
     #------------------------------------
@@ -134,19 +136,19 @@ proc TensorInit {} {
     set Tensor(mode,visualizationSettingsType) default
     set Tensor(mode,visualizationSettingsTypeList) {tensors default}
     set Tensor(mode,visualizationSettingsTypeList,tooltips) [list \
-        "Settings to display tensors well: black background, etc." \
-        "Reset to Slicer default settings."  \
-        ]
+            "Settings to display tensors well: black background, etc." \
+            "Reset to Slicer default settings."  \
+            ]
 
     # type of reformatting
     set Tensor(mode,reformatType) 0
     set Tensor(mode,reformatTypeList) {None 0 1 2}
     set Tensor(mode,reformatTypeList,tooltips) [list \
-        "No reformatting: display all tensors." \
-        "Reformat tensors along with slice 0."  \
-        "Reformat tensors along with slice 1."  \
-        "Reformat tensors along with slice 2."  \
-        ]
+            "No reformatting: display all tensors." \
+            "Reformat tensors along with slice 0."  \
+            "Reformat tensors along with slice 1."  \
+            "Reformat tensors along with slice 2."  \
+            ]
 
     # type of visualization to use
     set Tensor(mode,visualizationType) None
@@ -172,8 +174,8 @@ proc TensorInit {} {
     set Tensor(mode,glyphScalarRange) Auto
     set Tensor(mode,glyphScalarRangeList) {Auto Manual}
     set Tensor(mode,glyphScalarRangeList,tooltips) [list \
-        "Scalar range will be set to max and min scalar in the data." \
-        "User-adjustable scalar range to highlight areas of interest (like window/level does)."]
+            "Scalar range will be set to max and min scalar in the data." \
+            "User-adjustable scalar range to highlight areas of interest (like window/level does)."]
     # slider min/max values
     set Tensor(mode,glyphScalarRange,min) 0
     set Tensor(mode,glyphScalarRange,max) 10
@@ -197,8 +199,8 @@ proc TensorInit {} {
     set Tensor(mode,scalarBar) Off
     set Tensor(mode,scalarBarList) {On Off}
     set Tensor(mode,scalarBarList,tooltips) [list \
-        "Display a scalar bar to show correspondence between numbers and colors." \
-        "Do not display the scalar bar."]
+            "Display a scalar bar to show correspondence between numbers and colors." \
+            "Do not display the scalar bar."]
 
 
     #------------------------------------
@@ -238,9 +240,9 @@ proc TensorInit {} {
     # math op to produce scalars from tensors
     set Tensor(scalars,operation) Trace
     set Tensor(scalars,operationList) [list Trace Determinant \
-        RelativeAnisotropy FractionalAnisotropy LinearMeasure \
-        PlanarMeasure SphericalMeasure MaxEigenvalue \
-        MiddleEigenvalue MinEigenvalue ColorByOrientation D11 D22 D33]
+            RelativeAnisotropy FractionalAnisotropy LinearMeasure \
+            PlanarMeasure SphericalMeasure MaxEigenvalue \
+            MiddleEigenvalue MinEigenvalue ColorByOrientation D11 D22 D33]
 
     set Tensor(scalars,operationList,tooltip) "Produce a scalar volume from tensor data.\nTrace, Determinant, Anisotropy, and Eigenvalues produce grayscale volumes,\nwhile Orientation produces a 3-component (Color) volume that is best viewed in the 3D window."
 
@@ -254,36 +256,36 @@ proc TensorInit {} {
     # Event bindings
     #------------------------------------
     lappend Tensor(eventManager) {$Gui(fSl0Win) <KeyPress-l> \
-        { if { [SelectPick2D %W %x %y] != 0 } \
-        {  eval TensorSelect $Select(xyz); Render3D } } }
+            { if { [SelectPick2D %W %x %y] != 0 } \
+            {  eval TensorSelect $Select(xyz); Render3D } } }
     lappend Tensor(eventManager) {$Gui(fSl1Win) <KeyPress-l> \
-        { if { [SelectPick2D %W %x %y] != 0 } \
-        {  eval TensorSelect $Select(xyz);Render3D } } }
+            { if { [SelectPick2D %W %x %y] != 0 } \
+            {  eval TensorSelect $Select(xyz);Render3D } } }
     
     lappend Tensor(eventManager) {$Gui(fSl2Win) <KeyPress-l> \
-        { if { [SelectPick2D %W %x %y] != 0 } \
-        { eval TensorSelect $Select(xyz);Render3D } } }
+            { if { [SelectPick2D %W %x %y] != 0 } \
+            { eval TensorSelect $Select(xyz);Render3D } } }
 
     lappend Tensor(eventManager) {$Gui(fViewWin)  <KeyPress-l> \
-        { if { [SelectPick Tensor(vtk,picker) %W %x %y] != 0 } \
-        { eval TensorSelect $Select(xyz);Render3D } } }
+            { if { [SelectPick Tensor(vtk,picker) %W %x %y] != 0 } \
+            { eval TensorSelect $Select(xyz);Render3D } } }
 
     #------------------------------------
     # Developers panel variables
     #------------------------------------
     set Tensor(devel,fileName) "tensors.vtk"
     set tmp "\
-        {1 0 0 0}  \
-        {0 1 0 0}  \
-        {0 0 1 0}  \
-        {0 0 0 1}  "
+            {1 0 0 0}  \
+            {0 1 0 0}  \
+            {0 0 1 0}  \
+            {0 0 0 1}  "
     set rows {0 1 2 3}
     set cols {0 1 2 3}    
     foreach row $rows {
-    foreach col $cols {
-        set Tensor(recalculate,userMatrix,$row,$col) \
-            [lindex [lindex $tmp $row] $col]
-    } 
+        foreach col $cols {
+            set Tensor(recalculate,userMatrix,$row,$col) \
+                    [lindex [lindex $tmp $row] $col]
+        } 
     }
 
     #------------------------------------
@@ -454,8 +456,8 @@ proc TensorBuildGUI {} {
     #$f.fVisMethods config -relief groove -bd 3
 
     foreach frame "VisUpdate" {
-    frame $f.f$frame -bg $Gui(activeWorkspace)
-    pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill both
+        frame $f.f$frame -bg $Gui(activeWorkspace)
+        pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill both
     }
 
     
@@ -466,7 +468,7 @@ proc TensorBuildGUI {} {
 
     # menu to select active tensor
     DevAddSelectButton  Tensor $f Active "Active Tensor:" Grid \
-        "Active Tensor" 13 BLA
+            "Active Tensor" 13 BLA
     
     # Append these menus and buttons to lists 
     # that get refreshed during UpdateMRML
@@ -482,13 +484,13 @@ proc TensorBuildGUI {} {
     pack $f.l -side left -padx $Gui(pad) -pady 0
 
     foreach vis $Tensor(mode,visualizationSettingsTypeList) tip $Tensor(mode,visualizationSettingsTypeList,tooltips) {
-    eval {radiobutton $f.rMode$vis \
-        -text "$vis" -value "$vis" \
-        -variable Tensor(mode,visualizationSettingsType) \
-        -command {TensorApplyVisualizationSettings} \
-        -indicatoron 0} $Gui(WCA) 
-    pack $f.rMode$vis -side left -padx 0 -pady 0
-    TooltipAdd  $f.rMode$vis $tip
+        eval {radiobutton $f.rMode$vis \
+                -text "$vis" -value "$vis" \
+                -variable Tensor(mode,visualizationSettingsType) \
+                -command {TensorApplyVisualizationSettings} \
+                -indicatoron 0} $Gui(WCA) 
+        pack $f.rMode$vis -side left -padx 0 -pady 0
+        TooltipAdd  $f.rMode$vis $tip
     }   
 
     #-------------------------------------------
@@ -503,14 +505,14 @@ proc TensorBuildGUI {} {
     set widths [list 4 2 2 2]
 
     foreach vis $Tensor(mode,reformatTypeList) tip $Tensor(mode,reformatTypeList,tooltips) color $colors width $widths {
-    eval {radiobutton $f.rMode$vis \
-        -text "$vis" -value "$vis" \
-        -variable Tensor(mode,reformatType) \
-        -command {TensorUpdate} \
-        -indicatoron 0} $Gui(WCA) \
-        {-bg $color -width $width}
-    pack $f.rMode$vis -side left -padx 0 -pady 0
-    TooltipAdd  $f.rMode$vis $tip
+        eval {radiobutton $f.rMode$vis \
+                -text "$vis" -value "$vis" \
+                -variable Tensor(mode,reformatType) \
+                -command {TensorUpdate} \
+                -indicatoron 0} $Gui(WCA) \
+                {-bg $color -width $width}
+        pack $f.rMode$vis -side left -padx 0 -pady 0
+        TooltipAdd  $f.rMode$vis $tip
     }
 
     #-------------------------------------------
@@ -533,14 +535,14 @@ proc TensorBuildGUI {} {
 
     eval {label $f.lVis -text "Visualization Method: "} $Gui(WLA)
     eval {menubutton $f.mbVis -text $Tensor(mode,visualizationType) \
-        -relief raised -bd 2 -width 20 \
-        -menu $f.mbVis.m} $Gui(WMBA)
+            -relief raised -bd 2 -width 20 \
+            -menu $f.mbVis.m} $Gui(WMBA)
     eval {menu $f.mbVis.m} $Gui(WMA)
     pack $f.lVis $f.mbVis -side left -pady $Gui(pad) -padx $Gui(pad)
     # Add menu items
     foreach vis $Tensor(mode,visualizationTypeList) {
-    $f.mbVis.m add command -label $vis \
-        -command "TensorRaiseFrame $vis; set Tensor(mode,visualizationType) $vis; TensorUpdate"
+        $f.mbVis.m add command -label $vis \
+                -command "TensorRaiseFrame $vis; set Tensor(mode,visualizationType) $vis; TensorUpdate"
     }
     # save menubutton for config
     set Tensor(gui,mbVisMode) $f.mbVis
@@ -556,11 +558,11 @@ proc TensorBuildGUI {} {
     # make a parameters frame for each visualization type
     # types are: None Glyphs Tracks
     foreach frame $Tensor(mode,visualizationTypeList) {
-    frame $f.f$frame -bg $Gui(activeWorkspace)
-    # for raising one frame at a time
-    place $f.f$frame -in $f -relheight 1.0 -relwidth 1.0
-    #pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
-    set Tensor(frame,$frame) $f.f$frame
+        frame $f.f$frame -bg $Gui(activeWorkspace)
+        # for raising one frame at a time
+        place $f.f$frame -in $f -relheight 1.0 -relwidth 1.0
+        #pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
+        set Tensor(frame,$frame) $f.f$frame
     }
     raise $Tensor(frame,$Tensor(mode,visualizationType))
 
@@ -586,8 +588,8 @@ proc TensorBuildGUI {} {
     set f $fParams.fGlyphs
 
     foreach frame "Label GlyphType Lines Colors ScalarBar GlyphScalarRange Slider" {
-    frame $f.f$frame -bg $Gui(activeWorkspace)
-    pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill both
+        frame $f.f$frame -bg $Gui(activeWorkspace)
+        pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill both
     }
 
     #-------------------------------------------
@@ -607,13 +609,13 @@ proc TensorBuildGUI {} {
     pack $f.l -side left -padx $Gui(pad) -pady 1
 
     foreach vis $Tensor(mode,glyphTypeList) tip $Tensor(mode,glyphTypeList,tooltips) {
-    eval {radiobutton $f.rMode$vis \
-        -text "$vis" -value "$vis" \
-        -variable Tensor(mode,glyphType) \
-        -command {TensorUpdate} \
-        -indicatoron 0} $Gui(WCA)
-    pack $f.rMode$vis -side left -padx 0 -pady 1
-    TooltipAdd  $f.rMode$vis $tip
+        eval {radiobutton $f.rMode$vis \
+                -text "$vis" -value "$vis" \
+                -variable Tensor(mode,glyphType) \
+                -command {TensorUpdate} \
+                -indicatoron 0} $Gui(WCA)
+        pack $f.rMode$vis -side left -padx 0 -pady 1
+        TooltipAdd  $f.rMode$vis $tip
     }
 
     #-------------------------------------------
@@ -626,13 +628,13 @@ proc TensorBuildGUI {} {
     pack $f.l -side left -padx $Gui(pad) -pady 1
 
     foreach vis $Tensor(mode,glyphEigenvectorList) tip $Tensor(mode,glyphEigenvectorList,tooltips) {
-    eval {radiobutton $f.rMode$vis \
-        -text "$vis" -value "$vis" \
-        -variable Tensor(mode,glyphEigenvector) \
-        -command TensorUpdateGlyphEigenvector \
-        -indicatoron 0} $Gui(WCA)
-    pack $f.rMode$vis -side left -padx 0 -pady 1
-    TooltipAdd $f.rMode$vis $tip
+        eval {radiobutton $f.rMode$vis \
+                -text "$vis" -value "$vis" \
+                -variable Tensor(mode,glyphEigenvector) \
+                -command TensorUpdateGlyphEigenvector \
+                -indicatoron 0} $Gui(WCA)
+        pack $f.rMode$vis -side left -padx 0 -pady 1
+        TooltipAdd $f.rMode$vis $tip
     }
 
     #-------------------------------------------
@@ -642,14 +644,14 @@ proc TensorBuildGUI {} {
 
     eval {label $f.lVis -text "Color by: "} $Gui(WLA)
     eval {menubutton $f.mbVis -text $Tensor(mode,glyphColor) \
-        -relief raised -bd 2 -width 12 \
-        -menu $f.mbVis.m} $Gui(WMBA)
+            -relief raised -bd 2 -width 12 \
+            -menu $f.mbVis.m} $Gui(WMBA)
     eval {menu $f.mbVis.m} $Gui(WMA)
     pack $f.lVis $f.mbVis -side left -pady 1 -padx $Gui(pad)
     # Add menu items
     foreach vis $Tensor(mode,glyphColorList) {
-    $f.mbVis.m add command -label $vis \
-        -command "set Tensor(mode,glyphColor) $vis; TensorUpdateGlyphColor"
+        $f.mbVis.m add command -label $vis \
+                -command "set Tensor(mode,glyphColor) $vis; TensorUpdateGlyphColor"
     }
     # save menubutton for config
     set Tensor(gui,mbGlyphColor) $f.mbVis
@@ -665,13 +667,13 @@ proc TensorBuildGUI {} {
     pack $f.l -side left -padx $Gui(pad) -pady 1
 
     foreach vis $Tensor(mode,scalarBarList) tip $Tensor(mode,scalarBarList,tooltips) {
-    eval {radiobutton $f.rMode$vis \
-        -text "$vis" -value "$vis" \
-        -variable Tensor(mode,scalarBar) \
-        -command {TensorUpdateScalarBar} \
-        -indicatoron 0} $Gui(WCA)
-    pack $f.rMode$vis -side left -padx 0 -pady 1
-    TooltipAdd  $f.rMode$vis $tip
+        eval {radiobutton $f.rMode$vis \
+                -text "$vis" -value "$vis" \
+                -variable Tensor(mode,scalarBar) \
+                -command {TensorUpdateScalarBar} \
+                -indicatoron 0} $Gui(WCA)
+        pack $f.rMode$vis -side left -padx 0 -pady 1
+        TooltipAdd  $f.rMode$vis $tip
     }
 
     #-------------------------------------------
@@ -683,13 +685,13 @@ proc TensorBuildGUI {} {
     pack $f.l -side left -padx $Gui(pad) -pady 1
 
     foreach vis $Tensor(mode,glyphScalarRangeList) tip $Tensor(mode,glyphScalarRangeList,tooltips) {
-    eval {radiobutton $f.rMode$vis \
-        -text "$vis" -value "$vis" \
-        -variable Tensor(mode,glyphScalarRange) \
-        -command {TensorUpdateGlyphScalarRange; Render3D} \
-        -indicatoron 0} $Gui(WCA)
-    pack $f.rMode$vis -side left -padx 0 -pady 1
-    TooltipAdd  $f.rMode$vis $tip
+        eval {radiobutton $f.rMode$vis \
+                -text "$vis" -value "$vis" \
+                -variable Tensor(mode,glyphScalarRange) \
+                -command {TensorUpdateGlyphScalarRange; Render3D} \
+                -indicatoron 0} $Gui(WCA)
+        pack $f.rMode$vis -side left -padx 0 -pady 1
+        TooltipAdd  $f.rMode$vis $tip
     }
 
     #-------------------------------------------
@@ -697,27 +699,27 @@ proc TensorBuildGUI {} {
     #-------------------------------------------
     foreach slider "Low Hi" text "Lo Hi" {
 
-    set f $fParams.fGlyphs.fSlider
+        set f $fParams.fGlyphs.fSlider
 
-    frame $f.f$slider -bg $Gui(activeWorkspace)
-    pack $f.f$slider -side top -padx $Gui(pad) -pady 1
-    set f $f.f$slider
+        frame $f.f$slider -bg $Gui(activeWorkspace)
+        pack $f.f$slider -side top -padx $Gui(pad) -pady 1
+        set f $f.f$slider
 
-    eval {label $f.l$slider -text "$text:"} $Gui(WLA)
-    eval {entry $f.e$slider -width 10 \
-        -textvariable Tensor(mode,glyphScalarRange,[Uncap $slider])} \
-        $Gui(WEA)
-    eval {scale $f.s$slider -from $Tensor(mode,glyphScalarRange,min) \
-        -to $Tensor(mode,glyphScalarRange,max) \
-        -length 90 \
-        -variable Tensor(mode,glyphScalarRange,[Uncap $slider]) \
-        -resolution 0.1 \
-        -command {TensorUpdateGlyphScalarRange; Render3D}} \
-        $Gui(WSA) {-sliderlength 15}
-    pack $f.l$slider $f.e$slider $f.s$slider -side left  -padx $Gui(pad)
-    set Tensor(gui,slider,$slider) $f.s$slider
-    bind $f.e${slider} <Return>   \
-        "TensorUpdateGlyphScalarRange ${slider}; Render3D"
+        eval {label $f.l$slider -text "$text:"} $Gui(WLA)
+        eval {entry $f.e$slider -width 10 \
+                -textvariable Tensor(mode,glyphScalarRange,[Uncap $slider])} \
+                $Gui(WEA)
+        eval {scale $f.s$slider -from $Tensor(mode,glyphScalarRange,min) \
+                -to $Tensor(mode,glyphScalarRange,max) \
+                -length 90 \
+                -variable Tensor(mode,glyphScalarRange,[Uncap $slider]) \
+                -resolution 0.1 \
+                -command {TensorUpdateGlyphScalarRange; Render3D}} \
+                $Gui(WSA) {-sliderlength 15}
+        pack $f.l$slider $f.e$slider $f.s$slider -side left  -padx $Gui(pad)
+        set Tensor(gui,slider,$slider) $f.s$slider
+        bind $f.e${slider} <Return>   \
+                "TensorUpdateGlyphScalarRange ${slider}; Render3D"
 
     }
 
@@ -731,8 +733,8 @@ proc TensorBuildGUI {} {
     set f $fParams.fTracks
 
     foreach frame "Label" {
-    frame $f.f$frame -bg $Gui(activeWorkspace)
-    pack $f.f$frame -side top -padx 0 -pady 1 -fill x
+        frame $f.f$frame -bg $Gui(activeWorkspace)
+        pack $f.f$frame -side top -padx 0 -pady 1 -fill x
     }
 
     #-------------------------------------------
@@ -762,9 +764,9 @@ proc TensorBuildGUI {} {
     pack $f.fActive -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
 
     foreach frame "Threshold Mask" {
-    frame $f.f$frame -bg $Gui(activeWorkspace)
-    pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill both
-    $f.f$frame config -relief groove -bd 3
+        frame $f.f$frame -bg $Gui(activeWorkspace)
+        pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill both
+        $f.f$frame config -relief groove -bd 3
     }
 
     #-------------------------------------------
@@ -774,7 +776,7 @@ proc TensorBuildGUI {} {
 
     # menu to select active tensor
     DevAddSelectButton  Tensor $f Active "Active Tensor:" Grid \
-        "Active Tensor" 13 BLA
+            "Active Tensor" 13 BLA
     
     # Append these menus and buttons to lists 
     # that get refreshed during UpdateMRML
@@ -787,8 +789,8 @@ proc TensorBuildGUI {} {
     set f $fROI.fThreshold
 
     foreach frame "Label Mode Slider" {
-    frame $f.f$frame -bg $Gui(activeWorkspace)
-    pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill both
+        frame $f.f$frame -bg $Gui(activeWorkspace)
+        pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill both
     }
 
     #-------------------------------------------
@@ -808,13 +810,13 @@ proc TensorBuildGUI {} {
     pack $f.l -side left -padx $Gui(pad) -pady 0
 
     foreach vis $Tensor(mode,thresholdList) tip $Tensor(mode,thresholdList,tooltips) {
-    eval {radiobutton $f.rMode$vis \
-        -text "$vis" -value "$vis" \
-        -variable Tensor(mode,threshold) \
-        -command {TensorUpdate} \
-        -indicatoron 0} $Gui(WCA)
-    pack $f.rMode$vis -side left -padx 0 -pady 0
-    TooltipAdd  $f.rMode$vis $tip
+        eval {radiobutton $f.rMode$vis \
+                -text "$vis" -value "$vis" \
+                -variable Tensor(mode,threshold) \
+                -command {TensorUpdate} \
+                -indicatoron 0} $Gui(WCA)
+        pack $f.rMode$vis -side left -padx 0 -pady 0
+        TooltipAdd  $f.rMode$vis $tip
     }    
 
     #-------------------------------------------
@@ -822,30 +824,30 @@ proc TensorBuildGUI {} {
     #-------------------------------------------
     foreach slider "Lower Upper" text "Lo Hi" {
 
-    set f $fROI.fThreshold.fSlider
+        set f $fROI.fThreshold.fSlider
 
-    frame $f.f$slider -bg $Gui(activeWorkspace)
-    pack $f.f$slider -side top -padx $Gui(pad) -pady $Gui(pad)
-    set f $f.f$slider
+        frame $f.f$slider -bg $Gui(activeWorkspace)
+        pack $f.f$slider -side top -padx $Gui(pad) -pady $Gui(pad)
+        set f $f.f$slider
 
-    eval {label $f.l$slider -text "$text:"} $Gui(WLA)
-    eval {entry $f.e$slider -width 6 \
-        -textvariable Tensor(thresh,threshold,[Uncap $slider])} \
-        $Gui(WEA)
-    bind $f.e$slider <Return>   "TensorUpdateThreshold"
-    #bind $f.e$slider <FocusOut> "EdThresholdUpdate; RenderActive;"
-    eval {scale $f.s$slider -from $Tensor(thresh,threshold,rangeLow) \
-        -to $Tensor(thresh,threshold,rangeHigh) \
-        -length 130 \
-        -variable Tensor(thresh,threshold,[Uncap $slider]) \
-        -resolution 0.1 \
-        -command {TensorUpdateThreshold}} \
-        $Gui(WSA) {-sliderlength 15}
-    #grid $f.l$slider $f.e$slider -padx 2 -pady 2 -sticky w
-    #grid $f.l$slider -sticky e
-    #grid $f.s$slider -columnspan 2 -pady 2 
-    pack $f.l$slider $f.e$slider $f.s$slider -side left  -padx $Gui(pad)
-    set Tensor(gui,slider,$slider) $f.s$slider
+        eval {label $f.l$slider -text "$text:"} $Gui(WLA)
+        eval {entry $f.e$slider -width 6 \
+                -textvariable Tensor(thresh,threshold,[Uncap $slider])} \
+                $Gui(WEA)
+        bind $f.e$slider <Return>   "TensorUpdateThreshold"
+        #bind $f.e$slider <FocusOut> "EdThresholdUpdate; RenderActive;"
+        eval {scale $f.s$slider -from $Tensor(thresh,threshold,rangeLow) \
+                -to $Tensor(thresh,threshold,rangeHigh) \
+                -length 130 \
+                -variable Tensor(thresh,threshold,[Uncap $slider]) \
+                -resolution 0.1 \
+                -command {TensorUpdateThreshold}} \
+                $Gui(WSA) {-sliderlength 15}
+        #grid $f.l$slider $f.e$slider -padx 2 -pady 2 -sticky w
+        #grid $f.l$slider -sticky e
+        #grid $f.s$slider -columnspan 2 -pady 2 
+        pack $f.l$slider $f.e$slider $f.s$slider -side left  -padx $Gui(pad)
+        set Tensor(gui,slider,$slider) $f.s$slider
     }
 
 
@@ -855,8 +857,8 @@ proc TensorBuildGUI {} {
     set f $fROI.fMask
 
     foreach frame "Label Mode Volume ChooseLabel" {
-    frame $f.f$frame -bg $Gui(activeWorkspace)
-    pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill both
+        frame $f.f$frame -bg $Gui(activeWorkspace)
+        pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill both
     }
 
     #-------------------------------------------
@@ -876,13 +878,13 @@ proc TensorBuildGUI {} {
     pack $f.l -side left -padx $Gui(pad) -pady 0
 
     foreach vis $Tensor(mode,maskList) tip $Tensor(mode,maskList,tooltips) {
-    eval {radiobutton $f.rMode$vis \
-        -text "$vis" -value "$vis" \
-        -variable Tensor(mode,mask) \
-        -command {TensorUpdate} \
-        -indicatoron 0} $Gui(WCA)
-    pack $f.rMode$vis -side left -padx 0 -pady 0
-    TooltipAdd  $f.rMode$vis $tip
+        eval {radiobutton $f.rMode$vis \
+                -text "$vis" -value "$vis" \
+                -variable Tensor(mode,mask) \
+                -command {TensorUpdate} \
+                -indicatoron 0} $Gui(WCA)
+        pack $f.rMode$vis -side left -padx 0 -pady 0
+        TooltipAdd  $f.rMode$vis $tip
     }    
 
     #-------------------------------------------
@@ -893,8 +895,8 @@ proc TensorBuildGUI {} {
     # menu to select a volume: will set Volume(activeID)
     set name MaskLabelmap
     DevAddSelectButton  Tensor $f $name "Mask Labelmap:" Grid \
-        "Select a labelmap volume to use as a mask.\nTensors will be displayed only where the label matches the label you select below." \
-        13
+            "Select a labelmap volume to use as a mask.\nTensors will be displayed only where the label matches the label you select below." \
+            13
     
     # Append these menus and buttons to lists 
     # that get refreshed during UpdateMRML
@@ -908,14 +910,14 @@ proc TensorBuildGUI {} {
 
     # mask label
     eval {button $f.bOutput -text "Label:" \
-        -command "ShowLabels TensorUpdateMaskLabel"} $Gui(WBA)
+            -command "ShowLabels TensorUpdateMaskLabel"} $Gui(WBA)
     eval {entry $f.eOutput -width 6 \
-        -textvariable Label(label)} $Gui(WEA)
+            -textvariable Label(label)} $Gui(WEA)
     bind $f.eOutput <Return>   "TensorUpdateMaskLabel"
     bind $f.eOutput <FocusOut> "TensorUpdateMaskLabel"
     eval {entry $f.eName -width 14 \
-        -textvariable Label(name)} $Gui(WEA) \
-        {-bg $Gui(activeWorkspace) -state disabled}
+            -textvariable Label(name)} $Gui(WEA) \
+            {-bg $Gui(activeWorkspace) -state disabled}
     grid $f.bOutput $f.eOutput $f.eName -padx 2 -pady $Gui(pad)
     grid $f.eOutput $f.eName -sticky w
     
@@ -935,8 +937,8 @@ proc TensorBuildGUI {} {
     pack $f.fActive -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
 
     foreach frame "ChooseOutput UseROI Apply" {
-    frame $f.f$frame -bg $Gui(activeWorkspace)
-    pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
+        frame $f.f$frame -bg $Gui(activeWorkspace)
+        pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
     }
 
     #-------------------------------------------
@@ -946,7 +948,7 @@ proc TensorBuildGUI {} {
 
     # menu to select active tensor
     DevAddSelectButton  Tensor $f Active "Active Tensor:" Grid \
-        "Active Tensor" 13 BLA
+            "Active Tensor" 13 BLA
     
     # Append these menus and buttons to lists 
     # that get refreshed during UpdateMRML
@@ -960,15 +962,15 @@ proc TensorBuildGUI {} {
 
     eval {label $f.lMath -text "Create Volume: "} $Gui(WLA)
     eval {menubutton $f.mbMath -text $Tensor(scalars,operation) \
-        -relief raised -bd 2 -width 12 \
-        -menu $f.mbMath.m} $Gui(WMBA)
+            -relief raised -bd 2 -width 12 \
+            -menu $f.mbMath.m} $Gui(WMBA)
 
     eval {menu $f.mbMath.m} $Gui(WMA)
     pack $f.lMath $f.mbMath -side left -pady $Gui(pad) -padx $Gui(pad)
     # Add menu items
     foreach math $Tensor(scalars,operationList) {
-    $f.mbMath.m add command -label $math \
-        -command "TensorSetOperation $math"
+        $f.mbMath.m add command -label $math \
+                -command "TensorSetOperation $math"
     }
     # save menubutton for config
     set Tensor(gui,mbMath) $f.mbMath
@@ -984,13 +986,13 @@ proc TensorBuildGUI {} {
     pack $f.l -side left -padx $Gui(pad) -pady 0
 
     foreach vis $Tensor(scalars,ROIList) tip $Tensor(scalars,ROIList,tooltips) {
-    eval {radiobutton $f.rMode$vis \
-        -text "$vis" -value "$vis" \
-        -variable Tensor(scalars,ROI) \
-        -command TensorUpdateMathParams \
-        -indicatoron 0} $Gui(WCA)
-    pack $f.rMode$vis -side left -padx 0 -pady 0
-    TooltipAdd  $f.rMode$vis $tip
+        eval {radiobutton $f.rMode$vis \
+                -text "$vis" -value "$vis" \
+                -variable Tensor(scalars,ROI) \
+                -command TensorUpdateMathParams \
+                -indicatoron 0} $Gui(WCA)
+        pack $f.rMode$vis -side left -padx 0 -pady 0
+        TooltipAdd  $f.rMode$vis $tip
     }    
 
     #-------------------------------------------
@@ -1008,8 +1010,8 @@ proc TensorBuildGUI {} {
     set f $fProps
     
     foreach frame "Top Middle Bottom Convert" {
-    frame $f.f$frame -bg $Gui(activeWorkspace)
-    pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
+        frame $f.f$frame -bg $Gui(activeWorkspace)
+        pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
     }
 
     #-------------------------------------------
@@ -1018,7 +1020,7 @@ proc TensorBuildGUI {} {
     set f $fProps.fTop
     # file browse box: widget, array, var, label, proc, "", startdir
     DevAddFileBrowse $f Tensor FileName "File" \
-        TensorSetFileName "" {\$Tensor(defaultDir)}
+            TensorSetFileName "" {\$Tensor(defaultDir)}
     # Lauren does default dir work?
 
     #-------------------------------------------
@@ -1041,8 +1043,8 @@ proc TensorBuildGUI {} {
     set f $fProps.fConvert
 
     foreach frame "Select Apply" {
-    frame $f.f$frame -bg $Gui(activeWorkspace)
-    pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
+        frame $f.f$frame -bg $Gui(activeWorkspace)
+        pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
     }
     #-------------------------------------------
     # Props->Convert->Select frame
@@ -1051,7 +1053,7 @@ proc TensorBuildGUI {} {
     # Lauren test
     # menu to select a volume: will set Volume(activeID)
     DevAddSelectButton  Volume $f Active "Input Volume:" Grid \
-        "Input Volume to create tensors from." 13 BLA
+            "Input Volume to create tensors from." 13 BLA
 
     # Append these menus and buttons to lists 
     # that get refreshed during UpdateMRML
@@ -1072,8 +1074,8 @@ proc TensorBuildGUI {} {
     set f $fAdvanced
     
     foreach frame "Top Middle Bottom" {
-    frame $f.f$frame -bg $Gui(activeWorkspace)
-    pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
+        frame $f.f$frame -bg $Gui(activeWorkspace)
+        pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
     }
 
     #-------------------------------------------
@@ -1094,86 +1096,86 @@ proc TensorBuildGUI {} {
     #------------------------------------
     foreach o $Tensor(vtkObjectList) {
 
-    set f $fScrolled
+        set f $fScrolled
 
-    # if the object has properties
-    #-------------------------------------------
-    if {$Tensor(vtkPropertyList,$o) != ""} {
-        
-        # make a new frame for this vtk object
+        # if the object has properties
         #-------------------------------------------
-        frame $f.f$o -bg $Gui(activeWorkspace)
-        $f.f$o configure  -relief groove -bd 3 
-        pack $f.f$o -side top -padx $Gui(pad) -pady 2 -fill x
-        
-        # object name becomes the label for the frame
-        #-------------------------------------------
-        # Lauren we need an object description
-        # and also basic or advanced attrib
-        DevAddLabel $f.f$o.l$o [Cap $o]
-        pack $f.f$o.l$o -side top \
-            -padx 0 -pady 0
-    }
-
-    # loop through all the parameters for this object
-    # and build appropriate user entry stuff for each
-    #------------------------------------
-    foreach p $Tensor(vtkPropertyList,$o) {
-
-        set f $fScrolled.f$o
-
-        # name of entire tcl variable
-        set variableName Tensor(vtk,$o,$p)
-        # its value is:
-        set value $Tensor(vtk,$o,$p)
-        # description of the parameter
-        set desc $Tensor(vtk,$o,$p,description)
-        # datatype of the parameter
-        set type $Tensor(vtk,$o,$p,type)
-
-        # make a new frame for this parameter
-        frame $f.f$p -bg $Gui(activeWorkspace)
-        pack $f.f$p -side top -padx 0 -pady 1 -fill x
-        set f $f.f$p
-
-        # see if value is a list (not used now)
-        #------------------------------------        
-        set length [llength $value]
-        set isList [expr $length > "1"]
-
-        # Build GUI entry boxes, etc
-        #------------------------------------        
-        switch $type {
-        "int" {
-            eval {entry $f.e$p \
-                -width 5 \
-                -textvariable $variableName\
-            } $Gui(WEA)
-            DevAddLabel $f.l$p $desc:
-            pack $f.l$p $f.e$p -side left \
-                -padx $Gui(pad) -pady 2
-        }
-        "float" {
-            eval {entry $f.e$p \
-                -width 5 \
-                -textvariable $variableName\
-            } $Gui(WEA)
-            DevAddLabel $f.l$p $desc:
-            pack $f.l$p $f.e$p -side left \
-                -padx $Gui(pad) -pady 2
-        }
-        "bool" {
-            puts "bool: $variableName, $desc"
-            eval {checkbutton $f.r$p  \
-                -text $desc -variable $variableName \
-            } $Gui(WCA)
+        if {$Tensor(vtkPropertyList,$o) != ""} {
             
-            pack  $f.r$p -side left \
-                -padx $Gui(pad) -pady 2
+            # make a new frame for this vtk object
+            #-------------------------------------------
+            frame $f.f$o -bg $Gui(activeWorkspace)
+            $f.f$o configure  -relief groove -bd 3 
+            pack $f.f$o -side top -padx $Gui(pad) -pady 2 -fill x
+            
+            # object name becomes the label for the frame
+            #-------------------------------------------
+            # Lauren we need an object description
+            # and also basic or advanced attrib
+            DevAddLabel $f.f$o.l$o [Cap $o]
+            pack $f.f$o.l$o -side top \
+                    -padx 0 -pady 0
         }
+
+        # loop through all the parameters for this object
+        # and build appropriate user entry stuff for each
+        #------------------------------------
+        foreach p $Tensor(vtkPropertyList,$o) {
+
+            set f $fScrolled.f$o
+
+            # name of entire tcl variable
+            set variableName Tensor(vtk,$o,$p)
+            # its value is:
+            set value $Tensor(vtk,$o,$p)
+            # description of the parameter
+            set desc $Tensor(vtk,$o,$p,description)
+            # datatype of the parameter
+            set type $Tensor(vtk,$o,$p,type)
+
+            # make a new frame for this parameter
+            frame $f.f$p -bg $Gui(activeWorkspace)
+            pack $f.f$p -side top -padx 0 -pady 1 -fill x
+            set f $f.f$p
+
+            # see if value is a list (not used now)
+            #------------------------------------        
+            set length [llength $value]
+            set isList [expr $length > "1"]
+
+            # Build GUI entry boxes, etc
+            #------------------------------------        
+            switch $type {
+                "int" {
+                    eval {entry $f.e$p \
+                            -width 5 \
+                            -textvariable $variableName\
+                        } $Gui(WEA)
+                    DevAddLabel $f.l$p $desc:
+                    pack $f.l$p $f.e$p -side left \
+                            -padx $Gui(pad) -pady 2
+                }
+                "float" {
+                    eval {entry $f.e$p \
+                            -width 5 \
+                            -textvariable $variableName\
+                        } $Gui(WEA)
+                    DevAddLabel $f.l$p $desc:
+                    pack $f.l$p $f.e$p -side left \
+                            -padx $Gui(pad) -pady 2
+                }
+                "bool" {
+                    puts "bool: $variableName, $desc"
+                    eval {checkbutton $f.r$p  \
+                            -text $desc -variable $variableName \
+                        } $Gui(WCA)
+                    
+                    pack  $f.r$p -side left \
+                            -padx $Gui(pad) -pady 2
+                }
+            }
+            
         }
-        
-    }
     }
     # end foreach vtk object in tensors object list
 
@@ -1192,8 +1194,8 @@ proc TensorBuildGUI {} {
     set f $fDiffuse
     
     foreach frame "Top Middle Bottom" {
-    frame $f.f$frame -bg $Gui(activeWorkspace)
-    pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
+        frame $f.f$frame -bg $Gui(activeWorkspace)
+        pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
     }
 
     #-------------------------------------------
@@ -1202,7 +1204,7 @@ proc TensorBuildGUI {} {
     set f $fDiffuse.fTop
     # menu to select a volume: will set Volume(activeID)
     DevAddSelectButton  Volume $f Active "Input Volume:" Grid \
-        "Input Volume: heat distribution." 13 BLA
+            "Input Volume: heat distribution." 13 BLA
 
     # Append these menus and buttons to lists 
     # that get refreshed during UpdateMRML
@@ -1225,8 +1227,8 @@ proc TensorBuildGUI {} {
     set f $fDevel
     
     foreach frame "Top Middle Bottom" {
-    frame $f.f$frame -bg $Gui(activeWorkspace)
-    pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
+        frame $f.f$frame -bg $Gui(activeWorkspace)
+        pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
     }
 
     #-------------------------------------------
@@ -1248,17 +1250,17 @@ proc TensorBuildGUI {} {
     set rows {0 1 2 3}
     set cols {0 1 2 3}    
     foreach row $rows {
-    set f $fDevel.fMiddle.fEntry
-    frame $f.f$row
-    pack $f.f$row -side top -padx $Gui(pad) -pady $Gui(pad)
-    set f $f.f$row
-    foreach col $cols {
-        eval {entry $f.e$col -width 5 \
-                -textvariable \
-                Tensor(recalculate,userMatrix,$row,$col) \
-            } $Gui(WEA)
-        pack $f.e$col -side left -padx $Gui(pad) -pady 2        
-    }
+        set f $fDevel.fMiddle.fEntry
+        frame $f.f$row
+        pack $f.f$row -side top -padx $Gui(pad) -pady $Gui(pad)
+        set f $f.f$row
+        foreach col $cols {
+            eval {entry $f.e$col -width 5 \
+                    -textvariable \
+                    Tensor(recalculate,userMatrix,$row,$col) \
+                } $Gui(WEA)
+            pack $f.e$col -side left -padx $Gui(pad) -pady 2        
+        }
     }    
     set f $fDevel.fMiddle.fButton
     DevAddButton $f.bApply "Recalculate Tensors" {TensorRecalculateTensors}
@@ -1297,7 +1299,7 @@ proc TensorBuildScrolledGUI {f} {
     #-------------------------------------------
     canvas $canvas -yscrollcommand "$s set" -bg $Gui(activeWorkspace)
     eval "scrollbar $s -command \"TensorCheckScrollLimits $canvas yview\"\
-        $Gui(WSBA)"
+            $Gui(WSBA)"
     pack $s -side right -fill y
     pack $canvas -side top -fill both -pady $Gui(pad) -expand true
     
@@ -1334,8 +1336,8 @@ proc TensorCheckScrollLimits {args} {
     set fracs [$canvas $view]
 
     if {double([lindex $fracs 0]) == 0.0 && \
-        double([lindex $fracs 1]) == 1.0} {
-    return
+            double([lindex $fracs 1]) == 1.0} {
+        return
     }
     eval $args
 }
@@ -1396,45 +1398,45 @@ proc TensorPropsApply {} {
     #-------------------------------------------
     set errcode [MainTensorValidateUserInput]
     if {$errcode != "1"} {
-    return $errcode
+        return $errcode
     }
 
     # If we are in the process of adding a new data object
     #--------------------------------------------------------
     if {$d == "NEW"} {
 
-    # Create the node
-    # Lauren HUGE HACK!
-    # When we convert to tensors we are using a volume node
-    # here for structured points files we use a tensor node
-    # this should be only one kind of node
-    set n [MainMrmlAddNode Tensor]
-    #set n [MainMrmlAddNode Volume Tensor]
-    set i [$n GetID]
+        # Create the node
+        # Lauren HUGE HACK!
+        # When we convert to tensors we are using a volume node
+        # here for structured points files we use a tensor node
+        # this should be only one kind of node
+        set n [MainMrmlAddNode Tensor]
+        #set n [MainMrmlAddNode Volume Tensor]
+        set i [$n GetID]
 
-    # Set everything up in the node.
-    MainTensorSetAllVariablesToNode $i
+        # Set everything up in the node.
+        MainTensorSetAllVariablesToNode $i
 
-    # Update MRML (this will read in the new data)
-    MainUpdateMRML
+        # Update MRML (this will read in the new data)
+        MainUpdateMRML
         # If failed, then it's no longer in the idList
-    # Lauren this is a bug that the user is not informed?
-    # And we stay frozen...
+        # Lauren this is a bug that the user is not informed?
+        # And we stay frozen...
         if {[lsearch $Tensor(idList) $i] == -1} {
-        puts "Lauren node doesn't exist, should unfreeze and fix volumes.tcltoo"
+            puts "Lauren node doesn't exist, should unfreeze and fix volumes.tcltoo"
             return
         }
 
-    # Lauren what is this for?
+        # Lauren what is this for?
         set Tensor(freeze) 0
 
-    # Activate the new data object
+        # Activate the new data object
         MainDataSetActive Tensor $i
 
     } else {
-    # do we do a re-read of the object if user changed certain things?
-    # Lauren implement this?
-    #MainTensorSetAllVariablesToNode
+        # do we do a re-read of the object if user changed certain things?
+        # Lauren implement this?
+        #MainTensorSetAllVariablesToNode
     }
 
     # Apply normal settings changed by user (no file reread needed)
@@ -1534,12 +1536,12 @@ proc TensorUpdateScalarBar {} {
     set mode $Tensor(mode,scalarBar)
 
     switch $mode {
-    "On" {
-        TensorShowScalarBar
-    }
-    "Off" {
-        TensorHideScalarBar
-    }
+        "On" {
+            TensorShowScalarBar
+        }
+        "Off" {
+            TensorHideScalarBar
+        }
     }
 
     Render3D
@@ -1586,8 +1588,8 @@ proc TensorSelect {x y z} {
 
     set t $Tensor(activeID)
     if {$t == "" || $t == $Tensor(idNone)} {
-    puts "TensorSelect: No tensors have been read into the slicer"
-    return
+        puts "TensorSelect: No tensors have been read into the slicer"
+        return
     }
 
     # Use our world to ijk matrix information to correct x,y,z.
@@ -1647,8 +1649,8 @@ proc TensorUpdateThreshold {{not_used ""}} {
     global Tensor
     
     Tensor(vtk,thresh,threshold)  ThresholdBetween \
-        $Tensor(thresh,threshold,lower) \
-        $Tensor(thresh,threshold,upper)
+            $Tensor(thresh,threshold,lower) \
+            $Tensor(thresh,threshold,upper)
 
     # Update pipelines
     Render3D
@@ -1688,18 +1690,18 @@ proc TensorUpdateGlyphEigenvector {} {
     # eigenvector, etc.  So move the line to 
     # point along the proper axis for scaling
     switch $mode {
-    "Max" {
-        Tensor(vtk,glyphs,line) SetPoint1 -1 0 0
-        Tensor(vtk,glyphs,line) SetPoint2 1 0 0    
-    }
-    "Middle" {
-        Tensor(vtk,glyphs,line) SetPoint1 0 -1 0
-        Tensor(vtk,glyphs,line) SetPoint2 0 1 0    
-    }
-    "Min" {
-        Tensor(vtk,glyphs,line) SetPoint1 0 0 -1
-        Tensor(vtk,glyphs,line) SetPoint2 0 0 1    
-    }
+        "Max" {
+            Tensor(vtk,glyphs,line) SetPoint1 -1 0 0
+            Tensor(vtk,glyphs,line) SetPoint2 1 0 0    
+        }
+        "Middle" {
+            Tensor(vtk,glyphs,line) SetPoint1 0 -1 0
+            Tensor(vtk,glyphs,line) SetPoint2 0 1 0    
+        }
+        "Min" {
+            Tensor(vtk,glyphs,line) SetPoint1 0 0 -1
+            Tensor(vtk,glyphs,line) SetPoint2 0 0 1    
+        }
     }
     # Update pipelines
     Render3D
@@ -1720,37 +1722,37 @@ proc TensorUpdateGlyphColor {} {
     $Tensor(gui,mbGlyphColor)    config -text $mode
     
     switch $mode {
-    "Linear" {
-        Tensor(vtk,glyphs) ColorGlyphsWithLinearMeasure
-    }
-    "Planar" {
-        Tensor(vtk,glyphs) ColorGlyphsWithPlanarMeasure
-    }
-    "Spherical" {
-        Tensor(vtk,glyphs) ColorGlyphsWithSphericalMeasure
-    }
-    "Max" {
-        Tensor(vtk,glyphs) ColorGlyphsWithMaxEigenvalue
-    }
-    "Middle" {
-        Tensor(vtk,glyphs) ColorGlyphsWithMiddleEigenvalue
-    }
-    "Min" {
-        Tensor(vtk,glyphs) ColorGlyphsWithMinEigenvalue
-    }
-    "MaxMinusMiddle" {
-        Tensor(vtk,glyphs) ColorGlyphsWithMaxMinusMidEigenvalue
-    }
-    "RA" {
-        Tensor(vtk,glyphs) ColorGlyphsWithRelativeAnisotropy
-    }
-    "FA" {
-        Tensor(vtk,glyphs) ColorGlyphsWithFractionalAnisotropy
-    }
-    "Direction" {
-        Tensor(vtk,glyphs) ColorGlyphsWithDirection
-    }
-    
+        "Linear" {
+            Tensor(vtk,glyphs) ColorGlyphsWithLinearMeasure
+        }
+        "Planar" {
+            Tensor(vtk,glyphs) ColorGlyphsWithPlanarMeasure
+        }
+        "Spherical" {
+            Tensor(vtk,glyphs) ColorGlyphsWithSphericalMeasure
+        }
+        "Max" {
+            Tensor(vtk,glyphs) ColorGlyphsWithMaxEigenvalue
+        }
+        "Middle" {
+            Tensor(vtk,glyphs) ColorGlyphsWithMiddleEigenvalue
+        }
+        "Min" {
+            Tensor(vtk,glyphs) ColorGlyphsWithMinEigenvalue
+        }
+        "MaxMinusMiddle" {
+            Tensor(vtk,glyphs) ColorGlyphsWithMaxMinusMidEigenvalue
+        }
+        "RA" {
+            Tensor(vtk,glyphs) ColorGlyphsWithRelativeAnisotropy
+        }
+        "FA" {
+            Tensor(vtk,glyphs) ColorGlyphsWithFractionalAnisotropy
+        }
+        "Direction" {
+            Tensor(vtk,glyphs) ColorGlyphsWithDirection
+        }
+        
     }
     # Tell actor where to get scalar range
     set Tensor(mode,glyphScalarRange) Auto
@@ -1778,23 +1780,23 @@ proc TensorUpdateGlyphScalarRange {{not_used ""}} {
     set mode $Tensor(mode,glyphScalarRange)
 
     switch $mode {
-    "Auto" {
+        "Auto" {
 
-        scan [[Tensor(vtk,glyphs) GetOutput] GetScalarRange] \
-            "%f %f" \
-            Tensor(mode,glyphScalarRange,low) \
-            Tensor(mode,glyphScalarRange,hi) 
+            scan [[Tensor(vtk,glyphs) GetOutput] GetScalarRange] \
+                    "%f %f" \
+                    Tensor(mode,glyphScalarRange,low) \
+                    Tensor(mode,glyphScalarRange,hi) 
 
-        Tensor(vtk,glyphs,mapper) SetScalarRange \
-        $Tensor(mode,glyphScalarRange,low) \
-            $Tensor(mode,glyphScalarRange,hi) 
+            Tensor(vtk,glyphs,mapper) SetScalarRange \
+                    $Tensor(mode,glyphScalarRange,low) \
+                    $Tensor(mode,glyphScalarRange,hi) 
 
-    }
-    "Manual" {
-        Tensor(vtk,glyphs,mapper) SetScalarRange \
-            $Tensor(mode,glyphScalarRange,low) \
-            $Tensor(mode,glyphScalarRange,hi) 
-    }
+        }
+        "Manual" {
+            Tensor(vtk,glyphs,mapper) SetScalarRange \
+                    $Tensor(mode,glyphScalarRange,low) \
+                    $Tensor(mode,glyphScalarRange,hi) 
+        }
     }
 
 
@@ -1802,21 +1804,21 @@ proc TensorUpdateGlyphScalarRange {{not_used ""}} {
     # This way -4e-12 will not look like a negative eigenvalue in
     # the GUI
     set Tensor(mode,glyphScalarRange,low) \
-        [TensorRoundFloatingPoint $Tensor(mode,glyphScalarRange,low)]
+            [TensorRoundFloatingPoint $Tensor(mode,glyphScalarRange,low)]
     set Tensor(mode,glyphScalarRange,hi) \
-        [TensorRoundFloatingPoint $Tensor(mode,glyphScalarRange,hi)]
+            [TensorRoundFloatingPoint $Tensor(mode,glyphScalarRange,hi)]
 
     # If we are doing streamlines, tell them how to build LUT
     # Lauren why does this have little effect?  
     # need log lookup table?
     eval {Tensor(vtk,streamln,mapper)  SetScalarRange}  \
-        [[Tensor(vtk,glyphs) GetOutput] GetScalarRange] 
+            [[Tensor(vtk,glyphs) GetOutput] GetScalarRange] 
 
     set t $Tensor(activeID)
     foreach id $Tensor(vtk,streamline,idList) {
-    set streamline streamln,$id
-    eval {Tensor(vtk,$streamline,mapper)   SetScalarRange}  \
-        [[Tensor($t,data) GetOutput] GetScalarRange] 
+        set streamline streamln,$id
+        eval {Tensor(vtk,$streamline,mapper)   SetScalarRange}  \
+                [[Tensor($t,data) GetOutput] GetScalarRange] 
     }
 
     # This causes multiple renders since for some reason
@@ -1852,8 +1854,8 @@ proc TensorUpdate {} {
 
     set t $Tensor(activeID)
     if {$t == "" || $t == $Tensor(idNone)} {
-    puts "TensorUpdate: Can't visualize Nothing"
-    return
+        puts "TensorUpdate: Can't visualize Nothing"
+        return
     }
 
 
@@ -1869,63 +1871,63 @@ proc TensorUpdate {} {
     #------------------------------------
     set mode $Tensor(mode,threshold)
     if {$mode != "None"} {
-    
-    puts "thresholding by $Tensor(mode,threshold)"
-    set math Tensor(vtk,thresh,math)
+        
+        puts "thresholding by $Tensor(mode,threshold)"
+        set math Tensor(vtk,thresh,math)
 
-    # calculate trace or whatever we are thresholding by
-    $math SetInput 0 [Tensor($t,data) GetOutput]
-    $math SetOperationTo$Tensor(mode,threshold)
+        # calculate trace or whatever we are thresholding by
+        $math SetInput 0 [Tensor($t,data) GetOutput]
+        $math SetOperationTo$Tensor(mode,threshold)
 
-    # threshold to make a mask of the area of interest
-    set thresh1 Tensor(vtk,thresh,threshold)
-    $thresh1 ThresholdBetween $Tensor(thresh,threshold,lower) \
-        $Tensor(thresh,threshold,upper)
+        # threshold to make a mask of the area of interest
+        set thresh1 Tensor(vtk,thresh,threshold)
+        $thresh1 ThresholdBetween $Tensor(thresh,threshold,lower) \
+                $Tensor(thresh,threshold,upper)
 
-    # this line seems to be needed
-    $thresh1 Update
-    
-    #Tensor(vtk,glyphs) SetScalarMask [$thresh GetOutput]
-    # tell our filter to use this information
-    #Tensor(vtk,glyphs) MaskGlyphsWithScalarsOn
+        # this line seems to be needed
+        $thresh1 Update
+        
+        #Tensor(vtk,glyphs) SetScalarMask [$thresh GetOutput]
+        # tell our filter to use this information
+        #Tensor(vtk,glyphs) MaskGlyphsWithScalarsOn
 
-    #  set tensors to 0 outside of mask generated above
-    set mask1 Tensor(vtk,thresh,mask)
-    $mask1 SetImageInput [Tensor($t,data) GetOutput]
+        #  set tensors to 0 outside of mask generated above
+        set mask1 Tensor(vtk,thresh,mask)
+        $mask1 SetImageInput [Tensor($t,data) GetOutput]
 
-    set dataSource [$mask1 GetOutput]
+        set dataSource [$mask1 GetOutput]
     } else {
-    set dataSource [Tensor($t,data) GetOutput]
-    #Tensor(vtk,glyphs) MaskGlyphsWithScalarsOff
+        set dataSource [Tensor($t,data) GetOutput]
+        #Tensor(vtk,glyphs) MaskGlyphsWithScalarsOff
     }
 
     # mask tensors if required
     #------------------------------------
     set mode $Tensor(mode,mask)
     if {$mode != "None"} {
-    
-    puts "masking by $Tensor(mode,mask)"
-    # note it would be more efficient to 
-    # combine the two masks (from thresh and here) 
-    # but probably not both used at once 
+        
+        puts "masking by $Tensor(mode,mask)"
+        # note it would be more efficient to 
+        # combine the two masks (from thresh and here) 
+        # but probably not both used at once 
 
-    set thresh Tensor(vtk,mask,threshold)    
-    $thresh ThresholdBetween $Label(label) $Label(label)
-    set v $Volume(activeID)
-    $thresh SetInput [Volume($v,vol) GetOutput]
+        set thresh Tensor(vtk,mask,threshold)    
+        $thresh ThresholdBetween $Label(label) $Label(label)
+        set v $Volume(activeID)
+        $thresh SetInput [Volume($v,vol) GetOutput]
 
-    # this line seems to be needed
-    $thresh Update
-    
-    set mask Tensor(vtk,mask,mask)
-    # use output from above thresholding pipeline as input
-    $mask SetImageInput $dataSource
+        # this line seems to be needed
+        $thresh Update
+        
+        set mask Tensor(vtk,mask,mask)
+        # use output from above thresholding pipeline as input
+        $mask SetImageInput $dataSource
 
-    # set the dataSource to point to our output 
-    # for the following pipelines
-    set preprocessedSource [$mask GetOutput]
+        # set the dataSource to point to our output 
+        # for the following pipelines
+        set preprocessedSource [$mask GetOutput]
     } else {
-    set preprocessedSource $dataSource
+        set preprocessedSource $dataSource
     }
 
     #------------------------------------
@@ -1935,125 +1937,126 @@ proc TensorUpdate {} {
     puts "Setting mode $mode for tensor $t"
     
     switch $mode {
-    "Glyphs" {
-        puts "glyphs! $Tensor(mode,glyphType)"
+        "Glyphs" {
+            puts "glyphs! $Tensor(mode,glyphType)"
+            
+            # Find input to pipeline
+            #------------------------------------
+            set slice $Tensor(mode,reformatType)
+            if {$slice != "None"} {
 
-        # Find input to pipeline
-        #------------------------------------
-        set slice $Tensor(mode,reformatType)
-        if {$slice != "None"} {
+                # We are reformatting a slice of glyphs
+                Tensor(vtk,reformat) SetInput $preprocessedSource
 
-        # We are reformatting a slice of glyphs
-        Tensor(vtk,reformat) SetInput $preprocessedSource
+                # set fov same as volume we are overlaying
+                Tensor(vtk,reformat) SetFieldOfView [Slicer GetFieldOfView]
 
-        # set fov same as volume we are overlaying
-        Tensor(vtk,reformat) SetFieldOfView [Slicer GetFieldOfView]
+                # tell reformatter to obey the node
+                set node Tensor($Tensor(activeID),node)
+                Tensor(vtk,reformat) SetInterpolate [$node GetInterpolate]
+                Tensor(vtk,reformat) SetWldToIjkMatrix [$node GetWldToIjk]
+                
+                #  reformat resolution should match the tensor resolution.
+                # Use the extents to figure this out.
+                set ext [[Tensor($Tensor(activeID),data) GetOutput] GetExtent]
+                set resx [expr [lindex $ext 1] - [lindex $ext 0] + 1]
+                set resy [expr [lindex $ext 3] - [lindex $ext 2] + 1]
+                if {$resx > $resy} {
+                    set res $resx
+                } else {
+                    set res $resy
+                }
 
-        # tell reformatter to obey the node
-        set node Tensor($Tensor(activeID),node)
-        Tensor(vtk,reformat) SetInterpolate [$node GetInterpolate]
-        Tensor(vtk,reformat) SetWldToIjkMatrix [$node GetWldToIjk]
-        
-        #  reformat resolution should match the tensor resolution.
-        # Use the extents to figure this out.
-        set ext [[Tensor($Tensor(activeID),data) GetOutput] GetExtent]
-        set resx [expr [lindex $ext 1] - [lindex $ext 0] + 1]
-        set resy [expr [lindex $ext 3] - [lindex $ext 2] + 1]
-        if {$resx > $resy} {
-            set res $resx
-        } else {
-            set res $resy
+                Tensor(vtk,reformat) SetResolution $res
+
+                set m [Slicer GetReformatMatrix $slice]
+                Tensor(vtk,reformat) SetReformatMatrix $m
+                set visSource [Tensor(vtk,reformat) GetOutput]
+                
+                # Position glyphs with the slice.
+                # The glyph filter will transform output points by this 
+                # matrix.  We can't just move the actor in space
+                # since this will rotate the tensors, so this is wrong:
+                # Tensor(vtk,glyphs,actor) SetUserMatrix $m
+                Tensor(vtk,glyphs) SetUserMatrix $m
+                
+            } else {
+                # We are displaying the whole volume of glyphs!
+                set visSource $preprocessedSource
+                
+                # Want actor to be positioned in center with slices
+                vtkTransform t1
+                TensorCalculateActorMatrix t1 $Tensor(activeID)
+                
+                # Position glyphs in the volume.
+                # The glyph filter will transform output points by this 
+                # matrix.  We can't just move the actor in space
+                # since this will rotate the tensors, so this is wrong:
+                #Tensor(vtk,glyphs,actor) SetUserMatrix [t1 GetMatrix]
+                Tensor(vtk,glyphs) SetUserMatrix [t1 GetMatrix]
+                t1 Delete
+            }
+
+
+            # start pipeline
+            #------------------------------------
+            Tensor(vtk,glyphs) SetInput $visSource
+
+            # Use axes or ellipses
+            #------------------------------------
+            switch $Tensor(mode,glyphType) {
+                "Axes" {
+                    Tensor(vtk,glyphs) SetSource \
+                            [Tensor(vtk,glyphs,axes) GetOutput]
+
+                    # this is too slow, but might make nice pictures
+                    #[Tensor(vtk,glyphs,tubeAxes) GetOutput]
+
+                    Tensor(vtk,glyphs,mapper) SetInput \
+                            [Tensor(vtk,glyphs) GetOutput]
+                }
+                "Lines" {
+                    Tensor(vtk,glyphs) SetSource \
+                            [Tensor(vtk,glyphs,line) GetOutput]
+                    Tensor(vtk,glyphs,mapper) SetInput \
+                            [Tensor(vtk,glyphs) GetOutput]
+                }
+                "Ellipses" {
+                    Tensor(vtk,glyphs) SetSource \
+                            [Tensor(vtk,glyphs,sphere) GetOutput]
+                    # Lauren test
+                    # way too expensive?
+                    Tensor(vtk,glyphs,mapper) SetInput \
+                            [Tensor(vtk,glyphs,normals) GetOutput]
+                    Tensor(vtk,glyphs,mapper) SetInput \
+                            [Tensor(vtk,glyphs) GetOutput]
+                }
+            }
+
+            # Make actor visible
+            #------------------------------------
+            Tensor(vtk,glyphs,actor) VisibilityOn
+
         }
+        "Tracks" {
 
-        Tensor(vtk,reformat) SetResolution $res
+            puts "tracks!"
+            # Lauren this button is really only to access tractography
+            # GUI which should be its own thing anyway?
 
-        set m [Slicer GetReformatMatrix $slice]
-        Tensor(vtk,reformat) SetReformatMatrix $m
-        set visSource [Tensor(vtk,reformat) GetOutput]
-        
-        # Position glyphs with the slice.
-        # The glyph filter will transform output points by this 
-        # matrix.  We can't just move the actor in space
-        # since this will rotate the tensors, so this is wrong:
-        # Tensor(vtk,glyphs,actor) SetUserMatrix $m
-        Tensor(vtk,glyphs) SetUserMatrix $m
-
-        } else {
-        # We are displaying the whole volume of glyphs!
-        set visSource $preprocessedSource
-        
-        # Want actor to be positioned in center with slices
-        vtkTransform t1
-        TensorCalculateActorMatrix t1 $Tensor(activeID)
-        
-        # Position glyphs in the volume.
-        # The glyph filter will transform output points by this 
-        # matrix.  We can't just move the actor in space
-        # since this will rotate the tensors, so this is wrong:
-        #Tensor(vtk,glyphs,actor) SetUserMatrix [t1 GetMatrix]
-        Tensor(vtk,glyphs) SetUserMatrix [t1 GetMatrix]
         }
+        "None" {
+            puts "Turning off tensor visualization"
 
-
-        # start pipeline
-        #------------------------------------
-        Tensor(vtk,glyphs) SetInput $visSource
-
-        # Use axes or ellipses
-        #------------------------------------
-        switch $Tensor(mode,glyphType) {
-        "Axes" {
-            Tensor(vtk,glyphs) SetSource \
-                [Tensor(vtk,glyphs,axes) GetOutput]
-
-            # this is too slow, but might make nice pictures
-            #[Tensor(vtk,glyphs,tubeAxes) GetOutput]
-
-            Tensor(vtk,glyphs,mapper) SetInput \
-                [Tensor(vtk,glyphs) GetOutput]
+            # make invisible so output
+            # not requested from pipeline anymore
+            #------------------------------------
+            Tensor(vtk,glyphs,actor) VisibilityOff
+            foreach id $Tensor(vtk,streamline,idList) {
+                set streamline streamln,$id
+                Tensor(vtk,$streamline,actor) VisibilityOff
+            }
         }
-        "Lines" {
-            Tensor(vtk,glyphs) SetSource \
-                [Tensor(vtk,glyphs,line) GetOutput]
-            Tensor(vtk,glyphs,mapper) SetInput \
-                [Tensor(vtk,glyphs) GetOutput]
-        }
-        "Ellipses" {
-            Tensor(vtk,glyphs) SetSource \
-                [Tensor(vtk,glyphs,sphere) GetOutput]
-            # Lauren test
-            # way too expensive?
-            Tensor(vtk,glyphs,mapper) SetInput \
-                [Tensor(vtk,glyphs,normals) GetOutput]
-            Tensor(vtk,glyphs,mapper) SetInput \
-                [Tensor(vtk,glyphs) GetOutput]
-        }
-        }
-
-        # Make actor visible
-        #------------------------------------
-        Tensor(vtk,glyphs,actor) VisibilityOn
-
-    }
-    "Tracks" {
-
-        puts "tracks!"
-        # Lauren this button is really only to access tractography
-        # GUI which should be its own thing anyway?
-
-    }
-    "None" {
-        puts "Turning off tensor visualization"
-
-        # make invisible so output
-        # not requested from pipeline anymore
-        #------------------------------------
-        Tensor(vtk,glyphs,actor) VisibilityOff
-        foreach id $Tensor(vtk,streamline,idList) {
-        set streamline streamln,$id
-        Tensor(vtk,$streamline,actor) VisibilityOff
-        }
-    }
     }
 
     # config menubutton
@@ -2062,7 +2065,7 @@ proc TensorUpdate {} {
 
     # make sure the scalars are updated (if we have anything displayed)
     if {$mode != "None"} {
-    TensorUpdateGlyphScalarRange
+        TensorUpdateGlyphScalarRange
     }
     # update 3D window (causes pipeline update)
     Render3D
@@ -2091,20 +2094,20 @@ proc TensorUpdateMathParams {} {
     set err "The $mode ROI is not currently being computed.  Please turn this feature on in the ROI tab before creating the volume."
 
     switch $mode {
-    "None" {
-    }
-    "Threshold" {
-        if {$Tensor(mode,threshold)    == "None"} {
-        set Tensor(scalars,ROI) None
-        tk_messageBox -message $err
+        "None" {
         }
-    }
-    "Mask" {
-        if {$Tensor(mode,mask)    == "None"} {
-        set Tensor(scalars,ROI) None
-        tk_messageBox -message $err
+        "Threshold" {
+            if {$Tensor(mode,threshold)    == "None"} {
+                set Tensor(scalars,ROI) None
+                tk_messageBox -message $err
+            }
         }
-    }
+        "Mask" {
+            if {$Tensor(mode,mask)    == "None"} {
+                set Tensor(scalars,ROI) None
+                tk_messageBox -message $err
+            }
+        }
     }    
 
 }
@@ -2156,15 +2159,15 @@ proc TensorDoMath {{operation ""}} {
 
     # if this was called from user input GUI menu
     if {$operation == ""} {
-    set operation $Tensor(scalars,operation) 
+        set operation $Tensor(scalars,operation) 
     }
 
     # should use DevCreateNewCopiedVolume if have a vol node
     # to copy...
     set t $Tensor(activeID) 
     if {$t == "" || $t == $Tensor(idNone)} {
-    puts "Can't do math if no tensor selected"
-    return
+        puts "Can't do math if no tensor selected"
+        return
     }
     set name [Tensor($t,node) GetName]
     set name ${operation}_$name
@@ -2179,15 +2182,15 @@ proc TensorDoMath {{operation ""}} {
     set mode $Tensor(scalars,ROI)
     
     switch $mode {
-    "None" {
-        set input [Tensor($t,data) GetOutput]
-    }
-    "Threshold" {
-        set input [Tensor(vtk,thresh,mask) GetOutput]
-    }
-    "Mask" {
-        set input [Tensor(vtk,mask,mask) GetOutput]
-    }
+        "None" {
+            set input [Tensor($t,data) GetOutput]
+        }
+        "Threshold" {
+            set input [Tensor(vtk,thresh,mask) GetOutput]
+        }
+        "Mask" {
+            set input [Tensor(vtk,mask,mask) GetOutput]
+        }
     }
 
     vtkTensorMathematics math
@@ -2235,8 +2238,8 @@ proc TensorGrabVol {filter} {
     # to copy...
     set t $Tensor(activeID) 
     if {$t == "" || $t == $Tensor(idNone)} {
-    puts "Can't do math if no tensor selected"
-    return
+        puts "Can't do math if no tensor selected"
+        return
     }
     set name [Tensor($t,node) GetName]
     set name trace_$name
@@ -2289,25 +2292,25 @@ proc TensorApplyVisualizationParameters {} {
     #------------------------------------
     foreach o $Tensor(vtkObjectList) {
 
-    # loop through all parameters of the object
-    #------------------------------------
-    foreach p $Tensor(vtkPropertyList,$o) {
-
-        # value of the parameter is $Tensor(vtk,$o,$p)
+        # loop through all parameters of the object
         #------------------------------------
-        set value $Tensor(vtk,$o,$p)
-        
-        # Actually set the value appropriately in the vtk object
-        #------------------------------------    
+        foreach p $Tensor(vtkPropertyList,$o) {
 
-        # first capitalize the parameter name
-        set param [Cap $p]
-        
-        # MyObject SetMyParameter $value    
-        # handle the case in which value is a list with an eval 
-        # this puts it into the correct format for feeding to vtk
-        eval {Tensor(vtk,$o) Set$param} $value
-    }
+            # value of the parameter is $Tensor(vtk,$o,$p)
+            #------------------------------------
+            set value $Tensor(vtk,$o,$p)
+            
+            # Actually set the value appropriately in the vtk object
+            #------------------------------------    
+
+            # first capitalize the parameter name
+            set param [Cap $p]
+            
+            # MyObject SetMyParameter $value    
+            # handle the case in which value is a list with an eval 
+            # this puts it into the correct format for feeding to vtk
+            eval {Tensor(vtk,$o) Set$param} $value
+        }
     }
 
 }
@@ -2397,7 +2400,7 @@ proc TensorBuildVTK {} {
     Tensor(vtk,$object) SetReplaceIn     1
     Tensor(vtk,$object) SetReplaceOut    1
     Tensor(vtk,$object) SetInput \
-        [Tensor(vtk,thresh,math) GetOutput]
+            [Tensor(vtk,thresh,math) GetOutput]
 
     # convert the mask to unsigned char
     # Lauren it would be better to have the threshold filter do this
@@ -2405,15 +2408,15 @@ proc TensorBuildVTK {} {
     TensorMakeVTKObject vtkImageCast $object
     Tensor(vtk,$object) SetOutputScalarTypeToUnsignedChar    
     Tensor(vtk,$object) SetInput \
-        [Tensor(vtk,thresh,threshold) GetOutput]
+            [Tensor(vtk,thresh,threshold) GetOutput]
 
     # mask the tensors 
     set object thresh,mask
     TensorMakeVTKObject vtkTensorMask $object
     #Tensor(vtk,$object) SetMaskInput \
-    #    [Tensor(vtk,thresh,threshold) GetOutput]
+            #    [Tensor(vtk,thresh,threshold) GetOutput]
     Tensor(vtk,$object) SetMaskInput \
-        [Tensor(vtk,thresh,cast) GetOutput]
+            [Tensor(vtk,thresh,cast) GetOutput]
 
     # objects for masking before glyph display
     #------------------------------------
@@ -2432,13 +2435,13 @@ proc TensorBuildVTK {} {
     TensorMakeVTKObject vtkImageCast $object
     Tensor(vtk,$object) SetOutputScalarTypeToShort    
     Tensor(vtk,$object) SetInput \
-        [Tensor(vtk,mask,threshold) GetOutput]
+            [Tensor(vtk,mask,threshold) GetOutput]
 
     # mask the tensors 
     set object mask,mask
     TensorMakeVTKObject vtkTensorMask $object
     Tensor(vtk,$object) SetMaskInput \
-        [Tensor(vtk,mask,cast) GetOutput]
+            [Tensor(vtk,mask,cast) GetOutput]
 
     #---------------------------------------------------------------
     # Pipeline for display of glyphs
@@ -2481,7 +2484,7 @@ proc TensorBuildVTK {} {
     #Tensor(vtk,$object) SetInput [Tensor(vtk,glyphs,axes) GetOutput]
     #TensorAddObjectProperty $object Radius 0.1 float {Radius}
     #TensorAddObjectProperty $object NumberOfSides 6 int \
-    #    {Number Of Sides}
+            #    {Number Of Sides}
 
     # Lauren test
     # One line
@@ -2499,7 +2502,7 @@ proc TensorBuildVTK {} {
     #Tensor(vtk,$object) SetInput [Tensor(vtk,glyphs,line) GetOutput]
     #TensorAddObjectProperty $object Radius 0.1 float {Radius}
     #TensorAddObjectProperty $object NumberOfSides 6 int \
-    #    {Number Of Sides}
+            #    {Number Of Sides}
 
     # Ellipsoids
     set object glyphs,sphere
@@ -2537,7 +2540,7 @@ proc TensorBuildVTK {} {
     #TensorMakeVTKObject vtkLogLookupTable $object
     TensorMakeVTKObject vtkLookupTable $object
     TensorAddObjectProperty $object HueRange \
-        {.6667 0.0} float {Hue Range}
+            {.6667 0.0} float {Hue Range}
 
     # mapper
     set object glyphs,mapper
@@ -2546,7 +2549,7 @@ proc TensorBuildVTK {} {
     #Tensor(vtk,glyphs,mapper) SetInput [Tensor(vtk,glyphs,normals) GetOutput]
     Tensor(vtk,glyphs,mapper) SetLookupTable Tensor(vtk,glyphs,lut)
     TensorAddObjectProperty $object ImmediateModeRendering \
-        1 bool {Immediate Mode Rendering}    
+            1 bool {Immediate Mode Rendering}    
 
     # Lauren fix this!!!!! (copied from a tcl example)
     #eval Tensor(vtk,glyphs,mapper)  SetScalarRange 0.0415224 0.784456 
@@ -2580,19 +2583,19 @@ proc TensorBuildVTK {} {
 
     #TensorAddObjectProperty $object StartPosition {9 9 -9} float {Start Pos}
     #TensorAddObjectProperty $object IntegrateMinorEigenvector \
-        #1 bool IntegrateMinorEv
+            #1 bool IntegrateMinorEv
     TensorAddObjectProperty $object MaximumPropagationDistance 60.0 \
-        float {Max Propagation Distance}
+            float {Max Propagation Distance}
     TensorAddObjectProperty $object IntegrationStepLength 0.01 \
-        float {Integration Step Length}
+            float {Integration Step Length}
     TensorAddObjectProperty $object StepLength 0.0001 \
-        float {Step Length}        
+            float {Step Length}        
     TensorAddObjectProperty $object Radius 0.25 \
-        float {Radius}
+            float {Radius}
     TensorAddObjectProperty $object  NumberOfSides 30 \
-        int {Number of Sides}
+            int {Number of Sides}
     TensorAddObjectProperty $object  IntegrationDirection 2 \
-        int {Integration Direction}
+            int {Integration Direction}
     
     # Display of tensor streamline: LUT and Mapper
     #------------------------------------
@@ -2601,15 +2604,15 @@ proc TensorBuildVTK {} {
     #TensorMakeVTKObject vtkLogLookupTable $object
     TensorMakeVTKObject vtkLookupTable $object
     Tensor(vtk,$object) SetHueRange .6667 0.0
-#    TensorAddObjectProperty $object HueRange \
-#        {.6667 0.0} float {Hue Range}
+    #    TensorAddObjectProperty $object HueRange \
+            #        {.6667 0.0} float {Hue Range}
 
     set object streamln,mapper
     TensorMakeVTKObject vtkPolyDataMapper $object
     Tensor(vtk,streamln,mapper) SetInput [Tensor(vtk,streamln) GetOutput]
     Tensor(vtk,streamln,mapper) SetLookupTable Tensor(vtk,streamln,lut)
     TensorAddObjectProperty $object ImmediateModeRendering \
-        1 bool {Immediate Mode Rendering}    
+            1 bool {Immediate Mode Rendering}    
 
     #eval Tensor(vtk,streamln,mapper)  SetScalarRange 0.0415224 0.784456 
 
@@ -2637,9 +2640,9 @@ proc TensorBuildVTK {} {
     set object diffusion    
     TensorMakeVTKObject vtkImageTensorDiffusion $object
     TensorAddObjectProperty $object NumberOfIterations 1 \
-        int {Number of Iterations}
+            int {Number of Iterations}
     TensorAddObjectProperty $object S 1 \
-        float {Diffusion Speed}
+            float {Diffusion Speed}
 
 
     # Apply all settings from tcl variables that were
@@ -2657,20 +2660,20 @@ proc TensorBuildVTK {} {
 #-------------------------------------------------------------------------------
 proc annotatePick {picker} {
     if { [$picker GetCellId] < 0 } {
-    textActor VisibilityOff
+        textActor VisibilityOff
 
     } else {
-    set selPt [$picker GetSelectionPoint]
-    set x [lindex $selPt 0] 
-    set y [lindex $selPt 1]
-    set pickPos [$picker GetPickPosition]
-    set xp [lindex $pickPos 0] 
-    set yp [lindex $pickPos 1]
-    set zp [lindex $pickPos 2]
+        set selPt [$picker GetSelectionPoint]
+        set x [lindex $selPt 0] 
+        set y [lindex $selPt 1]
+        set pickPos [$picker GetPickPosition]
+        set xp [lindex $pickPos 0] 
+        set yp [lindex $pickPos 1]
+        set zp [lindex $pickPos 2]
 
-    textMapper SetInput "($xp, $yp, $zp)"
-    textActor SetPosition $x $y
-    textActor VisibilityOn
+        textMapper SetInput "($xp, $yp, $zp)"
+        textActor SetPosition $x $y
+        textActor VisibilityOn
     }
 
     #renWin Render
@@ -2693,8 +2696,8 @@ proc ConvertVolumeToTensors {} {
 
     set v $Volume(activeID)
     if {$v == "" || $v == $Volume(idNone)} {
-    puts "Can't create tensors from None volume"
-    return
+        puts "Can't create tensors from None volume"
+        return
     }
 
     # setup - Lauren these should be globals linked with GUI
@@ -2731,14 +2734,15 @@ proc ConvertVolumeToTensors {} {
     scan [Volume($v,node) GetSpacing] "%g %g %g" res_x res_y res_z
     # If the volume was swapped these are reversed
     if {[Volume($v,node) GetFrequencyPhaseSwap] == 1} {
-    set tmp $res_x
-    set res_x $res_y
-    set res_y $tmp
+        set tmp $res_x
+        set res_x $res_y
+        set res_y $tmp
     }
     # We want -y since vtk flips the y axis
+    #puts "Not flipping y"
     set res_y [expr -$res_y]
     transform Scale [expr 1.0 / $res_x] [expr 1.0 / $res_y] \
-        [expr 1.0 / $res_z]
+            [expr 1.0 / $res_z]
 
     # Remove the translation part from the last column.
     # (This was in there to center the volume in the cube.)
@@ -2753,7 +2757,9 @@ proc ConvertVolumeToTensors {} {
     # Tensor creation filter will transform gradient dirs by this matrix.
     # (Now this matrix JUST does the rotation needed for ijk->ras.)
     # -------------------------------------
-    tensor SetTransform transform
+
+    puts "Lauren creating ijk tensors"
+    #tensor SetTransform transform
     puts "-----------------------------------"
     puts [transform Print]
     puts "-----------------------------------"
@@ -2766,82 +2772,82 @@ proc ConvertVolumeToTensors {} {
     set inputNum 0
     set Tensor(recalculate,gradientVolumes) ""
     foreach slice $offsetsGradient {
-    vtkImageExtractSlices extract$slice
-    extract$slice SetInput $input
-    extract$slice SetSliceOffset $slice
-    extract$slice SetSlicePeriod $slicePeriod
+        vtkImageExtractSlices extract$slice
+        extract$slice SetInput $input
+        extract$slice SetSliceOffset $slice
+        extract$slice SetSlicePeriod $slicePeriod
 
-    #puts "----------- slice $slice update --------"    
-    extract$slice Update
-    #puts [[extract$slice GetOutput] Print]
+        #puts "----------- slice $slice update --------"    
+        extract$slice Update
+        #puts [[extract$slice GetOutput] Print]
 
-    # pass along in pipeline
-    tensor SetDiffusionImage \
-        $inputNum [extract$slice GetOutput]
-    incr inputNum
-    
-    # put the filter output into a slicer volume
-    # Lauren this should be optional
-    # make a MRMLVolume for this output
-    set name [Volume($v,node) GetName]
-    set description "$slice gradient volume derived from volume $name"
-    set name gradient${slice}_$name
-    set id [DevCreateNewCopiedVolume $v $description $name]
-    # save id in case we recalculate the tensors
-    lappend Tensor(recalculate,gradientVolumes) $id
-    puts "created volume $id"
-    Volume($id,vol) SetImageData [extract$slice GetOutput]
-    # fix the image range in the node (less slices than the original)
-    set extent [[Volume($id,vol) GetOutput] GetExtent]
-    set range "[expr [lindex $extent 4] +1] [expr [lindex $extent 5] +1]"
-    eval {Volume($id,node) SetImageRange} $range
-    # recompute the matrices using this offset to center vol in the cube
-    # for some reason this uses the wrong node spacing!
-    # Lauren test 
-    eval {Volume($id,node) SetSpacing} [Volume($id,node) GetSpacing]
+        # pass along in pipeline
+        tensor SetDiffusionImage \
+                $inputNum [extract$slice GetOutput]
+        incr inputNum
+        
+        # put the filter output into a slicer volume
+        # Lauren this should be optional
+        # make a MRMLVolume for this output
+        set name [Volume($v,node) GetName]
+        set description "$slice gradient volume derived from volume $name"
+        set name gradient${slice}_$name
+        set id [DevCreateNewCopiedVolume $v $description $name]
+        # save id in case we recalculate the tensors
+        lappend Tensor(recalculate,gradientVolumes) $id
+        puts "created volume $id"
+        Volume($id,vol) SetImageData [extract$slice GetOutput]
+        # fix the image range in the node (less slices than the original)
+        set extent [[Volume($id,vol) GetOutput] GetExtent]
+        set range "[expr [lindex $extent 4] +1] [expr [lindex $extent 5] +1]"
+        eval {Volume($id,node) SetImageRange} $range
+        # recompute the matrices using this offset to center vol in the cube
+        # for some reason this uses the wrong node spacing!
+        # Lauren test 
+        eval {Volume($id,node) SetSpacing} [Volume($id,node) GetSpacing]
 
-    set order [Volume($id,node) GetScanOrder]
-    puts "-------computing ras to ijk from scan order----"
-    Volume($id,node) ComputeRasToIjkFromScanOrder $order
+        set order [Volume($id,node) GetScanOrder]
+        puts "-------computing ras to ijk from scan order----"
+        Volume($id,node) ComputeRasToIjkFromScanOrder $order
 
 
-    # update slicer internals
-    MainVolumesUpdate $id
-    
+        # update slicer internals
+        MainVolumesUpdate $id
+        
     }
     # save ids in case we recalculate the tensors
     set Tensor(recalculate,noGradientVolumes) ""
     foreach slice $offsetsNoGradient {
-    vtkImageExtractSlices extract$slice
-    extract$slice SetInput $input
-    extract$slice SetSliceOffset $slice
-    extract$slice SetSlicePeriod $slicePeriod
-    
-    #puts "----------- slice $slice update --------"    
-    extract$slice Update
+        vtkImageExtractSlices extract$slice
+        extract$slice SetInput $input
+        extract$slice SetSliceOffset $slice
+        extract$slice SetSlicePeriod $slicePeriod
+        
+        #puts "----------- slice $slice update --------"    
+        extract$slice Update
 
 
-    # put the filter output into a slicer volume
-    # Lauren this should be optional
-    # make a MRMLVolume for this output
-    set name [Volume($v,node) GetName]
-    set name noGradient${slice}_$name
-    set description "$slice no gradient volume derived from volume $name"
-    set id [DevCreateNewCopiedVolume $v $description $name]
-    # save id in case we recalculate the tensors
-    lappend Tensor(recalculate,noGradientVolumes) $id
-    puts "created volume $id"
-    Volume($id,vol) SetImageData [extract$slice GetOutput]
-    # fix the image range in the node (less slices than the original)
-    set extent [[Volume($id,vol) GetOutput] GetExtent]
-    set range "[expr [lindex $extent 4] +1] [expr [lindex $extent 5] +1]"
-    eval {Volume($id,node) SetImageRange} $range
-    # recompute the matrices using this offset to center vol in the cube
-    set order [Volume($id,node) GetScanOrder]
-    Volume($id,node) ComputeRasToIjkFromScanOrder $order
+        # put the filter output into a slicer volume
+        # Lauren this should be optional
+        # make a MRMLVolume for this output
+        set name [Volume($v,node) GetName]
+        set name noGradient${slice}_$name
+        set description "$slice no gradient volume derived from volume $name"
+        set id [DevCreateNewCopiedVolume $v $description $name]
+        # save id in case we recalculate the tensors
+        lappend Tensor(recalculate,noGradientVolumes) $id
+        puts "created volume $id"
+        Volume($id,vol) SetImageData [extract$slice GetOutput]
+        # fix the image range in the node (less slices than the original)
+        set extent [[Volume($id,vol) GetOutput] GetExtent]
+        set range "[expr [lindex $extent 4] +1] [expr [lindex $extent 5] +1]"
+        eval {Volume($id,node) SetImageRange} $range
+        # recompute the matrices using this offset to center vol in the cube
+        set order [Volume($id,node) GetScanOrder]
+        Volume($id,node) ComputeRasToIjkFromScanOrder $order
 
-    # update slicer internals
-    MainVolumesUpdate $id
+        # update slicer internals
+        MainVolumesUpdate $id
     }
 
     # average the two slices of no gradient 
@@ -2883,7 +2889,7 @@ proc ConvertVolumeToTensors {} {
     set order [$newvol GetScanOrder]
     
     $newvol ComputeRasToIjkFromScanOrder $order
-  
+    
     puts "SPACING [$newvol GetSpacing] DIMS [$newvol GetDimensions] MAT [$newvol GetRasToIjkMatrix]"
     MainDataCreate Tensor $n
     
@@ -2898,21 +2904,21 @@ proc ConvertVolumeToTensors {} {
     MainUpdateMRML
     # If failed, then it's no longer in the idList
     if {[lsearch $Tensor(idList) $n] == -1} {
-    puts "Lauren node doesn't exist, should unfreeze and fix volumes.tcltoo"
+        puts "Lauren node doesn't exist, should unfreeze and fix volumes.tcltoo"
     } else {
-    # Activate the new data object
-    MainDataSetActive Tensor $n
+        # Activate the new data object
+        MainDataSetActive Tensor $n
     }
 
 
     # kill objects
     foreach slice $offsetsGradient {
-    extract$slice SetOutput ""
-    extract$slice Delete
+        extract$slice SetOutput ""
+        extract$slice Delete
     }
     foreach slice $offsetsNoGradient {
-    extract$slice SetOutput ""
-    extract$slice Delete
+        extract$slice SetOutput ""
+        extract$slice Delete
     }
 
     math SetOutput ""
@@ -2955,8 +2961,8 @@ proc TensorRecalculateTensors {} {
     # gradient image inputs
     set inputNum 0
     foreach v $Tensor(recalculate,gradientVolumes) {
-    tensor SetDiffusionImage $inputNum [Volume($v,vol) GetOutput]
-    incr inputNum
+        tensor SetDiffusionImage $inputNum [Volume($v,vol) GetOutput]
+        incr inputNum
     }
     
     # also set the no diffusion input
@@ -2968,27 +2974,27 @@ proc TensorRecalculateTensors {} {
     # Use matrix entered by user
     #set elements $Tensor(recalculate,userMatrix)
     #set elements "\
-        #        {1 0 0 0}  \
-        #        {0 1 0 0}  \
-        #        {0 0 1 0}  \
-        #        {0 0 0 1}  "
+            #        {1 0 0 0}  \
+            #        {0 1 0 0}  \
+            #        {0 0 1 0}  \
+            #        {0 0 0 1}  "
 
     vtkTransform trans    
     set rows {0 1 2 3}
     set cols {0 1 2 3}    
     foreach row $rows {
-    foreach col $cols {
-        [trans GetMatrix] SetElement $row $col \
-            $Tensor(recalculate,userMatrix,$row,$col)
-        #[lindex [lindex $elements $row] $col]
-    }
+        foreach col $cols {
+            [trans GetMatrix] SetElement $row $col \
+                    $Tensor(recalculate,userMatrix,$row,$col)
+            #[lindex [lindex $elements $row] $col]
+        }
     }    
     foreach row $rows {
-    foreach col $cols {
-        puts -nonewline "$Tensor(recalculate,userMatrix,$row,$col) "
-        #[lindex [lindex $elements $row] $col]
-    }
-    puts ""
+        foreach col $cols {
+            puts -nonewline "$Tensor(recalculate,userMatrix,$row,$col) "
+            #[lindex [lindex $elements $row] $col]
+        }
+        puts ""
     }    
 
     # Tensor creation filter will transform gradient dirs by this matrix
@@ -3066,9 +3072,81 @@ proc TensorCalculateActorMatrix {transform t} {
     scan [$node GetSpacing] "%g %g %g" res_x res_y res_z
 
     $transform Scale [expr 1.0 / $res_x] [expr 1.0 / $res_y] \
-        [expr 1.0 / $res_z]
+            [expr 1.0 / $res_z]
 }
 
+
+#-------------------------------------------------------------------------------
+# .PROC TensorCalculateIJKtoRASRotationMatrix
+# 
+#  The IJK to RAS matrix has two actions on the tensors.
+#  <p>
+#  1.  Each tensor glyph must be placed at the (x,y,z) location
+#  determined by the matrix.  This is analogous to setting the
+#  reformat matrix as the actor's user matrix when placing 
+#  scalar data.  However, actor matrices do not work here because
+#  of number 2, next.
+#  <p>
+#  2.  Each tensor itself must be rotated from ijk to ras.  This
+#  uses the ijk to ras matrix, but without any scaling or translation.
+#  The tensors are created in the ijk coordinate system so that 
+#  diffusion-simulation filters and hyperstreamlines, which do not 
+#  know about RAS or actor placement, can correctly handle the data.
+#
+#
+#  <p> This procedure removes translation and scaling 
+#  from a volume's ijk to ras matrix, and it returns
+#  a rotation matrix that can act on each tensor.
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc TensorCalculateIJKtoRASRotationMatrix {transform v} {
+    global Volume
+
+    # --------------------------------------------------------
+    # Rotate tensors to RAS
+    # --------------------------------------------------------
+    # We want the tensors to be displayed in the RAS coordinate system
+
+    # The upper left 3x3 part of this matrix is the rotation.
+    # (It also has voxel scaling which we will remove.)
+    # -------------------------------------
+    transform SetMatrix [Volume($v,node)  GetRasToIjk]
+    # Now it's ijk to ras
+    transform Inverse
+
+    # Remove the voxel scaling from the matrix.
+    # -------------------------------------
+    scan [Volume($v,node) GetSpacing] "%g %g %g" res_x res_y res_z
+    # If the volume was swapped these are reversed
+    if {[Volume($v,node) GetFrequencyPhaseSwap] == 1} {
+        set tmp $res_x
+        set res_x $res_y
+        set res_y $tmp
+    }
+    # We want -y since vtk flips the y axis
+    #puts "Not flipping y"
+    set res_y [expr -$res_y]
+    transform Scale [expr 1.0 / $res_x] [expr 1.0 / $res_y] \
+            [expr 1.0 / $res_z]
+
+    # Remove the translation part from the last column.
+    # (This was in there to center the volume in the cube.)
+    # -------------------------------------
+    [transform GetMatrix] SetElement 0 3 0
+    [transform GetMatrix] SetElement 1 3 0
+    [transform GetMatrix] SetElement 2 3 0
+    # Set element (4,4) to 1: homogeneous point
+    [transform GetMatrix] SetElement 3 3 1
+
+    # Now this matrix JUST does the rotation needed for ijk->ras.
+    # -------------------------------------
+    puts "-----------------------------------"
+    puts [transform Print]
+    puts "-----------------------------------"
+
+}
 
 #-------------------------------------------------------------------------------
 # .PROC TensorSpecificVisualizationSettings
@@ -3129,16 +3207,16 @@ proc TensorApplyVisualizationSettings {{mode ""}} {
     global Tensor
     
     if {$mode == ""} {
-    set mode $Tensor(mode,visualizationSettingsType)
+        set mode $Tensor(mode,visualizationSettingsType)
     }
     
     switch $mode {
-    "default" {
-        TensorResetDefaultVisualizationSettings
-    }
-    "tensors" {
-        TensorSpecificVisualizationSettings
-    }
+        "default" {
+            TensorResetDefaultVisualizationSettings
+        }
+        "tensors" {
+            TensorSpecificVisualizationSettings
+        }
     }
 
     Render3D
@@ -3210,21 +3288,21 @@ proc TensorAddStreamline {} {
     #TensorMakeVTKObject vtkLogLookupTable $object
     TensorMakeVTKObject vtkLookupTable $object
     Tensor(vtk,$object) SetHueRange .6667 0.0
-#    TensorAddObjectProperty $object HueRange \
-#        {.6667 0.0} float {Hue Range}
+    #    TensorAddObjectProperty $object HueRange \
+            #        {.6667 0.0} float {Hue Range}
 
     set object $streamline,mapper
     TensorMakeVTKObject vtkPolyDataMapper $object
     Tensor(vtk,$streamline,mapper) SetInput [Tensor(vtk,$streamline) GetOutput]
     Tensor(vtk,$streamline,mapper) SetLookupTable Tensor(vtk,$streamline,lut)
     TensorAddObjectProperty $object ImmediateModeRendering \
-        1 bool {Immediate Mode Rendering}    
+            1 bool {Immediate Mode Rendering}    
 
 
     # Lauren add GUI
     Tensor(vtk,$streamline,mapper) SetScalarRange \
-        $Tensor(mode,glyphScalarRange,low) \
-        $Tensor(mode,glyphScalarRange,hi) 
+            $Tensor(mode,glyphScalarRange,low) \
+            $Tensor(mode,glyphScalarRange,hi) 
 
     #eval Tensor(vtk,$streamline,mapper)  SetScalarRange 0.0415224 0.784456 
 
@@ -3309,7 +3387,7 @@ proc TensorDoDiffusion {} {
     puts "Doing diffusion in 2D"
     vtkImageTensorDiffusion2D diff
     foreach prop {NumberOfIterations S} {
-    diff Set$prop [Tensor(vtk,diffusion) Get$prop]
+        diff Set$prop [Tensor(vtk,diffusion) Get$prop]
     }
     set t $Tensor(activeID)
     # This was selected from the menu 
@@ -3388,11 +3466,11 @@ proc TensorPreprocess {} {
     # Lauren for now replace old data with new
     regularize Update
     Tensor($t,data) SetData [regularize GetOutput]
- 
+    
     # Display the new stuff
     TensorUpdate
 
-   #regularize SetOperationTo
+    #regularize SetOperationTo
     regularize Delete
 }
 
@@ -3422,14 +3500,11 @@ proc TensorRemoveAllActors {} {
     # We always remove for now, later if removal is optional 
     # need to keep track of if actor was added already.
     if {$Tensor(vtk,glyphs,actor,remove)} {
-    MainRemoveActor Tensor(vtk,glyphs,actor)
+        MainRemoveActor Tensor(vtk,glyphs,actor)
     }
 
     TensorRemoveAllStreamlines
-    #if {$Tensor(vtk,streamln,actor,remove)} {
-    #MainRemoveActor Tensor(vtk,streamln,actor)
-    #}
-    # make them actually disappear
+
     Render3D
 
 }
@@ -3444,8 +3519,8 @@ proc TensorRemoveAllStreamlines {} {
     global Tensor
 
     foreach id $Tensor(vtk,streamline,idList) {
-    set streamline streamln,$id
-    MainRemoveActor Tensor(vtk,$streamline,actor) 
+        set streamline streamln,$id
+        MainRemoveActor Tensor(vtk,$streamline,actor) 
     }
 }
 
@@ -3469,7 +3544,7 @@ proc TensorSeedStreamlinesFromSegmentation {} {
     #Tensor(vtk,programmableFilt) SetInput [Tensor($t,data) GetOutput] 
     Tensor(vtk,programmableFilt) SetInput [Volume($v,vol) GetOutput] 
     Tensor(vtk,programmableFilt) SetExecuteMethod \
-        TensorExecuteForProgrammableFilter
+            TensorExecuteForProgrammableFilter
 
     set Tensor(streamlineList) ""
 
@@ -3486,21 +3561,21 @@ proc TensorSeedStreamlinesFromSegmentation {} {
     # now it's ijk to world
     trans Inverse
     foreach point $Tensor(streamlineList) {
-    puts "..$point"
+        puts "..$point"
 
 
-    # Lauren test
-    # randomly seed some number of points around the ijk point also
-    #set offset [expr rand()]
-    #set offset [expr $offset/2]
-    
+        # Lauren test
+        # randomly seed some number of points around the ijk point also
+        #set offset [expr rand()]
+        #set offset [expr $offset/2]
+        
 
-    # find out where the point actually is in world space
-    set world [eval {trans TransformPoint} $point]
-    puts $world
-    eval {TensorSelect} $world
-    # save point to make a streamline there
-    #eval {TensorSelect} $point
+        # find out where the point actually is in world space
+        set world [eval {trans TransformPoint} $point]
+        puts $world
+        eval {TensorSelect} $world
+        # save point to make a streamline there
+        #eval {TensorSelect} $point
 
     }
 
@@ -3544,28 +3619,28 @@ proc TensorExecuteForProgrammableFilter {} {
     set i 0
     
     for {set z $zmin} {$z < $zmax} {incr z} {
-    
-    for {set y $ymin} {$y < $ymax} {incr y} {
         
-        for {set x $xmin} {$x < $xmax} {incr x} {
-        
-        set s [$scalars GetScalar $i]
-        
-        if {$s > 0} {
+        for {set y $ymin} {$y < $ymax} {incr y} {
             
-            # for each nonzero point in the segmentation
-            # we want to start a streamline
-            puts $s
+            for {set x $xmin} {$x < $xmax} {incr x} {
+                
+                set s [$scalars GetScalar $i]
+                
+                if {$s > 0} {
+                    
+                    # for each nonzero point in the segmentation
+                    # we want to start a streamline
+                    puts $s
 
-            # save on the list of points for later use
-            lappend Tensor(streamlineList) "$x $y $z"
-        }
-        
-        # point index
-        incr i
-        
+                    # save on the list of points for later use
+                    lappend Tensor(streamlineList) "$x $y $z"
+                }
+                
+                # point index
+                incr i
+                
+            } 
         } 
-    } 
     } 
     
     # should we pass the input through (points)?
@@ -3574,10 +3649,16 @@ proc TensorExecuteForProgrammableFilter {} {
     puts "done $x $y $z $i"
     # ignore output for now, we don't care
     #[[Tensor(vtk,programmableFilt) GetOutput] GetPointData] SetScalars scalars
-        
+    
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC TensorMrmlizeStructuredPoints
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc TensorMrmlizeStructuredPoints {sp v} {
     global Tensor Volume
 
@@ -3602,9 +3683,9 @@ proc TensorMrmlizeStructuredPoints {sp v} {
     MainUpdateMRML
     # If failed, then it's no longer in the idList
     if {[lsearch $Tensor(idList) $n] == -1} {
-    puts "Lauren node doesn't exist, should unfreeze and fix volumes.tcltoo"
+        puts "Lauren node doesn't exist, should unfreeze and fix volumes.tcltoo"
     } else {
-    # Activate the new data object
-    MainDataSetActive Tensor $n
+        # Activate the new data object
+        MainDataSetActive Tensor $n
     }
 }
