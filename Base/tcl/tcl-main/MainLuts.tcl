@@ -55,7 +55,7 @@ proc MainLutsInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo MainLuts \
-    {$Revision: 1.20 $} {$Date: 2003/10/23 00:28:22 $}]
+    {$Revision: 1.21 $} {$Date: 2004/03/14 18:41:44 $}]
 
     # Create an ID for Labels
     set Lut(idLabel) -1
@@ -119,6 +119,23 @@ proc MainLutsInit {} {
     set Lut(6,valueRange) "1 1"
     set Lut(6,annoColor) "1 1 1"
 }
+
+#-------------------------------------------------------------------------------
+# .PROC MainLutsInit
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MainLutsGetLutIDByName {lutname} {
+
+    foreach id $::Lut(idList) {
+        if { $lutname == $::Lut($id,name) } {
+            return $id
+        }
+    }
+    return ""
+}
+
 
 #-------------------------------------------------------------------------------
 # .PROC MainLutsBuildVTK
