@@ -8,7 +8,7 @@ FMpdf::FMpdf( unsigned int realizationMax )
 
   this->realizationMax=realizationMax;
 
-  bins = new (unsigned int) [realizationMax+1];
+  bins = new unsigned int [realizationMax+1];
 
   assert( bins!=NULL );
   // or else there was a problem during allocation

@@ -2,6 +2,7 @@
 #define __vtkFastMarching_h
 
 #include "vtkFastMarchingConfigure.h"
+#include "vtkImageData.h"
 #include "vtkImageToImageFilter.h"
 
 #ifdef _WIN32

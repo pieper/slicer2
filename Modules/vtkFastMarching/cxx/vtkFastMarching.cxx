@@ -5,7 +5,6 @@
 
 #include <stdio.h>
 #include <math.h>
-#include <vector>
 #include "vtkObjectFactory.h"
 
 #include "vtkFastMarching.h"
@@ -117,7 +116,7 @@ void vtkFastMarchingExecute(vtkFastMarching *self,
           // we're not on one of the border of the volume
 
           // extended median filtering
-          vector<short int> intensities;
+          std::vector<short int> intensities;
           for(int kp=-1;kp<=1;kp++)
           for(int jp=-1;jp<=1;jp++)
           for(int ip=-1;ip<=1;ip++)

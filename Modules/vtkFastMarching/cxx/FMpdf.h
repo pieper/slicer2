@@ -1,6 +1,12 @@
 #ifndef FMpdf_h
 #define FMpdf_h
 
+#ifdef _WIN32
+#include <float.h>
+#define isnan(x) _isnan(x)
+#define min(a,b) __min((a),(b))
+#endif
+
 /*
 
   This class is used by vtkFastMarching to estimate the probability density function
