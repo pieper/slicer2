@@ -65,6 +65,8 @@
 #   EdSetupBeforeApplyEffect
 #   EdUpdateAfterApplyEffect
 #   EditorWrite
+#   EditorSetSaveVolume
+#   EditorWriteVolume
 #   EditorRead
 #   EditorClear
 #   EditorMerge
@@ -97,7 +99,7 @@ proc EditorInit {} {
     
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.38 $} {$Date: 2000/11/13 17:00:05 $}]
+	    {$Revision: 1.39 $} {$Date: 2000/11/20 03:39:32 $}]
     
     # Initialize globals
     set Editor(idOriginal)  $Volume(idNone)
@@ -112,6 +114,7 @@ proc EditorInit {} {
     set Editor(fgName) Working
     set Editor(bgName) Composite
     set Editor(nameWorking) Working
+    set Editor(nameComposite) Composite
     set Editor(eventManager)  {  }
 
     # Look for Editor effects and form an array, Ed, for them.
@@ -272,6 +275,16 @@ proc EditorUpdateMRML {} {
     } else {
 	    $m add command -label NEW -command "EditorSetComposite NEW; RenderAll"
     }
+
+    # Composite Volume name field 
+    #---------------------------------------------------------------------------
+    set v $Editor(idComposite)
+    if {$v != "NEW"} {
+	set Editor(nameComposite) [Volume($v,node) GetName]
+    } else {
+	set Editor(nameComposite) Composite
+    }
+
 }
 
 #-------------------------------------------------------------------------------
@@ -293,6 +306,7 @@ proc EditorBuildGUI {} {
     #   TabbedFrame
     #     Setup
     #     Merge
+    #     Undo
     #     File
     # Effects
     #   Effects
@@ -350,9 +364,9 @@ proc EditorBuildGUI {} {
     
     # this makes the navigation menu (buttons) and the tabs.
     TabbedFrame MeasureVol $f ""\
-	    {Setup Merge File} {"Setup" "Merge" "Save"} \
+	    {Setup Merge Undo File} {"Setup" "Merge" "Undo" "Save"} \
 	    {"Choose volumes before editing." \
-	    "Merge two labelmaps." \
+	    "Merge two labelmaps." "Clear or re-read a labelmap from disk." \
 	    "Save a labelmap."}
 
     #-------------------------------------------
@@ -486,11 +500,9 @@ proc EditorBuildGUI {} {
     set f $fVolumes.fTabbedFrame.fMerge.fComposite
     
     frame $f.fMenu   -bg $Gui(activeWorkspace)
-    frame $f.fPrefix -bg $Gui(activeWorkspace)
-    frame $f.fBtns   -bg $Gui(activeWorkspace)
+    frame $f.fName -bg $Gui(activeWorkspace)
     pack $f.fMenu -side top -pady $Gui(pad)
-    pack $f.fPrefix -side top -pady $Gui(pad) -fill x
-    pack $f.fBtns -side top -pady $Gui(pad)
+    pack $f.fName -side top -pady $Gui(pad) -fill x
     
     #-------------------------------------------
     # Volumes->TabbedFrame->Merge->Composite->Menu
@@ -498,11 +510,12 @@ proc EditorBuildGUI {} {
     set f $fVolumes.fTabbedFrame.fMerge.fComposite.fMenu
 
     # Volume menu
-    eval {label $f.lComposite -text "Composite Volume:"} $Gui(WTA)
+    eval {label $f.lComposite -text "Composite Labelmap:"} $Gui(WTA)
     
     eval {menubutton $f.mbComposite -text "NEW" -relief raised -bd 2 -width 18 \
 	    -menu $f.mbComposite.m} $Gui(WMBA)
     eval {menu $f.mbComposite.m} $Gui(WMA)
+    TooltipAdd $f.mbComposite "Choose a labelmap, or NEW for a new one."
     pack $f.lComposite $f.mbComposite -padx $Gui(pad) -side left
     
     # Save widgets for changing
@@ -510,30 +523,19 @@ proc EditorBuildGUI {} {
     set Editor(mComposite)  $f.mbComposite.m
     
     #-------------------------------------------
-    # Volumes->TabbedFrame->Merge->Composite->Prefix
-    #-------------------------------------------
-    set f $fVolumes.fTabbedFrame.fMerge.fComposite.fPrefix
-    
-    eval {label $f.l -text "File Prefix:"} $Gui(WLA)
-    eval {entry $f.e \
-	    -textvariable Editor(prefixComposite)} $Gui(WEA)
+    # Volumes->TabbedFrame->Merge->Composite->Name
+    #-------------------------------------------    
+    set f $fVolumes.fTabbedFrame.fMerge.fComposite.fName
+
+    eval {label $f.l -text "Descriptive Name:"} $Gui(WLA)
+    eval {entry $f.e -textvariable Editor(nameComposite)} $Gui(WEA)
+    TooltipAdd $f.e "Nickname your NEW volume."
     pack $f.l -padx 3 -side left
     pack $f.e -padx 3 -side left -expand 1 -fill x
     
-    #-------------------------------------------
-    # Volumes->TabbedFrame->Merge->Composite->Btns
-    #-------------------------------------------
-    set f $fVolumes.fTabbedFrame.fMerge.fComposite.fBtns
-    
-    eval {button $f.bWrite -text "Save" -width 5 \
-	    -command "EditorWrite Composite; RenderAll"} $Gui(WBA)
-    eval {button $f.bClear -text "Clear to 0's" -width 12 \
-	    -command "EditorClear Composite; RenderAll"} $Gui(WBA)
-    eval {button $f.bRead -text "Read" -width 5 \
-	    -command "EditorRead Composite; RenderAll"} $Gui(WBA)
-    pack $f.bWrite $f.bRead $f.bClear -side left -padx $Gui(pad)
-    
-    
+    # Save widget for disabling name field if not NEW volume
+    set Editor(eNameComposite) $f.e
+
     #-------------------------------------------
     # Volumes->TabbedFrame->Merge->Merge
     #-------------------------------------------
@@ -544,6 +546,8 @@ proc EditorBuildGUI {} {
     eval {button $f.b -text "Merge" -width 6 \
 	    -command "EditorMerge merge 0; RenderAll"} $Gui(WBA)
     pack $f.lTitle $f.f $f.b -pady $Gui(pad) -side top
+
+    TooltipAdd $f.b "Merge the labelmaps."
     
     set f $fVolumes.fTabbedFrame.fMerge.fMerge.f
     
@@ -568,16 +572,111 @@ proc EditorBuildGUI {} {
     foreach v "Working Composite" {
 	$m add command -label $v -command "EditorMerge Back $v"
     }
+
+    TooltipAdd $f.mbFore "Choose a labelmap to go on top."
+    TooltipAdd $f.mbBack "Choose a labelmap to go underneath."
     
     pack $f.mbFore $f.l2 $f.mbBack -padx $Gui(pad) -side left -anchor w
+
+    #-------------------------------------------
+    # Volumes->TabbedFrame->Undo frame
+    #-------------------------------------------
+    set f  $fVolumes.fTabbedFrame.fUndo
+    
+    frame $f.fHelp      -bg $Gui(activeWorkspace)
+    frame $f.fWorking   -bg $Gui(activeWorkspace) -relief groove -bd 3
+    frame $f.fComposite -bg $Gui(activeWorkspace) -relief groove -bd 3
+
+    pack $f.fHelp $f.fWorking $f.fComposite  \
+	    -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
+    
+    #-------------------------------------------
+    # Volumes->TabbedFrame->Undo->Help
+    #-------------------------------------------
+    set f $fVolumes.fTabbedFrame.fUndo.fHelp
+    
+    eval {label $f.l -text "Undo all edits in a labelmap:\nEither re-read the labelmap from disk\nor clear it to all zeros."} $Gui(WLA)
+    pack $f.l
+
+    #-------------------------------------------
+    # Volumes->TabbedFrame->Undo->Working
+    #-------------------------------------------
+    set f $fVolumes.fTabbedFrame.fUndo.fWorking
+
+    frame $f.fLabel   -bg $Gui(activeWorkspace)
+    frame $f.fBtns   -bg $Gui(activeWorkspace)
+    pack $f.fLabel -side top -pady $Gui(pad)
+    pack $f.fBtns -side top -pady $Gui(pad)
+
+    #-------------------------------------------
+    # Volumes->TabbedFrame->Undo->Working->Label
+    #-------------------------------------------
+    set f $fVolumes.fTabbedFrame.fUndo.fWorking.fLabel
+    
+    eval {label $f.l -text "Working Labelmap:"} $Gui(WLA)
+    pack $f.l -side top
+
+    #-------------------------------------------
+    # Volumes->TabbedFrame->Undo->Working->Btns
+    #-------------------------------------------
+    set f $fVolumes.fTabbedFrame.fUndo.fWorking.fBtns
+
+    eval {button $f.bClear -text "Clear to 0's" -width 12 \
+	    -command "EditorClear Working; RenderAll"} $Gui(WBA)
+    TooltipAdd $f.bClear "Clear the Working Volume."
+    eval {button $f.bRead -text "Re-read" -width 7 \
+	    -command "EditorRead Working; RenderAll"} $Gui(WBA)
+    TooltipAdd $f.bRead "Re-read the Working Volume from disk."
+    pack  $f.bRead $f.bClear -side left -padx $Gui(pad)    
+
+    #-------------------------------------------
+    # Volumes->TabbedFrame->Undo->Composite
+    #-------------------------------------------
+    set f $fVolumes.fTabbedFrame.fUndo.fComposite
+
+    frame $f.fLabel   -bg $Gui(activeWorkspace)
+    frame $f.fBtns   -bg $Gui(activeWorkspace)
+    pack $f.fLabel -side top -pady $Gui(pad)
+    pack $f.fBtns -side top -pady $Gui(pad)
+
+    #-------------------------------------------
+    # Volumes->TabbedFrame->Undo->Composite->Label
+    #-------------------------------------------
+    set f $fVolumes.fTabbedFrame.fUndo.fComposite.fLabel
+    
+    eval {label $f.l -text "Composite Labelmap:"} $Gui(WLA)
+    pack $f.l -side top
+
+    #-------------------------------------------
+    # Volumes->TabbedFrame->Undo->Composite->Btns
+    #-------------------------------------------
+    set f $fVolumes.fTabbedFrame.fUndo.fComposite.fBtns
+
+    eval {button $f.bClear -text "Clear to 0's" -width 12 \
+	    -command "EditorClear Composite; RenderAll"} $Gui(WBA)
+    TooltipAdd $f.bClear "Clear the Composite Volume."
+    eval {button $f.bRead -text "Re-read" -width 7 \
+	    -command "EditorRead Composite; RenderAll"} $Gui(WBA)
+    TooltipAdd $f.bRead "Re-read the Composite Volume from disk."
+    pack  $f.bRead $f.bClear -side left -padx $Gui(pad)    
     
     #-------------------------------------------
     # Volumes->TabbedFrame->File frame
     #-------------------------------------------
     set f  $fVolumes.fTabbedFrame.fFile
 
+    frame $f.fHelp      -bg $Gui(activeWorkspace)    
     frame $f.fVol   -bg $Gui(activeWorkspace) -relief groove -bd 3
-    pack $f.fVol -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
+    pack $f.fHelp $f.fVol \
+	    -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
+
+    #-------------------------------------------
+    # Volumes->TabbedFrame->File->Help
+    #-------------------------------------------
+    set f $fVolumes.fTabbedFrame.fFile.fHelp
+    
+    eval {label $f.l -text "Save a labelmap volume."} $Gui(WLA)
+    pack $f.l
 
     #-------------------------------------------
     # Volumes->TabbedFrame->File->Vol frame
@@ -593,13 +692,20 @@ proc EditorBuildGUI {} {
     pack $f.fBtns -side top -pady $Gui(pad)
 
     #-------------------------------------------
-    # Volumes->TabbedFrame->File->fVol->Menu
+    # Volumes->TabbedFrame->File->Vol->Menu
     #-------------------------------------------
     set f $fVolumes.fTabbedFrame.fFile.fVol.fMenu
     
     # Volume menu
     DevAddSelectButton  Editor $f VolumeSelect "Volume:" Pack \
-	    "Volume to save, reread, or clear." 
+	    "Volume to save." 16
+
+    # bind menubutton to update stuff when volume changes.
+    bind $Editor(mVolumeSelect) <ButtonRelease-1> \
+	    "EditorSetSaveVolume" 
+    # have this binding execute after the menu updates
+    bindtags $Editor(mVolumeSelect) [list Menu \
+	    $Editor(mVolumeSelect) all]
 
     # Append menu and button to lists that get refreshed during UpdateMRML
     lappend Volume(mbActiveList) $f.mbVolumeSelect
@@ -607,7 +713,7 @@ proc EditorBuildGUI {} {
     
     
     #-------------------------------------------
-    # Volumes->TabbedFrame->File->fVol->Prefix
+    # Volumes->TabbedFrame->File->Vol->Prefix
     #-------------------------------------------
     set f $fVolumes.fTabbedFrame.fFile.fVol.fPrefix
     
@@ -618,22 +724,15 @@ proc EditorBuildGUI {} {
     pack $f.e -padx 3 -side left -expand 1 -fill x
     
     #-------------------------------------------
-    # Volumes->TabbedFrame->File->fVol->Btns
+    # Volumes->TabbedFrame->File->Vol->Btns
     #-------------------------------------------
     set f $fVolumes.fTabbedFrame.fFile.fVol.fBtns
     
     eval {button $f.bWrite -text "Save" -width 5 \
 	    -command "EditorWriteVolume"} $Gui(WBA)
     TooltipAdd $f.bWrite "Save the Volume."
-#    eval {button $f.bClear -text "Clear to 0's" -width 12 \
-#	    -command "EditorClear Working; RenderAll"} $Gui(WBA)
-#    TooltipAdd $f.bClear "Clear the Volume."
-#    eval {button $f.bRead -text "Read" -width 5 \
-#	    -command "EditorRead Working; RenderAll"} $Gui(WBA)
-#    TooltipAdd $f.bRead "Reread the Working Volume from disk."
-#    pack $f.bWrite $f.bRead $f.bClear -side left -padx $Gui(pad)    
-    pack $f.bWrite -side left -padx $Gui(pad)    
-    
+    pack  $f.bWrite -side left -padx $Gui(pad)    
+
     ############################################################################
     #                                 Effects
     ############################################################################
@@ -890,6 +989,9 @@ proc EditorEnter {} {
 
     # use the bindings stack for adding new bindings.
     pushEventManager $Editor(eventManager)
+
+    # update GUI
+    EditorSetSaveVolume
 }
 
 
@@ -1130,7 +1232,6 @@ proc EditorSetWorking {v} {
     set Editor(idWorking) $v
     
     # Change button text, show name and file prefix
-    # Disable name field if not NEW volume
     if {$v == "NEW"} {
 	$Editor(mbWorking) config -text $v
 	set Editor(prefixWorking) ""
@@ -1141,6 +1242,7 @@ proc EditorSetWorking {v} {
 	set Editor(prefixWorking) [MainFileGetRelativePrefix \
 		[Volume($v,node) GetFilePrefix]]
 	set Editor(nameWorking) [Volume($v,node) GetName]
+	# Disable name entry field if not NEW volume
 	eval {$Editor(eNameWorking) configure -state disabled} $Gui(WEDA)
     }
     
@@ -1155,7 +1257,7 @@ proc EditorSetWorking {v} {
 # .END
 #-------------------------------------------------------------------------------
 proc EditorSetComposite {v} {
-    global Editor Volume
+    global Editor Volume Gui
 
     if {$v == [EditorGetOriginalID]} {
 	tk_messageBox -message "The Original and Composite volumes must differ."
@@ -1171,10 +1273,15 @@ proc EditorSetComposite {v} {
     if {$v == "NEW"} {
 	$Editor(mbComposite) config -text $v
 	set Editor(prefixComposite) ""
+	set Editor(nameComposite) Composite
+	eval {$Editor(eNameComposite) configure -state normal}  $Gui(WEA)
     } else {
 	$Editor(mbComposite) config -text [Volume($v,node) GetName]
 	set Editor(prefixComposite) [MainFileGetRelativePrefix \
 		[Volume($v,node) GetFilePrefix]]
+	set Editor(nameComposite) [Volume($v,node) GetName]
+	# Disable name entry field if not NEW volume
+	eval {$Editor(eNameComposite) configure -state disabled} $Gui(WEDA)
     }
     
     # Refresh the effect, if it's an interactive one
@@ -1265,7 +1372,7 @@ proc EditorGetWorkingID {} {
     
     # Make sure the name entered is okay, else use default
     if {[ValidateName $Editor(nameWorking)] == 0} {
-	puts "The Descriptive Name can consist of letters, digits, dashes, or underscoresonly. Using default name Working"
+	tk_messageBox -message "The Descriptive Name can consist of letters, digits, dashes, or underscores only. Using default name Working"
 	$n SetName Working
     } else {
 	$n SetName $Editor(nameWorking)   
@@ -1307,6 +1414,14 @@ proc EditorGetCompositeID {} {
     $n SetLUTName     $Lut(idLabel)
     $n InterpolateOff
     $n LabelMapOn
+
+    # Make sure the name entered is okay, else use default
+    if {[ValidateName $Editor(nameComposite)] == 0} {
+	tk_messageBox -message "The Descriptive Name can consist of letters, digits, dashes, or underscores only. Using default name Composite"
+	$n SetName Composite
+    } else {
+	$n SetName $Editor(nameComposite)   
+    }
 
     # Create the volume
     MainVolumesCreate $v
@@ -1885,6 +2000,31 @@ proc EditorWrite {data} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC EditorSetSaveVolume
+# Called when the user chooses a volume from the Save menu.
+# Just sets the right filename prefix in the entry box now.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc EditorSetSaveVolume {} {
+    global Volume Editor
+
+    # get the chosen volume
+    set v $Volume(activeID)
+
+    # update File (Save) GUI
+    set Editor(prefixSave) [MainFileGetRelativePrefix \
+	    [Volume($v,node) GetFilePrefix]]
+}
+
+#-------------------------------------------------------------------------------
+# .PROC EditorWriteVolume
+# Saves the volume chosen in Editor->Volumes->Save.
+# This is the active volume, since the menu is set up that way.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EditorWriteVolume {} {
     global Volume Editor
 
