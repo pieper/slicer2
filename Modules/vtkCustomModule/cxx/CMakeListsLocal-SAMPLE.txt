@@ -17,6 +17,11 @@ vtkMyClass2.cxx
 ...
 )
 
+## classes that one does not want tcl wrapped
+SET ( LOCAL_NO_WRAP_SRCS
+#vtkMyClassNoWrap.cxx
+)
+
 
 # Place names of abstract class implementations here. No file suffixes.
 # Comment this out if there are no abstracts.
@@ -60,4 +65,5 @@ ${VTKMYCLASS_SOURCE_DIR}/lib
 # It should happen in the CMakeLists.txt file that includes this one,
 # but because of a CMake bug that doesn't work.
 #
-ADD_LIBRARY (${LOCAL_LIBRARY_BASENAME} ${LOCAL_MODULE_SRCS})
+ADD_LIBRARY (${LOCAL_LIBRARY_BASENAME} ${LOCAL_MODULE_SRCS}
+            ${LOCAL_NO_WRAP_SRCS})
