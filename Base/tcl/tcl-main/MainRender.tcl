@@ -54,7 +54,7 @@
 # .END
 #-------------------------------------------------------------------------------
 proc Render3D {{scale ""}} {
-    global Video viewWin Twin twinWin Save View Slice
+    global Video viewWin TwinDisplay twinWin Save View Slice
 
     # don't render when starting/stopping the program
     # or when certain modules need to do a lot of work w/o updates
@@ -93,10 +93,10 @@ proc Render3D {{scale ""}} {
 
     $viewWin Render
     
-    if {[IsModule Twin] == 1 && $Twin(mode) == "On"} {
-        Twin(src) Modified
-        Twin(src) Update
-        Twin(mapper) Modified
+    if {[IsModule TwinDisplay] == 1 && $TwinDisplay(mode) == "On"} {
+        TwinDisplay(src) Modified
+        TwinDisplay(src) Update
+        TwinDisplay(mapper) Modified
         $twinWin Render
     }
 
