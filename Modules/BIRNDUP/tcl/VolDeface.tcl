@@ -151,9 +151,28 @@ proc DefaceFindDICOM2 { StartDir AddDir Pattern } {
         }
     }
     
+    # add progress indicator
+    set w .dicomprogress
+    if { ![winfo exists $w] } {
+        toplevel $w
+        wm title $w "Collecting DICOM Files..."
+        wm geometry $w 400x150
+        set ::DICOMlabel "working..."
+        pack [label $w.label -textvariable ::DICOMlabel] 
+        pack [button $w.cancel -text "Stop Looking" -command {set ::DICOMabort "true"} ]
+        update ;# make sure the window exists before grabbing events
+        catch "grab -global $w"
+    }
+
     catch "parser Delete"
     vtkDCMParser parser
     foreach match [glob -nocomplain -- $Pattern] {
+        wm title $w "Searching [pwd]"
+        set ::DICOMlabel "\n\nExamining $match\n\n$::FindDICOMCounter DICOM files so far.\n"
+        update
+        if { $::DICOMabort == "true" } {
+            break
+        } 
         #puts stdout [file join $StartDir $match]
         if {[file isdirectory $match]} {
             continue
@@ -310,9 +329,11 @@ proc DefaceFindDICOM2 { StartDir AddDir Pattern } {
     }
     parser Delete
     
-    foreach file [glob -nocomplain *] {
-        if [file isdirectory $file] {
-            DefaceFindDICOM2 [file join $StartDir $AddDir] $file $Pattern
+    if { $::DICOMabort != "true" && $::DICOMrecurse == "true" } {
+        foreach file [glob -nocomplain *] {
+            if [file isdirectory $file] {
+                DefaceFindDICOM2 [file join $StartDir $AddDir] $file $Pattern
+            }
         }
     }
     cd $pwd
@@ -355,8 +376,17 @@ proc DefaceFindDICOM { StartDir Pattern } {
         cd $pwd
         return
     }
+    set ::DICOMabort "false"
+
     DefaceFindDICOM2 $StartDir "" $Pattern
+
+    set ret $::DICOMabort
+    catch "grab relase .dicomprogress"
+    catch "destroy .dicomprogress"
+    catch "unset ::DICOMabort"
     cd $pwd
+
+    return $ret
 }
 
 

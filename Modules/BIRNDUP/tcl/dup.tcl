@@ -11,6 +11,7 @@ upload pipeline (birndup)
 
 # TODO : 
     about_dialog
+    help
 }
 #
 #########################################################
@@ -44,6 +45,7 @@ if { [itcl::find class dup] == "" } {
 
         method menus {} {}
         method about_dialog {} {}
+        method help {} {}
         method pref { {KEY ""} } {}
         method prefs {} {}
         method prefui {} {}
@@ -132,6 +134,17 @@ itcl::body dup::menus {} {
             }
         }
     }
+}
+
+itcl::body dup::about_dialog {} {
+    
+    DevInfoWindow "Biomedical Informatics Research Network\nDeidentification and Upload Pipeline.\n\nwww.nbirn.net\n\nFor Evaluation Use Only."
+
+}
+
+itcl::body dup::help {} {
+
+    DevInfoWindow "Biomedical Informatics Research Network\nDeidentification and Upload Pipeline.\n\nwww.nbirn.net\n\nFor Evaluation Use Only."
 }
 
 itcl::body dup::fill { {dir "choose"} } {
@@ -224,7 +237,7 @@ itcl::body dup::prefs { } {
 
 itcl::body dup::pref_save { } {
     set fp [open $::env(HOME)/.birndup/prefs w]
-    foreach n [array names _prefs] {
+    foreach n [lsort -dictionary [array names _prefs]] {
         puts $fp "$n \"$_prefs($n)\""
     }
     close $fp
@@ -247,7 +260,7 @@ itcl::body dup::prefui { } {
         array set _save_prefs [array get _prefs]
 
         set efields ""
-        foreach n [array names _prefs] {
+        foreach n [lsort -dictionary [array names _prefs]] {
             if { [string match *,help $n] } { continue }
             lappend efiles $cs.e$n
             ::iwidgets::entryfield $cs.e$n -labeltext $n -labelpos w -textvariable [::itcl::scope _prefs($n)]
@@ -270,6 +283,10 @@ itcl::body dup::prefui { } {
 }
 
 proc dup_demo {} {
+    BIRNDUPInterface
+}
+
+proc BIRNDUPInterface {} {
 
     foreach c { "" _sort _deidentify _review _upload } {
         catch "itcl::delete class dup$c"

@@ -128,9 +128,17 @@ itcl::body dup_sort::fill {dir} {
     pack $cs.series -fill both -expand true
     pack $cs.buttons -fill x  -pady 5
 
-    DefaceFindDICOM $dir *
+    set aborted [DefaceFindDICOM $dir *]
+
+    if { $aborted == "true" } {
+        $parent fill choose
+        return
+    }
+
     if {$::FindDICOMCounter <= 0} {
         DevErrorWindow "No DICOM files found"
+        $parent fill choose
+        return
     }
 
     # save a local copy
@@ -167,7 +175,7 @@ itcl::body dup_sort::fill {dir} {
         label $sf.l$id -text "Ser $id, Flip $_series($id,FlipAngle)" -anchor w -justify left
         radiobutton $sf.cb$id -value $id -variable [itcl::scope _series(master)]
         iwidgets::optionmenu $sf.om$id -command "$this setdeident $id \[$sf.om$id get\]"
-        $sf.om$id insert end "Mask" "Deface" "Header Only" "No Deident" "Ignore"
+        $sf.om$id insert end "Mask" "Deface" "Header Only" "As Is" "Do Not Upload"
         $this setdeident $id "Mask"
         button $sf.b$id -text "View" -command "$this view $id"
         grid $sf.l$id $sf.cb$id $sf.om$id $sf.b$id -row $row -sticky ew
@@ -198,11 +206,23 @@ itcl::body dup_sort::sort {} {
         DevErrorWindow "Please set Destination Directory (temp area for deface processing)"
         return
     }
-    if { $_series(master) == "" } {
+
+    set has_mask "no"
+    foreach id $_series(ids) {
+        if { $_series($id,deident_method) == "Mask" } {
+            set has_mask "yes"
+        }
+    }
+
+    if { $has_mask == "yes" && $_series(master) == "" } {
         DevErrorWindow "Please select master series for masking"
         return
     }
-    if { $_series($_series(master),deident_method) != "Deface" } {
+    if { $has_mask == "no" && $_series(master) != "" } {
+        DevWarningWindow "No series selected for masking - Mask Master ignored."
+    }
+
+    if { $has_mask == "yes" && $_series($_series(master),deident_method) != "Deface" } {
         DevErrorWindow "Master series ($_series(master)) must be set to deface to be used as a mask"
         return
     }
@@ -229,8 +249,11 @@ itcl::body dup_sort::sort {} {
         file copy $_DICOMFiles($i,FileName) $_series($id,destdir)/$inum.dcm
     }
 
-    set deient_operations ""
-    lappend deident_operations "dcanon -deface $_series($_series(master),destdir)"
+    set deident_operations ""
+    if { $_series(master) != "" } {
+        # must run the master deface first if it exists
+        lappend deident_operations "dcanon -deface $_series($_series(master),destdir)"
+    }
     foreach id $_series(ids) {
         if { $id == $_series(master) } {
             continue
@@ -245,10 +268,10 @@ itcl::body dup_sort::sort {} {
             "Header Only" {
                 lappend deident_operations "dcanon -convert $_series($id,destdir)"
             }
-            "No Dident" {
+            "As Is" {
                 lappend deident_operations "dcanon -noanon -convert $_series($id,destdir)"
             }
-            "Ignore" {
+            "Do Not Upload" {
                 # nothing
             }
             default {

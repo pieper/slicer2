@@ -95,20 +95,19 @@ itcl::body dup_review::run {studydir} {
     exec $::env(SLICER_HOME)/slicer2-linux-x86 $::PACKAGE_DIR_BIRNDUP/../../../tcl/gonogo.tcl $studydir
 
     package require fileutil
-    set to_upload [::fileutil::cat $dir/upload_list.txt]
-    set to_defer [::fileutil::cat $dir/defer_list.txt]
+    set to_upload [::fileutil::cat $studydir/upload_list.txt]
+    set to_defer [::fileutil::cat $studydir/defer_list.txt]
     
     set defercount [llength $to_defer]
     if { $defercount > 0 } {
-        set resp [DevOkCancel "The Study contains $defercount series that did not pass review.\n\nClick Ok to upload anyway or cancel to defer the entire study."]
-        if { $resp == "ok" } {
-            close [open $studydir/ready_for_upload "w"]
-        } else {
-            set sourcedir [::fileutil::cat $dir/source_directory] 
+        set resp [DevOKCancel "The Study contains $defercount series that did not pass review.\n\nClick Ok to upload only the approved series or cancel to defer the entire study."]
+        if { $resp != "ok" } {
+            set sourcedir [::fileutil::cat $studydir/source_directory] 
             DevErrorWindow "The study in $sourcedir did not pass review.  Manual defacing must be used."
-            file delete -force $dir
+            file delete -force $studydir
         }
     }
+    close [open $studydir/ready_for_upload "w"]
 
 
     $parent log "finished review of $studydir"

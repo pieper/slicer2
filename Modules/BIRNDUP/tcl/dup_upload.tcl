@@ -92,11 +92,13 @@ itcl::body dup_upload::run {dir} {
     $parent log "starting upload of $dir"
 
 
-    tk_messageBox -message "Upload of $dir" 
-    file delete -force $dir
+    if { [DevOKCancel "Upload of $dir complete.  Temp copy will now be deleted." ] == "ok" } {
+        file delete -force $dir
+    } else {
+        close [open $studydir/uploaded "w"]
+    }
 
     $parent log "finished upload of $dir"
-    close [open $dir/uploaded "w"]
     $parent refresh upload
 }
 

@@ -154,7 +154,7 @@ proc BIRNDUPInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1 $} {$Date: 2003/09/30 13:23:36 $}]
+        {$Revision: 1.2 $} {$Date: 2004/02/24 23:53:42 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -274,7 +274,7 @@ proc BIRNDUPBuildGUI {} {
     #-------------------------------------------
     set f $fDeface.fRange
 
-    eval {button $f.select -text "Select Images" -width 20 -command "DefaceSelectMain"} $Gui(WBA)
+    eval {button $f.select -text "Run Interface" -width 20 -command "BIRNDUPInterface"} $Gui(WBA)
     
     pack $f.select -pady $Gui(pad) -side top -fill y -expand 1
 
