@@ -24,15 +24,15 @@ exec tclsh "$0" "$@"
 
 # set up variables for the OS Builds, to facilitate the move to solaris9
 # can be solaris8 or solaris9
-set solaris "solaris9"
+set solaris "solaris8"
 set linux "redhat7.3"
 set darwin "Darwin"
 set windows "Win32VC7"
 
 switch $tcl_platform(os) {
     "SunOS" {
-        set SLICER_HOME /projects/birn/slicer2/slicer2-2003-12-12-solaris9
-        set VTK_DIR /projects/birn/slicer2/Lib/solaris9/vtk/VTK-build-4.2
+        set SLICER_HOME /spl/tmp/nicole/slicer2
+        set VTK_DIR /projects/birn/slicer2/Lib/solaris8/vtk/VTK-build-4.2.3
         set ITK_BINARY_PATH /projects/birn/itk/itk-1.2/itk-build
         set BUILD $solaris
         set VTKSLICERBASE_BUILD_LIB $SLICER_HOME/Base/builds/$BUILD/bin/vtkSlicerBase.so
