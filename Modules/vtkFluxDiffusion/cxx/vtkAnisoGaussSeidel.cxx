@@ -37,8 +37,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkAnisoGaussSeidel.cxx,v $
   Language:  C++
-  Date:      $Date: 2003/02/13 19:31:38 $
-  Version:   $Revision: 1.3 $
+  Date:      $Date: 2003/04/29 17:47:12 $
+  Version:   $Revision: 1.4 $
 
 =========================================================================*/
 
@@ -1350,7 +1350,7 @@ float vtkAnisoGaussSeidel::Iterate3D( vtkImageData *inData,  int inExt[6],
       // Gradient en (x+1/2,y,z)
       //----- Calcul de alpha1_x, gamma1_x
       grad.x = *(in+xp) - *(in);
-      grad.y = ( *(in + tx) - *(in - tx) + *(in+yp+xp) - *(in+ym+xp) )/ 4.0;
+      grad.y = ( *(in+yp) - *(in+ym) + *(in+yp+xp) - *(in+ym+xp) )/ 4.0;
       grad.z = (*(in+zp)   - *(in+zm  )+ *(in+zp+xp)- *(in+zm+xp))/ 4.0;
 
       // Calcul du gradient, du hessien en (x+1/2,y,z)
