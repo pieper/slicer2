@@ -1,6 +1,6 @@
 #!/bin/sh
 # the next line restarts using tclsh \
-exec tclsh "$0" "$@"
+    exec tclsh "$0" "$@"
 
 ################################################################################
 #
@@ -145,16 +145,16 @@ if { [file exists $localvarsfile] } {
 switch $tcl_platform(os) {
     "SunOS" -
     "Linux" { 
-    set isWindows 0
-    set isDarwin 0
+        set isWindows 0
+        set isDarwin 0
     }
     "Darwin" { 
-    set isWindows 0
-    set isDarwin 1
+        set isWindows 0
+        set isDarwin 1
     }
     default { 
-    set isWindows 1
-    set isDarwin 0
+        set isWindows 1
+        set isDarwin 0
     }
 }
 
@@ -162,12 +162,12 @@ switch $tcl_platform(os) {
 if { $GENLIB(clean) } {
     puts "Deleting slicer lib files..."
     if { $isDarwin } {
-    runcmd rm -rf $SLICER_LIB
-    if { [file exists $SLICER_HOME/isPatched] } {
-        runcmd rm $SLICER_HOME/isPatched
-    }
+        runcmd rm -rf $SLICER_LIB
+        if { [file exists $SLICER_HOME/isPatched] } {
+            runcmd rm $SLICER_HOME/isPatched
+        }
     } else {
-    file delete -force $SLICER_LIB
+        file delete -force $SLICER_LIB
     }
 }
 
@@ -191,7 +191,7 @@ switch $tcl_platform(os) {
         set vtkTkLib $TCL_LIB_DIR/libtk8.4.so
         set vtkTclsh $TCL_BIN_DIR/tclsh8.4
         set itkTestFile $ITK_BINARY_PATH/bin/libITKCommon.so
-    set tkEventPatch $SLICER_HOME/tkEventPatch.diff
+        set tkEventPatch $SLICER_HOME/tkEventPatch.diff
     }
     default {
         # different windows machines return different values, assume if none of the above, windows
@@ -288,25 +288,25 @@ if { ![file exists $tkTestFile] } {
     runcmd cvs -z3 -d :pserver:anonymous@cvs.sourceforge.net:/cvsroot/tktoolkit checkout -r $tkTag tk
 
     if {$isDarwin} {
-    if { ![file exists $SLICER_HOME/isPatched] } {
-        if { [file exists $tkEventPatch] } {
-        puts "Patching..."
-        cd $SLICER_LIB/tcl/tk/generic
-        runcmd cp $SLICER_HOME/tkEventPatch.diff $SLICER_LIB/tcl/tk/generic 
-        runcmd patch -i tkEventPatch.diff
+        if { ![file exists $SLICER_HOME/isPatched] } {
+            if { [file exists $tkEventPatch] } {
+                puts "Patching..."
+                cd $SLICER_LIB/tcl/tk/generic
+                runcmd cp $SLICER_HOME/tkEventPatch.diff $SLICER_LIB/tcl/tk/generic 
+                runcmd patch -i tkEventPatch.diff
 
-        # create a file to make sure tkEvent.c isn't patched twice
-        runcmd touch $SLICER_HOME/isPatched
-        file delete $SLICER_LIB/tcl/tk/generic/tkEventPatch.diff
-        } else { 
-        puts "Download tkEvent patch from Xythos and place in $SLICER_HOME"  
-        puts "then run genlib.tcl again.  Download from:"
-        puts "https://share.spl.harvard.edu/xythoswfs/webui/share/birn/public/software/External/Patches"
-        exit
-        } 
-    } else {
-        puts "tkEvent.c already patched."
-    }
+                # create a file to make sure tkEvent.c isn't patched twice
+                runcmd touch $SLICER_HOME/isPatched
+                file delete $SLICER_LIB/tcl/tk/generic/tkEventPatch.diff
+            } else { 
+                puts "Download tkEvent patch from Xythos and place in $SLICER_HOME"  
+                puts "then run genlib.tcl again.  Download from:"
+                puts "https://share.spl.harvard.edu/xythoswfs/webui/share/birn/public/software/External/Patches"
+                exit
+            } 
+        } else {
+            puts "tkEvent.c already patched."
+        }
     }
 
     if {$isWindows} {
@@ -334,12 +334,12 @@ if { ![file exists $itclTestFile] } {
         # can't do windows
     } else {
         runcmd ../incrTcl/configure --with-tcl=$SLICER_LIB/tcl-build/lib --with-tk=$SLICER_LIB/tcl-build/lib --prefix=$SLICER_LIB/tcl-build
-    if { $isDarwin } {
-        # need to run ranlib separately on lib for Darwin
-        # file is created and ranlib is needed inside make all
-        catch "runcmd make all"
-        runcmd ranlib ../incrTcl/itcl/libitclstub3.2.a
-    }
+        if { $isDarwin } {
+            # need to run ranlib separately on lib for Darwin
+            # file is created and ranlib is needed inside make all
+            catch "runcmd make all"
+            runcmd ranlib ../incrTcl/itcl/libitclstub3.2.a
+        }
         runcmd make all
         runcmd make install
     }
@@ -377,7 +377,7 @@ if { ![file exists $bltTestFile] } {
     if { $isWindows } {
         # can't do Windows
     } elseif { $isDarwin } {
-    # this fails, but gets blt far enough along to build what is needed 
+        # this fails, but gets blt far enough along to build what is needed 
         cd $SLICER_LIB/tcl/blt
         runcmd ./configure --with-tcl=$SLICER_LIB/tcl-build --with-tk=$SLICER_LIB/tcl-build --prefix=$SLICER_LIB/tcl-build 
         catch "runcmd make"
@@ -405,21 +405,21 @@ if { ![file exists $gslTestFile] } {
 
     if { !$isWindows } {
         # can't do Windows
-    cd $SLICER_LIB/gsl-build/gsl
+        cd $SLICER_LIB/gsl-build/gsl
 
-    if { $isDarwin } {
-        # equivalent of autogen.sh for Darwin (libtoolize => glibtoolize)    
-        runcmd glibtoolize --automake
-        runcmd aclocal
-        runcmd automake --add-missing --gnu
-        runcmd autoconf
-    } else {
-        runcmd ./autogen.sh
-    }   
-    runcmd ./configure --prefix=$SLICER_LIB/gsl
-    runcmd touch doc/version-ref.texi
-    runcmd make
-    runcmd make install
+        if { $isDarwin } {
+            # equivalent of autogen.sh for Darwin (libtoolize => glibtoolize)    
+            runcmd glibtoolize --automake
+            runcmd aclocal
+            runcmd automake --add-missing --gnu
+            runcmd autoconf
+        } else {
+            runcmd ./autogen.sh
+        }   
+        runcmd ./configure --prefix=$SLICER_LIB/gsl
+        runcmd touch doc/version-ref.texi
+        runcmd make
+        runcmd make install
     }
 }
 
@@ -457,10 +457,10 @@ if { ![file exists $vtkTestFile] } {
 
 
     if { $isDarwin } {
-    # Darwin will fail on the first make, then succeed on the second
-    catch "runcmd make -j4"
-    set OpenGLString "-framework OpenGL -lgl"
-    runcmd $CMAKE -G$GENERATOR -DOPENGL_gl_LIBRARY:STRING=$OpenGLString -DVTK_USE_SYSTEM_ZLIB:BOOL=ON ../VTK
+        # Darwin will fail on the first make, then succeed on the second
+        catch "runcmd make -j4"
+        set OpenGLString "-framework OpenGL -lgl"
+        runcmd $CMAKE -G$GENERATOR -DOPENGL_gl_LIBRARY:STRING=$OpenGLString -DVTK_USE_SYSTEM_ZLIB:BOOL=ON ../VTK
     }
     
     if { $isWindows } {
