@@ -211,8 +211,7 @@ void vtkImageLiveWire::SetStartPoint(int x, int y)
 {
   int modified = 0;
   int extent[6];
-  int numEdgePoints, numPixPoints;
-
+  int i;
 
   if (this->NumberOfInputs < this->NumberOfRequiredInputs)
     {
@@ -240,14 +239,12 @@ void vtkImageLiveWire::SetStartPoint(int x, int y)
 
       // append new points to the saved contour
       int numPoints = this->NewEdges->GetNumberOfPoints();
-      for (int i = 0; i < numPoints; i++)
+      for (i = 0; i < numPoints; i++)
 	{
 	  this->ContourEdges->InsertNextPoint(this->NewEdges->GetPoint(i));
 	}
 
       numPoints = this->NewPixels->GetNumberOfPoints();
-      // confuses compilers
-      //for (int i = 0; i < numPoints; i++)
       for (i = 0; i < numPoints; i++)
 	{
 	  this->ContourPixels->InsertNextPoint(this->NewPixels->GetPoint(i));
@@ -421,7 +418,7 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
   int *extent = inDatas[0]->GetWholeExtent();
   int numrows = extent[1] - extent[0] + 1;
   int numcols = extent[3] - extent[2] + 1;
-  int numpix = numrows*numcols;
+  int i;
 
   clock_t tStart, tEnd, tDiff;
   tStart = clock();
@@ -458,7 +455,6 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
   array2D<int> &CC = (*self->CC);
   array2D<int> &Dir = (*self->Dir);
   array2D<int> &L = (*self->L);
-  array2D<int> &B = (*self->B);
 
   const int NONE = self->NONE;
   const int UP = self->UP;
@@ -681,7 +677,7 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
   newPixels->SetNumberOfPoints(numPoints);
   float *point;
   int count = 0;
-  for (int i=numPoints-1; i>=0; i--)
+  for (i=numPoints-1; i>=0; i--)
     {
       point = tempPixels->GetPoint(i);
       newPixels->SetPoint(count,point);
@@ -692,8 +688,6 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
   // draw points over image
   T outLabel = (T)self->GetLabel();
   numPoints = newPixels->GetNumberOfPoints();
-  // confuses compilers
-  //for (int i=0; i<numPoints; i++)
   for (i=0; i<numPoints; i++)
     {
       //cout << ".";
@@ -705,8 +699,6 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
   // draw previously chosen contour over image
   vtkPoints *contour = self->GetContourPixels();
   numPoints = contour->GetNumberOfPoints();
-  // confuses compilers
-  //for (int i=0; i<numPoints; i++)
   for (i=0; i<numPoints; i++)
     {
       //cout << ".";
@@ -718,8 +710,6 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
 
   // ------------- test --------------
   numPoints = newEdges->GetNumberOfPoints();
-  // confuses compilers
-  //for (int i=0; i<numPoints; i++)
   for (i=0; i<numPoints; i++)
     {
       //cout << ".";
