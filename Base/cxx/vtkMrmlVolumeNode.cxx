@@ -561,103 +561,6 @@ void vtkMrmlVolumeNode::PrintSelf(ostream& os, vtkIndent indent)
 }
 
 //----------------------------------------------------------------------------
-static void MakePermuteMatrix(vtkMatrix4x4 *mat, char *order)
-{
-	int orient = 0;
-
-  // Orient:
-  //  1 = Axial
-  //  2 = Sagittal
-  //  3 = Coronal
-  //
-  if (!strcmp(order,"SI") || !strcmp(order,"IS"))
-  {
-    orient = 1;
-  }
-  if (!strcmp(order,"LR") || !strcmp(order,"RL"))
-  {
-    orient = 2;
-  }
-  if (!strcmp(order,"PA") || !strcmp(order,"AP"))
-  {
-    orient = 3;
-  }
-
-  // IS = [-x  y  z]
-  // LR = [-y  z  x]
-  // PA = [-x  z  y]
-  //
-  // That is, the IStoXYZ matrix has column vectors [-x y z]
-  //
-  // IS = -1  0  0  0   LR =  0  0  1  0   PA = -1  0  0  0
-  //       0  1  0  0        -1  0  0  0         0  0  1  0
-  //       0  0  1  0         0  1  0  0         0  1  0  0
-  //       0  0  0  1         0  0  0  0         0  0  0  0
-  //
-  switch (orient)
-  {
-    // Axial
-    case 1:
-      // Top Row
-      mat->SetElement(0, 0, -1.0); mat->SetElement(0, 1,  0.0);
-      mat->SetElement(0, 2,  0.0); mat->SetElement(0, 3,  0.0);
-      // 2nd Row
-      mat->SetElement(1, 0,  0.0); mat->SetElement(1, 1,  1.0);
-      mat->SetElement(1, 2,  0.0); mat->SetElement(1, 3,  0.0);
-      // 3rd Row
-      mat->SetElement(2, 0,  0.0); mat->SetElement(2, 1,  0.0);
-      mat->SetElement(2, 2,  1.0); mat->SetElement(2, 3,  0.0);
-      break;
-
-    // Sagittal
-    case 2:
-      mat->SetElement(0, 0,  0.0); mat->SetElement(0, 1,  0.0);
-      mat->SetElement(0, 2,  1.0); mat->SetElement(0, 3,  0.0);
-
-      mat->SetElement(1, 0, -1.0); mat->SetElement(1, 1,  0.0);
-      mat->SetElement(1, 2,  0.0); mat->SetElement(1, 3,  0.0);
-
-      mat->SetElement(2, 0,  0.0); mat->SetElement(2, 1,  1.0);
-      mat->SetElement(2, 2,  0.0); mat->SetElement(2, 3,  0.0);
-      break;
-
-    // Coronal
-    case 3:
-      mat->SetElement(0, 0, -1.0); mat->SetElement(0, 1,  0.0);
-      mat->SetElement(0, 2,  0.0); mat->SetElement(0, 3,  0.0);
-
-      mat->SetElement(1, 0,  0.0); mat->SetElement(1, 1,  0.0);
-      mat->SetElement(1, 2,  1.0); mat->SetElement(1, 3,  0.0);
-
-      mat->SetElement(2, 0,  0.0); mat->SetElement(2, 1,  1.0);
-      mat->SetElement(2, 2,  0.0); mat->SetElement(2, 3,  0.0);
-    }
-
-    // Bottom row of matrix
-      mat->SetElement(3, 0,  0.0); mat->SetElement(3, 1,  0.0);
-      mat->SetElement(3, 2,  0.0); mat->SetElement(3, 3,  1.0);
-
-  // Direction of slice aquisition
-  double zDir = 1.0;
-  if (!strcmp(order,"SI") || !strcmp(order,"RL") || !strcmp(order,"AP"))
-  {
-    zDir = -1.0;
-  }
-
-  // Z-reflect
-  vtkTransform *tran = vtkTransform::New();
-	// Set the vtkTransform to PostMultiply so a concatenated matrix, C,
-	// is multiplied by the existing matrix, M, to form M`= C*M (not M*C)
-  tran->PostMultiply();
-  tran->Identity();
-  // Z:
-  tran->Scale(1.0, 1.0, zDir);
-  // R:
-  tran->Concatenate(mat);
-  tran->GetMatrix(mat);
-}
-
-//----------------------------------------------------------------------------
 static void Normalize(float *a)
 {
 	float d = sqrt(a[0]*a[0] + a[1]*a[1] + a[2]*a[2]);
@@ -678,238 +581,87 @@ static void Cross(float *a, float *b, float *c)
 }
 
 //----------------------------------------------------------------------------
-static void MakeRotateMatrix(vtkMatrix4x4 *mat, float *ftl, float *ftr,
-  float *fbr, float *ltl)
-{
-	float Ux[3], Uy[3], Uz[3];
-  
-  // Corner point notation:
-  //   tl = top-left
-  //   tr = top-right
-  //   br = bottom-right
-	// Convert this to a matrix that rotates the scanner's coordinate
-	// frame to that of the volume. The volume frame has axis vectors Ux, Uy, Uz.
-	// The final matrix looks like:
-	//
-	// Ux(r) Uy(r) Uz(r) 0
-	// Ux(a) Uy(a) Uz(a) 0
-	// Ux(s) Uy(s) Uz(s) 0
-	//   0     0     0   1
-	
-	// Ux = ftr - ftl
-	Ux[0] = ftr[0] - ftl[0];
-	Ux[1] = ftr[1] - ftl[1];
-	Ux[2] = ftr[2] - ftl[2];
-	Normalize(Ux);
-
-	// Note: this works for yDir == "1" (Y points up)
-	// Uy = ftr - fbr
-	Uy[0] = ftr[0] - fbr[0];
-	Uy[1] = ftr[1] - fbr[1];
-	Uy[2] = ftr[2] - fbr[2];
-	Normalize(Uy);
-
-	// Uz = ltl - ftl
-	Uz[0] = ltl[0] - ftl[0];
-	Uz[1] = ltl[1] - ftl[1];
-	Uz[2] = ltl[2] - ftl[2];
-	Normalize(Uz);
-
-	mat->SetElement(0, 0, Ux[0]); mat->SetElement(0, 1, Uy[0]);
-	mat->SetElement(0, 2, Uz[0]); mat->SetElement(0, 3, 0.0);
-
-	mat->SetElement(1, 0, Ux[1]); mat->SetElement(1, 1, Uy[1]);
-	mat->SetElement(1, 2, Uz[1]); mat->SetElement(1, 3, 0.0);
-
-	mat->SetElement(2, 0, Ux[2]); mat->SetElement(2, 1, Uy[2]);
-	mat->SetElement(2, 2, Uz[2]); mat->SetElement(2, 3, 0.0);
-
-	mat->SetElement(3, 0, 0.0);   mat->SetElement(3, 1, 0.0);
-	mat->SetElement(3, 2, 0.0);   mat->SetElement(3, 3, 1.0);
-}
-
-//----------------------------------------------------------------------------
-static void MakeVolumeMatrix(vtkMatrix4x4 *mat, vtkMatrix4x4 *matRotate, 
-                double yDir, int nx, int ny, int nz, 
-                float vx, float vy, float vz, float ox, float oy, float oz, 
-                float sh)
-{
-  vtkTransform *tran = vtkTransform::New();
-
-	// Make RAS->IJK matrix.
-	//---------------------------------------------------------------------
-	// Center
-	// 1 0 0 -nx/2
-	// 0 1 0 -ny/2
-	// 0 0 1 -nz/2
-	// 0 0 0     4
-
-	// Scale3
-	// vx  0  0  0
-	//  0 vy  0  0
-	//  0  0 vz  0
-	//  0  0  0  1
-
-	// Shear (from tilt)
-	//  1  0  0  0
-	//  0  1  0  0
-	//  0 sh  1  0
-	//  0  0  0  1
-
-	// Set the vtkTransform to PostMultiply so a concatenated matrix, C,
-	// is multiplied by the existing matrix, M, to form M`= C*M (not M*C)
-	tran->PostMultiply();
-
-	// M = O*R*Y*Sh*S*C  
-	// Order of operation: Center, Scale, Shear, Y-Reflect, Rotate, Offset
-	
-	tran->Identity();
-	// C:
-	tran->Translate(-nx/2.0, -ny/2.0, -nz/2.0);
-	// S:
-	tran->Scale(vx, vy, vz);
-	// Sh:
-	tran->GetMatrixPointer()->SetElement(2, 1, sh);
-	// Y:
-	tran->Scale(1.0, yDir, 1.0);
-	// R:
-	tran->Concatenate(matRotate);
-	// O:
-	tran->Translate(ox, oy, oz);
-
-  tran->Inverse();
-
-  tran->GetMatrix(mat);
-
-  tran->Delete();
-}
-
-//----------------------------------------------------------------------------
-static void MakePositionMatrix(vtkMatrix4x4 *mat, vtkMatrix4x4 *matRotate, 
-                double yDir, int nx, int ny, int nz, 
-                float vx, float vy, float vz, float ox, float oy, float oz, 
-                float sh)
-{
-  vtkTransform *tran = vtkTransform::New();
-
-  // The position matrix is a scaledIJK->RAS matrix.
-  // The difference between this matrix and the RAS->IJK matrix is:
-  //
-  // No scale term
-  // The matrix is not inverted at the end of this procedure.
-
-	// Make ScaledIJK->RAS matrix.
-	//---------------------------------------------------------------------
-	// Scaled-Center
-	// 1 0 0 -nx/2*vx
-	// 0 1 0 -ny/2*vy
-	// 0 0 1 -nz/2*vz
-	// 0 0 0     4
-
-	// Shear (from tilt)
-	//  1  0  0  0
-	//  0  1  0  0
-	//  0 sh  1  0
-	//  0  0  0  1
-
-	// Set the vtkTransform to PostMultiply so a concatenated matrix, C,
-	// is multiplied by the existing matrix, M, to form M`= C*M (not M*C)
-	tran->PostMultiply();
-
-	// M = O*R*Y*Sh*C  
-	// Order of operation: Scaled-Center, Shear, Y-Reflect, Rotate, Offset
-	
-	tran->Identity();
-	// C:
-	tran->Translate(-nx/2.0*vx, -ny/2.0*vy, -nz/2.0*vz);
-	// Sh:
-	tran->GetMatrixPointer()->SetElement(2, 1, sh);
-	// Y:
-	tran->Scale(1.0, yDir, 1.0);
-	// R:
-	tran->Concatenate(matRotate);
-	// O:
-	tran->Translate(ox, oy, oz);
-
-  tran->GetMatrix(mat);
-
-  tran->Delete();
-}
-
-//----------------------------------------------------------------------------
-void vtkMrmlVolumeNode::ComputeRasToIjk(vtkMatrix4x4 *matRotate, 
-                                        float ox, float oy, float oz)
+void vtkMrmlVolumeNode::ComputeRasToIjkFromScanOrder(char *order)
 {
   int nx, ny, nz;
-  float vx, vy, vz, sh;
-  double yDir, zDir;
-  vtkMatrix4x4 *mat = vtkMatrix4x4::New();
+  float crn[4][4],*ftl,*ftr,*fbr,*ltl,ctr[3];
+  int i,j;
 
-  char *order = this->GetScanOrder();
+  // All we do here is figure out the corners and call 
+  // ComputeRasToIjkFromCorners.
+  // x direction is across the top of a slice
+  // y direction is down the side of a slice
+  // z direction is scan direction
 
   nx = this->Dimensions[0];
   ny = this->Dimensions[1];
   nz = this->ImageRange[1] - this->ImageRange[0] + 1;
-  
-  vx = this->Spacing[0];
-  vy = this->Spacing[1];
-  vz = this->Spacing[2];
 
-  if (vz == 0.0 || nz == 0)
+  // Make sure we have a slice with some thickness
+  if ((this->Spacing[2] <= 0.0) || (nz == 0))
   {
-    vtkErrorMacro(<< "ComputeRasToIjkFromScanOrder: Slice spacing or number cannot be 0");
+    vtkErrorMacro(<< "ComputeRasToIjkFromScanOrder: Neither slice spacing nor slice count can be 0");
     return;
   }
-
-  // Direction of slice aquisition
-  zDir = 1.0;
-  if (!strcmp(order,"SI") || !strcmp(order,"RL") || !strcmp(order,"AP"))
+  
+  // Figure out corners.
+  // Here crn[][] = crn[ftl,ftr,fbr,ltl][x,y,z,1]
+  ftl=crn[0];  // first slice, top left corner
+  ftr=crn[1];  // first slice, top right corner
+  fbr=crn[2];  // first slice, bottom right corner
+  ltl=crn[3];  // last slice, top left corner
+  for(i=0;i<4;i++) 
   {
-    zDir = -1.0;
+    for(j=0;j<3;j++) crn[i][j]=0.0;
+    crn[i][3]=1.0;
   }
 
-  // Shear term for gantry tilt
-  sh = zDir * vy * tan(this->Tilt * atan(1.0) / 45.0) / vz;
+  // Spacing
+  ftr[0]=fbr[0]=((float)nx)*this->Spacing[0];
+  fbr[1]=((float)ny)*this->Spacing[1];
+  ltl[2]=((float)(nz-1))*this->Spacing[2];  // tricky, it's not (nz-0)
 
-  // RAS -> VTK
-  yDir = 1.0;
+  // Gantry tilt shifts the y coordinate of ltl
+  ltl[1]=-ltl[2]*tan(this->Tilt * 3.1415927410125732421875f / 180.0f);
 
-  MakeVolumeMatrix(mat, matRotate, yDir, nx, ny, nz, vx, vy, vz, 
-    ox, oy, oz, sh);
-  this->SetRasToVtkMatrix(GetMatrixToString(mat));
+  // Direction of slice acquisition
+  if (!strcmp(order,"SI") || !strcmp(order,"RL") || !strcmp(order,"AP"))
+    ltl[2]=-ltl[2];
 
-  // RAS -> IJK
-  yDir = -1.0;
-  MakeVolumeMatrix(mat, matRotate, yDir, nx, ny, nz, vx, vy, vz, 
-    ox, oy, oz, sh);
-  this->SetRasToIjkMatrix(GetMatrixToString(mat));
+  // Centering.  Center is midway between opposite corners
+  for(i=0;i<3;i++) ctr[i]=(fbr[i]+ltl[i])/2.0;
+  for (i=0;i<4;i++) for (j=0;j<3;j++) crn[i][j]-=ctr[j];
 
-  // Position (rotate, offset)
-  yDir = 1.0;
-  MakePositionMatrix(mat, matRotate, yDir, nx, ny, nz, vx, vy, vz,
-      ox, oy, oz, sh);
-  this->SetPositionMatrix(GetMatrixToString(mat));
+  // Map (x,y,z) to (r,a,s) by scan order
+  if (!strcmp(order,"SI") || !strcmp(order,"IS"))
+  {
+    // axial, so (r,a,s)=(-x,-y,z)
+    for (i=0;i<4;i++) for (j=0;j<2;j++) crn[i][j]=-crn[i][j];
+  }
+  else
+  {
+    if (!strcmp(order,"RL") || !strcmp(order,"LR"))  
+    {
+      // sagittal, so (r,a,s)=(z,-x,-y)
+      for(i=0;i<4;i++) crn[i][3]= crn[i][0]; // send  x to col 3
+      for(i=0;i<4;i++) crn[i][0]= crn[i][2]; // send  z to col 0
+      for(i=0;i<4;i++) crn[i][2]=-crn[i][1]; // send -y to col 2
+      for(i=0;i<4;i++) crn[i][1]=-crn[i][3]; // send -x to col 1
+      for(i=0;i<4;i++) crn[i][3]=1.0; // reset col 3 
+    }
+    else
+    {
+      // coronal, so (r,a,s)=(-x,z,-y)
+      for(i=0;i<4;i++) crn[i][0]=-crn[i][0]; // replace x with -x
+      for(i=0;i<4;i++) crn[i][3]= crn[i][2]; // send  z to col 3
+      for(i=0;i<4;i++) crn[i][2]=-crn[i][1]; // send -y to col 2
+      for(i=0;i<4;i++) crn[i][1]= crn[i][3]; // send  z to col 1
+      for(i=0;i<4;i++) crn[i][3]=1.0; // reset col 3
+    }
+  }
 
-  mat->Delete();
-}
-
-//----------------------------------------------------------------------------
-void vtkMrmlVolumeNode::ComputeRasToIjkFromScanOrder(char *order)
-{
-  float ox, oy, oz;
-  vtkMatrix4x4 *matRotate = vtkMatrix4x4::New();
-
-  // The offset from the origin of RAS space to the center of the volume
-  ox = 0;
-  oy = 0;
-  oz = 0;
-
-  this->SetScanOrder(order);
-
-  MakePermuteMatrix(matRotate, this->GetScanOrder());
-  this->ComputeRasToIjk(matRotate, ox, oy, oz);
-
-  matRotate->Delete();
+  // Now compute transforms based on corners
+  this->ComputeRasToIjkFromCorners(NULL,ftl,ftr,fbr,NULL,ltl);
 }
 
 //----------------------------------------------------------------------------
@@ -917,101 +669,204 @@ int vtkMrmlVolumeNode::ComputeRasToIjkFromCorners(
   float *fc, float *ftl, float *ftr, float *fbr,
   float *lc, float *ltl)
 {
-  vtkMatrix4x4 *matRotate = vtkMatrix4x4::New();
-  char *order;
-  float ox, oy, oz;
-  int orient=0; // axi=1, sag=2, cor=3
+  // Note: fc and lc are not used.
 
-	// Determine orientation by looking at these vectors:
-  //   top-left  -> top-right
-	//   top-right -> bottom-right
-	//---------------------------------------------------------------------
-  // Check if no corner points in header
+  // The strategy here is as follows.  We create a 4x4 matrix called Ras,
+  // which has in its columns the homogeneous RAS coordinates of four
+  // corners of the data volume.  We then create another matrix called
+  // Ijk, which has in its columns the IJK coordinates of those same four
+  // corners.  Then since the conversion matrix RasToIjk satisfies the
+  // equation RasToIjk*Ras=Ijk, we find RasToIjk using the formula
+  // RasToIjk=Ijk*Inverse(Ras). 
+
+  float ScanDir[3],XDir[3],YDir[3],Corners[3][4];
+  int i,j,nx,ny,nz;
+
+  vtkMatrix4x4 *Ijk = vtkMatrix4x4::New();
+  vtkMatrix4x4 *Vtk;
+  vtkMatrix4x4 *Ras = vtkMatrix4x4::New();
+  vtkMatrix4x4 *InvRas = vtkMatrix4x4::New();
+  vtkMatrix4x4 *RasToIjk = vtkMatrix4x4::New();
+  vtkMatrix4x4 *RasToVtk = vtkMatrix4x4::New();
+  vtkMatrix4x4 *ScaleMat = vtkMatrix4x4::New();
+  vtkMatrix4x4 *Position = vtkMatrix4x4::New();
+
+  nx = this->Dimensions[0];  // pixel columns in an image (x direction)
+  ny = this->Dimensions[1];  // pixel rows in an image (y direction)
+  nz = this->ImageRange[1] - this->ImageRange[0] + 1;  // number of slices
+
+  // Check if there are no corner points in header
   if (ftl[0] == 0 && ftl[1] == 0 && ftl[2] == 1 &&
       ftr[0] == 0 && ftr[1] == 0 && ftr[2] == 0 && 
       fbr[0] == 1 && fbr[1] == 0 && fbr[2] == 0)
   {
-    // (probably read a no-header image)
-	  return(-1);
-  }
-  if (ftl[0] != ftr[0] && ftl[1] == ftr[1] && 
-      ftl[2] == ftr[2] && ftr[0] == fbr[0] && 
-      ftr[1] != fbr[1] && ftr[2] == fbr[2])
-  {
-    orient = 1;
-  }
-  else if (ftl[0] == ftr[0] && ftl[1] != ftr[1] && 
-           ftl[2] == ftr[2] && ftr[0] == fbr[0] &&
-           ftr[1] == fbr[1] && ftr[2] != fbr[2])
-  {
-    orient = 2;
-  }
-  else if (ftl[0] != ftr[0] && ftl[1] == ftr[1] && 
-			     ftl[2] == ftr[2] && ftr[0] == fbr[0] && 
-			     ftr[1] == fbr[1] && ftr[2] != fbr[2])
-  {
-    orient = 3;
-  }
-  if (!orient)
-  {
-    // oblique, so call it axial
-	  orient = 1;
+    // (We probably have read a no-header image)
+    // Clean up
+    Ijk->Delete();
+    // Vtk->Delete();  We shouldn't have a Delete() for Vtk
+    Ras->Delete();
+    InvRas->Delete();
+    RasToIjk->Delete();
+    RasToVtk->Delete();
+    ScaleMat->Delete();
+    Position->Delete();
+    return(-1);
   }
 
-	// Determine acquisition order 
-	//---------------------------------------------------------------------
-  switch (orient)
+  // Get scan direction vectors
+  for(i=0;i<3;i++) 
   {
-  // Axial
-  case 1:
-    if (fc[2] < lc[2])
-    {
-      this->SetScanOrder("IS");
-    }
-    else
-    {
-      this->SetScanOrder("SI");
-		}
-	  break;
+    XDir[i]=ftr[i]-ftl[i];  // corner to corner across top of an image
+    YDir[i]=fbr[i]-ftr[i];  // corner to corner down side of an image
+    // ScanDir is across slices, but _NOT_ corner to corner.
+    // Rather, it's the center of the first scan plane to center of last.
+    ScanDir[i]=ltl[i]-ftl[i];
+  }
 
-  // Axial
-  case 2:
-    if (fc[0] < lc[0])
+  // Pack volume corners into Corners[][]
+  for(i=0;i<3;i++)
+  {
+    Corners[i][0]=ftl[i];  // first slice, top left
+    Corners[i][1]=ftr[i];  // first slice, top right
+    Corners[i][2]=fbr[i];  // first slice, bottom right
+    Corners[i][3]=ltl[i];  // last slice, top left
+  }
+
+  // Special handling for a volume that's a single slice.
+  // If nz==1 or ltl==ftl, assume a single image.  If so, set ScanDir
+  // to cross product of XDir and YDir, alter Corners[][3] to fake
+  // two slices, using thickness.
+  if ((nz==1)||((ScanDir[0]==0.0) && (ScanDir[1]==0.0) && 
+      (ScanDir[2]==0.0)))
+  {
+    // Zero slice thickness is a failure
+    if (this->Spacing[2]<=0.0) 
     {
-      this->SetScanOrder("LR");
+      // Clean up
+      Ijk->Delete();
+      // Vtk->Delete();  We shouldn't have a Delete() for Vtk
+      Ras->Delete();
+      InvRas->Delete();
+      RasToIjk->Delete();
+      RasToVtk->Delete();
+      ScaleMat->Delete();
+      Position->Delete();
+      return(-1);
+    }
+    // For single slice, set scan direction perpendicular to image.
+    Cross(ScanDir,XDir,YDir);
+    Normalize(ScanDir);
+    for (i=0;i<3;i++)
+      {
+      ScanDir[i]*=this->Spacing[2];
+      // mock up ltl[] using ftl[] and ScanDir
+      Corners[i][3]=Corners[i][0]+ScanDir[i];
+      }
+    // Pretend it's two slices when calculating transforms.
+    // Calculations below will then be correct.
+    nz=2; 
+  }
+
+  // Figure out scan direction description. 
+  // If oblique, take best approximation.
+  if (  (fabs(ScanDir[0])>=fabs(ScanDir[1]))&&
+        (fabs(ScanDir[0])>=fabs(ScanDir[2])))
+  { // Sagittal
+    if (ScanDir[0]>=0.0) this->SetScanOrder("LR");
+    else this->SetScanOrder("RL");
+  }
+  else
+  {
+    if ( (fabs(ScanDir[1])>=fabs(ScanDir[0]))&&
+         (fabs(ScanDir[1])>=fabs(ScanDir[2])))
+    { // Coronal
+      if (ScanDir[1]>=0.0) this->SetScanOrder("PA");
+      else this->SetScanOrder("AP");
     }
     else
-    {
-      this->SetScanOrder("RL");
-		}
-	  break;
+    { // Axial
+      if (ScanDir[2]>=0.0) this->SetScanOrder("IS");
+      else this->SetScanOrder("SI");      
+    }
+  }
+
+  // Create Ijk matrix with volume "Corner points" as columns.
+  // Slicer's ijk coordinate origin is at a corner of the volume 
+  // parallelepiped, not the center of the imaged voxel.
+
+  Ijk->Zero();
+  // ftl in Ijk coordinates
+  Ijk->SetElement(0,0,0.0);
+  Ijk->SetElement(1,0,0.0);  
+  Ijk->SetElement(2,0,0.5);  // Not 0.0
+  Ijk->SetElement(3,0,1.0);  
+  // ftr in Ijk coordinates
+  Ijk->SetElement(0,1,(float)nx);  
+  Ijk->SetElement(1,1,0.0);  
+  Ijk->SetElement(2,1,0.5);  // Not 0.0
+  Ijk->SetElement(3,1,1.0);  
+  // fbr in Ijk coordinates
+  Ijk->SetElement(0,2,(float)nx);  
+  Ijk->SetElement(1,2,(float)ny);  
+  Ijk->SetElement(2,2,0.5);  // Not 0.0
+  Ijk->SetElement(3,2,1.0);  
+  // ltl in Ijk coordinates
+  Ijk->SetElement(0,3,0.0);  
+  Ijk->SetElement(1,3,0.0);  
+  Ijk->SetElement(2,3,(float)(nz-1)+0.5); // Not nz-1
+  Ijk->SetElement(3,3,1.0);  
+
+  // Pack Ras matrix with "Corner Points"
+  Ras->Zero();
+  for(j=0;j<4;j++)
+  {
+    for(i=0;i<3;i++) Ras->SetElement(i,j,Corners[i][j]);
+    Ras->SetElement(3,j,1.0);
+  }
+  Ras->SetElement(3,3,1.0);
+
+  // Since RasToIjk*Ras=Ijk, RasToIjk=Ijk*inverse(Ras)
+  Ras->Invert(Ras,InvRas);
+  Ijk->Multiply4x4(Ijk,InvRas,RasToIjk);
+
+  // Vtk coordinates differ from Ijk in the direction
+  // of the j axis, i.e. Vtk=(i,ny-1-j,k)
+  Vtk=Ijk;  // Vtk was not created with New()
+  Vtk->SetElement(1,0,(float)ny);  // ftl
+  Vtk->SetElement(1,1,(float)ny);  // ftr
+  Vtk->SetElement(1,2,0);          // fbr
+  Vtk->SetElement(1,3,(float)ny);  // ltl
   
-  // Coronal
-  case 3:
-    if (fc[1] < lc[1])
-    {
-      this->SetScanOrder("PA");
-    }
-    else
-    {
-      this->SetScanOrder("AP");
-		}
-	  break;
-  }
-  order = this->GetScanOrder();
+  // Since RasToVtk*Ras=Vtk, RasToVtk=Vtk*inverse(Ras)
+  Vtk->Multiply4x4(Vtk,InvRas,RasToVtk);
+  
+  // Figure out the "Position Matrix" which converts
+  // from scaled Vtk coordinates to Ras coordinates.
+  // Formula: Position = VtkToRas*Inverse(ScaleMat)
+  //                   = Inverse(ScaleMat*RasToVtk),
+  // where ScaleMat is a diagonal scaling matrix with diagonal
+  // elements equal to the pixel size and slice thickness.
 
-  // Find offset from the origin to the RAS center of the volume
-  // by averaging the centers of the first and last slices.
-  // Note: we could also average ftl and lbr if centers weren't available.
-	//---------------------------------------------------------------------
-  ox = (fc[0] + lc[0]) / 2.0;
-  oy = (fc[1] + lc[1]) / 2.0;
-  oz = (fc[2] + lc[2]) / 2.0;
+  ScaleMat->Identity();
+  for (i=0;i<3;i++) ScaleMat->SetElement(i,i,this->Spacing[i]);
+  ScaleMat->Multiply4x4(ScaleMat,RasToVtk,Position);
+  Position->Invert();
 
-  MakeRotateMatrix(matRotate, ftl, ftr, fbr, ltl);
-  this->ComputeRasToIjk(matRotate, ox, oy, oz);
+  // Convert matrices to strings
+  this->SetRasToIjkMatrix(GetMatrixToString(RasToIjk));
+  this->SetRasToVtkMatrix(GetMatrixToString(RasToVtk));
+  this->SetPositionMatrix(GetMatrixToString(Position));
 
-  matRotate->Delete();
+  // Clean up
+  Ijk->Delete();
+  // Vtk->Delete();  We shouldn't have a Delete() for Vtk
+  Ras->Delete();
+  InvRas->Delete();
+  RasToIjk->Delete();
+  RasToVtk->Delete();
+  ScaleMat->Delete();
+  Position->Delete();
+
   return(0);
 }
 
