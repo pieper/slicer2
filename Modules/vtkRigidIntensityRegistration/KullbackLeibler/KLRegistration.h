@@ -166,10 +166,9 @@ public:
   void SetMetricParam();
 
   // Information to form K-L histogram
-  typedef Statistics::Histogram<double, 2> HistogramType;
+  typedef typename MetricType::HistogramType            HistogramType;
   typedef typename MetricType::HistogramSizeType         HistogramSizeType;
-    //  typename MetricType::HistogramType        AHistogramType;
-    //  typename MetricType::HistogramSizeType  HistogramSizeType      
+  //  typedef Statistics::Histogram<double, 2> HistogramType;
 
   // Description:
   // Either set all the images and transform and interpolator, or

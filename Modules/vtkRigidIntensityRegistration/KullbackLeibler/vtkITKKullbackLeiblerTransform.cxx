@@ -194,7 +194,7 @@ static void vtkITKKLExecute(vtkITKKullbackLeiblerTransform *self,
     }
   ITKTrainingTransform->SetParameters(parameters);
 
-  //  KLRegistrator->SetTrainingTransform(ITKTrainingTransform);
+  // KLRegistrator->SetTrainingTransform(ITKTrainingTransform);
   KLRegistrator->SetTrainingFixedImage(VTKtoITKImage(self->GetTrainingTargetImage(),(RegistratorType::FixedImageType *)(NULL)));
   KLRegistrator->SetTrainingMovingImage(VTKtoITKImage(self->GetTrainingSourceImage(),(RegistratorType::MovingImageType *)(NULL)));
 
@@ -202,9 +202,9 @@ static void vtkITKKLExecute(vtkITKKullbackLeiblerTransform *self,
   //  KLRegistrator->GetTrainingFixedImage()
   //  KLRegistrator->GetTrainingMovingImage()->UnRegister();
 
-  typedef RegistratorType::HistogramSizeType SizeType;
+  typedef RegistratorType::HistogramSizeType HistogramSizeType;
 
-  SizeType histSize;
+  HistogramSizeType histSize;
   histSize[0] = self->GetHistSizeSource();
   histSize[1] = self->GetHistSizeTarget();
   KLRegistrator->SetHistogramSize(histSize);
