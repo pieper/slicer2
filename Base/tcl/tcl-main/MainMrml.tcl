@@ -98,7 +98,7 @@ proc MainMrmlInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainMrml \
-        {$Revision: 1.92 $} {$Date: 2003/10/25 23:59:04 $}]
+        {$Revision: 1.93 $} {$Date: 2003/11/02 20:49:02 $}]
 
     set Mrml(colorsUnsaved) 0
 }
@@ -720,11 +720,10 @@ proc MainMrmlImport {filename} {
                             # set prefixlist [file split $val]
                             # when the tags are read in, the file prefix (val) is set wrong, just use the filename
                             # lappend outattr [list $key [eval file join $dots $filepath $prefixlist]]
-                            lappend outattr [list $key [eval file join $dots $filepath]]
+                            lappend outattr [list $key [eval file join $dots $filepath $val]]
                             if {$::Module(verbose)} {
-                                puts "\tsetting file prefix: Mrml(dir) = $Mrml(dir), filename = $filename, fileprefix = [eval file join $dots $filepath]"
+                                puts "\tsetting file prefix: Mrml(dir) = $Mrml(dir), filename = $filename, fileprefix = [eval file join $dots $filepath $val]"
                             }
-                            
                         }
                         default {
                             lappend outattr [eval list $key $val]
