@@ -22,6 +22,8 @@
 #===============================================================================
 # FILE:        Developer.tcl
 # PROCEDURES:  
+#   DevYesNo message
+#   DevOKCancel message
 #   DevWarningWindow message
 #   DevErrorWindow message
 #   DevFatalErrorWindow message
@@ -64,6 +66,35 @@
 # Useful Variables
 # $Mrml(dir)  The directory from which the slicer was run.
 #
+#-------------------------------------------------------------------------------
+# .PROC DevYesNo
+#
+#  Ask the user a Yes/No question. Force the user to decide before continuing.
+#  returns "yes" or "no" 
+#
+# .ARGS
+#  str message The question to ask.
+# .END
+#-------------------------------------------------------------------------------
+proc DevYesNo {message} {
+   return [tk_messageBox -type yesno -message $message]
+}
+
+#-------------------------------------------------------------------------------
+# .PROC DevOKCancel
+#
+#  Ask the user a Yes/No question. Force the user to decide before continuing.
+#  returns "yes" or "no" 
+#
+# .ARGS
+#  str message The message to give.
+# .END
+#-------------------------------------------------------------------------------
+proc DevOKCancel {message} {
+   return [tk_messageBox -type okcancel -message $message]
+}
+
+
 #-------------------------------------------------------------------------------
 # .PROC DevWarningWindow
 #
