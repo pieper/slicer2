@@ -99,7 +99,7 @@ proc RigidIntensityRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.2 $} {$Date: 2003/12/08 03:53:20 $}]
+        {$Revision: 1.3 $} {$Date: 2003/12/09 01:42:45 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -309,73 +309,74 @@ proc RigidIntensityRegistrationCheckSetUp {} {
     }
 
     ## Now test the transforms to make sure they affect the right volumes
-   set err1 [RigidIntensityRegistrationTestTransformConnections $Matrix(volume) $Matrix(activeID) 1]
+   set err1 [RigidIntensityRegistrationTestTransformConnections $Matrix(volume) $Matrix(refVolume) $Matrix(activeID)]
     if {$err1 != ""} {
       DevErrorWindow $err1
     return 0
     }
-
-   set err2 [RigidIntensityRegistrationTestTransformConnections $Matrix(refVolume) $Matrix(activeID) 0]
-    if {$err2 != ""} {
-      DevErrorWindow $err2
-    return 0
-    }
-
 }
 
 #-------------------------------------------------------------------------------
 # .PROC RigidIntensityTestTransformConnection
 #
-# Makesure the transformid has an effect on the volumeid
-# returns the error message, on "" if none
-#
-# desiredresult is the number of transforms that should affect the volumeid
-#  it should be 1 or 0
-# Matrix(transformid,node) should affect the volumeid of interest IF
-# desiredresult is set to 1
-#
+# Make sure the transforms fit the restrictions
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc RigidIntensityRegistrationTestTransformConnections \
-       {volumeid transformid desiredresult} {
+       {vIdMoving vIdStationary transformid} {
 
- set name [Volume($volumeid,node) GetName]
+ set Movingname     [Volume($vIdMoving,node) GetName]
+ set Stationaryname [Volume($vIdStationary,node) GetName]
 
- vtkTransform MIRegTmpTransform
+ vtkTransform MIRegVMovingTransform
+ vtkTransform MIRegVStationaryTransform
 
- Mrml(dataTree) ComputeNodeTransform Volume($volumeid,node) MIRegTmpTransform
+ Mrml(dataTree) ComputeNodeTransform Volume($vIdMoving,node) \
+    MIRegVMovingTransform
+ Mrml(dataTree) ComputeNodeTransform Volume($vIdStationary,node) \
+    MIRegVStationaryTransform
+   
+ set NumMovTrans [MIRegVMovingTransform GetNumberOfConcatenatedTransforms]
+ set NumStaTrans [MIRegVStationaryTransform GetNumberOfConcatenatedTransforms]
 
- set NumTrans [MIRegTmpTransform GetNumberOfConcatenatedTransforms]
+  ### now check all the error messages
 
- if {$NumTrans > 1} {
-     MIRegTmpTransform Delete
-     return "There are several transforms affecting $name. Sorry. We do not handle more than 1 transform. Please simplify your MRML file"
- }
+ if {$NumMovTrans != $NumStaTrans+1} {
+    MIRegVMovingTransform     Delete
+    MIRegVStationaryTransform Delete
 
- if {$desiredresult == 0} {
-     MIRegTmpTransform Delete
-     if {$NumTrans == 0} {
-     return ""
+     ## deal with a pretty typical error
+     if {$NumMovTrans == $NumStaTrans-1} {
+         return "The Reference volume is being affected by one more transform than the moving volume. However, the opposite should be true! Switching the Moving and reference volumes will likely fix this problem."
      } else {
-     return "There is a transform affecting $name. There should not be one. Please remove it."
+    return "There are $NumMovTrans transforms affecting the Moving volume and $NumStaTrans affecting the Refence Volume. The Moving volume should have one more Transform affecting it than the moving volume."
      }
  }
 
- if {$desiredresult == 1} {
-     if {$NumTrans == 0} {
-     MIRegTmpTransform Delete
-     return "No transform affecting $name. Is it possible you have a transform affecting the Refence Volume rather than the Volume to Move?"
-     }
-     set tmptrans [MIRegTmpTransform GetConcatenatedTransform 0]
-     if {$tmptrans != [Matrix($transformid,node) GetTransform] } {
-         MIRegTmpTransform Delete
-     return "The transform you have selected does not seem to be the one affecting $name. Please choose the correct transform."
-     }
- }
+ ### At this point there are the correct number of transforms in each
+ ### Now, make sure the tree is identical.
 
- MIRegTmpTransform Delete
+ for {set i 0} {$i < $NumStaTrans} { incr i} {
+   if {[MIRegVMovingTransform GetConcatenatedTransform $i] !=
+       [MIRegVStationaryTransform GetConcatenatedTransform $i] } {
+           MIRegVMovingTransform     Delete
+           MIRegVStationaryTransform Delete
+           return "Except for the last transform, the transforms affecting both the Moving and Reference volume must be the same. It seems that one of the transforms was not the same for both volumes. Please correct this problem. Read the help if you need more assistance."
+   }
+  }
+
+ ### Now, is the last transform the one they selected?
+ set tmptrans [MIRegVMovingTransform GetConcatenatedTransform $NumStaTrans]
+ if {$tmptrans != [Matrix($transformid,node) GetTransform] } {
+           MIRegVMovingTransform     Delete
+           MIRegVStationaryTransform Delete
+     return "The transform you have selected does not seem to be the last one affecting $Movingname. Please correct this problem. Read Help if you need more information."
+     }
+
+           MIRegVMovingTransform     Delete
+           MIRegVStationaryTransform Delete
  return ""
-}
+}   
 
 
