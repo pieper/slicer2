@@ -59,8 +59,8 @@ proc VolumeMathInit {} {
 	#   row2,tab = like row1 
 	#
 	set m VolumeMath
-	set Module($m,row1List) "Help Math Distance"
-        set Module($m,row1Name) "{Help} {Math} {Distance}"
+        set Module($m,row1List) "Help Math Resample Distance"
+        set Module($m,row1Name) "{Help} {Math} {Resample} {Distance}"
 	set Module($m,row1,tab) Math
 
 	# Define Procedures
@@ -115,7 +115,7 @@ proc VolumeMathInit {} {
 	#   appropriate info when the module is checked in.
 	#   
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.7 $} {$Date: 2001/02/19 17:53:33 $}]
+		{$Revision: 1.8 $} {$Date: 2001/06/06 15:37:30 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -244,7 +244,7 @@ Also, this module only does subtraction.
 	#-------------------------------------------
 	set f $fMath.fGrid
 
-        DevAddSelectButton VolumeMath $f Volume2 "Volume2:" Grid
+        DevAddSelectButton VolumeMath $f Volume2 "Volume2:"   Grid
         DevAddSelectButton VolumeMath $f Volume1 "- Volume1:" Grid
         DevAddSelectButton VolumeMath $f Volume3 "= Volume3:" Grid
 
@@ -254,7 +254,37 @@ Also, this module only does subtraction.
 
 	set f $fMath.fPack
 
-        DevAddButton $f.bRun "Run" "VolumeMathDoMath" 
+        DevAddButton $f.bRun "Run" "VolumeMathDoMath"
+
+	pack $f.bRun
+
+	#-------------------------------------------
+	# Resample frame
+	#-------------------------------------------
+
+	set fMath $Module(VolumeMath,fResample)
+	set f $fMath
+
+	frame $f.fGrid -bg $Gui(activeWorkspace)
+	frame $f.fPack -bg $Gui(activeWorkspace)
+	pack $f.fGrid $f.fPack -side top -padx 0 -pady $Gui(pad)
+
+	#-------------------------------------------
+	# Resample->Grid frame
+	#-------------------------------------------
+	set f $fMath.fGrid
+
+        DevAddSelectButton VolumeMath $f Volume2 "Resample" Grid
+        DevAddSelectButton VolumeMath $f Volume1 "in the coordinates of" Grid
+        DevAddSelectButton VolumeMath $f Volume3 "and put the results in" Grid
+
+	#-------------------------------------------
+	# Resample->Pack frame
+	#-------------------------------------------
+
+	set f $fMath.fPack
+
+        DevAddButton $f.bRun "Run" "VolumeMathDoResample" 
 
 	pack $f.bRun
 
@@ -414,6 +444,59 @@ proc VolumeMathExit {} {
 }
 
 #-------------------------------------------------------------------------------
+# .PROC VolumeMathPrepareResultVolume
+#   Check for Errors in the setup
+#   returns 1 if there are errors, 0 otherwise
+# .END
+#-------------------------------------------------------------------------------
+proc VolumeMathPrepareResultVolume {}  {
+    global VolumeMath
+
+    set v3 $VolumeMath(Volume3)
+    set v2 $VolumeMath(Volume2)
+    set v1 $VolumeMath(Volume1)
+
+    # Do we need to Create a New Volume?
+    # If so, let's do it.
+    
+    if {$v3 == -5 } {
+        set v3 [DevCreateNewCopiedVolume $v2 "" "VolumeMathResult" ]
+    } else {
+
+        # Are We Overwriting a volume?
+        # If so, let's ask. If no, return.
+         
+        set v3name  [Volume($v3,node) GetName]
+	set continue [DevOKCancel "Overwrite $v3name?"]
+          
+        if {$continue == "cancel"} return 1
+        # They say it is OK, so overwrite!
+              
+        Volume($v3,node) Copy Volume($v2,node)
+    }
+
+    return 0
+}
+
+#-------------------------------------------------------------------------------
+# .PROC VolumeMathPrepareResult
+#   Create the New Volume if necessary. Otherwise, ask to overwrite.
+#   returns 1 if there is are errors 0 otherwise
+# .END
+#-------------------------------------------------------------------------------
+proc VolumeMathCheckErrors {} {
+    global VolumeMath Volume
+    if {($VolumeMath(Volume1) == $Volume(idNone)) || \
+            ($VolumeMath(Volume2) == $Volume(idNone)) || \
+            ($VolumeMath(Volume3) == $Volume(idNone))} {
+        DevErrorWindow "You cannot use Volume \"None\""
+        return 1
+    }
+    return 0
+}
+
+
+#-------------------------------------------------------------------------------
 # .PROC VolumeMathDoMath
 #   Actually do the VolumeMath
 #
@@ -424,54 +507,78 @@ proc VolumeMathDoMath {} {
 
         # Check to make sure no volume is none
 
-  	  if {($VolumeMath(Volume1) == $Volume(idNone)) || \
-  	     ($VolumeMath(Volume2) == $Volume(idNone)) || \
-  	     ($VolumeMath(Volume3) == $Volume(idNone))} {
-                DevErrorWindow "You cannot use Volume \"None\""
-		return
-          }
-
-        
-	tk_messageBox -type yesno -message "You chose $VolumeMath(Volume1) $VolumeMath(Volume2) $VolumeMath(Volume3)"
-
+    if {[VolumeMathCheckErrors] == 1} {
+        return
+    }
+    if {[VolumeMathPrepareResultVolume] == 1} {
+        return
+    }
 	set v3 $VolumeMath(Volume3)
 	set v2 $VolumeMath(Volume2)
 	set v1 $VolumeMath(Volume1)
 
-        # Do we need to Create a New Volume?
-        # If so, let's do it.
+    # Set up the VolumeMath Subtract
 
-          if {$v3 == -5 } {
-              set v3 [DevCreateNewCopiedVolume $v2 "" "VolumeMathResult" ]
-          } else {
+    vtkImageMathematics SubMath
+    SubMath SetInput1 [Volume($v2,vol) GetOutput]
+    SubMath SetInput2 [Volume($v1,vol) GetOutput]
+    SubMath SetOperationToSubtract
 
-        # Are We Overwriting a volume?
-        # If so, let's ask. If no, return.
-         
-        set v3name  [Volume($v3,node) GetName]
-	set continue [tk_messageBox -type okcancel -message "Overwrite $v3name?"]
-#          YesNoPopup OverWrite 20 50 "" return
-          
-        if {$continue == "cancel"} return
-        # They say it is OK, so overwrite!
-              
-           Volume($v3,node) Copy Volume($v2,node)
-          }
+    # Start copying in the output data.
+    # Taken from MainVolumesCopyData
 
-        # Set up the VolumeMath Subtract
+    Volume($v3,vol) SetImageData [SubMath GetOutput]
 
-          vtkImageMathematics SubMath
-          SubMath SetInput1 [Volume($v2,vol) GetOutput]
-          SubMath SetInput2 [Volume($v1,vol) GetOutput]
-          SubMath SetOperationToSubtract
+    SubMath Delete
+}
 
-       # Start copying in the output data.
-       # Taken from MainVolumesCopyData
+#-------------------------------------------------------------------------------
+# .PROC VolumeMathDoResample
+#   Actually do the Resampling
+#
+# .END
+#-------------------------------------------------------------------------------
+proc VolumeMathDoResample {} {
+	global VolumeMath Volume
 
-        Volume($v3,vol) SetImageData [SubMath GetOutput]
+        # Check to make sure no volume is none
 
-        SubMath Delete
-}   
+    if {[VolumeMathCheckErrors] == 1} {
+        return
+    }
+    if {[VolumeMathPrepareResultVolume] == 1} {
+        return
+    }
+
+    set v3 $VolumeMath(Volume3)
+    set v2 $VolumeMath(Volume2)
+    set v1 $VolumeMath(Volume1)
+
+    # Set up the VolumeMath Resampling
+
+    # Want ScaledIJK1^-1 * ScaledIJK2 
+    set mat2 [Volume($v2,node) GetPosition]
+    set mat1 [Volume($v1,node) GetPosition]
+
+    vtkMatrix4x4 Amatrix
+    Amatrix DeepCopy $mat1
+    Amatrix Invert
+    Amatrix Multiply4x4 Amatrix $mat2 Amatrix
+
+    # Resampling
+    
+    vtkResliceImage Reslice
+     Reslice SetInput            [Volume($v1,vol) GetOutput]
+     Reslice SetOutputImageParam [Volume($v2,vol) GetOutput]
+     Reslice SetTransformOutputToInput Amatrix
+     Reslice Update
+    
+    Volume($v3,vol) SetImageData [Reslice GetOutput]
+
+    Amatrix Delete
+    Reslice Delete
+}
+
 
 #-------------------------------------------------------------------------------
 # .PROC VolumeMathCount
