@@ -268,8 +268,8 @@ proc EdFastMarchingUserExpand {zero userExpand} {
         EdSetupBeforeApplyEffect $v $Ed($e,scope) Native
         Ed(editor)  UseInputOn
         
-    if {$EdFastMarching(totalExpand) > 0} {
-        EdFastMarching(FastMarching) show [expr $userExpand/$EdFastMarching(totalExpand)]
+        if {$EdFastMarching(totalExpand) > 0} {
+            EdFastMarching(FastMarching) show [expr $userExpand/$EdFastMarching(totalExpand)]
 
 
 # the progress bar should not be updated
@@ -277,43 +277,43 @@ proc EdFastMarchingUserExpand {zero userExpand} {
 #     EdFastMarching(FastMarching) SetProgressMethod  ""
 #     EdFastMarching(FastMarching) SetEndMethod       ""
 
-EdFastMarching(FastMarching) Modified
-EdFastMarching(FastMarching) Update
+            EdFastMarching(FastMarching) Modified
+            EdFastMarching(FastMarching) Update
 
-set w [EditorGetWorkingID]
+            set w [EditorGetWorkingID]
 
-    MainVolumesUpdate $w
+            MainVolumesUpdate $w
 
-    # Update the effect panel GUI by re-running it's Enter procedure
-    #EditorUpdateEffect
-    
-    # Mark the volume as changed
-    set Volume($w,dirty) 1
-    
-    RenderAll
-
-
-#[Volume($w,vol) GetOutput] Modified
-#[Volume($w,vol) GetOutput] Update
-
-#set Volume($w,dirty) 1
-
-#MainVolumesUpdate $w
-#RenderAll
-
-#RenderActive
-#MainInteractorRender
-#EdUpdateAfterApplyEffect $w Active
-
-#        EditorResetDisplay
-        
-        # Refresh the effect, if it's an interactive one
-#        EditorUpdateEffect
-
-#RenderSlices
+            # Update the effect panel GUI by re-running it's Enter procedure
+            #EditorUpdateEffect
+            
+            # Mark the volume as changed
+            set Volume($w,dirty) 1
+            
+            RenderAll
 
 
-    }
+            #[Volume($w,vol) GetOutput] Modified
+            #[Volume($w,vol) GetOutput] Update
+
+            #set Volume($w,dirty) 1
+
+            #MainVolumesUpdate $w
+            #RenderAll
+
+            #RenderActive
+            #MainInteractorRender
+            #EdUpdateAfterApplyEffect $w Active
+
+            #        EditorResetDisplay
+                    
+                    # Refresh the effect, if it's an interactive one
+            #        EditorUpdateEffect
+
+            #RenderSlices
+
+
+        }
 #        EdSetupBeforeApplyEffect $v $Ed($e,scope) Native
 
 #        Ed(editor)  SetInput ""
