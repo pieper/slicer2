@@ -887,6 +887,11 @@ float vtkFastMarching::step( void )
   if(somethingReallyWrong)
     return INF;
 
+#ifdef _WIN32
+  // to try to debug a problem under Windows with Steve...
+  vtkErrorMacro( "tree.size()==" << tree.size() << endl );
+#endif
+
   int indexN;
   int n;
   
