@@ -100,7 +100,7 @@ void vtkDCMParser::Init()
   else
     MustSwap = 1;
   
-  FileIOMessage = 0;
+  PrevFileIOMessage = FileIOMessage = 0;
   
   PrevFilePos = HeaderStartPos = 0;
 }
@@ -232,7 +232,7 @@ void vtkDCMParser::ReadText(char *str, unsigned int Length)
 char *vtkDCMParser::ReadText(unsigned int Length)
 {
   //char str[Length + 1];
-  char str[1024];
+  static char str[1024];
   unsigned int id;
   unsigned int length = (Length >= 1024) ? 1024 : Length;
   
@@ -345,7 +345,8 @@ void vtkDCMParser::ReadElement(DCMDataElementStruct *des)
   if(this->file_in)
     {
       PrevFilePos = ftell(file_in);
-      
+      PrevFileIOMessage = FileIOMessage;
+
       switch(TransferSyntax)
 	{
 	case TFS_IVRLE:
@@ -428,7 +429,8 @@ void vtkDCMParser::UnreadLastElement()
 {
   if(this->file_in)
     {
-      fseek(this->file_in, PrevFilePos, SEEK_SET);  
+      fseek(this->file_in, PrevFilePos, SEEK_SET);
+      FileIOMessage = PrevFileIOMessage;
     }
 }
 
@@ -455,7 +457,7 @@ void vtkDCMParser::ReadDICOMMetaHeaderInfo()
   tfs = TFS_IVRLE;
   TransferSyntax = TFS_EVRLE;
 
-  FileIOMessage = 0;
+  PrevFileIOMessage = FileIOMessage = 0;
 
   PrevFilePos = file_pos = ftell(file_in);
 
@@ -592,8 +594,8 @@ void vtkDCMParser::ReadDICOMHeaderInfo(dcm_callback dcm_funct)
       fseek(file_in, des.NextBlock, SEEK_SET);
       if(feof(file_in) || (FileIOMessage != 0))
 	{
-	  break;
 	  stop = 1;
+	  break;
 	}
     }
 }
@@ -609,17 +611,18 @@ int vtkDCMParser::FindElement(unsigned short group, unsigned short element)
 
 int vtkDCMParser::FindNextElement(unsigned short group, unsigned short element)
 {
-  //UINT16 GroupCode;
-  //UINT16 ElementCode;
-  //UINT32 Length;
-  //char vr[4];
   int stop;
-  //UINT32 NextBlock;
   int found;
   DCMDataElementStruct des;
+  long fpos;
+  int FileIOState;
 
   if(file_in == NULL)
     return 0;
+
+  // store current file position information before search
+  fpos = ftell(this->file_in);
+  FileIOState = FileIOMessage;
 
   found = 0;
   stop = 0;
@@ -652,8 +655,17 @@ int vtkDCMParser::FindNextElement(unsigned short group, unsigned short element)
 	}
     }
 
-  UnreadLastElement();
-  FileIOMessage = 0;
+  if(found)
+    {
+      UnreadLastElement();
+      FileIOMessage = 0;
+    }
+  else
+    {
+      // set values as they were before calling
+      fseek(file_in, fpos, SEEK_SET);
+      FileIOMessage = FileIOState;
+    }
 
   return found;
 }
@@ -721,19 +733,21 @@ char *vtkDCMParser::stringncopy(char *dest, const char *src, long max)
   long i, j, n;
   long length;
 
-  length = strlen(src);
-
-  if(src == NULL) memset(dest, 0, max + 1);
-  else
-  {
-    n = (length < max) ? length : max;
-    for(j=n-1; (j>=0) && (isspace(src[j])); j--);
-    for(i=0; (i<n) && (isspace(src[i])); i++);
-    for(p=src+i; (i<=j) && ((*p)!='\0'); i++, p++)
-      dest[i] = *p;
-    for(; i<=max; i++)
-      dest[i]='\0';
-  }
+  if(dest != NULL)
+    {
+      if(src == NULL) memset(dest, 0, max + 1);
+      else
+	{
+	  length = strlen(src);
+	  n = (length < max) ? length : max;
+	  for(j=n-1; (j>=0) && (isspace(src[j])); j--);
+	  for(i=0; (i<n) && (isspace(src[i])); i++);
+	  for(p=src+i; (i<=j) && ((*p)!='\0'); i++, p++)
+	    dest[i] = *p;
+	  for(; i<=max; i++)
+	    dest[i]='\0';
+	}
+    }
 
   return dest;
 }

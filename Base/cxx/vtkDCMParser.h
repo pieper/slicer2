@@ -148,6 +148,7 @@ class VTK_EXPORT vtkDCMParser : public vtkObject
   int TransferSyntax;
   
   int FileIOMessage;
+  int PrevFileIOMessage;
   char buff[255];
   
   long PrevFilePos;
