@@ -243,7 +243,7 @@ proc EMSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.16 $} {$Date: 2002/11/27 13:26:16 $}]
+        {$Revision: 1.17 $} {$Date: 2002/12/10 18:27:52 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -458,7 +458,7 @@ proc EMSegmentInit {} {
     }
     # Set Global Window Position
     set EMSegment(Graph,WindowX) 900
-    set EMSegment(Graph,WindowY) 10  
+    set EMSegment(Graph,WindowY) 5  
 
     # Event bindings! (see EMSegmentEnter, EMSegmentExit, tcl-shared/Events.tcl)
     set EMSegment(eventManager) {}
@@ -1233,39 +1233,7 @@ Description of the tabs:
     pack $f.fSect1.fCol2.fCreateFile.r1  $f.fSect1.fCol2.fCreateFile.r0 -side left -fill x
     pack $f.fSect1.fCol1.lEmpty5 $f.fSect1.fCol2.lEmpty5 -side top -padx $Gui(pad) -pady 1 -anchor w 
 
-    if {$EMSegment(NumGraph) > 1} {
-    set Border 2
-    } else {
-    set Border 1 
-    }
-    for {set i 0} { $i < $Border} {incr i} { 
-    DevAddLabel $f.fSect1.fCol1.lGraph$i "Graph [expr $i+1]"
-    DevAddLabel $f.fSect1.fCol2.lGraph$i " "
-    DevAddLabel $f.fSect1.fCol1.lXMin$i "X-Minium:"
-    eval {entry $f.fSect1.fCol2.eXMin$i -width 4 -textvariable EMSegment(Graph,XminNew,$i) } $Gui(WEA)
-    TooltipAdd $f.fSect1.fCol2.eXMin$i "Minimum X value represented in Graph [expr $i+1]" 
-    bind $f.fSect1.fCol2.eXMin$i <Return> "EMSegmentRescaleGraphMulti $i" 
-    bind $f.fSect1.fCol2.eXMin$i <Tab>    "EMSegmentRescaleGraphMulti $i" 
-    bind $f.fSect1.fCol2.eXMin$i <Leave>  "EMSegmentRescaleGraphMulti $i" 
-
-    DevAddLabel $f.fSect1.fCol1.lXMax$i "X-Maximum:"
-    eval {entry $f.fSect1.fCol2.eXMax$i -width 4 -textvariable EMSegment(Graph,XmaxNew,$i) } $Gui(WEA)
-    TooltipAdd $f.fSect1.fCol2.eXMax$i "Maximum X value represented in Graph [expr $i+1]" 
-    bind $f.fSect1.fCol2.eXMax$i <Return> "EMSegmentRescaleGraphMulti $i" 
-    bind $f.fSect1.fCol2.eXMax$i <Tab>    "EMSegmentRescaleGraphMulti $i" 
-    bind $f.fSect1.fCol2.eXMax$i <Leave>  "EMSegmentRescaleGraphMulti $i" 
-
-    DevAddLabel $f.fSect1.fCol1.lXSca$i "X-Scalling:"
-    eval {entry $f.fSect1.fCol2.eXSca$i -width 4 -textvariable EMSegment(Graph,XscaNew,$i) } $Gui(WEA)
-    TooltipAdd $f.fSect1.fCol2.eXSca$i "Value difference between two tabs on the X-axis" 
-    bind $f.fSect1.fCol2.eXSca$i <Return> "EMSegmentRescaleGraphMulti $i" 
-    bind $f.fSect1.fCol2.eXSca$i <Tab>    "EMSegmentRescaleGraphMulti $i" 
-    bind $f.fSect1.fCol2.eXSca$i <Leave>  "EMSegmentRescaleGraphMulti $i" 
-    pack $f.fSect1.fCol1.lGraph$i $f.fSect1.fCol2.lGraph$i $f.fSect1.fCol1.lXMin$i $f.fSect1.fCol1.lXMax$i $f.fSect1.fCol1.lXSca$i -side top -padx $Gui(pad) -pady 2 -anchor w 
-    pack $f.fSect1.fCol2.eXMin$i $f.fSect1.fCol2.eXMax$i $f.fSect1.fCol2.eXSca$i -side top -anchor w
-    }
-
-
+  
     #Pack 6.Block
     pack $f.fSect1.fCol1.lUseProb  -side top -padx $Gui(pad) -pady 2 -anchor w 
     pack $f.fSect1.fCol2.fUseProb -side top -anchor w
@@ -1477,9 +1445,9 @@ proc EMSegmentUpdateMRML {} {
         
         set NumberOfGraphs 0
         set EMSegment(SegmenterNode) $item
-    # Current SupperClass
-    set EMSegment(SuperClass) 0 
-    # set EMSegment(Cattrib,0,ClassList) ""
+        # Current SupperClass
+        set EMSegment(SuperClass) 0 
+        # set EMSegment(Cattrib,0,ClassList) ""
         $EMSegment(SegmenterNode) SetAlreadyRead 1
 
         # Reset all Input and Graph Values
@@ -1558,41 +1526,41 @@ proc EMSegmentUpdateMRML {} {
         if {$NumClass == ""} { DevErrorWindow "Error in XML File : Super class $EMSegment(SuperClass)  has not a sub-classes defined" }
         
         # Save status when returning to parent of this class 
-    set CurrentClassList [lrange $CurrentClassList 1 end]
+        set CurrentClassList [lrange $CurrentClassList 1 end]
         lappend SclassMemory [list "$EMSegment(SuperClass)" "$CurrentClassList"]
 
         # Transfer from Class to SuperClass
         set EMSegment(Class) $NumClass
-    if {$EMSegment(Cattrib,$NumClass,IsSuperClass) == 0} {
+        if {$EMSegment(Cattrib,$NumClass,IsSuperClass) == 0} {
            set EMSegment(Cattrib,$NumClass,IsSuperClass) 1
            # Set current class to current SuperClass
            EMSegmentTransfereClassType 0 0
-    }
-    set EMSegment(NewSuperClassName) [SegmenterSuperClass($pid,node) GetName]
+        }
+        set EMSegment(NewSuperClassName) [SegmenterSuperClass($pid,node) GetName]
         EMSegmentChangeSuperClassName 0
 
         set EMSegment(Cattrib,$NumClass,Prob) [SegmenterSuperClass($pid,node) GetProb]
         # Create Sub Classes
         set EMSegment(NumClassesNew)          [SegmenterSuperClass($pid,node) GetNumClasses]       
-    EMSegmentCreateDeleteClasses 0 0
+        EMSegmentCreateDeleteClasses 0 0
 
-    set EMSegment(Cattrib,$NumClass,Node) $item
-    set CurrentClassList $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList)
+        set EMSegment(Cattrib,$NumClass,Node) $item
+        set CurrentClassList $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList)
     } elseif {$ClassName == "vtkMrmlSegmenterClassNode" } {
         # --------------------------------------------------
         # 7.) Update selected Class List 
         # -------------------------------------------------
-    # If you get an error mesaage in the follwoing lines then CurrentClassList to short
-    set NumClass [lindex $CurrentClassList 0]
-    if {$NumClass == ""} { DevErrorWindow "Error in XML File : Super class $EMSegment(SuperClass)  has not a sub-classes defined" }
-    set CurrentClassList [lrange $CurrentClassList 1 end]
+        # If you get an error mesaage in the follwoing lines then CurrentClassList to short
+        set NumClass [lindex $CurrentClassList 0]
+        if {$NumClass == ""} { DevErrorWindow "Error in XML File : Super class $EMSegment(SuperClass)  has not a sub-classes defined" }
+        set CurrentClassList [lrange $CurrentClassList 1 end]
 
-    set EMSegment(Class) $NumClass
-    if {$EMSegment(Cattrib,$NumClass,IsSuperClass) == 1} {
+        set EMSegment(Class) $NumClass
+        if {$EMSegment(Cattrib,$NumClass,IsSuperClass) == 1} {
            set EMSegment(Cattrib,$NumClass,IsSuperClass) 0
            # Set current class to current Class
            EMSegmentTransfereClassType 0 0
-    }
+        }
 
         set pid [$item GetID]
         set EMSegment(Cattrib,$NumClass,Node)  $item
@@ -1612,7 +1580,7 @@ proc EMSegmentUpdateMRML {} {
         }
         if {$EMSegment(Cattrib,$NumClass,ProbabilityData) == ""} {
            set EMSegment(Cattrib,$NumClass,ProbabilityData) $Volume(idNone) 
-        } 
+        }
         set index 0
         set LogCovariance  [SegmenterClass($pid,node) GetLogCovariance]
         set LogMean [SegmenterClass($pid,node) GetLogMean]
@@ -1647,12 +1615,12 @@ proc EMSegmentUpdateMRML {} {
         # --------------------------------------------------
         # 9.) End of super class 
         # -------------------------------------------------
-    set EMSegment(Cattrib,$EMSegment(SuperClass),EndNode) $item
+        set EMSegment(Cattrib,$EMSegment(SuperClass),EndNode) $item
         # Pop the last parent from the Stack
-    set temp [lindex $SclassMemory end]
-    set SclassMemory [lreplace $SclassMemory end end]
+        set temp [lindex $SclassMemory end]
+        set SclassMemory [lreplace $SclassMemory end end]
         set CurrentClassList [lindex $temp 1] 
-    EMSegmentChangeSuperClass [lindex $temp 0] 0
+        EMSegmentChangeSuperClass [lindex $temp 0] 0
     } elseif {$ClassName == "vtkMrmlEndSegmenterNode" } {
         # --------------------------------------------------
         # 10.) End of Segmenter
@@ -1663,7 +1631,8 @@ proc EMSegmentUpdateMRML {} {
            set EMSegment(EndSegmenterNode) $item 
         }
         # EMSegmentChangeSuperClass 0   
-    # set EMSegment(NumClassesNew) [llength $EMSegment(Cattrib,0,ClassList)]
+        # set EMSegment(NumClassesNew) [llength $EMSegment(Cattrib,0,ClassList)]
+    set EMSegment(Class) 0
         EMSegmentChangeClass 0
     }
     
@@ -1950,9 +1919,6 @@ proc EMSegmentStartEM { } {
        DevErrorWindow "End Slices is greate than the existing number of slices!" 
        return
    }
-   # Update MRML Tree
-   # EMSegmentSaveSetting 0
-
    # ----------------------------------------------
    # 3. Call Algorithm
    # ----------------------------------------------
@@ -1981,17 +1947,18 @@ proc EMSegmentStartEM { } {
    # 5. Recover Values 
    # ----------------------------------------------
    if {$EMSegment(SegmentMode) > 0} {
-       set index 1
+       set index 0
        foreach v $EMSegment(SelVolList,VolumeList) {
-       if {$EMSegment(IntensityAvgValue,$v) < 0} {
+         if {$EMSegment(IntensityAvgValue,$v) < 0} {
            set EMSegment(IntensityAvgValue,$v) [EMSegment(vtkEMSegment) GetIntensityAvgValueCurrent $index]
-       }
+         }
        incr index
        }
    }
 
    # Update MRML Tree
    EMSegmentSaveSetting 0
+
 
    # Update MRML
    MainUpdateMRML
@@ -2337,14 +2304,12 @@ proc EMSegmentUseSamples {change} {
 #-------------------------------------------------------------------------------
 proc EMSegmentFindClassAndTestfromIntClass {IntLabel} {
     global EMSegment
-    set IntText "None"
     foreach IntClass $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList) {
-    if {$IntLabel == $EMSegment(Cattrib,$IntClass,Label)} {
-        set IntText $IntLabel 
-    }
+      if {$IntLabel == $EMSegment(Cattrib,$IntClass,Label)} {
+    return "$IntClass $IntLabel"
+      }
     } 
-    if {$IntText == "None"} {set IntClass -1}
-    return "$IntClass $IntText"
+    return "-1 None"
 }
 #-------------------------------------------------------------------------------
 # .PROC EMSegmentChangeClass
@@ -3570,7 +3535,7 @@ proc EMSegmentCalculateClassCurveRegion {Sclass graphnum} {
         set XhistRangeMin [lindex $inputRange 0]
         set XhistRangeMax $numBins 
         # Yrange of Histogram
-        set histRange [[[$data GetPointData] GetScalars] GetRange]
+        # set histRange [[[$data GetPointData] GetScalars] GetRange]
          
         # --------------------------------------------------
         # Read values from Histogram 
@@ -5422,7 +5387,7 @@ proc EMSegmentCreateGraphWindow {} {
     pack $f.lTitle -side top -padx 4 -pady 4
 
     frame $f.fGraphButtons -bg $Gui(activeWorkspace)
-    pack $f.fGraphButtons -side top -padx $Gui(pad) -pady 1 -fill x
+    pack $f.fGraphButtons -side top -padx $Gui(pad) -pady 2 -fill x
     set EMSegment(Cl-fGraphButtons) $f.fGraphButtons
     # Create Button for Histogram
     # First Button is selecting the Volume for the Histogram 
@@ -5454,33 +5419,74 @@ proc EMSegmentCreateGraphWindow {} {
     }
 
     frame $f.fLastLine -bg $Gui(activeWorkspace)
-    pack $f.fLastLine -side top -padx 4 -pady 4 -fill x
+    pack $f.fLastLine -side top -padx 2 -pady 2 -fill x
 
+    frame $f.fLastLine.fGraph -bg $Gui(activeWorkspace)
     frame $f.fLastLine.fButtons -bg $Gui(activeWorkspace)
-    frame $f.fLastLine.fWindow -bg $Gui(activeWorkspace)
-    pack $f.fLastLine.fButtons -side top -padx 0 -pady 0 
-    pack $f.fLastLine.fWindow -side right -padx 0 -pady 0 
+
+    pack $f.fLastLine.fButtons -side top -padx 0 -pady 2 
+    pack $f.fLastLine.fGraph -side top -padx 0 -pady 2 
 
     eval {button $f.fLastLine.fButtons.bCancel -text "Cancel" -width 8 -command "wm withdraw $w"} $Gui(WBA)
     DevAddLabel $f.fLastLine.fButtons.lEmpty2 "      "
     eval {button $f.fLastLine.fButtons.bUpdate -text "Update" -width 8 -command "EMSegmentUpdateClassButton"} $Gui(WBA)
     TooltipAdd $f.fLastLine.fButtons.bUpdate "Press this button to update class values and graph."
 
-    eval {label $f.fLastLine.fWindow.lWindowX -text "X:"} $Gui(WLA) 
-    eval {entry $f.fLastLine.fWindow.eWindowX -width 3 -textvariable EMSegment(Graph,WindowX) } $Gui(WEA)
-    TooltipAdd  $f.fLastLine.fWindow.eWindowX "Set where window should be placed in X direction"
-    bind $f.fLastLine.fWindow.eWindowX <Return> "EMSegmentShowGraphWindow"
-    bind $f.fLastLine.fWindow.eWindowX <Tab>    "EMSegmentShowGraphWindow"
-    bind $f.fLastLine.fWindow.eWindowX <Leave>  "EMSegmentShowGraphWindow"
+ pack  $f.fLastLine.fButtons.bCancel $f.fLastLine.fButtons.lEmpty2 $f.fLastLine.fButtons.bUpdate -side left  -side left -padx 0  -pady 0
+    if {$EMSegment(NumGraph) > 1} {
+      set Border 2
+    } else {
+      set Border 1 
+    }
+    for {set i 0} { $i < $Border} {incr i} { 
+      frame $f.fLastLine.fGraph.f$i -bg $Gui(activeWorkspace)  -relief raised -bd 2 
+      pack  $f.fLastLine.fGraph.f$i -side left -padx 2 -pady 0 
 
-    eval {label $f.fLastLine.fWindow.lWindowY -text "Y:"} $Gui(WLA)
-    eval {entry $f.fLastLine.fWindow.eWindowY -width 3 -textvariable EMSegment(Graph,WindowY) } $Gui(WEA)
-    TooltipAdd  $f.fLastLine.fWindow.eWindowY "Set where window should be placed in Y direction"
-    bind $f.fLastLine.fWindow.eWindowY <Return> "EMSegmentShowGraphWindow"
-    bind $f.fLastLine.fWindow.eWindowY <Tab>    "EMSegmentShowGraphWindow"
-    bind $f.fLastLine.fWindow.eWindowY <Leave>  "EMSegmentShowGraphWindow"
+      DevAddLabel $f.fLastLine.fGraph.f$i.lGraph$i "Graph [expr $i+1]"
+      DevAddLabel $f.fLastLine.fGraph.f$i.lXMin$i "Min:"
+      eval {entry $f.fLastLine.fGraph.f$i.eXMin$i -width 4 -textvariable EMSegment(Graph,XminNew,$i) } $Gui(WEA)
+      TooltipAdd $f.fLastLine.fGraph.f$i.eXMin$i "Minimum X value represented in Graph [expr $i+1]" 
+      bind $f.fLastLine.fGraph.f$i.eXMin$i <Return> "EMSegmentRescaleGraphMulti $i" 
+      bind $f.fLastLine.fGraph.f$i.eXMin$i <Tab>    "EMSegmentRescaleGraphMulti $i" 
+      bind $f.fLastLine.fGraph.f$i.eXMin$i <Leave>  "EMSegmentRescaleGraphMulti $i" 
 
-    pack  $f.fLastLine.fButtons.bCancel $f.fLastLine.fButtons.lEmpty2 $f.fLastLine.fButtons.bUpdate $f.fLastLine.fWindow.lWindowX $f.fLastLine.fWindow.eWindowX $f.fLastLine.fWindow.lWindowY $f.fLastLine.fWindow.eWindowY -side left  -side left -padx 0  -pady 0
+      DevAddLabel $f.fLastLine.fGraph.f$i.lXMax$i "Max:"
+      eval {entry $f.fLastLine.fGraph.f$i.eXMax$i -width 4 -textvariable EMSegment(Graph,XmaxNew,$i) } $Gui(WEA)
+      TooltipAdd $f.fLastLine.fGraph.f$i.eXMax$i "Maximum X value represented in Graph [expr $i+1]" 
+      bind $f.fLastLine.fGraph.f$i.eXMax$i <Return> "EMSegmentRescaleGraphMulti $i" 
+      bind $f.fLastLine.fGraph.f$i.eXMax$i <Tab>    "EMSegmentRescaleGraphMulti $i" 
+      bind $f.fLastLine.fGraph.f$i.eXMax$i <Leave>  "EMSegmentRescaleGraphMulti $i" 
+
+      DevAddLabel $f.fLastLine.fGraph.f$i.lXSca$i "Scal:"
+      eval {entry $f.fLastLine.fGraph.f$i.eXSca$i -width 4 -textvariable EMSegment(Graph,XscaNew,$i) } $Gui(WEA)
+      TooltipAdd $f.fLastLine.fGraph.f$i.eXSca$i "Value difference between two tabs on the X-axis" 
+      bind $f.fLastLine.fGraph.f$i.eXSca$i <Return> "EMSegmentRescaleGraphMulti $i" 
+      bind $f.fLastLine.fGraph.f$i.eXSca$i <Tab>    "EMSegmentRescaleGraphMulti $i" 
+      bind $f.fLastLine.fGraph.f$i.eXSca$i <Leave>  "EMSegmentRescaleGraphMulti $i" 
+      pack $f.fLastLine.fGraph.f$i.lGraph$i -side top -padx 0 -pady 0 
+      pack $f.fLastLine.fGraph.f$i.lXMin$i $f.fLastLine.fGraph.f$i.eXMin$i $f.fLastLine.fGraph.f$i.lXMax$i  $f.fLastLine.fGraph.f$i.eXMax$i $f.fLastLine.fGraph.f$i.lXSca$i $f.fLastLine.fGraph.f$i.eXSca$i -side left -padx 1  -pady 1 -anchor w 
+    }
+
+    frame $f.fLastLine.fGraph.fWindow -bg $Gui(activeWorkspace) -relief raised -bd 2 
+    pack  $f.fLastLine.fGraph.fWindow -side left -padx 2 -pady 0 
+
+    DevAddLabel $f.fLastLine.fGraph.fWindow.lWindow "Widnow"
+    eval {label $f.fLastLine.fGraph.fWindow.lWindowX -text "X:"} $Gui(WLA) 
+    eval {entry $f.fLastLine.fGraph.fWindow.eWindowX -width 3 -textvariable EMSegment(Graph,WindowX) } $Gui(WEA)
+    TooltipAdd  $f.fLastLine.fGraph.fWindow.eWindowX "Set where window should be placed in X direction"
+    bind $f.fLastLine.fGraph.fWindow.eWindowX <Return> "EMSegmentShowGraphWindow"
+    bind $f.fLastLine.fGraph.fWindow.eWindowX <Tab>    "EMSegmentShowGraphWindow"
+    bind $f.fLastLine.fGraph.fWindow.eWindowX <Leave>  "EMSegmentShowGraphWindow"
+
+    eval {label $f.fLastLine.fGraph.fWindow.lWindowY -text "Y:"} $Gui(WLA)
+    eval {entry $f.fLastLine.fGraph.fWindow.eWindowY -width 3 -textvariable EMSegment(Graph,WindowY) } $Gui(WEA)
+    TooltipAdd  $f.fLastLine.fGraph.fWindow.eWindowY "Set where window should be placed in Y direction"
+    bind $f.fLastLine.fGraph.fWindow.eWindowY <Return> "EMSegmentShowGraphWindow"
+    bind $f.fLastLine.fGraph.fWindow.eWindowY <Tab>    "EMSegmentShowGraphWindow"
+    bind $f.fLastLine.fGraph.fWindow.eWindowY <Leave>  "EMSegmentShowGraphWindow"
+
+    pack $f.fLastLine.fGraph.fWindow.lWindow -side top -padx 0 -pady 0 
+    pack $f.fLastLine.fGraph.fWindow.lWindowX $f.fLastLine.fGraph.fWindow.eWindowX $f.fLastLine.fGraph.fWindow.lWindowY $f.fLastLine.fGraph.fWindow.eWindowY -side left  -side left -padx 0  -pady 0
 }
 #-------------------------------------------------------------------------------
 # .PROC EMSegmentCreateGraph
@@ -5494,7 +5500,7 @@ proc EMSegmentCreateGraph {f index} {
     canvas $f.caGraph -width $EMSegment(Graph,Cxle,$index) -height $EMSegment(Graph,Cyle,$index)      
     set ca $f.caGraph
     set EMSegment(Cl-caGraph$index) $ca
-    pack $ca -side top  -padx $Gui(pad)  -pady $Gui(pad)
+    pack $ca -side top  -padx $Gui(pad)  -pady 1
 
     # Coordinate Axis
     $ca create line $EMSegment(Graph,XboL) [expr $EMSegment(Graph,Ylen,$index) + $EMSegment(Graph,YboU)] \

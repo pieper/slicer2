@@ -72,9 +72,9 @@ proc EMSegmentSetVtkSuperClassSetting {SuperClass NumInputImagesSet } {
   }
   
   foreach i $EMSegment(Cattrib,$SuperClass,ClassList) {
-      if {$EMSegment(Cattrib,$i,IsSuperClass)} {
+    if {$EMSegment(Cattrib,$i,IsSuperClass)} {
       EMSegment(vtkEMSegment) CreateNextSuperClass 
-      } else {
+    } else {
       EMSegment(vtkEMSegment) CreateNextClass
       EMSegment(vtkEMSegment) SetLabel             $EMSegment(Cattrib,$i,Label) 
       if {$EMSegment(Cattrib,$i,ProbabilityData) != $Volume(idNone)} {
@@ -86,33 +86,33 @@ proc EMSegmentSetVtkSuperClassSetting {SuperClass NumInputImagesSet } {
       }
       for {set y 0} {$y < $EMSegment(NumInputChannel)} {incr y} {
           if {$EMSegment(SegmentMode)} {
-          EMSegment(vtkEMSegment) SetLogMu $EMSegment(Cattrib,$i,LogMean,$y) $y
-          for {set x 0} {$x < $EMSegment(NumInputChannel)} {incr x} {
-              EMSegment(vtkEMSegment) SetLogCovariance $EMSegment(Cattrib,$i,LogCovariance,$y,$x) $y $x
-          }
+             EMSegment(vtkEMSegment) SetLogMu $EMSegment(Cattrib,$i,LogMean,$y) $y
+             for {set x 0} {$x < $EMSegment(NumInputChannel)} {incr x} {
+               EMSegment(vtkEMSegment) SetLogCovariance $EMSegment(Cattrib,$i,LogCovariance,$y,$x) $y $x
+             }
           } else {
-          EMSegment(vtkEMSegment) SetMu $EMSegment(Cattrib,$i,LogMean,[expr $y+1]) $i
-          EMSegment(vtkEMSegment) SetSigma $EMSegment(Cattrib,$i,LogCovariance,$y,$y) $i 
+             EMSegment(vtkEMSegment) SetMu $EMSegment(Cattrib,$i,LogMean,[expr $y+1]) $i
+             EMSegment(vtkEMSegment) SetSigma $EMSegment(Cattrib,$i,LogCovariance,$y,$y) $i 
           }
       }
-      if {$EMSegment(IntensityAvgClass) == $i} {
+      if {$EMSegment(IntensityAvgClass) == $EMSegment(Cattrib,$i,Label)} {
           # Transfere Intensity correction filter stuff
           set index 0
           EMSegment(vtkEMSegment) SetIntensityAvgClass
           foreach v $EMSegment(SelVolList,VolumeList) {       
-          EMSegment(vtkEMSegment) SetIntensityAvgValuePreDef $EMSegment(IntensityAvgValue,$v) $index
-          incr index
+             EMSegment(vtkEMSegment) SetIntensityAvgValuePreDef $EMSegment(IntensityAvgValue,$v) $index
+             incr index
           } 
       }
-      }
-      # puts "blubber $i $EMSegment(Cattrib,$i,Prob)"
-      EMSegment(vtkEMSegment) SetTissueProbability $EMSegment(Cattrib,$i,Prob)
-      # puts "$i is superclass $EMSegment(Cattrib,$i,IsSuperClass)"
-      if {$EMSegment(Cattrib,$i,IsSuperClass)} {
-      set NumInputImagesSet [EMSegmentSetVtkSuperClassSetting $i $NumInputImagesSet]
-      # just to go back to super class => go up a level 
-      EMSegment(vtkEMSegment) MoveToNextClass
-      }
+    }
+    # puts "blubber $i $EMSegment(Cattrib,$i,Prob)"
+    EMSegment(vtkEMSegment) SetTissueProbability $EMSegment(Cattrib,$i,Prob)
+    # puts "$i is superclass $EMSegment(Cattrib,$i,IsSuperClass)"
+    if {$EMSegment(Cattrib,$i,IsSuperClass)} {
+    set NumInputImagesSet [EMSegmentSetVtkSuperClassSetting $i $NumInputImagesSet]
+    # just to go back to super class => go up a level 
+    EMSegment(vtkEMSegment) MoveToNextClass
+   }
 
    }
    return $NumInputImagesSet
