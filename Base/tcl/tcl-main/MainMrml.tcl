@@ -78,7 +78,7 @@ proc MainMrmlInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainMrml \
-        {$Revision: 1.63 $} {$Date: 2002/08/22 18:53:45 $}]
+        {$Revision: 1.64 $} {$Date: 2002/09/12 23:31:35 $}]
 
     set Mrml(colorsUnsaved) 0
 }
@@ -429,6 +429,38 @@ proc MainMrmlDeleteNode {nodeType id} {
     ${nodeType}($id,node) Delete
 
     MainUpdateMRML
+
+    MainMrmlClearList
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MainMrmlDeleteNodeNoUpdate
+#  Same as MainMrmlDeleteNode, but does not call UpdateMRML 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MainMrmlDeleteNodeNoUpdate {nodeType id} {
+    global Mrml 
+    
+    # the #0 puts the nodeType in global scope
+    upvar #0 $nodeType Array
+
+    set tree "dataTree"
+    if {$nodeType == "Color"} {
+        set tree "colorTree"
+    }
+
+    MainMrmlClearList
+    set Array(idListDelete) $id
+
+    # Remove node's ID from idList
+    set i [lsearch $Array(idList) $id]
+    if {$i == -1} {return}
+    set Array(idList) [lreplace $Array(idList) $i $i]
+
+    # Remove node from tree, and delete it
+    Mrml($tree) RemoveItem ${nodeType}($id,node)
+    ${nodeType}($id,node) Delete
 
     MainMrmlClearList
 }
