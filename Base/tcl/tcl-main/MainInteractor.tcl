@@ -265,10 +265,14 @@ proc MainInteractorCursor {s xs ys x y} {
             set labelid [MainColorsGetColorFromLabel $backPix]
             if { $labelid != "" } {
                 set label [Color($labelid,node) GetName]
-                Anno($s,curBack,mapper) SetInput "$curtext : $label"
-                set ::Anno(curBack,label) $label
+            } else {
+                set label unknown
             }
-        } 
+            Anno($s,curBack,mapper) SetInput "$curtext : $label"
+            set ::Anno(curBack,label) $label
+        } else {
+            set ::Anno(curBack,label) ""
+        }
         set forenode [[$Interactor(activeSlicer) GetForeVolume $s] GetMrmlNode]
         set ::Anno(curFore,label) ""
         if { [$forenode GetLUTName] == -1 } {
@@ -276,9 +280,13 @@ proc MainInteractorCursor {s xs ys x y} {
             set labelid [MainColorsGetColorFromLabel $forePix]
             if { $labelid != "" } {
                 set label [Color($labelid,node) GetName]
-                Anno($s,curFore,mapper) SetInput "$curtext : $label"
-                set ::Anno(curFore,label) $label
+            } else {
+                set label unknown
             }
+            Anno($s,curFore,mapper) SetInput "$curtext : $label"
+            set ::Anno(curFore,label) $label
+        } else {
+            set ::Anno(curFore,label) ""
         }
     } else {
         foreach name "$Anno(mouseList)" {
