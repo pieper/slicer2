@@ -74,7 +74,7 @@ proc MainModelsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainModels \
-        {$Revision: 1.49 $} {$Date: 2002/10/04 17:52:54 $}]
+        {$Revision: 1.50 $} {$Date: 2002/10/07 23:37:41 $}]
 
     set Model(idNone) -1
     set Model(activeID) ""
@@ -315,10 +315,14 @@ proc MainModelsRead {m} {
 
     # If fileName = "", then do nothing
     set fileName [Model($m,node) GetFullFileName]
-    if {$fileName == ""} {return}
+    if {$fileName == ""} {
+        DevWarningWindow "MainModelsRead: empty filename"
+        return
+    }
 
     # Check fileName
     if {[CheckFileExists $fileName] == 0} {
+        DevWarningWindow "MainModelsRead: File does not exist, filename = $fileName"
         return -1
     }
     set name [Model($m,node) GetName]
