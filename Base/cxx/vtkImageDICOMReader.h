@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkImageDICOMReader.h,v $
   Language:  C++
-  Date:      $Date: 2000/10/19 20:19:18 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2000/10/24 17:45:56 $
+  Version:   $Revision: 1.2 $
   Thanks:    Thanks to C. Charles Law who developed this class.
 
 Copyright (c) 1993-2000 Ken Martin, Will Schroeder, Bill Lorensen 
@@ -209,6 +209,7 @@ public:
   vtkGetStringMacro(InternalFileName);
   
   int GetDICOMHeaderSize(int idx);
+  void SetDICOMFileNames(int, char **);
   void Start();
   
 protected:
@@ -249,6 +250,9 @@ protected:
   float DataOrigin[3];
   int DataVOI[6];
   
+  int DICOMFiles;
+  char **DICOMFileList;
+
   void ExecuteInformation();
   void Execute() { this->vtkImageSource::Execute(); };
   void Execute(vtkImageData *data);

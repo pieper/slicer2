@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkImageDICOMReader.cxx,v $
   Language:  C++
-  Date:      $Date: 2000/10/19 20:19:17 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2000/10/24 17:46:17 $
+  Version:   $Revision: 1.2 $
   Thanks:    Thanks to C. Charles Law who developed this class.
 
 Copyright (c) 1993-2000 Ken Martin, Will Schroeder, Bill Lorensen 
@@ -135,6 +135,9 @@ vtkImageDICOMReader::vtkImageDICOMReader()
   this->Transform = NULL;
   this->FileLowerLeft = 0;
   this->FileDimensionality = 2;
+
+  this->DICOMFiles = 0;
+  this->DICOMFileList = NULL;
 }
 
 //----------------------------------------------------------------------------
@@ -162,11 +165,11 @@ vtkImageDICOMReader::~vtkImageDICOMReader()
     delete [] this->FilePattern;
     this->FilePattern = NULL;
     }
-  if (this->InternalFileName)
+  /*if (this->InternalFileName)
     {
     delete [] this->InternalFileName;
     this->InternalFileName = NULL;
-    }
+    }*/
   
   this->SetTransform(NULL);
 }
@@ -175,6 +178,13 @@ vtkImageDICOMReader::~vtkImageDICOMReader()
 // This function sets the name of the file. 
 void vtkImageDICOMReader::ComputeInternalFileName(int slice)
 {
+  this->InternalFileName = DICOMFileList[slice-1];
+
+  //vtkGenericWarningMacro("InternalFileName: " << InternalFileName << "\n");
+
+  return;
+
+  /*
   // delete any old filename
   if (this->InternalFileName)
     {
@@ -209,6 +219,7 @@ void vtkImageDICOMReader::ComputeInternalFileName(int slice)
       sprintf (this->InternalFileName, this->FilePattern, slice);
       }
     }
+  */
 }
 
 
@@ -1281,6 +1292,12 @@ void vtkImageDICOMReader::ComputeInverseTransformedIncrements(int inIncr[3],
     vtkDebugMacro(<< "Inverse Transformed Incr are:" 
     << outIncr[0] << ", " << outIncr[1] << ", " << outIncr[2]);
     }
+}
+
+void vtkImageDICOMReader::SetDICOMFileNames(int num, char **ptr)
+{
+  DICOMFiles = num;
+  DICOMFileList = ptr;
 }
 
 void vtkImageDICOMReader::Start()

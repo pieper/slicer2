@@ -202,23 +202,25 @@ void vtkDCMParser::ReadText(char *str, unsigned int Length)
     }
 }
 
-//char *vtkDCMParser::ReadText(unsigned int Length)
-//{
-//  char str[Length + 1];
- // unsigned int id;
- // 
-  //if(this->file_in)
-   // {
-    //  if(fread(str, 1, Length, file_in)!=Length)
-//	{
-//	  str[0] = '\0';
-//	  FileIOMessage=4;
-//	}
- //     else str[Length]='\0';
-  //  }
-//
- // return str;
-//}
+char *vtkDCMParser::ReadText(unsigned int Length)
+{
+  //char str[Length + 1];
+  char str[1024];
+  unsigned int id;
+  unsigned int length = (Length >= 1024) ? 1024 : Length;
+  
+  if(this->file_in)
+    {
+      if(fread(str, 1, length, file_in)!=length)
+	{
+	  str[0] = '\0';
+	  FileIOMessage=4;
+	}
+      else str[length]='\0';
+    }
+
+  return str;
+}
 
 float vtkDCMParser::ReadFloatAsciiNumeric(unsigned int NextBlock)
 {
@@ -624,6 +626,7 @@ int vtkDCMParser::FindNextElement(unsigned short group, unsigned short element)
     }
 
   UnreadLastElement();
+  FileIOMessage = 0;
 
   return found;
 }
@@ -631,7 +634,10 @@ int vtkDCMParser::FindNextElement(unsigned short group, unsigned short element)
 void vtkDCMParser::SeekFirstElement()
 {
   if(this->file_in)
-    fseek(this->file_in, HeaderStartPos, SEEK_SET);
+    {
+      fseek(this->file_in, HeaderStartPos, SEEK_SET);
+      FileIOMessage = 0;
+    }
 }
 
 const char *vtkDCMParser::GetMediaStorageSOPClassUID()
@@ -677,7 +683,9 @@ int vtkDCMParser::GetTransferSyntax()
 const char *vtkDCMParser::GetTransferSyntaxAsString()
 {
   if((TransferSyntax >= 1) && (TransferSyntax <=3))
-  return TFS_String[TransferSyntax - 1];
+    return TFS_String[TransferSyntax - 1];
+  else
+    return TFS_String[3];
 }
 
 char *vtkDCMParser::stringncopy(char *dest, const char *src, long max)

@@ -37,6 +37,8 @@
 #   VolumesSetLast
 #==========================================================================auto=
 
+
+
 #-------------------------------------------------------------------------------
 # .PROC VolumesInit
 # 
@@ -56,6 +58,13 @@ proc VolumesInit {} {
 	# Define Procedures
 	set Module($m,procGUI)  VolumesBuildGUI
 
+    # Added by Attila Tanacs 10/18/2000
+	set Module($m,procEnter) VolumesEnter
+	set Module($m,procExit) VolumesExit
+        set Volume(DICOMStartDir) "e:/tanacs/medpic/"
+
+    # End
+
 	# For now, never display histograms to avoid bug in histWin Render
 	# call in MainVolumesSetActive. (This happened when starting slicer,
 	# switching to Volumes panel, switching back to Data, and then 
@@ -71,7 +80,7 @@ proc VolumesInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.34 $} {$Date: 2000/08/28 18:25:34 $}]
+                {$Revision: 1.35 $} {$Date: 2000/10/24 17:43:28 $}
 
 	# Props
 	set Volume(propertyType) Basic
@@ -96,7 +105,7 @@ proc VolumesInit {} {
 #-------------------------------------------------------------------------------
 proc VolumesBuildGUI {} {
 	global Gui Slice Volume Lut Module
-
+    
 	#-------------------------------------------
 	# Frame Hierarchy:
 	#-------------------------------------------
@@ -353,7 +362,7 @@ acquisition.
 	#-------------------------------------------
 	set f $fProps.fBot
 
-	foreach type "Basic Header" {
+	foreach type "Basic Header DICOM" {
 		frame $f.f${type} -bg $Gui(activeWorkspace)
 		place $f.f${type} -in $f -relheight 1.0 -relwidth 1.0
 		set Volume(f${type}) $f.f${type}
@@ -391,10 +400,10 @@ acquisition.
 
         eval {label $f.l -text "Properties:"} $Gui(BLA)
 	frame $f.f -bg $Gui(backdrop)
-	foreach p "Basic Header" {
+	foreach p "Basic Header DICOM" {
 		eval {radiobutton $f.f.r$p \
 			-text "$p" -command "VolumesSetPropertyType" \
-			-variable Volume(propertyType) -value $p -width 8 \
+			-variable Volume(propertyType) -value $p -width 6 \
 			-indicatoron 0} $Gui(WCA)
 		pack $f.f.r$p -side left -padx 0
 	}
@@ -416,6 +425,7 @@ acquisition.
 
 	set f $fProps.fBot.fBasic.fVolume
 
+    #DevAddFileBrowse $f Volume firstFile "First Image File:" "VolumesSetFirst" "" ""  "Browse for the first Image file" 
         DevAddFileBrowse $f Volume firstFile "First Image File:" "VolumesSetFirst" "" "\$Volume(DefaultDir)"  "Browse for the first Image file" 
 
         bind $f.efile <Tab> "VolumesSetLast"
@@ -618,7 +628,79 @@ acquisition.
         DevAddButton $f.bCancel "Cancel" "VolumesPropsCancel" 8
 	grid $f.bApply $f.bCancel -padx $Gui(pad)
 
-	#-------------------------------------------
+    # Added by Attila Tanacs 10/6/2000 
+    
+    #-------------------------------------------
+    # Props->Bot->DICOM frame
+    #-------------------------------------------
+    set f $fProps.fBot.fDICOM
+    
+    frame $f.fVolume  -bg $Gui(activeWorkspace) -relief groove -bd 3
+    frame $f.fApply   -bg $Gui(activeWorkspace)
+    pack $f.fVolume $f.fApply \
+            -side top -fill x -pady $Gui(pad)
+    
+    #-------------------------------------------
+    # Props->Bot->DICOM->fVolume frame
+    #-------------------------------------------
+    
+    set f $fProps.fBot.fDICOM.fVolume
+    
+    #DevAddFileBrowse $f Volume firstFile "First Image File:" "VolumesSetFirst" "" ""  "Browse for the first Image file"
+    #bind $f.efile <Tab> "VolumesSetLast"
+    
+    frame $f.fSelect -bg $Gui(activeWorkspace)
+    #frame $f.fLast     -bg $Gui(activeWorkspace)
+    #frame $f.fHeaders  -bg $Gui(activeWorkspace)
+    #frame $f.fLabelMap -bg $Gui(activeWorkspace)
+    set fileNameListbox [ScrolledListbox $f.fFiles 0 0 -height 5 -bg $Gui(activeWorkspace)]
+    set Volume(dICOMFileListbox) $fileNameListbox
+    #frame $f.fFiles -bg $Gui(activeWorkspace)
+    frame $f.fOptions  -bg $Gui(activeWorkspace)
+    frame $f.fDesc     -bg $Gui(activeWorkspace)
+    
+    pack $f.fSelect $f.fFiles $f.fOptions \
+            $f.fDesc -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
+    
+    # Select
+    DevAddButton $f.fSelect.bSelect "Select DICOM Volume" [list DICOMSelectMain $fileNameListbox]
+    DevAddButton $f.fSelect.bExtractHeader "Extract Header" { HandleExtractHeader }
+    pack $f.fSelect.bSelect $f.fSelect.bExtractHeader -padx $Gui(pad) -pady $Gui(pad)
+    
+    # Files
+    
+    $fileNameListbox delete 0 end
+
+    # Options
+    set f $fProps.fBot.fDICOM.fVolume.fOptions
+    
+    eval {label $f.lName -text "Name:"} $Gui(WLA)
+    eval {entry $f.eName -textvariable Volume(name) -width 13} $Gui(WEA)
+    pack  $f.lName -side left -padx $Gui(pad)
+    pack $f.eName -side left -padx $Gui(pad) -expand 1 -fill x
+    pack $f.lName -side left -padx $Gui(pad)
+    
+    # Desc row
+    set f $fProps.fBot.fDICOM.fVolume.fDesc
+    
+    eval {label $f.lDesc -text "Optional Description:"} $Gui(WLA)
+    eval {entry $f.eDesc -textvariable Volume(desc)} $Gui(WEA)
+    pack $f.lDesc -side left -padx $Gui(pad)
+    pack $f.eDesc -side left -padx $Gui(pad) -expand 1 -fill x
+    
+    
+    #-------------------------------------------
+    # Props->Bot->Basic->Apply frame
+    #-------------------------------------------
+    set f $fProps.fBot.fDICOM.fApply
+    
+    DevAddButton $f.bApply "Apply" "VolumesPropsApply; RenderAll" 8
+    DevAddButton $f.bCancel "Cancel" "VolumesPropsCancel" 8
+    grid $f.bApply $f.bCancel -padx $Gui(pad)
+    
+    # End
+    
+    #-------------------------------------------
 	# Other frame
 	#-------------------------------------------
 	set fOther $Module(Volumes,fOther)
@@ -708,6 +790,8 @@ proc VolumesPropsApply {} {
 
 	set m $Volume(activeID)
 	if {$m == ""} {return}
+
+    set Volume(isDICOM) [expr [llength $Volume(dICOMFileList)] > 0]
 	
 	# Validate name
 	if {$Volume(name) == ""} {
@@ -719,10 +803,12 @@ proc VolumesPropsApply {} {
 		return
 	}
 	# lastNum
+    if { $Volume(isDICOM) == 0 } {
 	if {[ValidateInt $Volume(lastNum)] == 0} {
 		tk_messageBox -message "The last number must be an integer."
 		return
 	}
+    }
 	# resolution
 	if {[ValidateInt $Volume(resolution)] == 0} {
 		tk_messageBox -message "The resolution must be an integer."
@@ -754,6 +840,10 @@ proc VolumesPropsApply {} {
 		return
 	}
 
+    if { $Volume(isDICOM) } {
+	set Volume(readHeaders) 0
+    }
+
 	# Manual headers
 	if {$Volume(readHeaders) == "0"} {
 		# if on basic frame, switch to header frame.
@@ -767,15 +857,32 @@ proc VolumesPropsApply {} {
 	if {$m == "NEW"} {
 		set n [MainMrmlAddNode Volume]
 		set i [$n GetID]
+	   
+        # Added by Attila Tanacs 10/11/2000
 
-		# Manual headers
+        $n DeleteDICOMFileNames
+        for  {set j 0} {$j < [llength $Volume(dICOMFileList)]} {incr j} {
+            $n AddDICOMFileName [$Volume(dICOMFileListbox) get $j]
+        }
+	    
+	if { $Volume(isDICOM) } {
+	    #$Volume(dICOMFileListbox) insert 0 [$n GetNumberOfDICOMFiles];
+	    set firstNum 1
+	    set Volume(lastNum) [llength $Volume(dICOMFileList)]
+	}	    
+
+	# End
+
+        # Manual headers
+
 		if {$Volume(readHeaders) == "0"} {
 		    # These get set down below, but we need them before MainUpdateMRML
 			$n SetFilePrefix [file root $Volume(firstFile)]
 			$n SetFilePattern $Volume(filePattern)
 			$n SetFullPrefix [file join $Mrml(dir) [$n GetFilePrefix]]
-			set firstNum [MainFileFindImageNumber First \
-				[file join $Mrml(dir) $Volume(firstFile)]]
+			if { !$Volume(isDICOM) } {
+			set firstNum [MainFileFindImageNumber First [file join $Mrml(dir) $Volume(firstFile)]]
+			}
 			$n SetImageRange $firstNum $Volume(lastNum)
 			$n SetDimensions $Volume(resolution) $Volume(resolution)
 			eval $n SetSpacing $Volume(pixelSize) $Volume(pixelSize) \
@@ -896,7 +1003,6 @@ proc VolumesSetFirst {} {
 
 	set Volume(name)  [file root [file tail $Volume(firstFile)]]
         set Volume(DefaultDir) [file dirname $Volume(firstFile)]
-
 	# lastNum is an image number
 	set Volume(lastNum)  [MainFileFindImageNumber Last \
 		[file join $Mrml(dir) $Volume(firstFile)]]
@@ -946,4 +1052,830 @@ proc VolumesSetLast {} {
 	set Volume(lastNum) [MainFileFindImageNumber Last\
 		[file join $Mrml(dir) $Volume(firstFile)]]
 	set Volume(name) [file root [file tail $Volume(firstFile)]]
+}
+
+#-------------------------------------------------------------------------------
+# DICOM related procedures
+# Added by Attila Tanacs
+# October 2000
+# (C) ERC for CISST, Johns Hopkins University, Baltimore
+# Any comments? tanacs@cs.jhu.edu
+#-------------------------------------------------------------------------------
+
+proc AddListUnique { list arg } {
+    upvar $list list2
+    if { [expr [lsearch -exact $list2 $arg] == -1] } {
+        lappend list2 $arg
+    }
+}
+
+#-------------------------------------------------------------------------------
+# DICOMScrolledListbox modified version of ScrolledListbox
+#
+# xAlways is 1 if the x scrollbar should be always visible
+#-------------------------------------------------------------------------------
+proc DICOMScrolledListbox {f xAlways yAlways variable {labeltext "labeltext"} {args ""}} {
+	global Gui
+	
+    set fmain $f
+    frame $fmain -bg $Gui(activeWorkspace)
+    eval { label $fmain.head -text $labeltext } $Gui(WLA)
+    eval { label $fmain.selected -textvariable $variable } $Gui(WLA)
+
+    frame $fmain.f -bg $Gui(activeWorkspace)
+    set f $fmain.f
+	if {$xAlways == 1 && $yAlways == 1} { 
+		listbox $f.list -selectmode single \
+			-xscrollcommand "$f.xscroll set" \
+			-yscrollcommand "$f.yscroll set"
+	
+	} elseif {$xAlways == 1 && $yAlways == 0} { 
+		listbox $f.list -selectmode single \
+			-xscrollcommand "$f.xscroll set" \
+			-yscrollcommand [list ScrollSet $f.yscroll \
+				[list grid $f.yscroll -row 0 -column 1 -sticky ns]]
+
+	} elseif {$xAlways == 0 && $yAlways == 1} { 
+		listbox $f.list -selectmode single \
+			-xscrollcommand [list ScrollSet $f.xscroll \
+				[list grid $f.xscroll -row 1 -column 0 -sticky we]] \
+			-yscrollcommand "$f.yscroll set"
+
+	} else {
+		listbox $f.list -selectmode single \
+			-xscrollcommand [list ScrollSet $f.xscroll \
+				[list grid $f.xscroll -row 1 -column 0 -sticky we]] \
+			-yscrollcommand [list ScrollSet $f.yscroll \
+				[list grid $f.yscroll -row 0 -column 1 -sticky ns]]
+	}
+
+	if {$Gui(smallFont) == 1} {
+		eval {$f.list configure \
+			-font {helvetica 7 bold} \
+			-bg $Gui(normalButton) -fg $Gui(textDark) \
+			-selectbackground $Gui(activeButton) \
+			-selectforeground $Gui(textDark) \
+			-highlightthickness 0 -bd $Gui(borderWidth) \
+			-relief sunken -selectborderwidth $Gui(borderWidth)}
+	} else {
+		eval {$f.list configure \
+			-font {helvetica 8 bold} \
+			-bg $Gui(normalButton) -fg $Gui(textDark) \
+			-selectbackground $Gui(activeButton) \
+			-selectforeground $Gui(textDark) \
+			-highlightthickness 0 -bd $Gui(borderWidth) \
+			-relief sunken -selectborderwidth $Gui(borderWidth)}
+	}
+
+	if {$args != ""} {
+		eval {$f.list configure} $args
+	}
+
+	scrollbar $f.xscroll -orient horizontal \
+		-command [list $f.list xview] \
+		-bg $Gui(activeWorkspace) \
+		-activebackground $Gui(activeButton) -troughcolor $Gui(normalButton) \
+		-highlightthickness 0 -bd $Gui(borderWidth)
+	scrollbar $f.yscroll -orient vertical \
+		-command [list $f.list yview] \
+		-bg $Gui(activeWorkspace) \
+		-activebackground $Gui(activeButton) -troughcolor $Gui(normalButton) \
+		-highlightthickness 0 -bd $Gui(borderWidth)
+
+	grid $f.list $f.yscroll -sticky news
+	grid $f.xscroll -sticky news
+	grid rowconfigure $f 0 -weight 1
+	grid columnconfigure $f 0 -weight 1
+
+    pack $fmain.head $fmain.selected -anchor nw -pady 5
+    pack $fmain.f -fill both -expand true
+    pack $fmain -fill both -expand true 
+
+	return $fmain.f.list
+}
+
+proc FindDICOM2 { StartDir AddDir Pattern } {
+    global DICOMFiles
+    global FindDICOMCounter
+    global DICOMPatientNames
+    global DICOMPatientIDsNames
+
+    set pwd [pwd]
+    if [expr [string length $AddDir] > 0] {
+        if [catch {cd $AddDir} err] {
+            puts stderr $err
+            return
+        }
+    }
+    
+    vtkDCMParser parser
+    foreach match [glob -nocomplain -- $Pattern] {
+        #puts stdout [file join $StartDir $match]
+        if {[file isdirectory $match]} {
+            continue
+        }
+        set FileName [file join $StartDir $AddDir $match]
+        set found [parser OpenFile $match]
+        if {[string compare $found "0"] == 0} {
+            puts stderr "Can't open file [file join $StartDir $AddDir $match]"
+        } else {
+            set found [parser FindElement 0x7fe0 0x0010]
+            if {[string compare $found "1"] == 0} {
+                #
+                # image data is available
+                #
+                
+                set DICOMFiles($FindDICOMCounter,FileName) $FileName
+                
+                if [expr [parser FindElement 0x0010 0x0010] == "1"] {
+                    set Length [lindex [split [parser ReadElement]] 3]
+                    set PatientName [parser ReadText $Length]
+		    if {$PatientName == ""} {
+			set PatientName "noname"
+		    }
+                } else  {
+                    set PatientName 'unknown'
+                }
+                set DICOMFiles($FindDICOMCounter,PatientName) $PatientName
+                AddListUnique DICOMPatientNames $PatientName
+                
+                if [expr [parser FindElement 0x0010 0x0020] == "1"] {
+                    set Length [lindex [split [parser ReadElement]] 3]
+                    set PatientID [parser ReadText $Length]
+		    if {$PatientID == ""} {
+			set PatientID "noid"
+		    }
+                } else  {
+                    set PatientID 'unknown'
+                }
+                set DICOMFiles($FindDICOMCounter,PatientID) $PatientID
+                set add {}
+                append add "<" $PatientID "><" $PatientName ">"
+                AddListUnique DICOMPatientIDsNames $add
+                set DICOMFiles($FindDICOMCounter,PatientIDName) $add
+                
+                if [expr [parser FindElement 0x0020 0x000d] == "1"] {
+                    set Length [lindex [split [parser ReadElement]] 3]
+                    set StudyInstanceUID [parser ReadText $Length]
+                } else  {
+                    set StudyInstanceUID 'unknown'
+                }
+                set DICOMFiles($FindDICOMCounter,StudyInstanceUID) $StudyInstanceUID
+                
+                if [expr [parser FindElement 0x0020 0x000e] == "1"] {
+                    set Length [lindex [split [parser ReadElement]] 3]
+                    set SeriesInstanceUID [parser ReadText $Length]
+                } else  {
+                    set SeriesInstanceUID 'unknown'
+                }
+                set DICOMFiles($FindDICOMCounter,SeriesInstanceUID) $SeriesInstanceUID
+                
+		set ImageNumber ""
+                if [expr [parser FindElement 0x0020 0x0013] == "1"] {
+                    #set Length [lindex [split [parser ReadElement]] 3]
+                    #set ImageNumber [parser ReadText $Length]
+		    #scan [parser ReadText $length] "%d" ImageNumber
+		    
+		    set NextBlock [lindex [split [parser ReadElement]] 4]
+		    set ImageNumber [parser ReadIntAsciiNumeric $NextBlock]
+                }
+		if { $ImageNumber == "" } {
+		    if [expr [parser FindElement 0x0020 0x1041] == "1"] {
+			set NextBlock [lindex [split [parser ReadElement]] 4]
+			set ImageNumber [parser ReadFloatAsciiNumeric $NextBlock]
+		    } else  {
+			set ImageNumber 1
+		    }		    
+		}
+                set DICOMFiles($FindDICOMCounter,ImageNumber) $ImageNumber
+                
+                incr FindDICOMCounter
+                #puts [file join $StartDir $AddDir $match]
+            } else {
+                #set dim 256
+            }
+            parser CloseFile
+        }
+    }
+    parser Delete
+    
+    foreach file [glob -nocomplain *] {
+        if [file isdirectory $file] {
+            FindDICOM2 [file join $StartDir $AddDir] $file $Pattern
+        }
+    }
+    cd $pwd
+}
+
+proc FindDICOM { StartDir Pattern } {
+    global DICOMFiles
+    global FindDICOMCounter
+    global DICOMPatientNames
+    global DICOMPatientIDsNames
+    global DICOMStudyInstanceUIDList
+    global DICOMSeriesInstanceUIDList
+    global DICOMFileNameArray
+    global DICOMFileNameList
+    
+    if [array exists DICOMFiles] {
+        unset DICOMFiles
+    }
+    if [array exists DICOMFileNameArray] {
+        unset DICOMFileNameArray
+    }
+    set pwd [pwd]
+    set FindDICOMCounter 0
+    set DICOMPatientNames {}
+    set DICOMPatientIDsNames {}
+    set DICOMStudyList {}
+    set DICOMSeriesList {}
+    set DICOMFileNameList {}
+    
+    if [catch {cd $StartDir} err] {
+        puts stderr $err
+        cd $pwd
+        return
+    }
+    FindDICOM2 $StartDir "" $Pattern
+    cd $pwd
+}
+
+proc CreateStudyList { PatientIDName } {
+    global DICOMFiles
+    global FindDICOMCounter
+    global DICOMPatientNames
+    global DICOMPatientIDsNames
+    global DICOMStudyList
+    
+    set DICOMStudyList {}
+    for  {set i 0} {$i < $FindDICOMCounter} {incr i} {
+        if {[string compare $DICOMFiles($i,PatientIDName) $PatientIDName] == 0} {
+            AddListUnique DICOMStudyList $DICOMFiles($i,StudyInstanceUID)
+        }
+    }
+}
+
+proc CreateSeriesList { PatientIDName StudyUID } {
+    global DICOMFiles
+    global FindDICOMCounter
+    global DICOMPatientNames
+    global DICOMPatientIDsNames
+    global DICOMSeriesList
+    
+    set DICOMSeriesList {}
+    for  {set i 0} {$i < $FindDICOMCounter} {incr i} {
+        if {[string compare $DICOMFiles($i,PatientIDName) $PatientIDName] == 0} {
+            if {[string compare $DICOMFiles($i,StudyInstanceUID) $StudyUID] == 0} {
+                AddListUnique DICOMSeriesList $DICOMFiles($i,SeriesInstanceUID)
+            }
+        }
+    }
+}
+
+proc CreateFileNameList { PatientIDName StudyUID SeriesUID} {
+    global DICOMFiles
+    global FindDICOMCounter
+    global DICOMPatientNames
+    global DICOMPatientIDsNames
+    global DICOMFileNameArray
+    global DICOMFileNameList
+    
+    catch {unset DICOMFileNameArray}
+    set count 0
+    for  {set i 0} {$i < $FindDICOMCounter} {incr i} {
+        if {[string compare $DICOMFiles($i,PatientIDName) $PatientIDName] == 0} {
+            if {[string compare $DICOMFiles($i,StudyInstanceUID) $StudyUID] == 0} {
+                if {[string compare $DICOMFiles($i,SeriesInstanceUID) $SeriesUID] == 0} {
+                    set id [format "%04d_%04d" $DICOMFiles($i,ImageNumber) $count]
+                    incr count
+                    set DICOMFileNameArray($id) $DICOMFiles($i,FileName)
+                }
+            }
+        }
+    }
+    set idx [lsort [array name DICOMFileNameArray]]
+    set DICOMFileNameList {}
+    foreach i $idx {
+        lappend DICOMFileNameList $DICOMFileNameArray($i)
+    }
+}
+
+proc ClickListIDsNames { idsnames study series filenames } {
+    global DICOMPatientIDsNames
+    global DICOMStudyList
+    global DICOMListSelectPatientName
+    global DICOMListSelectStudyUID
+    global DICOMListSelectSeriesUID
+
+    set nameidx [$idsnames curselection]
+    set name [lindex $DICOMPatientIDsNames $nameidx]
+    set DICOMListSelectPatientName $name
+    CreateStudyList $name
+    $study delete 0 end
+    eval {$study insert end} $DICOMStudyList
+    $series delete 0 end
+    $filenames delete 0 end
+    set DICOMListSelectStudyUID "none selected"
+    set DICOMListSelectSeriesUID "none selected"
+}
+
+proc ClickListStudyUIDs { idsnames study series filenames } {
+    global DICOMPatientIDsNames
+    global DICOMStudyList
+    global DICOMSeriesList
+    global DICOMListSelectStudyUID
+    global DICOMListSelectSeriesUID
+    
+    set nameidx [$idsnames index active]
+    set name [lindex $DICOMPatientIDsNames $nameidx]
+    set studyididx [$study curselection]
+    set studyid [lindex $DICOMStudyList $studyididx]
+    set DICOMListSelectStudyUID $studyid
+    CreateSeriesList $name $studyid
+    $series delete 0 end
+    eval {$series insert end} $DICOMSeriesList
+    $filenames delete 0 end
+    set DICOMListSelectSeriesUID "none selected"
+}
+
+proc ClickListSeriesUIDs { idsnames study series filenames } {
+    global DICOMPatientIDsNames
+    global DICOMStudyList
+    global DICOMSeriesList
+    global DICOMFileNameList
+    global DICOMListSelectSeriesUID
+    
+    set nameidx [$idsnames index active]
+    set name [lindex $DICOMPatientIDsNames $nameidx]
+    set studyididx [$study index active]
+    set studyid [lindex $DICOMStudyList $studyididx]
+    set seriesididx [$series curselection]
+    
+    if {$seriesididx == ""} {
+        return
+    }
+    
+    set seriesid [lindex $DICOMSeriesList $seriesididx]
+    set DICOMListSelectSeriesUID $seriesid
+    CreateFileNameList $name $studyid $seriesid
+    $filenames delete 0 end
+    eval {$filenames insert end} $DICOMFileNameList
+    $filenames selection set 0 end
+}
+
+proc DICOMListSelectClose { parent filelist } {
+    global DICOMFileNameList
+    
+    set DICOMFileNameList {}
+    set indices [$filelist curselection]
+    foreach idx $indices {
+        lappend DICOMFileNameList [$filelist get $idx]
+    }
+    
+    destroy $parent
+}
+
+proc DICOMListSelect { parent values } {
+    global DICOMListSelectPatientName
+    global DICOMListSelectStudyUID
+    global DICOMListSelectSeriesUID
+    global DICOMListSelectFiles
+    global Gui
+
+    set DICOMListSelectFiles ""
+
+    toplevel $parent -bg $Gui(activeWorkspace)
+    wm title $parent "List of DICOM studies"
+    wm minsize $parent 600 300
+    frame $parent.f1 -bg $Gui(activeWorkspace)
+    frame $parent.f2 -bg $Gui(activeWorkspace)
+    frame $parent.f3 -bg $Gui(activeWorkspace)
+    set iDsNames [DICOMScrolledListbox $parent.f1.iDsNames 0 1 DICOMListSelectPatientName "Patient <ID><Name>" -width 50 -height 5]
+    set studyUIDs [DICOMScrolledListbox $parent.f1.studyUIDs 0 1 DICOMListSelectStudyUID "Study UID" -width 50 -height 5]
+    set seriesUIDs [DICOMScrolledListbox $parent.f2.seriesUIDs 0 1 DICOMListSelectSeriesUID "Series UID" -width 50 -height 5]
+    set fileNames [DICOMScrolledListbox $parent.f2.fileNames 0 1 DICOMListSelectFiles "Files" -width 50 -height 5 -selectmode extended]
+    #set fileNames [DICOMScrolledListbox $parent.f2.fileNames 0 1 -width 60 -height 5 -selectmode multiple]
+    
+    #button $parent.f3.close -text "Close" -command "destroy $parent"
+    eval {button $parent.f3.close -text "Close" -command [list DICOMListSelectClose $parent $fileNames]} $Gui(WBA)
+    
+    pack $parent.f1.iDsNames $parent.f1.studyUIDs -side left -expand true -fill both
+    pack $parent.f2.seriesUIDs $parent.f2.fileNames -side left -expand true -fill both
+    pack $parent.f1 -fill both -expand true
+    pack $parent.f2 -fill both -expand true
+    pack $parent.f3.close -pady 10
+    pack $parent.f3 -fill both -expand true
+    #pack $parent
+    
+    bind $iDsNames <ButtonRelease-1> [list ClickListIDsNames %W $studyUIDs $seriesUIDs $fileNames]
+    bind $studyUIDs <ButtonRelease-1> [list ClickListStudyUIDs $iDsNames %W $seriesUIDs $fileNames]
+    bind $seriesUIDs <ButtonRelease-1> [list ClickListSeriesUIDs $iDsNames $studyUIDs %W $fileNames]
+    
+    foreach x $values {
+        $iDsNames insert end $x
+    }
+    
+    $iDsNames selection set 0
+    ClickListIDsNames $iDsNames $studyUIDs $seriesUIDs $fileNames
+    $studyUIDs selection set 0
+    ClickListStudyUIDs $iDsNames $studyUIDs $seriesUIDs $fileNames
+    $seriesUIDs selection set 0
+    ClickListSeriesUIDs $iDsNames $studyUIDs $seriesUIDs $fileNames
+}
+
+#
+#
+#
+
+proc ChangeDir { dirlist } {
+    global DICOMStartDir
+    
+    catch {cd $DICOMStartDir}
+    set DICOMStartDir [pwd]
+    
+    $dirlist delete 0 end
+    $dirlist insert end "../"
+    foreach match [glob -nocomplain *] {
+        if {[file isdirectory $match]} {
+            $dirlist insert end $match/
+        } else  {
+            $dirlist insert end $match
+        }
+        
+    }
+}
+
+proc ClickDirList { dirlist } {
+    global DICOMStartDir
+    set diridx [$dirlist curselection]
+    if  { $diridx != "" } {
+        set dir [$dirlist get $diridx]
+        set DICOMStartDir [file join $DICOMStartDir $dir]
+        ChangeDir $dirlist
+    }
+}
+
+proc DICOMHelp { parent msg {textparams {}}} {
+    global Gui
+
+    toplevel $parent
+    wm title $parent "DICOM Help"
+    #wm minsize $parent 600 300
+
+    frame $parent.f
+    frame $parent.b
+    pack $parent.f $parent.b -side top -fill both -expand true
+    set t [eval {text $parent.f.t -setgrid true -wrap word -yscrollcommand "$parent.f.sy set"} $textparams]
+    scrollbar $parent.f.sy -orient vert -command "$parent.f.t yview"
+    pack $parent.f.sy -side right -fill y
+    pack $parent.f.t -side left -fill both -expand true
+    $parent.f.t insert end $msg
+
+    eval { button $parent.b.close -text "Close" -command "destroy $parent" } $Gui(WBA)
+    pack $parent.b.close -padx 10 -pady 10
+}
+
+proc DICOMSelectDirHelp {} {
+    set msg "Select the start directory of DICOM studies either clicking \
+the directory names in the listbox or typing the exact name and pressing Enter (or \
+clicking the 'Change To' button).
+Clicking ordinary files has no effect.
+After pressing 'OK', the whole subdirectory will be traversed recursively and all DICOM \
+files will be collected into a list."
+
+    DICOMHelp .help $msg [list -width 60 -height 14]
+    
+    focus .help
+    grab .help
+    tkwait window .help
+#    tk_messageBox -type ok -message "Help" -title "Title" -icon  info
+}
+
+proc DICOMSelectDir { top } {
+    global DICOMStartDir
+    global Pressed
+    global Gui
+    
+    toplevel $top -bg $Gui(activeWorkspace)
+    wm minsize $top 100 100
+    wm title $top "Select Start Directory"
+
+    set f1 [frame $top.f1 -bg $Gui(activeWorkspace)]
+    set f2 [frame $top.f2 -bg $Gui(activeWorkspace)]
+    set f3 [frame $top.f3 -bg $Gui(activeWorkspace)]
+    
+    set dirlist [ScrolledListbox $f2.dirlist 1  1 -width 30 -height 15]
+    
+    eval { button $f1.changeto -text "Change To:" -command  [list ChangeDir $dirlist]} $Gui(WBA)
+    eval { entry $f1.dirname -textvariable DICOMStartDir } $Gui(WEA)
+    
+    eval {button $f3.ok -text "OK" -command "set Pressed OK; destroy $top"} $Gui(WBA)
+    eval {button $f3.cancel -text "Cancel" -command "set Pressed Cancel; destroy $top"} $Gui(WBA)
+    eval {button $f3.help -text "Help" -command "DICOMSelectDirHelp"} $Gui(WBA)
+
+    pack $f1.changeto $f1.dirname -side left -padx 10 -pady 10
+    pack $f2.dirlist -fill both -expand true
+    pack $f3.ok $f3.cancel $f3.help -side left -padx 10 -pady 10
+    pack $f1
+    pack $f2 -fill both -expand true
+    pack $f3
+    #pack $window
+    
+    set pwd [pwd]
+    catch {cd $DICOMStartDir}
+    set DICOMStartDir [pwd]
+    
+    ChangeDir $dirlist
+    #$dirlist delete 0 end
+    #$dirlist insert end ".."
+    #foreach match [glob -nocomplain *] {
+    #    if {[file isdirectory $match]} {
+    #        $dirlist insert end $match
+    #        #puts $dir
+    #    }
+    #}
+    
+    bind $dirlist <ButtonRelease-1> [list ClickDirList %W]
+    bind $f1.dirname <KeyRelease-Return> [list $f1.changeto invoke]
+    
+    #cd $pwd
+}
+
+proc DICOMSelectMain { fileNameListbox } {
+    global DICOMStartDir
+    global Pressed
+    global DICOMPatientIDsNames
+    global DICOMFileNameList
+    global Volume
+    
+    if {$Volume(activeID) != "NEW"} {
+	return
+    }
+
+    set pwd [pwd]
+    #set DICOMStartDir "e:/tanacs/medpic/"
+    set DICOMStartDir $Volume(DICOMStartDir)
+    set DICOMFileNameList {}
+    set Volume(dICOMFileList) {}
+    DICOMSelectDir .select
+    
+    focus .select
+    grab .select
+    tkwait window .select
+    
+    if { $Pressed == "OK" } {
+        FindDICOM $DICOMStartDir *
+        
+        DICOMListSelect .list $DICOMPatientIDsNames
+        
+        focus .list
+        grab .list
+        tkwait window .list
+        
+        #puts $DICOMFileNameList
+        $fileNameListbox delete 0 end
+        foreach name $DICOMFileNameList {
+            $fileNameListbox insert end $name
+        }
+        set Volume(dICOMFileList) $DICOMFileNameList
+
+	# use the second and the third
+	set file1 [lindex $DICOMFileNameList 1]
+	set file2 [lindex $DICOMFileNameList 2]
+	DICOMReadHeaderValues [lindex $DICOMFileNameList 0]
+	DICOMPredictScanOrder $file1 $file2
+
+	set Volume(DICOMStartDir) $DICOMStartDir
+    }
+    
+    cd $pwd
+}
+
+proc HandleExtractHeader {} {
+    global Volume
+
+    if {$Volume(activeID) != "NEW"} {
+	return
+    }
+
+    set fileidx [$Volume(dICOMFileListbox) index active]
+    set filename [lindex $Volume(dICOMFileList) $fileidx]
+    DICOMReadHeaderValues $filename
+
+    set Volume(propertyType) Header
+    VolumesSetPropertyType
+}
+
+proc DICOMReadHeaderValues { filename } {
+    global Volume
+
+    if {$filename == ""} {
+	return
+    }
+    
+    vtkDCMParser parser
+    set found [parser OpenFile $filename]
+    if {[string compare $found "0"] == 0} {
+	puts stderr "Can't open file $filename\n"
+	parser Delete
+	return
+    } else {
+	if { [parser FindElement 0x0010 0x0010] == "1" } {
+	    set Length [lindex [split [parser ReadElement]] 3]
+	    set PatientName [parser ReadText $Length]
+	    if {$PatientName == ""} {
+		set PatientName "noname"
+	    }
+	} else  {
+	    set PatientName 'unknown'
+	}
+	#regsub -all {\ |\t|\n} $PatientName "_" Volume(name)
+	regsub -all {[^a-zA-Z0-9]} $PatientName "_" Volume(name)
+	
+	if { [parser FindElement 0x0028 0x0010] == "1" } {
+	    #set Length [lindex [split [parser ReadElement]] 3]
+	    parser ReadElement
+	    set Volume(resolution) [parser ReadUINT16]
+	} else  {
+	    set Volume(resolution) "unknown"
+	}
+
+	if { [parser FindElement 0x0028 0x0030] == "1" } {
+	    set NextBlock [lindex [split [parser ReadElement]] 4]
+	    set Volume(pixelSize) [parser ReadFloatAsciiNumeric $NextBlock]
+	} else  {
+	    set Volume(pixelSize) "unknown"
+	}
+
+	if { [parser FindElement 0x0018 0x0050] == "1" } {
+	    set NextBlock [lindex [split [parser ReadElement]] 4]
+	    set Volume(sliceThickness) [parser ReadFloatAsciiNumeric $NextBlock]
+	} else  {
+	    set Volume(sliceThickness) "unknown"
+	}
+
+	if { [parser FindElement 0x0018 0x1120] == "1" } {
+	    set NextBlock [lindex [split [parser ReadElement]] 4]
+	    set Volume(gantryDetectorTilt) [parser ReadFloatAsciiNumeric $NextBlock]
+	} else  {
+	    set Volume(gantryDetectorTilt) 0
+	}
+
+	if { [parser FindElement 0x0008 0x0060] == "1" } {
+	    set Length [lindex [split [parser ReadElement]] 3]
+	    set Volume(desc) [parser ReadText $Length]
+	} else  {
+	    set Volume(desc) "unknown modality"
+	}
+
+	if { [parser GetTransferSyntax] == "3"} {
+	    set Volume(littleEndian) 0
+	} else {
+	    set Volume(littleEndian) 1
+	}
+
+	# Number of Scalars and ScalarType 
+
+	if { [parser FindElement 0x0028 0x0002] == "1" } {
+	    parser ReadElement
+	    set Volume(numScalars) [parser ReadUINT16]
+	} else  {
+	    set Volume(numScalars) "unknown"
+	}
+	
+	if { [parser FindElement 0x0028 0x0103] == "1" } {
+	    parser ReadElement
+	    set PixelRepresentation [parser ReadUINT16]
+	} else  {
+	    set PixelRepresentation 1
+	}
+	
+	if { [parser FindElement 0x0028 0x0100] == "1" } {
+	    parser ReadElement
+	    set BitsAllocated [parser ReadUINT16]
+	    if { $BitsAllocated == "16" } {
+		if { $PixelRepresentation == "0" } {
+		    #VolumesSetScalarType "UnsignedShort"
+		    VolumesSetScalarType "Short"
+		} else {
+		    VolumesSetScalarType "Short"
+		}
+	    }
+
+	    if { $BitsAllocated == "8" } {
+		if { $PixelRepresentation == "0" } {
+		    VolumesSetScalarType "UnsignedChar"
+		} else {
+		    VolumesSetScalarType "Char"
+		}
+	    }
+	} else  {
+	    # do nothing
+	}
+
+    }
+
+    parser Delete
+
+    set Volume(readHeaders) 0
+}
+
+proc DICOMPredictScanOrder { file1 file2 } {
+    global Volume
+
+    if { ($file1 == "") || ($file2 == "") } {
+	return
+    }
+
+    vtkDCMParser parser
+
+    set found [parser OpenFile $file1]
+    if {[string compare $found "0"] == 0} {
+	puts stderr "Can't open file $file1\n"
+	parser Delete
+	return
+    } else {
+	if { [parser FindElement 0x0020 0x0032] == "1" } {
+	    set NextBlock [lindex [split [parser ReadElement]] 4]
+	    set x1 [parser ReadFloatAsciiNumeric $NextBlock]
+	    set y1 [parser ReadFloatAsciiNumeric $NextBlock]
+	    set z1 [parser ReadFloatAsciiNumeric $NextBlock]
+	} else  {
+	    parser Delete
+	    return
+	}
+    }
+    parser CloseFile
+
+    set found [parser OpenFile $file2]
+    if {[string compare $found "0"] == 0} {
+	puts stderr "Can't open file $file2\n"
+	parser Delete
+	return
+    } else {
+	if { [parser FindElement 0x0020 0x0032] == "1" } {
+	    set NextBlock [lindex [split [parser ReadElement]] 4]
+	    set x2 [parser ReadFloatAsciiNumeric $NextBlock]
+	    set y2 [parser ReadFloatAsciiNumeric $NextBlock]
+	    set z2 [parser ReadFloatAsciiNumeric $NextBlock]
+	} else  {
+	    parser Delete
+	    return
+	}
+    }
+
+    #set Volume(filePattern) [format "%.2f %.2f %.2f" $x1 $y1 $z1]
+
+    set dx [expr $x2 - $x1]
+    set dy [expr $y2 - $y1]
+    set dz [expr $z2 - $z1]
+
+    if { abs($dx) > abs($dy) } {
+	if { abs($dx) > abs($dz) } {
+	    # sagittal
+	    if { $dx > 0 } {
+		VolumesSetScanOrder "LR"
+	    } else {
+		VolumesSetScanOrder "RL"
+	    }
+	} else {
+	    if { $dx > 0 } {
+		# axial SI
+		VolumesSetScanOrder "SI"
+	    } else {
+		# axial IS
+		VolumesSetScanOrder "IS"
+	    }
+	}
+    } else {
+	if { abs ($dy) > abs($dz) } {
+	    # coronal
+	    if { $dy > 0 } {
+		VolumesSetScanOrder "AP"
+	    } else {
+		VolumesSetScanOrder "PA"
+	    }
+	} else {
+	    if { $dx > 0 } {
+		# axial SI
+		VolumesSetScanOrder "SI"
+	    } else {
+		# axial IS
+		VolumesSetScanOrder "IS"
+	    }
+	}
+    }
+
+    parser CloseFile
+    parser Delete
+}
+
+proc VolumesEnter {} {
+    DataExit
+    bind Listbox <Control-Button-1> {tkListboxBeginToggle %W [%W index @%x,%y]}
+    #tk_messageBox -type ok -message "VolumesEnter" -title "Title" -icon  info
+}
+
+proc VolumesExit {} {
+    #tk_messageBox -type ok -message "VolumesExit" -title "Title" -icon  info
 }
