@@ -52,7 +52,12 @@
 # int isTcl 1 if this is a TCL file, and 0 otherwise
 # .END
 #-------------------------------------------------------------------------------
-proc PrintCopyright {fid isTcl} {
+proc PrintCopyright {fid isTcl {verbose 0} } {
+
+    if {$verbose} {
+        puts "PrintCopyright: isTcl = $isTcl"
+    }
+
     if {$isTcl == 1} {
         puts $fid \
 "# (c) Copyright [clock format [clock seconds] -format %Y] Massachusetts Institute of Technology (MIT) All Rights Reserved.
@@ -139,15 +144,19 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 # str file  the path of the file to parse, relative to slicer/program
 # .END
 #-------------------------------------------------------------------------------
-proc ProcessFile {file} {
+proc ProcessFile {file {verbose 0}} {
     set ext [file extension $file]
-#    puts "ProcessFile file = $file\n\text = $ext"
+    if {$verbose} {
+        puts "ProcessFile file = $file\n\text = $ext"
+    }
     if {$ext == ".tcl"} { 
         # Go to town
-        CommentFile $file
+        if {$verbose} { puts "ext == .tcl, calling CommentFile" }
+        CommentFile $file $verbose
     } else {
         # Just add the copyright
-        CopyrightFile $file
+        if {$verbose} { puts "Not a tcl file, calling CopyrightFile" }
+        CopyrightFile $file $verbose
     }
 }
 
@@ -160,8 +169,12 @@ proc ProcessFile {file} {
 # str filename the name of the file to edit
 # .END
 #-------------------------------------------------------------------------------
-proc CopyrightFile {filename} {
+proc CopyrightFile {filename {verbose 0} } {
     global Comments
+
+    if {$verbose} {
+        puts "Copyrightfile $filename, will call PrintCopyRight with 0"
+    }
 
     # Read file into "data"
     if {[catch {set fid [open $filename r]} errmsg] == 1} {
@@ -184,7 +197,8 @@ proc CopyrightFile {filename} {
         "CopyrightFile: $errmsg"
         exit
     }
-    PrintCopyright $fid 0
+    # it's not a tcl file, so last arg is 0
+    PrintCopyright $fid 0 $verbose
     puts -nonewline $fid $data
 
     if {[catch {close $fid} errorMessage]} {
@@ -207,11 +221,13 @@ proc CopyrightFile {filename} {
 proc CommentFile {filename {verbose 0}} {
     global Comments
 
+    if {$verbose} { puts "CommentFile $filename: exists = [ file exist $filename]" }
+
     # Read file into "data"
     if {[catch {set fid [open $filename r]} errmsg] == 1} {
         puts "CommentFile: $errmsg"
         exit
-    } 
+    }
     set data [read $fid]
     if {[catch {close $fid} errorMessage]} {
        tk_messageBox -type ok -message "The following error occurred while saving the input file: ${errorMessage}"
@@ -234,6 +250,7 @@ proc CommentFile {filename {verbose 0}} {
         exit
     }
     puts $fid "#=auto=========================================================================="
+    # it's a tcl file, so last arg is 1
     PrintCopyright $fid 1
     puts $fid "#==============================================================================="
     puts $fid "# FILE:        [file tail $filename]"
@@ -280,7 +297,7 @@ proc CommentFile {filename {verbose 0}} {
 #
 # For each procedure in a file, this routine polishes the procedural comments
 # if the existing comments fall into one of 3 pathological cases.
-# The polished output looks like the following (except that the keywords that
+# The polished output looks like the following except that the keywords that
 # begin with a . are listed in small letters in this documentation so that
 # the comment program can run on itself!
 # <code><pre>
@@ -333,8 +350,8 @@ proc Polish {data} {
         regsub "proc $name " $data \
             "$line\n# .PROC ${name}\n# \n# .ARGS\n# .END\n$line\nproc $name " data
         incr numsubs
-        if {$numsubs > 100} {
-            puts "ERROR: possible infinite loop. Check file for a space between an existing comment and proc $name"
+        if {$numsubs > 200} {
+            puts "ERROR: possible infinite loop while commenting proc $name.\nCheck file for a space between an existing comment and proc $name, or for two instances of the proc."
             exit
         } 
     }
@@ -458,4 +475,34 @@ proc Comment {data} {
         incr id
     }
     # .ENDIGNORE
+}
+
+#-------------------------------------------------------------------------------
+# .PROC ProcessModule
+#
+# This procedure will process the tcl and cxx files in the same subdirectories of a
+# single module.
+# .ARGS
+# str modpath    The full path to the module to comment
+# int verbose    If 1 will print out debugging info
+# .END
+#-------------------------------------------------------------------------------
+proc ProcessModule { modpath {verbose 0 } } {
+    set modsubdirs "tcl cxx"
+    foreach modsub $modsubdirs {
+        set thisdir [file join $modpath $modsub]
+        if {[file isdirectory $thisdir] == 1} {
+            if {$verbose} { puts "found directory $thisdir" }
+            # don't bother switching on the cxx or tcl dirs for now
+            foreach file "[glob -nocomplain $thisdir/*.tcl] \
+                              [glob -nocomplain $thisdir/*.h] \
+                              [glob -nocomplain $thisdir/*.cxx]" {
+                if {$verbose} {
+                    puts "NOT $file"
+                    # puts "ProcessModule: NOT calling \"ProcessFile $file\""
+                }
+                # ProcessFile $file
+            }
+        }
+    }
 }
