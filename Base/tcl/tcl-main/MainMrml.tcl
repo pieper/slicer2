@@ -78,7 +78,7 @@ proc MainMrmlInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainMrml \
-        {$Revision: 1.55 $} {$Date: 2002/03/21 23:05:22 $}]
+        {$Revision: 1.56 $} {$Date: 2002/03/25 23:59:17 $}]
 
     set Mrml(colorsUnsaved) 0
 }
@@ -812,6 +812,13 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
                     foreach offset $offsetlist {
                         $n AddDICOMMultiFrameOffset $offset
                     }
+                    }
+                    "frequencyphaseswap" {
+                        # added by odonnell for DTI data: will move 
+                        # to submodule of Volumes.tcl
+                        if {$val == "yes" || $val == "true"} {
+                            $n SetFrequencyPhaseSwap 1
+                        }
                     }
                 }
             }
