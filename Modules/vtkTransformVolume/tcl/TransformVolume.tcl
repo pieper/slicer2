@@ -105,7 +105,7 @@ proc TransformVolumeInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.5 $} {$Date: 2005/03/16 00:09:44 $}]
+        {$Revision: 1.6 $} {$Date: 2005/03/16 03:19:11 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -369,7 +369,7 @@ proc TransformVolumeBuildGUI {} {
     DevAddButton $f.bAutoDimension "Auto Dimension"  AutoDimension
     pack $f.bAutoDimension -side left -padx $Gui(pad) -pady $Gui(pad)
 
-    catch "destroy .isv"
+    catch "destroy $fResample.isv"
 
     isvolume $fResample.isv
     pack $fResample.isv -side top -padx $Gui(pad) -pady $Gui(pad)
@@ -391,6 +391,8 @@ proc TransformVolumeRun {} {
     # get displacement volume
     set vDisp $TransformVolume(DispVolume)
     
+    catch "destroy .isv"
+
     isvolume .isv
     
     .isv volmenu_update
