@@ -98,7 +98,7 @@ proc MainMrmlInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo MainMrml \
-    {$Revision: 1.100 $} {$Date: 2004/01/26 13:07:16 $}]
+    {$Revision: 1.101 $} {$Date: 2004/02/19 00:35:49 $}]
 
     set Mrml(colorsUnsaved) 0
 }
@@ -1436,119 +1436,12 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
                     }
                 }
             }
-            "Segmenter" {
-                    set n [MainMrmlAddNode Segmenter]
-                    foreach a $attr {
-                        set key [lindex $a 0]
-                        set val [lreplace $a 0 0]
-                        switch [string tolower $key] {
-                            "numclasses" {$n SetNumClasses $val}
-                            "maxinputchanneldef" {$n SetMaxInputChannelDef $val}
-                            "emshapeiter"        {$n SetEMShapeIter $val}
-                            "emiteration"        {$n SetEMiteration $val}
-                            "mfaiteration"       {$n SetMFAiteration $val}
-                            "alpha"              {$n SetAlpha $val}
-                            "smwidth"            {$n SetSmWidth $val}
-                            "smsigma"            {$n SetSmSigma $val}
-                            "printintermediateresults" {$n SetPrintIntermediateResults $val}
-                            "printintermediateslice" {$n SetPrintIntermediateSlice $val}
-                            "printintermediatefrequency" {$n SetPrintIntermediateFrequency $val}
-                            "printintermediatedir" {$n SetPrintIntermediateDir $val}
-                            "biasprint" {$n SetBiasPrint $val}
-                            "startslice" {$n SetStartSlice $val}
-                            "endslice" {$n SetEndSlice $val}
-                            "displayprob" {$n SetDisplayProb $val}
-                            "numberoftrainingsamples" {$n SetNumberOfTrainingSamples $val}
-                            "intensityavgclass"  {$n SetIntensityAvgClass  $val}
-                            "segmentationboundarymin" {eval $n SetSegmentationBoundaryMin $val}
-                            "segmentationboundarymax" {eval $n SetSegmentationBoundaryMax $val}
-                    }
-                }
-            }
-            "EndSegmenter" {
-                set n [MainMrmlAddNode EndSegmenter]
-            }
-            "SegmenterGraph" {
-                set n [MainMrmlAddNode SegmenterGraph]
-                foreach a $attr {
-                    set key [lindex $a 0]
-                    set val [lreplace $a 0 0]
-                    switch [string tolower $key] {
-                        "name" {$n SetName $val}
-                        "xmin" {$n SetXmin $val}
-                        "xmax" {$n SetXmax $val}
-                        "xsca" {$n SetXsca $val}
-                    }
-                }
-            } 
-            "SegmenterInput" {
-                set n [MainMrmlAddNode SegmenterInput]
-                foreach a $attr {
-                    set key [lindex $a 0]
-                    set val [lreplace $a 0 0]
-                    switch [string tolower $key] {
-                        "name"        {$n SetName $val}
-                        "fileprefix"  {$n SetFilePrefix $val}
-                        "filename"    {$n SetFileName $val}
-                        "imagerange"  {eval $n SetImageRange  $val}
-                        "intensityavgvaluepredef"  {$n SetIntensityAvgValuePreDef $val}
-                    }
-                }
-            }
-            "SegmenterSuperClass" {
-                set n [MainMrmlAddNode SegmenterSuperClass]
-                foreach a $attr {
-                    set key [lindex $a 0]
-                    set val [lreplace $a 0 0]
-                    switch [string tolower $key] {
-                        "numclasses"          {$n SetNumClasses $val}
-                        "name"                {$n SetName $val}
-                        "prob"                {$n SetProb $val}
-                        "localpriorweight"    {$n SetLocalPriorWeight $val}
-                        "inputchannelweights" {$n SetInputChannelWeights $val}
-                    }
-                }
-            }
-            "EndSegmenterSuperClass" {
-                set n [MainMrmlAddNode EndSegmenterSuperClass]
-            }
-            "SegmenterClass" {
-                set n [MainMrmlAddNode SegmenterClass]
-                foreach a $attr {
-                    set key [lindex $a 0]
-                    set val [lreplace $a 0 0]
-                    switch [string tolower $key] {
-                        "name"                 {$n SetName $val}
-                        "localpriorprefix"     {$n SetLocalPriorPrefix $val}
-                        "localpriorname"       {$n SetLocalPriorName $val}
-                        "localpriorrange"      {eval $n SetLocalPriorRange  $val}
-                        "logmean"              {$n SetLogMean $val}
-                        "logcovariance"        {$n SetLogCovariance $val}
-                        "label"                {$n SetLabel $val}
-                        "prob"                 {$n SetProb $val}
-                        "shapeparameter"       {$n SetShapeParameter $val}
-                        "weightconfidencename" {$n SetWeightConfidenceName $val}
-                        "localpriorweight"     {$n SetLocalPriorWeight $val}
-                        "inputchannelweights"  {$n SetInputChannelWeights $val}
-                    }
-                }
-            }
-            "SegmenterCIM" {
-                set n [MainMrmlAddNode SegmenterCIM]
-                foreach a $attr {
-                    set key [lindex $a 0]
-                    set val [lreplace $a 0 0]
-                    switch [string tolower $key] {
-                        "name"       {$n SetName $val}
-                        "cimmatrix"  {$n SetCIMMatrix $val}
-                    }
-                }
-            }
             default {
                 foreach m $::Module(idList) {
-                    if { [info exists ::${m}(procMRMLLoad)] } {
+                    
+                    if { [info exists ::Module(${m},procMRMLLoad)] } {
                         global $m
-                        set loadproc [set ${m}(procMRMLLoad)]
+                        set loadproc [set ::Module(${m},procMRMLLoad)]
                         $loadproc $tag $attr
                     }
                 }
