@@ -51,6 +51,19 @@
 #endif
 #include <stdio.h>
 
+#if defined(_WIN32) || defined(WIN32)
+# define IS_WIN32
+# if defined(_MSC_VER)
+#  define IS_VC
+#  if _MSC_VER >= 1300
+#   define IS_VC_DOTNET 1 // VC is at least version >= 7.0
+#  elif _MSC_VER >= 1200   // last version before advent of .NET = Version 6.0
+#   define IS_VC60 1
+#  else
+#   define IS_VC50 1
+#  endif
+# endif
+#endif
 
 //BTX
 
@@ -125,7 +138,7 @@ public:
   const T GetMin();
 
   T& operator[](int n);
-
+  
   void ChangeValue(int n, const T& elt);
 
   //#if !(defined(_sgi_)) 
@@ -134,7 +147,9 @@ public:
   //  friend ostream& operator << (ostream&, const vtkMinHeap<T>& p);
   //#endif
 
-#ifdef _WIN32
+  //#ifdef _WIN32
+
+#if defined(IS_VC60) || defined(IS_VC50) 
   friend ostream& operator << (ostream&, const vtkMinHeap<T>& p);
 #else
   friend ostream& operator << <>(ostream&, const vtkMinHeap<T>& p);
