@@ -35,8 +35,6 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 // Just for debugging purposes
 #define EM_DEBUG 1
 
-// Do you want to run the code with all the print outs (set 1) or not (0)
-#define EMVERBOSE 0
 // ---------------------------------------------------
 
 //BTX  
@@ -69,7 +67,7 @@ typedef struct {
   double        *TissueProbability;
   int           *VirtualNumInputImages;
   float         **w_m_output;
-} vtkImageEMLocal_MF_Approximation_Work;
+} MF_Approximation_Work_Private;
 
 //ETX 
 class VTK_EMLOCALSEGMENT_EXPORT vtkImageEMLocalSegmenter : public vtkImageEMGeneral
@@ -84,9 +82,6 @@ class VTK_EMLOCALSEGMENT_EXPORT vtkImageEMLocalSegmenter : public vtkImageEMGene
   // -----------------------------------------------------
   // Setting Algorithm 
   // -----------------------------------------------------
-  vtkSetMacro(NumEMShapeIter,int);
-  vtkGetMacro(NumEMShapeIter,int);
-
   vtkSetMacro(NumIter, int);
   vtkGetMacro(NumIter, int);
 
@@ -152,8 +147,7 @@ class VTK_EMLOCALSEGMENT_EXPORT vtkImageEMLocalSegmenter : public vtkImageEMGene
   // Print out intermediate result of the algorithm in a  file
   // The file is called  this->PrintIntermediateDir/EM*.m
   void PrintIntermediateResultsToFile(int iter, float **w_m, short *ROI, unsigned char* OutputVector, int NumTotalTypeCLASS, int* NumChildClasses, 
-                      vtkImageEMLocalSuperClass* actSupCl, char* LevelName, void **ClassList, classType *ClassListType, int* LabelList, 
-                      FILE** QualityFile);
+                      vtkImageEMLocalSuperClass* actSupCl, char* LevelName, void **ClassList, classType *ClassListType, int* LabelList, FILE** QualityFile);
 
   // -----------------------------------------------------
   // Intensity Correction 
@@ -208,7 +202,6 @@ class VTK_EMLOCALSEGMENT_EXPORT vtkImageEMLocalSegmenter : public vtkImageEMGene
   int GetWarningFlag() {return  this->WarningMessage.GetFlag();}
   void ResetWarningMessage() {this->WarningMessage.ResetParameters();}
   ProtocolMessages* GetWarningMessagePtr(){return &this->WarningMessage;}
-  //ETX
 protected:
   vtkImageEMLocalSegmenter();
   vtkImageEMLocalSegmenter(const vtkImageEMLocalSegmenter&) {};
@@ -227,7 +220,6 @@ protected:
   // Resets the error flag and messages 
   void ResetMessageSettings();  
 
-  int NumEMShapeIter; // How many times should the iteration between EM and Shape be repeated 
   int NumIter;         // Number of EM-iterations
   int NumRegIter;      // Number of iteration in E- Step to regularize weights 
   double Alpha;        // alpha - Paramter 0<= alpaha <= 1
@@ -259,14 +251,14 @@ protected:
   classType    activeClassType;
 
   vtkImageEMLocalSuperClass *HeadClass;          // Initial Class
-  //ETX 
+
   void *activeClass;               // Currently Active Class -> Important for interface with TCL
 
   short**  DebugImage;             // Just used for debuging
 
   ProtocolMessages ErrorMessage;    // Lists all the error messges -> allows them to be displayed in tcl too 
   ProtocolMessages WarningMessage;  // Lists all the warning messges -> allows them to be displayed in tcl too 
-
+  //ETX
 };
 #endif
 

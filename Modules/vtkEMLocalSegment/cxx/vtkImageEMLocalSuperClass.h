@@ -49,8 +49,12 @@ class VTK_EMLOCALSEGMENT_EXPORT vtkImageEMLocalSuperClass : public vtkImageEMGen
   //       i = class of the current pixel t+1 
   //       j = class of neighbouring pixel t 
   void          SetMarkovMatrix(double value, int k, int j, int i);
- 
+
   int           GetTotalNumberOfProbDataPtr();
+
+  // Has any subclass ProbDataPtr defined or not 
+  int           GetProbDataPtrFlag();
+
   int           GetProbDataPtr(void **PointerList,int index); 
   int           GetProbDataIncYandZ(int* ProbDataIncY,int* ProbDataIncZ,int index);
 

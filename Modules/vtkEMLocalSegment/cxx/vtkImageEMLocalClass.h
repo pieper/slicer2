@@ -47,7 +47,7 @@ class VTK_EMLOCALSEGMENT_EXPORT vtkImageEMLocalClass : public vtkImageEMGenericC
 
   // Description:
   // Probability Data defining the spatial conditional label distribution
-  void SetProbDataPtr(vtkImageData *image) {this->SetInput(0,image);}
+  void SetProbDataPtr(vtkImageData *image) {this->SetInput(1,image);}
   //BTX
   void SetProbDataPtr(void* initptr) {this->ProbDataPtr = initptr;}
   void* GetProbDataPtr() {return this->ProbDataPtr;}
@@ -76,12 +76,6 @@ class VTK_EMLOCALSEGMENT_EXPORT vtkImageEMLocalClass : public vtkImageEMGenericC
   // Set the Number of Input Images for subclasses
   void SetNumInputImages(int number); 
 
-  // Description:
-  // How influentuall should be the shape constraints generates by Samson
-  // => 0 = no importance  1 = just shape no spatial distribution 
-  vtkSetMacro(ShapeParameter,float);
-  vtkGetMacro(ShapeParameter,float);
-
    void     SetLogCovariance(double value, int y, int x);
   //BTX
    double** GetLogCovariance() {return this->LogCovariance;}
@@ -107,7 +101,7 @@ class VTK_EMLOCALSEGMENT_EXPORT vtkImageEMLocalClass : public vtkImageEMGenericC
   // Check if the input image data is consistence with what we expect
   int CheckInputImage(vtkImageData * inData,int DataTypeOrig, int num, int outExt[6]);
   // Check and Assign ImageData to the different parameters 
-  int CheckAndAssignImageData(vtkImageData *inData, int outExt[6], int ImageIndex);
+  int CheckAndAssignImageData(vtkImageData *inData, int outExt[6]);
 
 protected:
   vtkImageEMLocalClass();
@@ -126,12 +120,9 @@ protected:
   int    ProbDataIncY;           // Increments for probability data in Y Dimension 
   int    ProbDataIncZ;           // Increments for probability data in Z Dimension
 
-  float  ShapeParameter;         //  How influentuall should be the shape constraints generates by Samson
-                                  // => 0 = no importance  1 = just shape no spatial distribution 
-
   vtkImageData*  ReferenceStandardPtr;  // Reference Standard for measuring the performance of the algorithm
 
-   int PrintQuality;        // Prints out a quality measure of the current result ( 1=  Dice )
+  int PrintQuality;        // Prints out a quality measure of the current result ( 1=  Dice )
 };
 #endif
 

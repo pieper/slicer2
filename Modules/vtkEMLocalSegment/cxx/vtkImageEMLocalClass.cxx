@@ -52,14 +52,14 @@ vtkImageEMLocalClass::vtkImageEMLocalClass() {
   
   this->ReferenceStandardPtr= NULL;
 
-  // For Samson Stuff
-  this->ShapeParameter      = 0.0;
-
   // Printing functions 
   this->PrintQuality        = 0;
 
   // Important to set it - otherwise set to 1 by default  
-  this->vtkProcessObject::SetNumberOfInputs(0); 
+  // I disabled it bc if no image data is attached to this class 
+  // => NumberOfInputs = 0 => Update is disabled.
+  // this->vtkProcessObject::SetNumberOfInputs(0); 
+
 }
 
 
@@ -86,7 +86,6 @@ void vtkImageEMLocalClass::PrintSelf(ostream& os,vtkIndent indent) {
   int x,y;
   os << indent << "------------------------------------------ CLASS ----------------------------------------------" << endl;
   this->vtkImageEMGenericClass::PrintSelf(os,indent);  
-  os << indent << "Shape Parameter:         " << this->ShapeParameter << endl;
   os << indent << "ProbDataPtr:             " << this->ProbDataPtr << endl;
   os << indent << "ProbDataIncY:            " << this->ProbDataIncY << endl;
   os << indent << "ProbDataIncZ:            " << this->ProbDataIncZ << endl;
@@ -107,7 +106,6 @@ void vtkImageEMLocalClass::PrintSelf(ostream& os,vtkIndent indent) {
      os << this->ReferenceStandardPtr << endl;
   } else {os << "(None)" << endl;}
 
-  os << indent << "PrintWeights:            " << this->PrintWeights << endl;
   os << indent << "PrintQuality:            " << this->PrintQuality << endl;  
 }
 
@@ -166,20 +164,18 @@ static void vtkImageEMLocalClassAssignProbDataPointer(vtkImageEMLocalClass *self
 }
 
 //----------------------------------------------------------------------------
-// if ImageIndex = 0 than we know it is a probability map
-int vtkImageEMLocalClass::CheckAndAssignImageData(vtkImageData *inData, int outExt[6], int ImageIndex) {
+// Definition of  DataTypeIndex 
+// 1   = probability map
+
+int vtkImageEMLocalClass::CheckAndAssignImageData(vtkImageData *inData, int outExt[6]) {
   int DataIncY, DataIncZ, blub;
  
   // -----------------------------------------------------
   // 1.) Check Probability Maps
   // -----------------------------------------------------
-
-  // For Mean Shape and EigenVectors we currently only accepts float 
-  if (ImageIndex) {
-    if (this->CheckInputImage(inData,VTK_FLOAT, ImageIndex+1,outExt)) return 0;
-  } else {
-    if (this->CheckInputImage(inData,inData->GetScalarType(), 1,outExt)) return 0;
-  }
+  
+  int DataTypeIndex = 1; 
+  if (this->CheckInputImage(inData, inData->GetScalarType(), DataTypeIndex,outExt)) return 0;
 
   inData->GetContinuousIncrements(outExt, blub, DataIncY, DataIncZ);
         
@@ -190,7 +186,6 @@ int vtkImageEMLocalClass::CheckAndAssignImageData(vtkImageData *inData, int outE
 
   int BoundaryDataIncY = LengthOfXDim - this->DataDim[0];
   int BoundaryDataIncZ = LengthOfYDim - this->DataDim[1] *LengthOfXDim;
-
 
   // =========================================
   // Assign Probability Data
@@ -203,7 +198,6 @@ int vtkImageEMLocalClass::CheckAndAssignImageData(vtkImageData *inData, int outE
   this->ProbDataIncY = BoundaryDataIncY;
   this->ProbDataIncZ = BoundaryDataIncZ;
   this->ProbDataScalarType  = inData->GetScalarType();
-    // Meanshape and EigenVectors have to be floats !
 
   return 1; 
 }
@@ -291,16 +285,26 @@ void vtkImageEMLocalClass::ExecuteData(vtkDataObject *)
    // ==================================================
    // Define Parameters
 
-   int NumberOfRealInputs = this->vtkProcessObject::GetNumberOfInputs();
+   // First input (input[0]) is a fake 
+   int NumberOfRealInputData = this->vtkProcessObject::GetNumberOfInputs() -1;
 
    // No inputs defined we do not need to do here anything
-   if (NumberOfRealInputs == 0) return;
+   if (NumberOfRealInputData == 0) {
+     if (this->ProbDataWeight > 0.0)  vtkEMAddErrorMessage("ProbDataWeight > 0.0 and no Probability Map defined !" );
+     return;
+
+   }  
    // Redefine ImageRelatedClass Parameters   
    vtkImageData **inData  = (vtkImageData **) this->GetInputs();
 
-   int FirstData = 0;
-   while (FirstData< NumberOfRealInputs && !inData[FirstData])  FirstData++;
-   if (FirstData == NumberOfRealInputs) {
+   // Update all Input Data
+   // That does not help 
+   // for (int i = 1; i <=  NumberOfRealInputData; i++) if (inData[i]) inData[i]->Update();  
+ 
+   int FirstData = 1;
+
+   while (FirstData <= NumberOfRealInputData && !inData[FirstData])  FirstData++;
+   if (FirstData > NumberOfRealInputData) {
     // This error should not be possible 
     vtkEMAddErrorMessage("No image data defined as input even though vtkProcessObject::GetNumberOfInputs > 0 !");
     return;
@@ -327,13 +331,24 @@ void vtkImageEMLocalClass::ExecuteData(vtkDataObject *)
    // Load the images
    
    // Check and set Probability map 
-   if (NumberOfRealInputs && inData[0]) {
+   if (NumberOfRealInputData && inData[1]) {
+
+#if (EMVERBOSE)
+     {
+       // If ProbDataPtr points to weired values then do an Update of the orignal source of the data before assinging it to this class 
+       // e.g. vtkImageReader Blub ; Blub Update ; EMClass SetProbDataPtr [Blub GetOutput]
+       cout << "------------------ ProbabilityData ------------------------- " << endl;
+       vtkIndent indent;
+       inData[1]->PrintSelf(cout,indent); 
+     }
+#endif
+
      if (this->ProbDataWeight > 0.0) {
-       if (!this->CheckAndAssignImageData(inData[0], Ext, 0)) return;
+       if (!this->CheckAndAssignImageData(inData[1], Ext)) return;
      }
    } else {
      if (this->ProbDataWeight > 0.0) {
-       vtkEMAddErrorMessage("ProbDataWeight > 0.0 and no Probability Map defined !" );
+       vtkEMAddErrorMessage("ProbDataWeight > 0.0 but no Probability Map defined !" );
        return;
      } else {
        vtkEMAddWarningMessage("No probability map is defined for class with Label " << this->Label);
