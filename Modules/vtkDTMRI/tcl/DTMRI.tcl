@@ -110,7 +110,7 @@ proc DTMRIInit {} {
     set Module($m,author) "Lauren O'Donnell"
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.16 $} {$Date: 2004/07/27 18:44:43 $}]
+            {$Revision: 1.17 $} {$Date: 2004/07/27 18:54:31 $}]
 
     # Define Tabs
     #------------------------------------
@@ -348,6 +348,8 @@ proc DTMRIInit {} {
 
     set DTMRI(stream,MaximumPropagationDistance)  30
     set DTMRI(stream,MinimumPropagationDistance)  2
+    # Terminal Eigenvalue
+    set DTMRI(stream,TerminalEigenvalue)  0.0
     # nominal integration step size (expressed as a fraction of the
     # size of each cell)  0.2 is default
     set DTMRI(stream,IntegrationStepLength)  0.1
