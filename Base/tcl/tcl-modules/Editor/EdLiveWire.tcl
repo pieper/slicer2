@@ -31,6 +31,9 @@
 #   EdLiveWireBuildVTK
 #   EdLiveWireBuildGUI
 #   EdLiveWireRaiseEdgeImageWin
+#   EdLiveWireGetFeatureParams
+#   EdLiveWireSetFeatureParams
+#   EdLiveWireAdvancedApply
 #   EdLiveWireInitPipeline
 #   EdLiveWireEnter
 #   EdLiveWireExit
@@ -133,21 +136,9 @@ proc EdLiveWireBuildVTK {} {
 	Ed(EdLiveWire,viewer$s) SetColorLevel 127.5
 	[Ed(EdLiveWire,viewer$s) GetImageWindow] DoubleBufferOn
     }
-
-    # set up parameters for control of edge filters  
-    set default [Ed(EdLiveWire,lwSetup$s) GetEdgeFilter 0]
-    set Ed(EdLiveWire,numFeatures) [$default GetNumberOfFeatures]
     
-    # loop over features
-    for {set f 0} {$f < $Ed(EdLiveWire,numFeatures)} {incr f} {
-	set Ed(EdLiveWire,feature$f,numParams) \
-		[$default GetNumberOfParamsForFeature $f]
-	# loop over params for each feature
-	for {set p 0} {$p < $Ed(EdLiveWire,feature$f,numParams)} {incr p} {
-	    set Ed(EdLiveWire,feature$f,param$p) \
-		    [$default GetParamForFeature $f $p]
-	}
-    }
+    # initialize tcl variables that mirror vtk object settings
+    EdLiveWireGetFeatureParams
 }
 
 #-------------------------------------------------------------------------------
@@ -230,30 +221,94 @@ proc EdLiveWireBuildGUI {} {
     #-------------------------------------------
     set f $Ed(EdLiveWire,frame).fTabbedFrame.fAdvanced
 
-    frame $f.fSliders   -bg $Gui(activeWorkspace)
-    pack $f.fSliders -side top -pady $Gui(pad) -fill x
+    frame $f.fSettings   -bg $Gui(activeWorkspace)
+    pack $f.fSettings -side top -pady $Gui(pad) -fill x
 
     #-------------------------------------------
-    # TabbedFrame->Advanced->Sliders frame
+    # TabbedFrame->Advanced->Settings frame
     #-------------------------------------------
-    set f $Ed(EdLiveWire,frame).fTabbedFrame.fAdvanced.fSliders
-    foreach slider "Difference InsidePixel OutsidePixel" text "Diff In Out" {
-	eval {label $f.l$slider -text "$text:"} $Gui(WLA)
-	eval {entry $f.e$slider -width 6 \
-		-textvariable Ed(EdLiveWire,[Uncap $slider])} $Gui(WEA)
-	bind $f.e$slider <Return>   "EdLiveWireUpdate; RenderActive;"
-	bind $f.e$slider <FocusOut> "EdLiveWireUpdate; RenderActive;"
-	eval {scale $f.s$slider -from $Ed(EdLiveWire,sliderLow) \
-		-to $Ed(EdLiveWire,sliderHigh) -length 220 \
-		-variable Ed(EdLiveWire,[Uncap $slider])  -resolution 0.01 \
-		-command "EdLiveWireUpdateInit $f.s$slider"} \
-		$Gui(WSA) {-sliderlength 22}
-	grid $f.l$slider $f.e$slider -padx 2 -pady 2 -sticky w
-	grid $f.l$slider -sticky e
-	grid $f.s$slider -columnspan 2 -pady 2 
-	
-	set Ed(EdLiveWire,slider$slider) $f.s$slider
+    set f $Ed(EdLiveWire,frame).fTabbedFrame.fAdvanced.fSettings
+
+
+    #-------------------------------------------
+    # TabbedFrame->Advanced->Settings->Features frame
+    #-------------------------------------------
+    frame $f.fFeatures   -bg $Gui(activeWorkspace)
+    pack $f.fFeatures -side top -pady $Gui(pad) -fill x
+    set f $f.fFeatures
+
+    # hard-coded feature names:
+    # should match with the order in vtkImageLiveWireEdgeWeights
+    set featureNames "{0: in pix} {1: out pix} {2: out-in} \
+	    {3: gradient} {4: gradient} {5: gradient} {6: new feature...}"
+    set paramNames "{Weight} {Mean} {Variance}"
+
+    set n 1
+    foreach name $paramNames {
+	eval {label $f.lparamName$n -text $name} $Gui(WLA)
+	# 0th row is param name
+	grid $f.lparamName$n -row 0 -col $n
+	incr n
     }
+
+    # loop over features
+    for {set feat 0} {$feat < $Ed(EdLiveWire,numFeatures)} {incr feat} {
+	
+	set name [lindex $featureNames $feat]
+	if {$name == ""} {
+	    set $name "$feat: new feature"
+	}
+
+	set row [expr $feat +1]
+	
+	# 0th column is feature name
+	eval {label $f.lfeatureName$feat -text $name} $Gui(WLA)
+	grid $f.lfeatureName$feat  -row $row -column 0 -sticky w \
+		-ipadx 2 -ipady 2
+
+	# 1st column is feature weight
+	eval {entry $f.eFeature${feat}Weight -width 6 \
+		-textvariable Ed(EdLiveWire,feature$feat,weight)} $Gui(WEA)
+	grid $f.eFeature${feat}Weight  -row $row -column 1 -sticky ns 
+
+	# last columns: loop over parameters for calculation of each feature
+	for {set p 0} {$p < $Ed(EdLiveWire,feature$feat,numParams)} {incr p} {
+
+	    # entry box for each param for the feature
+	    eval {entry $f.eFeature${feat}Param$p -width 6 \
+		    -textvariable Ed(EdLiveWire,feature$feat,param$p)} $Gui(WEA)
+
+	    # 1st 2 cols were name and weight:
+	    set col [expr $p + 2]
+	    grid $f.eFeature${feat}Param$p  -row $row -column $col \
+		    -sticky ns 
+	}
+
+    }
+
+    #-------------------------------------------
+    # TabbedFrame->Advanced->Settings->Apply frame
+    #-------------------------------------------
+    set f $Ed(EdLiveWire,frame).fTabbedFrame.fAdvanced.fSettings
+
+    frame $f.fApply   -bg $Gui(activeWorkspace)
+    pack $f.fApply -side top -pady $Gui(pad) -fill x
+    set f $f.fApply
+    eval {button $f.bApply -text "Apply Settings" \
+	    -command "EdLiveWireAdvancedApply"} $Gui(WBA) {-width 20}
+    pack $f.bApply
+
+    #-------------------------------------------
+    # TabbedFrame->Advanced->Settings->Popup frame
+    #-------------------------------------------
+    set f $Ed(EdLiveWire,frame).fTabbedFrame.fAdvanced.fSettings
+
+    frame $f.fPopup   -bg $Gui(activeWorkspace)
+    pack $f.fPopup -side top -pady $Gui(pad) -fill x
+    set f $f.fPopup
+    eval {button $f.bPopup -text "View Edge Images" \
+	    -command "EdLiveWireRaiseEdgeImageWin"} $Gui(WBA) {-width 20}
+    pack $f.bPopup
 
 }
 
@@ -313,10 +368,119 @@ proc EdLiveWireRaiseEdgeImageWin {} {
 
 }
 
+
+
+#-------------------------------------------------------------------------------
+# .PROC EdLiveWireGetFeatureParams
+# initialize tcl variables that mirror vtk object settings
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc EdLiveWireGetFeatureParams {} {
+    global Ed Slice
+    
+    set s $Slice(activeID)
+
+    # set up parameters for control of edge filters  
+    set default [Ed(EdLiveWire,lwSetup$s) GetEdgeFilter 0]
+    set Ed(EdLiveWire,numFeatures) [$default GetNumberOfFeatures]
+    
+    # loop over features
+    for {set f 0} {$f < $Ed(EdLiveWire,numFeatures)} {incr f} {
+
+	# get weight (importance given to feature)
+	set Ed(EdLiveWire,feature$f,weight) \
+		[$default GetWeightForFeature $f]	
+	
+	# get number of params for feature calculation
+	set Ed(EdLiveWire,feature$f,numParams) \
+		[$default GetNumberOfParamsForFeature $f]
+
+	# loop over params for each feature
+	for {set p 0} {$p < $Ed(EdLiveWire,feature$f,numParams)} {incr p} {
+	    set Ed(EdLiveWire,feature$f,param$p) \
+		    [$default GetParamForFeature $f $p]
+	}
+    }
+
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC EdLiveWireSetFeatureParams
+# set vtkImageLiveWireEdgeWeights filters settings from tcl variables
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc EdLiveWireSetFeatureParams {} {
+    global Ed Slice
+
+    # Lauren do this for all slices or just active?
+    # Lauren need to check bounds better, and also make filters modified...
+
+    # loop over slices
+    foreach s $Slice(idList) {    
+	# loop over edge filters
+	for {set filter 0} {$filter < $Ed(EdLiveWire,numEdgeFilters)} {incr filter} {
+	    set filt [Ed(EdLiveWire,lwSetup$s) GetEdgeFilter $filter]
+	    
+	    # loop over features
+	    for {set feat 0} {$feat < $Ed(EdLiveWire,numFeatures)} {incr feat} {
+		
+		# set weight (importance given to feature)
+		$filt SetWeightForFeature $feat $Ed(EdLiveWire,feature$feat,weight)
+		
+		# loop over params for each feature
+		for {set p 0} {$p < $Ed(EdLiveWire,feature$feat,numParams)} {incr p} {
+		    $filt SetParamForFeature $feat $p $Ed(EdLiveWire,feature$feat,param$p)
+		}
+	    }
+	    
+	}
+    }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC EdLiveWireAdvancedApply
+# Changes filter settings:
+# validates input and calls EdLiveWireSetFeatureParams.
+# Called using Apply button in advanced tab.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc EdLiveWireAdvancedApply {} {
+    global Ed
+
+    # Validate input:
+
+    # loop over features
+    for {set feat 0} {$feat < $Ed(EdLiveWire,numFeatures)} {incr feat} {
+	
+	# weight (importance given to feature)
+	if {[ValidateFloat $Ed(EdLiveWire,feature$feat,weight)] == 0} {
+	    tk_messageBox -message "Weight for feature $feat is not a number."
+	    return
+	}
+	
+	# loop over params for each feature
+	for {set p 0} {$p < $Ed(EdLiveWire,feature$feat,numParams)} {incr p} {
+
+	    if {[ValidateFloat $Ed(EdLiveWire,feature$feat,param$p)] == 0} {
+		tk_messageBox -message "Parameter $p for feature $feat is not a number."
+		return
+	    }    
+	}
+    }
+ 
+    EdLiveWireSetFeatureParams
+
+}
+
+
 #-------------------------------------------------------------------------------
 # .PROC EdLiveWireInitPipeline
-# Set up filters to get input from Slicer (vtkMrmlSlicer) object.
-# Update the pipeline.
+# Sets up filters to get input from Slicer (vtkMrmlSlicer) object.
+# Updates the pipeline.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -399,6 +563,7 @@ proc EdLiveWireEnter {} {
 		Slicer DrawSetColor 0 0 0
 	}
 }
+
 #-------------------------------------------------------------------------------
 # .PROC EdLiveWireExit
 # 
@@ -510,31 +675,12 @@ proc EdLiveWireUpdate {{value ""}} {
     global Ed Label Slice
     
     # Validate input
-    if {[ValidateFloat $Ed(EdLiveWire,difference)] == 0} {
-	tk_messageBox -message "Difference is not a number."
-	return
-    }
-    
-    if {[ValidateFloat $Ed(EdLiveWire,insidePixel)] == 0} {
-	tk_messageBox -message "in pix is not a number."
-	return
-    }
-	
-    if {[ValidateFloat $Ed(EdLiveWire,outsidePixel)] == 0} {
-	tk_messageBox -message "out pix is not a number."
-	return
-    }
-    
     if {$Label(label) == ""} {
 	return
     }
 
     # update filter stuff    
     foreach s $Slice(idList) {
-	#Ed(EdLiveWire,lwSetup$s) SetDifference $Ed(EdLiveWire,difference)
-	#Ed(EdLiveWire,lwSetup$s) SetInsidePixel $Ed(EdLiveWire,insidePixel)
-	#Ed(EdLiveWire,lwSetup$s) SetOutsidePixel $Ed(EdLiveWire,outsidePixel)
-
 	Ed(EdLiveWire,lwPath$s) SetLabel $Label(label)	
     }
 
@@ -571,7 +717,6 @@ proc EdLiveWireB1 {x y s} {
     Ed(EdLiveWire,lwPath$s) SetStartPoint $x $y
 
 }
-
 
 #-------------------------------------------------------------------------------
 # .PROC EdLiveWireB1Motion
