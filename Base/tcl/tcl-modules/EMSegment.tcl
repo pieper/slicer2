@@ -239,7 +239,7 @@ proc EMSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.13 $} {$Date: 2002/07/03 18:10:37 $}]
+        {$Revision: 1.14 $} {$Date: 2002/08/19 16:31:30 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -304,6 +304,7 @@ proc EMSegmentInit {} {
     set EMSegment(PrintIntermediateResults)     [vtkEMInit GetPrintIntermediateResults] 
     set EMSegment(PrintIntermediateSlice)       [vtkEMInit GetPrintIntermediateSlice] 
     set EMSegment(PrintIntermediateFrequency)   [vtkEMInit GetPrintIntermediateFrequency] 
+
     vtkEMInit Delete
 
     # Special EMSegment(SegmentMode) == 1 Variables
@@ -319,6 +320,10 @@ proc EMSegmentInit {} {
     # Needed for intensity correction 
     # IntensityAvgClass <0 => intensity correction is enabled
     set EMSegment(IntensityAvgClass) -1
+
+    # Bias Field will not be printed
+    set EMSegment(BiasPrint) 0
+    set EMSegment(BiasRootFileName) ""
 
     # Sequence of how CIM values are represented
     # Where                      pixel to the North  
@@ -1139,7 +1144,7 @@ Description of the tabs:
     $menu add command -label "None" -command "EMSegmentChangeIntensityClass -1 1" 
     for {set i 1} {$i <= $EMSegment(NumClasses)} {incr i 1} {
         # change Menu Button when selected
-    $menu add command -label "$EMSegment(Cattrib,$i,Label)" -command "EMSegmentChangeIntensityClass $i " \
+        $menu add command -label "$EMSegment(Cattrib,$i,Label)" -command "EMSegmentChangeIntensityClass $i 1" \
         -background $EMSegment(Cattrib,$i,ColorCode) -activebackground $EMSegment(Cattrib,$i,ColorCode)
     } 
 
@@ -2093,8 +2098,8 @@ proc EMSegmentChangeClass {i} {
 proc EMSegmentChangeIntensityClass {Sclass reset} {
     global EMSegment Gui
     if {$Sclass > 0} {
-    set EMSegment(IntensityAvgClass) $EMSegment(Cattrib,$Sclass,Label)
-    $EMSegment(DE-mbIntClass) config -bg $EMSegment(Cattrib,$Sclass,ColorCode) -activebackground $EMSegment(Cattrib,$Sclass,ColorCode) -text $EMSegment(Cattrib,$Sclass,Label)
+       set EMSegment(IntensityAvgClass) $EMSegment(Cattrib,$Sclass,Label)
+       $EMSegment(DE-mbIntClass) config -bg $EMSegment(Cattrib,$Sclass,ColorCode) -activebackground $EMSegment(Cattrib,$Sclass,ColorCode) -text $EMSegment(Cattrib,$Sclass,Label)
     } else {
     set EMSegment(IntensityAvgClass) -1 
     eval {$EMSegment(DE-mbIntClass) config -text "None"}  $Gui(WMBA)
@@ -2102,7 +2107,7 @@ proc EMSegmentChangeIntensityClass {Sclass reset} {
     # Reset Values 
     if { ($EMSegment(NumInputChannel)) && $reset } {
        foreach v $EMSegment(SelVolList,VolumeList) {
-       set EMSegment(IntensityAvgValue,$v) -1.0 
+          set EMSegment(IntensityAvgValue,$v) -1.0 
        }
     }
 }

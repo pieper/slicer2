@@ -135,6 +135,16 @@ public:
   vtkSetMacro(IntensityAvgClass, int);
   vtkGetMacro(IntensityAvgClass, int);
 
+  // Description:
+  // Get/Set for Segmenter
+  vtkGetStringMacro(BiasRootFileName);
+  vtkSetStringMacro(BiasRootFileName);
+
+  // Description:
+  // Get/Set for Segmenter
+  vtkGetMacro(BiasPrint, int);
+  vtkSetMacro(BiasPrint, int);
+
 protected:
   vtkMrmlSegmenterNode();
   ~vtkMrmlSegmenterNode();
@@ -157,6 +167,8 @@ protected:
   int    DisplayProb;
   int    NumberOfTrainingSamples;
   int    IntensityAvgClass;
+  char*  BiasRootFileName;
+  int    BiasPrint;
 };
 
 #endif

@@ -62,6 +62,8 @@ vtkMrmlSegmenterNode::vtkMrmlSegmenterNode()
   this->DisplayProb     = 0;
   this->NumberOfTrainingSamples = 0;
   this->IntensityAvgClass = -1;
+  this->BiasRootFileName = NULL;
+  this->BiasPrint = 0;
 }
 
 //----------------------------------------------------------------------------
@@ -104,19 +106,21 @@ void vtkMrmlSegmenterNode::Write(ofstream& of, int nIndent)
   of << " DisplayProb  ='"               << this->DisplayProb  << "'";
   of << " NumberOfTrainingSamples ='"    << this->NumberOfTrainingSamples << "'";
   of << " IntensityAvgClass ='"          << this->IntensityAvgClass << "'";
+  of << " BiasPrint ='"                  << this->BiasPrint << "'";
+  if (this->BiasRootFileName && strcmp(this->BiasRootFileName, "")) of << " BiasRootFileName ='"           << this->BiasRootFileName << "'";
   of << ">\n";;
 }
 
 //----------------------------------------------------------------------------
 // Copy the node's attributes to this object.
-// Does NOT copy: ID, FilePrefix, Name
+// Does NOT copy: ID, FilePrefix, Name and BiasRootFileName
 void vtkMrmlSegmenterNode::Copy(vtkMrmlNode *anode)
 {
   vtkMrmlNode::MrmlNodeCopy(anode);
   vtkMrmlSegmenterNode *node = (vtkMrmlSegmenterNode *) anode;
 
   this->NumClasses                 = node->NumClasses;
-  this->MaxInputChannelDef            = node->MaxInputChannelDef;
+  this->MaxInputChannelDef         = node->MaxInputChannelDef;
   this->EMiteration                = node->EMiteration;
   this->MFAiteration               = node->MFAiteration;
   this->Alpha                      = node->Alpha;   
@@ -130,6 +134,7 @@ void vtkMrmlSegmenterNode::Copy(vtkMrmlNode *anode)
   this->DisplayProb                = node->DisplayProb;
   this->NumberOfTrainingSamples    = node->NumberOfTrainingSamples;
   this->IntensityAvgClass          = node->IntensityAvgClass;
+  this->BiasPrint                  = node->BiasPrint;
 }
 
 //----------------------------------------------------------------------------
@@ -152,4 +157,6 @@ void vtkMrmlSegmenterNode::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "DisplayProb: "               << this->DisplayProb <<  "\n"; 
   os << indent << "NumberOfTrainingSamples: "   << this->NumberOfTrainingSamples <<  "\n"; 
   os << indent << "IntensityAvgClass:"          << this->IntensityAvgClass << "\n";
+  os << indent << "BiasPrint:"                  << this->BiasPrint << "\n";
+  os << indent << "BiasRootFileName:"           << this->BiasRootFileName << "\n"; 
 }

@@ -61,9 +61,12 @@ proc EMSegmentAlgorithmStart { } {
        set index 1
        EMSegment(vtkEMSegment) SetIntensityAvgClass $EMSegment(IntensityAvgClass)
        foreach v $EMSegment(SelVolList,VolumeList) {       
-       EMSegment(vtkEMSegment) SetIntensityAvgValuePreDef $EMSegment(IntensityAvgValue,$v) $index
-       incr index
+         EMSegment(vtkEMSegment) SetIntensityAvgValuePreDef $EMSegment(IntensityAvgValue,$v) $index
+         incr index
        } 
+       # Transfer Bias Print out Information
+       EMSegment(vtkEMSegment) SetBiasPrint $EMSegment(BiasPrint)
+       if {$EMSegment(BiasPrint)} {EMSegment(vtkEMSegment) SetBiasRootFileName $EMSegment(BiasRootFileName)}
    } else {
        # EM Specific Information - Simple EM Algorithm
        vtkImageEMSegmenter EMSegment(vtkEMSegment)    

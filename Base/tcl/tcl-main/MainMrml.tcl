@@ -78,7 +78,7 @@ proc MainMrmlInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainMrml \
-        {$Revision: 1.60 $} {$Date: 2002/07/17 14:26:10 $}]
+        {$Revision: 1.61 $} {$Date: 2002/08/19 16:31:29 $}]
 
     set Mrml(colorsUnsaved) 0
 }
@@ -1261,6 +1261,8 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
                     "displayprob" {$n SetDisplayProb $val}
                     "numberoftrainingsamples" {$n SetNumberOfTrainingSamples $val}
                     "intensityavgclass"  {$n SetIntensityAvgClass  $val}
+            "biasprint" {$n SetBiasPrint $val}
+            "biasrootfilename" {$n SetBiasRootFileName $val}
         }
         }
     }
