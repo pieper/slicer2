@@ -72,7 +72,7 @@ public:
 
   // Description:
   // Lauren test
-  void SetNeighborhoodToLine(int length);
+  void SetNeighborhoodToLine(int length, int direction);
 
 protected:
   vtkImageNeighborhoodFilter();

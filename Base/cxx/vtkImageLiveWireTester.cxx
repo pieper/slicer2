@@ -95,10 +95,6 @@ static void vtkImageLiveWireTesterExecute(vtkImageLiveWireTester *self,
 				     vtkImageData *outData, short *outPtr, 
 				     int outExt[6])
 {
-  // feed the edge inputs into vtkImageLiveWire.
-  // output of this filter is same as its input, and will be
-  // fed to vtkImageLiveWire as output[0]
-
   if (!self->GetLiveWire())
     {
       cout << "ERROR in vtkImageLiveWire??: vtkImageLiveWire member not set."<< endl;
@@ -106,18 +102,17 @@ static void vtkImageLiveWireTesterExecute(vtkImageLiveWireTester *self,
     }
 
   vtkImageLiveWire *liveWire = self->GetLiveWire();
-
-  // ----------------  Make edge images  ------------------ //
-
   int numEdges = self->GetNumberOfEdgeFilters();
   vtkImageLiveWireEdgeWeights ** edgeFilters = self->GetEdgeFilters();
 
   // Lauren max edge cost of edge filters and live wire need to match
+
+  // make edge weight images
   for (int i = 0; i < numEdges; i++)
     {
       edgeFilters[i]->SetInput(inData);
       // Lauren fix!!!!!!!!1
-      edgeFilters[i]->SetNeighborhoodToLine(2);
+      edgeFilters[i]->SetNeighborhoodToLine(2,i);
       edgeFilters[i]->Update();
     }
 
@@ -125,26 +120,6 @@ static void vtkImageLiveWireTesterExecute(vtkImageLiveWireTester *self,
   liveWire->SetBottomEdges(edgeFilters[1]->GetOutput());
   liveWire->SetRightEdges(edgeFilters[2]->GetOutput());
   liveWire->SetLeftEdges(edgeFilters[3]->GetOutput());
-
-//    topEdge->SetInput(inData);
-//    bottomEdge->SetInput(inData);
-//    rightEdge->SetInput(inData);
-//    leftEdge->SetInput(inData);
-
-//    topEdge->SetNeighborhoodToLine(2);
-//    bottomEdge->SetNeighborhoodToLine(2);
-//    rightEdge->SetNeighborhoodToLine(2);
-//    leftEdge->SetNeighborhoodToLine(2);
-
-//    topEdge->Update();
-//    bottomEdge->Update();
-//    rightEdge->Update();
-//    leftEdge->Update();
-
-//    liveWire->SetTopEdges(topEdge->GetOutput());
-//    liveWire->SetBottomEdges(bottomEdge->GetOutput());
-//    liveWire->SetRightEdges(rightEdge->GetOutput());
-//    liveWire->SetLeftEdges(leftEdge->GetOutput());
 
   // Lauren do this directly??
   liveWire->SetStartPoint(self->GetStartPoint());

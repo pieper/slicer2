@@ -151,21 +151,47 @@ void vtkImageNeighborhoodFilter::SetNeighborTo8()
 
 // Lauren change Neighborhood variable?
 //----------------------------------------------------------------------------
-void vtkImageNeighborhoodFilter::SetNeighborhoodToLine(int length)
+void vtkImageNeighborhoodFilter::SetNeighborhoodToLine(int length, 
+						       int direction)
 {
   int x, y, z;
 
-  // Lauren this is one direction only (and needs to be shifted R/L...)
-  this->SetKernelSize(length, 1, 1);
+  //this->SetKernelSize(length, 1, 1);
+  // Lauren can easily incorporate information from 
+  // previous, next slice also using larger kernel..
+  // also could make 'distance map' by blurring prev image
+  // (labelmap!!) and use this ...  but perhaps then 
+  // edge filter should be multiple input!! ??
+  // OR all edge filters could produce quantities that could
+  // be added, and then another filter could add them and do 1/the #s ??
+  this->SetKernelSize(3, 3, 1);
+
   // Lauren ?
-  this->Neighbor = 2;
+  this->Neighbor = 1;
 
   // set
-  memset(this->Mask, 1, this->KernelSize[0]*this->KernelSize[1]*
+  memset(this->Mask, 0, this->KernelSize[0]*this->KernelSize[1]*
 	 this->KernelSize[2]*sizeof(unsigned char));
   // unset middle
-  // Lauren fix this!
-  this->Mask[1] = 0;
+  //this->Mask[1] = 0;
+
+  // set the neighbor on the line
+  // directions: 0 1 2 3 == locations top bottom right left 
+  // == dirs right left down up
+
+  // Lauren this is all ugly and fix it!
+  // 0 1 2
+  // 3 4 5
+  // 6 7 8
+
+  switch (direction)
+    {
+    case 0: {this->Mask[5] = 1;} // right
+    case 1: {this->Mask[3] = 1;} // left
+    case 2: {this->Mask[7] = 1;} // down
+    case 3: {this->Mask[1] = 1;} // up
+    }
+
 
   cout << "MASK: " << this->KernelSize[0]*this->KernelSize[1]*this->KernelSize[2]*sizeof(unsigned char) <<
     " " << sizeof(unsigned char) << " " << this->Mask[0] << " " << this->Mask[1] << endl;
