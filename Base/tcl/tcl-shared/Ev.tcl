@@ -24,13 +24,17 @@
 # PROCEDURES:  
 #   EvInit
 #   EvDeclareEventHandler
+#   EvClearEventHandler
 #   EvAddWidgetToBindingSet
 #   EvRemoveWidgetFromBindingSet
 #   EvGetBindingStack
 #   EvActivateBindingSet
 #   EvDeactivateBindingSet
+#   EvCullDeadWidgetsFromBindingSet
+#   EvDestroyBindingSet
 #   EvBindtagsToEventSet
 #   EvEventSetToBindtags
+#   EvFormatBinding
 #   EvReplaceWidgetBindings
 #   EvClearWidgetBindings
 #   EvSimpleExample
@@ -168,7 +172,7 @@ proc EvInit {} {
     
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.2 $} {$Date: 2002/03/26 21:53:42 $}]
+            {$Revision: 1.3 $} {$Date: 2002/04/11 23:51:40 $}]
 }
 
 #-------------------------------------------------------------------------------
@@ -184,7 +188,7 @@ proc EvInit {} {
 # form of event sets (e.g, "{Viewer editing}" and "{Viewer viewing}").
 #
 # To unbind an event handler for an event set, pass {}
-# as the event handler.
+# as the event handler, or use EvClearEventHandler.
 #
 # .ARGS
 #  list eSet the event set with which to associate the event and handler
@@ -193,9 +197,32 @@ proc EvInit {} {
 # .END
 #-------------------------------------------------------------------------------
 proc EvDeclareEventHandler {eSet event handler} {
-    bind "Slicer,[join $eSet ,]" $event $handler
+    
+    bind [EvFormatBinding $eSet] $event $handler
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EvClearEventHandler
+# 
+# Clear all event handlers in an event set.  If event is event,
+# the handler for that event is clear.  If no event is given,
+# all handlers are cleared.
+#
+# .ARGS
+# list eSet an event set name.
+# str event event to clear handlers for, if not given all events are cleared.
+# .END
+
+proc EvClearEventHandler {eSet {event {}}} {
+    set es [EvFormatBinding $eSet]
+    if {[length $event] == 0} {
+        set event [bind $es]
+    }
+
+    for b in $event {
+        bind $es $b {}
+    }
+}
 #-------------------------------------------------------------------------------
 # .PROC EvAddWidgetToBindingSet
 # 
@@ -240,6 +267,12 @@ proc EvAddWidgetToBindingSet {bindingSet widget eglist} {
 # .END
 #-------------------------------------------------------------------------------
 proc EvRemoveWidgetFromBindingSet {bindingSet widget} {
+
+    if {![winfo exists $widget]} {
+        EvCullDeadWidgetsFromBindingSet $bindingSet $widget
+        return
+    }
+
     upvar \#0 EvState(widgets,$bindingSet) widgetList
     upvar \#0 EvState(binding,$bindingSet,$widget) binding
 
@@ -280,16 +313,23 @@ proc EvRemoveWidgetFromBindingSet {bindingSet widget} {
 proc EvActivateBindingSet {bindingSet {widgetList {}}} {
     if {[llength $widgetList] == 0} {
         upvar \#0 EvState(widgets,$bindingSet) allWidgets
+        if {! [info exists allWidgets] } {
+            set allWidgets {}
+        }
         set widgetList $allWidgets
     }
 
+    EvCullDeadWidgetsFromBindingSet $bindingSet $widgetList
+
     foreach w $widgetList {
+        if {![winfo exists $w]} {
+            continue
+        }
         upvar \#0 EvState(binding,$bindingSet,$w) binding
         if {! [info exists binding]} {
             continue
         }
         upvar \#0 EvState(stack,$w) bindingStack
-        
         if {![info exists bindingStack]} {
             # widget has never been bound before
             set bindingStack $bindingSet
@@ -321,10 +361,18 @@ proc EvDeactivateBindingSet {bindingSet {widgetList {}}} {
         # binding set.
 
         upvar \#0 EvState(widgets,$bindingSet) allWidgets
+        if {! [info exists allWidgets] } {
+            set allWidgets {}
+        }
         set widgetList $allWidgets
     }
 
+    EvCullDeadWidgetsFromBindingSet $bindingSet $widgetList
+
     foreach w $widgetList {
+        if {![winfo exists $w]} {
+            continue
+        }
         upvar \#0 EvState(stack,$w) bindingStack
         if {![info exists bindingStack]} {
             # widget has never been bound before
@@ -344,6 +392,99 @@ proc EvDeactivateBindingSet {bindingSet {widgetList {}}} {
             }
         }
         EvReplaceWidgetBindings $w $newBindingSet $newBinding
+    }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC EvDestroyBindingSet
+# 
+# Destroy the named binding set.  The set's bindings are deactivated.
+#
+# .ARGS
+# str bindingSet
+# .END
+#-------------------------------------------------------------------------------
+proc EvDestroyBindingSet {bindingSet} {
+    EvCullDeadWidgetsFromBindingSet $bindingSet
+
+    EvDeactivateBindingSet $bindingSet
+
+    upvar \#0 EvState(widgets,$bindingSet) allWidgets
+    if {! [info exists allWidgets] } {
+        set allWidgets {}
+    }
+
+    foreach w $allWidgets {
+        upvar \#0 EvState(stack,$w) bindingStack
+        if {![info exists bindingStack]} {
+            continue
+        } 
+
+        while {1} {
+            set where [lsearch -exact $bindingStack $bindingSet]
+            if {$where == -1} {
+                break
+            }
+            set bindingStack [lreplace $bindingStack $where $where]
+        }
+
+        if {[llength $bindingStack] == 0} {
+            unset bindingStack
+        }
+
+        upvar \#0 EvState(binding,$bindingSet,$w) binding
+        if {[info exists binding]} {
+            unset binding
+        }
+    }
+    unset allWidgets
+}
+
+#-------------------------------------------------------------------------------
+# .PROC EvCullDeadWidgetsFromBindingSet
+# 
+# Look for widges that don't exist, and clear them out of the 
+# data structures
+#
+# .ARGS
+# str bindingSet
+# list widgetList  list of widgets to look for deadness, if empty all widgets checked.
+# .END
+#-------------------------------------------------------------------------------
+proc EvCullDeadWidgetsFromBindingSet {bindingSet {widgetList {}}} {
+    upvar \#0 EvState(widgets,$bindingSet) allWidgets
+    if {! [info exists allWidgets] } {
+        set allWidgets {}
+    }
+
+    if {[llength $widgetList] == 0} {
+        # special case: we were not given a widget list,
+        # so remove binding set from all widgets using the 
+        # binding set.
+
+        set widgetList $allWidgets
+    }
+
+    foreach w $widgetList {
+        if {[winfo exists $w] } {
+            # not dead yet
+            continue
+        }
+        upvar \#0 EvState(stack,$w) bindingStack
+        if {[info exists bindingStack]} {
+            unset bindingStack
+        }
+
+        upvar \#0 EvState(binding,$bindingSet,$w) binding
+        if {[info exists binding]} {
+            set newBinding $binding
+        }
+
+        set where [lsearch -exact $allWidgets $w]
+        if {$where != -1} {
+            # just in case, make sure that the binding isn't active
+            set allWidgets [lreplace $allWidgets $where $where]
+        }
     }
 }
 
@@ -383,10 +524,12 @@ proc EvGetBindingStack {widget} {
 # .END
 #-------------------------------------------------------------------------------
 proc EvClearWidgetBindings {widget} {
-    EvReplaceWidgetBindings $widget "" {}
+    if {[winfo exists $widget]} {
+        EvReplaceWidgetBindings $widget "" {}
+    }
 
     upvar \#0 EvState(stack,$widget) bindingStack
-    if {![info exists bindingStack]} {
+    if {[info exists bindingStack]} {
         unset bindingStack
     }
 }
@@ -450,12 +593,25 @@ proc EvEventSetToBindtags {bindingSet eventList {rest {}}} {
     
     foreach e $eventList {
         # format event binding list and add
-        lappend bt "Slicer,[join $e ,]"
+        lappend bt [EvFormatBinding $e]
     }
 
     # tack on end token
-    lappend bt "Slicer,_End"
+    lappend bt [EvFormatBinding "_End"]
     return [concat $bt $rest]
+}
+
+#------------------------------------------------------------------------------
+# .PROC EvFormatBinding
+# 
+# Format a binding. Internal use only.
+#
+# .ARGS
+# str e a name.
+# .END
+#------------------------------------------------------------------------------
+proc EvFormatBinding {e} {
+    return [format "%s,%s" "Slicer" [join $e ","]]
 }
 
 #------------------------------------------------------------------------------
@@ -538,12 +694,10 @@ proc EvSimpleExample {} {
     puts "f1 bindings: [EvGetBindingStack $f1]"
     puts "f2 bindings: [EvGetBindingStack $f2]"
 
-
     # ...and this line makes Endoscopic2 bindings active:
     EvActivateBindingSet Endoscopic2   
     puts "f1 bindings: [EvGetBindingStack $f1]"
     puts "f2 bindings: [EvGetBindingStack $f2]"
-
 
     # binding sets are stored on a per-widget stack.  
     # Deactivation of a binding set automatically reactivates 
