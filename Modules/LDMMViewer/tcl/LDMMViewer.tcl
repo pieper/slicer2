@@ -156,7 +156,7 @@ proc LDMMViewerInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.9 $} {$Date: 2004/07/06 15:55:09 $}]
+        {$Revision: 1.10 $} {$Date: 2004/07/24 20:34:18 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -343,8 +343,15 @@ proc LDMMViewerLoadStructuredPoints { vtkfile } {
     catch "spr Delete"
     vtkStructuredPointsReader spr
     spr SetFileName $vtkfile
-    spr Update
-    set id [spr GetOutput]
+
+    catch "iflip Delete"
+    vtkImageFlip iflip
+    iflip SetInput [spr GetOutput]
+    iflip SetFilteredAxis 0 
+    iflip Update
+
+    set id [iflip GetOutput]
+    #set id [spr GetOutput]
 
     # add a mrml node
     set n [MainMrmlAddNode Volume]
@@ -379,6 +386,7 @@ proc LDMMViewerLoadStructuredPoints { vtkfile } {
     RenderAll
 
     spr Delete
+    iflip Delete
 
     return $i
 }
@@ -448,11 +456,13 @@ proc LDMMViewerShowVectors {} {
         vtkStructuredPointsReader LDMMspr_$f
         LDMMspr_$f SetFileName $f
         LDMMspr_$f Update
-        [LDMMspr_$f GetOutput] SetOrigin -32 -32 -32
+        foreach "w h d" [[LDMMspr_$f GetOutput] GetDimensions] {}
+        [LDMMspr_$f GetOutput] SetOrigin [expr -0.5 * $w] [expr -0.5 * $h] [expr -0.5 * $d]
     }
 
     set f0 [lindex $::LDMMViewer(vectorfiles) 0]
     vtkExtractVOI LDMMevoi
+    #LDMMevoi SetSampleRate 2 2 2
     #LDMMevoi SetSampleRate 4 4 4
     LDMMevoi SetSampleRate 8 8 8
     LDMMevoi SetInput [LDMMspr_$f0 GetOutput]
@@ -461,10 +471,20 @@ proc LDMMViewerShowVectors {} {
     LDMMg3d SetInput [LDMMevoi GetOutput]
     LDMMg3d SetColorModeToColorByVector
     LDMMg3d SetScaleModeToScaleByVector
-    LDMMg3d SetScaleFactor 2
+    LDMMg3d SetScaleFactor 0.5
+
+    vtkMatrix4x4 LDMMmatrix
+    LDMMmatrix DeepCopy 1 0 0 0  0 1 0 0  0 0 1 0  0 0 0 1
+
+    vtkMatrixToLinearTransform LDMMmtlt
+    LDMMmtlt SetInput LDMMmatrix
+
+    vtkTransformFilter LDMMtf
+    LDMMtf SetInput [LDMMg3d GetOutput]
+    LDMMtf SetTransform LDMMmtlt
 
     vtkPolyDataMapper LDMMgmapper
-    LDMMgmapper SetInput [LDMMg3d GetOutput]
+    LDMMgmapper SetInput [LDMMtf GetOutput]
 
     vtkActor LDMMgactor
     LDMMgactor SetMapper LDMMgmapper
@@ -489,6 +509,9 @@ proc LDMMViewerHideVectors {} {
     }
     catch "LDMMspr Delete"
     catch "LDMMevoi Delete"
+    catch "LDMMmtlt Delete"
+    catch "LDMMmatrix Delete"
+    catch "LDMMtf Delete"
     catch "LDMMg3d Delete"
     catch "LDMMgmapper Delete"
     catch "LDMMgactor Delete"
