@@ -77,7 +77,7 @@ proc tarup { {destdir "auto"} } {
                 } else {
                     switch $::env(BUILD) {
                         "solaris8" { set destdir /tmp }
-                        "Darwin" - "darwin-ppc" - "linux-x86' - "redhat7.3" { set destdir /var/tmp }
+                        "Darwin" - "darwin-ppc" - "linux-x86" - "redhat7.3" { set destdir /var/tmp }
                         "Win32VC7" { set destdir c:/Temp }
                     }
                 }
@@ -112,6 +112,7 @@ proc tarup { {destdir "auto"} } {
     puts " -- copying launcher files"
     file copy slicer2-$target$exe $destdir
     file copy launch.tcl $destdir
+    file copy slicer_variables.tcl $destdir
 
     #
     # grab the tcl libraries and binaries
@@ -163,28 +164,28 @@ proc tarup { {destdir "auto"} } {
         "redhat7.3" { 
             set libs [glob $::env(VTK_DIR)/bin/*.so*]
             foreach lib $libs {
-                file copy $lib $destdir/Lib/$::env(BUILD)/vtk/VTK-build/bin
+                file copy $lib $destdir/Lib/$::env(BUILD)/VTK-build/bin
                 set ll [file tail $lib]
-                exec strip $destdir/Lib/$::env(BUILD)/vtk/VTK-build/bin/$ll
+                exec strip $destdir/Lib/$::env(BUILD)/VTK-build/bin/$ll
             }
-            file copy $::env(VTK_DIR)/bin/vtk $destdir/Lib/$::env(BUILD)/vtk/VTK-build/bin
-            file copy -force $::env(SLICER_HOME)/Scripts/slicer-vtk-pkgIndex.tcl $destdir/Lib/$::env(BUILD)/vtk/VTK-build/Wrapping/Tcl/pkgIndex.tcl
+            file copy $::env(VTK_DIR)/bin/vtk $destdir/Lib/$::env(BUILD)/VTK-build/bin
+            file copy -force $::env(SLICER_HOME)/Scripts/slicer-vtk-pkgIndex.tcl $destdir/Lib/$::env(BUILD)/VTK-build/Wrapping/Tcl/pkgIndex.tcl
         }
         "darwin-ppc" {
             set libs [glob $::env(VTK_DIR)/bin/*.dylib]
             foreach lib $libs {
-                file copy $lib $destdir/Lib/$::env(BUILD)/vtk/VTK-build/bin
+                file copy $lib $destdir/Lib/$::env(BUILD)/VTK-build/bin
             }
-            file copy $::env(VTK_DIR)/bin/vtk $destdir/Lib/$::env(BUILD)/vtk/VTK-build/bin
-            file copy -force $::env(SLICER_HOME)/Scripts/slicer-vtk-pkgIndex.tcl $destdir/Lib/$::env(BUILD)/vtk/VTK-build/Wrapping/Tcl/pkgIndex.tcl
+            file copy $::env(VTK_DIR)/vtk $destdir/Lib/$::env(BUILD)/VTK-build/bin
+            file copy -force $::env(SLICER_HOME)/Scripts/slicer-vtk-pkgIndex.tcl $destdir/Lib/$::env(BUILD)/VTK-build/Wrapping/Tcl/pkgIndex.tcl
         }
         "Win32VC7" { 
-            file mkdir $destdir/Lib/$::env(BUILD)/vtk/VTK-build/bin/debug
+            file mkdir $destdir/Lib/$::env(BUILD)/VTK-build/bin/debug
             set libs [glob $::env(VTK_DIR)/bin/debug/*.dll]
             foreach lib $libs {
-                file copy $lib $destdir/Lib/$::env(BUILD)/vtk/VTK-build/bin/debug
+                file copy $lib $destdir/Lib/$::env(BUILD)/VTK-build/bin/debug
             }
-            file copy -force $::env(SLICER_HOME)/Scripts/slicer-vtk-pkgIndex.tcl $destdir/Lib/$::env(BUILD)/vtk/VTK-build/Wrapping/Tcl/debug/pkgIndex.tcl
+            file copy -force $::env(SLICER_HOME)/Scripts/slicer-vtk-pkgIndex.tcl $destdir/Lib/$::env(BUILD)/VTK-build/Wrapping/Tcl/debug/pkgIndex.tcl
         }
     }
 
@@ -192,7 +193,7 @@ proc tarup { {destdir "auto"} } {
     # grab the itk libraries 
     #
     puts " -- copying itk files"
-    file mkdir $destdir/Lib/$::env(BUILD)/itk/ITK-build/bin
+    file mkdir $destdir/Lib/$::env(BUILD)/Insight-build/bin
 
     switch $::env(BUILD) {
         "solaris8" -
@@ -200,22 +201,22 @@ proc tarup { {destdir "auto"} } {
         "redhat7.3" { 
             set libs [glob -nocomplain $::env(ITK_BINARY_PATH)/bin/*.so]
             foreach lib $libs {
-                file copy $lib $destdir/Lib/$::env(BUILD)/itk/ITK-build/bin
+                file copy $lib $destdir/Lib/$::env(BUILD)/Insight-build/bin
                 set ll [file tail $lib]
-                exec strip $destdir/Lib/$::env(BUILD)/itk/ITK-build/bin/$ll
+                exec strip $destdir/Lib/$::env(BUILD)/Insight-build/bin/$ll
             }
         }
         "darwin-ppc" {
             set libs [glob -nocomplain $::env(ITK_BINARY_PATH)/bin/*.dylib]
             foreach lib $libs {
-                file copy $lib $destdir/Lib/$::env(BUILD)/itk/ITK-build/bin
+                file copy $lib $destdir/Lib/$::env(BUILD)/Insight-build/bin
             }
         }
         "Win32VC7" { 
-            file mkdir $destdir/Lib/$::env(BUILD)/itk/ITK-build/bin/debug
+            file mkdir $destdir/Lib/$::env(BUILD)/Insight-build/bin/debug
             set libs [glob -nocomplain $::env(ITK_BINARY_PATH)/bin/debug/*.dll]
             foreach lib $libs {
-                file copy $lib $destdir/Lib/$::env(BUILD)/itk/ITK-build/bin/debug
+                file copy $lib $destdir/Lib/$::env(BUILD)/Insight-build/bin/debug
             }
         }
     }

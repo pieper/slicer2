@@ -58,11 +58,11 @@
 
 # Check for a custom configuration, setting the environment variables 
 # on the system level
-if {![info exists env(SLICER_CUSTOM_CONFIG)]} {
+if {![info exists ::env(SLICER_CUSTOM_CONFIG)]} {
     # set it to simplify futher checking
-    set env(SLICER_CUSTOM_CONFIG) "false"
+    set ::env(SLICER_CUSTOM_CONFIG) "false"
 }
-if {$env(SLICER_CUSTOM_CONFIG) != "true"} {
+if {$::env(SLICER_CUSTOM_CONFIG) != "true"} {
     set bypass_msg "\n\n(Set environment variable SLICER_CUSTOM_CONFIG to true to bypass this message)"
 }
 # The environment variables that we need to have set for slicer 
@@ -72,81 +72,47 @@ set envVars {VTK_DIR VTK_SRC_DIR ITK_BINARY_PATH TCL_BIN_DIR TCL_LIB_DIR}
 # that we need to set
 set envVarsToSet {}
 foreach v $envVars {
-    if {![info exists env($v)] || $env($v) == "" } {
+    if {![info exists ::env($v)] || $::env($v) == "" } {
         lappend envVarsToSet $v
     }
 }
 
 # Source the local variables file, if it exists, or set defaults here
+#   - the local slicer_variables.tcl file is used in development
+#   - the defaults are in place for a distribution copy 
+#     (such as made by the tarup.tcl scrip)
+#
 set localvarsfile [file dirname [info script]]/slicer_variables.tcl
 if { [file exists $localvarsfile] } {
     puts "Sourcing $localvarsfile"
     source $localvarsfile
 } else {
-    
-    # set up variables for the OS Builds, this is all done in the slicer_variables file if it exists
-    set solaris "solaris8"
-    set linux "redhat7.3"
-    set darwin "Darwin"
-    set windows "Win32VC7"
-
-    # check the build os: SunOS, Linux, Windows NT are possible responses
-    switch $tcl_platform(os) {
-        "SunOS" {
-            set env(BUILD) $solaris
-        }
-        "Linux" {
-            set env(BUILD) $linux
-        }
-        "Darwin" {
-            set env(BUILD) $darwin
-        }
-        default {
-            # different windows machines say different things, so assume
-            # that if it doesn't match above it must be windows
-            # (VC7 is Visual C++ 7.0, also known as the .NET version)
-            set env(BUILD) $windows
-            # take out any spaces in the slicer home dir
-            if {[regexp { } $env(SLICER_HOME) match] != 0} {
-                # set it to the short name
-                set env(SLICER_HOME) [file attributes $env(SLICER_HOME) -shortname]
-                puts "Set SLICER_HOME environment variable to shortname: $env(SLICER_HOME)"
-            }
-        }
-    }
-    puts "\nSlicer build directory set to $env(BUILD)"
-
-    # Set your custom values here
-    set VTK_DIR ${env(SLICER_HOME)}/Lib/${env(BUILD)}/vtk/VTK-build
-    set ITK_BINARY_PATH ${env(SLICER_HOME)}/Lib/${env(BUILD)}/itk/ITK-build
-    set TCL_BIN_DIR ${env(SLICER_HOME)}/Lib/${env(BUILD)}/tcl/bin
-    set TCL_LIB_DIR ${env(SLICER_HOME)}/Lib/${env(BUILD)}/tcl/lib
-    set env(VTK_BIN_DIR) $VTK_DIR
-    set env(VTK_SRC_DIR) ${env(SLICER_HOME)}/Lib/${env(BUILD)}/vtk/VTK
+    puts stderr "Cannot find $localvarsfile"
+    exit
 }
 
 # if it is an empty string or doesn't exist, set the LD_LIBRARY_PATH 
 if {[catch {
-    if {$env(LD_LIBRARY_PATH) == ""} { 
-        set env(LD_LIBRARY_PATH) " " 
+    if {$::env(LD_LIBRARY_PATH) == ""} { 
+        set ::env(LD_LIBRARY_PATH) " " 
     }} ex]} {
-    set env(LD_LIBRARY_PATH) " "
+    set ::env(LD_LIBRARY_PATH) " "
 }
 
 # if it is an empty string or doesn't exist, set the TCLLIBPATH 
 if {[catch {
-    if {$env(TCLLIBPATH) == ""} { 
-        set env(TCLLIBPATH) " " 
+    if {$::env(TCLLIBPATH) == ""} { 
+        set ::env(TCLLIBPATH) " " 
     }} ex]} {
-    set env(TCLLIBPATH) " " 
+    set ::env(TCLLIBPATH) " " 
 }
 
 # if it is an empty string or doesn't exist, set the LD_LIBRARY_PATH 
-if { $env(BUILD) == $darwin && [catch {
-    if {$env(DYLD_LIBRARY_PATH) == ""} { 
-        set env(DYLD_LIBRARY_PATH) " " 
+if { $::env(BUILD) == $darwin && [catch {
+    if {$::env(DYLD_LIBRARY_PATH) == ""} { 
+        set ::env(DYLD_LIBRARY_PATH) " " 
     }} ex]} {
-    set env(DYLD_LIBRARY_PATH) " "
+    set ::env(DYLD_LIBRARY_PATH) " "
 }
  
 #
@@ -158,12 +124,12 @@ foreach v $envVars {
     if {[lsearch $envVarsToSet $v] != -1} {
         # it's not set already, use our values, either from the variables file, 
         # or our defaults set above, ie set env(VTK_DIR) $VTK_DIR
-        set env($v) [subst $$v]
+        set ::env($v) [subst $$v]
     } else {
         # it's already been set, don't over-ride
-        puts "NOT Overriding current $v $env($v)"
-        if {$env(SLICER_CUSTOM_CONFIG) != "true"} {
-            tk_messageBox -type ok -message "NOT Overriding current $v $env($v) $bypass_msg"
+        puts "NOT Overriding current $v $::env($v)"
+        if {$::env(SLICER_CUSTOM_CONFIG) != "true"} {
+            tk_messageBox -type ok -message "NOT Overriding current $v $::env($v) $bypass_msg"
         }
     }
 }
@@ -175,27 +141,27 @@ foreach v $envVars {
 #
 # set the base library paths for this build 
 # 
-if {$env(BUILD) == $solaris || 
-    $env(BUILD) == $linux} {
+if {$::env(BUILD) == $solaris || 
+    $::env(BUILD) == $linux} {
         # add vtk, slicer, and tcl bins
-        set env(LD_LIBRARY_PATH) $env(VTK_DIR)/bin:$env(LD_LIBRARY_PATH)
-        set env(LD_LIBRARY_PATH) $env(ITK_BINARY_PATH)/bin:$env(LD_LIBRARY_PATH)
-        set env(LD_LIBRARY_PATH) $env(SLICER_HOME)/Base/builds/$env(BUILD)/bin:$env(LD_LIBRARY_PATH)
-        set env(LD_LIBRARY_PATH) $env(TCL_LIB_DIR):$env(LD_LIBRARY_PATH)
-    } elseif {$env(BUILD) ==  $darwin} { 
+        set ::env(LD_LIBRARY_PATH) $::env(VTK_DIR)/bin:$::env(LD_LIBRARY_PATH)
+        set ::env(LD_LIBRARY_PATH) $::env(ITK_BINARY_PATH)/bin:$::env(LD_LIBRARY_PATH)
+        set ::env(LD_LIBRARY_PATH) $::env(SLICER_HOME)/Base/builds/$::env(BUILD)/bin:$::env(LD_LIBRARY_PATH)
+        set ::env(LD_LIBRARY_PATH) $::env(TCL_LIB_DIR):$::env(LD_LIBRARY_PATH)
+    } elseif {$::env(BUILD) ==  $darwin} { 
         # add vtk, slicer, and tcl bins
-        set env(DYLD_LIBRARY_PATH) $env(VTK_DIR)/bin:$env(DYLD_LIBRARY_PATH)
-        set env(DYLD_LIBRARY_PATH) $env(ITK_BINARY_PATH)/bin:$env(DYLD_LIBRARY_PATH)
-        set env(DYLD_LIBRARY_PATH) $env(SLICER_HOME)/Base/builds/$env(BUILD)/bin:$env(DYLD_LIBRARY_PATH)
-        set env(DYLD_LIBRARY_PATH) $env(TCL_LIB_DIR):$env(DYLD_LIBRARY_PATH)
-    } elseif {$env(BUILD) == $windows} {
+        set ::env(DYLD_LIBRARY_PATH) $::env(VTK_DIR)/bin:$::env(DYLD_LIBRARY_PATH)
+        set ::env(DYLD_LIBRARY_PATH) $::env(ITK_BINARY_PATH)/bin:$::env(DYLD_LIBRARY_PATH)
+        set ::env(DYLD_LIBRARY_PATH) $::env(SLICER_HOME)/Base/builds/$::env(BUILD)/bin:$::env(DYLD_LIBRARY_PATH)
+        set ::env(DYLD_LIBRARY_PATH) $::env(TCL_LIB_DIR):$::env(DYLD_LIBRARY_PATH)
+    } elseif {$::env(BUILD) == $windows} {
         # add vtk, slicer, and tcl bins
-        set env(Path) $env(VTK_DIR)/bin/debug\;$env(Path)
-        set env(Path) $env(ITK_BINARY_PATH)/bin/debug\;$env(Path)
-        set env(Path) $env(SLICER_HOME)/Base/builds/$env(BUILD)/bin/debug\;$env(Path)
-        set env(Path) $env(TCL_BIN_DIR)\;$env(Path)
+        set ::env(Path) $::env(VTK_DIR)/bin/debug\;$::env(Path)
+        set ::env(Path) $::env(ITK_BINARY_PATH)/bin/debug\;$::env(Path)
+        set ::env(Path) $::env(SLICER_HOME)/Base/builds/$::env(BUILD)/bin/debug\;$::env(Path)
+        set ::env(Path) $::env(TCL_BIN_DIR)\;$::env(Path)
     } else {
-        puts "Libraries: unknown build $env(BUILD)"
+        puts "Libraries: unknown build $::env(BUILD)"
     }
 
 
@@ -203,26 +169,26 @@ if {$env(BUILD) == $solaris ||
 # TODO: try out the following so that we're not tied to a TCL version number:
 # set env(TCL_LIBRARY) [glob $env(TCL_LIB_DIR)/tcl?.?]
 # set env(TK_LIBRARY) [glob $env(TCL_LIB_DIR)/tk?.?]
-set env(TCL_LIBRARY) $env(TCL_LIB_DIR)/tcl8.4
-set env(TK_LIBRARY) $env(TCL_LIB_DIR)/tk8.4
+set ::env(TCL_LIBRARY) $::env(TCL_LIB_DIR)/tcl8.4
+set ::env(TK_LIBRARY) $::env(TCL_LIB_DIR)/tk8.4
 
 #
 # add the default search locations for tcl packages
 #  (window has special tcl packages depending on build type)
 #
-if {$env(BUILD) == $solaris || 
-    $env(BUILD) == $linux ||
-    $env(BUILD) == $darwin} {
-        set env(TCLLIBPATH) "$env(VTK_DIR)/Wrapping/Tcl $env(TCLLIBPATH)"
-} elseif {$env(BUILD) == $windows} {
-    set env(TCLLIBPATH) "$env(VTK_DIR)/Wrapping/Tcl/Debug $env(TCLLIBPATH)"
+if {$::env(BUILD) == $solaris || 
+    $::env(BUILD) == $linux ||
+    $::env(BUILD) == $darwin} {
+        set ::env(TCLLIBPATH) "$::env(VTK_DIR)/Wrapping/Tcl $::env(TCLLIBPATH)"
+} elseif {$::env(BUILD) == $windows} {
+    set ::env(TCLLIBPATH) "$::env(VTK_DIR)/Wrapping/Tcl/Debug $::env(TCLLIBPATH)"
 } else {
-    puts "TCLLIBPATH: Invalid build $env(BUILD)"
+    puts "TCLLIBPATH: Invalid build $::env(BUILD)"
     exit
 }
 
 # same for all platforms
-set env(TCLLIBPATH) "$env(SLICER_HOME)/Base/Wrapping/Tcl/vtkSlicerBase $env(TCLLIBPATH)"
+set ::env(TCLLIBPATH) "$::env(SLICER_HOME)/Base/Wrapping/Tcl/vtkSlicerBase $::env(TCLLIBPATH)"
 
 
 #
@@ -242,13 +208,13 @@ set home [string trimright $home "/"]
 
 set modulePaths $slicer_home/Modules
 lappend modulePaths $home/Modules
-if { [info exists env(SLICER_MODULES)] } {
-    foreach mpath $env(SLICER_MODULES) {
+if { [info exists ::env(SLICER_MODULES)] } {
+    foreach mpath $::env(SLICER_MODULES) {
         lappend modulePaths [string trimright $mpath "/"]
     }
 }
 
-set env(SLICER_MODULES_TO_REQUIRE) " "
+set ::env(SLICER_MODULES_TO_REQUIRE) " "
 foreach modulePath $modulePaths {
     set modulePath [string trimright $modulePath "/"] ;# remove trailing slash
     set modules [glob -nocomplain $modulePath/*]
@@ -260,19 +226,19 @@ foreach modulePath $modulePaths {
         regexp "$modulePath/(\.\*)" $dir match moduleName
         # if it's not the custom one, append it to the path
         if {[string first Custom $moduleName] == -1} {
-            lappend env(SLICER_MODULES_TO_REQUIRE) $moduleName
-            if {$env(BUILD) == $solaris || 
-                $env(BUILD) == $linux} {
-                set env(LD_LIBRARY_PATH) ${modulePath}/$moduleName/builds/$env(BUILD)/bin:$env(LD_LIBRARY_PATH)
-                set env(TCLLIBPATH) "${modulePath}/$moduleName/Wrapping/Tcl $env(TCLLIBPATH)"
-            } elseif {$env(BUILD) == $darwin} {
-                set env(DYLD_LIBRARY_PATH) ${modulePath}/$moduleName/builds/$env(BUILD)/bin:$env(DYLD_LIBRARY_PATH)
-                set env(TCLLIBPATH) "${modulePath}/$moduleName/Wrapping/Tcl $env(TCLLIBPATH)"
-            } elseif {$env(BUILD) == $windows} {
-                set env(Path) $modulePath/$moduleName/builds/$env(BUILD)/bin/debug\;$env(Path)
-                set env(TCLLIBPATH) "$modulePath/$moduleName/Wrapping/Tcl $env(TCLLIBPATH)"
+            lappend ::env(SLICER_MODULES_TO_REQUIRE) $moduleName
+            if {$::env(BUILD) == $solaris || 
+                $::env(BUILD) == $linux} {
+                set ::env(LD_LIBRARY_PATH) ${modulePath}/$moduleName/builds/$::env(BUILD)/bin:$::env(LD_LIBRARY_PATH)
+                set ::env(TCLLIBPATH) "${modulePath}/$moduleName/Wrapping/Tcl $::env(TCLLIBPATH)"
+            } elseif {$::env(BUILD) == $darwin} {
+                set ::env(DYLD_LIBRARY_PATH) ${modulePath}/$moduleName/builds/$::env(BUILD)/bin:$::env(DYLD_LIBRARY_PATH)
+                set ::env(TCLLIBPATH) "${modulePath}/$moduleName/Wrapping/Tcl $::env(TCLLIBPATH)"
+            } elseif {$::env(BUILD) == $windows} {
+                set ::env(Path) $modulePath/$moduleName/builds/$::env(BUILD)/bin/debug\;$::env(Path)
+                set ::env(TCLLIBPATH) "$modulePath/$moduleName/Wrapping/Tcl $::env(TCLLIBPATH)"
             } else {
-                    puts "Modules: Invalid build $env(BUILD)"
+                    puts "Modules: Invalid build $::env(BUILD)"
                     exit
             }
         }
@@ -280,10 +246,10 @@ foreach modulePath $modulePaths {
 }
 
 
-if { $env(BUILD) == $darwin } {
+if { $::env(BUILD) == $darwin } {
     # vtk uses the LD_ version to do it's own search for what to load
     # so need to set this even though MAC OSX uses the DYLD_ version
-    set env(LD_LIBRARY_PATH) $env(DYLD_LIBRARY_PATH)
+    set ::env(LD_LIBRARY_PATH) $::env(DYLD_LIBRARY_PATH)
 }
 
 
@@ -296,7 +262,7 @@ set argv0 [lindex $argv 0]
 if { $argv == "-y" || $argv0 == "--agree_to_license" } {
     set argv [lreplace $argv 0 0]
 } else {
-    if { ![file exists $env(HOME)/.IAgreeToSlicersLicense] } {
+    if { ![file exists $::env(HOME)/.IAgreeToSlicersLicense] } {
         set resp [tk_messageBox -message $msg -type okcancel -title "Slicer2"]
 
         if {$resp == "cancel"} {
@@ -315,7 +281,7 @@ if { [string match *.tcl $argv0] } {
     set mainscript $argv0
     set argv [lreplace $argv 0 0] ;# trim the script name off 
 } else {
-    set mainscript $env(SLICER_HOME)/Base/tcl/Go.tcl
+    set mainscript $::env(SLICER_HOME)/Base/tcl/Go.tcl
 }
 
 
@@ -358,20 +324,20 @@ foreach a $argv {
 }
 set argv $newargv
 
-if {$env(BUILD) == $solaris || 
-    $env(BUILD) == $darwin ||
-    $env(BUILD) == $linux} {
+if {$::env(BUILD) == $solaris || 
+    $::env(BUILD) == $darwin ||
+    $::env(BUILD) == $linux} {
         # - need to run the specially modified tcl interp in the executable 'vtk' on unix
         # - don't put process in background so that jdemo can track its status
         regsub -all "{|}" $argv "\\\"" argv
-        set fp [open "| csh -c \"$env(VTK_DIR)/bin/vtk $mainscript $argv \" |& cat" r]
-    } elseif {$env(BUILD) == $windows} {
+        set fp [open "| csh -c \"$::env(VTK_DIR)/bin/vtk $mainscript $argv \" |& cat" r]
+    } elseif {$::env(BUILD) == $windows} {
         # put slicer in the background on windows so it won't be "Not Responding" in
         # task manager
         regsub -all "{|}" $argv "" argv
-        set fp [open "| \"$env(TCL_BIN_DIR)/wish84.exe\" $mainscript $argv" r]
+        set fp [open "| \"$::env(TCL_BIN_DIR)/wish84.exe\" $mainscript $argv" r]
     } else {
-        puts stderr "Run: Unknown build: $env(BUILD)"
+        puts stderr "Run: Unknown build: $::env(BUILD)"
         exit
     }
 

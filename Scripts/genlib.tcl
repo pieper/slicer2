@@ -130,7 +130,7 @@ cd $cwd
 # - use it to set your local environment and then your change won't 
 #   be overwritten when this file is updated
 #
-set localvarsfile ${SLICER_HOME}/slicer_variables.tcl
+set localvarsfile $SLICER_HOME/slicer_variables.tcl
 catch {set localvarsfile [file normalize $localvarsfile]}
 if { [file exists $localvarsfile] } {
     puts "Sourcing $localvarsfile"
@@ -141,18 +141,12 @@ if { [file exists $localvarsfile] } {
 }
 
 
-if { $argc == 0 } {
-    set LIB $SLICER_HOME/Lib/$env(BUILD)
-} else {
-    set LIB $argv
-}
-
 if { $GENLIB(clean) } {
-    file delete -force $LIB
+    file delete -force $SLICER_LIB
 }
 
-if { ![file exists $LIB] } {
-    file mkdir $LIB
+if { ![file exists $SLICER_LIB] } {
+    file mkdir $SLICER_LIB
 }
 
 # set up cross platform files to check for existence
@@ -163,8 +157,8 @@ switch $tcl_platform(os) {
         set isWindows 0
         set tclTestFile $TCL_BIN_DIR/tclsh8.4
         set tkTestFile  $TCL_BIN_DIR/wish8.4
-        set itclTestFile $TCL_LIB_DIR/libitclstub3.2.so
-        set iwidgetsTestFile $TCL_LIB_DIR/iwidgets4.0.2/iwidgets.tcl
+        set itclTestFile $TCL_LIB_DIR/libitclstub3.2.a
+        set iwidgetsTestFile $TCL_LIB_DIR/iwidgets4.0.1/iwidgets.tcl
         set bltTestFile $TCL_BIN_DIR/bltwish
         set vtkTestFile $VTK_DIR/bin/vtk
         set vtkTclLib $TCL_LIB_DIR/libtcl8.4.so 
@@ -178,7 +172,7 @@ switch $tcl_platform(os) {
         set tclTestFile $TCL_BIN_DIR/tclsh84.exe
         set tkTestFile  $TCL_BIN_DIR/wish84.exe
         set itclTestFile $TCL_LIB_DIR/itcl3.2/itcl32.dll
-        set iwidgetsTestFile $TCL_LIB_DIR/iwidgets4.0.2/iwidgets.tcl
+        set iwidgetsTestFile $TCL_LIB_DIR/iwidgets4.0.1/iwidgets.tcl
         set bltTestFile $TCL_BIN_DIR/bltwish.exe
         set vtkTestFile $VTK_DIR/bin/vtk.exe
         set vtkTclLib $TCL_LIB_DIR/tcl84.lib
@@ -193,7 +187,6 @@ switch $tcl_platform(os) {
 #
 
 # set in slicer_vars
-# set CMAKE $LIB/cmake/CMake-build/bin/cmake
 if { ![file exists $CMAKE] } {
     file mkdir $CMAKE_PATH
     cd $SLICER_LIB
@@ -202,7 +195,7 @@ if { ![file exists $CMAKE] } {
     runcmd cvs -z3 -d :pserver:anonymous@www.cmake.org:/cvsroot/CMake checkout -r $cmakeTag CMake
 
     if {$isWindows} {
-        append winMsg "cd $LIB/cmake/CMake-build\n../CMake/bootstrap\nmake\n"
+        append winMsg "cd $SLICER_LIB/CMake-build\n../CMake/bootstrap\nmake\n"
 
     } else {
         cd $CMAKE_PATH
@@ -218,70 +211,70 @@ if { ![file exists $CMAKE] } {
 
 # on windows, tcl won't build right, as can't configure, so save commands have to run
 if { ![file exists $tclTestFile] } {
-    file mkdir $LIB/tcl
-    cd $LIB/tcl
+    file mkdir $SLICER_LIB/tcl
+    cd $SLICER_LIB/tcl
 
     runcmd cvs -d :pserver:anonymous:@cvs.sourceforge.net:/cvsroot/tcl login
     runcmd cvs -z3 -d :pserver:anonymous@cvs.sourceforge.net:/cvsroot/tcl checkout -r $tclTag tcl
 
     if {$isWindows} {
-        append winMsg "cd $LIB/tcl/tcl/unix\n./configure --enable-threads --prefix=$LIB/tcl-build\nmake\nmake install\n"
+        append winMsg "cd $SLICER_LIB/tcl/tcl/unix\n./configure --enable-threads --prefix=$SLICER_LIB/tcl-build\nmake\nmake install\n"
     } else {
-        cd $LIB/tcl/tcl/unix
+        cd $SLICER_LIB/tcl/tcl/unix
 
-        runcmd ./configure --enable-threads --prefix=$LIB/tcl-build
+        runcmd ./configure --enable-threads --prefix=$SLICER_LIB/tcl-build
         runcmd make
         runcmd make install
     }
 }
 
 if { ![file exists $tkTestFile] } {
-    cd $LIB/tcl
+    cd $SLICER_LIB/tcl
 
     runcmd cvs -d :pserver:anonymous:@cvs.sourceforge.net:/cvsroot/tktoolkit login
     runcmd cvs -z3 -d :pserver:anonymous@cvs.sourceforge.net:/cvsroot/tktoolkit checkout -r $tkTag tk
 
     if {$isWindows} {
-        append winMsg "cd $LIB/tcl/tk/unix\n./configure --with-tcl=$LIB/tcl-build/lib --prefix=$LIB/tcl-build\nmake\make install"
+        append winMsg "cd $SLICER_LIB/tcl/tk/unix\n./configure --with-tcl=$SLICER_LIB/tcl-build/lib --prefix=$SLICER_LIB/tcl-build\nmake\make install"
     } else {
-        cd $LIB/tcl/tk/unix
+        cd $SLICER_LIB/tcl/tk/unix
 
-        runcmd ./configure --with-tcl=$LIB/tcl-build/lib --prefix=$LIB/tcl-build
+        runcmd ./configure --with-tcl=$SLICER_LIB/tcl-build/lib --prefix=$SLICER_LIB/tcl-build
         runcmd make
         runcmd make install
     }
 }
 
 if { ![file exists $itclTestFile] } {
-    cd $LIB/tcl
+    cd $SLICER_LIB/tcl
 
     runcmd cvs -d :pserver:anonymous:@cvs.sourceforge.net:/cvsroot/incrtcl login
     runcmd cvs -z3 -d :pserver:anonymous@cvs.sourceforge.net:/cvsroot/incrtcl checkout -r $itclTag incrTcl
 
-    cd $LIB/tcl/incrTcl
+    cd $SLICER_LIB/tcl/incrTcl
 
     exec chmod +x ../incrTcl/configure 
     if {$isWindows} {
-        append winMsg "cd $LIB/tcl/incrTcl\n./configure --with-tcl=$LIB/tcl-build/lib --with-tk=$LIB/tcl-build/lib --prefix=$LIB/tcl-build\nmake all\nmake install\n"
+        append winMsg "cd $SLICER_LIB/tcl/incrTcl\n./configure --with-tcl=$SLICER_LIB/tcl-build/lib --with-tk=$SLICER_LIB/tcl-build/lib --prefix=$SLICER_LIB/tcl-build\nmake all\nmake install\n"
     } else {
-        runcmd ../incrTcl/configure --with-tcl=$LIB/tcl-build/lib --with-tk=$LIB/tcl-build/lib --prefix=$LIB/tcl-build
+        runcmd ../incrTcl/configure --with-tcl=$SLICER_LIB/tcl-build/lib --with-tk=$SLICER_LIB/tcl-build/lib --prefix=$SLICER_LIB/tcl-build
         runcmd make all
         runcmd make install
     }
 }
 
 if { ![file exists $iwidgetsTestFile] } {
-    cd $LIB/tcl
+    cd $SLICER_LIB/tcl
 
     runcmd cvs -d :pserver:anonymous:@cvs.sourceforge.net:/cvsroot/incrtcl login
     runcmd cvs -z3 -d :pserver:anonymous@cvs.sourceforge.net:/cvsroot/incrtcl checkout -r $iwidgetsTag iwidgets
 
 
     if {$isWindows} {
-        append winMsg "cd $LIB/tcl/iwidgets\n./configure --with-tcl=$LIB/tcl-build/lib --with-tk=$LIB/tcl-build/lib --with-itcl=$LIB/tcl/incrTcl --prefix=$LIB/tcl-build\nmake install\n"
+        append winMsg "cd $SLICER_LIB/tcl/iwidgets\n./configure --with-tcl=$SLICER_LIB/tcl-build/lib --with-tk=$SLICER_LIB/tcl-build/lib --with-itcl=$SLICER_LIB/tcl/incrTcl --prefix=$SLICER_LIB/tcl-build\nmake install\n"
     } else {
-        cd $LIB/tcl/iwidgets
-        runcmd ../iwidgets/configure --with-tcl=$LIB/tcl-build/lib --with-tk=$LIB/tcl-build/lib --with-itcl=$LIB/tcl/incrTcl --prefix=$LIB/tcl-build
+        cd $SLICER_LIB/tcl/iwidgets
+        runcmd ../iwidgets/configure --with-tcl=$SLICER_LIB/tcl-build/lib --with-tk=$SLICER_LIB/tcl-build/lib --with-itcl=$SLICER_LIB/tcl/incrTcl --prefix=$SLICER_LIB/tcl-build
         # make all doesn't do anything... 
         runcmd make all
         runcmd make install
@@ -293,17 +286,17 @@ if { ![file exists $iwidgetsTestFile] } {
 # Get and build blt
 #
 
-if {![file exists $bltTestFile] } {
-    cd $LIB/tcl
+if { ![file exists $bltTestFile] } {
+    cd $SLICER_LIB/tcl
     
     runcmd cvs -d:pserver:anonymous:@cvs.sourceforge.net:/cvsroot/blt login
     runcmd cvs -z3 -d:pserver:anonymous:@cvs.sourceforge.net:/cvsroot/blt co -r $bltTag blt
 
     if {$isWindows} {
-        append winMsg "cd $LIB/tcl/blt\n./configure --with-tcl=$LIB/tcl-build --with-tk=$LIB/tcl-build --prefix=$LIB/tcl-build\nmake\nmake install"
+        append winMsg "cd $SLICER_LIB/tcl/blt\n./configure --with-tcl=$SLICER_LIB/tcl-build --with-tk=$SLICER_LIB/tcl-build --prefix=$SLICER_LIB/tcl-build\nmake\nmake install"
     } else {
-        cd $LIB/tcl/blt
-        runcmd ./configure --with-tcl=$LIB/tcl-build --with-tk=$LIB/tcl-build --prefix=$LIB/tcl-build 
+        cd $SLICER_LIB/tcl/blt
+        runcmd ./configure --with-tcl=$SLICER_LIB/tcl-build --with-tk=$SLICER_LIB/tcl-build --prefix=$SLICER_LIB/tcl-build 
         runcmd make
         runcmd make install
     }
@@ -315,16 +308,16 @@ if {![file exists $bltTestFile] } {
 #
 
 if { ![file exists $vtkTestFile] } {
-    cd $LIB
+    cd $SLICER_LIB
 
     runcmd cvs -d :pserver:anonymous:vtk@public.kitware.com:/cvsroot/VTK login
     runcmd cvs -z3 -d :pserver:anonymous@public.kitware.com:/cvsroot/VTK checkout -r $vtkTag VTK
 
-    file mkdir $LIB/VTK-build
-    cd $LIB/VTK-build
+    file mkdir $SLICER_LIB/VTK-build
+    cd $SLICER_LIB/VTK-build
 
     if {$isWindows} {
-    append winMsg "cd $LIB/VTK-build\n$CMAKE -G$GENERATOR -DBUILD_SHARED_LIBS:BOOL=ON -DBUILD_TESTING:BOOL=OFF -DVTK_USE_CARBON:BOOL=OFF -DVTK_USE_X:BOOL=ON -DVTK_WRAP_TCL:BOOL=ON -DVTK_USE_HYBRID:BOOL=ON -DVTK_USE_PATENTED:BOOL=ON -DTCL_INCLUDE_PATH:PATH=../tcl-build/include -DTK_INCLUDE_PATH:PATH=../tcl-build/include -DTCL_LIBRARY:FILEPATH=$vtkTclLib -DTK_LIBRARY:FILEPATH=$vtkTkLib -DTCL_TCLSH:FILEPATH=$vtkTclsh ../VTK make -j4\n"
+    append winMsg "cd $SLICER_LIB/VTK-build\n$CMAKE -G$GENERATOR -DBUILD_SHARED_LIBS:BOOL=ON -DBUILD_TESTING:BOOL=OFF -DVTK_USE_CARBON:BOOL=OFF -DVTK_USE_X:BOOL=ON -DVTK_WRAP_TCL:BOOL=ON -DVTK_USE_HYBRID:BOOL=ON -DVTK_USE_PATENTED:BOOL=ON -DTCL_INCLUDE_PATH:PATH=../tcl-build/include -DTK_INCLUDE_PATH:PATH=../tcl-build/include -DTCL_LIBRARY:FILEPATH=$vtkTclLib -DTK_LIBRARY:FILEPATH=$vtkTkLib -DTCL_TCLSH:FILEPATH=$vtkTclsh ../VTK make -j4\n"
     } else {
         runcmd $CMAKE \
             -G$GENERATOR \
@@ -335,8 +328,8 @@ if { ![file exists $vtkTestFile] } {
             -DVTK_WRAP_TCL:BOOL=ON \
             -DVTK_USE_HYBRID:BOOL=ON \
             -DVTK_USE_PATENTED:BOOL=ON \
-            -DTCL_INCLUDE_PATH:PATH=../tcl-build/include \
-            -DTK_INCLUDE_PATH:PATH=../tcl-build/include \
+            -DTCL_INCLUDE_PATH:PATH=$TCL_INCLUDE_DIR \
+            -DTK_INCLUDE_PATH:PATH=$TCL_INCLUDE_DIR \
             -DTCL_LIBRARY:FILEPATH=$vtkTclLib \
             -DTK_LIBRARY:FILEPATH=$vtkTkLib \
             -DTCL_TCLSH:FILEPATH=$vtkTclsh \
@@ -351,25 +344,25 @@ if { ![file exists $vtkTestFile] } {
 #
 
 if { ![file exists $itkTestFile] } {
-    cd $LIB
+    cd $SLICER_LIB
 
     runcmd cvs -d :pserver:anoncvs:@www.itk.org:/cvsroot/Insight login
     runcmd cvs -z3 -d :pserver:anoncvs@www.itk.org:/cvsroot/Insight checkout -r $itkTag Insight
 
-    file mkdir $LIB/Insight-build
-    cd $LIB/Insight-build
+    file mkdir $SLICER_LIB/Insight-build
+    cd $SLICER_LIB/Insight-build
 
 
     if {$isWindows} {
-    append winMsg "cd $LIB/Insight-build\nruncmd $CMAKE -G$GENERATOR -DBUILD_SHARED_LIBS:BOOL=ON -DBUILD_EXAMPLES:BOOL=OFF -DBUILD_TESTING:BOOL=OFF ../Insight\nmake -j4\n"
+    append winMsg "cd $SLICER_LIB/Insight-build\nruncmd $CMAKE -G$GENERATOR -DBUILD_SHARED_LIBS:BOOL=ON -DBUILD_EXAMPLES:BOOL=OFF -DBUILD_TESTING:BOOL=OFF ../Insight\nmake -j4\n"
     } else {
-    runcmd $CMAKE \
-        -G$GENERATOR \
-        -DBUILD_SHARED_LIBS:BOOL=ON \
-        -DBUILD_EXAMPLES:BOOL=OFF \
-        -DBUILD_TESTING:BOOL=OFF \
-        ../Insight
-    runcmd make -j4
+        runcmd $CMAKE \
+            -G$GENERATOR \
+            -DBUILD_SHARED_LIBS:BOOL=ON \
+            -DBUILD_EXAMPLES:BOOL=OFF \
+            -DBUILD_TESTING:BOOL=OFF \
+            ../Insight
+        runcmd make -j4
     }
 
 }

@@ -33,8 +33,13 @@ exec tclsh "$0" "$@"
 # - use it to set your local environment and then your change won't 
 #   be overwritten when this file is updated
 #
-set localvarsfile [file dirname [info script]]/../slicer_variables.tcl
-catch {set localvarsfile [file normalize $localvarsfile]}
+set cwd [pwd]
+cd [file dirname [info script]]
+cd ..
+set SLICER_HOME [pwd]
+cd $cwd
+set localvarsfile $SLICER_HOME/slicer_variables.tcl
+
 if { [file exists $localvarsfile] } {
     source $localvarsfile
 } else {
@@ -63,12 +68,11 @@ set VTK_ARG2 "-DVTK_DIR:PATH=$VTK_DIR"
 switch $tcl_platform(os) {
     "SunOS" {
         # in order to bypass warnings about Source files
-        #set VTK_ARG3 "-DCMAKE_BACKWARDS_COMPATIBILITY:STRING=1.7"
         set VTK_ARG3 "-DDUMMY:BOOL=ON"
         # explicitly specify the compiler used to compile the version of vtk that 
         # we link with
-        set VTK_ARG4 "-DCMAKE_CXX_COMPILER:STRING=/local/os/bin/$COMPILER"
-        set VTK_ARG5 "-DCMAKE_CXX_COMPILER_FULLPATH:FILEPATH=/local/os/bin/$COMPILER"
+        set VTK_ARG4 "-DCMAKE_CXX_COMPILER:STRING=$COMPILER_PATH/$COMPILER"
+        set VTK_ARG5 "-DCMAKE_CXX_COMPILER_FULLPATH:FILEPATH=$COMPILER_PATH/$COMPILER"
     }
     "Darwin" {
         set VTK_ARG3 "-DVTK_WRAP_HINTS:FILEPATH=$VTK_SRC_DIR/Wrapping/hints"
@@ -110,16 +114,22 @@ if { [info exists env(SLICER_MODULES)] } {
 
 set TARGETS ""
 foreach dir $modulePaths {
-    if { ![file isdirectory $dir] } {continue}
+    if { ![file isdirectory $dir] } {continue} ;# skip non-dirctory
     set moduleName [file tail $dir]
     # if it's not the custom one (the example) 
-    # but starts with vtk and has some c++ code, and has a cxx/CMakeLists.txt file append it to the list of targets
+    # but starts with vtk and has some c++ code, 
+    # and has a cxx/CMakeLists.txt file append it to the list of targets
     if { [string match "vtk*" $moduleName] 
-         && ![string match "*CustomModule*" $moduleName] 
-         && [file exists $dir/cxx] 
-         && [file exists $dir/cxx/CMakeListsLocal.txt]
-         && [llength [glob -nocomplain $dir/cxx/*.cxx]] > 0 } {
+           && ![string match "*CustomModule*" $moduleName] 
+           && [file exists $dir/cxx] 
+           && [file exists $dir/cxx/CMakeListsLocal.txt]
+           && [llength [glob -nocomplain $dir/cxx/*.cxx]] > 0 } {
 
+        #
+        # if there's a cmaker_local.tcl file, it means
+        # the module depends on other modules, so put it at
+        # the end of the list
+        #
         if {[file exists [file join $dir cmaker_local.tcl]]} {
             lappend TARGETS $dir
         } else {
@@ -160,38 +170,43 @@ for {set i 0} {$i < $argc} {incr i} {
     set a [lindex $OrigArgv $i]
     set AttributeFlag  0  
     switch -glob -- $a {
-        "--clean"    {  puts "Removing build directories"
-                        set CLEANFLAG 1
-                        set AttributeFlag 1 
-                   }
-        "--no-cmake" {  puts "Skipping cmake"
-                        set NOCMAKEFLAG 1
-                    set AttributeFlag 1
-                 }
-    "--verbose"  { puts "Compiling in verbose mode"
-                       set VTK_ARG_VERBOSE "-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON"
-                   set AttributeFlag 1
-                 } 
-        "--debug"    { puts "Compiling in debug mode (-g flag)" 
-                   set VTK_ARG_DEBUG   "-DCMAKE_BUILD_TYPE:STRING=Debug"
-                   set AttributeFlag 1
-                 }
-    default      { if {[string range $a 0 1 ] == "--"} { 
-                     puts stderr "Do not know option $a. Currently the following attributes are defined: "
-                     puts stderr " --clean: Removing build directories \n --no-cmake: Skipping cmake \n --verbose: Compiling in verbose mode \n --debug: Compiling in debug mode (-g flag)" 
-                     exit 1
-                   }  
-                    }
+        "--clean" { 
+            puts "Removing build directories"
+            set CLEANFLAG 1
+            set AttributeFlag 1 
+        }
+        "--no-cmake" {  
+            puts "Skipping cmake"
+            set NOCMAKEFLAG 1
+            set AttributeFlag 1
+        }
+        "--verbose" { 
+            puts "Compiling in verbose mode"
+            set VTK_ARG_VERBOSE "-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON"
+            set AttributeFlag 1
+        } 
+        "--debug" {
+            puts "Compiling in debug mode (-g flag)" 
+            set VTK_ARG_DEBUG   "-DCMAKE_BUILD_TYPE:STRING=Debug"
+            set AttributeFlag 1
+        }
+        default {
+            if {[string range $a 0 1 ] == "--"} { 
+                puts stderr "Do not know option $a. Currently the following attributes are defined: "
+                puts stderr " --clean: Removing build directories \n --no-cmake: Skipping cmake \n --verbose: Compiling in verbose mode \n --debug: Compiling in debug mode (-g flag)" 
+                exit 1
+            }  
+        }
     }
 
     # remove flag from the list if it was an attribute      
     if {$AttributeFlag} {    
-    set id [lsearch $argv $a] 
-    set argv [lreplace $argv $id $id]
-    if {[llength $argv] == 0} {
-        set argv ""
-        break
-    }
+        set id [lsearch $argv $a] 
+        set argv [lreplace $argv $id $id]
+        if {[llength $argv] == 0} {
+            set argv ""
+            break
+        }
     }
 }
 
