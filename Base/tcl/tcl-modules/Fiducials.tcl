@@ -101,7 +101,7 @@ proc FiducialsInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.42 $} {$Date: 2003/12/03 01:40:27 $}]
+        {$Revision: 1.43 $} {$Date: 2004/01/01 20:32:27 $}]
     
     # Initialize module-level variables
     
@@ -1139,17 +1139,20 @@ proc FiducialsResetVariables {} {
 #-------------------------------------------------------------------------------
 # .PROC FiducialsCheckListExistence
 # 
-# .ARGS
+# .ARGS return fid value if requested
 # .END
 #-------------------------------------------------------------------------------
-proc FiducialsCheckListExistence {name} {
+proc FiducialsCheckListExistence {name {argfid ""}} {
 
     global Fiducials
     
+    if { $argfid != "" } {
+        upvar $argfid fid
+    }
     set existingLists $Fiducials(idList)
     foreach fid $existingLists {
         if { [Fiducials($fid,node) GetName] == $name & [lsearch $Fiducials(listOfNames) $name] != -1} {
-            return 1 
+            return 1
         } 
     } 
     # if no list with that name is found, return 0
@@ -1204,7 +1207,7 @@ proc FiducialsCreateFiducialsList {type name {textSize "6"} {symbolSize "6"}} {
 # 
 # .END
 #-------------------------------------------------------------------------------
-proc FiducialsCreatePointFromWorldXYZ {type x y z  {listName ""} {name ""} {selected 1} } {
+proc FiducialsCreatePointFromWorldXYZ { type x y z  {listName ""} {name ""} {selected 1} } {
 
     global Fiducials Point Module Select
 
@@ -1963,7 +1966,7 @@ proc FiducialsAddActiveListFrame {frame scrollHeight scrollWidth {defaultNames "
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc FiducialsInteractActiveCB {} {
+proc FiducialsInteractActiveCB {args} {
     global Fiducials
 
 
@@ -1971,24 +1974,25 @@ proc FiducialsInteractActiveCB {} {
         return
     }
 
-    # special flag to keep slicer view controls from activating - TODO: generalize
-    set ::FiducialEventHandled 1
+    if { [info command Fiducials(csys,actor)] == "" } { 
+        return
+    }
 
-    # turn off rendering until all updates and callbacks are done
-    set $::View(render_on) 0
-
-    set xyz [__fid_pw GetPosition]
+    foreach var "x y z" val [Fiducials(csys,actor) GetPosition] {
+        set $var $val
+    }  
 
     # update fiducial
-    eval Point($Fiducials(activePointID),node) SetXYZ $xyz
+    Point($Fiducials(activePointID),node) SetXYZ $x $y $z
+    eval "Point($Fiducials(activePointID),node) SetOrientationWXYZ [Fiducials(csys,actor) GetOrientationWXYZ]"
     FiducialsUpdateMRML
 
     # update slice location
     for {set slice 0} {$slice < 3} {incr slice} {
         switch [$::Interactor(activeSlicer) GetOrientString $slice] {
-            "Axial" { MainSlicesSetOffset $slice [lindex $xyz 2]}
-            "Sagittal" { MainSlicesSetOffset $slice [lindex $xyz 0]}
-            "Coronal" { MainSlicesSetOffset $slice [lindex $xyz 1]}
+            "Axial" { MainSlicesSetOffset $slice $z}
+            "Sagittal" { MainSlicesSetOffset $slice $x}
+            "Coronal" { MainSlicesSetOffset $slice $y}
         }
         RenderSlice $slice
     }
@@ -2003,6 +2007,7 @@ proc FiducialsInteractActiveCB {} {
 
     set $::View(render_on) 1
     Render3D
+
 }
 
 #-------------------------------------------------------------------------------
@@ -2012,7 +2017,7 @@ proc FiducialsInteractActiveCB {} {
 # .END
 #-------------------------------------------------------------------------------
 proc FiducialsInteractActiveStart {} {
-    global Fiducials
+    global Fiducials Csys
 
     if { $Fiducials(activePointID) == "None" } {
         return
@@ -2023,35 +2028,17 @@ proc FiducialsInteractActiveStart {} {
     #
     FiducialsInteractActiveEnd
 
-    if { [info commands __fid_iren] == "" } {
-        # TODO - it looks like this cannot be created and detroyed or vtk will crash
-        vtkRenderWindowInteractor __fid_iren
-        __fid_iren SetRenderWindow [.tViewer.fViewWin GetRenderWindow]
+    if { [info command Fiducials(csys,actor)] == "" } { 
+        CsysCreate Fiducials csys -1 -1 -1
+        set ::Module(Fiducials,procXformMotion) FiducialsInteractActiveCB 
     }
+    Fiducials(csys,actor) SetOrientation 0 0 0
+    eval "Fiducials(csys,actor) RotateWXYZ [Point($Fiducials(activePointID),node) GetOrientationWXYZ]"
+    eval "Fiducials(csys,actor) SetPosition [Point($Fiducials(activePointID),node) GetXYZ]"
 
-    vtkInteractorStyle __fid_istyle 
-    __fid_iren SetInteractorStyle __fid_istyle
-
-    vtkOutlineSource __fid_source
-    set bound [expr $::View(fov) / 2.0]
-    foreach dim [Point($Fiducials(activePointID),node) GetXYZ] {
-        set dim [expr abs($dim)]
-        if { $dim > $bound } {
-            set bound $dim
-        }
-    }
-    set bound [expr 1.2 * $bound]
-    __fid_source SetBounds -$bound $bound -$bound $bound -$bound $bound 
-
-    vtkPointWidget __fid_pw
-    __fid_pw SetInteractor __fid_iren
-    __fid_pw SetInput [__fid_source GetOutput]
-    __fid_pw PlaceWidget
-    __fid_pw AddObserver InteractionEvent FiducialsInteractActiveCB
-    eval __fid_pw SetPosition [Point($Fiducials(activePointID),node) GetXYZ]
-    __fid_pw On
-
-    Render3D
+    set Csys(active) 1
+    MainAddActor Fiducials(csys,actor)
+    FiducialsInteractActiveCB 
 }
 
 
@@ -2064,19 +2051,12 @@ proc FiducialsInteractActiveStart {} {
 proc FiducialsInteractActiveEnd {} {
     global Fiducials
 
-    # need to reset these inputs or something in the 
-    # widget pipeline crashes on delete
-    catch {__fid_iren SetInteractorStyle ""}
-    # catch {__fid_iren SetRenderWindow ""} ;# TODO - see bug above
-    catch {__fid_pw Off}
-    catch {__fid_pw SetInteractor ""}
-    catch {__fid_pw SetInput ""}
+    if { [info command Fiducials(csys,actor)] == "" } { 
+        return
+    }
 
-    # catch "__fid_iren Delete" ;# TODO - see bug above
-    catch "__fid_istyle Delete"
-    catch "__fid_source Delete"
-    catch "__fid_pw Delete"
-
+    set Csys(active) 0
+    MainRemoveActor Fiducials(csys,actor)
     Render3D
 }
 
