@@ -104,7 +104,7 @@ proc FiducialsInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.52 $} {$Date: 2004/06/04 16:14:42 $}]
+        {$Revision: 1.53 $} {$Date: 2004/08/10 19:51:48 $}]
     
     # Initialize module-level variables
     
@@ -1795,6 +1795,7 @@ proc FiducialsSelectionUpdate {fid pid on} {
     foreach menu $Fiducials(mbActiveList) {
         # get the corresponding scrollbox
         set scroll [lindex $Fiducials(scrollActiveList) $counter]
+        if { $scroll == "" } { continue }
         if {[$menu cget -text] == $Fiducials($fid,name)} {
                 # clear everything
                 $scroll selection clear 0 end
