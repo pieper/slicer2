@@ -94,7 +94,7 @@ proc MainSlicesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainSlices \
-        {$Revision: 1.42 $} {$Date: 2002/07/26 23:26:31 $}]
+        {$Revision: 1.43 $} {$Date: 2002/10/02 11:51:20 $}]
 
     # Initialize Variables
     set Slice(idList) "0 1 2"
@@ -927,24 +927,24 @@ proc MainSlicesSetOffset {s {value ""}} {
 
     # figure out what offset to use
     if {$value == ""} {
-    # this means we were called directly from the slider w/ no value param
-    # and the variable Slice($s,offset) has already been set by user
-    set value $Slice($s,offset)
+        # this means we were called directly from the slider w/ no value param
+        # and the variable Slice($s,offset) has already been set by user
+        set value $Slice($s,offset)
     } elseif {$value == "Prev"} {
-    set value [expr $Slice($s,offset) - 1]
+        set value [expr $Slice($s,offset) - 1]
     } elseif {$value == "Next"} {
-    set value [expr $Slice($s,offset) + 1]
+        set value [expr $Slice($s,offset) + 1]
     }
     
     # validate value
     if {[ValidateFloat $value] == 0}  {
-    # don't change slice offset if value is bad
-    # Set slider to the last used offset for this orient
-    set value [Slicer GetOffset $s]
+        # don't change slice offset if value is bad
+        # Set slider to the last used offset for this orient
+        set value [Slicer GetOffset $s]
     } 
 
     set Slice($s,offset) $value
-    
+
     Slicer SetOffset $s $value
 
     MainSlicesRefreshClip $s
@@ -969,6 +969,11 @@ proc MainSlicesSetSliderRange {s} {
 
     # Update Offset 
     set Slice($s,offset) [Slicer GetOffset $s]
+
+    # adjust hidden scale widgets in Alignments if module is loaded
+    if { [info command AlignmentsSlicesSetSliderRange] != "" } {
+        AlignmentsSlicesSetSliderRange $s
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -1086,8 +1091,8 @@ proc MainSlicesSetOrient {s orient} {
     # Set slider increments
     MainSlicesSetOffsetIncrement $s
     
-        # Set slider to the last used offset for this orient
-        set Slice($s,offset) [Slicer GetOffset $s]
+    # Set slider to the last used offset for this orient
+    set Slice($s,offset) [Slicer GetOffset $s]
     
 
     # Change text on menu button
@@ -1588,20 +1593,20 @@ proc MainSlicesSetOffsetIncrement {s {incr ""}} {
     set orient [Slicer GetOrientString $s]
     if {$orient == "AxiSlice" || $orient == "CorSlice" \
         || $orient == "SagSlice" || $orient == "OrigSlice" } {
-    set incr 1    
+        set incr 1    
     }
     
     # if called without an incr arg it's from user entry
     if {$incr == ""} {
-    if {[ValidateFloat $Slice($s,offsetIncrement)] == 0} {
-        tk_messageBox -message "The increment must be a number."
-        
-        # reset the incr
-        set Slice($s,offsetIncrement) 1
-        return
-    }
-    # if user-entered incr is okay then do the rest of the procedure
-    set incr $Slice($s,offsetIncrement)
+        if {[ValidateFloat $Slice($s,offsetIncrement)] == 0} {
+            tk_messageBox -message "The increment must be a number."
+            
+            # reset the incr
+            set Slice($s,offsetIncrement) 1
+            return
+        }
+        # if user-entered incr is okay then do the rest of the procedure
+        set incr $Slice($s,offsetIncrement)
     }
 
     # Change Slice's offset increment variable
