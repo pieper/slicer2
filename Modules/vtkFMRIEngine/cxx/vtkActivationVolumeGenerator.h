@@ -57,13 +57,21 @@ public:
     vtkFloatArray *GetTimeCourse(int i, int j, int k);
 
     // Description:
-    // Set the activation detector.
+    // Sets the activation detector.
     void SetDetector(vtkActivationDetector *detector);
 
     // Description:
-    // Set lower threshold.
+    // Sets lower threshold.
     void SetLowerThreshold(int low) {lowerThreshold = low;}
 
+    // Description:
+    // Gets low range. 
+    float GetLowRange() {return lowRange;}
+ 
+    // Description:
+    // Gets high range. 
+    float GetHighRange() {return highRange;}
+    
 protected:
     vtkActivationVolumeGenerator();
     ~vtkActivationVolumeGenerator();
@@ -71,6 +79,8 @@ protected:
     void SimpleExecute(vtkImageData* input,vtkImageData* output);
     vtkActivationDetector *Detector;
     int lowerThreshold;
+    float lowRange;
+    float highRange;
 };
 
 
