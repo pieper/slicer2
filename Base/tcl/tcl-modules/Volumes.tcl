@@ -99,7 +99,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.88 $} {$Date: 2003/09/30 12:39:14 $}]
+            {$Revision: 1.89 $} {$Date: 2003/10/02 14:48:45 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -1762,7 +1762,8 @@ proc VolumesReformatSave {} {
     Volumes(reformatter) SetInput [Volume($Volume(activeID),vol) GetOutput]
     Volumes(reformatter) SetWldToIjkMatrix [[Volume($Volume(activeID),vol) GetMrmlNode] GetWldToIjk]
     Volumes(reformatter) SetInterpolate 1
-    Volumes(reformatter) SetResolution [lindex [Volume($Volume(activeID),node) GetDimensions] 0]
+    set resolution [lindex [Volume($Volume(activeID),node) GetDimensions] 0]
+    Volumes(reformatter) SetResolution $resolution
     # Volumes(reformatter) SetFieldOfView [expr [lindex [Volume($Volume(activeID),node) GetDimensions] 0] * [lindex [Volume($Volume(activeID),node) GetSpacing] 0]]
     set maxfov 0
     for {set i 0} {$i < 2} {incr i} {
@@ -1809,6 +1810,9 @@ proc VolumesReformatSave {} {
     }
     set Gui(progressText) "Done!"
     Volumes(writer) UpdateProgress 0
+
+    set spacing [expr $maxfov / (1. * $resolution)]
+    DevInfoWindow "Reformat complete: pixel spacing is $spacing x $spacing x 1.0 mm"
     
 }
 
