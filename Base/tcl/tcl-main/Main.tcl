@@ -459,7 +459,7 @@ proc MainInit {} {
 
         # Set version info
     lappend Module(versions) [ParseCVSInfo Main \
-        {$Revision: 1.114.2.1 $} {$Date: 2004/12/02 18:04:14 $}]
+        {$Revision: 1.114.2.2 $} {$Date: 2004/12/14 16:47:05 $}]
 
     # Call each "Init" routine that's not part of a module
     #-------------------------------------------
@@ -2134,6 +2134,12 @@ proc MainBuildCategoryMenu {} {
                         $Gui(mModules).m$category add command -label "$module" -command "Tab $module"
                     }
                 }
+            }
+            # check to see if any of the modules in this category had gui's
+            # if not, remove the menu for it
+            if {[$Gui(mModules).m$category index end] == "none"} {
+                if {$::Module(verbose)} { puts "Category $category has no entries with guis" }
+                $Gui(mModules) delete [$Gui(mModules) index $category]
             }
         } else {
             if {$::Module(verbose)} {
