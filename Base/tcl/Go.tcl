@@ -94,6 +94,7 @@ proc Usage { {msg ""} } {
     set msg "$msg\n   --exec <tcl code> : some code to execute after slicer loads"
     set msg "$msg\n   --all-info : print out all of the version info and continue"
     set msg "$msg\n   --enable-stereo : set the flag to allow use of frame sequential stereo"
+    set msg "$msg\n   --old-voxel-shift : start slicer with voxel coords in corner not center of image pixel"
     puts stderr $msg
     tk_messageBox -message $msg -title $SLICER(version) -type ok
 }
@@ -107,6 +108,7 @@ set verbose 0
 set Module(verbose) 0
 set SLICER(load-dicom) ""
 set SLICER(crystal-eyes-stereo) "false"
+set SLICER(old-voxel-shift) "false"
 set SLICER(load-analyze) ""
 set SLICER(load-freesurfer-volume) ""
 set SLICER(load-freesurfer-label-volume) ""
@@ -195,7 +197,9 @@ for {set i 0} {$i < $argc} {incr i} {
                 lappend SLICER(load-bxh) [lindex $argv $i]
             }
         }
- 
+        "--old-voxel-shift" {
+            set SLICER(old-voxel-shift) "true"
+        }
         "--script" {
             incr i
             if { $i == $argc } {
@@ -365,6 +369,14 @@ update
 
 puts "Loading Base..."
 package require vtkSlicerBase ;# this pulls in all of slicer
+
+if { $::SLICER(old-voxel-shift) == "true" } {
+    # for backwards compatibility with old slicer default
+    vtkMrmlVolumeNode _dummy_node
+    _dummy_node SetGlobalVoxelOffset 0.0;
+    _dummy_node Delete
+}
+
 
 # this is required by the widget interactors
 package require vtkinteraction
@@ -657,7 +669,7 @@ if { $SLICER(versionInfo) != "" } {
     set compilerName [Slicer GetCompilerName]
     set vtkVersion [Slicer GetVTKVersion]
     set libVersions "LibName1: VTK LibVersion1: ${vtkVersion} LibName2: TCL LibVersion2: ${tcl_patchLevel} LibName3: TK LibVersion2: ${tk_patchLevel}"
-    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: [ParseCVSInfo "" {$Name:  $}] CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.77 2004/07/24 15:00:59 pieper Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: [ParseCVSInfo "" {$Name:  $}] CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.78 2004/07/28 16:41:50 pieper Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
