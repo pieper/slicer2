@@ -104,7 +104,7 @@ proc DTMRIInit {} {
     set Module($m,author) "Lauren O'Donnell"
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.2 $} {$Date: 2004/02/24 00:08:34 $}]
+            {$Revision: 1.3 $} {$Date: 2004/02/24 23:18:12 $}]
 
     # Define Tabs
     #------------------------------------
@@ -2537,7 +2537,7 @@ proc DTMRISelectStartHyperStreamline {x y z} {
 
     # start pipeline (never use reformatted data here)
     #------------------------------------
-    DTMRI(vtk,$streamln) SetInput [DTMRI($t,data) GetOutput]
+    DTMRI(vtk,$streamln) SetInput [Tensor($t,data) GetOutput]
     
     # start hyperstreamline here
     #------------------------------------
@@ -2847,7 +2847,7 @@ proc DTMRIDeleteAllStreamlines {} {
 # .END
 #-------------------------------------------------------------------------------
 proc DTMRISeedStreamlinesFromSegmentation {{verbose 1}} {
-    global DTMRI Volume
+    global DTMRI Volume Tensor
     set v $Volume(activeID)
 
     # ask for user confirmation first
@@ -4256,7 +4256,7 @@ proc ConvertLSDIrecon {} {
         puts "Lauren node doesn't exist, should unfreeze and fix volumes.tcltoo"
     } else {
         # Activate the new data object
-        MainDataSetActive DTMRI $n
+        MainDataSetActive Tensor $n
     }
 
 
