@@ -4,7 +4,8 @@
 proc IbrowserBuildMotionCorrectGUI { f master } {
     global Gui
 
-    #--- set global variables for frame and specification params
+    #--- set global variables for frame so we can raise it,
+    #--- and specification params
     set ::Ibrowser(fProcessMotionCorrect) $f
     set ::Ibrowser(Process,MotionCorrectQuality) 1
     set ::Ibrowser(Process,MotionCorrectIterate) 0
@@ -19,29 +20,35 @@ proc IbrowserBuildMotionCorrectGUI { f master } {
 
     #--- create menu buttons and associated menus...
     set ff $f.fInput
-    set name "none"
-    eval { label $ff.lSequence -text "sequence:" } $Gui(WLA)
-    eval { menubutton $ff.mbSequence -text $name \
-               -relief raised -bd 2 -width 25 \
-               -menu $ff.mbSequence.m } $::Gui(WMBA)
-    eval { menu $ff.mbSequence.m } $::Gui(WMA)
-    grid $ff.lSequence $ff.mbSequence -pady 1 -padx $::Gui(pad) -sticky e
-    grid $ff.mbSequence -sticky e
+    eval { label $ff.lChooseProcInterval -text "interval:" } $Gui(WLA)
+    eval { menubutton $ff.mbIntervals -text "none" \
+               -relief raised -bd 2 -width 20 \
+               -menu $ff.mbIntervals.m -indicatoron 1 } $::Gui(WMBA)
+    eval { menu $ff.mbIntervals.m } $::Gui(WMA)
+    foreach i $::Ibrowser(idList) {
+        puts "adding $::Ibrowser($i,name)"
+        $ff.mbIntervals.m add command -label $::Ibrowser($i,name) \
+            -command "IbrowserSetActiveInterval $i"
+    }
+    set ::Ibrowser(Process,MotionCorrect,mbIntervals) $ff.mbIntervals
+    set ::Ibrowser(Process,MotionCorrect,mIntervals) $ff.mbIntervals.m
+    grid $ff.lChooseProcInterval $ff.mbIntervals -pady 1 -padx $::Gui(pad) -sticky e
+    grid $ff.mbIntervals -sticky e
     
-    set name "none"
     eval { label $ff.lReference -text "reference:" } $Gui(WLA)
-    eval { menubutton $ff.mbReference -text $name \
-               -relief raised -bd 2 -width 25 \
+    eval { menubutton $ff.mbReference -text "none" \
+               -relief raised -bd 2 -width 20 -indicatoron 1 \
                -menu $ff.mbReference.m } $::Gui(WMBA)
     eval { menu $ff.mbReference.m } $::Gui(WMA)
+    foreach i $::Ibrowser(idList) {
+        puts "adding $::Ibrowser($i,name)"
+        $ff.mbReference.m add command -label $::Ibrowser($i,name) \
+            -command ""
+    }
+    set ::Ibrowser(Process,MotionCorrect,mbReference) $ff.mbReference
+    set ::Ibrowser(Process,MotionCorrect,mReference) $ff.mbReference.m
     grid $ff.lReference $ff.mbReference -pady 1 -padx $::Gui(pad) -sticky e
     grid $ff.mbReference -sticky e
-    
-    #---save menu buttons and menus for configuring their text later
-    set ::Ibrowser(Process,MotionCorrect,mbSequence) $ff.mbSequence
-    set ::Ibrowser(Process,MotionCorrect,mbIntReference) $ff.mbReference
-    set ::Ibrowser(Process,MotionCorrect,mSequence) $ff.mbSequence.m
-    set ::Ibrowser(Process,MotionCorrect,mIntReference) $ff.mbReference.m
     
     #---------------------------------------------------------------------------
     #---QUALITY AND ITERATION FRAME

@@ -97,7 +97,7 @@ proc IbrowserInit {} {
     #---Set category and version info
     set Module($m,category) "Alpha"
        lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.8 $} {$Date: 2005/03/18 17:42:13 $}]
+        {$Revision: 1.9 $} {$Date: 2005/03/18 17:51:57 $}]
 
     #---Initialize module-level variables
     #---Global array with the same name as the module. Ibrowser()
@@ -175,10 +175,10 @@ proc IbrowserInit {} {
     #--- IO / processing / visualization
     source ${modulePath}IbrowserProcessing/IbrowserProcessingUtils.tcl
     source ${modulePath}IbrowserProcessing/IbrowserReorient.tcl
-    source ${modulePath}IbrowserProcessing/IbrowserMotionCorrect.tcl
-    source ${modulePath}IbrowserProcessing/IbrowserSmooth.tcl
-    source ${modulePath}IbrowserProcessing/IbrowserKeyframeRegister.tcl
-    source ${modulePath}IbrowserProcessing/IbrowserReassemble.tcl
+    #source ${modulePath}IbrowserProcessing/IbrowserMotionCorrect.tcl
+    #source ${modulePath}IbrowserProcessing/IbrowserSmooth.tcl
+    #source ${modulePath}IbrowserProcessing/IbrowserKeyframeRegister.tcl
+    #source ${modulePath}IbrowserProcessing/IbrowserReassemble.tcl
     
     #--- These contain tcl code for the interval controller
     #--- which is launched in proc IbrowserEnter().
