@@ -3,8 +3,8 @@
   Program:   Insight Segmentation & Registration Toolkit
   Module:    $RCSfile: itkGradientDescentOptimizerWithStopCondition.cxx,v $
   Language:  C++
-  Date:      $Date: 2003/10/18 18:40:58 $
-  Version:   $Revision: 1.3 $
+  Date:      $Date: 2003/11/24 19:45:43 $
+  Version:   $Revision: 1.4 $
 
   Copyright (c) 2002 Insight Consortium. All rights reserved.
   See ITKCopyright.txt or http://www.itk.org/HTML/Copyright.htm for details.
@@ -121,8 +121,9 @@ GradientDescentOptimizerWithStopCondition
        throw err;
       }
 
-    cout << "iter " << m_CurrentIteration 
-         << " metric value: " << m_Value << " grad " << m_Gradient << endl;
+    std::cout << "iter " << m_CurrentIteration 
+              << " metric value: " << m_Value 
+              << " grad " << m_Gradient << std::endl;
 
     if( m_Stop )
     {
