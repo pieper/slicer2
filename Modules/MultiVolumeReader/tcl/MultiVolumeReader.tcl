@@ -149,7 +149,7 @@ proc MultiVolumeReaderInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.10 $} {$Date: 2004/12/20 21:26:07 $}]
+        {$Revision: 1.11 $} {$Date: 2005/01/07 15:51:58 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -477,6 +477,47 @@ proc MultiVolumeReaderLoad {} {
 
 
 #-------------------------------------------------------------------------------
+# .PROC MultiVolumeReaderGetFilelistFromFilter 
+# Returns a list of file names that match the user's filter. 
+# .ARGS
+# extension the image file extension such as .hdr, .dcm, or .bxh
+# .END
+#-------------------------------------------------------------------------------
+proc MultiVolumeReaderGetFilelistFromFilter {extension} {
+    global MultiVolumeReader 
+
+    set path [file dirname $MultiVolumeReader(fileName)]
+    set name [file tail $MultiVolumeReader(fileName)]
+
+    set filter $MultiVolumeReader(filter)
+    string trim $filter
+    set len [string length $filter]
+    if {$len == 0} {
+        set filter "*.*" 
+    } 
+
+    set ext [file extension $filter]
+
+    if {$ext == ".*"} {
+        set len [string length $filter]
+        set filter [string replace $filter [expr $len-2] end $extension] 
+    } elseif {$ext == $extension} {
+    } else {
+        set filter $filter$extension
+    }
+
+    set pattern [file join $path $filter]
+    set fileList [glob -nocomplain $pattern]
+    if {$fileList == ""} {
+        DevErrorWindow "No image file is matched through your filter: $filter"
+        return "" 
+    }
+
+    return [lsort -dictionary $fileList]
+}
+
+
+#-------------------------------------------------------------------------------
 # .PROC MultiVolumeReaderLoadAnalyze 
 # Loads Analyze volumes. It returns 0 if successful; 1 otherwise. 
 # .ARGS
@@ -489,37 +530,10 @@ proc MultiVolumeReaderLoadAnalyze {} {
 
     set fileName $MultiVolumeReader(fileName)
     set analyzeFiles [list $fileName]
- 
+  
     # file filter
     if {$MultiVolumeReader(filterChoice) == "multiple"} {
-        set path [file dirname $fileName]
-        set name [file tail $fileName]
-
-        set filter $MultiVolumeReader(filter)
-        string trim $filter
-        set len [string length $filter]
-        if {$len == 0} {
-            set filter "*.*"
-
-            set hdr ".hdr"
-            set ext [file extension $filter]
-
-            if {$ext == ".*"} {
-                set len [string length $filter]
-                set filter [string replace $filter [expr $len-2] end $hdr] 
-            } elseif {$ext == $hdr} {
-            } else {
-                set filter $filter$hdr
-            }
-            set pattern [file join $path $filter]
-            set fileList [glob -nocomplain $pattern]
-            if {$fileList == ""} {
-                DevErrorWindow "No Analyze file is selected through your filter: $filter"
-                return 1
-            }
-
-            set analyzeFiles [lsort -dictionary $fileList]
-        }
+        set analyzeFiles [MultiVolumeReaderGetFilelistFromFilter ".hdr"]
     }
 
     foreach f $analyzeFiles { 
@@ -585,36 +599,7 @@ proc MultiVolumeReaderLoadDICOM {} {
  
     # file filter
     if {$MultiVolumeReader(filterChoice) == "multiple"} {
-        set path [file dirname $fileName]
-        set name [file tail $fileName]
-
-        set filter $MultiVolumeReader(filter)
-        string trim $filter
-        set len [string length $filter]
-        if {$len == 0} {
-           set filter "*.*" 
-        } 
-
-        set dcm ".dcm"
-        set ext [file extension $filter]
-
-        if {$ext == ".*"} {
-            set len [string length $filter]
-            set filter [string replace $filter [expr $len-2] end $dcm] 
-        } elseif {$ext == $dcm} {
-        } else {
-            set filter $filter$dcm
-        }
-
-        set pattern [file join $path $filter]
-        set fileList [glob -nocomplain $pattern]
-        if {$fileList == ""} {
-            DevErrorWindow "No DICOM file is selected through your filter: $filter"
-            return 1
-        }
-
-        set dcmFiles [lsort -dictionary $fileList]
-
+        set dcmFiles [MultiVolumeReaderGetFilelistFromFilter ".dcm"]
     }
 
     set val [DICOMHelperLoad $dcmFiles]
