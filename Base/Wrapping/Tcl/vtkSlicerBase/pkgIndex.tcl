@@ -8,4 +8,4 @@
 # script is sourced, the variable $dir must contain the
 # full path name of this file's directory.
 
-package ifneeded vtk@Modulename@ 1.0 [list source [file join $dir vtk@Modulename@.tcl]]
+package ifneeded vtkSlicerBase 1.0 [list source [file join $dir vtkSlicerBase.tcl]]
