@@ -756,7 +756,7 @@ void vtkImageLiveWire::Execute(vtkImageData **inData,
   if (this->EndPoint[0] == this->PrevEndPoint[0] &&
       this->EndPoint[1] == this->PrevEndPoint[1]) 
     {
-      cout << "Lauren end point the SAME" << endl;
+      //cout << "Lauren end point the SAME" << endl;
       return;
     }
   this->PrevEndPoint[0] = this->EndPoint[0];
