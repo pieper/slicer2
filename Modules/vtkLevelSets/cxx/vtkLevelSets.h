@@ -54,6 +54,9 @@
 #define ADVECTION_CENTRAL_VECTORS 1
 #define ADVECTION_MORPHO          2
 
+#define BALLOON_BROCKETT_MARAGOS   1
+#define BALLOON_VESSELS            2
+
 #define DISTMAP_CURVES       0
 #define DISTMAP_FASTMARCHING 1
 #define DISTMAP_CHAMFER      2 
@@ -173,6 +176,12 @@ public:
   vtkSetMacro(advection_scheme,int);
   vtkGetMacro(advection_scheme,int);
   //  vtkBooleanMacro(advection_scheme,int);
+
+
+  //
+  vtkSetMacro(balloon_scheme,int);
+  vtkGetMacro(balloon_scheme,int);
+
 
   //
   vtkSetMacro(UseCosTerm,int);
@@ -425,6 +434,8 @@ protected:
   unsigned char savesecdergrad;
 
   unsigned char advection_scheme;
+
+  unsigned char balloon_scheme;
 
   // Parameters for the evolution
   // current step
