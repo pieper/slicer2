@@ -7,10 +7,13 @@
 #include "vtkObjectFactory.h"
 #include "vtkPointData.h"
 #include "vtkPolyData.h"
-// the superclass had these classes in the vtkHyperStreamline.cxx file:
-//#include "vtkHyperPointandArray.cxx"
+// the superclass had these classes in the vtkHyperStreamline.cxx
+// file:
+#if (VTK_MAJOR_VERSION == 4 && VTK_MINOR_VERSION >= 3)
+#include "vtkHyperPointandArray.cxx"
+#endif
 
-vtkCxxRevisionMacro(vtkHyperStreamlineDTMRI, "$Revision: 1.6 $");
+vtkCxxRevisionMacro(vtkHyperStreamlineDTMRI, "$Revision: 1.7 $");
 vtkStandardNewMacro(vtkHyperStreamlineDTMRI);
 
 // Construct object with initial starting position (0,0,0); integration step 
