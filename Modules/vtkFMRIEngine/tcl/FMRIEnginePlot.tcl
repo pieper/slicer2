@@ -623,7 +623,7 @@ proc FMRIEngineCloseTimeCourseWindow {} {
 proc FMRIEngineGetDataVolumeDimensions {} {
     global Volume FMRIEngine
 
-    set ext $FMRIEngine(volextent) 
+    set ext $FMRIEngine(volumeExtent) 
 
     set xmin [lindex $ext 0]
     set xmax [lindex $ext 1]
