@@ -13,7 +13,7 @@ setenv MY_TCL /export/bigsur/vtk/tcl8.3.0/
 setenv MY_TK /export/bigsur/vtk/tk8.3.0/
 
 # Version number of your Tcl and Tk
-setenv MY_VER_NUM 8.3.0
+setenv MY_VER_NUM 8.3
 
 # Path to your VTK
 setenv MY_VTK /export/bigsur/vtk/vtk_nightly
@@ -23,19 +23,18 @@ if (${?CVSROOT} == 0) then
     setenv CVSROOT /projects/cvs/slicer
 endif
 
-
 # Get the latest source code from CVS.
 echo Checkout into cvs directory
 mkdir cvs
 cd cvs
-cvs checkout slicer
+cvs checkout -r slicer1_0_0_release slicer
 cd ..
 echo CVS DONE
 
 # Make the installation directory
 echo Making slicer directory
-mkdir slicer
-cd slicer
+mkdir slicer-1.0.0
+cd slicer-1.0.0
 
 # Copy stuff from cvs to install directory
 echo Copy the program directory
@@ -53,8 +52,8 @@ cp ${MY_TK}/unix/libtk*.so lib
 echo Copy tcl and tk library directories
 mkdir lib/tcl${MY_VER_NUM}
 mkdir lib/tk${MY_VER_NUM}
-cp -r ${MY_TCL}/library lib/tcl${MY_VER_NUM}
-cp -r ${MY_TK}/library lib/tk${MY_VER_NUM}
+cp -r ${MY_TCL}/library/* lib/tcl${MY_VER_NUM}
+cp -r ${MY_TK}/library/* lib/tk${MY_VER_NUM}
 
 echo Copy vtk binaries
 cp ${MY_VTK}/*/*.so lib
