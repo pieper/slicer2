@@ -251,21 +251,27 @@ proc DICOMLoadStudy { dir } {
         }
 
         foreach d $dirs { 
+            if { ![file isdirectory $d] } {
+                continue
+            }
             VolumesSetPropertyType VolDicom
             MainVolumesSetActive NEW
             Tab Volumes row1 Props
             set ::Volumes(DICOMStartDir) $d
             DICOMSelectMain $::Volume(dICOMFileListbox) "autoload"
-            VolumesSetPropertyType VolHeader
-            if { [info exists ::Volume(seriesDesc)] &&
-                    $::Volume(seriesDesc) != "" } {
-                set seriestag $::Volume(seriesDesc)
-            } else {
-                set seriestag [file tail $d]
+
+            if { $::FindDICOMCounter != 0 } {
+                VolumesSetPropertyType VolHeader
+                if { [info exists ::Volume(seriesDesc)] &&
+                        $::Volume(seriesDesc) != "" } {
+                    set seriestag $::Volume(seriesDesc)
+                } else {
+                    set seriestag [file tail $d]
+                }
+                regsub -all " " $seriestag "_" seriestag
+                set ::Volume(name) $seriestag-$::Volume(name)
+                VolumesPropsApply
             }
-            regsub -all " " $seriestag "_" seriestag
-            set ::Volume(name) $seriestag-$::Volume(name)
-            VolumesPropsApply
             RenderAll
             Tab Data
         }
@@ -1285,6 +1291,11 @@ proc DICOMSelectMain { fileNameListbox {autoload "noautoload"} } {
     
     FindDICOM $DICOMStartDir *
     
+    if { $::FindDICOMCounter == 0 } {
+        destroy .list
+        return
+    }
+
     DICOMListSelect .list $DICOMPatientIDsNames
     
     if { $autoload != "autoload" } {
