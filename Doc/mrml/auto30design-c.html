@@ -3,9 +3,10 @@
 Browsers know how to interpret XML files from the file's 
 <b>Document Type Description (DTD)</b>. Our DTD's are:
 <ul>
-<li><a href='mrml20.dtd'>Current DTD</a>
-<li><a href='mrml21.dtd'>Proposed DTD</a>
+<li><a href='http://splweb.bwh.harvard.edu:8000/cgi-bin/develop/viewcvs.cgi/slicer/dtd/mrml20.dtd'>Current DTD</a>
+<li><a href='http://splweb.bwh.harvard.edu:8000/cgi-bin/develop/viewcvs.cgi/slicer/dtd/mrml26.dtd'>Proposed DTD</a>
 </ul>
+They can also be found in SLICER_HOME/slicer/dtd/.
 <p>
 A sample MRML file of two volumes (registered using a transform)
 and a couple surface models is shown <a href='tutorial.xml'>here</a>.
@@ -181,7 +182,7 @@ in the <a href='#3a'>Basic Nodes</a> section.
 </tr>
 <tr>
 <td class=box0>name</td>
-<td class=box0>Name displayed on the user interface</td>
+<td class=box0>Required, the name displayed on the user interface</td>
 </tr>
 <tr>
 <td class=box1>description</td>
@@ -231,7 +232,7 @@ in the <a href='#3a'>Basic Nodes</a> section.
 </table>
 
 
-<h3>Option Node</h3>
+<h3>Options Node</h3>
 <p>
 <table cellpadding=3 cellspacing=3 border=0>
 <tr>
@@ -240,10 +241,10 @@ in the <a href='#3a'>Basic Nodes</a> section.
 </tr>
 <tr>
 <td class=box0>program</td>
-<td class=box0>Name of the program that should recognize these options.</td>
+<td class=box0>A required attribute, the name of the program that should recognize these options.</td>
 </tr>
 <tr>
-<td class=box1>contents</td>
+<td class=box1>content</td>
 <td class=box1>Short description of the contents of this node. ie: 'presets'</td>
 </tr>
 <tr>
