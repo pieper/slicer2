@@ -151,7 +151,7 @@ proc MIRIADSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.24 $} {$Date: 2004/02/19 17:41:14 $}]
+        {$Revision: 1.25 $} {$Date: 2004/02/20 13:06:30 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -1092,17 +1092,19 @@ proc MIRIADSegmentRunEM { {mode "full"} } {
         set ::EMSegment(SegmentationBoundaryMin,2) 1
         set ::EMSegment(SegmentationBoundaryMax,0) 256
         set ::EMSegment(SegmentationBoundaryMax,1) 256
-        set ::EMSegment(SegmentationBoundaryMax,2) 54
+        set t2 [MIRIADSegmentGetVolumeByName "T2"]
+        set end [linex [Volume($t2,node) GetImageRange] 1]
+        set ::EMSegment(SegmentationBoundaryMax,2) $end
         set ::EMSegment(EMiteration) 5
         set ::EMSegment(MFAiteration) 2
     } else {
         # preview mode
         set ::EMSegment(SegmentationBoundaryMin,0) 1
         set ::EMSegment(SegmentationBoundaryMin,1) 1
-        set ::EMSegment(SegmentationBoundaryMin,2) 22
+        set ::EMSegment(SegmentationBoundaryMin,2) 31
         set ::EMSegment(SegmentationBoundaryMax,0) 128
         set ::EMSegment(SegmentationBoundaryMax,1) 256
-        set ::EMSegment(SegmentationBoundaryMax,2) 22
+        set ::EMSegment(SegmentationBoundaryMax,2) 31
         set ::EMSegment(EMiteration) 5
         set ::EMSegment(MFAiteration) 2
     }
