@@ -151,7 +151,7 @@ proc MIRIADSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.11 $} {$Date: 2003/11/27 16:21:19 $}]
+        {$Revision: 1.12 $} {$Date: 2003/12/19 13:40:53 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -161,6 +161,7 @@ proc MIRIADSegmentInit {} {
     #   the procedures in this module and others need to access.
     #
 
+    set MIRIADSegment(status)  "okay"
     set MIRIADSegment(archive)  "gpop.bwh.harvard.edu:/nas/nas0/pieper/data/MIRIAD/Project_0002"
     set MIRIADSegment(subject_dir)  ""
 
@@ -329,14 +330,29 @@ proc MIRIADSegmentExit {} {
 #-------------------------------------------------------------------------------
 proc MIRIADSegmentProcessStudy { {archive "default"} {BIRNID "000397921927"} {visit 001} {atlas "spl"} } {
 
-    set ::MIRIADSegment(version) $atlas_reg
+    set ::MIRIADSegment(version) reg_${atlas}__params_SP
 
     MIRIADSegmentLoadStudy $archive $BIRNID $visit $atlas
+
+    if { $::MIRIADSegment(status) != "okay" } {
+        puts "MIRIADSegment Failed"
+        return
+    }
 
     MIRIADSegmentSetEMParameters
     MIRIADSegmentRunEM
 
+    if { $::MIRIADSegment(status) != "okay" } {
+        puts "MIRIADSegment Failed"
+        return
+    }
+
     MIRIADSegmentSaveResults 
+
+    if { $::MIRIADSegment(status) != "okay" } {
+        puts "MIRIADSegment Failed"
+        return
+    }
     
     puts "MIRIADSegment Finished"
 }
@@ -408,6 +424,11 @@ proc MIRIADSegmentLoadStudy { {archive "default"} {BIRNID "000397921927"} {visit
 #-------------------------------------------------------------------------------
 proc MIRIADSegmentSaveResults { } {
 
+    #
+    # Save the label map, then the scene, then the volume by tissue class
+    # Then copy results back to archive if needed
+    #
+
     set SEGid [MIRIADSegmentGetVolumeByName "EMSegResult1"]
     set resultdir $::MIRIADSegment(subject_dir)/DerivedData/SPL/EM-$::MIRIADSegment(version)
     file mkdir $resultdir
@@ -416,6 +437,11 @@ proc MIRIADSegmentSaveResults { } {
     set ::Mrml(dir) $resultdir 
     set ::File(filePrefix) AtlasAndSegmentation
     MainFileSaveAsApply
+
+    MainVolumesSetActive $SEGid
+    MeasureVolSelectVol
+    set ::MeasureVol(fileName) $::MIRIADSegment(subject_dir)/DerivedData/SPL/EM-$::MIRIADSegment(version)/tissue_volumes.txt
+    MeasureVolVolume "no_prompt"
 
     if { [string first ":" $::MIRIADSegment(archive)] != -1 } {
         puts "saving results to archive..." ; update
@@ -628,8 +654,16 @@ proc MIRIADSegmentLoadLONIWarpedAtlas { {dir "choose"} } {
         sumbackground.hdr sumcsf.hdr 
         sumwhitematter.hdr sumgreymatter.hdr 
     }
+
+    set vols $four_vols
+
+    if { ! [file exists $dir/[lindex $vols 0]] } {
+        puts "LONI atlas doesn't exist for $dir"
+        set ::MIRIADSegment(status) "error: LONI atlas doesn't exist for $dir"
+        return -1
+    }
         
-    foreach vol $four_vols {
+    foreach vol $vols {
         set name resample_atlas-[file root $vol]
         MIRIADSegmentDeleteVolumeByName $name
         MainVolumesSetActive "NEW"
@@ -639,6 +673,7 @@ proc MIRIADSegmentLoadLONIWarpedAtlas { {dir "choose"} } {
         MIRIADSegmentNormalizeImage $i 82
     }
     RenderAll
+    return 0
 }
 
 #-------------------------------------------------------------------------------

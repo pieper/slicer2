@@ -17,7 +17,7 @@ proc init { {job_limit 200} } {
         "crayon.rocksclusters.org" {
             set ::ids [exec ls -1 /home/pieper/data/MIRIAD/Project_0002]
             set racks {0 0}
-            set rows {2 15}
+            set rows {2 16}
             set ::archive  "/home/pieper/data/MIRIAD/Project_0002"
         }
         "rockstar.rocksclusters.org" {
@@ -115,12 +115,13 @@ proc is_running {pid} {
 
 proc run_job {compute job} {
 
+    set atlas "loni"
     set birnid [lindex $job 0]
     set visit [lindex $job 1]
 
-    set slicercmd "MIRIADSegmentProcessStudy $::archive $birnid $visit"
     set slicercmd "puts hoot"
     set slicercmd "MIRIADSegmentLoadStudy $::archive 000300742113 001 none"
+    set slicercmd "MIRIADSegmentProcessStudy $::archive $birnid $visit $atlas"
 
     set fp [open "| csh -c \"ssh $compute ~/birn/bin/runvnc \
                 --wm /home/pieper/bin/xterm -- \
@@ -154,8 +155,18 @@ proc dump_logs {} {
 
 proc run_jobs {} {
 
+    #
+    # collect the list of jobs to run and the 
+    # compute machines available to do the work
+    #
     init 
 
+
+    #
+    # two-step batch algorithm:
+    # - while there are still jobs to do, send them off to free machines
+    # - look at current jobs and see if any are finished (thus freeing machines)
+    #
 
     set all_finished 0
     set iter 0
