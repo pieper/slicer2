@@ -101,7 +101,7 @@ proc FiducialsInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.45 $} {$Date: 2004/01/26 13:07:54 $}]
+        {$Revision: 1.46 $} {$Date: 2004/03/14 18:42:25 $}]
     
     # Initialize module-level variables
     
@@ -1917,7 +1917,7 @@ proc FiducialsUpdateSelectionForActor {fid} {
             Fiducials($fid,scalars) SetTuple1 [FiducialsScalarIdFromPointId $fid $pid] 0
             # uncolor the text
             foreach r $Fiducials(renList) {
-                          eval [Point($pid,follower,$r) GetProperty] SetColor [Fiducials($fid,node) GetColor]
+              eval [Point($pid,follower,$r) GetProperty] SetColor [Fiducials($fid,node) GetColor]
             }
         }
     }
