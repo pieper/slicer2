@@ -9,6 +9,7 @@
 
 #define MODESLICE 0
 #define MODEVOLUME 1
+#define MODEMOSAIC 2
 
 class VTK_DTMRI_EXPORT vtkImageExtractSlices : public vtkImageToImageFilter
 {
@@ -50,6 +51,22 @@ class VTK_DTMRI_EXPORT vtkImageExtractSlices : public vtkImageToImageFilter
   this->Modified(); 
   };
 
+  void SetModeToMOSAIC(void)
+  {
+  this->SetMode(2);
+  this->Modified();
+  }
+
+  // Description:
+  // New variables to support MOSAIC, Siemens,data
+  // Number of real slices per each mosaic slice
+  vtkSetMacro(MosaicSlices,int);
+  vtkGetMacro(MosaicSlices,int);
+
+  // Numbers of tiles per mosaic slice row.
+  vtkSetMacro(MosaicTiles,int);
+  vtkGetMacro(MosaicTiles,int);
+
  protected:
   vtkImageExtractSlices();
   ~vtkImageExtractSlices() {};
@@ -60,6 +77,9 @@ class VTK_DTMRI_EXPORT vtkImageExtractSlices : public vtkImageToImageFilter
   int SliceOffset;
   int SlicePeriod;
   int Mode;
+  int MosaicSlices;
+  int MosaicTiles;
+
   void ExecuteInformation(vtkImageData *input, 
               vtkImageData *output);
   void ComputeInputUpdateExtent(int inExt[6], 

@@ -36,9 +36,14 @@ void vtkImageExtractSlices::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "SlicePeriod: "<< this->SlicePeriod<<endl;
   if (this->Mode == MODESLICE)
     os << indent << "Mode to Slice "<<endl;
-  else
+  else if (this-> Mode == MODEVOLUME)
     os << indent << "Mode to Volume "<<endl;
-
+  else
+    {
+    os << indent << "Mode to Mosaic "<<endl;
+    os << indent << "Number of Mosaic Slices: "<< this->MosaicSlices<<endl;
+    os << indent << "Number of Mosaic Tiles: "<< this->MosaicTiles<<endl;
+    }
 }
 
 
@@ -78,6 +83,27 @@ void vtkImageExtractSlices::ExecuteInformation(vtkImageData *input,
   output->SetWholeExtent(outExt); 
   }
 
+  if(this->Mode == MODEMOSAIC) {
+    outExt[0] = 0;
+    totalInSlices = (inExt[1] - inExt[0] + 1);
+    if(fmod(totalInSlices,this->MosaicTiles)!=0) {
+     vtkErrorMacro("Too few or Too many tiles per slice.");
+     return;
+    }
+    outExt[1] = outExt[0] + totalInSlices/this->MosaicTiles - 1;
+ 
+   outExt[2] = 0;
+    totalInSlices = (inExt[3] - inExt[2] + 1);
+    if(fmod(totalInSlices,this->MosaicTiles)!=0) {
+     vtkErrorMacro("Too few or Too many tiles per slice.");
+     return;
+    }
+    outExt[3] = outExt[2] + totalInSlices/this->MosaicTiles - 1;
+    outExt[4] = 0;
+    outExt[5] = this->MosaicSlices-1;
+    output->SetWholeExtent(outExt);
+  }
+
 }
 
 void vtkImageExtractSlices::ComputeInputUpdateExtent(int inExt[6], 
@@ -108,7 +134,7 @@ void vtkImageExtractSlices::ComputeInputUpdateExtent(int inExt[6],
 //----------------------------------------------------------------------------
 // This templated function executes the filter for any type of data.
 template <class T>
-static void vtkImageExtractSlicesExecute(vtkImageExtractSlices *self,
+static void vtkImageExtractSlicesExecute1(vtkImageExtractSlices *self,
                      vtkImageData *inData, 
                      T * inPtr, int inExt[6], 
                      vtkImageData *outData, 
@@ -192,6 +218,91 @@ static void vtkImageExtractSlicesExecute(vtkImageExtractSlices *self,
 }
 
 //----------------------------------------------------------------------------
+// This templated function executes the filter for any type of data.
+template <class T>
+static void vtkImageExtractSlicesExecute2(vtkImageExtractSlices *self,
+                     vtkImageData *inData, 
+                     T * inPtr, int inExt[6], 
+                     vtkImageData *outData, 
+                     T * outPtr, int outExt[6])
+{
+  int idxX, idxY, idxZ;
+  int idxoutX,idxoutY;
+  int maxX, maxY, maxZ;
+  int dimX, dimY, dimZ;
+  int inIncX, inIncY, inIncZ;
+  int outIncX, outIncY, outIncZ;
+  unsigned long count = 0;
+  unsigned long target;
+  int slice, period, offset, tiles ;
+
+  // information for extracting the slices
+  period = self->GetSlicePeriod();
+  offset = self->GetSliceOffset();
+  tiles = self->GetMosaicTiles();
+
+  // find the region to loop over: loop over entire output
+  maxX = outExt[1] - outExt[0];
+  maxY = outExt[3] - outExt[2]; 
+  maxZ = outExt[5] - outExt[4]; 
+
+  
+  target = (unsigned long)(outData->GetNumberOfScalarComponents()*
+               (maxZ+1)*(maxY+1)/50.0);
+  target++;
+
+  // Get increments to march through image data 
+  inData->GetContinuousIncrements(inExt, inIncX, inIncY, inIncZ);
+  outData->GetContinuousIncrements(outExt, outIncX, outIncY, outIncZ);
+  dimX = maxX + 1;
+  dimY = maxY + 1;
+  dimZ = maxZ + 1;
+
+  for (idxZ = 0; idxZ <= maxZ; idxZ++)
+    {
+       // compute icrements to march through input data
+       inExt[0] = idxoutX*dimX;
+       inExt[1] = (idxoutX + 1)*dimX;
+       inExt[2] = idxoutY * dimY;
+       inExt[3] = (idxoutY + 1)* dimY;
+       inExt[4] = offset;
+       inExt[5] = offset;
+       inData->GetContinuousIncrements(inExt, inIncX, inIncY, inIncZ);
+       inPtr = (T *)inData->GetScalarPointerForExtent(inExt);
+       
+       idxoutX++;
+       if (fmod(idxoutX,tiles) == 0) 
+        {
+         idxoutX=0;
+         idxoutY++;
+        }
+
+     for (idxY = 0; !self->AbortExecute && idxY <= maxY; idxY++)
+        {
+          if (!(count%target)) 
+             {
+              self->UpdateProgress(count/(50.0*target) 
+                                       + (maxZ+1)*(maxY+1));
+             }
+             count++;
+
+        for (idxX = 0; idxX <= maxX; idxX++)
+          {
+          // Pixel operation
+          *outPtr = *inPtr;
+        
+          inPtr++;
+          outPtr++;
+          }
+          outPtr += outIncY;
+          inPtr += inIncY;
+         }
+   
+      outPtr += outIncZ;
+    }
+}
+
+//----------------------------------------------------------------------------
 // This method is passed a input and output regions, and executes the filter
 // algorithm to fill the output from the inputs.
 // It just executes a switch statement to call the correct function for
@@ -230,16 +341,30 @@ void vtkImageExtractSlices::ThreadedExecute(vtkImageData *inData,
     }
   
   // call Execute method 
+ if (this->Mode == MODEMOSAIC)
+   {
+    switch (inData->GetScalarType())
+      {
+      vtkTemplateMacro7(vtkImageExtractSlicesExecute2, this, 
+            inData, (VTK_TT *)(inPtr), inExt,
+            outData, (VTK_TT *)(outPtr), outExt);
+      default:
+        vtkErrorMacro(<< "Execute: Unknown ScalarType");
+      return;
+      }
+  }
+ else    
+  {
   switch (inData->GetScalarType())
     {
-      vtkTemplateMacro7(vtkImageExtractSlicesExecute, this, 
+      vtkTemplateMacro7(vtkImageExtractSlicesExecute1, this, 
             inData, (VTK_TT *)(inPtr), inExt,
             outData, (VTK_TT *)(outPtr), outExt);
     default:
       vtkErrorMacro(<< "Execute: Unknown ScalarType");
       return;
     }
-  
+  }
 }
 
 

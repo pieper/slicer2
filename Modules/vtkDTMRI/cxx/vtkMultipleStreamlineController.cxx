@@ -322,7 +322,7 @@ void vtkMultipleStreamlineController::DeleteStreamline(vtkActor *pickedActor)
 int vtkMultipleStreamlineController::PointWithinTensorData(double *point, double *pointw)
 {
   int *dims;
-  float *spacing;
+  vtkFloatingPointType *spacing;
   int i, inbounds;
 
   dims=this->InputTensorField->GetDimensions();
