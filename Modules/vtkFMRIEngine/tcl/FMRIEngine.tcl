@@ -158,7 +158,7 @@ proc FMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.2 $} {$Date: 2004/04/14 22:12:29 $}]
+        {$Revision: 1.3 $} {$Date: 2004/04/22 19:00:13 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -180,6 +180,7 @@ proc FMRIEngineInit {} {
 
     #---Source all appropriate tcl files here. 
     source "$FMRIEngine(modulePath)/tcl/FMRIEnginePlot.tcl"
+    source "$FMRIEngine(modulePath)/tcl/FMRIEngineParadigmParser.tcl"
 }
 
 
@@ -501,19 +502,19 @@ proc FMRIEngineLoadVolumes {} {
 proc FMRIEngineComputeActivationVolume {} {
     global FMRIEngine Module Volume
 
-    if {[file exists $FMRIEngine(paradigmFileName)] == 0} { 
-        DevErrorWindow "Paradigm file doesn't exist: $FMRIEngine(paradigmFileName)"
+    # Checks if volumes have been loaded
+    set slider [$FMRIEngine(timescale) get]
+    if {$slider == 0} {
+        DevErrorWindow "Please load volumes first."
         return
     }
 
-    if {![info exists FMRIEngine(stimulus)]} {
-        vtkStimulusGenerator sg
-        set FMRIEngine(stimulus) sg
-    }     
-    $FMRIEngine(stimulus) SetFileName $FMRIEngine(paradigmFileName) 
-    set stimArray [$FMRIEngine(stimulus) CreateStimulusFromFile]
-    
-    set stimSize [$stimArray GetNumberOfTuples]
+    # Checks if paradigm file has been properly parsed 
+    if {! [FMRIEngineParseParadigm]} {
+        return
+    }
+
+    set stimSize [$FMRIEngine(stimulus) GetNumberOfTuples]
     set volSize [$FMRIEngine(actvolgen) GetNumberOfInputs]
     if {$stimSize != $volSize} {
         DevErrorWindow "Stimulus size ($stimSize) is not same as no of volumes ($volSize)."
@@ -525,8 +526,8 @@ proc FMRIEngineComputeActivationVolume {} {
     }
     vtkActivationDetector detector
     detector SetDetectionMethod 1
-    detector SetNumberOfPredictors [$FMRIEngine(stimulus) GetNumberOfPredictors]
-    detector SetStimulus [$FMRIEngine(stimulus) GetStimulus]
+    detector SetNumberOfPredictors [lindex $FMRIEngine(paradigm) 1] 
+    detector SetStimulus $FMRIEngine(stimulus) 
     set FMRIEngine(detector) detector
 
     $FMRIEngine(actvolgen) SetDetector detector  

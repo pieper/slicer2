@@ -89,7 +89,7 @@ proc FMRIEnginePopUpPlot {x y} {
         vtkTimeCoursePlotActor tcPlot
         tcPlot SetVoxelIndex $i $j $k
         tcPlot SetPlot [$FMRIEngine(actvolgen) GetTimeCourse $i $j $k] \
-        [$FMRIEngine(stimulus) GetStimulus]
+        $FMRIEngine(stimulus) 
 
         vtkRenderer render
         render AddActor2D tcPlot 
@@ -112,7 +112,7 @@ proc FMRIEnginePopUpPlot {x y} {
 
     $FMRIEngine(tcPlot) SetVoxelIndex $i $j $k
     $FMRIEngine(tcPlot) SetPlot [$FMRIEngine(actvolgen) GetTimeCourse $i $j $k] \
-        [$FMRIEngine(stimulus) GetStimulus]
+        $FMRIEngine(stimulus) 
     #Update the graph for the new data
     $FMRIEngine(renWin) Render 
 }
