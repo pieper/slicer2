@@ -82,11 +82,11 @@ proc FiducialsInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.20 $} {$Date: 2002/07/19 01:21:21 $}]
+        {$Revision: 1.21 $} {$Date: 2002/07/26 23:12:02 $}]
     
     # Initialize module-level variables
     
-    set Fiducials(renList) "viewRen"
+    set Fiducials(renList) "viewRen matRen"
     set Fiducials(scale) 6
     set Fiducials(minScale) 0
     set Fiducials(maxScale) 40
