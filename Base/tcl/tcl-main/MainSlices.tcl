@@ -109,7 +109,7 @@ proc MainSlicesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainSlices \
-        {$Revision: 1.49 $} {$Date: 2003/06/18 22:16:07 $}]
+        {$Revision: 1.50 $} {$Date: 2003/07/31 23:09:11 $}]
 
     # Initialize Variables
     set Slice(idList) "0 1 2"
@@ -484,9 +484,9 @@ proc MainSlicesBuildAdvancedControlsPopup {s} {
     # once on the Viewer and once in the module panel.
     # So build the popup only once
     if {[info exists Gui(wSlicesAdv$s)] == 1} {
-    if {[winfo exists $Gui(wSlicesAdv$s)] == 1} {
-        return
-    }
+        if {[winfo exists $Gui(wSlicesAdv$s)] == 1} {
+            return
+        }
     }
 
     #-------------------------------------------
@@ -499,7 +499,7 @@ proc MainSlicesBuildAdvancedControlsPopup {s} {
     wm iconname $w Dialog
     wm protocol $w WM_DELETE_WINDOW "wm withdraw $w"
     if {$Gui(pc) == "0"} {
-    wm transient $w .
+        wm transient $w .
     }
     wm withdraw $w
     set f $w
@@ -555,6 +555,8 @@ proc MainSlicesBuildAdvancedControlsPopup {s} {
     eval {entry $f.eIncrement -width 7 \
         -textvariable Slice($s,offsetIncrement)} $Gui(WEA)
     bind $f.eIncrement <Return>   \
+        "MainSlicesSetOffsetIncrement $s"
+    bind $f.eIncrement <FocusOut>   \
         "MainSlicesSetOffsetIncrement $s"
 
     grid $f.lIncrement $f.eIncrement \
@@ -947,9 +949,9 @@ proc MainSlicesSetOffset {s {value ""}} {
         # and the variable Slice($s,offset) has already been set by user
         set value $Slice($s,offset)
     } elseif {$value == "Prev"} {
-        set value [expr $Slice($s,offset) - 1]
+        set value [expr $Slice($s,offset) - $Slice($s,offsetIncrement)]
     } elseif {$value == "Next"} {
-        set value [expr $Slice($s,offset) + 1]
+        set value [expr $Slice($s,offset) + $Slice($s,offsetIncrement)]
     }
     
     # validate value
@@ -1607,7 +1609,7 @@ proc MainSlicesAdvancedControlsPopup {s} {
     
     # Recreate window if user killed it
     if {[winfo exists $Gui(wSlicesAdv$s)] == 0} {
-    MainSlicesBuildAdvancedControlsPopup $s
+        MainSlicesBuildAdvancedControlsPopup $s
     }
     
     ShowPopup $Gui(wSlicesAdv$s) 0 0
