@@ -136,7 +136,7 @@ proc ModelHierarchyInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.2 $} {$Date: 2001/11/14 20:27:31 $}]
+	    {$Revision: 1.3 $} {$Date: 2001/11/15 16:46:17 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -279,6 +279,7 @@ proc ModelHierarchyCreateRootEntry {f} {
 #-------------------------------------------------------------------------------
 proc ModelHierarchyEnter {} {
     global ModelHierarchy Gui Module
+    global ModelGroup
     global Mrml(dataTree)
         
     set HierarchyLevel 0
@@ -300,6 +301,22 @@ proc ModelHierarchyEnter {} {
 	bind DragDrop <<DragLeave>>	[list ModelHierarchyDrag leave %W]
 	bind DragDrop <<DragDrop>>	[list ModelHierarchyDrag drop %W %X %Y]
 		
+	# search for collapsed model groups and expand them first
+	while {$node != ""} {
+		if {[string compare -length 10 $node "ModelGroup"] == 0} {
+			set mg [$node GetID]
+			if {$ModelGroup($mg,expansion) == 0} {
+				set ModelGroup($mg,expansion) 1
+				MainModelGroupsSetExpansion $ModelGroup(frame) $ModelGroup(frame).hcg$mg $mg
+			}
+		}
+		set node [Mrml(dataTree) GetNextItem]
+	}
+	Render3D
+	
+	Mrml(dataTree) InitTraversal
+	set node [Mrml(dataTree) GetNextItem]
+	
 	while {$node != ""} {
 		if {[string compare -length 10 $node "ModelGroup"] == 0} {
 			if {$success==0} {
