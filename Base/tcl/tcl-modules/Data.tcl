@@ -72,9 +72,8 @@ proc DataInit {} {
         set Module($m,depend) "Events"
 
         # Set version info
-        set m Data
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.14 $} {$Date: 2000/02/13 02:01:11 $}]
+		{$Revision: 1.15 $} {$Date: 2000/02/14 15:30:02 $}]
 
 	set Data(index) ""
 	set Data(clipboard) ""
@@ -660,9 +659,12 @@ proc DataAddTransform {} {
     
     # Transform will enclose selected nodes
     set selection [$Data(fNodeList) curselection]
+
+    # Check that transform will only enclose transform-end transform pairs.
+    set numTrans [DataCountTransforms $selection]
     
-    # Empty list or no selection: put Transform at end	
-    if {[$Data(fNodeList) index end] == 0 || $selection == "" || [lindex $selection 0] == 0} {
+    # Empty list, no selection, or partial transform in selection: put Transform at end	
+    if {[$Data(fNodeList) index end] == 0 || $selection == "" || [lindex $selection 0] == 0 || $numTrans != 0} {
 	set append 1
     } else {
 	set append 0
