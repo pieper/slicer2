@@ -123,10 +123,10 @@ public:
   float GetParamForFeature(int f, int p)
     {return this->FeatureSettings[f].TransformParams[p];};
   float GetWeightForFeature(int f)
-    {return this->FeatureSettings[f].Weight;
-    this->Modified();};
+    {return this->FeatureSettings[f].Weight;};
   void SetWeightForFeature(int f, float w)
-    {this->FeatureSettings[f].Weight = w;};
+    {this->FeatureSettings[f].Weight = w;
+    this->Modified();};
 
   // Description:
   // Get all parameters used to compute the ith feature
