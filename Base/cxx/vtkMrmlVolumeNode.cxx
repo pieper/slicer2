@@ -630,19 +630,37 @@ int vtkMrmlVolumeNode::SolveABeqCforA(vtkMatrix4x4 * A,  vtkMatrix4x4 * B,
 //----------------------------------------------------------------------------
 void vtkMrmlVolumeNode::SetRasToWld(vtkMatrix4x4 *rasToWld)
 {
+
+    vtkIndent indent;
+    if (this->Debug)
+    {
+        vtkDebugMacro(<<"\n\n\n\n****************************************\n***\t\t\t\t\t***\n***\t\t\t\t\t***\nmrml volume node, starting set ras to world, volume " << this->ID << "\n ");
+        vtkDebugMacro(<<"Original rasToWld: ");
+        this->RasToWld->PrintSelf(cerr, indent);
+
+        vtkDebugMacro(<<"Original rasToIkj: ");
+        this->RasToIjk->PrintSelf(cerr,indent);
+        vtkDebugMacro(<<"Input rasToWld: ");
+        rasToWld->PrintSelf(cerr, indent);
+    }
+    
   // Store RasToWld for posterity and because modern computer systems
   // have lots of memory.
   this->RasToWld->DeepCopy(rasToWld);
-
+  
+    vtkDebugMacro(<<"UseRasToVtkMatrix: " << this->UseRasToVtkMatrix);
   // Convert RasToIjk from string to matrix form
   if (this->UseRasToVtkMatrix)
   {
+      vtkDebugMacro(<<"Setting RasToIjk using ras to vtk matrix:\n" << this->RasToVtkMatrix << endl);
     SetMatrixToString(this->RasToIjk, this->RasToVtkMatrix);
   }
   else 
   {
+      vtkDebugMacro(<<"Setting RasToIjk using ras to ijk matrix:\n" << this->RasToIjkMatrix << endl);
     SetMatrixToString(this->RasToIjk, this->RasToIjkMatrix);
   }
+  vtkDebugMacro(<<"Setting Position from Position Matrix:\n" << this->PositionMatrix << endl);
   SetMatrixToString(this->Position, this->PositionMatrix);
 
   // Form WldToIjk matrix to pass to reformatter, by
@@ -652,6 +670,11 @@ void vtkMrmlVolumeNode::SetRasToWld(vtkMatrix4x4 *rasToWld)
   
   // This line is necessary to force reformatters to update.
   this->WldToIjk->Modified();
+  if (this->Debug)
+  {
+      vtkDebugMacro(<<"mrml volume node, done set ras to world, WldToIjk: ");
+      this->WldToIjk->PrintSelf(cerr,indent);
+  }
 }
 
 //----------------------------------------------------------------------------
