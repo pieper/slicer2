@@ -120,14 +120,14 @@ foreach dir $modulePaths {
     if { [string match "vtk*" $moduleName] 
          && ![string match "*CustomModule*" $moduleName] 
          && [file exists $dir/cxx] 
-         && [file exists $dir/cxx/CMakeLists.txt]} {
+         && [file exists $dir/cxx/CMakeListsLocal.txt]} {
         if {[file exists [file join $dir cmaker_local.tcl]]} {
             lappend TARGETS $dir
         } else {
             set TARGETS "$dir $TARGETS"
         }
     } else {
-        puts "Skipping invalid module $moduleName..."
+        puts "Skipping module $moduleName...no compilation needed."
     }
 }
 
