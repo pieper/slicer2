@@ -14,7 +14,7 @@ exec tclsh "$0" "$@"
 # - configure (or cmake) with needed options
 # - build for this platform
 #
-# Packages: cmake, tcl, itcl, ITK, VTK, gsl, blt
+# Packages: cmake, tcl, itcl, ITK, VTK, blt
 # 
 # Usage:
 #   genlib [options] [target]
