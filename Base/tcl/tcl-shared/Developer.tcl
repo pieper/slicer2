@@ -25,6 +25,7 @@
 #   DevYesNo message
 #   DevOKCancel message
 #   DevWarningWindow message
+#   DevInfoWindow message
 #   DevErrorWindow message
 #   DevFatalErrorWindow message
 #   DevAddLabel LabelName Message Color
@@ -81,7 +82,7 @@
 # .END
 #-------------------------------------------------------------------------------
 proc DevYesNo {message} {
-   return [tk_messageBox -type yesno -message $message]
+   return [tk_messageBox -title Slicer -icon question -type yesno -message $message]
 }
 
 #-------------------------------------------------------------------------------
@@ -95,7 +96,7 @@ proc DevYesNo {message} {
 # .END
 #-------------------------------------------------------------------------------
 proc DevOKCancel {message} {
-   return [tk_messageBox -type okcancel -message $message]
+   return [tk_messageBox -title Slicer -icon question -type okcancel -message $message]
 }
 
 
@@ -109,7 +110,20 @@ proc DevOKCancel {message} {
 # .END
 #-------------------------------------------------------------------------------
 proc DevWarningWindow {{message "Unknown Warning"}} {
-   tk_messageBox -message $message
+   tk_messageBox -title "Slicer" -icon warning -message $message
+}
+
+#-------------------------------------------------------------------------------
+# .PROC DevInfoWindow
+#
+#  Report Information to the user. Force them to click OK to continue.
+#
+# .ARGS
+#  str message The error message. Default: \"Unknown Warning\"
+# .END
+#-------------------------------------------------------------------------------
+proc DevInfoWindow {message} {
+   tk_messageBox -title "Slicer" -icon info -message $message -type ok
 }
 
 #-------------------------------------------------------------------------------
@@ -122,7 +136,7 @@ proc DevWarningWindow {{message "Unknown Warning"}} {
 # .END
 #-------------------------------------------------------------------------------
 proc DevErrorWindow {{message "Unknown Error"}} {
-   tk_messageBox -message $message
+   tk_messageBox -title Slicer -icon error -message $message -type ok
 }
 
 #-------------------------------------------------------------------------------
