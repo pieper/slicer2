@@ -331,7 +331,7 @@ proc MainInit {} {
 
         # Set version info
 	lappend Module(versions) [ParseCVSInfo Main \
-		{$Revision: 1.41 $} {$Date: 2000/04/08 00:49:30 $}]
+		{$Revision: 1.42 $} {$Date: 2000/06/07 21:39:11 $}]
 
 	# Call each "Init" routine that's not part of a module
 	#-------------------------------------------
@@ -423,7 +423,6 @@ proc MainBuildGUI {} {
 	# When the mouse enters the display area, show the View controls
 	# instead of the welcome image
 	bind .tMain.fDisplay <Enter>  "MainViewSetWelcome Controls"
-	bind .tMain.fDisplay <Leave>  "MainViewSetWelcome Welcome"
 
 	bind .tMain.fModules  <Enter>  "MainViewSetWelcome Welcome"
 	bind .tMain.fControls <Enter>  "MainViewSetWelcome Welcome"
