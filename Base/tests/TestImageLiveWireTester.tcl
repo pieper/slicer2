@@ -29,14 +29,17 @@ clip ReleaseDataFlagOff
 
 # pipeline
 vtkImageLiveWireTester lwt
-lwt SetStartPoint 253 253
-lwt SetEndPoint 1 1
 lwt SetInput [clip GetOutput]
+vtkImageLiveWire lw
+lwt SetLiveWire lw
 
 puts "---"
 lwt Update
 puts "---"
 
+# test writing settings to a file
+lwt SetSettingsFileName "testfile.txt"
+lwt WriteFilterSettings
 
 # viewer
 vtkImageViewer viewer

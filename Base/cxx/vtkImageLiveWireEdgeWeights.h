@@ -151,7 +151,9 @@ public:
 
   // Description: 
   // Write feature means and variances to the training file
-  void WriteTrainedFeatureSettings();
+  void WriteFeatureSettings();
+  void AppendFeatureSettings(ofstream& of);
+  void GetFeatureSettingsString(char *);
 
   // Description:
   // internal access from Execute: don't call this

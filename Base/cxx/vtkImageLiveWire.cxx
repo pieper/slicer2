@@ -213,6 +213,14 @@ void vtkImageLiveWire::SetStartPoint(int x, int y)
   int extent[6];
   int numEdgePoints, numPixPoints;
 
+
+  if (this->NumberOfInputs < this->NumberOfRequiredInputs)
+    {
+      // the pipeline isn't all set up yet
+      vtkErrorMacro(<< "SetStartPoint: Expected " << this->NumberOfRequiredInputs << " inputs, got only " << this->NumberOfInputs);
+      return;      
+    }
+
   // if we have a previous short path, add it to contour 
   // and start next short path from contour's end
   // (even if end point of contour doesn't match where the user clicked.)
@@ -310,6 +318,13 @@ void vtkImageLiveWire::SetEndPoint(int x, int y)
 {
   int modified = 0;
   int extent[6];
+
+  if (this->NumberOfInputs < this->NumberOfRequiredInputs)
+    {
+      // the pipeline isn't all set up yet
+      vtkErrorMacro(<< "SetEndPoint: Expected " << this->NumberOfRequiredInputs << " inputs, got only " << this->NumberOfInputs);
+      return;      
+    }
 
   // if there is no start point yet, don't set the end point
   if (this->StartPoint[0] == -1 || this->StartPoint[1] == -1)
@@ -836,7 +851,9 @@ void vtkImageLiveWire::ExecuteInformation(vtkImageData **inputs,
       in1Ext[2] != in2Ext[2] || in1Ext[3] != in2Ext[3] || 
       in1Ext[4] != in2Ext[4] || in1Ext[5] != in2Ext[5])
     {
-      vtkErrorMacro("ExecuteInformation: Inputs are not the same size.");
+      vtkErrorMacro("ExecuteInformation: Inputs are not the same size. " <<
+		    in1Ext[0] << " " << in1Ext[1] << " " << in1Ext[2] << in1Ext[3] <<
+		    in2Ext[0] << " " << in2Ext[1] << " " << in2Ext[2] << in2Ext[3] );
       return;
     }
 }

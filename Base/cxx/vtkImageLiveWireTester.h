@@ -34,25 +34,19 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 class VTK_EXPORT vtkImageLiveWireTester : public vtkImageToImageFilter
 {
-public:
+  public:
   static vtkImageLiveWireTester *New();
   vtkTypeMacro(vtkImageLiveWireTester,vtkImageToImageFilter);
   void PrintSelf(ostream& os, vtkIndent indent);
-
-  // Description:
-  // Starting point of shortest path (mouse click #1)
-  vtkSetVector2Macro(StartPoint, int);
-  vtkGetVector2Macro(StartPoint, int);
-
-  // Description:
-  // Ending point of shortest path (mouse click #2)
-  vtkSetVector2Macro(EndPoint, int);
-  vtkGetVector2Macro(EndPoint, int);
-
+  
   // Description:
   // LiveWire object this class makes edges for
   vtkSetObjectMacro(LiveWire, vtkImageLiveWire);
   vtkGetObjectMacro(LiveWire, vtkImageLiveWire);
+
+  // Description:
+  // Set up the pipeline (give edge images to LiveWire filter)
+  void InitializePipeline();
 
   // Description:
   // Number of filters for edges (number of directions of edges)
@@ -66,15 +60,24 @@ public:
   // Description:
   // Returns output of one of the edge-producing filters.
   vtkImageData *GetEdgeImage(int filter);
+  
+  // Description: 
+  // The file where all edge filters' settings will be written when using 
+  // WriteFeatureSettings.  Use this to save training information.
+  vtkSetStringMacro(SettingsFileName);
+  vtkGetStringMacro(SettingsFileName);
+
+  // Description: 
+  // Write settings of all edge filters to file
+  void WriteFilterSettings();
 
 protected:
   vtkImageLiveWireTester();
   ~vtkImageLiveWireTester();
   vtkImageLiveWireTester(const vtkImageLiveWireTester&) {};
   void operator=(const vtkImageLiveWireTester&) {};
-  
-  int StartPoint[2];
-  int EndPoint[2];
+
+  char *SettingsFileName;
 
   // Description:
   // object we are creating input (multiple edges) for.

@@ -34,6 +34,10 @@ vtkImageViewer viewer
 viewer SetInput [lwedge GetOutput]
 viewer SetZSlice 15
 
+# test writing to a file
+#lwedge SetTrainingFileName testfile.txt
+#lwedge WriteTrainedFeatureSettings
+
 # Gui
 toplevel .top
 frame .top.f

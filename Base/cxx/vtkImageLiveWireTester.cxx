@@ -56,6 +56,7 @@ vtkImageLiveWireTester::vtkImageLiveWireTester()
       this->EdgeFilters[i]->SetEdgeDirection(i);
     }
 
+  this->SettingsFileName = NULL;
 }
 
 //----------------------------------------------------------------------------
@@ -90,7 +91,7 @@ vtkImageLiveWireTester::~vtkImageLiveWireTester()
 
 //----------------------------------------------------------------------------
 // Description:
-// return output of edge filter
+// return output of edge filter (for display)
 vtkImageData *vtkImageLiveWireTester::GetEdgeImage(int filter)
 {
   if (filter < this->NumberOfEdgeFilters)
@@ -101,6 +102,73 @@ vtkImageData *vtkImageLiveWireTester::GetEdgeImage(int filter)
     {
       vtkErrorMacro(<<"Requested filter " << filter << " greater than number of filters!");
     }
+}
+
+//----------------------------------------------------------------------------
+// Description:
+// get all filters to write their settings to one file
+void vtkImageLiveWireTester::WriteFilterSettings()
+{
+
+  ofstream file;
+
+  if (this->SettingsFileName)
+    {
+      file.open(this->SettingsFileName);
+      if (file.fail())
+	{
+	  vtkErrorMacro("Could not open file %" << this->SettingsFileName);
+	  return;
+	}  
+    }
+  else 
+    {
+      vtkErrorMacro("FileName has not been set");
+      return;
+    }
+
+  file << "Slicer Edge Filter Settings Version 1\n";
+
+  char settings[2000];
+  settings[0] = '\0';
+  // tell each edge filter to output its data
+  for (int i = 0; i < this->NumberOfEdgeFilters; i++)
+    {
+      // reset settings string
+      
+      // get settings from this filter
+      this->EdgeFilters[i]->GetFeatureSettingsString(settings);
+
+      this->EdgeFilters[i]->AppendFeatureSettings(file);
+      file << "\n";
+    }
+  //cout << "i: " << i  << " settings: " << settings << endl;
+  //cout << "len: " << strlen(settings) << endl;
+
+  file.close();
+}
+
+//----------------------------------------------------------------------------
+// Description:
+// Perform the main function of this filter:
+// feed edge images to livewire filter (hook up the pipeline)
+void vtkImageLiveWireTester::InitializePipeline()
+{
+  // Lauren max edge cost of edge filters and live wire need to match
+
+  // give each edge weight filter the same input as this filter has
+  for (int i = 0; i < this->NumberOfEdgeFilters; i++)
+    {
+      this->EdgeFilters[i]->SetOriginalImage(this->GetInput());
+    }
+
+  this->LiveWire->SetUpEdges(this->EdgeFilters[0]->GetOutput());
+  this->LiveWire->SetDownEdges(this->EdgeFilters[1]->GetOutput());
+  this->LiveWire->SetLeftEdges(this->EdgeFilters[2]->GetOutput());
+  this->LiveWire->SetRightEdges(this->EdgeFilters[3]->GetOutput());
+
+  // Lauren test
+  //this->LiveWire->SetOriginalImage(this->GetInput());
 }
 
 //----------------------------------------------------------------------------
@@ -118,32 +186,11 @@ static void vtkImageLiveWireTesterExecute(vtkImageLiveWireTester *self,
 {
   if (!self->GetLiveWire())
     {
-      cout << "ERROR in vtkImageLiveWire??: vtkImageLiveWire member not set."<< endl;
+      cout << "ERROR in vtkImageLiveWireTester: vtkImageLiveWire member not set."<< endl;
       return;
     }
 
-  vtkImageLiveWire *liveWire = self->GetLiveWire();
-  int numEdges = self->GetNumberOfEdgeFilters();
-  vtkImageLiveWireEdgeWeights ** edgeFilters = self->GetEdgeFilters();
-
-  // Lauren max edge cost of edge filters and live wire need to match
-
-  // set up pipeline for live wire.
-  // Pipeline stuff should only happen once!
-  // make edge weight images
-  for (int i = 0; i < numEdges; i++)
-    {
-      edgeFilters[i]->SetOriginalImage(inData);
-      // Lauren this sets precision.
-      //edgeFilters[i]->SetMaxEdgeWeight();
-      // Lauren this does not always Update when needed but this is too much:
-      edgeFilters[i]->Update();
-    }
-
-  liveWire->SetUpEdges(edgeFilters[0]->GetOutput());
-  liveWire->SetDownEdges(edgeFilters[1]->GetOutput());
-  liveWire->SetLeftEdges(edgeFilters[2]->GetOutput());
-  liveWire->SetRightEdges(edgeFilters[3]->GetOutput());
+  self->InitializePipeline();
 
   // Output is the same as input
   outData->CopyAndCastFrom(inData, inData->GetExtent());  

@@ -149,22 +149,26 @@ vtkImageLiveWireEdgeWeights::~vtkImageLiveWireEdgeWeights()
 //----------------------------------------------------------------------------
 // Description:
 // Dump training settings to a file
-void vtkImageLiveWireEdgeWeights::WriteTrainedFeatureSettings()
+void vtkImageLiveWireEdgeWeights::WriteFeatureSettings()
 {
   ofstream file;
 
-  if (this->GetTrainingFileName())
+  if (this->TrainingFileName)
     {
-      file.open(this->GetTrainingFileName());
+      file.open(this->TrainingFileName);
       if (file.fail())
 	{
-	  vtkErrorMacro("Could not open file %" << this->GetTrainingFileName());
+	  vtkErrorMacro("Could not open file %" << this->TrainingFileName);
 	  return;
 	}  
     }
+  else 
+    {
+      vtkErrorMacro("FileName has not been set");
+      return;
+    }
 
-  // output the features
-  
+  // output the features  
   for (int i=0; i < this->NumberOfFeatures; i++)
     {
       file << this->GetWeightForFeature(i) << ' ' 
@@ -175,6 +179,45 @@ void vtkImageLiveWireEdgeWeights::WriteTrainedFeatureSettings()
   file.close();
 }
 
+
+//----------------------------------------------------------------------------
+// Description:
+// Output training settings to a file (already opened)
+void vtkImageLiveWireEdgeWeights::AppendFeatureSettings(ofstream& of)
+{
+
+  // output the features
+  
+  for (int i=0; i < this->NumberOfFeatures; i++)
+    {
+      of << this->GetWeightForFeature(i) << ' ' 
+	 << this->GetParamForFeature(i,0)    << ' '  
+	 << this->GetParamForFeature(i,1)   << endl;
+    }
+
+}
+
+//----------------------------------------------------------------------------
+// Description:
+// Output training settings to a file (already opened)
+void vtkImageLiveWireEdgeWeights::GetFeatureSettingsString(char *settings)
+{
+  char set[10];
+  int count = 0;
+
+  // append the features
+  for (int i=0; i < this->NumberOfFeatures; i++)
+    {
+      snprintf(set, 10, "%9f.4", this->GetWeightForFeature(i));
+      strcat(settings, set);
+
+      snprintf(set, 10, "%9f.4", this->GetParamForFeature(i,0));
+      strcat(settings, set);
+
+      snprintf(set, 10, "%9f.4", this->GetParamForFeature(i,1));
+      strcat(settings, set);
+    }
+}
 
 //----------------------------------------------------------------------------
 // Description:
@@ -711,9 +754,6 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
 	  // clear the running total
 	  self->SetRunningNumberOfTrainingPoints(0);
 	  
-	  // output to a file
-	  self->WriteTrainedFeatureSettings();
-
 	  // set this filter's settings to the trained ones.
 	  // Lauren do weight if train it later
 	  for (int f=0;f<numFeatures;f++)
