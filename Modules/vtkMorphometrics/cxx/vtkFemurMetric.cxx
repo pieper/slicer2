@@ -34,10 +34,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 =========================================================================auto=*/
 #include "vtkFemurMetric.h"
 #include <vtkObjectFactory.h>
-#include <vtkCommand.h>
 #include <vtkMath.h>
-
-#include <iostream>
 
 vtkFemurMetric* vtkFemurMetric::New()
 {
@@ -75,13 +72,8 @@ vtkFemurMetric::vtkFemurMetric()
   UpperShaftEndPlane = vtkPlaneSource::New();
   LowerShaftEndPlane = vtkPlaneSource::New();
   Femur = NULL;
-  NeckAxisSource = vtkCylinderSource::New();
-  NeckAxisFilter = vtkTransformPolyDataFilter::New();
-  NeckAxisTransform = vtkTransform::New();
-  ShaftAxisSource = vtkCylinderSource::New();
-  ShaftAxisFilter = vtkTransformPolyDataFilter::New();
-  ShaftAxisTransform = vtkTransform::New();
-
+  NeckAxis = vtkAxisSource::New();
+  ShaftAxis = vtkAxisSource::New();
 
   // defaults:
   HeadNeckPlane->SetOrigin(0,0,0);
@@ -108,53 +100,17 @@ vtkFemurMetric::vtkFemurMetric()
   LowerShaftEndPlane->SetCenter(-105,-15,-155);
   LowerShaftEndPlane->SetNormal(-1,0,7);
 
-  // make the axis visible
-  NeckAxisSource->SetResolution(30);
-  NeckAxisSource->SetRadius(3);
-  NeckAxisSource->SetHeight(400);
-  // put the pipeline together
-  NeckAxisFilter->SetInput(NeckAxisSource->GetOutput());
-  NeckAxisFilter->SetTransform(NeckAxisTransform);
-  SetAxis(NeckAxisTransform,-113.749,-5.89667,52.48,0.643935,0.458941,0.612144);
+  NeckAxis->SetCenter(-113.749,-5.89667,52.48);
+  NeckAxis->SetDirection(0.643935,0.458941,0.612144);
 
-
-  // make the axis visible
-  ShaftAxisSource->SetResolution(30);
-  ShaftAxisSource->SetRadius(3);
-  ShaftAxisSource->SetHeight(400);
-  // put the pipeline together
-  ShaftAxisFilter->SetInput(ShaftAxisSource->GetOutput());
-  ShaftAxisFilter->SetTransform(ShaftAxisTransform);
-  SetAxis(ShaftAxisTransform,-116.32,-14.9477,-76.2995,0.107772,0.06512,-0.992041);
+  ShaftAxis->SetCenter(-116.32,-14.9477,-76.2995);
+  ShaftAxis->SetDirection(0.107772,0.06512,-0.992041);
 
   HeadSphere->SetCenter(-105,-5,70);
   HeadSphere->SetRadius(24);
   HeadSphere->SetThetaResolution(30);
   HeadSphere->SetPhiResolution(30);
 
-}
-
-void vtkFemurMetric::SetAxis(vtkTransform* t,float x0_x,float x0_y,float x0_z,float dir_x,float dir_y,float dir_z)
-{
-  float norm =  sqrt(dir_x*dir_x + dir_y*dir_y + dir_z*dir_z);
-  dir_x = dir_x / norm;
-  dir_y = dir_y / norm;
-  dir_z = dir_z / norm;
-
-  dir_x = dir_x / 2;
-  dir_y = (1+dir_y) / 2;
-  dir_z = dir_z / 2;
-
-  norm =  sqrt(dir_x*dir_x + dir_y*dir_y + dir_z*dir_z);
-  dir_x = dir_x / norm;
-  dir_y = dir_y / norm;
-  dir_z = dir_z / norm;
-
-
-  t->Identity();
-  t->RotateWXYZ(180,dir_x,dir_y,dir_z);
-  t->PostMultiply();
-  t->Translate(x0_x,x0_y,x0_z);
 }
 
 vtkFemurMetric::~vtkFemurMetric()
@@ -164,22 +120,8 @@ vtkFemurMetric::~vtkFemurMetric()
   NeckShaftPlane->Delete();
   UpperShaftEndPlane->Delete();
   LowerShaftEndPlane->Delete();
-  NeckAxisSource->Delete();
-  NeckAxisFilter->Delete();
-  NeckAxisTransform->Delete();
-  ShaftAxisSource->Delete();
-  ShaftAxisFilter->Delete();
-  ShaftAxisTransform->Delete();
-}
-
-vtkFemurMetric::vtkFemurMetric(vtkFemurMetric&)
-{
-
-}
-
-void vtkFemurMetric::operator=(const vtkFemurMetric)
-{
-
+  NeckAxis->Delete();
+  ShaftAxis->Delete();
 }
 
 void vtkFemurMetric::Execute()
@@ -193,8 +135,8 @@ void vtkFemurMetric::Execute()
 // - the normal of NeckShaftPlane looks towards the head
 // - the normal of UpperShaftEndPlane looks away from the tuberculum major
 // - the normal of LowerShaftEndPlane looks towards the tuberculum major
-// - the axis of the neck axis points from neck towards head
-// - the axis of the shaft axis points from the upper end towards the lower end of the shaft
+// - the neck axis points from neck towards head
+// - the shaft axis points from the upper end towards the lower end of the shaft
 void vtkFemurMetric::Normalize()
 {
   float* n;
@@ -232,7 +174,7 @@ void vtkFemurMetric::Normalize()
 
   if(!(vtkMath::Dot(n,x0) < vtkMath::Dot(n,x1))) 
     {
-      UpperShaftEndPlane->SetNormal(-1*n[0],-1*n[1],-1*n[2]);
+      UpperShaftEndPlane->SetNormal(-n[0],-n[1],-n[2]);
     }
   
   // Ensure Normal of LowerShaftEndPlane looks towards tuberculum major
@@ -243,80 +185,43 @@ void vtkFemurMetric::Normalize()
 
   if(!(vtkMath::Dot(n,x0) < vtkMath::Dot(n,x1))) 
     {
-      LowerShaftEndPlane->SetNormal(-1*n[0],-1*n[1],-1*n[2]);
+      LowerShaftEndPlane->SetNormal(-n[0],-n[1],-n[2]);
     }
 
   // - the axis of the neck axis points from neck towards head
   // implemented: we simply ensure that the center of the 
   // HeadNeckPlane is inside the halfspace defined by the direction and the center of the axis
 
-  n  = CylinderDirection(NeckAxisTransform);
-  x0 = NeckAxisTransform->GetPosition();
+  n  = NeckAxis->GetDirection();
+  x0 = NeckAxis->GetCenter();
   x1 = HeadNeckPlane->GetCenter();
 
   if(!(vtkMath::Dot(n,x0) < vtkMath::Dot(n,x1)))
     {
-      SetAxis(NeckAxisTransform,x0[0],x0[1],x0[2],-n[0],-n[1],-n[2]);
+      NeckAxis->SetDirection(-n[0],-n[1],-n[2]);
     }
-
-  free(n);
 
   // - the axis of the shaft axis points from the upper end towards the lower end of the shaft
   // implemented: we simply ensure that the center of the 
   // LowerShaftEndPlane is inside the halfspace defined by the direction and the center of the axis
 
 
-  n  = CylinderDirection(ShaftAxisTransform);
-  x0 = ShaftAxisTransform->GetPosition();
+  n  = ShaftAxis->GetDirection();
+  x0 = ShaftAxis->GetCenter();
   x1 = LowerShaftEndPlane->GetCenter();
 
   if(!(vtkMath::Dot(n,x0) < vtkMath::Dot(n,x1)))
     {
-      SetAxis(ShaftAxisTransform,x0[0],x0[1],x0[2],-n[0],-n[1],-n[2]);
+      ShaftAxis->SetDirection(-n[0],-n[1],-n[2]);
     }
 
-  free(n);
 }
 
-float* vtkFemurMetric::CylinderDirection(vtkTransform* t)
-{
-  float* dir_v   = (float*) malloc(4*sizeof(float));
-  float* result  = (float*) malloc(4*sizeof(float));
-
-  dir_v[0] = 0;
-  dir_v[1] = 1;
-  dir_v[2] = 0;
-  dir_v[3] = 0;
-
-  t->GetMatrix()->MultiplyPoint(dir_v, result);
-  vtkMath::Normalize(result);
-
-  free(dir_v);
-  return result;
-}
-
-float vtkFemurMetric::Angle(float* a,float* b)
-{
-  float normA = vtkMath::Norm(a);
-  float normB = vtkMath::Norm(b);
-  float AdotB = vtkMath::Dot(a,b);
-  
-  float angle = acos(AdotB / (normA*normB));
-  return angle*vtkMath::RadiansToDegrees();
-}
-
+// NeckShaftAngle == angle between neck axis and shaft axis
 void vtkFemurMetric::ComputeNeckShaftAngle()
 {
-  // NeckShaftAngle == angle between neck axis and shaft axis
-
   // ensure everthing is correct set up, especially that the axis are pointing in the correct direction
   Normalize();
+  NeckShaftAngle = ShaftAxis->vtkAxisSource::Angle(NeckAxis);
   
-  float* dir_shaft = CylinderDirection(ShaftAxisTransform);
-  float* dir_neck  = CylinderDirection(NeckAxisTransform);
-
-  NeckShaftAngle = Angle(dir_shaft,dir_neck);
-
-  free(dir_neck);
-  free(dir_shaft);
 }

@@ -37,10 +37,8 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkMorphometricsConfigure.h"
 #include <vtkObject.h>
 #include <vtkPlaneSource.h>
-#include <vtkCylinderSource.h>
-#include <vtkTransformPolyDataFilter.h>
-#include <vtkTransform.h>
 #include <vtkPolyData.h>
+#include "vtkAxisSource.h"
 //---------------------------------------------------------
 // Author: Axel Krauth
 //
@@ -62,11 +60,6 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 // frontal axis in the coordinate system. Whereas that can be transferred to 3D I found
 // no way to specify how much the hip is tilted, so I set it to (0,1,0).
 //
-// The visualization of the frontal axis is the transformation of a vtkCylinderSource.
-// When you want to change the frontal axis, you have to set the transform
-// LowerBoundaryFilter->GetTransform() so that multiplying it with (0,1,0,0), which is the
-// initial direction of a vtkCylinderSource, yields the wanted direction.
-//
 class VTK_MORPHOMETRICS_EXPORT vtkPelvisMetric : public vtkObject
 {
  public:
@@ -81,28 +74,19 @@ class VTK_MORPHOMETRICS_EXPORT vtkPelvisMetric : public vtkObject
   void SetPelvis(vtkPolyData*);
   vtkGetObjectMacro(Pelvis,vtkPolyData);
 
-  vtkGetVector3Macro(FrontalAxis,float);
-  vtkGetVector3Macro(SagittalAxis,float);
-  vtkGetVector3Macro(LongitudinalAxis,float);
-
  // center of gravity of the member Pelvis
   vtkGetVector3Macro(Center,float);
 
   vtkGetObjectMacro(AcetabularPlane,vtkPlaneSource);
 
-  vtkGetObjectMacro(LowerBoundaryFilter,vtkTransformPolyDataFilter);
+  vtkGetObjectMacro(FrontalAxis,vtkAxisSource);
 
-  vtkGetObjectMacro(LowerBoundarySource,vtkCylinderSource);
+  vtkGetObjectMacro(SagittalAxis,vtkAxisSource);
 
+  vtkGetObjectMacro(LongitudinalAxis,vtkAxisSource);
 
- // converts the representation of the frontal axis into 
- // the representation via FrontalAxis, ensures that all axes
- // are orthogonal and computes the inclination and anteversion angles
- // for the current set of axes and acetabular plane
-  void UpdateAndNormalize();
-
- // Update the members so that they fulfill some properties.
- // this faciliates the computation of the anteversion and inclination
+  // Update the members so that they fulfill some properties as well as 
+  // computes the derived values.
   void Normalize();
 
  protected:
@@ -116,32 +100,29 @@ class VTK_MORPHOMETRICS_EXPORT vtkPelvisMetric : public vtkObject
  // representation of the acetabular plane
   vtkPlaneSource* AcetabularPlane;
 
- // graphical representation of the frontal axis
-  vtkCylinderSource* LowerBoundarySource;
-  vtkTransformPolyDataFilter* LowerBoundaryFilter;
-  vtkTransform* LowerBoundaryTransform;
-
  // model representing the pelvis
   vtkPolyData* Pelvis;
 
  // center of gravity of Pelvis
   float* Center;
 
- //the three axis vectors are orthogonal to each other
-  float* FrontalAxis;
- // always set to (0,1,0)
-  float* SagittalAxis;
-// Crossproduct of FrontalAxis and SagittalAxis
-  float* LongitudinalAxis;
+  //the three axis vectors are orthogonal to each other
+  vtkAxisSource* FrontalAxis;
 
- // convenience function for computing the angle between to vectors
-  float Angle(float* a,float* b);
+  // always set to (0,1,0)
+  vtkAxisSource* SagittalAxis;
+
+  // Crossproduct of FrontalAxis and SagittalAxis
+  vtkAxisSource* LongitudinalAxis;
+
   float InclinationAngle;
   float AnteversionAngle;
+
+  // recompute the angles
+  void UpdateAngles();
  
- // convenience function so that the transform translates and rotates
- // the input vtkCylinderSource to the given location and orientation
-  void SetAxis(vtkTransform*,float,float,float,float,float,float);
+  // ensure that all three Axis are orthogonal to each other
+  void OrthogonalizeAxes();
 };
 
 #endif

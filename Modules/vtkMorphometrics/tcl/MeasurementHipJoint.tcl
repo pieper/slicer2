@@ -39,7 +39,7 @@
 #    MorphometricsHipJointMeasurementInit
 #    MorphometricsHipJointSetModels idList
 #    MorphometricsHipJointMeasurementInitGeometry
-#    MorphometricsHipJointPreplaceAxis TransformFilter PolyData
+#    MorphometricsHipJointPreplaceAxis Axis PolyData
 #    MorphometricsHipJointPlaceHeadSphere
 #    MorphometricsHipJointPlaceShaftAxis
 #    MorphometricsHipJointResultEnter
@@ -97,13 +97,13 @@ proc MorphometricsHipJointMeasurementInit {} {
     MorphometricsCreatePlanePlacementStep MorphometricsHipJoint  [Femur GetLowerShaftEndPlane] "lower end of shaft" "Place plane at the lower end of the shaft at the tuberculum minor" 
 
     # step : the user can set the neck axis manually
-    MorphometricsCreateCylinderPlacementStep MorphometricsHipJoint [Femur GetNeckAxisSource] [Femur GetNeckAxisFilter] "Neck axis" "neck axis"
+    MorphometricsCreateAxisPlacementStep MorphometricsHipJoint [Femur GetNeckAxis] "Neck axis" "neck axis"
 
     # step : the user specifies the acetabular plane
     MorphometricsCreatePlanePlacementStep MorphometricsHipJoint  [Pelvis GetAcetabularPlane] "Acetabular Plane" "Place the acetabular plane"
 
     # step : the user specifies the coronal plane
-    MorphometricsCreateCylinderPlacementStep MorphometricsHipJoint [Pelvis GetLowerBoundarySource] [Pelvis GetLowerBoundaryFilter] "Lower Pelvis Boundary" "Place the line at the lower boundary of the pelvis"
+    MorphometricsCreateAxisPlacementStep MorphometricsHipJoint [Pelvis GetFrontalAxis] "Frontal Axis" "Place the frontal axis of the pelvis"
 
     # step : display the results
     WorkflowAddStep MorphometricsHipJoint MorphometricsHipJointResultEnter MorphometricsHipJointResultExit  MorphometricsHipJointResultUserInterface "Results"
@@ -123,10 +123,8 @@ proc MorphometricsHipJointSetModels {idList} {
     # BUG: ignores whether $Model([lindex $p 0],polyData actually exists
     Femur SetFemur $Model([lindex $idList 0],polyData)
     Pelvis SetPelvis $Model([lindex $idList 1],polyData)
-    HeadFilter SetInput [Femur GetFemur]
-    NeckFilter SetInput [Femur GetFemur]
     ShaftFilter SetInput [Femur GetFemur]
-    HeadNeckFilter SetInput [Femur GetFemur]
+    HeadFilter SetInput [Femur GetFemur]
 }
 
 #-------------------------------------------------------------------------------
@@ -147,21 +145,21 @@ proc MorphometricsHipJointMeasurementInitGeometry {} {
 # filter is therefore updated so that the output of it is the visualization of 
 # the best fitting line.
 # .ARGS
-# str TransformFilter an object of type vtkTransformFilter
+# str Axis an object of type vtkAxisSource
 # str PolyData an object of type vtkPolyData
 # .END
 #-------------------------------------------------------------------------------
-proc MorphometricsHipJointPreplaceAxis {TransformFilter PolyData} {
+proc MorphometricsHipJointPreplaceAxis {Axis PolyData} {
     global MorphometricsHipJointEuclideanLineFit 
+
     MorphometricsHipJointEuclideanLineFit SetInput $PolyData
     MorphometricsHipJointEuclideanLineFit Update
+
     set normal [MorphometricsHipJointEuclideanLineFit GetDirection]
     set center [MorphometricsHipJointEuclideanLineFit GetCenter]
-    [$TransformFilter GetTransform] Identity
-    [$TransformFilter GetTransform] RotateWXYZ 180 [lindex $normal 0] [expr 1 +[lindex $normal 1]] [lindex $normal 2]
-    [$TransformFilter GetTransform] PostMultiply
-    [$TransformFilter GetTransform] Translate  [lindex $center 0] [lindex $center 1] [lindex $center 2]
 
+    $Axis SetCenter [lindex $center 0] [lindex $center 1] [lindex $center 2]
+    $Axis SetDirection [lindex $normal 0] [lindex $normal 1] [lindex $normal 2]
 }
 
 #-------------------------------------------------------------------------------
@@ -174,8 +172,10 @@ proc MorphometricsHipJointPreplaceAxis {TransformFilter PolyData} {
 #-------------------------------------------------------------------------------
 proc MorphometricsHipJointPlaceHeadSphere {} {
     global Femur HeadFilter MorphometricsHipJointSphereFit
+
     MorphometricsHipJointSphereFit SetInput [HeadFilter GetOutput]
     MorphometricsHipJointSphereFit Update
+
     [Femur GetHeadSphere] SetRadius [MorphometricsHipJointSphereFit GetRadius]
     set center [MorphometricsHipJointSphereFit GetCenter]
     [Femur GetHeadSphere] SetCenter [lindex $center 0] [lindex $center 1] [lindex $center 2]
@@ -189,8 +189,7 @@ proc MorphometricsHipJointPlaceHeadSphere {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MorphometricsHipJointPlaceShaftAxis {} {
-    global Femur ShaftFilter
-    MorphometricsHipJointPreplaceAxis [Femur GetShaftAxisFilter] [ShaftFilter GetOutput]
+    MorphometricsHipJointPreplaceAxis [Femur GetShaftAxis] [ShaftFilter GetOutput]
 }
 
 #-------------------------------------------------------------------------------
@@ -201,12 +200,9 @@ proc MorphometricsHipJointPlaceShaftAxis {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MorphometricsHipJointResultEnter {} {
-    global MorphometricsHipJointResultShaftAxis MorphometricsHipJointResultNeckAxis MorphometricsHipJointResultHeadSphere HeadSegment NeckSegment ShaftSegment AcetabularPlane
+    global MorphometricsHipJointResultShaftAxis MorphometricsHipJointResultNeckAxis MorphometricsHipJointResultHeadSphere AcetabularPlane
 
     # display the defined parts of the femur and the hip joint geometry parts specified by the user
-    viewRen AddActor HeadSegment
-    viewRen AddActor NeckSegment
-    viewRen AddActor ShaftSegment
     viewRen AddActor MorphometricsHipJointResultNeckAxis
     viewRen AddActor AcetabularPlane
 
@@ -230,13 +226,10 @@ proc MorphometricsHipJointResultEnter {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MorphometricsHipJointResultExit {} {
-    global MorphometricsHipJointResultShaftAxis MorphometricsHipJointResultNeckAxis MorphometricsHipJointResultHeadSphere HeadSegment NeckSegment ShaftSegment AcetabularPlane
+    global MorphometricsHipJointResultShaftAxis MorphometricsHipJointResultNeckAxis MorphometricsHipJointResultHeadSphere AcetabularPlane
     viewRen RemoveActor MorphometricsHipJointResultShaftAxis
     viewRen RemoveActor MorphometricsHipJointResultNeckAxis
     viewRen RemoveActor MorphometricsHipJointResultHeadSphere
-    viewRen RemoveActor HeadSegment
-    viewRen RemoveActor NeckSegment
-    viewRen RemoveActor ShaftSegment
     viewRen RemoveActor AcetabularPlane
 
     Render3D
@@ -251,7 +244,7 @@ proc MorphometricsHipJointResultExit {} {
 proc MorphometricsHipJointResultUserInterface {frame} {
     global Gui Femur
 
-    Pelvis UpdateAndNormalize
+    Pelvis Normalize
     Femur Normalize
     Femur ComputeNeckShaftAngle
 
@@ -296,65 +289,27 @@ proc MorphometricsHipJointDisplayInit {} {
     AcetabularPlane SetMapper MorphometricsHipJointResultPDM4
 
 
-    MorphometricsHipJointResultPDM1 SetInput [[Femur GetShaftAxisFilter] GetOutput]
-    MorphometricsHipJointResultPDM2 SetInput [[Femur GetNeckAxisFilter] GetOutput]
+    MorphometricsHipJointResultPDM1 SetInput [[Femur GetShaftAxis] GetOutput]
+    MorphometricsHipJointResultPDM2 SetInput [[Femur GetNeckAxis] GetOutput]
     MorphometricsHipJointResultPDM3 SetInput [[Femur GetHeadSphere] GetOutput]
     MorphometricsHipJointResultPDM4 SetInput [[Pelvis GetAcetabularPlane] GetOutput]
 
 
-    vtkPredicateFilter HeadFilter
-    vtkPredicateFilter NeckFilter
     vtkPredicateFilter ShaftFilter
-
-    vtkHalfspacePredicate h5
-    h5 SetPlane [Femur GetNeckShaftPlane]
-    vtkPredicateFilter HeadNeckFilter
-    HeadNeckFilter SetPredicate h5
-
-    vtkHalfspacePredicate h1
-    vtkHalfspacePredicate h2
     vtkHalfspacePredicate h3
     vtkHalfspacePredicate h4
-
-    h1 SetPlane [Femur GetHeadNeckPlane]
-    h2 SetPlane [Femur GetNeckShaftPlane]
     h3 SetPlane [Femur GetUpperShaftEndPlane]
     h4 SetPlane [Femur GetLowerShaftEndPlane]
-
-    HeadFilter SetPredicate h1
-
-    vtkAndPredicate and1
-    and1 SetLeftOperand h2
-    vtkNotPredicate n1
-    and1 SetRightOperand n1
-    n1 SetOperand h1
-    
-    NeckFilter SetPredicate and1
 
     vtkAndPredicate and2
     and2 SetLeftOperand h3
     and2 SetRightOperand h4
     
     ShaftFilter SetPredicate and2
-    
-    vtkPolyDataMapper pdmHead
-    vtkPolyDataMapper pdmNeck
-    vtkPolyDataMapper pdmShaft
 
-    pdmHead SetInput [HeadFilter GetOutput]
-    pdmNeck SetInput [NeckFilter GetOutput]
-    pdmShaft SetInput [ShaftFilter GetOutput]
-
-    vtkActor HeadSegment    
-    vtkActor NeckSegment
-    vtkActor ShaftSegment
-
-    HeadSegment SetMapper pdmHead
-    NeckSegment SetMapper pdmNeck
-    ShaftSegment SetMapper pdmShaft
-
-    [HeadSegment GetProperty] SetDiffuseColor 1 0 0
-    [NeckSegment GetProperty] SetDiffuseColor 0 1 0
-    [ShaftSegment GetProperty] SetDiffuseColor 0 0 1
+    vtkPredicateFilter HeadFilter
+    vtkHalfspacePredicate h1
+    h1 SetPlane [Femur GetHeadNeckPlane]
+    HeadFilter SetPredicate h1
 }
 

@@ -38,10 +38,9 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include <vtkObject.h>
 #include <vtkPlaneSource.h>
 #include <vtkSphereSource.h>
-#include <vtkCylinderSource.h>
-#include <vtkTransformPolyDataFilter.h>
-#include <vtkTransform.h>
 #include <vtkPolyData.h>
+#include "vtkAxisSource.h"
+
 //---------------------------------------------------------
 // Author: Axel Krauth
 //
@@ -74,13 +73,9 @@ class VTK_MORPHOMETRICS_EXPORT vtkFemurMetric : public vtkObject
  // representation of the approximation of the head sphere
   vtkGetObjectMacro(HeadSphere,vtkSphereSource);
 
- // representation of the neck axis as a transformed cylinder
-  vtkGetObjectMacro(NeckAxisFilter,vtkTransformPolyDataFilter);
-  vtkGetObjectMacro(NeckAxisSource,vtkCylinderSource);
+  vtkGetObjectMacro(NeckAxis,vtkAxisSource);
 
- // representation of the shaft axis as a transformed cylinder
-  vtkGetObjectMacro(ShaftAxisFilter,vtkTransformPolyDataFilter);
-  vtkGetObjectMacro(ShaftAxisSource,vtkCylinderSource);
+  vtkGetObjectMacro(ShaftAxis,vtkAxisSource);
 
   vtkGetObjectMacro(HeadNeckPlane,vtkPlaneSource);
 
@@ -106,13 +101,9 @@ class VTK_MORPHOMETRICS_EXPORT vtkFemurMetric : public vtkObject
 
   vtkSphereSource* HeadSphere;
   
-  vtkCylinderSource* NeckAxisSource;
-  vtkTransformPolyDataFilter* NeckAxisFilter;
-  vtkTransform* NeckAxisTransform;
+  vtkAxisSource* NeckAxis;
 
-  vtkCylinderSource* ShaftAxisSource;
-  vtkTransformPolyDataFilter* ShaftAxisFilter;
-  vtkTransform* ShaftAxisTransform;
+  vtkAxisSource* ShaftAxis;
 
   vtkPlaneSource*  HeadNeckPlane;
 
@@ -124,14 +115,6 @@ class VTK_MORPHOMETRICS_EXPORT vtkFemurMetric : public vtkObject
 
   vtkPolyData* Femur;
 
- // convenience function for computing the angle between two vectors
-  float Angle(float* a,float* b);
- // update t so that it translates and rotates an input vtkCylinderSource 
- // to the given location and orientation
-  void SetAxis(vtkTransform* t,float x0_x,float x0_y,float x0_z,float dir_x,float dir_y,float dir_z);
- 
- // retrieve the axis of a cylinder for a given transformation t
-  float* CylinderDirection(vtkTransform* t);
   float NeckShaftAngle;
 };
 

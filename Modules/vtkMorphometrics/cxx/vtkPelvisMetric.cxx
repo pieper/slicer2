@@ -34,10 +34,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 =========================================================================auto=*/
 #include "vtkPelvisMetric.h"
 #include <vtkObjectFactory.h>
-#include <vtkCommand.h>
 #include <vtkMath.h>
-
-#include <iostream>
 
 vtkPelvisMetric* vtkPelvisMetric::New()
 {
@@ -71,7 +68,6 @@ vtkPelvisMetric::vtkPelvisMetric()
   AcetabularPlane = vtkPlaneSource::New();
   Pelvis = NULL;
 
-
   // defaults:
   AcetabularPlane->SetOrigin(0,0,0);
   AcetabularPlane->SetPoint1(100,0,0);
@@ -79,43 +75,23 @@ vtkPelvisMetric::vtkPelvisMetric()
   AcetabularPlane->SetCenter(-88.6134,-4.64934,87.0443);
   AcetabularPlane->SetNormal(-0.721505,0.320132,-0.613959);
 
-  LowerBoundarySource = vtkCylinderSource::New();
-  LowerBoundaryFilter = vtkTransformPolyDataFilter::New();
-  LowerBoundaryTransform = vtkTransform::New();
-
-
-  // make the axis visible
-  LowerBoundarySource->SetResolution(30);
-  LowerBoundarySource->SetRadius(3);
-  LowerBoundarySource->SetHeight(400);
-  // put the pipeline together
-  LowerBoundaryFilter->SetInput(LowerBoundarySource->GetOutput());
-  LowerBoundaryFilter->SetTransform(LowerBoundaryTransform);
-  SetAxis(LowerBoundaryTransform,4.65723,-5.89667,9.52892,1,0,0);
-
-
   Center = (float*)malloc(3*sizeof(float)); 
   Center[0] = 0;
   Center[1] = 0;
   Center[2] = 0;
 
-  FrontalAxis  = (float*)malloc(3*sizeof(float)); 
-  FrontalAxis[0] = 1;
-  FrontalAxis[1] = 0;
-  FrontalAxis[2] = 0;
+  FrontalAxis  = vtkAxisSource::New();
+  FrontalAxis->SetDirection(1,0,0);
 
-  SagittalAxis  = (float*)malloc(3*sizeof(float)); 
-  SagittalAxis[0] = 0;
-  SagittalAxis[1] = 1;
-  SagittalAxis[2] = 0;
+  SagittalAxis  = vtkAxisSource::New();
+  SagittalAxis->SetDirection(0,1,0);
 
-  LongitudinalAxis  = (float*)malloc(3*sizeof(float)); 
-  LongitudinalAxis[0] = 0;
-  LongitudinalAxis[1] = 0;
-  LongitudinalAxis[2] = 1;
+  LongitudinalAxis  = vtkAxisSource::New();
+  LongitudinalAxis->SetDirection(0,0,1);
 
-  InclinationAngle = 0;
-  AnteversionAngle = 0;
+  InclinationAngle = 45;
+  AnteversionAngle = 45;
+  Normalize();
 }
 
 void vtkPelvisMetric::SetPelvis(vtkPolyData* newPelvis)
@@ -144,90 +120,12 @@ void vtkPelvisMetric::SetPelvis(vtkPolyData* newPelvis)
   Modified();
 }
 
-void vtkPelvisMetric::UpdateAndNormalize()
-{
-  // update FrontalAxis and LongitudinalAxis
-  // FrontalAxis = y-Axis of LowerBoundaryTransform
-  FrontalAxis[0] = 0;
-  FrontalAxis[1] = 1;
-  FrontalAxis[2] = 0;
-
-  // FrontalAxis is now the direction of LowerBoundaryTransform
-  LowerBoundaryTransform->TransformNormal(FrontalAxis,FrontalAxis);
-
-  // make FrontalAxis orthogonal to the Sagittal axis
-  float frontalSagittalP = vtkMath::Dot(FrontalAxis,SagittalAxis);
-  for(int i=0;i<3;i++)
-    FrontalAxis[i] = FrontalAxis[i] - frontalSagittalP*SagittalAxis[i];
-
-  SetAxis(LowerBoundaryTransform,LowerBoundaryTransform->GetPosition()[0],LowerBoundaryTransform->GetPosition()[1],LowerBoundaryTransform->GetPosition()[2],FrontalAxis[0],FrontalAxis[1],FrontalAxis[2]);
-
-  // ensure the longitudinal is orthogonal to both axes
-  vtkMath::Cross(FrontalAxis,SagittalAxis,LongitudinalAxis);
-
-  // Normalization necessary for computation of angles
-  Normalize();
-
-  // recompute Angles
-
-  float* normalProjected = (float*) malloc(3*sizeof(float));
-  for(int i=0;i<3;i++)
-    normalProjected[i] = AcetabularPlane->GetNormal()[i];
-
-  float normalP = vtkMath::Dot(normalProjected,SagittalAxis);
-  for(int i=0;i<3;i++)
-    normalProjected[i] = normalProjected[i] - normalP*SagittalAxis[i];
-
-  InclinationAngle = 90 - Angle(FrontalAxis,normalProjected);
-  
-  
-  for(int i=0;i<3;i++)
-    normalProjected[i] = AcetabularPlane->GetNormal()[i];
-
-  normalP = vtkMath::Dot(normalProjected,LongitudinalAxis);
-  for(int i=0;i<3;i++)
-    normalProjected[i] = normalProjected[i] - normalP*LongitudinalAxis[i];
-
-  AnteversionAngle = Angle(normalProjected,FrontalAxis);
-
-  free(normalProjected);
-  Modified();
-}
-
-vtkPelvisMetric::~vtkPelvisMetric()
-{
-  AcetabularPlane->Delete();
-  free(Center);
-  free(FrontalAxis);
-  free(SagittalAxis);
-  free(LongitudinalAxis);
-}
-
-float vtkPelvisMetric::Angle(float* a,float* b)
-{
-  float normA = vtkMath::Norm(a);
-  float normB = vtkMath::Norm(b);
-  float AdotB = vtkMath::Dot(a,b);
-  
-  float angle = acos(AdotB / (normA*normB));
-  return angle*vtkMath::RadiansToDegrees();
-}
-
-vtkPelvisMetric::vtkPelvisMetric(vtkPelvisMetric&)
-{
-
-}
-
-void vtkPelvisMetric::operator=(const vtkPelvisMetric)
-{
-
-}
-
 void vtkPelvisMetric::Normalize()
 {
-  vtkMath::Normalize(SagittalAxis);
-  vtkMath::Normalize(FrontalAxis);
-  vtkMath::Normalize(LongitudinalAxis);
+  OrthogonalizeAxes();
+
+  // ensure that the different direction vector look in certain directions.
+  // those are invariants needed for computing the angles.
 
   // acetabular plane normal not pointing towards center of gravity
   float p_acetabulum = vtkMath::Dot(AcetabularPlane->GetCenter(),AcetabularPlane->GetNormal());
@@ -242,38 +140,70 @@ void vtkPelvisMetric::Normalize()
     }
   
 
-  // center of actabular plane in frontalAxis halfspace
-  p_acetabulum = vtkMath::Dot(AcetabularPlane->GetCenter(),FrontalAxis);
-  p_center = vtkMath::Dot(Center,FrontalAxis);
+  // center of actabular plane in FrontalAxis halfspace
+  p_acetabulum = vtkMath::Dot(AcetabularPlane->GetCenter(),FrontalAxis->GetDirection());
+  p_center = vtkMath::Dot(Center,FrontalAxis->GetDirection());
   if(p_acetabulum<p_center)
     {
-      for(int i=0;i<3;i++)
-    FrontalAxis[i] *= -1;
-      SetAxis(LowerBoundaryTransform,LowerBoundaryTransform->GetPosition()[0],LowerBoundaryTransform->GetPosition()[1],LowerBoundaryTransform->GetPosition()[2],FrontalAxis[0],FrontalAxis[1],FrontalAxis[2]);
+      float* dir= FrontalAxis->GetDirection();
+      FrontalAxis->SetDirection(-dir[0],-dir[1],-dir[2]);
     }
-  
+
+  UpdateAngles();
+  Modified();
 }
 
-
-void vtkPelvisMetric::SetAxis(vtkTransform* t,float x0_x,float x0_y,float x0_z,float dir_x,float dir_y,float dir_z)
+void vtkPelvisMetric::OrthogonalizeAxes()
 {
-  float norm =  sqrt(dir_x*dir_x + dir_y*dir_y + dir_z*dir_z);
-  dir_x = dir_x / norm;
-  dir_y = dir_y / norm;
-  dir_z = dir_z / norm;
+  float* FrontalAxisDirection = FrontalAxis->GetDirection();
 
-  dir_x = dir_x / 2;
-  dir_y = (1+dir_y) / 2;
-  dir_z = dir_z / 2;
+  // make FrontalAxis orthogonal to the Sagittal axis
+  float frontalSagittalP = vtkMath::Dot(FrontalAxis->GetDirection(),SagittalAxis->GetDirection());
+  FrontalAxis->SetDirection(FrontalAxisDirection[0] - frontalSagittalP*SagittalAxis->GetDirection()[0],
+                FrontalAxisDirection[1] - frontalSagittalP*SagittalAxis->GetDirection()[1],
+                FrontalAxisDirection[2] - frontalSagittalP*SagittalAxis->GetDirection()[2]);
 
-  norm =  sqrt(dir_x*dir_x + dir_y*dir_y + dir_z*dir_z);
-  dir_x = dir_x / norm;
-  dir_y = dir_y / norm;
-  dir_z = dir_z / norm;
+  // ensure the longitudinal axis is orthogonal to both axes
+  float* longitudinalDirection = (float*)malloc(3*sizeof(float));
+  vtkMath::Cross(FrontalAxis->GetDirection(),SagittalAxis->GetDirection(),longitudinalDirection);
 
+  LongitudinalAxis->SetDirection(longitudinalDirection);
 
-  t->Identity();
-  t->RotateWXYZ(180,dir_x,dir_y,dir_z);
-  t->PostMultiply();
-  t->Translate(x0_x,x0_y,x0_z);
+  free(longitudinalDirection);
+}
+
+void vtkPelvisMetric::UpdateAngles()
+{
+  float* normalProjected = (float*) malloc(3*sizeof(float));
+  for(int i=0;i<3;i++)
+    normalProjected[i] = AcetabularPlane->GetNormal()[i];
+  
+  float normalP = vtkMath::Dot(normalProjected,SagittalAxis->GetDirection());
+  for(int i=0;i<3;i++)
+    normalProjected[i] = normalProjected[i] - normalP*SagittalAxis->GetDirection()[i];
+  
+  InclinationAngle = 90 - FrontalAxis->Angle(normalProjected);
+  
+  
+  for(int i=0;i<3;i++)
+    normalProjected[i] = AcetabularPlane->GetNormal()[i];
+  
+  normalP = vtkMath::Dot(normalProjected,LongitudinalAxis->GetDirection());
+  for(int i=0;i<3;i++)
+    normalProjected[i] = normalProjected[i] - normalP*LongitudinalAxis->GetDirection()[i];
+  
+  AnteversionAngle = FrontalAxis->Angle(normalProjected);
+  
+  free(normalProjected);
+}
+
+vtkPelvisMetric::~vtkPelvisMetric()
+{
+  AcetabularPlane->Delete();
+
+  free(Center);
+
+  FrontalAxis->Delete();
+  SagittalAxis->Delete();
+  LongitudinalAxis->Delete();
 }
