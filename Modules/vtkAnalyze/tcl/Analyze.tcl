@@ -162,7 +162,7 @@ proc AnalyzeInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1 $} {$Date: 2004/07/21 21:26:51 $}]
+        {$Revision: 1.2 $} {$Date: 2004/07/22 18:20:59 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -465,7 +465,7 @@ proc AnalyzeCreateMrmlNodeForVolume {volName volData} {
     $n SetName $volName 
     $n SetDescription $volName 
 
-    Volume($i,node) SetScanOrder {SI} 
+    Volume($i,node) SetScanOrder {IS} 
     Volume($i,node) SetLittleEndian $AnalyzeCache(byteOrder) 
 
     $volData Update 
