@@ -15,4 +15,4 @@ endif
 
 setenv SLICER_SCRIPT $SLICER_HOME/Base/tests/TestModelCompareArray.tcl
 
-/projects/birn/slicer2/porting/slicer2/slicer $SLICER_DATA/AmygHipModels/AmygHipModels.xml
+slicer
