@@ -177,161 +177,6 @@ proc EMSegmentSetVtkSuperClassSetting {SuperClass} {
   return [EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) GetErrorFlag] 
 }
 
-proc EMSegmentSetVtkSuperClassSettingV1 {SuperClass NumInputImagesSet} {
-  global EMSegment Volume
-  # Reads in the value for each class individually
-  EMSegment(vtkEMSegment) SetNumClasses [llength $EMSegment(Cattrib,$SuperClass,ClassList)]
-  set x 0
-
-  foreach i $EMSegment(Cattrib,$SuperClass,ClassList) {
-      set y 0
-      foreach j $EMSegment(Cattrib,$SuperClass,ClassList) {
-      for {set k 0} { $k < 6} {incr k} {
-         EMSegment(vtkEMSegment) SetMarkovMatrix $EMSegment(Cattrib,$SuperClass,CIMMatrix,$i,$j,[lindex $EMSegment(CIMList) $k]) $k $y $x
-      }
-      incr y
-      }
-      incr x
-  }
-  # Kilian: Problem with EMSegment(Cattrib,$i,LocalPriorWeight)
-  # The  following sceanrio: superclass has EMSegment(Cattrib,$i,LocalPriorWeight) > 0 
-  # The subclass has EMSegment(Cattrib,$i,LocalPriorWeight) == 0 but EMSegment(Cattrib,$sub,ProbabilityData) exists 
-  # =>  EMSegment(Cattrib,$sub,ProbabilityData) will not be transfered => superclass cannot access it even though it needs it !
-  foreach i $EMSegment(Cattrib,$SuperClass,ClassList) {
-    if {$EMSegment(Cattrib,$i,IsSuperClass)} {
-       EMSegment(vtkEMSegment) CreateNextSuperClass 
-       EMSegment(vtkEMSegment) SetProbDataWeight $EMSegment(Cattrib,$i,LocalPriorWeight)
-    } else {
-      EMSegment(vtkEMSegment) CreateNextClass
-      EMSegment(vtkEMSegment) SetLabel             $EMSegment(Cattrib,$i,Label) 
-      EMSegment(vtkEMSegment) SetShapeParameter    $EMSegment(Cattrib,$i,ShapeParameter)
-      if {$EMSegment(Cattrib,$i,ProbabilityData) != $Volume(idNone) && ($EMSegment(Cattrib,$i,LocalPriorWeight) > 0.0)} {
-          EMSegment(vtkEMSegment) SetProbDataWeight $EMSegment(Cattrib,$i,LocalPriorWeight)
-          EMSegment(vtkEMSegment) SetInputIndex  [Volume($EMSegment(Cattrib,$i,ProbabilityData),vol) GetOutput]
-          incr NumInputImagesSet
-      } else {
-          EMSegment(vtkEMSegment) SetProbDataWeight 0.0 
-      }
-
-      for {set y 0} {$y < $EMSegment(NumInputChannel)} {incr y} {
-          EMSegment(vtkEMSegment) SetLogMu $EMSegment(Cattrib,$i,LogMean,$y) $y
-          for {set x 0} {$x < $EMSegment(NumInputChannel)} {incr x} {
-            EMSegment(vtkEMSegment) SetLogCovariance $EMSegment(Cattrib,$i,LogCovariance,$y,$x) $y $x
-          }
-      }
-      if {$EMSegment(IntensityAvgClass) == $EMSegment(Cattrib,$i,Label)} {
-          # Transfere Intensity correction filter stuff
-          set index 0
-          EMSegment(vtkEMSegment) SetIntensityAvgClass
-          foreach v $EMSegment(SelVolList,VolumeList) {       
-             EMSegment(vtkEMSegment) SetIntensityAvgValuePreDef $EMSegment(IntensityAvgValue,$v) $index
-             incr index
-          } 
-      }
-      # Setup DICE Related information
-      if {($EMSegment(Cattrib,$i,DICEData) !=  $Volume(idNone)) && $EMSegment(PrintDICEResults) } {
-      EMSegment(vtkEMSegment) SetDICEPtr [Volume($EMSegment(Cattrib,$i,DICEData),vol) GetOutput]
-      } 
-      # Setup PCA parameter
-      if {$EMSegment(Cattrib,$i,PCAMeanData) !=  $Volume(idNone) } {
-         set NumEigenModes [llength $EMSegment(Cattrib,$i,PCAEigen)]
-         # Kilan: first Rotate and translate the image before setting them 
-         # Remember to first calculathe first the inverse of the two because we go from case2 to patient and data is given form patient to case2
-         EMSegment(vtkEMSegment) SetPCANumberOfEigenModes $NumEigenModes
-
-         EMSegment(vtkEMSegment) SetInputIndex $NumInputImagesSet [Volume($EMSegment(Cattrib,$i,PCAMeanData),vol) GetOutput]
-         incr NumInputImagesSet
-
-         foreach EigenList $EMSegment(Cattrib,$i,PCAEigen) {
-             EMSegment(vtkEMSegment) SetInputIndex $NumInputImagesSet   [Volume([lindex $EigenList 2],vol) GetOutput] 
-             incr NumInputImagesSet
-         }
-          
-         # Have to do it seperate otherwise EigenValues get deleted 
-         foreach EigenList $EMSegment(Cattrib,$i,PCAEigen) {
-             EMSegment(vtkEMSegment)  SetPCAEigenValue [lindex $EigenList 0] [lindex $EigenList 1] 
-         }
-         eval EMSegment(vtkEMSegment) SetPCAScale   $EMSegment(Cattrib,$i,PCAScale)
-         EMSegment(vtkEMSegment) SetPCAMaxDist      $EMSegment(Cattrib,$i,PCAMaxDist)
-         EMSegment(vtkEMSegment) SetPCADistVariance $EMSegment(Cattrib,$i,PCADistVariance)
-      } 
-    }
-    EMSegment(vtkEMSegment) SetTissueProbability $EMSegment(Cattrib,$i,Prob)
-    for {set y 0} {$y < $EMSegment(NumInputChannel)} {incr y} {
-       EMSegment(vtkEMSegment) SetInputChannelWeights $EMSegment(Cattrib,$i,InputChannelWeights,$y) $y
-    }
-    if {$EMSegment(Cattrib,$i,IsSuperClass)} {
-      set NumInputImagesSet [EMSegmentSetVtkSuperClassSetting $i $NumInputImagesSet]
-      # just to go back to super class => go up a level 
-      EMSegment(vtkEMSegment) MoveToNextClass
-    }
-
-  }
-   return $NumInputImagesSet
-}
-
-#-------------------------------------------------------------------------------
-# .PROC EMSegmentSetVtkClassSettingOld
-# Old function for Setting up everything for the EMAlgorithm
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EMSegmentSetVtkClassSettingOld {} {
-  global EMSegment Volume
-
-  EMSegment(vtkEMSegment) SetNumClasses [llength $EMSegment(Cattrib,0,ClassList)]
-  set NumInputImagesSet 0
-  # Set Class info
-  set xindex 1
-  foreach i $EMSegment(Cattrib,0,ClassList) { 
-    EMSegment(vtkEMSegment) SetLabel   $EMSegment(Cattrib,$i,Label) $xindex
- 
-    # Probability paramters
-    EMSegment(vtkEMSegment) SetTissueProbability $EMSegment(Cattrib,$i,Prob) $xindex
-    if {$EMSegment(Cattrib,$i,ProbabilityData) != $Volume(idNone)} {
-       EMSegment(vtkEMSegment) SetProbDataLocal 1 $xindex
-       EMSegment(vtkEMSegment) SetInputIndex $NumInputImagesSet [Volume($EMSegment(Cattrib,$i,ProbabilityData),vol) GetOutput]
-       incr NumInputImagesSet
-    } else {
-       EMSegment(vtkEMSegment) SetProbDataLocal 0 $xindex 
-    }
-
-    # Intensity Paramters
-    set yindex 1
-    for {set y 0} {$y < $EMSegment(NumInputChannel)} {incr y} {
-    EMSegment(vtkEMSegment) SetLogMu $EMSegment(Cattrib,$i,LogMean,$y) $xindex $yindex
-    for {set z 0} {$z < $EMSegment(NumInputChannel)} {incr z} {
-        EMSegment(vtkEMSegment) SetLogCovariance $EMSegment(Cattrib,$i,LogCovariance,$y,$z) $xindex $yindex [expr $z +1]
-    }
-        incr yindex
-    }
-
-    # MRF Parameters
-    set yindex 1
-    foreach j $EMSegment(Cattrib,0,ClassList) { 
-       for {set k 0} { $k< 6} {incr k} {
-          EMSegment(vtkEMSegment) SetMarkovMatrix $EMSegment(Cattrib,0,CIMMatrix,$i,$j,[lindex $EMSegment(CIMList) $k]) [expr $k+1] $yindex $xindex
-       }
-       incr yindex
-    }
-    incr xindex
-  }
-  # Transfer image information
-  foreach v $EMSegment(SelVolList,VolumeList) {       
-      EMSegment(vtkEMSegment) SetInputIndex $NumInputImagesSet [Volume($v,vol) GetOutput]
-      incr NumInputImagesSet
-  }
-  # Transfere Intensity correction filter stuff
-  set index 1
-  EMSegment(vtkEMSegment) SetIntensityAvgClass $EMSegment(IntensityAvgClass)
-  foreach v $EMSegment(SelVolList,VolumeList) {       
-     EMSegment(vtkEMSegment) SetIntensityAvgValuePreDef $EMSegment(IntensityAvgValue,$v) $index
-     incr index
-  } 
-  # Transfer Bias Print out Information
-  if {$EMSegment(BiasPrint)} {EMSegment(vtkEMSegment) SetBiasRootFileName $EMSegment(BiasRootFileName)}
-}
-
 #-------------------------------------------------------------------------------
 # .PROC EMSegmentAlgorithmStart
 # Sets up the segmentation algorithm
@@ -343,53 +188,46 @@ proc EMSegmentAlgorithmStart { } {
    global EMSegment Volume 
    set NumInputImagesSet 0
    # EMLocalSegmentation: Multiple Input Images
-   if {$EMSegment(SegmentMode) == 1} {vtkImageEMLocalSegmenter EMSegment(vtkEMSegment) 
-   } else {vtkImageEMPrivateSegmenter EMSegment(vtkEMSegment) }
+   vtkImageEMPrivateSegmenter EMSegment(vtkEMSegment)
 
    # How many input images do you have
    EMSegment(vtkEMSegment) SetNumInputImages $EMSegment(NumInputChannel) 
    EMSegment(vtkEMSegment) SetNumberOfTrainingSamples $EMSegment(NumberOfTrainingSamples)
    # EMSegment(vtkEMSegment) SetBiasPrint $EMSegment(BiasPrint)
 
-   if {$EMSegment(SegmentMode) > 1} {
-       if {[EMSegmentSetVtkSuperClassSetting 0]} { return 0 }
- 
-       # Transfer image information
-       set NumInputImagesSet 0
-       foreach v $EMSegment(SelVolList,VolumeList) {       
-       EMSegment(vtkEMSegment) SetImageInput $NumInputImagesSet [Volume($v,vol) GetOutput]
-       incr NumInputImagesSet
-       }
-       # Transfer Bias Print out Information
-       EMSegment(vtkEMSegment) SetPrintDir $EMSegment(PrintDir)
-       EMSegment(vtkEMSegment) SetNumEMShapeIter  $EMSegment(EMShapeIter)  
-
-       # This is for debuging purposes so extra volumes can be loaded into the segmentation process 
-       if {$EMSegment(DebugVolume)} {
-       set index 1 
-       set foundindex 0
-       while {$foundindex > -1} {
-           set foundindex [lsearch -exact $EMSegment(VolumeNameList)  EMDEBUG${index}] 
-           if {$foundindex > -1} {
-           EMSegment(vtkEMSegment) SetInputIndex $NumInputImagesSet [Volume([lindex $Volume(idList) $foundindex],vol) GetOutput]
-           incr NumInputImagesSet
-           incr index
-           }
-       }
-       }
-       # EMSegment(vtkEMSegment) SetPrintPCAParameters $EMSegment(PrintPCAParameters)
-       # EMSegment(vtkEMSegment) SetPrintDICEResults   $EMSegment(PrintDICEResults)
-       EMSegment(vtkEMSegment) SetHeadClass          EMSegment(Cattrib,0,vtkImageEMSuperClass)
-       # Does not work that way bc no input image is defined  
-       # puts "--------------------"
-       # EMSegment(Cattrib,0,vtkImageEMSuperClass) Update
-       # puts "--------------------"
-       # puts [EMSegment(Cattrib,0,vtkImageEMSuperClass) Print]
-   } else {
-       EMSegmentSetVtkClassSettingOld
-       EMSegment(vtkEMSegment) SetStartSlice      $EMSegment(SegmentationBoundaryMin,2)
-       EMSegment(vtkEMSegment) SetEndSlice        $EMSegment(SegmentationBoundaryMax,2)
+   if {[EMSegmentSetVtkSuperClassSetting 0]} { return 0 }
+   
+   # Transfer image information
+   set NumInputImagesSet 0
+   foreach v $EMSegment(SelVolList,VolumeList) {       
+   EMSegment(vtkEMSegment) SetImageInput $NumInputImagesSet [Volume($v,vol) GetOutput]
+   incr NumInputImagesSet
    }
+   # Transfer Bias Print out Information
+   EMSegment(vtkEMSegment) SetPrintDir $EMSegment(PrintDir)
+   EMSegment(vtkEMSegment) SetNumEMShapeIter  $EMSegment(EMShapeIter)  
+   
+   # This is for debuging purposes so extra volumes can be loaded into the segmentation process 
+   if {$EMSegment(DebugVolume)} {
+   set index 1 
+   set foundindex 0
+   while {$foundindex > -1} {
+       set foundindex [lsearch -exact $EMSegment(VolumeNameList)  EMDEBUG${index}] 
+       if {$foundindex > -1} {
+       EMSegment(vtkEMSegment) SetInputIndex $NumInputImagesSet [Volume([lindex $Volume(idList) $foundindex],vol) GetOutput]
+       incr NumInputImagesSet
+       incr index
+       }
+   }
+   }
+   # EMSegment(vtkEMSegment) SetPrintPCAParameters $EMSegment(PrintPCAParameters)
+   # EMSegment(vtkEMSegment) SetPrintDICEResults   $EMSegment(PrintDICEResults)
+   EMSegment(vtkEMSegment) SetHeadClass          EMSegment(Cattrib,0,vtkImageEMSuperClass)
+   # Does not work that way bc no input image is defined  
+   # puts "--------------------"
+   # EMSegment(Cattrib,0,vtkImageEMSuperClass) Update
+   # puts "--------------------"
+   # puts [EMSegment(Cattrib,0,vtkImageEMSuperClass) Print]
 
    #----------------------------------------------------------------------------
    # Transfering General Information
@@ -449,42 +287,42 @@ proc EMSegmentTrainCIMField {} {
        EMCIM SetStartSlice     $EMSegment(SegmentationBoundaryMin,2)
        EMCIM SetEndSlice       $EMSegment(SegmentationBoundaryMax,2)
 
-        # Kilian : Get rid of those 
-        EMCIM SetImgTestNo       -1 
-        EMCIM SetImgTestDivision  0 
-        EMCIM SetImgTestPixel     0 
-        set index 0
-        foreach j $EMSegment(Cattrib,$i,ClassList) {
-        set LabelList [EMSegmentSuperClassChildren $j]
-        EMCIM SetLabelNumber $index [llength $LabelList]
-        foreach l $LabelList {
-        EMCIM SetLabel $index $l
-        }
-      incr index
-    }
+       # Kilian : Get rid of those 
+       EMCIM SetImgTestNo       -1 
+       EMCIM SetImgTestDivision  0 
+       EMCIM SetImgTestPixel     0 
+       set index 0
+       foreach j $EMSegment(Cattrib,$i,ClassList) {
+          set LabelList [EMSegmentSuperClassChildren $j]
+          EMCIM SetLabelNumber $index [llength $LabelList]
+          foreach l $LabelList {
+            EMCIM SetLabel $index $l
+          }
+          incr index
+       }
 
-    # Transfer image information
-    EMCIM SetInput [Volume($Volume(activeID),vol) GetOutput]
-    set data [EMCIM GetOutput]
-    # This Command calls the Thread Execute function
-    $data Update
-    set xindex 0 
-    foreach x $EMSegment(Cattrib,$i,ClassList) {
-        set EMSegment(Cattrib,$x,Prob) [EMCIM GetProbability $xindex]
-        set yindex 0
-        # EMCIM traines the matrix (y=t, x=t-1) just the other way EMSegment (y=t-1, x=t) needs it - Sorry !
-        foreach y $EMSegment(Cattrib,$i,ClassList) {
-        for {set z 0} {$z < 6} {incr z} {
-            # Error made in x,y coordinates in EMSegment - I checked everything - it workes in XML and CIM Display in correct order - so do not worry - it is just a little bit strange - but strange things happen
-            set temp [$data GetScalarComponentAsFloat $yindex $xindex  $z 0]
-            set EMSegment(Cattrib,$i,CIMMatrix,$x,$y,[lindex $EMSegment(CIMList) $z]) [expr round($temp*100000)/100000.0]        
-        }
-        incr yindex
-        }
-        incr xindex
-    }
-    # Delete instance
-    EMCIM Delete
+       # Transfer image information
+       EMCIM SetInput [Volume($Volume(activeID),vol) GetOutput]
+       set data [EMCIM GetOutput]
+       # This Command calls the Thread Execute function
+       $data Update
+       set xindex 0 
+       foreach x $EMSegment(Cattrib,$i,ClassList) {
+           set EMSegment(Cattrib,$x,Prob) [EMCIM GetProbability $xindex]
+           set yindex 0
+           # EMCIM traines the matrix (y=t, x=t-1) just the other way EMSegment (y=t-1, x=t) needs it - Sorry !
+           foreach y $EMSegment(Cattrib,$i,ClassList) {
+           for {set z 0} {$z < 6} {incr z} {
+               # Error made in x,y coordinates in EMSegment - I checked everything - it workes in XML and CIM Display in correct order - so do not worry - it is just a little bit strange - but strange things happen
+               set temp [$data GetScalarComponentAsFloat $yindex $xindex  $z 0]
+               set EMSegment(Cattrib,$i,CIMMatrix,$x,$y,[lindex $EMSegment(CIMList) $z]) [expr round($temp*100000)/100000.0]        
+           }
+           incr yindex
+           }
+           incr xindex
+       }
+       # Delete instance
+       EMCIM Delete
     }
     # Jump to edit field 
     # EMSegmentExecuteCIM Edit

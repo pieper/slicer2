@@ -153,7 +153,6 @@ proc EMSegmentInit {} {
       puts "Load Private EM-Version"
       set EMSegment(SegmentMode) 2
     } 
-    # EMSegment(SegmentMode) == 0 <=> Set all Probabilty maps to none, EMSegment(SegmentMode) == 1
 
     # Source EMSegmentAlgorithm.tcl File 
     source $::PACKAGE_DIR_VTKEMLocalSegment/../../../tcl/EMSegmentAlgorithm.tcl
@@ -243,7 +242,7 @@ proc EMSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.33 $} {$Date: 2004/07/29 22:00:21 $}]
+        {$Revision: 1.34 $} {$Date: 2004/07/29 23:44:59 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -332,7 +331,6 @@ proc EMSegmentInit {} {
     set EMSegment(SegmentIndex) 0
     vtkEMInit Delete
 
-    # Special EMSegment(SegmentMode) == 1 Variables
     # How did I come up with the number 82 ? It is a long story ....
     set EMSegment(NumberOfTrainingSamples) 82
 
@@ -377,11 +375,6 @@ proc EMSegmentInit {} {
     # 1 = display one 1-D Graph
     # 2 = display two 1-D Graph
     # 3 = display two 1-D Graph and one 2-D Graph (in the middle) => 3rd graph is 2D Graph 
-    if {$EMSegment(SegmentMode) > 1} {
-      set EMSegment(NumGraph) 3
-    } else {
-      set EMSegment(NumGraph) 1
-    }
     set EMSegment(NumGraph) 3
 
     # How many Graph buttons should be in one row 
@@ -598,46 +591,15 @@ Description of the tabs:
     # EM->Sec2 Frame: Define Input Channel 
     #-------------------------------------------
     set f $EMSegment(Ma-fEM).fInputChannel
-    if {$EMSegment(SegmentMode)} {
-       DevAddLabel $f.l "Step 1: Select original greyscales\nto be segmented  "
-    } else {
-       DevAddLabel $f.l "Step 1: Select original greyscale \nto be segmented  "
-    }
+    DevAddLabel $f.l "Step 1: Select original greyscales\nto be segmented  "
     pack $f.l -side top -padx $Gui(pad) -pady $Gui(pad)
     
     frame $f.fSelection -bg $Gui(activeWorkspace) 
     DevAddLabel $f.lNote "\nNote\n Multiple input greyscales have to be   \naligned with each other in order to be\nsegmented!                                        "
     pack $f.fSelection $f.lNote -side top -padx $Gui(pad) 
 
-    if {$EMSegment(SegmentMode) == 0} {
-      set EMSegment(EM-mbVolumeSelect) $f.fSelection.mbVolumeSelect
-      set EMSegment(EM-mVolumeSelect) $f.fSelection.mbVolumeSelect.m 
-      if {$EMSegment(NumInputChannel) > 0} {
-        set MenuText [Volume([lindex $EMSegment(SelVolList,VolumeList) 0],node) GetName]
-      } else {
-        set MenuText None
-    }
-
-    eval {menubutton $EMSegment(EM-mbVolumeSelect) -text $MenuText  -menu $EMSegment(EM-mVolumeSelect) -width 13} $Gui(WMBA) 
-    pack $EMSegment(EM-mbVolumeSelect) -side top -padx $Gui(pad) -pady $Gui(pad)
-    TooltipAdd  $EMSegment(EM-mbVolumeSelect) "Select volume to be segmented"
-
-    # Define Menu selection 
-    eval {menu $EMSegment(EM-mVolumeSelect)} $Gui(WMA)
-    # Add Selection entry
-    set index 0
-    foreach v $EMSegment(SelVolList,VolumeList)  {
-        set VolName [Volume($v,node) GetName]
-        $EMSegment(EM-mVolumeSelect) add command -label $VolName -command "EMSegmentChangeVolumeSegmented $index"
-        incr index
-    }
-    # Append menus and buttons to lists that get refreshed during UpdateMRML
-    # lappend Volume(mbActiveList) $f.fSelection.mbVolumeSelect
-    # lappend Volume(mActiveList) $f.fSelection.mbVolumeSelect.m
-    } else {
     EMSegmentAssignInput $f.fSelection
-    }
-
+ 
     #-------------------------------------------
     # EM->Sec2 Frame: Define algorithm settings
     #-------------------------------------------
@@ -667,42 +629,25 @@ Description of the tabs:
     pack  $f.fCol.f1.lNumClasses $f.fCol.f1.lEMI      -side top -padx $Gui(pad) -pady 2 -anchor w  
     pack  $f.fCol.f2.eNumClasses $f.fCol.f2.eEMI      -side top -padx $Gui(pad) -pady 1 -anchor w  
 
-    if {$EMSegment(SegmentMode) < 2} {
-      DevAddLabel $f.fCol.f1.lStartSlice "Start Slice:"
-      eval {entry $f.fCol.f2.eStartSlice -width 4 -textvariable EMSegment(SegmentationBoundaryMin,2) } $Gui(WEA)
-      TooltipAdd $f.fCol.f2.eStartSlice "Slice Number to start EM-EMSegment"
+    DevAddLabel $f.fCol.f1.lBoundaryMin "Boundary Min:"
+    frame $f.fCol.f2.fBoundaryMin -bg $Gui(activeWorkspace)
+    TooltipAdd $f.fCol.f2.fBoundaryMin "Minimum of Segmentation Boundary"
 
-      DevAddLabel $f.fCol.f1.lEndSlice "End Slice:"
-      eval {entry $f.fCol.f2.eEndSlice -width 4 -textvariable  EMSegment(SegmentationBoundaryMax,2) } $Gui(WEA)
-      TooltipAdd $f.fCol.f2.eEndSlice "Slice number to end EM-EMSegment"
-      pack  $f.fCol.f1.lStartSlice $f.fCol.f1.lEndSlice -side top -padx $Gui(pad) -pady 2 -anchor w 
-      pack  $f.fCol.f2.eStartSlice $f.fCol.f2.eEndSlice -side top -padx $Gui(pad) -pady 1 -anchor w 
+    DevAddLabel $f.fCol.f1.lBoundaryMax "Boundary Max:"
+    frame $f.fCol.f2.fBoundaryMax -bg $Gui(activeWorkspace)
+    TooltipAdd $f.fCol.f2.fBoundaryMax "Maximum of Segmentation Boundary"
 
-      # DevAddButton $f.fSect1.fCol2.fEndSlice.b Max EMSegmentEndSlice
-      # $f.fSect1.fCol2.fEndSlice.b configure -width 4 -command {EMSegmentEndSlice 1}
-      #TooltipAdd $f.fSect1.fCol2.fEndSlice.b "Setting End Slice to the last Slice of the current Volume"  
-    } else {
-      DevAddLabel $f.fCol.f1.lBoundaryMin "Boundary Min:"
-      frame $f.fCol.f2.fBoundaryMin -bg $Gui(activeWorkspace)
-      TooltipAdd $f.fCol.f2.fBoundaryMin "Minimum of Segmentation Boundary"
+    pack  $f.fCol.f1.lBoundaryMin $f.fCol.f1.lBoundaryMax -side top -padx $Gui(pad) -pady 2 -anchor w 
+    pack  $f.fCol.f2.fBoundaryMin $f.fCol.f2.fBoundaryMax -side top -padx $Gui(pad) -pady 1 -anchor w 
 
-      DevAddLabel $f.fCol.f1.lBoundaryMax "Boundary Max:"
-      frame $f.fCol.f2.fBoundaryMax -bg $Gui(activeWorkspace)
-      TooltipAdd $f.fCol.f2.fBoundaryMax "Maximum of Segmentation Boundary"
-
-      pack  $f.fCol.f1.lBoundaryMin $f.fCol.f1.lBoundaryMax -side top -padx $Gui(pad) -pady 2 -anchor w 
-      pack  $f.fCol.f2.fBoundaryMin $f.fCol.f2.fBoundaryMax -side top -padx $Gui(pad) -pady 1 -anchor w 
-
-      eval {entry $f.fCol.f2.fBoundaryMin.eMin0 -width 4 -textvariable EMSegment(SegmentationBoundaryMin,0) } $Gui(WEA)
-      eval {entry $f.fCol.f2.fBoundaryMin.eMin1 -width 4 -textvariable EMSegment(SegmentationBoundaryMin,1) } $Gui(WEA)
-      eval {entry $f.fCol.f2.fBoundaryMin.eMin2 -width 4 -textvariable EMSegment(SegmentationBoundaryMin,2) } $Gui(WEA)
-      eval {entry $f.fCol.f2.fBoundaryMax.eMax0 -width 4 -textvariable EMSegment(SegmentationBoundaryMax,0) } $Gui(WEA)
-      eval {entry $f.fCol.f2.fBoundaryMax.eMax1 -width 4 -textvariable EMSegment(SegmentationBoundaryMax,1) } $Gui(WEA)
-      eval {entry $f.fCol.f2.fBoundaryMax.eMax2 -width 4 -textvariable EMSegment(SegmentationBoundaryMax,2) } $Gui(WEA)
-      pack  $f.fCol.f2.fBoundaryMin.eMin0  $f.fCol.f2.fBoundaryMin.eMin1  $f.fCol.f2.fBoundaryMin.eMin2  -side left -padx 1
-      pack  $f.fCol.f2.fBoundaryMax.eMax0  $f.fCol.f2.fBoundaryMax.eMax1  $f.fCol.f2.fBoundaryMax.eMax2  -side left -padx 1
-    }
-
+    eval {entry $f.fCol.f2.fBoundaryMin.eMin0 -width 4 -textvariable EMSegment(SegmentationBoundaryMin,0) } $Gui(WEA)
+    eval {entry $f.fCol.f2.fBoundaryMin.eMin1 -width 4 -textvariable EMSegment(SegmentationBoundaryMin,1) } $Gui(WEA)
+    eval {entry $f.fCol.f2.fBoundaryMin.eMin2 -width 4 -textvariable EMSegment(SegmentationBoundaryMin,2) } $Gui(WEA)
+    eval {entry $f.fCol.f2.fBoundaryMax.eMax0 -width 4 -textvariable EMSegment(SegmentationBoundaryMax,0) } $Gui(WEA)
+    eval {entry $f.fCol.f2.fBoundaryMax.eMax1 -width 4 -textvariable EMSegment(SegmentationBoundaryMax,1) } $Gui(WEA)
+    eval {entry $f.fCol.f2.fBoundaryMax.eMax2 -width 4 -textvariable EMSegment(SegmentationBoundaryMax,2) } $Gui(WEA)
+    pack  $f.fCol.f2.fBoundaryMin.eMin0  $f.fCol.f2.fBoundaryMin.eMin1  $f.fCol.f2.fBoundaryMin.eMin2  -side left -padx 1
+    pack  $f.fCol.f2.fBoundaryMax.eMax0  $f.fCol.f2.fBoundaryMax.eMax1  $f.fCol.f2.fBoundaryMax.eMax2  -side left -padx 1
 
     #-------------------------------------------
     # EM->Sec2 Frame: Define Class settings
@@ -898,7 +843,6 @@ Description of the tabs:
     TooltipAdd $f.fSuper.cSuperClass "If box is checked than the follwing class is a super class otherwise not. Be careful, when using the checkbox all definitons for this class might get lost !"
     pack $f.fSuper.cSuperClass -side left -padx $Gui(pad) -pady 0  
     set EMSegment(Cl-cSuperClass) $f.fSuper.cSuperClass
-    if {($Sclass == 0) || ($EMSegment(SegmentMode) < 2)} { $EMSegment(Cl-cSuperClass) configure -state disabled}
 
     #--------------------------------------------
     # Class->Section 2
@@ -998,9 +942,7 @@ Description of the tabs:
     set EMSegment(Cl-eShapeParameter)  $f.fBox1.fLeft.fShape.eShape
 
     EMSegmentBuildWeightPannel $f $Sclass 0
-    if {$EMSegment(SegmentMode) == 2} {     
-      pack $f.fBox1.fLeft.fShape.lShape $f.fBox1.fLeft.fShape.eShape -side left
-    }
+    pack $f.fBox1.fLeft.fShape.lShape $f.fBox1.fLeft.fShape.eShape -side left
 
     #Define Color
     DevAddLabel $f.fBox1.fColor.lColorLabel "Color/Label:"
@@ -1420,10 +1362,8 @@ Description of the tabs:
     DevAddLabel $f.fSect1.fCol2.lEmpty8 ""
 
     # Pack 2. Block
-    if {$EMSegment(SegmentMode) == 2 } {    
-        pack $f.fSect1.fCol1.lESI -side top -padx $Gui(pad) -pady 2 -anchor w 
-        pack $f.fSect1.fCol2.eESI -side top -anchor w
-    }
+    pack $f.fSect1.fCol1.lESI -side top -padx $Gui(pad) -pady 2 -anchor w 
+    pack $f.fSect1.fCol2.eESI -side top -anchor w
 
     pack $f.fSect1.fCol1.lEMI $f.fSect1.fCol1.lMRFI $f.fSect1.fCol1.lAlpha -side top -padx $Gui(pad) -pady 2 -anchor w 
     pack $f.fSect1.fCol2.eEMI $f.fSect1.fCol2.eMRFI $f.fSect1.fCol2.eAlpha -side top -anchor w
@@ -1444,37 +1384,33 @@ Description of the tabs:
     pack $f.fSect1.fCol1.lUseProb  -side top -padx $Gui(pad) -pady 2 -anchor w 
     pack $f.fSect1.fCol2.fUseProb -side top -anchor w
     pack $f.fSect1.fCol2.fUseProb.r1  $f.fSect1.fCol2.fUseProb.r0 -side left -fill x
-    if {$EMSegment(SegmentMode) > 0 } {    
-      #Pack 7.Block
-      pack $f.fSect1.fCol1.lEmpty6 $f.fSect1.fCol2.lEmpty6 -side top -padx $Gui(pad) -pady 1 -anchor w 
-      pack $f.fSect1.fCol1.lTrSample -side top -padx $Gui(pad) -pady 2 -anchor w 
-      pack $f.fSect1.fCol2.eTrSample -side top -anchor w 
 
-      pack $f.fSect1.fCol1.lIntensityClass -side top -padx $Gui(pad) -pady 2 -anchor w 
-      pack $f.fSect1.fCol2.mbIntensityClass -side top -anchor w
-    }
 
-    if {$EMSegment(SegmentMode)} {
-      pack $f.fSect1.fCol1.lEmpty8 $f.fSect1.fCol2.lEmpty8 -side top -padx $Gui(pad) -pady 1 -anchor w 
+    #Pack 7.Block
+    pack $f.fSect1.fCol1.lEmpty6 $f.fSect1.fCol2.lEmpty6 -side top -padx $Gui(pad) -pady 1 -anchor w 
+    pack $f.fSect1.fCol1.lTrSample -side top -padx $Gui(pad) -pady 2 -anchor w 
+    pack $f.fSect1.fCol2.eTrSample -side top -anchor w 
 
-      if {$EMSegment(SegmentMode) == 2} {
-         pack $f.fSect1.fCol1.lRunRemote  -side top -padx $Gui(pad) -pady 2 -anchor w 
-         pack $f.fSect1.fCol2.fRunRemote -side top -anchor w
-         pack $f.fSect1.fCol2.fRunRemote.r1  $f.fSect1.fCol2.fRunRemote.r0 $f.fSect1.fCol2.fRunRemote.eServer -side left -fill x
-      }
-      # pack $f.fSect1.fCol1.lDICEMeasure  -side top -padx $Gui(pad) -pady 2 -anchor w 
-      # pack $f.fSect1.fCol2.fDICEMeasure -side top -anchor w
-      # pack $f.fSect1.fCol2.fDICEMeasure.eDICEMeasure $f.fSect1.fCol2.fDICEMeasure.bDICEMeasure -side left -fill x
-      pack $f.fSect1.fCol1.lModelMaker  -side top -padx $Gui(pad) -pady 2 -anchor w  
-      pack $f.fSect1.fCol2.fModelMaker  -side top -anchor w 
-      pack $f.fSect1.fCol2.fModelMaker.bModelMaker  -side left -fill x 
+    pack $f.fSect1.fCol1.lIntensityClass -side top -padx $Gui(pad) -pady 2 -anchor w 
+    pack $f.fSect1.fCol2.mbIntensityClass -side top -anchor w
 
-    }
+    pack $f.fSect1.fCol1.lEmpty8 $f.fSect1.fCol2.lEmpty8 -side top -padx $Gui(pad) -pady 1 -anchor w 
+
+    pack $f.fSect1.fCol1.lRunRemote  -side top -padx $Gui(pad) -pady 2 -anchor w 
+    pack $f.fSect1.fCol2.fRunRemote -side top -anchor w
+    pack $f.fSect1.fCol2.fRunRemote.r1  $f.fSect1.fCol2.fRunRemote.r0 $f.fSect1.fCol2.fRunRemote.eServer -side left -fill x
+  
+    # pack $f.fSect1.fCol1.lDICEMeasure  -side top -padx $Gui(pad) -pady 2 -anchor w 
+    # pack $f.fSect1.fCol2.fDICEMeasure -side top -anchor w
+    # pack $f.fSect1.fCol2.fDICEMeasure.eDICEMeasure $f.fSect1.fCol2.fDICEMeasure.bDICEMeasure -side left -fill x
+    pack $f.fSect1.fCol1.lModelMaker  -side top -padx $Gui(pad) -pady 2 -anchor w  
+    pack $f.fSect1.fCol2.fModelMaker  -side top -anchor w 
+    pack $f.fSect1.fCol2.fModelMaker.bModelMaker  -side left -fill x 
+
     # Special Function Calls
     # Depending on the Situation we want to en- or disable certain fields
     EMSegmentUseSamples 0
 }
-
 #-------------------------------------------------------------------------------
 # .PROC EMSegmentUpdateLocalProb
 # Update local porb panel 
@@ -1494,24 +1430,22 @@ proc EMSegmentUpdateLocalProb {ModelLabel Sclass} {
 #-------------------------------------------------------------------------------
 proc EMSegmentDefineLocalProb {f Panel Sclass General} {
     global EMSegment Gui Volume
-    if  {$EMSegment(SegmentMode)} {
-      set menubutton  $f.mbProbVolumeSelect
-      set menu        $f.mbProbVolumeSelect.m
+    set menubutton  $f.mbProbVolumeSelect
+    set menu        $f.mbProbVolumeSelect.m
 
-      eval {menubutton $menubutton -text [Volume($EMSegment(Cattrib,$Sclass,ProbabilityData),node) GetName] -relief raised -bd 2 -width 9 -menu $menu} $Gui(WMBA)
-      eval {menu $menu} $Gui(WMA)
-      TooltipAdd $menubutton "Select Probability Map representing the tissue class!"
-      if {$General} {
-          set EMSegment(mb${Panel}-ProbVolumeSelect) $menubutton
-          set EMSegment(m${Panel}-ProbVolumeSelect) $menu
-          set EMSegment(ProbVolumeSelect) $EMSegment(Cattrib,$Sclass,ProbabilityData) 
-          DevUpdateNodeSelectButton Volume EMSegment ${Panel}-ProbVolumeSelect ProbVolumeSelect EMSegmentProbVolumeSelectNode
-      } else {
-          set EMSegment(mbOT-ProbVolumeSelect,${Sclass}) $menubutton
-          set EMSegment(mOT-ProbVolumeSelect,${Sclass}) $menu
-              set EMSegment(ProbVolumeSelect,${Sclass}) $EMSegment(Cattrib,$Sclass,ProbabilityData) 
-          DevUpdateNodeSelectButton Volume EMSegment OT-ProbVolumeSelect,${Sclass} ProbVolumeSelect,${Sclass} EMSegmentProbVolumeSelectNode
-      }
+    eval {menubutton $menubutton -text [Volume($EMSegment(Cattrib,$Sclass,ProbabilityData),node) GetName] -relief raised -bd 2 -width 9 -menu $menu} $Gui(WMBA)
+    eval {menu $menu} $Gui(WMA)
+    TooltipAdd $menubutton "Select Probability Map representing the tissue class!"
+    if {$General} {
+    set EMSegment(mb${Panel}-ProbVolumeSelect) $menubutton
+    set EMSegment(m${Panel}-ProbVolumeSelect) $menu
+    set EMSegment(ProbVolumeSelect) $EMSegment(Cattrib,$Sclass,ProbabilityData) 
+    DevUpdateNodeSelectButton Volume EMSegment ${Panel}-ProbVolumeSelect ProbVolumeSelect EMSegmentProbVolumeSelectNode
+    } else {
+    set EMSegment(mbOT-ProbVolumeSelect,${Sclass}) $menubutton
+    set EMSegment(mOT-ProbVolumeSelect,${Sclass}) $menu
+    set EMSegment(ProbVolumeSelect,${Sclass}) $EMSegment(Cattrib,$Sclass,ProbabilityData) 
+    DevUpdateNodeSelectButton Volume EMSegment OT-ProbVolumeSelect,${Sclass} ProbVolumeSelect,${Sclass} EMSegmentProbVolumeSelectNode
     }
 }
 
@@ -2071,17 +2005,15 @@ proc EMSegmentUpdateMRML {} {
   if {$EMSegment(IntensityAvgClass) != $IntensityAvgClass} {
       EMSegmentChangeIntensityClass [lindex [EMSegmentFindClassAndTestfromIntClass $IntensityAvgClass] 0] 0
   }
-  if {$EMSegment(SegmentMode) > 0} {
-      # puts "Hey SuperClass $EMSegment(SuperClass)  $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList)" 
-      foreach cl $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList) {
-         if {$EMSegment(Cattrib,$cl,IsSuperClass) == 0} {EMSegmentUpdateLocalProb OT-ProbVolumeSelect,$cl $cl }
+  # puts "Hey SuperClass $EMSegment(SuperClass)  $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList)" 
+  foreach cl $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList) {
+      if {$EMSegment(Cattrib,$cl,IsSuperClass) == 0} {EMSegmentUpdateLocalProb OT-ProbVolumeSelect,$cl $cl }
      
-      }
-      # Had to put it in - otherwise try to delete a superclass that has a sub class that is also a super class ! 
-      EMSegmentUpdateLocalProb Cl-ProbVolumeSelect $EMSegment(Class)
-      EMSegmentUpdateLocalProb EM-ProbVolumeSelect $EMSegment(Class)
-      EMSegmentUpdateReferenceStandard
   }
+  # Had to put it in - otherwise try to delete a superclass that has a sub class that is also a super class ! 
+  EMSegmentUpdateLocalProb Cl-ProbVolumeSelect $EMSegment(Class)
+  EMSegmentUpdateLocalProb EM-ProbVolumeSelect $EMSegment(Class)
+  EMSegmentUpdateReferenceStandard
   # puts "---------------------- End EMSegmentUpdateMRML ---------------"
 }
 
@@ -2210,10 +2142,8 @@ proc EMSegmentBuildWeightPannel {f Sclass Tab} {
     DevAddLabel $f.fInputChannelWeights.lWeights "Input Channel Weights:"
     set EMSegment(Cl-f${Tab}-fInputChannelWeights) $f.fInputChannelWeights
 
-    if {$EMSegment(SegmentMode) == 2} {     
-      pack $f.fPriorWeight.lWeight $f.fPriorWeight.eWeight -side left
-      pack $f.fInputChannelWeights.lWeights  -side left
-    }
+    pack $f.fPriorWeight.lWeight $f.fPriorWeight.eWeight -side left
+    pack $f.fInputChannelWeights.lWeights  -side left
 }
 
 #-------------------------------------------------------------------------------
@@ -2293,14 +2223,9 @@ proc EMSegmentSaveSetting {FileFlag {FileName -1} {CheckToProceed 1} } {
     Segmenter($pid,node) SetAlpha                       $EMSegment(Alpha)  
     Segmenter($pid,node) SetSmWidth                     $EMSegment(SmWidth)  
     Segmenter($pid,node) SetSmSigma                     $EMSegment(SmSigma)  
-    if {$EMSegment(SegmentMode) == 2} {
-        eval Segmenter($pid,node) SetSegmentationBoundaryMin $EMSegment(SegmentationBoundaryMin,0) $EMSegment(SegmentationBoundaryMin,1) $EMSegment(SegmentationBoundaryMin,2)
-        eval Segmenter($pid,node) SetSegmentationBoundaryMax $EMSegment(SegmentationBoundaryMax,0) $EMSegment(SegmentationBoundaryMax,1) $EMSegment(SegmentationBoundaryMax,2)
-    } else {
-    Segmenter($pid,node) SetNumClasses                  [llength $EMSegment(Cattrib,$SuperClass,ClassList)]
-        Segmenter($pid,node) SetStartSlice                  $EMSegment(SegmentationBoundaryMin,2)  
-        Segmenter($pid,node) SetEndSlice                    $EMSegment(SegmentationBoundaryMax,2)  
-    }
+
+    eval Segmenter($pid,node) SetSegmentationBoundaryMin $EMSegment(SegmentationBoundaryMin,0) $EMSegment(SegmentationBoundaryMin,1) $EMSegment(SegmentationBoundaryMin,2)
+    eval Segmenter($pid,node) SetSegmentationBoundaryMax $EMSegment(SegmentationBoundaryMax,0) $EMSegment(SegmentationBoundaryMax,1) $EMSegment(SegmentationBoundaryMax,2)
 
     Segmenter($pid,node) SetDisplayProb                 $EMSegment(Graph,DisplayProb)  
     Segmenter($pid,node) SetNumberOfTrainingSamples     $EMSegment(NumberOfTrainingSamples)
@@ -2621,20 +2546,20 @@ proc EMSegmentStartEM { {save_mode "save"} } {
      EMSegment(vtkEMSegment) Update 
      #  puts "[EMSegment(vtkEMSegment) Print]"
 
-     if {($EMSegment(SegmentMode) > 0) && [EMSegment(vtkEMSegment) GetErrorFlag]} {
+      if {[EMSegment(vtkEMSegment) GetErrorFlag]} {
          set ErrorFlag 1
          DevErrorWindow "Error Report: \n[EMSegment(vtkEMSegment) GetErrorMessages]Fix errors before resegmenting !"
          RenderAll
      }
-     if {($EMSegment(SegmentMode) > 0) && [EMSegment(vtkEMSegment) GetWarningFlag]} {
-     set WarningFlag 1
-     puts "================================================"
+    if {[EMSegment(vtkEMSegment) GetWarningFlag]} {
+         set WarningFlag 1
+         puts "================================================"
          puts "Warning Report:"
-     puts "[EMSegment(vtkEMSegment) GetWarningMessages]"
-     puts "================================================"
-     }
+         puts "[EMSegment(vtkEMSegment) GetWarningMessages]"
+         puts "================================================"
+    }
 
-   }  
+  } 
    # ----------------------------------------------
    # 4. Write Back Results - or print our error messages
    # ----------------------------------------------
@@ -2671,14 +2596,12 @@ proc EMSegmentStartEM { {save_mode "save"} } {
            # ----------------------------------------------
            # 5. Recover Values 
            # ----------------------------------------------
-           if {$EMSegment(SegmentMode) > 0} {
-               set index 0
-               foreach v $EMSegment(SelVolList,VolumeList) {
-                   if {$EMSegment(IntensityAvgValue,$v) < 0} {
-                       set EMSegment(IntensityAvgValue,$v) [EMSegment(vtkEMSegment) GetIntensityAvgValueCurrent $index]
-                   }
-                   incr index
+           set index 0
+           foreach v $EMSegment(SelVolList,VolumeList) {
+               if {$EMSegment(IntensityAvgValue,$v) < 0} {
+                   set EMSegment(IntensityAvgValue,$v) [EMSegment(vtkEMSegment) GetIntensityAvgValueCurrent $index]
                }
+               incr index
            }
            # Update MRML Tree
            if { $save_mode == "save" } {
@@ -2709,15 +2632,12 @@ proc EMSegmentStartEM { {save_mode "save"} } {
    } else {
      # This is done so the vtk instance won't be called again when saving the model
      # if it does not work also do the same to the input of all the subclasses - should be fine 
-     if {$EMSegment(SegmentMode) > 0} {
-       while {$NumInputImagesSet > 0} {
+     while {$NumInputImagesSet > 0} {
            incr NumInputImagesSet -1
            EMSegment(vtkEMSegment) SetImageInput $NumInputImagesSet "" 
-       }
-     } else {
-       EMSegment(vtkEMSegment) SetInput ""
-     } 
-     if {($EMSegment(SegmentMode) == 0) || [EMSegment(vtkEMSegment) GetErrorFlag] == 0} { 
+     }
+
+     if {[EMSegment(vtkEMSegment) GetErrorFlag] == 0} { 
          Volume($result,vol) SetImageData [EMSegment(vtkEMSegment) GetOutput]
      }
      EMSegment(vtkEMSegment) SetOutput ""
@@ -2727,7 +2647,7 @@ proc EMSegmentStartEM { {save_mode "save"} } {
    # ----------------------------------------------
    # 7. Run Dice measure if necessary 
    # ----------------------------------------------
-   if {$EMSegment(SegmentMode) > 0 && ($ErrorFlag == 0)} {
+   if {$ErrorFlag == 0} {
      set EMSegment(LatestLabelMap) $result
      EMSegmentCalcDice 
    }
@@ -3506,8 +3426,7 @@ proc EMSegmentChangeClass {Sclass} {
     set EMSegment(Class) $Sclass
     $EMSegment(EM-lClass) configure -text $Sclass 
     # Change Super Class Setting
-    if {$Sclass && $EMSegment(SegmentMode) > 1 } { $EMSegment(Cl-cSuperClass) configure -state normal 
-    } else {$EMSegment(Cl-cSuperClass) configure -state disabled }
+    $EMSegment(Cl-cSuperClass) configure -state normal 
     
     # Change Variable the Entry field is assigned width
     for {set y 0} {$y < $EMSegment(NumInputChannel)} {incr y} { 
@@ -3750,25 +3669,13 @@ proc EMSegmentCalculateClassMeanCovariance { } {
                         (log([lindex [lindex $EMSegment(Cattrib,$Sclass,$YVolID,Sample) $i] 3]+1) - \
                         $EMSegment(Cattrib,$Sclass,LogMean,$y)) )]    
                 }
-                if { $EMSegment(SegmentMode) < 1 } {
-                  if {$Clength < 1} {
-                    set EMSegment(Cattrib,$Sclass,LogCovariance,$x,$x) -1
-                  } elseif {$Clength < 2} {   
-                    set EMSegment(Cattrib,$Sclass,LogCovariance,$x,$x) 0.0
-                  } else {
-                    # We calculate Sigma => We have to square it / for the multichannel version we calculate the covariance Matrix
-                    # set EMSegment(Cattrib,$Sclass,Sigma) [expr sqrt($Variance / double($Clength))]
-                    set EMSegment(Cattrib,$Sclass,LogCovariance,$x,$x) [expr round(sqrt($LogCovariance / double($Clength - 1.0))*10000.0)/10000.0]
-                  }
-                } else {
-                  if {$Clength < 2} {
+                if {$Clength < 2} {
                     set EMSegment(Cattrib,$Sclass,LogCovariance,$y,$x) 0.0
-                  } else {
+        } else {
                     set EMSegment(Cattrib,$Sclass,LogCovariance,$y,$x) [expr round($LogCovariance / double($Clength - 1.0)*10000.0)/10000.0]
-                  }
-                  if {$x != $y} {                
+        }
+                if {$x != $y} {                
                     set EMSegment(Cattrib,$Sclass,LogCovariance,$x,$y) $EMSegment(Cattrib,$Sclass,LogCovariance,$y,$x) 
-                  }
                 }
               }
             }
@@ -3872,7 +3779,7 @@ proc EMSegmentCreateDeleteClasses {ChangeGui DeleteNode InitClasses} {
        # Destory elements from list
        # Have to do it here otherwise I have problems with EMSegmentUpdateMRML which is automatically called when deleting a node 
        set EMSegment(Cattrib,$EMSegment(SuperClass),ClassList) [lrange $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList) 0 [expr $EMSegment(NumClassesNew) -1]] 
-       puts "DeleteList $DeleteList "
+
        foreach i $DeleteList { 
           # It is a super class => destroy also all sub classes
           if {$EMSegment(Cattrib,$i,IsSuperClass)} {
@@ -4058,7 +3965,6 @@ proc EMSegmentCreateDeleteClasses {ChangeGui DeleteNode InitClasses} {
       # Graph of class is plottet (== 1) or not (== 0)  
       set EMSegment(Cattrib,$i,Label)     [lindex $EMSegment(ColorLabelList) [expr 2*(($i-1)%$ColorLabelLength)+1]]
 
-      # Special EMSegment(SegmentMode) == 1 Variables     
       set EMSegment(Cattrib,$i,ProbabilityData) $Volume(idNone)
       set EMSegment(Cattrib,$i,PCAFileRange) "0 0" 
       set EMSegment(Cattrib,$i,PCATranslation) "0.0 0.0 0.0" 
@@ -4290,15 +4196,12 @@ proc EMSegmentChangeVolumeGraph {VolumeID numGraph} {
     if {$EMSegment(NumGraph) == 3} {
     set EMSegment(Graph,2,VolumeID,$numGraph) $VolumeID
     }
-    if {$EMSegment(SegmentMode)} {
-      EMSegmentPlotCurveRegion $numGraph
-      if {$EMSegment(NumGraph) == 3} {
-    EMSegmentPlotCurveRegion 2
-      }
-      $EMSegment(Cl-mbGraphHistogram$numGraph) configure -text $VolName
-    } else {
-       $EMSegment(Cl-bGraphHistogram$numGraph) configure -text $VolName
+
+    EMSegmentPlotCurveRegion $numGraph
+    if {$EMSegment(NumGraph) == 3} {
+        EMSegmentPlotCurveRegion 2
     }
+    $EMSegment(Cl-mbGraphHistogram$numGraph) configure -text $VolName
 }
 
 
@@ -4425,8 +4328,7 @@ proc EMSegmentDrawDeleteCurveRegion {Sclass NumGraph} {
        if {$ClassIndex < $EMSegment(Graph,ButtonNum)} { $EMSegment(Cl-fGraphButtons).bGraphButton$Sclass configure -relief raised
        } else { $EMSegment(Cl-fGraphButtonsBelow).bGraphButton$Sclass configure -relief raised }
        } else {
-       if  {$EMSegment(SegmentMode)} {$EMSegment(Cl-mbGraphHistogram$NumGraph) configure -relief raised
-       } else {$EMSegment(Cl-bGraphHistogram$NumGraph) configure -relief raised }
+         $EMSegment(Cl-mbGraphHistogram$NumGraph) configure -relief raised
        }
     } else {
     # Draw Graph and lower button
@@ -4466,8 +4368,7 @@ proc EMSegmentDrawDeleteCurveRegion {Sclass NumGraph} {
         if {$ClassIndex < $EMSegment(Graph,ButtonNum)} { $EMSegment(Cl-fGraphButtons).bGraphButton$Sclass configure -relief sunken
         } else { $EMSegment(Cl-fGraphButtonsBelow).bGraphButton$Sclass configure -relief sunken }
       } else {
-        if  {$EMSegment(SegmentMode)} {$EMSegment(Cl-mbGraphHistogram$NumGraph) configure -relief raised
-        } else {$EMSegment(Cl-bGraphHistogram$NumGraph) configure -relief sunken }
+        $EMSegment(Cl-mbGraphHistogram$NumGraph) configure -relief raised
       }
   }
   return 1
@@ -4741,21 +4642,10 @@ proc EMSegmentTransfereVolume {from} {
       }
       EMSegmentCreate_Mean_Covariance_InputChannelWeights_RowsColumns [expr $EMSegment(NumInputChannel)-1] $EMSegment(NumInputChannel) 
       # Add it to the Volume Graph Button
-      if {$EMSegment(SegmentMode)} {
-        $EMSegment(Cl-mGraphHistogram0) add command -label [Volume($VolumeID,node) GetName] -command "EMSegmentChangeVolumeGraph $VolumeID 0"
-        if {$EMSegment(NumGraph) > 1} { $EMSegment(Cl-mGraphHistogram1) add command -label [Volume($VolumeID,node) GetName] -command "EMSegmentChangeVolumeGraph $VolumeID 1"}
-        $EMSegment(fAllVolList) delete $EMSegment(AllVolList,ActiveID)
-      } else {
-        $EMSegment(EM-mbVolumeSelect) configure -text "[Volume($VolumeID,node) GetName]"
-        $EMSegment(EM-mVolumeSelect) delete $EMSegment(AllVolList,ActiveID)
-        set IndexLen [expr [llength $EMSegment(AllVolList,VolumeList)]-1]
-        for {set i $EMSegment(AllVolList,ActiveID)} {$i < $IndexLen} {incr i} {
-          $EMSegment(EM-mVolumeSelect) entryconfigure $i -command "EMSegmentChangeVolumeSegmented $i"
-        }
-        for {set i 0} { $i < $EMSegment(NumGraph)} {incr i} {
-          EMSegmentChangeVolumeGraph $VolumeID $i
-        }
-      }
+      $EMSegment(Cl-mGraphHistogram0) add command -label [Volume($VolumeID,node) GetName] -command "EMSegmentChangeVolumeGraph $VolumeID 0"
+      if {$EMSegment(NumGraph) > 1} { $EMSegment(Cl-mGraphHistogram1) add command -label [Volume($VolumeID,node) GetName] -command "EMSegmentChangeVolumeGraph $VolumeID 1"}
+      $EMSegment(fAllVolList) delete $EMSegment(AllVolList,ActiveID)
+    
       # Define End Slice
       set BoundaryMax [EMSegmentSegmentationBoundaryMax 0  $VolumeID]
       for {set i 0} { $i <3} { incr i} {
@@ -4770,9 +4660,8 @@ proc EMSegmentTransfereVolume {from} {
       set to All 
       EMSegmentDeleteFromSelList $VolumeID
     }
-    if {$EMSegment(SegmentMode)} { 
-      $EMSegment(f${to}VolList) insert end [Volume($VolumeID,node) GetName]
-    } 
+    $EMSegment(f${to}VolList) insert end [Volume($VolumeID,node) GetName]
+    
     lappend EMSegment(${to}VolList,VolumeList) $VolumeID
     set EMSegment(${from}VolList,ActiveID) -1
     EMSegmentCalculateClassMeanCovariance
@@ -4818,11 +4707,7 @@ proc EMSegmentUpdateVolumeList { } {
     set EMSegment(AllVolList,VolumeList) { }
     set NewList { } 
     # Delete All Values from the List in panel EM
-    if {$EMSegment(SegmentMode)} {
-      $EMSegment(fAllVolList) delete 0 end
-    } else {
-      $EMSegment(EM-mVolumeSelect) delete 0 end
-    }
+    $EMSegment(fAllVolList) delete 0 end
 
     set i 0
     foreach v $Volume(idList) {
@@ -4832,13 +4717,8 @@ proc EMSegmentUpdateVolumeList { } {
         if {$index > -1} {
           lappend NewList $v 
         } else {
-          if {$EMSegment(SegmentMode)} {
-            $EMSegment(fAllVolList) insert end  [Volume($v,node) GetName]
-        set EMSegment(IntensityAvgValue,$v) -1.0 
-          } else {
-            $EMSegment(EM-mVolumeSelect) add  command -label [Volume($v,node) GetName] -command "EMSegmentChangeVolumeSegmented $i"
-            incr i
-          }
+          $EMSegment(fAllVolList) insert end  [Volume($v,node) GetName]
+          set EMSegment(IntensityAvgValue,$v) -1.0 
           lappend EMSegment(AllVolList,VolumeList) $v
         }
       }
@@ -4887,16 +4767,8 @@ proc EMSegmentDeleteFromSelList {args} {
        # Delete Mean and Covariance in Class panel
        set index [lsearch -exact $EMSegment(SelVolList,VolumeList) $v]
        # Now we have tom move everything one step down otherwise the entry fields do not correspond anymore to the position in the volume list
-       if {$EMSegment(SegmentMode) } {
-          $EMSegment(fSelVolList) delete $index
-       } else {
-          if { [lsearch -exact $Volume(idList) $v] > -1} {  
-             $EMSegment(EM-mVolumeSelect) add command -label [Volume($v,node) GetName] -command "EMSegmentChangeVolumeSegmented [llength $EMSegment(AllVolList,VolumeList)]"  
-          } 
-          # There is only one displayed 
-          $EMSegment(EM-mbVolumeSelect) configure -text "None"
+       $EMSegment(fSelVolList) delete $index
 
-       }
        # We have to destroy the menu selection because no volume is available anymore
        if {$EMSegment(NumInputChannel) == 1} {
          if { [llength $EMSegment(Cattrib,$EMSegment(Class),$v,Sample)] > 0 }  {
@@ -4907,38 +4779,26 @@ proc EMSegmentDeleteFromSelList {args} {
     # Delete from Graph Volume List
     # Kilian : Has to be changed later if we have different input channels for different classes !
     set ClassList "0 $EMSegment(GlobalClassList)"
-    if  {$EMSegment(SegmentMode)} {
-        $EMSegment(Cl-mGraphHistogram0) delete $index
-        if {$EMSegment(NumGraph) > 1} {$EMSegment(Cl-mGraphHistogram1) delete $index}
-           for {set i 0} { $i < $EMSegment(NumGraph)} {incr i} {
-           if {$EMSegment(Graph,$i,VolumeID,0) == $v } {
-              set EMSegment(Graph,$i,VolumeID,0) -1
-          if {$EMSegment(NumGraph) == 3} {
-          set EMSegment(Graph,2,VolumeID,$i) -1
-          } 
-              $EMSegment(Cl-mbGraphHistogram$i) config -text ""
-              if {$EMSegment(Graph,$i,ID,0) > -1} {
-                EMSegmentDrawDeleteCurveRegion 0 $i
-              }
-          foreach j $ClassList { 
-                if {$EMSegment(Graph,$i,ID,$j) > -1} {
-                  EMSegmentMultipleDrawDeleteCurveRegion $j
-                }
-              }
-           }
-        }
-    } else {
-        for {set i 0} { $i < $EMSegment(NumGraph)} {incr i} {
-            set EMSegment(Graph,$i,VolumeID,0) -1
-        if {$EMSegment(NumGraph) == 2} {
-        set EMSegment(Graph,2,VolumeID,$i) -1
-        }
-            $EMSegment(Cl-bGraphHistogram$i) config -text ""
-            if {$EMSegment(Cattrib,$i,ID,0) > -1} {
-               EMSegmentDrawDeleteCurveRegion 0 $i
+    $EMSegment(Cl-mGraphHistogram0) delete $index
+    if {$EMSegment(NumGraph) > 1} {$EMSegment(Cl-mGraphHistogram1) delete $index}
+       for {set i 0} { $i < $EMSegment(NumGraph)} {incr i} {
+       if {$EMSegment(Graph,$i,VolumeID,0) == $v } {
+          set EMSegment(Graph,$i,VolumeID,0) -1
+      if {$EMSegment(NumGraph) == 3} {
+      set EMSegment(Graph,2,VolumeID,$i) -1
+      } 
+          $EMSegment(Cl-mbGraphHistogram$i) config -text ""
+          if {$EMSegment(Graph,$i,ID,0) > -1} {
+            EMSegmentDrawDeleteCurveRegion 0 $i
+          }
+      foreach j $ClassList { 
+            if {$EMSegment(Graph,$i,ID,$j) > -1} {
+              EMSegmentMultipleDrawDeleteCurveRegion $j
             }
-        }
+          }
+       }
     }
+    
     # Delete entry from list
     set EMSegment(SelVolList,VolumeList) [lreplace $EMSegment(SelVolList,VolumeList) $index $index]    
     incr EMSegment(NumInputChannel) -1 
@@ -4968,10 +4828,8 @@ proc EMSegmentCreate_Mean_Covariance_InputChannelWeights_RowsColumns {OldNumInpu
         eval {entry  $fClf0InputChannel.e$x -textvariable EMSegment(Cattrib,$Sclass,InputChannelWeights,$x) -width 5} $Gui(WEA)
         eval {entry  $fClf1InputChannel.e$x -textvariable EMSegment(Cattrib,$Sclass,InputChannelWeights,$x) -width 5} $Gui(WEA)
         pack $fClLogMean.e$x -side left  -padx 1 -pady 1
-        if {$EMSegment(SegmentMode) == 2} {
-            pack $fClf0InputChannel.e$x -side left  -padx 1 -pady 1
-            pack $fClf1InputChannel.e$x -side left  -padx 1 -pady 1
-        } 
+    pack $fClf0InputChannel.e$x -side left  -padx 1 -pady 1
+    pack $fClf1InputChannel.e$x -side left  -padx 1 -pady 1 
     }
 
     set flog $EMSegment(Cl-fLogCovVar)
@@ -5022,7 +4880,7 @@ proc EMSegmentShowGraphWindow {{x 0} {y 0}} {
     global EMSegment Gui
 
     # Recreate popup if user killed it
-    if {([winfo exists $Gui(wEMSegment)] == 0) || (($EMSegment(NumGraph) == 1) && ($EMSegment(SegmentMode) > 1) && ($EMSegment(NumInputChannel) > 1)) || (($EMSegment(NumGraph) == 3) && ($EMSegment(NumInputChannel) < 2))  } {
+    if {([winfo exists $Gui(wEMSegment)] == 0) || (($EMSegment(NumGraph) == 1) && ($EMSegment(NumInputChannel) > 1)) || (($EMSegment(NumGraph) == 3) && ($EMSegment(NumInputChannel) < 2))  } {
         EMSegmentCreateGraphWindow
     }
 
@@ -5050,10 +4908,10 @@ proc EMSegmentCreateGraphWindow { } {
        destroy  $Gui(wEMSegment) 
     }
     # Set parameters corectly 
-    if {($EMSegment(SegmentMode) > 1) && ($EMSegment(NumInputChannel) > 1) } {
+    if {$EMSegment(NumInputChannel) > 1 } {
        set EMSegment(NumGraph) 3
     } else {
-    set EMSegment(NumGraph) 1
+       set EMSegment(NumGraph) 1
     }
 
 
@@ -5151,34 +5009,25 @@ proc EMSegmentCreateHistogramButton {f index} {
     GraphCreateHistogramCurve EMSegment(Graph,$index,Data,0) $volume $EMSegment(Graph,$index,Xmin) $EMSegment(Graph,$index,Xmax) $EMSegment(Graph,$index,Xlen)
     set EMSegment(Graph,$index,ID,0) -1
 
-    if  {$EMSegment(SegmentMode)} {
-      set EMSegment(Cl-mbGraphHistogram$index) $f.mbHistogram
-      set EMSegment(Cl-mGraphHistogram$index) $f.mbHistogram.m
+    set EMSegment(Cl-mbGraphHistogram$index) $f.mbHistogram
+    set EMSegment(Cl-mGraphHistogram$index) $f.mbHistogram.m
     
-      eval {menubutton $EMSegment(Cl-mbGraphHistogram$index) -text $MenuText  -menu $EMSegment(Cl-mGraphHistogram$index) -width 8} $Gui(WBA) 
-      $EMSegment(Cl-mbGraphHistogram$index) configure -bg $EMSegment(Cattrib,0,ColorGraphCode)
-      $EMSegment(Cl-mbGraphHistogram$index) configure -activebackground $EMSegment(Cattrib,0,ColorGraphCode)
-
-      pack $EMSegment(Cl-mbGraphHistogram$index) -side left -padx $Gui(pad) 
-      TooltipAdd  $EMSegment(Cl-mbGraphHistogram$index) "Press left mouse button to selct volume - press right mouse button to display volume's histogram "
-      bind $EMSegment(Cl-mbGraphHistogram$index) <ButtonPress-3> "EMSegmentDrawDeleteCurveRegion 0 $index" 
-
-      # Define Menu selection 
-      eval {menu $EMSegment(Cl-mGraphHistogram$index)} $Gui(WMA)
-      $EMSegment(Cl-mGraphHistogram$index) configure -bg $EMSegment(Cattrib,0,ColorGraphCode)
-      $EMSegment(Cl-mGraphHistogram$index) configure -activebackground $EMSegment(Cattrib,0,ColorGraphCode)
-      # Add Selection entry
-      foreach v $EMSegment(SelVolList,VolumeList)  {
-         set VolName [Volume($v,node) GetName]
-         $EMSegment(Cl-mGraphHistogram$index) add command -label $VolName -command "EMSegmentChangeVolumeGraph $v $index"
-      }
-    } else {
-      set EMSegment(Cl-bGraphHistogram$index) $f.bHistogram
-      eval {button $EMSegment(Cl-bGraphHistogram$index) -text $MenuText -width 8 -command "EMSegmentDrawDeleteCurveRegion 0 $index" } $Gui(WBA)
-      $EMSegment(Cl-bGraphHistogram$index) configure -bg $EMSegment(Cattrib,0,ColorGraphCode)
-      $EMSegment(Cl-bGraphHistogram$index) configure -activebackground $EMSegment(Cattrib,0,ColorGraphCode)
-      TooltipAdd $EMSegment(Cl-bGraphHistogram$index) "Press button to display histogram of current active volume" 
-      pack $EMSegment(Cl-bGraphHistogram$index) -side left -padx $Gui(pad)
+    eval {menubutton $EMSegment(Cl-mbGraphHistogram$index) -text $MenuText  -menu $EMSegment(Cl-mGraphHistogram$index) -width 8} $Gui(WBA) 
+    $EMSegment(Cl-mbGraphHistogram$index) configure -bg $EMSegment(Cattrib,0,ColorGraphCode)
+    $EMSegment(Cl-mbGraphHistogram$index) configure -activebackground $EMSegment(Cattrib,0,ColorGraphCode)
+    
+    pack $EMSegment(Cl-mbGraphHistogram$index) -side left -padx $Gui(pad) 
+    TooltipAdd  $EMSegment(Cl-mbGraphHistogram$index) "Press left mouse button to selct volume - press right mouse button to display volume's histogram "
+    bind $EMSegment(Cl-mbGraphHistogram$index) <ButtonPress-3> "EMSegmentDrawDeleteCurveRegion 0 $index" 
+    
+    # Define Menu selection 
+    eval {menu $EMSegment(Cl-mGraphHistogram$index)} $Gui(WMA)
+    $EMSegment(Cl-mGraphHistogram$index) configure -bg $EMSegment(Cattrib,0,ColorGraphCode)
+    $EMSegment(Cl-mGraphHistogram$index) configure -activebackground $EMSegment(Cattrib,0,ColorGraphCode)
+    # Add Selection entry
+    foreach v $EMSegment(SelVolList,VolumeList)  {
+       set VolName [Volume($v,node) GetName]
+       $EMSegment(Cl-mGraphHistogram$index) add command -label $VolName -command "EMSegmentChangeVolumeGraph $v $index"
     }
 }
 
@@ -5487,36 +5336,23 @@ proc EMSegmentReadTextBox {} {
    while { $ReadLine != {} && $ErrorFlag == 0}  { 
        set ReadX [lindex $ReadLine 0]
        set ReadY [lindex $ReadLine 1]
-       if { $EMSegment(SegmentMode) < 1 } { 
-         set ReadBrightness [lindex $ReadLine 2]
-         if {$ReadBrightness > -1} {
-           lappend ReadSample "$ReadX $ReadY $ReadBrightness"
-         } else {
-           set ErrorFlag 1 
-           DevErrorWindow "Sample $i not correctly defined !"
-           return
-         }
-       } else {
-         lappend ReadSample "$ReadX $ReadY"
-       } 
+
+       lappend ReadSample "$ReadX $ReadY"
+ 
        incr i
        set ReadLine [$EMSegment(Cl-textBox) get $i.0 $i.end]
    }
    if {$ErrorFlag == 0} {
        set vol [lindex $EMSegment(SelVolList,VolumeList) 0]
-       if { $EMSegment(SegmentMode) < 1 } { 
-         set EMSegment(Cattrib,$Sclass,$vol,Sample) $ReadSample
-       } else {
        set index 0
        foreach elem $EMSegment(Cattrib,$Sclass,$vol,Sample)  {
            if {[lsearch -exact $ReadSample $elem] == -1} {
            foreach v $EMSegment(SelVolList,VolumeList) {
-               set EMSegment(Cattrib,$Sclass,$v,Sample) [lreplace $EMSegment(Cattrib,$Sclass,$v,Sample) $index $index]
+           set EMSegment(Cattrib,$Sclass,$v,Sample) [lreplace $EMSegment(Cattrib,$Sclass,$v,Sample) $index $index]
            }
            } else {
            incr index
            }
-       }
        }
    }
 }    
@@ -5585,11 +5421,7 @@ proc EMSegmentWriteTextBox {} {
    if {$EMSegment(NumInputChannel)} {
        set x [lindex $EMSegment(SelVolList,VolumeList) 0]       
        foreach Sline $EMSegment(Cattrib,$Sclass,$x,Sample) {
-       if {$EMSegment(SegmentMode) } { 
-           $EMSegment(Cl-textBox) insert end "[lrange $Sline 0 2]  \n" 
-       } else {
-           $EMSegment(Cl-textBox) insert end "$Sline \n" 
-       }
+       $EMSegment(Cl-textBox) insert end "[lrange $Sline 0 2]  \n"  
        }
    }
    if {$EMSegment(UseSamples) == 0} {$EMSegment(Cl-textBox) configure -state disabled}
