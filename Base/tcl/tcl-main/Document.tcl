@@ -189,9 +189,9 @@ proc DocumentFile {docdir dir filename {level "1"}} {
     set name [file root [file tail $filename]]
 
     # Open output file
-    set docfile [file join [file join $docdir $dir] $name.html]
+    set docfile [file join [file join $docdir $dir] $name.html]    
     if {[catch {set fid [open $docfile w]} errmsg] == 1} {
-        puts "$errmsg"
+        puts "DocumentFile: Attempted to open $docfile:\n$errmsg"
         exit
     }
 
@@ -200,7 +200,7 @@ proc DocumentFile {docdir dir filename {level "1"}} {
     set default "../../style.css"
     set styleFile $default
     for {set i "1"} { $i < $level} { incr i} {
-    set styleFile "../$styleFile"   
+        set styleFile "../$styleFile"   
     }
     HtmlHead $fid $name $styleFile
 
@@ -526,10 +526,20 @@ proc DocumentAll {prog {outputdir ""} {what "doc tcl"}} {
         
 
         if {$outputdir != ""} {
-        set docdir [file join $outputdir tcl]} else {
+            set docdir [file join $outputdir tcl]
+        } else {
             set docdir [file join [file join [file dirname $prog] \
-                doc] tcl]}
+                                       doc] tcl]
+        }
 
+        # Create the doc dir if necessary
+        if {[file exists $docdir] == 0} {
+            puts "Creating directory $docdir"
+            if {[catch {file mkdir $docdir} errmsg] == 1} {
+                puts "Cannot create directory $docdir: $errmsg"
+                exit
+            }
+        }
         # Document each file
         set Index(dirList) ""
         set dirs "tcl-main tcl-modules tcl-shared tcl-modules/Editor tcl-modules/Volumes" 
@@ -539,6 +549,15 @@ proc DocumentAll {prog {outputdir ""} {what "doc tcl"}} {
 
         foreach dir $dirs level $levels {
             puts $dir
+            # Create this subdirectory if necessary
+            if {[file exists [file join $docdir $dir]] == 0} {
+                puts "Creating directory [file join $docdir $dir]"
+                if {[catch {file mkdir [file join $docdir $dir]} errmsg] == 1} {
+                    puts "Cannot create directory [file join $docdir $dir]: $errmsg"
+                    exit
+                }
+            }
+
             set Index($dir) ""
             lappend Index(dirList) $dir
             foreach file [glob -nocomplain $prog/$dir/*.tcl] {
