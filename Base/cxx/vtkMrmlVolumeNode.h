@@ -293,6 +293,7 @@ public:
   // DICOMFileList
   int GetNumberOfDICOMFiles() { return DICOMFiles; }
   void AddDICOMFileName(char *);
+  void SetDICOMFileName(int idx, char *str);
   char *GetDICOMFileName(int idx);
   void DeleteDICOMFileNames();
   char **GetDICOMFileNamesPointer() { return DICOMFileList;}

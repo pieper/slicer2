@@ -1003,6 +1003,13 @@ void vtkMrmlVolumeNode::AddDICOMFileName(char *str)
   DICOMFiles++;
 }
 
+void vtkMrmlVolumeNode::SetDICOMFileName(int idx, char *str)
+{
+  delete [] DICOMFileList[idx];
+  DICOMFileList[idx] = new char [strlen(str) + 1];
+  strcpy(DICOMFileList[idx], str);
+}
+
 char *vtkMrmlVolumeNode::GetDICOMFileName(int idx)
 {
   return DICOMFileList[idx];
