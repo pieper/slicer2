@@ -126,6 +126,7 @@ j.) Create a home directory for your server:
     mkdir slicer
     cd slicer
     mv ../nsd.tcl .
+    rm -rf ../log
     mkdir log
     ln -s ../bin bin
     ln -s ../modules modules
