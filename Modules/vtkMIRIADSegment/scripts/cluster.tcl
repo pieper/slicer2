@@ -8,6 +8,8 @@ proc echo {args} {puts "$args"}
 proc init { {job_limit 200} } {
 
     puts "init for host $::env(HOSTNAME)"
+    set bad_computes ""
+
     switch $::env(HOSTNAME) { 
         "C226.2532.sc03.org" {
             set ::ids [exec ls -1 /home/pieper/data/MIRIAD/Project_0002]
@@ -26,7 +28,6 @@ proc init { {job_limit 200} } {
                 ls -1 /nas/nas0/pieper/data/MIRIAD/Project_0002]
             set racks {0 3}
             set rows {0 31}
-            set bad_computes {compute-0-12 compute-1-1 compute-1-2 compute-1-12 compute-2-12 compute-2-16 compute-2-17 compute-2-18 compute-2-19 compute-2-20 compute-2-21 compute-2-24}
             set ::archive  "gpop.bwh.harvard.edu:/nas/nas0/pieper/data/MIRIAD/Project_0002"
 
         }
@@ -34,7 +35,7 @@ proc init { {job_limit 200} } {
         "rockstar.rocksclusters.org" {
             set racks {0 3}
             set rows {0 31}
-            set bad_computes {compute-0-12 compute-1-1 compute-1-2 compute-1-12 compute-2-12 compute-2-16 compute-2-17 compute-2-18 compute-2-19 compute-2-20 compute-2-21 compute-2-24}
+            set bad_computes {compute-0-5 compute-0-7 compute-0-12 compute-1-1 compute-1-2 compute-1-3 compute-1-4 compute-1-12 compute-2-12 compute-2-16 compute-2-17 compute-2-18 compute-2-19 compute-2-20 compute-2-21 compute-2-24 compute-3-23}
 
             set ::ids [exec ls -1 /home/pieper/data/MIRIAD/Project_0002]
             set ::archive  "/home/pieper/data/MIRIAD/Project_0002"
@@ -46,10 +47,11 @@ proc init { {job_limit 200} } {
     }
 
     set ::computes(all) ""
+    set ::free_computes ""
     for {set rack [lindex $racks 0]} {$rack <= [lindex $racks 1]} {incr rack} {
         for {set row [lindex $rows 0]} {$row <= [lindex $rows 1]} {incr row} {
             set c compute-$rack-$row
-            if { [lsearch $c $bad_computes] != -1 } { 
+            if { [lsearch $bad_computes $c] == -1 } { 
                 lappend ::computes(all) compute-$rack-$row
                 lappend ::free_computes compute-$rack-$row
             }
@@ -217,7 +219,7 @@ proc run_jobs {} {
                 if { ![is_running $pids($job)] } {
                     puts "finished: $job on $::computes($job)"
                     set elapsed [expr ([clock seconds] - $::launch_time($job)) / 60.]
-                    lappend ::logs($job) "finished $job on $compute at [clock format [clock seconds]] - elapsed time $elapsed minutes"
+                    lappend ::logs($job) "finished $job on $::computes($job) at [clock format [clock seconds]] - elapsed time $elapsed minutes"
                     unset pids($job)
                     lappend ::free_computes $::computes($job)
                     unset ::computes($job)
