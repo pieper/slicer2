@@ -24,12 +24,12 @@ exec tclsh "$0" "$@"
 
 switch $tcl_platform(os) {
     "SunOS" {
-        set SLICER_HOME /projects/birn/nicole/slicer2
+        set SLICER_HOME /projects/birn/slicer2/latest/slicer2
         set VTK_BINARY_PATH /projects/birn/slicer2/Lib/solaris8/vtk/VTK-build
         set BUILD solaris8
         set VTKSLICERBASE_BUILD_LIB $SLICER_HOME/Base/builds/$BUILD/bin/vtkSlicerBase.so
         set GENERATOR "Unix Makefiles"
-        set COMPILER "/usr/bin/g++"
+        set COMPILER "g++"
         set CMAKE cmake
     }
     "Linux" {
@@ -122,11 +122,12 @@ set VTK_ARG2 "-DVTK_BINARY_PATH:PATH=$VTK_BINARY_PATH"
 switch $tcl_platform(os) {
     "SunOS" {
         # in order to bypass warnings about Source files
-        set VTK_ARG3 "-DCMAKE_BACKWARDS_COMPATIBILITY:STRING=1.2"
+        #set VTK_ARG3 "-DCMAKE_BACKWARDS_COMPATIBILITY:STRING=1.7"
+        set VTK_ARG3 "-DDUMMY:BOOL=ON"
         # explicitly specify the compiler used to compile the version of vtk that 
         # we link with
-        set VTK_ARG4 "-DCMAKE_CXX_COMPILER:STRING=g++"
-        set VTK_ARG5 "-DCMAKE_CXX_COMPILER_FULLPATH:FILEPATH=/usr/bin/g++"
+        set VTK_ARG4 "-DCMAKE_CXX_COMPILER:STRING=$COMPILER"
+        set VTK_ARG5 "-DCMAKE_CXX_COMPILER_FULLPATH:FILEPATH=/local/os/bin/$COMPILER"
     }
     default {
         set VTK_ARG3 "-DDUMMY:BOOL=ON"
@@ -165,8 +166,14 @@ foreach target $TARGETS {
         "Darwin" -
         "Linux" {
             puts "running: make"
-            puts [catch "exec make" res]
-            puts $res
+
+            # print the results line by line to provide feedback during long builds
+            set fp [open "| make |& cat" "r"]
+            while { ![eof $fp] } {
+                gets $fp line
+                puts $line
+            }
+            close $fp
         }
         default {
             if { [file tail $target] == "Base" } {
@@ -175,11 +182,13 @@ foreach target $TARGETS {
                 set sln [string toupper [file tail $target]].sln
             }
             puts "running: devenv $sln /build debug"
+
+            # no output from devenv so just go ahead and run it with no loop
             exec devenv $sln /build debug
         }
     }
 }
 
 
-exit
+exit 0
 
