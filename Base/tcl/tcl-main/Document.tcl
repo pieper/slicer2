@@ -74,9 +74,6 @@ proc HtmlHead {fid title {styleFile "../../style.css"} \
 <td align=left>
 	&nbsp;<a href='$homeFile' target='_top'>www.slicer.org</a>
 </td>
-<td align=right>
-	<a href='mailto:slicer@ai.mit.edu'><small>Questions?</small></a>&nbsp;
-</td>
 </table>
 
 [BlueGrayLine]"
@@ -163,8 +160,8 @@ $desc
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc DocumentFile {docdir dir filename} {
-	global Comments
+proc DocumentFile {docdir dir filename {level "1"}} {
+	global Comments prog
 
 	Comment [ReadInput $filename]
 	set name [file root [file tail $filename]]
@@ -175,7 +172,15 @@ proc DocumentFile {docdir dir filename} {
 		puts "$errmsg"
 		exit
 	}
-	HtmlHead $fid $name
+
+    # if directory level is deeper than 1, need to look higher for
+    # the style file than the default ../../style.css
+    set default "../../style.css"
+    set styleFile $default
+    for {set i "1"} { $i < $level} { incr i} {
+	set styleFile "../$styleFile"   
+    }
+    HtmlHead $fid $name $styleFile
 
 	# List procecures
 	puts $fid \
@@ -340,9 +345,6 @@ proc DocumentGenerateAuto {dir} {
 <td align=left>
 	&nbsp;<a href='../index.html' target='_top'>www.slicer.org</a>
 </td>
-<td align=right>
-	<a href='mailto:slicer@ai.mit.edu'><small>Questions?</small></a>&nbsp;
-</td>
 </table>
 
 [BlueGrayLine]
@@ -488,14 +490,19 @@ proc DocumentAll {prog {outputdir ""} {what "doc tcl"}} {
 
 		# Document each file
 		set Index(dirList) ""
-		foreach dir "tcl-main tcl-modules tcl-shared tcl-modules/Editor" {
+	    set dirs "tcl-main tcl-modules tcl-shared tcl-modules/Editor" 
+	    # levels we are deep in the directory structure, 
+	    # relative to slicer/program
+	    set levels " 1 1 1 2"
+
+	    foreach dir $dirs level $levels {
 			puts $dir
 			set Index($dir) ""
 			lappend Index(dirList) $dir
 			foreach file [glob -nocomplain $prog/$dir/*.tcl] {
 				puts $file
 				lappend Index($dir) [file root [file tail $file]]
-				DocumentFile $docdir $dir $file
+				DocumentFile $docdir $dir $file $level
 			}
 		}
 		# Build an index
