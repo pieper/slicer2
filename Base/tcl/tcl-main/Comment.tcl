@@ -141,6 +141,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #-------------------------------------------------------------------------------
 proc ProcessFile {file} {
     set ext [file extension $file]
+#    puts "ProcessFile file = $file\n\text = $ext"
     if {$ext == ".tcl"} { 
         # Go to town
         CommentFile $file
@@ -164,7 +165,7 @@ proc CopyrightFile {filename} {
 
     # Read file into "data"
     if {[catch {set fid [open $filename r]} errmsg] == 1} {
-        puts "CommentFile: $errmsg"
+        puts "CopyrightFile: $errmsg"
         exit
     }
     set data [read $fid]
@@ -180,7 +181,7 @@ proc CopyrightFile {filename} {
 
     # Add comments to the file
     if {[catch {set fid [open $filename w]} errmsg] == 1} {
-        "CommentFile: $errmsg"
+        "CopyrightFile: $errmsg"
         exit
     }
     PrintCopyright $fid 0
@@ -210,7 +211,7 @@ proc CommentFile {filename {verbose 0}} {
     if {[catch {set fid [open $filename r]} errmsg] == 1} {
         puts "CommentFile: $errmsg"
         exit
-    }
+    } 
     set data [read $fid]
     if {[catch {close $fid} errorMessage]} {
        tk_messageBox -type ok -message "The following error occurred while saving the input file: ${errorMessage}"
@@ -325,9 +326,17 @@ proc Polish {data} {
     set line "#-------------------------------------------------------------------------------"
     
     # Fix procs with no comments
+    set numsubs 0
     while {[regexp "\n\nproc (\[^ \]*) " $data match name] == 1} {
+        # this can get stuck in an infintite loop if there's a space between 
+        # an already existing comment and the proc
         regsub "proc $name " $data \
             "$line\n# .PROC ${name}\n# \n# .ARGS\n# .END\n$line\nproc $name " data
+        incr numsubs
+        if {$numsubs > 100} {
+            puts "ERROR: possible infinite loop. Check file for a space between an existing comment and proc $name"
+            exit
+        } 
     }
 
     # Fix procs with just a procedure name
