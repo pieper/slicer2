@@ -118,6 +118,8 @@ if { [itcl::find class isvolume] == "" } {
         method set_dimensions  {dimensionI dimensionJ dimensionK} {}
         method scanorder{} {}
 
+        method pre_destroy {} {}
+
     }
 }
 
@@ -255,11 +257,7 @@ itcl::body isvolume::constructor {args} {
 
 
 itcl::body isvolume::destructor {} {
-    catch "$_renwin Delete"
-    destroy $_tkrw 
-    $_ren Delete
-    $_mapper Delete
-    $_actor Delete
+    catch "$this pre_destroy"
 }
 
 # ------------------------------------------------------------------
@@ -849,6 +847,24 @@ itcl::body isvolume::set_dimensions  {dimensionI dimensionJ dimensionK} {
     $_tkrw configure -width $dimensionI -height $dimensionJ
 }
 
+# ------------------------------------------------------------------
+# use this method to clean up the vtk class instances before calling
+# the destructor -- this is a hack to deal with improper cleanup of the vtk
+# render windows and vtkTkRenderWidget
+
+itcl::body isvolume::pre_destroy {} {
+    catch "$_renwin Delete"
+    destroy $_tkrw 
+    $_ren Delete
+    $_mapper Delete
+    $_actor Delete
+
+    set _renwin ""
+    set _tkrw  ""
+    set _ren  ""
+    set _mapper ""
+    set _actor ""
+}
 
 # ------------------------------------------------------------------
 

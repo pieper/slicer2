@@ -106,7 +106,7 @@ proc TransformVolumeInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.16 $} {$Date: 2005/03/30 15:07:14 $}]
+        {$Revision: 1.17 $} {$Date: 2005/04/01 22:38:28 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -166,6 +166,7 @@ proc TransformVolumeEnter {} {
     if {[info exists TransformVolume(fResample)] && (![info exists TransformVolume(isv)] || $TransformVolume(isv) == "") } {
         set f $TransformVolume(fResample)
         
+        catch "$f.isv pre_destroy"
         catch "destroy $f.isv"
         
         isvolume $f.isv
@@ -196,10 +197,12 @@ proc TransformVolumeExit {} {
     #
     #popEventManager
 
-    if {[info exists TransformVolume(OutputIsv)]} {
+    if { [info exists TransformVolume(OutputIsv)] && $TransformVolume(OutputIsv) != "" } {
+        $TransformVolume(OutputIsv) pre_destroy
         destroy $TransformVolume(OutputIsv)
     }
-    if {[info exists TransformVolume(isv)]} {
+    if { [info exists TransformVolume(isv)] && $TransformVolume(isv) != "" } {
+        $TransformVolume(isv) pre_destroy
         destroy $TransformVolume(isv)
     }
     set TransformVolume(OutputIsv) ""
@@ -505,6 +508,7 @@ proc TransformVolumeRun {} {
     set vDisp $TransformVolume(DispVolume)
     
     if {![info exists TransformVolume(OutputIsv)] || $TransformVolume(OutputIsv) == ""} {
+        catch ".isv pre_destroy"
         catch "destroy .isv"
         isvolume .isv
         set  TransformVolume(OutputIsv) .isv
