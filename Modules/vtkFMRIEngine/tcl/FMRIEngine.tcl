@@ -170,7 +170,7 @@ proc FMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.25 $} {$Date: 2004/08/24 19:37:18 $}]
+        {$Revision: 1.26 $} {$Date: 2004/08/25 22:04:23 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -814,6 +814,7 @@ proc FMRIEngineBuildUIForAnalyze {parent} {
     DevAddLabel $f.label "Filter:"
     eval {entry $f.entry -width 30 \
               -textvariable FMRIEngine(filter)} $Gui(WEA)
+    bind $f.entry <Return> "FMRIEngineLoadVolumes"              
     pack $f.label $f.entry -side left -padx $Gui(pad) -pady 5
  
     set f $parent.fSlider
@@ -1047,11 +1048,12 @@ proc FMRIEngineComputeActivationVolume {} {
     }
 
     set FMRIEngine(computeStatus) \
-        "The activation volume is under \n\
-        computation. Upon completion, \n\
-        it will be displayed as \n\
-        the foreground image.
+        "The activation volume is being\n\
+        computed. This may take a while.\n\
+        Upon completion, it will be displayed\n\
+        as the foreground image.
         " 
+
     puts "Computing Act Volume $FMRIEngine(actVolName)..." 
 
     if {[info commands FMRIEngine(detector)] != ""} {
