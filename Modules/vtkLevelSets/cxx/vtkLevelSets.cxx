@@ -1860,7 +1860,7 @@ void vtkLevelSets::Evolve2D()
       if (normcompsq==0) 
         {
           imcomp = 0;
-      vel    = 0;
+          vel    = 0;
         }
       else 
         {
@@ -1876,49 +1876,51 @@ void vtkLevelSets::Evolve2D()
       // it should be: - H.DI.Du / |Du| / |DI|
       //
       
-      switch (advection_scheme) {
-      case ADVECTION_UPWIND_VECTORS: 
+      if (fabs(AdvectionCoeff)>1E-10) {
+    switch (advection_scheme) {
+    case ADVECTION_UPWIND_VECTORS: 
           // Use upwind differences for advection term :
-            imx = data_attach_x[p];
-            imy = data_attach_y[p];
+      imx = data_attach_x[p];
+      imy = data_attach_y[p];
           adv = 0;
-        if (costerm>0) {
-          if (imx>0) adv += imx*D_x;  else   adv += imx*Dx;
-          if (imy>0) adv += imy*D_y;  else   adv += imy*Dy;
-        } else {
-          if (imx>0) adv += imx*Dx;  else   adv += imx*D_x;
-          if (imy>0) adv += imy*Dy;  else   adv += imy*D_y;
-        }
-        imcomp = adv*AdvectionCoeff*costerm; 
-        break;
-      case ADVECTION_CENTRAL_VECTORS:
-            imx = data_attach_x[p];
-            imy = data_attach_y[p];
+      if (costerm>0) {
+        if (imx>0) adv += imx*D_x;  else   adv += imx*Dx;
+        if (imy>0) adv += imy*D_y;  else   adv += imy*Dy;
+      } else {
+        if (imx>0) adv += imx*Dx;  else   adv += imx*D_x;
+        if (imy>0) adv += imy*Dy;  else   adv += imy*D_y;
+      }
+      imcomp = adv*AdvectionCoeff*costerm; 
+      break;
+    case ADVECTION_CENTRAL_VECTORS:
+      imx = data_attach_x[p];
+      imy = data_attach_y[p];
           adv =  D0x*imx+D0y*imy;
-        imcomp = adv*AdvectionCoeff*costerm; 
-        break;
-      case ADVECTION_MORPHO:
-        if (secdergrad[p]*AdvectionCoeff<0) {
+      imcomp = adv*AdvectionCoeff*costerm; 
+      break;
+    case ADVECTION_MORPHO:
+      if (secdergrad[p]*AdvectionCoeff<0) {
             Gx = Gy = 0;
-          if (D_x>=0) Gx = D_x;
-          if ((Dx<0)&&(-Dx>Gx)) Gx = Dx;
+        if (D_x>=0) Gx = D_x;
+        if ((Dx<0)&&(-Dx>Gx)) Gx = Dx;
           if (D_y>=0) Gy = D_y;
-          if ((Dy<0)&&(-Dy>Gy)) Gy = Dy;
-        }
-        else {
-            Gx = Gy = 0;
-          if (D_x<=0) Gx = D_x;
-          if ((Dx>0)&&(Dx>-Gx)) Gx = Dx;
-          if (D_y<=0) Gy = D_y;
-          if ((Dy>0)&&(Dy>-Gy)) Gy = Dy;
-        }
-        Gnorm = sqrt(Gx*Gx+Gy*Gy);
-        imcomp = -Gnorm*secdergrad[p];
-        imcomp *= AdvectionCoeff;
-        break;
-      } // end switch
-        }
-        
+        if ((Dy<0)&&(-Dy>Gy)) Gy = Dy;
+           }
+          else {
+        Gx = Gy = 0;
+        if (D_x<=0) Gx = D_x;
+        if ((Dx>0)&&(Dx>-Gx)) Gx = Dx;
+        if (D_y<=0) Gy = D_y;
+        if ((Dy>0)&&(Dy>-Gy)) Gy = Dy;
+      }
+          Gnorm = sqrt(Gx*Gx+Gy*Gy);
+          imcomp = -Gnorm*secdergrad[p];
+          imcomp *= AdvectionCoeff;
+          break;
+    } // end switch
+      }
+    }
+ 
       //      g = exp(-sqrt(normcompq)/0.3);
 
     //--------------------------------------------------
@@ -2961,7 +2963,7 @@ void vtkLevelSets::InitEvolution()
   //
   // Set the Advection Parameters
   //
-  //..  if (fabs(AdvectionCoeff)>1E-10) { 
+  if (fabs(AdvectionCoeff)>1E-10) { 
     switch (advection_scheme) {
     case ADVECTION_UPWIND_VECTORS:
     case ADVECTION_CENTRAL_VECTORS:
@@ -2979,7 +2981,7 @@ void vtkLevelSets::InitEvolution()
       ADDMEMORY("vtkLevelSets::InitEvolution() ADVECTION_MORPHO secdergrad",2*sizeof(float)*imsize);
       break;
     }
-    //  }
+  }
 
   sqxspacing   = 1.0/vx/vx;
   sqyspacing   = 1.0/vy/vy;
@@ -2996,8 +2998,8 @@ void vtkLevelSets::InitEvolution()
 
   if (GB_debug) fprintf(stderr,"PreComputeDataAttachment() \n");
 
-  //  if (fabs(AdvectionCoeff)>1E-10) 
-   PreComputeDataAttachment();
+   if (fabs(AdvectionCoeff)>1E-10) 
+     PreComputeDataAttachment();
 
   if (DMmethod == 0) {
     this->MakeBand();
