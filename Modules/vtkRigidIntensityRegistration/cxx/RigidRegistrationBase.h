@@ -120,9 +120,6 @@ public:
   /** Run-time type information (and related methods). */
   itkTypeMacro(RigidRegistrationBase, Object);
 
-  /** Method for creation through the object factory. */
-  itkNewMacro(Self);
-
   // ----------------------------------------------------------------------
   // All the Type Definitions
   // ----------------------------------------------------------------------

@@ -3,8 +3,8 @@
   Program:   Insight Segmentation & Registration Toolkit
   Module:    $RCSfile: itkCompareHistogramImageToImageMetric.h,v $
   Language:  C++
-  Date:      $Date: 2004/01/02 21:45:00 $
-  Version:   $Revision: 1.6 $
+  Date:      $Date: 2004/11/19 01:51:13 $
+  Version:   $Revision: 1.7 $
 
   Copyright (c) Insight Software Consortium. All rights reserved.
   See ITKCopyright.txt or http://www.itk.org/HTML/Copyright.htm for details.
@@ -59,9 +59,6 @@ public HistogramImageToImageMetric<TFixedImage, TMovingImage>
   typedef HistogramImageToImageMetric<TFixedImage, TMovingImage> Superclass;
   typedef SmartPointer<Self>                                     Pointer;
   typedef SmartPointer<const Self>                               ConstPointer;
-
-  /** Method for creation through the object factory. */
-  itkNewMacro(Self);
 
   /** Run-time type information (and related methods). */
   itkTypeMacro(CompareHistogramImageToImageMetric,
