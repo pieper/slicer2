@@ -161,7 +161,7 @@ proc LevelSetsInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.18 $} {$Date: 2003/10/24 20:26:51 $}]
+        {$Revision: 1.19 $} {$Date: 2003/10/24 21:02:02 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -1939,15 +1939,15 @@ proc SetUSLiverParam {} {
   set LevelSets(Dimension)                  "3"
   set LevelSets(HistoGradThreshold)         "0.3"
   set LevelSets(AdvectionCoeff)             "0.8"
-  set LevelSets(StepDt)                     "0.8"
+  set LevelSets(StepDt)                     "0.5"
   set LevelSets(SmoothingScheme)            "Mean Curvature"
   set LevelSets(ReinitFreq)                 "6"
   set LevelSets(SmoothingCoeff)             "0.3"
   set LevelSets(BandSize)                   "3"
   set LevelSets(TubeSize)                   "2"
   set LevelSets(NumIters)                   "100"
-  set LevelSets(MeanIntensity)              "35"
-  set LevelSets(SDIntensity)                "15"
+  set LevelSets(MeanIntensity)              "30"
+  set LevelSets(SDIntensity)                "12"
   set LevelSets(BalloonCoeff)               "0.8"
   set LevelSets(ProbabilityThreshold)       "0.2"
   set LevelSets(NumInitPoints)              "0"
