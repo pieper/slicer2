@@ -3,8 +3,8 @@
   Program:   Insight Segmentation & Registration Toolkit
   Module:    $RCSfile: vtkITKMutualInformationTransform.cxx,v $
   Language:  C++
-  Date:      $Date: 2003/01/16 19:01:33 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2003/01/20 03:53:37 $
+  Version:   $Revision: 1.2 $
 
   Copyright (c) 2002 Insight Consortium. All rights reserved.
   See ITKCopyright.txt or http://www.itk.org/HTML/Copyright.htm for details.
@@ -54,7 +54,7 @@
 #include "itkNumericTraits.h"
 #include "vnl/vnl_math.h"
 
-vtkCxxRevisionMacro(vtkITKMutualInformationTransform, "$Revision: 1.1 $");
+vtkCxxRevisionMacro(vtkITKMutualInformationTransform, "$Revision: 1.2 $");
 vtkStandardNewMacro(vtkITKMutualInformationTransform);
 
 //----------------------------------------------------------------------------
@@ -287,6 +287,12 @@ void vtkITKMutualInformationTransform::InternalUpdate()
 void vtkITKMutualInformationTransform::Identity()
 {
     this->Matrix->Identity();
+}
+
+//------------------------------------------------------------------------
+void vtkITKMutualInformationTransform::Initialize(vtkLinearTransform *initial)
+{
+  this->Matrix->DeepCopy( initial->GetMatrix());
 }
 
 //------------------------------------------------------------------------

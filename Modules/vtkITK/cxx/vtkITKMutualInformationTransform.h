@@ -3,8 +3,8 @@
   Program:   Insight Segmentation & Registration Toolkit
   Module:    $RCSfile: vtkITKMutualInformationTransform.h,v $
   Language:  C++
-  Date:      $Date: 2003/01/16 19:01:33 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2003/01/20 03:53:37 $
+  Version:   $Revision: 1.2 $
 
   Copyright (c) 2002 Insight Consortium. All rights reserved.
   See ITKCopyright.txt or http://www.itk.org/HTML/Copyright.htm for details.
@@ -20,11 +20,12 @@
 
 // .SECTION Description
 
-// A MutualInformationTransform computes a transformation that will
-// align the source image with the target image. The algorithm is
-// described in the paper:
-// Viola, P. and Wells III, W. (1997).
-// "Alignment by Maximization of Mutual Information"
+// MutualInformationTransform computes a transformation that will align
+// the source image with the target image.  The transform can be
+// initialized with a vtkLinearTransform or reset with the Identity
+// method.
+// The algorithm is described in the paper: Viola, P. and Wells III,
+// W. (1997).  "Alignment by Maximization of Mutual Information"
 // International Journal of Computer Vision, 24(2):137-154
 // .SECTION see also
 // vtkLinearTransform
@@ -86,6 +87,10 @@ public:
   void Identity();
 
   // Description:
+  // Initialize the transformation to a linear transform.
+  void Initialize(vtkLinearTransform *);
+
+  // Description:
   // Get the MTime.
   unsigned long GetMTime();
 
@@ -106,7 +111,7 @@ protected:
 
   vtkImageData *SourceImage;
   vtkImageData *TargetImage;
-
+ 
   double LearningRate;
   double SourceStandardDeviation;
   double TargetStandardDeviation;
