@@ -142,18 +142,23 @@ foreach dir $modulePaths {
 # by default, all modules are built.  If some are listed on commandline, only
 # those are built.
 #
-if { $argv != "" } {
+set cleanarg [lsearch $argv "--clean"] 
+if {$cleanarg != -1} {
+    puts "Removing build directories"
+    set CLEANFLAG 1
+    # remove flag from the list
+    set argv [lreplace $argv $cleanarg $cleanarg]
+    if {[llength $argv] == 0} {
+        set argv ""
+    }
+}
+if { $argv != "" && $argv != {} } {
     set newtargets ""
     foreach argmodule $argv {
         set idx [lsearch -glob $TARGETS *$argmodule]
         if { $idx == -1 } {
-            if {$argmodule == "--clean"} {
-                puts "Removing build directories"
-                set CLEANFLAG 1
-            } else {
-                puts stderr "can't find module $argmodule in search path (options are: $TARGETS)"
-                exit
-            }
+            puts stderr "can't find module $argmodule in search path (options are: $TARGETS)"
+            exit
         } else {
             lappend newtargets [lindex $TARGETS $idx]
         }
@@ -198,7 +203,7 @@ foreach target $TARGETS {
             puts "running: make"
 
             # print the results line by line to provide feedback during long builds
-            set fp [open "| make |& cat" "r"]
+            set fp [open "| gmake -j8 |& cat" "r"]
             while { ![eof $fp] } {
                 gets $fp line
                 puts $line
