@@ -67,9 +67,21 @@
 # Default proc called on program start.
 # .ARGS
 # .END
-#-------------------------------------------------------------------------------
+#------------------------------------------------------------------------------
+
 proc VolumesInit {} {
     global Volumes Volume Module Gui Path prog
+
+    set VolumesVtkSlicerScalarType("char")  "Char"
+    set VolumesVtkSlicerScalarType("unsigned\ char")  "UnsignedChar"
+    set VolumesVtkSlicerScalarType("short")  "Short"
+    set VolumesVtkSlicerScalarType("unsigned\ short")  "UnsignedShort"
+    set VolumesVtkSlicerScalarType("int")  "Int"
+    set VolumesVtkSlicerScalarType("unsigned\ int")  "UnsignedInt"
+    set VolumesVtkSlicerScalarType("long")  "Long"
+    set VolumesVtkSlicerScalarType("unsigned\ long")  "UnsignedLong"
+    set VolumesVtkSlicerScalarType("float")  "Float"
+    set VolumesVtkSlicerScalarType("double")  "Double"
 
     # Define Tabs
     set m Volumes
@@ -101,7 +113,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.103 $} {$Date: 2004/11/11 23:07:46 $}]
+            {$Revision: 1.104 $} {$Date: 2005/01/03 21:27:06 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -920,6 +932,10 @@ proc VolumesManualSetPropertyType {n} {
     $n SetFullPrefix [file join $Mrml(dir) [$n GetFilePrefix]]
     if { !$Volume(isDICOM) } {
         set firstNum [MainFileFindImageNumber First [file join $Mrml(dir) $Volume(firstFile)]]
+        if {$firstNum ==""} {
+            set firstNum 1
+            set Volume(firstFile) 0
+        }
     } else {
         set firstNum 1
     }
@@ -1017,7 +1033,6 @@ proc VolumesSetPropertyType {type} {
 proc VolumesPropsApply {} {
     global Lut Volume Label Module Mrml View
 
-
     set m $Volume(activeID)
     if {$m == ""} {
         DevErrorWindow "VolumesPropsApply: no active volume"
@@ -1041,7 +1056,7 @@ proc VolumesPropsApply {} {
 
     # first file
     if {[file exists $Volume(firstFile)] == 0} {
-        tk_messageBox -message "The first file must exist, if you haven't saved a newly created volume, please press cancel and then go to the Editor Module, Volumes tab, Save button"
+        tk_messageBox -message "The first file $Volume(firstFile) must exist, if you haven't saved a newly created volume, please press cancel and then go to the Editor Module, Volumes tab, Save button"
         return
     }
 
@@ -1111,7 +1126,12 @@ proc VolumesPropsApply {} {
         # add a MRML node for this volume (so that in UpdateMRML we can read it in according to the path, etc. in the node)
         set n [MainMrmlAddNode Volume]
         set newID [$n GetID]
-           
+
+        # determine file type
+        if {[info exists Volume(fileType)]} {
+            Volume($newID,node) SetFileType $Volume(fileType)
+        }
+
         # Added by Attila Tanacs 10/11/2000 1/4/02
 
         $n DeleteDICOMFileNames
@@ -2096,3 +2116,47 @@ c_ras 0.000000 0.000000 0.000000"
 
 }
 
+#-------------------------------------------------------------------------------
+# .PROC VolumesVtkToSlicerScalarType
+#  convert VTK scalar type (like "unsigned char") into
+#  Slicer type string like "UnsignedChar"
+# .ARGS
+#  type is vtk scalar type
+# .END
+#-------------------------------------------------------------------------------
+proc VolumesVtkToSlicerScalarType {type} {
+    
+    switch $type {
+        "char" {
+            return "Char"
+        }
+        "unsigned char" {
+            return "UnsignedChar"
+        }
+        "short" {
+            return "Short"
+        }
+        "unsigned short" {
+            return "UnsignedShort"
+        }
+        "int" {
+            return "Int"
+        }
+        "unsigned int" {
+            return "UnsignedInt"
+        }
+        "long" {
+            return "Long"
+        }
+        "unsigned long" {
+            return "UnsignedLong"
+        }
+        "float" {
+            return "Float"
+        }
+        "double" {
+            return "Double"
+        }
+    }
+    return ""
+}
