@@ -1521,50 +1521,50 @@ void vtkImagePropagateDist2::new3D_update_neighbors2( const int& k,  int* n, flo
       if (y0>0) {
         if (z0>0)  DIRECT_NEIGHBOR(n[0],  dxpm, dypm, dzpm, dxp2m+dyp2m+dzp2m)
                    DIRECT_NEIGHBOR(n[1],  dxpm, dypm, dzp , dxp2m+dyp2m      )
-    if (z0<tz) DIRECT_NEIGHBOR(n[2],  dxpm, dypm, dzpp, dxp2m+dyp2m+dzp2p)
+        if (z0<tz-1) DIRECT_NEIGHBOR(n[2],  dxpm, dypm, dzpp, dxp2m+dyp2m+dzp2p)
       }
 
       if (z0>0)  DIRECT_NEIGHBOR(n[3],  dxpm, dyp,  dzpm, dxp2m      +dzp2m)
                  DIRECT_NEIGHBOR(  -1,  dxpm, dyp,  dzp , dxp2m            )
-      if (z0<tz) DIRECT_NEIGHBOR(n[5],  dxpm, dyp,  dzpp, dxp2m      +dzp2p)
+      if (z0<tz-1) DIRECT_NEIGHBOR(n[5],  dxpm, dyp,  dzpp, dxp2m      +dzp2p)
 
-      if (y0<ty) {
+      if (y0<ty-1) {
         if (z0>0)  DIRECT_NEIGHBOR(n[6],  dxpm, dypp, dzpm, dxp2m+dyp2p+dzp2m)
                    DIRECT_NEIGHBOR(n[7],  dxpm, dypp, dzp , dxp2m+dyp2p      )
-        if (z0<tz) DIRECT_NEIGHBOR(n[8],  dxpm, dypp, dzpp, dxp2m+dyp2p+dzp2p)
+        if (z0<tz-1) DIRECT_NEIGHBOR(n[8],  dxpm, dypp, dzpp, dxp2m+dyp2p+dzp2p)
       }
     }
 
     if (y0>0) {
       if (z0>0)  DIRECT_NEIGHBOR(n[9],  dxp,  dypm, dzpm,       dyp2m+dzp2m)
                  DIRECT_NEIGHBOR( -tx,  dxp,  dypm, dzp ,       dyp2m      )
-      if (z0<tz) DIRECT_NEIGHBOR(n[11], dxp,  dypm, dzpp,       dyp2m+dzp2p)
+      if (z0<tz-1) DIRECT_NEIGHBOR(n[11], dxp,  dypm, dzpp,       dyp2m+dzp2p)
     }
 
     if (z0>0)  DIRECT_NEIGHBOR( -txy, dxp,  dyp,  dzpm,             dzp2m)
-    if (z0<tz) DIRECT_NEIGHBOR(  txy, dxp,  dyp,  dzpp,             dzp2p)
+    if (z0<tz-1) DIRECT_NEIGHBOR(  txy, dxp,  dyp,  dzpp,             dzp2p)
 
-    if (y0<ty) {
+    if (y0<ty-1) {
       if (z0>0)  DIRECT_NEIGHBOR(n[14], dxp,  dypp, dzpm,       dyp2p+dzp2m)
                  DIRECT_NEIGHBOR( tx,   dxp,  dypp, dzp ,       dyp2p      )
-      if (z0<tz) DIRECT_NEIGHBOR(n[16], dxp,  dypp, dzpp,       dyp2p+dzp2p)
+      if (z0<tz-1) DIRECT_NEIGHBOR(n[16], dxp,  dypp, dzpp,       dyp2p+dzp2p)
     }
 
-    if (x0<tx) {
+    if (x0<tx-1) {
       if (y0>0) {
         if (z0>0)  DIRECT_NEIGHBOR(n[17], dxpp, dypm, dzpm,dxp2p+dyp2m +dzp2m)
                    DIRECT_NEIGHBOR(n[18], dxpp, dypm, dzp ,dxp2p+dyp2m      )
-        if (z0<tz) DIRECT_NEIGHBOR(n[19], dxpp, dypm, dzpp,dxp2p+dyp2m +dzp2p)
+        if (z0<tz-1) DIRECT_NEIGHBOR(n[19], dxpp, dypm, dzpp,dxp2p+dyp2m +dzp2p)
       }
 
       if (z0>0)  DIRECT_NEIGHBOR(n[20], dxpp, dyp,  dzpm,dxp2p+       dzp2m)
                  DIRECT_NEIGHBOR( 1,    dxpp, dyp,  dzp ,dxp2p            )
-      if (z0<tz) DIRECT_NEIGHBOR(n[22], dxpp, dyp,  dzpp,dxp2p+       dzp2p)
+      if (z0<tz-1) DIRECT_NEIGHBOR(n[22], dxpp, dyp,  dzpp,dxp2p+       dzp2p)
 
-      if (y0<ty) {
+      if (y0<ty-1) {
         if (z0>0)  DIRECT_NEIGHBOR(n[23], dxpp, dypp, dzpm,dxp2p+dyp2p +dzp2m)
                    DIRECT_NEIGHBOR(n[24], dxpp, dypp, dzp ,dxp2p+dyp2p      )
-        if (z0<tz) DIRECT_NEIGHBOR(n[25], dxpp, dypp, dzpp,dxp2p+dyp2p +dzp2p)
+        if (z0<tz-1) DIRECT_NEIGHBOR(n[25], dxpp, dypp, dzpp,dxp2p+dyp2p +dzp2p)
       }
     }
 
