@@ -33,6 +33,7 @@ class VTK_EXPORT vtkFileOps { //; prevent man page generation
 
   // Note if varname = NULL it will just write the data in the file
   void WriteVectorMatlabFile (char *filename, char *name,unsigned char *vec, int xMax) const;
+  void WriteVectorMatlabFile (char *filename, char *varname,float *vec, int xMax) const;
   void WriteVectorMatlabFile (char *filename, char *varname,double *vec, int xMax) const;
   void WriteMatrixMatlabFile (char *filename,char *varname, double **mat, int imgY, int imgX) const;
 
@@ -62,15 +63,46 @@ protected:
 };
 
 //BTX
-// Writes the result upside down - I do not know of any other way of doing it 
+
+template <class T>  
+static T MaxValue(T *vec, int size) {
+  T result = *vec;
+  for (int i = 1; i < size; i++) {
+    if (result < *vec ) result = *vec;
+    vec++;
+  }
+  return result;
+}
+
+template <class Tin, class Tout> 
+static void TransferDataFormat(Tin *vec_in, Tout *vec_out, int Size, Tout max_out) {
+  Tin max_in = MaxValue(vec_in, Size);
+  Tin quote  = Tin(max_out) / (max_in != 0 ? max_in : 1.0);
+  for (int i = 0; i < Size; i++) {
+    vec_out[i] = Tout((vec_in[i])*quote);
+  }
+}
+ 
+// Kilian - Fixed function in August 03 - works now correctly 
 template <class T> 
 static void WriteToFlippedGEFile(char *filename,T *vec, int XSize, int YSize, int XYSize) {
   T* res = new T[XYSize];
   int x,y;
-  vec += XSize;
+
+  // Flip around the Y Axis
+  // vec += XSize;
+  // for (y = 0; y < YSize; y++) {
+  //  if (y) vec += 2*XSize;
+  //  for (x = 0; x < XSize; x++) *res++ = *vec--;
+  // }
+  // res -= XYSize;
+
+  // Flip around the X-Axis
+  vec += XYSize;
   for (y = 0; y < YSize; y++) {
-    if (y) vec += 2*XSize;
-    for (x = 0; x < XSize; x++) *res++ = *vec--;
+    vec -= XSize;
+    memcpy(res,vec,sizeof(T)*XSize);
+    res += XSize;
   }
   res -= XYSize;
   WriteToGEFile(filename,res,XYSize);

@@ -47,6 +47,22 @@ void vtkFileOps::WriteVectorMatlabFile (char *filename, char *name,unsigned char
   fclose(f);
 }
 
+void vtkFileOps::WriteVectorMatlabFile (char *filename, char *name,float *vec, int xMax) const {
+  int appendFlag = 0;
+  FILE *f = (strcmp(filename,"-"))?fopen(filename,((appendFlag)?"a":"w")):stdout;
+  if ( f == NULL ) {
+    cerr << "Could not open file " << filename << "\n";
+    return;
+  }
+  if (name != NULL) fprintf(f,"%s = [", name);
+  xMax --;
+  for (int x = 0; x < xMax; x++ ) fprintf(f,"%10.6f ", vec[x]);
+  fprintf(f,"%10.6f", vec[xMax]);
+  if (name != NULL) fprintf(f,"];\n");
+  fflush(f);
+  fclose(f);
+}
+
 // Opens up a new file and writes down result in the file
 void vtkFileOps::WriteVectorMatlabFile (char *filename, char *varname,double *vec, int xMax) const {
   int appendFlag = 0;
@@ -117,7 +133,7 @@ void  vtkFileOps::WriteDoubleToUShortToGEFile(char* FileName, double* vec,int XS
 // Functions to write Short Data to an MRI File
 // ---------------------------------------------------------
 /* Copyright (c) Simon Warfield simonw@bwh.harvard.edu */
-/* $Id: vtkFileOps.cxx,v 1.2 2003/05/12 19:46:00 pohl Exp $ */
+/* $Id: vtkFileOps.cxx,v 1.3 2003/08/21 19:25:07 pohl Exp $ */
 int vtkFileOps::uncompressedFileName(char *fname, char **newFileName)
 {
 #ifndef _WIN32
