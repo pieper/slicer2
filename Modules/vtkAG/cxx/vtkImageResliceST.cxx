@@ -901,7 +901,8 @@ static void vtkImageResliceSTExecute(vtkImageResliceST *self,
   unsigned long target;
   float point[4];
   float f;
-  float *inSpacing,*inOrigin,*outSpacing,*outOrigin,inInvSpacing[3];
+//  float *inSpacing,*inOrigin,*outSpacing,*outOrigin,inInvSpacing[3];
+  vtkFloatingPointType *inSpacing,*inOrigin,*outSpacing,*outOrigin,inInvSpacing[3];
   T *background;
   int (*interpolate)(float *point, T *inPtr, T *outPtr,
                      T *background, int numscalars,

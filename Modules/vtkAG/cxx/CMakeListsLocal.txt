@@ -55,7 +55,9 @@ INCLUDE_DIRECTORIES(
 ${VTKAG_SOURCE_DIR}
 #/home/liu/gsl/gsl-1.3/lib/include
 #D:/gsl_project/gsl_1_3
-/projects/lmi/local/extpkg/gsl-1.5/include
+#/projects/lmi/local/extpkg/gsl-1.5/include
+	${GSL_INC_DIR}
+	${GSL_INC_DIR}/gsl
 )
 
 #### if you code depends on SlicerBase, uncomment the 
@@ -75,6 +77,7 @@ LINK_DIRECTORIES(
 #/home/liu/gsl/gsl-1.3/lib/lib
 #D:/gsl_project/gsl_1_3/GSLDLL/
 /projects/lmi/local/extpkg/gsl-1.5/lib
+	${GSL_LIB_DIR}
 )
 
 
