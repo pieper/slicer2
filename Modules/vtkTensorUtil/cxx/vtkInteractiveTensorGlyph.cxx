@@ -40,6 +40,7 @@ vtkInteractiveTensorGlyph::vtkInteractiveTensorGlyph()
 
   this->MaskGlyphsWithScalars = 0;
   this->ScalarMask = NULL;
+  this->Resolution = 1;
 }
 
 vtkInteractiveTensorGlyph::~vtkInteractiveTensorGlyph()
@@ -248,7 +249,7 @@ void vtkInteractiveTensorGlyph::Execute()
 
   //cout << "glyph time before pt traversal: " << clock() - tStart << endl;
 
-  for (inPtId=0; inPtId < numPts; inPtId++)
+  for (inPtId=0; inPtId < numPts; inPtId=inPtId+this->Resolution)
     {
       
       if ( ! (inPtId % 10000) ) 

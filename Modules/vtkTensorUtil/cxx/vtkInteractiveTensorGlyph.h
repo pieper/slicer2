@@ -126,6 +126,20 @@ public:
   vtkSetObjectMacro(TensorRotationMatrix, vtkMatrix4x4);
   vtkGetObjectMacro(TensorRotationMatrix, vtkMatrix4x4);
 
+  // Description:
+  // Resolution of the output glyphs. This parameter is a integer value
+  // that set the number of points that are skipped before render one glyphs.
+  // 1 is the finer level meaning that every input point a glyph is rendered.
+  void SetResolution(int value){
+    if(value<=0) {
+      vtkWarningMacro("Resolution cannot be lower than 1.");
+      value = 1;
+    }
+    this->Resolution=value;  
+    this->Modified();
+  };  
+  vtkGetMacro(Resolution,int);
+
 
   // Description:
   // When determining the modified time of the filter, 
@@ -145,6 +159,7 @@ protected:
   int ColorGlyphsWithAnisotropy;
   int ScalarMeasure;
   int MaskGlyphsWithScalars;
+  int Resolution;
 
   vtkMatrix4x4 *VolumePositionMatrix;
   vtkMatrix4x4 *TensorRotationMatrix;
