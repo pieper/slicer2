@@ -162,7 +162,7 @@ proc AnalyzeInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.2 $} {$Date: 2004/07/22 18:20:59 $}]
+        {$Revision: 1.3 $} {$Date: 2004/07/22 20:59:42 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -474,7 +474,8 @@ proc AnalyzeCreateMrmlNodeForVolume {volName volData} {
     set pixelWidth [lindex $spc 0]
     set pixelHeight [lindex $spc 1]
     set sliceThickness [lindex $spc 2]
-    set zSpacing [expr $sliceThickness + 0]
+    set sliceSpacing 0
+    set zSpacing [expr $sliceThickness + $sliceSpacing]
 
 #puts "pixelWidth = $pixelWidth"
 #puts "pixelHeight = $pixelHeight"
@@ -557,10 +558,10 @@ proc AnalyzeLoadVolumes {} {
 
 
     ir SetFileName $AnalyzeCache(fileName)
-    # TODO: ScalarType
-    ir SetDataScalarTypeToShort
     ir SetDataByteOrder $AnalyzeCache(byteOrder) 
-    # TODO: Spacing
+    ir SetScalarType $AnalyzeCache(dataType)
+ 
+    # Spacing
     set pixDims $AnalyzeCache(pixDim)
     set xx [lindex $pixDims 0]
     set yy [lindex $pixDims 1]
@@ -598,8 +599,9 @@ proc AnalyzeLoadVolumes {} {
         set Volume(name) $volName$dash$j
         set load "Loading volume:\n"
         append load $Volume(name) 
+        puts "Loading volume: $Volume(name) ..."
         set FMRIEngine(name) $load
-        
+
         set yBase [expr $y*$z*($j-1)]
         while {$i <= $z} {
 
