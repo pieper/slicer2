@@ -99,7 +99,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.86 $} {$Date: 2003/08/11 19:23:17 $}]
+            {$Revision: 1.87 $} {$Date: 2003/08/14 19:44:35 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -973,10 +973,14 @@ proc VolumesSetPropertyType {type} {
 proc VolumesPropsApply {} {
     global Lut Volume Label Module Mrml View
 
+
     set m $Volume(activeID)
     if {$m == ""} {
         DevErrorWindow "VolumesPropsApply: no active volume"
         return
+    }
+    if {$::Module(verbose)} {
+        puts "VolumesPropsApply: active id = $m"
     }
 
     set Volume(isDICOM) [expr [llength $Volume(dICOMFileList)] > 0]
@@ -990,6 +994,13 @@ proc VolumesPropsApply {} {
         tk_messageBox -message "The name can consist of letters, digits, dashes, or underscores"
         return
     }
+
+    # first file
+    if {[file exists $Volume(firstFile)] == 0} {
+        tk_messageBox -message "The first file must exist, if you haven't saved a newly created volume, please press cancel and then go to the Editor Module, Volumes tab, Save button"
+        return
+    }
+
     # lastNum
     if { $Volume(isDICOM) == 0 } {
         if {[ValidateInt $Volume(lastNum)] == 0} {
@@ -1248,6 +1259,12 @@ proc VolumesSetFirst {} {
     # check to see if user cancelled and set filename to empty string
     if {$Volume(firstFile) == {} || $Volume(firstFile) == ""} {
         puts "VolumesSetFirst: firstFile not set"
+        return
+    }
+    # check to see if user entered a non existant first file
+    if {[file exists $Volume(firstFile)] == 0} {
+        puts "VolumesSetFirst: first file does not exist: $Volume(firstFile)"
+        DevErrorWindow "VolumesSetFirst: first file does not exist: $Volume(firstFile).\nSave the volume via Editor->Volumes->Save."
         return
     }
     set Volume(name)  [file root [file tail $Volume(firstFile)]]
