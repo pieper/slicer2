@@ -58,99 +58,34 @@
 proc SessionLogInit {} {
     global SessionLog Module Volume Model
     
-    # Define Tabs
-    #------------------------------------
-    # Description:
-    #   Each module is given a button on the Slicer's main menu.
-    #   When that button is pressed a row of tabs appear, and there is a panel
-    #   on the user interface for each tab.  If all the tabs do not fit on one
-    #   row, then the last tab is automatically created to say "More", and 
-    #   clicking it reveals a second row of tabs.
-    #
-    #   Define your tabs here as shown below.  The options are:
-    #   
-    #   row1List = list of ID's for tabs. (ID's must be unique single words)
-    #   row1Name = list of Names for tabs. (Names appear on the user interface
-    #              and can be non-unique with multiple words.)
-    #   row1,tab = ID of initial tab
-    #   row2List = an optional second row of tabs if the first row is too small
-    #   row2Name = like row1
-    #   row2,tab = like row1 
-    #
     set m SessionLog
+    
+    # Set up GUI tabs
     set Module($m,row1List) "Help Start Log"
     set Module($m,row1Name) "{Help} {Start Here} {Log}"
     set Module($m,row1,tab) Start
 
-    # Define Procedures
-    #------------------------------------
-    # Description:
-    #   The Slicer sources all *.tcl files, and then it calls the Init
-    #   functions of each module, followed by the VTK functions, and finally
-    #   the GUI functions. A MRML function is called whenever the MRML tree
-    #   changes due to the creation/deletion of nodes.
-    #   
-    #   While the Init procedure is required for each module, the other 
-    #   procedures are optional.  If they exist, then their name (which
-    #   can be anything) is registered with a line like this:
-    #
-    #   set Module($m,procVTK) SessionLogBuildVTK
-    #
-    #   All the options are:
-    #
-    #   procGUI   = Build the graphical user interface
-    #   procVTK   = Construct VTK objects
-    #   procMRML  = Update after the MRML tree changes due to the creation
-    #               of deletion of nodes.
-    #   procEnter = Called when the user enters this module by clicking
-    #               its button on the main menu
-    #   procExit  = Called when the user leaves this module by clicking
-    #               another modules button
-    #   procStorePresets  = Called when the user holds down one of the Presets
-    #               buttons.
-    #   procRecallPresets  = Called when the user clicks one of the Presets buttons
-    #               
-    #   Note: if you use presets, make sure to give a preset defaults
-    #   string in your init function, of the form: 
-    #   set Module($m,presets) "key1='val1' key2='val2' ..."
-    #   
+    # Register procedures that will be called 
     set Module($m,procGUI) SessionLogBuildGUI
     set Module($m,procEnter) SessionLogEnter
     set Module($m,procExit) SessionLogExit
     set Module($m,procSessionLog) SessionLogLog
 
-    # Define Dependencies
-    #------------------------------------
-    # Description:
-    #   Record any other modules that this one depends on.  This is used 
-    #   to check that all necessary modules are loaded when Slicer runs.
-    #   
+    #   Record any other modules that this one depends on.
     set Module($m,depend) ""
 
     # Set version info
-    #------------------------------------
-    # Description:
-    #   Record the version number for display under Help->Version Info.
-    #   The strings with the $ symbol tell CVS to automatically insert the
-    #   appropriate revision number and date when the module is checked in.
-    #   
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.2 $} {$Date: 2001/02/27 21:21:22 $}]
+	    {$Revision: 1.3 $} {$Date: 2001/02/27 23:45:37 $}]
 
     # Initialize module-level variables
-    #------------------------------------
-    # Description:
-    #   Keep a global array with the same name as the module.
-    #   This is a handy method for organizing the global variables that
-    #   the procedures in this module and others need to access.
-    #
-    set SessionLog(count) 0
-    set SessionLog(Volume1) $Volume(idNone)
-    set SessionLog(Model1)  $Model(idNone)
-    set SessionLog(FileName)  ""
+    set SessionLog(fileName)  ""
+    set SessionLog(currentlyLogging) 0
 
+    # event bindings
     set SessionLog(eventManager)  ""
-    
+
+    # call init functions
     SessionLogInitRandomFortune
 }
 
@@ -234,7 +169,7 @@ proc SessionLogBuildGUI {} {
     
     foreach frame "Top Middle Bottom" {
 	frame $f.f$frame -bg $Gui(activeWorkspace)
-	pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
+	pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
     }
     
     #-------------------------------------------
@@ -242,17 +177,20 @@ proc SessionLogBuildGUI {} {
     #-------------------------------------------
     set f $fStart.fTop
 
+    # file browse box
+    DevAddFileBrowse $f SessionLog fileName "Log File:" [] \
+	    "txt" [] "Save" "Select Log File" \
+	    "Choose the log file for this grayscale volume."\
+	    "Absolute"
     
     #-------------------------------------------
     # Start->Middle frame
     #-------------------------------------------
     set f $fStart.fMiddle
     
-    # file browse box
-    DevAddFileBrowse $f SessionLog fileName "Log File:" [] \
-	    "txt" [] "Save" "Select Log File" \
-	    "Choose the log file for this grayscale volume."\
-	    "Absolute"
+    DevAddLabel $f.lLogging "Logging is off."
+    pack $f.lLogging -side top -padx $Gui(pad) -fill x
+    set SessionLog(lLogging) $f.lLogging
 
     #-------------------------------------------
     # Start->Bottom frame
@@ -260,32 +198,21 @@ proc SessionLogBuildGUI {} {
     set f $fStart.fBottom
     
     # make frames inside the Bottom frame for nice layout
-    foreach frame "CountDemo" {
+    foreach frame "Start" {
 	frame $f.f$frame -bg $Gui(activeWorkspace) 
 	pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
     }
 
     #-------------------------------------------
-    # Start->Bottom->CountDemo frame
+    # Start->Bottom->Start frame
     #-------------------------------------------
-    set f $fStart.fBottom.fCountDemo
+    set f $fStart.fBottom.fStart
 
-    DevAddLabel $f.lStart "You clicked 0 times."
-    pack $f.lStart -side top -padx $Gui(pad) -fill x
-    set SessionLog(lStart) $f.lStart
-    
-    # Here's a button with text "Count" that calls "SessionLogCount" when
-    # pressed.
-    DevAddButton $f.bCount Count SessionLogCount 
-    
-    # Tooltip example: Add a tooltip for the button
-    TooltipAdd $f.bCount "Press this button to increment the counter."
+    DevAddButton $f.bStart "Start Logging" SessionLogStartLogging
+    TooltipAdd $f.bStart "Start logging each time before editing."
 
-    # entry box
-    eval {entry $f.eCount -width 5 -textvariable SessionLog(count) } $Gui(WEA)
-    
-    pack $f.bCount $f.eCount -side left -padx $Gui(pad) -pady $Gui(pad)
-    
+    pack $f.bStart -side top -padx $Gui(pad) -pady $Gui(pad)
+
     #-------------------------------------------
     # Log frame
     #-------------------------------------------
@@ -360,6 +287,66 @@ proc SessionLogExit {} {
     popEventManager
 }
 
+proc SessionLogStartLogging {} {
+    global SessionLog env
+    
+    if {$SessionLog(currentlyLogging) == 1} {
+	tk_messageBox -message "Already logging."
+	return
+    }
+
+    # make sure we have a filename.
+    if {$SessionLog(fileName) == ""} {
+	tk_messageBox -message "Please choose a filename first."
+	return
+    }
+    
+    # let users know we are logging
+    set red [MakeColor "200 60 60"]
+    $SessionLog(lLogging) config -text \
+	    "Logging is on." \
+	    -fg $red
+    SessionLogShowRandomFortune
+
+    # in case any module wants to know if we are logging or not
+    set SessionLog(currentlyLogging) 1
+
+    # set up things this module is going to log
+    set SessionLog(log,startTime) [clock format [clock seconds]]
+    # this may not work on PCs
+    catch [set SessionLog(log,userName) $env(USER)]
+}
+
+proc SessionLogStopLogging {} {
+    global SessionLog
+
+    # final things this module will log
+    set SessionLog(log,endTime) [clock format [clock seconds]]
+
+}
+
+proc SessionLogLog {} {
+    global SessionLog
+
+    set log "" 
+
+    # get everything that was stored in the log part of the array
+    set loglist [array names SessionLog log,*]
+    puts $loglist
+
+    # format the things this module will log
+    foreach item $loglist {
+	set name ""
+	# get name without leading 'log,'
+	regexp {log,(.*)} $item match name
+	set val $SessionLog($item)
+	set log "${log}${name}: ${val}\n"
+    }
+
+    # log something from this module
+    return $log
+}
+
 #-------------------------------------------------------------------------------
 # .PROC SessionLogShowLog
 # 
@@ -367,15 +354,21 @@ proc SessionLogExit {} {
 # .END
 #-------------------------------------------------------------------------------
 proc SessionLogShowLog {} {
-    global Module
+    global Module SessionLog
     
     # display the output that will be written to the file.
+    set log ""
     foreach m $Module(idList) {
 	if {[info exists Module($m,procSessionLog)] == 1} {
-	    puts "LOG: $m"
-	    puts [$Module($m,procSessionLog)]
+	    set log "${log}Module: $m\n[$Module($m,procSessionLog)]"
 	}
     }
+
+    # clear the text box
+    $SessionLog(textBox) delete 1.0 end
+    # put the new log there
+    $SessionLog(textBox) insert end $log
+
 }
 
 #-------------------------------------------------------------------------------
@@ -396,17 +389,12 @@ proc SessionLogWriteLog {} {
 
     puts $out "\nSession Number $number"
 
-    # Lauren fix
-    # set date
-    set date "00/00/00 at 17 pm!!!"
-    puts $out $date
-
-
+    # get the goods:
     foreach m $Module(idList) {
 	if {[info exists Module($m,procSessionLog)] == 1} {
 	    puts "LOGGING: $m"
 	    set info [$Module($m,procSessionLog)]
-	    puts $out "Module $m:"
+	    puts $out "Module: $m"
 	    puts $out $info
 	}
     }
@@ -430,19 +418,6 @@ proc SessionLogReadLog {} {
     close $in
 }
 
-proc SessionLogLog {} {
-    global SessionLog
-
-    # log something from this module
-    return $SessionLog(count)
-}
-
-proc SessionLogCount {} {
-    global SessionLog
-    
-    incr SessionLog(count)
-    $SessionLog(lStart) config -text "You clicked the button $SessionLog(count) times"
-}
 
 #-------------------------------------------------------------------------------
 # .PROC SessionLogShowRandomFortune
@@ -457,7 +432,10 @@ proc SessionLogShowRandomFortune {} {
     set random [expr rand()]
     set index [expr round([expr $random * $length])]
 
-    puts [lindex $SessionLog(fortunes) $index]
+    set fortune [lindex $SessionLog(fortunes) $index]
+
+    tk_messageBox -message "Thanks for logging!\n\n$fortune"
+    
 }
 
 #-------------------------------------------------------------------------------
