@@ -146,7 +146,7 @@ proc AlignmentsInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.27 $} {$Date: 2003/08/27 17:24:18 $}]
+            {$Revision: 1.28 $} {$Date: 2003/09/08 16:45:39 $}]
 
     # Props
     set Matrix(propertyType) Basic
@@ -1113,15 +1113,14 @@ proc AlignmentsBuildGUI {} {
     ##
     ## Otherwise, don't use it.
 
-    set ret [catch "package require vtkMIReg" res]
+    set ret [catch "package require vtkMutualInformationRegistration" res]
 
     if { $ret } {
-        DevAddLabel $f.lbadnews "I'm sorry but the MutualInfoReg Module\n is not loaded so that Mutual\n Information Registration is not available."
+        DevAddLabel $f.lbadnews "I'm sorry but the MutualInformationRegistration Module\n is not loaded so that Mutual\n Information Registration is not available."
         pack $f.lbadnews -pady $Gui(pad)
     } else {
-        MutualInfoRegBuildSubGui $f
+        MutualInformationRegistrationBuildSubGui $f
     }
-
 
     #-------------------------------------------
     # Minimized Slice Controls used to switch
