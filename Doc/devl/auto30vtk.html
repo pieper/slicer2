@@ -1,14 +1,28 @@
 <title>Build Slicer</title>
 
 <p> These instructions are for Unix/Linux machines, but doing basically the same thing under Windows will also work.
+<p>
+The build process that the developers use assumes that third party
+sources (tcl and vtk) are built in subdirectories of 
+slicer2/Lib/[osname]. The following is written with that in mind.
 
 <p>
-Make sure that Tcl and Tk are installed on your machine.  They can be downloaded from <a href="http://aspn.activestate.com/ASPN/Tcl">http://aspn.activestate.com/ASPN/Tcl</a> (includes incrTcl and IWidgets)
-Any tcl/tk version greater than 8.3 should work fine. 
+Make sure that Tcl and Tk are installed on your machine.  They can be downloaded from <a href="http://aspn.activestate.com/ASPN/Tcl">http://aspn.activestate.com/ASPN/Tcl</a> (includes incrTcl and IWidgets)<br>
+Any tcl/tk version greater than 8.3 should work fine. Select the
+install directory slicer2/Lib/[osname]/ActiveTcl-[version] for
+installation of the precompiled files.
 <p>
-Obtain the VTK (Visualization Toolkit) source code.  It can be downloaded from 
+Obtain the VTK (Visualization Toolkit) source code (pre-compiled binaries won't work).  It can be downloaded from 
 <a href="http://public.kitware.com/">http://public.kitware.com/</a>.
-We are currently developing with <a href="http://public.kitware.com/VTK/files/release/4.0/">vtk4.0</a> (release version).
+We are currently developing with <a
+href="http://public.kitware.com/VTK/files/release/4.0/">vtk4.0</a>
+(release version).
+<br>
+You must build VTK against the same version of Tcl that you will be
+using to run slicer, and compile it with the same compiler with which you
+compile slicer. Place the source in
+slicer2/Lib/[osname]/vtk/VTK-[version] and built it using cmake and
+place the resulting binaries into slicer2/Lib/[osname]/VTK-build.
 
 <p> The classes that Slicer adds to VTK are found in the directory
 slicer2/Base/cxx. 
@@ -28,7 +42,7 @@ Replace anonymous with your user name if you have one.
   ccmake -i ../../<br>
   make</p></pre>
 Replace my-os with the name of your operating system, ie solaris or linux.<br>
-You will need to point ccmake to either the installed or the built versions of vtk4.0. At the SPL you can use /local/os/src/vtk-4.0 for the VTK_BINARY_PATH, as it has been built in the proper configuration (configured with tcl, tkwidget, patented, local, and shared). 
+You will need to point ccmake to either the installed or the built versions of vtk. At the SPL you can use /local/os/src/vtk-4.0 for the VTK_BINARY_PATH, as it has been built in the proper configuration (configured with tcl, tkwidget, patented, local, and shared). 
 <br>
 Make sure WRAP_TCL is set to ON. 
 <br>
