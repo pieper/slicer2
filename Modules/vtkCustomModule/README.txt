@@ -6,6 +6,7 @@ Neuroimage Analysis Center/BIRN (an NCRR National Resource Center)
 Surgical Planning Lab, Brigham and Women's Hospital
 
 Quick notes for creating your own custom VTK module.
+Updated Steve Pieper -- 2004-12-07
 Michael Halle -- 2002/05/17
 Updated Steve Pieper -- 2002-05-29
 Michael Halle -- 2001/01/17
@@ -73,20 +74,22 @@ Be SURE you are in your new directory when you run this command!
 * Edit CMakeListsLocal.txt to include the names of your source files.
   Change VTKMYCLASS_SOURCE_DIR to VTK[MODULENAME]_SOURCE_DIR as needed
   e.g. VTKTEST_SOURCE_DIR.
-  Be sure not to include suffixes.  If you have abstract classes, put
+  Be sure to include suffixes (.cxx).  If you have abstract classes, put
   them in the source files area as well as the abstract files area.
   The file also includes directions for adding link libraries, and
   paths for include files and libraries. See
   http://www.cmake.org/HTML/Index.html for more information.
 
-* In CMakeListsLocal.txt, add these last two lines to the
-  INCLUDE_DIRECTORIES section if your code depends on the slicer code:
+* In CMakeListsLocal.txt, uncomment the following lines if 
+your code depends on the slicer code:
 
-  INCLUDE_DIRECTORIES(
-  ${VTKMYCLASS_SOURCE_DIR}/include
-  ${VTKMYCLASS_SOURCE_DIR}/../../Base/cxx/
-  ${VTKMYCLASS_SOURCE_DIR}/../../Base/builds/Solaris/
-  )
+INCLUDE_DIRECTORIES( 
+   ${VTKSLICERBASE_SOURCE_DIR}/cxx 
+   ${VTKSLICERBASE_BUILD_DIR}
+   ${VTKTENSORUTIL_SOURCE_DIR}/cxx
+   ${VTKTENSORUTIL_BUILD_DIR}   
+
+)
   
 * Change to the tcl directory (e.g. /home/halazar/slicer2/Modules/vtkTest/tcl)
 and put your tcl code in the skeleton file, ie Test.tcl.
@@ -108,7 +111,14 @@ in the if statement in Wrapping/Tcl/vtk[ModuleName]/vtk[ModuleName].tcl
 Where vtk[ModuleName].tcl is the entry point for any tcl code associated
 with your module.
 
-* You're ready to build; cd to the builds directory and make a new
+* You're ready to build; you can use Scripts/cmaker.tcl to automatically 
+configure and make your module.
+
+
+==========================
+== Steps to build manually (without cmaker.tcl):
+
+* cd to the builds directory and make a new
 directory of the same name as the Slicer build you want to link with.
 For example:
     cd builds /* now you're in /home/halazar/slicer2/Modules/vtkTest/builds */

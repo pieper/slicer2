@@ -137,7 +137,7 @@ proc CorCTAInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.5 $} {$Date: 2004/09/17 15:40:10 $}]
+        {$Revision: 1.6 $} {$Date: 2005/01/28 22:44:27 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -212,7 +212,8 @@ proc CorCTABuildGUI {} {
     #
     set help "
     This module extracts center lines from segmented vessels. It requires
-    a label map as an input and generates a model.
+a label map as an input and generates a model. 
+<BR>The input label map must contain a segementation of the vessels labeled with the Vessels color as defined in Base/tcl/Colors.xml.
     <P>
     Description by tab:
     <BR>
