@@ -86,7 +86,7 @@ proc LocatorInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.23 $} {$Date: 2001/04/12 17:44:59 $}]
+		{$Revision: 1.24 $} {$Date: 2001/07/06 18:44:32 $}]
 
 	# Patient/Table position
 	set Locator(tblPosList)   "Front Side"
@@ -213,7 +213,7 @@ proc LocatorBuildVTK {} {
 
 	# Images
 	vtkMrmlVolumeNode Locator(Images,node)
-	vtkMrmlVolume Locator(Images,vol)
+	vtkMrmlDataVolume Locator(Images,vol)
 	set n Locator(Images,node)
 	set v Locator(Images,vol)
 	$n SetDescription "Realtime Images source"

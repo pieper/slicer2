@@ -58,7 +58,7 @@ proc MainVolumesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.43 $} {$Date: 2001/06/19 17:09:04 $}]
+		{$Revision: 1.44 $} {$Date: 2001/07/06 18:44:31 $}]
 
 	set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -98,7 +98,7 @@ proc MainVolumesBuildVTK {} {
 	$n SetDescription "NoneVolume=$v"
 	$n SetLUTName 0
 
-	vtkMrmlVolume Volume($v,vol)
+	vtkMrmlDataVolume Volume($v,vol)
 	Volume($v,vol) SetMrmlNode         Volume($v,node)
 	Volume($v,vol) SetHistogramWidth   $Volume(histWidth)
 	Volume($v,vol) SetHistogramHeight  $Volume(histHeight)
@@ -224,8 +224,8 @@ proc MainVolumesCreate {v} {
 		Volume($v,node) SetLUTName [lindex $Lut(idList) 0]
 	}
 
-	# Create vtkMrmlVolume
-	vtkMrmlVolume Volume($v,vol)
+	# Create vtkMrmlDataVolume
+	vtkMrmlDataVolume Volume($v,vol)
 	Volume($v,vol) SetMrmlNode          Volume($v,node)
 	Volume($v,vol) SetLabelIndirectLUT  Lut($Lut(idLabel),indirectLUT)
 	Volume($v,vol) SetLookupTable       Lut([Volume($v,node) GetLUTName],lut)
