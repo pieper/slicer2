@@ -25,7 +25,6 @@ if {[info exists ::env(SLICER_HOME)]} {
     set ::SLICER_HOME [pwd]
     cd $cwd
 }
-puts "SLICER_HOME is $::SLICER_HOME"
 
 # set up variables for the OS Builds, to facilitate the move to solaris9
 # - solaris can be solaris8 or solaris9
@@ -40,8 +39,14 @@ switch $tcl_platform(os) {
     "SunOS" { set ::env(BUILD) $solaris }
     "Linux" { set ::env(BUILD) $linux }
     "Darwin" { set ::env(BUILD) $darwin }
-    default { set ::env(BUILD) $windows }
+    default { 
+        set ::env(BUILD) $windows 
+        set ::SLICER_HOME [file attributes $::SLICER_HOME -shortname]
+        set ::env(SLICER_HOME) $::SLICER_HOME
+    }
 }
+
+puts "SLICER_HOME is $::SLICER_HOME"
 
 set ::SLICER_LIB $SLICER_HOME/Lib/$::env(BUILD)
 set ::VTK_DIR  $::SLICER_LIB/VTK-build
@@ -55,6 +60,14 @@ set ::TCL_INCLUDE_DIR $::SLICER_LIB/tcl-build/include
 set ::CMAKE_PATH $::SLICER_LIB/CMake-build
 set ::GSL_LIB_DIR $::SLICER_LIB/gsl/lib
 set ::GSL_INC_DIR $::SLICER_LIB/gsl/include
+
+##
+# my custom configuration:
+#
+set ::TCL_BIN_DIR c:/Tcl/bin
+set ::TCL_LIB_DIR c:/Tcl/lib
+set ::TCL_INCLUDE_DIR c:/Tcl/include
+set ::CMAKE_PATH "c:/Program Files/CMake20"
 
 ## system dependent variables
 
@@ -99,7 +112,7 @@ switch $tcl_platform(os) {
         set ::GENERATOR "Visual Studio 7" 
         set ::COMPILER "cl"
         set ::CMAKE $::CMAKE_PATH/bin/cmake.exe
-        set ::MAKE make
+        set ::MAKE "devenv /$::VTK_BUILD_TYPE"
 
     }
 }
