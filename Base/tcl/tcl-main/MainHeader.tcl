@@ -570,7 +570,7 @@ proc DumpHeader {aHeader} {
 
 #-------------------------------------------------------------------------------
 # .PROC GetHeaderInfo
-# Return an error message if files don't exist, else "".
+# Return an error message if files don't exist, else empty list.
 # .END
 #-------------------------------------------------------------------------------
 proc GetHeaderInfo {img1 num2 node tk} {
