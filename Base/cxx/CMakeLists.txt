@@ -35,9 +35,6 @@ SET (Base_SRCS
 	vtkMrmlVolumeNode.cxx vtkMrmlVolumeStateNode.cxx vtkMrmlWindowLevelNode.cxx
 	vtkResliceImage.cxx vtkSurfaceProps.cxx
 	vtkPolyBoolean.cxx 
-	vtkMrmlEndSegmenterNode.cxx vtkMrmlSegmenterClassNode.cxx vtkMrmlSegmenterInputNode.cxx  
-        vtkMrmlSegmenterCIMNode.cxx vtkMrmlSegmenterGraphNode.cxx vtkMrmlSegmenterNode.cxx 
-        vtkMrmlSegmenterSuperClassNode.cxx vtkMrmlEndSegmenterSuperClassNode.cxx
         vtkImageCurveRegion.cxx vtkImageDrawObjects.cxx vtkImageGraph.cxx
 	# vtkDistractorSource.cxx
 	#vtkImageEuclideanDistanceTransformation.cxx 
