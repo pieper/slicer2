@@ -98,7 +98,7 @@ proc MainMrmlInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainMrml \
-        {$Revision: 1.81 $} {$Date: 2003/05/28 22:56:53 $}]
+        {$Revision: 1.82 $} {$Date: 2003/05/30 21:50:52 $}]
 
     set Mrml(colorsUnsaved) 0
 }
@@ -2028,7 +2028,7 @@ proc MainMrmlCheckVolumes {filename} {
                # if it's a relative file name, prepend the mrml dir
                if {[file pathtype $fname] == "relative"} {
                    puts "MainMrmlCheckVolumes: filename is relative $fname"
-                   set fname2 ${Mrml(dir)}[file separator]${fname}
+                   set fname2 ${Mrml(dir)}/${fname}
                    puts "MainMrmlCheckVolumes: prepended mrml dir to filename: $fname2"
                    set fname [file normalize $fname2]
                    puts "MainMrmlCheckVolumes: Set dicom filename to normalised name = $fname"
@@ -2074,8 +2074,10 @@ proc MainMrmlAbsolutivity {} {
              
             set oldPrefix [$node GetFullPrefix]
             if {[file pathtype $oldPrefix] == "relative"} {
-                set fname ${Mrml(dir)}[file separator]${oldPrefix}
-                puts "MainMrmlAbsolutivity: non dicom file \n\trelative old prefix $oldPrefix\n\tnew one wrt mrml dir $fname\n\tnormalized = [file normalize $fname]"
+                set fname ${Mrml(dir)}/${oldPrefix}
+                if { $::verbose } {
+                    puts "MainMrmlAbsolutivity: non dicom file \n\trelative old prefix $oldPrefix\n\tnew one wrt mrml dir $fname\n\tnormalized = [file normalize $fname]"
+                }
                 $node SetFilePrefix [file normalize $fname]
             }
             set num [$node GetNumberOfDICOMFiles]
@@ -2083,8 +2085,10 @@ proc MainMrmlAbsolutivity {} {
                 set filename [$node GetDICOMFileName $i]
                 puts "MainMrmlAbsolutivity: got dicom filename $filename"
                 if {[file pathtype $filename] == "relative"} {
-                    set absname ${Mrml(dir)}[file separator]${filename}
-                    puts "MainMrmlAbsolutivity: dicom file \n\trelative old filename $filename\n\tnew one wrt mrml dir $absname\n\tnormalized = [file normalize $absname]"
+                    set absname ${Mrml(dir)}/${filename}
+                    if { $::verbose } {
+                        puts "MainMrmlAbsolutivity: dicom file \n\trelative old filename $filename\n\tnew one wrt mrml dir $absname\n\tnormalized = [file normalize $absname]"
+                    }
                     $node SetDICOMFileName $i $absname
                 }
             }
