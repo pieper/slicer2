@@ -1,16 +1,17 @@
 
 proc DTMRITractClusterInit {} {
     global DTMRI 
-    puts "IN TC INIT==============================================="
+
     set DTMRI(TractCluster,NumberOfClusters) 3
     set DTMRI(TractCluster,Sigma) 25
+    set DTMRI(TractCluster,HausdorffN) 20
     set DTMRI(TractCluster,ShapeFeature) MeanAndCovariance
     set DTMRI(TractCluster,ShapeFeature,menu) {MeanAndCovariance Hausdorff}
 
-    set DTMRI(TractCluster,SettingsList,Names) {{Number of Clusters} Sigma ShapeFeature}
-    set DTMRI(TractCluster,SettingsList,Variables) {NumberOfClusters Sigma ShapeFeature}
-    set DTMRI(TractCluster,SettingsList,VariableTypes) {entry entry menu}
-    set DTMRI(TractCluster,SettingsList,Tooltips) {{Number of clusters (colors) when grouping tracts} {Similarity/distance tradeoff} {How to measure tract similarity}}
+    set DTMRI(TractCluster,SettingsList,Names) {{Number of Clusters} Sigma N ShapeFeature}
+    set DTMRI(TractCluster,SettingsList,Variables) {NumberOfClusters Sigma HausdorffN ShapeFeature}
+    set DTMRI(TractCluster,SettingsList,VariableTypes) {entry entry entry menu}
+    set DTMRI(TractCluster,SettingsList,Tooltips) {{Number of clusters (colors) when grouping tracts} {Similarity/distance tradeoff} {For Hausdorff shape feature, use every Nth point on the tract in computation.} {How to measure tract similarity}}
 
     # for viewing matrices
     vtkImageMagnify DTMRI(TractCluster,vtk,imageMagnify)
@@ -141,8 +142,7 @@ proc DTMRITractClusterBuildClusterFrame {} {
 
 }
 
-
-proc DTMRITractClusterComputeClusters {} {
+proc DTMRITractClusterApplyUserSettings {} {
     global DTMRI 
 
     set clusterer [DTMRI(vtk,streamlineControl) GetTractClusterer]
@@ -153,8 +153,15 @@ proc DTMRITractClusterComputeClusters {} {
 
     # Apply all variables from the GUI into the objects
     $features SetSigma $DTMRI(TractCluster,Sigma)
+    $features SetHausdorffN $DTMRI(TractCluster,HausdorffN)
     $classifier SetNumberOfClusters $DTMRI(TractCluster,NumberOfClusters)
     $features SetFeatureTypeTo$DTMRI(TractCluster,ShapeFeature)
+}
+
+proc DTMRITractClusterComputeClusters {} {
+    global DTMRI 
+
+    DTMRITractClusterApplyUserSettings
 
     puts "[DTMRI(vtk,streamlineControl) GetNumberOfStreamlines] streamlines"
     puts "Calling ComputeStreamlineFeatures"
@@ -391,3 +398,55 @@ proc DTMRIractClusterSaveTractClusters {{verbose "1"}} {
     }
 
 } 
+
+proc DTMRITractClusterTest {} {
+    global DTMRI Label Tensor Volume
+
+    set t $Tensor(activeID)
+    set v $Volume(activeID)
+
+    # make sure they are using a segmentation (labelmap)
+    if {[Volume($v,node) GetLabelMap] != 1} {
+        set name [Volume($v,node) GetName]
+        set msg "The volume $name is not a label map (segmented ROI). Continue anyway?"
+        if {[tk_messageBox -type yesno -message $msg] == "no"} {
+            return
+        }
+
+    }
+
+    # ask for user confirmation first
+    set name [Volume($v,node) GetName]
+    set msg "About to seed streamlines in all labelled voxels of volume $name.  This may take a while, so make sure the Tracts settings are what you want first. Go ahead?"
+    if {[tk_messageBox -type yesno -message $msg] == "no"} {
+        return
+    }
+
+    # set mode to On (the Display Tracts button will go On)
+    set DTMRI(mode,visualizationType,tractsOn) On
+
+    # make sure the settings are current
+    DTMRIUpdateTractColor
+    DTMRIUpdateStreamlineSettings
+    
+    # set up the input segmented volume
+    DTMRI(vtk,streamlineControl) SetInputROI [Volume($v,vol) GetOutput] 
+    DTMRI(vtk,streamlineControl) SetInputROIValue $Label(label)
+
+    # Get positioning information from the MRML node
+    # world space (what you see in the viewer) to ijk (array) space
+    vtkTransform transform
+    transform SetMatrix [Volume($v,node) GetWldToIjk]
+    # now it's ijk to world
+    transform Inverse
+    DTMRI(vtk,streamlineControl) SetROIToWorld transform
+    transform Delete
+
+    # Apply the settings for number of clusters, etc.
+    DTMRITractClusterApplyUserSettings
+
+    # create all streamlines
+    puts "Original number of tracts: [[DTMRI(vtk,streamlineControl) GetStreamlines] GetNumberOfItems]"
+    DTMRI(vtk,streamlineControl) SeedStreamlinesFromROIClusterAndDisplay
+    puts "New number of tracts is: [[DTMRI(vtk,streamlineControl) GetStreamlines] GetNumberOfItems]"
+}
