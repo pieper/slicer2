@@ -5,16 +5,19 @@ How can I export other model file formats from Slicer?
 <p class=answer>
 VTK supplies classes to export some standard formats once you have a vtk model file:
 <a href="http://www.vtk.org/doc/nightly/html/classvtkExporter.html">vtkExporter</a>. <br>
-To use them, you can refer to the following example that outputs a volume in STL format, you can type this into the tkcon that comes up when you start slicer:<br>
+To use them, you can refer to the following example that outputs a volume in STL format, you can type this into the tkcon that comes up when you start slicer. This snippet cleans up the input model and generates triangles from it.<br>
 <p class=code>
-<pre>
-vtkPolyDataReader pdr
-pdr SetFileName in.vtk
-vtkSTLWriter sw
-sw SetFileName out.stl
-sw SetInput [pdr GetOutput]
-sw Write
-</pre>
+vtkPolyDataReader pdr<br>
+pdr SetFileName in.vtk<br>
+vtkCleanPolyData clean<br>
+clean SetInput [pdr GetOutput]<br>
+vtkTriangleFilter triangles<br>
+triangles SetInput [clean GetOutput]<br>
+vtkSTLWriter sw<br>
+sw SetFileName out.stl<br>
+sw SetInput [triangles GetOutput]<br>
+sw SetFileTypeToBinary<br>
+sw Write<br>
 </p>
 
 </li>
