@@ -15,8 +15,8 @@ IF (WIN32)
         vtkDataTimeDef.cxx
         vtkFileOps.cxx
         vtkImageEMGenericClass.cxx
-        vtkImageEMClass.cxx
-        vtkImageEMSuperClass.cxx
+        vtkImageEMLocalClass.cxx
+        vtkImageEMLocalSuperClass.cxx
     	vtkImageEMGeneral.cxx
         vtkImageEMLocalSegmenter.cxx
     	vtkMrmlSegmenterNode.cxx 

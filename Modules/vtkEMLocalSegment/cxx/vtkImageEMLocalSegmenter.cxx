@@ -1266,7 +1266,7 @@ int vtkImageEMLocalSegmenter::MF_Approx_Workpile(float **w_m_input,unsigned char
     job[i].VirtualNumInputImages =  VirtualNumInputImages;
     StartIndex += jobsize;
 #ifdef _WIN32
-    MeanFieldApproximation3DThread(&job[i]);
+    EMLocalSegment_MeanFieldApproximation3DThread(&job[i]);
 #else
     thread.work_put(workpile, &job[i]);
 #endif
