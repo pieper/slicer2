@@ -80,7 +80,7 @@ proc FiducialsInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.16 $} {$Date: 2002/05/09 14:50:42 $}]
+        {$Revision: 1.17 $} {$Date: 2002/07/16 14:13:50 $}]
     
     # Initialize module-level variables
     
@@ -469,8 +469,7 @@ proc FiducialsVTKUpdatePoints {} {
         set xyz [Point($pid,node) GetXYZ]
         eval Fiducials($fid,points) InsertNextPoint $xyz
         Fiducials($fid,scalars) InsertNextTuple1 0        
-        eval Fiducials(tmpXform) SetPoint $xyz 1
-        set xyz [Fiducials(tmpXform) GetPoint]
+    eval Fiducials(tmpXform) TransformPoint $xyz
         foreach r $Module(Renderers) {
         eval Point($pid,follower,$r) SetPosition $xyz
         }
@@ -495,6 +494,11 @@ proc FiducialsVTKUpdatePoints {} {
     }
     
     Fiducials($fid,pointsPD) Modified
+
+  # set its visibility to whatever it is
+    foreach r $Module(Renderers) {
+        FiducialsSetFiducialsVisibility $r $Fiducials($fid,name) $Fiducials($fid,visibility,$r)
+    }
     }
     
     Render3D
@@ -544,7 +548,7 @@ proc FiducialsSetScale { val } {
 # .END
 #-------------------------------------------------------------------------------
 proc FiducialsUpdateMRML {} {
-    global Fiducials Mrml
+    global Fiducials Mrml Module
     
 
     Mrml(dataTree) ComputeTransforms
@@ -572,13 +576,18 @@ proc FiducialsUpdateMRML {} {
         if {[info exists Fiducials($fid,oldSelectedPointIdList)] == 0 } {
         set Fiducials($fid,oldSelectedPointIdList) ""
         }
+
+    if {[info exists Fiducials($fid,visibility,viewRen)] == 0 } {
+        foreach r $Module(Renderers) {
+            set Fiducials($fid,visibility,$r) 1
+        }
+        }
     }
     if { [$item GetClassName] == "vtkMrmlPointNode" } {
         set pid [$item GetID]
         
         lappend Fiducials($fid,pointIdList) $pid
         FiducialsVTKCreatePoint $fid $pid
-        
     }
     if { [$item GetClassName] == "vtkMrmlEndFiducialsNode" } {
         set efid [$item GetID]
@@ -642,6 +651,15 @@ proc FiducialsUpdateMRML {} {
         $menu configure -text "None"
     }
     incr counter
+    }
+
+    # Call each Module's "FiducialsUpdated" routine
+    #-------------------------------------------
+    foreach m $Module(idList) {
+    if {[info exists Module($m,procFiducialsUpdated)] == 1} {
+        if {$Module(verbose) == 1} {puts "FiducialsUpdated: $m"}
+        $Module($m,procFiducialsUpdated)
+    }
     }
 }
 
@@ -1180,8 +1198,7 @@ proc FiducialsWorldPointXYZ { fid pid } {
     global Fiducials Point
 
     Fiducials(tmpXform) SetMatrix Fiducials($fid,xform)
-    eval Fiducials(tmpXform) SetPoint [Point($pid,node) GetXYZ] 1
-    set xyz [Fiducials(tmpXform) GetPoint]
+    eval Fiducials(tmpXform) TransformPoint [Point($pid,node) GetXYZ]
     return $xyz
 }
 
