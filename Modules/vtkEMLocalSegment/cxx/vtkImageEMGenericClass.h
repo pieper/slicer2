@@ -82,7 +82,7 @@ private:
 #define vtkEMAddMessage(output,MessagePtr, x)                 \
    {                                                          \
      vtkEMAddMessageNoOutput(MessagePtr, x)                   \
-     output << x << "\n";                                     \
+     output << "ERROR: In " __FILE__ ", line " << __LINE__ << "\n" << x << "\n";                    \
    }
 
 // Message is not printed out 
@@ -90,13 +90,26 @@ private:
    vtkEMAddMessageNoOutput((&this->ErrorMessage), x) ; \
  }
 
+#ifdef _WIN32
 #define vtkEMAddErrorMessage(x) {\
-   vtkEMAddMessage(cerr, (&this->ErrorMessage), "- Error: " << x) ; \
+   vtkEMAddMessage(cout, (&this->ErrorMessage), "- Error: " << x) ; \
  }
 
+#else  
+#define vtkEMAddErrorMessage(x) {\
+    vtkEMAddMessage(cerr, (&this->ErrorMessage), "- Error: " << x) ; \
+  }
+#endif
+
+#ifdef _WIN32
 #define vtkEMAddErrorMessageSelf(x) {\
-   vtkEMAddMessage(cerr,self->GetErrorMessagePtr(), "- Error: " << x); \
-}
+    vtkEMAddMessage(cout,self->GetErrorMessagePtr(), "- Error: " << x); \
+  }
+#else  
+#define vtkEMAddErrorMessageSelf(x) {\
+    vtkEMAddMessage(cerr,self->GetErrorMessagePtr(), "- Error: " << x); \
+  }
+#endif 
 
 #define vtkEMAddWarningMessage(x) {\
    vtkEMAddMessage(cout, (&this->WarningMessage), "- Warning: " << x) ; \
