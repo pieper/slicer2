@@ -39,6 +39,7 @@
 #   MainTensorAddTensor
 #   MainTensorInit
 #   MainTensorUpdateMRML
+#   MainTensorSetActive
 #   MainTensorValidateUserInput
 #   MainTensorSetAllVariablesToNode
 #   MainTensorGetAllVariablesFromNode
@@ -97,7 +98,7 @@ proc MainTensorInit {} {
     # Set version info
     #-------------------------------------------
     lappend Module(versions) [ParseCVSInfo MainTensor \
-        {$Revision: 1.11 $} {$Date: 2003/03/19 19:16:25 $}]
+        {$Revision: 1.12 $} {$Date: 2004/02/24 23:19:27 $}]
 
 
     # List variables that shadow the active MRML node 
@@ -120,6 +121,18 @@ proc MainTensorInit {} {
     #-------------------------------------------
     # Lauren uncomment this in CVS when check in any nodes
     MainTensorGetAllVariablesFromNode "default"
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MainTensorSetActive
+# Just a wrapper function that calls MainDataSetActive Tensor
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MainTensorSetActive {id} {
+    #puts "Lauren in MainTensorUpdateMRML"
+    MainDataSetActive Tensor $id
+
 }
 
 #-------------------------------------------------------------------------------
