@@ -156,8 +156,8 @@ public:
   void Identity();
 
   // Description:
-  // Initialize the transformation to a linear transform.
-  void Initialize(vtkLinearTransform *);
+  // Initialize the transformation to a Matrix
+  void Initialize(vtkMatrix4x4 *mat);
 
   // Description:
   // Get the MTime.

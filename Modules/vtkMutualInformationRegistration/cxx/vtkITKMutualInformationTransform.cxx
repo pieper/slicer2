@@ -96,7 +96,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
   }
 
 
-vtkCxxRevisionMacro(vtkITKMutualInformationTransform, "$Revision: 1.3 $");
+vtkCxxRevisionMacro(vtkITKMutualInformationTransform, "$Revision: 1.4 $");
 vtkStandardNewMacro(vtkITKMutualInformationTransform);
 
 //----------------------------------------------------------------------------
@@ -228,6 +228,16 @@ static void vtkITKMutualInformationExecute(vtkITKMutualInformationTransform *sel
   // Initialize
   MIRegistrator->InitializeRegistration(matrix);
 
+  // A TEST!!!
+  vtkMatrix4x4 *matt = vtkMatrix4x4::New();
+  MIRegistrator->ParamToMatrix(MIRegistrator->GetInitialParameters(),matt);
+  cout << "Printing initially set matrix" << endl;
+  matrix->Print(cout);
+  cout << "Printing actually set matrix" << endl;
+  matt->Print(cout);
+  matt->Delete();
+
+
  // Setup the optimizer
 
   MIRegistrator->SetTranslationScale(1.0/vnl_math_sqr(self->GetTranslateScale()));
@@ -348,9 +358,9 @@ void vtkITKMutualInformationTransform::Identity()
 }
 
 //------------------------------------------------------------------------
-void vtkITKMutualInformationTransform::Initialize(vtkLinearTransform *initial)
+void vtkITKMutualInformationTransform::Initialize(vtkMatrix4x4 *mat)
 {
-  this->Matrix->DeepCopy(initial->GetMatrix());
+  this->Matrix->DeepCopy(mat);
 }
 
 //------------------------------------------------------------------------
