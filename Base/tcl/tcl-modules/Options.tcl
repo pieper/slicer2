@@ -64,15 +64,10 @@ proc OptionsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.5 $} {$Date: 2000/02/18 22:09:17 $}]
+		{$Revision: 1.6 $} {$Date: 2000/02/20 02:51:20 $}]
 
 	# Props
 	set Options(propertyType) Basic
-	set Options(program) "slicer"
-	set Options(contents) "presets"
-#	set Options(options) ""
-
-	set Options(moduleList) "ordered='$Module(idList)'\nsuppressed='$Module(supList)'"
 
 	foreach m $Module(idList) {
 		set Module($m,visibility) 1
@@ -401,10 +396,7 @@ proc OptionsModulesApply {} {
 		}
 	}
 
-	set ordered "$ordered'"
-	set suppressed "$suppressed'"
-	
-	set Options(moduleList) "$ordered\n$suppressed\n"
+	set Options(moduleList) "$ordered'\n$suppressed'\n"
 	
 	MainFileSaveOptions
 	return

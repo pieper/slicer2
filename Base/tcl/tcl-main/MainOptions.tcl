@@ -63,6 +63,8 @@ proc MainOptionsInit {} {
 	set Options(contents) ""
 #	set Options(options) ""
 
+	set Options(moduleList) "ordered='$Module(idList)'\nsuppressed='$Module(supList)'"
+
         set Preset(userOptions) 0
         set Preset(idList) "0 1 2 3"
 	foreach p $Preset(idList) {
@@ -273,10 +275,10 @@ proc MainOptionsParseDefaults {m} {
 proc MainOptionsUnparsePresets {{presetNum ""}} {
 	global Preset Mrml Options Module Model
 	
-	# Store current settings as preset #0
-	set Preset(0,state) Press
-	MainOptionsPresetCallback 0
-	set Preset(0,state) Release
+	# Store current settings as preset #0 (userOptions)
+	set Preset($Preset(userOptions),state) Press
+	MainOptionsPresetCallback $Preset(userOptions)
+	set Preset($Preset(userOptions),state) Release
 
 	# Build an option string of attributes that differ from defaults
 	

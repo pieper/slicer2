@@ -720,7 +720,7 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 
 		"Options" {
 			set n [MainMrmlAddNode Options]
-		    foreach a $attr {
+		        foreach a $attr {
 				set key [lindex $a 0]
 				set val [lreplace $a 0 0]
 				set Options($key) $val
@@ -729,12 +729,17 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 					"program"      {$n SetProgram $val}
 					"contents"     {$n SetContents $val}
 				}
-		    }
+			}
+
+			# Check that this is a slicer options node.
+			if {[$n GetProgram] != "slicer"} {
+			    return
+			}
 
 			# If these are presets, then do preset stuff on stuffing, not attr
 			if {[$n GetContents] == "presets"} {
 			    MainOptionsParsePresets $attr
-			    # Set current values to presets for user prefs
+			    # Set current values to preset 0 (user preferencess)
 			    MainOptionsRecallPresets $Preset(userOptions)
 			}
 		}

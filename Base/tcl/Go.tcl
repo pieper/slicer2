@@ -44,7 +44,7 @@ if {$argc > 1} {
 }
 
 # verbose
-set verbose 0
+set verbose 1
 
 # Determine Slicer's home directory where the program is installed
 # If the SLICER_HOME environment is not defined, then use the 
@@ -78,23 +78,40 @@ set Path(program) $prog
 
 #-------------------------------------------------------------------------------
 # .PROC ReadModuleNames
+# Reads Options.xml 
+# Returns ordered and suppressed modules
 # .END
 #-------------------------------------------------------------------------------
 proc ReadModuleNames {filename} {
-	set modules ""
-	if {[catch {set fid [open $filename]} errmsg] == 1} {
-		puts "$errmsg"
-		tk_messageBox -message "$errmsg"
-	} else {
-		while {[eof $fid] == 0} {
-			gets $fid line
-			if {$line != ""} {
-				lappend modules $line
-			}
+
+    if {$filename == ""} {
+	return [list "" ""]
+    }
+
+    set tags [MainMrmlReadVersion2.0 $filename 0]
+    if {$tags == 0} {
+	return [list "" ""]
+    }
+
+    foreach pair $tags {
+	set tag  [lindex $pair 0]
+	set attr [lreplace $pair 0 0]
+	
+	switch $tag {
+	    
+	    "Options" {
+		foreach a $attr {
+		    set key [lindex $a 0]
+		    set val [lreplace $a 0 0]
+		    set node($key) $val
 		}
-		close $fid
+		if {$node(program) == "slicer" && $node(contents) == "modules"} {
+		    return [list $node(ordered) $node(suppressed)]
+		}
+	    }
 	}
-	return $modules
+    }
+    return [list "" ""]
 }
 
 #-------------------------------------------------------------------------------
@@ -105,8 +122,8 @@ proc FindNames {dir} {
 	global prog
 	set names ""
 
-	# Form a full path by appending the name (ie: Volumes) to 			
-	# a local, and then central, directory.
+	# Form a full path by appending the name (ie: Volumes) to
+        # a local, and then central, directory.
 	set local   $dir
 	set central [file join $prog $dir]
 
@@ -131,57 +148,63 @@ proc FindNames {dir} {
 # .PROC ReadModuleNamesLocalOrCentral
 # .END
 #-------------------------------------------------------------------------------
-proc ReadModuleNamesLocalOrCentral {name} {
+proc ReadModuleNamesLocalOrCentral {name ext} {
 	global prog verbose
 
-	set local   $name.txt
-	set central [file join $prog $name].txt
-	set names ""
-	if {[file exists $local] == 1} {
-		if {$verbose == 1} {puts "local $name"}
-		set names [ReadModuleNames $local]
-	} elseif {[file exists $central] == 1} {
-		if {$verbose == 1} {puts "central $name"}
-		set names [ReadModuleNames $central]
-	}
-	return $names
+    set path [GetFullPath $name $ext "" 0]
+    set names [ReadModuleNames $path]
+    return $names
 }
 
 #-------------------------------------------------------------------------------
 # .PROC GetFullPath
 # .END
 #-------------------------------------------------------------------------------
-proc GetFullPath {name dir} {
+proc GetFullPath {name ext {dir "" } {verbose 1}} {
 	global prog
 
-	# Form a full path by appending the name (ie: Volumes) to 			
+	# Form a full path by appending the name (ie: Volumes) to
 	# a local, and then central, directory.
-	set local   [file join $dir $name].tcl
-	set central [file join [file join $prog $dir] $name].tcl
+	set local   [file join $dir $name].$ext
+	set central [file join [file join $prog $dir] $name].$ext
 
 	if {[file exists $local] == 1} {
 		return $local
 	} elseif {[file exists $central] == 1} {
 		return $central
 	} else {
-		tk_messageBox -message "File '$name.tcl' cannot be found"
+	        if {$verbose == 1} {
+		    set msg "File '$name.$ext' cannot be found"
+		    puts $msg
+		    tk_messageBox -message $msg
+		}
 		return ""
 	}
 }
 
 # Steps to sourcing files:
-# 1.) Get an ordered list of module names (ie: Volumes, not Volumes.tcl)
-# 2.) Append other existing module name to this list
-# 3.) Remove names from the list that are in the "suppressed" file.
+# 1.) Get an ordered list of module names (ie: Volumes, not Volumes.tcl).
+# 2.) Append names of other existing modules to this list.
+# 3.) Remove names from the list that are in the "suppressed" list.
 #
 
-# Look for a OrderedModules.txt file locally, and then centrally
-set ordered [ReadModuleNamesLocalOrCentral OrderedModules]
-if {$verbose == 1} {puts "ordered=$ordered"}
+# Source parse.tcl to read the XML
+set path [GetFullPath parse tcl]
+source $path
+
+# Look for an Options.xml file locally and then centrally
+set moduleNames [ReadModuleNamesLocalOrCentral Options xml]
+set ordered [lindex $moduleNames 0]
+set suppressed [lindex $moduleNames 1]
 
 # Find all module names
 set found [FindNames tcl-modules]
-if {$verbose == 1} {puts "found=$found"}
+
+if {$verbose == 1} {
+    puts "found=$found"
+    puts "ordered=$ordered"
+    puts "suppressed=$suppressed"
+}
 
 # Append found names to ordered names
 foreach name $found {
@@ -191,8 +214,6 @@ foreach name $found {
 }
 
 # Suppress unwanted (need a more PC term for this) modules
-set suppressed [ReadModuleNamesLocalOrCentral SuppressedModules]
-if {$verbose == 1} {puts "suppressed=$suppressed"}
 foreach name $suppressed {
 	set i [lsearch $ordered $name]
 	if {$i != -1} {
@@ -202,7 +223,7 @@ foreach name $suppressed {
 
 # Source the modules
 foreach name $ordered {
-	set path [GetFullPath $name tcl-modules]
+	set path [GetFullPath $name tcl tcl-modules]
 	if {$path != ""} {
 		if {$verbose == 1} {puts "source $path"}
 		source $path
@@ -212,7 +233,7 @@ foreach name $ordered {
 # Source shared stuff either locally or globally
 set shared [FindNames tcl-shared]
 foreach name $shared {
-	set path [GetFullPath $name tcl-shared]
+	set path [GetFullPath $name tcl tcl-shared]
 	if {$path != ""} {
 		if {$verbose == 1} {puts "source $path"}
 		source $path
@@ -222,7 +243,7 @@ foreach name $shared {
 # Source main stuff either locally or globally
 set main [FindNames tcl-main]
 foreach name $main {
-	set path [GetFullPath $name tcl-main]
+	set path [GetFullPath $name tcl tcl-main]
 	if {$path != ""} {
 		if {$verbose == 1} {puts "source $path"}
 		source $path
@@ -233,10 +254,10 @@ foreach name $main {
 set Module(idList)     $ordered
 set Module(mainList)   $main
 set Module(sharedList) $shared
-#set Module(supList)    $suppressed
-#set Module(allList)    $found
-set Module(supList)    ""
-set Module(allList)    $ordered
+set Module(supList)    $suppressed
+set Module(allList)    $found
+#set Module(supList)    ""
+#set Module(allList)    $ordered
 
 if {$verbose == 1} {
 	puts "ordered=$ordered"
