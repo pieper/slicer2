@@ -1,0 +1,158 @@
+<html>
+<head>
+<title>Making Slicer Run on Windows NT</title>
+</head>
+
+<body>
+This guide was written by Attila Tanacs (tanacs@cs.jhu.edu).
+<p>
+Variables with all captital letters are used to record the directory
+paths into which you install various software packages. For example,
+if you install Tck/Tk into c:\tcl, in this document, TCL will refer to
+c:\tcl.
+
+    <ol>
+      <li>If you don't have Tcl/Tk, install it (we suggest you install Tcl/Tk 8.3.2)
+	(directory path: TCL)
+	
+      <li> Download and install source code for the following packages:
+	<ul>
+	  <li>Slicer (Tcl/Tk, vtk) from <a href="http://www.slicer.org/">www.slicer.org</a> (directory path: SLICER)
+	  <li>vtk from <a href="http://www.kitware.com">www.kitware.com</a> (directory path: VTK)
+	  <li>Tcl/Tk <a href="http://dev.scriptics.com">dev.scriptics.com</a> (directory path: TCL_SRC)
+	</ul>
+	
+      <li>Collect the necessary source files
+	<ol>
+	  <li>Copy all files from SLICER\vtksrc to VTK\local
+	    
+	  <li>Check Makefile.in in VTK\local (it must contain every cxx class file)
+	    
+	  <li>If pcmaker.exe is not present in VTK\pcmaker, compile it using Visual C++
+	    
+	  <li>Make the following directories:
+	    <ul>
+	      <li>VTK\pcmaker\tcllib\generic
+	      <li>VTK\pcmaker\tcllib\win
+	      <li>VTK\pcmaker\tcllib\xlib
+	      <li>VTK\pcmaker\tcllib\xlib\X11
+	    </ul>
+	    
+	  <li>Copy the following files from TCL_SRC\generic to VTK\pcmaker\tcllib\generic :
+	    <ul>
+	      <li>tcl.h
+	      <li>tclDecls.h
+	      <li>tclInt.h
+	      <li>tclIndDecls.h
+	      <li>tclPort.h
+	    </ul>
+	    
+	  <li>Copy the following files from TK_SRC\generic to VTK\pcmaker\tcllib\generic :
+	    <ul>
+	      <li>tk.h
+	      <li>tkDecls.h
+	      <li>tkInt.h
+	      <li>tkIntDecls.h
+	      <li>tkIntPlatDecls.h
+	      <li>tkPlatDecls.h
+	      <li>tkPort.h
+	      <li>tkIntXlibDecls.h
+	    </ul>
+	    
+	  <li>Copy the following files from TCL_SRC\win to VTK\pcmaker\tcllib\win :
+	    <ul>
+	      <li>tclWinInt.h
+	      <li>tclWinPort.h
+	    </ul>
+	    
+	  <li>Copy the following files from TK_SRC\win to VTK\pcmaker\tcllib\win :
+	    <ul>
+	      <li>tkWin.h
+	      <li>tkWinInt.h
+	      <li>tkWinPort.h
+	    </ul>
+	    
+	  <li>Copy the following files from TCL\lib to VTK\pcmaker\tcllib\win :
+	    <ul>
+	      <li>tcl83.lib
+	      <li>tclstub83.lib
+	      <li>tk83.lib
+	      <li>tkstub83.lib
+	    </ul>
+	    
+	  <li>Copy the directory structure TK_SRC\xlib to VTK\pcmaker\tcllib\xlib
+	</ol>
+	
+      <li>Compiling vtk on NT
+	<ol>
+	  <li>Run VTK\pcmaker\pcmaker.exe
+	    <ul>
+	      <li>Set the following values:
+		<ul>
+		  <li>Where is vtk:  VTK (root of your vtk directory)
+		  <li>vtk libraries: VTK\lib (dlls will be put in subdirectories of this)
+		  <li>Where is your compiler: MSDEV\vc98 (root of VC)
+		  <li>Check the following checkboxes:
+		    <ul>
+		      <li>What compiler: Microsoft
+		      <li>Additional toolkits: Graphics, Imaging, Contrib, Local
+		      <li>Include Patented Algorithms
+		      <li>Build Tcl
+                      <li>ANSI C++
+		    </ul>
+		  <li>Press button 'Advanced' and set these options:
+		    <ul>
+		      <li>Where is libtcl: VTK\pcmaker\tcllib\win\tcl83.lib
+		      <li>Where is libtk:  VTK\pcmaker\tcllib\win\tk83.lib
+		      <li>Library prefix:  vtk
+		      <li>Press OK
+		    </ul>
+		  <li>Press OK and wait until pcmaker finishes
+		</ul>
+	    </ul>
+	    
+	  <li>Compiling
+	    <ul>
+	      <li>Open a Command prompt window
+	      <li>cd to your MSDEV\vc98\bin directory and execute vcvars32.bat to set the environment varialbes needed by Visual C++
+	      <li>Version without debug information:
+		<ul>
+		    <li>cd to VTK\pcmaker\lib
+		    <li>nmake
+		    <li>...and wait patiently
+		</ul>
+	      <li>Version with debug information:
+		<ul>
+		    <li>cd to VTK\pcmaker\lib\Debug\
+		  <li>nmake
+		  <li>...and wait patiently
+		</ul>
+	    </ul>
+
+	  <li>Copy DLLs
+	    <ul>
+		<li>Copy all dll files from VTK\lib\lib or
+		VTK\lib\Debug\lib to TCL\bin or add one of these directories to your PATH environment variable
+	    </ul>
+	</ol>
+
+      <li>Running Slicer
+	<ul>
+	  <li>Run SLICER\program\Go.tcl (assuming that .tcl files are associated with wish.exe)
+	</ul>
+
+      <li>If you modify some of the source files
+	<ul>
+	    <li>Recompile (4.2.) and copy dlls (4.3.)
+	</ul>
+
+      <li>If you add new source files
+	<ul>
+	  <li>Add the name of the new file (without extension) to Makefile.in (to CONCRETE)
+	  <li>Run pcmaker (4.1.), recompile (4.2.), and copy dlls (4.3.)
+	</ul>
+    </ol>
+
+</body>
+
+</html>
