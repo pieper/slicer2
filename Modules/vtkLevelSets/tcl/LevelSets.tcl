@@ -154,7 +154,7 @@ proc LevelSetsInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.4 $} {$Date: 2003/04/30 16:22:13 $}]
+        {$Revision: 1.5 $} {$Date: 2003/05/20 18:22:39 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -1268,7 +1268,6 @@ proc RunLevelSetsBegin {} {
 
   set Slice(opacity) 0.2
   MainSlicesSetOpacityAll
-
 
   # set the window and level
   set Volume(activeID) $res
