@@ -160,6 +160,8 @@ proc ReadModuleNamesLocalOrCentral {name ext} {
 
 #-------------------------------------------------------------------------------
 # .PROC GetFullPath
+# 
+#
 # .END
 #-------------------------------------------------------------------------------
 proc GetFullPath {name ext {dir "" } {verbose 1}} {
@@ -183,6 +185,20 @@ proc GetFullPath {name ext {dir "" } {verbose 1}} {
 		return ""
 	}
 }
+
+
+#-------------------------------------------------------------------------------
+# .PROC START_THE_SLICER
+#
+# Looks in ./tcl-shared ./tcl-modules and ./tcl-shared for names of tcl files
+# Also looks in $central/tcl-shared ... (which is $SLICER_HOME/program/..)
+#
+# Source those files
+# Boot the slicer
+# If there is a SlicerScript, run it
+#
+# .END
+#-------------------------------------------------------------------------------
 
 # Steps to sourcing files:
 # 1.) Get an ordered list of module names (ie: Volumes, not Volumes.tcl).
@@ -276,3 +292,11 @@ if {$verbose == 1} {
 # Bootup
 MainBoot [lindex $argv 0]
 
+## The programmer has the opportunity to start a SlicerScript.
+## SlicerScript if possible
+##
+if {[info commands SlicerScript] != ""} {
+puts "Running slicer script..."
+SlicerScript
+puts "Done running slicer script."
+}
