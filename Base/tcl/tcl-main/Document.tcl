@@ -239,13 +239,12 @@ proc DocumentAll {prog} {
 	global Index
 
 	set docdir [file join [file dirname $prog] doc]
-
 	# Document each file
 	set Index(dirList) ""
 	foreach dir "tcl-main tcl-modules tcl-shared" {
 		set Index($dir) ""
 		lappend Index(dirList) $dir
-		foreach file "[glob -nocomplain $dir/*.tcl]" {
+		foreach file "[glob -nocomplain $prog/$dir/*.tcl]" {
 			puts $file
 			lappend Index($dir) [file root [file tail $file]]
 			set filename [file join $prog $file]
