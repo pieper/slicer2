@@ -158,10 +158,10 @@ $desc
 #-------------------------------------------------------------------------------
 proc DocumentFile {docdir dir filename} {
 	global Comments
-	
+puts "docdir $docdir dir $dir filename $filename"	
 	Comment [ReadInput $filename]
 	set name [file root [file tail $filename]]
-
+puts "name $name"
 	# Open output file
 	set docfile [file join [file join $docdir $dir] $name.html]
 	if {[catch {set fid [open $docfile w]} errmsg] == 1} {
@@ -446,13 +446,16 @@ $Contents($index,html)
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc DocumentAll {prog {what "doc tcl"}} {
+proc DocumentAll {prog {outputdir ""} {what "doc tcl"}} {
 	global Index
 
 	# Document the guides
 	#------------------------------------------
 	if {[lsearch $what "doc"] != -1} {
-		set docdir [file join [file dirname $prog] doc]
+	    if {$outputdir != ""} {
+		set docdir [file join $outputdir doc]} else {
+		    set docdir [file join [file dirname $prog] doc]}
+
 		foreach file [glob -nocomplain $docdir/*] {
 			if {[file isdirectory $file] == 1} {
 				set dir [file join $docdir $file]
@@ -477,8 +480,12 @@ proc DocumentAll {prog {what "doc tcl"}} {
 	#------------------------------------------
 	if {[lsearch $what "tcl"] != -1} {
 		# Find the directory to place the output html files
-		set docdir [file join [file join [file dirname $prog] \
-			doc] tcl]
+	    
+
+	    if {$outputdir != ""} {
+		set docdir [file join [file join $outputdir doc] tcl]} else {
+		    set docdir [file join [file join [file dirname $prog] \
+			    doc] tcl]}
 
 		# Document each file
 		set Index(dirList) ""

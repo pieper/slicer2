@@ -14,6 +14,14 @@ if {[info exists env(SLICER_HOME)] == 0 || $env(SLICER_HOME) == ""} {
 	set prog [file join $env(SLICER_HOME) program]
 }
 
+if {[info exists env(SLICER_DOC)] == 0 || $env(SLICER_DOC) == ""} {
+	set outputdir [file dirname $prog]
+} else {
+	set outputdir $env(SLICER_DOC)
+}
+
+puts "prog $prog output $outputdir"
+
 # Read source files
 source [file join [file join $prog tcl-main] Comment.tcl]
 source [file join [file join $prog tcl-main] Document.tcl]
@@ -22,5 +30,5 @@ source [file join [file join $prog tcl-main] Document.tcl]
 if {$argv == ""} {
 	set argv "doc tcl"
 }
-DocumentAll $prog $argv
+DocumentAll $prog $outputdir $argv
 exit

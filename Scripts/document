@@ -4,6 +4,10 @@ if (${?SLICER_HOME} == 0) then
     setenv SLICER_HOME /export/bigsur/slicer
 endif
 
+if (${?SLICER_DOC} == 0) then
+    setenv SLICER_DOC ${SLICER_HOME}
+endif
+
 if (${?LD_LIBRARY_PATH} == 0) then
     setenv LD_LIBRARY_PATH ${SLICER_HOME}/lib:/local/lib
 else
