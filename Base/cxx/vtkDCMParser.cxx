@@ -815,7 +815,11 @@ int vtkDCMParser::OpenFile(const char *filename)
       Init();
     }
 
-  if((file_in = fopen(filename, "rb")) != NULL)
+  if((filename == NULL) || (strcmp(filename, "") == 0))
+    {
+      file_in = NULL;
+    }
+  else if((file_in = fopen(filename, "rb")) != NULL)
     ReadDICOMMetaHeaderInfo();
 
   return (file_in != NULL);
