@@ -1,3 +1,37 @@
+#   ==================================================
+#   Module: vtkFluxDiffusion
+#   Author: Karl Krissian
+#   Email:  karl@bwh.harvard.edu
+#
+#   This module implements a version of anisotropic diffusion published in 
+#    
+#   "Flux-Based Anisotropic Diffusion Applied to Enhancement of 3D Angiography"
+#   Karl Krissian
+#   IEEE Trans. Medical Imaging, 21(11), pp 1440-1442, nov 2003.
+#    
+#   It aims at restoring 2D and 3D images with the ability to preserve
+#   small and elongated structures.
+#   It comes with a Tcl/Tk interface for the '3D Slicer'.
+#   ==================================================
+#   Copyright (C) 2002  Karl Krissian
+#
+#   This library is free software; you can redistribute it and/or
+#   modify it under the terms of the GNU Lesser General Public
+#   License as published by the Free Software Foundation; either
+#   version 2.1 of the License, or (at your option) any later version.
+#
+#   This library is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+#   Lesser General Public License for more details.
+#
+#   You should have received a copy of the GNU Lesser General Public
+#   License along with this library; if not, write to the Free Software
+#   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+#   ================================================== 
+#   The full GNU Lesser General Public License file is in vtkFluxDiffusion/LesserGPL_license.txt
+
+
 #=auto==========================================================================
 #
 #===============================================================================
@@ -122,7 +156,7 @@ proc FluxDiffusionInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1 $} {$Date: 2002/10/31 15:46:41 $}]
+        {$Revision: 1.2 $} {$Date: 2003/02/13 19:14:37 $}]
 
     # Initialize module-level variables
     #------------------------------------
