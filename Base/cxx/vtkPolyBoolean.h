@@ -110,7 +110,7 @@ public:
   vtkPiercePoint *Next; // pointer to next PP on this edge
   vtkPiercePoint *Prev; // pointer to previous PP on this edge
   vtkPiercePoint *Merge; // next PP to merge with this one.
-  vtkBoolTriEdge *NextEdge[2]; // pointer to next Edge along
+    vtkBoolTriEdge *NextEdge[2]; // pointer to next Edge along
                                // intersection in each direction
 };
 
