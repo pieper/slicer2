@@ -96,7 +96,7 @@ proc SessionLogInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.4 $} {$Date: 2001/03/10 01:20:08 $}]
+	    {$Revision: 1.5 $} {$Date: 2001/03/10 19:43:55 $}]
 
     # Initialize module-level variables
     set SessionLog(fileName)  ""
@@ -700,8 +700,8 @@ proc SessionLogTraceSliceOffsets {}  {
 
     foreach var $varlist {
 	trace variable $var w SessionLogTraceSliceDescriptionCallback
-	puts $var
-	eval {puts } \$$var
+	#puts $var
+	#eval {puts } \$$var
     }
 
     return
@@ -734,12 +734,10 @@ proc SessionLogTraceSliceOffsetsCallback {variableName indexIfArray operation} {
 
     # get slice number
     upvar 1 $variableName var
-    puts "$indexIfArray: $var($indexIfArray)"
     set num $var($indexIfArray)
 
     # get slice id number
     set s [lindex [split $indexIfArray ","] 0]
-    puts $s
 
     SessionLogStartTimingSlice $s
 }
