@@ -29,7 +29,8 @@
 # set up the versions to check out
 set cmakeTag "CMake-2-0-5"
 set vtkTag "Slicer-2-4"
-set itkTag "Slicer-2-4"
+set itkTag "ITK-2-0"
+#set itkTag "Slicer-2-4"
 set tclTag "core-8-4-6"
 set tkTag "core-8-4-6"
 set itclTag "itcl-3-2-1"
@@ -206,39 +207,70 @@ if { ![file exists $SLICER_LIB] } {
 }
 
 # set up cross platform files to check for existence
-switch $tcl_platform(os) {
-    "SunOS" -
-    "Linux" -
-    "Darwin" {
-        set tclTestFile $TCL_BIN_DIR/tclsh8.4
-        set tkTestFile  $TCL_BIN_DIR/wish8.4
-        set itclTestFile $TCL_LIB_DIR/libitclstub3.2.a
-        set iwidgetsTestFile $TCL_LIB_DIR/iwidgets4.0.1/iwidgets.tcl
-        set bltTestFile $TCL_BIN_DIR/bltwish
-        set gslTestFile $GSL_LIB_DIR/libgsl.so
-        set vtkTestFile $VTK_DIR/bin/vtk
-        set vtkTclLib $TCL_LIB_DIR/libtcl8.4.so 
-        set vtkTkLib $TCL_LIB_DIR/libtk8.4.so
-        set vtkTclsh $TCL_BIN_DIR/tclsh8.4
-        set itkTestFile $ITK_BINARY_PATH/bin/libITKCommon.so
-        set tkEventPatch $SLICER_HOME/tkEventPatch.diff
-    }
-    default {
-        # different windows machines return different values, assume if none of the above, windows
-        set tclTestFile $TCL_BIN_DIR/tclsh84.exe
-        set tkTestFile  $TCL_BIN_DIR/wish84.exe
-        set itclTestFile $TCL_LIB_DIR/itcl3.2/itcl32.dll
-        set iwidgetsTestFile $TCL_LIB_DIR/iwidgets4.0.2/iwidgets.tcl
-        set bltTestFile $TCL_BIN_DIR/BLT24.dll
-        set gslTestFile $GSL_LIB_DIR/gsl.lib
-        set vtkTestFile $VTK_DIR/bin/$VTK_BUILD_TYPE/vtk.exe
-        set vtkTclLib $TCL_LIB_DIR/tcl84.lib
-        set vtkTkLib $TCL_LIB_DIR/tk84.lib
-        set vtkTclsh $TCL_BIN_DIR/tclsh84.exe
-        set itkTestFile $ITK_BINARY_PATH/bin/$VTK_BUILD_TYPE/libITKCommon.dll
-        #        set itkTestFile $ITK_BINARY_PATH/bin/$VTK_BUILD_TYPE/ITKCommon.dll
-    }
+if {$isSolaris || $isLinux || $isDarwin} {
+    set tclTestFile $TCL_BIN_DIR/tclsh8.4
+    set tkTestFile  $TCL_BIN_DIR/wish8.4
+    set itclTestFile $TCL_LIB_DIR/libitclstub3.2.a
+    set iwidgetsTestFile $TCL_LIB_DIR/iwidgets4.0.1/iwidgets.tcl
+    set bltTestFile $TCL_BIN_DIR/bltwish
+    set gslTestFile $GSL_LIB_DIR/libgsl.so
+    set vtkTestFile $VTK_DIR/bin/vtk
+    set vtkTclLib $TCL_LIB_DIR/libtcl8.4.so 
+    set vtkTkLib $TCL_LIB_DIR/libtk8.4.so
+    set vtkTclsh $TCL_BIN_DIR/tclsh8.4
+    set itkTestFile $ITK_BINARY_PATH/bin/libITKCommon.so
+    set tkEventPatch $SLICER_HOME/tkEventPatch.diff
+} elseif {$isWindows} {
+    set tclTestFile $TCL_BIN_DIR/tclsh84.exe
+    set tkTestFile  $TCL_BIN_DIR/wish84.exe
+    set itclTestFile $TCL_LIB_DIR/itcl3.2/itcl32.dll
+    set iwidgetsTestFile $TCL_LIB_DIR/iwidgets4.0.2/iwidgets.tcl
+    set bltTestFile $TCL_BIN_DIR/BLT24.dll
+    set gslTestFile $GSL_LIB_DIR/gsl.lib
+    set vtkTestFile $VTK_DIR/bin/$VTK_BUILD_TYPE/vtk.exe
+    set vtkTclLib $TCL_LIB_DIR/tcl84.lib
+    set vtkTkLib $TCL_LIB_DIR/tk84.lib
+    set vtkTclsh $TCL_BIN_DIR/tclsh84.exe
+    set itkTestFile $ITK_BINARY_PATH/bin/$VTK_BUILD_TYPE/libITKCommon.dll
+    # set itkTestFile $ITK_BINARY_PATH/bin/$VTK_BUILD_TYPE/ITKCommon.dll
+} else {
+    puts "Could not match platform."
 }
+
+
+# switch $tcl_platform(os) {
+#     "SunOS" -
+#     "Linux" -
+#     "Darwin" {
+#         set tclTestFile $TCL_BIN_DIR/tclsh8.4
+#         set tkTestFile  $TCL_BIN_DIR/wish8.4
+#         set itclTestFile $TCL_LIB_DIR/libitclstub3.2.a
+#         set iwidgetsTestFile $TCL_LIB_DIR/iwidgets4.0.1/iwidgets.tcl
+#         set bltTestFile $TCL_BIN_DIR/bltwish
+#         set gslTestFile $GSL_LIB_DIR/libgsl.so
+#         set vtkTestFile $VTK_DIR/bin/vtk
+#         set vtkTclLib $TCL_LIB_DIR/libtcl8.4.so 
+#         set vtkTkLib $TCL_LIB_DIR/libtk8.4.so
+#         set vtkTclsh $TCL_BIN_DIR/tclsh8.4
+#         set itkTestFile $ITK_BINARY_PATH/bin/libITKCommon.so
+#         set tkEventPatch $SLICER_HOME/tkEventPatch.diff
+#     }
+#     default {
+#         # different windows machines return different values, assume if none of the above, windows
+#         set tclTestFile $TCL_BIN_DIR/tclsh84.exe
+#         set tkTestFile  $TCL_BIN_DIR/wish84.exe
+#         set itclTestFile $TCL_LIB_DIR/itcl3.2/itcl32.dll
+#         set iwidgetsTestFile $TCL_LIB_DIR/iwidgets4.0.2/iwidgets.tcl
+#         set bltTestFile $TCL_BIN_DIR/BLT24.dll
+#         set gslTestFile $GSL_LIB_DIR/gsl.lib
+#         set vtkTestFile $VTK_DIR/bin/$VTK_BUILD_TYPE/vtk.exe
+#         set vtkTclLib $TCL_LIB_DIR/tcl84.lib
+#         set vtkTkLib $TCL_LIB_DIR/tk84.lib
+#         set vtkTclsh $TCL_BIN_DIR/tclsh84.exe
+#         set itkTestFile $ITK_BINARY_PATH/bin/$VTK_BUILD_TYPE/libITKCommon.dll
+#         #        set itkTestFile $ITK_BINARY_PATH/bin/$VTK_BUILD_TYPE/ITKCommon.dll
+#     }
+# }
 
 ################################################################################
 # Get and build CMake
