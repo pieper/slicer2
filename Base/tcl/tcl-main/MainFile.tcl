@@ -86,7 +86,7 @@ proc MainFileInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainFile \
-        {$Revision: 1.47 $} {$Date: 2003/03/19 19:16:24 $}]
+        {$Revision: 1.48 $} {$Date: 2003/05/18 15:30:02 $}]
 
     set File(filePrefix) data
 }
@@ -810,9 +810,6 @@ proc MainFileCreateDirectory {filename} {
 #-------------------------------------------------------------------------------
 proc CheckVolumeExists {filePrefix filePattern firstNum lastNum  {verbose 0} } {
     global Gui
-
-
-
 
     # Check that it's a prefix, not a directory
     if {[file isdirectory $filePrefix] == 1} {
