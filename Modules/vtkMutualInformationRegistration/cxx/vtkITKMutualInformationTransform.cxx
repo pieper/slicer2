@@ -41,6 +41,8 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkObjectFactory.h"
 #include "vtkImageExport.h"
 #include "vtkTransform.h"
+#include "vtkUnsignedIntArray.h"
+#include "vtkDoubleArray.h"
 
 #include "itkVTKImageImport.h"
 #include "vtkITKUtility.h"
@@ -49,7 +51,19 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "MIRegistration.h"
 #include "itkExceptionObject.h"
 
+// itk classes
 // Some of this may be necessary, but I doubt it.
+#include "itkImage.h"
+#include "itkImageRegionIterator.h"
+#include "itkQuaternionRigidTransform.h"
+#include "itkQuaternionRigidTransformGradientDescentOptimizer.h"
+#include "itkMutualInformationImageToImageMetric.h"
+#include "itkLinearInterpolateImageFunction.h"
+#include "itkImageRegistrationMethod.h"
+#include "itkNumericTraits.h"
+#include "vnl/vnl_math.h"
+
+#include "MIRegistration.txx"
 #include "itkObject.h"
 #include "itkMultiResolutionImageRegistrationMethod.h"
 #include "itkAffineTransform.h"
@@ -61,6 +75,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "itkRecursiveMultiResolutionPyramidImageFilter.h"
 
 #include "itkArray.h"
+
 
 // turn itk exceptions into vtk errors
 #undef itkExceptionMacro  
@@ -80,20 +95,8 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
   std::cerr << message.str().c_str() << std::endl; \
   }
 
-// itk classes
 
-#include "itkImage.h"
-#include "itkImageRegionIterator.h"
-#include "itkQuaternionRigidTransform.h"
-#include "itkQuaternionRigidTransformGradientDescentOptimizer.h"
-#include "itkMutualInformationImageToImageMetric.h"
-#include "itkLinearInterpolateImageFunction.h"
-#include "itkImageRegistrationMethod.h"
-#include "itkNumericTraits.h"
-#include "MIRegistration.txx"
-#include "vnl/vnl_math.h"
-
-vtkCxxRevisionMacro(vtkITKMutualInformationTransform, "$Revision: 1.1 $");
+vtkCxxRevisionMacro(vtkITKMutualInformationTransform, "$Revision: 1.2 $");
 vtkStandardNewMacro(vtkITKMutualInformationTransform);
 
 //----------------------------------------------------------------------------
@@ -102,14 +105,23 @@ vtkITKMutualInformationTransform::vtkITKMutualInformationTransform()
   // Default Parameters
   this->SourceImage=NULL;
   this->TargetImage=NULL;
-  this->SourceStandardDeviation = 2.0;
-  this->TargetStandardDeviation = 2.0;
-  this->LearningRate = .005;
-  this->TranslateScale = 64;
-  this->NumberOfIterations = 500;  
+  this->SourceStandardDeviation = 0.4;
+  this->TargetStandardDeviation = 0.4;
+  this->TranslateScale = 320;
   this->NumberOfSamples = 50;
   this->MetricValue = 0;
   this->Matrix->Identity();
+
+  this->LearningRate          = vtkDoubleArray::New();
+  this->MaxNumberOfIterations = vtkUnsignedIntArray::New();
+
+  // Default Number of MultiResolutionLevels is 1
+  this->SetNextLearningRate(0.0001);
+  this->SetNextMaxNumberOfIterations(500);
+
+  // Default Shrink Factors: No Shrink
+  this->SetSourceShrinkFactors(1,1,1);
+  this->SetTargetShrinkFactors(1,1,1);
 }
 
 //----------------------------------------------------------------------------
@@ -124,6 +136,8 @@ vtkITKMutualInformationTransform::~vtkITKMutualInformationTransform()
     { 
     this->TargetImage->Delete();
     }
+  this->LearningRate->Delete();
+  this->MaxNumberOfIterations->Delete();
 }
 
 //----------------------------------------------------------------------------
@@ -134,18 +148,26 @@ void vtkITKMutualInformationTransform::PrintSelf(ostream& os, vtkIndent indent)
 
   os << "SourceStandardDeviation: " << this->SourceStandardDeviation  << endl;
   os << "TargetStandardDeviation: " << this->SourceStandardDeviation  << endl;
-  os << "LearningRate: " << this->LearningRate  << endl;
   os << "TranslateScale: " << this->TranslateScale  << endl;
   os << "NumberOfSamples: " << this->NumberOfSamples  << endl;
-  os << "NumberOfIterations: " << this->NumberOfIterations  << endl;
   os << "MetricValue: " << this->MetricValue  << endl;
 
-  os << "SourceImage: " << this->SourceImage << "\n";
+  os << "Source Shrink: "       << SourceShrink[0] << ' '
+     << SourceShrink[1] << ' '  << SourceShrink[2] << endl;
+  os << "Target Shrink: "       << TargetShrink[0] << ' '
+     << TargetShrink[1] << ' '  << TargetShrink[2] << endl;
+
+  os << "NumberOfIterations: " << this->MaxNumberOfIterations  << endl;
+    this->MaxNumberOfIterations->PrintSelf(os,indent.GetNextIndent());
+  os << "LearningRate: "       << this->LearningRate  << endl;
+    this->LearningRate->PrintSelf(os,indent.GetNextIndent());
+
+  os << "SourceImage: " << this->SourceImage << endl;
   if(this->SourceImage)
     {
     this->SourceImage->PrintSelf(os,indent.GetNextIndent());
     }
-  os << "TargetImage: " << this->TargetImage << "\n";
+  os << "TargetImage: " << this->TargetImage << endl;
   if(this->TargetImage)
     {
     this->TargetImage->PrintSelf(os,indent.GetNextIndent());
@@ -181,11 +203,11 @@ static void vtkITKMutualInformationExecute(vtkITKMutualInformationTransform *sel
   ImageImportType::Pointer movingItkImporter = ImageImportType::New();
   ConnectPipelines(movingVtkExporter, movingItkImporter);
 
-  // Source Image that is not moving
+  // Target Image that is not moving
   vtkImageExport *fixedVtkExporter = vtkImageExport::New();
     fixedVtkExporter->SetInput(target);
 
-  // Source Image that is not moving into ITK
+  // Target Image that is not moving into ITK
   ImageImportType::Pointer fixedItkImporter = ImageImportType::New();
   ConnectPipelines(fixedVtkExporter, fixedItkImporter);
 
@@ -208,12 +230,13 @@ static void vtkITKMutualInformationExecute(vtkITKMutualInformationTransform *sel
 
  // Setup the optimizer
 
+  MIRegistrator->SetTranslationScale(1.0/vnl_math_sqr(self->GetTranslateScale()));
 //  // This is the scale on translation
 //  for (int j=4; j<7; j++)
 //    {
 //    scales[j] = MIReg_TranslationScale;
 //    // This was chosen by Steve. I'm not sure why.
-//    // scales[j] = 1.0 / vnl_math_sqr(self->GetTranslateScale());
+//    scales[j] = 1.0/vnl_math_sqr(self->GetTranslateScale());
 //    }
 
   // Set metric related parameters
@@ -222,21 +245,46 @@ static void vtkITKMutualInformationExecute(vtkITKMutualInformationTransform *sel
   MIRegistrator->SetNumberOfSpatialSamples(self->GetNumberOfSamples());
 
   //
-  // THIS NEEDS TO BE AN ARRAY
-  // Temporary hack for single layer multi-res structure
+  // This is the multi-resolution information
+  // Number of iterations and learning rate at each level
   //
+
   typedef typename RegistratorType::UnsignedIntArray UnsignedIntArray;
   typedef typename RegistratorType::DoubleArray      DoubleArray;
   
-  DoubleArray      LearnRates(1);
-  LearnRates.Fill(self->GetLearningRate());
+ DoubleArray      LearnRates(self->GetLearningRate()->GetNumberOfTuples());
+ UnsignedIntArray NumIterations(self->GetLearningRate()->GetNumberOfTuples());
+
+  for(int i=0;i<self->GetLearningRate()->GetNumberOfTuples();i++)
+    {
+      LearnRates[i]    = self->GetLearningRate()->GetValue(i);
+      NumIterations[i] = self->GetMaxNumberOfIterations()->GetValue(i);
+    }
+
   MIRegistrator->SetLearningRates(LearnRates);
-  
-  UnsignedIntArray NumIterations(1);
-  NumIterations.Fill(self->GetNumberOfIterations());
   MIRegistrator->SetNumberOfIterations(NumIterations);
 
+  //
+  // This is the shrink factors for each dimension
+  // 
+
+  typedef typename RegistratorType::ShrinkFactorsArray ShrinkFactorsArray;
+
+  ShrinkFactorsArray SourceShrink;
+  SourceShrink[0] = self->GetSourceShrinkFactors(0);
+  SourceShrink[1] = self->GetSourceShrinkFactors(1);
+  SourceShrink[2] = self->GetSourceShrinkFactors(2);
+  MIRegistrator->SetMovingImageShrinkFactors(SourceShrink);
+
+  ShrinkFactorsArray TargetShrink;
+  TargetShrink[0] = self->GetTargetShrinkFactors(0);
+  TargetShrink[1] = self->GetTargetShrinkFactors(1);
+  TargetShrink[2] = self->GetTargetShrinkFactors(2);
+  MIRegistrator->SetFixedImageShrinkFactors(TargetShrink);
+
+  //
   // Start registration
+  //
   MIRegistrator->Execute();
 
   MIRegistrator->ResultsToMatrix(matrix);
@@ -259,6 +307,14 @@ void vtkITKMutualInformationTransform::InternalUpdate()
     this->Matrix->Identity();
     return;
     }
+
+  if (MaxNumberOfIterations->GetNumberOfTuples() != 
+               LearningRate->GetNumberOfTuples())
+    vtkErrorMacro (<< MaxNumberOfIterations->GetNumberOfTuples() 
+    << "is the number of levels of iterations"
+    << LearningRate->GetNumberOfTuples() 
+    << "is the number of levels of learning rates. "
+    << "the two numbers should be the same");
 
   if (this->SourceImage->GetScalarType() != VTK_FLOAT)
     {
@@ -378,18 +434,54 @@ void vtkITKMutualInformationTransform::InternalDeepCopy(vtkAbstractTransform *tr
 {
   vtkITKMutualInformationTransform *t = (vtkITKMutualInformationTransform *)transform;
 
-  this->SetSourceStandardDeviation(t->SourceStandardDeviation);
-  this->SetTargetStandardDeviation(t->TargetStandardDeviation);
+  cerr << "Calling Internal Deep Copy" << endl;
 
-  //
-  // ========= This Needs rewriting!!!
-  //
+  this->SetSourceStandardDeviation(t->GetSourceStandardDeviation());
+  this->SetTargetStandardDeviation(t->GetTargetStandardDeviation());
+  this->SetTranslateScale(t->GetTranslateScale());
+  this->SetNumberOfSamples(t->GetNumberOfSamples());
+  this->SetMetricValue(t->GetMetricValue());
 
   this->SetLearningRate(t->LearningRate);
   this->SetTranslateScale(t->TranslateScale);
   this->SetNumberOfSamples(t->NumberOfSamples);
 
+//  vtkImageData *SourceImage;
+//  vtkImageData *TargetImage;
+//  vtkUnsignedIntArray  *MaxNumberOfIterations;
+//  vtkDoubleArray       *LearningRate;
+
   this->Modified();
 }
 
+
+//----------------------------------------------------------------------------
+
+void vtkITKMutualInformationTransform::SetNextLearningRate(const double rate)
+{ LearningRate->InsertNextValue(rate); }
+
+//----------------------------------------------------------------------------
+
+void vtkITKMutualInformationTransform::SetNextMaxNumberOfIterations(const int num) 
+  { MaxNumberOfIterations->InsertNextValue(num); }
+
+//----------------------------------------------------------------------------
+
+void vtkITKMutualInformationTransform::SetSourceShrinkFactors(
+    unsigned int i, unsigned int j, unsigned int k)
+{
+  SourceShrink[0] = i;
+  SourceShrink[1] = j;
+  SourceShrink[2] = k;
+}
+
+//----------------------------------------------------------------------------
+
+void vtkITKMutualInformationTransform::SetTargetShrinkFactors(
+    unsigned int i, unsigned int j, unsigned int k)
+{
+  TargetShrink[0] = i;
+  TargetShrink[1] = j;
+  TargetShrink[2] = k;
+}
 
