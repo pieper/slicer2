@@ -75,7 +75,7 @@ proc DataInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.23 $} {$Date: 2000/03/05 22:19:28 $}]
+		{$Revision: 1.24 $} {$Date: 2000/03/05 23:51:00 $}]
 
 	set Data(index) ""
 	set Data(clipboard) ""
@@ -700,7 +700,7 @@ proc DataAddMatrix {} {
     vtkMrmlMatrixNode Matrix($i,node)
     set n Matrix($i,node)
     $n SetID $i
-    $n SetName matrix$i
+    $n SetName manual$i
     Mrml(dataTree) InsertAfterItem $lastSel $n
 
     MainMatricesSetActive $i
@@ -753,7 +753,7 @@ proc DataAddTransform {} {
     vtkMrmlMatrixNode Matrix($i,node)
     set n Matrix($i,node)
     $n SetID $i
-    $n SetName matrix$i
+    $n SetName manual$i
     if {$append == 1} {
 	Mrml(dataTree) AddItem $n
     } else {
