@@ -85,8 +85,9 @@ public:
   itkGetMacro(UpdateIter, int);
 
  /** Update Function(object,num_level,num_iter) and object to be called */
+ /** function returns 1 if process should abort                         */
   void SetCallbackFunction(void* object,
-               void (*f)(void *,int,int))
+               int (*f)(void *,int,int))
   {
     CallbackData = object;
     Callback = f;
@@ -107,7 +108,7 @@ protected:
   TransformType::Pointer             m_Transform;
   int abort;
   int m_UpdateIter;
-  void (*Callback)(void *,int,int);
+  int (*Callback)(void *,int,int);
   void *CallbackData;
   int m_CurrentIter;
   int m_CurrentLevel;

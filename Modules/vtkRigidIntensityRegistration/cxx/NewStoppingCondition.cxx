@@ -88,20 +88,20 @@ void NewStoppingCondition::Execute(itk::Object * object,
         this->Reset();
       }
 
-    this->m_CurrentIter = optimizer->GetNumberOfIterations();
+    this->m_CurrentIter = optimizer->GetCurrentIteration();
     if(m_CurrentIter % m_UpdateIter == 0)
       {
-    if (CallbackData != NULL)
-      {
-        this->Callback(CallbackData,
-               this->m_CurrentLevel,
-               this->m_CurrentIter);
-      }
+      if (CallbackData != NULL)
+       {
+         this->abort = this->Callback(CallbackData,
+                      this->m_CurrentLevel,
+                      this->m_CurrentIter);
+       }
       }
     if (this->abort)
       {
-    optimizer->StopOptimization();
-    return;
+      optimizer->StopOptimization();
+      return;
       }
 
     // The current matrix becomes the old one
