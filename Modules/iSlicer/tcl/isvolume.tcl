@@ -38,6 +38,7 @@ option add *isvolume.volume "None" widgetDefault
 option add *isvolume.slice 0 widgetDefault
 option add *isvolume.interpolation linear widgetDefault
 option add *isvolume.resolution 256 widgetDefault
+option add *isvolume.transform "1 0 0 0  0 1 0 0  0 0 1 0  0 0 0 1" widgetDefault
 
 #
 # The class definition - define if needed (not when re-sourcing)
@@ -61,6 +62,7 @@ if { [itcl::find class isvolume] == "" } {
       itk_option define -slice slice Slice 0
       itk_option define -interpolation interpolation Interpolation {linear}
       itk_option define -resolution resolution Resolution {256}
+      itk_option define -transform transform Transform { 1 0 0 0  0 1 0 0  0 0 1 0  0 0 0 1 }
 
       # widgets for the control area
       variable _controls
@@ -85,6 +87,7 @@ if { [itcl::find class isvolume] == "" } {
 
       # internal state variables
       variable _VolIdMap
+      variable _volume_serial 0
 
       # methods
       method expose {}   {}
@@ -100,7 +103,8 @@ if { [itcl::find class isvolume] == "" } {
       method screensave { filename {imagetype "PNM"} } {} ;# TODO should be moved to superclass
 
       method volmenu_update {} {}
-
+      method transform_update {} {}
+      method slicer_volume { {name ""} } {}
     }
 }
 
@@ -303,13 +307,12 @@ itcl::configbody isvolume::volume {
 
     $_reslice SetInput [$_changeinfo GetOutput]
 
+    $_mapper SetInput [$_reslice GetOutput]
     $_mapper SetColorWindow [Volume($id,node) GetWindow]
     $_mapper SetColorLevel [Volume($id,node) GetLevel]
 
-    # trick configure to re-run the configbody
-    set orient $itk_option(-orientation)
-    $this configure -orientation ""
-    $this configure -orientation $orient
+    $this transform_update
+    $this expose
 }
 
 #-------------------------------------------------------------------------------
@@ -318,7 +321,6 @@ itcl::configbody isvolume::volume {
 # DESCRIPTION: which slicer volume to display in this isvolume
 #-------------------------------------------------------------------------------
 itcl::configbody isvolume::orientation {
-    global View
 
     # don't change the orientation of the None volume
     # also allow for an empty orientation option
@@ -328,14 +330,108 @@ itcl::configbody isvolume::orientation {
     } else {
         $_mapper SetInput [$_reslice GetOutput]
     }
+
+    $this transform_update
+    $this configure -resolution $itk_option(-resolution)
+}
+
+itcl::configbody isvolume::interpolation {
+    switch $itk_option(-interpolation) {
+        "linear" { set mode Linear }
+        "cubic" { set mode Cubic }
+        "nearest" -
+        "nearestneighbor" { set mode NearestNeighbor }
+        default {
+            error "must be nearest, linear, or cubic"
+        }
+    }
+    $_reslice SetInterpolationModeTo$mode
+    $this expose
+}
+
+itcl::configbody isvolume::resolution {
+
+    set opos [expr ([$this cget -slice] * 1.0) / [$_slider cget -to] ]
+    set res $itk_option(-resolution)
+    set spacing [expr $::View(fov) / (1.0 * $res)]
+
+    $_reslice SetOutputSpacing $spacing $spacing $spacing 
+    set ext [expr $res -1]
+    $_reslice SetOutputExtent 0 $ext 0 $ext 0 $ext
+
+    $_slider configure -from 0
+    $_slider configure -to $res
+    $this configure -slice [expr round( $opos * $res )]
+    $_tkrw configure -width $res -height $res
+
+    $this transform_update
+}
+
+itcl::configbody isvolume::transform {
+
+    $this transform_update
+    $this expose
+}
+
+# ------------------------------------------------------------------
+#                             METHODS
+# ------------------------------------------------------------------
+
+
+itcl::body isvolume::expose {} {
+    $_tkrw Render
+}
+
+# ------------------------------------------------------------------
+
+#-------------------------------------------------------------------------------
+# METHOD: volmenu_update
+#
+# DESCRIPTION: create the array of volume names and ids
+#              The array can be accessed by volume Id or volume name.
+#              However, should two names be the same, the second one
+#              overwrites the first.
+#-------------------------------------------------------------------------------
+itcl::body isvolume::volmenu_update {} {
+
+    array unset _VolIdMap
+
+    foreach id $::Volume(idList) {
+        set name [Volume($id,node) GetName]
+        set _VolIdMap($name)  $id
+        set _VolIdMap($id)    $id
+        set _VolIdMap(${name}__$id)  $id 
+    }
+
+    $_volmenu delete 0 end
+    foreach id $::Volume(idList) {
+        set name [Volume($id,node) GetName]
+        $_volmenu insert end  ${name}__$id
+    }
+    $_volmenu select 0
+}
+
+
+#-------------------------------------------------------------------------------
+# METHOD: transform_update
+#
+# DESCRIPTION: recalculate the transform parameters
+#             
+#            
+#           
+#-------------------------------------------------------------------------------
+itcl::body isvolume::transform_update {} {
+
     set id $_VolIdMap($itk_option(-volume))
 
+    #
     # first, make the transform to put the images
     # into axial RAS space.  Center the volume resliced output
     # around the origin of RAS space
     # - size of RAS space is cube of size fov
     # - output extent of RAS is a to-be-defined resolution
     # - a to-be-defined pan-zoom transform will map to the screen
+    #
 
     $_ijkmatrix Identity
     switch [Volume($id,node) GetScanOrder] {
@@ -390,84 +486,42 @@ itcl::configbody isvolume::orientation {
             # nothing yet
         }
     }
+    #
+    # need to invert the X axis to handle slicer transform
+    #
+    for {set i 0} {$i < 4} {incr i} {
+        transposematrix SetElement 0 $i [expr -1 * [transposematrix GetElement 0 $i]]
+    }
 
+    #
+    # make a matrix of the supplied transform - positions the volume
+    # in RAS space (inverted for use with ImageReslice)
+    #
+    catch "transformmatrix Delete"
+    vtkMatrix4x4 transformmatrix
+    eval transformmatrix DeepCopy $itk_option(-transform)
+    transformmatrix Invert
+    for {set i 0} {$i < 4} {incr i} {
+        transformmatrix SetElement 0 $i [expr -1 * [transformmatrix GetElement 0 $i]]
+    }
+    puts [transformmatrix Print]
+
+    #
+    # now combine the matrices
+    # - _ijkmatrix goes from image voxels to RAS
+    # - transformmatrix moves the volume in RAS space
+    # - transposematrix picks an orientation to reslice RAS space
+    #
+    $_ijkmatrix Multiply4x4 $_ijkmatrix transformmatrix $_ijkmatrix
     $_ijkmatrix Multiply4x4 $_ijkmatrix transposematrix $_ijkmatrix
+    transformmatrix Delete
     transposematrix Delete
 
     $_xform SetMatrix $_ijkmatrix
     $_reslice SetResliceTransform $_xform 
 
-    $this configure -resolution $itk_option(-resolution)
 }
 
-itcl::configbody isvolume::interpolation {
-    switch $itk_option(-interpolation) {
-        "linear" { set mode Linear }
-        "cubic" { set mode Cubic }
-        "nearest" -
-        "nearestneighbor" { set mode NearestNeighbor }
-        default {
-            error "must be nearest, linear, or cubic"
-        }
-    }
-    $_reslice SetInterpolationModeTo$mode
-    $this expose
-}
-
-itcl::configbody isvolume::resolution {
-    global View
-
-    set opos [expr ([$this cget -slice] * 1.0) / [$_slider cget -to] ]
-    set res $itk_option(-resolution)
-    set spacing [expr $View(fov) / (1.0 * $res)]
-
-    $_reslice SetOutputSpacing $spacing $spacing $spacing 
-    set ext [expr $res -1]
-    $_reslice SetOutputExtent 0 $ext 0 $ext 0 $ext
-
-    $_slider configure -from 0
-    $_slider configure -to $res
-    $this configure -slice [expr round( $opos * $res )]
-    $_tkrw configure -width $res -height $res
-}
-
-# ------------------------------------------------------------------
-#                             METHODS
-# ------------------------------------------------------------------
-
-
-itcl::body isvolume::expose {} {
-    $_tkrw Render
-}
-
-# ------------------------------------------------------------------
-
-#-------------------------------------------------------------------------------
-# METHOD: volmenu_update
-#
-# DESCRIPTION: create the array of volume names and ids
-#              The array can be accessed by volume Id or volume name.
-#              However, should two names be the same, the second one
-#              overwrites the first.
-#-------------------------------------------------------------------------------
-itcl::body isvolume::volmenu_update {} {
-
-    array unset _VolIdMap
-
-    foreach id $::Volume(idList) {
-        set name [Volume($id,node) GetName]
-        set _VolIdMap($name)  $id
-        set _VolIdMap($id)    $id
-        set _VolIdMap(${name}__$id)  $id 
-    }
-
-    $_volmenu delete 0 end
-    foreach id $::Volume(idList) {
-        set name [Volume($id,node) GetName]
-        $_volmenu insert end  ${name}__$id
-    }
-    $_volmenu select 0
-}
 
 # ------------------------------------------------------------------
 
@@ -516,6 +570,66 @@ itcl::body isvolume::screensave { filename {imagetype "PNM"} } {
 
 # ------------------------------------------------------------------
 
+itcl::body isvolume::slicer_volume { {name ""} } {
+
+    # add a mrml node
+    set n [MainMrmlAddNode Volume]
+    set i [$n GetID]
+    MainVolumesCreate $i
+    
+    # find a name for the image data that hasn't been taken yet
+    while {1} {
+        set id id_$_name$_volume_serial
+        if { [info command $id] == "" } {
+            break ;# found a free name
+        } else {
+            incr _volume_serial ;# need to try again
+        }
+    }
+
+    # set the name and description of the volume
+    if { $name == "" } { 
+        $n SetName isvolume-$_volume_serial
+    } else {
+        $n SetName $name
+    }
+    $n SetDescription "Resampled volume"
+    incr _volume_serial
+
+    #
+    # need to construct a volume from the slicer output
+    #
+
+    vtkImageData $id
+    eval [$this imagedata] SetUpdateExtent [[$this imagedata] GetWholeExtent]
+    [$this imagedata] Update
+    $id DeepCopy [$this imagedata]
+
+    eval ::Volume($i,node) SetSpacing [$id GetSpacing]
+
+    switch $itk_option(-orientation) {
+        Axial { ::Volume($i,node) SetScanOrder IS }
+        Sagittal { ::Volume($i,node) SetScanOrder LR }
+        Coronal { ::Volume($i,node) SetScanOrder PA }
+    }
+    ::Volume($i,node) SetNumScalars 1
+    ::Volume($i,node) SetScalarType [$id GetScalarType]
+    ::Volume($i,node) SetDimensions [lindex [$id GetDimensions] 0] [lindex [$id GetDimensions] 1]
+    ::Volume($i,node) SetImageRange 0 [expr $itk_option(-resolution) - 1]
+
+    ::Volume($i,node) ComputeRasToIjkFromScanOrder [::Volume($i,node) GetScanOrder]
+
+    MainUpdateMRML
+
+    Volume($i,vol) SetImageData $id
+
+    Slicer SetOffset 0 0
+    MainSlicesSetVolumeAll Back $i
+    RenderAll
+}
+
+# ------------------------------------------------------------------
+
 proc isvolume_demo {} {
 
     catch "destroy .isvolumedemo"
@@ -524,6 +638,16 @@ proc isvolume_demo {} {
     #wm geometry .isvolumedemo 400x700
 
     pack [isvolume .isvolumedemo.isv] -fill both -expand true
+}
+
+proc iSlicerUpdateMRML {} {
+    .isvolumedemo.isv configure -transform [Matrix(0,node) GetMatrix]
+}
+
+proc isvolume_transform_test {} {
+
+    lappend ::Module(idList) iSlicer
+    set ::Module(iSlicer,procMRML) iSlicerUpdateMRML
 }
 
 
