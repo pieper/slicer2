@@ -149,8 +149,12 @@ When satisfied with the segmentation use other editing modules on the labelmap (
     # FastMarching->Logo Frame
     #-------------------------------------------
     set f $Ed(EdFastMarching,frame).fTabbedFrame.fBasic.fLogo
-    set im [image create photo -file $::env(SLICER_HOME)/Modules/vtkFastMarching/images/gatech.ppm]
-    pack [label $f.logo -image $im]
+    if { [file exists $::env(SLICER_HOME)/Modules/vtkFastMarching/images/gatech.ppm] } {
+        set im [image create photo -file $::PACKAGE_DIR_VTKFASTMARCHING/../../../images/gatech.ppm]
+        pack [label $f.logo -image $im]
+    } else {
+        pack [label $f.logo -text "Georgia Tech"]
+    }
 
     #-------------------------------------------
     # FastMarching->Grid frame
