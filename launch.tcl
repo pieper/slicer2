@@ -79,10 +79,18 @@ if {[catch {
 #
 # VTK source and binary dirs and tcl dirs should be in the Lib directory
 #
-set env(VTK_SRC_DIR) ${env(SLICER_HOME)}/Lib/${env(BUILD)}/vtk/VTK
-set env(VTK_BIN_DIR) ${env(SLICER_HOME)}/Lib/${env(BUILD)}/vtk/VTK-build
-set env(TCL_BIN_DIR) ${env(SLICER_HOME)}/Lib/${env(BUILD)}/ActiveTcl-8.4.1/bin
-set env(TCL_LIB_DIR) ${env(SLICER_HOME)}/Lib/${env(BUILD)}/ActiveTcl-8.4.1/lib
+if { ![info exists env(VTK_SRC_DIR)] || $env(VTK_SRC_DIR) == "" } {
+    set env(VTK_SRC_DIR) ${env(SLICER_HOME)}/Lib/${env(BUILD)}/vtk/VTK
+}
+if { ![info exists env(VTK_BIN_DIR)] || $env(VTK_BIN_DIR) == "" } {
+    set env(VTK_BIN_DIR) ${env(SLICER_HOME)}/Lib/${env(BUILD)}/vtk/VTK-build
+}
+if { ![info exists env(TCL_BIN_DIR)] || $env(TCL_BIN_DIR) == "" } {
+    set env(TCL_BIN_DIR) ${env(SLICER_HOME)}/Lib/${env(BUILD)}/ActiveTcl-8.4.1/bin
+}
+if { ![info exists env(TCL_LIB_DIR)] || $env(TCL_LIB_DIR) == "" } {
+    set env(TCL_LIB_DIR) ${env(SLICER_HOME)}/Lib/${env(BUILD)}/ActiveTcl-8.4.1/lib
+}
 
 
 #
