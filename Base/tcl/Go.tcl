@@ -29,16 +29,6 @@
 #   START_THE_SLICER
 #==========================================================================auto=
 
-# Load vtktcl.dll on PCs
-catch {load vtktcl}
-
-# turn of warnings about old function use
-if { $tcl_platform(platform) == "windows" } {
-	vtkObject o
-	o SetGlobalWarningDisplay 0
-	o Delete
-}
-
 if {$argc > 1} {
     puts "UNIX Usage: vtk Go.tcl <MRML file name without .mrml>"
     puts "Windows Usage: wish82.exe Go.tcl <MRML file name without .mrml>"
@@ -84,11 +74,25 @@ global Path
 set splashim [image create photo -file [file join $Path(program) gui/welcome.ppm]]
 label .splash.l -image $splashim
 place .splash.l -relx 0.5 -rely 0.35 -anchor center
-label .splash.t -text "Please be aware that Slicer is for Research Use Only.\n\nSee www.slicer.org for license details." -bg white -fg red
+label .splash.t -text "Please be aware that Slicer is not validated and is for Research Use Only.\n\nSee www.slicer.org for license details." -bg white -fg red
 place .splash.t -relx 0.5 -rely 0.75 -anchor center
 wm withdraw .
 update
-after 10000 "destroy .splash; image delete $splashim"
+after 7000 "destroy .splash; image delete $splashim"
+proc raisesplash {} { if {[winfo exists .splash]} {raise .splash; after 100 "after idle raisesplash"}}
+raisesplash
+
+
+# Load vtktcl.dll on PCs
+catch {load vtktcl}
+
+# turn of warnings about old function use
+if { $tcl_platform(platform) == "windows" } {
+	vtkObject o
+	o SetGlobalWarningDisplay 0
+	o Delete
+}
+
 
 # Source Tcl scripts
 # Source optional local copies of files with programming changes
