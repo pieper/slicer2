@@ -19,8 +19,12 @@ set nBins 200
 vtkLookupTable lut1
   lut1 Build
 
+tk_messageBox -message "before create"
+
 vtkImageAccumulateDiscrete accum
   accum SetInput [mag GetOutput]
+
+tk_messageBox -message "before update"
   accum Update
  
 vtkImageBimodalAnalysis bi

@@ -130,7 +130,9 @@ proc MainBoot {{mrmlFile ""}} {
 
     # Build the Viewer window before doing anything else to see if that helps
     # with the apparent OpenGL bug on Windows98 version 2
+
     vtkMrmlSlicer Slicer
+
     Slicer SetFieldOfView $View(fov)
 
     vtkRenderer viewRen
@@ -355,7 +357,7 @@ proc MainInit {} {
 
         # Set version info
     lappend Module(versions) [ParseCVSInfo Main \
-        {$Revision: 1.74 $} {$Date: 2002/05/09 14:50:42 $}]
+        {$Revision: 1.75 $} {$Date: 2002/05/09 20:29:12 $}]
 
     # Call each "Init" routine that's not part of a module
     #-------------------------------------------

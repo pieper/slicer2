@@ -14,14 +14,14 @@ vtkImageMagnify mag
   mag SetInput [reader GetOutput]
   mag SetMagnificationFactors 4 4 1
 
-vtkImageThreshold mag
+vtkImageThreshold th
   th SetReplaceIn 1
   th SetReplaceOut 0
   th SetInValue 4000
   th ThresholdBetween 1000 2000
 
 vtkImageEditor edit 
-  edit SetInput [reader GetOutput]
+  edit SetInput [mag GetOutput]
   edit UseInputOn
   edit SetDimensionTo3D
 #  edit SetDimensionToSingle

@@ -18,8 +18,7 @@ vtkImageThreshold thfast
 thfast SetInput [mag GetOutput]
 thfast SetReplaceIn 1
 thfast SetReplaceOut 1
-thfast SetUpperThreshold 2000
-thfast SetLowerThreshold 1000
+thfast ThresholdBetween 1000 2000
 thfast SetOutValue 0
 thfast SetInValue 1000
 
@@ -34,10 +33,4 @@ viewer SetColorLevel 1000
 
 #make interface
 source [file join [file dirname [info script]] WindowLevelInterface.tcl]
-
-
-
-
-
-
 
