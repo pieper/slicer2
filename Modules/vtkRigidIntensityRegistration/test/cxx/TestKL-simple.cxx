@@ -80,4 +80,11 @@ int main(int argc, char *argv[])
   
     KL->Update();
     std::cout << "Metric: " << KL->GetMetricValue() << std::endl;
+
+    KL->SetSourceImage(imadd1->GetOutput());
+    KL->SetTargetImage(imadd2->GetOutput());
+
+    KL->Update();
+    std::cout << "Metric: (should be 0)" << KL->GetMetricValue() << std::endl;
+
 }
