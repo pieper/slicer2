@@ -112,9 +112,12 @@ itcl::body dup_deidentify::run {dir} {
         foreach op $ops {
             puts "executing $op"
             $parent log "executing $op"
-            if { [catch "exec $dcanon_dir/$op" err] } {
-                puts "$op failed: $err"
-                $parent log "$op failed: $err"
+            if { [catch "exec $dcanon_dir/$op" res] } {
+                puts "$op failed: $res"
+                $parent log "$op failed: $res"
+            } else {
+                puts "$op succeeded: $res"
+                $parent log "$op succeeded: $res"
             }
         }
         $parent log "finished deidentify of $dir"
@@ -125,9 +128,12 @@ itcl::body dup_deidentify::run {dir} {
             $parent log "rendering $ser"
             # TODO - this avoids warning messages when slicer starts
             set ::env(SLICER_CUSTOM_CONFIG) "true"
-            if { [catch "exec $::env(SLICER_HOME)/slicer2-linux-x86 --load-dicom $ser --script $::env(SLICER_HOME)/Modules/iSlicer/tcl/evaluation-movies.tcl --exec eval_movies $ser/Deface 10 10 ., exit" err] } {
-                puts "$op failed: $err"
-                $parent log "$op failed: $err"
+            if { [catch "exec $::env(SLICER_HOME)/slicer2-linux-x86 --agree_to_license --load-dicom $ser --script $::env(SLICER_HOME)/Modules/iSlicer/tcl/evaluation-movies.tcl --exec eval_movies $ser/Deface 10 10 ., exit" res] } {
+                puts "$op failed: $res"
+                $parent log "$op failed: $res"
+            } else {
+                puts "$op succeeded: $res"
+                $parent log "$op succeeded: $res"
             }
 
         }
