@@ -42,6 +42,7 @@
 #   DevCheckScrollLimits 
 #   DevCheckScrollLimits
 #   DevFileExists
+#   DevSourceTclFilesInDirectory dir verbose
 #==========================================================================auto=
 # This file exists specifically for user to help fast development
 # of Slicer modules
@@ -844,4 +845,38 @@ proc DevFileExists {filename} {
     }
 
     return 0
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC DevSourceTclFilesInDirectory
+# Source all tcl files found in directory dir.  Returns a list of
+# the files (without the leading path or file extension).
+# .ARGS
+# path dir location of the files
+# int verbose optional, defaults to 0, whether to puts the filenames
+# .END
+#-------------------------------------------------------------------------------
+proc DevSourceTclFilesInDirectory {dir {verbose "0"}} {
+
+    # from Go.tcl.  Looks locally and centrally.
+    set found [FindNames $dir]
+    if {$verbose == 1} {puts $found}
+
+    set sourced ""
+
+    # If it's a tcl file source it and save its name on a list
+    foreach name $found {
+        # from Go.tcl.  Finds local or central full path of tcl file
+        set path [GetFullPath $name tcl $dir]
+        # If a tcl file exists source it and save name
+        if {$path != ""} {
+            if {$verbose == 1} {puts "source $path"}
+            source $path
+            lappend sourced $name
+        } 
+    }
+
+    # return the list of sourced files
+    return $sourced
 }

@@ -74,7 +74,7 @@ proc DataInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.39 $} {$Date: 2002/03/21 23:05:24 $}]
+        {$Revision: 1.40 $} {$Date: 2002/04/09 19:17:53 $}]
 
     set Data(index) ""
     set Data(clipboard) ""
@@ -825,8 +825,7 @@ proc DataAddVolume {} {
     global Volume Module
 
     if {[IsModule Volumes] == 1} {
-        set Volume(propertyType) Basic
-        VolumesSetPropertyType
+        VolumesSetPropertyType VolBasic
         MainVolumesSetActive NEW
         set Volume(freeze) 1
         Tab Volumes row1 Props
