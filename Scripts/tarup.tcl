@@ -390,7 +390,6 @@ proc tarup { {destdir "auto"} } {
                 exec xterm -e scp $archroot.tar.gz $scpdestination
             }
             "win32" { 
-                tk_messageBox -message "exec rxvt -e scp $archroot.zip $scpdestination &"
                 exec rxvt -e scp $archroot.zip $scpdestination &
             }
         }
