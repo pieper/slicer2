@@ -67,7 +67,7 @@ proc ModelsInit {} {
 
 	# Set Version Info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.20 $} {$Date: 2000/02/28 17:56:18 $}]
+		{$Revision: 1.21 $} {$Date: 2000/05/19 22:57:55 $}]
 
 	# Props
 	set Model(propertyType) Basic
@@ -83,6 +83,7 @@ proc ModelsInit {} {
 # .END
 #-------------------------------------------------------------------------------
 proc ModelsUpdateMRML {} {
+
 	global Gui Model Slice Module Color Volume Label
 
 	# Create the GUI for any new models
@@ -612,15 +613,14 @@ proc ModelsConfigScrolledGUI {} {
 
 	if {$m != ""} {
 	    # Find the height of a single button
-	    set lastButton $f.c$m
-	    set width [winfo reqwidth $lastButton]
+	    # Must use $f.s$m since the scrollbar ("s") fields are tallest
+	    set lastButton $f.s$m
 	    # Find how many modules (lines) in the frame
 	    set numLines [llength $Model(idList)]
 	    # Find the height of a line
 	    set incr [expr {[winfo reqheight $lastButton] + 2*$pady}]
 	    # Find the total height that should scroll
 	    set height [expr {$numLines * $incr}]
-
 	    $canvas config -scrollregion "0 0 1 $height"
 	    $canvas config -yscrollincrement $incr -confine true
 	}
