@@ -160,7 +160,7 @@ proc FMRIEngineInit {} {
     #   Record any other modules that this one depends on.  This is used 
     #   to check that all necessary modules are loaded when Slicer runs.
     #   
-    set Module($m,depend) "CISGFile BXH"
+    set Module($m,depend) "Analyze BXH"
 
     # Set version info
     #------------------------------------
@@ -170,7 +170,7 @@ proc FMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.17 $} {$Date: 2004/07/12 20:25:53 $}]
+        {$Revision: 1.18 $} {$Date: 2004/07/21 21:01:15 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -194,6 +194,7 @@ proc FMRIEngineInit {} {
     source "$FMRIEngine(modulePath)/tcl/FMRIEnginePlot.tcl"
     source "$FMRIEngine(modulePath)/tcl/FMRIEngineParadigmParser.tcl"
     source "$FMRIEngine(modulePath)/tcl/notebook.tcl"
+    source "$FMRIEngine(modulePath)/tcl/AnalyzeReader.tcl"
 }
 
 
@@ -865,7 +866,7 @@ proc FMRIEngineLoadVolumes {} {
 # .END
 #-------------------------------------------------------------------------------
 proc FMRIEngineLoadAnalyzeVolumes {} {
-    global FMRIEngine Volume Mrml
+    global AnalyzeCache FMRIEngine Volume Mrml
 
     $FMRIEngine(slider) set 0 
     $FMRIEngine(slider) configure -showvalue 1 
@@ -883,64 +884,51 @@ proc FMRIEngineLoadAnalyzeVolumes {} {
     # file filter
     set path [file dirname $fileName]
     set filter $FMRIEngine(filter)
-    set wildcard "*.hdr"
-    set hdr ".hdr"
     string trim $filter
-    if {$filter == ""} {
-        set pattern [file join $path $wildcard]
+    set len [string length $filter]
+    if {$len == 0} {
+        lappend analyzeFiles $fileName
     } else {
-        if {$len < 5} {
-            set pattern [file join $path $filter$hdr]
-        } else {
-            set ext [string range $filter [expr $len-4] [expr $len-1]]
-            if {$ext == $hdr} {
-                set pattern [file join $path $filter]
-            } else {
-                set wildcard [string range $filter 0 [expr $len-5]]
-                set pattern [file join $path $wildcard$hdr]
-            }
+        set pattern [file join $path $filter]
+        set fileList [glob -nocomplain $pattern]
+        if {$fileList == ""} {
+            DevErrorWindow "No Analyze file is selected through your filter: $filter"
+            return
         }
+
+        set analyzeFiles [lsort -dictionary $fileList]
     }
 
-    set fileList [glob -nocomplain $pattern]
-    if {$fileList == ""} {
-        set path $Mrml(dir)
-        DevErrorWindow "Your Analyze file is not valid: $fileName"
-        return
-    }
-
-    set analyzeFiles [lsort -dictionary $fileList]
+    unset -nocomplain AnalyzeCache(MRMLid)
     foreach f $analyzeFiles { 
-
-        MainVolumesSetActive "NEW"
-        set Volume(VolAnalyze,FileName) $f
-        set volName [VolBXHCreateVolumeNameFromFileName $f] 
-        set Volume(name) $volName
-
-        set load "Loading volume:\n"
-        append load $volName
-        set FMRIEngine(name) $load
-        
+       
         # VolAnalyzeApply without argument is for Cindy's data (IS scan order) 
         # VolAnalyzeApply "PA" is for Chandlee's data (PA scan order) 
         # set id [VolAnalyzeApply "PA"]
-        lappend mrmlIds [VolAnalyzeApply]
+        # lappend mrmlIds [VolAnalyzeApply]
+
+         set ext [file extension $f]
+         if {$ext != ".hdr"} {
+             DevErrorWindow "Tried to load a non-Analyze header file: $f"
+             return
+         }
+        set AnalyzeCache(fileName) $f 
+        AnalyzeApply
     }
-    set FMRIEngine(firstMRMLid) [lindex $mrmlIds 0] 
-    set FMRIEngine(lastMRMLid) [lindex $mrmlIds end] 
-    set FMRIEngine(noOfAnalyzeVolumes) [llength $mrmlIds] 
-    set ext [[Volume([lindex $mrmlIds 0],vol) GetOutput] GetWholeExtent]
+
+    set FMRIEngine(firstMRMLid) [lindex $AnalyzeCache(MRMLid) 0] 
+    set FMRIEngine(lastMRMLid) [lindex $AnalyzeCache(MRMLid) end] 
+    set FMRIEngine(noOfAnalyzeVolumes) [llength $AnalyzeCache(MRMLid)] 
+    set ext [[Volume([lindex $AnalyzeCache(MRMLid) 0],vol) GetOutput] GetWholeExtent]
     set FMRIEngine(volextent) $ext 
 
-    $FMRIEngine(slider) configure -from 1 -to [llength $mrmlIds] 
+    $FMRIEngine(slider) configure -from 1 -to [llength $AnalyzeCache(MRMLid)] 
     $FMRIEngine(slider) configure -state active
     $FMRIEngine(slider) configure -showvalue 1 
 
     # show the first volume by default
-    MainSlicesSetVolumeAll Back [lindex $mrmlIds 0] 
+    MainSlicesSetVolumeAll Back [lindex $AnalyzeCache(MRMLid) 0] 
     RenderAll
-
-    set FMRIEngine(name) ""
 }
 
 
@@ -1029,10 +1017,10 @@ proc FMRIEngineComputeActivationVolume {} {
     Volume($i,node) SetDimensions [lindex [$act GetDimensions] 0] [lindex [$act GetDimensions] 1]
     Volume($i,node) ComputeRasToIjkFromScanOrder [Volume($i,node) GetScanOrder]
 
-    MainUpdateMRML
     Volume($i,vol) SetImageData $act
     MainSlicesSetVolumeAll Fore $i
     MainVolumesSetActive $i
+    MainUpdateMRML
     RenderAll
 }
 
