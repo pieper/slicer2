@@ -71,6 +71,8 @@ Be SURE you are in your new directory when you run this command!
     cp CMakeListsLocal-SAMPLE.txt CMakeListsLocal.txt
 
 * Edit CMakeListsLocal.txt to include the names of your source files.
+  Change VTKMYCLASS_SOURCE_DIR to VTK[MODULENAME]_SOURCE_DIR as needed
+  e.g. VTKTEST_SOURCE_DIR.
   Be sure not to include suffixes.  If you have abstract classes, put
   them in the source files area as well as the abstract files area.
   The file also includes directions for adding link libraries, and

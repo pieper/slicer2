@@ -5,6 +5,11 @@
 # abstract files noted below in this list too. Do not include file
 # suffixes.
 
+#
+# Change all 'MyClass' to appropriate source file name 
+# and 'MYCLASS' to your module name (all CAPS)
+#
+
 SOURCE_FILES (LOCAL_MODULE_SRCS
 vtkMyClass1
 vtkMyClass2
