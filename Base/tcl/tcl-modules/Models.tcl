@@ -67,7 +67,7 @@ proc ModelsInit {} {
 
 	# Set Version Info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.21 $} {$Date: 2000/05/19 22:57:55 $}]
+		{$Revision: 1.22 $} {$Date: 2000/07/26 19:02:42 $}]
 
 	# Props
 	set Model(propertyType) Basic
@@ -153,21 +153,33 @@ proc ModelsBuildGUI {} {
 Description by tab:<BR>
 <UL>
 <LI><B>Display:</B> Click the button with the model's name to
-set it visibility, and move the slider to affect its opacity.
+set its visibility, and move the slider to affect its opacity.
 For a menu of additional options, click the button with the
 <B>Right</B> mouse button.<BR>
 <LI><B>Props:</B> Another way of setting the model's properties
 than via the menu on the <B>Display</B> tab. You must click the
 <B>Apply</B> button for your changes to take effect.<BR>
-<LI><B>Clip:</B> The reformatted slice planes can act as clipping
-planes to give you vision inside the model. Select whether to clip
-the portion of the model lying on the positive or negative side of
-each slice plane.
+
+<LI><B>Clip:</B> The slice planes can act as clipping planes to give
+you vision inside the model. Select whether each plane should not
+clip, or clip the portion of the model lying on the its positive or
+its negative side. Note that if two planes are clipping at the same
+time, only regions that would be clipped by both planes are clipped. <BR>
+
+Note that to clip a particular model, you must turn clipping on for that model.
+Do that in the Props:Advanced section.
+
 <BR><B>TIP</B> Clip the skin to see the other models inside the
 body while still retaining the skin as a landmark.<BR>
 <LI><B>Meter:</B> Click the <B>Measure Performance</B> button
 to display the number of polygons in each model and the time
-to render them all."
+to render them all.
+
+<LI><B>Other Notes:</B><BR>
+If <B>Backface Culling</B> is on, you will see nothing when looking inside a clipped model. If Backface Culling is off, you will the inside of the model when looking inside a clipped model.
+
+
+"
 	regsub -all "\n" $help { } help
 	MainHelpApplyTags Models $help
 	MainHelpBuildGUI Models
@@ -370,7 +382,7 @@ to render them all."
 	set f $fProps.fBot.fBasic.fApply
 
 	eval {button $f.bApply -text "Apply" \
-		-command "ModelsPropsApply; RenderAll"} $Gui(WBA) {-width 8}
+		-command "ModelsPropsApply; Render3D"} $Gui(WBA) {-width 8}
 	eval {button $f.bCancel -text "Cancel" \
 		-command "ModelsPropsCancel"} $Gui(WBA) {-width 8}
 	grid $f.bApply $f.bCancel -padx $Gui(pad) -pady $Gui(pad)
@@ -384,7 +396,8 @@ to render them all."
 	# Visible
 	eval {label $f.l -text "Clipping:"} $Gui(WLA)
 	eval {checkbutton $f.c \
-		 -variable Model(clipping) -indicatoron 1} $Gui(WCA)
+		 -variable Model(clipping) -indicatoron 1 \
+                 -command "ModelsPropsApply; Render3D" } $Gui(WCA)
 
 	pack $f.l $f.c -side left -padx $Gui(pad)
 
@@ -399,9 +412,10 @@ to render them all."
 
 	foreach text "{Yes} {No}" \
 		value "1 0" \
-		width "3 3" {
+		width "4 4" {
 		eval {radiobutton $f.f.rMode$value -width $width \
-			-text "$text" -value "$value" -variable Model(culling) \
+			-text "$text" -value "$value" -variable Model(culling)\
+                         -command "ModelsPropsApply; Render3D" \
 			-indicatoron 0} $Gui(WCA)
 		pack $f.f.rMode$value -side left -padx 0 -pady 0
 	}
@@ -429,6 +443,7 @@ to render them all."
 		width "4 4" {
 		eval {radiobutton $f.f.rMode$value -width $width \
 			-text "$text" -value "$value" -variable Model(scalarVisibility) \
+                         -command "ModelsPropsApply; Render3D" \
 			-indicatoron 0} $Gui(WCA)
 		pack $f.f.rMode$value -side left
 	}
@@ -437,8 +452,12 @@ to render them all."
 	set f $fRange
 
 	eval {label $f.l -text "  Scalar Range:"} $Gui(WLA)
-	eval {entry $f.eLo -width 6 -textvariable Model(scalarLo)} $Gui(WEA)
-	eval {entry $f.eHi -width 6 -textvariable Model(scalarHi)} $Gui(WEA)
+	eval {entry $f.eLo -width 6 -textvariable Model(scalarLo) } $Gui(WEA)
+	bind $f.eLo <Return> "ModelsPropsApply; Render3D"
+	bind $f.eLo <FocusOut> "ModelsPropsApply; Render3D"
+	eval {entry $f.eHi -width 6 -textvariable Model(scalarHi) } $Gui(WEA)
+        bind $f.eHi <Return> "ModelsPropsApply; Render3D"
+	bind $f.eHi <FocusOut> "ModelsPropsApply; Render3D"
 	pack $f.l $f.eLo $f.eHi -side left -padx $Gui(pad)
 
 	#-------------------------------------------
@@ -447,6 +466,8 @@ to render them all."
 	set f $fProps.fBot.fAdvanced.fDesc
 
 	eval {label $f.l -text "Optional Description:"} $Gui(WLA)
+	bind $f.l <Return> "ModelsPropsApply"
+	bind $f.l <FocusOut> "ModelsPropsApply"
 	eval {entry $f.e -textvariable Model(desc)} $Gui(WEA)
 	pack $f.l -side top -padx $Gui(pad) -fill x -anchor w
 	pack $f.e -side top -padx $Gui(pad) -expand 1 -fill x
@@ -457,7 +478,7 @@ to render them all."
 	set f $fProps.fBot.fAdvanced.fApply
 
 	eval {button $f.bApply -text "Apply" \
-		-command "ModelsPropsApply; RenderAll"} $Gui(WBA) {-width 8}
+		-command "ModelsPropsApply; Render3D"} $Gui(WBA) {-width 8}
 	eval {button $f.bCancel -text "Cancel" \
 		-command "ModelsPropsCancel"} $Gui(WBA) {-width 8}
 	grid $f.bApply $f.bCancel -padx $Gui(pad) -pady $Gui(pad)
@@ -478,12 +499,12 @@ to render them all."
 	#-------------------------------------------
 	set f $fClip.fHelp
 
-	eval {label $f.l  -justify left -text "The slices clip the models that\n\
+	eval {label $f.l  -justify left -text "The slices clip all models that\n\
 have clipping turned on.\n\n\
 To turn clipping on for a model,\n\
 click with the right mouse button\n\
-on the model's name on the Display\n\
-page, and select 'Clipping'."} $Gui(WLA)
+on the model's name on the Props:\n\
+Advanced page, and select 'Clipping'."} $Gui(WLA)
 	pack $f.l
 
 	#-------------------------------------------
