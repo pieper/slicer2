@@ -911,15 +911,15 @@ void vtkImageDrawROI::DrawBoxes(vtkImageData *outData, int outExt[6])
 //----------------------------------------------------------------------------
 // Description:
 // this is cool
-void vtkImageDrawROI::ExecuteData(vtkDataObject *)
+void vtkImageDrawROI::ExecuteData(vtkDataObject *out)
 {
+
+  // let superclass allocate data
+  this->vtkImageInPlaceFilter::ExecuteData(out);
 
   vtkImageData *inData = this->GetInput();
   vtkImageData *outData = this->GetOutput();
   int *outExt = outData->GetWholeExtent();
-
-  outData->SetExtent(outExt);
-  outData->AllocateScalars();
 
   int x1, *inExt;
   

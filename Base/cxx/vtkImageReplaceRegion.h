@@ -63,7 +63,7 @@ protected:
   vtkIntArray *Indices;
   vtkImageData *Region;
 
-  void Execute(vtkImageData *inData, vtkImageData *outData);
+  void ExecuteData(vtkDataObject *outData);
 };
 
 #endif

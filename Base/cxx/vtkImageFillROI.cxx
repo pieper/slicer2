@@ -659,11 +659,12 @@ static void vtkImageFillROIExecute(vtkImageFillROI* self,
 }
 
 //----------------------------------------------------------------------------
-void vtkImageFillROI::ExecuteData(vtkDataObject *)
+void vtkImageFillROI::ExecuteData(vtkDataObject *out)
 {
+  // let superclass allocate data
+  this->vtkImageInPlaceFilter::ExecuteData(out);
+
   vtkImageData *outData = this->GetOutput();
-  outData->SetExtent(outData->GetWholeExtent());
-  outData->AllocateScalars();
 
     void *ptr = NULL;
     int x1, *inExt;

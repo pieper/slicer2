@@ -119,9 +119,12 @@ static void vtkImageReplaceRegionExecute(vtkImageReplaceRegion *self,
 // algorithm to fill the output from the input.
 // It just executes a switch statement to call the correct function for
 // the datas data types.
-void vtkImageReplaceRegion::Execute(vtkImageData *vtkNotUsed(inData), 
-                 vtkImageData *outData)
+void vtkImageReplaceRegion::ExecuteData(vtkDataObject *out)
 {
+  // let superclass allocate data
+  this->vtkImageInPlaceFilter::ExecuteData(out);
+  vtkImageData *outData = this->GetOutput();
+
   void *ptr = NULL;
   int s1, s2;
 
