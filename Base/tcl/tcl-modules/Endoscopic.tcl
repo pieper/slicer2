@@ -259,7 +259,7 @@ proc EndoscopicInit {} {
     set Module($m,category) "Visualisation"
     
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.71 $} {$Date: 2004/10/15 20:15:22 $}] 
+    {$Revision: 1.72 $} {$Date: 2004/10/19 20:06:41 $}] 
        
     # Define Procedures
     #------------------------------------
@@ -4921,7 +4921,7 @@ proc EndoscopicAddFlatView {} {
     
  
     set zoomfrm [frame .t$name.controls.xfrm.zoomfrm]        
-    set camZoomlbl [label $zoomfrm.lbl -text "In<-->Out" -font {helvetica 10}]
+    set camZoomlbl [label $zoomfrm.lbl -text "Zoom In<-->Zoom Out" -font {helvetica 10}]
     set Endoscopic(flatScale,camZoom) [scale $zoomfrm.camZoom -from 0 -to 100 -res 0.5 -orient horizontal  -variable Endoscopic(flatColon,zCamDist)]
     pack $camZoomlbl -side top
     pack $Endoscopic(flatScale,camZoom) -side top
@@ -5043,7 +5043,7 @@ proc EndoscopicAddFlatView {} {
     set Endoscopic(flatColon,yMin) [lindex $outline 2]
     set Endoscopic(flatColon,yMax) [lindex $outline 3]
     set Endoscopic(flatColon,zMin) [lindex $outline 4]
-    set Endoscopic(flatColon,zMax) [lindex $outline 5]
+    set Endoscopic(flatColon,zMax) [lindex $outline 5]  
 
 # normalize the initial camera position   
     set y [expr $Endoscopic(flatColon,yMax) - $Endoscopic(flatColon,yMin)]
@@ -5097,8 +5097,8 @@ proc EndoscopicAddFlatView {} {
      Endoscopic($name,renderer) AddLight Endoscopic($name,light)
      
      # add command for changing the light's elevation and azimuth
-     set Endoscopic(flatColon,LightElev) 0
-     set Endoscopic(flatColon,LightAzi) -20
+     set Endoscopic(flatColon,LightElev) 45
+     set Endoscopic(flatColon,LightAzi) -45
      $Endoscopic(flatScale,elevation) config -command "EndoscopicFlatLightElevationAzimuth $f.flatRenderWidget$name"
      $Endoscopic(flatScale,azimuth) config -command "EndoscopicFlatLightElevationAzimuth $f.flatRenderWidget$name"
   
@@ -5185,13 +5185,31 @@ proc EndoscopicCreateFlatBindings {widget} {
  # the following 2 lines are for testing the bindings the old fashioned way.
  #    bind $widget <ButtonRelease-1> {puts Button}
  #    bind $widget <KeyPress-c> {EndoscopicPickFlatPoint %W %x %y}
+ 
+# FlatWindow Pan and Zoom bindings
+    EvDeclareEventHandler FlatWindowExpose <Expose> {%W Render}
+    EvDeclareEventHandler FlatWindowStartPan <ButtonPress-2> {EndoscopicStartPan %W %x %y}
+    EvDeclareEventHandler FlatWindowB2Motion <B2-Motion> {EndoscopicEndPan %W %x %y}
+    EvDeclareEventHandler FlatWindowEndPan <ButtonRelease-2> {EndoscopicEndPan %W %x %y}
+    EvDeclareEventHandler FlatWindowStartZoom <ButtonPress-3> {EndoscopicStartZoom %W %y}
+    EvDeclareEventHandler FlatWindowB3Motion <B3-Motion> {EndoscopicEndZoom %W %y}
+    EvDeclareEventHandler FlatWindowEndZoom <ButtonRelease-3> {EndoscopicEndZoom %W %y}
 
-    EvDeclareEventHandler FlatWindowEvents <Double-Any-ButtonPress> {EndoscopicPickFlatPoint %W %x %y}
- #test   
+#FlatWindow Pick target binding    
+    EvDeclareEventHandler FlatWindowEvents <Shift-Double-1> {EndoscopicPickFlatPoint %W %x %y}
+
+#test binding to track mouse position
     EvDeclareEventHandler FlatMotionEvents <Motion> {EndoscopicMouseLocation %W %x %y}
 
-    EvAddWidgetToBindingSet bindFlatWindowEvents $widget {{FlatWindowEvents} {FlatMotionEvents}}
+#add various events to the binding set for the flat window
+    EvAddWidgetToBindingSet bindFlatWindowEvents $widget {{FlatWindowEvents} {FlatMotionEvents} {FlatWindowExpose} \
+    {FlatWindowStartPan} {FlatWindowB2Motion} {FlatWindowEndPan}}
+    
+# the zoom function with B3 is temporarily disabled, pending feed back from user
+# to activate: append the following 3 bindings to  EvAddWidgetToBindingSet  
+#     {FlatWindowStartZoom} {FlatWindowB3Motion} {FlatWindowEndZoom}
 
+#activate the binding set for the flat window
     EvActivateBindingSet bindFlatWindowEvents
 
 }
@@ -5207,15 +5225,97 @@ proc EndoscopicPopFlatBindings {} {
 }
 
 
-#test proc
+#test proc to track mouse location in the flat window
 proc EndoscopicMouseLocation {widget xcoord ycoord} {
     global Endoscopic
     
     set name $Endoscopic($widget,name)
     .t$name.controls.lfrm.coordfrm.lbl configure -text "x: $xcoord  y: $ycoord"
 
-
 }
+
+
+proc EndoscopicStartPan {widget xcoord ycoord} {
+     global Endoscopic
+
+    set name $Endoscopic($widget,name)
+
+    set Endoscopic($name,pan,xstart) $xcoord
+    set Endoscopic($name,pan,ystart) $ycoord     
+     
+     
+}
+
+
+proc EndoscopicEndPan {widget xcoord ycoord} {
+     global Endoscopic
+     
+    set name $Endoscopic($widget,name)
+
+    set xstart $Endoscopic($name,pan,xstart)
+    set ystart $Endoscopic($name,pan,ystart)
+
+    set dx [expr $xcoord - $xstart]
+    set dy [expr $ycoord - $ystart]
+
+    set position [$Endoscopic($name,camera) GetPosition]
+    set x1 [lindex $position 0]
+    set y1 [lindex $position 1]
+    set z1 [lindex $position 2]
+
+    set x2 [expr $x1 - [expr $dx * .1]]
+    set y2 [expr $y1 + [expr $dy * .1]]
+    
+    $Endoscopic($name,camera) SetFocalPoint $x2 $y2 0
+    $Endoscopic($name,camera) SetPosition $x2 $y2 $z1
+    
+    set Endoscopic(flatColon,xCamDist) $x2
+    set Endoscopic(flatColon,yCamDist) $y2
+
+    [$widget GetRenderWindow] Render     
+     
+}
+
+
+proc EndoscopicStartZoom {widget ycoord} {
+     global Endoscopic
+    
+    set name $Endoscopic($widget,name)
+    set Endoscopic($name,zoom,ystart) $ycoord     
+     
+     
+}
+
+
+proc EndoscopicEndZoom {widget ycoord} {
+     global Endoscopic
+
+    set name $Endoscopic($widget,name)
+
+    set ystart $Endoscopic($name,zoom,ystart)
+    set dy [expr $ycoord - $ystart]
+    
+     # log base b of x = log(x) / log(b)
+     set b      1.02
+     set zPrev  1
+     set dyPrev [expr log($zPrev) / log($b)]
+
+     set zoom [expr pow($b, ($dy + $dyPrev))]
+     if {$zoom < 0.01} {
+         set zoom 0.01
+     }
+     set z [format "%.2f" $zoom]
+
+    $Endoscopic($name,camera) Zoom $z
+    
+    set position [$Endoscopic($name,camera) GetPosition]
+    set Endoscopic(flatColon,zCamDist) [lindex $position 2]
+    
+    [$widget GetRenderWindow] Render     
+     
+     
+}
+
 
 #-------------------------------------------------------------------
 # .PROC EndoscopicPickFlatPoint
