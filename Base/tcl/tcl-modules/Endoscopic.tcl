@@ -262,7 +262,7 @@ proc EndoscopicInit {} {
     set Module($m,category) "Visualisation"
     
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.90 $} {$Date: 2005/01/21 17:29:11 $}] 
+    {$Revision: 1.91 $} {$Date: 2005/01/24 21:35:06 $}] 
        
     # Define Procedures
     #------------------------------------
@@ -370,7 +370,7 @@ proc EndoscopicInit {} {
 #   trace add variable Endoscopic(flatColon,yCamDist) write EndoscopicTempProc
     set Endoscopic(flatColon,zCamDist) 5.0
     
-    set Endoscopic(flatColon,speed) 0.1
+    set Endoscopic(flatColon,speed) 0.5
     set Endoscopic(flatColon,stop) 0
     
     # lights
@@ -5165,7 +5165,7 @@ proc EndoscopicAddFlatView {} {
 # re-config the scale according to the size of the flat colon        
     $Endoscopic(flatScale,progress) config -from [expr [expr floor($Endoscopic(flatColon,xMin))]-1] -to [expr ceil($Endoscopic(flatColon,xMax))]
     $Endoscopic(flatScale,panud) config -from [expr [expr ceil($Endoscopic(flatColon,yMin))]-2] -to [expr [expr ceil($Endoscopic(flatColon,yMax))]+2]
-    $Endoscopic(flatScale,camZoom) config -from 0 -to [expr [expr ceil($Endoscopic(flatColon,zOpt))] + 40]
+    $Endoscopic(flatScale,camZoom) config -from 0 -to [expr [expr ceil($Endoscopic(flatColon,zOpt))] + 300]
 
 # set initial camera position   
     set Endoscopic(flatColon,xCamDist) [expr [expr floor($Endoscopic(flatColon,xMin))]-1]
@@ -5178,7 +5178,7 @@ proc EndoscopicAddFlatView {} {
     $Endoscopic(flatScale,camZoom) set $Endoscopic(flatColon,zCamDist)
     
     set Endoscopic($name,camera) [Endoscopic($name,renderer) GetActiveCamera]
-    $Endoscopic($name,camera) SetClippingRange 0.01 2000
+    $Endoscopic($name,camera) SetClippingRange 0.01 4000
     $Endoscopic($name,camera) SetFocalPoint $Endoscopic(flatColon,xCamDist) $Endoscopic(flatColon,yCamDist) $Endoscopic(flatColon,zMin)
     $Endoscopic($name,camera) SetPosition $Endoscopic(flatColon,xCamDist) $Endoscopic(flatColon,yCamDist) $Endoscopic(flatColon,zCamDist)
     $Endoscopic($name,camera) SetViewAngle 90
@@ -5207,7 +5207,7 @@ proc EndoscopicAddFlatView {} {
      Endoscopic($name,renderer) AddLight Endoscopic($name,light)
      
      # add command for changing the light's elevation and azimuth
-     set Endoscopic(flatColon,LightElev) -75
+     set Endoscopic(flatColon,LightElev) -60
      set Endoscopic(flatColon,LightAzi) -75
      $Endoscopic(flatScale,elevation) config -command "EndoscopicFlatLightElevationAzimuth $f.flatRenderWidget$name"
      $Endoscopic(flatScale,azimuth) config -command "EndoscopicFlatLightElevationAzimuth $f.flatRenderWidget$name"
@@ -5216,7 +5216,7 @@ proc EndoscopicAddFlatView {} {
     set Endoscopic($name,lineCount) 0
     #set Endoscopic(FlatSelect) ""
     
-    set Endoscopic(flatColon,speed) 0.2
+    set Endoscopic(flatColon,speed) 3.0
 
     #Render
     #[$f.flatRenderWidget$name GetRenderWindow] Render  
@@ -6634,14 +6634,14 @@ proc EndoscopicUpdateTargetsInFlatWindow {widget} {
                     for {set i 0} {$i < $numP} {incr i} {
                          set pid [lindex $list $i]
                          set pointIdT1 [Point($pid,node) GetDescription]
-    #    puts "p was $pointId"     
+    # puts "p was $pointId"     
              set pointIdT2 [expr $pointIdT1 + $numP3D]
-        #       puts "p is $pointId"
+    # puts "p is $pointId"
                          set polyData $Endoscopic($name,polyData)
                          set pointT1(xyz) [$polyData GetPoint $pointIdT1]
              set pointT2(xyz) [$polyData GetPoint $pointIdT2]
 
-             # find the position of the point
+    # find the position of the 2 points in both copies of the flat colon
              
              set x1 [lindex $pointT1(xyz) 0]
              set y1 [lindex $pointT1(xyz) 1]
@@ -6651,6 +6651,10 @@ proc EndoscopicUpdateTargetsInFlatWindow {widget} {
              set y2 [lindex $pointT2(xyz) 1]
              set z2 [lindex $pointT2(xyz) 2]
          
+    # compare the y position of the 2 points with the center of the flat colon \
+      assume that the point is within the boundary when the diff is smaller for that point \
+      draw target hashes around that point
+      
          set diff1 [expr abs([expr $y1 - $Endoscopic(flatColon,yMid)])]
          set diff2 [expr abs([expr $y2 - $Endoscopic(flatColon,yMid)])]
 
