@@ -4,32 +4,30 @@
 #define __vtkVolumeTextureMapper3D_h
 
 #include "vtkVolumeTextureMapper.h"
-//#include <GL/gl.h>
 #include <vtkVolumeTextureMappingConfigure.h>
 #include "vtkMatrix4x4.h"
+#include "vtkLookupTable.h"
+#include "vtkImageData.h"
+#include "vtkLookupTable.h"
 class VTK_VOLUMETEXTUREMAPPING_EXPORT vtkVolumeTextureMapper3D : public vtkVolumeTextureMapper
 {
 public:
-    vtkTypeRevisionMacro(vtkVolumeTextureMapper3D,vtkVolumeTextureMapper);
-  //vtkTypeMacro(vtkVolumeTextureMapper3D,vtkVolumeTextureMapper);
-  // void PrintSelf( ostream& os, vtkIndent indent );
-
+  vtkTypeRevisionMacro(vtkVolumeTextureMapper3D,vtkVolumeTextureMapper);
   static vtkVolumeTextureMapper3D *New();
 
   
 
 void SetNumberOfVolumes( int num );
-void AddTFPoint(int volume, int type, int point, int value);
+void AddTFPoint(int volume, int point, int value);
 void ClearTF();
 int IsColorTableChanged(int volume);
-int GetArrayPos(int volume, int type, int point, int value, int boundX, int boundY) ;
-void ChangeTFPoint(int volume, int type, int pos, int point, int value);
+int GetArrayPos(int volume, int point, int value, int boundX, int boundY) ;
+void ChangeTFPoint(int volume, int pos, int point, int value);
 void SetNumberOfClipPlanes(int planeNum);
 int GetNumberOfClipPlanes();
 void ChangeDist(int plane, int dist);
 void ChangeClipPlaneDir(int plane, int dir, vtkFloatingPointType angle);
 void GetClipPlaneEquation(double planeEquation[4], int planeNum);
-void MultiplyMatrix(double result[3], double rotMatrix[3][3], double original[3]);
 void UpdateClipPlaneEquation(int plane);
 void InitializeClipPlanes();
 void SetCounter(int counter);
@@ -40,22 +38,20 @@ void VolumesToClip(int vol, int value);
 void GetVolumesToClip(bool vToClip[3]);
 void IniatializeColors();
 void SetColorMinMax(int volume, int minelmax, int r, int g, int b);
-int GetNumPoint(int currentVolume, int type);
-int GetPoint(int currentVolume, int type, int num, int xORy);
+int GetNumPoint(int currentVolume);
+int GetPoint(int currentVolume, int num, int xORy);
 int GetColorMinMax(int volume, int minelmax, int rgb);
-void RemoveTFPoint(int volume, int type, int pointPos);
-
+void RemoveTFPoint(int volume,int pointPos);
 void SetEnableClipPlanes(int plane, int type);
 void GetEnableClipPlanes(int enableClip[6]);
 void ChangeType(int type);
 void ResetClipPlanes(int type);
 void ChangeSpacing(int spacing);
 void ComputePlaneEquation(double plane[4], double point[4], double normal[3]);
-void Rotate(double rot[3][3], double angle[3]);
+void Rotate(int dir, double angle);
 void EnableClipLines(int value);
-void IsClipLinesEnable(int value[1]);
-void UpdateTransformMatrix(int volume, vtkFloatingPointType t00, vtkFloatingPointType t01, vtkFloatingPointType t02, vtkFloatingPointType t03, vtkFloatingPointType t10, vtkFloatingPointType t11, vtkFloatingPointType t12, vtkFloatingPointType t13, vtkFloatingPointType t20, vtkFloatingPointType t21, vtkFloatingPointType t22, vtkFloatingPointType t23, vtkFloatingPointType t30, vtkFloatingPointType t31, vtkFloatingPointType t32, vtkFloatingPointType t33 );
- 
+int IsClipLinesEnable();
+void UpdateTransformMatrix(int volume, vtkFloatingPointType t00, vtkFloatingPointType t01, vtkFloatingPointType t02, vtkFloatingPointType t03, vtkFloatingPointType t10, vtkFloatingPointType t11, vtkFloatingPointType t12, vtkFloatingPointType t13, vtkFloatingPointType t20, vtkFloatingPointType t21, vtkFloatingPointType t22, vtkFloatingPointType t23, vtkFloatingPointType t30, vtkFloatingPointType t31, vtkFloatingPointType t32, vtkFloatingPointType t33 ); 
 void GetTransformMatrix(vtkFloatingPointType transfMatrix[4][4], int volume);
 int IsTMatrixChanged(int volume);
 vtkFloatingPointType GetTransformMatrixElement(int volume, int row, int column);
@@ -64,15 +60,18 @@ void GetEnableVolume(int enVol[3]) ;
 int GetClipNum();
  void SetTransformMatrixElement(int volume, int row, int column, vtkFloatingPointType value);
  void SetDimension(int volume, int dir, int dims);
-void GetDimension(int volume, int dim[3]);
 int GetTextureDimension(int volume, int dir);
-void DefaultValues();
 void SetBoxSize(vtkFloatingPointType size);
 int GetBoxSize();
 int GetHistValue(int volume, int index);
 void UpdateTransformMatrix(int volume, vtkMatrix4x4 *transMatrix );
  void SetOrigin(vtkFloatingPointType o_x, vtkFloatingPointType o_y, vtkFloatingPointType o_z);
 void  GetOrigin(vtkFloatingPointType o[3]);
+void SetHistMax(int volume, int value);
+int GetHistMax(int volume);
+void SetHistValue(int volume, int index);
+void SetColorTable(vtkLookupTable *lookupTable, int volume);
+void GetColorTable(int colorTable[256][4], int volume);
 //BTX
 
   // Description:
@@ -83,7 +82,7 @@ void  GetOrigin(vtkFloatingPointType o[3]);
 
   virtual void CreateSubImages(unsigned char* vtkNotUsed(texture),
                             int vtkNotUsed(size)[3],
-                            float vtkNotUsed(spacing)[3]) {};
+                            vtkFloatingPointType vtkNotUsed(spacing)[3]) {};
 
   
 
@@ -138,13 +137,12 @@ protected:
   int             AxisTextureSize[3][3];
   
   int xySize[3][2];
-    int TFdata[4][256][3][2];
+    int TFdata[256][3][2];
     bool changedTable[3];
     int colorTable[256][4];
     int colorMinMax[3][4][2];
-    int TFnum[3][4];
+    int TFnum[3];
     int dimension[3][3];
-    int tempData[256][256][4];
     int histArray[3][256];
     int histMax[3];
     int diffX ;
@@ -166,8 +164,12 @@ protected:
     vtkFloatingPointType currentTransformation[3][4][4];
     int tMatrixChanged[3];
     int enableVolume [3];
+    vtkMatrix4x4  *rotate;
     vtkFloatingPointType origin[3];
-
+    vtkImageData *imageDataResampled;
+    vtkLookupTable *LUT0;
+    vtkLookupTable *LUT1;
+    vtkLookupTable *LUT2;
   
 private:
   vtkVolumeTextureMapper3D(const vtkVolumeTextureMapper3D&);  // Not implemented.

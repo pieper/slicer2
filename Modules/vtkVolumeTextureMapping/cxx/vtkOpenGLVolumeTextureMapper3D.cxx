@@ -10,13 +10,12 @@
 #include "vtkImageData.h"
 #include "math.h"
 #include <GL/gl.h>
-// for error checking
 #include <GL/glu.h>
 
 #define volumeBox 3
 
 #ifndef VTK_IMPLEMENT_MESA_CXX
-vtkCxxRevisionMacro(vtkOpenGLVolumeTextureMapper3D, "$Revision: 1.9 $");
+vtkCxxRevisionMacro(vtkOpenGLVolumeTextureMapper3D, "$Revision: 1.10 $");
 vtkStandardNewMacro(vtkOpenGLVolumeTextureMapper3D);
 #endif
 
@@ -32,17 +31,17 @@ vtkStandardNewMacro(vtkOpenGLVolumeTextureMapper3D);
 #endif
 
 int intersectionPlanes[12][4] ={0, 1, 0, 1,
-                2, 6, 0, 3, 
-                7, 4, 1, 2,
-                5, 3, 2, 3,
-                1, 6, 0, 5,
-                0, 2, 0, 4,
-                4, 3, 2, 5,
-                7, 5, 2, 4,
-                    1, 4, 1, 5,
-                6, 3, 3, 5,
-                0, 7, 1, 4,
-                2, 5, 3, 4};
+                                2, 6, 0, 3, 
+                                7, 4, 1, 2,
+                                5, 3, 2, 3,
+                                1, 6, 0, 5,
+                                0, 2, 0, 4,
+                                4, 3, 2, 5,
+                                7, 5, 2, 4,
+                                1, 4, 1, 5,
+                                6, 3, 3, 5,
+                                0, 7, 1, 4,
+                                2, 5, 3, 4};
 
 
 #ifdef VOLUME_TEXTURE_DEBUG
@@ -102,6 +101,37 @@ vtkOpenGLVolumeTextureMapper3D::~vtkOpenGLVolumeTextureMapper3D()
 {
 }
                     
+//-----------------------------------------------------
+//Name: computeTextureDimension
+//Description: Shrink texture to best size
+//-----------------------------------------------------
+int computeTextureDimension(int texDim, int size)
+{
+ if ((texDim == 256) && (size < texDim))
+ {
+    if (size > 128)
+    {
+        texDim = 256;
+    }
+    else if (size > 64)
+    {
+        texDim = 128;
+    }
+    else if (size > 32)
+    {
+        texDim = 64;
+    }
+    else if (size > 16)
+    {
+        texDim = 32;
+    }
+    else 
+    {
+        texDim = 16;        
+    }
+ }
+return texDim;
+}
 
 //-----------------------------------------------------
 //Name: Render
@@ -110,7 +140,6 @@ vtkOpenGLVolumeTextureMapper3D::~vtkOpenGLVolumeTextureMapper3D()
 void vtkOpenGLVolumeTextureMapper3D::Render(vtkRenderer *ren, vtkVolume *vol)
 {    
     
-  int dim[3];
   counter = this->GetCounter();
   
   glClearColor(1.0, 1.0, 1.0, 1.0);
@@ -118,10 +147,6 @@ void vtkOpenGLVolumeTextureMapper3D::Render(vtkRenderer *ren, vtkVolume *vol)
   glEnable(GL_DEPTH_TEST);
   glDisable(GL_COLOR);
   int size[3];
-
-
-
-
 
   //init == 0 - only the first time that a dataset are saved in texture memory
   if (init == 0)
@@ -143,12 +168,8 @@ void vtkOpenGLVolumeTextureMapper3D::Render(vtkRenderer *ren, vtkVolume *vol)
            glColorTableNOT_EXT = (PFNGLCOLORTABLEPROC) wglGetProcAddress("glColorTable");
            if (glColorTableNOT_EXT == NULL ) 
            {    vtkErrorMacro(<< "Cannot get pointer for glColorTable ");
-           } else 
-           {    //glColorTable = glColorTableNOT_EXT;
            }
-       } else 
-       {    //glColorTable = glColorTableEXT;
-       }
+       } 
 
        #define glColorTable glColorTableEXT
     #else
@@ -156,26 +177,13 @@ void vtkOpenGLVolumeTextureMapper3D::Render(vtkRenderer *ren, vtkVolume *vol)
        #  define GL_TEXTURE_COLOR_TABLE_SGI -1
        using_palette = 0;
        #endif
-
        #define GL_INTENSITY_EXT GL_INTENSITY
        #define GL_SHARED_TEXTURE_PALETTE_EXT GL_TEXTURE_COLOR_TABLE_SGI
        #define GL_COLOR_INDEX8_EXT GL_INTENSITY
-       #define GL_TEXTURE_3D_EXT GL_TEXTURE_3D
-       //#define glTexImage3DEXT glTexImage3D
-       //#define glColorTableEXT glColorTable            
+       #define GL_TEXTURE_3D_EXT GL_TEXTURE_3D                
     #endif
 
-    this->DefaultValues();
     boxSize = this->GetBoxSize();
-    
-    for (int n = 0; n < 3; n++)
-    {    
-      this->GetDimension(0, dim);
-      textureSizeX[n]=dim[0];
-      textureSizeY[n]=dim[1];
-      textureSizeZ[n]=dim[2];
-    }
-    CreateEmptyTexture();
     InitializeVolRend();
   }
     
@@ -187,37 +195,35 @@ void vtkOpenGLVolumeTextureMapper3D::Render(vtkRenderer *ren, vtkVolume *vol)
     if (init != 0)
     {
       InitializeVolRend();
-      for (int n = 0; n < 3; n++)
-      {    
-    this->GetDimension(n, dim);
-    textureSizeX[n]=dim[0];
-    textureSizeY[n]=dim[1];
-    textureSizeZ[n]=dim[2];            
-      }    
-      
-      CreateEmptyTexture();    
     }    
   }
 
   if (counter < maxVolumes)
   {
-    //testing---------------
-   /*tkMatrix4x4       *trans = vtkMatrix4x4::New();
-    trans =  vol->GetUserMatrix();
-    for (int i = 0; i < 4; i++)
-    {
-      for (int j = 0; j < 4; j++)
-      {
-    transformMatrix[counter][i][j]=trans->GetElement(i, j);
-      }
-    }*/
-
-
-    ///---------------------
 
     if (enableVol[counter] == 1)
     {
 
+      vtkImageData           *input = this->GetInput();
+      int                    extent[6];
+      input->GetExtent(extent);    
+
+      textureSizeX[counter]=this->GetTextureDimension(counter, 0);
+      textureSizeY[counter]=this->GetTextureDimension(counter, 1);
+      textureSizeZ[counter]=this->GetTextureDimension(counter, 2);
+    
+      size[0] = extent[1]+1;
+      size[1] = extent[3]+1;
+      size[2] = extent[5]+1;
+      
+       textureSizeX[counter] = computeTextureDimension(textureSizeX[counter], size[0]);
+      this->vtkVolumeTextureMapper3D::SetDimension(counter, 0, textureSizeX[counter]);
+      textureSizeY[counter] = computeTextureDimension(textureSizeY[counter], size[1]);
+      this->vtkVolumeTextureMapper3D::SetDimension(counter, 1, textureSizeY[counter]);
+      textureSizeZ[counter] = computeTextureDimension(textureSizeZ[counter], size[2]);
+      this->vtkVolumeTextureMapper3D::SetDimension(counter, 2, textureSizeZ[counter]);
+         
+      CreateEmptyTexture(counter);
       //superclass initialization
       this->vtkVolumeTextureMapper3D::InitializeRender( ren, vol );
 
@@ -248,98 +254,51 @@ void vtkOpenGLVolumeTextureMapper3D::Render(vtkRenderer *ren, vtkVolume *vol)
 //Name: CreateEmptyTexture
 //Description: Save empty texture in texture memory
 //-----------------------------------------------------
-void vtkOpenGLVolumeTextureMapper3D::CreateEmptyTexture()
+void vtkOpenGLVolumeTextureMapper3D::CreateEmptyTexture(int volume)
 {
-        GLenum errCode;
-        const GLubyte *errString;
-        
-  if (init != 0)
-  { 
-    glDisable(GL_TEXTURE_3D_EXT);
-    glDeleteTextures(3, &tempIndex3d[0]);
-  }
-  if ((errCode = glGetError()) != GL_NO_ERROR) {
-      errString = gluErrorString(errCode);
-      cerr << "CreateEmptyTexture: error status after init check: " << errString << endl;
-  }
-  
-  glGenTextures(3, &tempIndex3d[0]);
-  if ((errCode = glGetError()) != GL_NO_ERROR) {
-      errString = gluErrorString(errCode);
-      cerr << "CreateEmptyTexture: error after glGenTextures:" << errString << endl;
-  }
-  
-  for (int m = 0; m < 3; m++)
-  {
-    glBindTexture(GL_TEXTURE_3D_EXT, tempIndex3d[m]);
+
+    glBindTexture(GL_TEXTURE_3D_EXT, tempIndex3d[volume]);
     glTexParameteri(GL_TEXTURE_3D_EXT, GL_TEXTURE_WRAP_S, GL_CLAMP);
     glTexParameteri(GL_TEXTURE_3D_EXT, GL_TEXTURE_WRAP_T, GL_CLAMP);
     glTexParameteri(GL_TEXTURE_3D_EXT, GL_TEXTURE_WRAP_R, GL_CLAMP);
     glTexParameteri(GL_TEXTURE_3D_EXT, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_3D_EXT, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    if ((errCode = glGetError()) != GL_NO_ERROR) {
-      errString = gluErrorString(errCode);
-      cerr << "CreateEmptyTexture: error after glTexParameteri for m= " << m << ":" << errString << endl;
-    }
-  }
-  
-  for (int i = 0; i < 3; i++)
-  {    
+    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+     
     //create an empty texture
-    for (int s = 0; s < textureSizeZ[i]; s++)
-    {
-      for (int t = 0; t < textureSizeY[i]; t++)
-      {
-        for (int r = 0; r < textureSizeX[i]; r++) 
-        {
-          emptyImage[r][t][s][0] = (GLubyte) (0);
-          emptyImage[r][t][s][1] = (GLubyte) (0);
-          emptyImage[r][t][s][2] = (GLubyte) (0);
-          emptyImage[r][t][s][3] = (GLubyte) (0);
-        }
-      }
-    }
-    
+    unsigned char *emptyImage = new unsigned char[4*textureSizeX[volume]*textureSizeY[volume]*textureSizeZ[volume]];
+
     //store empty textures for each dataset
-    glBindTexture(GL_TEXTURE_3D_EXT, tempIndex3d[i]);
-    if ((errCode = glGetError()) != GL_NO_ERROR) {
-      errString = gluErrorString(errCode);
-      cerr << "CreateEmptyTexture: error after glBindTexture:" << errString << endl;
-    }
-    //store the data in the texture memory
+    glBindTexture(GL_TEXTURE_3D_EXT, tempIndex3d[volume]);
     
+    //store the data in the texture memory
+
     if (using_palette != 1)
     {
       glTexImage3DEXT(GL_TEXTURE_3D_EXT, 
               0, 
               GL_INTENSITY_EXT, 
-              textureSizeX[i], 
-              textureSizeY[i], 
-              textureSizeZ[i], 
+              textureSizeX[volume], 
+              textureSizeY[volume], 
+              textureSizeZ[volume], 
               0, GL_RGBA, 
               GL_UNSIGNED_BYTE, 
               emptyImage);        
+
     }
     else
     {
       glTexImage3DEXT(GL_TEXTURE_3D_EXT, 
               0, 
               GL_COLOR_INDEX8_EXT, 
-              textureSizeX[i], 
-              textureSizeY[i], 
-              textureSizeZ[i], 
+              textureSizeX[volume], 
+              textureSizeY[volume], 
+              textureSizeZ[volume], 
               0, GL_COLOR_INDEX, 
               GL_UNSIGNED_BYTE, 
               emptyImage);    
-    }
-    errCode = glGetError();
-    if (errCode != GL_NO_ERROR)
-    {
-        errString = gluErrorString(errCode);
-        cerr << "CreateEmptyTexture: after glTexImage3DEXT: " << errString << " (using palette = " << using_palette << ")" << endl;
-       
-    }
-  }
+    } 
+    delete [] emptyImage;
 }
 
 
@@ -369,7 +328,7 @@ void vtkOpenGLVolumeTextureMapper3D::ClipPlane(int plane, vtkFloatingPointType v
   vtkFloatingPointType vertex[12][3];
   vtkFloatingPointType result[4];
   int vertexnums= 0;
-  int cLines[1];
+  int cLines = 0;
 
   //get the clip plane equation for a specific plane
   this->GetClipPlaneEquation(planeEquation, plane);
@@ -380,9 +339,9 @@ void vtkOpenGLVolumeTextureMapper3D::ClipPlane(int plane, vtkFloatingPointType v
 
   //set the clip plane equation to a specific openGL clip plane
   glClipPlane((GLenum)(GL_CLIP_PLANE0+plane),planeEquation);
-  this->IsClipLinesEnable(cLines);
+  cLines = this->IsClipLinesEnable();
   //calculate intersection points of the clipplane and the volumebox
-  if (cLines[0] == 1)
+  if (cLines == 1)
   {  
     for (int i = 0; i < 12; i++) 
     {    
@@ -436,7 +395,6 @@ void vtkOpenGLVolumeTextureMapper3D::SortVertex(int vertexOrder[12], vtkFloating
 {
   vtkFloatingPointType vertexAngle[12];
   vtkFloatingPointType r[3];
-  vtkFloatingPointType rLength;
   vtkFloatingPointType rAngleViewUp;
   vtkFloatingPointType rAngleNx;
   vtkFloatingPointType pi = 3.14;
@@ -527,29 +485,26 @@ void vtkOpenGLVolumeTextureMapper3D::SortVertex(int vertexOrder[12], vtkFloating
 void vtkOpenGLVolumeTextureMapper3D::RenderQuads(vtkRenderer *ren, vtkVolume *vol)
 {
 
-  vtkFloatingPointType focalPoint[3];
+vtkFloatingPointType focalPoint[3];
   int   size[3];
-  vtkFloatingPointType spacing[3];
-  vtkFloatingPointType viewAngle;
-  vtkFloatingPointType viewUp[3];
+vtkFloatingPointType spacing[3];
+vtkFloatingPointType viewAngle;
+vtkFloatingPointType viewUp[3];
   bool  volumesToClip[3];
-  int   thisSize[3];
-  vtkFloatingPointType normal[3];
-  vtkFloatingPointType cameraPosition[3];
-  vtkFloatingPointType nx[3];
-  vtkFloatingPointType ny[3];
+vtkFloatingPointType normal[3];
+vtkFloatingPointType cameraPosition[3];
   vtkFloatingPointType nz[3];
   vtkFloatingPointType startpos[3];
-  vtkFloatingPointType origin[3];
+
 
   this->GetVolumesToClip(volumesToClip);
-  ren->GetActiveCamera()->GetPosition(&cameraPosition[0]);
+  ren->GetActiveCamera()->GetPosition(cameraPosition);
   viewAngle = ren->GetActiveCamera()->GetViewAngle();
-  ren->GetActiveCamera()->GetFocalPoint(&focalPoint[0]);
-  ren->GetActiveCamera()->GetViewUp(&viewUp[0]);
+  ren->GetActiveCamera()->GetFocalPoint(focalPoint);
+  ren->GetActiveCamera()->GetViewUp(viewUp);
   this->GetInput()->GetDimensions( size );
-  this->GetInput()->GetSpacing(&spacing[0]);
-  this->GetOrigin(&origin[0]);
+  this->GetInput()->GetSpacing(spacing);
+
     
   //is the tranformation changed?
   for (int v = 0; v < maxVolumes; v++)
@@ -569,7 +524,7 @@ void vtkOpenGLVolumeTextureMapper3D::RenderQuads(vtkRenderer *ren, vtkVolume *vo
   
   //the amount of planes used to build the volume
   int numQuads = this->GetNumberOfPlanes();
-  vtkFloatingPointType diagonal = sqrt(boxSize*boxSize+boxSize*boxSize+boxSize*boxSize);
+  float diagonal = sqrt(boxSize*boxSize+boxSize*boxSize+boxSize*boxSize);
   
   //calculate the normalvector
   normal[0] = (cameraPosition[0]-focalPoint[0]); 
@@ -584,14 +539,7 @@ void vtkOpenGLVolumeTextureMapper3D::RenderQuads(vtkRenderer *ren, vtkVolume *vo
     startpos[axis] = -normal[axis]*diagonal/2;
   }
 
-
-
   //--------------------------------------------
-
-
-
-
-
 
   for(int num = 0; num < numQuads; num++)
   {
@@ -605,7 +553,7 @@ void vtkOpenGLVolumeTextureMapper3D::RenderQuads(vtkRenderer *ren, vtkVolume *vo
     {
       num++;
     }        
-    vtkFloatingPointType planePoint[3];
+    float planePoint[3];
     
     for(int axis = 0; axis < 3; axis++)
     {
@@ -613,8 +561,6 @@ void vtkOpenGLVolumeTextureMapper3D::RenderQuads(vtkRenderer *ren, vtkVolume *vo
       nz[axis] = normal[axis]*(diagonal/numQuads)*num;
       planePoint[axis]= startpos[axis]+nz[axis];
     }
-
-
     
     vtkFloatingPointType vertex[12][3];
     vtkFloatingPointType result[4];
@@ -679,19 +625,15 @@ void vtkOpenGLVolumeTextureMapper3D::RenderQuads(vtkRenderer *ren, vtkVolume *vo
     {
       glEnable(GL_SHARED_TEXTURE_PALETTE_EXT);
     }
-        glEnable(GL_COLOR);
+    glEnable(GL_COLOR);
     glDisable(GL_TEXTURE_2D);
-        glDisable(GL_LIGHTING);
+    glDisable(GL_LIGHTING);
     
-        glColor3f(1.0, 1.0, 1.0);
+    glColor3f(1.0, 1.0, 1.0);
     glEnable(GL_TEXTURE_3D_EXT);
     glEnable(GL_BLEND);                
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glBindTexture(GL_TEXTURE_3D_EXT, tempIndex3d[vols]);
-    //glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_BLEND);
-    
-
-
 
     if (vertexnums >= 3)
     {
@@ -706,33 +648,29 @@ void vtkOpenGLVolumeTextureMapper3D::RenderQuads(vtkRenderer *ren, vtkVolume *vo
              
           //transform texture coordinates with the inverse of the transformation matrix
           vtkFloatingPointType tx = (transformInvMatrix[vols][0][0]*bx+
-              transformInvMatrix[vols][0][1]*by+
-              transformInvMatrix[vols][0][2]*bz+
-              transformInvMatrix[vols][0][3]+texSize[vols][0]/2);    
+                                    transformInvMatrix[vols][0][1]*by+
+                                    transformInvMatrix[vols][0][2]*bz+
+                                    transformInvMatrix[vols][0][3]+texSize[vols][0]/2);    
           vtkFloatingPointType ty = (transformInvMatrix[vols][1][0]*bx+
-              transformInvMatrix[vols][1][1]*by+
-              transformInvMatrix[vols][1][2]*bz+
-              transformInvMatrix[vols][1][3]+texSize[vols][1]/2);
+                                     transformInvMatrix[vols][1][1]*by+
+                                     transformInvMatrix[vols][1][2]*bz+
+                                     transformInvMatrix[vols][1][3]+texSize[vols][1]/2);
           vtkFloatingPointType tz = (transformInvMatrix[vols][2][0]*bx+
-              transformInvMatrix[vols][2][1]*by+
-              transformInvMatrix[vols][2][2]*bz+
-              transformInvMatrix[vols][2][3]+texSize[vols][2]/2);
+                                    transformInvMatrix[vols][2][1]*by+
+                                    transformInvMatrix[vols][2][2]*bz+
+                                    transformInvMatrix[vols][2][3]+texSize[vols][2]/2);
 
           tx = tx/texSize[vols][0];
           ty = ty/texSize[vols][1];
-          tz = tz/textureSizeZ[vols];
-     
-          fprintf(fm, "texCoords tx %f, ty %f, tz %f\n", tx, ty, tz);
-          fflush(fm);
-          
+          tz = tz/texSize[vols][2];
+      
           //set texture coordinate
           glTexCoord3f(tx, ty, tz);
 
-          vtkFloatingPointType vx = vertex[vertexOrder[v]][0]+origin[0];
-          vtkFloatingPointType vy = vertex[vertexOrder[v]][1]+origin[1];
-          vtkFloatingPointType vz = vertex[vertexOrder[v]][2]+origin[2];
-          fprintf(fm, "VertexCoords vx %f, vy %f, vz %f\n", vx, vy, vz);
-          fflush(fm);
+          vtkFloatingPointType vx = vertex[vertexOrder[v]][0];
+          vtkFloatingPointType vy = vertex[vertexOrder[v]][1];
+          vtkFloatingPointType vz = vertex[vertexOrder[v]][2];
+    
           //set vertex coordinates
           glVertex3f(vx, vy, vz);    
         }
@@ -743,7 +681,7 @@ void vtkOpenGLVolumeTextureMapper3D::RenderQuads(vtkRenderer *ren, vtkVolume *vo
       
       for (int i = 0; i < 6; i++)
       {
-    glDisable((GLenum)(GL_CLIP_PLANE0+i));                        
+        glDisable((GLenum)(GL_CLIP_PLANE0+i));                        
       }
     }
   }
@@ -760,6 +698,7 @@ void vtkOpenGLVolumeTextureMapper3D::RenderQuads(vtkRenderer *ren, vtkVolume *vo
   
   glDisable(GL_TEXTURE_3D_EXT);
   glDisable(GL_BLEND);
+  
 }
 
 //-----------------------------------------------------
@@ -772,7 +711,7 @@ void vtkOpenGLVolumeTextureMapper3D::ChangeColorTable(int volume, int colorTable
   //update colortable if the transfer function is changed
   if (IsColorTableChanged(volume))
   {
-    this->UpdateColorTable(colorTable, volume);             
+    this->GetColorTable(colorTable, volume);             
   }
   
   GLubyte newColorTable[256][4];
@@ -827,15 +766,14 @@ void vtkOpenGLVolumeTextureMapper3D::CalcMaxMinValue()
       
       for (int i = 0; i < 8; i++) 
       {
-    for (int j = 0; j < 3; j++)
-    {
-      volumeCornerPoint[volume][i][j]= transformMatrix[volume][j][0]*cornerInDatasetBox[i][0]+
-                                       transformMatrix[volume][j][1]*cornerInDatasetBox[i][1]+
-                                           transformMatrix[volume][j][2]*cornerInDatasetBox[i][2]+
-                                   transformMatrix[volume][j][3];
-    }
-      }        
-    
+        for (int j = 0; j < 3; j++)
+        {
+            volumeCornerPoint[volume][i][j]= transformMatrix[volume][j][0]*cornerInDatasetBox[i][0]+
+                                             transformMatrix[volume][j][1]*cornerInDatasetBox[i][1]+
+                                             transformMatrix[volume][j][2]*cornerInDatasetBox[i][2]+
+                                             transformMatrix[volume][j][3];
+        }
+      }   
     }
   }
 }
@@ -858,10 +796,10 @@ void vtkOpenGLVolumeTextureMapper3D::Transformation()
       this->GetTransformMatrix(tMatrix, v);
       for (int i = 0; i < 4; i++)
       {
-    for (int j = 0; j < 4; j++)
-    {
-      transformMatrix[v][i][j] = tMatrix[i][j];
-    }
+        for (int j = 0; j < 4; j++)
+        {
+            transformMatrix[v][i][j] = tMatrix[i][j];
+        }
       }
     }
   }
@@ -874,7 +812,7 @@ void vtkOpenGLVolumeTextureMapper3D::Transformation()
     {
       for (int m = 0; m < 6; m++)
       {
-    CalculatePlaneEquation(/*a1*/volumeCornerPoint[volume][cornersInDatasetPlane[m][0]][0],
+         CalculatePlaneEquation(/*a1*/volumeCornerPoint[volume][cornersInDatasetPlane[m][0]][0],
                    /*a2*/volumeCornerPoint[volume][cornersInDatasetPlane[m][0]][1],
                    /*a3*/volumeCornerPoint[volume][cornersInDatasetPlane[m][0]][2],
                    /*b1*/volumeCornerPoint[volume][cornersInDatasetPlane[m][1]][0],
@@ -888,20 +826,20 @@ void vtkOpenGLVolumeTextureMapper3D::Transformation()
             
       for (int n = 0; n < 4; n++)
       {
-    for (int u = 0; u < 4; u++)
-    {
-      tfmatrix->SetElement(n,u, transformMatrix[volume][n][u]);
-    }
+        for (int u = 0; u < 4; u++)
+        {
+            tfmatrix->SetElement(n,u, transformMatrix[volume][n][u]);
+        }
       }
       
       tfmatrix->Invert(tfmatrix, tfInvmatrix);
       
       for (int f = 0; f < 4; f++)
       {
-    for (int e = 0; e < 4; e++)
-    {
-      transformInvMatrix[volume][f][e]= tfInvmatrix->GetElement(f,e);
-    }
+        for (int e = 0; e < 4; e++)
+        {
+            transformInvMatrix[volume][f][e]= tfInvmatrix->GetElement(f,e);
+        }
       }
     }
   }
@@ -914,97 +852,77 @@ void vtkOpenGLVolumeTextureMapper3D::Transformation()
 //Name: CreateSubImages
 //Description: Store sub images in texture memory
 //-----------------------------------------------------
-void vtkOpenGLVolumeTextureMapper3D::CreateSubImages( unsigned char* texture,                                                      int size[3], vtkFloatingPointType spacing[3])
+void vtkOpenGLVolumeTextureMapper3D::CreateSubImages( unsigned char* texture, int size[3], vtkFloatingPointType spacing[3])
 {
-
-  if (counter  < maxVolumes)
-  {
-
-    if (enableVol[counter] == 1)
+    if (counter  < maxVolumes)
     {
-
-      for(int i = 0; i < 3; i++)
+      if (enableVol[counter] == 1)
       {
-        volSize[counter][i]= spacing[i];
-        texSize[counter][i]= size[i];                
-      }
-
-    }
-    int texPtr = 0;    
-
-    if (using_palette != 1)
-    { 
-
-      unsigned char* pix =  new unsigned char[4*textureSizeX[counter]*textureSizeY[counter]];
-
-      int pixPtr = 0;
-
-
-      for (int y = 0; y < textureSizeY[counter]; y++)
-      {
-        for (int x = 0; x < textureSizeX[counter]; x++) 
-        {     
-          //pix[pixPtr]=(unsigned char)this->colorTable0[texture[texPtr]];
-          pix[pixPtr]=texture[texPtr];
-          pixPtr++;
-          //pix[pixPtr]=(unsigned char)this->colorTable0[texture[texPtr]];
-          pix[pixPtr]=texture[texPtr];
-          pixPtr++;
-          //pix[pixPtr]=(unsigned char)this->colorTable0[texture[texPtr]];
-          pix[pixPtr]=texture[texPtr];
-          pixPtr++;
-          //pix[pixPtr]=(unsigned char)this->colorTable0[texture[texPtr]];
-          pix[pixPtr]=texture[texPtr];
-          pixPtr++;
-          texPtr++;
+        for(int i = 0; i < 3; i++)
+        {
+            volSize[counter][i]= spacing[i];
+            texSize[counter][i]= size[i];                
         }
       }
+      int texPtr = 0;    
 
-      texPtr = 0;
-  
-      //store the subimage
-      glBindTexture(GL_TEXTURE_3D_EXT, tempIndex3d[counter]);    
-      texPtr = 0;
-  
-      glTexSubImage3DEXT( GL_TEXTURE_3D_EXT,    
-              0,                    //level of detail
-              0,                //xoffset 
-              0,                //yoffset 
-              zVal,                //zoffset
-              //0,
-              textureSizeX[counter],
-              textureSizeY[counter], 
-              1,
-              GL_RGBA,
-              GL_UNSIGNED_BYTE, 
-              pix);                 //data
-      delete [] pix;
-    }
+      if (using_palette != 1)
+      { 
+        //store the subimage
+        glBindTexture(GL_TEXTURE_3D_EXT, tempIndex3d[counter]);    
+
+        glTexSubImage3DEXT( GL_TEXTURE_3D_EXT,    
+                            0,                    //level of detail
+                            0,                //xoffset 
+                            0,                //yoffset 
+                            zVal,                //zoffset
+                             textureSizeX[counter],
+                            textureSizeY[counter], 
+                            1,
+                            GL_RGBA,
+                            GL_UNSIGNED_BYTE, 
+                            texture);                 //data
+     }
     else
     {
-      //store the subimage
-      glBindTexture(GL_TEXTURE_3D_EXT, tempIndex3d[counter]);    
-      glTexSubImage3DEXT( GL_TEXTURE_3D_EXT, //GL_TEXTURE_3D_EXT
-              0,            //level of detail
-              0,            //xoffset 
-              0,            //yoffset 
-              zVal,            //zoffset
-              textureSizeX[counter],
-              textureSizeY[counter], 
-              1,
-              GL_COLOR_INDEX,
-              GL_UNSIGNED_BYTE, 
-              texture);              //data    
+
+        unsigned char* pix =  new unsigned char[textureSizeX[counter]*textureSizeY[counter]];
+        int pixPtr = 0;
+        
+        for (int y = 0; y < textureSizeY[counter]; y++)
+        {
+            for (int x = 0; x < textureSizeX[counter]; x++) 
+            {     
+                pix[pixPtr]=texture[texPtr];
+                pixPtr++;
+                texPtr=texPtr+4;     
+            }
+        }
+
+
+        texPtr = 0;
+        //store the subimage
+        glBindTexture(GL_TEXTURE_3D_EXT, tempIndex3d[counter]);    
+        glTexSubImage3DEXT( GL_TEXTURE_3D_EXT, //GL_TEXTURE_3D_EXT
+                            0,            //level of detail
+                            0,            //xoffset 
+                            0,            //yoffset 
+                            zVal,            //zoffset
+                            textureSizeX[counter],
+                            textureSizeY[counter], 
+                            1,
+                            GL_COLOR_INDEX,
+                            GL_UNSIGNED_BYTE, 
+                            pix);              //data    
+        delete [] pix;
     }
     
-    if (size[3]  == zVal)
+    if (textureSizeZ[counter]  == zVal)
     {
       this->Transformation();
     }
     zVal++;
   }    
-
-
 }
 
 //-----------------------------------------------------
@@ -1023,8 +941,8 @@ void vtkOpenGLVolumeTextureMapper3D::CalculatePlaneEquation(vtkFloatingPointType
   volumePlaneEquation[volume][num][1] = B/(vtkFloatingPointType)sqrt(A*A+B*B+C*C);
   volumePlaneEquation[volume][num][2] = C/(vtkFloatingPointType)sqrt(A*A+B*B+C*C);
   volumePlaneEquation[volume][num][3] = (a1*volumePlaneEquation[volume][num][0]
-                    +a2*volumePlaneEquation[volume][num][1]
-                        +a3*volumePlaneEquation[volume][num][2]);
+                                        +a2*volumePlaneEquation[volume][num][1]
+                                        +a3*volumePlaneEquation[volume][num][2]);
 }
 
 //-----------------------------------------------------
@@ -1048,16 +966,19 @@ void vtkOpenGLVolumeTextureMapper3D::NormalizeVector(vtkFloatingPointType vect[3
 //-----------------------------------------------------
 void vtkOpenGLVolumeTextureMapper3D::IntersectionPoint(vtkFloatingPointType result[4], int corner1, int corner2, int plane1, int plane2, vtkFloatingPointType a, vtkFloatingPointType b, vtkFloatingPointType c, vtkFloatingPointType d, int vols)
 {
+    
   vtkFloatingPointType intersectionDisplacement[3];
   vtkFloatingPointType intersectionMatrix[3][3];
   vtkFloatingPointType intersectionInvMatrix[3][3];   
   vtkFloatingPointType determinant ;
-  vtkFloatingPointType r1 = 0;
+  /*vtkFloatingPointType r1 = 0;
   vtkFloatingPointType r2 = 0;
   vtkFloatingPointType r3 = 0;
   vtkFloatingPointType t1 = 0;
   vtkFloatingPointType t2 = 0;
-  vtkFloatingPointType t3 = 0;
+  vtkFloatingPointType t3 = 0;*/
+  vtkFloatingPointType r[3] = {0,0,0};
+  vtkFloatingPointType t[3] = {0,0,0};
   vtkFloatingPointType x = 0.0;
   vtkFloatingPointType y = 0.0;
   vtkFloatingPointType z = 0.0;
@@ -1138,25 +1059,21 @@ void vtkOpenGLVolumeTextureMapper3D::IntersectionPoint(vtkFloatingPointType resu
     ((z <= (zc1+margin)) && (z >= (zc2-margin)))))
       
     {
-      r1 =  xc2-xc1;
-      r2 =  yc2-yc1;
-      r3 =  zc2-zc1;
-      t1 =  x-xc1;
-      t2 =  y-yc1;
-      t3 =  z-zc1;
-      r1 =  r1/sqrt(r1*r1+r2*r2+r3*r3);
-      r2 =  r2/sqrt(r1*r1+r2*r2+r3*r3);
-      r3 =  r3/sqrt(r1*r1+r2*r2+r3*r3);
-      t1 =  t1/sqrt(t1*t1+t2*t2+t3*t3);
-      t2 =  t2/sqrt(t1*t1+t2*t2+t3*t3);
-      t3 =  t3/sqrt(t1*t1+t2*t2+t3*t3);
+      r[0] =  xc2-xc1;
+      r[1] =  yc2-yc1;
+      r[2] =  zc2-zc1;
+      t[0] =  x-xc1;
+      t[1] =  y-yc1;
+      t[2] =  z-zc1;
+      this->NormalizeVector(r);
+      this->NormalizeVector(t);
       
-      if ((sqrt((r1 - t1)*(r1 - t1)) < 1.0) && (sqrt((r2 - t2)*(r2 - t2)) < 1.0) && (sqrt((r3 - t3)*(r3 - t3)) < 1.0))
+      if ((sqrt((r[0] - t[0])*(r[0] - t[0])) < 1.0) && (sqrt((r[1] - t[1])*(r[1] - t[1])) < 1.0) && (sqrt((r[2] - t[2])*(r[2] - t[2])) < 1.0))
       {
-    result[0] = x;
-    result[1] = y;
-    result[2] = z;
-    result[3] = 1;
+        result[0] = x;
+        result[1] = y;
+        result[2] = z;
+        result[3] = 1;
       }
     }    
   }
@@ -1169,6 +1086,13 @@ void vtkOpenGLVolumeTextureMapper3D::IntersectionPoint(vtkFloatingPointType resu
 //-----------------------------------------------------
 void vtkOpenGLVolumeTextureMapper3D::InitializeVolRend()
 {
+  if (init != 0)
+  { 
+    glDisable(GL_TEXTURE_3D_EXT);
+    glDeleteTextures(3, &tempIndex3d[0]);
+  }
+    
+  glGenTextures(3, &tempIndex3d[0]); 
   if (init == 0)
   {
       for (int t = 0; t < maxVolumes; t++)

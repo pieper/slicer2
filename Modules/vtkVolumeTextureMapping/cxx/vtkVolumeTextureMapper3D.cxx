@@ -9,6 +9,8 @@
 #include "vtkRenderer.h"
 #include "vtkTransform.h"
 #include "vtkVolumeProperty.h"
+#include "vtkImageResample.h"
+#include "vtkImageCast.h"
 #include "math.h"
 #include <GL/gl.h>
 
@@ -37,42 +39,45 @@ void vtkVolumeTextureMapper3D_TextureOrganization( T *data_ptr,
   T                *dptr;
   unsigned char    *rgbaArray = me->GetRGBAArray();
   vtkRenderWindow  *renWin = me->GetRenderWindow();
-  float            spacing[3];
+  float                dataSpacing[3];
+  vtkFloatingPointType            spacing[3];
   unsigned char    *texture;
   int              *zAxis=0, *yAxis=0, *xAxis=0;
   int              loc, inc=0;
   int              textureOffset=0;  
-  int           a0=0, a1=1, a2=2;
-  int           dimension[3];
-  int           factor[2];
-  vtkFloatingPointType           tempFactor =0;
+  int              dimensions[3];
   xAxis = &i;
   yAxis = &j;
   zAxis = &k;
   inc = 1;
   
+  me->GetDataSpacing(dataSpacing);
   // Create space for the texture
+  for (int l=0; l< 3;l++)
+  {
+    dimensions[l] = me->GetTextureDimension(volume, l);
+    spacing[l]=dataSpacing[l];
 
-  texture = new unsigned char[4*size[0]*size[1]];
+  }
 
-  me->GetDataSpacing( spacing );
+  texture = new unsigned char[4*dimensions[0]*dimensions[1]];
 
   kstart = 0;
-  kend = size[2];
+  kend= me-> GetTextureDimension(volume, 2);
   kinc = me->GetInternalSkipFactor();
   for ( k = kstart; k != kend; k+=kinc )
   {
-    for ( j = 0; j < size[a1]; j++ )
+    for ( j = 0; j < dimensions[1]; j++ )
     {
       i = 0;
       //tptr is the pointer where to store the texture
       //start at texture and add addresses according to j
-      tptr = texture+4*j*size[0];
-      loc = (*zAxis)*size[0]*size[1]+(*yAxis)*size[0]+(*xAxis);
+      tptr = texture+4*j*dimensions[0];
+      loc = (*zAxis)*dimensions[0]*dimensions[1]+(*yAxis)*dimensions[0]+(*xAxis);
       dptr = data_ptr + loc;
-      
-      for ( i = 0; i < size[a0]; i++ )
-      {
+ 
+      for ( i = 0; i < dimensions[0]; i++ )
+      { 
         //copy information from (rgbaArray + (*dptr)*4) with the length 4 to tptr
         memcpy( tptr, rgbaArray + (*dptr)*4, 4 );
         tptr += 4;
@@ -84,164 +89,31 @@ void vtkVolumeTextureMapper3D_TextureOrganization( T *data_ptr,
     {
       break;
     }
-    
-    //check if the volume must be rescaled
-    me->GetDimension(volume, dimension);
-    tempFactor = (vtkFloatingPointType)size[0]/(vtkFloatingPointType)dimension[0];
-    if (tempFactor == 1)
+  
+    //temp hist start
+    int texPtr = 0;
+    for (int y = 0; y < dimensions[1]; y++)
     {
-      factor[0] = (int)tempFactor;
+        for (int x = 0; x < dimensions[0]; x++) 
+        {
+            int tempVal = (int)texture[texPtr];
+            int histVal = me->GetHistValue(volume, tempVal);
+            int histMax = me->GetHistMax(volume);
+            me->SetHistValue(volume, tempVal);
+            histVal++;
+            me->SetHistMax(volume, histVal);
+            texPtr=texPtr+4;    
+        }
     }
-    else if (tempFactor < 1)
-    {
-      factor[0] = -(int)(1/tempFactor);
-    }
-    else
-    {
-      factor[0]= (int)tempFactor;            
-    }
-    tempFactor = (vtkFloatingPointType)size[1]/(vtkFloatingPointType)dimension[1];
-    if (tempFactor == 1)
-    {
-      factor[1] = (int)tempFactor;
-    }
-    else if (tempFactor < 1)
-    {
-      factor[1] = -(int)(1/tempFactor);
-    }
-    else
-    {
-      factor[1]= tempFactor;        
-    }
-    //scale data to wanted power of two
-    me->RescaleData(texture, size, spacing, factor, volume);       
+    texPtr = 0;
+
+    me->CreateSubImages(texture, size, spacing);    
+ 
   }
   delete [] texture;
 }
 
-
-//-----------------------------------------------------
-//Name: RescaleData  - are going to be rewritten!
-//Description: Scaling of the volumes to a different power of two
-//-----------------------------------------------------
-void vtkVolumeTextureMapper3D::RescaleData(unsigned char* texture,  int size[3], float spacing[3], int scaleFactor[2], int volume)
-{
-  
-  int dim[3];
-  this->GetDimension(volume, dim);
-
-  //rescale to wanted power of two and call CreateSubImage in vtkOpenGLVolumeTextureMapper3D
-  int texPtr = 0;
-  int y = 0;
-  int x = 0;
-  for (y = 0; y < size[1]; y++)
-  {
-    for (x = 0; x < size[0]; x++) 
-    {
-      tempData[x][y][0] = (int)texture[texPtr];
-      histArray[volume][tempData[x][y][0]]++;
-      if ((histArray[volume][tempData[x][y][0]] > histMax[volume]) && (tempData[x][y][0] != 0))
-      {
-        histMax[volume] = histArray[volume][tempData[x][y][0]];
-      }
-      texPtr=texPtr+4;    
-    }
-  }
-
-  if ((scaleFactor[0] == 1) && (scaleFactor[1] == 1))
-  {
-    texPtr = 0;
-    for (int y = 0; y < dim[1]; y++)
-    {
-      for (int x = 0; x < dim[0]; x++) 
-      {
-        texture[texPtr] = (unsigned char) tempData[x][y][0];
-        texPtr++;
-      }
-    }
-    this->CreateSubImages(texture, size, spacing);
-  } else
-  {
-
-    double tempValue = 0;
-    int tx = 0;
-    int ty = 0;
-    //increas the volume
-    if ((scaleFactor[0] < 0) && (scaleFactor[1] <0))
-    {
-      texPtr= 0;
-      int y = 0;
-      for (y = 0; y < size[1]; y++) 
-      {
-        if (y < (size[1]+scaleFactor[1]))
-        {    
-          for (int scaleY=0; scaleY < -scaleFactor[1]; scaleY++)
-          {
-            for (int scaleX=0; scaleX < -scaleFactor[0]; scaleX++)
-            {
-              tx = scaleX/(-scaleFactor[0]-1);
-              ty = scaleY/(-scaleFactor[1]-1);
-              //interpolation
-              tempValue = (1-tx)*(1-ty)*(vtkFloatingPointType)tempData[x][y][0]+tx
-                         *(1-ty)*(vtkFloatingPointType)tempData[x+1][y][0]+ty*(1-tx)
-                         *(vtkFloatingPointType)tempData[x][y+1][0]+tx*ty* (vtkFloatingPointType)tempData[x+1][y+1][0];    
-              texture[texPtr] = (unsigned char)(ceil(tempValue));
-              texPtr++;
-            }
-          }                        
-        } else //high  x-values
-        {   
-            for (int scaleX=0; scaleX < -scaleFactor[0]; scaleX++)
-            {
-              texture[texPtr]=(unsigned char)(tempData[x][y][0]);    
-              texPtr++;
-            }
-        }
-      }
-    } else //high y-values
-    {
-      for (int scaleY=0; scaleY < -scaleFactor[1]; scaleY++)
-      {
-        for (int x = 0; x < size[0]; x++)
-        {
-          for (int scaleX=0; scaleX < -scaleFactor[0]; scaleX++)
-          {
-            texture[texPtr]=(unsigned char)(tempData[x][y][0]);
-            texPtr++;
-          }
-        }
-      }
-    }
-    //decrease the volume
-    if ((scaleFactor[0]>= 0) && (scaleFactor[1]>=0))
-    {  
-      texPtr= 0;
-      double tempValue = 0;
-      for (int y = 0; y < size[1]; y+=scaleFactor[1]) 
-      {
-        for (int x = 0; x < size[0]; x+=scaleFactor[0])
-        {
-          for (int scaleY=0; scaleY < scaleFactor[1]; scaleY++)
-          {
-            for (int scaleX=0; scaleX < scaleFactor[0]; scaleX++)
-            {
-              tempValue = tempValue+tempData[x+scaleX][y+scaleY][0];
-            }
-          }
-          texture[texPtr] = (unsigned char)(ceil(tempValue/(scaleFactor[0]*scaleFactor[1])));
-          texPtr++;
-          tempValue = 0;
-        }        
-      }
-    }
-  }
-  //call CreateSubImages in vtkOpenGLVolumeTextureMapping with the rescaled texture
-  this->CreateSubImages(texture, size, spacing);
-  texPtr =0;
-}
-
-
-vtkCxxRevisionMacro(vtkVolumeTextureMapper3D, "$Revision: 1.5 $");
+vtkCxxRevisionMacro(vtkVolumeTextureMapper3D, "$Revision: 1.6 $");
 
 //----------------------------------------------------------------------------
 // Needed when we don't use the vtkStandardNewMacro.
@@ -254,6 +126,7 @@ vtkInstantiatorNewMacro(vtkVolumeTextureMapper3D);
 //-----------------------------------------------------
 vtkVolumeTextureMapper3D::vtkVolumeTextureMapper3D()
 {
+
   this->Texture               = NULL;
   diffX = 0;
   diffY = 0;
@@ -263,20 +136,30 @@ vtkVolumeTextureMapper3D::vtkVolumeTextureMapper3D()
   tMatrixChanged[1] = 0;
   tMatrixChanged[2] = 0;
     
-   for (int i = 0; i < 3; i++)
-   {
+  for (int i = 0; i < 3; i++)
+  {
      for (int j = 0; j < 4; j++)
-       {
-     for (int k = 0; k < 4; k++)
-       {
-         currentTransformation[i][j][k] = 0;
-       }
-       }    
+     {
+        for (int k = 0; k < 4; k++)
+        {
+            currentTransformation[i][j][k] = 0;
+        }
+     }    
      currentTransformation[i][0][0] = 1;
      currentTransformation[i][1][1] = 1;
      currentTransformation[i][2][2] = 1;
      currentTransformation[i][3][3] = 1;
-   }
+  }
+  for (int l = 0; l< 3; l++)
+  {
+    for (int j = 0; j < 3; j++)
+    {
+      this->SetDimension(l, j, 256);
+    }
+  }
+  LUT0 = vtkLookupTable::New();
+  LUT1 = vtkLookupTable::New();
+  LUT2 = vtkLookupTable::New();
 }
 
 //-----------------------------------------------------
@@ -289,6 +172,9 @@ vtkVolumeTextureMapper3D::~vtkVolumeTextureMapper3D()
   {
     delete [] this->Texture;
   }
+  LUT0->Delete();
+  LUT1->Delete();
+  LUT2->Delete();
 }
 
 
@@ -309,40 +195,80 @@ vtkVolumeTextureMapper3D *vtkVolumeTextureMapper3D::New()
 //-----------------------------------------------------
 void vtkVolumeTextureMapper3D::GenerateTextures( vtkRenderer *ren, vtkVolume *vol, int volume )
 {
-
   vtkImageData           *input = this->GetInput();
+  vtkImageData           *inputResample = vtkImageData::New();
+  vtkImageResample       *resample = vtkImageResample::New();
+  vtkImageCast           *imageCast =  vtkImageCast::New();
   int                    size[3];
+  int                    extent[6];
   void                   *inputPointer;
   int                    inputType;
-  
-  inputPointer = input->GetPointData()->GetScalars()->GetVoidPointer(0);
-  inputType    = input->GetPointData()->GetScalars()->GetDataType();
-
+  int                    texDim[3];
+  vtkFloatingPointType   scaleFactor[3];
   
   histMax[volume] = 0;
   for (int j = 0; j < 256; j++)
   {
     histArray[volume][j] = 0;
   }
-
+  
   if ( this->Texture )
   {
     delete [] this->Texture;
     this->Texture = NULL;
   }
   
-  //is not always updated - very strange!  
+  vtkFloatingPointType spacing[3];
   input->GetDimensions(size);
+  input->GetSpacing(spacing);
+  input->GetExtent(extent);
+  size[0] = extent[1]+1;
+  size[1] = extent[3]+1;
+  size[2] = extent[5]+1;
+
+  texDim[0]= this-> GetTextureDimension(volume, 0);
+  texDim[1]= this-> GetTextureDimension(volume, 1);
+  texDim[2]= this-> GetTextureDimension(volume, 2);
+  
+  scaleFactor[0]= ((vtkFloatingPointType)texDim[0]-0.5)/(vtkFloatingPointType)extent[1];
+  scaleFactor[1]= ((vtkFloatingPointType)texDim[1]-0.5)/(vtkFloatingPointType)extent[3];
+  scaleFactor[2]= ((vtkFloatingPointType)texDim[2]-0.5)/(vtkFloatingPointType)extent[5];
+
+  //if texture size is not the same size as the volume extent - resample
+  if (scaleFactor[0] != 1 || scaleFactor[1] != 1 || scaleFactor[2] != 1)
+  {
+    inputResample->DeepCopy(input);
+    inputResample->GetExtent(extent);
+    
+    resample->SetInput(inputResample);
+        
+    resample-> SetAxisMagnificationFactor( 0, scaleFactor[0]);
+    resample-> SetAxisMagnificationFactor( 1, scaleFactor[1]);
+    resample-> SetAxisMagnificationFactor( 2, scaleFactor[2]);
+    resample-> Update();
+
+    inputResample->DeepCopy(resample->GetOutput());
+    inputResample->SetScalarTypeToUnsignedShort();
+    inputResample->UpdateData();
+
+    inputPointer=inputResample->GetPointData()->GetScalars()->GetVoidPointer(0);
+    inputType = inputResample->GetPointData()->GetScalars()->GetDataType();
+
+    inputResample->GetExtent(extent);
+  }
+  else 
+  {
+     inputPointer = input->GetPointData()->GetScalars()->GetVoidPointer(0);
+     inputType    = input->GetPointData()->GetScalars()->GetDataType();
+  }
   
   switch ( inputType )
   {
     case VTK_UNSIGNED_CHAR:
       vtkVolumeTextureMapper3D_TextureOrganization( (unsigned char *)inputPointer, size, volume, this );
-
       break;
     case VTK_UNSIGNED_SHORT:
       vtkVolumeTextureMapper3D_TextureOrganization( (unsigned short *)inputPointer,  size, volume, this );
-  
       break;
     default:
       vtkErrorMacro("vtkVolumeTextureMapper3D only works with unsigned short and unsigned char data.\n" << 
@@ -358,45 +284,9 @@ void vtkVolumeTextureMapper3D::InitializeRender( vtkRenderer *ren,
                                                  vtkVolume *vol,
                                                  int majorDirection )
 {
-  vtkFloatingPointType spacing[3];
   boxSize = 128;
   this->InternalSkipFactor = 1;
-  this->GetInput()->GetSpacing(spacing);
-  this->DataSpacing[0] = (float) spacing[0];
-  this->DataSpacing[1] = (float) spacing[1];
-  this->DataSpacing[2] = (float) spacing[2];
   this->vtkVolumeTextureMapper::InitializeRender( ren, vol );
-
-
-
-
-
-}
-
-
-void vtkVolumeTextureMapper3D::DefaultValues()
-{
-  for (int i = 0; i < 3; i++)
-    {
-      //dimension[i][0] = 256;
-      //dimension[i][1] = 256;
-      //dimension[i][2] = 256;    
-
-      dimension[i][0] = 128;
-      dimension[i][1] = 128;
-      dimension[i][2] = 128;    
-    }    
-}
-
-//-----------------------------------------------------
-//Name: MultiplyMatrix (internal function)
-//Description: Multiplication of a 1x3 matrix and a 3x3 matrix 
-//-----------------------------------------------------
-void vtkVolumeTextureMapper3D::MultiplyMatrix(double result[3], double rotMatrix[3][3], double original[3])
-{
-  result[0] = rotMatrix[0][0]*original[0]+rotMatrix[0][1]*original[1]+rotMatrix[0][2]*original[2];
-  result[1] = rotMatrix[1][0]*original[0]+rotMatrix[1][1]*original[1]+rotMatrix[1][2]*original[2];
-  result[2] = rotMatrix[2][0]*original[0]+rotMatrix[2][1]*original[1]+rotMatrix[2][2]*original[2];
 }
 
 //-----------------------------------------------------
@@ -413,70 +303,37 @@ void vtkVolumeTextureMapper3D::ComputePlaneEquation(double plane[4], double poin
 
 //-----------------------------------------------------
 //Name: Rotate (internal function)
-//Description: Rotation with the result in rot[3][3]
+//Description: 
 //-----------------------------------------------------
-void vtkVolumeTextureMapper3D::Rotate(double rot[3][3], double angle[3])
+void vtkVolumeTextureMapper3D::Rotate(int dir, double angle)
 {
-  double rotx[3][3];
-  double roty[3][3];
-  double rotz[3][3];
-  double rotTemp[3][3];
+   vtkMatrix4x4       *rotdir = vtkMatrix4x4::New();
+   rotdir->Identity();
+    
+   if (dir == 0)
+   {
+      rotdir->SetElement(1,1,cos(angle));
+      rotdir->SetElement(1,2,sin(angle)); 
+      rotdir->SetElement(2,1,-sin(angle));
+      rotdir->SetElement(2,2,cos(angle));
+   } 
+   else if (dir == 1)
+   {
+       rotdir->SetElement(0,0,cos(angle));
+      rotdir->SetElement(0,2,-sin(angle));
+      rotdir->SetElement(2,0,sin(angle));
+      rotdir->SetElement(2,2,cos(angle));
+   }
+   else 
+   {
+      rotdir->SetElement(0,0,cos(angle));
+      rotdir->SetElement(0,1,sin(angle));
+      rotdir->SetElement(1,0,-sin(angle));
+      rotdir->SetElement(1,1,cos(angle));
+   }
   
-  rotx[0][0]= 1;
-  rotx[0][1]= 0;
-  rotx[0][2]= 0; 
-  rotx[1][0]= 0;
-  rotx[1][1]= cos(angle[0]);
-  rotx[1][2]= sin(angle[0]); 
-  rotx[2][0]= 0;
-  rotx[2][1]= -sin(angle[0]);
-  rotx[2][2]= cos(angle[0]);
-  
-  roty[0][0]= cos(angle[1]);
-  roty[0][1]= 0;
-  roty[0][2]= -sin(angle[1]); 
-  roty[1][0]= 0;
-  roty[1][1]= 1;
-  roty[1][2]= 0; 
-  roty[2][0]= sin(angle[1]);
-  roty[2][1]= 0;
-  roty[2][2]= cos(angle[1]);
-  
-  rotz[0][0]= cos(angle[2]);
-  rotz[0][1]= sin(angle[2]);
-  rotz[0][2]= 0; 
-  rotz[1][0]= -sin(angle[2]);
-  rotz[1][1]= cos(angle[2]);
-  rotz[1][2]= 0; 
-  rotz[2][0]= 0;
-  rotz[2][1]= 0;
-  rotz[2][2]= 1;
-  
-  rotTemp[0][0] = rotx[0][0]*roty[0][0]+rotx[0][1]*roty[1][0]+rotx[0][2]*roty[2][0];
-  rotTemp[0][1] = rotx[0][0]*roty[0][1]+rotx[0][1]*roty[1][1]+rotx[0][2]*roty[2][1];
-  rotTemp[0][2] = rotx[0][0]*roty[0][2]+rotx[0][1]*roty[1][2]+rotx[0][2]*roty[2][2];
-  
-  rotTemp[1][0] = rotx[1][0]*roty[0][0]+rotx[1][1]*roty[1][0]+rotx[1][2]*roty[2][0];
-  rotTemp[1][1] = rotx[1][0]*roty[0][1]+rotx[1][1]*roty[1][1]+rotx[1][2]*roty[2][1];
-  rotTemp[1][2] = rotx[1][0]*roty[0][2]+rotx[1][1]*roty[1][2]+rotx[1][2]*roty[2][2];
-  
-  rotTemp[2][0] = rotx[2][0]*roty[0][0]+rotx[2][1]*roty[1][0]+rotx[2][2]*roty[2][0];    
-  rotTemp[2][1] = rotx[2][0]*roty[0][1]+rotx[2][1]*roty[1][1]+rotx[2][2]*roty[2][1];
-  rotTemp[2][2] = rotx[2][0]*roty[0][2]+rotx[2][1]*roty[1][2]+rotx[2][2]*roty[2][2];
-  
-  
-  rot[0][0] = rotTemp[0][0]*rotz[0][0]+rotTemp[0][1]*rotz[1][0]+rotTemp[0][2]*rotz[2][0];
-  rot[0][1] = rotTemp[0][0]*rotz[0][1]+rotTemp[0][1]*rotz[1][1]+rotTemp[0][2]*rotz[2][1];
-  rot[0][2] = rotTemp[0][0]*rotz[0][2]+rotTemp[0][1]*rotz[1][2]+rotTemp[0][2]*rotz[2][2];
-  
-  rot[1][0] = rotTemp[1][0]*rotz[0][0]+rotTemp[1][1]*rotz[1][0]+rotTemp[1][2]*rotz[2][0];
-  rot[1][1] = rotTemp[1][0]*rotz[0][1]+rotTemp[1][1]*rotz[1][1]+rotTemp[1][2]*rotz[2][1];
-  rot[1][2] = rotTemp[1][0]*rotz[0][2]+rotTemp[1][1]*rotz[1][2]+rotTemp[1][2]*rotz[2][2];
-  
-  rot[2][0] = rotTemp[2][0]*rotz[0][0]+rotTemp[2][1]*rotz[1][0]+rotTemp[2][2]*rotz[2][0];    
-  rot[2][1] = rotTemp[2][0]*rotz[0][1]+rotTemp[2][1]*rotz[1][1]+rotTemp[2][2]*rotz[2][1];
-  rot[2][2] = rotTemp[2][0]*rotz[0][2]+rotTemp[2][1]*rotz[1][2]+rotTemp[2][2]*rotz[2][2];    
-  
+   rotate->DeepCopy(rotdir);
+   rotdir->Delete();   
 }
 //xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 // Functions below can be called by users
@@ -611,17 +468,6 @@ void vtkVolumeTextureMapper3D::SetDimension(int volume, int dir, int dims)
   dimension[volume][dir] = dims;
 }
 
-//-----------------------------------------------------
-//Name: GetDimension 
-//Description: Get the dimension of a volume
-//-----------------------------------------------------
-void vtkVolumeTextureMapper3D::GetDimension(int volume, int dim[3])
-{
-  for (int i = 0; i < 3; i++)
-  {
-    dim[i]= dimension[volume][i];
-  }    
-}
 
 //-----------------------------------------------------
 //Name: GetTextureDimension
@@ -651,9 +497,9 @@ void vtkVolumeTextureMapper3D::EnableClipLines(int value)
 //Name: IsClipLinesEnable
 //Description: Check if the clip plane line is enabled
 //-----------------------------------------------------
-void vtkVolumeTextureMapper3D::IsClipLinesEnable(int value[1])
+int vtkVolumeTextureMapper3D::IsClipLinesEnable()
 {
-  value[0] = clipLines;
+  return clipLines;
 }
 
 //-----------------------------------------------------
@@ -717,6 +563,8 @@ void vtkVolumeTextureMapper3D::InitializeClipPlanes()
   {
     volToClip[i] = false;
   }
+  rotate = vtkMatrix4x4::New();
+  rotate->Identity();
   this->ResetClipPlanes(0);
   this->SetEnableClipPlanes(0, 1);
   for (int c = 1; c < 6; c++)
@@ -827,23 +675,26 @@ void vtkVolumeTextureMapper3D::ResetClipPlanes(int type)
 //-----------------------------------------------------
 void vtkVolumeTextureMapper3D::ChangeClipPlaneDir(int plane, int dir, vtkFloatingPointType angle)
 {
-  double rot[3][3];
-  double tempPlaneEquation[4];
-  double currPlane[3];
-  currPlane[0] = 1;
-  currPlane[1] = 0;
-  currPlane[2] = 0;
+  vtkMatrix4x4  *tempPlaneEquation = vtkMatrix4x4::New();
+  tempPlaneEquation->Identity();
+  tempPlaneEquation->SetElement(0, 3, 1);
   angle = angle*3.14/180;
-  currentAngle[dir]= angle;
-  this->Rotate(rot, currentAngle);
-  this->MultiplyMatrix(tempPlaneEquation, rot, currPlane);
-  currentPlane[plane][0] = tempPlaneEquation[0];
-  currentPlane[plane][1] = tempPlaneEquation[1];
-  currentPlane[plane][2] = tempPlaneEquation[2];
+  angle = angle - currentAngle[dir];
+  currentAngle[dir]= angle+currentAngle[dir];
+     
+  this->Rotate(1, currentAngle[1]);
+  tempPlaneEquation->Multiply4x4(rotate, tempPlaneEquation, tempPlaneEquation);
+  this->Rotate(2, currentAngle[2]);
+  tempPlaneEquation->Multiply4x4(rotate, tempPlaneEquation, tempPlaneEquation);
+  this->Rotate(0, currentAngle[0]);
+  tempPlaneEquation->Multiply4x4(rotate, tempPlaneEquation, tempPlaneEquation);
+  
+  currentPlane[plane][0] = tempPlaneEquation->GetElement(0, 3);
+  currentPlane[plane][1] = tempPlaneEquation->GetElement(1, 3);
+  currentPlane[plane][2] = tempPlaneEquation->GetElement(2, 3);
   this->UpdateClipPlaneEquation(plane);
+  tempPlaneEquation->Delete();
 }
-
-
 
 
 //-----------------------------------------------------
@@ -936,17 +787,21 @@ void vtkVolumeTextureMapper3D::UpdateClipPlaneEquation(int plane)
     planePointCube[5][1] = 0;
     planePointCube[5][2] = -1;
     
-    double rot[3][3];
-    this->Rotate(rot, currentAngle);
-    
+        
     for (int j = 0; j < 6; j++)
     {
-      planePoint[0] = planePointCube[j][0];
-      planePoint[1] = planePointCube[j][1];
-      planePoint[2] = planePointCube[j][2];
-      
-      this->MultiplyMatrix(planePointRot, rot, planePoint);
-      
+    
+      vtkMatrix4x4  *planePoint = vtkMatrix4x4::New();    
+      planePoint->SetElement(0,3, planePointCube[j][0]);
+      planePoint->SetElement(1,3, planePointCube[j][1]);
+      planePoint->SetElement(2,3, planePointCube[j][2]);
+
+      planePoint->Multiply4x4(rotate, planePoint, planePoint);
+
+      planePointRot[0] = planePoint->GetElement(0,3);
+      planePointRot[1] = planePoint->GetElement(0,3);
+      planePointRot[2] = planePoint->GetElement(0,3);
+
       normPlaneVector[0] = planePointRot[0]/sqrt(planePointRot[0]*planePointRot[0]
                         +planePointRot[1]*planePointRot[1]
                         +planePointRot[2]*planePointRot[2]);
@@ -967,6 +822,7 @@ void vtkVolumeTextureMapper3D::UpdateClipPlaneEquation(int plane)
       planeEq[j][1]=newPlane[1];
       planeEq[j][2]=newPlane[2];
       planeEq[j][3]=newPlane[3];
+      planePoint->Delete();
     }
   }
 }
@@ -1010,16 +866,45 @@ void vtkVolumeTextureMapper3D::GetClipPlaneEquation(double planeEquation[4], int
 //-o-o-o-o-o-o-o-o-o-o-
 
 
+//-----------------------------------------------------
+//Name: SetHistMax
+//-----------------------------------------------------
+void vtkVolumeTextureMapper3D::SetHistMax(int volume, int value)
+{
+    histMax[volume]++;
+}
 
+//-----------------------------------------------------
+//Name: GetHistMax
+//-----------------------------------------------------
+int vtkVolumeTextureMapper3D::GetHistMax(int volume)
+{
+  return histMax[volume];
+}
+
+//-----------------------------------------------------
+//Name: SetHistValue
+//-----------------------------------------------------
+void vtkVolumeTextureMapper3D::SetHistValue(int volume, int index)
+{
+  histArray[volume][index]++;
+}
 
 //-----------------------------------------------------
 //Name: GetHistValue
 //-----------------------------------------------------
 int vtkVolumeTextureMapper3D::GetHistValue(int volume, int index)
 {
-  return histArray[volume][index]*255/histMax[volume];
+  if (histMax[volume] != 0)
+  {
+    int histVal = (int)(histArray[volume][index]/255);
+    return histVal;
+  }
+  else
+  {
+    return 0;
+  }
 }
-
 
 //-----------------------------------------------------
 //Name: ClearTF
@@ -1029,10 +914,7 @@ void vtkVolumeTextureMapper3D::ClearTF()
 {
   for (int i = 0; i < 3; i++)
   {
-    for (int rgba = 0; rgba < 4; rgba++ )
-    {
-      TFnum[i][rgba] = 0; 
-    }
+    TFnum[i] = 0;     
   }
 }
 
@@ -1041,29 +923,28 @@ void vtkVolumeTextureMapper3D::ClearTF()
 //Description: Get number of points in the transfer function
 //for a specific volume and type
 //-----------------------------------------------------
-int vtkVolumeTextureMapper3D::GetNumPoint(int currentVolume, int type)
+int vtkVolumeTextureMapper3D::GetNumPoint(int currentVolume)
 {
-  return (TFnum[currentVolume][type]-1);
+  return (TFnum[currentVolume]-1);
 }
 
 //-----------------------------------------------------
 //Name: GetPoint
 //Description: Get the value of a specific transfer function point
 //-----------------------------------------------------
-int vtkVolumeTextureMapper3D::GetPoint(int currentVolume, int type, int num, int xORy)
+int vtkVolumeTextureMapper3D::GetPoint(int currentVolume, int num, int xORy)
 {
-  return TFdata[type][num][currentVolume][xORy];
+  return TFdata[num][currentVolume][xORy];
 }
 
 //-----------------------------------------------------
 //Name: AddTFPoint
 //Description: Add a transfer function point
 //-----------------------------------------------------
-void vtkVolumeTextureMapper3D::AddTFPoint(int volume, int type, int point, int value)
+void vtkVolumeTextureMapper3D::AddTFPoint(int volume, int point, int value)
 {
   bool last = true;
-  bool grey = false;
-  
+
   if (point < 0)
   {
     point =0;
@@ -1072,129 +953,58 @@ void vtkVolumeTextureMapper3D::AddTFPoint(int volume, int type, int point, int v
   {
     value =0;
   }
-  if (type == 4)
+ 
+  if (TFnum[volume] == 0)
   {
-    grey = true;
-    type = 0;
-  }
-  
-  if (TFnum[volume][type] == 0)
-  {
-    if (grey)
-    {
-      for (int i = 0; i < 3; i++)
-      {
-    TFdata[i][0][volume][0] = point; 
-    TFdata[i][0][volume][1] = value;
-    TFnum[volume][i]++;
-      }
-    }
-    else
-    {
-      TFdata[type][0][volume][0] = point; 
-      TFdata[type][0][volume][1] = value;
-      TFnum[volume][type]++;
-    }
-    last = false;
+      TFdata[0][volume][0] = point; 
+      TFdata[0][volume][1] = value;
+      TFnum[volume]++;
+         last = false;
   }
   else
   {
-    for(int i = 0; i < TFnum[volume][type]; i++ )
-    {
-      if (TFdata[type][i][volume][0] >= point)
+      for(int i = 0; i < TFnum[volume]; i++ )
       {
-    //sortera sà att de kommer i rätt ordning!!!
-    for (int j = TFnum[volume][type]; j > i; j--) 
-    {
-      if (grey)
-      {
-        for (int m = 0; m < 3; m++)
-        {
-          TFdata[m][j][volume][0] = TFdata[m][j-1][volume][0]; 
-          TFdata[m][j][volume][1] = TFdata[m][j-1][volume][1];
-        }
+          if (TFdata[i][volume][0] >= point)
+          {
+              //sort
+              for (int j = TFnum[volume]; j > i; j--) 
+              {
+                  TFdata[j][volume][0] = TFdata[j-1][volume][0]; 
+                  TFdata[j][volume][1] = TFdata[j-1][volume][1];
+              }    
+              TFdata[i][volume][0] = point;
+              TFdata[i][volume][1] = value;
+              TFnum[volume]++;
+              last = false;
+              break;
+          }
       }
-      else
-      {
-        TFdata[type][j][volume][0] = TFdata[type][j-1][volume][0]; 
-        TFdata[type][j][volume][1] = TFdata[type][j-1][volume][1];                        
-      }
-    }
-    if (grey)
-    {
-      for(int m = 0; m< 3; m++)
-      {
-        TFdata[m][i][volume][0] = point;
-        TFdata[m][i][volume][1] = value;
-        TFnum[volume][m]++;
-      }
-    }
-    else
-    {
-      TFdata[type][i][volume][0] = point;
-      TFdata[type][i][volume][1] = value;
-      TFnum[volume][type]++;
-    }
-    last = false;
-    break;
-      }
-    }
   }        
   if (last == true) 
   {
-    if (grey)
-    {
-      for (int m = 0; m < 3; m++)
-      {
-    TFdata[m][TFnum[volume][m]][volume][0] = point;
-    TFdata[m][TFnum[volume][m]][volume][1] = value;
-    TFnum[volume][m]++;
-      }
-    }
-    else
-    {
-      TFdata[type][TFnum[volume][type]][volume][0] = point;
-      TFdata[type][TFnum[volume][type]][volume][1] = value;
-      TFnum[volume][type]++;
-    }
+     TFdata[TFnum[volume]][volume][0] = point;
+     TFdata[TFnum[volume]][volume][1] = value;
+     TFnum[volume]++;
   }
-  grey =false;
   changedTable[volume] = true;
 }
+
+
 
 //-----------------------------------------------------
 //Name: RemoveTFPoint
 //Description: Remove a transfer function point
 //-----------------------------------------------------
-void vtkVolumeTextureMapper3D::RemoveTFPoint(int volume, int type, int pointPos)
+void vtkVolumeTextureMapper3D::RemoveTFPoint(int volume, int pointPos)
 {
-  for (int j = pointPos; j < TFnum[volume][type]; j++) 
+  for (int j = pointPos; j < TFnum[volume]; j++) 
   {
-    if (type == 4)
-    {
-      for (int m = 0; m < 3; m++)
-      {
-    TFdata[m][j][volume][0] = TFdata[m][j+1][volume][0]; 
-    TFdata[m][j][volume][1] = TFdata[m][j+1][volume][1];
-      }
-    }
-    else
-    {
-      TFdata[type][j][volume][0] = TFdata[type][j+1][volume][0]; 
-      TFdata[type][j][volume][1] = TFdata[type][j+1][volume][1];                
-    }
+      TFdata[j][volume][0] = TFdata[j+1][volume][0]; 
+      TFdata[j][volume][1] = TFdata[j+1][volume][1];                
   }
-  if (type == 4)
-  {
-    for (int t = 0; t < 3; t++) 
-    {
-      TFnum[volume][t]--;
-    }
-  }
-  else 
-  {
-    TFnum[volume][type]--;
-  }        
+ 
+  TFnum[volume]--;
 }
 
 
@@ -1235,101 +1045,111 @@ int vtkVolumeTextureMapper3D::GetColorMinMax(int volume, int minelmax, int rgb)
 }
 
 //-----------------------------------------------------
-//Name: UpdateColorTable
-//Description: Update the color table
+//Name: SetColorTable
+//Description: Set the color table with a vtkLookupTable
 //-----------------------------------------------------
-void vtkVolumeTextureMapper3D::UpdateColorTable(int colorTable[256][4], int volume)
+void vtkVolumeTextureMapper3D::SetColorTable(vtkLookupTable *lookupTable, int volume)
 {
-  vtkFloatingPointType quote = 0.0;
-  vtkFloatingPointType diff1 =0.0;
-  vtkFloatingPointType diff2 =0.0;
-  int least1 =0;
-  int least2 = 0;
-  
-  for(int type = 0; type < 4; type++)
+  if (volume == 0)
   {
-    for (int num = 0; num < (TFnum[volume][type]-1); num++ )
+      LUT0->DeepCopy(lookupTable);
+  }
+  else if (volume == 1)
+  {
+      LUT1->DeepCopy(lookupTable);
+  }
+  else if (volume == 2)
+  {
+      LUT2->DeepCopy(lookupTable);
+  }
+  else 
+  {
+      vtkErrorMacro("A color table is set to a volume that doesn't exist.");
+  }
+
+  changedTable[volume] = true;
+}
+
+//-----------------------------------------------------
+//Name: GetColorTable
+//Description: Set the color table with a vtkLookupTable
+//-----------------------------------------------------
+void vtkVolumeTextureMapper3D::GetColorTable(int colorTable[256][4], int volume)
+{
+ 
+  double colors[4];
+  double alphaValue[256];
+  int least1, least2;
+  double diff1, diff2, quote;
+
+  for (int num = 0; num < TFnum[volume]; num++ )
+  {
+    for (int i = TFdata[num][volume][0]; i <= TFdata[num+1][volume][0]; i++)
     {
-      for (int i = TFdata[type][num][volume][0]; i <= TFdata[type][num+1][volume][0]; i++)
-      { 
-    if (TFdata[type][num+1][volume][1] == TFdata[type][num][volume][1] )
-    {
-      if (type == 3)
-      {
-        colorTable[i][type] = TFdata[type][num][volume][1]*256/numberOfPlanes/**128/numberOfPlanes*/;    
-        if (colorTable[i][type]<0)
-        {
-          colorTable[i][type]=0;
-        }
-      }
-      else
-      {
-        colorTable[i][type] = ceil((TFdata[type][num][volume][1]
-                    *((colorMinMax[volume][type][1]-colorMinMax[volume][type][0]))
-                    /255+colorMinMax[volume][type][0]));
-        if (colorMinMax[volume][type][1] < colorMinMax[volume][type][0])
-        {
-          if (colorTable[i][type] < colorMinMax[volume][type][1])
-          {
-        colorTable[i][type] = colorMinMax[volume][type][1];
-          }
-          else if (colorTable[i][type] > colorMinMax[volume][type][0])
-          {
-        colorTable[i][type] = colorMinMax[volume][type][0];
-          }
-        }
-        else
-        {
-          if (colorTable[i][type] > colorMinMax[volume][type][1])
-          {
-        colorTable[i][type] = colorMinMax[volume][type][1];
-          }
-          else if (colorTable[i][type] < colorMinMax[volume][type][0])
-          {
-        colorTable[i][type] = colorMinMax[volume][type][0];
-          }
-        }
-      }
-    }
-    else
-    {
-      diff1=(vtkFloatingPointType)TFdata[type][num+1][volume][1]-(vtkFloatingPointType)TFdata[type][num][volume][1];
-      diff2=(vtkFloatingPointType)TFdata[type][num+1][volume][0]-(vtkFloatingPointType)TFdata[type][num][volume][0];
+      diff1=(double)TFdata[num+1][volume][1]-(double)TFdata[num][volume][1];
+      diff2=(double)TFdata[num+1][volume][0]-(double)TFdata[num][volume][0];
       quote = sqrt(diff1*diff1)/sqrt(diff2*diff2);
-      if (TFdata[type][num+1][volume][1]<TFdata[type][num][volume][1])
+      if (TFdata[num+1][volume][1]<TFdata[num][volume][1])
       {
-        least2=(vtkFloatingPointType)TFdata[type][num+1][volume][1];
+        least2=TFdata[num+1][volume][1];
       }
       else
       {
-        least2=(vtkFloatingPointType)TFdata[type][num][volume][1];
+        least2=TFdata[num][volume][1];
       }
-      if (TFdata[type][num+1][volume][0]<TFdata[type][num][volume][0])
+      if (TFdata[num+1][volume][0]<TFdata[num][volume][0])
       {
-        least1=(vtkFloatingPointType)TFdata[type][num+1][volume][0];
+        least1=TFdata[num+1][volume][0];
       }
       else
       {
-        least1=(vtkFloatingPointType)TFdata[type][num][volume][0];
+        least1=TFdata[num][volume][0];
       }
-      if (type == 3)
-      {
-        colorTable[i][type]= ceil((((i-least1)*quote+least2))*256/numberOfPlanes);
-        if (colorTable[i][type]<0)
+     
+        alphaValue[i]=  ((i-least1)*quote+least2)/numberOfPlanes;
+        if (alphaValue[i]<0)
         {
-          colorTable[i][type]=0;
+          alphaValue[i]=0;
+        }
+        else if(alphaValue[i] > 1)
+        {
+            alphaValue[i] = 1;
         }
       }
-      else
-      {
-        colorTable[i][type] = ceil(((((i-least1)*quote+least2)*
-                     ((colorMinMax[volume][type][1]-colorMinMax[volume][type][0]))
-                     /255+colorMinMax[volume][type][0])));
-      }
-    }
-      }     
+  }
+ 
+  vtkLookupTable *LUT = vtkLookupTable::New();
+  if (volume == 0)
+  {
+      LUT->DeepCopy(LUT0);
+  }
+  else if (volume == 1)
+  {
+      LUT->DeepCopy(LUT1);
+  }
+  else if (volume == 2)
+  {
+      LUT->DeepCopy(LUT2);
+  }
+
+  LUT->SetNumberOfColors(256);
+  LUT->Build();
+  for (int i = 0; i < 256; i++)
+  {
+    LUT->GetTableValue(i, colors);
+    colors[3] = alphaValue[i];
+    LUT->SetTableValue(i, colors);
+
+    for (int j = 0; j < 4; j++)
+    {
+        colorTable[i][j] = (int)ceil(colors[j]*255);    
     }
   }
+  LUT->GetTableValue(1, colors);
+  for (int j = 0; j < 4; j++)
+    {
+        colorTable[0][j] = (int)ceil(colors[j]*255);    
+    }
 }
 
 
@@ -1338,22 +1158,17 @@ void vtkVolumeTextureMapper3D::UpdateColorTable(int colorTable[256][4], int volu
 //Description: Get the array position for a point in the 
 //transfer function
 //-----------------------------------------------------
-int vtkVolumeTextureMapper3D::GetArrayPos(int volume, int type, int point, int value, int boundX, int boundY) 
+int vtkVolumeTextureMapper3D::GetArrayPos(int volume, int point, int value, int boundX, int boundY) 
 {
-  if (type == 4)
+ for (int i = 0; i < TFnum[volume]; i++ )
   {
-    type = 0;
-  }
-
-  for (int i = 0; i < TFnum[volume][type]; i++ )
-  {
-    if ((TFdata[type][i][volume][0] < (point+boundX) 
-      && TFdata[type][i][volume][0] > (point-boundX)) 
-      && (TFdata[type][i][volume][1] < (value+boundY) 
-      && TFdata[type][i][volume][1] > (value-boundY)))
+    if ((TFdata[i][volume][0] < (point+boundX) 
+      && TFdata[i][volume][0] > (point-boundX)) 
+      && (TFdata[i][volume][1] < (value+boundY) 
+      && TFdata[i][volume][1] > (value-boundY)))
     {
-      diffX = TFdata[type][i][volume][0] - point;
-      diffY = TFdata[type][i][volume][1] - value;
+      diffX = TFdata[i][volume][0] - point;
+      diffY = TFdata[i][volume][1] - value;
       return i;
     }
   }
@@ -1365,21 +1180,10 @@ int vtkVolumeTextureMapper3D::GetArrayPos(int volume, int type, int point, int v
 //Name: ChangeTFPoint
 //Description: Change an existing transfer function point
 //-----------------------------------------------------
-void vtkVolumeTextureMapper3D::ChangeTFPoint(int volume, int type, int pos, int point, int value)
+void vtkVolumeTextureMapper3D::ChangeTFPoint(int volume,int pos, int point, int value)
 {
-  if (type == 4)
-  {
-    for (int m = 0; m < 3; m++)
-    {
-      TFdata[m][pos][volume][0] = point+diffX;
-      TFdata[m][pos][volume][1] = value+diffY;
-    }
-  }
-  else
-  {
-    TFdata[type][pos][volume][0] = point+diffX;
-    TFdata[type][pos][volume][1] = value+diffY;
-  }
+  TFdata[pos][volume][0] = point+diffX;
+  TFdata[pos][volume][1] = value+diffY;
   changedTable[volume] = true;
 }
 

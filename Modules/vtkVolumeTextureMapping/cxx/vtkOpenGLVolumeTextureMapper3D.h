@@ -47,7 +47,7 @@ public:
  virtual void Render(vtkRenderer *ren, vtkVolume *vol);
  void CreateSubImages(unsigned char* texture, int size[2], vtkFloatingPointType spacing[3]);
  void RenderQuads(vtkRenderer *ren, vtkVolume *vol);
- void CreateEmptyTexture(void);
+ void CreateEmptyTexture(int volume);
  void ClipPlane(int plane, vtkFloatingPointType viewUp[3]);
  void InitializeVolRend();
  void NormalizeVector(vtkFloatingPointType vect[3]);
