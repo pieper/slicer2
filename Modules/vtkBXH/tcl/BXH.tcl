@@ -63,7 +63,7 @@
  
 #-------------------------------------------------------------------------------
 # .PROC VolBXHLoadVolumes 
-# Reads a BXH file
+# Reads a BXH file. It returns 0 if successful; 1 otherwise.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -74,12 +74,12 @@ proc VolBXHLoadVolumes {} {
 
     if {$fn == ""} {
         DevErrorWindow "File name field is empty."
-        return
+        return 1
     }
 
     if {[file exists $fn] == 0} { 
         DevErrorWindow "File doesn't exist: $fn"
-        return
+        return 1
     }
 
     # The directory the bxh file is located
@@ -108,14 +108,14 @@ proc VolBXHLoadVolumes {} {
     set parsed [bxhParser Parse]
     if {! $parsed} {
         DevErrorWindow "Failed to parse bxh file: $fn"
-        return
+        return 1
     }
     
     set root [bxhParser GetRootElement]
     set name [$root GetName]
     if {$name != "bxh"} {
         DevErrorWindow "No bxh tag found: $fn"
-        return
+        return 1
     }
 
     set VolBXH(bxhparser) bxhParser
@@ -156,6 +156,8 @@ proc VolBXHLoadVolumes {} {
     if {[info exists VolBXH(bxh-dim,t,size)] == 0} {
         VolumesPropsCancel
     }
+
+    return 0
 }
 
 

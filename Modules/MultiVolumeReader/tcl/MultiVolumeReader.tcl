@@ -149,7 +149,7 @@ proc MultiVolumeReaderInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.3 $} {$Date: 2004/11/12 20:29:59 $}]
+        {$Revision: 1.4 $} {$Date: 2004/11/12 21:53:26 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -421,15 +421,19 @@ proc MultiVolumeReaderLoad {} {
 
     switch $MultiVolumeReader(fileExtension) {
         ".hdr" {
-            MultiVolumeReaderLoadAnalyze
+            set val [MultiVolumeReaderLoadAnalyze]
         }
         ".bxh" {
-            MultiVolumeReaderLoadBXH
+            set val [MultiVolumeReaderLoadBXH]
         }
         default {
             DevErrorWindow "Can't read this file for a volume sequence: $fileName."
-            return
+            set val 1
         }
+    }
+
+    if {$val == 1} {
+        return 
     }
 
     # Sets range for the volume slider
@@ -441,7 +445,7 @@ proc MultiVolumeReaderLoad {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MultiVolumeReaderLoadAnalyze 
-# Loads Analyze volumes 
+# Loads Analyze volumes. It returns 0 if successful; 1 otherwise. 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -477,7 +481,7 @@ proc MultiVolumeReaderLoadAnalyze {} {
             set fileList [glob -nocomplain $pattern]
             if {$fileList == ""} {
                 DevErrorWindow "No Analyze file is selected through your filter: $filter"
-                return
+                return 1
             }
 
             set analyzeFiles [lsort -dictionary $fileList]
@@ -490,7 +494,10 @@ proc MultiVolumeReaderLoadAnalyze {} {
         # set id [VolAnalyzeApply "PA"]
         # lappend mrmlIds [VolAnalyzeApply]
         set AnalyzeCache(fileName) $f 
-        AnalyzeApply
+        set val [AnalyzeApply]
+        if {$val == 1} {
+            return $val
+        }
     }
 
     set MultiVolumeReader(firstMRMLid) [lindex $AnalyzeCache(MRMLid) 0] 
@@ -501,12 +508,14 @@ proc MultiVolumeReaderLoadAnalyze {} {
     # show the first volume by default
     MainSlicesSetVolumeAll Back $MultiVolumeReader(firstMRMLid)
     RenderAll
+
+    return 0
 }
 
 
 #-------------------------------------------------------------------------------
 # .PROC MultiVolumeReaderLoadBXH 
-# Loads BXH volumes 
+# Loads BXH volumes. It returns 0 if successful; 1 otherwise. 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -514,10 +523,15 @@ proc MultiVolumeReaderLoadBXH {} {
     global MultiVolumeReader VolBXH 
 
     set VolBXH(bxh-fileName) $MultiVolumeReader(fileName)
-    VolBXHLoadVolumes
+    set val [VolBXHLoadVolumes]
+    if {$val == 1} {
+        return $val
+    }
 
     set MultiVolumeReader(firstMRMLid) [lindex $VolBXH(MRMLid) 0] 
     set MultiVolumeReader(lastMRMLid) [lindex $VolBXH(MRMLid) end] 
     set MultiVolumeReader(noOfVolumes) [llength $VolBXH(MRMLid)] 
     set MultiVolumeReader(volumeExtent) $VolBXH(volumeExtent) 
+
+    return 0
 }

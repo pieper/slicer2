@@ -162,7 +162,7 @@ proc AnalyzeInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.8 $} {$Date: 2004/11/12 16:53:32 $}]
+        {$Revision: 1.9 $} {$Date: 2004/11/12 21:51:50 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -403,7 +403,7 @@ proc AnalyzeExit {} {
 
 #-------------------------------------------------------------------------------
 # .PROC AnalyzeApply 
-#  Starts to load Analyze volume(s).
+#  Starts to load Analyze volume(s). It returns 0 if successful; 1 otherwise.
 # .END
 #-------------------------------------------------------------------------------
 proc AnalyzeApply {} {
@@ -412,13 +412,13 @@ proc AnalyzeApply {} {
     # Checks file 
     if {![info exists AnalyzeCache(fileName)]} {
         DevErrorWindow "Analyze file is not available."
-        return
+        return 1
     }
 
     set fileName [string trim $AnalyzeCache(fileName)]
     if {![file exists $fileName]} {
         DevErrorWindow "Analyze file is not available: $fileName."
-        return
+        return 1
     }
 
     # Checks header info
@@ -427,7 +427,7 @@ proc AnalyzeApply {} {
         set b [AnalyzeExtractHeader]
         if {!$b} {
             DevErrorWindow "Failed to extract header info."
-            return
+            return 1
         }
     }
 
@@ -442,6 +442,8 @@ proc AnalyzeApply {} {
 
     # Flushes AnalyzeCache
     AnalyzeFlushCache
+
+    return 0
 }
 
 
