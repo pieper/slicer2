@@ -118,7 +118,6 @@ void vtkAnalyzeHeaderExtractor::Read()
                     SwapHeader(); 
                 }
 
-                this->DataType = this->Hdr.dime.datatype;
                 this->BitsPix = this->Hdr.dime.bitpix;
                 this->Orient = (int)this->Hdr.hist.orient;
 
@@ -133,6 +132,29 @@ void vtkAnalyzeHeaderExtractor::Read()
                 }
                 this->PixRange[0] = this->Hdr.dime.glmax;
                 this->PixRange[1] = this->Hdr.dime.glmin;
+
+                switch (this->Hdr.dime.datatype)
+                {
+                    case DT_BINARY:
+                        this->DataType = VTK_BIT; 
+                        break;
+                    case DT_UNSIGNED_CHAR:
+                        this->DataType = VTK_UNSIGNED_CHAR; 
+                        break;
+                    case DT_SIGNED_SHORT: 
+                        this->DataType = VTK_SHORT; 
+                        break;
+                    case DT_SIGNED_INT:  
+                        this->DataType = VTK_INT; 
+                        break;
+                    case DT_FLOAT:  
+                        this->DataType = VTK_FLOAT; 
+                        break;
+                    default:
+                        this->DataType = VTK_VOID;
+                        cout << "Unsupported data type: " << this->Hdr.dime.datatype << endl; 
+                        break;
+                }
             }
         }
     } 
