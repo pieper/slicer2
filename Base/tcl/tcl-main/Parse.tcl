@@ -83,7 +83,8 @@ proc MainMrmlReadVersion2.x {fileName {verbose 1}} {
 
     # Check that it's the right file type and version
     # accepts all versions from MRML 2.0 to 2.5
-    if {[regexp {<!DOCTYPE MRML SYSTEM ['"]mrml2[0-5].dtd['"]>} $mrml match] == 0} {
+    # accepts any file path to the dtd (".*?" is non-greedy char matcher)
+    if {[regexp {<!DOCTYPE MRML SYSTEM ['"].*?mrml2[0-5].dtd['"]>} $mrml match] == 0} {
         set errmsg "The file \"$fileName\" is NOT MRML version 2.x"
         tk_messageBox -message $errmsg
         return 0
