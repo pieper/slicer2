@@ -47,7 +47,8 @@ static char *TFS_String[32] =
 {
   "Implicit VR Little Endian",
   "Explicit VR Little Endian",
-  "Explicit VR Big Endian"
+  "Explicit VR Big Endian",
+  "Unknown"
 };
 
 typedef class vtkDCMParser;
@@ -74,7 +75,7 @@ class VTK_EXPORT vtkDCMParser : public vtkObject
   float ReadFloatAsciiNumeric(unsigned int next_block);
   int ReadIntAsciiNumeric(unsigned int next_block);
   void ReadText(char *str, unsigned int length);
-//  char *ReadText(unsigned int length);
+  char *ReadText(unsigned int length);
   char *ReadElement();
   unsigned long ReadElementLength();
   //void ReadElement(char *vr, char *group_code,
