@@ -75,6 +75,8 @@ proc BIRNDUPInit {} {
     #  This is included in the  Help->Module Credits menu item.
     set Module($m,author) "Steve Pieper, SPL, pieper@bwh.harvard.edu"
 
+    set Module($m,category) [lindex $Module(categories) 2]
+
     # Define Tabs
     #------------------------------------
     # Description:
@@ -154,7 +156,7 @@ proc BIRNDUPInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.2 $} {$Date: 2004/02/24 23:53:42 $}]
+        {$Revision: 1.3 $} {$Date: 2004/03/15 21:06:54 $}]
 
     # Initialize module-level variables
     #------------------------------------

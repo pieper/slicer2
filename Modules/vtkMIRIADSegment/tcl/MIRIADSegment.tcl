@@ -71,6 +71,7 @@ proc MIRIADSegmentInit {} {
     #  reached for any questions people may have regarding your module. 
     #  This is included in the  Help->Module Credits menu item.
     set Module($m,author) "Steve Pieper, SPL, pieper@bwh.harvard.edu"
+    set Module($m,category) [lindex $Module(categories) 2]
 
     # Define Tabs
     #------------------------------------
@@ -151,7 +152,7 @@ proc MIRIADSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.27 $} {$Date: 2004/03/10 23:51:01 $}]
+        {$Revision: 1.28 $} {$Date: 2004/03/15 21:06:20 $}]
 
     # Initialize module-level variables
     #------------------------------------
