@@ -56,9 +56,7 @@
 proc FSLReaderPopUpPlot {x y} {
     global FSLReader
 
-    if {! [info exists FSLReader(firstMRMLid)] ||
-        ! [info exists FSLReader(lastMRMLid)]} {
-        # DevErrorWindow "Please load filtered_func_data.hdr first."
+    if {$FSLReader(tcPlottingOption) == "No"} {
         return
     }
 
@@ -126,12 +124,6 @@ proc FSLReaderPopUpPlot {x y} {
 
     #Update the graph for the new data
     $FSLReader(renWin) Render 
-
-    # timer to remove the time course plot
-    if {[info exists FSLReader(timer)]} {
-        after cancel $FSLReader(timer)
-    }
-    set FSLReader(timer) [after 6000 {FSLReaderCloseTimeCourseWindow}]
 }
 
 
@@ -241,20 +233,34 @@ proc FSLReaderGetVoxelFromSelection {x y} {
         return "-1 -1 -1"
     }
 
-    set bvName [[[Slicer GetBackVolume $s] GetMrmlNode] GetName]
-
-    set index [string first "filtered_func_data" $bvName 0]
-    if {$index != 0} {
-        # DevErrorWindow "The background volume is not filtered_func_data.hdr."
-        return "-1 -1 -1"
-    }
-
     set fvName [[[Slicer GetForeVolume $s] GetMrmlNode] GetName]
     set start [string first "_" $fvName 0]
     set end [string first "-" $fvName 0]
     set name [string range $fvName [expr $start + 1] [expr $end - 1]]
 
     if {[info command FSLReader($name,model)] == ""} {
+        DevErrorWindow "To view time series, you need to load an activation as your \
+        foreground image."
+        return "-1 -1 -1"
+    }
+
+    # Make sure back volume exists
+    set bvName [[[Slicer GetBackVolume $s] GetMrmlNode] GetName]
+    if {$bvName == "None"} {
+        DevErrorWindow "Background volume is empty."
+        return "-1 -1 -1"
+    }
+
+    if {$FSLReader(bgOption) == "Other-Volume" && 
+        $FSLReader(bgVolName) != $bvName} {
+        DevErrorWindow "Please load or select a right background volume."
+        return "-1 -1 -1"
+    }
+
+    set b [string first "filtered_func_data" $bvName 0]
+    if {$FSLReader(bgOption) == "Time-Series-Volume" && 
+        $b == -1} {
+        DevErrorWindow "Please select a time series volume as your background image."
         return "-1 -1 -1"
     }
 
