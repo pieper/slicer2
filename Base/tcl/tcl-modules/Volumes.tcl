@@ -5,7 +5,7 @@
 # The following terms apply to all files associated with the software unless
 # explicitly disclaimed in individual files.   
 # 
-# The authors hereby grant permission to use, copy, and distribute this
+# The authors hereby grant permission to use, copy, (but NOT distribute) this
 # software and its documentation for any NON-COMMERCIAL purpose, provided
 # that existing copyright notices are retained verbatim in all copies.
 # The authors grant permission to modify this software and its documentation 
@@ -26,16 +26,16 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        Volumes.tcl
-# DATE:        12/09/1999 14:15
-# LAST EDITOR: odonnell
+# DATE:        01/18/2000 12:17
+# LAST EDITOR: gering
 # PROCEDURES:  
 #   VolumesInit
 #   VolumesBuildGUI
 #   VolumesSetPropertyType
-#   VolumesPropsApply
 #   VolumesPropsCancel
 #   VolumesSetFirst
 #   VolumesSetOrder
+#   VolumesSetLast
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -661,6 +661,10 @@ Ron, the interpolation button won't work without downloading dll's again.
 	
 }
 
+#-------------------------------------------------------------------------------
+# .PROC VolumesSetPropertyType
+# .END
+#-------------------------------------------------------------------------------
 proc VolumesSetPropertyType {} {
 	global Volume
 	
@@ -755,6 +759,10 @@ proc VolumesPropsApply {} {
 	MainUpdateMRML
 }
 
+#-------------------------------------------------------------------------------
+# .PROC VolumesPropsCancel
+# .END
+#-------------------------------------------------------------------------------
 proc VolumesPropsCancel {} {
 	global Volume Module
 
@@ -775,7 +783,8 @@ proc VolumesPropsCancel {} {
 }
 
 #-------------------------------------------------------------------------------
-# VolumesSetFirst
+# .PROC VolumesSetFirst
+# .END
 #-------------------------------------------------------------------------------
 proc VolumesSetFirst {} {
 	global Volume Path
@@ -804,7 +813,8 @@ puts " last image number: [MainFileFindImageNumber Last\
 		[file join $Path(root) $filename]]"
 }
 #-------------------------------------------------------------------------------
-# VolumesSetOrder
+# .PROC VolumesSetOrder
+# .END
 #-------------------------------------------------------------------------------
 proc VolumesSetOrder {order} {
 	global Volume Gui
@@ -815,7 +825,8 @@ proc VolumesSetOrder {order} {
 }
 
 #-------------------------------------------------------------------------------
-# VolumesSetLast
+# .PROC VolumesSetLast
+# .END
 #-------------------------------------------------------------------------------
 proc VolumesSetLast {} {
 	global Path Volume

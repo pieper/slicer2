@@ -5,7 +5,7 @@
 # The following terms apply to all files associated with the software unless
 # explicitly disclaimed in individual files.   
 # 
-# The authors hereby grant permission to use, copy, and distribute this
+# The authors hereby grant permission to use, copy, (but NOT distribute) this
 # software and its documentation for any NON-COMMERCIAL purpose, provided
 # that existing copyright notices are retained verbatim in all copies.
 # The authors grant permission to modify this software and its documentation 
@@ -26,18 +26,17 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        Labels.tcl
-# DATE:        12/09/1999 14:06
+# DATE:        01/18/2000 12:17
 # LAST EDITOR: gering
 # PROCEDURES:  
 #   LabelsInit
-#   LabelsBuildVTK
+#   LabelsUpdateMRML
 #   LabelsBuildGUI
 #   LabelsHideLabels
 #   LabelsUnHideLabels
 #   LabelsColorSample
 #   ShowLabels
 #   ShowColors
-#   LabelsUpdateMRML
 #   LabelsDisplayColors
 #   LabelsBrowseColor
 #   LabelsSelectColor
@@ -45,8 +44,8 @@
 #   LabelsDisplayLabels
 #   LabelsSelectLabelClick
 #   LabelsSelectLabel
+#   LabelsSetColor
 #   LabelsColorWidgets
-#   LabelsGetColorFromLabel
 #   LabelsFindLabel
 #   LabelsSetOutputLabel
 #   LabelsCreateColor
@@ -540,6 +539,10 @@ proc LabelsSelectLabel {{i ""}} {
 	LabelsColorWidgets
 }
 
+#-------------------------------------------------------------------------------
+# .PROC LabelsSetColor
+# .END
+#-------------------------------------------------------------------------------
 proc LabelsSetColor {colorName} {
 	global Label Color
 

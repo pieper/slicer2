@@ -5,7 +5,7 @@
 # The following terms apply to all files associated with the software unless
 # explicitly disclaimed in individual files.   
 # 
-# The authors hereby grant permission to use, copy, and distribute this
+# The authors hereby grant permission to use, copy, (but NOT distribute) this
 # software and its documentation for any NON-COMMERCIAL purpose, provided
 # that existing copyright notices are retained verbatim in all copies.
 # The authors grant permission to modify this software and its documentation 
@@ -26,12 +26,22 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        MainMrml.tcl
-# DATE:        12/09/1999 14:09
+# DATE:        01/18/2000 12:16
 # LAST EDITOR: gering
 # PROCEDURES:  
 #   MainMrmlInit
-#   MainMrmlDeleteModel
+#   MainMrmlUpdateMRML
+#   MainMrmlDumpTree
+#   MainMrmlClearList
+#   MainMrmlDeleteNode
+#   MainMrmlDeleteAll
 #   MainMrmlRead
+#   MainMrmlReadVersion1.0
+#   MainMrmlReadVersion2.0
+#   MainMrmlAddColors
+#   MainMrmlBuildTreesVersion1.0
+#   MainMrmlBuildTreesVersion2.0
+#   MainMrmlWrite
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -64,6 +74,10 @@ proc MainMrmlInit {} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC MainMrmlUpdateMRML
+# .END
+#-------------------------------------------------------------------------------
 proc MainMrmlUpdateMRML {} {
 	global Mrml
 
@@ -73,6 +87,10 @@ proc MainMrmlUpdateMRML {} {
 	}
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MainMrmlDumpTree
+# .END
+#-------------------------------------------------------------------------------
 proc MainMrmlDumpTree {type} {
 	global Mrml
 
@@ -85,6 +103,10 @@ proc MainMrmlDumpTree {type} {
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MainMrmlClearList
+# .END
+#-------------------------------------------------------------------------------
 proc MainMrmlClearList {} {
 	global Model Volume Color Transform EndTransform Matrix
 	global TransferFunction WindowLevel TFPoint ColorLUT Options
@@ -127,6 +149,10 @@ proc MainMrmlDeleteNode {nodeType id} {
 	MainMrmlClearList
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MainMrmlDeleteAll
+# .END
+#-------------------------------------------------------------------------------
 proc MainMrmlDeleteAll {} {
 	global Mrml Model Volume Color Transform EndTransform Matrix
 	global TransferFunction WindowLevel TFPoint ColorLUT Options
@@ -192,6 +218,10 @@ proc MainMrmlDeleteAll {} {
 	MainMrmlClearList
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MainMrmlRead
+# .END
+#-------------------------------------------------------------------------------
 proc MainMrmlRead {mrmlFile} {
 	global Path Mrml
 
@@ -305,6 +335,10 @@ proc MainMrmlReadVersion1.0 {fileName} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC MainMrmlReadVersion2.0
+# .END
+#-------------------------------------------------------------------------------
 proc MainMrmlReadVersion2.0 {fileName} {
 
 	# Returns list of tags on success else 0
@@ -404,6 +438,10 @@ proc MainMrmlReadVersion2.0 {fileName} {
 	return $tags2
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MainMrmlAddColors
+# .END
+#-------------------------------------------------------------------------------
 proc MainMrmlAddColors {tags} {
 
 	# If there are no Color nodes, then read, and append default colors.
@@ -430,6 +468,10 @@ proc MainMrmlAddColors {tags} {
 	return "$tags $tagsColors"
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MainMrmlBuildTreesVersion1.0
+# .END
+#-------------------------------------------------------------------------------
 proc MainMrmlBuildTreesVersion1.0 {} {
 	global Dag Color Model Volume Transform EndTransform Matrix Path
 	
@@ -615,6 +657,10 @@ proc MainMrmlBuildTreesVersion1.0 {} {
 	}
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MainMrmlBuildTreesVersion2.0
+# .END
+#-------------------------------------------------------------------------------
 proc MainMrmlBuildTreesVersion2.0 {tags} {
 	global Mrml Path
 	global Model Volume Color Transform EndTransform Matrix
@@ -801,6 +847,10 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 	}
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MainMrmlWrite
+# .END
+#-------------------------------------------------------------------------------
 proc MainMrmlWrite {filename} {
 	global Mrml
 
