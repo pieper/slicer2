@@ -178,6 +178,17 @@ public:
   vtkGetMacro(PCAShapeModelType,int); 
   vtkSetMacro(PCAShapeModelType,int); 
 
+
+  // Desciption:
+  // This flag is for the registration cost function. By default all subclasses are seen as one. 
+  // In some cases this causes a loss of contrast within the cost function so that the registration is not as reliable, 
+  // e.g. when we define two SuperClasses (FG and BG) which are defined as outside the brain as BG and everything inside the brain as FG, 
+  // than we cannot use the ventricles wont be used for the alignment. Hoewever in many cases this structure drives the registration soley so that 
+  /// our method is not as rebust. For this specific case we would set the flag for FG and do not set it for BG !
+  vtkGetMacro(RegistrationIndependentSubClassFlag,int);      
+  vtkSetMacro(RegistrationIndependentSubClassFlag,int);      
+ 
+
 protected:
   vtkMrmlSegmenterSuperClassNode();
   ~vtkMrmlSegmenterSuperClassNode();
@@ -214,7 +225,9 @@ protected:
   int    RegistrationType; 
   int GenerateBackgroundProbability;
 
-int PCAShapeModelType;
+  int PCAShapeModelType;
+
+  int RegistrationIndependentSubClassFlag;
 
 };
 

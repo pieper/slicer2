@@ -128,7 +128,8 @@ proc EMSegmentSetVtkPrivateSuperClassSetting {SuperClass} {
 
   EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPrintShapeSimularityMeasure  $EMSegment(Cattrib,$SuperClass,PrintShapeSimularityMeasure)
 
-  EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPCAShapeModelType            $EMSegment(Cattrib,$SuperClass,PCAShapeModelType)
+  EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPCAShapeModelType                 $EMSegment(Cattrib,$SuperClass,PCAShapeModelType)
+  EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetRegistrationIndependentSubClassFlag $EMSegment(Cattrib,$SuperClass,RegistrationIndependentSubClassFlag)
 
   # Current Legacy - I have to fix gui
   if {$EMSegment(Cattrib,$SuperClass,StopMFAMaxIter) == 0} {set EMSegment(Cattrib,$SuperClass,StopMFAMaxIter) $EMSegment(Cattrib,0,StopMFAMaxIter) }
