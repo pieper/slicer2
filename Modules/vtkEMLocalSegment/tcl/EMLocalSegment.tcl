@@ -245,7 +245,7 @@ proc EMSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.4 $} {$Date: 2003/08/22 18:21:21 $}]
+        {$Revision: 1.5 $} {$Date: 2003/09/16 13:23:14 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -1483,7 +1483,6 @@ proc EMSegmentBindingCallback { event x y} {
     }
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC EMSegmentUpdateMRML
 #
@@ -1492,7 +1491,7 @@ proc EMSegmentBindingCallback { event x y} {
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentUpdateMRML {} {
-    global Mrml EMSegment Volume Gui
+    global Mrml EMSegment Volume Gui env
     # Current Desing of Node structure : (order is important !) 
     # Segmenter
     # -> SegmenterInput
@@ -1543,7 +1542,7 @@ proc EMSegmentUpdateMRML {} {
         }  
         set VolumeList ""
         foreach VolID $Volume(idList) {
-          lappend VolumeList "[Volume($VolID,node) GetName] {[Volume($VolID,node) GetImageRange]} [Volume($VolID,node) GetFilePrefix]"
+          lappend VolumeList "[Volume($VolID,node) GetName] {[Volume($VolID,node) GetImageRange]} [Volume($VolID,node) GetFilePrefix] [file normalize [file join $env(SLICER_HOME) [Volume($VolID,node) GetFullPrefix]]]"
         }
         
         set NumberOfGraphs 0
@@ -1611,12 +1610,14 @@ proc EMSegmentUpdateMRML {} {
         set ImageRange [SegmenterInput($pid,node) GetImageRange]
 
         foreach VolID $Volume(idList) VolAttr $VolumeList {
-           if {([lindex $VolAttr 0] == $FileName) && ([lindex $VolAttr 1] == $ImageRange) && ([lindex $VolAttr 2] == $FilePrefix) } {
-              set EMSegment(AllVolList,ActiveID) [lsearch -exact $EMSegment(AllVolList,VolumeList) $VolID]
-              EMSegmentTransfereVolume All
-          set EMSegment(IntensityAvgValue,$VolID) [SegmenterInput($pid,node) GetIntensityAvgValuePreDef]
-              break;
-           }
+        if {([lindex $VolAttr 0] == $FileName) && ([lindex $VolAttr 1] == $ImageRange) } { 
+        if {([lindex $VolAttr 2] == $FilePrefix) || ([lindex $VolAttr 3] == $FilePrefix)} {
+                  set EMSegment(AllVolList,ActiveID) [lsearch -exact $EMSegment(AllVolList,VolumeList) $VolID]
+                  EMSegmentTransfereVolume All
+                  set EMSegment(IntensityAvgValue,$VolID) [SegmenterInput($pid,node) GetIntensityAvgValuePreDef]
+                  break;
+        }
+        }
         }
     } elseif {$ClassName == "vtkMrmlSegmenterSuperClassNode" } {
         # --------------------------------------------------
@@ -1678,9 +1679,11 @@ proc EMSegmentUpdateMRML {} {
         set LocalPriorRange  [SegmenterClass($pid,node) GetLocalPriorRange]
         set EMSegment(Cattrib,$NumClass,ProbabilityData) ""
         foreach VolID $Volume(idList) VolAttr $VolumeList {
-            if {([lindex $VolAttr 0] == $LocalPriorName) && ([lindex $VolAttr 1] == $LocalPriorRange) && ([lindex $VolAttr 2] == $LocalPriorPrefix) } {
-               set EMSegment(Cattrib,$NumClass,ProbabilityData) $VolID
-               break;
+            if {([lindex $VolAttr 0] == $LocalPriorName) && ([lindex $VolAttr 1] == $LocalPriorRange)} {
+        if {([lindex $VolAttr 2] == $LocalPriorPrefix) || ([lindex $VolAttr 3] == $LocalPriorPrefix)} {
+                  set EMSegment(Cattrib,$NumClass,ProbabilityData) $VolID
+                  break;
+        }
             }
         }
         if {$EMSegment(Cattrib,$NumClass,ProbabilityData) == ""} {
