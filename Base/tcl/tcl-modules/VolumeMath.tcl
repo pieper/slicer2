@@ -120,7 +120,7 @@ proc VolumeMathInit {} {
 	#   appropriate info when the module is checked in.
 	#   
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.12 $} {$Date: 2001/06/27 10:35:36 $}]
+		{$Revision: 1.13 $} {$Date: 2001/06/28 20:09:55 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -237,6 +237,8 @@ For Subtraction: If you wish to subtract two volumes that have
  results are sometimes difficult to look at. I recommend taking the
  Absolute Valute of the results of the subtraction. <p>
 
+Distance Maps yield the square of the distance.
+
 <b>Known Bugs<b>Don't set the output to be one of the input
 files. Sometimes it doesn't work.
 "
@@ -269,8 +271,13 @@ files. Sometimes it doesn't work.
         frame $f.f.2 -bg $Gui(inactiveWorkspace)
         pack $f.f.1 $f.f.2 -side top -fill x -anchor w
 
+        #
+        # NOTE: As you want more functions, don't forget
+        #       to add more rows above.
+        #
+
         set row 1
-	foreach p "Subtract Resample Abs DistMap" {
+	foreach p "Subtract Resample Abs DistMap Hausdorff" {
             eval {radiobutton $f.f.$row.r$p \
 			-text "$p" -command "VolumeMathSetMathType" \
 			-variable VolumeMath(MathType) -value $p -width 10 \
@@ -520,6 +527,10 @@ proc VolumeMathSetMathType {}  {
         $a configure -text "Distance Map"
         $b configure -text "(not used)"
         $c configure -text "and put the results in"
+    } elseif {$VolumeMath(MathType) == "Hausdorff" } {
+        $a configure -text "Undir. Par. Haus. Dist. V2"
+        $b configure -text "V1"
+        $c configure -text "and put the results in"
     }
 }
 
@@ -598,6 +609,7 @@ proc VolumeMathDoMath {} {
     if { $VolumeMath(MathType) == "Resample" } {VolumeMathDoResample}
     if { $VolumeMath(MathType) == "Abs" }      {VolumeMathDoAbs}
     if { $VolumeMath(MathType) == "DistMap" }  {VolumeMathDoDistMap}
+    if { $VolumeMath(MathType) == "Hausdorff" }  {VolumeMathDoHausdorff}
 
     # This is necessary so that the data is updated correctly.
     # If the programmers forgets to call it, it looks like nothing
@@ -645,6 +657,93 @@ proc VolumeMathDoSubtract {} {
 }
 
 #-------------------------------------------------------------------------------
+# .PROC VolumeMathDoHausdorff
+#   Find the distance Map
+#
+# .END
+#-------------------------------------------------------------------------------
+proc VolumeMathDoHausdorff {} {
+	global VolumeMath Volume
+
+        # Check to make sure no volume is none
+
+    if {[VolumeMathCheckErrors] == 1} {
+        return
+    }
+    if {[VolumeMathPrepareResultVolume] == 1} {
+        return
+    }
+
+    set v3 $VolumeMath(Volume3)
+    set v2 $VolumeMath(Volume2)
+    set v1 $VolumeMath(Volume1)
+
+    set vol2 [Volume($v2,vol) GetOutput]
+    set vol1 [Volume($v1,vol) GetOutput]
+
+    # The distance Map from volume 1
+
+    vtkImageLogic Logic
+    Logic SetOperationToNot
+    Logic SetInput1 $vol1
+
+    vtkImageEuclideanDistanceTransformation DistMap
+    DistMap ConsiderAnisotropyOn
+    DistMap InitializeOn
+    DistMap SetInput [Logic GetOutput]
+
+    ## Get region of Image2 that does not exist in image 1
+    ## Get the distance map in that region
+
+    # first a cast.
+    vtkImageCast CastToUChar
+    CastToUChar SetOutputScalarTypeToUnsignedChar
+    CastToUChar ClampOverflowOn
+    CastToUChar SetInput $vol2
+
+    vtkImageMask Distances
+    Distances SetMaskedOutputValue 0
+    Distances SetMaskInput  [CastToUChar GetOutput]
+    Distances SetImageInput [DistMap GetOutput]
+    Distances Update
+    # Start copying in the output data.
+    # Taken from MainVolumesCopyData
+
+    vtkImageStatistics stat
+    stat SetInput [Distances GetOutput]
+    stat IgnoreZeroOn
+    stat Update
+
+    Volume($v3,vol) SetImageData [Distances GetOutput]
+    MainVolumesUpdate $v3
+
+    set a [stat GetNumExaminedElements]
+    set b [stat GetQuartile1 ]
+    set c [stat GetMedian    ]
+    set d [stat GetQuartile3 ]
+    set e [stat GetQuintile1 ]
+    set f [stat GetQuintile2 ]
+    set g [stat GetQuintile3 ]
+    set h [stat GetQuintile4 ]
+    set i [stat GetAverage   ]
+    set j [stat GetStdev     ]
+    set k [stat GetMax       ]
+    set l [stat GetMin       ]
+
+    set mes1 "NumElements $a \n Quartiles: $b $c $d \n"
+    set mes2 "Min: $k Max: $l \n"
+    set mes3 "Quintiles: $e $f $g $h \n"
+    set mes4 "Mean $i +/- std: $j \n";
+    tk_messageBox -message "$mes1 $mes2 $mes3 $mes4"
+
+    DistMap Delete
+    Logic Delete
+    Distances Delete
+    CastToUChar Delete
+    stat Delete
+}
+
+#-------------------------------------------------------------------------------
 # .PROC VolumeMathDoDistMap
 #   Find the distance Map
 #
@@ -666,7 +765,7 @@ proc VolumeMathDoDistMap {} {
     set v2 $VolumeMath(Volume2)
     set v1 $VolumeMath(Volume1)
 
-    # Set up the VolumeMath Subtract
+    # Set up the Distance Map
 
     vtkImageLogic Logic
     Logic SetOperationToNot
@@ -682,7 +781,6 @@ proc VolumeMathDoDistMap {} {
     # Taken from MainVolumesCopyData
 
     Volume($v3,vol) SetImageData [DistMap GetOutput]
-    [DistMap GetOutput] Print
     MainVolumesUpdate $v3
 
     DistMap Delete
@@ -711,7 +809,7 @@ proc VolumeMathDoAbs {} {
     set v2 $VolumeMath(Volume2)
     set v1 $VolumeMath(Volume1)
 
-    # Set up the VolumeMath Subtract
+    # Set up the VolumeMath Abs
 
     vtkImageMathematics SubMath
     SubMath SetInput1 [Volume($v2,vol) GetOutput]
