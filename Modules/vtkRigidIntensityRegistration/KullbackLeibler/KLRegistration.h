@@ -166,8 +166,10 @@ public:
   void SetMetricParam();
 
   // Information to form K-L histogram
-  typename MetricType::HistogramType            AHistogramType;
-  typename MetricType::HistogramSizeType        ASizeType;
+  typedef Statistics::Histogram<double, 2> HistogramType;
+  typedef typename MetricType::HistogramSizeType         HistogramSizeType;
+    //  typename MetricType::HistogramType        AHistogramType;
+    //  typename MetricType::HistogramSizeType  HistogramSizeType      
 
   // Description:
   // Either set all the images and transform and interpolator, or
@@ -176,17 +178,17 @@ public:
     { m_Metric->SetTrainingMovingImage(TrainingMovingImage); }
   FixedImageType *SetTrainingFixedImage(  const FixedImageType  *TrainingFixedImage )
     { m_Metric->SetTrainingFixedImage(TrainingFixedImage); }
-  void SetTrainingTransform(   const AffineTransformType::Pointer TrainingTransform )
+  void SetTrainingTransform(  const AffineTransformType::Pointer TrainingTransform )
     { m_Metric->SetTrainingTransform(TrainingTransform); }
   void SetTrainingInterpolator( const InterpolatorType::Pointer TrainingInterpolator )
     { m_Metric->SetTrainingInterpolator(TrainingInterpolator); }
-  void SetHistogram( const AHistogramType TrainingHistogram )
+  void SetHistogram( const HistogramType TrainingHistogram )
     { m_Metric->SetTrainingHistogram(TrainingHistogram); }
 
     // Description:
     // Set the size of the histogram for the metric
     // Default is 32 by 32
-  void SetHistogramSize( const ASizeType histSize )
+  void SetHistogramSize( const HistogramSizeType histSize )
     { m_Metric->SetHistogramSize(histSize); }
 
     // Description:
