@@ -84,7 +84,7 @@ proc MainSlicesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainSlices \
-		{$Revision: 1.29 $} {$Date: 2001/04/10 18:35:16 $}]
+		{$Revision: 1.30 $} {$Date: 2001/04/27 15:22:42 $}]
 
 	# Initialize Variables
 	set Slice(idList) "0 1 2"
@@ -720,7 +720,7 @@ proc MainSlicesSetOffsetInit {s widget {value ""}} {
 proc MainSlicesSetOffset {s {value ""}} {
     global Slice
 
-    # figure out what integer offset to use
+    # figure out what offset to use
     if {$value == ""} {
 	# this means we were called directly from the slider w/ no value param
 	# and the variable Slice($s,offset) has already been set by user
@@ -732,7 +732,7 @@ proc MainSlicesSetOffset {s {value ""}} {
     }
     
     # validate value
-    if {[ValidateInt $value] == 0}  {
+    if {[ValidateFloat $value] == 0}  {
 	# don't change slice offset if value is bad
 	# Set slider to the last used offset for this orient
 	set value [Slicer GetOffset $s]
