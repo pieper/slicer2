@@ -294,7 +294,6 @@ void vtkRasToIjkTransform::ComputeTransforms()
   //              | |   |   |   |  |
   // Account for Y-axis being up instead of down because I
   // reverse rows in the ImageReader to be compatible with VTK.
-  // (DAVE BUG: not implemented  yet)
   //
   // ftl in Ijk coordinates
   Ijk->SetElement(0,0,  -0.5);
@@ -355,10 +354,10 @@ void vtkRasToIjkTransform::ComputeCornersFromSlicerMatrix()
 
   // Define corner points in IJK space.
   // Points are at the voxel corners in X & Y, but voxel center in Z.
-  iftl->SetElements( 0,  0,    0.5);
-  iftr->SetElements(nx,  0,    0.5);
-  ifbr->SetElements(nx, ny,    0.5);
-  iltl->SetElements( 0,  0, nz-0.5);
+  iftl->SetElements( 0, ny,    0.5);
+  iftr->SetElements(nx, ny,    0.5);
+  ifbr->SetElements(nx,  0,    0.5);
+  iltl->SetElements( 0, ny, nz-0.5);
   
   // Transform IJK points by the Slicer's IjkToRas matrix.
   this->RasToIjk->DeepCopy(this->SlicerMatrix);
@@ -540,7 +539,8 @@ void vtkRasToIjkTransform::SetCorners(vtkVector3 *ftl, vtkVector3 *ftr,
   this->CnrFtr->Copy(ftr);
   this->CnrFbr->Copy(fbr);
   this->CnrLtl->Copy(ltl);
-
+  
+  this->ComputeSliceOrder();
   this->ComputeTransforms();
 }
 

@@ -224,10 +224,11 @@ void vtkImageMIReg::Update()
 //----------------------------------------------------------------------------
 int vtkImageMIReg::Initialize()
 {
-  int i;
+  int i, *ext;
   vtkImageFastGaussian *smooth;
   vtkImageShrink3D *down;
-  float slThick, *spacing = this->Subject->GetSpacing();
+  float slThick1, slThick2, *spacing1, *spacing2;
+  float *spacing = this->Subject->GetSpacing();
   vtkVector3 *ftl = vtkVector3::New();
   vtkVector3 *ftr = vtkVector3::New();
   vtkVector3 *fbr = vtkVector3::New();
@@ -320,28 +321,42 @@ int vtkImageMIReg::Initialize()
       // Compute Ijk-To-Ras matrices for downsampled image
       //
       // Corner points same in X,Y because the points are at voxel corners. 
-      // But Z must move 1/2 orig voxel inward because points are at voxel centers
-      // Approach: move the original corner points in the K direction.
+      
+      // But Z must move 1/2 orig voxel inward because points are at voxel centers.
+      // Approach: move the original corner points in the K direction
+      // by moving back 1/2 old spacing, and then forward 1/2 new spacing.
+      // If old had odd number of slices, then move last slice in extra old.
       //
+
+
       // kDir = ltl - ftl
-      // kStep = kDir * slThick * Factor/2 - 1/2
+      // kStep = kDir * (slThick2-slThick1)
       // ftl += kStep
       // ftr += kStep
       // fbr += kStep
       // ltl -= kStep
-      spacing = this->Refs[i]->GetSpacing();
-      slThick = spacing[2];
+      spacing1 = this->Refs[i+1]->GetSpacing();
+      spacing2 = this->Refs[i  ]->GetSpacing();
+      slThick1 = spacing1[2];
+      slThick2 = spacing2[2];
       this->RefRasToIjk[i+1]->GetCorners(ftl, ftr, fbr, ltl);
       kDir->Subtract(ltl, ftl);
       kDir->Normalize();
       kStep->Copy(kDir);
-      kStep->Multiply(slThick * -0.5);
+      kStep->Multiply((slThick2 - slThick1) * 0.5);
       ftl->Add(kStep);
       ftr->Add(kStep);
       fbr->Add(kStep);
       ltl->Subtract(kStep);
+      ext = this->Refs[i+1]->GetExtent();
+      if ((ext[5]-ext[4]+1) % 2) {
+        // Input has odd number of slices
+        kStep->Copy(kDir);
+        kStep->Multiply(slThick1);
+        ltl->Subtract(kStep);
+      }
       this->RefRasToIjk[i]->SetExtent(this->Refs[i]->GetExtent());
-      this->RefRasToIjk[i]->SetSpacing(spacing);
+      this->RefRasToIjk[i]->SetSpacing(this->Refs[i]->GetSpacing());
       this->RefRasToIjk[i]->SetCorners(ftl, ftr, fbr, ltl);
 
       //
@@ -374,19 +389,28 @@ int vtkImageMIReg::Initialize()
       down->Delete();
 
       // Compute Ras-to-Ijk matrices for downsampled image
-      spacing = this->Subs[i]->GetSpacing();
-      slThick = spacing[2];
+      spacing1 = this->Subs[i+1]->GetSpacing();
+      spacing2 = this->Subs[i  ]->GetSpacing();
+      slThick1 = spacing1[2];
+      slThick2 = spacing2[2];
       this->SubRasToIjk[i+1]->GetCorners(ftl, ftr, fbr, ltl);
       kDir->Subtract(ltl, ftl);
       kDir->Normalize();
       kStep->Copy(kDir);
-      kStep->Multiply(slThick * -0.5);
+      kStep->Multiply((slThick2 - slThick1) * 0.5);
       ftl->Add(kStep);
       ftr->Add(kStep);
       fbr->Add(kStep);
       ltl->Subtract(kStep);
+      ext = this->Subs[i+1]->GetExtent();
+      if ((ext[5]-ext[4]+1) % 2) {
+        // Input has odd number of slices
+        kStep->Copy(kDir);
+        kStep->Multiply(slThick1);
+        ltl->Subtract(kStep);
+      }
       this->SubRasToIjk[i]->SetExtent(this->Subs[i]->GetExtent());
-      this->SubRasToIjk[i]->SetSpacing(spacing);
+      this->SubRasToIjk[i]->SetSpacing(this->Subs[i]->GetSpacing());
       this->SubRasToIjk[i]->SetCorners(ftl, ftr, fbr, ltl);
     }
   }
@@ -475,7 +499,9 @@ static void ImageGradientInterpolation(vtkImageData *data,
   if ((xi < 0   ) || (yi < 0   ) || (zi < 0   ) ||
       (xi > nx-2) || (yi > ny-2) || (zi > nz-1))
   {
-    // Out of bounds
+    // Out of bounds.
+    //  DAVE: this happens a lot because coordinates are nx-1 or ny-1.
+    //  It would be nice to avoid that, especially at lower resolutions.
     grad->Zero();
     *value = 0;
   }
