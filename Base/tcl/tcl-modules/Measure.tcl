@@ -109,7 +109,7 @@ proc MeasureInit {} {
     
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.23 $} {$Date: 2004/07/22 15:48:37 $}]
+        {$Revision: 1.23.2.1 $} {$Date: 2004/12/23 23:11:30 $}]
     
     # Initialize module-level variables
     #    set Measure(Model1) $Model(idNone)
@@ -800,13 +800,13 @@ proc MeasureSurface {} {
     vtkSurfaceProps surfProps
     
     foreach id $Selected(Model) {
-    set currModel [Mrml(dataTree) GetNthModel $id]
-    set name [$currModel GetName]
-    surfProps SetInput [Model($id,mapper,viewRen) GetInput]
-    surfProps Update
-    set area [surfProps GetSurfaceArea]
-    set msg [concat "Area of" $name "=" $area "(mm^2)"]
-    MeasureOutput $msg
+        set currModel [Mrml(dataTree) GetNthModel $id]
+        set name [$currModel GetName]
+        surfProps SetInput [Model($id,mapper,viewRen) GetInput]
+        surfProps Update
+        set area [surfProps GetSurfaceArea]
+        set msg [concat "Area of" $name "=" $area "(mm^2)"]
+        MeasureOutput $msg
     }
 
     surfProps Delete
