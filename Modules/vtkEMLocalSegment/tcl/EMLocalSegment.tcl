@@ -249,7 +249,7 @@ proc EMSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.40 $} {$Date: 2004/09/25 08:28:12 $}]
+        {$Revision: 1.41 $} {$Date: 2004/09/25 10:39:43 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -2600,7 +2600,7 @@ proc EMSegmentStartEM { {save_mode "save"} } {
      foreach v $Volume(idList) {lappend EMSegment(VolumeNameList)  [Volume($v,node) GetName]}
      set NumInputImagesSet [EMSegmentAlgorithmStart] 
      # For debugging
-     puts [EMSegment(vtkEMSegment) Print]
+     # puts [EMSegment(vtkEMSegment) Print]
 
      EMSegment(vtkEMSegment) Update
      if {[EMSegment(vtkEMSegment) GetErrorFlag]} {
