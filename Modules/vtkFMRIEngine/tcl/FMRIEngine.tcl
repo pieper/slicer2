@@ -170,7 +170,7 @@ proc FMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.23 $} {$Date: 2004/08/23 21:45:15 $}]
+        {$Revision: 1.24 $} {$Date: 2004/08/24 18:07:24 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -549,14 +549,22 @@ proc FMRIEngineBuildUIForSelect {parent} {
 # .END
 #-------------------------------------------------------------------------------
 proc FMRIEngineSelectSequence {} {
-    global FMRIEngine 
+    global FMRIEngine Ibrowser  
 
     set ci [$FMRIEngine(seqsListBox) cursel]
     if {[string length $ci] > 0} { 
         set cc [$FMRIEngine(seqsListBox) get $ci]
-        set id $Ibrowser($cc,id)
-        set FMRIEngine(firstMRMLid) Ibrowser($id,firstMRMLid)
-        set FMRIEngine(lastMRMLid) Ibrowser($id,lastMRMLid)
+        set l [string trim $cc]
+        set index [string last " " $l]
+        set id [string range $l $index end-1]
+        set id [string trim $id]
+        set FMRIEngine(firstMRMLid) $Ibrowser($id,firstMRMLid)
+        set FMRIEngine(lastMRMLid) $Ibrowser($id,lastMRMLid)
+
+        set ext [[Volume($FMRIEngine(firstMRMLid),vol) GetOutput] GetWholeExtent]
+        set FMRIEngine(volextent) $ext 
+        set FMRIEngine(noOfAnalyzeVolumes) \
+            [expr $FMRIEngine(lastMRMLid) - $FMRIEngine(firstMRMLid) + 1]
     }
 }
 
@@ -571,19 +579,19 @@ proc FMRIEngineUpdateSequences {} {
 
     # clears the listbox
     set size [$FMRIEngine(seqsListBox) size]
-    $FMRIEngine(seqsListBox) delete 0 [expr $size-1]
+    $FMRIEngine(seqsListBox) delete 0 [expr $size - 1]
 
     set b [info exists Ibrowser(idList)] 
     set n [expr {$b == 0 ? 0 : [llength $Ibrowser(idList)]}]
-    if {$n > 0} {
-        set i 0
+    if {$n > 1} {
+        set i 1 
         while {$i < $n} {
-            set id [lindex $Ibrowder(idList) $i]
-            $FMRIEngine(seqsListBox) insert end $Ibrowser($id,name) 
+            set id [lindex $Ibrowser(idList) $i]
+            $FMRIEngine(seqsListBox) insert end "$Ibrowser($id,name) \[id: $id\]" 
             incr i
         }
     } else {
-        $FMRIEngine(seqsListBox) insert end None 
+        $FMRIEngine(seqsListBox) insert end none 
     }
 }
 
