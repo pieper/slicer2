@@ -440,19 +440,19 @@ static void vtkIndirectLookupTableMapData(vtkIndirectLookupTable *self,
   // range is -32768, 32767, can not be converted to unsigned short for example ...
   //
   T v;
-  short min = (short)range[0];
-  short max = (short)range[1];
+  long min = (long)range[0];
+  long max = (long)range[1];
 
   for (i=0; i<length; i++)
   {
     v = *input;
     
     // Boundary check
-    if (v < min) 
+    if ((long)v < min) 
     {
       v = min;
     }
-    else if (v > max)
+    else if ((long)v > max)
     {
       v = max;
     }
