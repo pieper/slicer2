@@ -135,7 +135,7 @@ proc tarup { {destdir "auto"} } {
     switch $::env(BUILD) {
         "solaris8" -
         "redhat7.3" { 
-            set libs [glob $::env(VTK_BIN_DIR)/bin/*.so]
+            set libs [glob $::env(VTK_BIN_DIR)/bin/*.so*]
             foreach lib $libs {
                 file copy $lib $destdir/Lib/$::env(BUILD)/vtk/VTK-build/bin
                 set ll [file tail $lib]
@@ -313,12 +313,14 @@ proc tarup { {destdir "auto"} } {
     switch $::env(BUILD) {
         "solaris8" {
             puts " -- making $archroot.tar.gz"
-            exec gtar cvfz $archroot.tar.gz $archroot
+            #exec gtar cvfz $archroot.tar.gz $archroot
+            exec tar cfE $archroot.tar $archroot
+            exec gzip -f $archroot.tar
         }
         "redhat7.3" - 
         "Darwin" {
             puts " -- making $archroot.tar.gz"
-            exec tar cvfz $archroot.tar.gz $archroot
+            exec tar cfz $archroot.tar.gz $archroot
         }
         "Win32VC7" { 
             puts " -- making $archroot.zip"
