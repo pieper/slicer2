@@ -66,7 +66,7 @@ proc ModelsInit {} {
 
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.48 $} {$Date: 2002/10/04 17:51:13 $}]
+            {$Revision: 1.49 $} {$Date: 2002/10/07 23:38:47 $}]
 
     # Props
     set Model(propertyType) Basic
@@ -320,7 +320,8 @@ proc ModelsBuildGUI {} {
     #-------------------------------------------
     set f $fProps.fBot
 
-    foreach type "Basic Advanced FreeSurfer" {
+    # add FreeSurfer
+    foreach type "Basic Advanced" {
         frame $f.f${type} -bg $Gui(activeWorkspace)
         place $f.f${type} -in $f -relheight 1.0 -relwidth 1.0
         set Model(f${type}) $f.f${type}
@@ -358,7 +359,8 @@ proc ModelsBuildGUI {} {
 
     eval {label $f.l -text "Properties:"} $Gui(BLA)
     frame $f.f -bg $Gui(backdrop)
-    foreach p "Basic Advanced FreeSurfer" {
+    # add FreeSurfer
+    foreach p "Basic Advanced" {
         eval {radiobutton $f.f.r$p \
                 -text "$p" -command "ModelsSetPropertyType" \
                 -variable Model(propertyType) -value $p -width 8 \
@@ -455,6 +457,7 @@ proc ModelsBuildGUI {} {
     DevAddButton $f.bCancel "Cancel" "ModelsPropsCancel" 8
     grid $f.bApply $f.bCancel -padx $Gui(pad) -pady $Gui(pad)
 
+    if {0} {
     #-------------------------------------------
     # Props->Bot->FreeSurfer frame
     #-------------------------------------------
@@ -508,11 +511,12 @@ proc ModelsBuildGUI {} {
     #-------------------------------------------
     set f $fProps.fBot.fFreeSurfer.fApply
 
-    DevAddButton $f.bApply "Apply" "ModelsFreeSurferPropsApply; Render3D" 8
+#    DevAddButton $f.bApply "Apply" "ModelsFreeSurferPropsApply; Render3D" 8
+    DevAddButton $f.bApply "Apply" "ModelsPropsApply; Render3D" 8
     DevAddButton $f.bCancel "Cancel" "ModelsPropsCancel" 8
     grid $f.bApply $f.bCancel -padx $Gui(pad) -pady $Gui(pad)
 
-
+} 
     #-------------------------------------------
     # Props->Bot->Advanced->Clipping frame
     #-------------------------------------------
@@ -877,7 +881,10 @@ proc ModelsPropsApply {} {
     global Model Label Module Mrml
 
     set m $Model(activeID)
-    if {$m == ""} {return}
+    if {$m == ""} {
+        DevWarningWindow "ModelsPropsApply: Model active id is empty."
+        return
+    }
 
     # Validate name
     if {$Model(name) == ""} {
@@ -1126,7 +1133,7 @@ proc ModelsFreeSurferPropsApply {} {
 
     set m $Model(activeID)
     if {$m == ""} {
-        DevWarningWindow "Model active ID is empty string"
+        DevWarningWindow "ModelsFreeSurferPropsApply: Model active ID is empty string"
         return
     }
 
