@@ -83,28 +83,31 @@ static void TransferDataFormat(Tin *vec_in, Tout *vec_out, int Size, Tout max_ou
   }
 }
  
+
+template <class T> 
+void FlipXAxis(T *invec, T *outvec, int XSize, int YSize, int XYSize) {
+  // Flip around the X-Axis
+  invec += XYSize;
+  for (int y = 0; y < YSize; y++) {
+    invec -= XSize;
+    memcpy(outvec,invec,sizeof(T)*XSize);
+    outvec += XSize;
+  }
+}
+
 // Kilian - Fixed function in August 03 - works now correctly 
+// Flip around the Y Axis
+// vec += XSize;
+// for (y = 0; y < YSize; y++) {
+//  if (y) vec += 2*XSize;
+//  for (x = 0; x < XSize; x++) *res++ = *vec--;
+// }
+// res -= XYSize;
+
 template <class T> 
 static void WriteToFlippedGEFile(char *filename,T *vec, int XSize, int YSize, int XYSize) {
   T* res = new T[XYSize];
-  int y;
-
-  // Flip around the Y Axis
-  // vec += XSize;
-  // for (y = 0; y < YSize; y++) {
-  //  if (y) vec += 2*XSize;
-  //  for (x = 0; x < XSize; x++) *res++ = *vec--;
-  // }
-  // res -= XYSize;
-
-  // Flip around the X-Axis
-  vec += XYSize;
-  for (y = 0; y < YSize; y++) {
-    vec -= XSize;
-    memcpy(res,vec,sizeof(T)*XSize);
-    res += XSize;
-  }
-  res -= XYSize;
+  FlipXAxis(vec,res,XSize,YSize,XYSize);
   WriteToGEFile(filename,res,XYSize);
   delete[] res;
 }

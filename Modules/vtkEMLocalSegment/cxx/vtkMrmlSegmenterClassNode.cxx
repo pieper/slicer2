@@ -72,6 +72,9 @@ vtkMrmlSegmenterClassNode::vtkMrmlSegmenterClassNode()
   this->InputChannelWeights = NULL;
   this->PCAMeanName      = NULL; 
   memset(this->PCAFileRange,0,2*sizeof(int));
+  memset(this->PCATranslation,0,3*sizeof(double));
+  memset(this->PCARotation,0,3*sizeof(double));
+  for (int i =0; i < 3; i++) PCAScale[i]= 1.0;
    
 }
 
@@ -159,6 +162,11 @@ void vtkMrmlSegmenterClassNode::Write(ofstream& of, int nIndent)
     of << " PCAMeanName='" << this->PCAMeanName << "'";
   }
   if  (this->PCAFileRange[0] || this->PCAFileRange[1]) of << " PCAFileRange='" << this->PCAFileRange[0] << " " << this->PCAFileRange[1] << "'";
+
+  if  (this->PCATranslation[0] || this->PCATranslation[1] || this->PCATranslation[2]) of << " PCATranslation='" << this->PCATranslation[0] << " " << this->PCATranslation[1] << " " << this->PCATranslation[2] << "'";
+  if  (this->PCARotation[0] || this->PCARotation[1] || this->PCARotation[2]) of << " PCARotation='" << this->PCARotation[0] << " " << this->PCARotation[1] << " " << this->PCARotation[2] << "'";
+  if  ((this->PCAScale[0] != 1) || (this->PCAScale[1] != 1) || (this->PCAScale[2] != 1)) of << " PCAScale='" << this->PCAScale[0] << " " << this->PCAScale[1] << " " << this->PCAScale[2] << "'";
+
   of << ">\n";
 }
 
@@ -182,6 +190,9 @@ void vtkMrmlSegmenterClassNode::Copy(vtkMrmlNode *anode)
   this->SetLocalPriorWeight(node->LocalPriorWeight);
   this->SetPCAFileRange(node->PCAFileRange);
   this->SetPCAMeanName(node->PCAMeanName);
+  this->SetPCATranslation(node->PCATranslation);
+  this->SetPCARotation(node->PCARotation);
+  this->SetPCAScale(node->PCAScale);
 }
 
 //----------------------------------------------------------------------------
@@ -211,6 +222,9 @@ void vtkMrmlSegmenterClassNode::PrintSelf(ostream& os, vtkIndent indent)
 
    os << indent << "PCAMeanName: " <<  (this->PCAMeanName ? this->PCAMeanName : "(none)") << "\n"; 
    os << indent << "PCAFileRange: " << this->PCAFileRange[0] << ", " << this->PCAFileRange[1] << "\n" ;
+   os << indent << "PCATranslation: " << this->PCATranslation[0] << ", " << this->PCATranslation[1] << ", " << this->PCATranslation[2] << "\n" ;
+   os << indent << "PCARotation: " << this->PCARotation[0] << ", " << this->PCARotation[1] << ", " << this->PCARotation[2] << "\n" ;
+   os << indent << "PCAScale: " << this->PCAScale[0] << ", " << this->PCAScale[1] << ", " << this->PCAScale[2] << "\n" ;
 }
 
 

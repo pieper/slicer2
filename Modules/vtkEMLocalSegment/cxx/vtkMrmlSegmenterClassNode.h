@@ -134,6 +134,21 @@ public:
   vtkGetVector2Macro(PCAFileRange, int);
   vtkSetVector2Macro(PCAFileRange, int);
 
+  // Description:
+  // Translation from patient case to PCA  
+  vtkGetVector3Macro(PCATranslation, double);
+  vtkSetVector3Macro(PCATranslation, double);
+
+  // Description:
+  // Rotation from patient case to PCA  
+  vtkGetVector3Macro(PCARotation, double);
+  vtkSetVector3Macro(PCARotation, double);
+
+  // Description:
+  // Scale from patient case to PCA  
+  vtkGetVector3Macro(PCAScale, double);
+  vtkSetVector3Macro(PCAScale, double);
+
 protected:
   vtkMrmlSegmenterClassNode();
   ~vtkMrmlSegmenterClassNode();
@@ -153,6 +168,9 @@ protected:
   char   *InputChannelWeights;
   char   *PCAMeanName;
   int    PCAFileRange[2];
+  double PCATranslation[3];
+  double PCARotation[3];
+  double PCAScale[3];
 };
 
 #endif

@@ -235,7 +235,7 @@ proc EMSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.23 $} {$Date: 2004/02/20 14:11:12 $}]
+        {$Revision: 1.24 $} {$Date: 2004/02/23 14:22:39 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -298,6 +298,9 @@ proc EMSegmentInit {} {
     set EMSegment(Cattrib,0,Prob) 0.0 
     set EMSegment(Cattrib,0,ProbabilityData) $Volume(idNone)
     set EMSegment(Cattrib,0,PCAFileRange) "0 0" 
+    set EMSegment(Cattrib,0,PCATranslation) "0 0 0" 
+    set EMSegment(Cattrib,0,PCARotation) "0 0 0" 
+    set EMSegment(Cattrib,0,PCAScale) "1 1 1" 
     set EMSegment(Cattrib,0,PCAMeanData) $Volume(idNone) 
     set EMSegment(Cattrib,0,PCAEigen) "" 
     set EMSegment(Cattrib,0,ClassList) ""
@@ -1623,6 +1626,9 @@ proc EMSegmentLoadMRML {tag attr} {
                     "inputchannelweights"  {$n SetInputChannelWeights $val}
                     "pcameanname"          {$n SetPCAMeanName $val}
                     "pcafilerange"         {eval $n SetPCAFileRange $val}
+                    "pcatanslation"        {eval $n SetPCATranslation $val}
+                    "pcarotation"          {eval $n SetPCARotation $val}
+                    "pcascale"             {eval $n SetPCAScale     $val}
                 }
             }
     }
@@ -1886,7 +1892,10 @@ proc EMSegmentUpdateMRML {} {
         set EMSegment(Cattrib,$NumClass,LocalPriorWeight)    [SegmenterClass($pid,node) GetLocalPriorWeight]
 
         set EMSegment(Cattrib,$NumClass,ProbabilityData) $Volume(idNone) 
-        set EMSegment(Cattrib,$NumClass,PCAFileRange) [SegmenterClass($pid,node) GetPCAFileRange]
+        set EMSegment(Cattrib,$NumClass,PCAFileRange)   [SegmenterClass($pid,node) GetPCAFileRange]
+        set EMSegment(Cattrib,$NumClass,PCATranslation) [SegmenterClass($pid,node) GetPCATranslation]
+        set EMSegment(Cattrib,$NumClass,PCARotation)    [SegmenterClass($pid,node) GetPCARotation]
+        set EMSegment(Cattrib,$NumClass,PCAScale)       [SegmenterClass($pid,node) GetPCAScale]
 
         set EMSegment(Cattrib,$NumClass,PCAMeanData) $Volume(idNone) 
         set PCAMeanName   [SegmenterClass($pid,node) GetPCAMeanName]
@@ -2262,7 +2271,11 @@ proc EMSegmentSaveSettingSuperClass {SuperClass LastNode} {
              SegmenterClass($pid,node) SetLocalPriorPrefix ""
              SegmenterClass($pid,node) SetLocalPriorName   ""
           }
-          eval SegmenterClass($pid,node) SetPCAFileRange  $EMSegment(Cattrib,$i,PCAFileRange)
+          eval SegmenterClass($pid,node) SetPCAFileRange   $EMSegment(Cattrib,$i,PCAFileRange)
+          eval SegmenterClass($pid,node) SetPCATranslation $EMSegment(Cattrib,$i,PCATranslation)
+          eval SegmenterClass($pid,node) SetPCARotation    $EMSegment(Cattrib,$i,PCARotation)
+          eval SegmenterClass($pid,node) SetPCAScale       $EMSegment(Cattrib,$i,PCAScale)
+
           if {$EMSegment(Cattrib,$i,PCAMeanData) != $Volume(idNone) } {
              SegmenterClass($pid,node) SetPCAMeanName  [Volume($EMSegment(Cattrib,$i,PCAMeanData),node) GetName]
       } else {
@@ -3718,6 +3731,7 @@ proc EMSegmentCreateDeleteClasses {ChangeGui DeleteNode} {
         unset EMSegment(Cattrib,$i,ColorCode) EMSegment(Cattrib,$i,Label)  
         unset EMSegment(Cattrib,$i,Prob) EMSegment(Cattrib,$i,ProbabilityData)
         unset EMSegment(Cattrib,$i,PCAMeanData) EMSegment(Cattrib,$i,PCAFileRange) 
+        unset EMSegment(Cattrib,$i,PCATranslation) EMSegment(Cattrib,$i,PCARotation) EMSegment(Cattrib,$i,PCAScale) 
         unset EMSegment(Cattrib,$i,ShapeParameter)
         foreach EigenList $EMSegment(Cattrib,$i,PCAEigen) {
            if {[lindex $EigenList 3] != ""} {MainMrmlDeleteNode SegmenterPCAEigen [[lindex $EigenList 3] GetID] }
@@ -3809,6 +3823,9 @@ proc EMSegmentCreateDeleteClasses {ChangeGui DeleteNode} {
       # Special EMSegment(SegmentMode) == 1 Variables     
       set EMSegment(Cattrib,$i,ProbabilityData) $Volume(idNone)
       set EMSegment(Cattrib,$i,PCAFileRange) "0 0" 
+      set EMSegment(Cattrib,$i,PCATranslation) "0.0 0.0 0.0" 
+      set EMSegment(Cattrib,$i,PCARotation) "0.0 0.0 0.0" 
+      set EMSegment(Cattrib,$i,PCAScale) "1.0 1.0 1.0" 
       set EMSegment(Cattrib,$i,PCAMeanData) $Volume(idNone)
       set EMSegment(Cattrib,$i,PCAEigen) "" 
     }
