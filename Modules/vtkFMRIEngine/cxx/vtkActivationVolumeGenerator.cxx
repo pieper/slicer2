@@ -50,6 +50,8 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 ==============================================================================*/
 
+
+#include "GeneralLinearModel.h"
 #include "vtkActivationVolumeGenerator.h"
 #include "vtkObjectFactory.h"
 #include "vtkImageData.h"
@@ -160,6 +162,7 @@ void vtkActivationVolumeGenerator::SimpleExecute(vtkImageData *inputs, vtkImageD
         } 
     }
 
+    GeneralLinearModel::Free();
     tc->Delete();
 
     // Scales the scalar values in the activation volume between 0 - 100
