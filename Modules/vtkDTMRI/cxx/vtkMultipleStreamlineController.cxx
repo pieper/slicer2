@@ -392,6 +392,7 @@ vtkHyperStreamline * vtkMultipleStreamlineController::CreateHyperStreamline()
           // NumberOfSides
           currHSP->SetNumberOfSides(this->VtkHyperStreamlinePointsSettings->GetNumberOfSides());
           // IntegrationDirection (set in this class, default both ways)
+          currHSP->SetIntegrationDirection(this->IntegrationDirection);
 
           return((vtkHyperStreamline *)currHSP);
         }
@@ -444,8 +445,9 @@ vtkHyperStreamline * vtkMultipleStreamlineController::CreateHyperStreamline()
           // NumberOfSides
           currPHSP->
             SetNumberOfSides(this->VtkPreciseHyperStreamlinePointsSettings->GetNumberOfSides());
-          // IntegrationDirection
-          // Skip this, here we always want both directions
+          // IntegrationDirection (set in this class, default both ways)
+          currPHSP->SetIntegrationDirection(this->IntegrationDirection);
+
           // MaxStep
           currPHSP->
             SetMaxStep(this->VtkPreciseHyperStreamlinePointsSettings->GetMaxStep());
@@ -504,10 +506,6 @@ void vtkMultipleStreamlineController::SeedStreamlineFromPoint(double x,
   newStreamline->SetInput(this->InputTensorField);
   newStreamline->SetStartPosition(point[0],point[1],point[2]);
   
-  // Set its parameters
-  newStreamline->
-    SetIntegrationDirection(this->IntegrationDirection);
-
 }
 
 
@@ -578,7 +576,8 @@ void vtkMultipleStreamlineController::SeedStreamlinesFromROI()
                     {
                       // Now create a streamline and put it on the collection.
                       //newStreamline=vtkHyperStreamlineDTMRI::New();
-                      newStreamline=vtkHyperStreamlinePoints::New();
+                      //newStreamline=vtkHyperStreamlinePoints::New();
+                      newStreamline=this->CreateHyperStreamline();
                       //newStreamline=vtkHyperStreamline::New();
                       //newStreamline->DebugOn();
                       this->Streamlines->AddItem((vtkObject *)newStreamline);
@@ -586,10 +585,6 @@ void vtkMultipleStreamlineController::SeedStreamlinesFromROI()
                       // Set its input information.
                       newStreamline->SetInput(this->InputTensorField);
                       newStreamline->SetStartPosition(point[0],point[1],point[2]);
-                      
-                      // Set its parameters
-                      newStreamline->
-                        SetIntegrationDirection(this->IntegrationDirection);
                     }
                 }
               inPtr++;
