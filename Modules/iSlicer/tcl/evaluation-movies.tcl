@@ -7,7 +7,7 @@
 source $env(SLICER_HOME)/Modules/iSlicer/tcl/isvolume.tcl
 source $env(SLICER_HOME)/Modules/iSlicer/tcl/is3d.tcl
 
-proc eval_movies { {dir /tmp} {steps 30} {skip 10} } {
+proc eval_movies { {dir /tmp} {steps 120} {skip 1} } {
     
     catch "destroy .eval"
     toplevel .eval
