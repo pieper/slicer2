@@ -259,7 +259,7 @@ proc EndoscopicInit {} {
     set Module($m,category) "Visualisation"
     
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.66 $} {$Date: 2004/08/31 20:03:31 $}] 
+    {$Revision: 1.67 $} {$Date: 2004/10/06 18:40:55 $}] 
        
     # Define Procedures
     #------------------------------------
@@ -547,7 +547,7 @@ proc EndoscopicCreateRenderer {renName} {
     vtkLight View($cam,light2)
     
     vtkLightKit View(light3)
-    View(light3) SetKeyLightIntensity 0.1
+    View(light3) SetKeyLightIntensity 0.001
     View(light3) SetKeyToFillRatio 1.5
     View(light3) SetKeyToHeadRatio 1.75
     View(light3) SetKeyToBackRatio 3.75
@@ -1168,10 +1168,10 @@ proc EndoscopicCreateBindings {} {
    EvAddWidgetToBindingSet Slice2Events $Gui(fSl2Win) {{EndoKeySelectSlicesEvents} {EndoKeyMoveSlicesEvents}}
 
 #  Activated in TkInteractor
-   EvDeclareEventHandler EndoKeySelect3DEvents <KeyPress-t> { if { [SelectPick Endoscopic(picker) %W %x %y] != 0 } \
-    { eval EndoscopicAddTargetFromWorldCoordinates [lindex $Select(xyz) 0] [lindex $Select(xyz) 1] [lindex $Select(xyz) 2] }}
+#   EvDeclareEventHandler EndoKeySelect3DEvents <KeyPress-t> { if { [SelectPick Endoscopic(picker) %W %x %y] != 0 } \
+    { eval EndoscopicAddTargetFromWorldCoordinates [lindex $Select(xyz) 0] [lindex $Select(xyz) 1] [lindex $Select(xyz) 2] $Select(cellId) }}
     
-   EvAddWidgetToBindingSet 3DEvents $Gui(fViewWin) {EndoKeySelect3DEvents}
+#   EvAddWidgetToBindingSet 3DEvents $Gui(fViewWin) {EndoKeySelect3DEvents}
    
        
 }
@@ -1722,7 +1722,7 @@ Rotate the axis by pressing the right mouse button and moving the mouse."
     eval {label $f.lTar -text "Target#"} $Gui(WLA)
     eval {entry $f.lTarNum \
         -textvariable Endoscopic(selectedTarget) -width 2} $Gui(WEA) {-bg $Endoscopic(path,sColor)}
-    bind $f.lTarNum <Return> "EndoscopicSelectTarget"
+    bind $f.lTarNum <Return> {EndoscopicSelectTarget $Endoscopic(selectedTarget)}
     eval {button $f.next -text ">>>" -command "EndoscopicSelectNextTarget"} $Gui(WMBA) 
     eval {button $f.prev -text "<<<" -command "EndoscopicSelectPreviousTarget"} $Gui(WMBA)
     pack $f.bInsert $f.prev $f.lTar $f.lTarNum $f.next -side left -padx 2 -pady 2
@@ -2198,7 +2198,7 @@ proc EndoscopicBuildFlyThroughGUI {} {
 
     eval {entry $f.ejump \
         -textvariable Endoscopic(selectedTarget) -width 4} $Gui(WEA) {-bg $Endoscopic(path,sColor)}
-    bind $f.ejump <Return> "EndoscopicSelectTarget"
+    bind $f.ejump <Return> {EndoscopicSelectTarget $Endoscopic(selectedTarget)}
     
     eval {button $f.fjump -text " >>> " -width 6  -command "EndoscopicSelectNextTarget"} $Gui(WMBA)
     
@@ -4889,16 +4889,19 @@ proc EndoscopicAddFlatView {} {
     # add the new window to the list of open windows
     lappend Endoscopic(FlatWindows) $name
     
+    package require vtkinteraction
+    
     # create new toplevel for the flattened image
     toplevel .t$name -visual best
-    frame .t$name.fView
-    set f .t$name.fView
     wm title .t$name $name
     wm geometry .t$name -0-0
     wm protocol .t$name WM_DELETE_WINDOW "EndoscopicRemoveFlatView $name"
     wm withdraw .
  
-   
+    # view frame
+    frame .t$name.fView
+    set f .t$name.fView
+
     # create a vtkTkRenderWidget to draw the flattened image into
     vtkTkRenderWidget $f.flatRenderWidget$name -width 600 -height $View(viewerHeightNormal)
     set Endoscopic($f.flatRenderWidget$name,name) $name
@@ -4960,9 +4963,14 @@ proc EndoscopicAddFlatView {} {
     set Endoscopic(flatScale,azimuth) [scale $azifrm.azimuth -from -90 -to 90 -res 5.0 -orient horizontal  -variable Endoscopic(flatColon,LightAzi)]
     pack $azilbl -side top
     pack $Endoscopic(flatScale,azimuth) -side top
+    
+    set coordfrm [frame .t$name.controls.lfrm.coordfrm]
+    set coordlbl [label $coordfrm.lbl -text "x: 0 y: "]
+    pack $coordlbl -side top
 
     pack $elefrm -side top -pady 4 -expand yes
     pack $azifrm -side top -pady 4 -expand yes
+    pack $coordfrm -side top -pady 4 -expand yes
     
     # pack control frames
     pack .t$name.controls.xfrm -side left  -padx 1 -anchor n -expand yes
@@ -4980,9 +4988,12 @@ proc EndoscopicAddFlatView {} {
     Endoscopic($name,renderer) SetBackground 0.5 0.5 0.5
     [$f.flatRenderWidget$name GetRenderWindow] AddRenderer Endoscopic($name,renderer)
     lappend $Endoscopic(FlatRenderers) Endoscopic($name,renderer)
+    #vtkRenderWindowInteractor iren
+    #iren SetRenderWindow [$f.flatRenderWidget$name GetRenderWindow]
+
 
     # set and activate event bindings for this widget
-    EndoscopicCreateFlatBindings $f.flatRenderWidget$name
+     EndoscopicCreateFlatBindings $f.flatRenderWidget$name
     
     # Update targets (Fiducials) that were saved in the MRML Tree
     $updatebut config -command "EndoscopicUpdateTargetsInFlatWindow $f.flatRenderWidget$name"
@@ -5186,7 +5197,7 @@ proc EndoscopicRemoveFlatView {{name ""}} {
 
 #-----------------------------------------------------------------------------------------------
 # .PROC EndoscopicCreateFlatBindings
-# Create and activate binding sets that allow the user to double click at a location on the flattened colon,
+# Create and Activate binding sets that allow the user to double click at a location on the flattened colon,
 # move the endoscope to the corresponding location in 3D, and sychronize the 2D slices as well
 #-----------------------------------------------------------------------------------------------
 
@@ -5198,9 +5209,11 @@ proc EndoscopicCreateFlatBindings {widget} {
  #    bind $widget <KeyPress-c> {EndoscopicPickFlatPoint %W %x %y}
 
     EvDeclareEventHandler FlatWindowEvents <Double-Any-ButtonPress> {EndoscopicPickFlatPoint %W %x %y; \
-    EndoscopicAddTargetFromFlatColon $Select(cellId); EndoscopicCreateTargets }
+    EndoscopicAddTargetFromFlatColon $Select(cellId)}
+ #test   
+    EvDeclareEventHandler FlatMotionEvents <Motion> {EndoscopicMouseLocation %W %x %y}
 
-    EvAddWidgetToBindingSet bindFlatWindowEvents $widget {FlatWindowEvents}
+    EvAddWidgetToBindingSet bindFlatWindowEvents $widget {{FlatWindowEvents} {FlatMotionEvents}}
 
     EvActivateBindingSet bindFlatWindowEvents
 
@@ -5216,6 +5229,17 @@ proc EndoscopicPopFlatBindings {} {
     EvDeactivateBindingSet bindFlatWindowEvents
 }
 
+
+#test proc
+proc EndoscopicMouseLocation {widget xcoord ycoord} {
+    global Endoscopic
+    
+    set name $Endoscopic($widget,name)
+    .t$name.controls.lfrm.coordfrm.lbl configure -text "x: $xcoord  y: $ycoord"
+
+
+}
+
 #-------------------------------------------------------------------
 # .PROC EndoscopicPickFlatPoint
 # use vtkCellPicker to identify the cell Id and location of interest.
@@ -5227,11 +5251,13 @@ proc EndoscopicPickFlatPoint {widget xcoord ycoord} {
     set name $Endoscopic($widget,name)
     
     vtkCellPicker TempCellPicker
-    TempCellPicker SetTolerance 0.0001
+    TempCellPicker SetTolerance 0.001
 
     if {[SelectPick TempCellPicker $widget $xcoord $ycoord]} {
     
     set fx [lindex $Select(xyz) 0]
+#test 
+puts "fx is $fx"
     
     EndoscopicAddTargetInFlatWindow $widget $fx
     
@@ -5255,8 +5281,8 @@ proc EndoscopicAddTargetInFlatWindow {widget x} {
 
     vtkLineSource aLine
 
-    aLine SetPoint1 $x [expr $Endoscopic(flatColon,yMin) - 1] -1.0
-    aLine SetPoint2 $x [expr $Endoscopic(flatColon,yMax) + 1] -1.0      
+    aLine SetPoint1 $x [expr $Endoscopic(flatColon,yMin) - 1] -0.01
+    aLine SetPoint2 $x [expr $Endoscopic(flatColon,yMax) + 1] -0.01   
 
     aLine SetResolution 20
     vtkPolyDataMapper aLineMapper
@@ -5295,6 +5321,8 @@ proc EndoscopicAddTargetFromFlatColon {ScellId} {
     }    
     
         set cellId $ScellId
+
+puts "cellId from FlatColon is $cellId"
 
 # get the active actor   
        set model $Model(activeID)
@@ -5365,7 +5393,9 @@ proc EndoscopicAddTargetFromFlatColon {ScellId} {
 # reset the driver to user so that they can use the slicer to move the 2D slices.
     set driver User
     EndoscopicSetSliceDriver $driver
-    
+
+# create targets   
+    EndoscopicCreateTargets
 }
 
 #-----------------------------------------------------------------------------------------
@@ -5408,6 +5438,8 @@ proc EndoscopicAddTargetFromSlices {x y z} {
     $polyData GetPointCells $pointid cellList
 # for now: choose the 1st cell in that list
     set cellId [cellList GetId 0]
+    set $Select(cellId) $cellId
+puts "cellId from Slices is: $Select(cellId)"
 
 #  active list (should be the default path just created from the automatic tab)
     set fid $Fiducials($Fiducials(activeList),fid)
@@ -5449,6 +5481,8 @@ proc EndoscopicAddTargetFromSlices {x y z} {
     Point($closestPid,node) SetFXYZ $fx $fy $fz
 # use the SetDescription to store and save $cellId information.
     Point($closestPid,node) SetDescription $cellId
+    
+puts "cellId from 2D slices is: $cellId"
 
     MainUpdateMRML
     
@@ -5469,6 +5503,20 @@ cellList Delete
     
 # Create Targets    
     EndoscopicCreateTargets
+    
+# update targets in the flat window
+    if {$Endoscopic(FlatWindows) != ""} {
+
+# Fix later: as of now I am assuming the user are working with the first flat model
+# if the user want to work with several flat models at the same time, they either has to be really careful or
+# insert some checking mechanism to prevent them from adding or selecting targets in the wrong flat window.    
+    set name [lindex $Endoscopic(FlatWindows) 0]
+    
+    set widget .t$name.fView.flatRenderWidget$name
+    EndoscopicUpdateTargetsInFlatWindow $widget
+    }
+ 
+  
 }
 
 #-----------------------------------------------------------------------------------------
@@ -5476,7 +5524,7 @@ cellList Delete
 #  When a user selects a location on the 3D model, the 2D slices sychronises.
 #-----------------------------------------------------------------------------------------
 
-proc EndoscopicAddTargetFromWorldCoordinates {sx sy sz} {
+proc EndoscopicAddTargetFromWorldCoordinates {sx sy sz cellId} {
      global Endoscopic Point Fiducials Select Model View Slice
 
 #  If no path selected, do nothing.
@@ -5489,13 +5537,15 @@ proc EndoscopicAddTargetFromWorldCoordinates {sx sy sz} {
            
      if {[info exists Select(actor)] != 0} {
         set actor $Select(actor)
-        set cellId $Select(cellId)
+        set cellId $cellId
     } else {
         set actor ""
         set cellId ""
     }
 
       set Select(xyz) [list $sx $sy $sz]
+      set Select(cellId) $cellId
+puts "cellId from 3D is: $Select(cellId)"
 
       set fid $Fiducials($Fiducials(activeList),fid)
       set listName $Fiducials(activeList)
@@ -5553,7 +5603,20 @@ proc EndoscopicAddTargetFromWorldCoordinates {sx sy sz} {
     EndoscopicSetSliceDriver $driver
     
 # Create Targets    
-    EndoscopicCreateTargets  
+    EndoscopicCreateTargets
+    
+# update targets in the flat window
+    if {$Endoscopic(FlatWindows) != ""} {
+
+# Fix later: as of now I am assuming the user are working with the first flat model
+# if the user want to work with several flat models at the same time, they either has to be really careful or
+# insert some checking mechanism to prevent them from adding or selecting targets in the wrong flat window.    
+    set name [lindex $Endoscopic(FlatWindows) 0]
+    
+    set widget .t$name.fView.flatRenderWidget$name
+    EndoscopicUpdateTargetsInFlatWindow $widget
+    }
+ 
   
 }
 
@@ -5581,7 +5644,7 @@ proc EndoscopicLoadTargets { }  {
          set targetlist [FiducialsGetPointIdListFromName $targetlistname]
          set num [llength $targetlist] 
          set Endoscopic(selectedTarget) 1
-         EndoscopicSelectTarget
+         EndoscopicSelectTarget $Endoscopic(selectedTarget)
          set Endoscopic(totalTargets) $num
 
          } else {
@@ -5647,7 +5710,7 @@ proc EndoscopicCreateTargets {} {
     Fiducials($targetfid,node) SetType "default"
     Fiducials($targetfid,node) SetName $listname
     Fiducials($targetfid,node) SetTextSize 0.0
-    Fiducials($targetfid,node) SetSymbolSize 2.0
+    Fiducials($targetfid,node) SetSymbolSize 4.0
                                 
     MainMrmlAddNode EndFiducials
     MainUpdateMRML
@@ -5689,6 +5752,8 @@ proc EndoscopicCreateTargets {} {
 
     set Endoscopic(totalTargets) [llength $Fiducials($targetfid,pointIdList)]
     set Endoscopic(selectedTarget) $index
+
+puts " Target $index, cellId is $cellId"
 }
 
 #-------------------------------------------------------------------------------------
@@ -5732,7 +5797,7 @@ proc EndoscopicUpdateActiveTarget {} {
      MainUpdateMRML
      
      set Endoscopic(selectedTarget) $cT
-     EndoscopicSelectTarget
+     EndoscopicSelectTarget $Endoscopic(selectedTarget)
 
 }
 
@@ -5793,7 +5858,7 @@ proc EndoscopicDeleteActiveTarget {} {
         set Endoscopic(totalTargets) [llength $list] 
     
         set Endoscopic(selectedTarget) $pT
-    EndoscopicSelectTarget
+    EndoscopicSelectTarget $Endoscopic(selectedTarget)
     
     } else {
     
@@ -5803,6 +5868,19 @@ proc EndoscopicDeleteActiveTarget {} {
          append listname -targets
          FiducialsDeleteList $listname
     }
+    
+# delete the corresponding target in the flat window
+    if {$Endoscopic(FlatWindows) != ""} {
+
+# Fix later: as of now I am assuming the user are working with the first flat model
+# if the user want to work with several flat models at the same time, they either has to be really careful or
+# insert some checking mechanism to prevent them from adding or selecting targets in the wrong flat window.    
+    set name [lindex $Endoscopic(FlatWindows) 0]
+    
+    set widget .t$name.fView.flatRenderWidget$name
+    EndoscopicUpdateTargetsInFlatWindow $widget
+   
+    }
 
 }
 
@@ -5811,7 +5889,7 @@ proc EndoscopicDeleteActiveTarget {} {
 # when a target is selected, the endoscope jumps to the optimum location (decided by the user) and aim itself at the target.
 #--------------------------------------------------------------------------------------------------------
 
-proc EndoscopicSelectTarget {} {
+proc EndoscopicSelectTarget {sT} {
 
     global Fiducials Endoscopic Point
 
@@ -5821,6 +5899,7 @@ proc EndoscopicSelectTarget {} {
     return
     }
 
+    set $Endoscopic(selectedTarget) $sT
     set index $Endoscopic(selectedTarget)
 
     if {$index > 0} {
@@ -5913,7 +5992,7 @@ proc EndoscopicSelectNextTarget {} {
 
     set Endoscopic(selectedTarget) [expr $Endoscopic(selectedTarget) + 1]
 
-    EndoscopicSelectTarget
+    EndoscopicSelectTarget $Endoscopic(selectedTarget)
 
     } else {
 #   tk_messageBox -message "No More Targets"
@@ -5940,7 +6019,7 @@ proc EndoscopicSelectPreviousTarget {} {
 
     set Endoscopic(selectedTarget) [expr $Endoscopic(selectedTarget) - 1]
 
-    EndoscopicSelectTarget
+    EndoscopicSelectTarget $Endoscopic(selectedTarget)
     
     } else {
     return
@@ -5959,6 +6038,8 @@ proc EndoscopicUpdateTargetsInFlatWindow {widget} {
     global Endoscopic Fiducials Point
 
     set name $Endoscopic($widget,name)
+puts "widget is $widget, name is $name"
+
 
 # delete all the lines that's already in the flat window
     for {set linecount 0} {$linecount < $Endoscopic($name,lineCount)} {incr linecount} {
@@ -5993,14 +6074,18 @@ proc EndoscopicUpdateTargetsInFlatWindow {widget} {
                     for {set i 0} {$i < $numP} {incr i} {
                          set pid [lindex $list $i]
                          set cellId [Point($pid,node) GetDescription]
-
+       
                          set polyData $Endoscopic($name,polyData)
                          set cell [$polyData GetCell $cellId]
+    #test         
+    set dummy [expr $i +1]     
+    puts "target $dummy , cellId is $cellId"
+    #test end     
                          set points [$cell GetPoints]
                          set point1 [$points GetPoint 0]
                          set point2 [$points GetPoint 1]
                          set point3 [$points GetPoint 2]
-
+             
                          set x [expr [expr [expr [lindex $point1 0]+[lindex $point2 0]]+[lindex $point2 0]]/3]
 
                          set count $Endoscopic($name,lineCount)
@@ -6008,8 +6093,8 @@ proc EndoscopicUpdateTargetsInFlatWindow {widget} {
 
                          vtkLineSource aLine
 
-                         aLine SetPoint1 $x [expr $Endoscopic(flatColon,yMin) - 1] -1.0
-                         aLine SetPoint2 $x [expr $Endoscopic(flatColon,yMax) + 1] -1.0      
+                         aLine SetPoint1 $x [expr $Endoscopic(flatColon,yMin) - 1] -0.01
+                         aLine SetPoint2 $x [expr $Endoscopic(flatColon,yMax) + 1] -0.01      
 
                          aLine SetResolution 20
                          vtkPolyDataMapper aLineMapper
@@ -6034,6 +6119,8 @@ proc EndoscopicUpdateTargetsInFlatWindow {widget} {
     
              tk_messageBox -message "Please select a path first"
          }
+     
+     EndoscopicSelectTarget $Endoscopic(selectedTarget)
 }
 
 proc EndoscopicFlatLightElevationAzimuth {widget {Endoscopic(flatColon,LightElev)"" Endoscopic(flatColon,LightAzi)""}} {
