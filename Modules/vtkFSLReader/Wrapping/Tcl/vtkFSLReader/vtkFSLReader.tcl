@@ -5,8 +5,9 @@ package require vtkAnalyze
 # rely on the fact that a class loaded from the shared
 # library is uniquely available through this module
 #
+if {[info commands vtkTimeCoursePlotActor2] != "" ||
+    [::vtk::load_component vtkFSLReaderTCL] == ""} {
 
-if {[info commands FSLReaderInit] == ""} {
     global PACKAGE_DIR_VTKFSLReader
     package provide vtkFSLReader 1.0
 
