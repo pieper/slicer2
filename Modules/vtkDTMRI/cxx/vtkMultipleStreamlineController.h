@@ -28,7 +28,12 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   void SeedStreamlinesFromROI();
 
   // Description
-  // Make the streamlines visible in the renderer.
+  // Start a streamline from the input point.
+  // The point should be in the world coordinates of the scene.
+  void SeedStreamlineFromPoint(double x, double y, double z);
+
+  // Description
+  // Make all of the streamlines visible in the renderer.
   void AddStreamlinesToScene();
 
 

@@ -40,9 +40,15 @@ vtkMultipleStreamlineController::vtkMultipleStreamlineController()
 //----------------------------------------------------------------------------
 vtkMultipleStreamlineController::~vtkMultipleStreamlineController()
 {
-  // TO DO
-  // Delete everything 
-
+  this->ROIToWorld->Delete();
+  this->WorldToTensorScaledIJK->Delete();
+  this->InputTensorField->Delete();
+  this->InputROI->Delete();
+  this->InputRenderers->Delete();
+  this->Streamlines->Delete();
+  this->LookupTables->Delete();
+  this->Mappers->Delete();
+  this->Actors->Delete();
 }
 
 // Make actors, mappers, and lookup tables as needed for streamlines
@@ -126,6 +132,37 @@ void vtkMultipleStreamlineController::AddStreamlinesToScene()
         }
       
     }
+
+}
+
+
+//----------------------------------------------------------------------------
+void vtkMultipleStreamlineController::SeedStreamlineFromPoint(double x, 
+                                                              double y, 
+                                                              double z)
+
+{
+  double pointw[3], point[3];
+  vtkHyperStreamline *newStreamline;
+  
+  pointw[0]=x;
+  pointw[1]=y;
+  pointw[2]=z;
+  
+  // Transform from world coords to scaled ijk of the input tensors
+  this->WorldToTensorScaledIJK->TransformPoint(pointw,point);
+  
+  // Now create a streamline and put it on the collection.
+  newStreamline=vtkHyperStreamlineDTMRI::New();
+  this->Streamlines->AddItem((vtkObject *)newStreamline);
+  
+  // Set its input information.
+  newStreamline->SetInput(this->InputTensorField);
+  newStreamline->SetStartPosition(point[0],point[1],point[2]);
+  
+  // Set its parameters
+  newStreamline->
+    SetIntegrationDirection(this->IntegrationDirection);
 
 }
 
