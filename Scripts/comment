@@ -19,4 +19,5 @@ endif
 
 setenv TCL_LIBRARY ${SLICER_HOME}/lib/tcl8.3
 
-exec $SLICER_HOME/program/tclsh $SLICER_HOME/program/GoComment.tcl $1
+# exec $SLICER_HOME/program/tclsh $SLICER_HOME/program/GoComment.tcl $1
+exec tclsh $SLICER_HOME/Base/tcl/GoComment.tcl $1
