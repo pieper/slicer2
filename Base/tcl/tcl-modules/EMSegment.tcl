@@ -164,7 +164,7 @@ proc EMSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.2 $} {$Date: 2001/12/19 17:39:13 $}]
+	    {$Revision: 1.3 $} {$Date: 2002/01/10 17:01:46 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -196,26 +196,26 @@ proc EMSegmentInit {} {
     # with    'set EMSegment(EMiteration) 10
 
     # Kilian : Set for debugging
-    set EMSegment(NumClasses)   [vtkEMInit GetNumClasses]
-    # set EMSegment(NumClasses)   4
+    set EMSegment(NumClasses)   4
     set EMSegment(NumClassesNew) -1 
-    set EMSegment(EMiteration)  [vtkEMInit GetNumIter]
-    # set EMSegment(EMiteration)  3
-    set EMSegment(MFAiteration) 1
-    # set EMSegment(MFAiteration) [vtkEMInit GetNumRegIter]
+    # set EMSegment(EMiteration)  [vtkEMInit GetNumIter]
+    set EMSegment(EMiteration)  3
+    set EMSegment(MFAiteration) [vtkEMInit GetNumRegIter]
+    # set EMSegment(MFAiteration) 1
     set EMSegment(Alpha)        [vtkEMInit GetAlpha]
     set EMSegment(SmWidth)      [vtkEMInit GetSmoothingWidth]
     set EMSegment(SmSigma)      [vtkEMInit GetSmoothingSigma]
     # Debugging set EMSegment(StartSlice)   [vtkEMInit GetStartSlice]
     set EMSegment(StartSlice)   1
     set EMSegment(EndSlice)     [vtkEMInit GetEndSlice]
-    # set EMSegment(EndSlice)     1
+    # set EMSegment(EndSlice)     3
     set EMSegment(ImgTestNo)        [vtkEMInit GetImgTestNo]
-    #set EMSegment(ImgTestNo)        -1
+    # set EMSegment(ImgTestNo)        1
     set EMSegment(ImgTestDivision)  [vtkEMInit GetImgTestDivision]
     # set EMSegment(ImgTestDivision)  $EMSegment(NumClasses)
     set EMSegment(ImgTestPixel)     [vtkEMInit GetImgTestPixel]
-    # set EMSegment(ImgTestPixel)     2
+    # set EMSegment(ImgTestPixel)     4
+
     set EMSegment(PrintIntermediateResults)   [vtkEMInit GetPrintIntermediateResults] 
     set EMSegment(PrintIntermediateSlice)   [vtkEMInit GetPrintIntermediateSlice] 
     set EMSegment(PrintIntermediateFrequency)   [vtkEMInit GetPrintIntermediateFrequency] 
@@ -422,7 +422,7 @@ Description of the tabs:
     DevAddLabel $f.lHead "Step 2: Load Class Interaction Matrix"
     pack $f.lHead -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
     # file browse box
-    DevAddFileBrowse $f EMSegment FileCIM "File" "" "mrf"  "." "" "Load File with Class Interation Matrix"
+    DevAddFileBrowse $f EMSegment FileCIM "File" "EMSegmentImportCIM 1" "mrf"  "." "" "Load File with Class Interation Matrix"
 
     #-------------------------------------------
     # EM->Step3 frame : Select and Define Classes
@@ -1111,6 +1111,7 @@ proc EMSegmentStartEM { } {
    set clist {}
    # Kilian: For Debugging
    # set EMSegment(FileCIM) knee.mrf
+   # set EMSegment(FileCIM) brain.mrf
    # EMSegmentImportCIM 0
 
    # Update Values
@@ -1155,20 +1156,17 @@ proc EMSegmentStartEM { } {
    EMStart SetSmoothingSigma  $EMSegment(SmSigma)      
    EMStart SetStartSlice      $EMSegment(StartSlice)
    EMStart SetEndSlice        $EMSegment(EndSlice)
-   # EMStart SetEndSlice        3
    EMStart SetImgTestNo       $EMSegment(ImgTestNo)
    EMStart SetImgTestDivision $EMSegment(ImgTestDivision)
    EMStart SetImgTestPixel    $EMSegment(ImgTestPixel)
    EMStart SetPrintIntermediateResults  $EMSegment(PrintIntermediateResults) 
    EMStart SetPrintIntermediateSlice  $EMSegment(PrintIntermediateSlice) 
    EMStart SetPrintIntermediateFrequency  $EMSegment(PrintIntermediateFrequency) 
-
    for {set i 1} { $i<= $EMSegment(NumClasses)} {incr i} {
        EMStart SetProbability  $EMSegment(Cattrib,$i,Prob) $i
        EMStart SetMu           $EMSegment(Cattrib,$i,Mean) $i
        EMStart SetSigma        $EMSegment(Cattrib,$i,Sigma) $i
        EMStart SetLabel        $EMSegment(Cattrib,$i,Label) $i 
-
        # Reads in the value for each class individually
        for {set j 1} { $j<= $EMSegment(NumClasses)} {incr j} {
 	   for {set k 0} { $k< 6} {incr k} {
@@ -1180,8 +1178,7 @@ proc EMSegmentStartEM { } {
 	       #}
 	   }
        }
-   }  
-
+   } 
    # Transfer image information
    EMStart SetInput [Volume($Volume(activeID),vol) GetOutput]
 
@@ -1211,7 +1208,6 @@ proc EMSegmentStartEM { } {
    # If the programmers forgets to call it, it looks like nothing
    # happened
    MainVolumesUpdate $result
-
    # Delete instance
    EMStart Delete
 }
@@ -2282,19 +2278,8 @@ proc EMSegmentTrainCIMField {} {
 
     # Kilian: For Debugging 
     # set EMSegment(FileCIM) brain.mrf
-    set EMSegment(FileCIM) knee.mrf
-    if {[DevFileExists $EMSegment(FileCIM)]} {
-	$EMSegment(Ma-lLoadText) configure -text "Reading from file ...."
-	if {[EMSegmentReadCIMFile 0]} {
-	    $EMSegment(Ma-lLoadText) configure -text "Finished reading CIM parameters from from file."
-	    EMSegmentExecuteCIM Edit
-	    set EMSegment(TabbedFrame,$EMSegment(Ma-tabCIM),tab) Edit
-	} else {
-	    $EMSegment(Ma-lLoadText) configure -text "Error: MRF-File was not correct!"
-	}
-    } else {
-	$EMSegment(Ma-lLoadText) configure -text "Error: Could not read file !"
-    }
+    # set EMSegment(FileCIM) knee.mrf
+    # EMSegmentImportCIM 0
 
     # Transferring Information
     vtkImageEMMarkov EMCIM    
