@@ -45,17 +45,11 @@ vtkImageLiveWireTester::vtkImageLiveWireTester()
 {
   // must be set by user
   this->LiveWire = NULL;
-  
-  this->NumberOfEdgeFilters = 4;
-  
-  this->EdgeFilters = new vtkImageLiveWireEdgeWeights*[this->NumberOfEdgeFilters];
 
-  for (int i = 0; i < this->NumberOfEdgeFilters; i++)
-    {
-      this->EdgeFilters[i] = vtkImageLiveWireEdgeWeights::New();
-      this->EdgeFilters[i]->SetEdgeDirection(i);
-    }
-
+  this->EdgeFilters = NULL;
+  this->SetNumberOfEdgeFilters(4);
+  //this->SetNumberOfEdgeFilters(8);
+  
   this->SettingsFileName = NULL;
 }
 
@@ -76,9 +70,10 @@ vtkImageLiveWireTester::~vtkImageLiveWireTester()
 	      this->EdgeFilters[i]->Delete();
 	    }
 	}
+
+      delete [] this->EdgeFilters;
     }
   
-  delete [] this->EdgeFilters;
 
   // We must UnRegister any object that has a vtkSetObjectMacro
   if (this->LiveWire != NULL) 
@@ -88,6 +83,46 @@ vtkImageLiveWireTester::~vtkImageLiveWireTester()
 
 }
 
+//----------------------------------------------------------------------------
+// Description:
+// creates the edge filter objects
+// make sure to set their inputs when using this
+void vtkImageLiveWireTester::SetNumberOfEdgeFilters(int number)
+{
+
+  if (number == 4 || number == 8) 
+    {
+      // kill the old ones
+      if (this->EdgeFilters)
+	{
+	  for (int i = 0; i < this->NumberOfEdgeFilters; i++)
+	    {
+	      if (this->EdgeFilters[i])
+		{
+		  this->EdgeFilters[i]->Delete();
+		}
+	    }
+
+	  delete [] this->EdgeFilters;
+	}
+  
+      // make the new ones
+      this->NumberOfEdgeFilters = number;
+  
+      this->EdgeFilters = new vtkImageLiveWireEdgeWeights*[this->NumberOfEdgeFilters];
+  
+      for (int i = 0; i < this->NumberOfEdgeFilters; i++)
+	{
+	  this->EdgeFilters[i] = vtkImageLiveWireEdgeWeights::New();
+	  this->EdgeFilters[i]->SetEdgeDirection(i);
+	}
+
+    }
+  else
+    {
+      vtkErrorMacro("NumberOfEdgeFilters must be 4 or 8");
+    }
+}
 
 //----------------------------------------------------------------------------
 // Description:
@@ -169,6 +204,15 @@ void vtkImageLiveWireTester::InitializePipeline()
   this->LiveWire->SetDownEdges(this->EdgeFilters[1]->GetOutput());
   this->LiveWire->SetLeftEdges(this->EdgeFilters[2]->GetOutput());
   this->LiveWire->SetRightEdges(this->EdgeFilters[3]->GetOutput());
+
+
+  if (this->NumberOfEdgeFilters == 8)
+    {
+      this->LiveWire->SetUpLeftEdges(this->EdgeFilters[4]->GetOutput());
+      this->LiveWire->SetUpRightEdges(this->EdgeFilters[5]->GetOutput());
+      this->LiveWire->SetDownLeftEdges(this->EdgeFilters[6]->GetOutput());
+      this->LiveWire->SetDownRightEdges(this->EdgeFilters[7]->GetOutput());
+    }
 
 }
 

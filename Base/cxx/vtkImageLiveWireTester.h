@@ -51,6 +51,7 @@ class VTK_EXPORT vtkImageLiveWireTester : public vtkImageToImageFilter
   // Description:
   // Number of filters for edges (number of directions of edges)
   vtkGetMacro(NumberOfEdgeFilters, int);
+  void SetNumberOfEdgeFilters(int number);
 
   // Description:
   // Array of edge filters.
