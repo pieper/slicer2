@@ -306,12 +306,17 @@ itcl::body regions::findptscalars {} {
 
 
 itcl::body regions::demo {} {
+    global env
 
     # - read in lh.pial 
     # - make scalars visible
 
-    $this configure -labelfile "C:/pieper/bwh/freesurfer/Simple_surface_labels2002.txt"
-    $this configure -annotfile "C:/pieper/bwh/data/MGH-Siemens15-JJ/label/lh.aparc.pannot"
+    # $this configure -labelfile "C:/pieper/bwh/freesurfer/Simple_surface_labels2002.txt"
+    # $this configure -annotfile "C:/pieper/bwh/data/MGH-Siemens15-JJ/label/lh.aparc.pannot"
+    # $this configure -model lh-pial
+
+    $this configure -labelfile "$env(SLICER_HOME)/Modules/vtkFreeSurferReaders/tcl/Simple_surface_labels2002.txt"
+    $this configure -annotfile "$env(SLICER_HOME)/../../slicerdata/freesurfer/freesurferInterop/label/lh.aparc.pannot"
     $this configure -model lh-pial
 
     $this apply
