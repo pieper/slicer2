@@ -1554,9 +1554,6 @@ void vtkMultipleStreamlineController::ConvertStreamlinesToPolyLines()
 void vtkMultipleStreamlineController::FindStreamlinesThatPassThroughROI()
 {
 
- vtkIntArray *streamlineId;
- vtkIdType strId;
- 
  cout<<"Converting Streamlines to PolyLines"<<endl;
  this->ConvertStreamlinesToPolyLines();
  
@@ -1621,7 +1618,7 @@ void vtkMultipleStreamlineController::HighlightStreamlinesPassTest()
  vtkIdType strId;
  int numStr = this->StreamlineIdPassTest->GetNumberOfTuples();
  cout<<"Number of Streamlines that pass test: "<<numStr<<endl;
- vtkActor *currActor;
+
  int idx=0;
  for (int i=0;i<this->GetNumberOfStreamlines();i++) {
    strId = this->StreamlineIdPassTest->GetValue(idx);
