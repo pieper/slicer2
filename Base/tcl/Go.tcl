@@ -69,14 +69,21 @@ set SLICER(version) "$SLICER(major_version).$SLICER(minor_version)$SLICER(revisi
 proc usage {} {
     global SLICER
 
-    set msg "usage: slicer2-<arch> \[MRML file name .xml | dir with MRML file\]"
+    set msg "usage: slicer2-<arch> [options] \[MRML file name .xml | dir with MRML file\]"
     set msg "$msg\n  <arch> is one of win32.exe, solaris-sparc, or linux-x86"
+    set msg "$msg\n  [options] is one of the following:"
+    set msg "$msg\n   --help : prints this message and exits"
+    set msg "$msg\n   --verbose : turns on extra debugging output"
+    set msg "$msg\n   --no-threads : disables multi threading"
+    set msg "$msg\n   --no-tkcon : disables tk console"
     tk_messageBox -message $msg -title $SLICER(version) -type ok
 }
 
 #
 # simple arg parsing - can't yet handle args with parameters
 #
+set SLICER(threaded) "true"
+set SLICER(tkcon) "true"
 set verbose 0
 set strippedargs ""
 foreach a $argv {
@@ -90,6 +97,12 @@ foreach a $argv {
         "-h" {
             usage
             exit 1
+        }
+        "--no-threads" {
+            set SLICER(threaded) "false"
+        }
+        "--no-tkcon" {
+            set SLICER(tkcon) "false"
         }
         "-*" {
             puts stderr "unknown option $a\n"
@@ -201,12 +214,15 @@ foreach dir $modulePaths {
 }
 
 #
-# turn off multithreading by default
-# - not all classes appear to be safe currently - 2002-11-12 sp
+# turn off if user wants - re-enabled threading by default
+# based on Raul's fixes to vtkImageReformat 2002-11-26
 #
-vtkMultiThreader tempMultiThreader
-tempMultiThreader SetGlobalDefaultNumberOfThreads 1
-tempMultiThreader Delete
+puts "threaded is $SLICER(threaded)"
+if { $SLICER(threaded) == "false" } {
+    vtkMultiThreader tempMultiThreader
+    tempMultiThreader SetGlobalDefaultNumberOfThreads 1
+    tempMultiThreader Delete
+}
 
 # turn off warnings about old function use
 if { $tcl_platform(platform) == "windows" } {
@@ -218,7 +234,7 @@ if { $tcl_platform(platform) == "windows" } {
 #
 # startup with the tkcon
 #
-if {1} { 
+if { $SLICER(tkcon) == "true" } { 
     set av $argv; set argv "" ;# keep tkcon from trying to interpret command line args
     source $prog/tkcon.tcl
     ::tkcon::Init
