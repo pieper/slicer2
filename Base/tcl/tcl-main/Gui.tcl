@@ -58,7 +58,11 @@ proc GuiInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo Gui \
-		{$Revision: 1.31 $} {$Date: 2001/12/26 15:31:54 $}]
+		{$Revision: 1.32 $} {$Date: 2002/01/28 03:30:34 $}]
+
+
+    # enable tooltips by default.  This should check user preferences somehow.
+    TooltipEnable
 
         # Are we running under Windows?
 	if {$tcl_platform(platform) == "windows"} {

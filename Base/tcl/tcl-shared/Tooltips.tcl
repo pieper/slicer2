@@ -30,6 +30,9 @@
 #==========================================================================auto=
 
 
+# default to disabled tooltips when this file is first sourced
+set Tooltips(enabled) 0
+
 #-------------------------------------------------------------------------------
 # .PROC TooltipAdd
 # Call this procedure to add a tooltip (floating help text) to a widget. 
@@ -81,6 +84,12 @@ proc TooltipAdd {widget tip} {
 #-------------------------------------------------------------------------------
 proc TooltipEnterWidget {widget tip X Y} {
     global Tooltips
+
+
+    # do nothing if tooltips disabled
+    if {$Tooltips(enabled) == 0} {
+	return
+    }
 
     # We are over the widget
     set Tooltips(stillOverWidget) 1
@@ -163,4 +172,31 @@ proc TooltipPopDown {} {
     global Tooltips
 
     catch {destroy $Tooltips(window)}
+}
+
+proc TooltipDisable {} {
+    global Tooltips
+
+    # get rid of any other existing tooltip
+    TooltipPopDown
+
+    # disable tooltips
+    set Tooltips(enabled) 0
+}
+
+proc TooltipEnable {} {
+    global Tooltips
+
+    # disable tooltips
+    set Tooltips(enabled) 1
+}
+
+proc TooltipToggle {} {
+    global Tooltips
+
+    if {$Tooltips(enabled) == 1} {
+	set Tooltips(enabled) 0
+    } else {
+	set Tooltips(enabled) 1
+    } 
 }

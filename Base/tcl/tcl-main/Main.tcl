@@ -355,7 +355,7 @@ proc MainInit {} {
 
         # Set version info
 	lappend Module(versions) [ParseCVSInfo Main \
-		{$Revision: 1.69 $} {$Date: 2002/01/26 23:59:03 $}]
+		{$Revision: 1.70 $} {$Date: 2002/01/28 03:30:34 $}]
 
 	# Call each "Init" routine that's not part of a module
 	#-------------------------------------------
@@ -530,6 +530,8 @@ proc MainBuildGUI {} {
 		"MainMenu Help Modules"
 	$Gui(mHelp) add command -label "Module Credits..." -command \
 		"MainMenu Help Credits"
+	$Gui(mHelp) add command -label "Turn Tooltips Off/On" -command \
+		"TooltipToggle"
 	
 	#-------------------------------------------
 	# Main->Module Frame
@@ -565,6 +567,7 @@ proc MainBuildGUI {} {
 			-width 6 -menu $f.mbMore.m} $Gui(WMBA)
 			eval {menu $f.mbMore.m} $Gui(WMA)
 		set Module(mbMore) $f.mbMore
+	    TooltipAdd $f.mbMore "More module menu"
 		eval {radiobutton $f.rMore -width 10 \
 			-text "None" -variable Module(moreBtn) -value 1 \
 			-command "Tab Menu" -indicatoron 0} $Gui(WCA)
@@ -610,6 +613,10 @@ proc MainBuildGUI {} {
 					-text "$m" -variable Module(btn) -value $m \
 					-command "Tab $m" -indicatoron 0} $Gui(WCA)
 				pack $f.$row.r$m -side left -padx 0 -pady 0
+
+			    #if {[info exists Module($m,overview)]} {
+				#TooltipAdd  $f.$row.r$m $Module($m,overview)
+			    #}
 			} else {
 				if {$firstMore == ""} {
 					set firstMore $m
@@ -751,6 +758,9 @@ proc MainBuildGUI {} {
 		-command "MainSlicesSetOpacityAll; RenderAll" \
 		-length 80 -resolution 0.1} $Gui(BSA) {-sliderlength 30  \
 		-troughcolor [MakeColorNormalized ".7 .7 .9"]}
+
+	TooltipAdd $f.sOpacity "Slice overlay slider: Fade from\n\
+		the Foreground to the Background slice."
 
 	# Fade button
 	#-------------------------------------------
