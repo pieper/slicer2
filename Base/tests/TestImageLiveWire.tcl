@@ -52,10 +52,10 @@ lw SetEndPoint 200 0
 puts "set e.p"
 # Update lw so we can grab the points info
 puts "---"
-#lw Update
+lw Update
 puts "---"
 
-set points [lw GetContourPoints]
+set points [lw GetNewPixels]
 set numPoints [$points GetNumberOfPoints]
 puts "numPoints: $numPoints"
 puts "bounds: [$points GetBounds]"

@@ -10,10 +10,29 @@ reader SetDataExtent 0 255 0 255 1 93
 reader SetFilePrefix "../../../vtkdata/fullHead/headsq"
 reader SetDataMask 0x7fff
 
-vtkImageLabelMerge flroi
-flroi SetInput [reader GetOutput]
-flroi SetValue 100
+# get just one slice
+vtkImageClip clip
+clip SetInput [reader GetOutput]
+clip SetOutputWholeExtent 0 255 0 255 10 10
+clip ClipDataOn
+clip ReleaseDataFlagOff
+
+vtkPoints roiPoints
+roiPoints InsertNextPoint 2 2 0
+roiPoints InsertNextPoint 200 230 0
+roiPoints InsertNextPoint 220 50 0
+roiPoints InsertNextPoint 4 10 0
+
+
+#vtkImageLabelMerge flroi
+vtkImageFillROI flroi
+#flroi SetInput [reader GetOutput]
+flroi SetInput [clip GetOutput]
+flroi SetValue 1000
 flroi SetRadius 10 
+
+flroi SetShapeString Polygon
+flroi SetPoints roiPoints
 
 vtkImageViewer viewer
 viewer SetInput [flroi GetOutput]
