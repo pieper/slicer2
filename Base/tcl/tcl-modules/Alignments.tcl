@@ -149,7 +149,7 @@ proc AlignmentsInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.32 $} {$Date: 2004/04/13 20:59:58 $}]
+            {$Revision: 1.33 $} {$Date: 2004/06/25 21:34:01 $}]
 
     # Props
     set Matrix(propertyType) Basic
@@ -1688,13 +1688,22 @@ proc AlignmentsManualRotate {param {value ""} {mouse 0}} {
     }
 
     # Only UpdateMRML if the transform changed
-    set mat1 [Matrix($t,transform) GetMatrix]
-    set mat2 [[Matrix($t,node) GetTransform] GetMatrix]
-    set differ 0
-    for {set i 0} {$i < 4} {incr i} {
-        for {set j 0} {$j < 4} {incr j} {
-            if {[$mat1 GetElement $i $j] != [$mat2 GetElement $i $j]} {
-                set differ 1
+    # check first that the transform exists
+    if {[info command Matrix($t,transform)] == ""} {
+        set differ 1
+        if {$::Module(verbose)} {
+            DevErrorWindow "Alignments.tcl: WARNING: Matrix($t,transform) does not exist, skipping comparison of matrices"
+        }
+        puts "Alignments.tcl: WARNING: Matrix($t,transform) does not exist, skipping comparison of matrices"
+    } else {
+        set mat1 [Matrix($t,transform) GetMatrix]
+        set mat2 [[Matrix($t,node) GetTransform] GetMatrix]
+        set differ 0
+        for {set i 0} {$i < 4} {incr i} {
+            for {set j 0} {$j < 4} {incr j} {
+                if {[$mat1 GetElement $i $j] != [$mat2 GetElement $i $j]} {
+                    set differ 1
+                }
             }
         }
     }
