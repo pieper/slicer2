@@ -122,6 +122,18 @@ void vtkImageLiveWireTester::SetOutsidePixel(float val)
     }
 }
 
+vtkImageData *vtkImageLiveWireTester::GetEdgeImage(int filter)
+{
+  if (filter < this->NumberOfEdgeFilters)
+    {
+      return this->EdgeFilters[filter]->GetOutput();
+    }
+  else
+    {
+      vtkErrorMacro(<<"Requested filter " << filter << " greater than number of filters!");
+    }
+}
+
 //----------------------------------------------------------------------------
 // Description:
 // Pseudo-multiple-output filter.  Feeds 4 edge images to LiveWire, which
@@ -147,12 +159,13 @@ static void vtkImageLiveWireTesterExecute(vtkImageLiveWireTester *self,
 
   // Lauren max edge cost of edge filters and live wire need to match
 
+  // Lauren need to rotate images and then pad for correct input to livewire
   // make edge weight images
   for (int i = 0; i < numEdges; i++)
     {
       edgeFilters[i]->SetInput(inData);
-      // Lauren fix!!!!!!!!1
-      edgeFilters[i]->SetNeighborhoodToLine(2,i);
+      // Lauren this sets precision.
+      //edgeFilters[i]->SetMaxEdgeWeight();
       edgeFilters[i]->Update();
     }
 

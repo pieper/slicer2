@@ -65,6 +65,11 @@ public:
   // Description:
   // Array of edge filters.
   vtkImageLiveWireEdgeWeights **GetEdgeFilters(){return this->EdgeFilters;};
+  vtkImageLiveWireEdgeWeights *GetEdgeFilter(int i){return this->EdgeFilters[i];};
+
+  // Description:
+  // Array of edge filters.
+  vtkImageData *GetEdgeImage(int filter);
 
   // Description:
   // User input to filters that create edges, to control importance 
