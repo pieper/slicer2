@@ -3,3 +3,5 @@ TestImageCloseUp2D.tcl OK   goot_test   vtkImageCloseUp2D
 TestPlot               OK   looks_good  vtkImageBimodalAnalysis_vtkImagePlot
 TestImageOverlay       OK   bad_test    vtkImageOverlay
 TestImageReformatIJK.tcl OK bad_test    vtkImageReformatIJK
+TestImageMeasureVoxels.tcl OK good_test vtkImageMeasureVoxels
+TestImageWeightedSum.tcl OK goot_test   vtkImageWeightedSum
