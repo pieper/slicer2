@@ -20,7 +20,7 @@ proc XformAxisStart { module actor widget axis x y } {
     set lastX $x
     set lastY $y
     set lastAxis $axis
-    ${module}($actor,xform) SetMatrix [[viewRen GetActiveCamera] GetViewTransform]
+    ${module}($actor,xform) SetMatrix [[viewRen GetActiveCamera] GetViewTransformMatrix]
     ${module}($actor,actor) GetMatrix ${module}($actor,matrix)
     ${module}($actor,xform) Concatenate ${module}($actor,matrix)
     foreach id $Selected(Model) {
