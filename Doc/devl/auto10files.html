@@ -1,7 +1,7 @@
 <title>File Organization</title>
 
 <p>
-Tcl source files are organized into 3 subdirectories of the slicer2/Base/tcl directory.
+The Slicer core Tcl source files are organized into 3 subdirectories of the slicer2/Base/tcl directory.
 <p>
 <table cellpadding=3 cellspacing=3 border=0>
 <tr>
@@ -9,7 +9,7 @@ Tcl source files are organized into 3 subdirectories of the slicer2/Base/tcl dir
 </tr>
 <tr>
 <td class=box0>
-    <div class=q>tcl-main</div>
+    <div class=q>slicer2/Base/tcl/tcl-main</div>
     <div class=a>
 These are the files the 3D Slicer must have in order to run.
     </div>
@@ -17,30 +17,27 @@ These are the files the 3D Slicer must have in order to run.
 </tr>
 <tr>
 <td class=box1>
-    <div class=q>tcl-modules</div>
+    <div class=q>slicer2/Base/tcl/tcl-modules</div>
     <div class=a>
-These files are optional, and each one implements a specific function
-of the Slicer.  Tcl files in this directory are referred to as
+These files are optional, and each one implements a specific function to 
+extend Slicer.  Tcl files in this directory are referred to as
 modules.
     </div>
 </td>
 </tr>
 <tr>
 <td class=box0>
-    <div class=q>tcl-shared</div>
+    <div class=q>slicer2/Base/tcl/tcl-shared</div>
     <div class=a>
-
 These files implement functionality that may be shared by multiple
 modules.  For example, generally helpful procedures or new widgets are
 located here.
-
     </div>
 </td>
 </tr>
 </table>
-
 <p>
-VTK classes are found in the slicer2/Base/cxx directory.
+VTK classes that are part of the core of Slicer are found in the slicer2/Base/cxx directory.
 <p>
 <table cellpadding=3 cellspacing=3 border=0>
 <tr>
@@ -55,10 +52,69 @@ These are the classes that the Slicer adds to VTK.
 </td>
 </tr>
 </table>
+<p>
+
+The VTK classes are compiled outside of the source tree, in the slicer2/Base/builds/[os-name] subdirectory.
+<p>
+<table cellpadding=3 cellspacing=3 border=0>
+<tr>
+<th class=box>Build Files</th>
+</tr>
+<tr>
+<td class=box0>
+    <div class=q>slicer2/Base/builds/[os-name]</div>
+    <div class=a>cmake generated files live at this level.</div>
+</td>
+</tr>
+<tr>
+<td class=box1>
+    <div class=q>slicer2/Base/builds/[os-name]/bin</div>
+    <div class=a>The shared library files are placed here once built.</div>
+</td>
+</tr>
+<tr>
+<td class=box0>
+    <div class=q>slicer2/Base/builds/[os-name]/cxx</div>
+    <div class=a>The generated, Tcl wrapped, cxx files are placed here, as well as compiled object files.</div>
+</td>
+</tr>
+</table>
 
 <p>
-Scripts that are used to run the Slicer and perform useful functions
-are found in the slicer2/Scripts directory.
+We are migrating towards a more independent module structure, populating the slicer2/Modules directory. New modules are added by creating a directory with a name that starts with vtk, such as vtkCustomModule. Full instructions, and an automated script, for adding a new module can be found in that subdirectory.
+<br>
+In each module, there is a tcl subdirectory in which you can place the Tcl files associated with your module. There is also a cxx directory, similar to the Slicer core cxx directory.
+<p>
+<table cellpadding=3 cellspacing=3 border=0>
+<tr>
+<th class=box>Module Source Files</th>
+</tr>
+<tr>
+<td class=box0>
+    <div class=q>slicer2/Modules/vtkCustomModule/cxx</div>
+    <div class=a>
+These are the VTK classes that the Custom Module adds to Slicer.
+    </div>
+</td>
+</tr>
+<tr>
+<td class=box1>
+    <div class=q>slicer2/Modules/vtkCustomModule/tcl</div>
+    <div class=a>Tcl files that implement the GUI and functionality of the module.</div>
+</td>
+</tr>
+<tr>
+<td class=box0>
+    <div class=q>slicer2/Modules/vtkCustomModule/builds/[os-name]</div>
+    <div class=a>Subdirectories are created for each OS on which you are going to build the C++ classes, ie solaris8.</div>
+</td>
+</tr>
+</table>
+
+
+<p>
+Scripts that perform useful functions
+are found in the slicer2/Scripts directory. 
 
 <p>
 <table cellpadding=3 cellspacing=3 border=0>
@@ -71,6 +127,18 @@ are found in the slicer2/Scripts directory.
     <div class=a>
 Useful shell scripts: read slicer2/Scripts/README.scripts for an overview.
     </div>
+</td>
+</tr>
+<tr>
+<td class=box1>
+    <div class=q>slicer2/Scripts/cmaker.tcl</div>
+    <div class=a>Runs cmake and compiles C++ source code.</div>
+</td>
+</tr>
+<tr>
+<td class=box0>
+    <div class=q>slicer2/Scripts/tarup.tcl</div>
+    <div class=a>Packages slicer for distribution.</div>
 </td>
 </tr>
 </table>
