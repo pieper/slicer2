@@ -81,7 +81,7 @@ PL/SQL Release 8.1.5.0.0 - Production
 a.) Monitoring by the Operating System
 
 There is a Linux process named "init" that restarts a process whenever it
-dies.  We told it to monitor our web servers by editing the /etc/initab file
+dies.  I told it to monitor our web servers by editing the /etc/initab file
 as described in the later on this page.
 
 b.) Monitoring by another Web Server process
@@ -283,6 +283,6 @@ export PATH=$JAVA_HOME/bin:$PATH
 #
 # Slicer
 #
-export CVSROOT=:pserver:anonymous@cvs.spl.harvard.edu:/projects/cvs/slicer
 export SLICER_DOC=/scratch/web
+export CVSROOT=<NOT PUBLIC>
 
