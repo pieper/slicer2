@@ -24,11 +24,18 @@ Run this script: /scratch/update
 
 which does this (order matters):
 cd /scratch/web
+cvs update -d
+cd /scratch/pkg/slicer2
 cvs update
-cd /scratch/pkg/slicer
-cvs update
+cd /scratch/pkg/slicer2/Scripts
 ./document
 
+The call to cvs update in /scratch/web is to ensure that all needed 
+directories have been created before the documentation is generated.
+
+The SLICER_DOC environment variable is set to /scratch/web so that when
+the document script is run, it will place the output html pages in the
+directories that the web server displays to the rest of the world.
 
 2.) How To Restart the web server:
 --------------------------------------------------------------------------
