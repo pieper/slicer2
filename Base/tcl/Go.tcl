@@ -566,25 +566,17 @@ if { $SLICER(versionInfo) != "" } {
     set compilerName [Slicer GetCompilerName]
     set vtkVersion [Slicer GetVTKVersion]
     set libVersions "LibName1: VTK LibVersion1: ${vtkVersion} LibName2: TCL LibVersion2: ${tcl_patchLevel} LibName3: TK LibVersion2: ${tk_patchLevel}"
-    set SLICER(versionInfo) "$SLICER(versionInfo) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.60 2003/06/09 01:27:20 pieper Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.61 2003/07/31 23:07:39 pieper Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
 #
 # read a dicom volume specified on command line
+# - if it's a dir full of files, load that dir as a volume
+# - if it's a dir full of dirs, load each dir as a volume
+# - if it's "", it will be ignored
 #
-if { $SLICER(load-dicom) != "" } {
-    global Volumes 
-    VolumesSetPropertyType VolDicom
-    MainVolumesSetActive NEW
-    Tab Volumes row1 Props
-    set Volumes(DICOMStartDir) $SLICER(load-dicom)
-    DICOMSelectMain $Volume(dICOMFileListbox) "autoload"
-    VolumesSetPropertyType VolHeader
-    VolumesPropsApply
-    RenderAll
-    Tab Data
-}
+DICOMLoadStudy $SLICER(load-dicom)
 
 
 #
