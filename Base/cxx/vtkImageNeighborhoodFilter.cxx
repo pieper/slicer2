@@ -165,6 +165,8 @@ void vtkImageNeighborhoodFilter::SetNeighborhoodToLine(int length,
   // OR all edge filters could produce quantities that could
   // be added, and then another filter could add them and do 1/the #s ??
   this->SetKernelSize(3, 3, 1);
+  // Lauren test!
+  //this->SetKernelSize(3, 3, 3);
 
   // Lauren ?
   this->Neighbor = 1;

@@ -116,12 +116,8 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
   outMin1 = outExt[2];   outMax1 = outExt[3];
   outMin2 = outExt[4];   outMax2 = outExt[5];
   numComps = outData->GetNumberOfScalarComponents();
-	
 
-  // Neighborhood around current pixel (kernel has radius 1)
-  kernelSize = self->GetKernelSize();
-
-  // Neighborhood offsets from current voxel
+  // Neighborhood around current voxel
   self->GetRelativeHoodExtent(hoodMin0, hoodMax0, hoodMin1, 
 			      hoodMax1, hoodMin2, hoodMax2);
 
@@ -201,8 +197,8 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
 				      outIdx2 + hoodIdx2 >= inImageMin2 &&
 				      outIdx2 + hoodIdx2 <= inImageMax2)
 				    {
-				      // Lauren do something
-				      // test: 1/pixel difference (if neighborhood is 2 pix).
+				      // Compute various features.
+
 				      // Lauren what if input is float, etc? 
 				      // Lauren accept only short input, or something.
 				      // Lauren output MUST be positive!

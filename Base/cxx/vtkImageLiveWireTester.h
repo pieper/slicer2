@@ -67,11 +67,12 @@ public:
   vtkImageLiveWireEdgeWeights **GetEdgeFilters(){return this->EdgeFilters;};
 
   // Description:
-  // User input to filters that create edges.
-  // Control importance of different factors in calculation of edges.
-  void SetDifference(float diff);
-  void SetInsidePixel(float inpix);
-  void SetOutsidePixel(float outpix);
+  // User input to filters that create edges, to control importance 
+  // of different factors in calculation of edges.
+  // val must be >= 0.
+  void SetDifference(float val);
+  void SetInsidePixel(float val);
+  void SetOutsidePixel(float val);
 
 protected:
   vtkImageLiveWireTester();
