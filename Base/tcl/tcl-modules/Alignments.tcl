@@ -129,7 +129,7 @@ proc AlignmentsInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.11 $} {$Date: 2002/11/05 17:36:34 $}]
+            {$Revision: 1.12 $} {$Date: 2003/01/22 16:52:47 $}]
 
     # Props
     set Matrix(propertyType) Basic
@@ -362,7 +362,7 @@ proc AlignmentsBuildGUI {} {
         eval {radiobutton $f.f.r$p \
                 -text "$p" -command "AlignmentsSetPropertyType" \
                 -variable Matrix(propertyType) -value $p -width 8 \
-                -indicatoron 0} $Gui(WCA)
+                -indicatoron 0} $Gui(WRA)
         pack $f.f.r$p -side left -padx 0
     }
     pack $f.l $f.f -side left -padx $Gui(pad) -fill x -anchor w
@@ -551,7 +551,7 @@ proc AlignmentsBuildGUI {} {
     foreach mode $modes name $names {
         eval {radiobutton $f.f.r$mode -width [expr [string length $name]+1]\
                 -text "$name" -variable Matrix(render) -value $mode \
-                -indicatoron 0} $Gui(WCA)
+                -indicatoron 0} $Gui(WRA)
         pack $f.f.r$mode -side left -padx 0 -pady 0
     }
     pack $f.l $f.f -side left -padx $Gui(pad) -fill x -anchor w
@@ -625,7 +625,7 @@ proc AlignmentsBuildGUI {} {
             width "10 7" {
         eval {radiobutton $f.fBtns.rSpeed$value -width $width \
                 -text "$text" -value "$value" -variable Matrix(mouse) \
-                -indicatoron 0} $Gui(WCA)
+                -indicatoron 0} $Gui(WRA)
         pack $f.fBtns.rSpeed$value -side left -padx 0 -pady 0
         TooltipAdd  $f.fBtns.rSpeed$value  \
                 "$value volumes in the Slice Window"
@@ -725,7 +725,7 @@ proc AlignmentsBuildGUI {} {
         eval {radiobutton $f.fmodes.r$mode \
             -text "$mode" -command "AlignmentsSetRegistrationMode" \
             -variable Matrix(regMode) -value $mode -width 10 \
-            -indicatoron 0} $Gui(WCA)
+            -indicatoron 0} $Gui(WRA)
  set Matrix(r${mode}) $f.fmodes.r$mode
  pack $f.fmodes.r$mode -side left -padx 0
     }
