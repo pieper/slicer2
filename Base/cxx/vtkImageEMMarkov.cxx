@@ -66,6 +66,19 @@ vtkImageEMMarkov::~vtkImageEMMarkov(){
 }
 
 //----------------------------------------------------------------------------
+void vtkImageEMMarkov::ComputeInputUpdateExtent(int inExt[6], int outExt[6])
+{
+   this->GetInput()->GetWholeExtent(inExt);
+   // Stole this from some other code -> might help
+   // int *wholeExtent;
+
+   // outExt = outExt;
+   // wholeExtent = this->GetInput()->GetWholeExtent();
+   // memcpy(inExt, wholeExtent, 6*sizeof(int));
+}
+
+
+//----------------------------------------------------------------------------
 void vtkImageEMMarkov::PrintSelf(ostream& os)
 {
 }
@@ -73,16 +86,33 @@ void vtkImageEMMarkov::PrintSelf(ostream& os)
 // To chage anything about output us this executed before Thread
 
 //----------------------------------------------------------------------------
-// void vtkImageEMMarkov::ExecuteInformation(vtkImageData *vtkNotUsed(input), 
-//                    vtkImageData *output) {
+void vtkImageEMMarkov::ExecuteInformation(vtkImageData *inData, vtkImageData *outData) 
+{
   
-  // output->SetWholeExtent(this->ComponentExtent); // size of output
-  //output->SetOrigin(0.0,0.0,0.0);
-// output->SetSpacing(1.0, 1.0, 1.0);
-//  output->SetNumberOfScalarComponents(1);
-// output->SetScalarType(VTK_DOUBLE);      // type of output float, integer 
-  // cout << " Got to execute information" << endl;
-// }
+  int ext[6];
+  float spacing[3], factor, origin[3];
+
+  spacing[0] = 1.0;
+  spacing[1] = 1.0;
+  spacing[2] = 1.0;
+
+  origin[0] = 1.0;
+  origin[1] = 1.0;
+  origin[2] = 1.0;
+
+
+  // Check if extend is sset correctly 
+  ext[0] = ext[2] = ext[4] = 0;
+  ext[1] = ext[3] = this->NumClasses;
+  ext[5] = 5;
+   
+  outData->SetOrigin(origin);
+  outData->SetNumberOfScalarComponents(1);
+  outData->SetWholeExtent(ext);
+  outData->SetSpacing(spacing);
+  // outData->SetScalarType(VTK_DOUBLE);
+  outData->SetScalarType(VTK_FLOAT);
+}
 
 
 
@@ -91,31 +121,23 @@ void vtkImageEMMarkov::PrintSelf(ostream& os)
 //----------------------------------------------------------------------------
 // This templated function executes the filter for any type of data.
 template <class T>
-static void vtkImageEMMarkovExecute(vtkImageEMMarkov *self,vtkImageData *in1Data, T *in1Ptr,
-                  vtkImageData *outData, T *outPtr,int outExt[6], int id)
+static void vtkImageEMMarkovExecute(vtkImageEMMarkov *self,vtkImageData *in1Data, T *in1Ptr,int inExt[6],vtkImageData *outData, T *outPtr,int outExt[6], int maxZ, int id)
 {
-  int idxR, idxY, idxZ;
-  int maxY, maxZ;
+  int idxC,idxR, idxY, idxZ;
+  int inMaxX, inMaxY, inMaxZ;
+  int maxY;
   int inIncX, inIncY, inIncZ;
   int outIncX, outIncY, outIncZ;
   int rowLength;
-  int StartSlice = self->get_StartSlice();
-  int EndSlice = self->get_EndSlice();
-  int StartEndSlice; 
-  
-  // find the region to loop over
-  rowLength = (outExt[1] - outExt[0]+1)*in1Data->GetNumberOfScalarComponents();
-  maxY = outExt[3] - outExt[2] + 1; // outExt[3/2] = Relative Maximum/Minimum Y index  
-  maxZ = outExt[5] - outExt[4] + 1; // outExt[5/4] = Relative Maximum/Minimum Slice index  
+  int StartEndSlice;
 
-  // Making sure values are set correctly
-  if (1 > StartSlice) StartSlice = 1;
-  if (maxZ < EndSlice) EndSlice = maxZ; 
-  else if (StartSlice > EndSlice) EndSlice = StartSlice -1;  
-  StartEndSlice = EndSlice - StartSlice + 1;
+  // find the region to loop over
+  rowLength = (inExt[1] - inExt[0]+1)*in1Data->GetNumberOfScalarComponents();
+  maxY = inExt[3] - inExt[2] + 1; // outExt[3/2] = Relative Maximum/Minimum Y index  
+  StartEndSlice = self->get_EndSlice() - self->get_StartSlice() + 1;
 
   // Get increments to march through data 
-  in1Data->GetContinuousIncrements(outExt, inIncX, inIncY, inIncZ);
+  in1Data->GetContinuousIncrements(inExt, inIncX, inIncY, inIncZ);
   outData->GetContinuousIncrements(outExt, outIncX, outIncY, outIncZ);
 
   // The Slices of the images 
@@ -128,16 +150,7 @@ static void vtkImageEMMarkovExecute(vtkImageEMMarkov *self,vtkImageData *in1Data
   // Loop through input pixels 
 
   // 1.) Read thorugh beginning slides we do not want to read through for input and output
-  for (idxZ = 1; idxZ < StartSlice; idxZ++) {
-    for (idxY = 0; idxY < maxY; idxY++) {
-      for (idxR = 0; idxR < rowLength; idxR++) {
-    *outPtr = (T) (*in1Ptr);
-    in1Ptr++;
-      }
-      in1Ptr += inIncY;
-    }
-    in1Ptr += inIncZ;
-  }
+  in1Ptr += ((rowLength+inIncY)*maxY + inIncZ)*(self->get_StartSlice() -1); 
 
   // 2.) Read thorugh the slides that should be segmented 
   int Max =  ((int)*in1Ptr);
@@ -146,18 +159,13 @@ static void vtkImageEMMarkovExecute(vtkImageEMMarkov *self,vtkImageData *in1Data
   if (self->get_ImgTestNo() < 1) {
     for (idxZ = 0; idxZ < StartEndSlice ; idxZ++) {
       for (idxY = 0; idxY < maxY; idxY++) {
-    for (idxR = 0; idxR < rowLength; idxR++) {
-      // Copied from  vtkMrmlSlicer::GetBackPixel
-      // in1data->GetWholeExtent(ext);
-      // in1Data->GetPointData()->GetScalars()->GetScalar(y*(ext[1]-ext[0]+1)+x);
-      // Pixel operaton
-      Volume[idxZ][idxY][idxR] = ((double) * in1Ptr);
-    
-      if (((int)*in1Ptr) > Max) Max = ((int)*in1Ptr);
-      else if (((int)*in1Ptr) < Min) Min = ((int)*in1Ptr);
-      in1Ptr++;
-    }
-    in1Ptr += inIncY;
+        for (idxR = 0; idxR < rowLength; idxR++) {
+          Volume[idxZ][idxY][idxR] = ((double) * in1Ptr);
+          if (((int)*in1Ptr) > Max) Max = ((int)*in1Ptr);
+          else if (((int)*in1Ptr) < Min) Min = ((int)*in1Ptr);
+          in1Ptr++;
+        }
+        in1Ptr += inIncY;
       }
       in1Ptr += inIncZ;
     }
@@ -165,9 +173,27 @@ static void vtkImageEMMarkovExecute(vtkImageEMMarkov *self,vtkImageData *in1Data
     self->setMatrix3DTest(Volume,StartEndSlice,maxY,rowLength,self->get_ImgTestNo(),self->get_ImgTestDivision(),self->get_ImgTestPixel());
     Max = 255;
     Min = 0;
-  }
+  } 
   // 3.) Run Algorith to find out Matrix
   self->TrainMarkovMatrix(Volume, maxY, rowLength, Min, Max);
+
+ // 4.) Transfere CIM Matrix
+  for (idxZ = 1; idxZ < 7; idxZ++) {
+    for (idxY = 1; idxY <= self->GetNumClasses(); idxY++) {
+      for (idxR = 1; idxR <= self->GetNumClasses(); idxR++) {
+        *outPtr = (T) 1.0;
+        outPtr +=outIncX;
+      }
+      outPtr += outIncY;
+    }
+    outPtr += outIncZ; 
+  }
+  for (idxZ = 0; idxZ < StartEndSlice; idxZ++) {
+    for (idxY = 0; idxY < maxY; idxY++)
+      delete []Volume[idxZ][idxY];
+    delete[] Volume[idxZ];
+  }
+  delete[] Volume;
 }
 
 //----------------------------------------------------------------------------
@@ -180,23 +206,31 @@ void vtkImageEMMarkov::ThreadedExecute(vtkImageData *inData, vtkImageData *outDa
 {
   void *inPtr;
   void *outPtr;
-   
-  vtkDebugMacro(<< "Execute: inData = " << inData 
-        << ", outData = " << outData);
-  
 
-  if (inData == NULL)
-    {
+  int inExt[6];
+  int maxZ;
+  this->ComputeInputUpdateExtent(inExt,outExt);
+
+  vtkDebugMacro(<< "Execute: inData = " << inData << ", outData = " << outData);
+ 
+  if (inData == NULL) {
     vtkErrorMacro(<< "Input " << 0 << " must be specified.");
     return;
-    }
+  }
 
-  inPtr = inData->GetScalarPointerForExtent(outExt);
+  inPtr = inData->GetScalarPointerForExtent(inExt);
   outPtr = outData->GetScalarPointerForExtent(outExt);
+
+  maxZ = inExt[5] - inExt[4] + 1; // outExt[5/4] = Relative Maximum/Minimum Slice index  
+
+  // Making sure values are set correctly
+  if ((this->StartSlice < 1) || (this->StartSlice > this->EndSlice) || (this->EndSlice > maxZ)) {
+    vtkErrorMacro(<< "Start Slice,"<<this->StartSlice<< ", or EndSlice," << this->EndSlice << ", not defined correctly !");
+    return;
+  }
   
   switch (inData->GetScalarType()) {
-    vtkTemplateMacro7(vtkImageEMMarkovExecute, this, inData, (VTK_TT *)(inPtr), 
-                      outData, (VTK_TT *)(outPtr),outExt, id);
+    vtkTemplateMacro9(vtkImageEMMarkovExecute, this, inData, (VTK_TT *)(inPtr),inExt, outData, (VTK_TT *)(outPtr),outExt, maxZ,id);
   default:
     vtkErrorMacro(<< "Execute: Unknown ScalarType");
     return;
@@ -222,9 +256,7 @@ void vtkImageEMMarkov::SetComponentExtent(int extent[6])
 }
 
 //----------------------------------------------------------------------------
-void vtkImageEMMarkov::SetComponentExtent(int minX, int maxX, 
-                        int minY, int maxY,
-                        int minZ, int maxZ)
+void vtkImageEMMarkov::SetComponentExtent(int minX, int maxX, int minY, int maxY, int minZ, int maxZ)
 {
   int extent[6];
   
@@ -266,7 +298,7 @@ void vtkImageEMMarkov::SetNumClasses(int NumberOfClasses)
     for (z=0; z < 6; z++) {
       this->MarkovMatrix[z] = new double*[NumberOfClasses];
       for (y=0;y < NumberOfClasses; y ++) 
-    this->MarkovMatrix[z][y] = new double[NumberOfClasses];
+        this->MarkovMatrix[z][y] = new double[NumberOfClasses];
     }
   
     // this->SetComponentExtent(0,NumberOfClasses - 1, 0, NumberOfClasses - 1, 0,5);
@@ -277,7 +309,7 @@ void vtkImageEMMarkov::SetNumClasses(int NumberOfClasses)
       *this->Sigma++             = -1;
       *this->ClassProbability++  = -1;
       for (z=0; z < 6; z++) {
-    for (y=0;y < NumberOfClasses; y ++) this->MarkovMatrix[z][y][x] = 0.0;
+        for (y=0;y < NumberOfClasses; y ++) this->MarkovMatrix[z][y][x] = 0.0;
       }
     }
     this->Mu -= NumberOfClasses; this->Sigma  -= NumberOfClasses;this->ClassProbability  -= NumberOfClasses;
@@ -304,7 +336,7 @@ int vtkImageEMMarkov::checkValues(int ImageMin)
     return -1;
   }
   if (ImageMin < 0 ) {
-     vtkErrorMacro(<< "vtkImageEMMarkov:checkValues:  Minimum Brightness Value cannot be smaller than 0 !");
+    vtkErrorMacro(<< "vtkImageEMMarkov:checkValues:  Minimum Brightness Value cannot be smaller than 0 !");
     this->Error = -10;
     return -10;
   }
@@ -371,7 +403,6 @@ void vtkImageEMMarkov::SetSigma(double sigma, int index){
 // Given the input volumes it derives a Markov Matrix
 
 void vtkImageEMMarkov::TrainMarkovMatrix(double ***Image,int Ydim, int Xdim,int ImageMin, int ImageMax) {
-
   // Check consistency of all veluyes and start with output 
   if (this->checkValues(ImageMin) < 1) return;
   // Nothing to do
@@ -383,7 +414,6 @@ void vtkImageEMMarkov::TrainMarkovMatrix(double ***Image,int Ydim, int Xdim,int 
 
   for (z = 0 ; z < 6; z++)
       this->setMatrix(this->MarkovMatrix[z],this->NumClasses,this->NumClasses, 0.0);
-
   // Lookup Table for the most likely Class given a certain Image value 
   ImageMax ++;
   double *MaxImageClassProb = new double[ImageMax],*MaxImageClassProbPtr = MaxImageClassProb ;
@@ -398,39 +428,37 @@ void vtkImageEMMarkov::TrainMarkovMatrix(double ***Image,int Ydim, int Xdim,int 
     ClassAssignment[z] = new double *[Ydim];
     for (y=0; y < Ydim ; y++) ClassAssignment[z][y] = new double[Xdim];
   }
-
   for (z=0; z < NumSlices; z++) {
     for (y=0; y < Ydim; y++) {
       for (x=0; x < Xdim; x++) {
-    ClassAssignment[z][y][x] = MaxImageClassProb[(int)Image[z][y][x]];
+        ClassAssignment[z][y][x] = MaxImageClassProb[(int)Image[z][y][x]];
       }
     }
   }
-
   // Define Markov Matrix and stationary Prior for classes
   for (z=0; z < NumSlices; z++) {
     for (y=0; y < Ydim; y++) {
       for (x=0; x < Xdim; x++) {
-    // This way the matrix is defined correctly : Y-Dim = Current Pixel, X-Dim = Neighbouring Pixel 
+        // This way the matrix is defined correctly : Y-Dim = Current Pixel, X-Dim = Neighbouring Pixel 
         // Relationship between pixel and neighbour to the west
-    if (x > 0) this->MarkovMatrix[0][(int)ClassAssignment[z][y][x]][(int)ClassAssignment[z][y][x-1]] += 1;
+        if (x > 0) this->MarkovMatrix[0][(int)ClassAssignment[z][y][x]][(int)ClassAssignment[z][y][x-1]] += 1;
         // Relationship between pixel and neighbour to the east
-    if (x < (Xdim-1)) {
-      this->MarkovMatrix[3][(int)ClassAssignment[z][y][x]][(int)ClassAssignment[z][y][x+1]] += 1;
-    }
+        if (x < (Xdim-1)) {
+          this->MarkovMatrix[3][(int)ClassAssignment[z][y][x]][(int)ClassAssignment[z][y][x+1]] += 1;
+        }
         // Picture is displayed upside down on the screen -> y= 1 -> down, y = Ymax-> up
         // Relationship between pixel and neighbour to the South
-    if (y > 0) this->MarkovMatrix[4][int(ClassAssignment[z][y][x])][int(ClassAssignment[z][y-1][x])] += 1;
+        if (y > 0) this->MarkovMatrix[4][int(ClassAssignment[z][y][x])][int(ClassAssignment[z][y-1][x])] += 1;
         // Relationship between pixel and neighbour to the North
-    if (y < (Ydim-1)) {
-      this->MarkovMatrix[1][int(ClassAssignment[z][y][x])][int(ClassAssignment[z][y+1][x])] += 1;
-    }
+        if (y < (Ydim-1)) {
+          this->MarkovMatrix[1][int(ClassAssignment[z][y][x])][int(ClassAssignment[z][y+1][x])] += 1;
+        }
         // Relationship between pixel and pixel of the previous slice
-    if (z > 0) this->MarkovMatrix[5][(int)ClassAssignment[z][y][x]][(int)ClassAssignment[z-1][y][x]] += 1;
+        if (z > 0) this->MarkovMatrix[5][(int)ClassAssignment[z][y][x]][(int)ClassAssignment[z-1][y][x]] += 1;
         // Relationship between pixel and pixel of the next slice
-    if (z < (NumSlices-1)) this->MarkovMatrix[2][(int)ClassAssignment[z][y][x]][(int)ClassAssignment[z+1][y][x]] += 1;
-    // Define class probablities/stationary priors
-    this->ClassProbability[(int)ClassAssignment[z][y][x]] += 1;
+        if (z < (NumSlices-1)) this->MarkovMatrix[2][(int)ClassAssignment[z][y][x]][(int)ClassAssignment[z+1][y][x]] += 1;
+        // Define class probablities/stationary priors
+        this->ClassProbability[(int)ClassAssignment[z][y][x]] += 1;
       }
     }
   } 
@@ -442,16 +470,15 @@ void vtkImageEMMarkov::TrainMarkovMatrix(double ***Image,int Ydim, int Xdim,int 
       NormMarkov = 0.0;
 
       for (x=0; x < this->NumClasses; x++) 
-    NormMarkov +=  this->MarkovMatrix[z][y][x];
+        NormMarkov +=  this->MarkovMatrix[z][y][x];
        
       if (NormMarkov > 0.0) { 
-    for (x=0; x < this->NumClasses; x++) 
-      this->MarkovMatrix[z][y][x] = int(this->MarkovMatrix[z][y][x]/NormMarkov*1000+0.5)/1000.0;
-      } else 
-      this->MarkovMatrix[z][y][y] =  1.0;
+        for (x=0; x < this->NumClasses; x++) 
+          this->MarkovMatrix[z][y][x] = int(this->MarkovMatrix[z][y][x]/NormMarkov*1000+0.5)/1000.0;
+       } else 
+          this->MarkovMatrix[z][y][y] =  1.0;
     }
   }
-
   delete[] MaxImageClassProb;
 
   for (z = 0; z < NumSlices ; z++) {
@@ -470,8 +497,8 @@ void vtkImageEMMarkov::CalculateMaxClassProb(double *MaxClass, int &ImageMin,int
     MaxClass[i] = 0;
     for (c = 1; c < this->NumClasses; c++) {
       if (prob < EMMarkovGauss(i,this->Mu[c],this->Sigma[c])) {
-    prob = EMMarkovGauss(i,this->Mu[c],this->Sigma[c]);
-    MaxClass[i] = c;
+        prob = EMMarkovGauss(i,this->Mu[c],this->Sigma[c]);
+        MaxClass[i] = c;
       } 
     }
   }
@@ -489,7 +516,7 @@ void vtkImageEMMarkov::DeleteVariables() {
 
     for (z=0; z < 6; z++){ 
       for (y=0; y < this->NumClasses; y++)
-    delete[] this->MarkovMatrix[z][y];
+        delete[] this->MarkovMatrix[z][y];
       delete[] this->MarkovMatrix[z];
     }
     delete[] this->MarkovMatrix;
@@ -563,3 +590,4 @@ void vtkImageEMMarkov::setVectorTest(double *vec, int maxX,int test,int division
     vec[x-1] = ImgColor;
   }
 }
+

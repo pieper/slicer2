@@ -1,13 +1,12 @@
 package require vtk
 package require vtkSlicerBase
 
-
-# This script allows the direct access of the vtkImageEMLocalSegmenter Filter. It is very useful for batch processing.
+# This script allows the direct access of the vtkImageEMSegmenter Filter. It is very useful for batch processing.
 # Function can be called through
-# setenv EMBATCH_HOME /home/ai2/kpohl/slicer_devel/vtk3.2/local/examplesTcl
-# setenv LD_LIBRARY_PATH /home/ai2/kpohl/slicer_devel/pkg/lib:${LD_LIBRARY_PATH}
-# setenv SLICER_USE_LOCAL_ONLY_CODE 1
-# exec /home/ai2/kpohl/slicer_devel/pkg/bin/vtk $EMBATCH_HOME/BatchProcessEMLocalSegmenter.tcl <Mrml File Defining Segmentation> <Display Graph Afterwards>
+# setenv SLICER_HOME /home/ai2/kpohl/slicer_devel/slicer2
+# setenv LD_LIBRARY_PATH ${SLICER_HOME}/Base/builds/debian_gcc/bin:${LD_LIBRARY_PATH}
+# setenv TCLLIBPATH "${SLICER_HOME}/Base/Wrapping/Tcl ${SLICER_HOME}/Base/builds/debian-gcc/bin"
+# /home/ai2/kpohl/slicer_devel/vtk4.0/VTK-build/bin/vtk TestImageEMSegment.tcl
 
 #-------------------------------------------------------------------------------
 # 1. Step Initialize 
