@@ -140,8 +140,29 @@ class VTK_EXPORT vtkMrmlSlicer : public vtkObject
   // Description:
   // Double slice size outputs 512x512 images for larger display
   // (instead of 256x256)
+
+  // >> AT 02/16/01
+  //void SetDouble(int s, int yes) {
+  //  this->DoubleSliceSize[s] = yes; this->BuildLowerTime.Modified();};
   void SetDouble(int s, int yes) {
-    this->DoubleSliceSize[s] = yes; this->BuildLowerTime.Modified();};
+    this->DoubleSliceSize[s] = 0;
+    if(yes == 1)
+      {
+	this->BackReformat[s]->SetResolution(512);
+	this->ForeReformat[s]->SetResolution(512);
+	this->LabelReformat[s]->SetResolution(512);
+      }
+    else
+      {
+	this->BackReformat[s]->SetResolution(256);
+	this->ForeReformat[s]->SetResolution(256);
+	this->LabelReformat[s]->SetResolution(256);
+      }
+ 
+    this->BuildLowerTime.Modified();};
+
+  // << AT 02/16/01
+
   int GetDouble(int s) {return this->DoubleSliceSize[s];};
 
   // Description:
@@ -354,6 +375,23 @@ class VTK_EXPORT vtkMrmlSlicer : public vtkObject
   void DrawSetShapeToLines() {this->PolyDraw->SetShapeToLines();};
   void DrawSetShapeToPoints() {this->PolyDraw->SetShapeToPoints();};
   char* GetShapeString() {return this->PolyDraw->GetShapeString();};
+  //>> AT 01/17/01 01/19/01 02/19/01
+  void DrawSetSelectedPointColor(float r, float g, float b)
+    {
+      this->PolyDraw->SetSelectedPointColor(r, g, b);
+    }
+  void DrawSetShapeToCrosses() { this->PolyDraw->SetShapeToCrosses(); }
+  void DrawSetShapeToBoxes() { this->PolyDraw->SetShapeToBoxes(); }
+  void DrawSelectPoint(int x, int y) { this->PolyDraw->SelectPoint(x, y); }
+  void DrawDeselectPoint(int x, int y) { this->PolyDraw->DeselectPoint(x, y); }
+  //void DrawSetStartMethod(void (*f)(void *)) { this->PolyDraw->SetStartMethod(f, NULL); };
+  void DrawSetStartMethod(void (*f)(void *), void *arg) { this->PolyDraw->SetStartMethod(f, arg); }
+  void DrawSetStartMethodArgDelete(void (*f)(void *)) { this->PolyDraw->SetStartMethodArgDelete(f); }
+  // Necessary for calculating the ROI windowsize
+  // TO DO: Add check for s
+  int GetBackReformatResolution(int s) { return this->BackReformat[s]->GetResolution();}
+  vtkImageDrawROI *GetImageDrawROI() { return this->PolyDraw; }
+  //<< AT 01/17/01 01/19/01 02/19/01
 
   // Description:
   // Update any part of this class that needs it.
