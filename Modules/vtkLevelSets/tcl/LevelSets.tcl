@@ -168,7 +168,7 @@ proc LevelSetsInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.26 $} {$Date: 2004/04/14 14:25:03 $}]
+        {$Revision: 1.27 $} {$Date: 2004/04/22 15:27:37 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -1805,7 +1805,7 @@ proc LevelSetsStart {} {
 
   LevelSets(curv) InitEvolution
 
-  LevelSetsCreateModel
+#  LevelSetsCreateModel
 
   set k 0
   for {set j 0} { ($j < $LevelSets(NumIters)) && ($LevelSets(Processing) == "ON")} {incr j} {
