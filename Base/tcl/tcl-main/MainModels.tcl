@@ -88,7 +88,7 @@ proc MainModelsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainModels \
-        {$Revision: 1.56 $} {$Date: 2003/03/19 19:16:25 $}]
+        {$Revision: 1.57 $} {$Date: 2003/04/23 20:11:37 $}]
 
     set Model(idNone) -1
     set Model(activeID) ""
@@ -355,10 +355,15 @@ proc MainModelsRead {m} {
         reader SetFileName $fileName
     }  elseif {$suffix == ".stl"} {
         # read in an STL file (CAD) if the Psyclon Reader module has been loaded
-        package require vtkPsyclonReader
-        vtkPsyclonReader reader
-        reader SetFileName $fileName
-        reader ReleaseDataFlagOn
+        if { [catch {package require vtkPsyclonReader} errVal] } { 
+            puts stderr "ERROR: no STL reader found, failed to find vtkPsyclonReader module: $errVal"
+            DevWarningWindow "ERROR: no STL reader found, failed to find vtkPsyclonReader module: $errVal"
+            return -1
+        } else {
+            vtkPsyclonReader reader
+            reader SetFileName $fileName
+            reader ReleaseDataFlagOn
+        }
     }
 
 
