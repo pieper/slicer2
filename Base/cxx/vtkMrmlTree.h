@@ -139,6 +139,12 @@ public:
 
   void ComputeNodeTransform( vtkMrmlNode *node, vtkMatrix4x4 *xform );
 
+    // Description:
+    // The reader should set this code at the end of the update.
+    // The error code contains a possible error that occured while
+    // writing the file.
+    vtkGetMacro(ErrorCode, unsigned long );
+
 protected:
   vtkMrmlTree() {};
   ~vtkMrmlTree() {};
@@ -149,13 +155,19 @@ protected:
   int GetNumberOfItemsByClass(char *className);
   vtkMrmlNode* GetNthItemByClass(int n, char *className);
   vtkMrmlNode *GetNextItemByClass(char *className);
-  
+    
+    // Description:
+    // The reader should set this code at the end of the update.
+    // The error code contains a possible error that occured while
+    // writing the file.
+    vtkSetMacro( ErrorCode, unsigned long );
 private:
   // hide the standard AddItem from the user and the compiler.
   void AddItem(vtkObject *o) { this->vtkCollection::AddItem(o); };
   void RemoveItem(vtkObject *o) { this->vtkCollection::RemoveItem(o); };
   void RemoveItem(int i) { this->vtkCollection::RemoveItem(i); };
   int  IsItemPresent(vtkObject *o) { return this->vtkCollection::IsItemPresent(o);};
+    unsigned long ErrorCode;
 };
 
 #endif

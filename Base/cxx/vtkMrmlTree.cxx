@@ -37,6 +37,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 =========================================================================auto=*/
 #include "vtkMrmlTree.h"
 #include "vtkObjectFactory.h"
+#include "vtkErrorCode.h"
 
 //------------------------------------------------------------------------------
 vtkMrmlTree* vtkMrmlTree::New()
@@ -65,6 +66,7 @@ void vtkMrmlTree::Write(char *filename)
   {
     vtkErrorMacro("Write: Could not open file " << filename);
     cerr << "Write: Could not open file " << filename;
+    this->SetErrorCode(vtkErrorCode::GetErrorCodeFromString("CannotOpenFileError"));
     return;
   }
   
@@ -97,6 +99,7 @@ void vtkMrmlTree::Write(char *filename)
 
   // Close file
   file.close();
+  this->SetErrorCode(vtkErrorCode::GetErrorCodeFromString("NoError"));
 }
 
 //------------------------------------------------------------------------------
