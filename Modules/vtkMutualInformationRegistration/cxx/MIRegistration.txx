@@ -106,8 +106,6 @@ MIRegistration<TFixedImage,TMovingImage>::MIRegistration()
   m_OptimizeObserverTag = m_Optimizer->AddObserver( IterationEvent(), 
                                                      StoppingObserver );
 
-  // Ability to test the parameters to matrix and reverse
-  //  this->Test();
 }
 
 //----------------------------------------------------------------------
@@ -236,7 +234,7 @@ void MIRegistration<TFixedImage,TMovingImage>::ParamToMatrix(
 //----------------------------------------------------------------------------
 
 template <typename TFixedImage, typename TMovingImage>
-void MIRegistration<TFixedImage,TMovingImage>::Test()
+int MIRegistration<TFixedImage,TMovingImage>::TestParamToMatrix()
 {
   ParametersType test = ParametersType(m_Transform->GetNumberOfParameters());
   test[0] = 0.08428825861139;
@@ -252,9 +250,15 @@ void MIRegistration<TFixedImage,TMovingImage>::Test()
   InitializeRegistration(mat);
 
   std::cout << "Testing for initial stuff " 
-           << m_InitialParameters << endl;
+        << m_InitialParameters << endl;
+
+  int err=0;
+  for(int i=0;i<7;i++)
+    if (fabs(test[i]-m_InitialParameters[i])>0.001)
+      err = 1;
 
   mat->Delete();
+  return err;
 }
 
 //----------------------------------------------------------------------

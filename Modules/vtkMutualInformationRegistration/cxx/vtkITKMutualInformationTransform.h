@@ -192,6 +192,11 @@ public:
   // Called during the execute function
   vtkGetObjectMacro(ImageFlip, vtkImageFlip);
 
+  // Description:
+  // Test Initialization of the Matrix, which is a pure rotation/translation
+  // returns 0 on success. Also calls MIRegistration->TestParamToMatrix.
+  int TestMatrixInitialize(vtkMatrix4x4 *aMat);
+
 protected:
   vtkITKMutualInformationTransform();
   ~vtkITKMutualInformationTransform();

@@ -271,7 +271,8 @@ public:
   // Description:
   // Test the ParamToMatrix function
   // with the InitializeRegistration function
-  void Test();
+  // returns 0 on success.
+  int TestParamToMatrix();
 
   // Description:
   // How good was the alignment

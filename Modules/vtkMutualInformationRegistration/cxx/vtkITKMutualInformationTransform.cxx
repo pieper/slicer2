@@ -99,7 +99,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
   }
 
 
-vtkCxxRevisionMacro(vtkITKMutualInformationTransform, "$Revision: 1.9 $");
+vtkCxxRevisionMacro(vtkITKMutualInformationTransform, "$Revision: 1.10 $");
 vtkStandardNewMacro(vtkITKMutualInformationTransform);
 
 //----------------------------------------------------------------------------
@@ -267,31 +267,6 @@ static void vtkITKMutualInformationExecute(vtkITKMutualInformationTransform *sel
 
   // Initialize
   MIRegistrator->InitializeRegistration(matrix);
-
-  // A TEST!!!
-  {
-    vtkMatrix4x4 *matt = vtkMatrix4x4::New();
-    MIRegistrator->ParamToMatrix(MIRegistrator->GetInitialParameters(),matt);
-    double diff = 0.0;
-    for(int ii =0;ii<4;ii++)
-      for(int jj=0;jj<4;jj++)
-        diff += ((matrix->GetElement(ii,jj) - matt->GetElement(ii,jj))*
-                 (matrix->GetElement(ii,jj) - matt->GetElement(ii,jj)));
-    if (diff > 1e-6)
-      {
-        MIRegistrator->Print(std::cout);
-        std::cout << "Was unable to set initial matricies accurately" << std::endl;
-        std::cout << "Error was : " << diff << std::endl;
-        std::cout << "Printing initially set matrix" << endl;
-        matrix->Print(std::cout);
-        std::cout << "Printing actually set matrix" << endl;
-        matt->Print(std::cout);
-
-        matt->Delete();
-        self->SetError(1);
-        return;
-      }
-  }
 
  // Setup the optimizer
 
@@ -585,3 +560,38 @@ void vtkITKMutualInformationTransform::SetTargetShrinkFactors(
   TargetShrink[2] = k;
 }
 
+//----------------------------------------------------------------------------
+
+int vtkITKMutualInformationTransform::TestMatrixInitialize(vtkMatrix4x4 *aMat)
+{
+  // Initialize
+  typedef itk::Image<float,3>                       OutputImageType;
+  typedef itk::MIRegistration<OutputImageType,OutputImageType> RegistratorType;
+  RegistratorType::Pointer MIRegistrator = RegistratorType::New();
+
+  MIRegistrator->InitializeRegistration(aMat);
+
+  // A TEST!!!
+  {
+    vtkMatrix4x4 *matt = vtkMatrix4x4::New();
+    MIRegistrator->ParamToMatrix(MIRegistrator->GetInitialParameters(),matt);
+    double diff = 0.0;
+    for(int ii =0;ii<4;ii++)
+      for(int jj=0;jj<4;jj++)
+        diff += ((aMat->GetElement(ii,jj) - matt->GetElement(ii,jj))*
+                 (aMat->GetElement(ii,jj) - matt->GetElement(ii,jj)));
+    if (diff > 1e-6)
+      {
+        MIRegistrator->Print(std::cout);
+        std::cout << "Was unable to set initial matricies accurately" << std::endl;
+        std::cout << "Error was : " << diff << std::endl;
+        std::cout << "Printing initially set matrix" << endl;
+        aMat->Print(std::cout);
+        std::cout << "Printing actually set matrix" << endl;
+        matt->Print(std::cout);
+        matt->Delete();
+        return -1;
+      }
+  }
+  return MIRegistrator->TestParamToMatrix();
+}
