@@ -156,7 +156,7 @@ DICOMDataDictFile='$Volumes(DICOMDataDictFile)'"
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-                {$Revision: 1.49 $} {$Date: 2001/06/03 14:34:03 $}]
+                {$Revision: 1.50 $} {$Date: 2001/06/14 18:21:42 $}]
 
 	# Props
 	set Volume(propertyType) Basic
@@ -912,6 +912,8 @@ proc VolumesManualSetPropertyType {n} {
     $n SetFullPrefix [file join $Mrml(dir) [$n GetFilePrefix]]
     if { !$Volume(isDICOM) } {
         set firstNum [MainFileFindImageNumber First [file join $Mrml(dir) $Volume(firstFile)]]
+    } else {
+	set firstNum 1
     }
     $n SetImageRange $firstNum $Volume(lastNum)
     $n SetDimensions $Volume(width) $Volume(height)
