@@ -521,6 +521,7 @@ int vtkMrmlDataVolume::Write()
       int tmpExt[6], saveExt[6], range[2];
       this->ImageData->GetExtent(saveExt);
       this->ImageData->GetExtent(tmpExt);
+      
       node->GetImageRange(range);
       tmpExt[4] = range[0];
       tmpExt[5] = range[1];
