@@ -13,6 +13,7 @@ vtkMGHReader.cxx
 vtkFSSurfaceReader.cxx
 vtkFSSurfaceScalarReader.cxx
 vtkFSSurfaceAnnotationReader.cxx
+vtkGDFReader.cxx
 )
 
 
