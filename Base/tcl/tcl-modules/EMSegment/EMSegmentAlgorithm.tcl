@@ -69,6 +69,7 @@ proc EMSegmentAlgorithmStart { } {
            EMSegment(vtkEMSegment) SetProbability  $EMSegment(Cattrib,$i,Prob) $i
        }
        # Transfer image information
+       set NumInputImagesSet 1
        EMSegment(vtkEMSegment) SetInput [Volume([lindex $EMSegment(SelVolList,VolumeList) 0],vol) GetOutput]
    }
 
