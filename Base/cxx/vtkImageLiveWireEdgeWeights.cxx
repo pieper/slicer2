@@ -840,7 +840,12 @@ void vtkImageLiveWireEdgeWeights::ThreadedExecute(vtkImageData **inDatas,
 
 
   // TEMPORARY FIX: make the 0th thread do everything.
-  // 
+  // this is to try to avoid bug during livewire apply
+  // when vtkImageReformat.cxx crashes.  Seems like its
+  // inPtr is set to nil during its execution.
+  // this has not been seen on single procesor machines, so
+  // pretend that's what we are.
+  //
   // thread 0 does it all, so return if id > 0
   if (id > 0)
     return;
