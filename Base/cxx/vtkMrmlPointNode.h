@@ -43,16 +43,6 @@ public:
   // Write the node's attributes to a MRML file in XML format
   void Write(ofstream& of, int indent);
 
-  // Description:
-  // Name displayed on the user interface
-  vtkSetStringMacro(Name);
-  vtkGetStringMacro(Name);
-
-  // Description:
-  // Description displayed on the user interface
-  vtkSetStringMacro(Description);
-  vtkGetStringMacro(Description);
-
   //--------------------------------------------------------------------------
   // Utility Functions
   //--------------------------------------------------------------------------
@@ -72,8 +62,6 @@ protected:
   vtkMrmlPointNode(const vtkMrmlPointNode&) {};
   void operator=(const vtkMrmlPointNode&) {};
 
-  char *Name;
-  char *Description;
   float XYZ[3];
 };
 

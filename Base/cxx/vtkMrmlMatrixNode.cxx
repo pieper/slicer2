@@ -44,23 +44,12 @@ vtkMrmlMatrixNode* vtkMrmlMatrixNode::New()
 //----------------------------------------------------------------------------
 vtkMrmlMatrixNode::vtkMrmlMatrixNode()
 {
-  // vtkMrmlNode's attributes
-  this->ID = 0;
-  this->Description = NULL;
-  this->Options = NULL;
-
-  this->Name = NULL;
   this->Transform = vtkTransform::New();
 }
 
 //----------------------------------------------------------------------------
 vtkMrmlMatrixNode::~vtkMrmlMatrixNode()
 {
-  if (this->Name)
-  {
-    delete [] this->Name;
-    this->Name = NULL;
-  }
   this->Transform->Delete();
 }
 

@@ -44,15 +44,9 @@ vtkMrmlVolumeNode* vtkMrmlVolumeNode::New()
 //----------------------------------------------------------------------------
 vtkMrmlVolumeNode::vtkMrmlVolumeNode()
 {
-  // vtkMrmlNode's attributes
-  this->ID = 0;
-  this->Description = NULL;
-  this->Options = NULL;
-
   // vtkMrmlVolumeNode's attributes
 
   // Strings
-  this->Name = NULL;
   this->FilePattern = NULL;
   this->FilePrefix = NULL;
   this->RasToIjkMatrix = NULL;
@@ -121,11 +115,6 @@ vtkMrmlVolumeNode::~vtkMrmlVolumeNode()
   this->RasToIjk->Delete();
   this->Position->Delete();
 
-  if (this->Name)
-  {
-    delete [] this->Name;
-    this->Name = NULL;
-  }
   if (this->FilePattern)
   {
     delete [] this->FilePattern;
@@ -174,6 +163,7 @@ vtkMrmlVolumeNode::~vtkMrmlVolumeNode()
 
   // End
 }
+
 
 //----------------------------------------------------------------------------
 char* vtkMrmlVolumeNode::GetScalarTypeAsString()

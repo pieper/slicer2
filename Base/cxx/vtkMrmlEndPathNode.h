@@ -40,7 +40,6 @@ public:
   static vtkMrmlEndPathNode *New();
   vtkTypeMacro(vtkMrmlEndPathNode,vtkMrmlNode);
   void PrintSelf(ostream& os, vtkIndent indent);
-  const char *GetName() {return "";}; 
   
   //--------------------------------------------------------------------------
   // Utility Functions

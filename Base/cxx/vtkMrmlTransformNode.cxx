@@ -45,10 +45,8 @@ vtkMrmlTransformNode* vtkMrmlTransformNode::New()
 vtkMrmlTransformNode::vtkMrmlTransformNode()
 {
   // vtkMrmlNode's attributes
-  this->ID = 0;
   this->Indent = 1;
-  this->Description = NULL;
-  this->Options = NULL;
+
 }
 
 //----------------------------------------------------------------------------

@@ -42,7 +42,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 class VTK_EXPORT vtkMrmlVolumeNode : public vtkMrmlNode
 {
-public:
+  public:
   static vtkMrmlVolumeNode *New();
   vtkTypeMacro(vtkMrmlVolumeNode,vtkMrmlNode);
   void PrintSelf(ostream& os, vtkIndent indent);
@@ -64,11 +64,6 @@ public:
   // Non-Header Information
   //--------------------------------------------------------------------------
   
-  // Description:
-  // Name displayed on the user interface
-  vtkSetStringMacro(Name);
-  vtkGetStringMacro(Name);
-
   // Description:
   // The pattern for naming the files expressed in C language syntax. 
   // For example, a file named skin.001 has a patter of %s.%03d, and a file
@@ -310,7 +305,6 @@ protected:
     float ox, float oy, float oz);
 
   // Strings
-  char *Name;
   char *FilePattern;
   char *FilePrefix;
   char *FullPrefix;

@@ -44,26 +44,83 @@ vtkMrmlNode* vtkMrmlNode::New()
 vtkMrmlNode::vtkMrmlNode()
 {
   this->ID = 0;
+  
+  // By default nodes have no effect on indentation
   this->Indent = 0;
+
+  // Strings
   this->Description = NULL;
   this->Options = NULL;
+  this->Title = NULL;
+
+  // By default all MRML nodes have a blank name
+  // Must set name to NULL first so that the SetName
+  // macro will not free memory.
+  this->Name = NULL;
+  this->SetName("");
 }
 
 //----------------------------------------------------------------------------
 vtkMrmlNode::~vtkMrmlNode()
 {
   if (this->Description)
-  {
-    delete [] this->Description;
-    this->Description = NULL;
-  }
-
+    {
+      delete [] this->Description;
+      this->Description = NULL;
+    }
+  
   if (this->Options)
-  {
-    delete [] this->Options;
-    this->Options = NULL;
-  }
+    {
+      delete [] this->Options;
+      this->Options = NULL;
+    }
+  
+  if (this->Name)
+    {
+      delete [] this->Name;
+      this->Name = NULL;
+    }
 }
+
+// Create a title to be displayed on the GUI.
+// Subclasses should override this to display
+// something other than ClassNickName: NodeName
+// (i.e. Model: Brain)
+//----------------------------------------------------------------------------
+char *vtkMrmlNode::GetTitle()
+{
+  char tmp[200], classname[100], nickname[100];
+  int len;
+
+  // make sure we have a name
+  if (this->Name == NULL) 
+    {
+      this->SetName("");
+    }
+
+  // get full name of class
+  strcpy(classname,this->GetClassName());
+
+  // kill the "Node" text at end of class name
+  len = strlen(classname) - 4;
+  classname[len] = '\0';
+  // ignore initial "vtkMrml" characters
+  strcpy(nickname, &classname[7]);
+
+  // Create title from current name (if not blank) and class name
+  if (strcmp(this->Name, "") == 0) 
+    {
+      this->SetTitle(nickname);
+    }
+  else
+    {
+      sprintf(tmp, "%s: %s", nickname, this->Name);
+      this->SetTitle(tmp);
+    }
+
+  // return the current title
+  return this->Title;
+};
 
 //----------------------------------------------------------------------------
 void vtkMrmlNode::Copy(vtkMrmlNode *node)

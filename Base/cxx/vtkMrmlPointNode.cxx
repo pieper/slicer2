@@ -44,23 +44,13 @@ vtkMrmlPointNode* vtkMrmlPointNode::New()
 //----------------------------------------------------------------------------
 vtkMrmlPointNode::vtkMrmlPointNode()
 {
-  // vtkMrmlNode's attributes
-  this->ID = 0;
-  this->Description = NULL;
-  this->Options = NULL;
-
-  this->Name = NULL;
   this->XYZ[0] = this->XYZ[1] = this->XYZ[2] = 0.0;
 }
 
 //----------------------------------------------------------------------------
 vtkMrmlPointNode::~vtkMrmlPointNode()
 {
-  if (this->Name)
-  {
-    delete [] this->Name;
-    this->Name = NULL;
-  }
+
 }
 
 //----------------------------------------------------------------------------

@@ -23,7 +23,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 =========================================================================auto=*/
 // .NAME vtkMrmlNode - Superclass for all specific types of MRML nodes.
 // .SECTION Description
-// This node excapsulates the functionality common to all types of MRML nodes.
+// This node encapsulates the functionality common to all types of MRML nodes.
 // This includes member variables for ID, Description, and Options,
 // as well as member functions to Copy() and Write().
 
@@ -37,7 +37,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 class VTK_EXPORT vtkMrmlNode : public vtkObject
 {
-public:
+  public:
   static vtkMrmlNode *New();
   vtkTypeMacro(vtkMrmlNode,vtkObject);
   void PrintSelf(ostream& os, vtkIndent indent);
@@ -50,24 +50,35 @@ public:
   
   // Description:
   // Set/Get a numerical ID for the calling program to use to keep track
-  // of its various volume objects.
+  // of its various node objects.
   vtkSetMacro(ID, int);
   vtkGetMacro(ID, int);
 
   // Description:
-  // Text description
+  // Text description of this node, to be set by the user
   vtkSetStringMacro(Description);
   vtkGetStringMacro(Description);
+
+  // Description:
+  // Name of this node, to be set by the user
+  vtkSetStringMacro(Name);
+  vtkGetStringMacro(Name);
+
+  // Description:
+  // The Title is for use when graphically displaying the 
+  // contents of a MRML file.
+  char *GetTitle();
+
+  // Description:
+  // Node's effect on indentation when displaying the
+  // contents of a MRML file. (0, +1, -1)
+  vtkGetMacro(Indent, int);
 
   // Description:
   // Optional attributes not defined in the MRML standard,
   // but recognized by various browsers
   vtkSetStringMacro(Options);
   vtkGetStringMacro(Options);
-
-  // Description:
-  // Node's effect on indentation (0, +1, -1)
-  vtkGetMacro(Indent, int);
 
   // Description:
   // Utility functions for converting between vtkMatrix4x4 and
@@ -91,12 +102,19 @@ protected:
   vtkMrmlNode(const vtkMrmlNode&) {};
   void operator=(const vtkMrmlNode&) {};
 
+  // Description:
+  // Only for internal use by the GetTitle function
+  vtkSetStringMacro(Title);
+
   int ID;
   int Indent;
   char *Description;
   char *Options;
+  char *Name;
+  char *Title;
 };
 
 #endif
+
 
 

@@ -38,21 +38,10 @@ public:
   static vtkMrmlPathNode *New();
   vtkTypeMacro(vtkMrmlPathNode,vtkMrmlNode);
   void PrintSelf(ostream& os, vtkIndent indent);
-  const char *GetName() {return "";}; 
 
   // Description:
   // Write the node's attributes to a MRML file in XML format
   void Write(ofstream& of, int indent);
-
-  // Description:
-  // Name displayed on the user interface
-  //vtkSetStringMacro(Name);
-  //vtkGetStringMacro(Name);
-
-  // Description:
-  // Description displayed on the user interface
-  vtkSetStringMacro(Description);
-  vtkGetStringMacro(Description);
 
   //--------------------------------------------------------------------------
   // Utility Functions

@@ -44,13 +44,7 @@ vtkMrmlModelNode* vtkMrmlModelNode::New()
 //----------------------------------------------------------------------------
 vtkMrmlModelNode::vtkMrmlModelNode()
 {
-  // vtkMrmlNode's attributes
-  this->ID = 0;
-  this->Description = NULL;
-  this->Options = NULL;
-
   // Strings
-  this->Name = NULL;
   this->FileName = NULL;
   this->Color = NULL;
   this->FullFileName = NULL;
@@ -74,11 +68,6 @@ vtkMrmlModelNode::~vtkMrmlModelNode()
 {
   this->RasToWld->Delete();
 
-  if (this->Name)
-  {
-    delete [] this->Name;
-    this->Name = NULL;
-  }
   if (this->FileName)
   {
     delete [] this->FileName;

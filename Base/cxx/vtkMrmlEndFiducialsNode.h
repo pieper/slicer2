@@ -40,7 +40,6 @@ public:
   static vtkMrmlEndFiducialsNode *New();
   vtkTypeMacro(vtkMrmlEndFiducialsNode,vtkMrmlNode);
   void PrintSelf(ostream& os, vtkIndent indent);
-  const char *GetName() {return "";}; 
   
   //--------------------------------------------------------------------------
   // Utility Functions

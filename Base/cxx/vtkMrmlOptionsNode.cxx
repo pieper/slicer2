@@ -46,7 +46,6 @@ vtkMrmlOptionsNode::vtkMrmlOptionsNode()
   // Strings
   this->Program = NULL;
   this->Contents = NULL;
-  this->Options = NULL;
 }
 
 //----------------------------------------------------------------------------

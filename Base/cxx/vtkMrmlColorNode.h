@@ -63,11 +63,6 @@ public:
   //--------------------------------------------------------------------------
 
   // Description:
-  // Name displayed on the user interface
-  vtkGetStringMacro(Name);
-  vtkSetStringMacro(Name);
-
-  // Description:
   // Get/Set for DiffuseColor
   vtkGetVector3Macro(DiffuseColor, float);
   vtkSetVector3Macro(DiffuseColor, float);
@@ -104,7 +99,6 @@ protected:
   void operator=(const vtkMrmlColorNode&) {};
 
   // Strings
-  char *Name;
   char *Labels;
 
   // Numbers

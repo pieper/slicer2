@@ -44,13 +44,7 @@ vtkMrmlColorNode* vtkMrmlColorNode::New()
 //----------------------------------------------------------------------------
 vtkMrmlColorNode::vtkMrmlColorNode()
 {
-  // vtkMrmlNode's attributes
-  this->ID = 0;
-  this->Description = NULL;
-  this->Options = NULL;
-
   // Strings
-  this->Name = NULL;
   this->Labels = NULL;
 
   // Numbers
@@ -68,11 +62,6 @@ vtkMrmlColorNode::vtkMrmlColorNode()
 //----------------------------------------------------------------------------
 vtkMrmlColorNode::~vtkMrmlColorNode()
 {
-  if (this->Name)
-  {
-    delete [] this->Name;
-    this->Name = NULL;
-  }
   if (this->Labels)
   {
     delete [] this->Labels;

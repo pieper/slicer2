@@ -37,7 +37,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 class VTK_EXPORT vtkMrmlOptionsNode : public vtkMrmlNode
 {
-public:
+  public:
   static vtkMrmlOptionsNode *New();
   vtkTypeMacro(vtkMrmlOptionsNode,vtkMrmlNode);
   void PrintSelf(ostream& os, vtkIndent indent);
@@ -73,7 +73,7 @@ public:
   vtkGetStringMacro(Options);
   vtkSetStringMacro(Options);
 
-protected:
+  protected:
   vtkMrmlOptionsNode();
   ~vtkMrmlOptionsNode();
   vtkMrmlOptionsNode(const vtkMrmlOptionsNode&) {};
@@ -81,7 +81,9 @@ protected:
 
   // Description:
   // Contains information for use by specified program
-  char *Options;
+  // Not needed here since superclass vtkMrmlNode has Options
+  //char *Options;
+
   // Description:
   // Name of program that uses these options (i.e. Slicer)
   char *Program;

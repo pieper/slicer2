@@ -50,11 +50,6 @@ public:
   void Write(ofstream& of, int indent);
 
   // Description:
-  // Name displayed on the user interface
-  vtkSetStringMacro(Name);
-  vtkGetStringMacro(Name);
-
-  // Description:
   // 16 numbers that form a 4x4 matrix. The matrix is multiplied by a 
   // point (M*P) to compute the transformed point
   void SetMatrix(char *str) {
@@ -100,7 +95,6 @@ protected:
   vtkMrmlMatrixNode(const vtkMrmlMatrixNode&) {};
   void operator=(const vtkMrmlMatrixNode&) {};
 
-  char *Name;
   vtkTransform *Transform;
 };
 

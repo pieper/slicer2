@@ -44,12 +44,6 @@ vtkMrmlLandmarkNode* vtkMrmlLandmarkNode::New()
 //----------------------------------------------------------------------------
 vtkMrmlLandmarkNode::vtkMrmlLandmarkNode()
 {
-  // vtkMrmlNode's attributes
-  this->ID = 0;
-  this->Description = NULL;
-  this->Options = NULL;
-
-  this->Name = NULL;
   this->XYZ[0] = this->XYZ[1] = this->XYZ[2] = 0.0;
   this->FXYZ[0] = this->FXYZ[1] = this->FXYZ[2] = 0.0;
   this->PathPosition = 0;
@@ -58,11 +52,7 @@ vtkMrmlLandmarkNode::vtkMrmlLandmarkNode()
 //----------------------------------------------------------------------------
 vtkMrmlLandmarkNode::~vtkMrmlLandmarkNode()
 {
-  if (this->Name)
-  {
-    delete [] this->Name;
-    this->Name = NULL;
-  }
+
 }
 
 //----------------------------------------------------------------------------

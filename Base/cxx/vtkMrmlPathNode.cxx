@@ -46,10 +46,7 @@ vtkMrmlPathNode::vtkMrmlPathNode()
 {
 
   // vtkMrmlNode's attributes
-  this->ID = 0;
   this->Indent = 1;
-  this->Description = NULL;
-  this->Options = NULL;
 
 //  this->cPathColor = NULL;
 //  this->cLandColor = NULL;
