@@ -96,7 +96,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
   }
 
 
-vtkCxxRevisionMacro(vtkITKMutualInformationTransform, "$Revision: 1.2 $");
+vtkCxxRevisionMacro(vtkITKMutualInformationTransform, "$Revision: 1.3 $");
 vtkStandardNewMacro(vtkITKMutualInformationTransform);
 
 //----------------------------------------------------------------------------
@@ -260,7 +260,8 @@ static void vtkITKMutualInformationExecute(vtkITKMutualInformationTransform *sel
       LearnRates[i]    = self->GetLearningRate()->GetValue(i);
       NumIterations[i] = self->GetMaxNumberOfIterations()->GetValue(i);
     }
-
+  MIRegistrator->SetNumberOfLevels(self->GetLearningRate()
+                                       ->GetNumberOfTuples());
   MIRegistrator->SetLearningRates(LearnRates);
   MIRegistrator->SetNumberOfIterations(NumIterations);
 
