@@ -230,6 +230,20 @@ proc MainOptionsParsePresets {attr} {
 	}
 }
 
+proc MainOptionsUseDefaultPresets {} {
+	global Module Preset
+
+	foreach m $Module(idList) {
+		if {[info exists Module($m,presets)] == 1} {
+			foreach p "$Preset(idList)" {
+				foreach key $Preset($m,keys) {
+					set Preset($m,$p,$key) $Preset($m,default,$key)
+				}
+			}
+		}
+	}
+}
+
 #-------------------------------------------------------------------------------
 # .PROC MainOptionsParseDefaults
 #  Parses the default presets string provided by each module in its Init.

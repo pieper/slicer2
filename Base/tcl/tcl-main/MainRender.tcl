@@ -43,10 +43,16 @@
 # .END
 #-------------------------------------------------------------------------------
 proc Render3D {{scale ""}} {
-	global Video viewWin
+	global Video viewWin Twin twinWin
 
 	$viewWin Render
 	
+	if {$Twin(mode) == "On"} {
+		Twin(src) Modified
+		Twin(mapper) Modified
+		$twinWin Render
+	}
+
 	if {[IsModule Video] == 1 && $Video(record) == "On"} {
 		VideoSave
 	}

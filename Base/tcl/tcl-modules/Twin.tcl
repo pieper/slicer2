@@ -50,11 +50,11 @@ proc TwinInit {} {
 	set Module($m,procGUI) TwinBuildGUI
 	set Module($m,procVTK) TwinBuildVTK
 
+	set Twin(mode) Off
 	set Twin(xPos) 0
 	set Twin(yPos) 0
 	set Twin(width) 400
 	set Twin(height) 300
-	set Twin(mode) 1
 	set Twin(screen) 0
 }
 
@@ -62,13 +62,8 @@ proc TwinBuildVTK {} {
 	global Twin viewWin twinWin
 
 	vtkXDisplayWindow Twin(display)
-	set twinWin [Twin(display) GetImageWindow $Twin(screen)]
 
 	vtkImager twinRen
-
-	$twinWin SetPosition $Twin(xPos) $Twin(yPos)
-	$twinWin SetSize $Twin(width) $Twin(height)
-	$twinWin AddImager twinRen
 
 	vtkImageFrameSource Twin(src)
 	Twin(src) SetExtent 0 [expr $Twin(width)-1] 0 [expr $Twin(height)-1]
@@ -119,7 +114,7 @@ Models are fun. Do you like models, Ron?
 
 	frame $f.fGrid -bg $Gui(activeWorkspace) -relief groove -bd 3
 	frame $f.fMode -bg $Gui(activeWorkspace)
-	pack $f.fGrid $f.fMode \
+	pack $f.fMode $f.fGrid \
 		-side top -pady $Gui(pad) -padx $Gui(pad) -fill x
 
 	#-------------------------------------------
@@ -131,10 +126,10 @@ Models are fun. Do you like models, Ron?
 		eval [subst $c]
 	pack $f.l -side left -padx $Gui(pad) -pady 0
 
-	foreach value "On Off" width "2 3" {
+	foreach value "On Pause Off" width "3 6 4" {
 		set c {radiobutton $f.r$value -width $width \
 			-text "$value" -value "$value" -variable Twin(mode) \
-			-indicatoron 0 -command "TwinSetMode; Render3D" $Gui(WCA)}
+			-indicatoron 0 -command "TwinApply" $Gui(WCA)}
 			eval [subst $c]
 		pack $f.r$value -side left -padx 0 -pady 0
 	}
@@ -144,5 +139,40 @@ Models are fun. Do you like models, Ron?
 	#-------------------------------------------
 	set f $fTwin.fGrid
 	
+	# Entry fields (the loop makes a frame for each variable)
+	foreach param "xPos yPos width height screen" \
+		name "{X Position} {Y Position} {Width} {Height} {Screen Number}" {
+
+	    set c {label $f.l$param -text "$name:" $Gui(WLA)}; eval [subst $c]
+	    set c {entry $f.e$param -width 5 -textvariable Twin($param) $Gui(WEA)}
+	    eval [subst $c]
+
+		grid $f.l$param $f.e$param -padx $Gui(pad) -pady $Gui(pad) -sticky e
+		grid $f.e$param -sticky w
+	}
+
+	set c {button $f.b -text "Apply" -command "TwinApply" $Gui(WBA)}; eval [subst $c]
+	grid $f.b -columnspan 2 -padx $Gui(pad) -pady $Gui(pad) 
 }
 
+proc TwinApply {} {
+	global Twin twinWin
+
+	if {$Twin(mode) == "On"} {
+		# If window does not exist, create it
+		if {[info exists twinWin] == 0 || [info command $twinWin] == ""} {
+			set twinWin [Twin(display) GetImageWindow $Twin(screen)]
+			$twinWin AddImager twinRen
+		}
+		$twinWin SetPosition $Twin(xPos) $Twin(yPos)
+		$twinWin SetSize $Twin(width) $Twin(height)
+		Twin(src) SetExtent 0 [expr $Twin(width)-1] 0 [expr $Twin(height)-1]
+		Render3D
+
+	} elseif {$Twin(mode) == "Off"} {
+		# If window exists, delete it
+		if {[info exists twinWin] == 1 && [info command $twinWin] != ""} {
+			$twinWin Delete
+		}
+	}
+}

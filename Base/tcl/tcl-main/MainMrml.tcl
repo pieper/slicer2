@@ -750,7 +750,10 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 
 			# If these are presets, then do preset stuff on stuffing, not attr
 			if {[$n GetContents] == "presets"} {
-			    MainOptionsParsePresets $attr
+				# Since presets aren't written to the MRML file when different
+				# from their default values, I must first reset them to their defaults.
+				MainOptionsUseDefaultPresets
+				MainOptionsParsePresets $attr
 			}
 		}
 
