@@ -2564,7 +2564,7 @@ void vtkLevelSets::Evolve3D( int first_band, int last_band)
 
       //ut = min(max(StepDt*ut,-Band),Band);
       newU[p]=u0+StepDt*ut;
-      if (fabsf(newU[p])>Band+1) {
+      if (fabs(newU[p])>Band+1) {
     fprintf(stderr,"pb: absf(newU[p])>Band+1, p=%d, newU[p] = %f \n",p,newU[p]);
     fprintf(stderr,"pb: curvterm = %f, imcomp = %f, balloonterm = %f, vel = %f, \n",curvterm, imcomp,balloonterm, vel);
       }
@@ -3193,7 +3193,7 @@ void vtkLevelSets::NormalizeSecDerGrad()
   int            zmin,zmax,nmax;
 
 
-  this->SetProgressText("Precompute Data Attachement");
+  this->SetProgressText("Normalize 2nd Deriv Gradient");
 
   // tmp: for compute the distance to the second order derivatives
   tmp = new float[this->imsize];
