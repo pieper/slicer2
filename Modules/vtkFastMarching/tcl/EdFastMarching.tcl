@@ -254,8 +254,6 @@ proc EdFastMarchingEnter {} {
     set EdFastMarching(fidFiducialList) \
         [ FiducialsCreateFiducialsList "default" "FastMarching-seeds" 0 3 ]
 
-    FiducialsSetActiveList "FastMarching-seeds"
-
     # create the vtk object 
     vtkFastMarching EdFastMarching(FastMarching) 
 
@@ -300,7 +298,6 @@ proc EdFastMarchingEnter {} {
     EdUpdateAfterApplyEffect $v
     }    
 
-    FiducialsSetActiveList "FastMarching-seeds"    
 }
 
 
