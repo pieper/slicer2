@@ -56,13 +56,12 @@ class VTK_MORPHOMETRICS_EXPORT vtkPrincipalAxes : public vtkPolyDataToPolyDataFi
   vtkGetVector3Macro(XAxis,float);
   vtkGetVector3Macro(YAxis,float);
   vtkGetVector3Macro(ZAxis,float);
-
+ void Execute();
   void PrintSelf();
  protected:
   vtkPrincipalAxes();
   ~vtkPrincipalAxes();
 
-  void Execute();
  private:
   vtkPrincipalAxes(vtkPrincipalAxes&);
   void operator=(const vtkPrincipalAxes);
