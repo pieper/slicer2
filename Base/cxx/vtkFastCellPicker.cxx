@@ -45,7 +45,8 @@ float vtkFastCellPicker::IntersectWithLine(float p1[3], float p2[3], float tol,
 #endif
 {
   int numCells, ii, nOBBTrees;
-  int i, minCellId, minSubId;
+  int i, minSubId;
+  vtkIdType minCellId;
   float x[3], t, pcoords[3];
   //vtkCell *cell;
   vtkDataSet *input=m->GetInput();
