@@ -149,7 +149,7 @@ proc MultiVolumeReaderInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.6 $} {$Date: 2004/11/22 15:17:20 $}]
+        {$Revision: 1.6.2.1 $} {$Date: 2004/11/24 19:11:53 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -266,8 +266,10 @@ proc MultiVolumeReaderBuildGUI {parent} {
         "Don't need to input anything here. This\n\
         entry is used to display loading status."
     pack $f.lVName $f.eVName -side top -padx $Gui(pad) -pady 2 
-    set MultiVolumeReader(loadStatusEntry) $f.eVName
-
+    if { [ info exists MultiVolumeReaser(loadStatusEntry)] } {
+        set MultiVolumeReader(loadStatusEntry) $f.eVName
+    }
+    
     # The Navigate frame
     set f $parent.fNav
 
@@ -421,8 +423,10 @@ proc MultiVolumeReaderLoad {} {
     unset -nocomplain MultiVolumeReader(lastMRMLid)
     unset -nocomplain MultiVolumeReader(volumeExtent)
 
-    $MultiVolumeReader(loadStatusEntry) configure -textvariable \
-        Volume(name) 
+    if { [ info exists MultiVolumeReaser(loadStatusEntry)] } {
+        $MultiVolumeReader(loadStatusEntry) configure -textvariable \
+            Volume(name)
+    }
 
     switch $MultiVolumeReader(fileExtension) {
         ".hdr" {
@@ -450,8 +454,10 @@ proc MultiVolumeReaderLoad {} {
     # Sets the first volume in the sequence as the active volume
     MainVolumesSetActive $MultiVolumeReader(firstMRMLid)
 
-    $MultiVolumeReader(loadStatusEntry) configure -textvariable \
-        MultiVolumeReader(emptyLoadStatus)
+    if { [ info exists MultiVolumeReaser(loadStatusEntry)] } {
+        $MultiVolumeReader(loadStatusEntry) configure -textvariable \
+            MultiVolumeReader(emptyLoadStatus)
+    }
 
     return 0
 }   
