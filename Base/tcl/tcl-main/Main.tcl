@@ -459,7 +459,7 @@ proc MainInit {} {
 
         # Set version info
     lappend Module(versions) [ParseCVSInfo Main \
-        {$Revision: 1.118 $} {$Date: 2005/01/28 21:45:43 $}]
+        {$Revision: 1.119 $} {$Date: 2005/03/03 22:31:45 $}]
 
     # Call each "Init" routine that's not part of a module
     #-------------------------------------------
@@ -1906,6 +1906,12 @@ proc MainExitProgram { } {
         if { ![catch "winfo class $w"] } {
             if {[winfo class $w] == "vtkTkRenderWidget"} {
                 set renwin [$w GetRenderWindow]
+                if { [info command $renwin] != "" } {
+                    $renwin Delete
+                }
+                catch "destroy $w"
+            } elseif {[winfo class $w] == "vtkTkImageViewerWidget"} {
+                set renwin [$w GetImageViewer]
                 if { [info command $renwin] != "" } {
                     $renwin Delete
                 }
