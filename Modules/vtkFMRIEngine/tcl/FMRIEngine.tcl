@@ -170,7 +170,7 @@ proc FMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.24 $} {$Date: 2004/08/24 18:07:24 $}]
+        {$Revision: 1.25 $} {$Date: 2004/08/24 19:37:18 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -374,11 +374,13 @@ proc FMRIEngineBuildGUI {} {
 proc FMRIEngineBuildUIForDetectors {parent} {
     global FMRIEngine Gui
 
-    frame $parent.fType  -bg $Gui(backdrop)
-    frame $parent.fApply -bg $Gui(activeWorkspace)
-    frame $parent.fName  -bg $Gui(activeWorkspace)
+    frame $parent.fType   -bg $Gui(backdrop)
+    frame $parent.fApply  -bg $Gui(activeWorkspace)
+    frame $parent.fName   -bg $Gui(activeWorkspace)
+    frame $parent.fStatus -bg $Gui(activeWorkspace)
+
     pack $parent.fType -side top -fill x -pady $Gui(pad) -padx $Gui(pad)
-    pack $parent.fName $parent.fApply -side top -fill x -pady $Gui(pad)
+    pack $parent.fName $parent.fApply $parent.fStatus -side top -fill x -pady $Gui(pad)
 
     # Type frame
     set f $parent.fType
@@ -416,6 +418,12 @@ proc FMRIEngineBuildUIForDetectors {parent} {
     set f $parent.fApply
     DevAddButton $f.bApply "Compute" "FMRIEngineComputeActivationVolume" 8
     grid $f.bApply -padx $Gui(pad)
+
+    # Status frame    
+    set f $parent.fStatus
+    set FMRIEngine(computeStatus) ""
+    eval {label $f.eName -textvariable FMRIEngine(computeStatus) -width 50} $Gui(WLA)
+    pack $f.eName -side left -padx 0 -pady 50 
 }
 
 
@@ -1011,6 +1019,7 @@ proc FMRIEngineComputeActivationVolume {} {
         return
     }
 
+
     # Add volumes into vtkActivationVolumeGenerator
     if {[info commands FMRIEngine(actvolgen)] != ""} {
         FMRIEngine(actvolgen) Delete
@@ -1036,6 +1045,14 @@ proc FMRIEngineComputeActivationVolume {} {
         DevErrorWindow "Stimulus size ($stimSize) is not same as no of volumes ($volSize)."
         return
     }
+
+    set FMRIEngine(computeStatus) \
+        "The activation volume is under \n\
+        computation. Upon completion, \n\
+        it will be displayed as \n\
+        the foreground image.
+        " 
+    puts "Computing Act Volume $FMRIEngine(actVolName)..." 
 
     if {[info commands FMRIEngine(detector)] != ""} {
         FMRIEngine(detector) Delete
@@ -1080,6 +1097,9 @@ proc FMRIEngineComputeActivationVolume {} {
     MainVolumesSetActive $i
     MainUpdateMRML
     RenderAll
+
+    set FMRIEngine(computeStatus) ""
+    puts "...done"
 }
 
 
