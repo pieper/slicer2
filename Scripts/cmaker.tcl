@@ -33,8 +33,8 @@ switch $tcl_platform(os) {
         set CMAKE cmake
     }
     "Linux" {
-        set SLICER_HOME /home/nicole/slicer2
-        set VTK_BINARY_PATH /usr/local/include/vtk
+        set SLICER_HOME /home/pieper/slicer2/latest/slicer2
+        set VTK_BINARY_PATH /home/pieper/vtk/latest/VTK-build
         set BUILD redhat7.3
         set VTKSLICERBASE_BUILD_LIB $SLICER_HOME/Base/builds/$BUILD/bin/vtkSlicerBase.so
         set GENERATOR "Unix Makefiles" 
@@ -139,7 +139,7 @@ set VTK_ARG6 "-DBUILD_SHARED_LIBS:BOOL=ON"
 
 set SLICER_ARG1 "-DVTKSLICERBASE_SOURCE_DIR:PATH=$SLICER_HOME/Base"
 set SLICER_ARG2 "-DVTKSLICERBASE_BUILD_DIR:PATH=$SLICER_HOME/Base/builds/$BUILD"
-set SLICER_ARG3 "-DVTKSLICERBASE_BUILD_LIB:PATH=$SLICER_HOME/Base/builds/$BUILD/bin/debug/vtkSlicerBase.lib"
+set SLICER_ARG3 "-DVTKSLICERBASE_BUILD_LIB:PATH=$VTKSLICERBASE_BUILD_LIB"
 
 
 foreach target $TARGETS {
