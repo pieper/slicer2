@@ -26,17 +26,21 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        MainVolumes.tcl
-# DATE:        01/20/2000 09:41
+# DATE:        02/16/2000 09:12
 # LAST EDITOR: gering
 # PROCEDURES:  
 #   MainVolumesInit
 #   MainVolumesBuildVTK
 #   MainVolumesUpdateMRML
+#   MainVolumesCopyData
 #   MainVolumesCreate
+#   MainVolumesRead
+#   MainVolumesWrite
 #   MainVolumesDelete
 #   MainVolumesBuildGUI
 #   MainVolumesPopupGo
 #   MainVolumesPopup
+#   MainVolumesUpdate
 #   MainVolumesRender
 #   MainVolumesRenderActive
 #   MainVolumesSetActive
@@ -56,7 +60,7 @@ proc MainVolumesInit {} {
         
         set m MainVolumes
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.22 $} {$Date: 2000/02/16 14:04:08 $}]
+		{$Revision: 1.23 $} {$Date: 2000/02/16 14:17:03 $}]
 
 	set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -172,6 +176,10 @@ proc MainVolumesUpdateMRML {} {
 	MainVolumesSetActive $Volume(activeID)
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MainVolumesCopyData
+# .END
+#-------------------------------------------------------------------------------
 proc MainVolumesCopyData {dst src clear} {
 	global Volume Lut
 
@@ -561,6 +569,10 @@ proc MainVolumesPopup {v X Y} {
 	ShowPopup $Gui(wVolumes) 0 0
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MainVolumesUpdate
+# .END
+#-------------------------------------------------------------------------------
 proc MainVolumesUpdate {v} {
 	global Volume Slice 
 

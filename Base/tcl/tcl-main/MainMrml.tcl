@@ -26,23 +26,27 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        MainMrml.tcl
-# DATE:        01/20/2000 09:40
+# DATE:        02/16/2000 09:11
 # LAST EDITOR: gering
 # PROCEDURES:  
 #   MainMrmlInit
+#   MainMrmlInitIdLists
 #   MainMrmlUpdateMRML
 #   MainMrmlDumpTree
 #   MainMrmlClearList
+#   MainMrmlAddNode
 #   MainMrmlDeleteNodeDuringUpdate
 #   MainMrmlDeleteNode
 #   MainMrmlDeleteAll
 #   MainMrmlSetFile
 #   MainMrmlRead
-#   MainMrmlReadVersion1.0
 #   MainMrmlReadVersion2.0
-#   MainMrmlAddColors
-#   MainMrmlBuildTreesVersion1.0
 #   MainMrmlBuildTreesVersion2.0
+#   MainMrmlReadVersion1.0
+#   MainMrmlBuildTreesVersion1.0
+#   MainMrmlAddColors
+#   MainMrmlCheckColors
+#   MainMrmlRelativity
 #   MainMrmlWrite
 #==========================================================================auto=
 
@@ -69,6 +73,10 @@ proc MainMrmlInit {} {
 	set Mrml(colorsUnsaved) 0
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MainMrmlInitIdLists
+# .END
+#-------------------------------------------------------------------------------
 proc MainMrmlInitIdLists {} {
 	global Mrml
 	global Model Volume Color Transform EndTransform Matrix
@@ -127,6 +135,10 @@ proc MainMrmlClearList {} {
 	}
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MainMrmlAddNode
+# .END
+#-------------------------------------------------------------------------------
 proc MainMrmlAddNode {nodeType} {
 	global Mrml Model Volume Color Transform EndTransform Matrix Options
 	global TransferFunction WindowLevel TFPoint ColorLUT 
@@ -903,6 +915,10 @@ proc MainMrmlAddColors {tags} {
 	return "$tags $tagsColors"
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MainMrmlCheckColors
+# .END
+#-------------------------------------------------------------------------------
 proc MainMrmlCheckColors {} {
 	global Mrml
 	
@@ -977,6 +993,10 @@ proc MainMrmlCheckColors {} {
 
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MainMrmlRelativity
+# .END
+#-------------------------------------------------------------------------------
 proc MainMrmlRelativity {oldRoot} {
 	global Mrml
 

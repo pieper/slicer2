@@ -26,7 +26,7 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        MainAnno.tcl
-# DATE:        01/20/2000 09:40
+# DATE:        02/16/2000 09:10
 # LAST EDITOR: gering
 # PROCEDURES:  
 #   MainAnnoInit
@@ -38,6 +38,7 @@
 #   MainAnnoSetCrossVisibility
 #   MainAnnoSetHashesVisibility
 #   MainAnnoSetColor
+#   MainAnnoStorePresets
 #==========================================================================auto=
 
 
@@ -405,6 +406,10 @@ proc MainAnnoSetColor {color} {
 	eval Slicer SetCursorColor $color
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MainAnnoStorePresets
+# .END
+#-------------------------------------------------------------------------------
 proc MainAnnoStorePresets {p} {
 	global Preset Anno
 

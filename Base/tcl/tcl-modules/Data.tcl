@@ -26,7 +26,7 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        Data.tcl
-# DATE:        01/20/2000 09:41
+# DATE:        02/16/2000 09:13
 # LAST EDITOR: gering
 # PROCEDURES:  
 #   DataInit
@@ -47,6 +47,8 @@
 #   DataAddMatrix
 #   DataAddTransform
 #   DataAddVolume
+#   DataEnter
+#   DataExit
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -73,7 +75,7 @@ proc DataInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.15 $} {$Date: 2000/02/14 15:30:02 $}]
+		{$Revision: 1.16 $} {$Date: 2000/02/16 14:17:05 $}]
 
 	set Data(index) ""
 	set Data(clipboard) ""
@@ -846,6 +848,10 @@ proc DataCheckSelectedTransforms {selection lastItem} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC DataEnter
+# .END
+#-------------------------------------------------------------------------------
 proc DataEnter {} { 
     global Data
 
@@ -854,6 +860,10 @@ proc DataEnter {} {
 
 }
 
+#-------------------------------------------------------------------------------
+# .PROC DataExit
+# .END
+#-------------------------------------------------------------------------------
 proc DataExit {} {
 
     popEventManager

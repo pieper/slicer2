@@ -26,7 +26,7 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        MainSlices.tcl
-# DATE:        01/20/2000 09:41
+# DATE:        02/16/2000 09:12
 # LAST EDITOR: gering
 # PROCEDURES:  
 #   MainSlicesInit
@@ -43,7 +43,7 @@
 #   MainSlicesSetActive
 #   MainSlicesSetVolumeAll
 #   MainSlicesSetVolume
-#   MainSlicesSetOffsetCallback
+#   MainSlicesSetOffsetInit
 #   MainSlicesSetOffset
 #   MainSlicesSetSliderRange
 #   MainSlicesSetOrientAll
@@ -55,6 +55,11 @@
 #   MainSlicesSetVisibilityAll
 #   MainSlicesSetVisibility
 #   MainSlicesSetOpacityAll
+#   MainSlicesSetFadeAll
+#   MainSlicesSave
+#   MainSlicesSavePopup
+#   MainSlicesWrite
+#   MainSlicesStorePresets
 #==========================================================================auto=
 
 
@@ -663,6 +668,10 @@ proc MainSlicesSetVolume {Layer s v} {
 	MainSlicesSetSliderRange $s
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MainSlicesSetOffsetInit
+# .END
+#-------------------------------------------------------------------------------
 proc MainSlicesSetOffsetInit {s widget {value ""}} {
 
 	# This prevents Tk from calling RenderBoth when it first creates
@@ -996,6 +1005,10 @@ proc MainSlicesSetFadeAll {{value ""}} {
 	Slicer SetForeFade $value
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MainSlicesSave
+# .END
+#-------------------------------------------------------------------------------
 proc MainSlicesSave {} {
 	global Mrml Slice
 
@@ -1011,6 +1024,10 @@ proc MainSlicesSave {} {
 	MainSlicesWrite $filename
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MainSlicesSavePopup
+# .END
+#-------------------------------------------------------------------------------
 proc MainSlicesSavePopup {} {
 	global Slice Mrml Gui
 
@@ -1037,6 +1054,10 @@ proc MainSlicesSavePopup {} {
 	MainSlicesWrite $filename
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MainSlicesWrite
+# .END
+#-------------------------------------------------------------------------------
 proc MainSlicesWrite {filename} {
 	global viewWin Mrml Slice Gui
 
@@ -1097,6 +1118,10 @@ proc MainSlicesWrite {filename} {
 	set Slice(ext) [file extension $filename]
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MainSlicesStorePresets
+# .END
+#-------------------------------------------------------------------------------
 proc MainSlicesStorePresets {p} {
 	global Preset Slice
 

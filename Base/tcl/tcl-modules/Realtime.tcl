@@ -1,3 +1,53 @@
+#=auto==========================================================================
+# Copyright (c) 1999 Surgical Planning Lab, Brigham and Women's Hospital
+#  
+# Direct all questions regarding this copyright to slicer@ai.mit.edu.
+# The following terms apply to all files associated with the software unless
+# explicitly disclaimed in individual files.   
+# 
+# The authors hereby grant permission to use, copy, (but NOT distribute) this
+# software and its documentation for any NON-COMMERCIAL purpose, provided
+# that existing copyright notices are retained verbatim in all copies.
+# The authors grant permission to modify this software and its documentation 
+# for any NON-COMMERCIAL purpose, provided that such modifications are not 
+# distributed without the explicit consent of the authors and that existing
+# copyright notices are retained in all copies. Some of the algorithms
+# implemented by this software are patented, observe all applicable patent law.
+# 
+# IN NO EVENT SHALL THE AUTHORS OR DISTRIBUTORS BE LIABLE TO ANY PARTY FOR
+# DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING OUT
+# OF THE USE OF THIS SOFTWARE, ITS DOCUMENTATION, OR ANY DERIVATIVES THEREOF,
+# EVEN IF THE AUTHORS HAVE BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# 
+# THE AUTHORS AND DISTRIBUTORS SPECIFICALLY DISCLAIM ANY WARRANTIES, INCLUDING,
+# BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+# PARTICULAR PURPOSE, AND NON-INFRINGEMENT.  THIS SOFTWARE IS PROVIDED ON AN
+# 'AS IS' BASIS, AND THE AUTHORS AND DISTRIBUTORS HAVE NO OBLIGATION TO PROVIDE
+# MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+#===============================================================================
+# FILE:        Realtime.tcl
+# DATE:        02/16/2000 09:13
+# LAST EDITOR: gering
+# PROCEDURES:  
+#   RealtimeInit
+#   RealtimeBuildVTK
+#   RealtimeUpdateMRML
+#   RealtimeBuildGUI
+#   RealtimeEnter
+#   RealtimeSetEffect
+#   RealtimeSetSwitch
+#   RealtimeImageComponentCallback
+#   RealtimeImageCompleteCallback
+#   RealtimeMakeBaseline
+#   RealtimeSetRealtime
+#   RealtimeSetBaseline
+#   RealtimeSetResult
+#   RealtimeGetRealtimeID
+#   RealtimeGetBaselineID
+#   RealtimeGetResultID
+#   RealtimeWrite
+#   RealtimeRead
+#==========================================================================auto=
 
 #-------------------------------------------------------------------------------
 # .PROC RealtimeInit
@@ -333,6 +383,10 @@ Models are fun. Do you like models, Ron?
 	}
 }
 
+#-------------------------------------------------------------------------------
+# .PROC RealtimeEnter
+# .END
+#-------------------------------------------------------------------------------
 proc RealtimeEnter {} {
 	global Realtime Volume Slice
 
@@ -350,6 +404,10 @@ proc RealtimeEnter {} {
 	}
 }
 
+#-------------------------------------------------------------------------------
+# .PROC RealtimeSetEffect
+# .END
+#-------------------------------------------------------------------------------
 proc RealtimeSetEffect {e} {
 	global Realtime
 
@@ -360,6 +418,10 @@ proc RealtimeSetEffect {e} {
 
 }
 
+#-------------------------------------------------------------------------------
+# .PROC RealtimeSetSwitch
+# .END
+#-------------------------------------------------------------------------------
 proc RealtimeSetSwitch {} {
 	global Realtime
 
@@ -372,6 +434,10 @@ proc RealtimeSetSwitch {} {
 	set Realtime(switch) Off
 }
 
+#-------------------------------------------------------------------------------
+# .PROC RealtimeImageComponentCallback
+# .END
+#-------------------------------------------------------------------------------
 proc RealtimeImageComponentCallback {} {
 	global Realtime
 
@@ -389,6 +455,10 @@ proc RealtimeImageComponentCallback {} {
 	RealtimeImageCompleteCallback
 }
 
+#-------------------------------------------------------------------------------
+# .PROC RealtimeImageCompleteCallback
+# .END
+#-------------------------------------------------------------------------------
 proc RealtimeImageCompleteCallback {} {
 	global Realtime Volume
 
@@ -449,6 +519,10 @@ proc RealtimeImageCompleteCallback {} {
 	RenderAll
 }
 
+#-------------------------------------------------------------------------------
+# .PROC RealtimeMakeBaseline
+# .END
+#-------------------------------------------------------------------------------
 proc RealtimeMakeBaseline {} {
 	global Volume
 
@@ -627,6 +701,10 @@ proc RealtimeGetResultID {} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC RealtimeWrite
+# .END
+#-------------------------------------------------------------------------------
 proc RealtimeWrite {data} {
 	global Volume Realtime
 
@@ -652,6 +730,10 @@ proc RealtimeWrite {data} {
 	MainVolumesSetActive $v
 }
 
+#-------------------------------------------------------------------------------
+# .PROC RealtimeRead
+# .END
+#-------------------------------------------------------------------------------
 proc RealtimeRead {data} {
 	global Volume Realtime Mrml
 

@@ -26,7 +26,7 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        MainColors.tcl
-# DATE:        01/20/2000 09:40
+# DATE:        02/16/2000 09:10
 # LAST EDITOR: gering
 # PROCEDURES:  
 #   MainColorsInit

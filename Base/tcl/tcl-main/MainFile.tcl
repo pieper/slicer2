@@ -26,7 +26,7 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        MainFile.tcl
-# DATE:        01/20/2000 09:40
+# DATE:        02/16/2000 09:10
 # LAST EDITOR: gering
 # PROCEDURES:  
 #   MainFileBuildGUI
@@ -37,9 +37,14 @@
 #   MainFileSaveAs
 #   MainFileSaveAsApply
 #   MainFileSave
+#   MainFileSaveWithOptions
 #   MainFileOpenPopup
 #   MainFileOpen
 #   MainFileOpenApply
+#   MainFileSaveModel
+#   MainFileOpenModel
+#   MainFileSaveVolume
+#   MainFileOpenVolume
 #   MainFileGetRelativePrefix
 #   MainFileFindUniqueName
 #   MainFileCreateDirectory
@@ -398,6 +403,10 @@ proc MainFileOpenApply {} {
 	}
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MainFileSaveModel
+# .END
+#-------------------------------------------------------------------------------
 proc MainFileSaveModel {m prefix} {
 	global Model Mrml
 
@@ -433,6 +442,10 @@ Use this utility to save a model that is already in the 3D Slicer."
 	return [MainFileGetRelativePrefix $filename]
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MainFileOpenModel
+# .END
+#-------------------------------------------------------------------------------
 proc MainFileOpenModel {m prefix} {
 	global Model Mrml
 
@@ -469,6 +482,10 @@ To read a model for the first time, click 'Add Model' on the Data panel."
 	return [MainFileGetRelativePrefix $filename]
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MainFileSaveVolume
+# .END
+#-------------------------------------------------------------------------------
 proc MainFileSaveVolume {v prefix} {
 	global Volume Mrml
 
@@ -503,6 +520,10 @@ Use this utility to save a volume that already exists in the 3D Slicer."
 	return [MainFileGetRelativePrefix $filename]
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MainFileOpenVolume
+# .END
+#-------------------------------------------------------------------------------
 proc MainFileOpenVolume {v prefix} {
 	global Volume Mrml
 

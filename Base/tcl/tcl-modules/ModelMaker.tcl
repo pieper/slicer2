@@ -26,20 +26,22 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        ModelMaker.tcl
-# DATE:        01/20/2000 09:41
+# DATE:        02/16/2000 09:13
 # LAST EDITOR: gering
 # PROCEDURES:  
 #   ModelMakerInit
 #   ModelMakerUpdateMRML
 #   ModelMakerBuildGUI
-#   ModelMakerSetPrefix
+#   ModelMakerTransform
 #   ModelMakerWrite
+#   ModelMakerRead
 #   ModelMakerEnter
 #   ModelMakerSetVolume
 #   ModelMakerCreate
 #   ModelMakerLabelCallback
 #   ModelMakerSmoothWrapper
 #   ModelMakerSmooth
+#   ModelMakerReverseNormals
 #   ModelMakerMarch
 #==========================================================================auto=
 
@@ -362,6 +364,10 @@ Models are fun. Do you like models, Ron?
 	pack $f.f.bSave $f.f.bRead -side left -padx $Gui(pad)
 }
 
+#-------------------------------------------------------------------------------
+# .PROC ModelMakerTransform
+# .END
+#-------------------------------------------------------------------------------
 proc ModelMakerTransform {volume} {
 	global ModelMaker Model Volume Matrix
 	

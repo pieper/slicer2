@@ -26,7 +26,7 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        MainOptions.tcl
-# DATE:        01/20/2000 09:40
+# DATE:        02/16/2000 09:12
 # LAST EDITOR: gering
 # PROCEDURES:  
 #   MainOptionsInit
@@ -35,6 +35,11 @@
 #   MainOptionsCreate
 #   MainOptionsDelete
 #   MainOptionsSetActive
+#   MainOptionsParsePresets
+#   MainOptionsParseDefaults
+#   MainOptionsUnparsePresets
+#   MainOptionsPreset
+#   MainOptionsPresetCallback
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -205,6 +210,10 @@ proc MainOptionsSetActive {t} {
 	}
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MainOptionsParsePresets
+# .END
+#-------------------------------------------------------------------------------
 proc MainOptionsParsePresets {attr} {
 	global Preset
 	
@@ -216,6 +225,10 @@ proc MainOptionsParsePresets {attr} {
 	}
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MainOptionsParseDefaults
+# .END
+#-------------------------------------------------------------------------------
 proc MainOptionsParseDefaults {m} {
 	global Module Preset
 	
@@ -246,6 +259,10 @@ proc MainOptionsParseDefaults {m} {
 	}
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MainOptionsUnparsePresets
+# .END
+#-------------------------------------------------------------------------------
 proc MainOptionsUnparsePresets {} {
 	global Preset Mrml Options Module Model
 	
@@ -333,6 +350,10 @@ proc MainOptionsUnparsePresets {} {
 	}
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MainOptionsPreset
+# .END
+#-------------------------------------------------------------------------------
 proc MainOptionsPreset {p state} {
 	global View Gui Preset
 
@@ -345,6 +366,10 @@ proc MainOptionsPreset {p state} {
 	}
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MainOptionsPresetCallback
+# .END
+#-------------------------------------------------------------------------------
 proc MainOptionsPresetCallback {p} {
 	global View Target Gui Preset Slice Locator Anno Model Options Module
 

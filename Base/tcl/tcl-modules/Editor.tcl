@@ -26,14 +26,13 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        Editor.tcl
-# DATE:        01/20/2000 09:41
+# DATE:        02/16/2000 09:13
 # LAST EDITOR: gering
 # PROCEDURES:  
 #   EditorInit
 #   EditorBuildVTK
 #   EditorUpdateMRML
 #   EditorBuildGUI
-#   EditorSetPrefix
 #   EditorEnter
 #   EditorB1
 #   EditorB1Motion
@@ -43,6 +42,8 @@
 #   EditorSetWorking
 #   EditorSetComposite
 #   EditorUpdateEffect
+#   EditorSameExtents
+#   EditorCopyNode
 #   EditorGetOriginalID
 #   EditorGetWorkingID
 #   EditorGetCompositeID
@@ -53,12 +54,15 @@
 #   EditorUpdateAfterUndo
 #   EditorUndo
 #   EdBuildScopeGUI
+#   EdBuildMultiGUI
 #   EdBuildInputGUI
 #   EdBuildInteractGUI
 #   EdBuildRenderGUI
 #   EdSetupBeforeApplyEffect
 #   EdUpdateAfterApplyEffect
-#   EditorClearOutput
+#   EditorWrite
+#   EditorRead
+#   EditorClear
 #   EditorMerge
 #==========================================================================auto=
 
@@ -938,6 +942,10 @@ proc EditorUpdateEffect {} {
 	}
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EditorSameExtents
+# .END
+#-------------------------------------------------------------------------------
 proc EditorSameExtents {dst src} {
 	set dstExt [[Volume($dst,vol) GetOutput] GetExtent]
 	set srcExt [[Volume($src,vol) GetOutput] GetExtent]
@@ -947,6 +955,10 @@ proc EditorSameExtents {dst src} {
 	return 0
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EditorCopyNode
+# .END
+#-------------------------------------------------------------------------------
 proc EditorCopyNode {dst src} {
 	global Volume Lut
 
@@ -1281,6 +1293,10 @@ proc EdBuildScopeGUI {f var {not ""}} {
 	pack $f.l $f.f -side left -padx $Gui(pad) -fill x -anchor w
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EdBuildMultiGUI
+# .END
+#-------------------------------------------------------------------------------
 proc EdBuildMultiGUI {f var} {
 	global Gui
 
@@ -1473,6 +1489,10 @@ proc EdUpdateAfterApplyEffect {v {render All}} {
 #                           OUTPUT
 ################################################################################
 
+#-------------------------------------------------------------------------------
+# .PROC EditorWrite
+# .END
+#-------------------------------------------------------------------------------
 proc EditorWrite {data} {
 	global Volume Editor
 
@@ -1498,6 +1518,10 @@ proc EditorWrite {data} {
 	MainVolumesSetActive $v
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EditorRead
+# .END
+#-------------------------------------------------------------------------------
 proc EditorRead {data} {
 	global Volume Editor Mrml
 

@@ -1,17 +1,3 @@
-# Events.tcl
-# 10/16/98 Peter C. Everett peverett@bwh.harvard.edu: Created
-
-# This utility supports the pushing and popping of event handlers
-# in order for different "tools" to have different bindings from
-# existing ones, and to later restore the old bindings. -P. C. Everett
-#
-# An event manager is an array where the names take the form:
-# widget,event and the values take the form: {command}.
-# pushEventManager and popEventManager allow the pushing and popping
-# of an entire set of event handlers, as in the case of changing
-# tools.
-#
-######################################################################
 #=auto==========================================================================
 # Copyright (c) 1999 Surgical Planning Lab, Brigham and Women's Hospital
 #  
@@ -19,7 +5,7 @@
 # The following terms apply to all files associated with the software unless
 # explicitly disclaimed in individual files.   
 # 
-# The authors hereby grant permission to use and copy (but not distribute) this
+# The authors hereby grant permission to use, copy, (but NOT distribute) this
 # software and its documentation for any NON-COMMERCIAL purpose, provided
 # that existing copyright notices are retained verbatim in all copies.
 # The authors grant permission to modify this software and its documentation 
@@ -39,9 +25,9 @@
 # 'AS IS' BASIS, AND THE AUTHORS AND DISTRIBUTORS HAVE NO OBLIGATION TO PROVIDE
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
-# FILE:        Blocks.tcl
-# DATE:        1/24/00 22:30
-# LAST EDITOR: lzollei
+# FILE:        Events.tcl
+# DATE:        02/16/2000 09:10
+# LAST EDITOR: gering
 # PROCEDURES:  
 #   EventsInit
 #   pushHandler
@@ -49,6 +35,20 @@
 #   pushEventManager
 #   popEventManager
 #==========================================================================auto=
+# Events.tcl
+# 10/16/98 Peter C. Everett peverett@bwh.harvard.edu: Created
+
+# This utility supports the pushing and popping of event handlers
+# in order for different "tools" to have different bindings from
+# existing ones, and to later restore the old bindings. -P. C. Everett
+#
+# An event manager is an array where the names take the form:
+# widget,event and the values take the form: {command}.
+# pushEventManager and popEventManager allow the pushing and popping
+# of an entire set of event handlers, as in the case of changing
+# tools.
+#
+######################################################################
 #-------------------------------------------------------------------------------
 # .PROC EventsInit
 # .END

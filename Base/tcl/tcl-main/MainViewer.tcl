@@ -26,7 +26,7 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        MainViewer.tcl
-# DATE:        01/20/2000 09:41
+# DATE:        02/16/2000 09:12
 # LAST EDITOR: gering
 # PROCEDURES:  
 #   MainViewerInit

@@ -26,7 +26,7 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        MainModels.tcl
-# DATE:        01/20/2000 09:40
+# DATE:        02/16/2000 09:11
 # LAST EDITOR: gering
 # PROCEDURES:  
 #   MainModelsInit
@@ -34,7 +34,6 @@
 #   MainModelsShouldBeAVtkClass
 #   MainModelsCreate
 #   MainModelsRead
-#   MainModelsCreateUnreadable
 #   MainModelsInitGUIVariables
 #   MainModelsDelete
 #   MainModelsBuildGUI
@@ -45,13 +44,15 @@
 #   MainModelsSetActive
 #   MainModelsSetColor
 #   MainModelsSetVisibility
-#   MainModelsRefreshClip
-#   MainModelsSetClip
+#   MainModelsRefreshClipping
+#   MainModelsSetClipping
+#   MainModelsSetOpacityInit
 #   MainModelsSetOpacity
 #   MainModelsSetCulling
 #   MainModelsSetScalarVisibility
 #   MainModelsRegisterModel
 #   MainModelsWrite
+#   MainModelsStorePresets
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -713,6 +714,10 @@ proc MainModelsSetClipping {m {value ""}} {
 	}
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MainModelsSetOpacityInit
+# .END
+#-------------------------------------------------------------------------------
 proc MainModelsSetOpacityInit {m widget {value ""}} {
 
 	$widget config -command "MainModelsSetOpacity $m; Render3D"
@@ -853,6 +858,10 @@ since the last time it was saved."
 	set Model($m,dirty) 0
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MainModelsStorePresets
+# .END
+#-------------------------------------------------------------------------------
 proc MainModelsStorePresets {p} {
 	global Preset Model
 

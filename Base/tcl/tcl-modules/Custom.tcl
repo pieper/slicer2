@@ -26,7 +26,7 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        Custom.tcl
-# DATE:        01/20/2000 09:41
+# DATE:        02/16/2000 09:13
 # LAST EDITOR: gering
 # PROCEDURES:  
 #   CustomInit

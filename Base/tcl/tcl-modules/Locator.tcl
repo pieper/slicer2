@@ -26,12 +26,15 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        Locator.tcl
-# DATE:        01/20/2000 09:41
+# DATE:        02/16/2000 09:13
 # LAST EDITOR: gering
 # PROCEDURES:  
 #   LocatorInit
+#   LocatorUpdateMRML
 #   LocatorBuildVTK
 #   LocatorBuildGUI
+#   LocatorSetActive
+#   LocatorSetPatientPosition
 #   LocatorSetDriverAll
 #   LocatorSetDriver
 #   LocatorSetVisibility
@@ -42,9 +45,18 @@
 #   LocatorSetPosition
 #   LocatorUseLocatorMatrix
 #   LocatorFormat
+#   LocatorGetRealtimeID
+#   LocatorSetRealtime
+#   LocatorWrite
+#   LocatorRead
 #   LocatorPause
 #   LocatorConnect
 #   LocatorLoopFile
+#   LocatorLoopImages
+#   LocatorLoopSignaSP
+#   LocatorFilePrefix
+#   LocatorImagesPrefix
+#   LocatorStorePresets
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -716,6 +728,10 @@ Models are fun. Do you like models, Ron?
 	}
 }
 
+#-------------------------------------------------------------------------------
+# .PROC LocatorSetActive
+# .END
+#-------------------------------------------------------------------------------
 proc LocatorSetActive {s} {
 	global Locator
 
@@ -724,6 +740,10 @@ proc LocatorSetActive {s} {
 	raise $Locator(f$s)
 }
 
+#-------------------------------------------------------------------------------
+# .PROC LocatorSetPatientPosition
+# .END
+#-------------------------------------------------------------------------------
 proc LocatorSetPatientPosition {{key ""} {value ""}} {
 	global Locator
 	
@@ -1153,6 +1173,10 @@ proc LocatorSetRealtime {v} {
 	}
 }
 
+#-------------------------------------------------------------------------------
+# .PROC LocatorWrite
+# .END
+#-------------------------------------------------------------------------------
 proc LocatorWrite {data} {
 	global Volume Locator
 
@@ -1177,6 +1201,10 @@ proc LocatorWrite {data} {
 	MainVolumesSetActive $v
 }
 
+#-------------------------------------------------------------------------------
+# .PROC LocatorRead
+# .END
+#-------------------------------------------------------------------------------
 proc LocatorRead {data} {
 	global Volume Locator Mrml
 
@@ -1359,6 +1387,10 @@ proc LocatorLoopFile {} {
 	after $Locator(File,msPoll) LocatorLoopFile
 }
 
+#-------------------------------------------------------------------------------
+# .PROC LocatorLoopImages
+# .END
+#-------------------------------------------------------------------------------
 proc LocatorLoopImages {} {
 	global Slice Volume Locator
 
@@ -1379,6 +1411,10 @@ proc LocatorLoopImages {} {
 	
 }
 
+#-------------------------------------------------------------------------------
+# .PROC LocatorLoopSignaSP
+# .END
+#-------------------------------------------------------------------------------
 proc LocatorLoopSignaSP {} {
 	global Slice Volume Locator
 	
@@ -1507,6 +1543,10 @@ proc LocatorLoopSignaSP {} {
 	after $Locator(SignaSP,msPoll) LocatorLoopSignaSP
 }
 
+#-------------------------------------------------------------------------------
+# .PROC LocatorFilePrefix
+# .END
+#-------------------------------------------------------------------------------
 proc LocatorFilePrefix {} {
 	global Locator Mrml
 
@@ -1533,6 +1573,10 @@ proc LocatorFilePrefix {} {
 	set Locator(File,prefix) [MainFileGetRelativePrefix $filename]
 }
 
+#-------------------------------------------------------------------------------
+# .PROC LocatorImagesPrefix
+# .END
+#-------------------------------------------------------------------------------
 proc LocatorImagesPrefix {} {
 	global Locator Mrml
 
@@ -1570,6 +1614,10 @@ proc LocatorImagesPrefix {} {
 		[file join $Mrml(dir) $filename]]
 }
 
+#-------------------------------------------------------------------------------
+# .PROC LocatorStorePresets
+# .END
+#-------------------------------------------------------------------------------
 proc LocatorStorePresets {p} {
 	global Preset Locator Slice
 

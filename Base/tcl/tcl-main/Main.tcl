@@ -26,7 +26,7 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        Main.tcl
-# DATE:        01/20/2000 09:40
+# DATE:        02/16/2000 09:10
 # LAST EDITOR: gering
 # PROCEDURES:  
 #   BootSlicer
@@ -45,6 +45,7 @@
 #   MainSaveMRMLQuery
 #   MainExitProgram
 #   Distance
+#   FormatCVSInfo
 #==========================================================================auto=
 
 
@@ -309,7 +310,7 @@ proc MainInit {} {
 	set Module(procRecallPresets) ""
 	set m Main
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.22 $} {$Date: 2000/02/14 22:26:45 $}]
+		{$Revision: 1.23 $} {$Date: 2000/02/16 14:16:58 $}]
 
 	# Call each "Init" routine that's not part of a module
 	#-------------------------------------------
@@ -1256,6 +1257,10 @@ proc ParseCVSInfo {module args} {
     return $l
 }
 
+#-------------------------------------------------------------------------------
+# .PROC FormatCVSInfo
+# .END
+#-------------------------------------------------------------------------------
 proc FormatCVSInfo {versions} {
     set s [format "%-20s%-20s%-20s\n" "Module Name" "Revision" "Date"]
     for {set i 0} {$i < 60} {incr i} {

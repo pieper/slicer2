@@ -26,12 +26,14 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        Models.tcl
-# DATE:        01/20/2000 09:41
+# DATE:        02/16/2000 09:13
 # LAST EDITOR: gering
 # PROCEDURES:  
 #   ModelsInit
 #   ModelsUpdateMRML
 #   ModelsBuildGUI
+#   ModelsBuildScrolledGUI
+#   ModelsConfigScrolledGUI
 #   ModelsSetPropertyType
 #   ModelsSetPrefix
 #   ModelsPropsApply
@@ -530,6 +532,10 @@ page, and select 'Clipping'."} $Gui(WLA)
 	ModelsBuildScrolledGUI 
 }
 
+#-------------------------------------------------------------------------------
+# .PROC ModelsBuildScrolledGUI
+# .END
+#-------------------------------------------------------------------------------
 proc ModelsBuildScrolledGUI {} {
 	global Model Gui Module
 	
@@ -565,6 +571,10 @@ proc ModelsBuildScrolledGUI {} {
 	ModelsConfigScrolledGUI
 }
 
+#-------------------------------------------------------------------------------
+# .PROC ModelsConfigScrolledGUI
+# .END
+#-------------------------------------------------------------------------------
 proc ModelsConfigScrolledGUI {} {
 	global Model
 

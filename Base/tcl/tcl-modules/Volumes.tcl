@@ -26,7 +26,7 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        Volumes.tcl
-# DATE:        01/20/2000 09:41
+# DATE:        02/16/2000 09:13
 # LAST EDITOR: gering
 # PROCEDURES:  
 #   VolumesInit
@@ -37,8 +37,6 @@
 #   VolumesSetScanOrder
 #   VolumesSetScalarType
 #   VolumesSetLast
-#   VolumesGetDefaultScanOrder
-#   VolumesGetDefaultScalarType
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -874,6 +872,10 @@ proc VolumesPropsCancel {} {
 	}
 }
 
+#-------------------------------------------------------------------------------
+# .PROC VolumesSetFirst
+# .END
+#-------------------------------------------------------------------------------
 proc VolumesSetFirst {} {
 	global Volume Mrml
 

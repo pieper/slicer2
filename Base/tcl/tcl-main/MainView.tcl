@@ -26,7 +26,7 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        MainView.tcl
-# DATE:        01/20/2000 09:41
+# DATE:        02/16/2000 09:12
 # LAST EDITOR: gering
 # PROCEDURES:  
 #   MainViewInit
@@ -46,6 +46,7 @@
 #   MainViewSaveView
 #   MainViewSaveViewPopup
 #   MainViewWriteView
+#   MainViewStorePresets
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -66,7 +67,7 @@ viewMode='Normal' viewBgColor='Blue'"
 
         set m MainView
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.11 $} {$Date: 2000/02/11 22:29:37 $}]
+		{$Revision: 1.12 $} {$Date: 2000/02/16 14:17:02 $}]
 
 	set View(viewerHeightNormal) 656
 	set View(viewerWidth)  956 
@@ -712,6 +713,10 @@ proc MainViewWriteView {filename} {
 	set View(ext) [file extension $filename]
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MainViewStorePresets
+# .END
+#-------------------------------------------------------------------------------
 proc MainViewStorePresets {p} {
 	global Preset View
 

@@ -26,17 +26,20 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        Options.tcl
-# DATE:        01/20/2000 09:41
+# DATE:        02/16/2000 09:13
 # LAST EDITOR: gering
 # PROCEDURES:  
 #   OptionsInit
 #   OptionsUpdateMRML
 #   OptionsBuildGUI
 #   OptionsSetPropertyType
-#   OptionsSetPrefix
 #   OptionsPropsApply
+#   OptionsModulesApply
 #   OptionsPropsCancel
-#   OptionsMeter
+#   OptionsModulesAll
+#   ModulesOrderGUI
+#   ModulesUp
+#   ModulesDown
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -61,7 +64,7 @@ proc OptionsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.3 $} {$Date: 2000/02/14 15:33:06 $}]
+		{$Revision: 1.4 $} {$Date: 2000/02/16 14:17:08 $}]
 
 	# Props
 	set Options(propertyType) Basic
@@ -375,6 +378,10 @@ proc OptionsPropsApply {} {
 	MainUpdateMRML
 }
 
+#-------------------------------------------------------------------------------
+# .PROC OptionsModulesApply
+# .END
+#-------------------------------------------------------------------------------
 proc OptionsModulesApply {} {
 
         global Module Options

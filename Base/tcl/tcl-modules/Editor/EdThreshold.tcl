@@ -5,7 +5,7 @@
 # The following terms apply to all files associated with the software unless
 # explicitly disclaimed in individual files.   
 # 
-# The authors hereby grant permission to use and copy (but not distribute) this
+# The authors hereby grant permission to use, copy, (but NOT distribute) this
 # software and its documentation for any NON-COMMERCIAL purpose, provided
 # that existing copyright notices are retained verbatim in all copies.
 # The authors grant permission to modify this software and its documentation 
@@ -26,7 +26,7 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        EdThreshold.tcl
-# DATE:        12/10/1999 08:40
+# DATE:        02/16/2000 09:13
 # LAST EDITOR: gering
 # PROCEDURES:  
 #   EdThresholdInit
@@ -38,6 +38,7 @@
 #   EdThresholdUpdateInteractive
 #   EdThresholdSetInput
 #   EdThresholdSetInteract
+#   EdThresholdUpdateInit
 #   EdThresholdUpdate
 #   EdThresholdRenderInteractive
 #   EdThresholdLabel
@@ -326,6 +327,10 @@ proc EdThresholdSetInteract {} {
 	RenderAll
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EdThresholdUpdateInit
+# .END
+#-------------------------------------------------------------------------------
 proc EdThresholdUpdateInit {widget {value ""}} {
 
 	$widget config -command "EdThresholdUpdate; RenderActive"

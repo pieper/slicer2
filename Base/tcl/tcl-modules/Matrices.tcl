@@ -26,7 +26,7 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        Matrices.tcl
-# DATE:        01/20/2000 09:41
+# DATE:        02/16/2000 09:13
 # LAST EDITOR: gering
 # PROCEDURES:  
 #   MatricesInit
@@ -35,6 +35,7 @@
 #   MatricesIdentity
 #   MatricesInvert
 #   MatricesSetPropertyType
+#   MatricesPropsApply
 #   MatricesPropsCancel
 #   MatricesManualTranslate
 #   MatricesManualTranslateDual
@@ -679,6 +680,10 @@ proc MatricesSetPropertyType {} {
 	raise $Matrix(f$Matrix(propertyType))
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MatricesPropsApply
+# .END
+#-------------------------------------------------------------------------------
 proc MatricesPropsApply {} {
 	global Matrix Label Module Mrml Volume
 
