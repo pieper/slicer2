@@ -42,8 +42,8 @@
 #   MainModelsSetActive
 #   MainModelsSetColor
 #   MainModelsSetVisibility
-#   MainModelsRefreshClipping
-#   MainModelsSetClipping
+#   MainModelsRefreshClipping when to
+#   MainModelsSetClipping m value
 #   MainModelsSetOpacityInit
 #   MainModelsSetOpacity
 #   MainModelsSetCulling
@@ -72,7 +72,7 @@ proc MainModelsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainModels \
-		{$Revision: 1.23 $} {$Date: 2000/03/01 02:20:35 $}]
+		{$Revision: 1.24 $} {$Date: 2000/07/26 19:13:00 $}]
 
 	set Model(idNone) -1
 	set Model(activeID) ""
@@ -678,12 +678,14 @@ proc MainModelsSetVisibility {model {value ""}} {
 # .PROC MainModelsRefreshClipping
 # 
 # .ARGS
+#  Called when the Clipping of a model is Changed. It calls 
+#  MainModelsSetClipping to refresh the clipping of every model
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsRefreshClipping {} {
 	global Model Slice
 
-	# If no functions are added, then don't clip
+	# For each model, do the appropriate Clipping
 	foreach m $Model(idList) {
 		MainModelsSetClipping $m
 	}
@@ -693,6 +695,8 @@ proc MainModelsRefreshClipping {} {
 # .PROC MainModelsSetClipping
 # 
 # .ARGS
+#  int m the id number of the model.
+#  int value \"\" means refresh.  Otherwise Sets Model(m,clipping) to value.
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsSetClipping {m {value ""}} {
@@ -705,6 +709,7 @@ proc MainModelsSetClipping {m {value ""}} {
 	}
 	Model($m,node) SetClipping $Model($m,clipping)
 		
+        # Count the number of slices that Cut:
 	set union 0
 	foreach s $Slice(idList) {
 		set union [expr $union + $Slice($s,addedFunction)]
