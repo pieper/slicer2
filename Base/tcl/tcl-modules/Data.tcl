@@ -88,7 +88,7 @@ proc DataInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.47 $} {$Date: 2003/04/14 20:04:10 $}]
+        {$Revision: 1.48 $} {$Date: 2003/05/28 12:42:01 $}]
 
     set Data(index) ""
     set Data(clipboard) ""
@@ -707,20 +707,26 @@ proc DataAddMatrix {} {
     # Check that the matrix is being added after another matrix or transform
     set selection [$Data(fNodeList) curselection]
     if {$selection == ""} {
-    tk_messageBox -message "Select a Transform to add the Matrix to."
-    return
+        tk_messageBox -message "Select a Transform to add the Matrix to."
+        return
     }
     set lastSel [Mrml(dataTree) GetNthItem [lindex $selection end]]    
     set class [$lastSel GetClassName]
     if {$class != "vtkMrmlTransformNode" && $class != "vtkMrmlMatrixNode"} {
-    tk_messageBox -message "Select a Transform to add the Matrix to."
-    return
+        tk_messageBox -message "Select a Transform to add the Matrix to."
+        return
     }
     
     set i $Matrix(nextID)
     incr Matrix(nextID)
     lappend Matrix(idList) $i
     vtkMrmlMatrixNode Matrix($i,node)
+
+    # special trick to avoid vtk 4.2 legacy hack message 
+    # (adds a concatenated identity transform to the transform)
+    [Matrix($i,node) GetTransform] Scale 2 2 2
+    [Matrix($i,node) GetTransform] Scale .5 .5 .5
+
     set n Matrix($i,node)
     $n SetID $i
     $n SetName manual$i
@@ -810,9 +816,9 @@ proc DataAddTransform {append firstSel lastSel {CallUpdate "1"} } {
     set n Transform($i,node)
     $n SetID $i
     if {$append == 1} {
-    Mrml(dataTree) AddItem $n
+        Mrml(dataTree) AddItem $n
     } else {
-    Mrml(dataTree) InsertBeforeItem $firstSel $n
+        Mrml(dataTree) InsertBeforeItem $firstSel $n
     }
 
     ###########
@@ -825,13 +831,19 @@ proc DataAddTransform {append firstSel lastSel {CallUpdate "1"} } {
     incr Matrix(nextID)
     lappend Matrix(idList) $m
     vtkMrmlMatrixNode Matrix($m,node)
+
+    # special trick to avoid vtk 4.2 legacy hack message 
+    # (adds a concatenated identity transform to the transform)
+    [Matrix($i,node) GetTransform] Scale 2 2 2
+    [Matrix($i,node) GetTransform] Scale .5 .5 .5
+
     set n Matrix($m,node)
     $n SetID $m
     $n SetName manual$i
     if {$append == 1} {
-    Mrml(dataTree) AddItem $n
+        Mrml(dataTree) AddItem $n
     } else {
-    Mrml(dataTree) InsertBeforeItem $firstSel $n
+        Mrml(dataTree) InsertBeforeItem $firstSel $n
     }
     MainAlignmentsSetActive $m
 
@@ -848,9 +860,9 @@ proc DataAddTransform {append firstSel lastSel {CallUpdate "1"} } {
     set n EndTransform($i,node)
     $n SetID $i
     if {$append == 1} {
-    Mrml(dataTree) AddItem $n
+        Mrml(dataTree) AddItem $n
     } else {
-    Mrml(dataTree) InsertAfterItem $lastSel $n
+        Mrml(dataTree) InsertAfterItem $lastSel $n
     }
 
     if {$CallUpdate == 1} {
@@ -911,45 +923,45 @@ proc DataCheckSelectedTransforms {selection lastItem} {
 
     # Return if the selection contains only matching T-ET pairs
     if {$numTrans == 0} {
-    return $selection
+        return $selection
     }
 
     # If open Transforms are in selection ($numTrans>0), find the rest of 
     # their contents.
     if {$numTrans > 0} {
-    set TList ""
-    set line [lindex $selection end]
-    incr line
-
-    # T is the number of nested transforms we are inside; numTrans is the 
-    # number of transforms whose contents we want to find.
-    set T $numTrans
-    
-    while {$T > 0 && $line < $lastItem} {
-        set node [Mrml(dataTree) GetNthItem $line]
-        set class [$node GetClassName]
-        switch $class {
-        vtkMrmlTransformNode {
-            incr T
-        }
-        vtkMrmlMatrixNode {
-            if {$T <= $numTrans} {
-            lappend TList $line
-            }
-        }
-        vtkMrmlEndTransformNode {
-            if {$T <= $numTrans} {
-            lappend TList $line
-            }
-            incr T -1
-        }
-        }
-        # Get the next line
+        set TList ""
+        set line [lindex $selection end]
         incr line
-    }
-    
-    # Add the transform contents to the selection
-    return [concat $selection $TList]
+
+        # T is the number of nested transforms we are inside; numTrans is the 
+        # number of transforms whose contents we want to find.
+        set T $numTrans
+        
+        while {$T > 0 && $line < $lastItem} {
+            set node [Mrml(dataTree) GetNthItem $line]
+            set class [$node GetClassName]
+            switch $class {
+                vtkMrmlTransformNode {
+                    incr T
+                }
+                vtkMrmlMatrixNode {
+                    if {$T <= $numTrans} {
+                        lappend TList $line
+                    }
+                }
+                vtkMrmlEndTransformNode {
+                    if {$T <= $numTrans} {
+                        lappend TList $line
+                    }
+                    incr T -1
+                }
+            }
+            # Get the next line
+            incr line
+        }
+        
+        # Add the transform contents to the selection
+        return [concat $selection $TList]
     }
 
     # If there are unmatched End Transform tags ($numTrans<0), remove them 
@@ -963,27 +975,27 @@ proc DataCheckSelectedTransforms {selection lastItem} {
     set T $numOpenTrans
     
     while {$T > 0 && $line <= $lastSel} {
-    set node [Mrml(dataTree) GetNthItem $line]
-    set class [$node GetClassName]
-    switch $class {
-        vtkMrmlTransformNode {
-        incr T
+        set node [Mrml(dataTree) GetNthItem $line]
+        set class [$node GetClassName]
+        switch $class {
+            vtkMrmlTransformNode {
+                incr T
+            }
+            vtkMrmlEndTransformNode {
+                if {$T <= $numOpenTrans} {
+                    lappend ETList $line
+                }
+                incr T -1
+            }
         }
-        vtkMrmlEndTransformNode {
-        if {$T <= $numOpenTrans} {
-            lappend ETList $line
-        }
-        incr T -1
-        }
-    }
-    # Get the next line
-    incr line
+        # Get the next line
+        incr line
     }
 
     #Remove items we are saving from the selection
     foreach item $ETList {
-    set index [lsearch -exact $selection $item]
-    set selection [lreplace $selection $index $index]
+        set index [lsearch -exact $selection $item]
+        set selection [lreplace $selection $index $index]
     }
     return $selection
 }
