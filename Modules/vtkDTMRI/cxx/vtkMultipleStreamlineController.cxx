@@ -1279,7 +1279,7 @@ void vtkMultipleStreamlineController::SeedStreamlinesEvenlyInROI()
   tmp->SetFilePrefix("tractCountImage");
   tmp->SetFilePattern("%s.%03d");
   tmp->SetFileDimensionality(2);
-  tmp->Write();
+  //tmp->Write();
 
   vtkErrorMacro("number ofnon-null pointers: " << tmpCount);
 
@@ -1982,6 +1982,10 @@ void vtkMultipleStreamlineController::SeedStreamlinesFromROIClusterAndDisplay()
       index++;
       ++iter;
     }
+
+  //  ------------------------------------
+  // Save them to disk since we are about to delete the streamlines
+  this->SaveTractClustersAsTextFiles("embed");
 
   //  ------------------------------------
   // Since we don't have matching actors and mappers, remove the streamlines
