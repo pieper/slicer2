@@ -59,7 +59,7 @@ float vtkFastMarching::speed( int index )
        << " depth=" << depth << endl;
     }
 
-  return min(pdfIntensityIn->value(I)/pdfIntensityAll->value(I),
+  return (float)min(pdfIntensityIn->value(I)/pdfIntensityAll->value(I),
          pdfInhomoIn->value(H)/pdfInhomoAll->value(H));
 }
 
@@ -645,7 +645,7 @@ float vtkFastMarching::step( void )
     // reachjed them.
     return INF;
 
-  float EPS=1e-1;
+  float EPS=(float)1e-1;
 
   while( speed(min.nodeIndex)<EPS )
     {
@@ -715,7 +715,7 @@ float vtkFastMarching::computeT(int index )
   float s=speed(index);
 
   if( s==0.0 )
-    s=1.0/INF;
+    s=(float)1.0/INF;
 
   C = -dx*dx/( s*s ); 
 
@@ -747,36 +747,36 @@ float vtkFastMarching::computeT(int index )
   if ((Dxm>0.0) || (Dxp<0.0)) {
     if (Dxm > -Dxp) {
       A++;
-      B -= 2.0 * Txm;
+      B -= (float)2.0 * Txm;
       C += Txm * Txm;
     }
     else {
       A++;
-      B -= 2.0 * Txp;
+      B -= (float)2.0 * Txp;
       C += Txp * Txp;
     }
   }
   if ((Dym>0.0) || (Dyp<0.0)) {
     if (Dym > -Dyp) {
       A++;
-      B -= 2.0 * Tym;
+      B -= (float)2.0 * Tym;
       C += Tym * Tym;
     }
     else {
       A++;
-      B -= 2.0 * Typ;
+      B -= (float)2.0 * Typ;
       C += Typ * Typ;
     }
   }
   if ((Dzm>0.0) || (Dzp<0.0)) {
     if (Dzm > -Dzp) {
       A++;
-      B -= 2.0 * Tzm;
+      B -= (float)2.0 * Tzm;
       C += Tzm * Tzm;
     }
     else {
       A++;
-      B -= 2.0 * Tzp;
+      B -= (float)2.0 * Tzp;
       C += Tzp * Tzp;
     }
   }
@@ -794,7 +794,7 @@ float vtkFastMarching::computeT(int index )
   /*
    * Negative discriminant? Complex crossing times?
    */
-  Discr = B*B - 4.0*A*C;
+  Discr = B*B - (float)4.0*A*C;
   if (Discr < 0.0) {
     //printf("Discr<0 ");
     /*
@@ -819,7 +819,7 @@ float vtkFastMarching::computeT(int index )
    * since only EARLIER elements are active. Therefore the plus
    * sign is appropriate.
    */
-  TijNew = (-B + sqrt(Discr))/(2.0*A);
+  TijNew = (-B + (float)sqrt(Discr))/((float)2.0*A);
 
   return TijNew; 
 }
