@@ -146,6 +146,21 @@ proc MainInteractorBind {widget} {
              { eval FiducialsCreatePointFromWorldXYZ "default" $Select(xyz) ; MainUpdateMRML; Render3D}
      }
     }
+
+     # surreal: added for Navigator
+     # have to use SelectPick2D for slices
+     if {[IsModule Navigator] == 1} {
+       bind $widget <KeyPress-n> {
+           if {[SelectPick2D %W %x %y] != 0} {
+               set x [lindex $Select(xyz) 0]
+               set y [lindex $Select(xyz) 1]
+               set z [lindex $Select(xyz) 2]
+               puts "slice"
+               eval NavigatorPickSlicePoint %W $x $y $z
+           }
+       }
+     }
+
 }
 
 #-------------------------------------------------------------------------------

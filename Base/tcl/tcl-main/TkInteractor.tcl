@@ -103,6 +103,25 @@ proc CreateAndBindTkEvents { widget } {
         }
     }
 
+     # surreal: added for Navigator module
+     if {[IsModule Navigator] == 1} {
+       EvDeclareEventHandler tkRegularEvents <KeyPress-n> { 
+           vtkCellPicker TempCellPicker
+           # have to have really low tolerance or the picker will
+           # pick cell 0 by default
+           TempCellPicker SetTolerance 0.0001
+           if { [SelectPick TempCellPicker %W %x %y] != 0} {
+               puts "not a slice"
+               set x [lindex $Select(xyz) 0]
+               set y [lindex $Select(xyz) 1]
+               set z [lindex $Select(xyz) 2]
+               NavigatorPick3DPoint %W $x $y $z
+           }
+           TempCellPicker Delete       
+       }
+     }
+
+
     ###### binding of event set that contains all the regular events ######
     EvAddWidgetToBindingSet bindTkRegularAndMotionEvents $widget {{tkMouseClickEvents} {tkMotionEvents} {tkRegularEvents}}
     ###### binding of event set that contains all the motion events #######
