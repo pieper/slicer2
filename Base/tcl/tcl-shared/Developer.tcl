@@ -35,7 +35,7 @@
 #   DevSelectNode type id ArrayName ModelLabel ModelName
 #   DevCreateNewCopiedVolume VolumeId Description VolName
 #   DevGetFile filename MustPop DefaultExt DefaultDir Title Action
-#   DevAddFileBrowse Frame ArrayName VarFileName Message Command DefaultExt DefaultDir Action Title Tooltip
+#   DevAddFileBrowse Frame ArrayName VarFileName Message Command DefaultExt DefaultDir Action Title Tooltip PathType
 #==========================================================================auto=
 # This file exists specifically for user to help fast development
 # of Slicer modules
@@ -652,8 +652,7 @@ proc DevGetFile { filename { MustPop 0} { DefaultExt "" } { DefaultDir "" } {Tit
 # str Action     Whether this is \"Open\" or \"Save\".  Optional
 # str Title      The title of the window to display. Optional
 # str Tooltip    The tooltip to display over the button. Optional
-# str PathType   Default is filename is relative to Mrml(dir).  Use
-#                "Absolute" for absolute pathnames
+# str PathType   Default is filename is relative to Mrml(dir).  Use "Absolute" for absolute pathnames
 # .END
 #-------------------------------------------------------------------------------
 

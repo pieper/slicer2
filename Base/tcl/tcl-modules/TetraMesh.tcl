@@ -28,9 +28,10 @@
 #   TetraMeshExit
 #   TetraMeshUpdateGUI
 #   TetraMeshFileNameEntered
-#   TetraMeshCheckErrors
+#   TetraMeshGetData
 #   TetraMeshProcessEdges
 #   TetraMeshProcessEdges2
+#   TetraMeshProcessVField
 #   TetraMeshProcessSurface
 #   TetraMeshCreateModel
 #==========================================================================auto=
@@ -142,7 +143,7 @@ proc TetraMeshInit {} {
 	#   appropriate revision number and date when the module is checked in.
 	#   
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.10 $} {$Date: 2001/03/04 04:04:12 $}]
+		{$Revision: 1.11 $} {$Date: 2001/03/08 01:17:29 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -1157,6 +1158,12 @@ Render3D
 set TetraMesh(modelbasename) ""
 }
 
+#-------------------------------------------------------------------------------
+# .PROC TetraMeshProcessSurface
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc TetraMeshProcessSurface {} {
 	global TetraMesh Model Volume
 
