@@ -36,8 +36,11 @@
 #===============================================================================
 # FILE:        FMRIEngineParadigmParser.tcl
 # PROCEDURES:  
-#   FMRIEngineParseParadigm
-#   FMRIEngineCreateStimulusArray
+#   FFMRIEngineParseParadigm 
+#   FMRIEngineCheckParadigm
+#   FMRIEngineStoreParadigm
+#   FMRIEngineSaveParadigm
+#   FFMRIEngineCreateStimulusArray 
 #==========================================================================auto=
 #-------------------------------------------------------------------------------
 # .PROC FFMRIEngineParseParadigm 
@@ -65,21 +68,145 @@ proc FMRIEngineParseParadigm {} {
 
     # Values of parameters in paradigm.txt are saved in list FMRIEngine(paradigm).
     # Here is the index order:
-    # 0 --- total volumes (85)  
-    # 1 --- number of stimuli (1)
-    # 2 --- volumes per baseline (5)
-    # 3 --- volumes per task (5)
-    # 4 --- volumes at start (5)
-    # 5 --- start with (0)
+    # 0 --- Total Volumes (85)  
+    # 1 --- Number Of Conditions (1)
+    # 2 --- Volumes Per Baseline (5)
+    # 3 --- Volumes Per Conditions (5)
+    # 4 --- Volumes At Start (5)
+    # 5 --- Starts With (0)
     foreach line $lines {
         set pair [split $line ":"]
-        lappend FMRIEngine(paradigm) [lindex $pair 1]
+        lappend FMRIEngine(paradigm) [string trim [lindex $pair 1]]
     }
     close $fp
+
+    set i 0
+    set len [llength $FMRIEngine(paradigm)]
+    while {$i < $len} { 
+
+        set param [lindex $FMRIEngine(paramVariables) $i]
+        set val [lindex $FMRIEngine(paradigm) $i]
+        set FMRIEngine($param) $val
+        incr i
+    }
 
     FMRIEngineCreateStimulusArray
 
     return 1 
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC FMRIEngineCheckParadigm
+# Checks paradigm parameters
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc FMRIEngineCheckParadigm {} {
+    global FMRIEngine 
+
+    foreach param "tVols nStims bVols cVols sVols start" { 
+
+        set val [string trim $FMRIEngine($param)]
+        if {$val == "" || [string is digit -strict $val] == 0} {
+            DevErrorWindow "Make sure you have valid input for all fields."
+            return 0
+        }
+    }
+
+    return 1
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC FMRIEngineStoreParadigm
+# Stores the parameters in memory for activation computation
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc FMRIEngineStoreParadigm {} {
+    global FMRIEngine 
+
+    set check [FMRIEngineCheckParadigm]
+
+    if {$check} {
+
+        # if FMRIEngine(paradigm) exists, unset it
+        if {[info exists FMRIEngine(paradigm)]} { 
+            unset FMRIEngine(paradigm)
+        }
+
+        set i 0      
+        set len [llength $FMRIEngine(paramNames)]
+        while {$i < $len} { 
+
+            set param [lindex $FMRIEngine(paramVariables) $i]
+            lappend FMRIEngine(paradigm) $FMRIEngine($param) 
+            incr i
+        }
+
+        FMRIEngineCreateStimulusArray
+    }
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC FMRIEngineSaveParadigm
+# Saves the parameters into a text file 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc FMRIEngineSaveParadigm {} {
+    global FMRIEngine 
+
+    set check [FMRIEngineCheckParadigm]
+
+    if {$check} {
+        set types {
+            {{Text Files} {.txt}}
+            {{All Files}  *}
+        }
+
+        set fileName \
+            [tk_getSaveFile -defaultextension ".txt" \
+            -initialdir "" \
+            -filetypes $types \
+            -initialfile $FMRIEngine(paradigmFileName) \
+            -title "Save paradigm parameters"]
+
+        if {$fileName != ""} {
+
+            # if FMRIEngine(paradigm) exists, unset it
+            if {[info exists FMRIEngine(paradigm)]} { 
+                unset FMRIEngine(paradigm)
+            }
+
+            set fp [open $fileName "w"]
+            set i 0      
+            set len [llength $FMRIEngine(paramNames)]
+            while {$i < $len} { 
+
+                set name [lindex $FMRIEngine(paramNames) $i]
+                set param [lindex $FMRIEngine(paramVariables) $i]
+                set data "$name: $FMRIEngine($param)\n"
+
+                lappend FMRIEngine(paradigm) $FMRIEngine($param) 
+
+                # Failure to add '-nonewline' will result in 
+                # an extra newline at the end of the file
+                puts -nonewline $fp $data
+
+                incr i
+            }
+
+            # close the file, ensuring the data is written out before you continue
+            #  with processing.
+            close $fp
+
+            set FMRIEngine(paradigmFileName) $fileName
+            FMRIEngineCreateStimulusArray
+        }
+    }
 }
 
 
