@@ -624,7 +624,7 @@ void vtkImageOverlay::PrintSelf(ostream& os, vtkIndent indent)
       this->Opacity[layer] << "\n";
   }
 
-  for (layer=0; layer < this->GetNumberOfInputs(); layer++) 
+  for (int layer=0; layer < this->GetNumberOfInputs(); layer++) 
   {
     os << indent << "Layer "<<layer<<", Fade: " << 
       this->Fade[layer] << "\n";
