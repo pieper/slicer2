@@ -301,6 +301,32 @@ public:
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:
+  // Label value of output contour
+  vtkSetMacro(Label, int);
+  vtkGetMacro(Label, int);
+
+  // Description:
+  // Starting point of shortest path (mouse click #1)
+  void SetStartPoint(int x, int y);
+  void SetStartPoint(int *point){this->SetStartPoint(point[0],point[1]);};
+  vtkGetVector2Macro(StartPoint, int);
+
+  // Description:
+  // Ending point of shortest path (mouse click #2)
+  vtkSetVector2Macro(EndPoint, int);
+  vtkGetVector2Macro(EndPoint, int);
+
+  // Description:
+  // Max cost of any single pixel edge; also size of circular queue
+  vtkSetMacro(MaxEdgeCost, int);
+  vtkGetMacro(MaxEdgeCost, int);
+
+  // Description:
+  // For testing.  
+  vtkSetMacro(Verbose, int);
+  vtkGetMacro(Verbose, int);
+
+  // Description:
   // Image data all these edges were created from
   void SetOriginalImage(vtkImageData *image) {this->SetInput(0,image);}
   vtkImageData *GetOriginalImage() {return this->GetInput(0);}
@@ -324,27 +350,6 @@ public:
   // Left edges, direction upward (corresponds to Dir UP)
   void SetLeftEdges(vtkImageData *image) {this->SetInput(4,image);}
   vtkImageData *GetLeftEdges() {return this->GetInput(4);}
-
-  // Description:
-  // Starting point of shortest path (mouse click #1)
-  void SetStartPoint(int x, int y);
-  void SetStartPoint(int *point){this->SetStartPoint(point[0],point[1]);};
-  vtkGetVector2Macro(StartPoint, int);
-
-  // Description:
-  // Ending point of shortest path (mouse click #2)
-  vtkSetVector2Macro(EndPoint, int);
-  vtkGetVector2Macro(EndPoint, int);
-
-  // Description:
-  // Max cost of any single pixel edge; also size of circular queue
-  vtkSetMacro(MaxEdgeCost, int);
-  vtkGetMacro(MaxEdgeCost, int);
-
-  // Description:
-  // For testing.  
-  vtkSetMacro(Verbose, int);
-  vtkGetMacro(Verbose, int);
 
   // Description:
   // Cumulative cost of current path.
@@ -421,6 +426,7 @@ protected:
 
   int Verbose;
 
+  int Label;
 
   void DeallocatePathInformation();
 

@@ -55,6 +55,7 @@ vtkImageLiveWire::vtkImageLiveWire()
   memset(this->PrevEndPoint, 0, 2*sizeof(int));
   this->MaxEdgeCost = 255;
   this->Verbose = 0;
+  this->Label = 2;
 
   // output
   this->ContourPoints = vtkPoints::New();
@@ -209,7 +210,7 @@ void vtkImageLiveWire::SetStartPoint(int x, int y)
       memset(extent, 0, 6*sizeof(int));
     }
      
-  cout << "extent:" << extent[0] << extent[1] << extent[2] << extent[3] << extent[4] << extent[5] <<endl;
+  //cout << "extent:" << extent[0] << extent[1] << extent[2] << extent[3] << extent[4] << extent[5] <<endl;
 
   // crop point with image coordinates
   if (x < extent[0] || x > extent[1] ||
@@ -238,7 +239,7 @@ void vtkImageLiveWire::SetStartPoint(int x, int y)
       this->StartPoint[1] = y;
     }
 
-  cout << "deallocating..." << endl;
+  //cout << "deallocating..." << endl;
 
   if (modified)
     {
@@ -247,7 +248,7 @@ void vtkImageLiveWire::SetStartPoint(int x, int y)
       // Lauren don't set Modified until EndPoint is also set?
       this->Modified();
     }
-  cout << "deallocated" << endl;
+  //cout << "deallocated" << endl;
 }
 
 //----------------------------------------------------------------------------
@@ -271,9 +272,7 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
   // ----------------  Data structures  ------------------ //
 
   // allocate if don't exist
-  cout << "1" << endl;
   self->AllocatePathInformation(numrows, numcols);
-  cout << "2" << endl;
   // for nice access to arrays
   circularQueue *Q = self->Q;
   array2D<int> &CC = (*self->CC);
@@ -324,7 +323,6 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
   int currentCC = self->GetCurrentCC();
   
   int currentX, currentY;
-  cout << "3" << endl;
   // while end point not in L keep checking out neighbors of current point
   while ( L(end[0],end[1]) == false) 
     {
@@ -420,8 +418,6 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
   // save cost for next time
   self->SetCurrentCC(currentCC);
 
-  cout << "4" << endl;
-
   // ------- Trace the shortest path using the Dir array. -----------//
 
   // Lauren row column, x and y confusing.  test/fix it all.
@@ -435,8 +431,6 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
   int traceY = end[1];
   
   self->ContourPoints->InsertNextPoint(traceX,traceY,0);
-
-  cout << "5" << endl;
 
   while (traceX!=start[0] || traceY!=start[1])
     {
@@ -515,8 +509,6 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
       cout << "(" << traceX << "," << traceY << ")" << endl;
     }  
 
-  cout << "6" << endl;
-
   // ----------------  Output Image  ------------------ //
   int sizeX, sizeY, sizeZ, outExt[6];
   outData->GetExtent(outExt);
@@ -529,11 +521,9 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
   // clear the output
   memset(outPtr, 0, sizeX*sizeY*sizeZ*sizeof(T));   
 
-  // Lauren make this a member of the class
-  T outLabel = 7;
+  T outLabel = (T)self->GetLabel();
 
   // draw points over image
-  cout << "drawing..." << endl;
   int numPoints = self->ContourPoints->GetNumberOfPoints();
   float *point;
   for (int i=0; i<numPoints; i++)
