@@ -60,7 +60,7 @@ proc MainOptionsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainOptions \
-		{$Revision: 1.16 $} {$Date: 2001/11/19 19:03:50 $}]
+		{$Revision: 1.17 $} {$Date: 2001/11/23 19:18:53 $}]
 
 	# Props
 	set Options(program) "slicer"
@@ -352,7 +352,7 @@ proc MainOptionsRetrievePresetValues {} {
 			if {$currentScene == "default"} {
 				set currentScene "0"
 			}
-			if {[$node GetName] != "0"} {
+			if {$currentScene != "0"} {
 				# don't add the default values to the scenes list
 				lappend Scenes(nameList) $currentScene
 				lappend Preset(idList) $currentScene
@@ -445,7 +445,8 @@ proc MainOptionsRetrievePresetValues {} {
 	if {$Scenes(nameList) != ""} {
 		$Gui(ViewMenuButton).m delete 0 last
 		foreach scene $Scenes(nameList) {
-			$Gui(ViewMenuButton).m add command -label "$scene" -command "MainViewSelectView {$scene}"
+			regsub -all "_" $scene " " scene2
+			$Gui(ViewMenuButton).m add command -label "$scene2" -command "MainViewSelectView {$scene}"
 		}
 	}
 }
