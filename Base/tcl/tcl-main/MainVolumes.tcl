@@ -72,7 +72,7 @@ proc MainVolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.75 $} {$Date: 2004/06/17 18:59:46 $}]
+    {$Revision: 1.76 $} {$Date: 2004/06/28 21:23:32 $}]
 
     set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -371,16 +371,19 @@ proc MainVolumesRead {v} {
             catch "anreader Delete"
             vtkCISGAnalyzeReader anreader
 
-            switch -glob [Volume($v,node) GetFileType] {
+            switch -glob $volumeFileType {
                 "*Radiological" {
                     anreader SetFlippingSequence "0"
                 }
                 "*EPIReconPA" {
                     anreader SetFlippingSequence "1"
                 }
-                "*Neurological" {
+                "Analyze\[0-9\]*" {
+                    scan $volumeFileType "Analyze%s" flipseq
+                    anreader SetFlippingSequence $flipseq
                 }
                 default {
+                    puts "unknown analye file type $volumeFileType - assuming AnalyzeNeurological"
                 }
             }
 
