@@ -117,9 +117,10 @@ set env(TCLLIBPATH) "$env(VTK_SRC_DIR) $env(SLICER_HOME)/Base/Wrapping/Tcl/vtkSl
 # Add the module bin directories to the load library path and the Wrapping/Tcl directories to the tcl library path
 # check both the base slicer home and the user's home dir
 set baseModulePath ${env(SLICER_HOME)}/Modules
-set userModulePath ${env(HOME)}/Modules
+regsub -all {\\} $env(HOME) / home
+set userModulePath $home/Modules
 foreach modulePath "${baseModulePath} ${userModulePath}" {
-    set modulePaths [glob ${modulePath}/vtk*]
+    set modulePaths [glob -nocomplain ${modulePath}/vtk*]
     foreach dir $modulePaths {
         # get the module name
         regexp "$modulePath/(\.\*)" $dir match moduleName
