@@ -91,7 +91,7 @@ proc TooltipEnterWidget {widget tip X Y} {
     set Tooltips(stillOverWidget) 1
 
     # reset Tooltips(stillOverWidget) after a delay (to end the "vwait")
-    set id [after 1000 \
+    set id [after 500 \
 	    {if {$Tooltips(stillOverWidget) == 1} {set Tooltips(stillOverWidget) 1}}]
 
     # wait until Tooltips(stillOverWidget) is set (by us or by exiting the widget).
