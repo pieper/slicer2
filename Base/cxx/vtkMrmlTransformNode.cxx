@@ -75,8 +75,18 @@ void vtkMrmlTransformNode::Write(ofstream& of, int nIndent)
   
   vtkIndent i1(nIndent);
 
-  of << i1 << "<Transform>\n";
+  of << i1 << "<Transform";
 
+  // Strings
+  if (this->Name && strcmp(this->Name, "")) 
+  {
+    of << " name='" << this->Name << "'";
+  }
+  if (this->Description && strcmp(this->Description, "")) 
+  {
+    of << " description='" << this->Description << "'";
+  }
+  of << ">\n";
 }
 
 //----------------------------------------------------------------------------
