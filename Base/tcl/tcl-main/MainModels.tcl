@@ -74,7 +74,7 @@ proc MainModelsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainModels \
-        {$Revision: 1.50 $} {$Date: 2002/10/07 23:37:41 $}]
+        {$Revision: 1.51 $} {$Date: 2002/11/05 16:08:54 $}]
 
     set Model(idNone) -1
     set Model(activeID) ""
@@ -119,18 +119,18 @@ proc MainModelsUpdateMRML {} {
     # Build any new models
     #--------------------------------------------------------
     foreach m $Model(idList) {
-    if {[MainModelsCreate $m] > 0} {
-        
-        # Mark it as not being created on the fly 
-        # since it was added from the Data module or read in from MRML
-        set Model($m,fly) 0
-        
-        # Read
-        if {[MainModelsRead $m] < 0} {
-        # failed
-        MainMrmlDeleteNodeDuringUpdate Model $m
+        if {[MainModelsCreate $m] > 0} {
+            
+            # Mark it as not being created on the fly 
+            # since it was added from the Data module or read in from MRML
+            set Model($m,fly) 0
+            
+            # Read
+            if {[MainModelsRead $m] < 0} {
+            # failed
+            MainMrmlDeleteNodeDuringUpdate Model $m
+            }
         }
-    }
     }
     
     set f $Model(fScrolledGUI)
@@ -160,22 +160,22 @@ proc MainModelsUpdateMRML {} {
         # save the current active renderer
         set activeRenderer $Model(activeRenderer)
         foreach rend $Module(Renderers) {
-        set Model(activeRenderer) $rend
-        MainModelsSetClipping $m
-        MainModelsSetColor $m
-        MainModelsSetCulling $m
-        MainModelsSetVisibility $m
-        MainModelsSetScalarVisibility $m
-        MainModelsSetOpacity $m
-        
-        eval Model($m,mapper,$rend) SetScalarRange [Model($m,node) GetScalarRange]
+            set Model(activeRenderer) $rend
+            MainModelsSetClipping $m
+            MainModelsSetColor $m
+            MainModelsSetCulling $m
+            MainModelsSetVisibility $m
+            MainModelsSetScalarVisibility $m
+            MainModelsSetOpacity $m
+            
+            eval Model($m,mapper,$rend) SetScalarRange [Model($m,node) GetScalarRange]
         }
         set Model(activeRenderer) $activeRenderer
         
         foreach mg $ModelGroup(idList) {
-        # second parameter "1" means: this group only, doesn't affect
-        # anything that is below in the hierarchy
-        catch {MainModelGroupsSetOpacity $mg 1}
+            # second parameter "1" means: this group only, doesn't affect
+            # anything that is below in the hierarchy
+            catch {MainModelGroupsSetOpacity $mg 1}
         }
     }
 
@@ -186,8 +186,8 @@ proc MainModelsUpdateMRML {} {
         $menu delete 0 end
         
         foreach m $Model(idList) {
-        $menu add command -label [Model($m,node) GetName] \
-            -command "MainModelsSetActive $m"
+            $menu add command -label [Model($m,node) GetName] \
+                -command "MainModelsSetActive $m"
         }
     }
 
