@@ -1,4 +1,4 @@
-<!ELEMENT MRML (Transform | Volume | Model | TetraMesh Color | Options | Fiducials)*>
+<!ELEMENT MRML (Transform | Volume | Model | TetraMesh | Color | Options | Fiducials)*>
 
 <!ELEMENT Transform (Transform | Matrix | Volume | Model | Fiducials)*>
 
