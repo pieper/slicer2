@@ -167,7 +167,7 @@ DICOMDataDictFile='$Volumes(DICOMDataDictFile)'"
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-                {$Revision: 1.59 $} {$Date: 2002/02/06 22:11:03 $}]
+                {$Revision: 1.60 $} {$Date: 2002/02/06 22:16:24 $}]
 
 	# Props
 	set Volume(propertyType) Basic
@@ -3563,7 +3563,7 @@ proc VolumesProjectVectorOnPlane {A B C D V1x V1y V1z V2x V2y V2z} {
     global Volumes P1 P2
 
     # tang is in the direction of p2-p1
-    puts "in VolumesProjectVectorOnPlane $P1(x) $P1(y) $P1(z) $P2(x) $P2(y) $P2(z)" 
+    
     set evaluateP1 [expr $P1(x)*$A + $P1(y)*$B + $P1(z)*$C + $D]
     set evaluateP2 [expr $P2(x)*$A + $P2(y)*$B + $P2(z)*$C + $D]
     set Norm [expr sqrt($A*$A + $B*$B + $C*$C)]
@@ -3596,8 +3596,7 @@ proc VolumesProjectVectorOnPlane {A B C D V1x V1y V1z V2x V2y V2z} {
     set p2projy [expr $P2(y)  - ($multiplier * $distp2 * $n(y))]
     set p2projz [expr $P2(z)  - ($multiplier * $distp2 * $n(z))]
     
-    puts "proj1 should be 0 [expr $p1projx * $A + $p1projy *$B + $p1projz *$C + $D]"
- puts "proj2 should be 0 [expr $p2projx * $A + $p2projy *$B + $p2projz *$C + $D]"
+    
     set Projection(x) [expr $p2projx - $p1projx]
     set Projection(y) [expr $p2projy - $p1projy]
     set Projection(z) [expr $p2projz - $p1projz]
@@ -3661,9 +3660,7 @@ proc VolumesReformatSlicePlane {orientation} {
 	set N(z) [expr $p1x * ($p2y-$p3y) + $p2x * ($p3y - $p1y) + $p3x * ($p1y - $p2y)]
 	set coef [expr -($p1x * (($p2y* $p3z) - ($p3y* $p2z)) + $p2x * (($p3y * $p1z) - ($p1y * $p3z)) + $p3x * (($p1y*$p2z) - ($p2y *$p1z)))]
 
-	puts "coef is $coef"
-
-
+	
 	# save the reformat plane equation coefficients
 	set s $Slice(activeID)
 	set Slice($s,reformatPlaneCoeff,A) $N(x)
@@ -3714,7 +3711,7 @@ proc VolumesReformatSlicePlane {orientation} {
 	    }
 	    
 	    if {[expr $N(x)*$originalN(x) +  $N(y)*$originalN(y) +  $N(z)*$originalN(z)] <0 } {
-		puts "negating"
+		
 		set N(x) [expr -$N(x)]
 		set N(y) [expr -$N(y)]
 		set N(z) [expr -$N(z)]
