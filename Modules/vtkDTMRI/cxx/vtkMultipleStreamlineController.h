@@ -75,6 +75,11 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   void DeleteAllStreamlines();
 
   // Description
+  // Get the internal index of the chosen actor, if it is a streamline
+  // in the collection.
+  int GetStreamlineIndexFromActor(vtkActor *pickedActor);
+
+  // Description
   // Save streamlines as vtkPolyData models.
   // Streamlines are grouped into model files based on their color.
   // Files are saved as filename_0.vtk, filename_1.vtk, etc.

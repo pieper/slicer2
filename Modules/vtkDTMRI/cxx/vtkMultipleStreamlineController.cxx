@@ -316,19 +316,33 @@ void vtkMultipleStreamlineController::DeleteStreamline(vtkActor *pickedActor)
 {
   int index;
 
-  vtkDebugMacro( << "Picked actor (present?): " << pickedActor);
-  // find the actor on the collection and remove and delete all
-  // corresponding objects. nonzero index means item was found.
-  index = this->Actors->IsItemPresent(pickedActor);
-  if (index)
-    {
-      // the index returned was 1-based but actually to get items
-      // from the list we must use 0-based indices.  Very
-      // strange but this is necessary.
-      index--;
+  index = this->GetStreamlineIndexFromActor(pickedActor);
 
+  if (index >=0)
+    {
       this->DeleteStreamline(index);
     }
+}
+
+// Get the index into all of the collections corresponding to the picked
+// actor.
+//----------------------------------------------------------------------------
+int vtkMultipleStreamlineController::GetStreamlineIndexFromActor(vtkActor *pickedActor)
+{
+  int index;
+
+  vtkDebugMacro( << "Picked actor (present?): " << pickedActor);
+  // find the actor on the collection.
+  // nonzero index means item was found.
+  index = this->Actors->IsItemPresent(pickedActor);
+
+  // the index returned was 1-based but actually to get items
+  // from the list we must use 0-based indices.  Very
+  // strange but this is necessary.
+  index--;
+
+  // so now "not found" is -1, and >=0 are valid indices
+  return(index);
 }
 
 // Save only one streamline. Called from within functions that save 
