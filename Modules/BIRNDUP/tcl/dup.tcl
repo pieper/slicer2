@@ -254,7 +254,7 @@ itcl::body dup::prefui { } {
 
     if { [info command $d] == "" } {
         ::iwidgets::dialog $d
-    
+        $d configure -title "BIRNDUP Preferencnes"
         set cs [$d childsite]
 
         array set _save_prefs [array get _prefs]
