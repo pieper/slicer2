@@ -99,7 +99,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
   }
 
 
-vtkCxxRevisionMacro(vtkITKMutualInformationTransform, "$Revision: 1.6 $");
+vtkCxxRevisionMacro(vtkITKMutualInformationTransform, "$Revision: 1.7 $");
 vtkStandardNewMacro(vtkITKMutualInformationTransform);
 
 //----------------------------------------------------------------------------
@@ -114,6 +114,9 @@ vtkITKMutualInformationTransform::vtkITKMutualInformationTransform()
   this->NumberOfSamples = 50;
   this->MetricValue = 0;
   this->Matrix->Identity();
+
+  // the last iteration finished with no error
+  this->Error = 0;
 
   this->LearningRate          = vtkDoubleArray::New();
   this->MaxNumberOfIterations = vtkUnsignedIntArray::New();
@@ -210,7 +213,7 @@ static void vtkITKMutualInformationExecute(vtkITKMutualInformationTransform *sel
                                vtkMatrix4x4 *matrix,
                                T vtkNotUsed(dummy))
 {
-  self->Print(cout);
+  self->Print(std::cout);
 
   // Declare the input and output types
   typedef itk::Image<T,3>                       OutputImageType;
@@ -266,10 +269,10 @@ static void vtkITKMutualInformationExecute(vtkITKMutualInformationTransform *sel
   // A TEST!!!
   vtkMatrix4x4 *matt = vtkMatrix4x4::New();
   MIRegistrator->ParamToMatrix(MIRegistrator->GetInitialParameters(),matt);
-  cout << "Printing initially set matrix" << endl;
-  matrix->Print(cout);
-  cout << "Printing actually set matrix" << endl;
-  matt->Print(cout);
+  std::cout << "Printing initially set matrix" << endl;
+  matrix->Print(std::cout);
+  std::cout << "Printing actually set matrix" << endl;
+  matt->Print(std::cout);
   matt->Delete();
 
 
@@ -336,6 +339,7 @@ static void vtkITKMutualInformationExecute(vtkITKMutualInformationTransform *sel
     {
       std::cout << "Caught an exception: " << std::endl;
       std::cout << err << std::endl;
+      self->SetError(1);
       return;
     }
 
@@ -345,6 +349,8 @@ static void vtkITKMutualInformationExecute(vtkITKMutualInformationTransform *sel
   self->SetMetricValue(MIRegistrator->GetMetricValue());
   // self->SetMetricValue(optimizer->GetValue());
 
+  // the last iteration finished with no error
+  self->SetError(0);
 
   self->Modified();
 }
@@ -397,8 +403,6 @@ void vtkITKMutualInformationTransform::InternalUpdate()
 
 void vtkITKMutualInformationTransform::Initialize(vtkMatrix4x4 *mat)
 {
-  this->Matrix->DeepCopy(mat);
-
   // Do we need the flip?
   if (mat->Determinant()<0)
     {

@@ -114,6 +114,12 @@ public:
   vtkGetMacro(TranslateScale, double);
 
   // Description:
+  // Did the last run finish with an error?
+  // Set to 0 if no error, 1 otherwise.
+  vtkSetMacro(Error, int);
+  vtkGetMacro(Error, int);
+
+  // Description:
   // Set the shrink factors for pyramid schemes.
   // Default is 1 1 1 
   void SetSourceShrinkFactors(unsigned int i, 
@@ -124,7 +130,6 @@ public:
     { return SourceShrink[dir]; }
   unsigned int GetTargetShrinkFactors(const int &dir)
     { return TargetShrink[dir]; }
-
 
   // Description:
   // Reset the Multiresolution Settings
@@ -225,6 +230,8 @@ protected:
 
   unsigned int SourceShrink[3];
   unsigned int TargetShrink[3];
+
+  int Error;
 
   vtkUnsignedIntArray  *MaxNumberOfIterations;
   vtkDoubleArray       *LearningRate;
