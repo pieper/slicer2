@@ -49,6 +49,7 @@
 #   MainFileFindUniqueName
 #   MainFileCreateDirectory
 #   CheckVolumeExists
+#   MainFileFindImageNumber which firstfile
 #==========================================================================auto=
 
 
@@ -72,7 +73,7 @@ proc MainFileInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainFile \
-		{$Revision: 1.21 $} {$Date: 2000/07/28 17:47:58 $}]
+		{$Revision: 1.22 $} {$Date: 2000/08/28 18:22:18 $}]
 
 	set File(filePrefix) data
 }
@@ -792,9 +793,13 @@ proc CheckFileExists {filename {verbose 1}} {
 }
 
 #-------------------------------------------------------------------------------
-# MainFileFindImageNumber
+# .PROC MainFileFindImageNumber
 #
-# 'firstFile' is a full path 
+# .ARGS
+# str which \"First\" means the image being sent is the first one. Otherwise, it means nothing.
+# str firstfile the full path
+# .END
+# 
 #-------------------------------------------------------------------------------
 proc MainFileFindImageNumber {which firstFile} {
 
