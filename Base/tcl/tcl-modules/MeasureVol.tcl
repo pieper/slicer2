@@ -32,7 +32,6 @@
 #   MeasureVolEnter
 #   MeasureVolExit
 #   MeasureVolVolume
-#   MeasureVolDisplayExtents
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -97,7 +96,7 @@ proc MeasureVolInit {} {
     # Set version info
     #------------------------------------
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.5 $} {$Date: 2000/11/03 04:32:16 $}]
+	    {$Revision: 1.6 $} {$Date: 2000/11/06 21:58:29 $}]
     
     # Initialize module-level variables
     #------------------------------------
@@ -228,7 +227,7 @@ proc MeasureVolBuildGUI {} {
 
     # bind menubutton to update the extents.
     bind $MeasureVol(mVolumeSelect) <ButtonRelease-1> \
-	    "MeasureVolDisplayExtents" 
+	    "MeasureVolSelectVol" 
     # have this binding execute after menu updates active volume
     bindtags $MeasureVol(mVolumeSelect) [list Menu \
 	    $MeasureVol(mVolumeSelect) all]
@@ -398,7 +397,7 @@ proc MeasureVolEnter {} {
     #   (See slicer/program/tcl-shared/Events.tcl for more details.)
     pushEventManager $MeasureVol(eventManager)
 
-    MeasureVolDisplayExtents
+    MeasureVolSelectVol
 }
 
 #-------------------------------------------------------------------------------
@@ -440,7 +439,10 @@ proc MeasureVolVolume {} {
 	DevErrorWindow "Please enter a filename first."
 	return
     }
-    
+    if {[file extension $MeasureVol(fileName)] != ".txt"} {
+	set MeasureVol(fileName) "$MeasureVol(fileName).txt"
+    }
+
     # validate input from Advanced tab
     set okay 1
     for {set i 1} {$i < 7} {incr i} {
@@ -499,21 +501,27 @@ proc MeasureVolVolume {} {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC MeasureVolDisplayExtents
-# Displays the extent values for the currently active Volume in 
-# the entry boxes on the Setup->Advanced tab.  Called when the 
+# .PROC MeasureVolSelectVol
+# Called when the 
 # module is entered and when a new volume is selected from the 
 # menu.
+# Sets the filename to be the current volume's name_hist.txt.
+# Displays the extent values for the currently active Volume in 
+# the entry boxes on the Setup->Advanced tab.  
 # 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc MeasureVolDisplayExtents {} {
+proc MeasureVolSelectVol {} {
 
     global MeasureVol Volume
 
     # currently selected volume
     set v $Volume(activeID)
+
+    set name [Volume($v,node) GetName]
+    set default "_hist.txt"
+    set MeasureVol(fileName) $name$default
 
     # set extent to that of the current volume.
     # this sets the entry boxes too.

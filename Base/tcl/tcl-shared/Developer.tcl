@@ -611,6 +611,12 @@ proc DevGetFile { filename { MustPop 0} { DefaultExt "" } { DefaultDir "" } {Tit
 	# Return nothing if the user cancelled
 	if {$filename == ""} {return "" }
 
+	# if the file will be Saved (not Opened) make sure it has an extension
+	if {$Action == "Save"} {
+	    if {[file extension $filename] == ""} {
+		set filename "$filename.$DefaultExt"
+	    }   
+	}
 
 	# Store first image file as a relative filename to the root 
 	# Return the relative Directory Path
