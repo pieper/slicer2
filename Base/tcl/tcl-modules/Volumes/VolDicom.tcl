@@ -264,7 +264,7 @@ proc DICOMLoadStudy { dir {Pattern "*"} } {
 
     set return_ids ""
     if { $dir != "" } {
-        set files [glob -nocomplain $dir/*]
+        set files [lsort -dictionary [glob -nocomplain $dir/*]]
         set dirs [list $dir]
         foreach f $files {
             if { [file isdirectory $f] } {
@@ -298,7 +298,7 @@ proc DICOMLoadStudy { dir {Pattern "*"} } {
                     set seriestag [file tail $d]
                 }
                 regsub -all " " $seriestag "_" seriestag
-                regsub -all "." $seriestag "_" seriestag
+                #regsub -all "." $seriestag "_" seriestag
                 set ::Volume(name) $seriestag-$::Volume(name)
                 lappend return_ids [VolumesPropsApply]
             }
@@ -652,7 +652,7 @@ proc FindDICOM2 { StartDir AddDir Pattern } {
     }
     
     vtkDCMParser parser
-    foreach match [glob -nocomplain -- $Pattern] {
+    foreach match [lsort -dictionary [glob -nocomplain -- $Pattern]] {
         wm title $w "Searching [pwd]"
         set ::DICOMlabel "\n\nExamining $match\n\n$::FindDICOMCounter DICOM files so far.\n"
         update
@@ -1472,6 +1472,16 @@ proc DICOMReadHeaderValues { filename } {
         parser Delete
         return
     } else {
+          # sp 2003-07-09 - capture the series description to name volume
+          set seriesdesc ""
+          if { [parser FindElement 0x0008 0x103e] == "1" } {
+              #set len [parser ReadElementLength]
+              set len [lindex [split [parser ReadElement]] 3]
+              set seriesdesc [parser ReadText $len]
+          }
+          regsub -all {[^a-zA-Z0-9]} $seriesdesc "_" Volume(seriesDesc)
+        if {$::Module(verbose)} { puts "got seriesdesc $::Volume(seriesDesc)"} 
+
         if { [parser FindElement 0x0010 0x0010] == "1" } {
             set Length [lindex [split [parser ReadElement]] 3]
             set PatientName [parser ReadText $Length]
@@ -1484,14 +1494,6 @@ proc DICOMReadHeaderValues { filename } {
         #regsub -all {\ |\t|\n} $PatientName "_" Volume(name)
         regsub -all {[^a-zA-Z0-9]} $PatientName "_" Volume(name)
 
-          # sp 2003-07-09 - capture the series description to name volume
-          set seriesdesc ""
-          if { [parser FindElement 0x0008 0x103e] == "1" } {
-              set len [parser ReadElementLength]
-              set seriesdesc [parser ReadText $len]
-          }
-          regsub -all {[^a-zA-Z0-9]} $seriesdesc "_" Volume(seriesDesc)
-        if {$::Module(verbose)} { puts "got seriesdesc $::Volume(seriesDesc)"} 
 
         
         if { [parser FindElement 0x0028 0x0010] == "1" } {
