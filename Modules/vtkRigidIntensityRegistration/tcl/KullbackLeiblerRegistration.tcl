@@ -1,15 +1,15 @@
 #-------------------------------------------------------------------------------
-# .PROC MutualInformationRegistrationInit
+# .PROC KullbackLeiblerRegistrationInit
 #  The "Init" procedure is called automatically by the slicer.  
 #  It puts information about the module into a global array called Module, 
 #  and it also initializes module-level variables.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc MutualInformationRegistrationInit {} {
-    global MutualInformationRegistration Module Volume Model
+proc KullbackLeiblerRegistrationInit {} {
+    global KullbackLeiblerRegistration Module Volume Model
 
-    set m MutualInformationRegistration
+    set m KullbackLeiblerRegistration
 
     # Module Summary Info
     #------------------------------------
@@ -57,7 +57,7 @@ proc MutualInformationRegistrationInit {} {
     #   procedures are optional.  If they exist, then their name (which
     #   can be anything) is registered with a line like this:
     #
-    #   set Module($m,procVTK) MutualInformationRegistrationBuildVTK
+    #   set Module($m,procVTK) KullbackLeiblerRegistrationBuildVTK
     #
     #   All the options are:
 
@@ -78,10 +78,10 @@ proc MutualInformationRegistrationInit {} {
     #   string in your init function, of the form: 
     #   set Module($m,presets) "key1='val1' key2='val2' ..."
 
-#    set Module($m,procGUI) MutualInformationRegistrationBuildGUI
-#    set Module($m,procVTK) MutualInformationRegistrationBuildVTK
-#    set Module($m,procEnter) MutualInformationRegistrationEnter
-#    set Module($m,procExit) MutualInformationRegistrationExit
+#    set Module($m,procGUI) KullbackLeiblerRegistrationBuildGUI
+#    set Module($m,procVTK) KullbackLeiblerRegistrationBuildVTK
+#    set Module($m,procEnter) KullbackLeiblerRegistrationEnter
+#    set Module($m,procExit) KullbackLeiblerRegistrationExit
 
     # Define Dependencies
     #------------------------------------
@@ -101,7 +101,7 @@ proc MutualInformationRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.3 $} {$Date: 2003/12/08 03:53:20 $}]
+        {$Revision: 1.1 $} {$Date: 2003/12/08 03:53:20 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -110,27 +110,27 @@ proc MutualInformationRegistrationInit {} {
     #   This is a handy method for organizing the global variables that
     #   the procedures in this module and others need to access.
     #
-    set MutualInformationRegistration(count) 0
-    set MutualInformationRegistration(Volume1) $Volume(idNone)
-    set MutualInformationRegistration(Model1)  $Model(idNone)
-    set MutualInformationRegistration(FileName)  ""
+    set KullbackLeiblerRegistration(count) 0
+    set KullbackLeiblerRegistration(Volume1) $Volume(idNone)
+    set KullbackLeiblerRegistration(Model1)  $Model(idNone)
+    set KullbackLeiblerRegistration(FileName)  ""
 
-    set MutualInformationRegistration(sourceId) $Volume(idNone)
-    set MutualInformationRegistration(targetId) $Volume(idNone)
-    set MutualInformationRegistration(matrixId) ""
+    set KullbackLeiblerRegistration(sourceId) $Volume(idNone)
+    set KullbackLeiblerRegistration(targetId) $Volume(idNone)
+    set KullbackLeiblerRegistration(matrixId) ""
 
-    set MutualInformationRegistration(Repeat) 1
+    set KullbackLeiblerRegistration(Repeat) 1
 
-    global Matrix MutualInformationRegistration
+    global Matrix KullbackLeiblerRegistration
     #set Matrix(autoFast) mi-fast.txt
     #set Matrix(autoSlow) mi-slow.txt
     set Matrix(allowAutoUndo) 0
 
     ## Set the default to fast registration
-    MutualInformationRegistrationVerySlowParam
+    KullbackLeiblerRegistrationVerySlowParam
 }
 #-------------------------------------------------------------------------------
-# .PROC MutualInformationRegistrationBuildSubGui
+# .PROC KullbackLeiblerRegistrationBuildSubGui
 #
 # Build the sub-gui under $f whatever frame is calling this one
 #
@@ -140,8 +140,8 @@ proc MutualInformationRegistrationInit {} {
 # frame framename
 # .END
 #-------------------------------------------------------------------------------
-proc MutualInformationRegistrationBuildSubGui {f} {
-    global Gui Matrix MutualInformationRegistration
+proc KullbackLeiblerRegistrationBuildSubGui {f} {
+    global Gui Matrix KullbackLeiblerRegistration
 
     set framename $f
 
@@ -177,14 +177,14 @@ proc MutualInformationRegistrationBuildSubGui {f} {
 
     foreach level "Help Normal Advanced" {
         eval {radiobutton $f.r$level \
-            -text "$level" -command "MutualInformationRegistrationSetLevel" \
-            -variable MutualInformationRegistration(Level) -value $level -width 10 \
+            -text "$level" -command "KullbackLeiblerRegistrationSetLevel" \
+            -variable KullbackLeiblerRegistration(Level) -value $level -width 10 \
             -indicatoron 0} $Gui(WRA)
-        set MutualInformationRegistration(r${level}) $f.r$level
+        set KullbackLeiblerRegistration(r${level}) $f.r$level
         pack $f.r$level -side left -padx 0 
     }
 
-    set MutualInformationRegistration(Level) Normal
+    set KullbackLeiblerRegistration(Level) Normal
 
     #-------------------------------------------
     # Level frame
@@ -197,9 +197,9 @@ proc MutualInformationRegistrationBuildSubGui {f} {
     foreach type "Help Normal Advanced" {
         frame $f.f${type} -bg $Gui(activeWorkspace)
         place $f.f${type} -in $f -relheight 1.0 -relwidth 1.0
-        set MutualInformationRegistration(f${type}) $f.f${type}
+        set KullbackLeiblerRegistration(f${type}) $f.f${type}
     }
-    raise $MutualInformationRegistration(fNormal)
+    raise $KullbackLeiblerRegistration(fNormal)
 
     set fnormal   $framename.fLevel.fNormal
     set fadvanced $framename.fLevel.fAdvanced
@@ -233,15 +233,15 @@ proc MutualInformationRegistrationBuildSubGui {f} {
     </UL>"
 
     regsub -all "\n" $help { } help
-    MainHelpApplyTags MutualInformationRegistration $help
-#    MainHelpBuildGUI  MutualInformationRegistration 
+    MainHelpApplyTags KullbackLeiblerRegistration $help
+#    MainHelpBuildGUI  KullbackLeiblerRegistration 
 
     global Help
     set f  $fhelp
     frame $f.fWidget -bg $Gui(activeWorkspace)
     pack $f.fWidget -side top -padx 2 -fill both -expand true
     set tmp [HelpWidget $f.fWidget]
-    MainHelpShow $tmp MutualInformationRegistration
+    MainHelpShow $tmp KullbackLeiblerRegistration
 
     #-------------------------------------------
     # Level->Normal frame
@@ -287,15 +287,15 @@ proc MutualInformationRegistrationBuildSubGui {f} {
         width "6 6 15 21" {
         eval {radiobutton $f.fBtns.$row.r$value -width $width \
         -text "$text" -value "$value" \
-        -command MutualInformationRegistration${value}Param \
-        -variable MutualInformationRegistration(Objective) \
+        -command KullbackLeiblerRegistration${value}Param \
+        -variable KullbackLeiblerRegistration(Objective) \
         -indicatoron 0} $Gui(WCA) 
         pack $f.fBtns.$row.r$value -side left -padx 4 -pady 2
         if { $value == "Fine" } {incr row};
         if { $value == "GSlow" } {incr row};
     }
 
-   set MutualInformationRegistration(Objective) VerySlow
+   set KullbackLeiblerRegistration(Objective) VerySlow
 
     #-------------------------------------------
     # Level->Normal->Repeat Frame
@@ -309,7 +309,7 @@ proc MutualInformationRegistrationBuildSubGui {f} {
     foreach value "1 0" text "Yes No" width "4 3" {
         eval {radiobutton $f.f.r$value -width $width \
               -indicatoron 0 -text "$text" -value "$value" \
-              -variable MutualInformationRegistration(Repeat) } $Gui(WCA)
+              -variable KullbackLeiblerRegistration(Repeat) } $Gui(WCA)
         pack $f.f.r$value -side left -fill x -anchor w
     }
 
@@ -319,10 +319,10 @@ proc MutualInformationRegistrationBuildSubGui {f} {
     set f $fnormal.fRun
 
     eval {button $f.bRun -text "Start" -width [expr [string length "Start"]+1] \
-            -command "MutualInformationRegistrationAutoRun"} $Gui(WBA)
+            -command "KullbackLeiblerRegistrationAutoRun"} $Gui(WBA)
 
     pack $f.bRun -side left -padx $Gui(pad) -pady $Gui(pad)
-    set MutualInformationRegistration(b1Run) $f.bRun
+    set KullbackLeiblerRegistration(b1Run) $f.bRun
 
     #-------------------------------------------
     # Level->Advanced
@@ -374,7 +374,7 @@ proc MutualInformationRegistrationBuildSubGui {f} {
         
         set f $f.f$param
         eval {label $f.l$param -text "$name:"} $Gui(WLA)
-        eval {entry $f.e$param -width 10 -textvariable MutualInformationRegistration($param)} $Gui(WEA)
+        eval {entry $f.e$param -width 10 -textvariable KullbackLeiblerRegistration($param)} $Gui(WEA)
         pack $f.l$param -side left -padx $Gui(pad) -fill x -anchor w
         pack $f.e$param -side left -padx $Gui(pad) -expand 1
     }
@@ -386,16 +386,16 @@ proc MutualInformationRegistrationBuildSubGui {f} {
 
     foreach str "Run" {
         eval {button $f.b$str -text "$str" -width [expr [string length $str]+1] \
-            -command "MutualInformationRegistrationAuto$str"} $Gui(WBA)
-        set MutualInformationRegistration(b$str) $f.b$str
+            -command "KullbackLeiblerRegistrationAuto$str"} $Gui(WBA)
+        set KullbackLeiblerRegistration(b$str) $f.b$str
     }
     pack $f.bRun -side left -padx $Gui(pad) -pady $Gui(pad)
-    set MutualInformationRegistration(b2Run) $f.bRun
+    set KullbackLeiblerRegistration(b2Run) $f.bRun
 
 }  
 
 #-------------------------------------------------------------------------------
-# .PROC MutualInformationRegistrationSetLevel
+# .PROC KullbackLeiblerRegistrationSetLevel
 #
 # Set the registration mechanism depending on which button the user selected in
 # the Auto tab.
@@ -403,16 +403,16 @@ proc MutualInformationRegistrationBuildSubGui {f} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc MutualInformationRegistrationSetLevel {} {
-    global MutualInformationRegistration
+proc KullbackLeiblerRegistrationSetLevel {} {
+    global KullbackLeiblerRegistration
 
-    set level $MutualInformationRegistration(Level)
-    raise $MutualInformationRegistration(f${level})
-    focus $MutualInformationRegistration(f${level})
+    set level $KullbackLeiblerRegistration(Level)
+    raise $KullbackLeiblerRegistration(f${level})
+    focus $KullbackLeiblerRegistration(f${level})
 }
 
 #-------------------------------------------------------------------------------
-# .PROC MutualInformationRegistrationCoarseParam
+# .PROC KullbackLeiblerRegistrationCoarseParam
 #
 #  These parameters should allow the user the ability to intervene
 #  and decide when he/she is done.
@@ -420,29 +420,29 @@ proc MutualInformationRegistrationSetLevel {} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc MutualInformationRegistrationCoarseParam {} {
-    global MutualInformationRegistration
+proc KullbackLeiblerRegistrationCoarseParam {} {
+    global KullbackLeiblerRegistration
 
-    set MutualInformationRegistration(Resolution)       128
-    set MutualInformationRegistration(LearningRate)    3e-5
-    set MutualInformationRegistration(UpdateIterations) 100
-    set MutualInformationRegistration(NumberOfSamples)  50
-    set MutualInformationRegistration(TranslateScale)   320
+    set KullbackLeiblerRegistration(Resolution)       128
+    set KullbackLeiblerRegistration(LearningRate)    3e-5
+    set KullbackLeiblerRegistration(UpdateIterations) 100
+    set KullbackLeiblerRegistration(NumberOfSamples)  50
+    set KullbackLeiblerRegistration(TranslateScale)   320
     # If Wells, Viola, Atsumi, etal, 
     # used 2 and 4. Wells claims exact number not critical (personal communication)
     # They scaled data 0...256.
     # We scale data -1 to 1.
     # 2/256*2 = 0.015
-    set MutualInformationRegistration(SourceStandardDeviation) 0.4
-    set MutualInformationRegistration(TargetStandardDeviation) 0.4
-    set MutualInformationRegistration(SourceShrinkFactors)   "1 1 1"
-    set MutualInformationRegistration(TargetShrinkFactors)   "1 1 1"
-    set MutualInformationRegistration(Repeat) 1
+    set KullbackLeiblerRegistration(SourceStandardDeviation) 0.4
+    set KullbackLeiblerRegistration(TargetStandardDeviation) 0.4
+    set KullbackLeiblerRegistration(SourceShrinkFactors)   "1 1 1"
+    set KullbackLeiblerRegistration(TargetShrinkFactors)   "1 1 1"
+    set KullbackLeiblerRegistration(Repeat) 1
 }
 
 
 #-------------------------------------------------------------------------------
-# .PROC MutualInformationRegistrationFineParam
+# .PROC KullbackLeiblerRegistrationFineParam
 #
 #  These parameters should allow the user the ability to intervene
 #  and decide when he/she is done.
@@ -450,94 +450,94 @@ proc MutualInformationRegistrationCoarseParam {} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc MutualInformationRegistrationFineParam {} {
-    global MutualInformationRegistration
+proc KullbackLeiblerRegistrationFineParam {} {
+    global KullbackLeiblerRegistration
 
-    set MutualInformationRegistration(Resolution)       128
-    set MutualInformationRegistration(LearningRate)     3e-6
-    set MutualInformationRegistration(UpdateIterations) 100
-    set MutualInformationRegistration(NumberOfSamples)  50
-    set MutualInformationRegistration(TranslateScale)   320
+    set KullbackLeiblerRegistration(Resolution)       128
+    set KullbackLeiblerRegistration(LearningRate)     3e-6
+    set KullbackLeiblerRegistration(UpdateIterations) 100
+    set KullbackLeiblerRegistration(NumberOfSamples)  50
+    set KullbackLeiblerRegistration(TranslateScale)   320
     # If Wells, Viola, Atsumi, etal, 
     # used 2 and 4. Wells claims exact number not critical (personal communication)
     # They scaled data 0...256.
     # We scale data -1 to 1.
     # 2/256*2 = 0.015
-    set MutualInformationRegistration(SourceStandardDeviation) 0.4
-    set MutualInformationRegistration(TargetStandardDeviation) 0.4
-    set MutualInformationRegistration(SourceShrinkFactors)   "1 1 1"
-    set MutualInformationRegistration(TargetShrinkFactors)   "1 1 1"
-    set MutualInformationRegistration(Repeat) 1
+    set KullbackLeiblerRegistration(SourceStandardDeviation) 0.4
+    set KullbackLeiblerRegistration(TargetStandardDeviation) 0.4
+    set KullbackLeiblerRegistration(SourceShrinkFactors)   "1 1 1"
+    set KullbackLeiblerRegistration(TargetShrinkFactors)   "1 1 1"
+    set KullbackLeiblerRegistration(Repeat) 1
 }
 
 
 #-------------------------------------------------------------------------------
-# .PROC MutualInformationRegistrationGSlowParam
+# .PROC KullbackLeiblerRegistrationGSlowParam
 #
 # This should run until completion and give a good registration
 #
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc MutualInformationRegistrationGSlowParam {} {
-    global MutualInformationRegistration
+proc KullbackLeiblerRegistrationGSlowParam {} {
+    global KullbackLeiblerRegistration
 
-    set MutualInformationRegistration(Resolution)       128
-    set MutualInformationRegistration(UpdateIterations) "500 1000"
-    set MutualInformationRegistration(LearningRate)    "0.0001 0.00001"
-    set MutualInformationRegistration(NumberOfSamples)  50
-    set MutualInformationRegistration(TranslateScale)   320
+    set KullbackLeiblerRegistration(Resolution)       128
+    set KullbackLeiblerRegistration(UpdateIterations) "500 1000"
+    set KullbackLeiblerRegistration(LearningRate)    "0.0001 0.00001"
+    set KullbackLeiblerRegistration(NumberOfSamples)  50
+    set KullbackLeiblerRegistration(TranslateScale)   320
     # If Wells, Viola, Atsumi, etal, 
     # used 2 and 4. Wells claims exact number not critical (personal communication)
     # They scaled data 0...256.
     # We scale data -1 to 1.
     # 2/256*2 = 0.015
-    set MutualInformationRegistration(SourceStandardDeviation) 0.4
-    set MutualInformationRegistration(TargetStandardDeviation) 0.4
-    set MutualInformationRegistration(SourceShrinkFactors)   "2 2 2"
-    set MutualInformationRegistration(TargetShrinkFactors)   "2 2 2"
-    set MutualInformationRegistration(Repeat) 0
+    set KullbackLeiblerRegistration(SourceStandardDeviation) 0.4
+    set KullbackLeiblerRegistration(TargetStandardDeviation) 0.4
+    set KullbackLeiblerRegistration(SourceShrinkFactors)   "2 2 2"
+    set KullbackLeiblerRegistration(TargetShrinkFactors)   "2 2 2"
+    set KullbackLeiblerRegistration(Repeat) 0
 }
 
 #-------------------------------------------------------------------------------
-# .PROC MutualInformationRegistrationGSlowParam
+# .PROC KullbackLeiblerRegistrationGSlowParam
 #
 # This should run until completion and give a good registration
 #
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc MutualInformationRegistrationVerySlowParam {} {
-    global MutualInformationRegistration
+proc KullbackLeiblerRegistrationVerySlowParam {} {
+    global KullbackLeiblerRegistration
 
-    set MutualInformationRegistration(Resolution)       128 
-    set MutualInformationRegistration(UpdateIterations) "2500 2500 2500 2500 2500"
-    set MutualInformationRegistration(LearningRate)    "1e-4 1e-5 5e-6 1e-6 5e-7"
-    set MutualInformationRegistration(NumberOfSamples)  50
-    set MutualInformationRegistration(TranslateScale)   320
+    set KullbackLeiblerRegistration(Resolution)       128 
+    set KullbackLeiblerRegistration(UpdateIterations) "2500 2500 2500 2500 2500"
+    set KullbackLeiblerRegistration(LearningRate)    "1e-4 1e-5 5e-6 1e-6 5e-7"
+    set KullbackLeiblerRegistration(NumberOfSamples)  50
+    set KullbackLeiblerRegistration(TranslateScale)   320
     # If Wells, Viola, Atsumi, etal, 
     # used 2 and 4. Wells claims exact number not critical (personal communication)
     # They scaled data 0...256.
     # We scale data -1 to 1.
     # 2/256*2 = 0.015
-    set MutualInformationRegistration(SourceStandardDeviation) 0.4
-    set MutualInformationRegistration(TargetStandardDeviation) 0.4
-    set MutualInformationRegistration(SourceShrinkFactors)   "4 4 1"
-    set MutualInformationRegistration(TargetShrinkFactors)   "4 4 1"
-    set MutualInformationRegistration(Repeat) 0
+    set KullbackLeiblerRegistration(SourceStandardDeviation) 0.4
+    set KullbackLeiblerRegistration(TargetStandardDeviation) 0.4
+    set KullbackLeiblerRegistration(SourceShrinkFactors)   "4 4 1"
+    set KullbackLeiblerRegistration(TargetShrinkFactors)   "4 4 1"
+    set KullbackLeiblerRegistration(Repeat) 0
 }
 
 
 #-------------------------------------------------------------------------------
-# .PROC MutualInformationRegistrationEnter
+# .PROC KullbackLeiblerRegistrationEnter
 # Called when this module is entered by the user.  Pushes the event manager
 # for this module. 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
 
-proc MutualInformationRegistrationEnter {} {
-    global MutualInformationRegistration
+proc KullbackLeiblerRegistrationEnter {} {
+    global KullbackLeiblerRegistration
     
     # Push event manager
     #------------------------------------
@@ -547,22 +547,22 @@ proc MutualInformationRegistrationEnter {} {
     #   The pushEventManager routine saves the previous bindings on 
     #   a stack and binds our new ones.
     #   (See slicer/program/tcl-shared/Events.tcl for more details.)
-    pushEventManager $MutualInformationRegistration(eventManager)
+    pushEventManager $KullbackLeiblerRegistration(eventManager)
 
     # clear the text box and put instructions there
-    $MutualInformationRegistration(textBox) delete 1.0 end
-    $MutualInformationRegistration(textBox) insert end "Shift-Click anywhere!\n"
+    $KullbackLeiblerRegistration(textBox) delete 1.0 end
+    $KullbackLeiblerRegistration(textBox) insert end "Shift-Click anywhere!\n"
 }
 
 
 #-------------------------------------------------------------------------------
-# .PROC MutualInformationRegistrationExit
+# .PROC KullbackLeiblerRegistrationExit
 # Called when this module is exited by the user.  Pops the event manager
 # for this module.  
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc MutualInformationRegistrationExit {} {
+proc KullbackLeiblerRegistrationExit {} {
 
     # Pop event manager
     #------------------------------------
@@ -575,75 +575,20 @@ proc MutualInformationRegistrationExit {} {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC MutualInformationTestTransformConnection
-#
-# Makesure the transformid has an effect on the volumeid
-# returns the error message, on "" if none
-#
-# desiredresult is the number of transforms that should affect the volumeid
-#  it should be 1 or 0
-# Matrix(transformid,node) should affect the volumeid of interest IF
-# desiredresult is set to 1
+# .PROC KullbackLeiblerRegistrationAutoRun
 #
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc MutualInformationRegistrationTestTransformConnections \
-       {volumeid transformid desiredresult} {
-
- set name [Volume($volumeid,node) GetName]
-
- vtkTransform MIRegTmpTransform
-
- Mrml(dataTree) ComputeNodeTransform Volume($volumeid,node) MIRegTmpTransform
-
- set NumTrans [MIRegTmpTransform GetNumberOfConcatenatedTransforms]
-
- if {$NumTrans > 1} {
-     MIRegTmpTransform Delete
-     return "There are several transforms affecting $name. Sorry. We do not handle more than 1 transform. Please simplify your MRML file"
- }
-
- if {$desiredresult == 0} {
-     MIRegTmpTransform Delete
-     if {$NumTrans == 0} {
-     return ""
-     } else {
-     return "There is a transform affecting $name. There should not be one. Please remove it."
-     }
- }
-
- if {$desiredresult == 1} {
-     if {$NumTrans == 0} {
-     MIRegTmpTransform Delete
-     return "No transform affecting $name. Is it possible you have a transform affecting the Refence Volume rather than the Volume to Move?"
-     }
-     set tmptrans [MIRegTmpTransform GetConcatenatedTransform 0]
-     if {$tmptrans != [Matrix($transformid,node) GetTransform] } {
-         MIRegTmpTransform Delete
-     return "The transform you have selected does not seem to be the one affecting $name. Please choose the correct transform."
-     }
- }
-
- MIRegTmpTransform Delete
- return ""
-}
-
-#-------------------------------------------------------------------------------
-# .PROC MutualInformationRegistrationAutoRun
-#
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc MutualInformationRegistrationAutoRun {} {
-    global Matrix MutualInformationRegistration
+proc KullbackLeiblerRegistrationAutoRun {} {
+    global Matrix KullbackLeiblerRegistration
 
     if {[RigidIntensityRegistrationCheckSetUp] == 0} {
       return 0
     }
 
-    if {[llength $MutualInformationRegistration(LearningRate) ] != \
-        [llength $MutualInformationRegistration(UpdateIterations) ] } {
+    if {[llength $KullbackLeiblerRegistration(LearningRate) ] != \
+        [llength $KullbackLeiblerRegistration(UpdateIterations) ] } {
        DevErrorWindow "Must Have same number of levels of iterations as learning rates"
        return 0
      }
@@ -651,18 +596,15 @@ proc MutualInformationRegistrationAutoRun {} {
     # sourceId = ID of volume to register (source, moving)
     # targetId = ID of reference volume   (target, stationary)
     # matrixId = ID of the transform to change
-    set MutualInformationRegistration(sourceId) $Matrix(volume)
-    set MutualInformationRegistration(targetId) $Matrix(refVolume)
-    set MutualInformationRegistration(matrixId) $Matrix(activeID)
+    set KullbackLeiblerRegistration(sourceId) $Matrix(volume)
+    set KullbackLeiblerRegistration(targetId) $Matrix(refVolume)
+    set KullbackLeiblerRegistration(matrixId) $Matrix(activeID)
 
-#    Gering version disabled
-#    MutualInformationRegistrationAutoRun_Vtk  
-
-     MutualInformationRegistrationAutoRun_Itk 
+     KullbackLeiblerRegistrationAutoRun_Itk 
 }
 
 #-------------------------------------------------------------------------------
-# .PROC MutualInformationRegistrationAutoRun_Itk
+# .PROC KullbackLeiblerRegistrationAutoRun_Itk
 #
 # use the vtkITK interface to the ITK MI registration routines
 # - builds a new user interface panel to control the process
@@ -671,12 +613,12 @@ proc MutualInformationRegistrationAutoRun {} {
 # .END
 #-------------------------------------------------------------------------------
 
-proc MutualInformationRegistrationAutoRun_Itk { } {
-    global Path env Gui Matrix Volume MutualInformationRegistration
+proc KullbackLeiblerRegistrationAutoRun_Itk { } {
+    global Path env Gui Matrix Volume KullbackLeiblerRegistration
 
     # TODO make islicer a package
     source $env(SLICER_HOME)/Modules/iSlicer/tcl/isregistration.tcl
-#    source $env(SLICER_HOME)/Modules/vtkMutualInformationRegistration/tcl/ItkToSlicerTransform.tcl
+#    source $env(SLICER_HOME)/Modules/vtkKullbackLeiblerRegistration/tcl/ItkToSlicerTransform.tcl
 
     ## if it is not already there, create it.
     set notalreadythere [catch ".mi cget -background"]
@@ -688,250 +630,66 @@ proc MutualInformationRegistrationAutoRun_Itk { } {
     # catch "destroy .mi"
 
     .mi.reg config \
-        -update_procedure MutualInformationRegistrationUpdateParam         \
-        -stop_procedure MutualInformationRegistrationStop                  \
-        -source          $MutualInformationRegistration(sourceId)          \
-        -target          $MutualInformationRegistration(targetId)          \
-        -resolution      $MutualInformationRegistration(Resolution)        
+        -update_procedure KullbackLeiblerRegistrationUpdateParam         \
+        -stop_procedure KullbackLeiblerRegistrationStop                  \
+        -source          $KullbackLeiblerRegistration(sourceId)          \
+        -target          $KullbackLeiblerRegistration(targetId)          \
+        -resolution      $KullbackLeiblerRegistration(Resolution)        
 
     puts "to see the pop-up window, type: pack .mi.reg -fill both -expand true"
   #  pack .mi.reg -fill both -expand true
-    $MutualInformationRegistration(b1Run) configure -command \
-                                      "MutualInformationRegistrationStop"
-    $MutualInformationRegistration(b2Run) configure -command \
-                                      "MutualInformationRegistrationStop"
-    $MutualInformationRegistration(b1Run) configure -text "Stop"
-    $MutualInformationRegistration(b2Run) configure -text "Stop"
+    $KullbackLeiblerRegistration(b1Run) configure -command \
+                                      "KullbackLeiblerRegistrationStop"
+    $KullbackLeiblerRegistration(b2Run) configure -command \
+                                      "KullbackLeiblerRegistrationStop"
+    $KullbackLeiblerRegistration(b1Run) configure -text "Stop"
+    $KullbackLeiblerRegistration(b2Run) configure -text "Stop"
     .mi.reg start
 }
 
 #-------------------------------------------------------------------------------
-# .PROC MutualInformationRegistrationUpdateParam
+# .PROC KullbackLeiblerRegistrationUpdateParam
 #
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc MutualInformationRegistrationUpdateParam {} {
-    global MutualInformationRegistration
+proc KullbackLeiblerRegistrationUpdateParam {} {
+    global KullbackLeiblerRegistration
 
     .mi.reg config \
-        -update_procedure MutualInformationRegistrationUpdateParam         \
-        -transform       $MutualInformationRegistration(matrixId)          \
-        -source          $MutualInformationRegistration(sourceId)          \
-        -target          $MutualInformationRegistration(targetId)          \
-        -resolution      $MutualInformationRegistration(Resolution)        \
-        -iterations      $MutualInformationRegistration(UpdateIterations)  \
-        -samples         $MutualInformationRegistration(NumberOfSamples)   \
-        -learningrate    $MutualInformationRegistration(LearningRate)      \
-        -translatescale  $MutualInformationRegistration(TranslateScale)    \
-        -source_standarddev $MutualInformationRegistration(SourceStandardDeviation)  \
-        -target_standarddev $MutualInformationRegistration(TargetStandardDeviation)  \
-        -source_shrink $MutualInformationRegistration(SourceShrinkFactors) \
-        -target_shrink $MutualInformationRegistration(TargetShrinkFactors) \
-        -auto_repeat   $MutualInformationRegistration(Repeat) 
+        -update_procedure KullbackLeiblerRegistrationUpdateParam         \
+        -transform       $KullbackLeiblerRegistration(matrixId)          \
+        -source          $KullbackLeiblerRegistration(sourceId)          \
+        -target          $KullbackLeiblerRegistration(targetId)          \
+        -resolution      $KullbackLeiblerRegistration(Resolution)        \
+        -iterations      $KullbackLeiblerRegistration(UpdateIterations)  \
+        -samples         $KullbackLeiblerRegistration(NumberOfSamples)   \
+        -learningrate    $KullbackLeiblerRegistration(LearningRate)      \
+        -translatescale  $KullbackLeiblerRegistration(TranslateScale)    \
+        -source_standarddev $KullbackLeiblerRegistration(SourceStandardDeviation)  \
+        -target_standarddev $KullbackLeiblerRegistration(TargetStandardDeviation)  \
+        -source_shrink $KullbackLeiblerRegistration(SourceShrinkFactors) \
+        -target_shrink $KullbackLeiblerRegistration(TargetShrinkFactors) \
+        -auto_repeat   $KullbackLeiblerRegistration(Repeat) 
 }
 
 #-------------------------------------------------------------------------------
-# .PROC MutualInformationRegistrationStop
+# .PROC KullbackLeiblerRegistrationStop
 #
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc MutualInformationRegistrationStop {} {
-    global MutualInformationRegistration
+proc KullbackLeiblerRegistrationStop {} {
+    global KullbackLeiblerRegistration
 .mi.reg stop
-$MutualInformationRegistration(b1Run) configure -command \
-                                      "MutualInformationRegistrationAutoRun"
-$MutualInformationRegistration(b2Run) configure -command \
-                                      "MutualInformationRegistrationAutoRun"
-$MutualInformationRegistration(b1Run) configure -text "Start"
-$MutualInformationRegistration(b2Run) configure -text "Start"
-}
-
-#-------------------------------------------------------------------------------
-# .PROC MutualInformationRegistrationAutoRun_Vtk
-#
-#
-# These are the tools written by Dave Gering (and implemented by Hanifa Dostmohamed)
-# They are not currently used, though they should work.
-# But, I'm not really sure.
-#
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc MutualInformationRegistrationAutoRun_Vtk {} {
-    global Path env Gui Matrix Volume MutualInformationRegistration
-
-    # v = ID of volume to register
-    # r = ID of reference volume
-    set v $Matrix(volume)
-    set r $Matrix(refVolume)
-
-    # Store which transform we're editing
-    # If the user has not selected a tranform, then create a new one by default
-    # and append it to the volume to register (ie. "Volume to Move")
-    set t $Matrix(activeID)
-
-    catch "refTrans Delete"
-    catch "subTrans Delete"
-    catch "initMatrix Delete"
-    catch "initPose Delete"
-    catch "reg Delete"
-
-    vtkRasToIjkTransform refTrans
-    eval refTrans SetExtent  [[Volume($r,vol) GetOutput] GetExtent]
-    eval refTrans SetSpacing [[Volume($r,vol) GetOutput] GetSpacing]
-    refTrans SetSlicerMatrix [Volume($r,node) GetRasToIjk]
-    refTrans ComputeCornersFromSlicerMatrix
-
-    vtkRasToIjkTransform subTrans
-    eval subTrans SetExtent  [[Volume($v,vol) GetOutput] GetExtent]
-    eval subTrans SetSpacing [[Volume($v,vol) GetOutput] GetSpacing]
-    subTrans SetSlicerMatrix [Volume($v,node) GetRasToIjk]
-    subTrans ComputeCornersFromSlicerMatrix
-
-    # Get the initial Pose
-    # This is either identity when no manual reg has been done
-    # or the matrix obtained from manual registration
-    set tran   [Matrix($t,node) GetTransform]
-    set matrix [$tran GetMatrix]
-    vtkMatrix4x4 initMatrix
-    initMatrix DeepCopy $matrix
-    initMatrix Invert
-    vtkPose initPose
-    initPose ConvertFromMatrix4x4 initMatrix
-    puts "Initial Pose = [initPose Print]"
-
-    # Run MI Registration
-    vtkImageMIReg reg
-    reg SetReference [Volume($r,vol) GetOutput]
-    reg SetSubject   [Volume($v,vol) GetOutput]
-    reg SetRefTrans refTrans
-    reg SetSubTrans subTrans
-    reg SetInitialPose initPose
-
-    # Set parameters (ordered from small res to large)
-    reg SetNumIterations 16000 4000 4000 4000
-    reg SetLambdaDisplacement .2 0.1 0.05 0.01
-    reg SetLambdaRotation 0.00005 0.00002 0.000005 0.000001
-    reg SetSampleSize 50
-    reg SetSigmaUU 2
-    reg SetSigmaVV 2
-    reg SetSigmaV 4
-    reg SetPMin 0.01
-    reg SetUpdateIterations 200
-
-    # Initialize (downsample images)
-    set res -1
-    set resDisplay 3
-    set Gui(progressText) "MI Initializing"
-    MainStartProgress
-    MainShowProgress reg
-    reg Update
-
-    # Iterate
-    while {[reg GetInProgress] == 1} {
-        reg Update
-
-        # Update the pose (set the transform's matrix)
-        set currentPose [reg GetCurrentPose]
-        $currentPose ConvertToMatrix4x4 $matrix
-        $matrix Invert
-
-        # If we're not done, then display intermediate results
-        if {[reg GetInProgress] == 1} {
-
-          # Print out the current status
-          set res  [reg GetResolution]
-          set iter [reg GetIteration]
-          set Gui(progressText) "MI res=$res iter=$iter"
-          MainShowProgress reg
-
-          # Update the image data to display
-          # Copy the new Subject if its resolution changed since last update
-          if {$res != $resDisplay} {
-            puts "Current Pose at res=$res is: [$currentPose Print]"
-            set resDisplay $res
-            MutualInformationRegistrationCopyRegImages $res $r $v
-          }
-        }
-
-        # Update MRML and display
-        MainUpdateMRML
-        RenderAll
-   }
-   MainEndProgress
-
-   # Cleanup
-   refTrans Delete
-   subTrans Delete
-   initMatrix Delete
-   initPose Delete
-   reg Delete
-
-   #Return the user back to the pick alignment mode tab
-   set Matrix(regMode) ""
-   raise $Matrix(fAlignBegin)
+$KullbackLeiblerRegistration(b1Run) configure -command \
+                                      "KullbackLeiblerRegistrationAutoRun"
+$KullbackLeiblerRegistration(b2Run) configure -command \
+                                      "KullbackLeiblerRegistrationAutoRun"
+$KullbackLeiblerRegistration(b1Run) configure -text "Start"
+$KullbackLeiblerRegistration(b2Run) configure -text "Start"
 }
 
 
-#
-#-------------------------------------------------------------------------------
-# .PROC MutualInformationRegistrationCopyRegImages
-#
-# Stuff for Dave Gering implementation
-#
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc MutualInformationRegistrationCopyRegImages {res r v} {
-  global Volume
 
-  #
-  # Copy Subject
-  #
 
-  # Copy the downsampled ImageData
-  vtkImageCopy copy
-  copy SetInput [reg GetSub $res]
-  copy Update
-  copy SetInput ""
-  Volume($v,vol) SetImageData [copy GetOutput]
-  copy SetOutput ""
-  copy Delete
-
-  # Copy the RasToIjk matrix of downsampled data
-  set imgMatrix [[reg GetSubRasToIjk $res] GetRasToIjk]
-  puts "Subject RasToIjk = [$imgMatrix Print]"
-  set n Volume($v,node)
-  set str [$n GetMatrixToString $imgMatrix]
-  $n SetRasToVtkMatrix $str
-  $n UseRasToVtkMatrixOn
-
-  # Update pipeline and GUI
-  MainVolumesUpdate $v
-
-  #
-  # Copy Reference
-  #
-
-  # Copy the downsampled ImageData
-  vtkImageCopy copy
-  copy SetInput [reg GetRef $res]
-  copy Update
-  copy SetInput ""
-  Volume($r,vol) SetImageData [copy GetOutput]
-  copy SetOutput ""
-  copy Delete
-
-  # Copy the RasToIjk matrix of downsampled data
-  set imgMatrix [[reg GetRefRasToIjk $res] GetRasToIjk]
-  # puts "Reference RasToIjk = [$imgMatrix Print]"
-  set n Volume($r,node)
-  set str [$n GetMatrixToString $imgMatrix]
-  $n SetRasToVtkMatrix $str
-  $n UseRasToVtkMatrixOn
-
-  # Update pipeline and GUI
-  MainVolumesUpdate $r
-}

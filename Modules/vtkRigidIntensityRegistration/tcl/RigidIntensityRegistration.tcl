@@ -20,7 +20,7 @@ proc RigidIntensityRegistrationInit {} {
     #  Provide your name, affiliation and contact information so you can be 
     #  reached for any questions people may have regarding your module. 
     #  This is included in the  Help->Module Credits menu item.
-    set Module($m,author) "First name, last name, affiliation, email"
+    set Module($m,author) "Samson Timoner MIT AI Lab"
 
     # Define Tabs
     #------------------------------------
@@ -99,7 +99,7 @@ proc RigidIntensityRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1 $} {$Date: 2003/12/07 22:41:33 $}]
+        {$Revision: 1.2 $} {$Date: 2003/12/08 03:53:20 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -134,140 +134,87 @@ proc RigidIntensityRegistrationInit {} {
 #-------------------------------------------------------------------------------
 
 
-proc RigidIntensityRegistrationBuildGUI {} {
+#-------------------------------------------------------------------------------
+# .PROC RigidIntensityRegistrationBuildSubGUI
+#
+# Build the sub-gui under $f whatever frame is calling this one
+#
+# Example Useg: RigidIntensityRegistrationBuildSubGui $f.fIntensity
+#
+# .ARGS
+# frame framename
+# .END
+#-------------------------------------------------------------------------------
+proc RigidIntensityRegistrationBuildSubGui {f} {
     global Gui RigidIntensityRegistration Module Volume Model
-    
-    # A frame has already been constructed automatically for each tab.
-    # A frame named "Stuff" can be referenced as follows:
-    #   
-    #     $Module(<Module name>,f<Tab name>)
-    #
-    # ie: $Module(RigidIntensityRegistration,fStuff)
-    
-    # This is a useful comment block that makes reading this easy for all:
-    #-------------------------------------------
-    # Frame Hierarchy:
-    #-------------------------------------------
-    # Help
-    # Stuff
-    #   Top
-    #   Middle
-    #   Bottom
-    #     FileLabel
-    #     CountDemo
-    #     TextBox
-    #-------------------------------------------
-   #-------------------------------------------
-    # Help frame
-    #-------------------------------------------
-    
-    # Write the "help" in the form of psuedo-html.  
-    # Refer to the documentation for details on the syntax.
-    #
-    set help "
-    The RigidIntensityRegistration module is an example for developers.  It shows how to add a module 
-    to the Slicer.  The source code is in slicer2/Modules/vtkRigidIntensityRegistration/tcl/RigidIntensityRegistration.tcl.
-    <P>
-    Description by tab:
-    <BR>
-    <UL>
-    <LI><B>Tons o' Stuff:</B> This tab is a demo for developers.
-    "
-    regsub -all "\n" $help {} help
-    MainHelpApplyTags RigidIntensityRegistration $help
-    MainHelpBuildGUI RigidIntensityRegistration
 
+    set framename $f
+
+    # The select and Level Frames
+    frame $f.fSelect -bg $Gui(backdrop) -relief sunken -bd 2
+    frame $f.fChoice  -bg $Gui(activeWorkspace) -height 500
+    pack $f.fSelect $f.fChoice -side top -fill x
     #-------------------------------------------
-    # Stuff frame
+    # Select frame
     #-------------------------------------------
-    set fStuff $Module(RigidIntensityRegistration,fStuff)
-    set f $fStuff
-    
-    foreach frame "Top Middle Bottom" {
-    frame $f.f$frame -bg $Gui(activeWorkspace)
-    pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
+
+    set f $framename.fSelect
+
+    # Build pulldown menu for volume properties
+    eval {label $f.l -text "Intensity Based Method:"} $Gui(BLA)
+    frame $f.f -bg $Gui(backdrop)
+    pack $f.l $f.f -side left -padx $Gui(pad) -fill x -anchor w
+
+    set RigidIntensityRegistration(RegType) MI
+
+    eval {menubutton $f.mbType -text $RigidIntensityRegistration(RegType) \
+            -relief raised -bd 2 -width 5 \
+            -menu $f.mbType.m} $Gui(WMBA) 
+    eval {menu $f.mbType.m} $Gui(WMA)
+    pack  $f.mbType -side left -pady 1 -padx $Gui(pad)
+    # Add menu items
+    foreach RegType "MI KL" {
+        $f.mbType.m add command -label $RegType \
+                -command "RigidIntensityRegistrationSetRegType $RegType"
     }
-    
-    #-------------------------------------------
-    # Stuff->Top frame
-    #-------------------------------------------
-    set f $fStuff.fTop
-    
-    #       grid $f.lStuff -padx $Gui(pad) -pady $Gui(pad)
-    #       grid $menubutton -sticky w
-    
-    # Add menus that list models and volumes
-    DevAddSelectButton  RigidIntensityRegistration $f Volume1 "Ref Volume" Grid
-    DevAddSelectButton  RigidIntensityRegistration $f Model1  "Ref Model"  Grid
-    
-    # Append these menus and buttons to lists 
-    # that get refreshed during UpdateMRML
-    lappend Volume(mbActiveList) $f.mbVolume1
-    lappend Volume(mActiveList) $f.mbVolume1.m
-    lappend Model(mbActiveList) $f.mbModel1
-    lappend Model(mActiveList) $f.mbModel1.m
-    
-    #-------------------------------------------
-    # Stuff->Middle frame
-    #-------------------------------------------
-    set f $fStuff.fMiddle
-    
-    # file browse box
-    DevAddFileBrowse $f RigidIntensityRegistration FileName "File" RigidIntensityRegistrationShowFile
-
-    # confirm user's existence
-    DevAddLabel $f.lfile "You entered: <no filename yet>"
-    pack $f.lfile -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
-    set RigidIntensityRegistration(lfile) $f.lfile
+    # save menubutton for config
+    set Volume(gui,mbPropertyType) $f.mbType
+    # put a tooltip over the menu
+    TooltipAdd $f.mbType \
+            "Choose the type of Registration Algorithm. Choose MI unless you know what you are doing."
 
     #-------------------------------------------
-    # Stuff->Bottom frame
+    # Choice frame
     #-------------------------------------------
-    set f $fStuff.fBottom
-    # make frames inside the Bottom frame for nice layout
-    foreach frame "CountDemo TextBox" {
-    frame $f.f$frame -bg $Gui(activeWorkspace) 
-    pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
+
+    set f $framename.fChoice
+    #
+    # Swappable Frames for MI/KL methods
+    #
+    foreach type "MI KL" {
+        frame $f.f${type} -bg $Gui(activeWorkspace)
+        place $f.f${type} -in $f -relheight 1.0 -relwidth 1.0
+        set RigidIntensityRegistration(f${type}) $f.f${type}
     }
+    raise $RigidIntensityRegistration(fMI)
 
-    $f.fTextBox config -relief groove -bd 3 
-
-    #-------------------------------------------
-    # Stuff->Bottom->CountDemo frame
-    #-------------------------------------------
-    set f $fStuff.fBottom.fCountDemo
-
-    DevAddLabel $f.lStuff "You clicked 0 times."
-    pack $f.lStuff -side top -padx $Gui(pad) -fill x
-    set RigidIntensityRegistration(lStuff) $f.lStuff
-    
-    # Here's a button with text "Count" that calls "RigidIntensityRegistrationCount" when
-    # pressed.
-    DevAddButton $f.bCount Count RigidIntensityRegistrationCount 
-    
-    # Tooltip example: Add a tooltip for the button
-    TooltipAdd $f.bCount "Press this button to increment the counter."
-    # entry box
-    eval {entry $f.eCount -width 5 -textvariable RigidIntensityRegistration(count) } $Gui(WEA)
-    
-    pack $f.bCount $f.eCount -side left -padx $Gui(pad) -pady $Gui(pad)
-    
-
-    #-------------------------------------------
-    # Stuff->Bottom->TextBox frame
-    #-------------------------------------------
-    set f $fStuff.fBottom.fTextBox
-
-    # this is a convenience proc from tcl-shared/Developer.tcl
-    DevAddLabel $f.lBind "Bindings Demo"
-    pack $f.lBind -side top -pady $Gui(pad) -padx $Gui(pad) -fill x
-    
-    # here's the text box widget from tcl-shared/Widgets.tcl
-    set RigidIntensityRegistration(textBox) [ScrolledText $f.tText]
-    pack $f.tText -side top -pady $Gui(pad) -padx $Gui(pad) \
-        -fill x -expand true
-
+    MutualInformationRegistrationBuildSubGui $f.fMI
+    KullbackLeiblerRegistrationBuildSubGui $f.fKL
+    set fKL $f.fKL
 }
+
+#-------------------------------------------------------------------------------
+# .PROC RigidIntensityRegistrationSetRegType
+#   raise the appropriate GUI
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc RigidIntensityRegistrationSetRegType { RegType} {
+ global RigidIntensityRegistration
+
+  raise $RigidIntensityRegistration(f$RegType)
+}
+
 #-------------------------------------------------------------------------------
 # .PROC RigidIntensityRegistrationBuildVTK
 # Build any vtk objects you wish here
@@ -324,3 +271,111 @@ proc RigidIntensityRegistrationExit {} {
     #
     popEventManager
 }
+
+
+#-------------------------------------------------------------------------------
+# .PROC RigidIntensityRegistrationCheckSetUp
+#
+# Make sure the volumes and the transform are OK.
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc RigidIntensityRegistrationCheckSetUp {} {
+  global Matrix Volume
+    ###
+    ### Check for Errors
+    ###
+    if {$Matrix(volume) == $Volume(idNone)} {
+        DevWarningWindow "The Volume to Move is None! Please choose one."
+        return 0
+    }
+
+    if {$Matrix(refVolume) == $Volume(idNone)} {
+        DevWarningWindow "The Reference Volume is None! Please choose one."
+        return 0
+    }
+
+    #
+    # Store which transform we're editing
+    # If the user has not selected a tranform, then create a new one by default
+    # and append it to the volume to register (ie. "Volume to Move")
+    #
+    set Matrix(tAuto) $Matrix(activeID)
+    if {$Matrix(activeID) == ""} {
+        set v $Matrix(volume)
+        DataAddTransform append Volume($v,node) Volume($v,node)
+        MainUpdateMRML
+    }
+
+    ## Now test the transforms to make sure they affect the right volumes
+   set err1 [RigidIntensityRegistrationTestTransformConnections $Matrix(volume) $Matrix(activeID) 1]
+    if {$err1 != ""} {
+      DevErrorWindow $err1
+    return 0
+    }
+
+   set err2 [RigidIntensityRegistrationTestTransformConnections $Matrix(refVolume) $Matrix(activeID) 0]
+    if {$err2 != ""} {
+      DevErrorWindow $err2
+    return 0
+    }
+
+}
+
+#-------------------------------------------------------------------------------
+# .PROC RigidIntensityTestTransformConnection
+#
+# Makesure the transformid has an effect on the volumeid
+# returns the error message, on "" if none
+#
+# desiredresult is the number of transforms that should affect the volumeid
+#  it should be 1 or 0
+# Matrix(transformid,node) should affect the volumeid of interest IF
+# desiredresult is set to 1
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc RigidIntensityRegistrationTestTransformConnections \
+       {volumeid transformid desiredresult} {
+
+ set name [Volume($volumeid,node) GetName]
+
+ vtkTransform MIRegTmpTransform
+
+ Mrml(dataTree) ComputeNodeTransform Volume($volumeid,node) MIRegTmpTransform
+
+ set NumTrans [MIRegTmpTransform GetNumberOfConcatenatedTransforms]
+
+ if {$NumTrans > 1} {
+     MIRegTmpTransform Delete
+     return "There are several transforms affecting $name. Sorry. We do not handle more than 1 transform. Please simplify your MRML file"
+ }
+
+ if {$desiredresult == 0} {
+     MIRegTmpTransform Delete
+     if {$NumTrans == 0} {
+     return ""
+     } else {
+     return "There is a transform affecting $name. There should not be one. Please remove it."
+     }
+ }
+
+ if {$desiredresult == 1} {
+     if {$NumTrans == 0} {
+     MIRegTmpTransform Delete
+     return "No transform affecting $name. Is it possible you have a transform affecting the Refence Volume rather than the Volume to Move?"
+     }
+     set tmptrans [MIRegTmpTransform GetConcatenatedTransform 0]
+     if {$tmptrans != [Matrix($transformid,node) GetTransform] } {
+         MIRegTmpTransform Delete
+     return "The transform you have selected does not seem to be the one affecting $name. Please choose the correct transform."
+     }
+ }
+
+ MIRegTmpTransform Delete
+ return ""
+}
+
+
