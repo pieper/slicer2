@@ -116,6 +116,50 @@ MIRegistration<TFixedImage,TMovingImage>::~MIRegistration()
 
 //----------------------------------------------------------------------------
 
+template < typename TFixedImage, typename TMovingImage  >
+void MIRegistration<TFixedImage,TMovingImage>
+::PrintSelf(std::ostream& os, Indent indent) const
+{
+  Superclass::PrintSelf(os, indent);
+
+  os << indent << "NumberOfLevels: "  << m_NumberOfLevels << endl;
+  os << indent << "TranslationScale: " 
+        <<   m_TranslationScale             << endl;
+  os << indent << "MovingImageStandardDeviation: " 
+        << m_MovingImageStandardDeviation   << endl;
+  os << indent << "FixedImageStandardDeviation: " 
+        <<   m_FixedImageStandardDeviation  << endl; 
+  os << indent << "NumberOfSpatialSamples: " 
+        <<   m_NumberOfSpatialSamples       << endl;
+  os << indent << "NumberOfIterations: " 
+        <<   m_NumberOfIterations           << endl;
+  os << indent << "LearningRates: " 
+        <<   m_LearningRates                << endl;
+  os << indent << "MovingImageShrinkFactors: " 
+        <<   m_MovingImageShrinkFactors     << endl;
+  os << indent << "FixedImageShrinkFactors: " 
+        <<   m_FixedImageShrinkFactors      << endl;
+  os << indent << "InitialParameters: " 
+        <<   m_InitialParameters            << endl;
+  os << indent << "AffineTransform: " << m_AffineTransform  << endl;
+  os << indent << "Tag: "       <<   m_Tag  << endl;
+
+  os << indent << "FixedImage: " <<  m_FixedImage          << endl;
+  os << indent << "MovingImage: " <<  m_MovingImage         << endl;
+  os << indent << "Transform: " <<  m_Transform           << endl;
+  os << indent << "Optimizer: " <<  m_Optimizer           << endl;
+  os << indent << "Metric: " <<  m_Metric              << endl;
+  os << indent << "Interpolator: " <<  m_Interpolator        << endl;
+  os << indent << "FixedImagePyramid: " <<  m_FixedImagePyramid   << endl;
+  os << indent << "MovingImagePyramid: " <<  m_MovingImagePyramid  << endl;
+  os << indent << "Registration: " <<  m_Registration        << endl;
+
+}
+
+
+
+//----------------------------------------------------------------------------
+
 // Go from an initial Matrix To Setting the initial Parameters of the Registration
 template <typename TFixedImage, typename TMovingImage>
 void MIRegistration<TFixedImage,TMovingImage>::InitializeRegistration(
@@ -126,23 +170,33 @@ void MIRegistration<TFixedImage,TMovingImage>::InitializeRegistration(
   for(int i=0;i<3;i++)
     for(int j=0;j<4;j++)
       matrix3x4[i][j] = matrix->Element[i][j];
-
+  
   vnl_quaternion<double> matrixAsQuaternion(matrix3x4);
 
-  //  typename RegistrationType::ParametersType guess(transform->GetNumberOfParameters() );
+  // There is a transpose between the vnl quaternion and itk quaternion.
+  vnl_quaternion<double> conjugated = matrixAsQuaternion.conjugate();
+
+  // This command automatically does the conjugate.
+  // But, it does not calculate the paramaters
+  // m_Transform->SetRotation(matrixAsQuaternion);
+
   // Quaternions have 7 parameters. The first four represents the
   // quaternion and the last three represents the offset. 
-
-  m_InitialParameters[0] = matrixAsQuaternion.x();
-  m_InitialParameters[1] = matrixAsQuaternion.y();
-  m_InitialParameters[2] = matrixAsQuaternion.z();
-  m_InitialParameters[3] = matrixAsQuaternion.r();
+  m_InitialParameters[0] = conjugated.x();
+  m_InitialParameters[1] = conjugated.y();
+  m_InitialParameters[2] = conjugated.z();
+  m_InitialParameters[3] = conjugated.r();
   m_InitialParameters[4] = matrix->Element[0][3];
   m_InitialParameters[5] = matrix->Element[1][3];
   m_InitialParameters[6] = matrix->Element[2][3];
 
+  cout << "Initial Quaternion Setup" << endl;
+  m_Transform->Print(cout);
   // The guess is: a quaternion followed by a translation
   m_Registration->SetInitialTransformParameters(m_InitialParameters);
+  cout << "Initial Param Set:" << m_InitialParameters << endl;
+  m_Transform->SetParameters(m_InitialParameters);
+  m_Transform->Print(cout);
 }
 
 //----------------------------------------------------------------------------
@@ -182,7 +236,7 @@ void MIRegistration<TFixedImage,TMovingImage>::Test()
 {
   ParametersType test = ParametersType(m_Transform->GetNumberOfParameters());
   test[0] = 0.08428825861139;
-  test[1] = 0.11238434481518;  
+  test[1] = 0.11238434481518;
   test[2] = 0.14048043101898;
   test[3] = 0.98006657784124;
   test[4] = 3.1;
@@ -193,18 +247,10 @@ void MIRegistration<TFixedImage,TMovingImage>::Test()
   ParamToMatrix(test,mat);
   InitializeRegistration(mat);
 
-  cerr << "Testing for initial stuff" 
-       << m_InitialParameters[0] << ' '
-       << m_InitialParameters[1] << ' '
-       << m_InitialParameters[2] << ' '
-       << m_InitialParameters[3] << ' '
-       << m_InitialParameters[4] << ' '
-       << m_InitialParameters[5] << ' '
-       << m_InitialParameters[6] << endl;
+  cout << "Testing for initial stuff " 
+       << m_InitialParameters << endl;
 
-  cout << m_InitialParameters << endl;
-
-  mat->Delete(); 
+  mat->Delete();
 }
 
 //----------------------------------------------------------------------
@@ -223,6 +269,7 @@ void MIRegistration<TFixedImage,TMovingImage>::Execute()
   for ( int j = 4; j < 7; j++ )
     {
       scales[j] = m_TranslationScale;
+      // scales[j] = 1.0/vnl_math_sqr(m_TranslationScale);
     }
 
   m_Optimizer->SetScales( scales );
@@ -257,6 +304,8 @@ void MIRegistration<TFixedImage,TMovingImage>::Execute()
   m_Registration->SetFixedImageRegion(
                       m_FixedImage->GetBufferedRegion());
 
+  cout << "Starting Iteration" << endl;
+  this->Print(cout);
   //
   // Do the Registration
   //
@@ -267,6 +316,9 @@ void MIRegistration<TFixedImage,TMovingImage>::Execute()
       std::cout << err << std::endl;
       throw err;
     }
+
+  cout << "Ending Iteration" << endl;
+  this->Print(cout);
 }
 
 //----------------------------------------------------------------------
