@@ -63,7 +63,7 @@ proc MainVolumesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.33 $} {$Date: 2000/10/24 17:44:11 $}]
+		{$Revision: 1.34 $} {$Date: 2000/11/07 16:51:18 $}]
 
 	set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -814,8 +814,9 @@ proc MainVolumesSetActive {v} {
 			# display default for spacing
 			set Volume(sliceSpacing) 0
 
-			scan [Volume($v,node) GetDimensions] "%d %d" dim dim
-			set Volume(resolution) $dim
+			scan [Volume($v,node) GetDimensions] "%d %d" width height
+			set Volume(width) $width
+			set Volume(height) $height
 
 			# display default for readHeaders
 			set Volume(readHeaders) 1
@@ -1017,7 +1018,9 @@ proc MainVolumesSetGUIDefaults {} {
     set Volume(filePattern) %s.%03d
     set Volume(scanOrder) [default GetScanOrder]
     set Volume(littleEndian) [default GetLittleEndian]
-    set Volume(resolution) [lindex [default GetDimensions] 0]
+    #set Volume(resolution) [lindex [default GetDimensions] 0]
+    set Volume(width) [lindex [default GetDimensions] 0]
+    set Volume(height) [lindex [default GetDimensions] 1]
     set spacing [default GetSpacing]
     set Volume(pixelSize) [lindex $spacing 0]
     set Volume(sliceThickness) [lindex $spacing 2]
