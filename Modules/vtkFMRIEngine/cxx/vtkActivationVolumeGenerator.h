@@ -60,12 +60,17 @@ public:
     // Set the activation detector.
     void SetDetector(vtkActivationDetector *detector);
 
+    // Description:
+    // Set lower threshold.
+    void SetLowerThreshold(int low) {lowerThreshold = low;}
+
 protected:
     vtkActivationVolumeGenerator();
     ~vtkActivationVolumeGenerator();
 
     void SimpleExecute(vtkImageData* input,vtkImageData* output);
     vtkActivationDetector *Detector;
+    int lowerThreshold;
 };
 
 
