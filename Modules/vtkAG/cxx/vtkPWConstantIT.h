@@ -13,7 +13,7 @@ public:
   void PrintSelf(ostream& os, vtkIndent indent);
       
   void SetNumberOfFunctions(int n);
-  int FunctionValues(float* x, float* f);
+  int FunctionValues(vtkFloatingPointType* x, vtkFloatingPointType* f);
 
   void SetNumberOfPieces(int i, int p);
   int GetNumberOfPieces(int i);

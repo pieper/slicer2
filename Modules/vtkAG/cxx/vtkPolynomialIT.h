@@ -19,7 +19,7 @@ public:
   void PrintSelf(ostream& os, vtkIndent indent);
       
   void SetNumberOfFunctions(int n);
-  int FunctionValues(float* x, float* f);
+  int FunctionValues(vtkFloatingPointType* x, vtkFloatingPointType* f);
 
   virtual void SetDegree(int d);
   vtkGetMacro(Degree, int);

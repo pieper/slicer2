@@ -261,7 +261,7 @@ vtkLTSPolynomialIT* vtkLTSPolynomialIT::New()
     return (vtkLTSPolynomialIT*)ret;
     }
   // If the factory was unable to create the object, then create it here.
-  //  return new vtkLTSPolynomialIT;
+    return new vtkLTSPolynomialIT;
 }
 
 vtkLTSPolynomialIT::vtkLTSPolynomialIT()

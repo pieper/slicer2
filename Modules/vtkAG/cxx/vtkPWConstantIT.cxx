@@ -12,7 +12,7 @@ vtkPWConstantIT* vtkPWConstantIT::New()
     return (vtkPWConstantIT*)ret;
     }
   // If the factory was unable to create the object, then create it here.
-  //  return new vtkPWConstantIT;
+    return new vtkPWConstantIT;
 }
 
 vtkPWConstantIT::vtkPWConstantIT()
@@ -188,7 +188,7 @@ void vtkPWConstantIT::PrintSelf(ostream& os, vtkIndent indent)
     }
 }
 
-int vtkPWConstantIT::FunctionValues(float* x,float* f)
+int vtkPWConstantIT::FunctionValues(vtkFloatingPointType* x,vtkFloatingPointType* f)
 {
   for(int i=0;i<this->NumFuncs;++i)
     {

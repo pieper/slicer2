@@ -28,7 +28,7 @@ vtkPWMedianIT* vtkPWMedianIT::New()
     return (vtkPWMedianIT*)ret;
     }
   // If the factory was unable to create the object, then create it here.
-  //  return new vtkPWMedianIT;
+    return new vtkPWMedianIT;
 }
 
 vtkPWMedianIT::vtkPWMedianIT()

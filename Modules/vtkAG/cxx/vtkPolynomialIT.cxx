@@ -12,7 +12,7 @@ vtkPolynomialIT* vtkPolynomialIT::New()
     return (vtkPolynomialIT*)ret;
     }
   // If the factory was unable to create the object, then create it here.
-//   return new vtkPolynomialIT;
+    return new vtkPolynomialIT;
 }
 
 vtkPolynomialIT::vtkPolynomialIT()
@@ -122,7 +122,7 @@ void vtkPolynomialIT::SetDegree(int d)
     } 
 } 
 
-int vtkPolynomialIT::FunctionValues(float* x,float* f)
+int vtkPolynomialIT::FunctionValues(vtkFloatingPointType* x,vtkFloatingPointType* f)
 {
   for(int i=0;i<this->NumFuncs;++i)
     {
