@@ -170,7 +170,7 @@ proc FMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.20 $} {$Date: 2004/07/21 22:26:46 $}]
+        {$Revision: 1.21 $} {$Date: 2004/07/22 19:08:26 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -888,6 +888,15 @@ proc FMRIEngineLoadAnalyzeVolumes {} {
     if {$len == 0} {
         lappend analyzeFiles $fileName
     } else {
+        set hdr ".hdr"
+        set ext [file extension $filter]
+
+        if {$ext == ".*"} {
+            set filter [string replace $filter [expr $len-2] end $hdr] 
+        } elseif {$ext == $hdr} {
+        } else {
+            set filter $filter$hdr
+        }
         set pattern [file join $path $filter]
         set fileList [glob -nocomplain $pattern]
         if {$fileList == ""} {
@@ -906,13 +915,8 @@ proc FMRIEngineLoadAnalyzeVolumes {} {
         # set id [VolAnalyzeApply "PA"]
         # lappend mrmlIds [VolAnalyzeApply]
 
-         set ext [file extension $f]
-         if {$ext != ".hdr"} {
-             DevErrorWindow "Tried to load a non-Analyze header file: $f"
-             return
-         }
-        set AnalyzeCache(fileName) $f 
-        AnalyzeApply
+       set AnalyzeCache(fileName) $f 
+       AnalyzeApply
     }
 
     set FMRIEngine(firstMRMLid) [lindex $AnalyzeCache(MRMLid) 0] 
