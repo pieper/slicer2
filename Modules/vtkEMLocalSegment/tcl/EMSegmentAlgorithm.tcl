@@ -98,6 +98,12 @@ proc EMSegmentSetVtkPrivateSuperClassSetting {SuperClass} {
   EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetBoundaryStopEMValue         $EMSegment(Cattrib,$SuperClass,BoundaryStopEMValue)
   EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetBoundaryStopEMMaxIterations $EMSegment(Cattrib,$SuperClass,BoundaryStopEMMaxIterations)
 
+  EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPrintMFALabelMapConvergence  $EMSegment(Cattrib,$SuperClass,PrintMFALabelMapConvergence)
+  EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPrintMFAWeightsConvergence   $EMSegment(Cattrib,$SuperClass,PrintMFAWeigthsMapConvergence)
+  EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetBoundaryStopMFAType          $EMSegment(Cattrib,$SuperClass,BoundaryStopMFAType)
+  EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetBoundaryStopMFAValue         $EMSegment(Cattrib,$SuperClass,BoundaryStopMFAValue)
+  EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetBoundaryStopMFAMaxIterations $EMSegment(Cattrib,$SuperClass,BoundaryStopMFAMaxIterations)
+
   set ClassIndex 0
   foreach i $EMSegment(Cattrib,$SuperClass,ClassList) {
     if {$EMSegment(Cattrib,$i,IsSuperClass)} {

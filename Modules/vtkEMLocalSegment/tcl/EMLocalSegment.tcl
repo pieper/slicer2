@@ -249,7 +249,7 @@ proc EMSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.41 $} {$Date: 2004/09/25 10:39:43 $}]
+        {$Revision: 1.42 $} {$Date: 2004/09/25 12:14:30 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -1838,6 +1838,13 @@ proc EMSegmentUpdateMRML {} {
           set EMSegment(Cattrib,$NumClass,BoundaryStopEMType)          [SegmenterSuperClass($pid,node)  GetBoundaryStopEMType]
           set EMSegment(Cattrib,$NumClass,BoundaryStopEMValue)         [SegmenterSuperClass($pid,node)  GetBoundaryStopEMValue]
           set EMSegment(Cattrib,$NumClass,BoundaryStopEMMaxIterations) [SegmenterSuperClass($pid,node)  GetBoundaryStopEMMaxIterations]
+
+      set EMSegment(Cattrib,$NumClass,PrintMFALabelMapConvergence)  [SegmenterSuperClass($pid,node)  GetPrintMFALabelMapConvergence]       
+          set EMSegment(Cattrib,$NumClass,PrintMFAWeightsConvergence)   [SegmenterSuperClass($pid,node)  GetPrintMFAWeightsConvergence]       
+          set EMSegment(Cattrib,$NumClass,BoundaryStopMFAType)          [SegmenterSuperClass($pid,node)  GetBoundaryStopMFAType]
+          set EMSegment(Cattrib,$NumClass,BoundaryStopMFAValue)         [SegmenterSuperClass($pid,node)  GetBoundaryStopMFAValue]
+          set EMSegment(Cattrib,$NumClass,BoundaryStopMFAMaxIterations) [SegmenterSuperClass($pid,node)  GetBoundaryStopMFAMaxIterations]
+
 
           # Create Sub Classes
           set EMSegment(NumClassesNew)          [SegmenterSuperClass($pid,node) GetNumClasses]       
@@ -3969,6 +3976,12 @@ proc EMSegmentCreateDeleteClasses {ChangeGui DeleteNode InitClasses} {
       unset EMSegment(Cattrib,$i,BoundaryStopEMType)
       unset EMSegment(Cattrib,$i,BoundaryStopEMValue)
       unset EMSegment(Cattrib,$i,BoundaryStopEMMaxIterations)
+
+      unset EMSegment(Cattrib,$i,PrintMFALabelMapConvergence)
+      unset EMSegment(Cattrib,$i,PrintMFAWeigthsMapConvergence)
+      unset EMSegment(Cattrib,$i,BoundaryStopMFAType)
+      unset EMSegment(Cattrib,$i,BoundaryStopMFAValue)
+      unset EMSegment(Cattrib,$i,BoundaryStopMFAMaxIterations)
       }
       # Reconfigure width and height of canvas
       if {$ChangeGui} {EMSegmentSetCIMMatrix} 
@@ -4055,11 +4068,19 @@ proc EMSegmentCreateDeleteClasses {ChangeGui DeleteNode InitClasses} {
       set EMSegment(Cattrib,$i,PrintBias) 0
       set EMSegment(Cattrib,$i,PrintLabelMap) 0 
       set EMSegment(Cattrib,$i,PrintFrequency) 0
+
       set EMSegment(Cattrib,$i,PrintEMLabelMapConvergence)   0
       set EMSegment(Cattrib,$i,PrintEMWeigthsMapConvergence) 0
       set EMSegment(Cattrib,$i,BoundaryStopEMType)  0
       set EMSegment(Cattrib,$i,BoundaryStopEMValue) 0.0
       set EMSegment(Cattrib,$i,BoundaryStopEMMaxIterations) 0 
+
+      set EMSegment(Cattrib,$i,PrintMFALabelMapConvergence)   0
+      set EMSegment(Cattrib,$i,PrintMFAWeigthsMapConvergence) 0
+      set EMSegment(Cattrib,$i,BoundaryStopMFAType)  0
+      set EMSegment(Cattrib,$i,BoundaryStopMFAValue) 0.0
+      set EMSegment(Cattrib,$i,BoundaryStopMFAMaxIterations) 0 
+
     }
     # Define CIM Field as Matrix M(Class1,Class2,Relation of Pixels)
     # where the "Relation of the Pixels" can be set as Pixel with "left", 
