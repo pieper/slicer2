@@ -116,7 +116,7 @@ class LinkedList : public array2D<ListElement>{
 //
 // Each linked list starts at a bucket and winds its way through A.
 // New vertices are inserted at the top (by the bucket).
-// Lauren is this really much better?
+//
 // To extract vertices for examination, it is best to use older
 // ones (so it is more like a breadth first search than a depth first one)
 // so the last vertex in A is linked back to the bucket.  
@@ -314,6 +314,11 @@ public:
   vtkGetVector2Macro(EndPoint, int);
 
   // Description:
+  // Must be either 4 or 8.  Connectedness of the path that is found.
+  vtkSetMacro(NumberOfNeighbors, int);
+  vtkGetMacro(NumberOfNeighbors, int);  
+  
+  // Description:
   // Max cost of any single pixel edge; also size of circular queue
   vtkSetMacro(MaxEdgeCost, int);
   vtkGetMacro(MaxEdgeCost, int);
@@ -348,6 +353,29 @@ public:
   void SetRightEdges(vtkImageData *image) {this->SetInput(4,image);}
   vtkImageData *GetRightEdges() {return this->GetInput(4);}
 
+  //--- If we are running with 8-connected paths ---
+  // Description:
+  // edge costs (for traveling UP to the next pixel)
+  void SetUpLeftEdges(vtkImageData *image) {this->SetInput(5,image);}
+  vtkImageData *GetUpLeftEdges() {return this->GetInput(5);}
+
+  // Description:
+  // edge costs (for traveling UP to the next pixel)
+  void SetUpRightEdges(vtkImageData *image) {this->SetInput(6,image);}
+  vtkImageData *GetUpRightEdges() {return this->GetInput(6);}
+
+  // Description:
+  // edge costs
+  void SetDownLeftEdges(vtkImageData *image) {this->SetInput(7,image);}
+  vtkImageData *GetDownLeftEdges() {return this->GetInput(7);}
+
+  // Description:
+  // edge costs
+  void SetDownRightEdges(vtkImageData *image) {this->SetInput(8,image);}
+  vtkImageData *GetDownRightEdges() {return this->GetInput(8);}
+
+  //--- End if we are running with 8-connected paths ---
+
   // Description:
   // Edges on the chosen contour
   vtkGetObjectMacro(ContourEdges, vtkPoints);
@@ -370,7 +398,18 @@ public:
   // Clears the saved contour points (to start again from a new StartPoint)
   void ClearContour();
 
-  // Lauren these are public for access from vtkImageLiveWireExecute (change...)
+  // Description:
+  // Clears the points on the last chosen segment of the live wire
+  // (the "tail" and also the points between the last two clicks)
+  void ClearLastContourSegment();
+
+  // Description:
+  // For clearing the last livewire segment (for pretty screen shots)
+  vtkSetMacro(InvisibleLastSegment, int);
+  vtkGetMacro(InvisibleLastSegment, int);
+  
+
+
   // ---- Data structures for internal use in path computation -- //
   // Description:
   // Circular queue, composed of buckets that hold vertices of each path cost.
@@ -388,8 +427,8 @@ public:
 
   // Description:
   // The directions the path may take.
-  enum {UP, DOWN, LEFT, RIGHT, NONE};
-
+  // We either use the first 4 or all 8 of these.
+  enum {UP, DOWN, LEFT, RIGHT, UP_LEFT, UP_RIGHT, DOWN_LEFT, DOWN_RIGHT, NONE};
 
   // Description:
   // L is the list of edges ("bels") which have already been processed
@@ -401,6 +440,7 @@ public:
   //ETX
   // ---- End of data structures for internal use in path computation -- //
 
+  // ---- Functions for internal use in path computation -- //
   // Description:
   // This is public since it is called from the non-class function 
   // vtkImageLiveWireExecute...  Don't call this.
@@ -417,7 +457,8 @@ public:
   // Don't set this; it's here for access from vtkImageLiveWireExecute
   vtkSetVector2Macro(CurrentPoint, int);
   vtkGetVector2Macro(CurrentPoint, int);
-  
+  // ---- End Functions for internal use in path computation -- //
+
 protected:
   vtkImageLiveWire();
   ~vtkImageLiveWire();
@@ -436,6 +477,11 @@ protected:
   int Verbose;
 
   int Label;
+
+  int NumberOfNeighbors;
+
+  // for display only
+  int InvisibleLastSegment;
 
   vtkPoints *ContourEdges;
   vtkPoints *ContourPixels;

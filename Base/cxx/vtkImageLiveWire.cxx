@@ -74,6 +74,12 @@ vtkImageLiveWire::vtkImageLiveWire()
   this->L = NULL;
   this->B = NULL;
 
+  // what connectedness the path uses
+  this->NumberOfNeighbors = 4;
+  //this->NumberOfNeighbors = 8;
+
+  // for display only
+  this->InvisibleLastSegment = 0;
 }
 
 //----------------------------------------------------------------------------
@@ -98,6 +104,84 @@ vtkImageLiveWire::~vtkImageLiveWire()
       this->NewEdges->Delete();
     }
 }
+
+//----------------------------------------------------------------------------
+// Clear the last part (revert to the previous clicked-on point)
+void vtkImageLiveWire::ClearLastContourSegment() 
+{
+  float *point;
+  int done = 0;
+  int i;
+  vtkPoints *tempPixels = vtkPoints::New();
+
+  // remove the latest section of points
+  int numPoints = this->ContourPixels->GetNumberOfPoints();
+  int index;
+  // find the previous endpoint, at location number index
+  for (index=numPoints-2; (index>=0 && !done); index--)
+    {
+      point = this->ContourPixels->GetPoint(index);
+      if ((int)point[2] == 1)
+	{
+	  // we have hit an endpoint at index
+	  done = 1;
+	  // we would like to start here from now on
+	  this->StartPoint[0] = (int)point[0];
+	  this->StartPoint[1] = (int)point[1];
+	  this->EndPoint[0] = (int)point[0];
+	  this->EndPoint[1] = (int)point[1];
+	  this->DeallocatePathInformation();
+	}
+    }  
+  // remove all things after the index by resetting, copying, etc.
+  for (i = 0; i <= index; i++)
+    {
+      point = this->ContourPixels->GetPoint(i);
+      tempPixels->InsertPoint(i,point);
+    }
+  this->ContourPixels->Reset();
+  for (i = 0; i <= index; i++)
+    {
+      point = tempPixels->GetPoint(i);
+      this->ContourPixels->InsertPoint(i,point);
+    }  
+
+
+  // do all the above for this->ContourEdges too
+  tempPixels->Reset();
+  done = 0;
+  numPoints = this->ContourEdges->GetNumberOfPoints();
+  // find the previous endpoint, at location number index
+  for (index=numPoints-2; (index>=0 && !done); index--)
+    {
+      point = this->ContourEdges->GetPoint(index);
+      if ((int)point[2] == 1)
+	{
+	  // we have hit an endpoint at index
+	  done = 1;
+	}
+    }  
+  // remove all things after the index by resetting, copying, etc.
+  for (i = 0; i <= index; i++)
+    {
+      point = this->ContourEdges->GetPoint(i);
+      tempPixels->InsertPoint(i,point);
+    }
+  this->ContourEdges->Reset();
+  for (i = 0; i <= index; i++)
+    {
+      point = tempPixels->GetPoint(i);
+      this->ContourEdges->InsertPoint(i,point);
+    }  
+
+
+  // reset the moving "tail" of the wire
+  this->NewEdges->Reset();
+  this->NewPixels->Reset();
+
+  this->Modified();
+}
+
 
 //----------------------------------------------------------------------------
 // This method deletes stored shortest path information
@@ -448,6 +532,14 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
 
   // ----------------  Data structures  ------------------ //
 
+  // The reason for all the tests for the number of neighbors 
+  // below is that the phase-based live wire uses 8-connected neighbors
+  // and finds paths along pixels, while the regular live wire 
+  // uses 4-connected paths *along the cracks between pixels*.
+  // so the input images are not perfectly aligned in the 
+  // 4-neighbor case, and the path found is the outline of the pixels
+  // to draw on the slice
+
   // allocate if don't exist
   self->AllocatePathInformation(numrows, numcols);
   // for nice access to arrays
@@ -461,32 +553,82 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
   const int DOWN = self->DOWN;
   const int LEFT = self->LEFT;
   const int RIGHT = self->RIGHT;
-  
+  // used if running 8-connected
+  const int UP_LEFT = self->UP_LEFT;
+  const int UP_RIGHT = self->UP_RIGHT;
+  const int DOWN_LEFT = self->DOWN_LEFT;
+  const int DOWN_RIGHT = self->DOWN_RIGHT;
+
   // arrows, neighbors, offsets, and colors match with edges below.
-  int arrows[4] = {UP, DOWN, LEFT, RIGHT};
-  // to test path to 4 neighbors of current pixel corner
-  int neighbors[4][2] = {{0,1},{0,-1},{-1,0},{1,0}};
-  // to access edge images (not perfectly aligned)
-  int offset[4][2] = {{-1,-1},{0,0},{-1,-1},{0,0}};
+  int arrows[8] = {UP, DOWN, LEFT, RIGHT, UP_LEFT, UP_RIGHT, DOWN_LEFT, DOWN_RIGHT};
+
+  // to test path to 4 or 8 neighbors of current pixel corner
+  int neighbors[8][2] = {{0,1},{0,-1},{-1,0},{1,0},{-1,1},{1,1},{-1,-1},{1,-1}};
+  // sqrt two factor: diagonal edges cost more.
+#define SQRT_TWO 1.4142
+  float factor[8] = {1,1,1,1,SQRT_TWO,SQRT_TWO,SQRT_TWO,SQRT_TWO};
+
+  // offset to access edge images
+  int offset[8][2] = {{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0}};
+  if (self->GetNumberOfNeighbors() == 4)
+    {
+      // handle misalignment of input images
+      //int offset[4][2] = {{-1,-1},{0,0},{-1,-1},{0,0}};
+      offset[0][0] = -1;
+      offset[0][1] = -1;
+      offset[2][0] = -1;
+      offset[2][1] = -1;
+    }
+
 
   // to color in the correct pixel relative to the edge
-  //int color[4][2] = {{0,1},{-1,0},{-1,1},{0,0}};
-  // the edge is stored at the lower left hand corner of each pixel
-  // (when looking at the image).  so using this and the bel type:
-  int color[4][2] = {{0,0},{-1,-1},{-1,0},{0,-1}};
+  int color[8][2] = {{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0}};
+  if (self->GetNumberOfNeighbors() == 4)
+    {
+      // handle the fact that we color pixels 
+      // but path is along pixel cracks
+      //
+      // the edge is stored at the lower left hand corner of each pixel
+      // (when looking at the image).  so using this and the bel type:
+      //int color[4][2] = {{0,0},{-1,-1},{-1,0},{0,-1}};
+      color[1][0] = -1;
+      color[1][1] = -1;
+      color[2][0] = -1;
+      color[3][1] = -1;
+    }
   
   vtkImageData *upEdge, *downEdge, *leftEdge, *rightEdge;
   upEdge = self->GetUpEdges();
   downEdge = self->GetDownEdges();
   leftEdge = self->GetLeftEdges();
   rightEdge = self->GetRightEdges();
+  // if we are running 8-connected:
+  vtkImageData *upLeftEdge, *upRightEdge, *downLeftEdge, *downRightEdge;
+  upLeftEdge = self->GetUpLeftEdges();
+  upRightEdge = self->GetUpRightEdges();
+  downLeftEdge = self->GetDownLeftEdges();
+  downRightEdge = self->GetDownRightEdges();
 
-  T *upEdgeVal = (T*)upEdge->GetScalarPointerForExtent(upEdge->GetExtent());
-  T *downEdgeVal = (T*)downEdge->GetScalarPointerForExtent(downEdge->GetExtent());
-  T *leftEdgeVal = (T*)leftEdge->GetScalarPointerForExtent(leftEdge->GetExtent());
-  T *rightEdgeVal = (T*)rightEdge->GetScalarPointerForExtent(rightEdge->GetExtent());
+  T *upEdgeVal, *downEdgeVal, *leftEdgeVal, *rightEdgeVal;
+  T *upLeftEdgeVal, *upRightEdgeVal, *downLeftEdgeVal, *downRightEdgeVal;
+  upLeftEdgeVal = upRightEdgeVal = downLeftEdgeVal = downRightEdgeVal = NULL;
 
-  T* edges[4] = {upEdgeVal, downEdgeVal, leftEdgeVal, rightEdgeVal};
+  upEdgeVal = (T*)upEdge->GetScalarPointerForExtent(upEdge->GetExtent());
+  downEdgeVal = (T*)downEdge->GetScalarPointerForExtent(downEdge->GetExtent());
+  leftEdgeVal = (T*)leftEdge->GetScalarPointerForExtent(leftEdge->GetExtent());
+  rightEdgeVal = (T*)rightEdge->GetScalarPointerForExtent(rightEdge->GetExtent());
+
+  // if we are running 8-connected:
+  if (self->GetNumberOfNeighbors() == 8)
+    {  
+      upLeftEdgeVal = (T*)upLeftEdge->GetScalarPointerForExtent(upLeftEdge->GetExtent());
+      upRightEdgeVal = (T*)upRightEdge->GetScalarPointerForExtent(upRightEdge->GetExtent());
+      downLeftEdgeVal = (T*)downLeftEdge->GetScalarPointerForExtent(downLeftEdge->GetExtent());
+      downRightEdgeVal = (T*)downRightEdge->GetScalarPointerForExtent(downRightEdge->GetExtent());      
+    }
+
+  T* edges[8] = {upEdgeVal, downEdgeVal, leftEdgeVal, rightEdgeVal,
+		 upLeftEdgeVal, upRightEdgeVal, downLeftEdgeVal, downRightEdgeVal};
 
   // ----------------  Dijkstra ------------------ //
 
@@ -542,12 +684,13 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
 	}
 
 
-      // check out its 4 neighbors
+      // check out its 4 or 8 neighbors
       int oldCC, tempCC;
       int x,y;
       T* edge;
+      int totalNeighbors = self->GetNumberOfNeighbors();
 
-      for (int n=0; n<4; n++) 
+      for (int n=0; n < totalNeighbors; n++) 
 	{
 	  x = currentX + neighbors[n][0];
 	  y = currentY + neighbors[n][1];
@@ -566,7 +709,26 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
 	      // if edge cost in (shifted) edge image
 	      if (ey < numrows && ex < numcols && ex >= 0 && ey >= 0) 
 		{
-		  tempCC = currentCC + (int)edge[ex + ey*numcols];
+		  // if we are running w/ regular 4-connected path
+		  if (totalNeighbors == 4) 
+		    {
+		      tempCC = currentCC + (int)edge[ex + ey*numcols];
+		    }
+		  else
+		    {
+		      // error checking
+		      if ((int)edge[ex + ey*numcols] > self->GetMaxEdgeCost())
+			{
+			  cout << "lw: " << (int)edge[ex + ey*numcols];
+			}
+		      
+		      // extra cost for 8-connected corner path
+		      int edgeCost = (int)(edge[ex + ey*numcols]*factor[n]);
+		      if (edgeCost > self->GetMaxEdgeCost()) 
+			edgeCost = self->GetMaxEdgeCost();
+		      tempCC = currentCC + edgeCost;
+		    }
+
 		}
 	      else
 		{
@@ -600,7 +762,7 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
 	} // end loop over neighbors
     } // end while
 
-  // save cost for next time
+  // save cost for next time (essentially pointer to current location in Q)
   self->SetCurrentCC(currentCC);
   
   //cout << "current cc: " << currentCC << endl;
@@ -631,7 +793,8 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
   newEdges->InsertNextPoint(traceX,traceY,Dir(traceX,traceY));
   colorX = traceX + color[Dir(traceX,traceY)][0];
   colorY = traceY + color[Dir(traceX,traceY)][1];
-  tempPixels->InsertNextPoint(colorX,colorY,0);
+  // the 1 at the end means this was an endpoint
+  tempPixels->InsertNextPoint(colorX,colorY,1);
 
   // follow "arrows" backwards to the start point
   while (traceX!=start[0] || traceY!=start[1])
@@ -677,7 +840,13 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
   newPixels->SetNumberOfPoints(numPoints);
   float *point;
   int count = 0;
-  for (i=numPoints-1; i>=0; i--)
+
+  // the 1 at the end when setting the point means this was an endpoint
+  point = tempPixels->GetPoint(numPoints-1);
+  newPixels->SetPoint(count,point[0],point[1],1);
+  count++;
+
+  for (i=numPoints-2; i>=0; i--)
     {
       point = tempPixels->GetPoint(i);
       newPixels->SetPoint(count,point);
@@ -688,14 +857,32 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
   // draw points over image
   T outLabel = (T)self->GetLabel();
   numPoints = newPixels->GetNumberOfPoints();
-  for (i=0; i<numPoints; i++)
-    {
-      //cout << ".";
-      point = newPixels->GetPoint(i);
-      //cout << (int)point[0] + ((int)point[1])*sizeX << endl;
-      outPtr[(int)point[0] + ((int)point[1])*sizeX] = outLabel;
-    }
 
+  // don't draw last section if it should be invisible
+  if (self->GetInvisibleLastSegment() == 0) 
+    {
+      // draw last segment
+      for (i=0; i<numPoints; i++)
+	{
+      
+	  for (i=0; i<numPoints; i++)
+	    {
+	      //cout << ".";
+	      point = newPixels->GetPoint(i);
+	      //cout << (int)point[0] + ((int)point[1])*sizeX << endl;
+	      if ((int)point[2] == 1)
+		{
+		  // color endpoints differently
+		  outPtr[(int)point[0] + ((int)point[1])*sizeX] = 10;	  
+		}
+	      else
+		{
+		  outPtr[(int)point[0] + ((int)point[1])*sizeX] = outLabel;
+		}
+	    }
+	}
+
+    }
   // draw previously chosen contour over image
   vtkPoints *contour = self->GetContourPixels();
   numPoints = contour->GetNumberOfPoints();
@@ -703,8 +890,18 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
     {
       //cout << ".";
       point = contour->GetPoint(i);
-      //cout << (int)point[0] + ((int)point[1])*sizeX << endl;
-      outPtr[(int)point[0] + ((int)point[1])*sizeX] = outLabel;
+
+
+      if ((int)point[2] == 1)
+	{
+	  // color endpoints differently
+	  outPtr[(int)point[0] + ((int)point[1])*sizeX] = 10;	  
+	}
+      else
+	{
+	//cout << (int)point[0] + ((int)point[1])*sizeX << endl;
+	  outPtr[(int)point[0] + ((int)point[1])*sizeX] = outLabel;
+	}
     }  
 
 
