@@ -1,10 +1,11 @@
 <title>CVS access</title>
 <h3>CVS Access</h3>
-<p> For anonymous CVS access, set the environment variable CVSROOT to
+<p> For anonymous CVS access, in order to check out the Slicer 2 code and documentation, you must set the environment variable CVSROOT:
 
 <p class=code>
-:pserver:anonymous@cvs.spl.harvard.edu:/projects/cvs/slicer2
-
+setenv CVSROOT :pserver:anonymous@cvs.spl.harvard.edu:/projects/cvs/slicer<br>
+cvs login<br>
+cvs co slicer2
 <p>
 The password for anonymous login is bwhspl.
 <p>
