@@ -127,13 +127,13 @@ void vtkMrmlFiducialsNode::PrintSelf(ostream& os, vtkIndent indent)
     (this->Name ? this->Name : "(none)") << "\n";
   
   os << indent << "Type: ";
-  os << indent << this->SymbolSize << " \n ";
+  os << indent << this->Type << " \n ";
   
   os << indent << "Symbol size: (";
   os << indent << this->SymbolSize << ") \n ";
 
   os << indent << "Text size: (";
-  os << indent << this->SymbolSize << ") \n ";
+  os << indent << this->TextSize << ") \n ";
 
 }
 
