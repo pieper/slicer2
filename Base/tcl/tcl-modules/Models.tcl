@@ -67,7 +67,7 @@ proc ModelsInit {} {
 
 	# Set Version Info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.22 $} {$Date: 2000/07/26 19:02:42 $}]
+		{$Revision: 1.23 $} {$Date: 2000/07/27 22:53:52 $}]
 
 	# Props
 	set Model(propertyType) Basic
@@ -312,8 +312,11 @@ If <B>Backface Culling</B> is on, you will see nothing when looking inside a cli
 	frame $f.fCulling -bg $Gui(activeWorkspace)
 	frame $f.fScalars -bg $Gui(activeWorkspace) -relief groove -bd 3
 	frame $f.fDesc    -bg $Gui(activeWorkspace)
-	frame $f.fApply   -bg $Gui(activeWorkspace)
-	pack $f.fClipping $f.fCulling $f.fScalars $f.fDesc $f.fApply \
+        # Got rid of the Apply frame, it is unnecessary.
+#	frame $f.fApply   -bg $Gui(activeWorkspace)
+#	pack $f.fClipping $f.fCulling $f.fScalars $f.fDesc $f.fApply \
+#		-side top -fill x -pady $Gui(pad)
+	pack $f.fClipping $f.fCulling $f.fScalars $f.fDesc  \
 		-side top -fill x -pady $Gui(pad)
 
 	#-------------------------------------------
@@ -334,14 +337,14 @@ If <B>Backface Culling</B> is on, you will see nothing when looking inside a cli
 	frame $f.f -bg $Gui(activeWorkspace)
 	pack $f.f -side top -pady $Gui(pad)
 
-	eval {label $f.f.l -text "File Prefix (without .vtk)"} $Gui(WLA)
-	eval {button $f.f.b -text "Browse..." -width 10 \
-		-command "ModelsSetPrefix"} $Gui(WBA)
+        DevAddLabel  $f.f.l "File Prefix (without .vtk)"
+        DevAddButton $f.f.b "Browse..." "ModelsSetPrefix"
 	pack $f.f.l $f.f.b -side left -padx $Gui(pad)
 
 	eval {entry $f.eFile -textvariable Model(prefix) -width 50} $Gui(WEA)
 	bind $f.eFile <Return> {ModelsSetPrefix}
-	pack $f.eFile -side top -pady $Gui(pad) -padx $Gui(pad) -expand 1 -fill x
+	pack $f.eFile -side top -pady $Gui(pad) -padx $Gui(pad) \
+                -expand 1 -fill x
 
 	#-------------------------------------------
 	# Props->Bot->Basic->Color frame
@@ -472,16 +475,17 @@ If <B>Backface Culling</B> is on, you will see nothing when looking inside a cli
 	pack $f.l -side top -padx $Gui(pad) -fill x -anchor w
 	pack $f.e -side top -padx $Gui(pad) -expand 1 -fill x
 
-	#-------------------------------------------
-	# Props->Bot->Advanced->Apply frame
-	#-------------------------------------------
-	set f $fProps.fBot.fAdvanced.fApply
-
-	eval {button $f.bApply -text "Apply" \
-		-command "ModelsPropsApply; Render3D"} $Gui(WBA) {-width 8}
-	eval {button $f.bCancel -text "Cancel" \
-		-command "ModelsPropsCancel"} $Gui(WBA) {-width 8}
-	grid $f.bApply $f.bCancel -padx $Gui(pad) -pady $Gui(pad)
+         # Unnecessary
+#        #-------------------------------------------
+#        # Props->Bot->Advanced->Apply frame
+#        #-------------------------------------------
+#        set f $fProps.fBot.fAdvanced.fApply
+#
+#        eval {button $f.bApply -text "Apply" \
+#                -command "ModelsPropsApply; Render3D"} $Gui(WBA) {-width 8}
+#        eval {button $f.bCancel -text "Cancel" \
+#                -command "ModelsPropsCancel"} $Gui(WBA) {-width 8}
+#        grid $f.bApply $f.bCancel -padx $Gui(pad) -pady $Gui(pad)
 
 
 	#-------------------------------------------
