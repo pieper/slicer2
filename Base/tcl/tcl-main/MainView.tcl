@@ -67,7 +67,7 @@ viewMode='Normal' viewBgColor='Blue'"
 
         set m MainView
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.17 $} {$Date: 2000/02/28 17:56:12 $}]
+		{$Revision: 1.18 $} {$Date: 2000/07/19 10:27:00 $}]
 
 	set View(viewerHeightNormal) 656
 	set View(viewerWidth)  956 
@@ -617,12 +617,14 @@ proc MainViewSetFocalPoint {x y z} {
 
 	#SLICES
 	Slicer ComputeNTPFromCamera $View(viewCam)
-	foreach s $Slice(idList) {
-		if {[lsearch "Axial Sagittal Coronal Perp InPlane0 InPlane90 \
-			InPlaneNeg90" [Slicer GetOrientString $s]] != -1} {
-			MainSlicesSetOffset $s 0
-		}
-	}
+
+# BUG: This causes slice offset to not work with presets
+#	foreach s $Slice(idList) {
+#		if {[lsearch "Axial Sagittal Coronal Perp InPlane0 InPlane90 \
+#			InPlaneNeg90" [Slicer GetOrientString $s]] != -1} {
+#			MainSlicesSetOffset $s 0
+#		}
+#	}
 
 	MainAnnoUpdateFocalPoint $x $y $z
 }
