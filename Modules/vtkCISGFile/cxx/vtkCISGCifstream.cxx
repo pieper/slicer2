@@ -5,8 +5,8 @@
   Authors   : (C)opyright Daniel Rueckert and Julia Schnabel 1994-1998++
               See COPYRIGHT statement in top level directory.
   Purpose   :
-  Date      : $Date: 2003/08/14 17:32:34 $
-  Version   : $Revision: 1.1 $
+  Date      : $Date: 2005/01/31 20:44:29 $
+  Version   : $Revision: 1.2 $
 
 =========================================================================*/
 #define WORDS_BIGENDIAN 
@@ -127,7 +127,8 @@ void vtkCISGCifstream::Open(char *filename)
   // Check whether file was opened successful
   if (this->is_open() != True){
     cerr << "vtkCISGCifstream::Open: Can't open file " << filename << endl;
-    exit(1);
+    //exit(1);
+    return;
   }
 
   if ((this->get() != '\037') || (this->get() != ('\235'&0xFF))){

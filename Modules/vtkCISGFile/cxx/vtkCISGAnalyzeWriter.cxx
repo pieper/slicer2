@@ -11,8 +11,8 @@
               Div. of Radiological Sciences, 
               Computational Imaging Science Group, 1997 - 2000
   Purpose   : 
-  Date      : $Date: 2004/09/16 18:52:02 $
-  Version   : $Revision: 1.2 $
+  Date      : $Date: 2005/01/31 20:44:29 $
+  Version   : $Revision: 1.3 $
 =========================================================================*/
 #include "vtkCISGAnalyzeWriter.h"
 #include "vtkObjectFactory.h"
@@ -94,7 +94,11 @@ void vtkCISGAnalyzeWriter::WriteData()
 
   vtkCISGCofstream to;
   to.Open(this->GetFileName());
-
+  if (to.is_open() != True) {
+      vtkErrorMacro(<<"Can't open file " << this->GetFileName());
+      return;
+  }
+  
   vtkStructuredPoints *input=this->GetInput();
 
   input->GetDimensions(Dim);
@@ -154,7 +158,8 @@ void vtkCISGAnalyzeWriter::WriteData()
     break;
   default:
     vtkErrorMacro(<< "WriteData(): Voxel type is not supported.");
-    exit(1);
+    //exit(1);
+    return;
   }
   bits       = 8 * pixsize;
 
@@ -199,7 +204,11 @@ void vtkCISGAnalyzeWriter::WriteData()
   imagename[length-3] = 'i';
 
   to.Open(imagename);
-
+  if (to.is_open() != True) {
+      vtkErrorMacro(<< "vtkCISGAnalyzeWriter: WriteData: Cannot open file " << imagename);
+      return;
+  }
+ 
   vtkDataArray *DataArray=input->GetPointData()->GetScalars();
 
   switch(input->GetScalarType()){
@@ -268,7 +277,8 @@ void vtkCISGAnalyzeWriter::WriteData()
     break;
   default:
     vtkErrorMacro(<< "WriteVolume(): Unknown voxel type");
-    exit(1);
+    //exit(1);
+    return;
   }
 
   to.close();

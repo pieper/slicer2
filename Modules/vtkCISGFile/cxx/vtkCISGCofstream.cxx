@@ -11,8 +11,8 @@
               Div. of Radiological Sciences, 
               Computational Imaging Science Group, 1997 - 2000
               http://www-ipg.umds.ac.uk/cisg
-  Date      : $Date: 2003/08/14 17:32:34 $
-  Version   : $Revision: 1.1 $
+  Date      : $Date: 2005/01/31 20:44:29 $
+  Version   : $Revision: 1.2 $
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -47,8 +47,10 @@ void vtkCISGCofstream::Open(char *filename)
 
   // Check whether file was opened successful
   if (this->is_open() != True){
-    cerr << "cofstream::Open: Can't open file " << filename << endl;
-    exit(1);
+    cerr << "vtkCISGCofstream::Open: Can't open file " << filename << endl;
+    //vtkErrorMacro(<< "vtkCISGCcofstream::Open: Can't open file " << filename << endl);
+    return;
+    //exit(1);
   }
 
   _swapped = swapping();
