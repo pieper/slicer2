@@ -1,5 +1,6 @@
-set argv "c:/data/dave/axi/I.001 32"
-set argc 2
+
+#set argv "c:/data/dave/axi/I.001 32"
+#set argc 2
 
 if {$argc != 2} {
     puts "Usage: vtk MRMLize.tcl <img1> <num2>"
