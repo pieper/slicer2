@@ -97,7 +97,8 @@ vtkImageEuclideanDistanceTransformation  \
 vtkImageStatistics \
 vtkImageLabelVOI \
 vtkImageEMMarkov \
-vtkImageEMSegmenter 
+vtkImageEMSegmenter \
+vtkFog
 
 #vtkSurfaceProps \
 #vtkMathUtils \

@@ -43,6 +43,9 @@
 proc Render3D {{scale ""}} {
     global Video viewWin Twin twinWin View Slice
 
+    # Apply the fog parameters to all the renderers of viewWin
+    FogApply $viewWin
+
     $viewWin Render
     
     if {[IsModule Twin] == 1 && $Twin(mode) == "On"} {
