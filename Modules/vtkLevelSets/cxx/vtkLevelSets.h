@@ -216,6 +216,9 @@ public:
   vtkSetObjectMacro(initImage,vtkImageData);
   vtkGetObjectMacro(initImage,vtkImageData);
 
+  void SetInitIntensityBright() { InitIntensity=Bright; }
+  void SetInitIntensityDark()   { InitIntensity=Dark; }
+
   // Set/Get Skeleton Image
   vtkSetObjectMacro(SkeletonImage,vtkImageData);
   vtkGetObjectMacro(SkeletonImage,vtkImageData);
@@ -448,7 +451,10 @@ protected:
 
   // Initialization Parameters
   vtkImageData* initImage;
-  float InitThreshold;
+  float         InitThreshold;
+  enum TInitIntensity { Bright, Dark };
+  TInitIntensity InitIntensity;
+
   // Number of seeding points for initialization
   int   NumInitPoints;
   int** InitPoints;
