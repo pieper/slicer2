@@ -62,7 +62,7 @@ proc VolTensorInit {} {
     set Volume(tensors,pfSwap) 0
     set Volume(tensors,DTIdata) 0  
     set Volume(VolTensor,FileType) Tensor9
-    set Volume(VolTensor,FileTypeList) {Tensor9 Scalar6}
+    set Volume(VolTensor,FileTypeList) {Tensor9 Scalar6 ODF}
     set Volume(VolTensor,FileTypeList,tooltips) {"File contains TENSORS field with 9 components" "File contains SCALARS field with 6 components"}
     set Volume(VolTensor,YAxis) vtk
     set Volume(VolTensor,YAxisList) {vtk non-vtk}
@@ -320,10 +320,13 @@ proc VolTensorApply {} {
            }
     
         }
-        
-        #Delete Reader node and vtkMrmlReadWrite
+    
+    if {$Volume(VolTensor,FileType) == "ODF"} {
+    } else {
+    #Delete Reader node and vtkMrmlReadWrite
         MainMrmlDeleteNode Volume $i
-        Volume($i,vol,rw) Delete
+        }
+    Volume($i,vol,rw) Delete
         
         MainUpdateMRML
         
@@ -350,6 +353,9 @@ proc VolTensorCreateTensors {v} {
         }
         "Tensor9" {
             VolTensorMake9ComponentTensorVolIntoTensors $v
+        }
+    "ODF" {
+        VolTensorMakeNComponentScalarVolIntoODF $v
         }
     }
 
@@ -523,4 +529,12 @@ proc VolTensorMake6ComponentScalarVolIntoTensors {v} {
 
     # Delete all temporary vtk objects
     aa Delete
+}
+
+proc VolTensorMakeNComponentScalarVolIntoODF {v} {
+    global Volume Tensor
+
+    # all we need to do here is put it on the tensor
+    # id list and do MRML thing
+
 }
