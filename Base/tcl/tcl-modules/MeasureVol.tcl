@@ -97,7 +97,7 @@ proc MeasureVolInit {} {
     # Set version info
     #------------------------------------
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.3 $} {$Date: 2000/10/31 00:25:29 $}]
+	    {$Revision: 1.4 $} {$Date: 2000/11/03 03:21:44 $}]
     
     # Initialize module-level variables
     #------------------------------------
@@ -381,7 +381,7 @@ proc MeasureVolBuildGUI {} {
 #-------------------------------------------------------------------------------
 # .PROC MeasureVolEnter
 # Called when this module is entered by the user.  Pushes the event manager
-# for this module. 
+# for this module. Also displays extents.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -424,6 +424,10 @@ proc MeasureVolExit {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MeasureVolVolume
+# Measures the volume in mL using a vtkImageMeasureVoxels object 
+# which writes an output file.  Reads in and displays the output 
+# on the Results tab.  (Also can measure a subvolume if the extent
+# values are changed on the Setup->Advanced tab.)
 # 
 # .ARGS
 # .END
@@ -497,6 +501,10 @@ proc MeasureVolVolume {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MeasureVolDisplayExtents
+# Displays the extent values for the currently active Volume in 
+# the entry boxes on the Setup->Advanced tab.  Called when the 
+# module is entered and when a new volume is selected from the 
+# menu.
 # 
 # .ARGS
 # .END
