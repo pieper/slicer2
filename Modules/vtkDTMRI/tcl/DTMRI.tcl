@@ -132,9 +132,11 @@ proc DTMRIInit {} {
     #------------------------------------
     set Module($m,overview) "Diffusion DTMRI MRI visualization and more..."
     set Module($m,author) "Lauren O'Donnell"
+    set Module($m,category) "Visualisation"
+
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.52 $} {$Date: 2005/01/12 17:24:16 $}]
+                  {$Revision: 1.53 $} {$Date: 2005/01/16 16:44:36 $}]
 
      # Define Tabs
     #------------------------------------
@@ -282,7 +284,7 @@ proc DTMRIInit {} {
     #]
 
     # whether we are currently displaying glyphs
-    set DTMRI(mode,visualizationType,glyphsOn) 0n
+    set DTMRI(mode,visualizationType,glyphsOn) 0ff
     set DTMRI(mode,visualizationType,glyphsOnList) {On Off}
     set DTMRI(mode,visualizationType,glyphsOnList,tooltip) [list \
                                 "Display each DTMRI as a glyph\n(for example a line or ellipsoid)" \
@@ -348,6 +350,9 @@ proc DTMRIInit {} {
     # Whether to remove actors on module exit
     set DTMRI(vtk,actors,removeOnExit) 1
     set DTMRI(vtk,actors,firstEnter) 1
+
+    # Whether the glyph actors are currently present in the scene
+    set DTMRI(glyphs,actorsAdded) 0
 
     # scalar bar
     set DTMRI(mode,scalarBar) Off
@@ -526,7 +531,7 @@ proc DTMRIInit {} {
     foreach row $rows {
         foreach col $cols {
             set DTMRI(recalculate,userMatrix,$row,$col) \
-        [lindex [lindex $tmp $row] $col]
+                [lindex [lindex $tmp $row] $col]
         } 
     }
 
@@ -540,7 +545,6 @@ proc DTMRIInit {} {
     #------------------------------------
     # round floats to 8 digits
     set DTMRI(floatingPointFormat) "%0.5f"
-
     
 
     set DTMRI(Description) ""
@@ -615,17 +619,17 @@ proc DTMRIEnter {} {
 
     #Add our actors the first time we enter the module during exec
     if {$DTMRI(vtk,actors,firstEnter)} {
-      DTMRIAddAllActors
-      set DTMRI(vtk,actors,firstEnter) 0
+        # do not add actors, since pipeline has no input yet. add in DTMRISetActive instead.
+        #DTMRIAddAllActors
+        set DTMRI(vtk,actors,firstEnter) 0
     } else {  
-      # Add our actors if removed on module exit.
-      if {$DTMRI(vtk,actors,removeOnExit)} {
-      DTMRIAddAllActors
-      } else {
-      #Reconnect glyphs vis pipeline
-      DTMRI(vtk,glyphs) SetOutput [DTMRI(vtk,glyphs,mapper) GetInput]
-      }
-      
+        # Add our actors if removed on module exit.
+        if {$DTMRI(vtk,actors,removeOnExit)} {
+            DTMRIAddAllActors
+        } else {
+            #Reconnect glyphs vis pipeline
+            DTMRI(vtk,glyphs) SetOutput [DTMRI(vtk,glyphs,mapper) GetInput]
+        }
     }  
     Render3D
 
@@ -667,10 +671,10 @@ proc DTMRIExit {} {
 
     # Remove our actors if the user wants that on module exit.
     if {$DTMRI(vtk,actors,removeOnExit)} {
-    DTMRIRemoveAllActors
+        DTMRIRemoveAllActors
     } else {
-    #Disconnect vis glyphs pipeline
-    DTMRI(vtk,glyphs) UnRegisterAllOutputs
+        #Disconnect vis glyphs pipeline
+        DTMRI(vtk,glyphs) UnRegisterAllOutputs
     }
     
     # make 3D slices opaque now
@@ -776,19 +780,19 @@ especially Diffusion DTMRI MRI.
     pack $f.fTitle -side top -padx $Gui(pad) -pady $Gui(pad) -fill x -anchor w
 
 
-Notebook:create $f.fNotebook \
-                    -pages {{Option 1} {Option 2} {Option 3}} \
-                    -pad 2 \
-                    -bg $Gui(activeWorkspace) \
-                    -height 260 \
-                    -width 240
-pack $f.fNotebook -fill both -expand 1
+    Notebook:create $f.fNotebook \
+                        -pages {{Option 1} {Option 2} {Option 3}} \
+                        -pad 2 \
+                        -bg $Gui(activeWorkspace) \
+                        -height 260 \
+                        -width 240
+    pack $f.fNotebook -fill both -expand 1
 
-set f $fInput.fNotebook
+    set f $fInput.fNotebook
 
-set FrameOption1 [Notebook:frame $f {Option 1}] 
-set FrameOption2 [Notebook:frame $f {Option 2}]
-set FrameOption3 [Notebook:frame $f {Option 3}]
+    set FrameOption1 [Notebook:frame $f {Option 1}] 
+    set FrameOption2 [Notebook:frame $f {Option 2}]
+    set FrameOption3 [Notebook:frame $f {Option 3}]
 
 #    foreach frame "$FrameOption1 $FrameOption2 $FrameOption3" {
 #        frame $frame -bg $Gui(activeWorkspace)
@@ -797,10 +801,10 @@ set FrameOption3 [Notebook:frame $f {Option 3}]
 
     # $f.fTitle configure -bg $Gui(backdrop)
     foreach frame "$FrameOption1 $FrameOption2 $FrameOption3" {
-    $frame configure  -relief groove -bd 3 
-    foreach secframe "OptionNumber Input What How" {
-    frame $frame.f$secframe -bg $Gui(activeWorkspace)
-    pack $frame.f$secframe -side top -padx $Gui(pad) -pady $Gui(pad) -fill x -anchor w
+        $frame configure  -relief groove -bd 3 
+        foreach secframe "OptionNumber Input What How" {
+        frame $frame.f$secframe -bg $Gui(activeWorkspace)
+        pack $frame.f$secframe -side top -padx $Gui(pad) -pady $Gui(pad) -fill x -anchor w
     }
     DevAddLabel $frame.fInput.l1 "The input is:"
     $frame.fInput.l1 configure -font {helvetica 7 normal}
@@ -810,8 +814,8 @@ set FrameOption3 [Notebook:frame $f {Option 3}]
     $frame.fHow.l1 configure -font {helvetica 7 normal}
 
     foreach secframe "Input What How" {
-    pack $frame.f$secframe.l1 -side top -anchor w -padx $Gui(pad) -pady 0
-    }
+        pack $frame.f$secframe.l1 -side top -anchor w -padx $Gui(pad) -pady 0
+        }
     }
 
 
@@ -1081,7 +1085,7 @@ set FrameOption3 [Notebook:frame $f {Option 3}]
     set f $fDisplay.fNotebook
 
 
-   Notebook:create $f.fNotebook \
+    Notebook:create $f.fNotebook \
                     -pages {{Display Glyphs} {Tractography}} \
                     -pad 2 \
                     -bg $Gui(activeWorkspace) \
@@ -1420,7 +1424,7 @@ set FrameOption3 [Notebook:frame $f {Option 3}]
     DevAddButton $f.b "Color:" {ShowColors DTMRIUpdateTractColorToSolid}
     eval {entry $f.e -width 20 \
           -textvariable Label(name)} $Gui(WEA) \
-    {-bg $Gui(activeWorkspace) -state disabled}
+            {-bg $Gui(activeWorkspace) -state disabled}
     pack $f.b $f.e -side left -padx $Gui(pad) -pady $Gui(pad) -fill x
 
     lappend Label(colorWidgetList) $f.e
@@ -1684,7 +1688,7 @@ set FrameOption3 [Notebook:frame $f {Option 3}]
     bind $f.eOutput <FocusOut> "DTMRIUpdateMaskLabel"
     eval {entry $f.eName -width 14 \
           -textvariable Label(name)} $Gui(WEA) \
-    {-bg $Gui(activeWorkspace) -state disabled}
+            {-bg $Gui(activeWorkspace) -state disabled}
     grid $f.bOutput $f.eOutput $f.eName -padx 2 -pady $Gui(pad)
     grid $f.eOutput $f.eName -sticky w
     
@@ -1916,8 +1920,8 @@ set FrameOption3 [Notebook:frame $f {Option 3}]
     # menu to select a volume: will set Volume(activeID)
     set name MaskLabelmap
     DevAddSelectButton  Volume $f $name "Mask Labelmap:" Grid \
-    "Select a labelmap volume to use as a mask.\nDTMRIs will be displayed only where the label matches the label you select below." \
-    13
+        "Select a labelmap volume to use as a mask.\nDTMRIs will be displayed only where the label matches the label you select below." \
+        13
     
     # Append these menus and buttons to lists 
     # that get refreshed during UpdateMRML
@@ -1938,7 +1942,7 @@ set FrameOption3 [Notebook:frame $f {Option 3}]
     bind $f.eOutput <FocusOut> "DTMRIUpdateMaskLabel"
     eval {entry $f.eName -width 14 \
           -textvariable Label(name)} $Gui(WEA) \
-    {-bg $Gui(activeWorkspace) -state disabled}
+            {-bg $Gui(activeWorkspace) -state disabled}
     grid $f.bOutput $f.eOutput $f.eName -padx 2 -pady $Gui(pad)
     grid $f.eOutput $f.eName -sticky w
     
@@ -2122,9 +2126,9 @@ set FrameOption3 [Notebook:frame $f {Option 3}]
     eval {menubutton $f.mbPattern -text "None" -relief raised -bd 2 -menu $f.mbPattern.menu -width 15} $Gui(WMBA)
     eval {menu $f.mbPattern.menu}  $Gui(WMA)
     button $f.bProp -text Prop. -width 5 -font {helvetica 8} -bg $Gui(normalButton) -fg $Gui(textDark)  -activebackground $Gui(activeButton) -activeforeground $Gui(textDark)  -bd $Gui(borderWidth) -padx 0 -pady 0 -relief raised -command {
-    catch {DevInfoWindow $DTMRI($DTMRI(selectedpattern),tip)}
-    catch {puts $DTMRI($DTMRI(selectedpattern),tip)}
-    #DTMRIViewProps
+        catch {DevInfoWindow $DTMRI($DTMRI(selectedpattern),tip)}
+        catch {puts $DTMRI($DTMRI(selectedpattern),tip)}
+        #DTMRIViewProps
     }
 
     pack $f.lLabel $f.bProp -side left -padx $Gui(pad) -pady $Gui(pad)
@@ -2195,156 +2199,157 @@ set FrameOption3 [Notebook:frame $f {Option 3}]
 
     foreach Page "$FrameCont $FrameInter" {   
 
-    #-------------------------------------------
-    # Convert->Pattern frame
-    #-------------------------------------------
-#    set f $fConvert.fPattern
-    set f $Page
+        #-------------------------------------------
+        # Convert->Pattern frame
+        #-------------------------------------------
+    #    set f $fConvert.fPattern
+        set f $Page
 
-    foreach frame "Name Disposal GradientNum GradientImages NoGradientImages Gradients Parameter Create" {
-        frame $f.f$frame -bg $Gui(activeWorkspace)
-        pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
+        foreach frame "Name Disposal GradientNum GradientImages NoGradientImages Gradients Parameter Create" {
+            frame $f.f$frame -bg $Gui(activeWorkspace)
+            pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
+        }
+
+        $f configure  -relief sunken -bd 3 
+
+        #-------------------------------------------
+        # Convert->Pattern->Gradients Title frame
+        #-------------------------------------------
+
+    #    set f $fConvert.fPattern
+    #    frame $f.fTitle -bg $Gui(backdrop)
+    #    pack $f.fTitle -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
+
+        set f $fConvert.fPattern.fTitle
+    #    set f $Page.fTitle
+       
+    #    DevAddLabel $f.lWellcome "Create New Protocol"
+    #    $f.lWellcome configure -fg White -font {helvetica 10 bold}  -bg $Gui(backdrop) -bd 0 -relief groove
+    #    pack $f.lWellcome -side top -padx $Gui(pad) -pady $Gui(pad)
+       
+
+        #-------------------------------------------
+        # Convert->Pattern->Gradients Name frame
+        #-------------------------------------------
+
+    #    set f $fConvert.fPattern.fName
+        set f $Page.fName
+
+        $f configure -relief raised -padx 2 -pady 2
+        DevAddLabel $f.lTitle "Protocol Name:"
+    #   $f.lTitle configure -relief sunken -background gray -bd 2
+        DevAddEntry DTMRI name,name $f.eName 15
+        pack $f.lTitle $f.eName -side left -padx $Gui(pad) -pady 4 -fill x
+
+
+     
+        #-------------------------------------------
+        # Convert->Pattern->Gradients Disposal frame
+        #-------------------------------------------
+
+    #    set f $fConvert.fPattern.fDisposal
+        set f $Page.fDisposal
+
+        $f configure -relief raised -padx 2 -pady 2
+        DevAddLabel $f.lTitle "Gradients/Baselines disposal in Volume:"
+        $f.lTitle configure -relief sunken -background gray -bd 2
+        pack $f.lTitle -side top -padx $Gui(pad) -pady 4 -fill x
+     
+        #-------------------------------------------
+        # Convert->Pattern->GradientNum frame
+        #-------------------------------------------
+    #    set f $fConvert.fPattern.fGradientNum
+        set f $Page.fGradientNum
+        
+        DevAddLabel $f.l "Number of Gradient Directions:"
+        eval {entry $f.eEntry \
+            -textvariable DTMRI(name,numberOfGradients) \
+            -width 5} $Gui(WEA)
+        pack $f.l $f.eEntry -side left -padx $Gui(pad) -pady 0 -fill x
+
+        #-------------------------------------------
+        # Convert->Pattern->GradientImages frame
+        #-------------------------------------------
+    #    set f $fConvert.fPattern.fGradientImages
+        set f $Page.fGradientImages
+
+        DevAddLabel $f.l "Gradient:"
+        eval {entry $f.eEntry1 \
+              -textvariable DTMRI(name,firstGradientImage) \
+              -width 5} $Gui(WEA)
+        eval {entry $f.eEntry2 \
+              -textvariable DTMRI(name,lastGradientImage) \
+              -width 5} $Gui(WEA)
+        pack $f.l $f.eEntry1 $f.eEntry2 -side left -padx $Gui(pad) -pady 0 -fill x
+        TooltipAdd $f.eEntry1 \
+            "First gradient (diffusion-weighted)\nimage number at first slice location"
+        TooltipAdd $f.eEntry2 \
+            "Last gradient (diffusion-weighted)\niimage number at first slice location"
+
+        #-------------------------------------------
+        # Convert->Pattern->NoGradientImages frame
+        #-------------------------------------------
+    #    set f $fConvert.fPattern.fNoGradientImages
+        set f $Page.fNoGradientImages
+
+
+        DevAddLabel $f.l "Baseline:"
+        eval {entry $f.eEntry1 \
+              -textvariable DTMRI(name,firstNoGradientImage) \
+              -width 5} $Gui(WEA)
+        eval {entry $f.eEntry2 \
+              -textvariable DTMRI(name,lastNoGradientImage) \
+              -width 5} $Gui(WEA)
+        pack $f.l $f.eEntry1 $f.eEntry2 -side left -padx $Gui(pad) -pady 0 -fill x
+        TooltipAdd $f.eEntry1 \
+            "First NO gradient (not diffusion-weighted)\nimage number at first slice location"
+        TooltipAdd $f.eEntry2 \
+            "Last NO gradient (not diffusion-weighted)\n image number at first slice location"
+
+        #-------------------------------------------
+        # Convert->Pattern->Gradients frame
+        #-------------------------------------------
+    #    set f $fConvert.fPattern.fGradients
+        set f $Page.fGradients
+
+
+        DevAddLabel $f.lLabel "Directions:"
+        frame $f.fEntry -bg $Gui(activeWorkspace)
+        eval {entry $f.fEntry.eEntry \
+            -textvariable DTMRI(name,gradients) \
+            -width 25 -xscrollcommand [list $f.fEntry.sx set]} $Gui(WEA)
+            scrollbar $f.fEntry.sx -orient horizontal -command [list $f.fEntry.eEntry xview] -bg $Gui(normalButton) -width 10 -troughcolor $Gui(normalButton) 
+        pack $f.fEntry.eEntry $f.fEntry.sx -side top -padx 0 -pady 0 -fill x
+        pack $f.lLabel $f.fEntry -side left -padx $Gui(pad) -pady $Gui(pad) -fill x -anchor n
+        #pack $f.sx -side top -padx $Gui(pad) -pady 0 -fill x
+        TooltipAdd $f.fEntry.eEntry "List of diffusion gradient directions"
+
+        #-------------------------------------------
+        # Convert->Pattern->Parameters frame
+        #-------------------------------------------
+
+
+
+
+    # This frame is supposed to hold the entries for needed parameters in tensors conversion.
+
+    #    set f $fConvert.fPattern.fParameter
+        set f $Page.fParameter
+
+        $f configure -relief raised -padx 2 -pady 2
+        DevAddLabel $f.lTitle "Conversion Parameters:"
+        $f.lTitle configure -relief sunken -background gray -bd 2
+        pack $f.lTitle -side top -padx $Gui(pad) -pady 4 -fill x
+        DevAddLabel $f.lLeBihan "LeBihan factor (b):"
+        eval {entry $f.eEntrylebihan \
+            -textvariable DTMRI(name,lebihan)  \
+            -width 4} $Gui(WEA)
+        eval {scale $f.slebihan -from 100 -to 5000 -variable DTMRI(name,lebihan) -orient vertical -resolution 10 -width 10} $Gui(WSA)
+        pack $f.lLeBihan $f.eEntrylebihan $f.slebihan  -side left -padx $Gui(pad) -pady 0 -fill x -padx $Gui(pad)
+        TooltipAdd $f.eEntrylebihan "Diffusion weighting factor, introduced and defined by LeBihan et al.(1986)"
+      
     }
 
-    $f configure  -relief sunken -bd 3 
-
-    #-------------------------------------------
-    # Convert->Pattern->Gradients Title frame
-    #-------------------------------------------
-
-#    set f $fConvert.fPattern
-#    frame $f.fTitle -bg $Gui(backdrop)
-#    pack $f.fTitle -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
-
-    set f $fConvert.fPattern.fTitle
-#    set f $Page.fTitle
-   
-#    DevAddLabel $f.lWellcome "Create New Protocol"
-#    $f.lWellcome configure -fg White -font {helvetica 10 bold}  -bg $Gui(backdrop) -bd 0 -relief groove
-#    pack $f.lWellcome -side top -padx $Gui(pad) -pady $Gui(pad)
-   
-
-    #-------------------------------------------
-    # Convert->Pattern->Gradients Name frame
-    #-------------------------------------------
-
-#    set f $fConvert.fPattern.fName
-    set f $Page.fName
-
-    $f configure -relief raised -padx 2 -pady 2
-    DevAddLabel $f.lTitle "Protocol Name:"
-#   $f.lTitle configure -relief sunken -background gray -bd 2
-    DevAddEntry DTMRI name,name $f.eName 15
-    pack $f.lTitle $f.eName -side left -padx $Gui(pad) -pady 4 -fill x
-
-
- 
-    #-------------------------------------------
-    # Convert->Pattern->Gradients Disposal frame
-    #-------------------------------------------
-
-#    set f $fConvert.fPattern.fDisposal
-    set f $Page.fDisposal
-
-    $f configure -relief raised -padx 2 -pady 2
-    DevAddLabel $f.lTitle "Gradients/Baselines disposal in Volume:"
-    $f.lTitle configure -relief sunken -background gray -bd 2
-    pack $f.lTitle -side top -padx $Gui(pad) -pady 4 -fill x
- 
-    #-------------------------------------------
-    # Convert->Pattern->GradientNum frame
-    #-------------------------------------------
-#    set f $fConvert.fPattern.fGradientNum
-    set f $Page.fGradientNum
-    
-    DevAddLabel $f.l "Number of Gradient Directions:"
-    eval {entry $f.eEntry \
-    -textvariable DTMRI(name,numberOfGradients) \
-    -width 5} $Gui(WEA)
-    pack $f.l $f.eEntry -side left -padx $Gui(pad) -pady 0 -fill x
-
-    #-------------------------------------------
-    # Convert->Pattern->GradientImages frame
-    #-------------------------------------------
-#    set f $fConvert.fPattern.fGradientImages
-    set f $Page.fGradientImages
-
-    DevAddLabel $f.l "Gradient:"
-    eval {entry $f.eEntry1 \
-          -textvariable DTMRI(name,firstGradientImage) \
-          -width 5} $Gui(WEA)
-    eval {entry $f.eEntry2 \
-          -textvariable DTMRI(name,lastGradientImage) \
-          -width 5} $Gui(WEA)
-    pack $f.l $f.eEntry1 $f.eEntry2 -side left -padx $Gui(pad) -pady 0 -fill x
-    TooltipAdd $f.eEntry1 \
-    "First gradient (diffusion-weighted)\nimage number at first slice location"
-    TooltipAdd $f.eEntry2 \
-    "Last gradient (diffusion-weighted)\niimage number at first slice location"
-
-    #-------------------------------------------
-    # Convert->Pattern->NoGradientImages frame
-    #-------------------------------------------
-#    set f $fConvert.fPattern.fNoGradientImages
-    set f $Page.fNoGradientImages
-
-
-    DevAddLabel $f.l "Baseline:"
-    eval {entry $f.eEntry1 \
-          -textvariable DTMRI(name,firstNoGradientImage) \
-          -width 5} $Gui(WEA)
-    eval {entry $f.eEntry2 \
-          -textvariable DTMRI(name,lastNoGradientImage) \
-          -width 5} $Gui(WEA)
-    pack $f.l $f.eEntry1 $f.eEntry2 -side left -padx $Gui(pad) -pady 0 -fill x
-    TooltipAdd $f.eEntry1 \
-    "First NO gradient (not diffusion-weighted)\nimage number at first slice location"
-    TooltipAdd $f.eEntry2 \
-    "Last NO gradient (not diffusion-weighted)\n image number at first slice location"
-
-    #-------------------------------------------
-    # Convert->Pattern->Gradients frame
-    #-------------------------------------------
-#    set f $fConvert.fPattern.fGradients
-    set f $Page.fGradients
-
-
-    DevAddLabel $f.lLabel "Directions:"
-    frame $f.fEntry -bg $Gui(activeWorkspace)
-    eval {entry $f.fEntry.eEntry \
-    -textvariable DTMRI(name,gradients) \
-    -width 25 -xscrollcommand [list $f.fEntry.sx set]} $Gui(WEA)
-    scrollbar $f.fEntry.sx -orient horizontal -command [list $f.fEntry.eEntry xview] -bg $Gui(normalButton) -width 10 -troughcolor $Gui(normalButton) 
-    pack $f.fEntry.eEntry $f.fEntry.sx -side top -padx 0 -pady 0 -fill x
-    pack $f.lLabel $f.fEntry -side left -padx $Gui(pad) -pady $Gui(pad) -fill x -anchor n
-    #pack $f.sx -side top -padx $Gui(pad) -pady 0 -fill x
-    TooltipAdd $f.fEntry.eEntry "List of diffusion gradient directions"
-
-    #-------------------------------------------
-    # Convert->Pattern->Parameters frame
-    #-------------------------------------------
-
-
-
-
-# This frame is supposed to hold the entries for needed parameters in tensors conversion.
-
-#    set f $fConvert.fPattern.fParameter
-    set f $Page.fParameter
-
-    $f configure -relief raised -padx 2 -pady 2
-    DevAddLabel $f.lTitle "Conversion Parameters:"
-    $f.lTitle configure -relief sunken -background gray -bd 2
-    pack $f.lTitle -side top -padx $Gui(pad) -pady 4 -fill x
-    DevAddLabel $f.lLeBihan "LeBihan factor (b):"
-    eval {entry $f.eEntrylebihan \
-    -textvariable DTMRI(name,lebihan)  \
-    -width 4} $Gui(WEA)
-    eval {scale $f.slebihan -from 100 -to 5000 -variable DTMRI(name,lebihan) -orient vertical -resolution 10 -width 10} $Gui(WSA)
-    pack $f.lLeBihan $f.eEntrylebihan $f.slebihan  -side left -padx $Gui(pad) -pady 0 -fill x -padx $Gui(pad)
-    TooltipAdd $f.eEntrylebihan "Diffusion weighting factor, introduced and defined by LeBihan et al.(1986)"
-  
-}
     #-------------------------------------------
     # Convert->Pattern->FrameCont-->Create frame
     #-------------------------------------------
@@ -2416,7 +2421,7 @@ set FrameOption3 [Notebook:frame $f {Option 3}]
             # and also basic or advanced attrib
             DevAddLabel $f.f$o.l$o [Cap $o]
             pack $f.f$o.l$o -side top \
-        -padx 0 -pady 0
+                -padx 0 -pady 0
         }
 
         # loop through all the parameters for this object
@@ -2452,28 +2457,27 @@ set FrameOption3 [Notebook:frame $f {Option 3}]
                     eval {entry $f.e$p \
                   -width 5 \
                   -textvariable $variableName\
-              } $Gui(WEA)
+                          } $Gui(WEA)
                     DevAddLabel $f.l$p $desc:
                     pack $f.l$p $f.e$p -side left \
-            -padx $Gui(pad) -pady 2
+                        -padx $Gui(pad) -pady 2
                 }
                 "float" {
                     eval {entry $f.e$p \
-                  -width 5 \
-                  -textvariable $variableName\
-              } $Gui(WEA)
+                          -width 5 \
+                          -textvariable $variableName\
+                          } $Gui(WEA)
                     DevAddLabel $f.l$p $desc:
                     pack $f.l$p $f.e$p -side left \
-            -padx $Gui(pad) -pady 2
+                        -padx $Gui(pad) -pady 2
                 }
                 "bool" {
                     # puts "bool: $variableName, $desc"
                     eval {checkbutton $f.r$p  \
-                  -text $desc -variable $variableName \
-              } $Gui(WCA)
-                    
+                          -text $desc -variable $variableName \
+                          } $Gui(WCA)
                     pack  $f.r$p -side left \
-            -padx $Gui(pad) -pady 2
+                        -padx $Gui(pad) -pady 2
                 }
             }
             
@@ -2714,7 +2718,7 @@ proc RunLSDIrecon {} {
         DevInfoWindow "Error: Cannot find $DTMRI(LSDIpydir)\nor execute $DTMRI(pythonintdir)\nUnable to create new volume data"
         return
     }
-    }
+}
 
 
 #-------------------------------------------------------------------------------
@@ -2732,12 +2736,12 @@ proc RunLSDIrecon {} {
 
     if { $DTMRI(convert,show) == 1} {
         pack forget $f.fPattern
-    set DTMRI(convert,show) 0
+        set DTMRI(convert,show) 0
         return
     }
 
     if { $DTMRI(convert,show) == 0 } {
-    pack $f.fPattern -padx $Gui(pad) -pady $Gui(pad)
+        pack $f.fPattern -padx $Gui(pad) -pady $Gui(pad)
     
         set DTMRI(convert,show) 1
         return
@@ -2841,7 +2845,7 @@ proc DTMRICreatePatternSlice {} {
 
         }
  
-    }
+}
 
 
 #-------------------------------------------------------------------------------
@@ -2916,7 +2920,7 @@ proc DTMRICreatePatternVolume {} {
           DTMRILoadPattern
 
       }
-   } 
+} 
 
 
 
@@ -2928,30 +2932,30 @@ proc DTMRICreatePatternVolume {} {
 #-------------------------------------------------------------------------------
 #nowworking2
 
-   proc DTMRILoadPattern {} {
+proc DTMRILoadPattern {} {
     global Module Gui Volume DTMRI Mrml env PACKAGE_DIR_VTKDTMRI
 
    # if DTMRI(patternames) already exists, initialize it and its information
    
    if {[info exists DTMRI(patternnames)]} {
-            foreach a $DTMRI(patternnames) {
+        foreach a $DTMRI(patternnames) {
                set DTMRI($a,parameters) ""
-            }
-         set DTMRI(patternnames) ""
-        } else {set DTMRI(patternnames) ""}
-   if {[info exists DTMRI(patternnamesdef)]} {
-            foreach a $DTMRI(patternnamesdef) {
-               set DTMRI($a,parameters) ""
-            }
-        set DTMRI(patternnamesdef) ""
         }
+        set DTMRI(patternnames) ""
+    } else {set DTMRI(patternnames) ""}
+    if {[info exists DTMRI(patternnamesdef)]} {
+        foreach a $DTMRI(patternnamesdef) {
+            set DTMRI($a,parameters) ""
+        }
+        set DTMRI(patternnamesdef) ""
+    }
 
     if {[info exists DTMRI(localpatternnames)]} {
-            foreach a $DTMRI(localpatternnames) {
-               set DTMRI($a,parameters) ""
-            }
-             set DTMRI(localpatternnames) ""
+        foreach a $DTMRI(localpatternnames) {
+           set DTMRI($a,parameters) ""
         }
+        set DTMRI(localpatternnames) ""
+    }
    
     # look for a file containing pattern information, if it exists, put this information in variable lists
 
@@ -2963,18 +2967,18 @@ proc DTMRICreatePatternVolume {} {
       foreach pattern $DTMRI(patternnamesdef) {
         set DTMRI(ispatternfile) 0
        
-       if { [file isfile $PACKAGE_DIR_VTKDTMRI/../../../data/$pattern] != 0 } {
+            if { [file isfile $PACKAGE_DIR_VTKDTMRI/../../../data/$pattern] != 0 } {
 
-        catch [set filelist [open $PACKAGE_DIR_VTKDTMRI/../../../data/$pattern {RDONLY}]]
-        while {[eof $filelist] != 1} {
+                catch [set filelist [open $PACKAGE_DIR_VTKDTMRI/../../../data/$pattern {RDONLY}]]
+                while {[eof $filelist] != 1} {
 
-            set line [gets $filelist]
-            if {[lindex $line 0] == "vtkDTMRIprotocol"} {
-                set DTMRI(ispatternfile) 1
-            }
-        }
+                    set line [gets $filelist]
+                    if {[lindex $line 0] == "vtkDTMRIprotocol"} {
+                        set DTMRI(ispatternfile) 1
+                    }
+                }
 
-       }
+           }
 
             if {$DTMRI(ispatternfile) == 1} {
                 lappend DTMRI(patternnames) $pattern
@@ -2992,14 +2996,14 @@ proc DTMRICreatePatternVolume {} {
 
             set line [gets $filelist]
           if {[lindex $line 0] != "vtkDTMRIprotocol"} {
-            if {[lindex $line 0] != ""} {
-            if {[lindex $line 0] != "#"} {
-            for {set i 0} {$i<[llength $line]} {incr i} {
-             
-                lappend DTMRI($pattern,parameters) [lindex $line $i]
-            }
-            }
-            }
+                if {[lindex $line 0] != ""} {
+                    if {[lindex $line 0] != "#"} {
+                        for {set i 0} {$i<[llength $line]} {incr i} {
+                         
+                            lappend DTMRI($pattern,parameters) [lindex $line $i]
+                        }
+                    }
+                }
             }
         }
     }
@@ -3025,43 +3029,43 @@ proc DTMRICreatePatternVolume {} {
         while {[eof $filelist] != 1} {
 
             set line [gets $filelist]
-        if { [ lindex $line  0 ] == "vtkDTMRIprotocol" } {
-        set DTMRI(ispatternfile) 1
-        }
+            if { [ lindex $line  0 ] == "vtkDTMRIprotocol" } {
+                set DTMRI(ispatternfile) 1
+            }
         }
 
        }
 
-    if {$DTMRI(ispatternfile) == 1} {
-        lappend DTMRI(localpatternnames) $pattern
-    }    
+        if {$DTMRI(ispatternfile) == 1} {
+            lappend DTMRI(localpatternnames) $pattern
+        }    
     }
  
      # Variable containing all the patterns available (the ones from the module and the locals ones)
     set DTMRI(patternnames) [concat $DTMRI(patternnames) $DTMRI(localpatternnames)]
 
      # put pattern information into modules variables
-    foreach pattern $DTMRI(localpatternnames) {
+        foreach pattern $DTMRI(localpatternnames) {
 
-    catch [set filelist [open $env(HOME)/PatternsData/$pattern {RDONLY}]]
-        while {[eof $filelist] != 1} {
+        catch [set filelist [open $env(HOME)/PatternsData/$pattern {RDONLY}]]
+            while {[eof $filelist] != 1} {
 
-            set line [gets $filelist]
-        if {[lindex $line 0] != "vtkDTMRIprotocol"} {
-            if {[lindex $line 0] != ""} {
-            if {[lindex $line 0] != "#"} {
-            for {set i 0} {$i<[llength $line]} {incr i} {
-             
-                lappend DTMRI($pattern,parameters) [lindex $line $i]
+                set line [gets $filelist]
+            if {[lindex $line 0] != "vtkDTMRIprotocol"} {
+                    if {[lindex $line 0] != ""} {
+                        if {[lindex $line 0] != "#"} {
+                            for {set i 0} {$i<[llength $line]} {incr i} {
+                             
+                                lappend DTMRI($pattern,parameters) [lindex $line $i]
+
+                            }
+                        }
+                    }
+                }
 
             }
-            }
-            }
-            }
 
-        }
-
-     }
+         }
      }
 
     destroy $Module(DTMRI,fConvert).fConvert.fPattern.mbPattern.menu
@@ -3069,7 +3073,7 @@ proc DTMRICreatePatternVolume {} {
 
     # load existing patterns in the menu of the menubutton
     foreach z $DTMRI(patternnames) {
-    set DTMRI(patt) $z
+        set DTMRI(patt) $z
         pack forget $Module(DTMRI,fConvert).fConvert.fPattern.mbPattern      
         $Module(DTMRI,fConvert).fConvert.fPattern.mbPattern.menu add command -label $z -command "
         set DTMRI(selectedpattern) $DTMRI(patt)
@@ -3079,10 +3083,7 @@ proc DTMRICreatePatternVolume {} {
         "
 
      }  
-        pack  $Module(DTMRI,fConvert).fConvert.fPattern.mbPattern -side left -padx $Gui(pad) -pady $Gui(pad) -after $Module(DTMRI,fConvert).fConvert.fPattern.lLabel
-        
-    
-    
+    pack  $Module(DTMRI,fConvert).fConvert.fPattern.mbPattern -side left -padx $Gui(pad) -pady $Gui(pad) -after $Module(DTMRI,fConvert).fConvert.fPattern.lLabel
 }
  
 
@@ -3116,10 +3117,10 @@ proc DTMRICreatePatternVolume {} {
 # .END
 #-------------------------------------------------------------------------------
 proc DTMRIViewProps {} {
-puts $DTMRI(selectedpattern)
+    puts $DTMRI(selectedpattern)
 
     if { [info exists DTMRI(selectedpattern)] } {
-    DevInfoWindow $DTMRI($DTMRI(selectedpattern),tip)
+        DevInfoWindow $DTMRI($DTMRI(selectedpattern),tip)
     }
 
 }
@@ -3194,7 +3195,7 @@ proc DTMRIPropsApply {} {
     if {$d == "NEW"} {
 
         # Create the node
-    set newvol [MainMrmlAddNode Volume Tensor]
+        set newvol [MainMrmlAddNode Volume Tensor]
         set i [$newvol GetID]
 
         # Set everything up in the node.
@@ -3386,6 +3387,7 @@ proc DTMRIRemoveAllActors {} {
 
     Render3D
 
+    set DTMRI(glyphs,actorsAdded) 0
 }
 
 #-------------------------------------------------------------------------------
@@ -3405,6 +3407,7 @@ proc DTMRIAddAllActors {} {
 
     Render3D
 
+    set DTMRI(glyphs,actorsAdded) 1
 }
 
 
@@ -3425,14 +3428,14 @@ proc DTMRIUpdateReformatType {} {
     # make sure we don't display all DTMRIs by accident
     switch $mode {
         "None" {
-        set message "This will display ALL DTMRIs.  If the volume is not masked using a labelmap or threshold ROI, this may take a long time or not work on your machine.  Proceed?"
-        set result [tk_messageBox -type okcancel -message $message]
-    }
+            set message "This will display ALL DTMRIs.  If the volume is not masked using a labelmap or threshold ROI, this may take a long time or not work on your machine.  Proceed?"
+            set result [tk_messageBox -type okcancel -message $message]
+        }
     }
 
     # display what was requested
     if {$result == "ok"} {
-    DTMRIUpdate
+        DTMRIUpdate
     }
 }
 
@@ -3716,17 +3719,17 @@ proc DTMRIUpdateGlyphScalarRange {{not_used ""}} {
             scan [[DTMRI(vtk,glyphs) GetOutput] GetScalarRange] \
         "%f %f" s1 s2
         }
-    "Manual" {
-        set s1 $DTMRI(mode,glyphScalarRange,low) 
-        set s2 $DTMRI(mode,glyphScalarRange,hi) 
-    }
+        "Manual" {
+            set s1 $DTMRI(mode,glyphScalarRange,low) 
+            set s2 $DTMRI(mode,glyphScalarRange,hi) 
+        }
     }
 
     # make sure that the scalars hi and low are not equal since
     # this causes an error from the mapper
     if {$s2 == $s1} {
-    set s1 0
-    set s2 1
+        set s1 0
+        set s2 1
     }    
     # set this scalar range for glyph display
     DTMRI(vtk,glyphs,mapper) SetScalarRange $s1 $s2
@@ -3953,17 +3956,17 @@ proc DTMRIUpdateTractingMethod { TractingMethod } {
 proc DTMRIUpdateBSplineOrder { SplineOrder } {
     global DTMRI
     if { $SplineOrder != $DTMRI(stream,BSplineOrder) } {
-    set DTMRI(stream,BSplineOrder) $SplineOrder
-    $DTMRI(gui,mbBSplineOrder)    config -text $SplineOrder
+        set DTMRI(stream,BSplineOrder) $SplineOrder
+        $DTMRI(gui,mbBSplineOrder)    config -text $SplineOrder
 
-    for {set i 0} {$i < 6} {incr i 1} {
-        DTMRI(vtk,impComp($i)) SetSplineOrder $SplineOrder
-        DTMRI(vtk,bspline($i)) SetSplineOrder $SplineOrder
-        if { $DTMRI(vtk,BSpline,init) == 1 } {
-        DTMRI(vtk,bspline($i)) Update
-        DTMRI(vtk,impComp($i)) SetInput [DTMRI(vtk,bspline($i)) GetOutput]
+        for {set i 0} {$i < 6} {incr i 1} {
+            DTMRI(vtk,impComp($i)) SetSplineOrder $SplineOrder
+            DTMRI(vtk,bspline($i)) SetSplineOrder $SplineOrder
+            if { $DTMRI(vtk,BSpline,init) == 1 } {
+                DTMRI(vtk,bspline($i)) Update
+                DTMRI(vtk,impComp($i)) SetInput [DTMRI(vtk,bspline($i)) GetOutput]
+            }
         }
-    }
 
     }
 }
@@ -4349,16 +4352,16 @@ proc DTMRIUpdate {} {
             #------------------------------------
             set slice $DTMRI(mode,reformatType)
 
-        # find ijk->ras rotation to apply to each DTMRI
-        #vtkTransform t2 
-        #DTMRICalculateIJKtoRASRotationMatrix t2 $t
-        #puts "Lauren testing rm -y"
-        #t2 Scale 1 -1 1
-        #puts [[t2 GetMatrix] Print]
-        #DTMRI(vtk,glyphs) SetTensorRotationMatrix [t2 GetMatrix]
-        #t2 Delete
-        DTMRICalculateIJKtoRASRotationMatrix DTMRI(vtk,glyphs,trans) $t
-        DTMRI(vtk,glyphs) SetTensorRotationMatrix [DTMRI(vtk,glyphs,trans) GetMatrix]
+            # find ijk->ras rotation to apply to each DTMRI
+            #vtkTransform t2 
+            #DTMRICalculateIJKtoRASRotationMatrix t2 $t
+            #puts "Lauren testing rm -y"
+            #t2 Scale 1 -1 1
+            #puts [[t2 GetMatrix] Print]
+            #DTMRI(vtk,glyphs) SetTensorRotationMatrix [t2 GetMatrix]
+            #t2 Delete
+            DTMRICalculateIJKtoRASRotationMatrix DTMRI(vtk,glyphs,trans) $t
+            DTMRI(vtk,glyphs) SetTensorRotationMatrix [DTMRI(vtk,glyphs,trans) GetMatrix]
         
             if {$slice != "None"} {
 
@@ -4420,37 +4423,44 @@ proc DTMRIUpdate {} {
             DTMRI(vtk,glyphs) SetInput $visSource
 
             # for lines don't use normals filter before mapper
-        DTMRI(vtk,glyphs,mapper) SetInput \
-        [DTMRI(vtk,glyphs) GetOutput]
+            DTMRI(vtk,glyphs,mapper) SetInput \
+                [DTMRI(vtk,glyphs) GetOutput]
 
             # Use axes or ellipsoids
             #------------------------------------
             switch $DTMRI(mode,glyphType) {
                 "Axes" {
                     DTMRI(vtk,glyphs) SetSource \
-            [DTMRI(vtk,glyphs,axes) GetOutput]
+                        [DTMRI(vtk,glyphs,axes) GetOutput]
                     # this is too slow, but might make nice pictures
                     #[DTMRI(vtk,glyphs,tubeAxes) GetOutput]
 
                 }
                 "Lines" {
                     DTMRI(vtk,glyphs) SetSource \
-            [DTMRI(vtk,glyphs,line) GetOutput]
+                        [DTMRI(vtk,glyphs,line) GetOutput]
                 }
                 "Ellipsoids" {
                     DTMRI(vtk,glyphs) SetSource \
-            [DTMRI(vtk,glyphs,sphere) GetOutput]
+                        [DTMRI(vtk,glyphs,sphere) GetOutput]
                     # this normal filter improves display but is slow.
                     DTMRI(vtk,glyphs,mapper) SetInput \
-            [DTMRI(vtk,glyphs,normals) GetOutput]
+                        [DTMRI(vtk,glyphs,normals) GetOutput]
                 }
                 "Boxes" {
                     DTMRI(vtk,glyphs) SetSource \
-            [DTMRI(vtk,glyphs,box) GetOutput]
+                        [DTMRI(vtk,glyphs,box) GetOutput]
                     # this normal filter improves display but is slow.
                     DTMRI(vtk,glyphs,mapper) SetInput \
-            [DTMRI(vtk,glyphs,normals) GetOutput]
+                        [DTMRI(vtk,glyphs,normals) GetOutput]
                 }
+            }
+
+            # in case this is the first time we load a tensor volume, 
+            # place the actors in the scene now. (Now that there is input
+            # to the pipeline this will not cause errors.)
+            if {$DTMRI(glyphs,actorsAdded) == 0} {
+                DTMRIAddAllActors
             }
 
             # Make actor visible
@@ -4469,7 +4479,7 @@ proc DTMRIUpdate {} {
     }
 
     # make sure the scalars are updated (if we have anything displayed)
-    if {$mode != "None"} {
+    if {$mode != "None" && $DTMRI(glyphs,actorsAdded)==1} {
         DTMRIUpdateGlyphScalarRange
     }
     # update 3D window (causes pipeline update)
@@ -4586,11 +4596,11 @@ proc DTMRIDoMath {{operation ""}} {
 
     # validate user input
     if {[ValidateFloat $DTMRI(scalars,scaleFactor)] != "1"} {
-    tk_messageBox -message \
-        "Please enter a number for the scale factor."
-    # reset default
-    set DTMRI(scalars,scaleFactor) 1000
-    return
+        tk_messageBox -message \
+            "Please enter a number for the scale factor."
+        # reset default
+        set DTMRI(scalars,scaleFactor) 1000
+        return
     }
 
     # should use DevCreateNewCopiedVolume if have a vol node
@@ -4626,18 +4636,19 @@ proc DTMRIDoMath {{operation ""}} {
     set rangexx [[[$input GetPointData] GetTensors] GetRange 0]
     set rangeyy [[[$input GetPointData] GetTensors] GetRange 4]
     set rangezz [[[$input GetPointData] GetTensors] GetRange 8]
-    puts "Ranges are: $rangexx $rangeyy $rangezz"
+    
     set maxTrace [expr [lindex $rangexx 1] + [lindex $rangeyy 1] + [lindex $rangezz 1]]
+    
     puts "Running oper: $operation"
     puts "Max Trace: $maxTrace"
     
     switch -regexp -- $operation {
-    {^(Trace|Determinant|D11|D22|D33|MaxEigenvalue|MiddleEigenvalue|MinEigenvalue)$} {
-        set DTMRI(scalars,scaleFactor) [expr 1000.0 / $maxTrace]
-    }
-    {^(RelativeAnisotropy|FractionalAnisotropy|LinearMeasure|PlanarMeasure|SphericalMeasure|ColorByOrientation)$} {
-        set DTMRI(scalars,scaleFactor) 1000
-    }
+        {^(Trace|Determinant|D11|D22|D33|MaxEigenvalue|MiddleEigenvalue|MinEigenvalue)$} {
+            set DTMRI(scalars,scaleFactor) [expr 1000.0 / $maxTrace]
+        }
+        {^(RelativeAnisotropy|FractionalAnisotropy|LinearMeasure|PlanarMeasure|SphericalMeasure|ColorByOrientation)$} {
+            set DTMRI(scalars,scaleFactor) 1000
+        }
     }
     
     puts "DTMR: scale factor $DTMRI(scalars,scaleFactor)"
@@ -4862,7 +4873,7 @@ proc DTMRIBuildVTK {} {
     DTMRI(vtk,$object) SetReplaceIn     1
     DTMRI(vtk,$object) SetReplaceOut    1
     DTMRI(vtk,$object) SetInput \
-    [DTMRI(vtk,thresh,math) GetOutput]
+        [DTMRI(vtk,thresh,math) GetOutput]
 
     # convert the mask to unsigned char
     # Lauren it would be better to have the threshold filter do this
@@ -4870,7 +4881,7 @@ proc DTMRIBuildVTK {} {
     DTMRIMakeVTKObject vtkImageCast $object
     DTMRI(vtk,$object) SetOutputScalarTypeToUnsignedChar    
     DTMRI(vtk,$object) SetInput \
-    [DTMRI(vtk,thresh,threshold) GetOutput]
+        [DTMRI(vtk,thresh,threshold) GetOutput]
 
     # mask the DTMRIs 
     set object thresh,mask
@@ -4878,7 +4889,7 @@ proc DTMRIBuildVTK {} {
     #DTMRI(vtk,$object) SetMaskInput \
     #    [DTMRI(vtk,thresh,threshold) GetOutput]
     DTMRI(vtk,$object) SetMaskInput \
-    [DTMRI(vtk,thresh,cast) GetOutput]
+        [DTMRI(vtk,thresh,cast) GetOutput]
 
     # objects for masking before glyph display
     #------------------------------------
@@ -4898,13 +4909,13 @@ proc DTMRIBuildVTK {} {
     DTMRIMakeVTKObject vtkImageCast $object
     DTMRI(vtk,$object) SetOutputScalarTypeToShort    
     DTMRI(vtk,$object) SetInput \
-    [DTMRI(vtk,mask,threshold) GetOutput]
+        [DTMRI(vtk,mask,threshold) GetOutput]
 
     # mask the DTMRIs 
     set object mask,mask
     DTMRIMakeVTKObject vtkTensorMask $object
     DTMRI(vtk,$object) SetMaskInput \
-    [DTMRI(vtk,mask,cast) GetOutput]
+        [DTMRI(vtk,mask,cast) GetOutput]
 
     #---------------------------------------------------------------
     # Pipeline for display of glyphs
@@ -5015,7 +5026,7 @@ proc DTMRIBuildVTK {} {
     #DTMRIMakeVTKObject vtkLogLookupTable $object
     DTMRIMakeVTKObject vtkLookupTable $object
     DTMRIAddObjectProperty $object HueRange \
-    {.6667 0.0} float {Hue Range}
+        {.6667 0.0} float {Hue Range}
 
     # mapper
     set object glyphs,mapper
@@ -5025,7 +5036,7 @@ proc DTMRIBuildVTK {} {
     #DTMRI(vtk,glyphs,mapper) SetInput [DTMRI(vtk,glyphs,normals) GetOutput]
     DTMRI(vtk,glyphs,mapper) SetLookupTable DTMRI(vtk,glyphs,lut)
     DTMRIAddObjectProperty $object ImmediateModeRendering \
-    1 bool {Immediate Mode Rendering}    
+        1 bool {Immediate Mode Rendering}    
 
     # Display of DTMRI glyphs: Actor
     #------------------------------------
@@ -5183,8 +5194,8 @@ proc ConvertVolumeToTensors {} {
     #set numberOfNoGradientImages 2
     set count 0
     for {set i $DTMRI(convert,firstGradientImage)} \
-    {$i  <= $DTMRI(convert,lastGradientImage) } \
-    {incr i} {
+            {$i  <= $DTMRI(convert,lastGradientImage) } \
+            {incr i} {
         # 0-based offsets, so subtract 1
         lappend offsetsGradient [expr $i -1]
         incr count
@@ -5193,8 +5204,8 @@ proc ConvertVolumeToTensors {} {
     set numberOfGradientImages $count
     set count 0
     for {set i $DTMRI(convert,firstNoGradientImage)} \
-    {$i  <= $DTMRI(convert,lastNoGradientImage) } \
-    {incr i} {
+            {$i  <= $DTMRI(convert,lastNoGradientImage) } \
+            {incr i} {
         # 0-based offsets, so subtract 1
         lappend offsetsNoGradient [expr $i -1]
         incr count
@@ -5213,7 +5224,7 @@ proc ConvertVolumeToTensors {} {
 
     for {set i 0} {$i < $DTMRI(convert,numberOfGradients)} {incr i} {
     #    eval {DTMRI SetDiffusionGradient $i} [lindex DTMRI(convert,gradients) $i]
-    eval {DTMRI SetDiffusionGradient $i} [lindex $DTMRI(convert,gradients) $i]
+        eval {DTMRI SetDiffusionGradient $i} [lindex $DTMRI(convert,gradients) $i]
     }
 
     # volume we use for input
@@ -5227,61 +5238,61 @@ proc ConvertVolumeToTensors {} {
     
       
     if {$swap == 0} {    
-    # Gunnar Farneback, April 6, 2004
-    #
-    # Apparently nobody understands all the involved coordinate
-    # systems well enough to actually know how the gradient
-    # directions should be transformed. This piece of code is
-    # based on the hypothesis that the transformation matrices
-    # only need to depend on the scan order and that the values
-    # can be determined experimentally. It is perfectly possible
-    # that this may break from changes elsewhere.
-    #
-    # If somebody reading this does know how to properly do these
-    # transforms, please replace this code with something better.
-    #
-    # So far IS and PA have been experimentally verified.
-    # SI is hypothesized to be the same as IS.
-    # AP is hypothesized to be the same as PA.
+        # Gunnar Farneback, April 6, 2004
+        #
+        # Apparently nobody understands all the involved coordinate
+        # systems well enough to actually know how the gradient
+        # directions should be transformed. This piece of code is
+        # based on the hypothesis that the transformation matrices
+        # only need to depend on the scan order and that the values
+        # can be determined experimentally. It is perfectly possible
+        # that this may break from changes elsewhere.
+        #
+        # If somebody reading this does know how to properly do these
+        # transforms, please replace this code with something better.
+        #
+        # So far IS and PA have been experimentally verified.
+        # SI is hypothesized to be the same as IS.
+        # AP is hypothesized to be the same as PA.
 
-    puts $scanorder
-    switch $scanorder {
-        "SI" -
-        "IS" {
-        set elements "\
-                                {0 1 0 0}  \
-                                {1 0 0 0}  \
-                                {0 0 -1 0}  \
-                                {0 0 0 1}  "
+        puts $scanorder
+        switch $scanorder {
+            "SI" -
+            "IS" {
+            set elements "\
+                                    {0 1 0 0}  \
+                                    {1 0 0 0}  \
+                                    {0 0 -1 0}  \
+                                    {0 0 0 1}  "
+            }
+            "AP" -
+            "PA" {
+            set elements "\
+                                    {0 1 0 0}  \
+                                    {-1 0 0 0}  \
+                                    {0 0 -1 0}  \
+                                    {0 0 0 1}  "
+            }
+            default {
+            set elements "\
+                                    {0 1 0 0}  \
+                                    {1 0 0 0}  \
+                                    {0 0 1 0}  \
+                                    {0 0 0 1}  "
+            }
         }
-        "AP" -
-        "PA" {
-        set elements "\
-                                {0 1 0 0}  \
-                                {-1 0 0 0}  \
-                                {0 0 -1 0}  \
-                                {0 0 0 1}  "
-        }
-        default {
-        set elements "\
-                                {0 1 0 0}  \
-                                {1 0 0 0}  \
-                                {0 0 1 0}  \
-                                {0 0 0 1}  "
-        }
-    }
 
-    set rows {0 1 2 3}
-    set cols {0 1 2 3}    
-    foreach row $rows {
-        foreach col $cols {
-        [trans GetMatrix] SetElement $row $col \
-            [lindex [lindex $elements $row] $col]
-        }
-    }    
+        set rows {0 1 2 3}
+        set cols {0 1 2 3}    
+        foreach row $rows {
+            foreach col $cols {
+                [trans GetMatrix] SetElement $row $col \
+                    [lindex [lindex $elements $row] $col]
+            }
+        }    
     } else { 
-    puts "Creating DTMRIs with -y for vtk compliance"
-    trans Scale 1 -1 1
+        puts "Creating DTMRIs with -y for vtk compliance"
+        trans Scale 1 -1 1
     }
 
     #Hardcode specific parameters for MOSAIC. Experimental.
@@ -5773,7 +5784,7 @@ proc DTMRIWriteStructuredPoints {filename} {
 
     set filename [tk_getSaveFile -defaultextension ".vtk" -title "Save tensor as vtkstructurepoints"]
     if { $filename == "" } {
-    return
+        return
     }
 
     vtkStructuredPointsWriter writer
@@ -5840,7 +5851,7 @@ proc DTMRISaveStreamlinesAsPolyLines {subdir name {verbose "1"}} {
     
     set filename [tk_getSaveFile -defaultextension ".vtk" -title "Save Streamlines as polyline"]
     if { $filename == "" } {
-    return
+        return
     }
     
     
@@ -5852,7 +5863,7 @@ proc DTMRISaveStreamlinesAsPolyLines {subdir name {verbose "1"}} {
         set streamln streamln,$id
         
         foreach dir {0 1} {
-        set numpts [expr $numpts + [[DTMRI(vtk,$streamln) GetHyperStreamline$dir] GetNumberOfPoints]]
+            set numpts [expr $numpts + [[DTMRI(vtk,$streamln) GetHyperStreamline$dir] GetNumberOfPoints]]
         }
     }
     
@@ -5868,29 +5879,29 @@ proc DTMRISaveStreamlinesAsPolyLines {subdir name {verbose "1"}} {
     #global id for points
     set idp 0
     foreach id $thelist {
-    set streamln streamln,$id
-    
-    foreach dir {0 1} {
-        set cellnumpts [[DTMRI(vtk,$streamln) GetHyperStreamline$dir] GetNumberOfPoints]
-        c InsertNextCell $cellnumpts
-        #Get transformation matrix: IJK -> RAS
-        set matrix [DTMRI(vtk,$streamln,actor) GetUserMatrix]
+        set streamln streamln,$id
         
-        for {set i 0} {$i < $cellnumpts} {incr i} {
-        set ijkpoint [[DTMRI(vtk,$streamln) GetHyperStreamline$dir] GetPoint $i]
-        set raspoint [$matrix MultiplyPoint [lindex $ijkpoint 0] [lindex $ijkpoint 1] [lindex $ijkpoint 2] 1]
-        #If we want to save points in ijk
-        #eval "pt SetPoint $idp" [[DTMRI(vtk,$streamln) GetHyperStreamline$dir] GetPoint $i]
-        
-        #If we want to save points in ras
-        pt SetPoint $idp [lindex $raspoint 0] [lindex $raspoint 1] [lindex $raspoint 2]
-        
-        c InsertCellPoint $idp
-        incr idp
-        
-        }   
-        incr idcell
-    }
+        foreach dir {0 1} {
+            set cellnumpts [[DTMRI(vtk,$streamln) GetHyperStreamline$dir] GetNumberOfPoints]
+            c InsertNextCell $cellnumpts
+            #Get transformation matrix: IJK -> RAS
+            set matrix [DTMRI(vtk,$streamln,actor) GetUserMatrix]
+            
+            for {set i 0} {$i < $cellnumpts} {incr i} {
+                set ijkpoint [[DTMRI(vtk,$streamln) GetHyperStreamline$dir] GetPoint $i]
+                set raspoint [$matrix MultiplyPoint [lindex $ijkpoint 0] [lindex $ijkpoint 1] [lindex $ijkpoint 2] 1]
+                #If we want to save points in ijk
+                #eval "pt SetPoint $idp" [[DTMRI(vtk,$streamln) GetHyperStreamline$dir] GetPoint $i]
+                
+                #If we want to save points in ras
+                pt SetPoint $idp [lindex $raspoint 0] [lindex $raspoint 1] [lindex $raspoint 2]
+                
+                c InsertCellPoint $idp
+                incr idp
+            
+            }   
+            incr idcell
+        }
     }
     
     #3. Build polydata
@@ -5914,8 +5925,8 @@ proc DTMRISaveStreamlinesAsPolyLines {subdir name {verbose "1"}} {
 
     # let user know something happened
     if {$verbose == "1"} {
-    set msg "Wrote streamlines as vtk files, last file was $filename"
-    tk_messageBox -message $msg
+        set msg "Wrote streamlines as vtk files, last file was $filename"
+        tk_messageBox -message $msg
     }
 
 
@@ -6045,7 +6056,7 @@ proc DTMRICalculateActorMatrix {transform t} {
     scan [$node GetSpacing] "%g %g %g" res_x res_y res_z
 
     $transform Scale [expr 1.0 / $res_x] [expr 1.0 / $res_y] \
-    [expr 1.0 / $res_z]
+        [expr 1.0 / $res_z]
 }
 
 
@@ -6132,6 +6143,9 @@ proc DTMRISetActive {n} {
 
     # Call the procedure that puts this tensor on the menus
     MainDataSetActive Tensor $n
+
+    # Make sure this tensor is the input to the glyph pipeline
+    DTMRIUpdate
 
     # get the active ID (index into tensor list)
     set t $Tensor(activeID)
