@@ -99,7 +99,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.79 $} {$Date: 2003/06/09 16:25:56 $}]
+            {$Revision: 1.80 $} {$Date: 2003/06/19 23:16:42 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -1069,9 +1069,28 @@ proc VolumesPropsApply {} {
         set m $i
 
         # if we are successful set the FOV for correct display of this volume
-        set dim     [lindex [Volume($i,node) GetDimensions] 0]
-        set spacing [lindex [Volume($i,node) GetSpacing] 0]
-        set fov     [expr $dim*$spacing]
+        # (check all dimensions and pix max - special cases for z for dicom, 
+        # but since GE files haven't been parsed yet, no way to know their 
+        # z extent yet.  TODO: fix GE z extent parsing)
+        set fov 0
+        for {set i 0} {$i < 2} {incr i} {
+            set dim     [lindex [Volume($i,node) GetDimensions] $i]
+            set spacing [lindex [Volume($i,node) GetSpacing] $i]
+            set newfov     [expr $dim * $spacing]
+            if { $newfov > $fov } {
+                set fov $newfov
+            }
+        }
+        set dim [llength $Volume(dICOMFileList)]
+        if { $dim == 0 } {
+            # do nothing for non-dicom because size isn't known yet
+        } else {
+            set spacing [lindex [Volume($i,node) GetSpacing] 2]
+            set newfov [expr $dim * $spacing]
+            if { $newfov > $fov } {
+                set fov $newfov
+            }
+        }
         set View(fov) $fov
         MainViewSetFov
 
