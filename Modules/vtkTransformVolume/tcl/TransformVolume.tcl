@@ -105,7 +105,7 @@ proc TransformVolumeInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.9 $} {$Date: 2005/03/21 15:15:31 $}]
+        {$Revision: 1.10 $} {$Date: 2005/03/21 19:36:41 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -114,7 +114,7 @@ proc TransformVolumeInit {} {
     #   This is a handy method for organizing the global variables that
     #   the procedures in this module and others need to access.
     #
-    set TransformVolume(resultPrefix) "xformed"
+    set TransformVolume(ResultPrefix) "xformed"
     set TransformVolume(VolIDs) ""
     set TransformVolume(RefVolume) ""
     set TransformVolume(DispVolume) ""
@@ -128,6 +128,8 @@ proc TransformVolumeInit {} {
     set TransformVolume(OutputDimensionIS) 64
     set TransformVolume(ResamplingModes) {"SourceVolume" "ReferenceVolume" "Resample"}
     set TransformVolume(ResamplingMode) 0
+    set TransformVolume(InterpolationModes) {"NearestNeighbor" "Linear" "Cubic"}
+    set TransformVolume(InterpolationMode) Cubic
     set TransformVolume(resampleConrols) ""
 }
 
@@ -265,7 +267,6 @@ proc TransformVolumeBuildGUI {} {
     $TransformVolume(referenceVol) allowNone 1
 
     # Main->ReasmpleMode
-    set f $fMain
     iwidgets::radiobox $f.rbresample -labeltext "Resample Mode" -labelpos n \
         -background "#e2cdba" -foreground "#000000" \
         -labelfont {helvetica 8} -orient vertical \
@@ -277,44 +278,42 @@ proc TransformVolumeBuildGUI {} {
     set TransformVolume(resampleMode) $f.rbresample
     $TransformVolume(resampleMode) select $TransformVolume(ResamplingMode)
 
-    iwidgets::Labeledwidget::alignlabels $f.matopt $f.volopt $f.volref
+    # Main->Interpolation Mode
+    iwidgets::radiobox $f.rbinterpmode -labeltext "Interpolation Mode" -labelpos n \
+        -background "#e2cdba" -foreground "#000000" \
+        -labelfont {helvetica 8} -orient horizontal \
+        -command TransformVolumeInterpolationMode
 
-    pack $f.matopt $f.volopt $f.volref $f.rbresample -side top -padx $Gui(pad) -pady $Gui(pad) \
-        -fill x \
-        -expand yes
-
-
-    # Result prefix
-    set f $fMain.fPrefix
-    frame $f -bg $Gui(activeWorkspace)
-    pack $f -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
-    DevAddLabel $f.lPrefix "Result Prefix:"
-    eval {entry $f.ePrefix -textvariable TransformVolume(resultPrefix)} $Gui(WEA)
-    pack $f.lPrefix -side left -padx $Gui(pad)
-    pack $f.ePrefix -side left -padx $Gui(pad) -expand 1 -fill x
-
-    # Interpolation Mode
-    set f $fMain.fInterpolationMode
-    frame $f -bg $Gui(activeWorkspace)
-    pack $f -side top -padx 0 -pady $Gui(pad) -fill x
-
-    eval {label $f.lInterpolationMode -text "Interpolation Mode:"} $Gui(WLA)
-    #Create label foreach type of interpolation
-    foreach label {"NearestNeighbor" "Linear" "Cubic"} text {"Nearest Neighbor" "Linear" "Cubic"} {
-        eval {radiobutton $f.rb$label -text $text -variable TransformVolume(InterpolationMode) -value $label} $Gui(WLA)
+    foreach or $TransformVolume(InterpolationModes) {
+        $f.rbinterpmode add $or -text $or
     }
-    set TransformVolume(InterpolationMode) Cubic
-    pack $f.lInterpolationMode -side top -padx $Gui(pad) -pady $Gui(pad)
-    pack $f.rbNearestNeighbor $f.rbLinear $f.rbCubic -side left -anchor w -padx 1 -pady $Gui(pad)
+    set TransformVolume(interpolationMode) $f.rbinterpmode
+    $TransformVolume(interpolationMode) select $TransformVolume(InterpolationMode)
 
+    # Main- Result prefix
+    iwidgets::entryfield $f.ePrefix -labeltext "Result Prefix:" -labelpos w \
+        -background "#e2cdba" -foreground "#000000" \
+        -labelfont {helvetica 8} \
+        -command TransformVolumeResultPrefix
+
+    $f.ePrefix insert 0  $TransformVolume(ResultPrefix)
+    set TransformVolume(resultPrefix) $f.ePrefix
 
     # Transform button
-    set f $fMain.fRun
-    frame $f -bg $Gui(activeWorkspace)
-    pack $f -side top -padx 0 -pady $Gui(pad) -fill x
-    DevAddButton $f.bRun "Do Transform" "TransformVolumeRun"
-    pack $f.bRun -pady $Gui(pad)
-    TooltipAdd $f.bRun "Transform volumes"
+    iwidgets::pushbutton  $f.brun \
+        -text "Do Transform" \
+        -background "#e2cdba" -foreground "#000000" \
+        -font {helvetica 8} \
+        -command TransformVolumeRun
+
+    set TransformVolume(brun) $f.brun
+
+    iwidgets::Labeledwidget::alignlabels $f.matopt $f.volopt $f.volref $f.ePrefix 
+
+    pack $f.matopt $f.volopt $f.volref $f.rbresample $f.rbinterpmode $f.ePrefix $f.brun \
+        -side top -padx $Gui(pad) -pady $Gui(pad) \
+        -fill x \
+        -expand yes
 
 
     #-------------------------------------------
@@ -366,7 +365,7 @@ proc TransformVolumeBuildGUI {} {
     pack $f -side top -padx 0 -pady $Gui(pad) -fill x
 
     set f $fResample.fAutoSpacing
-    DevAddButton $f.bAutoSpacing "Original Spacing"  AutoSpacing
+    DevAddButton $f.bAutoSpacing "Original Spacing"  TransformVolumeAutoSpacing
     pack $f.bAutoSpacing -side left -padx $Gui(pad) -pady $Gui(pad)
 
     lappend TransformVolume(resampleConrols) $f.bAutoSpacing
@@ -395,9 +394,9 @@ proc TransformVolumeBuildGUI {} {
     pack $f -side top -padx 0 -pady $Gui(pad) -fill x
   
     set f $fResample.fSetExtent
-    DevAddButton $f.bIsoExtentI " Auto LR "  AutoDimensionLR
-    DevAddButton $f.bIsoExtentJ " Auto PA "  AutoDimensionPA
-    DevAddButton $f.bIsoExtentK " Auto IS "  AutoDimensionIS
+    DevAddButton $f.bIsoExtentI " Auto LR "  TransformVolumeAutoDimensionLR
+    DevAddButton $f.bIsoExtentJ " Auto PA "  TransformVolumeAutoDimensionPA
+    DevAddButton $f.bIsoExtentK " Auto IS "  TransformVolumeAutoDimensionIS
     pack $f.bIsoExtentI  $f.bIsoExtentJ $f.bIsoExtentK -side left -padx $Gui(pad)
 
     lappend TransformVolume(resampleConrols) $f.bIsoExtentI  $f.bIsoExtentJ $f.bIsoExtentK
@@ -408,7 +407,7 @@ proc TransformVolumeBuildGUI {} {
     pack $f -side top -padx 0 -pady $Gui(pad) -fill x
   
     set f $fResample.fAutoDimension
-    DevAddButton $f.bAutoDimension "Auto Dimension"  AutoDimension
+    DevAddButton $f.bAutoDimension "Auto Dimension"  TransformVolumeAutoDimension
     pack $f.bAutoDimension -side left -padx $Gui(pad) -pady $Gui(pad)
     
     lappend TransformVolume(resampleConrols) $f.bAutoDimension 
@@ -432,6 +431,8 @@ proc TransformVolumeUpdateGUI {} {
 proc TransformVolumeRun {} {
     global TransformVolume Volume
     
+    $TransformVolume(brun) configure -state disabled
+
     # get displacement volume
     set vDisp $TransformVolume(DispVolume)
     
@@ -467,7 +468,7 @@ proc TransformVolumeRun {} {
         }
         
         # create result name
-        set resVolName $TransformVolume(resultPrefix)
+        set resVolName $TransformVolume(ResultPrefix)
         append resVolName "_" [Volume($v,node) GetName]
         
         # check if the result name exists already
@@ -490,6 +491,9 @@ proc TransformVolumeRun {} {
         .isv slicer_volume $resVolName
         
     }
+
+    $TransformVolume(brun) configure -state normal
+
 }
 
 proc TransformVolumeGetVolumes {transformId} {
@@ -625,6 +629,15 @@ proc TransformVolumeResampleMode {} {
 }
 
 #-----------------------------
+proc TransformVolumeInterpolationMode {} {
+    global TransformVolume
+
+    set resampling [$TransformVolume(resampleMode) get]
+
+    set TransformVolume(InterpolationMode) [$TransformVolume(interpolationMode) get]
+}
+
+#-----------------------------
 proc TransformVolumeUpdateResample {} {
     global TransformVolume Volume
 
@@ -720,12 +733,12 @@ proc TransformVolumeUpdatePreview {} {
 
 
 #-------------------------------------------------------------------------------
-# .PROC AutoSpacing
+# .PROC TransformVolumeAutoSpacing
 #
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc AutoSpacing {} {
+proc TransformVolumeAutoSpacing {} {
     global Matrix Volume TransformVolume
 
     # get volumes to transform under a transform node
@@ -780,7 +793,7 @@ proc AutoSpacing {} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc AutoDimension {} {
+proc TransformVolumeAutoDimension {} {
     global TransformVolume Module Matrix Volume
 
     set volIDs $TransformVolume(VolIDs)   
@@ -906,49 +919,62 @@ proc AutoDimension {} {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC AutoDimensionLR
+# .PROC TransformVolumeAutoDimensionLR
 #
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc AutoDimensionLR {} {
+proc TransformVolumeAutoDimensionLR {} {
     global TransformVolume
     set tmpZ $TransformVolume(OutputDimensionPA)
     set tmpY $TransformVolume(OutputDimensionIS)
-    AutoDimension
+    TransformVolumeAutoDimension
     set TransformVolume(OutputDimensionPA) $tmpZ
     set TransformVolume(OutputDimensionIS) $tmpY
     TransformVolumeUpdatePreview
 }  
 
 #-------------------------------------------------------------------------------
-# .PROC AutoDimensionPA
+# .PROC TransformVolumeAutoDimensionPA
 #
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc AutoDimensionPA {} {
+proc TransformVolumeAutoDimensionPA {} {
     global TransformVolume
     set tmpY $TransformVolume(OutputDimensionIS)
     set tmpX $TransformVolume(OutputDimensionLR)
-    AutoDimension
+    TransformVolumeAutoDimension
     set TransformVolume(OutputDimensionIS) $tmpY
     set TransformVolume(OutputDimensionLR) $tmpX
     TransformVolumeUpdatePreview
 } 
 
 #-------------------------------------------------------------------------------
-# .PROC AutoDimensionIS
+# .PROC TransformVolumeAutoDimensionIS
 #
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc AutoDimensionIS {} {
+proc TransformVolumeAutoDimensionIS {} {
     global TransformVolume
     set tmpZ $TransformVolume(OutputDimensionPA)
     set tmpX $TransformVolume(OutputDimensionLR)
-    AutoDimension
+    TransformVolumeAutoDimension
     set TransformVolume(OutputDimensionPA) $tmpZ
     set TransformVolume(OutputDimensionLR) $tmpX
     TransformVolumeUpdatePreview   
 } 
+
+#-------------------------------------------------------------------------------
+# .PROC TransformVolumeResultPrefix
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc TransformVolumeResultPrefix {} {
+    global TransformVolume
+
+    set TransformVolume(ResultPrefix) [$TransformVolume(resultPrefix) get]
+}
+
