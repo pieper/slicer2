@@ -284,6 +284,25 @@ public:
   int  Iterate();
   void EndEvolution();
 
+  // Set a curvature weight for the geodesic framework
+  void SetCurvatureWeight( float* CW)
+  //
+  {
+    curvature_weight = CW;
+  }
+
+
+  //
+  void SetAdvectionVectorField( float* DAx, float* DAy, float* DAz)
+  {
+    advection_scheme = ADVECTION_UPWIND_VECTORS;
+    data_attach_x = DAx;
+    data_attach_y = DAy;
+    data_attach_z = DAz;
+    // don't call PreComputeDataAttachment() because the pointers are not NULL anymore
+  }
+
+
   void GetDataAttach( float** DAx, float** DAy, float** DAz)
   {
     switch (advection_scheme) {
@@ -448,6 +467,10 @@ protected:
   int EvolveThreads; // number of threads for Evolve()
 
   unsigned char verbose;
+
+
+  // Curvature Weight for the geodesic framework
+  float*        curvature_weight;
 
   // Precomputed data attachment vector field  H*DI/|DI|
   float*        data_attach_x;

@@ -197,6 +197,8 @@ vtkLevelSets::vtkLevelSets()
   balloon_data   = NULL;
   distance_data  = NULL;
 
+  curvature_weight = NULL;
+
   data_attach_x = NULL;
   data_attach_y = NULL;
   data_attach_z = NULL;
@@ -1845,8 +1847,7 @@ void vtkLevelSets::Evolve2D()
 
     //    if (delta0!=0) 
     if (delta0>.1) {     
-      meancurv = (Dpmy*dxsq +Dpmx*dysq-dxy2*D0xy)
-    /delta0/sqrtdelta0; 
+      meancurv = (Dpmy*dxsq +Dpmx*dysq-dxy2*D0xy)/delta0/sqrtdelta0; 
 
     //--------------------------------------------------
     // Data Attachment Term
@@ -2022,6 +2023,7 @@ void vtkLevelSets::Evolve2D()
 
       curvterm = sqrtdelta0*meancurv   ;
       curvterm *= coeff_curvature;
+      if (curvature_weight != NULL) curvterm *= curvature_weight[p];
 
       if (curvature_data!=NULL) curvature_data[p] = curvterm;
       if (advection_data!=NULL) advection_data[p] = -imcomp;
@@ -2423,6 +2425,7 @@ void vtkLevelSets::Evolve3D( int first_band, int last_band)
       this->mean_curv      += curvterm;
       }
     } // coeff_curvature >0
+    if (curvature_weight != NULL) curvterm *= curvature_weight[p];
     ut = curvterm;
 
     //--------------------------------------------------
@@ -3010,7 +3013,7 @@ void vtkLevelSets::InitEvolution()
 
   if (GB_debug) fprintf(stderr,"PreComputeDataAttachment() \n");
 
-   if (fabs(AdvectionCoeff)>1E-10) 
+  if ((fabs(AdvectionCoeff)>1E-10)&&(data_attach_x==NULL)) 
      PreComputeDataAttachment();
 
   if (DMmethod == 0) {
