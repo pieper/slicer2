@@ -186,7 +186,7 @@ proc FMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.38 $} {$Date: 2004/12/29 18:01:30 $}]
+        {$Revision: 1.39 $} {$Date: 2005/01/07 17:19:38 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -337,16 +337,16 @@ proc FMRIEngineBuildGUI {} {
     set f $fSequence.fOption
 
     Notebook:create $f.fNotebook \
-                    -pages {Select Load} \
+                    -pages {Load Select} \
                     -pad 2 \
                     -bg $Gui(activeWorkspace) \
                     -height 356 \
                     -width 240
     pack $f.fNotebook -fill both -expand 1
-    set w [Notebook:frame $f.fNotebook Select]
-    FMRIEngineBuildUIForSelect $w
     set w [Notebook:frame $f.fNotebook Load]
     FMRIEngineBuildUIForLoad $w
+    set w [Notebook:frame $f.fNotebook Select]
+    FMRIEngineBuildUIForSelect $w
 
     #-------------------------------------------
     # Compute tab 
