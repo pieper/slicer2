@@ -107,7 +107,7 @@ proc EditorInit {} {
     
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.58 $} {$Date: 2002/03/21 23:05:25 $}]
+        {$Revision: 1.59 $} {$Date: 2002/06/06 20:32:56 $}]
     
     # Initialize globals
     set Editor(idOriginal)  $Volume(idNone)
@@ -137,6 +137,9 @@ proc EditorInit {} {
     set prog $Path(program)
     set central  [file join [file join $prog tcl-modules] Editor]
     set names ""
+
+    # save the already loaded editor commands (from modules)
+    set cmds [info command Ed*Init]
 
     # Look locally
     foreach fullname [glob -nocomplain $local/*] {
@@ -168,6 +171,13 @@ proc EditorInit {} {
 
         lappend Ed(idList) $name
     } 
+    }
+
+    foreach c $cmds {
+    if { $c != "EditorInit" } {
+        scan $c "%\[^I\]sInit" name
+        lappend Ed(idList) $name
+    }
     }
 
     # Initialize effects
@@ -1199,6 +1209,12 @@ proc EditorB1 {x y} {
     }
     "EdLabelVOI" {
         EdLabelVOIB1 $x $y
+    }
+    # the default case handles editor effects loaded as modules
+    # - in the future we may need a way to register custom
+    #   actions
+    default {
+        EditorChangeInputLabel $x $y    
     }
     }
 }
