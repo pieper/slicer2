@@ -88,7 +88,7 @@ proc MainModelsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainModels \
-        {$Revision: 1.58 $} {$Date: 2003/05/18 15:31:16 $}]
+        {$Revision: 1.59 $} {$Date: 2003/05/30 21:52:42 $}]
 
     set Model(idNone) -1
     set Model(activeID) ""
@@ -825,12 +825,15 @@ proc MainModelsSetColor {m {name ""}} {
         }
     }
     set c $Model($m,colorID)
+    if {$c == ""} {
+    } else {
         foreach r $Module(Renderers) {
-        $Model($m,prop,$r) SetAmbient       [Color($c,node) GetAmbient]
-        $Model($m,prop,$r) SetDiffuse       [Color($c,node) GetDiffuse]
-        $Model($m,prop,$r) SetSpecular      [Color($c,node) GetSpecular]
-        $Model($m,prop,$r) SetSpecularPower [Color($c,node) GetPower]
-        eval $Model($m,prop,$r) SetColor    [Color($c,node) GetDiffuseColor]
+            $Model($m,prop,$r) SetAmbient       [Color($c,node) GetAmbient]
+            $Model($m,prop,$r) SetDiffuse       [Color($c,node) GetDiffuse]
+            $Model($m,prop,$r) SetSpecular      [Color($c,node) GetSpecular]
+            $Model($m,prop,$r) SetSpecularPower [Color($c,node) GetPower]
+            eval $Model($m,prop,$r) SetColor    [Color($c,node) GetDiffuseColor]
+        }
     }
 }
 
