@@ -283,6 +283,8 @@ static void vtkImageFillROIDrawPolygon(int nx, int ny, int nPts, int *xPts, int 
 	delete [] edges;
 }
 
+// This corresponds to "DrawLine" in vtkImageDrawROI.cxx. Both are
+// used to draw the "Polygons" shape (before and after the shape is Applied).
 template <class T>
 static void DrawLinesFast(int nx, int ny, int nPts, int *xPts, int *yPts,
 					   T value, T *outPtr)
@@ -340,8 +342,7 @@ static void DrawLinesFast(int nx, int ny, int nPts, int *xPts, int *yPts,
 						if (r <= 0)
 							r += dy2;
 						else {
-							// Draw now only because it's thick
-							outPtr[y*nx+x] = value;
+						  // Don't draw: don't want thick lines here
 							y++;
 							r += dydx2;
 						}
@@ -357,8 +358,7 @@ static void DrawLinesFast(int nx, int ny, int nPts, int *xPts, int *yPts,
 						if (r <= 0)
 							r += dy2;
 						else {
-							// Draw now only because it's thick
-							outPtr[y*nx+x] = value;
+						  // Don't draw: don't want thick lines here
 							y++;
 							r += dydx2;
 						}
@@ -393,7 +393,8 @@ static void DrawLinesFast(int nx, int ny, int nPts, int *xPts, int *yPts,
 	}//for
 }
 
-
+// This corresponds to "DrawThickLine" in vtkImageDrawROI.cxx. Both are
+// used to draw the "Lines" shape (before and after the lines are Applied).
 template <class T>
 static void DrawLines(int nx, int ny, int z, int radius,
 					   int nPts, int *xPts, int *yPts,
