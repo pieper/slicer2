@@ -113,7 +113,7 @@ proc TensorInit {} {
     # Set Version Info
     #------------------------------------
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.7 $} {$Date: 2002/02/11 23:47:38 $}]
+	    {$Revision: 1.8 $} {$Date: 2002/02/18 02:05:41 $}]
     
     # Props: GUI tab we are currently on
     #------------------------------------
@@ -1687,12 +1687,15 @@ proc TensorUpdateGlyphEigenvector {} {
     # point along the proper axis for scaling
     switch $mode {
 	"Max" {
+	    Tensor(vtk,glyphs,line) SetPoint1 -1 0 0
 	    Tensor(vtk,glyphs,line) SetPoint2 1 0 0    
 	}
 	"Middle" {
+	    Tensor(vtk,glyphs,line) SetPoint1 0 -1 0
 	    Tensor(vtk,glyphs,line) SetPoint2 0 1 0    
 	}
 	"Min" {
+	    Tensor(vtk,glyphs,line) SetPoint1 0 0 -1
 	    Tensor(vtk,glyphs,line) SetPoint2 0 0 1    
 	}
     }
@@ -1807,6 +1810,13 @@ proc TensorUpdateGlyphScalarRange {{not_used ""}} {
     # need log lookup table?
     eval {Tensor(vtk,streamln,mapper)  SetScalarRange}  \
 	    [[Tensor(vtk,glyphs) GetOutput] GetScalarRange] 
+
+    set t $Tensor(activeID)
+    foreach id $Tensor(vtk,streamline,idList) {
+	set streamline streamln,$id
+	eval {Tensor(vtk,$streamline,mapper)   SetScalarRange}  \
+		[[Tensor($t,data) GetOutput] GetScalarRange] 
+    }
 
     # This causes multiple renders since for some reason
     # the scalar bar does not update on the first one
@@ -2473,7 +2483,9 @@ proc TensorBuildVTK {} {
     set object glyphs,line
     TensorMakeVTKObject vtkLineSource $object
     TensorAddObjectProperty $object Resolution 10 int {Resolution}
-    Tensor(vtk,$object) SetPoint1 0 0 0
+    #Tensor(vtk,$object) SetPoint1 0 0 0
+    # use a stick that points both ways, not a vector from the origin!
+    Tensor(vtk,$object) SetPoint1 -1 0 0
     Tensor(vtk,$object) SetPoint2 1 0 0
     
     # too slow: maybe useful for nice photos
@@ -2498,7 +2510,7 @@ proc TensorBuildVTK {} {
     #Tensor(vtk,glyphs) SetSource [Tensor(vtk,glyphs,axes) GetOutput]
     #Tensor(vtk,glyphs) SetSource [Tensor(vtk,glyphs,sphere) GetOutput]
     #TensorAddObjectProperty $object ScaleFactor 1 float {Scale Factor}
-    TensorAddObjectProperty $object ScaleFactor 20000 float {Scale Factor}
+    TensorAddObjectProperty $object ScaleFactor 5000 float {Scale Factor}
     TensorAddObjectProperty $object ClampScaling 0 bool {Clamp Scaling}
     TensorAddObjectProperty $object ExtractEigenvalues 1 bool {Extract Eigenvalues}
     Tensor(vtk,$object) SetStartMethod      MainStartProgress
@@ -3029,7 +3041,8 @@ proc TensorRecalculateTensors {} {
     # Recreate the tensors
     tensor Update
     Tensor($t,data) SetData [tensor GetOutput]
-    puts [Tensor($t,data) Print]
+    puts [[tensor GetOutput] Print]
+    #puts [Tensor($t,data) Print]
 
     # Display the new stuff
     TensorUpdate
@@ -3116,7 +3129,8 @@ proc TensorSpecificVisualizationSettings {} {
     global Anno
 
     # let us see tensors through the slices
-    MainSlicesSet3DOpacityAll 0.1
+    MainSlicesSet3DOpacityAll 0.2
+    #MainSlicesSet3DOpacityAll 0.1
     MainViewSetBackgroundColor Black
     # show all digits of float data (i.e. trace)
     MainAnnoSetPixelDisplayFormat "full"
@@ -3209,25 +3223,19 @@ proc TensorAddStreamline {} {
     set streamline streamln,$id
     TensorMakeVTKObject vtkHyperStreamline $streamline
     
-    Tensor(vtk,$streamline) SetStartMethod      MainStartProgress
-    Tensor(vtk,$streamline) SetProgressMethod  "MainShowProgress Tensor(vtk,$streamline)"
-    Tensor(vtk,$streamline) SetEndMethod        MainEndProgress
+    #Tensor(vtk,$streamline) SetStartMethod      MainStartProgress
+    #Tensor(vtk,$streamline) SetProgressMethod  "MainShowProgress Tensor(vtk,$streamline)"
+    #Tensor(vtk,$streamline) SetEndMethod        MainEndProgress
 
-    #TensorAddObjectProperty $streamline StartPosition {9 9 -9} float {Start Pos}
-    #TensorAddObjectProperty $streamline IntegrateMinorEigenvector \
-	    #1 bool IntegrateMinorEv
-    TensorAddObjectProperty $streamline MaximumPropagationDistance 60.0 \
-	    float {Max Propagation Distance}
-    TensorAddObjectProperty $streamline IntegrationStepLength 0.01 \
-	    float {Integration Step Length}
-    TensorAddObjectProperty $streamline StepLength 0.0001 \
-	    float {Step Length}	    
-    TensorAddObjectProperty $streamline Radius 0.25 \
-	    float {Radius}
-    TensorAddObjectProperty $streamline  NumberOfSides 30 \
-	    int {Number of Sides}
-    TensorAddObjectProperty $streamline  IntegrationDirection 2 \
-	    int {Integration Direction}
+    # Lauren put these in the GUI
+    Tensor(vtk,$streamline) SetMaximumPropagationDistance 60
+    #Tensor(vtk,$streamline) SetIntegrationStepLength 0.01
+    #Tensor(vtk,$streamline) SetStepLength 0.0001
+    Tensor(vtk,$streamline) SetRadius 0.25 
+    Tensor(vtk,$streamline) SetNumberOfSides 30
+    Tensor(vtk,$streamline) SetIntegrationDirection 2
+    Tensor(vtk,$streamline) SetIntegrationDirectionToIntegrateBothDirections
+    
     
     # Display of tensor streamline: LUT and Mapper
     #------------------------------------
@@ -3246,6 +3254,12 @@ proc TensorAddStreamline {} {
     TensorAddObjectProperty $object ImmediateModeRendering \
 	    1 bool {Immediate Mode Rendering}    
 
+
+    # Lauren add GUI
+    Tensor(vtk,$streamline,mapper) SetScalarRange \
+	    $Tensor(mode,glyphScalarRange,low) \
+	    $Tensor(mode,glyphScalarRange,hi) 
+
     #eval Tensor(vtk,$streamline,mapper)  SetScalarRange 0.0415224 0.784456 
 
     # Display of tensor streamline: Actor
@@ -3255,6 +3269,10 @@ proc TensorAddStreamline {} {
     Tensor(vtk,$streamline,actor) SetMapper Tensor(vtk,$streamline,mapper)
     [Tensor(vtk,$streamline,actor) GetProperty] SetAmbient 1
     [Tensor(vtk,$streamline,actor) GetProperty] SetDiffuse 0
+
+    # Update the scalar range of everything
+    # this makes the tube's mapper display the streamline in colors
+    TensorUpdateGlyphScalarRange
 }
 
 
@@ -3500,12 +3518,21 @@ proc TensorSeedStreamlinesFromSegmentation {} {
     trans Inverse
     foreach point $Tensor(streamlineList) {
 	puts "..$point"
+
+	# Lauren test
+	# randomly seed some number of points around the ijk point also
+	#set offset [expr rand()]
+	#set offset [expr $offset/2]
+	
+
 	# find out where the point actually is in world space
 	set world [eval {trans TransformPoint} $point]
 	puts $world
 	eval {TensorSelect} $world
 	# save point to make a streamline there
 	#eval {TensorSelect} $point
+
+
     }
 
     trans Delete
