@@ -11,18 +11,7 @@
 
 
 
-//-------------------------------------------------------------------------
-vtkVectorToOuterProductDualBasis* vtkVectorToOuterProductDualBasis::New()
-{
-  // First try to create the object from the vtkObjectFactory
-  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkVectorToOuterProductDualBasis");
-  if(ret)
-    {
-      return (vtkVectorToOuterProductDualBasis*)ret;
-    }
-  // If the factory was unable to create the object, then create it here.
-  return new vtkVectorToOuterProductDualBasis;
-}
+vtkStandardNewMacro(vtkVectorToOuterProductDualBasis);
 
 //-------------------------------------------------------------------------
 vtkVectorToOuterProductDualBasis::vtkVectorToOuterProductDualBasis()

@@ -102,7 +102,7 @@ proc MutualInformationRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.8 $} {$Date: 2004/07/06 16:02:16 $}]
+        {$Revision: 1.9 $} {$Date: 2005/01/28 23:31:05 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -599,6 +599,10 @@ proc MutualInformationRegistrationAutoRun {} {
       return 0
     }
 
+    if {$::Module(verbose)} { 
+        puts "Starting MutualInformationRegistrationAutoRun"
+    }
+
 #    Gering version disabled
 #    MutualInformationRegistrationAutoRun_Vtk  
 
@@ -625,7 +629,9 @@ proc MutualInformationRegistrationAutoRun {} {
         -vtk_itk_reg       vtkITKMutualInformationTransform               
 
 
-    puts "to see the pop-up window, type: pack .mi.reg -fill both -expand true"
+    if {$::Module(verbose)} {
+        puts "to see the pop-up window, type: pack .mi.reg -fill both -expand true"
+    }
   #  pack .mi.reg -fill both -expand true
     $MutualInformationRegistration(b1Run) configure -command \
                                       "MutualInformationRegistrationStop"
@@ -633,7 +639,13 @@ proc MutualInformationRegistrationAutoRun {} {
                                       "MutualInformationRegistrationStop"
     $MutualInformationRegistration(b1Run) configure -text "Stop"
     $MutualInformationRegistration(b2Run) configure -text "Stop"
+    if {$::Module(verbose)} {
+        puts "MutualInformationRegistrationAutoRun: calling .mi.reg start"
+    }
     .mi.reg start
+    if {$::Module(verbose)} { 
+        puts "MutualInformationRegistrationAutoRun: done .mi.reg"
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -686,6 +698,8 @@ proc MutualInformationRegistrationSetMetricOption { vtkITKMI } {
 proc MutualInformationRegistrationAutoRun_Vtk {} {
     global Path env Gui Matrix Volume MutualInformationRegistration
 
+    if {$::Module(verbose)} { puts "starting MutualInformationRegistrationAutoRun_Vtk..." }
+
     # v = ID of volume to register
     # r = ID of reference volume
     set v $Matrix(volume)
@@ -724,10 +738,14 @@ proc MutualInformationRegistrationAutoRun_Vtk {} {
     initMatrix Invert
     vtkPose initPose
     initPose ConvertFromMatrix4x4 initMatrix
-    puts "Initial Pose = [initPose Print]"
+    if {$::Module(verbose)} { puts "Initial Pose = [initPose Print]" }
 
     # Run MI Registration
     vtkImageMIReg reg
+    if {$::Module(verbose)} {
+        puts "vtkImageMIReg: setting DebugOn for reg"
+        reg DebugOn
+    }
     reg SetReference [Volume($r,vol) GetOutput]
     reg SetSubject   [Volume($v,vol) GetOutput]
     reg SetRefTrans refTrans
@@ -751,12 +769,20 @@ proc MutualInformationRegistrationAutoRun_Vtk {} {
     set Gui(progressText) "MI Initializing"
     MainStartProgress
     MainShowProgress reg
+    if {$::Module(verbose)} {
+        puts "\t calling first reg Update"
+    }
     reg Update
+    if {$::Module(verbose)} {
+        puts "\t done first reg Update"
+    }
 
     # Iterate
     while {[reg GetInProgress] == 1} {
         reg Update
-
+        if {$::Module(verbose)} {
+            puts "\t done reg Update in progress loop"
+        }
         # Update the pose (set the transform's matrix)
         set currentPose [reg GetCurrentPose]
         $currentPose ConvertToMatrix4x4 $matrix
@@ -769,21 +795,30 @@ proc MutualInformationRegistrationAutoRun_Vtk {} {
           set res  [reg GetResolution]
           set iter [reg GetIteration]
           set Gui(progressText) "MI res=$res iter=$iter"
+          if {$::Module(verbose)} {
+              puts "\t still in progress, set progressText to $Gui(progressText)"
+          }
           MainShowProgress reg
 
           # Update the image data to display
           # Copy the new Subject if its resolution changed since last update
           if {$res != $resDisplay} {
-            puts "Current Pose at res=$res is: [$currentPose Print]"
+              if {$::Module(verbose)} { puts "Current Pose at res=$res is: [$currentPose Print]" } 
             set resDisplay $res
             MutualInformationRegistrationCopyRegImages $res $r $v
           }
         }
 
+        if {$::Module(verbose)} {
+            puts "MutualInformationRegistration\t calling main update mrml and renderall"
+        }
         # Update MRML and display
         MainUpdateMRML
         RenderAll
    }
+    if {$::Module(verbose)} { 
+        puts "\t MutualInformationRegistration done loop"
+    }
    MainEndProgress
 
    # Cleanup
@@ -826,7 +861,7 @@ proc MutualInformationRegistrationCopyRegImages {res r v} {
 
   # Copy the RasToIjk matrix of downsampled data
   set imgMatrix [[reg GetSubRasToIjk $res] GetRasToIjk]
-  puts "Subject RasToIjk = [$imgMatrix Print]"
+    if {$::Module(verbose)} { puts "Subject RasToIjk = [$imgMatrix Print]" }
   set n Volume($v,node)
   set str [$n GetMatrixToString $imgMatrix]
   $n SetRasToVtkMatrix $str

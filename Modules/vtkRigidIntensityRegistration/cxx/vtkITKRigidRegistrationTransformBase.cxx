@@ -152,7 +152,7 @@ int vtkITKRigidRegistrationTransformBase::DataCallback(void *voidself,
     if (i < NumLevel)     done_num = total_num;
     else if (i==NumLevel) done_num += NumIter;
     }
-  std::cout << ((float)done_num)/total_num << std::endl;
+  std::cout << "Progress: " << (((float)done_num)/total_num)*100.0 << "%" << std::endl;
   // fraction done is done_num/total_num
   // set something in tcl
   obj->UpdateProgress((float)done_num/total_num);
@@ -228,7 +228,7 @@ vtkImageData *vtkITKRigidRegistrationTransformBase::GetPossiblyFlippedTargetImag
 {
   if (this->FlipTargetZAxis)
     {
-      std::cout << "Z-Flipping Target Input" << std::endl;
+      itkDebugMacro( << "Z-Flipping Target Input" << std::endl);
       this->ImageFlip->SetInput(TargetImage);
       this->ImageFlip->Update();
       return this->ImageFlip->GetOutput();
@@ -341,7 +341,7 @@ void vtkITKRigidRegistrationTransformBase::Initialize(vtkMatrix4x4 *mat)
   // Do we need the flip?
   if (mat->Determinant()<0)
     {
-      std::cout << "Z-Flipping Input Matrix" << std::endl;
+      itkDebugMacro( << "Z-Flipping Input Matrix" << std::endl);
       this->FlipTargetZAxis = 1;
       vtkMatrix4x4::Multiply4x4(mat,this->ZFlipMat,this->Matrix);
     }
@@ -402,7 +402,7 @@ vtkMatrix4x4 *vtkITKRigidRegistrationTransformBase::GetOutputMatrix()
 {
   if(this->FlipTargetZAxis)
     {
-      std::cout << "Z-Flipping Output Matrix" << std::endl;
+      itkDebugMacro( << "Z-Flipping Output Matrix" << std::endl);
       vtkMatrix4x4::Multiply4x4(this->Matrix,this->ZFlipMat,
                                 this->OutputMatrix);
     }
@@ -468,6 +468,13 @@ void vtkITKRigidRegistrationTransformBase::SetNextLearningRate(const double rate
 
 void vtkITKRigidRegistrationTransformBase::SetNextMaxNumberOfIterations(const int num) 
   { MaxNumberOfIterations->InsertNextValue(num); }
+
+//----------------------------------------------------------------------------
+
+const char * vtkITKRigidRegistrationTransformBase::GetNameOfClass()
+{
+    return "vtkITKRigidRegistrationTransformBase";
+}
 
 //----------------------------------------------------------------------------
 

@@ -147,10 +147,10 @@ void NewStoppingCondition::Execute(itk::Object * object,
     }
     distancemetric = sqrt(distancemetric);
 
-    std::cout << optimizer->GetCurrentIteration() << " = ";
-    std::cout << optimizer->GetValue() << " : ";
-    std::cout << distancemetric << " : ";
-    std::cout << optimizer->GetCurrentPosition() << std::endl;
+    itkDebugMacro( << optimizer->GetCurrentIteration() << " = ");
+    itkDebugMacro( << optimizer->GetValue() << " : ");
+    itkDebugMacro( << distancemetric << " : ");
+    itkDebugMacro( << optimizer->GetCurrentPosition() << std::endl);
 }
 
 

@@ -61,17 +61,7 @@ public:
 };
 */
 
-vtkPreciseHyperStreamlinePoints* vtkPreciseHyperStreamlinePoints::New()
-{
-  // First try to create the object from the vtkObjectFactory
-  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkPreciseHyperStreamlinePoints");
-  if(ret)
-    {
-    return (vtkPreciseHyperStreamlinePoints*)ret;
-    }
-  // If the factory was unable to create the object, then create it here.
-  return new vtkPreciseHyperStreamlinePoints;
-}
+vtkStandardNewMacro(vtkPreciseHyperStreamlinePoints);
 
 //------------------------------------------------------------------------------
 vtkPreciseHyperStreamlinePoints::vtkPreciseHyperStreamlinePoints()

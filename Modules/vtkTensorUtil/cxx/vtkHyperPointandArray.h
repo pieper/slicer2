@@ -2,6 +2,8 @@
 #define __vtkHyperPointandArray_h
 
 #include "vtkSystemIncludes.h"
+#include "vtkStreamer.h"
+#include "vtkTensorUtilConfigure.h"
 
 // copied directly from vtkHyperStreamline.
 // this class was defined in the vtkHyperStreamline.cxx file.
@@ -9,7 +11,7 @@
 //
 // Special classes for manipulating data
 //BTX
-class vtkHyperPoint { //;prevent man page generation
+class VTK_TENSORUTIL_EXPORT vtkHyperPoint { //;prevent man page generation
 public:
     vtkHyperPoint(); // method sets up storage
     vtkHyperPoint &operator=(const vtkHyperPoint& hp); //for resizing
@@ -28,7 +30,8 @@ public:
 };
 //ETX
 
-class vtkHyperArray { //;prevent man page generation
+//BTX
+class VTK_TENSORUTIL_EXPORT vtkHyperArray { //;prevent man page generation
 public:
   vtkHyperArray();
   ~vtkHyperArray()
@@ -57,6 +60,7 @@ public:
   vtkIdType Extend;            // grow array by this amount
   vtkFloatingPointType Direction;       // integration direction
 };
+//ETX
 
 #define VTK_START_FROM_POSITION 0
 #define VTK_START_FROM_LOCATION 1

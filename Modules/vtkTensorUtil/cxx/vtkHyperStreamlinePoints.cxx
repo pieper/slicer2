@@ -5,18 +5,7 @@
 // otherwise we cannot access the points calculated by superclass
 //#include "vtkHyperStreamline.cxx"
 
-//------------------------------------------------------------------------------
-vtkHyperStreamlinePoints* vtkHyperStreamlinePoints::New()
-{
-  // First try to create the object from the vtkObjectFactory
-  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkHyperStreamlinePoints");
-  if(ret)
-    {
-    return (vtkHyperStreamlinePoints*)ret;
-    }
-  // If the factory was unable to create the object, then create it here.
-  return new vtkHyperStreamlinePoints;
-}
+vtkStandardNewMacro(vtkHyperStreamlinePoints);
 
 //------------------------------------------------------------------------------
 vtkHyperStreamlinePoints::vtkHyperStreamlinePoints()

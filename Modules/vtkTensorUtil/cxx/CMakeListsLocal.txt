@@ -24,6 +24,13 @@ vtkTensorMask.cxx
 vtkTensorMathematics.cxx
 vtkVectorToOuterProductDualBasis.cxx
 vtkHyperStreamlineDTMRI.cxx
+#vtkHyperPointandArray.cxx
+)
+
+SET_SOURCE_FILES_PROPERTIES(
+vtkHyperPointandArray
+PROPERTIES
+WRAP_EXCLUDE TRUE
 )
 
 ## classes that one does not want tcl wrapped

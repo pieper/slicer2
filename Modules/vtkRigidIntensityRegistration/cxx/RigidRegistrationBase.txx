@@ -346,8 +346,8 @@ int RigidRegistrationBase<TFixedImage,TMovingImage,TMetricType>::TestParamToMatr
   ParamToMatrix(test,mat);
   InitializeRegistration(mat);
 
-  std::cout << "Testing for initial stuff " 
-        << m_InitialParameters << endl;
+  itkDebugMacro( << "Testing for initial stuff " 
+        << m_InitialParameters << endl);
 
   int err=0;
   for(int i=0;i<7;i++)
@@ -408,8 +408,8 @@ void RigidRegistrationBase<TFixedImage,TMovingImage,TMetricType>::Execute()
   m_Registration->SetFixedImageRegion(
                       m_FixedImage->GetBufferedRegion());
 
-  std::cout << "Starting Iteration" << endl;
-  this->Print(std::cout);
+  itkDebugMacro( << "Starting Iteration" << endl);
+  //this->Print(std::cout); // don't print now, causes a warning that output not set yet
   //
   // Do the Registration
   //
@@ -421,7 +421,7 @@ void RigidRegistrationBase<TFixedImage,TMovingImage,TMetricType>::Execute()
       throw err;
     }
 
-  std::cout << "Ending Iteration" << endl;
+  itkDebugMacro( << "Ending Iteration" << endl);
   // this->Print(std::cout);
 }
 
@@ -443,9 +443,9 @@ RigidRegistrationBase<TFixedImage,TMovingImage,TMetricType>::GetAffineTransform(
 template <typename TFixedImage, typename TMovingImage, typename TMetricType>
 void RigidRegistrationBase<TFixedImage,TMovingImage,TMetricType>::StartNewLevel()
 {
-  std::cout << "--- Starting level " 
+  itkDebugMacro( << "--- Starting level " 
             << m_Registration->GetCurrentLevel()
-            << std::endl;
+            << std::endl );
 
   unsigned int level = m_Registration->GetCurrentLevel();
   if (m_NumberOfIterations.Size() >= level + 1)
@@ -458,11 +458,11 @@ void RigidRegistrationBase<TFixedImage,TMovingImage,TMetricType>::StartNewLevel(
       m_Optimizer->SetLearningRate( m_LearningRates[level] );
     }
 
-  std::cout << " No. Iterations: " 
+  itkDebugMacro( << " No. Iterations: " 
             << m_Optimizer->GetNumberOfIterations()
             << " Learning rate: "
             << m_Optimizer->GetLearningRate()
-            << std::endl;
+            << std::endl);
 }
 
 } // namespace itk
