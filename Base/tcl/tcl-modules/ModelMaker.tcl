@@ -67,7 +67,7 @@ proc ModelMakerInit {} {
 
 	# Set Version Info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.31 $} {$Date: 2002/01/26 23:34:32 $}]
+		{$Revision: 1.32 $} {$Date: 2002/02/22 22:12:59 $}]
 
 	# Create
 	set ModelMaker(idVolume) $Volume(idNone)
@@ -851,15 +851,14 @@ proc ModelMakerMarch {m v decimateIterations smoothIterations} {
 	set p decimator
 	vtkDecimate $p
 	$p SetInput [mcubes GetOutput]
-    $p SetInitialFeatureAngle 60
-    $p SetMaximumIterations $decimateIterations
-    $p SetMaximumSubIterations 0
-    $p PreserveEdgesOn
-    $p SetMaximumError 1
-    $p SetTargetReduction 1
-	$p GlobalWarningDisplayOff
-    $p SetInitialError .0002
-    $p SetErrorIncrement .0002
+	$p SetInitialFeatureAngle 60
+	$p SetMaximumIterations $decimateIterations
+	$p SetMaximumSubIterations 0
+	$p PreserveEdgesOn
+	$p SetMaximumError 1
+	$p SetTargetReduction 1
+	$p SetInitialError .0002
+	$p SetErrorIncrement .0002
 	[$p GetOutput] ReleaseDataFlagOn
 	set Gui(progressText) "Decimating $name"
 	$p SetStartMethod     MainStartProgress
@@ -867,7 +866,6 @@ proc ModelMakerMarch {m v decimateIterations smoothIterations} {
 	$p SetEndMethod       MainEndProgress
 	set ModelMaker(t,$p) [expr [lindex [time {$p Update}] 0]/1000000.0]
 	set ModelMaker(n,$p) [[$p GetOutput] GetNumberOfPolys]
-	$p GlobalWarningDisplayOn
 	
 	vtkReverseSense reverser
 
