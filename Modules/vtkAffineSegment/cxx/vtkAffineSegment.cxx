@@ -714,8 +714,8 @@ static void vtkAffineSegmentContract(vtkAffineSegment *self,
                         self->phi_ext_z[x] * psi_hat_z) * (kapa4/0.01) +  v * eucl_grad * self->eucl_ext[x]; 
 
                 
-                if(fabsf(temp)>t_max)
-                    t_max = fabsf(temp);
+                if(fabs(temp)>t_max)
+                    t_max = fabs(temp);
 
                 update_term.push_back(temp);
 
@@ -928,8 +928,8 @@ static void vtkAffineSegmentInflation(vtkAffineSegment *self,
                 temp = v * eucl_grad * self->eucl_ext[x];
 
                 
-                if(fabsf(temp)>t_max)
-                    t_max = fabsf(temp);
+                if(fabs(temp)>t_max)
+                    t_max = fabs(temp);
 
                 update_term.push_back(temp);
 
@@ -1377,13 +1377,13 @@ curr_pos=0;
                temp_phi_ext_z[curr_pos] = 0;
                temp_eucl_phi[curr_pos] = 0;
 
-               dl = fabsf(level_set[curr_pos]);
+               dl = fabs(level_set[curr_pos]);
                dist_to_zero = 100;
 
                if(curr_pos+1 < dimXYZ)
                if((level_set[curr_pos]>=0) && (level_set[curr_pos+1]<0))
                {
-                   dr = fabsf(level_set[curr_pos+1]);
+                   dr = fabs(level_set[curr_pos+1]);
                    //fprintf(fp,"dl = %f, +1 = %f, curr_pos = %d\n",level_set[curr_pos],level_set[curr_pos+1],curr_pos);
                    tmp = dl/(dl+dr);
                    if(tmp < dist_to_zero)
@@ -1399,7 +1399,7 @@ curr_pos=0;
                if(curr_pos-1 >= 0)
                if((level_set[curr_pos]>=0) && (level_set[curr_pos-1]<0))
                 {
-                    dr = fabsf(level_set[curr_pos-1]);
+                    dr = fabs(level_set[curr_pos-1]);
                     //fprintf(fp,"dl = %f, -1 = %f, curr_pos = %d\n",level_set[curr_pos],level_set[curr_pos-1],curr_pos);
                     tmp = dl/(dl+dr);
                     if(tmp < dist_to_zero)
@@ -1417,7 +1417,7 @@ curr_pos=0;
                 if(curr_pos+dimX < dimXYZ)
                 if((level_set[curr_pos]>=0) && (level_set[curr_pos+dimX]<0))
                 {
-                    dr = fabsf(level_set[curr_pos+dimX]);
+                    dr = fabs(level_set[curr_pos+dimX]);
                     //fprintf(fp,"dl = %f, +dimX = %f, curr_pos = %d\n",level_set[curr_pos],level_set[curr_pos+dimX],curr_pos);
                     tmp = dl/(dl+dr);
                     if(tmp < dist_to_zero)
@@ -1433,7 +1433,7 @@ curr_pos=0;
                if(curr_pos-dimX >= 0)
                 if((level_set[curr_pos]>=0) && (level_set[curr_pos-1*dimX]<0)) 
                 {
-                    dr = fabsf(level_set[curr_pos-1*dimX]);
+                    dr = fabs(level_set[curr_pos-1*dimX]);
                     //fprintf(fp,"dl = %f, -dimX = %f, curr_pos = %d\n",level_set[curr_pos],level_set[curr_pos-dimX],curr_pos);
                     tmp = dl/(dl+dr);
                     if(tmp < dist_to_zero)
@@ -1449,7 +1449,7 @@ curr_pos=0;
                if(curr_pos-dimXY>=0)
                if((level_set[curr_pos]>=0) && (level_set[curr_pos-1*dimXY]<0))
                 {
-                    dr = fabsf(level_set[curr_pos-1*dimXY]);
+                    dr = fabs(level_set[curr_pos-1*dimXY]);
                     //fprintf(fp,"dl = %f, -dimXY = %f, curr_pos = %d\n",level_set[curr_pos],level_set[curr_pos-dimXY],curr_pos);
                     tmp = dl/(dl+dr);
                     if(tmp < dist_to_zero)
@@ -1466,7 +1466,7 @@ curr_pos=0;
                if(curr_pos+dimXY<dimXYZ)
                if((level_set[curr_pos]>=0) && (level_set[curr_pos+1*dimXY]<0))
                 {
-                    dr = fabsf(level_set[curr_pos+1*dimXY]);
+                    dr = fabs(level_set[curr_pos+1*dimXY]);
                     //fprintf(fp,"dl = %f, +dimXY = %f, curr_pos = %d\n",level_set[curr_pos],level_set[curr_pos+dimXY],curr_pos);
                     tmp = dl/(dl+dr);
                     if(tmp < dist_to_zero)
