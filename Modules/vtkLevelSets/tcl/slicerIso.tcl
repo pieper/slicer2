@@ -384,26 +384,44 @@ proc SAniso {imname sd th it} {
 
 
 #======================================================================
-proc SSubVol {imname x1 x2 y1 y2 z1 z2 } {
+# Slicer does not handle non-0 based extents for now (vtkImageReformat)
+# so some ticks need to be done
+#
+#
+proc SSubVol {imname extension x1 x2 y1 y2 z1 z2 } {
 #    -------
+
+
   global Volume
 
   vtkExtractVOI op
   op SetInput [SGetImage $imname]
   op SetVOI  $x1 $x2 $y1 $y2 $z1 $z2
   op Update
-
   set imid [SGetImageId $imname]
-
-  set newvol [SAddMrmlImage $imname "_subvol"]
+  set newvol [SAddMrmlImage $imname ${extension}]
   set res [op GetOutput]
-  Volume($newvol,vol) SetImageData $res
+
+
+  $res SetExtent 0 [expr $x2-$x1] 0 [expr $y2-$y1] 0 [expr $z2-$z1]
+  Volume($newvol,vol) SetImageData  $res
+  # DISCONNECT the VTK PIPELINE !!!!....
+  op SetOutput ""
   op Delete
 
-#  $res SetExtent 0 [expr $x2-$x1] 0 [expr $y2-$y1] 0 [expr $z2-$z1]
 
-  Volume($newvol,node) SetDimensions [expr $x2-$x1+1] [expr $y2-$y1+1]
+  puts [[Volume($newvol,vol) GetOutput] GetExtent]
+  [Volume($newvol,vol) GetOutput] SetExtent 0 [expr $x2-$x1] 0 [expr $y2-$y1] 0 [expr $z2-$z1]
+  puts [[Volume($newvol,vol) GetOutput] GetExtent]
+
+  # Set  new dimensions
+  set dim [Volume($imid,node) GetDimensions]
+  Volume($newvol,node) SetDimensions [expr $x2-$x1+1]  [expr $y2-$y1+1]
+
+  # Set  new range
+  set range   [Volume($imid,node) GetImageRange]
   Volume($newvol,node) SetImageRange $z1 $z2
+
 
   MainUpdateMRML
   MainVolumesUpdate $newvol
@@ -411,10 +429,43 @@ proc SSubVol {imname x1 x2 y1 y2 z1 z2 } {
   # update matrices
   Volume($newvol,node) ComputeRasToIjkFromScanOrder [Volume($imid,node) GetScanOrder]
 
+  # Set the RasToWld matrix
+  # Ras2ToWld = Ras2ToIjk2 x Ijk2ToIjk1 x Ijk1ToRas1 x Ras1ToWld
+  puts "Set the RasToWld matrix\n"
+  set ras1wld1 [Volume($imid,node)   GetRasToWld]
+
+  # It's weird ... : I need to call SetRasToWld in order to update RasToIjk !!!
+  Volume($newvol,node) SetRasToWld $ras1wld1
+
+  set ras2ijk2 [Volume($newvol,node) GetRasToIjk]
+
+  vtkMatrix4x4 ijk2ijk1
+  ijk2ijk1 Identity
+  ijk2ijk1 SetElement 0 3 $x1
+  ijk2ijk1 SetElement 1 3 $y1
+  ijk2ijk1 SetElement 2 3 $z1
+
+  vtkMatrix4x4 ijk1ras1 
+  ijk1ras1 DeepCopy [Volume($imid,node) GetRasToIjk]
+  ijk1ras1 Invert
+
+  vtkMatrix4x4 ras2wld2 
+  ras2wld2 Identity
+  ras2wld2 Multiply4x4 ijk2ijk1  $ras2ijk2  ras2wld2
+  ras2wld2 Multiply4x4 ijk1ras1  ras2wld2   ras2wld2
+  ras2wld2 Multiply4x4 $ras1wld1 ras2wld2   ras2wld2
+
+  Volume($newvol,node) SetRasToWld ras2wld2
+  
+  MainVolumesUpdate $newvol
+
+  ijk2ijk1    Delete
+  ijk1ras1    Delete
+  ras2wld2    Delete
 
   return [append $imname "_subvol"]
 }
-
+#
 
 #-------------------------------------------------------------------------------
 # .PROC SModelMakerCreate
