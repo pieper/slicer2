@@ -151,8 +151,6 @@ proc EndoscopicExit {} {
 proc EndoscopicInit {} {
     global Endoscopic Module Model Path Advanced View Gui
     
-    #FIXME TkInteractor has direct reference to Endoscopic, change
-    #that!
 
     set m Endoscopic
     set Module($m,row1List) "Help Init Camera Path Advanced"
@@ -331,7 +329,7 @@ proc EndoscopicBuildVTK {} {
         global Endoscopic Model
 
     # vtkPointPicker doesn't work like this one, why?
-	vtkCellPicker picker
+	vtkCellPicker Endoscopic(vtk,picker)
 
         # create the focal point actor
         EndoscopicCreateFocalPoint
@@ -555,8 +553,11 @@ proc EndoscopicCreateLandmarks {} {
 
     foreach l "cLand fLand" {
 
-	vtkFloatPoints    Endoscopic($l,inputPoints)  
-	vtkFloatPoints    Endoscopic($l,points)
+	vtkPoints    Endoscopic($l,inputPoints)  
+	vtkPoints    Endoscopic($l,points)
+	Endoscopic($l,inputPoints)  SetDataTypeToFloat
+	Endoscopic($l,points) SetDataTypeToFloat
+ 
 	vtkPolyData       Endoscopic($l,polyData)       
 	vtkSphereSource   Endoscopic($l,source)        
 	vtkGlyph3D        Endoscopic($l,glyph)        
@@ -648,7 +649,7 @@ proc EndoscopicBuildGUI {} {
 	    { eval EndoscopicAddLandmarkAtWorldPos $Select(xyz);Render3D } } }
     
     lappend Endoscopic(eventManager) {$Gui(fViewWin)  <KeyPress-l> \
-	    { if { [SelectPick picker %W %x %y] != 0 } \
+	    { if { [SelectPick Endoscopic(vtk,picker) %W %x %y] != 0 } \
 	    { eval EndoscopicAddLandmarkAtWorldPos $Select(xyz);Render3D } } }
 
     lappend Endoscopic(eventManager) {$Gui(fSl0Win) <KeyPress-l> \
@@ -664,12 +665,12 @@ proc EndoscopicBuildGUI {} {
 
     
     lappend Endoscopic(eventManager) {$Gui(fViewWin)  <KeyPress-c> \
-	    { if { [SelectPick picker %W %x %y] != 0 } \
+	    { if { [SelectPick Endoscopic(vtk,picker) %W %x %y] != 0 } \
 	    { eval EndoscopicSetWorldPosition $Select(xyz);Render3D }}   }
 
 
     lappend Endoscopic(eventManager) {$Gui(fViewWin)  <KeyPress-c> \
-	    { if { [SelectPick picker %W %x %y] != 0 } \
+	    { if { [SelectPick Endoscopic(vtk,picker) %W %x %y] != 0 } \
 	    { eval EndoscopicSetWorldPosition $Select(xyz);Render3D } } }
 
         set LposTexts "{L<->R } {P<->A } {I<->S }"
@@ -1500,18 +1501,18 @@ proc EndoscopicSetSize {a} {
 proc EndoscopicSetCameraPosition {{value ""}} {
 	global Endoscopic View Endoscopic
 
-	if {[ValidateFloat $Endoscopic(cam,xStr)] == 0} {
-		tk_messageBox -message "LR is not a floating point number."
-		return
-	}
+#	if {[ValidateFloat $Endoscopic(cam,xStr)] == 0} {
+#		tk_messageBox -message "LR is not a floating point number."
+#		return
+#	}
 #	if {[ValidateFloat $Endoscopic(cam,yStr)] == 0} {
 #		tk_messageBox -message "PA is not a floating point number."
 #		return
 #	}
-	if {[ValidateFloat $Endoscopic(cam,zStr)] == 0} {
-		tk_messageBox -message "IS is not a floating point number."
-		return
-	}
+#	if {[ValidateFloat $Endoscopic(cam,zStr)] == 0} {
+#		tk_messageBox -message "IS is not a floating point number."
+#		return
+#	}
 
 	set collision 0
 
@@ -1584,11 +1585,11 @@ proc EndoscopicSetCameraPosition {{value ""}} {
 	    set l0 [expr [lindex $l 0]]
 	    set l1 [expr [lindex $l 1]]
 	    set l2 [expr [lindex $l 2]]
-	    set p [picker Pick $l0 $l1 $l2 endRen]
+	    set p [Endoscopic(vtk,picker) Pick $l0 $l1 $l2 endRen]
 	    
 	    
 	    if { $p == 1} {
-		set selPt [picker GetPickPosition]
+		set selPt [Endoscopic(vtk,picker) GetPickPosition]
 		set selPtX [expr [lindex $selPt 0]]
 		set selPtY [expr [lindex $selPt 1]]
 		set selPtZ [expr [lindex $selPt 2]]
@@ -1615,7 +1616,7 @@ proc EndoscopicSetCameraPosition {{value ""}} {
 		    puts "collision detection!!"
 		    set collision 1
 		}
-		#set a [picker GetActor]
+		
 	    }
 	    # re-change the focal point 
 	    $View(endCam) SetFocalPoint [lindex $Endoscopic(tmp) 0] [lindex $Endoscopic(tmp) 1] [lindex $Endoscopic(tmp) 2]
@@ -1649,11 +1650,11 @@ proc EndoscopicSetCameraPosition {{value ""}} {
 		set l0 [expr [lindex $l 0]]
 		set l1 [expr [lindex $l 1]]
 		set l2 [expr [lindex $l 2]]
-		set p [picker Pick $l0 $l1 $l2 endRen]
+		set p [Endoscopic(vtk,picker) Pick $l0 $l1 $l2 endRen]
 		
 		
 		if { $p == 1} {
-		    set selPt [picker GetPickPosition]
+		    set selPt [Endoscopic(vtk,picker) GetPickPosition]
 		    set Endoscopic(intersection,x) [expr [lindex $selPt 0]]
 		    set Endoscopic(intersection,y) [expr [lindex $selPt 1]]
 		    set Endoscopic(intersection,z) [expr [lindex $selPt 2]]
@@ -1940,11 +1941,11 @@ proc EndoscopicSetFocalAndCameraPosition {x y z FPx FPy FPz} {
 	set l0 [expr [lindex $l 0]]
 	set l1 [expr [lindex $l 1]]
 	set l2 [expr [lindex $l 2]]
-	set p [picker Pick $l0 $l1 $l2 endRen]
+	set p [Endoscopic(vtk,picker) Pick $l0 $l1 $l2 endRen]
 	
 	
 	if { $p == 1} {
-	    set selPt [picker GetPickPosition]
+	    set selPt [Endoscopic(vtk,picker) GetPickPosition]
 	    set Endoscopic(intersection,x) [expr [lindex $selPt 0]]
 	    set Endoscopic(intersection,y) [expr [lindex $selPt 1]]
 	    set Endoscopic(intersection,z) [expr [lindex $selPt 2]]
@@ -2989,11 +2990,11 @@ proc EndoscopicCameraMotionFromUser {} {
 	set l0 [expr [lindex $l 0]]
 	set l1 [expr [lindex $l 1]]
 	set l2 [expr [lindex $l 2]]
-	set p [picker Pick $l0 $l1 $l2 endRen]
+	set p [Endoscopic(vtk,picker) Pick $l0 $l1 $l2 endRen]
 	
 	
 	if { $p == 1} {
-	    set selPt [picker GetPickPosition]
+	    set selPt [Endoscopic(vtk,picker) GetPickPosition]
 	    set Endoscopic(intersection,x) [expr [lindex $selPt 0]]
 	    set Endoscopic(intersection,y) [expr [lindex $selPt 1]]
 	    set Endoscopic(intersection,z) [expr [lindex $selPt 2]]
