@@ -32,6 +32,7 @@
 #   TetraMeshEnter
 #   TetraMeshExit
 #   TetraMeshUpdateGUI
+#   TetraMeshFileNameEntered
 #   TetraMeshProcess
 #   TetraMeshCreateModel
 #==========================================================================auto=
@@ -139,7 +140,7 @@ proc TetraMeshInit {} {
 	#   appropriate revision number and date when the module is checked in.
 	#   
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.3 $} {$Date: 2000/08/09 21:10:56 $}]
+		{$Revision: 1.4 $} {$Date: 2000/08/28 18:36:36 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -153,6 +154,7 @@ proc TetraMeshInit {} {
         set TetraMesh(modelbasename) ""
 	set TetraMesh(eventManager)  ""
 	set TetraMesh(AlignmentVolume) $Volume(idNone)
+        set TetraMesh(DefaultDir) ""
 }
 
 
@@ -216,7 +218,8 @@ The TetraMesh module allows a user to read in a Tetrahedral Mesh.  The Mesh is a
 	frame $f.f -bg $Gui(activeWorkspace)
 	pack $f.f -side top -pady $Gui(pad)
 
-        DevAddFileBrowse $f.f TetraMesh FileName "Tetrahedral Mesh:" "" "vtk" "" "Browse for a Tetrahedral Mesh"
+        DevAddFileBrowse $f.f TetraMesh FileName "Tetrahedral Mesh:" "TetraMeshFileNameEntered" "vtk"\
+                "\$TetraMesh(DefaultDir)" "Browse for a Tetrahedral Mesh"
 
 	set f $fProps.fTop.fBaseName
 
@@ -310,6 +313,26 @@ proc TetraMeshUpdateGUI {} {
    DevUpdateNodeSelectButton Volume TetraMesh AlignmentVolume AlignmentVolume DevSelectNode
 }
 
+#-------------------------------------------------------------------------------
+# .PROC TetraMeshFileNameEntered
+# 
+# This procedure is called when a filename has been entered.
+#
+# It simply guesses the name of the "Model Base Name" and
+# updated the DefaultDir for Tetra Meshes. 
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc TetraMeshFileNameEntered {} {
+	global TetraMesh Volume
+
+    set TetraMesh(DefaultDir) [file dirname $TetraMesh(FileName)]
+    if  {$TetraMesh(modelbasename) == "" } {
+        set TetraMesh(modelbasename) \
+                [ file root [file tail $TetraMesh(FileName)]]
+    }
+}
 
 #-------------------------------------------------------------------------------
 # .PROC TetraMeshProcess
@@ -321,7 +344,7 @@ proc TetraMeshUpdateGUI {} {
 proc TetraMeshProcess {} {
 	global TetraMesh Model Volume
 
-    puts "$TetraMesh(FileName) $TetraMesh(modelbasename)"
+#    puts "$TetraMesh(FileName) $TetraMesh(modelbasename)"
     set fileName "$TetraMesh(FileName)"
     set modelbasename "$TetraMesh(modelbasename)"
 
@@ -373,8 +396,48 @@ set LOWSCALAR $lowscalar
 set HIGHSCALAR $highscalar
 
 ######################################################################
-### Setup the pipeline: Threshold the data, convert to PolyData
+#### I tried to scale the data first, it didn't work. I don't know why.
+#### I tested the output by piping to a file, that worked just fine.
+#### So, it seems the data is processed more before being displayed.
+#### I don't understand why that would be.
 ######################################################################
+#vtkTransform TheTransform
+#
+#if {$TetraMesh(AlignmentVolume) != "" && \
+#        $TetraMesh(AlignmentVolume) != $Volume(idNone) } {
+#    
+# TheTransform Concatenate [Volume($TetraMesh(AlignmentVolume),node) GetPosition]
+#puts "yo"
+#} else {
+#    TheTransform Identity
+#}
+#
+#vtkMatrix4x4 testme
+#  testme Identity
+#  testme SetElement 0 0 20
+#  testme SetElement 1 1 20
+#  testme SetElement 2 2 20
+#
+## TheTransform Concatenate testme
+#
+#
+#vtkTransformFilter TransformMesh
+#  TransformMesh SetInput $CurrentTetraMesh
+#  TransformMesh SetTransform TheTransform
+#
+#set $CurrentTetraMesh [TransformMesh GetOutput]
+#$CurrentTetraMesh Update
+#
+#vtkUnstructuredGridWriter ugw
+#   ugw SetInput $CurrentTetraMesh
+#   ugw SetFileName "/tmp/tt.vtk"
+#   ugw SetFileTypeToASCII
+#   ugw Update
+#
+
+#######################################################################
+#### Setup the pipeline: Threshold the data, convert to PolyData, Transform
+#######################################################################
 
   #############################################################
   #### Threshold the Data
@@ -393,10 +456,30 @@ vtkThreshold Thresh
 vtkGeometryFilter gf
   gf SetInput [Thresh GetOutput]
 
-######################################################################
-#### For each Scalar Determine if there is any points in there
-#### If so, create an output model
-######################################################################
+  ######################################################################
+  #### Now, determine the transform
+  #### If a volume has been selected, use that volumes ScaledIJK to RAS
+  #### Otherwise, just use the identity.
+  ######################################################################
+
+vtkTransform TheTransform
+
+if {$TetraMesh(AlignmentVolume) != "" && \
+        $TetraMesh(AlignmentVolume) != $Volume(idNone) } {
+    
+ TheTransform Concatenate [Volume($TetraMesh(AlignmentVolume),node) GetPosition]
+} else {
+    TheTransform Identity
+}
+
+vtkTransformPolyDataFilter TransformPolyData
+  TransformPolyData SetInput [gf GetOutput]
+  TransformPolyData SetTransform TheTransform
+
+ ######################################################################
+ #### For each Scalar Determine if there is any points in there
+ #### If so, create an output model
+ ######################################################################
 
 set i 0
 set first $Model(idNone)
@@ -406,10 +489,10 @@ while { [$CurrentTetraMesh GetNumberOfPoints] > 0 } {
   ### Get the lowest Scalar Data
   Thresh ThresholdBetween $lowscalar $lowscalar
   ### Finish the pipeline
-  gf Update
+  TransformPolyData Update
 
   ### Create the new Model
-  set m [ TetraMeshCreateModel $modelbasename$i $LOWSCALAR $HIGHSCALAR \
+  set m [ TetraMeshCreateModel $modelbasename$lowscalar $LOWSCALAR $HIGHSCALAR \
           $TetraMesh(AlignmentVolume) ]
 
   if { $first == $Model(idNone) }  { 
@@ -421,9 +504,9 @@ while { [$CurrentTetraMesh GetNumberOfPoints] > 0 } {
   ### We don't want the outputs deleted. These lines should prevent this.
   vtkPolyData ModelPolyData$m
   set Model($m,polyData) ModelPolyData$m
-  $Model($m,polyData) CopyStructure [gf GetOutput]
-  [ $Model($m,polyData) GetPointData] PassData [[gf GetOutput] GetPointData]
-  [ $Model($m,polyData) GetCellData] PassData [[gf GetOutput] GetCellData]
+  $Model($m,polyData) CopyStructure [TransformPolyData GetOutput]
+  [ $Model($m,polyData) GetPointData] PassData [[TransformPolyData GetOutput] GetPointData]
+  [ $Model($m,polyData) GetCellData] PassData [[TransformPolyData GetOutput] GetCellData]
 
   ### The next line would replace the last bunch if we didn't care about
   ### deleting the inputs causing the results to be deleted.
@@ -445,35 +528,47 @@ while { [$CurrentTetraMesh GetNumberOfPoints] > 0 } {
 
 #   puts [ $Model($m,polyData) GetNumberOfPolys]
 
+#TransformMesh Delete
+
+#ugw Delete
+#testme Delete
+TheTransform Delete
+TransformPolyData Delete
 Thresh Delete
 gf Delete
 tetra_reader Delete
 
-######################################################################
-#### Now, add a transform
-#### by putting a transform around the newly created models
-#### 
-######################################################################
 
-if {$TetraMesh(AlignmentVolume) != "" && \
-        $TetraMesh(AlignmentVolume) != $Volume(idNone) } {
-    
-    set last $m
+## This code is obsolete. Though, it is an excellent example of how
+## to add a transform to the Mrml tree. This is the right way to do things,
+## but it doesn't work in the slicer. GRUMBLE!
+#
+#######################################################################
+##### Now, add a transform
+##### by putting a transform around the newly created models
+##### 
+#######################################################################
+#
+#if {$TetraMesh(AlignmentVolume) != "" && \
+#        $TetraMesh(AlignmentVolume) != $Volume(idNone) } {
+#    
+#    set last $m
+#
+#    set matrixnum [ DataAddTransform 0 Model($first,node) Model($last,node) ]
+#    Matrix($matrixnum,node) SetName "TetraMeshTransform"
+#
+#
+#######################################################################
+##### Now, transform the data appropriately
+##### By editing the new matrix
+#######################################################################
+#
+#      Matrix($matrixnum,node) SetMatrix \
+#              [Volume($TetraMesh(AlignmentVolume),node) GetPositionMatrix]
+#
+##      [Matrix($matrixnum,node) GetTransform] Inverse
+#}
 
-    set matrixnum [ DataAddTransform 0 Model($first,node) Model($last,node) ]
-    Matrix($matrixnum,node) SetName "TetraMeshTransform"
-
-
-######################################################################
-#### Now, transform the data appropriately
-#### By editing the new matrix
-######################################################################
-
-      Matrix($matrixnum,node) SetMatrix \
-              [Volume($TetraMesh(AlignmentVolume),node) GetPositionMatrix]
-
-#      [Matrix($matrixnum,node) GetTransform] Inverse
-}
 ######################################################################
 #### Update and Redraw
 ######################################################################
@@ -482,6 +577,7 @@ MainModelsUpdateMRML
 MainUpdateMRML
 Render3D
 
+set TetraMesh(modelbasename) ""
 }   
 
 #-------------------------------------------------------------------------------
@@ -511,13 +607,12 @@ proc TetraMeshCreateModel  {name scalarLo scalarHi v} {
  MainModelsSetActive $i
  set m $i
 
-# set Model($m,fly) 1 ??? I have a feeling it would be good to add this.
-# It marks a model as having been created on the fly.
-# Mark this model as saved
- set Model($m,dirty) 0
+# This next part says the models are not saved. Therefore
+# One can save them in the ModelMaker.
+ set Model($m,dirty) 1
 
  Model($m,node) SetName $name
- Model($m,node) SetFileName $Model(FileName)
+ Model($m,node) SetFileName "None"
  Model($m,node) SetFullFileName [file join $Mrml(dir) [Model($m,node) GetFileName]]
  Model($m,node) SetDescription "Generated from Tetrahedral Mesh"
 
@@ -525,7 +620,7 @@ proc TetraMeshCreateModel  {name scalarLo scalarHi v} {
  MainModelsSetVisibility $m 1
  MainModelsSetOpacity $m 1
  MainModelsSetColor $m $Label(name)
- MainModelsSetCulling $m 1
+ MainModelsSetCulling $m 0
  MainModelsSetScalarVisibility $m 1
  MainModelsSetScalarRange $m $scalarLo $scalarHi
  return $m
