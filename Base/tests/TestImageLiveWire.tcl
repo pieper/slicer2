@@ -48,11 +48,11 @@ lw SetOriginalImage [clip GetOutput]
 
 #### set start and end points of the path.
 lw SetStartPoint 0 253
-lw SetEndPoint 1 0
-
+lw SetEndPoint 200 0
+puts "set e.p"
 # Update lw so we can grab the points info
 puts "---"
-lw Update
+#lw Update
 puts "---"
 
 set points [lw GetContourPoints]

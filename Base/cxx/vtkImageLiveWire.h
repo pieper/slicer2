@@ -305,14 +305,12 @@ public:
   vtkSetMacro(Label, int);
   vtkGetMacro(Label, int);
 
-  // Lauren handle shift in edge images
   // Description:
   // Starting point of shortest path (mouse click #1)
   void SetStartPoint(int x, int y);
   void SetStartPoint(int *point){this->SetStartPoint(point[0],point[1]);};
   vtkGetVector2Macro(StartPoint, int);
 
-  // Lauren handle shift in edge images
   // Description:
   // Ending point of shortest path (mouse click #2)
   void SetEndPoint(int x, int y);
@@ -367,10 +365,24 @@ public:
   vtkGetVector2Macro(CurrentPoint, int);
   
   // Description:
-  // Points on the shortest path ("contour")
-  // The output image has these highlighted.
-  vtkGetObjectMacro(ContourPoints, vtkPoints);
+  // Edges on the chosen contour
+  vtkGetObjectMacro(ContourEdges, vtkPoints);
 
+  // Description:
+  // Pixels on the chosen contour
+  // The output image has these highlighted, plus any new pixels 
+  vtkGetObjectMacro(ContourPixels, vtkPoints);
+
+  // Description:
+  // Edges on the new shortest path.
+  vtkGetObjectMacro(NewEdges, vtkPoints);
+
+  // Description:
+  // Pixels on the new shortest path (moving wire at end of contour).
+  // The output image also has these highlighted.
+  vtkGetObjectMacro(NewPixels, vtkPoints);
+
+  // Lauren these are public for access from vtkImageLiveWireExecute (change...)
   // ---- Data structures for internal use in path computation -- //
   // Description:
   // Circular queue, composed of buckets that hold vertices of each path cost.
@@ -402,12 +414,6 @@ public:
   // ---- End of data structures for internal use in path computation -- //
 
   // Description:
-  // Points on the contour...  (maybe this is B?)
-  // Lauren why was there no get/set before??  (fix)
-  //vtkGetObjectMacro(ContourPoints, vtkPoints);
-  vtkPoints *ContourPoints;
-
-  // Description:
   // This is public since it is called from the non-class function 
   // vtkImageLiveWireExecute...  Don't call this.
   void AllocatePathInformation(int numRows, int numCols);
@@ -431,6 +437,11 @@ protected:
 
   int Label;
 
+  vtkPoints *ContourEdges;
+  vtkPoints *ContourPixels;
+  vtkPoints *NewEdges;
+  vtkPoints *NewPixels;
+  
   void DeallocatePathInformation();
 
   void ExecuteInformation(vtkImageData **inputs, vtkImageData *output); 

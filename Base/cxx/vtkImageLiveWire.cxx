@@ -30,7 +30,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "stdlib.h"
 #include "vtkObjectFactory.h"
 #include <math.h>
-
+#include <time.h>
 
 //------------------------------------------------------------------------------
 vtkImageLiveWire* vtkImageLiveWire::New()
@@ -58,7 +58,11 @@ vtkImageLiveWire::vtkImageLiveWire()
   this->Label = 2;
 
   // output
-  this->ContourPoints = vtkPoints::New();
+  this->ContourEdges = vtkPoints::New();
+  this->ContourPixels = vtkPoints::New();
+  // these are created when output edges/pixels exist
+  this->NewEdges = NULL;
+  this->NewPixels = NULL;
 
   // all inputs 
   this->NumberOfRequiredInputs = 5;
@@ -78,9 +82,13 @@ vtkImageLiveWire::~vtkImageLiveWire()
 {      
   this->DeallocatePathInformation();
 
-  if (this->ContourPoints)
+  if (this->ContourEdges)
     {
-      this->ContourPoints->Delete();
+      this->ContourEdges->Delete();
+    }
+  if (this->ContourPixels)
+    {
+      this->ContourPixels->Delete();
     }
 }
 
@@ -196,40 +204,69 @@ void vtkImageLiveWire::SetStartPoint(int x, int y)
 {
   int modified = 0;
   int extent[6];
+  int numEdgePoints, numPixPoints;
 
-  // just check against the first edge input for now 
-  // (they should all have the same extent, and this is checked in ExecuteInformation)
-  // Lauren can this be done better?
-  if (this->GetInput(1)) 
+  // if we have a previous short path, add it to contour 
+  // and start next short path from its end
+  // (even if end point doesn't match where the user clicked.)
+  if (this->NewEdges)
     {
-      this->GetInput(1)->GetExtent(extent);
+      // Lauren need to check if clicked twice on same start point???
+
+      if (x != this->EndPoint[0] || y != this->EndPoint[1])
+	{
+	  cout << "click: ("<<x<<","<<y<<") end: ("<<this->EndPoint[0]<<","<<this->EndPoint[1]<<")"<<endl;
+	}
+      // we have a contour already.  Start adding to its end:
+      x  = this->EndPoint[0];
+      y  = this->EndPoint[1];     
+
+      // Lauren make sure curve goes through this point??
+      cout <<"ok 1"<<endl;
+      // append new points to the saved contour
+      for (int i = 0; i < this->NewEdges->GetNumberOfPoints(); i++)
+	{
+	  this->ContourEdges->InsertNextPoint(this->NewEdges->GetPoint(i));
+	}
+      for (int i = 0; i < this->NewPixels->GetNumberOfPoints(); i++)
+	{
+	  this->ContourPixels->InsertNextPoint(this->NewPixels->GetPoint(i));
+	}
+      cout <<"ok"<<endl;
     }
   else
     {
-      cout << "LiveWire SetStartPoint: No input 1 yet!" << endl;
-      memset(extent, 0, 6*sizeof(int));
-    }
-     
-  //cout << "extent:" << extent[0] << extent[1] << extent[2] << extent[3] << extent[4] << extent[5] <<endl;
-
-  // Lauren handle shift in edge images
-  // crop point with image coordinates
-  // Lauren remove the outer "if"
-  if (x < extent[0] || x > extent[1] ||
-      y < extent[2] || y > extent[3]) 
-    {
-      cout << "Coords (" << x << "," << y << ") are outside of image!" << endl;      
-      if (x < extent[0]) x = extent[0];
+      // start a new contour.
+      // crop point with image extent:
+      if (this->GetInput(1)) 
+	{
+	  // all inputs should have the same extent
+	  this->GetInput(1)->GetExtent(extent);
+	}
       else
-	if (x > extent[1]) x = extent[1];
+	{
+	  // the pipeline isn't all set up yet
+	  cout << "LiveWire SetStartPoint: No input 1 yet!" << endl;
+	  memset(extent, 0, 6*sizeof(int));
+	}
       
-      if (y < extent[2]) y = extent[2];
+      if (x < extent[0]) 
+	x = extent[0];
       else
-	if (y > extent[3]) y = extent[3];
+	if (x > extent[1]) 
+	  x = extent[1];
+      
+      if (y < extent[2]) 
+	y = extent[2];
+      else
+	if (y > extent[3])
+	  y = extent[3];
+
     }
 
   cout << "Coords of start point: (" << x << "," << y << ")" << endl;      
-  
+
+  // Lauren check this first???
   if (this->StartPoint[0] != x)
     {
       modified = 1;
@@ -252,6 +289,7 @@ void vtkImageLiveWire::SetStartPoint(int x, int y)
     }
   //cout << "deallocated" << endl;
 }
+
 //----------------------------------------------------------------------------
 // This method sets the EndPoint 
 void vtkImageLiveWire::SetEndPoint(int x, int y)
@@ -270,7 +308,6 @@ void vtkImageLiveWire::SetEndPoint(int x, int y)
       memset(extent, 0, 6*sizeof(int));
     }
      
-  // Lauren handle shift in edge images
   // crop point with image coordinates
   // Lauren remove the outer "if"
   if (x < extent[0] || x > extent[1] ||
@@ -278,7 +315,7 @@ void vtkImageLiveWire::SetEndPoint(int x, int y)
     {
       cout << "Coords (" << x << "," << y << ") are outside of image!" << endl;      
       // Lauren test!
-      if (x < extent[0]) x = extent[0]+1;
+      if (x < extent[0]) x = extent[0];
       else
 	if (x > extent[1]) x = extent[1];
       
@@ -299,6 +336,11 @@ void vtkImageLiveWire::SetEndPoint(int x, int y)
       modified = 1;
       this->EndPoint[1] = y;
     }
+  
+  if (modified)
+    {
+      this->Modified();
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -313,6 +355,9 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
   int numrows = extent[1] - extent[0] + 1;
   int numcols = extent[3] - extent[2] + 1;
   int numpix = numrows*numcols;
+
+  clock_t tStart, tEnd, tDiff;
+  tStart = clock();
 
   // Lauren test if input image is different, must deallocate all stuff.
   // Need to override SetInput! (also check for 2D input, etc.)
@@ -477,16 +522,16 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
 
   // save cost for next time
   self->SetCurrentCC(currentCC);
+  
+  cout << "current cc: " << currentCC << endl;
 
   // ------- Trace the shortest path using the Dir array. -----------//
 
   // Lauren row column, x and y confusing.  test/fix it all.
 
-  // clear old contour points
-  // ***********************lauren fix to use Get fcn.******************************
-  self->ContourPoints->Delete();
-  self->ContourPoints = vtkPoints::New();
-  vtkPoints *testPoints = vtkPoints::New();
+  // clear old shortest path points
+  vtkPoints *newEdges = self->GetNewEdges();
+  vtkPoints *newPixels = self->GetNewPixels();
 
   // current spot on path of arrows
   int traceX = end[0];
@@ -498,85 +543,42 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
   // coloring assumes clockwise segmentation.
   int colorX, colorY;
 
-  // Lauren this needs to be color!
-  self->ContourPoints->InsertNextPoint(traceX,traceY,0);
+  // Insert first points into lists
+  newEdges->InsertNextPoint(traceX,traceY,0);
+  colorX = traceX + color[Dir(traceX,traceY)][0];
+  colorY = traceY + color[Dir(traceX,traceY)][1];
+  newPixels->InsertNextPoint(colorX,colorY,0);
 
+  // follow "arrows" backwards to the start point
   while (traceX!=start[0] || traceY!=start[1])
     {
       if (self->GetVerbose() > 2) 
 	{
-	  cout << "(" << traceX << "," << traceY << ")" << endl;
+	  cout <<"("<<traceX<<","<<traceY<<")"<<"  ("<<colorX<<","<<colorY<<")"<<endl;
 	}
 
-      // Lauren shorten the following code:
-      // follow "arrows" backwards.
-      switch (Dir(traceX,traceY))
+      // arrow is NONE, UP, DOWN, LEFT, or RIGHT
+      int arrow = Dir(traceX,traceY);
+      if (arrow == NONE)
 	{
-	case NONE:
-	  {
-	    cout << "ERROR in vtkImageLiveWire: broken path" << endl;
-	    return;
-	  }
-	case UP:
-	  {	    
-	    traceX -= neighbors[UP][0];
-	    traceY -= neighbors[UP][1];
-	    if (self->GetVerbose() > 2) 
-	      {
-		cout << "UP: ";
-	      }
-	    colorX = traceX + color[UP][0];
-	    colorY = traceY + color[UP][1];
-	    break;
-	  }
-	case DOWN:
-	  {
-	    traceX -= neighbors[DOWN][0];
-	    traceY -= neighbors[DOWN][1];
-	    if (self->GetVerbose() > 2) 
-	      {
-		cout << "DOWN: ";
-	      }
-	    colorX = traceX + color[DOWN][0];
-	    colorY = traceY + color[DOWN][1];
-	    break;
-	  }
-	case LEFT:
-	  {
-	    traceX -= neighbors[LEFT][0];
-	    traceY -= neighbors[LEFT][1];
-	    if (self->GetVerbose() > 2) 
-	      {
-		cout << "LEFT: ";
-	      }
-	    colorX = traceX + color[LEFT][0];
-	    colorY = traceY + color[LEFT][1];
-	    break;
-	  }
-	case RIGHT:
-	  {
-	    traceX -= neighbors[RIGHT][0];
-	    traceY -= neighbors[RIGHT][1];
-	    if (self->GetVerbose() > 2) 
-	      {
-		cout << "RIGHT: ";
-	      }
-	    colorX = traceX + color[RIGHT][0];
-	    colorY = traceY + color[RIGHT][1];
-	    break;
-	  }
-	default:
-	  {
-	    cout << "ERROR in vtkImageLiveWire: unknown path dir" << endl;
-	    return;
-	  }
-
+	  cout << "ERROR in vtkImageLiveWire: broken path" << endl;
+	  return;      
 	}
 
-      //self->ContourPoints->InsertNextPoint(traceX,traceY,0);
-      //cout << "(" << traceX << "," << traceY << ")" << "   (" << colorX << "," << colorY << ")" << endl;
-      self->ContourPoints->InsertNextPoint(colorX,colorY,0);
-      testPoints->InsertNextPoint(traceX,traceY,0);
+      traceX -= neighbors[arrow][0];
+      traceY -= neighbors[arrow][1];
+      // select the pixel to color in
+      colorX = traceX + color[arrow][0];
+      colorY = traceY + color[arrow][1];
+
+      if (self->GetVerbose() > 2) 
+	{
+	  cout << arrow;
+	}
+
+      // add to path lists
+      newPixels->InsertNextPoint(colorX,colorY,0);
+      newEdges->InsertNextPoint(traceX,traceY,0);
 
     } // end while
 
@@ -600,31 +602,45 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
   T outLabel = (T)self->GetLabel();
 
   // draw points over image
-  int numPoints = self->ContourPoints->GetNumberOfPoints();
+  int numPoints = newPixels->GetNumberOfPoints();
   float *point;
   for (int i=0; i<numPoints; i++)
     {
       //cout << ".";
-      point = self->ContourPoints->GetPoint(i);
+      point = newPixels->GetPoint(i);
       //cout << (int)point[0] + ((int)point[1])*sizeX << endl;
       outPtr[(int)point[0] + ((int)point[1])*sizeX] = outLabel;
     }
-  //cout << "done drawing!" << endl;  
-
-
-  // ------------- test --------------
-  numPoints = testPoints->GetNumberOfPoints();
+  // draw previously chosen contour over image
+  vtkPoints *contour = self->GetContourPixels();
+  numPoints = contour->GetNumberOfPoints();
   for (int i=0; i<numPoints; i++)
     {
       //cout << ".";
-      point = testPoints->GetPoint(i);
+      point = contour->GetPoint(i);
+      //cout << (int)point[0] + ((int)point[1])*sizeX << endl;
+      outPtr[(int)point[0] + ((int)point[1])*sizeX] = outLabel;
+    }  
+
+
+  // ------------- test --------------
+  numPoints = newEdges->GetNumberOfPoints();
+  for (int i=0; i<numPoints; i++)
+    {
+      //cout << ".";
+      point = newEdges->GetPoint(i);
       //cout << (int)point[0] + ((int)point[1])*sizeX << endl;
       outPtr[(int)point[0] + ((int)point[1])*sizeX] += 5;
     }
-  // ------------- test --------------
+  // ------------- end test --------------
 
   // test points
-  cout << "num points C++ " << self->ContourPoints->GetNumberOfPoints() << endl;
+  cout << "num points C++ " << newEdges->GetNumberOfPoints() << endl;
+
+  tEnd = clock();
+  tDiff = tEnd - tStart;
+  cout << "LW time: " << tDiff << endl;
+
   return;
 }
 
@@ -663,6 +679,19 @@ void vtkImageLiveWire::Execute(vtkImageData **inData,
 
   // Lauren check this
   // 2D input is required
+
+  // clear and reallocate output points (shortest path)
+  if (this->NewEdges)
+    {
+      this->NewEdges->Delete();
+    }
+  if (this->NewPixels)
+    {
+      this->NewPixels->Delete();
+    }
+  this->NewEdges = vtkPoints::New();
+  this->NewPixels = vtkPoints::New();
+
 
   void *inPtr[2], *outPtr;
 

@@ -57,6 +57,7 @@ vtkImageLiveWireTester::vtkImageLiveWireTester()
   for (int i = 0; i < this->NumberOfEdgeFilters; i++)
     {
       this->EdgeFilters[i] = vtkImageLiveWireEdgeWeights::New();
+      this->EdgeFilters[i]->SetEdgeDirection(i);
     }
 
 }
@@ -159,14 +160,15 @@ static void vtkImageLiveWireTesterExecute(vtkImageLiveWireTester *self,
 
   // Lauren max edge cost of edge filters and live wire need to match
 
+  // set up pipeline for live wire.
+  // Pipeline stuff should only happen once!
   // make edge weight images
   for (int i = 0; i < numEdges; i++)
     {
       edgeFilters[i]->SetInput(inData);
       // Lauren this sets precision.
       //edgeFilters[i]->SetMaxEdgeWeight();
-      edgeFilters[i]->SetEdgeDirection(i);
-      edgeFilters[i]->Update();
+      //edgeFilters[i]->Update();
     }
 
   liveWire->SetUpEdges(edgeFilters[0]->GetOutput());
@@ -175,8 +177,8 @@ static void vtkImageLiveWireTesterExecute(vtkImageLiveWireTester *self,
   liveWire->SetRightEdges(edgeFilters[3]->GetOutput());
 
   // Lauren do this directly??
-  liveWire->SetStartPoint(self->GetStartPoint());
-  liveWire->SetEndPoint(self->GetEndPoint());
+  //liveWire->SetStartPoint(self->GetStartPoint());
+  //liveWire->SetEndPoint(self->GetEndPoint());
 
   // Output is the same as input
   outData->CopyAndCastFrom(inData, inData->GetExtent());  
