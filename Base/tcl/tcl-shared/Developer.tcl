@@ -126,10 +126,15 @@ proc DevAddLabel { LabelName Message {Color WLA}} {
     eval {label $LabelName -text $Message} $Gui($Color)
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC DevAddEntry
 # 
+#
+# Example: DevAddEntry View parallelScale $f.eParallelScale 
+# Example: DevAddEntry View parallelScale $f.eParallelScale 20
+# adds an entry corresponding to variable View(parallelScale)
+# the first one has width 10, the second has width 20
+#
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -139,6 +144,7 @@ proc DevAddEntry { ArrayName Variable EntryName {Width 10}} {
     eval {entry $EntryName -textvariable "$ArrayName\($Variable\)" \
 	    -width $Width } $Gui(WEA)
 }
+
 
 #-------------------------------------------------------------------------------
 # .PROC DevAddButton
