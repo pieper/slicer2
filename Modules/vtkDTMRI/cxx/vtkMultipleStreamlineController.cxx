@@ -1,4 +1,8 @@
 #include "vtkMultipleStreamlineController.h"
+#include "vtkLookupTable.h"
+#include "vtkPolyDataMapper.h"
+#include "vtkActor.h"
+#include "vtkRenderer.h"
 
 //------------------------------------------------------------------------------
 vtkMultipleStreamlineController* vtkMultipleStreamlineController::New()
@@ -22,8 +26,12 @@ vtkMultipleStreamlineController::vtkMultipleStreamlineController()
 
   this->InputTensorField = NULL;
   this->InputROI = NULL;
+  this->InputRenderers = vtkCollection::New();
 
   this->Streamlines = vtkCollection::New();
+  this->LookupTables = vtkCollection::New();
+  this->Mappers = vtkCollection::New();
+  this->Actors = vtkCollection::New();
 
   // Streamline parameters
   this->IntegrationDirection = VTK_INTEGRATE_BOTH_DIRECTIONS;
@@ -32,9 +40,95 @@ vtkMultipleStreamlineController::vtkMultipleStreamlineController()
 //----------------------------------------------------------------------------
 vtkMultipleStreamlineController::~vtkMultipleStreamlineController()
 {
-  // Delete everything
+  // TO DO
+  // Delete everything 
 
 }
+
+// Make actors, mappers, and lookup tables as needed for streamlines
+// in the collection.
+// Corresponds to DTMRIAddStreamline in DTMRI.tcl.
+//----------------------------------------------------------------------------
+void vtkMultipleStreamlineController::CreateGraphicsObjects()
+{
+  // TO DO: see if all can use same LUT
+  int numStreamlines, numActorsCreated;
+  vtkHyperStreamline *currStreamline;
+  vtkLookupTable *currLookupTable;
+  vtkPolyDataMapper *currMapper;
+  vtkActor *currActor;
+  vtkTransform *currTransform;
+
+  numStreamlines = this->Streamlines->GetNumberOfItems();
+  numActorsCreated = this->Actors->GetNumberOfItems();
+
+  currTransform=vtkTransform::New();
+  currTransform->SetMatrix(this->WorldToTensorScaledIJK->GetMatrix());
+  currTransform->Inverse();
+  
+  cout << "----------------in CreateGraphicsObjects " << numActorsCreated << "  " << numStreamlines << endl;
+
+  while (numActorsCreated < numStreamlines) 
+    {
+      cout << "creating objects " << numActorsCreated << endl;
+      // Get the streamline
+      currStreamline = (vtkHyperStreamline *)
+        this->Streamlines->GetItemAsObject(numActorsCreated);
+
+      // Now create the objects needed
+      currLookupTable = vtkLookupTable::New();
+      this->LookupTables->AddItem((vtkObject *)currLookupTable);
+      currActor = vtkActor::New();
+      this->Actors->AddItem((vtkObject *)currActor);
+      currMapper = vtkPolyDataMapper::New();
+      this->Mappers->AddItem((vtkObject *)currMapper);
+
+      // Hook up the pipeline
+      currMapper->SetInput(currStreamline->GetOutput());
+      currMapper->SetLookupTable(currLookupTable);
+      currActor->SetMapper(currMapper);
+      
+      // Place the actor in the scene
+      // NOTE: in future there may be multiple tensor inputs/input matrices
+      currActor->SetUserMatrix(currTransform->GetMatrix());
+
+      // Increment the count of actors we have created
+      numActorsCreated++;
+    }
+}
+
+void vtkMultipleStreamlineController::AddStreamlinesToScene()
+{
+  vtkActor *currActor;
+  vtkRenderer *currRenderer;
+
+  // make objects if needed
+  this->CreateGraphicsObjects();
+
+  // traverse actor collection and make all visible
+  this->Actors->InitTraversal();
+  currActor= (vtkActor *)this->Actors->GetNextItemAsObject();
+  while(currActor)
+    {
+      cout << "Actor " << endl;
+      currActor->VisibilityOn();
+      currActor= (vtkActor *)this->Actors->GetNextItemAsObject();      
+
+      // add to the scene (to each renderer)
+      // MainAddActor in Main.tcl adds actor to each renderer.
+      // For speed we cannot call this function (?)
+      this->InputRenderers->InitTraversal();
+      currRenderer= (vtkRenderer *)this->InputRenderers->GetNextItemAsObject();
+      while(currRenderer)
+        {
+          currRenderer->AddActor(currActor);
+          currRenderer= (vtkRenderer *)this->InputRenderers->GetNextItemAsObject();
+        }
+      
+    }
+
+}
+
 
 //----------------------------------------------------------------------------
 void vtkMultipleStreamlineController::SeedStreamlinesFromROI()

@@ -28,6 +28,11 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   void SeedStreamlinesFromROI();
 
   // Description
+  // Make the streamlines visible in the renderer.
+  void AddStreamlinesToScene();
+
+
+  // Description
   // Input tensor field in which to seed streamlines
   vtkSetObjectMacro(InputTensorField, vtkImageData);
   vtkGetObjectMacro(InputTensorField, vtkImageData);
@@ -58,8 +63,17 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
 
   // Description
   // List of the output vtkHyperStreamlines (or subclasses)
-  vtkSetObjectMacro(Streamlines, vtkCollection);
   vtkGetObjectMacro(Streamlines, vtkCollection);
+  vtkGetObjectMacro(Actors, vtkCollection);
+  vtkGetObjectMacro(LookupTables, vtkCollection);
+  vtkGetObjectMacro(Mappers, vtkCollection);
+
+  // Description
+  // Input: list of the renderers whose scenes will have streamlines
+  // added.
+  vtkSetObjectMacro(InputRenderers, vtkCollection);
+  vtkGetObjectMacro(InputRenderers, vtkCollection);
+
 
 
   // Description
@@ -67,19 +81,30 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   // Add access to parameters of all created streamlines.
   // Add Print function
   // Add option to create new/old streamline classes
+  // Add save function
+  // Add actor collection
+  // Add observers for progress/implement progress updating
   
  protected:
   vtkMultipleStreamlineController();
   ~vtkMultipleStreamlineController();
+
+  void CreateGraphicsObjects();
 
   vtkTransform *ROIToWorld;
   vtkTransform *WorldToTensorScaledIJK;
 
   vtkImageData *InputTensorField;
   vtkImageData *InputROI;
-
+  vtkCollection *InputRenderers;
   int InputROIValue;
+
   vtkCollection *Streamlines;
+  vtkCollection *LookupTables;
+  vtkCollection *Mappers;
+  vtkCollection *Actors;
+
+
 
   // Add Parameters of standard streamlines
   //MaximumPropagationDistance IntegrationStepLength 
