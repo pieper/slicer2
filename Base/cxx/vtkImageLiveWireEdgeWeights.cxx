@@ -203,7 +203,6 @@ void vtkImageLiveWireEdgeWeights::AppendFeatureSettings(ofstream& of)
 void vtkImageLiveWireEdgeWeights::GetFeatureSettingsString(char *settings)
 {
   char set[40];
-  int count = 0;
 
   // append the features
   for (int i=0; i < this->NumberOfFeatures; i++)
@@ -243,14 +242,13 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
   int hoodMin0, hoodMax0, hoodMin1, hoodMax1, hoodMin2, hoodMax2;
   int hoodIdx0, hoodIdx1, hoodIdx2;
   int offsetPtr0, offsetPtr1, offsetPtr2;
-  int  *nPtr, *nPtr0, *nPtr1, *nPtr2;
+  int *nPtr0, *nPtr1, *nPtr2;
   // Lauren should loop through hoodCopy nicer!
   int maskInc0, maskInc1, maskInc2;
   // The extent of the whole input image
   int inImageMin0, inImageMin1, inImageMin2;
   int inImageMax0, inImageMax1, inImageMax2;
   // Other
-  T pix;
   T *outPtr = (T*)outData->GetScalarPointerForExtent(outExt);
   unsigned long count = 0;
   unsigned long target;
@@ -307,6 +305,8 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
   int neighborhoodWidth = self->GetNeighborhood();
 
   int t,u,p,q,v,w;
+  t = u = p = q = v = w = 0;
+
   if (neighborhoodWidth == 3) 
     {
       // compute these edges at each pixel, x:
@@ -687,7 +687,7 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
 		    }
 		  // each feature is between 0 and its Weight.  
 		  // normalize sum to 1 and multiply by max edge cost.
-		  *outPtr0 = (sum*maxEdge/sumOfWeights);
+		  *outPtr0 = (T) (sum*maxEdge/sumOfWeights);
 		  float tmp = (sum*maxEdge/sumOfWeights);
 		  if (tmp < testMin2) 
 		    testMin2 = tmp;
