@@ -55,10 +55,13 @@
 #   VolumeMathDoSubtract
 #   VolumeMathDoAdd
 #   VolumeMathDoHausdorff
+#   VolumeMathDoStatistics
 #   VolumeMathDoDistMap
 #   VolumeMathDoAbs
 #   VolumeMathDoResample
 #   VolumeMathDoAnd
+#   VolumeMathDoMultiply
+#   VolumeMathDoMask
 #==========================================================================auto=
 #-------------------------------------------------------------------------------
 # .PROC VolumeMathInit
@@ -155,7 +158,7 @@ proc VolumeMathInit {} {
     #   appropriate info when the module is checked in.
     #   
         lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.33 $} {$Date: 2003/08/07 18:59:23 $}]
+        {$Revision: 1.34 $} {$Date: 2003/08/11 16:34:21 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -357,9 +360,12 @@ files. Sometimes it doesn't work.
     frame $f.fGrid -bg $Gui(activeWorkspace)
     #Hanifa
     frame $f.fResampButton -bg $Gui(activeWorkspace)
+    #sp - 2003-08-11
+    frame $f.fMaskLabel -bg $Gui(activeWorkspace)
     frame $f.fPack -bg $Gui(activeWorkspace)
+
   
-    pack $f.fSelectMath $f.fGrid $f.fResampButton $f.fPack  -side top -padx 0 -pady $Gui(pad)
+    pack $f.fSelectMath $f.fGrid $f.fResampButton $f.fMaskLabel $f.fPack  -side top -padx 0 -pady $Gui(pad)
 
     #-------------------------------------------
     # Math->SelectMath
@@ -368,20 +374,20 @@ files. Sometimes it doesn't work.
 
     frame $f.f -bg $Gui(backdrop)
 
-        # the first row and second row
-        frame $f.f.1 -bg $Gui(inactiveWorkspace)
-        frame $f.f.2 -bg $Gui(inactiveWorkspace)
-        frame $f.f.3 -bg $Gui(inactiveWorkspace)
-        pack $f.f.1 $f.f.2 $f.f.3 -side top -fill x -anchor w
+    # the first row and second row
+    frame $f.f.1 -bg $Gui(inactiveWorkspace)
+    frame $f.f.2 -bg $Gui(inactiveWorkspace)
+    frame $f.f.3 -bg $Gui(inactiveWorkspace)
+    pack $f.f.1 $f.f.2 $f.f.3 -side top -fill x -anchor w
 
-        #
-        # NOTE: As you want more functions, don't forget
-        #       to add more rows above.
-        #
+    #
+    # NOTE: As you want more functions, don't forget
+    #       to add more rows above.
+    #
 
-        set row 1
-        foreach p "Subtract Add Resample Abs DistMap Hausdorff Multiply" {
-            eval {radiobutton $f.f.$row.r$p \
+    set row 1
+    foreach p "Subtract Add Resample Abs DistMap Hausdorff Multiply Statistics Mask" {
+        eval {radiobutton $f.f.$row.r$p \
             -text "$p" -command "VolumeMathSetMathType" \
             -variable VolumeMath(MathType) -value $p -width 10 \
             -indicatoron 0} $Gui(WCA)
@@ -419,12 +425,33 @@ files. Sometimes it doesn't work.
     #-------------------------------------------
     set f $fMath.fResampButton
 
-        DevAddButton $f.bResampParamPopup "View/change Resampling Params" \
-             "set VolumeMath(resampMenuOpen) 1; VolumeMathShowPopup"
+    DevAddButton $f.bResampParamPopup "View/change Resampling Params" \
+         "set VolumeMath(resampMenuOpen) 1; VolumeMathShowPopup"
 
     #Save the path to the widget so that it can be accessed later
     set VolumeMath(ResampParamButton) $f.bResampParamPopup
 
+    #sp - 2003-08-11 
+    #-------------------------------------------
+    # Math->Mask Label 
+    #-------------------------------------------
+    set f $fMath.fMaskLabel
+
+    # Mask label
+    eval {button $f.bLabel -text "Mask:" \
+        -command "ShowLabels VolumeMathSetMaskLabel"} $Gui(WBA)
+    eval {entry $f.eLabel -width 6 \
+        -textvariable ::Label(label)} $Gui(WEA)
+    bind $f.eLabel <Return>   "VolumeMathSetMaskLabel"
+    bind $f.eLabel <FocusOut> "VolumeMathSetMaskLabel"
+    eval {entry $f.eName -width 14 \
+        -textvariable ::Label(name)} $Gui(WEA) \
+        {-bg $Gui(activeWorkspace) -state disabled}
+    grid $f.bLabel $f.eLabel $f.eName -padx 2 -pady $Gui(pad)
+    grid $f.eLabel $f.eName -sticky w
+    #Save the path to the widget so that it can be accessed later
+    set VolumeMath(maskLabelFrame) $f
+    pack forget $VolumeMath(maskLabelFrame)
 
 #        #-------------------------------------------
 #        # Resample frame
@@ -811,7 +838,7 @@ proc VolumeMathShowPopup {{x 255} {y 0}} {
    
     # Recreate popup if user killed it
     if {[winfo exists $Gui(wResamplingParams)] == 0} {
-    VolumeMathBuildResampParamPopup 
+        VolumeMathBuildResampParamPopup 
     }
     # Show the popup box
     ShowPopup $Gui(wResamplingParams) $x $y
@@ -948,11 +975,12 @@ proc VolumeMathSetMathType {} {
     set b $f.lVolume1 
     set c $f.lVolume3 
 
-    #Hanifa
-    #If the Resample Menu is not being shown, hide the button that calls the 
-    #resampling adjust parameter popup box
-    if {$VolumeMath(resampMenuOpen) == 1} {
+    if {$VolumeMath(MathType) != "Resample"} {
         pack forget $VolumeMath(ResampParamButton)
+    }
+
+    if {$VolumeMath(MathType) != "Mask"} {
+        pack forget $VolumeMath(maskLabelFrame)
     }
     
     if {$VolumeMath(MathType) == "Subtract" } {
@@ -980,10 +1008,20 @@ proc VolumeMathSetMathType {} {
         $a configure -text "Undir. Par. Haus. Dist. V2"
         $b configure -text "V1"
         $c configure -text "and put the results in"
+    } elseif {$VolumeMath(MathType) == "Statistics" } {
+        $a configure -text "Calculate Statistics of"
+        $b configure -text "(not used)"
+        $c configure -text "(not used)"
     } elseif {$VolumeMath(MathType) == "Multiply" } {
         $a configure -text "Volume2:"
         $b configure -text "Volume1:"
         $c configure -text "=Volume3"
+    } elseif {$VolumeMath(MathType) == "Mask" } {
+        $a configure -text "Volume to Mask:"
+        $b configure -text "Label Map:"
+        $c configure -text "Masked Output:"
+        VolumeMathSetMaskLabel
+        pack $VolumeMath(maskLabelFrame)
     }
 }
 
@@ -1102,13 +1140,17 @@ proc VolumeMathDoMath {} {
     if { $VolumeMath(MathType) == "Abs" }      {VolumeMathDoAbs}
     if { $VolumeMath(MathType) == "DistMap" }  {VolumeMathDoDistMap}
     if { $VolumeMath(MathType) == "Hausdorff"} {VolumeMathDoHausdorff}
+    if { $VolumeMath(MathType) == "Statistics"} {VolumeMathDoStatistics}
     if { $VolumeMath(MathType) == "Multiply"} {VolumeMathDoMultiply}
+    if { $VolumeMath(MathType) == "Mask"} {VolumeMathDoMask}
 
     # This is necessary so that the data is updated correctly.
     # If the programmers forgets to call it, it looks like nothing
-    # happened.
-    set v3 $VolumeMath(Volume3)
-    MainVolumesUpdate $v3
+    # happened. (skip for statistics that doesn't create a new volume)
+    if { $VolumeMath(MathType) != "Statistics"} {
+        set v3 $VolumeMath(Volume3)
+        MainVolumesUpdate $v3
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -1289,6 +1331,35 @@ proc VolumeMathDoHausdorff {} {
     Logic Delete
     Distances Delete
     CastToUChar Delete
+    stat Delete
+}
+
+#-------------------------------------------------------------------------------
+# .PROC VolumeMathDoStatistics
+#   Generate and Display Image Statistics
+#
+# .END
+#-------------------------------------------------------------------------------
+proc VolumeMathDoStatistics {} {
+    global VolumeMath Volume
+
+    if { $VolumeMath(Volume2) == $Volume(idNone) } {
+        DevErrorWindow "You cannot use Volume \"None\""
+        return 1
+    }
+
+    catch "stat Delete"
+    vtkImageStatistics stat
+    stat IgnoreZeroOn
+    stat SetInput [Volume($VolumeMath(Volume2),vol) GetOutput]
+    stat Update
+
+    set msg "Statistics of [Volume($VolumeMath(Volume2),node) GetName]\n"
+    set msg "$msg - Min: [stat GetMin] Max: [stat GetMax]\n"
+    set msg "$msg - Mean [stat GetAverage] +/- std: [stat GetStdev] \n"
+    set msg "$msg \n(zero values ignored)"
+    tk_messageBox -message $msg -type ok
+
     stat Delete
 }
 
@@ -1547,6 +1618,57 @@ proc VolumeMathDoMultiply {} {
     MultMath Delete
 }
 
+#-------------------------------------------------------------------------------
+# .PROC VolumeMathDoMask
+#   Actually do the VolumeMath Mask
+#  - makes a new volume where everything is zero except the selected label value
+#
+# .END
+#-------------------------------------------------------------------------------
+proc VolumeMathDoMask {} {
+    global VolumeMath Volume
+
+    # Check to make sure no volume is none
+
+    if {[VolumeMathCheckErrors] == 1} {
+        return
+    }
+    if {[VolumeMathPrepareResultVolume] == 1} {
+        return
+    }
+
+    set v3 $VolumeMath(Volume3)
+    set v2 $VolumeMath(Volume2)
+    set v1 $VolumeMath(Volume1)
+
+    # create the binary volume of the label
+    catch "mathThresh Delete"
+    vtkImageThreshold mathThresh
+    mathThresh SetInput [Volume($v1,vol) GetOutput]
+    mathThresh SetInValue 1
+    mathThresh SetOutValue 0
+    mathThresh ReplaceInOn
+    mathThresh ReplaceOutOn
+    mathThresh ThresholdBetween $VolumeMath(maskLabel) $VolumeMath(maskLabel) 
+
+    # Set up the VolumeMath Mask
+
+    catch "MultMath Delete"
+    vtkImageMathematics MultMath
+    MultMath SetInput1 [Volume($v2,vol) GetOutput]
+    MultMath SetInput2 [mathThresh GetOutput]
+    MultMath SetOperationToMultiply
+
+    # Start copying in the output data.
+    # Taken from MainVolumesCopyData
+
+    Volume($v3,vol) SetImageData [MultMath GetOutput]
+    MainVolumesUpdate $v3
+
+    MultMath Delete
+    mathThresh Delete
+}
+
 ################# Procedures from Logic Tab #################
 
 #-------------------------------------------------------------------------------
@@ -1573,8 +1695,8 @@ proc VolumeMathDoAnd {} {
 
     # Validate input
     if {[ValidateInt $Label(label)] == 0} {
-    tk_messageBox -message "Label of interest is not an integer."
-    return
+        tk_messageBox -message "Label of interest is not an integer."
+        return
     }
 
     set v3 $VolumeMath(Volume3)
@@ -1625,3 +1747,21 @@ proc VolumeMathDoAnd {} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC VolumeMathSetMaskLabel
+# - callback to set the label for the Mask operator
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc VolumeMathSetMaskLabel {} {
+    global Label VolumeMath
+
+    LabelsFindLabel
+
+    if {$Label(label) != ""} {
+        set VolumeMath(maskLabel) $Label(label)
+    } else {
+        set VolumeMath(maskLabel) 0
+    }
+}
