@@ -1,6 +1,6 @@
 SET (LOCAL_LIBRARY_BASENAME vtkMutualInformationRegistration)
 
-INCLUDE (${VTKMUTUALINFORMATIONREGISTRATION_SOURCE_DIR}/test/cxx/CMakeListsLocal.txt)
+INCLUDE (${VTKRIGIDINTENSITYREGISTRATION_SOURCE_DIR}/test/cxx/CMakeListsLocal.txt)
 
 # --------------------------------------------------------------------------
 # You probably do not need to modify anything below this line
@@ -15,7 +15,7 @@ INCLUDE (${VTKMUTUALINFORMATIONREGISTRATION_SOURCE_DIR}/test/cxx/CMakeListsLocal
 # Create the vtkMutualInformationRegistration Tcl library
 #
 
-#IF (VTK_WRAP_TCL AND VTKMUTUALINFORMATIONREGISTRATION_WRAP_TCL)
+#IF (VTK_WRAP_TCL AND VTKRIGIDREGISTRATIONREGISTRATION_WRAP_TCL)
 #
 #  VTK_WRAP_TCL (vtkMutualInformationRegistrationTCL MutualInformationRegistrationTCL_SRCS LOCAL_MODULE_SRCS)
 #  ADD_LIBRARY (vtkMutualInformationRegistrationTCL MutualInformationRegistrationTCL_SRCS)
