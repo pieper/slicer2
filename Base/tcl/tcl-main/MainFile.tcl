@@ -71,7 +71,7 @@ proc MainFileInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainFile \
-        {$Revision: 1.44 $} {$Date: 2002/12/05 17:07:27 $}]
+        {$Revision: 1.45 $} {$Date: 2003/01/25 22:34:41 $}]
 
     set File(filePrefix) data
 }
@@ -473,7 +473,8 @@ proc MainFileOpenApply {} {
 
     # Prefix cannot be blank
     if {$File(filePrefix) == ""} {
-        tk_messageBox -message "A file name must be specified"
+        DevWarningWindow "No file to open specified."
+        return
     }
     
     # Relative to root.
