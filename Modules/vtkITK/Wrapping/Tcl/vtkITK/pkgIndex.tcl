@@ -8,4 +8,4 @@
 # script is sourced, the variable $dir must contain the
 # full path name of this file's directory.
 
-package ifneeded vtkInsight 1.0 [list source [file join $dir vtkInsight.tcl]]
+package ifneeded vtkITK 1.0 [list source [file join $dir vtkITK.tcl]]

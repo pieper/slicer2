@@ -7,17 +7,17 @@ INCLUDE (${CMAKE_ROOT}/Modules/FindVTK.cmake)
 IF (USE_VTK_FILE)
   INCLUDE (${USE_VTK_FILE})
 ELSE (USE_VTK_FILE)
-  SET (VTKINSIGHT_CAN_BUILD 0)
+  SET (VTKITK_CAN_BUILD 0)
 ENDIF (USE_VTK_FILE)
 
 #
 # Output path(s)
 #
 
-SET (LIBRARY_OUTPUT_PATH ${VTKINSIGHT_BINARY_DIR}/bin/ CACHE PATH 
+SET (LIBRARY_OUTPUT_PATH ${VTKITK_BINARY_DIR}/bin/ CACHE PATH 
      "Single output directory for building all libraries.")
 
-SET (EXECUTABLE_OUTPUT_PATH ${VTKINSIGHT_BINARY_DIR}/bin/ CACHE PATH 
+SET (EXECUTABLE_OUTPUT_PATH ${VTKITK_BINARY_DIR}/bin/ CACHE PATH 
        "Single output directory for building all executables.")
 
 MARK_AS_ADVANCED (
@@ -41,8 +41,8 @@ IF (USE_VTK_FILE)
   # vtk@modulename@Configure.h.in otherwise the BUILD_SHARED_LIB
   # from VTK's vtkConfigure.h file is picked first :(
 
-  SET(VTKINSIGHT_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS} CACHE INTERNAL 
-      "Is this VTKINSIGHT built with shared libraries.")
+  SET(VTKITK_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS} CACHE INTERNAL 
+      "Is this VTKITK built with shared libraries.")
 
   IF (VTK_LIBRARY_PATH AND VTK_EXECUTABLE_PATH)
     OPTION(USE_VTK_OUTPUT_PATHS
@@ -73,21 +73,21 @@ ENDIF (USE_VTK_FILE)
 
 IF (VTK_WRAP_TCL)
 
-  OPTION(VTKINSIGHT_WRAP_TCL 
+  OPTION(VTKITK_WRAP_TCL 
          "Wrap classes into the TCL interpreted language." 
          ON)
 
-  IF (VTKINSIGHT_WRAP_TCL)
+  IF (VTKITK_WRAP_TCL)
 
     IF (NOT VTK_WRAP_TCL_EXE)
 
       MESSAGE("Error. Unable to find VTK_WRAP_TCL_EXE, please edit this value to specify the correct location of the VTK Tcl wrapper.")
       MARK_AS_ADVANCED(CLEAR VTK_WRAP_TCL_EXE)
-      SET (VTKINSIGHT_CAN_BUILD 0)
+      SET (VTKITK_CAN_BUILD 0)
 
     ELSE (NOT VTK_WRAP_TCL_EXE)
 
-      FIND_FILE (VTK_WRAP_HINTS hints ${VTKINSIGHT_SOURCE_DIR}/Wrapping)
+      FIND_FILE (VTK_WRAP_HINTS hints ${VTKITK_SOURCE_DIR}/Wrapping)
       MARK_AS_ADVANCED(VTK_WRAP_HINTS)
 
       IF (USE_INSTALLED_VTK)
@@ -99,14 +99,14 @@ IF (VTK_WRAP_TCL)
       ENDIF (TCL_INCLUDE_PATH)
 
     ENDIF (NOT VTK_WRAP_TCL_EXE)
-  ENDIF (VTKINSIGHT_WRAP_TCL)
+  ENDIF (VTKITK_WRAP_TCL)
 
 ELSE (VTK_WRAP_TCL)
 
-  IF (VTKINSIGHT_WRAP_TCL)
-    MESSAGE("Warning. VTKINSIGHT_WRAP_TCL is ON but the VTK version you have chosen has not support for Tcl (VTK_WRAP_TCL is OFF). Please set VTKINSIGHT_WRAP_TCL to OFF.")
-    SET (VTKINSIGHT_WRAP_TCL OFF)
-  ENDIF (VTKINSIGHT_WRAP_TCL)
+  IF (VTKITK_WRAP_TCL)
+    MESSAGE("Warning. VTKITK_WRAP_TCL is ON but the VTK version you have chosen has not support for Tcl (VTK_WRAP_TCL is OFF). Please set VTKITK_WRAP_TCL to OFF.")
+    SET (VTKITK_WRAP_TCL OFF)
+  ENDIF (VTKITK_WRAP_TCL)
 
 ENDIF (VTK_WRAP_TCL)
 
@@ -116,21 +116,21 @@ ENDIF (VTK_WRAP_TCL)
 
 IF (VTK_WRAP_PYTHON)
 
-  OPTION(VTKINSIGHT_WRAP_PYTHON 
+  OPTION(VTKITK_WRAP_PYTHON 
          "Wrap classes into the Python interpreted language." 
          ON)
 
-  IF (VTKINSIGHT_WRAP_PYTHON)
+  IF (VTKITK_WRAP_PYTHON)
 
     IF (NOT VTK_WRAP_PYTHON_EXE)
 
       MESSAGE("Error. Unable to find VTK_WRAP_PYTHON_EXE, please edit this value to specify the correct location of the VTK Python wrapper.")
       MARK_AS_ADVANCED(CLEAR VTK_WRAP_PYTHON_EXE)
-      SET (VTKINSIGHT_CAN_BUILD 0)
+      SET (VTKITK_CAN_BUILD 0)
 
     ELSE (NOT VTK_WRAP_PYTHON_EXE)
 
-      FIND_FILE(VTK_WRAP_HINTS hints ${VTKINSIGHT_SOURCE_DIR}/Wrapping )
+      FIND_FILE(VTK_WRAP_HINTS hints ${VTKITK_SOURCE_DIR}/Wrapping )
       MARK_AS_ADVANCED(VTK_WRAP_HINTS)
 
       IF (USE_INSTALLED_VTK)
@@ -144,19 +144,19 @@ IF (VTK_WRAP_PYTHON)
       IF (WIN32)
         IF (NOT BUILD_SHARED_LIBS)
           MESSAGE("Error. Python support requires BUILD_SHARED_LIBS to be ON.")
-          SET (VTKINSIGHT_CAN_BUILD 0)
+          SET (VTKITK_CAN_BUILD 0)
         ENDIF (NOT BUILD_SHARED_LIBS)  
       ENDIF (WIN32)
 
     ENDIF (NOT VTK_WRAP_PYTHON_EXE)
-  ENDIF (VTKINSIGHT_WRAP_PYTHON)
+  ENDIF (VTKITK_WRAP_PYTHON)
 
 ELSE (VTK_WRAP_PYTHON)
 
-  IF (VTKINSIGHT_WRAP_PYTHON)
-    MESSAGE("Warning. VTKINSIGHT_WRAP_PYTHON is ON but the VTK version you have chosen has not support for Python (VTK_WRAP_PYTHON is OFF). Please set VTKINSIGHT_WRAP_PYTHON to OFF.")
-    SET (VTKINSIGHT_WRAP_PYTHON OFF)
-  ENDIF (VTKINSIGHT_WRAP_PYTHON)
+  IF (VTKITK_WRAP_PYTHON)
+    MESSAGE("Warning. VTKITK_WRAP_PYTHON is ON but the VTK version you have chosen has not support for Python (VTK_WRAP_PYTHON is OFF). Please set VTKITK_WRAP_PYTHON to OFF.")
+    SET (VTKITK_WRAP_PYTHON OFF)
+  ENDIF (VTKITK_WRAP_PYTHON)
 
 ENDIF (VTK_WRAP_PYTHON)
 
@@ -166,27 +166,27 @@ ENDIF (VTK_WRAP_PYTHON)
 
 IF (VTK_WRAP_JAVA)
 
-  OPTION(VTKINSIGHT_WRAP_JAVA 
+  OPTION(VTKITK_WRAP_JAVA 
          "Wrap classes into the Java interpreted language." 
          ON)
 
-  IF (VTKINSIGHT_WRAP_JAVA)
+  IF (VTKITK_WRAP_JAVA)
 
     IF (NOT VTK_WRAP_JAVA_EXE)
       MESSAGE("Error. Unable to find VTK_WRAP_JAVA_EXE, please edit this value to specify the correct location of the VTK Java wrapper.")
       MARK_AS_ADVANCED(CLEAR VTK_WRAP_JAVA_EXE)
-      SET (VTKINSIGHT_CAN_BUILD 0)
+      SET (VTKITK_CAN_BUILD 0)
     ENDIF (NOT VTK_WRAP_JAVA_EXE)
 
     IF (NOT VTK_PARSE_JAVA_EXE)
       MESSAGE("Error. Unable to find VTK_PARSE_JAVA_EXE, please edit this value to specify the correct location of the VTK Java parser.")
       MARK_AS_ADVANCED(CLEAR VTK_PARSE_JAVA_EXE)
-      SET (VTKINSIGHT_CAN_BUILD 0)
+      SET (VTKITK_CAN_BUILD 0)
     ENDIF (NOT VTK_PARSE_JAVA_EXE)
 
     IF (VTK_WRAP_JAVA_EXE AND VTK_PARSE_JAVA_EXE)
 
-      FIND_FILE(VTK_WRAP_HINTS hints ${VTKINSIGHT_SOURCE_DIR}/Wrapping )
+      FIND_FILE(VTK_WRAP_HINTS hints ${VTKITK_SOURCE_DIR}/Wrapping )
       MARK_AS_ADVANCED(VTK_WRAP_HINTS)
 
       IF (USE_INSTALLED_VTK)
@@ -206,25 +206,25 @@ IF (VTK_WRAP_JAVA)
       ENDIF (JAVA_AWT_INCLUDE_PATH)
 
       IF (NOT VTK_JAVA_HOME)
-        SET (VTK_JAVA_HOME ${VTKINSIGHT_BINARY_DIR}/java/vtk CACHE PATH "Path to Java install")
+        SET (VTK_JAVA_HOME ${VTKITK_BINARY_DIR}/java/vtk CACHE PATH "Path to Java install")
       ENDIF (NOT VTK_JAVA_HOME)
 
       IF (WIN32)
         IF (NOT BUILD_SHARED_LIBS)
           MESSAGE("Error. Java support requires BUILD_SHARED_LIBS to be ON.")
-          SET (VTKINSIGHT_CAN_BUILD 0)
+          SET (VTKITK_CAN_BUILD 0)
         ENDIF (NOT BUILD_SHARED_LIBS)  
       ENDIF (WIN32)
 
     ENDIF (VTK_WRAP_JAVA_EXE AND VTK_PARSE_JAVA_EXE)
-  ENDIF (VTKINSIGHT_WRAP_JAVA)
+  ENDIF (VTKITK_WRAP_JAVA)
 
 ELSE (VTK_WRAP_JAVA)
 
-  IF (VTKINSIGHT_WRAP_JAVA)
-    MESSAGE("Warning. VTKINSIGHT_WRAP_JAVA is ON but the VTK version you have chosen has not support for Java (VTK_WRAP_JAVA is OFF). Please set VTKINSIGHT_WRAP_JAVA to OFF.")
-    SET (VTKINSIGHT_WRAP_JAVA OFF)
-  ENDIF (VTKINSIGHT_WRAP_JAVA)
+  IF (VTKITK_WRAP_JAVA)
+    MESSAGE("Warning. VTKITK_WRAP_JAVA is ON but the VTK version you have chosen has not support for Java (VTK_WRAP_JAVA is OFF). Please set VTKITK_WRAP_JAVA to OFF.")
+    SET (VTKITK_WRAP_JAVA OFF)
+  ENDIF (VTKITK_WRAP_JAVA)
 
 ENDIF (VTK_WRAP_JAVA)
 

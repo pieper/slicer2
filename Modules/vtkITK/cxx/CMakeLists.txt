@@ -3,28 +3,28 @@
 #
 #
 
-SET (LOCAL_LIBRARY_BASENAME vtkInsight)
+SET (LOCAL_LIBRARY_BASENAME vtkITK)
 
-INCLUDE (${VTKINSIGHT_SOURCE_DIR}/cxx/CMakeListsLocal.txt)
+INCLUDE (${VTKITK_SOURCE_DIR}/cxx/CMakeListsLocal.txt)
 
 # --------------------------------------------------------------------------
 # You probably do not need to modify anything below this line
 
 #
-# Create the vtkInsight C++ library
+# Create the vtkITK C++ library
 #
 # (Doesn't work here because of a CMake bug)
-# ADD_LIBRARY (vtkInsight LOCAL_MODULE_SRCS)
+# ADD_LIBRARY (vtkITK LOCAL_MODULE_SRCS)
 
 #
-# Create the vtkInsight Tcl library
+# Create the vtkITK Tcl library
 #
 
-IF (VTK_WRAP_TCL AND VTKINSIGHT_WRAP_TCL)
+IF (VTK_WRAP_TCL AND VTKITK_WRAP_TCL)
 
-  VTK_WRAP_TCL (vtkInsightTCL InsightTCL_SRCS LOCAL_MODULE_SRCS)
-  ADD_LIBRARY (vtkInsightTCL InsightTCL_SRCS)
-  TARGET_LINK_LIBRARIES (vtkInsightTCL 
+  VTK_WRAP_TCL (vtkITKTCL ITKTCL_SRCS LOCAL_MODULE_SRCS)
+  ADD_LIBRARY (vtkITKTCL ITKTCL_SRCS)
+  TARGET_LINK_LIBRARIES (vtkITKTCL 
                          vtkIOTCL 
                          vtkGraphicsTCL 
                          vtkImagingTCL 
@@ -32,39 +32,39 @@ IF (VTK_WRAP_TCL AND VTKINSIGHT_WRAP_TCL)
                          vtkCommonTCL
                          ${TCL_LIBRARY})
   IF (VTK_USE_HYBRID)
-    TARGET_LINK_LIBRARIES (vtkInsightTCL vtkHybridTCL)
+    TARGET_LINK_LIBRARIES (vtkITKTCL vtkHybridTCL)
   ENDIF (VTK_USE_HYBRID)
 
   IF (VTK_USE_PARALLEL)
-    TARGET_LINK_LIBRARIES (vtkInsightTCL vtkParallelTCL)
+    TARGET_LINK_LIBRARIES (vtkITKTCL vtkParallelTCL)
   ENDIF (VTK_USE_PARALLEL)
 
   IF (VTK_USE_PATENTED)
-    TARGET_LINK_LIBRARIES (vtkInsightTCL vtkPatentedTCL)
+    TARGET_LINK_LIBRARIES (vtkITKTCL vtkPatentedTCL)
   ENDIF (VTK_USE_PATENTED)
 
   IF (VTK_USE_RENDERING)
-    TARGET_LINK_LIBRARIES (vtkInsightTCL vtkRenderingTCL)
+    TARGET_LINK_LIBRARIES (vtkITKTCL vtkRenderingTCL)
   ENDIF (VTK_USE_RENDERING)
 
-ENDIF (VTK_WRAP_TCL AND VTKINSIGHT_WRAP_TCL)
+ENDIF (VTK_WRAP_TCL AND VTKITK_WRAP_TCL)
 
 #
-# Create the vtkInsight Python library
+# Create the vtkITK Python library
 #
 
-IF (VTK_WRAP_PYTHON AND VTKINSIGHT_WRAP_PYTHON)
+IF (VTK_WRAP_PYTHON AND VTKITK_WRAP_PYTHON)
 
-  VTK_WRAP_PYTHON (vtkInsightPython InsightPython_SRCS LOCAL_MODULE_SRCS)
+  VTK_WRAP_PYTHON (vtkITKPython ITKPython_SRCS LOCAL_MODULE_SRCS)
 
   IF (APPLE)
-    ADD_LIBRARY (vtkInsightPython MODULE InsightPython_SRCS)
+    ADD_LIBRARY (vtkITKPython MODULE ITKPython_SRCS)
   ELSE (APPLE)
-    ADD_LIBRARY (vtkInsightPython SHARED InsightPython_SRCS)
+    ADD_LIBRARY (vtkITKPython SHARED ITKPython_SRCS)
   ENDIF (APPLE)
 
   IF (WIN32)
-    TARGET_LINK_LIBRARIES (vtkInsightPython 
+    TARGET_LINK_LIBRARIES (vtkITKPython 
                            vtkIOPython
                            vtkGraphicsPython
                            vtkImagingPython
@@ -73,7 +73,7 @@ IF (VTK_WRAP_PYTHON AND VTKINSIGHT_WRAP_PYTHON)
                            debug ${PYTHON_DEBUG_LIBRARY} 
                            optimized ${PYTHON_LIBRARY})
   ELSE (WIN32)
-    TARGET_LINK_LIBRARIES (vtkInsightPython 
+    TARGET_LINK_LIBRARIES (vtkITKPython 
                            vtkIOPython
                            vtkGraphicsPython
                            vtkImagingPython
@@ -83,61 +83,61 @@ IF (VTK_WRAP_PYTHON AND VTKINSIGHT_WRAP_PYTHON)
   ENDIF (WIN32)
 
   IF (VTK_USE_HYBRID)
-    TARGET_LINK_LIBRARIES (vtkInsightPython vtkHybridPython)
+    TARGET_LINK_LIBRARIES (vtkITKPython vtkHybridPython)
   ENDIF (VTK_USE_HYBRID)
 
   IF (VTK_USE_PARALLEL)
-    TARGET_LINK_LIBRARIES (vtkInsightPython vtkParallelPython)
+    TARGET_LINK_LIBRARIES (vtkITKPython vtkParallelPython)
   ENDIF (VTK_USE_PARALLEL)
 
   IF (VTK_USE_PATENTED)
-    TARGET_LINK_LIBRARIES (vtkInsightPython vtkPatentedPython)
+    TARGET_LINK_LIBRARIES (vtkITKPython vtkPatentedPython)
   ENDIF (VTK_USE_PATENTED)
 
   IF (VTK_USE_RENDERING)
-    TARGET_LINK_LIBRARIES (vtkInsightPython vtkRenderingPython)
+    TARGET_LINK_LIBRARIES (vtkITKPython vtkRenderingPython)
   ENDIF (VTK_USE_RENDERING)
 
-ENDIF (VTK_WRAP_PYTHON AND VTKINSIGHT_WRAP_PYTHON)
+ENDIF (VTK_WRAP_PYTHON AND VTKITK_WRAP_PYTHON)
 
 #
-# Create the vtkInsight Java library
+# Create the vtkITK Java library
 #
 
-IF (VTK_WRAP_JAVA AND VTKINSIGHT_WRAP_JAVA)
+IF (VTK_WRAP_JAVA AND VTKITK_WRAP_JAVA)
 
-  VTK_WRAP_JAVA (vtkInsightJava InsightJava_SRCS LOCAL_MODULE_SRCS)
-  ADD_LIBRARY (vtkInsightJava SHARED InsightJava_SRCS)
-  TARGET_LINK_LIBRARIES (vtkInsightJava 
+  VTK_WRAP_JAVA (vtkITKJava ITKJava_SRCS LOCAL_MODULE_SRCS)
+  ADD_LIBRARY (vtkITKJava SHARED ITKJava_SRCS)
+  TARGET_LINK_LIBRARIES (vtkITKJava 
                          vtkIOJava
                          vtkGraphicsJava
                          vtkImagingJava 
                          vtkFilteringJava
                          vtkCommonJava)
   IF (VTK_USE_HYBRID)
-    TARGET_LINK_LIBRARIES (vtkInsightJava vtkHybridJava)
+    TARGET_LINK_LIBRARIES (vtkITKJava vtkHybridJava)
   ENDIF (VTK_USE_HYBRID)
 
   IF (VTK_USE_PARALLEL)
-    TARGET_LINK_LIBRARIES (vtkInsightJava vtkParallelJava)
+    TARGET_LINK_LIBRARIES (vtkITKJava vtkParallelJava)
   ENDIF (VTK_USE_PARALLEL)
 
   IF (VTK_USE_PATENTED)
-    TARGET_LINK_LIBRARIES (vtkInsightJava vtkPatentedJava)
+    TARGET_LINK_LIBRARIES (vtkITKJava vtkPatentedJava)
   ENDIF (VTK_USE_PATENTED)
 
   IF (VTK_USE_RENDERING)
-    TARGET_LINK_LIBRARIES (vtkInsightJava vtkRenderingJava)
+    TARGET_LINK_LIBRARIES (vtkITKJava vtkRenderingJava)
   ENDIF (VTK_USE_RENDERING)
 
-ENDIF (VTK_WRAP_JAVA AND VTKINSIGHT_WRAP_JAVA)
+ENDIF (VTK_WRAP_JAVA AND VTKITK_WRAP_JAVA)
 
 #
 # Link to VTK and local
 #
 
 LINK_LIBRARIES (
-  vtkInsight
+  vtkITK
   vtkIO
   vtkGraphics
   vtkImaging 

@@ -4,6 +4,6 @@
 
 # Packages
 
-pkg_mkIndex -direct -verbose vtkInsight
+pkg_mkIndex -direct -verbose vtkITK
 
 exit

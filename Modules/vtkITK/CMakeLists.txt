@@ -2,11 +2,11 @@
 # Set the project name.
 #
 
-# MY -> INSIGHT
-# my -> Insight
+# MY -> ITK
+# my -> ITK
 
 
-PROJECT (VTKINSIGHT)
+PROJECT (VTKITK)
 
 #
 # Assume everything is set up correctly for build.
@@ -15,19 +15,19 @@ PROJECT (VTKINSIGHT)
 # In that case, the build won't be done.
 #
 
-SET (VTKINSIGHT_CAN_BUILD 1)
+SET (VTKITK_CAN_BUILD 1)
 
 #
 # Load CMake commands that you probably should not modify.
 #
 
-INCLUDE (${VTKINSIGHT_SOURCE_DIR}/CMakeOptions.cmake)
+INCLUDE (${VTKITK_SOURCE_DIR}/CMakeOptions.cmake)
 
 #
 # If everything is OK, then go into the sub directories and build.
 #
 
-IF (VTKINSIGHT_CAN_BUILD)
+IF (VTKITK_CAN_BUILD)
 
   #
   # Here is where you can list the sub-directories holding your local 
@@ -44,7 +44,7 @@ IF (VTKINSIGHT_CAN_BUILD)
   # You can put your include path(s) here
   #
 
-  INCLUDE_DIRECTORIES (${VTKINSIGHT_SOURCE_DIR}/cxx)
+  INCLUDE_DIRECTORIES (${VTKITK_SOURCE_DIR}/cxx)
 
   #
   # Build examples too ?
@@ -63,10 +63,10 @@ IF (VTKINSIGHT_CAN_BUILD)
   #
 
   CONFIGURE_FILE(
-    ${VTKINSIGHT_SOURCE_DIR}/vtkInsightConfigure.h.cin 
-    ${VTKINSIGHT_BINARY_DIR}/vtkInsightConfigure.h
+    ${VTKITK_SOURCE_DIR}/vtkITKConfigure.h.cin 
+    ${VTKITK_BINARY_DIR}/vtkITKConfigure.h
   )
 
-  INCLUDE_DIRECTORIES(${VTKINSIGHT_BINARY_DIR})
+  INCLUDE_DIRECTORIES(${VTKITK_BINARY_DIR})
 
-ENDIF (VTKINSIGHT_CAN_BUILD)
+ENDIF (VTKITK_CAN_BUILD)
