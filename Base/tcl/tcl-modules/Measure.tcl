@@ -39,7 +39,7 @@ proc MeasureInit {} {
     
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.4 $} {$Date: 2002/04/03 06:29:59 $}]
+        {$Revision: 1.5 $} {$Date: 2002/04/16 18:25:07 $}]
     
     # Initialize module-level variables
     #    set Measure(Model1) $Model(idNone)
@@ -336,6 +336,8 @@ proc MeasureBuildVTK {} {
     Point(picker) SetTolerance 0.001
     
     CsysCreate Measure Csys -1 -1 -1
+    # will not be pickable until the user enters the measure module
+    MeasureSetCsysPickable 0
     set Measure(Csys,visible) 0
     viewRen AddActor Measure(Csys,actor)
     #    Csys(actor) SetVisibility 1
@@ -358,12 +360,14 @@ proc MeasureBuildVTK {} {
 proc MeasureEnter {} {
     global Measure
 
+    MeasureSetCsysPickable 1
     pushEventManager $Measure(eventManager)
     MeasureRefreshGUI
 }
 
 proc MeasureExit {} {
 #    DebugMsg "Exiting Measure Tab"
+    MeasureSetCsysPickable 0
     popEventManager
 }
 
