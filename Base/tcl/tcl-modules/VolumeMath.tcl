@@ -155,7 +155,7 @@ proc VolumeMathInit {} {
     #   appropriate info when the module is checked in.
     #   
         lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.32 $} {$Date: 2003/07/22 21:39:47 $}]
+        {$Revision: 1.33 $} {$Date: 2003/08/07 18:59:23 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -301,6 +301,11 @@ Currently, the distance finder is not functional.
 VolumeMath*Result, where * is the name of the mathematical operation
 you have done to make the volume.  This name can be changed under
 Volumes->Props->Basic if desired.
+For Resampling, the type of volume 2 (greyscale or labelmap) will 
+determine the type of the output volume. If you wish to resample a 
+labelmap into the space of a grey scale image, you will need a 
+label map already in the grey scale image space to serve as V2 in 
+order for the output of the resampling to be a label map.
 
 <P>
 <B>For Subtraction or Addition</B>: If you wish to subtract two
