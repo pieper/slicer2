@@ -114,12 +114,12 @@ vtkMrmlVolumeNode::vtkMrmlVolumeNode()
 
   // DICOMFileNames
   this->DICOMFiles = 0;
-  this->DICOMFileList = new char *[500];
-  for(int i=0; i<500; i++)
+  this->DICOMFileList = new char *[DICOM_FILE_LIMIT];
+  for(int i=0; i<DICOM_FILE_LIMIT; i++)
     DICOMFileList[i] = NULL;
 
   this->DICOMMultiFrameOffsets = 0;
-  this->DICOMMultiFrameOffsetList = new int [500];
+  this->DICOMMultiFrameOffsetList = new int [DICOM_FILE_LIMIT];
 
   //AddDICOMFileName("first.dcm");
   //AddDICOMFileName("second.dcm");
@@ -188,7 +188,7 @@ vtkMrmlVolumeNode::~vtkMrmlVolumeNode()
 
   // Added by Attila Tanacs 10/10/2000 1/4/02
 
-  for(int i=0; i<500; i++)
+  for(int i=0; i<DICOM_FILE_LIMIT; i++)
     delete [] DICOMFileList[i];
 
   delete [] DICOMMultiFrameOffsetList;
@@ -1029,6 +1029,11 @@ int vtkMrmlVolumeNode::ComputeRasToIjkFromCorners(
 // DICOMFileList
 void vtkMrmlVolumeNode::AddDICOMFileName(char *str)
 {
+  if (DICOMFiles >= DICOM_FILE_LIMIT)
+  {
+    vtkErrorMacro(<< "AddDICOMFileName: Reached hard coded limit on number of files in a directory (" << DICOM_FILE_LIMIT << ")." );
+    return;
+  }
   DICOMFileList[DICOMFiles] = new char [strlen(str) + 1];
   strcpy(DICOMFileList[DICOMFiles], str);
   DICOMFiles++;
@@ -1049,7 +1054,7 @@ void vtkMrmlVolumeNode::SetDICOMFileName(int idx, char *str)
 void vtkMrmlVolumeNode::DeleteDICOMFileNames()
 {
     int i;
-    for(i=0; i<500; i++)
+    for(i=0; i<DICOM_FILE_LIMIT; i++)
         if(DICOMFileList[i] != NULL)
         {
             delete [] DICOMFileList[i];
