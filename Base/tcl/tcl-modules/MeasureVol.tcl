@@ -111,7 +111,7 @@ proc MeasureVolInit {} {
     # Set version info
     #------------------------------------
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.17 $} {$Date: 2003/03/19 19:16:32 $}]
+        {$Revision: 1.18 $} {$Date: 2003/08/11 14:04:28 $}]
     
     # Initialize module-level variables
     #------------------------------------
@@ -274,8 +274,8 @@ proc MeasureVolBuildGUI {} {
     set f $fSetup.fTabbedFrame.fAdvanced
 
     foreach frame "Extents" {
-    frame $f.f$frame -bg $Gui(activeWorkspace) -relief groove -bd 3
-    pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
+        frame $f.f$frame -bg $Gui(activeWorkspace) -relief groove -bd 3
+        pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
     }
     
     #-------------------------------------------
@@ -290,18 +290,18 @@ proc MeasureVolBuildGUI {} {
 
     # the 6 IJK extent entry boxes.
     foreach {label n1 n2} {I 1 2   J 3 4   K 5 6} {
-    frame $f.fExt$n1 -bg $Gui(activeWorkspace)
-    pack $f.fExt$n1 -side top -padx 0 -pady $Gui(pad)
+        frame $f.fExt$n1 -bg $Gui(activeWorkspace)
+        pack $f.fExt$n1 -side top -padx 0 -pady $Gui(pad)
 
-    DevAddLabel $f.fExt$n1.lE$n1 "$label:"
-    pack $f.fExt$n1.lE$n1 -side left -padx $Gui(pad)  -pady $Gui(pad)
+        DevAddLabel $f.fExt$n1.lE$n1 "$label:"
+        pack $f.fExt$n1.lE$n1 -side left -padx $Gui(pad)  -pady $Gui(pad)
 
-    # add entry box for variable MeasureVol(Extent1), etc.
-    DevAddEntry MeasureVol Extent$n1 $f.fExt$n1.eE$n1
-    pack $f.fExt$n1.eE$n1 -side left -padx $Gui(pad)  -pady $Gui(pad)
+        # add entry box for variable MeasureVol(Extent1), etc.
+        DevAddEntry MeasureVol Extent$n1 $f.fExt$n1.eE$n1
+        pack $f.fExt$n1.eE$n1 -side left -padx $Gui(pad)  -pady $Gui(pad)
 
-    DevAddEntry MeasureVol Extent$n2 $f.fExt$n1.eE$n2
-    pack $f.fExt$n1.eE$n2 -side left -padx $Gui(pad)  -pady $Gui(pad)
+        DevAddEntry MeasureVol Extent$n2 $f.fExt$n1.eE$n2
+        pack $f.fExt$n1.eE$n2 -side left -padx $Gui(pad)  -pady $Gui(pad)
     }
 
 
@@ -337,8 +337,8 @@ proc MeasureVolBuildGUI {} {
     set f $fResults.fOutput
 
     foreach frame "Label  TextBox" {
-    frame $f.f$frame -bg $Gui(activeWorkspace) 
-    pack $f.f$frame -side top -padx $Gui(pad) -pady 0 -fill x
+        frame $f.f$frame -bg $Gui(activeWorkspace) 
+        pack $f.f$frame -side top -padx $Gui(pad) -pady 0 -fill x
     }
 
     #-------------------------------------------
@@ -418,24 +418,24 @@ proc MeasureVolVolume {} {
     
     # validate input from Basic tab
     if {$MeasureVol(fileName) == ""} {
-    DevErrorWindow "Please enter a filename first."
-    return
+        DevErrorWindow "Please enter a filename first."
+        return
     }
     if {[file extension $MeasureVol(fileName)] != ".txt"} {
-    set MeasureVol(fileName) "$MeasureVol(fileName).txt"
+        set MeasureVol(fileName) "$MeasureVol(fileName).txt"
     }
 
     # validate input from Advanced tab
     set okay 1
     for {set i 1} {$i < 7} {incr i} {
-    if {[ValidateInt $MeasureVol(Extent$i)] == 0} {
-        set okay 0
-    }    
+        if {[ValidateInt $MeasureVol(Extent$i)] == 0} {
+            set okay 0
+        }    
     }
     if {$okay == 0} {
-    tk_messageBox -message \
-        "The extent numbers (under the Advanced Settings tab) must be integers."
-    return
+        tk_messageBox -message \
+            "The extent numbers (under the Advanced Settings tab) must be integers."
+        return
     }    
 
     # clear the text box.
