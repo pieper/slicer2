@@ -74,6 +74,7 @@ proc IbrowserInit {} {
 
     set m Ibrowser
 
+    
     #---Module summary info
     set Module($m,overview) "GUI-controller and framework for manipulating sequences of image data."
     set Module($m,author) "Wendy Plesniak, SPL & HCNR, wjp@bwh.harvard.edu"
@@ -95,8 +96,8 @@ proc IbrowserInit {} {
 
     #---Set category and version info
     set Module($m,category) "Alpha"
-    lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.7 $} {$Date: 2005/01/21 18:23:37 $}]
+       lappend Module(versions) [ParseCVSInfo $m \
+        {$Revision: 1.8 $} {$Date: 2005/03/18 17:42:13 $}]
 
     #---Initialize module-level variables
     #---Global array with the same name as the module. Ibrowser()
@@ -107,7 +108,6 @@ proc IbrowserInit {} {
     #--- Just some default values to start.
     set Ibrowser(idList) ""
     set Ibrowser(dir) ""
-    set Ibrowser(seqName) ""
     set Ibrowser(numSequences) 0
     set Ibrowser(uniqueNum) 0
     set Ibrowser(ViewDrop) 0
@@ -116,7 +116,7 @@ proc IbrowserInit {} {
     set Ibrowser(0,lastMRMLid) 0
     set Ibrowser(0,0,MRMLid) 0
     set Ibrowser(idNone) 0
-    set Ibrowser(activeInterval) 0
+    set Ibrowser(activeInterval) $::Ibrowser(idNone)
     set Ibrowser(FGInterval) $Ibrowser(idNone)
     set Ibrowser(BGInterval) $Ibrowser(idNone)
     #--- Here, 20.0 is chosen to be the number of units wide to make
@@ -138,6 +138,7 @@ proc IbrowserInit {} {
     set Ibrowser(AnimationRew) 0
     set Ibrowser(AnimationLoop) 0    
     set Ibrowser(AnimationPPong) 0
+    set Ibrowser(AnimationRecording) 0
     
     #--- set initial values for GUI radio buttons.
     #--- assembleChoice [0=files, 1=sequences, 2=volumes]
@@ -163,9 +164,6 @@ proc IbrowserInit {} {
     set Ibrowser(modulePath) $modulePath
     
 
-    #--- Source all appropriate tcl files here....
-    #--- These contain broken out 
-    #--- code for the Slicer GUI
     source ${modulePath}IbrowserDisplayGUI.tcl
     source ${modulePath}IbrowserLoadGUI.tcl
     source ${modulePath}IbrowserProcessGUI.tcl
@@ -175,11 +173,12 @@ proc IbrowserInit {} {
 
     #--- These contain extra procs for
     #--- IO / processing / visualization
+    source ${modulePath}IbrowserProcessing/IbrowserProcessingUtils.tcl
     source ${modulePath}IbrowserProcessing/IbrowserReorient.tcl
-    #source ${modulePath}IbrowserProcessing/IbrowserMotionCorrect.tcl
-    #source ${modulePath}IbrowserProcessing/IbrowserSmooth.tcl
-    #source ${modulePath}IbrowserProcessing/IbrowserKeyframeRegister.tcl
-    #source ${modulePath}IbrowserProcessing/IbrowserReassemble.tcl
+    source ${modulePath}IbrowserProcessing/IbrowserMotionCorrect.tcl
+    source ${modulePath}IbrowserProcessing/IbrowserSmooth.tcl
+    source ${modulePath}IbrowserProcessing/IbrowserKeyframeRegister.tcl
+    source ${modulePath}IbrowserProcessing/IbrowserReassemble.tcl
     
     #--- These contain tcl code for the interval controller
     #--- which is launched in proc IbrowserEnter().
@@ -214,7 +213,7 @@ proc IbrowserInit {} {
     set ::Ibrowser(Process,SelectSequence) "none"
     set ::Ibrowser(Process,SelectInternalReference) "none"
     set ::Ibrowser(Process,SelectExternalReference) "none"
-    set ::Ibrowser(Process,reassembleChoice) ""
+    set ::Ibrowser(Process,reassembleAxis) ""
 
     set ::VolumeGroupCollection(numCollections) 0
 }
@@ -299,7 +298,6 @@ proc IbrowserEnter {{toplevelName .controllerGUI} } {
     #    IbrowserPushBindings
     #--- These are Ibrowser windows.
     set ::IbrowserController(topLevel) $toplevelName
-    set ::IbrowserController(View,singleVolView) ".controllerVolViewMOCKUP"
     set ::IbrowserController(View,multiVolView) ".controllerMultiVolViewMOCKUP"
     set ::IbrowserController(View,VoxTimecourse) ".controllerVoxelTimecourseMOCKUP"
 
@@ -435,28 +433,6 @@ proc IbrowserGetIntervalIDFromName { name } {
 proc IbrowserBuildVTK {} {
 }
 
-
-
-
-
-#-------------------------------------------------------------------------------
-# .PROC IbrowserValidateName
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc IbrowserValidateName { } {
-
-    #--- make sure the name is unique, and that it
-    #--- contains no unrecognized characters
-    if { [ValidateName $::Ibrowser(seqName)] == 0}{
-        set $::Ibrowser(seqName) ""
-        set m1 "Specify a unique basename for the sequence using"
-        set m2 "only letters, digits, dashes and/or underscores."
-        tk_messageBox -message "$m1 $m2"
-        return
-    }
-}
 
 
 

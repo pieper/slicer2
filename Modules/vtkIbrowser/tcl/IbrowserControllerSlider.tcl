@@ -285,12 +285,21 @@ proc   IbrowserSynchronizeAllSliders { target } {
     if { $target == "active" } {
         $::Ibrowser(displaySlider) configure -state active
         $::Ibrowser(loadSlider) configure -state active
+        #--- WJP comment out during development
+        #$::Ibrowser(selectSlider) configure -state active
+        #$::Ibrowser(keyframeSlider) configure -state active
     } elseif { $target == "disabled" } {
         $::Ibrowser(displaySlider) configure -state disabled
         $::Ibrowser(loadSlider) configure -state disabled
+        #--- WJP comment out during development
+        #$::Ibrowser(selectSlider) configure -state disabled
+        #$::Ibrowser(keyframeSlider) configure -state disabled
     } else {
         $::Ibrowser(displaySlider) configure -from 0 -to $target -state active
         $::Ibrowser(loadSlider) configure -from 0 -to $target -state active
+        #--- WJP comment out during development
+        #$::Ibrowser(selectSlider) configure -from 0 -to $target -state active
+        #$::Ibrowser(keyframeSlider) configure -from 0 -to $target -state active
     }
 }
 

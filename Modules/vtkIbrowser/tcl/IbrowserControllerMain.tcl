@@ -54,6 +54,11 @@ proc IbrowserControllerLaunch {{toplevelName .controllerGUI} } {
         raise $toplevelName
         return
     }
+
+    #------------------------------------------------------
+    #fMRIModelViewLaunchModelView
+    #------------------------------------------------------
+
     set root [toplevel $toplevelName]
 
     #--- setup the Ibrowser

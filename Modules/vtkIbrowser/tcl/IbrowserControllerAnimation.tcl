@@ -45,7 +45,6 @@
 #   IbrowserPlayOnce
 #   IbrowserPlayOnceReverse
 #   IbrowserStopAnimation
-#   IbrowserRecordAnimationToFile
 #   IbrowserPauseAnimation
 #   IbrowserLoopAnimate
 #   IbrowserPingPongAnimate
@@ -189,12 +188,16 @@ proc IbrowserMakeAnimationMenu { root } {
     #---RECORD AN ANIMATION
     label $root.fibAnimControl.lanim_rec -background white \
     -image $::IbrowserController(Images,Menu,anim-recLO) -relief flat
+    set ::Ibrowser(AnimButtonRec) $root.fibAnimControl.lanim_rec
     bind $root.fibAnimControl.lanim_rec <Enter> {
         %W config -image $::IbrowserController(Images,Menu,anim-recHI) }
     bind $root.fibAnimControl.lanim_rec <Leave> {
-        %W config -image $::IbrowserController(Images,Menu,anim-recLO) }
+        if { $::Ibrowser(AnimationRecording) == 0 } {
+            %W config -image $::IbrowserController(Images,Menu,anim-recLO)
+        }
+    }
     bind $root.fibAnimControl.lanim_rec <Button-1> {
-        IbrowserRecordAnimationToFile "mpeg" }
+        IbrowserRecordPopupWindow }
 
     #---PAUSE AN ANIMATION
     label $root.fibAnimControl.lanim_pause -background white \
@@ -280,6 +283,8 @@ proc IbrowserMakeAnimationMenu { root } {
             -image $::IbrowserController(Images,Menu,anim-pauseLO) 
         $::Ibrowser(AnimButtonRew) config \
             -image $::IbrowserController(Images,Menu,anim-rewLO) 
+        $::Ibrowser(AnimButtonRec) config \
+            -image $::IbrowserController(Images,Menu,anim-recLO) 
         $::Ibrowser(AnimButtonPPong) config \
             -image $::IbrowserController(Images,Menu,anim-pingpongLO)         
         IbrowserStopAnimation }
@@ -541,18 +546,165 @@ proc IbrowserStopAnimation { } {
     set ::Ibrowser(AnimationRew) 0
     set ::Ibrowser(AnimationLoop) 0
     set ::Ibrowser(AnimationPPong) 0
+    if { $::Ibrowser(AnimationRecording) } {
+        IbrowserStopRecordingAnimation
+    }
 }
 
-#-------------------------------------------------------------------------------
-# .PROC IbrowserRecordAnimationToFile
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc IbrowserRecordAnimationToFile { type } {
-    set ::Ibrowser(AnimationInterrupt) 1
-    set ::Ibrowser(AnimationPaused) 0    
+
+
+proc IbrowserStopRecordingAnimation { } {
+    if { $::Ibrowser(AnimationRecording) } {
+        puts "exiting record mode"
+        set ::Save(imageSaveMode) "Single view"
+        #--- change state of button in RecordPopupWindow
+        set ::Ibrowser(AnimationRecording) 0
+        if  { [info exists ::Ibrowser(AnimationRecordbutton)] } {
+            $::Ibrowser(AnimationRecordbutton) configure -text "Go"
+        } 
+        #$::Ibrowser(AnimButtonRec) config -image \
+         #   $::IbrowserController(Images,Menu,anim-recLO)        
+    }
 }
+
+
+
+proc IbrowserRecordAnimationToFile { } {
+    #--- if we're recording, stop; and
+    #--- if we're not recording, start
+    #---
+    if { $::Ibrowser(AnimationRecording) } {
+        puts "exiting record mode"
+        set ::Save(imageSaveMode) "Single view"
+        set ::Ibrowser(AnimationRecording) 0
+        #--- change state of rec button in IbrowserController
+        $::Ibrowser(AnimButtonRec) config \
+            -image $::IbrowserController(Images,Menu,anim-recLO) 
+        #--- change state of button in RecordPopupWindow
+        if  { [info exists ::Ibrowser(AnimationRecordbutton)] } {
+            $::Ibrowser(AnimationRecordbutton) configure -text "Go"
+        }
+    } else {
+        puts "entering record mode"
+        set ::Ibrowser(AnimationInterrupt) 1
+        set ::Ibrowser(AnimationRecording) 1
+        #set ::Ibrowser(AnimationPaused) 0    
+        set ::Save(imageSaveMode) "Movie"
+        #Save3DImage
+        #--- change state of rec button in IbrowserController
+        $::Ibrowser(AnimButtonRec) config \
+            -image $::IbrowserController(Images,Menu,anim-recHI) 
+        #--- change state of button in RecordPopupWindow
+        if  { [info exists ::Ibrowser(AnimationRecordbutton)] } {
+            $::Ibrowser(AnimationRecordbutton) configure -text "Stop"
+        }
+    }
+}
+
+proc IbrowserCloseRecordPopupWindow { root } {
+    unset ::Ibrowser(AnimationRecordbutton)
+    destroy $root    
+}
+
+
+proc IbrowserRecordPopupWindow { {toplevelName .ibrowserRecord} } {
+    global Gui
+    
+    if {[winfo exists $toplevelName]} {
+        wm deiconify $toplevelName
+        raise $toplevelName
+        return
+    }
+    set root [toplevel $toplevelName]
+    wm title $root "Ibrowser save movie"
+    wm protocol $root WM_DELETE_WINDOW "IbrowserCloseRecordPopupWindow $root"
+
+    set f [ frame $root.fRecordOptions -relief flat -border 2 -bg #FFFFFF ]
+    pack $f 
+
+    #--- set some file options
+    label $f.lFileOptionsTitle -text "File Options" -bg #FFFFFF -fg #000000
+    grid $f.lFileOptionsTitle -sticky w -columnspan 2
+    grid [tkSpace $f.space0 -height 5] -columnspan 2
+
+    label $f.lDir -text "Directory:" -bg #FFFFFF -fg #000000
+
+    entry $f.eDir -width 16 -textvariable Save(imageDirectory) -bg #DDDDDD -fg #000000
+
+    grid $f.lDir $f.eDir -sticky w
+    grid config $f.lDir -sticky e -padx $Gui(pad)
+
+    button $f.bChooseDir -text "Browse..." -command SaveChooseDirectory -bg #DDDDDD -fg #000000
+    grid [tkSpace $f.space3] $f.bChooseDir -sticky w 
+
+    grid [tkSpace $f.space4 -height 5] -columnspan 2
+
+    label $f.lPrefix -text "File prefix:" -bg #FFFFFF -fg #000000
+    entry $f.ePrefix -width 16 -textvariable Save(imageFilePrefix) -bg #DDDDDD -fg #000000
+    grid $f.lPrefix $f.ePrefix -sticky w  -pady $Gui(pad)
+    grid config $f.lPrefix -sticky e  -padx $Gui(pad)
+
+    label $f.lFrame -text "Next frame #:"  -bg #FFFFFF -fg #000000
+    entry $f.eFrame -width 6 -textvariable Save(imageFrameCounter) -bg #DDDDDD -fg #000000
+    grid $f.lFrame $f.eFrame -sticky w  -pady $Gui(pad)
+    grid config $f.lFrame -sticky e  -padx $Gui(pad)
+
+    label $f.lFileType -text "File type:"  -bg #FFFFFF -fg #000000
+    eval tk_optionMenu $f.mbFileType Save(imageFileType) [SaveGetSupportedImageTypes] 
+    $f.mbFileType config -pady 3 -bg #DDDDDD -fg #000000
+    grid $f.lFileType $f.mbFileType -sticky w  -pady $Gui(pad)
+    grid config $f.lFileType -sticky e  -padx $Gui(pad)
+
+    grid [tkHorizontalLine $f.line1] -columnspan 2 -pady 5 -sticky we
+
+    #--- set some save options
+    label $f.lSaveTitle -text "Save Options" -anchor w -bg #FFFFFF -fg #000000
+    grid $f.lSaveTitle -sticky news -columnspan 1
+
+    label $f.lScale -text "Output zoom:" -bg #FFFFFF -fg #000000 -activebackground #DDDDDD
+    $f.lScale config -anchor sw 
+
+    eval scale $f.sScale -from 1 -to 8 -orient horizontal \
+        -variable Save(imageOutputZoom) $Gui(WSA) -showvalue true \
+        -bg #FFFFFF -fg #000000
+
+    TooltipAdd $f.sScale "Renders the image in multiple pieces toproduce a higher resolution image (useful for publication)." 
+    grid $f.lScale $f.sScale -sticky w 
+    grid $f.lScale -sticky sne -ipady 10  -padx $Gui(pad)
+
+    #label $f.lStereo -text "Stereo disparity:"
+    #GuiApplyStyle WLA $f.lStereo
+    #entry $f.eStereo -width 6 -textvariable Save(stereoDisparityFactor)
+    #GuiApplyStyle WEA $f.eStereo
+    #TooltipAdd $f.eStereo "Changes the disparity (apparent depth) of the stereo image by this scale factor."
+
+    #grid $f.lStereo $f.eStereo -sticky w   -pady $Gui(pad)
+    #grid $f.lScale $f.lStereo -sticky e  -padx $Gui(pad)
+    grid $f.lScale -sticky e  -padx $Gui(pad)
+
+    checkbutton $f.cIncludeSlices -text "Include slice windows" -indicatoron 1 -variable Save(imageIncludeSlices)\
+            -fg #000000 -bg #FFFFFF -activebackground #FFFFFF -relief flat
+    #GuiApplyStyle WCA $f.cIncludeSlices
+    grid $f.cIncludeSlices -sticky we -columnspan 2
+
+    grid [tkHorizontalLine $f.line10] -columnspan 2 -pady 5 -sticky we
+    grid [tkSpace $f.space2 -height 10] -columnspan 2
+    button $f.bCloseWindow -text "Close" -command "IbrowserCloseRecordPopupWindow $root" -bg #DDDDDD -fg #000000
+    button $f.bSaveNow     -text "Go" -command "IbrowserRecordAnimationToFile" -bg #DDDDDD -fg #000000
+    set ::Ibrowser(AnimationRecordbutton) $f.bSaveNow
+    TooltipAdd $f.bSaveNow "Begin saving a frame each time the Viewer is updated. Stop with Ibrowser's stop button."
+    
+    #GuiApplyStyle WBA $f.bSaveNow $f.bCloseWindow
+    grid $f.bCloseWindow $f.bSaveNow -sticky we -padx $Gui(pad) -pady $Gui(pad) -ipadx 2 -ipady 5
+
+    grid columnconfigure $f 0 -weight 1
+    grid columnconfigure $f 1 -weight 1
+    grid columnconfigure $f 2 -weight 1
+
+    return $root
+}
+
+
 
 #-------------------------------------------------------------------------------
 # .PROC IbrowserPauseAnimation

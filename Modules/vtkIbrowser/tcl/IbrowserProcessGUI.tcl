@@ -67,15 +67,13 @@ proc IbrowserBuildProcessFrame { } {
     #--- Catalog of all processing that the Ibrowser can do:
     #--- Developers: Add menu text for all new processing options here.
     #-------------------------------------------
+    #--- WJP comment out during development
+    set ::Ibrowser(Process,Text,Reassemble) "Reassemble"
     set ::Ibrowser(Process,Text,Reorient) "Reorient"
-    #--- do not expose until code is completed.    
-    if { 0 } {
-        set ::Ibrowser(Process,Text,MotionCorrect) "MotionCorrect"
-        set ::Ibrowser(Process,Text,Smooth) "Smooth"
-        set ::Ibrowser(Process,Text,Reassemble) "Reassemble"
-        set ::Ibrowser(Process,Text,KeyframeRegister) "KeyframeRegister"
-    }
-    
+    set ::Ibrowser(Process,Text,MotionCorrect) "MotionCorrect"
+    set ::Ibrowser(Process,Text,Smooth) "Smooth"
+    set ::Ibrowser(Process,Text,KeyframeRegister) "KeyframeRegister"
+
     #-------------------------------------------
     #--- ProcessInfo frame; one raised for each process.
     #--- Developers: Create new process frames here.
@@ -90,20 +88,18 @@ proc IbrowserBuildProcessFrame { } {
     frame $ff.fReorient -bg  $::Gui(activeWorkspace)  
     IbrowserBuildReorientGUI $ff.fReorient $f.fProcessInfo
 
-    #--- do not expose until code is completed.    
-    if { 0 } {
-        frame $ff.fMotionCorrect -bg $::Gui(activeWorkspace) 
-        IbrowserBuildMotionCorrectGUI $ff.fMotionCorrect $f.fProcessInfo
+    #--- WJP comment out during development
+    #frame $ff.fMotionCorrect -bg $::Gui(activeWorkspace) 
+    #IbrowserBuildMotionCorrectGUI $ff.fMotionCorrect $f.fProcessInfo
 
-        frame $ff.fReassemble -bg $::Gui(activeWorkspace)
-        IbrowserBuildReassembleGUI $ff.fReassemble $f.fProcessInfo
+    #frame $ff.fReassemble -bg $::Gui(activeWorkspace)
+    #IbrowserBuildReassembleGUI $ff.fReassemble $f.fProcessInfo
 
-        frame $ff.fSmooth -bg $::Gui(activeWorkspace)
-        IbrowserBuildSmoothGUI $ff.fSmooth $f.fProcessInfo    
+    #frame $ff.fSmooth -bg $::Gui(activeWorkspace)
+    #IbrowserBuildSmoothGUI $ff.fSmooth $f.fProcessInfo    
 
-        frame $ff.fKeyframeRegister -bg  $::Gui(activeWorkspace)
-        IbrowserBuildKeyframeRegisterGUI $ff.fKeyframeRegister $f.fProcessInfo
-    }
+    #frame $ff.fKeyframeRegister -bg  $::Gui(activeWorkspace)
+    #IbrowserBuildKeyframeRegisterGUI $ff.fKeyframeRegister $f.fProcessInfo
     raise $ff.fReorient
     
     #-------------------------------------------
@@ -131,8 +127,10 @@ proc IbrowserBuildProcessFrame { } {
     eval { menu $ff.mbProcessType.m } $::Gui(WMA)
 
     #--- do not expose until code is complete
-   # foreach r "Reorient MotionCorrect Smooth KeyframeRegister Reassemble" 
-    foreach r "Reorient" {    
+    #foreach r "Reorient MotionCorrect Smooth KeyframeRegister" 
+    #foreach r "Reassemble Reorient Smooth MotionCorrect KeyframeRegister" 
+    #--- WJP comment out during development
+    foreach r "Reorient" {
         $ff.mbProcessType.m add command -label $r \
             -command "IbrowserRaiseProcessingFrame $::Ibrowser(Process,Text,${r}) $::Ibrowser(fProcess${r})"
     }

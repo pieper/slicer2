@@ -602,7 +602,8 @@ proc IbrowserDeleteIntervalVolumes { id } {
         set ::Ibrowser(BGInterval) $::Ibrowser(none,intervalID)
     }
     if { $id == $::Ibrowser(activeInterval) } {
-        set ::Ibrowser(activeInterval) $::Ibrowser(none,intervalID)
+        IbrowserSetActiveInterval $::Ibrowser(none,intervalID)
+        #set ::Ibrowser(activeInterval) $::Ibrowser(none,intervalID)
     }
 
     IbrowserRaiseProgressBar
@@ -838,8 +839,6 @@ proc IbrowserMakeNoneInterval { } {
     if { [ IbrowserUniqueNameCheck $ival ] } {
         IbrowserMakeNewInterval $ival $::IbrowserController(Info,Ival,imageIvalType) 0.0 $w 0
     }
-    IbrowserCreateImageDrops $ival nullVec 0
-    set ::Ibrowser(0,numDrops) 0
 }
 
 
@@ -851,21 +850,12 @@ proc IbrowserSetActiveInterval { id } {
     IbrowserSelectActiveInterval $id $::IbrowserController(Icanvas)
 
     #--- configure all menu buttons which reflect the active interval
-    if { [ info exists ::Ibrowser(Process,Smooth,mbIntervals) ] } {
-        $::Ibrowser(Process,Smooth,mbIntervals) config -text $::Ibrowser($id,name)
-    }
-    if { [ info exists ::Ibrowser(Process,Reorient,mbIntervals) ] } {
-        $::Ibrowser(Process,Reorient,mbIntervals) config -text $::Ibrowser($id,name)
-    }
-    if { [ info exists ::Ibrowser(Process,Reassemble,mbIntervals) ] } {
-        $::Ibrowser(Process,Reassemble,mbIntervals) config -text $::Ibrowser($id,name)
-    }
-    if { [ info exists ::Ibrowser(Process,MotionCorrect,mbIntervals) ] } {
-        $::Ibrowser(Process,MotionCorrect,mbIntervals) config -text $::Ibrowser($id,name)
-    }
-    if { [ info exists ::Ibrowser(Process,KeyframeRegister,mbIntervals) ] } {    
-        $::Ibrowser(Process,KeyframeRegister,mbIntervals) config -text $::Ibrowser($id,name)
-    }
+    #--- WJP comment out during development
+    #$::Ibrowser(Process,Smooth,mbIntervals) config -text $::Ibrowser($id,name)
+    $::Ibrowser(Process,Reorient,mbIntervals) config -text $::Ibrowser($id,name)
+    #$::Ibrowser(Process,Reassemble,mbIntervals) config -text $::Ibrowser($id,name)
+    #$::Ibrowser(Process,MotionCorrect,mbIntervals) config -text $::Ibrowser($id,name)
+    #$::Ibrowser(Process,KeyframeRegister,mbIntervals) config -text $::Ibrowser($id,name)
 }
 
 
@@ -903,7 +893,6 @@ proc IbrowserMakeNewInterval { intval ikind spanmin spanmax numDrops } {
     set ::Ibrowser($intval,intervalID) $id
     set ::Ibrowser($id,name) $intval
 
-    IbrowserInitializeOrientation $id
     IbrowserAddToList $intval
 
     # Fill toplevel array with with the interval's properties.
@@ -1408,7 +1397,8 @@ proc IbrowserRenameInterval { old new } {
     set last $::Ibrowser($id,lastMRMLid)
     set i 0
     for { set vid $first } { $vid <= $last } { incr vid} {
-        ::Volume($vid,node) SetName ${new}_${i}
+        #::Volume($vid,node) SetName ${new}_${i}_${old}
+        ::Volume($vid,node) SetName ${old}_${new}
         incr i
     }
     MainUpdateMRML
@@ -1682,13 +1672,8 @@ proc IbrowserCreateIntervalBar { ivalname } {
         " IbrowserLeaveIntervalBar $id %W"
     $::IbrowserController(Icanvas) bind $::IbrowserController($id,ivalRECTtag) <Button-1> \
         "IbrowserDeselectActiveInterval %W;
-             set ::Ibrowser(activeInterval) $id;
-             IbrowserSelectActiveInterval $id %W;
+             IbrowserSetActiveInterval $id;
              MainVolumesSetActive $::Ibrowser($id,$::Ibrowser(ViewDrop),MRMLid)"
-    #"set ::Ibrowser(activeInterval) $id;
-    #MainVolumesSetActive $::Ibrowser($id,$::Ibrowser(ViewDrop),MRMLid)"
-
-
 }
 
 

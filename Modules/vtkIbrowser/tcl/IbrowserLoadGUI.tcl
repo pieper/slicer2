@@ -18,16 +18,26 @@ proc IbrowserBuildLoadFrame { } {
     #------------------------------
     set f $fNew.fOption
 
+    #---WJP comment out tabs during development
     Notebook:create $f.fNotebook \
-                    -pages {Load} \
-                    -pad 2 \
-                    -bg $Gui(activeWorkspace) \
-                    -height 300 \
-                    -width 240
+        #-pages {Load Assemble Append Import} \
+        -pages {Load} \
+        -pad 2 \
+        -bg $Gui(activeWorkspace) \
+        -height 300 \
+        -width 240
     pack $f.fNotebook -fill both -expand 1
     #--- Load or construct a sequence from disk
     set w [ Notebook:frame $f.fNotebook Load ]
     IbrowserBuildUIForLoad $w
+    #--- WJP comment out during development
+    #set w [ Notebook:frame $f.fNotebook Assemble ]
+    #IbrowserBuildUIForAssemble $w
+    #set w [ Notebook:frame $f.fNotebook Append ]
+    #IbrowserBuildUIForAppend $w
+    #--- Import a sequence from elsewhere in Slicer
+    #set w [ Notebook:frame $f.fNotebook Import ]
+    #IbrowserBuildUIForImport $w
 
     #---------------------------------------------------------------
     #--- fNew->fLogos (packer)
@@ -40,7 +50,6 @@ proc IbrowserBuildLoadFrame { } {
     eval {label $f.lLogoImages -width 200 -height 45 \
               -image $uselogo -justify center} $Gui(BLA)
     pack $f.lLogoImages -side bottom -padx 2 -pady 1 -expand 0
-
 
 }
 
@@ -299,8 +308,7 @@ proc IbrowserAssembleSequenceFromVolumes { } {
     #--- get the interval started
     set ivalID $::Ibrowser(uniqueNum)
     set ::Ibrowser(loadVol,name) [format "imageData-%d" $ivalID]
-    set ::Ibrowser(seqName) $::Ibrowser(loadVol,name)
-    set iname $::Ibrowser(seqName)
+    set iname $::Ibrowser(loadVol,name)
     set ::Ibrowser($ivalID,name) $iname
     set ::Ibrowser($iname,intervalID) $ivalID
 
@@ -422,89 +430,97 @@ proc IbrowserBuildUIForLoad { parent } {
         return
     }
     #--- This is slightly different from MultiVolumeReader's GUI
-    IbrowserMultiVolumeReaderBuildGUI $f
+    IbrowserMultiVolumeReaderBuildGUI $f 1
     
 }
 
 
 
-proc IbrowserMultiVolumeReaderBuildGUI {parent} {
+proc IbrowserMultiVolumeReaderBuildGUI {parent {status 0}} {
     global Gui MultiVolumeReader Module Volume Model
-   
-    set f $parent
-    frame $f.fVols -bg $Gui(activeWorkspace) -relief groove -bd 3
-    frame $f.fNav -bg $Gui(activeWorkspace) 
-    pack $f.fVols $f.fNav -side top -pady $Gui(pad)
 
-    # The Volume frame
-    set f $parent.fVols
-    DevAddLabel $f.lNote "Configure the multi-volume reader:"
-    frame $f.fConfig -bg $Gui(activeWorkspace) -relief groove -bd 2 
-    pack $f.lNote -side top -pady 2
-    pack $f.fConfig -side top
 
-    set f $parent.fVols.fConfig
+    frame $parent.fReaderConfig -bg $Gui(activeWorkspace) -relief groove -bd 3
+    frame $parent.fVolumeNav -bg $Gui(activeWorkspace)
+    pack $parent.fReaderConfig $parent.fVolumeNav -side top -pady 3
+    
+    #--- reader configuration
+    set f $parent.fReaderConfig
+    frame $f.fLabel -bg $Gui(activeWorkspace)
+    frame $f.fFile -bg $Gui(activeWorkspace) -relief groove -bd 2
+    frame $f.fApply -bg $Gui(activeWorkspace) -relief groove -bd 3
+    frame $f.fStatus -bg $Gui(activeWorkspace) -relief groove -bd 3
+    pack $f.fLabel $f.fFile $f.fApply $f.fStatus -side top -pady 1
+
+    set f $parent.fReaderConfig.fLabel
+    DevAddLabel $f.lLabel "Configure the multi-volume reader:"
+    pack $f.lLabel -side top -pady 2
+    
+    set f $parent.fReaderConfig.fFile
     DevAddFileBrowse $f MultiVolumeReader "fileName" "File from load dir:" \
         "MultiVolumeReaderSetFileFilter" "bxh .dcm .hdr" \
         "\$Volume(DefaultDir)" "Open" "Browse for a volume file" "" "Absolute"
+    frame $f.fSingle -bg $Gui(activeWorkspace)
+    frame $f.fMultiple -bg $Gui(activeWorkspace) -relief groove -bd 1
+    frame $f.fName -bg $Gui(activeWorkspace)
+    pack $f.fSingle $f.fMultiple $f.fName -side top -pady 1
 
-    frame $f.fFilter -bg $Gui(activeWorkspace)
-    pack $f.fFilter -pady $Gui(pad)
-    set f $f.fFilter
-
-    set filter \
-        "Load a single file: Only read the specified input file.\n\
-        Load multiple files: Read files in the same directory\n\
-        matching the pattern in the Filter field.              "
-
-    eval {radiobutton $f.r1 -width 27 -text {Load a single file} \
+   set f $parent.fReaderConfig.fFile.fSingle
+    eval {radiobutton $f.r1 -width 23 -text {Load a single file} \
         -variable MultiVolumeReader(fileChoice) -value single \
         -relief flat -offrelief flat -overrelief raised \
         -selectcolor white} $Gui(WEA)
-    pack $f.r1 -side top -pady 2 
-    TooltipAdd $f.r1 $filter 
-    frame $f.fMulti -bg $Gui(activeWorkspace) -relief groove -bd 1 
-    pack $f.fMulti -pady 3
-    set f $f.fMulti
+    grid $f.r1  -padx 1 -pady 3 -sticky w
+
+    set f $parent.fReaderConfig.fFile.fMultiple
     eval {radiobutton $f.r2 -width 27 -text {Load multiple files} \
         -variable MultiVolumeReader(fileChoice) -value multiple \
         -relief flat -offrelief flat -overrelief raised \
         -selectcolor white} $Gui(WEA)
-    TooltipAdd $f.r2 $filter 
 
     DevAddLabel $f.lFilter " Filter:"
     eval {entry $f.eFilter -width 24 \
         -textvariable MultiVolumeReader(filter)} $Gui(WEA)
-    bind $f.eFilter <Return> "IbrowserMultiVolumeReaderLoad" 
-    TooltipAdd $f.eFilter $filter 
 
     #The "sticky" option aligns items to the left (west) side
     grid $f.r2 -row 0 -column 0 -columnspan 2 -padx 5 -pady 3 -sticky w
     grid $f.lFilter -row 1 -column 0 -padx 1 -pady 3 -sticky w
     grid $f.eFilter -row 1 -column 1 -padx 1 -pady 3 -sticky w
 
-    set MultiVolumeReader(fileChoice) single
+    set MultiVolumeReader(filterChoice) single
     set MultiVolumeReader(singleRadiobutton) $f.r1
     set MultiVolumeReader(multipleRadiobutton) $f.r2
     set MultiVolumeReader(filterEntry) $f.eFilter
-    
-    set f $parent.fVols
-    DevAddButton $f.bApply "Apply" "IbrowserMultiVolumeReaderLoad" 12 
+
+    if {$status == 1} {
+        set f $parent.fReaderConfig.fFile.fName
+        DevAddLabel $f.lName "Sequence name:"
+        eval { entry $f.eName -width 16 \
+                   -textvariable MultiVolumeReader(sequenceName)} $Gui(WEA)
+        bind $f.eName <Return> "IbrowserMultiVolumeReaderLoad $status"
+        grid $f.lName $f.eName -padx 3 -pady 3 -sticky w
+    }
+
+    set f $parent.fReaderConfig.fApply
+    DevAddButton $f.bApply "Apply" "IbrowserMultiVolumeReaderLoad $status" 12 
     pack $f.bApply -side top -pady 5 
 
-    set f $parent.fVols
+    set f $parent.fReaderConfig.fStatus
     frame $f.fVName -bg $Gui(activeWorkspace)
     pack $f.fVName  -pady 2
     set f $f.fVName
-    DevAddLabel $f.lVName "Volume name:"
-    label $f.eVName -width 20 -relief flat  -textvariable ::Volume(name) \
-        -bg $Gui(activeWorkspace) -fg $Gui(textDark) -font {helvetica 8 }
-    grid $f.lVName -row 0 -column 0 -padx 1 -pady 3 -sticky w
-    grid $f.eVName -row 0 -column 1 -padx 1 -pady 3 -sticky w
-
+    DevAddLabel $f.lVName "loading volume:"
+    set MultiVolumeReader(emptyLoadStatus) ""
+    eval {entry $f.eVName -width 30 \
+        -state normal \
+        -textvariable MultiVolumeReader(emptyLoadStatus)} $Gui(WEA)
+    pack $f.lVName $f.eVName -side top -padx $Gui(pad) -pady 2 
+    if {$status == 1} {
+        set MultiVolumeReader(loadStatusEntry) $f.eVName
+    }
 
     # The Navigate frame
-    set f $parent.fNav
+    set f $parent.fVolumeNav
 
     #--- for now; need to create MultiVolumeReader(slider) but don't
     #--- want to do anything with it.
@@ -518,9 +534,9 @@ proc IbrowserMultiVolumeReaderBuildGUI {parent} {
                -state disabled \
                -variable ::Ibrowser(ViewDrop) } $Gui(WSA) {-showvalue 1}
     set ::Ibrowser(loadSlider) $f.sSlider
-     bind $f.sSlider <ButtonPress-1> {
-         IbrowserUpdateIndexFromGUI
-         IbrowserUpdateMainViewer $::Ibrowser(ViewDrop)
+    bind $f.sSlider <ButtonPress-1> {
+        IbrowserUpdateIndexFromGUI
+        IbrowserUpdateMainViewer $::Ibrowser(ViewDrop)
     }
     bind $f.sSlider <ButtonRelease-1> {
         IbrowserUpdateIndexFromGUI
@@ -603,10 +619,8 @@ proc IbrowserImportSequenceFromOtherModule { } {
         IbrowserDeselectActiveInterval $::IbrowserController(Icanvas)
         IbrowserDeselectFGIcon $::IbrowserController(Icanvas)
 
-        set ::Ibrowser(activeInterval) $id
+        IbrowserSetActiveInterval $id
         set ::Ibrowser(FGInterval) $id
-
-        IbrowserSelectActiveInterval $id $::IbrowserController(Icanvas)
         IbrowserSelectFGIcon $id $::IbrowserController(Icanvas)
 
         MainSlicesSetVolumeAll Fore $::Ibrowser($id,0,MRMLid) 
@@ -619,9 +633,9 @@ proc IbrowserImportSequenceFromOtherModule { } {
 
 
 
-proc IbrowserMultiVolumeReaderLoad { } {
+proc IbrowserMultiVolumeReaderLoad { status } {
 
-    set readfailure [ MultiVolumeReaderLoad ]
+    set readfailure [ MultiVolumeReaderLoad $status ]
     if { $readfailure } {
         return
     }
@@ -630,15 +644,20 @@ proc IbrowserMultiVolumeReaderLoad { } {
     set first $::MultiVolumeReader(firstMRMLid)
     set last $::MultiVolumeReader(lastMRMLid)
 
-    set ::Ibrowser(loadVol,name) "imageData"
+    set k [llength $::MultiVolumeReader(sequenceNames)]
+    set indx [expr $k-1]
+    set iname [lindex $::MultiVolumeReader(sequenceNames) $indx ]
+    set ::Ibrowser(loadVol,name) $iname
     set ::Ibrowser(loadVol,name) [format "%s-%d" $::Ibrowser(loadVol,name) $id]
-    set ::Ibrowser(seqName) $::Ibrowser(loadVol,name)
-    set iname $::Ibrowser(seqName)
-
+    
     set vcount 0
+    #--- give ibrowser a way to refer to each vol
+    #--- and rename each volume...
+    set new $iname
     for {set i $first } { $i <= $last } { incr i } {
-        #--- give ibrowser a way to refer to each vol
         set ::Ibrowser($id,$vcount,MRMLid) $i
+        set old [ ::Volume($i,node) GetName ]
+        ::Volume($i,node) SetName ${old}_{$iname}
         incr vcount
     }
 
@@ -649,8 +668,7 @@ proc IbrowserMultiVolumeReaderLoad { } {
     set m $::MultiVolumeReader(noOfVolumes)
     set spanmax [ expr $m - 1 ]
     IbrowserMakeNewInterval $iname $::IbrowserController(Info,Ival,imageIvalType) 0.0 $spanmax $m
-
-    set ::Ibrowser(loadVol,name) "imageData"
+    #--- for feeback...
     set ::Volume(VolAnalyze,FileName) ""
     set ::Volume(name) ""
     IbrowserUpdateMRML
