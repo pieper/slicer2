@@ -85,11 +85,7 @@ vtkMrmlSceneOptionsNode \
 vtkMrmlLocatorNode \
 vtkImageMeasureVoxels \
 vtkImageNeighborhoodFilter \
-vtkImageLiveWire \
-vtkImageLiveWireTester \
-vtkImageLiveWireEdgeWeights \
 vtkImageBandedDistanceMap \
-vtkImageLiveWireScale \
 vtkImageWeightedSum \
 vtkDCMLister \
 vtkResliceImage \
@@ -103,6 +99,10 @@ vtkImageEMSegmenter
 #vtkMathUtils \
 #vtkBoolTess \
 #vtkPolyBoolean
+#vtkImageLiveWire \
+#vtkImageLiveWireTester \
+#vtkImageLiveWireEdgeWeights \
+#vtkImageLiveWireScale \
 
 
 #------------------------------------------------------------------------------
