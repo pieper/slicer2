@@ -155,6 +155,14 @@ foreach dir $modulePaths {
     }
 }
 
+#
+# turn off multithreading by default
+# - not all classes appear to be safe currently - 2002-11-12 sp
+#
+vtkMultiThreader tempMultiThreader
+tempMultiThreader SetGlobalDefaultNumberOfThreads 1
+tempMultiThreader Delete
+
 # turn off warnings about old function use
 if { $tcl_platform(platform) == "windows" } {
     vtkObject o
