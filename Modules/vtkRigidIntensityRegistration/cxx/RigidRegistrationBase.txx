@@ -411,7 +411,7 @@ void RigidRegistrationBase<TFixedImage,TMovingImage,TMetricType>::Execute()
     }
 
   std::cout << "Ending Iteration" << endl;
-  this->Print(std::cout);
+  // this->Print(std::cout);
 }
 
 //----------------------------------------------------------------------
