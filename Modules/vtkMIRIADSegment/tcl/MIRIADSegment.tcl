@@ -151,7 +151,7 @@ proc MIRIADSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.12 $} {$Date: 2003/12/19 13:40:53 $}]
+        {$Revision: 1.13 $} {$Date: 2004/01/31 23:33:29 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -330,7 +330,7 @@ proc MIRIADSegmentExit {} {
 #-------------------------------------------------------------------------------
 proc MIRIADSegmentProcessStudy { {archive "default"} {BIRNID "000397921927"} {visit 001} {atlas "spl"} } {
 
-    set ::MIRIADSegment(version) reg_${atlas}__params_SP
+    set ::MIRIADSegment(version) reg_LONIbAb__params_SP_ic
 
     MIRIADSegmentLoadStudy $archive $BIRNID $visit $atlas
 
@@ -393,7 +393,7 @@ proc MIRIADSegmentLoadStudy { {archive "default"} {BIRNID "000397921927"} {visit
     # load up the data...
     #
     puts "loading raw..." ; update
-    MIRIADSegmentLoadDukeStudy $::MIRIADSegment(subject_dir)/RawData/001.ser
+    MIRIADSegmentLoadDukeStudy "corrected"
 
     #
     # either read the existing warped atlas, or create it
@@ -401,7 +401,7 @@ proc MIRIADSegmentLoadStudy { {archive "default"} {BIRNID "000397921927"} {visit
     puts "loading atlas $atlas..." ; update
     switch $atlas {
         "loni" {
-            MIRIADSegmentLoadLONIWarpedAtlas $::MIRIADSegment(subject_dir)/DerivedData/LONI/mri/atlases/bwh_prob/air_252p
+            MIRIADSegmentLoadLONIWarpedAtlas "bseANDbet" "four"
         }
         "spl" {
             if { [MIRIADSegmentLoadSPLWarpedAtlas] } {
@@ -432,6 +432,8 @@ proc MIRIADSegmentSaveResults { } {
     set SEGid [MIRIADSegmentGetVolumeByName "EMSegResult1"]
     set resultdir $::MIRIADSegment(subject_dir)/DerivedData/SPL/EM-$::MIRIADSegment(version)
     file mkdir $resultdir
+    Volume($SEGid,node) SetFileType "Headerless"
+    Volume($SEGid,node) SetFilePattern "%s.%d"
     MainVolumesWrite $SEGid $resultdir/EMSegResult
 
     set ::Mrml(dir) $resultdir 
@@ -456,24 +458,26 @@ proc MIRIADSegmentSaveResults { } {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc MIRIADSegmentLoadDukeStudy { {dir "choose"} } {
-
-    if { $dir == "choose"} {
-        set initialdir /home/pieper/data/duke-data/neil/MIRIAD/subjects/000397921927/Visit_001/Study_0001/RawData/001.ser
-        set dir [tk_chooseDirectory -initialdir $initialdir]
-        if { $dir == "" } {
-            return
-        }
-    }
+proc MIRIADSegmentLoadDukeStudy { {imtype "raw"} } {
 
     MIRIADSegmentDeleteVolumeByName "T2"
     MIRIADSegmentDeleteVolumeByName "PD"
 
-    set T2id [DICOMLoadStudy $dir *\[02468\].dcm]
-    set PDid [DICOMLoadStudy $dir *\[13579\].dcm]
-
-    Volume($T2id,node) SetName "T2"
-    Volume($PDid,node) SetName "PD"
+    if { $imtype == "raw" } {
+        set dir $::MIRIADSegment(subject_dir)/RawData/001.ser
+        set T2id [DICOMLoadStudy $dir *\[02468\].dcm]
+        set PDid [DICOMLoadStudy $dir *\[13579\].dcm]
+        Volume($T2id,node) SetName "T2"
+        Volume($PDid,node) SetName "PD"
+    } else {
+        set dir $::MIRIADSegment(subject_dir)/DerivedData/SPL/mri/kld/norm_rcon_1
+        set ::Volume(VolAnalyze,FileName) $dir/t2_ic_ch1.hdr
+        set ::Volume(name) "T2"
+        VolAnalyzeApply
+        set ::Volume(VolAnalyze,FileName) $dir/pd_ic_ch0.hdr
+        set ::Volume(name) "PD"
+        VolAnalyzeApply
+    }
 
     MainUpdateMRML
 }
@@ -624,15 +628,18 @@ proc MIRIADSegmentLoadSPLWarpedAtlas { } {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc MIRIADSegmentLoadLONIWarpedAtlas { {dir "choose"} } {
+proc MIRIADSegmentLoadLONIWarpedAtlas { { atlas "bseANDbet" } {labels "eleven"} } {
 
-    if { $dir == "choose"} {
-        set initialdir /home/pieper/data/duke-data/neil/MIRIAD/subjects/000397921927/Visit_001/Study_0001/DerivedData/LONI/mri/atlases/bwh_prob/air_252p
-        set dir [tk_chooseDirectory -initialdir $initialdir]
-        if { $dir == "" } {
-            return
+
+    switch $atlas {
+        "bseANDbet" {
+            set dir $::MIRIADSegment(subject_dir)/DerivedData/LONI/mri/atlases/bwh_prob/bseANDbet/air_252p
+        }
+        default {
+            set dir $::MIRIADSegment(subject_dir)/DerivedData/LONI/mri/atlases/bwh_prob/air_252p
         }
     }
+
     set all_vols {
         sumbackground.hdr sumcsf.hdr sumforeground.hdr 
         sumgraymatter_amygdala.hdr sumgraymatter_hippocampus.hdr 
@@ -650,12 +657,39 @@ proc MIRIADSegmentLoadLONIWarpedAtlas { {dir "choose"} } {
         sumrstg_normed.hdr sumrTempLobe.hdr sumrThalamus.hdr 
         sumwhitematter.hdr
     }
+    set eleven_vols {
+        sumbackground.hdr sumcsf.hdr 
+        sumwhitematter.hdr
+        sumgreymatter_all.hdr 
+        sumlamygdala.hdr sumlAnterInsulaCortex.hdr 
+        sumlhippocampus.hdr sumlInferiorTG.hdr 
+        sumlMiddleTG.hdr sumlparrahipp.hdr 
+        sumlPostInsulaCortex.hdr sumlstg.hdr 
+        sumlTempLobe.hdr sumlThalamus.hdr sumramygdala.hdr 
+        sumrAnterInsulaCortex.hdr 
+        sumrhippocampus.hdr 
+        sumrInferiorTG.hdr sumrMiddleTG.hdr sumrparrahipp.hdr 
+        sumrPostInsulaCortex.hdr sumrstg.hdr 
+        sumrTempLobe.hdr 
+        sumrThalamus.hdr 
+    }
     set four_vols {
         sumbackground.hdr sumcsf.hdr 
         sumwhitematter.hdr sumgreymatter.hdr 
     }
 
-    set vols $four_vols
+    switch $labels {
+        "eleven" {
+            set vols $eleven_vols
+        }
+        "four" {
+            set vols $four_vols
+        }
+        default {
+            set ::MIRIADSegment(status) "error: bad number of labels $labels"
+            return -1
+        }
+    }
 
     if { ! [file exists $dir/[lindex $vols 0]] } {
         puts "LONI atlas doesn't exist for $dir"
