@@ -259,7 +259,7 @@ proc EndoscopicInit {} {
     set Module($m,category) "Visualisation"
     
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.70 $} {$Date: 2004/10/15 17:07:30 $}] 
+    {$Revision: 1.71 $} {$Date: 2004/10/15 20:15:22 $}] 
        
     # Define Procedures
     #------------------------------------
@@ -5001,28 +5001,9 @@ proc EndoscopicAddFlatView {} {
     # create a vtkPolyDataReader
     vtkPolyDataReader TempPolyReader   
     TempPolyReader SetFileName $Endoscopic(FlatSelect)
-    
-    # strip data: May not need later when the stripping is done ahead of time
-    #vtkStripper stripper
-    #stripper SetInput [TempPolyReader GetOutput]
-
-    
-    # create shading related stuff
-    vtkPolyDataNormals pNormals
-    pNormals SetInput [TempPolyReader GetOutput]
-    pNormals SetFeatureAngle 37
-    pNormals ConsistencyOn
-    pNormals SplittingOn
-    pNormals ComputeCellNormalsOn
-    # not yet used
-    vtkRIBProperty property
-    property SetInterpolationToPhong
-
 
     # create a vtkPolyDataMapper
     vtkPolyDataMapper TempMapper
-#    TempMapper SetInput [stripper GetOutput]
-#    TempMapper SetInput [pNormals GetOutput]
     TempMapper SetInput [TempPolyReader GetOutput]
     TempMapper ScalarVisibilityOff
         
@@ -5133,9 +5114,6 @@ proc EndoscopicAddFlatView {} {
     TempMapper Delete
     colonOutline Delete
     outlineMapper Delete
-    property Delete
-    pNormals Delete
-    #stripper Delete
 
 }
 
@@ -5257,8 +5235,10 @@ proc EndoscopicPickFlatPoint {widget xcoord ycoord} {
     if {[SelectPick TempCellPicker $widget $xcoord $ycoord] != 0} {
     
     set fx [lindex $Select(xyz) 0]
+    set fy [lindex $Select(xyz) 1]
+    set fz [lindex $Select(xyz) 2]
     
-    EndoscopicAddTargetInFlatWindow $widget $fx
+    EndoscopicAddTargetInFlatWindow $widget $fx $fy $fz
     
 #get the picked pointId from the picker, and pass the pointId to the 3D model in slicer
 
@@ -5289,35 +5269,104 @@ proc EndoscopicPickFlatPoint {widget xcoord ycoord} {
 # Draw a vertical red line behind the flattened colon at locations of interest selected by the user.
 #-------------------------------------------------------------------
 
-proc EndoscopicAddTargetInFlatWindow {widget x} {
+proc EndoscopicAddTargetInFlatWindow {widget x y z} {
 
     global Select Endoscopic
 
     set name $Endoscopic($widget,name)
-    set count $Endoscopic($name,lineCount)
     set renderer [[[$widget GetRenderWindow] GetRenderers] GetItemAsObject 0]
+    set count $Endoscopic($name,lineCount)
 
-    vtkLineSource aLine
+# make top verticle line of the cursor
+    vtkLineSource aLineT
+    
+    aLineT SetPoint1 $x [expr $y - 5]  [expr $z + 0.01]
+    aLineT SetPoint2 $x [expr $y - 2]  [expr $z + 0.01]
 
-    aLine SetPoint1 $x [expr $Endoscopic(flatColon,yMin) - 1] -0.01
-    aLine SetPoint2 $x [expr $Endoscopic(flatColon,yMax) + 1] -0.01   
-
-    aLine SetResolution 20
-    vtkPolyDataMapper aLineMapper
-    aLineMapper SetInput [aLine GetOutput]
+    aLineT SetResolution 20
+    vtkPolyDataMapper aLineTMapper
+    aLineTMapper SetInput [aLineT GetOutput]
 
     vtkActor Endoscopic($name,aLineActor,$count)
-    Endoscopic($name,aLineActor,$count) SetMapper aLineMapper 
+    Endoscopic($name,aLineActor,$count) SetMapper aLineTMapper 
     [Endoscopic($name,aLineActor,$count) GetProperty] SetColor 1 0 0    
     
     $renderer AddActor Endoscopic($name,aLineActor,$count)
 
-    [$widget GetRenderWindow] Render
-    
     set Endoscopic($name,lineCount) [expr $Endoscopic($name,lineCount) + 1]
     
-    aLine Delete
-    aLineMapper Delete
+    aLineT Delete
+    aLineTMapper Delete
+    
+# make bottom verticle line of the cursor   
+    
+    set count $Endoscopic($name,lineCount)
+    vtkLineSource aLineB
+
+    aLineB SetPoint1 $x [expr $y + 2]  [expr $z + 0.01]
+    aLineB SetPoint2 $x [expr $y + 5]  [expr $z + 0.01]  
+
+    aLineB SetResolution 20
+    vtkPolyDataMapper aLineBMapper
+    aLineBMapper SetInput [aLineB GetOutput]
+
+    vtkActor Endoscopic($name,aLineActor,$count)
+    Endoscopic($name,aLineActor,$count) SetMapper aLineBMapper 
+    [Endoscopic($name,aLineActor,$count) GetProperty] SetColor 1 0 0    
+    
+    $renderer AddActor Endoscopic($name,aLineActor,$count)
+
+    set Endoscopic($name,lineCount) [expr $Endoscopic($name,lineCount) + 1]
+    
+    aLineB Delete
+    aLineBMapper Delete
+    
+# make left horizontal line of the cursor   
+    
+    set count $Endoscopic($name,lineCount)
+    vtkLineSource aLineL
+
+    aLineL SetPoint1 [expr $x - 5] $y [expr $z + 0.01]
+    aLineL SetPoint2 [expr $x - 2] $y [expr $z + 0.01]  
+
+    aLineL SetResolution 20
+    vtkPolyDataMapper aLineLMapper
+    aLineLMapper SetInput [aLineL GetOutput]
+
+    vtkActor Endoscopic($name,aLineActor,$count)
+    Endoscopic($name,aLineActor,$count) SetMapper aLineLMapper 
+    [Endoscopic($name,aLineActor,$count) GetProperty] SetColor 1 0 0    
+    
+    $renderer AddActor Endoscopic($name,aLineActor,$count)
+
+    set Endoscopic($name,lineCount) [expr $Endoscopic($name,lineCount) + 1]
+    
+    aLineL Delete
+    aLineLMapper Delete
+
+# make right horizontal line of the cursor   
+    
+    set count $Endoscopic($name,lineCount)
+    vtkLineSource aLineR
+
+    aLineR SetPoint1 [expr $x + 2] $y [expr $z + 0.01]
+    aLineR SetPoint2 [expr $x + 5] $y [expr $z + 0.01]  
+
+    aLineR SetResolution 20
+    vtkPolyDataMapper aLineRMapper
+    aLineRMapper SetInput [aLineR GetOutput]
+
+    vtkActor Endoscopic($name,aLineActor,$count)
+    Endoscopic($name,aLineActor,$count) SetMapper aLineRMapper 
+    [Endoscopic($name,aLineActor,$count) GetProperty] SetColor 1 0 0    
+    
+    $renderer AddActor Endoscopic($name,aLineActor,$count)
+    [$widget GetRenderWindow] Render
+
+    set Endoscopic($name,lineCount) [expr $Endoscopic($name,lineCount) + 1]
+    
+    aLineR Delete
+    aLineRMapper Delete
 
 }
 
@@ -6065,8 +6114,6 @@ proc EndoscopicUpdateTargetsInFlatWindow {widget} {
     global Endoscopic Fiducials Point
 
     set name $Endoscopic($widget,name)
-puts "widget is $widget, name is $name"
-
 
 # delete all the lines that's already in the flat window
     for {set linecount 0} {$linecount < $Endoscopic($name,lineCount)} {incr linecount} {
@@ -6076,8 +6123,6 @@ puts "widget is $widget, name is $name"
     }
     
     set Endoscopic($name,lineCount) 0
-
-    [$widget GetRenderWindow] Render
 
 #get the active path name, and find the corresponding target list
     if {$Endoscopic(path,activeId) != "None"} {
@@ -6104,36 +6149,15 @@ puts "widget is $widget, name is $name"
        
                          set polyData $Endoscopic($name,polyData)
                          set point(xyz) [$polyData GetPoint $pointId]
-    #test         
-    set dummy [expr $i +1]     
-    puts "target $dummy , pointId is $pointId"
-    #test end     
-                         set x [lindex $point(xyz) 0]
 
-                         set count $Endoscopic($name,lineCount)
-                         set renderer [[[$widget GetRenderWindow] GetRenderers] GetItemAsObject 0]
+             # make the top verticle line
+             
+             set x [lindex $point(xyz) 0]
+             set y [lindex $point(xyz) 1]
+             set z [lindex $point(xyz) 2]
+             
+             EndoscopicAddTargetInFlatWindow $widget $x $y $z
 
-                         vtkLineSource aLine
-
-                         aLine SetPoint1 $x [expr $Endoscopic(flatColon,yMin) - 1] -0.01
-                         aLine SetPoint2 $x [expr $Endoscopic(flatColon,yMax) + 1] -0.01      
-
-                         aLine SetResolution 20
-                         vtkPolyDataMapper aLineMapper
-                         aLineMapper SetInput [aLine GetOutput]
-
-                         vtkActor Endoscopic($name,aLineActor,$count)
-                         Endoscopic($name,aLineActor,$count) SetMapper aLineMapper 
-                         [Endoscopic($name,aLineActor,$count) GetProperty] SetColor 1 0 0    
-
-                         $renderer AddActor Endoscopic($name,aLineActor,$count)
-
-                         [$widget GetRenderWindow] Render
-
-                         set Endoscopic($name,lineCount) [expr $Endoscopic($name,lineCount) + 1]
-   
-                         aLine Delete
-                         aLineMapper Delete
                     }
                }
     
