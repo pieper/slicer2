@@ -155,7 +155,7 @@ proc LDMMViewerInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.5 $} {$Date: 2003/09/18 13:13:56 $}]
+        {$Revision: 1.6 $} {$Date: 2004/01/26 13:09:26 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -263,7 +263,7 @@ proc LDMMViewerBuildGUI {} {
     # LDMM->Middle frame
     #-------------------------------------------
     set f $fLDMM.fMiddle
-    DevAddButton $f.build "Make Models" LDMMViewerMakeModels 
+    DevAddButton $f.build "Make Models" "LDMMViewerMakeModels; Tab LDMMViewer"
     DevAddButton $f.showvectors "Show Vectors" LDMMViewerShowVectors 
     DevAddButton $f.hidevectors "Hide Vectors" LDMMViewerHideVectors 
     pack $f.build $f.showvectors $f.hidevectors
@@ -355,7 +355,8 @@ proc LDMMViewerLoadStructuredPoints { vtkfile } {
     $n SetDescription "$vtkfile"
 
     eval Volume($i,node) SetSpacing [$id GetSpacing]
-    Volume($i,node) SetScanOrder PA
+    #Volume($i,node) SetScanOrder PA
+    Volume($i,node) SetScanOrder IS
     Volume($i,node) SetNumScalars [$id GetNumberOfScalarComponents]
     set ext [$id GetWholeExtent]
     Volume($i,node) SetImageRange [lindex $ext 4] [lindex $ext 5]
