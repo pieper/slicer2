@@ -5,8 +5,10 @@
 #define GL_GLEXT_PROTOTYPES // to declare extension prototypes in GL/gl.h
                             // (linux and mac get compile errors if you don't)
 #include <GL/gl.h>
+#ifndef GL_EXT_color_table                1
 #include "glext.h" // include extension defs and decls that may be newer
                    // than the ones that are in either GL/gl.h or GL/glext.h
+#endif
 
 //------------------
 #include <math.h>
