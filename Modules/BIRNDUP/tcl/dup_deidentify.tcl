@@ -103,7 +103,7 @@ itcl::body dup_deidentify::run {dir} {
 
     ## fake
 
-    set resp [DevOKCancel "Click Ok to run real deidentification or Cancel to bypass deidentification"]
+    set resp [DevOKCancel "Click Ok to run deidentification"]
 
     if { $resp == "ok" } {
 
@@ -145,13 +145,13 @@ itcl::body dup_deidentify::run {dir} {
         }
         $parent log "finished deidentify of $dir"
 
+        close [open $dir/ready_for_review "w"]
+        $parent refresh review
+        $parent refresh deidentify
 
     } else {
         $parent log "bypassed deidentify of $dir"
     }
 
-    close [open $dir/ready_for_review "w"]
-    $parent refresh review
-    $parent refresh deidentify
 }
 
