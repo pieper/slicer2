@@ -55,6 +55,7 @@
 #   LevelSetsCreateModel
 #   SetSPGR_WM_Param
 #   SetMRAParam
+#   SetUSLiverParam
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -160,7 +161,7 @@ proc LevelSetsInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.17 $} {$Date: 2003/10/03 15:50:44 $}]
+        {$Revision: 1.18 $} {$Date: 2003/10/24 20:26:51 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -207,8 +208,8 @@ proc LevelSetsInit {} {
 
     # Main Parameters
     set LevelSets(InputVol)                   $Volume(idNone)
-    set LevelSets(ResultVol)                  $Volume(idNone)
-    set LevelSets(LabelResultVol)             $Volume(idNone)
+    set LevelSets(ResultVol)                  -5
+    set LevelSets(LabelResultVol)             -5
 
     set LevelSets(Dimension)                  "3"
 
@@ -773,10 +774,12 @@ proc LevelSetsBuildMainFrame {} {
     pack $f.l -side left -padx $Gui(pad) -pady 0
 
     DevAddButton $f.bSPGR_WM   "SPGR White Matter"     "SetSPGR_WM_Param"
-    DevAddButton $f.bMRA_param "MR Angio"         "SetMRAParam"
+    DevAddButton $f.bMRA_param "MR Angio"              "SetMRAParam"
+    DevAddButton $f.bUSLiver_param "US Liver"              "SetUSLiverParam"
 
     pack  $f.bSPGR_WM   -side top
     pack  $f.bMRA_param -side top
+    pack  $f.bUSLiver_param -side top
 
     #-------------------------------------------
     # Parameters->Input/Output Frame
@@ -1918,3 +1921,38 @@ proc SetMRAParam {} {
 
 }
 #----- SetMRAParam
+
+
+#----------------------------------------------------------------------
+# .PROC SetUSLiver
+#
+#   Predefined parameters for US Liver
+#
+# .END
+#----------------------------------------------------------------------
+proc SetUSLiverParam {} {
+#    -----------
+
+  global LevelSets Volume Gui
+
+  #
+  set LevelSets(Dimension)                  "3"
+  set LevelSets(HistoGradThreshold)         "0.3"
+  set LevelSets(AdvectionCoeff)             "0.8"
+  set LevelSets(StepDt)                     "0.8"
+  set LevelSets(SmoothingScheme)            "Mean Curvature"
+  set LevelSets(ReinitFreq)                 "6"
+  set LevelSets(SmoothingCoeff)             "0.3"
+  set LevelSets(BandSize)                   "3"
+  set LevelSets(TubeSize)                   "2"
+  set LevelSets(NumIters)                   "100"
+  set LevelSets(MeanIntensity)              "35"
+  set LevelSets(SDIntensity)                "15"
+  set LevelSets(BalloonCoeff)               "0.8"
+  set LevelSets(ProbabilityThreshold)       "0.2"
+  set LevelSets(NumInitPoints)              "0"
+  # upwind vectors scheme
+  set LevelSets(AdvectionScheme)            $LevelSets(AdvectionScheme0)
+
+}
+#----- SetUSLiverParam
