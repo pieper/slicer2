@@ -70,28 +70,33 @@ set SLICER(version) "$SLICER(major_version).$SLICER(minor_version)$SLICER(revisi
 # simple command line argument parsing
 #
 
-proc Usage {} {
+proc Usage { {msg ""} } {
     global SLICER
-
-    set msg "usage: slicer2-<arch> [options] \[MRML file name .xml | dir with MRML file\]"
+    
+    set msg "$msg\nusage: slicer2-<arch> \[options\] \[MRML file name .xml | dir with MRML file\]"
     set msg "$msg\n  <arch> is one of win32.exe, solaris-sparc, or linux-x86"
-    set msg "$msg\n  [options] is one of the following:"
+    set msg "$msg\n  \[options\] is one of the following:"
     set msg "$msg\n   --help : prints this message and exits"
     set msg "$msg\n   --verbose : turns on extra debugging output"
     set msg "$msg\n   --no-threads : disables multi threading"
     set msg "$msg\n   --no-tkcon : disables tk console"
+    set msg "$msg\n   --load-dicom <dir> : read dicom files from <dir> at startup"
+    puts stderr $msg
     tk_messageBox -message $msg -title $SLICER(version) -type ok
 }
 
 #
-# simple arg parsing - can't yet handle args with parameters
+# simple arg parsing 
 #
 set SLICER(threaded) "true"
 set SLICER(tkcon) "true"
 set verbose 0
 set Module(verbose) 0
+set SLICER(load-dicom) ""
 set strippedargs ""
-foreach a $argv {
+set argc [llength $argv]
+for {set i 0} {$i < $argc} {incr i} {
+    set a [lindex $argv $i]
     switch -glob -- $a {
         "--verbose" -
         "-v" {
@@ -109,9 +114,16 @@ foreach a $argv {
         "--no-tkcon" {
             set SLICER(tkcon) "false"
         }
+        "--load-dicom*" {
+            incr i
+            if { $i == $argc } {
+                Usage "missing argument for $a\n"
+            } else {
+                set SLICER(load-dicom) [lindex $argv $i]
+            }
+        }
         "-*" {
-            puts stderr "unknown option $a\n"
-            Usage
+            Usage "unknown option $a\n"
         }
         default {
             lappend strippedargs $a
@@ -543,6 +555,18 @@ global View
 set View(render_on) 1
 MainBoot [lindex $argv 0]
 set View(render_on) 0
+
+#
+# read volume specified on command line
+#
+if { $SLICER(load-dicom) != "" } {
+    global Volumes
+    VolumesSetPropertyType VolDicom
+    MainVolumesSetActive NEW
+    Tab Volumes row1 Props
+    set Volumes(DICOMStartDir) $SLICER(load-dicom)
+    DICOMSelectMain $Volume(dICOMFileListbox) 
+}
 
 
 # override the built in exit routine to provide cleanup
