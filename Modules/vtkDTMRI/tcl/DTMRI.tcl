@@ -104,7 +104,7 @@ proc DTMRIInit {} {
     set Module($m,author) "Lauren O'Donnell"
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.6 $} {$Date: 2004/03/22 20:54:09 $}]
+            {$Revision: 1.7 $} {$Date: 2004/04/07 01:32:31 $}]
 
     # Define Tabs
     #------------------------------------
@@ -4015,24 +4015,27 @@ proc ConvertVolumeToTensors {} {
 
     # average the two slices of no gradient 
     # NOTE THIS WILL NOT WORK WITH MORE THAN 2
-     vtkImageMathematics math
-     math SetOperationToAdd
-     math SetInput 0 [extract6 GetOutput]
-     math SetInput 1 [extract7 GetOutput]
+    if {$numberOfNoGradientImages == 2} {
+       vtkImageMathematics math
+       math SetOperationToAdd
+       math SetInput 0 [extract6 GetOutput]
+       math SetInput 1 [extract7 GetOutput]
 
-     vtkImageMathematics math2
-     math2 SetOperationToMultiplyByK
-     math2 SetConstantK 0.5
-     math2 SetInput 0 [math GetOutput]
+       vtkImageMathematics math2
+       math2 SetOperationToMultiplyByK
+       math2 SetConstantK 0.5
+       math2 SetInput 0 [math GetOutput]
     
-    # set the no diffusion input
-    DTMRI SetNoDiffusionImage [extract6 GetOutput]
-    DTMRI SetNoDiffusionImage [math2 GetOutput]
+       # set the no diffusion input
+       DTMRI SetNoDiffusionImage [extract6 GetOutput]
+       DTMRI SetNoDiffusionImage [math2 GetOutput]
+    } else
+       DTMRI SetNoDiffusionImage [extract6 GetOutput]
+    }    
     
-    
-    puts "----------- DTMRI update --------"
-    DTMRI Update
-    puts "----------- after DTMRI update --------"
+     puts "----------- DTMRI update --------"
+     DTMRI Update
+     puts "----------- after DTMRI update --------"
 
 
     # put output into a Tensor volume
@@ -4085,13 +4088,16 @@ proc ConvertVolumeToTensors {} {
         extract$slice Delete
     }
 
-    math SetOutput ""
-    math2 SetOutput ""
+    if {$numberOfNoGradientImages == 2} {
+      math SetOutput ""
+      math2 SetOutput ""
+      math Delete
+      math2 Delete
+    }
+    
     DTMRI SetOutput ""
-
     DTMRI Delete
-    math Delete
-    math2 Delete
+
 }
 
 
