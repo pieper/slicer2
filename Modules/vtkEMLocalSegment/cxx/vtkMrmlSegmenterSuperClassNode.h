@@ -171,6 +171,26 @@ public:
   vtkGetMacro(BoundaryStopMFAMaxIterations,int); 
   vtkSetMacro(BoundaryStopMFAMaxIterations,int); 
 
+  // Description:  
+  // Translation from patient case to atlas space   
+  vtkGetVector3Macro(RegistrationTranslation, double);
+  vtkSetVector3Macro(RegistrationTranslation, double);
+
+  // Description:
+  // Rotation from patient case to atlas space   
+  vtkGetVector3Macro(RegistrationRotation, double);
+  vtkSetVector3Macro(RegistrationRotation, double);
+
+  // Description:
+  // Scale from patient case to atlas space   
+  vtkGetVector3Macro(RegistrationScale, double);
+  vtkSetVector3Macro(RegistrationScale, double);
+
+  // Description:
+  // Scale from patient case to atlas space   
+  vtkGetMacro(RegistrationType, int);
+  vtkSetMacro(RegistrationType, int);
+
 protected:
   vtkMrmlSegmenterSuperClassNode();
   ~vtkMrmlSegmenterSuperClassNode();
@@ -206,6 +226,11 @@ protected:
   int BoundaryStopMFAType;       
   float BoundaryStopMFAValue;    
   int BoundaryStopMFAMaxIterations;
+
+  double RegistrationTranslation[3];
+  double RegistrationRotation[3];
+  double RegistrationScale[3];
+  int    RegistrationType; 
 };
 
 #endif

@@ -80,6 +80,11 @@ vtkMrmlSegmenterSuperClassNode::vtkMrmlSegmenterSuperClassNode() {
   this->BoundaryStopMFAType  = 0;
   this->BoundaryStopMFAValue = 0.0; 
   this->BoundaryStopMFAMaxIterations = 0; 
+
+  memset(this->RegistrationTranslation,0,3*sizeof(double));
+  memset(this->RegistrationRotation,0,3*sizeof(double));
+  for (int i =0; i < 3; i++) RegistrationScale[i]= 1.0;
+  this->RegistrationType = 0;
 }
 
 //----------------------------------------------------------------------------
@@ -123,6 +128,15 @@ void vtkMrmlSegmenterSuperClassNode::Write(ofstream& of, int nIndent)
   of << " BoundaryStopMFAType='" << this->BoundaryStopMFAType  <<  "'";
   of << " BoundaryStopMFAValue='" << this->BoundaryStopMFAValue <<  "'";
   of << " BoundaryStopMFAMaxIterations='" << this->BoundaryStopMFAMaxIterations <<  "'";
+
+  if  (this->RegistrationTranslation[0] || this->RegistrationTranslation[1] || this->RegistrationTranslation[2]) 
+    of << " RegistrationTranslation='" << this->RegistrationTranslation[0] << " " << this->RegistrationTranslation[1] << " " << this->RegistrationTranslation[2] << "'";
+  if  (this->RegistrationRotation[0] || this->RegistrationRotation[1] || this->RegistrationRotation[2]) 
+    of << " RegistrationRotation='" << this->RegistrationRotation[0] << " " << this->RegistrationRotation[1] << " " << this->RegistrationRotation[2] << "'";
+  if  ((this->RegistrationScale[0] != 1) || (this->RegistrationScale[1] != 1) || (this->RegistrationScale[2] != 1)) 
+    of << " RegistrationScale='" << this->RegistrationScale[0] << " " << this->RegistrationScale[1] << " " << this->RegistrationScale[2] << "'";
+
+  of << " RegistrationType='" << this->RegistrationType << "' ";
   of << ">\n";
 }
 
@@ -154,6 +168,10 @@ void vtkMrmlSegmenterSuperClassNode::Copy(vtkMrmlNode *anode)
   this->BoundaryStopMFAValue         = node->BoundaryStopMFAValue; 
   this->BoundaryStopMFAMaxIterations = node->BoundaryStopMFAMaxIterations; 
 
+  memcpy(this->RegistrationTranslation,node->RegistrationTranslation,3*sizeof(double));
+  memcpy(this->RegistrationRotation, node->RegistrationRotation,3*sizeof(double));
+  memcpy(this->RegistrationScale,node->RegistrationScale,3*sizeof(double));
+  this->RegistrationType = node->RegistrationType;
 }
 
 //----------------------------------------------------------------------------
@@ -173,17 +191,22 @@ void vtkMrmlSegmenterSuperClassNode::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "PrintLabelMap:  " << this->PrintLabelMap << "\n";
   os << indent << "PrintFrequency: " << this->PrintFrequency << "\n";
 
-  os << indent << "PrintEMLabelMapConvergence:  " << this->PrintEMLabelMapConvergence << "\n";
-  os << indent << "PrintEMWeightsConvergence:   " << this->PrintEMWeightsConvergence << "\n";
-  os << indent << "BoundaryStopEMType:          " << this->BoundaryStopEMType  << "\n";
-  os << indent << "BoundaryStopEMValue:         " << this->BoundaryStopEMValue << "\n";
-  os << indent << "BoundaryStopEMMaxIterations: " << this->BoundaryStopEMMaxIterations << "\n";
+  os << indent << "PrintEMLabelMapConvergence:   " << this->PrintEMLabelMapConvergence << "\n";
+  os << indent << "PrintEMWeightsConvergence:    " << this->PrintEMWeightsConvergence << "\n";
+  os << indent << "BoundaryStopEMType:           " << this->BoundaryStopEMType  << "\n";
+  os << indent << "BoundaryStopEMValue:          " << this->BoundaryStopEMValue << "\n";
+  os << indent << "BoundaryStopEMMaxIterations:  " << this->BoundaryStopEMMaxIterations << "\n";
 
   os << indent << "PrintMFALabelMapConvergence:  " << this->PrintMFALabelMapConvergence << "\n";
   os << indent << "PrintMFAWeightsConvergence:   " << this->PrintMFAWeightsConvergence << "\n";
   os << indent << "BoundaryStopMFAType:          " << this->BoundaryStopMFAType  << "\n";
   os << indent << "BoundaryStopMFAValue:         " << this->BoundaryStopMFAValue << "\n";
   os << indent << "BoundaryStopMFAMaxIterations: " << this->BoundaryStopMFAMaxIterations << "\n";
+
+  os << indent << "RegistrationTranslation:      " << this->RegistrationTranslation[0] << ", " << this->RegistrationTranslation[1] << ", " << this->RegistrationTranslation[2] << "\n" ;
+  os << indent << "RegistrationRotation:         " << this->RegistrationRotation[0] << ", " << this->RegistrationRotation[1] << ", " << this->RegistrationRotation[2] << "\n" ;
+  os << indent << "RegistrationScale:            " << this->RegistrationScale[0] << ", " << this->RegistrationScale[1] << ", " << this->RegistrationScale[2] << "\n" ;
+  os << indent << "RegistrationType:             " << this->RegistrationType<< "\n" ;
 }
 
 

@@ -140,21 +140,6 @@ public:
   vtkSetVector2Macro(PCAFileRange, int);
 
   // Description:
-  // Translation from patient case to PCA  
-  vtkGetVector3Macro(PCATranslation, double);
-  vtkSetVector3Macro(PCATranslation, double);
-
-  // Description:
-  // Rotation from patient case to PCA  
-  vtkGetVector3Macro(PCARotation, double);
-  vtkSetVector3Macro(PCARotation, double);
-
-  // Description:
-  // Scale from patient case to PCA  
-  vtkGetVector3Macro(PCAScale, double);
-  vtkSetVector3Macro(PCAScale, double);
-
-  // Description:
   // Maximum distance inside the object 
   vtkGetMacro(PCAMaxDist,double);
   vtkSetMacro(PCAMaxDist,double);
@@ -178,6 +163,22 @@ public:
   vtkSetMacro(PrintPCA,int);
   vtkGetMacro(PrintPCA,int);
 
+
+  // Description:
+  // Translation from patient case to atlas space   
+  vtkGetVector3Macro(RegistrationTranslation, double);
+  vtkSetVector3Macro(RegistrationTranslation, double);
+
+  // Description:
+  // Rotation from patient case to atlas space   
+  vtkGetVector3Macro(RegistrationRotation, double);
+  vtkSetVector3Macro(RegistrationRotation, double);
+
+  // Description:
+  // Scale from patient case to atlas space   
+  vtkGetVector3Macro(RegistrationScale, double);
+  vtkSetVector3Macro(RegistrationScale, double);
+
 protected:
   vtkMrmlSegmenterClassNode();
   ~vtkMrmlSegmenterClassNode();
@@ -197,9 +198,6 @@ protected:
   char   *InputChannelWeights;
   char   *PCAMeanName;
   int    PCAFileRange[2];
-  double PCATranslation[3];
-  double PCARotation[3];
-  double PCAScale[3];
   double PCAMaxDist;
   double PCADistVariance;
   char   *ReferenceStandardFileName;
@@ -207,6 +205,11 @@ protected:
   int    PrintWeights;
   int    PrintQuality;        // Prints out a quality measure of the current result ( 1=  Dice )
   int    PrintPCA;            // Print out PCA Parameters at each step 
+
+  double RegistrationTranslation[3];
+  double RegistrationRotation[3];
+  double RegistrationScale[3];
+
 };
 
 #endif
