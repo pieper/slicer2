@@ -54,6 +54,7 @@ if { [itcl::find class dup] == "" } {
         method studies {} {}
         method log {message} {}
 
+        method load_example { {dir "choose"} } {}
         method fill { {dir "choose"} } {}
         method refresh { {pane "all"} } {}
 
@@ -120,6 +121,10 @@ itcl::body dup::menus {} {
                 command pref -label "Preferences..." \
                     -helpstr "Application preference settings." \
                     -command "$this prefui"
+                separator sepexample
+                command reviewexampe -label "Load Review Example..." \
+                    -helpstr "Copy an example of data to review." \
+                    -command "$this load_example"
                 separator sep2
                 command exit -label "Close" -command "destroy [namespace tail $this]" \
                     -helpstr "Close BIRNDUP"
@@ -158,6 +163,21 @@ itcl::body dup::fill { {dir "choose"} } {
     if { $dir != "" } { 
         $_sort fill $dir
     }
+}
+
+itcl::body dup::load_example { {dir "choose"} } {
+
+    if { $dir == "choose" } {
+        set dir [tk_chooseDirectory \
+                    -initialdir $::env(SLICER_HOME)/../data/birndup/Project_a-for-review \
+                    -title "Select Example Review Directory" ]
+    }
+    
+    if { $dir != "" } {
+        file copy -force $dir [$this pref DEFACE_DIR]
+    }
+
+    $this refresh review
 }
 
 itcl::body dup::refresh { {pane "all"} } {
@@ -208,15 +228,16 @@ itcl::body dup::prefs { } {
     # put all preference defaults here - in case the older pref
     # file didn't contain all the entries
     #
+    set BIRN [file normalize $::env(SLICER_HOME)/..]
     set _prefs(INSTITUTION) BWH
     set _prefs(INSTITUTION,help) "Prefix for BIRN ID - 3 or 4 character, e.g. BWH"
-    set _prefs(DEFACE_DIR) /opt/birn/deface
+    set _prefs(DEFACE_DIR) $BIRN/deface
     set _prefs(DEFACE_DIR,help) "Staging directory for files to upload"
-    set _prefs(LINKTABLE) /opt/birn/deface/linktable
+    set _prefs(LINKTABLE) $BIRN/deface/linktable
     set _prefs(LINKTABLE,help) "Link table for storing the map between clinical ID and BIRN ID"
-    set _prefs(DCANON_DIR) /opt/birn/structure/birn-dicom/anonym_scripts/dcanon
+    set _prefs(DCANON_DIR) $BIRN/dcanon
     set _prefs(DCANON_DIR,help) "Location of dcanon programs."
-    set _prefs(UPLOAD2_DIR) /opt/birn/upload2
+    set _prefs(UPLOAD2_DIR) $BIRN/upload2
     set _prefs(UPLOAD2_DIR,help) "Location of upload2 programs."
 
     # create a pref file if needed and let user fill in blanks
@@ -249,11 +270,15 @@ itcl::body dup::prefs { } {
 }
 
 itcl::body dup::pref_save { } {
-    set preffile $::env(HOME)/.birndup/prefs
-    if { ![file writable $preffile] } {
-        DevErrorWindow "$pref file not writable - preferences not saved"
+    if { [catch "file mkdir $::env(HOME)/.birndup"] } {
+        DevErrorWindow "Cannot create .birndup directory - preferences not saved"
         return
     }
+    if { ![file writable $::env(HOME)/.birndup] } {
+        DevErrorWindow "$preffile file not writable - preferences not saved"
+        return
+    }
+    set preffile $::env(HOME)/.birndup/prefs
     set fp [open $preffile w]
     foreach n [lsort -dictionary [array names _prefs]] {
         puts $fp "$n \"$_prefs($n)\""
