@@ -58,7 +58,7 @@ proc GuiInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo Gui \
-    {$Revision: 1.40 $} {$Date: 2002/11/05 17:34:23 $}]
+    {$Revision: 1.41 $} {$Date: 2003/01/21 19:24:01 $}]
 
 
     # enable tooltips by default.  This should check user preferences somehow.
@@ -265,9 +265,20 @@ proc GuiInit {} {
     set Gui(WSBA) { -bg $Gui(activeWorkspace) \
         -activebackground $Gui(activeButton) -troughcolor $Gui(normalButton) \
         -highlightthickness 0 -bd $Gui(borderWidth) -relief flat}
+}
 
-
-
+#-------------------------------------------------------------------------------
+# .PROC GuiApplyStyle
+# Apply a Gui style to a list of widgets
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc GuiApplyStyle {stylename args} {
+    global Gui
+    foreach widget $args {
+        eval $widget config $Gui($stylename)
+    }
 }
 
 #-------------------------------------------------------------------------------
