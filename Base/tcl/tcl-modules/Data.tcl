@@ -88,7 +88,7 @@ proc DataInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.49 $} {$Date: 2003/06/02 19:47:51 $}]
+        {$Revision: 1.50 $} {$Date: 2003/10/03 14:23:12 $}]
 
     set Data(index) ""
     set Data(clipboard) ""
@@ -234,13 +234,14 @@ to quickly cut and paste items.
 
     # initialize key-bindings (and hide class Listbox Control button ops)
     # - sp 2003-03-01 changed edit from ^e to ^o to ease editing in tkcon
+    # - sp 2003-10-03 removed Control-d to avoid accidental deletion when 
+    #   doing command line editing in tkcon
     set Data(eventManager) { \
         {Listbox <Control-Button-1>  {}} \
         {Listbox <Control-B1-Motion>  {}} \
         {all <Control-o> {DataEditNode}} \
         {all <Control-x> {DataCutNode}} \
-        {all <Control-v> {DataPasteNode}} \
-        {all <Control-d> {DataDeleteNode}} }
+        {all <Control-v> {DataPasteNode}} }
 
 #    bind all <Control-c> {DataCopyNode}
 
@@ -267,7 +268,7 @@ to quickly cut and paste items.
         -state disabled
     incr id
     set Data(rightMenu,Delete)  $id
-    $m add command -label "Delete (Ctrl+d)" -command "DataDeleteNode"
+    $m add command -label "Delete" -command "DataDeleteNode"
     $m add command -label "-- Close Menu --" -command "$Data(rightMenu) unpost"
 
 }
@@ -332,7 +333,7 @@ proc DataDisplayTree {{index end}} {
     }
 
     if {$index == ""} {
-    set index "end"
+        set index "end"
     }
     $Data(fNodeList) selection set $index $index
 }
@@ -461,12 +462,12 @@ proc DataCutNode {} {
 
     # Identify node(s)
     foreach node $remove {
-    lappend nodes [Mrml(dataTree) GetNthItem $node]
+        lappend nodes [Mrml(dataTree) GetNthItem $node]
     }
 
     # Remove node(s) from the MRML tree
     foreach node $nodes {
-    Mrml(dataTree) RemoveItem $node 
+        Mrml(dataTree) RemoveItem $node 
     }
     
     # Copy to clipboard
@@ -495,16 +496,16 @@ proc DataDeleteNode {} {
     
     # Identify node(s)
     foreach node $remove {
-    lappend nodes [Mrml(dataTree) GetNthItem $node]
+        lappend nodes [Mrml(dataTree) GetNthItem $node]
     }
     
     foreach node $nodes {
-    # Delete
-    set nodeType [DataGetTypeFromNode $node]
-    set id [DataGetIdFromNode $node]
-    # For the next line to work, Volume, Model, etc need to
-    # be on the "global" line of this procedure
-    MainMrmlDeleteNode $nodeType $id
+        # Delete
+        set nodeType [DataGetTypeFromNode $node]
+        set id [DataGetIdFromNode $node]
+        # For the next line to work, Volume, Model, etc need to
+        # be on the "global" line of this procedure
+        MainMrmlDeleteNode $nodeType $id
     }
     
     RenderAll
@@ -549,7 +550,7 @@ proc DataPasteNode {} {
     # Empty list is a special case
     if {[$Data(fNodeList) index end] == 0} {
         foreach node [DataClipboardPaste] {    
-        Mrml(dataTree) AddItem $node 
+            Mrml(dataTree) AddItem $node 
         }
         MainUpdateMRML
         return
@@ -604,75 +605,75 @@ proc DataEditNode {} {
 
     set class [$node GetClassName]
     switch $class {
-    "vtkMrmlVolumeNode" {
-        set id [DataGetIdFromNode $node]
-        MainVolumesSetActive $id
-        if {[IsModule Volumes] == 1} {
-            Tab Volumes row1 Display
+        "vtkMrmlVolumeNode" {
+            set id [DataGetIdFromNode $node]
+            MainVolumesSetActive $id
+            if {[IsModule Volumes] == 1} {
+                Tab Volumes row1 Display
+            }
         }
-    }
-    "vtkMrmlModelNode" {
-        set id [DataGetIdFromNode $node]
-        MainModelsSetActive $id
-        if {[IsModule Models] == 1} {
-            set Model(propertyType) Basic
-            Tab Models row1 Props
+        "vtkMrmlModelNode" {
+            set id [DataGetIdFromNode $node]
+            MainModelsSetActive $id
+            if {[IsModule Models] == 1} {
+                set Model(propertyType) Basic
+                Tab Models row1 Props
+            }
         }
-    }
-    "vtkMrmlTetraMeshNode" {
-        set id [DataGetIdFromNode $node]
-        MainTetraMeshSetActive $id
-        if {[IsModule TetraMesh] == 1} {
-            Tab TetraMesh row1 Visualize
+        "vtkMrmlTetraMeshNode" {
+            set id [DataGetIdFromNode $node]
+            MainTetraMeshSetActive $id
+            if {[IsModule TetraMesh] == 1} {
+                Tab TetraMesh row1 Visualize
+            }
         }
-    }
-    "vtkMrmlMatrixNode" {
-        set id [DataGetIdFromNode $node]
-        MainAlignmentsSetActive $id
-        if {[IsModule Alignments] == 1} {
-            Tab Alignments row1 Manual
+        "vtkMrmlMatrixNode" {
+            set id [DataGetIdFromNode $node]
+            MainAlignmentsSetActive $id
+            if {[IsModule Alignments] == 1} {
+                Tab Alignments row1 Manual
+            }
         }
-    }
-    "vtkMrmlOptionsNode" {
-        set id [DataGetIdFromNode $node]
-        MainOptionsSetActive $id
-        if {[IsModule Options] == 1} {
-            Tab Options row1 Props
+        "vtkMrmlOptionsNode" {
+            set id [DataGetIdFromNode $node]
+            MainOptionsSetActive $id
+            if {[IsModule Options] == 1} {
+                Tab Options row1 Props
+            }
         }
-    }
-    "vtkMrmlModelRefNode" -
-    "vtkMrmlModelGroupNode" -
-    "vtkMrmlEndModelGroupNode" -
-    "vtkMrmlEndHierarchyNode" -
-    "vtkMrmlHierarchyNode" {
-        if {[IsModule ModelHierarchy] == 1} {
-            Tab ModelHierarchy row1 HDisplay
+        "vtkMrmlModelRefNode" -
+        "vtkMrmlModelGroupNode" -
+        "vtkMrmlEndModelGroupNode" -
+        "vtkMrmlEndHierarchyNode" -
+        "vtkMrmlHierarchyNode" {
+            if {[IsModule ModelHierarchy] == 1} {
+                Tab ModelHierarchy row1 HDisplay
+            }
         }
-    }
-    "vtkMrmlSegmenterNode" -
-    "vtkMrmlEndSegmenterNode" -
-    "vtkMrmlSegmenterGraphNode" {
-        if {[IsModule EMSegment] == 1} {
-            Tab EMSegment row1 Setting
+        "vtkMrmlSegmenterNode" -
+        "vtkMrmlEndSegmenterNode" -
+        "vtkMrmlSegmenterGraphNode" {
+            if {[IsModule EMSegment] == 1} {
+                Tab EMSegment row1 Setting
+            }
         }
-    }
-    "vtkMrmlSegmenterInputNode" {
-        if {[IsModule EMSegment] == 1} {
-            Tab EMSegment row1 EM
-        }    
-    }
-    "vtkMrmlSegmenterSuperClassNode" -
-    "vtkMrmlEndSegmenterSuperClassNode" -
-    "vtkMrmlSegmenterClassNode" {
-        if {[IsModule EMSegment] == 1} {
-            Tab EMSegment row1 Class
+        "vtkMrmlSegmenterInputNode" {
+            if {[IsModule EMSegment] == 1} {
+                Tab EMSegment row1 EM
+            }    
         }
-    }
-    "vtkMrmlSegmenterCIMNode" {
-        if {[IsModule EMSegment] == 1} {
-           Tab EMSegment row1 CIM
-    }
-    }
+        "vtkMrmlSegmenterSuperClassNode" -
+        "vtkMrmlEndSegmenterSuperClassNode" -
+        "vtkMrmlSegmenterClassNode" {
+            if {[IsModule EMSegment] == 1} {
+                Tab EMSegment row1 Class
+            }
+        }
+        "vtkMrmlSegmenterCIMNode" {
+            if {[IsModule EMSegment] == 1} {
+               Tab EMSegment row1 CIM
+            }
+        }
     }
 }
 
@@ -762,11 +763,11 @@ proc DataAddTransformFromSelection {} {
     
     # Empty list, no selection, or partial transform in selection: put Transform at end    
     if {[$Data(fNodeList) index end] == 0 || $selection == "" || $numTrans != 0} {
-    set append 1
+        set append 1
     } else {
-    set append 0
-    set firstSel [Mrml(dataTree) GetNthItem [lindex $selection 0]]
-    set lastSel [Mrml(dataTree) GetNthItem [lindex $selection end]]
+        set append 0
+        set firstSel [Mrml(dataTree) GetNthItem [lindex $selection 0]]
+        set lastSel [Mrml(dataTree) GetNthItem [lindex $selection end]]
     }
 
     DataAddTransform append $firstSel $lastSel 
@@ -907,10 +908,10 @@ proc DataCountTransforms {selection {start ""} {end ""}} {
     set class [$node GetClassName]
     switch $class {
         vtkMrmlTransformNode {
-        incr T
+            incr T
         }
         vtkMrmlEndTransformNode {
-        incr T -1
+            incr T -1
         } 
     }
     }
