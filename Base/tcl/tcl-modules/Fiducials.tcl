@@ -82,7 +82,7 @@ proc FiducialsInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.25 $} {$Date: 2002/09/12 23:33:12 $}]
+        {$Revision: 1.26 $} {$Date: 2002/09/13 01:53:19 $}]
     
     # Initialize module-level variables
     
@@ -101,7 +101,7 @@ proc FiducialsInit {} {
     set Fiducials(mActiveList)  ""
     set Fiducials(scrollActiveList) ""
 
-    set Fiducials(activeList) NONE
+    set Fiducials(activeList) None
     set Fiducials(defaultNames) ""
     # List of Fiducials node names
     set Fiducials(listOfNames) ""
@@ -221,7 +221,7 @@ $Fiducials(help) "
     DevAddButton $f.bAll "Show All" \
             "FiducialsSetFiducialsVisibility ALL; Render3D" 10 
     DevAddButton $f.bNone "Show None" \
-            "FiducialsSetFiducialsVisibility NONE; Render3D" 10 
+            "FiducialsSetFiducialsVisibility None; Render3D" 10 
     pack $f.bAll $f.bNone -side left -padx $Gui(pad) -pady 0
 
     #-------------------------------------------
@@ -492,7 +492,7 @@ proc FiducialsBuildVTK {} {
     
 
     vtkSphereSource   Fiducials(sphereSource)     
-    Fiducials(sphereSource) SetRadius 0.1
+    Fiducials(sphereSource) SetRadius 0.3
     Fiducials(sphereSource)     SetPhiResolution 10
     Fiducials(sphereSource)     SetThetaResolution 10
     
@@ -887,8 +887,15 @@ if { [lsearch $Fiducials(listOfNames) $Fiducials(activeList) ] > -1 } {
    
 } else {
 # if the list that was active before the UpdateMRML does not exist anymore, 
-# then make the active list the "NONE" list
-    FiducialsSetActiveList "NONE"
+# then make the active list the "None" list
+    FiducialsSetActiveList "None"
+     # callback in case any module wants that the None list is active
+    foreach m $Module(idList) {
+    if {[info exists Module($m,fiducialsActivatedListCallback)] == 1} {
+        if {$Module(verbose) == 1} {puts "Fiducials Activated List Callback: $m"}
+        $Module($m,fiducialsActivatedListCallback)  "default" "None" ""
+    }
+}
 }
 
 ##################################################
@@ -1045,8 +1052,8 @@ proc FiducialsResetVariables {} {
 #-------------------------------------------------------------------------------
 # .PROC FiducialsCreateFiducialsList
 # Create a new Fiducials/EndFiducials nodes with that name that will hold a set of points
-# If a list with that name exists already, return 0
-# If the new Fiducials/EndFiducials pair is created, return 1  
+# If a list with that name exists already, return -1
+# If the new Fiducials/EndFiducials pair is created, return its id  
 # .ARGS 
 #  str name the name of the new List
 # .END
@@ -1066,11 +1073,13 @@ proc FiducialsCreateFiducialsList {type name {textSize ""} {symbolSize ""}} {
     MainMrmlAddNode EndFiducials
 
     MainUpdateMRML
+    # set that list active
+    FiducialsSetActiveList $name
     Render3D
     
     return $fid
     } else {
-    return 0
+    return -1
     }
 }
 
@@ -1128,7 +1137,7 @@ proc FiducialsCreatePointFromWorldXYZ {type x y z  {listName ""} {name ""} } {
             FiducialsSetActiveList $listName
             
         }  else {
-            if { $Fiducials(activeList) == "NONE" } {
+            if { $Fiducials(activeList) == "None" } {
                 FiducialsCreateFiducialsList $type "default"
                 FiducialsSetActiveList "default"
             } else {
@@ -1272,7 +1281,7 @@ proc FiducialsDeleteFromPicker {actor cellId} {
 #-------------------------------------------------------------------------------
 proc FiducialsDeleteActiveList {} {
     global Fiducials
-    if {$Fiducials(activeList) == "NONE"} {
+    if {$Fiducials(activeList) == "None"} {
     # do nothing 
     return
     } else {
@@ -1292,12 +1301,12 @@ proc FiducialsDeleteList {name} {
     
     global Fiducials Point
     
-    if {$name == "NONE"} {
+    if {$name == "None"} {
     # do nothing 
     return
     }
     if { $Fiducials(activeList) == $name } {
-    set Fiducials(activeList) "NONE"
+    set Fiducials(activeList) "None"
     }
     
     set fid $Fiducials($name,fid)
@@ -1335,7 +1344,7 @@ proc FiducialsSetFiducialsVisibility {name {visibility ""} {rendererName ""}} {
     if {$name == "ALL"} {
     set visibility 1 
     set name $Fiducials(listOfNames)
-    } elseif {$name == "NONE"} {
+    } elseif {$name == "None"} {
     set visibility 0 
     set name $Fiducials(listOfNames)
     } else {
@@ -1420,9 +1429,27 @@ proc FiducialsSetActiveList {name {menu ""} {scroll ""}} {
         }
         }    
     }
-    }
 }
 
+# callback in case any module wants to know the name of the active list    
+if {$name == "None"} {
+foreach m $Module(idList) {
+    if {[info exists Module($m,fiducialsActivatedListCallback)] == 1} {
+        if {$Module(verbose) == 1} {puts "Fiducials Activated List Callback: $m"}
+        $Module($m,fiducialsActivatedListCallback)  "default" $name ""
+    }
+}
+} else {
+    set id $Fiducials($name,fid)
+    set type [Fiducials($id,node) GetType]
+    foreach m $Module(idList) {
+    if {[info exists Module($m,fiducialsActivatedListCallback)] == 1} {
+        if {$Module(verbose) == 1} {puts "Fiducials Activated List Callback: $m"}
+        $Module($m,fiducialsActivatedListCallback)  $type $name $id
+    }
+    }
+}
+}
 
 proc FiducialsSelectionUpdate {fid pid on} {
     
@@ -1677,12 +1704,12 @@ proc FiducialsGetAllNodesFromList {name} {
     
     global Fiducials Point Mrml
     
-    if {$name == "NONE"} {
+    if {$name == "None"} {
     # do nothing 
     return
     }
     if { $Fiducials(activeList) == $name } {
-    set Fiducials(activeList) "NONE"
+    set Fiducials(activeList) "None"
     }
     
     set fid $Fiducials($name,fid)
