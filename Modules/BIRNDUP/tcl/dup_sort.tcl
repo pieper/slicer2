@@ -128,6 +128,7 @@ itcl::body dup_sort::fill {dir} {
     pack $cs.series -fill both -expand true
     pack $cs.buttons -fill x  -pady 5
 
+    set ::DICOMrecurse "true"
     set aborted [DefaceFindDICOM $dir *]
 
     if { $aborted == "true" } {
@@ -176,11 +177,11 @@ itcl::body dup_sort::fill {dir} {
     set linktable [$parent pref LINKTABLE]
     set inst [$parent pref INSTITUTION]
 
-    if { [catch "exec java -jar $birnid_manager -create -p $inst -l $linktable -c $patient" err] } {
+    if { [catch "exec java -jar $birnid_manager -create -p $inst -l $linktable -c $patient" resp] } {
         DevErrorWindow "Cannot execute BIRN ID manager.  Ensure that UPLOAD2_DIR preference is correct and that Java is installed on your machine."
     } else {
 
-        if { [catch "exec java -jar $birnid_manager -find -l $linktable -c $patient" err] } {
+        if { [catch "exec java -jar $birnid_manager -find -l $linktable -c $patient" resp] } {
             DevErrorWindow "Cannot execute BIRN ID manager to access BIRN ID.  Ensure that LINKTABLE preference is correct."
             set birnid ""
         } else {
