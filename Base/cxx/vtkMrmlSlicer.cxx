@@ -1972,6 +1972,13 @@ void vtkMrmlSlicer::SetShowCursor(int vis)
   }
 }
 
+void vtkMrmlSlicer::SetCursorIntersect(int flag)
+{
+    for (int s=0; s<NUM_SLICES; s++)
+    {
+        this->SetCursorIntersect(s,flag);
+    }
+}
 // DAVE need to call with SetAnnoColor
 void vtkMrmlSlicer::SetCursorColor(float red, float green, float blue) 
 {
