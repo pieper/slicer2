@@ -329,7 +329,7 @@ proc MainInit {} {
 
         # Set version info
 	lappend Module(versions) [ParseCVSInfo Main \
-		{$Revision: 1.31 $} {$Date: 2000/02/22 03:50:39 $}]
+		{$Revision: 1.32 $} {$Date: 2000/02/22 04:17:54 $}]
 
 	# Call each "Init" routine that's not part of a module
 	#-------------------------------------------
@@ -1130,7 +1130,7 @@ http://www.slicer.org"
 		}
 		"Version" {
 		    set msg [FormatCVSInfo $Module(versions)]
-		    MsgPopup Version $x $y $msg {Module Version Info} $Gui(VIF)
+		    MsgPopup Version $x $y $msg {Module Version Info}
 		}
 	    }
 	}
@@ -1295,17 +1295,10 @@ proc ParseCVSInfo {module args} {
 # .END
 #-------------------------------------------------------------------------------
 proc FormatCVSInfo {versions} {
-    set s [format "%-20s%-20s%-20s\n" "Module Name" "Revision" "Date"]
-    for {set i 0} {$i < 60} {incr i} {
-	set s ${s}_
-    }
-    set s "${s}\n"
-    foreach v $versions {
-	set s [format "%s%-20s" $s "[lindex $v 0]:"]
-	foreach item [lrange $v 1 end] {
-	    set s [format "%s%-20s" $s [lrange $item 1 end]]
-	}
-	set s "${s}\n"
+    set s ""
+    foreach v "$versions" {
+	set s [format "%s%-30s" $s "[lindex $v 0]:"]
+	set s "${s}\t[lindex $v 1]\t\t[lindex $v 2]\n"
     }
     return $s
 }
