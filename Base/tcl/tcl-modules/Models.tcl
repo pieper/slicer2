@@ -175,7 +175,7 @@ Models are fun. Do you like models, Ron?
 	#-------------------------------------------
 	# fDisplay->Grid frame
 	#-------------------------------------------
-	# Done in MainModelsRefreshGUI
+	# Done in MainModelsCreateGUI
 
 	#-------------------------------------------
 	# Props frame

@@ -98,8 +98,9 @@ organize them.
 	frame $f.fTitle -bg $Gui(activeWorkspace)
 	frame $f.fApply -bg $Gui(activeWorkspace)
 	frame $f.fGrid -bg $Gui(activeWorkspace)
-	pack $f.fTitle $f.fApply $f.fGrid -side top -pady $Gui(pad)
-
+#	pack $f.fTitle $f.fApply $f.fGrid -side top -pady $Gui(pad)
+	pack $f.fTitle $f.fApply -side top -pady $Gui(pad)
+        pack $f.fGrid -side bottom -pady $Gui(pad) -fill y -expand true
 	#-------------------------------------------
 	# Order->Title frame
 	#-------------------------------------------
@@ -203,12 +204,29 @@ proc ModulesOrderGUI {} {
 	global Module Modules Gui
 	
 	set f $Modules(fOrder)
-	foreach m $Module(idList) {
 
-		# Delete from last time
-		destroy $f.c$m
-		destroy $f.bUp$m
-		destroy $f.bDown$m
+        # Delete everything from last time
+        set canvas $f.cGrid
+        catch {destroy $canvas}
+        set s $f.sGrid
+        catch {destroy $s}
+
+        canvas $canvas -yscrollcommand "$s set" -bg $Gui(activeWorkspace)
+        eval "scrollbar $s -command \"CheckScrollLimits $canvas yview\"	\
+		$Gui(WSBA)"
+        pack $s -side right -fill y
+        pack $canvas -side top -fill both -expand true
+
+        set f $canvas.fModules
+        frame $f -bd 0 -bg $Gui(activeWorkspace)
+    
+        # put the frame inside the canvas (so it can scroll)
+        $canvas create window 0 0 -anchor nw -window $f
+
+        # y spacing important for calculation of frame height for scrolling
+        set pady 2
+
+	foreach m $Module(idList) {
 
 		# Name / Visible
 		set c {checkbutton $f.c$m \
@@ -221,9 +239,38 @@ proc ModulesOrderGUI {} {
 			-command "ModulesUp $m" $Gui(WBA)}; eval [subst $c]
 		set c {button $f.bDown$m -text "Down" -width 5\
 			-command "ModulesDown $m" $Gui(WBA)}; eval [subst $c]
-
-		grid $f.c$m $f.bUp$m $f.bDown$m -pady 2 -padx 5
+		
+		grid $f.c$m $f.bUp$m $f.bDown$m -pady $pady -padx 5
 	}
+
+	if {[info exists m] == 1} {
+	    # Find the height of a single button
+	    set lastButton $f.bUp$m
+	    set width [winfo reqwidth $lastButton]
+	    # Find how many modules (lines) in the frame
+	    set numLines [llength $Module(idList)]
+	    # Find the height of a line
+	    set incr [expr {[winfo reqheight $lastButton] + 2*$pady}]
+	    # Find the total height that should scroll
+	    set height [expr {$numLines * $incr}]
+
+	    $canvas config -scrollregion "0 0 1 $height"
+	    $canvas config -yscrollincrement $incr -confine true
+	}
+}
+
+# This procedure allows scrolling only if the entire frame is not visible
+proc CheckScrollLimits {args} {
+
+    set canvas [lindex $args 0]
+    set view   [lindex $args 1]
+    set fracs [$canvas $view]
+
+    if {double([lindex $fracs 0]) == 0.0 && \
+	    double([lindex $fracs 1]) == 1.0} {
+	return
+    }
+    eval $args
 }
 
 #-------------------------------------------------------------------------------

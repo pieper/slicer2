@@ -217,6 +217,18 @@ proc GuiInit {} {
 			regsub {helvetica 8} $Gui($a) {helvetica 10 bold} Gui($a)
 		} 
 	}
+
+
+	# Workspace Scrollbar Attributes (WSBA)
+	lappend attr WSBA 
+	set Gui(WSBA) { -bg $Gui(activeWorkspace) \
+		-activebackground $Gui(activeButton) -troughcolor $Gui(normalButton) \
+		-highlightthickness 0 -bd $Gui(borderWidth) -relief flat}
+
+
+
+
+
 }
 
 #-------------------------------------------------------------------------------
