@@ -37,8 +37,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkAnisoGaussSeidel.cxx,v $
   Language:  C++
-  Date:      $Date: 2003/05/15 15:54:22 $
-  Version:   $Revision: 1.6 $
+  Date:      $Date: 2003/09/09 20:16:11 $
+  Version:   $Revision: 1.7 $
 
 =========================================================================*/
 
@@ -869,7 +869,7 @@ float vtkAnisoGaussSeidel::Iterate3D()
                 )/2.0;
 
         // Compute the basis (e0, e1, e2):
-        Si CurvaturasPrincipales(  hessien, 
+        Si ::FluxDiffusion::CurvaturasPrincipales(  hessien, 
                  (float*) gradient, 
                  (float*) vmax, 
                  (float*) vmin, 
@@ -968,7 +968,7 @@ float vtkAnisoGaussSeidel::Iterate3D()
 
 
         // Calcul de la base (e0, e1, e2):
-        Si CurvaturasPrincipales(  hessien, 
+        Si ::FluxDiffusion::CurvaturasPrincipales(  hessien, 
                  (float*) gradient, 
                  (float*) vmax, 
                  (float*) vmin, 
@@ -1069,7 +1069,7 @@ float vtkAnisoGaussSeidel::Iterate3D()
         FinSi
 
         // Calcul de la base (e0, e1, e2):
-        Si CurvaturasPrincipales(  hessien, 
+        Si ::FluxDiffusion::CurvaturasPrincipales(  hessien, 
                  (float*) gradient, 
                  (float*) vmax, 
                  (float*) vmin, 
@@ -1398,7 +1398,7 @@ float vtkAnisoGaussSeidel::Iterate3D( vtkImageData *inData,  int inExt[6],
                 )/2.0;
 
         // Compute the basis (e0, e1, e2):
-        Si CurvaturasPrincipales(  hessien, 
+        Si ::FluxDiffusion::CurvaturasPrincipales(  hessien, 
                  (float*) gradient, 
                  (float*) vmax, 
                  (float*) vmin, 
@@ -1499,7 +1499,7 @@ float vtkAnisoGaussSeidel::Iterate3D( vtkImageData *inData,  int inExt[6],
 
 
         // Calcul de la base (e0, e1, e2):
-        Si CurvaturasPrincipales(  hessien, 
+        Si ::FluxDiffusion::CurvaturasPrincipales(  hessien, 
                  (float*) gradient, 
                  (float*) vmax, 
                  (float*) vmin, 
@@ -1601,7 +1601,7 @@ float vtkAnisoGaussSeidel::Iterate3D( vtkImageData *inData,  int inExt[6],
         FinSi
 
         // Calcul de la base (e0, e1, e2):
-        Si CurvaturasPrincipales(  hessien, 
+        Si ::FluxDiffusion::CurvaturasPrincipales(  hessien, 
                  (float*) gradient, 
                  (float*) vmax, 
                  (float*) vmin, 
