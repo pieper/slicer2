@@ -268,61 +268,21 @@ if { $SLICER(tkcon) == "true" } {
 raise .splash
 update
 
-#
-# set statup options - convert backslashes from windows
-# version of SLICER_HOME var into to regular slashes
-# (won't matter for unix version)
-#
-regsub -all {\\} $env(SLICER_HOME) / slicer_home
-regsub -all {\\} $env(HOME) / user_home
-regsub -all {\\} $env(VTK_SRC_DIR) / vtk_src_dir
-#lappend auto_path $slicer_home/Base/tcl 
-#lappend auto_path $slicer_home/Base/Wrapping/Tcl/vtkSlicerBase
-#lappend auto_path $vtk_src_dir/Wrapping/Tcl
 
+#
+# load the tcl packages and shared libraries of cxx code
+# (proper environment is set up in launch.tcl)
+#
+
+puts "Loading Base..."
 package require vtkSlicerBase ;# this pulls in all of slicer
 
-# Set path to search for plug-in modules, and require them
-set baseModulePath ${slicer_home}/Modules
-set userModulePath ${user_home}/Modules
-set modulePaths ""
-catch {set modulePaths [join [list [glob $baseModulePath/vtk*] [glob -nocomplain ${userModulePath}/vtk*]]]}
-if {$verbose == 1} { puts "Set modulePaths to:\n ${modulePaths}" }
-
-# do the add to autopath and require two times, once for the slicer home modules 
-# and again for any modules in the users home dir
-foreach modulePath "${baseModulePath} ${userModulePath}" {
-    # do two separate loops to solve interdependency problems between modules, 
-    # add all modules to the autopath first so that any package requiring another 
-    # module can find it if they are not loaded in the right order
-    foreach dir $modulePaths {
-        # get the module name
-        if {[regexp "$modulePath/(\.\*)" $dir match moduleName] == 1} {
-            # if it's not the custom one, append it to the path
-            if {[string first Custom $moduleName] == -1} {
-                if {[file isdirectory ${modulePath}/${moduleName}/Wrapping/Tcl/${moduleName}] == 1} {
-                    puts "Adding module to auto_path: ${moduleName}"
-                    if {$verbose == 1} {
-                        puts "\n\t(dir: ${modulePath}/${moduleName}/Wrapping/Tcl/${moduleName})"
-                    }
-                    lappend auto_path ${modulePath}/${moduleName}/Wrapping/Tcl/${moduleName}
-                }
-            }
-        }
-    }
-    # second loop to deal with all the package requires after the auto path is set up
-    foreach dir $modulePaths {
-        if {[regexp "$modulePath/(\.\*)" $dir match moduleName] == 1} {
-            if {[string first Custom $moduleName] == -1} {
-                puts "Requiring module: ${moduleName}"
-                if { [catch {package require ${moduleName}} errVal] } {
-                    puts stderr "ERROR while requiring  ${moduleName}:\n$errVal"
-                }
-            }
-        }
+foreach m $env(SLICER_MODULES_TO_REQUIRE) {
+    puts "Loading Module $m..."
+    if { [catch {package require $m} errVal] } {
+        puts stderr "ERROR while requiring  $m:\n$errVal"
     }
 }
-
 
 #
 # turn off if user wants - re-enabled threading by default
@@ -333,13 +293,6 @@ if { $SLICER(threaded) == "false" } {
     vtkMultiThreader tempMultiThreader
     tempMultiThreader SetGlobalDefaultNumberOfThreads 1
     tempMultiThreader Delete
-}
-
-# turn off warnings about old function use
-if { $tcl_platform(platform) == "windows" } {
-    vtkObject o
-    # o SetGlobalWarningDisplay 0
-    o Delete
 }
 
 
@@ -608,7 +561,7 @@ if { $SLICER(versionInfo) != "" } {
     set compilerName [Slicer GetCompilerName]
     set vtkVersion [Slicer GetVTKVersion]
     set libVersions "VTK: ${vtkVersion} TCL: ${tcl_patchLevel} TK: ${tk_patchLevel}"
-    set SLICER(versionInfo) "$SLICER(versionInfo) ${compilerName}: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.51 2003/04/14 19:58:08 pieper Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo) ${compilerName}: $compilerVersion ${libVersions} CVS: [ParseCVSInfo " " {$Id: Go.tcl,v 1.52 2003/05/06 18:44:25 pieper Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
