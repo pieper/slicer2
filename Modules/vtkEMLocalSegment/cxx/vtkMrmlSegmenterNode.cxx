@@ -62,15 +62,12 @@ vtkMrmlSegmenterNode::vtkMrmlSegmenterNode()
   // This is a flag so we can see if we already read the node 
   this->AlreadyRead        = 0;
   this->MaxInputChannelDef    = 0;
-  this->NumClasses         = 1;
   this->EMShapeIter        = 1;
   this->EMiteration        = 1;
   this->MFAiteration       = 1;
   this->Alpha              = 0.0;   
   this->SmWidth     = 1;
   this->SmSigma     = 1;
-  this->StartSlice         = 0;
-  this->EndSlice           = 0;
   this->DisplayProb     = 0;
   this->NumberOfTrainingSamples = 0;
   this->IntensityAvgClass = -1;
@@ -79,6 +76,10 @@ vtkMrmlSegmenterNode::vtkMrmlSegmenterNode()
     this->SegmentationBoundaryMin[i] = 0; // Lower bound of the boundary box where the image gets segments.
     this->SegmentationBoundaryMax[i] = 0;// Upper bound of the boundary box where the image gets segments.
   }
+
+  // Legacy variables to stay compatibale with older versions - cannot delete it 
+  this->NumClasses         = 1;
+
 }
 
 //----------------------------------------------------------------------------
@@ -98,18 +99,6 @@ void vtkMrmlSegmenterNode::Write(ofstream& of, int nIndent)
   vtkIndent i1(nIndent);
 
   of << i1 << "<Segmenter";
-
-  // Strings
-  //  if (this->Name && strcmp(this->Name, "")) 
-  //    {
-  //      of << " name='" << this->Name << "'";
-  //    }
-  //    if (this->Description && strcmp(this->Description, "")) 
-  //    {
-  //      of << " description='" << this->Description << "'";
-  //    }
-
-  of << " NumClasses ='"                 << this->NumClasses << "'";
   of << " MaxInputChannelDef ='"         << this->MaxInputChannelDef << "'";
   of << " EMShapeIter ='"                << this->EMShapeIter << "'";
   of << " EMiteration ='"                << this->EMiteration << "'";
@@ -142,15 +131,12 @@ void vtkMrmlSegmenterNode::Copy(vtkMrmlNode *anode)
   vtkMrmlNode::MrmlNodeCopy(anode);
   vtkMrmlSegmenterNode *node = (vtkMrmlSegmenterNode *) anode;
 
-  this->NumClasses                 = node->NumClasses;
   this->MaxInputChannelDef         = node->MaxInputChannelDef;
   this->EMiteration                = node->EMiteration;
   this->MFAiteration               = node->MFAiteration;
   this->Alpha                      = node->Alpha;   
   this->SmWidth                    = node->SmWidth;
   this->SmSigma                    = node->SmSigma;
-  this->StartSlice                 = node->StartSlice;
-  this->EndSlice                   = node->EndSlice;
   this->DisplayProb                = node->DisplayProb;
   this->NumberOfTrainingSamples    = node->NumberOfTrainingSamples;
   this->IntensityAvgClass          = node->IntensityAvgClass;
@@ -164,7 +150,6 @@ void vtkMrmlSegmenterNode::PrintSelf(ostream& os, vtkIndent indent)
 {
   vtkMrmlNode::PrintSelf(os,indent);
   os << indent << "AlreadyRead: "               << this->AlreadyRead     <<  "\n"; 
-  os << indent << "NumClasses: "                << this->NumClasses      <<  "\n"; 
   os << indent << "MaxInputChannelDef: "        << this->MaxInputChannelDef <<  "\n"; 
   os << indent << "EMShapeIter: "               << this->EMShapeIter     <<  "\n"; 
   os << indent << "EMiteration: "               << this->EMiteration     <<  "\n"; 
@@ -172,8 +157,6 @@ void vtkMrmlSegmenterNode::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "Alpha: "                     << this->Alpha <<  "\n"; 
   os << indent << "SmWidth: "                   << this->SmWidth <<  "\n"; 
   os << indent << "SmSigma: "                   << this->SmSigma <<  "\n"; 
-  os << indent << "StartSlice: "                << this->StartSlice  <<  "\n"; 
-  os << indent << "EndSlice: "                  << this->EndSlice <<  "\n"; 
   os << indent << "DisplayProb: "               << this->DisplayProb <<  "\n"; 
   os << indent << "NumberOfTrainingSamples: "   << this->NumberOfTrainingSamples <<  "\n"; 
   os << indent << "IntensityAvgClass:"          << this->IntensityAvgClass << "\n";

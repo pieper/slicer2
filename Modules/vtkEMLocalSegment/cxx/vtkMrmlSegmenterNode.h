@@ -82,11 +82,6 @@ public:
 
   // Description:
   // Get/Set for Segmenter
-  vtkSetMacro(NumClasses, int);
-  vtkGetMacro(NumClasses, int);
-
-  // Description:
-  // Get/Set for Segmenter
   vtkSetMacro(EMShapeIter, int);
   vtkGetMacro(EMShapeIter, int);
 
@@ -116,38 +111,11 @@ public:
   vtkGetMacro(SmSigma, int);
 
   // Description:
-  // Get/Set for Segmenter - not part of new version anymore 
-  vtkSetMacro(StartSlice, int);
-  vtkGetMacro(StartSlice, int);
-
-  // Description:
-  // Get/Set for Segmenter - not part of new version anymore 
-  vtkSetMacro(EndSlice, int);
-  vtkGetMacro(EndSlice, int);
-
-  // Description:
   // Replacement for Start - EndSlice Bounding Box can be 3D
-  void vtkSetSegmentationBoundaryMin(int init0, int init1, int init2) {
-    int init[3]={init0,init1,init2};
-    this->SetSegmentationBoundaryMin(init);
-  }
-
-  void SetSegmentationBoundaryMin(int init[3]) {
-    for(int i = 0 ; i < 3; i++) {printf("%d ",init[i]); this->SegmentationBoundaryMin[i] = init[i];}
-    this->StartSlice = this->SegmentationBoundaryMin[2];
-  }
-
-  void vtkSetSegmentationBoundaryMax(int init0, int init1, int init2) {
-    int init[3]={init0,init1,init2};
-    this->SetSegmentationBoundaryMax(init);
-  }
-
-  void SetSegmentationBoundaryMax(int init[3]) {
-    for(int i = 0 ; i < 3; i++) this->SegmentationBoundaryMax[i] = init[i];
-    this->EndSlice = this->SegmentationBoundaryMax[2];
-  }
-
+  vtkSetVector3Macro(SegmentationBoundaryMin, int);
   vtkGetVector3Macro(SegmentationBoundaryMin,int);
+
+  vtkSetVector3Macro(SegmentationBoundaryMax,int);
   vtkGetVector3Macro(SegmentationBoundaryMax,int);
 
  
@@ -174,6 +142,21 @@ public:
   vtkGetStringMacro(PrintDir);
   vtkSetStringMacro(PrintDir);
 
+
+  // Legacy Variables : 
+  // The tree is a 1D list of nodes, it does not know anything about hireachies 
+  //  => Never delete variables from vtkMrml..Node.h if for some XML files you use them 
+  // and you cannot update them easily in LoadMRML
+
+  // Description:
+  // Get/Set for Segmenter
+  void SetNumClasses(int init) {
+    vtkWarningMacro(<<"You have an older XML Version for EMSegmenter - NumClasses is not defined anymore as part of vtMRMLSegmenterNode"<< endl 
+                    <<"We still read in values but update your XML File to new structure to erase this error message" );
+    this->NumClasses  = init;
+  }
+  vtkGetMacro(NumClasses, int);
+
 protected:
   vtkMrmlSegmenterNode();
   ~vtkMrmlSegmenterNode();
@@ -182,21 +165,22 @@ protected:
 
   int    AlreadyRead; 
   int    MaxInputChannelDef;
-  int    NumClasses;
   int    EMShapeIter;
   int    EMiteration;
   int    MFAiteration;
   double Alpha;
   int    SmWidth;
   int    SmSigma;
-  int    StartSlice;
-  int    EndSlice;
-  int    DisplayProb;
+  int    DisplayProb;  // Should the probability displayed in the graph - left it in bc it is more work to take it out - should not be defined here but in GraphNode 
   int    NumberOfTrainingSamples;
   int    IntensityAvgClass;
   char*  PrintDir;
   int    SegmentationBoundaryMin[3];
   int    SegmentationBoundaryMax[3];
+
+  // These are legacy definitions - we leave them in so we keep compatibility with older versions
+  int    NumClasses; //  From July 04 the HeadClass will be defined seperatly from SegmenterNode so that there is no overlap anymore between SuperClassNode and SegmenterNode
+
 };
 
 #endif

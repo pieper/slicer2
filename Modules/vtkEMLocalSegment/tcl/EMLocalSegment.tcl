@@ -242,7 +242,7 @@ proc EMSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.31 $} {$Date: 2004/07/19 22:57:26 $}]
+        {$Revision: 1.32 $} {$Date: 2004/07/24 18:26:13 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -1548,7 +1548,7 @@ proc EMSegmentLoadMRMLNode {NodeType attr AddSetCommandList } {
     set n [MainMrmlAddNode $NodeType]
     set nMethods [$n ListMethods] 
 
-    # Cut out eveyrhting than it is not directly connected with the MrmlSegmenterNode!  
+    # Cut out everyhting than it is not directly connected with the MrmlSegmenterNode!  
     # If you want to chnage it just take the SetOptions out - that is why I am duing it 
     set nMethods "[lrange $nMethods [expr [lsearch $nMethods vtkMrml${NodeType}Node:]+ 1] end] $AddSetCommandList"
     foreach index [lsearch -glob -all $nMethods  Set*] {
@@ -1564,6 +1564,7 @@ proc EMSegmentLoadMRMLNode {NodeType attr AddSetCommandList } {
         if {$CommandIndex > -1} {
            if {[catch {eval $n [lindex $SetList $CommandIndex] $val}] } {$n [lindex $SetList $CommandIndex] $val }}
     }
+    return $n
 }
 
 
@@ -1577,10 +1578,27 @@ proc EMSegmentLoadMRMLNode {NodeType attr AddSetCommandList } {
 #-------------------------------------------------------------------------------
 proc EMSegmentLoadMRML {tag attr} {
   global Mrml 
+  # Just note : The tree does not know anything about dependencies / hierarchy 
+  # between different nodes - it is not really a tree but a list of nodes 
+  # where when we printed out the vtkIndent indent variables is just set so it looks 
+  # like we have a tree structure   
   switch $tag {
     "Segmenter" {
-            EMSegmentLoadMRMLNode Segmenter "$attr" "" 
+        set n [EMSegmentLoadMRMLNode Segmenter "$attr" "" ]
+        # Have to address legacy Attributes in UpdateMrml and Save Setting ! 
+        # The tree is a 1D list of nodes - see also the note above
+    # => Never delete varaibles from vtkMrml..Node.h if some XML files you use 
+        # still have them and cannot easily change it up here such as NumClasses 
+    foreach a $attr {
+        set key [lindex $a 0]
+        set val [lreplace $a 0 0]
+        switch $key {
+        "StartSlice" {$n SetSegmentationBoundaryMin 1 1 $val}  
+        "EndSlice"   {$n SetSegmentationBoundaryMin 256 256 $val}  
+        }
     }
+
+     }
     "EndSegmenter" {
             set n [MainMrmlAddNode EndSegmenter]
     }
@@ -1588,22 +1606,22 @@ proc EMSegmentLoadMRML {tag attr} {
             EMSegmentLoadMRMLNode SegmenterGraph "$attr" "SetName" 
     }
     "SegmenterInput" {
-        EMSegmentLoadMRMLNode SegmenterInput "$attr" "SetName" 
+            EMSegmentLoadMRMLNode SegmenterInput "$attr" "SetName" 
     }
     "SegmenterSuperClass" {
-        EMSegmentLoadMRMLNode SegmenterSuperClass "$attr" "SetName" 
+            EMSegmentLoadMRMLNode SegmenterSuperClass "$attr" "SetName" 
     }
     "EndSegmenterSuperClass" {
             set n [MainMrmlAddNode EndSegmenterSuperClass]
     }
     "SegmenterClass" {
-        EMSegmentLoadMRMLNode SegmenterClass "$attr" "SetName" 
+             EMSegmentLoadMRMLNode SegmenterClass "$attr" "SetName" 
     }
     "EndSegmenterClass" {
             set n [MainMrmlAddNode EndSegmenterClass]
     }
     "SegmenterPCAEigen" {
-        EMSegmentLoadMRMLNode SegmenterPCAEigen "$attr"  ""
+            EMSegmentLoadMRMLNode SegmenterPCAEigen "$attr"  ""
     }
      
     "SegmenterCIM" {
@@ -1671,148 +1689,157 @@ proc EMSegmentUpdateMRML {} {
        } 
 
        if { $ClassName == "vtkMrmlSegmenterNode" } {
-        # --------------------------------------------------
-        # 2.) Check if we already work on this Segmenter
-        #     => if yes , do not do anything
-        # -------------------------------------------------
-        set pid [$item GetID]
-        # Kilian change back
-        # Do not overide any changes - do not have to update anything - makes it fast
-        # The only time, when this 0 if a new xml file is read 
-        if {$EMSegment(SegmenterNode) != "" && $pid == [$EMSegment(SegmenterNode) GetID] && [$EMSegment(SegmenterNode) GetAlreadyRead]} {
-            break   
-        }  
-        set VolumeList ""
-        foreach VolID $Volume(idList) {
-          lappend VolumeList "[Volume($VolID,node) GetName] {[Volume($VolID,node) GetImageRange]} [Volume($VolID,node) GetFilePrefix] [file normalize [file join $env(SLICER_HOME) [Volume($VolID,node) GetFullPrefix]]]"
-        }
-        
-        set NumberOfGraphs 0
-        set EMSegment(SegmenterNode) $item
-        # Current SupperClass
-        EMSegmentChangeClass 0
-        # set EMSegment(Cattrib,0,ClassList) ""
-        $EMSegment(SegmenterNode) SetAlreadyRead 1
-      
-        # Reset all Input and Graph Values
-        set EMSegment(SegmenterGraphNodeList) ""
-        set EMSegment(SegmenterInputNodeList) ""
-        EMSegmentDeleteFromSelList $EMSegment(SelVolList,VolumeList)
-        # --------------------------------------------------
-        # 3.) Update variables 
-        # -------------------------------------------------
-        # If the path is not the same, define all Segmenter variables
-        # Delete old values Kilian: Could do it but would cost to much time 
-        # This is more efficient - but theoretically could also start from stretch bc I 
-        # only get this far when a new XML file is read ! If you get in problems just do the 
-        # following (deletes everything) 
-        # set EMSegment(NumClassesNew)   0
-        # EMSegmentCreateDeleteClasses 1 0
-        set EMSegment(NumClassesNew)              [Segmenter($pid,node) GetNumClasses]              
-        EMSegmentSetMaxInputChannelDef            [Segmenter($pid,node) GetMaxInputChannelDef]
-        EMSegmentCreateDeleteClasses 1 0
-
-        set CurrentClassList $EMSegment(Cattrib,0,ClassList)       
-        set EMSegment(EMShapeIter)                [Segmenter($pid,node) GetEMShapeIter]
-        set EMSegment(EMiteration)                [Segmenter($pid,node) GetEMiteration]
-        set EMSegment(MFAiteration)               [Segmenter($pid,node) GetMFAiteration]                
-        set EMSegment(Alpha)                      [Segmenter($pid,node) GetAlpha]                       
-        set EMSegment(SmWidth)                    [Segmenter($pid,node) GetSmWidth]                     
-        set EMSegment(SmSigma)                    [Segmenter($pid,node) GetSmSigma] 
-        set EMSegment(PrintIntermediateResults)   [Segmenter($pid,node) GetPrintIntermediateResults]    
-        set EMSegment(PrintIntermediateSlice)     [Segmenter($pid,node) GetPrintIntermediateSlice]      
-        set EMSegment(PrintIntermediateFrequency) [Segmenter($pid,node) GetPrintIntermediateFrequency] 
-        set EMSegment(PrintPCAParameters)         [Segmenter($pid,node) GetPrintPCAParameters]
-        set EMSegment(PrintDICEResults)           [Segmenter($pid,node) GetPrintDICEResults]  
-        set BoundaryMin                           [Segmenter($pid,node) GetSegmentationBoundaryMin]
-        set BoundaryMax                           [Segmenter($pid,node) GetSegmentationBoundaryMax]
-        for {set i 0} {$i < 3} {incr i} { 
-          set EMSegment(SegmentationBoundaryMin,$i) [lindex $BoundaryMin $i]
-          set EMSegment(SegmentationBoundaryMax,$i) [lindex $BoundaryMax $i]
-        }
-        # Kilian - think about it later - have to be comlient with older versions 
-        set EMSegment(SegmentationBoundaryMin,2)  [Segmenter($pid,node) GetStartSlice]
-        set EMSegment(SegmentationBoundaryMax,2)  [Segmenter($pid,node) GetEndSlice]                
-
-
-        set EMSegment(Graph,DisplayProbNew)       [Segmenter($pid,node) GetDisplayProb]                 
-        if {$EMSegment(Graph,DisplayProbNew) != $EMSegment(Graph,DisplayProb)} { set EMSegment(Graph,DisplayProb) $EMSegment(Graph,DisplayProbNew); EMSegmentUpdateClasses 0 }    
-        set EMSegment(NumberOfTrainingSamples)    [Segmenter($pid,node) GetNumberOfTrainingSamples]
-        set IntensityAvgClass                     [Segmenter($pid,node) GetIntensityAvgClass]    
-    } elseif {$ClassName == "vtkMrmlSegmenterGraphNode" } {
-        # --------------------------------------------------
-        # 4.) Only change Graph variables until graph 
-        #     definitions extends the Number of Graphs 
-        #     defined in the Module 
-        # -------------------------------------------------
-        if {($NumberOfGraphs < $EMSegment(NumGraph)) && ($NumberOfGraphs < 2)} {
-          lappend EMSegment(SegmenterGraphNodeList)  $item 
+          # --------------------------------------------------
+          # 2.) Check if we already work on this Segmenter
+          #     => if yes , do not do anything
+          # -------------------------------------------------
           set pid [$item GetID]
-      GraphRescaleAxis EMSegment $EMSegment(Graph,$NumberOfGraphs,path) [SegmenterGraph($pid,node) GetXmin] [SegmenterGraph($pid,node) GetXmax] [SegmenterGraph($pid,node) GetXsca] 0
-          incr NumberOfGraphs
-        }
-    } elseif {$ClassName == "vtkMrmlSegmenterInputNode" } {
-        # --------------------------------------------------
-        # 5.) Update selected Input List 
-        # -------------------------------------------------
-        # find out the Volume correspnding to the following description
-        lappend EMSegment(SegmenterInputNodeList)  $item 
-        set pid [$item GetID]
-        set FilePrefix [SegmenterInput($pid,node) GetFilePrefix]
-        set FileName   [SegmenterInput($pid,node) GetFileName]
-        set ImageRange [SegmenterInput($pid,node) GetImageRange]
+          # Kilian change back
+          # Do not overide any changes - do not have to update anything - makes it fast
+          # The only time, when this 0 if a new xml file is read 
+          if {$EMSegment(SegmenterNode) != "" && $pid == [$EMSegment(SegmenterNode) GetID] && [$EMSegment(SegmenterNode) GetAlreadyRead]} {
+              break   
+          }  
+          set VolumeList ""
+          foreach VolID $Volume(idList) {
+            lappend VolumeList "[Volume($VolID,node) GetName] {[Volume($VolID,node) GetImageRange]} [Volume($VolID,node) GetFilePrefix] [file normalize [file join $env(SLICER_HOME) [Volume($VolID,node) GetFullPrefix]]]"
+          }
+          
+          set NumberOfGraphs 0
+          set EMSegment(SegmenterNode) $item
+          # Current SupperClass
+          EMSegmentChangeClass 0
+          # set EMSegment(Cattrib,0,ClassList) ""
+          $EMSegment(SegmenterNode) SetAlreadyRead 1
+            
+          # Reset all Input and Graph Values
+          set EMSegment(SegmenterGraphNodeList) ""
+          set EMSegment(SegmenterInputNodeList) ""
+          EMSegmentDeleteFromSelList $EMSegment(SelVolList,VolumeList)
+          # --------------------------------------------------
+          # 3.) Update variables 
+          # -------------------------------------------------
+          EMSegmentSetMaxInputChannelDef            [Segmenter($pid,node) GetMaxInputChannelDef]
+          set EMSegment(EMShapeIter)                [Segmenter($pid,node) GetEMShapeIter]
+          set EMSegment(EMiteration)                [Segmenter($pid,node) GetEMiteration]
+          set EMSegment(MFAiteration)               [Segmenter($pid,node) GetMFAiteration]                
+          set EMSegment(Alpha)                      [Segmenter($pid,node) GetAlpha]                       
+          set EMSegment(SmWidth)                    [Segmenter($pid,node) GetSmWidth]                     
+          set EMSegment(SmSigma)                    [Segmenter($pid,node) GetSmSigma] 
+          set EMSegment(PrintDir)                   [Segmenter($pid,node) GetPrintDir]  
+          set BoundaryMin                           [Segmenter($pid,node) GetSegmentationBoundaryMin]
+          set BoundaryMax                           [Segmenter($pid,node) GetSegmentationBoundaryMax]
+          for {set i 0} {$i < 3} {incr i} { 
+            set EMSegment(SegmentationBoundaryMin,$i) [lindex $BoundaryMin $i]
+            set EMSegment(SegmentationBoundaryMax,$i) [lindex $BoundaryMax $i]
+          }      
+          set EMSegment(Graph,DisplayProbNew)       [Segmenter($pid,node) GetDisplayProb]                 
+          if {$EMSegment(Graph,DisplayProbNew) != $EMSegment(Graph,DisplayProb)} { set EMSegment(Graph,DisplayProb) $EMSegment(Graph,DisplayProbNew); EMSegmentUpdateClasses 0 }    
+          set EMSegment(NumberOfTrainingSamples)    [Segmenter($pid,node) GetNumberOfTrainingSamples]
+          set IntensityAvgClass                     [Segmenter($pid,node) GetIntensityAvgClass]  
 
-        foreach VolID $Volume(idList) VolAttr $VolumeList {
-        if {([lindex $VolAttr 0] == $FileName) && ([lindex $VolAttr 1] == $ImageRange) } { 
-        if {([lindex $VolAttr 2] == $FilePrefix) || ([lindex $VolAttr 3] == $FilePrefix)} {
-                  set EMSegment(AllVolList,ActiveID) [lsearch -exact $EMSegment(AllVolList,VolumeList) $VolID]
-                  EMSegmentTransfereVolume All
-                  set EMSegment(IntensityAvgValue,$VolID) [SegmenterInput($pid,node) GetIntensityAvgValuePreDef]
-                  break;
-        }
-        }
-        }
-    } elseif {$ClassName == "vtkMrmlSegmenterSuperClassNode" } {
-        # --------------------------------------------------
-        # 6.) Update variables for SuperClass 
-        # -------------------------------------------------
-        set pid [$item GetID]
-        # If you get an error mesaage in the follwoing lines then CurrentClassList to short
-        set NumClass [lindex $CurrentClassList 0]
-        if {$NumClass == ""} { DevErrorWindow "Error in XML File : Super class $EMSegment(SuperClass)  has not a sub-classes defined" }
+          set EMSegment(EMShapeIter)                [Segmenter($pid,node) GetEMShapeIter]
 
-        # Save status when returning to parent of this class 
-        set CurrentClassList [lrange $CurrentClassList 1 end]
-        lappend SclassMemory [list "$EMSegment(SuperClass)" "$CurrentClassList"]
 
-        # Transfer from Class to SuperClass
-        set EMSegment(Class) $NumClass
-        if {$EMSegment(Cattrib,$NumClass,IsSuperClass) == 0} {
-           set EMSegment(Cattrib,$NumClass,IsSuperClass) 1
-           # Set current class to current SuperClass
-           EMSegmentTransfereClassType 0 0
-        } else {
-           set EMSegment(SuperClass) $NumClass
-        }
+      # If the path is not the same, define all Segmenter variables
+      # Delete old values Kilian: Could do it but would cost to much time 
+      # This is more efficient - but theoretically could also start from stretch bc I 
+      # only get this far when a new XML file is read ! If you get in problems just do the 
+      # following (deletes everything) 
+      # set EMSegment(NumClassesNew)   0
+      # EMSegmentCreateDeleteClasses 1 0
+          set  NumClasses [Segmenter($pid,node) GetNumClasses]
+
+      if {$NumClasses} { 
+          set EMSegment(NumClassesNew)           [Segmenter($pid,node) GetNumClasses]              
+          EMSegmentCreateDeleteClasses 1 0
+          set CurrentClassList $EMSegment(Cattrib,0,ClassList)       
+      } else {
+          set CurrentClassList 0
+      }
+       } elseif {$ClassName == "vtkMrmlSegmenterGraphNode" } {
+          # --------------------------------------------------
+          # 4.) Only change Graph variables until graph 
+          #     definitions extends the Number of Graphs 
+          #     defined in the Module 
+          # -------------------------------------------------
+          if {($NumberOfGraphs < $EMSegment(NumGraph)) && ($NumberOfGraphs < 2)} {
+            lappend EMSegment(SegmenterGraphNodeList)  $item 
+            set pid [$item GetID]
+            GraphRescaleAxis EMSegment $EMSegment(Graph,$NumberOfGraphs,path) [SegmenterGraph($pid,node) GetXmin] [SegmenterGraph($pid,node) GetXmax] [SegmenterGraph($pid,node) GetXsca] 0
+            incr NumberOfGraphs
+          }
+       } elseif {$ClassName == "vtkMrmlSegmenterInputNode" } {
+          # --------------------------------------------------
+          # 5.) Update selected Input List 
+          # -------------------------------------------------
+          # find out the Volume correspnding to the following description
+          lappend EMSegment(SegmenterInputNodeList)  $item 
+          set pid [$item GetID]
+          set FilePrefix [SegmenterInput($pid,node) GetFilePrefix]
+          set FileName   [SegmenterInput($pid,node) GetFileName]
+          set ImageRange [SegmenterInput($pid,node) GetImageRange]
+      
+          foreach VolID $Volume(idList) VolAttr $VolumeList {
+            if {([lindex $VolAttr 0] == $FileName) && ([lindex $VolAttr 1] == $ImageRange) } { 
+              if {([lindex $VolAttr 2] == $FilePrefix) || ([lindex $VolAttr 3] == $FilePrefix)} {
+                 set EMSegment(AllVolList,ActiveID) [lsearch -exact $EMSegment(AllVolList,VolumeList) $VolID]
+                 EMSegmentTransfereVolume All
+                 set EMSegment(IntensityAvgValue,$VolID) [SegmenterInput($pid,node) GetIntensityAvgValuePreDef]
+                 break;
+              }
+            }
+          }
+       } elseif {$ClassName == "vtkMrmlSegmenterSuperClassNode" } {
+          # --------------------------------------------------
+          # 6.) Update variables for SuperClass 
+          # -------------------------------------------------
+          set pid [$item GetID]
+          # If you get an error mesaage in the follwoing lines then CurrentClassList to short
+          set NumClass [lindex $CurrentClassList 0]
+          if {$NumClass == ""} { DevErrorWindow "Error in XML File : Super class $EMSegment(SuperClass)  has not a sub-classes defined" }
+
+      # Check If we initialize the head class 
+          if {$NumClass == 0} {set InitiHeadClassFlag 1
+      } else {set InitiHeadClassFlag 0}
+
+          set EMSegment(Class) $NumClass 
+
+          # Save status when returning to parent of this class 
+      if {$InitiHeadClassFlag} {
+            set SclassMemory ""
+            set EMSegment(SuperClass) $NumClass
+      } else  { 
+            lappend SclassMemory [list "$EMSegment(SuperClass)" "[lrange $CurrentClassList 1 end]"] 
+            # Transfer from Class to SuperClass
+            if {$EMSegment(Cattrib,$NumClass,IsSuperClass) == 0} {
+               set EMSegment(Cattrib,$NumClass,IsSuperClass) 1
+               # Set current class to current SuperClass
+               EMSegmentTransfereClassType 0 0
+            } else {
+               set EMSegment(SuperClass) $NumClass
+            }
         set EMSegment(NewSuperClassName) [SegmenterSuperClass($pid,node) GetName]
-        EMSegmentChangeSuperClassName 0 -1
+            EMSegmentChangeSuperClassName 0 -1
 
-        set EMSegment(Cattrib,$NumClass,LocalPriorWeight)    [SegmenterSuperClass($pid,node) GetLocalPriorWeight]
-        set InputChannelWeights [SegmenterSuperClass($pid,node) GetInputChannelWeights]
-        for {set y 0} {$y < $EMSegment(MaxInputChannelDef)} {incr y} {
-           if {[lindex $InputChannelWeights $y] == ""} {set EMSegment(Cattrib,$NumClass,InputChannelWeights,$y) 1.0
-           } else {
-             set EMSegment(Cattrib,$NumClass,InputChannelWeights,$y) [lindex $InputChannelWeights $y]
-           }
-        }
-
-        set EMSegment(Cattrib,$NumClass,Prob) [SegmenterSuperClass($pid,node) GetProb]
-        # Create Sub Classes
-        set EMSegment(NumClassesNew)          [SegmenterSuperClass($pid,node) GetNumClasses]       
-        EMSegmentCreateDeleteClasses 0 0
-
-        set EMSegment(Cattrib,$NumClass,Node) $item
-        set CurrentClassList $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList)
+          }
+      
+          set EMSegment(Cattrib,$NumClass,LocalPriorWeight)    [SegmenterSuperClass($pid,node) GetLocalPriorWeight]
+          set InputChannelWeights [SegmenterSuperClass($pid,node) GetInputChannelWeights]
+          for {set y 0} {$y < $EMSegment(MaxInputChannelDef)} {incr y} {
+             if {[lindex $InputChannelWeights $y] == ""} {set EMSegment(Cattrib,$NumClass,InputChannelWeights,$y) 1.0
+             } else {
+               set EMSegment(Cattrib,$NumClass,InputChannelWeights,$y) [lindex $InputChannelWeights $y]
+             }
+          }
+      
+          set EMSegment(Cattrib,$NumClass,Prob) [SegmenterSuperClass($pid,node) GetProb]
+          # Create Sub Classes
+          set EMSegment(NumClassesNew)          [SegmenterSuperClass($pid,node) GetNumClasses]       
+          EMSegmentCreateDeleteClasses 0 0
+      
+          set EMSegment(Cattrib,$NumClass,Node) $item
+          set CurrentClassList $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList)
     } elseif {$ClassName == "vtkMrmlSegmenterClassNode" } {
         # --------------------------------------------------
         # 7.) Update selected Class List 
@@ -1863,8 +1890,9 @@ proc EMSegmentUpdateMRML {} {
         set EMSegment(Cattrib,$NumClass,PCAMeanData) $Volume(idNone) 
         set PCAMeanName   [SegmenterClass($pid,node) GetPCAMeanName]
 
-        set EMSegment(Cattrib,$NumClass,DICEData) $Volume(idNone) 
-        set DICEFileName  [SegmenterClass($pid,node) GetDICEFileName]
+        set EMSegment(Cattrib,$NumClass,DICEData) $Volume(idNone)
+
+        set DICEFileName  [SegmenterClass($pid,node) GetReferenceStandardFileName]
 
         foreach VolID $Volume(idList) VolAttr $VolumeList {
             if {([lindex $VolAttr 0] == $LocalPriorName) && ([lindex $VolAttr 1] == $LocalPriorRange) &&  ($LocalPriorName != "")} {
@@ -2344,17 +2372,17 @@ proc EMSegmentSaveSettingSuperClass {SuperClass LastNode} {
 proc EMSegmentChangeSuperClassName {Active SuperClass} {
     global EMSegment
     if {$SuperClass > -1} {
-    $EMSegment(CIM-fMatrix).fLineL.l$SuperClass configure -text "$EMSegment(Cattrib,$SuperClass,Label)"
-    $EMSegment(CIM-fMatrix).fLine$SuperClass.lLabel configure -text "$EMSegment(Cattrib,$SuperClass,Label)"
+      $EMSegment(CIM-fMatrix).fLineL.l$SuperClass configure -text "$EMSegment(Cattrib,$SuperClass,Label)"
+      $EMSegment(CIM-fMatrix).fLine$SuperClass.lLabel configure -text "$EMSegment(Cattrib,$SuperClass,Label)"
     } else {
-    set SuperClass $EMSegment(SuperClass)
-    if {$EMSegment(Cattrib,$SuperClass,Name) == $EMSegment(NewSuperClassName)} {return}
-    set EMSegment(Cattrib,$SuperClass,Name) $EMSegment(NewSuperClassName)
+      set SuperClass $EMSegment(SuperClass)
+      if {$EMSegment(Cattrib,$SuperClass,Name) == $EMSegment(NewSuperClassName)} {return}
+      set EMSegment(Cattrib,$SuperClass,Name) $EMSegment(NewSuperClassName)
 
-    if {$Active} {
+      if {$Active} {
         $EMSegment(CIM-fDefinition).lHead2 config -text "Super Class: $EMSegment(Cattrib,$SuperClass,Name)"
         $EMSegment(Cl-mbClasses) configure -text $EMSegment(Cattrib,$SuperClass,Name)
-    }
+      }
     }
 
     set EMSegment(Cattrib,$SuperClass,Label) $EMSegment(Cattrib,$SuperClass,Name)
