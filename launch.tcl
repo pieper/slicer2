@@ -110,19 +110,19 @@ if { $env(BUILD) == "Darwin" && [catch {
 # VTK source and binary dirs and tcl dirs should be in the Lib directory
 #
 if { ![info exists env(VTK_SRC_DIR)] || $env(VTK_SRC_DIR) == "" } {
-    set env(VTK_SRC_DIR) ${env(SLICER_HOME)}/Lib/${env(BUILD)}/vtk/VTK
+    set env(VTK_SRC_DIR) ${env(SLICER_HOME)}/Lib/${env(BUILD)}/vtk/VTK-4.2.2
 }
 if { ![info exists env(VTK_BIN_DIR)] || $env(VTK_BIN_DIR) == "" } {
-    set env(VTK_BIN_DIR) ${env(SLICER_HOME)}/Lib/${env(BUILD)}/vtk/VTK-build
+    set env(VTK_BIN_DIR) ${env(SLICER_HOME)}/Lib/${env(BUILD)}/vtk/VTK-build-4.2.2
 }
 if { ![info exists env(ITK_BIN_DIR)] || $env(ITK_BIN_DIR) == "" } {
     set env(ITK_BIN_DIR) ${env(SLICER_HOME)}/Lib/${env(BUILD)}/itk/ITK-build
 }
 if { ![info exists env(TCL_BIN_DIR)] || $env(TCL_BIN_DIR) == "" } {
-    set env(TCL_BIN_DIR) ${env(SLICER_HOME)}/Lib/${env(BUILD)}/tcl/bin
+    set env(TCL_BIN_DIR) ${env(SLICER_HOME)}/Lib/${env(BUILD)}/ActiveTcl8.4.2.0-solaris-sparc/bin
 }
 if { ![info exists env(TCL_LIB_DIR)] || $env(TCL_LIB_DIR) == "" } {
-    set env(TCL_LIB_DIR) ${env(SLICER_HOME)}/Lib/${env(BUILD)}/tcl/lib
+    set env(TCL_LIB_DIR) ${env(SLICER_HOME)}/Lib/${env(BUILD)}/ActiveTcl8.4.2.0-solaris-sparc/lib
 }
 
 
@@ -235,13 +235,13 @@ Any clinical use requires proper research controls.
 Clicking \"Ok\" below binds you to the license agreement.
 See www.slicer.org for details.
 "
-#set resp okay
-set resp [tk_messageBox -message $msg -type okcancel -title "Slicer2"]
+if { ![file exists $env(HOME)/.IAgreeToSlicersLicense] } {
+    set resp [tk_messageBox -message $msg -type okcancel -title "Slicer2"]
 
-if {$resp == "cancel"} {
-    exit
+    if {$resp == "cancel"} {
+        exit
+    }
 }
-
 
 # 
 # if a tcl script is the first argument on the command line, run it
