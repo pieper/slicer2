@@ -1,7 +1,7 @@
 #=auto==========================================================================
 # Copyright (c) 1999 Surgical Planning Lab, Brigham and Women's Hospital
 #  
-# Direct all questions on this copyright to slicer@ai.mit.edu.
+# Direct all questions regarding this copyright to slicer@ai.mit.edu.
 # The following terms apply to all files associated with the software unless
 # explicitly disclaimed in individual files.   
 # 
@@ -32,7 +32,6 @@
 #   CopyrightFile filename
 #   CommentFile filename verbose
 #   Polish data
-#   Comment data
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -234,13 +233,15 @@ proc CommentFile {filename {verbose 0}} {
 #
 # For each procedure in a file, this routine polishes the procedural comments
 # if the existing comments fall into one of 3 pathological cases.
-# The polished output looks like the following:
+# The polished output looks like the following (except that the keywords that
+# begin with a . are listed in small letters in this documentation so that
+# the comment program can run on itself!
 # <code><pre>
 # #------------------------------
-# # .PROC MyProc
+# # .proc MyProc
 # #
-# # .ARGS
-# # .END
+# # .args
+# # .end
 # #------------------------------
 # proc MyProc {} {
 # }
@@ -259,8 +260,8 @@ proc CommentFile {filename {verbose 0}} {
 # }
 #
 # #-----------------------------
-# # .PROC MyProc
-# # .END
+# # .proc MyProc
+# # .end
 # #-----------------------------
 # proc MyProc {} {
 # }
@@ -272,6 +273,8 @@ proc CommentFile {filename {verbose 0}} {
 # .END
 #-------------------------------------------------------------------------------
 proc Polish {data} {
+
+	# .IGNORE
 
 	set line "#-------------------------------------------------------------------------------"
 	
@@ -295,11 +298,12 @@ proc Polish {data} {
 		  "$line\n# .PROC ${name}\n# \n# .ARGS\n# .END\n$line\nproc $name " data
 	}
 
+	# .ENDIGNORE
 	return $data
 }
 
 #-------------------------------------------------------------------------------
-# .PROC Commment
+# .PROC Comment
 #
 # This procedure forms a global array 'Comments' containing the contents of
 # the comments at the procedure level in the file
@@ -309,6 +313,10 @@ proc Polish {data} {
 #-------------------------------------------------------------------------------
 proc Comment {data} {
 	global Comments
+
+	# .IGNORE
+	# Ignore this routine so that the comment program can run on itself
+	regsub -all {\.IGNORE.*\.ENDIGNORE} $data {} data
 
 	# Delete all comment markers
 	#
@@ -338,6 +346,7 @@ proc Comment {data} {
 	set Comments(idList) ""
 	set id 1
 	foreach p $procList {
+
 		# Delete everything after, and including, ".END"
 		regsub {\.END.*} $p {} p 
 
@@ -349,7 +358,13 @@ proc Comment {data} {
 
 		# Strip off the first word of the desc as the proc name
 		set proc [lindex $desc 0]
-		set desc [lrange $desc 1 end]
+		regsub "$proc" $desc {} desc
+		# Note the following line would have stripped off the
+		# line returns:
+		# set desc [lrange $desc 1 end]
+
+		# Strip leading white space of the description
+		regsub "^\[\n\t \]*" $desc {} desc
 
 		# Delineate args by newlines 
 		regsub -all "\n" $args "|" args 
@@ -378,4 +393,5 @@ proc Comment {data} {
 		}
 		incr id
 	}
+	# .ENDIGNORE
 }

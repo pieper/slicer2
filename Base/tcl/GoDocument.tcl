@@ -15,7 +15,7 @@ if {[info exists env(SLICER_HOME)] == 0 || $env(SLICER_HOME) == ""} {
 }
 
 # Read source files
-source [file join $prog Comment.tcl]
+source [file join [file join $prog tcl-main] Comment.tcl]
 source [file join [file join $prog tcl-main] Document.tcl]
 
 #Run

@@ -31,7 +31,7 @@ IMG {
 	border-color: #333399
 	border: 2 
 }
-P,BODY,UL {
+P,BODY,UL,PRE {
 	font-family : Arial,Helvetica,sans-serif;
 }
 BODY {

@@ -15,7 +15,7 @@ if {[info exists env(SLICER_HOME)] == 0 || $env(SLICER_HOME) == ""} {
 }
 
 # Read source files
-source [file join $prog Comment.tcl]
+source [file join $prog [file join tcl-main Comment.tcl]]
 
 # Run on one file if requested, otherwise on ALL files
 set file [lindex $argv 0]
@@ -26,7 +26,6 @@ if {$file != ""} {
 } else {
 	# Process all files
 	set dirs "tcl-main tcl-modules tcl-shared ../vtksrc"
-puts $dirs
 	if {[file exists [file join $prog \
 		[file join tcl-modules Editor]]] == 1} {
 		set dirs "$dirs tcl-modules/Editor"
