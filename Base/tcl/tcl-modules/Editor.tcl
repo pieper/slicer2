@@ -123,7 +123,7 @@ proc EditorInit {} {
     
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.69 $} {$Date: 2003/04/29 21:54:52 $}]
+        {$Revision: 1.70 $} {$Date: 2003/07/18 15:27:39 $}]
     
     # Initialize globals
     set Editor(idOriginal)  $Volume(idNone)
@@ -2213,7 +2213,7 @@ proc EdSetupBeforeApplyEffect {v scope multi} {
     if {[EditorSameExtents $w $o] != 1} {
         EditorCopyNode $w $o
         MainVolumesCopyData $w $o On
-        # >> AT 12/20/01
+
         # force the working volume to be of type short
         set workvol [Volume($w,vol) GetOutput]
         set worktype [$workvol GetScalarType]
@@ -2221,8 +2221,10 @@ proc EdSetupBeforeApplyEffect {v scope multi} {
         if {$worktype != "4"} {
             $workvol SetScalarType 4
             $workvol AllocateScalars
+
+            # we should then make sure this volume is initalized to 0
+            EditorClear Working
         }
-        # << AT 12/20/01
     }
     
     # Set the editor's input & output
