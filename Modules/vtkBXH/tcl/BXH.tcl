@@ -48,8 +48,8 @@
 #   VolBXHCreateVolumeNameFromFileName  the
 #   VolBXHCreateMrmlNodeForVolume the the
 #   VolBXHLoadAnalyze 
+#   VolBXHCreateVolumeFromAnalyze   the
 #   VolBXHGetScanOrder 
-#   VolBXHGetGap 
 #   VolBXHRetrieveVolumeInfoFromBXHTree  the
 #   VolBXHHandleImageDatarecElement  the
 #   VolBXHHandleElementtypeElement  the
@@ -93,9 +93,6 @@ proc VolBXHLoadVolumes {} {
     }
     if {[info exists VolBXH(bxh-imageType)]} {
         unset VolBXH(bxh-imageType)
-    }
-    if {[info exists VolBXH(bxh-volPropList)]} {
-        unset VolBXH(bxh-volPropList)
     }
     if {[info exists VolBXH(bxh-dim,outputSelect)]} {
         unset VolBXH(bxh-dim,outputSelect)
@@ -175,12 +172,20 @@ proc VolBXHLoadVolumes {} {
 proc VolBXHOrganizeVolumeInfo {} {
     global VolBXH
 
-    # Sets volume properties
-    lappend volPropList [VolBXHGetScanOrder]  
-    lappend volPropList $VolBXH(bxh-littleEndian)   
-    lappend volPropList [VolBXHGetSliceSpacing]   
+    # Scan order
+    set VolBXH(bxh-scanOrder) [VolBXHGetScanOrder]
 
-    set VolBXH(bxh-volPropList) $volPropList
+    # z spacing
+    set zSpacing 0
+    foreach m $VolBXH(bxh-dimensions) {
+        if {[expr {$m == "z" || $m == "z-split2"}]} {
+        
+            set sliceThickness $VolBXH(bxh-dim,$m,spacing)
+            set sliceGap $VolBXH(bxh-dim,$m,gap)
+        }
+    }
+    set VolBXH(bxh-sliceThickness) $sliceThickness
+    set VolBXH(bxh-sliceGap) $sliceGap
 } 
 
 
@@ -247,7 +252,6 @@ proc VolBXHSetSliders {max} {
 proc VolBXHLoadRegularDCMFiles {} {
     global VolBXH Volume 
 
-    set byteOrder [lindex $VolBXH(bxh-volPropList) 1]
     set maxX [expr $VolBXH(bxh-dim,x,size) - 1]
     set maxY [expr $VolBXH(bxh-dim,y,size) - 1]
 
@@ -266,7 +270,9 @@ proc VolBXHLoadRegularDCMFiles {} {
         vtkImageReader ir$i
         ir$i SetFileName $f
         ir$i ReleaseDataFlagOff
-        ir$i SetDataByteOrder $byteOrder
+        ir$i SetDataSpacing $VolBXH(bxh-dim,x,spacing) \
+            $VolBXH(bxh-dim,y,spacing) $VolBXH(bxh-sliceThickness)
+        ir$i SetDataByteOrder $VolBXH(bxh-littleEndian)
         ir$i SetDataExtent 0 $maxX 0 $maxY 0 0 
         
         ip AddInput [ir$i GetOutput] 
@@ -350,6 +356,8 @@ proc VolBXHCreateVolumeFromMosaic {fileName} {
 
     ir SetFileName $fileName
     ir SetDataByteOrder $VolBXH(bxh-littleEndian) 
+    ir SetDataSpacing $VolBXH(bxh-dim,x,spacing) \
+        $VolBXH(bxh-dim,y,spacing) $VolBXH(bxh-sliceThickness)
     ir ReleaseDataFlagOff
     ir SetDataExtent 0 $maxX 0 $maxY 0 0 
 
@@ -496,15 +504,18 @@ proc VolBXHCreateMrmlNodeForVolume {volName volData} {
     $n SetName $volName 
     $n SetDescription $volName 
 
-    set volProps $VolBXH(bxh-volPropList) 
-    set so [expr {$volProps == "" ? {IS} : [lindex $volProps 0]}]
-    set le [expr {$volProps == "" ? 1 : [lindex $volProps 1]}]
-    set sp [expr {$volProps == "" ? 0 : [lindex $volProps 2]}]
-    Volume($i,node) SetScanOrder $so 
-    Volume($i,node) SetLittleEndian $le 
+    Volume($i,node) SetScanOrder $VolBXH(bxh-scanOrder)
+    Volume($i,node) SetLittleEndian $VolBXH(bxh-littleEndian) 
 
     $volData Update 
-    eval Volume($i,node) SetSpacing [$volData GetSpacing]
+
+    set spc [$volData GetSpacing]
+    set pixelWidth [lindex $spc 0]
+    set pixelHeight [lindex $spc 1]
+    set sliceThickness [lindex $spc 2]
+    set zSpacing [expr $sliceThickness + $VolBXH(bxh-sliceGap)]
+
+    eval Volume($i,node) SetSpacing $pixelWidth $pixelHeight $zSpacing 
     Volume($i,node) SetNumScalars [$volData GetNumberOfScalarComponents]
     set ext [$volData GetWholeExtent]
     Volume($i,node) SetImageRange [expr 1 + [lindex $ext 4]] [expr 1 + [lindex $ext 5]]
@@ -529,14 +540,12 @@ proc VolBXHCreateMrmlNodeForVolume {volName volData} {
 proc VolBXHLoadAnalyze {} {
     global VolBXH Volume Mrml
     
-    # Image files
     set i 1 
-    while {$i <= $VolBXH(bxh-noOfImgFiles)} {
+    while {$i <= $VolBXH(bxh-noOfImgFiles)} {   
+
         set f $VolBXH(bxh-img,$i,name)
 
-        # puts "reading $f"
         MainVolumesSetActive "NEW"
-        set Volume(VolAnalyze,FileName) $f
 
         set volName [VolBXHCreateVolumeNameFromFileName $f]
         set Volume(name) $volName
@@ -544,10 +553,13 @@ proc VolBXHLoadAnalyze {} {
         append load $volName
         set VolBXH(name) $load 
 
-        set ii [VolAnalyzeApply $VolBXH(bxh-volPropList)]
-        set VolBXH($i,id) $ii
+        VolBXHCreateVolumeFromAnalyze $f
+        set volData [VolBXH(imageAppend) GetOutput] 
+        set id [VolBXHCreateMrmlNodeForVolume $volName $volData]
+        set VolBXH($i,id) $id
 
         incr i
+        VolBXH(imageAppend) Delete
     }
 
     set VolBXH(lastIndex) $VolBXH(bxh-noOfImgFiles)
@@ -558,6 +570,84 @@ proc VolBXHLoadAnalyze {} {
     # show the first volume by default
     MainSlicesSetVolumeAll Back $VolBXH(1,id)
     RenderAll
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC VolBXHCreateVolumeFromAnalyze  
+# Creates a vtkImageData object from an Analyze img file  
+# .ARGS
+# fileName the Analyze img file name
+# .END
+#-------------------------------------------------------------------------------
+proc VolBXHCreateVolumeFromAnalyze {fileName} {
+    global VolBXH 
+
+    puts "reading $fileName"
+
+    vtkImageReader ir
+
+    # Here is the coordinate system
+    # x axis
+    # ^
+    # |------------------------------------| 
+    # |          |          |              |
+    # | slice #1 | slice #2 |  ......      |
+    # |          |          |              |
+    # -------------------------------------------->
+    #                    y axis
+    #
+    set x $VolBXH(bxh-dim,x,size) 
+    set y $VolBXH(bxh-dim,y,size) 
+    set z $VolBXH(bxh-dim,z,size) 
+    set maxX [expr $x - 1] 
+    set maxY [expr $y * $z - 1] 
+
+    ir SetFileName $fileName
+    ir SetDataScalarTypeToShort
+    ir SetDataByteOrder $VolBXH(bxh-littleEndian) 
+    ir SetDataSpacing $VolBXH(bxh-dim,x,spacing) \
+        $VolBXH(bxh-dim,y,spacing) $VolBXH(bxh-sliceThickness)
+    ir ReleaseDataFlagOff
+    ir SetDataExtent 0 $maxX 0 $maxY 0 0 
+
+    # If you want to create a volue from a series of XY images, 
+    # then you should set the AppendAxis to 2 (Z axis).
+    vtkImageAppend VolBXH(imageAppend) 
+    VolBXH(imageAppend) SetAppendAxis 2 
+
+    set x1 0 
+    set x2 $maxX 
+    set count 0
+    set i 1
+    while {$i <= $z} {
+
+        vtkExtractVOI extract
+        extract SetInput [ir GetOutput]
+        extract SetSampleRate 1 1 1 
+
+        vtkImageData vol
+        set y1 [expr ($i - 1) * $y]
+        set y2 [expr $i * $y - 1]
+
+        extract SetVOI $x1 $x2 $y1 $y2 0 0 
+        extract Update
+
+        set d [extract GetOutput]
+        # Setting directly the extent of extract's output does not 
+        # change its extent. That's why DeepCopy is here.
+        vol DeepCopy $d
+        vol SetExtent 0 [expr $x - 1] 0 [expr $y - 1] 0 0 
+
+        VolBXH(imageAppend) AddInput vol 
+        extract Delete
+        vol Delete
+        
+        incr i
+        incr count
+    }
+
+    ir Delete
 }
 
 
@@ -633,27 +723,6 @@ proc VolBXHGetScanOrder {} {
 
     return $so
 }  
-
- 
-#-------------------------------------------------------------------------------
-# .PROC VolBXHGetGap 
-# Returns slice spacing 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc VolBXHGetSliceSpacing {} {
-    global VolBXH
-  
-    set sliceSpacing 0
-    foreach m $VolBXH(bxh-dimensions) {
-        if {[expr {$m == "z" || $m == "z-split2"}] && [info exists VolBXH(bxh-dim,$m,gap)]} {
-        
-            set slicerSpacing $VolBXH(bxh-dim,$m,gap)
-        }
-    }
-
-    return $sliceSpacing
-}
 
 
 #-------------------------------------------------------------------------------
@@ -734,15 +803,6 @@ proc VolBXHHandleImageDatarecElement {imgdatarec} {
                             set VolBXH(bxh-imageType) $ext
                         }
 
-                        # For Analyze files, change extension from ".img" to ".hdr"
-                        # This is required by Analyze reader. 
-                        if {$VolBXH(bxh-imageType) == "img"} {
-                            set len [string length $value]
-                            set end [expr $len - 1]
-                            set start [expr $end - 3]
-                            set value [string replace $value $start $end ".hdr"]  
-                        }
-
                         set index [expr $VolBXH(bxh-noOfImgFiles) + 1]
                         set pathName [file join $VolBXH(bxh-dir) $value]
                         set VolBXH(bxh-img,$index,name) $pathName
@@ -780,37 +840,37 @@ proc VolBXHHandleElementtypeElement {type} {
 
     switch $type {
         "int8" {
-            set opt "char" 
+            set opt VTK_CHAR 
         }
         "uint8" {
-            set opt "unsgined char" 
+            set opt VTK_UNSIGNED_CHAR 
         }
         "int16" {
-            set opt "short" 
+            set opt VTK_SHORT 
         }
         "uint16" {
-            set opt "unsigned short" 
+            set opt VTK_UNSIGNED_SHORT 
         }
         "int32" {
-            set opt "int"
+            set opt VTK_INT 
         }
         "uint32" {
-            set opt "unsigned int" 
+            set opt VTK_UNSIGNED_INT 
         }
         "int64" {
-            set opt "long" 
+            set opt VTK_LONG 
         }
         "uint64" {
-            set opt "unsigned long" 
+            set opt VTK_UNSIGNED_LONG 
         }
         "float32" {
-            set opt "float" 
+            set opt VTK_FLOAT 
         }
         "float64" {
-            set opt "double" 
+            set opt VTK_DOUBLE 
         }
         "ascii" {
-            set opt "ascii" 
+            set opt VTK_VOID 
         }
     }
 
