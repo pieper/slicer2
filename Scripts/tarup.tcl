@@ -394,6 +394,8 @@ proc tarup { {destdir "auto"} } {
             file copy -force $moddir/data $moddest
         }
 
+       
+
         # TODO: these as special cases for the birn Query Atlas and 
         # should be generalized (maybe a manifest file or something)
         if { [file exists $moddir/java] } {
@@ -439,7 +441,7 @@ proc tarup { {destdir "auto"} } {
     }
 
     if { $do_upload == "true" } {
-    set scpdestination "$::env(USER)@slicerl.bwh.harvard.edu:/usr/local/apache2/htdocs/snapshots/slicer2.4"
+    set scpdestination "$::env(USER)@slicerl.bwh.harvard.edu:/usr/local/apache2/htdocs/snapshots"
         puts " -- upload to $scpdestination"
         switch $::tcl_platform(os) {
             "SunOS" -
