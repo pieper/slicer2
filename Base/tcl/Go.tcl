@@ -410,7 +410,7 @@ proc GetFullPath {name ext {dir "" } {verbose 1}} {
     } elseif {[file exists $central] == 1} {
         return $central
     } else {
-            if {$verbose == 1} {
+        if {$verbose == 1} {
             set msg "File '$name.$ext' cannot be found"
             puts $msg
             tk_messageBox -message $msg
@@ -565,7 +565,7 @@ if { $SLICER(versionInfo) != "" } {
     set compilerName [Slicer GetCompilerName]
     set vtkVersion [Slicer GetVTKVersion]
     set libVersions "LibName1: VTK LibVersion1: ${vtkVersion} LibName2: TCL LibVersion2: ${tcl_patchLevel} LibName3: TK LibVersion2: ${tk_patchLevel}"
-    set SLICER(versionInfo) "$SLICER(versionInfo) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.58 2003/05/27 19:59:44 nicole Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.59 2003/05/30 21:47:31 pieper Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
