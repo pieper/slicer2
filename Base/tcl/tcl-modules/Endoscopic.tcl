@@ -164,8 +164,10 @@ proc EndoscopicEnter {} {
     #}
     foreach a $Endoscopic(actors) {
         viewRen AddActor $a
+    EndoscopicSetPickable $a 1
     }
     set Csys(active) 1
+    
     Render3D
     if {$Endoscopic(endoview,visibility) == 1} {
         EndoscopicAddEndoscopicView
@@ -201,6 +203,7 @@ proc EndoscopicExit {} {
                     
         }
         set Csys(active) 0
+    
         Render3D
         EndoscopicRemoveEndoscopicView
     }
@@ -259,7 +262,7 @@ proc EndoscopicInit {} {
     set Module($m,category) "Visualisation"
     
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.81 $} {$Date: 2004/11/22 18:23:05 $}] 
+    {$Revision: 1.81.2.1 $} {$Date: 2004/12/07 20:08:48 $}] 
        
     # Define Procedures
     #------------------------------------
@@ -1256,7 +1259,7 @@ proc EndoscopicBuildGUI {} {
     <BR>- select absolute mode (to move along the world's axis) or relative mode (to move along the camera's axis)
     <BR>- to move the camera with precision, use the sliders or type a world coordinate in the text box, next to the sliders. For the orientation of the camera, the number displayed is the angle of rotation in degrees.
     <BR>- to move the camera intuitively, use the 3D Gyro (read instructions on the tab). 
-    <BR>- you can also move the camera by moving the mouse/pressing mouse buttons in the endoscopic view, just like you control the main view.
+    <BR>- you can also move the camera by combining the shift or control key with mouse button press and motion. For example: Shift+moving the mouse with left button pressed down controls the camera's 'Pitch'. Shift + middle or right mouse button motion controls the camera's 'Roll' and 'Yaw' respectively. Control + Left, middle, or right mouse button press and motion controls the camera's 'L<->R', 'I<->S', and 'P<->A'. The precise amount of camera motion, as you use the key + mouse motion, can be read off from the sliders in the camera tab.
     <P>
     <BR><B>To create a path</B>:
     <BR><B>Automatically:</B>
@@ -3801,23 +3804,22 @@ proc EndoscopicComputeRandomPath {} {
 #-------------------------------------------------------------------------------
 proc EndoscopicShowPath {} {
     global Path Endoscopic
-    puts "TEMPORARILY DISABLED - pending bugfix"
-    if {0} {
+
     if {$Endoscopic(path,exists) == 1} {
+#jeanette    
+    set id $Endoscopic(path,activeId)
+    
         if {$Endoscopic(path,showPath) == 1} {
             
-            foreach m {c f} {
-                endoscopicScreen AddActor Endoscopic(${m}Land,actor)
-                endoscopicScreen AddActor Endoscopic(${m}Path,actor)
-            }
+            endoscopicScreen AddActor Endoscopic($id,path,actor)
+    
         } else {
-            foreach m {c f} {
-                endoscopicScreen RemoveActor Endoscopic(${m}Land,actor)
-                endoscopicScreen RemoveActor Endoscopic(${m}Path,actor)
-            }
-        }
+    
+        endoscopicScreen RemoveActor Endoscopic($id,path,actor)
+        
     }
     }
+
 }
 
 #-------------------------------------------------------------------------------
