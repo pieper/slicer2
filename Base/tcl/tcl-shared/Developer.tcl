@@ -106,7 +106,7 @@ proc DevFatalErrorWindow {{message "Fatal Error"}} {
 #  the width of the button.
 #
 # .ARGS
-#  str ButtonName Name of the button
+#  str ButtonName Name of the button (i.e. f.stuff.bStuff)
 #  str Message    The text on the button
 #  str Command    The command to run
 #  str Width      Optional Width. Default: width of the Message.
@@ -115,7 +115,8 @@ proc DevFatalErrorWindow {{message "Fatal Error"}} {
 proc DevAddButton { ButtonName Message Command {Width 0} } {
 	global Gui
     if {$Width == 0 } {
-        set Width [ expr [string length $Width] * 3]
+        set Width [string length $Message]
+puts "length is: $Width"
     }
     eval  {button $ButtonName -text $Message -width $Width \
             -command $Command } $Gui(WBA)
