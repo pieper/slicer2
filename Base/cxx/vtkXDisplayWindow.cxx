@@ -62,7 +62,6 @@ vtkXDisplayWindow* vtkXDisplayWindow::New()
 vtkXDisplayWindow::vtkXDisplayWindow()
 {
   this->RenderWindow = NULL;
-  this->ImageWindow = NULL;
 }
 
 vtkXDisplayWindow::~vtkXDisplayWindow()
@@ -70,10 +69,6 @@ vtkXDisplayWindow::~vtkXDisplayWindow()
   if(this->RenderWindow) {
     this->RenderWindow->Delete();
     this->RenderWindow = NULL;
-  }
-  if(this->ImageWindow) {
-    this->ImageWindow->Delete();
-    this->ImageWindow = NULL;
   }
 }
 
@@ -93,22 +88,3 @@ vtkRenderWindow* vtkXDisplayWindow::GetRenderWindow(int screen)
 #endif
   return this->RenderWindow;
 }
-
-vtkImageWindow* vtkXDisplayWindow::GetImageWindow(int screen)
-{
-  if (this->ImageWindow != NULL) {
-    this->ImageWindow->Delete();
-    this->ImageWindow = NULL;
-  }
-
-  char str[80];
-  sprintf(str, ":0.%d", screen);
-  fprintf(stderr, "vtkXDisplayWindow: Creating display '%s'.\n", str);
-
-  this->ImageWindow = vtkImageWindow::New();
-#ifndef _WIN32
-  this->ImageWindow->SetDisplayId(XOpenDisplay(str));
-#endif
-  return this->ImageWindow;
-}
-

@@ -53,11 +53,10 @@ SET (Base_SRCS
 	vtkMrmlVolumeReadWriteStructuredPointsNode.cxx
 	# Endoscopic Module:
 	vtkImageDijkstra.cxx vtkDataSetToLabelMap.cxx
+    # for the Twin module
+    vtkXDisplayWindow.cxx
 )
 
-IF(UNIX)
-#SOURCE_FILES (Base_SRCS vtkXDisplayWindow.cxx)
-ENDIF(UNIX)
 
 # --------------------------------------------------------------------------
 # You probably do not need to modify anything below this line

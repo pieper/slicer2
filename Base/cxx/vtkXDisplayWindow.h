@@ -45,7 +45,6 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 #include <stdio.h>
 #include "vtkRenderWindow.h"
-#include "vtkImageWindow.h"
 #include "vtkObject.h"
 
 #include "vtkSlicer.h"
@@ -57,13 +56,11 @@ public:
   vtkTypeMacro(vtkXDisplayWindow, vtkObject);
 
   vtkRenderWindow* GetRenderWindow(int screen);
-  vtkImageWindow* GetImageWindow(int screen);
 
 protected:
   vtkXDisplayWindow();
   ~vtkXDisplayWindow();
   vtkRenderWindow *RenderWindow;
-  vtkImageWindow *ImageWindow;
 };
 
 #endif
