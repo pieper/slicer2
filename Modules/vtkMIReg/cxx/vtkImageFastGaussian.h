@@ -47,7 +47,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkImageData.h"
 #include "vtkImageDecomposeFilter.h"
 
-class VTK_SLICER_BASE_EXPORT vtkImageFastGaussian : public vtkImageDecomposeFilter
+class VTK_MIREG_EXPORT vtkImageFastGaussian : public vtkImageDecomposeFilter
 {
 public:
   static vtkImageFastGaussian *New();

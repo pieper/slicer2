@@ -47,7 +47,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkMatrix4x4.h"
 #include "vtkSlicer.h"
 
-class VTK_SLICER_BASE_EXPORT vtkPose : public vtkObject
+class VTK_MIREG_EXPORT vtkPose : public vtkObject
 {
 public:
   // VTK requisites

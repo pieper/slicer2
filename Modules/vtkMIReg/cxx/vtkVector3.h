@@ -45,7 +45,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 #define VECTOR3_EPSILON 0.000001f
 
-class VTK_SLICER_BASE_EXPORT vtkVector3 : public vtkObject
+class VTK_MIREG_EXPORT vtkVector3 : public vtkObject
 {
 public:
   // VTK requisites

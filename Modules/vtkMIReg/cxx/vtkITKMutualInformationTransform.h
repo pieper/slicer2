@@ -60,7 +60,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 class vtkImageData;
 
-class VTK_EXPORT vtkITKMutualInformationTransform : public vtkLinearTransform
+class VTK_MIREG_EXPORT vtkITKMutualInformationTransform : public vtkLinearTransform
 {
 public:
   static vtkITKMutualInformationTransform *New();

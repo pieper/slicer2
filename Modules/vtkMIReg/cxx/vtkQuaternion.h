@@ -50,7 +50,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkObject.h"
 #include "vtkVector3.h"
 
-class VTK_SLICER_BASE_EXPORT vtkQuaternion : public vtkObject
+class VTK_MIREG_EXPORT vtkQuaternion : public vtkObject
 {
 public:
   // VTK requisites
