@@ -78,7 +78,7 @@ proc LabelsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.23 $} {$Date: 2003/03/19 19:16:38 $}]
+        {$Revision: 1.24 $} {$Date: 2004/11/20 05:26:35 $}]
 
     # Props
     set Label(nameBrowse) ""
@@ -645,7 +645,7 @@ proc LabelsColorWidgets {} {
     global Label 
 
     foreach w $Label(colorWidgetList) {
-        $w config -bg [MakeColorNormalized $Label(diffuse)]
+        $w config -bg [MakeColorNormalized $Label(diffuse)] -state normal
     }
 }
 
