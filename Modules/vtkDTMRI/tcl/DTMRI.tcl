@@ -136,7 +136,7 @@ proc DTMRIInit {} {
 
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.49.2.1 $} {$Date: 2004/11/30 20:53:06 $}]
+                  {$Revision: 1.49.2.2 $} {$Date: 2004/12/01 23:43:06 $}]
 
      # Define Tabs
     #------------------------------------
@@ -4278,6 +4278,7 @@ proc DTMRIUpdate {} {
 
         # calculate trace or whatever we are thresholding by
         $math SetInput 0 [Tensor($t,data) GetOutput]
+        $math SetInput 1 [Tensor($t,data) GetOutput]
         $math SetOperationTo$DTMRI(mode,threshold)
 
         # threshold to make a mask of the area of interest
@@ -4644,6 +4645,7 @@ proc DTMRIDoMath {{operation ""}} {
     vtkTensorMathematics math
     math SetScaleFactor $DTMRI(scalars,scaleFactor)
     math SetInput 0 $input
+    math SetInput 1 $input
     math SetOperationTo$operation
     math AddObserver StartEvent MainStartProgress
     math AddObserver ProgressEvent "MainShowProgress math"
@@ -5949,4 +5951,3 @@ proc DTMRISetActive {n} {
 #         DTMRI(vtk,impComp($i)) SetInput [DTMRI(vtk,bspline($i)) GetOutput]
 #     }
 }
-
