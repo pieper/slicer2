@@ -23,7 +23,7 @@ note: this is a widget
 #
 option add *isrange.title "Range" widgetDefault
 option add *isrange.command "" widgetDefault
-option add *isrange.height 35 widgetDefault
+option add *isrange.height 20 widgetDefault
 # TODO: option add *isrange.minvariable "" widgetDefault
 # TODO: option add *isrange.maxvariable "" widgetDefault
 # TODO: option add *isrange.fromvariable "" widgetDefault
@@ -55,10 +55,8 @@ if { [itcl::find class isrange] == "" } {
 
       ### variables
       variable _name
-
-      # is components for the controller
-      variable _is3d
-      variable _ismodel
+      variable _canvas
+      variable _bar 1
 
       # drag state
       variable _start_fx
@@ -70,26 +68,27 @@ if { [itcl::find class isrange] == "" } {
       variable _fmin 0.25
       variable _fmax 0.75
 
-      # full range
+      # full range - these variables are traced
       variable _from 0
       variable _to 100
       variable _fullmin 25
       variable _fullmax 75
+      variable _in_trace_callback 0
 
 
       ### methods
 
-      method is3d {} {return $_is3d}
-      method ismodel {} {return $_ismodel}
-      method bindings {} {return $_ismodel}
+      method tracing { onoff } {}
+      method bindings {} {}
       method dragcb { state x y } {}
       method validate_set {min max} {}
       method validate_set_range {min max} {}
-      method update_model {} {}
+      method update_canvas {} {}
       method update_variables {which args} {}
-      method set_bounds {f t} {set from $f; set to $t}
-      method get_bounds {} {return "$from $to"}
+      method set_bounds {f t} {set _from $f; set _to $t}
+      method get_bounds {} {return "$_from $_to"}
       method range {} {}
+      method frange {} {}
     }
 }
 
@@ -106,20 +105,10 @@ itcl::body isrange::constructor {args} {
 
     set cs [$this childsite]
     #
-    # make an is3d widget 
+    # make a canvas
     #
-    set _is3d $cs.is3d_$_name
-    ::is3d $_is3d -background #ffffff
-    $_is3d configure -longitude 0 -latitude -90 -distance 1.9
-    [$_is3d tkrw] configure -height 50 
-    [[[.b.r is3d] ren] GetActiveCamera] ParallelProjectionOn
-    pack forget [$_is3d controls]
-
-    set _ismodel ::ismodel_$_name
-    catch "delete object $_ismodel"
-    ::ismodel $_ismodel 
-    $this update_model
-    [$_is3d ren] AddActor [$_ismodel actor]
+    set _canvas $cs.canvas
+    canvas $_canvas -background white -height 20 -width 75
     $this bindings
 
     #
@@ -127,7 +116,7 @@ itcl::body isrange::constructor {args} {
     #
     pack [iwidgets::spinfloat $cs.from -step 1 -width 5 -labeltext From -labelpos nw -textvariable [itcl::scope _from]] -side left
     pack [iwidgets::spinfloat $cs.min -step 1 -width 5 -labeltext Min -labelpos nw -textvariable [itcl::scope _fullmin]] -side left
-    pack $_is3d -fill x -expand false -side left
+    pack $_canvas -fill x -expand true -side left
     pack [iwidgets::spinfloat $cs.max -step 1 -width 5 -labeltext Max -labelpos nw -textvariable [itcl::scope _fullmax]] -side left
     pack [iwidgets::spinfloat $cs.to -step 1 -width 5 -labeltext To -labelpos nw -textvariable [itcl::scope _to]] -side left
 
@@ -135,10 +124,10 @@ itcl::body isrange::constructor {args} {
     set _to 100
     set _fullmin 25
     set _fullmax 75
-    trace variable [itcl::scope _from] w "$this update_variables fromto" 
-    trace variable [itcl::scope _to] w "$this update_variables fromto" 
-    trace variable [itcl::scope _fullmin] w "$this update_variables minmax" 
-    trace variable [itcl::scope _fullmax] w "$this update_variables minmax" 
+    set _fmin .25
+    set _fmax .75
+
+    $this tracing on
 
     #
     # Initialize the widget based on the command line options.
@@ -148,11 +137,7 @@ itcl::body isrange::constructor {args} {
 
 
 itcl::body isrange::destructor {} {
-    delete object $_ismodel
-    trace vdelete [itcl::scope _from] w "$this update_variables fromto" 
-    trace vdelete [itcl::scope _to] w "$this update_variables fromto" 
-    trace vdelete [itcl::scope _fullmin] w "$this update_variables minmax" 
-    trace vdelete [itcl::scope _fullmax] w "$this update_variables minmax" 
+    $this tracing off
 }
 
 # ------------------------------------------------------------------
@@ -166,15 +151,34 @@ itcl::configbody isrange::command {
 #                             METHODS
 # ------------------------------------------------------------------
 
+itcl::body isrange::tracing { onoff } {
+    if { $onoff == "on" } {
+        trace variable [itcl::scope _from] w "$this update_variables from" 
+        trace variable [itcl::scope _to] w "$this update_variables to" 
+        trace variable [itcl::scope _fullmin] w "$this update_variables min" 
+        trace variable [itcl::scope _fullmax] w "$this update_variables max" 
+    } else {
+        trace vdelete [itcl::scope _from] w "$this update_variables from" 
+        trace vdelete [itcl::scope _to] w "$this update_variables to" 
+        trace vdelete [itcl::scope _fullmin] w "$this update_variables min" 
+        trace vdelete [itcl::scope _fullmax] w "$this update_variables max" 
+    }
+}
+
 itcl::body isrange::bindings { } {
-    $_is3d bindings clear
-    bind [$_is3d tkrw] <ButtonPress-1> "$this dragcb start %x %y"
-    bind [$_is3d tkrw] <B1-Motion> "$this dragcb drag %x %y"
+    
+    catch "bind $_canvas <ButtonPress-1> \"\""
+    catch "bind $_canvas <B1-Motion> \"\""
+    catch "bind $_canvas <Expose> \"\""
+
+    bind $_canvas <ButtonPress-1> "$this dragcb start %x %y"
+    bind $_canvas <B1-Motion> "$this dragcb drag %x %y"
+    bind $_canvas <Expose> "$this update_canvas"
 }
 
 itcl::body isrange::dragcb {state x y} {
 
-    set width [lindex [[$_is3d tkrw] configure -width] 4]
+    set width [winfo width $_canvas]
     set fx [expr $x / ($width * 1.0)]
 
     switch -- $state {
@@ -209,27 +213,25 @@ itcl::body isrange::dragcb {state x y} {
                     validate_set $_fmin $fmax
                 }
             }
-            $this update_model
+            $this update_canvas
+
+            if { $itk_option(-command) != "" } {
+                uplevel #0 $itk_option(-command)
+            }
         }
     }
 }
 
-itcl::body isrange::update_model {} {
+itcl::body isrange::update_canvas {} {
 
-    set fcenter [expr 0.5 * ($_fmax + $_fmin)]
-    set fradius [expr 0.5 * ($_fmax - $_fmin)]
+    set w [winfo width $_canvas]
+    set h [winfo height $_canvas]
 
-    # convert to rendering space
-    set mcenter [expr -20.0 * ($fcenter - 0.5)]
-    set mradius [expr 20.0 * $fradius]
-    if { $mradius < .1 } {
-        set mradius .1
-    }
-    $_ismodel cylinder "$mcenter 0 0" $mradius
+    set cmin [expr $_fmin * $w]
+    set cmax [expr $_fmax * $w]
 
-    [[$_ismodel actor] GetProperty] SetDiffuse 0
-    $_is3d expose
-
+    catch "$_canvas delete $_bar"
+    set _bar [$_canvas create rectangle $cmin 0 $cmax $h -fill black]
 }
 
 #
@@ -237,21 +239,52 @@ itcl::body isrange::update_model {} {
 #
 itcl::body isrange::update_variables {which args} {
 
-    set fullrange [expr 1.0 * ($_to - $_from)]
-    switch -- $which {
-        "fromto" {
-            # adjust entries to reflext slider
-            set _fullmin [expr $_fmin * $fullrange]
-            set _fullmax [expr $_fmax * $fullrange]
-        }
-        "minmax" {
-            # adjust slider to reflect entries
-            set _fmin [expr $_fullmin / $fullrange]
-            set _fmax [expr $_fullmax / $fullrange]
-            update_model
-        }
+    if { $_in_trace_callback == 1 } {
+        return
+    }
+    set _in_trace_callback 1
+
+    if { $_from == "" || $_to == "" || $_fullmin == "" || $_fullmax == "" } {
+        set _in_trace_callback 0
+        return
     }
 
+
+    set ret [catch {
+
+        set fullrange [expr 1.0 * ($_to - $_from)]
+
+        switch -- $which {
+            "from" -
+            "to" {
+                # adjust entries to reflect slider
+                set fullmin [expr $_fmin * $fullrange]
+                set fullmax [expr $_fmax * $fullrange]
+                set _fmin [expr $fullmin / $fullrange]
+                set _fmax [expr $fullmax / $fullrange]
+                set _fullmin $fullmin
+                set _fullmax $fullmax
+            }
+            "min" -
+            "max" {
+                # adjust slider to reflect entries
+                set _fmin [expr $_fullmin / $fullrange]
+                set _fmax [expr $_fullmax / $fullrange]
+            }
+        }
+
+        $this update_canvas
+
+        if { $itk_option(-command) != "" } {
+            uplevel #0 $itk_option(-command)
+        }
+    } res]
+
+    if { $ret } {
+        puts stderr $res
+    }
+
+    set _in_trace_callback 0
 }
 
 itcl::body isrange::validate_set_range {min max} {
@@ -259,11 +292,13 @@ itcl::body isrange::validate_set_range {min max} {
     if { $min < 0.0 } {
         set _fmin 0.0
         set _fmax $range
+        $this range
         return
     }
     if { $max > 1.0 } {
         set _fmax 1.0
         set _fmin [expr $_fmax - $range]
+        $this range
         return
     }
     if { $max < $min } {
@@ -292,10 +327,17 @@ itcl::body isrange::validate_set {min max} {
 
 itcl::body isrange::range {} {
     set fullrange [expr $_to - $_from]
-    set ffmin $_fmin ;# save the state since the traced variable will reset the global
-    set ffmax $_fmax
-    set _fullmin [expr $_from + $fullrange * $ffmin]
-    set _fullmax [expr $_from + $fullrange * $ffmax]
+    # save the state since the traced variable will reset the global
+    set fullmin [expr $_from + $fullrange * $_fmin] 
+    set fullmax [expr $_from + $fullrange * $_fmax]
+    $this tracing off
+    set _fullmin $fullmin
+    set _fullmax $fullmax
+    $this tracing on
     return "$_fullmin $_fullmax"
+}
+
+itcl::body isrange::frange {} {
+    return "$_fmin $_fmax"
 }
 
