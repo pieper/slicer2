@@ -154,7 +154,7 @@ proc LevelSetsInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.6 $} {$Date: 2003/05/27 21:26:22 $}]
+        {$Revision: 1.7 $} {$Date: 2003/05/27 21:39:39 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -343,16 +343,14 @@ proc LevelSetsBuildHelpFrame {} {
     <LI><B> Initial Level Set:</B> To specify an initial image (label map, etc...), not available yet
     <LI><B> Threshold:        </B> Starting threshold in case the number of initial points is 0.
 It should use the Initial Level Set image if there is one, or the Input image otherwise.
-    <LI><B> Points:            </B> Number of initial spheres (or disks in 2D).
-    <LI><B> Point1:            </B> I,J, and K coordinates + radius in voxels, Press 'l' to update it from the slices
-    <LI><B> Point2:            </B> I,J, and K coordinates + radius in voxels, Press 'L' to update it from the slices
-    <LI><B> Point3:            </B> I,J, and K coordinates + radius in voxels, Press 'Ctl-l' to update it from the slices
+    <LI><B> Radius:            </B> Radius of the initial spheres centeres on the selected initial points
+    <LI><B> LevelSets-seed:    </B> List of initial centers of spheres, all the fudicial of the list are used, use 'p' to add a point, 'd' to delete (check fiducials documentation).
     <LI><B> Low Intensity      </B> allows preprocessing the image by putting all points lower  than L to L, -1 means inactive
     <LI><B> High Intensity     </B> allows preprocessing the image by putting all points higher than H to H, -1 means inactive
-    <LI><B> Mean Intensity     </B>
-    <LI><B> Standard Deviation    </B>
-    <LI><B> Probability Threshold </B>
-    <LI><B> Probability High Threshold </B>
+    <LI><B> Mean Intensity        </B> mean intensity of the tissue to segment, use to design the expansion force.
+    <LI><B> Standard Deviation    </B> standard deviation of the intensity of the tissue to segment.
+    <LI><B> Probability Threshold </B> probability threshold is used to threshold a Gaussian based on the mean and the standard deviation: the function 'exp(-(I-mean)*(I-mean)/sd/sd)-threshold' is used for the expansion force, which allows shrinking the levelset surface when the intensity is far from the tissue statistics.
+    <LI><B> Probability High Threshold </B> allows to intensities higher than the threshold to give a probability of 1, and thus allows evolution in high intensity areas independently of the tissue statistics given by a Gaussian function.
     <BR>
     <P>
     "
@@ -438,7 +436,7 @@ proc LevelSetsBuildInitFrame {} {
     # Parameters->FidPoints Frame
     #-------------------------------------------
     set f $fInit.fInitFidPoints
-    FiducialsAddActiveListFrame $f 7 25 "LevelSets-seeds"
+    FiducialsAddActiveListFrame $f 7 25 "LevelSets-seed"
 
     #-------------------------------------------
     # Parameters->Intensity Thresholds
@@ -874,9 +872,9 @@ proc LevelSetsEnter {} {
 #    puts
     if {$LevelSets(FidPointList) == 0} {
       set LevelSets(FidPointList) 1
-      FiducialsCreateFiducialsList "default" "LevelSets-seeds"
+      FiducialsCreateFiducialsList "default" "LevelSets-seed"
     }
-    FiducialsSetActiveList "LevelSets-seeds"
+    FiducialsSetActiveList "LevelSets-seed"
 
     # clear the text box and put instructions there
 #    $LevelSets(textBox) delete 1.0 end
@@ -903,7 +901,7 @@ proc LevelSetsExit {} {
     popEventManager
 
     #Remove Fiducial List
-#    FiducialsDeleteList "LevelSets-seeds"
+#    FiducialsDeleteList "LevelSets-seed"
 }
 
 
@@ -1179,7 +1177,7 @@ proc RunLevelSetsBegin {} {
   #
   #------- Check Fiducial list
   #
-  set fidlist [FiducialsGetPointIdListFromName "LevelSets-seeds"]
+  set fidlist [FiducialsGetPointIdListFromName "LevelSets-seed"]
 
   #Update numPoints module variable  
   set LevelSets(NumInitPoints) [llength $fidlist]
