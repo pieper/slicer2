@@ -101,7 +101,7 @@ proc MutualInformationRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.4 $} {$Date: 2003/09/17 17:13:16 $}]
+        {$Revision: 1.5 $} {$Date: 2003/10/14 21:43:23 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -216,6 +216,8 @@ proc MutualInformationRegistrationBuildSubGui {f} {
     The Fine method can be run after the Coarse method to fine tune the result. Again, the Fine method updates regularly so that the user can stop the algorithm if she is satified. Otherwise, it will run until finished.
     <LI><B>Normal: Good and Slow</B>
     This method is designed for the user to be able to walk away, and come back and find a good registration. This method can be slow, but almost always yields a good result. It does not update the alignment until finished.
+    <LI><B>Normal: Very Good and Very Slow</B>
+    This method is designed for the user to be able to walk away, and come back and find a good registration. This method can be very slow, but it works very, very well. It does not update the alignment until finished.
     <LI><B>Advanced</B>
     Change these at your own risk. The input images are normalized, so that the source and target standard deviations should generally be smaller than 1. There are arguments they should be much smaller than 1, but changing them does not seem to make a big difference. The number of samples per iteration can be increased, but also does not seem to help alot. The translation scale is roughly a measure of how much to scale translations over rotations. A variety of numbers may work here. The learning rate should generally be less than 0.001, and often much smaller. The number of update iterations is generally between 100 and 2500
     </UL>"
@@ -259,17 +261,18 @@ proc MutualInformationRegistrationBuildSubGui {f} {
     frame $f.fBtns -bg $Gui(activeWorkspace)
     pack $f.fTitle $f.fBtns -side left -padx 5
 
-    eval {label $f.fTitle.lSpeed -text "Run Objective:"} $Gui(WLA)
+    eval {label $f.fTitle.lSpeed -text "Run\n Objective:"} $Gui(WLA)
     pack $f.fTitle.lSpeed
 
     # the first row and second row
     frame $f.fBtns.1 -bg $Gui(inactiveWorkspace)
     frame $f.fBtns.2 -bg $Gui(inactiveWorkspace)
-    pack $f.fBtns.1 $f.fBtns.2 -side top -fill x -anchor w
+    frame $f.fBtns.3 -bg $Gui(inactiveWorkspace)
+    pack $f.fBtns.1 $f.fBtns.2 $f.fBtns.3 -side top -fill x -anchor w
 
     set row 1
-    foreach text "Coarse Fine {Good and Slow}" value "Coarse Fine GSlow" \
-        width "6 6 15" {
+    foreach text "Coarse Fine {Good and Slow} {Very Good and Very Slow}" value "Coarse Fine GSlow VerySlow" \
+        width "6 6 15 21" {
         eval {radiobutton $f.fBtns.$row.r$value -width $width \
         -text "$text" -value "$value" \
         -command MutualInformationRegistration${value}Param \
@@ -277,6 +280,7 @@ proc MutualInformationRegistrationBuildSubGui {f} {
         -indicatoron 0} $Gui(WCA) 
         pack $f.fBtns.$row.r$value -side left -padx 4 -pady 2
         if { $value == "Fine" } {incr row};
+        if { $value == "GSlow" } {incr row};
     }
 
    set MutualInformationRegistration(Objective) Coarse
@@ -468,6 +472,34 @@ proc MutualInformationRegistrationGSlowParam {} {
 
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MutualInformationRegistrationGSlowParam
+#
+# This should run until completion and give a good registration
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MutualInformationRegistrationVerySlowParam {} {
+    global MutualInformationRegistration
+
+    set MutualInformationRegistration(Resolution)       128 
+    set MutualInformationRegistration(UpdateIterations) "2500 2500 2500 2500 2500"
+    set MutualInformationRegistration(LearningRate)    "1e-4 1e-5 5e-6 1e-6 5e-7"
+    set MutualInformationRegistration(NumberOfSamples)  50
+    set MutualInformationRegistration(TranslateScale)   320
+    # If Wells, Viola, Atsumi, etal, 
+    # used 2 and 4. Wells claims exact number not critical (personal communication)
+    # They scaled data 0...256.
+    # We scale data -1 to 1.
+    # 2/256*2 = 0.015
+    set MutualInformationRegistration(SourceStandardDeviation) 0.4
+    set MutualInformationRegistration(TargetStandardDeviation) 0.4
+    set MutualInformationRegistration(SourceShrinkFactors)   "4 4 1"
+    set MutualInformationRegistration(TargetShrinkFactors)   "4 4 1"
+}
+
+
 
 #-------------------------------------------------------------------------------
 # .PROC MutualInformationRegistrationEnter
@@ -589,6 +621,7 @@ proc MutualInformationRegistrationAutoRun_Itk {sourceId targetId matrixId} {
 
     # TODO make islicer a package
     source $env(SLICER_HOME)/Modules/iSlicer/tcl/isregistration.tcl
+    source $env(SLICER_HOME)/Modules/vtkMutualInformationRegistration/tcl/ItkToSlicerTransform.tcl
 
     catch "destroy .mi"
     toplevel .mi
