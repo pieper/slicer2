@@ -16,6 +16,6 @@ ordered='Data
 	Slices 
 	Colors 
 	Custom'
-suppressed=''
+suppressed='Tensor'
 </Options>
 </MRML>

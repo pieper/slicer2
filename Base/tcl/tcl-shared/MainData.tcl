@@ -113,7 +113,7 @@ proc MainDataInitialize {ModuleArray} {
 proc MainDataUpdateMRML {ModuleArray} {
 
 
-    puts "Lauren in MainDataUpdateMRML $ModuleArray "
+    #puts "Lauren in MainDataUpdateMRML $ModuleArray "
 
     # If the module is not loaded in the Slicer, do nothing.
     #--------------------------------------------------------
@@ -188,7 +188,7 @@ proc MainDataUpdateMRML {ModuleArray} {
 #-------------------------------------------------------------------------------
 proc MainDataCreate {ModuleArray d} {
 
-    puts "Lauren in MainData create $ModuleArray $d"
+    #puts "Lauren in MainData create $ModuleArray $d"
 
     # If the module is not loaded in the Slicer, do nothing.
     #--------------------------------------------------------
@@ -263,7 +263,7 @@ proc MainDataCreate {ModuleArray d} {
 #-------------------------------------------------------------------------------
 proc MainDataRead {ModuleArray d} {
 
-    puts "Lauren in MainDataRead"
+    #puts "Lauren in MainDataRead"
 
     # If the module is not loaded in the Slicer, do nothing.
     #--------------------------------------------------------
@@ -363,7 +363,7 @@ proc MainDataDelete {ModuleArray d} {
     # Delete VTK objects 
     #--------------------------------------------------------
     $data  Delete
-    puts "Lauren does deleting the volume really delete the node?"
+    #puts "Lauren does deleting the volume really delete the node?"
     
     # Delete all TCL variables of the form: Array($d,<whatever>)
     #--------------------------------------------------------
