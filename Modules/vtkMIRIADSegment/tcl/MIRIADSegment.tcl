@@ -40,9 +40,6 @@
 #   MIRIADSegmentBuildGUI
 #   MIRIADSegmentEnter
 #   MIRIADSegmentExit
-#   MIRIADSegmentCount
-#   MIRIADSegmentShowFile
-#   MIRIADSegmentBindingCallback
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -154,7 +151,7 @@ proc MIRIADSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.6 $} {$Date: 2003/10/16 19:01:29 $}]
+        {$Revision: 1.7 $} {$Date: 2003/11/02 20:03:25 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -163,7 +160,7 @@ proc MIRIADSegmentInit {} {
     #   This is a handy method for organizing the global variables that
     #   the procedures in this module and others need to access.
     #
-    set MIRIADSegment(dir)  ""
+    set MIRIADSegment(subject_dir)  ""
 }
 
 
@@ -300,26 +297,10 @@ proc MIRIADSegmentEnter {} {
 proc MIRIADSegmentExit {} {
 }
 
-
-#-------------------------------------------------------------------------------
-# .PROC MIRIADSegmentLoadStudy
-# Read the dicom data and the atlas for a subject, runs the segmentation and saves results
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc MIRIADSegmentLoadStudy { {BIRNID "000397921927"} {visit 001} } {
-
-    MainFileClose 
-    set root /home/pieper/data/duke-data/neil/MIRIAD/subjects/${BIRNID}
-    set subj $root/Visit_$visit/Study_0001/
-
-    MIRIADSegmentLoadDukeStudy $subj/RawData/001.ser
-    MIRIADSegmentLoadLONIWarpedAtlas $subj/DerivedData/LONI/mri/atlases/bwh_prob/air_252p
-
-}
-
 #-------------------------------------------------------------------------------
 # .PROC MIRIADSegmentProcessStudy
+# 
+# Main entry point for the Module
 # Read the dicom data and the atlas for a subject, runs the segmentation and saves results
 # .ARGS
 # .END
@@ -329,11 +310,35 @@ proc MIRIADSegmentProcessStudy { {BIRNID "000397921927"} {visit 001} } {
     set ::MIRIADSegment(version) 1
 
     MIRIADSegmentLoadStudy $BIRNID $visit 
+
     MIRIADSegmentSetEMParameters
     MIRIADSegmentRunEM
 
-    MIRIADSegmentSaveResults $subj
+    MIRIADSegmentSaveResults $::MIRIAD(subject_dir)
 }
+
+#-------------------------------------------------------------------------------
+# .PROC MIRIADSegmentLoadStudy
+# Read the dicom data and the atlas for a subject, runs the segmentation and saves results
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MIRIADSegmentLoadStudy { {BIRNID "000397921927"} {visit 001} {atlas "loni"} } {
+
+    MainFileClose 
+
+    set root /home/pieper/data/duke-data/neil/MIRIAD/subjects/${BIRNID}
+    set ::MIRIAD(subject_dir) $root/Visit_$visit/Study_0001/
+
+    MIRIADSegmentLoadDukeStudy $::MIRIAD(subject_dir)/RawData/001.ser
+    if { $atlas == "loni" } {
+        MIRIADSegmentLoadLONIWarpedAtlas $::MIRIAD(subject_dir)/DerivedData/LONI/mri/atlases/bwh_prob/air_252p
+    } else {
+
+    }
+
+}
+
 
 #-------------------------------------------------------------------------------
 # .PROC MIRIADSegmentSaveResults
@@ -341,10 +346,10 @@ proc MIRIADSegmentProcessStudy { {BIRNID "000397921927"} {visit 001} } {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc MIRIADSegmentSaveResults { subj } {
+proc MIRIADSegmentSaveResults { } {
 
     set SEGid [MIRIADSegmentGetVolumeByName "EMSegResult1"]
-    set resultdir $subj/DerivedData/SPL/EM-$::MIRIADSegment(version)
+    set resultdir $::MIRIAD(subject_dir)/DerivedData/SPL/EM-$::MIRIADSegment(version)
     file mkdir $resultdir
     MainVolumesWrite $SEGid $resultdir/EMSegResult
 
@@ -407,7 +412,6 @@ proc MIRIADSegmentLoadBWHAtlas { {dir "choose"} } {
         regsub -all "\\." $name "" name
         MIRIADSegmentDeleteVolumeByName $name
 
-        #set ::Volume(activeID) "NEW"
         MainVolumesSetActive "NEW"
         set ::Volume(name) $name
         set ::Volume(desc) "BWH Atlas $vol"
@@ -429,6 +433,45 @@ proc MIRIADSegmentLoadBWHAtlas { {dir "choose"} } {
         VolumesPropsApply 
     }
     RenderAll
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MIRIADSegmentCreateSPLWarpedAtlas 
+# Make a bwh probability atlas as warped by vtkAG
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MIRIADSegmentCreateSPLWarpedAtlas { {dir "choose"} } {
+
+    # 
+    # require that duke data and bwh atlas are already loaded
+    #
+    set ::AG(InputVolTarget) [MIRIADSegmentGetVolumeByName "T2"]
+    set ::AG(InputVolTarget2) [MIRIADSegmentGetVolumeByName "PD"]
+    set ::AG(InputVolSource) [MIRIADSegmentGetVolumeByName "atlas-t2w"]
+    set ::AG(InputVolSource2) [MIRIADSegmentGetVolumeByName "atlas-spgr"]
+    # special flag to Create New output volume
+    set ::AG(ResultVol) -5
+    set ::AG(ResultVol2) -5
+
+    #
+    # perform the registration
+    #
+    RunAG
+
+    #
+    # apply the transform to each of the atlas volumes and save them
+    #
+    foreach vol [MIRIADSegmentGetVolumesByNamePattern atlas-sum*] {
+        AGTransformOneVolume $vol $::AG(InputVolTarget)
+    }
+
+    foreach vol [MIRIADSegmentGetVolumesByNamePattern resample_atlas-sum*] {
+        set name [Volume($vol,node) GetName]
+        set resultdir $::MIRIAD(subject_dir)/DerivedData/SPL/mri/atlases/bwh_prob/AG
+        file mkdir $resultdir
+        MainVolumesWrite $vol $resultdir/$name
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -469,7 +512,7 @@ proc MIRIADSegmentLoadLONIWarpedAtlas { {dir "choose"} } {
     }
         
     foreach vol $four_vols {
-        set name atlas-[file root $vol]
+        set name resample_atlas-[file root $vol]
         MIRIADSegmentDeleteVolumeByName $name
         MainVolumesSetActive "NEW"
         set ::Volume(VolAnalyze,FileName) $dir/$vol
@@ -483,6 +526,8 @@ proc MIRIADSegmentLoadLONIWarpedAtlas { {dir "choose"} } {
 #-------------------------------------------------------------------------------
 # .PROC MIRIADSegmentSetEMParameters
 # Define the parameters for the segmentation
+# - this method interacts a bit with the GUI -- this ensures that 
+# all the right variables get set by the callbacks
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -491,6 +536,9 @@ proc MIRIADSegmentSetEMParameters {} {
     set ::EMSegment(SegmentMode) 1
     set ::EMSegment(DebugVolume) 1
 
+    #
+    # pick the PD and T2 volumes as the seg channels
+    #
     $::EMSegment(fAllVolList) selection clear 0 end
     for {set i 0} {$i < [$::EMSegment(fAllVolList) size]} {incr i} {
         if { [$::EMSegment(fAllVolList) get $i] == "PD" } {
@@ -510,6 +558,9 @@ proc MIRIADSegmentSetEMParameters {} {
         }
     }
 
+    #
+    # set the global parameters
+    #
     set ::EMSegment(EMiteration) 20
     set ::EMSegment(MFAiteration) 10
 
@@ -522,8 +573,11 @@ proc MIRIADSegmentSetEMParameters {} {
     set ::EMSegment(Cattrib,4,Prob) .25
     EMSegmentSumGlobalUpdate
 
+    #
+    # set the per-class parameters: class, atlas vol, mean, and covariance
+    #
     set classes "1 2 3 4" 
-    set probvols "atlas-sumbackground atlas-sumwhitematter atlas-sumcsf atlas-sumgreymatter"
+    set probvols "resample_atlas-sumbackground resample_atlas-sumwhitematter resample_atlas-sumcsf resample_atlas-sumgreymatter"
     set logmeans {
         {0.5711 0.4534} {6.3364 5.0624} {4.5678 4.2802} {6.3836 5.1253}
     }
@@ -676,7 +730,7 @@ proc MIRIADSegmentClassPDFFromSegmentation {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MIRIADSegmentGetVolumeByName 
-# clean up volumes before reloading them
+# returns the id of first match for a name
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -690,6 +744,25 @@ proc MIRIADSegmentGetVolumeByName {name} {
         }
     }
     return -1
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MIRIADSegmentGetVolumesByNamePattern
+# returns a list of IDs for a given pattern
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MIRIADSegmentGetVolumesByNamePattern {pattern} {
+
+    set ids ""
+    set nvols [Mrml(dataTree) GetNumberOfVolumes]
+    for {set vv 0} {$vv < $nvols} {incr vv} {
+        set n [Mrml(dataTree) GetNthVolume $vv]
+        if { [string match $pattern [$n GetName]] } {
+            lappend ids [DataGetIdFromNode $n]
+        }
+    }
+    return $ids
 }
 
 #-------------------------------------------------------------------------------
