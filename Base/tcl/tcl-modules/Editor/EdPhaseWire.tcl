@@ -1226,11 +1226,11 @@ proc EdPhaseWireEnter {} {
     # ignore mouse movement until we have a start point
     set Ed(EdPhaseWire,pipelineActiveAndContourStarted) 0
 
-    # set up Slicer pipeline
-    EdPhaseWireStartPipeline
-
     # keep track of active slice to reset contour if slice changes
     set Ed(EdPhaseWire,activeSlice) $Slice(activeID)
+
+    # set up Slicer pipeline
+    EdPhaseWireStartPipeline
 
     # Make sure we're colored
     LabelsColorWidgets
