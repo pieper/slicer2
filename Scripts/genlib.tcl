@@ -27,7 +27,7 @@ exec tclsh "$0" "$@"
 #
 
 # set up the versions to check out
-set cmakeTag "CMake-2-0-5"
+set cmakeTag "CMake-2-0-1"
 set vtkTag "Slicer-2-4"
 set itkTag "Slicer-2-4"
 set tclTag "core-8-4-6"
@@ -151,15 +151,11 @@ if { ![file exists $SLICER_LIB] } {
 }
 
 # set up cross platform files to check for existence
-# initialize values
-set isWindows 0
-set isDarwin 0
-
 switch $tcl_platform(os) {
-    "SunOS" - 
+    "SunOS" -
     "Linux" -
     "Darwin" {
-    set isDarwin 1
+        set isWindows 0
         set tclTestFile $TCL_BIN_DIR/tclsh8.4
         set tkTestFile  $TCL_BIN_DIR/wish8.4
         set itclTestFile $TCL_LIB_DIR/libitclstub3.2.a
@@ -287,19 +283,12 @@ if { ![file exists $itclTestFile] } {
     cd $SLICER_LIB/tcl/incrTcl
 
     exec chmod +x ../incrTcl/configure 
-
-    if { $isWindows } {
+    if {$isWindows} {
         # can't do windows
     } else {
         runcmd ../incrTcl/configure --with-tcl=$SLICER_LIB/tcl-build/lib --with-tk=$SLICER_LIB/tcl-build/lib --prefix=$SLICER_LIB/tcl-build
-    if { $isDarwin } {
-        # need to run ranlib separately on lib for Darwin
-        # file is created and ranlib is needed inside make all
-        catch "runcmd make all"
-        runcmd ranlib ../incrTcl/itcl/libitclstub3.2.a       
-    } 
-    runcmd make all
-    runcmd make install
+        runcmd make all
+        runcmd make install
     }
 }
 
@@ -332,13 +321,8 @@ if { ![file exists $bltTestFile] } {
     runcmd cvs -d:pserver:anonymous:@cvs.sourceforge.net:/cvsroot/blt login
     runcmd cvs -z3 -d:pserver:anonymous:@cvs.sourceforge.net:/cvsroot/blt co -r $bltTag blt
 
-    if { $isWindows } {
-        # can't do Windows or Darwin
-    } elseif { $isDarwin } {
-        cd $SLICER_LIB/tcl/blt
-        runcmd ./configure --with-tcl=$SLICER_LIB/tcl-build --with-tk=$SLICER_LIB/tcl-build --prefix=$SLICER_LIB/tcl-build 
-        catch "runcmd make"
-        catch "runcmd make install"
+    if {$isWindows} {
+        # can't do windows
     } else {
         cd $SLICER_LIB/tcl/blt
         runcmd ./configure --with-tcl=$SLICER_LIB/tcl-build --with-tk=$SLICER_LIB/tcl-build --prefix=$SLICER_LIB/tcl-build 
@@ -361,8 +345,8 @@ if { ![file exists $gslTestFile] } {
     runcmd cvs -d:pserver:anoncvs:anoncvs@sources.redhat.com:/cvs/gsl login
     runcmd cvs -z3 -d:pserver:anoncvs:anoncvs@sources.redhat.com:/cvs/gsl co -r $gslTag gsl
 
-    if {$isWindows || $isDarwin} {
-        # can't do Windows or Darwin
+    if {$isWindows} {
+        # can't do windows
     } else {
         cd $SLICER_LIB/gsl-build/gsl
         runcmd ./autogen.sh
