@@ -119,7 +119,7 @@ proc SessionLogInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.18 $} {$Date: 2004/04/13 21:00:10 $}]
+        {$Revision: 1.18.2.1 $} {$Date: 2004/11/30 20:48:04 $}]
 
     # Initialize module-level variables
     set SessionLog(fileName)  ""
@@ -249,13 +249,14 @@ proc SessionLogBuildGUI {} {
     # Refer to the documentation for details on the syntax.
     #
     set help "
-    The SessionLog module records info about your segmentation session
+    The SessionLog module records info about your segmentation session 
     for research purposes and to improve the Slicer.
     <P>
     Description by tab:
     <BR>
     <UL>
-    <LI><B>Tons o' Start:</B> This tab is a demo for developers.
+    <LI><B>Start:</B> Set the log file name here, and start logging.
+    <LI><B>Log:</B> View the logged information here.
     "
     regsub -all "\n" $help {} help
     # remove emacs-style indentation from the 'html'
