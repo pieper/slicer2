@@ -55,7 +55,6 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 // itk classes
 // All the MI Registration Stuff
 #include "MIRegistration.h"
-#include "vnl/vnl_math.h"
 
 //------------------------------------------------------------------------------
 vtkITKMutualInformationTransform* vtkITKMutualInformationTransform::New()
@@ -90,24 +89,6 @@ void vtkITKMutualInformationTransform::PrintSelf(ostream& os, vtkIndent indent)
 
 //----------------------------------------------------------------------------
 
-  // some memory leaks here...
-template <class T>
-itk::Image<T,3> *VTKtoITKImage(vtkImageData *VtkImage,T*)
-{
-  typedef itk::Image<T,3>                       OutputImageType;
-  typedef itk::VTKImageImport<OutputImageType>  ImageImportType;
-
-  vtkImageExport *ImageExporter = vtkImageExport::New();
-    ImageExporter->SetInput(VtkImage);
-  ImageImportType::Pointer ItkImporter = ImageImportType::New();
-  ConnectPipelines(ImageExporter, ItkImporter);
-  ItkImporter->Update();
-  ItkImporter->GetOutput()->Register();
-  return ItkImporter->GetOutput();
-}
-
-//----------------------------------------------------------------------------
-
 // This templated function executes the filter for any type of data.
 // But, actually we use only float...
 template <class T>
@@ -128,78 +109,12 @@ static void vtkITKMutualInformationExecute(vtkITKMutualInformationTransform *sel
   typedef itk::MIRegistration<OutputImageType,OutputImageType> RegistratorType;
   typename RegistratorType::Pointer MIRegistrator = RegistratorType::New();
 
-  MIRegistrator->SetMovingImage(VTKtoITKImage(source,(T*)(NULL)));
-  MIRegistrator->GetMovingImage()->UnRegister();
-
-  MIRegistrator->SetFixedImage(VTKtoITKImage(
-                               self->GetPossiblyFlippedTargetImage(),
-                     (T*)(NULL)));
-  MIRegistrator->GetFixedImage()->UnRegister();
-
-  self->Print(std::cout);
-
-  // ----------------------------------------
-  // Do the Registratioon Configuration
-  // ----------------------------------------
-
-  // Initialize
-  MIRegistrator->InitializeRegistration(matrix);
-
- // Setup the optimizer
-
-  MIRegistrator->SetTranslationScale(1.0/vnl_math_sqr(self->GetTranslateScale()));
-//  // This is the scale on translation
-//  for (int j=4; j<7; j++)
-//    {
-//    scales[j] = MIReg_TranslationScale;
-//    // This was chosen by Steve. I'm not sure why.
-//    scales[j] = 1.0/vnl_math_sqr(self->GetTranslateScale());
-//    }
+  MIRegistrator->Initialize(self,matrix);
 
   // Set metric related parameters
-
   MIRegistrator->SetMovingImageStandardDeviation(self->GetSourceStandardDeviation());
   MIRegistrator->SetFixedImageStandardDeviation(self->GetTargetStandardDeviation());
   MIRegistrator->SetNumberOfSpatialSamples(self->GetNumberOfSamples());
-
-  //
-  // This is the multi-resolution information
-  // Number of iterations and learning rate at each level
-  //
-
-  typedef typename RegistratorType::UnsignedIntArray UnsignedIntArray;
-  typedef typename RegistratorType::DoubleArray      DoubleArray;
-  
-  DoubleArray      LearnRates(self->GetLearningRate()->GetNumberOfTuples());
-  UnsignedIntArray NumIterations(self->GetLearningRate()->GetNumberOfTuples());
-
-  for(int i=0;i<self->GetLearningRate()->GetNumberOfTuples();i++)
-    {
-      LearnRates[i]    = self->GetLearningRate()->GetValue(i);
-      NumIterations[i] = self->GetMaxNumberOfIterations()->GetValue(i);
-    }
-  MIRegistrator->SetNumberOfLevels(self->GetLearningRate()
-                                       ->GetNumberOfTuples());
-  MIRegistrator->SetLearningRates(LearnRates);
-  MIRegistrator->SetNumberOfIterations(NumIterations);
-
-  //
-  // This is the shrink factors for each dimension
-  // 
-
-  typedef typename RegistratorType::ShrinkFactorsArray ShrinkFactorsArray;
-
-  ShrinkFactorsArray SourceShrink;
-  SourceShrink[0] = self->GetSourceShrinkFactors(0);
-  SourceShrink[1] = self->GetSourceShrinkFactors(1);
-  SourceShrink[2] = self->GetSourceShrinkFactors(2);
-  MIRegistrator->SetMovingImageShrinkFactors(SourceShrink);
-
-  ShrinkFactorsArray TargetShrink;
-  TargetShrink[0] = self->GetTargetShrinkFactors(0);
-  TargetShrink[1] = self->GetTargetShrinkFactors(1);
-  TargetShrink[2] = self->GetTargetShrinkFactors(2);
-  MIRegistrator->SetFixedImageShrinkFactors(TargetShrink);
 
   //
   // Start registration
