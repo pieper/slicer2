@@ -30,7 +30,8 @@ exec tclsh "$0" "$@"
 # - use it to set your local environment and then your change won't 
 #   be overwritten when this file is updated
 #
-set localvarsfile [file normalize [file dirname [info script]]/../slicer_variables.tcl]
+set localvarsfile [file dirname [info script]]/../slicer_variables.tcl
+catch {set localvarsfile [file normalize $localvarsfile]}
 if { [file exists $localvarsfile] } {
     source $localvarsfile
 } else {
