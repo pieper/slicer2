@@ -109,7 +109,7 @@ proc MainSlicesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainSlices \
-        {$Revision: 1.50 $} {$Date: 2003/07/31 23:09:11 $}]
+        {$Revision: 1.51 $} {$Date: 2003/09/05 18:30:21 $}]
 
     # Initialize Variables
     set Slice(idList) "0 1 2"
@@ -259,6 +259,7 @@ proc MainSlicesBuildVTKForSliceActor {s} {
     global Slice View
 
     vtkTexture Slice($s,texture)
+    Slice($s,texture) SetQualityTo32Bit
     
     vtkPlaneSource Slice($s,planeSource)
     
