@@ -90,7 +90,6 @@ proc runcmd {args} {
     }
     set ret [catch "close $fp" res] 
     if { $ret } {
-        lappend failed [file tail $target]
         puts stderr $res
         error $ret
     } 
@@ -131,9 +130,10 @@ file mkdir $LIB
 file mkdir $LIB/cmake
 cd $LIB/cmake
 
-set env(CVS_PASSFILE) $SLICER_HOME/Scripts/genlib-cvspass
-runcmd cvs -d :pserver:anonymous@www.cmake.org:/cvsroot/CMake login
-runcmd cvs -d :pserver:anonymous@www.cmake.org:/cvsroot/CMake co CMake
+runcmd cvs -d :pserver:anonymous:cmake@www.cmake.org:/cvsroot/CMake login
+runcmd cvs -d :pserver:anonymous@www.cmake.org:/cvsroot/CMake checkout -r 2.0.1 CMake
+
+cd CMake
 
 
 
