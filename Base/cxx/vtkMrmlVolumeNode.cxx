@@ -338,8 +338,7 @@ void vtkMrmlVolumeNode::SetScanOrder(char *s)
     return;
   }
   if (!strcmp(s,"SI") || !strcmp(s,"IS") || !strcmp(s,"LR") || 
-      !strcmp(s,"RL") || !strcmp(s,"AP") || !strcmp(s,"PA") ||
-      !strcmp(s,"ER")) 
+      !strcmp(s,"RL") || !strcmp(s,"AP") || !strcmp(s,"PA")) 
   { 
     if (this->ScanOrder)
     {
@@ -351,7 +350,7 @@ void vtkMrmlVolumeNode::SetScanOrder(char *s)
   }
   else
   {
-    vtkErrorMacro(<< "SetScanOrder: must be SI,IS,LR,RL,AP,PA,or ER");
+    vtkErrorMacro(<< "SetScanOrder: must be SI,IS,LR,RL,AP,or PA");
   }
 }
 
@@ -726,7 +725,7 @@ void vtkMrmlVolumeNode::ComputeRasToIjkFromScanOrder(char *order)
 }
 
 //----------------------------------------------------------------------------
-void vtkMrmlVolumeNode::ComputeRasToIjkFromCorners(
+int vtkMrmlVolumeNode::ComputeRasToIjkFromCorners(
   float *fc, float *ftl, float *ftr, float *fbr,
   float *lc, float *ltl)
 {
@@ -760,8 +759,7 @@ void vtkMrmlVolumeNode::ComputeRasToIjkFromCorners(
   if (!orient)
   {
     // Error! (probably read a no-header image)
-	this->SetScanOrder("ER");
-	return;
+	return(-1);
   }
 
 	// Determine acquisition order 
@@ -818,4 +816,5 @@ void vtkMrmlVolumeNode::ComputeRasToIjkFromCorners(
   this->ComputeRasToIjk(matRotate, ox, oy, oz);
 
   matRotate->Delete();
+  return(0);
 }

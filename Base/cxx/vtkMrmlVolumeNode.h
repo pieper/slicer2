@@ -117,9 +117,9 @@ public:
   vtkGetStringMacro(ScanOrder);
 
   // Description:
-  void ComputeRasToIjkFromCorners(float *fc, float *ftl, float *ftr, 
+  int ComputeRasToIjkFromCorners(float *fc, float *ftl, float *ftr, 
     float *fbr, float *lc, float *ltl);
-  void ComputeRasToIjkFromCorners(
+  int ComputeRasToIjkFromCorners(
     float fcR,  float fcA,  float fcS,
     float ftlR, float ftlA, float ftlS, 
     float ftrR, float ftrA, float ftrS, 
@@ -133,7 +133,7 @@ public:
     fbr[0]=fbrR; fbr[1]=fbrA; fbr[2]=fbrS;
     lc[0]=lcR; lc[1]=lcA; lc[2]=lcS;
     ltl[0]=ltlR; ltl[1]=ltlA; ltl[2]=ltlS;
-    this->ComputeRasToIjkFromCorners(fc, ftl, ftr, fbr, lc, ltl);};
+    return(this->ComputeRasToIjkFromCorners(fc, ftl, ftr, fbr, lc, ltl));};
 
   // Description:
   // 
