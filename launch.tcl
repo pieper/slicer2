@@ -84,6 +84,14 @@ if {[catch {
     }} ex]} {
     set env(TCLLIBPATH) " " 
 }
+
+# if it is an empty string or doesn't exist, set the LD_LIBRARY_PATH 
+if { $env(BUILD) == "Darwin" && [catch {
+    if {$env(DYLD_LIBRARY_PATH) == ""} { 
+        set env(DYLD_LIBRARY_PATH) " " 
+    }} ex]} {
+    set env(DYLD_LIBRARY_PATH) " "
+}
  
 #
 # VTK source and binary dirs and tcl dirs should be in the Lib directory
@@ -107,21 +115,22 @@ if { ![info exists env(TCL_LIB_DIR)] || $env(TCL_LIB_DIR) == "" } {
 # 
 switch $env(BUILD) {
     "solaris8" -
-    "Darwin" -
     "redhat7.3" {
-        # add vtk bins
+        # add vtk, slicer, and tcl bins
         set env(LD_LIBRARY_PATH) $env(VTK_BIN_DIR)/bin:$env(LD_LIBRARY_PATH)
-        # add slicer bins
         set env(LD_LIBRARY_PATH) $env(SLICER_HOME)/Base/builds/$env(BUILD)/bin:$env(LD_LIBRARY_PATH)
-        # add tcl bins
         set env(LD_LIBRARY_PATH) $env(TCL_LIB_DIR):$env(LD_LIBRARY_PATH)
     }
+    "Darwin" {
+        # add vtk, slicer, and tcl bins
+        set env(DYLD_LIBRARY_PATH) $env(VTK_BIN_DIR)/bin:$env(DYLD_LIBRARY_PATH)
+        set env(DYLD_LIBRARY_PATH) $env(SLICER_HOME)/Base/builds/$env(BUILD)/bin:$env(DYLD_LIBRARY_PATH)
+        set env(DYLD_LIBRARY_PATH) $env(TCL_LIB_DIR):$env(DYLD_LIBRARY_PATH)
+    }
     "Win32VC7" {
-        # add vtk bins
+        # add vtk, slicer, and tcl bins
         set env(Path) $env(VTK_BIN_DIR)/bin/debug\;$env(Path)
-        # add slicer bins
         set env(Path) $env(SLICER_HOME)/Base/builds/$env(BUILD)/bin/debug\;$env(Path)
-        # add tcl bins
         set env(Path) $env(TCL_BIN_DIR)\;$env(Path)
     }
 }
@@ -163,9 +172,12 @@ foreach modulePath $modulePaths {
             lappend env(SLICER_MODULES_TO_REQUIRE) $moduleName
             switch $env(BUILD) {
                 "solaris8" -
-                "Darwin" -
                 "redhat7.3" {
                     set env(LD_LIBRARY_PATH) ${modulePath}/$moduleName/builds/$env(BUILD)/bin:$env(LD_LIBRARY_PATH)
+                    set env(TCLLIBPATH) "${modulePath}/$moduleName/Wrapping/Tcl $env(TCLLIBPATH)"
+                }
+                "Darwin" {
+                    set env(DYLD_LIBRARY_PATH) ${modulePath}/$moduleName/builds/$env(BUILD)/bin:$env(DYLD_LIBRARY_PATH)
                     set env(TCLLIBPATH) "${modulePath}/$moduleName/Wrapping/Tcl $env(TCLLIBPATH)"
                 }
                 "Win32VC7" {
@@ -175,6 +187,13 @@ foreach modulePath $modulePaths {
             }
         }
     }
+}
+
+
+if { $env(BUILD) == "Darwin" } {
+    # vtk uses the LD_ version to do it's own search for what to load
+    # so need to set this even though MAC OSX uses the DYLD_ version
+    set env(LD_LIBRARY_PATH) $env(DYLD_LIBRARY_PATH)
 }
 
 set msg "Slicer is an experimental software package.
