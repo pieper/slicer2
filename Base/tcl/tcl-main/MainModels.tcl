@@ -71,7 +71,7 @@ proc MainModelsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainModels \
-		{$Revision: 1.35 $} {$Date: 2001/04/27 15:33:21 $}]
+		{$Revision: 1.36 $} {$Date: 2001/04/29 02:43:07 $}]
 
 	set Model(idNone) -1
 	set Model(activeID) ""
@@ -505,7 +505,7 @@ proc MainModelsCreateGUI {f m} {
 		-resolution 0.1} $Gui(WSA) {-sliderlength 14 \
 		-troughcolor [MakeColorNormalized \
 			[Color($Model($m,colorID),node) GetDiffuseColor]]}
-		puts "$Model($m,colorID)"
+		
 
 	# Clipping
 #	eval {checkbutton $f.cClip${m} -variable Model($m,clipping) \
@@ -814,9 +814,7 @@ proc MainModelsSetOpacity {m {value ""}} {
 	}
 	Model($m,node) SetOpacity $Model($m,opacity)
 	$Model($m,prop,viewRen) SetOpacity [Model($m,node) GetOpacity]
-	puts "viewRen [$Model($m,prop,viewRen) GetOpacity]"
-	puts "endRen [$Model($m,prop,endRen) GetOpacity]"
-
+	
 	# If this is the active model, update GUI
 	if {$m == $Model(activeID)} {
 			set Model(opacity) [Model($m,node) GetOpacity]
