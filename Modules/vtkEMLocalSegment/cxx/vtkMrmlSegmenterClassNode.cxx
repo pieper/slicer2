@@ -83,6 +83,8 @@ vtkMrmlSegmenterClassNode::vtkMrmlSegmenterClassNode()
   memset(this->RegistrationTranslation,0,3*sizeof(double));
   memset(this->RegistrationRotation,0,3*sizeof(double));
   for (int i =0; i < 3; i++) RegistrationScale[i]= 1.0;
+  for (int i = 0; i < 6; i++) this->RegistrationCovariance[i] = 1.0;
+  this->RegistrationCovariance[6] = this->RegistrationCovariance[7] = this->RegistrationCovariance[8] = 0.1;
 }
 
 //----------------------------------------------------------------------------
@@ -193,6 +195,10 @@ void vtkMrmlSegmenterClassNode::Write(ofstream& of, int nIndent)
   if  (this->RegistrationRotation[0] || this->RegistrationRotation[1] || this->RegistrationRotation[2]) of << " RegistrationRotation='" << this->RegistrationRotation[0] << " " << this->RegistrationRotation[1] << " " << this->RegistrationRotation[2] << "'";
   if  ((this->RegistrationScale[0] != 1) || (this->RegistrationScale[1] != 1) || (this->RegistrationScale[2] != 1)) of << " RegistrationScale='" << this->RegistrationScale[0] << " " << this->RegistrationScale[1] << " " << this->RegistrationScale[2] << "'";
 
+  of << " RegistrationCovariance='";
+  for(int i=0; i < 9; i++)  of << this->RegistrationCovariance[i] << " ";
+  of << "'"; 
+
   of << ">\n";
 }
 
@@ -220,6 +226,8 @@ void vtkMrmlSegmenterClassNode::Copy(vtkMrmlNode *anode)
   this->SetRegistrationTranslation(node->RegistrationTranslation);
   this->SetRegistrationRotation(node->RegistrationRotation);
   this->SetRegistrationScale(node->RegistrationScale);
+  this->SetRegistrationCovariance(node->RegistrationCovariance);
+
   this->SetPCAMaxDist(node->PCAMaxDist);
   this->SetPCADistVariance(node->PCADistVariance);
 
@@ -266,4 +274,7 @@ void vtkMrmlSegmenterClassNode::PrintSelf(ostream& os, vtkIndent indent)
    os << indent << "RegistrationTranslation:   " << this->RegistrationTranslation[0] << ", " << this->RegistrationTranslation[1] << ", " << this->RegistrationTranslation[2] << "\n" ;
    os << indent << "RegistrationRotation:      " << this->RegistrationRotation[0] << ", " << this->RegistrationRotation[1] << ", " << this->RegistrationRotation[2] << "\n" ;
    os << indent << "RegistrationScale:         " << this->RegistrationScale[0] << ", " << this->RegistrationScale[1] << ", " << this->RegistrationScale[2] << "\n" ;
+   os << indent << "RegistrationCovariance:    " ;
+   for (int i = 0 ; i < 9 ; i++)  os << RegistrationCovariance[i] << " "; 
+   os << "\n" ;
 }

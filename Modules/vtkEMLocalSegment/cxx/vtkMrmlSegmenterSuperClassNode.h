@@ -191,6 +191,11 @@ public:
   vtkGetMacro(RegistrationType, int);
   vtkSetMacro(RegistrationType, int);
 
+  // Description:
+  // Diagonal Covariance Matrix (describing the zero Mean Gaussian distribution of the class registration parameters 
+  vtkGetVectorMacro(RegistrationCovariance,double,9); 
+  vtkSetVectorMacro(RegistrationCovariance,double,9);
+
 protected:
   vtkMrmlSegmenterSuperClassNode();
   ~vtkMrmlSegmenterSuperClassNode();
@@ -230,7 +235,9 @@ protected:
   double RegistrationTranslation[3];
   double RegistrationRotation[3];
   double RegistrationScale[3];
+  double RegistrationCovariance[9];
   int    RegistrationType; 
+
 };
 
 #endif

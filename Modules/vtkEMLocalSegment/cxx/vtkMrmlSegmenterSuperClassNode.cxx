@@ -84,6 +84,9 @@ vtkMrmlSegmenterSuperClassNode::vtkMrmlSegmenterSuperClassNode() {
   memset(this->RegistrationTranslation,0,3*sizeof(double));
   memset(this->RegistrationRotation,0,3*sizeof(double));
   for (int i =0; i < 3; i++) RegistrationScale[i]= 1.0;
+  for (int i = 0; i < 6; i++) this->RegistrationCovariance[i] = 1.0;
+  this->RegistrationCovariance[6] = this->RegistrationCovariance[7] = this->RegistrationCovariance[8] = 0.1;
+
   this->RegistrationType = 0;
 }
 
@@ -137,7 +140,11 @@ void vtkMrmlSegmenterSuperClassNode::Write(ofstream& of, int nIndent)
     of << " RegistrationScale='" << this->RegistrationScale[0] << " " << this->RegistrationScale[1] << " " << this->RegistrationScale[2] << "'";
 
   of << " RegistrationType='" << this->RegistrationType << "' ";
+  of << " RegistrationCovariance='";
+  for(int i=0; i < 9; i++)  of << this->RegistrationCovariance[i] << " ";
+  of << "'"; 
   of << ">\n";
+
 }
 
 //----------------------------------------------------------------------------
@@ -171,6 +178,7 @@ void vtkMrmlSegmenterSuperClassNode::Copy(vtkMrmlNode *anode)
   memcpy(this->RegistrationTranslation,node->RegistrationTranslation,3*sizeof(double));
   memcpy(this->RegistrationRotation, node->RegistrationRotation,3*sizeof(double));
   memcpy(this->RegistrationScale,node->RegistrationScale,3*sizeof(double));
+  memcpy(this->RegistrationCovariance,node->RegistrationCovariance,9*sizeof(double));
   this->RegistrationType = node->RegistrationType;
 }
 
@@ -206,6 +214,9 @@ void vtkMrmlSegmenterSuperClassNode::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "RegistrationTranslation:      " << this->RegistrationTranslation[0] << ", " << this->RegistrationTranslation[1] << ", " << this->RegistrationTranslation[2] << "\n" ;
   os << indent << "RegistrationRotation:         " << this->RegistrationRotation[0] << ", " << this->RegistrationRotation[1] << ", " << this->RegistrationRotation[2] << "\n" ;
   os << indent << "RegistrationScale:            " << this->RegistrationScale[0] << ", " << this->RegistrationScale[1] << ", " << this->RegistrationScale[2] << "\n" ;
+  os << indent << "RegistrationCovariance:       " ;
+  for (int i = 0 ; i < 9 ; i++)  os << RegistrationCovariance[i] << " "; 
+  os << "\n" ;
   os << indent << "RegistrationType:             " << this->RegistrationType<< "\n" ;
 }
 
