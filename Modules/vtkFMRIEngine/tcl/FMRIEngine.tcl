@@ -38,10 +38,13 @@
 # PROCEDURES:  
 #   FMRIEngineInit
 #   FMRIEngineBuildGUI
+#   FMRIEngineSetImageFormat the
+#   FMRIEngineBuildUIForAnalyze the
 #   FMRIEngineEnter
 #   FMRIEngineExit
 #   FMRIEngineUpdateVolume the
 #   FMRIEngineLoadVolumes 
+#   FMRIEngineLoadAnalyzeVolumes 
 #   FMRIEngineComputeActivationVolume 
 #   FMRIEngineClear 
 #   FMRIEnginePushBindings 
@@ -75,6 +78,7 @@ proc FMRIEngineInit {} {
     #  Give a brief overview of what your module does, for inclusion in the 
     #  Help->Module Summaries menu item.
     set Module($m,overview) "Computes fMRI activation volume."
+
     #  Provide your name, affiliation and contact information so you can be 
     #  reached for any questions people may have regarding your module. 
     #  This is included in the  Help->Module Credits menu item.
@@ -148,7 +152,7 @@ proc FMRIEngineInit {} {
     #   Record any other modules that this one depends on.  This is used 
     #   to check that all necessary modules are loaded when Slicer runs.
     #   
-    set Module($m,depend) "CISGFile"
+    set Module($m,depend) "CISGFile BXH"
 
     # Set version info
     #------------------------------------
@@ -158,7 +162,7 @@ proc FMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.4 $} {$Date: 2004/04/22 19:34:21 $}]
+        {$Revision: 1.5 $} {$Date: 2004/05/20 17:35:03 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -168,17 +172,16 @@ proc FMRIEngineInit {} {
     #   the procedures in this module and others need to access.
     #
     set FMRIEngine(dir)  ""
-    set FMRIEngine(time)  0
     set FMRIEngine(modulePath) "$env(SLICER_HOME)/Modules/vtkFMRIEngine"
 
 
-    #---For now, spew heavily.
+    # For now, spew heavily.
     set Module(verbose) 0
     
-    #---Create bindings
+    # Creates bindings
     FMRIEngineCreateBindings 
 
-    #---Source all appropriate tcl files here. 
+    # Source all appropriate tcl files here. 
     source "$FMRIEngine(modulePath)/tcl/FMRIEnginePlot.tcl"
     source "$FMRIEngine(modulePath)/tcl/FMRIEngineParadigmParser.tcl"
 }
@@ -235,10 +238,8 @@ proc FMRIEngineBuildGUI {} {
     #-------------------------------------------
     # Help tab 
     #-------------------------------------------
-    
     # Write the "help" in the form of psuedo-html.  
     # Refer to the documentation for details on the syntax.
-    #
     set help "
     This module allows you to load a sequence of fMRI data volumes, \
     to input paradigm design file, to compute activation volume, and \
@@ -269,97 +270,189 @@ proc FMRIEngineBuildGUI {} {
     #-------------------------------------------
     # Load tab 
     #-------------------------------------------
-
     set fLoad $Module(FMRIEngine,fLoad)
-    set parentFrame $fLoad
-    set f $parentFrame
-    frame $f.fVolume  -bg $Gui(activeWorkspace) -relief groove -bd 3
-    frame $f.fSlider -bg $Gui(activeWorkspace)
-    frame $f.fApply   -bg $Gui(activeWorkspace)
-    frame $f.fLogos   -bg $Gui(activeWorkspace)
+    set f $fLoad
+
+    frame $f.fTop -bg $Gui(backdrop) -relief sunken -bd 2  
+    frame $f.fMiddle -bg $Gui(activeWorkspace) -height 280  
+    frame $f.fBot -bg $Gui(activeWorkspace)   
+
+    grid $f.fTop -row 0 -column 0 -sticky ew 
+    grid $f.fMiddle -row 1 -column 0 -sticky ew 
+    grid $f.fBot -row 3 -column 0 -sticky ew -pady 0 
+
+    #------------------------------
+    # Load->Bottom frame
+    #------------------------------
+    set f $fLoad.fBot
+    frame $f.fLogos  -bg $Gui(activeWorkspace)
     pack $f.fLogos \
-        -side bottom -fill x -pady "155 $Gui(pad)"
-    pack $f.fVolume $f.fSlider $f.fApply \
-        -side top -fill x -pady $Gui(pad)
+        -side bottom -fill x -pady $Gui(pad)
 
-    #----------------------
-    # Volume frame
-    #----------------------
-    set f $parentFrame.fVolume
-    DevAddFileBrowse $f Volume "VolAnalyze,FileName" "A Volume File in the Sequence:" \
-                     "VolAnalyzeSetFileName;FMRIEngineSetVolumeName" "hdr" "\$Volume(DefaultDir)" \
-                     "Open" "Browse for a Analyze file (.hdr that has matching .img)" 
-    frame $f.fName -bg $Gui(activeWorkspace)
-    pack $f.fName -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
-
-    #----------------------
-    # Name frame
-    #----------------------
-    set f $parentFrame.fVolume.fName
-    eval {label $f.lName -text "Name:"} $Gui(WLA)
-    eval {entry $f.eName -textvariable FMRIEngine(name) -width 13} $Gui(WEA)
-    pack  $f.lName -side left -padx $Gui(pad) 
-    pack $f.eName -side left -padx $Gui(pad) -expand 1 -fill x
-
-    frame $f.fTitle -bg $Gui(activeWorkspace)
-    frame $f.fBtns -bg $Gui(activeWorkspace)
-    pack $f.fTitle $f.fBtns -side left -pady 5
-
-    #----------------------
-    # Slider frame
-    #----------------------
-    set f $parentFrame.fSlider
-    DevAddLabel $f.label "Volume No:"
-    eval { scale $f.slider \
-        -orient horizontal \
-        -from 0 -to 0 \
-        -resolution 1 \
-        -bigincrement 10 \
-        -length 170 \
-        -state disabled \
-        -command { FMRIEngineUpdateVolume }} \
-        $::Gui(WSA) { -showvalue 0 }
-
-    set FMRIEngine(timescale) $f.slider
-    pack $f.label $f.slider -side left -expand false -fill x
-
-    #----------------------
-    # Apply frame
-    #----------------------
-    set f $parentFrame.fApply
-    DevAddButton $f.bApply "Load" "FMRIEngineLoadVolumes" 8 
-    DevAddButton $f.bClear "Clear" "FMRIEngineClear" 8 
-    grid $f.bApply $f.bClear -padx $Gui(pad)
-
-    #----------------------
-    # Logo frame
-    #----------------------
-    set f $parentFrame.fLogos
-    set uselogo [image create photo -file $FMRIEngine(modulePath)/tcl/images/LogosForIbrowser.gif]
+    # Load->Bottom->Logos frame
+    set f $fLoad.fBot.fLogos
+    set uselogo [image create photo -file \
+        $FMRIEngine(modulePath)/tcl/images/LogosForIbrowser.gif]
     eval {label $f.lLogoImages -width 200 -height 45 \
-              -image $uselogo -justify center} $Gui(BLA)
-    pack $f.lLogoImages -side bottom -padx 2 -pady 5 -expand 0
+        -image $uselogo -justify center} $Gui(BLA)
+    pack $f.lLogoImages -side bottom -padx 0 -pady $Gui(pad) -expand 0
 
+    #------------------------------
+    # Load->Middle frame
+    #------------------------------
+    set f $fLoad.fMiddle
+
+    # All image formats supported
+    set imgFormatList {Analyze BXH}
+
+    # Makes a frame for each reader submodule
+    foreach m $imgFormatList {
+        frame $f.f${m} -bg $Gui(activeWorkspace)
+        place $f.f${m} -in $f -relheight 1.0 -relwidth 1.0
+
+        switch $m {
+            "Analyze" {
+                FMRIEngineBuildUIForAnalyze $f.f${m}
+            }
+            "BXH" {
+                VolBXHBuildGUI $f.f${m}
+            }
+        }
+        set FMRIEngine(f$m) $f.f${m}
+    }
+    # raise the default one 
+    raise $FMRIEngine(fAnalyze)
+
+    #------------------------------
+    # Load->Top frame
+    #------------------------------
+    set f $fLoad.fTop
+
+    frame $f.fType   -bg $Gui(backdrop)
+    pack $f.fType -side top -fill x -pady $Gui(pad) -padx $Gui(pad)
+
+    # Load->Top->Type frame
+    set f $fLoad.fTop.fType
+
+    # Build pulldown menu image format 
+    eval {label $f.l -text "Image Format:"} $Gui(BLA)
+    pack $f.l -side left -padx $Gui(pad) -fill x -anchor w
+
+    # Analyze is default format 
+    set df [lindex $imgFormatList 0] 
+    eval {menubutton $f.mbType -text $df \
+          -relief raised -bd 2 -width 20 \
+          -menu $f.mbType.m} $Gui(WMBA)
+    eval {menu $f.mbType.m} $Gui(WMA)
+    pack  $f.mbType -side left -pady 1 -padx $Gui(pad)
+
+    # Add menu items
+    foreach m $imgFormatList  {
+        $f.mbType.m add command -label $m \
+            -command "FMRIEngineSetImageFormat $m"
+    }
+
+    # save menubutton for config
+    set FMRIEngine(gui,mbImgFormat) $f.mbType
+    # put a tooltip over the menu
+    # TooltipAdd $f.mbType \
+    #        "Choose the type of file information to display."
+
+    # Analyze is default format
+    FMRIEngineSetImageFormat $df
+    set FMRIEngine(imageFormat) $df
+  
     #-------------------------------------------
     # Compute tab 
     #-------------------------------------------
-
     set fCompute $Module(FMRIEngine,fCompute)
-    set parentFrame $fCompute
-    set f $parentFrame
+    set f $fCompute
+
     frame $f.fFile   -bg $Gui(activeWorkspace)
     frame $f.fApply   -bg $Gui(activeWorkspace)
 
     pack $f.fFile $f.fApply \
         -side top -fill x -pady $Gui(pad)
 
+    # File frame
     DevAddFileBrowse $f.fFile FMRIEngine "paradigmFileName" "Paradigm design file:" \
-                     "" "txt" "\$Volume(DefaultDir)" \
-                     "Open" "Browse for a text file" "" "Absolute" 
+        "" "txt" "\$Volume(DefaultDir)" \
+        "Open" "Browse for a text file" "" "Absolute" 
 
-    set f $parentFrame.fApply
+    # Apply frame
+    set f $f.fApply
     DevAddButton $f.bApply "Compute" "FMRIEngineComputeActivationVolume" 8
     grid $f.bApply -padx $Gui(pad)
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC FMRIEngineSetImageFormat
+# Switches image format 
+# .ARGS
+# imgFormat the image format
+# .END
+#-------------------------------------------------------------------------------
+proc FMRIEngineSetImageFormat {imgFormat} {
+    global Volume FMRIEngine
+    
+    FMRIEngineClear
+
+    set FMRIEngine(imageFormat) $imgFormat
+
+    # configure menubutton
+    $FMRIEngine(gui,mbImgFormat) config -text $imgFormat 
+
+    set f  $FMRIEngine(f${imgFormat})
+    raise $f
+    focus $f
+#    focus $Volume(f$Volume(propertyType))
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC FMRIEngineBuildUIForAnalyze
+# Creates UI for Analyze input 
+# .ARGS
+# parent the parent frame 
+# .END
+#-------------------------------------------------------------------------------
+proc FMRIEngineBuildUIForAnalyze {parent} {
+    global FMRIEngine Gui 
+
+    set f $parent
+    frame $f.fVolume -bg $Gui(activeWorkspace) -relief groove -bd 3
+    frame $f.fSlider -bg $Gui(activeWorkspace)
+    frame $f.fApply  -bg $Gui(activeWorkspace)
+ 
+    pack $f.fVolume $f.fSlider $f.fApply \
+        -side top -fill x -pady $Gui(pad)
+
+    set f $parent.fVolume
+    DevAddFileBrowse $f Volume "VolAnalyze,FileName" "Analyze Header File:" \
+        "VolAnalyzeSetFileName;FMRIEngineSetVolumeName" "hdr" "\$Volume(DefaultDir)" \
+        "Open" "Browse for an Analyze header file (.hdr) that has a matching .img" \
+        "" "Absolute"
+
+    set f $parent.fSlider
+    DevAddLabel $f.label "Volume No:"
+    eval { scale $f.slider \
+        -orient horizontal \
+        -from 0 -to 0 \
+        -resolution 1 \
+        -bigincrement 10 \
+        -length 160 \
+        -state disabled \
+        -command {FMRIEngineUpdateVolume}} \
+        $Gui(WSA) {-showvalue 0}
+
+    set FMRIEngine(slider) $f.slider
+    pack $f.label $f.slider -side left -expand false -fill x
+
+    set f $parent.fApply
+    DevAddButton $f.bApply "Apply" "FMRIEngineLoadVolumes" 8 
+    DevAddButton $f.bClear "Cancel" "VolumesPropsCancel" 8 
+    grid $f.bApply $f.bClear -padx $Gui(pad)
 }
 
 
@@ -400,17 +493,18 @@ proc FMRIEngineExit {} {
 # .PROC FMRIEngineUpdateVolume
 # Updates image volume as user moves the slider 
 # .ARGS
-# vn the volume number
+# volumeNo the volume number
 # .END
 #-------------------------------------------------------------------------------
-proc FMRIEngineUpdateVolume { vn } {
+proc FMRIEngineUpdateVolume {volumeNo} {
     global FMRIEngine
 
-    if {$vn == 0} {
+    if {$volumeNo == 0} {
+#        DevErrorWindow "Volume number must be greater than 0."
         return
     }
 
-    MainSlicesSetVolumeAll Back $FMRIEngine($vn,id)
+    MainSlicesSetVolumeAll Back $FMRIEngine($volumeNo,id)
     RenderAll
 }
 
@@ -422,47 +516,81 @@ proc FMRIEngineUpdateVolume { vn } {
 # .END
 #-------------------------------------------------------------------------------
 proc FMRIEngineLoadVolumes {} {
+    global FMRIEngine 
+
+    switch $FMRIEngine(imageFormat) {
+        "Analyze" {
+            FMRIEngineLoadAnalyzeVolumes 
+        }
+        "BXH" {
+            VolBXHLoadVolumes
+        }
+    }
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC FMRIEngineLoadAnalyzeVolumes 
+# Reads a series of Analyze files
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc FMRIEngineLoadAnalyzeVolumes {} {
     global FMRIEngine Volume Mrml
 
-    $FMRIEngine(timescale) set 0 
-    $FMRIEngine(timescale) configure -showvalue 0
+    $FMRIEngine(slider) set 0 
+    $FMRIEngine(slider) configure -showvalue 0
 
-    set DefaultDir $Mrml(dir)
-    set filename $Volume(VolAnalyze,FileName)
-    set pathname [file join $DefaultDir $filename]
-    set lastslash [ string last "/" $pathname ]
-    set path [ string range $pathname 0 $lastslash ]
-    set allfile [file join $path "*.hdr" ]
-    set files [lsort -dictionary [glob $allfile]]
+    if {[info exists FMRIEngine(lastIndex)]} {
+        set i 1
+        while {$i <= $FMRIEngine(lastIndex)} {
+            unset FMRIEngine($i,id)
+            incr i
+        }
+
+        unset FMRIEngine(lastIndex)
+    }
+
+    set fileName $Volume(VolAnalyze,FileName)
+    if {$fileName == ""} {
+        DevErrorWindow "File name field is empty."
+        return
+    }
+
+    set lastSlash [string last "/" $fileName]
+    set path [string range $fileName 0 $lastSlash]
+    set pattern [file join $path "*.hdr"]
+
+    set fileList [glob -nocomplain $pattern]
+    if {$fileList == ""} {
+        set path $Mrml(dir)
+        DevErrorWindow "Your Analyze file is not valid: $fileName"
+        return
+    }
+
+    set analyzeFiles [lsort -dictionary $fileList]
     set t 1
 
-    foreach f $files { 
+    foreach f $analyzeFiles { 
+
         puts "reading $f"
         MainVolumesSetActive "NEW"
         set Volume(VolAnalyze,FileName) $f
         set FMRIEngine($t,f) $f
-        set FMRIEngine($t,id) $t
-        set FMRIEngine(lastindex) $t
 
-        set l [ expr $lastslash+1 ]
-        set lastdot [ string last "." $f ]
-        set d [ expr $lastdot-1 ]
-        set e [ expr $lastdot+1 ]
-        set filelen [ string length $f ]
-        set fn [ string range $f $l $d ]
-        set str {}
-        set ext [ string range $f $e $filelen ]
-        set name {}
-        eval append name $fn "-" $ext
-        set Volume(name) $name
-        set FMRIEngine(name) $name
+        set volName [VolBXHCreateVolumeNameFromFileName $f] 
+        set Volume(name) $volName
+        set FMRIEngine(name) $volName
 
-        set i [VolAnalyzeApply]
+        set id [VolAnalyzeApply]
+        set FMRIEngine($t,id) $id
+
 
         MainVolumesSetParam Window 800
         MainVolumesSetParam Level  500
         incr t
     }
+    set FMRIEngine(lastIndex) [llength $analyzeFiles] 
 
     # Add volumes into vtkActivationVolumeGenerator
     if {[info exists FMRIEngine(actvolgen)]} {
@@ -472,8 +600,9 @@ proc FMRIEngineLoadVolumes {} {
     set ii 1
     while {$ii < $t} {
 
-        Volume($ii,vol) Update
-        ad AddInput [Volume($ii,vol) GetOutput]
+        set volId $FMRIEngine($ii,id)
+        Volume($volId,vol) Update
+        ad AddInput [Volume($volId,vol) GetOutput]
         incr ii
     }
     set FMRIEngine(actvolgen) ad
@@ -483,9 +612,9 @@ proc FMRIEngineLoadVolumes {} {
     set FMRIEngine(volextent) $ext 
 
     set m [expr $t-1]
-    $FMRIEngine(timescale) configure -from 1 -to $m
-    $FMRIEngine(timescale) configure -state active
-    $FMRIEngine(timescale) configure -showvalue 1 
+    $FMRIEngine(slider) configure -from 1 -to $m
+    $FMRIEngine(slider) configure -state active
+    $FMRIEngine(slider) configure -showvalue 1 
 
     # show the first volume by default
     MainSlicesSetVolumeAll Back $FMRIEngine(1,id)
@@ -503,7 +632,8 @@ proc FMRIEngineComputeActivationVolume {} {
     global FMRIEngine Module Volume
 
     # Checks if volumes have been loaded
-    set slider [$FMRIEngine(timescale) get]
+    set slider [$FMRIEngine(slider) get]
+    
     if {$slider == 0} {
         DevErrorWindow "Please load volumes first."
         return
@@ -569,13 +699,18 @@ proc FMRIEngineComputeActivationVolume {} {
 #-------------------------------------------------------------------------------
 proc FMRIEngineClear {} {
     global FMRIEngine Volume
-
-    set FMRIEngine(name) ""
+ 
+    set FMRIEngine(bxh-fileName) ""
     set Volume(VolAnalyze,FileName) ""
-    
-    $FMRIEngine(timescale) configure -from 0 -to 0 
-    $FMRIEngine(timescale) configure -state disabled 
-    $FMRIEngine(timescale) configure -showvalue 0 
+
+    set slider [$FMRIEngine(slider) get] 
+    if {$slider == 0} {
+        return
+    }
+
+    $FMRIEngine(slider) configure -from 0 -to 0 
+    $FMRIEngine(slider) configure -state disabled 
+    $FMRIEngine(slider) configure -showvalue 0 
 
     if {[info exist FMRIEngine(lastindex)]} {
         set ii 1
