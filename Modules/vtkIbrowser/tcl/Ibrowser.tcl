@@ -75,7 +75,7 @@ proc IbrowserInit {} {
     set m Ibrowser
 
     #---For now, spew heavily.
-    set Module(verbose) 0
+#    set Module(verbose) 0
     
     #---Module summary info
     set Module($m,overview) "GUI-controller and framework for manipulating sequences of image data."
@@ -96,7 +96,7 @@ proc IbrowserInit {} {
 
     #---Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1 $} {$Date: 2004/07/22 21:11:03 $}]
+        {$Revision: 1.2 $} {$Date: 2004/08/05 18:16:51 $}]
 
     #---Initialize module-level variables
     #---Global array with the same name as the module. Ibrowser()
