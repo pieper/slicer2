@@ -69,7 +69,6 @@ vtkMrmlLandmarkNode \
 vtkImageMeasureVoxels \
 vtkImageNeighborhoodFilter 
 
-#vtkImageSimpleEdge \
 #vtkImageLiveWire \
 #vtkImageLiveWireTester \
 
