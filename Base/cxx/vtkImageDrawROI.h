@@ -25,9 +25,9 @@ PARTICULAR PURPOSE, AND NON-INFRINGEMENT.  THIS SOFTWARE IS PROVIDED ON AN
 'AS IS' BASIS, AND THE AUTHORS AND DISTRIBUTORS HAVE NO OBLIGATION TO PROVIDE
 MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 =========================================================================auto=*/
-// .NAME vtkImageDrawROI -  Flexible threshold
+// .NAME vtkImageDrawROI -  Draw contour on an image
 // .SECTION Description
-// vtkImageDrawROI Can do binary or continous thresholding
+// Drawing and user interaction (select, etc.) for drawing on images
 
 #ifndef __vtkImageDrawROI_h
 #define __vtkImageDrawROI_h
@@ -47,6 +47,8 @@ public:
   vtkTypeMacro(vtkImageDrawROI,vtkImageInPlaceFilter);
 	void PrintSelf(ostream& os, vtkIndent indent);
 
+	// Description:
+	// Display user interaction (mainly selection) in image
 	void SelectPoint(int x, int y);
 	void DeselectPoint(int x, int y);
 	void TogglePoint(int x, int y);
@@ -62,6 +64,8 @@ public:
 	void MoveSelectedPoints(int deltaX, int deltaY);
 	void MoveAllPoints(int deltaX, int deltaY);
 
+	// Description:
+	// Attributes of the poly/line/points drawn in the slice
 	vtkSetVector3Macro(PointColor, float);
 	vtkGetVectorMacro(PointColor, float, 3);
 	vtkSetVector3Macro(SelectedPointColor, float);
@@ -79,6 +83,9 @@ public:
 	vtkSetMacro(HideROI, int);
 	vtkBooleanMacro(HideROI, int);
 
+	// Description:
+	// Shape functions affect the way the contour is drawn
+	// based on the input points
 	void SetShapeToPolygon() {
 		this->Shape = ROI_SHAPE_POLYGON; this->Modified();};
 	void SetShapeToLines() {
@@ -92,6 +99,9 @@ public:
 		case ROI_SHAPE_POINTS: return "Points";
 		default: return "None";};};
 
+	// Description:
+	// Get the points from the contour drawn on the slice.
+	// Used for Apply (to actually mark the points in the volume)
 	vtkPoints* GetPoints(void);
 
 protected:

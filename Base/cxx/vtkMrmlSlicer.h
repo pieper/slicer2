@@ -25,6 +25,17 @@ PARTICULAR PURPOSE, AND NON-INFRINGEMENT.  THIS SOFTWARE IS PROVIDED ON AN
 'AS IS' BASIS, AND THE AUTHORS AND DISTRIBUTORS HAVE NO OBLIGATION TO PROVIDE
 MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 =========================================================================auto=*/
+// .NAME vtkMrmlSlicer - main core of the 3D Slicer
+// .SECTION Description
+// Handles layers of images for the 3 slices, and everything related to 
+// their display.  (i.e. reformatting, orientation, cursor, filtering)
+// Handles drawing before the points are applied.
+// Does math w.r.t. reformat matrices, etc.
+//
+// Don't change this file without permission from slicer@ai.mit.edu.  It
+// is intended to be general enough so developers don't need to hack it.
+//
+
 #ifndef __vtkMrmlSlicer_h
 #define __vtkMrmlSlicer_h
 
@@ -78,59 +89,116 @@ public:
   vtkTypeMacro(vtkMrmlSlicer,vtkObject);
   void PrintSelf(ostream& os, vtkIndent indent);
     
+
+  //------ Output things to be displayed in slice s: ------//
+
   // Description:
-  // GetOutput slice images
+  // Overlay is merged fore, back, and label images, for display
   vtkImageData *GetOutput(int s) {
     this->Update(); return this->Overlay[s]->GetOutput();};
+
+  // Description:
+  // Cursor is the moving cross-hair for over slice s
   vtkImageData *GetCursor(int s) {
     this->Update(); return this->Cursor[s]->GetOutput();};
+
+  // Description:
+  // Active output is either the contour just drawn or the regular
+  // overlay image, depending on the slice it is for.
   vtkImageData *GetActiveOutput(int s) {
-	  this->Update();
+    this->Update();
     if (this->ActiveSlice == s) 
       return this->PolyDraw->GetOutput();
-	  else 
+    else 
       return this->Overlay[s]->GetOutput();
   };
 
-  // Active Slice
+  // Description:
+  // The active slice is the one last touched by the user.
   void SetActiveSlice(int s);
   vtkGetMacro(ActiveSlice, int);
 
+
+  //------ Factors that affect how slices are displayed: ------//
+
+  // Description:
   // Zoom factor
   void SetZoom(int s, float mag);
   void SetZoom(float mag);
   float GetZoom(int s) {return this->Zoom[s]->GetMagnification();};
+
+  // Description:
   // Zoom center
   void SetZoomCenter(int s, float x, float y);
   void GetZoomCenter();
   vtkGetVector2Macro(ZoomCenter0, float);
   vtkGetVector2Macro(ZoomCenter1, float);
   vtkGetVector2Macro(ZoomCenter2, float);
+
+  // Description:
   // Zoom auto center
   void SetZoomAutoCenter(int s, int yes);
   int GetZoomAutoCenter(int s) {return this->Zoom[s]->GetAutoCenter();};
 
-  // Double
+  // Description:
+  // Double slice size outputs 512x512 images for larger display
+  // (instead of 256x256)
   void SetDouble(int s, int yes) {
     this->DoubleSliceSize[s] = yes; this->BuildLowerTime.Modified();};
   int GetDouble(int s) {return this->DoubleSliceSize[s];};
 
-  // Cursor
+  // Description:
+  // The cursor is the crosshair that moves with the mouse over the slices
   void SetShowCursor(int vis);
   void SetNumHashes(int hashes);
   void SetCursorColor(float red, float green, float blue);
   void SetCursorPosition(int s, int x, int y) {
     this->Cursor[s]->SetCursor(x, y);};
 
+  // Description:
+  // Field of view for slices.  Also used for reformatting...
   vtkGetMacro(FieldOfView, float);
   void SetFieldOfView(float x);
 
-  // Volumes
+  // Cursor Annotation
+  int GetForePixel(int s, int x, int y);
+  int GetBackPixel(int s, int x, int y);
+
+  // Description:
+  // Sets the opacity used to overlay this layer on the others
+  void SetForeOpacity(float opacity);
+  vtkGetMacro(ForeOpacity, float);
+
+  // Description:
+  // Sets whether to fade out the background even when the 
+  // foreground is clearn
+  void SetForeFade(int fade);
+  vtkGetMacro(ForeFade, int);
+
+  // Description:
+  // Coloring label maps
+  void SetLabelIndirectLUT(vtkIndirectLookupTable *lut);
+
+
+  //--------- Volumes layered in the 3 slice windows -----------//
+
+  // Description:
+  // The None volume is a single slice, all 0's, used as input to 
+  // the pipeline when no volume is selected.
   void SetNoneVolume(vtkMrmlVolume *vol);
   vtkGetObjectMacro(NoneVolume, vtkMrmlVolume);
+  // Description:
+  // The Back volume is the one displayed in the background slice layer
   void SetBackVolume(vtkMrmlVolume *vol);
+  // Description:
+  // The Fore volume is the one displayed in the foreground slice layer
   void SetForeVolume(vtkMrmlVolume *vol);
+  // Description:
+  // The Label volume is displayed in the label slice layer.
+  // It is passed through a vtkImageLabelOutline filter which shows only
+  // the outline of the labeled regions.
   void SetLabelVolume(vtkMrmlVolume *vol);
+
   void SetBackVolume( int s, vtkMrmlVolume *vol);
   void SetForeVolume( int s, vtkMrmlVolume *vol);
   void SetLabelVolume(int s, vtkMrmlVolume *vol);
@@ -138,23 +206,11 @@ public:
   vtkMrmlVolume* GetForeVolume( int s) {return this->ForeVolume[s];};
   vtkMrmlVolume* GetLabelVolume(int s) {return this->LabelVolume[s];};
 
-  // Cursor Annotation
-  int GetForePixel(int s, int x, int y);
-  int GetBackPixel(int s, int x, int y);
 
-  // Sets the opacity used to overlay this layer on the others
-  void SetForeOpacity(float opacity);
-  vtkGetMacro(ForeOpacity, float);
+  //--------- Slice reformatting, orientation, point conversion  -----------//
 
-  // Sets whether to fade out the background even when the 
-  // foreground is clearn
-  void SetForeFade(int fade);
-  vtkGetMacro(ForeFade, int);
-
-  // Coloring label maps
-  void SetLabelIndirectLUT(vtkIndirectLookupTable *lut);
-
-  // Slice Orient
+  // Description:
+  // Slice Orientation
   void SetOrient(int orient);
   void SetOrient(int s, int orient);
   void SetOrientString(char *str);
@@ -164,6 +220,7 @@ public:
   char *GetOrientList() {return
 "Axial Sagittal Coronal InPlane InPlane90 InPlaneNeg90 Perp OrigSlice AxiSlice SagSlice CorSlice";};
 
+  // Description:
   // Slice Offset
   float GetOffsetRangeLow(int s) {
     return this->OffsetRange[s][this->Orient[s]][0];};
@@ -175,6 +232,7 @@ public:
   float GetOffset(int s, char *str) {return 
 	  this->Offset[s][ConvertStringToOrient(str)];};
 
+  // Description:
   // Matrix
   vtkMatrix4x4 *GetReformatMatrix(int s) {return this->ReformatMatrix[s];};
   void ComputeNTPFromCamera(vtkCamera *camera);
@@ -197,23 +255,56 @@ public:
   vtkGetVectorMacro(Seed, int, 3);
   vtkGetVectorMacro(Seed2D, int, 3);
 
+
+  //-------------------- Filter pipeline  -------------------------//
+
   // Description:
-  //
-  vtkGetMacro(BackFilter, int);
-  vtkSetMacro(BackFilter, int);
-  vtkBooleanMacro(BackFilter, int);
-  vtkGetMacro(ForeFilter, int);
-  vtkSetMacro(ForeFilter, int);
-  vtkBooleanMacro(ForeFilter, int);
-  vtkGetMacro(FilterActive, int);
-  vtkSetMacro(FilterActive, int);
-  vtkBooleanMacro(FilterActive, int);
+  // Convenient pipeline hook for developers.
+  // First and last filters of any pipeline (or part of pipeline)
+  // whose output should be displayed in a slice.
+  // For example, this is used in Editor/EdThreshold.tcl for
+  // dynamic thresholding.
+  // This is for display only!  It can't be used to actually change
+  // the volumes in the slicer.  Use the editor (vtkImageEditorEffects)
+  // for that.
   void SetFirstFilter(int s, vtkImageToImageFilter *filter);
   void SetLastFilter(int s, vtkImageToImageFilter *filter);
   vtkImageToImageFilter* GetFirstFilter(int s) {return this->FirstFilter[s];};
   vtkImageToImageFilter* GetLastFilter(int s) {return this->LastFilter[s];};
 
-  // Draw
+  // Description:
+  // Whether to apply pipeline defined by first, last filter
+  // to the Back slice
+  vtkGetMacro(BackFilter, int);
+  vtkSetMacro(BackFilter, int);
+  vtkBooleanMacro(BackFilter, int);
+
+  // Description:
+  // Whether to apply pipeline defined by first, last filter
+  // to the Fore slice
+  vtkGetMacro(ForeFilter, int);
+  vtkSetMacro(ForeFilter, int);
+  vtkBooleanMacro(ForeFilter, int);
+
+  // Description:
+  // Whether to apply pipeline defined by first, last filter
+  // to any slice.
+  vtkGetMacro(FilterActive, int);
+  vtkSetMacro(FilterActive, int);
+  vtkBooleanMacro(FilterActive, int);
+
+
+  //-------------------- Draw ---------------------------//
+  // Description:
+  // For display of temporary drawing over slices.
+  // 
+  // This is for display only!  It can't be used to actually change
+  // the volumes in the slicer.  The editor (vtkImageEditorEffects)
+  // is used for that.
+  //
+  // Mainly Drawing is interaction with the vtkImageDrawROI object
+  // PolyDraw.
+  //
   void DrawSetColor(float r, float g, float b) {
 	  this->PolyDraw->SetPointColor(r, g, b);
 	  this->PolyDraw->SetLineColor(r, g, b);};
@@ -259,11 +350,13 @@ public:
   char* GetShapeString() {return this->PolyDraw->GetShapeString();};
 
   // Description:
-  //
+  // Update any part of this class that needs it.
+  // Call this if you are using the First, Last filter pipeline
+  // and want it to execute.
   void Update();
 
   // Description:
-  //
+  // 
   void ReformatModified() {this->BuildUpperTime.Modified();};
 
 protected:
