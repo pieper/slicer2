@@ -69,9 +69,8 @@ to compile.
 <b>3. Compile Slicer2</b><br>
 We have provided a convenience script to allow one step configuring and building of Slicer.
 slicer2/Scripts/cmaker.tcl contains the commands to set up CMake and then start the compilation after CMake generates your make files. cmaker.tcl sources the slicer2/slicer_variables.tcl file which sets up the environment variables needed for the compilation (and run) step. Edit slicer_variables.tcl
- with your favourite text editor and set the variables for your platform. The variables that need to be set are at the bottom of the file, switched on the operating system. At the SPL, under SunOS, we use:
+ with your favourite text editor and set the variables for your platform. The variables that need to be set are at the bottom of the file, switched on the operating system. SLICER_HOME is set automatically from the directory that the slicer_variables.tcl file is in. At the SPL, under SunOS, we use:
 <pre><p class=code>
-        set SLICER_HOME [path-to-your-version-of]/slicer2<br>
         set VTK_DIR /projects/birn/slicer2/Lib/solaris8/vtk/VTK-build-[version]<br>
         set VTK_BINARY_DIR /projects/birn/slicer2/Lib/solaris8/vtk/VTK-build-[version]<br>
         set ITK_BINARY_PATH /projects/birn/itk/itk-1.2/itk-build<br>
