@@ -255,8 +255,15 @@ void vtkMrmlVolumeNode::Write(ofstream& of, int nIndent)
       sprintf(CheckVolumeFile,this->FilePattern,this->FullPrefix,this->ImageRange[0]);
       vtkDebugMacro(<< "vtkMrmlVolumeNode: checking for existence of first volume file:\n " << CheckVolumeFile << "\n\tfile prefix = " << this->FilePrefix << "\n\tfull prefix = " << this->FullPrefix << endl);
       
+      if ( CheckVolumeFile == "" || !strcmp (CheckVolumeFile, "r") ) 
+      {
+          cerr << "No filename information for " << this->Name << endl;
+          return;
+      }
+
       FILE *file = fopen(CheckVolumeFile,"r"); 
-      if ( file == NULL) {
+      if ( file == NULL) 
+      {
           cerr << "Could not open \"" << CheckVolumeFile << "\"! "<< endl;
           cerr << "Volume node will not be saved. Might not have read access to the file !" << endl;
           return;
