@@ -39,9 +39,7 @@
 #    MorphometricsHipJointMeasurementInit
 #    MorphometricsHipJointSetModels idList
 #    MorphometricsHipJointMeasurementInitGeometry
-#    MorphometricsHipJointPreplaceAxis Axis PolyData
 #    MorphometricsHipJointPlaceHeadSphere
-#    MorphometricsHipJointPlaceShaftAxis
 #    MorphometricsHipJointResultEnter
 #    MorphometricsHipJointResultExit
 #    MorphometricsHipJointResultUserInterface frame
@@ -84,20 +82,14 @@ proc MorphometricsHipJointMeasurementInit {} {
     # step : the user has to specify which model is the femur and which is the pelvis
     MorphometricsCreateModelChooserStep MorphometricsHipJoint {Femur Pelvis} MorphometricsHipJointSetModels
 
-    # step : the user has to specify the plane at the border of the head and neck
-    MorphometricsCreatePlanePlacementStep MorphometricsHipJoint [Femur GetHeadNeckPlane] "Head Neck Border" "Place plane between the head and the neck"
-
-    # step : the user has to specify the plane at the border of the neck and shaft
-    MorphometricsCreatePlanePlacementStep MorphometricsHipJoint [Femur GetNeckShaftPlane] "Neck Shaft Border" "Place plane between the neck and the shaft" 
-
-    # step : the user has to specify the upper border of the shaft
-    MorphometricsCreatePlanePlacementStep MorphometricsHipJoint [Femur GetUpperShaftEndPlane] "upper end of shaft" "Place plane at the upper end of the shaft at the tuberculum minor"
-
-    # step : the user has to specify the lower border of the shaft
-    MorphometricsCreatePlanePlacementStep MorphometricsHipJoint  [Femur GetLowerShaftEndPlane] "lower end of shaft" "Place plane at the lower end of the shaft at the tuberculum minor" 
-
+    # step : the user can set the shaft axis manually
+    MorphometricsCreateAxisPlacementStep MorphometricsHipJoint [Femur GetShaftAxis] "Shaft axis" "shaft axis"
+    
     # step : the user can set the neck axis manually
     MorphometricsCreateAxisPlacementStep MorphometricsHipJoint [Femur GetNeckAxis] "Neck axis" "neck axis"
+
+    # step : the user can set the head sphere manually
+    MorphometricsCreateSpherePlacementStep MorphometricsHipJoint [Femur GetHeadSphere] "Head sphere" "head sphere"
 
     # step : the user specifies the acetabular plane
     MorphometricsCreatePlanePlacementStep MorphometricsHipJoint  [Pelvis GetAcetabularPlane] "Acetabular Plane" "Place the acetabular plane"
@@ -120,11 +112,41 @@ proc MorphometricsHipJointMeasurementInit {} {
 #-------------------------------------------------------------------------------
 proc MorphometricsHipJointSetModels {idList} {
     global Model 
-    # BUG: ignores whether $Model([lindex $p 0],polyData actually exists
+    set femurMTime [Femur GetMTime]
+    set pelvisMTime [Pelvis GetMTime]
     Femur SetFemur $Model([lindex $idList 0],polyData)
     Pelvis SetPelvis $Model([lindex $idList 1],polyData)
-    ShaftFilter SetInput [Femur GetFemur]
-    HeadFilter SetInput [Femur GetFemur]
+    
+    if {[expr $femurMTime != [Femur GetMTime] || $pelvisMTime != [Pelvis GetMTime]]} {
+    MorphometricsHipJointPrecomputeGeometry
+    }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MorphometricsHipJointPrecomputeGeometry
+# Invokes the algorithms for automatic placement of the relevant geometry part
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MorphometricsHipJointPrecomputeGeometry {} {
+    PelvisConvexHull SetInput [Pelvis GetPelvis]
+    PelvisConvexHull Update
+    vDP1 SetHull PelvisConvexHull
+    vDP1 SetMaximalDistance 2000
+    vPF1 SetPredicate vDP1
+    vPF1 SetInput [Femur GetFemur]
+    vPF1 Update
+
+    JointSphere SetInput [vPF1 GetOutput]
+    JointSphere Update
+
+    [Femur GetHeadSphere] SetRadius [JointSphere GetRadius]
+
+    set center [JointSphere GetCenter]
+    puts "new Radius  [JointSphere GetRadius], new center  [lindex $center 0] [lindex $center 1] [lindex $center 2]"
+    [Femur GetHeadSphere] SetCenter [lindex $center 0] [lindex $center 1] [lindex $center 2]
+    Femur Precompute
+    PelvisPrecompute
 }
 
 #-------------------------------------------------------------------------------
@@ -138,59 +160,6 @@ proc MorphometricsHipJointMeasurementInitGeometry {} {
     vtkPelvisMetric Pelvis
 }
 
-#-------------------------------------------------------------------------------
-# .PROC MorphometricsHipJointPreplaceAxis
-# Computes the best fitting line through the the given vtkPolyData object. 
-# The TransformFilter is assumed to has as input a vtkCylinderSource, the transform 
-# filter is therefore updated so that the output of it is the visualization of 
-# the best fitting line.
-# .ARGS
-# str Axis an object of type vtkAxisSource
-# str PolyData an object of type vtkPolyData
-# .END
-#-------------------------------------------------------------------------------
-proc MorphometricsHipJointPreplaceAxis {Axis PolyData} {
-    global MorphometricsHipJointEuclideanLineFit 
-
-    MorphometricsHipJointEuclideanLineFit SetInput $PolyData
-    MorphometricsHipJointEuclideanLineFit Update
-
-    set normal [MorphometricsHipJointEuclideanLineFit GetDirection]
-    set center [MorphometricsHipJointEuclideanLineFit GetCenter]
-
-    $Axis SetCenter [lindex $center 0] [lindex $center 1] [lindex $center 2]
-    $Axis SetDirection [lindex $normal 0] [lindex $normal 1] [lindex $normal 2]
-}
-
-#-------------------------------------------------------------------------------
-# .PROC MorphometricsHipJointPlaceHeadSphere
-# Convenience function. Applies the sphere fitting algorithm to all points
-# currently considered to be part of the head sphere. It also saves the result
-# in the femur geometry.
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc MorphometricsHipJointPlaceHeadSphere {} {
-    global Femur HeadFilter MorphometricsHipJointSphereFit
-
-    MorphometricsHipJointSphereFit SetInput [HeadFilter GetOutput]
-    MorphometricsHipJointSphereFit Update
-
-    [Femur GetHeadSphere] SetRadius [MorphometricsHipJointSphereFit GetRadius]
-    set center [MorphometricsHipJointSphereFit GetCenter]
-    [Femur GetHeadSphere] SetCenter [lindex $center 0] [lindex $center 1] [lindex $center 2]
-}
-
-#-------------------------------------------------------------------------------
-# .PROC MorphometricsHipJointPlaceShaftAxis
-# Convenience function. Applies the line fitting algorithm to all points
-# in the shaft and saves the result in the femur geometry
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc MorphometricsHipJointPlaceShaftAxis {} {
-    MorphometricsHipJointPreplaceAxis [Femur GetShaftAxis] [ShaftFilter GetOutput]
-}
 
 #-------------------------------------------------------------------------------
 # .PROC MorphometricsHipJointResultEnter
@@ -203,19 +172,10 @@ proc MorphometricsHipJointResultEnter {} {
     global MorphometricsHipJointResultShaftAxis MorphometricsHipJointResultNeckAxis MorphometricsHipJointResultHeadSphere AcetabularPlane
 
     # display the defined parts of the femur and the hip joint geometry parts specified by the user
-    viewRen AddActor MorphometricsHipJointResultNeckAxis
-    viewRen AddActor AcetabularPlane
-
-    Render3D
-
-    # compute and display the shaft axis
-    MorphometricsHipJointPlaceShaftAxis
     viewRen AddActor MorphometricsHipJointResultShaftAxis
-    Render3D
-
-    # compute and display the femoral head sphere
-    MorphometricsHipJointPlaceHeadSphere
+    viewRen AddActor MorphometricsHipJointResultNeckAxis
     viewRen AddActor MorphometricsHipJointResultHeadSphere
+    viewRen AddActor AcetabularPlane
     Render3D
 }
 
@@ -277,7 +237,6 @@ proc MorphometricsHipJointDisplayInit {} {
     vtkActor MorphometricsHipJointResultHeadSphere
     vtkActor AcetabularPlane
 
-
     vtkPolyDataMapper MorphometricsHipJointResultPDM1
     vtkPolyDataMapper MorphometricsHipJointResultPDM2
     vtkPolyDataMapper MorphometricsHipJointResultPDM3
@@ -295,21 +254,85 @@ proc MorphometricsHipJointDisplayInit {} {
     MorphometricsHipJointResultPDM4 SetInput [[Pelvis GetAcetabularPlane] GetOutput]
 
 
-    vtkPredicateFilter ShaftFilter
-    vtkHalfspacePredicate h3
-    vtkHalfspacePredicate h4
-    h3 SetPlane [Femur GetUpperShaftEndPlane]
-    h4 SetPlane [Femur GetLowerShaftEndPlane]
+    vtkConvexHullInexact PelvisConvexHull
+    vtkBooksteinSphereFit JointSphere
+    vtkPredicateFilter vPF1
+    vtkDistancePredicate vDP1
 
-    vtkAndPredicate and2
-    and2 SetLeftOperand h3
-    and2 SetRightOperand h4
-    
-    ShaftFilter SetPredicate and2
-
-    vtkPredicateFilter HeadFilter
-    vtkHalfspacePredicate h1
-    h1 SetPlane [Femur GetHeadNeckPlane]
-    HeadFilter SetPredicate h1
+    AcetabularPlaneFitInit
 }
 
+
+proc AcetabularPlaneFitInit {} {
+    vtkAxisSource coneAxis
+    vtkPredicateFilter coneHip
+    vtkPredicateFilter borderJoint
+    vtkDistanceSpherePredicate femoralHead
+    vtkConePredicate coneAngle
+    vtkPrincipalAxes vprince
+    vtkAndPredicate andHipJoint
+    vtkConvexHullInexact roiHip
+    vtkDistancePredicate nearConvexHullHipJoint
+}
+
+proc PelvisPrecompute {} {
+    vprince SetInput [Pelvis GetPelvis]
+    vprince Update
+
+    set maxAngle [MorphometricsHipJointPelvisFemurHeadAxis coneAxis 2]
+
+    coneAngle SetMaximalAngle $maxAngle
+    coneAngle SetAxis coneAxis
+    coneHip SetPredicate coneAngle
+    coneHip SetInput [Pelvis GetPelvis]
+    coneHip Update
+
+    roiHip SetInput [coneHip GetOutput]
+    roiHip SetGranularity 3
+    roiHip Update
+
+    femoralHead SetSphere [Femur GetHeadSphere]
+    femoralHead SetOnlyInside 0
+    femoralHead SetMaximalDistance 6
+
+    borderJoint SetPredicate andHipJoint
+    andHipJoint SetLeftOperand femoralHead
+    andHipJoint SetRightOperand nearConvexHullHipJoint
+
+    nearConvexHullHipJoint SetHull roiHip
+    nearConvexHullHipJoint SetMaximalDistance 4
+
+    borderJoint SetInput [Pelvis GetPelvis]
+    borderJoint Update
+
+    vprince SetInput [borderJoint GetOutput]
+    vprince Update
+
+    set center [vprince GetCenter]
+    set normal [vprince GetZAxis]
+    [Pelvis GetAcetabularPlane] SetCenter [lindex $center 0] [lindex $center 1] [lindex $center 2]
+    [Pelvis GetAcetabularPlane] SetNormal [lindex $normal 0] [lindex $normal 1] [lindex $normal 2]
+}
+
+proc MorphometricsHipJointPelvisFemurHeadAxis {Axis factor } {
+    set pelvisCenter [vprince GetCenter]
+
+    set femurCenter [[Femur GetHeadSphere] GetCenter]
+    set femurRadius [expr $factor * [[Femur GetHeadSphere] GetRadius]]
+
+    set direction {}
+    lappend direction [expr [lindex $femurCenter 0] - [lindex $pelvisCenter 0]]
+    lappend direction [expr [lindex $femurCenter 1] - [lindex $pelvisCenter 1]]
+    lappend direction [expr [lindex $femurCenter 2] - [lindex $pelvisCenter 2]]
+
+    $Axis SetCenter [lindex $pelvisCenter 0] [lindex $pelvisCenter 1] [lindex $pelvisCenter 2]
+    $Axis SetDirection [lindex $direction 0] [lindex $direction 1] [lindex $direction 2]
+
+    set length 0
+    set length [expr $length + [lindex $direction 0] * [lindex $direction 0]]
+    set length [expr $length + [lindex $direction 1] * [lindex $direction 1]]
+    set length [expr $length + [lindex $direction 2] * [lindex $direction 2]]
+    set length [expr sqrt($length)]
+    set angle [expr acos($length / [expr sqrt($length * $length + $femurRadius * $femurRadius)])]
+    return [expr $angle *  57.2957795131]
+}
