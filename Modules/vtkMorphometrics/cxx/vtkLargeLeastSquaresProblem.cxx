@@ -269,6 +269,7 @@ void vtkLargeLeastSquaresProblem::PrintSelf()
 vtkLargeLeastSquaresProblem::vtkLargeLeastSquaresProblem()
 {
   Ab = NULL;
+  tempAb = NULL;
   Householder = NULL;
   omega = NULL;
   NumberColumns = 3;
