@@ -93,10 +93,10 @@ proc EdPhaseWireInit {} {
     # phase offset slider
     set Ed($e,phaseOffsetLow) 0
     set Ed($e,phaseOffsetHigh) 180
+
     # default offset is 90 degrees == perfect edge in phase image
-    #set Ed(EdPhaseWire,phaseOffset) 90
-    set Ed(EdPhaseWire,phaseOffset) 0
-    set Ed(EdPhaseWire,defaultPhaseOffset) 0
+    set Ed(EdPhaseWire,defaultPhaseOffset) 90
+    set Ed(EdPhaseWire,phaseOffset) $Ed(EdPhaseWire,defaultPhaseOffset)
 
     # phase and certainty volumes we are using
     set Ed(EdPhaseWire,phaseVol) $Volume(idNone)
@@ -108,8 +108,90 @@ proc EdPhaseWireInit {} {
 
     # ignore mouse movement until we have a start point
     set Ed(EdPhaseWire,pipelineActiveAndContourStarted) 0
+
+    # center frequency controls sensitivity to different size image features
+    # choices for omega (these should be chosen more carefully)
+    set Ed(EdPhaseWire,omega,idList) {PiOverThree PiOverFour PiOverSix}
+    #set Ed(EdPhaseWire,omega,nameList) {"pi/3" "pi/4" "pi/6"}
+    set Ed(EdPhaseWire,omega,nameList) {"small" "medium" "large"}
+    # current omega
+    set Ed(EdPhaseWire,omega,id) PiOverThree
+    set Ed(EdPhaseWire,omega,name) "pi/3"
 }
 
+proc EdPhaseWireSetOmega {omega} {
+    global Ed Volume prog
+
+    set e EdPhaseWire
+
+    # decide what size (256 or 512 now) kernel to use
+    #-------------------------------------------
+    set extent [[Volume([EditorGetWorkingID],vol) GetOutput] GetExtent]
+    set width [lindex $extent 1]
+    set height [lindex $extent 3]
+
+    puts "$width $height"
+    
+    if {$width != $height} {
+	puts "Can't work on non-square images now!"
+	return 1
+    }
+
+    if {$width != "255"} {
+	puts "Only 256x256 images supported!"
+	return 1
+    }
+
+    #if {$omega != "PiOverThree"} {
+	#	puts "Only w=pi/3 supported!"
+	#	return 1
+    #}
+	
+    set width1 [expr $width + 1]
+
+    # file name
+    #-------------------------------------------
+    set directory [file join $prog tcl-modules Editor EdPhaseWire]
+    set prefix [file join kernel$width1 omega$omega kernel]
+    set fullpath [file join $directory $prefix]
+
+    # read in kernel 
+    #-------------------------------------------
+    # Lauren should be created in slicer soon
+    foreach o $Ed($e,phaseOrientions,idList) {
+	Ed($e,phase,reader$o) SetFilePattern "%s.%03d"
+	Ed($e,phase,reader$o) SetDataByteOrderToLittleEndian
+	Ed($e,phase,reader$o) SetDataExtent 0 $width 0 $width $o $o
+	Ed($e,phase,reader$o) SetFilePrefix $fullpath
+	#reader SetDataScalarTypeToFloat
+	
+	# cast to float to match output of fft of image
+	Ed($e,phase,cast$o) SetOutputScalarTypeToFloat
+	Ed($e,phase,cast$o) SetInput [Ed($e,phase,reader$o) GetOutput]
+	
+	# since we are using regular multiply
+	# make both components the same (so real part
+	# will multiply both real and imag parts
+	# of the fft of the image this way)
+	#-------------------------------------------
+	foreach input {1 2} {
+	    Ed($e,phase,kernel$o) SetInput$input [ Ed($e,phase,cast$o) GetOutput]
+	}
+	
+    }
+
+    set Ed($e,omega,id) $omega
+    set idx [lsearch $Ed($e,omega,idList) $omega]
+    set Ed($e,omega,name) [lindex $Ed($e,omega,nameList) $idx]
+
+    # config menu on GUI
+    $Ed(EdPhaseWire,omega,menubutton) config -text $Ed($e,omega,name)
+
+    puts "read in filter kernels from $fullpath"
+
+    return 0
+
+}
 
 #-------------------------------------------------------------------------------
 # .PROC EdPhaseWireBuildVTK
@@ -132,12 +214,173 @@ proc EdPhaseWireBuildVTK {} {
     
     set e EdPhaseWire
 
-    foreach s $Slice(idList) {
+    #-------------------------------------------
+    # Lauren the phase computation should be a vtk class
+    #-------------------------------------------
+
 	
+    # ids for directions we are computing phase in
+    #-------------------------------------------
+    set Ed($e,phaseOrientions,idList) {1 2 3 4}
+
+
+    # objects for reading in filter kernels
+    # these will go away when kernels are computed
+    # in a vtk class
+    #-------------------------------------------
+    foreach o $Ed($e,phaseOrientions,idList) {
+	vtkImageReader Ed($e,phase,reader$o)
+	vtkImageCast  Ed($e,phase,cast$o)
+	vtkImageAppendComponents Ed($e,phase,kernel$o)
+    }
+
+    #-------------------------------------------
+    # Create objects for computing phase.
+    #-------------------------------------------
+
+    # We don't need to duplicate these objects for all 
+    # 3 slices: just use the same ones.
+
+    # if we are applying current window/level
+    # before phase computation
+    #
+    # this filter is the beginning of the pipeline
+    # and its input is current (active) slice from 
+    # Slicer object (vtkMrmlSlicer)
+    #-------------------------------------------
+    # Lauren this is in vtk3.2 only!
+    vtkImageMapToWindowLevelColors Ed($e,phase,windowLevel)
+
+    # fft of original image.
+    #-------------------------------------------
+    vtkImageFFT Ed($e,phase,fftSlice)
+    Ed($e,phase,fftSlice) SetInput [Ed($e,phase,windowLevel) GetOutput]
+
+
+    
+    # objects we need for each of 4 filter pairs
+    #-------------------------------------------
+    foreach o $Ed($e,phaseOrientions,idList) {
+	
+	# for filtering in fourier domain 
+	#-------------------------------------------
+	vtkImageMathematics Ed($e,phase,mult$o)
+	Ed($e,phase,mult$o) SetOperationToMultiply
+	Ed($e,phase,mult$o) SetInput1 [Ed($e,phase,fftSlice) GetOutput]
+	Ed($e,phase,mult$o) SetInput2 [Ed($e,phase,kernel$o) GetOutput]
+	
+	# reverse fft: back to spatial domain
+	#-------------------------------------------
+	vtkImageRFFT Ed($e,phase,rfft$o)
+	Ed($e,phase,rfft$o) SetDimensionality 2
+	Ed($e,phase,rfft$o) SetInput [Ed($e,phase,mult$o) GetOutput]
+	
+	# separate odd, even filter responses in spatial domain
+	#-------------------------------------------
+	vtkImageExtractComponents Ed($e,phase,even$o)
+	Ed($e,phase,even$o) SetComponents 0
+	Ed($e,phase,even$o) SetInput [Ed($e,phase,rfft$o) GetOutput]
+	
+	vtkImageExtractComponents Ed($e,phase,odd$o)
+	Ed($e,phase,odd$o) SetComponents 1
+	Ed($e,phase,odd$o) SetInput [Ed($e,phase,rfft$o) GetOutput]
+    }
+    
+    # Now combine the quadrature filter outputs to create 
+    # 'phase' and 'cert' images
+    
+    # add the real (even) responses
+    #------------------------------------------------------
+    vtkImageMathematics Ed($e,phase,rsum1)
+    Ed($e,phase,rsum1) SetOperationToAdd
+    Ed($e,phase,rsum1) SetInput 0 [Ed($e,phase,even1) GetOutput]
+    Ed($e,phase,rsum1) SetInput 1 [Ed($e,phase,even2) GetOutput]
+    vtkImageMathematics Ed($e,phase,rsum2)
+    Ed($e,phase,rsum2) SetOperationToAdd
+    Ed($e,phase,rsum2) SetInput 0 [Ed($e,phase,even3) GetOutput]
+    Ed($e,phase,rsum2) SetInput 1 [Ed($e,phase,even4) GetOutput]
+    vtkImageMathematics Ed($e,phase,realSum)
+    Ed($e,phase,realSum) SetInput 0 [Ed($e,phase,rsum1) GetOutput]
+    Ed($e,phase,realSum) SetInput 1 [Ed($e,phase,rsum2) GetOutput]
+    
+    
+    # get the abs value of all imaginary (odd) responses
+    #------------------------------------------------------
+    foreach o $Ed($e,phaseOrientions,idList) {
+	vtkImageMathematics Ed($e,phase,iabs$o)
+	Ed($e,phase,iabs$o) SetOperationToAbsoluteValue
+	Ed($e,phase,iabs$o) SetInput 0 [Ed($e,phase,odd$o) GetOutput]
+    }
+    
+    # add the abs imaginary responses
+    #------------------------------------------------------
+    vtkImageMathematics Ed($e,phase,isum1)
+    Ed($e,phase,isum1) SetOperationToAdd
+    Ed($e,phase,isum1) SetInput 0 [Ed($e,phase,iabs1) GetOutput]
+    Ed($e,phase,isum1) SetInput 1 [Ed($e,phase,iabs2) GetOutput]
+    vtkImageMathematics Ed($e,phase,isum2)
+    Ed($e,phase,isum2) SetOperationToAdd
+    Ed($e,phase,isum2) SetInput 0 [Ed($e,phase,iabs3) GetOutput]
+    Ed($e,phase,isum2) SetInput 1 [Ed($e,phase,iabs4) GetOutput]
+    vtkImageMathematics Ed($e,phase,imagSum)
+    Ed($e,phase,imagSum) SetInput 0 [Ed($e,phase,isum1) GetOutput]
+    Ed($e,phase,imagSum) SetInput 1 [Ed($e,phase,isum2) GetOutput]
+    
+    #------------------------------------------------------
+    # PHASE:
+    # res.edgephase = angle(res.phase);
+    #
+    # so we use the angle as the phase, 
+    # double atan2( double y, double x );
+    #------------------------------------------------------
+    vtkImageMathematics Ed($e,phase,phaseAngle)
+    Ed($e,phase,phaseAngle) SetOperationToATAN2 
+    Ed($e,phase,phaseAngle) SetInput 0 [Ed($e,phase,imagSum) GetOutput]
+    Ed($e,phase,phaseAngle) SetInput 1 [Ed($e,phase,realSum) GetOutput]
+    
+    # Lauren all this scaling (phase and cert) may be unnecessary...
+    # just here now for consistency with before
+
+    # shift and scale outputs  DON'T DO THE SHIFT HERE NOW
+    vtkImageShiftScale Ed($e,phase,phase)
+    #Ed($e,phase,phaseScale) SetShift -1.5707963 ; # -pi/2
+    Ed($e,phase,phase) SetScale 1000
+    Ed($e,phase,phase) SetInput [Ed($e,phase,phaseAngle) GetOutput]	
+    
+    # abs value of phase
+    #vtkImageMathematics Ed($e,phase,phaseAbs)
+    #Ed($e,phase,phaseAbs) SetOperationToAbsoluteValue
+    #Ed($e,phase,phaseAbs) SetInput 0 [phase GetOutput]	
+      
+    #------------------------------------------------------
+    # CERT:
+    # res.edgecert = abs(imag(res.q{1}))  + abs(imag(res.q{2}))  
+    # +  abs(imag(res.q{3}))  + abs(imag(res.q{4}));
+    # 
+    # this is the same as the imaginary part used to get phase, above:
+    #  =>   sum of absolute value of all imaginary parts
+    #
+    #------------------------------------------------------
+    
+    vtkImageShiftScale Ed($e,phase,cert)
+    # factor of 1000 is in kernel!!!!!
+    # want factor of 10 => 10/1000 = .01
+    #cert SetScale 10
+    # Lauren this scaling should go away when kernels computed in vtk
+    Ed($e,phase,cert) SetScale .01
+    Ed($e,phase,cert) SetInput [Ed($e,phase,imagSum) GetOutput]
+    
+    
+
+    foreach s $Slice(idList) {
+	#-------------------------------------------
+	# Create objects for computing shortest paths.
+	#-------------------------------------------
+
 	# maybe not used: for training, though
 	# currently this is the filter that the slicer
 	# gets to start off our pipeline
-	vtkImageGradientMagnitude Ed($e,gradMag$s)
+	#vtkImageGradientMagnitude Ed($e,gradMag$s)
 	
 	# for combining phase, cert, and any other inputs
 	vtkImageWeightedSum Ed($e,imageSumFilter$s)
@@ -145,7 +388,7 @@ proc EdPhaseWireBuildVTK {} {
 	# for normalization of the phase and cert inputs
 	vtkImageLiveWireScale Ed($e,phaseNorm$s)
 	vtkImageLiveWireScale Ed($e,certNorm$s)
-	vtkImageLiveWireScale Ed($e,gradNorm$s)
+	#vtkImageLiveWireScale Ed($e,gradNorm$s)
 
 	# for shifting the phase image to find edges at different grayscales
 	vtkImageShiftScale Ed($e,phaseScale$s)
@@ -160,20 +403,20 @@ proc EdPhaseWireBuildVTK {} {
 	Ed($e,phaseNorm$s) SetInput [Ed($e,phaseAbs$s) GetOutput]
 
 	# pipeline (rest done in EdPhaseWireEnter)
-	Ed($e,gradNorm$s)  SetInput [Ed($e,gradMag$s) GetOutput]
+	#Ed($e,gradNorm$s)  SetInput [Ed($e,gradMag$s) GetOutput]
 	
 	# transformation functions to emphasize desired features of the
 	# phase and cert inputs
 	#certNorm SetTransformationFunctionToOneOverX
 	Ed($e,certNorm$s) SetTransformationFunctionToInverseLinearRamp
-	Ed($e,gradNorm$s) SetTransformationFunctionToOneOverX
+	#Ed($e,gradNorm$s) SetTransformationFunctionToOneOverX
 	
 	# weighted sum of all inputs
 	set sum Ed(EdPhaseWire,imageSumFilter$s)
 	# pipeline
 	$sum SetInput 0 [Ed($e,phaseNorm$s) GetOutput]
 	$sum SetInput 1 [Ed($e,certNorm$s) GetOutput]
-	$sum SetInput 2 [Ed($e,gradNorm$s) GetOutput]
+	#$sum SetInput 2 [Ed($e,gradNorm$s) GetOutput]
 	
 	# this filter finds short paths in the image and draws the wire
 	vtkImageLiveWire Ed(EdPhaseWire,lwPath$s)
@@ -205,9 +448,19 @@ proc EdPhaseWireBuildVTK {} {
 	# make sure this is max val output by these filters:
 	Ed($e,phaseNorm$s) SetScaleFactor $scale
 	Ed($e,certNorm$s) SetScaleFactor  $scale
-	Ed($e,gradNorm$s) SetScaleFactor  $scale
+	#Ed($e,gradNorm$s) SetScaleFactor  $scale
 	
     }
+
+    #-------------------------------------------
+    # hook up phase computation to path computation
+    #-------------------------------------------
+    foreach s $Slice(idList) {
+	Ed($e,phaseScale$s)  SetInput [Ed($e,phase,phase) GetOutput]
+	Ed($e,certNorm$s)  SetInput [Ed($e,phase,cert) GetOutput]
+    }
+
+
 }
 
 
@@ -229,6 +482,7 @@ proc EdPhaseWireBuildGUI {} {
     #     Render
     #     Contour
     #     Reset
+    #     PhaseMenu
     #     Apply
     #   Advanced
     #     Settings
@@ -267,10 +521,11 @@ proc EdPhaseWireBuildGUI {} {
     frame $f.fGrid      -bg $Gui(activeWorkspace)
     frame $f.fContour   -bg $Gui(activeWorkspace)
     frame $f.fReset   -bg $Gui(activeWorkspace)
+    frame $f.fPhaseMenu     -bg $Gui(activeWorkspace)
     frame $f.fApply     -bg $Gui(activeWorkspace)
     frame $f.fSettings     -bg $Gui(activeWorkspace)
     pack $f.fGrid $f.fRender $f.fContour $f.fReset  \
-	    $f.fSettings $f.fApply \
+	    $f.fSettings $f.fPhaseMenu $f.fApply \
 	    -side top -pady $Gui(pad)
 
     # Standard Editor interface buttons
@@ -323,6 +578,29 @@ proc EdPhaseWireBuildGUI {} {
 	    "Clear the latest part of the PhaseWire."
 
     pack $f.bReset $f.bResetSeg -side left -pady $Gui(pad) -padx $Gui(pad)
+
+
+    #-------------------------------------------
+    # TabbedFrame->Basic->PhaseMenu frame
+    #-------------------------------------------
+    set f $Ed(EdPhaseWire,frame).fTabbedFrame.fBasic.fPhaseMenu
+    set label       "$f.l"
+    set menubutton  "$f.mb"
+    set menu        "$f.mb.m"
+    
+    eval {label $label -text "Image Feature Size"} $Gui(WLA)
+
+    eval {menubutton $menubutton -text  $Ed(EdPhaseWire,omega,name) \
+            -relief raised -bd 2 -menu $menu} $Gui(WMBA)
+    eval {menu $menu} $Gui(WMA)
+
+    foreach id $Ed(EdPhaseWire,omega,idList) name $Ed(EdPhaseWire,omega,nameList) {
+	$menu add command -label $name -command "EdPhaseWireSetOmega $id"
+    }
+    grid $label $menubutton -padx $Gui(pad)
+    # save menu to configure later
+    set Ed(EdPhaseWire,omega,menu) $menu
+    set Ed(EdPhaseWire,omega,menubutton) $menubutton
 
     #-------------------------------------------
     # TabbedFrame->Basic->Apply frame
@@ -469,6 +747,28 @@ proc EdPhaseWireBuildGUI {} {
     eval {entry $f.eCU -width 6 -textvariable Ed(EdPhaseWire,certUpperCutoff)} $Gui(WEA)
     eval {entry $f.eCL -width 6 -textvariable Ed(EdPhaseWire,certLowerCutoff)} $Gui(WEA)
     pack $f.lPW $f.ePW $f.lCW $f.eCW  $f.lGW $f.eGW $f.lCL $f.eCL $f.lCU $f.eCU -side left
+
+}
+
+proc EdPhaseUseWindowLevel {} {
+    global Lut Ed
+
+    set e EdPhaseWire
+
+    # get original volume and its current w/l
+    #-------------------------------------------
+    set v [EditorGetOriginalID]
+    set window [Volume($v,node) GetWindow]
+    set level  [Volume($v,node) GetLevel]
+
+    # imitate this display in our pipeline
+    #-------------------------------------------
+    Ed($e,phase,windowLevel) SetWindow $window
+    Ed($e,phase,windowLevel) SetLevel $level
+    # get the lookup table we are using already for this volume
+    Ed($e,phase,windowLevel) SetLookupTable Lut([Volume($v,node) GetLUTName],lut)
+    
+    puts "win: $window lev: $level"
 
 }
 
@@ -803,18 +1103,28 @@ proc EdPhaseWireStopPipeline {} {
 proc EdPhaseWireEnter {} {
     global Ed Label Slice Editor
 
-    # make sure we've got phase
-    if {[EdPhaseWireFindInputPhaseVolumes] == "" } {
-	tk_messageBox -message "Cannot find phase and cert volumes"
-	# Lauren don't let the user enter this effect.
-	
+
+    # Create filter kernels
+    #-------------------------------------------
+    if {[EdPhaseWireSetOmega $Ed(EdPhaseWire,omega,id)] == 1} {
+	puts "Unable to create filter kernels"
+	# give up the ghost
 	return
     }
-
+    
+    # make sure we've got phase
+    #if {[EdPhaseWireFindInputPhaseVolumes] == "" } {
+	#	tk_messageBox -message "Cannot find phase and cert volumes"
+	# Lauren don't let the user enter this effect.
+	
+	#	return
+	#    }
+	
     # we are drawing in the label layer, so it had
     # better be visible
     if {$Editor(display,labelOn) == 0} {
 	MainSlicesSetVolumeAll Label [EditorGetWorkingID]
+	# Lauren then variable is wrong?
     }
 
     # ignore mouse movement until we have a start point
@@ -1273,8 +1583,15 @@ proc EdPhaseWireUsePhasePipeline {} {
 
     foreach s $Slice(idList) {
 	
+
 	# get input grayscale images from Slicer object
-	Slicer SetFirstFilter $s Ed($e,gradMag$s)
+	# (grab reformatted image to compute its phase)
+	#-------------------------------------------    
+	Slicer SetFirstFilter $s Ed($e,phase,windowLevel)
+	#Slicer SetFirstFilter $s Ed($e,phase,fftSlice) 
+	#Slicer SetFirstFilter $s Ed($e,gradMag$s)
+	
+
 	# put our output over the slice (so the wire is visible)
 	Slicer SetLastFilter  $s Ed(EdPhaseWire,lwPath$s)  
 
@@ -1295,26 +1612,13 @@ proc EdPhaseWireUsePhasePipeline {} {
 	$sum SetWeightForInput 0 $Ed($e,phaseWeight)
 	$sum SetWeightForInput 1 $Ed($e,certWeight)
 	$sum SetWeightForInput 2 $Ed($e,gradWeight)
-    }
+
+    } 
     
-    # get input phase and cert images from Slicer object
-    set v Volume($Ed(EdPhaseWire,phaseVol),vol)
-    # tell the slicer to reformat this volume tracking the active slice
-    Slicer AddVolumeToReformat $v
-    foreach s $Slice(idList) {
-	#Ed($e,phaseNorm$s)  SetInput [Slicer GetReformatOutputFromVolume $v]
-	Ed($e,phaseScale$s)  SetInput [Slicer GetReformatOutputFromVolume $v]
-    }
-
-    set v Volume($Ed(EdPhaseWire,certVol),vol)
-    Slicer AddVolumeToReformat $v
-    foreach s $Slice(idList) {
-	Ed($e,certNorm$s)  SetInput [Slicer GetReformatOutputFromVolume $v]
-    }
-
+    # get current w/l and use in our pipeline
+    EdPhaseUseWindowLevel
 
     # update slicer
     Slicer ReformatModified
     Slicer Update
 }
-
