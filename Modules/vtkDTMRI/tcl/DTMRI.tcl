@@ -105,7 +105,7 @@ proc DTMRIInit {} {
     set Module($m,author) "Lauren O'Donnell"
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.12 $} {$Date: 2004/05/18 20:35:22 $}]
+            {$Revision: 1.13 $} {$Date: 2004/06/24 19:52:56 $}]
 
     # Define Tabs
     #------------------------------------
@@ -160,6 +160,7 @@ proc DTMRIInit {} {
     set DTMRI(convert,lastGradientImage) 6
     set DTMRI(convert,firstNoGradientImage) 7
     set DTMRI(convert,lastNoGradientImage) 8
+    set DTMRI(convert,B) 1000
     _default Delete
 
     #------------------------------------
@@ -455,6 +456,14 @@ proc DTMRIEnter {} {
     DTMRIAddAllActors
     }
     Render3D
+
+    #Update LMI logo
+    set modulepath $::PACKAGE_DIR_VTKDTMRI/../../../images
+   if {[file exist [ExpandPath [file join \
+   $modulepath "slicerLMIlogo.ppm"]]]} {
+        image create photo iWelcome \
+           -file [ExpandPath [file join $modulepath "slicerLMIlogo.ppm"]]
+   }
 }
 
 #-------------------------------------------------------------------------------
@@ -490,6 +499,12 @@ proc DTMRIExit {} {
     }
     # make 3D slices opaque now
     #MainSlicesReset3DOpacity
+    
+    #Restore standar slicer logo
+    image create photo iWelcome \
+        -file [ExpandPath [file join gui "welcome.ppm"]]
+
+
 }
 
 ################################################################
@@ -3610,6 +3625,16 @@ proc DTMRIBuildVTK {} {
     # objects for thresholding before glyph display
     #------------------------------------
 
+
+    #---------------------------------------------------------------
+    # Pipeline for display of DTMRIs over 2D slice
+    #---------------------------------------------------------------
+    
+    # Lauren how should reformatting be hooked into regular
+    # slicer slice reformatting?  Ideally want to follow
+    # the 3 slices.
+    DTMRIMakeVTKObject vtkImageReformat reformat
+
     # compute scalar data for thresholding
     set object thresh,math
     DTMRIMakeVTKObject vtkTensorMathematics $object
@@ -3749,6 +3774,7 @@ proc DTMRIBuildVTK {} {
     set object glyphs
     #DTMRIMakeVTKObject vtkDTMRIGlyph $object
     DTMRIMakeVTKObject vtkInteractiveTensorGlyph $object
+    DTMRI(vtk,glyphs) SetInput ""
     #DTMRI(vtk,glyphs) SetSource [DTMRI(vtk,glyphs,axes) GetOutput]
     #DTMRI(vtk,glyphs) SetSource [DTMRI(vtk,glyphs,sphere) GetOutput]
     #DTMRIAddObjectProperty $object ScaleFactor 1 float {Scale Factor}
@@ -3849,14 +3875,6 @@ proc DTMRIBuildVTK {} {
     DTMRIAddObjectProperty $object ImmediateModeRendering \
             1 bool {Immediate Mode Rendering}    
 
-    #---------------------------------------------------------------
-    # Pipeline for display of DTMRIs over 2D slice
-    #---------------------------------------------------------------
-    
-    # Lauren how should reformatting be hooked into regular
-    # slicer slice reformatting?  Ideally want to follow
-    # the 3 slices.
-    DTMRIMakeVTKObject vtkImageReformat reformat
 
 
     #---------------------------------------------------------------
@@ -3899,6 +3917,9 @@ proc ConvertVolumeToTensors {} {
 
     # DTMRI creation filter
     vtkImageDiffusionTensor DTMRI
+    
+    #Set b-factor
+    DTMRI SetB $DTMRI(convert,B)
 
     # setup - these are now globals linked with GUI
     #set slicePeriod 8
