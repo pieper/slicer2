@@ -62,6 +62,12 @@ set SLICER_ARG5 "-DGSL_LIB_DIR:PATH=$::GSL_LIB_DIR"
 set SLICER_ARG6 "-DGSL_INC_DIR:PATH=$::GSL_INC_DIR"
 set SLICER_ARG7 "-DGSL_SRC_DIR:PATH=$::GSL_SRC_DIR"
 
+# Do we have SOViewer?
+set SLICER_ARG8 "-DSOV_BINARY_DIR:BOOL=FALSE"
+if { $SOV_BINARY_DIR != " " } {
+   set SLICER_ARG8 "-DSOV_BINARY_DIR:FILEPATH=$SOV_BINARY_DIR"
+}
+
 # use an already built version of vtk
 set VTK_ARG1 "-DUSE_BUILT_VTK:BOOL=ON"
 set VTK_ARG2 "-DVTK_DIR:PATH=$VTK_DIR"
@@ -273,7 +279,7 @@ foreach target $TARGETS {
             $VTK_ARG1 $VTK_ARG2 $VTK_ARG3 $VTK_ARG4 $VTK_ARG5 \
             $VTK_ARG6 $VTK_ARG7 $VTK_ARG8 $VTK_ARG9 $VTK_ARG_VERBOSE $VTK_ARG_DEBUG $VTK_ARG_ENDIAN \
             $VTK_ARG_CONFIGURATIONS \
-            $SLICER_ARG1 $SLICER_ARG2 $SLICER_ARG3 $SLICER_ARG4 $SLICER_ARG5 $SLICER_ARG6 $SLICER_ARG7] 
+            $SLICER_ARG1 $SLICER_ARG2 $SLICER_ARG3 $SLICER_ARG4 $SLICER_ARG5 $SLICER_ARG6 $SLICER_ARG7 $SLICER_ARG8] 
 
         if {[file exists [file join $target cmaker_local.tcl]]} {
             # Define SLICER_MODULE_ARG in cmaker_local.tcl
@@ -308,15 +314,30 @@ foreach target $TARGETS {
         }
         default {
             if { [file tail $target] == "Base" } {
-                set sln VTKSLICER.sln
+              if {$MSVC6} {
+              set sln VTKSLICER.dsw
+              } else {
+              set sln VTKSLICER.sln
+              }
             } else {
-                set sln [string toupper [file tail $target]].sln
+              if {$MSVC6} {
+              set sln [string toupper [file tail $target]].dsw
+              } else {
+              set sln [string toupper [file tail $target]].sln
+              }
             }
+            if {$MSVC6} {
+            puts "running: $::MAKE $sln /MAKE \"ALL_BUILD - $::VTK_BUILD_TYPE\""
+            } else {
             puts "running: $::MAKE $sln /build $::VTK_BUILD_TYPE"
-
+            }
             # no output from devenv so just go ahead and run it with no loop
+            if {$MSVC6} {
+            set ret [catch {exec $::MAKE $sln /MAKE "ALL_BUILD - $::VTK_BUILD_TYPE"} res]
+    } else {
             set ret [catch {exec $::MAKE $sln /build $::VTK_BUILD_TYPE} res]
-
+            }
+    
             puts $res
             
             if { $ret } {
