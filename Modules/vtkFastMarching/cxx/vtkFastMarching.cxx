@@ -62,10 +62,9 @@ float vtkFastMarching::speed( int index )
   double pI=pdfIntensityIn->value(I);
   double pH=pdfInhomoIn->value(H);
 
-  // note: put the emphasis on pI... 
-  s=(float)pI*pI*pH;
 
-  s=pow(s, powerSpeed);
+
+  s=(float)pow(pI*pI*pH, powerSpeed);
 
   // make sure speed is not too small
   s*=1e10;
@@ -78,7 +77,7 @@ float vtkFastMarching::speed( int index )
       else
     vtkErrorMacro( "(s<1.0/(INF/1e6)) " << s );
       */
-      s=1.0/(INF/1e6);
+      s=(float)(1.0/(INF/1e6));
     }
 
   return s;
@@ -113,7 +112,7 @@ void vtkFastMarching::setSeed( int index )
       if( node[ f.nodeIndex ].status==fmsFAR )
     {
       node[f.nodeIndex].status=fmsTRIAL;
-      node[f.nodeIndex].T = distanceNeighbor(n) / speed(f.nodeIndex);
+      node[f.nodeIndex].T = (float) ( distanceNeighbor(n) / speed(f.nodeIndex) );
       
       insert( f ); // insert in minheap
     }
@@ -172,7 +171,7 @@ void vtkFastMarching::initNewExpansion( void )
   while(tree.size()>0)
     {
       node[ tree[tree.size()-1].nodeIndex ].status=fmsFAR; 
-      node[ tree[tree.size()-1].nodeIndex ].T=INF; 
+      node[ tree[tree.size()-1].nodeIndex ].T=(float)INF; 
       tree.pop_back();
     }
 
@@ -224,7 +223,7 @@ int vtkFastMarching::nValidSeeds( void )
   if(somethingReallyWrong)
     return 0;
 
-  return seedPoints.size()+tree.size();
+  return (int)(seedPoints.size()+tree.size());
 }
 
 void vtkFastMarchingExecute(vtkFastMarching *self,
@@ -247,14 +246,13 @@ void vtkFastMarchingExecute(vtkFastMarching *self,
       int index=0;
       int lastPercentageProgressBarUpdated=-1;
 
-      int I, H;
 
       for(int k=0;k<self->dimZ;k++)
     for(int j=0;j<self->dimY;j++)
       for(int i=0;i<self->dimX;i++)
         {
 
-          self->node[index].T=INF;
+          self->node[index].T=(float)INF;
 
           if(self->outdata[index]==0)
         self->node[index].status=fmsFAR;
@@ -319,7 +317,7 @@ void vtkFastMarchingExecute(vtkFastMarching *self,
       {
         int index = self->knownPoints[k];
         self->node[ index ].status = fmsFAR;
-        self->node[ index ].T = INF;
+        self->node[ index ].T = (float)INF;
        
         /* 
            we also want to remove the neighbors of these points that would be in TRIAL
@@ -332,7 +330,7 @@ void vtkFastMarchingExecute(vtkFastMarching *self,
         int indexN=index+self->shiftNeighbor(n);
         if( self->node[indexN].status==fmsTRIAL )
           {
-            self->node[indexN].T=INF;
+            self->node[indexN].T=(float)INF;
             self->downTree( self->node[indexN].leafIndex );
           }
           }
@@ -374,7 +372,7 @@ void vtkFastMarchingExecute(vtkFastMarching *self,
   // start a new evolution
   self->nEvolutions++;
 
-  self->nPointsBeforeLeakEvolution=self->knownPoints.size()-1;
+  self->nPointsBeforeLeakEvolution=(int)(self->knownPoints.size()-1);
 
   // use the seeds
   while(self->seedPoints.size()>0)
@@ -399,8 +397,8 @@ void vtkFastMarchingExecute(vtkFastMarching *self,
       float T=self->step();
 
       // all the statistics should be gathered from a band 3 pixels from the interface
-      self->pdfIntensityIn->setMemory(5*self->tree.size());
-      self->pdfInhomoIn->setMemory(5*self->tree.size());
+      self->pdfIntensityIn->setMemory((int)(5*self->tree.size()));
+      self->pdfInhomoIn->setMemory((int)(5*self->tree.size()));
 
       if( T==INF )
     {
@@ -538,14 +536,14 @@ void vtkFastMarching::insert(const FMleaf leaf) {
 
 bool vtkFastMarching::minHeapIsSorted( void )
 {
-  int N=tree.size();
+  int N=(int)tree.size();
   for(int k=(N-1);k>=1;k--)
     {
       if(node[tree[k].nodeIndex].leafIndex!=k)
     {
       vtkErrorMacro( "Error in vtkFastMarching::minHeapIsSorted(): "
              << "tree[" << k << "] : pb leafIndex/nodeIndex (size=" 
-             << tree.size() << ")" );
+             << (unsigned int)tree.size() << ")" );
     }
     }
   for(int k=(N-1);k>=1;k--)
@@ -557,7 +555,7 @@ bool vtkFastMarching::minHeapIsSorted( void )
       if( node[tree[k].nodeIndex].T<node[ (int)(tree[(k-1)/2].nodeIndex) ].T )
     {
       vtkErrorMacro( "Error in vtkFastMarching::minHeapIsSorted(): "
-             << "minHeapIsSorted is false! : size=" << tree.size() << "at leafIndex=" << k 
+             << "minHeapIsSorted is false! : size=" << (unsigned int)tree.size() << "at leafIndex=" << k 
              << " node[tree[k].nodeIndex].T=" << node[tree[k].nodeIndex].T
              << "<node[ (int)(tree[(k-1)/2].nodeIndex) ].T=" << node[ (int)(tree[(k-1)/2].nodeIndex) ].T);
 
@@ -702,13 +700,13 @@ void vtkFastMarching::init(int dimX, int dimY, int dimZ, int depth, double dx, d
 {
   powerSpeed = 1.0;
 
-  this->dx=dx;
-  this->dy=dy;
-  this->dz=dz;
+  this->dx=(float)dx;
+  this->dy=(float)dy;
+  this->dz=(float)dz;
 
-  invDx2 = 1.0/(dx*dx);
-  invDy2 = 1.0/(dy*dy);
-  invDz2 = 1.0/(dz*dz);
+  invDx2 = (float)(1.0/(dx*dx));
+  invDy2 = (float)(1.0/(dy*dy));
+  invDz2 = (float)(1.0/(dz*dz));
 
   nNeighbors=6; // 6 or 26
   //note: there seem to be some problems with discr < 0 
@@ -861,14 +859,14 @@ inline double vtkFastMarching::distanceNeighbor(int n)
 
 int vtkFastMarching::indexFather(int n )
 {
-  float Tmin = INF;
+  float Tmin = (float)INF;
   int index, indexMin;
 
   // note: has to be 6 or else topology not consistent and
   // we get weird path to parents using the diagonals
   for(int k=1;k<=6;k++)
     {
-      int index = n+shiftNeighbor(k);
+      index = n+shiftNeighbor(k);
       if( node[index].T<Tmin )
     {
       Tmin = node[index].T;
@@ -885,11 +883,11 @@ int vtkFastMarching::indexFather(int n )
 float vtkFastMarching::step( void )
 {
   if(somethingReallyWrong)
-    return INF;
+    return (float)INF;
 
 #ifdef _WIN32
   // to try to debug a problem under Windows with Steve...
-  vtkErrorMacro( "tree.size()==" << tree.size() << endl );
+  vtkErrorMacro( "tree.size()==" << (unsigned int)tree.size() << endl );
 #endif
 
   int indexN;
@@ -903,8 +901,9 @@ float vtkFastMarching::step( void )
   if( emptyTree() )
     {
       vtkErrorMacro( "vtkFastMarching::step empty tree!" << endl );
-      return INF;
+      return (float)INF;
     }
+
   min=removeSmallest();
   
   if( node[min.nodeIndex].T>=INF )
@@ -915,7 +914,7 @@ float vtkFastMarching::step( void )
       // by the user playing with the slider
       // we do not want to consider those before the expansion has naturally 
       // reachjed them.
-      return INF;
+      return (float)INF;
     }
 
   int I, H;
@@ -974,12 +973,12 @@ float vtkFastMarching::step( void )
 
 float vtkFastMarching::computeT(int index )
 {
-  float A, B, C, Discr;
+  double A, B, C, Discr;
 
   A = 0.0;
   B = 0.0;
 
-  float s=speed(index);
+  double s=speed(index);
 
   /*
     we don't want anything really small here as it might give us very large T
@@ -992,7 +991,7 @@ float vtkFastMarching::computeT(int index )
 
   C = -1.0/( s*s ); 
 
-  float Tij, Txm, Txp, Tym, Typ, Tzm, Tzp, TijNew;
+  double Tij, Txm, Txp, Tym, Typ, Tzm, Tzp, TijNew;
 
   Tij = node[index].T;
 
@@ -1005,7 +1004,7 @@ float vtkFastMarching::computeT(int index )
   Tzm = node[index+shiftNeighbor(5)].T;
   Tzp = node[index+shiftNeighbor(6)].T;
   
-  float Dxm, Dxp, Dym, Dyp, Dzm, Dzp;
+  double Dxm, Dxp, Dym, Dyp, Dzm, Dzp;
 
   Dxm = Tij - Txm;
   Dxp = Txp - Tij;
@@ -1055,7 +1054,7 @@ float vtkFastMarching::computeT(int index )
   }
 
   
-  Discr = B*B - (float)4.0*A*C;
+  Discr = B*B - 4.0*A*C;
 
   // cases when the quadratic equation is singular
   if ((A==0) || (Discr < 0.0)) {
@@ -1080,10 +1079,10 @@ float vtkFastMarching::computeT(int index )
     if(!( Tij<INF ))
       {
     vtkErrorMacro("Error in vtkFastMarching::computeT(...): !( Tij<INF )");
-    return INF;
+    return (float)INF;
       }
  
-   return Tij;
+   return (float)Tij;
   }
 
   /*
@@ -1094,7 +1093,7 @@ float vtkFastMarching::computeT(int index )
    */
   TijNew = (-B + (float)sqrt(Discr))/((float)2.0*A);
 
-  return TijNew; 
+  return (float)TijNew; 
 }
 
 void vtkFastMarching::setRAStoIJKmatrix

@@ -119,7 +119,7 @@ void FMpdf::update( void )
   if(memorySize!=-1)
     {
       // if inbins contains too many points, remove them
-      while(inBins.size()>memorySize)
+      while(inBins.size()>(unsigned)memorySize)
     {
       r=inBins[inBins.size()-1];
       inBins.pop_back();
@@ -130,7 +130,7 @@ void FMpdf::update( void )
     }
     }
 
-  nRealInBins=inBins.size();
+  nRealInBins=(signed)inBins.size();
 
   //assert( nRealInBins>0 );
   if(!( nRealInBins>0 ))
@@ -194,7 +194,7 @@ void FMpdf::addRealization( int k )
   //   consideration  is more than half of our memory
   if( (updateRate!=-1) && 
       ( (counter%updateRate)==0 
-    || (toBeAdded.size()>memorySize/2) ) )
+    || (memorySize!=-1) && (toBeAdded.size()>((unsigned int)(memorySize/2))) ) )
     update();
 }
 
