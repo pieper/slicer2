@@ -268,8 +268,19 @@ The 3D Slicer will exit so the problem can be corrected."
 
     #-------------------------------------------
     # Load MRML data
+    # - if a file, load it
+    # - if a dir, load single xml file if it exists
+    # - if nothing, set some defaults
     #-------------------------------------------    
     update
+    if { [file isdirectory $mrmlFile] } {
+        set mrmlfiles [glob -nocomplain -directory $mrmlFile *.xml]
+        if { [llength $mrmlfiles] == 1 } {
+            set mrmlFile [lindex $mrmlfiles 0]
+        } else {
+            set mrmlFile ""
+        }
+    }
     MainMrmlRead $mrmlFile
     MainUpdateMRML
     MainOptionsRetrievePresetValues
@@ -360,7 +371,7 @@ proc MainInit {} {
 
         # Set version info
     lappend Module(versions) [ParseCVSInfo Main \
-        {$Revision: 1.84 $} {$Date: 2002/09/11 00:02:32 $}]
+        {$Revision: 1.85 $} {$Date: 2002/11/05 14:29:39 $}]
 
     # Call each "Init" routine that's not part of a module
     #-------------------------------------------
@@ -483,6 +494,8 @@ proc MainBuildGUI {} {
     # File menu
     $Gui(mFile) add command -label "Open Scene..." -command \
         "MainMenu File Open"
+    $Gui(mFile) add command -label "Import Scene..." -command \
+        "MainMenu File Import"
     $Gui(mFile) add command -label "Save Scene" -command \
         "MainMenu File Save"
     $Gui(mFile) add command -label "Save Scene As..." -command \
@@ -1471,6 +1484,12 @@ proc MainMenu {menu cmd} {
         switch $cmd {
             "Open" {
                 MainFileOpenPopup "" 50 50
+            }
+            "Import" {
+                set file [tk_getOpenFile]
+                if { $file != "" } {
+                    MainMrmlImport $file    
+                }
             }
             "Save" {
                 MainFileSave
