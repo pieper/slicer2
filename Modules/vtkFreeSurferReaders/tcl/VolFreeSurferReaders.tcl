@@ -681,8 +681,8 @@ proc VolFreeSurferReadersCORHeaderRead {filename} {
     set Volume(gantryDetectorTilt) 0
     set Volume(numScalars) 1
     set Volume(littleEndian) 1
-    # scan order is Coronal  Anterior Posterior
-    set Volume(scanOrder) {AP}
+    # scan order is Coronal   Posterior Anterior
+    set Volume(scanOrder) {PA}
     set Volume(scalarType) {UnsignedChar}
     set Volume(readHeaders) 0
     set Volume(filePattern) {%s-%03d}
