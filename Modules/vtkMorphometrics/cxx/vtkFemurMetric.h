@@ -39,7 +39,11 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include <vtkPlaneSource.h>
 #include <vtkSphereSource.h>
 #include <vtkPolyData.h>
+#include <vtkImageEuclideanDistance.h>
 #include "vtkAxisSource.h"
+#include "vtkDataSetTriangleFilter.h"
+#include "vtkDataSetToLabelMap.h"
+#include "vtkImageDijkstra.h"
 
 //---------------------------------------------------------
 // Author: Axel Krauth
@@ -50,12 +54,8 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 // neck as well as for the shaft. The only derived property
 // at the moment is the angle between the neck and the shaft axis
 //
-// To be able to compute the basic properties, a division of the 
-// thighbone into a head, a neck and a shaft segment is needed.
-// the four planes which are members of this class represent a good
-// approximation where a physician would place the border between those
-// sections.
-//
+// To be able to compute the basic properties, a distance-to-surface
+// map is computed.
 
 class VTK_MORPHOMETRICS_EXPORT vtkFemurMetric : public vtkObject
 {
@@ -65,8 +65,8 @@ class VTK_MORPHOMETRICS_EXPORT vtkFemurMetric : public vtkObject
   vtkTypeMacro(vtkFemurMetric,vtkObject);
   void PrintSelf();
 
-  vtkSetObjectMacro(Femur,vtkPolyData);
   vtkGetObjectMacro(Femur,vtkPolyData);
+  void SetFemur(vtkPolyData*);
 
   vtkGetMacro(NeckShaftAngle,float);
 
@@ -77,24 +77,30 @@ class VTK_MORPHOMETRICS_EXPORT vtkFemurMetric : public vtkObject
 
   vtkGetObjectMacro(ShaftAxis,vtkAxisSource);
 
-  vtkGetObjectMacro(HeadNeckPlane,vtkPlaneSource);
+  vtkGetVector3Macro(HeadCenter,float);
+  vtkSetVector3Macro(HeadCenter,float);
 
-  vtkGetObjectMacro(NeckShaftPlane,vtkPlaneSource);
+  vtkGetVector3Macro(NeckShaftCenter,float);
+  vtkSetVector3Macro(NeckShaftCenter,float);
 
-  vtkGetObjectMacro(UpperShaftEndPlane,vtkPlaneSource);
-  
-  vtkGetObjectMacro(LowerShaftEndPlane,vtkPlaneSource);
-
+  vtkGetVector3Macro(DistalPoint,float);
+  vtkSetVector3Macro(DistalPoint,float);
+ 
  // ensure that the geometry fulfills some properties, i.e. the head
  // of femur is in the halfspace specified by the NeckShaftPlane
   void Normalize();
 
   void ComputeNeckShaftAngle();
+
+  void Precompute();
+
+  void FittNeckAxis() {FittAxis(NeckAxis,HeadCenter,NeckShaftCenter);};
+
+  void FittShaftAxis(){FittAxis(ShaftAxis,NeckShaftCenter,DistalPoint);};
  protected:
   vtkFemurMetric();
   ~vtkFemurMetric();
 
-  void Execute();
  private:
   vtkFemurMetric(vtkFemurMetric&);
   void operator=(const vtkFemurMetric);
@@ -105,17 +111,31 @@ class VTK_MORPHOMETRICS_EXPORT vtkFemurMetric : public vtkObject
 
   vtkAxisSource* ShaftAxis;
 
-  vtkPlaneSource*  HeadNeckPlane;
-
-  vtkPlaneSource*  NeckShaftPlane;
-
-  vtkPlaneSource*  UpperShaftEndPlane;
-
-  vtkPlaneSource*  LowerShaftEndPlane;
-
   vtkPolyData* Femur;
 
   float NeckShaftAngle;
+
+  float* HeadCenter;
+ 
+  float* NeckShaftCenter;
+
+  float* DistalPoint;
+
+  vtkDataSetTriangleFilter* TriangledFemur;
+
+  vtkDataSetToLabelMap* Volume;
+
+  vtkImageEuclideanDistance* DepthAnnotatedVolume;
+
+  vtkImageDijkstra* Dijkstra;
+
+  void FittAxis(vtkAxisSource*,float* source,float* sink);
+  void FindPoints();
+  void FindDeepestPoint(float*);
+  void FindNearestInside(int* p);
+
+  bool IsInsideVolume(int* p){return IsInsideVolume(p[0],p[1],p[2]);};
+  bool IsInsideVolume(int x,int y, int z){return 2== ((int)(Volume->GetOutput()->GetScalarComponentAsFloat(x,y,z,0)));};
 };
 
 #endif

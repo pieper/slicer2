@@ -33,8 +33,81 @@ IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO
 PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 =========================================================================auto=*/
 #include "vtkFemurMetric.h"
+#include <vtkPoints.h>
 #include <vtkObjectFactory.h>
 #include <vtkMath.h>
+#include <vtkEuclideanLineFit.h>
+
+#include <vector>
+#include <algorithm>
+#include <functional>
+#include <numeric>
+
+static float* headCenter = NULL;
+static float* add = NULL;
+
+struct less_mag : public std::binary_function<float*, float*, bool> {
+  bool operator()(float* x,float* y) 
+  {
+    for(int i =0;i<3;i++)
+      add[i] = x[i] + headCenter[i];
+    float a = vtkMath::Dot(add,add);
+    for(int i =0;i<3;i++)
+      add[i] = y[i] + headCenter[i];
+    float b = vtkMath::Dot(add,add);
+    return a < b;
+  }
+};
+
+void vtkFemurMetric::FindPoints()
+{
+  vtkPoints* p = Femur->GetPoints();
+  if(add==NULL)
+    add = (float*) malloc (3*sizeof(float));
+  if(headCenter == NULL)
+    headCenter = (float*) malloc (3*sizeof(float));
+  
+  for(int i =0;i<3;i++)
+    headCenter[i] = - HeadSphere->GetCenter()[i];
+
+  std::vector<float*> V;
+  for(int i = 0;i<p->GetNumberOfPoints();i++)
+    {
+      V.push_back(p->GetPoint(i));
+    }
+  
+  std::sort(V.begin(), V.end(), less_mag());
+  float* last = V.back();
+  for(int i =0;i<3;i++)
+    DistalPoint[i] = V.back()[i];
+
+  std::vector<float> diff;
+  
+  for(std::vector<float*>::iterator iter = V.begin(); iter != V.end();iter++)
+    {
+      float* b = *(iter++);
+      if(iter == V.end())
+    break;
+      float* a = *(iter--);
+      float a_minus_b = 0;
+      for(int i =0;i<3;i++)
+    a_minus_b = (a[i] - b[i]) * (a[i] - b[i]);
+      diff.push_back(sqrt(a_minus_b));
+    }
+  std::vector<float>::iterator maxDiff= std::max_element(diff.begin(),diff.end());
+
+  int index = std::distance(diff.begin(),maxDiff);
+
+  for(int i =0;i<3;i++)
+    DistalPoint[i] = V.back()[i];
+
+  for(int i =0;i<3;i++)
+    NeckShaftCenter[i] = V[index][i];
+
+  for(int i =0;i<3;i++)
+    HeadCenter[i] = HeadSphere->GetCenter()[i];
+}
+
 
 vtkFemurMetric* vtkFemurMetric::New()
 {
@@ -63,42 +136,99 @@ void vtkFemurMetric::PrintSelf()
 
 }
 
+void vtkFemurMetric::SetFemur(vtkPolyData* newFemur)
+{
+  if(newFemur==NULL)
+    return;
+
+  if(newFemur==Femur)
+    return;
+
+  Femur = newFemur;
+
+  if(TriangledFemur != NULL)
+    {
+      TriangledFemur->Delete();
+      Volume->Delete();
+      DepthAnnotatedVolume->Delete();
+    }
+
+  TriangledFemur = vtkDataSetTriangleFilter::New();
+  TriangledFemur->SetInput(Femur);
+  TriangledFemur->Update();
+
+
+  Volume = vtkDataSetToLabelMap::New();
+  Volume->SetUseBoundaryVoxels(true);
+  Volume->SetInput((vtkDataSet*)TriangledFemur->GetOutput());
+  Volume->Update();
+
+  DepthAnnotatedVolume = vtkImageEuclideanDistance::New();
+  DepthAnnotatedVolume->SetInput(Volume->GetOutput());
+  DepthAnnotatedVolume->Update();
+
+
+  Modified();
+}
+
+void vtkFemurMetric::FittAxis(vtkAxisSource* axis,float* source,float* sink)
+{
+  vtkPolyData* Path = vtkPolyData::New();
+  vtkPoints* PathPoints = vtkPoints::New();
+  vtkEuclideanLineFit* PathLine = vtkEuclideanLineFit::New();
+
+  if(Dijkstra!=NULL)
+    Dijkstra->Delete();
+  Dijkstra = vtkImageDijkstra::New();
+
+
+
+  Dijkstra->SetUseInverseDistance(true);
+  Dijkstra->SetBoundaryScalars(Volume->GetBoundaryScalars());
+  Dijkstra->SetInput(DepthAnnotatedVolume->GetOutput());
+
+  Dijkstra->SetSourceID(DepthAnnotatedVolume->GetOutput()->FindPoint(source));
+  Dijkstra->SetSinkID(DepthAnnotatedVolume->GetOutput()->FindPoint(sink));
+
+  Dijkstra->Update();
+  Dijkstra->InitTraversePath();
+    
+  for(int i = 0;i< Dijkstra->GetNumberOfPathNodes();i++)
+    {
+      PathPoints->InsertNextPoint(DepthAnnotatedVolume->GetOutput()->GetPoint(Dijkstra->GetNextPathNode()));
+    }
+
+  Path->SetPoints(PathPoints);
+
+  PathLine->SetInput(Path);
+  PathLine->Update();
+
+  axis->SetCenter(PathLine->GetCenter());
+  axis->SetDirection(PathLine->GetDirection());
+
+  PathLine->Delete();
+  Path->Delete();
+  PathPoints->Delete();
+}
+
+
 // defaults to the result values of a left femur for one data set I have
 vtkFemurMetric::vtkFemurMetric()
 {
   HeadSphere = vtkSphereSource::New();
-  HeadNeckPlane = vtkPlaneSource::New();
-  NeckShaftPlane = vtkPlaneSource::New();
-  UpperShaftEndPlane = vtkPlaneSource::New();
-  LowerShaftEndPlane = vtkPlaneSource::New();
   Femur = NULL;
   NeckAxis = vtkAxisSource::New();
   ShaftAxis = vtkAxisSource::New();
+  TriangledFemur = NULL;
+  Volume = NULL;
+  DepthAnnotatedVolume = NULL;
+  Dijkstra = NULL;
 
-  // defaults:
-  HeadNeckPlane->SetOrigin(0,0,0);
-  HeadNeckPlane->SetPoint1(100,0,0);
-  HeadNeckPlane->SetPoint2(0,100,0);
-  HeadNeckPlane->SetCenter(-110.685,-10.4339,63.9478);
-  HeadNeckPlane->SetNormal(0.542664,0.238796,0.805291);
+  HeadCenter = (float*)malloc(3*sizeof(float));
+ 
+  NeckShaftCenter  = (float*)malloc(3*sizeof(float));
 
-  NeckShaftPlane->SetOrigin(0,0,0);
-  NeckShaftPlane->SetPoint1(100,0,0);
-  NeckShaftPlane->SetPoint2(0,100,0);
-  NeckShaftPlane->SetCenter(-120.108,-21.5211,59.3707);
-  NeckShaftPlane->SetNormal(0.606775,0.588549,0.534261);
-
-  UpperShaftEndPlane->SetOrigin(0,0,0);
-  UpperShaftEndPlane->SetPoint1(100,0,0);
-  UpperShaftEndPlane->SetPoint2(0,100,0);
-  UpperShaftEndPlane->SetCenter(-130,-20,-5);
-  UpperShaftEndPlane->SetNormal(-1,0,5);
-
-  LowerShaftEndPlane->SetOrigin(0,0,0);
-  LowerShaftEndPlane->SetPoint1(100,0,0);
-  LowerShaftEndPlane->SetPoint2(0,100,0);
-  LowerShaftEndPlane->SetCenter(-105,-15,-155);
-  LowerShaftEndPlane->SetNormal(-1,0,7);
+  DistalPoint  = (float*)malloc(3*sizeof(float));
 
   NeckAxis->SetCenter(-113.749,-5.89667,52.48);
   NeckAxis->SetDirection(0.643935,0.458941,0.612144);
@@ -110,31 +240,27 @@ vtkFemurMetric::vtkFemurMetric()
   HeadSphere->SetRadius(24);
   HeadSphere->SetThetaResolution(30);
   HeadSphere->SetPhiResolution(30);
-
 }
 
 vtkFemurMetric::~vtkFemurMetric()
 {
   HeadSphere->Delete();
-  HeadNeckPlane->Delete();
-  NeckShaftPlane->Delete();
-  UpperShaftEndPlane->Delete();
-  LowerShaftEndPlane->Delete();
   NeckAxis->Delete();
   ShaftAxis->Delete();
-}
+  free(HeadCenter);
+  free(NeckShaftCenter);
+  free(DistalPoint);
 
-void vtkFemurMetric::Execute()
-{
-  //
+  if(TriangledFemur != NULL)
+    {
+      TriangledFemur->Delete();
+      Volume->Delete();
+      DepthAnnotatedVolume->Delete();
+      Dijkstra->Delete();
+    }
 }
-
 
 // ensure that
-// - the normal of HeadNeckPlane looks towards the head
-// - the normal of NeckShaftPlane looks towards the head
-// - the normal of UpperShaftEndPlane looks away from the tuberculum major
-// - the normal of LowerShaftEndPlane looks towards the tuberculum major
 // - the neck axis points from neck towards head
 // - the shaft axis points from the upper end towards the lower end of the shaft
 void vtkFemurMetric::Normalize()
@@ -143,58 +269,13 @@ void vtkFemurMetric::Normalize()
   float* x0;
   float* x1;
 
-  // Ensure Normal of HeadNeckPlane looks towards head
-  // implemented via: Center of NeckShaftPlane not in halfspace
-  n = HeadNeckPlane->GetNormal();
-  x0= HeadNeckPlane->GetCenter();
-  x1= NeckShaftPlane->GetCenter();
- 
-  if(!(vtkMath::Dot(n,x0) > vtkMath::Dot(n,x1))) 
-    {
-      HeadNeckPlane->SetNormal(-1*n[0],-1*n[1],-1*n[2]);
-    }
-
-  // Ensure Normal of NeckShaftPlane looks towards head
-  // implemented via: Center of HeadNeckPlane in halfspace
-  n = NeckShaftPlane->GetNormal();
-  x0= NeckShaftPlane->GetCenter();
-  x1= HeadNeckPlane->GetCenter();
-
-  if(!(vtkMath::Dot(n,x0) < vtkMath::Dot(n,x1))) 
-    {
-      NeckShaftPlane->SetNormal(-1*n[0],-1*n[1],-1*n[2]);
-    }
-
-
-  // Ensure Normal of UpperShaftEndPlane looks away from tuberculum major
-  // implemented via: Center of LowerShaftEndPlane in halfspace
-  n = UpperShaftEndPlane->GetNormal();
-  x0= UpperShaftEndPlane->GetCenter();
-  x1= LowerShaftEndPlane->GetCenter();
-
-  if(!(vtkMath::Dot(n,x0) < vtkMath::Dot(n,x1))) 
-    {
-      UpperShaftEndPlane->SetNormal(-n[0],-n[1],-n[2]);
-    }
-  
-  // Ensure Normal of LowerShaftEndPlane looks towards tuberculum major
-  // implemented via: Center of UpperShaftEndPlane in halfspace
-  n = LowerShaftEndPlane->GetNormal();
-  x0= LowerShaftEndPlane->GetCenter();
-  x1= UpperShaftEndPlane->GetCenter();
-
-  if(!(vtkMath::Dot(n,x0) < vtkMath::Dot(n,x1))) 
-    {
-      LowerShaftEndPlane->SetNormal(-n[0],-n[1],-n[2]);
-    }
-
   // - the axis of the neck axis points from neck towards head
   // implemented: we simply ensure that the center of the 
-  // HeadNeckPlane is inside the halfspace defined by the direction and the center of the axis
+  // HeadSphere is inside the halfspace defined by the direction and the center of the axis
 
   n  = NeckAxis->GetDirection();
   x0 = NeckAxis->GetCenter();
-  x1 = HeadNeckPlane->GetCenter();
+  x1 = HeadSphere->GetCenter();
 
   if(!(vtkMath::Dot(n,x0) < vtkMath::Dot(n,x1)))
     {
@@ -203,14 +284,14 @@ void vtkFemurMetric::Normalize()
 
   // - the axis of the shaft axis points from the upper end towards the lower end of the shaft
   // implemented: we simply ensure that the center of the 
-  // LowerShaftEndPlane is inside the halfspace defined by the direction and the center of the axis
+  // HeadSphere is not inside the halfspace defined by the direction and the center of the axis
 
 
   n  = ShaftAxis->GetDirection();
   x0 = ShaftAxis->GetCenter();
-  x1 = LowerShaftEndPlane->GetCenter();
+  x1 = HeadSphere->GetCenter();
 
-  if(!(vtkMath::Dot(n,x0) < vtkMath::Dot(n,x1)))
+  if(!(vtkMath::Dot(n,x0) > vtkMath::Dot(n,x1)))
     {
       ShaftAxis->SetDirection(-n[0],-n[1],-n[2]);
     }
@@ -224,4 +305,78 @@ void vtkFemurMetric::ComputeNeckShaftAngle()
   Normalize();
   NeckShaftAngle = ShaftAxis->vtkAxisSource::Angle(NeckAxis);
   
+}
+
+void vtkFemurMetric::FindNearestInside(int* p)
+{
+  int radius = 0;
+
+  while(true)
+    {
+      for(int i= -radius + p[0];i<= radius + p[0];i++)
+    for(int j= -radius + p[1];j<= radius + p[1];j++)
+      for(int k= -radius + p[2];k<= radius + p[2];k++)
+        if(IsInsideVolume(i,j,k))
+          {
+        p[0] = i;
+        p[1] = j;
+        p[2] = k;
+        return;
+          }
+      radius++;
+    }
+}
+
+void vtkFemurMetric::Precompute()
+{
+  FindPoints();
+  FindDeepestPoint(HeadCenter);
+  FindDeepestPoint(NeckShaftCenter);
+  FindDeepestPoint(DistalPoint);
+  FittShaftAxis();
+  FittNeckAxis();
+  Normalize();
+  ComputeNeckShaftAngle();
+}
+
+void vtkFemurMetric::FindDeepestPoint(float* p) 
+{
+  int* coords = (int*)malloc(3*sizeof(int));
+  for(int i=0;i<3;i++)
+    coords[i] = (int)( - (Volume->GetOutput()->GetOrigin()[i] - p[i]));
+
+
+  FindNearestInside(coords);
+  
+  float currentDepth = DepthAnnotatedVolume->GetOutput()->GetScalarComponentAsFloat(coords[0],coords[1],coords[2],0);
+  bool isDeepestPoint = false;
+
+  while(!isDeepestPoint)
+    {
+      isDeepestPoint = true;
+      int currentX = coords[0];
+      int currentY = coords[1];
+      int currentZ = coords[2];
+
+      for(int i = currentX -1; i <=currentX +1;i++)
+    for(int j = currentY -1; j <=currentY +1;j++)
+      for(int k = currentZ -1; k <=currentZ +1;k++)
+        {
+          if(!IsInsideVolume(i,j,k))
+        continue;
+          float depth = DepthAnnotatedVolume->GetOutput()->GetScalarComponentAsFloat(i,j,k,0);
+          if(depth> currentDepth)
+        {
+          currentDepth = depth;
+          isDeepestPoint = false;
+          coords[0] = i;
+          coords[1] = j;
+          coords[2] = k;
+        }
+        }
+    }
+
+  for(int i=0;i<3;i++)
+    p[i] = DepthAnnotatedVolume->GetOutput()->GetPoint(DepthAnnotatedVolume->GetOutput()->ComputePointId(coords))[i];
+  free(coords);
 }
