@@ -83,7 +83,7 @@ proc raisesplash {} { if {[winfo exists .splash]} {raise .splash; after 100 "aft
 raisesplash
 
 
-source Base/tcl/tkcon.tcl
+source $prog/tkcon.tcl
 tkcon attach main
 package require vtkSlicerBase
 
