@@ -66,7 +66,7 @@ switch $tcl_platform(os) {
         set VTK_ARG3 "-DDUMMY:BOOL=ON"
         # explicitly specify the compiler used to compile the version of vtk that 
         # we link with
-        set VTK_ARG4 "-DCMAKE_CXX_COMPILER:STRING=$COMPILER"
+        set VTK_ARG4 "-DCMAKE_CXX_COMPILER:STRING=/local/os/bin/$COMPILER"
         set VTK_ARG5 "-DCMAKE_CXX_COMPILER_FULLPATH:FILEPATH=/local/os/bin/$COMPILER"
     }
     "Darwin" {
@@ -104,7 +104,7 @@ if { [info exists env(SLICER_MODULES)] } {
 }
 
 
-set TARGETS "$slicer_home/Base"
+set TARGETS ""
 set CLEANFLAG 0
 
 foreach dir $modulePaths {
@@ -115,9 +115,15 @@ foreach dir $modulePaths {
     if { [string match "vtk*" $moduleName] 
             && ![string match "*CustomModule*" $moduleName] 
             && [file exists $dir/cxx] } {
-        lappend TARGETS $dir
+        if {[file exists [file join $dir cmaker_local.tcl]]} {
+           lappend TARGETS $dir
+        } else {
+           set TARGETS "$dir $TARGETS"
+        }
     }
 }
+
+set TARGETS "$slicer_home/Base $TARGETS"
 
 #
 # by default, all modules are built.  If some are listed on commandline, only
