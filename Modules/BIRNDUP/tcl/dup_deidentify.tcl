@@ -126,9 +126,13 @@ itcl::body dup_deidentify::run {dir} {
         foreach ser [glob $dir/*-anon] {
             puts "rendering $ser"
             $parent log "rendering $ser"
-            # TODO - this avoids warning messages when slicer starts
+
+            # this avoids warning messages when slicer starts
             set ::env(SLICER_CUSTOM_CONFIG) "true"
-            if { [catch "exec $::env(SLICER_HOME)/slicer2-linux-x86 --agree_to_license --load-dicom $ser --script $::env(SLICER_HOME)/Modules/iSlicer/tcl/evaluation-movies.tcl --exec eval_movies $ser/Deface 10 10 ., exit" res] } {
+
+            set steps 120 ;# face 3 degrees per frame
+            set skip 1 ;# slices show every mm
+            if { [catch "exec $::env(SLICER_HOME)/slicer2-linux-x86 --agree_to_license --load-dicom $ser --script $::env(SLICER_HOME)/Modules/iSlicer/tcl/evaluation-movies.tcl --exec eval_movies $ser/Deface $steps $skip ., exit" res] } {
                 puts "$op failed: $res"
                 $parent log "$op failed: $res"
             } else {
