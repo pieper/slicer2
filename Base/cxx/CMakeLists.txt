@@ -73,11 +73,11 @@ IF (VTK_WRAP_TCL AND VTKSLICER_WRAP_TCL)
     ADD_LIBRARY (vtkSlicerBaseTCL SHARED BaseTCL_SRCS)
   ENDIF(APPLE)
   TARGET_LINK_LIBRARIES (vtkSlicerBaseTCL 
+                         vtkCommonTCL
                          vtkIOTCL 
                          vtkGraphicsTCL 
                          vtkImagingTCL 
                          vtkFilteringTCL 
-                         vtkCommonTCL
                          ${TCL_LIBRARY})
   IF (APPLE)
     SET_TARGET_PROPERTIES(vtkSlicerBaseTCL PROPERTIES LINK_FLAGS "-init _oft_initSlicerBaseOSXInit")
@@ -118,20 +118,20 @@ IF (VTK_WRAP_PYTHON AND VTKSLICER_WRAP_PYTHON)
 
   IF (WIN32)
     TARGET_LINK_LIBRARIES (vtkSlicerBasePython 
+                           vtkCommonPython
                            vtkIOPython
                            vtkGraphicsPython
                            vtkImagingPython
                            vtkFilteringPython
-                           vtkCommonPython
                            debug ${PYTHON_DEBUG_LIBRARY} 
                            optimized ${PYTHON_LIBRARY})
   ELSE (WIN32)
     TARGET_LINK_LIBRARIES (vtkSlicerBasePython 
+                           vtkCommonPython
                            vtkIOPython
                            vtkGraphicsPython
                            vtkImagingPython
                            vtkFilteringPython
-                           vtkCommonPython
                            ${PYTHON_LIBRARY})
   ENDIF (WIN32)
 
@@ -161,12 +161,13 @@ IF (VTK_WRAP_JAVA AND VTKSLICER_WRAP_JAVA)
 
   VTK_WRAP_JAVA (vtkSlicerBaseJava BaseJava_SRCS Base_SRCS)
   ADD_LIBRARY (vtkSlicerBaseJava SHARED BaseJava_SRCS)
-  TARGET_LINK_LIBRARIES (vtkSlicerBaseJava 
+  TARGET_LINK_LIBRARIES (vtkSlicerBaseJava
+                         vtkCommonJava 
                          vtkIOJava
                          vtkGraphicsJava
                          vtkImagingJava 
-                         vtkFilteringJava
-                         vtkCommonJava)
+                         vtkFilteringJava)
+                         
   IF (VTK_USE_HYBRID)
     TARGET_LINK_LIBRARIES (vtkSlicerBaseJava vtkHybridJava)
   ENDIF (VTK_USE_HYBRID)
@@ -191,11 +192,11 @@ ENDIF (VTK_WRAP_JAVA AND VTKSLICER_WRAP_JAVA)
 
 LINK_LIBRARIES (
   vtkSlicerBase
+  vtkCommon
   vtkIO
   vtkGraphics
   vtkImaging 
   vtkFiltering
-  vtkCommon
 )
   IF (APPLE)
     SET_TARGET_PROPERTIES(vtkSlicerBase PROPERTIES LINK_FLAGS "-init _oft_initSlicerBase")
