@@ -88,7 +88,7 @@ proc DataInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.51 $} {$Date: 2003/12/03 01:39:53 $}]
+        {$Revision: 1.52 $} {$Date: 2004/02/20 13:40:51 $}]
 
     set Data(index) ""
     set Data(clipboard) ""
@@ -664,7 +664,9 @@ proc DataEditNode {} {
         }
         "vtkMrmlSegmenterSuperClassNode" -
         "vtkMrmlEndSegmenterSuperClassNode" -
-        "vtkMrmlSegmenterClassNode" {
+        "vtkMrmlSegmenterClassNode" -
+    "vtkMrmlEndSegmenterClassNode" -
+        "vtkMrmlSegmenterPCAEigenNode" {
             if {[IsModule EMSegment] == 1} {
                 Tab EMSegment row1 Class
             }

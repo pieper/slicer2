@@ -98,7 +98,7 @@ proc MainMrmlInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo MainMrml \
-    {$Revision: 1.101 $} {$Date: 2004/02/19 00:35:49 $}]
+    {$Revision: 1.102 $} {$Date: 2004/02/20 13:41:25 $}]
 
     set Mrml(colorsUnsaved) 0
 }
@@ -198,7 +198,7 @@ proc MainMrmlPrint {tags} {
         set attr [lreplace $pair 0 0]
 
         # Process EndTransform & EndFiducials & EndPath & EndModelGroup & EndHierarchy
-        if {$tag == "EndTransform" || $tag == "EndFiducials" || $tag == "EndPath" || $tag == "EndModelGroup" || $tag == "EndHierarchy" || $tag == "EndSegmenter" || $tag == "EndSegmenterSuperClass"} {
+        if {$tag == "EndTransform" || $tag == "EndFiducials" || $tag == "EndPath" || $tag == "EndModelGroup" || $tag == "EndHierarchy" || $tag == "EndSegmenter" || $tag == "EndSegmenterSuperClass" | $tag == "EndSegmenterClass" } {
             set level [expr $level - 1]
         }
         set indent ""
@@ -209,7 +209,7 @@ proc MainMrmlPrint {tags} {
         puts "${indent}$tag"
 
         # Process Transform & Fiducials & Path & ModelGroup & Hierarchy
-        if {$tag == "Transform" || $tag == "Fiducials" || $tag == "Path" || $tag == "ModelGroup" || $tag == "Hierarchy" || $tag == "Segmenter" || $tag == "SegmenterSuperClass" } {
+        if {$tag == "Transform" || $tag == "Fiducials" || $tag == "Path" || $tag == "ModelGroup" || $tag == "Hierarchy" || $tag == "Segmenter" || $tag == "SegmenterSuperClass" || $tag == "SegmenterClass"} {
             incr level
         }
         set indent ""
