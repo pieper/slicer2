@@ -380,7 +380,7 @@ proc MainInit {} {
 
         # Set version info
     lappend Module(versions) [ParseCVSInfo Main \
-        {$Revision: 1.90 $} {$Date: 2002/11/14 20:26:37 $}]
+        {$Revision: 1.91 $} {$Date: 2002/12/02 14:41:52 $}]
 
     # Call each "Init" routine that's not part of a module
     #-------------------------------------------
@@ -653,9 +653,12 @@ proc MainBuildGUI {} {
                 if {$firstMore == ""} {
                     set firstMore $m
                 }
-                $moreMenu add command -label $m \
-                    -command "set Module(btn) More; Tab $m; \
-                    $Module(rMore) config -text $m"
+                if { [info exists Module($m,procGUI)] } {
+                    # only add module to menu if it has a GUI
+                    $moreMenu add command -label $m \
+                        -command "set Module(btn) More; Tab $m; \
+                        $Module(rMore) config -text $m"
+                }
             }
         }
         pack $f.$row -side top -padx 0 -pady 0
@@ -1166,18 +1169,18 @@ proc Tab {m {row ""} {tab ""}} {
     
     # If "More" then switch rows
     if {$m == "More"} {
-    set m $Module(activeID)
-    set row $Module($m,row)
-    switch $row {
-        row1 {
-        set row row2
-        set tab $Module($m,$row,tab)
+        set m $Module(activeID)
+        set row $Module($m,row)
+        switch $row {
+            row1 {
+                set row row2
+                set tab $Module($m,$row,tab)
+            }
+            row2 {
+                set row row1
+                set tab $Module($m,$row,tab)
+            }
         }
-        row2 {
-        set row row1
-        set tab $Module($m,$row,tab)
-        }
-    }
     }
     
     # If "menu" then use currently selected menu item
