@@ -42,7 +42,7 @@ proc EMAtlasBrainClassifierInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.7 $} {$Date: 2005/02/17 19:37:38 $}]
+        {$Revision: 1.8 $} {$Date: 2005/04/03 18:13:32 $}]
 
 
     set EMAtlasBrainClassifier(Volume,SPGR) $Volume(idNone)
@@ -110,21 +110,21 @@ proc EMAtlasBrainClassifierBuildGUI {} {
     }
 
     foreach Input "SPGR T2W" {
-    DevAddLabel $f.fLeft.l$Input "  ${Input}:"
-    pack $f.fLeft.l$Input -side top -padx $Gui(pad) -pady 1 -anchor w
-
-    set menubutton   $f.fRight.m${Input}Select 
-    set menu        $f.fRight.m${Input}Select.m
- 
-    eval {menubutton $menubutton -text [Volume($EMAtlasBrainClassifier(Volume,${Input}),node) GetName] -relief raised -bd 2 -width 9 -menu $menu} $Gui(WMBA)
-    eval {menu $menu} $Gui(WMA)
-    TooltipAdd $menubutton "Select Volume defining ${Input}" 
-    set EMAtlasBrainClassifier(mbSeg-${Input}Select) $menubutton
-    set EMAtlasBrainClassifier(mSeg-${Input}Select) $menu
-        # Have to update at UpdateMRML too 
-    DevUpdateNodeSelectButton Volume EMAtlasBrainClassifier Seg-${Input}Select Volume,$Input
-
-    pack $menubutton -side top  -padx $Gui(pad) -pady 1 -anchor w
+      DevAddLabel $f.fLeft.l$Input "  ${Input}:"
+      pack $f.fLeft.l$Input -side top -padx $Gui(pad) -pady 1 -anchor w
+      
+      set menubutton   $f.fRight.m${Input}Select 
+      set menu        $f.fRight.m${Input}Select.m
+      
+      eval {menubutton $menubutton -text [Volume($EMAtlasBrainClassifier(Volume,${Input}),node) GetName] -relief raised -bd 2 -width 9 -menu $menu} $Gui(WMBA)
+      eval {menu $menu} $Gui(WMA)
+      TooltipAdd $menubutton "Select Volume defining ${Input}" 
+      set EMAtlasBrainClassifier(mbSeg-${Input}Select) $menubutton
+      set EMAtlasBrainClassifier(mSeg-${Input}Select) $menu
+          # Have to update at UpdateMRML too 
+      DevUpdateNodeSelectButton Volume EMAtlasBrainClassifier Seg-${Input}Select Volume,$Input
+      
+      pack $menubutton -side top  -padx $Gui(pad) -pady 1 -anchor w
    }
 
     #-------------------------------------------
@@ -459,9 +459,9 @@ proc EMAtlasBrainClassifierReadNextKey {input} {
 }
 
 # In the future should probably be more independent but should work for right now 
-proc EMAtlasBrainClassifierLoadAtlasVolume {AtlasDir AtlasName} {
+proc EMAtlasBrainClassifierLoadAtlasVolume {GeneralDir AtlasDir AtlasName} {
     global Volume EMAtlasBrainClassifier
-    set Volume(firstFile) "$EMAtlasBrainClassifier(AtlasDir)/$AtlasDir/I.001"
+    set Volume(firstFile) "$GeneralDir/$AtlasDir/I.001"
     set Volume(propertyType) "VolHeader"
     set Volume(lastNum)   124
     set Volume(readHeaders) 0
@@ -485,8 +485,8 @@ proc EMAtlasBrainClassifierLoadAtlasVolume {AtlasDir AtlasName} {
     set Volume(activeID) NEW
     set VolID [VolumesPropsApply]
     if {$VolID == "" } {
-    DevErrorWindow "Could not load Volume $AtlasName in directory $EMAtlasBrainClassifier(AtlasDir)/$AtlasDir/I.001"
-    return ""
+       DevErrorWindow "Could not load Volume $AtlasName in directory $GeneralDir/$AtlasDir/I.001"
+       return ""
     } 
     RenderAll
     return $VolID 
@@ -592,26 +592,28 @@ proc EMAtlasBrainClassifierStartSegmentation { } {
    
     # ---------------------------------------------------------------
     # 1. Step: Normalize images
-    foreach input "SPGR T2W" {
-    # Create a New Volume
-    puts "=========== Normalize $input ============ "
-    set VolIDInput $EMAtlasBrainClassifier(Volume,${input})
-    set VolIDOutput [DevCreateNewCopiedVolume $VolIDInput "" "Normed$input"]
-    set Prefix "$EMAtlasBrainClassifier(WorkingDirectory)/[string tolower $input]/[file tail [Volume($EMAtlasBrainClassifier(Volume,${input}),node) GetFilePrefix]]norm"
-    Volume($VolIDOutput,node) SetFilePrefix "$Prefix"
-    Volume($VolIDOutput,node) SetFullPrefix "$Prefix" 
-    Volume($VolIDOutput,node) SetFilePattern "%s.%03d"
-    set EMAtlasBrainClassifier(Volume,Normalized${input}) $VolIDOutput
+    if (1) {
+     foreach input "SPGR T2W" {
+      # Create a New Volume
+      puts "=========== Normalize $input ============ "
+      set VolIDInput $EMAtlasBrainClassifier(Volume,${input})
+      set VolIDOutput [DevCreateNewCopiedVolume $VolIDInput "" "Normed$input"]
+      set Prefix "$EMAtlasBrainClassifier(WorkingDirectory)/[string tolower $input]/[file tail [Volume($EMAtlasBrainClassifier(Volume,${input}),node) GetFilePrefix]]norm"
+      Volume($VolIDOutput,node) SetFilePrefix "$Prefix"
+      Volume($VolIDOutput,node) SetFullPrefix "$Prefix" 
+      Volume($VolIDOutput,node) SetFilePattern "%s.%03d"
+      set EMAtlasBrainClassifier(Volume,Normalized${input}) $VolIDOutput
 
-    # Normalize intentensities
-    EMAtlasBrainClassifier_Normalize  $VolIDInput $VolIDOutput $input 
+      # Normalize intentensities
+      EMAtlasBrainClassifier_Normalize  $VolIDInput $VolIDOutput $input 
 
-    # Clean Up 
-    MainUpdateMRML
-    RenderAll
-    if {$EMAtlasBrainClassifier(Save,$input)} {
+      # Clean Up 
+      MainUpdateMRML
+      RenderAll
+      if {$EMAtlasBrainClassifier(Save,$input)} {
         EMAtlasBrainClassifierVolumeWriter $VolIDOutput  
-    }
+      }
+     }
     }
     # ---------------------------------------------------------------
     # 2. Step: Align atlas - wait for script from Sylvain
@@ -683,79 +685,120 @@ proc EMAtlasBrainClassifierStartSegmentation { } {
            catch {exec rm -rf $EMAtlasBrainClassifier(AtlasDir)}
 
            if {[DownloadFile "$urlAddress" "$outputFile"]} {
-               puts "Finished"
+           puts "Start extracting $outputFile ...." 
                if {$tcl_platform(os) == "Linux"} { 
-               set OKFlag [catch {exec gunzip $outputFile; tar xf [file rootname $outputFile]} errormsg]
-               set RMFile [file rootname $outputFile]
+         catch {exec rm -f [file rootname $outputFile]}
+         puts "exec gunzip $outputFile"
+         set OKFlag [catch {exec gunzip -f $outputFile} errormsg]
+         if {$OKFlag == 0} {
+                     catch {exec rm -f atlas}
+             puts "exec tar xf [file rootname $outputFile]]"
+             set OKFlag [catch {exec tar xf [file rootname $outputFile]} errormsg]
+                     if {$OKFlag == 0} {
+             puts "exec mv atlas ${EMAtlasBrainClassifier(AtlasDir)}/"
+             set OKFlag [catch {exec mv atlas ${EMAtlasBrainClassifier(AtlasDir)}/}  errormsg]
+             }
+         }
+                 set RMFile [file rootname $outputFile]
                } else {
-               set OKFlag [catch {exec unzip -o -qq $outputFile}  errormsg] 
-               set RMFile $outputFile
+                  set OKFlag [catch {exec unzip -o -qq $outputFile}  errormsg] 
+                  set RMFile $outputFile
                } 
+               puts "... finished extracting"
                if {$OKFlag == 1} {
-             DevErrorWindow "Could not uncompress $outputFile because of the following error message:\n$errormsg\nPlease manually uncompress the file."
+                 DevErrorWindow "Could not uncompress $outputFile because of the following error message:\n$errormsg\nPlease manually uncompress the file."
              return
                } 
-               DevInfoWindow "Atlas installation completed !" 
+               DevInfoWindow "Atlas installation completed!" 
                catch {rm $RMFile} 
-           } else {
+             } else {
                return
            }           
            } else {
-           return 
+               return 
            }
+         }
+       } 
+
+       puts "=========== Register atlas spgr with patient ============ "
+       # Check if we need to run registration
+       set RunRegistrationFlag 0 
+       foreach Dir "$RegisterAtlasDirList" {
+       if {[file exists $EMAtlasBrainClassifier(WorkingDirectory)/atlas/$Dir/I.001] == 0  } {
+           set RunRegistrationFlag 1 
+           break 
+       }
+       }
+
+       if {$RunRegistrationFlag == 0 } {
+       if {[DevYesNo "We found already an atlas in $EMAtlasBrainClassifier(WorkingDirectory)/atlas. Do you still want to register ? " ] == "yes" } {
+           set RunRegistrationFlag 1
        }
        } 
 
-       set TemplateIDInput $EMAtlasBrainClassifier(Volume,NormalizedSPGR)
-       puts "=========== Register atlas spgr with patient ============ "
 
-       # Load Atlas SPGR 
-       set VolIDSource      [EMAtlasBrainClassifierLoadAtlasVolume spgr  AtlasSPGR]
-       if {$VolIDSource == "" } {return}
-       set EMAtlasBrainClassifier(Volume,AtlasSPGR) $VolIDSource
+       
+       if {$RunRegistrationFlag} { 
 
-       # Target file is the normalized SPGR
-       set VolIDTarget $EMAtlasBrainClassifier(Volume,NormalizedSPGR)
-       if {$VolIDTarget == "" } {return}
+     set TemplateIDInput $EMAtlasBrainClassifier(Volume,NormalizedSPGR)
+     # Load Atlas SPGR 
+     set VolIDSource      [EMAtlasBrainClassifierLoadAtlasVolume $EMAtlasBrainClassifier(AtlasDir) spgr  AtlasSPGR]
+     if {$VolIDSource == "" } {return}
+     set EMAtlasBrainClassifier(Volume,AtlasSPGR) $VolIDSource
        
-       EMAtlasBrainClassifierRegistration $VolIDTarget $VolIDSource
-       # Define Registration output volume 
-       set VolIDOutput [DevCreateNewCopiedVolume $TemplateIDInput "" "RegisteredSPGR"]
-       # Resample the Atlas SPGR
-       EMAtlasBrainClassifierResample  $VolIDTarget $VolIDSource $VolIDOutput
-       
-       # Clean up 
-       if {$EMAtlasBrainClassifier(Save,Atlas)} {
-           set Prefix "$EMAtlasBrainClassifier(WorkingDirectory)/atlas/spgr/I"
-           Volume($VolIDOutput,node) SetFilePrefix "$Prefix"
-           Volume($VolIDOutput,node) SetFullPrefix "$Prefix" 
-           EMAtlasBrainClassifierVolumeWriter $VolIDOutput
-       }
-       MainMrmlDeleteNode Volume $VolIDSource 
-       MainUpdateMRML
-       RenderAll
-       
-       # b.2 Resample atlas 
+     # Target file is the normalized SPGR
+     set VolIDTarget $EMAtlasBrainClassifier(Volume,NormalizedSPGR)
+     if {$VolIDTarget == "" } {return}
+
+         puts "============= Start registeration"  
+         EMAtlasBrainClassifierRegistration $VolIDTarget $VolIDSource
+         # Define Registration output volume 
+         set VolIDOutput [DevCreateNewCopiedVolume $TemplateIDInput "" "RegisteredSPGR"]
+         # Resample the Atlas SPGR
+         EMAtlasBrainClassifierResample  $VolIDTarget $VolIDSource $VolIDOutput
+         
+         # Clean up 
+         if {$EMAtlasBrainClassifier(Save,Atlas)} {
+             set Prefix "$EMAtlasBrainClassifier(WorkingDirectory)/atlas/spgr/I"
+             Volume($VolIDOutput,node) SetFilePrefix "$Prefix"
+             Volume($VolIDOutput,node) SetFullPrefix "$Prefix" 
+             EMAtlasBrainClassifierVolumeWriter $VolIDOutput
+         }
+         MainMrmlDeleteNode Volume $VolIDSource 
+         MainUpdateMRML
+         RenderAll
+         
+         # b.2 Resample atlas 
+         foreach Dir "$RegisterAtlasDirList" Name "$RegisterAtlasNameList" {
+             puts "=========== Resample Atlas $Name  ============ "
+             # Load In the New Atlases
+             set VolIDInput [EMAtlasBrainClassifierLoadAtlasVolume $EMAtlasBrainClassifier(AtlasDir) $Dir Atlas_$Name]
+             # Define Registration output volumes
+             set VolIDOutput [DevCreateNewCopiedVolume $TemplateIDInput "" "$Name"]
+             set Prefix "$EMAtlasBrainClassifier(WorkingDirectory)/atlas/$Dir/I"
+             Volume($VolIDOutput,node) SetFilePrefix "$Prefix"
+             Volume($VolIDOutput,node) SetFullPrefix "$Prefix" 
+         
+             # Resample the Atlas
+             EMAtlasBrainClassifierResample  $VolIDTarget $VolIDInput $VolIDOutput  
+             # Clean up 
+         
+             if {$EMAtlasBrainClassifier(Save,Atlas)} {EMAtlasBrainClassifierVolumeWriter $VolIDOutput}
+             MainMrmlDeleteNode Volume $VolIDInput 
+             MainUpdateMRML
+             RenderAll
+         }
+       } else {
+       puts "============= Skip registration" 
        foreach Dir "$RegisterAtlasDirList" Name "$RegisterAtlasNameList" {
-           puts "=========== Resample Atlas $Name  ============ "
-           # Load In the New Atlases
-           set VolIDInput [EMAtlasBrainClassifierLoadAtlasVolume $Dir Atlas$Name]
-           # Define Registration output volumes
-           set VolIDOutput [DevCreateNewCopiedVolume $TemplateIDInput "" "$Name"]
-           set Prefix "$EMAtlasBrainClassifier(WorkingDirectory)/atlas/$Dir/I"
-           Volume($VolIDOutput,node) SetFilePrefix "$Prefix"
-           Volume($VolIDOutput,node) SetFullPrefix "$Prefix" 
-       
-           # Resample the Atlas
-           EMAtlasBrainClassifierResample  $VolIDTarget $VolIDInput $VolIDOutput  
-           # Clean up 
-       
-           if {$EMAtlasBrainClassifier(Save,Atlas)} {EMAtlasBrainClassifierVolumeWriter $VolIDOutput}
-           MainMrmlDeleteNode Volume $VolIDInput 
-           MainUpdateMRML
-           RenderAll
+             puts "=========== Load Atlas $Name  ============ "
+             # Load In the New Atlases
+             EMAtlasBrainClassifierLoadAtlasVolume $EMAtlasBrainClassifier(WorkingDirectory)/atlas $Dir $Name
+             MainUpdateMRML
+             RenderAll
+         }       
        }
-    }
+   }
 
     # ---------------------------------------------------------------------- 
     # 3. Segment Image `
@@ -765,6 +808,7 @@ proc EMAtlasBrainClassifierStartSegmentation { } {
     set tags [MainMrmlAddColors $tags]
     MainMrmlBuildTreesVersion2.0 $tags
     MainUpdateMRML
+
     # Set Segmentation Boundary  so that if you have images of other dimension it will segment them correctly
     set VolID $EMAtlasBrainClassifier(Volume,SPGR)
     set EMSegment(SegmentationBoundaryMax,0) [lindex [Volume($VolID,node) GetDimensions] 0]
@@ -772,10 +816,13 @@ proc EMAtlasBrainClassifierStartSegmentation { } {
     set Range [Volume($VolID,node) GetImageRange]
     set EMSegment(SegmentationBoundaryMax,2) [expr [lindex $Range 1] - [lindex $Range 0] + 1] 
     puts "=========== Segment Image ============ "
+    # return
+    # Start algorithm 
     EMSegmentStartEM
 
+
     if {$EMSegment(LatestLabelMap) == $Volume(idNone)} { 
-    DevErrorWindow "Error: Could not segment subject"
+        DevErrorWindow "Error: Could not segment subject"
     } else {
     set Prefix "$EMAtlasBrainClassifier(WorkingDirectory)/EMSegmentation/EMResult"
     set VolIDOutput $EMSegment(LatestLabelMap)
@@ -785,7 +832,7 @@ proc EMAtlasBrainClassifierStartSegmentation { } {
     }
     # Change xml directory
     if {$EMAtlasBrainClassifier(Save,XMLFile)}      {MainMrmlWrite  $EMAtlasBrainClassifier(WorkingDirectory)/EMSegmentation/segmentation.xml}
-    puts "=========== Finshed  ============ "
+    puts "=========== Finished  ============ "
 }
 
 
