@@ -74,8 +74,13 @@ ADD_LIBRARY (vtkSlicerBase Base_SRCS)
 
 IF (VTK_WRAP_TCL AND VTKSLICER_WRAP_TCL)
 
+
   VTK_WRAP_TCL (vtkSlicerBaseTCL BaseTCL_SRCS Base_SRCS)
-  ADD_LIBRARY (vtkSlicerBaseTCL SHARED BaseTCL_SRCS)
+  IF (APPLE)
+    ADD_LIBRARY (vtkSlicerBaseTCL SHARED vtkOSXSlicerBaseTclInit.c BaseTCL_SRCS)
+  ELSE (APPLE)
+    ADD_LIBRARY (vtkSlicerBaseTCL SHARED BaseTCL_SRCS)
+  ENDIF(APPLE)
   TARGET_LINK_LIBRARIES (vtkSlicerBaseTCL 
                          vtkIOTCL 
                          vtkGraphicsTCL 
@@ -83,6 +88,11 @@ IF (VTK_WRAP_TCL AND VTKSLICER_WRAP_TCL)
                          vtkFilteringTCL 
                          vtkCommonTCL
                          ${TCL_LIBRARY})
+  IF (APPLE)
+    SET_TARGET_PROPERTIES(vtkSlicerBaseTCL PROPERTIES LINK_FLAGS "-init _oft_initSlicerBaseOSXInit")
+  ENDIF(APPLE)
+
+
   IF (VTK_USE_HYBRID)
     TARGET_LINK_LIBRARIES (vtkSlicerBaseTCL vtkHybridTCL)
   ENDIF (VTK_USE_HYBRID)
@@ -196,6 +206,9 @@ LINK_LIBRARIES (
   vtkFiltering
   vtkCommon
 )
+  IF (APPLE)
+    SET_TARGET_PROPERTIES(vtkSlicerBase PROPERTIES LINK_FLAGS "-init _oft_initSlicerBase")
+  ENDIF(APPLE)
 
 IF (VTK_USE_HYBRID)
   LINK_LIBRARIES (vtkHybrid)

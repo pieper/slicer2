@@ -51,6 +51,9 @@ switch $tcl_platform(os) {
     "Linux" {
         set env(BUILD) redhat7.3
     }
+    "Darwin" {
+        set env(BUILD) Darwin
+    }
     default {
         # different windows machines say different things, so assume
         # that if it doesn't match above it must be windows
@@ -98,6 +101,7 @@ if { ![info exists env(TCL_LIB_DIR)] || $env(TCL_LIB_DIR) == "" } {
 # 
 switch $env(BUILD) {
     "solaris8" -
+    "Darwin" -
     "redhat7.3" {
         # add vtk bins
         set env(LD_LIBRARY_PATH) $env(VTK_BIN_DIR)/bin:$env(LD_LIBRARY_PATH)
@@ -144,6 +148,7 @@ foreach modulePath "${baseModulePath} ${userModulePath}" {
             puts "Adding module to library paths: ${moduleName}"
             switch $env(BUILD) {
                 "solaris8" -
+                "Darwin" -
                 "redhat7.3" {
                     set env(LD_LIBRARY_PATH) ${modulePath}/$moduleName/builds/$env(BUILD)/bin:$env(LD_LIBRARY_PATH)
                     set env(TCLLIBPATH) "${modulePath}/$moduleName/Wrapping/Tcl $env(TCLLIBPATH)"
@@ -208,6 +213,7 @@ proc file_event {fp} {
 
 switch $env(BUILD) {
     "solaris8" -
+    "Darwin" -
     "redhat7.3" {
         # - need to run the specially modified tcl interp in the executable 'vtk' on unix
         # - don't put process in background so that jdemo can track its status
