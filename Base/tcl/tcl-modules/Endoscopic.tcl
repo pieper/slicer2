@@ -284,6 +284,7 @@ proc EndoscopicInit {} {
     
     #Advanced variables
     set Endoscopic(ModelsVisibilityInside) 1
+    set Endoscopic(positionLandmarkFromEventMgr) 0
 
     # Path variable
     set Path(flyDirection) "Forward"
@@ -683,10 +684,25 @@ proc EndoscopicBuildGUI {} {
     <UL>
     <LI><B>Camera</B> 
 <BR>This tab contains sliders to control the camera position, orientation and zoom.
+<P><B>To move and rotate the camera</B>:
+<BR>- select absolute mode (to move along the world's axis) or relative mode (to move along the camera's axis)
+<BR>- to move the camera with precision, use the sliders or type a world coordinate in the text box, next to the sliders. For the orientation of the camera, the number displayed is the angle of rotation in degrees.
+<BR>- to move the camera intuitively, use the mouse:
+<BR> 1) to pan (move left/right and up/down): hold the <B>Shift</B> key and the <B>left</B> mouse button and move the mouse in the right screen (the Endoscopic screen)
+<BR> 2) to Pitch/Yaw: hold the <B>Shift</B> key and the <B>right</B> mouse button and move the mouse in the right screen
+<P>
 <BR><B>To create a path</B>:
+<BR><B>To add a landmark</B>:
+<BR> You have 2 options: you can pick a landmark position on a 2D slice or in the 3D world:
+<BR> * <B>IN 3D</B>
 <BR>- Position the camera where desired
 <BR>- Click the button <I>Add</I>: this will add a landmark (a sphere) at the current camera position and another landmark at<BR> the current focal point position 
 <BR>- Two paths will automatically be created: one that links all the camera landmarks and another one that links all the focal point landmarks
+<BR> * <B>IN 2D</B>
+<BR> - You need to have greyscale images loaded along with the model, otherwise this option won't work
+<BR> - position the mouse in the slice window of your choice until the cross hair is on top of the region where you want to add a landmark
+<BR> - press the <B>c</B> key
+<BR> - by default, both a camera and focal point landmark will be added at this position
 <BR><B>To delete a camera landmark</B>:
 <BR>- Select the landmark position in the box
 <BR>- Click the <I>Delete</I> button
@@ -719,11 +735,7 @@ proc EndoscopicBuildGUI {} {
 
 <P>
 <LI><B>Advanced</B>
-<BR>This Tab allows you to change color and size parameters for the camera, focal point, landmarks and path
-<BR><B>Camera Direction</B>:
-<BR>- Absolute: the camera moves along the SI, RL and PA axis
-<BR>- Relative: the camera moves along its own axis, depending on its orientation
-
+<BR>This Tab allows you to change color and size parameters for the camera, focal point, landmarks and path. You can also change the virtual camera's lens angle for a wider view.
     "
         regsub -all "\n" $help { } help
         MainHelpApplyTags Endoscopic $help
@@ -891,8 +903,21 @@ If you need help, go to the Help tab"
 
 	eval {label $f.l -height 1 -text "Camera Position"} $Gui(WTA)
 	eval {button $f.r \
-		-text "reset" -width 10 -command "EndoscopicResetCameraPosition; Render3D"} $Gui(WBA)            
-	grid $f.l $f.r -padx 1 -pady 1
+		-text "reset" -width 5 -command "EndoscopicResetCameraPosition; Render3D"} $Gui(WBA)            
+
+        eval {menubutton $f.fMBtns -text "absolute" -menu $f.fMBtns.fMenu} $Gui(WMBA)  
+	eval {menu $f.fMBtns.fMenu} $Gui(WMA) 
+
+	$f.fMBtns.fMenu add command -label "absolute" -command {set Endoscopic(flyDirection) "absolute"; set LposTexts "{L<->R } {P<->A } {I<->S }"; EndoscopicSetCameraAxis "absolute"; Render3D}
+	$f.fMBtns.fMenu add command -label "relative" -command {set Endoscopic(flyDirection) "relative"; set LposTexts "{Left/Right} {Forw/Back} {Up/Down}";EndoscopicSetCameraAxis "relative"; Render3D}
+	
+	set Endoscopic(axis) $f.fMBtns
+	grid $f.l $f.r $f.fMBtns -padx 1 -pady 1
+
+
+
+
+	
 
 	#-------------------------------------------
 	# Camera->Top->Pos frame
@@ -925,20 +950,20 @@ If you need help, go to the Help tab"
 
         set f $fCamera.fMid.fTitle
 
-	eval {label $f.l -height 1 -text "Camera Rotation"} $Gui(WTA)
+	eval {label $f.l -height 1 -text "Camera Orientation"} $Gui(WTA)
 	eval {button $f.r \
 		-text "reset" -width 10 -command "EndoscopicResetCameraDirection; Render3D"} $Gui(WBA)            
 	grid $f.l $f.r -padx 1 -pady 1
 
 	#-------------------------------------------
-	# Camera->Mid->Pos frame
+	# Camera->Mid->Dir frame
 	#-------------------------------------------
 	set f $fCamera.fMid.fPos
 
 	# Rotation Sliders
 	foreach slider $dirAxi Rtext $RposTexts orient "horizontal horizontal vertical" {
 
-	    EndoscopicCreateLabelAndSlider $f l$slider 0 "$Rtext" $slider $orient 0 360 110 Endoscopic(cam,${slider}Str) "EndoscopicSetCameraDirection $slider" 5 0
+	    EndoscopicCreateLabelAndSlider $f l$slider 0 "$Rtext" $slider $orient -180 180 110 Endoscopic(cam,${slider}Str) "EndoscopicSetCameraDirection $slider" 5 0
 	
 	}
 
@@ -1195,7 +1220,7 @@ If you need help, go to the Help tab"
 	eval {scale $f.s$sliderName -from $from -to $to -length $length \
 		-variable $variable -orient vertical\
 		-command "$commandString; Render3D" \
-		-resolution 1} $Gui(WSA)
+		-resolution .1} $Gui(WSA)
 	eval {entry $f.e$sliderName \
 		-textvariable $variable -width $entryWidth} $Gui(WEA)
 	bind $f.e$sliderName <Return> \
@@ -1474,11 +1499,18 @@ proc EndoscopicSetCameraPosition {{value ""}} {
 	# if we want to go along the camera's own axis (Relative mode)
 
 	if { $Endoscopic(cam,axis) == "relative" } {
-	    set Endoscopic(cam,x) [expr $Endoscopic(cam,x) + ($Endoscopic(cam,tempX) - $Endoscopic(cam,xStr)) * $LR(x) + ($Endoscopic(cam,tempY) - $Endoscopic(cam,yStr)) * $IO(x) + ($Endoscopic(cam,tempZ) - $Endoscopic(cam,zStr)) * $Up(x)] 
-	    set Endoscopic(cam,y) [expr $Endoscopic(cam,y) + ($Endoscopic(cam,tempX) - $Endoscopic(cam,xStr)) * $LR(y) + ($Endoscopic(cam,tempY) - $Endoscopic(cam,yStr)) * $IO(y) + ($Endoscopic(cam,tempZ) - $Endoscopic(cam,zStr)) * $Up(y)] 
-	    set Endoscopic(cam,z) [expr $Endoscopic(cam,z) + ($Endoscopic(cam,tempX) - $Endoscopic(cam,xStr)) * $LR(z) + ($Endoscopic(cam,tempY) - $Endoscopic(cam,yStr)) * $IO(z) + ($Endoscopic(cam,tempZ) - $Endoscopic(cam,zStr)) * $Up(z)] 
-	
 
+	    set stepX [expr $Endoscopic(cam,tempX) - $Endoscopic(cam,xStr)]
+	    set stepY [expr $Endoscopic(cam,tempY) - $Endoscopic(cam,yStr)]
+	    set stepZ [expr $Endoscopic(cam,tempZ) - $Endoscopic(cam,zStr)]
+
+	    set Endoscopic(cam,x) [expr $Endoscopic(cam,x) + $stepX * $LR(x) \
+		    + $stepY * $IO(x) + $stepZ * $Up(x)] 
+	    set Endoscopic(cam,y) [expr $Endoscopic(cam,y) + $stepX * $LR(y) \
+		    + $stepY * $IO(y) + $stepZ * $Up(y)] 
+	    set Endoscopic(cam,z) [expr $Endoscopic(cam,z) + $stepX * $LR(z) \
+		    +  $stepY * $IO(z) +  $stepZ * $Up(z)] 
+	    
 	# else if we want to go along the absolute RA, IS, LR axis
 
 	} elseif { $Endoscopic(cam,axis) == "absolute" } {
@@ -1487,6 +1519,7 @@ proc EndoscopicSetCameraPosition {{value ""}} {
 	    set Endoscopic(cam,z) $Endoscopic(cam,zStr) 
 	}
 
+	# set the focal point 
 	set Endoscopic(fp,x) [expr $Endoscopic(cam,x) + $IO(x) * $Endoscopic(fp,distance)]
 	set Endoscopic(fp,y) [expr $Endoscopic(cam,y) + $IO(y) * $Endoscopic(fp,distance)]
 	set Endoscopic(fp,z) [expr $Endoscopic(cam,z) + $IO(z) * $Endoscopic(fp,distance)]
@@ -1560,11 +1593,14 @@ proc EndoscopicSetCameraDirection {{value ""}} {
 	}
 
 
-	Endoscopic(cam,actor) SetOrientation $Endoscopic(cam,rxStr) $Endoscopic(cam,ryStr) $Endoscopic(cam,rzStr) 
+	
+	Endoscopic(cam,actor) SetOrientation $Endoscopic(cam,rxStr) $Endoscopic(cam,ryStr) $Endoscopic(cam,rzStr)
+ 
 	# this is the current amount of rotation
 	set Endoscopic(cam,xRotation) $Endoscopic(cam,rxStr) 
 	set Endoscopic(cam,yRotation) $Endoscopic(cam,ryStr) 
 	set Endoscopic(cam,zRotation) $Endoscopic(cam,rzStr) 
+
 
 	# this is the current amount of rotation in rad
 	set Endoscopic(cam,xRotationRad) [expr $Endoscopic(cam,xRotation) *3.14 / 180]
@@ -1584,7 +1620,7 @@ proc EndoscopicSetCameraDirection {{value ""}} {
 	    # distance from camera in the xy plane 
 	    set dz [expr { sqrt (($Endoscopic(fp,y) - $Endoscopic(cam,y)) * ($Endoscopic(fp,y) - $Endoscopic(cam,y)) + ($Endoscopic(fp,x) - $Endoscopic(cam,x)) * ($Endoscopic(fp,x) - $Endoscopic(cam,x)))}]
  
-	    if { $Endoscopic(cam,xRotation) > 90 && $Endoscopic(cam,xRotation) < 270 } {
+	    if { $Endoscopic(cam,xRotation) < -90 || $Endoscopic(cam,xRotation) > 90 } {
 		set dz [expr -$dz]
 	    }
 
@@ -1600,6 +1636,7 @@ proc EndoscopicSetCameraDirection {{value ""}} {
 
 	}	
 	
+
 	Endoscopic(fp,actor) SetPosition $Endoscopic(fp,x) $Endoscopic(fp,y) $Endoscopic(fp,z)
 	$View(endCam) SetViewUp $Endoscopic(cam,viewUpX) $Endoscopic(cam,viewUpY) $Endoscopic(cam,viewUpZ)
 	$View(endCam) SetFocalPoint $Endoscopic(fp,x) $Endoscopic(fp,y) $Endoscopic(fp,z)
@@ -1617,36 +1654,47 @@ proc EndoscopicSetCameraDirection {{value ""}} {
 proc EndoscopicSetFocalAndCameraPosition {x y z FPx FPy FPz} {
 	global Endoscopic View Path Model
 
-
+    
+    # set the new x,y,z strings for the sliders
     set Endoscopic(cam,xStr) $x
     set Endoscopic(cam,yStr) $y
     set Endoscopic(cam,zStr) $z
 
+    # store current x,y,z to calculate the step in relative mode
+    set Endoscopic(cam,tempX) $x
+    set Endoscopic(cam,tempY) $y
+    set Endoscopic(cam,tempZ) $z
+
+    
     #*******************************************************************
     #
     # STEP 0: set the new position of the camera and fp and then update
     #         the virtual camera first
     #
     #*******************************************************************
-
+    
     set Endoscopic(cam,x) $x
     set Endoscopic(cam,y) $y
     set Endoscopic(cam,z) $z
-
+    
     set Endoscopic(fp,x) $FPx
     set Endoscopic(fp,y) $FPy
     set Endoscopic(fp,z) $FPz
 
     EndoscopicUpdateCamera
-
+    
     #*********************************************************************
     #
     # STEP 1: set the focal point actor's position
     #
     #*********************************************************************
-
+    
+    # we have to set the position of the actor, 
+    # otherwise it stays the Identity
+    Endoscopic(cam,actor) SetPosition $Endoscopic(cam,x) $Endoscopic(cam,y) $Endoscopic(cam,z)
+    
     Endoscopic(fp,actor) SetPosition $Endoscopic(fp,x) $Endoscopic(fp,y) $Endoscopic(fp,z)
-
+    
     #*********************************************************************
     #
     # STEP 2: set the camera actor's orientation based on the virtual
@@ -1654,7 +1702,7 @@ proc EndoscopicSetFocalAndCameraPosition {x y z FPx FPy FPz} {
     #         then set the position
     #
     #*********************************************************************
-
+    
     vtkMatrix4x4 matrix
     vtkTransform transform
     
@@ -1716,9 +1764,25 @@ proc EndoscopicSetFocalAndCameraPosition {x y z FPx FPy FPz} {
     transform Translate [expr $Endoscopic(cam,x)] [expr $Endoscopic(cam,y)] [expr $Endoscopic(cam,z)]
      
     # STEP 2.4: set the user matrix
-    transform GetMatrix Endoscopic(actor,matrix)
-    Endoscopic(actor,matrix) Modified
+    #transform GetMatrix Endoscopic(actor,matrix)
+    #Endoscopic(actor,matrix) Modified
+    
+    # STEP 2.5: set the actor's orientation (better than step 2.5, so we 
+    # can call GetOrientation)
 
+    set l [transform GetOrientation]
+    set Endoscopic(cam,xRotation) [expr [lindex $l 0]]
+    set Endoscopic(cam,yRotation) [expr [lindex $l 1]]
+    set Endoscopic(cam,zRotation) [expr [lindex $l 2]]
+    Endoscopic(cam,actor) SetOrientation $Endoscopic(cam,xRotation) $Endoscopic(cam,yRotation) $Endoscopic(cam,zRotation)
+    
+    # set the sliders
+    set Endoscopic(cam,rxStr) $Endoscopic(cam,xRotation)
+    
+    # FIXME: floating point problem (happens when yRotation is < 1. e-06)
+    set Endoscopic(cam,ryStr) $Endoscopic(cam,yRotation)
+    set Endoscopic(cam,rzStr) $Endoscopic(cam,zRotation)
+    
     matrix Delete
     transform Delete
 
@@ -2237,10 +2301,13 @@ proc EndoscopicResetStopPath {} {
 proc EndoscopicResetPath {} {
     global Endoscopic Path 
     	
-        EndoscopicStopPath
-	set Path(stepStr) 0
-        EndoscopicSetPathFrame
-        EndoscopicResetStopPath
+    set Endoscopic(cam,viewUpX) 0
+    set Endoscopic(cam,viewUpY) 0
+    set Endoscopic(cam,viewUpZ) 1
+    EndoscopicStopPath
+    set Path(stepStr) 0
+    EndoscopicSetPathFrame
+    EndoscopicResetStopPath
 }
 
 
@@ -2357,6 +2424,8 @@ proc EndoscopicSetCameraAxis {{axis ""}} {
     if {$axis != ""} {
 	if {$axis == "absolute" || $axis == "relative"} {
 	    set Endoscopic(cam,axis) $axis
+	    # Change button text
+	    $Endoscopic(axis) config -text $axis
 	} else {
 	    return
 	}   
