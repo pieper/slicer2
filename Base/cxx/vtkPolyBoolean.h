@@ -51,7 +51,8 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #define BOOL_CELL_CUT 2
 #define BOOL_CELL_NOT_IN_RESULT 3
 
-
+class vtkBoolTri;
+class vtkPiercePoint;
 //
 // Special classes to support boolean intersections.
 //
@@ -66,10 +67,10 @@ public:
 
   int Flag;
   int Points[2];
-  struct vtkBoolTri *Neighbors[2]; // the two neighbor triangles
-  struct vtkPiercePoint *FirstPP;
+  vtkBoolTri *Neighbors[2]; // the two neighbor triangles
+  vtkPiercePoint *FirstPP;
   vtkBoolTriEdge *Next[2]; // next edge on Neighbors 0 & 1
-  struct vtkPiercePoint *PPoints[2];
+  class vtkPiercePoint *PPoints[2];
 };
 
 class vtkPiercePoint { //; prevent man page generation
@@ -84,7 +85,7 @@ public:
   int SnapIdx; // Index of equivalent input data point, or -1 if new.
   float Point[3]; // 3d position of PP
   vtkBoolTriEdge *Edge; // piercing edge;
-  struct vtkBoolTri *Triangle;
+  vtkBoolTri *Triangle;
   vtkPiercePoint *Next; // pointer to next PP on this edge
   vtkPiercePoint *Prev; // pointer to previous PP on this edge
   vtkPiercePoint *Merge; // next PP to merge with this one.

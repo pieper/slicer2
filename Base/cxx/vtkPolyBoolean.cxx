@@ -118,7 +118,6 @@ void vtkPolyBoolean::SPLTestIntersection() {
   cout << "4" << endl;
   vtkCellData *outputCD = output->GetCellData();
   cout << "5" << endl;
-  vtkCellData *cdA, *cdB;
 
   cout << "Declaring Xform Data Input" << endl;
   vtkMatrix4x4 *XformBtoA = vtkMatrix4x4::New();
@@ -127,8 +126,7 @@ void vtkPolyBoolean::SPLTestIntersection() {
   vtkTransform *dummyxform = vtkTransform::New();
 
   cout << "Declaring Xform Num Data Input" << endl;
-  int numInputPointsA, numInputPointsB, numNewPoints,edgeCount;
-  int numNewPointsExpected, operationOutputs3D;
+  int numInputPointsA;
 
   vtkDebugMacro(<< "Performing polyhedron boolean.");
   cout << "Initializing Data" << endl;
@@ -336,7 +334,6 @@ void vtkPolyBoolean::Execute()
   vtkPointData *pdA = inputA->GetPointData(),
                *pdB = inputB->GetPointData();
   vtkCellData *outputCD = output->GetCellData();
-  vtkCellData *cdA, *cdB;
   vtkMatrix4x4 *XformBtoA = vtkMatrix4x4::New();
   vtkMatrix4x4 *XformAInverse = vtkMatrix4x4::New();
   // make dummy transform because of but that Multiply4x4 isn't static fcn
@@ -514,7 +511,7 @@ void vtkPolyBoolean::Execute()
 
   if ( operationOutputs3D )
     {
-    int numLines, numPts, *pts;
+    int numPts, *pts;
     vtkCellArray *oldLines;
 
     this->ClassifyCells();
@@ -1402,7 +1399,7 @@ void vtkPolyBoolean::FormLoops()
   const char *abortReasons[5] = { "OK", "Dead End", "Rho-walk",
                             "Fell off triangle", "Endless Loop" };
   vtkPiercePoint *thisPP, *nextPP, *linkPP;
-  vtkBoolTri *thisTri, *otherTri;
+  vtkBoolTri *thisTri;
   vtkBoolTriEdge *thisEdge, *nextEdge, *thisFrame, *nextFrame;
   vtkBoolLoop *newLoop;
   double dist2, dist_eps = this->DistanceResolution;
@@ -1629,12 +1626,10 @@ void vtkPolyBoolean::FormLoops()
 void vtkPolyBoolean::AddNewPolygons( vtkBoolTri *thisTri )
   {
   vtkBoolLoop *thisLoop;
-  vtkPolyData *dataset;
-  int ii, newId, nPts, nTriangles = 0, *tris;
+  int ii, nPts, nTriangles = 0, *tris;
   vtkBoolTess *tess = this->Tess;
   int flagBit, outerLoop[3], addOuterLoop = 0;
   float *p0, *p1, xprod[3], areavec[3];
-  double area;
 
   // Generate new triangles from the loops on this triangle.
   thisLoop = thisTri->NewLoops;
