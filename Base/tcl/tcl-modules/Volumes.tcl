@@ -56,7 +56,7 @@
 #-------------------------------------------------------------------------------
 proc VolumesInit {} {
     global Volumes Volume Module Gui Path prog
-    
+
     # Define Tabs
     set m Volumes
     set Module($m,row1List) "Help Display Props Reformat" 
@@ -85,7 +85,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.71 $} {$Date: 2002/10/04 17:49:45 $}]
+            {$Revision: 1.72 $} {$Date: 2002/10/24 22:41:45 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -140,7 +140,16 @@ proc VolumesInit {} {
         }
     }
 
-
+    if {0} {
+    # register sub modules color functions if they exist
+    foreach m $Volume(readerModules,idList) {
+        if {[info exists Volume(readerModules,$m,procColor)] == 1} {
+            lappend colorProcs $Volume(readerModules,$m,procColor)
+        }
+    }
+    puts "Volumes.tcl registering colour procedures: $colorProcs"
+    set Module(Volumes,procColor) $colorProcs
+}
     # Legacy things specific to submodules 
     #---------------------------------------------
     # Added by Attila Tanacs 10/18/2000
@@ -161,7 +170,7 @@ proc VolumesInit {} {
 #-------------------------------------------------------------------------------
 proc VolumesBuildGUI {} {
     global Gui Slice Volume Lut Module Volumes Fiducials Path
-    
+
     #-------------------------------------------
     # Frame Hierarchy:
     #-------------------------------------------
@@ -379,6 +388,7 @@ orientation plane of the slice (To see how to create/select Fiducials, press the
                 -command "MainVolumesSetParam LutID $l; MainVolumesRender"
         }
         set Volume(mbLUT) $f.mbLUT
+
     pack $f.lLUT $f.mbLUT -pady $Gui(pad) -side top
 
     #-------------------------------------------
@@ -473,7 +483,7 @@ orientation plane of the slice (To see how to create/select Fiducials, press the
 
     eval {menubutton $f.mbType -text \
             $Volume(readerModules,$Volume(propertyType),name) \
-            -relief raised -bd 2 -width 12 \
+            -relief raised -bd 2 -width 20 \
             -menu $f.mbType.m} $Gui(WMBA)
     eval {menu $f.mbType.m} $Gui(WMA)
     pack  $f.mbType -side left -pady 1 -padx $Gui(pad)
@@ -496,7 +506,9 @@ orientation plane of the slice (To see how to create/select Fiducials, press the
         # If it has a procedure for building the GUI
         if {[info command $Volume(readerModules,$m,procGUI)] != ""} {
             # then call it
-puts "calling:$Volume(readerModules,$m,procGUI)"
+            if {$Module(verbose) == 1} {
+                puts "VolumesBuildGUI calling: $Volume(readerModules,$m,procGUI)"
+            }
             $Volume(readerModules,$m,procGUI) $Volume(f$m)
         }
     }
@@ -977,8 +989,7 @@ proc VolumesPropsApply {} {
     # if the volume is NEW we may read it in...
     if {$m == "NEW"} {
 
-    # add a MRML node for this volume (so that in UpdateMRML
-    # we can read it in according to the path, etc. in the node)
+    # add a MRML node for this volume (so that in UpdateMRML we can read it in according to the path, etc. in the node)
         set n [MainMrmlAddNode Volume]
         set i [$n GetID]
            
