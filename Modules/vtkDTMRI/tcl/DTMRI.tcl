@@ -136,7 +136,7 @@ proc DTMRIInit {} {
 
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.49.2.2 $} {$Date: 2004/12/01 23:43:06 $}]
+                  {$Revision: 1.49.2.3 $} {$Date: 2004/12/09 21:37:00 $}]
 
      # Define Tabs
     #------------------------------------
@@ -280,7 +280,7 @@ proc DTMRIInit {} {
     #]
 
     # whether we are currently displaying glyphs
-    set DTMRI(mode,visualizationType,glyphsOn) 0n
+    set DTMRI(mode,visualizationType,glyphsOn) 0ff
     set DTMRI(mode,visualizationType,glyphsOnList) {On Off}
     set DTMRI(mode,visualizationType,glyphsOnList,tooltip) [list \
                                 "Display each DTMRI as a glyph\n(for example a line or ellipsoid)" \
@@ -346,6 +346,9 @@ proc DTMRIInit {} {
     # Whether to remove actors on module exit
     set DTMRI(vtk,actors,removeOnExit) 1
     set DTMRI(vtk,actors,firstEnter) 1
+
+    # Whether the glyph actors are currently present in the scene
+    set DTMRI(glyphs,actorsAdded) 0
 
     # scalar bar
     set DTMRI(mode,scalarBar) Off
@@ -613,7 +616,8 @@ proc DTMRIEnter {} {
 
     #Add our actors the first time we enter the module during exec
     if {$DTMRI(vtk,actors,firstEnter)} {
-      DTMRIAddAllActors
+      # do not add actors, since pipeline has no input yet. add in DTMRISetActive instead.
+      #DTMRIAddAllActors
       set DTMRI(vtk,actors,firstEnter) 0
     } else {  
       # Add our actors if removed on module exit.
@@ -3384,6 +3388,7 @@ proc DTMRIRemoveAllActors {} {
 
     Render3D
 
+    set DTMRI(glyphs,actorsAdded) 0
 }
 
 #-------------------------------------------------------------------------------
@@ -3403,6 +3408,7 @@ proc DTMRIAddAllActors {} {
 
     Render3D
 
+    set DTMRI(glyphs,actorsAdded) 1
 }
 
 
@@ -4451,6 +4457,13 @@ proc DTMRIUpdate {} {
                 }
             }
 
+            # in case this is the first time we load a tensor volume, 
+            # place the actors in the scene now. (Now that there is input
+            # to the pipeline this will not cause errors.)
+            if {$DTMRI(glyphs,actorsAdded) == 0} {
+                DTMRIAddAllActors
+            }
+
             # Make actor visible
             #------------------------------------
             DTMRI(vtk,glyphs,actor) VisibilityOn
@@ -4467,7 +4480,7 @@ proc DTMRIUpdate {} {
     }
 
     # make sure the scalars are updated (if we have anything displayed)
-    if {$mode != "None"} {
+    if {$mode != "None" && $DTMRI(glyphs,actorsAdded)==1} {
         DTMRIUpdateGlyphScalarRange
     }
     # update 3D window (causes pipeline update)
@@ -5900,6 +5913,9 @@ proc DTMRISetActive {n} {
     # Call the procedure that puts this tensor on the menus
     MainDataSetActive Tensor $n
 
+    # Make sure this tensor is the input to the glyph pipeline
+    DTMRIUpdate
+
     # get the active ID (index into tensor list)
     set t $Tensor(activeID)
 
@@ -5950,4 +5966,6 @@ proc DTMRISetActive {n} {
 #         #DTMRI(vtk,bspline($i)) Update
 #         DTMRI(vtk,impComp($i)) SetInput [DTMRI(vtk,bspline($i)) GetOutput]
 #     }
+
+
 }
