@@ -55,6 +55,15 @@
 proc MainMrmlInit {} {
 	global Mrml
 
+	# List of all types of MRML nodes understood by slicer
+	set Mrml(nodeTypeList) "Model Volume Color Transform \
+		EndTransform Matrix TransferFunction WindowLevel \
+		TFPoint ColorLUT Options Fiducials EndFiducials \
+		Point Path EndPath Landmark \
+		Hierarchy EndHierarchy ModelGroup EndModelGroup ModelRef \
+		Scenes EndScenes VolumeState EndVolumeState CrossSection \
+		SceneOptions ModelState Locator TetraMesh"
+
 	MainMrmlInitIdLists 
 
 	# Read MRML defaults file for version 1.0
@@ -69,7 +78,7 @@ proc MainMrmlInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainMrml \
-		{$Revision: 1.50 $} {$Date: 2002/01/21 18:48:42 $}]
+		{$Revision: 1.51 $} {$Date: 2002/01/27 21:39:47 $}]
 
 	set Mrml(colorsUnsaved) 0
 }
@@ -83,28 +92,18 @@ proc MainMrmlInit {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlInitIdLists {} {
-	global Mrml
-	global Model Volume Color Transform EndTransform Matrix TetraMesh
-	global TransferFunction WindowLevel TFPoint ColorLUT Options
-	global Fiducials EndFiducials Point
-        global Path EndPath Landmark
-        global Hierarchy EndHierarchy ModelGroup EndModelGroup ModelRef
-        global Scenes EndScenes VolumeState EndVolumeState CrossSection
-        global SceneOptions ModelState Locator
-
-    #puts "in MainMrmlInitIdLists: Lauren developers should not have to edit this file"
-	foreach node "Color Model Volume Transform EndTransform Matrix \
-		TransferFunction WindowLevel TFPoint ColorLUT Options \
-		Fiducials EndFiducials Point Path EndPath Landmark \
-		Hierarchy EndHierarchy ModelGroup EndModelGroup ModelRef \
-		Scenes EndScenes VolumeState EndVolumeState CrossSection \
-		SceneOptions ModelState Locator TetraMesh" {
-		set ${node}(nextID) 0
-		set ${node}(idList) ""
-		set ${node}(idListDelete) ""
-	}
-	set Volume(idList) 0
-	set Volume(nextID) 1
+    global Mrml 
+    eval {global} $Mrml(nodeTypeList)
+     
+    foreach node $Mrml(nodeTypeList) {
+	set ${node}(nextID) 0
+	set ${node}(idList) ""
+	set ${node}(idListDelete) ""
+    }
+    # Volumes are a special case because the "None" always exists
+    
+    set Volume(idList) 0
+    set Volume(nextID) 1
 }
 
 #-------------------------------------------------------------------------------
@@ -190,22 +189,12 @@ proc MainMrmlPrint {tags} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlClearList {} {
-	global Model Volume Color Transform EndTransform Matrix TetraMesh
-	global TransferFunction WindowLevel TFPoint ColorLUT Options
-	global Fiducials EndFiducials Point
-        global Path EndPath Landmark
-        global Hierarchy EndHierarchy ModelGroup EndModelGroup ModelRef
-        global Scenes EndScenes VolumeState EndVolumeState CrossSection
-        global SceneOptions ModelState Locator
-
-	foreach node "Color Model Volume Transform EndTransform Matrix \
-		TransferFunction WindowLevel TFPoint ColorLUT Options \
-		Fiducials EndFiducials Point Path EndPath Landmark \
-		Hierarchy EndHierarchy ModelGroup EndModelGroup ModelRef \
-		Scenes EndScenes VolumeState EndVolumeState CrossSection \
-		SceneOptions ModelState Locator TetraMesh" {
-		set ${node}(idListDelete) ""
-	}
+    global Mrml 
+    eval {global} $Mrml(nodeTypeList)
+    
+    foreach node $Mrml(nodeTypeList) {
+	set ${node}(idListDelete) ""
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -218,18 +207,15 @@ proc MainMrmlClearList {} {
 #  str nodeType the type of node, \"Volume\", \"Color\", etc.
 # .END
 #-------------------------------------------------------------------------------
-proc MainMrmlAddNode {nodeType} {
-	global Mrml Model Volume Color Transform EndTransform Matrix Options
-        global TetraMesh
-	global TransferFunction WindowLevel TFPoint ColorLUT 
-	global Fiducials EndFiducials Point 
-        global Path EndPath Landmark Array
-        global Hierarchy EndHierarchy ModelGroup EndModelGroup ModelRef
-        global Scenes EndScenes VolumeState EndVolumeState CrossSection
-        global SceneOptions ModelState Locator
-    
-	# the #0 puts the nodeType in global scope
-	upvar #0 $nodeType Array
+proc MainMrmlAddNode {nodeType  {globalArray ""}} {
+	global Mrml
+
+    if {$globalArray == ""} {
+	set globalArray $nodeType
+    }
+
+	# the #0 puts the array in global scope
+	upvar #0 $globalArray Array
 
 	set tree "dataTree"
 	if {$nodeType == "Color"} {
@@ -242,13 +228,13 @@ proc MainMrmlAddNode {nodeType} {
 	lappend Array(idList) $i
 
 	# Put the None volume at the end
-	if {$nodeType == "Volume"} {
+	if {$globalArray == "Volume"} {
 		set j [lsearch $Array(idList) $Array(idNone)]
 		set Array(idList) "[lreplace $Array(idList) $j $j] $Array(idNone)"
 	}
 
 	# Create vtkMrmlNode
-	set n ${nodeType}($i,node)
+	set n ${globalArray}($i,node)
 	vtkMrml${nodeType}Node $n
 	$n SetID $i
 
@@ -256,7 +242,7 @@ proc MainMrmlAddNode {nodeType} {
 	Mrml($tree) AddItem $n
 
 	# Return node
-	return ${nodeType}($i,node)
+	return ${globalArray}($i,node)
 }
 
 
@@ -271,13 +257,7 @@ proc MainMrmlAddNode {nodeType} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlInsertBeforeNode {nodeBefore nodeType} {
-	global Mrml Model Volume Color Transform EndTransform Matrix Options
-	global TransferFunction WindowLevel TFPoint ColorLUT 
-	global Fiducials EndFiducials Point 
-        global Path EndPath Landmark Array TetraMesh
-        global Hierarchy EndHierarchy ModelGroup EndModelGroup ModelRef
-        global Scenes EndScenes VolumeState EndVolumeState CrossSection
-        global SceneOptions ModelState Locator
+	global Mrml
 
 	# the #0 puts the nodeType in global scope
 	upvar #0 $nodeType Array
@@ -322,16 +302,10 @@ proc MainMrmlInsertBeforeNode {nodeBefore nodeType} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlInsertAfterNode {nodeBefore nodeType} {
-	global Mrml Model Volume Color Transform EndTransform Matrix Options
-	global TransferFunction WindowLevel TFPoint ColorLUT 
-	global Fiducials EndFiducials Point TetraMesh
-        global Path EndPath Landmark Array
-        global Hierarchy EndHierarchy ModelGroup EndModelGroup ModelRef
-        global Scenes EndScenes VolumeState EndVolumeState CrossSection
-        global SceneOptions ModelState Locator
-    
+	global Mrml
 
-	upvar $nodeType Array
+	# the #0 puts the nodeType in global scope
+	upvar #0 $nodeType Array
 
 	set tree "dataTree"
 	if {$nodeType == "Color"} {
@@ -375,13 +349,7 @@ proc MainMrmlInsertAfterNode {nodeBefore nodeType} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlUndoAddNode {nodeType n} {
-	global Mrml Model Volume Color Transform EndTransform Matrix Options
-	global TransferFunction WindowLevel TFPoint ColorLUT 
-	global Fiducials EndFiducials Point TetraMesh
-        global Path EndPath Landmark Array
-        global Hierarchy EndHierarchy ModelGroup EndModelGroup ModelRef
-        global Scenes EndScenes VolumeState EndVolumeState CrossSection
-        global SceneOptions ModelState Locator
+	global Mrml
 
 	# the #0 puts the nodeType in global scope
 	upvar #0 $nodeType Array
@@ -409,13 +377,7 @@ proc MainMrmlUndoAddNode {nodeType n} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlDeleteNodeDuringUpdate {nodeType id} {
-	global Mrml Model Volume Color Transform EndTransform Matrix
-	global TransferFunction WindowLevel TFPoint ColorLUT Options
-	global Fiducials EndFiducials Point TetraMesh
-        global Path EndPath Landmark
-        global Hierarchy EndHierarchy ModelGroup EndModelGroup ModelRef
-        global Scenes EndScenes VolumeState EndVolumeState CrossSection
-        global SceneOptions ModelState Locator
+	global Mrml
 
 	# the #0 puts the nodeType in global scope
 	upvar #0 $nodeType Array
@@ -444,15 +406,7 @@ proc MainMrmlDeleteNodeDuringUpdate {nodeType id} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlDeleteNode {nodeType id} {
-	global Mrml Model Volume Color Transform EndTransform Matrix Options
-	global TransferFunction WindowLevel TFPoint ColorLUT TetraMesh
-	global Fiducials EndFiducials Point
-        global Path EndPath Landmark
-        global Hierarchy EndHierarchy ModelGroup EndModelGroup ModelRef
-        global Scenes EndScenes VolumeState EndVolumeState CrossSection
-        global SceneOptions ModelState Locator
-
-	upvar $nodeType Array
+	global Mrml 
 	
 	# the #0 puts the nodeType in global scope
 	upvar #0 $nodeType Array
@@ -487,13 +441,8 @@ proc MainMrmlDeleteNode {nodeType id} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlDeleteAll {} {
-	global Mrml Model Volume Color Transform EndTransform Matrix
-	global TransferFunction WindowLevel TFPoint ColorLUT Options
-	global Fiducials EndFiducials Point TetraMesh
-        global Path EndPath Landmark
-        global Hierarchy EndHierarchy ModelGroup EndModelGroup ModelRef
-        global Scenes EndScenes VolumeState EndVolumeState CrossSection
-        global SceneOptions ModelState Locator
+	global Mrml 
+	eval {global} $Mrml(nodeTypeList)    
 
 	# Volumes are a special case because the "None" always exists
 	foreach id $Volume(idList) {
@@ -513,14 +462,10 @@ proc MainMrmlDeleteAll {} {
 	}
 
 	# dataTree
-	foreach node "Model TetraMesh Transform EndTransform Matrix \
-		TransferFunction WindowLevel TFPoint ColorLUT Options \
-		Fiducials EndFiducials Point Path EndPath Landmark \
-		Hierarchy EndHierarchy ModelGroup EndModelGroup ModelRef \
-		Scenes EndScenes VolumeState EndVolumeState CrossSection \
-		SceneOptions ModelState Locator" {
-		upvar 0 $node Array
-
+	foreach node $Mrml(nodeTypeList) {
+	    if {$node != "Volume" && $node != "Color"} {
+		upvar #0 $node Array
+		
 		foreach id $Array(idList) {
 
 			# Add to the deleteList
@@ -535,11 +480,12 @@ proc MainMrmlDeleteAll {} {
 			${node}($id,node) Delete
 
 		}
+	    }
 	}
 
 	# colorTree
 	foreach node "Color" {
-		upvar 0 $node Array
+		upvar #0 $node Array
 
 		foreach id $Array(idList) {
 
@@ -689,14 +635,8 @@ proc MainMrmlRead {mrmlFile} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlBuildTreesVersion2.0 {tags} {
-	global Mrml
-	global Model Volume Color Transform EndTransform Matrix TetraMesh
-	global TransferFunction WindowLevel TFPoint ColorLUT Options
-	global Preset Fiducials EndFiducials Point
-        global Path EndPath Landmark
-        global Hierarchy EndHierarchy ModelGroup EndModelGroup ModelRef
-        global Scenes EndScenes VolumeState EndVolumeState CrossSection
-        global SceneOptions ModelState Locator
+	global Mrml 
+	eval {global} $Mrml(nodeTypeList)
 
 	foreach pair $tags {
 		set tag  [lindex $pair 0]
