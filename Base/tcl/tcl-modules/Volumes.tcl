@@ -77,8 +77,8 @@ proc VolumesInit {} {
     set Module($m,row1Name) "{Help} {Display} {Props} {Reformat}"
     set Module($m,row1,tab) Display
     
-    set Module($m,row2List) "Other" 
-    set Module($m,row2Name) "{Other}"
+    set Module($m,row2List) "Other Deface" 
+    set Module($m,row2Name) "{Other} {Deface}"
     set Module($m,row2,tab) Other
 
     # Module Summary Info
@@ -99,7 +99,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.83 $} {$Date: 2003/07/21 22:10:50 $}]
+            {$Revision: 1.84 $} {$Date: 2003/08/05 13:43:31 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -755,8 +755,51 @@ you need to create and select 2 fiducials and then press the 'define new axis' b
             "MainVolumesSetParam Range${slider}; MainVolumesRender"
         grid $f.l${slider} $f.e${slider}  -padx 2 -pady $Gui(pad) -sticky w
     }
+# DDD1
+    #-------------------------------------------
+    # Deface frame
+    #-------------------------------------------
+    set fDeface $Module(Volumes,fDeface)
+    set f $fDeface
+    # Frames
+    frame $f.fActive -bg $Gui(backdrop) -relief sunken -bd 2 -height 20
+    frame $f.fRange  -bg $Gui(activeWorkspace) -relief flat -bd 3
+
+    pack $f.fActive -side top -pady $Gui(pad) -padx $Gui(pad)
+    pack $f.fRange  -side top -pady $Gui(pad) -padx $Gui(pad) -fill x
+
+
+
+    #-------------------------------------------
+    # Deface->Active frame
+    #-------------------------------------------
+    set f $fDeface.fActive
+
+    eval {label $f.lActive -text "Active Volume: "} $Gui(BLA)
+    eval {menubutton $f.mbActive -text "None" -relief raised -bd 2 -width 20 \
+        -menu $f.mbActive.m} $Gui(WMBA)
+    eval {menu $f.mbActive.m} $Gui(WMA)
+    pack $f.lActive $f.mbActive -side left -pady $Gui(pad) -padx $Gui(pad)
+
+    # Append widgets to list that gets refreshed during UpdateMRML
+    lappend Volume(mbActiveList) $f.mbActive
+    lappend Volume(mActiveList)  $f.mbActive.m
+
+    #-------------------------------------------
+    # Deface->Range frame
+    #-------------------------------------------
+    set f $fDeface.fRange
+
+    eval {button $f.select -text "Select Images" -width 20 -command "DefaceSelectMain"} $Gui(WBA)
     
+    pack $f.select -pady $Gui(pad) -side top -fill y -expand 1
+
+#bind $f.fAuto <Enter>  "puts {DYW: fAuto }"
+#bind $f.fSliders <Enter> "puts {DYW: fSliders}"
+
+# DDD2 
 }
+    
 
 #-------------------------------------------------------------------------------
 # .PROC VolumesCheckForManualChanges
