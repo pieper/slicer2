@@ -20,31 +20,31 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS. 
 #
 #===============================================================================
-# FILE:        Correspondance.tcl
+# FILE:        Correspondence.tcl
 # PROCEDURES:  
-#   CorrespondanceInit
-#   CorrespondanceBuildGUI
-#   CorrespondanceCreateModelGUI widget int
-#   CorrespondanceConfigScrolledGUI canvasScrolledGUI fScrolledGUI
-#   CorrespondanceDeleteModelGUI widget int
-#   CorrespondanceUpdateGUI
-#   CorrespondanceCorrespondSurfaces
-#   CorrespondanceCorrespondSurfaces
-#   CorrespondanceMatchSurface
-#   CorrespondanceMatchSurface
+#   CorrespondenceInit
+#   CorrespondenceBuildGUI
+#   CorrespondenceCreateModelGUI widget int
+#   CorrespondenceConfigScrolledGUI canvasScrolledGUI fScrolledGUI
+#   CorrespondenceDeleteModelGUI widget int
+#   CorrespondenceUpdateGUI
+#   CorrespondenceCorrespondSurfaces
+#   CorrespondenceCorrespondSurfaces
+#   CorrespondenceMatchSurface
+#   CorrespondenceMatchSurface
 #==========================================================================auto=
 
 
 #-------------------------------------------------------------------------------
-# .PROC CorrespondanceInit
+# .PROC CorrespondenceInit
 #  The "Init" procedure is called automatically by the slicer.  
 #  It puts information about the module into a global array called Module, 
 #  and it also initializes module-level variables.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc CorrespondanceInit {} {
-	global Correspondance Module Volume Model
+proc CorrespondenceInit {} {
+	global Correspondence Module Volume Model
 
 	# Define Tabs
 	#------------------------------------
@@ -65,7 +65,7 @@ proc CorrespondanceInit {} {
 	#   row2Name = like row1
 	#   row2,tab = like row1 
 	#
-	set m Correspondance
+	set m Correspondence
 	set Module($m,row1List) "Help Correspond"
         set Module($m,row1Name) "{Help} {Correspond}"
 	set Module($m,row1,tab) Correspond
@@ -90,7 +90,7 @@ proc CorrespondanceInit {} {
 	#   procedures are optional.  If they exist, then their name (which
 	#   can be anything) is registered with a line like this:
 	#
-	#   set Module($m,procVTK) CorrespondanceBuildVTK
+	#   set Module($m,procVTK) CorrespondenceBuildVTK
 	#
 	#   All the options are:
 	#
@@ -110,10 +110,10 @@ proc CorrespondanceInit {} {
 	#   string in your init function, of the form: 
 	#   set Module($m,presets) "key1='val1' key2='val2' ..."
 	#   
-	set Module($m,procGUI) CorrespondanceBuildGUI
-#	set Module($m,procEnter) CorrespondanceEnter
-#	set Module($m,procExit) CorrespondanceExit
-	set Module($m,procMRML) CorrespondanceUpdateGUI
+	set Module($m,procGUI) CorrespondenceBuildGUI
+#	set Module($m,procEnter) CorrespondenceEnter
+#	set Module($m,procExit) CorrespondenceExit
+	set Module($m,procMRML) CorrespondenceUpdateGUI
 
 	# Define Dependencies
 	#------------------------------------
@@ -131,7 +131,7 @@ proc CorrespondanceInit {} {
 	#   appropriate revision number and date when the module is checked in.
 	#   
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.4 $} {$Date: 2002/01/26 23:34:30 $}]
+		{$Revision: 1.5 $} {$Date: 2002/01/31 21:19:39 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -140,28 +140,28 @@ proc CorrespondanceInit {} {
 	#   This is a handy method for organizing the global variables that
 	#   the procedures in this module and others need to access.
 	#
-        set Correspondance(Model1) ""
-        set Correspondance(Model2) ""
-        set Correspondance(CorSphereScale) 9.5
-        set Correspondance(CorSphereSkip) 20
+        set Correspondence(Model1) ""
+        set Correspondence(Model2) ""
+        set Correspondence(CorSphereScale) 9.5
+        set Correspondence(CorSphereSkip) 20
 }
 
 
 #-------------------------------------------------------------------------------
-# .PROC CorrespondanceBuildGUI
+# .PROC CorrespondenceBuildGUI
 #
 # Create the Graphical User Interface.
 # .END
 #-------------------------------------------------------------------------------
-proc CorrespondanceBuildGUI {} {
-	global Gui Correspondance Module Volume Model View
+proc CorrespondenceBuildGUI {} {
+	global Gui Correspondence Module Volume Model View
 
 	# A frame has already been constructed automatically for each tab.
 	# A frame named "Props" can be referenced as follows:
 	#   
 	#     $Module(<Module name>,f<Tab name>)
 	#
-	# ie: $Module(Correspondance,fProps)
+	# ie: $Module(Correspondence,fProps)
 
 	# This is a useful comment block that makes reading this easy for all:
 	#-------------------------------------------
@@ -179,7 +179,7 @@ proc CorrespondanceBuildGUI {} {
 	# Refer to the documentation for details on the syntax.
 	#
 	set help "
-The Correspondance module allows a user to show point correspondances between models.
+The Correspondence module allows a user to show point correspondences between models.
 
 <UL>
 <LI><B>Matching Surfaces:</B> The models are assumed to correspond on a point by point basis. That is point 33 in model 1 corresponds to point 33 in model 2.
@@ -189,14 +189,14 @@ The Correspondance module allows a user to show point correspondances between mo
 </LI></UL>
 "
 	regsub -all "\n" $help {} help
-	MainHelpApplyTags Correspondance $help
-	MainHelpBuildGUI Correspondance
+	MainHelpApplyTags Correspondence $help
+	MainHelpBuildGUI Correspondence
 
 
 	#-------------------------------------------
 	# Correspond frame
 	#-------------------------------------------
-	set fCorrespond $Module(Correspondance,fCorrespond)
+	set fCorrespond $Module(Correspondence,fCorrespond)
 	set f $fCorrespond
 
 	frame $f.fTop    -bg $Gui(activeWorkspace)
@@ -211,17 +211,17 @@ The Correspondance module allows a user to show point correspondances between mo
         # Correspond->Top frame
         #-------------------------------------------
         set f $fCorrespond.fTop
-        DevAddLabel  $f.lCorrespond "Show correspondances between surfaces\n with identical numbers of nodes.\n\n Select Models:"
+        DevAddLabel  $f.lCorrespond "Show correspondences between surfaces\n with identical numbers of nodes.\n\n Select Models:"
 
         pack $f.lCorrespond -side left -padx $Gui(pad)
 
 	set f $fCorrespond.fScroll
 
-	set Correspondance(canvasScrolledGUI)  $f.cGrid
-        set Correspondance(fScrolledGUI)       $f.cGrid.fListItems
+	set Correspondence(canvasScrolledGUI)  $f.cGrid
+        set Correspondence(fScrolledGUI)       $f.cGrid.fListItems
         DevCreateScrollList $f \
-                            CorrespondanceCreateModelGUI \
-                            CorrespondanceConfigScrolledGUI \
+                            CorrespondenceCreateModelGUI \
+                            CorrespondenceConfigScrolledGUI \
                             "$Model(idList)"
 
 	#-------------------------------------------
@@ -231,7 +231,7 @@ The Correspondance module allows a user to show point correspondances between mo
 	set f $fCorrespond.fMiddle
 
         DevAddLabel  $f.lSphereScale "Sphere Scaling"
-        eval {entry $f.eSphereScale -textvariable Correspondance(CorSphereScale) -width 5} $Gui(WEA)
+        eval {entry $f.eSphereScale -textvariable Correspondence(CorSphereScale) -width 5} $Gui(WEA)
    
         pack $f.lSphereScale $f.eSphereScale -side left -padx $Gui(pad)
 
@@ -243,7 +243,7 @@ The Correspondance module allows a user to show point correspondances between mo
 	set f $fCorrespond.fBottom
 
         DevAddLabel  $f.lSphereSkip "Keep Every Nth Node:"
-        eval {entry $f.eSphereSkip -textvariable Correspondance(CorSphereSkip) -width 5} $Gui(WEA)
+        eval {entry $f.eSphereSkip -textvariable Correspondence(CorSphereSkip) -width 5} $Gui(WEA)
    
         pack $f.lSphereSkip $f.eSphereSkip -side left -padx $Gui(pad)
 
@@ -253,14 +253,14 @@ The Correspondance module allows a user to show point correspondances between mo
 
 	set f $fCorrespond.fRun
 
-        DevAddButton $f.bRun "Run" "CorrespondanceCorrespondSurfaces"
+        DevAddButton $f.bRun "Run" "CorrespondenceCorrespondSurfaces"
 
 	pack $f.bRun
 
 }
 
 #-------------------------------------------------------------------------------
-# .PROC CorrespondanceCreateModelGUI
+# .PROC CorrespondenceCreateModelGUI
 # Makes the GUI for each model on the Models->Display panel.
 # This is called for each new model.
 # Also makes the popup menu that comes up when you right-click a model.
@@ -272,8 +272,8 @@ The Correspondance module allows a user to show point correspondances between mo
 # m int the id of the model
 # .END
 #-------------------------------------------------------------------------------
-proc CorrespondanceCreateModelGUI {f m } {
-	global Gui Model Color Correspondance 
+proc CorrespondenceCreateModelGUI {f m } {
+	global Gui Model Color Correspondence 
 
 
         # puts "Creating GUI for model $m"		
@@ -284,9 +284,9 @@ proc CorrespondanceCreateModelGUI {f m } {
 	}
 
 	# Name / Visible
-	set Correspondance($m,match) 0
+	set Correspondence($m,match) 0
 	eval {checkbutton $f.c$m \
-		-text [Model($m,node) GetName] -variable Correspondance($m,match) \
+		-text [Model($m,node) GetName] -variable Correspondence($m,match) \
 		-width 17 -indicatoron 0} $Gui(WCA)
 #        $f.c$m configure -bg [MakeColorNormalized \
 #                        [Color($Model($m,colorID),node) GetDiffuseColor]]
@@ -305,7 +305,7 @@ proc CorrespondanceCreateModelGUI {f m } {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC CorrespondanceConfigScrolledGUI
+# .PROC CorrespondenceConfigScrolledGUI
 # 
 # Set the dimensions of the scrolledGUI
 #
@@ -315,7 +315,7 @@ proc CorrespondanceCreateModelGUI {f m } {
 # frame  fScrolledGUI       The frame with the item list of models
 # .END   
 #-------------------------------------------------------------------------------
-proc CorrespondanceConfigScrolledGUI {canvasScrolledGUI fScrolledGUI} {
+proc CorrespondenceConfigScrolledGUI {canvasScrolledGUI fScrolledGUI} {
 	global Model ModelGroup RemovedModels
 
 	set f      $fScrolledGUI
@@ -354,15 +354,15 @@ proc CorrespondanceConfigScrolledGUI {canvasScrolledGUI fScrolledGUI} {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC CorrespondanceDeleteModelGUI
+# .PROC CorrespondenceDeleteModelGUI
 # 
 # .ARGS
 # f widget the frame to create the GUI in
 # m int the id of the model
 # .END
 #-------------------------------------------------------------------------------
-proc CorrespondanceDeleteModelGUI {f m} {
-    global Correspondance
+proc CorrespondenceDeleteModelGUI {f m} {
+    global Correspondence
 
     # If the GUI is already deleted, return
     if {[info command $f.c$m] == ""} {
@@ -372,13 +372,13 @@ proc CorrespondanceDeleteModelGUI {f m} {
     # Destroy TK widgets
     destroy $f.c$m
 
-    set Correspondance($m,match) 0;
+    set Correspondence($m,match) 0;
 
     return 1
 }
 
 #-------------------------------------------------------------------------------
-# .PROC CorrespondanceUpdateGUI
+# .PROC CorrespondenceUpdateGUI
 # 
 # This procedure is called to update the buttons
 # due to such things as volumes or models being added or subtracted.
@@ -386,32 +386,32 @@ proc CorrespondanceDeleteModelGUI {f m} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc CorrespondanceUpdateGUI {} {
-	global Correspondance Model
+proc CorrespondenceUpdateGUI {} {
+	global Correspondence Model
 
     set gui 0
 
     # Now build GUI for any models not in hierarchies
     foreach m $Model(idList) {
-        set gui [expr $gui + [CorrespondanceCreateModelGUI \
-                               $Correspondance(fScrolledGUI) $m]]
+        set gui [expr $gui + [CorrespondenceCreateModelGUI \
+                               $Correspondence(fScrolledGUI) $m]]
     }
 
     # Delete the GUI for any old models
     foreach m $Model(idListDelete) {
-        set gui [expr $gui + [CorrespondanceDeleteModelGUI \
-                  $Correspondance(fScrolledGUI) $m]]
+        set gui [expr $gui + [CorrespondenceDeleteModelGUI \
+                  $Correspondence(fScrolledGUI) $m]]
     }
 
     # Tell the scrollbar to update if the gui height changed
     if {$gui > 0} {
-        CorrespondanceConfigScrolledGUI $Correspondance(canvasScrolledGUI) \
-                $Correspondance(fScrolledGUI)
+        CorrespondenceConfigScrolledGUI $Correspondence(canvasScrolledGUI) \
+                $Correspondence(fScrolledGUI)
     }
 }
 
 #-------------------------------------------------------------------------------
-# .PROC CorrespondanceCorrespondSurfaces
+# .PROC CorrespondenceCorrespondSurfaces
 #
 # Call each surface going to be corresponded and call the processing step
 # 
@@ -420,13 +420,13 @@ proc CorrespondanceUpdateGUI {} {
 #-------------------------------------------------------------------------------
 
 #-------------------------------------------------------------------------------
-# .PROC CorrespondanceCorrespondSurfaces
+# .PROC CorrespondenceCorrespondSurfaces
 # 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc CorrespondanceCorrespondSurfaces {} {
-    global Correspondance Model Mrml
+proc CorrespondenceCorrespondSurfaces {} {
+    global Correspondence Model Mrml
 
     ############################################################
     # First check for problems.
@@ -436,7 +436,7 @@ proc CorrespondanceCorrespondSurfaces {} {
     set NumNode -1;
 
     foreach m $Model(idList) {
-        if {$Correspondance($m,match) == 1} {
+        if {$Correspondence($m,match) == 1} {
             set ThisNumNode [$Model($m,polyData) GetNumberOfPoints]
             if {$NumNode == -1} { set NumNode $ThisNumNode }
             if {$ThisNumNode != $NumNode} {
@@ -457,8 +457,8 @@ proc CorrespondanceCorrespondSurfaces {} {
     ############################################################
 
     foreach m $Model(idList) {
-        if {$Correspondance($m,match) == 1} {
-            set p [CorrespondanceMatchSurface $m]
+        if {$Correspondence($m,match) == 1} {
+            set p [CorrespondenceMatchSurface $m]
 
             ## move the returning node to be after the polyData node
             Mrml(dataTree) RemoveItem Model($p,node)
@@ -478,20 +478,20 @@ proc CorrespondanceCorrespondSurfaces {} {
 
 
 #-------------------------------------------------------------------------------
-# .PROC CorrespondanceMatchSurface
+# .PROC CorrespondenceMatchSurface
 # 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
 
 #-------------------------------------------------------------------------------
-# .PROC CorrespondanceMatchSurface
+# .PROC CorrespondenceMatchSurface
 # 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc CorrespondanceMatchSurface {m} {
-	global Correspondance Model Volume Module
+proc CorrespondenceMatchSurface {m} {
+	global Correspondence Model Volume Module
 
     set PD  $Model($m,polyData)
     set NumNode [$PD GetNumberOfPoints]
@@ -502,7 +502,7 @@ proc CorrespondanceMatchSurface {m} {
 
 vtkMaskPoints PointSelection
   PointSelection SetInput $PD
-  PointSelection SetOnRatio $Correspondance(CorSphereSkip)
+  PointSelection SetOnRatio $Correspondence(CorSphereSkip)
   PointSelection RandomModeOff
   PointSelection Update
 
@@ -548,7 +548,7 @@ seen Delete
 vtkSphereSource ASphere
   ASphere SetPhiResolution 5
   ASphere SetThetaResolution 5
-  ASphere SetRadius [ expr 0.15 * $Correspondance(CorSphereScale) ]
+  ASphere SetRadius [ expr 0.15 * $Correspondence(CorSphereScale) ]
 vtkGlyph3D ScalarGlyph
   ScalarGlyph SetInput  tempPolyData
   ScalarGlyph SetSource [ASphere GetOutput]
