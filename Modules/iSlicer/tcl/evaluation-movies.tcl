@@ -1,6 +1,6 @@
 
 #
-# ./slicer2-linux-x86 --load-dicom /home/pieper/data/1.2.840.113619.2.5.1762874864.1932.1015502256.640.UID/000004.SER/ --script Modules/iSlicer/tcl/evaluation-movies.tcl --exec "eval_movies /var/tmp/facemovies 10 5; exit"
+# ./slicer2-linux-x86 --load-dicom /home/pieper/data/1.2.840.113619.2.5.1762874864.1932.1015502256.640.UID/000004.SER/ --script Modules/iSlicer/tcl/evaluation-movies.tcl --exec "eval_movies /var/tmp/Deface 10 5; exit"
 
 #
 #
@@ -21,6 +21,10 @@ proc eval_movies { {dir /tmp} {steps 120} {skip 1} } {
     pack [is3d .eval.is3d -isvolume .eval.isv -background #000000] -side left
 
     raise .eval
+
+    if { ![file exists $dir] } {
+        file mkdir $dir
+    }
 
     eval_3d_movie $dir $steps
     eval_slice_movie $dir axial $skip
@@ -51,7 +55,7 @@ proc eval_3d_movie { dir steps } {
     puts ""
     puts "encoding..."
 
-    set ret [catch "exec /usr/local/bin/ffmpeg -i /tmp/is%04d.ppm -y $dir/face.mpg" res]
+    set ret [catch "exec /usr/local/bin/ffmpeg -i /tmp/is%04d.ppm -y $dir/deface_render.mpg" res]
     puts $res
 
     puts "deleting..."
@@ -82,7 +86,7 @@ proc eval_slice_movie { dir orientation { step 1 } } {
     puts ""
     puts "encoding..."
 
-    set ret [catch "exec /usr/local/bin/ffmpeg -i /tmp/is%04d.ppm -y $dir/slices-$orientation.mpg" res]
+    set ret [catch "exec /usr/local/bin/ffmpeg -i /tmp/is%04d.ppm -y $dir/deface_$orientation.mpg" res]
     puts $res
 
     puts "deleting..."
