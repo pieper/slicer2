@@ -1,0 +1,370 @@
+#=auto==========================================================================
+# Copyright (c) 1999 Surgical Planning Lab, Brigham and Women's Hospital
+#  
+# Direct all questions regarding this copyright to slicer@ai.mit.edu.
+# The following terms apply to all files associated with the software unless
+# explicitly disclaimed in individual files.   
+# 
+# The authors hereby grant permission to use, copy, (but NOT distribute) this
+# software and its documentation for any NON-COMMERCIAL purpose, provided
+# that existing copyright notices are retained verbatim in all copies.
+# The authors grant permission to modify this software and its documentation 
+# for any NON-COMMERCIAL purpose, provided that such modifications are not 
+# distributed without the explicit consent of the authors and that existing
+# copyright notices are retained in all copies. Some of the algorithms
+# implemented by this software are patented, observe all applicable patent law.
+# 
+# IN NO EVENT SHALL THE AUTHORS OR DISTRIBUTORS BE LIABLE TO ANY PARTY FOR
+# DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING OUT
+# OF THE USE OF THIS SOFTWARE, ITS DOCUMENTATION, OR ANY DERIVATIVES THEREOF,
+# EVEN IF THE AUTHORS HAVE BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# 
+# THE AUTHORS AND DISTRIBUTORS SPECIFICALLY DISCLAIM ANY WARRANTIES, INCLUDING,
+# BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+# PARTICULAR PURPOSE, AND NON-INFRINGEMENT.  THIS SOFTWARE IS PROVIDED ON AN
+# 'AS IS' BASIS, AND THE AUTHORS AND DISTRIBUTORS HAVE NO OBLIGATION TO PROVIDE
+# MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+#===============================================================================
+# FILE:        MainOptions.tcl
+# DATE:        01/20/2000 09:40
+# LAST EDITOR: gering
+# PROCEDURES:  
+#   MainOptionsInit
+#   MainOptionsUpdateMRML
+#   MainOptionsBuildVTK
+#   MainOptionsCreate
+#   MainOptionsDelete
+#   MainOptionsSetActive
+#==========================================================================auto=
+
+#-------------------------------------------------------------------------------
+# .PROC MainOptionsInit
+# .END
+#-------------------------------------------------------------------------------
+proc MainOptionsInit {} {
+	global Module Option Preset
+
+	lappend Module(procVTK)  MainOptionsBuildVTK
+
+	# Append widgets to list that gets refreshed during UpdateMRML
+	set Option(mbActiveList) ""
+	set Option(mActiveList)  ""
+
+	set Option(activeID) ""
+	set Option(freeze) ""
+
+	# Props
+	set Option(program) "slicer"
+	set Option(contents) ""
+#	set Option(options) ""
+
+	foreach p "0 1 2 3" {
+		set Preset($p,state) Release
+	}
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MainOptionsUpdateMRML
+# .END
+#-------------------------------------------------------------------------------
+proc MainOptionsUpdateMRML {} {
+	global Option
+
+	# Build any new nodes
+	#--------------------------------------------------------
+	foreach t $Option(idList) {
+		if {[MainOptionsCreate $t] == 1} {
+			# Success
+		}
+	}    
+
+	# Delete any old nodes
+	#--------------------------------------------------------
+	foreach t $Option(idListDelete) {
+		if {[MainOptionsDelete $t] == 1} {
+			# Success
+		}
+	}
+	# Did we delete the active node?
+	if {[lsearch $Option(idList) $Option(activeID)] == -1} {
+		MainOptionsSetActive [lindex $Option(idList) 0]
+	}
+
+	# Form the menu
+	#--------------------------------------------------------
+	foreach m $Option(mActiveList) {
+		$m delete 0 end
+		foreach t $Option(idList) {
+			$m add command -label [Option($t,node) GetContents] \
+				-command "MainOptionsSetActive $t"
+		}
+	}
+
+	# In case we changed the name of the active transform
+	MainOptionsSetActive $Option(activeID)
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MainOptionsBuildVTK
+# .END
+#-------------------------------------------------------------------------------
+proc MainOptionsBuildVTK {} {
+	global Option
+
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MainOptionsCreate
+#
+# Returns:
+#  1 - success
+#  0 - already built this volume
+# -1 - failed to read files
+# .END
+#-------------------------------------------------------------------------------
+proc MainOptionsCreate {t} {
+	global View Matrix Gui Dag Lut
+
+	# If we've already built this volume, then do nothing
+	if {[info exists Option($t,created)] == 1} {
+		return 0
+	}
+	set Option($t,created) 1
+
+	return 1
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC MainOptionsDelete
+#
+# Returns:
+#  1 - success
+#  0 - already deleted this volume
+# .END
+#-------------------------------------------------------------------------------
+proc MainOptionsDelete {t} {
+	global Option
+
+	# If we've already deleted this transform, then return 0
+	if {[info exists Option($t,created)] == 0} {
+		return 0
+	}
+
+	# Delete VTK objects (and remove commands from TCL namespace)
+
+	# Delete all TCL variables of the form: Option($t,<whatever>)
+	foreach name [array names Matrix] {
+		if {[string first "$t," $name] == 0} {
+			unset Option($name)
+		}
+	}
+
+	return 1
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC MainOptionsSetActive
+# .END
+#-------------------------------------------------------------------------------
+proc MainOptionsSetActive {t} {
+	global Option
+
+	if {$Option(freeze) == 1} {return}
+	
+	# Set activeID to t
+	set Option(activeID) $t
+
+	if {$t == ""} {
+		# Change button text
+		foreach mb $Option(mbActiveList) {
+			$mb config -text None
+		}
+		return
+	} elseif {$t == "NEW"} {
+		# Change button text
+		foreach mb $Option(mbActiveList) {
+			$mb config -text "NEW"
+		}
+		# Use defaults to update GUI
+		vtkMrmlMatrixNode default
+		set Option(program)  "slicer"
+		set Option(contents) "presets"
+#		set Option(options)  ""
+		default Delete
+	} else {
+		# Change button text
+		foreach mb $Option(mbActiveList) {
+			$mb config -text [Option($t,node) GetContents]
+		}
+		# Update GUI
+		set Option(program)  [Option($t,node) GetProgram]
+		set Option(contents) [Option($t,node) GetContents]
+#		set Option(options)  [Option($t,node) GetOptions]
+	}
+}
+
+proc MainOptionsParsePresets {attr} {
+	global Preset
+	
+	foreach a $attr {
+		set key [lindex $a 0]
+		set val [lreplace $a 0 0]
+
+		set Preset($key) $val
+	}
+}
+
+proc MainOptionsParseDefaults {m} {
+	global Module Preset
+	
+	set Preset($m,keys) ""
+	set attr $Module($m,presets)
+
+	# Strip leading white space
+	regsub "^\[\n\t \]*" $attr "" attr
+
+	while {$attr != ""} {
+		
+		# Find the next key=value pair (and also strip it off... all in one step!)
+		if {[regexp "^(\[^=\]*)\[\n\t \]*=\[\n\t \]*\['\"\](\[^'\"\]*)\['\"\](.*)$" \
+			$attr match key value attr] == 0} {
+			set errmsg "Can't parse attributes:\n$attr"
+			puts "$errmsg"
+			tk_messageBox -message "$errmsg"
+			return
+		}
+			
+		foreach p "0 1 2 3 default" {
+			set Preset($m,$p,$key) $value
+		}
+		lappend Preset($m,keys) $key
+
+		# Strip leading white space
+		regsub "^\[\n\t \]*" $attr "" attr
+	}
+}
+
+proc MainOptionsUnparsePresets {} {
+	global Preset Mrml Option Module Model
+	
+	# Store current settings as preset #0
+	set Preset(0,state) Press
+	MainOptionsPresetCallback 0
+	set Preset(0,state) Release
+
+	# Build an option string of attributes that differ from defaults
+	
+	# Foreach module, foreach preset button, foreach key, 
+	# does the value differ from the default?
+	#
+	set options ""
+	foreach m $Module(idList) {
+		if {[info exists Preset($m,keys)] == 1} {
+			set wrote 0
+			foreach key $Preset($m,keys) {
+				foreach p "0 1 2 3" {
+					set name "$m,$p,$key"
+					if {$Preset($name) != $Preset($m,default,$key)} {
+						set wrote 1
+						set options "$options $name='$Preset($name)'"
+					}
+				}
+			}
+			if {$wrote == 1} {
+				set options "$options\n"
+			}
+		}
+	}
+
+	# Models are a special case since the keys are not known ahead of time.
+	# Use the current settings as the "defaults" to see if it is necessary
+	# to save the presets.
+	#
+	set wrote 0
+	foreach m $Model(idList) {
+		foreach key "visibility opacity" {
+			foreach p "0 1 2 3" {
+				set name "Models,$p,$m,$key"
+				# Careful: if the user never clicked the button, then the preset
+				# doesn't exist.
+				if {[info exists Preset($name)] == 1} {
+					if {$Preset($name) != $Model($m,$key)} {
+						set wrote 1
+						set options "$options $name='$Preset($name)'"
+					}
+				}
+			}
+		}	
+	}
+	if {$wrote == 1} {
+		set options "$options\n"
+	}
+
+	# If a preset options node exists, edit it, else create one.
+	set tree Mrml(dataTree)
+	$tree InitTraversal
+	set node [$tree GetNextItem]
+    set found 0
+	while {$node != ""} {
+		set class [$node GetClassName]
+		if {$class == "vtkMrmlOptionsNode"} {
+			if {[$node GetContents] == "presets" && $found == 0} {
+				set found 1
+				$node SetOptions $options
+			}
+		}
+		set node [$tree GetNextItem]
+    }
+
+	if {$found == 0} {
+		# Create a node
+		set i $Option(nextID)
+		incr Option(nextID)
+		lappend Option(idList) $i
+		vtkMrmlOptionsNode Option($i,node)
+		set n Option($i,node)
+		$n SetID           $i
+		$n SetOptions $options
+		$n SetProgram slicer
+		$n SetContents presets
+		Mrml(dataTree) AddItem $n
+	}
+}
+
+proc MainOptionsPreset {p state} {
+	global View Gui Preset
+
+	if {$state == "Press"} {
+		set Preset($p,state) $state
+		after 250 "MainOptionsPresetCallback $p; RenderAll"
+	} else {
+		set Preset($p,state) $state
+		$View(fPreset).c$p config -activebackground $Gui(activeButton) 
+	}
+}
+
+proc MainOptionsPresetCallback {p} {
+	global View Target Gui Preset Slice Locator Anno Model Option Module
+
+	if {$Preset($p,state) == "Press"} {
+		
+		# Change button to red
+		if {$p != 0} {
+			$View(fPreset).c$p config -activebackground red
+		}
+
+		# Set preset value to the current
+		foreach m $Module(procStorePresets) {
+			$m $p
+		}
+
+	} else {
+		# Set current to the preset value
+		foreach m $Module(procRecallPresets) {
+			$m $p
+		}
+	}
+}
+
