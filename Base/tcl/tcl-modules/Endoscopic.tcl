@@ -259,7 +259,7 @@ proc EndoscopicInit {} {
     set Module($m,category) "Visualisation"
     
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.76 $} {$Date: 2004/11/01 22:40:10 $}] 
+    {$Revision: 1.77 $} {$Date: 2004/11/02 18:31:24 $}] 
        
     # Define Procedures
     #------------------------------------
@@ -5597,7 +5597,7 @@ puts "pointId from FlatColon is $pointId"
 # use the SetDescription to store and save $pointId information.
     Point($closestPid,node) SetDescription $pointId
 
-    MainUpdateMRML
+#    MainUpdateMRML
     
     EndoscopicFiducialsPointSelectedCallback $fid $closestPid
     
@@ -5612,9 +5612,9 @@ puts "pointId from FlatColon is $pointId"
     set dim [Volume($vol,node) GetDimensions]
     
     if {$scanOrder == "IS" } {
-    MainSlicesSetOffset 0 [expr floor([lindex $oriSlice 2])]
-    MainSlicesSetOffset 1 [expr [lindex $dim 0] - [expr floor([lindex $oriSlice 0])]]
-    MainSlicesSetOffset 2 [expr floor([lindex $oriSlice 1])]
+    MainSlicesSetOffset 0 [expr round([lindex $oriSlice 2])]
+    MainSlicesSetOffset 1 [expr round([expr [lindex $dim 0] - [lindex $oriSlice 0]])]
+    MainSlicesSetOffset 2 [expr round([lindex $oriSlice 1])]
 
     } else {
     return
@@ -5702,7 +5702,7 @@ puts "pointId from Slices is: $pointId"
 # use the SetDescription to store and save $pointId information.
     Point($closestPid,node) SetDescription $pointId
     
-    MainUpdateMRML
+#    MainUpdateMRML
     
     EndoscopicFiducialsPointSelectedCallback $fid $closestPid
     
@@ -5719,9 +5719,9 @@ tempPointLocator Delete
     set dim [Volume($vol,node) GetDimensions]
     
     if {$scanOrder == "IS" } {
-    MainSlicesSetOffset 0 [expr floor([lindex $oriSlice 2])]
-    MainSlicesSetOffset 1 [expr [lindex $dim 0] - [expr floor([lindex $oriSlice 0])]]
-    MainSlicesSetOffset 2 [expr floor([lindex $oriSlice 1])]
+    MainSlicesSetOffset 0 [expr round([lindex $oriSlice 2])]
+    MainSlicesSetOffset 1 [expr round([expr [lindex $dim 0] - [lindex $oriSlice 0]])]
+    MainSlicesSetOffset 2 [expr round([lindex $oriSlice 1])]
 
     } else {
     return
@@ -5830,7 +5830,7 @@ puts "pointId from 3D colon is: $pointId"
 # use the SetDescription to store and save $pointId information.
     Point($closestPid,node) SetDescription $pointId
     
-    MainUpdateMRML
+#    MainUpdateMRML
 
     EndoscopicFiducialsPointSelectedCallback $fid $closestPid
 
@@ -5845,9 +5845,9 @@ puts "pointId from 3D colon is: $pointId"
     set dim [Volume($vol,node) GetDimensions]
     
     if {$scanOrder == "IS" } {
-    MainSlicesSetOffset 0 [expr floor([lindex $oriSlice 2])]
-    MainSlicesSetOffset 1 [expr [lindex $dim 0] - [expr floor([lindex $oriSlice 0])]]
-    MainSlicesSetOffset 2 [expr floor([lindex $oriSlice 1])]
+    MainSlicesSetOffset 0 [expr round([lindex $oriSlice 2])]
+    MainSlicesSetOffset 1 [expr round([expr [lindex $dim 0] - [lindex $oriSlice 0]])]
+    MainSlicesSetOffset 2 [expr round([lindex $oriSlice 1])]
 
     } else {
     return
@@ -6179,7 +6179,7 @@ proc EndoscopicSelectTarget {sT} {
     set index [expr $index - 1]
     set pid [lindex $list $index]
   
-    set point(xyz) [Point($pid,node) GetFXYZ]
+    set point(xyz) [Point($pid,node) GetXYZ]
     set fx [lindex $point(xyz) 0]
     set fy [lindex $point(xyz) 1]
     set fz [lindex $point(xyz) 2]
@@ -6201,9 +6201,9 @@ proc EndoscopicSelectTarget {sT} {
     set dim [Volume($vol,node) GetDimensions]
     
     if {$scanOrder == "IS" } {
-    MainSlicesSetOffset 0 [expr floor([lindex $oriSlice 2])]
-    MainSlicesSetOffset 1 [expr [lindex $dim 0] - [expr floor([lindex $oriSlice 0])]]
-    MainSlicesSetOffset 2 [expr floor([lindex $oriSlice 1])]
+    MainSlicesSetOffset 0 [expr round([lindex $oriSlice 2])]
+    MainSlicesSetOffset 1 [expr round([expr [lindex $dim 0] - [lindex $oriSlice 0]])]
+    MainSlicesSetOffset 2 [expr round([lindex $oriSlice 1])]
 
     } else {
     return
