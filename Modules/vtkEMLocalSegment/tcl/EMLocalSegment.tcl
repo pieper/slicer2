@@ -155,7 +155,7 @@ proc EMSegmentInit {} {
       set EMSegment(SegmentMode) 1
     } 
 
-    set EMSegment(SegmentMode) 0
+    ##set EMSegment(SegmentMode) 0
 
     # Source EMSegmentAlgorithm.tcl File 
     source $::PACKAGE_DIR_VTKEMLocalSegment/../../../tcl/EMSegmentAlgorithm.tcl
@@ -245,7 +245,7 @@ proc EMSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.35 $} {$Date: 2004/07/31 23:01:26 $}]
+        {$Revision: 1.36 $} {$Date: 2004/08/04 19:12:07 $}]
 
     # Initialize module-level variables
     #------------------------------------
