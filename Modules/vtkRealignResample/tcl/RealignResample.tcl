@@ -1,5 +1,3 @@
-package require vtk
-
 #-------------------------------------------------------------------------------
 # .PROC RealignResampleInit
 #  The "Init" procedure is called automatically by the slicer.  
@@ -12,110 +10,28 @@ proc RealignResampleInit {} {
     global RealignResample Module Volume Line Matrix
 
     set m RealignResample
-
-    # Module Summary Info
-    #------------------------------------
-    # Description:
-    #  Give a brief overview of what your module does, for inclusion in the 
-    #  Help->Module Summaries menu item.
     set Module($m,overview) "This module realigns and resamples using vtkImageReslice"
-    #  Provide your name, affiliation and contact information so you can be 
-    #  reached for any questions people may have regarding your module. 
-    #  This is included in the  Help->Module Credits menu item.
     set Module($m,author) "Jacob Albertson, SPL, jacob@bwh.harvard.edu"
-
-    #  Set the level of development that this module falls under, from the list defined in Main.tcl,
-    #  Module(categories) or pick your own
-    #  This is included in the Help->Module Categories menu item
     set Module($m,category) "Alpha"
-
-    # Define Tabs
-    #------------------------------------
-    # Description:
-    #   Each module is given a button on the Slicer's main menu.
-    #   When that button is pressed a row of tabs appear, and there is a panel
-    #   on the user interface for each tab.  If all the tabs do not fit on one
-    #   row, then the last tab is automatically created to say "More", and 
-    #   clicking it reveals a second row of tabs.
-    #
-    #   Define your tabs here as shown below.  The options are:
-    #   row1List = list of ID's for tabs. (ID's must be unique single words)
-    #   row1Name = list of Names for tabs. (Names appear on the user interface
-    #              and can be non-unique with multiple words.)
-    #   row1,tab = ID of initial tab
-    #   row2List = an optional second row of tabs if the first row is too small
-    #   row2Name = like row1
-    #   row2,tab = like row1 
-    #
 
     set Module($m,row1List) "Fiducials RealignResample Help"
     set Module($m,row1Name) "{Fiducials} {Realign Resample} {Help}"
     set Module($m,row1,tab) RealignResample
 
-    # Define Procedures
-    #------------------------------------
-    # Description:
-    #   The Slicer sources *.tcl files, and then it calls the Init
-    #   functions of each module, followed by the VTK functions, and finally
-    #   the GUI functions. A MRML function is called whenever the MRML tree
-    #   changes due to the creation/deletion of nodes.
-    #   
-    #   While the Init procedure is required for each module, the other 
-    #   procedures are optional.  If they exist, then their name (which
-    #   can be anything) is registered with a line like this:
-    #
-    #   set Module($m,procVTK) RealignResampleBuildVTK
-    #
-    #   All the options are:
-
-    #   procGUI   = Build the graphical user interface
-    #   procVTK   = Construct VTK objects
-    #   procMRML  = Update after the MRML tree changes due to the creation
-    #               of deletion of nodes.
-    #   procEnter = Called when the user enters this module by clicking
-    #               its button on the main menu
-    #   procExit  = Called when the user leaves this module by clicking
-    #               another modules button
-    #   procCameraMotion = Called right before the camera of the active 
-    #                      renderer is about to move 
-    #   procStorePresets  = Called when the user holds down one of the Presets
-    #               buttons.
-    #               
-    #   Note: if you use presets, make sure to give a preset defaults
-    #   string in your init function, of the form: 
-    #   set Module($m,presets) "key1='val1' key2='val2' ..."
-    #   
     set Module($m,procGUI) RealignResampleBuildGUI
     set Module($m,procMRML) RealignResampleUpdateMRML
-    # Define Dependencies
-    #------------------------------------
-    # Description:
-    #   Record any other modules that this one depends on.  This is used 
-    #   to check that all necessary modules are loaded when Slicer runs.
-    #   
-    set Module($m,depend) ""
+  
+    set Module($m,depend) "Morphometrics"
 
-    # Set version info
-    #------------------------------------
-    # Description:
-    #   Record the version number for display under Help->Version Info.
-    #   The strings with the $ symbol tell CVS to automatically insert the
-    #   appropriate revision number and date when the module is checked in.
-    #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1 $} {$Date: 2004/07/30 15:50:19 $}]
+        {$Revision: 1.2 $} {$Date: 2004/08/16 21:20:20 $}]
 
-    # Initialize module-level variables
-    #------------------------------------
-    # Description:
-    #   Keep a global array with the same name as the module.
-    #   This is a handy method for organizing the global variables that
-    #   the procedures in this module and others need to access.
-    #
-   
     set Matrix(volume) $Volume(idNone)
     set Matrix(RealignResampleVolumeName2) None
     set RealignResample(SaveAs) None
+    set RealignResample(ACPCList) None
+    set RealignResample(MidlineList) None
+
 }
 
 proc RealignResampleUpdateMRML {} {
@@ -126,7 +42,7 @@ proc RealignResampleUpdateMRML {} {
     #
     set n $Volume(idNone)
     if {[lsearch $Volume(idList) $Matrix(volume) ] == -1} {
-        RealignResampleSetVolume $n
+        RealignResampleSetVolume2 $n
     }
 
     # Menu of Volumes 
@@ -142,6 +58,7 @@ proc RealignResampleUpdateMRML {} {
     # ------------------------------------
     set m $RealignResample(mbACPC).m
     $m delete 0 end
+    $m add command -label "None" -command "RealignResampleSetACPCList None"
     foreach v $Fiducials(listOfNames) {
     $m add command -label "$v" -command "RealignResampleSetACPCList $v"
     }
@@ -149,6 +66,7 @@ proc RealignResampleUpdateMRML {} {
     # ------------------------------------
     set m $RealignResample(mbMidline).m
     $m delete 0 end
+    $m add command -label "None" -command "RealignResampleSetMidlineList None"
     foreach v $Fiducials(listOfNames) {
     $m add command -label "$v" -command "RealignResampleSetMidlineList $v"
     }
@@ -175,42 +93,9 @@ proc RealignResampleUpdateMRML {} {
 proc RealignResampleBuildGUI {} {
     global Gui RealignResample Module Volume Line Matrix Fiducials
     
-    # A frame has already been constructed automatically for each tab.
-    # A frame named "Stuff" can be referenced as follows:
-    #   
-    #     $Module(<Module name>,f<Tab name>)
-    #
-    # ie: $Module(RealignResample,fStuff)
-    
-    # This is a useful comment block that makes reading this easy for all:
-    #-------------------------------------------
-    # Frame Hierarchy:
-    #-------------------------------------------
-    # Help
-    # Stuff
-    #   Top
-    #   Middle
-    #   Bottom
-    #     FileLabel
-    #     CountDemo
-    #     TextBox
-    #-------------------------------------------
-   #-------------------------------------------
-    # Help frame
-    #-------------------------------------------
-    
-    # Write the "help" in the form of psuedo-html.  
-    # Refer to the documentation for details on the syntax.
-    #
     set help "
-    The RealignResample module is an example for developers.  It shows how to add a module 
-    to the Slicer.  The source code is in slicer2/Modules/vtkRealignResample/tcl/RealignResample.tcl.
-    <P>
-    Description by tab:
-    <BR>
-    <UL>
-    <LI><B>Tons o' Stuff:</B> This tab is a demo for developers.
-    "
+    The RealignResample module realigns a volume based on a transformation matrix. It can also resample the volume by changing the extent and spacing. Finally it can make a transform using a list of fiducials. The source code is in slicer2/Modules/vtkRealignResample/tcl/RealignResample.tcl.
+       "
     regsub -all "\n" $help {} help
     MainHelpApplyTags RealignResample $help
     MainHelpBuildGUI RealignResample
@@ -281,9 +166,9 @@ proc RealignResampleBuildGUI {} {
     set fRealignResample $Module(RealignResample,fRealignResample)
     set f $fRealignResample
 
-    foreach frame "Volume Matrix NewVolume OutputSpacing InterpolationMode BeginResample SaveAs BeginSave" {
+    foreach frame "Volume Matrix NewVolume OutputSpacing SetSpacing AutoSpacing OutputExtent SetExtent AutoExtent InterpolationMode BeginResample SaveAs BeginSave" {
     frame $f.f$frame -bg $Gui(activeWorkspace)
-    pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
+    pack $f.f$frame -side top -padx 0 -pady 0 -fill x
     }
 
     #-------------------------------------------
@@ -317,7 +202,8 @@ proc RealignResampleBuildGUI {} {
     
     DevAddLabel $f.lNewVolume "New Volume: "
     eval {entry $f.eNewVolume -width 30 -textvariable RealignResample(NewVolume) } $Gui(WEA)
-    set RealignResample(NewVolume) "[Volume($Matrix(volume),node) GetName]_realigned"
+    #set the new name to the oldname + _realign
+    set RealignResample(NewVolume) "[Volume($Matrix(volume),node) GetName]_realign"
     pack $f.lNewVolume $f.eNewVolume -side left -padx $Gui(pad) -pady $Gui(pad)
    
 
@@ -327,18 +213,68 @@ proc RealignResampleBuildGUI {} {
     set f $fRealignResample.fOutputSpacing
 
     DevAddLabel $f.lOutputSpacing "Output Spacing:"
-    pack  $f.lOutputSpacing -side top -padx $Gui(pad) -pady $Gui(pad)
-    DevAddLabel $f.lOutputSpacingX "X:"
+    pack  $f.lOutputSpacing -side top -padx $Gui(pad) -pady 0
+    DevAddLabel $f.lOutputSpacingX "LR:"
     eval {entry $f.eOutputSpacingX -width 6 -textvariable RealignResample(OutputSpacingX) } $Gui(WEA)
     set RealignResample(OutputSpacingX) 1
-    DevAddLabel $f.lOutputSpacingY "Y:"
+    DevAddLabel $f.lOutputSpacingY "IS:"
     eval {entry $f.eOutputSpacingY -width 6 -textvariable RealignResample(OutputSpacingY) } $Gui(WEA)
     set RealignResample(OutputSpacingY) 1
-    DevAddLabel $f.lOutputSpacingZ "Z:"
+    DevAddLabel $f.lOutputSpacingZ "PA:"
     eval {entry $f.eOutputSpacingZ -width 6 -textvariable RealignResample(OutputSpacingZ) } $Gui(WEA)
     set RealignResample(OutputSpacingZ) 1
 
     pack $f.lOutputSpacingX $f.eOutputSpacingX $f.lOutputSpacingY $f.eOutputSpacingY $f.lOutputSpacingZ $f.eOutputSpacingZ -side left -padx $Gui(pad) -pady $Gui(pad)
+
+    #-------------------------------------------
+    # Resample->Set Spacing
+    #-------------------------------------------   
+    set f $fRealignResample.fSetSpacing
+
+    DevAddButton $f.bIsoSpacingX " Iso LR  "  IsoSpacingX
+    DevAddButton $f.bIsoSpacingY " Iso IS  "  IsoSpacingY
+    DevAddButton $f.bIsoSpacingZ " Iso PA  "  IsoSpacingZ
+    pack $f.bIsoSpacingX $f.bIsoSpacingY $f.bIsoSpacingZ -side left -padx $Gui(pad)
+    
+    #-------------------------------------------
+    # Resample->Auto Spacing
+    #-------------------------------------------   
+    set f $fRealignResample.fAutoSpacing
+    DevAddButton $f.bAutoSpacing "Original Spacing"  AutoSpacing
+    pack $f.bAutoSpacing -side bottom -padx $Gui(pad) -pady $Gui(pad)
+
+    #-------------------------------------------
+    # Resample->Output Extent
+    #-------------------------------------------   
+    set f $fRealignResample.fOutputExtent
+
+    DevAddLabel $f.lOutputExtent "Output Extent:"
+    pack  $f.lOutputExtent -side top -padx $Gui(pad) -pady 0
+    DevAddLabel $f.lOutputExtentX "LR:"
+    eval {entry $f.eOutputExtentX -width 6 -textvariable RealignResample(OutputExtentX) } $Gui(WEA)
+    DevAddLabel $f.lOutputExtentY "IS:"
+    eval {entry $f.eOutputExtentY -width 6 -textvariable RealignResample(OutputExtentY) } $Gui(WEA)
+    DevAddLabel $f.lOutputExtentZ "PA:"
+    eval {entry $f.eOutputExtentZ -width 6 -textvariable RealignResample(OutputExtentZ) } $Gui(WEA)
+  
+    pack $f.lOutputExtentX $f.eOutputExtentX $f.lOutputExtentY $f.eOutputExtentY $f.lOutputExtentZ $f.eOutputExtentZ -side left -padx $Gui(pad) -pady $Gui(pad)
+
+    #-------------------------------------------
+    # Resample->Set Extent
+    #-------------------------------------------   
+    set f $fRealignResample.fSetExtent
+
+    DevAddButton $f.bIsoExtentX " Auto LR "  AutoExtentX
+    DevAddButton $f.bIsoExtentY " Auto IS "  AutoExtentY
+    DevAddButton $f.bIsoExtentZ " Auto PA "  AutoExtentZ
+    pack $f.bIsoExtentX $f.bIsoExtentY $f.bIsoExtentZ -side left -padx $Gui(pad)
+
+    #-------------------------------------------
+    # Resample->Auto Extent
+    #-------------------------------------------   
+    set f $fRealignResample.fAutoExtent
+    DevAddButton $f.bAutoExtent "Auto Extent"  AutoExtent
+    pack $f.bAutoExtent -side bottom -padx $Gui(pad) -pady $Gui(pad)
 
     #-------------------------------------------
     # Resample->Interpolation Mode
@@ -346,6 +282,7 @@ proc RealignResampleBuildGUI {} {
     set f $fRealignResample.fInterpolationMode
     eval {label $f.lInterpolationMode -text "Interpolation Mode:"} $Gui(WLA)
   
+    #Create label foreach type of interpolation
     foreach label {"NearestNeighbor" "Linear" "Cubic"} text {"Nearest Neighbor" "Linear" "Cubic"} {
         eval {radiobutton $f.rb$label -text $text -variable RealignResample(InterpolationMode) -value $label} $Gui(WLA)
     }
@@ -367,18 +304,18 @@ proc RealignResampleBuildGUI {} {
     #-------------------------------------------
     # Resample->SaveAs
     #-------------------------------------------
-    set f $fRealignResample.fSaveAs
+#     set f $fRealignResample.fSaveAs
     
-    DevAddLabel $f.lSaveAs "Save As: "
-    eval {menubutton $f.mbSaveAs -text "$RealignResample(SaveAs)" -relief raised -bd 2 -width 15 -menu $f.mbSaveAs.m} $Gui(WMBA)
-    eval {menu $f.mbSaveAs.m} $Gui(WMA)
+#     DevAddLabel $f.lSaveAs "Save As: "
+#     eval {menubutton $f.mbSaveAs -text "$RealignResample(SaveAs)" -relief raised -bd 2 -width 15 -menu $f.mbSaveAs.m} $Gui(WMBA)
+#     eval {menu $f.mbSaveAs.m} $Gui(WMA)
     
-    pack $f.lSaveAs $f.mbSaveAs -side left -padx $Gui(pad) -pady $Gui(pad)
-    foreach value {"Sagittal:LR" "Sagittal:RL" "Axial:SI" "Axial:IS" "Coronal:AP" "Coronal:PA"} {
-    $f.mbSaveAs.m add command -label $value -command "RealignResampleSaveAs $value"
-    }
+#     pack $f.lSaveAs $f.mbSaveAs -side left -padx $Gui(pad) -pady $Gui(pad)
+#     foreach value {"Sagittal:LR" "Sagittal:RL" "Axial:SI" "Axial:IS" "Coronal:AP" "Coronal:PA"} {
+#     $f.mbSaveAs.m add command -label $value -command "RealignResampleSaveAs $value"
+#     }
 
-    set Matrix(SaveAs) $f.mbSaveAs
+#     set Matrix(SaveAs) $f.mbSaveAs
 
 
     #-------------------------------------------
@@ -404,7 +341,7 @@ proc RealignResampleSetACPCList {{v ""}} {
 
     set RealignResample(ACPCList) "$v"
     $RealignResample(mbACPC) config -text "$v"
-    puts "ACPC LIst: $v"
+    puts "ACPC List: $v"
 }
 
 #-------------------------------------------------------------------------------
@@ -439,6 +376,9 @@ proc RealignResampleSetVolume2 {{v ""}} {
     set RealignResample(OutputSpacingX) [lindex $spacing 0]
     set RealignResample(OutputSpacingY) [lindex $spacing 1]
     set RealignResample(OutputSpacingZ) [lindex $spacing 2]
+    set RealignResample(OutputExtentX) 256
+    set RealignResample(OutputExtentY) 256
+    AutoExtentZ
 
     set RealignResample(NewVolume) "[Volume($v,node) GetName]_realign"
 
@@ -451,7 +391,152 @@ proc RealignResampleSetVolume2 {{v ""}} {
     #Print out what the user has set as the volume to move
     puts "this is the VolumeName: $Matrix(RealignResampleVolumeName2)"   
 }
+#-------------------------------------------------------------------------------
+# .PROC AutoSpacing
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc AutoSpacing {} {
+    global Matrix Volume RealignResample
+    set spacing [split [[Volume($Matrix(volume),vol) GetOutput] GetSpacing]]
+    set RealignResample(OutputSpacingX) [lindex $spacing 0]
+    set RealignResample(OutputSpacingY) [lindex $spacing 1]
+    set RealignResample(OutputSpacingZ) [lindex $spacing 2]
+}
 
+#-------------------------------------------------------------------------------
+# .PROC AutoExtent
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc AutoExtent {} {
+    global RealignResample Module Matrix Volume
+    
+    #Get matrix
+    vtkMatrix4x4 mat
+    mat DeepCopy [[Matrix($Matrix(activeID),node) GetTransform] GetMatrix]
+    
+    #Set default values
+    vtkTransform m2lt
+    m2lt SetMatrix mat 
+    set volume [Volume($Matrix(volume),vol) GetOutput]
+    set dim [split [$volume GetWholeExtent]]
+    set q [m2lt TransformPoint [lindex $dim 0] [lindex $dim 4] [lindex $dim 2]]
+    set ext(0) [lindex $q 0]
+    set ext(1) [lindex $q 0]
+    set ext(2) [lindex $q 1]
+    set ext(3) [lindex $q 1]
+    set ext(4) [lindex $q 2]
+    set ext(5) [lindex $q 2]
+    
+    set origin [split [$volume GetOrigin]]
+    set wholeExtent [split [$volume GetWholeExtent]]
+    set spacing [split [$volume GetSpacing]]
+    #loop through each point transforming it and finding if it is greater than max or less than min
+    for {set i 0} {$i < 8} {incr i} {
+    set point(0) [expr [lindex $origin 0] + [lindex $wholeExtent [expr $i %  2]]]
+    set point(1) [expr [lindex $origin 1] + [lindex $wholeExtent [expr 2 + ($i / 2) % 2]]]
+    set point(2) [expr [lindex $origin 2] + [lindex $wholeExtent [expr 4 + ($i / 4) % 2]]]
+    set newpoint [m2lt TransformPoint $point(0) $point(2) $point(1)]
+    puts  "Point: $point(0) $point(2) $point(1) New: $newpoint" 
+    for {set j 0} { $j < 3} {incr j} {
+        if {[lindex $newpoint $j] > $ext([expr 2 * $j + 1])} {
+        set ext([expr 2 * $j + 1]) [lindex $newpoint $j]
+        }
+        if {[lindex $newpoint $j] < $ext([expr 2 * $j])} {
+        set ext([expr 2 * $j]) [lindex $newpoint $j]
+        }
+    }
+    }
+    puts "$ext(0) $ext(1) $ext(2) $ext(3) $ext(4) $ext(5)"
+    #calculates the final extent
+    set RealignResample(OutputExtentY) [expr round(($ext(5) - $ext(4)) * [lindex $spacing 1] / $RealignResample(OutputSpacingY)) + 1]
+    set RealignResample(OutputExtentZ) [expr round(($ext(3) - $ext(2)) * [lindex $spacing 2] / $RealignResample(OutputSpacingZ)) + 1]
+    set RealignResample(OutputExtentX) [expr round(($ext(1) - $ext(0)) * [lindex $spacing 0] / $RealignResample(OutputSpacingX)) + 1]
+
+    mat Delete
+    m2lt Delete
+}
+#-------------------------------------------------------------------------------
+# .PROC AutoExtentX
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc AutoExtentX {} {
+    global RealignResample
+    set tmpZ $RealignResample(OutputExtentZ)
+    set tmpY $RealignResample(OutputExtentY)
+    AutoExtent
+    set RealignResample(OutputExtentZ) $tmpZ
+    set RealignResample(OutputExtentY) $tmpY
+
+}  
+#-------------------------------------------------------------------------------
+# .PROC AutoExtentY
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc AutoExtentY {} {
+    global RealignResample
+    set tmpZ $RealignResample(OutputExtentZ)
+    set tmpX $RealignResample(OutputExtentX)
+    AutoExtent
+    set RealignResample(OutputExtentZ) $tmpZ
+    set RealignResample(OutputExtentX) $tmpX
+} 
+#-------------------------------------------------------------------------------
+# .PROC AutoExtentZ
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc AutoExtentZ {} {
+    global RealignResample
+    set tmpY $RealignResample(OutputExtentY)
+    set tmpX $RealignResample(OutputExtentX)
+    AutoExtent
+    set RealignResample(OutputExtentY) $tmpY
+    set RealignResample(OutputExtentX) $tmpX
+} 
+
+#-------------------------------------------------------------------------------
+# .PROC IsoSpacingX
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc IsoSpacingX {} {
+    global RealignResample
+    set RealignResample(OutputSpacingZ) $RealignResample(OutputSpacingX)
+    set RealignResample(OutputSpacingY) $RealignResample(OutputSpacingX)
+}  
+#-------------------------------------------------------------------------------
+# .PROC IsoSpacingY
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc IsoSpacingY {} {
+    global RealignResample
+    set RealignResample(OutputSpacingX) $RealignResample(OutputSpacingY)
+    set RealignResample(OutputSpacingZ) $RealignResample(OutputSpacingY)
+} 
+#-------------------------------------------------------------------------------
+# .PROC IsoSpacingZ
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc IsoSpacingZ {} {
+    global RealignResample
+    set RealignResample(OutputSpacingX) $RealignResample(OutputSpacingZ)
+    set RealignResample(OutputSpacingY) $RealignResample(OutputSpacingZ)
+} 
+  
 #-------------------------------------------------------------------------------
 # .PROC RealignResampleSaveAs
 #
@@ -472,29 +557,30 @@ proc RealignResampleSaveAs {value} {
 
 proc RealignCalculate {} {
     global RealignResample Module Matrix Volume Fiducials Point
-    puts "$RealignResample(mbMidline) active"
-    puts "Volume: [Volume($Matrix(volume),vol) GetOutput]"
-    set vol [Volume($Matrix(volume),vol) GetOutput]
-    puts "Lines: [Volume($Matrix(refVolume),vol) GetOutput]"
-    set lines [Volume($Matrix(refVolume),vol) GetOutput]
-    puts "Fiducials: $Fiducials($Fiducials($RealignResample(MidlineList),fid),pointIdList)"
+    puts $RealignResample(MidlineList)
+    puts $RealignResample(ACPCList)
+    vtkTransform trans
+    trans Identity
+    trans PostMultiply
+    if {$RealignResample(MidlineList) != "None" } {
+    puts "Doing Midline..."
     set fids $Fiducials($Fiducials($RealignResample(MidlineList),fid),pointIdList) 
-    set acpc $Fiducials($Fiducials($RealignResample(ACPCList),fid),pointIdList) 
+    
     vtkMath math
     set x 0
     foreach fid $fids {
-    set list($x) [split [FiducialsGetPointCoordinates $fid] " "]
-    puts "Point $x: $list($x)"
-    incr x
+        set list($x) [split [FiducialsGetPointCoordinates $fid] " "]
+        puts "Point $x: $list($x)"
+        incr x
     }
-
+    
     vtkPolyData polydata
     vtkPolyData output
     vtkPoints points
     puts "Total Number of Points: $x"
     points SetNumberOfPoints $x
     for {set i 0} {$i < $x} {incr i} {
-    points SetPoint $i [lindex $list($i) 0] [lindex $list($i) 1] [lindex $list($i) 2]
+        points SetPoint $i [lindex $list($i) 0] [lindex $list($i) 1] [lindex $list($i) 2]
     }
     polydata SetPoints points
     puts "Calling vtkPrincipleAxes"
@@ -503,47 +589,83 @@ proc RealignCalculate {} {
     puts "Set Input to PrincipleAxes"
     pa SetInput polydata
     puts "Executing PrincipleAxes"
-    pa Execute
+    pa Update
+    set normal [pa GetZAxis]
+    puts "$normal"
+    set nx [lindex $normal 0 ]
+    set ny [lindex $normal 1 ]
+    set nz [lindex $normal 2 ]
+    puts "$nx $ny $nz"
+
     vtkMatrix4x4 mat
+    mat Identity
+
+#     mat SetElement 0 0 [expr  1 - $nx*$nx]
+#     mat SetElement 0 1 [expr -1 * $nx*$ny]
+#     mat SetElement 0 2 [expr -1 * $nx*$nz]
+
+#     mat SetElement 1 0 [expr -1 * $nx*$ny]
+#     mat SetElement 1 1 [expr  1 - $ny*$ny]
+#     mat SetElement 1 2 [expr -1 * $ny*$nz]
     
-    set i 0
-    foreach point [pa GetZAxis] {
-    mat SetElement $i 0 $point
-    incr i
+#     mat SetElement 2 0 [expr -1 * $nx*$nz]
+#     mat SetElement 2 1 [expr -1 * $ny*$nz]
+#     mat SetElement 2 2 [expr  1 - $nz*$nz]
+    
+# void Align(Matrix& u)
+# {
+#   const double epsilon = 1.0e-6;
+#   int i;
+
+#   int rowCount = u.rows();
+#   int colCount = u.cols(); 
+
+#   for ( int j = 0; j < colCount; j++ ) {
+#     double maxU = u[0][j];
+#     for ( i = 1; i < rowCount; i++ ) 
+#       if ( fabs(maxU) < fabs(u[i][j])-epsilon ) maxU = u[i][j];
+    
+#     if ( maxU < 0 ) {
+#       for ( i = 0; i < rowCount; i++ ) 
+#         u[i][j] = -u[i][j];
+#     }
+#   }
+# }
+
+
+    set Max $nx
+    if {[expr $ny*$ny] > [expr $Max*$Max]} {
+        set Max $ny
     }
+    if {[expr $nz*$nz] > [expr $Max*$Max]} {
+        set Max $nz
+    }
+    set sign 1
+    if {$Max < 0} {
+        set sign -1
+    }
+
+     set i 0
+     foreach point [pa GetZAxis] {
+         mat SetElement $i 0 [expr $sign * $point]
+         incr i
+     }
     
-    set oneAndAlpha [expr 1 + [mat GetElement 0 0]]
+      set oneAndAlpha [expr 1 + [mat GetElement 0 0]]
     
-    mat SetElement 0 1 [expr -1 * [mat GetElement 1 0]]
-    mat SetElement 0 2 [expr -1 * [mat GetElement 2 0]] 
-    mat SetElement 2 1 [expr -1 * [mat GetElement 1 0] * [mat GetElement 2 0] / $oneAndAlpha]
-    mat SetElement 1 2 [expr -1 * [mat GetElement 1 0] * [mat GetElement 2 0] / $oneAndAlpha]
-    mat SetElement 1 1 [expr 1  - [mat GetElement 1 0] * [mat GetElement 1 0] / $oneAndAlpha]
-    mat SetElement 2 2 [expr 1  - [mat GetElement 2 0] * [mat GetElement 2 0] / $oneAndAlpha]
+      mat SetElement 0 1 [expr -1 * [mat GetElement 1 0]]
+    
+      mat SetElement 0 2 [expr -1 * [mat GetElement 2 0]] 
+      mat SetElement 2 1 [expr -1 * [mat GetElement 1 0] * [mat GetElement 2 0] / $oneAndAlpha]
+      mat SetElement 1 2 [expr -1 * [mat GetElement 1 0] * [mat GetElement 2 0] / $oneAndAlpha]
+      mat SetElement 1 1 [expr 1  - [mat GetElement 1 0] * [mat GetElement 1 0] / $oneAndAlpha]
+      mat SetElement 2 2 [expr 1  - [mat GetElement 2 0] * [mat GetElement 2 0] / $oneAndAlpha]
     
     vtkMatrix4x4 matInverse
     matInverse DeepCopy mat
     matInverse Invert
-
-    set y 0
-    foreach fid $acpc {
-    if { $y < 2 } {
-    set ACPCpoints($y) [split [FiducialsGetPointCoordinates $fid] " "]
-    puts "ACPC Point $y: $ACPCpoints($y)"
-    incr y
-    }
-    }
-    set top [expr [lindex $ACPCpoints(0) 2] - [lindex $ACPCpoints(1) 2]]
-    set bot [expr [lindex $ACPCpoints(0) 1] - [lindex $ACPCpoints(1) 1]]
-    set tangent [expr atan( $top / $bot) * (180.0/(4.0*atan(1.0)))]
-    puts $tangent
-
-    vtkTransform trans
     trans SetMatrix matInverse
-    trans RotateX [expr $tangent * -1]
-    [Matrix($Matrix(activeID),node) GetTransform] SetMatrix [trans GetMatrix]
-    MainUpdateMRML
-    RenderAll
+#    trans SetMatrix mat
     mat Delete
     matInverse Delete
     pa Delete
@@ -551,6 +673,31 @@ proc RealignCalculate {} {
     polydata Delete
     output Delete
     math Delete
+    }
+    
+    
+    
+
+    if {$RealignResample(ACPCList) != "None"} {
+    puts "Doing ACPC..."
+    set acpc $Fiducials($Fiducials($RealignResample(ACPCList),fid),pointIdList) 
+    set y 0
+    foreach fid $acpc {
+        if { $y < 2 } {
+        set ACPCpoints($y) [split [FiducialsGetPointCoordinates $fid] " "]
+        puts "ACPC Point $y: $ACPCpoints($y)"
+        incr y
+        }
+    }
+    set top [expr [lindex $ACPCpoints(0) 2] - [lindex $ACPCpoints(1) 2]]
+    set bot [expr [lindex $ACPCpoints(0) 1] - [lindex $ACPCpoints(1) 1]]
+    set tangent [expr atan( $top / $bot) * (180.0/(4.0*atan(1.0)))]
+    puts $tangent
+    trans RotateX [expr $tangent * -1]
+    }
+    [Matrix($Matrix(activeID),node) GetTransform] SetMatrix [trans GetMatrix]
+    MainUpdateMRML
+    RenderAll
     trans Delete
     puts "Done"
 }
@@ -558,119 +705,167 @@ proc RealignCalculate {} {
 
 proc Resample {} {
     global RealignResample Module Matrix Volume
-    vtkMatrix4x4 mat
-    mat DeepCopy [[Matrix($Matrix(activeID),node) GetTransform] GetMatrix]
-    mat SetElement 1 2 [expr [mat GetElement 1 2] * -1]
-    mat SetElement 2 1 [expr [mat GetElement 2 1] * -1]
+       
+  
+    # Create a new Volume node
+    set newvol [DevCreateNewCopiedVolume  $Matrix(volume) "" "$RealignResample(NewVolume)"]
+    set node [Volume($newvol,vol) GetMrmlNode]
+    Mrml(dataTree) RemoveItem $node
+    Mrml(dataTree) AddItem $node
     
-    set volume [Volume($Matrix(volume),vol) GetOutput]
-    
-    switch [Volume($Matrix(volume),node) GetScanOrder] {
-        #                    -R        -A        -S
-        "LR" { set axes {  0  0 -1   0  1  0  -1  0  0 } }
-        "RL" { set axes {  0  0  1   0  1  0  -1  0  0 } }
-        "IS" { set axes {  1  0  0   0  0  1   0  1  0 } }
-        "SI" { set axes {  1  0  0   0  0 -1   0  1  0 } }
-        "PA" { set axes {  1  0  0   0  1  0   0  0  1 } }
-        "AP" { set axes {  1  0  0   0 -1  0   0  0  1 } }
-        #TODO - gantry tilt not supported
-    }
-    vtkMatrix4x4 ijkmatrix
-    ijkmatrix Identity
+    # Create a new vtkImageData
+    vtkImageData Target
+    Target DeepCopy [Volume($Matrix(volume),vol) GetOutput]
+    Volume($newvol,vol) SetImageData Target
+
+    MainUpdateMRML
+    MainVolumesUpdate $newvol
+
+    # Make a RAS to VTK matrix for realign resample
+    # based on the position matrix
+    vtkMatrix4x4 ModelRasToVtk
+    set position [Volume($Matrix(volume),node) GetPositionMatrix]
+    puts "$position"
+    ModelRasToVtk Identity
     set ii 0
-    for {set i 0} {$i < 3} {incr i} {
-        for {set j 0} {$j < 3} {incr j} {
-            # transpose for inverse - reslice transform requires it
-            ijkmatrix SetElement $i $j [lindex $axes $ii]
+    for {set i 0} {$i < 4} {incr i} {
+        for {set j 0} {$j < 4} {incr j} {
+            # Put the element from the position string
+            ModelRasToVtk SetElement $i $j [lindex $position $ii]
             incr ii
         }
+    # Remove the translation elements
+    ModelRasToVtk SetElement $i 3 0
     }
-    puts [Volume($Matrix(volume),vol) Print]
-    puts [Volume($Matrix(volume),node) Print]
+    # add a 1 at the for  M(4,4)
+    ModelRasToVtk SetElement 3 3 1
+    # Matrix now is
+    # a b c 0
+    # d e f 0
+    # g h i 0 
+    # 0 0 0 1
+    # a -> i is either -1 0 or 1 depending on 
+    # the original orientation of the volume
+ 
 
-    vtkImagePermute first
-    first SetInput $volume
-    first SetFilteredAxes 0 2 1
+    # Now we can build the Vtk1ToVtk2 matrix based on
+    # ModelRasToVtk and ras1toras2
+    # vtk1tovtk2 = inverse(rastovtk) ras1toras2 rastovtk
+    # RasToVtk
+    vtkMatrix4x4 RasToVtk
+    RasToVtk DeepCopy ModelRasToVtk    
+    puts "RasToVtk Matrix is:"
+    for {set i 0} {$i < 4} {incr i} {    
+    set element0 [RasToVtk GetElement $i 0]
+    set element1 [RasToVtk GetElement $i 1]
+    set element2 [RasToVtk GetElement $i 2]
+    set element3 [RasToVtk GetElement $i 3]
+    puts "$element0  $element1  $element2  $element3" 
+    }
     
-    mat Multiply4x4 ijkmatrix mat mat
-    vtkTransform m2lt
-    m2lt SetMatrix mat 
+    # Inverse Matrix RasToVtk
+    vtkMatrix4x4 InvRasToVtk
+    InvRasToVtk DeepCopy ModelRasToVtk
+    InvRasToVtk Invert
+    puts "InvRasToVtk Matrix is:"
+    for {set i 0} {$i < 4} {incr i} {    
+    set element0 [InvRasToVtk GetElement $i 0]
+    set element1 [InvRasToVtk GetElement $i 1]
+    set element2 [InvRasToVtk GetElement $i 2]
+    set element3 [InvRasToVtk GetElement $i 3]
+    puts "$element0  $element1  $element2  $element3" 
+    }
 
-    set pos  [split [m2lt GetPosition]]
+    # Ras1toRas2 given by the slicer MRML tree
+    vtkMatrix4x4 Ras1ToRas2
+    Ras1ToRas2 DeepCopy [[Matrix($Matrix(activeID),node) GetTransform] GetMatrix]
+    puts "Ras1ToRas2 Matrix is:"
+    for {set i 0} {$i < 4} {incr i} {    
+    set element0 [Ras1ToRas2 GetElement $i 0]
+    set element1 [Ras1ToRas2 GetElement $i 1]
+    set element2 [Ras1ToRas2 GetElement $i 2]
+    set element3 [Ras1ToRas2 GetElement $i 3]
 
+    puts "$element0  $element1  $element2  $element3" 
+    }
+
+    # Now build Vtk1ToVtk2
+    vtkMatrix4x4 Vtk1ToVtk2
+    Vtk1ToVtk2 Identity
+    Vtk1ToVtk2 Multiply4x4 Ras1ToRas2 RasToVtk  Vtk1ToVtk2
+    Vtk1ToVtk2 Multiply4x4 InvRasToVtk  Vtk1ToVtk2 Vtk1ToVtk2
+    puts "Vtk1ToVtk2 Matrix is:"
+    for {set i 0} {$i < 4} {incr i} {    
+    set element0 [Vtk1ToVtk2 GetElement $i 0]
+    set element1 [Vtk1ToVtk2 GetElement $i 1]
+    set element2 [Vtk1ToVtk2 GetElement $i 2]
+    set element3 [Vtk1ToVtk2 GetElement $i 3]
+    puts "$element0  $element1  $element2  $element3" 
+    }
+
+
+    # Setting up for vtkImageReslice
+    # Invert the matrix (because we resample the grid not the object)
+    Vtk1ToVtk2 Invert
+    vtkTransform trans
+    trans SetMatrix Vtk1ToVtk2 
+    # Center the input image
     vtkImageChangeInformation ici
-    ici SetInput [first GetOutput]
     ici CenterImageOn
-    
-    vtkImageChangeInformation ici2
-    ici2 SetInput [ici GetOutput]
-    ici2 SetOriginTranslation [expr -.5 + [lindex $pos 0]] [expr -.5 + [lindex $pos 1]] [expr -.5 + [lindex $pos 2]]
-
+    ici SetInput Target
+    # Set the input of the vtkImageReslice
     vtkImageReslice reslice
-    reslice SetResliceTransform m2lt
-    
-    puts "[ijkmatrix Print]"
-    reslice SetResliceAxes ijkmatrix
-            
-    set dim [split [$volume GetExtent]]
-    set x(0) [expr [expr [lindex $dim 1] - [lindex $dim 0] + 1] / 2]
-    set x(1) [expr [expr [lindex $dim 3] - [lindex $dim 2] + 1] / 2]
-    set x(2) [expr [expr [lindex $dim 5] - [lindex $dim 4] + 1] / 2]
-
-    set spa [split [$volume GetSpacing]]
-    set spacing(0) [lindex $spa 0]
-    set spacing(1) [lindex $spa 1]
-    set spacing(2) [lindex $spa 2]
-    puts "Position: $pos"
-    
-    puts "Extent: [lindex $dim 0] [lindex $dim 1] [lindex $dim 2] [lindex $dim 3] [lindex $dim 4] [lindex $dim 5]"
-    reslice SetInput [ici2 GetOutput]
-
+    reslice SetInput [ici GetOutput]
+    reslice SetResliceTransform trans
+    # Set the output spacing to user entered values
     puts "SetOutputSpacing $RealignResample(OutputSpacingX) $RealignResample(OutputSpacingY) $RealignResample(OutputSpacingZ)"
-    reslice SetOutputSpacing  $RealignResample(OutputSpacingX) $RealignResample(OutputSpacingZ) $RealignResample(OutputSpacingY)
-    
-    reslice SetOutputOrigin  [expr [lindex $pos 0] - $x(0) * $spacing(0)] \
-    [expr [lindex $pos 1] * -1 - $x(2) * $spacing(2)] \
-    [expr [lindex $pos 2] * -1 - $x(1) * $spacing(1)]
-
-    reslice SetOutputExtent [lindex $dim 0] [expr round( [lindex $dim 1] * $spacing(0) / $RealignResample(OutputSpacingX) )] \
-                            [lindex $dim 4] [expr round( [lindex $dim 5] * $spacing(2) / $RealignResample(OutputSpacingZ) )] \
-                            [lindex $dim 2] [expr round( [lindex $dim 3] * $spacing(1) / $RealignResample(OutputSpacingY) )] 
-    
+    reslice SetOutputSpacing $RealignResample(OutputSpacingX) \
+                             $RealignResample(OutputSpacingY) \
+                             $RealignResample(OutputSpacingZ)
+    # Set the extent to user or calculated values
+    puts "Extent: 0 $RealignResample(OutputExtentX) 0 $RealignResample(OutputExtentY) 0 $RealignResample(OutputExtentZ)"
+    reslice SetOutputExtent  0 $RealignResample(OutputExtentX) \
+                             0 $RealignResample(OutputExtentY) \
+                             0 $RealignResample(OutputExtentZ)
+    # Set the interpolation mode 
     puts "SetInterpolationModeTo$RealignResample(InterpolationMode)"
     reslice SetInterpolationModeTo$RealignResample(InterpolationMode)
+    # Reslice!
     reslice Update
-    vtkImagePermute last
-    last SetInput [reslice GetOutput]
-    last SetFilteredAxes 0 2 1
-    last Update
-  
-    set Matrix(NewVolume) [DevCreateNewCopiedVolume $Matrix(volume) "" "$RealignResample(NewVolume)"]
-    eval [Volume($Matrix(NewVolume),node) SetSpacing  $RealignResample(OutputSpacingX) $RealignResample(OutputSpacingY) $RealignResample(OutputSpacingZ)]
-    eval [Volume($Matrix(NewVolume),node) SetImageRange 1 [expr round($spacing(2) / $RealignResample(OutputSpacingZ) * [lindex $dim 5] )]
-      MainUpdateMRML]
-    eval [Volume($Matrix(NewVolume),vol) SetImageData [last GetOutput]]
-    Volume($Matrix(NewVolume),node) ComputeRasToIjkFromScanOrder [Volume($Matrix(NewVolume),node) GetScanOrder]
-    reslice Delete
-    mat Delete
-    first Delete
-    ici Delete
-    ici2 Delete 
-    last Delete
-    m2lt Delete
-    ijkmatrix Delete
+    
+    # Store output in the MRML tree
+    # and update its properties
+    Volume($newvol,vol) SetImageData [reslice GetOutput]
+    eval [Volume($newvol,node) SetSpacing  $RealignResample(OutputSpacingX) \
+                                           $RealignResample(OutputSpacingY) \
+                                           $RealignResample(OutputSpacingZ)]
+    eval [Volume($newvol,node) SetImageRange 1 $RealignResample(OutputExtentZ)]
+    eval [Volume($newvol,node) SetDimensions  $RealignResample(OutputExtentX) $RealignResample(OutputExtentY)]
+    Volume($newvol,node) ComputeRasToIjkFromScanOrder [Volume($newvol,node) GetScanOrder]
+    
     MainUpdateMRML
+    MainVolumesUpdate $newvol
+   
+    reslice Delete
+    ici Delete
+    ModelRasToVtk Delete
+    Target Delete
+    trans Delete
+    Ras1ToRas2 Delete
+    RasToVtk Delete
+    InvRasToVtk Delete
+    Vtk1ToVtk2 Delete
+     
     RenderAll
-    puts "Done"
+    puts "Done."
+     
 } 
 
 proc Write {} {
     global RealignResample Volume Matrix
-    puts "Writing..."
     set RealignResample(prefixSave) [file join $Volume(DefaultDir) [Volume($Matrix(NewVolume),node) GetName]]
     set RealignResample(prefixSave) [MainFileSaveVolume $Matrix(NewVolume) $RealignResample(prefixSave)]
-    
+      
     MainVolumesWrite $Matrix(NewVolume) $RealignResample(prefixSave)
-
     MainVolumesSetActive $Matrix(NewVolume)
 }
