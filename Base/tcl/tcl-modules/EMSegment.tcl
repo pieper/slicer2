@@ -130,19 +130,18 @@ proc EMSegmentInit {} {
     if {[info exists env(SLICER_HOME)] == 0 || $env(SLICER_HOME) == ""} {
       set EMSegment(SegmentMode) 0
     } else {
-
-        if {[file exist [file join $env(SLICER_HOME) Modules/EMLocalSegment]]} {
-          puts "Load Local Version"
+        if {[file exist [file join $env(SLICER_HOME) ../slicer2_lmi/EMLocalSegment/builds]]} {
+          puts "Load Local EM-Version"
           set EMSegment(SegmentMode) 2
           package require vtkSlicerEMLocalSegment
         } else {
-           if {[file exist [file join $env(SLICER_HOME) Modules/vtkEMLocalSegment]]} {
+           if {[file exist [file join $env(SLICER_HOME) Modules/vtkEMLocalSegment/builds/$env(BUILD)/bin]]} {
              set EMSegment(SegmentMode) 1
-             puts "Load Public Version 2.0"
+             # puts "Load Public Version 2.0"
              package require vtkEMLocalSegment
            } else {
              set EMSegment(SegmentMode) 0
-             puts "Load Public Version 1.0"
+             # puts "Load Public Version 1.0"
            }
         }
     } 
@@ -235,7 +234,7 @@ proc EMSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.25 $} {$Date: 2003/05/27 18:46:04 $}]
+        {$Revision: 1.26 $} {$Date: 2003/05/29 16:42:10 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -1239,10 +1238,14 @@ Description of the tabs:
     DevAddLabel $f.fSect1.fCol1.lEmpty8 ""
     DevAddLabel $f.fSect1.fCol2.lEmpty8 ""
 
-   
     # Pack 2. Block
-    pack $f.fSect1.fCol1.lESI $f.fSect1.fCol1.lEMI $f.fSect1.fCol1.lMRFI $f.fSect1.fCol1.lAlpha -side top -padx $Gui(pad) -pady 2 -anchor w 
-    pack $f.fSect1.fCol2.eESI $f.fSect1.fCol2.eEMI $f.fSect1.fCol2.eMRFI $f.fSect1.fCol2.eAlpha -side top -anchor w
+    if {$EMSegment(SegmentMode) == 2 } {    
+        pack $f.fSect1.fCol1.lESI -side top -padx $Gui(pad) -pady 2 -anchor w 
+        pack $f.fSect1.fCol2.eESI -side top -anchor w
+    }
+
+    pack $f.fSect1.fCol1.lEMI $f.fSect1.fCol1.lMRFI $f.fSect1.fCol1.lAlpha -side top -padx $Gui(pad) -pady 2 -anchor w 
+    pack $f.fSect1.fCol2.eEMI $f.fSect1.fCol2.eMRFI $f.fSect1.fCol2.eAlpha -side top -anchor w
     pack $f.fSect1.fCol1.lEmpty2 $f.fSect1.fCol2.lEmpty2 -side top -padx $Gui(pad) -pady 1 -anchor w  
 
     #Pack 3. Block
