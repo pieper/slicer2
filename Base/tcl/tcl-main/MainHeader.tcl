@@ -595,20 +595,36 @@ proc GetHeaderInfo {img1 num2 node tk} {
 
     # Get filename pattern
     set prefix [file root $img1]
+    # check to see if it found the root
+    if  {$img1 == $prefix} { 
+        # didn't work, there's no dot in the file name, crop off the numerals on the end
+        set prefix [string trimright $img1 0123456789]
+        # now remove the separater character
+        set prefix [string trimright $prefix [string index $prefix end]]
+    }
     if {[regexp {\.([0-9]*)([^0-9]*)$} $img1 match num1 suffix] == 0} {
-        return ""
+        # try it without assuming a dot separates the prefix and suffix
+        if {[regexp {([0-9]*)([^0-9]*)$} $img1 match num1 suffix] == 0} {
+            DevErrorWindow "Could not get number of first file from $img1, try renaming to name.nnn"
+            return ""
+        }
     }
     # Rid unnecessary 0's
     set num1 [string trimleft $num1 "0"]
     if {$num1 == ""} {set num1 0}
 
-    # Determine the pattern by testing a couple cases
+    # Determine the pattern by testing a couple of cases, period or dash separating prefix and suffix
     if {[format "%s.%03d$suffix" $prefix $num1] == $img1} {
         set filePattern "%s.%03d$suffix"
     } elseif {[format "%s.%d$suffix" $prefix $num1] == $img1} {
         set filePattern "%s.%d$suffix"
+    } elseif {[format "%s-%03d$suffix" $prefix $num1] == $img1} {
+        set filePattern "%s-%03d$suffix"
+    } elseif {[format "%s-%d$suffix" $prefix $num1] == $img1} {
+        set filePattern "%s-%d$suffix"
     } else {
         set filePattern ""
+        DevErrorWindow "Could not determine the file pattern to match $img1"
     }
 
     # Compute the full path of the last image in the volume
