@@ -19,11 +19,12 @@ IF (VTK_WRAP_TCL AND VTKRIGIDINTENSITYREGISTRATION_WRAP_TCL)
 
   VTK_WRAP_TCL (vtkMutualInformationRegistrationTCL RigidIntensityRegistrationTCL_SRCS LOCAL_MODULE_SRCS)
   ADD_LIBRARY (vtkMutualInformationRegistrationTCL RigidIntensityRegistrationTCL_SRCS)
-  TARGET_LINK_LIBRARIES (vtkMutualInformationRegistrationTCL 
-                         vtkIOTCL 
-                         vtkGraphicsTCL 
-                         vtkImagingTCL 
-                         vtkFilteringTCL 
+  TARGET_LINK_LIBRARIES (vtkMutualInformationRegistrationTCL
+                         vtkRigidIntensityRegistrationTCL
+                         vtkIOTCL
+                         vtkGraphicsTCL
+                         vtkImagingTCL
+                         vtkFilteringTCL
                          vtkCommonTCL
                          ${TCL_LIBRARY})
   IF (VTK_USE_HYBRID)
