@@ -28,7 +28,7 @@ proc OsteoPlanInit {} {
 
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1 $} {$Date: 2002/11/06 22:21:44 $}]
+        {$Revision: 1.2 $} {$Date: 2002/11/13 22:06:15 $}]
 
     # Initialize module-level variables
     set Osteo(pointlabels) 1
@@ -551,21 +551,21 @@ proc SelectModelMenu { fRoot variable {create 0}} {
     # Handle global arrays or regular global variables
     set paren [string first "(" $variable]
     if { $paren == -1 } {
-    global $variable
+        global $variable
     } else {
-    incr paren -1
-    global [string range $variable 0 $paren]
+        incr paren -1
+        global [string range $variable 0 $paren]
     }
     
     set none "<None>"
     set mb $fRoot.mb$variable
 
     if { $create == 1 } {
-    set c { menubutton $mb -text $none -relief raised -bd 2 -width 20 -menu $mb.m $Gui(WMBA) }
-    eval [subst $c]
-    
-    set c { menu $mb.m $Gui(WMA) }
-    eval [subst $c]
+        set c { menubutton $mb -text $none -relief raised -bd 2 -width 20 -menu $mb.m $Gui(WMBA) }
+        eval [subst $c]
+        
+        set c { menu $mb.m $Gui(WMA) }
+        eval [subst $c]
     }
     
     set m $mb.m
@@ -573,12 +573,17 @@ proc SelectModelMenu { fRoot variable {create 0}} {
 
 
     foreach id $Model(idList) {
-    set currModel [Mrml(dataTree) GetNthModel $id]
-    set name [$currModel GetName]
-    
-    $m add radiobutton -label $name -indicatoron 0 \
-        -variable $variable -value $id -command \
-        "$mb config -text $name"
+        set currModel [Mrml(dataTree) GetNthModel $id]
+        if {$currModel == ""} {
+            # TODO - this is an error condition, but it comes up when cutting
+            # and pasting models in the mrml tree (Data)
+            return;
+        }
+        set name [$currModel GetName]
+        
+        $m add radiobutton -label $name -indicatoron 0 \
+            -variable $variable -value $id -command \
+            "$mb config -text $name"
     }
     
     
@@ -588,17 +593,17 @@ proc SelectModelMenu { fRoot variable {create 0}} {
     set varID [subst $$variable]
     
     if { [lsearch $Model(idList) $varID] != -1 } {
-    set currModel [Mrml(dataTree) GetNthModel $varID]
-    set name [$currModel GetName]
-    
-    $mb config -text $name
+        set currModel [Mrml(dataTree) GetNthModel $varID]
+        set name [$currModel GetName]
+        
+        $mb config -text $name
     } else {
-    $mb config -text $none
+        $mb config -text $none
     }
     
 
     if { $create != 0 } {
-    return $fRoot.mb$variable
+        return $fRoot.mb$variable
     }
 
 }
