@@ -24,6 +24,7 @@
 # PROCEDURES:  
 #   MainSlicesInit
 #   MainSlicesBuildVTK
+#   MainSlicesBuildVTKForSliceActor
 #   MainSlicesBuildControlsForVolume widget int str str
 #   MainSlicesBuildControls s F
 #   MainSlicesBuildAdvancedControlsPopup
@@ -40,6 +41,7 @@
 #   MainSlicesSetOffsetInit
 #   MainSlicesSetOffset int float
 #   MainSlicesSetSliderRange int
+#   MainSlicesSetAnno
 #   MainSlicesSetOrientAll
 #   MainSlicesSetOrient int string
 #   MainSlicesResetZoomAll
@@ -92,7 +94,7 @@ proc MainSlicesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainSlices \
-        {$Revision: 1.41 $} {$Date: 2002/04/16 18:12:44 $}]
+        {$Revision: 1.42 $} {$Date: 2002/07/26 23:26:31 $}]
 
     # Initialize Variables
     set Slice(idList) "0 1 2"
@@ -209,39 +211,15 @@ proc MainSlicesBuildVTK {} {
     }
 
     foreach s $Slice(idList) {
-        vtkTexture Slice($s,texture)
+        #Build VTK objects
+        MainSlicesBuildVTKForSliceActor $s
+  
+        #Set input from vtkMrmlSlicer Slicer object
         Slice($s,texture) SetInput [Slicer GetOutput $s]
-
-        vtkPlaneSource Slice($s,planeSource)
-
-        vtkPolyDataMapper Slice($s,planeMapper)
-        Slice($s,planeMapper) SetInput [Slice($s,planeSource) GetOutput]
-
-        vtkActor Slice($s,planeActor)
-        Slice($s,planeActor) SetScale      $View(fov) $View(fov) 1.0
-        Slice($s,planeActor) SetPickable   1
-        Slice($s,planeActor) SetTexture    Slice($s,texture)
-        Slice($s,planeActor) SetMapper     Slice($s,planeMapper)
-        Slice($s,planeActor) SetUserMatrix [Slicer GetReformatMatrix $s]
-        Slice($s,planeActor) SetVisibility $Slice($s,visibility) 
-        [Slice($s,planeActor) GetProperty] SetAmbient 1
-        [Slice($s,planeActor) GetProperty] SetDiffuse 0
-        [Slice($s,planeActor) GetProperty] SetSpecular 0
-
-        vtkOutlineSource Slice($s,outlineSource)
-        Slice($s,outlineSource) SetBounds -0.5 0.5 -0.5 0.5 0.0 0.0
-
-        vtkPolyDataMapper Slice($s,outlineMapper)
-        Slice($s,outlineMapper) SetInput [Slice($s,outlineSource) GetOutput]
-        Slice($s,outlineMapper) ImmediateModeRenderingOn
-
-        vtkActor Slice($s,outlineActor)
-        Slice($s,outlineActor) SetMapper     Slice($s,outlineMapper)
-        Slice($s,outlineActor) SetScale      $View(fov) $View(fov) 1.0
-        Slice($s,outlineActor) SetPickable   0
         Slice($s,outlineActor) SetUserMatrix [Slicer GetReformatMatrix $s]
-        Slice($s,outlineActor) SetVisibility $Slice($s,visibility) 
-
+        Slice($s,planeActor) SetUserMatrix [Slicer GetReformatMatrix $s]
+    
+        # add to the scene
         MainAddActor Slice($s,outlineActor)
         MainAddActor Slice($s,planeActor)
 
@@ -254,6 +232,47 @@ proc MainSlicesBuildVTK {} {
     [Slice(1,outlineActor) GetProperty] SetColor 0.9 0.9 0.1
     [Slice(2,outlineActor) GetProperty] SetColor 0.1 0.9 0.1
 }
+
+#-------------------------------------------------------------------------------
+# .PROC MainSlicesBuildVTKForSlice
+# Build VTK objects for slice actors that are displayed in the 3D Viewer window.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MainSlicesBuildVTKForSliceActor {s} {
+    global Slice View
+
+    vtkTexture Slice($s,texture)
+    
+    vtkPlaneSource Slice($s,planeSource)
+    
+    vtkPolyDataMapper Slice($s,planeMapper)
+    Slice($s,planeMapper) SetInput [Slice($s,planeSource) GetOutput]
+    
+    vtkActor Slice($s,planeActor)
+    Slice($s,planeActor) SetScale      $View(fov) $View(fov) 1.0
+    Slice($s,planeActor) SetPickable   1
+    Slice($s,planeActor) SetTexture    Slice($s,texture)
+    Slice($s,planeActor) SetMapper     Slice($s,planeMapper)
+    Slice($s,planeActor) SetVisibility $Slice($s,visibility) 
+    [Slice($s,planeActor) GetProperty] SetAmbient 1
+    [Slice($s,planeActor) GetProperty] SetDiffuse 0
+    [Slice($s,planeActor) GetProperty] SetSpecular 0
+    
+    vtkOutlineSource Slice($s,outlineSource)
+    Slice($s,outlineSource) SetBounds -0.5 0.5 -0.5 0.5 0.0 0.0
+    
+    vtkPolyDataMapper Slice($s,outlineMapper)
+    Slice($s,outlineMapper) SetInput [Slice($s,outlineSource) GetOutput]
+    Slice($s,outlineMapper) ImmediateModeRenderingOn
+    
+    vtkActor Slice($s,outlineActor)
+    Slice($s,outlineActor) SetMapper     Slice($s,outlineMapper)
+    Slice($s,outlineActor) SetScale      $View(fov) $View(fov) 1.0
+    Slice($s,outlineActor) SetPickable   0
+    Slice($s,outlineActor) SetVisibility $Slice($s,visibility) 
+}
+
 
 #-------------------------------------------------------------------------------
 # .PROC MainSlicesBuildControlsForVolume
@@ -953,116 +972,14 @@ proc MainSlicesSetSliderRange {s} {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC MainSlicesSetOrientAll
-# Set all slice windows to have some orientation (i.e. Axial, etc)
+# .PROC MainSlicesSetAnno
+# Set Anno for slice windows 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc MainSlicesSetOrientAll {orient} {
-    global Slice View
+proc MainSlicesSetAnno {s orient} {
+    global View
 
-    
-    Slicer ComputeNTPFromCamera $View(viewCam)
-
-    Slicer SetOrientString $orient
-
-    foreach s $Slice(idList) {
-        set orient [Slicer GetOrientString $s]
-        set Slice($s,orient) $orient
-
-        # Always update Slider Range when change Back volume or orient
-        MainSlicesSetSliderRange $s
-
-        # Set slider increments
-        MainSlicesSetOffsetIncrement $s
-
-        # Set slider to the last used offset for this orient
-        set Slice($s,offset) [Slicer GetOffset $s]
-
-        # Change text on menu button
-        MainSlicesConfigGui $s fOrient.mbOrient$s "-text $orient"
-        $Slice($s,lOrient) config -text $orient
-
-        # Anno
-        switch $Slice($s,orient) {
-            "Axial" {
-                Anno($s,top,mapper)   SetInput A
-                Anno($s,bot,mapper)   SetInput P
-                Anno($s,left,mapper)  SetInput R
-                Anno($s,right,mapper) SetInput L
-            }
-            "AxiSlice" {
-                Anno($s,top,mapper)   SetInput A
-                Anno($s,bot,mapper)   SetInput P
-                Anno($s,left,mapper)  SetInput R
-                Anno($s,right,mapper) SetInput L
-            }
-            "Sagittal" {
-                Anno($s,top,mapper)   SetInput S
-                Anno($s,bot,mapper)   SetInput I
-                Anno($s,left,mapper)  SetInput A 
-                Anno($s,right,mapper) SetInput P 
-            }
-            "SagSlice" {
-                Anno($s,top,mapper)   SetInput S
-                Anno($s,bot,mapper)   SetInput I
-                Anno($s,left,mapper)  SetInput A 
-                Anno($s,right,mapper) SetInput P 
-            }
-            "Coronal" {
-                Anno($s,top,mapper)   SetInput S
-                Anno($s,bot,mapper)   SetInput I
-                Anno($s,left,mapper)  SetInput R
-                Anno($s,right,mapper) SetInput L
-            }
-            "CorSlice" {
-                Anno($s,top,mapper)   SetInput S
-                Anno($s,bot,mapper)   SetInput I
-                Anno($s,left,mapper)  SetInput R
-                Anno($s,right,mapper) SetInput L
-            }
-            default {
-                Anno($s,top,mapper)   SetInput " " 
-                Anno($s,bot,mapper)   SetInput " " 
-                Anno($s,left,mapper)  SetInput " " 
-                Anno($s,right,mapper) SetInput " " 
-            }
-        }
-    }
-}
-
-#-------------------------------------------------------------------------------
-# .PROC MainSlicesSetOrient
-# Set one slice window to have some orientation (i.e. Axial, etc)
-# 
-# .ARGS
-# s int slice window (0,1,2)
-# orient string one of Axial AxiSlice Sagittal SagSlice, etc. from menu
-# .END
-#-------------------------------------------------------------------------------
-proc MainSlicesSetOrient {s orient} {
-    global Slice Volume View Module
-
-    Slicer ComputeNTPFromCamera $View(viewCam)
-
-    Slicer SetOrientString $s $orient
-    set Slice($s,orient) [Slicer GetOrientString $s]
-
-    # Always update Slider Range when change Back volume or orient
-    MainSlicesSetSliderRange $s
-
-    # Set slider increments
-    MainSlicesSetOffsetIncrement $s
-    
-        # Set slider to the last used offset for this orient
-        set Slice($s,offset) [Slicer GetOffset $s]
-    
-
-    # Change text on menu button
-    MainSlicesConfigGui $s fOrient.mbOrient$s "-text $orient"
-    $Slice($s,lOrient) config -text $orient
-
-    # Anno
     switch $orient {
         "Axial" {
             Anno($s,top,mapper)   SetInput A
@@ -1107,7 +1024,80 @@ proc MainSlicesSetOrient {s orient} {
             Anno($s,right,mapper) SetInput " " 
         }
     }
+}  
+
+
+#-------------------------------------------------------------------------------
+# .PROC MainSlicesSetOrientAll
+# Set all slice windows to have some orientation (i.e. Axial, etc)
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MainSlicesSetOrientAll {orient} {
+    global Slice View
+
+    
+    Slicer ComputeNTPFromCamera $View(viewCam)
+
+    Slicer SetOrientString $orient
+
+    foreach s $Slice(idList) {
+        set orient [Slicer GetOrientString $s]
+        set Slice($s,orient) $orient
+
+        # Always update Slider Range when change Back volume or orient
+        MainSlicesSetSliderRange $s
+
+        # Set slider increments
+        MainSlicesSetOffsetIncrement $s
+
+        # Set slider to the last used offset for this orient
+        set Slice($s,offset) [Slicer GetOffset $s]
+
+        # Change text on menu button
+        MainSlicesConfigGui $s fOrient.mbOrient$s "-text $orient"
+        $Slice($s,lOrient) config -text $orient
+
+        # Anno
+        MainSlicesSetAnno $s $Slice($s,orient)
+    }
 }
+
+#-------------------------------------------------------------------------------
+# .PROC MainSlicesSetOrient
+# Set one slice window to have some orientation (i.e. Axial, etc)
+# 
+# .ARGS
+# s int slice window (0,1,2)
+# orient string one of Axial AxiSlice Sagittal SagSlice, etc. from menu
+# .END
+#-------------------------------------------------------------------------------
+proc MainSlicesSetOrient {s orient} {
+    global Slice Volume View Module
+
+    Slicer ComputeNTPFromCamera $View(viewCam)
+
+    Slicer SetOrientString $s $orient
+    set Slice($s,orient) [Slicer GetOrientString $s]
+
+    # Always update Slider Range when change Back volume or orient
+    MainSlicesSetSliderRange $s
+
+    # Set slider increments
+    MainSlicesSetOffsetIncrement $s
+    
+        # Set slider to the last used offset for this orient
+        set Slice($s,offset) [Slicer GetOffset $s]
+    
+
+    # Change text on menu button
+    MainSlicesConfigGui $s fOrient.mbOrient$s "-text $orient"
+    $Slice($s,lOrient) config -text $orient
+
+    # Anno
+    MainSlicesSetAnno $s $orient    
+}
+
 
 #-------------------------------------------------------------------------------
 # .PROC MainSlicesResetZoomAll
