@@ -89,7 +89,7 @@ proc DataInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.54 $} {$Date: 2004/04/13 21:00:04 $}]
+        {$Revision: 1.55 $} {$Date: 2005/02/11 00:26:26 $}]
 
     set Data(index) ""
     set Data(clipboard) ""
@@ -821,6 +821,7 @@ proc DataAddTransform {append firstSel lastSel {CallUpdate "1"} } {
     vtkMrmlTransformNode Transform($i,node)
     set n Transform($i,node)
     $n SetID $i
+    $n SetName transform$i
     if {$append == 1} {
         Mrml(dataTree) AddItem $n
     } else {
