@@ -162,7 +162,7 @@ proc FMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.8 $} {$Date: 2004/06/17 18:59:04 $}]
+        {$Revision: 1.9 $} {$Date: 2004/06/17 19:47:14 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -596,7 +596,9 @@ proc FMRIEngineLoadAnalyzeVolumes {} {
         set load "Loading volume:\n"
         append load $volName
         set FMRIEngine(name) $load
-
+        
+        # VolAnalyzeApply without argument is for Cindy's data (IS scan order) 
+        # VolAnalyzeApply "PA" is for Chandlee's data (PA scan order) 
         set id [VolAnalyzeApply "PA"]
         set FMRIEngine($t,id) $id
 
