@@ -62,6 +62,7 @@
 #   VolumeMathDoAnd
 #   VolumeMathDoMultiply
 #   VolumeMathDoMask
+#   VolumeMathDoMaskStat
 #   VolumeMathDoCast
 #==========================================================================auto=
 #-------------------------------------------------------------------------------
@@ -160,7 +161,7 @@ proc VolumeMathInit {} {
     #   appropriate info when the module is checked in.
     #   
         lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.37 $} {$Date: 2004/04/13 21:00:11 $}]
+        {$Revision: 1.38 $} {$Date: 2004/04/22 15:17:41 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -197,6 +198,9 @@ proc VolumeMathInit {} {
     set VolumeMath(interpolationMode) Linear
     #A check to see if the popup box is open
     set VolumeMath(resampMenuOpen) 0
+
+    # Set the variable for the histogram stats text file
+    set VolumeMath(fileName) "" 
 
     # sp 2003-12-07
     set ::VolumeMath(castType) Char
@@ -367,11 +371,10 @@ files. Sometimes it doesn't work.
     frame $f.fResampButton -bg $Gui(activeWorkspace)
     #sp - 2003-08-11
     frame $f.fMaskLabel -bg $Gui(activeWorkspace)
+    frame $f.fMaskStatButton -bg $Gui(activeWorkspace)
     frame $f.fCastType -bg $Gui(activeWorkspace)
     frame $f.fPack -bg $Gui(activeWorkspace)
-
-  
-    pack $f.fSelectMath $f.fGrid $f.fResampButton $f.fMaskLabel $f.fCastType $f.fPack  -side top -padx 0 -pady $Gui(pad)
+    pack $f.fSelectMath $f.fGrid $f.fResampButton $f.fMaskLabel $f.fMaskStatButton $f.fCastType $f.fPack  -side top -padx 0 -pady $Gui(pad)
 
     #-------------------------------------------
     # Math->SelectMath
@@ -393,7 +396,8 @@ files. Sometimes it doesn't work.
     #
 
     set row 1
-    foreach p "Subtract Add Resample Abs DistMap Hausdorff Multiply Statistics Mask Cast" {
+
+    foreach p "Subtract Add Resample Abs DistMap Hausdorff Multiply Statistics Mask MaskStat Cast" {
         eval {radiobutton $f.f.$row.r$p \
             -text "$p" -command "VolumeMathSetMathType" \
             -variable VolumeMath(MathType) -value $p -width 10 \
@@ -459,6 +463,22 @@ files. Sometimes it doesn't work.
     #Save the path to the widget so that it can be accessed later
     set VolumeMath(maskLabelFrame) $f
     pack forget $VolumeMath(maskLabelFrame)
+
+
+    #--------*********--------
+    # Math->Mask Stat File
+    # (added by Lida)
+    #--------*********--------
+    set f $fMath.fMaskStatButton
+
+    #DevAddButton $f.bMaskStatFileButton "Mask Stat Button" ""
+    DevAddFileBrowse $f VolumeMath fileName "Output File:" [] "txt" [] \
+        "Save" "Output File" "Choose the file where the output will be written." "Absolute"
+
+    #Save the path to the widget so that it can be accessed later
+    #set VolumeMath(MaskStatFButton) $f.bMaskStatFileButton
+    set VolumeMath(MaskStatFButton) $f
+    pack forget $VolumeMath(MaskStatFButton)
 
     #sp - 2003-12-07
     #-------------------------------------------
@@ -1009,12 +1029,17 @@ proc VolumeMathSetMathType {} {
     set a $f.lVolume2 
     set b $f.lVolume1 
     set c $f.lVolume3 
+    set d $f.lVolume4
 
     if {$VolumeMath(MathType) != "Resample"} {
         pack forget $VolumeMath(ResampParamButton)
     }
     if {$VolumeMath(MathType) != "Mask"} {
         pack forget $VolumeMath(maskLabelFrame)
+    }
+    if {$VolumeMath(MathType) != "MaskStat"} {
+        pack forget $VolumeMath(MaskStatFButton)
+    pack forget $VolumeMath(maskLabelFrame)
     }
     if {$VolumeMath(MathType) != "Cast"} {
         pack forget $VolumeMath(castTypeFrame)
@@ -1059,6 +1084,14 @@ proc VolumeMathSetMathType {} {
         $c configure -text "Masked Output:"
         VolumeMathSetMaskLabel
         pack $VolumeMath(maskLabelFrame)
+    } elseif {$VolumeMath(MathType) == "MaskStat" } {
+    $a configure -text "Volume to Mask:"
+    $b configure -text "Label Map:"
+    $c configure -text "Masked Output:"
+    VolumeMathSetMaskLabel
+    pack $VolumeMath(maskLabelFrame)
+    VolumeMathSetFileName
+        pack $VolumeMath(MaskStatFButton)    
     } elseif {$VolumeMath(MathType) == "Cast" } {
         $a configure -text "Volume to Cast:"
         $b configure -text "(not used)"
@@ -1185,12 +1218,13 @@ proc VolumeMathDoMath {} {
     if { $VolumeMath(MathType) == "Statistics"} {VolumeMathDoStatistics}
     if { $VolumeMath(MathType) == "Multiply"} {VolumeMathDoMultiply}
     if { $VolumeMath(MathType) == "Mask"} {VolumeMathDoMask}
+    if { $VolumeMath(MathType) == "MaskStat"} {VolumeMathDoMaskStat}
     if { $VolumeMath(MathType) == "Cast"} {VolumeMathDoCast}
 
     # This is necessary so that the data is updated correctly.
     # If the programmers forgets to call it, it looks like nothing
     # happened. (skip for statistics that doesn't create a new volume)
-    if { $VolumeMath(MathType) != "Statistics"} {
+    if { $VolumeMath(MathType) != "Statistics" } {  # && $VolumeMath(MathType) != "MaskStat"} {
         set v3 $VolumeMath(Volume3)
         MainVolumesUpdate $v3
     }
@@ -1712,6 +1746,78 @@ proc VolumeMathDoMask {} {
     mathThresh Delete
 }
 
+
+#########
+#
+#########
+proc VolumeMathDoMaskStat {} {
+    global VolumeMath Volume
+
+    # Check to make sure no volume is none
+    if {[VolumeMathCheckErrors] == 1} {
+    return
+    }
+    if {[VolumeMathPrepareResultVolume] == 1} {
+    return
+    }
+    
+    set v3 $VolumeMath(Volume3)
+    set v2 $VolumeMath(Volume2)
+    set v1 $VolumeMath(Volume1)
+
+    # validate input for saving the file
+    if {$VolumeMath(fileName) == ""} {
+    DevErrorWindow "Please enter a filename first."
+    return
+    }
+    # create the binary volume of the label catch "mathThresh Delete"
+    vtkImageThreshold mathThresh
+    mathThresh SetInput [Volume($v1,vol) GetOutput]
+    mathThresh SetInValue 1
+    mathThresh SetOutValue 0
+    mathThresh ReplaceOutOn
+    mathThresh ThresholdBetween $VolumeMath(maskLabel) $VolumeMath(maskLabel)
+    
+    # set up the VolumeMath Mask
+    catch "MultMath Delete"
+    vtkImageMathematics MultMath
+    MultMath SetInput1 [Volume($v2,vol) GetOutput]
+    MultMath SetInput2 [mathThresh GetOutput]
+    MultMath SetOperationToMultiply
+
+    # start copying in the ouput data.
+    # taken from MainVolumesCopyData
+    Volume($v3,vol) SetImageData [MultMath GetOutput]
+    MainVolumesUpdate $v3
+
+    MultMath Delete
+    mathThresh Delete
+
+    # stuff from VolumeMathDoMath ...
+    set v3 $VolumeMath(Volume3)
+    MainVolumesUpdate $v3
+
+    # now do the statistics stuff ...
+    catch "stat1 Delete"
+    vtkImageStatistics stat1
+    stat1 IgnoreZeroOn
+    stat1 SetInput [Volume($v3,vol) GetOutput]
+    stat1 Update
+    
+    set msg1 "Statistics of [Volume($v3,node) GetName] \n"
+    set msg1 "$msg1 - Min: [stat1 GetMin] Max: [stat1 GetMax] \n"
+    set msg1 "$msg1 - Mean: [stat1 GetAverage] +/- std: [stat1 GetStdev] \n"
+    set msg1 "$msg1 \n (zero values ignored)"
+    tk_messageBox -message $msg1 -type ok
+
+    # write data to the file
+    set fileID [open $VolumeMath(fileName) "w"]
+    puts $fileID "$VolumeMath(fileName) \t min \t [stat1 GetMin] \t max \t [stat1 GetMax] \t mean \t [stat1 GetAverage] \t std \t [stat1 GetStdev] \n"
+    close $fileID
+    
+    stat1 Delete
+}
+
 #-------------------------------------------------------------------------------
 # .PROC VolumeMathDoCast
 #   Actually do the VolumeMath Cast
@@ -1846,4 +1952,18 @@ proc VolumeMathSetMaskLabel {} {
     } else {
         set VolumeMath(maskLabel) 0
     }
+}
+
+
+#---------
+#
+#---------
+proc VolumeMathSetFileName {} {
+    global VolumeMath Volume
+
+    set v $VolumeMath(Volume2)
+    
+    set name [Volume($v,node) GetName]
+    set default "_hist.txt"
+    set VolumeMath(fileName) $name$default
 }
