@@ -95,7 +95,7 @@ proc EMSegmentSetVtkPrivateSuperClassSetting {SuperClass} {
   set ClassIndex 0
   foreach i $EMSegment(Cattrib,$SuperClass,ClassList) {
     if {$EMSegment(Cattrib,$i,IsSuperClass)} {
-        if {[EMSegmentSetVtkSuperClassSetting $i]} {return [EMSegment(Cattrib,$i,vtkImageEMSuperClass) GetErrorFlag]}
+        if {[EMSegmentSetVtkPrivateSuperClassSetting $i]} {return [EMSegment(Cattrib,$i,vtkImageEMSuperClass) GetErrorFlag]}
           EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) AddSubClass EMSegment(Cattrib,$i,vtkImageEMSuperClass) $ClassIndex
     } else {
       catch {EMSegment(Cattrib,$i,vtkImageEMClass) destroy}
@@ -200,7 +200,7 @@ proc EMSegmentSetVtkLocalSuperClassSetting {SuperClass} {
   set ClassIndex 0
   foreach i $EMSegment(Cattrib,$SuperClass,ClassList) {
     if {$EMSegment(Cattrib,$i,IsSuperClass)} {
-        if {[EMSegmentSetVtkPrivateSuperClassSetting $i]} {return [EMSegment(Cattrib,$i,vtkImageEMSuperClass) GetErrorFlag]}
+        if {[EMSegmentSetVtkLocalSuperClassSetting $i]} {return [EMSegment(Cattrib,$i,vtkImageEMSuperClass) GetErrorFlag]}
           EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) AddSubClass EMSegment(Cattrib,$i,vtkImageEMSuperClass) $ClassIndex
     } else {
       catch {EMSegment(Cattrib,$i,vtkImageEMClass) destroy}
