@@ -170,16 +170,6 @@ proc EdChangeIslandApply {} {
 
     EdSetupBeforeApplyEffect $v $Ed($e,scope) Native
 
-    # Only apply to native slices
-    if {[set native [EdIsNativeSlice]] != ""} {
-        # TODO - remove comment if this works
-        puts "Warning: check results - now allowed, but fromerly failed with:"
-        puts " Please click on the slice with orient = $native."
-        puts "-sp 2002-09-30"
-        #tk_messageBox -message "Please click on the slice with orient = $native."
-        #return
-    }
-
     set Gui(progressText) "Change Island in [Volume($v,node) GetName]"
     
     set fg      $Label(label)
