@@ -206,10 +206,6 @@ proc GetHeaderInfo {img1 num2 node tk} {
 	set hdr1 [ReadHeader $img1 1 $Path(printHeader) $tk]
 	set hdr2 [ReadHeader $img2 1 $Path(printHeader) $tk]
 
-	puts "hdr1     $hdr1"
-	puts ""
-	puts "hdr2     $hdr2"
-
 	# Parse headers
 	ParsePrintHeader $hdr1 Header1
 	ParsePrintHeader $hdr2 Header2
@@ -237,6 +233,6 @@ proc GetHeaderInfo {img1 num2 node tk} {
 	if {[$node GetScanOrder] == "ER"} {
 	    return "-1" 
 	} else {
-		return "0"
-	    }
+	    return "0"
+	}
 }
