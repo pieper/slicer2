@@ -259,7 +259,7 @@ proc EndoscopicInit {} {
     set Module($m,category) "Visualisation"
     
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.80 $} {$Date: 2004/11/19 19:05:11 $}] 
+    {$Revision: 1.81 $} {$Date: 2004/11/22 18:23:05 $}] 
        
     # Define Procedures
     #------------------------------------
@@ -1274,7 +1274,7 @@ proc EndoscopicBuildGUI {} {
     <BR> - by default, both a camera and focal point landmark will be added at this position
     <BR><B>To constrain the camera on the path</B>:
     <BR> -After a path or centerline is created, you can manually insert visible fiducials on the model while constrain the camera along the path.
-    <BR> -Point the cursor on the 3D model or on the 2D slices below, and press the key 't', the endoscope will jump to the closet point along the path and aim at the selected location. If you have the flattened colon open, just double click on the intended location, and the endoscope will perform the same task. Press <I>CreateTarget</I> to insert a visible fiducial point on the 3D model.
+    <BR> -Point the cursor on the 3D model or on the 2D slices below, and press the key 't', the endoscope will jump to the closet point along the path, aim at the selected location, and create a visible target. If you have the flattened colon open, just press shift + double click left mouse button on the intended location, and the endoscope will perform the same task. You can also set the camera location and orientation manually and press <I>CreateTarget</I> to insert a visible fiducial point on the 3D model.
     <BR><B>To select a landmark</B>:
     <BR> - Click on the landmark position in the scrollable text area, the line will be highlighted in red and the camera will jump to that landmark in the 3D view.
     <BR> - or Point the mouse at a landmark in the 3D view and press 'p'.
@@ -1707,11 +1707,12 @@ Rotate the axis by pressing the right mouse button and moving the mouse."
     and the endoscope will jump to the first target with respect to the path you have selected in Step 2.
     
     --Create Targets: Point the cursor on the 3D models or on the 2D slices below, and press the key 't',
-    the endoscope will jump to the closest landmark on the path and aim itself at the selected location.
-    If you have the flattened colon open, just Double Click on the location, and the endoscope will perform
-    the same task.
+    the endoscope will jump to the closest landmark on the path, aim itself at the selected location, 
+    and create a fiducial point on the surface of the 3D model.
+    If you have the flattened colon open, just press Shift+Double Click left mouse button on the location, 
+    and the endoscope will perform the same task.
     
-    You can further adjust the endoscope's location or oriention as wish. When you are ready, click 'Create Target',
+    You can also manually adjust the endoscope's location or oriention as wish. When you are ready, click 'Create Target',
     a fiducial point will be added on the surface of the 3D model. Repeat this procedure and create a series of targets.
     Click the fast forward '>>>' and backward '<<<' button to jump between targets.
     
