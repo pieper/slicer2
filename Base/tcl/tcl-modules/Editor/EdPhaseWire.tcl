@@ -696,6 +696,29 @@ proc EdPhaseWireBuildGUI {} {
     frame $f.fWL   -bg $Gui(activeWorkspace)
     pack $f.fWL -side top  -pady $Gui(pad) -fill x
 
+    frame $f.fGrid   -bg $Gui(activeWorkspace)
+    pack $f.fGrid -side top  -pady $Gui(pad) -fill x
+
+
+    #-------------------------------------------
+    # TabbedFrame->Advanced->Settings->Grid frame 
+    #-------------------------------------------
+    set f $Ed(EdPhaseWire,frame).fTabbedFrame.fAdvanced.fSettings.fGrid
+    
+    # Output label
+    eval {button $f.bOutput -text "Click Color:" \
+	    -command "ShowLabels EdPhaseWireClickLabel"} $Gui(WBA)
+    TooltipAdd $f.bOutput \
+	    "Choose output label value to draw on the slice"
+    eval {entry $f.eOutput -width 6 -textvariable Label(label)} $Gui(WEA)
+    bind $f.eOutput <Return>   "EdPhaseWireClickLabel"
+    bind $f.eOutput <FocusOut> "EdPhaseWireClickLabel"
+    eval {entry $f.eName -width 14 -textvariable Label(name)} $Gui(WEA) \
+	    {-bg $Gui(activeWorkspace) -state disabled}
+    grid $f.bOutput $f.eOutput $f.eName -padx 2 -pady $Gui(pad)
+    grid $f.eOutput $f.eName -sticky w
+    
+    lappend Label(colorWidgetList) $f.eName
 
     #-------------------------------------------
     # TabbedFrame->Advanced->Settings->Slider Frame
@@ -1359,6 +1382,18 @@ proc EdPhaseWireRenderInteractive {} {
     global Ed
     
     Render$Ed(EdPhaseWire,render)
+}
+
+proc EdPhaseWireClickLabel {{label ""} } {
+    global Label Slice
+
+    if {$label == ""} {
+	set label $Label(label)	
+    }
+    # set the label for the clicked-on points
+    foreach s $Slice(idList) {
+	Ed(EdPhaseWire,lwPath$s) SetClickLabel  $label
+    }
 }
 
 #-------------------------------------------------------------------------------

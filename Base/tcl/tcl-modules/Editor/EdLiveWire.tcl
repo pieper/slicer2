@@ -1879,3 +1879,14 @@ proc EdLiveWireWriteFeatureParams {} {
     puts "Saved settings to file $Ed(EdLiveWire,trainingOutputFileName)"
 }
 
+proc EdLiveWireClickLabel {{label ""} } {
+    global Label Slice
+
+    if {$label == ""} {
+	set label $Label(label)	
+    }
+    # set the label for the clicked-on points
+    foreach s $Slice(idList) {
+	Ed(EdLiveWire,lwPath$s) SetClickLabel  $label
+    }
+}

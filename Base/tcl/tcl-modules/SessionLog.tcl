@@ -100,7 +100,7 @@ proc SessionLogInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.10 $} {$Date: 2001/06/03 14:02:42 $}]
+	    {$Revision: 1.11 $} {$Date: 2001/06/26 20:44:44 $}]
 
     # Initialize module-level variables
     set SessionLog(fileName)  ""
@@ -109,9 +109,12 @@ proc SessionLogInit {} {
 
     # default directory to log to (used for auto logging)
     # (should be set from Options.xml)
-    set SessionLog(defaultDir) "/scratch/images/slicerLogOld"
+    #set SessionLog(defaultDir) [file join $Path(program) logs]
+    set SessionLog(defaultDir) ""
 
     if {[file isdirectory $SessionLog(defaultDir)] == 0} {
+	puts $SessionLog(defaultDir) 
+	#puts "No logging enabled"
 	set SessionLog(defaultDir) ""
     }
     
