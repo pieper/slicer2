@@ -380,7 +380,7 @@ proc MainInit {} {
 
         # Set version info
     lappend Module(versions) [ParseCVSInfo Main \
-        {$Revision: 1.89 $} {$Date: 2002/11/13 23:14:50 $}]
+        {$Revision: 1.90 $} {$Date: 2002/11/14 20:26:37 $}]
 
     # Call each "Init" routine that's not part of a module
     #-------------------------------------------
@@ -1707,7 +1707,9 @@ proc MainSaveMRMLQuery { } {
 # .END
 #-------------------------------------------------------------------------------
 proc MainExitProgram { } {
-    global Module
+    global Module View
+
+    set View(render_on) 0
     
     # logging
     if {[IsModule SessionLog] == 1} {
