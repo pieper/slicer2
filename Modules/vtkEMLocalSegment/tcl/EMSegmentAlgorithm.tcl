@@ -51,6 +51,7 @@
 #-------------------------------------------------------------------------------
 # .PROC  EMSegmentSetVtkSuperClassSetting
 # Setting up everything for the super classes  
+# Only loaded for private version
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -78,23 +79,21 @@ proc EMSegmentSetVtkSuperClassSetting {SuperClass NumInputImagesSet } {
       EMSegment(vtkEMSegment) CreateNextClass
       EMSegment(vtkEMSegment) SetLabel             $EMSegment(Cattrib,$i,Label) 
       EMSegment(vtkEMSegment) SetShapeParameter    $EMSegment(Cattrib,$i,ShapeParameter)
-      if {$EMSegment(Cattrib,$i,ProbabilityData) != $Volume(idNone)} {
-          EMSegment(vtkEMSegment) SetProbDataLocal 1 
+      if {$EMSegment(Cattrib,$i,ProbabilityData) != $Volume(idNone) && ($EMSegment(Cattrib,$i,LocalPriorWeight) > 0.0)} {
+          EMSegment(vtkEMSegment) SetProbDataWeight $EMSegment(Cattrib,$i,LocalPriorWeight)
           EMSegment(vtkEMSegment) SetInputIndex $NumInputImagesSet [Volume($EMSegment(Cattrib,$i,ProbabilityData),vol) GetOutput]
           incr NumInputImagesSet
       } else {
-          EMSegment(vtkEMSegment) SetProbDataLocal 0 
+          EMSegment(vtkEMSegment) SetProbDataWeight 0.0 
       }
 
       # Necessary for the shape matcher 
-      if {$EMSegment(SegmentMode) == 2} {
-        if {$EMSegment(Cattrib,$i,WeightConfidenceData) != $Volume(idNone)} {
+      if {$EMSegment(Cattrib,$i,WeightConfidenceData) != $Volume(idNone)} {
           EMSegment(vtkEMSegment) SetWeightConfidence 1 
           EMSegment(vtkEMSegment) SetInputIndex $NumInputImagesSet [Volume($EMSegment(Cattrib,$i,WeightConfidenceData),vol) GetOutput]
           incr NumInputImagesSet
-        } else {
+      } else {
           EMSegment(vtkEMSegment) SetWeightConfidence 0
-        }
       }
 
       for {set y 0} {$y < $EMSegment(NumInputChannel)} {incr y} {
@@ -113,13 +112,10 @@ proc EMSegmentSetVtkSuperClassSetting {SuperClass NumInputImagesSet } {
           } 
       }
     }
-    # puts "blubber $i $EMSegment(Cattrib,$i,Prob)"
     EMSegment(vtkEMSegment) SetTissueProbability $EMSegment(Cattrib,$i,Prob)
-    # EMSegment(vtkEMSegment) SetLocalPriorWeight $EMSegment(Cattrib,$i,LocalPriorWeight)
-    # for {set y 0} {$y < $EMSegment(NumInputChannel)} {incr y} {
-    #    EMSegment(vtkEMSegment) SetInputChannelWeights $EMSegment(Cattrib,$i,InputChannelWeights,$y)
-    # }
-    # puts "$i is superclass $EMSegment(Cattrib,$i,IsSuperClass)"
+    for {set y 0} {$y < $EMSegment(NumInputChannel)} {incr y} {
+       EMSegment(vtkEMSegment) SetInputChannelWeights $EMSegment(Cattrib,$i,InputChannelWeights,$y) $y
+    }
     if {$EMSegment(Cattrib,$i,IsSuperClass)} {
       set NumInputImagesSet [EMSegmentSetVtkSuperClassSetting $i $NumInputImagesSet]
       # just to go back to super class => go up a level 
@@ -195,14 +191,15 @@ proc EMSegmentAlgorithmStart { } {
    global EMSegment Volume 
    set NumInputImagesSet 0
    # EMLocalSegmentation: Multiple Input Images
-       if {$EMSegment(SegmentMode) == 1} {vtkImageEMLocalSegmenter EMSegment(vtkEMSegment) 
-       } else {vtkImageEMPrivateSegmenter EMSegment(vtkEMSegment) }
-       # How many input images do you have
-       EMSegment(vtkEMSegment) SetNumInputImages $EMSegment(NumInputChannel) 
-       EMSegment(vtkEMSegment) SetNumberOfTrainingSamples $EMSegment(NumberOfTrainingSamples)
-       EMSegment(vtkEMSegment) SetBiasPrint $EMSegment(BiasPrint)
+   if {$EMSegment(SegmentMode) == 1} {vtkImageEMLocalSegmenter EMSegment(vtkEMSegment) 
+   } else {vtkImageEMPrivateSegmenter EMSegment(vtkEMSegment) }
 
-       if {$EMSegment(SegmentMode) > 1} {
+   # How many input images do you have
+   EMSegment(vtkEMSegment) SetNumInputImages $EMSegment(NumInputChannel) 
+   EMSegment(vtkEMSegment) SetNumberOfTrainingSamples $EMSegment(NumberOfTrainingSamples)
+   EMSegment(vtkEMSegment) SetBiasPrint $EMSegment(BiasPrint)
+
+   if {$EMSegment(SegmentMode) > 1} {
           set NumInputImagesSet [EMSegmentSetVtkSuperClassSetting 0 0]
  
           # Transfer image information
@@ -227,9 +224,9 @@ proc EMSegmentAlgorithmStart { } {
                   }
               }
           }
-       } else {
-          EMSegmentSetVtkClassSettingOld
-       }
+   } else {
+       EMSegmentSetVtkClassSettingOld
+   }
 
    #----------------------------------------------------------------------------
    # Transfering General Information

@@ -138,26 +138,14 @@
 proc EMSegmentInit {} {
     global EMSegment Module Volume Model Mrml Color Slice Gui env
     # For later version where we can use local prios
-    # Normal     = 0
-    # LocalPrior = 1
-    # MultiDim   = 2
-    if {[info exists env(SLICER_HOME)] == 0 || $env(SLICER_HOME) == ""} {
-      set EMSegment(SegmentMode) 0
+    # Public Version  = 1
+    # Private Version = 2
+
+    if {[info exists env(SLICER_HOME)] != 0 && $env(SLICER_HOME) != "" && [file exist [file join $env(SLICER_HOME) Modules/vtkEMPrivateSegment/builds/$env(BUILD)/bin]]} {
+      puts "Load Private EM-Version"
+      set EMSegment(SegmentMode) 2
     } else {
-        if {[file exist [file join $env(SLICER_HOME) Modules/vtkEMPrivateSegment/builds/$env(BUILD)/bin]]} {
-          puts "Load Local EM-Version"
-          set EMSegment(SegmentMode) 2
-          # package require vtkEMLocalSegment
-        } else {
-           if {[file exist [file join $env(SLICER_HOME) Modules/vtkEMLocalSegment/builds/$env(BUILD)/bin]]} {
-             set EMSegment(SegmentMode) 1
-             # puts "Load Public Version 2.0"
-             # package require vtkEMLocalSegment
-           } else {
-             set EMSegment(SegmentMode) 0
-             # puts "Load Public Version 1.0"
-           }
-        }
+      set EMSegment(SegmentMode) 1
     } 
     # EMSegment(SegmentMode) == 0 <=> Set all Probabilty maps to none, EMSegment(SegmentMode) == 1
 
@@ -245,7 +233,7 @@ proc EMSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.10 $} {$Date: 2003/10/25 23:59:05 $}]
+        {$Revision: 1.11 $} {$Date: 2003/10/26 03:28:40 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -313,9 +301,10 @@ proc EMSegmentInit {} {
     set EMSegment(Cattrib,0,ColorCode) $Gui(activeWorkspace)
     set EMSegment(Cattrib,0,Label) $EMSegment(Cattrib,0,Name)
     set EMSegment(Cattrib,0,Node) ""
+    set EMSegment(Cattrib,0,LocalPriorWeight) 0.0 
 
     foreach dir  $EMSegment(CIMList) { 
-    set EMSegment(Cattrib,0,CIMMatrix,$dir,Node) ""
+       set EMSegment(Cattrib,0,CIMMatrix,$dir,Node) ""
     }
 
     # Current Super Class
@@ -924,7 +913,8 @@ Description of the tabs:
 
     frame $f.fLeft.fProb -bg $Gui(activeWorkspace) 
     frame $f.fLeft.fShape -bg $Gui(activeWorkspace)
-    pack $f.fLeft.fProb $f.fLeft.fShape -side top -padx 0 -pady 1 -fill x
+    frame $f.fLeft.fPriorWeight -bg $Gui(activeWorkspace)
+    pack $f.fLeft.fProb $f.fLeft.fShape $f.fLeft.fPriorWeight -side top -padx 0 -pady 1 -fill x
 
     eval {label $f.fLeft.fProb.lText -text "Prob.:"} $Gui(WLA)
     EMSegmentAddGlobalProbEntry $f.fLeft.fProb $Sclass 1
@@ -936,8 +926,13 @@ Description of the tabs:
     DevAddLabel $f.fLeft.fShape.lShape "Shape Parameter: "
     eval {entry $f.fLeft.fShape.eShape -width 4 -textvariable EMSegment(Cattrib,$Sclass,ShapeParameter) } $Gui(WEA)
     set EMSegment(Cl-eShapeParameter)  $f.fLeft.fShape.eShape
+
+    DevAddLabel $f.fLeft.fPriorWeight.lWeight "Prob Data Weight: "
+    eval {entry $f.fLeft.fPriorWeight.eWeight -width 4 -textvariable EMSegment(Cattrib,$Sclass,LocalPriorWeight) } $Gui(WEA)
+    set EMSegment(Cl-ePriorWeight) $f.fLeft.fPriorWeight.eWeight
     if {$EMSegment(SegmentMode) == 2} {     
       pack $f.fLeft.fShape.lShape $f.fLeft.fShape.eShape -side left
+      pack $f.fLeft.fPriorWeight.lWeight $f.fLeft.fPriorWeight.eWeight -side left
     }
 
     #Define Color
@@ -1663,6 +1658,14 @@ proc EMSegmentUpdateMRML {} {
         set EMSegment(NewSuperClassName) [SegmenterSuperClass($pid,node) GetName]
         EMSegmentChangeSuperClassName 0 -1
 
+        set InputChannelWeights [SegmenterClass($pid,node) GetInputChannelWeights]
+        for {set y 0} {$y < $EMSegment(MaxInputChannelDef)} {incr y} {
+           if {[lindex $InputChannelWeights $y] == ""} {set EMSegment(Cattrib,$NumClass,InputChannelWeights,$y) 1.0
+       } else {
+             set EMSegment(Cattrib,$NumClass,InputChannelWeights,$y) [lindex $InputChannelWeights $y]
+       }
+        }
+
         set EMSegment(Cattrib,$NumClass,Prob) [SegmenterSuperClass($pid,node) GetProb]
         # Create Sub Classes
         set EMSegment(NumClassesNew)          [SegmenterSuperClass($pid,node) GetNumClasses]       
@@ -1696,6 +1699,8 @@ proc EMSegmentUpdateMRML {} {
         set LocalPriorPrefix [SegmenterClass($pid,node) GetLocalPriorPrefix]
         set LocalPriorName   [SegmenterClass($pid,node) GetLocalPriorName]
         set LocalPriorRange  [SegmenterClass($pid,node) GetLocalPriorRange]
+        set EMSegment(Cattrib,$NumClass,LocalPriorWeight)    [SegmenterClass($pid,node) GetLocalPriorWeight]
+
         set EMSegment(Cattrib,$NumClass,ProbabilityData) $Volume(idNone) 
 
         set WeightConfidenceName   [SegmenterClass($pid,node) GetWeightConfidenceName]
@@ -1706,14 +1711,19 @@ proc EMSegmentUpdateMRML {} {
                if {([lindex $VolAttr 2] == $LocalPriorPrefix) || ([lindex $VolAttr 3] == $LocalPriorPrefix)} {set EMSegment(Cattrib,$NumClass,ProbabilityData) $VolID
                }
             }
-        if {([lindex $VolAttr 0] == $WeightConfidenceName) && ($WeightConfidenceName != "") } { set EMSegment(Cattrib,$NumClass,WeightConfidenceData) $VolID }
+            if {([lindex $VolAttr 0] == $WeightConfidenceName) && ($WeightConfidenceName != "") } { set EMSegment(Cattrib,$NumClass,WeightConfidenceData) $VolID }
         }
 
         set index 0
         set LogCovariance  [SegmenterClass($pid,node) GetLogCovariance]
         set LogMean [SegmenterClass($pid,node) GetLogMean]
+        set InputChannelWeights [SegmenterClass($pid,node) GetInputChannelWeights]
         for {set y 0} {$y < $EMSegment(MaxInputChannelDef)} {incr y} {
            set EMSegment(Cattrib,$NumClass,LogMean,$y) [lindex $LogMean $y]
+           if {[lindex $InputChannelWeights $y] == ""} {set EMSegment(Cattrib,$NumClass,InputChannelWeights,$y) 1.0
+       } else {
+             set EMSegment(Cattrib,$NumClass,InputChannelWeights,$y) [lindex $InputChannelWeights $y]
+       }
            for {set x 0} {$x < $EMSegment(MaxInputChannelDef)} {incr x} {
               set EMSegment(Cattrib,$NumClass,LogCovariance,$y,$x)  [lindex $LogCovariance $index]
               incr index
@@ -1803,8 +1813,10 @@ proc EMSegmentProbVolumeSelectNode { type id ArrayName ModelLabel ModelName} {
     if {$id == ""} {
       set Text "None"
       set EMSegment(Cattrib,$ActiveClass,ProbabilityData) $Volume(idNone)
+      set EMSegment(Cattrib,$ActiveClass,LocalPriorWeight) 0.0
     } else {
         set EMSegment(Cattrib,$ActiveClass,ProbabilityData) $id
+        if {$EMSegment(Cattrib,$ActiveClass,LocalPriorWeight) == 0.0} {set EMSegment(Cattrib,$ActiveClass,LocalPriorWeight) 1.0}
         if {$id == -5} {
             set Text "Create New"
         } else { 
@@ -1982,22 +1994,28 @@ proc EMSegmentSaveSettingSuperClass {SuperClass LastNode} {
           # Check if UpdateNodeFlag is set => delete current node if it exists !
           if {$EMSegment(Cattrib,$i,Node) == ""} {set EMSegment(Cattrib,$i,Node) [MainMrmlInsertAfterNode $LastNode SegmenterSuperClass] }
           set pid [$EMSegment(Cattrib,$i,Node) GetID]
-          SegmenterSuperClass($pid,node) SetName        $EMSegment(Cattrib,$i,Name)
-          SegmenterSuperClass($pid,node) SetProb        $EMSegment(Cattrib,$i,Prob)  
-          SegmenterSuperClass($pid,node) SetNumClasses  [llength $EMSegment(Cattrib,$i,ClassList)]
-
+          SegmenterSuperClass($pid,node) SetName                $EMSegment(Cattrib,$i,Name)
+          SegmenterSuperClass($pid,node) SetProb                $EMSegment(Cattrib,$i,Prob)  
+          SegmenterSuperClass($pid,node) SetNumClasses          [llength $EMSegment(Cattrib,$i,ClassList)]
+          SegmenterSuperClass($pid,node) SetLocalPriorWeight    $EMSegment(Cattrib,$i,LocalPriorWeight)  
+          set InputChannelWeights ""
+          for {set y 0} {$y < $EMSegment(MaxInputChannelDef)} {incr y} {
+            lappend InputChannelWeights $EMSegment(Cattrib,$i,InputChannelWeights,$y)     
+      }
+          SegmenterSuperClass($pid,node) SetInputChannelWeights $InputChannelWeights
           set LastNode [EMSegmentSaveSettingSuperClass $i $EMSegment(Cattrib,$i,Node)]
       } else {
-      # A normal class
-      if {$EMSegment(Cattrib,$i,Node) == ""} {set EMSegment(Cattrib,$i,Node) [MainMrmlInsertAfterNode $LastNode SegmenterClass] }
+          # A normal class
+          if {$EMSegment(Cattrib,$i,Node) == ""} {set EMSegment(Cattrib,$i,Node) [MainMrmlInsertAfterNode $LastNode SegmenterClass] }
           set pid [$EMSegment(Cattrib,$i,Node) GetID]
           set LastNode $EMSegment(Cattrib,$i,Node)
 
           # Set Values
-          SegmenterClass($pid,node) SetName           "$EMSegment(Cattrib,$i,Label)"
-          SegmenterClass($pid,node) SetLabel          $EMSegment(Cattrib,$i,Label)
-          SegmenterClass($pid,node) SetProb           $EMSegment(Cattrib,$i,Prob)
-          SegmenterClass($pid,node) SetShapeParameter $EMSegment(Cattrib,$i,ShapeParameter)  
+          SegmenterClass($pid,node) SetName                "$EMSegment(Cattrib,$i,Label)"
+          SegmenterClass($pid,node) SetLabel               $EMSegment(Cattrib,$i,Label)
+          SegmenterClass($pid,node) SetProb                $EMSegment(Cattrib,$i,Prob)
+          SegmenterClass($pid,node) SetShapeParameter      $EMSegment(Cattrib,$i,ShapeParameter)
+          SegmenterSuperClass($pid,node) SetLocalPriorWeight $EMSegment(Cattrib,$i,LocalPriorWeight)    
           set v $EMSegment(Cattrib,$i,ProbabilityData)
           if {$v != $Volume(idNone) } {
              SegmenterClass($pid,node) SetLocalPriorPrefix     [Volume($v,node) GetFilePrefix]
@@ -2011,20 +2029,22 @@ proc EMSegmentSaveSettingSuperClass {SuperClass LastNode} {
           set v $EMSegment(Cattrib,$i,WeightConfidenceData) 
           if {$v != $Volume(idNone) } {
              SegmenterClass($pid,node) SetWeightConfidenceName [Volume($v,node) GetName]
-          if { [Volume($v,node) GetName] == ""} {puts "EMSegmentSaveSettingSuperClass: Error: No name was defined for the volume assigned to WeightConfidence!"
-          }
+             if { [Volume($v,node) GetName] == ""} {puts "EMSegmentSaveSettingSuperClass: Error: No name was defined for the volume assigned to WeightConfidence!" }
           } else { SegmenterClass($pid,node) SetWeightConfidenceName  ""}
 
           set LogMean ""
           set LogCovariance ""
+          set InputChannelWeights ""
           for {set y 0} {$y < $EMSegment(MaxInputChannelDef)} {incr y} {
             lappend LogMean $EMSegment(Cattrib,$i,LogMean,$y)
+            lappend InputChannelWeights $EMSegment(Cattrib,$i,InputChannelWeights,$y)
             for {set x 0} {$x < $EMSegment(MaxInputChannelDef)} {incr x} {
               lappend LogCovariance $EMSegment(Cattrib,$i,LogCovariance,$y,$x)
             }
             lappend LogCovariance "|"
           }
           SegmenterClass($pid,node) SetLogMean "$LogMean"
+          SegmenterSuperClass($pid,node) SetInputChannelWeights $InputChannelWeights
           SegmenterClass($pid,node) SetLogCovariance "[lrange $LogCovariance 0 [expr [llength $LogCovariance]-2]]"
        }
    }
@@ -2390,15 +2410,13 @@ proc EMSegmentDisplayClassDefinition {} {
     #---------------------
     $EMSegment(Cl-mbClasses) config -text "$EMSegment(Cattrib,$Sclass,Label)"
     
-    if {$EMSegment(SegmentMode) > 0} {
-      if {[lsearch -exact $Volume(idList) $EMSegment(Cattrib,$Sclass,ProbabilityData)] < 0} {
+    if {[lsearch -exact $Volume(idList) $EMSegment(Cattrib,$Sclass,ProbabilityData)] < 0} {
         set EMSegment(Cattrib,$Sclass,ProbabilityData) $Volume(idNone) 
-      }
-      set name [Volume($EMSegment(Cattrib,$Sclass,ProbabilityData),node) GetName]
-      $EMSegment(mbCl-ProbVolumeSelect) config -text $name
-      $EMSegment(mbEM-ProbVolumeSelect) config -text $name
-      set EMSegment(ProbVolumeSelect) $EMSegment(Cattrib,$Sclass,ProbabilityData)
     }
+    set name [Volume($EMSegment(Cattrib,$Sclass,ProbabilityData),node) GetName]
+    $EMSegment(mbCl-ProbVolumeSelect) config -text $name
+    $EMSegment(mbEM-ProbVolumeSelect) config -text $name
+    set EMSegment(ProbVolumeSelect) $EMSegment(Cattrib,$Sclass,ProbabilityData)
 }
 #-------------------------------------------------------------------------------
 # .PROC EMSegmentTransfereClassType
@@ -2970,6 +2988,7 @@ proc EMSegmentChangeClass {Sclass} {
  
     foreach prob $EMSegment(eGlobalProb) { $prob config  -textvariable EMSegment(Cattrib,$Sclass,Prob)}
     $EMSegment(Cl-eShapeParameter) config  -textvariable EMSegment(Cattrib,$Sclass,ShapeParameter)
+    $EMSegment(Cl-ePriorWeight) config -textvariable EMSegment(Cattrib,$Sclass,LocalPriorWeight)
 
     foreach col $EMSegment(bColorLabel) {
     $col config -bg $EMSegment(Cattrib,$Sclass,ColorCode) -text $EMSegment(Cattrib,$Sclass,Label)\
@@ -3424,6 +3443,7 @@ proc EMSegmentCreateDeleteClasses {ChangeGui DeleteNode} {
       set EMSegment(Cattrib,$i,Node)  ""   
       set EMSegment(Cattrib,$i,EndNode) ""
       set EMSegment(Cattrib,$i,IsSuperClass) 0
+      set EMSegment(Cattrib,$i,LocalPriorWeight) 0.0
 
       for {set y 0} {$y <  $EMSegment(MaxInputChannelDef)} {incr y} {
           set  EMSegment(Cattrib,$i,LogMean,$y) -1
