@@ -62,12 +62,17 @@ proc EMSegmentSetVtkGenericClassSetting {vtkGenericClass Sclass} {
   eval $vtkGenericClass SetSegmentationBoundaryMax $EMSegment(SegmentationBoundaryMax,0) $EMSegment(SegmentationBoundaryMax,1) $EMSegment(SegmentationBoundaryMax,2)
 
   $vtkGenericClass SetTissueProbability $EMSegment(Cattrib,$Sclass,Prob)
-
   $vtkGenericClass SetPrintWeights $EMSegment(Cattrib,$Sclass,PrintWeights)
 
   for {set y 0} {$y < $EMSegment(NumInputChannel)} {incr y} {
       if {[info exists EMSegment(Cattrib,$Sclass,InputChannelWeights,$y)]} {$vtkGenericClass SetInputChannelWeights $EMSegment(Cattrib,$Sclass,InputChannelWeights,$y) $y}
   }
+
+  if {$EMSegment(SegmentMode)}  {
+    eval $vtkGenericClass SetRegistrationTranslation $EMSegment(Cattrib,$Sclass,RegistrationTranslation)
+    eval $vtkGenericClass SetRegistrationRotation $EMSegment(Cattrib,$Sclass,RegistrationRotation)
+    eval $vtkGenericClass SetRegistrationScale $EMSegment(Cattrib,$Sclass,RegistrationScale)
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -98,13 +103,13 @@ proc EMSegmentSetVtkPrivateSuperClassSetting {SuperClass} {
   EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetBoundaryStopEMValue         $EMSegment(Cattrib,$SuperClass,BoundaryStopEMValue)
   EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetBoundaryStopEMMaxIterations $EMSegment(Cattrib,$SuperClass,BoundaryStopEMMaxIterations)
 
-    if {0} {
   EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPrintMFALabelMapConvergence  $EMSegment(Cattrib,$SuperClass,PrintMFALabelMapConvergence)
-  EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPrintMFAWeightsConvergence   $EMSegment(Cattrib,$SuperClass,PrintMFAWeigthsConvergence)
+  EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPrintMFAWeightsConvergence   $EMSegment(Cattrib,$SuperClass,PrintMFAWeightsConvergence)
   EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetBoundaryStopMFAType          $EMSegment(Cattrib,$SuperClass,BoundaryStopMFAType)
   EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetBoundaryStopMFAValue         $EMSegment(Cattrib,$SuperClass,BoundaryStopMFAValue)
   EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetBoundaryStopMFAMaxIterations $EMSegment(Cattrib,$SuperClass,BoundaryStopMFAMaxIterations)
-    }
+
+  EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetRegistrationType             $EMSegment(Cattrib,$SuperClass,RegistrationType)
 
   set ClassIndex 0
   foreach i $EMSegment(Cattrib,$SuperClass,ClassList) {
@@ -138,7 +143,7 @@ proc EMSegmentSetVtkPrivateSuperClassSetting {SuperClass} {
       if {$EMSegment(IntensityAvgClass) == $EMSegment(Cattrib,$i,Label)} {
           # Transfere Intensity correction filter stuff
           set index 0
-          EMSegment(vtkEMSegment) EMSetIntensityAvgClass  EMSegment(Cattrib,$i,vtkImageEMClass)
+          EMSegment(vtkEMSegment) SetIntensityAvgClass  EMSegment(Cattrib,$i,vtkImageEMClass)
           foreach v $EMSegment(SelVolList,VolumeList) {       
              EMSegment(vtkEMSegment) SetIntensityAvgValuePreDef $EMSegment(IntensityAvgValue,$v) $index
              incr index
