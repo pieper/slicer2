@@ -1,5 +1,4 @@
 /*=auto=========================================================================
-
 (c) Copyright 2004 Massachusetts Institute of Technology (MIT) All Rights Reserved.
 
 This software ("3D Slicer") is provided by The Brigham and Women's 
@@ -32,9 +31,24 @@ NON-INFRINGEMENT.
 THE SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS 
 IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
 PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-
-
 =========================================================================auto=*/
+/*==============================================================================
+(c) Copyright 2004 Massachusetts Institute of Technology (MIT) All Rights Reserved.
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+==============================================================================*/
 
 // .NAME vtkTimeCoursePlotActor - Plots time course of a voxel.   
 // .SECTION Description
@@ -65,18 +79,52 @@ public:
     // Sets the index of selected voxel.
     void SetVoxelIndex(int i, int j, int k);
 
+    // Description:
+    // Sets model. 
+    void SetModel(vtkFloatArray *model);
 
     // Description:
-    // Sets properties for the plot with specified paradigm and voxel time course.
-    void SetPlot(vtkFloatArray *timeCourse, vtkFloatArray *stimulus);
+    // Sets paradigm. 
+    void SetParadigm(vtkFloatArray *paradigm);
+
+    // Description:
+    // Sets properties for the voxel-long plot with voxel time course.
+    void SetPlotLong(vtkFloatArray *timeCourse);
+
+    // Description:
+    // Sets properties for the voxel-short plot with voxel time course.
+    void SetPlotShort(vtkFloatArray *timeCourse);
+
 
 private:
     // Voxel index
-    int i;
+    int i; 
     int j;
     int k;
 
+    vtkFloatArray *Model; // = stimulus
+    vtkFloatArray *TimeCourse;
+
+    vtkFloatArray *ConditionMaxTimeCourse;
+    vtkFloatArray *ConditionMinTimeCourse;
+    vtkFloatArray *ConditionAverageTimeCourse;
+
+    vtkFloatArray *BaselineMaxTimeCourse;
+    vtkFloatArray *BaselineMinTimeCourse;
+    vtkFloatArray *BaselineAverageTimeCourse;
+
+    float Max;
+    float Min;
+
+    int TotalVolumes;
+    int NumberOfConditions;
+    int VolumesPerBaseline;
+    int VolumesPerCondition;
+    int VolumesAtStart;
+    int StartsWith;
+
     vtkDataSet *CreateDataSet(vtkFloatArray *yPoints, float *xPoints);
+    void MakeTimeCourses();
 };
 
 

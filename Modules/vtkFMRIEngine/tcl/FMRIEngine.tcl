@@ -57,7 +57,25 @@
 #   FMRIEngineCreateBindings  
 #   FMRIEngineSetVolumeName   
 #==========================================================================auto=
-
+#===============================================================================
+# (c) Copyright 2004 Massachusetts Institute of Technology (MIT) All Rights Reserved.
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Library General Public License for more details.
+#
+#===============================================================================
 #-------------------------------------------------------------------------------
 #  Description
 # This module computes activation volume from a sequence of fMRI images. 
@@ -166,7 +184,7 @@ proc FMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.31 $} {$Date: 2004/11/16 20:45:26 $}]
+        {$Revision: 1.32 $} {$Date: 2004/11/19 16:41:35 $}]
 
     # Initialize module-level variables
     #------------------------------------
