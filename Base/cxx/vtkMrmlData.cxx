@@ -46,7 +46,7 @@ vtkMrmlData* vtkMrmlData::New()
 //----------------------------------------------------------------------------
 vtkMrmlData::vtkMrmlData()
 {
-  // Objects thate should be set by the user, but can be self-created
+  // Objects that should be set by the user, but can be self-created
   this->MrmlNode = NULL;
   this->LabelIndirectLUT = NULL;
   this->IndirectLUT = vtkIndirectLookupTable::New();
