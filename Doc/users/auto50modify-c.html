@@ -1,0 +1,32 @@
+<title>Reformatting Data</title>
+
+Volumes Reformat
+
+<!-- tbd
+
+
+
+<A NAME="a"></A><h3>Threshold effect</h3>
+<p>The goal of thresholding is to limit the output image to only those pixels
+whose signal intensity is between the lower and upper bounds you select.
+In the new output volume, all the pixels will have a single label (the <b>Output</b> color).
+<br><b>Threshold</b> is useful for separating the anatomy of interest
+from surrounding anatomy, based on the signal intensity of the anatomy of interest. For example, <b>Threshold</b> works well for segmenting bone in CT data.
+<br><br>To use <b>Threshold</b>:</p>
+<ol>
+<li>Click <b>Threshold</b>. This window appears:
+<center>
+<img SRC="images/editor_details_tab_threshold.jpg" ></center></li>
+<li>Select the <b>Input Volume</b>.</li>
+<li>Select the <b>Scope</b> and <b>Interact</b> ranges.</li>
+<li>Click <b>Output</b> and select a color, or enter an <b>Output</b> color number. You can also enter an optional label for what that color will represent. For instance, in this example, the chosen color is 2 (orange) and the label is 'skin'.</li>
+<li>Adjust the <b>Lo</b> slider to exclude points whose signal intensity is too low.</li>
+<li>Adjust the <b>Hi</b> slider to exclude points whose signal intensity is too high.</li>
+<li>Click <b>Apply</b> to apply the thresholding effect. Slicer will update the <code>Working</code> volume with your new label of thresholded data.</li>
+</ol>
+
+    </ol>
+
+
+    
+

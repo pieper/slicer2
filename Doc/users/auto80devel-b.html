@@ -1,0 +1,57 @@
+<title>Adding a Module</title>
+
+
+<p>
+For versions of Slicer starting with 2.0, new modules that are not
+part of the main Slicer code base are in the directory
+<code>slicer2/Modules</code>.
+Instructions for building a custom module are in <code>Modules/README.modules</code>.
+Sample code is in <code>slicer2/Modules/vtkCustomModule</code>.
+<br>
+To ensure that the Tcl files associated with the module are loaded
+during the GUI construction, follow the instructions in the <code>README.txt</code>
+file in the <code>vtkCustomModule</code> directory.
+If renaming is done via the
+call to the <code>vtkNameModule</code> Tcl script, your module will be registered
+with the Slicer base and will be initialized correctly.
+You must name your subdirectory in the <code>Modules</code> directory starting
+with the prefix <code>vtk</code> or it will not be automatically found at run time
+nor during autocompilation via the <code>cmaker.tcl</code> script.</p>
+
+<p>
+New core modules are added to the code base in the directory
+<code>slicer2/Base/tcl/tcl-modules</code>.
+Inside this directory, there is an
+example file called <code>Custom.tcl</code> that explains in detail how to
+create your own core module.
+This should be avoided unless you are adding new functionality necessary to Slicer.</p>
+
+<p>
+All files in the <code>tcl-modules</code> directory (generally referred to here as
+"modules") will automatically receive a button on Slicer's main
+menu.
+They will also be provided with a tab on the GUI.
+</p>
+
+<p>
+To allow multiple users to develop their own modules on UNIX systems,
+Slicer will preferentially source modules in any local <code>Modules/vtk*</code>
+directories that it finds in the directory from which it was run, your
+home directory, or a user-designated <code>Modules</code> directory. Then
+Slicer will continue on to source the rest of the core Tcl files and
+distributed modules that it finds in the directory where it was
+installed.
+
+</p>
+
+<p>
+Run Slicer from inside your personal <code>slicer2</code> directory
+and it will find your new modules.  This is because Slicer will
+preferentially source Tcl files in your local <code>Modules</code> directory.<br>
+If you have set your <code>HOME</code> environment variable, Slicer will load custom
+modules from your <code>${HOME}/Modules</code> directory as well. You can also set
+your <code>SLICER_MODULES</code> environment variable to point to more custom modules.
+</p>
+
+
+

@@ -1,0 +1,84 @@
+<title>Installing on Linux</title>
+
+<h3>Compatibility</h3>
+<p>Slicer is compatible with Red Hat Linux 7.3.</p>
+
+<h4>System Requirements</h4>
+
+
+<ul>
+<li><b>Memory</b>:  Minimum: 128 MB.</li>
+<li><b>Disk Space</b>: 31.6 MB to download the installer, which expands to about 119 MB. The tutorial data set requires 37 MB.</li>
+<li><b>Processor Speed</b>: Has run successfully on a 450-MHz machine; a faster processor speed is recommended.</li>
+</ul>
+
+
+<h3>Installation Steps</h3>
+
+<p>Replace <code>slicer</code> in the following instructions with the correct version,
+for example, <code>slicer-1.3.0</code>.</p>
+
+
+<ol>
+<li>
+Download the desired version of the <code>slicer.tar.gz</code> file to your computer.
+(Instructions about how to download the most recent version were emailed to
+you upon receipt of your signed
+<a href="http://spl.bwh.harvard.edu:8000/pages/papers/slicer/license.html">Software License Agreement</a>.
+If you have not filled this out yet,
+click <a href='index.html#1'>here</a>.)</li>
+
+
+<br>&nbsp;<li>
+At a shell prompt, type the following commands to uncompress the file and create a
+<code>slicer</code> directory:
+<pre></pre>
+<p class=code>gunzip slicer.tar.gz<br>
+tar xf slicer.tar</p></li>
+
+<br>&nbsp;<li>
+Edit the <code>slicer</code> file to set the <code>SLICER_HOME</code> environment variable
+to point to the directory where the <code>slicer</code> directory is installed.</li>
+
+<br>&nbsp;<li>
+Move the <code>slicer</code> file to a directory that is in every user's <code>PATH</code>
+environment variable. For example, this may be <code>/user/local/bin</code>.</li>
+
+<br>&nbsp;<li>
+Repeat steps 3 and 4 with the following scripts from the <code>slicer</code> directory:
+<ul>
+<li><code>mrmlize</code></li>
+<li><code>printmrml</code></li>
+</ul>
+If you will be contributing to the development of Slicer, then also
+repeat steps 3 and 4 with these scripts:
+<ul>
+<li><code>comment</code></li>
+<li><code>document</code></li>
+</ul>
+</li>
+
+<br>&nbsp;<li>
+Launch Slicer by typing the following command at a shell prompt:
+<pre></pre>
+<p class=code>slicer</p></li>
+</ol>
+
+
+<!---------------------------------- FAQ ------------------------------------->
+<p>
+<table cellpadding=3 cellspacing=3 border=0 align=center>
+<tr>
+<th class=box>Frequently Asked Questions</th>
+</tr>
+<tr>
+<td class=box0>
+    <div class=q>How can I load an existing data set?</div>
+    <div class=a>At the shell prompt, type <b>slicer</b> followed by the name of your MRML file.</div>
+</td>
+</tr>
+</table>
+</p>
+
+
+
