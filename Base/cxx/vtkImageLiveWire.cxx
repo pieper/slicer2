@@ -736,7 +736,7 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
 
   tEnd = clock();
   tDiff = tEnd - tStart;
-  cout << "LW time: " << tDiff << endl;
+  //cout << "LW time: " << tDiff << endl;
 
   return;
 }
