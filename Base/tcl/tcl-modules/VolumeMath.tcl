@@ -140,7 +140,7 @@ proc VolumeMathInit {} {
     #   appropriate info when the module is checked in.
     #   
         lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.26 $} {$Date: 2002/10/17 21:21:05 $}]
+        {$Revision: 1.27 $} {$Date: 2003/01/27 18:24:24 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -1419,9 +1419,9 @@ proc VolumeMathDoResample {} {
 
     #check to see which mode is currently selected
     if {$VolumeMath(interpolationMode) == "Linear"} {
-    Reslice SetInterpolationModeToLinear
+        Reslice SetInterpolationModeToLinear
     } else {
-    Reslice SetInterpolationModeToNearestNeighbor
+        Reslice SetInterpolationModeToNearestNeighbor
     }
 
     Reslice SetInput [Volume($v2,vol) GetOutput]
@@ -1434,7 +1434,13 @@ proc VolumeMathDoResample {} {
     puts "Origin values: $OriginVals"
 
     #set the extent values
-    Reslice SetOutputExtent [lindex $VolumeMath(extentVal) 0]  [lindex $VolumeMath(extentVal) 1] [lindex $VolumeMath(extentVal) 2] [lindex $VolumeMath(extentVal) 3] [lindex $VolumeMath(extentVal) 4] [lindex $VolumeMath(extentVal) 5] 
+    Reslice SetOutputExtent \
+        [lindex $VolumeMath(extentVal) 0] \
+        [lindex $VolumeMath(extentVal) 1] \
+        [lindex $VolumeMath(extentVal) 2] \
+        [lindex $VolumeMath(extentVal) 3] \
+        [lindex $VolumeMath(extentVal) 4] \
+        [lindex $VolumeMath(extentVal) 5] 
     #print the extent values
     set ExtentVals [Reslice GetOutputExtent]
     puts "Extent Values: $ExtentVals"
