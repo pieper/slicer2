@@ -146,7 +146,7 @@ proc AlignmentsInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.28 $} {$Date: 2003/09/08 16:45:39 $}]
+            {$Revision: 1.29 $} {$Date: 2003/09/10 14:58:48 $}]
 
     # Props
     set Matrix(propertyType) Basic
@@ -1116,7 +1116,7 @@ proc AlignmentsBuildGUI {} {
     set ret [catch "package require vtkMutualInformationRegistration" res]
 
     if { $ret } {
-        DevAddLabel $f.lbadnews "I'm sorry but the MutualInformationRegistration Module\n is not loaded so that Mutual\n Information Registration is not available."
+        DevAddLabel $f.lbadnews "I'm sorry but the \n MutualInformationRegistration Module\n is not loaded so that Mutual\n Information Registration is not available."
         pack $f.lbadnews -pady $Gui(pad)
     } else {
         MutualInformationRegistrationBuildSubGui $f
