@@ -111,6 +111,8 @@ class VTK_RIGIDINTENSITYREGISTRATION_EXPORT vtkITKRigidRegistrationTransformBase
   vtkSetMacro(Error, int);
   vtkGetMacro(Error, int);
 
+  virtual const char *GetNameOfClass();
+
   // Description:
   // Set the shrink factors for pyramid schemes.
   // Default is 1 1 1 
