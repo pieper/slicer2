@@ -942,3 +942,244 @@ proc DevSourceTclFilesInDirectory {dir {verbose "0"}} {
     # return the list of sourced files
     return $sourced
 }
+
+
+
+proc DevCreateTextPopup { topicWinName title x y textBoxHit txt  } {
+
+    set w .w$topicWinName
+    #--- if .w$topicWinName exists,
+    #--- destroy it, and create a new one
+    #--- containing new requested text.
+    if { [info exists $w] } {
+        -command "destroy $w"
+    }
+    
+    #--- format text.
+    regsub -all "\n" $txt {} txt
+    DevApplyTextTags $txt
+    if { ![info exists ::Dev(TextFormat,tagList)] } {
+        set ::Dev(TextFormat,tagList) ""
+    }
+    
+    #--- create popup window and configure
+    toplevel $w -class Dialog -background #FFFFFF
+    wm title $w $title
+    wm iconname $w Dialog
+    wm geometry $w +$x+$y
+    focus $w
+
+    set dismissButtonHit 4
+    set minWinHit [ expr $textBoxHit + $dismissButtonHit ]
+    wm minsize $w 30 $minWinHit
+    frame $w.fMsg -background #FFFFFF
+    frame $w.fButton -background #FFFFFF
+    pack $w.fMsg -fill both -expand true
+    pack $w.fButton -side top -pady 4 -padx 4
+
+    #--- make scrolled text widget to contain text
+    set f $w.fMsg
+    set helpt [ text $f.tMessage -height $textBoxHit -width 35 -setgrid true -wrap word \
+                -yscrollcommand "$f.sy set" -cursor arrow -insertontime 0 ]
+    scrollbar $f.sy -orient vert -command "$f.tMessage yview"
+    pack $f.sy -side right -anchor e -fill y
+    pack $f.tMessage -side left -fill both -expand true -padx 4 -pady 4
+    
+    #--- make button to dismiss the window
+    set f $w.fButton
+    button $f.bDismiss -text "close" -width 6 -bg #DDDDDD \
+        -command "destroy $w"
+    pack $f.bDismiss -padx 4 -pady 4 -side bottom
+    
+    #--- set the font to be 10 point helvetica
+    $f.bDismiss config -font "-Adobe-Helvetica-Normal-R-Normal-*-10-*-*-*-*-*-*-*"
+
+    #--- insert the text and raise window.
+    DevInsertPopupText $helpt
+#    DevRaisePopup $w
+}
+
+
+
+proc DevApplyTextTags { str } {
+
+    set Dev(TextFormat,hypertext) $str
+
+    # Routines adapted from those in MainHelp.tcl
+    # Replace some tags with text or nothing
+    #--------------------------------------------------
+    foreach tag "<P> <LI> </LI> <BR> <UL> </UL> <HR> &nbsp; &gt; &lt; &amp;" \
+        sub {"\n\n" "\n<G>doc/bullet.gif</G>" "" "\n" "" "" "" " " ">" "<" "&" \
+        } {
+        set i [string first $tag $str]
+        while {$i != -1} {
+            set str "[string range $str 0 [expr $i-1]]$sub\
+            [string range $str [expr $i+[string length $tag]] end]"
+            set i [string first $tag $str]
+        }
+    }
+
+    # Put sub before tag
+    #--------------------------------------------------
+    foreach tag "<H3> <H4> <H5>" sub {"\n\n" "\n\n"} {
+        set i [string first $tag $str]
+        set rest $str
+        set str ""
+        while {$i != -1} {
+            set str "${str}[string range $rest 0 [expr $i-1]]$sub$tag"
+            set rest [string range $rest [expr $i+[string length $tag]] end]
+            set i [string first $tag $rest]
+        }
+        set str "$str$rest"
+    }
+    
+    # Find tags
+    #--------------------------------------------------
+    set tag 0
+    set tagList ""
+    set type normal
+    set text $str
+    set tokens "B I H3 H4 H5 A G"
+    set names "bold italic heading3 heading4 heading5 link image"
+
+    set a [string length $str]
+    set type -1
+    foreach token $tokens name $names {
+        set d [string first <$token> $str]
+        if {$d != "-1" && $d < $a} {
+            set a $d
+            set type $name
+            set symbol $token
+        }
+    }
+        while {$type != -1} {
+
+        set text [string range $str 0 [expr $a-1]]
+        if {[string length $text] > 0} {
+            set ::Dev(TextFormat,$tag,type) normal
+            set ::Dev(TextFormat,$tag,text) $text
+            lappend tagList $tag
+            incr tag
+        }
+
+        set rest [string range $str [expr $a+2+[string length $symbol]] end]
+        set b [string first </$symbol> $rest]
+        set text [string range $rest 0 [expr $b-1]]
+
+        set ::Dev(TextFormat,$tag,type) $type
+        set ::Dev(TextFormat,$tag,text) $text
+        lappend tagList $tag
+        incr tag
+        set str [string range $rest [expr $b+3+[string length $symbol]] end]
+
+        set a [string length $str]
+        set type -1
+        foreach token $tokens name $names {
+            set d [string first <$token> $str]
+            if {$d != "-1" && $d < $a} {
+                set a $d
+                set type $name
+                set symbol $token
+            }
+        }
+    }
+
+    set text $str
+    if {[string length $text] > 0} {
+        set ::Dev(TextFormat,$tag,type) normal
+        set ::Dev(TextFormat,$tag,text) $text
+        lappend tagList $tag
+        incr tag
+    }
+    set ::Dev(TextFormat,tagList) $tagList
+
+}
+
+
+
+proc  DevInsertPopupText { w } {
+
+    #--- configure text tags 
+    #--- I'm borrowing this from Help module, but
+    #--- changing it a little bit.
+    eval $w tag configure normal   "-font {helvetica 9}"
+    eval $w tag configure italic   "-font {helvetica 9 italic}"
+    eval $w tag configure bold    "-font {helvetica 9 bold}"
+    eval $w tag configure link "-font {helvetica 9} -underline true -foreground blue"
+    eval $w tag configure heading3 "-font {helvetica 10 bold}"
+    eval $w tag configure heading4 "-font {helvetica 11 bold italic}"
+    eval $w tag configure heading5 "-font {helvetica 12 bold}"
+
+    foreach tag $::Dev(TextFormat,tagList) {
+        set type $::Dev(TextFormat,$tag,type)
+        set text $::Dev(TextFormat,$tag,text)
+
+        if {$type == "heading3"} {
+            set ::Dev(TextFormat,$tag,index) [$w index insert]
+        }
+        
+        if {$type == "link"} {
+            set type link$tag
+            eval $w tag configure $type $::Dev(tagLink)
+        }
+
+        if {$type == "image"} {
+            set img [image create photo -file [ExpandPath "$text"]]
+            $w image create insert -image $img
+        } else {
+            $w insert insert "$text" $type
+        }
+    }
+
+    foreach tag $::Dev(TextFormat,tagList) {
+        set type $::Dev(TextFormat,$tag,type)
+        if {$type == "link"} {
+            $w tag bind link$tag <ButtonPress> "DevTextLink $w $tag"
+            $w tag bind link$tag <Enter> "$w config -cursor hand2"
+            $w tag bind link$tag <Leave> "$w config -cursor arrow"
+        }
+    }
+}
+
+
+proc DevTextLink {w linkTag} {
+
+    set linkText $::Dev(TextFormat,$linkTag,text)
+
+    foreach tag $::Dev(TextFormat,tagList) {
+        set type $::Dev(TextFormat,$tag,type)
+        set text $::Dev(TextFormat,$tag,text)
+
+        if {$type == "heading3"} {
+            if {$text == $linkText} {
+                $w see $::Dev(TextFormat,$tag,index)
+            }
+        }
+    }
+}
+
+
+proc DevLaunchBrowser {{section ""}} {
+
+    if {$section == ""} {
+        set url "$::Path(browserUrl)"
+    } else {
+        set url "$::Path(browserUrl)#$section"
+    }
+    DevLaunchBrowserURL $url
+}
+
+
+
+
+proc DevLaunchBrowserURL { url } {
+
+    if { $::Path(browserPath) != "unknown" } {
+        set ret [catch "exec $::Path(browserPath) $url &" res]
+        if { $ret } {
+            DevErrorWindow "Could not launch browser.\n\n$res"
+        }
+    } else {
+        DevWarningWindow "Could not detect your default browser.\n\nYou may need to set your BROWSER environment variable.\n\nPlease open $url manually."
+    }
+}
