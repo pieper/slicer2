@@ -92,7 +92,7 @@ proc EditorInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.24 $} {$Date: 2000/02/28 17:56:15 $}]
+		{$Revision: 1.25 $} {$Date: 2000/03/01 03:55:10 $}]
 
 	# Initialize globals
 	set Editor(idOriginal)  $Volume(idNone)
@@ -1111,8 +1111,8 @@ proc EditorGetWorkingID {} {
 	MainVolumesCreate $v
 	Volume($v,vol) UseLabelIndirectLUTOn
 
-	EditorSetWorking $v
-
+        # This updates all the buttons to say that the
+        # Volume List has changed.
 	MainUpdateMRML
 
 	return $v
