@@ -133,8 +133,8 @@ public:
   // Description:
   // Turn on training mode, where means and variances are calculated
   // for all features
-  vtkBooleanMacro(TrainingMode, int);
-  vtkSetMacro(TrainingMode, int);
+  void TrainingModeOn();
+  void TrainingModeOff();
   vtkGetMacro(TrainingMode, int);
 
   // Description:

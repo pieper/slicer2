@@ -29,7 +29,8 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 featureProperties::featureProperties()
 {
-  this->Transform = &featureProperties::GaussianCost;
+  //this->Transform = &featureProperties::GaussianCost;
+  this->Transform = NULL;
   this->NumberOfParams = 2;
   this->TransformParams = new float[this->NumberOfParams];
   this->TransformParams[0] = 0;
@@ -171,12 +172,36 @@ void vtkImageLiveWireEdgeWeights::WriteFeatureSettings()
   // output the features  
   for (int i=0; i < this->NumberOfFeatures; i++)
     {
+     //   file << this->GetWeightForFeature(i) << ' ' 
+//  	   << this->TrainingAverages[i]    << ' '  
+//  	   << this->TrainingVariances[i]   << endl;
+
       file << this->GetWeightForFeature(i) << ' ' 
 	   << this->TrainingAverages[i]    << ' '  
-	   << this->TrainingVariances[i]   << endl;
+	   << this->TrainingVariances[i]   << ' '
+	   << this->GetParamForFeature(i,0) << ' '  
+	   << this->GetParamForFeature(i,1) << endl;
     }
   
   file.close();
+}
+
+void vtkImageLiveWireEdgeWeights::TrainingModeOn()
+{
+  this->TrainingMode = 1;
+  
+  for (int i=0; i < this->NumberOfFeatures; i++)
+    {
+      this->TrainingAverages[i] = 0;
+      // don't allow 0 variance to be calculated (will break Gaussian).
+      this->TrainingVariances[i] = 0.01;
+    }
+
+}
+
+void vtkImageLiveWireEdgeWeights::TrainingModeOff()
+{
+  this->TrainingMode = 0;
 }
 
 
@@ -393,7 +418,10 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
 	  }
 	default:
 	  {
-	    cout << "ERROR in vtkImageLiveWireEdgeWeights: bad edge direction.  Defaulting to UP_EDGE" << endl;
+	    cout << "ERROR in vtkImageLiveWireEdgeWeights: "
+		 << "bad edge direction of: "
+		 << self->GetEdgeDirection() 
+		 << "Defaulting to UP_EDGE" << endl;
 	    self->SetEdgeDirection(UP_EDGE);
 	    t = 7; 
 	    u = 8;
@@ -447,18 +475,6 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
   float *variance = self->GetTrainingVariances();      
   int numberOfTrainingPoints = 0;
 
-  // if we are computing training data
-  if (self->GetTrainingMode()) 
-    {
-      // if we are not computing features over multiple slices
-      if (!self->GetRunningNumberOfTrainingPoints()) 
-	{
-	  memset(average,0,numFeatures*sizeof(float));
-	  // don't allow 0 variance to be calculated (will break Gaussian).
-	  for (int i = 0; i<numFeatures; i++)
-	    variance[i] = 0.01;
-	}
-    }
   // compute normalization factor
   float sumOfWeights = 0;
   for (int i = 0; i < numFeatures; i++) 
@@ -781,7 +797,7 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
 	}
     }
 
-  cout << "min: " << testMin << " max: " << testMax << " min2: " << testMin2 << " max2: " << testMax2 << endl;
+  //cout << "min: " << testMin << " max: " << testMax << " min2: " << testMin2 << " max2: " << testMax2 << endl;
   tEnd = clock();
   tDiff = tEnd - tStart;
   cout << "time: " << tDiff << endl;
@@ -797,27 +813,44 @@ void vtkImageLiveWireEdgeWeights::ThreadedExecute(vtkImageData **inDatas,
 						 vtkImageData *outData,
 						 int outExt[6], int id)
 {
+  void *inPtrs[3];
+  int inExt[6];
 
-  // Lauren allocate additional outputs here.
-  // done like this in vtkImageToImageFilter:
-  //    vtkImageData *output = this->GetOutput();
-  
-  //    output->SetExtent(output->GetUpdateExtent());
-  //    output->AllocateScalars();
-  //    this->Execute(this->GetInput(), output);
+  // if we are training, we want one thread to handle everything.
+  // else we want each thread to do part of the image.
 
-  void *inPtrs[3], *outPtr;
-  inPtrs[0] = inDatas[0]->GetScalarPointerForExtent(inDatas[0]->GetExtent());
+  if (this->TrainingMode)
+    {
+      // thread 0 does it all, so return if id > 0
+      if (id > 0)
+	return;
+      
+      // set extents to be the whole size of the output 
+      // (same as input size)
+      outData->GetWholeExtent(outExt);
+      memcpy(inExt, outExt, 6*sizeof(int));      
+
+    }
+  else
+    {
+      // input extent is same as output extent 
+      // (each thread gets its own chunk)
+      memcpy(inExt, outExt, 6*sizeof(int));
+    }
+
+  for (int i = 0; i < 6; i++)
+    printf("id: %d ext %d: %d\n", id, i, inExt[i]);
+
+  inPtrs[0] = inDatas[0]->GetScalarPointerForExtent(inExt);
 
   if (this->NumberOfInputs > 1)
     {
-      inPtrs[1] = inDatas[1]->GetScalarPointerForExtent(inDatas[1]->GetExtent());
+      inPtrs[1] = inDatas[1]->GetScalarPointerForExtent(inExt);
     }
   if (this->NumberOfInputs > 2)
     {
-      inPtrs[2] = inDatas[2]->GetScalarPointerForExtent(inDatas[2]->GetExtent());
+      inPtrs[2] = inDatas[2]->GetScalarPointerForExtent(inExt);
     }
-  outPtr = outData->GetScalarPointerForExtent(outData->GetExtent());
 
   switch (inDatas[0]->GetScalarType())
     {
