@@ -97,7 +97,7 @@ if { [itcl::find class isvolume] == "" } {
       # Note: use SetUpdateExtent to get full volume in the imagedata
       method imagedata {} {return [$_reslice GetOutput]}
 
-      method screensave { filename } {} ;# TODO should be moved to superclass
+      method screensave { filename {imagetype "PNM"} } {} ;# TODO should be moved to superclass
 
       method volmenu_update {} {}
 
@@ -153,6 +153,7 @@ itcl::body isvolume::constructor {args} {
         -command "$this configure -volume \[$_volmenu get\]"
 
     $this volmenu_update
+
     pack $_orientmenu $_resmenu $_volmenu -side top -expand true -fill x
     ::iwidgets::Labeledwidget::alignlabels $_orientmenu $_resmenu $_volmenu
     
@@ -160,7 +161,7 @@ itcl::body isvolume::constructor {args} {
     # build the vtk image viewer
     #
     iwidgets::scrolledframe $itk_interior.sframe \
-        -hscrollmode dynamic -vscrollmode dynamic 
+        -hscrollmode dynamic -vscrollmode dynamic -width 300 -height 300
     pack $itk_interior.sframe -fill both -expand true
     set cs [$itk_interior.sframe childsite]
     set _tkrw $cs.tkrw
@@ -277,17 +278,24 @@ itcl::configbody isvolume::slice {
 #
 # DESCRIPTION: which slicer volume to display in this isvolume
 # The argument can be the volume name or the volume Id. The volume
-# Id is strongly preferedbecause it is unique.
+# Id is strongly prefered because it is unique.
 #-------------------------------------------------------------------------------
 itcl::configbody isvolume::volume {
     global Volume
 
-    if { ![info exists _VolIdMap($itk_option(-volume))] } {
-        error "bad volume id"
+    set volname $itk_option(-volume)
+
+    if { $volname == "" } {
+        set volname "None"
     }
 
-    set id $_VolIdMap($itk_option(-volume))
-    if { $itk_option(-volume) == "" || $itk_option(-volume) == "None" || $itk_option(-volume) == $Volume(idNone)} {
+    set id $_VolIdMap($volname)
+
+    if { ![info exists _VolIdMap($id)] } {
+        error "bad volume id $id for $volname"
+    }
+
+    if { $id == "None" || $id == $Volume(idNone)} {
         $_changeinfo SetInput $_None_ImageData 
     } else {
         $_changeinfo SetInput [Volume($id,vol) GetOutput]
@@ -438,20 +446,23 @@ itcl::body isvolume::expose {} {
 # METHOD: volmenu_update
 #
 # DESCRIPTION: create the array of volume names and ids
-#              The array canbe accessed by volume Id or volume name.
+#              The array can be accessed by volume Id or volume name.
 #              However, should two names be the same, the second one
 #              overwrites the first.
 #-------------------------------------------------------------------------------
 itcl::body isvolume::volmenu_update {} {
-    global Volume
 
-    $_volmenu delete 0 end
     array unset _VolIdMap
 
-    foreach id $Volume(idList) {
+    foreach id $::Volume(idList) {
         set name [Volume($id,node) GetName]
         set _VolIdMap($name)  $id
         set _VolIdMap($id)    $id
+    }
+
+    $_volmenu delete 0 end
+    foreach id $::Volume(idList) {
+        set name [Volume($id,node) GetName]
         $_volmenu insert end  $name
     }
     $_volmenu select 0
@@ -459,22 +470,46 @@ itcl::body isvolume::volmenu_update {} {
 
 # ------------------------------------------------------------------
 
-itcl::body isvolume::screensave { filename } {
+itcl::body isvolume::screensave { filename {imagetype "PNM"} } {
 # TODO should be moved to superclass
 
     set wif ::wif_$_name
-    set pnmw ::pnmw_$_name
+    set imgw ::imgw_$_name
     catch "$wif Delete"
-    catch "$pnmw Delete"
+    catch "$imgw Delete"
 
     vtkWindowToImageFilter $wif 
     $wif SetInput [[$this tkrw] GetRenderWindow]
-    vtkPNMWriter $pnmw 
-    $pnmw SetInput [$wif GetOutput]
-    $pnmw SetFileName $filename
-    $pnmw Write
 
-    $pnmw Delete
+    switch $imagetype {
+        "PNM" - "PPM" {
+            vtkPNMWriter $imgw 
+        }
+        "JPG" - "JPEG" {
+            vtkJPEGWriter $imgw 
+        }
+        "BMP" {
+            vtkBMPWriter $imgw 
+        }
+        "PS" - "PostScript" - "postscript" {
+            vtkPostScriptWriter $imgw 
+        }
+        "TIF" - "TIFF" {
+            vtkTIFFWriter $imgw 
+        }
+        "PNG" {
+            vtkPNGWriter $imgw 
+        }
+        default {
+            error "unknown image format $imagetype; options are PNM, JPG, BMP, PS, TIFF, PNG"
+        }
+    }
+        
+    $imgw SetInput [$wif GetOutput]
+    $imgw SetFileName $filename
+    $imgw Write
+
+    $imgw Delete
     $wif Delete
 } 
 
@@ -485,7 +520,7 @@ proc isvolume_demo {} {
     catch "destroy .isvolumedemo"
     toplevel .isvolumedemo
     wm title .isvolumedemo "isvolume demo"
-    wm geometry .isvolumedemo 400x700
+    #wm geometry .isvolumedemo 400x700
 
     pack [isvolume .isvolumedemo.isv] -fill both -expand true
 }
