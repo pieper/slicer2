@@ -279,15 +279,29 @@ proc EdDrawUpdate {type} {
     switch $type {
         NextMode {
             switch $Ed($e,mode) {
-            "Draw" {
-                set Ed($e,mode) Select
+                "Draw" {
+                    set Ed($e,mode) Select
+                }
+                "Select" {
+                    set Ed($e,mode) Move
+                }
+                "Move" {
+                    set Ed($e,mode) Draw
+                }
             }
-            "Select" {
-                set Ed($e,mode) Move
-            }
-            "Move" {
-                set Ed($e,mode) Draw
-            }
+        }
+        Delete {
+            switch $Ed($e,mode) {
+                "Draw" {
+                    Slicer DrawDeleteAll
+                    MainInteractorRender
+                }
+                "Select" {
+                    # nothing
+                }
+                "Move" {
+                    # nothing
+                }
             }
         }
         SelectAll {

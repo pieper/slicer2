@@ -48,7 +48,7 @@ proc MainViewerInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainViewer \
-        {$Revision: 1.25 $} {$Date: 2002/07/31 21:25:56 $}]
+        {$Revision: 1.26 $} {$Date: 2002/08/19 13:38:24 $}]
 
         # Props
     set Gui(midHeight) 1
@@ -78,6 +78,7 @@ proc MainViewerBuildGUI {} {
     # sum heights of 3d window, slice, and middle button frame
     set h [expr $View(viewerHeightNormal) + 256 + $Gui(midHeight)]
     wm geometry  .tViewer +$Gui(xViewer)+0
+    update
     set Gui(fViewer) .tViewer
 
     #-------------------------------------------
@@ -97,9 +98,14 @@ proc MainViewerBuildGUI {} {
 
     set Gui(fViewWin) $Gui(fViewer).fViewWin
 
-    update idletasks
+    update
+#idebug on
+idebug break
+    update
     vtkTkRenderWidget $Gui(fViewWin) -width $View(viewerHeight) -height $View(viewerHeightNormal)
     CreateAndBindTkEvents $Gui(fViewWin) 
+    $Gui(fViewWin) Render
+idebug break
 
     #-------------------------------------------
     # Mid->Slice$s frames

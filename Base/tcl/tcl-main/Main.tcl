@@ -357,7 +357,7 @@ proc MainInit {} {
 
         # Set version info
     lappend Module(versions) [ParseCVSInfo Main \
-        {$Revision: 1.78 $} {$Date: 2002/07/26 03:24:04 $}]
+        {$Revision: 1.79 $} {$Date: 2002/08/19 13:38:23 $}]
 
     # Call each "Init" routine that's not part of a module
     #-------------------------------------------
@@ -1587,7 +1587,7 @@ proc MainExitQuery { } {
         if {[info exists TetraMesh($v,dirty)] == 1} {
             if {$TetraMesh($v,dirty) == 1} {
                 if {$tetmesh == ""} {
-                                    set tetmesh "[TetraMesh($v,node) GetName]"
+                    set tetmesh "[TetraMesh($v,node) GetName]"
                 } else {
                     set tetmesh "${tetmesh}, [TetraMesh($v,node) GetName]"
                 }

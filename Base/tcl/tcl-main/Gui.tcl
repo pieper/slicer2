@@ -58,7 +58,7 @@ proc GuiInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo Gui \
-        {$Revision: 1.37 $} {$Date: 2002/05/09 14:50:42 $}]
+        {$Revision: 1.38 $} {$Date: 2002/08/19 13:38:23 $}]
 
 
     # enable tooltips by default.  This should check user preferences somehow.
@@ -402,6 +402,7 @@ proc YesNoPopup {win x y msg {yesCmd ""} {noCmd ""} \
             -command "destroy $w; $noCmd"} $Gui(WBA)
         pack $f.bYes $f.bNo -side left -padx $Gui(pad)
     }
+    RaisePopup $w
 }
 
 #-------------------------------------------------------------------------------
@@ -417,6 +418,7 @@ proc RaisePopup {w} {
     if {[winfo exists $w] != 0} {
         raise $w
         focus $w
+        wm deiconify $w
         return 1
     }
     return 0

@@ -129,6 +129,7 @@ proc MainInteractorBind {widget} {
     bind $widget <Down>              {MainInteractorKeyPress Down  %W %x %y}
     bind $widget <Left>              {MainInteractorKeyPress Left  %W %x %y}
     bind $widget <Right>             {MainInteractorKeyPress Right %W %x %y}
+    bind $widget <Delete>            {MainInteractorKeyPress Delete %W %x %y}
 
     # Added for Fiducials
     if {[IsModule Fiducials] == 1 || [IsModule Alignments] == 1} {
@@ -255,40 +256,51 @@ proc MainInteractorKeyPress {key widget x y} {
     if {$s == ""} {return}
 
     switch $key {
-    "Right" {
-        MainSlicesSetOffset $s Next;
-        MainSlicesRefreshClip $s
+        "Right" {
+            MainSlicesSetOffset $s Next;
+            MainSlicesRefreshClip $s
 
-        scan [MainInteractorXY $s $x $y] "%d %d %d %d" xs ys x y 
-        MainInteractorCursor $s $xs $ys $x $y
-        MainInteractorRender
-    }
-    "Left" {
-        MainSlicesSetOffset $s Prev;
-        MainSlicesRefreshClip $s
+            scan [MainInteractorXY $s $x $y] "%d %d %d %d" xs ys x y 
+            MainInteractorCursor $s $xs $ys $x $y
+            MainInteractorRender
+        }
+        "Left" {
+            MainSlicesSetOffset $s Prev;
+            MainSlicesRefreshClip $s
 
-        scan [MainInteractorXY $s $x $y] "%d %d %d %d" xs ys x y 
-        MainInteractorCursor $s $xs $ys $x $y
-        MainInteractorRender
-    }
-    "Up" {
-        switch $Module(activeID) {
-        "Editor" {
-            $Editor(activeID)Apply
+            scan [MainInteractorXY $s $x $y] "%d %d %d %d" xs ys x y 
+            MainInteractorCursor $s $xs $ys $x $y
+            MainInteractorRender
         }
-        }
-    }
-    "Down" {
-        switch $Module(activeID) {
-        "Editor" {
-            switch $Editor(activeID) {
-            "EdDraw" {
-                EdDrawUpdate NextMode
-            }
+        "Up" {
+            switch $Module(activeID) {
+                "Editor" {
+                    $Editor(activeID)Apply
+                }
             }
         }
+        "Down" {
+            switch $Module(activeID) {
+                "Editor" {
+                    switch $Editor(activeID) {
+                        "EdDraw" {
+                            EdDrawUpdate NextMode
+                        }
+                    }
+                }
+            }
         }
-    }
+        "Delete" {
+            switch $Module(activeID) {
+                "Editor" {
+                    switch $Editor(activeID) {
+                        "EdDraw" {
+                            EdDrawUpdate Delete
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -307,9 +319,9 @@ proc MainInteractorMotion {widget x y} {
 
     # added for LiveWire
     switch $Module(activeID) {
-    "Editor" {
-        EditorMotion $x $y
-    }
+        "Editor" {
+            EditorMotion $x $y
+        }
     }
 
     # Cursor
@@ -424,12 +436,12 @@ proc MainInteractorB1Motion {widget x y} {
     scan [MainInteractorXY $s $x $y] "%d %d %d %d" xs ys x y 
 
     switch $Module(activeID) {
-    "Editor" {
-        EditorB1Motion $x $y
-    }
-    "Alignments" {
-        AlignmentsB1Motion $x $y
-    }
+        "Editor" {
+            EditorB1Motion $x $y
+        }
+        "Alignments" {
+            AlignmentsB1Motion $x $y
+        }
     }
 
     # Cursor

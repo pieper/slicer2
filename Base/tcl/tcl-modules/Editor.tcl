@@ -107,7 +107,7 @@ proc EditorInit {} {
     
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.60 $} {$Date: 2002/06/06 22:26:51 $}]
+        {$Revision: 1.61 $} {$Date: 2002/08/19 13:38:25 $}]
     
     # Initialize globals
     set Editor(idOriginal)  $Volume(idNone)
@@ -1166,58 +1166,120 @@ proc EditorB1 {x y} {
     EditorIncrementAndLogEvent "b1click"
     
     switch $Editor(activeID) {
-    "EdDraw" {
-        # Mark point for moving
-        Slicer DrawMoveInit $x $y
-        
-        # Act depending on the draw mode:
-        #  - Draw:   Insert a point
-        #  - Select: Select/deselect a point
-        #
-        switch $Ed(EdDraw,mode) {
-        "Draw" {
-            Slicer DrawInsertPoint $x $y
+        "EdDraw" {
+            # Mark point for moving
+            Slicer DrawMoveInit $x $y
+            
+            # Act depending on the draw mode:
+            #  - Draw:   Insert a point
+            #  - Select: Select/deselect a point
+            #
+            switch $Ed(EdDraw,mode) {
+                "Draw" {
+                    Slicer DrawInsertPoint $x $y
+                    EditorIdleProc start
+                }
+                "Select" {
+                    Slicer DrawStartSelectBox $x $y
+                }
+            }
         }
-        "Select" {
-            Slicer DrawStartSelectBox $x $y
+        "EdLiveWire" {
+            EdLiveWireB1 $x $y
         }
+        "EdPhaseWire" {
+            EdPhaseWireB1 $x $y
         }
-    }
-    "EdLiveWire" {
-        EdLiveWireB1 $x $y
-    }
-    "EdPhaseWire" {
-        EdPhaseWireB1 $x $y
-    }
-    "EdChangeIsland" {
-        EditorChangeInputLabel $x $y
-    }
-    "EdMeasureIsland" {
-        EditorChangeInputLabel $x $y
-    }
-    "EdSaveIsland" {
-        EditorChangeInputLabel $x $y
-    }
-    "EdChangeLabel" {
-        EditorChangeInputLabel $x $y
-    }
-    "EdRemoveIslands" {
-        EditorChangeInputLabel $x $y
-    }
-    "EdIdentifyIslands" {
-        EditorChangeInputLabel $x $y
-    }
-    "EdLabelVOI" {
-        EdLabelVOIB1 $x $y
-    }
-    default {
-    # the default case handles editor effects loaded as modules
-    # - in the future we may need a way to register custom
-    #   actions
-        EditorChangeInputLabel $x $y    
-    }
+        "EdChangeIsland" {
+            EditorChangeInputLabel $x $y
+        }
+        "EdMeasureIsland" {
+            EditorChangeInputLabel $x $y
+        }
+        "EdSaveIsland" {
+            EditorChangeInputLabel $x $y
+        }
+        "EdChangeLabel" {
+            EditorChangeInputLabel $x $y
+        }
+        "EdRemoveIslands" {
+            EditorChangeInputLabel $x $y
+        }
+        "EdIdentifyIslands" {
+            EditorChangeInputLabel $x $y
+        }
+        "EdLabelVOI" {
+            EdLabelVOIB1 $x $y
+        }
+        default {
+        # the default case handles editor effects loaded as modules
+        # - in the future we may need a way to register custom
+        #   actions
+            EditorChangeInputLabel $x $y    
+        }
     }
 }
+
+
+#-------------------------------------------------------------------------------
+# .PROC EditorIdleProc
+# Something to do when all events are idle (e.g. for draw update)
+# Currently only used for Draw.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc EditorIdleProc {cmd} {
+    global Ed Editor Slice Interactor
+
+    set s $Slice(activeID)
+
+    switch $Editor(activeID) {
+        "EdDraw" {
+            # Act depending on the draw mode:
+            #  - Move:   nothing
+            #  - Draw:   show current state of effect
+            #  - Select: nothing
+            #
+            switch $Ed(EdDraw,mode) {
+                "Draw" {
+                    switch $cmd {
+                        "start" {
+                            set Ed(EdDraw,lastIdlePointCount) 0
+                            if {![info exists Ed(EdDraw,afterID)] || $Ed(EdDraw,afterID) == ""} {
+                                set Ed(EdDraw,afterID) [after idle "EditorIdleProc apply"]
+                            }
+                        }
+                        "apply" {
+                            set p __EditorIdleProc_Points
+                            vtkPoints $p
+                            $p DeepCopy [Slicer DrawGetPoints]
+                            set pts [$p GetNumberOfPoints]
+                            if {$Ed(EdDraw,lastIdlePointCount) != $pts} {
+                                set Ed(EdDraw,lastIdlePointCount) $pts
+                                EdDrawApply
+                                EditorUndo false
+                                for {set i 0} {$i < $pts} {incr i} {
+
+                                    eval Slicer DrawInsertPoint [lrange [$p GetPoint $i] 0 1]
+                                }
+                            }
+                            $p Delete
+                            if {[info exists Ed(EdDraw,afterID)] && $Ed(EdDraw,afterID) != ""} {
+                                set Ed(EdDraw,afterID) [after idle "EditorIdleProc apply"]
+                            }
+                        }
+                        "cancel" {
+                            catch {after cancel $Ed(EdDraw,afterID)}
+                            set Ed(EdDraw,afterID) ""
+                            set Ed(EdDraw,lastIdlePointCount) 0
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 
 #-------------------------------------------------------------------------------
 # .PROC EditorB1Motion
@@ -1234,33 +1296,32 @@ proc EditorB1Motion {x y} {
     set s $Slice(activeID)
 
     switch $Editor(activeID) {
-    "EdDraw" {
-        # Act depending on the draw mode:
-        #  - Move:   move points
-        #  - Draw:   Insert a point
-        #  - Select: draw the "select" box
-        #
-        switch $Ed(EdDraw,mode) {
-        "Draw" {
-            Slicer DrawInsertPoint $x $y
-            
-            # Lauren this would be better:
-            
-            # DAVE: allow drawing on non-native slices someday
-            #            Slicer SetReformatPoint $s $x $y
-            #            scan [Slicer GetIjkPoint] "%g %g %g" i j k
-            #            puts "Slicer DrawInsertPoint $x $y ijk=$i $j $k s=$s"
-        }
-        "Select" {
-            Slicer DrawDragSelectBox $x $y
-        }
-        "Move" {
-            Slicer DrawMove $x $y
-        }
+        "EdDraw" {
+            # Act depending on the draw mode:
+            #  - Move:   move points
+            #  - Draw:   Insert a point
+            #  - Select: draw the "select" box
+            #
+            switch $Ed(EdDraw,mode) {
+                "Draw" {
+                    Slicer DrawInsertPoint $x $y
+                    
+                    # Lauren this would be better:
+                    
+                    # DAVE: allow drawing on non-native slices someday
+                    #            Slicer SetReformatPoint $s $x $y
+                    #            scan [Slicer GetIjkPoint] "%g %g %g" i j k
+                    #            puts "Slicer DrawInsertPoint $x $y ijk=$i $j $k s=$s"
+                }
+                "Select" {
+                    Slicer DrawDragSelectBox $x $y
+                }
+                "Move" {
+                    Slicer DrawMove $x $y
+                }
+            }
         }
     }
-    }
-    
 }
 
 #-------------------------------------------------------------------------------
@@ -1274,16 +1335,19 @@ proc EditorB1Release {x y} {
     global Ed Editor
     
     switch $Editor(activeID) {
-    "EdDraw" {
-        # Act depending on the draw mode:
-        #  - Select: stop drawing the "select" box
-        #
-        switch $Ed(EdDraw,mode) {
-        "Select" {
-            Slicer DrawEndSelectBox $x $y
+        "EdDraw" {
+            # Act depending on the draw mode:
+            #  - Select: stop drawing the "select" box
+            #
+            switch $Ed(EdDraw,mode) {
+                "Select" {
+                    Slicer DrawEndSelectBox $x $y
+                }
+                "Draw" {
+                    EditorIdleProc cancel
+                }
+            }
         }
-        }
-    }
     }
 }
 
@@ -1802,11 +1866,11 @@ proc EditorActivateUndo {active} {
 
     set Editor(undoActive) $active
     if {$Editor(undoActive) == 0} {
-    $Editor(bUndo) config -state disabled
-    $Editor(bUndo2) config -state disabled
+        $Editor(bUndo) config -state disabled
+        $Editor(bUndo2) config -state disabled
     } else {
-    $Editor(bUndo) config -state normal
-    $Editor(bUndo2) config -state normal
+        $Editor(bUndo) config -state normal
+        $Editor(bUndo2) config -state normal
     }
 }
 
@@ -1816,7 +1880,7 @@ proc EditorActivateUndo {active} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc EditorUpdateAfterUndo {} {
+proc EditorUpdateAfterUndo { {render "true"} } {
     global Ed Editor Volume Slice
     
     set w [EditorGetWorkingID]
@@ -1838,7 +1902,9 @@ proc EditorUpdateAfterUndo {} {
     # Mark the volume as changed
     set Volume($w,dirty) 1
     
-    RenderAll
+    if {$render == "true"} {
+        RenderAll
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -1848,12 +1914,12 @@ proc EditorUpdateAfterUndo {} {
 # Disable the Undo button
 # .END
 #-------------------------------------------------------------------------------
-proc EditorUndo {} {
+proc EditorUndo { {render "true"} } {
     global Volume Ed
     
     # Undo the working volume
     Ed(editor) Undo
-    EditorUpdateAfterUndo
+    EditorUpdateAfterUndo $render
 }
 
 
