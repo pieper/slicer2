@@ -73,8 +73,8 @@ vtkMultipleStreamlineController::~vtkMultipleStreamlineController()
 
   this->ROIToWorld->Delete();
   this->WorldToTensorScaledIJK->Delete();
-  this->InputTensorField->Delete();
-  this->InputROI->Delete();
+  if (this->InputTensorField) this->InputTensorField->Delete();
+  if (this ->InputROI) this->InputROI->Delete();
   this->InputRenderers->Delete();
   this->Streamlines->Delete();
   this->Mappers->Delete();
