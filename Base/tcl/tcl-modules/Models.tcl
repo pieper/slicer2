@@ -63,7 +63,7 @@ proc ModelsInit {} {
 
 	# Set Version Info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.37 $} {$Date: 2001/11/13 23:26:05 $}]
+		{$Revision: 1.38 $} {$Date: 2001/12/11 18:11:56 $}]
 
 	# Props
 	set Model(propertyType) Basic
@@ -116,7 +116,7 @@ proc ModelsUpdateMRML {} {
 		
 		if {[string compare -length 8 $node "ModelRef"] == 0} {
 			set success 1
-			set CurrentModelID [SharedModelLookup [$node GetmodelRefID]]
+			set CurrentModelID [SharedModelLookup [$node GetModelRefID]]
 			if {$CurrentModelID != -1} {
 				set gui [expr $gui + [MainModelsCreateGUI $Model(fScrolledGUI) $CurrentModelID $hlevel]]
 			}

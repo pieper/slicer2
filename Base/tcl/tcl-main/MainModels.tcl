@@ -72,7 +72,7 @@ proc MainModelsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainModels \
-		{$Revision: 1.41 $} {$Date: 2001/11/13 23:26:05 $}]
+		{$Revision: 1.42 $} {$Date: 2001/12/11 18:11:55 $}]
 
 	set Model(idNone) -1
 	set Model(activeID) ""
@@ -116,7 +116,7 @@ proc MainModelsUpdateMRML {} {
 	while {$node != ""} {
 		if {[string compare -length 8 $node "ModelRef"] == 0} {
 			set success 1
-			set CurrentModelID [SharedModelLookup [$node GetmodelRefID]]
+			set CurrentModelID [SharedModelLookup [$node GetModelRefID]]
 			if {$CurrentModelID != -1} {
 				if {[MainModelsCreate $CurrentModelID] > 0} {
 					set Model($CurrentModelID,fly) 0
@@ -238,7 +238,7 @@ proc MainModelsUpdateMRML {} {
 		while {$node != ""} {
 			if {[string compare -length 8 $node "ModelRef"] == 0} {
 				set success 1
-				set CurrentModelID [SharedModelLookup [$node GetmodelRefID]]
+				set CurrentModelID [SharedModelLookup [$node GetModelRefID]]
 				if {$CurrentModelID != -1} {
 					$menu add command -label [Model($CurrentModelID,node) GetName] \
 					-command "MainModelsSetActive $CurrentModelID"
@@ -701,7 +701,7 @@ proc MainModelsDestroyGUI {} {
 	set node [Mrml(dataTree) GetNextItem]
 	while {$node != ""} {
 		if {[string compare -length 8 $node "ModelRef"] == 0} {
-			set CurrentModelID [SharedModelLookup [$node GetmodelRefID]]
+			set CurrentModelID [SharedModelLookup [$node GetModelRefID]]
 			if {$CurrentModelID != -1} {
 				MainModelsDeleteGUI $f $CurrentModelID
 			}

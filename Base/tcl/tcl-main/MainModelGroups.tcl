@@ -205,7 +205,7 @@ proc MainModelGroupsSetVisibility {modelgroup {value ""}} {
 		}
 		
 		if {([string compare -length 8 $node "ModelRef"] == 0) && ($traversingModelGroup > 0)} {
-			set m [SharedModelLookup [$node GetmodelRefID]]
+			set m [SharedModelLookup [$node GetModelRefID]]
 			
 			if {$value != ""} {
 			    set ModelGroup($modelgroup,visibility) $value
@@ -285,7 +285,7 @@ proc MainModelGroupsSetOpacity {modelgroup {grouponly 0}} {
 		
 		if {([string compare -length 8 $node "ModelRef"] == 0) && ($traversingModelGroup > 0)} {
 			if {$grouponly != 1} {
-				set m [SharedModelLookup [$node GetmodelRefID]]
+				set m [SharedModelLookup [$node GetModelRefID]]
 				Model($m,node) SetOpacity $ModelGroup($modelgroup,opacity)
 				$Model($m,prop,viewRen) SetOpacity [Model($m,node) GetOpacity]
 				set Model($m,opacity) [format %#.1f $ModelGroup($modelgroup,opacity)]

@@ -107,7 +107,7 @@ proc SharedGetModelsInGroup {modelgroup umodels {changeExpansion -1}} {
 		}
 		
 		if {([string compare -length 8 $node "ModelRef"] == 0) && ($traversingModelGroup > 0)} {
-			set m [SharedModelLookup [$node GetmodelRefID]]
+			set m [SharedModelLookup [$node GetModelRefID]]
 			lappend models $m
 			if {($traversingModelGroup == 1) && ($changeExpansion >= 0)} {
 				set Model($m,expansion) $changeExpansion
@@ -153,7 +153,7 @@ proc SharedGetModelsInGroupOnly {modelgroup umodels} {
 		}
 		
 		if {([string equal -length 8 $node "ModelRef"] == 1) && ($traversingModelGroup == 1)} {
-			set m [SharedModelLookup [$node GetmodelRefID]]
+			set m [SharedModelLookup [$node GetModelRefID]]
 			lappend models $m
 		}
 		set node [Mrml(dataTree) GetNextItem]

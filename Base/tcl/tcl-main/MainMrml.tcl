@@ -69,7 +69,7 @@ proc MainMrmlInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainMrml \
-		{$Revision: 1.45 $} {$Date: 2001/12/10 21:31:02 $}]
+		{$Revision: 1.46 $} {$Date: 2001/12/11 18:11:56 $}]
 
 	set Mrml(filePrefix) data
 	set Mrml(colorsUnsaved) 0
@@ -996,7 +996,7 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 				set key [lindex $a 0]
 				set val [lreplace $a 0 0]
 				switch [string tolower $key] {
-					"modelrefid" {$n SetmodelRefID $val}
+					"modelrefid" {$n SetModelRefID $val}
 				}
 			}
 		}

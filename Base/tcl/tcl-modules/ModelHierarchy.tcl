@@ -136,7 +136,7 @@ proc ModelHierarchyInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.5 $} {$Date: 2001/11/23 19:17:45 $}]
+	    {$Revision: 1.6 $} {$Date: 2001/12/11 18:11:56 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -206,7 +206,7 @@ proc ModelHierarchyBuildGUI {} {
     The ModelHierarchy module displays the hierarchy of your models.  It also allows you to change the hierarchy, to delete it or to create a new one.<BR>
     To move a model to another model group, simply use drag and drop. You can also drop models on other models. In this case they will be inserted directly before the model on which they were dropped. Doing this, you can reorganize the order of your models in any way you like.<BR>
     You can also move whole model groups, but only to other model groups.<BR>
-    If you like to create a new group, click the respective button and enter the desired name.<BR>
+    If you would like to create a new group, click the respective button and enter the desired name.<BR>
     The buttons 'Create' and 'Delete' affect the whole hierarchy.
     "
     regsub -all "\n" $help {} help
@@ -357,7 +357,7 @@ proc ModelHierarchyEnter {} {
 				set success 1
 				ModelHierarchyCreateRootEntry $f
 			}
-			set CurrentModelID [SharedModelLookup [$node GetmodelRefID]]
+			set CurrentModelID [SharedModelLookup [$node GetModelRefID]]
 			if {$CurrentModelID != -1} {
 					eval {label $f.l$CurrentModelID -text "[Model($CurrentModelID,node) GetName]"} $Gui(WLA)
 					bindtags $f.l$CurrentModelID [list DragDrop $f.l$CurrentModelID Label . all]
@@ -489,10 +489,10 @@ proc ModelHierarchyCreate {} {
 	foreach m $Model(idList) {
 		set newModelRefNode [MainMrmlAddNode "ModelRef"]
 		if {[Model($m,node) GetModelID] != ""} {
-			$newModelRefNode SetmodelRefID [Model($m,node) GetModelID]
+			$newModelRefNode SetModelRefID [Model($m,node) GetModelID]
 		} else {
 			# no model IDs yet, so create them
-			$newModelRefNode SetmodelRefID "M$m"
+			$newModelRefNode SetModelRefID "M$m"
 			Model($m,node) SetModelID "M$m"
 		}
 	}
@@ -709,7 +709,7 @@ proc ModelHierarchyMoveModel {id targetGroup src_modelgroup {trg_modelgroup 1}} 
 					# before the first model group
 					if {$targetGroup == "<root>"} {
 						set newModelRefNode [MainMrmlInsertBeforeNode $node ModelRef]
-						$newModelRefNode SetmodelRefID [Model($id,node) GetModelID]
+						$newModelRefNode SetModelRefID [Model($id,node) GetModelID]
 						set targetGroup ""
 					}
 					if {$depth < 0} {
@@ -726,20 +726,20 @@ proc ModelHierarchyMoveModel {id targetGroup src_modelgroup {trg_modelgroup 1}} 
 				if {$trg_modelgroup == 1} {
 					if {$depth == 0} {
 						set newModelRefNode [MainMrmlInsertBeforeNode $node "ModelRef"]
-						$newModelRefNode SetmodelRefID [Model($id,node) GetModelID]
+						$newModelRefNode SetModelRefID [Model($id,node) GetModelID]
 					}
 					incr depth -1
 				}
 			}
 			if {[string compare -length 8 $node "ModelRef"] == 0} {
-				if {[$node GetmodelRefID] == $sourceModelID} {
+				if {[$node GetModelRefID] == $sourceModelID} {
 					# remove this node
 					ModelHierarchyDeleteNode ModelRef [$node GetID]
 				} else {
-					if {[Model([SharedModelLookup [$node GetmodelRefID]],node) GetName] == $targetGroup} {
+					if {[Model([SharedModelLookup [$node GetModelRefID]],node) GetName] == $targetGroup} {
 						# insert new node here
 						set newModelRefNode [MainMrmlInsertBeforeNode $node ModelRef]
-						$newModelRefNode SetmodelRefID $sourceModelID
+						$newModelRefNode SetModelRefID $sourceModelID
 					}
 				}
 			}
@@ -786,7 +786,7 @@ proc ModelHierarchyMoveModel {id targetGroup src_modelgroup {trg_modelgroup 1}} 
 				if {$depth > 0} {
 					set n ModelRefTemp($i,node)
 					vtkMrmlModelRefNode $n
-					$n SetmodelRefID [$node GetmodelRefID]
+					$n SetModelRefID [$node GetModelRefID]
 					tempTree AddItem $n
 					ModelHierarchyDeleteNode ModelRef [$node GetID]
 				}
@@ -829,7 +829,7 @@ proc ModelHierarchyMoveModel {id targetGroup src_modelgroup {trg_modelgroup 1}} 
 				}
 			}
 			if {([string compare -length 8 $node "ModelRef"] == 0) && ($trg_modelgroup == 0)} {
-				set modelid [SharedModelLookup [$node GetmodelRefID]]
+				set modelid [SharedModelLookup [$node GetModelRefID]]
 				if {[Model($modelid,node) GetName] == $targetGroup} {
 					set targetNode $node
 					set success 1
@@ -872,7 +872,7 @@ proc ModelHierarchyMoveModel {id targetGroup src_modelgroup {trg_modelgroup 1}} 
 			}
 			if {[string compare -length 8 $node "ModelRef"] == 0} {
 				set newNode [MainMrmlInsertBeforeNode $targetNode ModelRef]
-				$newNode SetmodelRefID [$node GetmodelRefID]
+				$newNode SetModelRefID [$node GetModelRefID]
 			}
 			
 			set node [tempTree GetNextItem]
@@ -1124,7 +1124,7 @@ proc ModelHierarchyAddModel {modelID} {
 		if {[string compare -length 12 $node "EndHierarchy"] == 0} {
 			# insert the new model here
 			set newNode [MainMrmlInsertBeforeNode $node "ModelRef"]
-			$newNode SetmodelRefID $modelID
+			$newNode SetModelRefID $modelID
 		}
 		set node [Mrml(dataTree) GetNextItem]
 	}
