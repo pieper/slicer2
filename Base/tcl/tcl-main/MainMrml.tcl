@@ -533,7 +533,8 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 	global Mrml
 	global Model Volume Color Transform EndTransform Matrix
 	global TransferFunction WindowLevel TFPoint ColorLUT Options
-	
+	global Preset
+
 	foreach pair $tags {
 		set tag  [lindex $pair 0]
 		set attr [lreplace $pair 0 0]
@@ -709,7 +710,9 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 
 			# If these are presets, then do preset stuff on stuffing, not attr
 			if {[$n GetContents] == "presets"} {
-				MainOptionsParsePresets $attr
+			    MainOptionsParsePresets $attr
+			    # Set current values to presets for user prefs
+			    MainOptionsRecallPresets $Preset(userOptions)
 			}
 		}
 

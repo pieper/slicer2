@@ -310,7 +310,7 @@ proc MainInit {} {
 	set Module(procRecallPresets) ""
 	set m Main
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.24 $} {$Date: 2000/02/17 18:13:21 $}]
+		{$Revision: 1.25 $} {$Date: 2000/02/18 22:09:15 $}]
 
 	# Call each "Init" routine that's not part of a module
 	#-------------------------------------------
@@ -436,6 +436,9 @@ proc MainBuildGUI {} {
 		"MainMenu File SaveAs"
 	$Gui(mFile) add command -label "Save with Options" -command \
 		"MainMenu File SaveWithOptions"
+	$Gui(mFile) add separator
+	$Gui(mFile) add command -label "Save Options" -command \
+		"MainMenu File SaveOptions"
 	$Gui(mFile) add separator
 	$Gui(mFile) add command -label "Save 3D View" -command \
 		"MainMenu File Save3D"
@@ -1044,6 +1047,9 @@ proc MainMenu {menu cmd} {
 		}
 		"SaveWithOptions" {
 		    MainFileSaveWithOptions
+		}
+		"SaveOptions" {
+		    MainFileSaveOptions
 		}
 		"Save3D" {
 		    MainViewSaveView

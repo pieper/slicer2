@@ -64,13 +64,15 @@ proc OptionsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.4 $} {$Date: 2000/02/16 14:17:08 $}]
+		{$Revision: 1.5 $} {$Date: 2000/02/18 22:09:17 $}]
 
 	# Props
 	set Options(propertyType) Basic
 	set Options(program) "slicer"
 	set Options(contents) "presets"
 #	set Options(options) ""
+
+	set Options(moduleList) "ordered='$Module(idList)'\nsuppressed='$Module(supList)'"
 
 	foreach m $Module(idList) {
 		set Module($m,visibility) 1
@@ -311,6 +313,9 @@ proc OptionsSetPropertyType {} {
 proc OptionsPropsApply {} {
 	global Options Module Mrml
 
+    # for now, disable creation of options in this way.  (Can save in MRML file or in Options.xml)
+    return
+
 	# Validate program
 	if {$Options(program) == ""} {
 		tk_messageBox -message "Please enter a program that will recognize this option."
@@ -386,37 +391,23 @@ proc OptionsModulesApply {} {
 
         global Module Options
 
-	set ordList ""
-	set supList ""
+	set ordered "ordered='"
+	set suppressed "suppressed='"
 	foreach m $Module(idList) {
 		if {$Module($m,visibility) == 1} {
-			lappend ordList $m
+			set ordered "$ordered $m"
 		} else {
-			lappend supList $m
+			set suppressed "$suppressed $m"
 		}
 	}
 
-	# Write the modules into 2 lists: ordered, suppressed
-	if {$ordList != ""} {
-		if {[catch {set ord [open OrderedModules.txt w]} errmsg] == 1} {
-			puts $errmsg
-			return
-		}
-		foreach m $ordList {
-			puts $ord $m
-		}
-		close $ord
-	}
-	if {$supList != ""} {
-		if {[catch {set sup [open SuppressedModules.txt w]} errmsg] == 1} {
-			puts $errmsg
-			return
-		}
-		foreach m $supList {
-			puts $sup $m
-		}
-		close $sup
-	}
+	set ordered "$ordered'"
+	set suppressed "$suppressed'"
+	
+	set Options(moduleList) "$ordered\n$suppressed\n"
+	
+	MainFileSaveOptions
+	return
 
 }
 
@@ -448,20 +439,17 @@ proc OptionsPropsCancel {} {
 # .END
 #-------------------------------------------------------------------------------
 proc OptionsModulesAll {} {
-	global Options Module
+    global Options Module
 
-	if {[catch {file delete OrderedModules.txt} errmsg] == 1} {
-		puts $errmsg
-	}
-	if {[catch {file delete SuppressedModules.txt} errmsg] == 1} {
-		puts $errmsg
-	}
-	$Options(bModulesApply) config -state disabled
-	$Options(bModulesAll) config -state disabled
-	foreach m $Module(idList) {
-		set Module($m,visibility) 1
-	}
-	OptionsModulesGUI
+    foreach m $Module(idList) {
+	set Module($m,visibility) 1
+    }
+    OptionsModulesGUI
+
+    OptionsModulesApply
+
+#    $Options(bModulesApply) config -state disabled
+#    $Options(bModulesAll) config -state disabled
 }
 
 #-------------------------------------------------------------------------------

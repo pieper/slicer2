@@ -63,9 +63,12 @@ proc MainOptionsInit {} {
 	set Options(contents) ""
 #	set Options(options) ""
 
-	foreach p "0 1 2 3" {
+        set Preset(userOptions) 0
+        set Preset(idList) "0 1 2 3"
+	foreach p $Preset(idList) {
 		set Preset($p,state) Release
 	}
+	
 }
 
 #-------------------------------------------------------------------------------
@@ -123,7 +126,7 @@ proc MainOptionsBuildVTK {} {
 #
 # Returns:
 #  1 - success
-#  0 - already built this volume
+#  0 - already built this Option
 # -1 - failed to read files
 # .END
 #-------------------------------------------------------------------------------
@@ -145,7 +148,7 @@ proc MainOptionsCreate {t} {
 #
 # Returns:
 #  1 - success
-#  0 - already deleted this volume
+#  0 - already deleted this Option
 # .END
 #-------------------------------------------------------------------------------
 proc MainOptionsDelete {t} {
@@ -227,6 +230,8 @@ proc MainOptionsParsePresets {attr} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainOptionsParseDefaults
+#  Parses the default presets string provided by each module in its Init.
+#  Initializes all presets (including "default" preset) to these defaults
 # .END
 #-------------------------------------------------------------------------------
 proc MainOptionsParseDefaults {m} {
@@ -249,7 +254,7 @@ proc MainOptionsParseDefaults {m} {
 			return
 		}
 			
-		foreach p "0 1 2 3 default" {
+		foreach p "$Preset(idList) default" {
 			set Preset($m,$p,$key) $value
 		}
 		lappend Preset($m,keys) $key
@@ -261,9 +266,11 @@ proc MainOptionsParseDefaults {m} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainOptionsUnparsePresets
+# Puts presets into the XML format.
+# Makes an Options node and adds it to data tree.
 # .END
 #-------------------------------------------------------------------------------
-proc MainOptionsUnparsePresets {} {
+proc MainOptionsUnparsePresets {{presetNum ""}} {
 	global Preset Mrml Options Module Model
 	
 	# Store current settings as preset #0
@@ -281,7 +288,7 @@ proc MainOptionsUnparsePresets {} {
 		if {[info exists Preset($m,keys)] == 1} {
 			set wrote 0
 			foreach key $Preset($m,keys) {
-				foreach p "0 1 2 3" {
+				foreach p $Preset(idList) {
 					set name "$m,$p,$key"
 					if {$Preset($name) != $Preset($m,default,$key)} {
 						set wrote 1
@@ -301,8 +308,8 @@ proc MainOptionsUnparsePresets {} {
 	#
 	set wrote 0
 	foreach m $Model(idList) {
-		foreach key "visibility opacity" {
-			foreach p "0 1 2 3" {
+		foreach key "visibility opacity clipping backfaceCulling" {
+			foreach p $Preset(idList) {
 				set name "Models,$p,$m,$key"
 				# Careful: if the user never clicked the button, then the preset
 				# doesn't exist.
@@ -318,11 +325,17 @@ proc MainOptionsUnparsePresets {} {
 		set options "$options\n"
 	}
 
+
+	# If we are saving user options in Options.xml, don't add node to tree.
+	if {$presetNum == $Preset(userOptions)} {
+	    return $options
+	}
+
 	# If a preset options node exists, edit it, else create one.
 	set tree Mrml(dataTree)
 	$tree InitTraversal
 	set node [$tree GetNextItem]
-    set found 0
+        set found 0
 	while {$node != ""} {
 		set class [$node GetClassName]
 		if {$class == "vtkMrmlOptionsNode"} {
@@ -332,20 +345,14 @@ proc MainOptionsUnparsePresets {} {
 			}
 		}
 		set node [$tree GetNextItem]
-    }
+	}
 
 	if {$found == 0} {
 		# Create a node
-		set i $Options(nextID)
-		incr Options(nextID)
-		lappend Options(idList) $i
-		vtkMrmlOptionsNode Options($i,node)
-		set n Options($i,node)
-		$n SetID           $i
+	        set n [MainMrmlAddNode Options]
 		$n SetOptions $options
 		$n SetProgram slicer
 		$n SetContents presets
-		Mrml(dataTree) AddItem $n
 	}
 }
 
@@ -370,25 +377,40 @@ proc MainOptionsPreset {p state} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainOptionsPresetCallback {p} {
-	global View Target Gui Preset Slice Locator Anno Model Options Module
-
-	if {$Preset($p,state) == "Press"} {
-		
-		# Change button to red
-		if {$p != 0} {
-			$View(fPreset).c$p config -activebackground red
-		}
-
-		# Set preset value to the current
-		foreach m $Module(procStorePresets) {
-			$m $p
-		}
-
-	} else {
-		# Set current to the preset value
-		foreach m $Module(procRecallPresets) {
-			$m $p
-		}
+    global View Target Gui Preset Slice Locator Anno Model Options Module
+    
+    if {$Preset($p,state) == "Press"} {
+	
+	# Change button to red
+	if {$p != $Preset(userOptions)} {
+	    $View(fPreset).c$p config -activebackground red
 	}
+	
+	# Set preset value to the current
+	MainOptionsStorePresets $p
+	
+    } else {
+	
+	# Set current to the preset value
+	MainOptionsRecallPresets $p
+    }
 }
 
+
+proc MainOptionsRecallPresets {p} {
+    global Module
+
+    # Set current to the preset value
+    foreach m $Module(procRecallPresets) {
+	$m $p
+    }
+}
+
+proc MainOptionsStorePresets {p} {
+    global Module
+    
+    # Set preset value to the current
+    foreach m $Module(procStorePresets) {
+	$m $p
+    }
+}

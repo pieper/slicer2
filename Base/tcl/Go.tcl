@@ -233,6 +233,11 @@ foreach name $main {
 set Module(idList)     $ordered
 set Module(mainList)   $main
 set Module(sharedList) $shared
+#set Module(supList)    $suppressed
+#set Module(allList)    $found
+set Module(supList)    ""
+set Module(allList)    $ordered
+
 if {$verbose == 1} {
 	puts "ordered=$ordered"
 	puts "main=$main"

@@ -301,6 +301,7 @@ proc MainFileSave {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainFileSaveWithOptions
+# Puts Options in current MRML file.
 # .END
 #-------------------------------------------------------------------------------
 proc MainFileSaveWithOptions {} {
@@ -314,6 +315,46 @@ proc MainFileSaveWithOptions {} {
 	}
 
 	MainFileSaveAsApply
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MainFileSaveOptions
+#  Saves Options.xml 
+# .END
+#-------------------------------------------------------------------------------
+proc MainFileSaveOptions {} {
+    global Mrml Preset File Options
+    puts "save options"    
+    # Get presets
+    set options [MainOptionsUnparsePresets $Preset(userOptions)]
+    
+    # Make a temporary node for presets
+    vtkMrmlOptionsNode pre
+    pre SetOptions $options
+    pre SetProgram slicer
+    pre SetContents presets
+
+    # Make a temporary node for modules
+    vtkMrmlOptionsNode mod
+    mod SetOptions $Options(moduleList)
+    mod SetProgram slicer
+    mod SetContents modules
+
+    # Make a temporary tree for writing
+    vtkMrmlTree tree
+    tree AddItem pre
+    tree AddItem mod
+
+    # Write Options.xml
+    set filename Options.xml
+    tree Write $filename
+
+    # Clean up.
+    tree RemoveAllItems
+    tree Delete
+    pre Delete
+    mod Delete
+puts "save options done"
 }
 
 #-------------------------------------------------------------------------------
