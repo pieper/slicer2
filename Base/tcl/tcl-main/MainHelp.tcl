@@ -56,7 +56,7 @@ proc MainHelpInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainHelp \
-        {$Revision: 1.18.6.1 $} {$Date: 2004/12/22 16:42:32 $}]
+        {$Revision: 1.18.6.2 $} {$Date: 2004/12/22 16:49:24 $}]
 
     set Help(tagNormal)   "-font {times 10}"
     set Help(tagItalic)   "-font {times 10 italic}"
@@ -343,16 +343,26 @@ proc MainHelpLink {w id linkTag} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainHelpLaunchBrowser {{section ""}} {
-    global Path
 
     if {$section == ""} {
-        set url "$Path(browserUrl)"
+        set url "$::Path(browserUrl)"
     } else {
-        set url "$Path(browserUrl)#$section"
+        set url "$::Path(browserUrl)#$section"
     }
+    MainHelpLaunchBrowserURL $url
+}
 
-    if { $Path(browserPath) != "unknown" } {
-        set ret [catch "exec $Path(browserPath) $url &" res]
+#-------------------------------------------------------------------------------
+# .PROC MainHelpLaunchBrowserURL
+#
+#
+#  Tries to launch a Web Browser with a specified URL
+# .END
+#-------------------------------------------------------------------------------
+proc MainHelpLaunchBrowserURL {url} {
+
+    if { $::Path(browserPath) != "unknown" } {
+        set ret [catch "exec $::Path(browserPath) $url &" res]
         if { $ret } {
             DevErrorWindow "Could not launch browser.\n\n$res"
         }
