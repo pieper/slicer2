@@ -8,6 +8,12 @@ proc echo {args} {puts "$args"}
 proc init { {job_limit 200} } {
 
     switch $::env(HOSTNAME) { 
+        "C226.2532.sc03.org" {
+            set ::ids [exec ls -1 /home/pieper/data/MIRIAD/Project_0002]
+            set racks {0 2}
+            set rows {0 31}
+            set ::archive  "/home/pieper/data/MIRIAD/Project_0002"
+        }
         "crayon.rocksclusters.org" {
             set ::ids [exec ls -1 /home/pieper/data/MIRIAD/Project_0002]
             set racks {0 0}
@@ -18,7 +24,7 @@ proc init { {job_limit 200} } {
             set ::ids [exec ssh gpop.bwh.harvard.edu \
                 ls -1 /nas/nas0/pieper/data/MIRIAD/Project_0002]
             set racks {0 3}
-            set rows {2 15}
+            set rows {0 31}
             set ::archive  "gpop.bwh.harvard.edu:/nas/nas0/pieper/data/MIRIAD/Project_0002"
 
         }
@@ -112,9 +118,9 @@ proc run_job {compute job} {
     set birnid [lindex $job 0]
     set visit [lindex $job 1]
 
+    set slicercmd "MIRIADSegmentProcessStudy $::archive $birnid $visit"
     set slicercmd "puts hoot"
     set slicercmd "MIRIADSegmentLoadStudy $::archive 000300742113 001 none"
-    set slicercmd "MIRIADSegmentProcessStudy $::archive $birnid $visit"
 
     set fp [open "| csh -c \"ssh $compute ~/birn/bin/runvnc \
                 --wm /home/pieper/bin/xterm -- \

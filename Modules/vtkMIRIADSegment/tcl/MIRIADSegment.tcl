@@ -151,7 +151,7 @@ proc MIRIADSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.10 $} {$Date: 2003/11/14 19:09:57 $}]
+        {$Revision: 1.11 $} {$Date: 2003/11/27 16:21:19 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -327,11 +327,11 @@ proc MIRIADSegmentExit {} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc MIRIADSegmentProcessStudy { {archive "default"} {BIRNID "000397921927"} {visit 001} } {
+proc MIRIADSegmentProcessStudy { {archive "default"} {BIRNID "000397921927"} {visit 001} {atlas "spl"} } {
 
-    set ::MIRIADSegment(version) 1
+    set ::MIRIADSegment(version) $atlas_reg
 
-    MIRIADSegmentLoadStudy $archive $BIRNID $visit 
+    MIRIADSegmentLoadStudy $archive $BIRNID $visit $atlas
 
     MIRIADSegmentSetEMParameters
     MIRIADSegmentRunEM
