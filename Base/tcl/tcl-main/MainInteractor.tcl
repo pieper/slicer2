@@ -1098,7 +1098,9 @@ proc Angle2D {ax1 ay1 ax2 ay2 bx1 by1 bx2 by2} {
     # Find angle between a, b from their dot product
     set dot [expr $ax*$bx + $ay*$by]
     if {$am == 0 || $bm == 0} {return 0}
-    set deg [expr acos($dot/($am*$bm))]
+    set cos [expr $dot/($am*$bm)]
+    if { $cos > 1. } { set cos 1 } ;# fix possible rounding error
+    set deg [expr acos($cos)]
 
     # See if angle is negative from the cross product of a and b
     if {$ax*$by - $bx*$ay > 0} {
