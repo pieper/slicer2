@@ -144,7 +144,7 @@ void vtkPose::Transform(vtkVector3 *r, vtkVector3 *p)
 //
 // Concatenate rotations by multiplication, translations by addition:
 //
-// t = concat(r1*t2, t1) = r1*t2 + t1
+// t = concat(r2*t1, t2) = r2*t1 + t2
 // r = concat(r1   , r2) = r2 * r1
 //
 // (See comments on Quaternion::Multiply for why it's r2*r1 instead of r1*r2.)
@@ -159,8 +159,8 @@ void vtkPose::Concat(vtkPose *p1, vtkPose *p2)
   vtkVector3    *t  = this->GetTranslation();
 
   // Translation
-  r1->Rotate(t, t2);
-  t->Add(t1);
+  r2->Rotate(t, t1);
+  t->Add(t2);
 
   // Rotation
   r->Multiply(r2, r1);

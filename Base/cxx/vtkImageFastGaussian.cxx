@@ -81,13 +81,18 @@ static void vtkImageFastGaussianExecute(vtkImageFastGaussian *self,
   self->PermuteIncrements(outData->GetIncrements(), outIncX, outIncY, outIncZ);
 
   nx = outMax0 - outMin0 + 1;
-    ny = outMax1 - outMin1 + 1;
-    nz = outMax2 - outMin2 + 1;
+  ny = outMax1 - outMin1 + 1;
+  nz = outMax2 - outMin2 + 1;
   
   // Radius need not be larger than image
   // (or I'd have to change the loop controls below)
+  if (ks > nx) {
+    ks = nx-1;
+    rx = ks/2;
+  }
+  
   if (rx >= nx) rx = nx-1;
-
+    
   // No radius, no filtering.
   if (rx == 0) return;
 
@@ -119,14 +124,14 @@ static void vtkImageFastGaussianExecute(vtkImageFastGaussian *self,
       // Init accumulator to contain righthand half of kernel
       kernelSum = 0;
       nk = 0;
-      for (t=-1, h=0; h < rx; h++) 
+      for (t=-ks, h=0; h < rx; h++, t++)
       { 
         kernelSum += kernel[nk];
         nk++;
       }
 
       // Move kernel onto image from left end
-      for (c=0; c <= rx; h++, c++)
+      for (c=0; c <= rx; h++, c++, t++)
       {
         kernelSum += kernel[nk];
         nk++;
@@ -140,7 +145,7 @@ static void vtkImageFastGaussianExecute(vtkImageFastGaussian *self,
 
       // Move kernel across middle of image
       normalizeFactor = 1.0 / (double)kernelSum;
-      for (t=0; h < nx; h++, c++, t++)
+      for (; h < nx; h++, c++, t++)
       {
         accum = 0;
         for (k=0; k<nk; k++)
@@ -151,7 +156,7 @@ static void vtkImageFastGaussianExecute(vtkImageFastGaussian *self,
       }
 
       // Move kernel off right end of image
-      for (h=nx-1; c < nx; c++, t++)
+      for (; c < nx; c++, t++)
       {
         kernelSum -= kernel[ks-nk];
         nk--;
