@@ -151,7 +151,11 @@ void vtkPelvisMetric::Normalize()
   
   // OBS! this invariant is also enforced in NormalizeXAxis
   // center of actabular plane in FrontalAxis halfspace
+#if (VTK_MAJOR_VERSION == 4 && VTK_MINOR_VERSION >= 3)
   vtkFloatingPointType* frontalAxisDirection = WorldToObject->TransformNormal(1,0,0);
+#else
+  float* frontalAxisDirection = WorldToObject->TransformFloatNormal(1,0,0);
+#endif
   p_acetabulum = vtkMath::Dot(AcetabularPlane->GetCenter(),frontalAxisDirection);
   p_center = vtkMath::Dot(Center,frontalAxisDirection);
   if(p_acetabulum<p_center)
@@ -187,7 +191,12 @@ vtkFloatingPointType vtkPelvisMetric::Angle(vtkFloatingPointType* n,vtkFloatingP
 
 void vtkPelvisMetric::UpdateAngles()
 {
+#if (VTK_MAJOR_VERSION == 4 && VTK_MINOR_VERSION >= 3)
   vtkFloatingPointType* normal_in_obj = WorldToObject->TransformNormal(AcetabularPlane->GetNormal());
+#else
+  float* normal_in_obj = WorldToObject->TransformFloatNormal(AcetabularPlane->GetNormal());
+#endif
+  
   vtkFloatingPointType* reference_n = (vtkFloatingPointType*) malloc(3*sizeof(vtkFloatingPointType));
 
   for(int i = 0;i<3;i++)
@@ -202,7 +211,11 @@ void vtkPelvisMetric::UpdateAngles()
   InclinationAngle = 90 - Angle(reference_n,normal_in_obj);
 
   // Clean up of inclination computation
+#if (VTK_MAJOR_VERSION == 4 && VTK_MINOR_VERSION >= 3)
   normal_in_obj = WorldToObject->TransformNormal(AcetabularPlane->GetNormal());
+#else
+  normal_in_obj = WorldToObject->TransformFloatNormal(AcetabularPlane->GetNormal());
+#endif
 
   // Anteversion
   normal_in_obj[2]= 0;
