@@ -96,7 +96,10 @@
 # .END
 #-------------------------------------------------------------------------------
 proc DevYesNo {message} {
-   return [tk_messageBox -title Slicer -icon question -type yesno -message $message]
+    set oscaling [tk scaling]
+    tk scaling 1
+    return [tk_messageBox -title Slicer -icon question -type yesno -message $message]
+    tk scaling $oscaling
 }
 
 #-------------------------------------------------------------------------------
@@ -110,7 +113,10 @@ proc DevYesNo {message} {
 # .END
 #-------------------------------------------------------------------------------
 proc DevOKCancel {message} {
-   return [tk_messageBox -title Slicer -icon question -type okcancel -message $message]
+    set oscaling [tk scaling]
+    tk scaling 1
+    return [tk_messageBox -title Slicer -icon question -type okcancel -message $message]
+    tk scaling $oscaling
 }
 
 
@@ -124,7 +130,10 @@ proc DevOKCancel {message} {
 # .END
 #-------------------------------------------------------------------------------
 proc DevWarningWindow {{message "Unknown Warning"}} {
-   tk_messageBox -title "Slicer" -icon warning -message $message
+    set oscaling [tk scaling]
+    tk scaling 1
+    tk_messageBox -title "Slicer" -icon warning -message $message
+    tk scaling $oscaling
 }
 
 #-------------------------------------------------------------------------------
@@ -137,7 +146,10 @@ proc DevWarningWindow {{message "Unknown Warning"}} {
 # .END
 #-------------------------------------------------------------------------------
 proc DevInfoWindow {message} {
-   tk_messageBox -title "Slicer" -icon info -message $message -type ok
+    set oscaling [tk scaling]
+    tk scaling 1
+    tk_messageBox -title "Slicer" -icon info -message $message -type ok
+    tk scaling $oscaling
 }
 
 #-------------------------------------------------------------------------------
@@ -150,7 +162,10 @@ proc DevInfoWindow {message} {
 # .END
 #-------------------------------------------------------------------------------
 proc DevErrorWindow {{message "Unknown Error"}} {
-   tk_messageBox -title Slicer -icon error -message $message -type ok
+    set oscaling [tk scaling]
+    tk scaling 1
+    tk_messageBox -title Slicer -icon error -message $message -type ok
+    tk scaling $oscaling
 }
 
 #-------------------------------------------------------------------------------
