@@ -23,20 +23,21 @@
 # FILE:        Ev.tcl
 # PROCEDURES:  
 #   EvInit
-#   EvDeclareEventHandler
+#   EvDeclareEventHandler eSet event handler
+#   EvClearEventHandler eSet event
 #   EvClearEventHandler
-#   EvAddWidgetToBindingSet
-#   EvRemoveWidgetFromBindingSet
-#   EvGetBindingStack
-#   EvActivateBindingSet
-#   EvDeactivateBindingSet
-#   EvCullDeadWidgetsFromBindingSet
-#   EvDestroyBindingSet
-#   EvBindtagsToEventSet
-#   EvEventSetToBindtags
-#   EvFormatBinding
-#   EvReplaceWidgetBindings
-#   EvClearWidgetBindings
+#   EvAddWidgetToBindingSet bindingSet widget eglist
+#   EvRemoveWidgetFromBindingSet bindingSet widget
+#   EvActivateBindingSet bindingSet widgetList
+#   EvDeactivateBindingSet bindingSet widgetList
+#   EvDestroyBindingSet bindingSet
+#   EvCullDeadWidgetsFromBindingSet bindingSet widgetList
+#   EvGetBindingStack widget
+#   EvClearWidgetBindings widget
+#   EvBindtagsToEventSet bt
+#   EvEventSetToBindtags bindingSet eventList rest
+#   EvFormatBinding e
+#   EvReplaceWidgetBindings widget newBindingSet newBindings
 #   EvSimpleExample
 #==========================================================================auto=
 
@@ -172,7 +173,7 @@ proc EvInit {} {
     
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.3 $} {$Date: 2002/04/11 23:51:40 $}]
+            {$Revision: 1.4 $} {$Date: 2002/06/17 20:08:34 $}]
 }
 
 #-------------------------------------------------------------------------------
@@ -213,6 +214,12 @@ proc EvDeclareEventHandler {eSet event handler} {
 # str event event to clear handlers for, if not given all events are cleared.
 # .END
 
+#-------------------------------------------------------------------------------
+# .PROC EvClearEventHandler
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EvClearEventHandler {eSet {event {}}} {
     set es [EvFormatBinding $eSet]
     if {[length $event] == 0} {
