@@ -253,7 +253,7 @@ proc EMSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.44 $} {$Date: 2004/10/23 00:53:07 $}]
+        {$Revision: 1.45 $} {$Date: 2004/11/05 03:02:03 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -330,7 +330,6 @@ proc EMSegmentInit {} {
     set EMSegment(DICEVolumeList) {}
     set EMSegment(ModelMakerVolumeList) {}
     
-
     set EMSegment(SegmentIndex) 0
 
     # How did I come up with the number 82 ? It is a long story ....
@@ -440,8 +439,8 @@ proc EMSegmentInit {} {
 
     set EMSegment(SuperClass) -1
     set EMSegment(NumClassesNew) 1
-                   
-    foreach NodeType $EMSegment(MrmlNode,TypeList) {
+         
+    foreach NodeType "$EMSegment(MrmlNode,TypeList) SegmenterGenericClass" {
         switch $NodeType {
             SegmenterGraph -
             SegmenterInput -
@@ -456,15 +455,13 @@ proc EMSegmentInit {} {
         set EMSegment(MrmlNode,$NodeType,AttributeList) [lindex $blubList 2]
         set EMSegment(MrmlNode,$NodeType,InitValueList)      [lindex $blubList 3]
     }
+   
+    set EMSegment(MrmlNode,JointSegmenterSuperClassAndClass,AttributeList) "$EMSegment(MrmlNode,SegmenterSuperClass,AttributeList) [lrange $EMSegment(MrmlNode,SegmenterClass,AttributeList) 1 end] $EMSegment(MrmlNode,SegmenterGenericClass,AttributeList)"
+    set EMSegment(MrmlNode,JointSegmenterSuperClassAndClass,InitValueList) "$EMSegment(MrmlNode,SegmenterSuperClass,InitValueList) [lrange $EMSegment(MrmlNode,SegmenterClass,InitValueList) 1 end] $EMSegment(MrmlNode,SegmenterGenericClass,InitValueList)"
 
-    set EMSegment(MrmlNode,JointSegmenterSuperClassAndClass,AttributeList) "$EMSegment(MrmlNode,SegmenterSuperClass,AttributeList)"
-    set EMSegment(MrmlNode,JointSegmenterSuperClassAndClass,InitValueList) "$EMSegment(MrmlNode,SegmenterSuperClass,InitValueList)"
-
-    foreach item "$EMSegment(MrmlNode,SegmenterClass,AttributeList)" init "$EMSegment(MrmlNode,SegmenterClass,InitValueList)" {
-      if {[lsearch -exact $EMSegment(MrmlNode,JointSegmenterSuperClassAndClass,AttributeList) $item] < 0 } {
-        lappend EMSegment(MrmlNode,JointSegmenterSuperClassAndClass,AttributeList) $item
-        lappend EMSegment(MrmlNode,JointSegmenterSuperClassAndClass,InitValueList) "$init"
-      } 
+    foreach ListType "SetList SetListLower AttributeList InitValueList" {
+        set EMSegment(MrmlNode,SegmenterSuperClass,$ListType) "$EMSegment(MrmlNode,SegmenterSuperClass,$ListType) $EMSegment(MrmlNode,SegmenterGenericClass,$ListType)"
+        set EMSegment(MrmlNode,SegmenterClass,$ListType) "$EMSegment(MrmlNode,SegmenterClass,$ListType) $EMSegment(MrmlNode,SegmenterGenericClass,$ListType)"
     }
 
     # Automatically adds entry fields to the GUI
@@ -478,7 +475,11 @@ proc EMSegmentInit {} {
 
     if {$EMSegment(SegmentMode)} {
         # For Printing parameters 
-        set LeftOverList [lrange $EMSegment(MrmlNode,SegmenterSuperClass,AttributeList) 4 end-1]
+        set LeftOverList $EMSegment(MrmlNode,SegmenterSuperClass,AttributeList) 
+    foreach LeftOut "Name NumClasses Prob LocalPriorWeight InputChannelWeights" {
+        set index [lsearch -exact $LeftOverList $LeftOut] 
+        set LeftOverList [lreplace $LeftOverList $index $index] 
+    } 
 
         foreach index [lsearch -glob -all $EMSegment(MrmlNode,SegmenterSuperClass,AttributeList)  Print*] {
           set attribute [lindex $EMSegment(MrmlNode,SegmenterSuperClass,AttributeList) $index]
@@ -496,15 +497,15 @@ proc EMSegmentInit {} {
         }
 
         # Boundary calculation parameters    
-    foreach index [lsearch -glob -all $EMSegment(MrmlNode,SegmenterSuperClass,AttributeList)  Boundary*] {
+       foreach index [lsearch -glob -all $EMSegment(MrmlNode,SegmenterSuperClass,AttributeList)  Boundary*] {
           set attribute [lindex $EMSegment(MrmlNode,SegmenterSuperClass,AttributeList) $index]
-      lappend EMSegment(GuiBoundaryNameList) [string range $attribute 12 end]
-      lappend EMSegment(GuiBoundaryAttributeList) $attribute
-      lappend EMSegment(GuiBoundaryEntryTypeList) entry
+          lappend EMSegment(GuiBoundaryNameList) [string range $attribute 12 end]
+          lappend EMSegment(GuiBoundaryAttributeList) $attribute
+          lappend EMSegment(GuiBoundaryEntryTypeList) entry
 
-      set LeftOverIndex [lsearch $LeftOverList $attribute]  
+          set LeftOverIndex [lsearch $LeftOverList $attribute]  
           set LeftOverList [lreplace $LeftOverList $LeftOverIndex $LeftOverIndex]
-    }
+       }
     # Misc Parameter
         foreach attribute $LeftOverList {
         lappend EMSegment(GuiMiscellaneousNameList) $attribute
@@ -1609,9 +1610,11 @@ proc EMSegmentDefineNodeAttributeList {MrmlNodeType AddSetCommandList} {
 
     vtkMrml${MrmlNodeType}Node blub
     set nMethods [blub ListMethods] 
+    set nMethods "$AddSetCommandList [lrange $nMethods [expr [lsearch $nMethods vtkMrml${MrmlNodeType}Node:]+ 1] end]"
+   
     # Cut out everyhting than it is not directly connected with the MrmlSegmenterNode!  
     # If you want to change it just take the SetOptions out - that is why I am duing it 
-    set nMethods "[lrange $nMethods [expr [lsearch $nMethods vtkMrml${MrmlNodeType}Node:]+ 1] end] $AddSetCommandList"
+
     foreach index [lsearch -glob -all $nMethods  Set*] {
         set SetCommand  [lindex $nMethods $index]
         if {[lsearch -exact $SetList $SetCommand] < 0} {
@@ -1623,6 +1626,7 @@ proc EMSegmentDefineNodeAttributeList {MrmlNodeType AddSetCommandList} {
     }
     }
     blub Delete
+
 
     return "{$SetList} {$SetListLower} {$AttributeList} {$InitList}" 
 }
@@ -2468,24 +2472,25 @@ proc EMSegmentSaveSettingSuperClass {SuperClass LastNode} {
           # SegmenterSuperClass($pid,node) SetPrintBias           $EMSegment(Cattrib,$i,PrintBias)  
           # SegmenterSuperClass($pid,node) SetPrintLabelMap       $EMSegment(Cattrib,$i,PrintLabelMap)  
 
-          set InputChannelWeights ""
-          for {set y 0} {$y < $EMSegment(MaxInputChannelDef)} {incr y} {
-            lappend InputChannelWeights $EMSegment(Cattrib,$i,InputChannelWeights,$y)     
-          }
-          SegmenterSuperClass($pid,node) SetInputChannelWeights $InputChannelWeights
-          set LastNode [EMSegmentSaveSettingSuperClass $i $EMSegment(Cattrib,$i,Node)]
+      set InputChannelWeights ""
+      for {set y 0} {$y < $EMSegment(MaxInputChannelDef)} {incr y} {
+          lappend InputChannelWeights $EMSegment(Cattrib,$i,InputChannelWeights,$y)     
+      }
+      SegmenterSuperClass($pid,node) SetInputChannelWeights "$InputChannelWeights"
+
+      set LastNode [EMSegmentSaveSettingSuperClass $i $EMSegment(Cattrib,$i,Node)]
       
           # Automatically saving values 
-      foreach Name $EMSegment(GuiBuildEntryBoxList) {
-          if {$Name != "Miscellaneous"} {
-          set BeginName $Name
-          } else {
-          set BeginName ""
-          }
-          foreach Attribute $EMSegment(Gui${Name}AttributeList) {
-          eval SegmenterSuperClass($pid,node) Set$Attribute $EMSegment(Cattrib,$i,$Attribute) 
-          }
-      }
+          foreach Name $EMSegment(GuiBuildEntryBoxList) {
+            if {$Name != "Miscellaneous"} {
+              set BeginName $Name
+            } else {
+              set BeginName ""
+            }
+            foreach Attribute $EMSegment(Gui${Name}AttributeList) {
+           eval SegmenterSuperClass($pid,node) Set$Attribute $EMSegment(Cattrib,$i,$Attribute) 
+            }
+         }
        } else {
 
           # A normal class
@@ -2554,7 +2559,7 @@ proc EMSegmentSaveSettingSuperClass {SuperClass LastNode} {
             lappend LogCovariance "|"
           }
           SegmenterClass($pid,node) SetLogMean "$LogMean"
-          SegmenterClass($pid,node) SetInputChannelWeights $InputChannelWeights
+          SegmenterClass($pid,node) SetInputChannelWeights "$InputChannelWeights"
           SegmenterClass($pid,node) SetLogCovariance "[lrange $LogCovariance 0 [expr [llength $LogCovariance]-2]]"
 
           # Print Functions 
@@ -4121,7 +4126,7 @@ proc EMSegmentCreateDeleteClasses {ChangeGui DeleteNode InitClasses} {
 
     foreach NodeAttribute "$EMSegment(MrmlNode,JointSegmenterSuperClassAndClass,AttributeList)" InitValue "$EMSegment(MrmlNode,JointSegmenterSuperClassAndClass,InitValueList)" {
       switch $NodeAttribute {
-      Label                 {set EMSegment(Cattrib,$i,Label)     [lindex $EMSegment(ColorLabelList) [expr 2*(($i-1)%$ColorLabelLength)+1]]}
+          Label                 {set EMSegment(Cattrib,$i,Label)     [lindex $EMSegment(ColorLabelList) [expr 2*(($i-1)%$ColorLabelLength)+1]]}
           default               {set EMSegment(Cattrib,$i,$NodeAttribute) "$InitValue"  } 
         }
       }
@@ -4162,13 +4167,13 @@ proc EMSegmentCreateDeleteClasses {ChangeGui DeleteNode InitClasses} {
         if { $i < $Cstart} { set jlist  [lrange $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList) $NumClasses end] 
         } else { set jlist $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList)}
         foreach k $EMSegment(CIMList) {
-        if { $i >= $Cstart} {set EMSegment(Cattrib,$i,CIMMatrix,$k,Node) ""}
-        foreach j $jlist {
-        if {$i == $j} {
-            set EMSegment(Cattrib,$EMSegment(SuperClass),CIMMatrix,$i,$j,$k) 1
-            set EMSegment(Cattrib,$j,CIMMatrix,$k,Node) ""
-        } else  {set EMSegment(Cattrib,$EMSegment(SuperClass),CIMMatrix,$i,$j,$k) 0}
-        }
+          if { $i >= $Cstart} {set EMSegment(Cattrib,$i,CIMMatrix,$k,Node) ""}
+          foreach j $jlist {
+            if {$i == $j} {
+              set EMSegment(Cattrib,$EMSegment(SuperClass),CIMMatrix,$i,$j,$k) 1
+              set EMSegment(Cattrib,$j,CIMMatrix,$k,Node) ""
+            } else  {set EMSegment(Cattrib,$EMSegment(SuperClass),CIMMatrix,$i,$j,$k) 0}
+          }
         }
     }
 

@@ -70,9 +70,10 @@ proc EMSegmentSetVtkGenericClassSetting {vtkGenericClass Sclass} {
 
   if {$EMSegment(SegmentMode)}  {
     eval $vtkGenericClass SetRegistrationTranslation $EMSegment(Cattrib,$Sclass,RegistrationTranslation)
-    eval $vtkGenericClass SetRegistrationRotation $EMSegment(Cattrib,$Sclass,RegistrationRotation)
-    eval $vtkGenericClass SetRegistrationScale $EMSegment(Cattrib,$Sclass,RegistrationScale)
-    }
+    eval $vtkGenericClass SetRegistrationRotation    $EMSegment(Cattrib,$Sclass,RegistrationRotation)
+    eval $vtkGenericClass SetRegistrationScale       $EMSegment(Cattrib,$Sclass,RegistrationScale)
+    eval $vtkGenericClass SetRegistrationCovariance  $EMSegment(Cattrib,$Sclass,RegistrationCovariance)   
+  }
 }
 
 #-------------------------------------------------------------------------------
