@@ -1,0 +1,10 @@
+echo
+echo "Reconfiguring in current directory."
+echo
+
+touch targets.make
+
+./configure  --with-tcl --with-tkwidget --with-patented --with-local --prefix=/local/pkg/vtk3.01 --with-shared --cache-file=.././config.cache --srcdir=.
+echo 
+echo "Now run make depend, then make all in this directory."
+echo
