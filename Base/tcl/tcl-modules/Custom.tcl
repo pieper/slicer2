@@ -33,6 +33,7 @@
 #   CustomExit
 #   CustomUpdateGUI
 #   CustomCount
+#   CustomShowFile
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -137,7 +138,7 @@ proc CustomInit {} {
 	#   appropriate revision number and date when the module is checked in.
 	#   
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.17 $} {$Date: 2000/07/31 19:56:55 $}]
+		{$Revision: 1.18 $} {$Date: 2000/08/08 15:36:29 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -149,6 +150,7 @@ proc CustomInit {} {
 	set Custom(count) 0
 	set Custom(Volume1) $Volume(idNone)
 	set Custom(Model1)  $Model(idNone)
+        set Custom(FileName)  ""
 	set Custom(eventManager)  ""
 }
 
@@ -176,6 +178,7 @@ proc CustomBuildGUI {} {
 	# Help
 	# Stuff
 	#   Top
+        #   Middle
 	#   Bottom
 	#-------------------------------------------
 
@@ -205,7 +208,7 @@ Description by tab:
 	set fStuff $Module(Custom,fStuff)
 	set f $fStuff
 
-	foreach frame "Top Bottom" {
+	foreach frame "Top Middle Bottom" {
 		frame $f.f$frame -bg $Gui(activeWorkspace)
 		pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
 	}
@@ -215,8 +218,8 @@ Description by tab:
 	#-------------------------------------------
 	set f $fStuff.fTop
         
-#         grid $f.lStuff -padx $Gui(pad) -pady $Gui(pad)
-#        grid $menubutton -sticky w
+#       grid $f.lStuff -padx $Gui(pad) -pady $Gui(pad)
+#       grid $menubutton -sticky w
 
         # Add menus that list models and volumes
         DevAddSelectButton  Custom $f Volume1 "Ref Volume" Grid
@@ -229,9 +232,20 @@ Description by tab:
 	lappend Model(mActiveList) $f.mbModel1.m
 
 	#-------------------------------------------
+	# Stuff->Middle frame
+	#-------------------------------------------
+	set f $fStuff.fMiddle
+
+        DevAddFileBrowse $f Custom FileName "File" CustomShowFile
+
+	#-------------------------------------------
 	# Stuff->Bottom frame
 	#-------------------------------------------
 	set f $fStuff.fBottom
+
+	DevAddLabel $f.lfile "You clicked 0 times."
+        pack $f.lfile -side top -padx $Gui(pad) -fill x
+	set Custom(lfile) $f.lfile
 
 	DevAddLabel $f.lStuff "You clicked 0 times."
         pack $f.lStuff -side top -padx $Gui(pad) -fill x
@@ -306,8 +320,8 @@ proc CustomExit {} {
 proc CustomUpdateGUI {} {
 	global Custom Volume
 
-   DevUpdateSelectButton Volume Custom Volume1 Volume1 DevSelect
-   DevUpdateSelectButton Model  Custom Model1  Model1  DevSelect
+   DevUpdateNodeSelectButton Volume Custom Volume1 Volume1 DevSelectNode
+   DevUpdateNodeSelectButton Model  Custom Model1  Model1  DevSelectNode
 }
 
 
@@ -324,4 +338,18 @@ proc CustomCount {} {
 
 	incr Custom(count)
 	$Custom(lStuff) config -text "You clicked the button $Custom(count) times"
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC CustomShowFile
+#
+# This routine demos how to make button callbacks and use global arrays
+# for object oriented programming.
+# .END
+#-------------------------------------------------------------------------------
+proc CustomShowFile {} {
+    global Custom
+
+    $Custom(lfile) config -text "You entered: $Custom(FileName)"
 }

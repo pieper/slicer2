@@ -71,7 +71,7 @@ proc VolumesInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.32 $} {$Date: 2000/07/31 19:56:56 $}]
+		{$Revision: 1.33 $} {$Date: 2000/08/08 15:36:30 $}]
 
 	# Props
 	set Volume(propertyType) Basic
@@ -413,31 +413,19 @@ acquisition.
 	#-------------------------------------------
 
 	set f $fProps.fBot.fBasic.fVolume
-	frame $f.fInstr    -bg $Gui(activeWorkspace)
-	frame $f.fFirst    -bg $Gui(activeWorkspace)
+
+        DevAddFileBrowse $f Volume firstFile "First Image File:" "VolumesSetFirst" "" ""  "Browse for the first Image file" 
+
+        bind $f.efile <Tab> "VolumesSetLast"
+
 	frame $f.fLast     -bg $Gui(activeWorkspace)
 	frame $f.fHeaders  -bg $Gui(activeWorkspace)
 	frame $f.fLabelMap -bg $Gui(activeWorkspace)
 	frame $f.fOptions  -bg $Gui(activeWorkspace)
 	frame $f.fDesc     -bg $Gui(activeWorkspace)
 
-	pack $f.fInstr $f.fFirst $f.fLast $f.fHeaders $f.fLabelMap $f.fOptions \
+	pack $f.fLast $f.fHeaders $f.fLabelMap $f.fOptions \
 		$f.fDesc -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
-
-	# Instr
-	set f $fProps.fBot.fBasic.fVolume.fInstr
-
-	DevAddLabel $f.l "First Image File:"
-        DevAddButton $f.bFind "Browse..." "VolumesSetFirst"
-	pack $f.l $f.bFind -side left -padx $Gui(pad) 
-
-	# First
-	set f $fProps.fBot.fBasic.fVolume.fFirst
-
-	eval {entry $f.eFirst -textvariable Volume(firstFile)} $Gui(WEA)
-		bind $f.eFirst <Return> "VolumesSetFirst"
-		bind $f.eFirst <Tab> "VolumesSetLast"
-	pack $f.eFirst -side left -padx $Gui(pad) -expand 1 -fill x
 
 	# Last
 	set f $fProps.fBot.fBasic.fVolume.fLast
@@ -896,38 +884,19 @@ proc VolumesPropsCancel {} {
 #-------------------------------------------------------------------------------
 # .PROC VolumesSetFirst
 # 
+# Called after the User Selects the first file of the volume.
+#
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc VolumesSetFirst {} {
 	global Volume Mrml
 
-	# Cannot have blank prefix
-	if {$Volume(firstFile) == ""} {
-		set Volume(firstFile) I
-	}
-
- 	# Show popup initialized to root plus any typed pathname
-	set filename [file join $Mrml(dir) $Volume(firstFile)]
-	set dir [file dirname $filename]
-	set typelist {
-		{"All Files" {*}}
-	}
-	set filename [tk_getOpenFile -title "First Image In Volume" \
-		-filetypes $typelist -initialdir "$dir" -initialfile $filename]
-
-	# Do nothing if the user cancelled
-	if {$filename == ""} {return}
-
-	# Store first image file as a relative filename to the root (prefix.001)
-	set Volume(firstFile) [MainFileGetRelativePrefix $filename][file \
-		extension $filename]
-
-	set Volume(name)  [file root [file tail $filename]]
+	set Volume(name)  [file root [file tail $Volume(firstFile)]]
 
 	# lastNum is an image number
 	set Volume(lastNum)  [MainFileFindImageNumber Last \
-		[file join $Mrml(dir) $filename]]
+		[file join $Mrml(dir) $Volume(firstFile)]]
 }
 
 #-------------------------------------------------------------------------------

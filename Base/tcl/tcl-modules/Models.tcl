@@ -33,7 +33,7 @@
 #   ModelsBuildScrolledGUI
 #   ModelsConfigScrolledGUI
 #   ModelsSetPropertyType
-#   ModelsSetPrefix
+#   ModelsSetFileName
 #   ModelsPropsApplyButNotToNew
 #   ModelsPropsApply
 #   ModelsPropsCancel
@@ -68,7 +68,7 @@ proc ModelsInit {} {
 
 	# Set Version Info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.25 $} {$Date: 2000/07/31 20:01:42 $}]
+		{$Revision: 1.26 $} {$Date: 2000/08/08 15:36:29 $}]
 
 	# Props
 	set Model(propertyType) Basic
@@ -296,12 +296,12 @@ If <B>Backface Culling</B> is on, you will see nothing when looking inside a cli
 	#-------------------------------------------
 	set f $fProps.fBot.fBasic
 
-	frame $f.fPrefix  -bg $Gui(activeWorkspace) -relief groove -bd 3
+	frame $f.fFileName -bg $Gui(activeWorkspace) -relief groove -bd 3
 	frame $f.fName    -bg $Gui(activeWorkspace)
 	frame $f.fColor   -bg $Gui(activeWorkspace)
 	frame $f.fGrid    -bg $Gui(activeWorkspace)
 	frame $f.fApply   -bg $Gui(activeWorkspace)
-	pack $f.fPrefix $f.fName $f.fColor $f.fGrid $f.fApply \
+	pack $f.fFileName $f.fName $f.fColor $f.fGrid $f.fApply \
 		-side top -fill x -pady $Gui(pad)
 
 	#-------------------------------------------
@@ -331,21 +331,11 @@ If <B>Backface Culling</B> is on, you will see nothing when looking inside a cli
 	pack $f.e -side left -padx $Gui(pad) -expand 1 -fill x
 
 	#-------------------------------------------
-	# Props->Bot->Basic->Prefix frame
+	# Props->Bot->Basic->FileName frame
 	#-------------------------------------------
-	set f $fProps.fBot.fBasic.fPrefix
+	set f $fProps.fBot.fBasic.fFileName
 
-	frame $f.f -bg $Gui(activeWorkspace)
-	pack $f.f -side top -pady $Gui(pad)
-
-        DevAddLabel  $f.f.l "File Prefix (without .vtk)"
-        DevAddButton $f.f.b "Browse..." "ModelsSetPrefix"
-	pack $f.f.l $f.f.b -side left -padx $Gui(pad)
-
-	eval {entry $f.eFile -textvariable Model(prefix) -width 50} $Gui(WEA)
-	bind $f.eFile <Return> {ModelsSetPrefix}
-	pack $f.eFile -side top -pady $Gui(pad) -padx $Gui(pad) \
-                -expand 1 -fill x
+        DevAddFileBrowse $f Model FileName "Model File (.vtk)" "ModelsSetFileName" "vtk" ""  "Browse for a Model" 
 
 	#-------------------------------------------
 	# Props->Bot->Basic->Color frame
@@ -674,25 +664,23 @@ proc ModelsSetPropertyType {} {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC ModelsSetPrefix
+# .PROC ModelsSetFileName
 # 
+# Called after a user selects a Model file.
+# Model(FileName) is set by the Browse button.
+#
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc ModelsSetPrefix {} {
+proc ModelsSetFileName {} {
 	global Model Mrml Color
 
-        set filename [DevGetFile $Model(prefix) "vtk" "" "Choose Model"]
-
 	# Do nothing if the user cancelled
-	if {$filename == ""} {return}
+	if {$Model(FileName) == ""} {return}
 
-	# Store it as a relative prefix for next time
-	set Model(prefix) [MainFileGetRelativePrefix $filename]
-
-	# Guess the name based on the prefix
-	set Model(name) [file tail $Model(prefix)]
-
+	# Name the model based on the entered file.
+	set Model(name) [ file root [file tail $Model(FileName)]]
+        puts "$Model(FileName), $Model(name)"
 	# Guess the color
 	set name [string tolower $Model(name)]
 	set guess [Color($Color(activeID),node) GetName]
@@ -758,9 +746,9 @@ proc ModelsPropsApply {} {
 	if {$m == ""} {return}
 
 	if {$m == "NEW"} {
-		# Ensure prefix not blank
-		if {$Model(prefix) == ""} {
-			DevWarningWindow "Please enter a file prefix."
+		# Ensure FileName not blank
+		if {$Model(FileName) == ""} {
+			DevWarningWindow "Please enter a model file name."
 			return
 		}
 		set n [MainMrmlAddNode Model]
@@ -771,7 +759,7 @@ proc ModelsPropsApply {} {
 
 		# These get set down below, but we need them before MainUpdateMRML
 		$n SetName $Model(name)
-		$n SetFileName "$Model(prefix).vtk"
+		$n SetFileName "$Model(FileName)"
 		$n SetFullFileName [file join $Mrml(dir) [$n GetFileName]]
 		$n SetColor $Label(name)
 
@@ -786,7 +774,7 @@ proc ModelsPropsApply {} {
 	}
 
 	Model($m,node) SetName $Model(name)
-	Model($m,node) SetFileName "$Model(prefix).vtk"
+	Model($m,node) SetFileName "$Model(FileName)"
 	Model($m,node) SetFullFileName [file join $Mrml(dir) [Model($m,node) GetFileName]]
 	Model($m,node) SetDescription $Model(desc)
 	MainModelsSetClipping $m $Model(clipping)
