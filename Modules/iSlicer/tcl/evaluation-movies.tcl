@@ -55,7 +55,7 @@ proc eval_3d_movie { dir steps } {
     }
 }
 
-proc eval_slice_movie { dir orientation { step 1 } } {
+proc eval_slice_movie { dir orientation { skip 1 } } {
 
     #
     # render and encode the slice movies
@@ -65,7 +65,7 @@ proc eval_slice_movie { dir orientation { step 1 } } {
     .eval.isv expose
     update
 
-    for {set s 0} {$s <= 256} { incr s $step } {
+    for {set s 0} {$s <= 256} { incr s $skip } {
         puts -nonewline "$s..." ; flush stdout
         .eval.isv configure -slice $s
         update
