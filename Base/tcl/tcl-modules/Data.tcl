@@ -88,7 +88,7 @@ proc DataInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.46 $} {$Date: 2003/03/19 19:16:30 $}]
+        {$Revision: 1.47 $} {$Date: 2003/04/14 20:04:10 $}]
 
     set Data(index) ""
     set Data(clipboard) ""
@@ -233,10 +233,11 @@ to quickly cut and paste items.
     bind $Data(fNodeList) <Double-1>  {DataEditNode}
 
     # initialize key-bindings (and hide class Listbox Control button ops)
+    # - sp 2003-03-01 changed edit from ^e to ^o to ease editing in tkcon
     set Data(eventManager) { \
         {Listbox <Control-Button-1>  {}} \
         {Listbox <Control-B1-Motion>  {}} \
-        {all <Control-e> {DataEditNode}} \
+        {all <Control-o> {DataEditNode}} \
         {all <Control-x> {DataCutNode}} \
         {all <Control-v> {DataPasteNode}} \
         {all <Control-d> {DataDeleteNode}} }
