@@ -6,7 +6,7 @@ package require vtkSlicerBase
 vtkImageReader reader
   reader ReleaseDataFlagOff
   reader SetDataByteOrderToLittleEndian
-  reader SetDataExtent 0 63 0 63 40 40
+  reader SetDataExtent 0 63 0 63 22 22
   reader SetFilePrefix ${VTK_DATA_ROOT}/Data/headsq/quarter
   reader SetDataMask 0x7fff
   set a [ reader GetDataSpacing]
@@ -35,13 +35,14 @@ vtkImageAppendComponents AppCom2
 
 vtkImageCrossHair2D CrossH
   CrossH SetInput [AppCom2 GetOutput]
-  CrossH SetCursor 40 25
+  CrossH SetCursor 50 50 
   CrossH ShowCursorOn
   CrossH IntersectCrossOff
   CrossH SetMagnification 2
   CrossH BullsEyeOn
   CrossH SetBullsEyeWidth 2
   CrossH SetCursorColor 0.3 1 1
+#  CrossH SetCursorColor 0 0 0 
 
 vtkImageViewer viewer
   viewer SetInput [CrossH GetOutput]
