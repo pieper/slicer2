@@ -96,11 +96,11 @@ proc VolHeaderBuildGUI {parentFrame} {
         set Volume(entryBoxWidth) 7
 
         # two entry boxes per line to save space
-        foreach params "{width height} \
-                {pixelWidth pixelHeight} "\
+        foreach params "{height width} \
+                {pixelHeight pixelWidth } "\
                 name "{Image Size} \
                 {Pixel Size}" \
-                tip1 "{width height} {width height}" \
+                tip1 "{height width } {height width }" \
                 tip "{units are pixels} \
                 {units are mm}" {
 
