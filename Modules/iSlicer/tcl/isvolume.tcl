@@ -504,7 +504,6 @@ itcl::body isvolume::transform_update {} {
     for {set i 0} {$i < 4} {incr i} {
         transformmatrix SetElement 0 $i [expr -1 * [transformmatrix GetElement 0 $i]]
     }
-    puts [transformmatrix Print]
 
     #
     # now combine the matrices
