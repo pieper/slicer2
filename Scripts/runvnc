@@ -29,6 +29,7 @@ set DISPLAY ""
 set VERBOSE 0
 set XVNC [file dirname [info script]]/Xvnc
 set WM ""
+set AUTHORIZATION "-localhost"
 #set WM gnome-session
 #set WM /usr/bin/startkde
 
@@ -74,6 +75,10 @@ for {set i 0} {$i < $argc} {incr i} {
                 set WM [lindex $argv $i]
             }
             
+        }
+        "--not-secure" {
+            puts stderr "warning: allowing connections from anywhere"
+            set AUTHORIZATION "-rfbauth /home/pieper/.vnc/passwd"
         }
         "-v" - "--version" {
             puts $VERSION
@@ -146,7 +151,11 @@ foreach fpdir $fpdirs {
     }
 }
 
-set vncpid [exec $XVNC :$DISPLAY -fp $fparg -alwaysshared -localhost -depth 32 -geometry 1280x1024 >& /tmp/logs/vnclog$STARTDATE &]
+if { $AUTHORIZATION == "-localhost" } {
+    set vncpid [exec $XVNC :$DISPLAY -fp $fparg -alwaysshared $LOCALHOST -depth 32 -geometry 1280x1024 >& /tmp/logs/vnclog$STARTDATE &]
+} else {
+    set vncpid [exec $XVNC :$DISPLAY -fp $fparg -alwaysshared -rfbauth /home/pieper/.vnc/passwd -depth 32 -geometry 1280x1024 >& /tmp/logs/vnclog$STARTDATE &]
+}
 
 set cwd [pwd]
 cd /tmp/logs
