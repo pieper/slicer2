@@ -12,17 +12,17 @@
 
 # note: - SET replaced SOURCE_FILES for cmake 1.6
 SET(LOCAL_MODULE_SRCS
-vtkHyperStreamlinePoints
-vtkInteractiveTensorGlyph
-vtkTensorMask
-vtkTensorMathematics
-vtkVectorToOuterProductDualBasis
+vtkHyperStreamlinePoints.cxx
+vtkInteractiveTensorGlyph.cxx
+vtkTensorMask.cxx
+vtkTensorMathematics.cxx
+vtkVectorToOuterProductDualBasis.cxx
 )
 
 ## classes that one does not want tcl wrapped
-SET ( LOCAL_NO_WRAP_SRCS
+#SET ( LOCAL_NO_WRAP_SRCS
 #vtkMyClassNoWrap.cxx
-)
+#)
 
 
 # Place names of abstract class implementations here. No file suffixes.
@@ -35,9 +35,9 @@ SET ( LOCAL_NO_WRAP_SRCS
 #)
 
 # You can add additional include paths here
-INCLUDE_DIRECTORIES(
-${VTKMYCLASS_SOURCE_DIR}/include
-)
+#INCLUDE_DIRECTORIES(
+#${VTKTENSORUTIL_SOURCE_DIR}/include
+#)
 
 #### if you code depends on SlicerBase, uncomment the 
 #### INCLUDE_DIRECTORIES and LINK_LIBRARIES
@@ -47,13 +47,13 @@ INCLUDE_DIRECTORIES(
    ${VTKSLICERBASE_SOURCE_DIR}/cxx 
    ${VTKSLICERBASE_BUILD_DIR}
 )
-LINK_LIBRARIES (${VTKSLICERBASE_BUILD_LIB})
+LINK_LIBRARIES (${VTKSLICERBASE_BUILD_LIB} ${VTKSLICERBASE_BUILD_TCL_LIB})
 
 
 # Add additional directories to look in for libraries
-LINK_DIRECTORIES(
-${VTKMYCLASS_SOURCE_DIR}/lib
-)
+#LINK_DIRECTORIES(
+#${VTKMYCLASS_SOURCE_DIR}/lib
+#)
 
 
 
@@ -67,5 +67,4 @@ ${VTKMYCLASS_SOURCE_DIR}/lib
 # It should happen in the CMakeLists.txt file that includes this one,
 # but because of a CMake bug that doesn't work.
 #
-ADD_LIBRARY (${LOCAL_LIBRARY_BASENAME} ${LOCAL_MODULE_SRCS}
-            ${LOCAL_NO_WRAP_SRCS})
+ADD_LIBRARY (${LOCAL_LIBRARY_BASENAME} ${LOCAL_MODULE_SRCS})
