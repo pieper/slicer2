@@ -43,9 +43,9 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkMath.h"
 #include "vtkObjectFactory.h"
 
-// Initialize static member that resampling -- 
-  // This offset will be changed to 0.5 from 0.0 per 2/8/2002 Slicer 
-  // development meeting, to move ijk coordinates to voxel centers.
+// Initialize static member that controls resampling -- 
+  // old comment: "This offset will be changed to 0.5 from 0.0 per 2/8/2002 Slicer 
+  // development meeting, to move ijk coordinates to voxel centers."
 static float vtkMrmlVolumeNodeGlobalVoxelOffset = 0.5;
 
 
@@ -270,9 +270,16 @@ void vtkMrmlVolumeNode::Write(ofstream& of, int nIndent)
   char CheckVolumeFile[1000];
   if(this->GetNumberOfDICOMFiles() == 0)
   {
+      CheckVolumeFile[0] == '\0';
       sprintf(CheckVolumeFile,this->FilePattern,this->FullPrefix,this->ImageRange[0]);
       vtkDebugMacro(<< "vtkMrmlVolumeNode: checking for existence of first volume file:\n " << CheckVolumeFile << "\n\tfile prefix = " << this->FilePrefix << "\n\tfull prefix = " << this->FullPrefix << endl);
       
+      if ( *CheckVolumeFile == '\0' ) 
+      {
+          cerr << "No filename information for " << this->Name << endl;
+          return;
+      }
+
       FILE *file = fopen(CheckVolumeFile,"r"); 
       if ( file == NULL) {
           cerr << "Could not open \"" << CheckVolumeFile << "\"! "<< endl;
