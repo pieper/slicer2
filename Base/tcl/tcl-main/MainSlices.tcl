@@ -84,7 +84,7 @@ proc MainSlicesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainSlices \
-		{$Revision: 1.30 $} {$Date: 2001/04/27 15:22:42 $}]
+		{$Revision: 1.31 $} {$Date: 2002/01/28 03:05:38 $}]
 
 	# Initialize Variables
 	set Slice(idList) "0 1 2"
@@ -128,6 +128,7 @@ proc MainSlicesInit {} {
 		set Slice($s,backVolID) 0
 		set Slice($s,foreVolID) 0
 		set Slice($s,labelVolID) 0
+		set Slice($s,offsetIncrement) 1
 	}
 }
 
@@ -172,8 +173,8 @@ proc MainSlicesInit {} {
 # Slice(id,orient)              : 
 # Slice(id,visibility)          : Is the plane visible in the 3D viewer?
 # Slice(id,zoom)                : 1,2 4 or 8 : The Zoom on the slice.
+# Slice(id,offsetIncrement)     : in mm, the amount the offset slider moves by
 #
-
 
 #-------------------------------------------------------------------------------
 # .PROC MainSlicesBuildVTK
@@ -257,13 +258,20 @@ proc MainSlicesBuildControlsForVolume {f s layer text} {
 		-menu $f.mb${layer}Volume.m} $Gui(WMBA)
 	eval {menu $f.mb${layer}Volume.m} $Gui(WMA)
 	bind $f.mb${layer}Volume <Button-3> "MainVolumesPopupGo $layer $s %X %Y"
+	# tooltip for slices in this layer
+	TooltipAdd $f.mb${layer}Volume "Volume selection: choose a volume \
+		to appear\nin the $layer layer in all three slice windows.\n\
+		Right-click for volume display menu."
 
 	# This Slice
 	eval {menubutton $f.mb${layer}Volume${s} -text None -width 13 \
 		-menu $f.mb${layer}Volume${s}.m} $Gui(WMBA) {-bg $Gui(slice$s)}
 	eval {menu $f.mb${layer}Volume${s}.m} $Gui(WMA)
 	bind $f.mb${layer}Volume$s <Button-3> "MainVolumesPopupGo $layer $s %X %Y"			
-	
+	# tooltip for this slice in this layer
+	TooltipAdd $f.mb${layer}Volume${s} "Volume Selection: choose a volume\
+		to appear\nin the $layer layer in just this slice window.\n\
+		Right-click for volume display menu."	
 	pack $f.mb${layer}Volume $f.mb${layer}Volume${s} \
 		-pady 0 -padx 2 -side left -fill x
 }
@@ -298,10 +306,22 @@ proc MainSlicesBuildControls {s F} {
 	eval {entry $f.eOffset -width 4 -textvariable Slice($s,offset)} $Gui(WEA)
 		bind $f.eOffset <Return>   "MainSlicesSetOffset $s; RenderBoth $s"
 		bind $f.eOffset <FocusOut> "MainSlicesSetOffset $s; RenderBoth $s"
+
+	# tooltip for entry box
+	set tip "Current slice: in mm or slice increments,\n \
+		depending on the slice orientation you have chosen.\n \
+		The default (AxiSagCor orientation) is in mm. \n \
+		When editing (Slices orientation), slice numbers are shown.\n\
+		To change the distance between slices from the default\n\
+		1 mm, right-click on the V button."
+
+	TooltipAdd $f.eOffset $tip
+
 	eval {scale $f.sOffset -from -$fov2 -to $fov2 \
 		-variable Slice($s,offset) -length 160 -resolution 1.0 -command \
 		"MainSlicesSetOffsetInit $s $f.sOffset"} $Gui(WSA) \
 		{-troughcolor $Gui(slice$s)}
+
 
 	pack $f.sOffset $f.eOffset -side left -anchor w -padx 2 -pady 0
 
@@ -315,6 +335,11 @@ proc MainSlicesBuildControls {s F} {
 		MainViewerHideSliceControls; Render3D"} $Gui(WCA) \
 		{-selectcolor $Gui(slice$s)}
 	pack $f.cVisibility${s} -side left -padx 2
+
+	# tooltip for Visibility checkbutton
+	TooltipAdd $f.cVisibility${s} "Click to make this slice visible.\n \
+		Right-click for menu: \nzoom, slice increments, \
+		volume display."
 
 	# Menu on the Visibility checkbutton
 	eval {menu $f.cVisibility${s}.men} $Gui(WMA)
@@ -333,6 +358,10 @@ proc MainSlicesBuildControls {s F} {
 		"MainSlicesVolumeParam $s AutoWindowLevel 1"
 	$men add command -label "No Threshold" -command \
 		"MainSlicesVolumeParam $s AutoThreshold -1"
+	$men add command -label "Set Zoom" -command \
+		"MainSlicesAdvancedControlsPopup $s"
+	$men add command -label "Set Slice Increment" -command \
+		"MainSlicesAdvancedControlsPopup $s"
 	$men add command -label "-- Close Menu --" -command "$men unpost"
 	bind $f.cVisibility${s} <Button-3> "$men post %X %Y"
 
@@ -344,6 +373,8 @@ proc MainSlicesBuildControls {s F} {
 	eval {menubutton $f.mbOrient -text "Or:" -width 3 -menu $f.mbOrient.m} \
 		$Gui(WMBA) {-anchor e}
 	pack $f.mbOrient -side left -pady 0 -padx 2 -fill x
+	# tooltip for orientation menu
+	TooltipAdd $f.mbOrient "Set Orientation of all slices."
 
 	eval {menu $f.mbOrient.m} $Gui(WMA)
 	foreach item "AxiSagCor Orthogonal Slices" {
@@ -355,6 +386,9 @@ proc MainSlicesBuildControls {s F} {
 	eval {menubutton $f.mbOrient${s} -text INIT -menu $f.mbOrient${s}.m \
 		-width 13} $Gui(WMBA) {-bg $Gui(slice$s)}
 	pack $f.mbOrient${s} -side left -pady 0 -padx 2 -fill x
+
+	# tooltip for orientation menu for slice
+	TooltipAdd $f.mbOrient${s} "Set Orientation of just this slice."
 
 	eval {menu $f.mbOrient${s}.m} $Gui(WMA)
 	foreach item "[Slicer GetOrientList]" {
@@ -372,6 +406,99 @@ proc MainSlicesBuildControls {s F} {
 
 	MainSlicesBuildControlsForVolume $f $s Label Lb
 	MainSlicesBuildControlsForVolume $f $s Fore  Fg
+
+	MainSlicesBuildAdvancedControlsPopup $s
+
+}
+
+
+proc MainSlicesBuildAdvancedControlsPopup {s} {
+    global Gui
+
+    # This is since the slice GUIs get built twice,
+    # once on the Viewer and once in the module panel.
+    # So build the popup only once
+    if {[info exists Gui(wSlicesAdv$s)] == 1} {
+	if {[winfo exists $Gui(wSlicesAdv$s)] == 1} {
+	    return
+	}
+    }
+
+    #-------------------------------------------
+    # Slices Advanced Controls Popup Window
+    #-------------------------------------------
+    set w .wSlicesAdv$s
+    set Gui(wSlicesAdv$s) $w
+    toplevel $w -bg $Gui(activeWorkspace) -class Dialog
+    wm title $w "Advanced Slice Controls"
+    wm iconname $w Dialog
+    wm protocol $w WM_DELETE_WINDOW "wm withdraw $w"
+    if {$Gui(pc) == "0"} {
+	wm transient $w .
+    }
+    wm withdraw $w
+    set f $w
+    
+    # Close button
+    eval {button $f.bClose -text "Close" \
+	    -command "wm withdraw $w"} $Gui(WBA)
+
+    # Frames
+    frame $f.fTop -bg $Gui(activeWorkspace)
+    frame $f.fZoom -bg $Gui(activeWorkspace)
+    frame $f.fIncrement -bg $Gui(activeWorkspace)
+    pack $f.fTop $f.fZoom $f.fIncrement -side top \
+	    -pady $Gui(pad) -padx $Gui(pad) -fill x -expand true
+
+    pack $f.bClose -side top -pady $Gui(pad)
+    
+    #-------------------------------------------
+    # Popup->Top frame
+    #-------------------------------------------
+    set f $w.fTop
+    
+    eval {label $f.lTop -text "Controls for Slice $s"} \
+	    $Gui(WLA) {-bg $Gui(slice$s)}
+    pack $f.lTop
+
+    #-------------------------------------------
+    # Popup->Zoom frame
+    #-------------------------------------------
+    set f $w.fZoom
+    
+    eval {label $f.lZoom -text "Zoom: "} $Gui(WLA)
+
+    eval {entry $f.eZoom -width 7 \
+	    -textvariable Slice($s,zoom)} $Gui(WEA)
+    bind $f.eZoom <Return>   \
+	    "MainSlicesSetZoom $s; RenderSlices"
+    TooltipAdd $f.eZoom "Manually enter zoom value for slice\n\
+	    and hit Enter."
+
+    grid $f.lZoom $f.eZoom \
+	    -pady $Gui(pad) -padx $Gui(pad)
+    grid $f.lZoom -sticky e
+    grid $f.eZoom -sticky e
+
+    #-------------------------------------------
+    # Popup->Increment frame
+    #-------------------------------------------
+    set f $w.fIncrement
+    
+    eval {label $f.lIncrement -text "Slice Increment: "} $Gui(WLA)
+
+    eval {entry $f.eIncrement -width 7 \
+	    -textvariable Slice($s,offsetIncrement)} $Gui(WEA)
+    bind $f.eIncrement <Return>   \
+	    "MainSlicesSetOffsetIncrement $s"
+
+    grid $f.lIncrement $f.eIncrement \
+	    -pady $Gui(pad) -padx $Gui(pad)
+    grid $f.lIncrement -sticky e
+    grid $f.eIncrement -sticky e
+
+    TooltipAdd $f.eIncrement "Enter increment between reformatted\n\
+	    slices in mm, and hit Enter.\nThe slider will morve by this amount."
 }
 
 #-------------------------------------------------------------------------------
@@ -737,11 +864,11 @@ proc MainSlicesSetOffset {s {value ""}} {
 	# Set slider to the last used offset for this orient
 	set value [Slicer GetOffset $s]
     } 
-    
+
     set Slice($s,offset) $value
     
     Slicer SetOffset $s $value
-    
+
     MainSlicesRefreshClip $s
 }
 
@@ -782,6 +909,9 @@ proc MainSlicesSetOrientAll {orient} {
 
 		# Always update Slider Range when change Back volume or orient
 		MainSlicesSetSliderRange $s
+
+		# Set slider increments
+		MainSlicesSetOffsetIncrement $s
 
 		# Set slider to the last used offset for this orient
 		set Slice($s,offset) [Slicer GetOffset $s]
@@ -854,6 +984,9 @@ proc MainSlicesSetOrient {s orient} {
 
 	# Always update Slider Range when change Back volume or orient
 	MainSlicesSetSliderRange $s
+
+	# Set slider increments
+	MainSlicesSetOffsetIncrement $s
 
 	# Set slider to the last used offset for this orient
 	set Slice($s,offset) [Slicer GetOffset $s]
@@ -967,14 +1100,27 @@ proc MainSlicesConfigGui {s gui config} {
 # Usage: MainSlicesSetZoom id zoom
 # .END
 #-------------------------------------------------------------------------------
-proc MainSlicesSetZoom {s zoom} {
-	global Slice
+proc MainSlicesSetZoom {s {zoom ""}} {
+    global Slice
+    
+    # if called without a zoom arg it's from user entry
+    if {$zoom == ""} {
+	if {[ValidateFloat $Slice($s,zoom)] == 0} {
+	    tk_messageBox -message "The zoom must be a number."
+	    
+	    # reset the zoom
+	    set Slice($s,zoom) [Slicer GetZoom $s]
+	    return
+	}
+	# if user-entered zoom is okay then do the rest of the procedure
+	set zoom $Slice($s,zoom)
+    }
 
-	# Change Slice's Zoom variable
-	set Slice($s,zoom) $zoom
-	
-	Slicer SetZoom $s $zoom
-	Slicer Update
+    # Change Slice's Zoom variable
+    set Slice($s,zoom) $zoom
+    
+    Slicer SetZoom $s $zoom
+    Slicer Update
 }
 
 #-------------------------------------------------------------------------------
@@ -1285,4 +1431,46 @@ proc MainSlicesAllOffsetToPoint { x y z } {
 		MainSlicesOffsetToPoint $s $x $y $z
 	}
 	RenderAll
+}
+
+
+proc MainSlicesAdvancedControlsPopup {s} {
+    global Gui
+    
+    # Recreate window if user killed it
+    if {[winfo exists $Gui(wSlicesAdv$s)] == 0} {
+	MainSlicesBuildAdvancedControlsPopup $s
+    }
+    
+    ShowPopup $Gui(wSlicesAdv$s) 0 0
+}
+
+proc MainSlicesSetOffsetIncrement {s {incr ""}} {
+    global Slice
+
+    # set slider increments to 1 if in original orientation
+    set orient [Slicer GetOrientString $s]
+    if {$orient == "AxiSlice" || $orient == "CorSlice" \
+	    || $orient == "SagSlice" || $orient == "OrigSlice" } {
+	set incr 1	
+    }
+    
+    # if called without an incr arg it's from user entry
+    if {$incr == ""} {
+	if {[ValidateFloat $Slice($s,offsetIncrement)] == 0} {
+	    tk_messageBox -message "The increment must be a number."
+	    
+	    # reset the incr
+	    set Slice($s,offsetIncrement) 1
+	    return
+	}
+	# if user-entered incr is okay then do the rest of the procedure
+	set incr $Slice($s,offsetIncrement)
+    }
+
+    # Change Slice's offset increment variable
+    set Slice($s,offsetIncrement) $incr
+
+    # Make the slider allow this resolution
+    MainSlicesConfigGui $s fOffset.sOffset "-resolution $incr"    
 }

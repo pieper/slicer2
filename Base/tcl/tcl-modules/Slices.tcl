@@ -45,7 +45,7 @@ proc SlicesInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.15 $} {$Date: 2002/01/26 23:34:32 $}]
+		{$Revision: 1.16 $} {$Date: 2002/01/28 03:05:38 $}]
 
 	# Props
 	set Slice(prefix) slice
@@ -103,7 +103,9 @@ The other options produces slices at arbitrary orientations in millimeter space.
 
 	frame $f.fActive -bg $Gui(activeWorkspace)
 	frame $f.fSave   -bg $Gui(activeWorkspace)
-	pack $f.fActive $f.fSave -side top -pady $Gui(pad) -expand 1 -fill x
+	frame $f.fAdv   -bg $Gui(activeWorkspace)
+	pack $f.fActive $f.fSave $f.fAdv -side top -pady $Gui(pad) \
+		-expand 1 -fill x
 
 	#-------------------------------------------
 	# Active frame
@@ -131,5 +133,15 @@ The other options produces slices at arbitrary orientations in millimeter space.
 	bind $f.eSave <Return> {MainSlicesSavePopup}
 	pack $f.bSave -side left -padx 3
 	pack $f.eSave -side left -padx 2 -expand 1 -fill x
+
+	#-------------------------------------------
+	# Adv frame
+	#-------------------------------------------
+	set f $fControls.fAdv
+
+	eval {button $f.bAdv -text "Show Advanced Slice Controls" \
+		-command "MainSlicesAdvancedControlsPopup \$Slice(activeID)"} $Gui(WBA)
+	pack $f.bAdv -side left -padx 3
+
 }
 
