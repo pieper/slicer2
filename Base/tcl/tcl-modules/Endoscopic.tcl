@@ -262,7 +262,7 @@ proc EndoscopicInit {} {
     set Module($m,category) "Visualisation"
     
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.94 $} {$Date: 2005/02/08 19:39:13 $}] 
+    {$Revision: 1.95 $} {$Date: 2005/02/14 17:56:11 $}] 
        
     # Define Procedures
     #------------------------------------
@@ -6941,13 +6941,13 @@ proc EndoscopicSetFlatColonScalarRange {widget} {
      Endoscopic($name,FlatColonMapper) SetLookupTable Endoscopic(flatColon,lookupTable,$name)
      Endoscopic($name,FlatColonMapper) SetScalarRange $Endoscopic(flatColon,scalarLow) $Endoscopic(flatColon,scalarHigh)
      
-     } 
-#     else {
+     } else {
      
-#     set Endoscopic(flatColon,scalarVisibility) 1
+     set Endoscopic(flatColon,scalarVisibility) 1
+     EndoscopicSetFlatColonScalarVisibility $widget
 #     Endoscopic($name,FlatColonMapper) ScalarVisibilityOn
 #     Endoscopic($name,FlatColonMapper) SetScalarRange $Endoscopic(flatColon,scalarLow) $Endoscopic(flatColon,scalarHigh)
-#     }
+     }
      
     [$widget GetRenderWindow] Render
 
