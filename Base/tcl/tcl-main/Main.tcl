@@ -331,7 +331,7 @@ proc MainInit {} {
 
         # Set version info
 	lappend Module(versions) [ParseCVSInfo Main \
-		{$Revision: 1.39 $} {$Date: 2000/02/28 17:56:08 $}]
+		{$Revision: 1.40 $} {$Date: 2000/03/06 17:55:36 $}]
 
 	# Call each "Init" routine that's not part of a module
 	#-------------------------------------------
@@ -1012,7 +1012,7 @@ proc MainStartProgress {} {
 #-------------------------------------------------------------------------------
 # .PROC MainShowProgress
 #
-# I think it creates a window which shows the progress of a vtk filter.
+# Displays progress bar when reading off disk.
 # .END
 #-------------------------------------------------------------------------------
 proc MainShowProgress {filter} {
