@@ -8,6 +8,10 @@
 #include <float.h>
 #endif
 
+#ifdef __APPLE_CC__
+#include <math.h>
+#endif
+
 // #include <vtkStructuredPointsWriter.h>
 // static void Write(vtkImageData* image,const char* filename)
 // {
@@ -180,8 +184,8 @@ static void vtkMeanPValueExecute(vtkMeanPValue *self,
         double val=(N1+N2-p-1)/(N1+N2-p-1+p*F);
 
         //Modified by Liu
-        #ifdef WIN32
-    if(_isnan(val))
+#ifdef WIN32
+        if(_isnan(val))
 #else
         if(isnan(val))
 #endif          
