@@ -498,10 +498,10 @@ proc ProcessModule { modpath {verbose 0 } } {
                               [glob -nocomplain $thisdir/*.h] \
                               [glob -nocomplain $thisdir/*.cxx]" {
                 if {$verbose} {
-                    puts "NOT $file"
+                    puts "$file"
                     # puts "ProcessModule: NOT calling \"ProcessFile $file\""
                 }
-                # ProcessFile $file
+                ProcessFile $file
             }
         }
     }
