@@ -264,11 +264,9 @@ void vtkMrmlTree::ComputeTransforms()
   mat->Delete();
 }
 //------------------------------------------------------------------------------
-void vtkMrmlTree::ComputeNodeTransform( vtkMrmlNode *node, vtkMatrix4x4 *xform )
+void vtkMrmlTree::ComputeNodeTransform( vtkMrmlNode *node, vtkTransform *tran )
 {
   vtkMrmlNode *n;
-  vtkTransform *tran = vtkTransform::New();
-  vtkMatrix4x4 *mat = vtkMatrix4x4::New();
   vtkMrmlMatrixNode *t;
   vtkCollectionElement *elem;
 
@@ -297,11 +295,21 @@ void vtkMrmlTree::ComputeNodeTransform( vtkMrmlNode *node, vtkMatrix4x4 *xform )
     else if (!strcmp("vtkMrmlMatrixNode", n->GetClassName()))
     {
       t = (vtkMrmlMatrixNode*)n;
-      tran->Concatenate(t->GetTransform()->GetMatrix());
+      // used to be Concatenate t->GetTransform()->GetMatrix()
+      // changed by samson (Dec 2,2003) so that transforms could
+      // be tracked
+      tran->Concatenate(t->GetTransform());
     }
-
     elem = elem->Next;
   }
+}
+
+//------------------------------------------------------------------------------
+void vtkMrmlTree::ComputeNodeTransform( vtkMrmlNode *node, vtkMatrix4x4 *xform )
+{
+  vtkTransform *tran = vtkTransform::New();
+  this->ComputeNodeTransform(node,tran);
+  vtkMatrix4x4 *mat = vtkMatrix4x4::New();
   tran->GetMatrix(mat);
   xform->DeepCopy( mat );
   tran->Delete();

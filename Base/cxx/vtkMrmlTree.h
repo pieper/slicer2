@@ -137,6 +137,12 @@ public:
   void InsertAfterItem( vtkMrmlNode *item, vtkMrmlNode *newItem);
   void InsertBeforeItem( vtkMrmlNode *item, vtkMrmlNode *newItem);
 
+  // Description:
+  // Compute the Transform for one node
+  // The second just gets the matrix
+  // There is no check that the node actually exists. The function
+  // sometimes crash without it.
+  void ComputeNodeTransform( vtkMrmlNode *node, vtkTransform *xform );
   void ComputeNodeTransform( vtkMrmlNode *node, vtkMatrix4x4 *xform );
 
     // Description:
