@@ -33,46 +33,28 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #ifndef __vtkImageErode_h
 #define __vtkImageErode_h
 
-#include "vtkImageSpatialFilter.h"
+#include "vtkImageNeighborhoodFilter.h"
 
-class VTK_EXPORT vtkImageErode : public vtkImageSpatialFilter
+class VTK_EXPORT vtkImageErode : public vtkImageNeighborhoodFilter
 {
 public:
   static vtkImageErode *New();
   vtkTypeMacro(vtkImageErode,vtkImageSpatialFilter);
 	
   // Description: 
-  // create set and get functions for Background and Foreground
+  // Background and foreground pixel values in the image.
+  // Usually 0 and some label value, respectively.
   vtkSetMacro(Background, float);
   vtkGetMacro(Background, float);
   vtkSetMacro(Foreground, float);
   vtkGetMacro(Foreground, float);
 
-  // Description:
-  // Get the mask
-  unsigned char *GetMaskPointer() {return mask;}
-
-  // Description:
-  // Use 4 or 8 neighbor connectivity in neighborhood around pixel
-  void SetNeighborTo8();
-  void SetNeighborTo4();
-
-  // Description: 
-  // Get the neighborhood size
-  vtkGetMacro(Neighbor, int);
-
 protected:
   vtkImageErode();
   ~vtkImageErode();
 
-  // Description: 
-  // set size of neighborhood of each pixel (where erosion is performed)
-  void SetKernelSize(int size0, int size1, int size2);
-
   float Background;
   float Foreground;
-  int Neighbor;
-  unsigned char *mask;
 
   void ThreadedExecute(vtkImageData *inData, vtkImageData *outData, 
     int extent[6], int id);

@@ -53,7 +53,6 @@ vtkImageErode* vtkImageErode::New()
 vtkImageErode::vtkImageErode()
 {
 
-	this->mask = NULL;
 	this->Background = 0;
 	this->Foreground = 1;
 	this->HandleBoundaries = 1;
@@ -66,96 +65,6 @@ vtkImageErode::vtkImageErode()
 vtkImageErode::~vtkImageErode()
 {
 
-  if (this->mask != NULL)
-    {
-      delete [] this->mask;
-    }
-
-}
-//----------------------------------------------------------------------------
-
-
-//----------------------------------------------------------------------------
-// This method sets the size of the neighborhood and the default middle of the
-// neighborhood.  Also sets the size of (allocates) the matching mask.
-void vtkImageErode::SetKernelSize(int size0, int size1, int size2)
-{
-  int modified = 0;
-  
-  if (this->KernelSize[0] != size0)
-    {
-    modified = 1;
-    this->KernelSize[0] = size0;
-    this->KernelMiddle[0] = size0 / 2;
-    }
-  if (this->KernelSize[1] != size1)
-    {
-    modified = 1;
-    this->KernelSize[1] = size1;
-    this->KernelMiddle[1] = size1 / 2;
-    }
-  if (this->KernelSize[2] != size2)
-    {
-    modified = 1;
-    this->KernelSize[2] = size2;
-    this->KernelMiddle[2] = size2 / 2;
-    }
-
-
-  if (modified)
-    {
-      if (this->mask != NULL)
-	{
-	  delete [] this->mask;
-	}
-      this->mask = new unsigned char[this->KernelSize[0]*
-				    this->KernelSize[1]*this->KernelSize[2]];
-
-      this->Modified();
-    }
-}
-//----------------------------------------------------------------------------
-
-
-//----------------------------------------------------------------------------
-void vtkImageErode::SetNeighborTo4()
-{
-	int x, y, z;
-	
-	this->Neighbor = 4;
-
-	// clear
-	memset(this->mask, 0, this->KernelSize[0]*this->KernelSize[1]*
-	       this->KernelSize[2]);
-
-	// set
-	z = 0;
-	for (y=-1; y <= 1; y++)
-		for (x=-1; x <= 1; x++)
-			if (x*y == 0)
-				mask[(1+z)*9+(1+y)*3+(1+x)] = 1;
-
-	mask[1*9+1*3+1] = 0;
-	mask[0*9+1*3+1] = 1;
-	mask[2*9+1*3+1] = 1;
-
-	this->Modified();
-}
-
-//----------------------------------------------------------------------------
-void vtkImageErode::SetNeighborTo8()
-{
-	int x, y, z;
-	
-	this->Neighbor = 8;
-
-	// set
-	memset(this->mask, 1, this->KernelSize[0]*this->KernelSize[1]*
-	       this->KernelSize[2]);
-
-	mask[1*9+1*3+1] = 0;
-
-	this->Modified();
 }
 
 //----------------------------------------------------------------------------
@@ -209,25 +118,13 @@ static void vtkImageErodeExecute(vtkImageErode *self,
 	outMin2 = outExt[4];   outMax2 = outExt[5];
 	numComps = outData->GetNumberOfScalarComponents();
 	
+	// Neighborhood around current voxel
+	self->GetRelativeHoodExtent(hoodMin0, hoodMax0, hoodMin1, 
+				    hoodMax1, hoodMin2, hoodMax2);
 
-	// Neighborhood around current pixel (kernel has radius 1)
-	kernelSize = self->GetKernelSize();
-	kernelMiddle = self->GetKernelMiddle();
-	hoodMin0 = - kernelMiddle[0];
-	hoodMin1 = - kernelMiddle[1];
-	hoodMin2 = - kernelMiddle[2];
-	hoodMax0 = hoodMin0 + kernelSize[0] - 1;
-	hoodMax1 = hoodMin1 + kernelSize[1] - 1;
-	hoodMax2 = hoodMin2 + kernelSize[2] - 1;
-
-	// Lauren this is a bug! (increments are wrong.)
-	// just make this class inherit from the new vtkImageNeighborhoodFilter
-	// Setup mask info
+	// Set up mask info
 	maskPtr = (unsigned char *)(self->GetMaskPointer());
-	maskInc0 = kernelSize[0];
-	maskInc1 = kernelSize[1];
-	maskInc2 = kernelSize[2];
-
+	self->GetMaskIncrements(maskInc0, maskInc1, maskInc2);
 
 	// in and out should be marching through corresponding pixels.
 	inPtr = (T *)(inData->GetScalarPointer(outMin0, outMin1, outMin2));

@@ -25,45 +25,42 @@ PARTICULAR PURPOSE, AND NON-INFRINGEMENT.  THIS SOFTWARE IS PROVIDED ON AN
 'AS IS' BASIS, AND THE AUTHORS AND DISTRIBUTORS HAVE NO OBLIGATION TO PROVIDE
 MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 =========================================================================auto=*/
-// .NAME vtkImageLabelOutline -  Flexible threshold
+// .NAME vtkImageLabelOutline -  Display labelmap outlines
 // .SECTION Description
-//  The output data type may be different than the output, but defaults
-// to the same type.
+//  Used  in slicer for the Label layer to outline the segmented
+//  structures (instead of showing them filled-in).
 
 #ifndef __vtkImageLabelOutline_h
 #define __vtkImageLabelOutline_h
 
-#include "vtkImageSpatialFilter.h"
+#include "vtkImageNeighborhoodFilter.h"
 
-class VTK_EXPORT vtkImageLabelOutline : public vtkImageSpatialFilter
+class VTK_EXPORT vtkImageLabelOutline : public vtkImageNeighborhoodFilter
 {
-public:
-	static vtkImageLabelOutline *New();
+ public:
+  static vtkImageLabelOutline *New();
   vtkTypeMacro(vtkImageLabelOutline,vtkImageSpatialFilter);
-	void PrintSelf(ostream& os, vtkIndent indent);
+  void PrintSelf(ostream& os, vtkIndent indent);
 
-	vtkSetMacro(Background, float);
-	vtkGetMacro(Background, float);
+  // Description:
+  // background pixel value in the image (usually 0)
+  vtkSetMacro(Background, float);
+  vtkGetMacro(Background, float);
 
-	vtkSetMacro(Outline, int);
-	vtkGetMacro(Outline, int);
+  // Description:
+  // not used (don't know what it was intended for)
+  vtkSetMacro(Outline, int);
+  vtkGetMacro(Outline, int);
 
-	unsigned char *GetMaskPointer() {return mask;}
-	void SetNeighborTo8();
-	void SetNeighborTo4();
-	vtkGetMacro(Neighbor, float);
+ protected:
+  vtkImageLabelOutline();
+  ~vtkImageLabelOutline();
 
-protected:
-	vtkImageLabelOutline();
-	~vtkImageLabelOutline();
-	void SetKernelSize(int size0, int size1, int size2);
-	float Background;
-	int Neighbor;
-	int Outline;
-	unsigned char *mask;
+  float Background;
+  int Outline;
 
-	void ThreadedExecute(vtkImageData *inData, vtkImageData *outData, 
-		int extent[6], int id);
+  void ThreadedExecute(vtkImageData *inData, vtkImageData *outData, 
+		       int extent[6], int id);
 };
 
 #endif
