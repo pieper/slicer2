@@ -347,7 +347,7 @@ proc Comment {data} {
 		set desc [string trimleft $desc]
 
 		# Strip off the first word of the desc as the proc name
-		regexp "(.*?)\[\n].*" $desc match proc
+		regexp "(.*?)\[\n\].*" $desc match proc
 
 		# Note the following line treats the string as a list, which	    
 		# is too dangerous since a quote-comma sequence crashes it
