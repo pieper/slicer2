@@ -82,6 +82,8 @@ public:
   // Downsampled images (made accessible for interactive rendering)
   vtkImageData *GetRef(int res) {return this->Refs[res];};
   vtkImageData *GetSub(int res) {return this->Subs[res];};
+  vtkMatrix4x4 *GetRefRasToIjk(int res) {return this->RefRasToIjk[res];};
+  vtkMatrix4x4 *GetSubRasToIjk(int res) {return this->SubRasToIjk[res];};
 
   // Pipeline
   void Update();
@@ -108,6 +110,7 @@ protected:
   vtkImageData *Subs[4];
   vtkImageData *Refs[4];
   vtkMatrix4x4 *RefIjkToRas[4];
+  vtkMatrix4x4 *RefRasToIjk[4];
   vtkMatrix4x4 *SubRasToIjk[4];
   vtkMatrix4x4 *CurrentPose;
 
