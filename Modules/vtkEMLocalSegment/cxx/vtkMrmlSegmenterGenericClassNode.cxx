@@ -59,7 +59,10 @@ vtkMrmlSegmenterGenericClassNode* vtkMrmlSegmenterGenericClassNode::New()
 vtkMrmlSegmenterGenericClassNode::vtkMrmlSegmenterGenericClassNode() { 
   // vtkMrmlNode's attributes => Tabs following sub classes  
   this->Prob       = 0.0;
+
   this->LocalPriorWeight = 1.0;
+  this->LocalPriorName   = NULL; 
+
   this->InputChannelWeights = NULL;
   this->PrintWeights        = 0;
   this->PrintRegistrationParameters = 0;
@@ -80,6 +83,13 @@ vtkMrmlSegmenterGenericClassNode::~vtkMrmlSegmenterGenericClassNode() {
     delete [] this->InputChannelWeights;
     this->InputChannelWeights = NULL;
   }
+
+  if (this->LocalPriorName)
+  {
+    delete [] this->LocalPriorName;
+    this->LocalPriorName = NULL;
+  }
+
 }
 
 //----------------------------------------------------------------------------
@@ -92,6 +102,11 @@ void vtkMrmlSegmenterGenericClassNode::Write(ofstream& of, int nIndent)
     of << " InputChannelWeights='" << this->InputChannelWeights << "'";
   }
   of << " LocalPriorWeight='" << this->LocalPriorWeight << "'";
+
+  if (this->LocalPriorName && strcmp(this->LocalPriorName, "")) 
+  {
+    of << " LocalPriorName='" << this->LocalPriorName << "'";
+  }
 
   if (this->PrintWeights) of << " PrintWeights='" << this->PrintWeights << "'";
   if (this->PrintRegistrationParameters) of << " PrintRegistrationParameters='" << this->PrintRegistrationParameters << "'";
@@ -119,6 +134,7 @@ void vtkMrmlSegmenterGenericClassNode::Copy(vtkMrmlNode *anode)
   this->Prob = node->Prob;
   this->SetInputChannelWeights(node->InputChannelWeights);
   this->SetLocalPriorWeight(node->LocalPriorWeight);
+  this->SetLocalPriorName(node->LocalPriorName); 
 
   this->PrintWeights                  = node->PrintWeights;
   this->PrintRegistrationParameters   = node->PrintRegistrationParameters;
@@ -138,6 +154,8 @@ void vtkMrmlSegmenterGenericClassNode::PrintSelf(ostream& os, vtkIndent indent)
     (this->InputChannelWeights ? this->InputChannelWeights : "(none)") << "\n";
 
   os << indent << "LocalPriorWeight:                   " << this->LocalPriorWeight << "\n";
+  os << indent << "LocalPriorName: " <<
+    (this->LocalPriorName ? this->LocalPriorName : "(none)") << "\n";
 
   os << indent << "PrintWeights:                       " << this->PrintWeights << "\n";
   os << indent << "PrintRegistrationParameters:        " << this->PrintRegistrationParameters << "\n";

@@ -64,8 +64,6 @@ vtkMrmlSegmenterClassNode::vtkMrmlSegmenterClassNode()
 
   this->ShapeParameter   = 0.0;
 
-  this->LocalPriorName   = NULL; 
-
   this->LogMean          = NULL;
   this->LogCovariance    = NULL;
 
@@ -85,11 +83,6 @@ vtkMrmlSegmenterClassNode::vtkMrmlSegmenterClassNode()
 //----------------------------------------------------------------------------
 vtkMrmlSegmenterClassNode::~vtkMrmlSegmenterClassNode()
 {
-  if (this->LocalPriorName)
-  {
-    delete [] this->LocalPriorName;
-    this->LocalPriorName = NULL;
-  }
   if (this->LogMean)
   {
     delete [] this->LogMean;
@@ -133,10 +126,6 @@ void vtkMrmlSegmenterClassNode::Write(ofstream& of, int nIndent)
 
   of << " ShapeParameter='" << this->ShapeParameter << "'";
   
-  if (this->LocalPriorName && strcmp(this->LocalPriorName, "")) 
-  {
-    of << " LocalPriorName='" << this->LocalPriorName << "'";
-  }
   if (this->LogMean && strcmp(this->LogMean, "")) 
   {
     of << " LogMean='" << this->LogMean << "'";
@@ -179,7 +168,6 @@ void vtkMrmlSegmenterClassNode::Copy(vtkMrmlNode *anode)
 
   this->SetLabel(node->Label);
   this->SetShapeParameter(node->ShapeParameter);
-  this->SetLocalPriorName(node->LocalPriorName); 
   this->SetLogMean(node->LogMean);
   this->SetLogCovariance(node->LogCovariance);
   this->SetPCAMeanName(node->PCAMeanName);
@@ -204,9 +192,6 @@ void vtkMrmlSegmenterClassNode::PrintSelf(ostream& os, vtkIndent indent)
   this->vtkMrmlSegmenterGenericClassNode::PrintSelf(os, indent);
 
    os << indent << "ShapeParameter: " << this->ShapeParameter << "\n";
-
-   os << indent << "LocalPriorName: " <<
-    (this->LocalPriorName ? this->LocalPriorName : "(none)") << "\n";
 
    os << indent << "LogMean: " <<
     (this->LogMean ? this->LogMean : "(none)") << "\n";

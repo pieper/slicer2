@@ -82,11 +82,6 @@ public:
 
   // Description:
   // Get/Set for SegmenterClass
-  vtkSetStringMacro(LocalPriorName);
-  vtkGetStringMacro(LocalPriorName);
-
-  // Description:
-  // Get/Set for SegmenterClass
   vtkSetStringMacro(LogMean);
   vtkGetStringMacro(LogMean);
 
@@ -139,7 +134,6 @@ protected:
   int    Label;
 
   float  ShapeParameter;
-  char   *LocalPriorName;
   char   *LogMean;
   char   *LogCovariance;
   float  LocalPriorWeight;

@@ -95,6 +95,11 @@ public:
   vtkSetMacro(LocalPriorWeight,float);
 
   // Description:
+  // Get/Set for SegmenterClass - define name of spatial prior
+  vtkSetStringMacro(LocalPriorName);
+  vtkGetStringMacro(LocalPriorName);
+
+  // Description:
   // This paramters allows the individual influence of each channel in the segmentation process 
   // by default 
   // The weight confidence measure describes the confidence in the weights form the EM algorithm
@@ -152,6 +157,7 @@ protected:
   int    PrintRegistrationParameters;
   int    PrintRegistrationSimularityMeasure;
 
+  char   *LocalPriorName;
 
   double RegistrationTranslation[3];
   double RegistrationRotation[3];
