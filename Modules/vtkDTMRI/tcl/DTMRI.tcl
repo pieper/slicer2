@@ -123,7 +123,7 @@ proc DTMRIInit {} {
     set Module($m,author) "Lauren O'Donnell"
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.31 $} {$Date: 2004/10/08 19:13:46 $}]
+                  {$Revision: 1.32 $} {$Date: 2004/10/26 23:03:19 $}]
 
      # Define Tabs
     #------------------------------------
@@ -1428,7 +1428,7 @@ set FrameOption3 [Notebook:frame $f {Option 3}]
     # Display-> Notebook ->Tract frame->VisMethods->VisParams->Tracts->Colors frame
     #-------------------------------------------
     set f $fParams.fTracts.fColors
-    foreach frame "ChooseColor ColorBy " {
+    foreach frame "ChooseColor ColorBy ColorByVol" {
         frame $f.f$frame -bg $Gui(activeWorkspace)
         pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
     }
@@ -1466,6 +1466,22 @@ set FrameOption3 [Notebook:frame $f {Option 3}]
     set DTMRI(gui,mbTractColor) $f.mbVis
     # Add a tooltip
     TooltipAdd $f.mbVis $DTMRI(mode,tractColorList,tooltip)
+
+    #-------------------------------------------
+    # Display-> Notebook ->Tract frame->VisMethods->VisParams->Tracts->Colors->ColorByVol frame
+    #-------------------------------------------
+    set f $fParams.fTracts.fColors.fColorByVol
+
+    # menu to select a volume: will set Volume(activeID)
+    set name ColorByVolume
+    DevAddSelectButton  Volume $f $name "Color by Volume:" Pack \
+    "First select Color by MultiColor, then select the volume to use to color the tracts. For example to color by FA, create the FA volume using the <More...> tab in this module, then the <Scalars> tab.  Then select that volume from this list." \
+    13
+    
+    # Append these menus and buttons to lists 
+    # that get refreshed during UpdateMRML
+    lappend Volume(mbActiveList) $f.mb$name
+    lappend Volume(mActiveList) $f.mb$name.m
 
     #-------------------------------------------
     # Display-> Notebook ->Tract frame->VisMethods->VisParams->Tracts->Entries frame
@@ -4139,7 +4155,7 @@ proc DTMRIUpdateStreamlines {} {
 # .END
 #-------------------------------------------------------------------------------
 proc DTMRIAddStreamline {} {
-    global DTMRI Label
+    global DTMRI Label Tensor Volume
 
     # Make sure we have streamline actors visible now before 
     # adding a new one
@@ -4208,9 +4224,19 @@ proc DTMRIAddStreamline {} {
                 $DTMRI(vtk,$streamline,color)
         }
         "MultiColor" {
-            # do nothing, default
+            # put the volume we wish to color by as the Scalars field 
+            # in the tensor volume.
+            set t $Tensor(activeID)            
+            set v $Volume(activeID)
+            # make sure they have the same extent
+            set ext1 [[Tensor($t,data) GetOutput] GetWholeExtent]
+            set ext2 [[Volume($v,vol) GetOutput] GetWholeExtent]
+            if {[string equal $ext1 $ext2]} {
+                # put the scalars there
+                [[Tensor($t,data) GetOutput] GetPointData] SetScalars [[[Volume($v,vol) GetOutput] GetPointData] GetScalars]
+            }
         }
-    }    
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -4221,7 +4247,7 @@ proc DTMRIAddStreamline {} {
 # .END
 #-------------------------------------------------------------------------------
 proc DTMRIAddPreciseStreamline {} {
-    global DTMRI Label
+    global DTMRI Label Tensor Volume
 
     # Make sure we have streamline actors visible now before 
     # adding a new one
@@ -4309,7 +4335,17 @@ proc DTMRIAddPreciseStreamline {} {
                 $DTMRI(vtk,$streamline,color)
         }
         "MultiColor" {
-            # do nothing, default
+            # put the volume we wish to color by as the Scalars field 
+            # in the tensor volume.
+            set t $Tensor(activeID)            
+            set v $Volume(activeID)
+            # make sure they have the same extent
+            set ext1 [[Tensor($t,data) GetOutput] GetWholeExtent]
+            set ext2 [[Volume($v,vol) GetOutput] GetWholeExtent]
+            if {[string equal $ext1 $ext2]} {
+                # put the scalars there
+                [[Tensor($t,data) GetOutput] GetPointData] SetScalars [[[Volume($v,vol) GetOutput] GetPointData] GetScalars]
+            }
         }
     }
 }
