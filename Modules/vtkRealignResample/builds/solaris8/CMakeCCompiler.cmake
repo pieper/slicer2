@@ -1,0 +1,6 @@
+SET(CMAKE_C_COMPILER "gcc")
+SET(CMAKE_AR "/local/os/bin/ar")
+SET(CMAKE_RANLIB "/local/os/bin/ranlib")
+SET(CMAKE_COMPILER_IS_GNUCC 1)
+SET(CMAKE_C_COMPILER_LOADED 1)
+
