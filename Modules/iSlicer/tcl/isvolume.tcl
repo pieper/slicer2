@@ -230,7 +230,7 @@ itcl::body isvolume::constructor {args} {
     vtkImageReslice $_reslice
       $_reslice SetInput $_None_ImageData
       $_reslice SetInterpolationModeToLinear
-    vtkTransform $_xform
+    vtkGeneralTransform $_xform
     vtkImageChangeInformation $_changeinfo
       $_changeinfo CenterImageOn
 
@@ -507,13 +507,9 @@ itcl::body isvolume::transform_update {} {
         return
     }
 
-    if {$_refVolId == 0} {
-        set id $_VolIdMap($itk_option(-volume))
-    } else {
-        set id $_refVolId
-    }
+    set id $_VolIdMap($itk_option(-volume))
 
-    #
+    # Existing volume scan order and orientation
     # first, make the transform to put the images
     # into axial RAS space.  Center the volume resliced output
     # around the origin of RAS space
@@ -545,6 +541,8 @@ itcl::body isvolume::transform_update {} {
 
     # TODO - add other orientations here...
 
+    # desired orenation
+    # NOTE: in the case if a refVolume present the orientation is taken from it
     catch "transposematrix Delete"
     vtkMatrix4x4 transposematrix
     switch $itk_option(-orientation) {
@@ -582,9 +580,6 @@ itcl::body isvolume::transform_update {} {
         transposematrix SetElement 0 $i [expr -1 * [transposematrix GetElement 0 $i]]
     }
 
-
-    set id $_VolIdMap($itk_option(-volume))
-
     #
     # make a matrix of the supplied transform - positions the volume
     # in RAS space (inverted for use with ImageReslice)
@@ -615,7 +610,8 @@ itcl::body isvolume::transform_update {} {
     transformmatrix Delete
     transposematrix Delete
 
-    $_xform SetMatrix $_ijkmatrix
+    $_xform Identity
+    $_xform Concatenate $_ijkmatrix
 
     # concatenate with displacement field transform
     if {$_warpVolId != "" && $_warpVolId != $Volume(idNone)} {
@@ -626,7 +622,7 @@ itcl::body isvolume::transform_update {} {
     }
 
     $_reslice SetResliceTransform $_xform 
-
+    
 }
 
 
@@ -718,7 +714,7 @@ itcl::body isvolume::slicer_volume { {name ""} } {
         set order [::Volume($_refVolId,node) GetScanOrder]
     }
 
-    set orientation [$this order_to_orientation]
+    set orientation [$this order_to_orientation $order]
 
     $this configure -orientation $orientation
 
