@@ -46,11 +46,31 @@ public:
   vtkGetMacro(MaxEdgeWeight, int);
   vtkSetMacro(MaxEdgeWeight, int);
 
+  // Description:
+  // 
+  vtkGetMacro(Difference, float);
+  vtkSetMacro(Difference, float);
+
+  // Description:
+  // 
+  vtkGetMacro(InsidePixel, float);
+  vtkSetMacro(InsidePixel, float);
+
+  // Description:
+  // 
+  vtkGetMacro(OutsidePixel, float);
+  vtkSetMacro(OutsidePixel, float);
+
 protected:
   vtkImageLiveWireEdgeWeights();
   ~vtkImageLiveWireEdgeWeights();
 
   int MaxEdgeWeight;
+
+  // User settings that affect edge weight calculation
+  float Difference;
+  float InsidePixel;
+  float OutsidePixel;
 
   void ThreadedExecute(vtkImageData *inData, vtkImageData *outData, 
     int extent[6], int id);

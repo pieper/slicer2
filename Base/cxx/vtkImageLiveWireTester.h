@@ -34,7 +34,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 #include "vtkImageToImageFilter.h"
 #include "vtkImageLiveWire.h"
-#include "vtkImageSimpleEdge.h"
+#include "vtkImageLiveWireEdgeWeights.h"
 
 class VTK_EXPORT vtkImageLiveWireTester : public vtkImageToImageFilter
 {
@@ -58,16 +58,39 @@ public:
   vtkSetObjectMacro(LiveWire, vtkImageLiveWire);
   vtkGetObjectMacro(LiveWire, vtkImageLiveWire);
 
+  // Description:
+  // Number of filters for edges (number of directions of edges)
+  vtkGetMacro(NumberOfEdgeFilters, int);
+
+  // Description:
+  // Array of edge filters.
+  vtkImageLiveWireEdgeWeights **GetEdgeFilters(){return this->EdgeFilters;};
+
+  // Description:
+  // User input to filters that create edges.
+  // Control importance of different factors in calculation of edges.
+  void SetDifference(float diff);
+  void SetInsidePixel(float inpix);
+  void SetOutsidePixel(float outpix);
+
 protected:
   vtkImageLiveWireTester();
-  ~vtkImageLiveWireTester(){};
+  ~vtkImageLiveWireTester();
   vtkImageLiveWireTester(const vtkImageLiveWireTester&) {};
   void operator=(const vtkImageLiveWireTester&) {};
   
   int StartPoint[2];
   int EndPoint[2];
 
+  // Description:
+  // object we are creating input (multiple edges) for.
+  // this filter's output should also be input to it
   vtkImageLiveWire *LiveWire;
+
+  // Description:
+  // Array of filters to find edges in all directions
+  vtkImageLiveWireEdgeWeights **EdgeFilters;
+  int NumberOfEdgeFilters;
 
   void Execute(vtkImageData *inData, vtkImageData *outData);
 };

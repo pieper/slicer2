@@ -53,6 +53,11 @@ vtkImageLiveWireEdgeWeights* vtkImageLiveWireEdgeWeights::New()
 vtkImageLiveWireEdgeWeights::vtkImageLiveWireEdgeWeights()
 {
   this->MaxEdgeWeight = 255;
+  
+  this->Difference = 0.25;
+  this->InsidePixel = 0.1;
+  this->OutsidePixel = 0.1;
+
 }
 
 
@@ -120,17 +125,9 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
   self->GetRelativeHoodExtent(hoodMin0, hoodMax0, hoodMin1, 
 			      hoodMax1, hoodMin2, hoodMax2);
 
-  // Setup mask info
+  // Set up mask info
   maskPtr = (unsigned char *)(self->GetMaskPointer());
   self->GetMaskIncrements(maskInc0, maskInc1, maskInc2);
-  // Lauren these were broken.
-  //maskInc0 = kernelSize[0];
-  //maskInc1 = kernelSize[1];
-  //maskInc2 = kernelSize[2];
- //   maskInc0 = 1;
-//    maskInc1 = kernelSize[0];
-//    maskInc2 = kernelSize[0]*kernelSize[1];
-
 
   // in and out should be marching through corresponding pixels.
   inPtr = (T *)(inData->GetScalarPointer(outMin0, outMin1, outMin2));
@@ -138,7 +135,15 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
   target = (unsigned long)(numComps*(outMax2-outMin2+1)*
 			   (outMax1-outMin1+1)/50.0);
   target++;
-	
+
+  // Lauren  ??  short??
+  // scale factor (edges go from 1 to this number)
+  int maxEdge = self->GetMaxEdgeWeight();
+
+  // multipliers set by user
+  float diff = self->GetDifference();
+  float inpix = self->GetInsidePixel();
+  float outpix = self->GetOutsidePixel();
 
   // loop through components
   for (outIdxC = 0; outIdxC < numComps; ++outIdxC)
@@ -164,30 +169,23 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
 		{
 
 		  // ---- Neighborhood Operations ---- //
-		  
-		  // Lauren need default for if partial neighborhood!!!
-		  // this default is BAD!
+
+		  // Lauren is this needed?
 		  // Default output equal to max edge value
 		  *outPtr0 = self->GetMaxEdgeWeight();
 
 		  // Loop through neighborhood pixels (kernel radius=1)
 		  // Note: input pointer marches out of bounds.
 
-		  // Lauren why was this like this?
-		  // this line is basically hard-coded 3x3x3 mask size!!!!!!!!!!
-		  // hoodPtr2 = inPtr0 - inInc0 - inInc1 - inInc2;
-
-		  // 1 256 65536
-		  //cout << inInc0 << " " << inInc1 << " " <<  inInc2 << endl;
-
-		  // find beginning of neighborhood, relative to the current voxel.
+		  // find beginning of neighborhood, relative to 
+		  // the current voxel.
 		  hoodPtr2 = inPtr0 + inInc0*hoodMin0 + inInc1*hoodMin1 + inInc2*hoodMin2;
 		  maskPtr2 = maskPtr;
 		  for (hoodIdx2 = hoodMin2; hoodIdx2 <= hoodMax2; ++hoodIdx2)
 		    {
 		      hoodPtr1 = hoodPtr2;
 		      maskPtr1 = maskPtr2;
-		      for (hoodIdx1 = hoodMin1; hoodIdx1 <= hoodMax1;	++hoodIdx1)
+		      for (hoodIdx1 = hoodMin1; hoodIdx1 <= hoodMax1; ++hoodIdx1)
 			{
 			  hoodPtr0 = hoodPtr1;
 			  maskPtr0 = maskPtr1;
@@ -207,8 +205,12 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
 				      // test: 1/pixel difference (if neighborhood is 2 pix).
 				      // Lauren what if input is float, etc? 
 				      // Lauren accept only short input, or something.
-				      *outPtr0 = *inPtr0 - *hoodPtr0;
-					//1/(abs(int(*inPtr - *hoodPtr0)) + 1);
+				      // Lauren output MUST be positive!
+				      //*outPtr0 = *inPtr0 - *hoodPtr0;
+
+				      // Lauren int for now...?  short?
+				      float sum = (diff*fabs((float)(*inPtr0 - *hoodPtr0)) + inpix*((float)*inPtr0) + outpix*((float)*hoodPtr0) + 1);
+				      *outPtr0 = maxEdge/(int)sum;
 				      //cout << hoodIdx0 << ": " << *outPtr0 << endl;
 				    }
 				}

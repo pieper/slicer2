@@ -126,6 +126,11 @@ void vtkImageLiveWire::AllocatePathInformation(int numRows, int numCols)
   if (!this->Q)
     {
       this->Q = new circularQueue(numRows, numCols, this->GetMaxEdgeCost());
+      // debug
+      if (this->Verbose > 1) 
+	{
+	  this->Q->VerboseOn();
+	}
     }
   if (!this->CC)
     {

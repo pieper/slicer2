@@ -152,13 +152,13 @@ class circularQueue {
   void Insert(int x, int y, int cost)
     {
       int bucket = this->GetBucket(cost);
-		
+
       ListElement *el = this->A->Element(x,y);
       // insert el at the top of the list from the bucket
       el->Next = this->Circle[bucket].Next;
       if (el->Next == NULL) 
 	{
-	  cout <<"ERROR in vtkImageLiveWire.  bucket is NULL, not linked to self.\n" << endl;
+	  cout << "ERROR in vtkImageLiveWire.  bucket is NULL, not linked to self." << endl;
 	}
       this->Circle[bucket].Next->Prev = el;      
       this->Circle[bucket].Next = el;
@@ -188,7 +188,7 @@ class circularQueue {
       
 	if (el->Next == NULL)
 	  {
-	    cout <<"ERROR in vtkImageLiveWire.  el->Next is NULL.\n "<< endl;
+	    cout <<"ERROR in vtkImageLiveWire.  el->Next is NULL."<< endl;
 	    return;
 	  }
 	el->Next->Prev = el->Prev;
@@ -202,7 +202,7 @@ class circularQueue {
 	  if (this->Verbose)
 	    {
 	      cout <<"Q_REMOVE: el->Prev is NULL, el (" << el->Coord[0] << "," 
-		   << el->Coord[1] << ") not in Q.\n "<< endl;
+		   << el->Coord[1] << ") not in Q."<< endl;
 	      return;
 	    }
 	}
@@ -238,17 +238,26 @@ class circularQueue {
       return this->Circle[bucket].Prev;
     }
 
+  void VerboseOn() 
+    {
+      this->Verbose = 1;
+    }
+
  private:
 
   int GetBucket(int cost)
     {
+      if (cost < 0 ) 
+	{
+	  cout << "ERROR in vtkImageLiveWire: negative cost of " << cost << endl;
+	}
+      
       //return (int)fmodf(cost, this->C+1);
 
       // return remainder
       return div(cost,this->C+1).rem;
     }
 
-  // Lauren if the queue is empty this will loop forever.
   int FindMinBucket(float cost)
     {
       int bucket = this->GetBucket(cost);

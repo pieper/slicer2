@@ -27,10 +27,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 =========================================================================auto=*/
 #include "vtkImageLiveWireTester.h"
 #include "vtkObjectFactory.h"
-#include "vtkImageDrawROI.h"
-#include "vtkImageSimpleEdge.h"
-#include "vtkImageCast.h"
-#include "vtkImageGradientMagnitude.h"
+#include "vtkImageLiveWireEdgeWeights.h"
 
 //------------------------------------------------------------------------------
 vtkImageLiveWireTester* vtkImageLiveWireTester::New()
@@ -50,7 +47,39 @@ vtkImageLiveWireTester* vtkImageLiveWireTester::New()
 // Constructor sets default values.
 vtkImageLiveWireTester::vtkImageLiveWireTester()
 {
+  // must be set by user
   this->LiveWire = NULL;
+  
+  this->NumberOfEdgeFilters = 4;
+  
+  this->EdgeFilters = new vtkImageLiveWireEdgeWeights*[this->NumberOfEdgeFilters];
+
+  for (int i = 0; i < this->NumberOfEdgeFilters; i++)
+    {
+      this->EdgeFilters[i] = vtkImageLiveWireEdgeWeights::New();
+    }
+
+}
+
+vtkImageLiveWireTester::~vtkImageLiveWireTester()
+{
+  if (this->LiveWire)
+    {
+      this->LiveWire->Delete();
+    }
+  
+  if (this->EdgeFilters)
+    {
+      for (int i = 0; i < this->NumberOfEdgeFilters; i++)
+	{
+	  if (this->EdgeFilters[i])
+	    {
+	      this->EdgeFilters[i]->Delete();
+	    }
+	}
+    }
+  
+  delete [] this->EdgeFilters;
 }
 
 //----------------------------------------------------------------------------
@@ -76,71 +105,50 @@ static void vtkImageLiveWireTesterExecute(vtkImageLiveWireTester *self,
       return;
     }
 
-  vtkImageLiveWire *LiveWire = self->GetLiveWire();
+  vtkImageLiveWire *liveWire = self->GetLiveWire();
 
   // ----------------  Make edge images  ------------------ //
 
-  // Lauren this needs to use another filter that can do any 
-  // kind of cool variation on edge weighting...
-  // Lauren Filters should be set by user, and their parameters too!
+  int numEdges = self->GetNumberOfEdgeFilters();
+  vtkImageLiveWireEdgeWeights ** edgeFilters = self->GetEdgeFilters();
 
-//    vtkImageSimpleEdge *topEdge, *bottomEdge, *rightEdge, *leftEdge;
-//    topEdge = vtkImageSimpleEdge::New();
-//    bottomEdge = vtkImageSimpleEdge::New();
-//    rightEdge = vtkImageSimpleEdge::New();
-//    leftEdge = vtkImageSimpleEdge::New();
+  // Lauren max edge cost of edge filters and live wire need to match
+  for (int i = 0; i < numEdges; i++)
+    {
+      edgeFilters[i]->SetInput(inData);
+      // Lauren fix!!!!!!!!1
+      edgeFilters[i]->SetNeighborhoodToLine(2);
+      edgeFilters[i]->Update();
+    }
 
-//    topEdge->SetKernelToVertical();
-//    rightEdge->SetKernelToHorizontal();
+  liveWire->SetTopEdges(edgeFilters[0]->GetOutput());
+  liveWire->SetBottomEdges(edgeFilters[1]->GetOutput());
+  liveWire->SetRightEdges(edgeFilters[2]->GetOutput());
+  liveWire->SetLeftEdges(edgeFilters[3]->GetOutput());
 
-  vtkImageGradientMagnitude *topEdge, *bottomEdge, *rightEdge, *leftEdge;
-  topEdge = vtkImageGradientMagnitude::New();
-  bottomEdge = vtkImageGradientMagnitude::New();
-  rightEdge = vtkImageGradientMagnitude::New();
-  leftEdge = vtkImageGradientMagnitude::New();
+//    topEdge->SetInput(inData);
+//    bottomEdge->SetInput(inData);
+//    rightEdge->SetInput(inData);
+//    leftEdge->SetInput(inData);
 
-  topEdge->SetInput(inData);
-  bottomEdge->SetInput(inData);
-  rightEdge->SetInput(inData);
-  leftEdge->SetInput(inData);
+//    topEdge->SetNeighborhoodToLine(2);
+//    bottomEdge->SetNeighborhoodToLine(2);
+//    rightEdge->SetNeighborhoodToLine(2);
+//    leftEdge->SetNeighborhoodToLine(2);
 
-  topEdge->Update();
-  bottomEdge->Update();
-  rightEdge->Update();
-  leftEdge->Update();
+//    topEdge->Update();
+//    bottomEdge->Update();
+//    rightEdge->Update();
+//    leftEdge->Update();
 
-  vtkImageCast * topCast = vtkImageCast::New();
-  vtkImageCast * bottomCast = vtkImageCast::New();
-  vtkImageCast * rightCast = vtkImageCast::New();
-  vtkImageCast * leftCast = vtkImageCast::New();
+//    liveWire->SetTopEdges(topEdge->GetOutput());
+//    liveWire->SetBottomEdges(bottomEdge->GetOutput());
+//    liveWire->SetRightEdges(rightEdge->GetOutput());
+//    liveWire->SetLeftEdges(leftEdge->GetOutput());
 
-  topCast->SetInput(topEdge->GetOutput());
-  bottomCast->SetInput(bottomEdge->GetOutput());
-  rightCast->SetInput(rightEdge->GetOutput());
-  leftCast->SetInput(leftEdge->GetOutput());
-
-  topCast->SetOutputScalarTypeToInt();
-  bottomCast->SetOutputScalarTypeToInt();
-  rightCast->SetOutputScalarTypeToInt();
-  leftCast->SetOutputScalarTypeToInt();
-
-//    LiveWire->SetTopEdges(topEdge->GetOutput());
-//    LiveWire->SetBottomEdges(bottomEdge->GetOutput());
-//    LiveWire->SetRightEdges(rightEdge->GetOutput());
-//    LiveWire->SetLeftEdges(leftEdge->GetOutput());
-
-  topCast->Update();
-  bottomCast->Update();
-  rightCast->Update();
-  leftCast->Update();
-
-  LiveWire->SetTopEdges(topCast->GetOutput());
-  LiveWire->SetBottomEdges(bottomCast->GetOutput());
-  LiveWire->SetRightEdges(rightCast->GetOutput());
-  LiveWire->SetLeftEdges(leftCast->GetOutput());
-
-  LiveWire->SetStartPoint(self->GetStartPoint());
-  LiveWire->SetEndPoint(self->GetEndPoint());
+  // Lauren do this directly??
+  liveWire->SetStartPoint(self->GetStartPoint());
+  liveWire->SetEndPoint(self->GetEndPoint());
 
   // Output is the same as input
   outData->CopyAndCastFrom(inData, inData->GetExtent());  
