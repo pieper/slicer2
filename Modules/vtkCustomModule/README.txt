@@ -96,7 +96,7 @@ and put your tcl code in the skeleton file, ie Test.tcl.
   specify a unique command that's only in your class -- by default it
   assumes there will be a class with the same name as your module.
 
-* Add the following two lines to your Wrapping/Tcl/pkgIndex.tcl file,
+* Add the following two lines to your Wrapping/Tcl/[ModuleName]/pkgIndex.tcl file,
 if they are not already present:
     global PACKAGE_DIR_VTK[MODULENAME]
     set PACKAGE_DIR_VTK[MODULENAME] $dir
