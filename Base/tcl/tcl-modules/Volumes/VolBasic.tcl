@@ -109,7 +109,7 @@ proc VolBasicBuildGUI {parentFrame} {
 
     frame $f.fTitle -bg $Gui(activeWorkspace)
     frame $f.fBtns -bg $Gui(activeWorkspace)
-       pack $f.fTitle $f.fBtns -side left -pady 5
+    pack $f.fTitle $f.fBtns -side left -pady 5
 
     DevAddLabel $f.fTitle.l "Image Headers:"
     pack $f.fTitle.l -side left -padx $Gui(pad) -pady 0
