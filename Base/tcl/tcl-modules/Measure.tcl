@@ -105,7 +105,7 @@ proc MeasureInit {} {
     
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.18 $} {$Date: 2003/06/03 20:59:23 $}]
+        {$Revision: 1.19 $} {$Date: 2003/07/17 16:35:48 $}]
     
     # Initialize module-level variables
     #    set Measure(Model1) $Model(idNone)
@@ -637,10 +637,16 @@ proc MeasurePosition {} {
 proc MeasureDistance {} {
 ##    global Point
 
-    set list [FiducialsGetAllSelectedPointIdList]
+    # set list [FiducialsGetAllSelectedPointIdList]
+    # get the selected points from the ACTIVE list
+    set list [FiducialsGetActiveSelectedPointIdList]
     set idA [lindex $list 0]
     set idB [lindex $list 1]
-
+    if {$idA == "" || $idB == ""} {
+        set msg "Warning: the active list ($::Fiducials(activeList)) does not have two points selected to measure the distance between."
+        MeasureOutput $msg
+        return
+    }
 ##    set idA [lindex $Point(selected) 0]
 ##    set idB [lindex $Point(selected) 1]
     #    MeasureTmpPoints SetNumberOfPoints 2
