@@ -165,10 +165,10 @@ $desc
 #-------------------------------------------------------------------------------
 proc DocumentFile {docdir dir filename} {
 	global Comments
-puts "docdir $docdir dir $dir filename $filename"	
+
 	Comment [ReadInput $filename]
 	set name [file root [file tail $filename]]
-puts "name $name"
+
 	# Open output file
 	set docfile [file join [file join $docdir $dir] $name.html]
 	if {[catch {set fid [open $docfile w]} errmsg] == 1} {
@@ -488,7 +488,7 @@ proc DocumentAll {prog {outputdir ""} {what "doc tcl"}} {
 
 		# Document each file
 		set Index(dirList) ""
-		foreach dir "tcl-main tcl-modules tcl-shared" {
+		foreach dir "tcl-main tcl-modules tcl-shared tcl-modules/Editor" {
 			puts $dir
 			set Index($dir) ""
 			lappend Index(dirList) $dir
