@@ -36,8 +36,12 @@
 #   TetraMeshProcessEdges2
 #   TetraMeshProcessEdges
 #   TetraMeshProcessScalarField
+#   TetraMeshProcessNodes
+#   TetraMeshProcessCorrespond
 #   TetraMeshProcessVectorField
 #   TetraMeshProcessSurface
+#   TetraMeshCorrespondSurfaces
+#   TetraMeshCopyPolyData PolyData number
 #   TetraMeshCreateModel
 #==========================================================================auto=
 
@@ -87,9 +91,9 @@ proc TetraMeshInit {} {
 	#   row2,tab = like row1 
 	#
 	set m TetraMesh
-	set Module($m,row1List) "Help Surface View"
+	set Module($m,row1List) "Help Process View"
         set Module($m,row1Name) "{Help} {Process} {View}"
-	set Module($m,row1,tab) Surface
+	set Module($m,row1,tab) Process
 
 #        set Module($m,row2List) "SField VField"
 #        set Module($m,row2Name) "{Scalar Field} {Vector Field}"
@@ -148,7 +152,7 @@ proc TetraMeshInit {} {
 	#   appropriate revision number and date when the module is checked in.
 	#   
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.23 $} {$Date: 2001/11/09 20:03:54 $}]
+		{$Revision: 1.24 $} {$Date: 2001/12/27 14:47:38 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -159,6 +163,7 @@ proc TetraMeshInit {} {
 	#
 	set TetraMesh(count) 0
 	set TetraMesh(FileName) ""
+	set TetraMesh(OtherMesh) ""
         set TetraMesh(modelbasename) ""
 	set TetraMesh(eventManager)  ""
         set TetraMesh(DefaultDir) ""
@@ -169,7 +174,6 @@ proc TetraMeshInit {} {
         set TetraMesh(SphereScale) 9.5
         set TetraMesh(SphereSkip) 2
 
-        set TetraMesh(ProcessType) Surface
         # 
         #
         # The following matrix exists to move the origin
@@ -203,7 +207,7 @@ proc TetraMeshBuildGUI {} {
 	# Frame Hierarchy:
 	#-------------------------------------------
 	# Help
-	# Surface
+	# Process
 	#   Top
         #   Middle
         #   Alignment
@@ -214,6 +218,8 @@ proc TetraMeshBuildGUI {} {
         #      Nodes
         #      ...
         #   Bottom
+        #
+        #
         # View
         #   Top
         #   Bottom
@@ -247,10 +253,10 @@ The TetraMesh module allows a user to read in a Tetrahedral Mesh.  The Mesh is c
 	MainHelpBuildGUI TetraMesh
 
 	#-------------------------------------------
-	# Surface frame
+	# Process frame
 	#-------------------------------------------
-	set fSurface $Module(TetraMesh,fSurface)
-	set f $fSurface
+	set fProcess $Module(TetraMesh,fProcess)
+	set f $fProcess
 
 	foreach frame "Top Middle Alignment Select" {
 		frame $f.f$frame -bg $Gui(activeWorkspace)
@@ -266,9 +272,9 @@ The TetraMesh module allows a user to read in a Tetrahedral Mesh.  The Mesh is c
 	}
 
 	#-------------------------------------------
-	# Surface->Top frame
+	# Process->Top frame
 	#-------------------------------------------
-	set f $fSurface.fTop
+	set f $fProcess.fTop
 
 	frame $f.f -bg $Gui(activeWorkspace)
 	pack $f.f -side top -pady $Gui(pad)
@@ -276,7 +282,7 @@ The TetraMesh module allows a user to read in a Tetrahedral Mesh.  The Mesh is c
         DevAddFileBrowse $f.f TetraMesh FileName "Tetrahedral Mesh:" "TetraMeshFileNameEntered" "vtk"\
                 "\$TetraMesh(DefaultDir)" "Browse for a Tetrahedral Mesh"
 
-	set f $fSurface.fTop.fBaseName
+	set f $fProcess.fTop.fBaseName
 
 	frame $f  -bg $Gui(activeWorkspace) 
         pack $f -side top -padx 0 -pady $Gui(pad) -fill x
@@ -287,9 +293,9 @@ The TetraMesh module allows a user to read in a Tetrahedral Mesh.  The Mesh is c
         pack $f.l $f.eModelName -side left -padx $Gui(pad)
 
 	#-------------------------------------------
-	# Surface->Alignment frame
+	# Process->Alignment frame
 	#-------------------------------------------
-	set f $fSurface.fAlignment
+	set f $fProcess.fAlignment
 
         DevAddSelectButton TetraMesh $f AlignmentVolume "Alignment Volume(Optional)" Pack
 
@@ -297,9 +303,9 @@ The TetraMesh module allows a user to read in a Tetrahedral Mesh.  The Mesh is c
         lappend Volume(mActiveList)  $f.mbAlignmentVolume.m
 
 	#-------------------------------------------
-	# Surface->Select
+	# Process->Select
 	#-------------------------------------------
-	set f $fSurface.fSelect
+	set f $fProcess.fSelect
 
         eval {label $f.l -text " Process Type: "} $Gui(BLA)
 	frame $f.f -bg $Gui(backdrop)
@@ -328,10 +334,10 @@ The TetraMesh module allows a user to read in a Tetrahedral Mesh.  The Mesh is c
 
 
 	#-------------------------------------------
-	# Surface->Options
+	# Process->Options
 	#-------------------------------------------
 
-	set f $fSurface.fOptions
+	set f $fProcess.fOptions
 
 	foreach type "Surface Edges Nodes ScalarField VectorField" {
 		frame $f.f${type} -bg $Gui(activeWorkspace)
@@ -342,25 +348,25 @@ The TetraMesh module allows a user to read in a Tetrahedral Mesh.  The Mesh is c
 	raise $TetraMesh(fSurface)
 
 	#-------------------------------------------
-	# Surface->Options->Surface
+	# Process->Options->Surface
 	#-------------------------------------------
-        set f $fSurface.fOptions.fSurface
+        set f $fProcess.fOptions.fSurface
 
         DevAddLabel $f.l "Grab Surfaces of the mesh"
         pack $f.l -side left -padx $Gui(pad)
 
 	#-------------------------------------------
-	# Surface->Options->Edges
+	# Process->Options->Edges
 	#-------------------------------------------
-        set f $fSurface.fOptions.fEdges
+        set f $fProcess.fOptions.fEdges
 
         DevAddLabel $f.l "Grab the Edges of the mesh"
         pack $f.l -side left -padx $Gui(pad)
 
 	#-------------------------------------------
-	# Surface->Options->Nodes
+	# Process->Options->Nodes
 	#-------------------------------------------
-        set ff $fSurface.fOptions.fNodes
+        set ff $fProcess.fOptions.fNodes
         set  f $ff
 
 	foreach frame "Scale Skip" {
@@ -391,9 +397,9 @@ The TetraMesh module allows a user to read in a Tetrahedral Mesh.  The Mesh is c
 
 
 	#-------------------------------------------
-	# Surface->Options->ScalarField
+	# Process->Options->ScalarField
 	#-------------------------------------------
-        set ff $fSurface.fOptions.fScalarField
+        set ff $fProcess.fOptions.fScalarField
         set  f $ff
 
 	foreach frame "Scale Skip" {
@@ -423,9 +429,9 @@ The TetraMesh module allows a user to read in a Tetrahedral Mesh.  The Mesh is c
            pack $f.lSphereSkip $f.eSphereSkip -side left -padx $Gui(pad)
 
 	#-------------------------------------------
-	# Surface->Options->VectorField
+	# Process->Options->VectorField
 	#-------------------------------------------
-        set ff $fSurface.fOptions.fVectorField
+        set ff $fProcess.fOptions.fVectorField
         set f $ff
 
 	foreach frame "Scale Skip" {
@@ -453,12 +459,11 @@ The TetraMesh module allows a user to read in a Tetrahedral Mesh.  The Mesh is c
            eval {entry $f.eArrowSkip -textvariable TetraMesh(ArrowSkip) -width 5} $Gui(WEA)
    
            pack $f.lArrowSkip $f.eArrowSkip -side left -padx $Gui(pad)
-      
 
         #-------------------------------------------
-        # Surface->Bottom frame
+        # Process->Bottom frame
         #-------------------------------------------
-        set f $fSurface.fBottom
+        set f $fProcess.fBottom
 
 #	eval {label $f.lSurface -text "You clicked 0 times."} $Gui(WLA)
 #        pack $f.lSurface -side top -padx $Gui(pad) -fill x
@@ -467,7 +472,7 @@ The TetraMesh module allows a user to read in a Tetrahedral Mesh.  The Mesh is c
         DevAddButton $f.bGo Process TetraMeshProcessTetraMesh
 
         # Tooltip example: Add a tooltip for the button
-        TooltipAdd $f.bGo "Press this button to start Processing the Mesh into its Surfaces"
+        TooltipAdd $f.bGo "Press this button to start Processing the Mesh"
 
         pack $f.bGo  -side top -padx $Gui(pad) -pady $Gui(pad)
 
@@ -583,18 +588,13 @@ proc TetraMeshExit {} {
 # 
 # This procedure is called to update the buttons
 # due to such things as volumes or models being added or subtracted.
-# (Note: to do this, this proc must be this module's procMRML.  Right now,
-# these buttons are being updated automatically since they have been added
-# to lists updated in VolumesUpdateMRML and ModelsUpdateMRML.  So this procedure
-# is not currently used.)
+#
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc TetraMeshUpdateGUI {} {
 	global TetraMesh Volume
 
-#   DevUpdateNodeSelectButton Volume TetraMesh AlignmentVolume AlignmentVolume DevSelectNode
-#"   DevUpdateNodeSelectButton Volume TetraMesh AlignmentVolume AlignmentVolume DevSelectNode
 }
 
 #-------------------------------------------------------------------------------
@@ -942,36 +942,18 @@ set HIGHSCALAR $highscalar
   ######################################################################
 
   ### Create the new Model
-  set m [ TetraMeshCreateModel $modelbasename $LOWSCALAR $HIGHSCALAR \
-          $v ]
+  set m [ TetraMeshCreateModel $modelbasename $LOWSCALAR $HIGHSCALAR ]
 
   #############################################################
-  #### Copy the output
+  #### Copy the output and set up the renderers
   #############################################################
 
   ### Need to copy the output of the pipeline so that the results
   ### Don't get over-written later. Also, when we delete the inputs,
   ### We don't want the outputs deleted. These lines should prevent this.
-  vtkPolyData TetraEdgePolyData$m
-  set Model($m,polyData) TetraEdgePolyData$m
-  $Model($m,polyData) CopyStructure [TransformPolyData GetOutput]
-  [ $Model($m,polyData) GetPointData] PassData [[TransformPolyData GetOutput] GetPointData]
-  [ $Model($m,polyData) GetCellData] PassData [[TransformPolyData GetOutput] GetCellData]
+  TetraMeshCopyPolyData [TransformPolyData GetOutput] $m
 
-  #############################################################
-  #### Set Up the Mapper
-  #############################################################
-
-  ### The next line would replace the last bunch if we didn't care about
-  ### deleting the inputs causing the results to be deleted.
-  #  set Model($m,polyData) [gf GetOutput]
-  #  $Model($m,polyData) Update
-  #  puts [ $Model($m,polyData) GetNumberOfPolys]
-   $Model($m,polyData) Update
-   foreach r $Module(Renderers) {
-       Model($m,mapper,$r) SetInput $Model($m,polyData)
-   }
-   puts [ $Model($m,polyData) GetNumberOfPolys]
+  puts [ $Model($m,polyData) GetNumberOfPolys]
    
   #############################################################
   #### Clean Up
@@ -1032,46 +1014,6 @@ set highscalar [ lindex $range 1 ]
 set LOWSCALAR $lowscalar
 set HIGHSCALAR $highscalar
 
-######################################################################
-#### I tried to scale the data first, it didn't work. I don't know why.
-#### I tested the output by piping to a file, that worked just fine.
-#### So, it seems the data is processed more before being displayed.
-#### I don't understand why that would be.
-######################################################################
-#vtkTransform TheTransform
-#
-#if {$TetraMesh(AlignmentVolume) != "" && \
-#        $TetraMesh(AlignmentVolume) != $Volume(idNone) } {
-#    
-# TheTransform Concatenate [Volume($TetraMesh(AlignmentVolume),node) GetPosition]
-#puts "yo"
-#} else {
-#    TheTransform Identity
-#}
-#
-#vtkMatrix4x4 testme
-#  testme Identity
-#  testme SetElement 0 0 20
-#  testme SetElement 1 1 20
-#  testme SetElement 2 2 20
-#
-## TheTransform Concatenate testme
-#
-#
-#vtkTransformFilter TransformMesh
-#  TransformMesh SetInput $CurrentTetraMesh
-#  TransformMesh SetTransform TheTransform
-#
-#set $CurrentTetraMesh [TransformMesh GetOutput]
-#$CurrentTetraMesh Update
-#
-#vtkUnstructuredGridWriter ugw
-#   ugw SetInput $CurrentTetraMesh
-#   ugw SetFileName "/tmp/tt.vtk"
-#   ugw SetFileTypeToASCII
-#   ugw Update
-#
-
 #######################################################################
 #### Setup the pipeline: Threshold the data, grab lines, Transform
 #######################################################################
@@ -1123,30 +1065,20 @@ while { [$CurrentTetraMesh GetNumberOfPoints] > 0 } {
   TransformPolyData Update
 
   ### Create the new Model
-  set m [ TetraMeshCreateModel $modelbasename$lowscalar $LOWSCALAR $HIGHSCALAR \
-          $v ]
+  set m [TetraMeshCreateModel $modelbasename$lowscalar $LOWSCALAR $HIGHSCALAR ]
 
   if { $first == $Model(idNone) }  { 
      set first $m
   }
 
+  #############################################################
+  #### Copy the output and set up the renderers
+  #############################################################
+
   ### Need to copy the output of the pipeline so that the results
   ### Don't get over-written later. Also, when we delete the inputs,
   ### We don't want the outputs deleted. These lines should prevent this.
-  vtkPolyData ModelPolyData$m
-  set Model($m,polyData) ModelPolyData$m
-  $Model($m,polyData) CopyStructure [TransformPolyData GetOutput]
-  [ $Model($m,polyData) GetPointData] PassData [[TransformPolyData GetOutput] GetPointData]
-  [ $Model($m,polyData) GetCellData] PassData [[TransformPolyData GetOutput] GetCellData]
-
-  ### The next line would replace the last bunch if we didn't care about
-  ### deleting the inputs causing the results to be deleted.
-  #  set Model($m,polyData) [gf GetOutput]
-  #  $Model($m,polyData) Update
-  #  puts [ $Model($m,polyData) GetNumberOfPolys]
-  foreach r $Module(Renderers) {
-      Model($m,mapper,$r) SetInput $Model($m,polyData)
-  }
+  TetraMeshCopyPolyData [TransformPolyData GetOutput] $m
 
   ### Get the remaining Data ###
   Thresh ThresholdBetween [ expr { $lowscalar + 0.01} ] $highscalar
@@ -1272,22 +1204,17 @@ vtkGlyph3D ScalarGlyph
   ScalarGlyph SetScaleFactor $TetraMeshArrowScale
 ScalarGlyph Update
 
-  #set m [ TetraMeshCreateModel ${modelbasename}Scalars $LOWSCALAR $HIGHSCALAR $v ]
-  set m [ TetraMeshCreateModel ${modelbasename}Scalars 0 10 $v ]
+  #set m [ TetraMeshCreateModel ${modelbasename}Scalars $LOWSCALAR $HIGHSCALAR ]
+  set m [ TetraMeshCreateModel ${modelbasename}Scalars 0 10 ]
+
+  #############################################################
+  #### Copy the output and set up the renderers
+  #############################################################
 
   ### Need to copy the output of the pipeline so that the results
   ### Don't get over-written later. Also, when we delete the inputs,
   ### We don't want the outputs deleted. These lines should prevent this.
-  set result [ScalarGlyph GetOutput]
-  vtkPolyData ModelPolyData$m
-  set Model($m,polyData) ModelPolyData$m
-  $Model($m,polyData) CopyStructure $result
-  [ $Model($m,polyData) GetPointData] PassData [$result GetPointData]
-  [ $Model($m,polyData) GetCellData] PassData  [$result GetCellData]
-
-foreach r $Module(Renderers) {
-    Model($m,mapper,$r) SetInput $Model($m,polyData)
-}
+  TetraMeshCopyPolyData [ScalarGlyph GetOutput] $m
 
 TheTransform Delete
 TransPoints Delete
@@ -1366,22 +1293,17 @@ vtkGlyph3D ScalarGlyph
   ScalarGlyph SetScaleFactor $TetraMeshArrowScale
 ScalarGlyph Update
 
-  #set m [ TetraMeshCreateModel ${modelbasename}Nodes $LOWSCALAR $HIGHSCALAR $v ]
-  set m [ TetraMeshCreateModel ${modelbasename}Nodes 0 10 $v ]
+  #set m [ TetraMeshCreateModel ${modelbasename}Nodes $LOWSCALAR $HIGHSCALAR ]
+  set m [ TetraMeshCreateModel ${modelbasename}Nodes 0 10 ]
+
+  #############################################################
+  #### Copy the output and set up the renderers
+  #############################################################
 
   ### Need to copy the output of the pipeline so that the results
   ### Don't get over-written later. Also, when we delete the inputs,
   ### We don't want the outputs deleted. These lines should prevent this.
-  set result [ScalarGlyph GetOutput]
-  vtkPolyData ModelPolyData$m
-  set Model($m,polyData) ModelPolyData$m
-  $Model($m,polyData) CopyStructure $result
-  [ $Model($m,polyData) GetPointData] PassData [$result GetPointData]
-  [ $Model($m,polyData) GetCellData] PassData  [$result GetCellData]
-
-foreach r $Module(Renderers) {
-    Model($m,mapper,$r) SetInput $Model($m,polyData)
-}
+  TetraMeshCopyPolyData [ScalarGlyph GetOutput] $m
 
 TheTransform Delete
 TransPoints Delete
@@ -1396,6 +1318,97 @@ Render3D
 
 set TetraMesh(modelbasename) ""
 }
+
+
+#-------------------------------------------------------------------------------
+# .PROC TetraMeshProcessCorrespond
+#
+# This Routine Reads in the TetraMesh and produces
+# a Model for the Scalar Field of the nodes in the mesh. 
+# It assumes the nodes have scalar labels
+#
+# Only one line difference between this and TetraMeshProcessScalar
+#
+# .END
+#-------------------------------------------------------------------------------
+proc TetraMeshProcessCorrespond {} {
+	global TetraMesh Model Volume Module
+
+######################################################################
+#### Get the data
+######################################################################
+
+    if {![TetraMeshGetData]} {
+      return;
+    }
+
+    set modelbasename "$TetraMesh(modelbasename)"
+
+    set CurrentTetraMesh [TetraReader GetOutput]
+    $CurrentTetraMesh Update
+
+    set TetraMeshFractionOn $TetraMesh(SphereSkip)
+    set TetraMeshArrowScale $TetraMesh(SphereScale)
+
+######################################################################
+#### Get the range of the data, not exactly thread safe. See vtkDataSet.h
+#### But, since we are not concurrently modifying the dataset, we should
+#### be OK.
+######################################################################
+
+#######################################################################
+#### Setup the pipeline: Cones -> PointMaskSelection -> Glyph data
+#######################################################################
+
+  TetraMeshGetTransform
+  set v $Volume(activeID)
+
+vtkMaskPoints PointSelection
+  PointSelection SetInput $CurrentTetraMesh
+  PointSelection SetOnRatio $TetraMeshFractionOn
+  PointSelection RandomModeOff
+vtkTransformFilter TransPoints
+  TransPoints SetTransform TheTransform
+  TransPoints SetInput [PointSelection GetOutput]
+vtkSphereSource TetraSphere
+  TetraSphere SetPhiResolution 5
+  TetraSphere SetThetaResolution 5
+  TetraSphere SetRadius 0.15
+vtkGlyph3D ScalarGlyph
+  ScalarGlyph SetInput [TransPoints GetOutput]
+  ScalarGlyph SetSource [TetraSphere GetOutput]
+  ScalarGlyph SetScaleModeToDataScalingOff
+#  ScalarGlyph SetScaleModeToScaleByScalar
+  ScalarGlyph SetScaleFactor $TetraMeshArrowScale
+ScalarGlyph Update
+
+  #set m [ TetraMeshCreateModel ${modelbasename}Correspond $LOWSCALAR $HIGHSCALAR ]
+  set m [ TetraMeshCreateModel ${modelbasename}Correspond 0 10 ]
+
+
+  #############################################################
+  #### Copy the output and set up the renderers
+  #############################################################
+
+  ### Need to copy the output of the pipeline so that the results
+  ### Don't get over-written later. Also, when we delete the inputs,
+  ### We don't want the outputs deleted. These lines should prevent this.
+  TetraMeshCopyPolyData [ScalarGlyph GetOutput] $m
+
+TheTransform Delete
+TransPoints Delete
+TetraReader Delete
+TetraSphere Delete
+PointSelection Delete
+ScalarGlyph Delete
+
+MainModelsUpdateMRML 
+MainUpdateMRML
+Render3D
+
+set TetraMesh(modelbasename) ""
+}
+
 
 
 #-------------------------------------------------------------------------------
@@ -1484,27 +1497,18 @@ vtkTransformPolyDataFilter TransformPolyData
 
 TransformPolyData Update
 
-set m [ TetraMeshCreateModel ${modelbasename}Vector 0 10 \
-          $v ]
+set m [ TetraMeshCreateModel ${modelbasename}Vector 0 10 ]
 
-#set m [ TetraMeshCreateModel ${modelbasename}Vector $LOWSCALAR $HIGHSCALAR \
-#          $v ]
+#set m [ TetraMeshCreateModel ${modelbasename}Vector $LOWSCALAR $HIGHSCALAR ]
+
+  #############################################################
+  #### Copy the output and set up the renderers
+  #############################################################
 
   ### Need to copy the output of the pipeline so that the results
   ### Don't get over-written later. Also, when we delete the inputs,
   ### We don't want the outputs deleted. These lines should prevent this.
-  vtkPolyData ModelPolyData$m
-  set Model($m,polyData) ModelPolyData$m
-  $Model($m,polyData) CopyStructure [TransformPolyData GetOutput]
-  [ $Model($m,polyData) GetPointData] PassData [[TransformPolyData GetOutput] GetPointData]
-  [ $Model($m,polyData) GetCellData] PassData [[TransformPolyData GetOutput] GetCellData]
-
-foreach r $Module(Renderers) {
-    Model($m,mapper,$r) SetInput $Model($m,polyData)
-}
-
-
-#TransformMesh Delete
+  TetraMeshCopyPolyData [ScalarGlyph GetOutput] $m
 
 TheTransform Delete
 TransformPolyData Delete
@@ -1651,31 +1655,21 @@ while { [$CurrentTetraMesh GetNumberOfPoints] > 0 } {
   TransformPolyData Update
 
   ### Create the new Model
-  set m [ TetraMeshCreateModel $modelbasename$lowscalar $LOWSCALAR $HIGHSCALAR \
-          $v ]
+  set m [ TetraMeshCreateModel $modelbasename$lowscalar $LOWSCALAR $HIGHSCALAR ]
 
   if { $first == $Model(idNone) }  { 
      set first $m
   }
 
+
+  #############################################################
+  #### Copy the output and set up the renderers
+  #############################################################
+
   ### Need to copy the output of the pipeline so that the results
   ### Don't get over-written later. Also, when we delete the inputs,
   ### We don't want the outputs deleted. These lines should prevent this.
-  vtkPolyData ModelPolyData$m
-  set Model($m,polyData) ModelPolyData$m
-  $Model($m,polyData) CopyStructure [TransformPolyData GetOutput]
-  [ $Model($m,polyData) GetPointData] PassData [[TransformPolyData GetOutput] GetPointData]
-  [ $Model($m,polyData) GetCellData] PassData [[TransformPolyData GetOutput] GetCellData]
-
-  ### The next line would replace the last bunch if we didn't care about
-  ### deleting the inputs causing the results to be deleted.
-  #  set Model($m,polyData) [gf GetOutput]
-  #  $Model($m,polyData) Update
-  #  puts [ $Model($m,polyData) GetNumberOfPolys]
-  foreach r $Module(Renderers) {
-      Model($m,mapper,$r) SetInput $Model($m,polyData)
-  }
-  
+  TetraMeshCopyPolyData [TransformPolyData GetOutput] $m
 
   ### Get the remaining Data ###
   Thresh ThresholdBetween [ expr { $lowscalar + 0.01} ] $highscalar
@@ -1744,6 +1738,145 @@ set TetraMesh(modelbasename) ""
 
 
 #-------------------------------------------------------------------------------
+# .PROC TetraMeshCorrespondSurfaces
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc TetraMeshCorrespondSurfaces {} {
+	global TetraMesh Model Volume Module
+
+######################################################################
+#### Get the data
+#### Check for problems in the input
+######################################################################
+
+    set m1   $TetraMesh(Model1)
+    set m2   $TetraMesh(Model2)
+    set PD1  $Model($m1,polyData)
+    set PD2  $Model($m2,polyData)
+
+    set NumNode1 [$PD1 GetNumberOfPoints]
+    set NumNode2 [$PD2 GetNumberOfPoints]
+
+    if {$NumNode1 != $NumNode2} {
+        puts "Must have same number of nodes in each surface mesh!"
+        exit 0;
+    }
+
+######################################################################
+#### Set scalars on the data
+#### This is a bug: I replace Scalars on models!!
+######################################################################
+
+
+######################################################################
+#################### Get the Points Set and put them together
+######################################################################
+
+vtkMaskPoints PointSelection
+  PointSelection SetInput $PD1
+  PointSelection SetOnRatio $TetraMesh(CorSphereSkip)
+  PointSelection RandomModeOff
+
+  set NumSelectNode [[PointSelection GetOutput] GetNumberOfPoints]
+
+  vtkScalars Scalars
+  for {set i 0} { $i < $NumSelectNode } {incr i 1} {
+       Scalars InsertScalar $i $i
+  }
+
+  PointSelection Update
+  [[PointSelection GetOutput] GetPointData] SetScalars Scalars
+
+vtkSphereSource ASphere
+  ASphere SetPhiResolution 5
+  ASphere SetThetaResolution 5
+  ASphere SetRadius [ expr 0.15 * $TetraMesh(CorSphereScale) ]
+vtkGlyph3D ScalarGlyph
+  ScalarGlyph SetInput  [PointSelection GetOutput]
+  ScalarGlyph SetSource [ASphere GetOutput]
+  ScalarGlyph SetScaleModeToDataScalingOff
+  ScalarGlyph SetColorModeToColorByScalar
+#  ScalarGlyph SetScaleModeToScaleByScalar
+#  ScalarGlyph SetScaleFactor 
+  ScalarGlyph Update
+
+  ########################################
+  ##### Form the Model
+  ########################################
+
+  set range [[PointSelection GetOutput] GetScalarRange]
+  set LOWSCALAR  [ lindex $range 0 ]
+  set HIGHSCALAR [ lindex $range 1 ]
+  set name [Model($m1,node) GetName]
+  set name "${name}-correspond-points"
+
+  ### Create the new Model
+  set m [ TetraMeshCreateModel $name $LOWSCALAR $HIGHSCALAR ]
+  TetraMeshCopyPolyData [ScalarGlyph GetOutput] $m
+
+  PointSelection SetInput $PD2
+  PointSelection Update
+  [[PointSelection GetOutput] GetPointData] SetScalars Scalars
+  ScalarGlyph Update
+
+  set name [Model($m2,node) GetName]
+  set name "${name}-correspond-points"
+
+  set m [ TetraMeshCreateModel $name $LOWSCALAR $HIGHSCALAR ]
+  TetraMeshCopyPolyData [ScalarGlyph GetOutput] $m
+
+  PointSelection Delete
+  ASphere Delete
+  ScalarGlyph Delete
+  Scalars Delete
+
+  MainModelsUpdateMRML 
+  MainUpdateMRML
+  Render3D
+}
+
+
+
+#-------------------------------------------------------------------------------
+# .PROC TetraMeshCopyPolyData
+#
+# Copies the polydata into a Node's polydata.
+# And then, assigns all the renderers to it.
+# 
+# .ARGS
+#
+# vtkPolyData PolyData
+# m  number of the model to copy data into 
+#
+# .END
+#-------------------------------------------------------------------------------
+proc TetraMeshCopyPolyData  {PolyData m} {
+    global Model Module 
+
+  ### Need to copy the output of the pipeline so that the results
+  ### Don't get over-written later. Also, when we delete the inputs,
+  ### We don't want the outputs deleted. These lines should prevent this.
+  vtkPolyData ModelPolyData$m
+  set Model($m,polyData) ModelPolyData$m
+  $Model($m,polyData) CopyStructure $PolyData
+  [ $Model($m,polyData) GetPointData] PassData [$PolyData GetPointData]
+  [ $Model($m,polyData) GetCellData]  PassData  [$PolyData GetCellData ]
+
+  ### The next line would replace the last bunch if we didn't care about
+  ### deleting the inputs causing the results to be deleted.
+  #  set Model($m,polyData) [$PolyData]
+  #  $Model($m,polyData) Update
+  #  puts [ $Model($m,polyData) GetNumberOfPolys]
+
+  ## Assign the renderers
+  foreach r $Module(Renderers) {
+      Model($m,mapper,$r) SetInput $Model($m,polyData)
+  }
+}
+
+#-------------------------------------------------------------------------------
 # .PROC TetraMeshCreateModel
 #
 # This file has almost everything you need to create a model.
@@ -1753,7 +1886,7 @@ set TetraMesh(modelbasename) ""
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc TetraMeshCreateModel  {name scalarLo scalarHi v} {
+proc TetraMeshCreateModel  {name scalarLo scalarHi} {
     global Model Volume Mrml Label
 
  set n [MainMrmlAddNode Model]
