@@ -158,7 +158,7 @@ proc LevelSetsInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.11 $} {$Date: 2003/07/08 19:08:01 $}]
+        {$Revision: 1.12 $} {$Date: 2003/07/08 20:29:50 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -1148,9 +1148,9 @@ proc LevelSetsUpdateResults {} {
   vtk_th ReplaceOutOn
   vtk_th SetInValue 0
   vtk_th SetOutValue 10
-  vtk_th SetOutputScalarTypeToUnsignedShort
+  vtk_th SetOutputScalarTypeToShort
   Volume($lm,vol)  SetImageData [vtk_th GetOutput]
-  Volume($lm,node) SetScalarTypeToUnsignedShort
+  Volume($lm,node) SetScalarTypeToShort
 
   # set interpolation OFF
   Volume($lm,node) InterpolateOff
