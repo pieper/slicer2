@@ -89,7 +89,7 @@ proc LocatorInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.29 $} {$Date: 2002/07/31 18:49:43 $}]
+        {$Revision: 1.30 $} {$Date: 2003/01/27 18:23:41 $}]
 
     # Patient/Table position
     set Locator(tblPosList)   "Front Side"
@@ -1008,8 +1008,8 @@ proc LocatorSetMatrices {} {
     #     where the locator's position is (x,y,z).
     # Then: M = T*R*C
 
-    vtkMatrix4x4 matrix
-    vtkTransform transform
+    vtkMatrix4x4 locator_matrix
+    vtkTransform locator_transform
 
     # Locator's offset: x0, y0, z0
     set x0 $Locator(px)
@@ -1031,70 +1031,70 @@ proc LocatorSetMatrices {} {
     set Uz(z) [expr $Ux(x)*$Uy(y) - $Uy(x)*$Ux(y)]
 
     # Ux
-    matrix SetElement 0 0 $Ux(x)
-    matrix SetElement 1 0 $Ux(y)
-    matrix SetElement 2 0 $Ux(z)
-    matrix SetElement 3 0 0
+    locator_matrix SetElement 0 0 $Ux(x)
+    locator_matrix SetElement 1 0 $Ux(y)
+    locator_matrix SetElement 2 0 $Ux(z)
+    locator_matrix SetElement 3 0 0
     # Uy
-    matrix SetElement 0 1 $Uy(x)
-    matrix SetElement 1 1 $Uy(y)
-    matrix SetElement 2 1 $Uy(z)
-    matrix SetElement 3 1 0
+    locator_matrix SetElement 0 1 $Uy(x)
+    locator_matrix SetElement 1 1 $Uy(y)
+    locator_matrix SetElement 2 1 $Uy(z)
+    locator_matrix SetElement 3 1 0
     # Uz
-    matrix SetElement 0 2 $Uz(x)
-    matrix SetElement 1 2 $Uz(y)
-    matrix SetElement 2 2 $Uz(z)
-    matrix SetElement 3 2 0
+    locator_matrix SetElement 0 2 $Uz(x)
+    locator_matrix SetElement 1 2 $Uz(y)
+    locator_matrix SetElement 2 2 $Uz(z)
+    locator_matrix SetElement 3 2 0
     # Bottom row
-    matrix SetElement 0 3 0
-    matrix SetElement 1 3 0
-    matrix SetElement 2 3 0
-    matrix SetElement 3 3 1
+    locator_matrix SetElement 0 3 0
+    locator_matrix SetElement 1 3 0
+    locator_matrix SetElement 2 3 0
+    locator_matrix SetElement 3 3 1
 
     # Set the vtkTransform to PostMultiply so a concatenated matrix, C,
     # is multiplied by the existing matrix, M: C*M (not M*C)
-    transform PostMultiply
+    locator_transform PostMultiply
     # M = T*R*C
 
     # TIP PART
 
-    transform Identity
+    locator_transform Identity
     # T:
-    transform Translate [expr $x0] [expr $y0] [expr $z0]
-    transform GetMatrix Locator(tipMatrix)
+    locator_transform Translate [expr $x0] [expr $y0] [expr $z0]
+    locator_transform GetMatrix Locator(tipMatrix)
     # VTK BUG (i shouldn't have to call modify for the matrix)?
     Locator(tipMatrix) Modified
     
     # NORMAL PART
 
-    transform Identity
+    locator_transform Identity
     # C:
-    transform Translate 0 [expr $Locator(normalLen) / 2.0] 0
+    locator_transform Translate 0 [expr $Locator(normalLen) / 2.0] 0
     # R:
-    transform Concatenate matrix
+    locator_transform Concatenate locator_matrix
     # T:
-    transform Translate [expr $x0] [expr $y0] [expr $z0]
-    transform GetMatrix Locator(normalMatrix)
+    locator_transform Translate [expr $x0] [expr $y0] [expr $z0]
+    locator_transform GetMatrix Locator(normalMatrix)
     Locator(normalMatrix) Modified
 
     # TRANSVERSE PART
 
-    transform Identity
+    locator_transform Identity
     # C: 
-    transform RotateZ 90
-    transform Translate \
+    locator_transform RotateZ 90
+    locator_transform Translate \
         [expr [expr $Locator(transverseLen) / 2.0] - $Locator(radius)] \
         [expr $Locator(normalLen)] \
          0 
     # R:
-    transform Concatenate matrix
+    locator_transform Concatenate locator_matrix
     # T:
-    transform Translate [expr $x0] [expr $y0] [expr $z0]
-    transform GetMatrix Locator(transverseMatrix)
+    locator_transform Translate [expr $x0] [expr $y0] [expr $z0]
+    locator_transform GetMatrix Locator(transverseMatrix)
     Locator(transverseMatrix) Modified
 
-    matrix Delete
-    transform Delete
+    locator_matrix Delete
+    locator_transform Delete
 }
 
 #-------------------------------------------------------------------------------
