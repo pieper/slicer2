@@ -105,7 +105,7 @@ proc KullbackLeiblerRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.5 $} {$Date: 2003/12/23 16:46:38 $}]
+        {$Revision: 1.6 $} {$Date: 2003/12/28 23:25:19 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -265,10 +265,14 @@ will not work. Also, arbitrary cascades of transforms are not allowed. All of th
     #-------------------------------------------
     set f $fnormal.fDesc
 
-    eval {label $f.l -text "\Press 'Start' to start the program that\n
-  performs automatic registration\nby Kullback Leibler.\n\Your manual
-  registration is used\n\ as an initial pose.\ "} $Gui(WLA)
+   if {[Slicer GetCompilerName] == "GCC" && \
+       [Slicer GetCompilerVersion] < 30000 } {
+     eval {label $f.l -text "KL WILL NOT WORK. IT NEEDS \n A NEWER COMPILER TO WORK"} $Gui(WLA)
+     pack $f.l -pady $Gui(pad)
+   } else {
+      eval {label $f.l -text "\Press 'Start' to perform automatic\n registration by Kullback Leibler.\n\Your manual registration is used\n\ as an initial pose.\ "} $Gui(WLA)
     pack $f.l -pady $Gui(pad)
+   }
 
     #-------------------------------------------
     # Level->Normal->Training frame
@@ -280,6 +284,11 @@ will not work. Also, arbitrary cascades of transforms are not allowed. All of th
         TrainMovVol "TrainingMoving"     Grid
     DevAddSelectButton KullbackLeiblerRegistration $f \
         TrainRefVol "TrainingReference:" Grid
+
+   if {[Slicer GetCompilerName] == "GCC" && \
+       [Slicer GetCompilerVersion] < 30000 } {
+   return 
+      }
 
     #-------------------------------------------
     # Level->Normal->Speed Frame
@@ -681,6 +690,16 @@ proc KullbackLeiblerRegistrationAutoRun {} {
 
     global Path env Gui Matrix Volume 
     global RigidIntensityRegistration KullbackLeiblerRegistration
+
+    if {$$KullbackLeiblerRegistration(TrainingMovVol) == $Volume(idNone)} {
+        DevWarningWindow "The Training Moving Volume is None! Please choose one."
+        return 0
+    }
+
+    if {$KullbackLeiblerRegistration(TrainingRefVol) == $Volume(idNone)} {
+        DevWarningWindow "The Training Reference Volume is None! Please choose one."        return 0
+    }
+
 
     # TODO make islicer a package
     source $env(SLICER_HOME)/Modules/iSlicer/tcl/isregistration.tcl
