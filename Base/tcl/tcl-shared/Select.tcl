@@ -1,4 +1,38 @@
 #=auto==========================================================================
+# (c) Copyright 2001 Massachusetts Institute of Technology
+#
+# Permission is hereby granted, without payment, to copy, modify, display 
+# and distribute this software and its documentation, if any, for any purpose, 
+# provided that the above copyright notice and the following three paragraphs 
+# appear on all copies of this software.  Use of this software constitutes 
+# acceptance of these terms and conditions.
+#
+# IN NO EVENT SHALL MIT BE LIABLE TO ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, 
+# INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE 
+# AND ITS DOCUMENTATION, EVEN IF MIT HAS BEEN ADVISED OF THE POSSIBILITY OF 
+# SUCH DAMAGE.
+#
+# MIT SPECIFICALLY DISCLAIMS ANY EXPRESS OR IMPLIED WARRANTIES INCLUDING, 
+# BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR 
+# A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
+#
+# THE SOFTWARE IS PROVIDED "AS IS."  MIT HAS NO OBLIGATION TO PROVIDE 
+# MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS. 
+#
+#===============================================================================
+# FILE:        Select.tcl
+# PROCEDURES:  
+#   SelectInit
+#   SelectBuildVTK
+#   SelectBuildGUI
+#   SelectRefreshVTK
+#   SelectPick
+#   SelectPickRenderer
+#   SelectPickable
+#   SelectPick2D
+#   SelectModelOn
+#==========================================================================auto=
+#=auto==========================================================================
 # Copyright (c) 2000 Surgical Planning Lab, Brigham and Women's Hospital
 #  
 # Direct all questions regarding this copyright to slicer@ai.mit.edu.
@@ -164,6 +198,12 @@ proc SelectPick { picker widget x y } {
 	}
 }
 
+#-------------------------------------------------------------------------------
+# .PROC SelectPickRenderer
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc SelectPickRenderer { widget x y } {
 	set rWin [$widget GetRenderWindow]
 	set winWidth [lindex [$rWin GetSize] 0]
@@ -185,10 +225,22 @@ proc SelectPickRenderer { widget x y } {
 	return $retRen
 	}
 
+#-------------------------------------------------------------------------------
+# .PROC SelectPickable
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc SelectPickable { group value } {
 	# group is one of: Anno, Models, Slices, Points
 }
 
+#-------------------------------------------------------------------------------
+# .PROC SelectPick2D
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc SelectPick2D { widget x y } {
 	global Select Interactor
 

@@ -53,6 +53,8 @@
 #   MainSlicesSavePopup
 #   MainSlicesWrite
 #   MainSlicesStorePresets
+#   MainSlicesOffsetToPoint
+#   MainSlicesAllOffsetToPoint
 #==========================================================================auto=
 
 
@@ -82,7 +84,7 @@ proc MainSlicesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainSlices \
-		{$Revision: 1.27 $} {$Date: 2001/04/02 20:20:28 $}]
+		{$Revision: 1.28 $} {$Date: 2001/04/05 23:03:53 $}]
 
 	# Initialize Variables
 	set Slice(idList) "0 1 2"
@@ -1218,6 +1220,12 @@ proc MainSlicesRecallPresets {p} {
 	MainSlicesSetFadeAll $Preset(Slices,$p,fade)
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MainSlicesOffsetToPoint
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc MainSlicesOffsetToPoint { s x y z } {
 	#
 	# NOTICE: THIS CODE SHOULD BE REMOVED THE INSTANT
@@ -1255,6 +1263,12 @@ proc MainSlicesOffsetToPoint { s x y z } {
 	MainSlicesSetOffset $s $offset
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MainSlicesAllOffsetToPoint
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc MainSlicesAllOffsetToPoint { x y z } {
 	global Slice
 

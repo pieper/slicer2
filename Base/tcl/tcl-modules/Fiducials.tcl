@@ -35,6 +35,8 @@
 #   FiducialsCreate
 #   FiducialsCreatePoint
 #   FiducialsUpdatePoints
+#   FiducialsPointIdFromGlyphCellId
+#   FiducialsWorldPointXYZ
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -124,7 +126,7 @@ proc FiducialsInit {} {
 	#   appropriate info when the module is checked in.
 	#   
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.8 $} {$Date: 2001/04/02 18:20:11 $}]
+		{$Revision: 1.9 $} {$Date: 2001/04/05 23:05:13 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -559,6 +561,12 @@ proc FiducialsUpdatePoints {} {
 	}
 }
 
+#-------------------------------------------------------------------------------
+# .PROC FiducialsPointIdFromGlyphCellId
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc FiducialsPointIdFromGlyphCellId { fid cid } {
 	global Fiducials Point
 
@@ -567,6 +575,12 @@ proc FiducialsPointIdFromGlyphCellId { fid cid } {
 	return [lindex $Fiducials($fid,pointIdList) $vtkId]
 	}
 
+#-------------------------------------------------------------------------------
+# .PROC FiducialsWorldPointXYZ
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc FiducialsWorldPointXYZ { fid pid } {
 	global Fiducials Point
 
