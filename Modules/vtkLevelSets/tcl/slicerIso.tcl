@@ -522,12 +522,8 @@ proc SModelMakerMarch {m v threshold decimateIterations smoothIterations} {
     # If there are no polygons, then the smoother gets mad, so stop.
     if {$ModelMaker(n,$p) == 0} {
         tk_messageBox -message "No polygons can be created."
-        thresh SetInput ""
-        to SetInput ""
         mcubes SetInput ""
         rot Delete
-        thresh Delete
-        to Delete
         mcubes Delete
         set ModelMaker(marching) 0
         eval [Volume($v,vol) GetOutput] SetSpacing $spacing
@@ -773,6 +769,82 @@ proc SModel_IJK_2_RAS { volID modelname newmodelname } {
 
 
 #----------------------------------------------------------------------
+proc SModelLine_IJK_2_RAS { volID modelname newmodelname } {
+#
+# Not tested yet ...
+#
+    global Model ModelMaker Label Module
+
+    set ModelMaker(name)     $newmodelname
+    if {[ValidateName $ModelMaker(name)] == 0} {
+        tk_messageBox -message "The name can consist of letters, digits, dashes, or underscores"
+        return
+    }
+    # Create the model's MRML node
+    set n [MainMrmlAddNode Model]
+    $n SetName  $ModelMaker(name)
+    $n SetColor $Label(name)
+
+    # Guess the prefix
+    set ModelMaker(prefix) $ModelMaker(name)
+
+    # Create the model
+    set m [$n GetID]
+    MainModelsCreate $m
+
+    # Registration
+    #
+    # Here needs ModelMaker(idVolume) !!!
+    #
+    set ModelMaker(idVolume) $volID
+    set v $ModelMaker(idVolume)
+
+    Model($m,node) SetRasToWld [Volume($v,node) GetRasToWld]
+
+    # Here process the conversion
+    # 1. get the transformation
+    # Read orientation matrix and permute the images if necessary.
+    vtkTransform rot
+    set matrixList [Volume($v,node) GetRasToVtkMatrix]
+    for {set row 0} { $row < 4 } {incr row} {
+        for {set col 0} {$col < 4} {incr col} {
+            [rot GetMatrix] SetElement $row $col \
+                [lindex $matrixList [expr $row*4+$col]]
+        }
+    }
+    [rot GetMatrix] Invert
+    
+    # 2. process Transformation
+    set p transformer
+    vtkTransformPolyDataFilter $p
+    $p SetInput [SGetSurface $modelname]
+    $p SetTransform rot
+    [$p GetOutput] ReleaseDataFlagOff
+
+    # polyData will survive as long as it's the input to the mapper
+    set Model($m,polyData) [$p GetOutput]
+    $Model($m,polyData) Update
+    foreach r $Module(Renderers) {
+        Model($m,mapper,$r) SetInput $Model($m,polyData)
+    }
+
+    transformer SetOutput ""
+    transformer SetInput ""
+    transformer Delete
+    rot Delete
+
+    MainUpdateMRML
+    MainModelsSetActive $m
+    $ModelMaker(bCreate) config -state normal
+    set name [Model($m,node) GetName]
+    tk_messageBox -message "The model '$newmodelname' has been created."
+
+} 
+# SModelLine_IJK_2_RAS
+
+
+
+#----------------------------------------------------------------------
 proc SModel_RAS_2_IJK { volID modelname newmodelname } {
 #
 # Not tested yet ...
@@ -956,6 +1028,125 @@ proc SModel_Scale { modelname newmodelname sx sy sz} {
 } 
 # SModel_Scale
 
+#----------------------------------------------------------------------
+proc SModelLine_Scale { modelname newmodelname sx sy sz} {
+#
+# Not tested yet ...
+#
+    global Model ModelMaker Label Module
+
+    set ModelMaker(name)     $newmodelname
+    if {[ValidateName $ModelMaker(name)] == 0} {
+        tk_messageBox -message "The name can consist of letters, digits, dashes, or underscores"
+        return
+    }
+    # Create the model's MRML node
+    set n [MainMrmlAddNode Model]
+    $n SetName  $ModelMaker(name)
+    $n SetColor $Label(name)
+
+    # Guess the prefix
+    set ModelMaker(prefix) $ModelMaker(name)
+
+    # Create the model
+    set m [$n GetID]
+    MainModelsCreate $m
+
+    # Here process the conversion
+    # 1. get the transformation
+    # Read orientation matrix and permute the images if necessary.
+    vtkTransform Tscale
+    Tscale Identity
+    Tscale Scale $sx $sy $sz
+    
+    # 2. process Transformation
+    set p transformer
+    vtkTransformPolyDataFilter $p
+    $p SetInput [SGetSurface $modelname]
+    $p SetTransform Tscale
+    [$p GetOutput] ReleaseDataFlagOff
+
+    # polyData will survive as long as it's the input to the mapper
+    set Model($m,polyData) [$p GetOutput]
+    $Model($m,polyData) Update
+    foreach r $Module(Renderers) {
+        Model($m,mapper,$r) SetInput $Model($m,polyData)
+    }
+
+    transformer SetOutput ""
+    transformer SetInput ""
+    transformer Delete
+    Tscale Delete
+
+    MainUpdateMRML
+    MainModelsSetActive $m
+    $ModelMaker(bCreate) config -state normal
+    set name [Model($m,node) GetName]
+    tk_messageBox -message "The model '$newmodelname' has been created."
+
+} 
+# SModelLine_Scale
+
+#----------------------------------------------------------------------
+proc SModelLine_FlipY { modelname newmodelname ty} {
+#
+# Not tested yet ...
+#
+    global Model ModelMaker Label Module
+
+    set ModelMaker(name)     $newmodelname
+    if {[ValidateName $ModelMaker(name)] == 0} {
+        tk_messageBox -message "The name can consist of letters, digits, dashes, or underscores"
+        return
+    }
+    # Create the model's MRML node
+    set n [MainMrmlAddNode Model]
+    $n SetName  $ModelMaker(name)
+    $n SetColor $Label(name)
+
+    # Guess the prefix
+    set ModelMaker(prefix) $ModelMaker(name)
+
+    # Create the model
+    set m [$n GetID]
+    MainModelsCreate $m
+
+    # Here process the conversion
+    # 1. get the transformation
+    # Read orientation matrix and permute the images if necessary.
+    vtkTransform Tflip
+    Tflip Identity
+    Tflip Scale     0 -1  0
+    Tflip Translate 0 [expr $ty -1] 0
+    
+    # 2. process Transformation
+    set p transformer
+    vtkTransformPolyDataFilter $p
+    $p SetInput [SGetSurface $modelname]
+    $p SetTransform Tflip
+    [$p GetOutput] ReleaseDataFlagOff
+
+    # polyData will survive as long as it's the input to the mapper
+    set Model($m,polyData) [$p GetOutput]
+    $Model($m,polyData) Update
+    foreach r $Module(Renderers) {
+        Model($m,mapper,$r) SetInput $Model($m,polyData)
+    }
+
+    transformer SetOutput ""
+    transformer SetInput ""
+    transformer Delete
+    Tflip Delete
+
+    MainUpdateMRML
+    MainModelsSetActive $m
+    $ModelMaker(bCreate) config -state normal
+    set name [Model($m,node) GetName]
+    tk_messageBox -message "The model '$newmodelname' has been created."
+
+} 
+# SModelLine_Scale
+
 
 #----------------------------------------------------------------------
 proc SModel_Translation { modelname newmodelname tx ty tz} {
@@ -1043,6 +1234,69 @@ proc SModel_Translation { modelname newmodelname tx ty tz} {
 
 
 #----------------------------------------------------------------------
+proc SModelLine_Translation { modelname newmodelname tx ty tz} {
+#
+# Not tested yet ...
+#
+    global Model ModelMaker Label Module
+
+    set ModelMaker(name)     $newmodelname
+    if {[ValidateName $ModelMaker(name)] == 0} {
+        tk_messageBox -message "The name can consist of letters, digits, dashes, or underscores"
+        return
+    }
+    # Create the model's MRML node
+    set n [MainMrmlAddNode Model]
+    $n SetName  $ModelMaker(name)
+    $n SetColor $Label(name)
+
+    # Guess the prefix
+    set ModelMaker(prefix) $ModelMaker(name)
+
+    # Create the model
+    set m [$n GetID]
+    MainModelsCreate $m
+
+    # Here process the conversion
+    # 1. get the transformation
+    # Read orientation matrix and permute the images if necessary.
+    vtkTransform Tscale
+    Tscale Identity
+    Tscale Translate $tx $ty $tz
+    
+    # 2. process Transformation
+    set p transformer
+    vtkTransformPolyDataFilter $p
+    $p SetInput [SGetSurface $modelname]
+    $p SetTransform Tscale
+    [$p GetOutput] ReleaseDataFlagOff
+
+
+    # polyData will survive as long as it's the input to the mapper
+    set Model($m,polyData) [$p GetOutput]
+    $Model($m,polyData) Update
+    foreach r $Module(Renderers) {
+        Model($m,mapper,$r) SetInput $Model($m,polyData)
+    }
+    $p SetOutput ""
+
+    foreach p "transformer" {
+         $p SetInput ""
+         $p Delete
+    }
+    Tscale Delete
+
+    MainUpdateMRML
+    MainModelsSetActive $m
+    $ModelMaker(bCreate) config -state normal
+    set name [Model($m,node) GetName]
+    tk_messageBox -message "The model '$newmodelname' has been created."
+
+} 
+# SModelLine_Translation
+
+
+#----------------------------------------------------------------------
 proc SModel_Reverse { modelname newmodelname } {
 #
 # Not tested yet ...
@@ -1074,17 +1328,17 @@ proc SModel_Reverse { modelname newmodelname } {
     $p ReverseNormalsOn
     [$p GetOutput] ReleaseDataFlagOn
 
-    # Normals
-    vtkPolyDataNormals normals
-    normals SetInput [$p GetOutput]
-    set p normals
-    $p SetFeatureAngle 60
-    [$p GetOutput] ReleaseDataFlagOn
+#    # Normals
+#    vtkPolyDataNormals normals
+#    normals SetInput [$p GetOutput]
+#    set p normals
+#    $p SetFeatureAngle 60
+#    [$p GetOutput] ReleaseDataFlagOn
 
     # Stripping
+    vtkStripper stripper
+    stripper SetInput [$p GetOutput]
     set p stripper
-    vtkStripper $p
-    $p SetInput [normals GetOutput]
     [$p GetOutput] ReleaseDataFlagOff
 
     # polyData will survive as long as it's the input to the mapper
@@ -1095,7 +1349,9 @@ proc SModel_Reverse { modelname newmodelname } {
     }
     stripper SetOutput ""
 
-    foreach p "reverser normals stripper" {
+#    normals SetInput ""
+#    normals Delete
+    foreach p "reverser  stripper" {
          $p SetInput ""
          $p Delete
     }
