@@ -152,7 +152,7 @@ proc MIRIADSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.29 $} {$Date: 2004/04/13 21:31:33 $}]
+        {$Revision: 1.30 $} {$Date: 2004/11/23 15:50:32 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -850,7 +850,7 @@ proc MIRIADSegmentSetEMParameters { } {
     # SUPERCLASS: HEAD
     EMSegmentChangeClass 0
     set ::EMSegment(NumClassesNew) 3
-    EMSegmentCreateDeleteClasses 1 1
+    EMSegmentCreateDeleteClasses 1 1 0
     EMSegmentClickLabel 0 1 0 ""
     # class Air 
     set ::EMSegment(Cattrib,1,Name) Air 
@@ -881,7 +881,7 @@ proc MIRIADSegmentSetEMParameters { } {
     EMSegmentTransfereClassType 1 1           ;# Transfer ClassType to Superclass
     # c.) Create subclasses 
     set ::EMSegment(NumClassesNew) 3      
-    EMSegmentCreateDeleteClasses 1 1          ;# 1. Parameter = ChangeGui; 
+    EMSegmentCreateDeleteClasses 1 1 0          ;# 1. Parameter = ChangeGui; 
                                               ;# 2. Parameter =  DeleteNode  
     # d.) Define CIM if necessary
     # foreach Name $EMSegment(CIMList) {
@@ -918,7 +918,7 @@ proc MIRIADSegmentSetEMParameters { } {
     set ::EMSegment(Cattrib,6,InputChannelWeights,1) $mp(NormalWhiteMatter,InputChannelWeight,T2)
     # c.) Create subclasses 
     set ::EMSegment(NumClassesNew) 2      
-    EMSegmentCreateDeleteClasses 1 1          ;# 1. Parameter = ChangeGui; 
+    EMSegmentCreateDeleteClasses 1 1   0        ;# 1. Parameter = ChangeGui; 
                                               ;# 2. Parameter =  DeleteNode  
     
     # WMNormal 
@@ -951,7 +951,7 @@ proc MIRIADSegmentSetEMParameters { } {
 
     # c.) Create subclasses 
     set ::EMSegment(NumClassesNew) 21
-    EMSegmentCreateDeleteClasses 1 1          ;# 1. Parameter = ChangeGui; 
+    EMSegmentCreateDeleteClasses 1 1  0         ;# 1. Parameter = ChangeGui; 
 
     set grayparcels {
         OtherGray 
