@@ -234,7 +234,7 @@ proc EMSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.8 $} {$Date: 2002/05/01 14:32:03 $}]
+        {$Revision: 1.9 $} {$Date: 2002/05/01 20:48:22 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -1732,52 +1732,6 @@ proc EMSegmentStartEM { } {
    }
    # Update MRML Tree
    EMSegmentSaveSetting 0
-
-   #----------------------------------------------------------------------------
-   # Transfering Specific information for each Module
-   #----------------------------------------------------------------------------
-   if {$EMSegment(SegmentMode) > 0} {
-       # EMLocalSegmentation: Multiple Input Images
-       vtkImageEMLocalSegmenter EMStart 
-       # How many input images do you have
-       EMStart SetNumInputImages $EMSegment(NumInputChannel) 
-       EMStart SetNumClasses $EMSegment(NumClasses)  
-       for {set i 1} { $i<= $EMSegment(NumClasses)} {incr i} {
-       EMStart SetTissueProbability $EMSegment(Cattrib,$i,Prob) $i
-       } 
-       EMStart SetNumberOfTrainingSamples $EMSegment(NumberOfTrainingSamples)
-       # Transefer probability map
-       set NumInputImagesSet 0
-       set i 0
-       while {$i< $EMSegment(NumClasses)} {
-       incr i
-       if {$EMSegment(Cattrib,$i,ProbabilityData) != $Volume(idNone)} {
-           EMStart SetUseLocalPrior 1 $i
-           EMStart SetInputIndex $NumInputImagesSet [Volume($EMSegment(Cattrib,$i,ProbabilityData),vol) GetOutput]
-           incr NumInputImagesSet
-       } else {
-          EMStart SetUseLocalPrior 0 $i 
-       }
-       }
-       # Transfer image information
-       foreach v $EMSegment(SelVolList,VolumeList) {       
-       EMStart SetInputIndex $NumInputImagesSet [Volume($v,vol) GetOutput]
-       incr NumInputImagesSet
-       }
-   } else {
-       # EM Specific Information - Simple EM Algorithm
-       vtkImageEMSegmenter EMStart    
-       EMStart SetNumClasses      $EMSegment(NumClasses)  
-
-       EMStart SetImgTestNo       $EMSegment(ImgTestNo)
-       EMStart SetImgTestDivision $EMSegment(ImgTestDivision)
-       EMStart SetImgTestPixel    $EMSegment(ImgTestPixel)
-       for {set i 1} { $i<= $EMSegment(NumClasses)} {incr i} {
-       EMStart SetProbability  $EMSegment(Cattrib,$i,Prob) $i
-       }
-       # Transfer image information
-       EMStart SetInput [Volume([lindex $EMSegment(SelVolList,VolumeList) 0],vol) GetOutput]
-   }
 
    # ----------------------------------------------
    # 3. Call Algorithm
