@@ -1,10 +1,11 @@
 <title>Matching Versions of VTK and Slicer</title>
 <p>
+Slicer 2.4.x uses the VTK code that has been tagged in their repository with Slicer-2-4. We're also using the ITK tagged version Slicer-2-4. You can examine the script <code>slicer2/Scripts/genlib.tcl</code> where we define the repository tags for all of the support libraries that we compile against.
+<p>
 In December 2003, we standardized our CVS repository of <code>slicer2</code> to
 <a href="http://www.vtk.org/files/release/4.2/">VTK 4.2.3</a>,
 because the CVS version of <a href="http://www.vtk.org/get-software.php#cvs">VTK</a>
-is currently changing rapidly in the time up to the release of VTK 5.0 in June 2004.
- We will resynchronize after February when VTK 4.8 stabilizes.
+is currently changing rapidly in the time up to the release of VTK 5.0. Intermediate Slicer development versions 2.3 have been compiled with VTK 4.2.3.
 
  <p>
 Slicer version 2.1 has been compiled with
@@ -33,9 +34,9 @@ Kitware no longer distributes as a package, but can be obtained through CVS via 
 <p>
 If you are working in the SPL at Brigham and Women's, there are a few compiled versions on the Solaris system to which you have access:
 <ul>
-<li><code>/local/bin/slicer2</code> is the release version of the Slicer code. We
-are currently supporting and developing against this version.
-<li><code>/projects/birn/slicer2/slicer2*</code> are previous release versions.
+<li><code>/spl/os/bin/slicer24</code> is the 2.4.1 release version of the Slicer code that includes the vtkAG module for internal use (it will appear in the next public release). We are currently supporting and developing against this version.
+<li><code>/local/bin/slicer2</code> is the 2.1 release version of the Slicer code. 
+<li><code>/projects/birn/slicer2/slicer2*</code> are previous and current release versions.
 <li><code>slicer-old</code> is ancient, and holds the original code by Dave Gering and Peter Everett. This has been
 superseded by <code>slicer2</code>, as their code has been incorporated into the latest release.
 <li><code>/local/bin/slicer-stable</code> is a stable version of <code>slicer1.*</code>. It runs with VTK 3.1.
