@@ -39,9 +39,9 @@ proc MainLutsInit {} {
     # Define Procedures
     lappend Module(procVTK) MainLutsBuildVTK
 
-        # Set version info
-        lappend Module(versions) [ParseCVSInfo MainLuts \
-        {$Revision: 1.15 $} {$Date: 2002/07/26 23:47:25 $}]
+    # Set version info
+    lappend Module(versions) [ParseCVSInfo MainLuts \
+    {$Revision: 1.16 $} {$Date: 2002/11/12 13:06:49 $}]
 
     # Create an ID for Labels
     set Lut(idLabel) -1
@@ -109,52 +109,54 @@ proc MainLutsBuildVTK {} {
 
     foreach l $Lut(idList) {
         if {$l >= 0} {
-        
-        # Hue, Saturation, Intensity
-        if {$Lut($l,fileName) == ""} {
-        
-            vtkLookupTable Lut($l,lut)
-            foreach param "NumberOfColors HueRange SaturationRange ValueRange" {
-                eval Lut($l,lut) Set${param} $Lut($l,[Uncap ${param}])
-            }
-            Lut($l,lut) Build
-        
-        # File
-        } else {
-            vtkLookupTable Lut($l,lut)
-
-            # Open palette file
-            set filename $Lut($l,fileName)
-            if {[CheckFileExists $filename] == 0} {
-                puts "Cannot open file '$filename'"
-                return
-            }
-            set fid [open $filename r]
-
-            # Read colors represented by 3 numbers (RGB) on a line
-            set numColors 0
-            gets $fid line
-            while {[eof $fid] == "0"} {
-                if {[llength $line] == 3} {
-                    set colors($numColors) $line
-                    incr numColors
+            # Hue, Saturation, Intensity
+            if {$Lut($l,fileName) == ""} {
+            
+                vtkLookupTable Lut($l,lut)
+                foreach param "NumberOfColors HueRange SaturationRange ValueRange" {
+                    eval Lut($l,lut) Set${param} $Lut($l,[Uncap ${param}])
                 }
-                gets $fid line
-            }
-            if {[catch {close $fid} errorMessage]} {
-                           tk_messageBox -type ok -message "The following error occurred saving a file: ${errorMessage}" 
-                           puts "Aborting due to : ${errorMessage}"
-                           exit 1
-                        }
+                # sp - 2002-11-11 changed default SCurve to Linear to improve
+                # fidelity of image display
+                Lut($l,lut) SetRampToLinear
+                Lut($l,lut) Build
+            
+            # File
+            } else {
+                vtkLookupTable Lut($l,lut)
 
-            # Set colors into the Lut
-            set Lut($l,numberOfColors) $numColors
-            Lut($l,lut) SetNumberOfTableValues $Lut($l,numberOfColors)
-            Lut($l,lut) SetNumberOfColors $Lut($l,numberOfColors)
-            for {set n 0} {$n < $numColors} {incr n} {
-                eval Lut($l,lut) SetTableValue $n $colors($n) 1
+                # Open palette file
+                set filename $Lut($l,fileName)
+                if {[CheckFileExists $filename] == 0} {
+                    puts "Cannot open file '$filename'"
+                    return
+                }
+                set fid [open $filename r]
+
+                # Read colors represented by 3 numbers (RGB) on a line
+                set numColors 0
+                gets $fid line
+                while {[eof $fid] == "0"} {
+                    if {[llength $line] == 3} {
+                        set colors($numColors) $line
+                        incr numColors
+                    }
+                    gets $fid line
+                }
+                if {[catch {close $fid} errorMessage]} {
+                    tk_messageBox -type ok -message "The following error occurred saving a file: ${errorMessage}" 
+                    puts "Aborting due to : ${errorMessage}"
+                    exit 1
+                }
+
+                # Set colors into the Lut
+                set Lut($l,numberOfColors) $numColors
+                Lut($l,lut) SetNumberOfTableValues $Lut($l,numberOfColors)
+                Lut($l,lut) SetNumberOfColors $Lut($l,numberOfColors)
+                for {set n 0} {$n < $numColors} {incr n} {
+                    eval Lut($l,lut) SetTableValue $n $colors($n) 1
+                }
             }
-        }
         }
     }
 
