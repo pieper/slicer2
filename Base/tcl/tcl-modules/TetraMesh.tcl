@@ -139,7 +139,7 @@ proc TetraMeshInit {} {
 	#   appropriate revision number and date when the module is checked in.
 	#   
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.1 $} {$Date: 2000/07/27 22:58:12 $}]
+		{$Revision: 1.2 $} {$Date: 2000/08/01 21:39:03 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -333,6 +333,11 @@ proc TetraMeshProcess {} {
     set fileName "$TetraMesh(prefix)"
     set modelbasename "$TetraMesh(modelbasename)"
 
+######################################################################
+#### Check for problems in the input
+######################################################################
+
+
     if {$fileName == ""} { 
         DevWarningWindow "You need to select a Tetrahedral Mesh!"
         return 
@@ -359,7 +364,6 @@ vtkUnstructuredGridReader tetra_reader
 
 set CurrentTetraMesh [tetra_reader GetOutput]
 $CurrentTetraMesh Update
-
 
 ######################################################################
 #### Get the range of the data, not exactly thread safe. See vtkDataSet.h
@@ -397,7 +401,6 @@ vtkThreshold Thresh
 vtkGeometryFilter gf
   gf SetInput [Thresh GetOutput]
 
-
 ######################################################################
 #### For each Scalar Determine if there is any points in there
 #### If so, create an output model
@@ -406,16 +409,30 @@ vtkGeometryFilter gf
 set i 0
 
 while { [$CurrentTetraMesh GetNumberOfPoints] > 0 } {
+  puts "starting new"
   ### Get the lowest Scalar Data
   Thresh ThresholdBetween $lowscalar $lowscalar
+  ### Finish the pipeline
+  gf Update
 
   ### Create the new Model
   set m [ TetraMeshCreateModel $modelbasename$i $LOWSCALAR $HIGHSCALAR]
-  set Model($m,polyData) [gf GetOutput]
-   puts [ $Model($m,polyData) GetNumberOfPolys]
-  $Model($m,polyData) Update
-  Model($m,mapper) SetInput $Model($m,polyData)
 
+  ### Need to copy the output of the pipeline so that the results
+  ### Don't get over-written later. Also, when we delete the inputs,
+  ### We don't want the outputs deleted. These lines should prevent this.
+  vtkPolyData ModelPolyData$m
+  set Model($m,polyData) ModelPolyData$m
+  $Model($m,polyData) CopyStructure [gf GetOutput]
+  [ $Model($m,polyData) GetPointData] PassData [[gf GetOutput] GetPointData]
+  [ $Model($m,polyData) GetCellData] PassData [[gf GetOutput] GetCellData]
+
+  ### The next line would replace the last bunch if we didn't care about
+  ### deleting the inputs causing the results to be deleted.
+  #  set Model($m,polyData) [gf GetOutput]
+  #  $Model($m,polyData) Update
+#  puts [ $Model($m,polyData) GetNumberOfPolys]
+  Model($m,mapper) SetInput $Model($m,polyData)
   ### Get the remaining Data ###
   Thresh ThresholdBetween [ expr { $lowscalar + 0.01} ] $highscalar
   set CurrentTetraMesh [Thresh GetOutput]
@@ -424,7 +441,10 @@ while { [$CurrentTetraMesh GetNumberOfPoints] > 0 } {
   set lowscalar [ lindex $range 0 ]
   set highscalar [ lindex $range 1 ]
   incr i
+#  puts [ $Model($m,polyData) GetNumberOfPolys]
 }
+
+#   puts [ $Model($m,polyData) GetNumberOfPolys]
 
 Thresh Delete
 gf Delete
@@ -433,6 +453,8 @@ tetra_reader Delete
 MainModelsUpdateMRML 
 MainUpdateMRML
 Render3D
+
+#   puts [ $Model($m,polyData) GetNumberOfPolys]
 }   
 
 #-------------------------------------------------------------------------------
