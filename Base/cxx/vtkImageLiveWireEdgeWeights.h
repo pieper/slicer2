@@ -24,7 +24,18 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 // .NAME vtkImageLiveWireEdgeWeights -  Computes edge weights for input
 // to vtkImageLiveWire.
 // .SECTION Description
-// 
+//  
+// This filter takes a grayscale image as input and outputs
+// edge costs in one direction (up, down, etc.).  These edge cost
+// images form the weighted graph for input to vtkImageLiveWire, which 
+// finds shortest paths in the graph (to aid image segmentation).
+//
+// The filter can also train based on an input labeled image.
+//
+// This version of the filter aligns the weighted graph with the
+// "cracks" between pixels; another version that does not
+// do this is under construction.
+//
 
 #ifndef __vtkImageLiveWireEdgeWeights_h
 #define __vtkImageLiveWireEdgeWeights_h
@@ -61,6 +72,7 @@ class VTK_EXPORT vtkImageLiveWireEdgeWeights : public vtkImageMultipleInputFilte
 public:
   static vtkImageLiveWireEdgeWeights *New();
   vtkTypeMacro(vtkImageLiveWireEdgeWeights,vtkImageMultipleInputFilter);
+  void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:
   // grayscale ImageData for creating edge weight map

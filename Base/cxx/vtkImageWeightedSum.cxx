@@ -48,10 +48,9 @@ vtkImageWeightedSum::vtkImageWeightedSum()
   this->NumberOfRequiredInputs = 1;
   this->NumberOfInputs = 0;
 
-  // array of weights: need as many as inputs
-  // Lauren should default to 1/NumberOfInputs if not set!
+  // array of weights: need as many weights as inputs
   this->Weights = vtkFloatArray::New();
-  // 1st component is set by user, second is normalized
+  // 1st component is weight set by user, second is normalized weight
   this->Weights->SetNumberOfComponents(2);
 }
 
@@ -65,8 +64,8 @@ vtkImageWeightedSum::~vtkImageWeightedSum()
     }
 }
 
-# define COMPONENT_WEIGHT 0
-# define COMPONENT_NORM_WEIGHT 1
+#define COMPONENT_WEIGHT 0
+#define COMPONENT_NORM_WEIGHT 1
 
 void vtkImageWeightedSum::NormalizeWeights()
 {
@@ -124,6 +123,8 @@ void vtkImageWeightedSum::CheckWeights() {
     
     this->NormalizeWeights();
   }
+  // else if number of weights is equal to number of inputs we 
+  // have already normalized the weights.
 }
 
 
@@ -272,9 +273,8 @@ void vtkImageWeightedSum::ThreadedExecute(vtkImageData **inDatas,
   delete [] inPtrs;
 }
 
-// This should check all inputs are same type and size
 //----------------------------------------------------------------------------
-// Make sure both the inputs are the same size. Doesn't really change 
+// Make sure all the inputs are the same size. Doesn't really change 
 // the output. Just performs a sanity check
 void vtkImageWeightedSum::ExecuteInformation(vtkImageData **inputs,
 						     vtkImageData *output)
@@ -287,25 +287,40 @@ void vtkImageWeightedSum::ExecuteInformation(vtkImageData **inputs,
       vtkErrorMacro(<< "ExecuteInformation: Expected " << this->NumberOfRequiredInputs << " inputs, got only " << this->NumberOfInputs);
       return;      
     }
-  
+
+  // Check that all extents are the same.
   in1Ext = inputs[0]->GetWholeExtent();
-
-  if (this->NumberOfInputs > 1)
+  for (int i = 1; i < this->NumberOfInputs; i++) 
     {
-      in2Ext = inputs[1]->GetWholeExtent();
-    }
-  else
-    return;
-
-  if (in1Ext[0] != in2Ext[0] || in1Ext[1] != in2Ext[1] || 
-      in1Ext[2] != in2Ext[2] || in1Ext[3] != in2Ext[3] || 
-      in1Ext[4] != in2Ext[4] || in1Ext[5] != in2Ext[5])
-    {
-      vtkErrorMacro("ExecuteInformation: Inputs are not the same size.");
-      return;
+      in2Ext = inputs[i]->GetWholeExtent();
+      
+      if (in1Ext[0] != in2Ext[0] || in1Ext[1] != in2Ext[1] || 
+	  in1Ext[2] != in2Ext[2] || in1Ext[3] != in2Ext[3] || 
+	  in1Ext[4] != in2Ext[4] || in1Ext[5] != in2Ext[5])
+	{
+	  vtkErrorMacro("ExecuteInformation: Inputs 0 and " << i <<
+			" are not the same size. " 
+			<< in1Ext[0] << " " << in1Ext[1] << " " 
+			<< in1Ext[2] << " " << in1Ext[3] << " vs: "
+			<< in2Ext[0] << " " << in2Ext[1] << " " 
+			<< in2Ext[2] << " " << in2Ext[3] );
+	  return;
+	}
     }
 
   // we like floats
   output->SetNumberOfScalarComponents(1);
   output->SetScalarType(VTK_FLOAT);
+}
+
+void vtkImageWeightedSum::PrintSelf(ostream& os, vtkIndent indent)
+{
+  vtkImageMultipleInputFilter::PrintSelf(os,indent);
+
+  // objects
+  os << indent << "Weights: " << this->Weights << "\n";
+  if (this->Weights)
+  {
+    this->Weights->PrintSelf(os,indent.GetNextIndent());
+  }
 }

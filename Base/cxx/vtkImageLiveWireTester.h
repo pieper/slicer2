@@ -21,9 +21,12 @@ THE SOFTWARE IS PROVIDED "AS IS."  MIT HAS NO OBLIGATION TO PROVIDE
 MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 =========================================================================auto=*/
-// .NAME vtkImageLiveWireTester - Identify and process islands of similar pixels
+// .NAME vtkImageLiveWireTester - Wrapper around vtkImageLiveWire
 // .SECTION Description
-//  The input data type must be shorts.
+//  This poorly named class handles the multiple edge inputs to 
+// vtkImageLiveWire.  It replaces a bit of tcl code and may be
+// replaced itself in future...
+//
 
 #ifndef __vtkImageLiveWireTester_h
 #define __vtkImageLiveWireTester_h

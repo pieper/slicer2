@@ -148,55 +148,6 @@ void vtkImageNeighborhoodFilter::SetNeighborTo8()
   this->Modified();
 }
 
-// Lauren change Neighborhood variable?
-//----------------------------------------------------------------------------
-void vtkImageNeighborhoodFilter::SetNeighborhoodToLine(int length, 
-						       int direction)
-{
-  int x, y, z;
-
-  //this->SetKernelSize(length, 1, 1);
-  // Lauren can incorporate information from 
-  // previous, next slice also using larger kernel..
-  // also could make 'distance map' 
-  // so edge filter should be multiple input!! ??
-  this->SetKernelSize(3, 3, 1);
-  // Lauren test!
-  //this->SetKernelSize(3, 3, 3);
-
-  // Lauren ?
-  this->Neighbor = 1;
-
-  // set
-  memset(this->Mask, 0, this->KernelSize[0]*this->KernelSize[1]*
-	 this->KernelSize[2]*sizeof(unsigned char));
-  // unset middle
-  //this->Mask[1] = 0;
-
-  // set the neighbor on the line
-  // directions: 0 1 2 3 == locations top bottom right left 
-  // == dirs right left down up
-
-  // Lauren fix this!
-  // 0 1 2
-  // 3 4 5
-  // 6 7 8
-
-  switch (direction)
-    {
-    case 0: {this->Mask[5] = 1;} // right
-    case 1: {this->Mask[3] = 1;} // left
-    case 2: {this->Mask[7] = 1;} // down
-    case 3: {this->Mask[1] = 1;} // up
-    }
-
-
-  //cout << "MASK: " << this->KernelSize[0]*this->KernelSize[1]*this->KernelSize[2]*sizeof(unsigned char) <<
-  //    " " << sizeof(unsigned char) << " " << this->Mask[0] << " " << this->Mask[1] << endl;
-  this->Modified();
-}
-
-
 //----------------------------------------------------------------------------
 // Description:
 // increments to loop through mask.

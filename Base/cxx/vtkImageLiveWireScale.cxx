@@ -120,9 +120,11 @@ float vtkImageLiveWireScale::TransformationFunction(float intensity, float max,
 	intensity = this->LowerCutoff;
     }
 
+  // try to spread the data out in the output range
   float range = max-min;
   float x = intensity - min;
   float x_frac = x/range;
+
   switch (this->TransformationFunctionNumber)
     {
     case INVERSE_LINEAR_RAMP:
@@ -131,11 +133,7 @@ float vtkImageLiveWireScale::TransformationFunction(float intensity, float max,
       break;
     case ONE_OVER_X:
       // scale * (1/1+x), where x = intensity/max
-      // Lauren could do this a bit better (min now is scale/2)
-      //return (this->ScaleFactor*max/(max + intensity));
-
-      //return (this->ScaleFactor*range/(range + intensity - min));
-
+      // note: This should be done a bit better (min now is scale/2)
       // do 1/(1+x^2)
       //return (this->ScaleFactor*range/(range + x));
       return (this->ScaleFactor/(1 + x_frac*x_frac));
@@ -216,7 +214,7 @@ static void vtkImageLiveWireScaleBuildLookupTable(vtkImageLiveWireScale *self,
       LookupTable->SetValue(i,0);
     }
 
-  // Lauren may only want to use some of the points later.
+  // note: may only want to use some of the points later.
   for (i = 0; i < numberOfPoints; i++) 
     {
       // for each point, grab its intensity value and 
@@ -347,7 +345,7 @@ static void vtkImageLiveWireScaleBuildGaussianModel(vtkImageLiveWireScale *self,
     return;
   }
 
-  // Lauren may only want to use some of the points later.
+  // note: may only want to use some of the points later.
   float sum = 0;
   float var = 0;
   for (int i = 0; i < numberOfPoints; i++) 
@@ -413,11 +411,11 @@ static void vtkImageLiveWireScaleExecute(vtkImageLiveWireScale *self,
   target = (unsigned long)((outMax2-outMin2+1)*(outMax1-outMin1+1)/50.0);
   target++;
 
-  // Lauren this code assumes that the image is all >= 0 already. (!!!!!!)
+  // note: this code assumes that the image is all >= 0 already. (!!!!!!)
   T max = *inPtr;
   T min = *inPtr;
 
-  // Two loops: first computes max, then the second divides by it.
+  // Two loops: first computes max and min, then the second scales each pixel.
   // loop through pixels of input
   inPtr2 = inPtr;
   for (outIdx2 = outMin2; outIdx2 <= outMax2; outIdx2++)
@@ -649,10 +647,12 @@ static void vtkImageLiveWireScaleExecute(vtkImageLiveWireScale *self,
 	    {
 	      
 	      if (*outPtr0 > scaleFactor) 
-		cout << "ERROR in vtkImageLiveWireScale: pix > scale factor "
-		     << " pix: " << *outPtr0
-		     << " s.f: " << scaleFactor
-		     << endl;
+		{
+		  cout << "ERROR in vtkImageLiveWireScale: pix > scale factor "
+		       << " pix: " << *outPtr0
+		       << " s.f: " << scaleFactor
+		       << endl;
+		}
 	      
 	      inPtr0 += inInc0;
 	      outPtr0 += outInc0;
@@ -669,7 +669,7 @@ static void vtkImageLiveWireScaleExecute(vtkImageLiveWireScale *self,
 
   tEnd = clock();
   tDiff = tEnd - tStart;
-  //cout << "div by max time: " << tDiff << endl;
+  //cout << "LW scale time: " << tDiff << endl;
 }
 
 	
@@ -752,5 +752,21 @@ void vtkImageLiveWireScale::PrintSelf(ostream& os, vtkIndent indent)
 {
   vtkImageToImageFilter::PrintSelf(os,indent);
 
+  // numbers
+  os << indent << "ScaleFactor: "<< this->ScaleFactor << "\n";
+  os << indent << "UpperCutoff: "<< this->UpperCutoff << "\n";
+  os << indent << "LowerCutoff: "<< this->LowerCutoff << "\n";
+  os << indent << "UseUpperCutoff: "<< this->UseUpperCutoff << "\n";
+  os << indent << "UseLowerCutoff: "<< this->UseLowerCutoff << "\n";
+  os << indent << "UseLookupTable: "<< this->UseLookupTable << "\n";
+  os << indent << "UseGaussianLookup: "<< this->UseGaussianLookup << "\n";
+  os << indent << "MeanForGaussianModel: "<< this->MeanForGaussianModel << "\n";
+  os << indent << "VarianceForGaussianModel: "<< this->VarianceForGaussianModel << "\n";
+  os << indent << "UseTransformationFunction: "<< this->UseTransformationFunction << "\n";
+  os << indent << "TransformationFunctionNumber: "<< this->TransformationFunctionNumber << "\n";
+  os << indent << "TotalPointsInLookupTable: "<< this->TotalPointsInLookupTable << "\n";
+  os << indent << "MaxPointsInLookupTableBin: "<< this->MaxPointsInLookupTableBin << "\n";
+  os << indent << "MinimumBin: "<< this->MinimumBin << "\n";
+  os << indent << "MaximumBin: "<< this->MaximumBin << "\n";
 }
 

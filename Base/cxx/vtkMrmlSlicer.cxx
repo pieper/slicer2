@@ -751,9 +751,8 @@ void vtkMrmlSlicer::BuildUpper(int s)
 	// Mapper
 	if (this->FilterOverlay)
 	  {
-	    // Lauren: what is the fastest way to do this?
-	    // don't display the filter in the fore layer.  Its output
-	    // will go directly into the label layer.
+	    // If filter is being overlayed in label layer,
+	    // don't display the filter's output in the fore layer.
 	    this->ForeMapper[s]->SetInput(this->ForeReformat[s]->GetOutput());
 	  }
 	else

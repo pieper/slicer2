@@ -25,8 +25,9 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 // a mask to allow neighborhoods of any shape.
 // .SECTION Description
 // 4 or 8 neighbor connectivity, or subclasses may define their own neighborhood
-// shapes.
-
+// shapes. The mask is basically a binary (0/1) filter kernel to define
+// neighbors of interest.
+//
 #ifndef __vtkImageNeighborhoodFilter_h
 #define __vtkImageNeighborhoodFilter_h
 
@@ -65,10 +66,6 @@ public:
   // Description: 
   // Get the increments to use when looping through the mask.
   void GetMaskIncrements(int &maskInc0, int &maskInc1, int &maskInc2);
-
-  // Description:
-  // Lauren test
-  void SetNeighborhoodToLine(int length, int direction);
 
 protected:
   vtkImageNeighborhoodFilter();

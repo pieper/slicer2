@@ -23,57 +23,8 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 =========================================================================auto=*/
 #include "vtkImageLiveWireEdgeWeights.h"
 #include "vtkObjectFactory.h"
-#include "vtkPolyData.h"
 #include <math.h>
 #include <time.h>
-
-featureProperties::featureProperties()
-{
-  //this->Transform = &featureProperties::GaussianCost;
-  this->Transform = NULL;
-  this->NumberOfParams = 2;
-  this->TransformParams = new float[this->NumberOfParams];
-  this->TransformParams[0] = 0;
-  this->TransformParams[1] = 1;
-  this->Weight = 1;
-}
-
-featureProperties::~featureProperties()
-{
-  if (this->TransformParams != NULL) 
-    {
-      delete [] this->TransformParams;
-    }
-}
-
-float featureProperties::GaussianCost(float x)
-{
-  float mean = this->TransformParams[0];
-  float var = this->TransformParams[1];
-  return(exp(-((x-mean)*(x-mean))/(2*var))/sqrt(6.28318*var));  
-}
-
-// inverse "Gaussian": low cost for good edges
-inline float GaussianC(float x, float mean, float var)
-{
-  // This is the time bottleneck of this filter.
-  // So only bother to compute the gaussian if this is a 
-  // "good feature" (with a value close to the mean).
-  // Else return the max value of 1.
-  //    float tmp = x-mean;
-  //    if (tmp < var)
-  //      return(1 - exp(-(tmp*tmp)/(2*var))/sqrt(6.28318*var));  
-  //    else
-  //      return 1;
-
-  // we need between 0 and 1 always, so:
-  // forget about the scale factor.  the feature weight does this.
-  // so just do the e^-((x-u)^2/2*sigma^2)
-
-  float tmp = x-mean;
-  return(1 - exp( -(tmp*tmp)/(2*var) ));  
-
-}
 
 //------------------------------------------------------------------------------
 vtkImageLiveWireEdgeWeights* vtkImageLiveWireEdgeWeights::New()
@@ -107,7 +58,6 @@ vtkImageLiveWireEdgeWeights::vtkImageLiveWireEdgeWeights()
 
   this->FeatureSettings = new featureProperties[this->NumberOfFeatures];
 
-  // Lauren try 3D kernel someday (need 3D input)
   this->Neighborhood = 3; // 3x3 neighborhood
 
   this->TrainingMode = 0;
@@ -116,6 +66,13 @@ vtkImageLiveWireEdgeWeights::vtkImageLiveWireEdgeWeights()
   this->RunningNumberOfTrainingPoints = 0;
   this->TrainingAverages = new float[this->NumberOfFeatures];
   this->TrainingVariances = new float[this->NumberOfFeatures];
+
+  for (int i=0; i < this->NumberOfFeatures; i++)
+    {
+      this->TrainingAverages[i] = 0;
+      // don't allow 0 variance to be calculated (will break Gaussian).
+      this->TrainingVariances[i] = 0.01;
+    }
 }
 
 
@@ -915,7 +872,6 @@ void vtkImageLiveWireEdgeWeights::ThreadedExecute(vtkImageData **inDatas,
 
 }
 
-// Lauren check inputs are same type and size
 //----------------------------------------------------------------------------
 // Make sure both the inputs are the same size. Doesn't really change 
 // the output. Just performs a sanity check
@@ -931,21 +887,115 @@ void vtkImageLiveWireEdgeWeights::ExecuteInformation(vtkImageData **inputs,
       return;      
     }
   
-  // Lauren fix this to check all extents are the same size.
+
+  // Check that all extents are the same.
   in1Ext = inputs[0]->GetWholeExtent();
-
-  if (this->NumberOfInputs > 1)
+  for (int i = 1; i < this->NumberOfInputs; i++) 
     {
-      in2Ext = inputs[1]->GetWholeExtent();
-    }
-  else
-    return;
-
-  if (in1Ext[0] != in2Ext[0] || in1Ext[1] != in2Ext[1] || 
-      in1Ext[2] != in2Ext[2] || in1Ext[3] != in2Ext[3] || 
-      in1Ext[4] != in2Ext[4] || in1Ext[5] != in2Ext[5])
-    {
-      vtkErrorMacro("ExecuteInformation: Inputs are not the same size.");
-      return;
+      in2Ext = inputs[i]->GetWholeExtent();
+      
+      if (in1Ext[0] != in2Ext[0] || in1Ext[1] != in2Ext[1] || 
+	  in1Ext[2] != in2Ext[2] || in1Ext[3] != in2Ext[3] || 
+	  in1Ext[4] != in2Ext[4] || in1Ext[5] != in2Ext[5])
+	{
+	  vtkErrorMacro("ExecuteInformation: Inputs 0 and " << i <<
+			" are not the same size. " 
+			<< in1Ext[0] << " " << in1Ext[1] << " " 
+			<< in1Ext[2] << " " << in1Ext[3] << " vs: "
+			<< in2Ext[0] << " " << in2Ext[1] << " " 
+			<< in2Ext[2] << " " << in2Ext[3] );
+	  return;
+	}
     }
 }
+
+//----------------------------------------------------------------------------
+void vtkImageLiveWireEdgeWeights::PrintSelf(ostream& os, vtkIndent indent)
+{
+  vtkImageMultipleInputFilter::PrintSelf(os,indent);
+
+  // numbers
+  os << indent << "MaxEdgeWeight: "<< this->MaxEdgeWeight << "\n";
+  os << indent << "EdgeDirection: "<< this->EdgeDirection << "\n";
+  os << indent << "NumberOfFeatures: "<< this->NumberOfFeatures << "\n";
+  os << indent << "Neighborhood: "<< this->Neighborhood << "\n";
+  os << indent << "TrainingMode: "<< this->TrainingMode << "\n";
+  os << indent << "TrainingComputeRunningTotals: "<< this->TrainingComputeRunningTotals << "\n";
+  os << indent << "RunningNumberOfTrainingPoints: "<< this->RunningNumberOfTrainingPoints << "\n";
+  os << indent << "NumberOfTrainingPoints: "<< this->NumberOfTrainingPoints << "\n";
+
+  // strings
+  os << indent << "FileName: "<< this->FileName << "\n";
+  os << indent << "TrainingFileName: "<< this->TrainingFileName << "\n";
+
+  // arrays
+  int idx;
+  os << indent << "TrainingAverages:\n" << indent 
+     << "(" << this->TrainingAverages[0];
+  for (idx = 1; idx < this->NumberOfFeatures; ++idx)
+  {
+    os << indent << ", " << this->TrainingAverages[idx];
+  }
+  os << ")\n";
+  os << indent << "TrainingVariances:\n" << indent 
+     << "(" << this->TrainingVariances[0];
+  for (idx = 1; idx < this->NumberOfFeatures; ++idx)
+  {
+    os << indent << ", " << this->TrainingVariances[idx];
+  }
+  os << ")\n";
+}
+
+
+//----------------------------------------------------------------------------
+// Helper classes
+//----------------------------------------------------------------------------
+
+featureProperties::featureProperties()
+{
+  //this->Transform = &featureProperties::GaussianCost;
+  this->Transform = NULL;
+  this->NumberOfParams = 2;
+  this->TransformParams = new float[this->NumberOfParams];
+  this->TransformParams[0] = 0;
+  this->TransformParams[1] = 1;
+  this->Weight = 1;
+}
+
+featureProperties::~featureProperties()
+{
+  if (this->TransformParams != NULL) 
+    {
+      delete [] this->TransformParams;
+    }
+}
+
+float featureProperties::GaussianCost(float x)
+{
+  float mean = this->TransformParams[0];
+  float var = this->TransformParams[1];
+  return(exp(-((x-mean)*(x-mean))/(2*var))/sqrt(6.28318*var));  
+}
+
+// inverse "Gaussian": low cost for good edges
+inline float GaussianC(float x, float mean, float var)
+{
+  // This is the time bottleneck of this filter.
+  // So only bother to compute the gaussian if this is a 
+  // "good feature" (with a value close to the mean).
+  // Else return the max value of 1.
+  //    float tmp = x-mean;
+  //    if (tmp < var)
+  //      return(1 - exp(-(tmp*tmp)/(2*var))/sqrt(6.28318*var));  
+  //    else
+  //      return 1;
+
+  // we need between 0 and 1 always, so:
+  // forget about the scale factor.  the feature weight does this.
+  // so just do the e^-((x-u)^2/2*sigma^2)
+
+  float tmp = x-mean;
+  return(1 - exp( -(tmp*tmp)/(2*var) ));  
+
+}
+

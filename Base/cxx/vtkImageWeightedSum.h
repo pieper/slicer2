@@ -22,11 +22,11 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 =========================================================================auto=*/
 // .NAME vtkImageWeightedSum -  adds any number of images, weighting
-// each according to the weight given in this->SetWeightForInput(i,w).
+// each according to the weight set using this->SetWeightForInput(i,w).
 //
 // .SECTION Description
 // All weights are normalized so they will sum to 1.
-// Images must have the same extents.
+// Images must have the same extents. Output is always type float.
 //  
 //
 #ifndef __vtkImageWeightedSum_h
@@ -40,17 +40,19 @@ class VTK_EXPORT vtkImageWeightedSum : public vtkImageMultipleInputFilter
   public:
   static vtkImageWeightedSum *New();
   vtkTypeMacro(vtkImageWeightedSum,vtkImageMultipleInputFilter);
+  void PrintSelf(ostream& os, vtkIndent indent);
   
   // Description:
-  // weights control contributiotn of each input to the sum
-  // they will be normalized
-  // set these for each input else they will be automatically set to 1
+  // The weights control the contribution of each input to the sum.
+  // They will be normalized to sum to 1 before filter execution.
   float GetWeightForInput(int i);
   float GetNormalizedWeightForInput(int i);
   void SetWeightForInput(int i, float w);
 
   // Description:
-  // called by execute; makes sure a weight exists for each input image
+  // This function is called by vtkImageWeightedSumExecute.
+  // It makes sure a weight exists for each input image
+  // and normalizes the weights.
   void CheckWeights();
 
   protected:

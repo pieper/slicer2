@@ -30,83 +30,58 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #define __vtkImageLiveWire_h
 
 #include "vtkImageMultipleInputFilter.h"
-#include "vtkImageDrawROI.h"
+
+
+//----------------------------------------------------------------------------
+// helper classes used in computation
+//----------------------------------------------------------------------------
 
 // avoid tcl wrapping ("begin Tcl exclude")
 //BTX
+
 //----------------------------------------------------------------------------
-// doubly linked list element
-class ListElement {
+// Doubly linked list element.
+class listElement {
  public:
-  ListElement *Prev; 
-  ListElement *Next; 
+  listElement *Prev; 
+  listElement *Next; 
   int Coord[2];
-  ListElement() {this->Prev=NULL; this->Next=NULL;};
-  
+  listElement() {this->Prev=NULL; this->Next=NULL;}; 
 };
 
 //----------------------------------------------------------------------------
 // 2D array.
-// uses x,y indices like image coords, so x=row and y=column.
 template <class T>
 class array2D {
  public:
-  array2D(int x, int y){
-    this->Rows = y;
-    this->Cols = x;
-    this->array = new T[this->Rows*this->Cols];
-  };
-
-  array2D(int x, int y, T initVal){
-    this->Rows = y;
-    this->Cols = x;
-    this->array = new T[this->Rows*this->Cols];
-
-    for( int i=0; i < this->Rows*this->Cols; i++){    
-      this->array[i]= initVal;
-    }
-  };
-
+  array2D(int x, int y);
+  array2D(int x, int y, T initVal);
   ~array2D(){if (this->array) delete[] this->array;};
 
   // Get/Set functions 
   T GetElement(int x,int y) {return this->array[x + y*this->Cols];};
   void SetElement(int x,int y, T value) {this->array[x + y*this->Cols] = value;};
-
   // return the array element itself
-  T&       operator() (int x, int y){return this->array[x + y*this->Cols];};
-
+  T& operator() (int x, int y){return this->array[x + y*this->Cols];};
   // return a pointer to the array element
   T *Element(int x,int y) {return (this->array + x + y*this->Cols);};
 
  private:
   T *array;
   int Rows, Cols; 
-
 };
-
 
 
 //----------------------------------------------------------------------------
 // 2D array of list elements
-class LinkedList : public array2D<ListElement>{
+class linkedList : public array2D<listElement>{
  public:
-
-  LinkedList(int rows, int cols)
-    :
-    array2D<ListElement>(rows,cols)
-    {
-      for (int i = 0; i < rows; i++) {
-	for (int j = 0; j < cols; j++) {
-	  this->Element(i,j)->Coord[0] = i;
-	  this->Element(i,j)->Coord[1] = j;
-	}
-      }
-    }  
+  linkedList(int x, int y);
 };
   
 
 //----------------------------------------------------------------------------
+// Circular queue.
 // This is a *really* circular queue.  Circle points to the heads
 // of the linked lists in A.  Vertices are put in a "bucket"
 // in Circle, where cost to vertex mod buckets in Circle (-1) defines
@@ -126,168 +101,33 @@ class LinkedList : public array2D<ListElement>{
 //
 class circularQueue {
  public:  
-  circularQueue(int rows, int cols, int buckets)
-    {
-      this->A = new LinkedList(rows,cols);
-      this->C = buckets;
-      this->Circle = new ListElement[this->C+1];
-      // link each bucket into its circle
-      for (int i=0; i<C+1; i++) 
-	{
-	  this->Circle[i].Prev = this->Circle[i].Next = &this->Circle[i];
-	}
-      this->Verbose = 0;
-    };
-  
-  ~circularQueue()
-    {
-      if (this->A) delete this->A;
-      if (this->Circle) delete[] this->Circle;
-    };
+  circularQueue(int x, int y, int buckets);  
+  ~circularQueue();
 
-  void Insert(int x, int y, int cost)
-    {
-      int bucket = this->GetBucket(cost);
-
-      ListElement *el = this->A->Element(x,y);
-      // insert el at the top of the list from the bucket
-      el->Next = this->Circle[bucket].Next;
-      if (el->Next == NULL) 
-	{
-	  cout << "ERROR in vtkImageLiveWire.  bucket is NULL, not linked to self." << endl;
-	}
-      this->Circle[bucket].Next->Prev = el;      
-      this->Circle[bucket].Next = el;
-      el->Prev = &this->Circle[bucket];
-
-      if (this->Verbose)
-	{
-	  cout << "Q_INSERT " << "b: " << bucket << " " << "c: " 
-	       << cost << " (" << x << "," << y << ")" << endl;
-	}
-    }
-
-  void Remove(int *coord)
-    {
-      this->Remove(coord[0],coord[1]);      
-    }
-  void Remove(int x, int y)
-    {
-      ListElement *el = this->A->Element(x,y);
-      this->Remove(el);      
-    }
-  void Remove(ListElement *el)
-    {
-      // if el is in linked list
-      if (el->Prev != NULL) 
-	{
-      
-	if (el->Next == NULL)
-	  {
-	    cout <<"ERROR in vtkImageLiveWire.  el->Next is NULL."<< endl;
-	    return;
-	  }
-	el->Next->Prev = el->Prev;
-	el->Prev->Next = el->Next;
-	
-	// clear el's pointers
-	el->Prev = el->Next = NULL;
-	}
-      else
-	{
-	  if (this->Verbose)
-	    {
-	      cout <<"Q_REMOVE: el->Prev is NULL, el (" << el->Coord[0] << "," 
-		   << el->Coord[1] << ") not in Q."<< endl;
-	      return;
-	    }
-	}
-      
-      if (this->Verbose)
-	{
-	  cout << "Q_REMOVE " << "(" << el->Coord[0] << "," 
-	       << el->Coord[1] <<")" << endl;
-	}
-
-      return;
-    }
-  
-  ListElement *GetListElement(int cost)
-    {
-      int bucket = FindMinBucket(cost);
-
-      // return the last one in the linked list.
-      if (this->Circle[bucket].Prev == NULL)
-	{
-	  cout << "ERROR in vtkImageLiveWire.  Unlinked list." << endl;
-	}
-      if (this->Circle[bucket].Next == &this->Circle[bucket])
-	{
-	  cout << "ERROR in vtkImageLiveWire.  Empty linked list." << endl;
-	}
-      if (this->Verbose)
-	{
-	  int x = this->Circle[bucket].Prev->Coord[0];
-	  int y = this->Circle[bucket].Prev->Coord[1];
-	  cout << "Q_GET b: " << bucket << ", point: ("<< x << "," << y << ")" << endl;	  
-	}
-      return this->Circle[bucket].Prev;
-    }
-
-  void VerboseOn() 
-    {
-      this->Verbose = 1;
-    }
+  void Insert(int x, int y, int cost);
+  void Remove(int *coord);
+  void Remove(int x, int y);
+  void Remove(listElement *el);
+  listElement *GetListElement(int cost);
+  void VerboseOn();
 
  private:
+  int GetBucket(int cost);
+  int FindMinBucket(float cost);
 
-  int GetBucket(int cost)
-    {
-      if (cost < 0 ) 
-	{
-	  cout << "ERROR in vtkImageLiveWire: negative cost of " << cost << endl;
-	}
-      
-      //return (int)fmodf(cost, this->C+1);
-
-      // return remainder
-      return div(cost,this->C+1).rem;
-    }
-
-  int FindMinBucket(float cost)
-    {
-      int bucket = this->GetBucket(cost);
-      int count = 0;
-
-      while (this->Circle[bucket].Next == &this->Circle[bucket] && count <= this->C)
-	{
-	  // search around the Q for the next vertex
-	  cost++;
-	  bucket = this->GetBucket(cost);
-	  count++;
-	}
-
-      // have we looped all the way around?
-      if (count > this->C) 
-	{
-	  cout << "ERROR in vtkImageLiveWire.  Empty Q." << endl;
-	}
-      if (this->Circle[bucket].Prev == &this->Circle[bucket])
-	{
-	  cout <<"ERROR in vtkImageLiveWire.  Prev not linked to bucket." << endl;
-	}
-
-      return bucket;
-    }
-
-  LinkedList *A;
-  ListElement *Circle;
+  linkedList *A;
+  listElement *Circle;
   int C;
   int Verbose;
 };
 
+//----------------------------------------------------------------------------
+// end of helper classes used in computation
+//----------------------------------------------------------------------------
+
 // start Tcl wrapping again (cryptic acronym for End Tcl Exclude)
 //ETX
+
 
 class VTK_EXPORT vtkImageLiveWire : public vtkImageMultipleInputFilter
 {
@@ -329,7 +169,9 @@ public:
   vtkGetMacro(Verbose, int);
 
   // Description:
-  // Image data all these edges were created from
+  // Original grayscale image the weighted graph edges were created 
+  // from.  Could easily be used to output the path over the original
+  // image, though this is currently not implemented.
   void SetOriginalImage(vtkImageData *image) {this->SetInput(0,image);}
   vtkImageData *GetOriginalImage() {return this->GetInput(0);}
 
@@ -409,43 +251,39 @@ public:
   void ClearLastContourSegment();
 
   // Description:
-  // For clearing the last livewire segment (for pretty screen shots)
+  // For clearing the last livewire segment 
+  // (for pretty screen shots without the "tail")
   vtkSetMacro(InvisibleLastSegment, int);
   vtkGetMacro(InvisibleLastSegment, int);
   
-
-
   // ---- Data structures for internal use in path computation -- //
+  //BTX
   // Description:
   // Circular queue, composed of buckets that hold vertices of each path cost.
   // The vertices are stored in a doubly linked list for each bucket.
-  circularQueue *Q;
+  circularQueue * GetQ() {return this->Q;};
 
-  //BTX
   // Description:
-  // CC is the cumulative cost from StartPoint to each pixel
-  array2D<int> *CC;
+  // CC is the cumulative cost from StartPoint to each pixel.
+  array2D<int> * GetCC() {return this->CC;};
 
   // Description:
   // Dir is the direction the optimal path takes through each pixel.
-  array2D<int> *Dir;
+  array2D<int> * GetDir() {return this->Dir;};
+
+  // Description:
+  // L is the list of edges ("bels") which have already been processed
+  array2D<int> * GetL() {return this->L;};
 
   // Description:
   // The directions the path may take.
   // We either use the first 4 or all 8 of these.
   enum {UP, DOWN, LEFT, RIGHT, UP_LEFT, UP_RIGHT, DOWN_LEFT, DOWN_RIGHT, NONE};
 
-  // Description:
-  // L is the list of edges ("bels") which have already been processed
-  array2D<int> *L;
-
-  // Description:
-  // B is list of edges ("bels") on the contour already
-  array2D<int> *B;
-  //ETX
   // ---- End of data structures for internal use in path computation -- //
 
   // ---- Functions for internal use in path computation -- //
+
   // Description:
   // This is public since it is called from the non-class function 
   // vtkImageLiveWireExecute...  Don't call this.
@@ -457,12 +295,8 @@ public:
   vtkSetMacro(CurrentCC, int);
   vtkGetMacro(CurrentCC, int);
 
-  // Description:
-  // Current point of "longest shortest" path found so far.
-  // Don't set this; it's here for access from vtkImageLiveWireExecute
-  vtkSetVector2Macro(CurrentPoint, int);
-  vtkGetVector2Macro(CurrentPoint, int);
   // ---- End Functions for internal use in path computation -- //
+  //ETX
 
 protected:
   vtkImageLiveWire();
@@ -473,34 +307,31 @@ protected:
   int StartPoint[2];
   int EndPoint[2];
   int PrevEndPoint[2];
-
   int CurrentCC;
-  int *CurrentPoint;
-
   int MaxEdgeCost;
-
   int Verbose;
-
   int Label;
-
   int NumberOfNeighbors;
-
-  // for display only
   int InvisibleLastSegment;
 
   vtkPoints *ContourEdges;
   vtkPoints *ContourPixels;
   vtkPoints *NewEdges;
   vtkPoints *NewPixels;
-  
-  void DeallocatePathInformation();
 
+  //BTX
+  circularQueue *Q;
+  array2D<int> *CC;
+  array2D<int> *Dir;
+  array2D<int> *L;
+  //ETX
+
+  void DeallocatePathInformation();
   void ExecuteInformation(vtkImageData **inputs, vtkImageData *output); 
   void ComputeInputUpdateExtent(int inExt[6], int outExt[6],
 				int whichInput);
   void ExecuteInformation(){this->vtkImageMultipleInputFilter::ExecuteInformation();};
   virtual void Execute(vtkImageData **inDatas, vtkImageData *outData);  
-
 };
 
 #endif

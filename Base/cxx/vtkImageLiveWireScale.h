@@ -143,8 +143,6 @@ class VTK_EXPORT vtkImageLiveWireScale : public vtkImageToImageFilter
   int MinimumBin;
   int MaximumBin;
 
-  //int NumberOfLookupPoints; // Lauren ?
-
   void Execute(vtkImageData *inData, vtkImageData *outData);
   void ExecuteInformation(vtkImageData *vtkNotUsed(input), 
 			  vtkImageData *output);
