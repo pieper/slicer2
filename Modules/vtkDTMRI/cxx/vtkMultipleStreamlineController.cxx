@@ -293,27 +293,13 @@ void vtkMultipleStreamlineController::DeleteStreamline(vtkActor *pickedActor)
     }
 }
 
-
 //----------------------------------------------------------------------------
-void vtkMultipleStreamlineController::SeedStreamlineFromPoint(double x, 
-                                                              double y, 
-                                                              double z)
-
+int vtkMultipleStreamlineController::PointWithinTensorData(double *point, double *pointw)
 {
-  double pointw[3], point[3];
-  vtkHyperStreamline *newStreamline;
   int *dims;
   float *spacing;
   int i, inbounds;
 
-  pointw[0]=x;
-  pointw[1]=y;
-  pointw[2]=z;
-  
-  // Transform from world coords to scaled ijk of the input tensors
-  this->WorldToTensorScaledIJK->TransformPoint(pointw,point);
-
-  // make sure it is within the bounds of the tensor dataset
   dims=this->InputTensorField->GetDimensions();
   spacing=this->InputTensorField->GetSpacing();
   i=0;
@@ -330,8 +316,31 @@ void vtkMultipleStreamlineController::SeedStreamlineFromPoint(double x,
   if (inbounds ==0)
     {
       cout << "point " << pointw[0] << " " << pointw[1] << " " << pointw[2] << " outside of tensor dataset" << endl;
-      return;
     }
+
+  return(inbounds);
+}
+
+
+//----------------------------------------------------------------------------
+void vtkMultipleStreamlineController::SeedStreamlineFromPoint(double x, 
+                                                              double y, 
+                                                              double z)
+
+{
+  double pointw[3], point[3];
+  vtkHyperStreamline *newStreamline;
+
+  pointw[0]=x;
+  pointw[1]=y;
+  pointw[2]=z;
+  
+  // Transform from world coords to scaled ijk of the input tensors
+  this->WorldToTensorScaledIJK->TransformPoint(pointw,point);
+
+  // make sure it is within the bounds of the tensor dataset
+  if (!this->PointWithinTensorData(point,pointw))
+    return;
 
   // Now create a streamline and put it on the collection.
   newStreamline=vtkHyperStreamlineDTMRI::New();
@@ -410,21 +419,21 @@ void vtkMultipleStreamlineController::SeedStreamlinesFromROI()
                   // Now transform to scaled ijk of the input tensors
                   this->WorldToTensorScaledIJK->TransformPoint(point2,point);
 
-                  // Now create a streamline and put it on the collection.
-                  newStreamline=vtkHyperStreamlineDTMRI::New();
-                  this->Streamlines->AddItem((vtkObject *)newStreamline);
-
-                  // Set its input information.
-                  newStreamline->SetInput(this->InputTensorField);
-                  newStreamline->SetStartPosition(point[0],point[1],point[2]);
-
-                  // Set its parameters
-                  newStreamline->
-                    SetIntegrationDirection(this->IntegrationDirection);
-                
-                  // also create an actor, transform it, 
-                  // add to another collection
-                  // then in DTMRI.tcl just do MainAddActor to all of them
+                  // make sure it is within the bounds of the tensor dataset
+                  if (this->PointWithinTensorData(point,point2))
+                    {
+                      // Now create a streamline and put it on the collection.
+                      newStreamline=vtkHyperStreamlineDTMRI::New();
+                      this->Streamlines->AddItem((vtkObject *)newStreamline);
+                      
+                      // Set its input information.
+                      newStreamline->SetInput(this->InputTensorField);
+                      newStreamline->SetStartPosition(point[0],point[1],point[2]);
+                      
+                      // Set its parameters
+                      newStreamline->
+                        SetIntegrationDirection(this->IntegrationDirection);
+                    }
                 }
               inPtr++;
               inPtr += inIncX;

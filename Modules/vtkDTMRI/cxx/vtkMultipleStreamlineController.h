@@ -110,6 +110,7 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
 
   void CreateGraphicsObjects();
   void DeleteStreamline(int index);
+  int PointWithinTensorData(double *point, double *pointw);
 
   vtkTransform *ROIToWorld;
   vtkTransform *WorldToTensorScaledIJK;
