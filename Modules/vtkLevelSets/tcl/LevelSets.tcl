@@ -168,7 +168,7 @@ proc LevelSetsInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.30 $} {$Date: 2004/08/06 17:15:40 $}]
+        {$Revision: 1.31 $} {$Date: 2004/08/11 14:51:52 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -764,7 +764,7 @@ proc LevelSetsBuildMainFrame {} {
     set fMain $Module(LevelSets,fMain)
     set f $fMain
   
-    frame $f.flogoLMI             -bg $Gui(activeWorkspace) 
+    #frame $f.flogoLMI             -bg $Gui(activeWorkspace) 
     frame $f.fProtocol            -bg $Gui(activeWorkspace) -relief groove -bd 1
     frame $f.fIO                  -bg $Gui(activeWorkspace) -relief groove -bd 1
     frame $f.fDimension           -bg $Gui(activeWorkspace)
@@ -773,7 +773,7 @@ proc LevelSetsBuildMainFrame {} {
     frame $f.fRun                 -bg $Gui(activeWorkspace) 
     frame $f.fModel               -bg $Gui(activeWorkspace)
 
-    pack  $f.flogoLMI  -side top 
+    #pack  $f.flogoLMI  -side top 
 #-anchor w
 
     pack  $f.fProtocol \
@@ -787,15 +787,15 @@ proc LevelSetsBuildMainFrame {} {
     #-------------------------------------------
     # Parameters->logoLMI: LMI logo
     #-------------------------------------------
-    set f $fMain.flogoLMI
+    #set f $fMain.flogoLMI
     
-    image create photo ilogoLMI \
-        -file [ExpandPath [file join $::PACKAGE_DIR_VTKLevelSets/../../../images/LMI_logo_2.ppm]]
-    eval {label $f.llogoLMI -image ilogoLMI  \
-           -anchor w -justify left} $Gui(myWLA)
+    #image create photo ilogoLMI \
+    #    -file [ExpandPath [file join $::PACKAGE_DIR_VTKLevelSets/../../../images/LMI_logo_2.ppm]]
+    #eval {label $f.llogoLMI -image ilogoLMI  \
+    #       -anchor w -justify left} $Gui(myWLA)
 
-    TooltipAdd $f.llogoLMI     " Laboratory of Mathematics in Imaging "
-    pack $f.llogoLMI
+    #TooltipAdd $f.llogoLMI     " Laboratory of Mathematics in Imaging "
+    #pack $f.llogoLMI
 
     #-------------------------------------------
     # Parameters->Protocol Frame
