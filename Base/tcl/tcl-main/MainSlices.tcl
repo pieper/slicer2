@@ -82,7 +82,7 @@ proc MainSlicesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainSlices \
-		{$Revision: 1.26 $} {$Date: 2001/03/23 22:40:42 $}]
+		{$Revision: 1.27 $} {$Date: 2001/04/02 20:20:28 $}]
 
 	# Initialize Variables
 	set Slice(idList) "0 1 2"
@@ -205,6 +205,7 @@ proc MainSlicesBuildVTK {} {
 
 		vtkActor Slice($s,planeActor)
 		Slice($s,planeActor) SetScale      $View(fov) $View(fov) 1.0
+		Slice($s,planeActor) SetPickable   1
 		Slice($s,planeActor) SetTexture    Slice($s,texture)
 		Slice($s,planeActor) SetMapper     Slice($s,planeMapper)
 		Slice($s,planeActor) SetUserMatrix [Slicer GetReformatMatrix $s]
@@ -223,6 +224,7 @@ proc MainSlicesBuildVTK {} {
 		vtkActor Slice($s,outlineActor)
 		Slice($s,outlineActor) SetMapper     Slice($s,outlineMapper)
 		Slice($s,outlineActor) SetScale      $View(fov) $View(fov) 1.0
+		Slice($s,outlineActor) SetPickable   0
 		Slice($s,outlineActor) SetUserMatrix [Slicer GetReformatMatrix $s]
 		Slice($s,outlineActor) SetVisibility $Slice($s,visibility) 
 
@@ -1214,4 +1216,50 @@ proc MainSlicesRecallPresets {p} {
 	}
 	MainSlicesSetOpacityAll $Preset(Slices,$p,opacity)
 	MainSlicesSetFadeAll $Preset(Slices,$p,fade)
+}
+
+proc MainSlicesOffsetToPoint { s x y z } {
+	#
+	# NOTICE: THIS CODE SHOULD BE REMOVED THE INSTANT
+	# THAT vtkMrmlSlicer SUPPORTS IT. The internallogic
+	# of the reformatter should not be duplicated here.
+	# YOU HAVE BEEN WARNED. Here is the replacement code:
+	#
+	# set offset [Slicer GetOffsetFromPoint $s $x $y $z]
+	# MainSlicesSetOffset $s $offset
+	#
+	if { [lsearch [Slicer ListMethods] "GetOffsetFromPoint"] != -1 } {
+		puts "Warning: Read comment in tcl-main/MainSlicesOffsetToPoint"
+	}
+
+	set drive [Slicer GetDriver $s]
+	if { $drive == 0 } {
+		set fp [Slicer GetCamP]
+	} else {
+		set fp [Slicer GetDirP]
+	}
+	set mat [Slicer GetReformatMatrix $s]
+	set vecx [$mat GetElement 0 2]
+	set vecy [$mat GetElement 1 2]
+	set vecz [$mat GetElement 2 2]
+	set difx [expr $x - [lindex $fp 0]]
+	set dify [expr $y - [lindex $fp 1]]
+	set difz [expr $z - [lindex $fp 2]]
+	set offset [expr $vecx * $difx + $vecy * $dify + $vecz * $difz]
+	# Weird kludge for axial & sagittal. For explanation,
+	# see vtkMrmlSlicer:GetOffsetForComputation
+	set orient [Slicer GetOrientString $s]
+	if { $orient == "Axial" || $orient == "Sagittal" } {
+		set offset [expr -1.0 * $offset]
+	}
+	MainSlicesSetOffset $s $offset
+}
+
+proc MainSlicesAllOffsetToPoint { x y z } {
+	global Slice
+
+	foreach s $Slice(idList) {
+		MainSlicesOffsetToPoint $s $x $y $z
+	}
+	RenderAll
 }

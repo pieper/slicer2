@@ -50,7 +50,7 @@ proc MainAnnoInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainAnno \
-		{$Revision: 1.12 $} {$Date: 2001/02/19 17:53:21 $}]
+		{$Revision: 1.13 $} {$Date: 2001/04/02 20:20:28 $}]
 
 	# Preset Defaults
 	set Module(Anno,presets) "box='1' axes='0' outline='0' letters='1' cross='1'\
@@ -116,6 +116,7 @@ proc MainAnnoBuildVTK {} {
 	#---------------------#
 	MakeVTKObject Outline box
 	boxActor SetScale $fov2 $fov2 $fov2
+	boxActor SetPickable 0
  	[boxActor GetProperty] SetColor 1.0 0.0 1.0
 
 	#---------------------#
@@ -129,6 +130,7 @@ proc MainAnnoBuildVTK {} {
 		vtkActor ${axis}AxisActor
 			${axis}AxisActor SetMapper ${axis}AxisMapper
 			${axis}AxisActor SetScale $fov2 $fov2 $fov2
+			${axis}AxisActor SetPickable 0
 			[${axis}AxisActor GetProperty] SetColor 1.0 0.0 1.0
 
 		MainAddActor ${axis}AxisActor
@@ -155,6 +157,7 @@ proc MainAnnoBuildVTK {} {
 		vtkFollower ${axis}Actor
 			${axis}Actor SetMapper ${axis}Mapper
 			${axis}Actor SetScale  $scale $scale $scale 
+			${axis}Actor SetPickable 0
 
 	    # add only to the Main View window
 		viewRen AddActor ${axis}Actor
