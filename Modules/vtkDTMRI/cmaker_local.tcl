@@ -16,7 +16,7 @@ switch $tcl_platform(os) {
        lappend SLICER_MODULE_ARG "-DVTKSLICERTENSOR_BUILD_TCL_LIB:PATH=$SLICER_HOME/Modules/vtkTensorUtil/builds/$::env(BUILD)/bin/libvtkTensorUtilTCL.dylib" 
     }
     default {
-         lappend SLICER_MODULE_ARG "-DVTKTENSORUTIL_BUILD_LIB:PATH=$SLICER_HOME/Modules/vtkTensorUtil/builds/$::env(BUILD)/bin/debug/vtkTensorUtil.lib"
-         lappend SLICER_MODULE_ARG "-DVTKTENSORUTIL_BUILD_TCL_LIB:PATH=$SLICER_HOME/Modules/vtkTensorUtil/builds/$::env(BUILD)/bin/debug/vtkTensorUtilTCL.lib" 
+         lappend SLICER_MODULE_ARG "-DVTKTENSORUTIL_BUILD_LIB:PATH=$SLICER_HOME/Modules/vtkTensorUtil/builds/$::env(BUILD)/bin/$::env(VTK_BUILD_TYPE)/vtkTensorUtil.lib"
+         lappend SLICER_MODULE_ARG "-DVTKTENSORUTIL_BUILD_TCL_LIB:PATH=$SLICER_HOME/Modules/vtkTensorUtil/builds/$::env(BUILD)/bin/$::env(VTK_BUILD_TYPE)/vtkTensorUtilTCL.lib" 
     } 
 }
