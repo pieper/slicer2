@@ -19,6 +19,10 @@
 
 #else // UNIX
 
+#ifdef _SOLARIS_
+#include <math.h>
+#include <ieeefp.h>
+#endif
 #include <deque.h>
 
 #endif
