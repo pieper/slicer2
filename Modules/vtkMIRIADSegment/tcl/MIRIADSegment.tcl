@@ -151,7 +151,7 @@ proc MIRIADSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.26 $} {$Date: 2004/02/24 23:36:56 $}]
+        {$Revision: 1.27 $} {$Date: 2004/03/10 23:51:01 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -943,7 +943,7 @@ proc MIRIADSegmentSetEMParameters { } {
     set ::EMSegment(Cattrib,5,IsSuperClass) 1
     EMSegmentTransfereClassType 1 1           ;# Transfer ClassType to Superclass
     set ::EMSegment(Cattrib,5,Prob) $mp(CorticalGrayMatter,prob)
-    set ::EMSegment(Cattrib,5,LocalPriorWeight) $mp(CorticalGrayMatter,ProbDataWeight)
+    set ::EMSegment(Cattrib,5,LocalPriorWeight) 0.05 ;# $mp(CorticalGrayMatter,ProbDataWeight)
     set ::EMSegment(Cattrib,5,InputChannelWeights,0) $mp(CorticalGrayMatter,InputChannelWeight,PD)
     set ::EMSegment(Cattrib,5,InputChannelWeights,1) $mp(CorticalGrayMatter,InputChannelWeight,T2)
 
@@ -965,16 +965,18 @@ proc MIRIADSegmentSetEMParameters { } {
         LTemporalLobe RTemporalLobe
         LThalamus RThalamus
     }
+    set cortprob [expr $mp(CorticalGrayMatter,prob) / 13.]
+    set subcortprob [expr $mp(SubCorticalGrayMatter,prob) / 8.]
     set l 9
     foreach gp $grayparcels {
         set ::EMSegment(Cattrib,$l,Name) $gp
         if { [MIRIADParametersGrayType $gp] == "cortical" } {
-            set ::EMSegment(Cattrib,$l,Prob) $mp(CorticalGrayMatter,prob)
+            set ::EMSegment(Cattrib,$l,Prob) $cortprob
             set ::EMSegment(Cattrib,$l,LocalPriorWeight) $mp(CorticalGrayMatter,ProbDataWeight)
             set ::EMSegment(Cattrib,$l,InputChannelWeights,0) $mp(CorticalGrayMatter,InputChannelWeight,PD)
             set ::EMSegment(Cattrib,$l,InputChannelWeights,1) $mp(CorticalGrayMatter,InputChannelWeight,T2)
         } else {
-            set ::EMSegment(Cattrib,$l,Prob) $mp(SubCorticalGrayMatter,prob)
+            set ::EMSegment(Cattrib,$l,Prob) $subcortprob
             set ::EMSegment(Cattrib,$l,LocalPriorWeight) $mp(SubCorticalGrayMatter,ProbDataWeight)
             set ::EMSegment(Cattrib,$l,InputChannelWeights,0) $mp(SubCorticalGrayMatter,InputChannelWeight,PD)
             set ::EMSegment(Cattrib,$l,InputChannelWeights,1) $mp(SubCorticalGrayMatter,InputChannelWeight,T2)
