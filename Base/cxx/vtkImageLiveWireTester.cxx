@@ -101,6 +101,7 @@ vtkImageData *vtkImageLiveWireTester::GetEdgeImage(int filter)
   else
     {
       vtkErrorMacro(<<"Requested filter " << filter << " greater than number of filters!");
+      return this->EdgeFilters[0]->GetOutput();
     }
 }
 
