@@ -14,5 +14,5 @@ echo SLICER_HOME  is $SLICER_HOME
 echo DISPLAY      is $DISPLAY
 echo LD_LIBRARY_PATH is $LD_LIBRARY_PATH
 
-exec $SLICER_HOME/vtk $SLICER_HOME/program/mrmlize.tcl $1 $2
+exec $SLICER_HOME/program/vtk $SLICER_HOME/program/mrmlize.tcl $1 $2
 

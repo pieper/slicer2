@@ -40,7 +40,7 @@ cp /local/src/vtk3.01/patented/*.so lib
 cp /local/src/vtk3.01/local/*.so lib
 
 echo Copy vtk executable
-cp /local/src/vtk3.01/tcl/vtk .
+cp /local/src/vtk3.01/tcl/vtk program
 
 echo Copy vtk scripts 
 cp ../cvs/slicer/slicer2k .
