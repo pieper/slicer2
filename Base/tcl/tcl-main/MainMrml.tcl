@@ -78,7 +78,7 @@ proc MainMrmlInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainMrml \
-        {$Revision: 1.59 $} {$Date: 2002/06/28 20:11:15 $}]
+        {$Revision: 1.60 $} {$Date: 2002/07/17 14:26:10 $}]
 
     set Mrml(colorsUnsaved) 0
 }
@@ -428,7 +428,7 @@ proc MainMrmlDeleteNode {nodeType id} {
     Mrml($tree) RemoveItem ${nodeType}($id,node)
     ${nodeType}($id,node) Delete
 
-    MainUpdateMRML
+    #MainUpdateMRML
 
     MainMrmlClearList
 }
@@ -879,8 +879,19 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 
         "Fiducials" {
             set n [MainMrmlAddNode Fiducials]
+            foreach a $attr {
+                  set key [lindex $a 0]
+                 set val [lreplace $a 0 0]
+                 switch [string tolower $key] {
+                 "desc"             {$n SetDescription  $val}
+                 "name"             {$n SetName         $val}
+                 "type"              {eval $n SetType     $val}
+         "visibility"        {eval $n SetVisibility $val}
+         "symbolSize"         {eval $n SetSymbolSize    $val}
+         "textSize"         {eval $n SetTextSize    $val}
+         }
         }
-        
+    }
         "EndFiducials" {
             set n [MainMrmlAddNode EndFiducials]
         }
@@ -892,11 +903,15 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
                 switch [string tolower $key] {
                 "desc"             {$n SetDescription  $val}
                 "name"             {$n SetName         $val}
-                "xyz"              {eval $n SetXYZ     $val}
+        "index"            {eval $n SetIndex        $val}
+        "xyz"              {eval $n SetXYZ     $val}
+        "focalxyz"         {eval $n SetFXYZ     $val}
                 }
 
             }
             }
+        ####### The next 3 nodes are only here for backward compatibility
+        ####### Endoscopic paths are now defined with Fiducials/Point nodes
         "Path" {
             set n [MainMrmlAddNode Path]
         }
@@ -1245,8 +1260,8 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
                     "endslice" {$n SetEndSlice $val}
                     "displayprob" {$n SetDisplayProb $val}
                     "numberoftrainingsamples" {$n SetNumberOfTrainingSamples $val}
-            "intensityavgclass"  {$n SetIntensityAvgClass  $val}
-                }
+                    "intensityavgclass"  {$n SetIntensityAvgClass  $val}
+        }
         }
     }
     "EndSegmenter" {
@@ -1275,7 +1290,7 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
                     "fileprefix"  {$n SetFilePrefix $val}
                     "filename"    {$n SetFileName $val}
                     "imagerange"  {eval $n SetImageRange  $val}
-                "intensityavgvaluepredef"  {$n SetIntensityAvgValuePreDef $val}
+            "intensityavgvaluepredef"  {$n SetIntensityAvgValuePreDef $val}
                 }
             }
     }
@@ -1305,7 +1320,7 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
                     "name"       {$n SetName $val}
                     "cimmatrix"  {$n SetCIMMatrix $val}
                 }
-            }
+        }
         }
         }
         }
