@@ -136,7 +136,7 @@ proc DTMRIInit {} {
 
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.55 $} {$Date: 2005/01/16 21:34:56 $}]
+                  {$Revision: 1.56 $} {$Date: 2005/01/16 23:37:49 $}]
 
      # Define Tabs
     #------------------------------------
@@ -320,6 +320,12 @@ proc DTMRIInit {} {
     set DTMRI(mode,glyphColor) Linear; # default linear matches the vtk class
     set DTMRI(mode,glyphColorList) {Linear Planar Spherical Max Middle Min MaxMinusMiddle RA FA Direction}
     set DTMRI(mode,glyphColorList,tooltip) "Color DTMRIs according to\nLinear, Planar, or Spherical measures,\nwith the Max, Middle, or Min eigenvalue,\nwith relative or fractional anisotropy (RA or FA),\nor by direction of major eigenvector."
+   
+    # glyhs visualization resolution
+    set DTMRI(mode,glyphResolution) 3
+    set DTMRI(mode,glyphResolution,min) 1
+    set DTMRI(mode,glyphResolution,max) 5
+
 
     # type of tract coloring
     set DTMRI(mode,tractColor) SolidColor;
@@ -1261,10 +1267,29 @@ especially Diffusion DTMRI MRI.
 
     set f $Glyph.fVisMethods.fGlyphs
 
-    foreach frame "GlyphType Lines Colors ScalarBar GlyphScalarRange Slider" {
+    foreach frame "Resolution GlyphType Lines Colors ScalarBar GlyphScalarRange Slider" {
         frame $f.f$frame -bg $Gui(activeWorkspace)
         pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill both
     }
+
+    #-------------------------------------------
+    # Display-> Notebook ->Glyph frame->VisMethods->VisParams->Glyphs->Resolution frame
+    #-------------------------------------------
+    set f $Glyph.fVisMethods.fGlyphs.fResolution
+    
+    eval {label $f.l -text "Resolution (fine->gross):"\
+          -width 12 -justify right } $Gui(WLA)
+
+    eval {scale $f.s -from $DTMRI(mode,glyphResolution,min) \
+                          -to $DTMRI(mode,glyphResolution,max)    \
+          -variable  DTMRI(mode,glyphResolution)\
+      -command DTMRIUpdateGlyphResolution \
+          -orient vertical     \
+          -resolution 1      \
+          } $Gui(WSA)
+
+      pack $f.l $f.s -side left -padx $Gui(pad) -pady 0
+
 
     #-------------------------------------------
     # Display-> Notebook ->Glyph frame->VisMethods->VisParams->Glyphs->GlyphType frame
@@ -3602,6 +3627,21 @@ proc DTMRIApplyVisualizationSettings {{mode ""}} {
 ################################################################
 #  visualization procedures that deal with glyphs
 ################################################################
+#-------------------------------------------------------------------------------
+# .PROC DTMRIUpdateGlyphResolution
+# choose the resolution of the glyphs
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc DTMRIUpdateGlyphResolution { value } {
+    global DTMRI
+
+    foreach plane "0 1 2" {
+      DTMRI(vtk,glyphs$plane) SetResolution $DTMRI(mode,glyphResolution)
+    }
+    #update 3D window (causes pipeline update)
+    Render3D
+}
 
 #-------------------------------------------------------------------------------
 # .PROC DTMRIUpdateGlyphEigenvector
