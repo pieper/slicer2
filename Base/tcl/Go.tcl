@@ -94,7 +94,15 @@ proc Usage { {msg ""} } {
 #
 # simple arg parsing 
 #
-set SLICER(threaded) "true"
+switch $tcl_platform(os) {
+    "SunOS" {
+        # threading on solaris has been causing problems so turn it off
+        set SLICER(threaded) "false"
+    }
+    default {
+        set SLICER(threaded) "true"
+    }
+}
 set SLICER(tkcon) "true"
 set verbose 0
 set Module(verbose) 0
@@ -566,7 +574,7 @@ if { $SLICER(versionInfo) != "" } {
     set compilerName [Slicer GetCompilerName]
     set vtkVersion [Slicer GetVTKVersion]
     set libVersions "LibName1: VTK LibVersion1: ${vtkVersion} LibName2: TCL LibVersion2: ${tcl_patchLevel} LibName3: TK LibVersion2: ${tk_patchLevel}"
-    set SLICER(versionInfo) "$SLICER(versionInfo) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.60.2.1 2003/06/09 19:29:24 nicole Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.60.2.2 2003/08/07 21:10:41 pieper Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
