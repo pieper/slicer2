@@ -760,9 +760,11 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
 	  // if we are writing to a file
 	  if (self->GetTrainingFileName())
 	    {
+	      // output the features
 	      for (int i=0;i<numFeatures;i++)
 		{
-		  file << average[i] << ' '  << variance[i] << endl;
+		  file << self->GetWeightForFeature(i) << ' ' 
+		       << average[i] << ' '  << variance[i] << endl;
 		}
 	      file.close();
 	    }
