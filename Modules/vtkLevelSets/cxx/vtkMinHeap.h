@@ -144,14 +144,14 @@ template<class T> void vtkMinHeap<T>::Resize( int size)
     int    new_nbelts,i=0;
 
 
-  fprintf(stderr,"vtkMinHeap() resize %d \n",size);
+    //  fprintf(stderr,"vtkMinHeap() resize %d \n",size);
 
   if (size < array_size) return;
 
   new_nbelts = size;
 
-  fprintf(stderr,"vtkMinHeap::Resize() \t Allocation of size %f Mb \n",
-      (new_nbelts+1)*sizeof(T)/1000000.0);
+  //  fprintf(stderr,"vtkMinHeap::Resize() \t Allocation of size %f Mb \n",
+  //      (new_nbelts+1)*sizeof(T)/1000000.0);
   new_array = new T [new_nbelts+1];
 
   for(i=0;i<=num_elts;i++)  new_array[i] = array[i];
