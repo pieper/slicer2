@@ -66,18 +66,47 @@ set SLICER(version) "$SLICER(major_version).$SLICER(minor_version)$SLICER(revisi
 # simple command line argument parsing
 #
 
-if {$argc > 1 ||
-        ($argc == 1 && [lindex $argv 0] == "--help") } {
+proc usage {} {
+    global SLICER
+
     set msg "usage: slicer2-<arch> \[MRML file name .xml | dir with MRML file\]"
     set msg "$msg\n  <arch> is one of win32.exe, solaris-sparc, or linux-x86"
     tk_messageBox -message $msg -title $SLICER(version) -type ok
-    exit
 }
 
 #
 # verbose mode for debugging
 #
 set verbose 0
+set strippedargs ""
+foreach a $argv {
+    switch -glob -- $a {
+        "--verbose" -
+        "-v" {
+            set verbose 1
+        }
+        "--help" -
+        "-h" {
+            usage
+            exit 1
+        }
+        "-*" {
+            puts stderr "unknown option $a\n"
+            usage
+        }
+        default {
+            lappend strippedargs $a
+        }
+    }
+}
+set argv $strippedargs
+set argc [llength $argv]
+
+if {$argc > 1 } {
+    usage
+    exit 1
+}
+
 
 #
 # Determine Slicer's home directory from the SLICER_HOME environment 
