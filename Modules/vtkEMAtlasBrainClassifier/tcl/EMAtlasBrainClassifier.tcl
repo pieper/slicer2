@@ -42,7 +42,7 @@ proc EMAtlasBrainClassifierInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.6 $} {$Date: 2005/01/17 18:40:57 $}]
+        {$Revision: 1.7 $} {$Date: 2005/02/17 19:37:38 $}]
 
 
     set EMAtlasBrainClassifier(Volume,SPGR) $Volume(idNone)
@@ -311,6 +311,7 @@ proc EMAtlasBrainClassifier_Normalize { VolIDInput VolIDOutput Mode } {
     set Vol [Volume($VolIDInput,vol) GetOutput]
     puts [$Vol GetNumberOfScalarComponents] 
     vtkImageData hist
+    # Generate Histogram with 1000 bins 
     vtkImageAccumulate ia
     ia SetInput $Vol
     ia SetComponentSpacing 1 1 1
@@ -318,18 +319,24 @@ proc EMAtlasBrainClassifier_Normalize { VolIDInput VolIDOutput Mode } {
     ia SetComponentExtent 0 1000 0 0 0 0
     ia Update
     hist DeepCopy [ia GetOutput]
+  
+    # Get maximum image value 
     set max [lindex [ia GetMax] 0]
     puts $max
     set count 0
     set i 0
-    # Kilian change this - it is 99% of total amount of voxels
+
+    # Find out the intensity value which is an uppwer bound for 99% of the voxels 
+    # => Cut of the tail of the the histogram
     set Extent [[Volume($VolIDInput,vol) GetOutput] GetExtent]
     set Boundary [expr ([lindex $Extent 1] - [lindex $Extent 0] +1) * ([lindex $Extent 3] - [lindex $Extent 2] +1) * ([lindex $Extent 5] - [lindex $Extent 4] +1) * 0.99]
     while {$i < $max && $count < $Boundary} {    
-    set val [hist GetScalarComponentAsFloat $i 0 0 0]
-    set count [expr $count + $val]
-    incr i
+      set val [hist GetScalarComponentAsFloat $i 0 0 0]
+      set count [expr $count + $val]
+      incr i
     }
+
+    # max is now the upper bound intensity value for 99% of the voxels  
     set max $i 
     set min 0
     puts "Max: $max"
@@ -337,29 +344,38 @@ proc EMAtlasBrainClassifier_Normalize { VolIDInput VolIDOutput Mode } {
     set width [expr $max / 5]
     puts "Width: $width"
     set fwidth [expr 1.0 / $width ]
-
+    
+    # Smooth histogram by applying a window of width with 20% of the intensity value 
     set sHistMax  [expr ($max - $min) - $width]
     for {set x 0} {$x <= $sHistMax } {incr x} { 
-    set sHist($x) 0
-    for {set k 0} {$k <= $width} {incr k} {
+      set sHist($x) 0
+      for {set k 0} {$k <= $width} {incr k} {
         set sHist($x) [expr [hist GetScalarComponentAsFloat [expr $x + $k] 0 0 0] + $sHist($x)]
+      }
+      set sHist($x) [expr $sHist($x) * $fwidth]
     }
-    set sHist($x) [expr $sHist($x) * $fwidth]
-    }
+   
+    # Define the lower intensity value for calculating the mean of the historgram
+    # - When noise is set to 0 then we reached the first peak in the smoothed out histogram
+    #   We considere this area noise (or background) and therefore exclude it for the definition of the normalization factor  
+    # - When through is set we reached the first minimum after the first peak which defines the lower bound of the intensity 
+    #   value considered for calculating the Expected value of the histogram 
     set x [expr $min + 1]
     set trough [expr $min - 1]
     set noise 1
     incr  sHistMax -2 
     while {$x < $sHistMax && $trough < $min} {
-    if {$noise == 1 && $sHist($x) > $sHist([expr $x + 1]) && $x > $min} {
-        set noise 0
-    } elseif { $sHist($x) < $sHist([expr $x + 1]) && $sHist([expr $x + 1]) < $sHist([expr $x + 2]) && $sHist([expr $x +2]) < $sHist([expr $x + 3]) } {
-        set trough $x
-    }
-    incr x
+       if {$noise == 1 && $sHist($x) > $sHist([expr $x + 1]) && $x > $min} {
+          set noise 0
+       } elseif { $sHist($x) < $sHist([expr $x + 1]) && $sHist([expr $x + 1]) < $sHist([expr $x + 2]) && $sHist([expr $x +2]) < $sHist([expr $x + 3]) } {
+          set trough $x
+       }
+       incr x
     }
 
     puts "Threshold: $trough"
+
+    # Calculate the mean intensity value of the voxels with range [trough, max]  
     vtkImageAccumulate ia2
     ia2 SetInput $Vol
     ia2 SetComponentSpacing 1 1 1
@@ -371,16 +387,17 @@ proc EMAtlasBrainClassifier_Normalize { VolIDInput VolIDOutput Mode } {
     set total 0
     set num 0
     while {$i < [expr $width * 5]} {    
-    set val [hist GetScalarComponentAsFloat [expr $i - $trough] 0 0 0]
-    set total [expr $total + ($i * $val)]
-    set num [expr $num + $val]
-    incr i
+      set val [hist GetScalarComponentAsFloat [expr $i - $trough] 0 0 0]
+      set total [expr $total + ($i * $val)]
+      set num [expr $num + $val]
+      incr i
     }
+    # Normalize image by factor M which is the expect value in this range 
     set M [expr $total * 1.0 / $num]
 
     puts "M: $M"
 
-     vtkImageMathematics im
+    vtkImageMathematics im
     im SetInput1 $Vol
     im SetConstantK [expr ($EMAtlasBrainClassifier(Normalize,$Mode) / $M)]
     puts "Mode: $Mode"
