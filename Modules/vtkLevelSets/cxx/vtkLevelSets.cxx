@@ -2983,16 +2983,21 @@ void vtkLevelSets::PreComputeDataAttachment()
     float gradnorm;
     float DAx,DAy,DAz;
     float* im   = (float*) this->inputImage->GetScalarPointer();;
+    int imsize;
 
     float norm, maxnorm;
+
+  this->SetProgressText("Precompute Data Attachement");
 
   p       = 0;
   maxnorm = 0;
 
-  for(z=0;z<tz;z++)
-  for(y=0;y<ty;y++)
+  for(z=0;z<tz;z++) {
+  this->UpdateProgress(p*1.0/this->imsize);
+  for(y=0;y<ty;y++) {
   for(x=0;x<tx;x++) {
     
+
     if (x==0)    mx =  1;   else mx = -1;
     if (x==tx-1) px = -1;   else px =  1;
     if (y==0)    my =  tx;  else my = -tx;
@@ -3099,7 +3104,9 @@ void vtkLevelSets::PreComputeDataAttachment()
 
     p++;
 
-  }
+  } // x
+  } // y
+  } // z
 
   printf(" Max norm of precomputed data attachment vector field : %f \n", sqrt(maxnorm));
 
@@ -3109,7 +3116,7 @@ void vtkLevelSets::PreComputeDataAttachment()
     NormalizeSecDerGrad();
     delete [] this->normgrad;
     this->normgrad=NULL;
-    ADDMEMORY("vtkLevelSets::PreComputeDataAttachment()  delete normgrad",-1.0*sizeof(float)*imsize);
+    ADDMEMORY("vtkLevelSets::PreComputeDataAttachment()  delete normgrad",-1.0*sizeof(float)*this->imsize);
   }
 
   //
@@ -3132,7 +3139,7 @@ void vtkLevelSets::PreComputeDataAttachment()
     copyImage->AllocateScalars();
     
     ptr = (float*) copyImage->GetScalarPointer();
-    for(i=0;i<imsize;i++) {
+    for(i=0;i<this->imsize;i++) {
       *ptr = secdergrad[i];
       ptr++;
     }
@@ -3175,16 +3182,18 @@ void vtkLevelSets::NormalizeSecDerGrad()
   int            zmin,zmax,nmax;
 
 
-  // tmp: for compute the distance to the second order derivatives
-  tmp = new float[imsize];
+  this->SetProgressText("Precompute Data Attachement");
 
-  //  fprintf(stderr,"%4.2f \n",(1.0*sizeof(float)*imsize));
-  ADDMEMORY("vtkLevelSets::NormalizeSecDerGrad() tmp",(1.0*sizeof(float)*imsize));
+  // tmp: for compute the distance to the second order derivatives
+  tmp = new float[this->imsize];
+
+  //  fprintf(stderr,"%4.2f \n",(1.0*sizeof(float)*this->imsize));
+  ADDMEMORY("vtkLevelSets::NormalizeSecDerGrad() tmp",(1.0*sizeof(float)*this->imsize));
 
   // Put the result in the time image
   sdg_buf = secdergrad;
 
-  for(pos=0;pos<imsize;pos++) 
+  for(pos=0;pos<this->imsize;pos++) 
     if (secdergrad[pos]>0) 
       tmp[pos] = 1;
     else 
@@ -3210,7 +3219,9 @@ void vtkLevelSets::NormalizeSecDerGrad()
 
   // Compute the distance approximation close to the surface
   // Should call vtkImageIsoContourDist ...
-  for(z=zmin;z<=zmax;z++) 
+  p=0;
+  for(z=zmin;z<=zmax;z++) {
+    this->UpdateProgress(p*1.0/this->imsize);
   for(y=0;y<=ty-2;y++) {
     sdg_buf   = secdergrad+y*tx;
     tmp_buf   = tmp       +y*tx;
@@ -3282,26 +3293,28 @@ void vtkLevelSets::NormalizeSecDerGrad()
       
       sdg_buf++;
       tmp_buf++;
+      p++;
       
     } // x
+  }
   } // y,z
 
 
   // Copy tmp to secdergrad
-  for(p=0;p<imsize;p++) secdergrad[p]=tmp[p];  
+  for(p=0;p<this->imsize;p++) secdergrad[p]=tmp[p];  
  
   histosize = 10000;
   histo = new int[histosize];
   for(n=0;n<histosize;n++) histo[n] = 0;
 
   // histogram
-  for(p=0;p<imsize;p++) 
+  for(p=0;p<this->imsize;p++) 
     histo[(int) (normgrad[p]/(max_normgrad+1E-5)*histosize)]++;
 
   // compute "HistoGradThreshold*100%" of cumulative histogram
   cumul_histo = 0;
   n = 0;
-  while (cumul_histo<HistoGradThreshold*imsize) {
+  while (cumul_histo<HistoGradThreshold*this->imsize) {
     cumul_histo += histo[n];
     n++;
   }
@@ -3310,7 +3323,7 @@ void vtkLevelSets::NormalizeSecDerGrad()
   printf("NormalizeSecDerGrad() maxnorm %.2f threshold %.2f +/- %.2f \n",
      max_normgrad,threshold,max_normgrad/histosize);
 
-  for(p=0;p<imsize;p++) {
+  for(p=0;p<this->imsize;p++) {
     secdergrad[p] *= 1-exp(-normgrad[p]*normgrad[p]/threshold/threshold);  
       if (!((secdergrad[p]>-1E5)&&(secdergrad[p]<1E5))) {
     fprintf(stderr,"NormalizeSecDerGrad() \t secdergrad[%d] = %f \n",p,secdergrad[p]);
@@ -3320,7 +3333,7 @@ void vtkLevelSets::NormalizeSecDerGrad()
 
   delete [] histo;
   delete [] tmp;
-  ADDMEMORY("vtkLevelSets::NormalizeSecDerGrad() tmp",-1.0*sizeof(float)*imsize);
+  ADDMEMORY("vtkLevelSets::NormalizeSecDerGrad() tmp",-1.0*sizeof(float)*this->imsize);
 
 } // NormalizeSecDerGrad()
 
@@ -3355,7 +3368,7 @@ int vtkLevelSets::UpdateResult(){
     {
       if (verbose)
         cout << "Updating result ... " << 1-current <<"\n" ;
-      memcpy(u[1-current],u[current],imsize*sizeof(float));
+      memcpy(u[1-current],u[current],this->imsize*sizeof(float));
       return 1;
     }
   return 0;

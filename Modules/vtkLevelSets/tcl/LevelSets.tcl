@@ -164,7 +164,7 @@ proc LevelSetsInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.22 $} {$Date: 2004/01/27 17:30:31 $}]
+        {$Revision: 1.23 $} {$Date: 2004/02/12 16:46:58 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -1766,6 +1766,12 @@ proc LevelSetsStart {} {
   #
   vtkImageData                           LevelSets(output)
   LevelSets(curv) InitParam              $InputImage LevelSets(output)
+
+  #  set p LevelSets(curv)
+  set Gui(progressText) "Pre-processing for Level Set"
+  LevelSets(curv) SetStartMethod      MainStartProgress
+  LevelSets(curv) SetProgressMethod  "MainShowProgress LevelSets(curv)"
+  LevelSets(curv) SetEndMethod        MainEndProgress
 
   LevelSets(curv) InitEvolution
 
