@@ -15,13 +15,15 @@ ref SetInput [reader GetOutput]
 ref SetInputOrderString SI
 ref SetOutputOrderString SI
 ref SetSlice 22
-ref ComputeTransform
+# this function is not getting wrapped (why?)
+#ref ComputeTransform
+ref ComputeTransform2
 ref ComputeOutputExtent
 ref Update
 
 vtkImageViewer viewer
 viewer SetInput [ref GetOutput]
-viewer SetZSlice 0
+#viewer SetZSlice 0
 viewer SetColorWindow 2000
 viewer SetColorLevel 1000
 
