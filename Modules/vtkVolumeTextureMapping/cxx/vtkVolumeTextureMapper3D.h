@@ -6,6 +6,7 @@
 #include "vtkVolumeTextureMapper.h"
 //#include <GL/gl.h>
 #include <vtkVolumeTextureMappingConfigure.h>
+#include "vtkMatrix4x4.h"
 class VTK_VOLUMETEXTUREMAPPING_EXPORT vtkVolumeTextureMapper3D : public vtkVolumeTextureMapper
 {
 public:
@@ -54,6 +55,7 @@ void Rotate(double rot[3][3], double angle[3]);
 void EnableClipLines(int value);
 void IsClipLinesEnable(int value[1]);
 void UpdateTransformMatrix(int volume, float t00, float t01, float t02, float t03, float t10, float t11, float t12, float t13, float t20, float t21, float t22, float t23, float t30, float t31, float t32, float t33 );
+ 
 void GetTransformMatrix(float transfMatrix[4][4], int volume);
 int IsTMatrixChanged(int volume);
 float GetTransformMatrixElement(int volume, int row, int column);
@@ -68,6 +70,9 @@ void DefaultValues();
 void SetBoxSize(float size);
 int GetBoxSize();
 int GetHistValue(int volume, int index);
+void UpdateTransformMatrix(int volume, vtkMatrix4x4 *transMatrix );
+ void SetOrigin(float o_x, float o_y, float o_z);
+void  GetOrigin(float o[3]);
 //BTX
 
   // Description:
@@ -94,7 +99,8 @@ int GetHistValue(int volume, int index);
   unsigned char *GetTexture() {return this->Texture;};
 
   int GetNumberOfVolumes() {return this->volNum;};
-  void RescaleData(unsigned char* texture, int size[3], float spacing[3], int scaleFactor[2], int volume);
+  void RescaleData(unsigned char* texture,  int size[3], float spacing[3], int scaleFactor[2], int volume);
+
 
 //ETX
 
@@ -160,6 +166,7 @@ protected:
     float currentTransformation[3][4][4];
     int tMatrixChanged[3];
     int enableVolume [3];
+    float origin[3];
 
   
 private:

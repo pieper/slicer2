@@ -20,7 +20,7 @@ template <class T>
 //Name: vtkVolumeTextureMapper3D_TextureOrganization
 //Description: Organization of textures
 //-----------------------------------------------------
-void vtkVolumeTextureMapper3D_TextureOrganization( T *data_ptr, 
+void vtkVolumeTextureMapper3D_TextureOrganization( T *data_ptr,                     
                            int size[3],
                            int volume, 
                            vtkVolumeTextureMapper3D *me )
@@ -47,9 +47,11 @@ void vtkVolumeTextureMapper3D_TextureOrganization( T *data_ptr,
   inc = 1;
   
   // Create space for the texture
+
   texture = new unsigned char[4*size[0]*size[1]];
+
   me->GetDataSpacing( spacing );
-  
+
   kstart = 0;
   kend = size[2];
   kinc = me->GetInternalSkipFactor();
@@ -117,7 +119,7 @@ void vtkVolumeTextureMapper3D_TextureOrganization( T *data_ptr,
 //Name: RescaleData  - are going to be rewritten!
 //Description: Scaling of the volumes to a different power of two
 //-----------------------------------------------------
-void vtkVolumeTextureMapper3D::RescaleData(unsigned char* texture, int size[3], float spacing[3], int scaleFactor[2], int volume)
+void vtkVolumeTextureMapper3D::RescaleData(unsigned char* texture,  int size[3], float spacing[3], int scaleFactor[2], int volume)
 {
   
   int dim[3];
@@ -238,7 +240,7 @@ void vtkVolumeTextureMapper3D::RescaleData(unsigned char* texture, int size[3], 
 }
 
 
-vtkCxxRevisionMacro(vtkVolumeTextureMapper3D, "$Revision: 1.1 $");
+vtkCxxRevisionMacro(vtkVolumeTextureMapper3D, "$Revision: 1.2 $");
 
 //----------------------------------------------------------------------------
 // Needed when we don't use the vtkStandardNewMacro.
@@ -256,7 +258,7 @@ vtkVolumeTextureMapper3D::vtkVolumeTextureMapper3D()
   diffY = 0;
   clipPlaneNum = 0;
   numberOfPlanes = 0;
-  tMatrixChanged[0] = 0;
+  tMatrixChanged[0] = 1;
   tMatrixChanged[1] = 0;
   tMatrixChanged[2] = 0;
     
@@ -335,9 +337,11 @@ void vtkVolumeTextureMapper3D::GenerateTextures( vtkRenderer *ren, vtkVolume *vo
   {
     case VTK_UNSIGNED_CHAR:
       vtkVolumeTextureMapper3D_TextureOrganization( (unsigned char *)inputPointer, size, volume, this );
+
       break;
     case VTK_UNSIGNED_SHORT:
-      vtkVolumeTextureMapper3D_TextureOrganization( (unsigned short *)inputPointer, size, volume, this );
+      vtkVolumeTextureMapper3D_TextureOrganization( (unsigned short *)inputPointer,  size, volume, this );
+  
       break;
     default:
       vtkErrorMacro("vtkVolumeTextureMapper3D only works with unsigned short and unsigned char data.\n" << 
@@ -523,6 +527,29 @@ void vtkVolumeTextureMapper3D::SetBoxSize(float size)
 int vtkVolumeTextureMapper3D::GetBoxSize()
 {
   return boxSize;
+}
+
+//-----------------------------------------------------
+//Name: SetOrigin
+//Description: Set the size of the box surronding the volumes
+//-----------------------------------------------------
+void vtkVolumeTextureMapper3D::SetOrigin(float o_x, float o_y, float o_z)
+{
+  origin[0]=o_x;
+  origin[1]=o_y;
+  origin[2]=o_z;
+}
+
+//-----------------------------------------------------
+//Name: GetOrigin
+//Description: Return the size of the box surrounding the volumes
+//-----------------------------------------------------
+void vtkVolumeTextureMapper3D::GetOrigin(float o[3])
+{
+  for(int i = 0; i < 3; i++)
+  {
+    o[i]= origin[i];
+  }
 }
 
 //-----------------------------------------------------
@@ -968,32 +995,6 @@ void vtkVolumeTextureMapper3D::GetClipPlaneEquation(double planeEquation[4], int
   }
 }
 
-//-----------------------------------------------------
-//Name: UpdateTransformMatrix
-//Description: Updates the transformation matrix with new values
-//-----------------------------------------------------
-void vtkVolumeTextureMapper3D::UpdateTransformMatrix(int volume, float t00, float t01, float t02, float t03, float t10, float t11, float t12, float t13, float t20, float t21, float t22, float t23, float t30, float t31, float t32, float t33 )
-{
-  currentTransformation[volume][0][0] = t00;
-  currentTransformation[volume][0][1] = t01;
-  currentTransformation[volume][0][2] = t02;
-  currentTransformation[volume][0][3] = t03;
-  currentTransformation[volume][1][0] = t10;
-  currentTransformation[volume][1][1] = t11;
-  currentTransformation[volume][1][2] = t12;
-  currentTransformation[volume][1][3] = t13;
-  currentTransformation[volume][2][0] = t20;
-  currentTransformation[volume][2][1] = t21;
-  currentTransformation[volume][2][2] = t22;
-  currentTransformation[volume][2][3] = t23;
-  currentTransformation[volume][3][0] = t30;
-  currentTransformation[volume][3][1] = t31;
-  currentTransformation[volume][3][2] = t32;
-  currentTransformation[volume][3][3] = t33;
-  
-  tMatrixChanged[volume] = 1;
-}
-
 
 //-o-o-o-o-o-o-o-o-o-o-
 //Color functions
@@ -1393,6 +1394,52 @@ int vtkVolumeTextureMapper3D::IsColorTableChanged(int volume)
 //-o-o-o-o-o-o-o-o-o-o-
 //Transform functions
 //-o-o-o-o-o-o-o-o-o-o-
+
+
+//-----------------------------------------------------
+//Name: UpdateTransformMatrix -  Not necessary???
+//Description: Updates the transformation matrix with new values
+//-----------------------------------------------------
+void vtkVolumeTextureMapper3D::UpdateTransformMatrix(int volume, float t00, float t01, float t02, float t03, float t10, float t11, float t12, float t13, float t20, float t21, float t22, float t23, float t30, float t31, float t32, float t33 )
+{
+  currentTransformation[volume][0][0] = t00;
+  currentTransformation[volume][0][1] = t01;
+  currentTransformation[volume][0][2] = t02;
+  currentTransformation[volume][0][3] = t03;
+  currentTransformation[volume][1][0] = t10;
+  currentTransformation[volume][1][1] = t11;
+  currentTransformation[volume][1][2] = t12;
+  currentTransformation[volume][1][3] = t13;
+  currentTransformation[volume][2][0] = t20;
+  currentTransformation[volume][2][1] = t21;
+  currentTransformation[volume][2][2] = t22;
+  currentTransformation[volume][2][3] = t23;
+  currentTransformation[volume][3][0] = t30;
+  currentTransformation[volume][3][1] = t31;
+  currentTransformation[volume][3][2] = t32;
+  currentTransformation[volume][3][3] = t33;
+  
+  tMatrixChanged[volume] = 1;
+}
+
+//-----------------------------------------------------
+//Name: UpdateTransformMatrix with vtkMatrix4x4 input
+//Description: Updates the transformation matrix with new values
+//--------------------------------------------------
+
+void vtkVolumeTextureMapper3D::UpdateTransformMatrix(int volume, vtkMatrix4x4 *transMatrix )
+{
+  for(int i = 0; i < 4; i++)
+  {
+    for(int j = 0; j < 4; j++)
+    {
+      currentTransformation[volume][i][j] =(float) transMatrix->GetElement(i, j);
+    }
+  }
+
+  
+  tMatrixChanged[volume] = 1;
+}
 
 //-----------------------------------------------------
 //Name: IsTMatrixChanged
