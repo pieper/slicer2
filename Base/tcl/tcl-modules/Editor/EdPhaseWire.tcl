@@ -92,7 +92,8 @@ proc EdPhaseWireInit {} {
     set Ed($e,phaseOffsetLow) 0
     set Ed($e,phaseOffsetHigh) 180
     # default offset is 90 degrees == perfect edge in phase image
-    set Ed(EdPhaseWire,phaseOffset) 90
+    #set Ed(EdPhaseWire,phaseOffset) 90
+    set Ed(EdPhaseWire,phaseOffset) 0
 
     # phase and certainty volumes we are using
     set Ed(EdPhaseWire,phaseVol) $Volume(idNone)
