@@ -240,7 +240,7 @@ proc PointsRefreshVTK {} {
         }
     foreach id $Point(selected) {
         set vtkId [PointsVTKId $id]
-        $Point(vtkFloatArray) SetScalar $vtkId 1
+        $Point(vtkFloatArray) SetTuple1 $vtkId 1
         eval [Point($id,follower) GetProperty] SetColor $Point(textselcolor)
         }
     $Point(vtkPoints) Modified
