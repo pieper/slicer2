@@ -1087,7 +1087,7 @@ proc EdLiveWireRenderInteractive {} {
 # .END
 #-------------------------------------------------------------------------------
 proc EdLiveWireLabel {} {
-    global Color Label
+    global Color Label Slice
     
     LabelsFindLabel
 	
