@@ -26,16 +26,12 @@ proc DTMRIODFInit {} {
 proc DTMRIBuildVTKODF {} {
     global DTMRI Module
     
-    vtkPolyDataReader DTMRI(vtk,qballreader)
-    DTMRI(vtk,qballreader) SetFileName /home/rjosest/projects/NAMIC/ODF/crop/755-conn.vtk
-    DTMRI(vtk,qballreader) Update
     set object glyphsODF
     foreach plane "0 1 2" {
     #DTMRIMakeVTKObject vtkDTMRIGlyph $object
     
     #DTMRIMakeVTKObject vtkHighAngularResolutionGlyph $object$plane
     #DTMRI(vtk,glyphsODF$plane) SetInput ""
-    #DTMRI(vtk,glyphsODF$plane) SetSource [DTMRI(vtk,qballreader) GetOutput]
     DTMRIMakeVTKObject vtkODFGlyph $object$plane
     DTMRI(vtk,glyphsODF$plane) SetInput ""
     }
