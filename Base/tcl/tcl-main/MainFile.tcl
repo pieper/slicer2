@@ -86,7 +86,7 @@ proc MainFileInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainFile \
-        {$Revision: 1.53 $} {$Date: 2003/06/18 22:17:38 $}]
+        {$Revision: 1.54 $} {$Date: 2003/07/10 14:54:56 $}]
 
     set File(filePrefix) data
 }
@@ -1012,9 +1012,21 @@ proc MainFileParseImageFile {ImageFile {postfixFlag 1}} {
     # this tests to see if anything else in the directory has the same extension as the first file, 
     # if nothing else does (glob only returns the file name we're checking against), then it is 
     # assumed that the file starts with a constant part
-    if {[glob -directory $fdir -tails *$fext] == $ftail} {
+    if {$::Module(verbose)} {
+        puts "MainFileParseImageFile: ftail = $ftail\n\tfdir = $fdir\n\tfext = \"$fext\""
+    }
+    # this will fail if there's another volume in the directory with the same 
+    # extension: second test = ftail is in the list, and any other elements
+    # have a different rootname. First test that there *is* an extension.
+    set filesWithSameExtension [glob -directory $fdir -tails *$fext]
+    if {$::Module(verbose)} {
+        puts "files with same extension = $filesWithSameExtension"
+    }
+    if {$fext != "" && ($filesWithSameExtension == $ftail || ([lsearch $filesWithSameExtension $ftail] != -1 && [lsearch $filesWithSameExtension [file rootname $ImageFile]\*] == -1))} {
         # the file starts with letters
-
+        if {$::Module(verbose)} {
+            puts "File starts with letters"
+        }
         ##  Parse the file into its prefix, number, and perhaps stuff afterwards
         
         ##   Note: find the last consecutive string of digits
