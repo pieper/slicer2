@@ -101,7 +101,7 @@ proc MutualInformationRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.12 $} {$Date: 2003/11/25 20:08:17 $}]
+        {$Revision: 1.13 $} {$Date: 2003/12/03 04:35:29 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -575,8 +575,59 @@ proc MutualInformationRegistrationExit {} {
 }
 
 #-------------------------------------------------------------------------------
-#        AUTO REGISTRATION
+# .PROC MutualInformationTestTransformConnection
+#
+# Makesure the transformid has an effect on the volumeid
+# returns the error message, on "" if none
+#
+# desiredresult is the number of transforms that should affect the volumeid
+#  it should be 1 or 0
+# Matrix(transformid,node) should affect the volumeid of interest IF
+# desiredresult is set to 1
+#
+# .ARGS
+# .END
 #-------------------------------------------------------------------------------
+proc MutualInformationRegistrationTestTransformConnections \
+       {volumeid transformid desiredresult} {
+
+ set name [Volume($volumeid,node) GetName]
+
+ vtkTransform MIRegTmpTransform
+
+ Mrml(dataTree) ComputeNodeTransform Volume($volumeid,node) MIRegTmpTransform
+
+ set NumTrans [MIRegTmpTransform GetNumberOfConcatenatedTransforms]
+
+ if {$NumTrans > 1} {
+     MIRegTmpTransform Delete
+     return "There are several transforms affecting $name. Sorry. We do not handle more than 1 transform. Please simplify your MRML file"
+ }
+
+ if {$desiredresult == 0} {
+     MIRegTmpTransform Delete
+     if {$NumTrans == 0} {
+     return ""
+     } else {
+     return "There is a transform affecting $name. There should not be one. Please remove it."
+     }
+ }
+
+ if {$desiredresult == 1} {
+     if {$NumTrans == 0} {
+     MIRegTmpTransform Delete
+     return "No transform affecting $name. Is it possible you have a transform affecting the Refence Volume rather than the Volume to Move?"
+     }
+     set tmptrans [MIRegTmpTransform GetConcatenatedTransform 0]
+     if {$tmptrans != [Matrix($transformid,node) GetTransform] } {
+         MIRegTmpTransform Delete
+     return "The transform you have selected does not seem to be the one affecting $name. Please choose the correct transform."
+     }
+ }
+
+ MIRegTmpTransform Delete
+ return ""
+}
 
 #-------------------------------------------------------------------------------
 # .PROC MutualInformationRegistrationAutoRun
@@ -616,6 +667,19 @@ proc MutualInformationRegistrationAutoRun {} {
         set v $Matrix(volume)
         DataAddTransform append Volume($v,node) Volume($v,node)
         MainUpdateMRML
+    }
+
+    ## Now test the transforms to make sure they affect the right volumes
+   set err1 [MutualInformationRegistrationTestTransformConnections $Matrix(volume) $Matrix(activeID) 1]
+    if {$err1 != ""} {
+      DevErrorWindow $err1
+    return 0
+    }
+
+   set err2 [MutualInformationRegistrationTestTransformConnections $Matrix(refVolume) $Matrix(activeID) 0]
+    if {$err2 != ""} {
+      DevErrorWindow $err2
+    return 0
     }
 
     # sourceId = ID of volume to register (source, moving)
