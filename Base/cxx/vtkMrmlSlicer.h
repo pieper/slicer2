@@ -257,6 +257,12 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
   void SetCursorColor(float red, float green, float blue);
   void SetCursorPosition(int s, int x, int y) {
     this->Cursor[s]->SetCursor(x, y);};
+    // turn on or off the cross hair intersection - if off there's a gap
+    void SetCursorIntersect(int flag);
+    void SetCursorIntersect(int s, int flag) {
+        this->Cursor[s]->SetIntersectCross(flag); } ;
+    int GetCursorIntersect(int s) {
+        return this->Cursor[s]->GetIntersectCross(); };
 
   // Description:
   // Field of view for slices.  Also used for reformatting...
