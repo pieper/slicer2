@@ -70,6 +70,11 @@ public:
   vtkGetVector2Macro(ImageRange, int);
   vtkSetVector2Macro(ImageRange, int);
 
+  // Description:
+  // Get/Set for SegmenterInput
+  vtkGetMacro(IntensityAvgValuePreDef, double);
+  vtkSetMacro(IntensityAvgValuePreDef, double);
+
 protected:
   vtkMrmlSegmenterInputNode();
   ~vtkMrmlSegmenterInputNode();
@@ -80,6 +85,7 @@ protected:
   char *FilePrefix; 
   char *FileName;
   int ImageRange[2];
+  double IntensityAvgValuePreDef;
 };
 
 #endif

@@ -91,26 +91,27 @@ void vtkImageEMMarkov::ExecuteInformation(vtkImageData *inData, vtkImageData *ou
   
   int ext[6];
   float spacing[3], origin[3];
-
   spacing[0] = 1.0;
   spacing[1] = 1.0;
   spacing[2] = 1.0;
 
-  origin[0] = 1.0;
-  origin[1] = 1.0;
-  origin[2] = 1.0;
+  origin[0] = 0.0;
+  origin[1] = 0.0;
+  origin[2] = 0.0;
 
 
   // Check if extend is sset correctly 
   ext[0] = ext[2] = ext[4] = 0;
-  ext[1] = ext[3] = this->NumClasses;
+  ext[1] = ext[3] = this->NumClasses-1;
   ext[5] = 5;
    
   outData->SetOrigin(origin);
   outData->SetNumberOfScalarComponents(1);
   outData->SetWholeExtent(ext);
   outData->SetSpacing(spacing);
-  // outData->SetScalarType(VTK_DOUBLE);
+  // outData->SetScalarType(VTK_FLOAT);
+  // The problem why I cannot use the outcome for the filter directly reading from tcl bc if I set the filter to VTK_FLOAT I get grabage
+  // If I set it to VTK_SHORT everything is fine
   outData->SetScalarType(VTK_FLOAT);
 }
 
@@ -176,12 +177,16 @@ static void vtkImageEMMarkovExecute(vtkImageEMMarkov *self,vtkImageData *in1Data
   // 3.) Run Algorith to find out Matrix
   self->TrainMarkovMatrix(Volume, maxY, rowLength, Min, Max);
 
+ // The problem why I cannot use the outcome for the filter directly reading from tcl bc if I set the filter to VTK_FLOAT I get grabage
+  // If I set it to VTK_SHORT everything is fine
+
  // 4.) Transfere CIM Matrix
   for (idxZ = 1; idxZ < 7; idxZ++) {
     for (idxY = 1; idxY <= self->GetNumClasses(); idxY++) {
       for (idxR = 1; idxR <= self->GetNumClasses(); idxR++) {
-        *outPtr = (T) 1.0;
-        outPtr +=outIncX;
+        *outPtr = (T) 1.01;
+    // Kilian: this cannot work outIncX == 0 -> should be outPtr ++ 
+        outPtr ++;
       }
       outPtr += outIncY;
     }
@@ -234,6 +239,8 @@ void vtkImageEMMarkov::ThreadedExecute(vtkImageData *inData, vtkImageData *outDa
     vtkErrorMacro(<< "Execute: Unknown ScalarType");
     return;
   }
+  // Debug to see what's coming out 
+  // outData->Print(cout);
 }
 
 void vtkImageEMMarkov::SetComponentExtent(int extent[6])

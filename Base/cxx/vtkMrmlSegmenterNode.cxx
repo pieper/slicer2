@@ -61,6 +61,7 @@ vtkMrmlSegmenterNode::vtkMrmlSegmenterNode()
   this->EndSlice           = 0;
   this->DisplayProb     = 0;
   this->NumberOfTrainingSamples = 0;
+  this->IntensityAvgClass = -1;
 }
 
 //----------------------------------------------------------------------------
@@ -102,6 +103,7 @@ void vtkMrmlSegmenterNode::Write(ofstream& of, int nIndent)
   of << " EndSlice ='"                   << this->EndSlice << "'";
   of << " DisplayProb  ='"               << this->DisplayProb  << "'";
   of << " NumberOfTrainingSamples ='"    << this->NumberOfTrainingSamples << "'";
+  of << " IntensityAvgClass ='"          << this->IntensityAvgClass << "'";
   of << ">\n";;
 }
 
@@ -127,6 +129,7 @@ void vtkMrmlSegmenterNode::Copy(vtkMrmlNode *anode)
   this->EndSlice                   = node->EndSlice;
   this->DisplayProb                = node->DisplayProb;
   this->NumberOfTrainingSamples    = node->NumberOfTrainingSamples;
+  this->IntensityAvgClass          = node->IntensityAvgClass;
 }
 
 //----------------------------------------------------------------------------
@@ -148,6 +151,5 @@ void vtkMrmlSegmenterNode::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "EndSlice: "                  << this->EndSlice <<  "\n"; 
   os << indent << "DisplayProb: "               << this->DisplayProb <<  "\n"; 
   os << indent << "NumberOfTrainingSamples: "   << this->NumberOfTrainingSamples <<  "\n"; 
+  os << indent << "IntensityAvgClass:"          << this->IntensityAvgClass << "\n";
 }
-
-

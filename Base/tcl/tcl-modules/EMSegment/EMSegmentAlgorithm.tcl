@@ -45,11 +45,11 @@ proc EMSegmentAlgorithmStart { } {
        while {$i< $EMSegment(NumClasses)} {
            incr i
            if {$EMSegment(Cattrib,$i,ProbabilityData) != $Volume(idNone)} {
-              EMSegment(vtkEMSegment) SetUseLocalPrior 1 $i
+              EMSegment(vtkEMSegment) SetProbDataLocal 1 $i
               EMSegment(vtkEMSegment) SetInputIndex $NumInputImagesSet [Volume($EMSegment(Cattrib,$i,ProbabilityData),vol) GetOutput]
               incr NumInputImagesSet
            } else {
-              EMSegment(vtkEMSegment) SetUseLocalPrior 0 $i 
+              EMSegment(vtkEMSegment) SetProbDataLocal 0 $i 
            }
        }
        # Transfer image information
@@ -57,6 +57,13 @@ proc EMSegmentAlgorithmStart { } {
           EMSegment(vtkEMSegment) SetInputIndex $NumInputImagesSet [Volume($v,vol) GetOutput]
           incr NumInputImagesSet
        }
+       # Transfere Intensity correction filter stuff
+       set index 1
+       EMSegment(vtkEMSegment) SetIntensityAvgClass $EMSegment(IntensityAvgClass)
+       foreach v $EMSegment(SelVolList,VolumeList) {       
+       EMSegment(vtkEMSegment) SetIntensityAvgValuePreDef $EMSegment(IntensityAvgValue,$v) $index
+       incr index
+       } 
    } else {
        # EM Specific Information - Simple EM Algorithm
        vtkImageEMSegmenter EMSegment(vtkEMSegment)    

@@ -78,7 +78,7 @@ proc MainMrmlInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainMrml \
-        {$Revision: 1.58 $} {$Date: 2002/04/23 23:11:22 $}]
+        {$Revision: 1.59 $} {$Date: 2002/06/28 20:11:15 $}]
 
     set Mrml(colorsUnsaved) 0
 }
@@ -1245,7 +1245,8 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
                     "endslice" {$n SetEndSlice $val}
                     "displayprob" {$n SetDisplayProb $val}
                     "numberoftrainingsamples" {$n SetNumberOfTrainingSamples $val}
-        }
+            "intensityavgclass"  {$n SetIntensityAvgClass  $val}
+                }
         }
     }
     "EndSegmenter" {
@@ -1274,6 +1275,7 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
                     "fileprefix"  {$n SetFilePrefix $val}
                     "filename"    {$n SetFileName $val}
                     "imagerange"  {eval $n SetImageRange  $val}
+                "intensityavgvaluepredef"  {$n SetIntensityAvgValuePreDef $val}
                 }
             }
     }
@@ -1303,7 +1305,7 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
                     "name"       {$n SetName $val}
                     "cimmatrix"  {$n SetCIMMatrix $val}
                 }
-        }
+            }
         }
         }
         }

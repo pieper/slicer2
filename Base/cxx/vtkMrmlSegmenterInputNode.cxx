@@ -47,6 +47,7 @@ vtkMrmlSegmenterInputNode::vtkMrmlSegmenterInputNode()
   this->FilePrefix = NULL;
   this->FileName = NULL;
   memset(this->ImageRange,0,2*sizeof(int));
+  this->IntensityAvgValuePreDef = 0;
 }
 
 //----------------------------------------------------------------------------
@@ -89,6 +90,7 @@ void vtkMrmlSegmenterInputNode::Write(ofstream& of, int nIndent)
     of << " ImageRange='" << this->ImageRange[0] << " "
        << this->ImageRange[1] << "'";
   }
+  of << " IntensityAvgValuePreDef ='"    << this->IntensityAvgValuePreDef << "'";
   of << "></SegmenterInput>\n";;
 }
 
@@ -103,6 +105,7 @@ void vtkMrmlSegmenterInputNode::Copy(vtkMrmlNode *anode)
   this->SetFilePrefix(node->FilePrefix); 
   this->SetFileName(node->FileName); 
   this->SetImageRange(node->ImageRange); 
+  this->IntensityAvgValuePreDef = node->IntensityAvgValuePreDef;
 }
 
 //----------------------------------------------------------------------------
@@ -119,7 +122,6 @@ void vtkMrmlSegmenterInputNode::PrintSelf(ostream& os, vtkIndent indent)
    for (int idx = 0; idx < 2; ++idx) {
      os << indent << ", " << this->ImageRange[idx];
    }
+   os << indent << "IntensityAvgValuePreDef:"          << this->IntensityAvgValuePreDef << "\n";
    os << ")\n";
 }
-
-

@@ -130,6 +130,11 @@ public:
   vtkSetMacro(NumberOfTrainingSamples, int);
   vtkGetMacro(NumberOfTrainingSamples, int);
 
+  // Description:
+  // Get/Set for Segmenter
+  vtkSetMacro(IntensityAvgClass, int);
+  vtkGetMacro(IntensityAvgClass, int);
+
 protected:
   vtkMrmlSegmenterNode();
   ~vtkMrmlSegmenterNode();
@@ -151,6 +156,7 @@ protected:
   int    EndSlice;
   int    DisplayProb;
   int    NumberOfTrainingSamples;
+  int    IntensityAvgClass;
 };
 
 #endif
