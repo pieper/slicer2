@@ -100,7 +100,9 @@ public:
     vtkGetVector4Macro(Origin, float);
 
   // Description:
-  // 
+  //
+  // Warning: XXX-MH this produces compiler warnings: should it be float 
+  // (vtkFloatingPointType)?
     vtkSetMacro(Slice, int);
     vtkGetMacro(Slice, int);
 

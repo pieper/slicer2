@@ -62,7 +62,7 @@ vtkMrmlFiducialsNode::vtkMrmlFiducialsNode()
   this->Indent = 1;
   this->SymbolSize = 6.0;
   this->TextSize = 4.5;
-  this->Visibility = 1.0;
+  this->Visibility = 1;
   this->Color[0]=0.4; this->Color[1]=1.0; this->Color[2]=1.0;
   this->Type = NULL;
   this->SetType("default");

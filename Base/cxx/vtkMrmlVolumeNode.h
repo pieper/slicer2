@@ -245,11 +245,15 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlVolumeNode : public vtkMrmlNode
 
   // Description:
   // The upper threshold value to use when autoThreshold is 'no'
+  // Warning:
+  // XXX-MH Should be floating point....
   vtkGetMacro(UpperThreshold, int);
   vtkSetMacro(UpperThreshold, int);
 
   // Description:
   // The lower threshold value to use when autoThreshold is 'no'
+  // Warning:
+  // XXX-MH Should be floating point....
   vtkGetMacro(LowerThreshold, int);
   vtkSetMacro(LowerThreshold, int);
 

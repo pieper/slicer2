@@ -78,8 +78,8 @@ public:
 
   // Description:
   // Get/Set for Symbol size
-  vtkSetMacro(Visibility,float);
-  vtkGetMacro(Visibility,float);
+  vtkSetMacro(Visibility,int);
+  vtkGetMacro(Visibility,int);
 
   // Description:
   // Get/Set for Text size

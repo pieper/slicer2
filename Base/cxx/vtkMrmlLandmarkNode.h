@@ -82,8 +82,8 @@ public:
 
   // Description:
   // Position of the landmark along the path
-  vtkSetMacro(PathPosition, float);
-  vtkGetMacro(PathPosition, float);
+  vtkSetMacro(PathPosition, int);
+  vtkGetMacro(PathPosition, int);
 
 protected:
   vtkMrmlLandmarkNode();

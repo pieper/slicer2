@@ -65,7 +65,7 @@ vtkMrmlPointNode::vtkMrmlPointNode()
   this->FXYZ[2] = 0.0;
   this->OrientationWXYZ[0] = this->OrientationWXYZ[1] = this->OrientationWXYZ[2] = 0.0;
   this->OrientationWXYZ[3] = 1.0;
-  this->Index = 0.0;
+  this->Index = 0;
 }
 
 //----------------------------------------------------------------------------
