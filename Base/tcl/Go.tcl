@@ -116,6 +116,11 @@ proc ReadModuleNames {filename} {
 
 #-------------------------------------------------------------------------------
 # .PROC FindNames
+#
+# Looks for all the modules.
+# For example, for a non-essential module, looks first for ./tcl-modules/*.tcl
+# Then looks for $SLICER_HOME/program/tcl-modules/*.tcl
+#
 # .END
 #-------------------------------------------------------------------------------
 proc FindNames {dir} {
@@ -235,6 +240,10 @@ foreach name $ordered {
 set ordered $foundOrdered
 
 # Source shared stuff either locally or globally
+# For example for a module MyModule, we looks for
+# ./tcl-modules/MyModule.tcl and then for $SLICER_HOME/program/tcl-modules/MyModule.tcl
+# Similar for tcl-shared and tcl-main
+
 set shared [FindNames tcl-shared]
 foreach name $shared {
 	set path [GetFullPath $name tcl tcl-shared]
