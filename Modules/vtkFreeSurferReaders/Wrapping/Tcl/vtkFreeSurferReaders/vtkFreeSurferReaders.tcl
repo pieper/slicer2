@@ -8,7 +8,7 @@ package require vtk
 if {[info commands vtkFreeSurferReaders] != "" ||
     [::vtk::load_component vtkFreeSurferReadersTCL] == ""} {
     global PACKAGE_DIR_VTKFREESURFERREADERS
-    source  [file join $PACKAGE_DIR_VTKFREESURFERREADERS/../../../tcl/VolFreeSurferReaders.tcl]
+#    source  [file join $PACKAGE_DIR_VTKFREESURFERREADERS/../../../tcl/VolFreeSurferReaders.tcl]
     source  [file join $PACKAGE_DIR_VTKFREESURFERREADERS/../../../tcl/vtkFreeSurferReaders.tcl]
     package provide vtkFreeSurferReaders 1.0
 
