@@ -48,6 +48,7 @@
 #   LevelSetsPrepareResultVolume
 #   LevelSetsUpdateResults
 #   RunLevelSetsBegin
+#   LevelSetsStop
 #   ReRunLevelSets
 #   RunLevelSetsEnd
 #   LevelSetsCreateModel
@@ -158,7 +159,7 @@ proc LevelSetsInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.13 $} {$Date: 2003/07/16 20:52:40 $}]
+        {$Revision: 1.14 $} {$Date: 2003/07/21 20:05:55 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -739,10 +740,11 @@ proc LevelSetsBuildMainFrame {} {
     set f $fMain.fRun
 
     DevAddButton $f.bInitRun   "Init & Run"  "RunLevelSetsBegin"
+    DevAddButton $f.bStop      "Stop"        "LevelSetsStop"
     DevAddButton $f.bReRun     "ReRun"       "ReRunLevelSets"
     DevAddButton $f.bEnd       "End"         "RunLevelSetsEnd"
 
-    pack  $f.bInitRun $f.bReRun $f.bEnd -side left -padx 2 -pady 2 -expand 1
+    pack  $f.bInitRun $f.bStop $f.bReRun $f.bEnd -side left -padx 2 -pady 2 -expand 1
 
     #-------------------------------------------
     # Parameters->Model Frame
@@ -1341,7 +1343,7 @@ proc RunLevelSetsBegin {} {
 
   LevelSets(curv) InitEvolution
 
-  for {set j 0} {$j < $LevelSets(NumIters)} {incr j} {
+  for {set j 0} { ($j < $LevelSets(NumIters)) && ($LevelSets(Processing) == "ON")} {incr j} {
     puts $j
     LevelSets(curv) Iterate
     update
@@ -1356,6 +1358,24 @@ proc RunLevelSetsBegin {} {
 
 }
 #----- RunLevelSetsBegin
+
+
+#-------------------------------------------------------------------------------
+# .PROC LevelSetsStop
+#
+#   Stops the current Level Set evolution
+#
+# .END
+#-------------------------------------------------------------------------------
+proc LevelSetsStop {} {
+#    -------------
+
+  global LevelSets 
+
+  set LevelSets(Processing)  "STOP"
+
+}
+#----- LevelSetsStop
 
 
 #-------------------------------------------------------------------------------
@@ -1374,12 +1394,14 @@ proc ReRunLevelSets {} {
   set res   $LevelSets(ResultVol)
   set lm    $LevelSets(LabelResultVol)
 
+  set LevelSets(Processing) "ON"
+
   [Volume($input,vol) GetOutput]   SetSpacing 1 1 1
   LevelSets(output)                SetSpacing 1 1 1
 
   LevelSetsUpdateParams
 
-  for {set j 0} {$j < $LevelSets(NumIters)} {incr j} {
+  for {set j 0} {($j < $LevelSets(NumIters))&& ($LevelSets(Processing) == "ON")} {incr j} {
     puts $j
     LevelSets(curv) Iterate
     update
@@ -1435,7 +1457,7 @@ proc  LevelSetsCreateModel {} {
   set res $LevelSets(ResultVol);
 
 
-  if { $LevelSets(Processing) == "ON" } {
+  if { ($LevelSets(Processing) == "ON") ||  ($LevelSets(Processing) == "STOP") } {
 
     vtkImageMathematics vtk_immath
     vtk_immath SetInput1 LevelSets(output)
