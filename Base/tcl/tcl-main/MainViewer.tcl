@@ -48,7 +48,7 @@ proc MainViewerInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainViewer \
-        {$Revision: 1.21 $} {$Date: 2002/03/21 23:05:23 $}]
+        {$Revision: 1.22 $} {$Date: 2002/04/03 06:05:22 $}]
 
         # Props
     set Gui(midHeight) 1
@@ -98,9 +98,7 @@ proc MainViewerBuildGUI {} {
     set Gui(fViewWin) $Gui(fViewer).fViewWin
 
     vtkTkRenderWidget $Gui(fViewWin) -width $View(viewerHeight) -height $View(viewerHeightNormal)
-    BindTkRenderWidget $Gui(fViewWin)
-
-
+    CreateAndBindTkEvents $Gui(fViewWin) 
 
     #-------------------------------------------
     # Mid->Slice$s frames
