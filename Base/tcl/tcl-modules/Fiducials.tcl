@@ -80,7 +80,7 @@ proc FiducialsInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.14 $} {$Date: 2002/03/21 23:05:25 $}]
+        {$Revision: 1.15 $} {$Date: 2002/04/10 22:23:25 $}]
     
     # Initialize module-level variables
     
@@ -406,13 +406,13 @@ proc FiducialsVTKCreateFiducialsList { id } {
     
     # create a different actor for each renderer
     foreach r $Module(Renderers) {
-    vtkActor Fiducials($r,$id,actor)
-    Fiducials($r,$id,actor) SetMapper Fiducials($id,mapper)
-    [Fiducials($r,$id,actor) GetProperty] SetColor 1 0 0
-    [Fiducials($r,$id,actor) GetProperty] SetInterpolationToFlat
-    Fiducials($r,$id,actor) SetUserMatrix Fiducials($id,xform)
+    vtkActor Fiducials($id,actor,$r)
+    Fiducials($id,actor,$r) SetMapper Fiducials($id,mapper)
+    [Fiducials($id,actor,$r) GetProperty] SetColor 1 0 0
+    [Fiducials($id,actor,$r) GetProperty] SetInterpolationToFlat
+    Fiducials($id,actor,$r) SetUserMatrix Fiducials($id,xform)
     
-    $r AddActor Fiducials($r,$id,actor)
+    $r AddActor Fiducials($id,actor,$r)
     }
 }
 
@@ -434,14 +434,14 @@ proc FiducialsVTKCreatePoint { fid pid } {
     vtkPolyDataMapper Point($pid,mapper)
     Point($pid,mapper) SetInput [Point($pid,text) GetOutput]
     foreach r $Module(Renderers) {
-    vtkFollower Point($r,$pid,follower)
-    Point($r,$pid,follower) SetMapper Point($pid,mapper)
-    Point($r,$pid,follower) SetCamera [viewRen GetActiveCamera]
-    Point($r,$pid,follower) SetUserMatrix [Point(textXform) GetMatrix]
-    Point($r,$pid,follower) SetPickable 0
-    eval [Point($r,$pid,follower) GetProperty] SetColor $Fiducials(textColor)
+    vtkFollower Point($pid,follower,$r)
+    Point($pid,follower,$r) SetMapper Point($pid,mapper)
+    Point($pid,follower,$r) SetCamera [viewRen GetActiveCamera]
+    Point($pid,follower,$r) SetUserMatrix [Point(textXform) GetMatrix]
+    Point($pid,follower,$r) SetPickable 0
+    eval [Point($pid,follower,$r) GetProperty] SetColor $Fiducials(textColor)
     
-    $r AddActor Point($r,$pid,follower)
+    $r AddActor Point($pid,follower,$r)
     }
 }
 
@@ -472,7 +472,7 @@ proc FiducialsVTKUpdatePoints {} {
         eval Fiducials(tmpXform) SetPoint $xyz 1
         set xyz [Fiducials(tmpXform) GetPoint]
         foreach r $Module(Renderers) {
-        eval Point($r,$pid,follower) SetPosition $xyz
+        eval Point($pid,follower,$r) SetPosition $xyz
         }
         Point($pid,text) SetText [Point($pid,node) GetName]
     }
@@ -486,7 +486,7 @@ proc FiducialsVTKUpdatePoints {} {
             Fiducials($fid,scalars) SetScalar [FiducialsScalarIdFromPointId $fid $pid] 1
             # color the text
             foreach r $Module(Renderers) {
-            eval [Point($r,$pid,follower) GetProperty] SetColor $Fiducials(textSelColor)
+            eval [Point($pid,follower,$r) GetProperty] SetColor $Fiducials(textSelColor)
             }
             # add it to the current list of selected items
             lappend Fiducials($fid,selectedPointIdList) $pid
@@ -516,7 +516,7 @@ proc FiducialsSetTxtScale { val } {
     Point(textXform) Translate 0 0 $Fiducials(textPush)
     [Point(textXform) GetMatrix] SetElement 0 1 .333
     Point(textXform) Scale $Fiducials(textScale) $Fiducials(textScale) 1
-
+    Point(textXform) Update
     Render3D
     }
 
@@ -532,7 +532,7 @@ proc FiducialsSetScale { val } {
     set s $Fiducials(scale)
     Fiducials(symbolXform) Identity
     Fiducials(symbolXform) Scale $s $s $s
-
+    Fiducials(symbolXform) Update
     Render3D
     }
 
@@ -660,16 +660,16 @@ proc FiducialsResetVariables {} {
 
     foreach pid $Fiducials($id,pointIdList) {
         foreach r $Module(Renderers) {
-        $r RemoveActor Point($r,$pid,follower)
-        Point($r,$pid,follower) Delete
+        $r RemoveActor Point($pid,follower,$r)
+        Point($pid,follower,$r) Delete
         }
         Point($pid,mapper) Delete
         Point($pid,text) Delete
     }
     
     foreach r $Module(Renderers) {
-        $r RemoveActor Fiducials($r,$id,actor)
-        Fiducials($r,$id,actor) Delete 
+        $r RemoveActor Fiducials($id,actor,$r)
+        Fiducials($id,actor,$r) Delete 
     }
     Fiducials($id,mapper) Delete 
     Fiducials($id,glyphs) Delete 
@@ -823,7 +823,7 @@ proc FiducialsSelectionFromPicker {actor cellId} {
     
     foreach fid $Fiducials(idList) {
     foreach r $Module(Renderers) {
-        if { $actor == "Fiducials($r,$fid,actor)" } {
+        if { $actor == "Fiducials($fid,actor,$r)" } {
         set pid [FiducialsPointIdFromGlyphCellId $fid $cellId]
         
         
@@ -924,11 +924,12 @@ proc FiducialsUpdateSelectionForActor {fid} {
     foreach pid $Fiducials($fid,pointIdList) {
     # if the point is selected
     if {[lsearch $Fiducials($fid,selectedPointIdList) $pid] != -1} { 
+    
         # color the point to show it is selected
         Fiducials($fid,scalars) SetScalar [FiducialsScalarIdFromPointId $fid $pid] 1
         # color the text
         foreach r $Module(Renderers) {
-        eval [Point($r,$pid,follower) GetProperty] SetColor $Fiducials(textSelColor)
+        eval [Point($pid,follower,$r) GetProperty] SetColor $Fiducials(textSelColor)
         }
         # if it is not selected
     } else {
@@ -936,7 +937,7 @@ proc FiducialsUpdateSelectionForActor {fid} {
         Fiducials($fid,scalars) SetScalar [FiducialsScalarIdFromPointId $fid $pid] 0
         # uncolor the text
         foreach r $Module(Renderers) {
-        eval [Point($r,$pid,follower) GetProperty] SetColor $Fiducials(textColor)
+        eval [Point($pid,follower,$r) GetProperty] SetColor $Fiducials(textColor)
         }
     }
     }
@@ -959,7 +960,7 @@ proc FiducialsDeleteFromPicker {actor cellId} {
     
     foreach fid $Fiducials(idList) {
     foreach r $Module(Renderers) {
-        if { $actor == "Fiducials($r,$fid,actor)" } {
+        if { $actor == "Fiducials($fid,actor,$r)" } {
         
         set pid [FiducialsPointIdFromGlyphCellId $fid $cellId]
         FiducialsDeletePoint $fid $pid
@@ -986,10 +987,10 @@ proc FiducialsSetFiducialsVisibility {rendererName name visibility} {
 
     if {[lsearch $Fiducials(listOfNames) $name] != -1} {
     set fid $Fiducials($name,fid)
-    Fiducials($rendererName,$fid,actor) SetVisibility $visibility
+    Fiducials($fid,actor,$rendererName) SetVisibility $visibility
     # go through the list of followers as well
     foreach pid $Fiducials($fid,pointIdList) {
-        Point($rendererName,$pid,follower) SetVisibility $visibility
+        Point($pid,follower,$rendererName) SetVisibility $visibility
     }
     Render3D
     }
