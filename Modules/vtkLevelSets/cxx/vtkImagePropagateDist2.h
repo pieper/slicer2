@@ -35,8 +35,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkImagePropagateDist2.h,v $
   Language:  C++
-  Date:      $Date: 2005/02/04 18:46:07 $
-  Version:   $Revision: 1.3 $
+  Date:      $Date: 2005/02/05 18:26:30 $
+  Version:   $Revision: 1.4 $
   Author:    Karl Krissian
 
 =========================================================================*/
@@ -70,21 +70,26 @@ class PD_element2 {
       track         = -1;
       prev_neighbor = -1;
       skeleton = 0;
+      squaredist=0;
     };
 
     void Init( const float& px,
       const float& py,
       const float& pz,
       const unsigned char& st,
-      const int& t) 
+           const int& t,
+const float& sqd) 
    {
      x=px;
      y=py;
      z=pz;
      state=st;
      track=t;
+     squaredist=sqd;
    }
  
+  const float& GetSquareDist() { return squaredist; }
+
   const float& X() {return x;}
   const float& Y() {return y;}
   const float& Z() {return z;}
@@ -93,6 +98,13 @@ class PD_element2 {
   const char&          GetPrevNeighbor() {return prev_neighbor;}
   const unsigned char& GetState()        {return state;}
   const unsigned char& GetSkeleton()     {return skeleton;}
+
+  void GetPosTrack(float& px, float& py, float& pz, int& t) {
+      px = x;
+      py = y;
+      pz = z;
+      t= track;
+  }
 
   void SetPos( const float& px, 
            const float& py,
@@ -107,13 +119,26 @@ class PD_element2 {
   void SetPosTrack( const float& px, 
            const float& py,
            const float& pz,
-           const int& t
+            const int& t
       )
     {
       x = px;
       y = py;
       z = pz;
       track = t;
+    }
+
+  void SetPosTrack( const float& px, 
+           const float& py,
+           const float& pz,
+            const int& t,
+            const float& sqd      )
+    {
+      x = px;
+      y = py;
+      z = pz;
+      track = t;
+      squaredist=sqd;
     }
 
   void SetState( const unsigned char& st)
@@ -139,6 +164,7 @@ class PD_element2 {
   float x;
   float y;
   float z;
+  float squaredist;
   unsigned char state;
   int track;
   char prev_neighbor;
@@ -199,6 +225,11 @@ protected:
 
   void PropagateDanielsson2D();
   void PropagateDanielsson3D();
+
+  void new3D_update_neighbors(int k,int* n, int* nx, int* ny, int* nz, float* buf);
+
+  void new3D_update_neighbors2(const int& k,  int* n,float* buf);
+
   void PropagateDanielsson3D_new();
 
   // Methods for saving information from the process as images
@@ -215,6 +246,7 @@ protected:
   int IncList1();
   int CheckIncList1(int);
   int IncListRemainingTrial();
+  int CheckIncListRemainingTrial(int);
 
   float ComputeDistance(const float& dx, const float& dy, const float& dz);
 
@@ -272,6 +304,10 @@ protected:
   // For use of output array
   vtkFloatArray* float_array;
   unsigned char  float_array_allocated;
+
+  int neighbors_type[5];
+  int total_track_discarded;
+  float min_dist_neighbors;
 
 //ETX
 };
