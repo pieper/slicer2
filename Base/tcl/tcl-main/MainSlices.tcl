@@ -26,6 +26,7 @@
 #   MainSlicesBuildVTK
 #   MainSlicesBuildControlsForVolume
 #   MainSlicesBuildControls s F
+#   MainSlicesBuildAdvancedControlsPopup
 #   MainSlicesUpdateMRML
 #   MainSlicesVolumeParam
 #   MainSlicesSetClipState
@@ -35,15 +36,15 @@
 #   MainSlicesKeyPress
 #   MainSlicesSetActive
 #   MainSlicesSetVolumeAll
-#   MainSlicesSetVolume
+#   MainSlicesSetVolume string int int
 #   MainSlicesSetOffsetInit
-#   MainSlicesSetOffset
-#   MainSlicesSetSliderRange
+#   MainSlicesSetOffset int float
+#   MainSlicesSetSliderRange int
 #   MainSlicesSetOrientAll
-#   MainSlicesSetOrient
+#   MainSlicesSetOrient int string
 #   MainSlicesResetZoomAll
 #   MainSlicesSetZoomAll
-#   MainSlicesConfigGui
+#   MainSlicesConfigGui int string string
 #   MainSlicesSetZoom
 #   MainSlicesSetVisibilityAll
 #   MainSlicesSetVisibility
@@ -53,14 +54,17 @@
 #   MainSlicesSavePopup
 #   MainSlicesWrite
 #   MainSlicesStorePresets
+#   MainSlicesRecallPresets
 #   MainSlicesOffsetToPoint
 #   MainSlicesAllOffsetToPoint
+#   MainSlicesAdvancedControlsPopup
+#   MainSlicesSetOffsetIncrement
 #==========================================================================auto=
 
 
 #-------------------------------------------------------------------------------
 # .PROC MainSlicesInit
-# 
+# Init proc called by slicer at startup
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -84,7 +88,7 @@ proc MainSlicesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainSlices \
-		{$Revision: 1.31 $} {$Date: 2002/01/28 03:05:38 $}]
+		{$Revision: 1.32 $} {$Date: 2002/01/28 16:51:57 $}]
 
 	# Initialize Variables
 	set Slice(idList) "0 1 2"
@@ -178,7 +182,8 @@ proc MainSlicesInit {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainSlicesBuildVTK
-# 
+# Build VTK objects.  slice actors, clipping planes, textures, etc for
+# all display in the 3D Viewer window.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -246,8 +251,12 @@ proc MainSlicesBuildVTK {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainSlicesBuildControlsForVolume
-# 
+# Build volume selection controls for a slice in frame f.
 # .ARGS
+# f widget frame to place controls in
+# s int slice (0,1,2)
+# layer str one of Fors, Back, Label
+# text str initial text for menubutton over menu (None for example)
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesBuildControlsForVolume {f s layer text} {
@@ -280,7 +289,8 @@ proc MainSlicesBuildControlsForVolume {f s layer text} {
 # .PROC MainSlicesBuildControls
 # 
 # Called from MainViewer.tcl in MainViewerBuildGUI.
-#
+# Builds all controls above a slice window.  Also called to
+# build the same controls for the Slices module.
 # .ARGS
 #  int s the id of the Slice
 #  str F the name of the Slice Window
@@ -412,6 +422,15 @@ proc MainSlicesBuildControls {s F} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC MainSlicesBuildAdvancedControlsPopup
+# Build the advanced slice controls window for one slice.  Pop it up 
+# by calling proc MainSlicesAdvancedControlsPopup.
+# Currently the window supports manual zoom entry and also
+# setting of the slice slider increment value.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc MainSlicesBuildAdvancedControlsPopup {s} {
     global Gui
 
@@ -503,7 +522,7 @@ proc MainSlicesBuildAdvancedControlsPopup {s} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainSlicesUpdateMRML
-# 
+# Update volume display and slice controls GUIs when MRML updates.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -561,8 +580,12 @@ proc MainSlicesUpdateMRML {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainSlicesVolumeParam
-# 
+#  Set a parameter for a slicer volume.  Also make that one
+# the active volume.  Calls MainVolumesSetParam 
 # .ARGS
+# s int slice (0,1,2)
+# param str name of parameter
+# value str value to set
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesVolumeParam {s param value} {
@@ -576,10 +599,14 @@ proc MainSlicesVolumeParam {s param value} {
 #-------------------------------------------------------------------------------
 # .PROC MainSlicesSetClipState
 #
-#  Assumes Slice(id,clipState) is set
+#  Uses Slice(id,clipState) if state is empty str.
 #  Makes appropriate changes to Slice(clipPlanes) 
-#
+#  states 1 and 2 use clipping (is there a difference btwn these?).
+#  state 0 is no clipping.
 # Usage: MainSlicesSetClipState id
+# .ARGS
+# s int slice id (0,1,2)
+# state int clip state to use (1,2 or empty string)
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesSetClipState {s {state ""}} {
@@ -610,8 +637,11 @@ proc MainSlicesSetClipState {s {state ""}} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainSlicesRefreshClip
-# 
+# Update clipping.
+# Set normal and origin of clip plane using current
+# info from vtkMrmlSlicer's reformat matrix.
 # .ARGS
+# s int slice id (0,1,2)
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesRefreshClip {s} {
@@ -643,7 +673,8 @@ proc MainSlicesRefreshClip {s} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainSlicesSetFov
-# 
+#  For all slices, resets the slider range and tells actors their scale.
+#  Called from MainViewSetFov
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -660,9 +691,11 @@ proc MainSlicesSetFov {} {
 #-------------------------------------------------------------------------------
 # .PROC MainSlicesCenterCursor
 #
-# 
-# Called when the mouse exits a window
+# Puts cursor (crosshair) in the center of the slice window. 
+# Called when the mouse exits a window.
 # Usage: CenterCursor sliceid
+# .ARGS
+# s int slice id
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesCenterCursor {s} {
@@ -683,6 +716,8 @@ proc MainSlicesCenterCursor {s} {
 #
 #  Up and Down moves the slice offset.
 #  Left and Right calles EditApplyFilter from Edit.tcl
+# .ARGS
+# key str the key that was pressed with mouse over the slice window
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesKeyPress {key} {
@@ -722,7 +757,10 @@ proc MainSlicesKeyPress {key} {
  
 #-------------------------------------------------------------------------------
 # .PROC MainSlicesSetActive
-# 
+# Set the active slice. This is called when the user clicks
+# on a slice.  The active slice is the one that is updated interactively 
+# when the user is changing the threshold or window/level, for
+# example.  It's also the one that the user is currently editing, etc.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -789,7 +827,12 @@ proc MainSlicesSetVolumeAll {Layer v} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainSlicesSetVolume
+# Set the volume to be displayed in this layer and this slice window.
 # Layer can be Back, Fore,Label
+# .ARGS 
+# Layer string one of the three composited slice image layers
+# s int 0,1,or 2 the slice image window
+# v int the id of the volume to display
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesSetVolume {Layer s v} {
@@ -826,7 +869,7 @@ proc MainSlicesSetVolume {Layer s v} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainSlicesSetOffsetInit
-# 
+# wrapper around MainSlicesSetOffset. Also calls RenderBoth
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -840,8 +883,13 @@ proc MainSlicesSetOffsetInit {s widget {value ""}} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainSlicesSetOffset
-# 
+# Set the offset from volume center at which slice should be reformatted.
+# Slice plane normal is already defined by the reformat matrix set in the
+# vtrkMrmlSlicer object for slice s.  This matrix changes when the 
+# Orient menu is used.
 # .ARGS
+# s int slice window (0,1,or 2)
+# value float offset from center of vol (proc is called from GUI with no value) 
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesSetOffset {s {value ""}} {
@@ -874,8 +922,11 @@ proc MainSlicesSetOffset {s {value ""}} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainSlicesSetSliderRange
-# 
+# Set the max and min values reachable with the slice selection slider.
+# Called when the volume in the background changes 
+# (in case num slices, resolution have changed)
 # .ARGS
+# s int slice window (0,1,2)
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesSetSliderRange {s} {
@@ -892,7 +943,7 @@ proc MainSlicesSetSliderRange {s} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainSlicesSetOrientAll
-# 
+# Set all slice windows to have some orientation (i.e. Axial, etc)
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -970,8 +1021,11 @@ proc MainSlicesSetOrientAll {orient} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainSlicesSetOrient
+# Set one slice window to have some orientation (i.e. Axial, etc)
 # 
 # .ARGS
+# s int slice window (0,1,2)
+# orient string one of Axial AxiSlice Sagittal SagSlice, etc. from menu
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesSetOrient {s orient} {
@@ -1044,7 +1098,7 @@ proc MainSlicesSetOrient {s orient} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainSlicesResetZoomAll
-# 
+# Set zoom in all slice windows to 1
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -1079,8 +1133,16 @@ proc MainSlicesSetZoomAll {zoom} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainSlicesConfigGui
-# 
+# Configure any gui widget for slice s.  The GUI is duplicated
+# once above the slice and once in the Slices module, so always
+# call this procedure to configure them both.  Example of usage is:
+# Change text on menu button by doing
+# MainSlicesConfigGui $s fOrient.mbOrient$s "-text $orient"
+#
 # .ARGS
+# s int slice (0,1,2)
+# gui string widget to configure (look in proc MainSlicesBuildControls)
+# config string tk configure line to use
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesConfigGui {s gui config} {
@@ -1175,8 +1237,9 @@ proc MainSlicesSetVisibility {s} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainSlicesSetOpacityAll
-# 
+#  Set opacity of all Fore layers to value
 # .ARGS
+# value int opacity value
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesSetOpacityAll {{value ""}} {
@@ -1192,8 +1255,12 @@ proc MainSlicesSetOpacityAll {{value ""}} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainSlicesSetFadeAll
-# 
+# Set fade of all slices to value.  
+# This controls the behavior of the display when using the opacity slider
+# to blend from foreground to background slice (image overlay).
+# Ron says this doesn't actually work...
 # .ARGS
+# fade bool whether to fade.
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesSetFadeAll {{value ""}} {
@@ -1209,7 +1276,8 @@ proc MainSlicesSetFadeAll {{value ""}} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainSlicesSave
-# 
+# Save a slice window into an image file.
+# Calls MainSlicesWrite.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -1230,7 +1298,7 @@ proc MainSlicesSave {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainSlicesSavePopup
-# 
+# Pop up a save dialog box to write the slice image.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -1262,7 +1330,7 @@ proc MainSlicesSavePopup {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainSlicesWrite
-# 
+# Write the active slice's image into a file.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -1336,7 +1404,7 @@ proc MainSlicesWrite {filename} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainSlicesStorePresets
-# 
+# Store current settings into preset global variables
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -1356,7 +1424,15 @@ proc MainSlicesStorePresets {p} {
 	set Preset(Slices,$p,opacity) $Slice(opacity)
 	set Preset(Slices,$p,fade) $Slice(fade)
 }
-	    
+
+
+
+#-------------------------------------------------------------------------------
+# .PROC MainSlicesRecallPresets
+# Set current settings from preset global variables
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc MainSlicesRecallPresets {p} {
 	global Preset Slice
 
@@ -1377,7 +1453,13 @@ proc MainSlicesRecallPresets {p} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainSlicesOffsetToPoint
+# Implemented by Peter Everett.
+# Reformat a slice at point  x y z
 # 
+# NOTICE: THIS CODE SHOULD BE REMOVED THE INSTANT
+# THAT vtkMrmlSlicer SUPPORTS IT. The internallogic
+# of the reformatter should not be duplicated here.
+# YOU HAVE BEEN WARNED. Here is the replacement code:	
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -1420,7 +1502,7 @@ proc MainSlicesOffsetToPoint { s x y z } {
 
 #-------------------------------------------------------------------------------
 # .PROC MainSlicesAllOffsetToPoint
-# 
+# All slices reformatted at a point
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -1434,6 +1516,13 @@ proc MainSlicesAllOffsetToPoint { x y z } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC MainSlicesAdvancedControlsPopup
+# Pop up the advanced slice controls window.  Called from
+# the menu under the V for visibility button.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc MainSlicesAdvancedControlsPopup {s} {
     global Gui
     
@@ -1445,6 +1534,18 @@ proc MainSlicesAdvancedControlsPopup {s} {
     ShowPopup $Gui(wSlicesAdv$s) 0 0
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MainSlicesSetOffsetIncrement
+# Set the increment by which the slice slider should move.
+# The default in the slicer is 1, which is 1 mm.
+# Note this procedure will force increment to 1 if in any
+# of the Slices orientations which just grab original data from the array.
+# In this case the increment would mean 1 slice instead of 1 mm.
+# .ARGS
+# s int slice number (0,1,2)
+# incr float increment slider should move by. is empty str if called from GUI
+# .END
+#-------------------------------------------------------------------------------
 proc MainSlicesSetOffsetIncrement {s {incr ""}} {
     global Slice
 

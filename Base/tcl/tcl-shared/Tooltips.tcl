@@ -27,6 +27,9 @@
 #   TooltipExitWidget
 #   TooltipPopUp
 #   TooltipPopDown
+#   TooltipDisable
+#   TooltipEnable
+#   TooltipToggle
 #==========================================================================auto=
 
 
@@ -174,6 +177,12 @@ proc TooltipPopDown {} {
     catch {destroy $Tooltips(window)}
 }
 
+#-------------------------------------------------------------------------------
+# .PROC TooltipDisable
+# Turn off display of tooltips
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc TooltipDisable {} {
     global Tooltips
 
@@ -184,6 +193,12 @@ proc TooltipDisable {} {
     set Tooltips(enabled) 0
 }
 
+#-------------------------------------------------------------------------------
+# .PROC TooltipEnable
+# Turn on display of tooltips
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc TooltipEnable {} {
     global Tooltips
 
@@ -191,6 +206,12 @@ proc TooltipEnable {} {
     set Tooltips(enabled) 1
 }
 
+#-------------------------------------------------------------------------------
+# .PROC TooltipToggle
+# Toggle tooltip display on/off
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc TooltipToggle {} {
     global Tooltips
 
