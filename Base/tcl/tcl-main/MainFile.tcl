@@ -68,7 +68,7 @@ proc MainFileInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainFile \
-		{$Revision: 1.26 $} {$Date: 2001/05/31 00:22:03 $}]
+		{$Revision: 1.27 $} {$Date: 2001/11/19 02:29:36 $}]
 
 	set File(filePrefix) data
 }
@@ -466,6 +466,7 @@ proc MainFileOpenApply {} {
 
 	MainMrmlRead $filename
 	MainUpdateMRML
+	MainOptionsRetrievePresetValues
 	MainSetup
 	RenderAll
 
