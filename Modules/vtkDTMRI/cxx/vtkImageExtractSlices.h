@@ -38,13 +38,13 @@ class VTK_DTMRI_EXPORT vtkImageExtractSlices : public vtkImageToImageFilter
   vtkSetMacro(Mode, int);
   vtkGetMacro(Mode, int);
 
-  void SetModeToSlice(void)
+  void SetModeToSLICE(void)
   {
    this->SetMode(0);
    this->Modified();
   };
 
-  void SetModeToVolume(void)
+  void SetModeToVOLUME(void)
   {
   this->SetMode(1);
   this->Modified(); 

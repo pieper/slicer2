@@ -68,12 +68,11 @@ void vtkImageExtractSlices::ExecuteInformation(vtkImageData *input,
   }
   
   if(this->Mode == MODEVOLUME) {
-
+    totalInSlices = inExt[5] - inExt[4] + 1;
   if(fmod(totalInSlices,this->SlicePeriod)!=0) {
      vtkErrorMacro("We cannot run");
      return;
   }
-  totalInSlices = inExt[5] - inExt[4] + 1;
   outExt[5] = outExt[4] - 1 + totalInSlices/this->SlicePeriod;
   vtkDebugMacro("setting out ext to " << outExt[5]);
   output->SetWholeExtent(outExt); 
