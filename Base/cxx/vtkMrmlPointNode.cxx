@@ -45,6 +45,10 @@ vtkMrmlPointNode* vtkMrmlPointNode::New()
 vtkMrmlPointNode::vtkMrmlPointNode()
 {
   this->XYZ[0] = this->XYZ[1] = this->XYZ[2] = 0.0;
+  this->FXYZ[0] = 0.0;
+  this->FXYZ[1] = 0.0; 
+  this->FXYZ[2] = 0.0;
+  this->Index = 0.0;
 }
 
 //----------------------------------------------------------------------------
@@ -73,9 +77,11 @@ void vtkMrmlPointNode::Write(ofstream& of, int nIndent)
   }
 
   // Point
+  of << "index='" << this->Index << "'";
   of << " xyz='" << this->XYZ[0] << " " << this->XYZ[1] << " " <<
                     this->XYZ[2] << "'";
-
+  of << " focalxyz='" << this->FXYZ[0] << " " << this->FXYZ[1] << " " <<
+    this->FXYZ[2] << "'";
   of << "></Point>\n";;
 }
 
@@ -90,6 +96,10 @@ void vtkMrmlPointNode::Copy(vtkMrmlNode *anode)
   this->XYZ[0] = node->XYZ[0];
   this->XYZ[1] = node->XYZ[1];
   this->XYZ[2] = node->XYZ[2];
+  this->FXYZ[0] = node->FXYZ[0];
+  this->FXYZ[1] = node->FXYZ[1];
+  this->FXYZ[2] = node->FXYZ[2];
+  this->Index = node->Index;
 }
 
 //----------------------------------------------------------------------------
@@ -100,10 +110,18 @@ void vtkMrmlPointNode::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "Name: " <<
     (this->Name ? this->Name : "(none)") << "\n";
 
+  // INDEX
+  os << indent << "Index: " << this->Index << "\n";
+
   // XYZ
   os << indent << "XYZ: (";
   os << indent << this->XYZ[0] << ", " << this->XYZ[1] << ", " << this->XYZ[2]
-                  << ")";
+                  << ") \n" ;
+
+// FXYZ
+  os << indent << "FXYZ: (";
+  os << indent << this->FXYZ[0] << ", " << this->FXYZ[1] << ", " << this->FXYZ[2] << ")" << "\n";
+
 }
 
 
