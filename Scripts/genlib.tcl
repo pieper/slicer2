@@ -368,6 +368,9 @@ if { ![file exists $vtkTestFile] } {
     runcmd cvs -d :pserver:anonymous:vtk@public.kitware.com:/cvsroot/VTK login
     runcmd cvs -z3 -d :pserver:anonymous@public.kitware.com:/cvsroot/VTK checkout -r $vtkTag VTK
 
+    # Andy's temporary hack to get around wrong permissions in VTK cvs repository
+    file attributes $SLICER_LIB/VTK/VTKConfig.cmake.in -permissions a+rw
+
     file mkdir $SLICER_LIB/VTK-build
     cd $SLICER_LIB/VTK-build
 
