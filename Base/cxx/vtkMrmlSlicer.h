@@ -354,16 +354,29 @@ class VTK_EXPORT vtkMrmlSlicer : public vtkObject
   vtkBooleanMacro(FilterOverlay, int);
 
   //-------------------- Additional Reformatting ---------------------------//
-  // Description:
   // For developers: convenience functions that reformat volumes 
   // in the slicer.
+
+  // Description:
+  // Add a volume to the list we are reformatting.
+  void AddVolumeToReformat(vtkMrmlVolume * v);
+
+  // Description:
+  // Call this to clear out the volumes when your module is exited.
+  void RemoveAllVolumesToReformat();
+
+  // Description:
+  // Get the reformatted slice from this volume.  The volume
+  // must have been added first.  Currently this reformats
+  // along with the active slice in the Slicer.
   vtkImageData *GetReformatOutputFromVolume(vtkMrmlVolume *v) {
     return this->GetVolumeReformatter(v)->GetOutput();
   };
   
+  // Description:
+  // Set reformat matrix same as that of this slice
   void ReformatVolumeLikeSlice(vtkMrmlVolume * v, int s);
-  void AddVolumeToReformat(vtkMrmlVolume * v);
-  void RemoveAllVolumesToReformat();
+
 
   //-------------------- Draw ---------------------------//
   // Description:
