@@ -1,6 +1,5 @@
 package require Iwidgets
 package require http
-package require tls
 #
 # a toplevel window that displays cortical parcellation options
 # - meant to be sourced into the slicer
@@ -541,7 +540,7 @@ itcl::body regions::findptscalars {} {
         } 
  
     }
- FiducialsUpdateMRML
+    FiducialsUpdateMRML
 }
 
 itcl::body regions::umls {} {
@@ -690,6 +689,11 @@ itcl::body regions::talairach {} {
        set tal(1) [expr round($x0)]
        set tal(2) [expr round($y0)]
        set tal(3) [expr round($z0)]
+    }
+
+    if { ![info exists tal(1)] } {
+        puts stderr "talairach failed (which is $which)"
+        return
     }
     puts "$tal(1) $tal(2) $tal(3)"
     #open socket, send coordinate to Talairach Daemon query
