@@ -44,6 +44,7 @@ switch $tcl_platform(os) {
     "Darwin" {
         set SLICER_HOME /Users/pieper/slicer2/latest/slicer2
         set VTK_BINARY_PATH /Users/pieper/downloads/vtk/vtk4.2/VTK-4.2.1-build
+        set VTK_SRC_PATH /Users/pieper/downloads/vtk/vtk4.2/VTK-4.2.1
         set BUILD Darwin
         set VTKSLICERBASE_BUILD_LIB $SLICER_HOME/Base/builds/$BUILD/bin/vtkSlicerBase.dylib
         set GENERATOR "Unix Makefiles" 
@@ -128,6 +129,11 @@ switch $tcl_platform(os) {
         # we link with
         set VTK_ARG4 "-DCMAKE_CXX_COMPILER:STRING=$COMPILER"
         set VTK_ARG5 "-DCMAKE_CXX_COMPILER_FULLPATH:FILEPATH=/local/os/bin/$COMPILER"
+    }
+    "Darwin" {
+        set VTK_ARG3 "-DVTK_WRAP_HINTS:FILEPATH=$VTK_SRC_PATH/Wrapping/hints"
+        set VTK_ARG4 "-DDUMMY:BOOL=ON"
+        set VTK_ARG5 "-DDUMMY:BOOL=ON"
     }
     default {
         set VTK_ARG3 "-DDUMMY:BOOL=ON"
