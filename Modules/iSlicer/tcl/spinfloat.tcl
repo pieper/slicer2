@@ -16,7 +16,7 @@
 #                                     E-mail: syockey@spd.dsccc.com
 #                                             yockey@acm.org
 #
-#   @(#) $Id: spinfloat.tcl,v 1.1 2004/02/17 16:31:58 pieper Exp $
+#   @(#) $Id: spinfloat.tcl,v 1.2 2004/03/10 23:48:32 pieper Exp $
 # ----------------------------------------------------------------------
 #            Copyright (c) 1995 DSC Technologies Corporation
 # ======================================================================
@@ -61,7 +61,7 @@ if { [info command ::iwidgets::spinfloat] == "" } {
         inherit iwidgets::Spinner 
 
         constructor {args} {
-            Spinner::constructor -validate numeric 
+            Spinner::constructor -validate real 
         } {}
 
         itk_option define -range range Range "" 
