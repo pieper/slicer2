@@ -122,7 +122,7 @@ proc DTMRIInit {} {
     set Module($m,author) "Lauren O'Donnell"
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.36 $} {$Date: 2004/11/12 05:41:41 $}]
+                  {$Revision: 1.37 $} {$Date: 2004/11/12 06:56:45 $}]
 
      # Define Tabs
     #------------------------------------
@@ -529,48 +529,9 @@ proc DTMRIInit {} {
 
     
 
-    # Lauren fix this
     set DTMRI(Description) ""
     set DTMRI(Name) ""
 
-    DTMRIMakeVTKObject vtkTensorImplicitFunctionToFunctionSet itf
-    set DTMRI(vtk,BSpline,init) 0
-    set DTMRI(vtk,BSpline,data) 0
-
-    if {[info command vtkITKBSplineImageFilter] == ""} {
-            DevErrorWindow "DTMRI\nERROR: vtkITKBSplineImageFilter does not exist, cannot use bspline filter"
-    }
-    for {set i 0} {$i < 6} {incr i 1} {
-        DTMRIMakeVTKObject vtkBSplineInterpolateImageFunction impComp($i)
-        DTMRI(vtk,itf) AddImplicitFunction DTMRI(vtk,impComp($i)) $i
-        if {[info command vtkITKBSplineImageFilter] != ""} {
-            DTMRIMakeVTKObject vtkITKBSplineImageFilter bspline($i)
-        } 
-    DTMRIMakeVTKObject vtkExtractTensorComponents extractor($i)
-    DTMRI(vtk,extractor($i)) PassTensorsToOutputOff
-    DTMRI(vtk,extractor($i)) ExtractScalarsOn
-    DTMRI(vtk,extractor($i)) ExtractVectorsOff
-    DTMRI(vtk,extractor($i)) ExtractNormalsOff
-    DTMRI(vtk,extractor($i)) ExtractTCoordsOff
-    DTMRI(vtk,extractor($i)) ScalarIsComponent
-    }
-
-    DTMRI(vtk,extractor(0)) SetScalarComponents 0 0
-    DTMRI(vtk,extractor(1)) SetScalarComponents 0 1
-    DTMRI(vtk,extractor(2)) SetScalarComponents 0 2
-    DTMRI(vtk,extractor(3)) SetScalarComponents 1 1
-    DTMRI(vtk,extractor(4)) SetScalarComponents 1 2
-    DTMRI(vtk,extractor(5)) SetScalarComponents 2 2
-
-    DTMRIMakeVTKObject vtkRungeKutta45 rk45
-    DTMRIMakeVTKObject vtkRungeKutta4 rk4
-    DTMRIMakeVTKObject vtkRungeKutta2 rk2
-
-    DTMRI(vtk,rk45) SetFunctionSet DTMRI(vtk,itf)
-    DTMRI(vtk,rk4) SetFunctionSet DTMRI(vtk,itf)
-    DTMRI(vtk,rk2) SetFunctionSet DTMRI(vtk,itf)
-
-    set DTMRI(vtk,ivps) DTMRI(vtk,rk4)
 }
 
 ################################################################
@@ -3831,7 +3792,9 @@ proc DTMRISelectStartHyperStreamline {x y z {render "true"} } {
 
 
     # Set up all parameters from the user
-    #DTMRIUpdateStreamlineSettings
+    # NOTE: TODO: make an Apply button and only call this 
+    # when the user changes settings. Here it is too slow.
+    DTMRIUpdateStreamlineSettings
 
     # actually create and display the streamline
     DTMRI(vtk,streamlineControl) SeedStreamlineFromPoint $x $y $z
@@ -3948,6 +3911,26 @@ proc DTMRIUpdateTractingMethod { TractingMethod } {
                 raise $DTMRI(stream,tractingFrame,BSpline)
                 focus $DTMRI(stream,tractingFrame,BSpline)
                 $DTMRI(gui,mbTractingMethod)    config -text $TractingMethod
+
+                # Apparently all of these Updates really are needed
+                # set up the BSpline tractography pipeline
+                set t $Tensor(activeID)
+                set DTMRI(vtk,BSpline,data) 1
+                set DTMRI(vtk,BSpline,init) 1;
+                DTMRI(vtk,itf) SetDataBounds [Tensor($t,data) GetOutput]
+                for {set i 0} {$i < 6} {incr i} {
+                    DTMRI(vtk,extractor($i)) SetInput [Tensor($t,data) GetOutput]
+                }
+                for {set i 0} {$i < 6} {incr i} {
+                    DTMRI(vtk,extractor($i)) Update
+                    DTMRI(vtk,bspline($i)) SetInput [DTMRI(vtk,extractor($i)) GetOutput]
+                }          
+                DTMRIUpdateBSplineOrder $DTMRI(stream,BSplineOrder)
+                for {set i 0} {$i < 6} {incr i} {
+                    DTMRI(vtk,bspline($i)) Update
+                    DTMRI(vtk,impComp($i)) SetInput [DTMRI(vtk,bspline($i)) GetOutput]
+                }
+
             }
         }
     }
@@ -4996,6 +4979,53 @@ proc DTMRIBuildVTK {} {
     DTMRI(vtk,streamlineControl) SetVtkPreciseHyperStreamlinePointsSettings \
         DTMRI(vtk,$streamline)
     
+
+
+    #---------------------------------------------------------------
+    # Pipeline for BSpline tractography (moved from proc DTMRIInit)
+    #---------------------------------------------------------------
+
+    DTMRIMakeVTKObject vtkTensorImplicitFunctionToFunctionSet itf
+    set DTMRI(vtk,BSpline,init) 0
+    set DTMRI(vtk,BSpline,data) 0
+    
+    if {[info command vtkITKBSplineImageFilter] == ""} {
+        DevErrorWindow "DTMRI\nERROR: vtkITKBSplineImageFilter does not exist, cannot use bspline filter"
+    }
+    for {set i 0} {$i < 6} {incr i 1} {
+        DTMRIMakeVTKObject vtkBSplineInterpolateImageFunction impComp($i)
+        DTMRI(vtk,itf) AddImplicitFunction DTMRI(vtk,impComp($i)) $i
+        if {[info command vtkITKBSplineImageFilter] != ""} {
+            DTMRIMakeVTKObject vtkITKBSplineImageFilter bspline($i)
+        } 
+        DTMRIMakeVTKObject vtkExtractTensorComponents extractor($i)
+        DTMRI(vtk,extractor($i)) PassTensorsToOutputOff
+        DTMRI(vtk,extractor($i)) ExtractScalarsOn
+        DTMRI(vtk,extractor($i)) ExtractVectorsOff
+        DTMRI(vtk,extractor($i)) ExtractNormalsOff
+        DTMRI(vtk,extractor($i)) ExtractTCoordsOff
+        DTMRI(vtk,extractor($i)) ScalarIsComponent
+    }
+    
+    DTMRI(vtk,extractor(0)) SetScalarComponents 0 0
+    DTMRI(vtk,extractor(1)) SetScalarComponents 0 1
+    DTMRI(vtk,extractor(2)) SetScalarComponents 0 2
+    DTMRI(vtk,extractor(3)) SetScalarComponents 1 1
+    DTMRI(vtk,extractor(4)) SetScalarComponents 1 2
+    DTMRI(vtk,extractor(5)) SetScalarComponents 2 2
+    
+    DTMRIMakeVTKObject vtkRungeKutta45 rk45
+    DTMRIMakeVTKObject vtkRungeKutta4 rk4
+    DTMRIMakeVTKObject vtkRungeKutta2 rk2
+    
+    DTMRI(vtk,rk45) SetFunctionSet DTMRI(vtk,itf)
+    DTMRI(vtk,rk4) SetFunctionSet DTMRI(vtk,itf)
+    DTMRI(vtk,rk2) SetFunctionSet DTMRI(vtk,itf)
+    
+    set DTMRI(vtk,ivps) DTMRI(vtk,rk4)
+    
+
+
     # Apply all settings from tcl variables that were
     # created above using calls to DTMRIAddObjectProperty
     #------------------------------------
@@ -6232,23 +6262,24 @@ proc DTMRISetActive {n} {
     DTMRIUpdateTractColorToSolid
 
     
-    # set up the BSpline tractography pipeline
-    set DTMRI(vtk,BSpline,data) 1
-    set DTMRI(vtk,BSpline,init) 1;
-    #DTMRI(vtk,itf) SetDataBounds [Tensor($t,data) GetOutput]
-    DTMRI(vtk,itf) SetDataBounds [DTMRI(vtk,streamline,merge) GetOutput]
-    for {set i 0} {$i < 6} {incr i} {
-        #DTMRI(vtk,extractor($i)) SetInput [Tensor($t,data) GetOutput]
-        DTMRI(vtk,extractor($i)) SetInput \
-            [DTMRI(vtk,streamline,merge) GetOutput]
-    }
-    for {set i 0} {$i < 6} {incr i} {
-        #DTMRI(vtk,extractor($i)) Update
-        DTMRI(vtk,bspline($i)) SetInput [DTMRI(vtk,extractor($i)) GetOutput]
-    }          
-    DTMRIUpdateBSplineOrder $DTMRI(stream,BSplineOrder)
-    for {set i 0} {$i < 6} {incr i} {
-        #DTMRI(vtk,bspline($i)) Update
-        DTMRI(vtk,impComp($i)) SetInput [DTMRI(vtk,bspline($i)) GetOutput]
-    }
+#     # set up the BSpline tractography pipeline
+#     set DTMRI(vtk,BSpline,data) 1
+#     set DTMRI(vtk,BSpline,init) 1;
+#     DTMRI(vtk,itf) SetDataBounds [Tensor($t,data) GetOutput]
+#     #DTMRI(vtk,itf) SetDataBounds [DTMRI(vtk,streamline,merge) GetOutput]
+#     for {set i 0} {$i < 6} {incr i} {
+#         DTMRI(vtk,extractor($i)) SetInput [Tensor($t,data) GetOutput]
+#         #DTMRI(vtk,extractor($i)) SetInput \
+#         #    [DTMRI(vtk,streamline,merge) GetOutput]
+#     }
+#     for {set i 0} {$i < 6} {incr i} {
+#         #DTMRI(vtk,extractor($i)) Update
+#         DTMRI(vtk,bspline($i)) SetInput [DTMRI(vtk,extractor($i)) GetOutput]
+#     }          
+#     DTMRIUpdateBSplineOrder $DTMRI(stream,BSplineOrder)
+#     for {set i 0} {$i < 6} {incr i} {
+#         #DTMRI(vtk,bspline($i)) Update
+#         DTMRI(vtk,impComp($i)) SetInput [DTMRI(vtk,bspline($i)) GetOutput]
+#     }
 }
+
