@@ -16,7 +16,7 @@
 #define volumeBox 3
 
 #ifndef VTK_IMPLEMENT_MESA_CXX
-vtkCxxRevisionMacro(vtkOpenGLVolumeTextureMapper3D, "$Revision: 1.7 $");
+vtkCxxRevisionMacro(vtkOpenGLVolumeTextureMapper3D, "$Revision: 1.8 $");
 vtkStandardNewMacro(vtkOpenGLVolumeTextureMapper3D);
 #endif
 
@@ -28,6 +28,7 @@ vtkStandardNewMacro(vtkOpenGLVolumeTextureMapper3D);
     PFNGLTEXIMAGE3DEXTPROC glTexImage3DEXT;
     PFNGLTEXSUBIMAGE3DEXTPROC glTexSubImage3DEXT;
     PFNGLCOLORTABLEEXTPROC glColorTableEXT;
+    PFNGLCOLORTABLEPROC glColorTableNOT_EXT;
 #endif
 
 int intersectionPlanes[12][4] ={0, 1, 0, 1,
@@ -123,9 +124,28 @@ void vtkOpenGLVolumeTextureMapper3D::Render(vtkRenderer *ren, vtkVolume *vol)
     using_palette = isExtensionSupported("GL_EXT_paletted_texture");        
     #ifdef WIN32
        glTexImage3DEXT = (PFNGLTEXIMAGE3DEXTPROC) wglGetProcAddress("glTexImage3DEXT");
+       if (glTexImage3DEXT == NULL ) 
+       {    vtkErrorMacro(<< "Cannot get pointer for glTexImage3DEXT");
+       }
        glTexSubImage3DEXT = (PFNGLTEXSUBIMAGE3DEXTPROC) wglGetProcAddress("glTexSubImage3DEXT");
+       if (glTexSubImage3DEXT == NULL ) 
+       {    vtkErrorMacro(<< "Cannot get pointer for glTexSubImage3DEXT ");
+       }
        glColorTableEXT = (PFNGLCOLORTABLEEXTPROC) wglGetProcAddress("glColorTableEXT");
-       //#define glColorTable glColorTableEXT
+       if (glColorTableEXT == NULL ) 
+       {    vtkErrorMacro(<< "Cannot get pointer for glColorTableEXT ");
+
+           glColorTableNOT_EXT = (PFNGLCOLORTABLEPROC) wglGetProcAddress("glColorTable");
+           if (glColorTableNOT_EXT == NULL ) 
+           {    vtkErrorMacro(<< "Cannot get pointer for glColorTable ");
+           } else 
+           {    //glColorTable = glColorTableNOT_EXT;
+           }
+       } else 
+       {    //glColorTable = glColorTableEXT;
+       }
+
+       #define glColorTable glColorTableEXT
     #else
        #ifndef GL_TEXTURE_COLOR_TABLE_SGI
        #  define GL_TEXTURE_COLOR_TABLE_SGI -1
@@ -265,13 +285,13 @@ void vtkOpenGLVolumeTextureMapper3D::CreateEmptyTexture()
     {
       for (int t = 0; t < textureSizeY[i]; t++)
       {
-    for (int r = 0; r < textureSizeX[i]; r++) 
-    {
-      emptyImage[r][t][s][0] = (GLubyte) (0);
-      emptyImage[r][t][s][1] = (GLubyte) (0);
-      emptyImage[r][t][s][2] = (GLubyte) (0);
-      emptyImage[r][t][s][3] = (GLubyte) (0);
-    }
+        for (int r = 0; r < textureSizeX[i]; r++) 
+        {
+          emptyImage[r][t][s][0] = (GLubyte) (0);
+          emptyImage[r][t][s][1] = (GLubyte) (0);
+          emptyImage[r][t][s][2] = (GLubyte) (0);
+          emptyImage[r][t][s][3] = (GLubyte) (0);
+        }
       }
     }
     
@@ -294,7 +314,6 @@ void vtkOpenGLVolumeTextureMapper3D::CreateEmptyTexture()
               0, GL_RGBA, 
               GL_UNSIGNED_BYTE, 
               emptyImage);        
-
     }
     else
     {
@@ -760,45 +779,26 @@ void vtkOpenGLVolumeTextureMapper3D::ChangeColorTable(int volume, int colorTable
     }
   }
   //set new color tables
-  #ifdef WIN32
-  if (using_palette != 1)
-  {
-    glColorTableEXT(GL_TEXTURE_COLOR_TABLE_SGI,
-         GL_RGBA ,
-         256 ,
-         GL_RGBA ,
-         GL_UNSIGNED_BYTE ,
-         &newColorTable);
-  }
-  else
-  {
-    glColorTableEXT(GL_SHARED_TEXTURE_PALETTE_EXT,
-         GL_RGBA ,
-         256 ,
-         GL_RGBA ,
-         GL_UNSIGNED_BYTE ,
-         &newColorTable);
-  }
-  #else
-  if (using_palette != 1)
-  {
-      glColorTable(GL_TEXTURE_COLOR_TABLE_SGI,
-                   GL_RGBA ,
-                   256 ,
-                   GL_RGBA ,
-                   GL_UNSIGNED_BYTE ,
-                   &newColorTable);
-  }
-  else
-  {
-       glColorTable(GL_SHARED_TEXTURE_PALETTE_EXT,
-                       GL_RGBA ,
-                       256 ,
-                       GL_RGBA ,
-                       GL_UNSIGNED_BYTE ,
-                       &newColorTable);
-  }
-  #endif
+  if (glColorTable != NULL) 
+  {   if (using_palette != 1)
+      {
+        glColorTable(GL_TEXTURE_COLOR_TABLE_SGI,
+             GL_RGBA ,
+             256 ,
+             GL_RGBA ,
+             GL_UNSIGNED_BYTE ,
+             &newColorTable);
+      }
+      else
+      {
+        glColorTable(GL_SHARED_TEXTURE_PALETTE_EXT,
+             GL_RGBA ,
+             256 ,
+             GL_RGBA ,
+             GL_UNSIGNED_BYTE ,
+             &newColorTable);
+      }
+   }
 }
 
 //-----------------------------------------------------
@@ -920,11 +920,9 @@ void vtkOpenGLVolumeTextureMapper3D::CreateSubImages( unsigned char* texture,   
 
       for(int i = 0; i < 3; i++)
       {
-
-    volSize[counter][i]= spacing[i];
-    texSize[counter][i]= size[i];                
+        volSize[counter][i]= spacing[i];
+        texSize[counter][i]= size[i];                
       }
-      
 
     }
     int texPtr = 0;    
@@ -932,32 +930,36 @@ void vtkOpenGLVolumeTextureMapper3D::CreateSubImages( unsigned char* texture,   
     if (using_palette != 1)
     { 
 
- unsigned char* pix =  new unsigned char[4*textureSizeX[counter]*textureSizeY[counter]];
+      unsigned char* pix =  new unsigned char[4*textureSizeX[counter]*textureSizeY[counter]];
 
       int pixPtr = 0;
 
 
       for (int y = 0; y < textureSizeY[counter]; y++)
       {
-    for (int x = 0; x < textureSizeX[counter]; x++) 
-    {     
-      pix[pixPtr]=texture[texPtr];
-      pixPtr++;
-      pix[pixPtr]=texture[texPtr];
-      pixPtr++;
-      pix[pixPtr]=texture[texPtr];
-      pixPtr++;
-      pix[pixPtr]=texture[texPtr];
-      pixPtr++;
-      texPtr++;
-    }
+        for (int x = 0; x < textureSizeX[counter]; x++) 
+        {     
+          //pix[pixPtr]=(unsigned char)this->colorTable0[texture[texPtr]];
+          pix[pixPtr]=texture[texPtr];
+          pixPtr++;
+          //pix[pixPtr]=(unsigned char)this->colorTable0[texture[texPtr]];
+          pix[pixPtr]=texture[texPtr];
+          pixPtr++;
+          //pix[pixPtr]=(unsigned char)this->colorTable0[texture[texPtr]];
+          pix[pixPtr]=texture[texPtr];
+          pixPtr++;
+          //pix[pixPtr]=(unsigned char)this->colorTable0[texture[texPtr]];
+          pix[pixPtr]=texture[texPtr];
+          pixPtr++;
+          texPtr++;
+        }
       }
 
       texPtr = 0;
   
       //store the subimage
       glBindTexture(GL_TEXTURE_3D_EXT, tempIndex3d[counter]);    
- texPtr = 0;
+      texPtr = 0;
   
       glTexSubImage3DEXT( GL_TEXTURE_3D_EXT,    
               0,                    //level of detail
