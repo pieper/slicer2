@@ -298,7 +298,7 @@ proc MainInit {} {
 	set Module(procMRML) ""
         set m Main
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.14 $} {$Date: 2000/02/07 03:35:55 $}]
+		{$Revision: 1.15 $} {$Date: 2000/02/07 15:43:31 $}]
 
 	# Call each "Init" routine that's not part of a module
 	#-------------------------------------------
@@ -645,7 +645,6 @@ proc MainBuildGUI {} {
 			-width $Gui(magDim) -height $Gui(magDim)  
 		bind $f.fMag <Expose> {ExposeTkImageViewer %W %x %y %w %h}
 		pack $f.fMag
-		magWin DoubleBufferOn
 	}
 
 	#-------------------------------------------

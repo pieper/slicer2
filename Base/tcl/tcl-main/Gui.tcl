@@ -424,6 +424,10 @@ proc MakeVTKImageWindow {name {input ""}} {
 		${name}Imager AddActor2D ${name}Actor
 	vtkImageWindow ${name}Win
 		${name}Win AddImager ${name}Imager
+
+	# This line prevents repainting the screen after each 2D 
+	# actor is drawn.  It must be called before creating the window.
+	${name}Win DoubleBufferOn
 }
 
 #-------------------------------------------------------------------------------

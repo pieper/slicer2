@@ -194,9 +194,6 @@ proc MainViewerBuildGUI {} {
 		pack $Gui(f${frm}Win) -side left -fill both -expand 1
 
 		MainInteractorBind $Gui(f${frm}Win)
- 
-		# This line prevents repainting the screen after each 2D actor is drawn
-		${win}Win DoubleBufferOn
 	}
 
 	# Pack
