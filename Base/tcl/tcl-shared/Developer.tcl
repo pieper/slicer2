@@ -58,6 +58,11 @@
 #   DevCheckScrollLimits
 #   DevFileExists
 #   DevSourceTclFilesInDirectory dir verbose
+#   DevCreateTextPopup
+#   DevApplyTextTags
+#   DevTextLink
+#   DevLaunchBrowser
+#   DevLaunchBrowserURL
 #==========================================================================auto=
 # This file exists specifically for user to help fast development
 # of Slicer modules
@@ -945,8 +950,23 @@ proc DevSourceTclFilesInDirectory {dir {verbose "0"}} {
 
 
 
-proc DevCreateTextPopup { topicWinName title x y textBoxHit txt  } {
 
+#-------------------------------------------------------------------------------
+# .PROC DevCreateTextPopup
+#
+#  Creates a popup scrolled text window  of specified text height and position,
+#  that displays formatted text specified in a string. Includes a button
+#  that dismisses the window.
+#
+# .ARGS
+#  stringe topicWinName (=unique window name)
+#  string title (=window title)
+#  int x y (=position of window)
+#  int textBoxHit (=number of textlines that set initial window height)
+#  str txt (=formatted text string to display)
+# .END
+#-------------------------------------------------------------------------------
+proc DevCreateTextPopup { topicWinName title x y textBoxHit txt  } {
     set w .w$topicWinName
     #--- if .w$topicWinName exists,
     #--- destroy it, and create a new one
@@ -1001,6 +1021,17 @@ proc DevCreateTextPopup { topicWinName title x y textBoxHit txt  } {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC DevApplyTextTags
+#
+#  processes tagged string and sets some
+#  global variables Dev(*) to contain formatting info
+#  and text string to display.
+#
+# .ARGS
+#  string str (string that includes formatting)
+# .END
+#-------------------------------------------------------------------------------
 proc DevApplyTextTags { str } {
 
     set Dev(TextFormat,hypertext) $str
@@ -1097,6 +1128,15 @@ proc DevApplyTextTags { str } {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC 
+#
+#  configures text widget
+#
+# .ARGS
+#  string w (=text widget name in which to insert text)
+# .END
+#-------------------------------------------------------------------------------
 proc  DevInsertPopupText { w } {
 
     #--- configure text tags 
@@ -1142,6 +1182,12 @@ proc  DevInsertPopupText { w } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC DevTextLink
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc DevTextLink {w linkTag} {
 
     set linkText $::Dev(TextFormat,$linkTag,text)
@@ -1159,6 +1205,12 @@ proc DevTextLink {w linkTag} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC DevLaunchBrowser
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc DevLaunchBrowser {{section ""}} {
 
     if {$section == ""} {
@@ -1172,6 +1224,12 @@ proc DevLaunchBrowser {{section ""}} {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC DevLaunchBrowserURL
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc DevLaunchBrowserURL { url } {
 
     if { $::Path(browserPath) != "unknown" } {
