@@ -1,0 +1,30 @@
+<title>Making the Introduction Image</title>
+
+
+<li class=faq>
+<p class=question>
+How did you make the image in the introduction to the website, with
+the models and cutaway view into the brain?
+<p class=answer>
+To make models such as the skin and brain in the tutorial, you can use
+two modules on the slicer menu: the Editor followed by the ModelMaker.
+Look at the User's Guide, under Segmentation.
+<p class=answer>
+To display the cut-through, you will need to use the Clipping
+functions in the slicer.  First you can display the models and
+grayscale slices that you are interested in.  Then go to the
+Models->Display tab, and right click on the model that you want
+clipped.  This should be the skin model if you are using the tutorial
+data from the ftp site, for example.  A menu will appear, and you
+should choose Clipping to turn this on.  Now the model will be cut by
+the grayscale slices.  Next go to the Models->Clip tab to adjust which
+side of each grayscale slice should be used to clip the model.
+<p class=answer>
+And finally, to remove the black background in each of the grayscale
+slices, you may use thresholding.  Under the Volumes->Display tab
+there is a Threshold function.  Press the Auto button and the black
+background should disappear.  You may also manually adjust the
+thresholding to get the desired effect.
+</li>
+
+

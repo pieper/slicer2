@@ -1,0 +1,47 @@
+<title>tcl/vtk*Tcl.cxx: syntax error before `found'</title>
+
+<li class=faq>
+<p class=question>
+As I'm compiling Slicer, the vtk files in the tcl directory are
+generating errors similar to this:<br>
+<pre><p class=code>tcl/vtkImageAccumulateDiscreteTcl.cxx:1: syntax
+error before `found'</p></pre>
+
+<p class=answer>
+
+The automatic wrapper generator failed since the parser wasn't able to
+read the input file properly. This is most likely due to saving the files in
+a different operating system format than the parser is running on. For
+example, the source was transfered from Windows and was being complied
+under Linux.
+
+<p class=answer>
+
+In a nutshell, the way VTK is working  with Tcl/Tk is the following.
+Compiling VTK you can get shared libraries. Tcl/Tk is able to
+use code from shared libraries only if they are in a specific format.
+VTK is not in this format. That's why VTK has the ability to generate
+another shared library which will be the "bridge" between the two.
+To do this, a special program parses all the VTK class headers and
+generates a new C file (called e.g., vtkImageAccumulateDiscreteTcl.cxx)
+this C file will then be compiled. This parser has some limitations
+though, it can accept only a subset of legal C and C++ syntax.
+If some error occurs it will generate a C file containing only one line
+and this will make the copiler stop.
+
+<p class=answer>
+
+If vtkImageAccumulateDiscrete is correct, you probably transferred the
+source from Windows and the sources are in DOS text mode.  It is
+usually not a problem for compilers, but probably this confuses the
+parser.
+
+<p class=answer>
+
+If this is the case: use dos2unix to convert vtkImageAccumulateDiscreteTcl.h
+in your local directory and compile again. This should give you an error
+message also, but hopefully with the next file and you can see a valid
+vtkImageAccumulateDiscreteTcl.cxx in your tcl directory. Then you must convert
+the rest of your files to unix mode and compile again.
+
+</li>
