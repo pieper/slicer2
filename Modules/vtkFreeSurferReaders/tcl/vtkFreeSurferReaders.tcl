@@ -214,7 +214,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.17 $} {$Date: 2005/03/18 21:35:18 $}]
+        {$Revision: 1.18 $} {$Date: 2005/03/18 22:19:18 $}]
 
 }
 
@@ -4628,13 +4628,16 @@ proc vtkFreeSurferReadersRecordSubjectQA { subject vol eval } {
     set fname [file join $vtkFreeSurferReaders(QADirName) $subject $vtkFreeSurferReaders(QASubjectFileName)]
     if {$::Module(verbose)} { puts "vtkFreeSurferReadersRecordSubjectQA fname = $fname" }
 
+    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $::env(USER) Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.18 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
+    
     if {[catch {set fid [open $fname "a"]} errmsg] == 1} {
-        DevErrorWindow "Cannot open subject's file for appending this QA run:\nfilename = $fname\n$errMsg"
+        puts "Can't write to subject file $fname.\nCopy and paste this if you want to save it:\n$msg"
+        DevErrorWindow "Cannot open subject's file for appending this QA run:\nfilename = $fname\n$errmsg"
         return 
     }
     
     # write it out
-    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $::env(USER) Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.17 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
+    
     puts $fid $msg
     close $fid
 
@@ -4990,7 +4993,8 @@ proc vtkFreeSurferReadersQAStop {} {
     # also write out the overall QA message to a file
     set fname [file join $vtkFreeSurferReaders(QADirName) QA-[clock format [clock seconds] -format "%Y-%m-%d-%T-%Z"].log]
     if {[catch {set fid [open $fname "w"]} errmsg] == 1} {
-        DevErrorWindow "Cannot open file for writing about this QA run:\nfilename = $fname\n$errMsg"
+        puts "Can't write to QA file $fname.\nCopy and paste this if you want to save it:\n $vtkFreeSurferReaders(QAmsg)"
+        DevErrorWindow "Cannot open file for writing about this QA run:\nfilename = $fname\n$errmsg"
         return 
     }
     puts $fid  $vtkFreeSurferReaders(QAmsg) 
