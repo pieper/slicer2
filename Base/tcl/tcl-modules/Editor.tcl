@@ -100,7 +100,7 @@ proc EditorInit {} {
     
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.42 $} {$Date: 2001/01/24 16:57:11 $}]
+	    {$Revision: 1.43 $} {$Date: 2001/01/30 02:05:32 $}]
     
     # Initialize globals
     set Editor(idOriginal)  $Volume(idNone)
@@ -1057,13 +1057,11 @@ proc EditorMakeModel {} {
 # .END
 #-------------------------------------------------------------------------------
 proc EditorMotion {x y} {
-    global Ed Editor Slice Interactor
-
-    set s $Slice(activeID)
+    global Ed Editor 
     
     switch $Editor(activeID) {
 	"EdLiveWire" {
-	    EdLiveWireMotion $x $y $s
+	    EdLiveWireMotion $x $y
 	}
     }
     
@@ -1077,8 +1075,6 @@ proc EditorMotion {x y} {
 #-------------------------------------------------------------------------------
 proc EditorB1 {x y} {
     global Ed Editor Slice
-
-    set s $Slice(activeID)
     
     switch $Editor(activeID) {
 	"EdDraw" {
@@ -1099,7 +1095,7 @@ proc EditorB1 {x y} {
 	    }
 	}
 	"EdLiveWire" {
-	    EdLiveWireB1 $x $y $s
+	    EdLiveWireB1 $x $y
 	}
 	"EdChangeIsland" {
 	    EditorChangeInputLabel $x $y
@@ -1159,6 +1155,9 @@ proc EditorB1Motion {x y} {
 		    Slicer DrawMove $x $y
 		}
 	    }
+	}
+	"EdLiveWire" {
+	    EdLiveWireB1Motion $x $y
 	}
     }
     

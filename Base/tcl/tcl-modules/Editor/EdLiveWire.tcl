@@ -34,7 +34,7 @@
 #   EdLiveWireGetFeatureParams
 #   EdLiveWireSetFeatureParams
 #   EdLiveWireAdvancedApply
-#   EdLiveWireInitPipeline
+#   EdLiveWireStartPipeline
 #   EdLiveWireEnter
 #   EdLiveWireExit
 #   EdLiveWireUpdateInteractive
@@ -43,6 +43,7 @@
 #   EdLiveWireUpdateInit
 #   EdLiveWireUpdate
 #   EdLiveWireB1
+#   EdLiveWireMotion
 #   EdLiveWireB1Motion
 #   EdLiveWireRenderInteractive
 #   EdLiveWireLabel
@@ -51,6 +52,8 @@
 #   EdLiveWireStartProgress
 #   EdLiveWireShowProgress
 #   EdLiveWireEndProgress
+#   EdLiveWireSetMode
+#   EdLiveWireTrain
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -77,6 +80,7 @@ proc EdLiveWireInit {} {
     # Original volume is input to our filters.
     set Ed($e,input)  Original
 
+    set Ed($e,trainingRadius) 0
     set Ed($e,radius) 0
     set Ed($e,shape)  Polygon
     set Ed($e,render) Active
@@ -87,7 +91,10 @@ proc EdLiveWireInit {} {
     
     # active slice
     set Ed($e,interact) Active
-
+    
+    # mode of user interaction (choices are LiveWire or Training)
+    set Ed($e,mode) LiveWire
+    set Ed($e,previousMode) LiveWire
 }
 
 #-------------------------------------------------------------------------------
@@ -132,8 +139,11 @@ proc EdLiveWireBuildVTK {} {
 	# for looking at edge weight image
 	vtkImageViewer Ed(EdLiveWire,viewer$s)
 	Ed(EdLiveWire,viewer$s) SetInput [Ed(EdLiveWire,lwSetup$s) GetEdgeImage 0]
+	#Ed(EdLiveWire,viewer$s) SetInput [Slicer GetActiveOutput $s]
 	Ed(EdLiveWire,viewer$s) SetColorWindow 256
 	Ed(EdLiveWire,viewer$s) SetColorLevel 127.5
+	#Ed(EdLiveWire,viewer$s) SetColorWindow 5
+	#Ed(EdLiveWire,viewer$s) SetColorLevel 0
 	[Ed(EdLiveWire,viewer$s) GetImageWindow] DoubleBufferOn
     }
     
@@ -310,6 +320,26 @@ proc EdLiveWireBuildGUI {} {
 	    -command "EdLiveWireRaiseEdgeImageWin"} $Gui(WBA) {-width 20}
     pack $f.bPopup
 
+    #-------------------------------------------
+    # TabbedFrame->Advanced->Settings->Train frame
+    #-------------------------------------------
+    set f $Ed(EdLiveWire,frame).fTabbedFrame.fAdvanced.fSettings
+
+    frame $f.fTrain   -bg $Gui(activeWorkspace)
+    pack $f.fTrain -side top -pady $Gui(pad) -fill x
+    set f $f.fTrain
+
+    foreach mode "LiveWire Training" text "Off On" width "3 3" {
+	radiobutton $f.r$mode -width $width -indicatoron 0\
+		-text "$text" -value "$mode" \
+		-variable Ed(EdLiveWire,mode) \
+		-command "EdLiveWireSetMode"
+	pack $f.r$mode -side left -fill x -anchor e
+    }
+
+    eval {button $f.bTrain -text "Train" \
+	    -command "EdLiveWireTrain"} $Gui(WBA) {-width 20}
+    pack $f.bTrain
 }
 
 
@@ -359,6 +389,8 @@ proc EdLiveWireRaiseEdgeImageWin {} {
     }
     pack $f -side top
 
+#"Ed(EdLiveWire,viewer$s) SetInput [Ed(EdLiveWire,lwSetup$s) GetEdgeImage $edge]; $viewer Render" 
+#"Ed(EdLiveWire,viewer$s) SetInput [Slicer GetActiveOutput $s]; $viewer Render" 
     # make close button
     frame $w.fcloseBtn
     set f $w.fcloseBtn
@@ -478,13 +510,13 @@ proc EdLiveWireAdvancedApply {} {
 
 
 #-------------------------------------------------------------------------------
-# .PROC EdLiveWireInitPipeline
+# .PROC EdLiveWireStartPipeline
 # Sets up filters to get input from Slicer (vtkMrmlSlicer) object.
 # Updates the pipeline.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc EdLiveWireInitPipeline {} {
+proc EdLiveWireStartPipeline {} {
     global Ed Slice Gui
 
     set Gui(progressText) "Livewire Initialization"	
@@ -512,6 +544,16 @@ proc EdLiveWireInitPipeline {} {
 
 }
 
+
+proc EdLiveWireStopPipeline {} {
+    global Ed Slice Gui
+
+    Slicer BackFilterOff
+    Slicer ForeFilterOff
+    Slicer ReformatModified
+    Slicer Update
+}
+
 #-------------------------------------------------------------------------------
 # .PROC EdLiveWireEnter
 # Called upon entering module.
@@ -532,7 +574,7 @@ proc EdLiveWireEnter {} {
     set Ed(EdLiveWire,pipelineActiveAndContourStarted) 0
 
     # set up Slicer pipeline and force edge filters to execute.
-    EdLiveWireInitPipeline
+    EdLiveWireStartPipeline
 
     # keep track of active slice to reset contour if slice changes
     set Ed(EdLiveWire,activeSlice) $Slice(activeID)
@@ -555,13 +597,13 @@ proc EdLiveWireEnter {} {
     # while in EdDraw...
     set e EdLiveWire
     Slicer DrawSetRadius $Ed($e,radius)
-	Slicer DrawSetShapeTo$Ed($e,shape)
-	if {$Label(activeID) != ""} {
-		set color [Color($Label(activeID),node) GetDiffuseColor]
-		eval Slicer DrawSetColor $color
-	} else {
-		Slicer DrawSetColor 0 0 0
-	}
+    Slicer DrawSetShapeTo$Ed($e,shape)
+    if {$Label(activeID) != ""} {
+	set color [Color($Label(activeID),node) GetDiffuseColor]
+	eval Slicer DrawSetColor $color
+    } else {
+	Slicer DrawSetColor 0 0 0
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -582,10 +624,8 @@ proc EdLiveWireExit {} {
     }
 
     # no more filter pipeline
-    Slicer BackFilterOff
-    Slicer ForeFilterOff
-    Slicer ReformatModified
-    Slicer Update
+    EdLiveWireStopPipeline
+
     EdLiveWireRenderInteractive
 }
 
@@ -696,50 +736,89 @@ proc EdLiveWireUpdate {{value ""}} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc EdLiveWireB1 {x y s} {
+proc EdLiveWireB1 {x y} {
     global Ed Slice
 
-    # if pipeline not set up yet do nothing
-    if {$Ed(EdLiveWire,pipelineActive) == 0} {
-	return
+    set s $Slice(activeID)
+
+    switch $Ed(EdLiveWire,mode) {
+	"LiveWire" {
+	    # if pipeline not set up yet do nothing
+	    if {$Ed(EdLiveWire,pipelineActive) == 0} {
+		return
+	    }
+	    set Ed(EdLiveWire,pipelineActiveAndContourStarted) 1
+	    
+	    # if we just changed to this slice
+	    if {$Ed(EdLiveWire,activeSlice) != $s} {
+		set Ed(EdLiveWire,activeSlice) $s
+		#	EdLiveWireResetSlice $s
+	    }
+	    
+	    #puts "EDLW: start $x $y"
+	    #Ed(EdLiveWire,lwSetup$s) SetStartPoint $x $y
+	    Ed(EdLiveWire,lwPath$s) SetStartPoint $x $y
+
+	}
+	"Training" {
+	    Slicer DrawInsertPoint $x $y
+	}
     }
-    set Ed(EdLiveWire,pipelineActiveAndContourStarted) 1
-
-    # if we just changed to this slice
-    if {$Ed(EdLiveWire,activeSlice) != $s} {
-	set Ed(EdLiveWire,activeSlice) $s
-#	EdLiveWireResetSlice $s
-    }
-
-
-    #puts "EDLW: start $x $y"
-    #Ed(EdLiveWire,lwSetup$s) SetStartPoint $x $y
-    Ed(EdLiveWire,lwPath$s) SetStartPoint $x $y
 
 }
 
 #-------------------------------------------------------------------------------
-# .PROC EdLiveWireB1Motion
+# .PROC EdLiveWireMotion
 # When mouse moves over slice, if pipeline is operational, 
 # pass end point to live wire filter and then render the slice.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc EdLiveWireMotion {x y s} {
+proc EdLiveWireMotion {x y} {
     global Ed Slice
 
-    # if no first click to begin contour, do nothing
-    if {$Ed(EdLiveWire,pipelineActiveAndContourStarted) == 0} {
-	return
+    set s $Slice(activeID)
+
+    switch $Ed(EdLiveWire,mode) {
+	"LiveWire" {
+	    # if no first click to begin contour, do nothing
+	    if {$Ed(EdLiveWire,pipelineActiveAndContourStarted) == 0} {
+		return
+	    }
+	    
+	    #puts "EDLW: end $x $y"
+	    #Ed(EdLiveWire,lwSetup$s) SetEndPoint $x $y
+	    Ed(EdLiveWire,lwPath$s) SetEndPoint $x $y
+	    #EdLiveWireUpdateInteractive
+	    
+	    # render whatever we are supposed to (slice, 3slice, or 3D)
+	    EdLiveWireRenderInteractive
+	}
+	"Training" {
+	    # do nothing
+	}
+
     }
+}
 
-    #puts "EDLW: end $x $y"
-    #Ed(EdLiveWire,lwSetup$s) SetEndPoint $x $y
-    Ed(EdLiveWire,lwPath$s) SetEndPoint $x $y
-    #EdLiveWireUpdateInteractive
+#-------------------------------------------------------------------------------
+# .PROC EdLiveWireB1Motion
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc EdLiveWireB1Motion {x y} {
+    global Ed
 
-    # render whatever we are supposed to (slice, 3slice, or 3D)
-    EdLiveWireRenderInteractive
+    switch $Ed(EdLiveWire,mode) {
+	"LiveWire" {
+	    # do nothing
+	}
+	"Training" {
+	    # paint training drawing on slice
+	    Slicer DrawInsertPoint $x $y
+	}
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -777,10 +856,14 @@ proc EdLiveWireLabel {} {
 proc EdLiveWireResetSlice {s} {
     global Ed
 
+    # reset contour points
     Ed(EdLiveWire,lwPath$s) ClearContour
     # Lauren have to do this for each slice?
     set Ed(EdLiveWire,pipelineActiveAndContourStarted) 0
-
+    # clear displayed slice somehow?
+    Slicer Update
+    RenderSlice $s
+    
 }
 
 
@@ -939,4 +1022,97 @@ proc EdLiveWireEndProgress {} {
 	# we are all ready: pay attention to mouse clicks
 	set Ed(EdLiveWire,pipelineActive) 1
     }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC EdLiveWireSetMode
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc EdLiveWireSetMode {} {
+    global Ed Slice
+
+    puts $Ed(EdLiveWire,mode)
+    
+    set s $Slice(activeID)
+    set e EdLiveWire
+
+    # Lauren: do this for all slices???????
+    switch $Ed($e,mode) {
+	"LiveWire" {
+	    if {$Ed($e,previousMode) == "Training"} {
+		for {set f 0} {$f < $Ed($e,numEdgeFilters)} {incr f} {
+		    set filt [Ed($e,lwSetup$s) GetEdgeFilter $f]
+		    $filt TrainingModeOff
+		}
+		# clear any drawn training points
+		Slicer DrawDeleteAll		
+
+		# restore drawing settings
+		Slicer DrawSetRadius $Ed($e,radius)
+		Slicer DrawSetShapeTo$Ed($e,shape)
+	    }
+	}
+	"Training" {
+	    if {$Ed(EdLiveWire,previousMode) == "LiveWire"} {
+		# clear livewire contour from all slices.  This is so that
+		# only the hand-drawn contour is used for training.
+		foreach s $Slice(idList) {
+		    EdLiveWireResetSlice $s
+		}
+
+		# training drawing settings
+		Slicer DrawSetRadius $Ed($e,trainingRadius)
+		Slicer DrawSetShapeToLines
+	    }	    
+	}
+    }
+    set Ed($e,previousMode) $Ed($e,mode)
+}
+
+#-------------------------------------------------------------------------------
+# .PROC EdLiveWireTrain
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc EdLiveWireTrain {} {
+    global Ed Slice Volume
+
+    if {$Ed(EdLiveWire,mode) != "Training"} {
+	puts "Can't train if not in training mode"
+	return
+    }
+
+    set s $Slice(activeID)
+
+    for {set f 0} {$f < $Ed(EdLiveWire,numEdgeFilters)} {incr f} {
+	set filt [Ed(EdLiveWire,lwSetup$s) GetEdgeFilter $f]
+	$filt TrainingModeOn
+
+	# need to get all points...
+	# perhaps give this filter another input with the points marked!
+	# Lauren remove this
+	$filt SetTrainingPoints [Slicer DrawGetPoints]
+	
+	# Lauren for now set the 2nd input to this too!
+	$filt SetPreviousContourImage [Slicer GetActiveOutput $s]
+
+
+	# draw points on a blank slice for input to filter
+	vtkImageFillROI fillroi
+	fillroi SetInput [Volume($Volume(idNone),vol) GetImageData]
+	fillroi SetValue 1
+	fillroi SetRadius $Ed(EdLiveWire,trainingRadius)
+
+	fillroi SetShapeString Lines
+	fillroi SetPoints [Slicer DrawGetPoints]
+	
+	$filt SetTrainingPointsImage [fillroi GetOutput]
+
+	fillroi Delete
+    }
+
+    Slicer Update
 }
