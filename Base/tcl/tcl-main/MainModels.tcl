@@ -88,7 +88,7 @@ proc MainModelsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainModels \
-        {$Revision: 1.59 $} {$Date: 2003/05/30 21:52:42 $}]
+        {$Revision: 1.60 $} {$Date: 2003/06/03 22:24:00 $}]
 
     set Model(idNone) -1
     set Model(activeID) ""
@@ -229,8 +229,8 @@ proc MainModelsShouldBeAVtkClass {m} {
     global Model Slice Module
 
     foreach r $Module(Renderers) {
-    # Mapper
-    vtkPolyDataMapper Model($m,mapper,$r)
+        # Mapper
+        vtkPolyDataMapper Model($m,mapper,$r)
     }
     # Create a sphere as a default model
     vtkSphereSource src
@@ -242,7 +242,7 @@ proc MainModelsShouldBeAVtkClass {m} {
     set Model($m,polyData) [src GetOutput]
     $Model($m,polyData) Update
     foreach r $Module(Renderers) {
-    Model($m,mapper,$r) SetInput $Model($m,polyData)
+        Model($m,mapper,$r) SetInput $Model($m,polyData)
     }
     src SetOutput ""
     src Delete
@@ -252,9 +252,9 @@ proc MainModelsShouldBeAVtkClass {m} {
     Model($m,clipper) SetClipFunction Slice(clipPlanes)
     Model($m,clipper) SetValue 0.0
 
-        vtkMatrix4x4 Model($m,rasToWld)
+    vtkMatrix4x4 Model($m,rasToWld)
     
-        foreach r $Module(Renderers) {
+    foreach r $Module(Renderers) {
 
         # Actor
         vtkActor Model($m,actor,$r)
