@@ -18,7 +18,7 @@
 #include <ctime>
 
 
-vtkCxxRevisionMacro(vtkNormalizedCuts, "$Revision: 1.3 $");
+vtkCxxRevisionMacro(vtkNormalizedCuts, "$Revision: 1.4 $");
 vtkStandardNewMacro(vtkNormalizedCuts);
 
 
@@ -354,6 +354,6 @@ void vtkNormalizedCuts::ComputeClusters()
     vtkErrorMacro("Error in update of output classifier");
     return;
   }
-  this->OutputClassifier->GetOutput()->DebugOn();
+  //this->OutputClassifier->GetOutput()->DebugOn();
 
 }
