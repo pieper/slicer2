@@ -170,7 +170,7 @@ proc FMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.21 $} {$Date: 2004/07/22 19:08:26 $}]
+        {$Revision: 1.22 $} {$Date: 2004/08/12 20:48:20 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -450,14 +450,60 @@ proc FMRIEngineSetDetector {detector} {
 proc FMRIEngineBuildUIForParadigm {parent} {
     global FMRIEngine Gui
 
-    frame $parent.fFile  -bg $Gui(activeWorkspace)
-    pack $parent.fFile -side top -fill x -pady $Gui(pad)
+    Notebook:create $parent.fNotebook \
+                    -pages {Load Input} \
+                    -pad 2 \
+                    -bg $Gui(activeWorkspace) \
+                    -height 356 \
+                    -width 240
+    pack $parent.fNotebook -fill both -expand 1
 
-    # File frame
-    set f $parent.fFile
-    DevAddFileBrowse $f FMRIEngine "paradigmFileName" "Paradigm design file:" \
-        "" "txt" "\$Volume(DefaultDir)" \
+    set fLoad [Notebook:frame $parent.fNotebook Load]
+    set fInput [Notebook:frame $parent.fNotebook Input]
+
+    #-------------------------------------------
+    # Load tab 
+    #-------------------------------------------
+    frame $fLoad.fFile  -bg $Gui(activeWorkspace)
+    pack $fLoad.fFile -side top -fill x -pady $Gui(pad)
+    DevAddFileBrowse $fLoad.fFile FMRIEngine "paradigmFileName" \
+        "Paradigm design file:" "" "txt" "\$Volume(DefaultDir)" \
         "Open" "Browse for a text file" "" "Absolute" 
+
+    DevAddButton $fLoad.bLoad "Load" "FMRIEngineParseParadigm" 10 
+    pack $fLoad.bLoad -side top -padx $Gui(pad) -pady $Gui(pad)
+
+    #-------------------------------------------
+    # Input tab 
+    #-------------------------------------------
+    frame $fInput.fGrid  -bg $Gui(activeWorkspace) -relief groove -bd 3
+    pack $fInput.fGrid -side top -fill x -pady $Gui(pad)
+    set f $fInput.fGrid
+    
+    # Entry fields (the loop makes a frame for each variable)
+    set FMRIEngine(paramNames) [list {Total Volumes} {Number Of Conditions} \
+        {Volumes Per Baseline} {Volumes Per Condition} {Volumes At Start} \
+        {Starts With}]
+    set FMRIEngine(paramVariables) [list tVols nStims bVols cVols sVols start]
+    set i 0      
+    set len [llength $FMRIEngine(paramNames)]
+    while {$i < $len} { 
+
+        set name [lindex $FMRIEngine(paramNames) $i]
+        set param [lindex $FMRIEngine(paramVariables) $i]
+ 
+        eval {label $f.l$param -text "$name:"} $Gui(WLA)
+        eval {entry $f.e$param -width 8 -textvariable FMRIEngine($param)} $Gui(WEA)
+
+        grid $f.l$param $f.e$param -padx $Gui(pad) -pady $Gui(pad) -sticky e
+        grid $f.e$param -sticky w
+        incr i
+    }
+
+    DevAddButton $f.bStore "Store" "FMRIEngineStoreParadigm" 7 
+    DevAddButton $f.bSave "Save" "FMRIEngineSaveParadigm" 7 
+    grid $f.bStore $f.bSave -padx $Gui(pad) -pady $Gui(pad) -sticky e
+    grid $f.bSave -sticky w
 }
 
 
@@ -971,7 +1017,8 @@ proc FMRIEngineComputeActivationVolume {} {
     }
 
     # Checks if paradigm file has been properly parsed 
-    if {! [FMRIEngineParseParadigm]} {
+    if {! [info exists FMRIEngine(paradigm)]} {
+        DevErrorWindow "Paradigm design doesn't exist."
         return
     }
 
