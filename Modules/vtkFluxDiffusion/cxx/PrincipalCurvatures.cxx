@@ -41,6 +41,7 @@
 #include <math.h>
 #define ABS(x) ((x)>0?(x):-(x))
 
+namespace FluxDiffusion {
 
 /********************************************************************/
 /*** CALCULO DEL autovector0 DE AUTOVALOR 0 de UNA MATRIZ 2x2   ******/
@@ -338,3 +339,4 @@ int CurvaturasPrincipales(float H[3][3],
 
 }
 
+}

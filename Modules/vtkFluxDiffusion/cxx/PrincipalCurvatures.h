@@ -44,6 +44,8 @@
 #ifndef CURVATURAS_PRINCIPALES_HPP
 #define CURVATURAS_PRINCIPALES_HPP
 
+namespace FluxDiffusion {
+
 #include <vtkFluxDiffusionConfigure.h>
 
 //BTX
@@ -63,5 +65,7 @@ int CurvaturasPrincipales(float H[3][3],
               float umbral);
 
 //ETX
+
+}
 
 #endif // CURVATURAS_PRINCIPALES_HPP
