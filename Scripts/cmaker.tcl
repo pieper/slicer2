@@ -70,7 +70,45 @@ switch $tcl_platform(os) {
     }
 }
 
+# use an already built version of vtk
+set VTK_ARG1 "-DUSE_BUILT_VTK:BOOL=ON"
+set VTK_ARG2 "-DVTK_BINARY_PATH:PATH=$VTK_BINARY_PATH"
+switch $tcl_platform(os) {
+    "SunOS" {
+        # in order to bypass warnings about Source files
+        #set VTK_ARG3 "-DCMAKE_BACKWARDS_COMPATIBILITY:STRING=1.7"
+        set VTK_ARG3 "-DDUMMY:BOOL=ON"
+        # explicitly specify the compiler used to compile the version of vtk that 
+        # we link with
+        set VTK_ARG4 "-DCMAKE_CXX_COMPILER:STRING=$COMPILER"
+        set VTK_ARG5 "-DCMAKE_CXX_COMPILER_FULLPATH:FILEPATH=/local/os/bin/$COMPILER"
+    }
+    "Darwin" {
+        set VTK_ARG3 "-DVTK_WRAP_HINTS:FILEPATH=$VTK_SRC_PATH/Wrapping/hints"
+        set VTK_ARG4 "-DDUMMY:BOOL=ON"
+        set VTK_ARG5 "-DDUMMY:BOOL=ON"
+    }
+    default {
+        set VTK_ARG3 "-DDUMMY:BOOL=ON"
+        set VTK_ARG4 "-DDUMMY:BOOL=ON"
+        set VTK_ARG5 "-DDUMMY:BOOL=ON"
+    }
+}
+# make sure to generate shared libraries
+set VTK_ARG6 "-DBUILD_SHARED_LIBS:BOOL=ON"
+if { $ITK_BINARY_PATH != "" } {
+    set VTK_ARG7 "-DITK_DIR:FILEPATH=$ITK_BINARY_PATH"
+} else {
+    set VTK_ARG7 "-DDUMMY:BOOL=ON"
+}
 
+set SLICER_ARG1 "-DVTKSLICERBASE_SOURCE_DIR:PATH=$SLICER_HOME/Base"
+set SLICER_ARG2 "-DVTKSLICERBASE_BUILD_DIR:PATH=$SLICER_HOME/Base/builds/$BUILD"
+set SLICER_ARG3 "-DVTKSLICERBASE_BUILD_LIB:PATH=$VTKSLICERBASE_BUILD_LIB"
+
+#
+# ----------------------------- Shouldn't need to edit anything below here...
+#
 
 #
 # Add any modules here, as found in the Modules/vtk* directories of SLICER_HOME
@@ -121,41 +159,6 @@ foreach t $TARGETS {
 }
 puts ""
 
-# use an already built version of vtk
-set VTK_ARG1 "-DUSE_BUILT_VTK:BOOL=ON"
-set VTK_ARG2 "-DVTK_BINARY_PATH:PATH=$VTK_BINARY_PATH"
-switch $tcl_platform(os) {
-    "SunOS" {
-        # in order to bypass warnings about Source files
-        #set VTK_ARG3 "-DCMAKE_BACKWARDS_COMPATIBILITY:STRING=1.7"
-        set VTK_ARG3 "-DDUMMY:BOOL=ON"
-        # explicitly specify the compiler used to compile the version of vtk that 
-        # we link with
-        set VTK_ARG4 "-DCMAKE_CXX_COMPILER:STRING=$COMPILER"
-        set VTK_ARG5 "-DCMAKE_CXX_COMPILER_FULLPATH:FILEPATH=/local/os/bin/$COMPILER"
-    }
-    "Darwin" {
-        set VTK_ARG3 "-DVTK_WRAP_HINTS:FILEPATH=$VTK_SRC_PATH/Wrapping/hints"
-        set VTK_ARG4 "-DDUMMY:BOOL=ON"
-        set VTK_ARG5 "-DDUMMY:BOOL=ON"
-    }
-    default {
-        set VTK_ARG3 "-DDUMMY:BOOL=ON"
-        set VTK_ARG4 "-DDUMMY:BOOL=ON"
-        set VTK_ARG5 "-DDUMMY:BOOL=ON"
-    }
-}
-# make sure to generate shared libraries
-set VTK_ARG6 "-DBUILD_SHARED_LIBS:BOOL=ON"
-if { $ITK_BINARY_PATH != "" } {
-    set VTK_ARG7 "-DITK_DIR:FILEPATH=$ITK_BINARY_PATH"
-} else {
-    set VTK_ARG7 "-DDUMMY:BOOL=ON"
-}
-
-set SLICER_ARG1 "-DVTKSLICERBASE_SOURCE_DIR:PATH=$SLICER_HOME/Base"
-set SLICER_ARG2 "-DVTKSLICERBASE_BUILD_DIR:PATH=$SLICER_HOME/Base/builds/$BUILD"
-set SLICER_ARG3 "-DVTKSLICERBASE_BUILD_LIB:PATH=$VTKSLICERBASE_BUILD_LIB"
 
 
 foreach target $TARGETS {
