@@ -141,6 +141,7 @@ proc EdPhaseWireInit {} {
 
     # whether to w/l before computing phase
     set Ed($e,useWindowLevel) 1
+
 }
 
 #-------------------------------------------------------------------------------
@@ -190,34 +191,34 @@ proc EdPhaseWireSetOmega {omega} {
     # Lauren should be created in slicer soon
     foreach o $Ed($e,phaseOrientions,idList) {
 
-    set prefix [file join kernel$width1 omega$omega kernel]
-    # try local
-    set fullpath [file join $local $prefix]
-    if {[file exists $fullpath.001] != "1"} {
-        # go central
-        set fullpath [file join $central $prefix]
-    }
+        set prefix [file join kernel$width1 omega$omega kernel]
+        # try local
+        set fullpath [file join $local $prefix]
+        if {[file exists $fullpath.001] != "1"} {
+            # go central
+            set fullpath [file join $central $prefix]
+        }
 
 
-    Ed($e,phase,reader$o) SetFilePattern "%s.%03d"
-    Ed($e,phase,reader$o) SetDataByteOrderToBigEndian
-    Ed($e,phase,reader$o) SetDataExtent 0 $width 0 $width $o $o
-    Ed($e,phase,reader$o) SetFilePrefix $fullpath
-    #reader SetDataScalarTypeToFloat
-    
-    # cast to float to match output of fft of image
-    Ed($e,phase,cast$o) SetOutputScalarTypeToFloat
-    Ed($e,phase,cast$o) SetInput [Ed($e,phase,reader$o) GetOutput]
-    
-    # since we are using regular multiply
-    # make both components the same (so real part
-    # will multiply both real and imag parts
-    # of the fft of the image this way)
-    #-------------------------------------------
-    foreach input {1 2} {
-        Ed($e,phase,kernel$o) SetInput$input [ Ed($e,phase,cast$o) GetOutput]
-    }
-    
+        Ed($e,phase,reader$o) SetFilePattern "%s.%03d"
+        Ed($e,phase,reader$o) SetDataByteOrderToBigEndian
+        Ed($e,phase,reader$o) SetDataExtent 0 $width 0 $width $o $o
+        Ed($e,phase,reader$o) SetFilePrefix $fullpath
+        #reader SetDataScalarTypeToFloat
+        
+        # cast to float to match output of fft of image
+        Ed($e,phase,cast$o) SetOutputScalarTypeToFloat
+        Ed($e,phase,cast$o) SetInput [Ed($e,phase,reader$o) GetOutput]
+        
+        # since we are using regular multiply
+        # make both components the same (so real part
+        # will multiply both real and imag parts
+        # of the fft of the image this way)
+        #-------------------------------------------
+        foreach input {1 2} {
+            Ed($e,phase,kernel$o) SetInput $input [ Ed($e,phase,cast$o) GetOutput]
+        }
+        
     }
 
     set Ed($e,omega,id) $omega
@@ -273,9 +274,9 @@ proc EdPhaseWireBuildVTK {} {
     # in a vtk class
     #-------------------------------------------
     foreach o $Ed($e,phaseOrientions,idList) {
-    vtkImageReader Ed($e,phase,reader$o)
-    vtkImageCast  Ed($e,phase,cast$o)
-    vtkImageAppendComponents Ed($e,phase,kernel$o)
+        vtkImageReader Ed($e,phase,reader$o)
+        vtkImageCast  Ed($e,phase,cast$o)
+        vtkImageAppendComponents Ed($e,phase,kernel$o)
     }
 
     #-------------------------------------------
@@ -319,29 +320,29 @@ proc EdPhaseWireBuildVTK {} {
     # objects we need for each of 4 filter pairs
     #-------------------------------------------
     foreach o $Ed($e,phaseOrientions,idList) {
-    
-    # for filtering in fourier domain 
-    #-------------------------------------------
-    vtkImageMathematics Ed($e,phase,mult$o)
-    Ed($e,phase,mult$o) SetOperationToMultiply
-    Ed($e,phase,mult$o) SetInput1 [Ed($e,phase,fftSlice) GetOutput]
-    Ed($e,phase,mult$o) SetInput2 [Ed($e,phase,kernel$o) GetOutput]
-    
-    # reverse fft: back to spatial domain
-    #-------------------------------------------
-    vtkImageRFFT Ed($e,phase,rfft$o)
-    Ed($e,phase,rfft$o) SetDimensionality 2
-    Ed($e,phase,rfft$o) SetInput [Ed($e,phase,mult$o) GetOutput]
-    
-    # separate odd, even filter responses in spatial domain
-    #-------------------------------------------
-    vtkImageExtractComponents Ed($e,phase,even$o)
-    Ed($e,phase,even$o) SetComponents 0
-    Ed($e,phase,even$o) SetInput [Ed($e,phase,rfft$o) GetOutput]
-    
-    vtkImageExtractComponents Ed($e,phase,odd$o)
-    Ed($e,phase,odd$o) SetComponents 1
-    Ed($e,phase,odd$o) SetInput [Ed($e,phase,rfft$o) GetOutput]
+        
+        # for filtering in fourier domain 
+        #-------------------------------------------
+        vtkImageMathematics Ed($e,phase,mult$o)
+        Ed($e,phase,mult$o) SetOperationToMultiply
+        Ed($e,phase,mult$o) SetInput 1 [Ed($e,phase,fftSlice) GetOutput]
+        Ed($e,phase,mult$o) SetInput 2 [Ed($e,phase,kernel$o) GetOutput]
+        
+        # reverse fft: back to spatial domain
+        #-------------------------------------------
+        vtkImageRFFT Ed($e,phase,rfft$o)
+        Ed($e,phase,rfft$o) SetDimensionality 2
+        Ed($e,phase,rfft$o) SetInput [Ed($e,phase,mult$o) GetOutput]
+        
+        # separate odd, even filter responses in spatial domain
+        #-------------------------------------------
+        vtkImageExtractComponents Ed($e,phase,even$o)
+        Ed($e,phase,even$o) SetComponents 0
+        Ed($e,phase,even$o) SetInput [Ed($e,phase,rfft$o) GetOutput]
+        
+        vtkImageExtractComponents Ed($e,phase,odd$o)
+        Ed($e,phase,odd$o) SetComponents 1
+        Ed($e,phase,odd$o) SetInput [Ed($e,phase,rfft$o) GetOutput]
     }
     
     # Now combine the quadrature filter outputs to create 
@@ -365,9 +366,9 @@ proc EdPhaseWireBuildVTK {} {
     # get the abs value of all imaginary (odd) responses
     #------------------------------------------------------
     foreach o $Ed($e,phaseOrientions,idList) {
-    vtkImageMathematics Ed($e,phase,iabs$o)
-    Ed($e,phase,iabs$o) SetOperationToAbsoluteValue
-    Ed($e,phase,iabs$o) SetInput 0 [Ed($e,phase,odd$o) GetOutput]
+        vtkImageMathematics Ed($e,phase,iabs$o)
+        Ed($e,phase,iabs$o) SetOperationToAbsoluteValue
+        Ed($e,phase,iabs$o) SetInput 0 [Ed($e,phase,odd$o) GetOutput]
     }
     
     # add the abs imaginary responses
@@ -431,82 +432,82 @@ proc EdPhaseWireBuildVTK {} {
     
 
     foreach s $Slice(idList) {
-    #-------------------------------------------
-    # Create objects for computing shortest paths.
-    #-------------------------------------------
+        #-------------------------------------------
+        # Create objects for computing shortest paths.
+        #-------------------------------------------
 
-    # maybe not used: for training, though
-    # currently this is the filter that the slicer
-    # gets to start off our pipeline
-    #vtkImageGradientMagnitude Ed($e,gradMag$s)
-    
-    # for combining phase, cert, and any other inputs
-    vtkImageWeightedSum Ed($e,imageSumFilter$s)
-    
-    # for normalization of the phase and cert inputs
-    vtkImageLiveWireScale Ed($e,phaseNorm$s)
-    vtkImageLiveWireScale Ed($e,certNorm$s)
-    #vtkImageLiveWireScale Ed($e,gradNorm$s)
-
-    # for shifting the phase image to find edges at different grayscales
-    vtkImageShiftScale Ed($e,phaseScale$s)
-    Ed($e,phaseScale$s) SetShift [EdPhaseConvertToRadians $Ed($e,phaseOffset)]
-    Ed($e,phaseScale$s) SetScale 1
-
-    # for abs value of phase image
-    vtkImageMathematics Ed($e,phaseAbs$s)
-    Ed($e,phaseAbs$s) SetOperationToAbsoluteValue
-    Ed($e,phaseAbs$s) SetInput 0 [Ed($e,phaseScale$s) GetOutput]
-
-    Ed($e,phaseNorm$s) SetInput [Ed($e,phaseAbs$s) GetOutput]
-
-    # pipeline (rest done in EdPhaseWireEnter)
-    #Ed($e,gradNorm$s)  SetInput [Ed($e,gradMag$s) GetOutput]
-    
-    # transformation functions to emphasize desired features of the
-    # phase and cert inputs
-    #certNorm SetTransformationFunctionToOneOverX
-    Ed($e,certNorm$s) SetTransformationFunctionToInverseLinearRamp
-    #Ed($e,gradNorm$s) SetTransformationFunctionToOneOverX
-    
-    # weighted sum of all inputs
-    set sum Ed(EdPhaseWire,imageSumFilter$s)
-    # pipeline
-    $sum SetInput 0 [Ed($e,phaseNorm$s) GetOutput]
-    $sum SetInput 1 [Ed($e,certNorm$s) GetOutput]
-    #$sum SetInput 2 [Ed($e,gradNorm$s) GetOutput]
-    
-    # this filter finds short paths in the image and draws the wire
-    vtkImageLiveWire Ed(EdPhaseWire,lwPath$s)
-    # we want our path to be able to go to diagonal pixel neighbors
-    Ed(EdPhaseWire,lwPath$s) SetNumberOfNeighbors 8
-    # debug
-    Ed(EdPhaseWire,lwPath$s) SetVerbose 0
-
-    # for looking at the input to the livewire filter
-    vtkImageViewer Ed(EdPhaseWire,viewer$s)
-    Ed(EdPhaseWire,viewer$s) SetInput \
-        [Ed(EdPhaseWire,lwPath$s) GetInput 0]
-    Ed(EdPhaseWire,viewer$s) SetColorWindow 256
-    Ed(EdPhaseWire,viewer$s) SetColorLevel 127.5
-    [Ed(EdPhaseWire,viewer$s) GetRenderWindow] DoubleBufferOn
-    
-    # pipeline
-    set totalInputs 9
-    for {set i 0} {$i < $totalInputs} {incr i} {   
+        # maybe not used: for training, though
+        # currently this is the filter that the slicer
+        # gets to start off our pipeline
+        #vtkImageGradientMagnitude Ed($e,gradMag$s)
         
-        # set all lw inputs (for all 8 directions) 
-        # to be from phase info
-        Ed(EdPhaseWire,lwPath$s) SetInput $i [$sum GetOutput]
-    }
-    
-    # figure out what the max value is that the filters can output
-    # this is needed for shortest path computation
-    set scale [Ed(EdPhaseWire,lwPath$s) GetMaxEdgeCost]
-    # make sure this is max val output by these filters:
-    Ed($e,phaseNorm$s) SetScaleFactor $scale
-    Ed($e,certNorm$s) SetScaleFactor  $scale
-    #Ed($e,gradNorm$s) SetScaleFactor  $scale
+        # for combining phase, cert, and any other inputs
+        vtkImageWeightedSum Ed($e,imageSumFilter$s)
+        
+        # for normalization of the phase and cert inputs
+        vtkImageLiveWireScale Ed($e,phaseNorm$s)
+        vtkImageLiveWireScale Ed($e,certNorm$s)
+        #vtkImageLiveWireScale Ed($e,gradNorm$s)
+
+        # for shifting the phase image to find edges at different grayscales
+        vtkImageShiftScale Ed($e,phaseScale$s)
+        Ed($e,phaseScale$s) SetShift [EdPhaseConvertToRadians $Ed($e,phaseOffset)]
+        Ed($e,phaseScale$s) SetScale 1
+
+        # for abs value of phase image
+        vtkImageMathematics Ed($e,phaseAbs$s)
+        Ed($e,phaseAbs$s) SetOperationToAbsoluteValue
+        Ed($e,phaseAbs$s) SetInput 0 [Ed($e,phaseScale$s) GetOutput]
+
+        Ed($e,phaseNorm$s) SetInput [Ed($e,phaseAbs$s) GetOutput]
+
+        # pipeline (rest done in EdPhaseWireEnter)
+        #Ed($e,gradNorm$s)  SetInput [Ed($e,gradMag$s) GetOutput]
+        
+        # transformation functions to emphasize desired features of the
+        # phase and cert inputs
+        #certNorm SetTransformationFunctionToOneOverX
+        Ed($e,certNorm$s) SetTransformationFunctionToInverseLinearRamp
+        #Ed($e,gradNorm$s) SetTransformationFunctionToOneOverX
+        
+        # weighted sum of all inputs
+        set sum Ed(EdPhaseWire,imageSumFilter$s)
+        # pipeline
+        $sum SetInput 0 [Ed($e,phaseNorm$s) GetOutput]
+        $sum SetInput 1 [Ed($e,certNorm$s) GetOutput]
+        #$sum SetInput 2 [Ed($e,gradNorm$s) GetOutput]
+        
+        # this filter finds short paths in the image and draws the wire
+        vtkImageLiveWire Ed(EdPhaseWire,lwPath$s)
+        # we want our path to be able to go to diagonal pixel neighbors
+        Ed(EdPhaseWire,lwPath$s) SetNumberOfNeighbors 8
+        # debug
+        Ed(EdPhaseWire,lwPath$s) SetVerbose 0
+
+        # for looking at the input to the livewire filter
+        vtkImageViewer Ed(EdPhaseWire,viewer$s)
+        Ed(EdPhaseWire,viewer$s) SetInput \
+            [Ed(EdPhaseWire,lwPath$s) GetInput 0]
+        Ed(EdPhaseWire,viewer$s) SetColorWindow 256
+        Ed(EdPhaseWire,viewer$s) SetColorLevel 127.5
+        [Ed(EdPhaseWire,viewer$s) GetRenderWindow] DoubleBufferOn
+        
+        # pipeline
+        set totalInputs 9
+        for {set i 0} {$i < $totalInputs} {incr i} {   
+            
+            # set all lw inputs (for all 8 directions) 
+            # to be from phase info
+            Ed(EdPhaseWire,lwPath$s) SetInput $i [$sum GetOutput]
+        }
+        
+        # figure out what the max value is that the filters can output
+        # this is needed for shortest path computation
+        set scale [Ed(EdPhaseWire,lwPath$s) GetMaxEdgeCost]
+        # make sure this is max val output by these filters:
+        Ed($e,phaseNorm$s) SetScaleFactor $scale
+        Ed($e,certNorm$s) SetScaleFactor  $scale
+        #Ed($e,gradNorm$s) SetScaleFactor  $scale
     
     }
 
@@ -514,10 +515,9 @@ proc EdPhaseWireBuildVTK {} {
     # hook up phase computation to path computation
     #-------------------------------------------
     foreach s $Slice(idList) {
-    Ed($e,phaseScale$s)  SetInput [Ed($e,phase,phase) GetOutput]
-    Ed($e,certNorm$s)  SetInput [Ed($e,phase,cert) GetOutput]
+        Ed($e,phaseScale$s)  SetInput [Ed($e,phase,phase) GetOutput]
+        Ed($e,certNorm$s)  SetInput [Ed($e,phase,cert) GetOutput]
     }
-
 
 }
 
@@ -666,7 +666,7 @@ proc EdPhaseWireBuildGUI {} {
         "Choose the size of the structure you are segmenting."
 
     foreach id $Ed(EdPhaseWire,omega,idList) name $Ed(EdPhaseWire,omega,nameList) {
-    $menu add command -label $name -command "EdPhaseWireSetOmega $id"
+        $menu add command -label $name -command "EdPhaseWireSetOmega $id"
     }
     grid $label $menubutton -padx $Gui(pad)
     # save menu to configure later
@@ -686,10 +686,10 @@ proc EdPhaseWireBuildGUI {} {
     # "Line" drawing button really draws our wire of points
     foreach shape "Polygon Lines" draw "Polygon Points" {
     eval {radiobutton $f.f.r$shape -width [expr [string length $shape]+1] \
-        -text "$shape" -variable Ed(EdPhaseWire,shape) -value $draw \
-        -command "EdPhaseWireUpdate SetShape" \
-        -indicatoron 0} $Gui(WCA)
-    pack $f.f.r$shape -side left 
+            -text "$shape" -variable Ed(EdPhaseWire,shape) -value $draw \
+            -command "EdPhaseWireUpdate SetShape" \
+            -indicatoron 0} $Gui(WCA)
+        pack $f.f.r$shape -side left 
     }
     
     # Apply
@@ -856,6 +856,11 @@ proc EdPhaseWireBuildGUI {} {
         -indicatoron 0 -command "EdPhaseUseWindowLevel"} $Gui(WCA)
     pack $f.cWindowLevel -side left -padx 2 
     TooltipAdd $f.cWindowLevel "Toggle window leveling of data before phase computation"
+
+    # read default filter kernel at startup to avoid update
+    # of vtk classes that don't have their inputs yet
+    EdPhaseWireSetOmega $Ed(EdPhaseWire,omega,id)]
+
 
 }
 
