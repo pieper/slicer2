@@ -41,6 +41,7 @@
 #    MorphometricsCreateModelChooserStep workflowName modelNames modelDistributor
 #    MorphometricsCreatePlanePlacementStep workflowName plane shortDescription instructions
 #    MorphometricsCreateSpherePlacementStep workflowName sphere shortDescription instructions
+#    MorphometricsCreateAxisPlacementStep workflowName axis shortDescription instructions
 #    MorphometricsCreateCylinderPlacementStep workflowName cylinderSource cylinderSourceTransformFilter shortDescription instructions CustomUserInterface callOnEnter callOnExit
 #    MorphometricsCreatePolyDataPlacementStep workflowName polyDataTransformFilter shortDescription instructions CustomUserInterface callOnEnter callOnExit
 #    MorphometricsInitStepFactories
@@ -163,6 +164,24 @@ proc MorphometricsCreatePlanePlacementStep {workflowName plane shortDescription 
 #-------------------------------------------------------------------------------
 proc MorphometricsCreateSpherePlacementStep {workflowName sphere shortDescription instructions} {
     WorkflowAddStep $workflowName [list [subst -nocommand {MorphometricsGenericSphereDisplay $sphere}]] [list [subst -nocommand {MorphometricsGenericSphereUndisplay $sphere}]] [list [subst -nocommand {MorphometricsGenericSphereUI $sphere [list $instructions]}]] $shortDescription
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC MorphometricsCreateAxisPlacementStep
+# Given a vtkAxisSource, this function creates the whole user interface in which
+# the user can place the axis according to the provided instructions.
+# The axis itself gets updated when the user leaves the step, not when the user 
+# places it
+# .ARGS
+# str workflowName name of the workflow to which this function should add a step
+# str axis object of type vtkAxis
+# str shortDescription A concise description where the user should place the axis
+# str instructions A longer text, explaining to the user how the axis should be placed.
+# .END 
+#-------------------------------------------------------------------------------
+proc MorphometricsCreateAxisPlacementStep {workflowName axis shortDescription instructions} {
+    WorkflowAddStep $workflowName [list [subst -nocommand {MorphometricsGenericAxisDisplay $axis}]] [list [subst -nocommand {MorphometricsGenericAxisUndisplay $axis}]] [list [subst -nocommand {MorphometricsGenericPolyDataUI MorphometricsNoUI [list $instructions]}]] $shortDescription
 }
 
 
@@ -297,7 +316,6 @@ proc MorphometricsGenericPlaneDisplay {plane} {
     [$Morphometrics(StepFactories,FilterTransform) GetMatrix] Invert [$Morphometrics(csys,actor) GetMatrix] [$Morphometrics(StepFactories,FilterTransform) GetMatrix]
 
     MorphometricsViewPolydataWithCsys
-    Render3D
 }
 
 #-------------------------------------------------------------------------------
@@ -312,7 +330,7 @@ proc MorphometricsGenericPlaneUndisplay {plane} {
     global Morphometrics
     MorphometricsUnAlignPolydataWithCsys
     MorphometricsHidePolydataWithCsys
-    Render3D
+
     set position [MorphometricsCsysCenter]
     $plane SetCenter [lindex $position 0] [lindex $position 1] [lindex $position 2]
     set normal [MorphometricsCsysDirectionX]
@@ -424,7 +442,6 @@ proc MorphometricsGenericPolyDataDisplay {polyDataTransformFilter userOnEnter} {
 
     MorphometricsAlignPolydataWithCsys [$polyDataTransformFilter GetInput] $center $orientation
     MorphometricsViewPolydataWithCsys
-    Render3D
 }
 
 #-------------------------------------------------------------------------------
@@ -440,7 +457,7 @@ proc MorphometricsGenericPolyDataUndisplay {polyDataTransformFilter userOnExit} 
     global Morphometrics
     MorphometricsUnAlignPolydataWithCsys
     MorphometricsHidePolydataWithCsys
-    Render3D
+
     [$polyDataTransformFilter GetTransform] SetMatrix  [Morphometrics(csys,actor) GetMatrix]
     eval $userOnExit
 }
@@ -572,7 +589,6 @@ proc MorphometricsGenericSphereDisplay {sphere} {
     MorphometricsAlignPolydataWithCsys [$sphere GetOutput] [$sphere GetCenter] {180 1 0 0}
     $Morphometrics(StepFactories,FilterTransform) Translate [expr -1 * [lindex [$sphere GetCenter] 0]] [expr -1 * [lindex [$sphere GetCenter] 1]] [expr -1 * [lindex [$sphere GetCenter] 2]]
     MorphometricsViewPolydataWithCsys
-    Render3D
 }
 
 #-------------------------------------------------------------------------------
@@ -586,7 +602,7 @@ proc MorphometricsGenericSphereUndisplay {sphere} {
     global Morphometrics
     MorphometricsUnAlignPolydataWithCsys
     MorphometricsHidePolydataWithCsys
-    Render3D
+
     set position [MorphometricsCsysCenter]
     $sphere SetCenter [lindex $position 0] [lindex $position 1] [lindex $position 2]
 }
@@ -631,6 +647,48 @@ proc MorphometricsGenericSphereChangeRadius {sphere delta} {
     $sphere SetRadius [expr $delta + [$sphere GetRadius]]
     }
 }
+
+
+#-------------------------------------------------------------------------------
+# .PROC MorphometricsGenericAxisDisplay
+# Display a axis in viewRen, center the csys actor at its center and align the
+# axis to the actor.
+# .ARGS
+# str axis object of type vtkAxisSource
+# .END
+#-------------------------------------------------------------------------------
+proc MorphometricsGenericAxisDisplay {axis} {
+    global Morphometrics
+
+    $Morphometrics(StepFactories,Filter) SetInput [$axis GetOutput]
+
+    $Morphometrics(StepFactories,FilterTransform) Identity
+
+    MorphometricsPositionCsys  [$axis GetCenter] [$axis GetDirection]
+
+    [$Morphometrics(StepFactories,FilterTransform) GetMatrix] Invert [$Morphometrics(csys,actor) GetMatrix] [$Morphometrics(StepFactories,FilterTransform) GetMatrix]
+
+    MorphometricsViewPolydataWithCsys
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MorphometricsGenericAxisUndisplay
+# Remove the axis from viewRen as well as update the axis to its new center.
+# .ARGS
+# str axis object of type vtkAxisSource
+# .END
+#-------------------------------------------------------------------------------
+proc MorphometricsGenericAxisUndisplay {axis} {
+    global Morphometrics
+    MorphometricsUnAlignPolydataWithCsys
+    MorphometricsHidePolydataWithCsys
+
+    set position [MorphometricsCsysCenter]
+    set direction [MorphometricsCsysDirectionX]
+    $axis SetCenter [lindex $position 0] [lindex $position 1] [lindex $position 2]
+    $axis SetDirection [lindex $direction 0] [lindex $direction 1] [lindex $direction 2]
+}
+
 
 #-------------------------------------------------------------------------------
 # .PROC MorphometricsAlignPolydataWithCsys
@@ -681,6 +739,7 @@ proc MorphometricsViewPolydata {polydata} {
     global Morphometrics
     $Morphometrics(StepFactories,Filter) SetInput $polydata
     viewRen AddActor $Morphometrics(StepFactories,Actor)
+    Render3D
 }
 
 #-------------------------------------------------------------------------------
@@ -692,6 +751,7 @@ proc MorphometricsViewPolydata {polydata} {
 proc MorphometricsHidePolydata {} {
     global Morphometrics
     viewRen RemoveActor $Morphometrics(StepFactories,Actor)
+    Render3D
 }
 
 #-------------------------------------------------------------------------------
@@ -704,6 +764,7 @@ proc MorphometricsViewPolydataWithCsys {} {
     global Morphometrics
     $Morphometrics(csys,actor) AddPart $Morphometrics(StepFactories,Actor)
     MorphometricsViewCsys
+    Render3D
 }
 
 #-------------------------------------------------------------------------------
@@ -716,5 +777,6 @@ proc MorphometricsHidePolydataWithCsys {} {
     global Morphometrics
     $Morphometrics(csys,actor) RemovePart $Morphometrics(StepFactories,Actor)
     MorphometricsHideCsys
+    Render3D
 }
 
