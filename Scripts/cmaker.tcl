@@ -109,9 +109,6 @@ if { [info exists env(SLICER_MODULES)] } {
 
 
 set TARGETS ""
-set CLEANFLAG 0
-set NOCMAKEFLAG 0
-
 foreach dir $modulePaths {
     if { ![file isdirectory $dir] } {continue}
     set moduleName [file tail $dir]
@@ -139,25 +136,60 @@ set TARGETS "$slicer_home/Base $TARGETS"
 #
 # also skip the cmake step for efficiency if desired
 #
-set cleanarg [lsearch $argv "--clean"] 
-if {$cleanarg != -1} {
-    puts "Removing build directories"
-    set CLEANFLAG 1
-    # remove flag from the list
-    set argv [lreplace $argv $cleanarg $cleanarg]
-    if {[llength $argv] == 0} {
-        set argv ""
-    }
+
+
+# -DCMAKE_WORDS_BIGENDIAN:BOOL= is needed otherwise does not work with cmake20 version
+if {$tcl_platform(byteOrder) == "littleEndian"} {
+   set VTK_ARG_ENDIAN "-DCMAKE_WORDS_BIGENDIAN:BOOL=OFF"
+} else {
+   set VTK_ARG_ENDIAN "-DCMAKE_WORDS_BIGENDIAN:BOOL=ON"
 }
 
-set nocmakearg [lsearch $argv "--no-cmake"] 
-if {$nocmakearg != -1} {
-    puts "skipping cmake"
-    set NOCMAKEFLAG 1
-    # remove flag from the list
-    set argv [lreplace $argv $nocmakearg $nocmakearg]
+set CLEANFLAG 0
+set NOCMAKEFLAG 0
+set VTK_ARG_VERBOSE "-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF"
+set VTK_ARG_DEBUG   "-DCMAKE_BUILD_TYPE:STRING="
+
+set argc [llength $argv]
+set OrigArgv "$argv"
+
+
+for {set i 0} {$i < $argc} {incr i} {
+    set a [lindex $OrigArgv $i]
+    set AttributeFlag  0  
+    switch -glob -- $a {
+        "--clean"    {  puts "Removing build directories"
+                        set CLEANFLAG 1
+                        set AttributeFlag 1 
+                   }
+        "--no-cmake" {  puts "Skipping cmake"
+                        set NOCMAKEFLAG 1
+                    set AttributeFlag 1
+                 }
+    "--verbose"  { puts "Compiling in verbose mode"
+                       set VTK_ARG_VERBOSE "-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON"
+                   set AttributeFlag 1
+                 } 
+        "--debug"    { puts "Compiling in debug mode (-g flag)" 
+                   set VTK_ARG_DEBUG   "-DCMAKE_BUILD_TYPE:STRING=Debug"
+                   set AttributeFlag 1
+                 }
+    default      { if {[string range $a 0 1 ] == "--"} { 
+                     puts stderr "Do not know option $a. Currently the following attributes are defined: "
+                     puts stderr " --clean: Removing build directories \n --no-cmake: Skipping cmake \n --verbose: Compiling in verbose mode \n --debug: Compiling in debug mode (-g flag)" 
+                     exit 1
+                   }  
+                    }
+    }
+
+    # remove flag from the list if it was an attribute      
+    if {$AttributeFlag} {    
+    set id [lsearch $argv $a] 
+    set argv [lreplace $argv $id $id]
     if {[llength $argv] == 0} {
         set argv ""
+        break
+    }
     }
 }
 
@@ -215,7 +247,7 @@ foreach target $TARGETS {
 
         set cmakecmd [list $CMAKE $target -G$GENERATOR \
             $VTK_ARG1 $VTK_ARG2 $VTK_ARG3 $VTK_ARG4 $VTK_ARG5 \
-            $VTK_ARG6 $VTK_ARG7 $VTK_ARG8 $VTK_ARG9 \
+            $VTK_ARG6 $VTK_ARG7 $VTK_ARG8 $VTK_ARG9 $VTK_ARG_VERBOSE $VTK_ARG_DEBUG $VTK_ARG_ENDIAN \
             $SLICER_ARG1 $SLICER_ARG2 $SLICER_ARG3 $SLICER_ARG4] 
 
         if {[file exists [file join $target cmaker_local.tcl]]} {
@@ -258,7 +290,8 @@ foreach target $TARGETS {
             puts "running: devenv $sln /build debug"
 
             # no output from devenv so just go ahead and run it with no loop
-            set ret [catch "exec devenv $sln /build debug" res]
+            set ret [catch {exec devenv $sln /build debug} res]
+            # set ret [catch {exec "c:/Program Files/Microsoft Visual Studio .NET/Common7/IDE/devenv" $sln /build debug} res]
 
             puts $res
             
