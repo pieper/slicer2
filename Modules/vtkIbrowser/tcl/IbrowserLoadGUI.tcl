@@ -448,8 +448,8 @@ proc IbrowserMultiVolumeReaderBuildGUI {parent {status 0}} {
     set f $parent.fReaderConfig
     frame $f.fLabel -bg $Gui(activeWorkspace)
     frame $f.fFile -bg $Gui(activeWorkspace) -relief groove -bd 2
-    frame $f.fApply -bg $Gui(activeWorkspace) -relief groove -bd 3
-    frame $f.fStatus -bg $Gui(activeWorkspace) -relief groove -bd 3
+    frame $f.fApply -bg $Gui(activeWorkspace) -bd 3
+    frame $f.fStatus -bg $Gui(activeWorkspace) -bd 3
     pack $f.fLabel $f.fFile $f.fApply $f.fStatus -side top -pady 1
 
     set f $parent.fReaderConfig.fLabel
@@ -511,12 +511,11 @@ proc IbrowserMultiVolumeReaderBuildGUI {parent {status 0}} {
     set f $f.fVName
     DevAddLabel $f.lVName "loading volume:"
     set MultiVolumeReader(emptyLoadStatus) ""
-    eval {entry $f.eVName -width 30 \
-        -state normal \
-        -textvariable MultiVolumeReader(emptyLoadStatus)} $Gui(WEA)
-    pack $f.lVName $f.eVName -side top -padx $Gui(pad) -pady 2 
+    eval { label $f.lvolname -width 30 -bg $::Gui(activeWorkspace) \
+               -textvariable MultiVolumeReader(emptyLoadStatus)}
+    pack $f.lVName $f.lvolname -side top -padx $Gui(pad) -pady 2 
     if {$status == 1} {
-        set MultiVolumeReader(loadStatusEntry) $f.eVName
+        set MultiVolumeReader(loadStatusEntry) $f.lvolname
     }
 
     # The Navigate frame
