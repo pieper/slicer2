@@ -301,12 +301,15 @@ static void vtkImageReformatExecuteInt(vtkImageReformat *self,
 
     // Scale mx, my by FOV/RESOLUTION
     res = self->GetResolution();
-    if(self->GetZoom() < 0.0001)
-        self->SetZoom(0.0001);
-    scale = self->GetFieldOfView() / (res * self->GetZoom());
+    ///Raul: Compute that in Execute
+    //if(self->GetZoom() < 0.0001)
+    //    self->SetZoom(0.0001);
+    //scale = self->GetFieldOfView() / (res * self->GetZoom());
 
     //self->PanScale = self->GetFieldOfView() / (res * self->Zoom);
-    self->SetPanScale(scale);
+    //self->SetPanScale(scale);
+    
+    scale=self->GetPanScale();
 
     mx[0] = mat->Element[0][0] * scale;
     mx[1] = mat->Element[1][0] * scale;
@@ -331,10 +334,11 @@ static void vtkImageReformatExecuteInt(vtkImageReformat *self,
     //originshift1[0] = self->OriginShift[0];
     //originshift1[1] = self->OriginShift[1];
     vtkMatrix4x4 *originshiftmtx = self->GetOriginShiftMtx();
-    originshiftmtx->DeepCopy(mat);
-    originshiftmtx->Element[0][3] = 0.0;
-    originshiftmtx->Element[1][3] = 0.0;
-    originshiftmtx->Element[2][3] = 0.0;
+    //Raul: These operations are not thread safe. Move to Execute
+    //originshiftmtx->DeepCopy(mat);
+    //originshiftmtx->Element[0][3] = 0.0;
+    //originshiftmtx->Element[1][3] = 0.0;
+    //originshiftmtx->Element[2][3] = 0.0;
     self->GetOriginShift(originshift1);
     originshift1[2] = 0.0;
     originshift1[3] = 1.0;
@@ -659,14 +663,17 @@ static void vtkImageReformatExecute(vtkImageReformat *self,
 
     // Scale mx, my by FOV/RESOLUTION
     res = self->GetResolution();
-    if(self->GetZoom() < 0.0001)
-        self->SetZoom(0.0001);
-    scale = self->GetFieldOfView() / (res * self->GetZoom());
+    ///Raul: Compute that in Execute
+    //if(self->GetZoom() < 0.0001)
+    //    self->SetZoom(0.0001);
+    //scale = self->GetFieldOfView() / (res * self->GetZoom());
     //    scale = self->GetFieldOfView() / res;
 
     //self->PanScale = self->GetFieldOfView() / (res * self->Zoom);
-    self->SetPanScale(scale);
+    //self->SetPanScale(scale);
 
+    scale=self->GetPanScale();
+    
     mx[0] = mat->Element[0][0] * scale;
     mx[1] = mat->Element[1][0] * scale;
     mx[2] = mat->Element[2][0] * scale;
@@ -687,10 +694,11 @@ static void vtkImageReformatExecute(vtkImageReformat *self,
 
     float originshift1[4], originshift2[4];
     vtkMatrix4x4 *originshiftmtx = self->GetOriginShiftMtx();
-    originshiftmtx->DeepCopy(mat);
-    originshiftmtx->Element[0][3] = 0.0;
-    originshiftmtx->Element[1][3] = 0.0;
-    originshiftmtx->Element[2][3] = 0.0;
+    //Raul: These operations are not thread safe. Move to Execute
+    //originshiftmtx->DeepCopy(mat);
+    //originshiftmtx->Element[0][3] = 0.0;
+    //originshiftmtx->Element[1][3] = 0.0;
+    //originshiftmtx->Element[2][3] = 0.0;
     self->GetOriginShift(originshift1);
     originshift1[2] = 0.0;
     originshift1[3] = 1.0;
@@ -1454,6 +1462,7 @@ static void vtkImageReformatExecuteTensor(vtkImageReformat *self,
 //void vtkImageReformat::Execute()
 void vtkImageReformat::ExecuteData(vtkDataObject *out)
 {
+    int i,ext[6];
     //vtkImageData *output = this->GetOutput();
     vtkImageData *output = vtkImageData::SafeDownCast(out);
 
@@ -1475,6 +1484,46 @@ void vtkImageReformat::ExecuteData(vtkDataObject *out)
 
         }
     }
+    
+    //Set up common information: reformat, matrices, res, scale...
+    // If no matrices provided, then create defaults
+    if (!this->ReformatMatrix) 
+    {
+        // If the user has not set the ReformatMatrix, then create it.
+        // The key is to perform: New(), Register(), Delete().
+        // Then we can call UnRegister() in the destructor, and it will delete
+        // the object if no one else is using it.  We don't have to distinguish
+        // between whether we created the object, or someone else did!
+        this->ReformatMatrix = vtkMatrix4x4::New();
+        this->ReformatMatrix->Register(this);
+        this->ReformatMatrix->Delete();
+    }
+    if (!this->WldToIjkMatrix) 
+    {
+        this->WldToIjkMatrix = vtkMatrix4x4::New();
+        this->WldToIjkMatrix->Register(this);
+        this->WldToIjkMatrix->Delete();
+
+        this->GetInput()->GetWholeExtent(ext);
+        for (i=0; i<3; i++)
+        {
+            this->WldToIjkMatrix->SetElement(i, 3, 
+                    (ext[i*2+1] - ext[i*2] + 1) / 2.0);
+        }
+    }
+    
+    //Set up Zoom to 0.0001 if it's too small.
+    if(this->GetZoom() < 0.0001)
+      this->SetZoom(0.0001);
+  
+    this->SetPanScale(this->GetFieldOfView() / (this->GetResolution() * this->GetZoom()));
+  
+    //Set up originShiftMtx so all the threads see the same
+    this->OriginShiftMtx->DeepCopy(this->ReformatMatrix);
+    this->OriginShiftMtx->Element[0][3] = 0.0;
+    this->OriginShiftMtx->Element[1][3] = 0.0;
+    this->OriginShiftMtx->Element[2][3] = 0.0;
+    
     // jump back into normal pipeline: call standard superclass method here
     //this->vtkImageToImageFilter::Execute(this->GetInput(), output);
     //this->vtkImageToImageFilter::Execute();
@@ -1502,33 +1551,6 @@ void vtkImageReformat::ThreadedExecute(vtkImageData *inData,
     // id: 1 outExt: 0 255 64 127 0 0,  inExt: 0 255 0 255 0 123  wExt: 0 255 0 255 0 0
     // id: 2 outExt: 0 255 128 191 0 0, inExt: 0 255 0 255 0 123  wExt: 0 255 0 255 0 0
     // id: 3 outExt: 0 255 192 255 0 0, inExt: 0 255 0 255 0 123  wExt: 0 255 0 255 0 0
-
-    // If no matrices provided, then create defaults
-    if (!this->ReformatMatrix) 
-    {
-        // If the user has not set the ReformatMatrix, then create it.
-        // The key is to perform: New(), Register(), Delete().
-        // Then we can call UnRegister() in the destructor, and it will delete
-        // the object if no one else is using it.  We don't have to distinguish
-        // between whether we created the object, or someone else did!
-        this->ReformatMatrix = vtkMatrix4x4::New();
-        this->ReformatMatrix->Register(this);
-        this->ReformatMatrix->Delete();
-    }
-    if (!this->WldToIjkMatrix) 
-    {
-        this->WldToIjkMatrix = vtkMatrix4x4::New();
-        this->WldToIjkMatrix->Register(this);
-        this->WldToIjkMatrix->Delete();
-
-        this->GetInput()->GetWholeExtent(ext);
-        for (i=0; i<3; i++)
-        {
-            this->WldToIjkMatrix->SetElement(i, 3, 
-                    (ext[i*2+1] - ext[i*2] + 1) / 2.0);
-        }
-    }
-
 
     // If we have tensors in the input
     if (inData->GetPointData()->GetTensors() != NULL) {
