@@ -48,6 +48,29 @@
 #
 #===============================================================================
  
+
+#-------------------------------------------------------------------------------
+# .PROC  EMSegmentSetVtkGenericClassSetting
+# Settings defined by vtkImageEMGenericClass, i.e. variables that have to be set for both CLASS and SUPERCLASS 
+# Only loaded for private version 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc EMSegmentSetVtkGenericClassSetting {vtkGenricClass Sclass} {
+  global EMSegment
+  $vtkGenericClass SetNumInputImages $EMSegment(NumInputChannel) 
+  eval $vtkGenericClass SetSegmentationBoundaryMin $EMSegment(SegmentationBoundaryMin,0) $EMSegment(SegmentationBoundaryMin,1) $EMSegment(SegmentationBoundaryMin,2)
+  eval $vtkGenericClass SetSegmentationBoundaryMax $EMSegment(SegmentationBoundaryMax,0) $EMSegment(SegmentationBoundaryMax,1) $EMSegment(SegmentationBoundaryMax,2)
+
+  $vtkGenericClass SetProbDataWeight $EMSegment(Cattrib,$Sclass,LocalPriorWeight)
+  $vtkGenericClass SetTissueProbability $EMSegment(Cattrib,$Sclass,Prob)
+
+  for {set y 0} {$y < $EMSegment(NumInputChannel)} {incr y} {
+       $vtkGenericClass SetInputChannelWeights $EMSegment(Cattrib,$Sclass,InputChannelWeights,$y) $y
+  }
+}
+
+
 #-------------------------------------------------------------------------------
 # .PROC  EMSegmentSetVtkSuperClassSetting
 # Setting up everything for the super classes  
@@ -55,7 +78,90 @@
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc EMSegmentSetVtkSuperClassSetting {SuperClass NumInputImagesSet} {
+proc EMSegmentSetVtkSuperClassSetting {SuperClass} {
+  global EMSegment Volume
+  # Reads in the value for each class individually
+  catch{ EMSegment(Cattrib,$i,vtkImageEMSuperClass) destroy} 
+  vtkImageEMSuperClass EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass)      
+  EMSegmentSetVtkGenericClassSetting EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) $SuperClass
+
+  EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetNumClasses [llength $EMSegment(Cattrib,$SuperClass,ClassList)]
+
+  set x 0  
+  foreach i $EMSegment(Cattrib,$SuperClass,ClassList) {
+      set y 0
+      foreach j $EMSegment(Cattrib,$SuperClass,ClassList) {
+        for {set k 0} { $k < 6} {incr k} {
+           EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetMarkovMatrix $EMSegment(Cattrib,$SuperClass,CIMMatrix,$i,$j,[lindex $EMSegment(CIMList) $k]) $k $y $x
+        }
+        incr y
+      }
+      incr x
+  }
+
+
+  foreach i $EMSegment(Cattrib,$SuperClass,ClassList) {
+    if {$EMSegment(Cattrib,$i,IsSuperClass)} {
+        if {[EMSegmentSetVtkSuperClassSetting $i]} {return [EMSegment(Cattrib,$i,vtkImageEMSuperClass) GetErrorFlag]}
+    } else {
+      catch{EMSegment(Cattrib,$i,vtkImageEMClass) destroy}
+      vtkImageEMClass EMSegment(Cattrib,$i,vtkImageEMClass)      
+      EMSegmentSetVtkGenericClassSetting EMSegment(Cattrib,$i,vtkImageEMClass) $i
+
+      EMSegment(Cattrib,$i,vtkImageEMClass) SetLabel             $EMSegment(Cattrib,$i,Label) 
+      EMSegment(Cattrib,$i,vtkImageEMClass) SetShapeParameter    $EMSegment(Cattrib,$i,ShapeParameter)
+      if {$EMSegment(Cattrib,$i,ProbabilityData) != $Volume(idNone)} {
+          EMSegment(Cattrib,$i,vtkImageEMClass) SetProbDataPtr [Volume($EMSegment(Cattrib,$i,ProbabilityData),vol) GetOutput]
+      } 
+      for {set y 0} {$y < $EMSegment(NumInputChannel)} {incr y} {
+          EMSegment(Cattrib,$i,vtkImageEMClass) SetLogMu $EMSegment(Cattrib,$i,LogMean,$y) $y
+          for {set x 0} {$x < $EMSegment(NumInputChannel)} {incr x} {
+            EMSegment(Cattrib,$i,vtkImageEMClass) SetLogCovariance $EMSegment(Cattrib,$i,LogCovariance,$y,$x) $y $x
+          }
+      }
+      if {$EMSegment(IntensityAvgClass) == $EMSegment(Cattrib,$i,Label)} {
+          # Transfere Intensity correction filter stuff
+          set index 0
+          EMSegment(vtkEMSegment) EMSetIntensityAvgClass  EMSegment(Cattrib,$i,vtkImageEMClass)
+          foreach v $EMSegment(SelVolList,VolumeList) {       
+             EMSegment(vtkEMSegment) SetIntensityAvgValuePreDef $EMSegment(IntensityAvgValue,$v) $index
+             incr index
+          } 
+      }
+      # Setup DICE Related information
+      if {($EMSegment(Cattrib,$i,DICEData) !=  $Volume(idNone)) && $EMSegment(PrintDICEResults) } {
+         EMSegment(Cattrib,$i,vtkImageEMClass) SetReferenceStandardPtr [Volume($EMSegment(Cattrib,$i,DICEData),vol) GetOutput]
+      } 
+      # Setup PCA parameter
+      if {$EMSegment(Cattrib,$i,PCAMeanData) !=  $Volume(idNone) } {
+         set NumEigenModes [llength $EMSegment(Cattrib,$i,PCAEigen)]
+         # Kilan: first Rotate and translate the image before setting them 
+         # Remember to first calculathe first the inverse of the two because we go from case2 to patient and data is given form patient to case2
+         EMSegment(Cattrib,$i,vtkImageEMClass) SetPCANumberOfEigenModes $NumEigenModes
+         EMSegment(Cattrib,$i,vtkImageEMClass) SetPCAMeanShape [Volume($EMSegment(Cattrib,$i,PCAMeanData),vol) GetOutput]
+
+     set NumInputImagesSet 0
+         foreach EigenList $EMSegment(Cattrib,$i,PCAEigen) {
+             EMSegment(Cattrib,$i,vtkImageEMClass) SetPCAEigenVector [Volume([lindex $EigenList 2],vol) GetOutput] $NumInputImagesSet  
+             incr NumInputImagesSet
+         }
+          
+         # Have to do it seperate otherwise EigenValues get deleted 
+         foreach EigenList $EMSegment(Cattrib,$i,PCAEigen) {
+             EMSegment(Cattrib,$i,vtkImageEMClass)  SetPCAEigenValue [lindex $EigenList 0] [lindex $EigenList 1] 
+         }
+         eval EMSegment(Cattrib,$i,vtkImageEMClass) SetPCAScale   $EMSegment(Cattrib,$i,PCAScale)
+         EMSegment(Cattrib,$i,vtkImageEMClass) SetPCAMaxDist      $EMSegment(Cattrib,$i,PCAMaxDist)
+         EMSegment(Cattrib,$i,vtkImageEMClass) SetPCADistVariance $EMSegment(Cattrib,$i,PCADistVariance)
+      } 
+    }
+  }
+  # Automatically all the subclass are updated too and checked if values are set correctly 
+  vtkImageEMSuperClass Update
+  return [vtkImageEMSuperClass GetErrorFlag] 
+}
+
+proc EMSegmentSetVtkSuperClassSettingV1 {SuperClass NumInputImagesSet} {
   global EMSegment Volume
   # Reads in the value for each class individually
   EMSegment(vtkEMSegment) SetNumClasses [llength $EMSegment(Cattrib,$SuperClass,ClassList)]
@@ -147,6 +253,7 @@ proc EMSegmentSetVtkSuperClassSetting {SuperClass NumInputImagesSet} {
   }
    return $NumInputImagesSet
 }
+
 #-------------------------------------------------------------------------------
 # .PROC EMSegmentSetVtkClassSettingOld
 # Old function for Setting up everything for the EMAlgorithm
@@ -212,6 +319,7 @@ proc EMSegmentSetVtkClassSettingOld {} {
 #-------------------------------------------------------------------------------
 # .PROC EMSegmentAlgorithmStart
 # Sets up the segmentation algorithm
+# Returns 0 if an Error Occured and 1 if it was successfull 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -228,34 +336,40 @@ proc EMSegmentAlgorithmStart { } {
    EMSegment(vtkEMSegment) SetBiasPrint $EMSegment(BiasPrint)
 
    if {$EMSegment(SegmentMode) > 1} {
-          set NumInputImagesSet [EMSegmentSetVtkSuperClassSetting 0 0]
+       if {[EMSegmentSetVtkSuperClassSetting 0]} {
+          # Error Occured
+      return 0
+       }
  
-          # Transfer image information
-          foreach v $EMSegment(SelVolList,VolumeList) {       
-            EMSegment(vtkEMSegment) SetInputIndex $NumInputImagesSet [Volume($v,vol) GetOutput]
-            incr NumInputImagesSet
-          }
-          # Transfer Bias Print out Information
-          EMSegment(vtkEMSegment) SetPrintIntermediateDir $EMSegment(PrintIntermediateDir)
-          EMSegment(vtkEMSegment) SetNumEMShapeIter  $EMSegment(EMShapeIter)  
+       # Transfer image information
+       set NumInputImagesSet 0
+       foreach v $EMSegment(SelVolList,VolumeList) {       
+       EMSegment(vtkEMSegment) SetImageInput $NumInputImagesSet [Volume($v,vol) GetOutput]
+       incr NumInputImagesSet
+       }
+       # Transfer Bias Print out Information
+       EMSegment(vtkEMSegment) SetPrintIntermediateDir $EMSegment(PrintIntermediateDir)
+       EMSegment(vtkEMSegment) SetNumEMShapeIter  $EMSegment(EMShapeIter)  
 
-          # This is for debuging purposes so extra volumes can be loaded into the segmentation process 
-          if {$EMSegment(DebugVolume)} {
-              set index 1 
-              set foundindex 0
-              while {$foundindex > -1} {
-                  set foundindex [lsearch -exact $EMSegment(VolumeNameList)  EMDEBUG${index}] 
-                  if {$foundindex > -1} {
-                      EMSegment(vtkEMSegment) SetInputIndex $NumInputImagesSet [Volume([lindex $Volume(idList) $foundindex],vol) GetOutput]
-                      incr NumInputImagesSet
-                      incr index
-                  }
-              }
-          }
-          EMSegment(vtkEMSegment) SetPrintPCAParameters $EMSegment(PrintPCAParameters)
-          EMSegment(vtkEMSegment) SetPrintDICEResults   $EMSegment(PrintDICEResults)
+       # This is for debuging purposes so extra volumes can be loaded into the segmentation process 
+       if {$EMSegment(DebugVolume)} {
+       set index 1 
+       set foundindex 0
+       while {$foundindex > -1} {
+           set foundindex [lsearch -exact $EMSegment(VolumeNameList)  EMDEBUG${index}] 
+           if {$foundindex > -1} {
+           EMSegment(vtkEMSegment) SetInputIndex $NumInputImagesSet [Volume([lindex $Volume(idList) $foundindex],vol) GetOutput]
+           incr NumInputImagesSet
+           incr index
+           }
+       }
+       }
+       EMSegment(vtkEMSegment) SetPrintPCAParameters $EMSegment(PrintPCAParameters)
+       EMSegment(vtkEMSegment) SetPrintDICEResults   $EMSegment(PrintDICEResults)
    } else {
        EMSegmentSetVtkClassSettingOld
+       EMSegment(vtkEMSegment) SetStartSlice      $EMSegment(SegmentationBoundaryMin,2)
+       EMSegment(vtkEMSegment) SetEndSlice        $EMSegment(SegmentationBoundaryMax,2)
    }
 
    #----------------------------------------------------------------------------
@@ -268,23 +382,12 @@ proc EMSegmentAlgorithmStart { } {
    EMSegment(vtkEMSegment) SetSmoothingWidth  $EMSegment(SmWidth)    
    EMSegment(vtkEMSegment) SetSmoothingSigma  $EMSegment(SmSigma)      
 
-   if {$EMSegment(SegmentMode) < 2}  {
-    EMSegment(vtkEMSegment) SetStartSlice      $EMSegment(SegmentationBoundaryMin,2)
-    EMSegment(vtkEMSegment) SetEndSlice        $EMSegment(SegmentationBoundaryMax,2)
-   } else {
-       eval EMSegment(vtkEMSegment) SetSegmentationBoundaryMin $EMSegment(SegmentationBoundaryMin,0) $EMSegment(SegmentationBoundaryMin,1) $EMSegment(SegmentationBoundaryMin,2)
-       eval EMSegment(vtkEMSegment) SetSegmentationBoundaryMax $EMSegment(SegmentationBoundaryMax,0) $EMSegment(SegmentationBoundaryMax,1) $EMSegment(SegmentationBoundaryMax,2)
-   }
-
+  
    EMSegment(vtkEMSegment) SetPrintIntermediateResults    $EMSegment(PrintIntermediateResults) 
    EMSegment(vtkEMSegment) SetPrintIntermediateSlice      $EMSegment(PrintIntermediateSlice) 
    EMSegment(vtkEMSegment) SetPrintIntermediateFrequency  $EMSegment(PrintIntermediateFrequency) 
-   if {$EMSegment(SegmentMode) > 1} {
-       EMSegment(vtkEMSegment) SetPrintPCAParameters          $EMSegment(PrintPCAParameters) 
-       EMSegment(vtkEMSegment) SetPrintDICEResults            $EMSegment(PrintDICEResults) 
-   }
 
-   return $NumInputImagesSet
+   return 1 
 }
 
 #-------------------------------------------------------------------------------
@@ -371,6 +474,23 @@ proc EMSegmentTrainCIMField {} {
 }
 
 #-------------------------------------------------------------------------------
+# .PROC EMSegmentAlgorithmDeletevtkEMSuperClass
+# Delete vtkImageEMSuperClass and children attached to it 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc EMSegmentAlgorithmDeletevtkEMSegment {SuperClass } {
+   global EMSegment
+   EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) Delete
+   foreach i $EMSegment(Cattrib,$SuperClass,ClassList) {
+         if {$EMSegment(Cattrib,$i,IsSuperClass)} {
+         EMSegmentAlgorithmDeletevtkEMSegment $i
+     } else {
+         EMSegment(Cattrib,$i,vtkImageEMClass) Delete
+     }
+   }  
+}
+#-------------------------------------------------------------------------------
 # .PROC EMSegmentAlgorithmDeletevtkEMSegment
 # Delete vtkEMSegment related parameters 
 # .ARGS
@@ -379,4 +499,5 @@ proc EMSegmentTrainCIMField {} {
 proc EMSegmentAlgorithmDeletevtkEMSegment { } {
      global EMSegment
      EMSegment(vtkEMSegment) Delete
- }
+     EMSegmentAlgorithmDeletevtkEMSuperClass 0
+}
