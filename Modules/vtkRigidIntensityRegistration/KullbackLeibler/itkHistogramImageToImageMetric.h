@@ -3,8 +3,8 @@
   Program:   Insight Segmentation & Registration Toolkit
   Module:    $RCSfile: itkHistogramImageToImageMetric.h,v $
   Language:  C++
-  Date:      $Date: 2003/12/08 23:12:16 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2003/12/24 02:41:55 $
+  Version:   $Revision: 1.2 $
 
   Copyright (c) Insight Software Consortium. All rights reserved.
   See ITKCopyright.txt or http://www.itk.org/HTML/Copyright.htm for details.
@@ -114,7 +114,9 @@ public:
     }
 
   /** Get the UsePaddingValue */
-  itkGetConstReferenceMacro(UsePaddingValue, bool);
+  itkSetMacro( UsePaddingValue, bool );
+  itkGetMacro( UsePaddingValue, bool );
+
 
   /** Sets the step length used to calculate the derivative. */
   inline void SetDerivativeStepLength(double length)

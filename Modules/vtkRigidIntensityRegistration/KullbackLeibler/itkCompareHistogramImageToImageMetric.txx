@@ -3,8 +3,8 @@
   Program:   Insight Segmentation & Registration Toolkit
   Module:    $RCSfile: itkCompareHistogramImageToImageMetric.txx,v $
   Language:  C++
-  Date:      $Date: 2003/12/23 22:50:03 $
-  Version:   $Revision: 1.4 $
+  Date:      $Date: 2003/12/24 02:41:54 $
+  Version:   $Revision: 1.5 $
 
   Copyright (c) Insight Software Consortium. All rights reserved.
   See ITKCopyright.txt or http://www.itk.org/HTML/Copyright.htm for details.
@@ -120,10 +120,9 @@ ti.GoToBegin();
 while (!ti.IsAtEnd())
 {
   index = ti.GetIndex();
-
   if (this->m_TrainingFixedImageRegion.IsInside(index) &&
-  (!this->Superclass::m_UsePaddingValue ||
-   (this->Superclass::m_UsePaddingValue && 
+  (!this->Superclass::GetUsePaddingValue() ||
+   (this->Superclass::GetUsePaddingValue() && 
     ti.Get() > this->Superclass::GetPaddingValue())))
   {
   typename Superclass::InputPointType inputPoint;
