@@ -139,6 +139,22 @@ proc SGetImageId {volname} {
 }
 
 #======================================================================
+proc SRenameImage { volname1 volname2 } {
+#    -----------
+
+  global Volume
+
+  foreach vid $Volume(idList) {
+      if {[Volume($vid,node) GetName] == $volname1} {
+      Volume($vid,node) SetName $volname2
+      MainUpdateMRML
+      }
+  }
+  puts "no volume with this id \n"
+  return -1
+}
+
+#======================================================================
 proc SGetSurface {modelname} {
 #    -----------
   global Model
@@ -191,8 +207,38 @@ proc SSaveImage {imname filename } {
 #    ----------
   global Volume
 
+  vtkStructuredPointsWriter w
+
+  w SetFileName $filename
+  w SetFileTypeToBinary
+  w SetInput [SGetImage $imname]
+
+  w Write
+  
+  w Update
+
+  w Delete
+
 }
 
+
+proc SSaveImageId {imid filename } {
+#    ------------
+  global Volume
+
+  vtkStructuredPointsWriter w
+
+  w SetFileName $filename
+  w SetFileTypeToBinary
+  w SetInput [Volume($imid,vol) GetOutput]
+
+  w Write
+  
+  w Update
+
+  w Delete
+
+}
 
 #======================================================================
 proc DisplayMatrix {mat} {
@@ -276,7 +322,7 @@ proc SSmooth {imname sd} {
 }
 
 #======================================================================
-proc SUpSample {imname fx fy fz} {
+proc SUpSample {imname fx fy fz { mode "linear" } } {
 #    ---------
 
   global Volume
@@ -288,6 +334,11 @@ proc SUpSample {imname fx fy fz} {
   magnify SetAxisMagnificationFactor 0 ${fx}
   magnify SetAxisMagnificationFactor 1 ${fy}
   magnify SetAxisMagnificationFactor 2 ${fz}
+  switch $mode {
+      "linear" { puts "linear interpolation";magnify SetInterpolationModeToLinear }
+      "cubic"  { puts "cubic interpolation"; magnify SetInterpolationModeToCubic }
+      default  { puts "linear interpolation";magnify SetInterpolationModeToLinear }
+  }
   magnify ReleaseDataFlagOff
   magnify Update
 
@@ -392,7 +443,7 @@ proc SSubVol {imname extension x1 x2 y1 y2 z1 z2 } {
 #    -------
 
 
-  global Volume
+  global Volume Transform Matrix
 
   vtkExtractVOI op
   op SetInput [SGetImage $imname]
@@ -410,9 +461,147 @@ proc SSubVol {imname extension x1 x2 y1 y2 z1 z2 } {
   op Delete
 
 
+  
+
   puts [[Volume($newvol,vol) GetOutput] GetExtent]
   [Volume($newvol,vol) GetOutput] SetExtent 0 [expr $x2-$x1] 0 [expr $y2-$y1] 0 [expr $z2-$z1]
   puts [[Volume($newvol,vol) GetOutput] GetExtent]
+
+  # Set  new dimensions
+  set dim [Volume($imid,node) GetDimensions]
+  Volume($newvol,node) SetDimensions [expr $x2-$x1+1]  [expr $y2-$y1+1]
+
+  # Set  new range
+  set range   [Volume($imid,node) GetImageRange]
+  Volume($newvol,node) SetImageRange $z1 $z2
+
+  MainUpdateMRML
+  MainVolumesUpdate $newvol
+
+  # update matrices
+  Volume($newvol,node) ComputeRasToIjkFromScanOrder [Volume($imid,node) GetScanOrder]
+
+  # Set the RasToWld matrix
+  # Ras2ToWld = Ras2ToIjk2 x Ijk2ToIjk1 x Ijk1ToRas1 x Ras1ToWld
+  puts "Set the RasToWld matrix\n"
+  set ras1wld1 [Volume($imid,node)   GetRasToWld]
+
+  # It's weird ... : I need to call SetRasToWld in order to update RasToIjk !!!
+  Volume($newvol,node) SetRasToWld $ras1wld1
+
+#  set ras2ijk2 [Volume($newvol,node) GetRasToIjk]
+
+#  vtkMatrix4x4 ijk2ijk1
+#  ijk2ijk1 Identity
+#  ijk2ijk1 SetElement 0 3 $x1
+#  ijk2ijk1 SetElement 1 3 $y1
+#  ijk2ijk1 SetElement 2 3 $z1
+
+#  vtkMatrix4x4 ijk1ras1 
+#  ijk1ras1 DeepCopy [Volume($imid,node) GetRasToIjk]
+#  ijk1ras1 Invert
+
+#  vtkMatrix4x4 ras2wld2 
+#  ras2wld2 Identity
+#  ras2wld2 Multiply4x4 ijk2ijk1  $ras2ijk2  ras2wld2
+#  ras2wld2 Multiply4x4 ijk1ras1  ras2wld2   ras2wld2
+#  ras2wld2 Multiply4x4 $ras1wld1 ras2wld2   ras2wld2
+
+#  Volume($newvol,node) SetRasToWld ras2wld2
+  
+  MainVolumesUpdate $newvol
+
+#  ijk2ijk1    Delete
+#  ijk1ras1    Delete
+#  ras2wld2    Delete
+
+
+  MainMrmlUpdateMRML
+  #
+  # Add a Transform 
+  #
+
+  set tid [DataAddTransform 0 Volume($newvol,node) Volume($newvol,node)]
+
+  #
+  # Set the Transform
+  #
+  set n Matrix($tid,node)
+
+  set Dx  [lindex  [Volume($imid,node) GetDimensions] 0]
+  set Dy  [lindex  [Volume($imid,node) GetDimensions] 1]
+  set Dz1 [lindex  [Volume($imid,node) GetImageRange] 0]
+  set Dz2 [lindex  [Volume($imid,node) GetImageRange] 1]
+
+  set dx  [lindex  [Volume($newvol,node) GetDimensions] 0]
+  set dy  [lindex  [Volume($newvol,node) GetDimensions] 1]
+  set dz1 [lindex  [Volume($newvol,node) GetImageRange] 0]
+  set dz2 [lindex  [Volume($newvol,node) GetImageRange] 1]
+
+  set ras2ijk2 [Volume($newvol,node) GetRasToIjk]
+
+  vtkMatrix4x4 ijk2ijk1
+  ijk2ijk1 Identity
+  ijk2ijk1 SetElement 0 3 $x1
+  ijk2ijk1 SetElement 1 3 $y1
+  ijk2ijk1 SetElement 2 3 $z1
+#  ijk2ijk1 SetElement 0 3 [expr ($dx-$Dx)/2.0+$x1]
+#  ijk2ijk1 SetElement 1 3 [expr ($dy-$Dy)/2.0+$y1]
+#  ijk2ijk1 SetElement 2 3 [expr ($Dz2-$Dz1-($dz2-$dz1))/2.0+$z1]
+
+  vtkMatrix4x4 ijk1ras1 
+  ijk1ras1 DeepCopy [Volume($imid,node) GetRasToIjk]
+  ijk1ras1 Invert
+
+  vtkMatrix4x4 ras2ras1
+  ras2ras1 Identity
+  ras2ras1 Multiply4x4 ijk2ijk1  $ras2ijk2  ras2ras1
+  ras2ras1 Multiply4x4 ijk1ras1  ras2ras1   ras2ras1
+
+  vtkTransform transf
+  transf SetMatrix ras2ras1
+  $n SetTransform transf
+
+  MainMrmlUpdateMRML
+
+  ijk2ijk1    Delete
+  ijk1ras1    Delete
+  ras2ras1    Delete
+  transf      Delete
+
+  return [append $imname $extension]
+}
+#
+
+#======================================================================
+# trying with non-zero based extent
+#
+#
+proc SSubVol2 {imname extension x1 x2 y1 y2 z1 z2 } {
+#    -------
+
+
+  global Volume
+
+  vtkExtractVOI op
+  op SetInput [SGetImage $imname]
+  op SetVOI  $x1 $x2 $y1 $y2 $z1 $z2
+  op Update
+  set imid [SGetImageId $imname]
+  set newvol [SAddMrmlImage $imname ${extension}]
+  set res [op GetOutput]
+
+
+#  $res SetExtent 0 [expr $x2-$x1] 0 [expr $y2-$y1] 0 [expr $z2-$z1]
+  Volume($newvol,vol) SetImageData  $res
+  # DISCONNECT the VTK PIPELINE !!!!....
+  op SetOutput ""
+  op Delete
+
+
+  #puts [[Volume($newvol,vol) GetOutput] GetExtent]
+  #[Volume($newvol,vol) GetOutput] SetExtent 0 [expr $x2-$x1] 0 [expr $y2-$y1] 0 [expr $z2-$z1]
+  #puts [[Volume($newvol,vol) GetOutput] GetExtent]
 
   # Set  new dimensions
   set dim [Volume($imid,node) GetDimensions]
@@ -441,9 +630,9 @@ proc SSubVol {imname extension x1 x2 y1 y2 z1 z2 } {
 
   vtkMatrix4x4 ijk2ijk1
   ijk2ijk1 Identity
-  ijk2ijk1 SetElement 0 3 $x1
-  ijk2ijk1 SetElement 1 3 $y1
-  ijk2ijk1 SetElement 2 3 $z1
+ # ijk2ijk1 SetElement 0 3 $x1
+ # ijk2ijk1 SetElement 1 3 $y1
+ # ijk2ijk1 SetElement 2 3 $z1
 
   vtkMatrix4x4 ijk1ras1 
   ijk1ras1 DeepCopy [Volume($imid,node) GetRasToIjk]
@@ -456,16 +645,91 @@ proc SSubVol {imname extension x1 x2 y1 y2 z1 z2 } {
   ras2wld2 Multiply4x4 $ras1wld1 ras2wld2   ras2wld2
 
   Volume($newvol,node) SetRasToWld ras2wld2
-  
+
+  Volume($newvol,node) PreserveMatricesOn
+
   MainVolumesUpdate $newvol
 
   ijk2ijk1    Delete
   ijk1ras1    Delete
   ras2wld2    Delete
 
-  return [append $imname "_subvol"]
+  return [append $imname ${extension}]
 }
 #
+
+#-------------------------------------------------------------------------------
+# .PROC SGetTransfromMatrix VolId
+#
+# Compute the transformation under the Mrml hierarchy
+# with a limited depth of 1 ...
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc SGetTransfromMatrix { volid } {
+#    -------------------
+
+    global Model ModelMaker Label
+
+    # go through the Mrml tree
+    set nitems [Mrml(dataTree) GetNumberOfItems]
+
+    #
+    # Compute the transformation under the Mrml hierarchy
+    #
+    vtkMatrix4x4 current_matrix
+    current_matrix Identity
+
+    vtkMatrix4x4 local_matrix
+    local_matrix Identity
+
+    set intransf 0
+
+    for {set midx 0} {$midx < $nitems} {incr midx} {
+    set n [Mrml(dataTree) GetNthItem $midx]
+
+        if { [string match "Transform(*,node)" $n]} {
+        set intransf 1
+        local_matrix DeepCopy current_matrix
+    }
+
+    if { [string match "EndTransform(*,node)" $n]} {
+        set intransf 0
+    }
+
+        if {[string match "Matrix(*,node)" $n]} {
+        set mat [[$n GetTransform] GetMatrix]
+        if { $intransf } {
+        local_matrix Multiply4x4 $mat  local_matrix  local_matrix
+        } else {
+        current_matrix Multiply4x4 $mat  current_matrix  current_matrix
+        }
+    }
+
+        if { $n == "Volume($volid,node)" } {
+            break
+        }
+    }
+
+
+    vtkTransform transf
+
+    if {$intransf} {
+    transf SetMatrix local_matrix
+    } else {
+    transf SetMatrix current_matrix
+    }
+
+    local_matrix   Delete
+    current_matrix Delete
+
+    return transf
+}
+
+
+
+
 
 #-------------------------------------------------------------------------------
 # .PROC SModelMakerCreate
@@ -528,6 +792,19 @@ Marching cubes: $ModelMaker(t,mcubes) sec.\n\
 Decimate: $ModelMaker(t,decimator) sec.\n\
 Smooth: $ModelMaker(t,smoother) sec.\n\
 $ModelMaker(n,mcubes) polygons reduced to $ModelMaker(n,decimator)."
+
+    # put the model inside the same transform as the source volume
+    set nitems [Mrml(dataTree) GetNumberOfItems]
+    for {set midx 0} {$midx < $nitems} {incr midx} {
+        if { [Mrml(dataTree) GetNthItem $midx] == "Model($m,node)" } {
+            break
+        }
+    }
+    if { $midx < $nitems } {
+        Mrml(dataTree) RemoveItem $midx
+        Mrml(dataTree) InsertAfterItem Volume($v,node) Model($m,node)
+        MainUpdateMRML
+    }
 
     MainUpdateMRML
     MainModelsSetActive $m
@@ -928,6 +1205,127 @@ proc SModelLine_IJK_2_RAS { volID modelname newmodelname } {
 # SModelLine_IJK_2_RAS
 
 
+#----------------------------------------------------------------------
+proc SModelConvert { volID modelfilename model2filename } {
+#
+#
+#
+  vtkPolyDataReader kread
+  vtkTransform ktransf
+  vtkTransformPolyDataFilter ktransfpoly
+  vtkPolyDataWriter kwriter
+
+  set kimdata [ Volume(1,vol) GetOutput]
+  set kdim    [ $kimdata GetDimensions  ]
+  set kvoxdim [ $kimdata GetSpacing     ]
+  set kdimy   [ lindex $kdim    1 ]
+  set kvoxy   [ lindex $kvoxdim 1 ]
+  set ktry    [ expr  (${kdimy}-1)*${kvoxy}]
+
+  ktransf PreMultiply
+  ktransf SetMatrix [Volume(1,node) GetPosition]
+  ktransf Translate 0 $ktry 0
+  ktransf Scale     1 -1 1
+  ktransfpoly SetTransform ktransf
+
+  kread SetFileName $modelfilename
+  ktransfpoly SetInput [kread GetOutput]
+     
+  vtkReverseSense reverser
+  reverser SetInput [ktransfpoly GetOutput]
+  reverser ReverseNormalsOff
+  reverser ReverseCellsOn
+
+
+  kwriter SetFileName $model2filename
+  kwriter SetInput [reverser GetOutput]
+  kwriter SetFileTypeToBinary
+  kwriter Write
+
+  ktransf     Delete
+  ktransfpoly Delete
+  kread       Delete
+  kwriter     Delete
+  reverser    Delete
+
+}
+
+
+#----------------------------------------------------------------------
+proc SModelLine_AMI_2_RAS { volID modelname newmodelname } {
+#
+# Not tested yet ...
+#
+    global Model ModelMaker Label Module
+
+    set ModelMaker(name)     $newmodelname
+    if {[ValidateName $ModelMaker(name)] == 0} {
+        tk_messageBox -message "The name can consist of letters, digits, dashes, or underscores"
+        return
+    }
+    # Create the model's MRML node
+    set n [MainMrmlAddNode Model]
+    $n SetName  $ModelMaker(name)
+    $n SetColor $Label(name)
+
+    # Guess the prefix
+    set ModelMaker(prefix) $ModelMaker(name)
+
+    # Create the model
+    set m [$n GetID]
+    MainModelsCreate $m
+
+    # Registration
+    #
+    # Here needs ModelMaker(idVolume) !!!
+    #
+    set ModelMaker(idVolume) $volID
+    set v $ModelMaker(idVolume)
+
+    Model($m,node) SetRasToWld [Volume($v,node) GetRasToWld]
+
+    # Here process the conversion
+    # 1. get the transformation
+    # Read orientation matrix and permute the images if necessary.
+    vtkTransform rot
+    set matrixList [Volume($v,node) GetRasToVtkMatrix]
+    for {set row 0} { $row < 4 } {incr row} {
+        for {set col 0} {$col < 4} {incr col} {
+            [rot GetMatrix] SetElement $row $col \
+                [lindex $matrixList [expr $row*4+$col]]
+        }
+    }
+    [rot GetMatrix] Invert
+    
+    # 2. process Transformation
+    set p transformer
+    vtkTransformPolyDataFilter $p
+    $p SetInput [SGetSurface $modelname]
+    $p SetTransform rot
+    [$p GetOutput] ReleaseDataFlagOff
+
+    # polyData will survive as long as it's the input to the mapper
+    set Model($m,polyData) [$p GetOutput]
+    $Model($m,polyData) Update
+    foreach r $Module(Renderers) {
+        Model($m,mapper,$r) SetInput $Model($m,polyData)
+    }
+
+    transformer SetOutput ""
+    transformer SetInput ""
+    transformer Delete
+    rot Delete
+
+    MainUpdateMRML
+    MainModelsSetActive $m
+    $ModelMaker(bCreate) config -state normal
+    set name [Model($m,node) GetName]
+    tk_messageBox -message "The model '$newmodelname' has been created."
+
+} 
+# SModelLine_AMI_2_RAS
+
+
 
 #----------------------------------------------------------------------
 proc SModel_RAS_2_IJK { volID modelname newmodelname } {
@@ -1224,6 +1622,91 @@ proc SModelLine_Smooth { modelname newmodelname length } {
 
 } 
 # SModelLine_Smooth
+
+#----------------------------------------------------------------------
+proc SModel_FlipY { modelname newmodelname ty} {
+#
+# Not working for the moment ...
+#
+    global Model ModelMaker Label Module
+
+    set ModelMaker(name)     $newmodelname
+    if {[ValidateName $ModelMaker(name)] == 0} {
+        tk_messageBox -message "The name can consist of letters, digits, dashes, or underscores"
+        return
+    }
+    # Create the model's MRML node
+    set n [MainMrmlAddNode Model]
+    $n SetName  $ModelMaker(name)
+    $n SetColor $Label(name)
+
+    # Guess the prefix
+    set ModelMaker(prefix) $ModelMaker(name)
+
+    # Create the model
+    set m [$n GetID]
+    MainModelsCreate $m
+
+    # Here process the conversion
+    # 1. get the transformation
+    # Read orientation matrix and permute the images if necessary.
+    vtkTransform Tflip
+    Tflip Identity
+    Tflip Scale     0 -1  0
+    Tflip Translate 0 [expr $ty -1] 0
+    
+    # 2. process Transformation
+    set p transformer
+    vtkTransformPolyDataFilter $p
+    $p SetInput [SGetSurface $modelname]
+    $p SetTransform Tflip
+    [$p GetOutput] ReleaseDataFlagOn
+
+    vtkReverseSense reverser
+    # Do normals need reversing?
+    set mm [Tflip GetMatrix] 
+    if {[$mm Determinant] < 0} {
+        reverser SetInput [$p GetOutput]
+        set p reverser
+        $p ReverseNormalsOn
+        [$p GetOutput] ReleaseDataFlagOn
+    }
+
+    # Normals
+    vtkPolyDataNormals normals
+    normals SetInput [$p GetOutput]
+    set p normals
+    $p SetFeatureAngle 60
+    [$p GetOutput] ReleaseDataFlagOn
+
+    # Stripping
+    set p stripper
+    vtkStripper $p
+    $p SetInput [normals GetOutput]
+    [$p GetOutput] ReleaseDataFlagOff
+
+    # polyData will survive as long as it's the input to the mapper
+    set Model($m,polyData) [$p GetOutput]
+    $Model($m,polyData) Update
+    foreach r $Module(Renderers) {
+        Model($m,mapper,$r) SetInput $Model($m,polyData)
+    }
+    stripper SetOutput ""
+
+    foreach p "transformer reverser normals stripper" {
+         $p SetInput ""
+         $p Delete
+    }
+    Tflip Delete
+
+    MainUpdateMRML
+    MainModelsSetActive $m
+    $ModelMaker(bCreate) config -state normal
+    set name [Model($m,node) GetName]
+    tk_messageBox -message "The model '$newmodelname' has been created."
+
+} 
+# SModel_FlipY
 
 #----------------------------------------------------------------------
 proc SModelLine_FlipY { modelname newmodelname ty} {

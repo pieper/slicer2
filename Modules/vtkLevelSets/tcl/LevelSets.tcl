@@ -168,7 +168,7 @@ proc LevelSetsInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.28 $} {$Date: 2004/07/06 16:01:11 $}]
+        {$Revision: 1.29 $} {$Date: 2004/07/19 19:26:27 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -1773,6 +1773,17 @@ proc LevelSetsStart {} {
       LevelSets(curv) SetNumInitPoints $LevelSets(NumInitPoints)
       }
       
+
+      #
+      # Get the transform
+      #
+
+      set voltransf [SGetTransfromMatrix $input]
+      puts "Transform ? \n"
+      puts [$voltransf GetClassName]
+      puts [$voltransf Print]
+      $voltransf Inverse
+
       set radius 4
       set RASToIJKMatrix [Volume($input,node) GetRasToIjk]
       for {set n 0} {$n < $LevelSets(NumInitPoints)} {incr n} {
@@ -1781,11 +1792,15 @@ proc LevelSetsStart {} {
       set ca [lindex $coord 1]
       set cs [lindex $coord 2]
       #Transform from RAS to IJK
-      scan [$RASToIJKMatrix MultiplyPoint $cr $ca $cs 1] "%g %g %g %g" xi yi zi hi
+      scan [$voltransf TransformPoint $cr $ca $cs] "%g %g %g " xi1 yi1 zi1
+      scan [$RASToIJKMatrix MultiplyPoint $xi1 $yi1 $zi1 1] "%g %g %g %g" xi yi zi hi
       puts "LevelSets(curv) SetInitPoint  $n $xi $yi $zi $LevelSets(InitRadius)"
       LevelSets(curv) SetInitPoint  $n [expr round($xi)] [expr round($yi)] \
           [expr round($zi)] $LevelSets(InitRadius)
+      
+      
       }
+      $voltransf Delete
   }
   }
 
