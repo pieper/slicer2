@@ -193,7 +193,7 @@ proc ::tkcon::Init {args} {
         alias clear dir dump echo idebug lremove
         tkcon_puts tkcon_gets observe observe_var unalias which what
     }
-    RCS        {RCS: @(#) $Id: tkcon.tcl,v 1.3 2002/11/15 01:13:08 pieper Exp $}
+    RCS        {RCS: @(#) $Id: tkcon.tcl,v 1.4 2003/02/28 22:50:34 pieper Exp $}
     HEADURL        {http://cvs.sourceforge.net/cgi-bin/viewcvs.cgi/tkcon/tkcon/tkcon.tcl?rev=HEAD}
     docs        "http://tkcon.sourceforge.net/"
     email        {jeff@hobbs.org}
@@ -4827,21 +4827,46 @@ proc ::tkcon::ExpandPathname str {
 #        possible further matches
 ##
 proc ::tkcon::ExpandProcname str {
-    set match [EvalAttached [list info commands $str*]]
-    if {[llength $match] == 0} {
-    set ns [EvalAttached \
-        "namespace children \[namespace current\] [list $str*]"]
-    if {[llength $ns]==1} {
-        set match [EvalAttached [list info commands ${ns}::*]]
+    if { [string match ".*" $str] } {
+        set s [string trimright $str "."]
+        if { $s != "" && [winfo exists $s] } {
+            set match [winfo children $s]
+        } else {
+            if { $s == "" } {
+                set match [winfo children .]
+            } else {
+                set s [string range $s 0 [expr [string last "." $s] -1]]
+                if { $s == "" } {
+                    set match [winfo children .]
+                } else {
+                    set match [winfo children $s]
+                }
+            }
+        }
+        set mm ""
+        foreach m $match {
+            if { [string match $str* $m] } {
+                lappend mm $m
+            }
+        }
+        set match $mm
     } else {
-        set match $ns
+        set match [EvalAttached [list info commands $str*]]
     }
+    if {[llength $match] == 0} {
+        set ns [EvalAttached \
+            "namespace children \[namespace current\] [list $str*]"]
+        if {[llength $ns]==1} {
+            set match [EvalAttached [list info commands ${ns}::*]]
+        } else {
+            set match $ns
+        }
     }
     if {[llength $match] > 1} {
-    regsub -all {([^\\]) } [ExpandBestMatch $match $str] {\1\\ } str
-    set match [linsert $match 0 $str]
+        regsub -all {([^\\]) } [ExpandBestMatch $match $str] {\1\\ } str
+        set match [linsert $match 0 $str]
     } else {
-    regsub -all {([^\\]) } $match {\1\\ } match
+        regsub -all {([^\\]) } $match {\1\\ } match
     }
     return $match
 }
