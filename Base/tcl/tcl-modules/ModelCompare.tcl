@@ -20,31 +20,31 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS. 
 #
 #===============================================================================
-# FILE:        Correspondence.tcl
+# FILE:        ModelCompare.tcl
 # PROCEDURES:  
-#   CorrespondenceInit
-#   CorrespondenceBuildGUI
-#   CorrespondenceCreateModelGUI widget int
-#   CorrespondenceConfigScrolledGUI canvasScrolledGUI fScrolledGUI
-#   CorrespondenceDeleteModelGUI widget int
-#   CorrespondenceUpdateGUI
-#   CorrespondenceCorrespondSurfaces
-#   CorrespondenceCorrespondSurfaces
-#   CorrespondenceMatchSurface
-#   CorrespondenceMatchSurface
+#   ModelCompareInit
+#   ModelCompareBuildGUI
+#   ModelCompareCreateModelGUI widget int
+#   ModelCompareConfigScrolledGUI canvasScrolledGUI fScrolledGUI
+#   ModelCompareDeleteModelGUI widget int
+#   ModelCompareUpdateGUI
+#   ModelCompareCorrespondSurfaces
+#   ModelCompareCorrespondSurfaces
+#   ModelCompareMatchSurface
+#   ModelCompareMatchSurface
 #==========================================================================auto=
 
 
 #-------------------------------------------------------------------------------
-# .PROC CorrespondenceInit
+# .PROC ModelCompareInit
 #  The "Init" procedure is called automatically by the slicer.  
 #  It puts information about the module into a global array called Module, 
 #  and it also initializes module-level variables.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc CorrespondenceInit {} {
-    global Correspondence Module Volume Model
+proc ModelCompareInit {} {
+    global ModelCompare Module Volume Model
 
     # Define Tabs
     #------------------------------------
@@ -65,9 +65,9 @@ proc CorrespondenceInit {} {
     #   row2Name = like row1
     #   row2,tab = like row1 
     #
-    set m Correspondence
-    set Module($m,row1List) "Help Correspond"
-        set Module($m,row1Name) "{Help} {Correspond}"
+    set m ModelCompare
+    set Module($m,row1List) "Help Correspond Array"
+    set Module($m,row1Name) "{Help} {Correspond} {Array Display}"
     set Module($m,row1,tab) Correspond
 
 #        set Module($m,row2List) "SField VField"
@@ -76,7 +76,7 @@ proc CorrespondenceInit {} {
 
     # Module Summary Info
     #------------------------------------
-    set Module($m,overview) "Point correspondences between models."
+    set Module($m,overview) "Comparing Lots of Models."
 
     # Define Procedures
     #------------------------------------
@@ -90,7 +90,7 @@ proc CorrespondenceInit {} {
     #   procedures are optional.  If they exist, then their name (which
     #   can be anything) is registered with a line like this:
     #
-    #   set Module($m,procVTK) CorrespondenceBuildVTK
+    #   set Module($m,procVTK) ModelCompareBuildVTK
     #
     #   All the options are:
     #
@@ -110,10 +110,10 @@ proc CorrespondenceInit {} {
     #   string in your init function, of the form: 
     #   set Module($m,presets) "key1='val1' key2='val2' ..."
     #   
-    set Module($m,procGUI) CorrespondenceBuildGUI
-#    set Module($m,procEnter) CorrespondenceEnter
-#    set Module($m,procExit) CorrespondenceExit
-    set Module($m,procMRML) CorrespondenceUpdateGUI
+    set Module($m,procGUI) ModelCompareBuildGUI
+#    set Module($m,procEnter) ModelCompareEnter
+#    set Module($m,procExit) ModelCompareExit
+    set Module($m,procMRML) ModelCompareUpdateGUI
 
     # Define Dependencies
     #------------------------------------
@@ -131,7 +131,7 @@ proc CorrespondenceInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.4 $} {$Date: 2002/05/09 14:50:42 $}]
+        {$Revision: 1.1 $} {$Date: 2002/06/28 20:35:14 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -140,28 +140,38 @@ proc CorrespondenceInit {} {
     #   This is a handy method for organizing the global variables that
     #   the procedures in this module and others need to access.
     #
-        set Correspondence(Model1) ""
-        set Correspondence(Model2) ""
-        set Correspondence(CorSphereScale) 9.5
-        set Correspondence(CorSphereSkip) 20
+        set ModelCompare(Model1) ""
+        set ModelCompare(Model2) ""
+        set ModelCompare(CorSphereScale) 9.5
+        set ModelCompare(CorSphereSkip) 20
+
+        set ModelCompare(TransformName) "ArrayTrans";
+        set ModelCompare(Rowsize)  10
+        set ModelCompare(ColX) 5.0;
+        set ModelCompare(ColY) 0.0;
+        set ModelCompare(ColZ) 0.0;;
+
+        set ModelCompare(RowX) 0.0;
+        set ModelCompare(RowY) 5.0;
+        set ModelCompare(RowZ) 0.0;;
+        set ModelCompare(MatArray) " ";
 }
 
-
 #-------------------------------------------------------------------------------
-# .PROC CorrespondenceBuildGUI
+# .PROC ModelCompareBuildGUI
 #
 # Create the Graphical User Interface.
 # .END
 #-------------------------------------------------------------------------------
-proc CorrespondenceBuildGUI {} {
-    global Gui Correspondence Module Volume Model View
+proc ModelCompareBuildGUI {} {
+    global Gui ModelCompare Module Volume Model View
 
     # A frame has already been constructed automatically for each tab.
     # A frame named "Props" can be referenced as follows:
     #   
     #     $Module(<Module name>,f<Tab name>)
     #
-    # ie: $Module(Correspondence,fProps)
+    # ie: $Module(ModelCompare,fProps)
 
     # This is a useful comment block that makes reading this easy for all:
     #-------------------------------------------
@@ -179,88 +189,221 @@ proc CorrespondenceBuildGUI {} {
     # Refer to the documentation for details on the syntax.
     #
     set help "
-The Correspondence module allows a user to show point correspondences between models.
+The ModelCompare module allows a compare lots of models. There are two 
+functions currently available: showing point correspondances and showing
+models in a 2D array.
 
 <UL>
 <LI><B>Matching Surfaces:</B> The models are assumed to correspond on a point by point basis. That is point 33 in model 1 corresponds to point 33 in model 2.
 </LI>
 <LI><B>Known Problems:</B> It overwrites the scalar point data on the models.
-
 </LI></UL>
+<UL>
+<LI><B>Array Display:</B> The models are assumed to roughly lie in the same spot in space. The models are then translated for easy visualization.
+</LI>
+<LI><B>Known Concerns:</B> Not exactly sure what happens if the model already has a transform around it.
+</LI></UL>
+
 "
     regsub -all "\n" $help {} help
-    MainHelpApplyTags Correspondence $help
-    MainHelpBuildGUI Correspondence
+    MainHelpApplyTags ModelCompare $help
+    MainHelpBuildGUI ModelCompare
 
 
     #-------------------------------------------
     # Correspond frame
     #-------------------------------------------
-    set fCorrespond $Module(Correspondence,fCorrespond)
+    set fCorrespond $Module(ModelCompare,fCorrespond)
     set f $fCorrespond
 
-    frame $f.fTop    -bg $Gui(activeWorkspace)
-    frame $f.fScroll   -bg $Gui(activeWorkspace)
-    frame $f.fMiddle -bg $Gui(activeWorkspace)
-    frame $f.fBottom -bg $Gui(activeWorkspace)
-    frame $f.fRun    -bg $Gui(activeWorkspace)
-    pack $f.fTop $f.fScroll $f.fMiddle $f.fBottom $f.fRun \
-                -side top -padx 0 -pady $Gui(pad)
+    set FrameString  "";
+    foreach Frame "Top Top2 Scroll Middle Bottom Run" {
+        frame $f.f$Frame  -bg $Gui(activeWorkspace)
+        set FrameString  "$FrameString $f.f$Frame"
+    }
+
+    eval pack $FrameString -side top -padx 0 -pady $Gui(pad)
 
         #-------------------------------------------
         # Correspond->Top frame
         #-------------------------------------------
         set f $fCorrespond.fTop
-        DevAddLabel  $f.lCorrespond "Show correspondences between surfaces\n with identical numbers of nodes.\n\n Select Models:"
+        DevAddLabel  $f.lCorrespond "Show correspondences between surfaces\n with identical numbers of nodes"
 
-        pack $f.lCorrespond -side left -padx $Gui(pad)
+        pack $f.lCorrespond 
 
-    set f $fCorrespond.fScroll
+        #-------------------------------------------
+        # Correspond->Top2 frame
+        #-------------------------------------------
 
-    set Correspondence(canvasScrolledGUI)  $f.cGrid
-        set Correspondence(fScrolledGUI)       $f.cGrid.fListItems
+        set f $fCorrespond.fTop2
+
+        DevAddLabel $f.lSelect "Select Models:"
+
+        DevAddButton $f.bAll "All" \
+                 "ModelCompareSetAll 1" 6 
+        DevAddButton $f.bNone "None" \
+                 "ModelCompareSetAll 0" 6 
+
+        pack $f.lSelect $f.bAll $f.bNone -side left -padx $Gui(pad)
+
+        #-------------------------------------------
+        # Correspond->Scroll frame
+        #-------------------------------------------
+
+    
+        set f $fCorrespond.fScroll
+
+        set ModelCompare(canvasScrolledGUI1)  $f.cGrid
+        set ModelCompare(fScrolledGUI1)   $f.cGrid.fListItems
         DevCreateScrollList $f \
-                            CorrespondenceCreateModelGUI \
-                            CorrespondenceConfigScrolledGUI \
+                            ModelCompareCreateModelGUI \
+                            ModelCompareConfigScrolledGUI \
                             "$Model(idList)"
 
+         #-------------------------------------------
+         # Correspond->Middle frame
+         #-------------------------------------------
+     
+         set f $fCorrespond.fMiddle
+     
+             DevAddLabel  $f.lSphereScale "Sphere Scaling"
+             eval {entry $f.eSphereScale -textvariable ModelCompare(CorSphereScale) -width 5} $Gui(WEA)
+        
+             pack $f.lSphereScale $f.eSphereScale -side left -padx $Gui(pad)
+     
+         #-------------------------------------------
+         # Correspond->Bottom frame
+         #-------------------------------------------
+     
+     
+         set f $fCorrespond.fBottom
+     
+             DevAddLabel  $f.lSphereSkip "Keep Every Nth Node:"
+             eval {entry $f.eSphereSkip -textvariable ModelCompare(CorSphereSkip) -width 5} $Gui(WEA)
+        
+             pack $f.lSphereSkip $f.eSphereSkip -side left -padx $Gui(pad)
+     
+         #-------------------------------------------
+         # Correspond->Bottom frame
+         #-------------------------------------------
+     
+         set f $fCorrespond.fRun
+     
+             DevAddButton $f.bRun "Run" "ModelCompareCorrespondSurfaces"
+     
+         pack $f.bRun
+     
     #-------------------------------------------
-    # Correspond->Middle frame
+    # Array frame
     #-------------------------------------------
+    set fArray $Module(ModelCompare,fArray)
+    set f $fArray
 
-    set f $fCorrespond.fMiddle
+    set FrameString ""
+    foreach Frame "Top Top2 Scroll Middle Bottom Mat1 Mat2 Run" {
+        frame $f.f$Frame  -bg $Gui(activeWorkspace)
+        set FrameString  "$FrameString $f.f$Frame"
+    }
 
-        DevAddLabel  $f.lSphereScale "Sphere Scaling"
-        eval {entry $f.eSphereScale -textvariable Correspondence(CorSphereScale) -width 5} $Gui(WEA)
-   
-        pack $f.lSphereScale $f.eSphereScale -side left -padx $Gui(pad)
+    eval pack $FrameString -side top -padx 0 -pady $Gui(pad)
 
-    #-------------------------------------------
-    # Correspond->Bottom frame
-    #-------------------------------------------
+        #-------------------------------------------
+        # Array->Top frame
+        #-------------------------------------------
+        set f $fArray.fTop
+        DevAddLabel  $f.lArray "Show Array of Models:"
 
+        pack $f.lArray
 
-    set f $fCorrespond.fBottom
+        #-------------------------------------------
+        # Array->Top2 frame
+        #-------------------------------------------
 
-        DevAddLabel  $f.lSphereSkip "Keep Every Nth Node:"
-        eval {entry $f.eSphereSkip -textvariable Correspondence(CorSphereSkip) -width 5} $Gui(WEA)
-   
-        pack $f.lSphereSkip $f.eSphereSkip -side left -padx $Gui(pad)
+        set f $fArray.fTop2
 
-    #-------------------------------------------
-    # Correspond->Bottom frame
-    #-------------------------------------------
+        DevAddLabel $f.lSelect "Select Models:"
 
-    set f $fCorrespond.fRun
+        DevAddButton $f.bAll "All" \
+                 "ModelCompareSetAll 1" 6 
+        DevAddButton $f.bNone "None" \
+                 "ModelCompareSetAll 0" 6 
 
-        DevAddButton $f.bRun "Run" "CorrespondenceCorrespondSurfaces"
+        pack $f.lSelect $f.bAll $f.bNone -side left -padx $Gui(pad)
 
-    pack $f.bRun
+        #-------------------------------------------
+        # Correspond->Scroll frame
+        #-------------------------------------------
 
+        set f $fArray.fScroll
+  
+        set ModelCompare(canvasScrolledGUI2)  $f.cGrid
+        set ModelCompare(fScrolledGUI2)   $f.cGrid.fListItems
+        DevCreateScrollList $f \
+                            ModelCompareCreateModelGUI \
+                            ModelCompareConfigScrolledGUI \
+                            "$Model(idList)"
+
+        #-------------------------------------------
+        # Arry->Middle frame
+        #-------------------------------------------
+    
+        set f $fArray.fMiddle
+    
+            DevAddLabel  $f.lTransformName "Transform Name:"
+            eval {entry $f.eTransformName -textvariable ModelCompare(TransformName) -width 15} $Gui(WEA)
+       
+            pack $f.lTransformName $f.eTransformName -side left -padx $Gui(pad)
+    
+        #-------------------------------------------
+        # Array->Bottom frame
+        #-------------------------------------------
+    
+        set f $fArray.fBottom
+    
+            DevAddLabel  $f.lRow "Models Per Row:"
+            eval {entry $f.eRow -textvariable ModelCompare(Rowsize) -width 5} $Gui(WEA)
+    #        DevAddLabel  $f.lCol "Per Column:"
+    #        eval {entry $f.eCol -textvariable ModelCompare(Columnsize) -width 5} $Gui(WEA)
+    
+    #        pack $f.lRow $f.eRow $f.lCol $f.eCol  -side left -padx $Gui(pad)
+            pack $f.lRow $f.eRow  -side left -padx $Gui(pad)
+    
+        #-------------------------------------------
+        # Array->Matrix Frame
+        #-------------------------------------------
+    
+        set f $fArray.fMat1
+    
+        DevAddLabel  $f.lRowOff "Row Offset:"
+        eval {entry $f.eRowX -textvariable ModelCompare(RowX) -width 5} $Gui(WEA)
+        eval {entry $f.eRowY -textvariable ModelCompare(RowY) -width 5} $Gui(WEA)
+        eval {entry $f.eRowZ -textvariable ModelCompare(RowZ) -width 5} $Gui(WEA)
+        pack $f.lRowOff $f.eRowX $f.eRowY $f.eRowZ  -side left -padx $Gui(pad)
+    
+        set f $fArray.fMat2
+    
+        DevAddLabel  $f.lColOff "Column Offset:"
+        eval {entry $f.eColX -textvariable ModelCompare(ColX) -width 5} $Gui(WEA)
+        eval {entry $f.eColY -textvariable ModelCompare(ColY) -width 5} $Gui(WEA)
+        eval {entry $f.eColZ -textvariable ModelCompare(ColZ) -width 5} $Gui(WEA)
+    
+        pack $f.lColOff $f.eColX $f.eColY $f.eColZ  -side left -padx $Gui(pad)
+    
+        #-------------------------------------------
+        # Array->Run Frame
+        #-------------------------------------------
+    
+        set f $fArray.fRun
+  
+         DevAddButton $f.bRun  "Run"  "ModelCompareFormArray"
+         DevAddButton $f.bUndo "Undo" "ModelCompareUndoArray"
+    
+         pack $f.bRun $f.bUndo -side left -padx $Gui(pad)
 }
 
 #-------------------------------------------------------------------------------
-# .PROC CorrespondenceCreateModelGUI
+# .PROC ModelCompareCreateModelGUI
 # Makes the GUI for each model on the Models->Display panel.
 # This is called for each new model.
 # Also makes the popup menu that comes up when you right-click a model.
@@ -272,8 +415,8 @@ The Correspondence module allows a user to show point correspondences between mo
 # m int the id of the model
 # .END
 #-------------------------------------------------------------------------------
-proc CorrespondenceCreateModelGUI {f m } {
-    global Gui Model Color Correspondence 
+proc ModelCompareCreateModelGUI {f m } {
+    global Gui Model Color ModelCompare
 
 
         # puts "Creating GUI for model $m"        
@@ -284,9 +427,9 @@ proc CorrespondenceCreateModelGUI {f m } {
     }
 
     # Name / Visible
-    set Correspondence($m,match) 0
+    set ModelCompare($m,match) 0
     eval {checkbutton $f.c$m \
-        -text [Model($m,node) GetName] -variable Correspondence($m,match) \
+        -text [Model($m,node) GetName] -variable ModelCompare($m,match) \
         -width 17 -indicatoron 0} $Gui(WCA)
 #        $f.c$m configure -bg [MakeColorNormalized \
 #                        [Color($Model($m,colorID),node) GetDiffuseColor]]
@@ -305,7 +448,7 @@ proc CorrespondenceCreateModelGUI {f m } {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC CorrespondenceConfigScrolledGUI
+# .PROC ModelCompareConfigScrolledGUI
 # 
 # Set the dimensions of the scrolledGUI
 #
@@ -315,7 +458,7 @@ proc CorrespondenceCreateModelGUI {f m } {
 # frame  fScrolledGUI       The frame with the item list of models
 # .END   
 #-------------------------------------------------------------------------------
-proc CorrespondenceConfigScrolledGUI {canvasScrolledGUI fScrolledGUI} {
+proc ModelCompareConfigScrolledGUI {canvasScrolledGUI fScrolledGUI} {
     global Model ModelGroup RemovedModels
 
     set f      $fScrolledGUI
@@ -354,15 +497,15 @@ proc CorrespondenceConfigScrolledGUI {canvasScrolledGUI fScrolledGUI} {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC CorrespondenceDeleteModelGUI
+# .PROC ModelCompareDeleteModelGUI
 # 
 # .ARGS
 # f widget the frame to create the GUI in
 # m int the id of the model
 # .END
 #-------------------------------------------------------------------------------
-proc CorrespondenceDeleteModelGUI {f m} {
-    global Correspondence
+proc ModelCompareDeleteModelGUI {f m} {
+    global ModelCompare
 
     # If the GUI is already deleted, return
     if {[info command $f.c$m] == ""} {
@@ -372,13 +515,13 @@ proc CorrespondenceDeleteModelGUI {f m} {
     # Destroy TK widgets
     destroy $f.c$m
 
-    set Correspondence($m,match) 0;
+    set ModelCompare($m,match) 0;
 
     return 1
 }
 
 #-------------------------------------------------------------------------------
-# .PROC CorrespondenceUpdateGUI
+# .PROC ModelCompareUpdateGUI
 # 
 # This procedure is called to update the buttons
 # due to such things as volumes or models being added or subtracted.
@@ -386,47 +529,41 @@ proc CorrespondenceDeleteModelGUI {f m} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc CorrespondenceUpdateGUI {} {
-    global Correspondence Model
+proc ModelCompareUpdateGUI {} {
+    global Model ModelCompare
 
     set gui 0
 
     # Now build GUI for any models not in hierarchies
     foreach m $Model(idList) {
-        set gui [expr $gui + [CorrespondenceCreateModelGUI \
-                               $Correspondence(fScrolledGUI) $m]]
+        set gui [expr $gui + [ModelCompareCreateModelGUI \
+                               $ModelCompare(fScrolledGUI1) $m]]
+        ModelCompareCreateModelGUI $ModelCompare(fScrolledGUI2) $m
     }
 
     # Delete the GUI for any old models
     foreach m $Model(idListDelete) {
-        set gui [expr $gui + [CorrespondenceDeleteModelGUI \
-                  $Correspondence(fScrolledGUI) $m]]
+        set gui [expr $gui + [ModelCompareDeleteModelGUI \
+                  $ModelCompare(fScrolledGUI1) $m]]
     }
 
     # Tell the scrollbar to update if the gui height changed
     if {$gui > 0} {
-        CorrespondenceConfigScrolledGUI $Correspondence(canvasScrolledGUI) \
-                $Correspondence(fScrolledGUI)
+        ModelCompareConfigScrolledGUI $ModelCompare(canvasScrolledGUI1) \
+                $ModelCompare(fScrolledGUI1)
+        ModelCompareConfigScrolledGUI $ModelCompare(canvasScrolledGUI2) \
+                $ModelCompare(fScrolledGUI2)
     }
 }
 
 #-------------------------------------------------------------------------------
-# .PROC CorrespondenceCorrespondSurfaces
-#
-# Call each surface going to be corresponded and call the processing step
+# .PROC ModelCompareCorrespondSurfaces
 # 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-
-#-------------------------------------------------------------------------------
-# .PROC CorrespondenceCorrespondSurfaces
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc CorrespondenceCorrespondSurfaces {} {
-    global Correspondence Model Mrml
+proc ModelCompareCorrespondSurfaces {} {
+    global ModelCompare Model Mrml
 
     ############################################################
     # First check for problems.
@@ -436,14 +573,14 @@ proc CorrespondenceCorrespondSurfaces {} {
     set NumNode -1;
 
     foreach m $Model(idList) {
-        if {$Correspondence($m,match) == 1} {
+        if {$ModelCompare($m,match) == 1} {
             set ThisNumNode [$Model($m,polyData) GetNumberOfPoints]
             if {$NumNode == -1} { set NumNode $ThisNumNode }
             if {$ThisNumNode != $NumNode} {
                 DevWarningWindow "Must have same number of nodes in each Model!"
                 return 0
             }
-        }
+          }
     }
 
     if {$NumNode == -1} {
@@ -457,8 +594,8 @@ proc CorrespondenceCorrespondSurfaces {} {
     ############################################################
 
     foreach m $Model(idList) {
-        if {$Correspondence($m,match) == 1} {
-            set p [CorrespondenceMatchSurface $m]
+        if {$ModelCompare($m,match) == 1} {
+            set p [ModelCompareMatchSurface $m]
 
             ## move the returning node to be after the polyData node
             Mrml(dataTree) RemoveItem Model($p,node)
@@ -478,20 +615,14 @@ proc CorrespondenceCorrespondSurfaces {} {
 
 
 #-------------------------------------------------------------------------------
-# .PROC CorrespondenceMatchSurface
+# .PROC ModelCompareMatchSurface
 # 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
 
-#-------------------------------------------------------------------------------
-# .PROC CorrespondenceMatchSurface
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc CorrespondenceMatchSurface {m} {
-    global Correspondence Model Volume Module
+proc ModelCompareMatchSurface {m} {
+    global ModelCompare Model Volume Module
 
     set PD  $Model($m,polyData)
     set NumNode [$PD GetNumberOfPoints]
@@ -502,7 +633,7 @@ proc CorrespondenceMatchSurface {m} {
 
 vtkMaskPoints PointSelection
   PointSelection SetInput $PD
-  PointSelection SetOnRatio $Correspondence(CorSphereSkip)
+  PointSelection SetOnRatio $ModelCompare(CorSphereSkip)
   PointSelection RandomModeOff
   PointSelection Update
 
@@ -548,7 +679,7 @@ seen Delete
 vtkSphereSource ASphere
   ASphere SetPhiResolution 5
   ASphere SetThetaResolution 5
-  ASphere SetRadius [ expr 0.15 * $Correspondence(CorSphereScale) ]
+  ASphere SetRadius [ expr 0.15 * $ModelCompare(CorSphereScale) ]
 vtkGlyph3D ScalarGlyph
   ScalarGlyph SetInput  tempPolyData
   ScalarGlyph SetSource [ASphere GetOutput]
@@ -579,4 +710,97 @@ vtkGlyph3D ScalarGlyph
   tempPolyData Delete
 
   return $m
+}
+
+#-------------------------------------------------------------------------------
+# .PROC ModelCompareFormArray
+# 
+# Put a transform around each model
+# to form a 2D array
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc ModelCompareFormArray {} {
+    global ModelCompare Model Transform EndTransform
+
+    set ModelCompare(MatArray) ""
+    set ModelCompare(Transforms)   ""
+    set ModelCompare(EndTransforms) ""
+    set NumColumn $ModelCompare(Rowsize);
+    set i 0
+    set j 0;
+
+    foreach m $Model(idList) {
+        if {$ModelCompare($m,match) == 1} {
+            ## Form the matrix
+            ## Put the transform and matrix in the right place
+            ## Keep track of the matrix
+            
+            ## add the matrix, don't redraw.
+            set matrixnum [ DataAddTransform 0 Model($m,node) Model($m,node) 0 ]
+            Matrix($matrixnum,node) SetName "ModelCompArrayTrans"
+            lappend ModelCompare(MatArray) $matrixnum
+
+            ### Also keep track of the transform
+            lappend ModelCompare(Transforms)    [expr $Transform(nextID) - 1]
+            lappend ModelCompare(EndTransforms) [expr $EndTransform(nextID) - 1]
+            set mat [ [Matrix($matrixnum,node) GetTransform] GetMatrix ]
+            $mat SetElement 0 3 [expr $i * $ModelCompare(ColX) + \
+                                      $j * $ModelCompare(RowX) ]
+            $mat SetElement 1 3 [expr $i * $ModelCompare(ColY) + \
+                                      $j * $ModelCompare(RowY) ]
+            $mat SetElement 2 3 [expr $i * $ModelCompare(ColZ) + \
+                                      $j * $ModelCompare(RowZ) ]
+            incr i
+            if {$i == $NumColumn} {
+              set i 0
+              incr j
+            }
+        }
+    }
+    MainUpdateMRML
+}
+
+#-------------------------------------------------------------------------------
+# .PROC ModelCompareUndoArray
+# 
+# Put a transform around each model
+# to form a 2D array
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc ModelCompareUndoArray {} {
+    global ModelCompare Model
+
+    foreach mat $ModelCompare(MatArray) \
+            trans  $ModelCompare(Transforms) \
+            etrans $ModelCompare(EndTransforms) {
+        MainMrmlDeleteNodeDuringUpdate Transform $trans
+        MainMrmlDeleteNodeDuringUpdate Matrix $mat
+        MainMrmlDeleteNodeDuringUpdate EndTransform $etrans
+    }
+    MainUpdateMRML
+    Render3D
+    set ModelCompare(MatArray) ""
+    set ModelCompare(Transforms)   ""
+    set ModelCompare(EndTransforms) ""
+}
+
+#-------------------------------------------------------------------------------
+# .PROC ModelCompareSetAll
+# 
+# Set all the models to the argument
+#
+# .ARGS
+# int Setting either 1 or 0, to select or unselect all
+# .END
+#-------------------------------------------------------------------------------
+proc ModelCompareSetAll {Setting} {
+    global ModelCompare Model 
+
+    foreach m $Model(idList) {
+        set ModelCompare($m,match) $Setting
+    }
 }
