@@ -54,9 +54,14 @@
 #   DTMRIUpdateGlyphColor
 #   DTMRIUpdateGlyphScalarRange
 #   DTMRISelectRemoveHyperStreamline
+#   DTMRISelectStartTractography x y z
 #   DTMRISelectStartHyperStreamline x y z
+#   DTMRISelectStartPreciseHyperStreamline x y z
 #   DTMRIUpdateStreamlines
 #   DTMRIAddStreamline
+#   DTMRIAddPreciseStreamline
+#   DTMRIUpdateTractingMethod
+#   DTMRIUpdateBSplineOrder
 #   DTMRIConfigureStreamline
 #   DTMRIUpdateTractColor
 #   DTMRIRemoveAllStreamlines
@@ -105,7 +110,7 @@ proc DTMRIInit {} {
     set Module($m,author) "Lauren O'Donnell"
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.13 $} {$Date: 2004/06/24 19:52:56 $}]
+            {$Revision: 1.14 $} {$Date: 2004/07/27 17:25:54 $}]
 
     # Define Tabs
     #------------------------------------
@@ -272,12 +277,45 @@ proc DTMRIInit {} {
     #------------------------------------
     # Variables for streamline display
     #------------------------------------
+    # BSpline Orders
+    set DTMRI(stream,BSplineOrder) "3"
+    set DTMRI(stream,BSplineOrderList) {"0" "1" "2" "3" "4" "5"}
+    set DTMRI(stream,BSplineOrderList,tooltip) {"Order of the BSpline interpolation."}
+
+    # Method Orders
+    set DTMRI(stream,MethodOrder) "rk45"
+    set DTMRI(stream,MethodOrderList) {"rk2" "rk4" "rk45"}
+    set DTMRI(stream,MethodOrderList,tooltip) {"Order of the tractography"}
+
+    # type of tracting method
+    set DTMRI(stream,tractingMethod) BSpline
+    set DTMRI(stream,tractingMethodList) {NoSpline BSpline }
+    set DTMRI(stream,tractingMethodList,tooltip) {"Method for interpolating signal"}
+
+    set DTMRI(stream,methodvariableList) [list UpperBoundBias LowerBoundBias CorrectionBias ]
+
+    set DTMRI(stream,methodvariableList,text) [list "High Fractional Anisotropy" "Low Fractional Anisotropy" "Correction Bias Magnitude" ]
+
+    set DTMRI(stream,methodvariableList,tooltips) [list \
+            "Inferior bound for fractional anisotropy before adding a regularization bias"\
+        "Lowest fractional anisotropy allowable for tractography"\
+        "Magnitude of the correction bias added for tractography" ]
     set DTMRI(stream,variableList) [list \
         MaximumPropagationDistance IntegrationStepLength \
         StepLength Radius  NumberOfSides IntegrationDirection]
+    set DTMRI(stream,precisevariableList) [list \
+                           MaximumPropagationDistance MinimumPropagationDistance TerminalEigenvalue \
+                           IntegrationStepLength \
+                           StepLength Radius  NumberOfSides IntegrationDirection \
+                           MaxStep MinStep MaxError MaxAngle LengthOfMaxAngle]
     set DTMRI(stream,variableList,text) [list \
         "Max Length" "Step Size" \
         "Smoothness (along)" "Radius"  "Smoothness (around)" "Direction"]
+    set DTMRI(stream,precisevariableList,text) [list \
+                            "Max Length" "Min Length" "Terminal Eigenvalue"\
+                            "Step Size" \
+                            "Smoothness (along)" "Radius"  "Smoothness (around)" "Direction" \
+                            "Max Step" "Min Step" "Max Error" "Max Angle" "Length for Max Angle"]
     set DTMRI(stream,variableList,tooltips) [list \
         "MaximumPropagationDistance: Tractography will stop after this distance" \
         "IntegrationStepLength: step size when following path" \
@@ -286,10 +324,45 @@ proc DTMRIInit {} {
         "NumberOfSides: Number of sides of displayed tube" \
         "IntegrationDirection: Number of directions to follow from initial point (1 or 2)"]
     
+    set DTMRI(stream,precisevariableList,tooltips) [list \
+                            "MaximumPropagationDistance: Tractography will stop after this distance" \
+                            "MinimumPropagationDistance: Streamline will be rejected if total length is under this value" \
+                            "TerminalEigenvalue: Set minimum propagation speed"\
+                            "IntegrationStepLength: step size when following path" \
+                            "StepLength: Length of each displayed tube segment" \
+                            "Radius: Initial radius (thickness) of displayed tube" \
+                            "NumberOfSides: Number of sides of displayed tube" \
+                            "IntegrationDirection: Number of directions to follow from initial point (1 or 2)"\
+                            "MaxStep: Maximum step size when following path" \
+                            "MinStep: Minimum step size when following path" \
+                            "MaxError: Maximum Error of each step" \
+                            "MaxAngle: Maximum Angle allowed per fiber" \
+                            "MaxError: Length of fiber when considering maximum angle" ]
+
+    # Upper Bound to add regularization Bias
+    set DTMRI(stream,UpperBoundBias)  0.0
+    # Lower Bound to add regularization Bias
+    set DTMRI(stream,LowerBoundBias)  0.0
+    # Magnitude of the correction bias
+    set DTMRI(stream,CorrectionBias)  0.0
+
     set DTMRI(stream,MaximumPropagationDistance)  30
+    set DTMRI(stream,MinimumPropagationDistance)  2
     # nominal integration step size (expressed as a fraction of the
     # size of each cell)  0.2 is default
     set DTMRI(stream,IntegrationStepLength)  0.1
+    # Set/Get the Maximum Step of integration
+    set DTMRI(stream,MaxStep) 1.0
+    # Set/Get the Minimum Step of integration
+    set DTMRI(stream,MinStep) 0.001
+    # Set/Get the Maximum Error per step of integration
+    set DTMRI(stream,MaxError) 0.000001
+
+    # Set/Get the Maximum Angle of a fiber
+    set DTMRI(stream,MaxAngle) 60
+
+    # Set/Get the length of the fiber when considering the maximum angle
+    set DTMRI(stream,LengthOfMaxAngle) 1
     # Set / get the length of a tube segment composing the
     # hyperstreamline. The length is specified as a fraction of the
     # diagonal length of the input bounding box.  0.01 is vtk default
@@ -397,6 +470,39 @@ proc DTMRIInit {} {
     # Lauren fix this
     set DTMRI(Description) ""
     set DTMRI(Name) ""
+
+    DTMRIMakeVTKObject vtkTensorImplicitFunctionToFunctionSet itf
+    set DTMRI(vtk,BSpline,init) 0
+
+    for {set i 0} {$i < 6} {incr i 1} {
+    DTMRIMakeVTKObject vtkBSplineInterpolateImageFunction impComp($i)
+    DTMRI(vtk,itf) AddImplicitFunction DTMRI(vtk,impComp($i)) $i
+    DTMRIMakeVTKObject vtkITKBSplineImageFilter bspline($i)
+    DTMRIMakeVTKObject vtkExtractTensorComponents extractor($i)
+    DTMRI(vtk,extractor($i)) PassTensorsToOutputOff
+    DTMRI(vtk,extractor($i)) ExtractScalarsOn
+    DTMRI(vtk,extractor($i)) ExtractVectorsOff
+    DTMRI(vtk,extractor($i)) ExtractNormalsOff
+    DTMRI(vtk,extractor($i)) ExtractTCoordsOff
+    DTMRI(vtk,extractor($i)) ScalarIsComponent
+    }
+
+    DTMRI(vtk,extractor(0)) SetScalarComponents 0 0
+    DTMRI(vtk,extractor(1)) SetScalarComponents 0 1
+    DTMRI(vtk,extractor(2)) SetScalarComponents 0 2
+    DTMRI(vtk,extractor(3)) SetScalarComponents 1 1
+    DTMRI(vtk,extractor(4)) SetScalarComponents 1 2
+    DTMRI(vtk,extractor(5)) SetScalarComponents 2 2
+
+    DTMRIMakeVTKObject vtkRungeKutta45 rk45
+    DTMRIMakeVTKObject vtkRungeKutta4 rk4
+    DTMRIMakeVTKObject vtkRungeKutta2 rk2
+
+    DTMRI(vtk,rk45) SetFunctionSet DTMRI(vtk,itf)
+    DTMRI(vtk,rk4) SetFunctionSet DTMRI(vtk,itf)
+    DTMRI(vtk,rk2) SetFunctionSet DTMRI(vtk,itf)
+
+    set DTMRI(vtk,ivps) DTMRI(vtk,rk45)
 }
 
 ################################################################
@@ -982,22 +1088,158 @@ especially Diffusion DTMRI MRI.
     #-------------------------------------------
     # Display->VisMethods->VisParams->Tracts->Entries frame
     #-------------------------------------------
-    foreach entry $DTMRI(stream,variableList) \
-        text $DTMRI(stream,variableList,text) \
-        tip $DTMRI(stream,variableList,tooltips) {
-
     set f $fParams.fTracts.fEntries
 
+    frame $f.fTractingMethod -bg $Gui(activeWorkspace) 
+    pack $f.fTractingMethod -side top -padx 0 -pady 0 -fill x
+
+    # note the height is necessary to place frames inside later
+    frame $f.fTractingVar -bg $Gui(activeWorkspace) -height 500
+    pack $f.fTractingVar -side top -padx 0 -pady $Gui(pad) -fill both -expand true
+
+    #    frame $f -bg $Gui(activeWorkspace)
+    #    pack $f -side top -padx $Gui(pad) -pady 1 -fill x
+
+    set f $fParams.fTracts.fEntries.fTractingMethod
+
+    eval {label $f.lVis -text "Tracting Method: "} $Gui(WLA)
+    eval {menubutton $f.mbVis -text $DTMRI(stream,tractingMethod) \
+          -relief raised -bd 2 -width 12 \
+          -menu $f.mbVis.m} $Gui(WMBA)
+    eval {menu $f.mbVis.m} $Gui(WMA)
+    pack $f.lVis $f.mbVis -side left -pady 1 -padx $Gui(pad)
+    foreach vis $DTMRI(stream,tractingMethodList) {
+        $f.mbVis.m add command -label $vis \
+        -command "DTMRIUpdateTractingMethod $vis"
+    }
+    # save menubutton for config
+    set DTMRI(gui,mbTractingMethod) $f.mbVis
+    # Add a tooltip
+    TooltipAdd $f.mbVis $DTMRI(stream,tractingMethodList,tooltip)
+
+    set f $fParams.fTracts.fEntries.fTractingVar
+
+    #    frame $f -bg $Gui(activeWorkspace)
+    #place $f.fVar -in $f -relheight 1.0 -relwidth 1.0
+    #    pack $f -side top -padx 0 -pady $Gui(pad) -fill both -expand true
+    #    pack $f.fVisParams -side top -padx 0 -pady $Gui(pad) -fill both -expand true
+
+    foreach frame $DTMRI(stream,tractingMethodList) {
+        frame $f.f$frame -bg $Gui(activeWorkspace)
+        # for raising one frame at a time
+        place $f.f$frame -in $f -relheight 1.0 -relwidth 1.0
+        #pack $f.f$frame -side top -padx 0 -pady 1 -fill x
+        set DTMRI(stream,tractingFrame,$frame) $f.f$frame
+    }
+    raise $DTMRI(stream,tractingFrame,$DTMRI(stream,tractingMethod))
+    
+    set f $DTMRI(stream,tractingFrame,BSpline)
+    
+    frame $f.fBSplineOrder -bg $Gui(activeWorkspace) 
+    pack $f.fBSplineOrder -side top -padx 0 -pady 0 -fill x
+
+    set f $f.fBSplineOrder
+
+    eval {label $f.lVis -text "Spline Order: "} $Gui(WLA)
+
+    eval {menubutton $f.mbVis -text $DTMRI(stream,BSplineOrder) \
+          -relief raised -bd 2 -width 12 \
+          -menu $f.mbVis.m} $Gui(WMBA)
+    eval {menu $f.mbVis.m} $Gui(WMA)
+    pack $f.lVis $f.mbVis -side left -pady 1 -padx $Gui(pad)
+    # Add menu items
+    foreach vis $DTMRI(stream,BSplineOrderList) {
+        $f.mbVis.m add command -label $vis \
+        -command "DTMRIUpdateBSplineOrder $vis"
+    }
+    # save menubutton for config
+    set DTMRI(gui,mbBSplineOrder) $f.mbVis
+    # Add a tooltip
+    TooltipAdd $f.mbVis $DTMRI(stream,BSplineOrderList,tooltip)
+
+    set f $DTMRI(stream,tractingFrame,BSpline)
+    
+    frame $f.fMethodOrder -bg $Gui(activeWorkspace) 
+    pack $f.fMethodOrder -side top -padx 0 -pady 0 -fill x
+
+    set f $f.fMethodOrder
+
+    eval {label $f.lVis -text "Method Order: "} $Gui(WLA)
+
+    eval {menubutton $f.mbVis -text $DTMRI(stream,MethodOrder) \
+          -relief raised -bd 2 -width 12 \
+          -menu $f.mbVis.m} $Gui(WMBA)
+    eval {menu $f.mbVis.m} $Gui(WMA)
+    pack $f.lVis $f.mbVis -side left -pady 1 -padx $Gui(pad)
+    # save menubutton for config
+    set DTMRI(gui,mbMethodOrder) $f.mbVis
+    # Add menu items
+    foreach vis $DTMRI(stream,MethodOrderList) {
+        $f.mbVis.m add command -label $vis \
+        -command "set DTMRI(vtk,ivps) DTMRI(vtk,$vis); $DTMRI(gui,mbMethodOrder) config -text $vis"
+    }
+    # Add a tooltip
+    TooltipAdd $f.mbVis $DTMRI(stream,BSplineOrderList,tooltip)
+
+    foreach entry $DTMRI(stream,methodvariableList) \
+        text $DTMRI(stream,methodvariableList,text) \
+        tip $DTMRI(stream,methodvariableList,tooltips) {
+        
+        set f $DTMRI(stream,tractingFrame,BSpline)
+        
         frame $f.f$entry -bg $Gui(activeWorkspace)
+        #place $f.f$frame -in $f -relheight 1.0 -relwidth 1.0
         pack $f.f$entry -side top -padx $Gui(pad) -pady 1 -fill x
         set f $f.f$entry
 
         eval {label $f.l$entry -text "$text:"} $Gui(WLA)
         eval {entry $f.e$entry -width 10 \
-                -textvariable DTMRI(stream,$entry)} \
+              -textvariable DTMRI(stream,$entry)} \
                 $Gui(WEA)
-    TooltipAdd $f.l$entry $tip
-    TooltipAdd $f.e$entry $tip
+        TooltipAdd $f.l$entry $tip
+        TooltipAdd $f.e$entry $tip
+        pack $f.l$entry -side left  -padx $Gui(pad)
+        pack $f.e$entry -side right  -padx $Gui(pad)
+    }
+
+    foreach entry $DTMRI(stream,variableList) \
+    text $DTMRI(stream,variableList,text) \
+    tip $DTMRI(stream,variableList,tooltips) {
+
+        set f $DTMRI(stream,tractingFrame,NoSpline)
+
+        frame $f.f$entry -bg $Gui(activeWorkspace)
+        #place $f.f$frame -in $f -relheight 1.0 -relwidth 1.0
+        pack $f.f$entry -side top -padx $Gui(pad) -pady 1 -fill x
+        set f $f.f$entry
+
+        eval {label $f.l$entry -text "$text:"} $Gui(WLA)
+        eval {entry $f.e$entry -width 10 \
+              -textvariable DTMRI(stream,$entry)} \
+        $Gui(WEA)
+        TooltipAdd $f.l$entry $tip
+        TooltipAdd $f.e$entry $tip
+        pack $f.l$entry -side left  -padx $Gui(pad)
+        pack $f.e$entry -side right  -padx $Gui(pad)
+    }
+
+    foreach entry $DTMRI(stream,precisevariableList) \
+        text $DTMRI(stream,precisevariableList,text) \
+        tip $DTMRI(stream,precisevariableList,tooltips) {
+        
+        set f $DTMRI(stream,tractingFrame,BSpline)
+        
+        frame $f.f$entry -bg $Gui(activeWorkspace)
+        #place $f.f$frame -in $f -relheight 1.0 -relwidth 1.0
+        pack $f.f$entry -side top -padx $Gui(pad) -pady 1 -fill x
+        set f $f.f$entry
+
+        eval {label $f.l$entry -text "$text:"} $Gui(WLA)
+        eval {entry $f.e$entry -width 10 \
+              -textvariable DTMRI(stream,$entry)} \
+                $Gui(WEA)
+        TooltipAdd $f.l$entry $tip
+        TooltipAdd $f.e$entry $tip
         pack $f.l$entry -side left  -padx $Gui(pad)
         pack $f.e$entry -side right  -padx $Gui(pad)
     }
@@ -2545,6 +2787,28 @@ proc DTMRISelectRemoveHyperStreamline {x y z} {
 }
 
 #-------------------------------------------------------------------------------
+# .PROC DTMRISelectStartTractography
+# Given x,y,z in world coordinates, starts a streamline using user selected method
+# from that point in the active DTMRI dataset.
+# .ARGS
+# int x 
+# int y
+# int z 
+# .END
+#-------------------------------------------------------------------------------
+proc DTMRISelectStartTractography {x y z {render "true"} } {
+    global DTMRI
+    switch $DTMRI(stream,tractingMethod) {
+    "BSpline" {
+        DTMRISelectStartPreciseHyperStreamline $x $y $z {render "true"}
+    }
+    "NoSpline" {
+        DTMRISelectStartHyperStreamline $x $y $z {render "true"}
+    }
+    }
+}
+
+#-------------------------------------------------------------------------------
 # .PROC DTMRISelectStartHyperStreamline
 # Given x,y,z in world coordinates, starts a streamline from that point
 # in the active DTMRI dataset.
@@ -2585,6 +2849,77 @@ proc DTMRISelectStartHyperStreamline {x y z {render "true"} } {
     # make new hyperstreamline 
     #------------------------------------
     DTMRIAddStreamline
+    set streamln streamln,$DTMRI(vtk,streamline,currentID)
+
+    # start pipeline (never use reformatted data here)
+    #------------------------------------
+    DTMRI(vtk,$streamln) SetInput [Tensor($t,data) GetOutput]
+    
+    # start hyperstreamline here
+    #------------------------------------
+    eval {DTMRI(vtk,$streamln) SetStartPosition} $point
+    
+    # Make actor visible now that it has inputs
+    #------------------------------------
+    MainAddActor DTMRI(vtk,$streamln,actor) 
+    DTMRI(vtk,$streamln,actor) VisibilityOn
+
+    # Put the output streamline's actor in the right place.
+    # Just use the same matrix we use to position the DTMRIs.
+    #------------------------------------
+    vtkTransform transform
+    DTMRICalculateActorMatrix transform $t
+    DTMRI(vtk,$streamln,actor) SetUserMatrix [transform GetMatrix]
+    transform Delete
+
+    # Force pipeline execution and render scene
+    #------------------------------------
+    if { $render == "true" } {
+        Render3D
+    }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC DTMRISelectStartPreciseHyperStreamline
+# Given x,y,z in world coordinates, starts a streamline from that point
+# in the active DTMRI dataset.
+# .ARGS
+# int x 
+# int y
+# int z 
+# .END
+#-------------------------------------------------------------------------------
+proc DTMRISelectStartPreciseHyperStreamline {x y z {render "true"} } {
+    global DTMRI Tensor
+    global Select
+
+    # puts "Select Picker  (x,y,z):  $x $y $z"
+
+
+    set t $Tensor(activeID)
+    if {$t == "" || $t == $Tensor(idNone)} {
+        puts "DTMRISelect: No DTMRIs have been read into the slicer"
+        return
+    }
+
+    # Get coordinates in scaled-ijk land
+    #------------------------------------
+    set point [DTMRIGetScaledIjkCoordinatesFromWorldCoordinates $x $y $z]
+
+    # check if inside data set (return value -1 if not)
+    #------------------------------------
+    foreach p $point {
+        if {$p < 0} {
+            puts "Point $x $y $z outside of DTMRI dataset"
+            return
+        }
+    }
+
+    #puts "Point $point inside of DTMRI dataset"
+
+    # make new hyperstreamline 
+    #------------------------------------
+    DTMRIAddPreciseStreamline
     set streamln streamln,$DTMRI(vtk,streamline,currentID)
 
     # start pipeline (never use reformatted data here)
@@ -2726,6 +3061,163 @@ proc DTMRIAddStreamline {} {
             # do nothing, default
         }
     }    
+}
+
+#-------------------------------------------------------------------------------
+# .PROC DTMRIAddPreciseStreamline
+# Add a streamline to the scene. Called by SelectStartHyperStreamline, etc.
+# makes all the vtk objects for a new streamline
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc DTMRIAddPreciseStreamline {} {
+    global DTMRI Label
+
+    # Make sure we have streamline actors visible now before 
+    # adding a new one
+    set DTMRI(mode,visualizationType,tractsOn) On
+    DTMRIUpdateStreamlines
+
+    incr DTMRI(vtk,streamline,currentID)
+    set id $DTMRI(vtk,streamline,currentID)
+    lappend DTMRI(vtk,streamline,idList) $id
+
+    #---------------------------------------------------------------
+    # Pipeline for display of tractography
+    #---------------------------------------------------------------
+    set streamline streamln,$id
+    #DTMRIMakeVTKObject vtkHyperStreamline $streamline
+    # use our subclass which makes (i,j,k) points available
+    # DTMRIMakeVTKObject vtkHyperStreamlinePoints $streamline
+    
+    DTMRIMakeVTKObject vtkPreciseHyperStreamlinePoints $streamline
+    DTMRI(vtk,$streamline) SetMethod $DTMRI(vtk,ivps)
+    if { $DTMRI(stream,LowerBoundBias) > $DTMRI(stream,UpperBoundBias) } {
+    set DTMRI(stream,UpperBoundBias) $DTMRI(stream,LowerBoundBias)
+    }
+    DTMRI(vtk,$streamline) SetTerminalFractionalAnisotropy $DTMRI(stream,LowerBoundBias)
+    foreach var $DTMRI(stream,methodvariableList) {
+    DTMRI(vtk,itf) Set$var $DTMRI(stream,$var)
+    }
+
+    foreach var $DTMRI(stream,precisevariableList) {
+    if { $var == "MaxAngle" } {
+        DTMRI(vtk,$streamline) Set$var [ expr cos( $DTMRI(stream,$var) * 3.14159265 / 180 ) ]
+    } else {
+        DTMRI(vtk,$streamline) Set$var $DTMRI(stream,$var)
+    }
+    
+    }
+
+    #DTMRI(vtk,$streamline) DebugOn
+
+    #DTMRI(vtk,$streamline) SetStartMethod      MainStartProgress
+    #DTMRI(vtk,$streamline) SetProgressMethod  "MainShowProgress DTMRI(vtk,$streamline)"
+    #DTMRI(vtk,$streamline) SetEndMethod        MainEndProgress
+
+
+    # Display of DTMRI streamline: LUT and Mapper
+    #------------------------------------
+    set object $streamline,lut
+    # Lauren we may want to use this once have no neg eigenvalues
+    #DTMRIMakeVTKObject vtkLogLookupTable $object
+    DTMRIMakeVTKObject vtkLookupTable $object
+    DTMRI(vtk,$object) SetHueRange .6667 0.0
+    #    DTMRIAddObjectProperty $object HueRange \
+    #        {.6667 0.0} float {Hue Range}
+
+    set object $streamline,mapper
+    DTMRIMakeVTKObject vtkPolyDataMapper $object
+    DTMRI(vtk,$streamline,mapper) SetInput [DTMRI(vtk,$streamline) GetOutput]
+    DTMRI(vtk,$streamline,mapper) SetLookupTable DTMRI(vtk,$streamline,lut)
+    DTMRIAddObjectProperty $object ImmediateModeRendering \
+    1 bool {Immediate Mode Rendering}    
+
+    # Display of DTMRI streamline: Actor
+    #------------------------------------
+    set object $streamline,actor
+    DTMRIMakeVTKObject vtkActor $object
+    DTMRI(vtk,$streamline,actor) SetMapper DTMRI(vtk,$streamline,mapper)
+    [DTMRI(vtk,$streamline,actor) GetProperty] SetAmbient 1
+    [DTMRI(vtk,$streamline,actor) GetProperty] SetDiffuse 0
+
+    # Update the scalar range of everything
+    # this makes the tube's mapper display the streamline in colors
+    DTMRIUpdateGlyphScalarRange
+
+    # if we are coloring a solid color do so
+    # save the color from when this was created
+    set DTMRI(vtk,$streamline,color) $Label(name)
+    switch $DTMRI(mode,tractColor) {
+        "SolidColor" {
+            DTMRIConfigureStreamline $streamline ScalarVisibility 0
+            DTMRIConfigureStreamline $streamline Color \
+                $DTMRI(vtk,$streamline,color)
+        }
+        "MultiColor" {
+            # do nothing, default
+        }
+    }
+}
+
+
+
+
+#-------------------------------------------------------------------------------
+# .PROC DTMRIUpdateTractingMethod
+# .ARGS
+# TractingMethod
+# .END
+#-------------------------------------------------------------------------------
+proc DTMRIUpdateTractingMethod { TractingMethod } {
+    global DTMRI
+    if { $TractingMethod != $DTMRI(stream,tractingMethod) } {
+    set DTMRI(stream,tractingMethod) $TractingMethod
+    switch $DTMRI(stream,tractingMethod) {
+        "NoSpline" {
+        raise $DTMRI(stream,tractingFrame,NoSpline)
+        focus $DTMRI(stream,tractingFrame,NoSpline)
+        $DTMRI(gui,mbTractingMethod)    config -text $TractingMethod
+
+        }
+        "BSpline" {
+        raise $DTMRI(stream,tractingFrame,BSpline)
+        focus $DTMRI(stream,tractingFrame,BSpline)
+        $DTMRI(gui,mbTractingMethod)    config -text $TractingMethod
+        if { $DTMRI(vtk,BSpline,init) == 1 } {
+            DTMRIUpdateBSplineOrder $DTMRI(stream,BSplineOrder)
+            for {set i 0} {$i < 6} {incr i} {
+            DTMRI(vtk,bspline($i)) Update
+            DTMRI(vtk,impComp($i)) SetInput [DTMRI(vtk,bspline($i)) GetOutput]
+            }
+        }
+        }
+    }
+    }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC DTMRIUpdateBSplineOrder
+# .ARGS
+# SplineOrder
+# .END
+#-------------------------------------------------------------------------------
+proc DTMRIUpdateBSplineOrder { SplineOrder } {
+    global DTMRI
+    if { $SplineOrder != $DTMRI(stream,BSplineOrder) } {
+    set DTMRI(stream,BSplineOrder) $SplineOrder
+    $DTMRI(gui,mbBSplineOrder)    config -text $SplineOrder
+
+    for {set i 0} {$i < 6} {incr i 1} {
+        DTMRI(vtk,impComp($i)) SetSplineOrder $SplineOrder
+        DTMRI(vtk,bspline($i)) SetSplineOrder $SplineOrder
+        if { $DTMRI(vtk,BSpline,init) == 1 } {
+        DTMRI(vtk,bspline($i)) Update
+        DTMRI(vtk,impComp($i)) SetInput [DTMRI(vtk,bspline($i)) GetOutput]
+        }
+    }
+
+    }
 }
 
 #-------------------------------------------------------------------------------
