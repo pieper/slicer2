@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkFSSurfaceAnnotationReader.h,v $
   Language:  C++
-  Date:      $Date: 2003/04/14 21:49:10 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2003/06/13 20:35:30 $
+  Version:   $Revision: 1.2 $
 
 =========================================================================*/
 // .NAME vtkFSSurfaceAnnotationReader - read a surface annotation and
@@ -61,9 +61,14 @@ public:
   int ReadFSAnnotation();
 
   void SetColorTableFileName (char*);
-  void DoUseExternalColorTableFile ();
-  void DontUseExternalColorTableFile ();
 
+    // changed these to use vtk Get/Set macros
+    //void DoUseExternalColorTableFile ();
+    //void DontUseExternalColorTableFile ();
+    vtkGetMacro(UseExternalColorTableFile,int);
+    vtkSetMacro(UseExternalColorTableFile,int);
+    vtkBooleanMacro(UseExternalColorTableFile,int);
+    
 protected:
   vtkFSSurfaceAnnotationReader();
   ~vtkFSSurfaceAnnotationReader();
@@ -73,7 +78,8 @@ protected:
   char           *NamesList;
   int            NumColorTableEntries;
 
-  bool UseExternalColorTableFile;
+    // bool UseExternalColorTableFile;
+    int UseExternalColorTableFile;
   char ColorTableFileName[1024];
 
   // Read color table information from a source, allocate the arrays
