@@ -809,7 +809,7 @@ proc VolumesPropsCancel {} {
 # .PROC VolumesSetFirst
 # .END
 #-------------------------------------------------------------------------------
-proc VolumesSetFirst {} {
+proc OldVolumesSetFirst {} {
 	global Volume Mrml
 	
 	set typelist {
@@ -824,6 +824,37 @@ proc VolumesSetFirst {} {
 	
 	set Volume(firstFile) $filename
 	set Volume(name)  [file root [file tail $filename]]
+	set Volume(lastNum)  [MainFileFindImageNumber Last \
+		[file join $Mrml(dir) $filename]]
+}
+
+
+proc VolumesSetFirst {} {
+	global Volume Mrml
+
+ 	# Show popup initialized to root plus any typed pathname
+	set filename [file join $Mrml(dir) $Volume(firstFile)]
+	set dir [file dirname $filename]
+	set typelist {
+		{"All Files" {*}}
+	}
+	set filename [tk_getOpenFile -title "First Image In Volume" \
+		-filetypes $typelist -initialdir "$dir" -initialfile $filename]
+
+	# Do nothing if the user cancelled
+	if {$filename == ""} {return}
+
+	# Store first image file as a relative prefix to the root (prefix.001)
+#	set Volume(firstFile) [MainFileGetRelativePrefix $filename]
+#	set Volume(firstFile) $filename
+
+	set Volume(firstFile) [MainFileGetRelativePrefix $filename][file \
+		extension $filename]
+
+	set Volume(name)  [file root [file tail $filename]]
+
+
+	# lastNum is an image number
 	set Volume(lastNum)  [MainFileFindImageNumber Last \
 		[file join $Mrml(dir) $filename]]
 }
@@ -866,26 +897,4 @@ proc VolumesSetLast {} {
 	set Volume(lastNum) [MainFileFindImageNumber Last\
 		[file join $Mrml(dir) $Volume(firstFile)]]
 	set Volume(name) [file root [file tail $Volume(firstFile)]]
-}
-
-#-------------------------------------------------------------------------------
-# .PROC VolumesGetDefaultScanOrder
-# .END
-#-------------------------------------------------------------------------------
-proc VolumesGetDefaultScanOrder {} {
-    global Volume
-
-    # find menu item that matches default Volume(scanOrder)
-    return [lindex $Volume(scanOrderMenu)\
-	    [lsearch $Volume(scanOrderList) $Volume(scanOrder)]]
-}
-
-#-------------------------------------------------------------------------------
-# .PROC VolumesGetDefaultScalarType
-# .END
-#-------------------------------------------------------------------------------
-proc VolumesGetDefaultScalarType {} {
-    global Volume
-
-    return $Volume(scalarType)
 }
