@@ -105,7 +105,7 @@ proc KullbackLeiblerRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.8 $} {$Date: 2003/12/29 15:22:31 $}]
+        {$Revision: 1.9 $} {$Date: 2003/12/29 21:26:54 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -694,12 +694,12 @@ proc KullbackLeiblerRegistrationAutoRun {} {
     global Path env Gui Matrix Volume 
     global RigidIntensityRegistration KullbackLeiblerRegistration
 
-    if {$KullbackLeiblerRegistration(TrainingMovVol) == $Volume(idNone)} {
+    if {$KullbackLeiblerRegistration(TrainMovVol) == $Volume(idNone)} {
         DevWarningWindow "The Training Moving Volume is None! Please choose one."
         return 0
     }
 
-    if {$KullbackLeiblerRegistration(TrainingRefVol) == $Volume(idNone)} {
+    if {$KullbackLeiblerRegistration(TrainRefVol) == $Volume(idNone)} {
         DevWarningWindow "The Training Reference Volume is None! Please choose one."        return 0
     }
 
