@@ -230,6 +230,25 @@ void vtkMrmlVolumeNode::Write(ofstream& of, int nIndent)
   {
     of << " filePrefix='" << this->FilePrefix << "'";
   }
+
+  // >> AT 4/2/01
+
+  if(this->GetNumberOfDICOMFiles() > 0)
+    {
+      of << " dicomFileNameList='";
+      int i;
+      int num = GetNumberOfDICOMFiles();
+      for(i = 0; i < num; i++)
+	{
+	  if(i > 0)
+	    of << " ";
+	  of << GetDICOMFileName(i);
+	}
+      of << "'";
+    }
+
+  // << AT 4/2/01
+
   if (this->RasToIjkMatrix && strcmp(this->RasToIjkMatrix, "")) 
   {
     of << " rasToIjkMatrix='" << this->RasToIjkMatrix << "'";
