@@ -399,6 +399,11 @@ public:
   void ClearContour();
 
   // Description:
+  // Clears the moving "tail" of the wire.  Use to redo current path 
+  // with new settings since it will clear cached shortest path information.
+  void ClearContourTail();
+
+  // Description:
   // Clears the points on the last chosen segment of the live wire
   // (the "tail" and also the points between the last two clicks)
   void ClearLastContourSegment();

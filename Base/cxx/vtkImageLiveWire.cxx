@@ -106,6 +106,27 @@ vtkImageLiveWire::~vtkImageLiveWire()
 }
 
 //----------------------------------------------------------------------------
+// Clear just the moving part (but leave recent start point same)
+// Used to redo current path with new settings since it will 
+// clear cached shortest path information.
+// This should be safe to call anytime, even if there is no "tail."
+void vtkImageLiveWire::ClearContourTail() 
+{
+  // reset the moving "tail" of the wire
+  this->NewPixels->Reset();
+
+  // kill stored information
+  this->DeallocatePathInformation();
+  
+  // set end point same as start point
+  this->EndPoint[0] = this->StartPoint[0];
+  this->EndPoint[1] = this->StartPoint[1];
+  
+  // make sure we re-execute
+  this->Modified();
+}
+
+//----------------------------------------------------------------------------
 // Clear the last part (revert to the previous clicked-on point)
 void vtkImageLiveWire::ClearLastContourSegment() 
 {
@@ -146,37 +167,7 @@ void vtkImageLiveWire::ClearLastContourSegment()
       this->ContourPixels->InsertPoint(i,point);
     }  
 
-
-//    // do all the above for this->ContourEdges too
-//    tempPixels->Reset();
-//    done = 0;
-//    numPoints = this->ContourEdges->GetNumberOfPoints();
-//    // find the previous endpoint, at location number index
-//    for (index=numPoints-2; (index>=0 && !done); index--)
-//      {
-//        point = this->ContourEdges->GetPoint(index);
-//        if ((int)point[2] == 1)
-//  	{
-//  	  // we have hit an endpoint at index
-//  	  done = 1;
-//  	}
-//      }  
-//    // remove all things after the index by resetting, copying, etc.
-//    for (i = 0; i <= index; i++)
-//      {
-//        point = this->ContourEdges->GetPoint(i);
-//        tempPixels->InsertPoint(i,point);
-//      }
-//    this->ContourEdges->Reset();
-//    for (i = 0; i <= index; i++)
-//      {
-//        point = tempPixels->GetPoint(i);
-//        this->ContourEdges->InsertPoint(i,point);
-//      }  
-
-
   // reset the moving "tail" of the wire
-  //  this->NewEdges->Reset();
   this->NewPixels->Reset();
 
   this->Modified();
@@ -319,13 +310,6 @@ void vtkImageLiveWire::SetStartPoint(int x, int y)
       y  = this->EndPoint[1];     
 
       // append new points to the saved contour
-     //   int numPoints = this->NewEdges->GetNumberOfPoints();
-//        for (i = 0; i < numPoints; i++)
-//  	{
-//  	  this->ContourEdges->InsertNextPoint(this->NewEdges->GetPoint(i));
-//  	}
-
-      // append new points to the saved contour
       int numPoints = this->NewPixels->GetNumberOfPoints();
       for (i = 0; i < numPoints; i++)
 	{
@@ -457,14 +441,7 @@ void vtkImageLiveWire::SetEndPoint(int x, int y)
 // (use it to start over from a new start point)
 void vtkImageLiveWire::ClearContour()
 {
-//    if (this->Verbose > 0)
-//      {
-//        cout << "Clear Contour" << endl;
-//      }
-
   this->ContourPixels->Reset();
-  //  this->ContourEdges->Reset();
-  //this->NewEdges->Reset();
   this->NewPixels->Reset();
 
   // unset start and end points
@@ -477,11 +454,6 @@ void vtkImageLiveWire::ClearContour()
 
   // Next Execute will output a clear image.
   this->Modified();
-
-//    if (this->Verbose > 0)
-//      {
-//        cout << "Clear Contour Done" << endl;
-//      }
 }
 
 //----------------------------------------------------------------------------
@@ -548,7 +520,7 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
   const int DOWN_RIGHT = self->DOWN_RIGHT;
 
   // order of arrows, neighbors, offsets, and colors matches with edges below.
-  
+
   // directions the path takes to the neighbors
   int arrows[8] = {UP, DOWN, LEFT, RIGHT, UP_LEFT, UP_RIGHT, 
 		   DOWN_LEFT, DOWN_RIGHT};
@@ -636,23 +608,6 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
       // remove it from Q
       Q->Remove(min);
       
-//        if (self->GetVerbose() > 1) 
-//  	{
-//  	  cout << "-- CC: " << currentCC << " --  (" << currentX 
-//  	       << "," << currentY << ") -- L: " << L(end[0],end[1]) 
-//  	       <<" --" << endl;
-//  	}
-    
-//        if (self->GetVerbose() > 0) 
-//  	{
-//  	  if (currentX == end[0] && currentY == end[1])
-//  	    {
-//  	      cout << "final point: (" << currentX << "," 
-//  		   << currentY << ")  CC: " << currentCC << endl;
-//  	    }
-//  	}
-
-
       // check out its 4 or 8 neighbors
       int oldCC, tempCC;
       int x,y;
@@ -705,12 +660,6 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
 		  tempCC = currentCC + self->GetMaxEdgeCost();
 		}
 
-//  	      if (self->GetVerbose() > 2) 
-//  		{
-//  		  cout << "NEIGHBOR (" << x << "," << y << ") CC: " 
-//  		       << tempCC << "," << oldCC << endl;
-//  		}
-	      
 	      // if path from current point shorter than old path
 	      if (tempCC < oldCC) 
 		{
@@ -733,16 +682,11 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
 
   // save cost for next time (essentially pointer to current location in Q)
   self->SetCurrentCC(currentCC);
-  
-  //cout << "current cc: " << currentCC << endl;
-
 
   // ------- Trace the shortest path using the Dir array. -----------//
 
   // clear previous shortest path points
-  //vtkPoints *newEdges = self->GetNewEdges();
   vtkPoints *newPixels = self->GetNewPixels();
-  //newEdges->Reset();
   newPixels->Reset();
   vtkPoints *tempPixels = vtkPoints::New();
 
@@ -757,20 +701,14 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
   int colorX, colorY;
 
   // Insert first points into lists
-  //newEdges->InsertNextPoint(traceX,traceY,0);
-  //newEdges->InsertNextPoint(traceX,traceY,Dir(traceX,traceY));
   colorX = traceX + color[Dir(traceX,traceY)][0];
   colorY = traceY + color[Dir(traceX,traceY)][1];
   // the 1 at the end means this was an endpoint
   tempPixels->InsertNextPoint(colorX,colorY,1);
 
   // follow "arrows" backwards from end point to the start point
-  while (traceX!=start[0] || traceY!=start[1])
+  while (traceX!=start[0] || traceY!=start[1]) 
     {
-//        if (self->GetVerbose() > 2) 
-//  	{
-//  	  cout <<"("<<traceX<<","<<traceY<<")"<<"  ("<<colorX<<","<<colorY<<")"<<endl;
-//  	}
 
       // arrow is NONE, UP, DOWN, LEFT, or RIGHT
       int arrow = Dir(traceX,traceY);
@@ -793,14 +731,8 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
 
       // add to path lists
       tempPixels->InsertNextPoint(colorX,colorY,0);
-      //newEdges->InsertNextPoint(traceX,traceY,Dir(traceX,traceY));
 
     } // end while
-
-//    if (self->GetVerbose() > 0) 
-//      {
-//        cout << "(" << traceX << "," << traceY << ")" << endl;
-//      }  
 
   // fix (reverse) the order of the pixels list.
   int numPoints = tempPixels->GetNumberOfPoints();
@@ -872,26 +804,9 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
 	}
     }  
 
-
-//    // ------------- test --------------
-//    numPoints = newEdges->GetNumberOfPoints();
-//    for (i=0; i<numPoints; i++)
-//      {
-//        //cout << ".";
-//        point = newEdges->GetPoint(i);
-//        //cout << (int)point[0] + ((int)point[1])*sizeX << endl;
-//        //outPtr[(int)point[0] + ((int)point[1])*sizeX] += 10;
-//        // color depending on direction followed...
-//        //outPtr[(int)point[0] + ((int)point[1])*sizeX] = (T)((point[2]+1)*2);
-//      }
-//    // ------------- end test --------------
-
-  // test points
-  //cout << "num points C++ " << newEdges->GetNumberOfPoints() << endl;
-
   tEnd = clock();
   tDiff = tEnd - tStart;
-  cout << "LW time: " << tDiff << endl;
+  //cout << "LW time: " << tDiff << endl;
 
   return;
 }
