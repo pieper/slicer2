@@ -259,7 +259,7 @@ proc EndoscopicInit {} {
     set Module($m,category) "Visualisation"
     
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.78 $} {$Date: 2004/11/15 21:24:19 $}] 
+    {$Revision: 1.79 $} {$Date: 2004/11/18 22:39:39 $}] 
        
     # Define Procedures
     #------------------------------------
@@ -334,13 +334,10 @@ proc EndoscopicInit {} {
     # names of the views/models selected
     set Endoscopic(ModelSelect) $Model(idNone)
     set Endoscopic(FlatSelect) ""
+    set Endoscopic(flatColon,name) ""
     
-    #camera in the flat view
-    set Endoscopic(FlatRenderWindow) ""
-    set Endoscopic(FlatRenderers) ""
-    
-    set Endoscopic(FlatPolyData) ""
-    
+    # keep lists of renderers and flatwindows that will be opened
+    set Endoscopic(FlatRenderers) ""    
     set Endoscopic(FlatWindows) ""
     
     set Endoscopic(default,lineCount) 0
@@ -4847,14 +4844,14 @@ proc EndoscopicSetFlatFileName {} {
 
 # do nothing if the user cancelled in the browser box
    if {$Endoscopic(FlatSelect) == ""} {
-   set Endoscopic(name) ""
+   set Endoscopic(flatColon,name) ""
    set Endoscopic(FlatSelect) ""
 
    return
    }
 
 # name the flattened view based on the entered file name.
-    set Endoscopic(name) [file root [file tail $Endoscopic(FlatSelect)]]
+    set Endoscopic(flatColon,name) [file root [file tail $Endoscopic(FlatSelect)]]
 }
 
 #-------------------------------------------------------------------------
@@ -4866,7 +4863,7 @@ proc EndoscopicCancelFlatFile {} {
    global Endoscopic
 
    set Endoscopic(FlatSelect) ""
-   set Endoscopic(name) ""
+   set Endoscopic(flatColon,name) ""
     
 }
 
@@ -4886,7 +4883,7 @@ proc EndoscopicAddFlatView {} {
     return
     }
 
-    set name $Endoscopic(name)
+    set name $Endoscopic(flatColon,name)
 
     # deny if user tries to display an already displayed file
     if {[lsearch -exact $Endoscopic(FlatWindows) $name] != -1} {
@@ -5085,6 +5082,9 @@ proc EndoscopicAddFlatView {} {
 
     # set and activate event bindings for this widget
      EndoscopicCreateFlatBindings $f.flatRenderWidget$name
+     
+    # create lookup table for mapping scalars representing the curvature analysis
+     EndoscopicBuildFlatColonLookupTable
     
     # Update targets (Fiducials) that were saved in the MRML Tree
  #   $updatebut config -command "EndoscopicUpdateTargetsInFlatWindow $f.flatRenderWidget$name"
@@ -5232,6 +5232,9 @@ proc EndoscopicRemoveFlatView {{name ""}} {
     Endoscopic($name,renderer) Delete
     Endoscopic($name,FlatColonActor) Delete
     Endoscopic($name,FlatColonMapper) Delete
+    
+    Endoscopic(flatColon,lookupTable) Delete
+    
     # actor for flattened image
     Endoscopic($name,outlineActor) Delete
     Endoscopic($name,lightKit) Delete
@@ -5267,12 +5270,12 @@ proc EndoscopicRemoveFlatView {{name ""}} {
 
     }
     set Endoscopic(FlatSelect) ""
-    set Endoscopic(name) ""
+    set Endoscopic(flatColon,name) ""
     
     set Endoscopic(flatColon,scalarVisibility) 0
     set Endoscopic(flatColon,scalarLow) 0    
     set Endoscopic(flatColon,scalarHigh) 100
-    
+        
  # de-activate bindings for the flat window   
     EndoscopicPopFlatBindings
 }
@@ -5326,6 +5329,40 @@ proc EndoscopicPopFlatBindings {} {
     global Ev Csys Endoscopic
    
     EvDeactivateBindingSet bindFlatWindowEvents
+}
+
+
+proc EndoscopicBuildFlatColonLookupTable {} {
+    global Endoscopic
+     
+     
+     vtkLookupTable Endoscopic(flatColon,lookupTable)
+#puts "build lookup table Endoscopic(flatColon,LookupTable)"
+     Endoscopic(flatColon,lookupTable) SetNumberOfColors 256
+     Endoscopic(flatColon,lookupTable) Build
+     # for the first 128 slots in the table, set the color to be the same as the colon (skin rgb: 1.0 0.8 0.7)
+     for {set i 0} {$i < 128} {incr i} {
+        eval Endoscopic(flatColon,lookupTable) SetTableValue $i 1.0 0.8 0.7 1
+     }
+     # for the next 118 slots in the table, set the color to be in transition from skin to green
+     # i.e., green value increases to 1, and both red and blue decrease to 0
+     for {set i 128} {$i < 246} {incr i} {
+         set numSteps [expr [expr 246 - 128] + 1]
+     set redDecr [expr 1.0 / $numSteps]
+     set greenIncr [expr [expr 1.0 - 0.8] / $numSteps]
+     set blueDecr [expr 0.7 / $numSteps]
+     
+     set red [expr 1.0 - [expr [expr $i - 127] * $redDecr]]
+     set green [expr 0.8 + [expr [expr $i - 127] * $greenIncr]]
+     set blue [expr 0.7 - [expr [expr $i - 127] * $blueDecr]]
+     
+     eval Endoscopic(flatColon,lookupTable) SetTableValue $i $red $green $blue 1
+      }
+      #for the last 10 slots in the table, set the color to be green (rgb: 0 1 0)
+      for {set i 246} {$i < 256} {incr i} {
+         eval Endoscopic(flatColon,lookupTable) SetTableValue $i 0.0 1.0 0.0 1
+      }
+
 }
 
 
@@ -5454,7 +5491,7 @@ proc EndoscopicPickFlatPoint {widget xcoord ycoord} {
     
 #get the picked pointId from the picker, and pass the pointId to the 3D model in slicer
 
-    set name $Endoscopic(name)  
+    set name $Endoscopic(flatColon,name)  
     set polyData $Endoscopic($name,polyData)
     
 #reduce point number by half
@@ -6664,6 +6701,7 @@ proc EndoscopicSetFlatColonScalarVisibility {widget} {
      } else {
      
      Endoscopic($name,FlatColonMapper) ScalarVisibilityOn
+     Endoscopic($name,FlatColonMapper) SetLookupTable Endoscopic(flatColon,lookupTable)
      Endoscopic($name,FlatColonMapper) SetScalarRange $Endoscopic(flatColon,scalarLow) $Endoscopic(flatColon,scalarHigh)
      }
      
@@ -6682,6 +6720,7 @@ proc EndoscopicSetFlatColonScalarRange {widget} {
      if {$Endoscopic(flatColon,scalarVisibility) == 1} {
      
      Endoscopic($name,FlatColonMapper) ScalarVisibilityOn
+     Endoscopic($name,FlatColonMapper) SetLookupTable Endoscopic(flatColon,lookupTable)
      Endoscopic($name,FlatColonMapper) SetScalarRange $Endoscopic(flatColon,scalarLow) $Endoscopic(flatColon,scalarHigh)
      
      } 
