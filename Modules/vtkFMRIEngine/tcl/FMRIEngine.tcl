@@ -170,7 +170,7 @@ proc FMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.26 $} {$Date: 2004/08/25 22:04:23 $}]
+        {$Revision: 1.27 $} {$Date: 2004/08/31 17:30:24 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -333,11 +333,25 @@ proc FMRIEngineBuildGUI {} {
     #-------------------------------------------
     set fDisplay $Module(FMRIEngine,fDisplay)
     set f $fDisplay
-    
-    frame $f.fActScale  -bg $Gui(activeWorkspace) -relief groove -bd 3
-    pack $f.fActScale -side top -fill x -pady $Gui(pad)
-    
-    set f $f.fActScale 
+
+    foreach m "ActThresholding TcPlotting" {
+        frame $f.f${m} -bg $Gui(activeWorkspace) -relief groove -bd 3
+        pack $f.f${m} -side top -fill x -pady $Gui(pad) 
+    }
+
+    # Act thresholding frame 
+    #-----------------------
+    set f $fDisplay.fActThresholding 
+    foreach m "Title Params" {
+        frame $f.f${m} -bg $Gui(activeWorkspace)
+        pack $f.f${m} -side top -fill x -pady $Gui(pad)
+    }
+
+    set f $fDisplay.fActThresholding.fTitle 
+    DevAddLabel $f.lTitle "Activation thresholding:"
+    pack $f.lTitle -side top -fill x -padx $Gui(pad) 
+
+    set f $fDisplay.fActThresholding.fParams 
     # Entry fields (the loop makes a frame for each variable)
     foreach param "pValue tStat actScale" \
         name "{p Value} {t Statistic} {Act Scale}" {
@@ -358,9 +372,26 @@ proc FMRIEngineBuildGUI {} {
                 -textvariable FMRIEngine($param)} $Gui(WEA)
         }
 
-        grid $f.l$param $f.e$param -padx $Gui(pad) -pady $Gui(pad) -sticky e
+        grid $f.l$param $f.e$param -padx $Gui(pad) -pady 2 -sticky e
         grid $f.e$param -sticky w
     }
+
+    # Time course plotting frame 
+    #---------------------------
+    set f $fDisplay.fTcPlotting 
+    DevAddLabel $f.lTitle "Time series plotting:"
+    pack $f.lTitle -side top -fill x -pady $Gui(pad) 
+
+    foreach param "None Long Short ROI" \
+         name "{No plotting} {Voxel long format} {Voxel short format} {ROI plotting}" {
+
+         eval {radiobutton $f.r$param -width 20 -text $name \
+             -variable FMRIEngine(tcPlottingOption) -value $param -relief raised \
+             -offrelief raised -overrelief raised -selectcolor blue} $Gui(WEA)
+         pack $f.r$param -side top -pady $Gui(pad) 
+    } 
+
+    set FMRIEngine(tcPlottingOption) None
 }
 
 

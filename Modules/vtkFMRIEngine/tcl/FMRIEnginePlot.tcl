@@ -55,6 +55,22 @@
 proc FMRIEnginePopUpPlot {x y} {
     global FMRIEngine
 
+    # Checks time course plotting option
+    switch $FMRIEngine(tcPlottingOption) {
+        "None" {
+            return
+        }
+        "Long" {
+            puts "Long"
+        }
+        "Short" {
+            puts "Short"
+        }
+        "ROI" {
+            puts "ROI"
+        }
+    }
+
     if {! [info exists FMRIEngine(firstMRMLid)] ||
         ! [info exists FMRIEngine(lastMRMLid)]} {
         # DevErrorWindow "Please load volume sequence first."
@@ -120,12 +136,6 @@ proc FMRIEnginePopUpPlot {x y} {
 
     #Update the graph for the new data
     $FMRIEngine(renWin) Render 
-
-    # timer to remove the time course plot
-    if {[info exists FMRIEngine(timer)]} {
-        after cancel $FMRIEngine(timer)
-    }
-    set FMRIEngine(timer) [after 6000 {FMRIEngineCloseTimeCourseWindow}]
 }
 
 
