@@ -136,30 +136,28 @@ if { ![info exists env(TCL_LIB_DIR)] || $env(TCL_LIB_DIR) == "" } {
 #
 # set the base library paths for this build 
 # 
-switch $env(BUILD) {
-    $solaris -
-    $linux {
+if { $env(BUILD) == $solaris || 
+     $env(BUILD) == $linux } {
         # add vtk, slicer, and tcl bins
         set env(LD_LIBRARY_PATH) $env(VTK_BIN_DIR)/bin:$env(LD_LIBRARY_PATH)
         set env(LD_LIBRARY_PATH) $env(ITK_BIN_DIR)/bin:$env(LD_LIBRARY_PATH)
         set env(LD_LIBRARY_PATH) $env(SLICER_HOME)/Base/builds/$env(BUILD)/bin:$env(LD_LIBRARY_PATH)
         set env(LD_LIBRARY_PATH) $env(TCL_LIB_DIR):$env(LD_LIBRARY_PATH)
-    }
-    $darwin {
+    } elseif { $env(BUILD) == $darwin} {
         # add vtk, slicer, and tcl bins
         set env(DYLD_LIBRARY_PATH) $env(VTK_BIN_DIR)/bin:$env(DYLD_LIBRARY_PATH)
         set env(DYLD_LIBRARY_PATH) $env(ITK_BIN_DIR)/bin:$env(DYLD_LIBRARY_PATH)
         set env(DYLD_LIBRARY_PATH) $env(SLICER_HOME)/Base/builds/$env(BUILD)/bin:$env(DYLD_LIBRARY_PATH)
         set env(DYLD_LIBRARY_PATH) $env(TCL_LIB_DIR):$env(DYLD_LIBRARY_PATH)
-    }
-    $windows {
+    } elseif {$env(BUILD) == $windows} {
         # add vtk, slicer, and tcl bins
         set env(Path) $env(VTK_BIN_DIR)/bin/debug\;$env(Path)
         set env(Path) $env(ITK_BIN_DIR)/bin/debug\;$env(Path)
         set env(Path) $env(SLICER_HOME)/Base/builds/$env(BUILD)/bin/debug\;$env(Path)
         set env(Path) $env(TCL_BIN_DIR)\;$env(Path)
+    } else {
+        puts "Libraries: unknown build $env(BUILD)"
     }
-}
 
 # set the base tcl/tk library paths, using the previously defined TCL_LIB_DIR
 set env(TCL_LIBRARY) $env(TCL_LIB_DIR)/tcl8.4
@@ -169,16 +167,14 @@ set env(TK_LIBRARY) $env(TCL_LIB_DIR)/tk8.4
 # add the default search locations for tcl packages
 #  (window has special tcl packages depending on build type)
 #
-switch $env(BUILD) {
-    $solaris -
-    $linux -
-    $darwin {
+if {$env(BUILD) == $solaris || 
+    $env(BUILD) == $linux ||
+    $env(BUILD) == $darwin} {
         set env(TCLLIBPATH) "$env(VTK_BIN_DIR)/Wrapping/Tcl $env(TCLLIBPATH)"
-    }
-    $windows {
-        set env(TCLLIBPATH) "$env(VTK_BIN_DIR)/Wrapping/Tcl/Debug $env(TCLLIBPATH)"
-    }
+} elseif {$env(BUILD) == $windows} {
+    set env(TCLLIBPATH) "$env(VTK_BIN_DIR)/Wrapping/Tcl/Debug $env(TCLLIBPATH)"
 }
+
 # same for all platforms
 set env(TCLLIBPATH) "$env(SLICER_HOME)/Base/Wrapping/Tcl/vtkSlicerBase $env(TCLLIBPATH)"
 
@@ -214,20 +210,16 @@ foreach modulePath $modulePaths {
         # if it's not the custom one, append it to the path
         if {[string first Custom $moduleName] == -1} {
             lappend env(SLICER_MODULES_TO_REQUIRE) $moduleName
-            switch $env(BUILD) {
-                $solaris -
-                $linux {
-                    set env(LD_LIBRARY_PATH) ${modulePath}/$moduleName/builds/$env(BUILD)/bin:$env(LD_LIBRARY_PATH)
-                    set env(TCLLIBPATH) "${modulePath}/$moduleName/Wrapping/Tcl $env(TCLLIBPATH)"
-                }
-                $darwin {
-                    set env(DYLD_LIBRARY_PATH) ${modulePath}/$moduleName/builds/$env(BUILD)/bin:$env(DYLD_LIBRARY_PATH)
-                    set env(TCLLIBPATH) "${modulePath}/$moduleName/Wrapping/Tcl $env(TCLLIBPATH)"
-                }
-                $windows {
-                    set env(Path) $modulePath/$moduleName/builds/$env(BUILD)/bin/debug\;$env(Path)
-                    set env(TCLLIBPATH) "$modulePath/$moduleName/Wrapping/Tcl $env(TCLLIBPATH)"
-                }
+            if {$env(BUILD) == $solaris || 
+                $env(BUILD) == $linux} {
+                set env(LD_LIBRARY_PATH) ${modulePath}/$moduleName/builds/$env(BUILD)/bin:$env(LD_LIBRARY_PATH)
+                set env(TCLLIBPATH) "${modulePath}/$moduleName/Wrapping/Tcl $env(TCLLIBPATH)"
+            } elseif {$env(BUILD) == $darwin} {
+                set env(DYLD_LIBRARY_PATH) ${modulePath}/$moduleName/builds/$env(BUILD)/bin:$env(DYLD_LIBRARY_PATH)
+                set env(TCLLIBPATH) "${modulePath}/$moduleName/Wrapping/Tcl $env(TCLLIBPATH)"
+            } elseif {$env(BUILD) == $windows} {
+                set env(Path) $modulePath/$moduleName/builds/$env(BUILD)/bin/debug\;$env(Path)
+                set env(TCLLIBPATH) "$modulePath/$moduleName/Wrapping/Tcl $env(TCLLIBPATH)"
             }
         }
     }
@@ -312,27 +304,22 @@ foreach a $argv {
 }
 set argv $newargv
 
-
-switch $env(BUILD) {
-    $solaris -
-    $darwin -
-    $linux {
+if {$env(BUILD) == $solaris ||
+    $env(BUILD) == $darwin ||
+    $env(BUILD) == $linux} {
         # - need to run the specially modified tcl interp in the executable 'vtk' on unix
         # - don't put process in background so that jdemo can track its status
         regsub -all "{|}" $argv "\\\"" argv
         set fp [open "| csh -c \"$env(VTK_BIN_DIR)/bin/vtk $mainscript $argv \" |& cat" r]
-    }
-    $windows {
+    } elseif {$env(BUILD) == $windows} {
         # put slicer in the background on windows so it won't be "Not Responding" in
         # task manager
         regsub -all "{|}" $argv "" argv
         set fp [open "| $env(TCL_BIN_DIR)/wish84.exe $mainscript $argv" r]
-    }
-    default {
+    } else {
         puts stderr "Unknown build: $env(BUILD)"
         exit
     }
-}
 
 fileevent $fp readable "file_event $fp"
 
