@@ -105,7 +105,7 @@ proc SubVolumeInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1 $} {$Date: 2004/04/20 19:59:32 $}]
+        {$Revision: 1.2 $} {$Date: 2004/04/21 22:50:41 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -164,7 +164,7 @@ proc SubVolumeInit {} {
     
     set SubVolume(Ext3D,CubeColor) "1 0 0"
     set SubVolume(Ext3D,CubeOpacity) 0.5
-    set SubVolume(Ext3D,RenderCube) 0
+    set SubVolume(Ext3D,RenderCube) 1
 }
 
 # NAMING CONVENTION:
@@ -401,16 +401,16 @@ global SubVolume Volume
 
 set volID $SubVolume(VolumeIn)
 
-set x1 [lindex $SubVolume(Ext3D,Ijk) 0]
-set x2 [lindex $SubVolume(Ext3D,Ijk) 1]
-set y1 [lindex $SubVolume(Ext3D,Ijk) 2]
-set y2 [lindex $SubVolume(Ext3D,Ijk) 3]
-set z1 [lindex $SubVolume(Ext3D,Ijk) 4]
-set z2 [lindex $SubVolume(Ext3D,Ijk) 5]
+set x1 [expr round([lindex $SubVolume(Ext3D,Ijk) 0])]
+set x2 [expr round([lindex $SubVolume(Ext3D,Ijk) 1])]
+set y1 [expr round([lindex $SubVolume(Ext3D,Ijk) 2])]
+set y2 [expr round([lindex $SubVolume(Ext3D,Ijk) 3])]
+set z1 [expr round([lindex $SubVolume(Ext3D,Ijk) 4])]
+set z2 [expr round([lindex $SubVolume(Ext3D,Ijk) 5])]
 
   vtkExtractVOI op
   op SetInput [Volume($volID,vol) GetOutput]
-  eval "op SetVOI" $SubVolume(Ext3D,Ijk)
+  op SetVOI $x1 $x2 $y1 $y2 $z1 $z2
   op Update
  
   set newvol [SubVolumeAddMrmlImage $volID $SubVolume(OutputName)]
@@ -667,7 +667,9 @@ proc SubVolumeGetInitParams {} {
        set SubVolume(Ext3D,CorMin) [lindex $RASmin 1]
        set SubVolume(Ext3D,CorMax) [lindex $RASmax 1]
     }
-    
+
+ SubVolumeRenderCube  
+
 }
 
 #-------------------------------------------------------------------------------
