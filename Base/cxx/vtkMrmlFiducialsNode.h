@@ -25,79 +25,46 @@ PARTICULAR PURPOSE, AND NON-INFRINGEMENT.  THIS SOFTWARE IS PROVIDED ON AN
 'AS IS' BASIS, AND THE AUTHORS AND DISTRIBUTORS HAVE NO OBLIGATION TO PROVIDE
 MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 =========================================================================auto=*/
-// .NAME vtkMrmlNode - Superclass for all specific types of MRML nodes.
+// .NAME vtkMrmlFiducialsNode - MRML node for representing a transform.
 // .SECTION Description
-// This node excapsulates the functionality common to all types of MRML nodes.
-// This includes member variables for ID, Description, and Options,
-// as well as member functions to Copy() and Write().
+// A Fiducials is container for a constellation of vtkMrmlPoints
 
-#ifndef __vtkMrmlNode_h
-#define __vtkMrmlNode_h
+#ifndef __vtkMrmlFiducialsNode_h
+#define __vtkMrmlFiducialsNode_h
 
 #include <iostream.h>
 #include <fstream.h>
-#include "vtkObject.h"
+#include "vtkMrmlNode.h"
 #include "vtkMatrix4x4.h"
+#include "vtkTransform.h"
 
-class VTK_EXPORT vtkMrmlNode : public vtkObject
+class VTK_EXPORT vtkMrmlFiducialsNode : public vtkMrmlNode
 {
 public:
-  static vtkMrmlNode *New();
-  vtkTypeMacro(vtkMrmlNode,vtkObject);
+  static vtkMrmlFiducialsNode *New();
+  vtkTypeMacro(vtkMrmlFiducialsNode,vtkMrmlNode);
   void PrintSelf(ostream& os, vtkIndent indent);
+  const char *GetName() {return "";}; 
   
-  // Copy the node's parameters to this object.
-  // But don't copy: ID
-  void Copy(vtkMrmlNode *node);
-  
-  // Description:
-  // Set/Get a numerical ID for the calling program to use to keep track
-  // of its various volume objects.
-  vtkSetMacro(ID, int);
-  vtkGetMacro(ID, int);
+  //--------------------------------------------------------------------------
+  // Utility Functions
+  //--------------------------------------------------------------------------
 
   // Description:
-  // Text description
-  vtkSetStringMacro(Description);
-  vtkGetStringMacro(Description);
+  // Write the node's attributes to a MRML file in XML format
+  void Write(ofstream& of, int indent);
 
   // Description:
-  // Optional attributes not defined in the MRML standard,
-  // but recognized by various browsers
-  vtkSetStringMacro(Options);
-  vtkGetStringMacro(Options);
-
-  // Description:
-  // Node's effect on indentation (0, +1, -1)
-  vtkGetMacro(Indent, int);
-
-  // Description:
-  // Utility functions for converting between vtkMatrix4x4 and
-  // a string of 16 numbers in row-major order.
-  void SetMatrixToString(vtkMatrix4x4 *m, char *s);
-  char* GetMatrixToString(vtkMatrix4x4 *m);
-
-  // Description:
-  // Write this node's information to a MRML file in XML format.
-  // Only write attributes that differ from the default values,
-  // which are set in the node's constructor.
-  // This is a virtual function that all subclasses must overload.
-  virtual void Write(ofstream& of, int indent) {};
+  // Copy the node's attributes to this object
+  void Copy(vtkMrmlFiducialsNode *node);
 
 protected:
+  vtkMrmlFiducialsNode();
+  ~vtkMrmlFiducialsNode();
+  vtkMrmlFiducialsNode(const vtkMrmlFiducialsNode&) {};
+  void operator=(const vtkMrmlFiducialsNode&) {};
 
-  vtkSetMacro(Indent, int);
-  vtkMrmlNode();
-  ~vtkMrmlNode();
-  vtkMrmlNode(const vtkMrmlNode&) {};
-  void operator=(const vtkMrmlNode&) {};
-
-  int ID;
-  int Indent;
-  char *Description;
-  char *Options;
 };
 
 #endif
-
 

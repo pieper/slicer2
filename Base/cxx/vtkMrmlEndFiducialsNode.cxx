@@ -29,24 +29,24 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include <ctype.h>
 #include <string.h>
 #include <math.h>
-#include "vtkMrmlEndTransformNode.h"
+#include "vtkMrmlEndFiducialsNode.h"
 #include "vtkObjectFactory.h"
 
 //------------------------------------------------------------------------------
-vtkMrmlEndTransformNode* vtkMrmlEndTransformNode::New()
+vtkMrmlEndFiducialsNode* vtkMrmlEndFiducialsNode::New()
 {
   // First try to create the object from the vtkObjectFactory
-  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkMrmlEndTransformNode");
+  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkMrmlEndFiducialsNode");
   if(ret)
   {
-    return (vtkMrmlEndTransformNode*)ret;
+    return (vtkMrmlEndFiducialsNode*)ret;
   }
   // If the factory was unable to create the object, then create it here.
-  return new vtkMrmlEndTransformNode;
+  return new vtkMrmlEndFiducialsNode;
 }
 
 //----------------------------------------------------------------------------
-vtkMrmlEndTransformNode::vtkMrmlEndTransformNode()
+vtkMrmlEndFiducialsNode::vtkMrmlEndFiducialsNode()
 {
   // vtkMrmlNode's attributes
   this->ID = 0;
@@ -56,31 +56,31 @@ vtkMrmlEndTransformNode::vtkMrmlEndTransformNode()
 }
 
 //----------------------------------------------------------------------------
-vtkMrmlEndTransformNode::~vtkMrmlEndTransformNode()
+vtkMrmlEndFiducialsNode::~vtkMrmlEndFiducialsNode()
 {
 }
 
 //----------------------------------------------------------------------------
-void vtkMrmlEndTransformNode::Write(ofstream& of, int nIndent)
+void vtkMrmlEndFiducialsNode::Write(ofstream& of, int nIndent)
 {
   // Write all attributes not equal to their defaults
   
   vtkIndent i1(nIndent);
 
-  of << i1 << "</Transform>\n";
+  of << i1 << "</Fiducials>\n";
 }
 
 //----------------------------------------------------------------------------
 // Copy the node's attributes to this object.
 // Does NOT copy: ID, FilePrefix, Name
-void vtkMrmlEndTransformNode::Copy(vtkMrmlEndTransformNode *node)
+void vtkMrmlEndFiducialsNode::Copy(vtkMrmlEndFiducialsNode *node)
 {
   vtkMrmlNode::Copy(node);
 
 }
 
 //----------------------------------------------------------------------------
-void vtkMrmlEndTransformNode::PrintSelf(ostream& os, vtkIndent indent)
+void vtkMrmlEndFiducialsNode::PrintSelf(ostream& os, vtkIndent indent)
 {
   vtkMrmlNode::PrintSelf(os,indent);
 

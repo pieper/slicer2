@@ -48,6 +48,7 @@ vtkMrmlNode* vtkMrmlNode::New()
 vtkMrmlNode::vtkMrmlNode()
 {
   this->ID = 0;
+  this->Indent = 0;
   this->Description = NULL;
   this->Options = NULL;
 }
@@ -82,6 +83,8 @@ void vtkMrmlNode::PrintSelf(ostream& os, vtkIndent indent)
   vtkObject::PrintSelf(os,indent);
 
   os << indent << "ID:          " << this->ID << "\n";
+
+  os << indent << "Indent:      " << this->Indent << "\n";
 
   os << indent << "Description: " <<
     (this->Description ? this->Description : "(none)") << "\n";

@@ -56,7 +56,15 @@ vtkMrmlTransformNode \
 vtkMrmlOptionsNode \
 vtkXDisplayWindow \
 vtkImageFrameSource \
-
+vtkFastCellPicker \
+vtkDistractorSource \
+vtkMrmlFiducialsNode \
+vtkMrmlEndFiducialsNode \
+vtkMrmlPointNode \
+#vtkSurfaceProps \
+#vtkMathUtils \
+#vtkBoolTess \
+#vtkPolyBoolean
 
 
 #------------------------------------------------------------------------------
@@ -78,8 +86,8 @@ vtkImageFrameSource \
 KIT_LIBS =
 
 # standard stuff here
-KIT_OBJ = ${SRC_OBJ}
-KIT_TCL_OBJ = ${TCL_OBJ}
+KIT_OBJ = ${SRC_OBJ} /home/peverett/recipes/nrutil.o /home/peverett/recipes/svdcmp.o
+KIT_TCL_OBJ = ${TCL_OBJ} /home/peverett/recipes/nrutil.o /home/peverett/recipes/svdcmp.o
 KIT_NEWS = ${TCL_NEWS}
 KIT_FLAGS = 
 PYTHON_LIBS = -L../graphics -lVTKGraphicsPython -L../imaging -lVTKImagingPython -L../common -lVTKCommonPython ${XLIBS} ${GRAPHICS_API_LIBS} 

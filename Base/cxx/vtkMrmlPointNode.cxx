@@ -29,59 +29,94 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include <ctype.h>
 #include <string.h>
 #include <math.h>
-#include "vtkMrmlEndTransformNode.h"
+#include "vtkMrmlPointNode.h"
 #include "vtkObjectFactory.h"
 
 //------------------------------------------------------------------------------
-vtkMrmlEndTransformNode* vtkMrmlEndTransformNode::New()
+vtkMrmlPointNode* vtkMrmlPointNode::New()
 {
   // First try to create the object from the vtkObjectFactory
-  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkMrmlEndTransformNode");
+  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkMrmlPointNode");
   if(ret)
   {
-    return (vtkMrmlEndTransformNode*)ret;
+    return (vtkMrmlPointNode*)ret;
   }
   // If the factory was unable to create the object, then create it here.
-  return new vtkMrmlEndTransformNode;
+  return new vtkMrmlPointNode;
 }
 
 //----------------------------------------------------------------------------
-vtkMrmlEndTransformNode::vtkMrmlEndTransformNode()
+vtkMrmlPointNode::vtkMrmlPointNode()
 {
   // vtkMrmlNode's attributes
   this->ID = 0;
-  this->Indent = -1;
   this->Description = NULL;
   this->Options = NULL;
+
+  this->Name = NULL;
+  this->XYZ[0] = this->XYZ[1] = this->XYZ[2] = 0.0;
 }
 
 //----------------------------------------------------------------------------
-vtkMrmlEndTransformNode::~vtkMrmlEndTransformNode()
+vtkMrmlPointNode::~vtkMrmlPointNode()
 {
+  if (this->Name)
+  {
+    delete [] this->Name;
+    this->Name = NULL;
+  }
 }
 
 //----------------------------------------------------------------------------
-void vtkMrmlEndTransformNode::Write(ofstream& of, int nIndent)
+void vtkMrmlPointNode::Write(ofstream& of, int nIndent)
 {
   // Write all attributes not equal to their defaults
   
   vtkIndent i1(nIndent);
 
-  of << i1 << "</Transform>\n";
+  of << i1 << "<Point";
+
+  // Strings
+  if (this->Name && strcmp(this->Name, "")) 
+  {
+    of << " name='" << this->Name << "'";
+  }
+  if (this->Description && strcmp(this->Description, "")) 
+  {
+    of << " description='" << this->Description << "'";
+  }
+
+  // Point
+  of << " xyz='" << this->XYZ[0] << " " << this->XYZ[1] << " " <<
+                    this->XYZ[2] << "'";
+
+  of << "></Point>\n";;
 }
 
 //----------------------------------------------------------------------------
 // Copy the node's attributes to this object.
 // Does NOT copy: ID, FilePrefix, Name
-void vtkMrmlEndTransformNode::Copy(vtkMrmlEndTransformNode *node)
+void vtkMrmlPointNode::Copy(vtkMrmlPointNode *node)
 {
   vtkMrmlNode::Copy(node);
 
+  this->XYZ[0] = node->XYZ[0];
+  this->XYZ[1] = node->XYZ[1];
+  this->XYZ[2] = node->XYZ[2];
 }
 
 //----------------------------------------------------------------------------
-void vtkMrmlEndTransformNode::PrintSelf(ostream& os, vtkIndent indent)
+void vtkMrmlPointNode::PrintSelf(ostream& os, vtkIndent indent)
 {
   vtkMrmlNode::PrintSelf(os,indent);
 
+  os << indent << "Name: " <<
+    (this->Name ? this->Name : "(none)") << "\n";
+
+  // XYZ
+  os << indent << "XYZ: (";
+  os << indent << this->XYZ[0] << ", " << this->XYZ[1] << ", " << this->XYZ[2]
+                  << ")";
 }
+
+

@@ -47,7 +47,7 @@ void vtkMrmlTree::Write(char *filename)
   vtkCollectionElement *elem=this->Top;
   vtkMrmlNode *node;
   ofstream file;
-  int i, indent=0;
+  int i, indent=0, deltaIndent;
 
   // Open file
   file.open(filename);
@@ -67,14 +67,15 @@ void vtkMrmlTree::Write(char *filename)
   {
     node = (vtkMrmlNode*)elem->Item;
 
-    if (!strcmp(node->GetClassName(), "vtkMrmlEndTransformNode"))
+    deltaIndent = node->GetIndent();
+    if ( deltaIndent < 0 )
     {
       indent -=2;
     }
 
     node->Write(file, indent);
 
-    if (!strcmp(node->GetClassName(), "vtkMrmlTransformNode"))
+    if ( deltaIndent > 0 )
     {
       indent += 2;
     }
@@ -245,6 +246,52 @@ void vtkMrmlTree::ComputeTransforms()
 
     elem = elem->Next;
   }
+  tran->Delete();
+  mat->Delete();
+}
+//------------------------------------------------------------------------------
+void vtkMrmlTree::ComputeNodeTransform( vtkMrmlNode *node, vtkMatrix4x4 *xform )
+{
+  vtkMrmlNode *n;
+  vtkTransform *tran = vtkTransform::New();
+  vtkMatrix4x4 *mat = vtkMatrix4x4::New();
+  vtkMrmlMatrixNode *t;
+  vtkCollectionElement *elem;
+
+	// Set the vtkTransform to PostMultiply so a concatenated matrix, C,
+	// is multiplied by the existing matrix, M: C*M (not M*C)
+  tran->PostMultiply();
+
+  elem = this->Top;
+  while ((vtkMrmlNode*)(elem->Item) != node)
+  {
+    n = (vtkMrmlNode*)(elem->Item);
+    
+    // Transform
+    if (!strcmp("vtkMrmlTransformNode", n->GetClassName()))
+    {
+      tran->Push();
+    }
+
+    // EndTransform
+    else if (!strcmp("vtkMrmlEndTransformNode", n->GetClassName()))
+    {
+      tran->Pop();
+    }
+
+    // Matrix
+    else if (!strcmp("vtkMrmlMatrixNode", n->GetClassName()))
+    {
+      t = (vtkMrmlMatrixNode*)n;
+      tran->Concatenate(t->GetTransform()->GetMatrixPointer());
+    }
+
+    elem = elem->Next;
+  }
+  tran->GetMatrix(mat);
+  xform->DeepCopy( mat );
+  tran->Delete();
+  mat->Delete();
 }
 
 //------------------------------------------------------------------------------
