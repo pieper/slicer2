@@ -101,7 +101,7 @@ proc MutualInformationRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.7 $} {$Date: 2003/10/21 20:37:18 $}]
+        {$Revision: 1.8 $} {$Date: 2003/11/24 18:17:00 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -118,6 +118,8 @@ proc MutualInformationRegistrationInit {} {
     set MutualInformationRegistration(sourceId) $Volume(idNone)
     set MutualInformationRegistration(targetId) $Volume(idNone)
     set MutualInformationRegistration(matrixId) ""
+
+    set MutualInformationRegistration(Repeat) 1
 
     global Matrix MutualInformationRegistration
     #set Matrix(autoFast) mi-fast.txt
@@ -247,9 +249,10 @@ proc MutualInformationRegistrationBuildSubGui {f} {
 
     frame $f.fDesc    -bg $Gui(activeWorkspace)
     frame $f.fSpeed   -bg $Gui(activeWorkspace)
+    frame $f.fRepeat  -bg $Gui(activeWorkspace)
     frame $f.fRun     -bg $Gui(activeWorkspace)
 
-    pack $f.fDesc $f.fSpeed $f.fRun -pady $Gui(pad) 
+    pack $f.fDesc $f.fSpeed $f.fRepeat $f.fRun -pady $Gui(pad) 
 
     #-------------------------------------------
     # Level->Normal->Desc frame
@@ -269,7 +272,7 @@ proc MutualInformationRegistrationBuildSubGui {f} {
     pack $f.fTitle $f.fBtns -side left -padx 5
 
     eval {label $f.fTitle.lSpeed -text "Run\n Objective:"} $Gui(WLA)
-    pack $f.fTitle.lSpeed
+    pack $f.fTitle.lSpeed -anchor w
 
     # the first row and second row
     frame $f.fBtns.1 -bg $Gui(inactiveWorkspace)
@@ -288,6 +291,22 @@ proc MutualInformationRegistrationBuildSubGui {f} {
         pack $f.fBtns.$row.r$value -side left -padx 4 -pady 2
         if { $value == "Fine" } {incr row};
         if { $value == "GSlow" } {incr row};
+    }
+
+    #-------------------------------------------
+    # Level->Normal->Repeat Frame
+    #-------------------------------------------
+    set f $fnormal.fRepeat
+    
+    eval {label $f.l -text "Repeat:"} $Gui(WLA)
+    frame $f.f -bg $Gui(activeWorkspace)
+    pack $f.l $f.f -side left -padx $Gui(pad) -fill x
+
+    foreach value "1 0" text "Yes No" width "4 3" {
+        eval {radiobutton $f.f.r$value -width $width \
+              -indicatoron 0 -text "$text" -value "$value" \
+              -variable MutualInformationRegistration(Repeat) } $Gui(WCA)
+        pack $f.f.r$value -side left -fill x -anchor w
     }
 
    set MutualInformationRegistration(Objective) Coarse
@@ -417,6 +436,7 @@ proc MutualInformationRegistrationCoarseParam {} {
     set MutualInformationRegistration(TargetStandardDeviation) 0.4
     set MutualInformationRegistration(SourceShrinkFactors)   "1 1 1"
     set MutualInformationRegistration(TargetShrinkFactors)   "1 1 1"
+    set MutualInformationRegistration(Repeat) 1
 }
 
 
@@ -446,6 +466,7 @@ proc MutualInformationRegistrationFineParam {} {
     set MutualInformationRegistration(TargetStandardDeviation) 0.4
     set MutualInformationRegistration(SourceShrinkFactors)   "1 1 1"
     set MutualInformationRegistration(TargetShrinkFactors)   "1 1 1"
+    set MutualInformationRegistration(Repeat) 1
 }
 
 
@@ -474,7 +495,7 @@ proc MutualInformationRegistrationGSlowParam {} {
     set MutualInformationRegistration(TargetStandardDeviation) 0.4
     set MutualInformationRegistration(SourceShrinkFactors)   "2 2 2"
     set MutualInformationRegistration(TargetShrinkFactors)   "2 2 2"
-
+    set MutualInformationRegistration(Repeat) 0
 }
 
 #-------------------------------------------------------------------------------
@@ -502,8 +523,8 @@ proc MutualInformationRegistrationVerySlowParam {} {
     set MutualInformationRegistration(TargetStandardDeviation) 0.4
     set MutualInformationRegistration(SourceShrinkFactors)   "4 4 1"
     set MutualInformationRegistration(TargetShrinkFactors)   "4 4 1"
+    set MutualInformationRegistration(Repeat) 0
 }
-
 
 
 #-------------------------------------------------------------------------------
@@ -639,10 +660,10 @@ proc MutualInformationRegistrationAutoRun_Itk { } {
 
     .mi.reg config \
         -update_procedure MutualInformationRegistrationUpdateParam         \
+        -stop_procedure MutualInformationRegistrationStop                  \
         -source          $MutualInformationRegistration(sourceId)          \
         -target          $MutualInformationRegistration(targetId)          \
-        -resolution      $MutualInformationRegistration(Resolution)        \
-
+        -resolution      $MutualInformationRegistration(Resolution)        
 
     puts "to see the pop-up window, type: pack .mi.reg -fill both -expand true"
   #  pack .mi.reg -fill both -expand true
@@ -656,7 +677,7 @@ proc MutualInformationRegistrationAutoRun_Itk { } {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC MutualInformationRegistrationStop
+# .PROC MutualInformationRegistrationUpdateParam
 #
 # .ARGS
 # .END
@@ -677,7 +698,8 @@ proc MutualInformationRegistrationUpdateParam {} {
         -source_standarddev $MutualInformationRegistration(SourceStandardDeviation)  \
         -target_standarddev $MutualInformationRegistration(TargetStandardDeviation)  \
         -source_shrink $MutualInformationRegistration(SourceShrinkFactors) \
-        -target_shrink $MutualInformationRegistration(TargetShrinkFactors)
+        -target_shrink $MutualInformationRegistration(TargetShrinkFactors) \
+        -auto_repeat   $MutualInformationRegistration(Repeat) 
 }
 
 #-------------------------------------------------------------------------------
