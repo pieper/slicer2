@@ -25,6 +25,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkObjectFactory.h"
 #include "vtkImageData.h"
 #include "vtkImageWriter.h"
+#include "vtkImageClip.h"
 
 #include <stdio.h>
 // #include <stdlib.h>
@@ -833,10 +834,58 @@ float vtkImageEMGeneral_CountLabel(vtkImageThreshold* trash,vtkImageData * Input
 // Value defines the vooxel with those label to be measured
 // Returns  Dice sim measure
 
+float vtkImageEMGeneral::CalcSimularityMeasure (vtkImageData *Image1, vtkImageData *Image2,float val, int PrintRes, int *BoundaryMin, int *BoundaryMax) {
+  vtkImageThreshold *Trash1 =  vtkImageThreshold::New(), 
+                    *Trash2 =  vtkImageThreshold::New(),
+                    *Final  =  vtkImageThreshold::New();
+
+  vtkImageClip      *ROI1 = vtkImageClip::New();
+  ROI1->SetInput(Image1);
+  ROI1->SetOutputWholeExtent(BoundaryMin[0],BoundaryMax[0],BoundaryMin[1],BoundaryMax[1],BoundaryMin[2],BoundaryMax[2]);
+  ROI1->ClipDataOn(); 
+  ROI1->Update();
+
+  vtkImageClip      *ROI2 = vtkImageClip::New();
+  ROI2->SetInput(Image2);
+  ROI2->SetOutputWholeExtent(BoundaryMin[0],BoundaryMax[0],BoundaryMin[1],BoundaryMax[1],BoundaryMin[2],BoundaryMax[2]);
+  ROI2->ClipDataOn(); 
+  ROI2->Update();
+
+  vtkImageMathematics *MathImg = vtkImageMathematics::New();
+  float result;
+  float NumMeasure;
+  float DivMeasure = vtkImageEMGeneral_CountLabel(Trash1,ROI1->GetOutput(), val); 
+  DivMeasure += vtkImageEMGeneral_CountLabel(Trash2,ROI2->GetOutput(), val); 
+
+  // Find out overlapping volume 
+  MathImg->SetOperationToAdd();
+  MathImg->SetInput(0,Trash1->GetOutput());
+  MathImg->SetInput(1,Trash2->GetOutput());
+  MathImg->Update();
+  NumMeasure = vtkImageEMGeneral_CountLabel(Final,MathImg->GetOutput(),2);
+  if (DivMeasure > 0) result = 2.0*NumMeasure / DivMeasure;
+  else result = -1.0;
+  if (PrintRes) {
+    cout << "Label:                 " << val << endl; 
+    cout << "Total Union Sum:       " << DivMeasure - NumMeasure << endl; 
+    cout << "Total Interaction Sum: " << NumMeasure << endl;
+    //  cout << "Jakobien sim measure:  " << ((DivMeasure - NumMeasure) > 0.0 ? NumMeasure / (DivMeasure - NumMeasure) : -1) << endl;
+    cout << "Dice sim measure:      " << result << endl;
+  }
+  ROI1->Delete();
+  ROI2->Delete();
+  Trash1->Delete();
+  Trash2->Delete();
+  Final->Delete();
+  MathImg->Delete();
+  return result;
+}  
+
+
 float vtkImageEMGeneral::CalcSimularityMeasure (vtkImageData *Image1, vtkImageData *Image2,float val, int PrintRes) {
   vtkImageThreshold *Trash1 =  vtkImageThreshold::New(), 
-    *Trash2 =  vtkImageThreshold::New(),
-    *Final =  vtkImageThreshold::New();
+                    *Trash2 =  vtkImageThreshold::New(),
+                    *Final  =  vtkImageThreshold::New();
 
   vtkImageMathematics *MathImg = vtkImageMathematics::New();
   float result;
@@ -865,6 +914,7 @@ float vtkImageEMGeneral::CalcSimularityMeasure (vtkImageData *Image1, vtkImageDa
   MathImg->Delete();
   return result;
 }  
+
 
 // Allocates data and spits pointer back out 
 

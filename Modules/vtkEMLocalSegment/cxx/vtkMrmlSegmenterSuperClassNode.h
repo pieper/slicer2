@@ -169,6 +169,15 @@ public:
   vtkGetMacro(GenerateBackgroundProbability,int);      
   vtkSetMacro(GenerateBackgroundProbability,int);      
 
+
+  // Description:
+  // This variable can have three settings :
+  // 0 = The PCA Model is generated over all structures together
+  // 1 = Each structure has its own PCA model defined 
+  // 2 = Do not maximize over the shape setting  - just use the current setting 
+  vtkGetMacro(PCAShapeModelType,int); 
+  vtkSetMacro(PCAShapeModelType,int); 
+
 protected:
   vtkMrmlSegmenterSuperClassNode();
   ~vtkMrmlSegmenterSuperClassNode();
@@ -204,6 +213,8 @@ protected:
 
   int    RegistrationType; 
   int GenerateBackgroundProbability;
+
+int PCAShapeModelType;
 
 };
 

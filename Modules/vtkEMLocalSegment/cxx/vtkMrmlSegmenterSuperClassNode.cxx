@@ -80,6 +80,7 @@ vtkMrmlSegmenterSuperClassNode::vtkMrmlSegmenterSuperClassNode() {
   this->StopBiasCalculation = -1;
   this->RegistrationType    = 0;
   this->GenerateBackgroundProbability = 0;
+  this->PCAShapeModelType = 0;
 }
 
 //----------------------------------------------------------------------------
@@ -116,6 +117,7 @@ void vtkMrmlSegmenterSuperClassNode::Write(ofstream& of, int nIndent)
   of << " StopStopBiasCalculation='" << this->StopBiasCalculation <<  "'";
   of << " GenerateBackgroundProbability='" << this->GenerateBackgroundProbability <<  "'";
   of << " PrintShapeSimularityMeasure='" << this->PrintShapeSimularityMeasure << "'";
+  of << " PCAShapeModelType='" << this->PCAShapeModelType << "'";
   of << ">\n";
 
 }
@@ -151,6 +153,7 @@ void vtkMrmlSegmenterSuperClassNode::Copy(vtkMrmlNode *anode)
   this->RegistrationType              = node->RegistrationType;
   this->GenerateBackgroundProbability = node->GenerateBackgroundProbability;
   this->PrintShapeSimularityMeasure   = node->PrintShapeSimularityMeasure;
+  this->PCAShapeModelType             = node->PCAShapeModelType;
 }
 
 //----------------------------------------------------------------------------
@@ -181,4 +184,5 @@ void vtkMrmlSegmenterSuperClassNode::PrintSelf(ostream& os, vtkIndent indent)
 
   os << indent << "GenerateBackgroundProbability: " << this->GenerateBackgroundProbability << "\n";
   os << indent << "PrintShapeSimularityMeasure:   " << this->PrintShapeSimularityMeasure << "\n";
+  os << indent << "PCAShapeModelType:             " << this->PCAShapeModelType << "\n";
 }

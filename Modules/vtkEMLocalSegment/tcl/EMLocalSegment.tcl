@@ -159,13 +159,14 @@ proc EMSegmentInit {} {
     # Public Version  = 1
     # Private Version = 2
    
-    if { [catch "package require vtkEMPrivateSegment"] } {
-      set EMSegment(SegmentMode) 0
-    } else {
-      puts "Load Private EM-Version"
-      set EMSegment(SegmentMode) 1
-    } 
-    # set EMSegment(SegmentMode) 0
+    #if { [catch "package require vtkEMPrivateSegment"] } {
+    #  set EMSegment(SegmentMode) 0
+    #} else {
+    #  puts "Load Private EM-Version"
+    #  set EMSegment(SegmentMode) 1
+    #} 
+    set EMSegment(SegmentMode) 0
+    puts "Debugging - just loadin local version"
 
     # Source EMSegmentAlgorithm.tcl File 
     source $::PACKAGE_DIR_VTKEMLocalSegment/../../../tcl/EMSegmentAlgorithm.tcl
@@ -259,7 +260,7 @@ proc EMSegmentInit {} {
     #   The strings with the $ symbol tell CVS to automatically insert the
     #   appropriate revision number and date when the module is checked in.
     #   
-    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.54 $} {$Date: 2005/03/31 22:48:53 $}]}
+    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.55 $} {$Date: 2005/04/03 20:01:26 $}]}
 
     # Initialize module-level variables
     #------------------------------------
@@ -1829,13 +1830,13 @@ proc EMSegmentUpdateMRML {} {
           set pid [$item GetID]
 
           set FileName [SegmenterInput($pid,node) GetFileName]
-      set VolIndex [lsearch $VolumeNameList $FileName]
+          set VolIndex [lsearch $VolumeNameList $FileName]
           if {($VolIndex > -1) && ($FileName != "") } {  
               set VolID [lindex $Volume(idList) $VolIndex] 
-          set EMSegment(AllVolList,ActiveID) [lsearch -exact $EMSegment(AllVolList,VolumeList) $VolID]
-          EMSegmentTransfereVolume All
-          set EMSegment(IntensityAvgValue,$VolID) [SegmenterInput($pid,node) GetIntensityAvgValuePreDef]
-      }
+              set EMSegment(AllVolList,ActiveID) [lsearch -exact $EMSegment(AllVolList,VolumeList) $VolID]
+              EMSegmentTransfereVolume All
+              set EMSegment(IntensityAvgValue,$VolID) [SegmenterInput($pid,node) GetIntensityAvgValuePreDef]
+          }
        } elseif {$ClassName == "vtkMrmlSegmenterSuperClassNode" } {
          # puts "Start vtkMrmlSegmenterSuperClassNode"
           # --------------------------------------------------
@@ -2467,7 +2468,7 @@ proc EMSegmentSaveSettingSuperClass {SuperClass LastNode} {
           if {$v != $Volume(idNone) } {
              SegmenterSuperClass($pid,node) SetLocalPriorName       [Volume($v,node) GetName]
           } else {
-             SegmenterSuperClass($pid,node) SetLocalPriorName   ""
+             SegmenterSuperClass($pid,node) SetLocalPriorName ""
           }
 
           set InputChannelWeights ""
@@ -2493,7 +2494,7 @@ proc EMSegmentSaveSettingSuperClass {SuperClass LastNode} {
               set BeginName ""
             }
             foreach Attribute $EMSegment(Gui${Name}AttributeList) {
-               eval SegmenterSuperClass($pid,node) Set$Attribute $EMSegment(Cattrib,$i,$Attribute) 
+        if {$Attribute != "LocalPriorName"} { eval SegmenterSuperClass($pid,node) Set$Attribute $EMSegment(Cattrib,$i,$Attribute) }
             }
          }
 

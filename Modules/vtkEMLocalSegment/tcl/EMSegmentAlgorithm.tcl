@@ -128,7 +128,7 @@ proc EMSegmentSetVtkPrivateSuperClassSetting {SuperClass} {
 
   EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPrintShapeSimularityMeasure  $EMSegment(Cattrib,$SuperClass,PrintShapeSimularityMeasure)
 
-  EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPCA_CLASS_Dependent_Model_Flag 0
+  EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPCAShapeModelType            $EMSegment(Cattrib,$SuperClass,PCAShapeModelType)
 
   # Current Legacy - I have to fix gui
   if {$EMSegment(Cattrib,$SuperClass,StopMFAMaxIter) == 0} {set EMSegment(Cattrib,$SuperClass,StopMFAMaxIter) $EMSegment(Cattrib,0,StopMFAMaxIter) }
@@ -225,7 +225,9 @@ proc EMSegmentSetVtkPrivateSuperClassSetting {SuperClass} {
       incr x
   }
   # Automatically all the subclass are updated too and checked if values are set correctly 
+  # puts  "======== Start Updated here  $SuperClass";
   EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) Update
+  # puts  "======== Finsihed Updated here  $SuperClass";
   return [EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) GetErrorFlag] 
 }
 
