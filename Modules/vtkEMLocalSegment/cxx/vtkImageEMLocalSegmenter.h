@@ -34,7 +34,7 @@ typedef struct {
   int           id ;
   double        *w_m_input;
   unsigned char *MapVector;
-  double        *cY_M;
+  float         *cY_M;
   int           imgX;
   int           imgY;
   int           imgXY;
@@ -185,7 +185,7 @@ class VTK_EXPORT vtkImageEMLocalSegmenter : public vtkImageEMGeneral
 
   // Desciption:
   // Special function for parallelise MF part -> Creating Threads 
-  int MF_Approx_Workpile(double * w_m_input,unsigned char* MapVector, double *cY_M, int imgXY,double ***LogCov,double *InvSqrtDetLogCov,double *w_m_output);
+  int MF_Approx_Workpile(double * w_m_input,unsigned char* MapVector, float *cY_M, int imgXY,double ***LogCov,double *InvSqrtDetLogCov,double *w_m_output);
 
   // Description:
   // Print out intermediate result of the algorithm in a matlab file

@@ -1,0 +1,13 @@
+#! /bin/csh -f
+# Test Function for vtkImageEMLocalSegment - all environment variables are automatically set 
+setenv VTK_EXE c:/cygwin/home/ai3/kpohl/slicer_devel/slicer2/slicer2-win32.exe
+# This is just necessary to run comparison script - 
+# so you can still run the test without having the variable underneath defined 
+# Just compare the the result of the script with TestImageEMLocalSegmentResult.*
+setenv SCRIPT_HOME c:/cygwin/home/ai3/kpohl/slicer_devel/slicer2_lmi/EMLocalSegment
+ 
+${VTK_EXE} TestImageEMLocalSegment.tcl
+echo "================================== Analyse Test Results ========================"
+echo "If you get an error message below - the vtk filter worked but you migth not have the file tcl/MathImage.tcl" 
+echo "The report below should display Rate(%): 0.00"
+${VTK_EXE} ${SCRIPT_HOME}/tcl/MathImage.tcl -pr TestImageEMLocalSegmentResult -le yes -p2 TestImageEMLocalSegmentTestResult -fc com -ir "1 3"

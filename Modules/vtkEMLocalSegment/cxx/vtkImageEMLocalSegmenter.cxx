@@ -550,7 +550,7 @@ template  <class T>
 static void MeanFieldApproximation3D(int id,
                      double *w_m_input, 
                      unsigned char* MapVector, 
-                     double *cY_M, 
+                     float *cY_M, 
                      int imgX, 
                      int imgY, 
                      int imgXY, 
@@ -965,7 +965,7 @@ void vtkImageEMLocalSegmenter::DeleteVariables() {
 // Calculate MF - necessary for parrallising algorithm
 // -----------------------------------------------------------
 
-int vtkImageEMLocalSegmenter::MF_Approx_Workpile(double *w_m_input,unsigned char* MapVector, double *cY_M, int imgXY,
+int vtkImageEMLocalSegmenter::MF_Approx_Workpile(double *w_m_input,unsigned char* MapVector, float *cY_M, int imgXY,
                            double ***InvLogCov,double *InvSqrtDetLogCov,double *w_m_output) {
   #define MAXMFAPPROXIMATIONWORKERTHREADS 32
   int numthreads = 0;
@@ -1068,10 +1068,10 @@ static void vtkImageEMLocalAlgorithm(vtkImageEMLocalSegmenter *self,T **ProbData
   #ifndef _WIN32
     cout << "This Computer has " << vtkThreadNumCpus(void)  << " Processors" << endl;
   #endif
-  cout << "vtkImageEMLocalAlgorithm: Initialize Variables" << endl;
+  cout << "vtkImageEMLocalAlgorithm: Version (2.0) June-2003: Initialize Variables" << endl;
   // Kilian - Debug
-  vtkIndent indent;
-  self->PrintSelf(cout, indent);
+  // vtkIndent indent;
+  // self->PrintSelf(cout, indent);
   // Read variables Class Definition
 
   int ImageProd             = self->GetImageProd();
@@ -1094,7 +1094,7 @@ static void vtkImageEMLocalAlgorithm(vtkImageEMLocalSegmenter *self,T **ProbData
   int BiasPrint             = self->GetBiasPrint();
   int BiasLengthFileName    = 0;
   if (self->GetBiasRootFileName() != NULL) BiasLengthFileName = int(strlen(self->GetBiasRootFileName()));
-  char *BiasRootFileName = new char[BiasLengthFileName + 1];
+  char *BiasRootFileName = new char[BiasLengthFileName + 2];
   if ((BiasPrint) && (BiasLengthFileName)) strcpy(BiasRootFileName,self->GetBiasRootFileName());
   else sprintf(BiasRootFileName,"\n");
 
@@ -1158,12 +1158,14 @@ static void vtkImageEMLocalAlgorithm(vtkImageEMLocalSegmenter *self,T **ProbData
 
   double *w_m_second = new double[NumClasses*ImageProd],*w_m_secondPtr = w_m_second; // Needed for Parallelising MF-Approximation
 
-  double *cY_M = new double[NumInputImages* ImageProd], *cY_MPtr = cY_M; // cY_M correct log intensity - dimension NumInputImages x ImageProd
+  float *cY_M = new float[NumInputImages* ImageProd], *cY_MPtr = cY_M; // cY_M correct log intensity - dimension NumInputImages x ImageProd
   // We assume the input is always positive - otherwise you have to take fabs(InputImage)  
   // cY_M  = fabs(InputVector - b_m) = {b_m ==0} = fabs(InputVector) = InputVector;
   for (i=0; i< ImageProd; i++) {
-    memcpy(cY_M,InputVector[i],sizeof(double)*NumInputImages);
-    cY_M += NumInputImages;
+    for (j=0; j< NumInputImages; j++) {
+      (*cY_M) = (float)InputVector[i][j];  
+      cY_M ++;
+    }
   }
   cY_M = cY_MPtr;
   
@@ -1207,8 +1209,11 @@ static void vtkImageEMLocalAlgorithm(vtkImageEMLocalSegmenter *self,T **ProbData
   FILE **BiasFile = new FILE*[NumInputImages];
   bool PrintBiasFlag;
   if (BiasLengthFileName) BiasLengthFileName = BiasLengthFileName + 7 + NumInputImages/10;
-  char *BiasFileName = new char[BiasLengthFileName + 1];
-  if (BiasLengthFileName == 0)  sprintf(BiasFileName,"\n");
+  char *BiasFileName = new char[BiasLengthFileName + 2];
+  if (BiasLengthFileName == 0) {
+    sprintf(BiasFileName,"\n");
+    for (int i = 0 ; i < NumInputImages; i++) BiasFile[i] = NULL;
+  }
 
 #ifndef _WIN32
   START_PRECISE_TIMING;
@@ -1227,9 +1232,8 @@ static void vtkImageEMLocalAlgorithm(vtkImageEMLocalSegmenter *self,T **ProbData
    if ((iter == 1) || (Alpha == 0)) { 
       cout << "vtkImageEMLocalAlgorithm: "<< iter << ". Estep " << endl;
       for (z = 0; z < ImageMaxZ ; z++) {
-        cout << z << endl; 
-    for (y = 0; y < ImageMaxY ; y++) {
-      for (x = 0; x < ImageMaxX ; x++) {
+        for (y = 0; y < ImageMaxY ; y++) {
+          for (x = 0; x < ImageMaxX ; x++) {
         normRow = 0;
         ProbValue = -2;
         for (j=0; j < NumClasses; j++) {
@@ -1430,8 +1434,9 @@ static void vtkImageEMLocalAlgorithm(vtkImageEMLocalSegmenter *self,T **ProbData
   // cout << "Calculation Time: " << (clock() - start_time)/double(CLOCKS_PER_SEC) << " seconds " << endl;
   delete[] BiasRootFileName;
   delete[] BiasFileName;
-  delete[] ProbDataPtrCopy;
   delete[] BiasFile;
+  delete[] ProbDataPtrCopy;
+
 
   delete[] InvSqrtDetLogCov;
   for (i=0; i<NumClasses; i++) {
