@@ -294,16 +294,16 @@ proc DevAddSelectButton { TabName f aLabel message pack {tooltip ""} \
     eval {menu $menu} $Gui(WMA)
 
     if {$pack == "Pack"} {
-    if {$message != ""} {pack $Label -side left -padx $Gui(pad) -pady 0} 
-       pack $menubutton -side left -padx $Gui(pad) -pady 0 
+        if {$message != ""} {pack $Label -side left -padx $Gui(pad) -pady 0} 
+        pack $menubutton -side left -padx $Gui(pad) -pady 0 
     } else {
-    if {$message != ""} { grid $Label -sticky e -padx $Gui(pad) -pady $Gui(pad)}
+        if {$message != ""} { grid $Label -sticky e -padx $Gui(pad) -pady $Gui(pad)}
         grid $menubutton -sticky e -padx $Gui(pad) -pady $Gui(pad)
         grid $menubutton -sticky w
     }
 
     if {$tooltip != ""} {
-    TooltipAdd $menubutton $tooltip
+        TooltipAdd $menubutton $tooltip
     }
     
     set LocalArray(mb$aLabel) $menubutton

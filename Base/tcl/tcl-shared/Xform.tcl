@@ -74,14 +74,14 @@ proc XformAxisStart { module actor widget axis x y } {
 
 
     foreach id $Selected(Model) {
-    Model($id,actor,viewRen) GetMatrix ${module}($actor,inverse)
-    ${module}($actor,inverse) Invert
-    ###
-    ${module}($actor,actXform) PostMultiply
-    ${module}($actor,actXform) SetMatrix ${module}($actor,matrix)
-    ${module}($actor,actXform) Concatenate ${module}($actor,inverse)
-    ${module}($actor,actXform) TransformPoint 0 0 0
-    eval Model($id,actor,viewRen) SetOrigin [${module}($actor,actXform) GetPosition]
+        Model($id,actor,viewRen) GetMatrix ${module}($actor,inverse)
+        ${module}($actor,inverse) Invert
+        ###
+        ${module}($actor,actXform) PostMultiply
+        ${module}($actor,actXform) SetMatrix ${module}($actor,matrix)
+        ${module}($actor,actXform) Concatenate ${module}($actor,inverse)
+        ${module}($actor,actXform) TransformPoint 0 0 0
+        eval Model($id,actor,viewRen) SetOrigin [${module}($actor,actXform) GetPosition]
     }
 
     #    DebugMsg [concat "Starting axis-based transformation with axis " $axis ]
@@ -102,7 +102,7 @@ proc XformAxisEnd { bindingSet widget x y button } {
     global lastX lastY lastAxis
 #    DebugMsg [concat "Ending axis xform " $lastAxis]
     if {[info exists Xform(xform)]} {
-    Xform(xform) Delete
+        Xform(xform) Delete
     }
     EvDeactivateBindingSet $bindingSet
 }
@@ -136,10 +136,10 @@ proc XformAxis { module actor widget x y button } {
         sin(3.14159*[$cam GetViewAngle]/180.0)/$WindowY]
     set angle [expr $xprod*180.0/$WindowY]
     if { $button == 1 } {
-    set angle 0.0
+        set angle 0.0
     }
     if { $button == 2 } {
-    set dotprod 0.0
+        set dotprod 0.0
     }
 #    DebugMsg [concat "moving " $lastAxis $dotprod $xprod "..." ]
     ${module}($actor,actor) AddPosition [expr $unitX*$dotprod] [expr $unitY*$dotprod] \
@@ -148,13 +148,14 @@ proc XformAxis { module actor widget x y button } {
     
 
     if { $lastAxis == 0 } {
-    ${module}($actor,actor) RotateX $angle
+        ${module}($actor,actor) RotateX $angle
     } else {
-    if { $lastAxis == 1 } {
-        ${module}($actor,actor) RotateY $angle
-    } else {
-        ${module}($actor,actor) RotateZ $angle
-    }   }
+        if { $lastAxis == 1 } {
+            ${module}($actor,actor) RotateY $angle
+        } else {
+            ${module}($actor,actor) RotateZ $angle
+        }   
+    }
    
     
     set lastX $x
@@ -165,10 +166,10 @@ proc XformAxis { module actor widget x y button } {
     # to do appropriate things with the Xform's motion
     #-------------------------------------------
     foreach m $Module(idList) {
-    if {[info exists Module($m,procXformMotion)] == 1} {
-        if {$Module(verbose) == 1} {puts "XformMotion: $m"}
-        $Module($m,procXformMotion) ${module}($actor,actor) $angle $dotprod $unitX $unitY $unitZ
-    }
+        if {[info exists Module($m,procXformMotion)] == 1} {
+            if {$Module(verbose) == 1} {puts "XformMotion: $m"}
+            $Module($m,procXformMotion) ${module}($actor,actor) $angle $dotprod $unitX $unitY $unitZ
+        }
     }
     Render3D    
 }
