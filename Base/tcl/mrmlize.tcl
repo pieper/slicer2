@@ -20,10 +20,10 @@ set Path(program) [file dirname $argv0]
 set Path(root) [file dirname [lindex $argv 0]]
 
 # Source Header.tcl
-source [file join $Path(program) [file join tcl-main Header.tcl]]
+source [file join $Path(program) [file join tcl-main MainHeader.tcl]]
 
 # Find print_header
-set Path(printHeader) [file join $Path(program) [file join bin print_header_NT]]
+set Path(printHeader) [file join $Path(program) [file join bin print_header]]
 
 # Get info from headers
 set img1 [lindex $argv 0]
