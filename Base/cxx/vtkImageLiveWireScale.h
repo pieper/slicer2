@@ -158,7 +158,9 @@ class VTK_SLICER_BASE_EXPORT vtkImageLiveWireScale : public vtkImageToImageFilte
   int MinimumBin;
   int MaximumBin;
 
-  void Execute(vtkImageData *inData, vtkImageData *outData);
+  //void Execute(vtkImageData *inData, vtkImageData *outData);
+  void ThreadedExecute(vtkImageData *inData, vtkImageData *outData, 
+               int extent[6], int id);
   void ExecuteInformation(vtkImageData *vtkNotUsed(input), 
               vtkImageData *output);
   // Description:

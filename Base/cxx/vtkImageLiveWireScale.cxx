@@ -60,6 +60,13 @@ vtkImageLiveWireScale* vtkImageLiveWireScale::New()
 // Constructor sets default values
 vtkImageLiveWireScale::vtkImageLiveWireScale()
 {  
+
+  // we only want one thread to execute since we do a pass
+  // over whole image to compute max and min. though perhaps
+  // this is stored in image data class as scalar range
+  // and does not need to be computed here.
+  this->NumberOfThreads = 1;
+
   this->ScaleFactor = 1;
 
   this->UseLookupTable = 0;
@@ -693,16 +700,19 @@ static void vtkImageLiveWireScaleExecute(vtkImageLiveWireScale *self,
 // algorithm to fill the output from the input.
 // It just executes a switch statement to call the correct function for
 // the Datas data types.
-void vtkImageLiveWireScale::Execute(vtkImageData *inData, 
-                 vtkImageData *outData)
+void vtkImageLiveWireScale::ThreadedExecute(vtkImageData *inData, 
+                                            vtkImageData *outData,
+                                            int outExt[6], int id)
+  //Execute(vtkImageData *inData,     vtkImageData *outData)
 {
-  void *inPtr;
-  float *outPtr;
-
-  inPtr  = inData->GetScalarPointer();
+  void *inPtr = inData->GetScalarPointerForExtent(outExt);
+  float *outPtr = (float *)outData->GetScalarPointerForExtent(outExt);
+  //void *inPtr;
+  //float *outPtr;
+  //inPtr  = inData->GetScalarPointer();
 
   //cout << "type: " << outData->GetScalarType() << endl;
-  outPtr = (float *)outData->GetScalarPointer();
+  //outPtr = (float *)outData->GetScalarPointer();
 
   switch (inData->GetScalarType())
   {
