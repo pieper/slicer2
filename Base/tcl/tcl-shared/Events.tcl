@@ -49,95 +49,116 @@
 ######################################################################
 #-------------------------------------------------------------------------------
 # .PROC EventsInit
-# 
+# Define module dependencies, set version info of this module, initialize
+# module-level variables.  
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc EventsInit {} {
-	global EventManagerStack Module
-
-	set m Events
-
-	# Define Dependencies
-	set Module($m,depend) ""
-
-        # Set version info
-        lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.6 $} {$Date: 2000/02/28 17:56:22 $}]
-
-	# Props
-	set EventManagerStack ""
+    global Events Module
+    
+    set m Events
+    
+    # Define Dependencies
+    set Module($m,depend) ""
+    
+    # Set version info
+    lappend Module(versions) [ParseCVSInfo $m \
+	    {$Revision: 1.7 $} {$Date: 2000/05/05 19:02:39 $}]
+    
+    # Props
+    set Events(managerStack) ""
 
 }
 
 #-------------------------------------------------------------------------------
 # .PROC pushHandler
-# 
+# Push the current event handler for this widget onto its stack.  
+# Bind a new one.
 # .ARGS
+# str widget name of the widget 
+# str event event you are interested in
+# str script action to bind to the event
 # .END
 #-------------------------------------------------------------------------------
 proc pushHandler { widget event script } {
-    global Handlers
+    global Events
+
     set oldHandler [bind $widget $event]
-    if { [info exists Handlers($widget,$event)] } {
-	set Handlers($widget,$event) \
-		[linsert $Handlers($widget,$event) 0 $oldHandler]
+    if { [info exists Events(handlers,$widget,$event)] } {
+	set Events(handlers,$widget,$event) \
+		[linsert $Events(handlers,$widget,$event) 0 $oldHandler]
     } else {
-	set Handlers($widget,$event) [list $oldHandler]
+	set Events(handlers,$widget,$event) [list $oldHandler]
     }
     bind $widget $event $script
 }
 	
 #-------------------------------------------------------------------------------
 # .PROC popHandler
-# 
+# Pops the handler off the stack and binds it.
 # .ARGS
+# str widget
+# str event
 # .END
 #-------------------------------------------------------------------------------
 proc popHandler { widget event } {
-    global Handlers
-    if { [llength $Handlers($widget,$event)] == 0 } {
-	unset Handlers($widget,$event)
+    global Events
+    if { [llength $Events(handlers,$widget,$event)] == 0 } {
+	unset Events(handlers,$widget,$event)
     } else {
-	set script [lindex $Handlers($widget,$event) 0]
-	set Handlers($widget,$event) \
-		[lreplace $Handlers($widget,$event) 0 0]
+	set script [lindex $Events(handlers,$widget,$event) 0]
+	set Events(handlers,$widget,$event) \
+		[lreplace $Events(handler,$widget,$event) 0 0]
 	bind $widget $event $script
     }
 }
 
 #-------------------------------------------------------------------------------
 # .PROC pushEventManager
-# 
+#  Use this to set all event bindings for your module.
+#  Call this from your procEnter function so that your widget
+#  bindings are only in effect when the user is using your module.
 # .ARGS
+#  list manager
 # .END
 #-------------------------------------------------------------------------------
-proc pushEventManager { mgr } {
-    global EventManagerStack Gui
+proc pushEventManager { manager } {
+    global Events Gui
 
-    upvar 1 $mgr manager
+#    upvar 1 $mgr manager
 
-    foreach entry [array names manager] {
-	set item [split $entry ,]
-	set widget [lindex $item 0]
-	set event [lindex $item 1]
-	set command $manager($entry)
+#    foreach entry [array names manager] {
+#	set item [split $entry ,]
+#	set widget [lindex $item 0]
+#	set event [lindex $item 1]
+#	set command $manager($entry)
+#	pushHandler $widget $event $command
+#    }
+
+    foreach entry $manager {
+	set widget [lindex $entry 0]
+	set event [lindex $entry 1]
+	set command [lindex $entry 2]	
 	pushHandler $widget $event $command
     }
-    set EventManagerStack [concat manager $EventManagerStack]
+    set Events(managerStack) [concat manager $Events(managerStack)]
 }
 
 #-------------------------------------------------------------------------------
 # .PROC popEventManager
-# 
+#  Use this in conjunction with pushEventManager to set all event 
+#  bindings for your module. It will pop the current event manager
+#  (yours) and restore the previous one. 
+#  Call this from your procExit function. 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc popEventManager {} {
-    global EventManagerStack
-    global [lindex $EventManagerStack 0]
+    #    global [lindex $EventManagerStack 0]
+    global Events
     
-    set manager [lindex $EventManagerStack 0]
+    set manager [lindex $Events(managerStack) 0]
     foreach entry [array names $manager] {
 	set item [split $entry ,]
 	set widget [subst [lindex $item 0]]
@@ -145,5 +166,5 @@ proc popEventManager {} {
 	set command [subst $${manager}($entry)]
 	popHandler $widget $event
     }
-    set EventManagerStack [lreplace $EventManagerStack 0 0]
+    set Events(managerStack) [lreplace $Events(managerStack) 0 0]
 }
