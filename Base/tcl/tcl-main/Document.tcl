@@ -62,12 +62,12 @@ proc ReadInput {filename} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc HtmlHead {fid title} {
+proc HtmlHead {fid title {stylePath ../../../style.css"}} {
 	puts $fid \
 "<html>
 <head>
 <title>$title</title>
-<link rel=stylesheet type='text/css' href='../style.css'>
+<link rel=stylesheet type='text/css' href='$stylePath'>
 </head>
 <body bgcolor=white>"
 }
@@ -218,13 +218,7 @@ proc DocumentIndex {docdir} {
 	}
 
 	# Head
-	puts $fid \
-"<html>
-<head>
-<title>TCL Source Index</title>
-<link rel=stylesheet type='text/css' href='style.css'>
-</head>
-<body bgcolor=white>"
+	HtmlHead $fid "TCL Source Index" "../../style.css"
 
 	# List files
 	foreach dir [lsort $Index(dirList)] {
@@ -253,7 +247,10 @@ proc DocumentIndex {docdir} {
 proc DocumentAll {prog} {
 	global Index
 
+	# Write output into the slicer/doc/developers/tcl directory
 	set docdir [file join [file dirname $prog] doc]
+	set docdir [file join [file join $docdir developers] tcl]
+
 	# Document each file
 	set Index(dirList) ""
 	foreach dir "tcl-main tcl-modules tcl-shared" {
