@@ -10,11 +10,8 @@ reader SetDataExtent 0 255 0 255 1 93
 reader SetFilePrefix "../../../vtkdata/fullHead/headsq"
 reader SetDataMask 0x7fff
 
-vtkImageAccumulateDiscrete accum
-accum SetInput [reader GetOutput]
-
 vtkImageMeasureVoxels measure
-measure SetInput [accum GetOutput]
+measure SetInput [reader GetOutput]
 measure SetFileName TestImageMeasureVoxels.txt
 
 measure Update
