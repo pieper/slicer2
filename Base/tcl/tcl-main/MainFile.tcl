@@ -58,7 +58,7 @@ proc MainFileInit {} {
 	global Module File Path Gui
 
 	if {$Gui(pc) == 1} {
-		set Path(printHeader) [file join $Path(program) [file join bin print_header_NT]]
+		set Path(printHeader) [file join $Path(program) [file join bin print_header_NT.exe]]
 	} else {
 		set Path(printHeader) [file join $Path(program) [file join bin print_header]]
 	}
@@ -68,7 +68,7 @@ proc MainFileInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainFile \
-		{$Revision: 1.25 $} {$Date: 2001/04/04 21:13:16 $}]
+		{$Revision: 1.26 $} {$Date: 2001/05/31 00:22:03 $}]
 
 	set File(filePrefix) data
 }
