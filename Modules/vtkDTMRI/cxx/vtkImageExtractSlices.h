@@ -7,6 +7,9 @@
 #include "vtkDTMRIConfigure.h"
 #include "vtkImageToImageFilter.h"
 
+#define MODESLICE 0
+#define MODEVOLUME 1
+
 class VTK_DTMRI_EXPORT vtkImageExtractSlices : public vtkImageToImageFilter
 {
  public:
@@ -32,6 +35,21 @@ class VTK_DTMRI_EXPORT vtkImageExtractSlices : public vtkImageToImageFilter
   // Lauren need to make sure the period is not larger than
   // the number of slices
 
+  vtkSetMacro(Mode, int);
+  vtkGetMacro(Mode, int);
+
+  void SetModeToSlice(void)
+  {
+   this->SetMode(0);
+   this->Modified();
+  };
+
+  void SetModeToVolume(void)
+  {
+  this->SetMode(1);
+  this->Modified(); 
+  };
+
  protected:
   vtkImageExtractSlices();
   ~vtkImageExtractSlices() {};
@@ -41,10 +59,11 @@ class VTK_DTMRI_EXPORT vtkImageExtractSlices : public vtkImageToImageFilter
 
   int SliceOffset;
   int SlicePeriod;
+  int Mode;
   void ExecuteInformation(vtkImageData *input, 
-			  vtkImageData *output);
+              vtkImageData *output);
   void ComputeInputUpdateExtent(int inExt[6], 
-				int outExt[6]);
+                int outExt[6]);
   void ThreadedExecute(vtkImageData *inData, vtkImageData *outData,
                int extent[6], int id);
 };

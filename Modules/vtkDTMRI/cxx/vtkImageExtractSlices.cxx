@@ -22,7 +22,7 @@ vtkImageExtractSlices::vtkImageExtractSlices()
   // default settings amount to a copy of the data
   this->SliceOffset = 0;
   this->SlicePeriod = 1;   
-
+  this->Mode = 0;
   // only allow 1 thread, this is not threaded
   this->NumberOfThreads = 1;
 
@@ -32,12 +32,19 @@ vtkImageExtractSlices::vtkImageExtractSlices()
 void vtkImageExtractSlices::PrintSelf(ostream& os, vtkIndent indent)
 {
   vtkImageToImageFilter::PrintSelf(os,indent);
+  os << indent << "SliceOffset: "<< this->SliceOffset<<endl;
+  os << indent << "SlicePeriod: "<< this->SlicePeriod<<endl;
+  if (this->Mode == MODESLICE)
+    os << indent << "Mode to Slice "<<endl;
+  else
+    os << indent << "Mode to Volume "<<endl;
+
 }
 
 
 //----------------------------------------------------------------------------
 void vtkImageExtractSlices::ExecuteInformation(vtkImageData *input, 
-					       vtkImageData *output)
+                           vtkImageData *output)
 {
   int *inExt, outExt[6], totalInSlices;
 
@@ -53,14 +60,29 @@ void vtkImageExtractSlices::ExecuteInformation(vtkImageData *input,
   // change output extent to reflect the 
   // total number of slices we will output,
   // given the entire input dataset
-  totalInSlices = inExt[5] - inExt[4];
-  outExt[5] = outExt[4] + (totalInSlices-this->SliceOffset)/this->SlicePeriod;
+  if (this->Mode == MODESLICE) {
+    totalInSlices = inExt[5] - inExt[4];
+    outExt[5] = outExt[4] + (totalInSlices-this->SliceOffset)/this->SlicePeriod;
+    vtkDebugMacro("setting out ext to " << outExt[5]);
+    output->SetWholeExtent(outExt);
+  }
+  
+  if(this->Mode == MODEVOLUME) {
+
+  if(fmod(totalInSlices,this->SlicePeriod)!=0) {
+     vtkErrorMacro("We cannot run");
+     return;
+  }
+  totalInSlices = inExt[5] - inExt[4] + 1;
+  outExt[5] = outExt[4] - 1 + totalInSlices/this->SlicePeriod;
   vtkDebugMacro("setting out ext to " << outExt[5]);
-  output->SetWholeExtent(outExt);
+  output->SetWholeExtent(outExt); 
+  }
+
 }
 
 void vtkImageExtractSlices::ComputeInputUpdateExtent(int inExt[6], 
-						     int outExt[6])
+                             int outExt[6])
 {
   int totalOutSlices;
 
@@ -70,15 +92,17 @@ void vtkImageExtractSlices::ComputeInputUpdateExtent(int inExt[6],
   // init to the whole extent
   this->GetInput()->GetWholeExtent(inExt);
 
-  // change input extent to just be what is needed to 
-  // generate the currently requested output
-  // where do we start in the input?
-  inExt[4] = (outExt[4]*this->SlicePeriod) + this->SliceOffset;
-  // how far do we go?
-  totalOutSlices = (outExt[5] - outExt[4] + 1);
-  // num periods is out slices - 1
-  inExt[5] = inExt[4] + (totalOutSlices-1)*this->SlicePeriod;
-
+  if (this->Mode == MODESLICE)
+  { 
+    // change input extent to just be what is needed to 
+    // generate the currently requested output
+    // where do we start in the input?
+    inExt[4] = (outExt[4]*this->SlicePeriod) + this->SliceOffset;
+    // how far do we go?
+    totalOutSlices = (outExt[5] - outExt[4] + 1);
+    // num periods is out slices - 1
+    inExt[5] = inExt[4] + (totalOutSlices-1)*this->SlicePeriod;
+  }
   //cout << "in ext is  " << inExt[4] << " " << inExt[5] << endl;
 }
 
@@ -86,10 +110,10 @@ void vtkImageExtractSlices::ComputeInputUpdateExtent(int inExt[6],
 // This templated function executes the filter for any type of data.
 template <class T>
 static void vtkImageExtractSlicesExecute(vtkImageExtractSlices *self,
-					 vtkImageData *inData, 
-					 T * inPtr, int inExt[6], 
-					 vtkImageData *outData, 
-					 T * outPtr, int outExt[6])
+                     vtkImageData *inData, 
+                     T * inPtr, int inExt[6], 
+                     vtkImageData *outData, 
+                     T * outPtr, int outExt[6])
 {
   int idxX, idxY, idxZ;
   int maxX, maxY, maxZ;
@@ -99,14 +123,14 @@ static void vtkImageExtractSlicesExecute(vtkImageExtractSlices *self,
   unsigned long target;
   int slice, extract, period, offset ;
   int sliceSize;
-
+  int numSlices;
   // find the region to loop over: loop over entire input
   // and generate a (possibly) smaller output
   maxX = inExt[1] - inExt[0];
   maxY = inExt[3] - inExt[2]; 
   maxZ = inExt[5] - inExt[4];
   target = (unsigned long)(outData->GetNumberOfScalarComponents()*
-			   (maxZ+1)*(maxY+1)/50.0);
+               (maxZ+1)*(maxY+1)/50.0);
   target++;
 
   // Get increments to march through image data 
@@ -119,19 +143,27 @@ static void vtkImageExtractSlicesExecute(vtkImageExtractSlices *self,
   
   // size of a whole slice for skipping
   sliceSize = (maxX+1)*(maxY+1);
+  numSlices = (maxZ + 1)/period;
 
   for (idxZ = 0; idxZ <= maxZ; idxZ++)
     {
       // either extract this slice from the input, or skip it.
       slice = inExt[4] + idxZ;
-      extract = (fmod(slice,period) == offset);
-      //cout <<"slice " << slice << " grab " << extract << endl;
+      if (self->GetMode() == MODESLICE)
+        {
+        extract = (fmod(slice,period) == offset);
+        }
+      else
+        {
+        extract = (int(slice/numSlices) == offset);
+        } 
+     //cout <<"slice " << slice << " grab " << extract << endl;
 
       if (extract) 
-	{
-	  // copy desired slices to output
-	  for (idxY = 0; !self->AbortExecute && idxY <= maxY; idxY++)
-	    {
+    {
+      // copy desired slices to output
+      for (idxY = 0; !self->AbortExecute && idxY <= maxY; idxY++)
+        {
               if (!(count%target)) 
                 {
                   self->UpdateProgress(count/(50.0*target) 
@@ -139,21 +171,21 @@ static void vtkImageExtractSlicesExecute(vtkImageExtractSlices *self,
                 }
               count++;
 
-	      for (idxX = 0; idxX <= maxX; idxX++)
-		{
-		  // Pixel operation
-		  *outPtr = *inPtr;
-		
-		  inPtr++;
-		  outPtr++;
-		}
-	      outPtr += outIncY;
-	      inPtr += inIncY;
-	    }
-	}
+          for (idxX = 0; idxX <= maxX; idxX++)
+        {
+          // Pixel operation
+          *outPtr = *inPtr;
+        
+          inPtr++;
+          outPtr++;
+        }
+          outPtr += outIncY;
+          inPtr += inIncY;
+        }
+    }
       else {
-	// just increment the pointer and skip the slice
-	inPtr+=sliceSize;
+    // just increment the pointer and skip the slice
+    inPtr+=sliceSize;
       }
       outPtr += outIncZ;
       inPtr += inIncZ;
@@ -202,8 +234,8 @@ void vtkImageExtractSlices::ThreadedExecute(vtkImageData *inData,
   switch (inData->GetScalarType())
     {
       vtkTemplateMacro7(vtkImageExtractSlicesExecute, this, 
-			inData, (VTK_TT *)(inPtr), inExt,
-			outData, (VTK_TT *)(outPtr), outExt);
+            inData, (VTK_TT *)(inPtr), inExt,
+            outData, (VTK_TT *)(outPtr), outExt);
     default:
       vtkErrorMacro(<< "Execute: Unknown ScalarType");
       return;
