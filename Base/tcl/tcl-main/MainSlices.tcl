@@ -109,7 +109,7 @@ proc MainSlicesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainSlices \
-        {$Revision: 1.51 $} {$Date: 2003/09/05 18:30:21 $}]
+        {$Revision: 1.52 $} {$Date: 2004/01/31 23:31:36 $}]
 
     # Initialize Variables
     set Slice(idList) "0 1 2"
@@ -1313,6 +1313,19 @@ proc MainSlicesSetOpacityAll {{value ""}} {
     }
     Slicer SetForeOpacity $value
 }
+
+#-------------------------------------------------------------------------------
+# .PROC MainSlicesSetOpacityToggle
+# toggle the opacity setting between top and bottom
+# eg if it was .75,.25 it becomes .25,.75
+# .ARGS
+# value int opacity value
+# .END
+#-------------------------------------------------------------------------------
+proc MainSlicesSetOpacityToggle {} {
+    MainSlicesSetOpacityAll [expr 1.0 - $::Slice(opacity)]
+}
+
 
 #-------------------------------------------------------------------------------
 # .PROC MainSlicesSetFadeAll

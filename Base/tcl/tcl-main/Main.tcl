@@ -450,7 +450,7 @@ proc MainInit {} {
 
         # Set version info
     lappend Module(versions) [ParseCVSInfo Main \
-        {$Revision: 1.102 $} {$Date: 2003/08/18 23:52:58 $}]
+        {$Revision: 1.103 $} {$Date: 2004/01/31 23:31:20 $}]
 
     # Call each "Init" routine that's not part of a module
     #-------------------------------------------
@@ -869,6 +869,11 @@ proc MainBuildGUI {} {
     TooltipAdd $f.sOpacity "Slice overlay slider: Fade from\n\
         the Foreground to the Background slice."
 
+    # Exit button
+    #-------------------------------------------
+    eval {button $f.bToggle -text Toggle -width 6 \
+        -command "MainSlicesSetOpacityToggle; RenderAll"} $Gui(WBA)
+
     # Fade button
     #-------------------------------------------
     eval {checkbutton $f.cFade \
@@ -876,7 +881,7 @@ proc MainBuildGUI {} {
         -width 5 -indicatoron 0 \
         -command "MainSlicesSetFadeAll; RenderAll"} $Gui(WCA)
 
-    pack $f.bExit $f.sOpacity $f.cFade -side top -pady $Gui(pad)
+    pack $f.bExit $f.sOpacity $f.bToggle $f.cFade -side top -pady $Gui(pad)
 
     #-------------------------------------------
     # Main->Status Frame
