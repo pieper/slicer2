@@ -33,9 +33,9 @@ public:
         this->selected = 0;
         this->next = NULL;
     }
-    Point(int x, int y) {
-        this->x = x;
-        this->y = y;
+    Point(int xa, int ya) {
+        this->x = xa;
+        this->y = ya;
         this->selected = 0;
         this->next = NULL;
     }

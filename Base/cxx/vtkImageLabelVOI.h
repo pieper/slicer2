@@ -44,14 +44,14 @@ public:
   vtkGetMacro(Method, int);
   vtkSetMacro(Method, int);
 
-  void SetCorner1(int c1x, int c1y, int c1z)
+  void SetCorner1(int c1x_, int c1y_, int c1z_)
   {
-    this->c1x = c1x; this->c1y = c1y; this->c1z = c1z;
+    this->c1x = c1x_; this->c1y = c1y_; this->c1z = c1z_;
   }
 
-  void SetCorner2(int c2x, int c2y, int c2z)
+  void SetCorner2(int c2x_, int c2y_, int c2z_)
   {
-    this->c2x = c2x; this->c2y = c2y; this->c2z = c2z;
+    this->c2x = c2x_; this->c2y = c2y_; this->c2z = c2z_;
   }
 
   void GetCorner1(int c1[3])
