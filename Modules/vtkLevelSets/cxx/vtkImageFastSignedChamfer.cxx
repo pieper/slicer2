@@ -86,9 +86,13 @@ vtkImageFastSignedChamfer::vtkImageFastSignedChamfer()
   maxdist   = 10.0;
 
   // by default set the coefficients given in Borgefors96
+  /*
   coeff_a = 0.92644;
   coeff_b = 1.34065;
   coeff_c = 1.65849;
+  */
+  //  coeff_b = sqrt(2);
+  //  coeff_c = sqrt(3);
 
   inputImage           = NULL;
   inputImage_allocated = 0;
@@ -207,9 +211,17 @@ void vtkImageFastSignedChamfer::ExecuteData(vtkDataObject *outData)
   InitParam( this->GetInput(), this->GetOutput());
 
   if (tz == 1) {
+    coeff_a = 1.;
+    //    coeff_b = 1.32;
+    coeff_b = sqrt(2);
     FastSignedChamfer2D();
   }
   else {
+    coeff_a = 1;
+    //    coeff_b = sqrt(2);
+    //  coeff_c = sqrt(3);
+    coeff_b = 1.314;
+    coeff_c = 1.628;
     FastSignedChamfer3D();
   }
 
@@ -675,8 +687,8 @@ void vtkImageFastSignedChamfer::FastSignedChamfer3D( )
   register float  maxdist1;
 
   //  fprintf(stderr,"FastSignedChamfer3D() \t initialization() \n");
-  fprintf(stderr,"FSCh3D() .");
-  fflush(stderr);
+  //  fprintf(stderr,"FSCh3D() .");
+  //  fflush(stderr);
 
 
   // indices
@@ -812,7 +824,7 @@ void vtkImageFastSignedChamfer::FastSignedChamfer3D( )
 
   // Second pass
   //  fprintf(stderr,"FastSignedChamfer3D() \t second pass \n");
-  fprintf(stderr, ".");fflush(stderr);
+  //  fprintf(stderr, ".");fflush(stderr);
 
   if (ymax==ty-1) ymax = ty-2;
   if (xmax==tx-1) xmax = tx-2;
@@ -895,10 +907,10 @@ void vtkImageFastSignedChamfer::FastSignedChamfer3D( )
 
   //  fprintf(stderr,"FastSignedChamfer3D() \t borders \n");
   if (!noborder) {
-    fprintf(stderr, ".");fflush(stderr);
+    //    fprintf(stderr, ".");fflush(stderr);
     FastSignedChamfer3DBorders();
   }
-  fprintf(stderr,";\n");
+  //  fprintf(stderr,";\n");
 
   extent[0] = xmin;
   extent[1] = xmax;
