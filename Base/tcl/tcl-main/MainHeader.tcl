@@ -42,15 +42,20 @@
 # .END
 #-------------------------------------------------------------------------------
 proc ReadHeader {image run utility tk} {
-
+    global Gui
 	# Run a header reading utility
 	if {$run == 1} {
 		if {[catch {set hdr [exec $utility $image]} errmsg] == 1} {
+		    # correct return val is in errmsg on unix; on pc it's an error.
+		    if {$Gui(pc) == 1} {
 			puts $errmsg
 			if {$tk == 1} {
 				tk_messageBox -icon error -message $errmsg
 			}
 			return ""
+		    } else {
+			set hdr $errmsg
+		    }
 		}
 	} else {
 		set fid [open $utility]
