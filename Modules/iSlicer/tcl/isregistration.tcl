@@ -86,20 +86,20 @@ if { [itcl::find class isregistration] == "" } {
         itk_option define -stop_procedure stopprocedure StopProcedure ""
         itk_option define -auto_repeat auto_repeat Auto_repeat 1
 
-    itk_option define -vtk_itk_reg vtk_itk_reg  Vtk_Itk_Reg vtkITKMutualInformationTransform 
+        itk_option define -vtk_itk_reg vtk_itk_reg  Vtk_Itk_Reg vtkITKMutualInformationTransform 
 
-    itk_option define -set_metric_option set_metric_option Set_metric_option 1
+        itk_option define -set_metric_option set_metric_option Set_metric_option 1
         itk_option define -samples samples Samples 50
         itk_option define -target_standarddev target_stardarddev Target_standarddev 1
         itk_option define -source_standarddev source_stardarddev Source_standarddev 1
     
 
         variable _name ""
-    # is this the first time we are iterating
-    variable _firsttime 1
+        # is this the first time we are iterating
+        variable _firsttime 1
 
-    # the m_time of matrix being altered
-    # keep track so we can see if it was changed
+        # the m_time of matrix being altered
+        # keep track so we can see if it was changed
         variable _mat_m_time  -1
 
         ### procedure to call if there are problems.
@@ -131,7 +131,7 @@ if { [itcl::find class isregistration] == "" } {
         method getP2 {} {}
         method update_slicer_mat {} {}
         method set_init_mat {} {}
-    method get_last_metric_value {} {}
+        method get_last_metric_value {} {}
         method start {} {$_task on;}
         method stop  {} {$_task off }
     }
@@ -302,6 +302,7 @@ itcl::configbody isregistration::target {
     if {$itk_option(-target) == ""} {
         return
     }
+    $_targetvol volmenu_update 
     $_targetvol configure -volume $itk_option(-target)
     $_targetvol configure -resolution $itk_option(-resolution)
     $_targetvol configure -orientation coronal ;# TODO extra config due to isvolume bug
@@ -323,6 +324,7 @@ itcl::configbody isregistration::source {
     if {$itk_option(-source) == ""} {
         return
     }
+    $_sourcevol volmenu_update 
     $_sourcevol configure -volume $itk_option(-source)
     $_sourcevol configure -resolution $itk_option(-resolution)
     $_sourcevol configure -orientation coronal ;# TODO extra config due to isvolume bug
@@ -364,12 +366,13 @@ itcl::body isregistration::step {} {
 
     if {$itk_option(-auto_repeat) == 0} {
          isprogress .regprogress \
-      -title "Rigid Registration" -geometry 300x100  \
-      -cancel_text "Stop Registration" \
-      -progress_text "Registering" \
-      -abort_command "$_reg SetAbort 1" \
-      -use_main_progress 1 \
-      -vtk_process_object [$_reg GetProcessObject]
+          -title "Rigid Registration" -geometry 300x100  \
+          -cancel_text "Stop Registration" \
+          -progress_text "Registering" \
+          -abort_command "$_reg SetAbort 1" \
+          -use_main_progress 1 \
+          -vtk_process_object [$_reg GetProcessObject]
+        update
     }
 
     #######
@@ -570,15 +573,15 @@ itcl::body isregistration::update_slicer_mat {} {
 ## (p1^-1 mat p2)^-1 = p2^-1 mat^-1 p1
 ## So, both of these are identical.
     if {0} {
-    set p2mat [$this getP1]
-    $p2mat Invert
-    $this GetSimilarityMatrix $p2mat $mat [$this getP2]
-    $mat Invert
+        set p2mat [$this getP1]
+        $p2mat Invert
+        $this GetSimilarityMatrix $p2mat $mat [$this getP2]
+        $mat Invert
     } else {
-    set p2mat [$this getP2]
-    $p2mat Invert
-    $mat Invert
-    $this GetSimilarityMatrix $p2mat $mat [$this getP1]
+        set p2mat [$this getP2]
+        $p2mat Invert
+        $mat Invert
+        $this GetSimilarityMatrix $p2mat $mat [$this getP1]
     }
 
     Matrix($t,node) SetMatrix [$this StringMatrix $mat]
