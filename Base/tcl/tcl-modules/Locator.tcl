@@ -89,7 +89,7 @@ proc LocatorInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.28 $} {$Date: 2002/03/21 23:05:26 $}]
+        {$Revision: 1.29 $} {$Date: 2002/07/31 18:49:43 $}]
 
     # Patient/Table position
     set Locator(tblPosList)   "Front Side"
@@ -385,7 +385,7 @@ know the location of the tip of this device rather than the Locator.
             grid $f.mbDriver $f.mbDriver${s} \
                 -pady $Gui(pad) -padx $Gui(pad)
         } else {
-            grid $f.mbDriver${s} -col 1 \
+            grid $f.mbDriver${s} -column 1 \
                 -pady $Gui(pad) -padx $Gui(pad)
         }
 
