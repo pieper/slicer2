@@ -85,7 +85,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.68 $} {$Date: 2002/07/12 15:55:49 $}]
+            {$Revision: 1.69 $} {$Date: 2002/07/16 17:31:53 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -483,6 +483,7 @@ orientation plane of the slice (To see how to create/select Fiducials, press the
         # If it has a procedure for building the GUI
         if {[info command $Volume(readerModules,$m,procGUI)] != ""} {
             # then call it
+puts "calling:$Volume(readerModules,$m,procGUI)"
             $Volume(readerModules,$m,procGUI) $Volume(f$m)
         }
     }
@@ -795,7 +796,7 @@ proc VolumesManualSetPropertyType {n} {
     if {$Volume(tensors,DTIdata) == 1} {
         #$n UseFrequencyPhaseSwapOn
         $n SetFrequencyPhaseSwap $Volume(tensors,pfSwap)
-        # recompute for test
+        # recompute 
         $n ComputeRasToIjkFromScanOrder $Volume(scanOrder)
     }
 }
@@ -878,7 +879,7 @@ proc VolumesPropsApply {} {
         
     # Validate name
     if {$Volume(name) == ""} {
-        tk_messageBox -message "Please enter a name that will allow you to distinguish this model."
+        tk_messageBox -message "Please enter a name that will allow you to distinguish this volume."
         return
     }
     if {[ValidateName $Volume(name)] == 0} {
