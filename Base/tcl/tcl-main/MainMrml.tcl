@@ -78,7 +78,7 @@ proc MainMrmlInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainMrml \
-        {$Revision: 1.66 $} {$Date: 2002/10/24 22:38:44 $}]
+        {$Revision: 1.67 $} {$Date: 2002/11/05 17:37:38 $}]
 
     set Mrml(colorsUnsaved) 0
 }
@@ -699,6 +699,7 @@ proc MainMrmlImport {filename} {
                     }
                 }
             }
+            # TODO - fix paths on different Node types (Models, etc)
             detault {
                 set outattr $attr
             }
