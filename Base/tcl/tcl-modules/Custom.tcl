@@ -29,6 +29,9 @@
 # PROCEDURES:  
 #   CustomInit
 #   CustomBuildGUI
+#   CustomEnter
+#   CustomExit
+#   CustomUpdateGUI
 #   CustomCount
 #==========================================================================auto=
 
@@ -134,7 +137,7 @@ proc CustomInit {} {
 	#   appropriate revision number and date when the module is checked in.
 	#   
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.15 $} {$Date: 2000/07/24 21:39:30 $}]
+		{$Revision: 1.16 $} {$Date: 2000/07/26 19:07:57 $}]
 
 	# Initialize module-level variables
 	#------------------------------------

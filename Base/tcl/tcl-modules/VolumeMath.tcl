@@ -30,6 +30,8 @@
 #   VolumeMathInit
 #   VolumeMathUpdateGUI
 #   VolumeMathBuildGUI
+#   VolumeMathEnter
+#   VolumeMathExit
 #   VolumeMathDoMath
 #   VolumeMathCount
 #==========================================================================auto=
@@ -118,7 +120,7 @@ proc VolumeMathInit {} {
 	#   appropriate info when the module is checked in.
 	#   
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.3 $} {$Date: 2000/03/04 22:25:32 $}]
+		{$Revision: 1.4 $} {$Date: 2000/07/26 19:07:58 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -391,6 +393,12 @@ Also, this module only does subtraction.
          grid $f.lMagnitude -sticky e 
     }   
 
+#-------------------------------------------------------------------------------
+# .PROC VolumeMathEnter
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc VolumeMathEnter {} { 
     global VolumeMath
 

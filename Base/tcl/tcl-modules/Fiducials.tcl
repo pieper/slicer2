@@ -28,8 +28,18 @@
 # FILE:        Fiducials.tcl
 # PROCEDURES:  
 #   FiducialsInit
+#   FiducialsBuildVTK
+#   FiducialsEnter
+#   FiducialsExit
 #   FiducialsBuildGUI
+#   FiducialsUpdateGUI
+#   FiducialsSetTxtScale
+#   FiducialsSetScale
 #   FiducialsCount
+#   FiducialsUpdateMRML
+#   FiducialsCreate
+#   FiducialsCreatePoint
+#   FiducialsUpdatePoints
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -119,7 +129,7 @@ proc FiducialsInit {} {
 	#   appropriate info when the module is checked in.
 	#   
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.1 $} {$Date: 2000/07/25 17:11:27 $}]
+		{$Revision: 1.2 $} {$Date: 2000/07/26 19:07:57 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -208,10 +218,22 @@ proc FiducialsBuildVTK {} {
 	  Fiducials(tmpXform) PostMultiply
 	}
 
+#-------------------------------------------------------------------------------
+# .PROC FiducialsEnter
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc FiducialsEnter {} {
 	Render3D
 	}
 
+#-------------------------------------------------------------------------------
+# .PROC FiducialsExit
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc FiducialsExit {} {
 	Render3D
 	}
