@@ -99,7 +99,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.89 $} {$Date: 2003/10/02 14:48:45 $}]
+            {$Revision: 1.90 $} {$Date: 2003/10/03 17:08:34 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -1173,6 +1173,8 @@ proc VolumesPropsApply {} {
 
     # Update MRML: this reads in new volumes, among other things
     MainUpdateMRML
+
+    return $m
 }
 #-------------------------------------------------------------------------------
 # .PROC VolumesPropsCancel
