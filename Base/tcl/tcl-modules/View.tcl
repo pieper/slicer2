@@ -64,7 +64,7 @@ proc ViewInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.26 $} {$Date: 2002/03/21 23:05:28 $}]
+        {$Revision: 1.27 $} {$Date: 2002/03/25 17:26:15 $}]
 
     set View(movie) 0
     set View(movieDirectory) "/tmp"
@@ -271,97 +271,7 @@ a frame will be saved everytime the 3D View is rendered "
     # Fog frame
     #-------------------------------------------
 
-    # Setup the fog parameters
-    set fFog $Module(View,fFog)
-    set f $fFog
-
-    frame $f.fEnabled  -bg $Gui(activeWorkspace) -relief groove -bd 3
-    frame $f.fMode     -bg $Gui(activeWorkspace)
-    frame $f.fLimits   -bg $Gui(activeWorkspace) -relief groove -bd 3
-
-    eval {label $f.lLimits  -text "Limits, bounding box is \[0\,1\]:"} $Gui(WTA)
-
-    pack $f.fEnabled $f.fMode $f.lLimits $f.fLimits \
-        -side top -pady $Gui(pad) -padx $Gui(pad) -fill x
-
-    #-------------------------------------------
-    # Fog->Enabled
-    #-------------------------------------------
-    set f $fFog.fEnabled
-    
-    eval {label $f.lEnabled -text "Enable Fog: "} $Gui(WLA)
-    pack $f.lEnabled -side left -padx $Gui(pad) -pady 0
-
-    foreach value "On Off" width "4 4" {
-        eval { radiobutton $f.rEnabled$value -width $width \
-               -text "$value" -value "$value" -variable Fog(Enabled) \
-               -indicatoron 0 -command "Render3D" \
-             } $Gui(WCA)
-    
-        pack $f.rEnabled$value -side left -padx 2 -pady 2 -fill x
-    }
-
-    #-------------------------------------------
-    # Fog->Mode
-    #-------------------------------------------
-    set f $fFog.fMode
-
-    foreach value "linear exp exp2" {
-        eval {radiobutton $f.r$value \
-              -text "$value" -value "$value" \
-              -variable Fog(mode) \
-              -indicatoron 0 \
-              -command "Render3D" \
-        }  $Gui(WCA)
-        pack $f.r$value -side left -padx 2 -pady 2 -expand 1 -fill x
-    }
-
-
-    #-------------------------------------------
-    # Fog->Limits
-    #-------------------------------------------
-    set f $fFog.fLimits
-
-
-    #        pack $f.lLimits  -side left -padx 0 -pady 0
-
-    # Start Slider
-    #
-    eval {label $f.lStart  -text "Start" -width 5} $Gui(WTA)
-
-    eval {entry $f.eStart -textvariable Fog(start) -width 4} $Gui(WEA)
-
-    eval {scale $f.sStart -from 0 -to 2        \
-          -variable Fog(start) \
-          -orient vertical     \
-          -command "Render3D"  \
-          -resolution .01      \
-         } $Gui(WSA)
-
-    bind $f.sStart <Motion> "Render3D"
-
-    grid $f.lStart $f.eStart $f.sStart
-
-    $f.sStart set 0.5
-
-    # End Slider
-    #
-    eval {label $f.lEnd  -text "End" -width 5} $Gui(WTA)
-
-    eval {entry $f.eEnd -textvariable Fog(end) -width 4} $Gui(WEA)
-
-    eval {scale $f.sEnd -from 0 -to 2        \
-          -variable Fog(end) \
-          -orient vertical     \
-          -command "Render3D"  \
-          -resolution .01      \
-          } $Gui(WSA)
-
-    bind $f.sEnd <Motion> "Render3D"
-
-    grid $f.lEnd $f.eEnd $f.sEnd 
-
-    $f.sEnd set 1
+    FogBuildGui $Module(View,fFog)
 
     #-------------------------------------------
     # Lights frame
