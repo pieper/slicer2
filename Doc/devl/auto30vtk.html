@@ -28,7 +28,11 @@ Replace anonymous with your user name if you have one.
   ccmake -i ../../<br>
   make</p></pre>
 Replace my-os with the name of your operating system, ie solaris or linux.<br>
-You will need to point ccmake to either the installed or the built versions of vtk4.0. At the SPL you can use /local/os/src/vtk-4.0 for the VTK_BINARY_PATH, as it has been built in the proper configuration (configured with tcl, tkwidget, patented, local, and shared). Make sure WRAP_TCL is set to ON. Once you're happy with your settings, you will need to type c to configure (repeate until all fields are filled in) and then g to generate make files.<br>
+You will need to point ccmake to either the installed or the built versions of vtk4.0. At the SPL you can use /local/os/src/vtk-4.0 for the VTK_BINARY_PATH, as it has been built in the proper configuration (configured with tcl, tkwidget, patented, local, and shared). 
+<br>
+Make sure WRAP_TCL is set to ON. 
+<br>
+Once you're happy with your settings, you will need to type c to configure (repeate until all fields are filled in) and then g to generate make files.<br>
 ccmake writes a file called CMakeCache.txt. If you have errors using
 ccmake or compiling you may wish to edit that file directly, and
 then simply run "cmake", which will read the file.  However, it is
@@ -36,19 +40,13 @@ often better to erase all subdirectories and start again.
 
 <p>
 <b>3. Running the Slicer</b><br>
-Edit the file slicer2/slicer and change the following lines:
-<pre><p class=code>setenv SLICER_HOME /path_to_slicer2/slicer2<br>
-   setenv LD_LIBRARY_PATH ${SLICER_HOME}/Base/builds/my-os/bin<br>
-setenv TCL_LIBRARY /path_to_lib/tcl8.3<br>
-setenv TK_LIBRARY /path_to_lib/tk8.3<br>
-setenv TCLLIBPATH "${SLICER_HOME}/Base/Wrapping/Tcl/vtkSlicerBase /usr/local/src/vtk4/VTK/Wrapping/Tcl ${TCLLIBPATH}"
-</pre>
-You will need to change the Tcl and Tk library variables to point to the directories that contain the library files (at the SPL, these are currently found in /local/os/lib/)
+
+Generate an all in one executable for your OS by running slicer2/Scripts/launcher/make-launchers.tcl, this will create OS specific executables (such as slicer2/slicer2-sparc-solaris or slicer2/slicer2-linux-x86) which you can then execute to run the program.
 
 <p>
 <b>4. Running Tests of the slicer code</b><br>
 You need to have downloaded VTK4 data.<br>
-Set the following environment variables appropriately:
+Set the following environment variables appropriately: 
 <pre><p class=code>
  setenv SLICER_HOME /path_to_slicer2/slicer2<br>
  setenv TCL_LIBRARY /path_to_lib/tcl8.3<br>
