@@ -343,9 +343,18 @@ proc Comment {data} {
 		set desc [lindex $list 0]
 		set args [lindex $list 1] 
 
+		# Strip leading white space off
+		set desc [string trimleft $desc]
+
 		# Strip off the first word of the desc as the proc name
-		set proc [lindex $desc 0]
+		regexp "(.*?)\[\n].*" $desc match proc
+
+		# Note the following line treats the string as a list, which	    
+		# is too dangerous since a quote-comma sequence crashes it
+		#set proc [lindex $desc 0]
+
 		regsub "$proc" $desc {} desc
+
 		# Note the following line would have stripped off the
 		# line returns:
 		# set desc [lrange $desc 1 end]
