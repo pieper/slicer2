@@ -34,7 +34,7 @@
 # 
 #
 #===============================================================================
-# FILE:        FMRIEngine.tcl
+# FILE:        fMRIEngine.tcl
 # PROCEDURES:  
 #   FMRIEngineInit
 #   FMRIEngineBuildGUI
@@ -186,7 +186,7 @@ proc FMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1 $} {$Date: 2005/03/28 15:47:45 $}]
+        {$Revision: 1.2 $} {$Date: 2005/03/28 16:20:39 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -210,14 +210,13 @@ proc FMRIEngineInit {} {
 
     # Source all appropriate tcl files here. 
     source "$FMRIEngine(modulePath)/tcl/notebook.tcl"
-    source "$FMRIEngine(modulePath)/tcl/modelView.tcl"
-    source "$FMRIEngine(modulePath)/tcl/FMRIEnginePlot.tcl"
-    source "$FMRIEngine(modulePath)/tcl/FMRIEngineModel.tcl"
+    source "$FMRIEngine(modulePath)/tcl/fMRIEnginePlot.tcl"
+    source "$FMRIEngine(modulePath)/tcl/fMRIEngineModel.tcl"
     source "$FMRIEngine(modulePath)/tcl/fMRIEngineHelpText.tcl"
-    source "$FMRIEngine(modulePath)/tcl/FMRIEngineContrasts.tcl"
-    source "$FMRIEngine(modulePath)/tcl/userInputForModelView.tcl"
-    source "$FMRIEngine(modulePath)/tcl/FMRIEngineSignalModeling.tcl"
-    source "$FMRIEngine(modulePath)/tcl/FMRIEngineParadigmParser.tcl"
+    source "$FMRIEngine(modulePath)/tcl/fMRIEngineContrasts.tcl"
+    source "$FMRIEngine(modulePath)/tcl/fMRIEngineModelView.tcl"
+    source "$FMRIEngine(modulePath)/tcl/fMRIEngineSignalModeling.tcl"
+    source "$FMRIEngine(modulePath)/tcl/fMRIEngineUserInputForModelView.tcl"
 }
 
 
