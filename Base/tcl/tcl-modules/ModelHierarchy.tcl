@@ -136,7 +136,7 @@ proc ModelHierarchyInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.3 $} {$Date: 2001/11/15 16:46:17 $}]
+	    {$Revision: 1.4 $} {$Date: 2001/11/20 15:11:01 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -242,7 +242,7 @@ proc ModelHierarchyBuildGUI {} {
     set f $fHierarchy.fButtons
     eval {button $f.bCreate -text "Create" -command "ModelHierarchyCreate"} $Gui(WBA)
     eval {button $f.bDelete -text "Delete" -command "ModelHierarchyDeleteAsk $f.bDelete"} $Gui(WBA)
-    eval {button $f.bCreateGroup -text "Create group" -command "ModelHierarchyCreateGroup"} $Gui(WBA)
+    eval {button $f.bCreateGroup -text "Create group" -command "ModelHierarchyCreateGroup $f.bCreateGroup"} $Gui(WBA)
     #eval {label $f.lTrash -text "T"} $Gui(WLA)
     #grid $f.bCreate $f.bDelete $f.bCreateGroup $f.lTrash -padx $Gui(pad)
     grid $f.bCreate $f.bDelete $f.bCreateGroup -padx $Gui(pad)
@@ -324,13 +324,20 @@ proc ModelHierarchyEnter {} {
 				ModelHierarchyCreateRootEntry $f
 			}
 			incr HierarchyLevel
-			label $f.lg[$node GetID] -fg red\
-				-text "Group: [$node GetName]" -font {helvetica 9}\
+			switch $HierarchyLevel {
+				1 {set color red}
+				2 {set color brown}
+				3 {set color purple}
+				4 {set color yellow}
+				default {set color red}
+			}
+			label $f.lg[$node GetID] -fg $color\
+				-text "[$node GetName]" -font {helvetica 10}\
                 		-bg $Gui(activeWorkspace)\
                 		-bd 0 -padx 1 -pady 1 -relief flat 
 			bindtags $f.lg[$node GetID] [list DragDrop $f.lg[$node GetID] Label . all]
 			
-			eval {label $f.l1g_[$node GetID] -text "" -width [expr $HierarchyLevel*2]} $Gui(WLA)
+			eval {label $f.l1g_[$node GetID] -text "" -width [expr ($HierarchyLevel-1)*2]} $Gui(WLA)
 			frame $f.f1g_[$node GetID] -bg $Gui(activeWorkspace)
 			set l1_command $f.l1g_[$node GetID]
 			
@@ -397,16 +404,23 @@ proc ModelHierarchyEnter {} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc ModelHierarchyExit {} {
-    global ModelHierarchy Gui
+proc ModelHierarchyExit {{param 1}} {
+    	global ModelHierarchy Gui
     
-    # destroy frame and create it again to delete all labels and buttons
+    	# destroy frame and create it again to delete all labels and buttons
     
-    set f $ModelHierarchy(ModelCanvas)
+    	set f $ModelHierarchy(ModelCanvas)
 
-    destroy $f.fModels
-    frame $f.fModels -bd 0 -bg $Gui(activeWorkspace)
-    $f create window 0 0 -anchor nw -window $f.fModels
+    	destroy $f.fModels
+    	frame $f.fModels -bd 0 -bg $Gui(activeWorkspace)
+    	$f create window 0 0 -anchor nw -window $f.fModels
+    
+    	# update the hierarchy in the models tab
+
+	if {$param == 1} {
+		MainModelsDestroyGUI
+		ModelsUpdateMRML
+	}
 }
 
 
@@ -417,7 +431,7 @@ proc ModelHierarchyExit {} {
 # .END
 #-------------------------------------------------------------------------------
 proc ModelHierarchyRedrawFrame {} {
-	ModelHierarchyExit
+	ModelHierarchyExit 0
 	ModelHierarchyEnter
 }
 
@@ -447,20 +461,6 @@ proc ModelHierarchyDeleteNode {nodeType id} {
 	# Remove node from tree, and delete it
 	Mrml(dataTree) RemoveItem ${nodeType}($id,node)
 	${nodeType}($id,node) Delete
-}
-
-
-#-------------------------------------------------------------------------------
-# .PROC ModelHierarchyUpdateGUI
-# Refreshes both the models GUI and the ModelHierarchy GUI
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc ModelHierarchyUpdateGUI {} {
-
-	MainModelsDestroyGUI
-	ModelsUpdateMRML
-	ModelHierarchyRedrawFrame
 }
 
 
@@ -496,7 +496,7 @@ proc ModelHierarchyCreate {} {
 	
 	MainMrmlAddNode "EndHierarchy"
 	
-	ModelHierarchyUpdateGUI
+	ModelHierarchyRedrawFrame
 }
 
 
@@ -561,12 +561,16 @@ proc ModelHierarchyDelete {} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc ModelHierarchyCreateGroup {} {
+proc ModelHierarchyCreateGroup {widget} {
 	global Gui
 
 	if {[winfo exists .askforname] == 0} {
+		set x [winfo rootx $widget]
+		set y [winfo rooty $widget]
 		toplevel .askforname -class Dialog -bg $Gui(activeWorkspace)
 		wm title .askforname "New model group"
+		wm geometry .askforname +$x+$y
+		focus .askforname
 		eval {label .askforname.l1 -text "Enter the name of the new group:"} $Gui(WLA)
 		eval {entry .askforname.e1} $Gui(WEA)
 		eval {button .askforname.bOk -text "Ok" -width 8 -command "ModelHierarchyCreateGroupOk"} $Gui(WBA)
@@ -574,6 +578,7 @@ proc ModelHierarchyCreateGroup {} {
 		grid .askforname.l1
 		grid .askforname.e1
 		grid .askforname.bOk .askforname.bCancel -padx 5 -pady 3
+		focus .askforname.e1
 		
 		# make the dialog modal
 		update idle
@@ -618,7 +623,7 @@ proc ModelHierarchyCreateGroupOk {} {
 	MainMrmlInsertBeforeNode $tmpnode "EndModelGroup"
 
 	destroy .askforname
-	ModelHierarchyUpdateGUI
+	ModelHierarchyRedrawFrame
 }
 
 
@@ -657,7 +662,7 @@ proc ModelHierarchyDeleteModelGroup {modelgroup} {
 		}
 		set node [Mrml(dataTree) GetNextItem]
 	}
-	ModelHierarchyUpdateGUI
+	ModelHierarchyRedrawFrame
 }
 
 
@@ -735,13 +740,8 @@ proc ModelHierarchyMoveModel {id targetGroup src_modelgroup {trg_modelgroup 1}} 
 			set node [Mrml(dataTree) GetNextItem]
 		}
 		
-		ModelHierarchyUpdateGUI
+		ModelHierarchyRedrawFrame
 	} else {
-		if {$trg_modelgroup == 0} {
-			DevErrorWindow "Model groups can only be moved to other model groups!"
-			return
-		}
-		
 		# move a complete model group
 		
 		# first step: copy the entire model group to a temporary mrml tree
@@ -807,16 +807,25 @@ proc ModelHierarchyMoveModel {id targetGroup src_modelgroup {trg_modelgroup 1}} 
 		set success 0
 		
 		while {($node != "") && ($success == 0)} {
-			if {[string compare -length 10 $node "ModelGroup"] == 0} {
+			if {([string compare -length 10 $node "ModelGroup"] == 0) && ($trg_modelgroup == 1)} {
 				# if we are moving the group to root, insert it
 				# before the first model group
 				
 				if {$targetGroup == "<root>"} {
 					set targetNode $node
 					set targetGroup ""
+					set success 1
 				}
 				if {[$node GetName] == $targetGroup} {
 					set targetNode [Mrml(dataTree) GetNextItem]
+					set success 1
+				}
+			}
+			if {([string compare -length 8 $node "ModelRef"] == 0) && ($trg_modelgroup == 0)} {
+				set modelid [SharedModelLookup [$node GetmodelRefID]]
+				if {[Model($modelid,node) GetName] == $targetGroup} {
+					set targetNode $node
+					set success 1
 				}
 			}
 			set node [Mrml(dataTree) GetNextItem]
@@ -872,7 +881,7 @@ proc ModelHierarchyMoveModel {id targetGroup src_modelgroup {trg_modelgroup 1}} 
 			set node [tempTree GetNextItem]
 		}
 		
-		ModelHierarchyUpdateGUI
+		ModelHierarchyRedrawFrame
 		MainUpdateMRML
 		
 		tempTree RemoveAllItems
@@ -909,6 +918,9 @@ proc ModelHierarchyDrag {command args} {
 			set _dragwidget $w
 			set _dragcursor [$w cget -cursor]
 			$w config -cursor target
+			set ModelHierarchy(DragOriginalColor) [$w cget -fg]
+			set ModelHierarchy(DragOverOriginalColor) 0
+			$w config -fg blue
 		}
 		
 		motion {
@@ -951,6 +963,7 @@ proc ModelHierarchyDrag {command args} {
 			set y [lindex $args 1]
 			set w [winfo containing $x $y]
 			if {[winfo exists $w]} {
+				$w configure -fg $ModelHierarchy(DragOriginalColor)
 				event generate $w <<DragLeave>>
 				event generate $w <<DragDrop>> -rootx $x -rooty $y
 			}
@@ -961,12 +974,20 @@ proc ModelHierarchyDrag {command args} {
 			if {!$_dragging} {return}
 			set w [lindex $args 0]
 			$w configure -relief raised
+			if {$ModelHierarchy(DragOverOriginalColor) == 0} {
+				set ModelHierarchy(DragOverOriginalColor) [$w cget -fg]
+			}
+			$w configure -fg green
 		}
 		
 		leave {
 			if {!$_dragging} {return}
 			set w [lindex $args 0]
 			$w configure -relief groove
+			if {($ModelHierarchy(DragOverOriginalColor) != 0) && ($_dragwidget != $w)} {
+				$w configure -fg $ModelHierarchy(DragOverOriginalColor)
+			}
+			set ModelHierarchy(DragOverOriginalColor) 0
 		}
 		
 		drop {
@@ -1010,18 +1031,15 @@ proc ModelHierarchyDrag {command args} {
 					ModelHierarchyMoveModel $SourceID $TargetGroup 0
 				} else {
 					# move a model group
-					if {$target_is_modelgroup == 0} {
-						DevErrorWindow "Model groups can only be moved to other model groups."
-						return
-					}
 					regexp {g(.+)} $SourceID match SourceGroupID
 					if {$SourceGroupID == "root"} {
 						DevErrorWindow "Can't move root!"
 						return
 					}
-					YesNoPopup ynp $x $y "Really move the model group?" \
-					"ModelHierarchyMoveModel $SourceGroupID \"$TargetGroup\" 1"
+					ModelHierarchyMoveModel $SourceGroupID "$TargetGroup" 1 $target_is_modelgroup
 				}
+			} else {
+				puts "It happened!!"
 			}
 		}
 	}
