@@ -113,7 +113,10 @@ proc getSeriesApproval {series_path} {
     set ser_rvalue 1
 
     foreach view $VIEW_LIST {
-            set mp_file($view) "$series_path/Deface/$view.mpg"
+        #set mp_file($view) "$series_path/Deface/$view.mpg"
+        # sp: changed to frame rendering
+        set mp_file($view) "$series_path/Deface/$view-0000.png"
+        set mp_file($view,pattern) "$series_path/Deface/$view*"
         set mp_out($view) ""
         set mp_paused($view) 0
     }
@@ -142,7 +145,7 @@ proc getSeriesApproval {series_path} {
         pack $ROOT.mp.$view.ptext -side left
 
         puts "looking for $series_path/Deface/$view.mpg"
-        if {[file exists $series_path/Deface/$view.mpg] == 1} {
+        if {[file exists $mp_file($view)] == 1} {
             eval button $ROOT.mp.$view.open -text Open -command [list "mpOpen $view"]
             pack $ROOT.mp.$view.open -side left -fill y
             eval button $ROOT.mp.$view.play -text Pause -command [list "mpTogglePause $view"] -image pause
@@ -226,8 +229,9 @@ proc getStudyApproval {study_path} {
     # Create a frame for each series, each frame contains a label with the series
     # name, a button to review the mpeg files for the series, and
     # label that tells the status of review
+    # - sp: only look at the -anon directories
     #----------------------------------------------------------------------------
-    set series_list [lsort [glob -nocomplain $study_path/*/] ]
+    set series_list [lsort [glob -nocomplain $study_path/*-anon] ]
     foreach series_path $series_list {
         set series [string map {. ""} [file tail $series_path]]
         set series_approval($series_path) 0
@@ -275,15 +279,23 @@ proc getStudyApproval {study_path} {
 }
 
 proc mpClose {view} {
-    global ROOT mp_out VIEW_LIST mp_paused
+    global ROOT mp_out VIEW_LIST mp_paused mp_file
 
-    if { $mp_paused($view) == 1} {
-        mpTogglePause $view
+
+    [$mp_file($view,w).isf task] off
+    update idletasks
+    catch "destroy $mp_file($view,w)"
+
+    if {0} {
+        if { $mp_paused($view) == 1} {
+            mpTogglePause $view
+        }
+
+        puts $mp_out($view) "quit"
+        flush $mp_out($view)
+        catch "close $mp_out($view)" err
+        set mp_out($view) ""
     }
-    puts $mp_out($view) "quit"
-    flush $mp_out($view)
-    catch "close $mp_out($view)" err
-    set mp_out($view) ""
 
     $ROOT.mp.$view.play config -state disabled
     $ROOT.mp.$view.forward config -state disabled
@@ -301,36 +313,50 @@ proc mpCloseAll {} {
 }
 
 proc mpForward {view} {
-    global mp_out mp_paused
+    global mp_out mp_paused mp_file
 
     if { $mp_paused($view) == 0} {
         mpTogglePause $view
     } else {
-        puts $mp_out($view) "seek 1"
-        flush $mp_out($view)
-        puts $mp_out($view) "pause"
-        flush $mp_out($view)
+        $mp_file($view,w).isf next
+
+        #puts $mp_out($view) "seek 1"
+        #flush $mp_out($view)
+        #puts $mp_out($view) "pause"
+        #flush $mp_out($view)
     }
 }
 
 proc mpOpen {view} {
     global ROOT MP mp_file mp_out
 
-    set f $mp_file($view)
-    if {![file exists $f]} {
-        tk_dialog .oops Error "Error on \"$f\": file does not exist" error 0 OK
-        return
-    }
-    if {![file readable $f]} {
-        tk_dialog .oops Error "Error on \"$f\": file is not readable" error 0 OK
-        return
-    }
 
-    set comm "| $MP"
-    set comm "$comm -slave -loop 1000"
-    set comm "$comm $f"
-    set comm "$comm >& /dev/null"
-    set mp_out($view) [open $comm "w"]
+    set w .$view
+    set mp_file($view,w) $w
+    catch "destroy $w"
+    toplevel $w
+    wm geometry $w 650x700
+
+    pack [isframes $w.isf -filepattern $mp_file($view,pattern)] -fill both -expand true
+    [$w.isf task] on
+    
+    if {0} {
+        set f $mp_file($view)
+        if {![file exists $f]} {
+            tk_dialog .oops Error "Error on \"$f\": file does not exist" error 0 OK
+            return
+        }
+        if {![file readable $f]} {
+            tk_dialog .oops Error "Error on \"$f\": file is not readable" error 0 OK
+            return
+        }
+
+        set comm "| $MP"
+        set comm "$comm -slave -loop 1000"
+        set comm "$comm $f"
+        set comm "$comm >& /dev/null"
+        set mp_out($view) [open $comm "w"]
+    }
 
     $ROOT.mp.$view.play config -state normal
     $ROOT.mp.$view.forward config -state normal
@@ -343,12 +369,15 @@ proc mpTogglePause {view} {
     if { $mp_paused($view) == 1} {
         $ROOT.mp.$view.play config -image pause
         set mp_paused($view) 0
+        [$mp_file($view,w).isf task] on
     } else {
         $ROOT.mp.$view.play config -image play
         set mp_paused($view) 1
+        [$mp_file($view,w).isf task] off
     }
-    puts $mp_out($view) "pause"
-    flush $mp_out($view)
+
+    #puts $mp_out($view) "pause"
+    #flush $mp_out($view)
 }
 
 proc viewSlicer {series_path} {
@@ -364,6 +393,12 @@ proc viewSlicer {series_path} {
 #-------------------------------------------------------------------------------
 proc main {} {
     global ROOT MP upload_series_list defer_series_list
+
+    if { [catch "package require iSlicer"] } {
+        DevErrorWindow "Need iSlicer Module to run this program.  Please update Slicer"
+        exit
+    }
+
 
     set ROOT ""
 
