@@ -101,6 +101,9 @@ proc VolumesInit {} {
 	set Module($m,row1Name) "{Help} {Display} {Props} {Other}"
 	set Module($m,row1,tab) Display
 
+    # Module Summary Info
+    set Module($m,overview) "Load/display 3d volumes (grayscale or label) in the slicer."
+
 	# Define Procedures
 	set Module($m,procGUI)  VolumesBuildGUI
 
@@ -156,7 +159,7 @@ DICOMDataDictFile='$Volumes(DICOMDataDictFile)'"
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-                {$Revision: 1.55 $} {$Date: 2002/01/21 18:16:13 $}]
+                {$Revision: 1.56 $} {$Date: 2002/01/26 23:34:33 $}]
 
 	# Props
 	set Volume(propertyType) Basic

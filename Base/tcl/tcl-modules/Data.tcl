@@ -60,6 +60,9 @@ proc DataInit {} {
 	set Module($m,row1Name) "Help List"
 	set Module($m,row1,tab) List
 
+    # Module Summary Info
+    set Module($m,overview) "Read models/volumes, view contents of current scene (MRML file)."
+
 	# Define Procedures
 	set Module($m,procGUI) DataBuildGUI
 	set Module($m,procMRML) DataUpdateMRML
@@ -71,7 +74,7 @@ proc DataInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.35 $} {$Date: 2001/11/13 20:44:53 $}]
+		{$Revision: 1.36 $} {$Date: 2002/01/26 23:34:31 $}]
 
 	set Data(index) ""
 	set Data(clipboard) ""

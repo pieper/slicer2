@@ -74,6 +74,10 @@ proc CorrespondanceInit {} {
 #        set Module($m,row2Name) "{Scalar Field} {Vector Field}"
 #        set Module($m,row2,tab) SField
 
+    # Module Summary Info
+    #------------------------------------
+    set Module($m,overview) "Point correspondences between models."
+
 	# Define Procedures
 	#------------------------------------
 	# Description:
@@ -127,7 +131,7 @@ proc CorrespondanceInit {} {
 	#   appropriate revision number and date when the module is checked in.
 	#   
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.3 $} {$Date: 2002/01/13 22:25:08 $}]
+		{$Revision: 1.4 $} {$Date: 2002/01/26 23:34:30 $}]
 
 	# Initialize module-level variables
 	#------------------------------------

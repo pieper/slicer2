@@ -54,6 +54,9 @@ proc ColorsInit {} {
 	set Module($m,row1Name) "Help {Edit Colors}"
 	set Module($m,row1,tab) Colors
 
+    # Module Summary Info
+    set Module($m,overview) "Add new colors, view color lookup table."
+
 	# Define Procedures
 	set Module($m,procGUI)  ColorsBuildGUI
 	set Module($m,procMRML) ColorsUpdateMRML
@@ -63,7 +66,7 @@ proc ColorsInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.17 $} {$Date: 2001/05/12 15:50:42 $}]
+		{$Revision: 1.18 $} {$Date: 2002/01/26 23:34:30 $}]
 }
 
 #-------------------------------------------------------------------------------

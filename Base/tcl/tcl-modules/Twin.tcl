@@ -43,6 +43,9 @@ proc TwinInit {} {
 	set Module($m,row1Name) "Help Twin"
 	set Module($m,row1,tab) Twin
 
+    # Module Summary Info
+    set Module($m,overview) "Display another 3D window on a different (MRT) monitor."
+
 	# Define Procedures
 	set Module($m,procGUI) TwinBuildGUI
 	set Module($m,procVTK) TwinBuildVTK
@@ -59,7 +62,7 @@ proc TwinInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.11 $} {$Date: 2001/02/19 17:53:32 $}]
+		{$Revision: 1.12 $} {$Date: 2002/01/26 23:34:33 $}]
 }
 
 #-------------------------------------------------------------------------------

@@ -52,6 +52,9 @@ proc ViewInit {} {
 	set Module($m,row1Name) "Help View Lights"
 	set Module($m,row1,tab) View
 
+    # Module Summary Info
+    set Module($m,overview) "Settings for 3D View, stereo, make movies."
+
 	# Define Procedures
 	set Module($m,procGUI) ViewBuildGUI
 
@@ -60,7 +63,7 @@ proc ViewInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.21 $} {$Date: 2001/10/10 02:59:54 $}]
+		{$Revision: 1.22 $} {$Date: 2002/01/26 23:34:33 $}]
 
 	set View(movie) 0
 	set View(movieDirectory) "/tmp"

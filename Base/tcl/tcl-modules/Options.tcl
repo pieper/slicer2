@@ -59,7 +59,10 @@ proc OptionsInit {} {
 
 	# Set Version Info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.15 $} {$Date: 2001/02/19 17:53:31 $}]
+		{$Revision: 1.16 $} {$Date: 2002/01/26 23:34:32 $}]
+
+    # Module Summary Info
+    set Module($m,overview) "Save User Preferences to Options.xml file."
 
 	# Initialize Globals
 	set Options(propertyType) Basic

@@ -50,6 +50,7 @@
 #   MainExitProgram
 #   Distance
 #   FormatCVSInfo
+#   FormatModuleInfo
 #==========================================================================auto=
 
 
@@ -353,7 +354,7 @@ proc MainInit {} {
 
         # Set version info
 	lappend Module(versions) [ParseCVSInfo Main \
-		{$Revision: 1.67 $} {$Date: 2002/01/12 00:42:38 $}]
+		{$Revision: 1.68 $} {$Date: 2002/01/26 23:34:30 $}]
 
 	# Call each "Init" routine that's not part of a module
 	#-------------------------------------------
@@ -524,6 +525,10 @@ proc MainBuildGUI {} {
 		"MainMenu Help Copyright"
 	$Gui(mHelp) add command -label "Version Info..." -command \
 		"MainMenu Help Version"
+	$Gui(mHelp) add command -label "Module Summaries..." -command \
+		"MainMenu Help Modules"
+	$Gui(mHelp) add command -label "Module Credits..." -command \
+		"MainMenu Help Credits"
 	
 	#-------------------------------------------
 	# Main->Module Frame
@@ -1512,6 +1517,14 @@ http://www.slicer.org"
 		    set msg [FormatCVSInfo $Module(versions)]
 		    MsgPopup Version $x $y $msg {Module Version Info}
 		}
+		"Modules" {
+		    set msg [FormatModuleInfo]
+		    MsgPopup Version $x $y $msg {Module Summaries}
+		}
+		"Credits" {
+		    set msg [FormatModuleCredits]
+		    MsgPopup Version $x $y $msg {Module Credits}
+		}
 	    }
 	}
 	"View" {
@@ -1713,7 +1726,7 @@ proc ParseCVSInfo {module args} {
 
 #-------------------------------------------------------------------------------
 # .PROC FormatCVSInfo
-# 
+# Format module version info string for display from help on main menu
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -1723,6 +1736,44 @@ proc FormatCVSInfo {versions} {
 	set s [format "%s%-30s" $s "[lindex $v 0]:"]
 	set s "${s}\t[lindex $v 1]\t\t[lindex $v 2]\n"
     }
+    return $s
+}
+
+#-------------------------------------------------------------------------------
+# .PROC FormatModuleInfo
+# Format module overview info string for display from help on main menu
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc FormatModuleInfo {} {
+    global Module
+
+    set s "" 
+    foreach m $Module(idList) {
+	if {[info exists Module($m,overview)]} {
+	    set s [format "%s%-30s" $s "$m:"]
+	    set s "${s}\t$Module($m,overview)\n"
+	} else {
+	    set s "$s$m: \n"
+	}
+    }
+
+    return $s
+}
+
+proc FormatModuleCredits {} {
+    global Module
+
+    set s "" 
+    foreach m $Module(idList) {
+	if {[info exists Module($m,author)]} {
+	    set s [format "%s%-30s" $s "$m:"]
+	    set s "${s}\t$Module($m,author)\n"
+	} else {
+	    set s "$s$m: \n"
+	}
+    }
+
     return $s
 }
 

@@ -42,6 +42,9 @@ proc AnnoInit {} {
 	set Module($m,row1Name) "Help Visibility Mode"
 	set Module($m,row1,tab) Visibility
 
+    # Module Summary Info
+    set Module($m,overview) "Show/hide/change slice window text and 3d box."
+
 	# Define Procedures
 	set Module($m,procGUI) AnnoBuildGUI
 
@@ -50,7 +53,7 @@ proc AnnoInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.14 $} {$Date: 2002/01/26 22:11:23 $}]
+		{$Revision: 1.15 $} {$Date: 2002/01/26 23:34:30 $}]
 }
 
 #-------------------------------------------------------------------------------

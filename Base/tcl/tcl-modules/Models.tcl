@@ -53,6 +53,9 @@ proc ModelsInit {} {
 #	set Module($m,row2Name) "{Meter}"
 #	set Module($m,row2,tab) Meter
 
+    # Module Summary Info
+    set Module($m,overview) "3D surface models."
+
 	# Define Procedures
 	set Module($m,procGUI) ModelsBuildGUI
 	set Module($m,procMRML) ModelsUpdateMRML
@@ -62,7 +65,7 @@ proc ModelsInit {} {
 
 	# Set Version Info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.40 $} {$Date: 2001/12/26 18:20:25 $}]
+		{$Revision: 1.41 $} {$Date: 2002/01/26 23:34:32 $}]
 
 	# Props
 	set Model(propertyType) Basic

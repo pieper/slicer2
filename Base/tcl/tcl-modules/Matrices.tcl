@@ -61,6 +61,9 @@ proc MatricesInit {} {
 	set Module($m,row1Name) "{Help} {Props} {Manual} {Auto} {Fiducial}"
 	set Module($m,row1,tab) Manual
 
+    # Module Summary Info
+    set Module($m,overview) "Edit transformation matrices to move volumes/models."
+
 	# Define Procedures
 	set Module($m,procGUI)   MatricesBuildGUI
 	set Module($m,procMRML)  MatricesUpdateMRML
@@ -70,7 +73,7 @@ proc MatricesInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.23 $} {$Date: 2002/01/11 16:45:28 $}]
+		{$Revision: 1.24 $} {$Date: 2002/01/26 23:34:31 $}]
 
 	# Props
 	set Matrix(propertyType) Basic

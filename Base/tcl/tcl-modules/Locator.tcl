@@ -69,6 +69,9 @@ proc LocatorInit {} {
 	set Module($m,row1Name) "Help Tracking Server Handpiece"
 	set Module($m,row1,tab) Tracking
 
+    # Module Summary Info
+    set Module($m,overview) "Surgical guidance in the MRT (tracked locator)."
+
 	# Define Procedures
 	set Module($m,procGUI)   LocatorBuildGUI
 	set Module($m,procVTK)   LocatorBuildVTK
@@ -86,7 +89,7 @@ proc LocatorInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.24 $} {$Date: 2001/07/06 18:44:32 $}]
+		{$Revision: 1.25 $} {$Date: 2002/01/26 23:34:31 $}]
 
 	# Patient/Table position
 	set Locator(tblPosList)   "Front Side"

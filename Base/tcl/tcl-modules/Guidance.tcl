@@ -33,8 +33,6 @@
 #==========================================================================auto=
 # Guidance.tcl
 
-# Register this file as a Module
-lappend Module(idList) Guidance
 
 #-------------------------------------------------------------------------------
 # .PROC Distance3D
@@ -64,6 +62,11 @@ proc GuidanceInit {} {
 	set Module($m,row1Name) "Help Target"
 	set Module($m,row1,tab) Target
 
+   # Module Summary Info
+    #------------------------------------
+    set Module($m,overview) "Surgical planning: slice reformatting along trajectories."
+    set Module($m,author) "David Gering, MIT AI Lab"
+
 	# Define Procedures
 	set Module($m,procGUI) GuidanceBuildGUI
 	set Module($m,procVTK) GuidanceBuildVTK
@@ -73,7 +76,7 @@ proc GuidanceInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.14 $} {$Date: 2001/02/19 17:53:29 $}]
+		{$Revision: 1.15 $} {$Date: 2002/01/26 23:34:31 $}]
 
 	# Target
 	set Target(idList) "0 1"

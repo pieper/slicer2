@@ -58,7 +58,18 @@
 #-------------------------------------------------------------------------------
 proc CustomInit {} {
     global Custom Module Volume Model
+
+    set m Custom
     
+    # Module Summary Info
+    #------------------------------------
+    # Description:
+    #   This summary info will be displayed on the main menu
+    #   under Help->Module Summaries
+    #   and under Help->Module Credits
+    set Module($m,overview) "Example module for developers."
+    set Module($m,author) "various, MIT AI Lab/SPL"
+
     # Define Tabs
     #------------------------------------
     # Description:
@@ -78,7 +89,6 @@ proc CustomInit {} {
     #   row2Name = like row1
     #   row2,tab = like row1 
     #
-    set m Custom
     set Module($m,row1List) "Help Stuff"
     set Module($m,row1Name) "{Help} {Tons o' Stuff}"
     set Module($m,row1,tab) Stuff
@@ -137,7 +147,7 @@ proc CustomInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.25 $} {$Date: 2001/06/12 21:01:14 $}]
+	    {$Revision: 1.26 $} {$Date: 2002/01/26 23:34:30 $}]
 
     # Initialize module-level variables
     #------------------------------------

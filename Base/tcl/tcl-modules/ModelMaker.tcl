@@ -47,8 +47,12 @@
 proc ModelMakerInit {} {
 	global ModelMaker Module Volume
 
-	# Define Tabs
 	set m ModelMaker
+
+    # Module Summary Info
+    set Module($m,overview) "Make 3D surface models from segmented data."
+
+  	# Define Tabs
 	set Module($m,row1List) "Help Create Edit Save"
 	set Module($m,row1Name) "{Help} {Create} {Edit} {Save} "
 	set Module($m,row1,tab) Create
@@ -63,7 +67,7 @@ proc ModelMakerInit {} {
 
 	# Set Version Info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.30 $} {$Date: 2001/07/03 07:15:39 $}]
+		{$Revision: 1.31 $} {$Date: 2002/01/26 23:34:32 $}]
 
 	# Create
 	set ModelMaker(idVolume) $Volume(idNone)

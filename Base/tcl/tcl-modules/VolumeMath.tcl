@@ -73,6 +73,15 @@ proc VolumeMathInit {} {
     set Module($m,row1Name) "{Help} {Math} {Distance} {Logic}"
 	set Module($m,row1,tab) Math
 
+    # Module Summary Info
+    #------------------------------------
+    # Description:
+    #   This summary info will be displayed on the main menu
+    #   under Help->Module Summaries
+    #   and under Help->Module Credits
+    set Module($m,overview) "Math on volumes: addition, etc."
+    set Module($m,author) "Samson Timoner, MIT AI Lab"
+
 	# Define Procedures
 	#------------------------------------
 	# Description:
@@ -126,7 +135,7 @@ proc VolumeMathInit {} {
 	#   appropriate info when the module is checked in.
 	#   
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.21 $} {$Date: 2002/01/14 17:29:47 $}]
+		{$Revision: 1.22 $} {$Date: 2002/01/26 23:34:33 $}]
 
 	# Initialize module-level variables
 	#------------------------------------

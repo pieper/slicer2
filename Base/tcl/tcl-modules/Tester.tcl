@@ -80,6 +80,10 @@ proc TesterInit {} {
         set Module($m,row1Name) "{Help} {Source} {Watch}"
 	set Module($m,row1,tab) Source
 
+    # Module Summary Info
+    #------------------------------------
+    set Module($m,overview) "Reload a module for software development testing."
+
 	# Define Procedures
 	#------------------------------------
 	# Description:
@@ -132,7 +136,7 @@ proc TesterInit {} {
 	#   appropriate revision number and date when the module is checked in.
 	#   
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.10 $} {$Date: 2001/09/06 21:42:13 $}]
+		{$Revision: 1.11 $} {$Date: 2002/01/26 23:34:33 $}]
 
 	# Initialize module-level variables
 	#------------------------------------

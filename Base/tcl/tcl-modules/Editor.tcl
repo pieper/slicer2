@@ -89,6 +89,9 @@ proc EditorInit {} {
     set Module($m,row1List) "Help Volumes Effects Details"
     set Module($m,row1Name) "{Help} {Volumes} {Effects} {Details}"
     set Module($m,row1,tab) Volumes
+
+    # Module Summary Info
+    set Module($m,overview) "Segmentation: manual, semi-automatic, and morphological."
     
     # Define Procedures
     set Module($m,procGUI)   EditorBuildGUI
@@ -104,7 +107,7 @@ proc EditorInit {} {
     
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.55 $} {$Date: 2001/12/20 16:20:55 $}]
+	    {$Revision: 1.56 $} {$Date: 2002/01/26 23:34:31 $}]
     
     # Initialize globals
     set Editor(idOriginal)  $Volume(idNone)

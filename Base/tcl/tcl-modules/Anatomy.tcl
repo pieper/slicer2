@@ -89,6 +89,11 @@ proc AnatomyInit {} {
     set Module($m,row1Name) "{Help} {Anatomy}"
     set Module($m,row1,tab) Anatomy
 
+    # Module Summary Info
+    #------------------------------------
+    set Module($m,overview) "Export scenes to Anatomy Browser (SPL program)"
+    set Module($m,author) "Arne Hans, SPL"
+
     # Define Procedures
     #------------------------------------
     # Description:
@@ -142,7 +147,7 @@ proc AnatomyInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.4 $} {$Date: 2002/01/21 18:16:13 $}]
+	    {$Revision: 1.5 $} {$Date: 2002/01/26 23:34:30 $}]
 
     # Initialize module-level variables
     #------------------------------------
