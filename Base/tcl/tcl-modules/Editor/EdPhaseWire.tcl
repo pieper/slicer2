@@ -128,7 +128,7 @@ proc EdPhaseWireInit {} {
 # .END
 #-------------------------------------------------------------------------------
 proc EdPhaseWireSetOmega {omega} {
-    global Ed Volume prog
+    global Ed Volume Path
 
     set e EdPhaseWire
 
@@ -157,18 +157,27 @@ proc EdPhaseWireSetOmega {omega} {
 	
     set width1 [expr $width + 1]
 
-    # file name
+    # file name: look locally and then centrally
     #-------------------------------------------
-    set directory [file join $prog tcl-modules Editor EdPhaseWire]
-    set prefix [file join kernel$width1 omega$omega kernel]
-    set fullpath [file join $directory $prefix]
+    set local [file join tcl-modules Editor EdPhaseWire]
+    set central  [file join $Path(program) $local]
 
     # read in kernel 
     #-------------------------------------------
     # Lauren should be created in slicer soon
     foreach o $Ed($e,phaseOrientions,idList) {
+
+	set prefix [file join kernel$width1 omega$omega kernel]
+	# try local
+	set fullpath [file join $local $prefix]
+	if {[file exists $fullpath.001] != "1"} {
+	    # go central
+	    set fullpath [file join $central $prefix]
+	}
+
+
 	Ed($e,phase,reader$o) SetFilePattern "%s.%03d"
-	Ed($e,phase,reader$o) SetDataByteOrderToLittleEndian
+	#Ed($e,phase,reader$o) SetDataByteOrderToLittleEndian
 	Ed($e,phase,reader$o) SetDataExtent 0 $width 0 $width $o $o
 	Ed($e,phase,reader$o) SetFilePrefix $fullpath
 	#reader SetDataScalarTypeToFloat
@@ -1246,6 +1255,10 @@ proc EdPhaseWireB1 {x y} {
     
     # set new value of phase offset if needed
     if {$Ed(EdPhaseWire,clickSetsPhase) == 1} {
+	puts "Lauren implement clicking!"
+	return
+	# we are not using the slicer reformatting anymore:
+
 	# grab phase (grayscale value of pixel) at this point
 	set v Volume($Ed(EdPhaseWire,phaseVol),vol)
 	set data [Slicer GetReformatOutputFromVolume $v]
