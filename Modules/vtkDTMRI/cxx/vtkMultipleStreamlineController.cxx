@@ -673,22 +673,19 @@ void vtkMultipleStreamlineController::SaveStreamlinesAsPolyData(char *filename,
 //----------------------------------------------------------------------------
 int vtkMultipleStreamlineController::PointWithinTensorData(double *point, double *pointw)
 {
-  int *dims;
-  vtkFloatingPointType *spacing;
+  vtkFloatingPointType *bounds;
   int i, inbounds;
 
-  dims=this->InputTensorField->GetDimensions();
-  spacing=this->InputTensorField->GetSpacing();
-  i=0;
+  bounds=this->InputTensorField->GetBounds();
+  vtkDebugMacro("Bounds " << bounds[0] << " " << bounds[1] << " " << bounds[2] << " " << bounds[3] << " " << bounds[4] << " " << bounds[5]);
+  
   inbounds=1;
-  while (i<3)
-    {
-      if (point[i] <0)
-        inbounds=0;
-      if (point[i] > dims[i]*spacing[i])
-        inbounds=0;
-      i++;
-    }
+  if (point[0] < bounds[0]) inbounds = 0;
+  if (point[0] > bounds[1]) inbounds = 0;
+  if (point[1] < bounds[2]) inbounds = 0;
+  if (point[1] > bounds[3]) inbounds = 0;
+  if (point[2] < bounds[4]) inbounds = 0;
+  if (point[2] > bounds[5]) inbounds = 0;
 
   if (inbounds ==0)
     {
