@@ -94,9 +94,6 @@ proc MorphometricsHipJointMeasurementInit {} {
     # step : the user specifies the acetabular plane
     MorphometricsCreatePlanePlacementStep MorphometricsHipJoint  [Pelvis GetAcetabularPlane] "Acetabular Plane" "Place the acetabular plane"
 
-    # step : the user specifies the coronal plane
-    MorphometricsCreateAxisPlacementStep MorphometricsHipJoint [Pelvis GetFrontalAxis] "Frontal Axis" "Place the frontal axis of the pelvis"
-
     # step : display the results
     WorkflowAddStep MorphometricsHipJoint MorphometricsHipJointResultEnter MorphometricsHipJointResultExit  MorphometricsHipJointResultUserInterface "Results"
 }
@@ -116,6 +113,7 @@ proc MorphometricsHipJointSetModels {idList} {
     set pelvisMTime [Pelvis GetMTime]
     Femur SetFemur $Model([lindex $idList 0],polyData)
     Pelvis SetPelvis $Model([lindex $idList 1],polyData)
+    Pelvis SymmetryAdaptedWorldCsys
     
     if {[expr $femurMTime != [Femur GetMTime] || $pelvisMTime != [Pelvis GetMTime]]} {
     MorphometricsHipJointPrecomputeGeometry
