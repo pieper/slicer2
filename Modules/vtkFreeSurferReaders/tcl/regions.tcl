@@ -677,7 +677,8 @@ proc QueryAtlas_fdemo {} {
     set mydata c:/pieper/bwh/data/staple/average7
 
     vtkFreeSurferReadersLoadModel $mydata/surf/lh.pial
-    r configure -annotfile $mydata/label/lh_aparc.annot 
+    #r configure -annotfile $mydata/label/lh_aparc.annot 
+    r configure -annotfile $mydata/label/lh.atlas2002_simple.annot 
     r configure -talfile $mydata/mri/transforms/talairach.xfm
     r configure -arrow "$fstcldir/QueryA.html"
     r configure -arrowout "$fstcldir/QueryAout.html"
