@@ -44,6 +44,7 @@
 #    MorphometricsHipJointResultExit
 #    MorphometricsHipJointResultUserInterface frame
 #    MorphometricsHipJointDisplayInit
+#    MorphometricsHipJointCreateModel polydata name
 #===============================================================================
 
 # add the module to the list of tools 
@@ -74,7 +75,6 @@ proc MorphometricsHipJointMeasurementInit {} {
     # initialize all vtkObjects necessary for viewing as well as computing 
     # the results and the necessary user interactions
     MorphometricsHipJointDisplayInit
-
 
     # create the workflow
     WorkflowInitWorkflow MorphometricsHipJoint $Morphometrics(workflowFrame)
@@ -216,6 +216,37 @@ proc MorphometricsHipJointResultUserInterface {frame} {
 
     DevAddLabel $frame.linclinationangle "Inclination : [Pelvis GetInclinationAngle]"
     pack $frame.linclinationangle -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
+
+    DevAddButton $frame.createModels "Create Result Models" [list eval [subst -nocommands {MorphometricsHipJointCreateResultModels; Render3D}]]
+    pack $frame.createModels -side bottom -padx $Gui(pad) -pady $Gui(pad)
+
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MorphometricsHipJointCreateResultsModels
+# Creates a model hierarchy representing the results of the hip joint workflow. 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MorphometricsHipJointCreateResultModels {} {
+
+    set idList {} 
+    lappend idList [MorphometricsHipJointCreateModel [[Femur GetShaftAxis] GetOutput] "Shaft Axis"]
+    lappend idList [MorphometricsHipJointCreateModel [[Femur GetNeckAxis] GetOutput] "Neck Axis"]
+    lappend idList [MorphometricsHipJointCreateModel [[Femur GetHeadSphere] GetOutput] "Head Sphere"]
+    lappend idList [MorphometricsHipJointCreateModel [[Pelvis GetAcetabularPlane] GetOutput] "Acetabular Plane"]
+
+    # -> checking whether one exists
+    ModelHierarchyCreate
+
+    MainUpdateMRML
+    # -> checking whether HipJointModels already exists
+    ModelHierarchyCreateGroupOk HipJointModels
+    MainUpdateMRML
+    foreach resultModel $idList {
+    ModelHierarchyMoveModel $resultModel HipJointModels 0
+    MainUpdateMRML
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -261,7 +292,6 @@ proc MorphometricsHipJointDisplayInit {} {
 
     AcetabularPlaneFitInit
 }
-
 
 proc AcetabularPlaneFitInit {} {
     vtkAxisSource coneAxis
@@ -335,4 +365,56 @@ proc MorphometricsHipJointPelvisFemurHeadAxis {Axis factor } {
     set length [expr sqrt($length)]
     set angle [expr acos($length / [expr sqrt($length * $length + $femurRadius * $femurRadius)])]
     return [expr $angle *  57.2957795131]
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MorphometricsHipJointCreateModel
+# Create a MRML node for $polydata with name $name. No fancy stuff is done, so 
+# this could be in Base/tcl/tcl-main/ModelMaker.tcl as well. This function is 
+# based upon the function for creating a model out of a segmentation.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MorphometricsHipJointCreateModel {polydata name} {
+    global Model Module ModelMaker Label
+
+    # Create the model's MRML node
+    set n [MainMrmlAddNode Model]
+    $n SetName  $name
+    $n SetColor Brain
+
+    # Guess the prefix
+    set ModelMaker(prefix) $ModelMaker(name)
+
+    # Create the model
+    set m [$n GetID]
+    puts [MainModelsCreate $m]
+
+    # Registration
+    set v $ModelMaker(idVolume)
+    Model($m,node) SetRasToWld [Volume($v,node) GetRasToWld]
+
+    # polyData will survive as long as it's the input to the mapper
+    set Model($m,polyData) $polydata
+    $Model($m,polyData) Update
+    foreach r $Module(Renderers) {
+        Model($m,mapper,$r) SetInput $Model($m,polyData)
+    }
+
+    # put the model inside the same transform as the source volume
+    set nitems [Mrml(dataTree) GetNumberOfItems]
+    for {set midx 0} {$midx < $nitems} {incr midx} {
+        if { [Mrml(dataTree) GetNthItem $midx] == "Model($m,node)" } {
+            break
+        }
+    }
+    if { $midx < $nitems } {
+        Mrml(dataTree) RemoveItem $midx
+        Mrml(dataTree) InsertAfterItem Volume($v,node) Model($m,node)
+        MainUpdateMRML
+    }
+
+    MainUpdateMRML
+    MainModelsSetActive $m
+    return [$n GetID]
 }
