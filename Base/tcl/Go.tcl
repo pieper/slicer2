@@ -97,13 +97,35 @@ lappend auto_path $slicer_home/Base/tcl
 lappend auto_path $slicer_home/Base/Wrapping/Tcl/vtkSlicerBase
 lappend auto_path $vtk_src_dir/Wrapping/Tcl
 
-# Set path to search for plug-in modules
-lappend auto_path $slicer_home/Modules/vtkFastMarching/Wrapping/Tcl/vtkFastMarching
-
 package require vtkSlicerBase
-catch "package require vtkFastMarching"
 
-# turn of warnings about old function use
+# Set path to search for plug-in modules, and require them
+set modulePath ${slicer_home}/Modules
+set modulePaths [glob ${modulePath}/vtk*]
+
+# do two separate loops to solve interdependency problems between modules, add all modules to the autopath first so that any package requiring another module can find it if they are not loaded in the right order
+foreach dir $modulePaths {
+    # get the module name
+    regexp "$modulePath/(\.\*)" $dir match moduleName
+    # if it's not the custom one, append it to the path
+    if {[string first Custom $moduleName] == -1} {
+        puts "Adding module to auto_path: ${moduleName}"
+        lappend auto_path ${slicer_home}/Modules/${moduleName}/Wrapping/Tcl/${moduleName}
+    }
+}
+# second loop to deal with all the package requires after the auto path is set up
+foreach dir $modulePaths {
+    regexp "$modulePath/(\.\*)" $dir match moduleName
+    if {[string first Custom $moduleName] == -1} {
+        puts "Requiring module: ${moduleName}"
+        # catch {package require ${moduleName}}
+        if { [catch {package require ${moduleName}} errVal] } {
+            puts stderr "ERROR while requiring  ${moduleName}:\n$errVal"
+        }
+    }
+}
+
+# turn off warnings about old function use
 if { $tcl_platform(platform) == "windows" } {
     vtkObject o
     # o SetGlobalWarningDisplay 0
@@ -112,14 +134,15 @@ if { $tcl_platform(platform) == "windows" } {
 
 #
 # startup with the tkcon
-# 
+#
+if {1} { 
 set av $argv; set argv "" ;# keep tkcon from trying to interpret command line args
 source $prog/tkcon.tcl
 ::tkcon::Init
 tkcon attach main
 wm geometry .tkcon +10-50
 set argv $av
-
+}
 
 # Source Tcl scripts
 # Source optional local copies of files with programming changes
