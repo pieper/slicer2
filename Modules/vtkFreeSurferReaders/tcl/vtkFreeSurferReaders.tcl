@@ -42,7 +42,7 @@
 # .END
 #-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersInit {} {
-    global vtkFreeSurferReaders Module Volume Model
+    global vtkFreeSurferReaders Module Volume Model env
 
     set m vtkFreeSurferReaders
 
@@ -58,6 +58,16 @@ proc vtkFreeSurferReadersInit {} {
     set vtkFreeSurferReaders(surfaces) "inflated pial smoothwm sphere"
     set vtkFreeSurferReaders(annots) "aparc cma_aparc" 
     set vtkFreeSurferReaders(castToShort) 1
+    # flag to load in free surfer colour file when loading a label map
+    set vtkFreeSurferReaders(loadColours) 1
+    # Set up the file name of the free surfer modules' colour xml file, 
+    # it's in the Module's tcl directory. Try setting it from the slicer home
+    # environment variable first, otherwise, assume search  is starting from slicer home
+    if {[info exists env(SLICER_HOME)] == 1} {
+        set vtkFreeSurferReaders(colourFileName) [file join $env(SLICER_HOME) Modules vtkFreeSurferReaders tcl ColorsFreesurfer.xml]
+    } else {
+        set vtkFreeSurferReaders(colourFileName) [file join Modules vtkFreeSurferReaders tcl ColorsFreesurfer.xml]
+    }
 
     # the default colour table file name
     set vtkFreeSurferReaders(colorTableFilename) [ExpandPath [file join $::PACKAGE_DIR_VTKFREESURFERREADERS ".." ".." ".." tcl "Simple_surface_labels2002.txt"]]
@@ -165,7 +175,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.5 $} {$Date: 2004/11/11 21:02:16 $}]
+        {$Revision: 1.6 $} {$Date: 2004/11/12 19:25:44 $}]
 
 }
 
@@ -227,12 +237,14 @@ proc vtkFreeSurferReadersBuildGUI {} {
 
     frame $f.fLabelMap -bg $Gui(activeWorkspace)
     frame $f.fCast  -bg $Gui(activeWorkspace)
+    frame $f.fColours -bg $Gui(activeWorkspace)
     frame $f.fDesc     -bg $Gui(activeWorkspace)
     frame $f.fName -bg $Gui(activeWorkspace)
     frame $f.fApply  -bg $Gui(activeWorkspace)
 
     pack $f.fLabelMap -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
     pack $f.fCast -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
+    pack $f.fColours -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
     pack $f.fDesc -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
     pack $f.fName -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
     pack $f.fApply -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
@@ -292,7 +304,17 @@ proc vtkFreeSurferReadersBuildGUI {} {
     TooltipAdd $f.cCastToShort "Cast this volume to short when reading it in. This allows use of the editing tools."
     pack $f.cCastToShort -side top -padx 0
 
-
+    
+    #------------
+    # Volume->Colours
+    #------------
+    set f $fVolumes.fVolume.fColours
+    eval {checkbutton $f.cLoadColours \
+              -text "Load FreeSurfer Colors" -variable vtkFreeSurferReaders(loadColours) -width 23 \
+              -indicatoron 0 -command "vtkFreeSurferReadersSetLoadColours"} $Gui(WCA)
+    TooltipAdd $f.cLoadColours "Load in a FreeSurfer colour definition file when loading a COR label map.\nWARNING: will override other colours, use at your own risk."
+    pack $f.cLoadColours -side top -padx $Gui(pad)
+    DevAddFileBrowse $f vtkFreeSurferReaders "colourFileName" "Colour xml file:" "vtkFreeSurferReadersSetColourFileName" "xml" "\$Volume(DefaultDir)" "Open" "Browse for a FreeSurfer colors file"
 
     #------------
     # Volume->Apply 
@@ -556,7 +578,7 @@ proc vtkFreeSurferReadersApply {} {
 # .END
 #-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersCORApply {} {
-    global Volume vtkFreeSurferReaders Module View
+    global Volume vtkFreeSurferReaders Module View Color
 
     # Validate name
     if {$Volume(name) == ""} {
@@ -677,6 +699,17 @@ proc vtkFreeSurferReadersCORApply {} {
             DevInfoWindow "Cast input volume to Short, use ${Volume(name)}-Short for editing."
         }
     } 
+
+    # load in free surfer colours?
+    if {$vtkFreeSurferReaders(loadColours)} {
+        if {$::Module(verbose)} {
+            puts "vtkFreeSurferReadersCORApply: loading colour file $vtkFreeSurferReaders(colourFileName)."
+        }
+        # piggy back on the Color module
+        set Color(fileName) $vtkFreeSurferReaders(colourFileName)
+        ColorsLoadApply
+    }
+
 
     # display the new volume in the background of all slices if not a label map
     if {$iCast == -1} {
@@ -1671,14 +1704,8 @@ proc vtkFreeSurferReadersAddColors {tags} {
     # Return a new list of tags, possibly including default colors.
     # TODO: check for conflicts in color names
 
-    # Set up the file name of the free surfer modules' colour xml file, 
-    # it's in the Module's tcl directory. Try setting it from the slicer home
-    # environment variable first, otherwise, assume search  is starting from slicer home
-    if {[info exists env(SLICER_HOME)] == 1} {
-        set fileName [file join $env(SLICER_HOME) Modules vtkFreeSurferReaders tcl ColorsFreesurfer.xml]
-    } else {
-        set fileName [file join Modules vtkFreeSurferReaders tcl ColorsFreesurfer.xml]
-    }
+    set filename $vtkFreeSurferReaders(colourFileName)
+
     if {$Module(verbose) == 1} {
         puts "Trying to read Freesurfer colours from \"$fileName\""
     }
@@ -2370,4 +2397,31 @@ proc vtkFreeSurferReadersCast {v {toType "Short"}} {
     vtkFreeSurferReadersCaster Delete
 
     return $vCast
+}
+
+#-------------------------------------------------------------------------------
+# .PROC 
+# vtkFreeSurferReadersSetLoadColours
+# Prints out confirmation of the loadColours flag
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc vtkFreeSurferReadersSetLoadColours {} {
+    global vtkFreeSurferReaders
+    if {$::Module(verbose)} {
+        puts "load freesurfer colours = $vtkFreeSurferReaders(loadColours)"
+    }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersSetColourFileName
+# The filename is set elsewhere, in variable vtkFreeSurferReaders(colourFileName)
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc vtkFreeSurferReadersSetColourFileName {} {
+    global vtkFreeSurferReaders Volume
+    if {$::Module(verbose)} {
+        puts "vtkFreeSurferReadersSetColourFileName: colour file name set to $vtkFreeSurferReaders(colourFileName)"
+    }
 }
