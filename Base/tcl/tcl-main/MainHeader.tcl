@@ -367,6 +367,10 @@ proc ReadHeader {image run utility tk} {
     global Gui
 	# Run a header reading utility
 	if {$run == 1} {
+		if {[file exists $utility] == 0 } {
+		    puts "ReadHeader: print_header program not found."
+		    return ""
+		}
 		if {[catch {set hdr [exec $utility $image]} errmsg] == 1} {
 		    # correct return val is in errmsg on unix; on pc it's an error.
 		    if {$Gui(pc) == 1} {
@@ -613,6 +617,11 @@ proc GetHeaderInfo {img1 num2 node tk} {
 	# Read headers
 	set hdr1 [ReadHeader $img1 1 $Path(printHeader) $tk]
 	set hdr2 [ReadHeader $img2 1 $Path(printHeader) $tk]
+
+	# exit if failed to read
+	if {$hdr1 == ""} {
+	    return "-1"
+	}
 
 	# Parse headers
 	set errmsg [ParsePrintHeader $hdr1 Header1]
