@@ -361,22 +361,45 @@ proc MainInteractorShiftMotion {widget x y} {
     scan [MainInteractorXY $s $x $y] "%d %d %d %d" xs ys x y 
 
     $Interactor(activeSlicer) SetReformatPoint $s $x $y
-    scan [$Interactor(activeSlicer) GetWldPoint] "%g %g %g" xRas yRas zRas 
-    scan [$Interactor(activeSlicer) GetIjkPoint] "%g %g %g" xIjk yIjk zIjk
+    scan [$Interactor(activeSlicer) GetWldPoint] "%g %g %g" rRas aRas sRas 
+    # scan [$Interactor(activeSlicer) GetIjkPoint] "%g %g %g" iIjk jIjk kIjk
+
+    # round off the pixel coordinates
+    # set iIjk [expr round($iIjk)]
+    # set jIjk [expr round($jIjk)]
+    # set kIjk [expr round($kIjk)]
 
     for {set slice 0} {$slice < 3} {incr slice} {
         if {$slice != $s} {
+            # set vol [Slicer GetBackVolume $s]
+            # set node [$vol GetMrmlNode]
+            # set scanorder [$node GetScanOrder]
+            # set hi [Slicer GetOffsetRangeHigh $s]
             switch [$Interactor(activeSlicer) GetOrientString $slice] {
-                "Axial" { MainSlicesSetOffset $slice $zRas; RenderSlice $slice }
-                "Sagittal" { MainSlicesSetOffset $slice $xRas; RenderSlice $slice }
-                "Coronal" { MainSlicesSetOffset $slice $yRas; RenderSlice $slice }
-                "AxiSlice" { MainSlicesSetOffset $slice $yIjk; RenderSlice $slice }
-                "SagSlice" { MainSlicesSetOffset $slice $xIjk; RenderSlice $slice }
-                "CorSlice" { MainSlicesSetOffset $slice $zIjk; RenderSlice $slice }
+                "Axial" { MainSlicesSetOffset $slice $sRas}
+                "Sagittal" { MainSlicesSetOffset $slice $rRas}
+                "Coronal" { MainSlicesSetOffset $slice $aRas}
+                
             }
+
+                # TODO - to make these modes work one must map from IJK space back to 
+                # original slice numbers and that depends on the original scan order
+                # (that is, the sliders don't move in IJK space but in a flipped/rotated space)
+                # "AxiSlice" { 
+                    # switch $scanorder {
+                        # IS {}
+                        # SI {}
+                        # RL {}
+                        # LR {}
+                        # AP {}
+                        # PA {}
+                    # }
+                    # MainSlicesSetOffset $slice $jIjk}
+                # "SagSlice" { MainSlicesSetOffset $slice $kIjk}
+                # "CorSlice" { MainSlicesSetOffset $slice $iIjk}
         }
     }
-    Render3D
+    RenderAll
 }
 
 #-------------------------------------------------------------------------------
