@@ -336,3 +336,23 @@ void vtkPose::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "Rotation: " << endl;
   this->Rotation->PrintSelf(os,indent);
 }
+
+//----------------------------------------------------------------------------
+void vtkPose::Dump()
+{
+  this->Print("dump");
+}
+
+//----------------------------------------------------------------------------
+void vtkPose::Print(const char *x)
+{
+  char *msgbuff; 
+  ostrstream msg;
+  msg << "<p><font color=blue>" __FILE__ "</font>, line <font color=blue>" << __LINE__ << "</font><br>" << x << ends;
+  msgbuff = msg.str();
+  ofstream file;
+  file.open("debug.html", ios::app);
+  if (file.fail()) {;} else {file << msgbuff;}
+  file.close();
+  msg.rdbuf()->freeze(0);
+}
