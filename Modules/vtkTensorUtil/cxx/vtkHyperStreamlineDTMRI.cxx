@@ -7,10 +7,13 @@
 #include "vtkObjectFactory.h"
 #include "vtkPointData.h"
 #include "vtkPolyData.h"
-// the superclass had these classes in the vtkHyperStreamline.cxx file:
-//#include "vtkHyperPointandArray.cxx"
+// the superclass had these classes in the vtkHyperStreamline.cxx
+// file:
+#if (VTK_MAJOR_VERSION == 4 && VTK_MINOR_VERSION >= 3)
+#include "vtkHyperPointandArray.cxx"
+#endif
 
-vtkCxxRevisionMacro(vtkHyperStreamlineDTMRI, "$Revision: 1.6 $");
+vtkCxxRevisionMacro(vtkHyperStreamlineDTMRI, "$Revision: 1.6.2.1 $");
 vtkStandardNewMacro(vtkHyperStreamlineDTMRI);
 
 // Construct object with initial starting position (0,0,0); integration step 
@@ -47,11 +50,11 @@ vtkHyperStreamlineDTMRI::~vtkHyperStreamlineDTMRI()
 
 // copied from superclass
 // Make sure coordinate systems are consistent
-static void FixVectors(float **prev, float **current, int iv, int ix, int iy)
+static void FixVectors(vtkFloatingPointType **prev, vtkFloatingPointType **current, int iv, int ix, int iy)
 {
-  float p0[3], p1[3], p2[3];
-  float v0[3], v1[3], v2[3];
-  float temp[3];
+  vtkFloatingPointType p0[3], p1[3], p2[3];
+  vtkFloatingPointType v0[3], v1[3], v2[3];
+  vtkFloatingPointType temp[3];
   int i;
 
   for (i=0; i<3; i++)
@@ -115,20 +118,20 @@ void vtkHyperStreamlineDTMRI::Execute()
   vtkHyperPoint *sNext, *sPtr;
   int i, j, k, ptId, subId, iv, ix, iy;
   vtkCell *cell;
-  float ev[3];
+  vtkFloatingPointType ev[3];
   vtkFloatingPointType xNext[3];
   vtkFloatingPointType d, step, dir, tol2, p[3];
   vtkFloatingPointType *w;
   vtkFloatingPointType dist2;
   vtkFloatingPointType closestPoint[3];
-  float *m[3], *v[3];
-  float m0[3], m1[3], m2[3];
-  float v0[3], v1[3], v2[3];
+  vtkFloatingPointType *m[3], *v[3];
+  vtkFloatingPointType m0[3], m1[3], m2[3];
+  vtkFloatingPointType v0[3], v1[3], v2[3];
   vtkDataArray *cellTensors;
   vtkDataArray *cellScalars;
   int pointCount;
   vtkHyperPoint *sPrev, *sPrevPrev;
-  float kv1[3], kv2[3], ku1[3], ku2[3], kl1, kl2, kn[3], K;
+  vtkFloatingPointType kv1[3], kv2[3], ku1[3], ku2[3], kl1, kl2, kn[3], K;
   // set up working matrices
   v[0] = v0; v[1] = v1; v[2] = v2; 
   m[0] = m0; m[1] = m1; m[2] = m2; 
