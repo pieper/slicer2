@@ -1,0 +1,43 @@
+
+// .NAME vtkGraphicsFactoryAddition - 
+// .SECTION Description
+
+#ifndef __vtkGraphicsFactoryAddition_h
+#define __vtkGraphicsFactoryAddition_h
+#include <vtkVolumeTextureMappingConfigure.h>
+#include "vtkObject.h"
+
+class VTK_VOLUMETEXTUREMAPPING_EXPORT vtkGraphicsFactoryAddition : public vtkObject
+{
+public:
+  static vtkGraphicsFactoryAddition *New();
+  vtkTypeRevisionMacro(vtkGraphicsFactoryAddition,vtkObject);
+
+
+  // Description:
+  // Create and return an instance of the named vtk object.
+  // This method first checks the vtkObjectFactory to support
+  // dynamic loading. 
+  static vtkObject* CreateInstance(const char* vtkclassname);
+
+  // Description:
+  // What rendering library has the user requested
+  static const char *GetRenderLibrary();
+
+  // Description:
+  // This option enables the creation of Mesa classes
+  // instead of the OpenGL classes when using mangled Mesa.
+  static void SetUseMesaClasses(int use);
+  static int  GetUseMesaClasses();
+  
+protected:
+  vtkGraphicsFactoryAddition() {};
+
+  static int UseMesaClasses;
+
+private:
+  vtkGraphicsFactoryAddition(const vtkGraphicsFactoryAddition&);  // Not implemented.
+  void operator=(const vtkGraphicsFactoryAddition&);  // Not implemented.
+};
+
+#endif
