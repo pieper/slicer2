@@ -24,6 +24,7 @@ vtkTensorMask.cxx
 vtkTensorMathematics.cxx
 vtkVectorToOuterProductDualBasis.cxx
 vtkHyperStreamlineDTMRI.cxx
+vtkSuperquadricTensorGlyph.cxx
 #vtkHyperPointandArray.cxx
 )
 
