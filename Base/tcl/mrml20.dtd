@@ -25,7 +25,7 @@
     interpolate (yes | no) "yes"
     littleEndian (yes | no) "no"
     tilt NMTOKEN "0.0"
-    autoWindowLevel (yes | no) "yes
+    autoWindowLevel (yes | no) "yes"
     window CDATA "256"
     level CDATA "128"
     applyThreshold (yes | no) "no"
@@ -44,7 +44,7 @@
     color NMTOKEN ""
     description CDATA ""
     opacity NMTOKEN "1.0"
-    visibility (yes | no) "yes
+    visibility (yes | no) "yes"
     clipping (yes | no) "no"
     backfaceCulling (yes | no) "yes"
     scalarVisibility (yes | no) "no"
