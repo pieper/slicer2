@@ -35,8 +35,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkLevelSetFastMarching.cxx,v $
   Language:  C++
-  Date:      $Date: 2003/05/15 00:10:03 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2003/10/03 15:33:24 $
+  Version:   $Revision: 1.2 $
 
 =========================================================================*/
 #include "vtkLevelSetFastMarching.h"
@@ -202,7 +202,7 @@ void vtkLevelSetFastMarching::InitParam()
 
   int type;
 
-  fprintf(stderr,"vtkLevelSetFastMarching::InitParam() begin\n");
+  //  fprintf(stderr,"vtkLevelSetFastMarching::InitParam() begin\n");
 
   // Get force image from input
   force  = this->GetInput();
@@ -329,7 +329,7 @@ void vtkLevelSetFastMarching::InitParam()
   // Empty the min heap structure just in case
   mh.RemoveAll();
 
-  fprintf(stderr,"vtkLevelSetFastMarching::InitParam() end \n");
+  //  fprintf(stderr,"vtkLevelSetFastMarching::InitParam() end \n");
 
 } // vtkLevelSetFastMarching::InitParam()
 
@@ -356,8 +356,8 @@ void vtkLevelSetFastMarching::ExecuteData(vtkDataObject *outData)
   //  Si dim==VTK_MODE_2D AlorsFait
   //    ImEvol = new InrImage(tx,ty,50,WT_FLOAT,"evol_fm.ami.gz");
 
-  fprintf(stderr,"vtkLevelSetFastMarching::Execute() begin ----------------------------- \n");
-  fprintf(stderr,"vtkLevelSetFastMarching::Execute() initparam \n");
+  //  fprintf(stderr,"vtkLevelSetFastMarching::Execute() begin ----------------------------- \n");
+  //  fprintf(stderr,"vtkLevelSetFastMarching::Execute() initparam \n");
 
   InitParam();
 
@@ -370,8 +370,8 @@ void vtkLevelSetFastMarching::ExecuteData(vtkDataObject *outData)
       InitIsoSurf();
 
   iterations = 0;
-  printf("iterations = %7d",iterations);
-  fflush(stdout);
+  //  printf("iterations = %7d",iterations);
+  //  fflush(stdout);
 
   do {
 
@@ -391,9 +391,9 @@ void vtkLevelSetFastMarching::ExecuteData(vtkDataObject *outData)
     if (((iterations % 10000==0)&&(dim==VTK_MODE_3D))||
         ((iterations % 200  ==0)&&(dim==VTK_MODE_2D))) {
       
-      printf("\b\b\b\b\b");
-      printf("%5d",iterations/100);
-      fflush(stdout);
+      //      printf("\b\b\b\b\b");
+      // printf("%5d",iterations/100);
+      //fflush(stdout);
       //      sprintf(Tname,"T%d.ami.gz",iterations/100);
       //      this->T->Sauve(Tname);
       
@@ -414,7 +414,7 @@ void vtkLevelSetFastMarching::ExecuteData(vtkDataObject *outData)
   
   } while (!( (p.value>=this->maxTime) || (this->mh.Size() == 0) ));
 
-  printf("\n");
+  //  printf("\n");
   
 
 //  if ( dim==VTK_MODE_2D ){
@@ -437,7 +437,7 @@ void vtkLevelSetFastMarching::ExecuteData(vtkDataObject *outData)
     T_buf     [pos] *= -1;
   }
 
-  fprintf(stderr,"vtkLevelSetFastMarching::Execute() end ----------------------------- \n");
+  //  fprintf(stderr,"vtkLevelSetFastMarching::Execute() end ----------------------------- \n");
 
   // Check for the maximum
 
@@ -1530,12 +1530,12 @@ void vtkLevelSetFastMarching::InitWithImage()
     int*           tab_pos;
     int            npos;
 
-  fprintf(stderr, "InitWithImage() .");fflush(stderr);
+    //   fprintf(stderr, "InitWithImage() .");fflush(stderr);
 
   status_buf = this->status;
   init_buf   = (float*)this->initimage->GetScalarPointer();
 
-  fprintf(stderr, ".");fflush(stderr);
+  //  fprintf(stderr, ".");fflush(stderr);
 
   tab_pos = new int[imsize];
   npos = 0;
@@ -1564,7 +1564,7 @@ void vtkLevelSetFastMarching::InitWithImage()
   }
 
   //  Set the  trial points
-  fprintf(stderr, ".");fflush(stderr);
+  //  fprintf(stderr, ".");fflush(stderr);
 
   for(i=0;i<npos;i++) {
     p = pos = tab_pos[i];
@@ -1576,7 +1576,7 @@ void vtkLevelSetFastMarching::InitWithImage()
   }
 
   delete [] tab_pos;
-  fprintf(stderr, ";\n");
+  // fprintf(stderr, ";\n");
 
 } // InitWithImage()
 
@@ -1738,7 +1738,7 @@ void vtkLevelSetFastMarching::InitIsoSurf()
   }
 
   //  Set the  trial points
-  fprintf(stderr, ";\n");
+  //  fprintf(stderr, ";\n");
   For(z,2,tz-3)
   For(y,2,ty-3)
     pos = z*txy+y*tx+2;
