@@ -428,6 +428,30 @@ proc MainVolumesPopup {v X Y} {
 	ShowPopup $Gui(wVolumes) 0 0
 }
 
+proc MainVolumesUpdate {v} {
+	global Volume Slice 
+
+	set n $Volume(idNone)
+
+	foreach s $Slice(idList) {
+ 		if {$v == $Slice($s,backVolID)} {
+			Slicer SetBackVolume Volume($n,vol)
+			Slicer SetBackVolume Volume($v,vol)
+		}
+ 		if {$v == $Slice($s,foreVolID)} {
+			Slicer SetForeVolume Volume($n,vol)
+			Slicer SetForeVolume Volume($v,vol)
+		}
+ 		if {$v == $Slice($s,labelVolID)} {
+			Slicer SetLabelVolume Volume($n,vol)
+			Slicer SetLabelVolume Volume($v,vol)
+		}
+	}
+	Volume($v,vol) Update
+	Slicer ReformatModified
+	Slicer Update
+}
+
 #-------------------------------------------------------------------------------
 # .PROC MainVolumesRender
 # .END
