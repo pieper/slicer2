@@ -1,4 +1,4 @@
-h// .NAME vtkClusterTracts - Cluster paths obtained through tractography.
+// .NAME vtkClusterTracts - Cluster paths obtained through tractography.
 
 // .SECTION Description
 // Wrapper around the classes vtkTractShapeFeatures and vtkNormalizedCuts.
