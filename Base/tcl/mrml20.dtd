@@ -54,6 +54,7 @@
     Opacity NMTOKEN "1.0"
     Clipping (yes | no) "no"
     DisplaySurfaces (yes | no) "no"
+      SurfacesUseCellData (yes | no) "yes"
     DisplayEdges    (yes | no) "no"
     DisplayNodes    (yes | no) "no"
       NodeScaling    NMTOKEN "9.5"
