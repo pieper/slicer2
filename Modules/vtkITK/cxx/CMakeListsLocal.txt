@@ -33,6 +33,7 @@ vtkITKPDEDeformableRegistrationFilter.h
 vtkITKThresholdSegmentationLevelSetImageFilter.h
 vtkITKTobogganImageFilter.h
 vtkITKWatershedImageFilter.cxx
+vtkITKVersion.cxx
 )
 
 SET_SOURCE_FILES_PROPERTIES ( 
@@ -43,6 +44,7 @@ vtkITKImageToImageFilterFUL.h
 vtkITKImageToImageFilterULUL.h
 vtkITKImageToImageFilterUSUL.h
 vtkITKImageToImageFilterUSUS.h
+vtkITKVersion.h
 ABSTRACT
 )
 
