@@ -175,10 +175,14 @@ proc MainInteractorCursor {s xs ys x y} {
 	if {$Anno(mouse) == 1} {
 		foreach name "$Anno(mouseList)" {
 			if {$name != "msg"} {
-				Anno($s,$name,actor) SetVisibility 1
+				# Warning: actor may not exist yet, so check!
+				if {[info command Anno($s,$name,actor)] != ""} {
+					Anno($s,$name,actor) SetVisibility 1
+				}
 			}
 		}
-		switch $Anno(cursorMode) {
+		if {[info command Anno($s,cur1,mapper)] != ""} {
+			switch $Anno(cursorMode) {
 			"RAS" {
 				Anno($s,cur1,mapper) SetInput [format "R %.f" $xRas]
 				Anno($s,cur2,mapper) SetInput [format "A %.f" $yRas]
@@ -194,12 +198,17 @@ proc MainInteractorCursor {s xs ys x y} {
 				Anno($s,cur2,mapper) SetInput [format "Y %.f" $y]
 				Anno($s,cur3,mapper) SetInput " "
 			}
+			}
 		}
-		Anno($s,curBack,mapper) SetInput [format "Bg %d" $backPix]
-		Anno($s,curFore,mapper) SetInput [format "Fg %d" $forePix]
+		if {[info command Anno($s,curBack,mapper)] != ""} {
+			Anno($s,curBack,mapper) SetInput [format "Bg %d" $backPix]
+			Anno($s,curFore,mapper) SetInput [format "Fg %d" $forePix]
+		}
 	} else {
 		foreach name "$Anno(mouseList)" {
-			Anno($s,$name,actor) SetVisibility 0
+			if {[info command Anno($s,$name,actor)] != ""} {
+				Anno($s,$name,actor) SetVisibility 0
+			}
 		}
 	}
 

@@ -477,8 +477,11 @@ proc MainSlicesRefreshClip {s} {
 		[expr $sign*[$mat GetElement 1 2]] \
 		[expr $sign*[$mat GetElement 2 2]]"
 
-	eval Slice($s,clipPlane) SetOrigin  $origin	 
-	eval Slice($s,clipPlane) SetNormal $normal
+	# WARNING: objects may not exist yet!
+	if {[info command Slice($s,clipPlane)] != ""} {
+		eval Slice($s,clipPlane) SetOrigin  $origin	 
+		eval Slice($s,clipPlane) SetNormal $normal
+	}
 }
 
 #-------------------------------------------------------------------------------
