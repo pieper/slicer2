@@ -92,7 +92,7 @@ proc EditorInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.26 $} {$Date: 2000/04/01 18:59:09 $}]
+		{$Revision: 1.27 $} {$Date: 2000/04/17 20:03:38 $}]
 
 	# Initialize globals
 	set Editor(idOriginal)  $Volume(idNone)
@@ -1538,7 +1538,7 @@ proc EdIsNativeSlice {} {
 # .END
 #-------------------------------------------------------------------------------
 proc EdSetupBeforeApplyEffect {v scope multi} {
-	global Volume Ed Editor
+	global Volume Ed Editor Gui
 
 	set o [EditorGetOriginalID]
 	set w [EditorGetWorkingID]
