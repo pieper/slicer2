@@ -155,7 +155,7 @@ proc TetraMeshInit {} {
 	#   appropriate revision number and date when the module is checked in.
 	#   
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.26 $} {$Date: 2002/01/15 01:25:46 $}]
+		{$Revision: 1.27 $} {$Date: 2002/01/15 17:15:37 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -932,8 +932,9 @@ proc TetraMeshProcessTetraMesh {} {
     ## Change the node to say what is displayed.
     foreach item "Surfaces Nodes Edges Scalars Vectors" {
         if {$TetraMesh(ProcessType) == "$item"} {
-            TetraMesh($v,node) SetDisplay$item 1
+#            TetraMesh($v,node) SetDisplay$item 1
             set TetraMesh(Display$item) 1
+            MainTetraMeshTclDataToVtkData TetraMesh($v,node)
         }
     }
 
