@@ -149,7 +149,7 @@ proc MultiVolumeReaderInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.16 $} {$Date: 2005/03/01 17:54:02 $}]
+        {$Revision: 1.17 $} {$Date: 2005/03/02 22:43:04 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -229,28 +229,22 @@ proc MultiVolumeReaderBuildGUI {parent {status 0}} {
     pack $f.fSingle $f.fMultiple $f.fName -side top -pady 1 
 
     set f $parent.fReaderConfig.fFile.fSingle
-    set filter \
-        "Load a single file: Only read the above input file.\n\
-        Load multiple files: Read files in the same directory\n\
-        matching the pattern in the Filter field.              "
-    eval {radiobutton $f.r1 -width 27 -text {Load a single file} \
+    DevAddButton $f.bHelp "?" "" 2 
+    eval {radiobutton $f.r1 -width 23 -text {Load a single file} \
         -variable MultiVolumeReader(fileChoice) -value single \
         -relief flat -offrelief flat -overrelief raised \
         -selectcolor white} $Gui(WEA)
-    pack $f.r1 -side top -pady 2 
-    TooltipAdd $f.r1 $filter 
+    grid $f.bHelp $f.r1  -padx 1 -pady 3 -sticky w
 
     set f $parent.fReaderConfig.fFile.fMultiple
     eval {radiobutton $f.r2 -width 27 -text {Load multiple files} \
         -variable MultiVolumeReader(fileChoice) -value multiple \
         -relief flat -offrelief flat -overrelief raised \
         -selectcolor white} $Gui(WEA)
-    TooltipAdd $f.r2 $filter 
 
     DevAddLabel $f.lFilter " Filter:"
     eval {entry $f.eFilter -width 24 \
         -textvariable MultiVolumeReader(filter)} $Gui(WEA)
-    TooltipAdd $f.eFilter $filter 
 
     #The "sticky" option aligns items to the left (west) side
     grid $f.r2 -row 0 -column 0 -columnspan 2 -padx 5 -pady 3 -sticky w
@@ -265,13 +259,10 @@ proc MultiVolumeReaderBuildGUI {parent {status 0}} {
     if {$status == 1} {
         set f $parent.fReaderConfig.fFile.fName
         DevAddLabel $f.lName "Sequence name:"
-        set name \
-            "Give a name for the sequence to be loaded."
         eval {entry $f.eName -width 16 \
             -textvariable MultiVolumeReader(sequenceName)} $Gui(WEA)
         bind $f.eName <Return> "MultiVolumeReaderLoad $status" 
         grid $f.lName $f.eName  -padx 3 -pady 3 -sticky w
-        TooltipAdd $f.eName $name 
     }
 
     set f $parent.fReaderConfig.fApply
@@ -284,9 +275,6 @@ proc MultiVolumeReaderBuildGUI {parent {status 0}} {
     eval {entry $f.eVName -width 30 \
         -state normal \
         -textvariable MultiVolumeReader(emptyLoadStatus)} $Gui(WEA)
-    TooltipAdd $f.eVName \
-        "Don't need to input anything here. This\n\
-        entry is used to display loading status."
     pack $f.lVName $f.eVName -side top -padx $Gui(pad) -pady 2 
     if {$status == 1} {
         set MultiVolumeReader(loadStatusEntry) $f.eVName
@@ -308,8 +296,6 @@ proc MultiVolumeReaderBuildGUI {parent {status 0}} {
         -command {MultiVolumeReaderUpdateVolume}} \
         $Gui(WSA) {-showvalue 1}
     set MultiVolumeReader(slider) $f.sSlider
-    TooltipAdd $f.sSlider \
-        "Slide this scale to navigate multi-volume sequence."
  
     #The "sticky" option aligns items to the left (west) side
     grid $f.lVolNo -row 1 -column 0 -padx 1 -pady 1 -sticky w
