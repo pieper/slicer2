@@ -134,7 +134,7 @@ proc DTMRIInit {} {
     set Module($m,author) "Lauren O'Donnell"
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.44 $} {$Date: 2004/11/16 03:21:48 $}]
+                  {$Revision: 1.45 $} {$Date: 2004/11/16 03:37:37 $}]
 
      # Define Tabs
     #------------------------------------
@@ -5664,8 +5664,15 @@ proc DTMRISaveStreamlinesAsPolyLines {subdir name {verbose "1"}} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc DTMRISaveStreamlinesAsModel {} {
+proc DTMRISaveStreamlinesAsModel {{verbose "1"}} {
     
+    # check we have streamlines
+    if {[DTMRI(vtk,streamlineControl) GetNumberOfStreamlines] < 1} {
+        set msg "There are no tracts to save. Please create tracts first."
+        tk_messageBox -message $msg
+        return
+    }
+
     set filename [tk_getSaveFile  -title "Save Tracts: Choose Initial Filename"]
     if { $filename == "" } {
         return
@@ -5676,158 +5683,15 @@ proc DTMRISaveStreamlinesAsModel {} {
     # save the models as well as a MRML file with their colors
     DTMRI(vtk,streamlineControl) SaveStreamlinesAsPolyData \
         $filename $modelname Mrml(colorTree)
-}
 
-
-#-------------------------------------------------------------------------------
-# .PROC DTMRISaveStreamlinesAsModel
-# Save all streamlines as a vtk model(s).
-# Each color is written as a separate model.
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc DTMRISaveStreamlinesAsModelOld {subdir name {verbose "1"}} {
-    global DTMRI
-
-    # append all streamlines together into one model
-    catch "appender0 Delete"
-    vtkAppendPolyData appender0
-    set appenderList 0
-
-    #set thelist {0 1 2}
-    set thelist $DTMRI(vtk,streamline,idList)
-
-    if {[llength $thelist] == 0} {
-    tk_messageBox -message "Nothing to save. You must create tracts first."
-    return
-    }  
-    # find first color
-    set id [lindex $thelist 0]
-    set streamline streamln,$id
-    set color $DTMRI(vtk,$streamline,color) 
-    set count 1
-    set colorList $color
-
-    foreach id $thelist {
-        set streamln streamln,$id
-
-    # only save it if it's visible
-    if {[DTMRI(vtk,$streamln,actor) GetVisibility] == "1"} {
-
-            # find name of color
-            set currentColor $DTMRI(vtk,$streamln,color) 
-            # if does not match the prev color, 
-            # then start appending to new appender
-            # (make one model file for each color)
-            if {$currentColor != $color } {
-                catch "appender$count Delete"
-                vtkAppendPolyData appender$count
-                lappend appenderList $count
-                lappend colorList $currentColor
-                incr count
-                set color $currentColor
-            }
-        
-            # the model is expected to be in RAS so we must transform
-            # it by its actor matrix here
-            # ---------------------------------------------
-            catch "trans Delete"
-            vtkTransform trans
-            trans SetMatrix [DTMRI(vtk,$streamln,actor) GetUserMatrix]
-            catch "transformer Delete"
-            vtkTransformPolyDataFilter transformer
-            transformer SetInput [DTMRI(vtk,$streamln) GetOutput]
-            transformer SetTransform trans
-            transformer Update
-            
-            # clean up normals
-            set p normals
-            catch "$p Delete"
-            vtkPolyDataNormals $p
-            $p SetInput [transformer GetOutput]
-            $p SetFeatureAngle 60
-            
-            # make triangle strips
-            set p stripper
-            catch "$p Delete"
-            vtkStripper $p
-            $p SetInput [normals GetOutput]
-            
-            # add this model to the output
-            set appender [lindex $appenderList end]
-            appender$appender AddInput [stripper GetOutput] 
-            
-            # delete vtk objects
-            transformer Delete
-            trans Delete
-            normals Delete
-            stripper Delete
-        }
-    }
-
-    # write the models
-    catch "tree Delete"
-    vtkMrmlTree tree
-    foreach appender $appenderList color $colorList {
-        #set filename "$name$appender.vtk"
-        #set filename "/spl/tmp/talos.vtk"
-        set filename [tk_getSaveFile -defaultextension ".vtk" -title "Save Tracts"]
-        if { $filename == "" } {
-            return
-        }
-        catch "writer Delete"
-        vtkPolyDataWriter writer
-        #writer DebugOn
-        #writer SetInput [DTMRI(vtk,$streamln) GetOutput] 
-        writer SetInput [appender$appender GetOutput]
-        writer SetFileType 2
-        writer SetFileName [file join $subdir $filename]
-        puts "DTMRI module writing model $filename..."
-        writer Update
-        writer SetInput ""
-        puts "DTMRI module finished writing model $filename."
-
-        # make a MRML node for it
-        catch "node Delete"
-        vtkMrmlModelNode node
-        node SetName "$name$appender"
-        node SetFileName  $filename
-        node SetFullFileName  $filename
-        node SetDescription "tract created by DTMRI.tcl"
-        node SetColor $color
-        if {$DTMRI(mode,tractColor) == "MultiColor"} {
-            node ScalarVisibilityOn
-            # set scalar range in node so when mrml read in, 
-            # model colors will look good
-            # don't always do this since old MRML did not support floats
-            eval {node SetScalarRange} \
-                [[appender$appender GetOutput] GetScalarRange]
-
-        }
-    
-        tree AddItem node
-
-        # delete all vtk objects
-        node Delete
-        writer Delete
-        appender$appender Delete
-    }
-
-    # Write the MRML file
-    #    tree Write [file join $subdir "$name.xml"]
-    #tree Write [file join "/spl/tmp/" "talos.xml"]
-    
-    tree Write [file rootname $filename].xml
-
-    tree Delete
-    
     # let user know something happened
     if {$verbose == "1"} {
-        set msg "Wrote streamlines as file $filename along with a MRML file"
+        set msg "Finished writing tracts and scene file. The filename is: $filename.xml"
         tk_messageBox -message $msg
     }
 
 }
+
 
 
 ################################################################

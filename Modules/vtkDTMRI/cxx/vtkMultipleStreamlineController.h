@@ -120,6 +120,7 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   vtkGetObjectMacro(Streamlines, vtkCollection);
   vtkGetObjectMacro(Actors, vtkCollection);
   vtkGetObjectMacro(Mappers, vtkCollection);
+  int GetNumberOfStreamlines() {return this->Streamlines->GetNumberOfItems();}
 
   // Description
   // Input: list of the renderers whose scenes will have streamlines
