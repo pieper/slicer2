@@ -68,7 +68,7 @@ proc MainFileInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainFile \
-        {$Revision: 1.34 $} {$Date: 2002/07/02 19:35:25 $}]
+        {$Revision: 1.35 $} {$Date: 2002/07/02 21:09:11 $}]
 
     set File(filePrefix) data
 }
@@ -806,34 +806,32 @@ proc CheckFileExists {filename {verbose 1}} {
 # 
 #-------------------------------------------------------------------------------
 proc MainFileFindImageNumber {which firstFile} {
-    # this assumes you have a dot separating the file name and the extensions
-    if {[regexp {\.([0-9]*)([^0-9]*)$} $firstFile match firstNum suffix] == 0} {
-        # try it without a dot
-        if {[regexp {([0-9]*)([^0-9]*)$} $firstFile match firstNum suffix] == 0} {
-            DevErrorWindow "Could not find the number of the first file in string $firstFile"
-            return ""
-        }
+    ##  Parse the file into its prefix, number, and perhaps stuff afterwards
+    ##   Note: find the last consecutive string of digits
+  if {[regexp {^(.+)\.([0-9]+)(\.[^\.0-9]*)?$} $firstFile match filePrefix \
+          num afterStuff] == 0} {
+       DevErrorWindow "Could not parse $firstFile in MainFileFindImageNumber"
+       return ""
     }
+
     # Rid unnecessary 0's
-    set firstNum [string trimleft $firstNum "0"]
+    set firstNum [string trimleft $num "0"]
     if {$firstNum == ""} {set firstNum 0}
 
-    if {$which == "First"} {
-        return $firstNum
-    }
+    ## Do they just want the first number?
+    if {$which == "First"} { return $firstNum  }
 
-    # Find filePattern of firstFile
-    set filePrefix [file root $firstFile]
-    set pattern ""
-    foreach volumeFirstPattern "%s.%03d %s.%d" {
-        set fileName [format $volumeFirstPattern $filePrefix $firstNum]
-        if {$fileName == $firstFile} {
-            set pattern $volumeFirstPattern
-        }
+    ## Did we trim zeros? This tells us how to look for files
+    if { [string equal $firstNum $num] == 1 } {
+        set pattern "%s.%d%s";        
+    } else {
+        ## Someday, we'll have to check for things other than 001...
+        set pattern "%s.%03d%s";
     }
-    if {$pattern == ""} {
-        return ""
-    }
+    # puts "Pattern: $pattern"
+    # puts "firstFile: $firstFile "
+    set firstFile [format $pattern $filePrefix $firstNum $afterStuff]
+    #puts "firstFile: $firstFile "
 
     # See if first file exists.  If not, then we're powerless.
     if {[CheckFileExists $firstFile 0] == 0} {
@@ -845,14 +843,13 @@ proc MainFileFindImageNumber {which firstFile} {
     set done 0
     set num $firstNum
     while {$done == 0} {
-        set fileName [format $pattern $filePrefix $num]
+        set fileName [format $pattern $filePrefix $num $afterStuff]
         if {[CheckFileExists $fileName 0] == 0} {
             set done 1
             set lastNum [expr $num - 1]
         }
         incr num
     }
-
     return $lastNum
 }
 
