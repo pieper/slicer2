@@ -486,46 +486,63 @@ static void MakePermuteMatrix(vtkMatrix4x4 *mat, char *order)
 
   switch (orient)
   {
-		// Axial
+    // Axial
     case 1:
       // Top Row
-			mat->SetElement(0, 0, -1.0); mat->SetElement(0, 1,  0.0);
-			mat->SetElement(0, 2,  0.0); mat->SetElement(0, 3,  0.0);
-			// 2nd Row
-			mat->SetElement(1, 0,  0.0); mat->SetElement(1, 1,  1.0);
-			mat->SetElement(1, 2,  0.0); mat->SetElement(1, 3,  0.0);
-			// 3rd Row
-			mat->SetElement(2, 0,  0.0); mat->SetElement(2, 1,  0.0);
-			mat->SetElement(2, 2,  1.0); mat->SetElement(2, 3,  0.0);
-		  break;
+      mat->SetElement(0, 0, -1.0); mat->SetElement(0, 1,  0.0);
+      mat->SetElement(0, 2,  0.0); mat->SetElement(0, 3,  0.0);
+      // 2nd Row
+      mat->SetElement(1, 0,  0.0); mat->SetElement(1, 1,  1.0);
+      mat->SetElement(1, 2,  0.0); mat->SetElement(1, 3,  0.0);
+      // 3rd Row
+      mat->SetElement(2, 0,  0.0); mat->SetElement(2, 1,  0.0);
+      mat->SetElement(2, 2,  1.0); mat->SetElement(2, 3,  0.0);
+      break;
 
-		// Sagittal
-		case 2:
-			mat->SetElement(0, 0,  0.0); mat->SetElement(0, 1,  0.0);
-			mat->SetElement(0, 2,  1.0); mat->SetElement(0, 3,  0.0);
+    // Sagittal
+    case 2:
+      mat->SetElement(0, 0,  0.0); mat->SetElement(0, 1,  0.0);
+      mat->SetElement(0, 2,  1.0); mat->SetElement(0, 3,  0.0);
 
-			mat->SetElement(1, 0, -1.0); mat->SetElement(1, 1,  0.0);
-			mat->SetElement(1, 2,  0.0); mat->SetElement(1, 3,  0.0);
+      mat->SetElement(1, 0, -1.0); mat->SetElement(1, 1,  0.0);
+      mat->SetElement(1, 2,  0.0); mat->SetElement(1, 3,  0.0);
 
-			mat->SetElement(2, 0,  0.0); mat->SetElement(2, 1,  1.0);
-			mat->SetElement(2, 2,  0.0); mat->SetElement(2, 3,  0.0);
-		  break;
+      mat->SetElement(2, 0,  0.0); mat->SetElement(2, 1,  1.0);
+      mat->SetElement(2, 2,  0.0); mat->SetElement(2, 3,  0.0);
+      break;
 
-		// Coronal
-		case 3:
-			mat->SetElement(0, 0, -1.0); mat->SetElement(0, 1,  0.0);
-			mat->SetElement(0, 2,  0.0); mat->SetElement(0, 3,  0.0);
+    // Coronal
+    case 3:
+      mat->SetElement(0, 0, -1.0); mat->SetElement(0, 1,  0.0);
+      mat->SetElement(0, 2,  0.0); mat->SetElement(0, 3,  0.0);
 
-			mat->SetElement(1, 0,  0.0); mat->SetElement(1, 1,  0.0);
-			mat->SetElement(1, 2,  1.0); mat->SetElement(1, 3,  0.0);
+      mat->SetElement(1, 0,  0.0); mat->SetElement(1, 1,  0.0);
+      mat->SetElement(1, 2,  1.0); mat->SetElement(1, 3,  0.0);
 
-			mat->SetElement(2, 0,  0.0); mat->SetElement(2, 1, -1.0);
-			mat->SetElement(2, 2,  0.0); mat->SetElement(2, 3,  0.0);
+      mat->SetElement(2, 0,  0.0); mat->SetElement(2, 1, -1.0);
+      mat->SetElement(2, 2,  0.0); mat->SetElement(2, 3,  0.0);
+    }
+
+    // Bottom row of matrix
+      mat->SetElement(3, 0,  0.0); mat->SetElement(3, 1,  0.0);
+      mat->SetElement(3, 2,  0.0); mat->SetElement(3, 3,  1.0);
+
+  // Direction of slice aquisition
+  double zDir = 1.0;
+  if (!strcmp(order,"SI") || !strcmp(order,"RL") || !strcmp(order,"AP"))
+  {
+    zDir = -1.0;
   }
 
-		// Bottom row of matrix
-		  mat->SetElement(3, 0,  0.0); mat->SetElement(3, 1,  0.0);
-		  mat->SetElement(3, 2,  0.0); mat->SetElement(3, 3,  1.0);
+  // Z-reflect
+  vtkTransform *tran = vtkTransform::New();
+  tran->PostMultiply();
+  tran->Identity();
+  // Z:
+  tran->Scale(1.0, 1.0, zDir);
+  // R:
+  tran->Concatenate(mat);
+  tran->GetMatrix(mat);
 }
 
 //----------------------------------------------------------------------------
@@ -601,7 +618,7 @@ static void MakeRotateMatrix(vtkMatrix4x4 *mat, float *ftl, float *ftr,
 
 //----------------------------------------------------------------------------
 static void MakeVolumeMatrix(vtkMatrix4x4 *mat, vtkMatrix4x4 *matRotate, 
-                double yDir, double zDir, int nx, int ny, int nz, 
+                double yDir, int nx, int ny, int nz, 
                 float vx, float vy, float vz, float ox, float oy, float oz, 
                 float sh)
 {
@@ -631,8 +648,8 @@ static void MakeVolumeMatrix(vtkMatrix4x4 *mat, vtkMatrix4x4 *matRotate,
 	// is multiplied by the existing matVol, M: C*M (not M*C)
 	tran->PostMultiply();
 
-	// M = O*R*Z*Y*S*C  
-	// Order of operation: Center, Scale, Shear, Y-Reflect, Z-Reflect, Rotate, Offset
+	// M = O*R*Y*S*C  
+	// Order of operation: Center, Scale, Shear, Y-Reflect, Rotate, Offset
 	
 	tran->Identity();
 	// C:
@@ -640,11 +657,9 @@ static void MakeVolumeMatrix(vtkMatrix4x4 *mat, vtkMatrix4x4 *matRotate,
 	// S:
 	tran->Scale(vx, vy, vz);
 	// Sh:
-	tran->GetMatrixPointer()->SetElement(2, 1, zDir * sh);
+	tran->GetMatrixPointer()->SetElement(2, 1, sh);
 	// Y:
 	tran->Scale(1.0, yDir, 1.0);
-	// Z:
-  tran->Scale(1.0, 1.0, zDir);
 	// R:
 	tran->Concatenate(matRotate);
 	// O:
@@ -668,7 +683,7 @@ void vtkMrmlVolumeNode::ComputeRasToIjk(vtkMatrix4x4 *matRotate,
 
   char *order = this->GetScanOrder();
 
-	nx = this->Dimensions[0];
+  nx = this->Dimensions[0];
   ny = this->Dimensions[1];
   nz = this->ImageRange[1] - this->ImageRange[0] + 1;
   
@@ -681,24 +696,26 @@ void vtkMrmlVolumeNode::ComputeRasToIjk(vtkMatrix4x4 *matRotate,
     vtkErrorMacro(<< "ComputeRasToIjkFromScanOrder: Slice spacing or number cannot be 0");
     return;
   }
-	sh = vy * tan(this->Tilt * atan(1.0) / 45.0) / vz;
 
   // Direction of slice aquisition
   zDir = 1.0;
-	if (!strcmp(order,"SI") || !strcmp(order,"RL") || !strcmp(order,"AP"))
+  if (!strcmp(order,"SI") || !strcmp(order,"RL") || !strcmp(order,"AP"))
   {
-		zDir = -1.0;
-	}
+    zDir = -1.0;
+  }
 
-	// RAS -> VTK
-	yDir = 1.0;
-  MakeVolumeMatrix(mat, matRotate, yDir, zDir, nx, ny, nz, vx, vy, vz, 
+  // Shear term for gantry tilt
+  sh = zDir * vy * tan(this->Tilt * atan(1.0) / 45.0) / vz;
+
+  // RAS -> VTK
+  yDir = 1.0;
+  MakeVolumeMatrix(mat, matRotate, yDir, nx, ny, nz, vx, vy, vz, 
     ox, oy, oz, sh);
   this->SetRasToVtkMatrix(GetMatrixToString(mat));
 
-	// RAS -> IJK
-	yDir = -1.0;
-  MakeVolumeMatrix(mat, matRotate, yDir, zDir, nx, ny, nz, vx, vy, vz, 
+  // RAS -> IJK
+  yDir = -1.0;
+  MakeVolumeMatrix(mat, matRotate, yDir, nx, ny, nz, vx, vy, vz, 
     ox, oy, oz, sh);
   this->SetRasToIjkMatrix(GetMatrixToString(mat));
 
