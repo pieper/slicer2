@@ -110,6 +110,8 @@ if { [itcl::find class isregistration] == "" } {
         method getP2 {} {}
         method update_slicer_mat {} {}
         method set_init_mat {} {}
+        method start {} {$_task on  }
+        method stop  {} {$_task off }
     }
 }
 
@@ -125,19 +127,18 @@ itcl::body isregistration::constructor {args} {
     # remove dots from name so it can be used in widget names
     regsub -all {\.} $_name "_" _name
 
-    #
-    # make the subwidgets
-    # - isvolumes for target and source volumes
-    # - control area
-    #
+    #######
+    ### make the subwidgets
+    ### - isvolumes for target and source volumes
+    ### - control area
+    ### - note that the volumes are initialized using the -target
+    ### -      and -source volumes
+    #######
 
+    ### create the two isvolumes, but do not give them any information.
     set _targetvol    [isvolume $itk_interior.target]
     set _sourcevol    [isvolume $itk_interior.source]
 
-    #puts $itk_interior.target
-    #set _targetvol    [isvolume -volume $itk_option(-target) ]
-    #set _sourcevol    [isvolume -volume $itk_option(-source) ]
-#
     pack $_targetvol -fill both -expand true
     pack $_sourcevol -fill both -expand true
     
@@ -162,21 +163,23 @@ itcl::body isregistration::constructor {args} {
     # align the control labels
     ::iwidgets::Labeledwidget::alignlabels $_task $_resmenu 
 
-    #
-    # set up the vtk pipeline
-    # - matrix that tie to slicer's matrix
-    # - image normalizers to prep volumes
-    # - the registration itself
-    #
+    ######
+    ### set up the vtk pipeline
+    ### - matrix that tie to slicer's matrix
+    ### - image normalizers to prep volumes
+    ### - the registration itself
+    ######
 
     set _matrix ::matrix_$_name
     catch "$_matrix Delete"
     vtkMatrix4x4 $_matrix
     $_matrix Identity
 
+    ######
     ##
     ## Cast target image to float and normalize
     ##
+    ######
     global Matrix
 
     set _targetcast ::targetcast_$_name
@@ -224,9 +227,9 @@ itcl::body isregistration::constructor {args} {
     vtkITKNormalizeImageFilter $_sourcenorm
     $_sourcenorm SetInput [$_sourcecast GetOutput]
 
-    ##
-    # Create the MI Registration instance
-    ##
+    #######
+    ## Create the MI Registration instance
+    #######
     set _reg ::reg_$_name
     catch "$_reg Delete"
     vtkITKMutualInformationTransform $_reg
@@ -250,7 +253,6 @@ itcl::body isregistration::destructor {} {
         catch "_sourcenorm Delete"
 }
 
-
 #-------------------------------------------------------------------------------
 # OPTION: -target
 #
@@ -265,6 +267,7 @@ itcl::configbody isregistration::target {
     if {$itk_option(-target) == ""} {
         return
     }
+    puts "got here in target"
     $_targetvol configure -volume $itk_option(-target)
     $_targetvol configure -resolution $itk_option(-resolution)
     $_targetvol configure -orientation coronal ;# TODO extra config due to isvolume bug
@@ -285,6 +288,7 @@ itcl::configbody isregistration::source {
     if {$itk_option(-source) == ""} {
         return
     }
+    puts "got here in source"
     $_sourcevol configure -volume $itk_option(-source)
     $_sourcevol configure -resolution $itk_option(-resolution)
     $_sourcevol configure -orientation coronal ;# TODO extra config due to isvolume bug
@@ -295,6 +299,7 @@ itcl::configbody isregistration::source {
 # OPTION: -resolution
 #
 # DESCRIPTION: set the resolution of the calculation
+#  this is not used at all
 #-------------------------------------------------------------------------------
 itcl::configbody isregistration::resolution {
 
@@ -341,7 +346,10 @@ itcl::body isregistration::step {} {
 #      aw Write
 #      aw Delete
 
-    # set the default values
+    #######
+    ## set the default values
+    #######
+
     $_reg SetTranslateScale $itk_option(-translatescale)
 
     $_reg SetSourceStandardDeviation $itk_option(-source_standarddev)
