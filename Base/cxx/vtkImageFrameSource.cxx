@@ -64,6 +64,7 @@ vtkImageFrameSource::vtkImageFrameSource()
 //----------------------------------------------------------------------------
 vtkImageFrameSource::~vtkImageFrameSource()
 {
+    vtkErrorMacro(<<"this->RenderWindow = " << this->RenderWindow << ", if != NULL, will UnRegister it\n");
   // We must UnRegister any object that has a vtkSetObjectMacro
   if (this->RenderWindow != NULL) 
   {
