@@ -68,6 +68,14 @@ proc DataInit {} {
 	set Module($m,procEnter) DataEnter
 	set Module($m,procExit) DataExit
 
+        # Define Dependencies
+        set Module($m,depend) "Events"
+
+        # Set version info
+        set m Data
+        lappend Module(versions) [ParseCVSInfo $m \
+		{$Revision: 1.13 $} {$Date: 2000/02/11 22:29:37 $}]
+
 	set Data(index) ""
 	set Data(clipboard) ""
 }

@@ -64,6 +64,10 @@ viewMode='Normal' viewBgColor='Blue'"
 	# The MainViewBuildGUI proc is called specifically
 	lappend Module(procVTK)  MainViewBuildVTK
 
+        set m MainView
+        lappend Module(versions) [ParseCVSInfo $m \
+		{$Revision: 1.11 $} {$Date: 2000/02/11 22:29:37 $}]
+
 	set View(viewerHeightNormal) 656
 	set View(viewerWidth)  956 
 	set View(viewerHeight) 956 
@@ -171,8 +175,8 @@ proc MainViewBuildGUI {} {
 	
 	frame $f.fTop -bg $Gui(activeWorkspace)
 	frame $f.fBot -bg $Gui(activeWorkspace)
-	pack $f.fTop -side top -padx 0 -pady 0 
-	pack $f.fBot -side top -padx 0 -pady 0 -fill x
+	pack $f.fTop -side top -padx 0 -pady 0 -fill both -expand true
+	pack $f.fBot -side top -padx 0 -pady 0 -fill both -expand true
 
 	#-------------------------------------------
 	# View->Nav->Top Frame
@@ -180,10 +184,11 @@ proc MainViewBuildGUI {} {
 	set f $Gui(fNav).fTop
 	
 	frame $f.fDir     -bg $Gui(activeWorkspace) -bd $Gui(borderWidth) -relief sunken
-	frame $f.fPreset  -bg $Gui(activeWorkspace)
+#	frame $f.fPreset  -bg $Gui(activeWorkspace)
 	frame $f.fMove    -bg $Gui(activeWorkspace)
 	
-	pack $f.fDir $f.fPreset $f.fMove -side left -padx 3 -pady 0
+#	pack $f.fDir $f.fPreset $f.fMove -side left -padx 3 -pady 0
+	pack $f.fDir $f.fMove -side left -padx 3 -pady 0
 
 	#-------------------------------------------
 	# View->Nav->Top->Dir Frame
@@ -203,20 +208,6 @@ proc MainViewBuildGUI {} {
 	pack $f.lDir
 	set Gui(fDir) $f.lDir
 
-	#-------------------------------------------
-	# View->Nav->Top->Preset Frame
-	#-------------------------------------------
-	set f $Gui(fNav).fTop.fPreset
-	set View(fPreset) $Gui(fNav).fTop.fPreset
-	
-	# Preset Button
-    foreach p "1 2 3" {
-		set c "button $f.c$p -text $p -width 2 $Gui(WBA)"
-			eval [subst $c]
-		bind $f.c$p <ButtonPress>   "MainOptionsPreset $p Press"
-		bind $f.c$p <ButtonRelease> "MainOptionsPreset $p Release"
-		pack $f.c$p -side top -pady 2 
-	}
 
 	#-------------------------------------------
 	# View->Nav->Top->Move Frame
@@ -224,6 +215,7 @@ proc MainViewBuildGUI {} {
 	set f $Gui(fNav).fTop.fMove
 	
 	frame $f.fRotate  -bg $Gui(activeWorkspace)
+	frame $f.fFov  -bg $Gui(activeWorkspace)
 
 # Comment out spin button to avoid bug when hit presets during spin	
 	# MainViewSpin button
@@ -232,7 +224,7 @@ proc MainViewBuildGUI {} {
 #        -indicatoron 0 -command "MainViewSpin" $Gui(WCA)}
 #        eval [subst $c]
 
-	pack $f.fRotate -side top -pady 2 
+	pack $f.fRotate $f.fFov -side top -pady 2 
 #	pack $f.fRotate $f.cMainViewSpin -side top -pady 3 
 	
 	#-------------------------------------------
@@ -252,65 +244,69 @@ proc MainViewBuildGUI {} {
 	bind $f.lRotate <Motion> {MainViewNavRotate %W %x %y      }
 
 	pack $f.lRotate -side top -padx 0 -pady 0 
-	
+
+	#-------------------------------------------
+	# View->Nav->Top->Move->Fov Frame
+	#-------------------------------------------
+	set f $Gui(fNav).fTop.fMove.fFov
+
+	eval {label $f.lFov -text "FOV:"} $Gui(WLA)
+	eval {entry $f.eFov -textvariable View(fov) -width 7} $Gui(WEA)
+	bind $f.eFov <Return> {MainViewSetFov; RenderAll}
+
+	pack $f.lFov $f.eFov -side left -padx 2 -pady 0
+
 	#-------------------------------------------
 	# View->Nav->Bot Frame
 	#-------------------------------------------
 	set f $Gui(fNav).fBot
 
-	frame $f.fBtns2 -bg $Gui(activeWorkspace)
 	frame $f.fSave -bg $Gui(activeWorkspace)
-	frame $f.fMode -bg $Gui(activeWorkspace)
+	frame $f.fPreset  -bg $Gui(activeWorkspace)
+	frame $f.fCenter  -bg $Gui(activeWorkspace)
 
-	pack $f.fBtns2 -side top -pady 2 
-	pack $f.fSave -side top -pady 2 -fill x
-	pack $f.fMode -side top -pady 2 
+	pack $f.fPreset $f.fCenter $f.fSave -side top -pady 2 -fill x
 
 	#-------------------------------------------
-	# View->Nav->Bot Frame
+	# View->Nav->Bot->Preset Frame
 	#-------------------------------------------
-	set f $Gui(fNav).fBot.fBtns2
+	set f $Gui(fNav).fBot.fPreset
+	set View(fPreset) $f
 
-    set c {label $f.lFov -text "FOV:" $Gui(WLA)}
-		eval [subst $c]
-	set c {entry $f.eFov -textvariable View(fov) -width 7 $Gui(WEA)}
-		eval [subst $c]
-		bind $f.eFov <Return> {MainViewSetFov; RenderAll}
-	pack $f.lFov $f.eFov -side left -padx 5 -pady 0
+	eval {label $f.lPreset -text "View Presets:"} $Gui(WLA)
+	pack $f.lPreset -side left -padx 5 -pady 0
+
+	# Preset Button
+	foreach p "1 2 3" {
+	    eval {button $f.c$p -text $p -width 2} $Gui(WBA)
+	    bind $f.c$p <ButtonPress>   "MainOptionsPreset $p Press"
+	    bind $f.c$p <ButtonRelease> "MainOptionsPreset $p Release"
+	    pack $f.c$p -side left -padx 2 
+	}
+	
+	#-------------------------------------------
+	# View->Nav->Bot->Center Frame
+	#-------------------------------------------
+	set f $Gui(fNav).fBot.fCenter
 
 	# Focalpoint button
-    set c {button $f.bFocus \
-        -text "Center" -width 7 \
-        -command "MainViewResetFocalPoint; RenderAll" $Gui(WBA)}
-        eval [subst $c]
+	eval {button $f.bFocus -text "Move Focal Point to Center" -width 26 \
+		-command "MainViewResetFocalPoint; RenderAll"} $Gui(WBA)
  
-	pack $f.bFocus -side top -padx 5 -pady 0
+	pack $f.bFocus -side left -padx 3 -pady 0
 
 	#-------------------------------------------
-	# Nav->Save
+	# View->Nav->Bot->Save Frame
 	#-------------------------------------------
 	set f $Gui(fNav).fBot.fSave
 
-	set c {button $f.bSave -text "Save 3D" -width 7 \
-		-command "MainViewSaveView" $Gui(WBA)}; eval [subst $c]
-	set c {entry $f.eSave -textvariable View(viewPrefix) $Gui(WEA)}
-		eval [subst $c]
+	eval {button $f.bSave -text "Save 3D" -width 7 \
+		-command "MainViewSaveView"} $Gui(WBA)
+	eval {entry $f.eSave -textvariable View(viewPrefix)} $Gui(WEA)
 	bind $f.eSave <Return> {MainViewSaveViewPopup}
+
 	pack $f.bSave -side left -padx 3
 	pack $f.eSave -side left -padx 2 -expand 1 -fill x
-	
-	#-------------------------------------------
-	# Nav->Mode
-	#-------------------------------------------
-	set f $Gui(fNav).fBot.fMode
-
-	foreach text "Normal 4x256 4x512 3D" value "Normal Quad256 Quad512 3D" {
-		set c {radiobutton $f.rMode$value -text "$text" -value "$value" \
-			-variable View(mode) -indicatoron 0 -command \
-			"MainViewerSetMode" $Gui(WCA)}; eval [subst $c]
-		pack $f.rMode$value -side left
-	}
-
 }
 
 #-------------------------------------------------------------------------------
