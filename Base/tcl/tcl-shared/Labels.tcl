@@ -64,7 +64,7 @@ proc LabelsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.17 $} {$Date: 2001/04/04 21:13:44 $}]
+		{$Revision: 1.18 $} {$Date: 2001/04/12 17:45:00 $}]
 
 	# Props
 	set Label(nameBrowse) ""
@@ -336,9 +336,7 @@ proc LabelsColorSample {{scale}} {
 		"$Label(sample,red) $Label(sample,green) $Label(sample,blue)"
 
 	foreach slider "Red Green Blue" {
-		$Label(s$slider) config -troughcolor \
-		[MakeColorNormalized \
-			"$Label(sample,red) $Label(sample,green) $Label(sample,blue)"]
+	    ColorSlider $Label(s$slider) $Label(diffuseNew)
 	}
 }
 

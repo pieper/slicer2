@@ -37,6 +37,7 @@
 #   ScrollSet
 #   MakeColor
 #   MakeColorNormalized
+#   ColorSlider
 #   ExpandPath
 #   Uncap
 #   Cap
@@ -57,7 +58,7 @@ proc GuiInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo Gui \
-		{$Revision: 1.25 $} {$Date: 2001/04/05 23:11:33 $}]
+		{$Revision: 1.26 $} {$Date: 2001/04/12 17:44:58 $}]
 
         # Are we running under Windows?
 	if {$tcl_platform(platform) == "windows"} {
@@ -651,6 +652,38 @@ proc MakeColorNormalized {str} {
 	[format %.0f [expr [lindex $str 0] * 255.0]] \
 	[format %.0f [expr [lindex $str 1] * 255.0]] \
 	[format %.0f [expr [lindex $str 2] * 255.0]]]
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC ColorSlider
+# This proc is introduced to color the troughs of sliders.  It only
+# reconfigures the color if the color will change, since otherwise
+# there is a bug under Linux.  (Under Linux the slider gets into an
+# infinite loop since configuring it calls the procedure bound to it,
+# which generally configures it again.  This freezes the slicer.
+# This must be a bug in tcl/tk with configuring scale widgets.)
+# .ARGS
+# widget widget the name of the slider
+# rgb list three integers, in "R G B" format
+# .END
+#-------------------------------------------------------------------------------
+proc ColorSlider {widget rgb} {
+
+    set color [MakeColorNormalized $rgb]
+
+    # ask the widget what color it is now (returns a descriptive list)
+    set oldColorDescription [$widget config -troughcolor]
+
+    foreach descrip  $oldColorDescription {
+	# if the new color is the same as the old color, return
+	if {$descrip == $color} { 
+	    return
+	}
+    }
+
+    # if the color is different, color away!
+    $widget config -troughcolor $color   
 }
 
 #-------------------------------------------------------------------------------

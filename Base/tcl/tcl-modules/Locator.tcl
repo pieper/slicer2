@@ -86,7 +86,7 @@ proc LocatorInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.22 $} {$Date: 2001/04/04 02:48:58 $}]
+		{$Revision: 1.23 $} {$Date: 2001/04/12 17:44:59 $}]
 
 	# Patient/Table position
 	set Locator(tblPosList)   "Front Side"
@@ -926,29 +926,8 @@ proc LocatorSetColor {{value ""}} {
 		eval [${actor}Actor GetProperty] SetColor $Locator(diffuseColor)
 	}
 
-	# under linux this caused a bug: every time LocatorSetColor
-	# was called it configured the slider and then LocatorSetColor
-	# was called again in an infinite loop.  (This must be a bug
-	# in tcl/tk with configuring scale widgets.) This prevented
-	# presets from working since the color was set whenever
-	# presets were recalled, and it also broke mrml files since 
-	# presets were recalled when they were opened/closed.
-
-	# So only configure the slider if its color has changed!
-	
-	set newcolor [MakeColorNormalized $Locator(diffuseColor)]
-	# get a list of junk describing the slider's color.
-	# one thing in the list is the color itself
-	set currcolor [$Locator(sRed) config -troughcolor]
-	foreach color $currcolor {
-	    # if it's the same as the old color, return
-	    if {$newcolor == $color} { 
-		return
-	    }
-	}
-
 	foreach slider "Red Green Blue" {
-		$Locator(s$slider) config -troughcolor [MakeColorNormalized $Locator(diffuseColor)]
+	    ColorSlider $Locator(s$slider) $Locator(diffuseColor)
 	}
 }
 

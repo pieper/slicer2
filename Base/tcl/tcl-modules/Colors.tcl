@@ -63,7 +63,7 @@ proc ColorsInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.15 $} {$Date: 2001/02/19 17:53:27 $}]
+		{$Revision: 1.16 $} {$Date: 2001/04/12 17:44:59 $}]
 }
 
 #-------------------------------------------------------------------------------
@@ -247,7 +247,6 @@ proc ColorsUpdateMRML {} {
 #-------------------------------------------------------------------------------
 # .PROC ColorsDisplayColors
 # 
-# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc ColorsDisplayColors {} {
@@ -269,6 +268,7 @@ proc ColorsDisplayColors {} {
 # .PROC ColorsSelectColor
 # 
 # .ARGS
+# i optional color index in Color(idList)
 # .END
 #-------------------------------------------------------------------------------
 proc ColorsSelectColor {{i ""}} {
@@ -289,7 +289,7 @@ proc ColorsSelectColor {{i ""}} {
 
 #-------------------------------------------------------------------------------
 # .PROC ColorsSetColor
-# 
+# Used by the color sliders
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -315,12 +315,17 @@ proc ColorsSetColor {{value ""}} {
 # .END
 #-------------------------------------------------------------------------------
 proc ColorsAddColor {} {
-	global Color Gui
+    global Color Gui
+    
+    set c [MainColorsAddColor $Color(name) $Color(diffuseColor) \
+	    $Color(ambient) $Color(diffuse) $Color(specular) $Color(power)]
+    
+    if {$c != ""} {
+	# make sure new color is selected on GUI
+	MainColorsSetActive $c
 
-	if {[MainColorsAddColor $Color(name) $Color(diffuseColor) \
-		$Color(ambient) $Color(diffuse) $Color(specular) $Color(power)] != ""} {
-		MainUpdateMRML
-	}
+	MainUpdateMRML
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -339,12 +344,12 @@ proc ColorsDeleteColor {} {
 # .END
 #-------------------------------------------------------------------------------
 proc ColorsColorSample {} {
-	global Color
-	
-	foreach slider "Red Green Blue" {
-		$Color(s$slider) config -troughcolor \
-		[MakeColorNormalized "$Color(red) $Color(green) $Color(blue)"]
-	}
+    global Color
+    
+    set color "$Color(red) $Color(green) $Color(blue)"
+    foreach slider "Red Green Blue" {
+	ColorSlider $Color(s$slider) $color
+    }
 }
 
 #-------------------------------------------------------------------------------

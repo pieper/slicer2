@@ -70,7 +70,7 @@ proc MainModelsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainModels \
-		{$Revision: 1.32 $} {$Date: 2001/04/04 21:13:16 $}]
+		{$Revision: 1.33 $} {$Date: 2001/04/12 17:44:58 $}]
 
 	set Model(idNone) -1
 	set Model(activeID) ""
@@ -144,11 +144,9 @@ proc MainModelsUpdateMRML {} {
 		# Color slider
 		set c $Model($m,colorID)
 		if {$c != ""} {
-			$Gui(wModels).fGrid.s$m config \
-				-troughcolor [MakeColorNormalized [Color($c,node) GetDiffuseColor]]
+		    ColorSlider $Gui(wModels).fGrid.s$m [Color($c,node) GetDiffuseColor]
 		} else {
-			$Gui(wModels).fGrid.s$m config \
-				-troughcolor [MakeColorNormalized "0 0 0"]
+		    ColorSlider $Gui(wModels).fGrid.s$m "0 0 0"
 		}
 	}
 
@@ -450,7 +448,8 @@ proc MainModelsBuildGUI {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainModelsCreateGUI
-# 
+# Makes the popup menu that comes up when you right-click a model.
+# This is made for each new model.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------

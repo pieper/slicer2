@@ -63,7 +63,7 @@ proc ModelsInit {} {
 
 	# Set Version Info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.31 $} {$Date: 2001/02/19 17:53:31 $}]
+		{$Revision: 1.32 $} {$Date: 2001/04/12 17:44:59 $}]
 
 	# Props
 	set Model(propertyType) Basic
@@ -104,11 +104,9 @@ proc ModelsUpdateMRML {} {
 		set c $Model($m,colorID)
 		# I shouldn't have to do this test, but making sure
 		if {[lsearch $Color(idList) $c] != -1} {
-			$Model(fScrolledGUI).s$m config \
-				-troughcolor [MakeColorNormalized [Color($c,node) GetDiffuseColor]]
+		    ColorSlider $Model(fScrolledGUI).s$m [Color($c,node) GetDiffuseColor]
 		} else {
-			$Model(fScrolledGUI).s$m config \
-				-troughcolor [MakeColorNormalized "0 0 0"]
+		    ColorSlider $Model(fScrolledGUI).s$m "0 0 0"
 		}
 	}
 }
