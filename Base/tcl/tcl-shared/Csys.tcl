@@ -167,12 +167,12 @@ proc CsysActorSelected {widget x y} {
 #-------------------------------------------------------------------------------
 proc CsysParams { module actor {axislen -1} {axisrad -1} {conelen -1} } {
     global Csys ${module}
-    
-    if { $axislen == -1 } { set axislen 100 }
-    if { $axisrad == -1 } { set axisrad [expr $axislen*0.02] }
-    if { $conelen == -1 } { set conelen [expr $axislen*0.2] }
+        
+    if { $axislen == -1 } { set axislen 150 }
+    if { $axisrad == -1 } { set axisrad [expr $axislen*0.015] }
+    if { $conelen == -1 } { set conelen [expr $axislen*0.15] }
     set axislen [expr $axislen-$conelen]
-    
+
     set ${module}($actor,size) $axislen
     
     # set parameters for cylinder geometry and transform
@@ -217,6 +217,8 @@ proc CsysResize { module actor size } {
 proc CsysCreate { module actor axislen axisrad conelen  } {
     global Csys ${module}
 
+    if { $axislen == -1 } { set axislen 150 }
+
     vtkCylinderSource ${module}($actor,AxisCyl)
     vtkConeSource ${module}($actor,AxisCone)
     vtkTransform ${module}($actor,CylXform)
@@ -236,16 +238,25 @@ proc CsysCreate { module actor axislen axisrad conelen  } {
     ${module}($actor,Xactor) SetMapper ${module}($actor,AxisMapper)
     eval [${module}($actor,Xactor) GetProperty] SetColor $Csys(xactor,color) 
     ${module}($actor,Xactor) PickableOn
+    # translate the arrow a bit
+    ${module}($actor,Xactor) SetPosition [expr -$axislen *0.4] 0 0
+    
     vtkActor ${module}($actor,Yactor)
     ${module}($actor,Yactor) SetMapper ${module}($actor,AxisMapper)
     eval [${module}($actor,Yactor) GetProperty] SetColor $Csys(yactor,color) 
     ${module}($actor,Yactor) RotateZ 90
     ${module}($actor,Yactor) PickableOn
+    # translate the arrow a bit
+    ${module}($actor,Yactor) SetPosition 0 [expr -$axislen *0.4] 0
+
     vtkActor ${module}($actor,Zactor)
     ${module}($actor,Zactor) SetMapper ${module}($actor,AxisMapper)
     eval [${module}($actor,Zactor) GetProperty] SetColor $Csys(zactor,color) 
     ${module}($actor,Zactor) RotateY -90
     ${module}($actor,Zactor) PickableOn
+    # translate the arrow a bit
+    ${module}($actor,Zactor) SetPosition 0 0 [expr -$axislen *0.4]
+
     CsysParams $module $actor $axislen $axisrad $conelen
     set ${module}($actor,actor) [vtkAssembly ${module}($actor,actor)]
     ${module}($actor,actor) AddPart ${module}($actor,Xactor)
