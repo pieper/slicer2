@@ -11,6 +11,8 @@ proc MIRIADParametersDefaults {} {
 
     upvar #0 MIRIADParameters mp  ;# for typing simplicity and readability
 
+    set mp(previewslice) 30
+
     set mp(pclasses) {
         Air
         OtherTissue
@@ -106,7 +108,11 @@ proc MIRIADParametersPreview { } {
 
     MIRIADSegmentSetEMParameters 
     MIRIADSegmentRunEM "preview"
-
+    for {set s 0} {$s < 3} {incr s} {
+        set ::Slice($s,offset) $::MIRIADParameters(previewslice)
+        MainSlicesSetOffset $s
+        RenderSlice $s
+    }
 }
 
 proc MIRIADParametersRun { } {
@@ -211,8 +217,10 @@ proc MIRIADParameters {} {
 
     set f [frame $cs.fbuttons]  
 
+    pack [iwidgets::spinint $f.prevsl -labeltext "Preview" -textvariable MIRIADParameters(previewslice) -width 3] -side left
     pack [button $f.load -text "Load..." -command MIRIADParametersLoad] -side left
     pack [button $f.save -text "Save..." -command MIRIADParametersSave] -side left
+    pack [button $f.xfer -text "Transfer" -command MIRIADSegmentSetEMParameters ] -side left
     pack [button $f.preview -text "Preview" -command MIRIADParametersPreview] -side left
     pack [button $f.run -text "Run" -command MIRIADParametersRun] -side left
     pack $f 
