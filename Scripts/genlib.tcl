@@ -252,14 +252,14 @@ if { ![file exists $LIB/VTK-build/bin/vtk] } {
 # Get and build itk
 #
 
-if { ![file exists $LIB/ITK-build/lib/vtk] } {
+if { ![file exists $LIB/Insight-build/lib/vtk] } {
     cd $LIB
 
     runcmd cvs -d :pserver:anoncvs:@www.itk.org:/cvsroot/Insight login
     runcmd cvs -z3 -d :pserver:anoncvs@www.itk.org:/cvsroot/Insight checkout -r ITK-1-6-0 Insight
 
-    file mkdir $LIB/ITK-build
-    cd $LIB/ITK-build
+    file mkdir $LIB/Insight-build
+    cd $LIB/Insight-build
 
     runcmd $CMAKE \
         -DBUILD_SHARED_LIBS:BOOL=ON \
