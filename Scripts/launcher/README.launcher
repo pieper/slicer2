@@ -25,6 +25,9 @@ The linux and solaris versions use the brand new "starpack" concept
 script.  These are build by running make-launchers.tcl on any platform.
 The incorporate slicer2.vfs/main.tcl into the newly created executable.
 
+Be sure to run tclkitsh where available (windows) to avoid entering into 
+an infinite loop in the tk event loop.
+
 //// comment from older version: this has been fixed as of 2002-10-22
 //
 //In the current version (8.4 200209) starpacks don't work right on windows,
