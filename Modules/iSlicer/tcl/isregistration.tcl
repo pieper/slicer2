@@ -78,8 +78,11 @@ if { [itcl::find class isregistration] == "" } {
         itk_option define -source_shrink source_shrink Source_shrink {1 1 1}
 
         itk_option define -translatescale translatescale Translatescale 64
+
         itk_option define -verbose verbose Verbose 1
         itk_option define -update_procedure updateprocedure UpdateProcedure ""
+        itk_option define -stop_procedure stopprocedure StopProcedure ""
+        itk_option define -auto_repeat auto_repeat Auto_repeat 1
 
         variable _name ""
     # is this the first time we are iterating
@@ -237,6 +240,7 @@ itcl::body isregistration::constructor {args} {
     #######
     ## Create the MI Registration instance
     #######
+     ### The name is something like ::reg__mi_reg Print
     set _reg ::reg_$_name
     catch "$_reg Delete"
     vtkITKMutualInformationTransform $_reg
@@ -395,10 +399,10 @@ itcl::body isregistration::step {} {
        return
      }
 
-    #
+    ##########
     # Get the current matrix - if it's different from the
     # the last matrix we set, copy it in and re-init reg 
-    #
+    ##########
 
     set t $itk_option(-transform)
 
@@ -411,6 +415,13 @@ itcl::body isregistration::step {} {
         puts "Metric [$_reg GetMetricValue]"
     }
 
+    if {[$_reg GetError] > 0} {
+        DevErrorWindow "Registration Algorithm returned an error!\n Are you sure the images overlap?"
+        $itk_option(-stop_procedure);
+        stop
+        return
+    }
+
     $this update_slicer_mat
 
     # Update MRML and display
@@ -419,8 +430,12 @@ itcl::body isregistration::step {} {
 
     # the next iteration will not be the first iter...
     set _firsttime 0;
-}
 
+    if {$itk_option(-auto_repeat) == 0} {
+        $itk_option(-stop_procedure);
+    stop
+    }
+}
 
 #-------------------------------------------------------------------------------
 # METHOD: update_slicer_mat
@@ -456,12 +471,15 @@ itcl::body isregistration::update_slicer_mat {} {
     vtkMatrix4x4 $mat
 
     $mat DeepCopy [$_reg GetOutputMatrix]
-    puts "The real mat"
+    if {$itk_option(-verbose)} {
+      puts "The real mat output by the registration algorithm"
+      puts [$this StringMatrix $mat]
+    }
+
 #   0.968893 0.247481 5.18321e-05 -18.2546 
 #   -0.247481 0.968893 0.000201605 -25.8306 
 #   -3.26387e-07 -0.000208161 1 0.0294268 
 #   0 0 0 1
-    puts [$this StringMatrix $mat]
 
 #
 # General Rot
@@ -523,7 +541,6 @@ itcl::body isregistration::update_slicer_mat {} {
 #    $mat SetElement 1 3 27.2486
 #    $mat SetElement 2 3 -31.8745
 
-
 ## Pieper data
 # 0.998666 -0.0111754 -0.0504106 -22.8 
 # 0.00955995 0.999436 -0.0321874 -11.1 
@@ -539,10 +556,17 @@ itcl::body isregistration::update_slicer_mat {} {
     puts "P2"
     puts [$this StringMatrix [$this getP2]]
 
-
+    if {0} {
+    set p2mat [$this getP1]
+    $p2mat Invert
+    $this GetSimilarityMatrix $p2mat $mat [$this getP2]
+    $mat Invert
+    } else {
     set p2mat [$this getP2]
     $p2mat Invert
+    $mat Invert
     $this GetSimilarityMatrix $p2mat $mat [$this getP1]
+    }
 
 #    $mat Multiply4x4 $mat [$this getP1] $mat
 #    puts "intermediate"
@@ -595,35 +619,74 @@ itcl::body isregistration::set_init_mat {} {
     catch "$mat Delete"
     vtkMatrix4x4 $mat
 
-        $mat DeepCopy [[Matrix($t,node) GetTransform] GetMatrix]
-    puts "Initting Matrix"
+    if {$itk_option(-verbose)} {
+       $mat DeepCopy [[Matrix($t,node) GetTransform] GetMatrix]
+       puts "Initting Matrix: The Mat"
+       puts [$this StringMatrix $mat]
+       puts "P1"
+       puts [$this StringMatrix [$this getP1]]
+       puts "P2"
+       puts [$this StringMatrix [$this getP2]]
+    }
+
+
+#    ## invert mat before
+#    ## normal p1,p2
+#    $mat DeepCopy [[Matrix($t,node) GetTransform] GetMatrix]
+#    set p1mat [$this getP1]
+#    $p1mat Invert
+#    $this GetSimilarityMatrix [$this getP2] $mat $p1mat
+#    $mat Invert
+
+    if {0} {
+### works
+    ## switch p1,p2 invert mat before
+    $mat DeepCopy [[Matrix($t,node) GetTransform] GetMatrix]
+    set p1mat [$this getP2]
+    $p1mat Invert
+     $mat Invert
+    $this GetSimilarityMatrix [$this getP1] $mat $p1mat
+    puts "switch, before--"
     puts [$this StringMatrix $mat]
-    puts [$this StringMatrix [$this getP1]]
-    puts [$this StringMatrix [$this getP2]]
-
-#     $mat Multiply4x4 [$this getP2] $mat $mat
-#     puts "multiply 1"
-#     puts [$this StringMatrix $mat]
-#
-#     ## solve the system of equations
-#     #set tmpnode ::tmpnode_$_name
-#     #catch "$tmpnode Delete"
-#     #vtkMrmlVolumeNode $tmpnode
-#     #$tmpnode SolveABeqCforB [$this getP2] $_matrix $mat
-#     #
-#     #$tmpnode Delete
-#
-#     set tmpmat [$this getP1]
-#     $tmpmat Invert
-#     $mat Multiply4x4 $mat $tmpmat $_matrix
-
+    } else {
+#### works
+    ## normal p1,p2, invert mat after
+    $mat DeepCopy [[Matrix($t,node) GetTransform] GetMatrix]
     set p1mat [$this getP1]
     $p1mat Invert
     $this GetSimilarityMatrix [$this getP2] $mat $p1mat
+    $mat Invert
+    puts "normal, after--"
+    puts [$this StringMatrix $mat]
+    }
+
+#### does not work
+##    ## normal p1,p2 invert mat before
+##    $mat DeepCopy [[Matrix($t,node) GetTransform] GetMatrix]
+##    set p1mat [$this getP1]
+##    $p1mat Invert
+##    $mat Invert
+##    $this GetSimilarityMatrix [$this getP2] $mat $p1mat
+##    puts "normal, before"
+##    puts [$this StringMatrix $mat]
+#
+#### no works
+##    # swith p1,p2 invert Mat after
+##    $mat DeepCopy [[Matrix($t,node) GetTransform] GetMatrix]
+##    set p1mat [$this getP2]
+##    $p1mat Invert
+##    $this GetSimilarityMatrix [$this getP1] $mat $p1mat
+##    $mat Invert
+##    puts "switch, after"
+##    puts [$this StringMatrix $mat]
 
     $_matrix DeepCopy $mat
     $mat Delete
-    puts [$_matrix Determinant]
+
+    if {$itk_option(-verbose)} {
+        puts "Determinant"
+        puts [$_matrix Determinant]
+    }
 
 #     ### hacking to identity
 #     $_matrix Identity
@@ -642,11 +705,11 @@ itcl::body isregistration::set_init_mat {} {
 #    $_matrix SetElement 1 3 -25.872
 
 
-        $_reg Initialize $_matrix
+    $_reg Initialize $_matrix
     
-        if {$itk_option(-verbose)} {
-            set matstring [Matrix($t,node) GetMatrix]
-            puts "input matrix $matstring"
+    if {$itk_option(-verbose)} {
+        set matstring [Matrix($t,node) GetMatrix]
+        puts "input matrix $matstring"
         set matstring [$this StringMatrix $_matrix ]
         puts "transformed input matrix $matstring"
 #        set matstring [$this StringMatrix [$_reg GetOutputMatrix ]]
@@ -656,7 +719,9 @@ itcl::body isregistration::set_init_mat {} {
     ## keep track of MTime just in case user updates that transform...
     set _mat_m_time [[Matrix($t,node) GetTransform] GetMTime]
     } else {
-    puts "Not initting matrix"
+        if {$itk_option(-verbose)} {
+            puts "Not re-Initting matrix"
+        }
     }
 }
 
@@ -671,7 +736,6 @@ itcl::body isregistration::set_init_mat {} {
 #-------------------------------------------------------------------------------
 
 itcl::body isregistration::GetSimilarityMatrix { s2 mat s1 } {
-    $mat Invert
     $mat Multiply4x4 $mat $s1 $mat
     $mat Multiply4x4 $s2 $mat $mat
 }
@@ -684,8 +748,6 @@ itcl::body isregistration::GetSimilarityMatrix { s2 mat s1 } {
 
 itcl::body isregistration::getP1 {  } {
     global Matrix
-
-#    return [Volume($Matrix(volume),node) GetPosition]
 
     set _p1 ::matrixp1_$_name
     catch  "$_p1 Delete"
@@ -706,12 +768,9 @@ itcl::body isregistration::getP1 {  } {
 itcl::body isregistration::getP2 {  } {
     global Matrix
 
-# return [Volume($Matrix(refVolume),node) GetPosition]
-
     set _p2 ::matrixp2_$_name
     catch  "$_p2 Delete"
     vtkMatrix4x4 $_p2
-
 
     GetSlicerToItkMatrix Volume($Matrix(refVolume),node) $_p2
     puts [$this StringMatrix $_p2]
@@ -753,6 +812,9 @@ itcl::body isregistration::StringToMatrix { mat4x4 str} {
 }
 
 
+#-------------------------------------------------------------------------------
+# A demo thing written by Steve Pieper
+#-------------------------------------------------------------------------------
 
 proc isregistration_demo {} {
 
