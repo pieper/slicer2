@@ -151,7 +151,7 @@ proc MIRIADSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.7 $} {$Date: 2003/11/02 20:03:25 $}]
+        {$Revision: 1.8 $} {$Date: 2003/11/02 20:33:27 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -160,7 +160,22 @@ proc MIRIADSegmentInit {} {
     #   This is a handy method for organizing the global variables that
     #   the procedures in this module and others need to access.
     #
+    set MIRIADSegment(archive)  "gpop.bwh.harvard.edu:/nas/nas0/pieper/data/MIRIAD/Project_0002"
     set MIRIADSegment(subject_dir)  ""
+
+    set tmpdirs {/state/partition1/pieper /usr/tmp /tmp}
+    foreach tmpdir $tmpdirs {
+        if { [file exists $tmpdir] } {
+            set MIRIADSegment(tmpdir) $tmpdir
+        }
+    }
+
+    if { [file exists /usr/bin/rsync] } {
+        set MIRIADSegment(rsync) /usr/bin/rsync
+    } else {
+        set MIRIADSegment(rsync) ~/birn/bin/rsync
+    }
+
 }
 
 
@@ -271,7 +286,7 @@ proc MIRIADSegmentBuildGUI {} {
     #-------------------------------------------
     set f $fDeface.fRange
 
-    eval {button $f.select -text "Load Atlas" -width 20 -command "MIRIADSegmentLoadBWHAtlas"} $Gui(WBA)
+    eval {button $f.select -text "Load Atlas" -width 20 -command "MIRIADSegmentLoadSPLAtlas"} $Gui(WBA)
     
     pack $f.select -pady $Gui(pad) -side top -fill y -expand 1
 
@@ -327,14 +342,29 @@ proc MIRIADSegmentLoadStudy { {BIRNID "000397921927"} {visit 001} {atlas "loni"}
 
     MainFileClose 
 
-    set root /home/pieper/data/duke-data/neil/MIRIAD/subjects/${BIRNID}
-    set ::MIRIAD(subject_dir) $root/Visit_$visit/Study_0001/
+    #
+    # first, make the local directory for the data
+    #
+    set ::MIRIAD(subject_dir) $::MIRIADSegment(tmpdir)/$BIRNID/Visit_$visit/Study_0001/
+    file mkdir $::MIRIADSegment(subject_dir)
+    set source $::MIRIADSegment(archive)/${BIRNID}/Visit_$visit/Study_0001/
+
+    #
+    # then, bring over the data with rsync and load it up
+    #
+    exec $::MIRIADSegment(rsync) -r $source $::MIRIADSegment(subject_dir)
 
     MIRIADSegmentLoadDukeStudy $::MIRIAD(subject_dir)/RawData/001.ser
+
+    #
+    # either read the existing warped atlas, or create it
+    #
     if { $atlas == "loni" } {
         MIRIADSegmentLoadLONIWarpedAtlas $::MIRIAD(subject_dir)/DerivedData/LONI/mri/atlases/bwh_prob/air_252p
     } else {
-
+        MIRIADSegmentLoadLONIWarpedAtlas 
+        MIRIADSegmentLoadSPLAtlas ~/birn/data/atlas
+        MIRIADSegmentCreateSPLWarpedAtlas 
     }
 
 }
@@ -389,7 +419,7 @@ proc MIRIADSegmentLoadDukeStudy { {dir "choose"} } {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc MIRIADSegmentLoadBWHAtlas { {dir "choose"} } {
+proc MIRIADSegmentLoadSPLAtlas { {dir "choose"} } {
 
     if { $dir == "choose"} {
         set dir [tk_chooseDirectory]
@@ -414,7 +444,7 @@ proc MIRIADSegmentLoadBWHAtlas { {dir "choose"} } {
 
         MainVolumesSetActive "NEW"
         set ::Volume(name) $name
-        set ::Volume(desc) "BWH Atlas $vol"
+        set ::Volume(desc) "SPL Atlas $vol"
         set ::Volume(firstFile) $dir/$vol
         set ::Volume(lastNum) 124
         set ::Volume(isDICOM) 0
@@ -441,7 +471,7 @@ proc MIRIADSegmentLoadBWHAtlas { {dir "choose"} } {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc MIRIADSegmentCreateSPLWarpedAtlas { {dir "choose"} } {
+proc MIRIADSegmentCreateSPLWarpedAtlas {} {
 
     # 
     # require that duke data and bwh atlas are already loaded
