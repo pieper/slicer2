@@ -236,6 +236,8 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   vtkHyperStreamline *CreateHyperStreamline();
   void SaveStreamlineAsTextFile(ofstream &filePoints,ofstream &fileAttribs,
                                 vtkHyperStreamlinePoints *currStreamline);
+  // Remove 0-length streamlines before clustering.
+  void CleanStreamlines();
 
   vtkTransform *ROIToWorld;
   vtkTransform *WorldToTensorScaledIJK;

@@ -1216,6 +1216,9 @@ void vtkMultipleStreamlineController::SeedAndSaveStreamlinesFromROI(char *points
 
 void vtkMultipleStreamlineController::ClusterTracts(int tmp)
 {
+  // First make sure none of the streamlines have 0 length
+  this->CleanStreamlines();
+
   int numberOfClusters= this->TractClusterer->GetNormalizedCuts()->GetNumberOfClusters();
 
   this->TractClusterer->SetInputStreamlines(this->Streamlines);
@@ -1265,3 +1268,42 @@ void vtkMultipleStreamlineController::ClusterTracts(int tmp)
 
 }
 
+// Remove any streamlines with 0 length
+//----------------------------------------------------------------------------
+void vtkMultipleStreamlineController::CleanStreamlines()
+{
+  int numStreamlines, index;
+  vtkHyperStreamlinePoints *currStreamline;
+
+
+  numStreamlines = this->Streamlines->GetNumberOfItems();
+  index = 0;
+  for (int i = 0; i < numStreamlines; i++)
+    {
+      vtkDebugMacro( << "Cleaning streamline " << i << " : " << index);
+
+      // Get the streamline
+      currStreamline = (vtkHyperStreamlinePoints *) 
+        this->Streamlines->GetItemAsObject(index);
+
+      if (currStreamline == NULL)
+    {
+      vtkErrorMacro( << "No streamline " << index);
+      return;
+    }
+
+      if (currStreamline->GetHyperStreamline0()->GetNumberOfPoints() +
+      currStreamline->GetHyperStreamline1()->GetNumberOfPoints() < 5)
+    {
+      vtkErrorMacro( << "Remove short streamline " << i);
+      // Delete the streamline from the collections
+      this->DeleteStreamline(index);
+    }
+      else
+    {
+      // Only increment if we haven't deleted one (and shortened the list)
+      index++;
+    }
+
+    }
+}
