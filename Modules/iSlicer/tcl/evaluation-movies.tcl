@@ -15,6 +15,7 @@ proc eval_movies { {dir /tmp} {steps 120} {skip 1} } {
     wm geometry .eval +0+0
 
     pack [isvolume .eval.isv] -side left
+    .eval.isv volmenu_update
     .eval.isv configure -resolution 256 -volume 1
     .eval.isv configure -orientation coronal
     .eval.isv configure -orientation axial

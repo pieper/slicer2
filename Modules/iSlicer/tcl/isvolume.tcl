@@ -279,7 +279,9 @@ itcl::configbody isvolume::slice {
 #-------------------------------------------------------------------------------
 itcl::configbody isvolume::volume {
 
-
+    if { ![info exists _volidmap($itk_option(-volume))] } {
+        error "bad volume id"
+    }
     set id $_volidmap($itk_option(-volume))
 
     if { $itk_option(-volume) == "" || $itk_option(-volume) == "None" } {
@@ -426,6 +428,7 @@ itcl::body isvolume::volmenu_update {} {
     foreach id $Volume(idList) {
         set name [Volume($id,node) GetName]
         set _volidmap($name) $id
+        set _volidmap($id) $id
         $_volmenu insert end $name
     }
     $_volmenu select 0

@@ -284,8 +284,3 @@ proc iwidgets::Imrml::test {} {
 
 }
 
-# for testing 
-
-iwidgets::Imrml::test
-
-
