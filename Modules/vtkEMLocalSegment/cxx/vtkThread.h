@@ -21,6 +21,8 @@ THE SOFTWARE IS PROVIDED "AS IS."  MIT HAS NO OBLIGATION TO PROVIDE
 MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 =========================================================================auto=*/
+// In the Future use vtkMultiThreader instead and delete this file 
+// An example how to use vtkMultiThreader is given in Module/vtkLevelSets/cxx/vtkLevelSets.cxx
 #ifndef __vtkThread_h
 #define __vtkThread_h
 
@@ -28,8 +30,6 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkObject.h"
 
 #ifndef _WIN32
-
-
 // ----------------------------------------------------------------------------------------------
 // Definitions for parallising from thread_combat.h 
 // ----------------------------------------------------------------------------------------------
@@ -42,7 +42,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 // ----------------------------------------------------------------------------------------------
 // Definitions for paralising algorithm from
 // workpile.h Simon Warfield simonw@bwh.harvard.edu */
-// $Id: vtkThread.h,v 1.5 2003/08/22 18:21:21 pohl Exp $ */
+// $Id: vtkThread.h,v 1.6 2004/11/18 03:24:22 pohl Exp $ */
 // ----------------------------------------------------------------------------------------------
 
 #include <stdlib.h>
@@ -86,11 +86,16 @@ public:
   void work_put(workpile_t wp, void *ptr) ;
   void work_wait(workpile_t wp) ;
   void work_finished_forever(workpile_t wp) ;
+
 protected:
   static void worker(workpile_t wp);
   void work_change_worker_proc(work_proc_t worker_proc, workpile_t wp);
 //ETX
 };
+#else 
+// In the future use GetGlobalDefaultNumberOfThreads from vtkMultiThreade
+// Cannpt use return bc we just subtitute the name  vtkThreadNumCpus with { ... }
+#define vtkThreadNumCpus(x) {SYSTEM_INFO sysInfo; GetSystemInfo(&sysInfo); x = (int) sysInfo.dwNumberOfProcessors;}
 
 #endif // _WIN32
 #endif
