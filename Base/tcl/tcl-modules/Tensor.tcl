@@ -39,7 +39,7 @@
 #   TensorUpdateScalarBar
 #   TensorShowScalarBar
 #   TensorHideScalarBar
-#   TensorSelect
+#   TensorSelect x y z
 #   TensorUpdateThreshold
 #   TensorUpdateMaskLabel
 #   TensorUpdateGlyphEigenvector
@@ -57,6 +57,13 @@
 #   TensorBuildVTK
 #   annotatePick
 #   ConvertVolumeToTensors
+#   TensorRecalculateTensors
+#   TensorWriteStructuredPoints
+#   TensorCalculateActorMatrix transform t
+#   TensorSpecificVisualizationSettings
+#   TensorResetDefaultVisualizationSettings
+#   TensorApplyVisualizationSettings mode
+#   TensorSetOperation math
 #==========================================================================auto=
 
 
@@ -97,7 +104,7 @@ proc TensorInit {} {
     # Set Version Info
     #------------------------------------
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.5 $} {$Date: 2002/02/05 17:37:13 $}]
+	    {$Revision: 1.6 $} {$Date: 2002/02/06 16:39:18 $}]
     
     # Props: GUI tab we are currently on
     #------------------------------------
@@ -114,8 +121,16 @@ proc TensorInit {} {
     # Visualization-related variables
     #------------------------------------
 
+    # type of settings in 3d view, anno, etc
+    set Tensor(mode,visualizationSettingsType) default
+    set Tensor(mode,visualizationSettingsTypeList) {tensors default}
+    set Tensor(mode,visualizationSettingsTypeList,tooltips) [list \
+	    "Settings to display tensors well: black background, etc." \
+	    "Reset to Slicer default settings."  \
+	    ]
+
     # type of reformatting
-    set Tensor(mode,reformatType) None
+    set Tensor(mode,reformatType) 0
     set Tensor(mode,reformatTypeList) {None 0 1 2}
     set Tensor(mode,reformatTypeList,tooltips) [list \
 	    "No reformatting: display all tensors." \
@@ -141,7 +156,7 @@ proc TensorInit {} {
 
     # type of glyph coloring
     set Tensor(mode,glyphColor) Linear
-    set Tensor(mode,glyphColorList) {Linear Planar Spherical Max Middle Min RA FA}
+    set Tensor(mode,glyphColorList) {Linear Planar Spherical Max Middle Min MaxMinusMiddle RA FA}
     set Tensor(mode,glyphColorList,tooltip) {Color tensors according to Linear, Planar, or Spherical measures, with the Max, Middle, or Min eigenvalue, or with relative or fractional anisotropy (RA or FA).}
 
     # How to handle display of colors: like W/L but scalar range
@@ -173,7 +188,7 @@ proc TensorInit {} {
     set Tensor(mode,scalarBar) Off
     set Tensor(mode,scalarBarList) {On Off}
     set Tensor(mode,scalarBarList,tooltips) [list \
-	    "Display a scalar bar to show correspondence between numbers and colors" \
+	    "Display a scalar bar to show correspondence between numbers and colors." \
 	    "Do not display the scalar bar."]
 
     #------------------------------------
@@ -275,7 +290,7 @@ proc TensorUpdateMRML {} {
 # .END
 #-------------------------------------------------------------------------------
 proc TensorEnter {} {
-    global Tensor
+    global Tensor Slice
     
     # Push event manager
     #------------------------------------
@@ -298,6 +313,9 @@ proc TensorEnter {} {
     MainAddActor Tensor(vtk,streamln,actor)
     Tensor(vtk,glyphs,actor) VisibilityOff
     Tensor(vtk,streamln,actor) VisibilityOff
+
+    # Default to reformatting along with the currently active slice
+    set Tensor(mode,reformatType) $Slice(activeID)
 
 }
 
@@ -330,7 +348,11 @@ proc TensorExit {} {
     if {$Tensor(vtk,streamln,actor,remove)} {
 	MainRemoveActor Tensor(vtk,streamln,actor)
     }
-
+    # make them actually disappear
+    Render3D
+    
+    # make 3D slices opaque now
+    #MainSlicesReset3DOpacity
 }
 
 ################################################################
@@ -394,6 +416,9 @@ proc TensorBuildGUI {} {
     frame $f.fActive    -bg $Gui(backdrop) -relief sunken -bd 2
     pack $f.fActive -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
 
+    frame $f.fSettings  -bg $Gui(activeWorkspace)
+    pack $f.fSettings -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
+
     frame $f.fReformat  -bg $Gui(activeWorkspace)
     pack $f.fReformat -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
 
@@ -420,7 +445,24 @@ proc TensorBuildGUI {} {
     # that get refreshed during UpdateMRML
     lappend Tensor(mbActiveList) $f.mbActive
     lappend Tensor(mActiveList) $f.mbActive.m
-    
+
+    #-------------------------------------------
+    # Display->Settings frame
+    #-------------------------------------------
+    set f $fDisplay.fSettings
+
+    DevAddLabel $f.l "3D View Settings:"
+    pack $f.l -side left -padx $Gui(pad) -pady 0
+
+    foreach vis $Tensor(mode,visualizationSettingsTypeList) tip $Tensor(mode,visualizationSettingsTypeList,tooltips) {
+	eval {radiobutton $f.rMode$vis \
+		-text "$vis" -value "$vis" \
+		-variable Tensor(mode,visualizationSettingsType) \
+		-command {TensorApplyVisualizationSettings} \
+		-indicatoron 0} $Gui(WCA) 
+	pack $f.rMode$vis -side left -padx 0 -pady 0
+	TooltipAdd  $f.rMode$vis $tip
+    }   
 
     #-------------------------------------------
     # Display->Reformat frame
@@ -617,7 +659,7 @@ proc TensorBuildGUI {} {
 	eval {radiobutton $f.rMode$vis \
 		-text "$vis" -value "$vis" \
 		-variable Tensor(mode,glyphScalarRange) \
-		-command {TensorUpdateGlyphScalarRange} \
+		-command {TensorUpdateGlyphScalarRange; Render3D} \
 		-indicatoron 0} $Gui(WCA)
 	pack $f.rMode$vis -side left -padx 0 -pady 1
 	TooltipAdd  $f.rMode$vis $tip
@@ -643,10 +685,13 @@ proc TensorBuildGUI {} {
 		-length 130 \
 		-variable Tensor(mode,glyphScalarRange,[Uncap $slider]) \
 		-resolution 0.1 \
-		-command {TensorUpdateGlyphScalarRange}} \
+		-command {TensorUpdateGlyphScalarRange; Render3D}} \
 		$Gui(WSA) {-sliderlength 15}
 	pack $f.l$slider $f.e$slider $f.s$slider -side left  -padx $Gui(pad)
 	set Tensor(gui,slider,$slider) $f.s$slider
+	bind $f.e${slider} <Return>   \
+		"TensorUpdateGlyphScalarRange ${slider}; Render3D"
+
     }
 
     ##########################################################
@@ -895,7 +940,7 @@ proc TensorBuildGUI {} {
     # Add menu items
     foreach math $Tensor(scalars,operationList) {
 	$f.mbMath.m add command -label $math \
-		-command "TensorDoMath $math"
+		-command "TensorSetOperation $math"
     }
     # save menubutton for config
     set Tensor(gui,mbMath) $f.mbMath
@@ -925,8 +970,7 @@ proc TensorBuildGUI {} {
     #-------------------------------------------
     set f $fScalars.fApply
 
-    # Lauren you are here
-    DevAddButton $f.bApply "Apply" "TensorDoMath $math" 4    
+    DevAddButton $f.bApply "Apply" "TensorDoMath" 4    
     pack $f.bApply -side top -padx 0 -pady 0
 
     #-------------------------------------------
@@ -1435,6 +1479,8 @@ proc TensorUpdateScalarBar {} {
 	    TensorHideScalarBar
 	}
     }
+
+    Render3D
 }
 
 #-------------------------------------------------------------------------------
@@ -1462,30 +1508,19 @@ proc TensorHideScalarBar {} {
 
 #-------------------------------------------------------------------------------
 # .PROC TensorSelect
-# 
+# Given x,y,z in world coordinates, starts a streamline from that point
+# in the active tensor dataset.
 # .ARGS
+# int x 
+# int y
+# int z 
 # .END
 #-------------------------------------------------------------------------------
 proc TensorSelect {x y z} {
     global Tensor
     global Select
 
-    #set x 10
-    #set y 10
-    #set z 1
-
-    # these points are supposed to be in ijk coordinates
-    set location  "[Tensor(vtk,picker) GetCellId] \
-	    [Tensor(vtk,picker) GetSubId] \
-	    [Tensor(vtk,picker) GetPCoords]"
-
-    set pickPos [Tensor(vtk,picker) GetPickPosition]
-    set xp [lindex $pickPos 0] 
-    set yp [lindex $pickPos 1]
-    set zp [lindex $pickPos 2]
-    
-    puts "Select Picker  (x,y,z):  $x $y $z  cell: $location,  (x,y,z):  $xp $yp $zp"
-
+    puts "Select Picker  (x,y,z):  $x $y $z"
 
     set t $Tensor(activeID)
     if {$t == "" || $t == $Tensor(idNone)} {
@@ -1493,23 +1528,20 @@ proc TensorSelect {x y z} {
 	return
     }
 
-    # use out world to ijk matrix information:
-    # Transform x y z.  The tensors don't know about their
-    # actor's UserMatrix.  We need to transform xyz by
-    # the inverse of this to put the point where the
-    # tensors think it is...
+    # Use our world to ijk matrix information to correct x,y,z.
+    # The streamline class doesn't know about the
+    # tensor actor's UserMatrix.  We need to transform xyz by
+    # the inverse of this matrix (almost) so the streamline will start 
+    # from the right place in the tensors.
+    #------------------------------------
     vtkTransform transform
-    TensorCalculateActorMatrix transform $t
-    
+    TensorCalculateActorMatrix transform $t    
     transform Inverse
-#    transform PreMultiply
     set point [transform TransformPoint $x $y $z]
     set x [lindex $point 0]
     set y [lindex $point 1]
     set z [lindex $point 2]
     transform Delete
-
-    #puts "find cell: [[Tensor($t,data) GetOutput] FindCell $x $y $z]"
 
     # start pipeline (never use reformatted data here)
     #------------------------------------
@@ -1517,35 +1549,14 @@ proc TensorSelect {x y z} {
     
     # start hyperstreamline here
     #------------------------------------
-
-    # notes: Lauren this works sometimes, but the cell 
-    # can't always be found and sometimes this causes a 
-    # core dump.  It doesn't seem to work if pick
-    # near two crossing lines
     Tensor(vtk,streamln) SetStartPosition $x $y $z
     
-    #set location "0 0 0 0 0"
-    #set location "10 0 0 0 0"
-    # this may not work at all, though it should since
-    # the class is now using this information
-    #eval {Tensor(vtk,streamln) SetStartLocation} $location
-
-    # for test hacked code: use both and all our info
-    #Tensor(vtk,streamln) SetStartPosition $x $y $z
-
-    # Lauren debug
-    #------------------------------------
-    Tensor(vtk,streamln) DebugOn
-    #Tensor(vtk,streamln) Update
-    #puts [Tensor(vtk,streamln) Print]
-
-
     # Make actor visible now that it has inputs
     #------------------------------------
     Tensor(vtk,streamln,actor) VisibilityOn
 
-    # Put the output streamline's actor in the right place
-    # just use the same matrix we use to position the tensors
+    # Put the output streamline's actor in the right place.
+    # Just use the same matrix we use to position the tensors.
     #------------------------------------
     vtkTransform transform
     TensorCalculateActorMatrix transform $t
@@ -1633,6 +1644,9 @@ proc TensorUpdateGlyphColor {} {
     global Tensor
 
     set mode $Tensor(mode,glyphColor)
+    
+    # display new mode while we are working...
+    $Tensor(gui,mbGlyphColor)	config -text $mode
 
     switch $mode {
 	"Linear" {
@@ -1653,6 +1667,9 @@ proc TensorUpdateGlyphColor {} {
 	"Min" {
 	    Tensor(vtk,glyphs) ColorGlyphsWithMinEigenvalue
 	}
+	"MaxMinusMiddle" {
+	    Tensor(vtk,glyphs) ColorGlyphsWithMaxMinusMidEigenvalue
+	}
 	"RA" {
 	    Tensor(vtk,glyphs) ColorGlyphsWithRelativeAnisotropy
 	}
@@ -1662,8 +1679,6 @@ proc TensorUpdateGlyphColor {} {
 
     }
 
-    $Tensor(gui,mbGlyphColor)	config -text $mode
-
     # Tell actor where to get scalar range
     set Tensor(mode,glyphScalarRange) Auto
     TensorUpdateGlyphScalarRange
@@ -1671,8 +1686,6 @@ proc TensorUpdateGlyphColor {} {
     # Update pipelines
     Render3D
 
-    # After update grab real scalar range for slider
-    TensorUpdateGlyphScalarRange
 }
 
 #-------------------------------------------------------------------------------
@@ -1683,6 +1696,11 @@ proc TensorUpdateGlyphColor {} {
 #-------------------------------------------------------------------------------
 proc TensorUpdateGlyphScalarRange {{not_used ""}} {
     global Tensor
+
+    # make sure the pipeline is up-to-date so we get the right
+    # scalar range.  Otherwise the first render will not have
+    # the right glyph colors.
+    Tensor(vtk,glyphs) Update
 
     set mode $Tensor(mode,glyphScalarRange)
 
@@ -1705,6 +1723,16 @@ proc TensorUpdateGlyphScalarRange {{not_used ""}} {
 		    $Tensor(mode,glyphScalarRange,hi) 
 	}
     }
+
+    # If we are doing streamlines, tell them how to build LUT
+    # Lauren why does this have little effect?  
+    # need log lookup table?
+    eval {Tensor(vtk,streamln,mapper)  SetScalarRange}  \
+	    [[Tensor(vtk,glyphs) GetOutput] GetScalarRange] 
+
+    # This causes multiple renders since for some reason
+    # the scalar bar does not update on the first one
+    Render3D
 }
 
 #-------------------------------------------------------------------------------
@@ -2025,10 +2053,16 @@ proc TensorCreateEmptyVolume {OrigId {Description ""} { VolName ""}} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc TensorDoMath {operation} {
+proc TensorDoMath {{operation ""}} {
     global Tensor Gui
 
     puts "creating volume"
+
+
+    # if this was called from user input GUI menu
+    if {$operation == ""} {
+	set operation $Tensor(scalars,operation) 
+    }
 
     # should use DevCreateNewCopiedVolume if have a vol node
     # to copy...
@@ -2084,6 +2118,10 @@ proc TensorDoMath {operation} {
     
     # reset blue bar text
     set Gui(progressText) ""
+
+    # display this volume so the user knows something happened
+    MainSlicesSetVolumeAll Back $v
+    RenderAll
 }
 
 #-------------------------------------------------------------------------------
@@ -2444,15 +2482,15 @@ proc TensorBuildVTK {} {
     #TensorAddObjectProperty $object StartPosition {9 9 -9} float {Start Pos}
     #TensorAddObjectProperty $object IntegrateMinorEigenvector \
 	    #1 bool IntegrateMinorEv
-    TensorAddObjectProperty $object MaximumPropagationDistance 20.0 \
+    TensorAddObjectProperty $object MaximumPropagationDistance 60.0 \
 	    float {Max Propagation Distance}
-    TensorAddObjectProperty $object IntegrationStepLength 0.1 \
+    TensorAddObjectProperty $object IntegrationStepLength 0.01 \
 	    float {Integration Step Length}
-    TensorAddObjectProperty $object StepLength 0.01 \
+    TensorAddObjectProperty $object StepLength 0.0001 \
 	    float {Step Length}	    
     TensorAddObjectProperty $object Radius 0.25 \
 	    float {Radius}
-    TensorAddObjectProperty $object  NumberOfSides 18 \
+    TensorAddObjectProperty $object  NumberOfSides 30 \
 	    int {Number of Sides}
     TensorAddObjectProperty $object  IntegrationDirection 2 \
 	    int {Integration Direction}
@@ -2460,8 +2498,10 @@ proc TensorBuildVTK {} {
     # Display of tensor streamline: LUT and Mapper
     #------------------------------------
     set object streamln,lut
+    # Lauren we may want to use this once have no neg eigenvalues
     #TensorMakeVTKObject vtkLogLookupTable $object
     TensorMakeVTKObject vtkLookupTable $object
+    Tensor(vtk,$object) SetHueRange .6667 0.0
 #    TensorAddObjectProperty $object HueRange \
 #	    {.6667 0.0} float {Hue Range}
 
@@ -2821,6 +2861,14 @@ proc ConvertVolumeToTensors {} {
     trans Delete
 }
 
+#-------------------------------------------------------------------------------
+# .PROC TensorRecalculateTensors
+# Using user-specified matrix to transform gradient vectors
+# (and consequently the tensors), recalculate tensors
+# from gradient volumes.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc TensorRecalculateTensors {} {
     global Tensor
 
@@ -2897,6 +2945,13 @@ proc TensorRecalculateTensors {} {
     trans Delete
 }
 
+#-------------------------------------------------------------------------------
+# .PROC TensorWriteStructuredPoints
+# Dump tensors to structured points file.  this ignores
+# world to ijk now.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc TensorWriteStructuredPoints {filename} {
     global Tensor
 
@@ -2911,23 +2966,16 @@ proc TensorWriteStructuredPoints {filename} {
     puts "Wrote tensor data, id $t, as $filename"
 }
 
-proc TensorTest {s opacity} {
-    global Slice
-
-    # Property
-    #set Model($m,prop,$r)  [Model($m,actor,$r) GetProperty]
-
-    #$Model($m,prop,$Model(activeRenderer)) SetOpacity [Model($m,node) GetOpacity]
-	
-    #Tensor(vtk,glyphs,actor) SetUserMatrix $m
-
-    #vtkActor Slice($s,planeActor)
-
-    [Slice($s,planeActor) GetProperty] SetOpacity $opacity
-    Render3D
-}
-
-
+#-------------------------------------------------------------------------------
+# .PROC TensorCalculateActorMatrix
+# Place the entire tensor volume in world coordinates
+# using this transform.  Uses world to IJk matrix but
+# removes the spacing since the data/actor know about this.
+# .ARGS
+# vtkTransform transform the transform to modify
+# int t the id of the tensor volume to calculate the matrix for
+# .END
+#-------------------------------------------------------------------------------
 proc TensorCalculateActorMatrix {transform t} {
 
     # Grab the node whose data we want to position 
@@ -2955,3 +3003,95 @@ proc TensorCalculateActorMatrix {transform t} {
     $transform Scale [expr 1.0 / $res_x] [expr 1.0 / $res_y] \
 	    [expr 1.0 / $res_z]
 }
+
+
+#-------------------------------------------------------------------------------
+# .PROC TensorSpecificVisualizationSettings
+# Set up vizualization to see tensors well.
+# Transparent 3D slices and black background...
+# 
+# FUTURE IDEAS:
+# It would be nice if this sort of setting could be pushed/
+# popped like the bindings stack that Peter wrote (Events.tcl).
+# This would allow modules to control the visualization
+# but not interfere with other modules.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc TensorSpecificVisualizationSettings {} {
+    global Anno
+
+    # let us see tensors through the slices
+    MainSlicesSet3DOpacityAll 0.1
+    MainViewSetBackgroundColor Black
+    # show all digits of float data (i.e. trace)
+    MainAnnoSetPixelDisplayFormat "full"
+    # turn off those irritating letters
+    set Anno(letters) 0
+    MainAnnoSetVisibility
+}
+
+#-------------------------------------------------------------------------------
+# .PROC TensorResetDefaultVisualizationSettings
+# Undo the TensorSpecific settings and use defaults 
+# of the slicer.  
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc TensorResetDefaultVisualizationSettings {} {
+    global Anno
+
+    # let us see tensors through the slices
+    MainSlicesReset3DOpacityAll
+    MainViewSetBackgroundColor Blue
+    # show all digits of float data (i.e. trace)
+    MainAnnoSetPixelDisplayFormat "default"
+    # turn back on those irritating letters
+    set Anno(letters) 1
+    MainAnnoSetVisibility
+}
+
+#-------------------------------------------------------------------------------
+# .PROC TensorApplyVisualizationSettings
+#  Set the settings the user requested, default or for tensors
+# .ARGS
+# str mode optional, default or tensors
+# .END
+#-------------------------------------------------------------------------------
+proc TensorApplyVisualizationSettings {{mode ""}} {
+    global Tensor
+    
+    if {$mode == ""} {
+	set mode $Tensor(mode,visualizationSettingsType)
+    }
+    
+    switch $mode {
+	"default" {
+	    TensorResetDefaultVisualizationSettings
+	}
+	"tensors" {
+	    TensorSpecificVisualizationSettings
+	}
+    }
+
+    Render3D
+}
+
+#-------------------------------------------------------------------------------
+# .PROC TensorSetOperation
+# Set the mathematical operation we should do to produce
+# a scalar volume from the tensors
+# .ARGS
+# str math the name of the operation from list $Tensor(scalars,operationList)
+# .END
+#-------------------------------------------------------------------------------
+proc TensorSetOperation {math} {
+    global Tensor
+
+    set Tensor(scalars,operation) $math
+    
+    # config menubutton
+    $Tensor(gui,mbMath) config -text $math
+}
+
