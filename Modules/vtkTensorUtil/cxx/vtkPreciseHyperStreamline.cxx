@@ -3,8 +3,8 @@
 Program:   Visualization Toolkit
 Module:    $RCSfile: vtkPreciseHyperStreamline.cxx,v $
 Language:  C++
-Date:      $Date: 2004/07/29 16:40:05 $
-Version:   $Revision: 1.3 $
+Date:      $Date: 2004/09/17 17:59:21 $
+Version:   $Revision: 1.4 $
 
 Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen 
 All rights reserved.
@@ -30,7 +30,7 @@ PURPOSE.  See the above copyright notice for more information.
 #include "vtkPreciseHyperArray.h"
 #include "vtkPreciseHyperPoint.h"
 
-vtkCxxRevisionMacro(vtkPreciseHyperStreamline, "$Revision: 1.3 $");
+vtkCxxRevisionMacro(vtkPreciseHyperStreamline, "$Revision: 1.4 $");
 vtkStandardNewMacro(vtkPreciseHyperStreamline);
 
 
@@ -77,12 +77,12 @@ vtkPreciseHyperArray::vtkPreciseHyperArray()
   this->MaxAngleLastId = 0;
 }
 
-float vtkPreciseHyperArray::CosineOfAngle(void) 
+vtkFloatingPointType vtkPreciseHyperArray::CosineOfAngle(void) 
 {
-  float vect[3];
+  vtkFloatingPointType vect[3];
   int i;
-  float length = 0.0;
-  float res=1.0;
+  vtkFloatingPointType length = 0.0;
+  vtkFloatingPointType res=1.0;
   if ( this->MaxId > this->MaxAngleLastId ) 
     {
       for ( i = 0 ; i < 3 ; i++ ) 
@@ -187,7 +187,7 @@ vtkPreciseHyperStreamline::~vtkPreciseHyperStreamline()
 // Specify the start of the hyperstreamline in the cell coordinate system. 
 // That is, cellId and subId (if composite cell), and parametric coordinates.
 void vtkPreciseHyperStreamline::SetStartLocation(vtkIdType cellId, int subId,
-                         float pcoords[3])
+                         vtkFloatingPointType pcoords[3])
 {
   if ( cellId != this->StartCell || subId != this->StartSubId ||
        pcoords[0] !=  this->StartPCoords[0] || 
@@ -208,9 +208,9 @@ void vtkPreciseHyperStreamline::SetStartLocation(vtkIdType cellId, int subId,
 // Specify the start of the hyperstreamline in the cell coordinate system. 
 // That is, cellId and subId (if composite cell), and parametric coordinates.
 void vtkPreciseHyperStreamline::SetStartLocation(vtkIdType cellId, int subId,
-                         float r, float s, float t)
+                         vtkFloatingPointType r, vtkFloatingPointType s, vtkFloatingPointType t)
 {
-  float pcoords[3];
+  vtkFloatingPointType pcoords[3];
   pcoords[0] = r;
   pcoords[1] = s;
   pcoords[2] = t;
@@ -220,7 +220,7 @@ void vtkPreciseHyperStreamline::SetStartLocation(vtkIdType cellId, int subId,
 
 // Get the starting location of the hyperstreamline in the cell coordinate
 // system. Returns the cell that the starting point is in.
-vtkIdType vtkPreciseHyperStreamline::GetStartLocation(int& subId, float pcoords[3])
+vtkIdType vtkPreciseHyperStreamline::GetStartLocation(int& subId, vtkFloatingPointType pcoords[3])
 {
   subId = this->StartSubId;
   pcoords[0] = this->StartPCoords[0];
@@ -232,7 +232,7 @@ vtkIdType vtkPreciseHyperStreamline::GetStartLocation(int& subId, float pcoords[
 // Specify the start of the hyperstreamline in the global coordinate system. 
 // Starting from position implies that a search must be performed to find 
 // initial cell to start integration from.
-void vtkPreciseHyperStreamline::SetStartPosition(float x[3])
+void vtkPreciseHyperStreamline::SetStartPosition(vtkFloatingPointType x[3])
 {
   if ( x[0] != this->StartPosition[0] || x[1] != this->StartPosition[1] || 
        x[2] != this->StartPosition[2] )
@@ -249,9 +249,9 @@ void vtkPreciseHyperStreamline::SetStartPosition(float x[3])
 // Specify the start of the hyperstreamline in the global coordinate system. 
 // Starting from position implies that a search must be performed to find 
 // initial cell to start integration from.
-void vtkPreciseHyperStreamline::SetStartPosition(float x, float y, float z)
+void vtkPreciseHyperStreamline::SetStartPosition(vtkFloatingPointType x, vtkFloatingPointType y, vtkFloatingPointType z)
 {
-  float pos[3];
+  vtkFloatingPointType pos[3];
   pos[0] = x;
   pos[1] = y;
   pos[2] = z;
@@ -260,17 +260,17 @@ void vtkPreciseHyperStreamline::SetStartPosition(float x, float y, float z)
 }
 
 // Get the start position of the hyperstreamline in global x-y-z coordinates.
-float *vtkPreciseHyperStreamline::GetStartPosition()
+vtkFloatingPointType *vtkPreciseHyperStreamline::GetStartPosition()
 {
   return this->StartPosition;
 }
 
 // Make sure coordinate systems are consistent
-static void FixVectors(float **prev, float **current, int iv, int ix, int iy)
+static void FixVectors(vtkFloatingPointType **prev, vtkFloatingPointType **current, int iv, int ix, int iy)
 {
-  float p0[3], p1[3], p2[3];
-  float v0[3], v1[3], v2[3];
-  float temp[3];
+  vtkFloatingPointType p0[3], p1[3], p2[3];
+  vtkFloatingPointType v0[3], v1[3], v2[3];
+  vtkFloatingPointType temp[3];
   int i;
 
   for (i=0; i<3; i++)
@@ -330,22 +330,22 @@ void vtkPreciseHyperStreamline::Execute()
   vtkPointData *pd=input->GetPointData();
   vtkDataArray *inScalars;
   vtkDataArray *inTensors;
-  float *tensor;
+  vtkFloatingPointType *tensor;
   vtkPreciseHyperPoint *sNext, *sPtr;
   int i, j, k, ptId, subId, iv, ix, iy;
-  float ev[3], xNext[3];
+  vtkFloatingPointType ev[3], xNext[3];
   vtkCell *cell;
-  float tol2,closestPoint[3];
-  float d, step, p[3];
-  float *w;
-  float dist2;
-  float deitActual, error, dirStart[3];
-  float *m[3], *v[3];
-  float totalLength =0.0;
+  vtkFloatingPointType tol2,closestPoint[3];
+  vtkFloatingPointType d, step, p[3];
+  vtkFloatingPointType *w;
+  vtkFloatingPointType dist2;
+  vtkFloatingPointType deitActual, error, dirStart[3];
+  vtkFloatingPointType *m[3], *v[3];
+  vtkFloatingPointType totalLength =0.0;
   //   float m0[3], m1[3], m2[3];
   //   float v0[3], v1[3], v2[3];
-  float m0[9];
-  float v0[9];
+  vtkFloatingPointType m0[9];
+  vtkFloatingPointType v0[9];
   vtkDataArray *cellTensors;
   vtkDataArray *cellScalars;
   // set up working matrices
@@ -360,7 +360,7 @@ void vtkPreciseHyperStreamline::Execute()
       vtkErrorMacro(<<"No tensor data defined!");
       return;
     }
-  w = new float[input->GetMaxCellSize()];
+  w = new vtkFloatingPointType[input->GetMaxCellSize()];
 
   inScalars = pd->GetScalars();
   //inScalars = 0;
@@ -592,9 +592,9 @@ void vtkPreciseHyperStreamline::BuildTube()
   vtkCellArray *newStrips;
   vtkIdType i, npts, ptOffset=0;
   int ptId, j, id, k, i1, i2;
-  float dOffset, x[3], v[3], s, r, r1[3], r2[3], stepLength;
-  float xT[3], sFactor, normal[3], w[3];
-  float theta=2.0*vtkMath::Pi()/this->NumberOfSides;
+  vtkFloatingPointType dOffset, x[3], v[3], s, r, r1[3], r2[3], stepLength;
+  vtkFloatingPointType xT[3], sFactor, normal[3], w[3];
+  vtkFloatingPointType theta=2.0*vtkMath::Pi()/this->NumberOfSides;
   vtkPointData *outPD;
   vtkDataSet *input = this->GetInput();
   vtkPolyData *output = this->GetOutput();

@@ -3,8 +3,6 @@
 
 //BTX
 
-#include "vtkIdType.h"
-
 class vtkPreciseHyperPoint { //;prevent man page generation
 public:
     vtkPreciseHyperPoint(); // method sets up storage

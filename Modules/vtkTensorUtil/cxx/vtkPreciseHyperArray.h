@@ -2,7 +2,6 @@
 #define __vtkPreciseHyperArray_h 
 
 //BTX
-#include "vtkIdType.h"
 #include "vtkPreciseHyperPoint.h"
 class vtkPreciseHyperArray { //;prevent man page generation
 public:
@@ -31,16 +30,16 @@ public:
   vtkIdType MaxId;             // maximum index inserted thus far
   vtkIdType Size;              // allocated size of data
   vtkIdType Extend;            // grow array by this amount
-  float Direction;       // integration direction
+  vtkFloatingPointType Direction;       // integration direction
   vtkIdType MaxAngleLastId;
   void IncrementMaxAngleLastId(void) { MaxAngleLastId++; }
-  float DistanceSoFarMaxAngle(void) { 
+  vtkFloatingPointType DistanceSoFarMaxAngle(void) { 
     if ( this->Array[MaxId].D == -1.0 && MaxId > 0 ) 
       return this->Array[MaxId-1].D - this->Array[MaxAngleLastId+1].D;
     else
       return this->Array[MaxId].D - this->Array[MaxAngleLastId+1].D;
   }
-  float CosineOfAngle(void);
+  vtkFloatingPointType CosineOfAngle(void);
 };
 //ETX
 

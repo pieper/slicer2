@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkTensorImplicitFunctionToFunctionSet.h,v $
   Language:  C++
-  Date:      $Date: 2004/08/05 00:16:56 $
-  Version:   $Revision: 1.2 $
+  Date:      $Date: 2004/09/17 17:59:21 $
+  Version:   $Revision: 1.3 $
 */
 // .NAME vtkTensorImplicitFunctionToFunctionSet - Wrapper class around itk::BSplineInterpolateImageFuntion
 // .SECTION Description
@@ -29,8 +29,8 @@ class VTK_TENSORUTIL_EXPORT vtkTensorImplicitFunctionToFunctionSet : public vtkF
   static vtkTensorImplicitFunctionToFunctionSet *New();
   vtkTypeRevisionMacro(vtkTensorImplicitFunctionToFunctionSet, vtkFunctionSet );
   virtual void PrintSelf(ostream& os, vtkIndent indent);
-  virtual int FunctionValues(float* x, float* f);
-  int GetTensor(float *x, float * f);
+  virtual int FunctionValues(vtkFloatingPointType* x, vtkFloatingPointType* f);
+  int GetTensor(vtkFloatingPointType *x, vtkFloatingPointType * f);
   virtual void AddDataSet(vtkDataSet* dataset) {}
   void AddImplicitFunction(vtkImplicitFunction * func, int numcomp ) {
     if ( numcomp < 0 || numcomp > 5 )
@@ -48,49 +48,49 @@ class VTK_TENSORUTIL_EXPORT vtkTensorImplicitFunctionToFunctionSet : public vtkF
   void SetIntegrationForward(void);
   void SetIntegrationBackward(void);
   void SetChangeIntegrationDirection(void);
-  void SetIntegrationDirection(float dir[3]);
+  void SetIntegrationDirection(vtkFloatingPointType dir[3]);
 
   // Description:
   // Set/get lower bound bias. If fractional anisotropy falls below this value, no regularization is done
   // ( should be set to the value of the terminal fractional anisotropy )
-  vtkSetClampMacro(LowerBoundBias,float,0.0,UpperBoundBias);
-  vtkGetMacro(LowerBoundBias,float);
+  vtkSetClampMacro(LowerBoundBias,vtkFloatingPointType,0.0,UpperBoundBias);
+  vtkGetMacro(LowerBoundBias,vtkFloatingPointType);
 
   // Description:
   // Set/get upper bound bias. If fractional anisotropy falls below this value, regularization is done on the tensor
-  vtkSetClampMacro(UpperBoundBias,float,LowerBoundBias,1.0);
-  vtkGetMacro(UpperBoundBias,float);
+  vtkSetClampMacro(UpperBoundBias,vtkFloatingPointType,LowerBoundBias,1.0);
+  vtkGetMacro(UpperBoundBias,vtkFloatingPointType);
 
-  vtkGetMacro(LastFractionalAnisotropy,float);
+  vtkGetMacro(LastFractionalAnisotropy,vtkFloatingPointType);
 
   // Description:
   // Set/get the magnitude of the correction bias
-  vtkSetClampMacro(CorrectionBias,float,0.0,UpperBoundBias);
-  vtkGetMacro(CorrectionBias,float);
-  int IsInsideImage(float x[3]);
-  void GetLastEigenvalues(float v[3]) {
-    memcpy(v,eigVal,3*sizeof(float));
+  vtkSetClampMacro(CorrectionBias,vtkFloatingPointType,0.0,UpperBoundBias);
+  vtkGetMacro(CorrectionBias,vtkFloatingPointType);
+  int IsInsideImage(vtkFloatingPointType x[3]);
+  void GetLastEigenvalues(vtkFloatingPointType v[3]) {
+    memcpy(v,eigVal,3*sizeof(vtkFloatingPointType));
   }
-  void GetLastEigenvectors(float *v[3]) {
+  void GetLastEigenvectors(vtkFloatingPointType *v[3]) {
     for ( int i = 0 ; i < 3 ; i++ )
-      memcpy(v[i],eigVec[i],3*sizeof(float));
+      memcpy(v[i],eigVec[i],3*sizeof(vtkFloatingPointType));
   }
  protected:
   
-  float Direction[3];
+  vtkFloatingPointType Direction[3];
   int DirectionValid;
   int IntegrationDirection;
-  float LastFractionalAnisotropy;
-  float LowerBoundBias;
-  float UpperBoundBias;
-  float CorrectionBias;
+  vtkFloatingPointType LastFractionalAnisotropy;
+  vtkFloatingPointType LowerBoundBias;
+  vtkFloatingPointType UpperBoundBias;
+  vtkFloatingPointType CorrectionBias;
   int DataExtent[6];
-  float DataOrigin[3];
-  float DataSpacing[3];
+  vtkFloatingPointType DataOrigin[3];
+  vtkFloatingPointType DataSpacing[3];
 
-  float vec[9];
-  float *eigVec[3];
-  float eigVal[3];
+  vtkFloatingPointType vec[9];
+  vtkFloatingPointType *eigVec[3];
+  vtkFloatingPointType eigVal[3];
   //BTX
 
   vtkImplicitFunction* TensorComponent[6];

@@ -3,8 +3,8 @@
   Program:   Insight Segmentation & Registration Toolkit
   Module:    $RCSfile: vtkTensorImplicitFunctionToFunctionSet.cxx,v $
   Language:  C++
-  Date:      $Date: 2004/07/27 21:11:49 $
-  Version:   $Revision: 1.2 $
+  Date:      $Date: 2004/09/17 17:59:21 $
+  Version:   $Revision: 1.3 $
 
   Copyright (c) 2002 Insight Consortium. All rights reserved.
   See ITKCopyright.txt or http://www.itk.org/HTML/Copyright.htm for details.
@@ -21,7 +21,7 @@
 #include "vtkObjectFactory.h"
 #include "vtkTensorImplicitFunctionToFunctionSet.h"
 
-vtkCxxRevisionMacro(vtkTensorImplicitFunctionToFunctionSet, "$Revision: 1.2 $");
+vtkCxxRevisionMacro(vtkTensorImplicitFunctionToFunctionSet, "$Revision: 1.3 $");
 vtkStandardNewMacro(vtkTensorImplicitFunctionToFunctionSet);
 
 void vtkTensorImplicitFunctionToFunctionSet::PrintSelf(ostream& os, vtkIndent indent)
@@ -35,7 +35,7 @@ void vtkTensorImplicitFunctionToFunctionSet::PrintSelf(ostream& os, vtkIndent in
   }
 }
 
-int vtkTensorImplicitFunctionToFunctionSet::GetTensor(float *x, float * res) {
+int vtkTensorImplicitFunctionToFunctionSet::GetTensor(vtkFloatingPointType *x, vtkFloatingPointType * res) {
   int i;
 
   if ( TensorComponent[0] )
@@ -81,12 +81,12 @@ int vtkTensorImplicitFunctionToFunctionSet::GetTensor(float *x, float * res) {
   return 1;
 }
 
-int vtkTensorImplicitFunctionToFunctionSet::FunctionValues(float* x, float* res){
-  float f[9];
-  float * val[3];
-  float dist2;
-  float trace;
-  float correction;
+int vtkTensorImplicitFunctionToFunctionSet::FunctionValues(vtkFloatingPointType* x, vtkFloatingPointType* res){
+  vtkFloatingPointType f[9];
+  vtkFloatingPointType * val[3];
+  vtkFloatingPointType dist2;
+  vtkFloatingPointType trace;
+  vtkFloatingPointType correction;
   int i,j;
 
   for ( i=0 ; i < 3 ; i++ )
@@ -149,19 +149,19 @@ void vtkTensorImplicitFunctionToFunctionSet::SetChangeIntegrationDirection(void)
   this->Direction[2] = -this->Direction[2];
 }
 
-void vtkTensorImplicitFunctionToFunctionSet::SetIntegrationDirection(float dir[3]) {
+void vtkTensorImplicitFunctionToFunctionSet::SetIntegrationDirection(vtkFloatingPointType dir[3]) {
   this->Direction[0] = dir[0];
   this->Direction[1] = dir[1];
   this->Direction[2] = dir[2];
   this->DirectionValid = 1;
 }
 
-int vtkTensorImplicitFunctionToFunctionSet::IsInsideImage(float x[3]) {
-  float temp;
+int vtkTensorImplicitFunctionToFunctionSet::IsInsideImage(vtkFloatingPointType x[3]) {
+  vtkFloatingPointType temp;
   int i;
   for ( i = 0 ; i < 3 ; i++ ) {
     temp = (x[i] - DataOrigin[i])/DataSpacing[i];
-    if ( temp < ((float)this->DataExtent[2*i]) || temp > ((float)this->DataExtent[2*i+1]) )
+    if ( temp < ((vtkFloatingPointType)this->DataExtent[2*i]) || temp > ((vtkFloatingPointType)this->DataExtent[2*i+1]) )
       return 0;
   }
   return 1;
