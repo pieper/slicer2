@@ -356,9 +356,12 @@ static void ConvertColor(float *f, unsigned char *c)
 }
 
 //----------------------------------------------------------------------------
-template <class T>
-static void vtkImagePlotExecute(vtkImagePlot *self,
-				  vtkImageData *inData,  T *inPtr,  int inExt[6],
+//template <class T>
+//static void vtkImagePlotExecute(vtkImagePlot *self,
+//				  vtkImageData *inData,  T *inPtr,  int inExt[6],
+//				  vtkImageData *outData, unsigned char *outPtr, int outExt[6])
+void vtkImagePlotExecute::vtkImagePlotExecute(
+				  vtkImageData *inData,  unsigned char *inPtr,  int inExt[6],
 				  vtkImageData *outData, unsigned char *outPtr, int outExt[6])
 {
 	unsigned char color[3];
@@ -366,10 +369,10 @@ static void vtkImagePlotExecute(vtkImagePlot *self,
   int inIncX, inIncY, inIncZ;
   int outIncX, outIncY, outIncZ;
 	int nx, ny, nc, nxnc;
-  int y1, y2, r=self->GetThickness();
+  int y1, y2, r=this->GetThickness();
   int range[2], domain[2];
   float delta;
-  vtkScalarsToColors *lookupTable = self->GetLookupTable();
+  vtkScalarsToColors *lookupTable = this->GetLookupTable();
   unsigned char *rgba;
 	unsigned char *ptr;
 
@@ -456,6 +459,10 @@ void vtkImagePlot::Execute(vtkImageData *inData, vtkImageData *outData)
     return;
   }
     
+      vtkImagePlotExecute(inData, (unsigned char *)(inPtr), inExt,
+			     outData, outPtr, outExt);
+
+           /*
   switch (inData->GetScalarType())
   {
     case VTK_DOUBLE:
@@ -502,5 +509,6 @@ void vtkImagePlot::Execute(vtkImageData *inData, vtkImageData *outData)
       vtkErrorMacro(<< "Execute: Unknown ScalarType");
       return;
   }
+  */
 }
 
