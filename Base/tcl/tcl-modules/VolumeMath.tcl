@@ -104,7 +104,7 @@ proc VolumeMathInit {} {
     #   This summary info will be displayed on the main menu
     #   under Help->Module Summaries
     #   and under Help->Module Credits
-    set Module($m,overview) "Math on volumes: addition, etc."
+    set Module($m,overview) "Math on volumes: subtract, add, resample, abs, mult, etc."
     set Module($m,author) "Samson Timoner, MIT AI Lab, samson@bwh.harvard.edu"
     set Module($m,category) "Measurement"
 
@@ -161,7 +161,7 @@ proc VolumeMathInit {} {
     #   appropriate info when the module is checked in.
     #   
         lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.39 $} {$Date: 2004/07/06 15:54:52 $}]
+        {$Revision: 1.39.2.1 $} {$Date: 2005/01/07 22:42:28 $}]
 
     # Initialize module-level variables
     #------------------------------------
