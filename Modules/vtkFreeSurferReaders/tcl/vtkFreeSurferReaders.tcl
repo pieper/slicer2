@@ -80,6 +80,7 @@ proc vtkFreeSurferReadersInit {} {
     #  reached for any questions people may have regarding your module. 
     #  This is included in the  Help->Module Credits menu item.
     set Module($m,author) "Nicole Aucoin, BWH, nicole@bwh.harvard.edu"
+    set Module($m,category) "IO"
 
     # Define Tabs
     #------------------------------------
@@ -92,8 +93,8 @@ proc vtkFreeSurferReadersInit {} {
     #
     #   Define your tabs here as shown below.  The options are:
     #   row1List = list of ID's for tabs. (ID's must be unique single words)
-    #   row1Name = list of Names for tabs. (Names appear on the user interface
-    #              and can be non-unique with multiple words.)
+    #   row1Name = list of Names for tabs. Names appear on the user interface
+    #              and can be non-unique with multiple words.
     #   row1,tab = ID of initial tab
     #   row2List = an optional second row of tabs if the first row is too small
     #   row2Name = like row1
@@ -102,7 +103,7 @@ proc vtkFreeSurferReadersInit {} {
 
     set Module($m,row1List) "Help Volumes Models"
     set Module($m,row1Name) "{Help} {Volumes} {Models}"
-    set Module($m,row1,tab) Models
+    set Module($m,row1,tab) Volumes
 
     # Define Procedures
     #------------------------------------
@@ -113,8 +114,8 @@ proc vtkFreeSurferReadersInit {} {
     #   changes due to the creation/deletion of nodes.
     #   
     #   While the Init procedure is required for each module, the other 
-    #   procedures are optional.  If they exist, then their name (which
-    #   can be anything) is registered with a line like this:
+    #   procedures are optional.  If they exist, then their name, which
+    #   can be anything, is registered with a line like this:
     #
     #   set Module($m,procVTK) vtkFreeSurferReadersBuildVTK
     #
@@ -141,6 +142,7 @@ proc vtkFreeSurferReadersInit {} {
     set Module($m,procVTK) vtkFreeSurferReadersBuildVTK
     set Module($m,procEnter) vtkFreeSurferReadersEnter
     set Module($m,procExit) vtkFreeSurferReadersExit
+    set Module($m,procMainFileCloseUpdateEntered) vtkFreeSurferReadersMainFileCloseUpdate
 
     # Define Dependencies
     #------------------------------------
@@ -150,6 +152,10 @@ proc vtkFreeSurferReadersInit {} {
     #   
     set Module($m,depend) ""
 
+    # register the procedures in this file that will read in volumes
+    set Module($m,readerProc,MGH) vtkFreeSurferReadersReadMGH
+    set Module($m,readerProc,bfloat) vtkFreeSurferReadersReadBfloat
+
     # Set version info
     #------------------------------------
     # Description:
@@ -158,7 +164,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.3 $} {$Date: 2004/03/11 19:56:34 $}]
+        {$Revision: 1.4 $} {$Date: 2004/10/07 21:03:27 $}]
 
 }
 
@@ -179,7 +185,7 @@ proc vtkFreeSurferReadersBuildGUI {} {
     #-------------------------------------------
     # Help frame
     #-------------------------------------------
-    set help "The vtkFreeSuferReaders module allows you to read in FreeSufer format files.<P>Description by tab:<BR><UL><LI><B>Volumes</B>: Load in COR volumes.<LI><B>Models</B>: Load in model files (${vtkFreeSurferReaders(surfaces)}) and associate scalars with them.(${vtkFreeSurferReaders(scalars)})."
+    set help "The vtkFreeSuferReaders module allows you to read in FreeSufer format files.<P>Description by tab:<BR><UL><LI><B>Volumes</B>: Load in COR. mgh volumes.<LI><B>Models</B>: Load in model files (${vtkFreeSurferReaders(surfaces)}) and associate scalars with them.(${vtkFreeSurferReaders(scalars)})."
     regsub -all "\n" $help {} help
     MainHelpApplyTags vtkFreeSurferReaders $help
     MainHelpBuildGUI vtkFreeSurferReaders
@@ -216,7 +222,7 @@ proc vtkFreeSurferReadersBuildGUI {} {
 
     set f $fVolumes.fVolume
 
-    DevAddFileBrowse $f  vtkFreeSurferReaders "VolumeFileName" "FreeSurfer File:" "vtkFreeSurferReadersSetVolumeFileName" "" "\$Volume(DefaultDir)" "Open" "Browse for a FreeSurfer volume file (.info)" 
+    DevAddFileBrowse $f  vtkFreeSurferReaders "VolumeFileName" "FreeSurfer File:" "vtkFreeSurferReadersSetVolumeFileName" "" "\$Volume(DefaultDir)" "Open" "Browse for a FreeSurfer volume file (.info, .mgh, .bfloat, .bshort)" 
 
     frame $f.fLabelMap -bg $Gui(activeWorkspace)
     frame $f.fDesc     -bg $Gui(activeWorkspace)
@@ -361,7 +367,7 @@ proc vtkFreeSurferReadersBuildGUI {} {
     #------------
     # Model->Annotation 
     #------------
-    # e)annotation files: lh.xxx.annot
+    # annotation files: lh.xxx.annot
     set f $Module(vtkFreeSurferReaders,fModels).fAnnotation
     DevAddLabel $f.lTitle "Load Associated Annotation files:"
     pack $f.lTitle -side top -padx $Gui(pad) -pady 0
@@ -397,13 +403,21 @@ proc vtkFreeSurferDemo {} {
     source $env(SLICER_HOME)/Modules/vtkFreeSurferReaders/tcl/regions.tcl
     source $env(SLICER_HOME)/Modules/vtkFreeSurferReaders/tcl/ccdb.tcl
     set r [regions #auto]
+           
     $r demo
 }
 
-    proc vtkFreeSurferReadersBuildVTK {} {
-        global Module
-        if {$Module(verbose) == 1} {puts "proc vtkFreeSurferReaders Build VTK"}
-    }
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReaderBuildVTK
+# Does nothing right now, vtk models are built when model files are read in.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc vtkFreeSurferReadersBuildVTK {} {
+    global Module
+    if {$Module(verbose) == 1} {puts "proc vtkFreeSurferReaders Build VTK"}
+}
+
 #-------------------------------------------------------------------------------
 # .PROC vtkFreeSurferReadersEnter
 # Does nothing yet
@@ -440,10 +454,19 @@ proc vtkFreeSurferReadersSetVolumeFileName {} {
     if {$Module(verbose) == 1} {
         puts "FreeSurferReaders filename: $vtkFreeSurferReaders(VolumeFileName)"
     }
-    # make the volume name be the name of the directory rather than COR-.info
-    set Volume(name) [file tail [file dirname $vtkFreeSurferReaders(VolumeFileName)]]
-    # replace . with -
-    regsub -all {[.]} $Volume(name) {-} Volume(name)
+    if {[string equal [file extension $vtkFreeSurferReaders(VolumeFileName)]  ".mgh"]} { 
+        set Volume(name) [file rootname [file tail $vtkFreeSurferReaders(VolumeFileName)]]
+    } elseif {[string equal [file extension $vtkFreeSurferReaders(VolumeFileName)]  ".bfloat"]} {
+        # use the stem of the file, the part between the last directory separator and the underscore
+        set bdir [file dirname $vtkFreeSurferReaders(VolumeFileName)]
+        regexp "$bdir/(.*)_.*" $vtkFreeSurferReaders(VolumeFileName) match Volume(name)
+#        set Volume(name) [file rootname [file tail $vtkFreeSurferReaders(VolumeFileName)]]
+    } else {
+        # COR: make the volume name be the name of the directory rather than COR-.info
+        set Volume(name) [file tail [file dirname $vtkFreeSurferReaders(VolumeFileName)]]
+        # replace . with -
+        regsub -all {[.]} $Volume(name) {-} Volume(name)
+    }
 }
 
 
@@ -465,6 +488,12 @@ proc vtkFreeSurferReadersSetModelFileName {} {
     set vtkFreeSurferReaders(ModelName) $Model(name)
 }
 
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersSetAnnotColorFileName
+# The filename is set elsehwere, in variable vtkFreeSurferReaders(colorTableFilename)
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersSetAnnotColorFileName {} {
     global vtkFreeSurferReaders Volume
     if {$::Module(verbose)} {
@@ -472,14 +501,48 @@ proc vtkFreeSurferReadersSetAnnotColorFileName {} {
     }
 }
 
+
 #-------------------------------------------------------------------------------
 # .PROC vtkFreeSurferReadersApply
-# Read in the volume specified.
+# Read in the freesurfer volume specified by calling the appropriate reader function.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersApply {} {
     global vtkFreeSurferReaders Module Volume
+
+    # switch on the file name, it canb be:
+    # a COR file (*.info that defines the volume) 
+    # an mgh file (*.mgh, volume in one file)
+    # a bfloat file (*.bfloat)
+    if {[string match *.info $vtkFreeSurferReaders(VolumeFileName)]} {
+        vtkFreeSurferReadersCORApply
+    } elseif {[string match *.mgh $vtkFreeSurferReaders(VolumeFileName)]} {
+        vtkFreeSurferReadersMGHApply
+    } elseif {[string match *.bfloat $vtkFreeSurferReaders(VolumeFileName)]} {
+        vtkFreeSurferReadersBfloatApply
+    } else {
+        DevErrorWindow "ERROR: Invalid file extension, file $vtkFreeSurferReaders(VolumeFileName) does not match info or mgh extensions for COR or MGH files."
+    }
+
+    # allow use of other module GUIs
+    set Volumes(freeze) 0
+
+    # If tabs are frozen, then return to the "freezer"
+    if {$Module(freezer) != ""} {
+        set cmd "Tab $Module(freezer)"
+        set Module(freezer) ""
+        eval $cmd
+    }
+}
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersCORApply
+# Read in the freesurfer COR volume specified
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc vtkFreeSurferReadersCORApply {} {
+    global Volume vtkFreeSurferReaders Module View
 
     # Validate name
     if {$Volume(name) == ""} {
@@ -510,12 +573,15 @@ proc vtkFreeSurferReadersApply {} {
         DevErrorWindow "Problem: reader for this new volume number $i already exists, deleting it"
         Volume($i,vol,rw) Delete
     }
+
     vtkCORReader Volume($i,vol,rw)
+    #  read the header first: sets the Volume array values we need
+    vtkFreeSurferReadersCORHeaderRead $vtkFreeSurferReaders(VolumeFileName)
     
     # get the directory name from the filename
     Volume($i,vol,rw) SetFilePrefix [file dirname $vtkFreeSurferReaders(VolumeFileName)]
     if {$Module(verbose) == 1} {
-        puts "vtkFreeSurferReadersApply: set COR prefix to [Volume($i,vol,rw) GetFilePrefix]\nCalling Update on volume $i"
+        puts "vtkFreeSurferReadersApply: set prefix to [Volume($i,vol,rw) GetFilePrefix]\nCalling Update on volume $i"
     }
     Volume($i,vol,rw) Update
 
@@ -525,7 +591,7 @@ proc vtkFreeSurferReadersApply {} {
     
    
     # set the volume properties: read the header first: sets the Volume array values we need
-    vtkFreeSurferReadersCORHeaderRead $vtkFreeSurferReaders(VolumeFileName)
+    # vtkFreeSurferReadersCORHeaderRead $vtkFreeSurferReaders(VolumeFileName)
     Volume($i,node) SetName $Volume(name)
     Volume($i,node) SetDescription $Volume(desc)
     Volume($i,node) SetLabelMap $Volume(labelMap)
@@ -573,12 +639,7 @@ proc vtkFreeSurferReadersApply {} {
         set badval [[Volume($i,node) GetPosition] GetElement 1 3]
         puts "vtkFreeSurferReaders: volume $i position 1 3: $badval"
     }
-    # allow use of other module GUIs
-    set Volumes(freeze) 0
  
-    puts "New FreeSurfer Volume:"
-    [Volume($i,vol) GetOutput] Print
-
     # set active volume on all menus
     MainVolumesSetActive $i
 
@@ -599,6 +660,573 @@ proc vtkFreeSurferReadersApply {} {
         MainSlicesSetVolumeAll Back $i
     }
 
+    # Update all fields that the user changed (not stuff that would need a file reread)
+}
+
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersMGHApply
+# Read in the freesurfer MGH volume specified
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc vtkFreeSurferReadersMGHApply {} {
+    global vtkFreeSurferReaders Module Volume View
+
+    if {![info exists Volume(name)] } { set Volume(name) "MGH"}
+
+    # Validate name
+    if {$Volume(name) == ""} {
+        tk_messageBox -message "Please enter a name that will allow you to distinguish this volume."
+        return
+    }
+    if {[ValidateName $Volume(name)] == 0} {
+        tk_messageBox -message "The name can consist of letters, digits, dashes, or underscores"
+        return
+    }
+
+    if {$::Module(verbose)} {
+        puts "vtkFreeSurferReadersMGHApply:\n\tLoading MGH file $vtkFreeSurferReaders(VolumeFileName)"
+    }
+
+    # add a mrml node
+    set n [MainMrmlAddNode Volume]
+    set i [$n GetID]
+
+    if {$::Module(verbose)} {
+        # turn debugging on in this node - causes a seg fault
+        Volume($i,node) DebugOn
+    }
+
+    # read in the MGH file
+    # Set up the reading
+    if {[info command Volume($i,vol,rw)] != ""} {
+        # have to delete it first, needs to be cleaned up
+        DevErrorWindow "Problem: reader for this new volume number $i already exists, deleting it"
+        Volume($i,vol,rw) Delete
+    }
+    vtkMGHReader Volume($i,vol,rw)
+    
+    Volume($i,vol,rw) SetFilePrefix [file dirname $vtkFreeSurferReaders(VolumeFileName)]
+    # set the filename
+    Volume($i,vol,rw) SetFileName $vtkFreeSurferReaders(VolumeFileName)
+
+    # have to fudge it a little here, read the header to get the info needed
+    if {$::Module(verbose)} {
+        puts "vtkFreeSurferReadersMGHApply:\n\tReading volume header"
+    }
+
+    Volume($i,vol,rw) ReadVolumeHeader
+    
+    set updateReturn [Volume($i,vol,rw) Update]
+    if {$updateReturn == 0} {
+        DevErrorWindow "vtkMGHReader: update on volume $i failed."
+    }
+
+   
+    set Volume(isDICOM) 0
+    set Volume($i,type) "MGH"
+
+    set dims [Volume($i,vol,rw) GetDataDimensions]
+    if {$::Module(verbose)} {
+        puts "$vtkFreeSurferReaders(VolumeFileName) dimensions: [lindex $dims 0] [lindex $dims 1]  [lindex $dims 2]"
+        # DevErrorWindow "$vtkFreeSurferReaders(VolumeFileName) dimensions: [lindex $dims 0] [lindex $dims 1]  [lindex $dims 2]"
+    }
+    set Volume(lastNum) [expr [lindex $dims 2] - 1]
+    set Volume(width) [expr [lindex $dims 0] - 1]
+    set Volume(height) [expr [lindex $dims 1] - 1]
+
+    set spc [Volume($i,vol,rw) GetDataSpacing]
+    set Volume(pixelWidth) [lindex $spc 0]
+    set Volume(pixelHeight) [lindex $spc 1]
+    set Volume(sliceThickness) [lindex $spc 2]
+    set Volume(sliceSpacing) [lindex $spc 2]
+
+    set Volume(gantryDetectorTilt) 0
+    set Volume(numScalars) 1
+    if {$::Module(verbose)} {
+        puts "$vtkFreeSurferReaders(VolumeFileName) numScalars = $Volume(numScalars)"
+    }
+    set Volume(littleEndian) 0
+
+    # Sag:LR RL Ax:SI IS Cor: AP PA
+    set Volume(scanOrder) {RL}
+    set scalarType [Volume($i,vol,rw) GetScalarType]
+    # Scalar type can be VTK_UNSIGNED_CHAR (3),  VTK_INT (6), VTK_FLOAT (10), VTK_SHORT (4), 
+    # set it to the valid volume values of $Volume(scalarTypeMenu)
+    switch $scalarType {
+        "3" { set Volume(scalarType) UnsignedChar}
+        "4" { set  Volume(scalarType) Short}
+        "6" { set  Volume(scalarType) Int}
+        "10" { set  Volume(scalarType) Float }
+        default {
+            puts "Unknown scalarType $scalarType, using Float"
+            DevErrorWindow "vtkFreeSurferReadersMGHApply: Unknown scalarType $scalarType, using Float"
+            set Volume(scalarType) Float 
+        }
+    }
+    if {$::Module(verbose)} {
+        puts "$vtkFreeSurferReaders(VolumeFileName) scalarType $Volume(scalarType)"
+    }
+    set Volume(readHeaders) 0
+    set Volume(filePattern) %s
+    set Volume(dimensions) "[lindex $dims 0] [lindex $dims 1]"
+
+    set Volume(imageRange) "1 [lindex $dims 2]"
+    if {$::Module(verbose)} {
+        puts "$vtkFreeSurferReaders(VolumeFileName) imageRange $Volume(imageRange)"
+    }
+    # set the name and description of the volume
+    $n SetName $Volume(name)
+    $n SetDescription $Volume(desc)
+
+    # set the volume properties
+    Volume($i,node) SetName $Volume(name)
+    Volume($i,node) SetDescription $Volume(desc)
+    Volume($i,node) SetLabelMap $Volume(labelMap)
+    eval Volume($i,node) SetSpacing $Volume(pixelWidth) $Volume(pixelHeight) \
+            [expr $Volume(sliceSpacing) + $Volume(sliceThickness)]
+    Volume($i,node) SetTilt $Volume(gantryDetectorTilt)
+
+    Volume($i,node) SetFilePattern $Volume(filePattern) 
+    Volume($i,node) SetScanOrder $Volume(scanOrder)
+    Volume($i,node) SetNumScalars $Volume(numScalars)
+    Volume($i,node) SetLittleEndian $Volume(littleEndian)
+    Volume($i,node) SetFilePrefix [Volume($i,vol,rw) GetFileName] ;# NB: just one file, not a pattern
+    Volume($i,node) SetFullPrefix [Volume($i,vol,rw) GetFileName] ;# needed in the range check
+    Volume($i,node) SetImageRange [lindex $Volume(imageRange) 0] [lindex $Volume(imageRange) 1]
+    Volume($i,node) SetScalarType $scalarType
+    Volume($i,node) SetDimensions [lindex $Volume(dimensions) 0] [lindex $Volume(dimensions) 1]
+    # without these, getting a seg fault when debug is turned on in the vtkMrmlVolumeNode
+    Volume($i,node) SetLUTName ""
+    Volume($i,node) SetFileType "MGH"
+
+    # read in the matrix from the headers and use it
+     
+    # get the IJK to RAS matrix from the volume:
+    # x_r x_a x_s y_r y_a y_s z_r z_a z_s c_r c_a c_s
+    set ijkmat [Volume($i,vol,rw) GetRASMatrix]
+    if {$::Module(verbose)} {
+        puts "MGH Reader: IJK matrix for volume $i: $ijkmat"
+    }
+    # fill in a matrix
+    if {[info command rasmat$i] != ""} {
+        rastmat$i Delete
+    }
+
+    # there's a problem with getting the MGH volume to display properly,
+    # it comes up okay in slices mode but not when the RasToIjk matrix is set
+    vtkMatrix4x4 rasmat$i
+
+    rasmat$i SetElement 0 0 [lindex $ijkmat 0]
+    rasmat$i SetElement 0 1 [lindex $ijkmat 1]
+    rasmat$i SetElement 0 2 [lindex $ijkmat 2]
+    rasmat$i SetElement 0 3 [lindex $ijkmat 9]
+
+    rasmat$i SetElement 1 0 [lindex $ijkmat 3]
+    rasmat$i SetElement 1 1 [lindex $ijkmat 4]
+    rasmat$i SetElement 1 2 [lindex $ijkmat 5]
+    rasmat$i SetElement 1 3 [lindex $ijkmat 10]
+
+    rasmat$i SetElement 2 0 [lindex $ijkmat 6]
+    rasmat$i SetElement 2 1 [lindex $ijkmat 7]
+    rasmat$i SetElement 2 2 [lindex $ijkmat 8]
+    rasmat$i SetElement 2 3 [lindex $ijkmat 11]
+
+    rasmat$i SetElement 3 0 0
+    rasmat$i SetElement 3 1 0
+    rasmat$i SetElement 3 2 0
+    rasmat$i SetElement 3 3 1
+
+    # rasmat$i Identity
+
+    # invert it to get the RAS to IJK
+    rasmat$i Invert
+
+    # the Slicer assumption shifts the MGH volume by 128 into the R
+    # the MGH volume center is ... info to be updated when tosa@nmr.mgh.harvard.edu responds
+    rasmat$i SetElement 0 3 [expr [rasmat$i GetElement 0 3] - 128]
+    
+    # turn off using the ras to vtk matrix, as otherwise the MGH volume is flipped in Y
+    if {$::Module(verbose)} {
+        puts "Turning off UseRasToVtkMatrix on volume $i"
+    }
+    Volume($i,node) UseRasToVtkMatrixOff
+
+    # set the volume's RAS to IJK matrix
+#    Volume($i,node) SetRasToIjkMatrix rasmat$i
+    set curRasToIjk [Volume($i,node) GetRasToIjk]
+    $curRasToIjk DeepCopy rasmat$i
+
+
+    # set up a secondary window to view the slices
+    if {$::Module(verbose)} {
+#        vtkFreeSurferReadersShowMGH $i
+    }
+
+    if {$::Module(verbose)} {
+        puts "vtkFreeSurferReaders: About  to call main update mrml for an MGH volume, \# $i"
+        DevErrorWindow "vtkFreeSurferReaders: About  to call main update mrml for an MGH volume"
+    }
+
+    # Reads in the volume via the Execute procedure
+    MainUpdateMRML
+
+    # try doing some manual reading here - necessary to show the data legibly
+    Volume($i,vol) SetImageData [Volume($i,vol,rw) GetOutput]
+
+    # If failed, then it's no longer in the idList
+    if {[lsearch $Volume(idList) $i] == -1} {
+        puts "vtkFreeSurferReaders: failed to read in the volume $i, $vtkFreeSurferReaders(VolumeFileName)"
+        DevErrorWindow "vtkFreeSurferReaders: failed to read in the volume $i, $vtkFreeSurferReaders(VolumeFileName)"
+        return
+    }
+     
+    # allow use of other module GUIs
+    set Volume(freeze) 0
+    if {$Module(freezer) != ""} {
+        set cmd "Tab $Module(freezer)"
+        set Module(freezer) ""
+        eval $cmd
+    }
+
+    # set active volume on all menus
+    MainVolumesSetActive $i
+
+    # save the id for later use
+    set m $i
+
+    # if we are successful set the FOV for correct display of this volume
+    set dim     [lindex [Volume($i,node) GetDimensions] 0]
+    set spacing [lindex [Volume($i,node) GetSpacing] 0]
+    set fov     [expr $dim*$spacing]
+    if {$::Module(verbose)} { 
+        puts "MGH Reader setting fov to $fov - should be 256 (dim $dim spacing $spacing)"
+    }
+    set View(fov) $fov
+    MainViewSetFov
+
+    # display the new volume in the background of all slices if not a label map
+    if {[Volume($i,node) GetLabelMap] == 1} {
+        MainSlicesSetVolumeAll Label $i
+    } else {
+        MainSlicesSetVolumeAll Back $i
+    }
+
+    # Update all fields that the user changed (not stuff that would need a file reread)
+    return $i
+}
+
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersMGHUpdateMRML
+# Takes the necessary updates from MainUpdateMrml
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc vtkFreeSurferReadersUpdateMRML {} {
+    global Module vtkFreeSurferReaders
+
+    if {$Module(verbose)} { 
+        puts "vtkFreeSurferReadersMGHUpdateMRML"
+    }
+
+}
+
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersShowMGH
+# A debugging tool, opens a new window with slices shown of the MGH volume i
+# .ARGS
+# i the volume id
+# .END
+#-------------------------------------------------------------------------------
+proc vtkFreeSurferReadersShowMGH {i} {
+    global Volume Module
+
+    if {[info command Volume($i,vol,rw)] == ""} {
+        puts "vtkFreeSurferReadersShowMGH: no reader exists for volume $i"
+        return
+    }
+    scan [[Volume($i,vol,rw) GetOutput] GetWholeExtent] "%d %d %d %d %d %d" \
+        xMin xMax yMin yMax zMin zMax
+    if {$::Module(verbose)} {
+        puts "vtkFreeSurferReadersShowMGH: vol $i: whole extent $xMin $xMax $yMin $yMax $zMin $zMax"
+    }
+    if {[info command viewer$i] == ""} {
+        vtkImageViewer viewer$i
+    }
+    viewer$i SetInput [Volume($i,vol,rw) GetOutput]
+    viewer$i SetZSlice [expr $zMax / 2]
+    viewer$i SetColorWindow 2000
+    viewer$i SetColorLevel 1000
+    toplevel .top$i
+    # wm protocol .top$i WM_DELETE_WINDOW {puts "exit, i=$i"; wm withdraw .top$i; destroy .top$i; viewer$i Delete}
+    frame .top$i.f1 
+    set vtkiw vtkiw$i
+    set $vtkiw [vtkTkImageViewerWidget .top$i.f1.r1 \
+                   -width [expr ($xMax - $xMin + 1)] \
+                   -height [expr ($yMax - $yMin + 1)] \
+                   -iv viewer$i]
+    ::vtk::bind_tk_imageviewer_widget [subst "$$vtkiw"]
+    set slice_number$i [viewer$i GetZSlice]
+    
+    
+    scale .top$i.slice \
+        -from $zMin \
+        -to $zMax \
+        -orient horizontal \
+        -command "SetSlice $i"\
+        -variable slice_number$i \
+        -label "Z Slice"
+    
+    proc SetSlice {i slice} {
+        if {$::Module(verbose)} {
+            puts "SetSlice slice = $slice, i = $i"
+        }
+        viewer$i SetZSlice $slice
+        viewer$i Render
+    }
+    pack [subst "$$vtkiw"] \
+        -side left -anchor n \
+        -padx 3 -pady 3 \
+        -fill x -expand f
+    pack .top$i.f1 \
+        -fill both -expand t
+    pack .top$i.slice \
+        -fill x -expand f
+}
+
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersVolumesPropsApplyPre
+# Encapsulates the stuff that volume props apply does before the custom stuff here
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc vtkFreeSurferReadersVolumesPropsApplyPre {} {
+    global vtkFreeSurferReaders Lut Volume Label Module Mrml View
+
+    set Volume(isDICOM) 0
+
+    # Validate name
+    if {$Volume(name) == ""} {
+        tk_messageBox -message "Please enter a name that will allow you to distinguish this volume."
+        return -1
+    }
+    if {[ValidateName $Volume(name)] == 0} {
+        tk_messageBox -message "The name can consist of letters, digits, dashes, or underscores"
+        return -1
+    }
+
+    
+    return 1
+}
+
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersBfloatApply
+# Read in the freesurfer Bfloat volume specified
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc vtkFreeSurferReadersBfloatApply {} {
+    global vtkFreeSurferReaders Module Volume View
+
+    if {![info exists Volume(name)] } { set Volume(name) "Bfloat"}
+
+    # encapsulate the standard stuff
+    set retval [vtkFreeSurferReadersVolumesPropsApplyPre]
+    if {$retval == -1} { 
+        puts "Error from vtkFreeSurferReadersVolumesPropsApplyPre, exiting vtkFreeSurferReadersBfloatApply"
+        return
+    }
+
+    if {$::Module(verbose)} {
+        puts "vtkFreeSurferReadersBfloatApply:\n\tLoading Bfloat file $vtkFreeSurferReaders(VolumeFileName)"
+    }
+
+
+    # add a mrml node
+    set n [MainMrmlAddNode Volume]
+    set i [$n GetID]
+
+    # Set up the reading
+    if {[info command Volume($i,vol,rw)] != ""} {
+        # have to delete it first, needs to be cleaned up
+        DevErrorWindow "Problem: reader for this new volume number $i already exists, deleting it"
+        Volume($i,vol,rw) Delete
+    }
+    vtkBVolumeReader Volume($i,vol,rw)
+    if {$::Module(verbose)} {
+        puts "Setting bvolume reader debug to on for volume $i"
+        Volume($i,vol,rw) DebugOn
+    }
+
+    # set the filename  stem
+    if {[regexp {(.*)_(.*)} $vtkFreeSurferReaders(VolumeFileName) match stem ext] == 0} {
+        DevErrorWindow "vtkFreeSurferReadersBfloatApply: error parsing file name $vtkFreeSurferReaders(VolumeFileName)"
+        set stem $vtkFreeSurferReaders(VolumeFileName)
+    } else {
+        puts "Set stem to $stem"
+    }
+
+    Volume($i,vol,rw) SetFileName $vtkFreeSurferReaders(VolumeFileName)
+    Volume($i,vol,rw) SetFilePrefix $stem
+
+    Volume($i,vol,rw) Update
+    set newstem [Volume($i,vol,rw) GetStem]
+    DevInfoWindow "After reading, new stem = $newstem (orig stem = $stem)"
+
+    # try setting the registration filename
+    Volume($i,vol,rw) SetRegistrationFileName ${stem}.dat
+    set regmat [Volume($i,vol,rw) GetRegistrationMatrix]
+    if {$::Module(verbose)} {
+        puts "Got registration matrix $regmat"
+        if {$regmat != ""} {
+            puts "[$regmat GetElement 0 0] [$regmat GetElement 1 0] [$regmat GetElement 2 0] [$regmat GetElement 3 0]"
+            puts "[$regmat GetElement 0 1] [$regmat GetElement 1 1] [$regmat GetElement 2 1] [$regmat GetElement 3 1]"
+            puts "[$regmat GetElement 0 2] [$regmat GetElement 1 2] [$regmat GetElement 2 2] [$regmat GetElement 3 2]"
+            puts "[$regmat GetElement 0 3] [$regmat GetElement 1 3] [$regmat GetElement 2 3] [$regmat GetElement 3 3]"
+        } else {
+            puts "\tregmat is empty"
+        }
+    }
+
+    set Volume(isDICOM) 0
+    set Volume($i,type) "bfloat"
+
+    set dims [Volume($i,vol,rw) GetDataDimensions]
+    if {$::Module(verbose)} {
+        puts "$vtkFreeSurferReaders(VolumeFileName) dimensions: [lindex $dims 0] [lindex $dims 1]  [lindex $dims 2]"
+        # DevErrorWindow "$vtkFreeSurferReaders(VolumeFileName) dimensions: [lindex $dims 0] [lindex $dims 1]  [lindex $dims 2]"
+    }
+    set Volume(lastNum) [expr [lindex $dims 2] - 1]
+    set Volume(width) [expr [lindex $dims 0] - 1]
+    set Volume(height) [expr [lindex $dims 1] - 1]
+
+    set spc [Volume($i,vol,rw) GetDataSpacing]
+    set Volume(pixelWidth) [lindex $spc 0]
+    set Volume(pixelHeight) [lindex $spc 1]
+    set Volume(sliceThickness) [lindex $spc 2]
+    set Volume(sliceSpacing) [lindex $spc 2]
+
+    set Volume(gantryDetectorTilt) 0
+    set Volume(numScalars) 1
+    if {$::Module(verbose)} {
+        puts "$vtkFreeSurferReaders(VolumeFileName) numScalars = $Volume(numScalars)"
+    }
+    set Volume(littleEndian) 0
+
+    # Sag:LR RL Ax:SI IS Cor: AP PA
+    set Volume(scanOrder) {RL}
+    set scalarType [Volume($i,vol,rw) GetScalarType]
+    # Scalar type can be VTK_UNSIGNED_CHAR (3),  VTK_INT (6), VTK_FLOAT (10), VTK_SHORT (4), 
+    # set it to the valid volume values of $Volume(scalarTypeMenu)
+    switch $scalarType {
+        "3" { set Volume(scalarType) UnsignedChar}
+        "4" { set  Volume(scalarType) Short}
+        "6" { set  Volume(scalarType) Int}
+        "10" { set  Volume(scalarType) Float }
+        default {
+            puts "Unknown scalarType $scalarType, using Float"
+            DevErrorWindow "vtkFreeSurferReadersBfloatApply: Unknown scalarType $scalarType, using Float"
+            set Volume(scalarType) Float 
+        }
+    }
+
+    set Volume(readHeaders) 0
+
+    set Volume(filePattern) {%s_%03d.bfloat}
+    set Volume(dimensions) "[lindex $dims 0] [lindex $dims 1]"
+
+    set Volume(imageRange) "0 [expr [lindex $dims 2] - 1]"
+    if {$::Module(verbose)} {
+        puts "$vtkFreeSurferReaders(VolumeFileName) imageRange $Volume(imageRange)"
+    }
+    # set the name and description of the volume
+    $n SetName $Volume(name)
+    $n SetDescription $Volume(desc)
+
+    # set the volume properties
+    Volume($i,node) SetName $Volume(name)
+    Volume($i,node) SetDescription $Volume(desc)
+    Volume($i,node) SetLabelMap $Volume(labelMap)
+    eval Volume($i,node) SetSpacing $Volume(pixelWidth) $Volume(pixelHeight) \
+            [expr $Volume(sliceSpacing) + $Volume(sliceThickness)]
+    Volume($i,node) SetTilt $Volume(gantryDetectorTilt)
+
+    Volume($i,node) SetFilePattern $Volume(filePattern) 
+    Volume($i,node) SetScanOrder $Volume(scanOrder)
+    Volume($i,node) SetNumScalars $Volume(numScalars)
+    Volume($i,node) SetLittleEndian $Volume(littleEndian)
+    Volume($i,node) SetFilePrefix [Volume($i,vol,rw) GetStem] 
+    Volume($i,node) SetFullPrefix [Volume($i,vol,rw) GetStem] ;# needed in the range check
+    Volume($i,node) SetImageRange [lindex $Volume(imageRange) 0] [lindex $Volume(imageRange) 1]
+    Volume($i,node) SetScalarType $scalarType
+    Volume($i,node) SetDimensions [lindex $Volume(dimensions) 0] [lindex $Volume(dimensions) 1]
+    # without these, getting a seg fault when debug is turned on in the vtkMrmlVolumeNode
+    Volume($i,node) SetLUTName ""
+    Volume($i,node) SetFileType "bfloat"
+    if {$::Module(verbose)} {
+        puts "vtkFreeSurferReaders: About  to call main update mrml for a Bfloat volume, \# $i"
+        DevErrorWindow "vtkFreeSurferReaders: About  to call main update mrml for an Bfloat volume"
+        puts "\tFile prefix = [Volume($i,node) GetFilePrefix]"
+        puts "\tFull prefix = [Volume($i,node) GetFullPrefix]"
+        puts "\tFile pattern = [Volume($i,node) GetFilePattern]"
+    }
+
+    # Reads in the volume via the Execute procedure
+    MainUpdateMRML
+
+    # If failed, then it's no longer in the idList
+    if {[lsearch $Volume(idList) $i] == -1} {
+        puts "vtkFreeSurferReaders: failed to read in the volume $i, $vtkFreeSurferReaders(VolumeFileName)"
+        DevErrorWindow "vtkFreeSurferReaders: failed to read in the volume $i, $vtkFreeSurferReaders(VolumeFileName)"
+        return
+    }
+
+    # try doing some manual reading here - necessary to show the data legibly
+    if {1} {
+        if {$::Module(verbose)} {
+            puts "BfloatReaderApply: calling SetImageData"
+        }
+        Volume($i,vol) SetImageData [Volume($i,vol,rw) GetOutput]
+    }
+
+    # mark the volume as saved
+    set Volume($i,dirty) 0
+
+    # allow use of other module GUIs
+    set Volume(freeze) 0
+    if {$Module(freezer) != ""} {
+        set cmd "Tab $Module(freezer)"
+        set Module(freezer) ""
+        eval $cmd
+    }
+
+    # set active volume on all menus
+    MainVolumesSetActive $i
+
+    # save the id for later use
+    set m $i
+
+    # if we are successful set the FOV for correct display of this volume
+    set dim     [lindex [Volume($i,node) GetDimensions] 0]
+    set spacing [lindex [Volume($i,node) GetSpacing] 0]
+    set fov     [expr $dim*$spacing]
+    if {$::Module(verbose)} { 
+        puts "Bfloat Reader setting fov to $fov (dim $dim spacing $spacing)"
+    }
+    set View(fov) $fov
+    MainViewSetFov
+
+    # display the new volume in the background of all slices if not a label map
+    if {[Volume($i,node) GetLabelMap] == 1} {
+        MainSlicesSetVolumeAll Label $i
+    } else {
+        MainSlicesSetVolumeAll Back $i
+    }
+
+    # set up a secondary window to view the slices
+    if {$::Module(verbose)} {
+        vtkFreeSurferReadersShowMGH $i
+    }
     # Update all fields that the user changed (not stuff that would need a file reread)
     return $i
 }
@@ -1119,7 +1747,13 @@ proc vtkFreeSurferReadersCORHeaderRead {filename} {
     return 0
 }
 
-# generated via /home/nicole/bin/readumls.sh
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersSetUMLSMapping
+# Set the surface label to UMLS mapping, generated via /home/nicole/bin/readumls.sh
+# .ARGS
+# 
+# .END
+#-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersSetUMLSMapping {} {
     # set up Freesurfer surface labels to UMLS mapping
     global vtkFreeSurferReadersSurface
@@ -1374,7 +2008,12 @@ proc vtkFreeSurferReadersReadAnnotations {_id} {
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersCheckAnnotError
 # references vtkFSSurfaceAnnotationReader.h. Returns error value (0 means success)
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersCheckAnnotError {val} {
     if {$val == 1} {
         DevErrorWindow "ERROR: error loading colour table"
@@ -1397,6 +2036,7 @@ proc vtkFreeSurferReadersCheckAnnotError {val} {
     }
     return $val
 }
+
 #-------------------------------------------------------------------------------
 # .PROC vtkFreeSurferReadersModelApply
 # Read in the model specified. Used in place of the temp ModelsFreeSurferPropsApply.
@@ -1438,6 +2078,12 @@ proc vtkFreeSurferReadersModelApply {} {
     return $i
 }
 
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersModelCancel
+# Cancel reading in the model
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersModelCancel {} {
     global vtkFreeSurferReaders Module Model Volume
     # model this after VolumePropsCancel - ModelPropsCancel?
@@ -1447,6 +2093,13 @@ proc vtkFreeSurferReadersModelCancel {} {
     ModelsPropsCancel
 }
 
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersSetLoad
+# Add this kind of associated file to the list of files to load when reading in a model
+# .ARGS
+# param - the kind of associated file to read in, added to vtkFreeSurferReaders(assocFiles)
+# .END
+#-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersSetLoad {param} {
     global vtkFreeSurferReaders Volume
 
@@ -1470,12 +2123,17 @@ proc vtkFreeSurferReadersSetLoad {param} {
     }
 }
 
-####################
-# Scriptable load functions -- tied into command line arguments
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersLoadVolume
+# Scriptable load function -- tied into command line arguments
 # example: 
 # ./slicer2-win32.exe --load-freesurfer-model c:/pieper/bwh/data/MGH-Siemens15-SP.1-uw/surf/lh.pial --load-freesurfer-volume c:/pieper/bwh/data/MGH-Siemens15-SP.1-uw/mri/orig/COR-.info --load-freesurfer-label-volume c:/pieper/bwh/data/MGH-Siemens15-SP.1-uw/mri/aseg/COR-.info &
-####################
-
+# .ARGS 
+# filename volume file to load
+# labelMap the label map associated with this volume
+# name the volume name
+# .END
+#-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersLoadVolume { filename {labelMap 0} {name ""} } {
 
     set ::Volume(labelMap) $labelMap
@@ -1487,6 +2145,14 @@ proc vtkFreeSurferReadersLoadVolume { filename {labelMap 0} {name ""} } {
     return [vtkFreeSurferReadersApply]
 }
 
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersLoadVolume
+# Scriptable load function -- tied into command line arguments
+# .ARGS 
+# filename model file to load
+# name name of the model
+# .END
+#-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersLoadModel { filename {name ""} } {
 
     set ::vtkFreeSurferReaders(ModelFileName) $filename
@@ -1516,3 +2182,88 @@ proc FreeSurferReadersFiducialsPointCreatedCallback {type fid pid} {
 
 }
 
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersMainFileCloseUpdate
+# Called to clean up anything created in this sub module. 
+# Deletes Volumes read in, along with their actors.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc vtkFreeSurferReadersMainFileCloseUpdate {} {
+    global Volume viewRen Module
+
+    # delete stuff that's been created
+    if {$Module(verbose) == 1} {
+        puts "vtkFreeSurferReadersMainFileCloseUpdate"
+    }
+
+    # Delete RAS matrices from MGH files
+    set rasmats [info commands rasmat*]
+    foreach rasmat $rasmats {
+        if {$::Module(verbose)} {
+            puts "Deleting ras matrix $rasmat"
+        }
+        $rasmat Delete
+    }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersReadMGH
+# Called by MainVolumes.tcl MainVolumesRead to read in an MGH volume, returns -1
+# if there is no vtkMGHReader. Assumes that the volume has been read already
+# .ARGS v volume ID
+# .END
+#-------------------------------------------------------------------------------
+proc vtkFreeSurferReadersReadMGH {v} {
+    global Volume
+    if { [info commands vtkMGHReader] == "" } {
+        DevErrorWindow "No MGH Reader available."
+        return -1
+    }
+    catch "mghreader Delete"
+    vtkMGHReader mghreader
+            
+    mghreader SetFileName [Volume($v,node) GetFullPrefix]
+    mghreader Update
+    mghreader ReadVolumeHeader
+    [[mghreader GetOutput] GetPointData] SetScalars [mghreader ReadVolumeData]
+    Volume($v,vol) SetImageData [mghreader GetOutput]
+    mghreader Delete
+}
+
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersReadBfloat
+# Called by MainVolumes.tcl MainVolumesRead to read in a bfloat volume
+# .ARGS v volume ID
+# .END
+#-------------------------------------------------------------------------------
+proc vtkFreeSurferReadersReadBfloat {v} {
+    global Volume
+
+    if {$::Module(verbose)} {
+        puts "vtkFreeSurferReadersReadBfloat: volume id = $v"
+        DevInfoWindow "vtkFreeSurferReadersReadBfloat: volume id = $v - SKIPPING this!"
+        return
+    }
+
+    if { [info commands vtkBVolumeReader] == "" } {
+        DevErrorWindow "No MGH B Volume Reader available."
+        return -1
+    }
+
+    catch "bfloatreader Delete"
+    vtkBVolumeReader bfloatreader
+
+    # not going to work, need to recreate the file name from what's saved in the node: FilePattern, FilePrefix, and ImageRange
+    # bfloatreader SetFileName  [Volume($v,node) GetFullPrefix]
+    set stem [Volume($v,node) GetFullPrefix]
+    bfloatreader SetFilePrefix $stem
+    bfloatreader SetStem $stem
+
+    bfloatreader Update
+    bfloatreader SetRegistrationFileName ${stem}.dat
+    set regmat [bfloatreader GetRegistrationMatrix]
+
+#    Volume($v,vol) SetImageData [bfloatreader GetOutput]
+    bfloatreader Delete
+}
