@@ -70,7 +70,7 @@ proc ViewInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.31 $} {$Date: 2002/10/26 19:42:17 $}]
+        {$Revision: 1.32 $} {$Date: 2002/10/28 14:46:24 $}]
 
     set View(movie) 0
     set View(movieDirectory) "/tmp"
@@ -278,7 +278,8 @@ a frame will be saved everytime the 3D View is rendered "
     grid configure $f.lFile -sticky e
 
     eval {menu $f.mbFile.m} $Gui(WMA)
-    foreach item "BMP JPEG PNG PNM PostScript TIFF" {
+
+    foreach item [SaveGetSupportedImageTypes] {
         $f.mbFile.m add command -label $item -command "ViewSetMovieFileType $item"
     }
 
