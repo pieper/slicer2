@@ -24,8 +24,9 @@ exec tclsh "$0" "$@"
 
 switch $tcl_platform(os) {
     "SunOS" {
-        set SLICER_HOME /projects/birn/slicer2/latest/slicer2
-        set VTK_BINARY_PATH /projects/birn/slicer2/Lib/solaris8/vtk/VTK-build
+        set SLICER_HOME /projects/birn/nicole/slicer2
+        set VTK_BINARY_PATH /projects/birn/slicer2/Lib/solaris8/vtk/VTK-build-4.2.2
+        set VTK_DIR /projects/birn/slicer2/Lib/solaris8/vtk/VTK-build-4.2.2
         set ITK_BINARY_PATH /projects/birn/itk/itk-1.2/itk-build
         set BUILD solaris8
         set VTKSLICERBASE_BUILD_LIB $SLICER_HOME/Base/builds/$BUILD/bin/vtkSlicerBase.so
@@ -34,8 +35,9 @@ switch $tcl_platform(os) {
         set CMAKE cmake
     }
     "Linux" {
-        set SLICER_HOME /home/pieper/slicer2/latest/slicer2
-        set VTK_BINARY_PATH /home/pieper/downloads/vtk/VTK-build
+        set SLICER_HOME /home/nicole/slicer2
+        # set VTK_BINARY_PATH /home/pieper/downloads/vtk/VTK-build
+        set VTK_BINARY_PATH /usr/local/include/vtk
         set ITK_BINARY_PATH /home/pieper/downloads/itk/itk-build
         set BUILD redhat7.3
         set VTKSLICERBASE_BUILD_LIB $SLICER_HOME/Base/builds/$BUILD/bin/vtkSlicerBase.so
@@ -125,6 +127,7 @@ if { [info exists env(SLICER_MODULES)] } {
 
 
 set TARGETS "$slicer_home/Base"
+set CLEANFLAG 0
 
 foreach dir $modulePaths {
     if { ![file isdirectory $dir] } {continue}
@@ -144,8 +147,13 @@ if { $argv != "" } {
     foreach argmodule $argv {
         set idx [lsearch -glob $TARGETS *$argmodule]
         if { $idx == -1 } {
-            puts stderr "can't find module $argmodule in search path (options are: $TARGETS)"
-            exit
+            if {$argmodule == "--clean"} {
+                puts "Removing build directories"
+                set CLEANFLAG 1
+            } else {
+                puts stderr "can't find module $argmodule in search path (options are: $TARGETS)"
+                exit
+            }
         } else {
             lappend newtargets [lindex $TARGETS $idx]
         }
@@ -167,6 +175,10 @@ foreach target $TARGETS {
 
     #set build $SLICER_HOME/$target/builds/$BUILD 
     set build $target/builds/$BUILD 
+    if {$CLEANFLAG } {
+        puts "Deleting $build"
+        catch "file delete -force $build"
+    }
     catch "file mkdir $build"
     cd $build
     puts "enter directory $build..."
