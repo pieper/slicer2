@@ -51,22 +51,31 @@ proc tarup { {destdir "auto"} } {
         "Win32VC7" { set target win32 ; set exe .exe}
     }
 
-    if { $destdir == "auto" } {
-        if { [info exists ::env(TMPDIR)] } {
-            set destdir [file normalize $::env(TMPDIR)]
-        } else {
-            if { [info exists ::env(TMP)] } {
-                set destdir [file normalize $::env(TMP)]
+    set create_archive "true"
+    set do_upload "true"
+    switch $destdir {
+        "auto" {
+            if { [info exists ::env(TMPDIR)] } {
+                set destdir [file normalize $::env(TMPDIR)]
             } else {
-                switch $::env(BUILD) {
-                    "solaris8" { set destdir /tmp }
-                    "Darwin" - "redhat7.3" { set destdir /var/tmp }
-                    "Win32VC7" { set destdir c:/Temp }
+                if { [info exists ::env(TMP)] } {
+                    set destdir [file normalize $::env(TMP)]
+                } else {
+                    switch $::env(BUILD) {
+                        "solaris8" { set destdir /tmp }
+                        "Darwin" - "redhat7.3" { set destdir /var/tmp }
+                        "Win32VC7" { set destdir c:/Temp }
+                    }
                 }
             }
+            set date [clock format [clock seconds] -format %Y-%m-%d]
+            set destdir $destdir/slicer$::SLICER(version)-$target-$date
         }
-        set date [clock format [clock seconds] -format %Y-%m-%d]
-        set destdir $destdir/slicer$::SLICER(version)-$target-$date
+        "birn" {
+            set destdir /usr/local/birn/install/slicer2
+            set create_archive "false"
+            set do_upload "false"
+        }
     }
 
     puts "Creating distribution in $destdir..."
@@ -309,41 +318,45 @@ proc tarup { {destdir "auto"} } {
     # make an archive of the new directory at the same level
     # with the destination
     #
-    cd $destdir/..
-    set archroot [file tail $destdir]
-    switch $::env(BUILD) {
-        "solaris8" {
-            puts " -- making $archroot.tar.gz"
-            #exec gtar cvfz $archroot.tar.gz $archroot
-            exec tar cfE $archroot.tar $archroot
-            exec gzip -f $archroot.tar
-        }
-        "redhat7.3" - 
-        "Darwin" {
-            puts " -- making $archroot.tar.gz"
-            exec tar cfz $archroot.tar.gz $archroot
-        }
-        "Win32VC7" { 
-            puts " -- making $archroot.zip"
-            exec zip -r $archroot.zip $archroot
+    if { $create_archive == "true" } {
+        cd $destdir/..
+        set archroot [file tail $destdir]
+        switch $::env(BUILD) {
+            "solaris8" {
+                puts " -- making $archroot.tar.gz"
+                #exec gtar cvfz $archroot.tar.gz $archroot
+                exec tar cfE $archroot.tar $archroot
+                exec gzip -f $archroot.tar
+            }
+            "redhat7.3" - 
+            "Darwin" {
+                puts " -- making $archroot.tar.gz"
+                exec tar cfz $archroot.tar.gz $archroot
+            }
+            "Win32VC7" { 
+                puts " -- making $archroot.zip"
+                exec zip -r $archroot.zip $archroot
+            }
         }
     }
 
-    if { $::SLICER(state) == "-dev" } {
-        set scpdestination "pieper@slicerl.bwh.harvard.edu:/usr/local/apache2/htdocs/snapshots"
-    } else {
-        set scpdestination "pieper@gpop.bwh.harvard.edu:slicer-dist"
-    }
-
-    puts " -- upload to $scpdestination"
-    switch $::env(BUILD) {
-        "solaris8" -
-        "redhat7.3" - 
-        "Darwin" {
-            exec xterm -e scp $archroot.tar.gz $scpdestination
+    if { $do_upload == "true" } {
+        if { $::SLICER(state) == "-dev" } {
+            set scpdestination "pieper@slicerl.bwh.harvard.edu:/usr/local/apache2/htdocs/snapshots"
+        } else {
+            set scpdestination "pieper@gpop.bwh.harvard.edu:slicer-dist"
         }
-        "Win32VC7" { 
-            exec rxvt -e scp $archroot.zip $scpdestination &
+
+        puts " -- upload to $scpdestination"
+        switch $::env(BUILD) {
+            "solaris8" -
+            "redhat7.3" - 
+            "Darwin" {
+                exec xterm -e scp $archroot.tar.gz $scpdestination
+            }
+            "Win32VC7" { 
+                exec rxvt -e scp $archroot.zip $scpdestination &
+            }
         }
     }
 
