@@ -178,15 +178,21 @@ itcl::body dup_sort::fill {dir} {
     set inst [$parent pref INSTITUTION]
 
     if { [catch "exec java -jar $birnid_manager -create -p $inst -l $linktable -c $patient" resp] } {
-        DevErrorWindow "Cannot execute BIRN ID manager.  Ensure that UPLOAD2_DIR preference is correct and that Java is installed on your machine."
+        DevErrorWindow "Cannot execute BIRN ID manager.  Ensure that UPLOAD2_DIR preference is correct and that Java is installed on your machine.\n\n$resp"
     } else {
 
         if { [catch "exec java -jar $birnid_manager -find -l $linktable -c $patient" resp] } {
-            DevErrorWindow "Cannot execute BIRN ID manager to access BIRN ID.  Ensure that LINKTABLE preference is correct."
+            DevErrorWindow "Cannot execute BIRN ID manager to access BIRN ID.  Ensure that LINKTABLE preference is correct.\n\n$resp"
             set birnid ""
         } else {
-
+            set birnid ""
             scan $resp {Birn ID=%[^,]s} birnid
+
+            if { $birnid == "" } {
+                DevErrorWindow "Cannot parse BIRN ID.  Response is: \n$resp"
+                puts stderr "Cannot parse BIRN ID.  Response is: \n$resp"
+            }
+
             set _study(birnid) $birnid
             $infocs.birnid configure -state normal
             $infocs.birnid delete 0 end
