@@ -2354,12 +2354,12 @@ proc EndoscopicResetCameraDirection {} {
 
 
 #-------------------------------------------------------------------------------
-# .PROC EndoscopicUpdateActorEndoscopeFromVirtualEndoscope
+# .PROC EndoscopicUpdateActorFromVirtualEndoscope
 # 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc EndoscopicUpdateActorEndoscopeFromVirtualEndoscope {} {
+proc EndoscopicUpdateActorFromVirtualEndoscope {} {
     global Endoscopic View Path Model
         
     #*********************************************************************
@@ -2662,7 +2662,7 @@ proc EndoscopicCameraMotionFromUser {} {
     global CurrentCamera 
     
     if {$CurrentCamera == $View(endCam)} {
-    EndoscopicUpdateActorEndoscopeFromVirtualEndoscope 
+    EndoscopicUpdateActorFromVirtualEndoscope 
     }
 }
 
@@ -2712,7 +2712,7 @@ proc EndoscopicMoveGyroToLandmark {id} {
     set xyz [Endoscopic(cLand,keyPoints) GetPoint $id]
     set rxyz [Endoscopic(fLand,keyPoints) GetPoint $id]
     
-    EndoscopicUpdateVirtualEndoscope [lindex $xyz 0] [lindex $xyz 1] [lindex $xyz 2] [lindex $rxyz 0] [lindex $rxyz 1] [lindex $rxyz 2] 
+    EndoscopicUpdateVirtualEndoscope "[lindex $xyz 0] [lindex $xyz 1] [lindex $xyz 2] [lindex $rxyz 0] [lindex $rxyz 1] [lindex $rxyz 2]" 
     EndoscopicUpdateActorFromVirtualEndoscope
 }
 
@@ -3403,14 +3403,14 @@ proc EndoscopicSetPathFrame {} {
         set l2 [Endoscopic(fLand,allInterpolatedPoints) GetPoint $Endoscopic(path,i)]
 
         EndoscopicUpdateVirtualEndoscope "[lindex $l 0] [lindex $l 1] [lindex $l 2] [lindex $l2 0] [lindex $l2 1] [lindex $l2 2]"
-        EndoscopicUpdateActorEndoscopeFromVirtualEndoscope 
+        EndoscopicUpdateActorFromVirtualEndoscope 
         
     } elseif { $Endoscopic(path,flyDirection) == "Backward" } {
         set Endoscopic(path,i) $Endoscopic(path,stepStr)
         set l [Endoscopic(cLand,allInterpolatedPoints) GetPoint $Endoscopic(path,i)]
         set l2 [Endoscopic(fLand,allInterpolatedPoints) GetPoint $Endoscopic(path,i)]
         EndoscopicUpdateVirtualEndoscope "[lindex $l 0] [lindex $l 1] [lindex $l 2] [lindex $l2 0] [lindex $l2 1] [lindex $l2 2]"
-        EndoscopicUpdateActorEndoscopeFromVirtualEndoscope 
+        EndoscopicUpdateActorFromVirtualEndoscope 
     }
     }
 }
@@ -3473,13 +3473,13 @@ global Endoscopic
     set x [$fp_mat GetElement 0 3]
     set y [$fp_mat GetElement 1 3]
     set z [$fp_mat GetElement 2 3]
-    EndoscopicEndoscopicReformatSlices $x $y $z
+    EndoscopicReformatSlices $x $y $z
     } elseif { $Endoscopic(cam,driver) == 1 } {
     set cam_mat [Endoscopic(cam,actor) GetMatrix]
     set x [$cam_mat GetElement 0 3]
     set y [$cam_mat GetElement 1 3]
     set z [$cam_mat GetElement 2 3]
-    EndoscopicEndoscopicReformatSlices $x $y $z
+    EndoscopicReformatSlices $x $y $z
     } elseif { $Endoscopic(intersection,driver) == 1 } {
     # get the intersection
     set l [endoscopicRen GetCenter]
@@ -3492,7 +3492,7 @@ global Endoscopic
         set x [expr [lindex $selPt 0]]
         set y [expr [lindex $selPt 1]]
         set z [expr [lindex $selPt 2]]
-        EndoscopicEndoscopicReformatSlices $x $y $z
+        EndoscopicReformatSlices $x $y $z
     }
     
     }
@@ -3500,12 +3500,12 @@ global Endoscopic
 
 
 #-------------------------------------------------------------------------------
-# .PROC EndoscopicEndoscopicReformatSlices
+# .PROC EndoscopicReformatSlices
 # 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc EndoscopicEndoscopicReformatSlices {x y z} {
+proc EndoscopicReformatSlices {x y z} {
     global Endoscopic View Slice
 
     # Force recomputation of the reformat matrix
