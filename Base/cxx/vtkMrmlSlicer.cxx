@@ -1793,7 +1793,7 @@ void vtkMrmlSlicer::SetForeFade(int fade)
 {
   for (int s=0; s<NUM_SLICES; s++)
   {
-	  this->Overlay[s]->SetOpacity(1, fade);
+	  this->Overlay[s]->SetFade(1, fade);
   }
 }
 
