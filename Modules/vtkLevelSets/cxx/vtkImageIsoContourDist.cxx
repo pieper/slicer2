@@ -368,7 +368,7 @@ void vtkImageIsoContourDist::IsoSurfDist3D( )
   register float*       inPtr1;
   register float*       outPtr;
 
-  fprintf(stderr,"IsoSurf3D() begin \n");
+  //  fprintf(stderr,"IsoSurf3D() begin \n");
 
   this->inputImage->GetSpacing(vs);
 
@@ -376,7 +376,7 @@ void vtkImageIsoContourDist::IsoSurfDist3D( )
   vs1_2 = 2*vs[1];
   vs2_2 = 2*vs[2];
 
-  fprintf(stderr,"IsoSurf3D() initfar \n");
+  //  fprintf(stderr,"IsoSurf3D() initfar \n");
 
   IsoSurfDistInit( );
 
@@ -384,7 +384,7 @@ void vtkImageIsoContourDist::IsoSurfDist3D( )
   displace[1] = tx;
   displace[2] = txy;
 
-  fprintf(stderr,"IsoSurf3D() compute \n");
+  //  fprintf(stderr,"IsoSurf3D() compute \n");
 
   for(z=1; z<=tz-2; z++) {
   for(y=1; y<=ty-2; y++) {
@@ -478,7 +478,7 @@ void vtkImageIsoContourDist::IsoSurfDist3D( )
   } // end for y
   } // end for z
 
-  fprintf(stderr,"IsoSurf3D() end \n");
+  //  fprintf(stderr,"IsoSurf3D() end \n");
 
 } // IsoSurfDist3D()
 
@@ -561,7 +561,7 @@ void vtkImageIsoContourDist::IsoSurfDist3D_band( )
   else {
   
 #ifdef _SOLARIS_
-  int code;
+    int code;
     fprintf(stderr,"thr_setconurrency(%d) \n",this->GetNumberOfThreads());
     code = thr_setconcurrency(this->GetNumberOfThreads());
 #endif

@@ -85,8 +85,9 @@
 
 #define ADDMEMORY(text,size) \
   MemoryAllocated += (size)/1000000.0; \
-  fprintf(stderr,"%s : %4.2f Mb,  total %4.2f Mb \n", \
-      text,(size)/1000000.0,MemoryAllocated);
+  if (verbose) \
+    fprintf(stderr,"%s : %4.2f Mb,  total %4.2f Mb \n", \
+        text,(size)/1000000.0,MemoryAllocated);
 
 //
 //------------------------------------------------------------------------------
@@ -1548,8 +1549,10 @@ void vtkLevelSets::InitParam( vtkImageData* input, vtkImageData* output)
   int type;
   int i;
 
-  fprintf(stderr,"vtkLevelSets::InitParam() \n");
-  this->PrintParameters();
+  if (verbose) {
+    fprintf(stderr,"vtkLevelSets::InitParam() \n");
+    //    this->PrintParameters();
+  }
 
   inputImage = input;
 
@@ -2090,7 +2093,8 @@ void vtkLevelSets::Evolve3D( )
   this->current=1-this->current;
 
   if (this->touched) {
-    fprintf(stderr,"touched \n ");
+    if (verbose)
+      fprintf(stderr,"touched \n ");
     //    fflush(stderr);
     this->DistanceMap();
     this->MakeBand();
@@ -2597,8 +2601,10 @@ void vtkLevelSets::InitEvolution()
      float th;
      float mean,sd;
 
-  fprintf(stderr,"vtkLevelSets::InitEvolution() \n");
-  this->PrintParameters();
+  if (verbose) {
+    fprintf(stderr,"vtkLevelSets::InitEvolution() \n");
+    this->PrintParameters();
+  }
 
   this->inputImage->GetSpacing(vs);
   vx = vs[0];
@@ -2607,7 +2613,7 @@ void vtkLevelSets::InitEvolution()
 
   if (!isotropic_voxels) isotropic_voxels=((vx==vy)&&(vx==vz));
 
-  if (isotropic_voxels)
+  if ((isotropic_voxels)&&(verbose))
     fprintf(stderr,"ISOTROPIC VOXELS \n");
 
    // First estimation of output is a threshold segmentation
@@ -2651,7 +2657,7 @@ void vtkLevelSets::InitEvolution()
 
    fprintf(stderr,"Threshold %f \n", this->InitThreshold);
 
-   if (this->RescaleImage) 
+   if ((this->RescaleImage)&&(initImage==NULL))
      th = (InitThreshold-minu)/(maxu-minu)*255.0;
    else
      th = InitThreshold;
@@ -2749,12 +2755,14 @@ void vtkLevelSets::InitEvolution()
    }
    else 
      {
+       fprintf(stderr," Copy the initial; image !! \n");
        outputImage->CopyAndCastFrom(initImage,initImage->GetExtent());
+       outPtr = (float*) outputImage->GetScalarPointer();
        for (i=0; i<imsize; i++) {
-     switch (InitIntensity) {
-     case Bright: *outPtr = -*outPtr+th; break;
-     case Dark:   *outPtr -= th; break;
-     }
+         switch (InitIntensity) {
+         case Bright: *outPtr = -*outPtr+th; break;
+         case Dark:   *outPtr -= th; break;
+         }
          outPtr++;
        }
      }
@@ -2909,9 +2917,11 @@ int vtkLevelSets::Iterate()
   if (GB_debug) 
     fprintf(stderr,"\n ==== \n\t Execute Step %d \n",step);
   else {
-    printf("\b\b\b\b");
-    printf("%4d",step);
-    fflush(stdout);
+    if (verbose) {
+      printf("\b\b\b\b");
+      printf("%4d",step);
+      fflush(stdout);
+    }
   }
 
   if ((step >0) &&(step % CheckFreq == 0)) {
@@ -3451,6 +3461,7 @@ void vtkLevelSets::PrintParameters()
   cout << "--- Expansion Parameters \n";
   cout << "balloon_coeff: "        << this->balloon_coeff        << "\n";
   cout << "ProbabilityThreshold: " << this->ProbabilityThreshold << "\n";
+  cout << "ProbabilityHighThreshold: " << this->ProbabilityHighThreshold << "\n";
   cout << "NumGaussians: "         << this->NumGaussians         << "\n";
   for(i=0;i<NumGaussians;i++)
     cout << "Gaussian " << i << " mean=" 
