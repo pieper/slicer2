@@ -47,8 +47,10 @@ vtkImageZoom2D \
 vtkIndirectLookupTable \
 vtkMrmlSlicer \
 vtkMrmlDataVolume \
+vtkMrmlDataTetraMesh \
 vtkMrmlMatrixNode \
 vtkMrmlVolumeNode \
+vtkMrmlTetraMeshNode \
 vtkMrmlModelNode \
 vtkMrmlEndTransformNode \
 vtkMrmlColorNode \
