@@ -162,7 +162,7 @@ proc AnalyzeInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.5 $} {$Date: 2004/07/22 21:49:17 $}]
+        {$Revision: 1.6 $} {$Date: 2004/07/30 15:52:56 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -417,7 +417,7 @@ proc AnalyzeApply {} {
 
     set fileName [string trim $AnalyzeCache(fileName)]
     if {![file exists $fileName]} {
-        DevErrorWindow "Analyze file is not available."
+        DevErrorWindow "Analyze file is not available: $fileName."
         return
     }
 
@@ -465,7 +465,7 @@ proc AnalyzeCreateMrmlNodeForVolume {volName volData} {
     $n SetName $volName 
     $n SetDescription $volName 
 
-    Volume($i,node) SetScanOrder {IS} 
+    Volume($i,node) SetScanOrder {SI} 
     Volume($i,node) SetLittleEndian $AnalyzeCache(byteOrder) 
 
     $volData Update 
@@ -642,6 +642,7 @@ proc AnalyzeLoadVolumes {} {
         set volData [imageAppend GetOutput] 
         set id [AnalyzeCreateMrmlNodeForVolume $Volume(name) $volData]
         lappend AnalyzeCache(MRMLid) $id 
+        puts "done."
 
         imageAppend Delete
 
