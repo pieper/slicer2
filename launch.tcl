@@ -115,15 +115,22 @@ switch $env(BUILD) {
         set env(Path) $env(TCL_BIN_DIR)\;$env(Path)
     }
 }
+
 # set the base tcl/tk library paths, looking in the slicer home Lib 
 # subdirectory for this build. 
 set env(TCL_LIBRARY) $env(SLICER_HOME)/Lib/$env(BUILD)/ActiveTcl-8.4.1/lib/tcl8.4
 set env(TK_LIBRARY) $env(SLICER_HOME)/Lib/$env(BUILD)/ActiveTcl-8.4.1/lib/tk8.4
 
-set env(TCLLIBPATH) "$env(VTK_SRC_DIR) $env(SLICER_HOME)/Base/Wrapping/Tcl/vtkSlicerBase $env(TCLLIBPATH)"
+# add the default search locations for tcl packages
+set env(TCLLIBPATH) "$env(SLICER_HOME)/Base/Wrapping/Tcl/vtkSlicerBase $env(TCLLIBPATH)"
+set env(TCLLIBPATH) "$env(VTK_SRC_DIR)/Wrapping/Tcl $env(TCLLIBPATH)"
 
-# Add the module bin directories to the load library path and the Wrapping/Tcl directories to the tcl library path
+#
+# Add the module bin directories to the load library path 
+# and the Wrapping/Tcl directories to the tcl library path
 # check both the base slicer home and the user's home dir
+#
+
 set baseModulePath ${env(SLICER_HOME)}/Modules
 regsub -all {\\} $env(HOME) / home
 set userModulePath $home/Modules
@@ -162,6 +169,32 @@ if {$resp == "cancel"} {
     exit
 }
 
+
+# 
+# if a tcl script is the first argument on the command line, run it
+# otherwise, run the default application startup script
+#
+set argv0 [lindex $argv 0]
+if { [string match *.tcl $argv0] } {
+    set mainscript $argv0
+    set argv [lreplace $argv 0 0] ;# trim the script name off 
+} else {
+    set mainscript $env(SLICER_HOME)/Base/tcl/Go.tcl
+}
+
+
+# 
+# launch the slicer main script as a sub-process and monitor the output
+# - process is started with the 'open' command through a pipe
+# - the file_event callback is triggered when subprocess has written to stdout
+# - pipe is closed when process exits, causing launcher to exit too.
+#
+# why? well, some messages only go to console stdout and we don't want to lose them.
+# Also, on windows if you block waiting for the process to exit the launcher would
+# be "Not Responding" and things like screen savers and power management might not 
+# work right.
+#
+
 proc file_event {fp} {
     global END
     if {[eof $fp]} {
@@ -178,14 +211,12 @@ switch $env(BUILD) {
     "redhat7.3" {
         # - need to run the specially modified tcl interp in the executable 'vtk' on unix
         # - don't put process in background so that jdemo can track its status
-        #eval exec $env(VTK_BIN_DIR)/bin/vtk $env(SLICER_HOME)/Base/tcl/Go.tcl $argv
-        set fp [open "| $env(VTK_BIN_DIR)/bin/vtk $env(SLICER_HOME)/Base/tcl/Go.tcl $argv" r]
+        set fp [open "| $env(VTK_BIN_DIR)/bin/vtk $mainscript $argv" r]
     }
     "Win32VC7" {
         # put slicer in the background on windows so it won't be "Not Responding" in
         # task manager
-        # eval exec $env(TCL_BIN_DIR)/wish84.exe $env(SLICER_HOME)/Base/tcl/Go.tcl $argv &
-        set fp [open "| $env(TCL_BIN_DIR)/wish84.exe $env(SLICER_HOME)/Base/tcl/Go.tcl $argv" r]
+        set fp [open "| $env(TCL_BIN_DIR)/wish84.exe $mainscript $argv" r]
     }
 }
 
