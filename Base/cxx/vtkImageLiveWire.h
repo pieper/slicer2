@@ -50,30 +50,65 @@ class ListElement {
 };
 
 //----------------------------------------------------------------------------
-// 2D array of list elements.
-class LinkedList {
+// 2D array.
+// uses x,y indices like image coords, so x=row and y=column.
+template <class T>
+class array2D {
  public:
-  ListElement GetElement(int x,int y) {return this->List[x + y*this->Cols];};
-  ListElement *Element(int x,int y) {return (this->List + x + y*this->Cols);};
-
-  LinkedList(int rows, int cols){
-    this->Rows = rows;
-    this->Cols = cols;
-    this->List = new ListElement[this->Rows*this->Cols];
-    for (int i = 0; i < this->Rows; i++) {
-      for (int j = 0; j < this->Cols; j++) {
-	this->Element(i,j)->Coord[0] = i;
-	this->Element(i,j)->Coord[1] = j;
-      }
-    }   
+  array2D(int x, int y){
+    this->Rows = y;
+    this->Cols = x;
+    this->array = new T[this->Rows*this->Cols];
   };
 
-  ~LinkedList(){if (this->List) delete[] this->List;};
+  array2D(int x, int y, T initVal){
+    this->Rows = y;
+    this->Cols = x;
+    this->array = new T[this->Rows*this->Cols];
 
- protected:
-  ListElement *List;
-  int Rows, Cols;
+    for( int i=0; i < this->Rows*this->Cols; i++){    
+      this->array[i]= initVal;
+    }
+  };
+
+  ~array2D(){if (this->array) delete[] this->array;};
+
+  // Get/Set functions 
+  T GetElement(int x,int y) {return this->array[x + y*this->Cols];};
+  void SetElement(int x,int y, T value) {this->array[x + y*this->Cols] = value;};
+
+  // return the array element itself
+  T&       operator() (int x, int y){return this->array[x + y*this->Cols];};
+
+  // return a pointer to the array element
+  T *Element(int x,int y) {return (this->array + x + y*this->Cols);};
+
+ private:
+  T *array;
+  int Rows, Cols; 
+
 };
+
+
+
+//----------------------------------------------------------------------------
+// 2D array of list elements
+class LinkedList : public array2D<ListElement>{
+ public:
+
+  LinkedList(int rows, int cols)
+    :
+    array2D(rows,cols)
+    {
+      for (int i = 0; i < rows; i++) {
+	for (int j = 0; j < cols; j++) {
+	  this->Element(i,j)->Coord[0] = i;
+	  this->Element(i,j)->Coord[1] = j;
+	}
+      }
+    }  
+};
+  
 
 //----------------------------------------------------------------------------
 // This is a *really* circular queue.  Circle points to the heads
@@ -85,6 +120,7 @@ class LinkedList {
 //
 // Each linked list starts at a bucket and winds its way through A.
 // New vertices are inserted at the top (by the bucket).
+// Lauren is this really much better?
 // To extract vertices for examination, it is best to use older
 // ones (so it is more like a breadth first search than a depth first one)
 // so the last vertex in A is linked back to the bucket.  
@@ -92,9 +128,9 @@ class LinkedList {
 // 
 // See IEEE Trans Med Img Jan 2000, Live Wire on the Fly for more.
 //
-class CircularQueue {
+class circularQueue {
  public:  
-  CircularQueue(int buckets, int rows, int cols)
+  circularQueue(int rows, int cols, int buckets)
     {
       this->A = new LinkedList(rows,cols);
       this->C = buckets;
@@ -104,46 +140,35 @@ class CircularQueue {
 	{
 	  this->Circle[i].Prev = this->Circle[i].Next = &this->Circle[i];
 	}
+      this->Verbose = 0;
     };
   
-  ~CircularQueue()
+  ~circularQueue()
     {
-      // Lauren do we need to delete A?
+      if (this->A) delete this->A;
       if (this->Circle) delete[] this->Circle;
     };
 
-  void Insert(int bucket,ListElement *el)
+  void Insert(int x, int y, int cost)
     {
-      //      if (this->Circle[bucket].Next)
-      //	{
-      //	  // the bucket is not empty.
-      //	  this->Circle[bucket].Next->Prev = el;
-      //	}
-      //      else 
-      //	{
-      //	  // the bucket is empty.  link back around.
-      //	  el->Next = &this->Circle[bucket];
-      //	  this->Circle[bucket].Prev = el;
-      //	}
-
+      int bucket = this->GetBucket(cost);
+		
+      ListElement *el = this->A->Element(x,y);
       // insert el at the top of the list from the bucket
       el->Next = this->Circle[bucket].Next;
+      if (el->Next == NULL) 
+	{
+	  cout <<"ERROR in vtkImageLiveWire.  bucket is NULL, not linked to self.\n" << endl;
+	}
       this->Circle[bucket].Next->Prev = el;      
       this->Circle[bucket].Next = el;
       el->Prev = &this->Circle[bucket];
 
-
-
-      //printf("put somebody in Q \n");
-    }
-  void Insert(int bucket, int x, int y)
-    {
-      ListElement *el = this->A->Element(x,y);
-      this->Insert(bucket, el);
-    }
-  void Insert(int bucket, int *coord)
-    {
-      this->Insert(bucket, coord[0], coord[1]);
+      if (this->Verbose)
+	{
+	  cout << "Q_INSERT " << "b: " << bucket << " " << "c: " 
+	       << cost << " (" << x << "," << y << ")" << endl;
+	}
     }
 
   void Remove(int *coord)
@@ -158,74 +183,90 @@ class CircularQueue {
   void Remove(ListElement *el)
     {
       // if el is in linked list
-      if (el->Prev != NULL) {
+      if (el->Prev != NULL) 
+	{
       
-	if (el->Next == NULL) {
-	  printf("ERROR in vtkImageLiveWire.  el->Next is NULL.\n");
-	}
+	if (el->Next == NULL)
+	  {
+	    cout <<"ERROR in vtkImageLiveWire.  el->Next is NULL.\n "<< endl;
+	  }
 	el->Next->Prev = el->Prev;
 	el->Prev->Next = el->Next;
 	
 	// clear el's pointers
 	el->Prev = el->Next = NULL;
-      }
+	}
+      
+      if (this->Verbose)
+	{
+	  cout << "Q_REMOVE " << "(" << el->Coord[0] << "," 
+	       << el->Coord[1] <<")" << endl;
+	}
+
       return;
     }
   
-  int FindMinBucket(int cost)
+  ListElement *GetListElement(int cost)
     {
-      // Lauren check rounding okay...
-      int bucket = (int)fmodf(cost, C+1);
+      int bucket = FindMinBucket(cost);
 
-      while (this->Circle[bucket].Next == &this->Circle[bucket])
-	{
-	  // search around the Q for the next vertex
-	  cost++;
-	  bucket = (int)fmodf(cost, this->C+1);
-	  //printf("bucket %d\n", bucket);
-	}
-      if (this->Circle[bucket].Prev == &this->Circle[bucket])
-	{
-	  printf("ERROR in vtkImageLiveWire.  Prev not linked right.\n");
-	}
-      return bucket;
-    }
-
-  ListElement *GetListElement(int bucket)
-    {
       // return the last one in the linked list.
       if (this->Circle[bucket].Prev == NULL)
 	{
-	  printf("ERROR in vtkImageLiveWire.  Unlinked list.\n");
+	  cout << "ERROR in vtkImageLiveWire.  Unlinked list." << endl;
 	}
       if (this->Circle[bucket].Next == &this->Circle[bucket])
 	{
-	  printf("ERROR in vtkImageLiveWire.  Empty linked list.\n");
+	  cout << "ERROR in vtkImageLiveWire.  Empty linked list." << endl;
+	}
+      if (this->Verbose)
+	{
+	  cout << "Q_GET b: " << bucket << endl;
 	}
       return this->Circle[bucket].Prev;
     }
 
- protected:
+ private:
+
+  int GetBucket(int cost)
+    {
+      //return (int)fmodf(cost, this->C+1);
+
+      // return remainder
+      return div(cost,this->C+1).rem;
+    }
+
+  // Lauren if the queue is empty this will loop forever.
+  int FindMinBucket(float cost)
+    {
+      int bucket = this->GetBucket(cost);
+      int count = 0;
+
+      while (this->Circle[bucket].Next == &this->Circle[bucket] && count < this->C+1)
+	{
+	  // search around the Q for the next vertex
+	  cost++;
+	  bucket = this->GetBucket(cost);
+	  // have we looped all the way around?
+	  count++;
+	}
+
+      if (count > this->C) 
+	{
+	  cout << "ERROR in vtkImageLiveWire.  Empty Q." << endl;
+	}
+      if (this->Circle[bucket].Prev == &this->Circle[bucket])
+	{
+	  cout <<"ERROR in vtkImageLiveWire.  Prev not linked right." << endl;
+	}
+
+      return bucket;
+    }
+
   LinkedList *A;
   ListElement *Circle;
   int C;
-};
-
-// 2D array.
-template <class T>
-class array2D {
- public:
-  T *array;
-  int rows, cols;
-  T GetElement(int x,int y) {return this->list[x + y*rows];};
-  T *Element(int x,int y) {return (this->list + x + y*rows);};
-  array2D(T init_val, int rows, int cols){
-    this->array = new T[rows*cols];
-    for(int i=0;i<rows*cols;i++){    
-      this->array[i]= init_val;
-    }
-  };
-  ~array2D(){if (this->array) delete[] this->array;};
+  bool Verbose;
 };
 
 // start Tcl wrapping again (cryptic acronym for End Tcl Exclude)
@@ -262,14 +303,46 @@ public:
   // Max cost of any single pixel edge; also size of circular queue
   vtkSetMacro(MaxEdgeCost, int);
   vtkGetMacro(MaxEdgeCost, int);
+
+  // Description:
+  // For testing.  
+  vtkSetMacro(Verbose, int);
+  vtkGetMacro(Verbose, int);
   
   // Description:
   // This filter represents contour points
   // it outputs an image containing them
   vtkGetObjectMacro(ContourPoints, vtkImageDrawROI);
 
+  // ---- Data structures for internal use in path computation -- //
+  // Description:
   // 
-  CircularQueue *Q;
+  circularQueue *Q;
+
+  //BTX
+  // Description:
+  // CC is the cumulative cost from StartPoint to each pixel
+  array2D<int> *CC;
+
+  // Description:
+  // Dir is the direction the optimal path takes through each pixel.
+  array2D<int> *Dir;
+
+  // Description:
+  // The directions the path may take.
+  enum {NONE, UP, DOWN, RIGHT, LEFT};
+
+
+  // Description:
+  // L is the list of edges ("bels") which have already been processed
+  array2D<bool> *L;
+
+  // Description:
+  // B is list of edges ("bels") on the contour already
+  array2D<bool> *B;
+  //ETX
+  // ---- End of data structures for internal use in path computation -- //
+
 
 
 protected:
@@ -282,7 +355,9 @@ protected:
   int EndPoint[2];
   
   int MaxEdgeCost;
-  
+
+  int Verbose;
+
   // Lauren here for now but vkMrmlSlicer has one of these
   // we should use?
   vtkImageDrawROI *ContourPoints;

@@ -57,6 +57,11 @@ vtkImageLiveWire::vtkImageLiveWire()
   this->ContourPoints = vtkImageDrawROI::New();
 
   this->Q = NULL;
+  this->CC = NULL;
+  this->Dir = NULL;
+  this->L = NULL;
+
+  this->Verbose = 1;
 }
 
 
@@ -108,80 +113,96 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
   int numcols = extent[3] - extent[2] + 1;
   int numpix = numrows*numcols;
 
+  // ----------------  Data structures  ------------------ //
+
   // data structures (see IEEE Trans Med Img Jan 2000, Live Wire on the Fly)
+  // Allocate structures.
+  // Lauren each time a path is chosen by the user these should go away
+  // and be created again for the next path. (when StartPoint changes)
+  // So there should be a allocate/delete data structures function that is called then somehow.
+
   if (!self->Q)
     {
-      self->Q = new CircularQueue(self->GetMaxEdgeCost(), numrows, numcols);
+      self->Q = new circularQueue(numrows, numcols, self->GetMaxEdgeCost());
     }
-  CircularQueue *Q = self->Q;
+  circularQueue *Q = self->Q;
 
-  // -------------- INIT should not happen in here ------------- //
-  // cc is the cumulative cost from StartPoint to each pixel
-  float cc[numrows][numcols];
-  for (int i = 0; i < numrows; i++) {
-    for (int j = 0; j < numcols; j++) {
-      cc[i][j] = FLT_MAX;
-    }
-  }
-
-  // dir is the direction the optimal path takes through each pixel.
-  int *dir = new int[numpix];  
-  enum {NONE, UP, DOWN, RIGHT, LEFT};
-  memset(dir, NONE, numpix*sizeof(int));
-
-  // Lauren this should be a member of the class
-  // L is the list of edges ("bels") which have already been processed
-  int *L = new int[numpix];
-  memset(L, 0, numpix*sizeof(int));
-
-  // Lauren this should be a member of the class
-  // set for the entire contour search, then clear btwn slices...)
-  // B is list of edges ("bels") on the contour already
-  int *B = new int[numpix];
-  memset(B, 0, numpix*sizeof(int));
-
-  // Lauren boolean arrays should not be ints.
-  
-  // Dijkstra
-  int *start = self->GetStartPoint();
-  // cumulative cost at StartPoint = 0;
-  cc[start[0]][start[1]] = 0;
-
-  // Insert StartPoint into zero-length path bucket of Q
-  int bucket = 0;
-  Q->Insert(bucket, self->GetStartPoint());
-
-  // current search bucket in Q
-  float currentCC = 0; // or init to cc[start point]
-
-  // -------------- end INIT should not happen in here ------------- //
-
-
-  int *end = self->GetEndPoint();
-  // while end point not in L do
-  while (L[end[0]+end[1]*numcols] == 0) 
+  if (!self->CC)
     {
+      self->CC = new array2D<int>(numrows, numcols, 65536);
+    }
+  array2D<int> &CC = (*self->CC);
 
-      // get min vertex from Q
-      bucket = Q->FindMinBucket(currentCC);
-      ListElement *min = Q->GetListElement(bucket);
+  if (!self->Dir)
+    {
+      self->Dir = new array2D<int>(numrows, numcols, self->NONE);
+    }
+  array2D<int> &Dir = (*self->Dir);
 
-      //printf("chosen bucket %d, cc %f\n", bucket, currentCC);
-    
-      // put it into L, the already looked at list
-      int coordX = min->Coord[0];
-      int coordY = min->Coord[1];
-      L[coordX+coordY*numcols] = 1;
-      printf("add to L: %d %d\n", coordX, coordY);
-      
+  if (!self->L)
+    {
+      self->L = new array2D<bool>(numrows, numcols, false);
+    }
+  array2D<bool> &L = (*self->L);
+
+  if (!self->B)
+    {
+      self->B = new array2D<bool>(numrows, numcols, false);
+    }
+  array2D<bool> &B = (*self->B);
+
+
+  
+  // ----------------  Dijkstra ------------------ //
+
+  int *start = self->GetStartPoint();
+  int *end = self->GetEndPoint();
+
+  // current cumulative cost at StartPoint must be 0
+  int currentCC = 0;
+  CC(start[0],start[1]) = currentCC;
+
+  // Insert StartPoint into (zero-length path bucket of) Q
+  Q->Insert(start[0], start[1], currentCC);
+
+  // while end point not in L keep checking out neighbors of current point
+  while ( L(end[0],end[1]) == false) 
+    {
+      // get min vertex from Q 
+      ListElement *min = Q->GetListElement(currentCC);
+
+      // update the current location
+      int currentX = min->Coord[0];
+      int currentY = min->Coord[1];
+
+      // update the current path cost
+      currentCC = CC(currentX,currentY);
+
+      // put vertex into L, the already looked at list
+      L(currentX,currentY) = 1;
+
       // remove it from Q (and list, A, in Q's bucket)
       Q->Remove(min);
 
-      // update the current path cost
-      currentCC = cc[coordX][coordY];
+     
+      if (self->GetVerbose() > 1) 
+	{
+	  cout << "----- CC: " << currentCC << " -----  (" << currentX 
+	       << "," << currentY << ") ----- L: " << L(end[0],end[1]) 
+	       <<" -----" << endl;
+	}
+    
+      if (self->GetVerbose() == 1) 
+	{
+	  if (currentX == end[0] && currentY == end[1])
+	    {
+	      cout << "final point: (" << currentX << "," 
+		   << currentY << ")  CC: " << currentCC << endl;
+	    }
+	}
 
       // check out its 4 neighbors
-      float oldCC, tempCC;
+      int oldCC, tempCC;
       vtkImageData *topEdge, *rightEdge;
       topEdge = self->GetTopEdges();
       rightEdge = self->GetRightEdges();
@@ -190,46 +211,53 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
       int x,y;
 
       int neighbors[4][2] = {{0,1},{1,0},{-1,0},{0,-1}};
+      // Lauren use the proper edge map
       T* edges[4] = {rightEdgeVal, topEdgeVal, rightEdgeVal, topEdgeVal};
       T* edge;
   
       for (int n=0; n<4; n++) 
 	{
-	  x = coordX + neighbors[n][0];
-	  y = coordY + neighbors[n][1];
+	  x = currentX + neighbors[n][0];
+	  y = currentY + neighbors[n][1];
 
 	  if (y < numrows && x < numcols && x > 0 && y > 0) 
 	    {
-	      oldCC = cc[x][y];
-	      // Lauren use the proper edge map
+	      oldCC = CC(x,y);
 	      edge = edges[n];
-	      tempCC = currentCC + edge[(x) + y*numcols];
+	      // Lauren is edge image being accessed right?
+	      // Lauren get int input!
+	      tempCC = currentCC + (int)edge[(x) + y*numcols];
+
+	      if (self->GetVerbose() > 2) 
+		{
+		  cout << "NEIGHBOR (" << x << "," << y << ") CC: " 
+		       << tempCC << "," << oldCC << endl;
+		}
+
 	      if (tempCC < oldCC) 
 		{
-		  cc[x][y] = tempCC;
-		  dir[x + y*numcols] = UP;
-		  //printf("updated CC value from %f to %f\n", oldCC, tempCC);
-		  // remove neighbor from Q if in it
+		  // lower the cumulative cost to reach this neighbor
+		  CC(x,y) = tempCC;
+		  // store new short path direction
+		  Dir(x,y) = n+1;
+		  // remove this neighbor from Q if in it
 		  Q->Remove(x,y);
-		  // then put it in the proper place
-		  // Lauren make this part of the Q class
-		  bucket = (int)fmodf(cc[x][y], self->GetMaxEdgeCost()+1);
-		  //printf("bucket %d\n",bucket);
-		  Q->Insert(bucket, x,y);
+		  // then put it in the proper place in Q for its new cost
+		  Q->Insert(x,y,CC(x,y));
 
-		  printf("  put %d %d in Q[%d]: %f \n", x, y,bucket,tempCC);
+		  if (self->GetVerbose() > 2)
+		    {
+		    cout << oldCC << " to  " << tempCC << endl;
+		    }
 		}
-	      //	    printf("CC values from %f to %f\n", oldCC, tempCC);
-      
 	    }
 	}
     }
-  printf ("L at end point %d\n", L[end[0]+end[1]*numcols]); 
   return;
 }
 
 
-
+// Lauren just accept int as input!
 //----------------------------------------------------------------------------
 // Description:
 // This method is passed a input and output data, and executes the filter
