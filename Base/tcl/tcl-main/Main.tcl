@@ -430,14 +430,13 @@ proc MainBuildGUI {} {
 	$Gui(mFile) add command -label "Exit" -command MainExitProgram
 
 	$Gui(mView) add command -label "Normal" -command \
-		"MainViewerSetMode Normal"
+		"MainMenu View Normal"
 	$Gui(mView) add command -label "4x256" -command \
-		"MainViewerSetMode Quad256"
+		"MainMenu View Quad256"
 	$Gui(mView) add command -label "4x512" -command \
-		"MainViewerSetMode Quad512"
+		"MainMenu View Quad512"
 	$Gui(mView) add command -label "3D" -command \
-		"MainViewerSetMode 3D"
-
+		"MainMenu View 3D"
 	$Gui(mHelp) add command -label "Documentation..." -command \
 		"MainMenu Help Documentation"
 	$Gui(mHelp) add command -label "Copyright..." -command \
@@ -998,40 +997,40 @@ proc MainEndProgress {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainMenu {menu cmd} {
-	global Gui
+    global Gui
 
-	set x 50
-	set y 50
-
-	switch $menu {
-
+    set x 50
+    set y 50
+    
+    switch $menu {
+	
 	"File" {
-		switch $cmd {
+	    switch $cmd {
 		"Open" {
-			MainFileOpenPopup "" 50 50
+		    MainFileOpenPopup "" 50 50
 		}
 		"Save" {
-			MainFileSave
+		    MainFileSave
 		}
 		"SaveAs" {
-			MainFileSaveAsPopup "" 50 50
+		    MainFileSaveAsPopup "" 50 50
 		}
 		"Save3D" {
-			MainViewSaveView
+		    MainViewSaveView
 		}
 		"SaveSlice" {
-			SlicesSave
+		    SlicesSave
 		}
 		"Close" {
-			MainFileClose
+		    MainFileClose
 		}
-		}
+	    }
 	}
-
+	
 	"Help" {
-		switch $cmd {
+	    switch $cmd {
 		"Copyright" {
-			MsgPopup Copyright $x $y "\
+		    MsgPopup Copyright $x $y "\
 Copyright (c) 1999 Surgical Planning Lab, Brigham and Women's Hospital
 
 Direct all questions regarding this copyright to slicer@ai.mit.edu.
@@ -1059,14 +1058,17 @@ PARTICULAR PURPOSE, AND NON-INFRINGEMENT.  THIS SOFTWARE IS PROVIDED ON AN
 MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS."
 		}
 		"Documentation" {
-			MsgPopup Documentation $x $y "\
+		    MsgPopup Documentation $x $y "\
 For the latest documentation, visit:
 
 http://www.slicer.org"
 		}
-		}
+	    }
 	}
-	}
+	"View" {
+	    MainViewerSetMode $cmd
+	}  
+    }
 }
 
 #-------------------------------------------------------------------------------
