@@ -737,7 +737,7 @@ static void MeanFieldApproximation3D(int id,
         // Kilian May 2002: I believe the form underneath is correct - Tina's PhD thesis displays it exactly like underneath 
     mp = TissueProbability[i] * (1-Alpha+Alpha*exp((*wxp++) + (*wxn++) + (*wyp++) + (*wyn++) + (*wzp++) + (*wzn++)));
     if (ProbDataLocal[i]) mp *= double(*ProbDataPtr[i]);
-    w_m_output[i] = mp*vtkImageEMGeneral::FastGaussMulti(InvSqrtDetLogCov[i],cY_M, LogMu[i],InvLogCov[i],NumInputImages);
+    w_m_output[i] = mp*vtkImageEMGeneral::FastGaussMulti(InvSqrtDetLogCov[i],cY_M, LogMu[i],InvLogCov[i],NumInputImages,NumInputImages);
     normRow += w_m_output[i];
       } 
       wxp = wxpPtr; wxn = wxnPtr; wyn = wynPtr; wyp = wypPtr; wzn = wznPtr; wzp = wzpPtr;
@@ -751,7 +751,7 @@ static void MeanFieldApproximation3D(int id,
     if (normRow == 0.0) {
       for (i=0; i<NumClasses; i++) {
         // (*w_m_output)[i] = vtkImageEMGeneral::LookupGauss(GaussLookupTable[i],TableLBound[i],TableUBound[i],TableResolution[i],*cY_M, NumInputImages);
-        w_m_output[i] = TissueProbability[i] * vtkImageEMGeneral::FastGaussMulti(InvSqrtDetLogCov[i],cY_M, LogMu[i],InvLogCov[i],NumInputImages); 
+        w_m_output[i] = TissueProbability[i] * vtkImageEMGeneral::FastGaussMulti(InvSqrtDetLogCov[i],cY_M, LogMu[i],InvLogCov[i], NumInputImages, NumInputImages); 
         normRow += w_m_output[i];
       } 
     }
@@ -1292,7 +1292,7 @@ static void vtkImageEMLocalAlgorithm(vtkImageEMLocalSegmenter *self,T **ProbData
           // check down a little bit later
           // (*w_m)[j] = (*ProbabilityData)[j]*vtkImageEMGeneral::LookupGauss(GaussLookupTable[j],TableLBound[j],TableUBound[j],TableResolution[j],*cY_M, NumInputImages);
           // (*w_m)[j] = ProbabilityData[i][j]*vtkImageEMGeneral::FastGaussMulti(InvSqrtDetLogCov[j],*cY_M, LogMu[j],InvLogCov[j],NumInputImages);
-          w_m[j] = TissueProbability[j] * vtkImageEMGeneral::FastGaussMulti(InvSqrtDetLogCov[j],cY_M, LogMu[j],InvLogCov[j],NumInputImages);
+          w_m[j] = TissueProbability[j] * vtkImageEMGeneral::FastGaussMulti(InvSqrtDetLogCov[j],cY_M, LogMu[j],InvLogCov[j],NumInputImages, NumInputImages);
 
           if (ProbDataPtrCopy[j]) w_m[j] *= ((double) *ProbDataPtrCopy[j]);
           normRow += w_m[j];
@@ -1321,7 +1321,7 @@ static void vtkImageEMLocalAlgorithm(vtkImageEMLocalSegmenter *self,T **ProbData
         for (j=0; j < NumClasses; j++) {
           // vtkImageEMGeneral::LookupGauss(GaussLookupTable[j],TableLBound[j],TableUBound[j],TableResolution[j],*cY_M, NumInputImages);
           // (*w_m)[j] = TissueProbability[j]*vtkImageEMGeneral::FastGaussMulti(InvSqrtDetLogCov[j],*cY_M, LogMu[j],InvLogCov[j],NumInputImages); 
-          w_m[j] = TissueProbability[j]*vtkImageEMGeneral::FastGaussMulti(InvSqrtDetLogCov[j],cY_M, LogMu[j],InvLogCov[j],NumInputImages); 
+          w_m[j] = TissueProbability[j]*vtkImageEMGeneral::FastGaussMulti(InvSqrtDetLogCov[j],cY_M, LogMu[j],InvLogCov[j],NumInputImages, NumInputImages); 
           normRow += w_m[j];
         }
           }

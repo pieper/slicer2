@@ -42,7 +42,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkImageThreshold.h"
 #include "vtkImageMathematics.h"
 #include "vtkImageAccumulate.h"
-#include "vtkImageData.h"
+#include "vtkImageData.h" 
 // Just made for vtkImageEMGeneral and its kids
 #include "vtkThread.h"
 #include "vtkDataTimeDef.h"
@@ -106,7 +106,7 @@ class VTK_EMLOCALSEGMENT_EXPORT vtkImageEMGeneral : public vtkImageMultipleInput
   static double determinant(double **mat,int dim); 
 
   // Description:
-  // Inverts the matrix -> Retrns 0 if it could not do it 
+  // Inverts the matrix -> Returns 0 if it could not do it 
   static int InvertMatrix(double **mat, double **inv_mat,int dim);
 
   // Description:
@@ -204,13 +204,20 @@ class VTK_EMLOCALSEGMENT_EXPORT vtkImageEMGeneral : public vtkImageMultipleInput
   // 3xfaster Gauss Function written by Sandy
   static double FastGauss(double inverse_sigma, double x);
   static double FastGaussTest(double inverse_sigma, double x);
-  static float FastGauss2(double inverse_sqrt_det_covariance, float *x ,double *mu,  double **inv_cov);
+  // Description:
+  // Special feature necessary bc we use weighted input images thus a matix of realDim 2 can be virtualDim 1
+  // e.g. 1 0 | 0 0
+  static float FastGauss2(double inverse_sqrt_det_covariance, float *x ,double *mu,  double **inv_cov, int virtualDim );
+
   // Description :
   // Same as FastGauss - just for multi dimensional input ->  x = (vec - mu) * InvCov *(vec - mu)
   static float FastGaussMulti(double inverse_sqrt_det_covariance, float x,int dim);
+
   // Description :
   // Same as FastGauss - just for multi dimensional input 
-  static float FastGaussMulti(double inverse_sqrt_det_covariance, float* x,double *mu, double **inv_cov, int dim);
+  // Special feature necessary bc we use weighted input images thus a matix of realDim 2 can be virtualDim 1
+  // e.g. 1 0 | 0 0
+  static float FastGaussMulti(double inverse_sqrt_det_covariance, float* x,double *mu, double **inv_cov, int realDim, int virtualDim);
 
   // Description :
   // Fastes Gauss Function (jep I wrote it) - just look in a predifend lookup table 
@@ -227,7 +234,6 @@ class VTK_EMLOCALSEGMENT_EXPORT vtkImageEMGeneral : public vtkImageMultipleInput
   // Value defines the vooxel with those label to be measured
   // Returns  Dice sim measure
   static float CalcSimularityMeasure (vtkImageData *Image1, vtkImageData *Image2,float val, int PrintRes);
-
 protected:
   vtkImageEMGeneral() {};
   vtkImageEMGeneral(const vtkImageEMGeneral&) {};

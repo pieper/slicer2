@@ -30,7 +30,6 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 // #include <unistd.h>
 
 
- 
 // ---------------------------------------------------------------------------------------------
 //  -*- Mode: C++;  -*-
 //  File: qgauss.hh
@@ -114,13 +113,17 @@ float vtkImageEMGeneral_qnexp2(float x)
     return (double) EMSEGMENT_ONE_OVER_ROOT_2_PI * inverse_sigma 
     * vtkImageEMGeneral_qnexp2(EMSEGMENT_MINUS_ONE_OVER_2_LOG_2 * tmp * tmp);
 }
-// Same as FastGauss - just for 2 Dimensional multi dimensional input 
- float vtkImageEMGeneral::FastGauss2(double inverse_sqrt_det_covariance, float *x ,double *mu,  double **inv_cov) {
+
+ // Same as FastGauss - just for 2 Dimensional multi dimensional input 
+ // Special feature necessary bc we use weighted input images thus a matix of realDim 2 can be virtualDim 1
+ // e.g. 1 0 | 0 0
+ float vtkImageEMGeneral::FastGauss2(double inverse_sqrt_det_covariance, float *x ,double *mu,  double **inv_cov, int virtualDim) {
   float term1 = x[0] - float(mu[0]),
-         term2 = x[1] - float(mu[1]);
+        term2 = x[1] - float(mu[1]);
   // Kilian: can be done faster: term1*(inv_cov[0][0]*term1 + 2.0*inv_cov[0][1]*term2) + term2*term2*inv_cov[1][1];
   term2 = term1*(float(inv_cov[0][0])*term1 + float(inv_cov[0][1])*term2) + term2*(float(inv_cov[1][0])*term1 + float(inv_cov[1][1])*term2);
-  return EMSEGMENT_ONE_OVER_2_PI * float(inverse_sqrt_det_covariance)  * vtkImageEMGeneral_qnexp2(EMSEGMENT_MINUS_ONE_OVER_2_LOG_2 * term2);
+  if (virtualDim > 1) return EMSEGMENT_ONE_OVER_2_PI * float(inverse_sqrt_det_covariance)  * vtkImageEMGeneral_qnexp2(EMSEGMENT_MINUS_ONE_OVER_2_LOG_2 * term2);
+  return EMSEGMENT_ONE_OVER_ROOT_2_PI * float(inverse_sqrt_det_covariance)  * vtkImageEMGeneral_qnexp2(EMSEGMENT_MINUS_ONE_OVER_2_LOG_2 * term2);
 }
 
 // Same as FastGauss - just for multi dimensional input ->  x = (vec - mu) * InvCov *(vec - mu) 
@@ -128,19 +131,21 @@ float vtkImageEMGeneral_qnexp2(float x)
   return pow(EMSEGMENT_ONE_OVER_ROOT_2_PI,dim) * inverse_sqrt_det_covariance * vtkImageEMGeneral_qnexp2(EMSEGMENT_MINUS_ONE_OVER_2_LOG_2 * x);
 }
 
- float vtkImageEMGeneral::FastGaussMulti(double inverse_sqrt_det_covariance, float* x,double *mu, double **inv_cov, int dim) {
-  if (dim <2) return (float) vtkImageEMGeneral::FastGauss(inverse_sqrt_det_covariance,x[0]- float(mu[0]));
-  if (dim <3) return vtkImageEMGeneral::FastGauss2(inverse_sqrt_det_covariance, x ,mu,inv_cov);
-  float *x_m = new float[dim];
+ // Special feature necessary bc we use weighted input images thus a matix of realDim 2 can be virtualDim 1
+ // e.g. 1 0 | 0 0
+ float vtkImageEMGeneral::FastGaussMulti(double inverse_sqrt_det_covariance, float* x,double *mu, double **inv_cov, int realDim, int virtualDim) {
+  if (realDim <2) return (float) vtkImageEMGeneral::FastGauss(inverse_sqrt_det_covariance,x[0]- float(mu[0]));
+  if (realDim <3) return vtkImageEMGeneral::FastGauss2(inverse_sqrt_det_covariance, x ,mu,inv_cov, virtualDim);
+  float *x_m = new float[realDim];
   float term = 0;
   int i,j; 
-  for (i=0; i < dim; i++) x_m[i] = x[i] - float(mu[i]);
-  for (i=0; i < dim; i++) {
-    for (j=0; j < dim; j++) term += (float(inv_cov[i][j])*x_m[j]);
+  for (i=0; i < realDim; i++) x_m[i] = x[i] - float(mu[i]);
+  for (i=0; i < realDim; i++) {
+    for (j=0; j < realDim; j++) term += (float(inv_cov[i][j])*x_m[j]);
     term *= x_m[i];
   }
   delete []x_m;
-  return vtkImageEMGeneral::FastGaussMulti(inverse_sqrt_det_covariance, term,dim);        
+  return vtkImageEMGeneral::FastGaussMulti(inverse_sqrt_det_covariance, term,virtualDim);        
 }
 
 // Similar to above.  This one computes an
@@ -422,7 +427,7 @@ float vtkImageEMGeneral_qgauss_sqrt(float inverse_sigma, float x)
   if (setvar == numvar) {
     if (numvar < 2) JointProb = FastGauss(inv_sqrt_det_cov, double(x[0]) - mu[0]);
       else {
-    if (numvar < 3) JointProb = FastGauss2(inv_sqrt_det_cov,x, mu,inv_cov);
+    if (numvar < 3) JointProb = FastGauss2(inv_sqrt_det_cov,x, mu,inv_cov,2);
     else JointProb = vtkImageEMGeneral::GeneralGauss(x,mu,inv_cov,inv_sqrt_det_cov,numvar);
       }
     return JointProb;
