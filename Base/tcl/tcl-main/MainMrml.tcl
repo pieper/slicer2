@@ -739,7 +739,7 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 			# If these are presets, then do preset stuff on stuffing, not attr
 			if {[$n GetContents] == "presets"} {
 			    MainOptionsParsePresets $attr
-			    # Set current values to preset 0 (user preferencess)
+			    # Set current values to preset 0 (user preferences)
 			    MainOptionsRecallPresets $Preset(userOptions)
 			}
 		}
