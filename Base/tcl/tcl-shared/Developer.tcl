@@ -54,11 +54,16 @@
 #   DevAddSelectButton              Add a volume or model select button
 #   DevSelect                       Called upon selection from a SelectButton.
 #   DevCreateNewCopiedVolume        Create a New Volume, Copying an existing one's param
-#proc DevGetFile                     Looks for a file, makes a pop-up window if necessary
+#proc DevGetFile                    Looks for a file, makes a pop-up window if necessary
+#proc DevAddFileBrowse              Creates a File Browsing Frame
+#
+# Other Useful stuff:
+#
 # MainVolumesCopyData               Copy the image part of a volume.
 # MainModelsDelete  idnum           Delete a model
 # MainVolumesDelete idnum           Delete a volume
 # YesNoPopup                        in tcl-main/Gui.tcl.
+# DataAddTransform                  Add a transform to the Mrml Tree.
 #
 # Useful Variables
 # $Mrml(dir)  The directory from which the slicer was run.
@@ -581,10 +586,17 @@ proc DevGetFile { filename { MustPop 0} { DefaultExt "" } { DefaultDir "" } {Tit
 
 #-------------------------------------------------------------------------------
 # .PROC DevAddFileBrowse
+#
+# Calls DevGetFile, so defaults for Optional Arguments are set there.
+# ArrayName(VarFileName) must exist already!
 # 
 # Make a typical button for browsing for files
 #  Example:  DevAddFileBrowse $f.fPrefix Custom Prefix \"File\"
 #  Example:  DevAddFileBrowse $f.fPrefix Custom Prefix \"vtk File\" \"vtk\" \"\" \"Browse for a model\"
+#  Example: DevAddFileBrowse $f Volume firstFile "First Image File:" "VolumesSetFirst" "" "\$Volume(DefaultDir)"  "Browse for the first Image file" #
+#
+# In the last example, the trick using "\$Volume(DefaultDir)" allows you
+# to change the default directory later.
 #
 # Calls DevGetFile, so defaults for Optional Arguments are set there.
 # ArrayName(VarFileName) must exist already!
