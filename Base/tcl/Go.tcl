@@ -32,6 +32,13 @@
 # Load vtktcl.dll on PCs
 catch {load vtktcl}
 
+# turn of warnings about old function use
+if { $tcl_platform(platform) == "windows" } {
+	vtkObject o
+	o SetGlobalWarningDisplay 0
+	o Delete
+}
+
 if {$argc > 1} {
     puts "UNIX Usage: vtk Go.tcl <MRML file name without .mrml>"
     puts "Windows Usage: wish82.exe Go.tcl <MRML file name without .mrml>"
