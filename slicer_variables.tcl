@@ -17,11 +17,14 @@ set windows "Win32VC7"
 ## variables that are the same for all systems
 set SLICER_DATA_ROOT ""
 
+## set the SLICER_HOME directory to the one in which this script resides
+set SLICER_HOME [file dirname [info script]]
+puts "Set SLICER_HOME to $SLICER_HOME"
+
 ## system dependent variables
 switch $tcl_platform(os) {
     "SunOS" {
         set env(BUILD) $solaris
-        set SLICER_HOME /projects/birn/nicole/slicer2
         set VTK_DIR  $SLICER_HOME/Lib/$env(BUILD)/vtk/VTK-build-4.2.2
         set ITK_BINARY_PATH /projects/birn/itk/itk-1.2/itk-build
         # used for compilation
@@ -38,7 +41,6 @@ switch $tcl_platform(os) {
     }
     "Linux" {
         set env(BUILD) $linux
-        set SLICER_HOME /home/pieper/slicer2/latest/slicer2
         set VTK_BINARY_PATH $SLICER_HOME/Lib/$env(BUILD)/vtk/VTK-build
         set VTK_DIR $VTK_BINARY_PATH
         set ITK_BINARY_PATH /home/pieper/downloads/itk/itk-build
@@ -55,7 +57,6 @@ switch $tcl_platform(os) {
     }
     "Darwin" {
         set env(BUILD) $darwin
-        set SLICER_HOME /Users/pieper/slicer2/latest/slicer2
         set ITK_BINARY_PATH /Users/pieper/downloads/itk/itk-build
         set VTK_SRC_PATH /Users/pieper/downloads/vtk/vtk4.2/VTK-4.2.1
         set VTKSLICERBASE_BUILD_LIB $SLICER_HOME/Base/builds/$env(BUILD)/bin/vtkSlicerBase.dylib
@@ -75,7 +76,6 @@ switch $tcl_platform(os) {
         # (VC7 is Visual C++ 7.0, also known as the .NET version)
 
         set env(BUILD) $windows
-        set SLICER_HOME c:/pieper/bwh/slicer2/latest/slicer2
         set VTK_BINARY_PATH c:/downloads/vtk/VTK-4.2.5-build
         set VTK_DIR $VTK_BINARY_PATH
         set ITK_BINARY_PATH "c:/downloads/itk/InsightToolkit-1.4.0-build"
