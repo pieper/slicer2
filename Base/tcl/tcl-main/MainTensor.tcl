@@ -83,7 +83,7 @@ proc MainTensorInit {} {
     # Set version info
     #-------------------------------------------
     lappend Module(versions) [ParseCVSInfo MainTensor \
-	    {$Revision: 1.1 $} {$Date: 2001/07/20 14:38:12 $}]
+	    {$Revision: 1.2 $} {$Date: 2001/07/24 21:10:40 $}]
 
 
     # List variables that shadow the active MRML node 
@@ -99,7 +99,8 @@ proc MainTensorInit {} {
 
     # Init variables that shadow active MRML node
     #-------------------------------------------
-    MainTensorGetAllVariablesFromNode "default"
+    # Lauren uncomment this in CVS when check in any nodes
+    #MainTensorGetAllVariablesFromNode "default"
 }
 
 #-------------------------------------------------------------------------------
