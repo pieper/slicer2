@@ -1,6 +1,6 @@
 #=auto==========================================================================
 # (c) Copyright 2001 Massachusetts Institute of Technology
-#                    ERC for CISST, Johns Hopkins University
+#
 # Permission is hereby granted, without payment, to copy, modify, display 
 # and distribute this software and its documentation, if any, for any purpose, 
 # provided that the above copyright notice and the following three paragraphs 
@@ -22,6 +22,19 @@
 #===============================================================================
 # FILE:        VolRend.tcl
 # PROCEDURES:  
+#   VolRendInit
+#   VolRendBuildGUI
+#   VolRendBuildVTK
+#   VolRendRefresh
+#   VolRendEnter
+#   VolRendExit
+#   VolRendUpdateMRML
+#   VolRendSetOriginal Volume
+#   VolRendSaveTransferFunctions
+#   VolRendReadTransferFunctions
+#   VolRendSelectRenderMethod
+#   VolRendStorePresets
+#   VolRendRecallPresets
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -57,7 +70,7 @@ proc VolRendInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.1 $} {$Date: 2001/06/14 18:31:52 $}]
+	    {$Revision: 1.2 $} {$Date: 2001/07/03 16:11:37 $}]
 
     set Module($m,row1List) "Help Settings Transfer"
     set Module($m,row1Name) "{Help} {Settings} {Transfer Functions}"
@@ -383,6 +396,12 @@ proc VolRendBuildVTK {} {
 #     eval [VolRend(outlineActor) GetProperty] SetColor 1 1 1
 }
 
+#-------------------------------------------------------------------------------
+# .PROC VolRendRefresh
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc VolRendRefresh {} {
     global VolRend Slice Volume
 
@@ -583,6 +602,12 @@ proc VolRendSetOriginal {v} {
     $VolRend(mbOriginal) config -text [Volume($v,node) GetName]
 }
 
+#-------------------------------------------------------------------------------
+# .PROC VolRendSaveTransferFunctions
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc VolRendSaveTransferFunctions {} {
     global VolRend Options
 
@@ -649,6 +674,12 @@ proc VolRendSaveTransferFunctions {} {
     node Delete
 }
 
+#-------------------------------------------------------------------------------
+# .PROC VolRendReadTransferFunctions
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc VolRendReadTransferFunctions {} {
     global VolRend
 
@@ -718,6 +749,12 @@ proc VolRendReadTransferFunctions {} {
     $VolRend(GradientOpacityBox) insert insert "end"
 }
 
+#-------------------------------------------------------------------------------
+# .PROC VolRendSelectRenderMethod
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc VolRendSelectRenderMethod {} {
     global VolRend
     
@@ -727,6 +764,12 @@ proc VolRendSelectRenderMethod {} {
 
 # >> Presets
 
+#-------------------------------------------------------------------------------
+# .PROC VolRendStorePresets
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc VolRendStorePresets {p} {
     global Preset VolRend Volume
 
@@ -776,6 +819,12 @@ proc VolRendStorePresets {p} {
     regsub -all "\n" $settings {} Preset(VolRend,$p,gradientOpacityTransferFunction)
 }
 
+#-------------------------------------------------------------------------------
+# .PROC VolRendRecallPresets
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc VolRendRecallPresets {p} {
     global Preset VolRend
     

@@ -41,6 +41,7 @@
 #   EdPhaseWireB1
 #   EdPhaseWireMotion
 #   EdPhaseWireRenderInteractive
+#   EdPhaseWireClickLabel
 #   EdPhaseWireLabel
 #   EdPhaseWireClearCurrentSlice
 #   EdLiveWireResetPhaseDefaults
@@ -1384,6 +1385,12 @@ proc EdPhaseWireRenderInteractive {} {
     Render$Ed(EdPhaseWire,render)
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EdPhaseWireClickLabel
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EdPhaseWireClickLabel {{label ""} } {
     global Label Slice
 

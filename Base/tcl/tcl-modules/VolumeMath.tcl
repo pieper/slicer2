@@ -32,6 +32,9 @@
 #   VolumeMathPrepareResult
 #   VolumeMathDoSubtract
 #   VolumeMathDoSubtract
+#   VolumeMathDoHausdorff
+#   VolumeMathDoDistMap
+#   VolumeMathDoAbs
 #   VolumeMathDoResample
 #   VolumeMathCount
 #==========================================================================auto=
@@ -120,7 +123,7 @@ proc VolumeMathInit {} {
 	#   appropriate info when the module is checked in.
 	#   
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.13 $} {$Date: 2001/06/28 20:09:55 $}]
+		{$Revision: 1.14 $} {$Date: 2001/07/03 16:11:37 $}]
 
 	# Initialize module-level variables
 	#------------------------------------

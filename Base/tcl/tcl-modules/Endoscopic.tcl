@@ -72,6 +72,8 @@
 #   EndoscopicSetSlicePosition
 #   EndoscopicUpdateMRML
 #   EndoscopicCameraMotionFromUser
+#   EndoscopicSetCollision
+#   EndoscopicSetWorldPosition
 #==========================================================================auto=
 
     
@@ -3002,6 +3004,12 @@ proc EndoscopicCameraMotionFromUser {} {
 }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicSetCollision
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicSetCollision {value} {
     global Endoscopic
 
@@ -3013,6 +3021,12 @@ proc EndoscopicSetCollision {value} {
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicSetWorldPosition
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicSetWorldPosition {x y z} {
     global Endoscopic
 

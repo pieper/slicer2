@@ -29,7 +29,12 @@
 #   StartMotion
 #   EndMotion
 #   Rotate
-#   PitchYaw
+#   Pitch
+#   Yaw
+#   Roll
+#   LR
+#   BF
+#   UD
 #   Pan
 #   Zoom
 #   Reset

@@ -58,6 +58,7 @@
 #   EdLiveWireTrain
 #   EdLiveWireReadFeatureParams
 #   EdLiveWireWriteFeatureParams
+#   EdLiveWireClickLabel
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -1879,6 +1880,12 @@ proc EdLiveWireWriteFeatureParams {} {
     puts "Saved settings to file $Ed(EdLiveWire,trainingOutputFileName)"
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EdLiveWireClickLabel
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EdLiveWireClickLabel {{label ""} } {
     global Label Slice
 
