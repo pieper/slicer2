@@ -107,7 +107,7 @@ proc DTMRIInit {} {
     set Module($m,author) "Lauren O'Donnell"
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.1 $} {$Date: 2004/02/23 19:40:23 $}]
+            {$Revision: 1.1.1.1 $} {$Date: 2004/02/23 19:40:23 $}]
 
     # Define Tabs
     #------------------------------------
