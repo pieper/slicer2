@@ -511,8 +511,12 @@ int vtkMrmlDataVolume::Write()
 
       // Set up the image writer
       vtkImageWriter *writer = vtkImageWriter::New();
-      writer->SetFilePattern(node->GetFilePattern());
-      writer->SetFilePrefix(node->GetFullPrefix());
+      if (node->GetFilePattern()) 
+      { writer->SetFilePattern(node->GetFilePattern());
+      }
+      if (node->GetFullPrefix())
+      { writer->SetFilePrefix(node->GetFullPrefix());
+      }
       writer->SetInput(this->ImageData);
       
       // Progress callback
