@@ -23,7 +23,6 @@
 # FILE:        Volumes.tcl
 # PROCEDURES:  
 #   VolumesInit
-#   VolumesBuildVTK
 #   VolumesBuildGUI
 #   VolumesCheckForManualChanges n
 #   VolumesManualSetPropertyType n
@@ -88,7 +87,7 @@
 
 #-------------------------------------------------------------------------------
 # .PROC VolumesInit
-# 
+# Default proc called on program start.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -110,7 +109,6 @@ proc VolumesInit {} {
     # Added by Attila Tanacs 10/18/2000
 	set Module($m,procEnter) VolumesEnter
 	set Module($m,procExit) VolumesExit
-        set Module($m,procVTK) VolumesBuildVTK
         #set Volumes(DICOMStartDir) "c:/tanacs/medpic/"
         set Volumes(DICOMStartDir) $prog
 	set Volumes(FileNameSortParam) "incr"
@@ -159,7 +157,7 @@ DICOMDataDictFile='$Volumes(DICOMDataDictFile)'"
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-                {$Revision: 1.56 $} {$Date: 2002/01/26 23:34:33 $}]
+                {$Revision: 1.57 $} {$Date: 2002/01/28 18:38:09 $}]
 
 	# Props
 	set Volume(propertyType) Basic
@@ -177,18 +175,8 @@ DICOMDataDictFile='$Volumes(DICOMDataDictFile)'"
 }
 
 #-------------------------------------------------------------------------------
-# .PROC VolumesBuildVTK
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc VolumesBuildVTK {} {
-
-}
-
-#-------------------------------------------------------------------------------
 # .PROC VolumesBuildGUI
-# 
+# Builds volumes module's GUI
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -900,6 +888,8 @@ proc VolumesCheckForManualChanges {n} {
 #-------------------------------------------------------------------------------
 # .PROC VolumesManualSetPropertyType
 # 
+# Sets all necessary info into a vtkMrmlVolumeNode.
+#
 # This procedure is called when manually setting the properties
 # to read in a volume
 #
@@ -934,6 +924,8 @@ proc VolumesManualSetPropertyType {n} {
 #-------------------------------------------------------------------------------
 # .PROC VolumesAutomaticSetPropertyType
 # 
+# Sets all necessary info into a vtkMrmlVolumeNode.
+#
 # This procedure is called when reading the header of a volume
 # to get the header information. Returns 1 on success
 #
@@ -971,7 +963,8 @@ proc VolumesAutomaticSetPropertyType {n} {
 
 #-------------------------------------------------------------------------------
 # .PROC VolumesSetPropertyType
-# 
+# Switch the visible volumes->props GUI.  Either
+# Basic, Header, or DICOM
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -984,19 +977,14 @@ proc VolumesSetPropertyType {} {
 
 #-------------------------------------------------------------------------------
 # .PROC VolumesPropsApply
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-
-#-------------------------------------------------------------------------------
-# .PROC VolumesPropsApply
-# 
+# Called from Volumes->Props GUI's apply button.
+# Updates volume properties and calls update MRML.
+# If volume is NEW, causes volume to be read in.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc VolumesPropsApply {} {
-    global Lut Volume Label Module Mrml
+    global Lut Volume Label Module Mrml View
 
     set m $Volume(activeID)
     if {$m == ""} {return}
@@ -1073,7 +1061,11 @@ proc VolumesPropsApply {} {
         }
     }
 
+    # if the volume is NEW we may read it in...
     if {$m == "NEW"} {
+
+	# add a MRML node for this volume (so that in UpdateMRML
+	# we can read it in according to the path, etc. in the node)
         set n [MainMrmlAddNode Volume]
         set i [$n GetID]
            
@@ -1100,8 +1092,8 @@ proc VolumesPropsApply {} {
 
         # End of Part added by Attila Tanacs
 
+	# Fill in header information for reading the volume
         # Manual headers
-
         if {$Volume(readHeaders) == "0"} {
             # These setting are set down below, 
             # but we need them before MainUpdateMRML
@@ -1124,10 +1116,24 @@ proc VolumesPropsApply {} {
         if {[lsearch $Volume(idList) $i] == -1} {
             return
         }
+
+	# allow use of other module GUIs
         set Volume(freeze) 0
+
+	# set active volume on all menus
         MainVolumesSetActive $i
+
+	# save the ID for later in this proc
         set m $i
 
+	# if we are successful set the FOV for correct display of this volume
+	set dim     [lindex [Volume($i,node) GetDimensions] 0]
+	set spacing [lindex [Volume($i,node) GetSpacing] 0]
+	set fov     [expr $dim*$spacing]
+	set View(fov) $fov
+	MainViewSetFov
+
+	# display the new volume in the background of all slices
         MainSlicesSetVolumeAll Back $i
     } else {
         # End   if the Volume is NEW
@@ -1190,11 +1196,12 @@ proc VolumesPropsApply {} {
     # Update pipeline
     MainVolumesUpdate $m
 
+    # Update MRML: this reads in new volumes, among other things
     MainUpdateMRML
 }
 #-------------------------------------------------------------------------------
 # .PROC VolumesPropsCancel
-# 
+# Cancel: do not read in a new volume if in progress.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -1221,7 +1228,7 @@ proc VolumesPropsCancel {} {
 # .PROC VolumesSetFirst
 # 
 # Called after the User Selects the first file of the volume.
-#
+# Finds the filename, directory, and last image number.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -1237,7 +1244,7 @@ proc VolumesSetFirst {} {
 
 #-------------------------------------------------------------------------------
 # .PROC VolumesSetScanOrder
-# 
+# Set scan order for active volume, configure menubutton.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -1255,7 +1262,7 @@ proc VolumesSetScanOrder {order} {
 
 #-------------------------------------------------------------------------------
 # .PROC VolumesSetScalarType
-# 
+# Set scalar type and config menubutton to match.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -1271,6 +1278,7 @@ proc VolumesSetScalarType {type} {
 
 #-------------------------------------------------------------------------------
 # .PROC VolumesSetLast
+# Sets last number and filename.
 # 
 # .ARGS
 # .END
@@ -3258,9 +3266,14 @@ proc DICOMImageTextboxDeselectAll {} {
     DICOMFillFileNameTextbox $Volumes(DICOMFileNameTextbox)    
 }
 
+
+########################################################################
+# End of DICOM procedures
+########################################################################
+
 #-------------------------------------------------------------------------------
 # .PROC VolumesEnter
-# 
+# Called when module is entered.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -3276,6 +3289,7 @@ proc VolumesEnter {} {
 
 #-------------------------------------------------------------------------------
 # .PROC VolumesExit
+# Called when module is exited.
 # 
 # .ARGS
 # .END
@@ -3291,7 +3305,7 @@ proc VolumesExit {} {
 
 #-------------------------------------------------------------------------------
 # .PROC VolumesStorePresets
-# 
+# Store preset values from this module into global array
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -3308,6 +3322,7 @@ proc VolumesStorePresets {p} {
 
 #-------------------------------------------------------------------------------
 # .PROC VolumesRecallPresets
+# Set preset values from this module from global array
 # 
 # .ARGS
 # .END
