@@ -68,6 +68,7 @@ if { [itcl::find class isframes] == "" } {
 
       # methods
       method expose {}   {}
+      method task  {}    {return $_task}
       method actor  {}   {return $_actor}
       method mapper {}   {return $_mapper}
       method ren    {}   {return $_ren}
