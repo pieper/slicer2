@@ -3,8 +3,8 @@
   Program:   Insight Segmentation & Registration Toolkit
   Module:    $RCSfile: itkKLCompareHistogramImageToImageMetric.h,v $
   Language:  C++
-  Date:      $Date: 2003/12/23 22:51:46 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2003/12/24 02:18:49 $
+  Version:   $Revision: 1.2 $
 
   Copyright (c) Insight Software Consortium. All rights reserved.
   See ITKCopyright.txt or http://www.itk.org/HTML/Copyright.htm for details.
@@ -21,7 +21,7 @@
 
 namespace itk
 {
-  /** \class KLHistogramImageToImageMetric 
+  /** \class KLCompareHistogramImageToImageMetric 
     *  \brief Computes the Kubler Lieblach(KL) metric between the histogram
     *  of the two images to be registered and a training histogram.
     *
@@ -62,12 +62,12 @@ namespace itk
     */
 
 template <class TFixedImage, class TMovingImage>
-class ITK_EXPORT KLHistogramImageToImageMetric :
+class ITK_EXPORT KLCompareHistogramImageToImageMetric :
 public CompareHistogramImageToImageMetric<TFixedImage, TMovingImage>
 {
  public:
   /** Standard class typedefs. */
-  typedef KLHistogramImageToImageMetric Self;
+  typedef KLCompareHistogramImageToImageMetric Self;
   typedef CompareHistogramImageToImageMetric<TFixedImage, TMovingImage> Superclass;
   typedef SmartPointer<Self>                                     Pointer;
   typedef SmartPointer<const Self>                               ConstPointer;
@@ -76,7 +76,7 @@ public CompareHistogramImageToImageMetric<TFixedImage, TMovingImage>
   itkNewMacro(Self);
 
   /** Run-time type information (and related methods). */
-  itkTypeMacro(KLHistogramImageToImageMetric,
+  itkTypeMacro(KLCompareHistogramImageToImageMetric,
     HistogramImageToImageMetric);
 
   /** Types transferred from the base class */
@@ -125,8 +125,8 @@ public CompareHistogramImageToImageMetric<TFixedImage, TMovingImage>
 protected:
   /** Constructor is protected to ensure that \c New() function is used to
       create instances. */
-  KLHistogramImageToImageMetric();
-  virtual ~KLHistogramImageToImageMetric(){}
+  KLCompareHistogramImageToImageMetric();
+  virtual ~KLCompareHistogramImageToImageMetric(){}
   void PrintSelf(std::ostream& os, Indent indent) const;
 
   /** Form the Histogram for the Training data */
@@ -139,7 +139,7 @@ protected:
 
 private:
   // Purposely not implemented.
-  KLHistogramImageToImageMetric(Self const&);
+  KLCompareHistogramImageToImageMetric(Self const&);
   void operator=(Self const&); // Purposely not implemented.
 };
 

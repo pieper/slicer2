@@ -3,8 +3,8 @@
   Program:   Insight Segmentation & Registration Toolkit
   Module:    $RCSfile: itkKLCompareHistogramImageToImageMetric.txx,v $
   Language:  C++
-  Date:      $Date: 2003/12/23 22:51:46 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2003/12/24 02:18:49 $
+  Version:   $Revision: 1.2 $
 
   Copyright (c) Insight Software Consortium. All rights reserved.
   See ITKCopyright.txt or http://www.itk.org/HTML/Copyright.htm for details.
@@ -27,24 +27,24 @@
 namespace itk
 {
 template <class TFixedImage, class TMovingImage>
-KLHistogramImageToImageMetric<TFixedImage, TMovingImage>::
-KLHistogramImageToImageMetric() 
+KLCompareHistogramImageToImageMetric<TFixedImage, TMovingImage>::
+KLCompareHistogramImageToImageMetric() 
 {
   m_Epsilon                = 1e-12; // should be smaller than 1/numBins^2
 }
 
 template <class TFixedImage, class TMovingImage>
 void 
-KLHistogramImageToImageMetric<TFixedImage, TMovingImage>
+KLCompareHistogramImageToImageMetric<TFixedImage, TMovingImage>
 ::Initialize()  throw (ExceptionObject)
 {
   Superclass::Initialize();
 }
 
 template <class TFixedImage, class TMovingImage>
-typename KLHistogramImageToImageMetric<TFixedImage, \
+typename KLCompareHistogramImageToImageMetric<TFixedImage, \
 TMovingImage>::MeasureType
-KLHistogramImageToImageMetric<TFixedImage, \
+KLCompareHistogramImageToImageMetric<TFixedImage, \
 TMovingImage>
 ::EvaluateMeasure(HistogramType& histogram) const
 {
@@ -93,7 +93,7 @@ TMovingImage>
 }
 
 template <class TFixedImage, class TMovingImage>
-void KLHistogramImageToImageMetric<TFixedImage, TMovingImage>::
+void KLCompareHistogramImageToImageMetric<TFixedImage, TMovingImage>::
 PrintSelf(std::ostream& os, Indent indent) const
 {
   Superclass::PrintSelf(os, indent);
