@@ -94,6 +94,7 @@ proc EdPhaseWireInit {} {
     # default offset is 90 degrees == perfect edge in phase image
     #set Ed(EdPhaseWire,phaseOffset) 90
     set Ed(EdPhaseWire,phaseOffset) 0
+    set Ed(EdPhaseWire,defaultPhaseOffset) 0
 
     # phase and certainty volumes we are using
     set Ed(EdPhaseWire,phaseVol) $Volume(idNone)
@@ -102,6 +103,9 @@ proc EdPhaseWireInit {} {
     # whether the user's click defines the value 
     # of the phase contour we follow
     set Ed(EdPhaseWire,clickSetsPhase) 0
+
+    # ignore mouse movement until we have a start point
+    set Ed(EdPhaseWire,pipelineActiveAndContourStarted) 0
 }
 
 
@@ -319,9 +323,64 @@ proc EdPhaseWireBuildGUI {} {
     pack $f.bReset $f.bResetSeg -side left -pady $Gui(pad) -padx $Gui(pad)
 
     #-------------------------------------------
-    # TabbedFrame->Basic->Settings Frame
+    # TabbedFrame->Basic->Apply frame
     #-------------------------------------------
-    set f $Ed(EdPhaseWire,frame).fTabbedFrame.fBasic.fSettings
+    set f $Ed(EdPhaseWire,frame).fTabbedFrame.fBasic.fApply
+    
+    # frame for shape control
+    frame $f.f -bg $Gui(activeWorkspace)
+    eval {label $f.f.l -text "Shape:"} $Gui(WLA)
+    pack $f.f.l -side left -padx $Gui(pad)
+
+    # "Line" drawing button really draws our wire of points
+    foreach shape "Polygon Lines" draw "Polygon Points" {
+	eval {radiobutton $f.f.r$shape -width [expr [string length $shape]+1] \
+		-text "$shape" -variable Ed(EdPhaseWire,shape) -value $draw \
+		-command "EdPhaseWireUpdate SetShape" \
+		-indicatoron 0} $Gui(WCA)
+	pack $f.f.r$shape -side left 
+    }
+    
+    # Apply
+    eval {button $f.bApply -text "Apply" \
+	    -command "EdPhaseWireApply"} $Gui(WBA) {-width 8}
+    TooltipAdd $f.bApply \
+	    "Apply the PhaseWire contour you have drawn."
+    
+    
+    pack $f.f $f.bApply -side top -padx $Gui(pad) -pady $Gui(pad)
+
+
+    #-------------------------------------------
+    # TabbedFrame->Advanced frame
+    #-------------------------------------------
+    set f $Ed(EdPhaseWire,frame).fTabbedFrame.fAdvanced
+
+    frame $f.fSettings   -bg $Gui(activeWorkspace)
+    pack $f.fSettings -side top -fill x
+
+    frame $f.fTrainingFile   -bg $Gui(activeWorkspace)
+    pack $f.fTrainingFile -side top -pady $Gui(pad) -fill x
+
+    #-------------------------------------------
+    # TabbedFrame->Advanced->Settings frame
+    #-------------------------------------------
+    set f $Ed(EdPhaseWire,frame).fTabbedFrame.fAdvanced.fSettings
+
+    frame $f.fSlider   -bg $Gui(activeWorkspace)
+    pack $f.fSlider -side top  -pady $Gui(pad) -fill x
+
+    frame $f.fInputImages   -bg $Gui(activeWorkspace)
+    pack $f.fInputImages -side top  -pady $Gui(pad) -fill x
+
+    frame $f.fPhase   -bg $Gui(activeWorkspace)
+    pack $f.fPhase -side top  -pady $Gui(pad) -fill x
+
+
+    #-------------------------------------------
+    # TabbedFrame-> Frame
+    #-------------------------------------------
+    set f $Ed(EdPhaseWire,frame).fTabbedFrame.fAdvanced.fSettings.fSlider
 
     foreach slider "PhaseOffset" text "phase" {
 	eval {label $f.l$slider -text "$text:"} $Gui(WLA)
@@ -372,56 +431,6 @@ proc EdPhaseWireBuildGUI {} {
 
     pack $f.bResetPhase -side left -pady $Gui(pad) -padx $Gui(pad)
 
-    #-------------------------------------------
-    # TabbedFrame->Basic->Apply frame
-    #-------------------------------------------
-    set f $Ed(EdPhaseWire,frame).fTabbedFrame.fBasic.fApply
-    
-    # frame for shape control
-    frame $f.f -bg $Gui(activeWorkspace)
-    eval {label $f.f.l -text "Shape:"} $Gui(WLA)
-    pack $f.f.l -side left -padx $Gui(pad)
-
-    # "Line" drawing button really draws our wire of points
-    foreach shape "Polygon Lines" draw "Polygon Points" {
-	eval {radiobutton $f.f.r$shape -width [expr [string length $shape]+1] \
-		-text "$shape" -variable Ed(EdPhaseWire,shape) -value $draw \
-		-command "EdPhaseWireUpdate SetShape" \
-		-indicatoron 0} $Gui(WCA)
-	pack $f.f.r$shape -side left 
-    }
-    
-    # Apply
-    eval {button $f.bApply -text "Apply" \
-	    -command "EdPhaseWireApply"} $Gui(WBA) {-width 8}
-    TooltipAdd $f.bApply \
-	    "Apply the PhaseWire contour you have drawn."
-    
-    
-    pack $f.f $f.bApply -side top -padx $Gui(pad) -pady $Gui(pad)
-
-
-    #-------------------------------------------
-    # TabbedFrame->Advanced frame
-    #-------------------------------------------
-    set f $Ed(EdPhaseWire,frame).fTabbedFrame.fAdvanced
-
-    frame $f.fSettings   -bg $Gui(activeWorkspace)
-    pack $f.fSettings -side top -fill x
-
-    frame $f.fTrainingFile   -bg $Gui(activeWorkspace)
-    pack $f.fTrainingFile -side top -pady $Gui(pad) -fill x
-
-    #-------------------------------------------
-    # TabbedFrame->Advanced->Settings frame
-    #-------------------------------------------
-    set f $Ed(EdPhaseWire,frame).fTabbedFrame.fAdvanced.fSettings
-
-    frame $f.fInputImages   -bg $Gui(activeWorkspace)
-    pack $f.fInputImages -side top  -pady $Gui(pad) -fill x
-
-    frame $f.fPhase   -bg $Gui(activeWorkspace)
-    pack $f.fPhase -side top  -pady $Gui(pad) -fill x
 
     #-------------------------------------------
     # TabbedFrame->Advanced->Settings->InputImages frame
@@ -1002,8 +1011,7 @@ proc EdLiveWireResetPhaseDefaults {} {
     global Ed
 
     # default is 90 degrees for an edge
-    set Ed(EdPhaseWire,phaseOffset) 90
-
+    set Ed(EdPhaseWire,phaseOffset) $Ed(EdPhaseWire,defaultPhaseOffset)
     EdPhaseWireUpdate PhaseOffset
 
 }
