@@ -195,8 +195,8 @@ static void vtkITKKLExecute(vtkITKKullbackLeiblerTransform *self,
   ITKTrainingTransform->SetParameters(parameters);
 
   KLRegistrator->SetTrainingTransform(ITKTrainingTransform);
-  KLRegistrator->SetTrainingFixedImage(VTKtoITKImage(self->GetTrainingTargetImage(),(T*)(NULL)))->UnRegister();
-  KLRegistrator->SetTrainingMovingImage(VTKtoITKImage(self->GetTrainingSourceImage(),(T*)(NULL)))->UnRegister();
+  KLRegistrator->SetTrainingFixedImage(VTKtoITKImage(self->GetTrainingTargetImage(),(T*)(NULL)));
+  KLRegistrator->SetTrainingMovingImage(VTKtoITKImage(self->GetTrainingSourceImage(),(T*)(NULL)));
 
   // take care of memory leak 
   //  KLRegistrator->GetTrainingFixedImage()
