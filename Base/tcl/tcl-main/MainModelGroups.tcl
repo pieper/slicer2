@@ -243,13 +243,18 @@ proc MainModelGroupsSetVisibility {modelgroup {value ""}} {
         
         if {([string compare -length 8 $node "ModelRef"] == 0) && ($traversingModelGroup > 0)} {
             set m [SharedModelLookup [$node GetModelRefID]]
+            if { $m == -1 } {
+                puts "can't find model id for [$node GetModelRefID]"
+                set node [Mrml(dataTree) GetNextItem]
+                break
+            }
             
             if {$value != ""} {
                 set ModelGroup($modelgroup,visibility) $value
             }
             Model($m,node)  SetVisibility $ModelGroup($modelgroup,visibility)
             set Model($m,visibility) $ModelGroup($modelgroup,visibility)
-                foreach r $Module(Renderers) {
+            foreach r $Module(Renderers) {
                 Model($m,actor,$r) SetVisibility [Model($m,node) GetVisibility] 
             }
             # If this is the active model, update GUI
