@@ -9,7 +9,7 @@
 #include "vtkNormalizedCuts.h"
 
 
-vtkCxxRevisionMacro(vtkClusterTracts, "$Revision: 1.1 $");
+vtkCxxRevisionMacro(vtkClusterTracts, "$Revision: 1.2 $");
 vtkStandardNewMacro(vtkClusterTracts);
 
 vtkCxxSetObjectMacro(vtkClusterTracts, InputStreamlines, vtkCollection);
@@ -51,7 +51,20 @@ void vtkClusterTracts::ComputeClusters()
       vtkErrorMacro("The InputStreamlines collection must be set first.");
       return;      
     }
-  
+
+  // Make sure we have at least twice as many streamlines as the number of
+  // eigenvectors we are using (really we need at least one more than
+  // this number to manage to calculate the eigenvectors, but double
+  // is more reasonable).
+  if (this->InputStreamlines->GetNumberOfItems() <  2*this->NormalizedCuts->GetNumberOfEigenvectors())
+    {
+      vtkErrorMacro("At least " << 
+            2*this->NormalizedCuts->GetNumberOfEigenvectors()  
+            << " tract paths are needed for clustering");
+      return;      
+
+    }    
+
   this->TractShapeFeatures->SetInputStreamlines(this->InputStreamlines);
   //this->TractShapeFeatures->DebugOn();
   this->TractShapeFeatures->ComputeFeatures();
