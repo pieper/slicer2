@@ -86,7 +86,7 @@ proc MainFileInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainFile \
-        {$Revision: 1.51 $} {$Date: 2003/06/03 21:51:57 $}]
+        {$Revision: 1.52 $} {$Date: 2003/06/03 22:24:48 $}]
 
     set File(filePrefix) data
 }
@@ -772,7 +772,7 @@ proc MainFileGetRelativePrefixNew {dir} {
     # file pathtype will return absolute even if have ..'s in the path, 
     # as long as it starts from the root dir, so just normalize - but normalize on a relative path starting from a non root dir won't work. So if the pathtype is relative, prepend the mrml dir. Problem now is if it was previously saved and is actually relative to another Mrml(dir)
     if {[file pathtype $justdir] == "relative"} {
-        set dirlist [file split ${Mrml(dir)}[file separator]${justdir}]
+        set dirlist [file split ${Mrml(dir)}/${justdir}]
     } else {
         set dirlist [file split [file normalize $justdir]]
     }
@@ -814,9 +814,9 @@ proc MainFileGetRelativePrefixNew {dir} {
         lappend relPath $prefix
     }
     if {$::Module(verbose)} {
-        puts "MainFileGetRelativePrefixNew: Done.\n\tfile dir = $justdir with prefix $prefix,\n\tmrml dir = $Mrml(dir),\n\trelative path = [join $relPath [file separator]]"
+        puts "MainFileGetRelativePrefixNew: Done.\n\tfile dir = $justdir with prefix $prefix,\n\tmrml dir = $Mrml(dir),\n\trelative path = [join $relPath /]"
     }
-    return [join $relPath [file separator]]
+    return [join $relPath /]
 
 }
 
@@ -1046,7 +1046,7 @@ proc MainFileParseImageFile {ImageFile {postfixFlag 1}} {
     } else {
         # assume that the number part is first, then a constant extenion
         puts "Trying to parse as a dicom file"
-        set filePrefix [file dirname $ImageFile][file separator]
+        set filePrefix [file dirname $ImageFile]/
         set num [file rootname [file tail $ImageFile]]
         set ZerolessNum [string trimleft $num "0"]
         if {$ZerolessNum == ""} {set ZerolessNum 0}

@@ -98,7 +98,7 @@ proc MainMrmlInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainMrml \
-        {$Revision: 1.86 $} {$Date: 2003/06/03 21:57:55 $}]
+        {$Revision: 1.87 $} {$Date: 2003/06/03 22:25:02 $}]
 
     set Mrml(colorsUnsaved) 0
 }
@@ -2050,7 +2050,7 @@ proc MainMrmlCheckVolumes {filename} {
                }
                # if it's a relative file name, prepend the mrml dir
                if {[file pathtype $fname] == "relative"} {
-                   set fname2 ${Mrml(dir)}[file separator]${fname}
+                   set fname2 ${Mrml(dir)}/${fname}
                    if {$::Module(verbose)} {
                        puts "MainMrmlCheckVolumes: filename is relative $fname.\n\t Prepended mrml dir to filename: $fname2.\n\tSetting dicom filename to normalised name [file normalize $fname2]"
                    }
@@ -2097,7 +2097,7 @@ proc MainMrmlAbsolutivity {} {
              
             set oldPrefix [$node GetFullPrefix]
             if {[file pathtype $oldPrefix] == "relative"} {
-                set fname ${Mrml(dir)}[file separator]${oldPrefix}
+                set fname ${Mrml(dir)}/${oldPrefix}
                 if {$::Module(verbose)} { 
                     puts "MainMrmlAbsolutivity: non dicom file \n\trelative old prefix $oldPrefix\n\tnew one wrt mrml dir $fname\n\tnormalized = [file normalize $fname]"
                 }
@@ -2118,7 +2118,7 @@ proc MainMrmlAbsolutivity {} {
                     puts "MainMrmlAbsolutivity: got dicom filename $filename"
                 }
                 if {[file pathtype $filename] == "relative"} {
-                    set absname ${Mrml(dir)}[file separator]${filename}
+                    set absname ${Mrml(dir)}/${filename}
                     if {$::Module(verbose)} {
                         puts "MainMrmlAbsolutivity: dicom file \n\trelative old filename $filename\n\tnew one wrt mrml dir $absname\n\tnormalized = [file normalize $absname]"
                     }
