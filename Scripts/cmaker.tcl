@@ -71,7 +71,7 @@ switch $tcl_platform(os) {
         set VTK_ARG5 "-DCMAKE_CXX_COMPILER_FULLPATH:FILEPATH=/local/os/bin/$COMPILER"
     }
     "Darwin" {
-        set VTK_ARG3 "-DVTK_WRAP_HINTS:FILEPATH=$VTK_SRC_PATH/Wrapping/hints"
+        set VTK_ARG3 "-DVTK_WRAP_HINTS:FILEPATH=$VTK_SRC_DIR/Wrapping/hints"
     }
 }
 # make sure to generate shared libraries
