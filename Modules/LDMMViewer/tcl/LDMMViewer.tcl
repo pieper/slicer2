@@ -155,7 +155,7 @@ proc LDMMViewerInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.2 $} {$Date: 2003/09/05 13:20:25 $}]
+        {$Revision: 1.3 $} {$Date: 2003/09/05 17:06:52 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -274,9 +274,10 @@ proc LDMMViewerBuildGUI {} {
 
     DevAddLabel $f.label "Time"
     eval {scale $f.time -from 0 -to 9 \
-            -length 220 -variable ::LDMMViewer(time)  -resolution 1 \
+            -length 220 -resolution 1 \
             -command LDMMViewerSetTime } \
             $::Gui(WSA) {-sliderlength 22}
+    set ::LDMMViewer(timescale) $f.time
 
     DevAddButton $f.movie "Movie" LDMMViewerMovie 
     pack $f.label $f.time $f.movie
@@ -412,9 +413,11 @@ proc LDMMViewerMakeModels { } {
         EditorMakeModel 
         set ::ModelMaker(name) [file tail [file root $::LDMMViewer($t,f)]]
         set ::LDMMViewer($t,m) [ModelMakerCreate]
+        update
     }
     MainSlicesSetOrientAll AxiSagCor
     MainSlicesSetVisibilityAll 0
+    update
 }
 
 #-------------------------------------------------------------------------------
@@ -456,7 +459,7 @@ proc LDMMViewerShowVectors {} {
     LDMMgactor SetMapper LDMMgmapper
 
     viewRen AddActor LDMMgactor
-
+    Render3D
 }
 
 #-------------------------------------------------------------------------------
@@ -478,6 +481,7 @@ proc LDMMViewerHideVectors {} {
     catch "LDMMg3d Delete"
     catch "LDMMgmapper Delete"
     catch "LDMMgactor Delete"
+    Render3D
 }
 
 
@@ -492,11 +496,19 @@ proc LDMMViewerHideVectors {} {
 #-------------------------------------------------------------------------------
 proc LDMMViewerSetTime { {t ""} } {
 
+    # if time hasn't been changed, return
+    if { $t != "" } {
+        if { $t == $::LDMMViewer(time) } {
+            return
+        }
+    }
     if { $t == "" } {
         set t $::LDMMViewer(time)
     } else {
         set ::LDMMViewer(time) $t
     }
+    $::LDMMViewer(timescale) set $t
+
     if { ![info exists ::LDMMViewer(lastindex)] } {
         # no data loaded yet
         return
@@ -588,12 +600,16 @@ proc LDMMViewerBatchRender { dir } {
 
     if { ![info exists ::env(IMAGEMAGICK_CONVERT)] } {
         set paths { 
-            /usr/X11/bin/convert 
+            /usr/X11R6/bin/convert 
             "c:/Program Files/ImageMagick-5.5.7-Q16/convert.exe"
         }
         foreach path $paths {
             if { [file exists $path] } {
-                set ::env(IMAGEMAGICK_CONVERT) [file attributes $path -shortname]
+                if { $::tcl_platform(platform) == "windows" } {
+                    set ::env(IMAGEMAGICK_CONVERT) [file attributes $path -shortname]
+                } else {
+                    set ::env(IMAGEMAGICK_CONVERT) $path
+                }
             }
         }
     }
@@ -603,11 +619,14 @@ proc LDMMViewerBatchRender { dir } {
     }
 
     LDMMViewerSetDirectory $dir
+    LDMMViewerShowVectors
     LDMMViewerMakeModels
 
-    raise .tViewer; update
+    Tab LDMMViewer
 
-    MainViewerSetMode 3D
+    raise .tViewer; update
+    MainViewerSetMode 3D ; update 
+
     set ::Save(imageSaveMode) Movie
     set ::Save(imageDirectory) $::LDMMViewer(dir)/movies/frames
     if { ![file exists $::Save(imageDirectory)] } {
@@ -629,5 +648,6 @@ proc LDMMViewerBatchRender { dir } {
     puts "Output from convert:\n$res"
     file delete -force $::Save(imageDirectory)
 
+    puts "finished"
 }
 
