@@ -97,10 +97,14 @@
 # .PROC BootSlicer
 # 
 #  Boots the slicer: the first procedure called.
-#     Hides the TK Window
-#     Inits global variables
-#     Builds VTK Graphics
-#     Builds the GUI
+#  <ul>
+#  <li>Hides the TK Window
+#  <li>Inits global variables
+#  <li>Builds VTK Graphics
+#  <li>Builds the GUI
+#  </ul>
+# .ARGS
+# str mrmlFile optional name of a MRML file to load 
 # .END
 #-------------------------------------------------------------------------------
 proc MainBoot {{mrmlFile ""}} {
@@ -328,7 +332,7 @@ proc MainInit {} {
 
         # Set version info
 	lappend Module(versions) [ParseCVSInfo Main \
-		{$Revision: 1.36 $} {$Date: 2000/02/22 17:56:06 $}]
+		{$Revision: 1.37 $} {$Date: 2000/02/23 21:53:01 $}]
 
 	# Call each "Init" routine that's not part of a module
 	#-------------------------------------------

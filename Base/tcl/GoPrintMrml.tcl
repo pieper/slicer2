@@ -1,7 +1,7 @@
 
 # Check if the user invoked this script incorrectly
 if {$argc != 1} {
-    puts "UNIX Usage: tclsh83 GoPrintMrml.tcl <filename>"
+    puts "UNIX Usage: tclsh GoPrintMrml.tcl <filename>"
     puts "Windows Usage: tclsh82.exe GoPrintMrml.tcl <filename>"
 	puts "where: <filename> = name of a MRML file (including the suffix)"
 	puts "Example: tclsh83 GoPrintMrml.tcl /data/mr/case.xml"

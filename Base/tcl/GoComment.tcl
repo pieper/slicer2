@@ -1,7 +1,7 @@
 
 # Check if the user invoked this script incorrectly
 if {$argc != 0} {
-    puts "Unix Usage: tclsh83 GoComment.tcl"
+    puts "UNIX Usage: tclsh GoComment.tcl"
     puts "Windows Usage: tclsh82.exe GoComment.tcl"
 	exit
 }
