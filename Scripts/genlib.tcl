@@ -211,6 +211,7 @@ switch $tcl_platform(os) {
         set vtkTkLib $TCL_LIB_DIR/tk84.lib
         set vtkTclsh $TCL_BIN_DIR/tclsh84.exe
         set itkTestFile $ITK_BINARY_PATH/bin/$VTK_BUILD_TYPE/libITKCommon.dll
+#        set itkTestFile $ITK_BINARY_PATH/bin/$VTK_BUILD_TYPE/ITKCommon.dll
     }
 }
 
@@ -223,8 +224,6 @@ if { ![file exists $CMAKE] } {
     file mkdir $CMAKE_PATH
     cd $SLICER_LIB
 
-    runcmd cvs -d :pserver:anonymous:cmake@www.cmake.org:/cvsroot/CMake login
-    runcmd cvs -z3 -d :pserver:anonymous@www.cmake.org:/cvsroot/CMake checkout -r $cmakeTag CMake
 
     if {$isWindows} {
         puts stderr "-- genlib.tcl cannot generate the cmake, tcl, or gsl binaries for windows --"
@@ -236,8 +235,10 @@ if { ![file exists $CMAKE] } {
         puts stderr "Then re-run genlib.tcl to build VTK and ITK"
         puts stderr ""
         exit
-
     } else {
+        runcmd cvs -d :pserver:anonymous:cmake@www.cmake.org:/cvsroot/CMake login
+        runcmd cvs -z3 -d :pserver:anonymous@www.cmake.org:/cvsroot/CMake checkout -r $cmakeTag CMake
+
         cd $CMAKE_PATH
         runcmd $SLICER_LIB/CMake/bootstrap
         eval runcmd $::MAKE
@@ -484,8 +485,11 @@ if { ![file exists $itkTestFile] } {
     cd $SLICER_LIB/Insight-build
 
 
+
     runcmd $CMAKE \
         -G$GENERATOR \
+        -DCMAKE_CXX_COMPILER:STRING=$COMPILER_PATH/$COMPILER \
+        -DCMAKE_CXX_COMPILER_FULLPATH:FILEPATH=$COMPILER_PATH/$COMPILER \
         -DBUILD_SHARED_LIBS:BOOL=ON \
         -DBUILD_EXAMPLES:BOOL=OFF \
         -DBUILD_TESTING:BOOL=OFF \

@@ -45,7 +45,7 @@ proc tarup { {destdir "auto"} } {
 
     ### Some simple error checking to see if the directories exist
 
-    foreach dirname "VTK_DIR VTK_SRC_DIR ITK_BINARY_PATH TCL_BIN_DIR " {
+    foreach dirname "VTK_DIR VTK_SRC_DIR ITK_BINARY_PATH TCL_BIN_DIR GSL_LIB_DIR" {
        set dir $::env($dirname)
        eval { \
              if {[file exist $dir] == 0} { \
@@ -126,6 +126,9 @@ proc tarup { {destdir "auto"} } {
     file copy -force $::env(TCL_LIB_DIR) $destdir/Lib/$::env(BUILD)/tcl-build/lib
     file copy -force $::env(TCL_BIN_DIR) $destdir/Lib/$::env(BUILD)/tcl-build/bin
 
+    puts " -- copying gsl files"
+    file mkdir $destdir/Lib/$::env(BUILD)/gsl
+    file copy -force $::env(GSL_LIB_DIR) $destdir/Lib/$::env(BUILD)/gsl/lib
 
     #
     # grab the vtk libraries and binaries
@@ -144,11 +147,10 @@ proc tarup { {destdir "auto"} } {
 
 
     file mkdir $destdir/Lib/$::env(BUILD)/VTK-build/Wrapping/Tcl
-    switch $::env(BUILD) {
-        "solaris8" -
-        "linux-x86" - 
-        "redhat7.3" - 
-        "darwin-ppc" {
+    switch $::tcl_platform(os) {
+        "SunOS" -
+        "Linux" - 
+        "Darwin" {
             file copy -force $::env(VTK_DIR)/Wrapping/Tcl/pkgIndex.tcl $destdir/Lib/$::env(BUILD)/VTK-build/Wrapping/Tcl
         }
         "win32" { 
@@ -158,10 +160,9 @@ proc tarup { {destdir "auto"} } {
     }
 
     file mkdir $destdir/Lib/$::env(BUILD)/VTK-build/bin
-    switch $::env(BUILD) {
-        "solaris8" -
-        "linux-x86" -
-        "redhat7.3" { 
+    switch $::tcl_platform(os) {
+        "SunOS" -
+        "Linux" { 
             set libs [glob $::env(VTK_DIR)/bin/*.so*]
             foreach lib $libs {
                 file copy $lib $destdir/Lib/$::env(BUILD)/VTK-build/bin
@@ -171,12 +172,12 @@ proc tarup { {destdir "auto"} } {
             file copy $::env(VTK_DIR)/bin/vtk $destdir/Lib/$::env(BUILD)/VTK-build/bin
             file copy -force $::env(SLICER_HOME)/Scripts/slicer-vtk-pkgIndex.tcl $destdir/Lib/$::env(BUILD)/VTK-build/Wrapping/Tcl/pkgIndex.tcl
         }
-        "darwin-ppc" {
+        "Darwin" {
             set libs [glob $::env(VTK_DIR)/bin/*.dylib]
             foreach lib $libs {
                 file copy $lib $destdir/Lib/$::env(BUILD)/VTK-build/bin
             }
-            file copy $::env(VTK_DIR)/vtk $destdir/Lib/$::env(BUILD)/VTK-build/bin
+            file copy $::env(VTK_DIR)/bin/vtk $destdir/Lib/$::env(BUILD)/VTK-build/bin
             file copy -force $::env(SLICER_HOME)/Scripts/slicer-vtk-pkgIndex.tcl $destdir/Lib/$::env(BUILD)/VTK-build/Wrapping/Tcl/pkgIndex.tcl
         }
         "win32" { 
@@ -188,6 +189,74 @@ proc tarup { {destdir "auto"} } {
             file copy -force $::env(SLICER_HOME)/Scripts/slicer-vtk-pkgIndex.tcl $destdir/Lib/$::env(BUILD)/VTK-build/Wrapping/Tcl/$::env(VTK_BUILD_TYPE)/pkgIndex.tcl
         }
     }
+    #
+    # grab the shared libraries and put them in the vtk bin dir
+    #
+    puts " -- copying shared development libraries"
+    set sharedLibDir $destdir/Lib/$::env(BUILD)/VTK-build/bin
+    set checkForSymlinks 1
+    switch $::tcl_platform(os) {
+      "SunOS" {
+          set sharedLibs [list libgcc_s.so.1 libstdc++.so.3]
+          set sharedSearchPath [split $::env(LD_LIBRARY_PATH) ":"]
+      }
+      "Linux" {
+#         set sharedLibs [list ld-2.2.5.so libpthread-0.9.so libstdc++-3-libc6.2-2-2.10.0.so]
+          set sharedLibs [list libstdc++-libc6.2-2.so.3]
+          set sharedSearchPath [split $::env(LD_LIBRARY_PATH) ":"]
+      }
+      "Darwin" {
+          set sharedLibs [list ]
+          set sharedSearchPath [split $::env(DYLD_LIBRARY_PATH) ":"]
+      }
+      default {
+          set sharedLibs [list msvci70d.dll msvci70.dll msvcp70d.dll msvcp70.dll msvcr70d.dll msvcr70.dll]
+          set sharedSearchPath [concat [split $::env(PATH) ";"] $::env(LD_LIBRARY_PATH)]
+          set sharedLibDir $destdir/Lib/$::env(BUILD)/VTK-build/bin/$::env(VTK_BUILD_TYPE)
+          set checkForSymlinks 0
+      }
+    }
+    foreach slib $sharedLibs { 
+        if {$::Module(verbose)} { puts "LIB $slib"  }
+        # don't copy if it's already in the dest dir
+        if {![file exists [file join $sharedLibDir $slib]]} {
+            set slibFound 0
+            foreach spath $sharedSearchPath { 
+                if {$::Module(verbose) && !$slibFound} { puts "checking dir $spath" }
+                if {!$slibFound && [file exists [file join $spath $slib]]} { 
+                    if {$::Module(verbose)} { puts "found $slib in dir $spath, copying to $sharedLibDir" }
+                    # check if it's a symlink (but not on windows)
+                    if {$checkForSymlinks} {
+                        set checkpath [file join $spath $slib]
+                        while {[file type $checkpath] == "link"} {
+                            # need to resolve it to a real file so that file copy will work
+                            set sympath [file readlink $checkpath]
+                            if {[file pathtype $sympath] == "relative"} {
+                                # if the link is relative to the last path, take the dirname of the last one 
+                                # and append the new path to it, then normalize it
+                                set checkpath [file normalize [file join [file dirname $checkpath] $sympath]]
+                            }
+                        }
+                        # the links may have changed the name of the library file 
+                        # (ie adding minor version numbers onto the end)
+                        # so copy the new file into the old file name
+                        file copy $checkpath [file join $sharedLibDir $slib]
+                        if {$::Module(verbose)} { puts "copied checkpath $checkpath to $sharedLibDir/$slib" }
+                    } else {
+                        # copy it into the shared vtk bin dir
+                        file copy [file join $spath $slib]  $sharedLibDir
+                    }
+                    set slibFound 1
+                }
+            }
+            if {!$slibFound} {
+                puts "WARNING: $slib not found, tarup may be incomplete. Place it in one of these directories and rerun tarup: \n $sharedSearchPath"
+                DevErrorWindow "WARNING: $slib not found, tarup may be incomplete. Place it in a directory in your search path and rerun tarup."
+            }
+        } else { 
+            if {$::Module(verbose)} { puts "$slib is already in $sharedLibDir" } 
+        }
+    }
 
     #
     # grab the itk libraries 
@@ -195,18 +264,17 @@ proc tarup { {destdir "auto"} } {
     puts " -- copying itk files"
     file mkdir $destdir/Lib/$::env(BUILD)/Insight-build/bin
 
-    switch $::env(BUILD) {
-        "solaris8" -
-        "linux-x86" -
-        "redhat7.3" { 
+    switch $::tcl_platform(os) {
+        "SunOS" -
+        "Linux" { 
             set libs [glob -nocomplain $::env(ITK_BINARY_PATH)/bin/*.so]
             foreach lib $libs {
                 file copy $lib $destdir/Lib/$::env(BUILD)/Insight-build/bin
                 set ll [file tail $lib]
                 exec strip $destdir/Lib/$::env(BUILD)/Insight-build/bin/$ll
-            }
+            } 
         }
-        "darwin-ppc" {
+        "Darwin" {
             set libs [glob -nocomplain $::env(ITK_BINARY_PATH)/bin/*.dylib]
             foreach lib $libs {
                 file copy $lib $destdir/Lib/$::env(BUILD)/Insight-build/bin
@@ -231,10 +299,9 @@ proc tarup { {destdir "auto"} } {
     file mkdir $destdir/Base/Wrapping/Tcl/vtkSlicerBase
     file copy Base/Wrapping/Tcl/vtkSlicerBase/pkgIndex.tcl $destdir/Base/Wrapping/Tcl/vtkSlicerBase
     file copy Base/Wrapping/Tcl/vtkSlicerBase/vtkSlicerBase.tcl $destdir/Base/Wrapping/Tcl/vtkSlicerBase
-    switch $::env(BUILD) {
-        "solaris8" -
-        "linux-x86" -
-        "redhat7.3" { 
+    switch $::tcl_platform(os) {
+        "SunOS" -
+        "Linux" { 
             file mkdir $destdir/Base/builds/$::env(BUILD)/bin
             set libs [glob Base/builds/$::env(BUILD)/bin/*.so]
             foreach lib $libs {
@@ -243,7 +310,7 @@ proc tarup { {destdir "auto"} } {
                 exec strip $destdir/Base/builds/$::env(BUILD)/bin/$ll
             }
         }
-        "darwin-ppc" {
+        "Darwin" {
             file mkdir $destdir/Base/builds/$::env(BUILD)/bin
             set libs [glob Base/builds/$::env(BUILD)/bin/*.dylib]
             foreach lib $libs {
@@ -294,10 +361,9 @@ proc tarup { {destdir "auto"} } {
         file mkdir $moddest/Wrapping/Tcl/$mod
         file copy $moddir/Wrapping/Tcl/$mod/pkgIndex.tcl $moddest/Wrapping/Tcl/$mod
         file copy $moddir/Wrapping/Tcl/$mod/$mod.tcl $moddest/Wrapping/Tcl/$mod
-        switch $::env(BUILD) {
-            "solaris8" -
-            "linux-x86" -
-            "redhat7.3" { 
+        switch $::tcl_platform(os) {
+            "SunOS" -
+            "Linux" { 
                 file mkdir $moddest/builds/$::env(BUILD)/bin
                 set libs [glob -nocomplain $moddir/builds/$::env(BUILD)/bin/*.so]
                 foreach lib $libs {
@@ -306,7 +372,7 @@ proc tarup { {destdir "auto"} } {
                     exec strip $moddest/builds/$::env(BUILD)/bin/$ll
                 }
             }
-            "darwin-ppc" {
+            "Darwin" {
                 file mkdir $moddest/builds/$::env(BUILD)/bin
                 set libs [glob -nocomplain $moddir/builds/$::env(BUILD)/bin/*.dylib]
                 foreach lib $libs {
@@ -353,17 +419,15 @@ proc tarup { {destdir "auto"} } {
     if { $create_archive == "true" } {
         cd $destdir/..
         set archroot [file tail $destdir]
-        switch $::env(BUILD) {
-            "solaris8" {
+        switch $::tcl_platform(os) {
+            "SunOS" {
                 puts " -- making $archroot.tar.gz"
                 #exec gtar cvfz $archroot.tar.gz $archroot
                 exec tar cfE $archroot.tar $archroot
                 exec gzip -f $archroot.tar
             }
-            "redhat7.3" - 
-            "linux-x86" -
-            "Darwin" -
-            "darwin-ppc" {
+            "Linux" -
+            "Darwin" {
                 puts " -- making $archroot.tar.gz"
                 exec tar cfz $archroot.tar.gz $archroot
             }
@@ -375,18 +439,12 @@ proc tarup { {destdir "auto"} } {
     }
 
     if { $do_upload == "true" } {
-        if { $::SLICER(state) == "-dev" } {
-            set scpdestination "pieper@slicerl.bwh.harvard.edu:/usr/local/apache2/htdocs/snapshots"
-        } else {
-            set scpdestination "pieper@gpop.bwh.harvard.edu:slicer-dist"
-        }
-
+    set scpdestination "$::env(USER)@slicerl.bwh.harvard.edu:/usr/local/apache2/htdocs/snapshots/slicer2.4"
         puts " -- upload to $scpdestination"
-        switch $::env(BUILD) {
-            "solaris8" -
-            "linux-x86" -
-            "redhat7.3" - 
-            "darwin-ppc" {
+        switch $::tcl_platform(os) {
+            "SunOS" -
+            "Linux" - 
+            "Darwin" {
                 exec xterm -e scp $archroot.tar.gz $scpdestination
             }
             "win32" { 
