@@ -154,10 +154,9 @@ switch $env(BUILD) {
     }
 }
 
-# set the base tcl/tk library paths, looking in the slicer home Lib 
-# subdirectory for this build. 
-set env(TCL_LIBRARY) $env(SLICER_HOME)/Lib/$env(BUILD)/tcl/lib/tcl8.4
-set env(TK_LIBRARY) $env(SLICER_HOME)/Lib/$env(BUILD)/tcl/lib/tk8.4
+# set the base tcl/tk library paths, using the previously defined TCL_LIB_DIR
+set env(TCL_LIBRARY) $env(TCL_LIB_DIR)/tcl8.4
+set env(TK_LIBRARY) $env(TCL_LIB_DIR)/tk8.4
 
 #
 # add the default search locations for tcl packages
