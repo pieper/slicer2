@@ -160,7 +160,7 @@ proc LevelSetsInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.16 $} {$Date: 2003/08/11 20:08:40 $}]
+        {$Revision: 1.17 $} {$Date: 2003/10/03 15:50:44 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -173,6 +173,11 @@ proc LevelSetsInit {} {
     # Initialization Paramaters
     set LevelSets(InitVol)                    $Volume(idNone)
     set LevelSets(InitThreshold)              "30"
+    # Initial image Bright or Dark
+    set LevelSets(InitVolIntensityList)       { 0 1}
+    set LevelSets(InitVolIntensity0)          "Bright"
+    set LevelSets(InitVolIntensity1)          "Dark"
+    set LevelSets(InitVolIntensity)           $LevelSets(InitVolIntensity0)
 
     set LevelSets(upsample_xcoeff)            "1"
     set LevelSets(upsample_ycoeff)            "1"
@@ -237,7 +242,11 @@ proc LevelSetsInit {} {
     set LevelSets(TubeSize)                   "2"
 
     set LevelSets(NumIters)                   "50"
-    set LevelSets(NumberOfThreads)            "2"
+  
+    # get the default number of threads
+    vtkMultiThreader v
+    set LevelSets(NumberOfThreads)            [v GetGlobalDefaultNumberOfThreads]
+    v Delete
 
     set LevelSets(Processing)                 "OFF"
 
@@ -533,6 +542,32 @@ proc LevelSetsBuildInitFrame {} {
     grid $f.lInitThreshold $f.eInitThreshold -pady $Gui(pad) -padx $Gui(pad) -sticky e
     grid $f.eInitThreshold  -sticky w
 
+    # Parameters->Interior
+    eval {label $f.lInitVolIntensity -text "Intensity:" \
+          -width 16 -justify right} $Gui(WLA)
+
+    #--------------------------------------------------
+    proc SetInitVolIntensity { i } {
+      global Module LevelSets
+
+      set LevelSets(InitVolIntensity) $LevelSets(InitVolIntensity$i)
+    }
+
+    eval {menubutton $f.mInitVolIntensity  \
+                      -relief raised -indicatoron on -takefocus 1 \
+                      -width 6 -justify right \
+                      -menu $f.mInitVolIntensity.m \
+                      -textvariable  LevelSets(InitVolIntensity) } $Gui(WEA)
+    eval {menu $f.mInitVolIntensity.m -tearoff 0   }
+    
+    foreach i $LevelSets(InitVolIntensityList) {
+      $f.mInitVolIntensity.m add command \
+          -label   $LevelSets(InitVolIntensity$i) \
+          -command "SetInitVolIntensity $i " 
+    }
+
+    grid $f.lInitVolIntensity $f.mInitVolIntensity  -pady  $Gui(pad) -padx $Gui(pad) -sticky e
+    grid $f.mInitVolIntensity  -sticky w
 
 }
 #----- LevelSetsBuildInitFrame
@@ -704,7 +739,8 @@ proc LevelSetsBuildMainFrame {} {
     frame $f.fRun                 -bg $Gui(activeWorkspace) 
     frame $f.fModel               -bg $Gui(activeWorkspace)
 
-    pack  $f.flogoLMI  -side top -anchor w
+    pack  $f.flogoLMI  -side top 
+#-anchor w
 
     pack  $f.fProtocol \
           $f.fIO \
@@ -1621,16 +1657,26 @@ proc LevelSetsStart {} {
   #------- Check Initial Level Set Image
   #
 
-
-  if { $initvol !=  $Volume(idNone) } {
-      if { $initvol != $input } {
-    puts "SetinitImage"
-        LevelSets(curv) SetinitImage [Volume($initvol,vol) GetOutput]
+  puts "LevelSets(InitScheme)=$LevelSets(InitScheme)"
+  case $LevelSets(InitScheme) in {
+  {"GreyScale Image" "Label Map"} {
+      if { $initvol !=  $Volume(idNone) } {
+        if { $initvol != $input } {
+          puts "SetinitImage"
+          LevelSets(curv) SetinitImage [Volume($initvol,vol) GetOutput]
+        }
+        puts "SetInitThreshold"
+        LevelSets(curv) SetInitThreshold       $LevelSets(InitThreshold)
+        if { $LevelSets(InitVolIntensity) == "Bright" } {
+        LevelSets(curv) SetInitIntensityBright
+        } else {
+        if { $LevelSets(InitVolIntensity) == "Dark" } {
+            LevelSets(curv) SetInitIntensityDark
+        }
       }
-      puts "SetInitThreshold"
-      LevelSets(curv) SetInitThreshold       $LevelSets(InitThreshold)
-  }  else {
-
+      }
+  }
+  Fiducials {
       puts "Fiducials"
 
       #
@@ -1658,6 +1704,7 @@ proc LevelSetsStart {} {
       LevelSets(curv) SetInitPoint  $n [expr round($xi)] [expr round($yi)] \
           [expr round($zi)] $LevelSets(InitRadius)
       }
+  }
   }
 
   #
