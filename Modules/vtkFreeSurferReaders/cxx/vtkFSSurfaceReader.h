@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkFSSurfaceReader.h,v $
   Language:  C++
-  Date:      $Date: 2002/10/04 20:49:54 $
-  Version:   $Revision: 1.2 $
+  Date:      $Date: 2002/10/04 22:05:14 $
+  Version:   $Revision: 1.3 $
 
 =========================================================================*/
 // .NAME vtkFSSurfaceReader - read a surface file from Freesurfer tools
@@ -19,6 +19,8 @@
 #include "vtkDataReader.h"
 #include "vtkPolyData.h"
 
+// Prints debugging info.
+#define FS_DEBUG 0
 
 // This code can calc normals but it doesn't seem to do so very well
 // (bug?) and vtkPolyDataNormals does it anyway.
@@ -29,7 +31,8 @@ const int FS_QUAD_FILE_MAGIC_NUMBER = (-1 & 0x00ffffff);
 const int FS_NEW_QUAD_FILE_MAGIC_NUMBER = (-3 & 0x00ffffff);
 const int FS_TRIANGLE_FILE_MAGIC_NUMBER = (-2 & 0x00ffffff);
 
-const int FS_NUM_SIDES_IN_FACE = 4; // dealing with quads
+const int FS_NUM_VERTS_IN_QUAD_FACE = 4; // dealing with quads
+const int FS_NUM_VERTS_IN_TRI_FACE = 3; // dealing with tris
 const int FS_MAX_NUM_FACES_PER_VERTEX = 10; // kinda arbitrary
 
 class VTK_FREESURFERREADERS_EXPORT vtkFSSurfaceReader : public vtkDataReader

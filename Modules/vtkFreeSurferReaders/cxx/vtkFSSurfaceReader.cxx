@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkFSSurfaceReader.cxx,v $
   Language:  C++
-  Date:      $Date: 2002/10/04 20:49:54 $
-  Version:   $Revision: 1.3 $
+  Date:      $Date: 2002/10/04 22:05:14 $
+  Version:   $Revision: 1.4 $
 
 =========================================================================*/
 #include "vtkFSSurfaceReader.h"
@@ -142,10 +142,12 @@ void vtkFSSurfaceReader::Execute()
   int numVertices = 0;
   int numFaces = 0;
   int vIndex, fIndex;
+  int numVerticesPerFace;
   int tmpX, tmpY, tmpZ, tmpfIndex;
   float locations[3];
   int fvIndex;
-  vtkIdType faceIndices[FS_NUM_SIDES_IN_FACE];
+  int faceIncrement;
+  vtkIdType faceIndices[4];
   vtkPoints *outputVertices;
   vtkCellArray *outputFaces;
   vtkPolyData *output = this->GetOutput();
@@ -182,6 +184,21 @@ void vtkFSSurfaceReader::Execute()
     return;
   }
 
+#if FS_DEBUG
+  switch (magicNumber) {
+  case FS_QUAD_FILE_MAGIC_NUMBER: 
+    cerr << "Reading old quad file" << endl;
+    break;
+  case FS_NEW_QUAD_FILE_MAGIC_NUMBER: 
+    cerr << "Reading new quad file" << endl;
+    break;
+  case FS_TRIANGLE_FILE_MAGIC_NUMBER: 
+    cerr << "Reading triangle file" << endl;
+    break;
+  }
+#endif
+  
+
   // Triangle file has some kind of header string at the
   // beginning. Skip it.
   if (FS_TRIANGLE_FILE_MAGIC_NUMBER == magicNumber) {
@@ -191,21 +208,42 @@ void vtkFSSurfaceReader::Execute()
 
   // Triangle files use normal ints to store their number of vertices
   // and faces, while quad files use three byte ints.
-  if (FS_TRIANGLE_FILE_MAGIC_NUMBER == magicNumber) {
-    fread (&numVertices, sizeof(int), 1, surfaceFile);
-    fread (&numFaces, sizeof(int), 1, surfaceFile);
-
-  } else {
+  switch (magicNumber) {
+  case FS_QUAD_FILE_MAGIC_NUMBER: 
+  case FS_NEW_QUAD_FILE_MAGIC_NUMBER: 
     ReadInt3 (surfaceFile, numVertices);
     ReadInt3 (surfaceFile, numFaces);
-  }  
+    break;
+  case FS_TRIANGLE_FILE_MAGIC_NUMBER: 
+    fread (&numVertices, sizeof(int), 1, surfaceFile);
+    fread (&numFaces, sizeof(int), 1, surfaceFile);
+    vtkByteSwap::Swap4BE (&numVertices);
+    vtkByteSwap::Swap4BE (&numFaces);
+    break;
+  }
+
+#if FS_DEBUG
+  cerr << numVertices << " vertices, " << numFaces << " faces" << endl;
+#endif
+
+  // If quad files, there are four vertices per face, in tri files,
+  // there are three.
+  switch (magicNumber) {
+  case FS_QUAD_FILE_MAGIC_NUMBER: 
+  case FS_NEW_QUAD_FILE_MAGIC_NUMBER: 
+    numVerticesPerFace = FS_NUM_VERTS_IN_QUAD_FACE;
+    break;
+  case FS_TRIANGLE_FILE_MAGIC_NUMBER:  
+    numVerticesPerFace = FS_NUM_VERTS_IN_TRI_FACE;
+    break;
+  }
 
   // Allocate our VTK arrays.
   outputVertices = vtkPoints::New();
   outputVertices->Allocate (numVertices);
   outputFaces = vtkCellArray::New();
-  outputFaces->Allocate (outputFaces->EstimateSize(numFaces,
-                           FS_NUM_SIDES_IN_FACE));
+  outputFaces->Allocate (outputFaces->EstimateSize(numFaces, 
+                           numVerticesPerFace));
 #if FS_CALC_NORMALS
   outputNormals = vtkFloatArray::New();
   outputNormals->Allocate (numVertices);
@@ -230,18 +268,21 @@ void vtkFSSurfaceReader::Execute()
     // in millimeters. Insert them into the vertices array.  The old
     // quad format uses the ints and the new quad and triangle formats
     // use floats.
-    if (FS_QUAD_FILE_MAGIC_NUMBER == magicNumber) {
+    switch (magicNumber) {
+    case FS_QUAD_FILE_MAGIC_NUMBER: 
       ReadInt2 (surfaceFile, tmpX);
       ReadInt2 (surfaceFile, tmpY);
       ReadInt2 (surfaceFile, tmpZ);
       locations[0] = (float)tmpX / 100.0;
       locations[1] = (float)tmpY / 100.0;
       locations[2] = (float)tmpZ / 100.0;
-
-    } else {
+      break;
+    case FS_NEW_QUAD_FILE_MAGIC_NUMBER: 
+    case FS_TRIANGLE_FILE_MAGIC_NUMBER: 
       ReadFloat (surfaceFile, locations[0]);
       ReadFloat (surfaceFile, locations[1]);
       ReadFloat (surfaceFile, locations[2]);
+      break;
     }
     
     outputVertices->InsertNextPoint (locations);
@@ -262,19 +303,37 @@ void vtkFSSurfaceReader::Execute()
 #endif
   }
 
+  // In quad files, we want to skip every other face. This has to do
+  // with the way they are stored; here we just generate quads where
+  // as in the old code they generated tries from the quads. (Trust
+  // me.) In tri files, we use every face.
+  switch (magicNumber) {
+  case FS_QUAD_FILE_MAGIC_NUMBER: 
+  case FS_NEW_QUAD_FILE_MAGIC_NUMBER: 
+    faceIncrement = 2;
+    break;
+  case FS_TRIANGLE_FILE_MAGIC_NUMBER: 
+    faceIncrement = 1;
+    break;
+  }
+
   // For each face...
-  for (fIndex = 0; fIndex < numFaces; fIndex += 2) {
+  for (fIndex = 0; fIndex < numFaces; fIndex += faceIncrement) {
 
     // For each vertex in the face...
-    for (fvIndex = 0; fvIndex < FS_NUM_SIDES_IN_FACE; fvIndex++) {
+    for (fvIndex = 0; fvIndex < numVerticesPerFace; fvIndex++) {
 
       // Read in a vertex index. Triangle format gets a normal int,
       // quad formats get three byte ints.
-      if (FS_TRIANGLE_FILE_MAGIC_NUMBER == magicNumber) {
-    fread (&tmpfIndex, sizeof(int), 1, surfaceFile);
-    
-      } else {
+      switch (magicNumber) {
+      case FS_QUAD_FILE_MAGIC_NUMBER: 
+      case FS_NEW_QUAD_FILE_MAGIC_NUMBER: 
     ReadInt3 (surfaceFile, tmpfIndex);
+    break;
+      case FS_TRIANGLE_FILE_MAGIC_NUMBER: 
+    fread (&tmpfIndex, sizeof(int), 1, surfaceFile);
+    vtkByteSwap::Swap4BE (&tmpfIndex);
+    break;
       }
 
       faceIndices[fvIndex] = tmpfIndex;
@@ -297,11 +356,15 @@ void vtkFSSurfaceReader::Execute()
     }
 
     // Add the face to the list.
-    outputFaces->InsertNextCell (FS_NUM_SIDES_IN_FACE, faceIndices);
+    outputFaces->InsertNextCell (numVerticesPerFace, faceIndices);
   }
   
   // Close the surface file.
   fclose (surfaceFile);
+
+#if FS_DEBUG
+  cerr << "Done reading surface." << endl;
+#endif
 
 #if FS_CALC_NORMALS
 
@@ -317,17 +380,17 @@ void vtkFSSurfaceReader::Execute()
       for (fIndex = 0; fIndex < fv1->numFaces; fIndex++) {
 
     // Get this face. fv1->indicesInFace tells us which index,
-    // 0 - FS_NUM_SIDES_IN_FACE-1, it is in the face. Get the two
+    // 0 - numVerticesPerFace-1, it is in the face. Get the two
     // indicies surrounding it so we can get the vertices
     // surrounding it. Now we have fv0, fv1, and fv2 which are all
     // adjacent in the face, with fv1 being the orignal vertex.
     f = &faces[fv1->faces[fIndex]];
     fvIndex1 = fv1->indicesInFace[fIndex];
     if (0 == fvIndex1) 
-      fvIndex0 = FS_NUM_SIDES_IN_FACE - 1;
+      fvIndex0 = numVerticesPerFace - 1;
     else
       fvIndex0 = fvIndex1 - 1;
-    if (FS_NUM_SIDES_IN_FACE == fvIndex1) 
+    if (numVerticesPerFace == fvIndex1) 
       fvIndex2 = 0;
     else
       fvIndex2 = fvIndex1 + 1;
