@@ -292,6 +292,16 @@ public:
   vtkGetObjectMacro(RasToIjk, vtkMatrix4x4);
   vtkGetObjectMacro(Position, vtkMatrix4x4);
 
+  // Added by Attila Tanacs 10/10/2000
+
+  // DICOMFileList
+  int GetNumberOfDICOMFiles() { return DICOMFiles; }
+  void AddDICOMFileName(char *);
+  char *GetDICOMFileName(int idx);
+  void DeleteDICOMFileNames();
+  char **GetDICOMFileNamesPointer() { return DICOMFileList;}
+
+  // End
 
 protected:
   vtkMrmlVolumeNode();
@@ -340,6 +350,11 @@ protected:
   vtkMatrix4x4 *RasToWld;
   vtkMatrix4x4 *RasToIjk;
   vtkMatrix4x4 *Position;
+
+  // Added by Attila Tanacs 10/10/2000
+  int DICOMFiles;
+  char **DICOMFileList;
+  // End
 };
 
 #endif

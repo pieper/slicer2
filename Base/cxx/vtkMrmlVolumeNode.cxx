@@ -102,6 +102,19 @@ vtkMrmlVolumeNode::vtkMrmlVolumeNode()
   this->SetDimensions(256, 256);
   this->SetSpacing(0.9375, 0.9375, 1.5);
   this->ComputeRasToIjkFromScanOrder("LR");
+
+  // Added by Attila Tanacs 10/10/2000
+
+  // DICOMFileNames
+  this->DICOMFiles = 0;
+  this->DICOMFileList = new char *[500];
+  for(int i=0; i<500; i++)
+    DICOMFileList[i] = NULL;
+
+  //AddDICOMFileName("first.dcm");
+  //AddDICOMFileName("second.dcm");
+  
+  // Ends
 }
 
 //----------------------------------------------------------------------------
@@ -157,6 +170,13 @@ vtkMrmlVolumeNode::~vtkMrmlVolumeNode()
     delete [] this->ScanOrder;
     this->ScanOrder = NULL;
   }
+
+  // Added by Attila Tanacs 10/10/2000
+
+  for(int i=0; i<500; i++)
+    delete [] DICOMFileList[i];
+
+  // End
 }
 
 //----------------------------------------------------------------------------
@@ -495,6 +515,12 @@ void vtkMrmlVolumeNode::PrintSelf(ostream& os, vtkIndent indent)
     this->WldToIjk->PrintSelf(os, indent.GetNextIndent());  
   os << indent << "Position:\n";
     this->Position->PrintSelf(os, indent.GetNextIndent());  
+
+  // Added by Attila Tanacs 10/10/2000
+    os << indent << "Number of DICOM Files: " << GetNumberOfDICOMFiles() << "\n";
+    for(idx = 0; idx < DICOMFiles; idx++)
+      os << indent << DICOMFileList[idx] << "\n";
+  // End
 }
 
 //----------------------------------------------------------------------------
@@ -951,3 +977,33 @@ int vtkMrmlVolumeNode::ComputeRasToIjkFromCorners(
   matRotate->Delete();
   return(0);
 }
+
+// Added by Attila Tanacs 10/10/2000
+
+// DICOMFileList
+void vtkMrmlVolumeNode::AddDICOMFileName(char *str)
+{
+  DICOMFileList[DICOMFiles] = new char [strlen(str) + 1];
+  strcpy(DICOMFileList[DICOMFiles], str);
+  DICOMFiles++;
+}
+
+char *vtkMrmlVolumeNode::GetDICOMFileName(int idx)
+{
+  return DICOMFileList[idx];
+}
+
+void vtkMrmlVolumeNode::DeleteDICOMFileNames()
+{
+  int i;
+  for(i=0; i<500; i++)
+    if(DICOMFileList[i] != NULL)
+      {
+	delete [] DICOMFileList[i];
+	DICOMFileList[i] = NULL;
+      }
+
+  DICOMFiles = 0;
+}
+
+// End

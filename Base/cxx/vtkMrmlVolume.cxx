@@ -441,21 +441,27 @@ void vtkMrmlVolume::Read()
 
   // try as DICOM
 
-  vtkImageDICOMReader *dcmreader = vtkImageDICOMReader::New();
-  dcmreader->SetNumberOfScalarComponents(node->GetNumScalars());
-  dcmreader->SetDataScalarType(node->GetScalarType());
-  dcmreader->SetDataByteOrder(node->GetLittleEndian());
-  dcmreader->SetDataSpacing(node->GetSpacing());
-  dcmreader->SetFilePattern(node->GetFilePattern());
-  dcmreader->SetFilePrefix(node->GetFullPrefix());
-  dcmreader->SetDataExtent(ext);
-  if(dcmreader->GetDICOMHeaderSize(ext[4]) != -1)
+  if(node->GetNumberOfDICOMFiles() > 0)
     { // DICOM
+      vtkImageDICOMReader *dcmreader = vtkImageDICOMReader::New();
+      dcmreader->SetNumberOfScalarComponents(node->GetNumScalars());
+      dcmreader->SetDataScalarType(node->GetScalarType());
+      dcmreader->SetDataByteOrder(node->GetLittleEndian());
+      dcmreader->SetDataSpacing(node->GetSpacing());
+      dcmreader->SetFilePattern(node->GetFilePattern());
+      dcmreader->SetFilePrefix(node->GetFullPrefix());
+      dcmreader->SetDataExtent(ext);
+
+      dcmreader->SetDICOMFileNames(node->GetNumberOfDICOMFiles(), node->GetDICOMFileNamesPointer());
+
+      //if(dcmreader->GetDICOMHeaderSize(ext[4]) != -1)
+      //{ // DICOM
       reader = (vtkImageSource *) dcmreader;
+      //}
     }
   else
     { // Not DICOM (use the original code)
-      dcmreader->Delete();
+      //dcmreader->Delete();
 
       vtkImageReader *ireader = vtkImageReader::New();
       ireader->SetNumberOfScalarComponents(node->GetNumScalars());
