@@ -39,17 +39,17 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
 
   // Description
   // Hide all streamlines (turn off their visibility);
-  //void RemoveStreamlinesFromScene();
+  void RemoveStreamlinesFromScene();
 
   // Description
-  // Delete one streamline
+  // Delete one streamline.  The input is a pointer to the actor you
+  // wish to delete.  All associated objects are deleted and removed 
+  // from the collections.
   void DeleteStreamline(vtkActor *pickedActor);
 
   // Description
   // Delete all streamlines
-  //void DeleteAllStreamlines();
-
-
+  void DeleteAllStreamlines();
 
   // Description
   // Input tensor field in which to seed streamlines
@@ -109,6 +109,7 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   ~vtkMultipleStreamlineController();
 
   void CreateGraphicsObjects();
+  void DeleteStreamline(int index);
 
   vtkTransform *ROIToWorld;
   vtkTransform *WorldToTensorScaledIJK;

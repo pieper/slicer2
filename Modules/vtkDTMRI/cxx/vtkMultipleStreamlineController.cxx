@@ -147,6 +147,89 @@ void vtkMultipleStreamlineController::AddStreamlinesToScene()
 
 }
 
+
+
+//----------------------------------------------------------------------------
+void vtkMultipleStreamlineController::RemoveStreamlinesFromScene()
+{
+  vtkActor *currActor;
+
+  // traverse actor collection and make all invisible
+  this->Actors->InitTraversal();
+  currActor= (vtkActor *)this->Actors->GetNextItemAsObject();
+  while(currActor)
+    {
+      currActor->VisibilityOff();
+      currActor= (vtkActor *)this->Actors->GetNextItemAsObject();      
+    }
+
+}
+
+//----------------------------------------------------------------------------
+void vtkMultipleStreamlineController::DeleteAllStreamlines()
+{
+  int numStreamlines, i;
+
+  i=0;
+  numStreamlines = this->Streamlines->GetNumberOfItems();
+  while (i < numStreamlines)
+    {
+      cout << i << endl;
+      // always delete the first streamline from the collections
+      // (they change size as we do this)
+      this->DeleteStreamline(0);
+      i++;
+    }
+  
+}
+
+//----------------------------------------------------------------------------
+void vtkMultipleStreamlineController::DeleteStreamline(int index)
+{
+  vtkRenderer *currRenderer;
+  vtkLookupTable *currLookupTable;
+  vtkPolyDataMapper *currMapper;
+  vtkHyperStreamline *currStreamline;
+  vtkActor *currActor;
+
+  cout << "actor" << endl;
+  currActor = (vtkActor *) this->Actors->GetItemAsObject(index);
+  currActor->VisibilityOff();
+  // Remove from the scene (from each renderer)
+  // Just like MainRemoveActor in Main.tcl.
+  this->InputRenderers->InitTraversal();
+  currRenderer= (vtkRenderer *)this->InputRenderers->GetNextItemAsObject();
+  while(currRenderer)
+    {
+      cout << "rm actor from renderer " << currRenderer << endl;
+      currRenderer->RemoveActor(currActor);
+      currRenderer= (vtkRenderer *)this->InputRenderers->GetNextItemAsObject();
+    }
+  this->Actors->RemoveItem(index);
+  currActor->Delete();
+  
+  cout << "stream" << endl;
+  currStreamline = (vtkHyperStreamline *)
+    this->Streamlines->GetItemAsObject(index);
+  this->Streamlines->RemoveItem(index);
+  currStreamline->Delete();
+  
+  cout << "mapper" << endl;
+  currMapper = (vtkPolyDataMapper *) this->Mappers->GetItemAsObject(index);
+  this->Mappers->RemoveItem(index);
+  //currMapper->SetInput(NULL);
+  //currMapper->SetLookupTable(NULL);
+  currMapper->Delete();
+  
+  cout << "lut" << endl;
+  currLookupTable = (vtkLookupTable *) this->LookupTables->GetItemAsObject(index);
+  this->LookupTables->RemoveItem(index);
+  currLookupTable->Delete();
+  
+  cout << "Done" << endl;
+
+}
+
 //----------------------------------------------------------------------------
 void vtkMultipleStreamlineController::DeleteStreamline(vtkActor *pickedActor)
 {
@@ -191,7 +274,7 @@ void vtkMultipleStreamlineController::DeleteStreamline(vtkActor *pickedActor)
       currStreamline = (vtkHyperStreamline *)
         this->Streamlines->GetItemAsObject(index);
       this->Streamlines->RemoveItem(index);
-      //currStreamline->Delete();
+      currStreamline->Delete();
 
       cout << "mapper" << endl;
       currMapper = (vtkPolyDataMapper *) this->Mappers->GetItemAsObject(index);
@@ -219,14 +302,37 @@ void vtkMultipleStreamlineController::SeedStreamlineFromPoint(double x,
 {
   double pointw[3], point[3];
   vtkHyperStreamline *newStreamline;
-  
+  int *dims;
+  float *spacing;
+  int i, inbounds;
+
   pointw[0]=x;
   pointw[1]=y;
   pointw[2]=z;
   
   // Transform from world coords to scaled ijk of the input tensors
   this->WorldToTensorScaledIJK->TransformPoint(pointw,point);
-  
+
+  // make sure it is within the bounds of the tensor dataset
+  dims=this->InputTensorField->GetDimensions();
+  spacing=this->InputTensorField->GetSpacing();
+  i=0;
+  inbounds=1;
+  while (i<3)
+    {
+      if (point[i] <0)
+        inbounds=0;
+      if (point[i] > dims[i]*spacing[i])
+        inbounds=0;
+      i++;
+    }
+
+  if (inbounds ==0)
+    {
+      cout << "point " << pointw[0] << " " << pointw[1] << " " << pointw[2] << " outside of tensor dataset" << endl;
+      return;
+    }
+
   // Now create a streamline and put it on the collection.
   newStreamline=vtkHyperStreamlineDTMRI::New();
   this->Streamlines->AddItem((vtkObject *)newStreamline);
