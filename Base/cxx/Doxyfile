@@ -17,7 +17,7 @@
 # The PROJECT_NAME tag is a single word (or a sequence of words surrounded 
 # by quotes) that should identify the project.
 
-PROJECT_NAME           = Slicer
+PROJECT_NAME           = Slicer2
 
 # The PROJECT_NUMBER tag can be used to enter a project or revision number. 
 # This could be handy for archiving the generated documentation or 
@@ -305,7 +305,7 @@ WARN_LOGFILE           =
 # directories like "/usr/src/myproject". Separate the files or directories 
 # with spaces.
 # INPUT                  = . examplesTcl java python tcl
-INPUT                  =  $(SLICER_HOME)/vtksrc $(SLICER_HOME)/vtksrc/examplesTcl $(SLICER_HOME)/vtksrc/java $(SLICER_HOME)/vtksrc/python $(SLICER_HOME)/vtksrc/tcl
+INPUT                  =  $(SLICER_HOME)/Base/cxx  $(SLICER_HOME)/Base/cxx/java $(SLICER_HOME)/Base/cxx/python $(SLICER_HOME)/Base/cxx/tcl
 
 # If the value of the INPUT tag contains directories, you can use the 
 # FILE_PATTERNS tag to specify one or more wildcard pattern (like *.cpp 
@@ -421,7 +421,7 @@ HTML_FOOTER            =
 # fine-tune the look of the HTML output. If the tag is left blank doxygen 
 # will generate a default style sheet
 
-HTML_STYLESHEET        = "$(SLICER_HOME)/doc/style.css"
+HTML_STYLESHEET        = "$(SLICER_HOME)/Doc/style.css"
 
 # If the HTML_ALIGN_MEMBERS tag is set to YES, the members of classes, 
 # files or namespaces will be aligned in HTML using tables. If set to 
