@@ -159,7 +159,7 @@ proc FMRIEngineInit {} {
     #   Record any other modules that this one depends on.  This is used 
     #   to check that all necessary modules are loaded when Slicer runs.
     #   
-    set Module($m,depend) "Analyze BXH"
+#    set Module($m,depend) "MultiVolumeReader"
 
     # Set version info
     #------------------------------------
@@ -169,7 +169,7 @@ proc FMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.29 $} {$Date: 2004/10/18 15:18:10 $}]
+        {$Revision: 1.30 $} {$Date: 2004/11/12 17:30:15 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -291,16 +291,16 @@ proc FMRIEngineBuildGUI {} {
     set f $fSequence.fOption
 
     Notebook:create $f.fNotebook \
-                    -pages {{Load Seq} {Select Seq}} \
+                    -pages {Select Load} \
                     -pad 2 \
                     -bg $Gui(activeWorkspace) \
                     -height 356 \
                     -width 240
     pack $f.fNotebook -fill both -expand 1
-    set w [Notebook:frame $f.fNotebook {Load Seq}]
-    FMRIEngineBuildUIForLoad $w
-    set w [Notebook:frame $f.fNotebook {Select Seq}]
+    set w [Notebook:frame $f.fNotebook Select]
     FMRIEngineBuildUIForSelect $w
+    set w [Notebook:frame $f.fNotebook Load]
+    FMRIEngineBuildUIForLoad $w
 
     #-------------------------------------------
     # Compute tab 
@@ -560,26 +560,61 @@ proc FMRIEngineBuildUIForSelect {parent} {
     frame $parent.fTop    -bg $Gui(activeWorkspace) 
     frame $parent.fMiddle -bg $Gui(activeWorkspace) 
     frame $parent.fBottom -bg $Gui(activeWorkspace) 
-    pack $parent.fTop $parent.fMiddle $parent.fBottom \
-        -side top -padx 10 
+    frame $parent.fSpace -bg $Gui(activeWorkspace) -height 83  
+    frame $parent.fLogo -bg $Gui(activeWorkspace)  
+    pack $parent.fTop $parent.fMiddle -side top -padx $Gui(pad) 
+    pack $parent.fBottom -side top -pady 15 
+    pack $parent.fSpace $parent.fLogo -side top 
 
     set f $parent.fTop
-    DevAddLabel $f.l "Sequence list from Ibrowser:"
-    pack $f.l -side top -pady 10   
-
-    set f $parent.fMiddle
-    listbox $f.lb -yscrollcommand "$parent.fMiddle.sb set" -bg $Gui(activeWorkspace) 
-    scrollbar $f.sb -orient vertical -bg $Gui(activeWorkspace) -command "$parent.fMiddle.lb yview"
-    pack $f.lb -side left -expand 1 -fill both
-    pack $f.sb -side left -fill y
+    DevAddLabel $f.l "Available sequences:"
+    listbox $f.lb -height 3 -bg $Gui(activeWorkspace) 
+    pack $f.l $f.lb -side top -pady $Gui(pad)   
 
     set FMRIEngine(seqsListBox) $f.lb
-    FMRIEngineUpdateSequences
 
-    set f $parent.fBottom
+    set f $parent.fMiddle
     DevAddButton $f.bSelect "Select" "FMRIEngineSelectSequence" 10 
     DevAddButton $f.bUpdate "Update" "FMRIEngineUpdateSequences" 10 
-    pack $f.bUpdate $f.bSelect -side left -expand 1 -pady 10 -padx 5 -fill both
+    pack $f.bUpdate $f.bSelect -side left -expand 1 -pady $Gui(pad) -padx $Gui(pad) -fill both
+
+    # The Navigate frame
+    set f $parent.fBottom
+
+    DevAddButton $f.bSet "Set Window/Level/Thresholds" \
+        "FMRIEngineSetWindowLevelThresholds" 30
+    TooltipAdd $f.bSet \
+        "Set window, level and low/high threshold\n\
+        for the first volume. Hit this button to set\n\
+        the same values for the entire sequence."
+ 
+    DevAddLabel $f.lVolNo "Vol Index:"
+    eval { scale $f.sSlider \
+        -orient horizontal \
+        -from 0 -to 0 \
+        -resolution 1 \
+        -bigincrement 10 \
+        -length 130 \
+        -state active \
+        -command {FMRIEngineUpdateVolume}} \
+        $Gui(WSA) {-showvalue 1}
+
+    set FMRIEngine(slider) $f.sSlider
+    TooltipAdd $f.sSlider \
+        "Slide this scale to navigate multi-volume sequence."
+ 
+    #The "sticky" option aligns items to the left (west) side
+    grid $f.bSet -row 0 -column 0 -columnspan 2 -padx 5 -pady 3 -sticky w
+    grid $f.lVolNo -row 1 -column 0 -padx 1 -pady 1 -sticky w
+    grid $f.sSlider -row 1 -column 1 -padx 1 -pady 1 -sticky w
+
+    set f $parent.fLogo
+    set uselogo [image create photo -file \
+        $FMRIEngine(modulePath)/tcl/images/LogosForIbrowser.gif]
+    eval {label $f.lLogoImages -width 200 -height 45 \
+        -image $uselogo -justify center} $Gui(BLA)
+    pack $f.lLogoImages -side bottom -padx 0 -pady \
+        $Gui(pad) -expand 0
 }
 
 
@@ -589,23 +624,49 @@ proc FMRIEngineBuildUIForSelect {parent} {
 # .END
 #-------------------------------------------------------------------------------
 proc FMRIEngineSelectSequence {} {
-    global FMRIEngine Ibrowser  
+    global FMRIEngine Ibrowser MultiVolumeReader
 
     set ci [$FMRIEngine(seqsListBox) cursel]
-    if {[string length $ci] > 0} { 
-        set cc [$FMRIEngine(seqsListBox) get $ci]
-        set l [string trim $cc]
-        set index [string last " " $l]
-        set id [string range $l $index end-1]
+    set size [$FMRIEngine(seqsListBox) size]
+
+    if {[string length $ci] == 0} {
+        if {$size > 1} {
+            DevErrorWindow "Please select a sequence."
+            return
+        } else {
+            set ci 0 
+        }
+    }
+
+    set cc [$FMRIEngine(seqsListBox) get $ci]
+    set l [string trim $cc]
+
+    if {$l == "none"} {
+        DevErrorWindow "No sequence available."
+        return
+    } elseif {$l == "Loaded-in-fMRIEngine"} {
+        set FMRIEngine(firstMRMLid) $MultiVolumeReader(firstMRMLid) 
+        set FMRIEngine(lastMRMLid) $MultiVolumeReader(lastMRMLid)
+        set FMRIEngine(volumeExtent) $MultiVolumeReader(volumeExtent) 
+        set FMRIEngine(noOfVolumes) $MultiVolumeReader(noOfVolumes) 
+    } else {
+        set index [string last "-" $l]
+        set start [expr $index + 1]
+        set id [string range $l $start end]
         set id [string trim $id]
         set FMRIEngine(firstMRMLid) $Ibrowser($id,firstMRMLid)
         set FMRIEngine(lastMRMLid) $Ibrowser($id,lastMRMLid)
 
         set ext [[Volume($FMRIEngine(firstMRMLid),vol) GetOutput] GetWholeExtent]
-        set FMRIEngine(volextent) $ext 
-        set FMRIEngine(noOfAnalyzeVolumes) \
+        set FMRIEngine(volumeExtent) $ext 
+        set FMRIEngine(noOfVolumes) \
             [expr $FMRIEngine(lastMRMLid) - $FMRIEngine(firstMRMLid) + 1]
     }
+
+    # Sets range for the volume slider
+    $FMRIEngine(slider) configure -from 1 -to $FMRIEngine(noOfVolumes)
+    # Sets the first volume in the sequence as the active volume
+    MainVolumesSetActive $FMRIEngine(firstMRMLid)
 }
 
 
@@ -615,27 +676,39 @@ proc FMRIEngineSelectSequence {} {
 # .END
 #-------------------------------------------------------------------------------
 proc FMRIEngineUpdateSequences {} {
-    global FMRIEngine Ibrowser 
+    global FMRIEngine Ibrowser MultiVolumeReader 
 
     # clears the listbox
     set size [$FMRIEngine(seqsListBox) size]
     $FMRIEngine(seqsListBox) delete 0 [expr $size - 1]
+ 
+    # checks sequences from Ibrowser
+    set b1 [info exists Ibrowser(idList)] 
+    set n1 [expr {$b1 == 0 ? 0 : [llength $Ibrowser(idList)]}]
 
-    set b [info exists Ibrowser(idList)] 
-    set n [expr {$b == 0 ? 0 : [llength $Ibrowser(idList)]}]
+    # checks sequence loaded from fMRIEngine
+    set b2 [info exists MultiVolumeReader(noOfVolumes)] 
+    set n2 [expr {$b2 == 0 ? 0 : $MultiVolumeReader(noOfVolumes)}]
+
+    set n [expr $n1 + $n2]
     if {$n > 1} {
         set i 1 
-        while {$i < $n} {
+        while {$i < $n1} {
             set id [lindex $Ibrowser(idList) $i]
-            $FMRIEngine(seqsListBox) insert end "$Ibrowser($id,name) \[id: $id\]" 
+            # $FMRIEngine(seqsListBox) insert end "$Ibrowser($id,name) \[id: $id\]" 
+            $FMRIEngine(seqsListBox) insert end "$Ibrowser($id,name)-$id" 
             incr i
+        }
+
+        if {$n2 > 1} {
+            $FMRIEngine(seqsListBox) insert end "Loaded-in-fMRIEngine" 
         }
     } else {
         $FMRIEngine(seqsListBox) insert end none 
     }
 }
 
- 
+  
 #-------------------------------------------------------------------------------
 # .PROC FMRIEngineBuildUIForLoad
 # Creates UI for Load page 
@@ -644,6 +717,29 @@ proc FMRIEngineUpdateSequences {} {
 # .END
 #-------------------------------------------------------------------------------
 proc FMRIEngineBuildUIForLoad {parent} {
+    global FMRIEngine Gui
+
+    frame $parent.fTop -bg $Gui(activeWorkspace)
+    pack $parent.fTop -side top 
+ 
+    set f $parent.fTop
+
+    # error if no private segment
+    if {[catch "package require MultiVolumeReader"]} {
+        DevAddLabel $f.lError \
+            "Loading function is disabled\n\
+            due to the unavailability\n\
+            of module MultiVolumeReader." 
+        pack $f.lError -side top -pady 30
+        return
+    }
+
+    MultiVolumeReaderBuildGUI $f
+}
+
+
+# FMRIEngineBuildUIForLoad back up
+proc FMRIEngineBuildUIForLoad-bak {parent} {
     global FMRIEngine Gui
 
     frame $parent.fTop -bg $Gui(backdrop) -relief sunken -bd 2  
@@ -766,10 +862,10 @@ proc FMRIEngineScaleActivation {no} {
         }
     }
 
-    if {[info exists FMRIEngine(noOfAnalyzeVolumes)] == 1} {
+    if {[info exists FMRIEngine(noOfVolumes)] == 1} {
 
         vtkCDF cdf
-        set dof [expr $FMRIEngine(noOfAnalyzeVolumes) - 1]
+        set dof [expr $FMRIEngine(noOfVolumes) - 1]
         # The index of list starts with 0
         set p [lindex $FMRIEngine(allPValues) [expr $no - 1]]
         set t [cdf p2t $p $dof]
@@ -965,7 +1061,7 @@ proc FMRIEngineLoadAnalyzeVolumes {} {
     $FMRIEngine(slider) set 0 
     $FMRIEngine(slider) configure -showvalue 1 
 
-    unset -nocomplain FMRIEngine(noOfAnalyzeVolumes)
+    unset -nocomplain FMRIEngine(noOfVolumes)
     unset -nocomplain FMRIEngine(firstMRMLid)
     unset -nocomplain FMRIEngine(lastMRMLid)
 
@@ -1016,9 +1112,9 @@ proc FMRIEngineLoadAnalyzeVolumes {} {
 
     set FMRIEngine(firstMRMLid) [lindex $AnalyzeCache(MRMLid) 0] 
     set FMRIEngine(lastMRMLid) [lindex $AnalyzeCache(MRMLid) end] 
-    set FMRIEngine(noOfAnalyzeVolumes) [llength $AnalyzeCache(MRMLid)] 
+    set FMRIEngine(noOfVolumes) [llength $AnalyzeCache(MRMLid)] 
     set ext [[Volume([lindex $AnalyzeCache(MRMLid) 0],vol) GetOutput] GetWholeExtent]
-    set FMRIEngine(volextent) $ext 
+    set FMRIEngine(volumeExtent) $ext 
 
     $FMRIEngine(slider) configure -from 1 -to [llength $AnalyzeCache(MRMLid)] 
     $FMRIEngine(slider) configure -state active
@@ -1051,7 +1147,6 @@ proc FMRIEngineComputeActivationVolume {} {
         DevErrorWindow "Please input a name for the activation volume."
         return
     }
-
 
     # Add volumes into vtkActivationVolumeGenerator
     if {[info commands FMRIEngine(actvolgen)] != ""} {
@@ -1146,8 +1241,7 @@ proc FMRIEngineComputeActivationVolume {} {
 proc FMRIEngineSetWindowLevelThresholds {} {
    global FMRIEngine Volume 
 
-    if {[info exists FMRIEngine(noOfAnalyzeVolumes)] == 0} {
-        DevErrorWindow "Please load volumes first."
+    if {[info exists FMRIEngine(noOfVolumes)] == 0} {
         return
     }
 
