@@ -259,7 +259,7 @@ proc EMSegmentInit {} {
     #   The strings with the $ symbol tell CVS to automatically insert the
     #   appropriate revision number and date when the module is checked in.
     #   
-    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.53 $} {$Date: 2005/03/18 23:46:26 $}]}
+    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.54 $} {$Date: 2005/03/31 22:48:53 $}]}
 
     # Initialize module-level variables
     #------------------------------------
@@ -1871,6 +1871,11 @@ proc EMSegmentUpdateMRML {} {
 
           }
           
+      set VolumeName  [SegmenterSuperClass($pid,node) GetLocalPriorName]
+      set VolumeIndex [lsearch $VolumeNameList $VolumeName]
+      if {($VolumeName != "") && ($VolumeIndex > -1) } { set EMSegment(Cattrib,$NumClass,ProbabilityData) [lindex $Volume(idList) $VolumeIndex]
+      } else { set EMSegment(Cattrib,$NumClass,ProbabilityData) $Volume(idNone) }
+
           set InputChannelWeights [SegmenterSuperClass($pid,node) GetInputChannelWeights]
           for {set y 0} {$y < $EMSegment(MaxInputChannelDef)} {incr y} {
              if {[lindex $InputChannelWeights $y] == ""} {set EMSegment(Cattrib,$NumClass,InputChannelWeights,$y) 1.0
@@ -1930,12 +1935,12 @@ proc EMSegmentUpdateMRML {} {
            set EMSegment(Cattrib,$NumClass,$NodeAttribute)     [SegmenterClass($pid,node) Get${NodeAttribute}]
     }
 
-        set VolumeName  [SegmenterClass($pid,node) GetLocalPriorName]
+    set VolumeName  [SegmenterClass($pid,node) GetLocalPriorName]
     set VolumeIndex [lsearch $VolumeNameList $VolumeName]
     if {($VolumeName != "") && ($VolumeIndex > -1) } { set EMSegment(Cattrib,$NumClass,ProbabilityData) [lindex $Volume(idList) $VolumeIndex]
     } else { set EMSegment(Cattrib,$NumClass,ProbabilityData) $Volume(idNone) }
 
-        set VolumeName  [SegmenterClass($pid,node) GetPCAMeanName]
+    set VolumeName  [SegmenterClass($pid,node) GetPCAMeanName]
     set VolumeIndex [lsearch $VolumeNameList $VolumeName]
     if {($VolumeName != "") && ($VolumeIndex > -1) } { set EMSegment(Cattrib,$NumClass,PCAMeanData) [lindex $Volume(idList) $VolumeIndex]
     } else { set EMSegment(Cattrib,$NumClass,PCAMeanData) $Volume(idNone) }
@@ -2458,6 +2463,12 @@ proc EMSegmentSaveSettingSuperClass {SuperClass LastNode} {
           SegmenterSuperClass($pid,node) SetProb                $EMSegment(Cattrib,$i,Prob)  
           SegmenterSuperClass($pid,node) SetNumClasses          [llength $EMSegment(Cattrib,$i,ClassList)]
           SegmenterSuperClass($pid,node) SetLocalPriorWeight    $EMSegment(Cattrib,$i,LocalPriorWeight)  
+          set v $EMSegment(Cattrib,$i,ProbabilityData)
+          if {$v != $Volume(idNone) } {
+             SegmenterSuperClass($pid,node) SetLocalPriorName       [Volume($v,node) GetName]
+          } else {
+             SegmenterSuperClass($pid,node) SetLocalPriorName   ""
+          }
 
           set InputChannelWeights ""
           for {set y 0} {$y < $EMSegment(MaxInputChannelDef)} {incr y} {
