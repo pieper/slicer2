@@ -176,6 +176,14 @@ void vtkVector3::Add(vtkVector3 *v)
   this->Modified();
 }
 
+void vtkVector3::Add(vtkVector3 *A, vtkVector3 *B) 
+{
+  for (int y=0; y<3; y++) {
+    this->Element[y] = A->Element[y] + B->Element[y];
+  }
+  this->Modified();
+}
+
 //----------------------------------------------------------------------------
 // Subtract
 //----------------------------------------------------------------------------
@@ -183,6 +191,14 @@ void vtkVector3::Subtract(vtkVector3 *v)
 {
   for (int y=0; y<3; y++) {
     this->Element[y] -= v->Element[y];
+  }
+  this->Modified();
+}
+
+void vtkVector3::Subtract(vtkVector3 *A, vtkVector3 *B) 
+{
+  for (int y=0; y<3; y++) {
+    this->Element[y] = A->Element[y] - B->Element[y];
   }
   this->Modified();
 }
