@@ -34,6 +34,7 @@
 #   ModelsConfigScrolledGUI
 #   ModelsSetPropertyType
 #   ModelsSetPrefix
+#   ModelsPropsApplyButNotToNew
 #   ModelsPropsApply
 #   ModelsPropsCancel
 #   ModelsMeter
@@ -67,7 +68,7 @@ proc ModelsInit {} {
 
 	# Set Version Info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.24 $} {$Date: 2000/07/31 16:14:46 $}]
+		{$Revision: 1.25 $} {$Date: 2000/07/31 20:01:42 $}]
 
 	# Props
 	set Model(propertyType) Basic
@@ -211,18 +212,18 @@ If <B>Backface Culling</B> is on, you will see nothing when looking inside a cli
 	#-------------------------------------------
 	set f $fDisplay.fAll
 
-	eval {button $f.bAll -text "Show All" -width 10 \
-		-command "MainModelsSetVisibility All; Render3D"} $Gui(WBA)
-	eval {button $f.bNone -text "Show None" -width 10 \
-		-command "MainModelsSetVisibility None; Render3D"} $Gui(WBA)
+        DevAddButton $f.bAll "Show All" \
+                "MainModelsSetVisibility All; Render3D" 10 
+        DevAddButton $f.bNone "Show None" \
+                "MainModelsSetVisibility None; Render3D" 10 
 	pack $f.bAll $f.bNone -side left -padx $Gui(pad) -pady 0
 
 	#-------------------------------------------
 	# fDisplay->Grid frame
 	#-------------------------------------------
 	set f $Module(Models,fDisplay).fGrid
-	eval {label $f.lV -text Visibility} $Gui(WLA)
-	eval {label $f.lO -text Opacity} $Gui(WLA)
+	DevAddLabel $f.lV "Visibility"
+	DevAddLabel $f.lO "Opacity" 
 	grid $f.lV $f.lO -pady 0 -padx 12
 	grid $f.lO -columnspan 2
 
@@ -264,7 +265,7 @@ If <B>Backface Culling</B> is on, you will see nothing when looking inside a cli
 	#-------------------------------------------
 	set f $fProps.fTop.fActive
 
-	eval {label $f.lActive -text "Active Model: "} $Gui(BLA)
+        eval {label $f.lActive -text "Active Model: "} $Gui(BLA)
 	eval {menubutton $f.mbActive -text "None" -relief raised -bd 2 -width 20 \
 		-menu $f.mbActive.m} $Gui(WMBA)
 	eval {menu $f.mbActive.m} $Gui(WMA)
@@ -279,7 +280,7 @@ If <B>Backface Culling</B> is on, you will see nothing when looking inside a cli
 	#-------------------------------------------
 	set f $fProps.fTop.fType
 
-	eval {label $f.l -text "Properties:"} $Gui(BLA)
+        eval {label $f.l -text "Properties:"} $Gui(BLA)
 	frame $f.f -bg $Gui(backdrop)
 	foreach p "Basic Advanced" {
 		eval {radiobutton $f.f.r$p \
@@ -324,7 +325,7 @@ If <B>Backface Culling</B> is on, you will see nothing when looking inside a cli
 	#-------------------------------------------
 	set f $fProps.fBot.fBasic.fName
 
-	eval {label $f.l -text "Name:" } $Gui(WLA)
+	DevAddLabel $f.l "Name:" 
 	eval {entry $f.e -textvariable Model(name)} $Gui(WEA)
 	pack $f.l -side left -padx $Gui(pad)
 	pack $f.e -side left -padx $Gui(pad) -expand 1 -fill x
@@ -351,7 +352,7 @@ If <B>Backface Culling</B> is on, you will see nothing when looking inside a cli
 	#-------------------------------------------
 	set f $fProps.fBot.fBasic.fColor
 
-	eval {button $f.b -text "Color:" -command "ShowColors"} $Gui(WBA)
+	DevAddButton $f.b "Color:" "ShowColors"
 	eval {entry $f.e -width 20 \
 		-textvariable Label(name)} $Gui(WEA) \
 		{-bg $Gui(activeWorkspace) -state disabled}
@@ -365,12 +366,12 @@ If <B>Backface Culling</B> is on, you will see nothing when looking inside a cli
 	set f $fProps.fBot.fBasic.fGrid
 
 	# Visible
-	eval {label $f.lV -text "Visible:"} $Gui(WLA)
+	DevAddLabel $f.lV "Visible:"
 	eval {checkbutton $f.c \
 		 -variable Model(visibility) -indicatoron 1} $Gui(WCA)
 
 	# Opacity
-	eval {label $f.lO -text "Opacity:"} $Gui(WLA)
+	DevAddLabel $f.lO "Opacity:"
 	eval {entry $f.e -textvariable Model(opacity) \
 		-width 3} $Gui(WEA)
 	eval {scale $f.s -from 0.0 -to 1.0 -length 50 \
@@ -384,12 +385,9 @@ If <B>Backface Culling</B> is on, you will see nothing when looking inside a cli
 	#-------------------------------------------
 	set f $fProps.fBot.fBasic.fApply
 
-	eval {button $f.bApply -text "Apply" \
-		-command "ModelsPropsApply; Render3D"} $Gui(WBA) {-width 8}
-	eval {button $f.bCancel -text "Cancel" \
-		-command "ModelsPropsCancel"} $Gui(WBA) {-width 8}
+        DevAddButton $f.bApply "Apply" "ModelsPropsApply; Render3D" 8
+	DevAddButton $f.bCancel "Cancel" "ModelsPropsCancel" 8
 	grid $f.bApply $f.bCancel -padx $Gui(pad) -pady $Gui(pad)
-
 
 	#-------------------------------------------
 	# Props->Bot->Advanced->Clipping frame
@@ -397,10 +395,10 @@ If <B>Backface Culling</B> is on, you will see nothing when looking inside a cli
 	set f $fProps.fBot.fAdvanced.fClipping
 
 	# Visible
-	eval {label $f.l -text "Clipping:"} $Gui(WLA)
+	DevAddLabel $f.l "Clipping:"
 	eval {checkbutton $f.c \
 		 -variable Model(clipping) -indicatoron 1 \
-                 -command "ModelsPropsApply; Render3D" } $Gui(WCA)
+		-command "ModelsPropsApplyButNotToNew; Render3D"} $Gui(WCA)
 
 	pack $f.l $f.c -side left -padx $Gui(pad)
 
@@ -409,7 +407,7 @@ If <B>Backface Culling</B> is on, you will see nothing when looking inside a cli
 	#-------------------------------------------
 	set f $fProps.fBot.fAdvanced.fCulling
 
-	eval {label $f.l -text "Backface Culling:"} $Gui(WLA)
+	DevAddLabel $f.l "Backface Culling:"
 	frame $f.f -bg $Gui(activeWorkspace)
 	pack $f.l $f.f -side left -padx $Gui(pad)
 
@@ -418,7 +416,7 @@ If <B>Backface Culling</B> is on, you will see nothing when looking inside a cli
 		width "4 4" {
 		eval {radiobutton $f.f.rMode$value -width $width \
 			-text "$text" -value "$value" -variable Model(culling)\
-                         -command "ModelsPropsApply; Render3D" \
+                        -command "ModelsPropsApplyButNotToNew; Render3D" \
 			-indicatoron 0} $Gui(WCA)
 		pack $f.f.rMode$value -side left -padx 0 -pady 0
 	}
@@ -437,7 +435,7 @@ If <B>Backface Culling</B> is on, you will see nothing when looking inside a cli
 	# fVisible
 	set f $fVisible
 
-	eval {label $f.l -text "Scalars Visible:"} $Gui(WLA)
+	DevAddLabel $f.l "Scalars Visible:"
 	frame $f.f -bg $Gui(activeWorkspace)
 	pack $f.l $f.f -side left -padx $Gui(pad) -pady 0
 
@@ -446,7 +444,7 @@ If <B>Backface Culling</B> is on, you will see nothing when looking inside a cli
 		width "4 4" {
 		eval {radiobutton $f.f.rMode$value -width $width \
 			-text "$text" -value "$value" -variable Model(scalarVisibility) \
-                         -command "ModelsPropsApply; Render3D" \
+                         -command "ModelsPropsApplyButNotToNew; Render3D" \
 			-indicatoron 0} $Gui(WCA)
 		pack $f.f.rMode$value -side left
 	}
@@ -454,13 +452,13 @@ If <B>Backface Culling</B> is on, you will see nothing when looking inside a cli
 	# fRange
 	set f $fRange
 
-	eval {label $f.l -text "  Scalar Range:"} $Gui(WLA)
+	DevAddLabel $f.l "Scalar Range:"
 	eval {entry $f.eLo -width 6 -textvariable Model(scalarLo) } $Gui(WEA)
-	bind $f.eLo <Return> "ModelsPropsApply; Render3D"
-	bind $f.eLo <FocusOut> "ModelsPropsApply; Render3D"
+	bind $f.eLo <Return> "ModelsPropsApplyButNotToNew; Render3D"
+	bind $f.eLo <FocusOut> "ModelsPropsApplyButNotToNew; Render3D"
 	eval {entry $f.eHi -width 6 -textvariable Model(scalarHi) } $Gui(WEA)
-        bind $f.eHi <Return> "ModelsPropsApply; Render3D"
-	bind $f.eHi <FocusOut> "ModelsPropsApply; Render3D"
+        bind $f.eHi <Return> "ModelsPropsApplyButNotToNew; Render3D"
+	bind $f.eHi <FocusOut> "ModelsPropsApplyButNotToNew; Render3D"
 	pack $f.l $f.eLo $f.eHi -side left -padx $Gui(pad)
 
 	#-------------------------------------------
@@ -468,9 +466,9 @@ If <B>Backface Culling</B> is on, you will see nothing when looking inside a cli
 	#-------------------------------------------
 	set f $fProps.fBot.fAdvanced.fDesc
 
-	eval {label $f.l -text "Optional Description:"} $Gui(WLA)
-	bind $f.l <Return> "ModelsPropsApply"
-	bind $f.l <FocusOut> "ModelsPropsApply"
+	DevAddLabel $f.l "Optional Description:"
+	bind $f.l <Return> "ModelsPropsApplyButNotToNew"
+	bind $f.l <FocusOut> "ModelsPropsApplyButNotToNew"
 	eval {entry $f.e -textvariable Model(desc)} $Gui(WEA)
 	pack $f.l -side top -padx $Gui(pad) -fill x -anchor w
 	pack $f.e -side top -padx $Gui(pad) -expand 1 -fill x
@@ -481,10 +479,8 @@ If <B>Backface Culling</B> is on, you will see nothing when looking inside a cli
 #        #-------------------------------------------
 #        set f $fProps.fBot.fAdvanced.fApply
 #
-#        eval {button $f.bApply -text "Apply" \
-#                -command "ModelsPropsApply; Render3D"} $Gui(WBA) {-width 8}
-#        eval {button $f.bCancel -text "Cancel" \
-#                -command "ModelsPropsCancel"} $Gui(WBA) {-width 8}
+#        DevAddButton $f.bApply "Apply" "ModelsPropsApply; Render3D" 8
+#        DevAddButton $f.bCancel "Cancel" "ModelsPropsCancel" 8
 #        grid $f.bApply $f.bCancel -padx $Gui(pad) -pady $Gui(pad)
 
 
@@ -550,9 +546,8 @@ Advanced page, and select 'Clipping'."} $Gui(WLA)
 	set f $fMeter.fApply
 
 	set text "Measure Performance"
-	eval {button $f.bMeasure -text "$text" \
-		-width [expr [string length $text] + 1] \
-		-command "ModelsMeter"} $Gui(WBA)
+        DevAddButton $f.bMeasure $text "ModelsMeter" \
+                [expr [string length $text] + 1] 
 	pack $f.bMeasure
 
 	#-------------------------------------------
@@ -687,20 +682,7 @@ proc ModelsSetPropertyType {} {
 proc ModelsSetPrefix {} {
 	global Model Mrml Color
 
-	# Cannot have blank prefix
-	if {$Model(prefix) == ""} {
-		set Model(prefix) model
-	}
-
- 	# Show popup initialized to the last file saved
-	set filename [file join $Mrml(dir) $Model(prefix)]
-	set dir [file dirname $filename]
-	set typelist {
-		{"VTK Files" {.vtk}}
-		{"All Files" {*}}
-	}
-	set filename [tk_getOpenFile -title "Open Model" -defaultextension ".vtk"\
-		-filetypes $typelist -initialdir "$dir" -initialfile $filename]
+        set filename [DevGetFile $Model(prefix) "vtk" "" "Choose Model"]
 
 	# Do nothing if the user cancelled
 	if {$filename == ""} {return}
@@ -725,8 +707,27 @@ proc ModelsSetPrefix {} {
 }
 
 #-------------------------------------------------------------------------------
+# .PROC ModelsPropsApplyButNotToNew
+#
+# Calls ModelsPropsApply if the Model is not a new one.
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc ModelsPropsApplyButNotToNew {} {
+    global Model 
+
+    set m $Model(activeID)
+    if {$m == "NEW"} {return}
+    ModelsPropsApply
+
+}
+#-------------------------------------------------------------------------------
 # .PROC ModelsPropsApply
 # 
+# This either updates the information about the model or it creates
+# a new model if the model is new.
+#
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -735,21 +736,21 @@ proc ModelsPropsApply {} {
 
 	# Validate name
 	if {$Model(name) == ""} {
-		tk_messageBox -message "Please enter a name that will allow you to distinguish this model."
+		DevWarningWindow "Please enter a name that will allow you to distinguish this model."
 		return
 	}
 	if {[ValidateName $Model(name)] == 0} {
-		tk_messageBox -message "The name can consist of letters, digits, dashes, or underscores"
+		DevWarningWindow "The name can consist of letters, digits, dashes, or underscores"
 		return
 	}
 
 	# Validate scalar range
 	if {[ValidateFloat $Model(scalarLo)] == 0} {
-		tk_messageBox -message "The scalar range must be numbers"
+		DevWarningWindow "The scalar range must be numbers"
 		return
 	}
 	if {[ValidateFloat $Model(scalarHi)] == 0} {
-		tk_messageBox -message "The scalar range must be numbers"
+		DevWarningWindow "The scalar range must be numbers"
 		return
 	}
 
@@ -759,7 +760,7 @@ proc ModelsPropsApply {} {
 	if {$m == "NEW"} {
 		# Ensure prefix not blank
 		if {$Model(prefix) == ""} {
-			tk_messageBox -message "Please enter a file prefix."
+			DevWarningWindow "Please enter a file prefix."
 			return
 		}
 		set n [MainMrmlAddNode Model]
