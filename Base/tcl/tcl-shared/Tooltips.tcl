@@ -50,6 +50,17 @@ proc TooltipAdd {widget tip} {
     # surround the tip string with brackets
     set tip "\{$tip\}"
 
+    # put the class (i.e. Button) first in the bindtags so it executes earlier
+    # (this makes button highlighting work)
+    # just swap the first two list elements
+    set btags [bindtags $widget]
+    if {[llength $btags] > 1} {
+	set tmp [lindex $btags 0]
+	set btags [lreplace $btags 0 0 [lindex $btags 1]]
+	set btags [lreplace $btags 1 1 $tmp]
+    }
+    bindtags $widget $btags
+
     # bindings
     bind $widget <Enter> "TooltipEnterWidget %W $tip %X %Y"
     bind $widget <Leave> TooltipExitWidget
