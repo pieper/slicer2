@@ -57,8 +57,8 @@ proc EdFastMarchingInit {} {
     set EdFastMarching(userExpand) 0
 
     set EdFastMarching(majorVersionTCL) 2
-    set EdFastMarching(minorVersionTCL) 0
-    set EdFastMarching(dateVersionTCL) "2002-12-11/12:00"
+    set EdFastMarching(minorVersionTCL) 1
+    set EdFastMarching(dateVersionTCL) "2003-1-08/17:00EST"
 
     set EdFastMarching(versionTCL) "$EdFastMarching(majorVersionTCL).$EdFastMarching(minorVersionTCL) \t($EdFastMarching(dateVersionTCL))"
 
@@ -273,7 +273,7 @@ proc EdFastMarchingEnter {} {
     set depth [Volume($v,vol) GetRangeHigh]
 
     set dim [[Volume($v,vol) GetOutput] GetWholeExtent]
-
+    scan [Volume($v,node) GetSpacing] "%f %f %f" dx dy dz
 
     # create the vtk object 
     vtkFastMarching EdFastMarching(FastMarching) 
@@ -293,7 +293,7 @@ proc EdFastMarchingEnter {} {
 
     # initialize the object
     EdFastMarching(FastMarching) init \
-        [expr [lindex $dim 1] + 1] [expr [lindex $dim 3] + 1] [expr [lindex $dim 5] + 1] $depth
+        [expr [lindex $dim 1] + 1] [expr [lindex $dim 3] + 1] [expr [lindex $dim 5] + 1] $depth $dx $dy $dz
 
     set EdFastMarching(fastMarchingInitialized) 1
 

@@ -18,8 +18,8 @@
 #include "FMpdf.h"
 
 #define MAJOR_VERSION 2
-#define MINOR_VERSION 0
-#define DATE_VERSION "2002-12-11/12:00"
+#define MINOR_VERSION 1
+#define DATE_VERSION "2003-1-08/17:00EST"
 
 ///////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////
@@ -42,6 +42,7 @@ struct FMnode {
   FMstatus status;
   float T;
   int leafIndex;
+  int nSonsLeaked;
 };
 
 struct FMleaf {
@@ -63,7 +64,14 @@ class VTK_FASTMARCHING_EXPORT vtkFastMarching : public vtkImageToImageFilter
   int arrayShiftNeighbor[27];
   int tmpNeighborhood[27]; // allocate it here so that we do not have to
   // allocate it over and over in getMedianInhomo
-  float dx; // =1
+
+  float dx; 
+  float dy;
+  float dz;
+
+  float invDx2;
+  float invDy2;
+  float invDz2;
 
   bool initialized;
   bool firstCall;
@@ -124,12 +132,16 @@ class VTK_FASTMARCHING_EXPORT vtkFastMarching : public vtkImageToImageFilter
   FMpdf *pdfInhomoIn;
   FMpdf *pdfInhomoAll;
 
+  bool firstPassThroughShow;
+
   // minheap methods
   bool emptyTree(void);
   void insert(const FMleaf leaf);
   FMleaf removeSmallest( void );
   void downTree(int index);
   void upTree(int index);
+
+  int indexFather(int index );
 
   void getMedianInhomo(int index, int &median, int &inhomo );
 
@@ -159,7 +171,7 @@ class VTK_FASTMARCHING_EXPORT vtkFastMarching : public vtkImageToImageFilter
   //pb wrap  vtkFastMarching()(const vtkFastMarching&);
   //pb wrap  void operator=(const vtkFastMarching&);
 
-  void init(int dimX, int dimY, int dimZ, int depth);
+  void init(int dimX, int dimY, int dimZ, int depth, double dx, double dy, double dz);
 
   void setActiveLabel(int label);
 

@@ -67,6 +67,7 @@ float vtkFastMarching::speed( int index )
     behaves like a very fluid fluid, less regular but deepends less on initial seeds
    */
 
+  //  s=1.0;
   return s;
 
   /*
@@ -92,16 +93,18 @@ void vtkFastMarching::setSeed( int index )
 
   knownPoints[nEvolutions].push_back(index);
 
-  // add all FAR neighbors to trial band
-  for(int nei=1;nei<=nNeighbors;nei++)
+  // add all 26-neighbors to trial band
+  for(int px=-1;px<=1;px++)
+  for(int py=-1;py<=1;py++)
+  for(int pz=-1;pz<=1;pz++)
     {
       FMleaf f;
-      f.nodeIndex=index+shiftNeighbor(nei);
-
-      if(node[f.nodeIndex].status == fmsFAR)
+      f.nodeIndex=index + px + py * dimX + pz * dimXY;
+      if( px!=0 || py!=0 || pz!=0 )
     {
       node[f.nodeIndex].status=fmsTRIAL;
-      node[f.nodeIndex].T=computeT(f.nodeIndex);
+      node[f.nodeIndex].T= sqrt( fabs(px)*dx*dx + fabs(px)*dy*dy + fabs(px)*dz*dz )
+        / speed(f.nodeIndex);
       insert( f ); // insert in minheap
     }
     }
@@ -233,7 +236,10 @@ void vtkFastMarchingExecute(vtkFastMarching *self,
       for(int j=0;j<self->dimY;j++)
       for(int i=0;i<self->dimX;i++)
         {
+
           self->node[index].T=INF;
+      self->node[index].nSonsLeaked=0;
+
       if(self->outdata[index]==0)
         self->node[index].status=fmsFAR;
       else 
@@ -401,7 +407,8 @@ void vtkFastMarchingExecute(vtkFastMarching *self,
       */
       std::cerr <<  "Error in vtkFastMarchingExecute: minHeap was not sorted after leaving main loop" << endl;
     }
-      
+
+  self->firstPassThroughShow = true;
 }
 
 void vtkFastMarching::show(float r)
@@ -421,16 +428,35 @@ void vtkFastMarching::show(float r)
     for(int index=(oldIndex+1);index<=newIndex;index++)
       {
     if( node[ knownPoints[nEvolutions][index] ].status==fmsKNOWN )
-      outdata[ knownPoints[nEvolutions][index] ]=label;
+      {
+        outdata[ knownPoints[nEvolutions][index] ]=label;
+        if( !firstPassThroughShow )
+          node[ indexFather(knownPoints[nEvolutions][index]) ].nSonsLeaked
+        -=node[ knownPoints[nEvolutions][index] ].nSonsLeaked+1;
+
+        assert( node[ indexFather(knownPoints[nEvolutions][index]) ].nSonsLeaked>=0 );
+      }
       }
   else if( newIndex < oldIndex )
     for(int index=oldIndex;index>newIndex;index--)
       {
     if(node[  knownPoints[nEvolutions][index] ].status==fmsKNOWN )
-      outdata[ knownPoints[nEvolutions][index] ]=0;
+      {
+        outdata[ knownPoints[nEvolutions][index] ]=0;
+
+        /*
+        // visualize candidate leaking points
+        if( node[knownPoints[nEvolutions][index]].nSonsLeaked>=10 )
+          outdata[ knownPoints[nEvolutions][index] ]=label+1;
+        */
+
+        node[ indexFather(knownPoints[nEvolutions][index]) ].nSonsLeaked
+          +=node[ knownPoints[nEvolutions][index] ].nSonsLeaked+1;
+      }       
       }
 
   nPointsBeforeLeakEvolution=newIndex;
+  firstPassThroughShow=false;
 }
 
 void vtkFastMarching::setActiveLabel(int label)
@@ -659,8 +685,16 @@ FMleaf vtkFastMarching::removeSmallest( void ) {
 vtkFastMarching::vtkFastMarching() 
 { initialized=false; }
 
-void vtkFastMarching::init(int dimX, int dimY, int dimZ, int depth)
+void vtkFastMarching::init(int dimX, int dimY, int dimZ, int depth, double dx, double dy, double dz)
 {
+  this->dx=dx;
+  this->dy=dy;
+  this->dz=dz;
+
+  invDx2 = 1.0/(dx*dx);
+  invDy2 = 1.0/(dy*dy);
+  invDz2 = 1.0/(dz*dz);
+
   nNeighbors=26; // 6 or 26
   dx=1.0;
 
@@ -746,6 +780,28 @@ inline int vtkFastMarching::shiftNeighbor(int n)
   //assert(n>=0 && n<=nNeighbors);
 
   return arrayShiftNeighbor[n];
+}
+
+int vtkFastMarching::indexFather(int n )
+{
+  float Tmin = INF;
+  int index, indexMin;
+
+  //  for(int k=1;k<=nNeighbors;k++)
+  for(int k=1;k<=26;k++)
+    {
+      int index = n+shiftNeighbor(k);
+      if( node[index].T<Tmin )
+    {
+      Tmin = node[index].T;
+      indexMin = index;
+    }
+    }
+
+  assert( Tmin < INF );
+  // or else there was no initialized neighbor around ?
+
+  return indexMin;
 }
 
 float vtkFastMarching::step( void )
@@ -876,7 +932,7 @@ float vtkFastMarching::computeT(int index )
   if(s<1.0/(INF/1e6))
     s=1.0/(INF/1e6);
 
-  C = -dx*dx/( s*s ); 
+  C = -1.0/( s*s ); 
 
   float Tij, Txm, Txp, Tym, Typ, Tzm, Tzp, TijNew;
 
@@ -905,38 +961,38 @@ float vtkFastMarching::computeT(int index )
    */
   if ((Dxm>0.0) || (Dxp<0.0)) {
     if (Dxm > -Dxp) {
-      A++;
-      B -= (float)2.0 * Txm;
-      C += Txm * Txm;
+      A += invDx2;
+      B += -2.0 * Txm * invDx2;
+      C += Txm * Txm * invDx2;
     }
     else {
-      A++;
-      B -= (float)2.0 * Txp;
-      C += Txp * Txp;
+      A += invDx2;
+      B += -2.0 * Txp * invDx2;
+      C += Txp * Txp * invDx2;
     }
   }
   if ((Dym>0.0) || (Dyp<0.0)) {
     if (Dym > -Dyp) {
-      A++;
-      B -= (float)2.0 * Tym;
-      C += Tym * Tym;
+      A += invDy2;
+      B += -2.0 * Tym * invDy2;
+      C += Tym * Tym * invDy2;
     }
     else {
-      A++;
-      B -= (float)2.0 * Typ;
-      C += Typ * Typ;
+      A += invDy2;
+      B += -2.0 * Typ * invDy2;
+      C += Typ * Typ * invDy2;
     }
   }
   if ((Dzm>0.0) || (Dzp<0.0)) {
     if (Dzm > -Dzp) {
-      A++;
-      B -= (float)2.0 * Tzm;
-      C += Tzm * Tzm;
+      A += invDz2;
+      B += -2.0 * Tzm * invDz2;
+      C += Tzm * Tzm * invDz2;
     }
     else {
-      A++;
-      B -= (float)2.0 * Tzp;
-      C += Tzp * Tzp;
+      A += invDz2;
+      B += -2.0 * Tzp * invDz2;
+      C += Tzp * Tzp * invDz2;
     }
   }
 
@@ -963,12 +1019,28 @@ float vtkFastMarching::computeT(int index )
       printf("Returning Tij %f\n",Tij);
     */
 
-    // this is what Tony Yezzi suggested
+    // find the smallest neighbor and compute T linearly from it.
+    // (suggested by TY)
     float minT=INF;
-    for(int n=1;n<=nNeighbors;n++)
-      minT=min(minT, node[index+shiftNeighbor(n)].T);
-
-    return minT+dx/s ;
+    int minIndex, minPx, minPy, minPz;
+    int candidateIndex;
+    int px, py, pz;
+    for(px=-1;px<=1;px++)
+      for(py=-1;py<=1;py++)
+    for(pz=-1;pz<=1;pz++)
+      {
+        candidateIndex=index + px + py * dimX + pz * dimXY;
+        if( node[candidateIndex].T<minT )
+          {
+        minT = node[candidateIndex].T;
+        minIndex = candidateIndex;
+        minPx = px;
+        minPy = py;
+        minPz = pz;
+          }
+      }
+    
+    return minT+sqrt( fabs(px)*dx*dx + fabs(px)*dy*dy + fabs(px)*dz*dz )/s ;
     
   }
 
