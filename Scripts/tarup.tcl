@@ -153,7 +153,7 @@ proc tarup { {destdir "auto"} } {
         "Darwin" {
             file copy -force $::env(VTK_DIR)/Wrapping/Tcl/pkgIndex.tcl $destdir/Lib/$::env(BUILD)/VTK-build/Wrapping/Tcl
         }
-        "win32" { 
+        default { 
             file mkdir $destdir/Lib/$::env(BUILD)/VTK-build/Wrapping/Tcl/$::env(VTK_BUILD_TYPE)
             file copy -force $::env(VTK_DIR)/Wrapping/Tcl/$::env(VTK_BUILD_TYPE)/pkgIndex.tcl $destdir/Lib/$::env(BUILD)/VTK-build/Wrapping/Tcl/$::env(VTK_BUILD_TYPE)
         }
@@ -180,7 +180,7 @@ proc tarup { {destdir "auto"} } {
             file copy $::env(VTK_DIR)/bin/vtk $destdir/Lib/$::env(BUILD)/VTK-build/bin
             file copy -force $::env(SLICER_HOME)/Scripts/slicer-vtk-pkgIndex.tcl $destdir/Lib/$::env(BUILD)/VTK-build/Wrapping/Tcl/pkgIndex.tcl
         }
-        "win32" { 
+        default { 
             file mkdir $destdir/Lib/$::env(BUILD)/VTK-build/bin/$::env(VTK_BUILD_TYPE)
             set libs [glob $::env(VTK_DIR)/bin/$::env(VTK_BUILD_TYPE)/*.dll]
             foreach lib $libs {
@@ -280,7 +280,7 @@ proc tarup { {destdir "auto"} } {
                 file copy $lib $destdir/Lib/$::env(BUILD)/Insight-build/bin
             }
         }
-        "win32" { 
+        default { 
             file mkdir $destdir/Lib/$::env(BUILD)/Insight-build/bin/$::env(VTK_BUILD_TYPE)
             set libs [glob -nocomplain $::env(ITK_BINARY_PATH)/bin/$::env(VTK_BUILD_TYPE)/*.dll]
             foreach lib $libs {
@@ -317,7 +317,7 @@ proc tarup { {destdir "auto"} } {
                 file copy $lib $destdir/Base/builds/$::env(BUILD)/bin
             }
         }
-        "win32" { 
+        default { 
             file mkdir $destdir/Base/builds/$::env(BUILD)/bin/$::env(VTK_BUILD_TYPE)
             set libs [glob Base/builds/$::env(BUILD)/bin/$::env(VTK_BUILD_TYPE)/*.dll]
             foreach lib $libs {
@@ -379,7 +379,7 @@ proc tarup { {destdir "auto"} } {
                     file copy $lib $moddest/builds/$::env(BUILD)/bin
                 }
             }
-            "win32" { 
+            default { 
                 file mkdir $moddest/builds/$::env(BUILD)/bin/$::env(VTK_BUILD_TYPE)
                 set libs [glob -nocomplain $moddir/builds/$::env(BUILD)/bin/$::env(VTK_BUILD_TYPE)/*.dll]
                 foreach lib $libs {
@@ -433,7 +433,7 @@ proc tarup { {destdir "auto"} } {
                 puts " -- making $archroot.tar.gz"
                 exec tar cfz $archroot.tar.gz $archroot
             }
-            "win32" { 
+            default { 
                 puts " -- making $archroot.zip"
                 exec zip -r $archroot.zip $archroot
             }
@@ -449,7 +449,7 @@ proc tarup { {destdir "auto"} } {
             "Darwin" {
                 exec xterm -e scp $archroot.tar.gz $scpdestination
             }
-            "win32" { 
+            default { 
                 exec rxvt -e scp $archroot.zip $scpdestination &
             }
         }
