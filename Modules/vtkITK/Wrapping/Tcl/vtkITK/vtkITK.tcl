@@ -10,6 +10,7 @@ if {[info commands vtkITK] != "" ||
     global PACKAGE_DIR_VTKITK
     source  [file join $PACKAGE_DIR_VTKITK/../../../tcl/EdWatershed.tcl]
     source  [file join $PACKAGE_DIR_VTKITK/../../../tcl/ITKFilters.tcl]
+    source  [file join $PACKAGE_DIR_VTKITK/../../../tcl/VolGeneric.tcl]
     global Module
     lappend Module(customModules) ITKFilters
     package provide vtkITK 1.0

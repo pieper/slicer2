@@ -74,12 +74,14 @@ public:
   // after this method is called.
   virtual void SetOutputScalarTypeToFloat(){this->SetOutputScalarType(VTK_FLOAT);}
   virtual void SetOutputScalarTypeToDouble(){this->SetOutputScalarType(VTK_DOUBLE);}
+  virtual void SetOutputScalarTypeToUnsignedLong(){this->SetOutputScalarType(VTK_UNSIGNED_LONG);}
+  virtual void SetOutputScalarTypeToLong(){this->SetOutputScalarType(VTK_LONG);}
+  virtual void SetOutputScalarTypeToUnsignedInt(){this->SetOutputScalarType(VTK_UNSIGNED_INT);}
   virtual void SetOutputScalarTypeToInt(){this->SetOutputScalarType(VTK_INT);}
+  virtual void SetOutputScalarTypeToUnsignedShort(){this->SetOutputScalarType(VTK_UNSIGNED_SHORT);}
   virtual void SetOutputScalarTypeToShort(){this->SetOutputScalarType(VTK_SHORT);}
-  virtual void SetOutputScalarTypeToUnsignedShort()
-    {this->SetOutputScalarType(VTK_UNSIGNED_SHORT);}
-  virtual void SetOutputScalarTypeToUnsignedChar()
-    {this->SetOutputScalarType(VTK_UNSIGNED_CHAR);}
+  virtual void SetOutputScalarTypeToUnsignedChar(){this->SetOutputScalarType(VTK_UNSIGNED_CHAR);}
+  virtual void SetOutputScalarTypeToChar(){this->SetOutputScalarType(VTK_CHAR);}
 
   // Description:
   // Get the file format.  Pixels are this type in the file.
