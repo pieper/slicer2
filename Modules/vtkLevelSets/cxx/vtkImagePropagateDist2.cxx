@@ -1456,6 +1456,7 @@ void vtkImagePropagateDist2::new3D_update_neighbors2( const int& k,  int* n, flo
     register float    dzpp = dzp+1;
     register float    dzpm = dzp-1;
 
+    /* this optimition seems slower in fact
     register float  dxp2  = dxp+dxp;
     register float  dxp2p = 1+dxp2;
     register float  dxp2m = 1-dxp2;
@@ -1467,6 +1468,7 @@ void vtkImagePropagateDist2::new3D_update_neighbors2( const int& k,  int* n, flo
     register float  dzp2  = dzp+dzp;
     register float  dzp2p = 1+dzp2;
     register float  dzp2m = 1-dzp2;
+    */
 
     register float current_dist=list_elts[p].GetSquareDist();
     if (current_dist<0) current_dist=-current_dist;
@@ -1492,7 +1494,7 @@ void vtkImagePropagateDist2::new3D_update_neighbors2( const int& k,  int* n, flo
     list1[list1_size++]=pn; \
     neighbor.SetState(POINT_TRIAL_INLIST);\
     val =    DISTANCE(dx1,dy1,dz1);\
-    if (buf[pn]<0)   val =  -val;\
+    if (buf[pn]<=0)   val =  -val;\
     neighbor.SetPosTrack( dx1,dy1,dz1, tp, val);\
       }  break;\
 \
@@ -1503,16 +1505,18 @@ void vtkImagePropagateDist2::new3D_update_neighbors2( const int& k,  int* n, flo
 \
     neigh_dist = neighbor.GetSquareDist();\
     val = DISTANCE(dx1,dy1,dz1);\
-    if (neigh_dist>0) \
+    if (neigh_dist>0) {\
       if (val<neigh_dist)  neighbor.SetPosTrack( dx1,dy1,dz1, tp,val);\
-    else {\
+    } else {\
       val=-val;\
       if (val>neigh_dist) neighbor.SetPosTrack( dx1,dy1,dz1, tp,val);\
     }\
       }  break;\
     }} // end switch // end of DEFINE block 
 
+    // we could get rid of the last parameter: sum
     // -X+Y+Z+ -X+Y+Z- -X-Y-Z+ -X+-Y-Z-
+
     if (x0>0) {
       if (y0>0) {
         if (z0>0)  DIRECT_NEIGHBOR(n[0],  dxpm, dypm, dzpm, dxp2m+dyp2m+dzp2m)
