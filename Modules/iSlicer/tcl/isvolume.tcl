@@ -62,7 +62,7 @@ if { [itcl::find class isvolume] == "" } {
       itk_option define -slice slice Slice 0
       itk_option define -interpolation interpolation Interpolation {linear}
       itk_option define -resolution resolution Resolution {256}
-      itk_option define -transform transform Transform { }
+      itk_option define -transform transform Transform {}
 
       # widgets for the control area
       variable _controls
@@ -397,7 +397,11 @@ itcl::body isvolume::volmenu_update {} {
 
     if { [info exists itk_option(-volume)] && $itk_option(-volume) != "" } {
         set v $itk_option(-volume)
-        set current_id $_VolIdMap($v)
+        if { [info exists _VolIdMap($v)] } {
+            set current_id $_VolIdMap($v)
+        } else {
+            set current_id -1
+        }
     } else {
         set current_id -1
     }
