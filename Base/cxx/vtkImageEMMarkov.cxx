@@ -273,8 +273,8 @@ void vtkImageEMMarkov::SetNumClasses(int NumberOfClasses)
 // -4 = Number of Classes not defined correctly
 
 int vtkImageEMMarkov::checkValues(vtkImageEMMatrix3D Volume)
-{
-  int i=0,j,k;
+{ 
+  int i=0;
   if (Volume.get_dim(1) != (this->EndSlice - this->StartSlice + 1)) {
     vtkErrorMacro(<< "vtkImageEMMarkov:checkValues:  Volume does not have the right dimension !");
     this->Error = -1;
@@ -366,17 +366,15 @@ void vtkImageEMMarkov::TrainMarkovMatrix(vtkImageEMMatrix3D Image,int ImageMin, 
   this->MarkovMatrix.setMatrix3D(0);
 
   // Lookup Table for the most likely Class given a certain Image value 
-  vtkImageEMVector MaxImageClassProb(ImageMax,0.0);
+  vtkImageEMVector MaxImageClassProb(ImageMax+1,0.0);
   this->CalculateMaxClassProb(MaxImageClassProb,ImageMin,ImageMax);
   
   // Class Assignment for every Pixel
-  // Be careful MaxImageClassProb[0] is also used here -> so do not use any vector functions , bc 
-  // bc they all defined for index > 0
   vtkImageEMMatrix3D ClassAssignment(NumSlices,Ydim,Xdim);
   for (z=1; z < NumSlicesPlus; z++) {
     for (y=1; y < Ymax; y++) {
       for (x=1; x < Xmax; x++) {
-	ClassAssignment[z][y][x] = MaxImageClassProb[(int)Image[z][y][x]];
+	ClassAssignment[z][y][x] = MaxImageClassProb[(int)Image[z][y][x]+1];
       }
     }
   }
@@ -434,11 +432,11 @@ void vtkImageEMMarkov::CalculateMaxClassProb(vtkImageEMVector & MaxClass, int &I
   double prob;
   for (i = ImageMin; i < iMax; i++) {
     prob = Gauss(i,this->Mu[1],this->Sigma[1]);
-    MaxClass[i] = 1;
+    MaxClass[i+1] = 1;
     for (c = 2; c < cMax; c++) {
       if (prob < this->Gauss(i,this->Mu[c],this->Sigma[c])) {
 	prob = this->Gauss(i,this->Mu[c],this->Sigma[c]);
-	MaxClass[i] = c;
+	MaxClass[i+1] = c;
       } 
     }
   }
@@ -453,32 +451,36 @@ double vtkImageEMMarkov::Gauss(int x,double m,double s) {
 // ---------------------------------------------------------   
 // Class: vtkImageEMMatrix3D
 // ---------------------------------------------------------  
-void vtkImageEMMatrix3D::allocate(int z=0, int y = 0, int x = 0 ){
+void vtkImageEMMatrix3D::allocate(int z, int y, int x){
   this->dimz = z;
-  int size = this->dimz+1;
   if (z > 0) { 
-    this->mat3D = new vtkImageEMMatrix[size];
+    this->mat3D = new vtkImageEMMatrix[this->dimz];
     if (!this->mat3D) {
       cout << "Did not get any Memory" << endl;
       exit(1);
     }
+
     if (y > 0)
-      for (int i=1; i < size; i++) this->mat3D[i].Resize(y,x);
+      for (int i=0; i < this->dimz; i++) this->mat3D[i].Resize(y,x);
+
+    this->mat3D --; // So we start with 1 and not with 0!
   }
   else this->mat3D = NULL;
 }
 
 void vtkImageEMMatrix3D::allocate(int z, int y, int x, double val){
   this->dimz = z;
-  int size = this->dimz+1;
   if (z > 0) { 
-    this->mat3D = new vtkImageEMMatrix[size];
+    this->mat3D = new vtkImageEMMatrix[this->dimz];
     if (!this->mat3D) {
       cout << "Did not get any Memory" << endl;
       exit(1);
     }
+
     if (y > 0)
-      for (int i=1; i < size; i++) this->mat3D[i].Resize(y,x,val);
+      for (int i=0; i < this->dimz; i++) this->mat3D[i].Resize(y,x,val);
+
+    this->mat3D --; // So we start with 1 and not with 0!
   }
   else this->mat3D = NULL;
 }
@@ -489,6 +491,7 @@ void vtkImageEMMatrix3D::deallocate (){
     //for (int i = 1; i < size;i++)
     //  delete (*this->mat3D)[i];
     this->dimz = 0;
+    this->mat3D ++; 
     delete[] this->mat3D;
     this->mat3D = NULL;
   }
@@ -505,7 +508,7 @@ vtkImageEMMatrix3D::vtkImageEMMatrix3D(const vtkImageEMMatrix3D & in){
 vtkImageEMMatrix& vtkImageEMMatrix3D::operator [] (int z) {return this->mat3D[z];}
 const vtkImageEMMatrix& vtkImageEMMatrix3D::operator [] (int i) const { return this->mat3D[i]; }
 
-void vtkImageEMMatrix3D::Resize(int z=0,int y = 0, int x = 0) {
+void vtkImageEMMatrix3D::Resize(int z,int y, int x) {
   if (z == this->dimz) {
     if (z== 0) return ;
     if ((y == this->get_dim(2)) && (x == this->get_dim(3))) return;
@@ -534,7 +537,7 @@ int vtkImageEMMatrix3D::get_dim(int dim) {
   return -1; 
 }
 
-void vtkImageEMMatrix3D::PrintMatrix3D(int zMax = -1,int yMax = -1,int xMax = -1) {
+void vtkImageEMMatrix3D::PrintMatrix3D(int zMax,int yMax,int xMax) {
   int Max = (zMax > -1 ? (zMax > this->dimz ? this->dimz : zMax) : this->dimz)  + 1;
   for (int z = 1; z < Max; z++)
     this->mat3D[z].PrintMatrix(yMax,xMax);
@@ -565,17 +568,13 @@ void vtkImageEMMatrix3D::Reshape(vtkImageEMVector v) {
 //  Smoothes  3D-Matrix
 // w(k) = sum(u(j)*v(k+1-j))
 // returns Matrix of size r_m
-void vtkImageEMMatrix3D::smoothConv(vtkImageEMMatrix3D U,vtkImageEMVector v) {
-  if ((this->get_dim(1) != U.get_dim(1))||
-      (this->get_dim(2) != U.get_dim(2)) || 
-      (this->get_dim(3) != U.get_dim(3))) 
-         vtkImageEMError::vtkImageEMError("vtkImageEMMatrix3D:smoothConv : Dimensions of 3D Matrixs do not match");
-
+void vtkImageEMMatrix3D::smoothConv(vtkImageEMVector v) {
   int i, iMax = this->get_dim(1) + 1;
-  vtkImageEMMatrix3D resultY(U.get_dim(1),U.get_dim(2),U.get_dim(3)), resultX(U.get_dim(1),U.get_dim(2),U.get_dim(3));            
+  vtkImageEMMatrix3D resultY(this->get_dim(1),this->get_dim(2),this->get_dim(3)), 
+                     resultX(this->get_dim(1),this->get_dim(2),this->get_dim(3));            
   // First: convolut in Y Direction 
   for (i = 1; i < iMax; i++){
-    resultY.mat3D[i].conv(U[i],v); 
+    resultY.mat3D[i].conv(this->mat3D[i],v); 
   }
   // Second: convolut in X Direction 
   for (i = 1; i < iMax; i++){
@@ -655,34 +654,36 @@ void vtkImageEMMatrix3D::setMatrix3DTest(int test,int division,int pixel){
 // Class: vtkImageEMMatrix
 // ---------------------------------------------------------   
 
-void vtkImageEMMatrix::allocate(int y=0,int x=0){
+void vtkImageEMMatrix::allocate(int y,int x){
   this->dimy = y; 
-  int size = y+1;
   if (y > 0) {
-    this->mat = new vtkImageEMVector[size];
+    this->mat = new vtkImageEMVector[this->dimy];
     if (!this->mat) {
       cout << "Did not get any Memory" << endl;
       exit(1);
     }
+
     if (x > 0) {
-      for (int i=1; i <size; i++) this->mat[i].Resize(x);
+      for (int i=0; i <this->dimy; i++) this->mat[i].Resize(x);
     }
+    this->mat --; // So we start with 1 and not with 0!
   } else {
     this->mat = NULL;
   }
 }
 void vtkImageEMMatrix::allocate(int y,int x,double val){
   this->dimy = y; 
-  int size = y+1;
   if (y > 0) {
-    this->mat = new vtkImageEMVector[size];
+    this->mat = new vtkImageEMVector[this->dimy];
     if (!this->mat) {
       cout << "Did not get any Memory" << endl;
       exit(1);
     }
     if (x > 0) {
-      for (int i=1; i <size; i++) this->mat[i].Resize(x,val);
+      for (int i=0; i <this->dimy; i++) this->mat[i].Resize(x,val);
     }
+    this->mat --; // So we start with 1 and not with 0!
+
   } else {
     this->mat = NULL;
   }
@@ -690,10 +691,7 @@ void vtkImageEMMatrix::allocate(int y,int x,double val){
 
 void vtkImageEMMatrix::deallocate(){
   if (this->dimy > 0) {
-    int size = this->dimy +1; 
-    //for (int i = 1; i < size;i++) {
-    //  delete this->mat[i];
-    //}
+    this->mat ++;
     delete[] this->mat;
     this->mat = NULL;
     this->dimy = 0;
@@ -757,7 +755,7 @@ void vtkImageEMMatrix::Resize(int y, int x, double val) {
   this->allocate(y,x,val);
 }
 
-void vtkImageEMMatrix::Resize(int y = 0, int x = 0) {
+void vtkImageEMMatrix::Resize(int y, int x) {
   if (y == this->dimy) {
     if (y== 0) return ;
     if (x == this->get_dim(2)) return;
@@ -766,7 +764,7 @@ void vtkImageEMMatrix::Resize(int y = 0, int x = 0) {
   this->allocate(y,x);
 }
 
-void vtkImageEMMatrix::PrintMatrix(int yMax = -1,int xMax = -1) {
+void vtkImageEMMatrix::PrintMatrix(int yMax,int xMax) {
   int Max = (yMax > -1 ? (yMax > this->dimy ? this->dimy : yMax) : this->dimy)  + 1;
   for (int y = 1; y < Max; y++)
     this->mat[y].PrintVector(xMax);
@@ -807,11 +805,10 @@ void vtkImageEMMatrix::SetEqual(double value) {
 
 // Convolution and polynomial multiplication . 
 // This is assuming u and 'this' have the same dimension
+// Convolution and polynomial multiplication . 
+// This is assuming u and 'this' have the same dimension
 
 void vtkImageEMMatrix::conv(vtkImageEMMatrix U, vtkImageEMVector v) {
-  if ((this->get_dim(1) != U.get_dim(1))||
-      (this->get_dim(2) != U.get_dim(2))) 
-         vtkImageEMError::vtkImageEMError("vtkImageEMMatrix::conv: Dimensions of input do not match Matrix  !");
   int iMax = U.get_dim(2)+1,
       i;
   vtkImageEMMatrix Utrans(U.get_dim(2),U.get_dim(1));
@@ -828,10 +825,6 @@ void vtkImageEMMatrix::conv(vtkImageEMMatrix U, vtkImageEMVector v) {
 // We use the following equation :
 // conv(U,v) = conv(U',v')' => conv(U,v') = conv(U',v)';
 void vtkImageEMMatrix::convT(vtkImageEMMatrix U, vtkImageEMVector v) {
-  if ((this->get_dim(1) != U.get_dim(1))||
-      (this->get_dim(2) != U.get_dim(2))) 
-         vtkImageEMError::vtkImageEMError("vtkImageEMMatrix::conv: Dimensions of input do not match Matrix  !");
-
   int iMax = U.get_dim(1)+1,
       i;
 
@@ -866,8 +859,8 @@ void vtkImageEMMatrix::WriteMatrixToFile (FILE *f,char *name) const
     this->mat[y].WriteVectorToFile(f,NULL); 
     if (y < this->dimy) fprintf(f,";\n");
   }
-  if (name != NULL) fprintf(f,"];\n", name);
-  fprintf(f,"\n", name);
+  if (name != NULL) fprintf(f,"];\n");
+  fprintf(f,"\n");
 }
 
 
@@ -904,14 +897,15 @@ void vtkImageEMMatrix::setMatrixTest(int test,int division, int pixel, int offse
 // Class: vtkImageEMVector
 // ---------------------------------------------------------   
 
-void vtkImageEMVector::allocate(int dim=0){
+void vtkImageEMVector::allocate(int dim){
   this->len = dim;
   if (dim > 0) {
-    this->vec = new double[dim+1];
+    this->vec = new double[this->len];
     if (!this->vec) {
       cout << "Did not get any Memory" << endl;
       exit(1);
     }
+    this->vec --; // So we start with 1 and not with 0!   
   } else {
     this->vec = NULL;
   }
@@ -920,13 +914,16 @@ void vtkImageEMVector::allocate(int dim=0){
 void vtkImageEMVector::allocate(int dim,double val){
   this->len = dim;
   if (dim > 0) {
-    this->vec = new double[dim+1];
+    this->vec = new double[this->len];
     if (!this->vec) {
       cout << "Did not get any Memory" << endl;
       exit(1);
     }
-    for (int i= 1; i <= dim; i++)
+
+    for (int i= 0; i < this->len; i++)
       this->vec[i] = val;
+
+    this->vec --; // So we start with 1 and not with 0!   
   } else {
     this->vec = NULL;
   }
@@ -941,6 +938,7 @@ vtkImageEMVector::vtkImageEMVector(const vtkImageEMVector & in){
 
 void vtkImageEMVector::deallocate() {
     if (this->len > 0 ){
+      this->vec ++; 
       delete[] this->vec; 
       this->len = 0;
       this->vec = NULL;
@@ -951,7 +949,7 @@ vtkImageEMVector& vtkImageEMVector::operator = ( const vtkImageEMVector& v) {
    if ( this->vec == v.vec) return *this;
    this->Resize(v.len);
    int size = v.len+1;  
-   for ( int i = 0; i < size; i++ )
+   for ( int i = 1; i < size; i++ )
      this->vec[i] = v.vec[i];
    return *this;
 }
@@ -972,7 +970,7 @@ void vtkImageEMVector::setVector(vtkImageEMMatrix v,int start, int end, int colu
     this->vec[i] = v[start+i][column];
 }
 
-void vtkImageEMVector::Resize(int dim=0) {
+void vtkImageEMVector::Resize(int dim) {
   if (dim != this->len) {
     this->deallocate();
     this->allocate(dim);
@@ -1048,12 +1046,17 @@ void vtkImageEMVector::MatrixCol(vtkImageEMMatrix im, int col) {
   for (int i=1; i < iMax; i++) this->vec[i] = im[i][col];
 }  
 
+void vtkImageEMVector::MatrixRow(vtkImageEMMatrix im, int row) {
+  if (this->len != im.get_dim(2))
+      vtkImageEMError::vtkImageEMError("vtkImageEMVector::MatrixRow: Dimension of input does not match vector!");
+
+  int iMax = this->len+1;
+  for (int i=1; i < iMax; i++) this->vec[i] = im[row][i];
+}
 // Convolution and polynomial multiplication . 
 // This is assuming u and 'this' have the same dimensio
 void vtkImageEMVector::conv(vtkImageEMVector u,vtkImageEMVector v){
   int uLen = u.get_len(), vLen = v.get_len();
-  if (this->len != uLen) 
-     vtkImageEMError::vtkImageEMError("vtkImageEMVector::conv: Dimension of input does not match vector!");
   int stump = vLen /2;
   int k,j,jMin,jMax;
   int kMax = this->len + stump +1;
@@ -1089,17 +1092,17 @@ void vtkImageEMVector::WriteVectorToFile (FILE *f,char *name) const
       fprintf(f,"%10.6f ", this->vec[x]);
   if (name != NULL) fprintf(f,"];\n");
 }
-
+  
 void vtkImageEMVector::setVectorTest(int test,int division,int pixel, int offset){
   int Xsize = this->len+1;
   int x;
+  int ImgColor = 0;
   if (division < 2) {
     this->setVector(0);
     return;
   }
   double ImgScale = 255/double(division-1);
   double XScale ;
-  int ImgColor;
 
   if (pixel > 0) XScale = double(pixel);
   else XScale = double(this->len) /double(division);
