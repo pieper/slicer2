@@ -14,7 +14,7 @@
 #define volumeBox 3
 
 #ifndef VTK_IMPLEMENT_MESA_CXX
-vtkCxxRevisionMacro(vtkOpenGLVolumeTextureMapper3D, "$Revision: 1.3 $");
+vtkCxxRevisionMacro(vtkOpenGLVolumeTextureMapper3D, "$Revision: 1.4 $");
 vtkStandardNewMacro(vtkOpenGLVolumeTextureMapper3D);
 #endif
 
@@ -730,7 +730,7 @@ void vtkOpenGLVolumeTextureMapper3D::ChangeColorTable(int volume, int colorTable
   //set new color tables
   if (using_palette != 1)
   {
-    glColorTable(GL_TEXTURE_COLOR_TABLE_SGI,
+    glColorTableEXT(GL_TEXTURE_COLOR_TABLE_SGI,
          GL_RGBA ,
          256 ,
          GL_RGBA ,
@@ -739,7 +739,7 @@ void vtkOpenGLVolumeTextureMapper3D::ChangeColorTable(int volume, int colorTable
   }
   else
   {
-    glColorTable(GL_SHARED_TEXTURE_PALETTE_EXT,
+    glColorTableEXT(GL_SHARED_TEXTURE_PALETTE_EXT,
          GL_RGBA ,
          256 ,
          GL_RGBA ,
