@@ -31,10 +31,10 @@ set windows "Win32VC7"
 
 switch $tcl_platform(os) {
     "SunOS" {
+        set BUILD $solaris
         set SLICER_HOME /spl/tmp/nicole/slicer2
         set VTK_DIR /projects/birn/slicer2/Lib/solaris8/vtk/VTK-build-4.2.3
         set ITK_BINARY_PATH /projects/birn/itk/itk-1.2/itk-build
-        set BUILD $solaris
         set VTKSLICERBASE_BUILD_LIB $SLICER_HOME/Base/builds/$BUILD/bin/vtkSlicerBase.so
         set GENERATOR "Unix Makefiles"
         set COMPILER "g++"
@@ -42,9 +42,11 @@ switch $tcl_platform(os) {
         set MAKE "gmake -j15"
     }
     "Linux" {
-        set SLICER_HOME /home/nicole/slicer2
-        set ITK_BINARY_PATH /home/pieper/downloads/itk/itk-build
         set BUILD $linux
+        set SLICER_HOME /home/pieper/slicer2/latest/slicer2
+        set VTK_BINARY_PATH $SLICER_HOME/Lib/$BUILD/vtk/VTK-build
+        set VTK_DIR $VTK_BINARY_PATH
+        set ITK_BINARY_PATH /home/pieper/downloads/itk/itk-build
         set VTKSLICERBASE_BUILD_LIB $SLICER_HOME/Base/builds/$BUILD/bin/vtkSlicerBase.so
         set GENERATOR "Unix Makefiles" 
         set COMPILER "g++"
@@ -52,10 +54,10 @@ switch $tcl_platform(os) {
         set MAKE make
     }
     "Darwin" {
+        set BUILD $darwin
         set SLICER_HOME /Users/pieper/slicer2/latest/slicer2
         set ITK_BINARY_PATH /Users/pieper/downloads/itk/itk-build
         set VTK_SRC_PATH /Users/pieper/downloads/vtk/vtk4.2/VTK-4.2.1
-        set BUILD $darwin
         set VTKSLICERBASE_BUILD_LIB $SLICER_HOME/Base/builds/$BUILD/bin/vtkSlicerBase.dylib
         set GENERATOR "Unix Makefiles" 
         set COMPILER "c++"
@@ -182,6 +184,7 @@ foreach t $TARGETS {
     puts $t
 }
 puts ""
+
 
 # clean all first if needed
 if { $CLEANFLAG } {
