@@ -149,7 +149,7 @@ proc MultiVolumeReaderInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.14 $} {$Date: 2005/01/28 20:44:15 $}]
+        {$Revision: 1.15 $} {$Date: 2005/02/25 20:13:48 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -198,44 +198,51 @@ proc MultiVolumeReaderInit {} {
 proc MultiVolumeReaderBuildGUI {parent {status 0}} {
     global Gui MultiVolumeReader Module Volume Model
    
-    set f $parent
-    frame $f.fVols -bg $Gui(activeWorkspace) -relief groove -bd 3
-    frame $f.fNav -bg $Gui(activeWorkspace) 
-    pack $f.fVols $f.fNav -side top -pady $Gui(pad)
+    frame $parent.fReaderConfig -bg $Gui(activeWorkspace) -relief groove -bd 3
+    frame $parent.fVolumeNav -bg $Gui(activeWorkspace) 
+    pack $parent.fReaderConfig $parent.fVolumeNav -side top -pady $Gui(pad)
 
-    # The Volume frame
-    set f $parent.fVols
-    DevAddLabel $f.lNote "Configure the multi-volume reader:"
-    frame $f.fConfig -bg $Gui(activeWorkspace) -relief groove -bd 2 
-    pack $f.lNote -side top -pady 6 
-    pack $f.fConfig -side top
+    #-------------------------------------------
+    # Reader configuration 
+    #-------------------------------------------
+    set f $parent.fReaderConfig
+    frame $f.fLabel   -bg $Gui(activeWorkspace)
+    frame $f.fFile    -bg $Gui(activeWorkspace) -relief groove -bd 2 
+    frame $f.fApply   -bg $Gui(activeWorkspace)
+    frame $f.fStatus  -bg $Gui(activeWorkspace) 
+    pack $f.fLabel $f.fFile $f.fApply $f.fStatus \
+        -side top -pady 1 
 
-    set f $parent.fVols.fConfig
+    set f $parent.fReaderConfig.fLabel
+    DevAddLabel $f.lLabel "Configure the multi-volume reader:"
+    pack $f.lLabel -side top -pady 6 
+
+    set f $parent.fReaderConfig.fFile
     # set MultiVolumeReader(fileTypes) {bxh .dcm .hdr}
     DevAddFileBrowse $f MultiVolumeReader "fileName" "File Name:" \
         "MultiVolumeReaderSetFileFilter" "bxh .dcm .hdr" \
         "\$Volume(DefaultDir)" "Open" "Browse for a volume file" "" "Absolute"
 
-    frame $f.fFilter -bg $Gui(activeWorkspace)
-    pack $f.fFilter -pady $Gui(pad)
-    set f $f.fFilter
+    frame $f.fSingle    -bg $Gui(activeWorkspace)
+    frame $f.fMultiple  -bg $Gui(activeWorkspace) -relief groove -bd 1 
+    frame $f.fName      -bg $Gui(activeWorkspace) 
+    pack $f.fSingle $f.fMultiple $f.fName -side top -pady 1 
 
+    set f $parent.fReaderConfig.fFile.fSingle
     set filter \
         "Load a single file: Only read the above input file.\n\
         Load multiple files: Read files in the same directory\n\
         matching the pattern in the Filter field.              "
-
     eval {radiobutton $f.r1 -width 27 -text {Load a single file} \
-        -variable MultiVolumeReader(filterChoice) -value single \
+        -variable MultiVolumeReader(fileChoice) -value single \
         -relief flat -offrelief flat -overrelief raised \
         -selectcolor white} $Gui(WEA)
     pack $f.r1 -side top -pady 2 
     TooltipAdd $f.r1 $filter 
-    frame $f.fMulti -bg $Gui(activeWorkspace) -relief groove -bd 1 
-    pack $f.fMulti -pady 3
-    set f $f.fMulti
+
+    set f $parent.fReaderConfig.fFile.fMultiple
     eval {radiobutton $f.r2 -width 27 -text {Load multiple files} \
-        -variable MultiVolumeReader(filterChoice) -value multiple \
+        -variable MultiVolumeReader(fileChoice) -value multiple \
         -relief flat -offrelief flat -overrelief raised \
         -selectcolor white} $Gui(WEA)
     TooltipAdd $f.r2 $filter 
@@ -243,7 +250,6 @@ proc MultiVolumeReaderBuildGUI {parent {status 0}} {
     DevAddLabel $f.lFilter " Filter:"
     eval {entry $f.eFilter -width 24 \
         -textvariable MultiVolumeReader(filter)} $Gui(WEA)
-    bind $f.eFilter <Return> "MultiVolumeReaderLoad" 
     TooltipAdd $f.eFilter $filter 
 
     #The "sticky" option aligns items to the left (west) side
@@ -251,18 +257,28 @@ proc MultiVolumeReaderBuildGUI {parent {status 0}} {
     grid $f.lFilter -row 1 -column 0 -padx 1 -pady 3 -sticky w
     grid $f.eFilter -row 1 -column 1 -padx 1 -pady 3 -sticky w
 
-    set MultiVolumeReader(filterChoice) single
+    set MultiVolumeReader(fileChoice) single
     set MultiVolumeReader(singleRadiobutton) $f.r1
     set MultiVolumeReader(multipleRadiobutton) $f.r2
     set MultiVolumeReader(filterEntry) $f.eFilter
-    
-    set f $parent.fVols
-    DevAddButton $f.bApply "Apply" "MultiVolumeReaderLoad" 12 
+
+    if {$status == 1} {
+        set f $parent.fReaderConfig.fFile.fName
+        DevAddLabel $f.lName "Sequence name:"
+        set name \
+            "Give a name for the sequence to be loaded."
+        eval {entry $f.eName -width 16 \
+            -textvariable MultiVolumeReader(sequenceName)} $Gui(WEA)
+        bind $f.eName <Return> "MultiVolumeReaderLoad $status" 
+        grid $f.lName $f.eName  -padx 3 -pady 3 -sticky w
+        TooltipAdd $f.eName $name 
+    }
+
+    set f $parent.fReaderConfig.fApply
+    DevAddButton $f.bApply "Apply" "MultiVolumeReaderLoad $status" 12 
     pack $f.bApply -side top -pady 5 
 
-    frame $f.fVName -bg $Gui(activeWorkspace)
-    pack $f.fVName  -pady 5 
-    set f $f.fVName
+    set f $parent.fReaderConfig.fStatus
     DevAddLabel $f.lVName "Load status (latest loaded volume):"
     set MultiVolumeReader(emptyLoadStatus) ""
     eval {entry $f.eVName -width 30 \
@@ -276,8 +292,10 @@ proc MultiVolumeReaderBuildGUI {parent {status 0}} {
         set MultiVolumeReader(loadStatusEntry) $f.eVName
     }
     
-    # The Navigate frame
-    set f $parent.fNav
+    #-------------------------------------------
+    # Volume navigation 
+    #-------------------------------------------
+    set f $parent.fVolumeNav
 
     DevAddLabel $f.lVolNo "Vol Index:"
     eval {scale $f.sSlider \
@@ -387,7 +405,7 @@ proc MultiVolumeReaderSetFileFilter {} {
             $MultiVolumeReader(filterEntry) configure -state normal 
         }
         ".bxh" {
-            set MultiVolumeReader(filterChoice) single
+            set MultiVolumeReader(fileChoice) single
             $MultiVolumeReader(multipleRadiobutton) configure -state disabled 
             $MultiVolumeReader(filterEntry) configure -state disabled 
         }
@@ -401,9 +419,10 @@ proc MultiVolumeReaderSetFileFilter {} {
 # .PROC MultiVolumeReaderLoad 
 # Loads volumes 
 # .ARGS
+# status whether the status message is on(1) or off(0)
 # .END
 #-------------------------------------------------------------------------------
-proc MultiVolumeReaderLoad {} {
+proc MultiVolumeReaderLoad {{status 0}} {
     global MultiVolumeReader Volume
 
     set fileName $MultiVolumeReader(fileName)
@@ -417,6 +436,22 @@ proc MultiVolumeReaderLoad {} {
         DevErrorWindow "File doesn't exist: $fileName."
         set MultiVolumeReader(fileName) ""
         return 1
+    }
+
+    if {$status} {
+        set sequenceName $MultiVolumeReader(sequenceName)
+        set sequenceName [string trim $sequenceName]
+        if {$sequenceName == ""} {
+            DevErrorWindow "Sequence name is empty."
+            return 1
+        }
+        if {[info exists MultiVolumeReader(sequenceNames)]} {
+            set found [lsearch -exact $MultiVolumeReader(sequenceNames) $sequenceName]
+            if {$found >= 0} {
+                DevErrorWindow "The following sequence name has already been used: $sequenceName. Please choose another one."
+                return 1
+            }
+        }
     }
 
     unset -nocomplain MultiVolumeReader(noOfVolumes)
@@ -440,7 +475,7 @@ proc MultiVolumeReaderLoad {} {
             set val [MultiVolumeReaderLoadDICOM]
         }
         default {
-            DevErrorWindow "Can't read this file for a volume sequence: $fileName."
+            DevErrorWindow "Can't read this file (the file format is not supported): $fileName."
             set val 1
         }
     }
@@ -462,6 +497,18 @@ proc MultiVolumeReaderLoad {} {
         $MultiVolumeReader(loadStatusEntry) configure -textvariable \
             MultiVolumeReader(emptyLoadStatus)
     }
+
+    if {$status} {
+        # Info for a loaded sequence
+        lappend MultiVolumeReader(sequenceNames) $sequenceName
+        set MultiVolumeReader($sequenceName,noOfVolumes) $MultiVolumeReader(noOfVolumes)
+        set MultiVolumeReader($sequenceName,firstMRMLid) $MultiVolumeReader(firstMRMLid)
+        set MultiVolumeReader($sequenceName,lastMRMLid) $MultiVolumeReader(lastMRMLid)
+        set MultiVolumeReader($sequenceName,volumeExtent) $MultiVolumeReader(volumeExtent)
+        set MultiVolumeReader(sequenceName) ""
+    }
+
+    set MultiVolumeReader(filter) ""
 
     return 0
 }   
@@ -521,10 +568,11 @@ proc MultiVolumeReaderLoadAnalyze {} {
 
     set fileName $MultiVolumeReader(fileName)
     set analyzeFiles [list $fileName]
-  
+ 
     # file filter
-    if {$MultiVolumeReader(filterChoice) == "multiple"} {
+    if {$MultiVolumeReader(fileChoice) == "multiple"} {
         set analyzeFiles [MultiVolumeReaderGetFilelistFromFilter ".hdr"]
+        set len [llength $analyzeFiles]
     }
 
     foreach f $analyzeFiles { 
@@ -597,7 +645,7 @@ proc MultiVolumeReaderLoadDICOM {} {
     set dcmFiles [list $fileName]
  
     # file filter
-    if {$MultiVolumeReader(filterChoice) == "multiple"} {
+    if {$MultiVolumeReader(fileChoice) == "multiple"} {
         set dcmFiles [MultiVolumeReaderGetFilelistFromFilter ".dcm"]
     }
 
