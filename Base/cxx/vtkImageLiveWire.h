@@ -180,8 +180,9 @@ class CircularQueue {
       while (this->Circle[bucket].Next == &this->Circle[bucket])
 	{
 	  // search around the Q for the next vertex
+	  cost++;
+	  bucket = (int)fmodf(cost, this->C+1);
 	  //printf("bucket %d\n", bucket);
-	  bucket++;
 	}
       if (this->Circle[bucket].Prev == &this->Circle[bucket])
 	{
