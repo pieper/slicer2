@@ -734,7 +734,11 @@ float vtkImageEMGeneral_CountLabel(vtkImageThreshold* trash,vtkImageData * Input
   Accu->SetComponentOrigin(0.0,0.0,0.0); 
   Accu->SetComponentSpacing(1.0,1.0,1.0);
   Accu->Update();  
+#if (VTK_MAJOR_VERSION == 4 && VTK_MINOR_VERSION >= 3)
+  result = Accu->GetOutput()->GetScalarComponentAsDouble(1,0,0,0);
+#else
   result = Accu->GetOutput()->GetScalarComponentAsFloat(1,0,0,0);
+#endif
   Accu->Delete();
   return result;
 }

@@ -61,9 +61,9 @@ void vtkTensorMask::ExecuteData(vtkDataObject *out)
 // when only scalars are present
 template <class T, class D>
 static void vtkTensorMaskExecute(vtkTensorMask *self, int ext[6],
-				vtkImageData *in1Data, T *in1Ptr,
-				vtkImageData *in2Data, D *in2Ptr,
-				vtkImageData *outData, T *outPtr, int id)
+                vtkImageData *in1Data, T *in1Ptr,
+                vtkImageData *in2Data, D *in2Ptr,
+                vtkImageData *outData, T *outPtr, int id)
 {
   int num0, num1, num2, numC, pixSize;
   int idx0, idx1, idx2;
@@ -71,7 +71,7 @@ static void vtkTensorMaskExecute(vtkTensorMask *self, int ext[6],
   int in2Inc0, in2Inc1, in2Inc2;
   int outInc0, outInc1, outInc2;
   T *maskedValue;
-  float *v;
+  vtkFloatingPointType *v;
   int nv;
   int maskState;
   unsigned long count = 0;
@@ -85,9 +85,9 @@ static void vtkTensorMaskExecute(vtkTensorMask *self, int ext[6],
   for (idx0 = 0, idx1 = 0; idx0 < numC; ++idx0, ++idx1)
     {
       if (idx1 >= nv)
-	{
-	  idx1 = 0;
-	}
+    {
+      idx1 = 0;
+    }
       maskedValue[idx0] = (T)(v[idx1]);
     }
   pixSize = numC * sizeof(T);
@@ -108,39 +108,39 @@ static void vtkTensorMaskExecute(vtkTensorMask *self, int ext[6],
   for (idx2 = 0; idx2 < num2; ++idx2)
     {
       for (idx1 = 0; !self->AbortExecute && idx1 < num1; ++idx1)
-	{
-	  if (!id) 
-	    {
-	      if (!(count%target))
-		{
-		  self->UpdateProgress(count/(50.0*target));
-		}
-	      count++;
-	    }
-	  for (idx0 = 0; idx0 < num0; ++idx0)
-	    {
-	      // Pixel operation
-	      if (*in2Ptr && maskState == 1)
-		{
-		  memcpy(outPtr, maskedValue, pixSize);
-		}
-	      else if ( ! *in2Ptr && maskState == 0)
-		{
-		  memcpy(outPtr, maskedValue, pixSize);
-		}
-	      else
-		{
-		  memcpy(outPtr, in1Ptr, pixSize);
-		}
-	
-	      in1Ptr += numC;
-	      outPtr += numC;
-	      in2Ptr += 1;
-	    }
-	  in1Ptr += in1Inc1;
-	  in2Ptr += in2Inc1;
-	  outPtr += outInc1;
-	}
+    {
+      if (!id) 
+        {
+          if (!(count%target))
+        {
+          self->UpdateProgress(count/(50.0*target));
+        }
+          count++;
+        }
+      for (idx0 = 0; idx0 < num0; ++idx0)
+        {
+          // Pixel operation
+          if (*in2Ptr && maskState == 1)
+        {
+          memcpy(outPtr, maskedValue, pixSize);
+        }
+          else if ( ! *in2Ptr && maskState == 0)
+        {
+          memcpy(outPtr, maskedValue, pixSize);
+        }
+          else
+        {
+          memcpy(outPtr, in1Ptr, pixSize);
+        }
+    
+          in1Ptr += numC;
+          outPtr += numC;
+          in2Ptr += 1;
+        }
+      in1Ptr += in1Inc1;
+      in2Ptr += in2Inc1;
+      outPtr += outInc1;
+    }
       in1Ptr += in1Inc2;
       in2Ptr += in2Inc2;
       outPtr += outInc2;
@@ -155,9 +155,9 @@ static void vtkTensorMaskExecute(vtkTensorMask *self, int ext[6],
 // this is for when only tensors are present
 template <class D>
 static void vtkTensorMaskExecuteTensor(vtkTensorMask *self, int ext[6],
-				       vtkImageData *in1Data,
-				       vtkImageData *in2Data, D *in2Ptr,
-				       vtkImageData *outData, int id)
+                       vtkImageData *in1Data,
+                       vtkImageData *in2Data, D *in2Ptr,
+                       vtkImageData *outData, int id)
 {
   int num0, num1, num2;
   int idx0, idx1, idx2;
@@ -170,8 +170,8 @@ static void vtkTensorMaskExecuteTensor(vtkTensorMask *self, int ext[6],
 
   vtkDataArray *inTensors;
   vtkDataArray *outTensors;
-  float inT[3][3];
-  float outT[3][3];
+  vtkFloatingPointType inT[3][3];
+  vtkFloatingPointType outT[3][3];
 
   int ptId;
 
@@ -211,63 +211,63 @@ static void vtkTensorMaskExecuteTensor(vtkTensorMask *self, int ext[6],
   for (idx2 = 0; idx2 < num2; ++idx2)
     {
       for (idx1 = 0; !self->AbortExecute && idx1 < num1; ++idx1)
-	{
-	  if (!id) 
-	    {
-	      if (!(count%target))
-		{
-		  self->UpdateProgress(count/(50.0*target));
-		}
-	      count++;
-	    }
-	  for (idx0 = 0; idx0 < num0; ++idx0)
-	    {
-	      inTensors->GetTuple(ptId,(float *)inT);
-	      //outTensors->GetTuple(ptId,outT);
+    {
+      if (!id) 
+        {
+          if (!(count%target))
+        {
+          self->UpdateProgress(count/(50.0*target));
+        }
+          count++;
+        }
+      for (idx0 = 0; idx0 < num0; ++idx0)
+        {
+          inTensors->GetTuple(ptId,(vtkFloatingPointType *)inT);
+          //outTensors->GetTuple(ptId,outT);
 
-	      // Pixel operation: clear or copy
-	      if (*in2Ptr && maskState == 1)
-		{
-		  //outT->Initialize();
-		  for (int j=0; j<3; j++)
-		    {
-		      for (int i=0; i<3; i++)
-			{
-		     	  outT[i][j] = 0;
-			}
-		    }
-		}
-	      else if ( ! *in2Ptr && maskState == 0)
-		{
-		  //outT->Initialize();
-		  for (int j=0; j<3; j++)
-		    {
-		      for (int i=0; i<3; i++)
-			{
-		     	  outT[i][j] = 0;
-			}
-		    }
-		}
-	      else
-		{
-		  //outT->DeepCopy(inT);
-		  for (int j=0; j<3; j++)
-		    {
-		      for (int i=0; i<3; i++)
-			{
-		     	  outT[i][j] = inT[i][j];
-			}
-		    }
-		}
+          // Pixel operation: clear or copy
+          if (*in2Ptr && maskState == 1)
+        {
+          //outT->Initialize();
+          for (int j=0; j<3; j++)
+            {
+              for (int i=0; i<3; i++)
+            {
+                   outT[i][j] = 0;
+            }
+            }
+        }
+          else if ( ! *in2Ptr && maskState == 0)
+        {
+          //outT->Initialize();
+          for (int j=0; j<3; j++)
+            {
+              for (int i=0; i<3; i++)
+            {
+                   outT[i][j] = 0;
+            }
+            }
+        }
+          else
+        {
+          //outT->DeepCopy(inT);
+          for (int j=0; j<3; j++)
+            {
+              for (int i=0; i<3; i++)
+            {
+                   outT[i][j] = inT[i][j];
+            }
+            }
+        }
 
-	      // set the output tensor to the calculated one
-	      outTensors->SetTuple(ptId,(float *)outT);
-	      
-	      ptId += 1;
-	      in2Ptr += 1;
-	    }
-	  ptId += outInc1;
-	}
+          // set the output tensor to the calculated one
+          outTensors->SetTuple(ptId,(vtkFloatingPointType *)outT);
+          
+          ptId += 1;
+          in2Ptr += 1;
+        }
+      ptId += outInc1;
+    }
       ptId += outInc2;
     }
 }
@@ -280,8 +280,8 @@ static void vtkTensorMaskExecuteTensor(vtkTensorMask *self, int ext[6],
 // It just executes a switch statement to call the correct function for
 // the Datas data types.
 void vtkTensorMask::ThreadedExecute(vtkImageData **inData, 
-				   vtkImageData *outData,
-				   int outExt[6], int id)
+                   vtkImageData *outData,
+                   int outExt[6], int id)
 {
   void *inPtr1;
   void *inPtr2;
@@ -347,23 +347,23 @@ void vtkTensorMask::ThreadedExecute(vtkImageData **inData,
     {
       // call the execute code for tensors
       switch (inData[1]->GetScalarType())
-	{  
-	case VTK_UNSIGNED_CHAR:
-	  vtkTensorMaskExecuteTensor(this, outExt, inData[0], 
-				     inData[1], 
-				     (unsigned char *)(inPtr2),
-				     outData, id);
-	  break;
-	case VTK_SHORT:
-	  vtkTensorMaskExecuteTensor(this, outExt, inData[0], 
-				     inData[1], 
-				     (short *)(inPtr2),
-				     outData, id);
-	  break;
-	default:
-	  vtkErrorMacro(<< "Execute: Unknown ScalarType for mask input");
-	  return;
-	}
+    {  
+    case VTK_UNSIGNED_CHAR:
+      vtkTensorMaskExecuteTensor(this, outExt, inData[0], 
+                     inData[1], 
+                     (unsigned char *)(inPtr2),
+                     outData, id);
+      break;
+    case VTK_SHORT:
+      vtkTensorMaskExecuteTensor(this, outExt, inData[0], 
+                     inData[1], 
+                     (short *)(inPtr2),
+                     outData, id);
+      break;
+    default:
+      vtkErrorMacro(<< "Execute: Unknown ScalarType for mask input");
+      return;
+    }
 
     }
 
@@ -371,35 +371,35 @@ void vtkTensorMask::ThreadedExecute(vtkImageData **inData,
   if (inPtr1) 
     {
       switch (inData[1]->GetScalarType())
-	{  
-	case VTK_UNSIGNED_CHAR:
-	  switch (inData[0]->GetScalarType())
-	    {
-	      vtkTemplateMacro9(vtkTensorMaskExecute, this, outExt, 
-				inData[0], (VTK_TT *)(inPtr1), 
-				inData[1], (unsigned char *)(inPtr2),
-				outData, (VTK_TT *)(outPtr),id);
-	    default:
-	      vtkErrorMacro(<< "Execute: Unknown ScalarType");
-	      return;
-	    }
-	  break;
-	case VTK_SHORT:
-	  switch (inData[0]->GetScalarType())
-	    {
-	      vtkTemplateMacro9(vtkTensorMaskExecute, this, outExt, 
-				inData[0], (VTK_TT *)(inPtr1), 
-				inData[1], (short *)(inPtr2),
-				outData, (VTK_TT *)(outPtr),id);
-	    default:
-	      vtkErrorMacro(<< "Execute: Unknown ScalarType");
-	      return;
-	    }
-	  break;
-	default:
-	  vtkErrorMacro(<< "Execute: Unknown ScalarType for mask input");
-	  return;
-	}
+    {  
+    case VTK_UNSIGNED_CHAR:
+      switch (inData[0]->GetScalarType())
+        {
+          vtkTemplateMacro9(vtkTensorMaskExecute, this, outExt, 
+                inData[0], (VTK_TT *)(inPtr1), 
+                inData[1], (unsigned char *)(inPtr2),
+                outData, (VTK_TT *)(outPtr),id);
+        default:
+          vtkErrorMacro(<< "Execute: Unknown ScalarType");
+          return;
+        }
+      break;
+    case VTK_SHORT:
+      switch (inData[0]->GetScalarType())
+        {
+          vtkTemplateMacro9(vtkTensorMaskExecute, this, outExt, 
+                inData[0], (VTK_TT *)(inPtr1), 
+                inData[1], (short *)(inPtr2),
+                outData, (VTK_TT *)(outPtr),id);
+        default:
+          vtkErrorMacro(<< "Execute: Unknown ScalarType");
+          return;
+        }
+      break;
+    default:
+      vtkErrorMacro(<< "Execute: Unknown ScalarType for mask input");
+      return;
+    }
     }
 }
 

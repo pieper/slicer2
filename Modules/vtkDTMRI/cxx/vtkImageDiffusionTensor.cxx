@@ -56,7 +56,7 @@ vtkImageDiffusionTensor::vtkImageDiffusionTensor()
 
   // test:
   //for (int i = 0; i < 6; i++ ) {
-  //float *tmp = this->GetDiffusionGradient(i);
+  //vtkFloatingPointType *tmp = this->GetDiffusionGradient(i);
   //cout << tmp[0] << " " << tmp[1] << " " << tmp[2] << endl;
   //}
 
@@ -76,7 +76,7 @@ void vtkImageDiffusionTensor::PrintSelf(ostream& os, vtkIndent indent)
   // print all of the gradients
   for (int i = 0; i < this->NumberOfGradients; i++ ) 
     {
-      float *g = this->GetDiffusionGradient(i);
+      vtkFloatingPointType *g = this->GetDiffusionGradient(i);
       os << indent << "Gradient " << i << ": (" 
          << g[0] << ", "
          << g[1] << ", "
@@ -88,7 +88,7 @@ void vtkImageDiffusionTensor::PrintSelf(ostream& os, vtkIndent indent)
 //----------------------------------------------------------------------------
 void vtkImageDiffusionTensor::TransformDiffusionGradients()
 {
-  float gradient[3];
+  vtkFloatingPointType gradient[3];
 
   // if matrix has not been set by user don't use it
   if (this->Transform == NULL) 
@@ -103,7 +103,7 @@ void vtkImageDiffusionTensor::TransformDiffusionGradients()
   // transform each gradient by this matrix
   for (int i = 0; i < this->NumberOfGradients; i++ ) 
     {
-      float *g = this->GetDiffusionGradient(i);
+      vtkFloatingPointType *g = this->GetDiffusionGradient(i);
       this->Transform->TransformPoint(g,gradient);
 
       // set the gradient to the transformed one 
@@ -135,7 +135,7 @@ void vtkImageDiffusionTensor::SetNumberOfGradients(int num)
 void vtkImageDiffusionTensor::ExecuteInformation(vtkImageData **inDatas, 
                                              vtkImageData *outData)
 {
-  // We always want to output float scalars
+  // We always want to output vtkFloatingPointType scalars
   outData->SetScalarType(VTK_FLOAT);
 
 }

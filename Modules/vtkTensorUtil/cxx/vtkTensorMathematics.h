@@ -97,8 +97,8 @@ public:
   // Description:
   // Specify scale factor to scale output (float) scalars by.
   // This is not used when the output is RGBA (char color data).
-  vtkSetMacro(ScaleFactor,float);
-  vtkGetMacro(ScaleFactor,float);
+  vtkSetMacro(ScaleFactor,vtkFloatingPointType);
+  vtkGetMacro(ScaleFactor,vtkFloatingPointType);
 
   // Description:
   // Turn on/off extraction of eigenvalues from tensor.
@@ -136,7 +136,7 @@ protected:
 
   int Operation; // math operation to perform
   vtkSetMacro(Operation,int);  
-  float ScaleFactor; // Scale factor for output scalars
+  vtkFloatingPointType ScaleFactor; // Scale factor for output scalars
   int ExtractEigenvalues; // Boolean controls eigenfunction extraction
 
   vtkMatrix4x4 *TensorRotationMatrix;
@@ -144,7 +144,7 @@ protected:
   void ExecuteInformation(vtkImageData **inDatas, vtkImageData *outData);
   void ExecuteInformation(){this->vtkImageTwoInputFilter::ExecuteInformation();};
   void ThreadedExecute(vtkImageData **inDatas, vtkImageData *outData,
-		       int extent[6], int id);
+        int extent[6], int id);
 };
 
 #endif

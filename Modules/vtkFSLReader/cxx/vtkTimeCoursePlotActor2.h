@@ -76,7 +76,7 @@ private:
     int j;
     int k;
 
-    vtkDataSet *CreateDataSet(vtkFloatArray *yPoints, float *xPoints);
+    vtkDataSet *CreateDataSet(vtkFloatArray *yPoints, vtkFloatingPointType *xPoints);
 };
 
 

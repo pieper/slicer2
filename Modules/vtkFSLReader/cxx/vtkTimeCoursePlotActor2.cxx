@@ -65,11 +65,11 @@ vtkTimeCoursePlotActor2::~vtkTimeCoursePlotActor2()
 }
 
 
-vtkDataSet* vtkTimeCoursePlotActor2::CreateDataSet(vtkFloatArray *yPoints, float *xPoints)
+vtkDataSet* vtkTimeCoursePlotActor2::CreateDataSet(vtkFloatArray *yPoints, vtkFloatingPointType *xPoints)
 {
 
     vtkPoints *points = vtkPoints::New();
-    float point[3];
+    vtkFloatingPointType point[3];
     for (int i = 0; i < yPoints->GetNumberOfTuples(); i++)
     {
         point[0] = xPoints[i];
@@ -96,7 +96,7 @@ void vtkTimeCoursePlotActor2::SetPlot(vtkFloatArray *timeCourse, vtkFloatArray *
     }
 
     // Creates x points
-    float *xPoints = new float [timeCourse->GetNumberOfTuples()];
+    vtkFloatingPointType *xPoints = new vtkFloatingPointType [timeCourse->GetNumberOfTuples()];
     for (int i = 0; i < timeCourse->GetNumberOfTuples(); i++)
     {
         xPoints[i] = i;
@@ -105,19 +105,19 @@ void vtkTimeCoursePlotActor2::SetPlot(vtkFloatArray *timeCourse, vtkFloatArray *
     vtkDataSet* tcDataSet = CreateDataSet(timeCourse, xPoints);
 
     // Scales model for plotting 
-    float range1[2], range2[2];
+    vtkFloatingPointType range1[2], range2[2];
     timeCourse->GetRange(range1, 0);
     model->GetRange(range2, 0);
-    float middle1 = (range1[0] + range1[1]) / 2;
-    float middle2 = (range2[0] + range2[1]) / 2;
-    float diff = middle2 - middle1;
+    vtkFloatingPointType middle1 = (range1[0] + range1[1]) / 2;
+    vtkFloatingPointType middle2 = (range2[0] + range2[1]) / 2;
+    vtkFloatingPointType diff = middle2 - middle1;
 
     int size = model->GetNumberOfTuples();
     float *stimPtr = model->GetPointer(0);  
     vtkFloatArray *tc = vtkFloatArray::New();
     tc->SetNumberOfTuples(size);
     tc->SetNumberOfComponents(1);
-    float tmp;
+    vtkFloatingPointType tmp;
     for (int i = 0; i < size; i++)
     {
         tmp = stimPtr[i] - diff;
@@ -125,8 +125,8 @@ void vtkTimeCoursePlotActor2::SetPlot(vtkFloatArray *timeCourse, vtkFloatArray *
     }
 
     tc->GetRange(range2, 0);
-    float max = (range2[1] > range1[1] ? range2[1] : range1[1]);
-    float min = (range2[0] > range1[0] ? range1[0] : range2[0]);
+    vtkFloatingPointType max = (range2[1] > range1[1] ? range2[1] : range1[1]);
+    vtkFloatingPointType min = (range2[0] > range1[0] ? range1[0] : range2[0]);
 
     // Creates data set for model 
     vtkDataSet* stimDataSet = CreateDataSet(tc, xPoints);

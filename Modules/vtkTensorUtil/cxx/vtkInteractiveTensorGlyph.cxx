@@ -95,7 +95,7 @@ void vtkInteractiveTensorGlyph::ColorGlyphsWith(int measure) {
 void vtkInteractiveTensorGlyph::Execute()
 {
   vtkDataArray *inTensors;
-  float tensor[3][3];
+  vtkFloatingPointType tensor[3][3];
   vtkDataArray *inScalars;
   int numPts, numSourcePts, numSourceCells;
   int inPtId, i, j;
@@ -105,7 +105,7 @@ void vtkInteractiveTensorGlyph::Execute()
   vtkPoints *newPts;
   vtkFloatArray *newScalars=NULL;
   vtkFloatArray *newNormals=NULL;
-  float *x, s;
+  vtkFloatingPointType *x, s;
   vtkTransform *trans = vtkTransform::New();
   vtkCell *cell;
   vtkIdList *cellPts;
@@ -114,11 +114,11 @@ void vtkInteractiveTensorGlyph::Execute()
   int cellId;
   int ptOffset=0;
   vtkMatrix4x4 *matrix = vtkMatrix4x4::New();
-  float *m[3], w[3], *v[3];
-  float m0[3], m1[3], m2[3];
-  float v0[3], v1[3], v2[3];
-  float xv[3], yv[3], zv[3];
-  float maxScale;
+  vtkFloatingPointType *m[3], w[3], *v[3];
+  vtkFloatingPointType m0[3], m1[3], m2[3];
+  vtkFloatingPointType v0[3], v1[3], v2[3];
+  vtkFloatingPointType xv[3], yv[3], zv[3];
+  vtkFloatingPointType maxScale;
   vtkPointData *pd, *outPD;
   vtkDataSet *input = this->GetInput();
   vtkPolyData *output = this->GetOutput();
@@ -253,7 +253,7 @@ void vtkInteractiveTensorGlyph::Execute()
       
       if ( ! (inPtId % 10000) ) 
     {
-      this->UpdateProgress ((float)inPtId/numPts);
+      this->UpdateProgress ((vtkFloatingPointType)inPtId/numPts);
       if (this->GetAbortExecute())
         {
           break;
@@ -263,14 +263,14 @@ void vtkInteractiveTensorGlyph::Execute()
       //ptIncr = inPtId * numSourcePts;
 
       //tensor = inTensors->GetTuple(inPtId);
-      inTensors->GetTuple(inPtId,(float *)tensor);
+      inTensors->GetTuple(inPtId,(vtkFloatingPointType *)tensor);
 
       trans->Identity();
 
       // threshold: if trace is <= 0, don't do expensive computations
       // This used to be: tensor ->GetComponent(0,0) + 
       // tensor->GetComponent(1,1) + tensor->GetComponent(2,2);
-      float trace = tensor[0][0] + tensor[1][1] + tensor[2][2];
+      vtkFloatingPointType trace = tensor[0][0] + tensor[1][1] + tensor[2][2];
 
       
       // only display this glyph if either:
@@ -298,7 +298,7 @@ void vtkInteractiveTensorGlyph::Execute()
       // translate Source to Input point
       x = input->GetPoint(inPtId);
       // If we have a user-specified matrix determining the points
-      float x2[3];
+      vtkFloatingPointType x2[3];
       if (this->VolumePositionMatrix)
         {
           userVolumeTransform->TransformPoint(x,x2);
@@ -352,16 +352,16 @@ void vtkInteractiveTensorGlyph::Execute()
       else 
         {
           // create scalar data from computed features
-          float trace = w[0]+w[1]+w[2];
+          vtkFloatingPointType trace = w[0]+w[1]+w[2];
 
           // avoid division by 0
-          float eps = 1;
+          vtkFloatingPointType eps = 1;
           if (trace == 0) 
         trace = eps;
-          float norm;
+          vtkFloatingPointType norm;
 
           // regularization to compensate for small eigenvalues
-          float r = 0.001;
+          vtkFloatingPointType r = 0.001;
           trace += r;
 
           switch (this->ScalarMeasure) 

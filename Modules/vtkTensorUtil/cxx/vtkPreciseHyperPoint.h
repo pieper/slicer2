@@ -8,17 +8,17 @@ public:
     vtkPreciseHyperPoint(); // method sets up storage
     vtkPreciseHyperPoint &operator=(const vtkPreciseHyperPoint& hp); //for resizing
     
-    float   X[3];    // position 
+    vtkFloatingPointType   X[3];    // position 
     vtkIdType CellId;  // cell
     int     SubId; // cell sub id
-    float   P[3];    // parametric coords in cell 
-    float   W[3];    // eigenvalues (sorted in decreasing value)
-    float   *V[3];   // pointers to eigenvectors (also sorted)
-    float   V0[3];   // storage for eigenvectors
-    float   V1[3];
-    float   V2[3];
-    float   S;       // scalar value 
-    float   D;       // distance travelled so far 
+    vtkFloatingPointType   P[3];    // parametric coords in cell 
+    vtkFloatingPointType   W[3];    // eigenvalues (sorted in decreasing value)
+    vtkFloatingPointType   *V[3];   // pointers to eigenvectors (also sorted)
+    vtkFloatingPointType   V0[3];   // storage for eigenvectors
+    vtkFloatingPointType   V1[3];
+    vtkFloatingPointType   V2[3];
+    vtkFloatingPointType   S;       // scalar value 
+    vtkFloatingPointType   D;       // distance travelled so far 
 };
 //ETX
 

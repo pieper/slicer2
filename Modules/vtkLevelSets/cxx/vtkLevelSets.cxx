@@ -488,7 +488,7 @@ void vtkLevelSets::DistanceMapCurves()
      int   p1,maxt;
      int   s, sgn_pc,bpc0;
      float *times[2],*t,*newt=NULL;
-     float voxel[3];
+     vtkFloatingPointType voxel[3];
      int   n;
      int   mx,px,my,py,mz,pz;
      int   tcurrent;
@@ -1967,8 +1967,13 @@ void vtkLevelSets::Evolve2D()
     //    printf("+ ");fflush(stdout);
     // Scheme of Brokett-Maragos
 
+#if (VTK_MAJOR_VERSION == 4 && VTK_MINOR_VERSION >= 3)
+        Vx = velocity->GetScalarComponentAsDouble(i,j,k,0);
+        Vy = velocity->GetScalarComponentAsDouble(i,j,k,1);
+#else
         Vx = velocity->GetScalarComponentAsFloat(i,j,k,0);
         Vy = velocity->GetScalarComponentAsFloat(i,j,k,1);
+#endif
     
     // Scalar product
     norm_vel = sqrt(Vx*Vx+Vy*Vy);
@@ -2667,9 +2672,16 @@ void vtkLevelSets::Evolve3D( int first_band, int last_band)
         //    printf("+ ");fflush(stdout);
         // Scheme of Brokett-Maragos
         ExtractCoords(p,i,j,k);
+
+#if (VTK_MAJOR_VERSION == 4 && VTK_MINOR_VERSION >= 3)
+        Vx = velocity->GetScalarComponentAsDouble(i,j,k,0);
+        Vy = velocity->GetScalarComponentAsDouble(i,j,k,1);
+        Vz = velocity->GetScalarComponentAsDouble(i,j,k,2);
+#else
         Vx = velocity->GetScalarComponentAsFloat(i,j,k,0);
         Vy = velocity->GetScalarComponentAsFloat(i,j,k,1);
         Vz = velocity->GetScalarComponentAsFloat(i,j,k,2);
+#endif
     
         // Scalar product
         norm_vel = sqrt(Vx*Vx+Vy*Vy+Vz*Vz);
@@ -2774,7 +2786,7 @@ void vtkLevelSets::InitEvolution()
      float *inPtr;
      float *outPtr;
      // Rescale parameters
-     float vs[3];
+     vtkFloatingPointType vs[3];
      int   i;
      float th;
      //     float mean,sd;
@@ -3356,7 +3368,7 @@ void vtkLevelSets::NormalizeSecDerGrad()
   register int   x,y,z;
   int            n,p;
   float          val;
-  float          vs[3];
+  vtkFloatingPointType          vs[3];
   unsigned long  cumul_histo;
   float          threshold;
   int*           histo;
@@ -3612,7 +3624,12 @@ void vtkLevelSets::InitPointsStatistics( float stats[2])
     if ((y<0)||(y>ty-1)) continue;
     for (z=z0-r; z<=z0+r; z++) {
       if ((z<0)||(z>tz-1)) continue;
+
+#if (VTK_MAJOR_VERSION == 4 && VTK_MINOR_VERSION >= 3)
+      mean += this->inputImage->GetScalarComponentAsDouble(x,y,z,0);
+#else
       mean += this->inputImage->GetScalarComponentAsFloat(x,y,z,0);
+#endif
       totalpoints++;
     }
       }
@@ -3634,7 +3651,11 @@ void vtkLevelSets::InitPointsStatistics( float stats[2])
     if ((y<0)||(y>ty-1)) continue;
     for (z=z0-r; z<=z0+r; z++) {
       if ((z<0)||(z>tz-1)) continue;
+#if (VTK_MAJOR_VERSION == 4 && VTK_MINOR_VERSION >= 3)
+      d = this->inputImage->GetScalarComponentAsDouble(x,y,z,0)-mean;
+#else
       d = this->inputImage->GetScalarComponentAsFloat(x,y,z,0)-mean;
+#endif
       sd += d*d;
     }
       }

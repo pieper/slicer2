@@ -45,19 +45,19 @@ public:
  static vtkOpenGLVolumeTextureMapper3D *New();
   
  virtual void Render(vtkRenderer *ren, vtkVolume *vol);
- void CreateSubImages(unsigned char* texture, int size[2], float spacing[3]);
+ void CreateSubImages(unsigned char* texture, int size[2], vtkFloatingPointType spacing[3]);
  void RenderQuads(vtkRenderer *ren, vtkVolume *vol);
  void CreateEmptyTexture(void);
- void ClipPlane(int plane, float viewUp[3]);
+ void ClipPlane(int plane, vtkFloatingPointType viewUp[3]);
  void InitializeVolRend();
- void NormalizeVector(float vect[3]);
+ void NormalizeVector(vtkFloatingPointType vect[3]);
  void ChangeColorTable(int volume, int colorTable[256][4]);
- void CalculatePlaneEquation(float a1, float a2, float a3, float b1, float b2,float  b3, float c1, float c2, float c3, int volume,int num);
- void IntersectionPoint(float result[4], int corner1, int corner2, int plane1, int plane2, float a, float b, float c, float d, int vols);
- void SortVertex(int vertexOrder[12], float vertex[12][3], int* vertexnum, float viewUp[3], float normal[3]);
+ void CalculatePlaneEquation(vtkFloatingPointType a1, vtkFloatingPointType a2, vtkFloatingPointType a3, vtkFloatingPointType b1, vtkFloatingPointType b2,vtkFloatingPointType  b3, vtkFloatingPointType c1, vtkFloatingPointType c2, vtkFloatingPointType c3, int volume,int num);
+ void IntersectionPoint(vtkFloatingPointType result[4], int corner1, int corner2, int plane1, int plane2, vtkFloatingPointType a, vtkFloatingPointType b, vtkFloatingPointType c, vtkFloatingPointType d, int vols);
+ void SortVertex(int vertexOrder[12], vtkFloatingPointType vertex[12][3], int* vertexnum, vtkFloatingPointType viewUp[3], vtkFloatingPointType normal[3]);
  void Transformation(); 
  void CalcMaxMinValue();
- void InsertVertex(float vertex[12][3], int *vertexnums, float result[4]);
+ void InsertVertex(vtkFloatingPointType vertex[12][3], int *vertexnums, vtkFloatingPointType result[4]);
 
 //xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 //variables
@@ -67,24 +67,24 @@ int colorTable0[256][4];
 int colorTable1[256][4];
 int colorTable2[256][4];
 int num;
-float volumeCornerPoint[4][8][3];
+vtkFloatingPointType volumeCornerPoint[4][8][3];
  unsigned char* pix;
 int init;
 int zVal;
 int counter;
 int maxVolumes ;
 int    using_palette;
-float volSize[3][3];
+vtkFloatingPointType volSize[3][3];
 int texSize[3][3];
 int textureSizeX[3];
 int textureSizeY[3];
 int textureSizeZ[3];
 int boxSize;
-float transformMatrix[3][4][4];
-float transformInvMatrix[3][4][4];
-float volumePlaneEquation[4][6][4]; 
+vtkFloatingPointType transformMatrix[3][4][4];
+vtkFloatingPointType transformInvMatrix[3][4][4];
+vtkFloatingPointType volumePlaneEquation[4][6][4]; 
 int cornersInDatasetPlane[6][3];
-float maxminCoord[2];
+vtkFloatingPointType maxminCoord[2];
 int enableClip[6];
 int enableVol[3];
 int currentTable[256][4];

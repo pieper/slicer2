@@ -40,7 +40,7 @@ void vtkVolumeTextureMapper3D_TextureOrganization( T *data_ptr,
   int           a0=0, a1=1, a2=2;
   int           dimension[3];
   int           factor[2];
-  float           tempFactor =0;
+  vtkFloatingPointType           tempFactor =0;
   xAxis = &i;
   yAxis = &j;
   zAxis = &k;
@@ -82,7 +82,7 @@ void vtkVolumeTextureMapper3D_TextureOrganization( T *data_ptr,
     
     //check if the volume must be rescaled
     me->GetDimension(volume, dimension);
-    tempFactor = (float)size[0]/(float)dimension[0];
+    tempFactor = (vtkFloatingPointType)size[0]/(vtkFloatingPointType)dimension[0];
     if (tempFactor == 1)
     {
       factor[0] = (int)tempFactor;
@@ -95,7 +95,7 @@ void vtkVolumeTextureMapper3D_TextureOrganization( T *data_ptr,
     {
       factor[0]= (int)tempFactor;            
     }
-    tempFactor = (float)size[1]/(float)dimension[1];
+    tempFactor = (vtkFloatingPointType)size[1]/(vtkFloatingPointType)dimension[1];
     if (tempFactor == 1)
     {
       factor[1] = (int)tempFactor;
@@ -155,7 +155,7 @@ void vtkVolumeTextureMapper3D::RescaleData(unsigned char* texture,  int size[3],
   }
   else
   {
-    int tempValue = 0;
+    double tempValue = 0;
     int tx = 0;
     int ty = 0;
     //increas the volume
@@ -177,9 +177,9 @@ void vtkVolumeTextureMapper3D::RescaleData(unsigned char* texture,  int size[3],
           tx = scaleX/(-scaleFactor[0]-1);
           ty = scaleY/(-scaleFactor[1]-1);
           //interpolation
-          tempValue = (1-tx)*(1-ty)*(float)tempData[x][y][0]+tx
-                     *(1-ty)*(float)tempData[x+1][y][0]+ty*(1-tx)
-                     *(float)tempData[x][y+1][0]+tx*ty* (float)tempData[x+1][y+1][0];    
+          tempValue = (1-tx)*(1-ty)*(vtkFloatingPointType)tempData[x][y][0]+tx
+                     *(1-ty)*(vtkFloatingPointType)tempData[x+1][y][0]+ty*(1-tx)
+                     *(vtkFloatingPointType)tempData[x][y+1][0]+tx*ty* (vtkFloatingPointType)tempData[x+1][y+1][0];    
           texture[texPtr] = (unsigned char)(ceil(tempValue));
           texPtr++;
         }
@@ -240,7 +240,7 @@ void vtkVolumeTextureMapper3D::RescaleData(unsigned char* texture,  int size[3],
 }
 
 
-vtkCxxRevisionMacro(vtkVolumeTextureMapper3D, "$Revision: 1.2 $");
+vtkCxxRevisionMacro(vtkVolumeTextureMapper3D, "$Revision: 1.3 $");
 
 //----------------------------------------------------------------------------
 // Needed when we don't use the vtkStandardNewMacro.
@@ -357,9 +357,13 @@ void vtkVolumeTextureMapper3D::InitializeRender( vtkRenderer *ren,
                                                  vtkVolume *vol,
                                                  int majorDirection )
 {
+  double spacing[3];
   boxSize = 128;
   this->InternalSkipFactor = 1;
-  this->GetInput()->GetSpacing( this->DataSpacing );
+  this->GetInput()->GetSpacing(spacing);
+  this->DataSpacing[0] = (float) spacing[0];
+  this->DataSpacing[1] = (float) spacing[1];
+  this->DataSpacing[2] = (float) spacing[2];
   this->vtkVolumeTextureMapper::InitializeRender( ren, vol );
 
 
@@ -515,7 +519,7 @@ void vtkVolumeTextureMapper3D::SetNumberOfVolumes(int num)
 //Name: SetBoxSize
 //Description: Set the size of the box surronding the volumes
 //-----------------------------------------------------
-void vtkVolumeTextureMapper3D::SetBoxSize(float size)
+void vtkVolumeTextureMapper3D::SetBoxSize(vtkFloatingPointType size)
 {
   boxSize = (int)size;
 }
@@ -533,7 +537,7 @@ int vtkVolumeTextureMapper3D::GetBoxSize()
 //Name: SetOrigin
 //Description: Set the size of the box surronding the volumes
 //-----------------------------------------------------
-void vtkVolumeTextureMapper3D::SetOrigin(float o_x, float o_y, float o_z)
+void vtkVolumeTextureMapper3D::SetOrigin(vtkFloatingPointType o_x, vtkFloatingPointType o_y, vtkFloatingPointType o_z)
 {
   origin[0]=o_x;
   origin[1]=o_y;
@@ -544,7 +548,7 @@ void vtkVolumeTextureMapper3D::SetOrigin(float o_x, float o_y, float o_z)
 //Name: GetOrigin
 //Description: Return the size of the box surrounding the volumes
 //-----------------------------------------------------
-void vtkVolumeTextureMapper3D::GetOrigin(float o[3])
+void vtkVolumeTextureMapper3D::GetOrigin(vtkFloatingPointType o[3])
 {
   for(int i = 0; i < 3; i++)
   {
@@ -816,7 +820,7 @@ void vtkVolumeTextureMapper3D::ResetClipPlanes(int type)
 //Name: ChangeClipPlaneDir
 //Description: Change the direction of a clip plane
 //-----------------------------------------------------
-void vtkVolumeTextureMapper3D::ChangeClipPlaneDir(int plane, int dir, float angle)
+void vtkVolumeTextureMapper3D::ChangeClipPlaneDir(int plane, int dir, vtkFloatingPointType angle)
 {
   double rot[3][3];
   double tempPlaneEquation[4];
@@ -1231,9 +1235,9 @@ int vtkVolumeTextureMapper3D::GetColorMinMax(int volume, int minelmax, int rgb)
 //-----------------------------------------------------
 void vtkVolumeTextureMapper3D::UpdateColorTable(int colorTable[256][4], int volume)
 {
-  float quote = 0.0;
-  float diff1 =0.0;
-  float diff2 =0.0;
+  vtkFloatingPointType quote = 0.0;
+  vtkFloatingPointType diff1 =0.0;
+  vtkFloatingPointType diff2 =0.0;
   int least1 =0;
   int least2 = 0;
   
@@ -1284,24 +1288,24 @@ void vtkVolumeTextureMapper3D::UpdateColorTable(int colorTable[256][4], int volu
     }
     else
     {
-      diff1=(float)TFdata[type][num+1][volume][1]-(float)TFdata[type][num][volume][1];
-      diff2=(float)TFdata[type][num+1][volume][0]-(float)TFdata[type][num][volume][0];
+      diff1=(vtkFloatingPointType)TFdata[type][num+1][volume][1]-(vtkFloatingPointType)TFdata[type][num][volume][1];
+      diff2=(vtkFloatingPointType)TFdata[type][num+1][volume][0]-(vtkFloatingPointType)TFdata[type][num][volume][0];
       quote = sqrt(diff1*diff1)/sqrt(diff2*diff2);
       if (TFdata[type][num+1][volume][1]<TFdata[type][num][volume][1])
       {
-        least2=(float)TFdata[type][num+1][volume][1];
+        least2=(vtkFloatingPointType)TFdata[type][num+1][volume][1];
       }
       else
       {
-        least2=(float)TFdata[type][num][volume][1];
+        least2=(vtkFloatingPointType)TFdata[type][num][volume][1];
       }
       if (TFdata[type][num+1][volume][0]<TFdata[type][num][volume][0])
       {
-        least1=(float)TFdata[type][num+1][volume][0];
+        least1=(vtkFloatingPointType)TFdata[type][num+1][volume][0];
       }
       else
       {
-        least1=(float)TFdata[type][num][volume][0];
+        least1=(vtkFloatingPointType)TFdata[type][num][volume][0];
       }
       if (type == 3)
       {
@@ -1400,7 +1404,7 @@ int vtkVolumeTextureMapper3D::IsColorTableChanged(int volume)
 //Name: UpdateTransformMatrix -  Not necessary???
 //Description: Updates the transformation matrix with new values
 //-----------------------------------------------------
-void vtkVolumeTextureMapper3D::UpdateTransformMatrix(int volume, float t00, float t01, float t02, float t03, float t10, float t11, float t12, float t13, float t20, float t21, float t22, float t23, float t30, float t31, float t32, float t33 )
+void vtkVolumeTextureMapper3D::UpdateTransformMatrix(int volume, vtkFloatingPointType t00, vtkFloatingPointType t01, vtkFloatingPointType t02, vtkFloatingPointType t03, vtkFloatingPointType t10, vtkFloatingPointType t11, vtkFloatingPointType t12, vtkFloatingPointType t13, vtkFloatingPointType t20, vtkFloatingPointType t21, vtkFloatingPointType t22, vtkFloatingPointType t23, vtkFloatingPointType t30, vtkFloatingPointType t31, vtkFloatingPointType t32, vtkFloatingPointType t33 )
 {
   currentTransformation[volume][0][0] = t00;
   currentTransformation[volume][0][1] = t01;
@@ -1433,7 +1437,7 @@ void vtkVolumeTextureMapper3D::UpdateTransformMatrix(int volume, vtkMatrix4x4 *t
   {
     for(int j = 0; j < 4; j++)
     {
-      currentTransformation[volume][i][j] =(float) transMatrix->GetElement(i, j);
+      currentTransformation[volume][i][j] =(vtkFloatingPointType) transMatrix->GetElement(i, j);
     }
   }
 
@@ -1461,7 +1465,7 @@ int vtkVolumeTextureMapper3D::IsTMatrixChanged(int volume)
 //Name: GetTransformMatrix
 //Description: Get the current transformation matrix
 //-----------------------------------------------------
-void vtkVolumeTextureMapper3D::GetTransformMatrix(float transfMatrix[4][4], int volume)
+void vtkVolumeTextureMapper3D::GetTransformMatrix(vtkFloatingPointType transfMatrix[4][4], int volume)
 {
 
   for (int i = 0; i < 4; i++)
@@ -1478,7 +1482,7 @@ void vtkVolumeTextureMapper3D::GetTransformMatrix(float transfMatrix[4][4], int 
 //Name: SetTransformMatrixElement
 //Description: Set an element in the transformation matrix
 //-----------------------------------------------------
-void vtkVolumeTextureMapper3D::SetTransformMatrixElement(int volume, int row, int column, float value)
+void vtkVolumeTextureMapper3D::SetTransformMatrixElement(int volume, int row, int column, vtkFloatingPointType value)
 {
   currentTransformation[volume][row][column] = value;
   tMatrixChanged[volume] = 1;
@@ -1490,7 +1494,7 @@ void vtkVolumeTextureMapper3D::SetTransformMatrixElement(int volume, int row, in
 //Description: Get the value of an element in the 
 //transformation matrix
 //-----------------------------------------------------
-float vtkVolumeTextureMapper3D::GetTransformMatrixElement(int volume, int row, int column)
+vtkFloatingPointType vtkVolumeTextureMapper3D::GetTransformMatrixElement(int volume, int row, int column)
 {
   return currentTransformation[volume][row][column];
 }

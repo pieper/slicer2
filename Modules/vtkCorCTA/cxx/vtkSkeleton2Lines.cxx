@@ -135,8 +135,8 @@ void vtkSkeleton2Lines::ExecuteData(vtkDataObject* output)
   vtkPoints* surfPoints;
   vtkCellArray* surfCell;
   vtkIdList* pointIds;
-  float        origin[3];
-  float        spacing[3];
+  vtkFloatingPointType        origin[3];
+  vtkFloatingPointType        spacing[3];
   unsigned short *inputPtr, *pointidPtr, *neighborsPtr;
   unsigned char *endpointsPtr;
 

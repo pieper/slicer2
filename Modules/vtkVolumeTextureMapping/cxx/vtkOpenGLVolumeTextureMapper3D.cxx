@@ -16,7 +16,7 @@
 #define volumeBox 3
 
 #ifndef VTK_IMPLEMENT_MESA_CXX
-vtkCxxRevisionMacro(vtkOpenGLVolumeTextureMapper3D, "$Revision: 1.6 $");
+vtkCxxRevisionMacro(vtkOpenGLVolumeTextureMapper3D, "$Revision: 1.7 $");
 vtkStandardNewMacro(vtkOpenGLVolumeTextureMapper3D);
 #endif
 
@@ -127,6 +127,11 @@ void vtkOpenGLVolumeTextureMapper3D::Render(vtkRenderer *ren, vtkVolume *vol)
        glColorTableEXT = (PFNGLCOLORTABLEEXTPROC) wglGetProcAddress("glColorTableEXT");
        //#define glColorTable glColorTableEXT
     #else
+       #ifndef GL_TEXTURE_COLOR_TABLE_SGI
+       #  define GL_TEXTURE_COLOR_TABLE_SGI -1
+       using_palette = 0;
+       #endif
+
        #define GL_INTENSITY_EXT GL_INTENSITY
        #define GL_SHARED_TEXTURE_PALETTE_EXT GL_TEXTURE_COLOR_TABLE_SGI
        #define GL_COLOR_INDEX8_EXT GL_INTENSITY
@@ -318,7 +323,7 @@ void vtkOpenGLVolumeTextureMapper3D::CreateEmptyTexture()
 //Name: InsertVertex
 //Description: 
 //-----------------------------------------------------
-void vtkOpenGLVolumeTextureMapper3D::InsertVertex(float vertex[12][3], int* vertexnums, float result[4])
+void vtkOpenGLVolumeTextureMapper3D::InsertVertex(vtkFloatingPointType vertex[12][3], int* vertexnums, vtkFloatingPointType result[4])
 {
   if (result[3]== 1)
   {
@@ -333,21 +338,21 @@ void vtkOpenGLVolumeTextureMapper3D::InsertVertex(float vertex[12][3], int* vert
 //Name: ClipPlane
 //Description: Calculation of clip planes
 //-----------------------------------------------------
-void vtkOpenGLVolumeTextureMapper3D::ClipPlane(int plane, float viewUp[3])
+void vtkOpenGLVolumeTextureMapper3D::ClipPlane(int plane, vtkFloatingPointType viewUp[3])
 {
   double planeEquation[4];
   int planeNum = 6;
-  float vertex[12][3];
-  float result[4];
+  vtkFloatingPointType vertex[12][3];
+  vtkFloatingPointType result[4];
   int vertexnums= 0;
   int cLines[1];
 
   //get the clip plane equation for a specific plane
   this->GetClipPlaneEquation(planeEquation, plane);
-  float a = planeEquation[0];
-  float b = planeEquation[1];
-  float c = planeEquation[2];
-  float d = planeEquation[3];
+  vtkFloatingPointType a = planeEquation[0];
+  vtkFloatingPointType b = planeEquation[1];
+  vtkFloatingPointType c = planeEquation[2];
+  vtkFloatingPointType d = planeEquation[3];
 
   //set the clip plane equation to a specific openGL clip plane
   glClipPlane((GLenum)(GL_CLIP_PLANE0+plane),planeEquation);
@@ -368,7 +373,7 @@ void vtkOpenGLVolumeTextureMapper3D::ClipPlane(int plane, float viewUp[3])
     }
     
     int vertexOrder[12];
-    float normal[3];
+    vtkFloatingPointType normal[3];
     normal[0] = planeEquation[0];
     normal[1] = planeEquation[1];
     normal[2] = planeEquation[2];
@@ -403,17 +408,17 @@ void vtkOpenGLVolumeTextureMapper3D::ClipPlane(int plane, float viewUp[3])
 //Name: SortVertex
 //Description: Sorts the vertexs according to angle
 //-----------------------------------------------------
-void vtkOpenGLVolumeTextureMapper3D::SortVertex(int vertexOrder[12], float vertex[12][3], int *vertexnum, float viewUp[3], float normal[3])
+void vtkOpenGLVolumeTextureMapper3D::SortVertex(int vertexOrder[12], vtkFloatingPointType vertex[12][3], int *vertexnum, vtkFloatingPointType viewUp[3], vtkFloatingPointType normal[3])
 {
-  float vertexAngle[12];
-  float r[3];
-  float rLength;
-  float rAngleViewUp;
-  float rAngleNx;
-  float pi = 3.14;
-  float rAngle;
+  vtkFloatingPointType vertexAngle[12];
+  vtkFloatingPointType r[3];
+  vtkFloatingPointType rLength;
+  vtkFloatingPointType rAngleViewUp;
+  vtkFloatingPointType rAngleNx;
+  vtkFloatingPointType pi = 3.14;
+  vtkFloatingPointType rAngle;
   int antV;
-  float nx[3];
+  vtkFloatingPointType nx[3];
   antV = 0;
 
   //calculate crossproduct normal x viewUp
@@ -498,29 +503,29 @@ void vtkOpenGLVolumeTextureMapper3D::SortVertex(int vertexOrder[12], float verte
 void vtkOpenGLVolumeTextureMapper3D::RenderQuads(vtkRenderer *ren, vtkVolume *vol)
 {
 
-  float focalPoint[3];
+  vtkFloatingPointType focalPoint[3];
   int   size[3];
-  float spacing[3];
-  float viewAngle;
-  float viewUp[3];
+  vtkFloatingPointType spacing[3];
+  vtkFloatingPointType viewAngle;
+  vtkFloatingPointType viewUp[3];
   bool  volumesToClip[3];
   int   thisSize[3];
-  float normal[3];
-  float cameraPosition[3];
-  float nx[3];
-  float ny[3];
-  float nz[3];
-  float startpos[3];
-  float origin[3];
+  vtkFloatingPointType normal[3];
+  vtkFloatingPointType cameraPosition[3];
+  vtkFloatingPointType nx[3];
+  vtkFloatingPointType ny[3];
+  vtkFloatingPointType nz[3];
+  vtkFloatingPointType startpos[3];
+  vtkFloatingPointType origin[3];
 
   this->GetVolumesToClip(volumesToClip);
-  ren->GetActiveCamera()->GetPosition(cameraPosition);
+  ren->GetActiveCamera()->GetPosition(&cameraPosition[0]);
   viewAngle = ren->GetActiveCamera()->GetViewAngle();
-  ren->GetActiveCamera()->GetFocalPoint(focalPoint);
-  ren->GetActiveCamera()->GetViewUp(viewUp);
+  ren->GetActiveCamera()->GetFocalPoint(&focalPoint[0]);
+  ren->GetActiveCamera()->GetViewUp(&viewUp[0]);
   this->GetInput()->GetDimensions( size );
-  this->GetInput()->GetSpacing(spacing);
-  this->GetOrigin(origin);
+  this->GetInput()->GetSpacing(&spacing[0]);
+  this->GetOrigin(&origin[0]);
     
   //is the tranformation changed?
   for (int v = 0; v < maxVolumes; v++)
@@ -540,7 +545,7 @@ void vtkOpenGLVolumeTextureMapper3D::RenderQuads(vtkRenderer *ren, vtkVolume *vo
   
   //the amount of planes used to build the volume
   int numQuads = this->GetNumberOfPlanes();
-  float diagonal = sqrt(boxSize*boxSize+boxSize*boxSize+boxSize*boxSize);
+  vtkFloatingPointType diagonal = sqrt(boxSize*boxSize+boxSize*boxSize+boxSize*boxSize);
   
   //calculate the normalvector
   normal[0] = (cameraPosition[0]-focalPoint[0]); 
@@ -576,7 +581,7 @@ void vtkOpenGLVolumeTextureMapper3D::RenderQuads(vtkRenderer *ren, vtkVolume *vo
     {
       num++;
     }        
-    float planePoint[3];
+    vtkFloatingPointType planePoint[3];
     
     for(int axis = 0; axis < 3; axis++)
     {
@@ -587,13 +592,13 @@ void vtkOpenGLVolumeTextureMapper3D::RenderQuads(vtkRenderer *ren, vtkVolume *vo
 
 
     
-    float vertex[12][3];
-    float result[4];
+    vtkFloatingPointType vertex[12][3];
+    vtkFloatingPointType result[4];
     int   vertexnums = 0;
-    float a = normal[0];
-    float b = normal[1];
-    float c = normal[2];
-    float d = normal[0]*planePoint[0]
+    vtkFloatingPointType a = normal[0];
+    vtkFloatingPointType b = normal[1];
+    vtkFloatingPointType c = normal[2];
+    vtkFloatingPointType d = normal[0]*planePoint[0]
              +normal[1]*planePoint[1]
              +normal[2]*planePoint[2];
     
@@ -671,20 +676,20 @@ void vtkOpenGLVolumeTextureMapper3D::RenderQuads(vtkRenderer *ren, vtkVolume *vo
       {        
         if ((vertexOrder[v] < vertexnums) && (vertexOrder[v] >= 0)) 
         {
-          float bx = vertex[vertexOrder[v]][0];
-          float by = vertex[vertexOrder[v]][1];
-          float bz = vertex[vertexOrder[v]][2];
+          vtkFloatingPointType bx = vertex[vertexOrder[v]][0];
+          vtkFloatingPointType by = vertex[vertexOrder[v]][1];
+          vtkFloatingPointType bz = vertex[vertexOrder[v]][2];
              
           //transform texture coordinates with the inverse of the transformation matrix
-          float tx = (transformInvMatrix[vols][0][0]*bx+
+          vtkFloatingPointType tx = (transformInvMatrix[vols][0][0]*bx+
               transformInvMatrix[vols][0][1]*by+
               transformInvMatrix[vols][0][2]*bz+
               transformInvMatrix[vols][0][3]+texSize[vols][0]/2);    
-          float ty = (transformInvMatrix[vols][1][0]*bx+
+          vtkFloatingPointType ty = (transformInvMatrix[vols][1][0]*bx+
               transformInvMatrix[vols][1][1]*by+
               transformInvMatrix[vols][1][2]*bz+
               transformInvMatrix[vols][1][3]+texSize[vols][1]/2);
-          float tz = (transformInvMatrix[vols][2][0]*bx+
+          vtkFloatingPointType tz = (transformInvMatrix[vols][2][0]*bx+
               transformInvMatrix[vols][2][1]*by+
               transformInvMatrix[vols][2][2]*bz+
               transformInvMatrix[vols][2][3]+texSize[vols][2]/2);
@@ -699,9 +704,9 @@ void vtkOpenGLVolumeTextureMapper3D::RenderQuads(vtkRenderer *ren, vtkVolume *vo
           //set texture coordinate
           glTexCoord3f(tx, ty, tz);
 
-          float vx = vertex[vertexOrder[v]][0]+origin[0];
-          float vy = vertex[vertexOrder[v]][1]+origin[1];
-          float vz = vertex[vertexOrder[v]][2]+origin[2];
+          vtkFloatingPointType vx = vertex[vertexOrder[v]][0]+origin[0];
+          vtkFloatingPointType vy = vertex[vertexOrder[v]][1]+origin[1];
+          vtkFloatingPointType vz = vertex[vertexOrder[v]][2]+origin[2];
           fprintf(fm, "VertexCoords vx %f, vy %f, vz %f\n", vx, vy, vz);
           fflush(fm);
           //set vertex coordinates
@@ -806,7 +811,7 @@ void vtkOpenGLVolumeTextureMapper3D::CalcMaxMinValue()
   {
     if (enableVol[volume] == 1)
     {
-      float cornerInDatasetBox[8][3] = {-texSize[volume][0]/2, -texSize[volume][1]/2, -texSize[volume][2]/2,
+      vtkFloatingPointType cornerInDatasetBox[8][3] = {-texSize[volume][0]/2, -texSize[volume][1]/2, -texSize[volume][2]/2,
                     -texSize[volume][0]/2, texSize[volume][1]/2, -texSize[volume][2]/2,
                     -texSize[volume][0]/2, -texSize[volume][1]/2, texSize[volume][2]/2,
                     texSize[volume][0]/2, texSize[volume][1]/2, texSize[volume][2]/2,
@@ -837,7 +842,7 @@ void vtkOpenGLVolumeTextureMapper3D::CalcMaxMinValue()
 //-----------------------------------------------------
 void vtkOpenGLVolumeTextureMapper3D::Transformation() 
 {
-  float tMatrix[4][4];
+  vtkFloatingPointType tMatrix[4][4];
   vtkMatrix4x4       *tfmatrix = vtkMatrix4x4::New();
   vtkMatrix4x4       *tfInvmatrix = vtkMatrix4x4::New();
     
@@ -904,7 +909,7 @@ void vtkOpenGLVolumeTextureMapper3D::Transformation()
 //Name: CreateSubImages
 //Description: Store sub images in texture memory
 //-----------------------------------------------------
-void vtkOpenGLVolumeTextureMapper3D::CreateSubImages( unsigned char* texture,                                                      int size[3], float spacing[3])
+void vtkOpenGLVolumeTextureMapper3D::CreateSubImages( unsigned char* texture,                                                      int size[3], vtkFloatingPointType spacing[3])
 {
 
   if (counter  < maxVolumes)
@@ -999,17 +1004,17 @@ void vtkOpenGLVolumeTextureMapper3D::CreateSubImages( unsigned char* texture,   
 //Name: CalculatePlaneEquation
 //Description: Calculation of plane equations
 //-----------------------------------------------------
-void vtkOpenGLVolumeTextureMapper3D::CalculatePlaneEquation(float a1,float a2, float a3, float b1, float b2, float b3, float c1, float c2, float c3, int volume,int num)
+void vtkOpenGLVolumeTextureMapper3D::CalculatePlaneEquation(vtkFloatingPointType a1,vtkFloatingPointType a2, vtkFloatingPointType a3, vtkFloatingPointType b1, vtkFloatingPointType b2, vtkFloatingPointType b3, vtkFloatingPointType c1, vtkFloatingPointType c2, vtkFloatingPointType c3, int volume,int num)
 {
   //crossproduct to get the polygon normal
-  float A = (b2-a2)*(c3-a3)-(c2-a2)*(b3-a3);
-  float B = ((b3-a3)*(c1-a1)-(c3-a3)*(b1-a1));
-  float C = (b1-a1)*(c2-a2)-(c1-a1)*(b2-a2);
+  vtkFloatingPointType A = (b2-a2)*(c3-a3)-(c2-a2)*(b3-a3);
+  vtkFloatingPointType B = ((b3-a3)*(c1-a1)-(c3-a3)*(b1-a1));
+  vtkFloatingPointType C = (b1-a1)*(c2-a2)-(c1-a1)*(b2-a2);
 
   //plane equation
-  volumePlaneEquation[volume][num][0] = A/(float)sqrt(A*A+B*B+C*C);
-  volumePlaneEquation[volume][num][1] = B/(float)sqrt(A*A+B*B+C*C);
-  volumePlaneEquation[volume][num][2] = C/(float)sqrt(A*A+B*B+C*C);
+  volumePlaneEquation[volume][num][0] = A/(vtkFloatingPointType)sqrt(A*A+B*B+C*C);
+  volumePlaneEquation[volume][num][1] = B/(vtkFloatingPointType)sqrt(A*A+B*B+C*C);
+  volumePlaneEquation[volume][num][2] = C/(vtkFloatingPointType)sqrt(A*A+B*B+C*C);
   volumePlaneEquation[volume][num][3] = (a1*volumePlaneEquation[volume][num][0]
                     +a2*volumePlaneEquation[volume][num][1]
                         +a3*volumePlaneEquation[volume][num][2]);
@@ -1019,9 +1024,9 @@ void vtkOpenGLVolumeTextureMapper3D::CalculatePlaneEquation(float a1,float a2, f
 //Name: NormalizeVector
 //Description: Vector normalization
 //-----------------------------------------------------
-void vtkOpenGLVolumeTextureMapper3D::NormalizeVector(float vect[3])
+void vtkOpenGLVolumeTextureMapper3D::NormalizeVector(vtkFloatingPointType vect[3])
 {
-  float vectDiv = sqrt(vect[0]*vect[0]+vect[1]*vect[1]+vect[2]*vect[2]);
+  vtkFloatingPointType vectDiv = sqrt(vect[0]*vect[0]+vect[1]*vect[1]+vect[2]*vect[2]);
   vect[0]= vect[0]/vectDiv;
   vect[1]= vect[1]/vectDiv;
   vect[2]= vect[2]/vectDiv;
@@ -1034,22 +1039,22 @@ void vtkOpenGLVolumeTextureMapper3D::NormalizeVector(float vect[3])
 //Description: Find out where the planes intersect with 
 //the volume box
 //-----------------------------------------------------
-void vtkOpenGLVolumeTextureMapper3D::IntersectionPoint(float result[4], int corner1, int corner2, int plane1, int plane2, float a, float b, float c, float d, int vols)
+void vtkOpenGLVolumeTextureMapper3D::IntersectionPoint(vtkFloatingPointType result[4], int corner1, int corner2, int plane1, int plane2, vtkFloatingPointType a, vtkFloatingPointType b, vtkFloatingPointType c, vtkFloatingPointType d, int vols)
 {
-  float intersectionDisplacement[3];
-  float intersectionMatrix[3][3];
-  float intersectionInvMatrix[3][3];   
-  float determinant ;
-  float r1 = 0;
-  float r2 = 0;
-  float r3 = 0;
-  float t1 = 0;
-  float t2 = 0;
-  float t3 = 0;
-  float x = 0.0;
-  float y = 0.0;
-  float z = 0.0;
-  float margin = 0.1;
+  vtkFloatingPointType intersectionDisplacement[3];
+  vtkFloatingPointType intersectionMatrix[3][3];
+  vtkFloatingPointType intersectionInvMatrix[3][3];   
+  vtkFloatingPointType determinant ;
+  vtkFloatingPointType r1 = 0;
+  vtkFloatingPointType r2 = 0;
+  vtkFloatingPointType r3 = 0;
+  vtkFloatingPointType t1 = 0;
+  vtkFloatingPointType t2 = 0;
+  vtkFloatingPointType t3 = 0;
+  vtkFloatingPointType x = 0.0;
+  vtkFloatingPointType y = 0.0;
+  vtkFloatingPointType z = 0.0;
+  vtkFloatingPointType margin = 0.1;
   result[3] = 0;
 
   intersectionMatrix[0][0]= volumePlaneEquation[vols][plane1][0];
@@ -1108,12 +1113,12 @@ void vtkOpenGLVolumeTextureMapper3D::IntersectionPoint(float result[4], int corn
        +intersectionInvMatrix[2][1]*intersectionDisplacement[1]
        +intersectionInvMatrix[2][2]*intersectionDisplacement[2];
 
-    float xc1 = (volumeCornerPoint[vols][corner1][0]);
-    float xc2 = (volumeCornerPoint[vols][corner2][0]);
-    float yc1 = (volumeCornerPoint[vols][corner1][1]);
-    float yc2 = (volumeCornerPoint[vols][corner2][1]);
-    float zc1 = (volumeCornerPoint[vols][corner1][2]);
-    float zc2 = (volumeCornerPoint[vols][corner2][2]);
+    vtkFloatingPointType xc1 = (volumeCornerPoint[vols][corner1][0]);
+    vtkFloatingPointType xc2 = (volumeCornerPoint[vols][corner2][0]);
+    vtkFloatingPointType yc1 = (volumeCornerPoint[vols][corner1][1]);
+    vtkFloatingPointType yc2 = (volumeCornerPoint[vols][corner2][1]);
+    vtkFloatingPointType zc1 = (volumeCornerPoint[vols][corner1][2]);
+    vtkFloatingPointType zc2 = (volumeCornerPoint[vols][corner2][2]);
 
     //check if the found intersection point lies within the corner points on the volume box
     if ((((x >= (xc1-margin)) && (x <= (xc2+margin))) ||

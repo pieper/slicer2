@@ -95,21 +95,21 @@ static void vtkTensorMathematicsExecute1(vtkTensorMathematics *self,
   int op = self->GetOperation();
   // tensor variables
   vtkDataArray *inTensors;
-  float tensor[3][3];
+  vtkFloatingPointType tensor[3][3];
   vtkPointData *pd;
   int numPts, inPtId;
   // time
   clock_t tStart=0;
   tStart = clock();
   // working matrices
-  float *m[3], w[3], *v[3];
-  float m0[3], m1[3], m2[3];
-  float v0[3], v1[3], v2[3];
+  vtkFloatingPointType *m[3], w[3], *v[3];
+  vtkFloatingPointType m0[3], m1[3], m2[3];
+  vtkFloatingPointType v0[3], v1[3], v2[3];
   m[0] = m0; m[1] = m1; m[2] = m2; 
   v[0] = v0; v[1] = v1; v[2] = v2;
   int i, j;
   // scaling
-  float scaleFactor = self->GetScaleFactor();
+  vtkFloatingPointType scaleFactor = self->GetScaleFactor();
 
   // find the input region to loop over
   pd = in1Data->GetPointData();
@@ -159,7 +159,7 @@ static void vtkTensorMathematicsExecute1(vtkTensorMathematics *self,
       for (idxR = 0; idxR < rowLength; idxR++)
         {
           // tensor at this voxel
-          inTensors->GetTuple(inPtId,(float *)tensor);
+          inTensors->GetTuple(inPtId,(vtkFloatingPointType *)tensor);
 
           // pixel operation
           switch (op)
@@ -229,23 +229,23 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
   int op = self->GetOperation();
   // tensor variables
   vtkDataArray *inTensors;
-  float tensor[3][3];
+  vtkFloatingPointType tensor[3][3];
   vtkPointData *pd;
   int numPts, inPtId;
   // time
   clock_t tStart=0;
   tStart = clock();
   // working matrices
-  float *m[3], w[3], *v[3];
-  float m0[3], m1[3], m2[3];
-  float v0[3], v1[3], v2[3];
+  vtkFloatingPointType *m[3], w[3], *v[3];
+  vtkFloatingPointType m0[3], m1[3], m2[3];
+  vtkFloatingPointType v0[3], v1[3], v2[3];
   m[0] = m0; m[1] = m1; m[2] = m2; 
   v[0] = v0; v[1] = v1; v[2] = v2;
   int i, j;
-  float trace, norm;
+  vtkFloatingPointType trace, norm;
   int extractEigenvalues;
   // scaling
-  float scaleFactor = self->GetScaleFactor();
+  vtkFloatingPointType scaleFactor = self->GetScaleFactor();
   // transformation of tensor orientations for coloring
   vtkTransform *trans = vtkTransform::New();
   int useTransform = 0;
@@ -308,7 +308,7 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
       for (idxR = 0; idxR < rowLength; idxR++)
         {
           // tensor at this voxel
-          inTensors->GetTuple(inPtId,(float *)tensor);
+          inTensors->GetTuple(inPtId,(vtkFloatingPointType *)tensor);
 
           // get eigenvalues and eigenvectors appropriately
           if (extractEigenvalues) 
@@ -350,8 +350,8 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
           
 
           // regularization to compensate for small trace values
-          //float r = 0.000001;
-          float r = 0.0001;
+          //vtkFloatingPointType r = 0.000001;
+          vtkFloatingPointType r = 0.0001;
           
           // we are not interested in regions with trace < r
           int ignore = 0;
@@ -449,7 +449,7 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
         if (ignore)
           *outPtr = (T) 0;
 
-          // scale floats if the user requested this
+          // scale vtkFloatingPointType if the user requested this
           if (scaleFactor != 1 && op != VTK_TENS_COLOR_ORIENTATION)
         *outPtr = (T) ((*outPtr) * scaleFactor);
 

@@ -241,10 +241,10 @@ protected:
   int tx,ty,tz,txy,imsize;
 
   // voxel size
-  float vs[3];
+  vtkFloatingPointType vs[3];
 
   // inverse of the squared voxel size
-  float ivs2[3];
+  vtkFloatingPointType ivs2[3];
 
   // center of the initial sphere
   int cx,cy,cz;

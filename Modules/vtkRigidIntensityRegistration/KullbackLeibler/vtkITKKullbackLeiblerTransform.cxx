@@ -53,20 +53,6 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 // All the MI Registration Stuff
 #include "itkExceptionObject.h"
 
-#if 0
-// itk classes
-// Some of this may be necessary, but I doubt it.
-#include "itkImage.h"
-#include "itkImageRegionIterator.h"
-#include "itkQuaternionRigidTransform.h"
-#include "itkQuaternionRigidTransformGradientDescentOptimizer.h"
-#include "itkKullbackLeiblerCompareHistogramImageToImageMetric.h"
-#include "itkLinearInterpolateImageFunction.h"
-#include "itkImageRegistrationMethod.h"
-#include "itkNumericTraits.h"
-#include "vnl/vnl_math.h"
-#endif
-
 #include "itkObject.h"
 #include "itkMultiResolutionImageRegistrationMethod.h"
 #include "itkAffineTransform.h"

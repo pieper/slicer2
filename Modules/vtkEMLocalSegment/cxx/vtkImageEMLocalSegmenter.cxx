@@ -507,10 +507,10 @@ int vtkImageEMLocalSegmenter::GetDimensionZ() {
 }
 
 //------------------------------------------------------------------------------
-int vtkImageEMLocalSegmenter::CheckInputImage(vtkImageData * inData,int DataTypeOrig, float DataSpacingOrig[3], int num) {
+int vtkImageEMLocalSegmenter::CheckInputImage(vtkImageData * inData,int DataTypeOrig, vtkFloatingPointType DataSpacingOrig[3], int num) {
   // Check if InData is defined 
   int inExt[6];
-  float DataSpacingNew[3];
+  vtkFloatingPointType DataSpacingNew[3];
   if (inData == NULL) {
     vtkEMAddErrorMessage("CheckInputImage: Input "<< num << " must be specified.");
     return 1;

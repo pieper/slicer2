@@ -27,7 +27,7 @@ void ChangeTFPoint(int volume, int type, int pos, int point, int value);
 void SetNumberOfClipPlanes(int planeNum);
 int GetNumberOfClipPlanes();
 void ChangeDist(int plane, int dist);
-void ChangeClipPlaneDir(int plane, int dir, float angle);
+void ChangeClipPlaneDir(int plane, int dir, vtkFloatingPointType angle);
 void GetClipPlaneEquation(double planeEquation[4], int planeNum);
 void MultiplyMatrix(double result[3], double rotMatrix[3][3], double original[3]);
 void UpdateClipPlaneEquation(int plane);
@@ -54,25 +54,25 @@ void ComputePlaneEquation(double plane[4], double point[4], double normal[3]);
 void Rotate(double rot[3][3], double angle[3]);
 void EnableClipLines(int value);
 void IsClipLinesEnable(int value[1]);
-void UpdateTransformMatrix(int volume, float t00, float t01, float t02, float t03, float t10, float t11, float t12, float t13, float t20, float t21, float t22, float t23, float t30, float t31, float t32, float t33 );
+void UpdateTransformMatrix(int volume, vtkFloatingPointType t00, vtkFloatingPointType t01, vtkFloatingPointType t02, vtkFloatingPointType t03, vtkFloatingPointType t10, vtkFloatingPointType t11, vtkFloatingPointType t12, vtkFloatingPointType t13, vtkFloatingPointType t20, vtkFloatingPointType t21, vtkFloatingPointType t22, vtkFloatingPointType t23, vtkFloatingPointType t30, vtkFloatingPointType t31, vtkFloatingPointType t32, vtkFloatingPointType t33 );
  
-void GetTransformMatrix(float transfMatrix[4][4], int volume);
+void GetTransformMatrix(vtkFloatingPointType transfMatrix[4][4], int volume);
 int IsTMatrixChanged(int volume);
-float GetTransformMatrixElement(int volume, int row, int column);
+vtkFloatingPointType GetTransformMatrixElement(int volume, int row, int column);
 void SetEnableVolume(int volume, int type);
 void GetEnableVolume(int enVol[3]) ;
 int GetClipNum();
- void SetTransformMatrixElement(int volume, int row, int column, float value);
+ void SetTransformMatrixElement(int volume, int row, int column, vtkFloatingPointType value);
  void SetDimension(int volume, int dir, int dims);
 void GetDimension(int volume, int dim[3]);
 int GetTextureDimension(int volume, int dir);
 void DefaultValues();
-void SetBoxSize(float size);
+void SetBoxSize(vtkFloatingPointType size);
 int GetBoxSize();
 int GetHistValue(int volume, int index);
 void UpdateTransformMatrix(int volume, vtkMatrix4x4 *transMatrix );
- void SetOrigin(float o_x, float o_y, float o_z);
-void  GetOrigin(float o[3]);
+ void SetOrigin(vtkFloatingPointType o_x, vtkFloatingPointType o_y, vtkFloatingPointType o_z);
+void  GetOrigin(vtkFloatingPointType o[3]);
 //BTX
 
   // Description:
@@ -163,10 +163,10 @@ protected:
     double planePointCube[6][3];
     int clipPlaneEnable[6];
     int clipLines;
-    float currentTransformation[3][4][4];
+    vtkFloatingPointType currentTransformation[3][4][4];
     int tMatrixChanged[3];
     int enableVolume [3];
-    float origin[3];
+    vtkFloatingPointType origin[3];
 
   
 private:

@@ -98,7 +98,7 @@ static void vtkImageTensorDiffusion2DExecute(vtkImageTensorDiffusion2D *self,
   T *outPtr0, *outPtr1, *outPtr2;
   int wholeMin0, wholeMax0, wholeMin1, wholeMax1, wholeMin2, wholeMax2;
   float n[9], M[9];
-  float tensor[3][3];
+  vtkFloatingPointType tensor[3][3];
   int * tensorInc;
   int * tensorExt;
   int tenIncX, tenIncY, tenIncZ;
@@ -148,11 +148,11 @@ static void vtkImageTensorDiffusion2DExecute(vtkImageTensorDiffusion2D *self,
     }
 
   // simulation parameters
-  float s = self->GetS();
-  float k = self->GetK();
-  float da = self->GetDa();
-  float db = self->GetDb();
-  float init = self->GetInitialConcentration();
+  vtkFloatingPointType s = self->GetS();
+  vtkFloatingPointType k = self->GetK();
+  vtkFloatingPointType da = self->GetDa();
+  vtkFloatingPointType db = self->GetDb();
+  vtkFloatingPointType init = self->GetInitialConcentration();
 
   inPtr2 = inPtr;
   srcPtr2 = srcPtr;
@@ -173,7 +173,7 @@ static void vtkImageTensorDiffusion2DExecute(vtkImageTensorDiffusion2D *self,
 
       for (idx0 = outMin0; idx0 <= outMax0; ++idx0)
         {
-          float c;
+          vtkFloatingPointType c;
 
           // use result of previous iteration (or input values)
           c = *inPtr0;
@@ -199,7 +199,7 @@ static void vtkImageTensorDiffusion2DExecute(vtkImageTensorDiffusion2D *self,
         ? (float)*(inPtr0+inInc0+inInc1) : c;
           
           // Diffuse neighbors using tensors
-          tensors->GetTuple(index, (float *)tensor);
+          tensors->GetTuple(index, (vtkFloatingPointType *)tensor);
 
           // construct mask M from tensor data
           // Lauren test just image plane first
@@ -227,7 +227,7 @@ static void vtkImageTensorDiffusion2DExecute(vtkImageTensorDiffusion2D *self,
           //              M[1] = M[3] = M[5] = M[7] = 1;
           //              M[4] = -4;
 
-          float laplacian = 0;
+          vtkFloatingPointType laplacian = 0;
 
           // Lauren do we need to scale the input tensors?
           for (int i = 0; i < 9; i++) 
@@ -239,7 +239,7 @@ static void vtkImageTensorDiffusion2DExecute(vtkImageTensorDiffusion2D *self,
           //laplacian *= da;
 
           // update rule 
-          float delta;
+          vtkFloatingPointType delta;
           delta = s*(laplacian);
           *outPtr0 = (T) (c + delta);
 

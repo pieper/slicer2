@@ -3,8 +3,8 @@
 Program:   Visualization Toolkit
 Module:    $RCSfile: vtkPreciseHyperStreamline.cxx,v $
 Language:  C++
-Date:      $Date: 2004/09/17 17:59:21 $
-Version:   $Revision: 1.4 $
+Date:      $Date: 2004/09/17 22:47:42 $
+Version:   $Revision: 1.5 $
 
 Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen 
 All rights reserved.
@@ -30,7 +30,7 @@ PURPOSE.  See the above copyright notice for more information.
 #include "vtkPreciseHyperArray.h"
 #include "vtkPreciseHyperPoint.h"
 
-vtkCxxRevisionMacro(vtkPreciseHyperStreamline, "$Revision: 1.4 $");
+vtkCxxRevisionMacro(vtkPreciseHyperStreamline, "$Revision: 1.5 $");
 vtkStandardNewMacro(vtkPreciseHyperStreamline);
 
 
@@ -402,9 +402,9 @@ void vtkPreciseHyperStreamline::Execute()
     {
       sPtr = this->Streamers[0].InsertNextPreciseHyperPoint();
       for (i=0; i<3; i++)
-    {
-      sPtr->X[i] = this->StartPosition[i];
-    }
+      {
+        sPtr->X[i] = this->StartPosition[i];
+      }
       sPtr->CellId = input->FindCell(this->StartPosition, NULL, (-1), 0.0, 
                      sPtr->SubId, sPtr->P, w);
     }

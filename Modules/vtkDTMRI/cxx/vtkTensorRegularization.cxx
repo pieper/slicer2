@@ -73,14 +73,14 @@ static void vtkTensorRegularizationExecute(vtkTensorRegularization *self,
   // for stepping through data
   vtkDataArray *inTensors;
   vtkDataArray *outTensors;
-  float inT[3][3];
+  vtkFloatingPointType inT[3][3];
   float outT[3][3];
   int ptId;
   // for eigensystem
   float *m[3], w[3], *v[3];
   float m0[3], m1[3], m2[3];
   float v0[3], v1[3], v2[3];
-  float xv[3], yv[3], zv[3];
+  vtkFloatingPointType xv[3], yv[3], zv[3];
   int extractEigenvalues;
   int i,j,k;
 
@@ -133,7 +133,7 @@ static void vtkTensorRegularizationExecute(vtkTensorRegularization *self,
         }
       for (idx0 = 0; idx0 < num0; ++idx0)
         {
-          inTensors->GetTuple(ptId,(float *)inT);
+          inTensors->GetTuple(ptId,(vtkFloatingPointType *)inT);
           //outTensors->GetTuple(ptId,(float *)outT);
 
           // Find eigenvalues for regularization
@@ -267,8 +267,8 @@ static void vtkTensorRegularizationExecute(vtkTensorRegularization *self,
 //              }
 
           
-          float A[3][3];
-          float *evectors[3];
+          vtkFloatingPointType A[3][3];
+          vtkFloatingPointType *evectors[3];
           evectors[0] = xv;
           evectors[1] = yv;
           evectors[2] = zv;
@@ -280,7 +280,7 @@ static void vtkTensorRegularizationExecute(vtkTensorRegularization *self,
               if (w[i] !=0)
             {
               // multiply eigenvector by eigenvalue
-              float wevector[3];
+              vtkFloatingPointType wevector[3];
               for (j=0; j<3; j++)
                 {
                   wevector[j] = evectors[i][j]*w[i];

@@ -214,7 +214,7 @@ protected:
   //BTX
   // Description:
   // Checks all intput image if they have coresponding dimensions 
-  int CheckInputImage(vtkImageData * inData,int DataTypeOrig, float DataSpacingOrig[3], int num);
+  int CheckInputImage(vtkImageData * inData,int DataTypeOrig, vtkFloatingPointType DataSpacingOrig[3], int num);
 
   // Description:
   // Resets the error flag and messages 

@@ -120,10 +120,10 @@ void vtkVectorToOuterProductDualBasis::AllocateInternals()
   if (this->NumberOfInputVectors > 0)
     {
       // allocate space for the vectors (Nx3)
-      this->V = new float*[this->NumberOfInputVectors];
+      this->V = new vtkFloatingPointType*[this->NumberOfInputVectors];
       for (i=0; i< this->NumberOfInputVectors; i++)
         {
-          this->V[i] = new float[VTK_VECTOR_LENGTH];
+          this->V[i] = new vtkFloatingPointType[VTK_VECTOR_LENGTH];
         }
 
 
@@ -232,9 +232,9 @@ void vtkVectorToOuterProductDualBasis::DeallocateInternals()
 
 
 void vtkVectorToOuterProductDualBasis::SetInputVector(int num, 
-						      float vector[VTK_VECTOR_LENGTH]) 
+                              vtkFloatingPointType vector[VTK_VECTOR_LENGTH]) 
 {
-  float length = 0;
+  vtkFloatingPointType length = 0;
 
   if (num > this->NumberOfInputVectors-1)
     {
@@ -248,7 +248,7 @@ void vtkVectorToOuterProductDualBasis::SetInputVector(int num,
   if (this->NumberOfInputVectors < 1) 
     {
       vtkErrorMacro("Need more than 0 vectors, use SetNumberOfInputVectors");
-      return;	
+      return;    
     }
 
   // normalize vector
@@ -265,11 +265,11 @@ void vtkVectorToOuterProductDualBasis::SetInputVector(int num,
 
 }
 
-void vtkVectorToOuterProductDualBasis::SetInputVector(int num, float v0, 
-						      float v1, float v2)
+void vtkVectorToOuterProductDualBasis::SetInputVector(int num, vtkFloatingPointType v0, 
+                              vtkFloatingPointType v1, vtkFloatingPointType v2)
 {
 
-  float *tmp = new float[VTK_VECTOR_LENGTH];
+  vtkFloatingPointType *tmp = new vtkFloatingPointType[VTK_VECTOR_LENGTH];
   tmp[0] = v0;
   tmp[1] = v1;
   tmp[2] = v2;
@@ -283,7 +283,7 @@ void vtkVectorToOuterProductDualBasis::CalculateDualBasis()
 {
   int i,j,k,count,N, result;
   // temp storage
-  float A[VTK_VECTOR_LENGTH][VTK_VECTOR_LENGTH];
+  vtkFloatingPointType A[VTK_VECTOR_LENGTH][VTK_VECTOR_LENGTH];
 
   N =   this->NumberOfInputVectors;
 
@@ -299,18 +299,18 @@ void vtkVectorToOuterProductDualBasis::CalculateDualBasis()
       // copy elements of A into our class arrays
       count = 0;
       for (j = 0; j < VTK_VECTOR_LENGTH; j++)
-	{
-	  for (k = 0; k < VTK_VECTOR_LENGTH; k++)
-	    {
-	      // place in cols of VV
-	      this->VV[count][i] = A[j][k];
+    {
+      for (k = 0; k < VTK_VECTOR_LENGTH; k++)
+        {
+          // place in cols of VV
+          this->VV[count][i] = A[j][k];
 
-	      // also place in rows of VVT (transposed) array
-	      this->VVT[i][count] = A[j][k];	      
-	      //cout << "A[j][k]" << j << " " << k << " " << A[j][k] << endl;
-	      count++;
-	    }
-	}
+          // also place in rows of VVT (transposed) array
+          this->VVT[i][count] = A[j][k];          
+          //cout << "A[j][k]" << j << " " << k << " " << A[j][k] << endl;
+          count++;
+        }
+    }
     }
 
   // multiply VVT by VV to make VVTVV, symmetric invertible matrix

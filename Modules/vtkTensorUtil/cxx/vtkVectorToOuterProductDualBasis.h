@@ -25,12 +25,12 @@ public:
 
   // Description:
   // Set number "num" input vector.
-  void SetInputVector(int num, float vector[3]);
-  void SetInputVector(int num, float v0, float v1, float v2);
+  void SetInputVector(int num, vtkFloatingPointType vector[3]);
+  void SetInputVector(int num, vtkFloatingPointType v0, vtkFloatingPointType v1, vtkFloatingPointType v2);
   
   // Description:
   // Get number "num" input vector.
-  float *GetInputVector(int num)
+  vtkFloatingPointType *GetInputVector(int num)
     {
       return this->V[num];
     };
@@ -58,7 +58,7 @@ protected:
 
   int NumberOfInputVectors;
 
-  float **V;
+  vtkFloatingPointType **V;
   double **VV;
   double **VVT;
 

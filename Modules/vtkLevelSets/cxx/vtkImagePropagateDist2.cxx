@@ -257,7 +257,7 @@ void vtkImagePropagateDist2::IsoSurfDist2D( )
   register float        val0_new,val1_new;
   register int          displace[2];  
   register float        Grad[2];
-  register float        vs[3];
+  register vtkFloatingPointType        vs[3];
   register float        norm=0;
   unsigned char         grad_computed;
   register float*       inPtr;
@@ -375,7 +375,7 @@ void vtkImagePropagateDist2::IsoSurfDist3D( )
   register float        val0_new,val1_new;
   register int          displace[3];  
   register float        Grad[3];
-  register float        vs[3];
+  register vtkFloatingPointType        vs[3];
   register float        norm=0;
   unsigned char         grad_computed;
   register float*       inPtr;
@@ -500,7 +500,7 @@ void vtkImagePropagateDist2::IsoSurfDist3D_band( int first_band, int last_band)
   register float        val0_new,val1_new;
   register int          displace[3];  
   register float        Grad[3];
-  register float        vs[3];
+  register vtkFloatingPointType        vs[3];
   register float        norm=0;
   unsigned char         grad_computed;
   register float*       inPtr0;
