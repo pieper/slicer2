@@ -148,7 +148,7 @@ proc AGInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.5 $} {$Date: 2004/11/24 18:10:58 $}]
+        {$Revision: 1.6 $} {$Date: 2004/11/24 22:06:20 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -698,7 +698,6 @@ proc AGBuildExpertFrame {} {
     TooltipAdd $f.cUseSSDLabel "Press to set/unset using SSD to stop iterations."
  
     eval {label $f.lEstimateBias -text "Bias:"} $Gui(WLA)
-  
     eval {checkbutton $f.cEstimateBias \
         -text  "Estimate Bias" -variable AG(Use_bias) \
         -width 15  -indicatoron 0 } $Gui(WCA)
@@ -706,6 +705,14 @@ proc AGBuildExpertFrame {} {
     TooltipAdd $f.cEstimateBias "Press to set/unset to estimate bias with intensity transformation." 
      eval {label $f.l2DRegistration -text "2D registration:"} $Gui(WLA)
   
+    eval {label $f.lInterpolation -text "Interpolation:"} $Gui(WLA)
+    eval {checkbutton $f.cInterpolation \
+        -text  "Interpolate" -variable AG(Interpolation) \
+        -width 15  -indicatoron 0 } $Gui(WCA)
+    grid $f.lInterpolation $f.cInterpolation  -pady 2 -padx $Gui(pad) -sticky w
+    TooltipAdd $f.cInterpolation "Press to set/unset to estimate bias with intensity transformation." 
+
+
     eval {checkbutton $f.c2DRegistration \
         -text  "2D" -variable AG(2D) \
         -width 15  -indicatoron 0 } $Gui(WCA)
@@ -721,18 +728,18 @@ proc AGBuildExpertFrame {} {
     #TooltipAdd $f.cTensor "Press to set/unset that last 6 channels are tensors."
 
 # Verbose level
-    eval {label $f.lVerbose -text "Verbose"} $Gui(WLA)
-    set AG(VerboseName) "1"
-    eval {menubutton $f.mbVerbose -text "$AG(VerboseName)" -relief raised -bd 2 -width 15 \
-        -menu $f.mbVerbose.m} $Gui(WMBA)
-    eval {menu $f.mbVerbose.m} $Gui(WMA)
-    set AG(mbVerbose) $f.mbVerbose
-    set m $AG(mbVerbose).m
-   foreach v "0 1 2" {
-       $m add command -label $v -command "ModifyOption Verbose {$v}"
-   }
-    TooltipAdd $f.mbVerbose "Choose the Verbose." 
-    grid $f.lVerbose $f.mbVerbose   -pady 2 -padx $Gui(pad) -sticky w
+  #  eval {label $f.lVerbose -text "Verbose"} $Gui(WLA)
+  #  set AG(VerboseName) "1"
+  #  eval {menubutton $f.mbVerbose -text "$AG(VerboseName)" -relief raised -bd 2 -width 15 \
+  #      -menu $f.mbVerbose.m} $Gui(WMBA)
+  #  eval {menu $f.mbVerbose.m} $Gui(WMA)
+  #  set AG(mbVerbose) $f.mbVerbose
+  #  set m $AG(mbVerbose).m
+  # foreach v "0 1 2" {
+  #     $m add command -label $v -command "ModifyOption Verbose {$v}"
+  # }
+  #  TooltipAdd $f.mbVerbose "Choose the Verbose." 
+  #  grid $f.lVerbose $f.mbVerbose   -pady 2 -padx $Gui(pad) -sticky w
 
 # entry type options
 
@@ -1321,7 +1328,7 @@ proc  AGWriteHomogeneous {t ii fileid} {
     DevInfoWindow "Matrix $m generated."
 } 
 
-proc WriteGrid {t ii fileid} {      
+proc AGWriteGrid {t ii fileid} {      
     # Matthan: removed fileid as argument after t ii
     
     set g [$t GetDisplacementGrid]
@@ -1451,10 +1458,10 @@ proc WriteTransform {gt flag it FileName} {
          set int_H [$t IsA vtkHomogeneousTransform]
          set int_G [$t IsA vtkGridTransform]
          if { ($int_H != 0) } {
-         WriteHomogeneous $t $i  $fileid
+         AGWriteHomogeneous $t $i  $fileid
          } 
          if { ($int_G != 0) } {
-         WriteGrid $t $i $fileid
+         AGWriteGrid $t $i $fileid
          }
      }
     }
@@ -1650,9 +1657,6 @@ proc RunAG {} {
   }
 
 
-  AGPreprocess Source Target $AG(InputVolSource)  $AG(InputVolTarget) 
-
-
   # Initial transform stuff
   if {[info exist AG(Transform)]} {
       if {!($AG(Initial_prev))} {
@@ -1773,6 +1777,22 @@ proc RunAG {} {
   }
 
 
+  # if only linear transform, to not change resolution of source
+  set AG(resamplesource) 0
+  if {$AG(Initial_grid)} {
+    set AG(resamplesource) 1
+  }
+  if {![info exist AG(Transform)]} {
+    set n [TransformAG GetNumberOfConcatenatedTransforms]
+    for {set i [expr $n-1]}  {$i >= 0} {set i [expr $i-1]} {
+        set t [TransformAG GetConcatenatedTransform $i]
+        set int_G [$t IsA vtkGridTransform]
+        if { ($int_G != 0) && !$done} {
+            set AG(resamplesource) 1
+        }
+    }
+  }
+  AGPreprocess Source Target $AG(InputVolSource)  $AG(InputVolTarget) 
 
 
   #AG(TestReadingWriting)
@@ -1983,7 +2003,7 @@ proc RunAG {} {
   # Do not delete   AG(Transform), otherwise, it will be wrong. ( delete the just allocated "TransformAG")
   set AG(Transform) TransformAG 
  
-  AGResample Source Target Resampled
+    AGResample Source Target Resampled
 
   if { ($AG(InputVolSource2) == $Volume(idNone)) || ($AG(InputVolTarget2) == $Volume(idNone)) }  {     
       Volume($AG(ResultVol),vol) SetImageData  Resampled
@@ -2182,6 +2202,21 @@ proc AGTransformOneVolume {SourceVolume TargetVolume} {
     catch "Resampled Delete"
     vtkImageData Resampled
 
+    # if only linear transform, to not change resolution of source
+    set AG(resamplesource) 0
+    if {$AG(initial_grid)} {
+      set AG(resamplesource) 1
+    }
+    if {![info exist AG(Transform)]} {
+      set n [TransformAG GetNumberOfConcatenatedTransforms]
+      for {set i [expr $n-1]}  {$i >= 0} {set i [expr $i-1]} {
+          set t [TransformAG GetConcatenatedTransform $i]
+          set int_G [$t IsA vtkGridTransform]
+          if { ($int_G != 0) && !$done} {
+              set AG(resamplesource) 1
+          }
+      }
+    }
     AGPreprocess Source Target $SourceVolume  $TargetVolume
     
     AGResample Source Target Resampled
@@ -2340,7 +2375,7 @@ proc AGResample {Source Target Resampled} {
 
   set None 0
  
-  set ResampleOptions(interp) 1
+  set ResampleOptions(interp) $AG(Interpolation)
   set ResampleOptions(intens) 0
   set ResampleOptions(like) 1
   #set ResampleOptions $None
@@ -2486,8 +2521,9 @@ proc AGNormalize { SourceImage TargetImage NormalizedSource SourceScanOrder Targ
     vtkMatrix4x4 ijkmatrix
     vtkImageReslice reslice
    
-    reslice SetInterpolationModeToCubic
-  
+    if {$AG(Interpolation)} {
+      reslice SetInterpolationModeToCubic
+    }
     catch "xform Delete"
     catch "changeinfo Delete"
     vtkTransform xform
@@ -2697,8 +2733,10 @@ proc AGNormalize { SourceImage TargetImage NormalizedSource SourceScanOrder Targ
 
 
     reslice SetOutputSpacing $outspa_0 $outspa_1 $outspa_2
+    
     reslice SetOutputExtent $outext_0 $outext_1 $outext_2 $outext_3 $outext_4 $outext_5
-#    [reslice GetOutput] SetUpdateExtent $outext_0 $outext_1 $outext_2 $outext_3 $outext_4 $outext_5
+    # [reslice GetOutput] SetUpdateExtent $outext_0 $outext_1 $outext_2 $outext_3 $outext_4 $outext_5
+    
     if {$AG(Debug) == 1} {
         puts " out dim:  $outdim"
         puts " out spacing :  $outspa" 
