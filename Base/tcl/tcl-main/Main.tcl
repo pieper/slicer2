@@ -408,7 +408,7 @@ proc MainBuildGUI {} {
 	# attach it to the main window
 	$f config -menu .menubar
 	# Create more cascade menus
-	foreach m {File Edit Help} {
+	foreach m {File Edit View Help} {
 		set c {menu .menubar.m$m $Gui(SMA)}; eval [subst $c]
 		set Gui(m$m) .menubar.m$m
 		.menubar add cascade -label $m -menu .menubar.m$m
@@ -428,6 +428,16 @@ proc MainBuildGUI {} {
 	$Gui(mFile) add command -label "Close" -command \
 		"MainMenu File Close"
 	$Gui(mFile) add command -label "Exit" -command MainExitProgram
+
+	$Gui(mView) add command -label "Normal" -command \
+		"MainViewerSetMode Normal"
+	$Gui(mView) add command -label "4x256" -command \
+		"MainViewerSetMode Quad256"
+	$Gui(mView) add command -label "4x512" -command \
+		"MainViewerSetMode Quad512"
+	$Gui(mView) add command -label "3D" -command \
+		"MainViewerSetMode 3D"
+
 	$Gui(mHelp) add command -label "Documentation..." -command \
 		"MainMenu Help Documentation"
 	$Gui(mHelp) add command -label "Copyright..." -command \
