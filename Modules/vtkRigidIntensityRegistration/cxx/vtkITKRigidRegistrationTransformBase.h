@@ -168,6 +168,11 @@ public:
   unsigned long GetMTime();
 
   // Description:
+  // Initialize Random Seed
+  // Initialize Random seed for itk. This is for testing
+  void InitRandomSeed(long int i);
+
+  // Description:
   // Test Initialization of the Matrix, which is a pure rotation/translation
   // returns 0 on success. Also calls MIRegistration->TestParamToMatrix.
   int TestMatrixInitialize(vtkMatrix4x4 *aMat);

@@ -80,7 +80,7 @@ vtkITKRigidRegistrationTransformBase::vtkITKRigidRegistrationTransformBase()
 
   // Default Number of MultiResolutionLevels is 1
   this->SetNextLearningRate(0.0001);
-  this->SetNextMaxNumberOfIterations(500);
+  this->SetNextMaxNumberOfIterations(100);
 
   // Default Shrink Factors: No Shrink
   this->SetSourceShrinkFactors(1,1,1);
@@ -289,6 +289,14 @@ void vtkITKRigidRegistrationTransformBase::Initialize(vtkMatrix4x4 *mat)
       this->Matrix->DeepCopy(mat);
     }
 }
+
+//------------------------------------------------------------------------
+
+void vtkITKRigidRegistrationTransformBase::InitRandomSeed(long int i)
+{
+ vnl_sample_reseed(i);
+}
+
 
 //------------------------------------------------------------------------
 
