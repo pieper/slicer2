@@ -99,7 +99,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.78 $} {$Date: 2003/05/27 21:11:50 $}]
+            {$Revision: 1.79 $} {$Date: 2003/06/09 16:25:56 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -811,6 +811,7 @@ proc VolumesManualSetPropertyType {n} {
     set parsing [MainFileParseImageFile $Volume(firstFile) 0]
 
 #    $n SetFilePrefix [file root $Volume(firstFile)]
+    puts "Volumes.tcl: VolumesManualSetPropertyType: setting file prefix to [lindex $parsing 1]"
     $n SetFilePrefix [lindex $parsing 1]
 
     # this check should be obsolete now
@@ -818,6 +819,9 @@ proc VolumesManualSetPropertyType {n} {
         # file root didn't work in this case, trim the right hand numerals
         set tmpPrefix [string trimright $Volume(firstFile) 0123456789]
         # now take the assumed single separater character off of the end as well (works with more than one instance, ie if have --)
+        if {$Module(verbose)} {
+            puts "Volumes.tcl: VolumesManualSetPropertyType: setting file prefix to  [string trimright $tmpPrefix [string index $tmpPrefix end]]"
+        }
         $n SetFilePrefix [string trimright $tmpPrefix [string index $tmpPrefix end]]
     }
 #    $n SetFilePattern $Volume(filePattern)
@@ -1173,8 +1177,14 @@ proc VolumesPropsCancel {} {
 proc VolumesSetFirst {} {
     global Volume Mrml
 
+    # check to see if user cancelled and set filename to empty string
+    if {[file root $Volume(firstFile)] == [file tail $Volume(firstFile)]} {
+        puts "VolumesSetFirst: firstFile not set"
+        return
+    }
     set Volume(name)  [file root [file tail $Volume(firstFile)]]
-        set Volume(DefaultDir) [file dirname [file join $Mrml(dir) $Volume(firstFile)]]
+
+    set Volume(DefaultDir) [file dirname [file join $Mrml(dir) $Volume(firstFile)]]
     # lastNum is an image number
     set Volume(lastNum)  [MainFileFindImageNumber Last \
         [file join $Mrml(dir) $Volume(firstFile)]]
