@@ -1,0 +1,123 @@
+<title>Questions</title>
+
+<ol>
+
+<li class=faq>
+<p class=question>
+Where can I find example data to use with the slicer?
+<p class=answer>
+At the ftp site where you downloaded the slicer (information is under
+"Get the Software"), there is a file called tutorial.tar.  Download
+this, unzip the files with winzip, gunzip, or similar, and open the
+tutorial.xml file in the slicer.  This tutorial contains both
+volumetric data and 3D models.
+</li>
+
+
+<li class=faq>
+<p class=question>
+What kind of medical image file formats does the slicer read?
+<p class=answer>
+It reads raw data (i.e. binary files composed of shorts, unsigned
+chars, etc.)  or DICOM.  For raw data (this includes files with or
+without headers) the slicer expects the images to be numbered as
+follows: I.001, I.002, I.003.  If you have genesis headers, try the
+automatic header-reading option.  See the Tutorial on this website for
+more information.
+</li>
+
+<li class=faq>
+<p class=question>
+How do I make a 3D surface model?
+<p class=answer>
+The first thing to do is to segment the 3D surface that you are
+interested in.  Click the Editor button, then click Effects.  Your
+choices for segmentation here are Draw or Threshold, and also
+morphological operations (erode, dilate).  To Draw, for example, click
+the Draw button and trace the structure in a slice, then hit apply and
+proceed to the next slice.  To Threshold your structure instead, click
+Threshold.
+<p class=answer>
+Once you have made a segmentation (probably its name in the slicer
+will be "Working" unless you changed the default name) then click on
+ModelMaker.  Choose the Working volume to make the model from, and
+then click the button to make the model.
+<p class=answer>
+After a little while, your model will be created and visible in the 3D
+window.  To save the model, use ModelMaker->Save.
+</li>
+
+<li class=faq>
+<p class=question>
+How did you make the image in the introduction to the website, with
+the models and cutaway view into the brain?
+<p class=answer>
+To make models such as the skin and brain in the tutorial, you can use
+two modules on the slicer menu: the Editor followed by the ModelMaker.
+Look at the User's Guide, under Segmentation.
+<p class=answer>
+To display the cut-through, you will need to use the Clipping
+functions in the slicer.  First you can display the models and
+grayscale slices that you are interested in.  Then go to the
+Models->Display tab, and right click on the model that you want
+clipped.  This should be the skin model if you are using the tutorial
+data from the ftp site, for example.  A menu will appear, and you
+should choose Clipping to turn this on.  Now the model will be cut by
+the grayscale slices.  Next go to the Models->Clip tab to adjust which
+side of each grayscale slice should be used to clip the model.
+<p class=answer>
+And finally, to remove the black background in each of the grayscale
+slices, you may use thresholding.  Under the Volumes->Display tab
+there is a Threshold function.  Press the Auto button and the black
+background should disappear.  You may also manually adjust the
+thresholding to get the desired effect.
+</li>
+
+<li class=faq>
+<p class=question>
+What about Linux?
+<p class=answer>
+Slicer works fine under Linux but we aren't providing a binary
+distribution yet.  If you want to make one, go for it!
+</li>
+
+<li class=faq>
+<p class=question>
+Where is the source code if I have downloaded a binary distribution?
+<p class=answer>
+The tcl code is never compiled; it is in slicer/program/tcl-modules,
+slicer/program/tcl-shared, and slicer/program/tcl-main.
+The C++ code is in slicer/vtksrc.
+</li>
+
+<li class=faq>
+<p class=question>
+What if I already have VTK or Tcl/Tk installed on my PC?
+<p class=answer>
+This is unlikely unless you are a developer (if you don't know if
+these are installed, they aren't).  If they are installed in
+WINDOWS/SYSTEM, our installer will replace them.
+</li>
+
+<li class=faq>
+<p class=question>
+How does the slicer start up, and what are all these script files for?
+<p class=answer>
+Check out slicer/README.scripts.
+</li>
+
+<li class=faq>
+<p class=question>
+Where can I get more information or help?
+<p class=answer>
+Post your question to the mailing list(s).  There are two, one for users
+and one for developers: see the User's Guide and the Developer's Guide
+for directions on subscribing.
+</li>
+
+</ol>
+
+
+
+
+
