@@ -30,8 +30,8 @@
 #==========================================================================auto=
 
 if {$argc > 1} {
-    puts "UNIX Usage: vtk Go.tcl <MRML file name without .mrml>"
-    puts "Windows Usage: wish82.exe Go.tcl <MRML file name without .mrml>"
+    puts "UNIX Usage: slicer <MRML file name .xml>"
+    puts "Windows Usage: slicer.bat <MRML file name .xml>"
     exit
 }
 
@@ -41,7 +41,8 @@ set verbose 0
 # Determine Slicer's home directory from the SLICER_HOME environment 
 # variable, or the root directory of this script ($argv0).
 if {[info exists env(SLICER_HOME)] == 0 || $env(SLICER_HOME) == ""} {
-    set prog [file dirname $argv0]
+    # set prog [file dirname $argv0]
+    set prog [file dirname [info script]]
 } else {
     set prog [file join $env(SLICER_HOME) Base/tcl]
 }
@@ -62,8 +63,10 @@ set Path(program) $prog
 
 
 ########################
-# simple splash screen #
-#                      # 
+# simple splash screen 
+#                      
+# do this before loading vtk dlls so people have something
+# to look at during startup
 ########################
  
 toplevel .splash -relief raised -borderwidth 6 -width 500 -height 400 -bg white
@@ -83,9 +86,13 @@ proc raisesplash {} { if {[winfo exists .splash]} {raise .splash; after 100 "aft
 raisesplash
 
 
-source $prog/tkcon.tcl
-wm geometry .tkcon +10-50
-tkcon attach main
+#
+# set statup options - convert backslashes from windows
+# version of SLICER_HOME var into to regular slashes
+#
+regsub -all {\\} $env(SLICER_HOME) / slicer_home
+regsub -all {\\} $env(VTK_SRC_DIR) / vtk_src_dir
+set auto_path "$slicer_home/Base/tcl $slicer_home/Base/Wrapping/Tcl/vtkSlicerBase $vtk_src_dir/Wrapping/Tcl $auto_path"
 
 package require vtkSlicerBase
 
@@ -95,6 +102,13 @@ if { $tcl_platform(platform) == "windows" } {
     # o SetGlobalWarningDisplay 0
     o Delete
 }
+
+#
+# startup with the tkcon
+# 
+source $prog/tkcon.tcl
+wm geometry .tkcon +10-50
+tkcon attach main
 
 
 # Source Tcl scripts
