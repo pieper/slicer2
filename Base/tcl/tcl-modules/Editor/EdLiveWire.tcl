@@ -25,13 +25,16 @@
 #   EdLiveWireInit
 #   EdLiveWireBuildVTK
 #   EdLiveWireBuildGUI
-#   EdLiveWireToggleWeight
+#   EdLiveWireSetActiveEdgeDirection
+#   EdLiveWireToggleWeight feat
 #   EdLiveWireRaiseEdgeImageWin
-#   EdLiveWireUpdateEdgeImageWin
+#   EdLiveWireUpdateEdgeImageWin viewerWidget edgeNum
 #   EdLiveWireWriteEdgeImage
 #   EdLiveWireGetFeatureParams
-#   EdLiveWireSetFeatureParams
+#   EdLiveWireSetFeatureParams edgedir
+#   EdLiveWireSetFeatureParamsForAllFilters
 #   EdLiveWireAdvancedApply
+#   EdLiveWireAdvancedApplyToAll
 #   EdLiveWireStartPipeline
 #   EdLiveWireStopPipeline
 #   EdLiveWireEnter
@@ -46,15 +49,15 @@
 #   EdLiveWireRenderInteractive
 #   EdLiveWireLabel
 #   EdLiveWireClearCurrentSlice
-#   EdLiveWireResetSlice
+#   EdLiveWireResetSlice s
 #   EdLiveWireApply
 #   EdLiveWireStartProgress
 #   EdLiveWireShowProgress
 #   EdLiveWireEndProgress
 #   EdLiveWireSetMode
-#   EdLiveWireReformatSlice
+#   EdLiveWireReformatSlice offset reformat volume
 #   EdLiveWireUseDistanceFromPreviousContour
-#   EdLiveWireGetContourSlice
+#   EdLiveWireGetContourSlice offset
 #   EdLiveWireTrain
 #   EdLiveWireReadFeatureParams
 #   EdLiveWireWriteFeatureParams
@@ -63,7 +66,7 @@
 
 #-------------------------------------------------------------------------------
 # .PROC EdLiveWireInit
-# 
+# Automatically called init procedure
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -74,7 +77,8 @@ proc EdLiveWireInit {} {
     set Ed($e,name)      "LiveWire"
     set Ed($e,initials)  "Lw"
     set Ed($e,desc)      "LiveWire: quick 2D segmentation."
-    set Ed($e,rank)      1
+    # order this editor module will appear in the list
+    set Ed($e,rank)      9
     set Ed($e,procGUI)   EdLiveWireBuildGUI
     set Ed($e,procVTK)   EdLiveWireBuildVTK
     set Ed($e,procEnter) EdLiveWireEnter
@@ -123,7 +127,7 @@ proc EdLiveWireInit {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdLiveWireBuildVTK
-# 
+# build vtk objects used in this module
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -194,7 +198,7 @@ proc EdLiveWireBuildVTK {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdLiveWireBuildGUI
-# 
+# build GUI of module
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -262,8 +266,9 @@ proc EdLiveWireBuildGUI {} {
     set f $Ed(EdLiveWire,frame).fTabbedFrame.fBasic.fContour
     eval {button $f.bContour -text "Stay near last slice's contour" \
 	    -command {puts "this feature is coming soon."}} $Gui(WBA)
-    pack $f.bContour
-    TooltipAdd $f.bContour \
+    # Lauren implement this!
+    #pack $f.bContour
+    #TooltipAdd $f.bContour \
 	    "Keep the LiveWire near the contour you drew on the previous slice."
 
     #-------------------------------------------
@@ -292,11 +297,11 @@ proc EdLiveWireBuildGUI {} {
     #-------------------------------------------
     set f $Ed(EdLiveWire,frame).fTabbedFrame.fBasic.fTest
     
-    eval {button $f.bTest -text "Test quadrature filter input on slice" \
-	    -command "EdLiveWireTestCF"} $Gui(WBA) {-width 30}
-    pack $f.bTest
-    TooltipAdd $f.bTest \
-	    "hello"
+    #eval {button $f.bTest -text "Test quadrature filter input on slice" \
+	    #-command "EdLiveWireTestCF"} $Gui(WBA) {-width 30}
+    #pack $f.bTest
+    #TooltipAdd $f.bTest \
+	    #"hello"
 
     #-------------------------------------------
     # TabbedFrame->Basic->File frame
@@ -540,13 +545,13 @@ proc EdLiveWireBuildGUI {} {
     eval {button $f.bApply -text "Apply" \
 	    -command "EdLiveWireAdvancedApply"} $Gui(WBA) {-width 7}
     TooltipAdd $f.bApply \
-	    "Apply these settings to the current directional filter."
+	    "Apply these settings to the current directional filter in the current slice."
     pack $f.bApply  -side left
 
     eval {button $f.bApplyToAll -text "ApplyToAll" \
 	    -command "EdLiveWireAdvancedApplyToAll"} $Gui(WBA) {-width 10}
     TooltipAdd $f.bApplyToAll \
-	    "Apply these settings to all directional filters (UP, DOWN, etc.)."
+	    "Apply these settings to all directional filters (UP, DOWN, etc.) for the current slice."
     pack $f.bApplyToAll  -side left
 
     eval {button $f.bPopup -text "View Edges" \
@@ -568,12 +573,19 @@ proc EdLiveWireBuildGUI {} {
 	    
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EdLiveWireSetActiveEdgeDirection
+# Called when arrow button is clicked on GUI: displays 
+# the settings for that filter by calling EdLiveWireGetFeatureParams
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EdLiveWireSetActiveEdgeDirection {} {
     global Ed
 
-    puts $Ed(EdLiveWire,activeEdgeDirection)
+    #puts $Ed(EdLiveWire,activeEdgeDirection)
 
-    # refresh values on GUI
+    # refresh values on GUI for this edge direction
     EdLiveWireGetFeatureParams
 }
 
@@ -583,6 +595,7 @@ proc EdLiveWireSetActiveEdgeDirection {} {
 # then to 0 when unpressed.
 # Just for user's convenience.
 # .ARGS
+# int feat the number of the feature
 # .END
 #-------------------------------------------------------------------------------
 proc EdLiveWireToggleWeight {feat} {
@@ -604,7 +617,7 @@ proc EdLiveWireToggleWeight {feat} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdLiveWireRaiseEdgeImageWin
-# Displays "edge image," which shows edge weights (costs)
+# Displays \"edge image,\" which shows edge weights (costs)
 # that are derived from the image.
 # Boundaries of interest should be enhanced in these images.
 # This proc creates the window with GUI and sets inputs for display.
@@ -743,6 +756,8 @@ proc EdLiveWireRaiseEdgeImageWin {} {
 # Display the edge image from the requested filter 
 # (up, down, left, or right edges can be shown).
 # .ARGS
+# widget viewerWidget what to render
+# int edgeNum number of the edge direction
 # .END
 #-------------------------------------------------------------------------------
 proc EdLiveWireUpdateEdgeImageWin {viewerWidget edgeNum} {
@@ -767,7 +782,7 @@ proc EdLiveWireUpdateEdgeImageWin {viewerWidget edgeNum} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdLiveWireWriteEdgeImage
-# 
+# Dump edge image to a file
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -895,6 +910,12 @@ proc EdLiveWireSetFeatureParams {{edgedir ""}} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC EdLiveWireSetFeatureParamsForAllFilters
+# Set the settings from the GUI into all filters for this slice
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EdLiveWireSetFeatureParamsForAllFilters {} {
     global Ed
     
@@ -908,7 +929,7 @@ proc EdLiveWireSetFeatureParamsForAllFilters {} {
 #-------------------------------------------------------------------------------
 # .PROC EdLiveWireAdvancedApply
 # Changes filter settings:
-# calls EdLiveWireSetFeatureParams and makes Slicer update.
+# Applies settings to current filter for current slice.
 # Called using Apply button in advanced tab.
 # .ARGS
 # .END
@@ -923,10 +944,10 @@ proc EdLiveWireAdvancedApply {} {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC EdLiveWireAdvancedApply
+# .PROC EdLiveWireAdvancedApplyToAll
 # Changes filter settings:
-# calls EdLiveWireSetFeatureParams and makes Slicer update.
-# Called using Apply button in advanced tab.
+# Applies settings to all filters for current slice.
+# Called using ApplyToAll button in advanced tab.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -950,7 +971,7 @@ proc EdLiveWireAdvancedApplyToAll {} {
 proc EdLiveWireStartPipeline {} {
     global Ed Slice Gui Volume
 
-    puts "EDLW START pipeline________________"
+    #puts "EDLW START pipeline________________"
     
     set Gui(progressText) "Livewire Initialization"	
 
@@ -980,7 +1001,7 @@ proc EdLiveWireStartPipeline {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdLiveWireStopPipeline
-# 
+# Shut down the pipeline that hooks into the slicer object
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -1218,7 +1239,7 @@ proc EdLiveWireMotion {x y} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdLiveWireB1Motion
-# 
+# used only in training mode (currently unused)
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -1250,7 +1271,7 @@ proc EdLiveWireRenderInteractive {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdLiveWireLabel
-# 
+# Called when label changes.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -1277,7 +1298,7 @@ proc EdLiveWireLabel {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdLiveWireClearCurrentSlice
-# 
+# Clears contour from filters and makes slice redraw
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -1295,8 +1316,9 @@ proc EdLiveWireClearCurrentSlice {} {
 # .PROC EdLiveWireResetSlice
 # Clear the previous contour to start over with new start point.
 # After, must do Slicer Update  and  RenderSlice $s
-# to clear the slice
+# to clear the slice (just call EdLiveWireClearCurrentSlice to do it all)
 # .ARGS
+# int s number of the slice
 # .END
 #-------------------------------------------------------------------------------
 proc EdLiveWireResetSlice {s} {
@@ -1422,7 +1444,7 @@ proc EdLiveWireEndProgress {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdLiveWireSetMode
-# 
+# unused.  from when there was a training mode.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -1479,8 +1501,12 @@ proc EdLiveWireSetMode {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdLiveWireReformatSlice
-# 
+# reformats a slice in a volume in the slicer.
+# THIS SHOULD BE IN C++ CODE SOMEWHERE (vtkMrmlSlicer.cxx)
 # .ARGS
+# int offset slice number, essentially
+# object reformat reformatter to use
+# int volume volume id of the volume (or \"Working\" or \"Original\")
 # .END
 #-------------------------------------------------------------------------------
 proc EdLiveWireReformatSlice {offset realReformat {volume "Working"}} {
@@ -1566,7 +1592,7 @@ proc EdLiveWireReformatSlice {offset realReformat {volume "Working"}} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdLiveWireUseDistanceFromPreviousContour
-# 
+#  not finished.  This will make a distance map for input to livewire
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -1592,8 +1618,9 @@ proc EdLiveWireUseDistanceFromPreviousContour {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdLiveWireGetContourSlice
-# 
+# Grabs a slice in working volume, gets only the desired label
 # .ARGS
+# int offset slice offset
 # .END
 #-------------------------------------------------------------------------------
 proc EdLiveWireGetContourSlice {offset} {
@@ -1663,7 +1690,8 @@ proc EdLiveWireGetContourSlice {offset} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdLiveWireTrain
-# 
+# makes edge filters train on slice(s) with contours in them
+# writes settings to a file
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -1893,7 +1921,7 @@ proc EdLiveWireReadFeatureParams {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdLiveWireWriteFeatureParams
-# 
+# writes settings to a file (Options format)
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -1962,7 +1990,7 @@ proc EdLiveWireWriteFeatureParams {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdLiveWireTestCF
-# 
+# development
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
