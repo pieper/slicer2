@@ -191,7 +191,11 @@ static void vtkITKKLExecute(vtkITKKullbackLeiblerTransform *self,
     }
   ITKTrainingTransform->SetParameters(parameters);
 
+#if defined(__GNUC__)
+# if (__GNUC__ >= 30000)
   KLRegistrator->SetTrainingTransform(ITKTrainingTransform);
+# endif
+#endif
   KLRegistrator->SetTrainingFixedImage(VTKtoITKImage(self->GetTrainingTargetImage(),(RegistratorType::FixedImageType *)(NULL)));
   KLRegistrator->SetTrainingMovingImage(VTKtoITKImage(self->GetTrainingSourceImage(),(RegistratorType::MovingImageType *)(NULL)));
 
