@@ -438,8 +438,10 @@ if { ![file exists $vtkTestFile] } {
     cd $SLICER_LIB/VTK-build
 
     set USE_VTK_ANSI_STDLIB ""
-    if {$MSVC6} {
-    set USE_VTK_ANSI_STDLIB "-DVTK_USE_ANSI_STDLIB:BOOL=ON"
+    if { $isWindows } {
+        if {$MSVC6} {
+            set USE_VTK_ANSI_STDLIB "-DVTK_USE_ANSI_STDLIB:BOOL=ON"
+        }
     }
     
     runcmd $CMAKE \
