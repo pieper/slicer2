@@ -217,7 +217,7 @@ void vtkImageFastSignedChamfer::ExecuteData(vtkDataObject *outData)
   if (tz == 1) {
     coeff_a = 1.;
     //    coeff_b = 1.32;
-    coeff_b = sqrt(2.0);
+    coeff_b = sqrt(2);
     FastSignedChamfer2D();
   }
   else {

@@ -41,8 +41,6 @@
 #ifndef __vtkLevelSets_h
 #define __vtkLevelSets_h
 
-#include <iostream>
-
 #include <vtkLevelSetsConfigure.h>
 #include "vtkImageData.h"
 #include "vtkImageToImageFilter.h"
