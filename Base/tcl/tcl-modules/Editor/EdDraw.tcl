@@ -276,8 +276,6 @@ proc EdDrawUpdate {type} {
 
     set e EdDraw
     
-    puts "got type $type"
-    puts "in mode $Ed($e,mode)"
     switch $type {
         NextMode {
             switch $Ed($e,mode) {
