@@ -40,11 +40,11 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkBVolumeReader.h,v $
   Language:  C++
-  Date:      $Date: 2005/04/04 15:35:08 $
-  Version:   $Revision: 1.3 $
+  Date:      $Date: 2005/04/04 22:18:46 $
+  Version:   $Revision: 1.4 $
 
 =========================================================================*/
-// .NAME vtkBVolumeReader - read an MGH (.mgh) volume file from Freesurfer tools
+// .NAME vtkBVolumeReader - read a binary volume file from Freesurfer tools
 // .SECTION Description
 // .SECTION Caveats
 // .SECTION See Also
@@ -97,12 +97,23 @@ public:
   // Description:
   vtkGetVectorMacro(DataDimensions,int,3);
 
+    // Description:
+  // Reads the header file and gets header information from it.
+  int ReadVolumeHeader();
+    
   // Description: 
   // Other objects make use of these methods but we don't. Left here
   // but not implemented.
   vtkImageData *GetImage(int ImageNumber);
     
   vtkMatrix4x4* GetRegistrationMatrix ();
+
+    vtkGetVectorMacro(RASMatrix,float,12);
+
+    vtkGetVectorMacro(TopL,float,3);
+    vtkGetVectorMacro(TopR,float,3);
+    vtkGetVectorMacro(BottomR,float,3);
+    
 
     vtkGetMacro(ScalarType,int);
 //    vtkGetVectorMacro(DataSpacing,int,3);
@@ -153,14 +164,16 @@ protected:
   float TR;
   float TI;
   float FlipAngle;
-  
+
+    // corner points, values in array are R, A, S
+    float TopL[3];
+    float TopR[3];
+    float BottomR[3];
+    
   // Description:
   // Reads the MGH file and creates an array of values.
   vtkDataArray *ReadVolumeData();
 
-  // Description:
-  // Reads the MGH file and gets header information from it.
-  int ReadVolumeHeader();
 
   void FindStemFromFilePrefixOrFileName();
   void GuessTypeFromStem();

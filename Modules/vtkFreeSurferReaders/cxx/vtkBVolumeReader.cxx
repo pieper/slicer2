@@ -40,8 +40,8 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkBVolumeReader.cxx,v $
   Language:  C++
-  Date:      $Date: 2005/04/04 15:35:45 $
-  Version:   $Revision: 1.5 $
+  Date:      $Date: 2005/04/04 22:18:46 $
+  Version:   $Revision: 1.6 $
 
 =========================================================================*/
 #include <sys/types.h>
@@ -85,6 +85,10 @@ vtkBVolumeReader::vtkBVolumeReader()
   this->ScalarType = 0;
   this->NumTimePoints = 0;
   this->CurTimePoint = 0;
+  this->TopL[0] = this->TopL[1] = this->TopL[2] = 0.0;
+  this->TopR[0] = this->TopR[1] = this->TopR[2] = 0.0;
+  this->BottomR[0] = this->BottomR[1] = this->BottomR[2] = 0.0;
+  
 }
 
 vtkBVolumeReader::~vtkBVolumeReader()
@@ -101,7 +105,7 @@ vtkBVolumeReader::~vtkBVolumeReader()
   if (this->Stem) {
     delete [] this->Stem;
   }
-  if (NULL == this->RegistrationMatrix) {
+  if (this->RegistrationMatrix) {
     this->RegistrationMatrix->Delete();
   }
 }
@@ -390,7 +394,7 @@ vtkDataArray *vtkBVolumeReader::ReadVolumeData()
   return scalars;
 }
 
-// need to test return values. 0 == success, 1 == failure
+// need to test return values. 0 == failure, 1 == success
 int vtkBVolumeReader::ReadVolumeHeader()
 {
   FILE *fp;
@@ -410,7 +414,7 @@ int vtkBVolumeReader::ReadVolumeHeader()
   int error;
   struct stat fileInfo;
 
-      vtkDebugMacro(<<"ReadVolumeHeader\n");
+      vtkDebugMacro(<<"\n###############\nReadVolumeHeader\n");
 
   // If we don't have a stem, file the stem from the file prefix or
   // name we have. If we still don't have one after that, return.
@@ -446,10 +450,12 @@ int vtkBVolumeReader::ReadVolumeHeader()
   // Look for a .bhdr file. If we get one, get information from
   // it. Otherwise just use defaults.
   sprintf( headerFileName, "%s.bhdr", this->Stem );
-  vtkDebugMacro(<<"ReadVolumeHeader: headerFileName = " << headerFileName);
+  vtkDebugMacro(<<"ReadVolumeHeader: trying headerFileName %s.bhdr = " << headerFileName);
   fp = fopen( headerFileName, "r" );
   if( NULL != fp ) {
 
+      vtkDebugMacro(<<"ReadVolumeHeader: sucess opening " << headerFileName);
+      
     while( !feof(fp) ){
 
         // Get a line. Strip newline and skip initial spaces.
@@ -486,23 +492,50 @@ int vtkBVolumeReader::ReadVolumeHeader()
             else if(strncmp(line, "flip_angle: ", 10) == 0)
                 sscanf(line, "%*s %lf", &this->FlipAngle);
             else if(strncmp(line, "top_left_r: ", 12) == 0)
+            {
                 sscanf(line, "%*s %g", &tlr);
+                this->TopL[0] = tlr;
+            }
             else if(strncmp(line, "top_left_a: ", 12) == 0)
+            {
                 sscanf(line, "%*s %g", &tla);
+                this->TopL[1] = tla;
+            }
             else if(strncmp(line, "top_left_s: ", 12) == 0)
+            {
                 sscanf(line, "%*s %g", &tls);
+                this->TopL[2] = tls;
+            }
             else if(strncmp(line, "top_right_r: ", 13) == 0)
+            {
                 sscanf(line, "%*s %g", &trr);
+                this->TopR[0] = trr;
+            }
             else if(strncmp(line, "top_right_a: ", 13) == 0)
+            {
                 sscanf(line, "%*s %g", &tra);
+                this->TopR[1] = tra;
+            }
             else if(strncmp(line, "top_right_s: ", 13) == 0)
+            {
                 sscanf(line, "%*s %g", &trs);
+                this->TopR[2] = trs;
+            }
             else if(strncmp(line, "bottom_right_r: ", 16) == 0)
+            {
                 sscanf(line, "%*s %g", &brr);
+                this->BottomR[0] = brr;
+            }
             else if(strncmp(line, "bottom_right_a: ", 16) == 0)
+            {
                 sscanf(line, "%*s %g", &bra);
+                this->BottomR[1] = bra;
+            }
             else if(strncmp(line, "bottom_right_s: ", 16) == 0)
+            {
                 sscanf(line, "%*s %g", &brs);
+                this->BottomR[2] = brs;
+            }
             else if(strncmp(line, "normal_r: ", 10) == 0)
                 sscanf(line, "%*s %g", &this->RASMatrix[6]);
             else if(strncmp(line, "normal_a: ", 10) == 0)
@@ -534,6 +567,8 @@ int vtkBVolumeReader::ReadVolumeHeader()
     // Try to open the header for slice 0. Read only the number of
     // time points out of it. This should override the value in bhdr
     // if it wants. It's in the file format spec, really.
+    vtkDebugMacro(<<"Trying to open the header for slice 0.");
+    
     sprintf( headerFileName, "%s_000.hdr", this->Stem );
     fp = fopen( headerFileName, "r" );
     if( NULL == fp ) {
@@ -551,7 +586,7 @@ int vtkBVolumeReader::ReadVolumeHeader()
       // dimension, and number of time points.
 
       sprintf( headerFileName, "%s_000.hdr", this->Stem );
-      vtkDebugMacro(<<"\nReadVolumeHeader: no bhdr file, looking for slice hdr files, trying " << headerFileName << " first\n");
+      vtkDebugMacro(<<"\nReadVolumeHeader: no STEM.bhdr file, looking for slice hdr files, trying " << headerFileName << " first\n");
       fp = fopen( headerFileName, "r" );
       if( NULL == fp ) {
           vtkErrorMacro(<< "\nReadVolumeHeader: Couldn't open header for slice 000: " << headerFileName );
@@ -825,11 +860,42 @@ void vtkBVolumeReader::PrintSelf(ostream& os, vtkIndent indent)
 
   vtkVolumeReader::PrintSelf( os, indent );
 
-  os << indent << "File Name: " << this->FileName << endl;
-  os << indent << "Registration File Name: " << this->RegistrationFileName << endl;
-  os << indent << "Slice File Name Extension: " << this->SliceFileNameExtension << endl;
-  os << indent << "Stem: " << this->Stem << endl;
+  if (this->FileName)
+  {
+      os << indent << "File Name: " << this->FileName << endl;
+  }
+  else
+  {
+      os << indent << "File Name: NULL" << endl;
+  }
 
+  if (this->RegistrationFileName)
+  {
+      os << indent << "Registration File Name: " << this->RegistrationFileName << endl;
+  }
+  else
+  {
+      os << indent << "Registration File Name: NULL" << endl;
+  }
+
+  if (this->SliceFileNameExtension)
+  {
+      os << indent << "Slice File Name Extension: " << this->SliceFileNameExtension << endl;
+  }
+  else
+  {
+      os << indent << "Slice File NameExtension: NULL" << endl;
+  }
+  
+  if (this->Stem)
+  {
+      os << indent << "Stem: " << this->Stem << endl;
+  }
+  else
+  {
+      os << indent << "Stem: NULL " << endl;
+  }
+  
   os << indent << "Data Dimensions: (" << this->DataDimensions[0] << ", "
      << this->DataDimensions[1] << ", " << this->DataDimensions[2] << ")\n";
   os << indent << "Data Spacing: (" << this->DataSpacing[0] << ", "
@@ -840,7 +906,14 @@ void vtkBVolumeReader::PrintSelf(ostream& os, vtkIndent indent)
 
   os << indent << "RAS Matrix: " << this->RASMatrix << endl;
   os << indent << "Registration Matrix: " << endl;
-  this->RegistrationMatrix->PrintSelf(os, indent);
-
+  if (this->RegistrationMatrix)
+  {
+      this->RegistrationMatrix->PrintSelf(os, indent);
+  }
+  else
+  {
+      os << indent << "NULL" << endl;
+  }
+  
   os << indent << "Meta data: TE " << this->TE << ", TR " << this->TR << ", TI " << this->TI << ", Flip angle " << this->FlipAngle << endl;
 }

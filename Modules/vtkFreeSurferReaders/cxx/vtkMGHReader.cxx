@@ -40,8 +40,8 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkMGHReader.cxx,v $
   Language:  C++
-  Date:      $Date: 2005/04/04 15:35:46 $
-  Version:   $Revision: 1.6 $
+  Date:      $Date: 2005/04/04 22:18:46 $
+  Version:   $Revision: 1.7 $
 
 =========================================================================*/
 #include "vtkMGHReader.h"
@@ -424,7 +424,14 @@ void vtkMGHReader::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "Scalar type: " << this->ScalarType << endl;
   os << indent << "Number of Frames: " << this->NumFrames << endl;
   os << indent << "Current Frame: " << this->CurFrame << endl;
-  os << indent << "File name: " << this->FileName << endl;
+  if (this->FileName)
+  {
+      os << indent << "File name: " << this->FileName << endl;
+  }
+  else
+  {
+      os << indent << "File name: NULL" << endl;
+  }
   os << indent << "RAS to IJK matrix: " << endl;
   os << indent << "\tx_r " << this->RASMatrix[0] << "\t\tx_a " << this->RASMatrix[1] << "\t\tx_s " << this->RASMatrix[2] << endl;
   os << indent << "\ty_r " << this->RASMatrix[3] << "\t\ty_a " << this->RASMatrix[4] << "\t\ty_s " << this->RASMatrix[5] << endl;
