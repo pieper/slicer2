@@ -85,7 +85,7 @@ proc ViewInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.37 $} {$Date: 2003/03/19 19:16:35 $}]
+        {$Revision: 1.38 $} {$Date: 2003/04/09 04:13:26 $}]
 }
 
 #-------------------------------------------------------------------------------
@@ -322,17 +322,18 @@ light parameters (e.g., overall intensity) to be adjusted.
     pack $f.rbLK -side top -anchor w -padx $Gui(pad) -pady $Gui(pad)
     pack $f.rbHL -side top -anchor w -padx $Gui(pad) -pady $Gui(pad)
 
+    # main light
     set f $fLights.fLightIntensity
-     eval {scale $f.sIntensity -from 0.0 -to 1.5 -showvalue true \
+    eval {scale $f.sIntensity -from 0.0 -to 1.5 -showvalue true \
                -label "Main Light Intensity" -tickinterval 0.25 \
                -variable View(LightIntensity) -resolution 0.05 -orient horizontal \
                -command ViewUpdateLightIntensity} $Gui(WSA)
 
     TooltipAdd $f.sIntensity "Set the overall lighting intensity of the scene."
-
     pack $f.sIntensity -fill x -side top -padx $Gui(pad) -pady $Gui(pad) -expand true
 
-     eval {scale $f.sFillRatio -from 0.5 -to 7.5 -showvalue true \
+    # fill light
+    eval {scale $f.sFillRatio -from 0.5 -to 7.5 -showvalue true \
                -label "Fill Ratio" -tickinterval 2.0 \
                -variable View(LightKeyToFillRatio) -resolution 0.05 -orient horizontal \
                -command ViewUpdateLightIntensity} $Gui(WSA)
@@ -342,7 +343,8 @@ light parameters (e.g., overall intensity) to be adjusted.
     TooltipAdd $f.sFillRatio "Set the ratio of the main light to fill light from below."
     pack $f.sFillRatio -fill x -side top -padx $Gui(pad) -pady $Gui(pad) -expand true
 
-     eval {scale $f.sHeadRatio -from 0.5 -to 7.5 -showvalue true \
+    # headlight
+    eval {scale $f.sHeadRatio -from 0.5 -to 7.5 -showvalue true \
                -label "Headlight Ratio" -tickinterval 2.0 \
                -variable View(LightKeyToHeadRatio) -resolution 0.05 -orient horizontal \
                -command ViewUpdateLightIntensity} $Gui(WSA)
@@ -351,6 +353,19 @@ light parameters (e.g., overall intensity) to be adjusted.
 
     TooltipAdd $f.sHeadRatio "Set the ratio of the main light to the camera's headlight."
     pack $f.sHeadRatio -fill x -side top -padx $Gui(pad) -pady $Gui(pad) -expand true
+
+    # back light
+    if {$View(LightKitHasBackLights)} {
+       eval {scale $f.sBackRatio -from 0.5 -to 7.5 -showvalue true \
+                  -label "Back Light Ratio" -tickinterval 2.0 \
+                  -variable View(LightKeyToBackRatio) -resolution 0.05 -orient horizontal \
+                  -command ViewUpdateLightIntensity} $Gui(WSA)
+
+       set View(BackRatioScale) $f.sBackRatio    
+
+       TooltipAdd $f.sBackRatio "Set the ratio of the main light to the camera's back lights."
+       pack $f.sBackRatio -fill x -side top -padx $Gui(pad) -pady $Gui(pad) -expand true
+    }
 
 }
 
@@ -376,6 +391,7 @@ proc ViewBuildLightsVTK {} {
     set View(LightIntensity) 0.7
     set View(LightKeyToFillRatio) 2
     set View(LightKeyToHeadRatio) 1.75
+    set View(LightKeyToBackRatio) 3.75
 
     ViewSwitchLightKit 1
     set View(LightModeIndicator) "LightKit"
@@ -410,6 +426,7 @@ proc ViewCreateLightKit {} {
     global View
     vtkLightKit ViewLightKit
     set View(LightKit) ViewLightKit
+    set View(LightKitHasBackLights) [expr {! [catch {ViewLightKit cGetBackLightWarmth}]}]
 }
 
 #-------------------------------------------------------------------------------
@@ -478,15 +495,24 @@ proc ViewSwitchLightKit {{state ""}} {
         catch {
             $View(HeadRatioScale) config -state disabled
             $View(FillRatioScale) config -state disabled
+            if {$View(LightKitHasBackLights)} {
+                $View(BackRatioScale) config -state disabled
+            }
         }
     } else {
         catch {
             $View(HeadRatioScale) config -state normal
             $View(FillRatioScale) config -state normal
+            if {$View(LightKitHasBackLights)} {
+                $View(BackRatioScale) config -state normal              
+            }
         }
         $View(LightKit) SetKeyLightIntensity $View(LightIntensity)
         $View(LightKit) SetKeyToFillRatio $View(LightKeyToFillRatio)
         $View(LightKit) SetKeyToHeadRatio $View(LightKeyToHeadRatio)
+        if {$View(LightKitHasBackLights)} {
+            $View(LightKit) SetKeyToBackRatio $View(LightKeyToBackRatio)
+        }
 
     }   
     Render3D
