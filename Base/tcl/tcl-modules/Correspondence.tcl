@@ -131,7 +131,7 @@ proc CorrespondenceInit {} {
 	#   appropriate revision number and date when the module is checked in.
 	#   
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.5 $} {$Date: 2002/01/31 21:19:39 $}]
+		{$Revision: 1.1 $} {$Date: 2002/01/31 21:20:43 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
