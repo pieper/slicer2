@@ -83,7 +83,7 @@ proc MainTensorInit {} {
     # Set version info
     #-------------------------------------------
     lappend Module(versions) [ParseCVSInfo MainTensor \
-        {$Revision: 1.8 $} {$Date: 2002/03/21 23:05:23 $}]
+        {$Revision: 1.9 $} {$Date: 2002/05/27 21:04:33 $}]
 
 
     # List variables that shadow the active MRML node 
@@ -251,7 +251,3 @@ proc MainTensorGetAllVariablesFromNode {n} {
 }
 
 
-##################################################################
-##  INTERACTIVE VISUALIZATION SECTION
-##  Lauren should this be here or in the module or in a vtk class?
-##################################################################
