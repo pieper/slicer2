@@ -166,6 +166,11 @@ if { $GENLIB(clean) } {
         if { [file exists $SLICER_HOME/isPatched] } {
             runcmd rm $SLICER_HOME/isPatched
         }
+    } elseif { $isWindows }  {
+        file delete -force $SLICER_LIB/VTK
+        file delete -force $SLICER_LIB/VTK-build
+        file delete -force $SLICER_LIB/Insight
+        file delete -force $SLICER_LIB/Insight-build
     } else {
         file delete -force $SLICER_LIB
     }
@@ -200,7 +205,7 @@ switch $tcl_platform(os) {
         set itclTestFile $TCL_LIB_DIR/itcl3.2/itcl32.dll
         set iwidgetsTestFile $TCL_LIB_DIR/iwidgets4.0.2/iwidgets.tcl
         set bltTestFile $TCL_BIN_DIR/BLT24.dll
-        set gslTestFile $GSL_LIB_DIR/gsl.dll
+        set gslTestFile $GSL_LIB_DIR/gsl.lib
         set vtkTestFile $VTK_DIR/bin/$VTK_BUILD_TYPE/vtk.exe
         set vtkTclLib $TCL_LIB_DIR/tcl84.lib
         set vtkTkLib $TCL_LIB_DIR/tk84.lib
@@ -240,7 +245,7 @@ if { ![file exists $CMAKE] } {
     } else {
         cd $CMAKE_PATH
         runcmd $SLICER_LIB/CMake/bootstrap
-        runcmd make
+        runcmd $::MAKE
     }
 }
 
@@ -276,8 +281,8 @@ if { ![file exists $tclTestFile] } {
         cd $SLICER_LIB/tcl/tcl/unix
 
         runcmd ./configure --enable-threads --prefix=$SLICER_LIB/tcl-build
-        runcmd make
-        runcmd make install
+        runcmd $::MAKE
+        runcmd $::MAKE install
     }
 }
 
@@ -315,8 +320,8 @@ if { ![file exists $tkTestFile] } {
         cd $SLICER_LIB/tcl/tk/unix
 
         runcmd ./configure --with-tcl=$SLICER_LIB/tcl-build/lib --prefix=$SLICER_LIB/tcl-build
-        runcmd make
-        runcmd make install
+        runcmd $::MAKE
+        runcmd $::MAKE install
     }
 }
 
@@ -337,11 +342,11 @@ if { ![file exists $itclTestFile] } {
         if { $isDarwin } {
             # need to run ranlib separately on lib for Darwin
             # file is created and ranlib is needed inside make all
-            catch "runcmd make all"
+            catch "runcmd $::MAKE all"
             runcmd ranlib ../incrTcl/itcl/libitclstub3.2.a
         }
-        runcmd make all
-        runcmd make install
+        runcmd $::MAKE all
+        runcmd $::MAKE install
     }
 }
 
@@ -358,8 +363,8 @@ if { ![file exists $iwidgetsTestFile] } {
         cd $SLICER_LIB/tcl/iwidgets
         runcmd ../iwidgets/configure --with-tcl=$SLICER_LIB/tcl-build/lib --with-tk=$SLICER_LIB/tcl-build/lib --with-itcl=$SLICER_LIB/tcl/incrTcl --prefix=$SLICER_LIB/tcl-build
         # make all doesn't do anything... 
-        runcmd make all
-        runcmd make install
+        runcmd $::MAKE all
+        runcmd $::MAKE install
     }
 }
 
@@ -380,13 +385,13 @@ if { ![file exists $bltTestFile] } {
         # this fails, but gets blt far enough along to build what is needed 
         cd $SLICER_LIB/tcl/blt
         runcmd ./configure --with-tcl=$SLICER_LIB/tcl-build --with-tk=$SLICER_LIB/tcl-build --prefix=$SLICER_LIB/tcl-build 
-        catch "runcmd make"
-        catch "runcmd make install"
+        catch "runcmd $::MAKE"
+        catch "runcmd $::MAKE install"
     } else {
         cd $SLICER_LIB/tcl/blt
         runcmd ./configure --with-tcl=$SLICER_LIB/tcl-build --with-tk=$SLICER_LIB/tcl-build --prefix=$SLICER_LIB/tcl-build 
-        runcmd make
-        runcmd make install
+        runcmd $::MAKE
+        runcmd $::MAKE install
     }
 }
 
@@ -418,8 +423,8 @@ if { ![file exists $gslTestFile] } {
         }   
         runcmd ./configure --prefix=$SLICER_LIB/gsl
         runcmd touch doc/version-ref.texi
-        runcmd make
-        runcmd make install
+        runcmd $::MAKE
+        runcmd $::MAKE install
     }
 }
 
@@ -458,15 +463,15 @@ if { ![file exists $vtkTestFile] } {
 
     if { $isDarwin } {
         # Darwin will fail on the first make, then succeed on the second
-        catch "runcmd make -j4"
+        catch "runcmd $::MAKE -j4"
         set OpenGLString "-framework OpenGL -lgl"
         runcmd $CMAKE -G$GENERATOR -DOPENGL_gl_LIBRARY:STRING=$OpenGLString -DVTK_USE_SYSTEM_ZLIB:BOOL=ON ../VTK
     }
     
     if { $isWindows } {
-        runcmd devenv VTK.SLN /build  $::VTK_BUILD_TYPE
+        runcmd $::MAKE VTK.SLN /build  $::VTK_BUILD_TYPE
     } else {
-        runcmd make -j4
+        runcmd $::MAKE
     }
 }
 
@@ -493,9 +498,9 @@ if { ![file exists $itkTestFile] } {
         ../Insight
 
     if {$isWindows} {
-        runcmd devenv ITK.SLN /build  $::VTK_BUILD_TYPE
+        runcmd $::MAKE ITK.SLN /build  $::VTK_BUILD_TYPE
     } else {
-        runcmd make -j4
+        runcmd $::MAKE 
     }
 }
 

@@ -58,6 +58,7 @@ ${VTKAG_SOURCE_DIR}
 #/projects/lmi/local/extpkg/gsl-1.5/include
 	${GSL_INC_DIR}
 	${GSL_INC_DIR}/gsl
+	${GSL_SRC_DIR}
 )
 
 #### if you code depends on SlicerBase, uncomment the 

@@ -59,7 +59,8 @@ set ::TCL_LIB_DIR $::SLICER_LIB/tcl-build/lib
 set ::TCL_INCLUDE_DIR $::SLICER_LIB/tcl-build/include
 set ::CMAKE_PATH $::SLICER_LIB/CMake-build
 set ::GSL_LIB_DIR $::SLICER_LIB/gsl/lib
-set ::GSL_INC_DIR $::SLICER_LIB/gsl-build/gsl
+set ::GSL_INC_DIR $::SLICER_LIB/gsl/include
+set ::GSL_SRC_DIR $::SLICER_LIB/gsl-build/gsl
 
 ## system dependent variables
 
@@ -95,16 +96,37 @@ switch $tcl_platform(os) {
         # different windows machines say different things, so assume
         # that if it doesn't match above it must be windows
         # (VC7 is Visual C++ 7.0, also known as the .NET version)
-        # set VTK_BUILD_TYPE RelWithDebInfo
-        set ::VTK_BUILD_TYPE Release
-        # set ::VTK_BUILD_TYPE Debug
+
+        #
+        ### Set your peferred build type: 
+        #
+
+        #set ::VTK_BUILD_TYPE RelWithDebInfo ;# good if you have the full (expensive) compiler
+        #set ::VTK_BUILD_TYPE Release  ;# faster, but no debugging
+        set ::VTK_BUILD_TYPE Debug  ;# a good default
+
         set ::env(VTK_BUILD_TYPE) $VTK_BUILD_TYPE
+
         set ::VTKSLICERBASE_BUILD_LIB $::SLICER_HOME/Base/builds/$::env(BUILD)/bin/$::VTK_BUILD_TYPE/vtkSlicerBase.lib
         set ::VTKSLICERBASE_BUILD_TCL_LIB $::SLICER_HOME/Base/builds/$::env(BUILD)/bin/$::VTK_BUILD_TYPE/vtkSlicerBaseTCL.lib
-        set ::GENERATOR "Visual Studio 7" 
-        set ::COMPILER "cl"
+
         set ::CMAKE $::CMAKE_PATH/bin/cmake.exe
-        set ::MAKE "devenv /$::VTK_BUILD_TYPE"
+
+        #
+        ## match this to the version of the compiler you have:
+        #
+
+        ## for Visual Studio 7:
+        set ::GENERATOR "Visual Studio 7" 
+        set ::MAKE "c:/Program\ Files/Microsoft\ Visual\ Studio\ .NET/Common7/IDE/devenv.exe"
+        set ::COMPILER_PATH "c:/Program\ Files/Microsoft\ Visual\ Studio\ .NET/Common7/Vc7/bin"
+
+        ## for Visual Studio 7.1:
+        #set ::GENERATOR "Visual Studio 7 .NET 2003" 
+        #set ::MAKE "c:/Program\ Files/Microsoft\ Visual\ Studio\ .NET 2003/Common7/IDE/devenv.exe"
+        #set ::MAKE "c:/Program\ Files/Microsoft\ Visual\ Studio\ .NET 2003/Common7/Vc7/bin"
+
+        set ::COMPILER "cl"
 
     }
 }

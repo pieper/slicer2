@@ -50,7 +50,7 @@ if { [file exists $localvarsfile] } {
 ##
 ## All arguments do nothing by default
 ##
-foreach var "VTK_ARG1 VTK_ARG2 VTK_ARG3 VTK_ARG4 VTK_ARG5 VTK_ARG6 VTK_ARG7 VTK_ARG8 VTK_ARG9 VTK_ARG_CONFIGURATIONS SLICER_ARG1 SLICER_ARG2 SLICER_ARG3 SLICER_ARG4 SLICER_ARG5 SLICER_ARG6" {
+foreach var "VTK_ARG1 VTK_ARG2 VTK_ARG3 VTK_ARG4 VTK_ARG5 VTK_ARG6 VTK_ARG7 VTK_ARG8 VTK_ARG9 VTK_ARG_CONFIGURATIONS SLICER_ARG1 SLICER_ARG2 SLICER_ARG3 SLICER_ARG4 SLICER_ARG5 SLICER_ARG6 SLICER_ARG7" {
     set $var "-DDUMMY:BOOL=ON"
 }
 
@@ -60,6 +60,7 @@ set SLICER_ARG3 "-DVTKSLICERBASE_BUILD_LIB:PATH=$VTKSLICERBASE_BUILD_LIB"
 set SLICER_ARG4 "-DVTKSLICERBASE_BUILD_TCL_LIB:PATH=$VTKSLICERBASE_BUILD_TCL_LIB"
 set SLICER_ARG5 "-DGSL_LIB_DIR:PATH=$::GSL_LIB_DIR"
 set SLICER_ARG6 "-DGSL_INC_DIR:PATH=$::GSL_INC_DIR"
+set SLICER_ARG7 "-DGSL_SRC_DIR:PATH=$::GSL_SRC_DIR"
 
 # use an already built version of vtk
 set VTK_ARG1 "-DUSE_BUILT_VTK:BOOL=ON"
@@ -272,7 +273,7 @@ foreach target $TARGETS {
             $VTK_ARG1 $VTK_ARG2 $VTK_ARG3 $VTK_ARG4 $VTK_ARG5 \
             $VTK_ARG6 $VTK_ARG7 $VTK_ARG8 $VTK_ARG9 $VTK_ARG_VERBOSE $VTK_ARG_DEBUG $VTK_ARG_ENDIAN \
             $VTK_ARG_CONFIGURATIONS \
-            $SLICER_ARG1 $SLICER_ARG2 $SLICER_ARG3 $SLICER_ARG4 $SLICER_ARG5 $SLICER_ARG6] 
+            $SLICER_ARG1 $SLICER_ARG2 $SLICER_ARG3 $SLICER_ARG4 $SLICER_ARG5 $SLICER_ARG6 $SLICER_ARG7] 
 
         if {[file exists [file join $target cmaker_local.tcl]]} {
             # Define SLICER_MODULE_ARG in cmaker_local.tcl
@@ -292,10 +293,10 @@ foreach target $TARGETS {
         "SunOS" -
         "Darwin" -
         "Linux" {
-            puts "running: $MAKE"
+            puts "running: $::MAKE"
 
             # print the results line by line to provide feedback during long builds
-            set fp [open "| $MAKE |& cat" "r"]
+            set fp [open "| $::MAKE |& cat" "r"]
             while { ![eof $fp] } {
                 gets $fp line
                 puts $line
@@ -311,11 +312,10 @@ foreach target $TARGETS {
             } else {
                 set sln [string toupper [file tail $target]].sln
             }
-            puts "running: devenv $sln /build $::VTK_BUILD_TYPE"
+            puts "running: $::MAKE $sln /build $::VTK_BUILD_TYPE"
 
             # no output from devenv so just go ahead and run it with no loop
-            set ret [catch {exec devenv $sln /build $::VTK_BUILD_TYPE} res]
-            # set ret [catch {exec "c:/Program Files/Microsoft Visual Studio .NET/Common7/IDE/devenv" $sln /build $::VTK_BUILD_TYPE} res]
+            set ret [catch {exec $::MAKE $sln /build $::VTK_BUILD_TYPE} res]
 
             puts $res
             
