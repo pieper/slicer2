@@ -300,7 +300,9 @@ foreach a $argv {
     lappend newargv $a
 }
 set argv $newargv
-regsub -all "{|}" $argv "" argv
+#regsub -all "{|}" $argv "" argv
+regsub -all "{|}" $argv "\\\"" argv
+
 
 switch $env(BUILD) {
     "solaris8" -
