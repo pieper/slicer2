@@ -335,6 +335,7 @@ if {$::env(BUILD) == $solaris ||
         set fp [open "| csh -c \"$::env(VTK_DIR)/bin/vtk $mainscript $argv \" |& cat" r]
     } elseif {$::env(BUILD) == $linux} {
         regsub -all "{|}" $argv "\\\"" argv
+        update
         eval exec "$::env(VTK_DIR)/bin/vtk $mainscript $argv"
     } elseif {$::env(BUILD) == $windows} {
         # put slicer in the background on windows so it won't be "Not Responding" in
