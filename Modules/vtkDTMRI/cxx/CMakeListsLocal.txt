@@ -36,7 +36,7 @@ SET ( LOCAL_NO_WRAP_SRCS
 
 # You can add additional include paths here
 INCLUDE_DIRECTORIES(
-${VTKMYCLASS_SOURCE_DIR}/include
+#${VTKMYCLASS_SOURCE_DIR}/include
 )
 
 #### if you code depends on SlicerBase, uncomment the 
