@@ -72,7 +72,7 @@ proc MainVolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.71 $} {$Date: 2004/03/16 23:55:10 $}]
+    {$Revision: 1.72 $} {$Date: 2004/04/16 21:38:23 $}]
 
     set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -189,8 +189,21 @@ proc MainVolumesUpdateMRML {} {
     foreach m $Volume(mActiveList) {
         $m delete 0 end
         foreach v $Volume(idList) {
+            set volnum [$m index end]
+            set colbreak 0
+            if {$volnum != "none"} {
+                # first pass through, get the end index returned as none, 
+                # second pass get 0. Have to bump it up one to get proper
+                # column breaking
+                incr volnum
+                # every 40 entries, start a new column in the volumes list
+                if {[expr fmod($volnum,40)] == 0} {
+                    set colbreak 1
+                }
+            }
             $m add command -label [Volume($v,node) GetName] \
-                -command "MainVolumesSetActive $v"
+                -command "MainVolumesSetActive $v" \
+                -columnbreak $colbreak
         }
     }
 
