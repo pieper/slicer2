@@ -147,7 +147,7 @@ proc AGInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1 $} {$Date: 2003/10/01 21:19:51 $}]
+        {$Revision: 1.2 $} {$Date: 2003/10/03 17:13:55 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -874,33 +874,33 @@ proc AGCheckErrors {} {
     global AG Volume
 
     if {  ($AG(InputVolSource) == $Volume(idNone)) || \
-	    ($AG(InputVolTarget) == $Volume(idNone)) || \
-	    ($AG(ResultVol)   == $Volume(idNone))}  {
-	DevErrorWindow "You cannot use Volume \"None\" for input or output"
-	return 1
+        ($AG(InputVolTarget) == $Volume(idNone)) || \
+        ($AG(ResultVol)   == $Volume(idNone))}  {
+    DevErrorWindow "You cannot use Volume \"None\" for input or output"
+    return 1
     }
 
     if {  ($AG(InputVolSource) == $AG(ResultVol)) || \
-	    ($AG(InputVolTarget) == $AG(ResultVol)) || \
-	    ($AG(InputVolMask)   == $AG(ResultVol))}  {
+        ($AG(InputVolTarget) == $AG(ResultVol)) || \
+        ($AG(InputVolMask)   == $AG(ResultVol))}  {
         DevErrorWindow "You cannot use one of the input Volumes as the result Volume"
         return 1
 
     }
 
-    if { ($AG(InputVolSource2) != $Volume(idNone)) && ($AG(InputVolTarget2) != $Volume(idNone)) }  {	
-	if { ($AG(ResultVol2)   == $Volume(idNone))} {    
-	    DevErrorWindow "You cannot use Volume \"None\" for input or output"
-	    return 1
-	}
+    if { ($AG(InputVolSource2) != $Volume(idNone)) && ($AG(InputVolTarget2) != $Volume(idNone)) }  {    
+    if { ($AG(ResultVol2)   == $Volume(idNone))} {    
+        DevErrorWindow "You cannot use Volume \"None\" for input or output"
+        return 1
+    }
 
-	if {  ($AG(InputVolSource2) == $AG(ResultVol)) || ($AG(InputVolSource2) == $AG(ResultVol2)) || \
-		 ($AG(InputVolTarget2) == $AG(ResultVol)) || ($AG(InputVolTarget2) == $AG(ResultVol2)) ||\
-		 ($AG(InputVolSource) == $AG(ResultVol2)) || ($AG(InputVolTarget) == $AG(ResultVol2)) || \
-		 ($AG(InputVolMask)   == $AG(ResultVol2))}  {
-	     DevErrorWindow "You cannot use one of the input Volumes as the result Volume"
-	     return 1
-	 }
+    if {  ($AG(InputVolSource2) == $AG(ResultVol)) || ($AG(InputVolSource2) == $AG(ResultVol2)) || \
+         ($AG(InputVolTarget2) == $AG(ResultVol)) || ($AG(InputVolTarget2) == $AG(ResultVol2)) ||\
+         ($AG(InputVolSource) == $AG(ResultVol2)) || ($AG(InputVolTarget) == $AG(ResultVol2)) || \
+         ($AG(InputVolMask)   == $AG(ResultVol2))}  {
+         DevErrorWindow "You cannot use one of the input Volumes as the result Volume"
+         return 1
+     }
      }
 
      return 0
@@ -929,20 +929,20 @@ proc AGPrepareResultVolume {}  {
         set node [Volume($v2,vol) GetMrmlNode]
         Mrml(dataTree) RemoveItem $node 
         set nodeBefore [Volume($v1,vol) GetMrmlNode]
-	Mrml(dataTree) InsertAfterItem $nodeBefore $node
-	set AG(ResultVol) $v2
-	#VolumesUpdateMRML
+    Mrml(dataTree) InsertAfterItem $nodeBefore $node
+    set AG(ResultVol) $v2
+    #VolumesUpdateMRML
         MainUpdateMRML
-	AGUpdateGUI
-	incr AG(CountNewResults)
+    AGUpdateGUI
+    incr AG(CountNewResults)
 
     } else { 
-	
+    
         # Are We Overwriting a volume?
         # If so, let's ask. If no, return.
-	
+    
         set v2name  [Volume($v2,node) GetName]
-	set continue [DevOKCancel "Overwrite $v2name?"]
+    set continue [DevOKCancel "Overwrite $v2name?"]
           
         if {$continue == "cancel"} { return 1 }
         # They say it is OK, so overwrite!
@@ -953,28 +953,28 @@ proc AGPrepareResultVolume {}  {
 
     if { ($AG(InputVolSource2) != $Volume(idNone)) && ($AG(InputVolTarget2) != $Volume(idNone)) } {
 
-	if {($v2_2 == -5)} {
-	    
-	    set v1_2 $AG(InputVolTarget2)      
-	    set v2_2 [DevCreateNewCopiedVolume $v1_2 ""  "AGResult2_$AG(CountNewResults)" ]
-	    set node [Volume($v2_2,vol) GetMrmlNode]
-	    Mrml(dataTree) RemoveItem $node 
-	    set nodeBefore [Volume($v1_2,vol) GetMrmlNode]
-	    Mrml(dataTree) InsertAfterItem $nodeBefore $node
-	    set AG(ResultVol2) $v2_2
-	    #VolumesUpdateMRML
-	    MainUpdateMRML
+    if {($v2_2 == -5)} {
+        
+        set v1_2 $AG(InputVolTarget2)      
+        set v2_2 [DevCreateNewCopiedVolume $v1_2 ""  "AGResult2_$AG(CountNewResults)" ]
+        set node [Volume($v2_2,vol) GetMrmlNode]
+        Mrml(dataTree) RemoveItem $node 
+        set nodeBefore [Volume($v1_2,vol) GetMrmlNode]
+        Mrml(dataTree) InsertAfterItem $nodeBefore $node
+        set AG(ResultVol2) $v2_2
+        #VolumesUpdateMRML
+        MainUpdateMRML
 
-	    
-	} else {
-	    
-	    set v2name_2  [Volume($v2_2,node) GetName]
-	    set continue [DevOKCancel "Overwrite $v2name_2?"]
-	    
-	    if {$continue == "cancel"} { return 1 }
-	    # They say it is OK, so overwrite
-	    Volume($v2_2,node) Copy Volume($AG(InputVolTarget2),node)
-	}
+        
+    } else {
+        
+        set v2name_2  [Volume($v2_2,node) GetName]
+        set continue [DevOKCancel "Overwrite $v2name_2?"]
+        
+        if {$continue == "cancel"} { return 1 }
+        # They say it is OK, so overwrite
+        Volume($v2_2,node) Copy Volume($AG(InputVolTarget2),node)
+    }
     } 
     
     return 0
@@ -991,7 +991,7 @@ proc AGWritevtkImageData {image filename} {
     catch "writer Delete"
     vtkStructuredPointsWriter  writer
     if {$AG(Debug) == 1} {
-	writer DebugOn
+    writer DebugOn
     }
     writer SetFileTypeToBinary
     writer SetInput  $image
@@ -1142,13 +1142,13 @@ proc  WriteHomogeneous {t ii fileid} {
     $trans Concatenate mat_copy
    
     for {set  i  0}  {$i < 4} {incr i} {
-	for {set  j  0}  {$j < 4} {incr j} {
-	    set one_element [$mat GetElement $i $j]
-	#    $matout SetElement $i $j $one_element
-	    set str "$str $one_element"
+    for {set  j  0}  {$j < 4} {incr j} {
+        set one_element [$mat GetElement $i $j]
+    #    $matout SetElement $i $j $one_element
+        set str "$str $one_element"
             puts $fileid  "  $one_element "
-	}
-	puts $fileid "\n"
+    }
+    puts $fileid "\n"
     }
     # Add a transform to the slicer.
   
@@ -1200,23 +1200,23 @@ proc  WritePWConstant {it fileid} {
     puts $fileid " nf \n"
 
     for {set f 0} {$f < $nf} {incr f} {
-	set value [$it GetNumberOfPieces $f]
-	puts $fileid " $value "
+    set value [$it GetNumberOfPieces $f]
+    puts $fileid " $value "
     }
     puts $fileid "\n"
 
     for {set f 0} {$f < $nf} {incr f} { 
-	set np [$it GetNumberOfPieces $f]
-	for {set p 0} {$p < [expr $np - 1]} {incr p} { 
-	    set value [$it GetBoundary $f $p]
-	    puts $fileid " $value " 
-	}
-	puts $fileid "\n"
-	for {set p 0} {$p < $np} {incr p} { 
-	    set value [$it GetValue $f $p]
-	    puts $fileid " $value " 
-	}
-	puts $fileid "\n"
+    set np [$it GetNumberOfPieces $f]
+    for {set p 0} {$p < [expr $np - 1]} {incr p} { 
+        set value [$it GetBoundary $f $p]
+        puts $fileid " $value " 
+    }
+    puts $fileid "\n"
+    for {set p 0} {$p < $np} {incr p} { 
+        set value [$it GetValue $f $p]
+        puts $fileid " $value " 
+    }
+    puts $fileid "\n"
     }
     
 }
@@ -1235,11 +1235,11 @@ proc  WritePolynomial {it fileid} {
 
     puts $fileid " $nf $nd \n "
     for {set  f  0}  {$f < $nf} {incr f } {
-	for {set  d  0}  {$d < [expr $nd + 1]} {incr d } {
-	    set value [$it GetAlpha $f $d]
-	    puts $fileid  " $value "
-	}
-	puts $fileid "\n"
+    for {set  d  0}  {$d < [expr $nd + 1]} {incr d } {
+        set value [$it GetAlpha $f $d]
+        puts $fileid  " $value "
+    }
+    puts $fileid "\n"
     }
 }
 
@@ -1253,12 +1253,12 @@ proc  WritePolynomial {it fileid} {
 proc WriteIntensityTransform {it fileid } {
       
     if {($it != 0)} {
-	if {[$it IsA vtkPolynomialIT]} {
-	    WritePolynomial $it $fileid
-	}
-	if {[$it IsA vtkPWConstantIT]} {
-	    WritePWConstant $it	$fileid
-	}
+    if {[$it IsA vtkPolynomialIT]} {
+        WritePolynomial $it $fileid
+    }
+    if {[$it IsA vtkPWConstantIT]} {
+        WritePWConstant $it    $fileid
+    }
     }
 }
 
@@ -1280,23 +1280,23 @@ proc WriteTransform {gt flag it FileName} {
      
     if { ($gt != 0 ) } {
          set n [$gt GetNumberOfConcatenatedTransforms]
-	 if {$AG(Debug) == 1} {
-		puts " There are $n concatenated transforms"
+     if {$AG(Debug) == 1} {
+        puts " There are $n concatenated transforms"
          }
          for {set  i  0}  {$i < $n} {incr i } {
-	     set t [$gt GetConcatenatedTransform $i]
-	     set int_H [$t IsA vtkHomogeneousTransform]
-	     set int_G [$t IsA vtkGridTransform]
-	     if { ($int_H != 0) } {
-		 WriteHomogeneous $t $i  $fileid
-	     } 
-	     if { ($int_G != 0) } {
-		 WriteGrid $t $i $fileid
-	     }
-	 }
+         set t [$gt GetConcatenatedTransform $i]
+         set int_H [$t IsA vtkHomogeneousTransform]
+         set int_G [$t IsA vtkGridTransform]
+         if { ($int_H != 0) } {
+         WriteHomogeneous $t $i  $fileid
+         } 
+         if { ($int_G != 0) } {
+         WriteGrid $t $i $fileid
+         }
+     }
     }
     if {$flag == 1} {
-	WriteIntensityTransform $it  $fileid
+    WriteIntensityTransform $it  $fileid
     }
     close $fileid
 }
@@ -1363,15 +1363,15 @@ proc RunAG {} {
  
  
       if {($dim1_0 != $dim2_0) || ($dim1_1 != $dim2_1) || ($dim1_2 != $dim2_2) } {
-	  DevErrorWindow "Two Source channels have different dimensions"
-	  Source1 Delete
-	  Source2 Delete
-	  Target1 Delete
-	  Target2 Delete
-	  Source Delete
-	  Target Delete
-	  
-	  return
+      DevErrorWindow "Two Source channels have different dimensions"
+      Source1 Delete
+      Source2 Delete
+      Target1 Delete
+      Target2 Delete
+      Source Delete
+      Target Delete
+      
+      return
       } 
 
     
@@ -1389,15 +1389,15 @@ proc RunAG {} {
  
  
       if {($dim1_0 != $dim2_0) || ($dim1_1 != $dim2_1) || ($dim1_2 != $dim2_2) } {
-	  DevErrorWindow "Two Target channels have different dimensions"
-	  Source1 Delete
-	  Source2 Delete
-	  Target1 Delete
-	  Target2 Delete
-	  Source Delete
-	  Target Delete
-	  
-	  return
+      DevErrorWindow "Two Target channels have different dimensions"
+      Source1 Delete
+      Source2 Delete
+      Target1 Delete
+      Target2 Delete
+      Source Delete
+      Target Delete
+      
+      return
       } 
     
       catch "combineS  Delete"
@@ -1505,57 +1505,57 @@ proc RunAG {} {
       puts "finish reading vtkdata"
 
       if {$AG(Debug) == 1} {
-	  puts " Debug information \n\n" 
-	  set targetType  [Target  GetDataObjectType]
-	  puts "Targert object type is $targetType"
-	  set targetPointNum  [Target  GetNumberOfPoints]
-	  puts "Targert object has   $targetPointNum points"
-	  set targetCellNum  [Target  GetNumberOfCells]
-	  puts "Targert object has   $targetCellNum cells"
+      puts " Debug information \n\n" 
+      set targetType  [Target  GetDataObjectType]
+      puts "Targert object type is $targetType"
+      set targetPointNum  [Target  GetNumberOfPoints]
+      puts "Targert object has   $targetPointNum points"
+      set targetCellNum  [Target  GetNumberOfCells]
+      puts "Targert object has   $targetCellNum cells"
 
-	  set extent_arr [Target  GetExtent]
-	  #parray extent_arr
-	  puts " Target, extent:$extent_arr"
+      set extent_arr [Target  GetExtent]
+      #parray extent_arr
+      puts " Target, extent:$extent_arr"
 
 
-	  set spacing [Target GetSpacing]
-	  puts " Target, spacing is  $spacing"
-	  
-	  set origin [Target GetOrigin]
-	  puts " Target, spacing is  $origin"
+      set spacing [Target GetSpacing]
+      puts " Target, spacing is  $spacing"
       
-	  set scalarSize [Target GetScalarSize]
-	  puts " Target, scalar size is  $scalarSize"
-	  set scalarType [Target GetScalarType]
-	  puts " Target, scalar type is  $scalarType"
-	  set ScalarComponents [Target GetNumberOfScalarComponents]
-	  puts " Target, $ScalarComponents scalar components."
+      set origin [Target GetOrigin]
+      puts " Target, spacing is  $origin"
+      
+      set scalarSize [Target GetScalarSize]
+      puts " Target, scalar size is  $scalarSize"
+      set scalarType [Target GetScalarType]
+      puts " Target, scalar type is  $scalarType"
+      set ScalarComponents [Target GetNumberOfScalarComponents]
+      puts " Target, $ScalarComponents scalar components."
 
 
-	  set sourceType  [Source  GetDataObjectType]
-	  puts "Source object type is $sourceType"
-	  set sourcePointNum  [Source  GetNumberOfPoints]
-	  puts "Source object has   $sourcePointNum points"
-	  set sourceCellNum  [Source  GetNumberOfCells]
-	  puts "Source object has   $sourceCellNum cells"
+      set sourceType  [Source  GetDataObjectType]
+      puts "Source object type is $sourceType"
+      set sourcePointNum  [Source  GetNumberOfPoints]
+      puts "Source object has   $sourcePointNum points"
+      set sourceCellNum  [Source  GetNumberOfCells]
+      puts "Source object has   $sourceCellNum cells"
 
-	  set extent_arr [Source  GetExtent]
-	  #parray extent_arr
-	  puts " Source, extent:$extent_arr"
+      set extent_arr [Source  GetExtent]
+      #parray extent_arr
+      puts " Source, extent:$extent_arr"
   
-	  set spacing [Source GetSpacing]
-	  puts " Source, spacing is  $spacing"
-	  
-	  set origin [Source GetOrigin]
-	  puts " Source, spacing is  $origin"
-	  set origin [Source GetOrigin]
-	  puts " Source, spacing is  $origin"
-	  set scalarSize [Source GetScalarSize]
-	  puts " Source, scalar size is  $scalarSize"
-	  set scalarType [Source GetScalarType]
-	  puts " Source, scalar type is  $scalarType"
-	  set ScalarComponents [Source GetNumberOfScalarComponents]
-	  puts " Source,  $ScalarComponents  scalar components."
+      set spacing [Source GetSpacing]
+      puts " Source, spacing is  $spacing"
+      
+      set origin [Source GetOrigin]
+      puts " Source, spacing is  $origin"
+      set origin [Source GetOrigin]
+      puts " Source, spacing is  $origin"
+      set scalarSize [Source GetScalarSize]
+      puts " Source, scalar size is  $scalarSize"
+      set scalarType [Source GetScalarType]
+      puts " Source, scalar type is  $scalarType"
+      set ScalarComponents [Source GetNumberOfScalarComponents]
+      puts " Source,  $ScalarComponents  scalar components."
 
 
       }
@@ -1598,7 +1598,7 @@ proc RunAG {} {
   if {$AG(Linear)} {
 
       if { [info commands __dummy_transform] == ""} {
-      		vtkTransform __dummy_transform
+              vtkTransform __dummy_transform
       }
 
       catch "GCR Delete"
@@ -1642,10 +1642,10 @@ proc RunAG {} {
       if { ($AG(InputVolMask)   != $Volume(idNone)) } {
           catch "Mask Delete"
     
-	  vtkImageData Mask
+      vtkImageData Mask
 
-	  Mask DeepCopy  [ Volume($AG(InputVolMask),vol) GetOutput]
-	  warp SetMask Mask
+      Mask DeepCopy  [ Volume($AG(InputVolMask),vol) GetOutput]
+      warp SetMask Mask
  
       }
 
@@ -1670,11 +1670,11 @@ proc RunAG {} {
       puts "RunAG 4"
  
       if {[AGIntensityTransform Source] == 0 } {
-	  warp SetIntensityTransform $AG(tfm)
-	  set intesity_transform_object 1
+      warp SetIntensityTransform $AG(tfm)
+      set intesity_transform_object 1
           
       }  else  {
-	  set intesity_transform_object 0
+      set intesity_transform_object 0
       }
 
       # This is necessary so that the data is updated correctly.
@@ -1717,7 +1717,8 @@ proc RunAG {} {
       
       
       vtkImageExtractComponents extractImage2
-      extractImage2 SetInput [Reslicer GetOutput]
+      #extractImage2 SetInput [Reslicer GetOutput]
+      extractImage2 SetInput Resampled
       
       extractImage2 SetComponents 1  
       extractImage2  ReleaseDataFlagOff
@@ -1739,35 +1740,35 @@ proc RunAG {} {
   
   if {$AG(Debug)} {
       if {$AG(Warp)} {
-	  
-	  set DataType [[warp GetDisplacementGrid] GetDataObjectType]
-	  puts " Transform displacementGrid, data type is $DataType"
-	  
-	  set dim_arr [[warp GetDisplacementGrid] GetDimensions]
-	  
-	  puts " Transform displacementGrid, dimensions:$dim_arr"
-	  
-	  #set {extent_1 extent_2 extent_3 extent_4 extent_5 extent_6} [[warp GetDisplacementGrid] GetExtent]
+      
+      set DataType [[warp GetDisplacementGrid] GetDataObjectType]
+      puts " Transform displacementGrid, data type is $DataType"
+      
+      set dim_arr [[warp GetDisplacementGrid] GetDimensions]
+      
+      puts " Transform displacementGrid, dimensions:$dim_arr"
+      
+      #set {extent_1 extent_2 extent_3 extent_4 extent_5 extent_6} [[warp GetDisplacementGrid] GetExtent]
 
-	  set extent_arr [[warp GetDisplacementGrid] GetExtent]
+      set extent_arr [[warp GetDisplacementGrid] GetExtent]
 
-	  set origin_arr [[warp GetDisplacementGrid] GetOrigin]
+      set origin_arr [[warp GetDisplacementGrid] GetOrigin]
 
-	  puts " Transform DisplacementGrid, origin : $origin_arr"
+      puts " Transform DisplacementGrid, origin : $origin_arr"
      
-	  #parray extent_arr
-	  puts " Transform displacementGrid, extent:$extent_arr"
+      #parray extent_arr
+      puts " Transform displacementGrid, extent:$extent_arr"
 
     
-	  set ScalarSize [[warp GetDisplacementGrid] GetScalarSize]
-	  puts " Transform displacementGrid, ScalarSize is $ScalarSize"
-	  
-	  set ScalarType [[warp GetDisplacementGrid] GetScalarTypeAsString]
-	  puts " Transform displacementGrid, ScalarType is $ScalarType"
-	  
-	  set ScalarComponents [[warp GetDisplacementGrid] GetNumberOfScalarComponents]
-	  puts " Transform displacementGrid,  $ScalarComponents  scalar components."
-	  
+      set ScalarSize [[warp GetDisplacementGrid] GetScalarSize]
+      puts " Transform displacementGrid, ScalarSize is $ScalarSize"
+      
+      set ScalarType [[warp GetDisplacementGrid] GetScalarTypeAsString]
+      puts " Transform displacementGrid, ScalarType is $ScalarType"
+      
+      set ScalarComponents [[warp GetDisplacementGrid] GetNumberOfScalarComponents]
+      puts " Transform displacementGrid,  $ScalarComponents  scalar components."
+      
       }
   }
 
@@ -1812,24 +1813,24 @@ proc RunAG {} {
 proc AGBatchProcessResampling  {  }  {
     global AG Volume Gui
     if {[AGCheckErrors] == 1} {
-	return
+    return
     }
  
     #upvar $ArrayName LocalArray
     upvar 0 Volume NodeType
 
     foreach v $NodeType(idList) {
-	if { ($v != $NodeType(idNone)) && ($v !=  $AG(InputVolTarget)) && ($v != $AG(InputVolSource))} {
+    if { ($v != $NodeType(idNone)) && ($v !=  $AG(InputVolTarget)) && ($v != $AG(InputVolSource))} {
         
-	    set name [Volume($v,node) GetName]
-	    set subname [string range $name 0 7]
+        set name [Volume($v,node) GetName]
+        set subname [string range $name 0 7]
 
      
             if { ($subname != "resample") && ($name != "None") } {
-		puts "Resample volume whose name is $name..."
-		AGTransformOneVolume $v $AG(InputVolTarget)
-	    }
-	}
+        puts "Resample volume whose name is $name..."
+        AGTransformOneVolume $v $AG(InputVolTarget)
+        }
+    }
     }
 
 }
@@ -2052,7 +2053,7 @@ proc AGResample {Source Target Resampled} {
   
   if  {$ResampleOptions(intens) == 1 } {
       if {$AG(Warp)} {
-		ITrans SetIntensityTransform $AG(tfm)
+        ITrans SetIntensityTransform $AG(tfm)
       }
   }
 
@@ -2183,18 +2184,18 @@ proc AGNormalize { SourceImage TargetImage NormalizedSource SourceScanOrder Targ
 
     reslice SetInput [changeinfo GetOutput]
 
-    switch  $SourceScanOrder {	
-	"LR" { set axes {  0  0 -1  -1  0  0   0  1  0 } }
-	"RL" { set axes {  0  0  1  -1  0  0   0  1  0 } }
-	"IS" { set axes {  1  0  0   0  1  0   0  0  1 } }
-	"SI" { set axes {  1  0  0   0  1  0   0  0 -1 } }
-	"PA" { set axes {  1  0  0   0  0  1   0  1  0 } }
-	"AP" { set axes {  1  0  0   0  0  1   0 -1  0 } }
+    switch  $SourceScanOrder {    
+    "LR" { set axes {  0  0 -1  -1  0  0   0  1  0 } }
+    "RL" { set axes {  0  0  1  -1  0  0   0  1  0 } }
+    "IS" { set axes {  1  0  0   0  1  0   0  0  1 } }
+    "SI" { set axes {  1  0  0   0  1  0   0  0 -1 } }
+    "PA" { set axes {  1  0  0   0  0  1   0  1  0 } }
+    "AP" { set axes {  1  0  0   0  0  1   0 -1  0 } }
     }
 
 
     if {$AG(Debug) == 1} {
-	puts "  axes are $axes"
+    puts "  axes are $axes"
     }
 
   
@@ -2215,65 +2216,65 @@ proc AGNormalize { SourceImage TargetImage NormalizedSource SourceScanOrder Targ
     
     switch $TargetScanOrder {
 
-	"LR" {  
-	    transposematrix DeepCopy \
-		    0  0  -1  0 \
-		    -1  0   0  0 \
-		    0  1   0  0 \
-		    0  0   0  1 
-	}
-	"RL" {
-	    transposematrix DeepCopy \
-		    0  0  1  0 \
-		   -1  0  0  0 \
-		    0  1  0  0 \
-		    0  0  0  1 
-	}
-		
-	"IS" {   transposematrix Identity }
+    "LR" {  
+        transposematrix DeepCopy \
+            0  0  -1  0 \
+            -1  0   0  0 \
+            0  1   0  0 \
+            0  0   0  1 
+    }
+    "RL" {
+        transposematrix DeepCopy \
+            0  0  1  0 \
+           -1  0  0  0 \
+            0  1  0  0 \
+            0  0  0  1 
+    }
+        
+    "IS" {   transposematrix Identity }
         "SI" { 
-	    transposematrix  DeepCopy \
-		    1  0  0   0 \
-		    0  1  0   0 \
-		    0  0 -1   0 \
-		    0  0  0   1
-	}
+        transposematrix  DeepCopy \
+            1  0  0   0 \
+            0  1  0   0 \
+            0  0 -1   0 \
+            0  0  0   1
+    }
         "PA" {
-	    transposematrix  DeepCopy \
-		    1  0  0 0 \
-		    0  0  1 0 \
-		    0  1  0 0 \
-		    0  0  0 1    
-	}
+        transposematrix  DeepCopy \
+            1  0  0 0 \
+            0  0  1 0 \
+            0  1  0 0 \
+            0  0  0 1    
+    }
         "AP" {
-	    transposematrix  DeepCopy \
-		    1  0  0 0 \
-		    0  0  1 0 \
-		    0 -1  0 0 \
-		    0  0  0 1 
-	}
+        transposematrix  DeepCopy \
+            1  0  0 0 \
+            0  0  1 0 \
+            0 -1  0 0 \
+            0  0  0 1 
+    }
     }
 
  
 
     if {$AG(Debug) == 1} {
-	puts " before using the transpose matrix, ijkmatrix is:"
-	for {set i 0} {$i < 4} {incr i} {    
-	    set element0 [ijkmatrix GetElement $i 0]
-	    set element1 [ijkmatrix GetElement $i 1]
-	    set element2 [ijkmatrix GetElement $i 2]
-	    set element3 [ijkmatrix GetElement $i 3]
-	    puts " $element0  $element1  $element2  $element3"
-	}
+    puts " before using the transpose matrix, ijkmatrix is:"
+    for {set i 0} {$i < 4} {incr i} {    
+        set element0 [ijkmatrix GetElement $i 0]
+        set element1 [ijkmatrix GetElement $i 1]
+        set element2 [ijkmatrix GetElement $i 2]
+        set element3 [ijkmatrix GetElement $i 3]
+        puts " $element0  $element1  $element2  $element3"
+    }
 
-	puts " transpose matrixis:"
-	for {set i 0} {$i < 4} {incr i} {    
-	    set element0 [transposematrix GetElement $i 0]
-	    set element1 [transposematrix GetElement $i 1]
-	    set element2 [transposematrix GetElement $i 2]
-	    set element3 [transposematrix GetElement $i 3]
-	    puts " $element0  $element1  $element2  $element3"
-	}
+    puts " transpose matrixis:"
+    for {set i 0} {$i < 4} {incr i} {    
+        set element0 [transposematrix GetElement $i 0]
+        set element1 [transposematrix GetElement $i 1]
+        set element2 [transposematrix GetElement $i 2]
+        set element3 [transposematrix GetElement $i 3]
+        puts " $element0  $element1  $element2  $element3"
+    }
     }
 
     ijkmatrix Multiply4x4 ijkmatrix transposematrix ijkmatrix
@@ -2281,14 +2282,14 @@ proc AGNormalize { SourceImage TargetImage NormalizedSource SourceScanOrder Targ
     transposematrix Delete
 
     if {$AG(Debug) == 1} {
-	puts " After using the transpose matrix, ijkmatrix is:"
-	for {set i 0} {$i < 4} {incr i} {    
-	    set element0 [ijkmatrix GetElement $i 0]
-	    set element1 [ijkmatrix GetElement $i 1]
-	    set element2 [ijkmatrix GetElement $i 2]
-	    set element3 [ijkmatrix GetElement $i 3]
-	    puts "$element0  $element1  $element2  $element3" 
-	}
+    puts " After using the transpose matrix, ijkmatrix is:"
+    for {set i 0} {$i < 4} {incr i} {    
+        set element0 [ijkmatrix GetElement $i 0]
+        set element1 [ijkmatrix GetElement $i 1]
+        set element2 [ijkmatrix GetElement $i 2]
+        set element3 [ijkmatrix GetElement $i 3]
+        puts "$element0  $element1  $element2  $element3" 
+    }
     }
     
 
@@ -2383,8 +2384,8 @@ proc AGNormalize { SourceImage TargetImage NormalizedSource SourceScanOrder Targ
     reslice SetOutputExtent $outext_0 $outext_1 $outext_2 $outext_3 $outext_4 $outext_5
 #    [reslice GetOutput] SetUpdateExtent $outext_0 $outext_1 $outext_2 $outext_3 $outext_4 $outext_5
     if {$AG(Debug) == 1} {
-    	puts " out dim:  $outdim"
-    	puts " out spacing :  $outspa" 
+        puts " out dim:  $outdim"
+        puts " out spacing :  $outspa" 
     }
 
     reslice Update
@@ -2398,50 +2399,50 @@ proc AGNormalize { SourceImage TargetImage NormalizedSource SourceScanOrder Targ
    
     if {$AG(Debug) == 1} {
 
-	set scalar_range [[reslice GetOutput] GetScalarRange]
-	puts "Resclier's scalar range is : $scalar_range"
+    set scalar_range [[reslice GetOutput] GetScalarRange]
+    puts "Resclier's scalar range is : $scalar_range"
       
 
-	set DataType [[reslice GetOutput] GetDataObjectType]
-	puts " Reliscer output, data type is $DataType"
+    set DataType [[reslice GetOutput] GetDataObjectType]
+    puts " Reliscer output, data type is $DataType"
 
-	set dim_arr [[reslice GetOutput] GetDimensions]
+    set dim_arr [[reslice GetOutput] GetDimensions]
 
-	puts " Reliscer output, dimensions:$dim_arr"
+    puts " Reliscer output, dimensions:$dim_arr"
       
    
-	set origin_arr [[reslice GetOutput] GetOrigin]
+    set origin_arr [[reslice GetOutput] GetOrigin]
 
-	puts " Reliscer output, origin : $origin_arr"
+    puts " Reliscer output, origin : $origin_arr"
       
-	#set {extent_1 extent_2 extent_3 extent_4 extent_5 extent_6} [[reslice GetOutput] GetExtent]
+    #set {extent_1 extent_2 extent_3 extent_4 extent_5 extent_6} [[reslice GetOutput] GetExtent]
 
-	set extent_arr [[reslice GetOutput] GetExtent]
-
-
-
-	#parray extent_arr
-	puts " Reliscer output, extent:$extent_arr"
-	
-
-	set spacing_arr [[reslice GetOutput] GetSpacing]
-	
+    set extent_arr [[reslice GetOutput] GetExtent]
 
 
-	#parray extent_arr
-	puts " Reliscer output, spacings:$spacing_arr"
-	
+
+    #parray extent_arr
+    puts " Reliscer output, extent:$extent_arr"
+    
+
+    set spacing_arr [[reslice GetOutput] GetSpacing]
+    
+
+
+    #parray extent_arr
+    puts " Reliscer output, spacings:$spacing_arr"
+    
     
       
     
-	set ScalarSize [[reslice GetOutput] GetScalarSize]
-	puts " Reliscer output, ScalarSize is $ScalarSize"
+    set ScalarSize [[reslice GetOutput] GetScalarSize]
+    puts " Reliscer output, ScalarSize is $ScalarSize"
       
-	set ScalarType [[reslice GetOutput] GetScalarTypeAsString]
-	puts " Reliscer output, ScalarType is $ScalarType"
-	
-	set ScalarComponents [[reslice GetOutput] GetNumberOfScalarComponents]
-	puts " Reliscer output,  $ScalarComponents  scalar comonents."
+    set ScalarType [[reslice GetOutput] GetScalarTypeAsString]
+    puts " Reliscer output, ScalarType is $ScalarType"
+    
+    set ScalarComponents [[reslice GetOutput] GetNumberOfScalarComponents]
+    puts " Reliscer output,  $ScalarComponents  scalar comonents."
 
     }
     #reslice UnRegisterAllOutputs
@@ -2500,15 +2501,15 @@ proc AGTestWriting {} {
  
  
       if {($dim1_0 != $dim2_0) || ($dim1_1 != $dim2_1) || ($dim1_2 != $dim2_2) } {
-	  DevErrorWindow "Two Source channels have different dimensions"
-	  Source1 Delete
-	  Source2 Delete
-	  Target1 Delete
-	  Target2 Delete
-	  Source Delete
-	  Target Delete
-	  
-	  return
+      DevErrorWindow "Two Source channels have different dimensions"
+      Source1 Delete
+      Source2 Delete
+      Target1 Delete
+      Target2 Delete
+      Source Delete
+      Target Delete
+      
+      return
       } 
 
     
@@ -2526,15 +2527,15 @@ proc AGTestWriting {} {
  
  
       if {($dim1_0 != $dim2_0) || ($dim1_1 != $dim2_1) || ($dim1_2 != $dim2_2) } {
-	  DevErrorWindow "Two Target channels have different dimensions"
-	  Source1 Delete
-	  Source2 Delete
-	  Target1 Delete
-	  Target2 Delete
-	  Source Delete
-	  Target Delete
-	  
-	  return
+      DevErrorWindow "Two Target channels have different dimensions"
+      Source1 Delete
+      Source2 Delete
+      Target1 Delete
+      Target2 Delete
+      Source Delete
+      Target Delete
+      
+      return
       } 
     
       catch "combineS  Delete"
@@ -2638,7 +2639,7 @@ proc AGTestWriting {} {
       puts " Source,  $ScalarComponents  scalar components."
 
       set dim_arr [Source GetDimensions]
-	  
+      
       puts "Source, dimensions:$dim_arr"
   }
 
@@ -2701,7 +2702,7 @@ proc AGTestReadvtkImageData {}  {
       puts " Source,  $ScalarComponents  scalar components."
 
       set dim_arr [SourceTest GetDimensions]
-	  
+      
       puts "Source, dimensions:$dim_arr"
 
 }
