@@ -129,7 +129,7 @@ proc FiducialsInit {} {
 	#   appropriate info when the module is checked in.
 	#   
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.2 $} {$Date: 2000/07/26 19:07:57 $}]
+		{$Revision: 1.3 $} {$Date: 2000/07/28 17:36:54 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -444,7 +444,7 @@ proc FiducialsCount {} {
 proc FiducialsUpdateMRML {} {
 	global Fiducials Mrml
 
-	# LOOK AT Mrml(dataTree) ComputeTransforms
+	Mrml(dataTree) ComputeTransforms
 	Mrml(dataTree) InitTraversal
 	set item [Mrml(dataTree) GetNextItem]
 	while { $item != "" } {
@@ -560,5 +560,6 @@ proc FiducialsUpdatePoints {} {
 			set xyz [Fiducials(tmpXform) GetPoint]
 			eval Point($pid,follower) SetPosition $xyz
 		}
+		Fiducials($fid,pointsPD) Modified
 	}
 }
