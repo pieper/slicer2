@@ -94,7 +94,7 @@ class LinkedList : public array2D<ListElement>{
 
   LinkedList(int rows, int cols)
     :
-    array2D(rows,cols)
+    array2D<ListElement>(rows,cols)
     {
       for (int i = 0; i < rows; i++) {
 	for (int j = 0; j < cols; j++) {
