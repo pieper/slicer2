@@ -190,7 +190,9 @@ regsub -all {\\} $env(HOME) / home
 set modulePaths $slicer_home/Modules
 lappend modulePaths $home/Modules
 if { [info exists env(SLICER_MODULES)] } {
-    eval lappend modulePaths $env(SLICER_MODULES)
+    foreach mpath $env(SLICER_MODULES) {
+        lappend modulePaths [string trimright $mpath "/"]
+    }
 }
 
 set env(SLICER_MODULES_TO_REQUIRE) " "
