@@ -69,7 +69,7 @@ proc MainFileInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainFile \
-        {$Revision: 1.37 $} {$Date: 2002/07/27 20:31:32 $}]
+        {$Revision: 1.38 $} {$Date: 2002/07/29 22:11:33 $}]
 
     set File(filePrefix) data
 }
@@ -238,7 +238,7 @@ proc MainFileClose {} {
     foreach m $Module(idList) {
         if {[info exists Module($m,procMainFileCloseUpdateEntered)] == 1} {
             if {$Module(verbose) == 1} {puts "procMainFileCloseUpdateEntered: $m"}
-            $Module($m,procMainFileCloseUpdate)
+            $Module($m,procMainFileCloseUpdated)
         }
     }
 
