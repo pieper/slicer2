@@ -87,7 +87,14 @@ proc ViewInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.40 $} {$Date: 2004/04/13 21:00:11 $}]
+        {$Revision: 1.40.2.1 $} {$Date: 2005/01/07 22:08:30 $}]
+
+    # Default values
+    set View(default,LightIntensity) 0.7
+    set View(default,LightKeyToFillRatio) 2
+    set View(default,LightKeyToHeadRatio) 1.75
+    set View(default,LightKeyToBackRatio) 3.75
+
 }
 
 #-------------------------------------------------------------------------------
@@ -142,7 +149,8 @@ the value 1 is the furthest position of the bounding box.
 <BR><LI><B>Lights</B>The Lights panel lets you select between the default,
 fairly ugly 'Blair Witch'-type headlight lighting and a more pleasing multiple
 light arrangement using the vtkLightKit. The panel also allows some other 
-light parameters (e.g., overall intensity) to be adjusted.
+light parameters (e.g., overall intensity) to be adjusted. 
+You can return to the system defaults by hitting the 'Return to default values' button.
 </UL>
 "
     regsub -all "\n" $help { } help
@@ -369,6 +377,10 @@ light parameters (e.g., overall intensity) to be adjusted.
        pack $f.sBackRatio -fill x -side top -padx $Gui(pad) -pady $Gui(pad) -expand true
     }
 
+    # button to return to default values
+    DevAddButton $f.bSetDefaults "Return to default values" ViewLightsSetDefaults
+    pack $f.bSetDefaults -side top -pady $Gui(pad) -padx $Gui(pad) -fill x
+    
 }
 
 #-------------------------------------------------------------------------------
@@ -390,10 +402,10 @@ proc ViewBuildVTK {} {
 proc ViewBuildLightsVTK {} {
     global View
     ViewCreateLightKit
-    set View(LightIntensity) 0.7
-    set View(LightKeyToFillRatio) 2
-    set View(LightKeyToHeadRatio) 1.75
-    set View(LightKeyToBackRatio) 3.75
+    set View(LightIntensity) $View(default,LightIntensity)
+    set View(LightKeyToFillRatio) $View(default,LightKeyToFillRatio)
+    set View(LightKeyToHeadRatio) $View(default,LightKeyToHeadRatio)
+    set View(LightKeyToBackRatio) $View(default,LightKeyToBackRatio) 
 
     ViewSwitchLightKit 1
     set View(LightModeIndicator) "LightKit"
@@ -519,4 +531,23 @@ proc ViewSwitchLightKit {{state ""}} {
     }   
     Render3D
 }
+
+#-------------------------------------------------------------------------------
+# .PROC ViewLightsSetDefaults
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc ViewLightsSetDefaults {} {
+    global View 
+    
+    set View(LightIntensity) $View(default,LightIntensity)
+    set View(LightKeyToFillRatio) $View(default,LightKeyToFillRatio)
+    set View(LightKeyToHeadRatio) $View(default,LightKeyToHeadRatio)
+    set View(LightKeyToBackRatio) $View(default,LightKeyToBackRatio) 
+
+    # update the 3d scene
+    ViewSwitchLightKit
+}
+
 
