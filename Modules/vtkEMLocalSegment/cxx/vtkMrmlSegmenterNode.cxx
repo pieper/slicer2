@@ -128,7 +128,7 @@ void vtkMrmlSegmenterNode::Write(ofstream& of, int nIndent)
 
 //----------------------------------------------------------------------------
 // Copy the node's attributes to this object.
-// Does NOT copy: ID, FilePrefix, Name and PrintDir
+// Does NOT copy: ID, Name and PrintDir
 void vtkMrmlSegmenterNode::Copy(vtkMrmlNode *anode)
 {
   vtkMrmlNode::MrmlNodeCopy(anode);

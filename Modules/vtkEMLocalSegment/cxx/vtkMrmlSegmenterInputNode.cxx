@@ -58,20 +58,13 @@ vtkMrmlSegmenterInputNode* vtkMrmlSegmenterInputNode::New()
 //----------------------------------------------------------------------------
 vtkMrmlSegmenterInputNode::vtkMrmlSegmenterInputNode()
 {
-  this->FilePrefix = NULL;
   this->FileName = NULL;
-  memset(this->ImageRange,0,2*sizeof(int));
   this->IntensityAvgValuePreDef = 0;
 }
 
 //----------------------------------------------------------------------------
 vtkMrmlSegmenterInputNode::~vtkMrmlSegmenterInputNode()
 {
-  if (this->FilePrefix)
-  {
-    delete [] this->FilePrefix;
-    this->FilePrefix = NULL;
-  }
   if (this->FileName)
   {
     delete [] this->FileName;
@@ -91,18 +84,9 @@ void vtkMrmlSegmenterInputNode::Write(ofstream& of, int nIndent)
   {
     of << " name ='" << this->Name << "'";
   }
-  if (this->FilePrefix && strcmp(this->FilePrefix, "")) 
-  {
-    of << " FilePrefix='" << this->FilePrefix << "'";
-  }
   if (this->FileName && strcmp(this->FileName, "")) 
   {
     of << " FileName='" << this->FileName << "'";
-  }
-  if (this->ImageRange[0] != 1 || this->ImageRange[1] != 1)
-  {
-    of << " ImageRange='" << this->ImageRange[0] << " "
-       << this->ImageRange[1] << "'";
   }
   of << " IntensityAvgValuePreDef ='"    << this->IntensityAvgValuePreDef << "'";
   of << "></SegmenterInput>\n";;
@@ -116,9 +100,7 @@ void vtkMrmlSegmenterInputNode::Copy(vtkMrmlNode *anode)
   vtkMrmlNode::MrmlNodeCopy(anode);
   vtkMrmlSegmenterInputNode *node = (vtkMrmlSegmenterInputNode *) anode;
 
-  this->SetFilePrefix(node->FilePrefix); 
   this->SetFileName(node->FileName); 
-  this->SetImageRange(node->ImageRange); 
   this->IntensityAvgValuePreDef = node->IntensityAvgValuePreDef;
 }
 
@@ -128,14 +110,8 @@ void vtkMrmlSegmenterInputNode::PrintSelf(ostream& os, vtkIndent indent)
   vtkMrmlNode::PrintSelf(os,indent);
    os << indent << "Name: " <<
     (this->Name ? this->Name : "(none)") << "\n";
-   os << indent << "FilePrefix: " <<
-    (this->FilePrefix ? this->FilePrefix : "(none)") << "\n";
    os << indent << "FileName: " <<
     (this->FileName ? this->FileName : "(none)") << "\n";
-   os << "ImageRange:\n";
-   for (int idx = 0; idx < 2; ++idx) {
-     os << indent << ", " << this->ImageRange[idx];
-   }
    os << indent << "IntensityAvgValuePreDef:"          << this->IntensityAvgValuePreDef << "\n";
    os << ")\n";
 }

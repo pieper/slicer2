@@ -64,9 +64,7 @@ vtkMrmlSegmenterClassNode::vtkMrmlSegmenterClassNode()
 
   this->ShapeParameter   = 0.0;
 
-  this->LocalPriorPrefix = NULL; 
   this->LocalPriorName   = NULL; 
-  memset(this->LocalPriorRange,0,2*sizeof(int));
 
   this->LogMean          = NULL;
   this->LogCovariance    = NULL;
@@ -84,11 +82,6 @@ vtkMrmlSegmenterClassNode::vtkMrmlSegmenterClassNode()
 //----------------------------------------------------------------------------
 vtkMrmlSegmenterClassNode::~vtkMrmlSegmenterClassNode()
 {
-  if (this->LocalPriorPrefix)
-  {
-    delete [] this->LocalPriorPrefix;
-    this->LocalPriorPrefix = NULL;
-  }
   if (this->LocalPriorName)
   {
     delete [] this->LocalPriorName;
@@ -137,18 +130,9 @@ void vtkMrmlSegmenterClassNode::Write(ofstream& of, int nIndent)
 
   of << " ShapeParameter='" << this->ShapeParameter << "'";
   
-  if (this->LocalPriorPrefix && strcmp(this->LocalPriorPrefix, "")) 
-  {
-    of << " LocalPriorPrefix='" << this->LocalPriorPrefix << "'";
-  }
   if (this->LocalPriorName && strcmp(this->LocalPriorName, "")) 
   {
     of << " LocalPriorName='" << this->LocalPriorName << "'";
-  }
-  if (this->LocalPriorRange[0] != 0 || this->LocalPriorRange[1] != 0)
-  {
-    of << " LocalPriorRange='" << this->LocalPriorRange[0] << " "
-       << this->LocalPriorRange[1] << "'";
   }
   if (this->LogMean && strcmp(this->LogMean, "")) 
   {
@@ -191,9 +175,7 @@ void vtkMrmlSegmenterClassNode::Copy(vtkMrmlNode *anode)
 
   this->SetLabel(node->Label);
   this->SetShapeParameter(node->ShapeParameter);
-  this->SetLocalPriorPrefix(node->LocalPriorPrefix); 
   this->SetLocalPriorName(node->LocalPriorName); 
-  this->SetLocalPriorRange(node->LocalPriorRange); 
   this->SetLogMean(node->LogMean);
   this->SetLogCovariance(node->LogCovariance);
   this->SetPCAFileRange(node->PCAFileRange);
@@ -218,11 +200,8 @@ void vtkMrmlSegmenterClassNode::PrintSelf(ostream& os, vtkIndent indent)
 
    os << indent << "ShapeParameter: " << this->ShapeParameter << "\n";
 
-   os << indent << "LocalPriorPrefix: " <<
-    (this->LocalPriorPrefix ? this->LocalPriorPrefix : "(none)") << "\n";
    os << indent << "LocalPriorName: " <<
     (this->LocalPriorName ? this->LocalPriorName : "(none)") << "\n";
-   os << indent << "LocalPriorRange: " << this->LocalPriorRange[0] << ", " << this->LocalPriorRange[1] << "\n" ;
 
    os << indent << "LogMean: " <<
     (this->LogMean ? this->LogMean : "(none)") << "\n";

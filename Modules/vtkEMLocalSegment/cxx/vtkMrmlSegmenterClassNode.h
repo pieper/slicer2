@@ -82,18 +82,8 @@ public:
 
   // Description:
   // Get/Set for SegmenterClass
-  vtkSetStringMacro(LocalPriorPrefix);
-  vtkGetStringMacro(LocalPriorPrefix);
-
-  // Description:
-  // Get/Set for SegmenterClass
   vtkSetStringMacro(LocalPriorName);
   vtkGetStringMacro(LocalPriorName);
-
-  // Description:
-  // Get/Set for SegmenterClass
-  vtkGetVector2Macro(LocalPriorRange, int);
-  vtkSetVector2Macro(LocalPriorRange, int);
 
   // Description:
   // Get/Set for SegmenterClass
@@ -149,9 +139,7 @@ protected:
   int    Label;
 
   float  ShapeParameter;
-  char   *LocalPriorPrefix; 
   char   *LocalPriorName;
-  int    LocalPriorRange[2];
   char   *LogMean;
   char   *LogCovariance;
   float  LocalPriorWeight;

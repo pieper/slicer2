@@ -90,7 +90,7 @@ void vtkMrmlSegmenterGraphNode::Write(ofstream& of, int nIndent)
 
 //----------------------------------------------------------------------------
 // Copy the node's attributes to this object.
-// Does NOT copy: ID, FilePrefix, Name
+// Does NOT copy: ID, Name
 void vtkMrmlSegmenterGraphNode::Copy(vtkMrmlNode *anode)
 {
   vtkMrmlNode::MrmlNodeCopy(anode);

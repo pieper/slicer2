@@ -77,21 +77,10 @@ public:
   vtkSetStringMacro(Name);
   vtkGetStringMacro(Name);
  
-  // Any Variables afterwards 
-  // Description:
-  // Get/Set for SegmenterInput
-  vtkSetStringMacro(FilePrefix);
-  vtkGetStringMacro(FilePrefix);
-
   // Description:
   // Get/Set for SegmenterInput
   vtkSetStringMacro(FileName);
   vtkGetStringMacro(FileName);
-
-  // Description:
-  // Get/Set for SegmenterInput
-  vtkGetVector2Macro(ImageRange, int);
-  vtkSetVector2Macro(ImageRange, int);
 
   // Description:
   // Get/Set for SegmenterInput
@@ -105,9 +94,7 @@ protected:
   void operator=(const vtkMrmlSegmenterInputNode&) {};
 
   // I do not know how to better Identify my Images
-  char *FilePrefix; 
   char *FileName;
-  int ImageRange[2];
   double IntensityAvgValuePreDef;
 };
 
