@@ -297,7 +297,11 @@ proc CrossSectionInit {} {
 #    set Module($m,row1,tab) Advanced
 
     set Module($m,depend) ""
-    
+
+    set Module($m,author) "Sylvain Bouix, SPL, sylvain@bwh.harvard.edu"
+    set Module($m,overview) "Similar to the endoscopic module"
+    set Module($m,category) [lindex $Module(categories) 2]
+
     # Define Procedures
     #------------------------------------
     
