@@ -86,7 +86,7 @@ proc MainFileInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainFile \
-        {$Revision: 1.52 $} {$Date: 2003/06/03 22:24:48 $}]
+        {$Revision: 1.53 $} {$Date: 2003/06/18 22:17:38 $}]
 
     set File(filePrefix) data
 }
@@ -1005,7 +1005,14 @@ proc MainFileParseImageFile {ImageFile {postfixFlag 1}} {
     
     # two possibilities: a file name that has the numbers after a separator character, or before, with a constant extention
     set ftail [file tail $ImageFile]
-    if {[regexp {^[a-zA-Z]+} $ftail] == 1} {
+    set fdir [file dirname $ImageFile]
+    set fext [file extension $ftail]
+    # update: instead of using a regexp to see if the file name starts with letters, 
+    # check to see if the file name is constant and therefore the extension is changing.
+    # this tests to see if anything else in the directory has the same extension as the first file, 
+    # if nothing else does (glob only returns the file name we're checking against), then it is 
+    # assumed that the file starts with a constant part
+    if {[glob -directory $fdir -tails *$fext] == $ftail} {
         # the file starts with letters
 
         ##  Parse the file into its prefix, number, and perhaps stuff afterwards
@@ -1048,6 +1055,17 @@ proc MainFileParseImageFile {ImageFile {postfixFlag 1}} {
         puts "Trying to parse as a dicom file"
         set filePrefix [file dirname $ImageFile]/
         set num [file rootname [file tail $ImageFile]]
+        # check to see if we really have a number here
+        if {[regexp {(^.*[a-zA-Z]+)([0-9]*)} $num match moreLetters realNum] == 1} {
+            if {$::Module(verbose)} {
+                puts "MainFileParseImageFile: WARNING there were letters in my number: $num\n\tResetting prefix to $filePrefix, num to $realNum"
+            }
+            # append the letters to the prefix
+            set filePrefix $filePrefix${moreLetters}
+            # set the number to be just the number part (assumes letters then number)
+            set num $realNum
+            
+        }
         set ZerolessNum [string trimleft $num "0"]
         if {$ZerolessNum == ""} {set ZerolessNum 0}
         set filePostfix ""
