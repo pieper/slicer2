@@ -3,8 +3,8 @@
   Program:   Insight Segmentation & Registration Toolkit
   Module:    $RCSfile: itkCompareHistogramImageToImageMetric.txx,v $
   Language:  C++
-  Date:      $Date: 2003/12/29 14:51:37 $
-  Version:   $Revision: 1.6 $
+  Date:      $Date: 2005/04/04 15:50:46 $
+  Version:   $Revision: 1.7 $
 
   Copyright (c) Insight Software Consortium. All rights reserved.
   See ITKCopyright.txt or http://www.itk.org/HTML/Copyright.htm for details.
@@ -161,23 +161,23 @@ PrintSelf(std::ostream& os, Indent indent) const
   Superclass::PrintSelf(os, indent);
 
   os << indent << "TrainingFixedImage: ";
-  if (m_TrainingFixedImage  == 0)  os << 0 << std::endl;
+  if (m_TrainingFixedImage.IsNull())  os << 0 << std::endl;
   else  os << m_TrainingFixedImage << std::endl;
 
   os << indent << "TrainingMovingImage: ";
-  if (m_TrainingMovingImage  == 0) os << 0 << std::endl;
+  if (m_TrainingMovingImage.IsNull()) os << 0 << std::endl;
   else os << m_TrainingMovingImage << std::endl;
 
   os << indent << "TrainingTransform: ";
-  if (m_TrainingTransform    == 0) os << 0 << std::endl;
+  if (m_TrainingTransform.IsNull()) os << 0 << std::endl;
   else os << m_TrainingTransform << std::endl;
 
   os << indent << "TrainingInterpolator: ";
-  if (m_TrainingInterpolator == 0) os << 0 << std::endl;
+  if (m_TrainingInterpolator.IsNull()) os << 0 << std::endl;
   else os << m_TrainingInterpolator << std::endl;
 
   os << indent << "TrainingHistogram: ";
-  if (m_TrainingHistogram    == 0) os << 0 << std::endl;
+  if (m_TrainingHistogram.IsNull()) os << 0 << std::endl;
   else os << m_TrainingHistogram << std::endl;
 
   os << indent << "TrainingFixedImageRegion: " << m_TrainingFixedImageRegion
