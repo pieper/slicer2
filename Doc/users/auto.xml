@@ -1,19 +1,19 @@
 <?xml version="1.0" standalone='no'?>
 <!DOCTYPE AUTO SYSTEM "../auto.dtd">
 <auto>
-<title>User's Guide</title>
+<title>Users Guide</title>
 
 <teaser>
-How to Use the Advanced
-<br>Features of Slicer</br>
+Complete Guide to 
+<br>Using Slicer</br>
 </teaser>
 
 <summary>
 
-This User's Guide assumes that you are already familiar with the material
-covered in the <a href='../tutorial/index.html'>Tutorial</a>.
+The Users Guide is a complete reference to using Slicer.
+<br>To get started quickly, try the <a href='../quickstart/index.html'>QuickStart</a> 
+<br>There is also a <a href='../tutorial/index.html'>Tutorial</a> to teach you how to use Slicer.
+
 
 </summary>
 </auto>
-
-
