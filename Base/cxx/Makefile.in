@@ -72,7 +72,12 @@ vtkImageLiveWire \
 vtkImageLiveWireTester \
 vtkImageLiveWireEdgeWeights \
 vtkImageBandedDistanceMap \
-vtkDCMLister
+vtkImageLiveWireScale \
+vtkImageWeightedSum \
+vtkDCMLister \
+vtkImageConvolve
+
+
 
 #vtkSurfaceProps \
 #vtkMathUtils \
