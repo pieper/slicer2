@@ -88,7 +88,7 @@ proc MainModelsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainModels \
-        {$Revision: 1.57 $} {$Date: 2003/04/23 20:11:37 $}]
+        {$Revision: 1.58 $} {$Date: 2003/05/18 15:31:16 $}]
 
     set Model(idNone) -1
     set Model(activeID) ""
@@ -1031,7 +1031,7 @@ proc MainModelsSetCulling {m {value ""}} {
         set Model(backfaceCulling) [Model($m,node) GetBackfaceCulling]
     }
     
-    }
+}
     
 #-------------------------------------------------------------------------------
 # .PROC MainModelsSetScalarVisibility
@@ -1099,12 +1099,17 @@ proc MainModelsWrite {m prefix} {
 
     # I don't understand this, but the model disappears from view after the
     # call to "writer Write", unless the model has been edited, like smoothed.
-    # So don't write it if it's not dirty.
+    # So don't write it if it's not dirty. 
+    # 
+    # Update:- this seems to be fixed now (new vtk?) so now just warn user
+    #
     if {$Model($m,dirty) == 0} {
-        tk_messageBox -message \
-            "This model will not be saved\nbecause it has not been changed\n\
-since the last time it was saved."
-        return
+        set resp [tk_messageBox -message \
+            "This model has not been changed
+since the last time it was saved.\n\nSave anyway?" -type okcancel]
+        if { $resp == "cancel" } {
+            return
+        }
     }
 
     # TODO: this may not be a vtk file, now that we can read in CAD and Freesurfer and Analyze files
@@ -1282,14 +1287,14 @@ proc MainModelsSetRenderer {r} {
     set Model(activeRenderer) $r
     # change the opacity sliders
     foreach m $Model(idList) {
-    set opacity [$Model($m,prop,$Model(activeRenderer)) GetOpacity]
-    MainModelsSetOpacity $m $opacity
-    set scalarvisibility [Model($m,mapper,$Model(activeRenderer)) GetScalarVisibility] 
-    MainModelsSetScalarVisibility $m $scalarvisibility
-    set backfaceculling [$Model($m,prop,$Model(activeRenderer)) GetBackfaceCulling]
-    MainModelsSetCulling $m $backfaceculling
-    set visibility  [Model($m,actor,$Model(activeRenderer)) GetVisibility]
-    MainModelsSetVisibility $m $visibility
+        set opacity [$Model($m,prop,$Model(activeRenderer)) GetOpacity]
+        MainModelsSetOpacity $m $opacity
+        set scalarvisibility [Model($m,mapper,$Model(activeRenderer)) GetScalarVisibility] 
+        MainModelsSetScalarVisibility $m $scalarvisibility
+        set backfaceculling [$Model($m,prop,$Model(activeRenderer)) GetBackfaceCulling]
+        MainModelsSetCulling $m $backfaceculling
+        set visibility  [Model($m,actor,$Model(activeRenderer)) GetVisibility]
+        MainModelsSetVisibility $m $visibility
     }
 }
 
