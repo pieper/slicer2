@@ -106,7 +106,7 @@ proc LocatorInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.36 $} {$Date: 2004/08/11 19:21:01 $}]
+        {$Revision: 1.37 $} {$Date: 2004/09/16 19:46:28 $}]
 
     # Patient/Table position
     set Locator(tblPosList)   "Front Side"
@@ -250,9 +250,9 @@ proc LocatorBuildVTK {} {
     $v SetLookupTable       Lut([$n GetLUTName],lut)
     $v SetHistogramHeight   $Volume(histHeight)
     $v SetHistogramWidth    $Volume(histWidth)
-    $v SetStartMethod       MainStartProgress
-    $v SetProgressMethod   "MainShowProgress $v"
-    $v SetEndMethod         MainEndProgress
+    $v AddObserver StartEvent       MainStartProgress
+    $v AddObserver ProgressEvent   "MainShowProgress $v"
+    $v AddObserver EndEvent         MainEndProgress
 
     #------------------------#
     # Construct handpiece
