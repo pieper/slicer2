@@ -25,10 +25,10 @@ PARTICULAR PURPOSE, AND NON-INFRINGEMENT.  THIS SOFTWARE IS PROVIDED ON AN
 'AS IS' BASIS, AND THE AUTHORS AND DISTRIBUTORS HAVE NO OBLIGATION TO PROVIDE
 MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 =========================================================================auto=*/
-// .NAME vtkImageErode -  Flexible threshold
+// .NAME vtkImageErode -  Performs erosion
 // .SECTION Description
-// The output data type may be different than the output, but defaults
-// to the same type.
+// Erodes pixels of specified Foreground value by setting them 
+// to the Background value. Variable connectivity (4- or 8-neighbor).
 
 #ifndef __vtkImageErode_h
 #define __vtkImageErode_h
