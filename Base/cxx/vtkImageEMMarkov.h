@@ -52,7 +52,7 @@ class VTK_EXPORT vtkImageEMMarkov : public vtkImageToImageFilter
   public:
   static vtkImageEMMarkov *New();
   vtkTypeMacro(vtkImageEMMarkov,vtkObject);
-  void PrintSelf(ostream& os);
+  void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:
   // Changing NumClasses re-defines also all the arrays which depon the number of classes e.g. prob

@@ -79,7 +79,7 @@ void vtkImageEMMarkov::ComputeInputUpdateExtent(int inExt[6], int outExt[6])
 
 
 //----------------------------------------------------------------------------
-void vtkImageEMMarkov::PrintSelf(ostream& os)
+void vtkImageEMMarkov::PrintSelf(ostream& os, vtkIndent indent)
 {
 }
 
