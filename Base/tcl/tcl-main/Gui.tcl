@@ -56,9 +56,9 @@
 proc GuiInit {} {
     global Gui Path tcl_platform
 
-        # Set version info
-        lappend Module(versions) [ParseCVSInfo Gui \
-        {$Revision: 1.38 $} {$Date: 2002/08/19 13:38:23 $}]
+    # Set version info
+    lappend Module(versions) [ParseCVSInfo Gui \
+    {$Revision: 1.39 $} {$Date: 2002/08/22 19:35:55 $}]
 
 
     # enable tooltips by default.  This should check user preferences somehow.
@@ -278,7 +278,7 @@ proc GuiInit {} {
 # .END
 #-------------------------------------------------------------------------------
 proc ValidateFloat { var } {
- return [expr ![ catch { expr $var + 1.0 } ] ]
+    return [expr ![ catch { expr $var + 1.0 } ] ]
 }
 
 #-------------------------------------------------------------------------------
@@ -485,6 +485,11 @@ proc ShowPopup {w x y} {
 proc MakeVTKImageWindow {name {input ""}} {
     global Gui
 
+    catch "${name}Mapper Delete"
+    catch "${name}Actor Delete"
+    catch "${name}Imager Delete"
+    catch "${name}Win Delete"
+
     vtkImageMapper ${name}Mapper
     ${name}Mapper SetColorWindow 255
     ${name}Mapper SetColorLevel 127.5
@@ -538,16 +543,15 @@ proc MakeVTKObject {shape name} {
 
     vtk${shape}Source ${name}Source
     vtkPolyDataMapper ${name}Mapper
-        ${name}Mapper SetInput [${name}Source GetOutput]
+    ${name}Mapper SetInput [${name}Source GetOutput]
    
 # Note: Immediate mode rendering is necessary for rendering the same model
 # to more than one render window.  However, it greatly slows performance.
 
     vtkActor ${name}Actor
-        ${name}Actor SetMapper ${name}Mapper
-        [${name}Actor GetProperty] SetColor 1.0 0.0 0.0
-        MainAddActor ${name}Actor
-
+    ${name}Actor SetMapper ${name}Mapper
+    [${name}Actor GetProperty] SetColor 1.0 0.0 0.0
+    MainAddActor ${name}Actor 
 
 }
 
@@ -689,10 +693,10 @@ proc ColorSlider {widget rgb} {
     set oldColorDescription [$widget config -troughcolor]
 
     foreach descrip  $oldColorDescription {
-    # if the new color is the same as the old color, return
-    if {$descrip == $color} { 
-        return
-    }
+        # if the new color is the same as the old color, return
+        if {$descrip == $color} { 
+            return
+        }
     }
 
     # if the color is different, color away!
