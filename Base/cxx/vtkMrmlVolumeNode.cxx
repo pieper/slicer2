@@ -79,6 +79,7 @@ vtkMrmlVolumeNode::vtkMrmlVolumeNode()
   this->AutoThreshold = 0;
   this->LowerThreshold = VTK_SHORT_MIN;
   this->UpperThreshold = VTK_SHORT_MAX;
+  this->UseRasToVtkMatrix = 1;
 
   // Arrays
   memset(this->ImageRange,0,2*sizeof(int));
