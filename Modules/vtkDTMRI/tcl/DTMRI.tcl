@@ -104,7 +104,7 @@ proc DTMRIInit {} {
     set Module($m,author) "Lauren O'Donnell"
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.4 $} {$Date: 2004/03/11 19:55:15 $}]
+            {$Revision: 1.5 $} {$Date: 2004/03/12 12:13:39 $}]
 
     # Define Tabs
     #------------------------------------
@@ -3623,10 +3623,17 @@ proc DTMRIBuildVTK {} {
     # Lauren test by displaying picked point
     #DTMRI(vtk,picker) SetEndPickMethod "annotatePick DTMRI(vtk,picker)"
     vtkTextMapper textMapper
-    textMapper SetFontFamilyToArial
-    textMapper SetFontSize 20
-    textMapper BoldOn
-    textMapper ShadowOn
+    if {[info commands vtkTextProperty] != ""} {
+        [textMapper GetTextProperty] SetFontFamilyToArial
+        [textMapper GetTextProperty] SetFontSize 20
+        [textMapper GetTextProperty] BoldOn
+        [textMapper GetTextProperty] ShadowOn
+    } else {
+        textMapper SetFontFamilyToArial
+        textMapper SetFontSize 20
+        textMapper BoldOn
+        textMapper ShadowOn
+    }
     vtkActor2D textActor
     textActor VisibilityOff
     textActor SetMapper textMapper
