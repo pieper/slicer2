@@ -145,19 +145,23 @@ void vtkMrmlModelNode::Write(ofstream& of, int nIndent)
   }
   if (this->Visibility != 1)
   {
-    of << " visibility='" << this->Visibility << "'";
+    of << " visibility='" << (this->Visibility ? "yes" : "no") << "'";
   }
   if (this->Clipping != 0)
   {
-    of << " clipping='" << this->Clipping << "'";
+    of << " clipping='" << (this->Clipping ? "yes" : "no") << "'";
   }
   if (this->BackfaceCulling != 1)
   {
-    of << " backfaceCulling='" << this->BackfaceCulling << "'";
+    of << " backfaceCulling='" << (this->BackfaceCulling ? "yes" : "no") << "'";
   }
   if (this->ScalarVisibility != 0)
   {
-    of << " scalarVisibility='" << this->ScalarVisibility << "'";
+    of << " scalarVisibility='" << (this->ScalarVisibility ? "yes" : "no") << "'";
+  }
+  if (this->Ignore != 0)
+  {
+    of << " ignore='" << (this->Ignore ? "yes" : "no") << "'";
   }
 
   // Arrays

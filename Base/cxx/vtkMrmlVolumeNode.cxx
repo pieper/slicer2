@@ -251,15 +251,15 @@ void vtkMrmlVolumeNode::Write(ofstream& of, int nIndent)
   }
   if (this->LabelMap != 0)
   {
-    of << " labelMap='" << this->LabelMap << "'";
+    of << " labelMap='" << (this->LabelMap ? "yes" : "no") << "'";
   }
   if (this->Interpolate != 1)
   {
-    of << " interpolate='" << this->Interpolate << "'";
+    of << " interpolate='" << (this->Interpolate ? "yes" : "no") << "'";
   }
   if (this->LittleEndian != 0)
   {
-    of << " littleEndian='" << this->LittleEndian << "'";
+    of << " littleEndian='" << (this->LittleEndian ? "yes" : "no") << "'";
   }
   if (this->Tilt != 0.0)
   {
@@ -267,7 +267,7 @@ void vtkMrmlVolumeNode::Write(ofstream& of, int nIndent)
   }
   if (this->AutoWindowLevel != 1)
   {
-    of << " autoWindowLevel='" << this->AutoWindowLevel << "'";
+    of << " autoWindowLevel='" << (this->AutoWindowLevel ? "yes" : "no") << "'";
   }
   if (this->Window != 256)
   {
@@ -279,7 +279,7 @@ void vtkMrmlVolumeNode::Write(ofstream& of, int nIndent)
   }
   if (this->AutoThreshold != 1)
   {
-    of << " autoThreshold='" << this->AutoThreshold << "'";
+    of << " autoThreshold='" << (this->AutoThreshold ? "yes" : "no") << "'";
   }
   if (this->LowerThreshold != VTK_SHORT_MIN)
   {
@@ -291,7 +291,7 @@ void vtkMrmlVolumeNode::Write(ofstream& of, int nIndent)
   }
   if (this->Ignore != 0)
   {
-    of << " ignore='" << this->Ignore << "'";
+    of << " ignore='" << (this->Ignore ? "yes" : "no") << "'";
   }
 
   // Arrays
