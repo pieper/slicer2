@@ -30,6 +30,17 @@ INCLUDE_DIRECTORIES(
 ${VTKMYCLASS_SOURCE_DIR}/include
 )
 
+#### if you code depends on SlicerBase, uncomment the 
+#### INCLUDE_DIRECTORIES and LINK_LIBRARIES
+#### lines below
+####
+#INCLUDE_DIRECTORIES( 
+#   ${VTKSLICERBASE_SOURCE_DIR}/cxx 
+#   ${VTKSLICERBASE_BUILD_DIR}
+#)
+#LINK_LIBRARIES (${VTKSLICERBASE_BUILD_LIB})
+
+
 # Add additional directories to look in for libraries
 LINK_DIRECTORIES(
 ${VTKMYCLASS_SOURCE_DIR}/lib
