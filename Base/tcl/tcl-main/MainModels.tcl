@@ -72,7 +72,7 @@ proc MainModelsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainModels \
-		{$Revision: 1.22 $} {$Date: 2000/02/28 17:56:10 $}]
+		{$Revision: 1.23 $} {$Date: 2000/03/01 02:20:35 $}]
 
 	set Model(idNone) -1
 	set Model(activeID) ""
@@ -341,6 +341,8 @@ proc MainModelsInitGUIVariables {m} {
 #-------------------------------------------------------------------------------
 # .PROC MainModelsDelete
 # If you want a model to be history, this is the procedure you call.
+# .ARG
+#  int m the id number of the model to be deleted.
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsDelete {m} {

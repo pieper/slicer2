@@ -30,7 +30,7 @@
 #   MainVolumesInit
 #   MainVolumesBuildVTK
 #   MainVolumesUpdateMRML
-#   MainVolumesCopyData
+#   MainVolumesCopyData dst src clear
 #   MainVolumesCreate
 #   MainVolumesRead
 #   MainVolumesWrite
@@ -63,7 +63,7 @@ proc MainVolumesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.30 $} {$Date: 2000/02/28 17:56:13 $}]
+		{$Revision: 1.31 $} {$Date: 2000/03/01 02:21:30 $}]
 
 	set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -187,6 +187,9 @@ proc MainVolumesUpdateMRML {} {
 # .PROC MainVolumesCopyData
 # 
 # .ARGS
+# int dst   The destination volume id.
+# int src   The source volume id.
+# str clear If \"On\", the output is set to all 0's. If \"Off\" the image is copied
 # .END
 #-------------------------------------------------------------------------------
 proc MainVolumesCopyData {dst src clear} {
@@ -378,6 +381,8 @@ since the last time it was saved."
 # Returns:
 #  1 - success
 #  0 - already deleted this volume
+# .ARG
+#   int m the id number of the volume to be deleted.
 # .END
 #-------------------------------------------------------------------------------
 proc MainVolumesDelete {v} {
