@@ -86,7 +86,7 @@ proc MainFileInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainFile \
-        {$Revision: 1.50 $} {$Date: 2003/05/29 23:50:43 $}]
+        {$Revision: 1.51 $} {$Date: 2003/06/03 21:51:57 $}]
 
     set File(filePrefix) data
 }
@@ -1015,7 +1015,10 @@ proc MainFileParseImageFile {ImageFile {postfixFlag 1}} {
         ##   replace the instances of [\.-] in the following regexp
         set filePostfix ""
         if {[regexp {^(.+)[\.-]([0-9]+)([\.-][^[0-9]*)?$} $ImageFile match filePrefix num filePostfix] == 0} {
-            DevErrorWindow "Could not parse \"$ImageFile\" in MainFileParseImageFile (postfixFlag = $postfixFlag)"
+            if {$::Module(verbose)} {
+                DevErrorWindow "Could not parse \"$ImageFile\" in MainFileParseImageFile (postfixFlag = $postfixFlag)"
+            }
+            puts "Could not parse \"$ImageFile\" in MainFileParseImageFile (postfixFlag = $postfixFlag)"
             return ""
         }
         
@@ -1074,6 +1077,13 @@ proc MainFileFindImageNumber {which firstFile} {
     }
     set parsing [MainFileParseImageFile $firstFile]
 
+    if {$parsing == ""} {
+        if {$::Module(verbose)} {
+            DevErrorWindow "MainFileFindImageNumber: First file $firstFile cannot be parsed"
+        }
+        puts "MainFileFindImageNumber: First file $firstFile cannot be parsed"
+        return ""
+    }
     set pattern    [lindex $parsing 0]
     set filePrefix [lindex $parsing 1]
     set firstNum   [lindex $parsing 2]
