@@ -44,8 +44,6 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 #include <stdio.h>
 
-#define TTestThreshold 0.0 
-
 
 vtkStandardNewMacro(vtkActivationVolumeGenerator);
 
@@ -135,13 +133,13 @@ void vtkActivationVolumeGenerator::SimpleExecute(vtkImageData *inputs, vtkImageD
 
                 if ((total/this->NumberOfInputs) < lowerThreshold)
                 {
-                    t = TTestThreshold;
+                    t = 0.0;
                 }
                 else
                 {
                     t = this->Detector->Detect(tc);
-                    // all negative t values are changed to 0
-                    t = (t < TTestThreshold ? TTestThreshold : t);
+                    // all negative t values are changed to positive 
+                    t = (t < 0.0 ? (-t) : t);
                 }
 
                 scalarsInOutput->SetComponent(indx++, 0, t);
@@ -149,17 +147,19 @@ void vtkActivationVolumeGenerator::SimpleExecute(vtkImageData *inputs, vtkImageD
         } 
     }
 
+    tc->Delete();
+
     // Scales the scalar values in the activation volume between 0 - 100
     float range[2];
     float value;
     float newValue;
     output->GetScalarRange(range);
+    lowRange = range[0];
+    highRange = range[1];
     for (int i = 0; i < indx; i++)
     {
         value = scalarsInOutput->GetComponent(i, 0); 
         newValue = 100 * (value - range[0]) / (range[1] - range[0]);
         scalarsInOutput->SetComponent(i, 0, newValue);
     }
-
-    tc->Delete();
 }
