@@ -140,11 +140,11 @@ proc AlignmentsInit {} {
     set Module($m,fiducialsStartCallback) AlignmentsFiducialsUpdated
 
     # Define Dependencies
-    set Module($m,depend) ""
+    set Module($m,depend) "MIReg"
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.20 $} {$Date: 2003/07/15 21:17:21 $}]
+            {$Revision: 1.21 $} {$Date: 2003/07/16 13:36:47 $}]
 
     # Props
     set Matrix(propertyType) Basic
@@ -247,7 +247,7 @@ proc AlignmentsUpdateMRML {} {
         if {$v != $Volume(idNone) && [Volume($v,node) GetLabelMap] == "0"} {
             $m add command -label "[Volume($v,node) GetName]" \
                     -command "AlignmentsSetRefVolume $v"
- }
+        }
     }
 
     # Menu of Fiducial Lists for FidAlign for the Reference Volume
@@ -745,8 +745,8 @@ proc AlignmentsBuildGUI {} {
             -text "$mode" -command "AlignmentsSetRegistrationMode" \
             -variable Matrix(regMode) -value $mode -width 10 \
             -indicatoron 0} $Gui(WRA)
- set Matrix(r${mode}) $f.fmodes.r$mode
- pack $f.fmodes.r$mode -side left -padx 0
+        set Matrix(r${mode}) $f.fmodes.r$mode
+        pack $f.fmodes.r$mode -side left -padx 0
     }
     pack $f.l -side top
     pack $f.fmodes -side left -padx $Gui(pad) -fill x -anchor w
@@ -1093,7 +1093,7 @@ proc AlignmentsBuildGUI {} {
 
     if {[info commands MIRegBuildSubGui] == ""} {
         DevAddLabel $f.lbadnews "I'm sorry but the MIReg Module\n is not loaded so that Mutual\n Information Registration is not available."
-    pack $f.lbadnews -pady $Gui(pad)
+        pack $f.lbadnews -pady $Gui(pad)
     } else {
         MIRegBuildSubGui $f
     }
@@ -1173,12 +1173,12 @@ proc AlignmentsBuildVTK {} {
 
     #SLICEACTORS
     foreach slicer "Slicer MatSlicer" {
- foreach s $Slice(idList) {
-     MainSlicesBuildVTKForSliceActor $s,$slicer
-     Slice($s,$slicer,planeActor) SetUserMatrix [$slicer GetReformatMatrix $s]
-     Slice($s,$slicer,planeMapper) SetInput [Slice($s,$slicer,planeSource) GetOutput]
-     Slice($s,$slicer,planeActor) SetTexture Slice($s,$slicer,texture)
- }
+        foreach s $Slice(idList) {
+            MainSlicesBuildVTKForSliceActor $s,$slicer
+            Slice($s,$slicer,planeActor) SetUserMatrix [$slicer GetReformatMatrix $s]
+            Slice($s,$slicer,planeMapper) SetInput [Slice($s,$slicer,planeSource) GetOutput]
+            Slice($s,$slicer,planeActor) SetTexture Slice($s,$slicer,texture)
+        }
     }
 }
 
@@ -1423,15 +1423,12 @@ proc AlignmentsManualTranslate {param {value ""}} {
         set delta [expr $value - $oldVal]
         switch $param {
             "regTranLR" {
-                #$mat SetElement 0 3 $value
                 $tran Translate $delta 0 0
             }
             "regTranPA" {
-                #$mat SetElement 1 3 $value
                 $tran Translate 0 $delta 0
             }
             "regTranIS" {
-                #$mat SetElement 2 3 $value
                 $tran Translate 0 0 $delta
             }
         }
@@ -1462,6 +1459,7 @@ proc AlignmentsManualTranslateDual {param1 value1 param2 value2} {
         tk_messageBox -message "$value2 must be a floating point number"
         return
     }
+
 
     # Value is blank if used entry field instead of slider
     set Matrix($param1) $value1
@@ -1500,31 +1498,34 @@ proc AlignmentsManualTranslateDual {param1 value1 param2 value2} {
 
     # Update all MRML only if the values changed
     if {$oldVal1 != $value1} {
+        set delta [expr $value1 - $oldVal1]
         switch $param1 {
             "regTranLR" {
-                $mat SetElement 0 3 $value1
+                $tran Translate $delta 0 0
             }
             "regTranPA" {
-                $mat SetElement 1 3 $value1
+                $tran Translate 0 $delta 0
             }
             "regTranIS" {
-                $mat SetElement 2 3 $value1
+                $tran Translate 0 0 $delta
             }
         }
     }
     if {$oldVal2 != $value2} {
+        set delta [expr $value2 - $oldVal2]
         switch $param2 {
             "regTranLR" {
-                $mat SetElement 0 3 $value2
+                $tran Translate $delta 0 0
             }
             "regTranPA" {
-                $mat SetElement 1 3 $value2
+                $tran Translate 0 $delta 0
             }
             "regTranIS" {
-                $mat SetElement 2 3 $value2
+                $tran Translate 0 0 $delta
             }
         }
     }
+
     if {$oldVal2 != $value2 || $oldVal1 != $value1} {
         set Matrix(rotAxis) "XX"
         set Matrix(regRotLR) 0
@@ -1729,41 +1730,41 @@ proc AlignmentsB1 {x y} {
     global Matrix Slice
 
     if {$Matrix(FidAlignEntered) != 1} {
-    set s $Slice(activeID)
-    set orient [Slicer GetOrientString $s]
-    if {[lsearch "Axial Sagittal Coronal" $orient] == -1} {
-        tk_messageBox -message \
-                "Set 'Orient' to Axial, Sagittal, or Coronal."
-        return
-    }
-    set Matrix(xHome) $x
-    set Matrix(yHome) $y
+        set s $Slice(activeID)
+        set orient [Slicer GetOrientString $s]
+        if {[lsearch "Axial Sagittal Coronal" $orient] == -1} {
+            tk_messageBox -message \
+                    "Set 'Orient' to Axial, Sagittal, or Coronal."
+            return
+        }
+        set Matrix(xHome) $x
+        set Matrix(yHome) $y
 
-    # Translate
-    if {$Matrix(mouse) == "Translate"} {
+        # Translate
+        if {$Matrix(mouse) == "Translate"} {
 
-        Anno($s,msg,mapper) SetInput "0 mm"
-        Anno($s,r1,actor)  SetVisibility 1
-        Anno($s,r1,source) SetPoint1 $x $y 0
-        Anno($s,r1,source) SetPoint2 $x [expr $y+1] 0
+            Anno($s,msg,mapper) SetInput "0 mm"
+            Anno($s,r1,actor)  SetVisibility 1
+            Anno($s,r1,source) SetPoint1 $x $y 0
+            Anno($s,r1,source) SetPoint2 $x [expr $y+1] 0
 
-        # To make this translation add to the current translation amount,
-        # store the current amount.
-        set Matrix(prevTranLR) $Matrix(regTranLR)
-        set Matrix(prevTranPA) $Matrix(regTranPA)
-        set Matrix(prevTranIS) $Matrix(regTranIS)
-    }
-    # Rotate
-    if {$Matrix(mouse) == "Rotate"} {
+            # To make this translation add to the current translation amount,
+            # store the current amount.
+            set Matrix(prevTranLR) $Matrix(regTranLR)
+            set Matrix(prevTranPA) $Matrix(regTranPA)
+            set Matrix(prevTranIS) $Matrix(regTranIS)
+        }
+        # Rotate
+        if {$Matrix(mouse) == "Rotate"} {
 
-        Anno($s,msg,mapper) SetInput "0 deg"
-        Anno($s,r1,actor)  SetVisibility 1
-        Anno($s,r1,source) SetPoint1 128 128 0
-        Anno($s,r1,source) SetPoint2 $x $y 0
-        Anno($s,r2,actor)  SetVisibility 1
-        Anno($s,r2,source) SetPoint1 128 128 0
-        Anno($s,r2,source) SetPoint2 $x $y 0
-    }
+            Anno($s,msg,mapper) SetInput "0 deg"
+            Anno($s,r1,actor)  SetVisibility 1
+            Anno($s,r1,source) SetPoint1 128 128 0
+            Anno($s,r1,source) SetPoint2 $x $y 0
+            Anno($s,r2,actor)  SetVisibility 1
+            Anno($s,r2,source) SetPoint1 128 128 0
+            Anno($s,r2,source) SetPoint2 $x $y 0
+        }
     }
 }
 
@@ -1985,28 +1986,28 @@ proc AlignmentsSlicesSetZoom {s {zoom}} {
 proc AlignmentsB1Release {x y} {
     global Matrix Slice
 
-   #If Fiducial selection has been entered then do not allow the user to be able to
-   #set the matrix by dragging the mouse over the 2D screens
-   if {$Matrix(FidAlignEntered) != 1} {
-   set s $Slice(activeID)
-    set orient [Slicer GetOrientString $s]
-    if {[lsearch "Axial Sagittal Coronal" $orient] == -1} {
-        return
-    }
+    #If Fiducial selection has been entered then do not allow the user to be able to
+    #set the matrix by dragging the mouse over the 2D screens
+    if {$Matrix(FidAlignEntered) != 1} {
+        set s $Slice(activeID)
+        set orient [Slicer GetOrientString $s]
+        if {[lsearch "Axial Sagittal Coronal" $orient] == -1} {
+            return
+        }
 
-    # Translate
-    if {$Matrix(mouse) == "Translate"} {
-        Anno($s,msg,mapper) SetInput ""
-        Anno($s,r1,actor)  SetVisibility 0
-    }
+        # Translate
+        if {$Matrix(mouse) == "Translate"} {
+            Anno($s,msg,mapper) SetInput ""
+            Anno($s,r1,actor)  SetVisibility 0
+        }
 
-    # Rotate
-    if {$Matrix(mouse) == "Rotate"} {
-        Anno($s,msg,mapper) SetInput ""
-        Anno($s,r1,actor)  SetVisibility 0
-        Anno($s,r2,actor)  SetVisibility 0
+        # Rotate
+        if {$Matrix(mouse) == "Rotate"} {
+            Anno($s,msg,mapper) SetInput ""
+            Anno($s,r1,actor)  SetVisibility 0
+            Anno($s,r2,actor)  SetVisibility 0
+        }
     }
-}
 }
 
 
@@ -2214,8 +2215,8 @@ proc AlignmentsBuildMinimizedSliceThumbControls {} {
         set f $Gui(fSlice$s).fControlsMat
 
         AlignmentsBuildMinimizedSliceControls $s $f
- lower $Gui(fSlice$s).fControlsMat
-  }
+        lower $Gui(fSlice$s).fControlsMat
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -2244,8 +2245,8 @@ proc AlignmentsBuildActiveVolSelectControls {} {
               -text "$text" -value "$slicer"\
               -variable Matrix(activeSlicer)\
               -indicatoron 1 -command "AlignmentsSetActiveSlicer $slicer; \
-AlignmentsSetActiveScreen; AlignmentsConfigSliceGUI; \
-AlignmentsSetSliceWindows $slicer;"} $Gui(WCA)
+                    AlignmentsSetActiveScreen; AlignmentsConfigSliceGUI; \
+                    AlignmentsSetSliceWindows $slicer;"} $Gui(WCA)
 
         pack $f.f.r$slicer -side left -padx 0 -ipadx 15
     }
@@ -2269,21 +2270,21 @@ proc AlignmentsConfigSliceGUI {} {
     global Matrix Slice Gui
 
     foreach s $Slice(idList) {
-    if {$Matrix(activeSlicer) == "Slicer"} {
-        set Matrix($s,Slicer,visibility) [Slice($s,Slicer,planeActor) GetVisibility]
-        set offset Slice($s,offset)
-        set visibility Matrix($s,Slicer,visibility)
-        set orient $Slice($s,orient)
-    } else {
-        set Matrix($s,MatSlicer,visibility) [Slice($s,MatSlicer,planeActor) GetVisibility]
-        set offset Matrix($s,offset)
-        set visibility Matrix($s,MatSlicer,visibility)
-        set orient $Matrix($s,orient)
-    }
+        if {$Matrix(activeSlicer) == "Slicer"} {
+            set Matrix($s,Slicer,visibility) [Slice($s,Slicer,planeActor) GetVisibility]
+            set offset Slice($s,offset)
+            set visibility Matrix($s,Slicer,visibility)
+            set orient $Slice($s,orient)
+        } else {
+            set Matrix($s,MatSlicer,visibility) [Slice($s,MatSlicer,planeActor) GetVisibility]
+            set offset Matrix($s,offset)
+            set visibility Matrix($s,MatSlicer,visibility)
+            set orient $Matrix($s,orient)
+        }
 
- #offset entry boxes
+         #offset entry boxes
         .tViewer.fMatMid.fMatMidSlice$s.fOffset.eOffset configure -textvariable $offset
- $Gui(fSlice$s).fControlsMat.fOffset.eOffset configure -textvariable $offset
+        $Gui(fSlice$s).fControlsMat.fOffset.eOffset configure -textvariable $offset
 
         #offset sliders
         .tViewer.fMatMid.fMatMidSlice$s.fOffset.sOffset configure -variable $offset
@@ -2291,11 +2292,11 @@ proc AlignmentsConfigSliceGUI {} {
 
         #visibility buttons
         .tViewer.fMatMid.fMatMidSlice$s.fOffset.cVisibility$s configure -variable $visibility
- $Gui(fSlice$s).fControlsMat.fOffset.cVisibility$s configure -variable $visibility
+        $Gui(fSlice$s).fControlsMat.fOffset.cVisibility$s configure -variable $visibility
 
         #orientation buttons
         .tViewer.fMatMid.fMatMidSlice$s.fOrient.mbOrient$s configure -text $orient
- $Gui(fSlice$s).fControlsMat.fOrient.mbOrient$s configure -text $orient
+        $Gui(fSlice$s).fControlsMat.fOrient.mbOrient$s configure -text $orient
     }
 }
 
@@ -2340,17 +2341,17 @@ proc AlignmentsFidAlignGo {} {
 
         # v = ID of volume to register
         # r = ID of reference volume
- set v $Matrix(volume)
- set r $Matrix(refVolume)
- # Store which transform we're editing
+        set v $Matrix(volume)
+        set r $Matrix(refVolume)
+        # Store which transform we're editing
         # If the user has not selected a tranform, then create a new one by default
         # and append it to the volume to move
         #t = the transform
         set t $Matrix(activeID)
         set Matrix(tAuto) $t
         if {$t == ""} {
-     DataAddTransform append Volume($v,node) Volume($v,node)
- }
+            DataAddTransform append Volume($v,node) Volume($v,node)
+        }
  
         #Freeze the Auto tab
         set Alignments(freeze) 1
@@ -2376,11 +2377,11 @@ proc AlignmentsFidAlignGo {} {
         #Depending on what the user selected as the volume to move and the reference volume
         #Put the "Reference Volume" in the viewRen renderer and put the "Volume to Move"
         #in the matRen renderer.
- MainSlicesSetVolumeAll Fore $r
- AlignmentsSplitVolumes $r viewRen Fore
- #put the volume to move in the right renderer
- MainSlicesSetVolumeAll Back $v
- AlignmentsSplitVolumes $v matRen Back
+        MainSlicesSetVolumeAll Fore $r
+        AlignmentsSplitVolumes $r viewRen Fore
+        #put the volume to move in the right renderer
+        MainSlicesSetVolumeAll Back $v
+        AlignmentsSplitVolumes $v matRen Back
 
         #Create new fiducials lists here that the user can use for FidAlign'ing.
         #These will be the default lists if the user does not choose a "premade" one
@@ -2391,7 +2392,7 @@ proc AlignmentsFidAlignGo {} {
         while { [lsearch $Fiducials(listOfNames) $Matrix(FidAlignRefVolumeList)] != -1} {
             set Matrix(FidAlignRefVolumeList) ${Matrix(FidAlignRefVolumeName)}${index}
             incr index
- }
+        }
         if { [lsearch $Fiducials(listOfNames) $Matrix(FidAlignRefVolumeList)] == -1} {
             FiducialsCreateFiducialsList "Alignments" $Matrix(FidAlignRefVolumeList)
             set Matrix(oldDataList,$Matrix(FidAlignRefVolumeList)) ""
@@ -2403,9 +2404,9 @@ proc AlignmentsFidAlignGo {} {
         while {[lsearch $Fiducials(listOfNames) $Matrix(FidAlignVolumeList)] != -1} {
             set Matrix(FidAlignVolumeList) ${Matrix(FidAlignVolumeName)}${index}
             incr index
- }
+        }
         if { [lsearch $Fiducials(listOfNames) $Matrix(FidAlignVolumeList)] == -1} {
-       FiducialsCreateFiducialsList "Alignments" $Matrix(FidAlignVolumeList)
+            FiducialsCreateFiducialsList "Alignments" $Matrix(FidAlignVolumeList)
             set Matrix(oldDataList,$Matrix(FidAlignVolumeList)) ""
             set Matrix(textBox,currentID,$Matrix(FidAlignVolumeList)) -1
         }
@@ -2423,16 +2424,16 @@ proc AlignmentsFidAlignGo {} {
         #Track the users mouse poition
         pushEventManager $Matrix(eventManager)
 
- # TEMP - Need to put a push/pop bindings someplace
- set widgets "$Gui(fSl0Win) $Gui(fSl1Win) $Gui(fSl2Win)"
- foreach widget $widgets {
-     bind $widget <KeyPress-p> {
-  # like SelectPick2D, sets right coords in Alignments(xyz)
-  # returns 0 if nothing picked
-  if { [AlignmentsPick2D %W %x %y] != 0 } \
-      { eval FiducialsCreatePointFromWorldXYZ "default" $Matrix(xyz) ; MainUpdateMRML; Render3D}
-     }
- }
+        # TEMP - Need to put a push/pop bindings someplace
+        set widgets "$Gui(fSl0Win) $Gui(fSl1Win) $Gui(fSl2Win)"
+        foreach widget $widgets {
+            bind $widget <KeyPress-p> {
+                # like SelectPick2D, sets right coords in Alignments(xyz)
+                # returns 0 if nothing picked
+                if { [AlignmentsPick2D %W %x %y] != 0 } \
+                {   eval FiducialsCreatePointFromWorldXYZ "default" $Matrix(xyz) ; MainUpdateMRML; Render3D}
+            }
+        }
     }
 }
 
@@ -2515,8 +2516,8 @@ proc AlignmentsFidAlignResetVars {} {
     #Set the visibilities for the original slice actors to the same value
     #as what the user had in FidAlign
     foreach s $Slice(idList) {
- set Slice($s,visibility) $Matrix($s,Slicer,visibility)
- Slice($s,planeActor) SetVisibility $Matrix($s,Slicer,visibility)
+        set Slice($s,visibility) $Matrix($s,Slicer,visibility)
+        Slice($s,planeActor) SetVisibility $Matrix($s,Slicer,visibility)
     }
 
     #Change the background color to be light blue (normal color)
@@ -2527,10 +2528,10 @@ proc AlignmentsFidAlignResetVars {} {
 
     #Remove the slice actors used in the FidAlign to show the volumes separately
     foreach s $Slice(idList) {
- viewRen RemoveActor Slice($s,MatSlicer,planeActor)
- viewRen RemoveActor Slice($s,Slicer,planeActor)
- viewRen AddActor Slice($s,planeActor)
- AlignmentsSetSliceWindows $Matrix(activeSlicer)
+        viewRen RemoveActor Slice($s,MatSlicer,planeActor)
+        viewRen RemoveActor Slice($s,Slicer,planeActor)
+        viewRen AddActor Slice($s,planeActor)
+        AlignmentsSetSliceWindows $Matrix(activeSlicer)
     }
 
     set Matrix(FidAlignEntered) 0
@@ -2562,20 +2563,20 @@ proc AlignmentsFidAlignResetVars {} {
 
     #Set the fiducials visibility to be 0
     foreach list $Fiducials(listOfNames) {
- FiducialsSetFiducialsVisibility $list 0 viewRen
- FiducialsSetFiducialsVisibility $list 0 matRen
+        FiducialsSetFiducialsVisibility $list 0 viewRen
+        FiducialsSetFiducialsVisibility $list 0 matRen
     }
 
     # TEMP - Need to put a push bindings someplace
     #Reset the bindings here
     set widgets "$Gui(fSl0Win) $Gui(fSl1Win) $Gui(fSl2Win)"
     foreach widget $widgets {
- bind $widget <KeyPress-p> {
-     # like SelectPick2D, sets right coords in Alignments(xyz)
-     # returns 0 if nothing picked
-     if { [SelectPick2D %W %x %y] != 0 } \
-     { eval FiducialsCreatePointFromWorldXYZ "default" $Select(xyz) ; MainUpdateMRML; Render3D}
- }
+         bind $widget <KeyPress-p> {
+             # like SelectPick2D, sets right coords in Alignments(xyz)
+             # returns 0 if nothing picked
+             if { [SelectPick2D %W %x %y] != 0 } \
+             { eval FiducialsCreatePointFromWorldXYZ "default" $Select(xyz) ; MainUpdateMRML; Render3D}
+         }
     }
 
 }
@@ -2622,7 +2623,7 @@ proc AlignmentsSplitVolumes {v ren layer} {
     foreach s $Slice(idList) {
         #Texture map the output of Slicer onto the Slice($s,Slicer,planeActor) actors
         Slice($s,Slicer,texture) SetInput [Slicer GetOutput $s]
- #Texture map the output of MatSlicer onto the Slice($s,MatSlicer,planeActor) actors
+        #Texture map the output of MatSlicer onto the Slice($s,MatSlicer,planeActor) actors
         Slice($s,MatSlicer,texture) SetInput [MatSlicer GetOutput $s]
 
         #This is for the viewRen/Slicer/Fore
@@ -2666,7 +2667,7 @@ proc AlignmentsPick2D { widget x y } {
         return 1
     } else {
         return 0
-        }
+    }
 }
 
 
@@ -2777,7 +2778,7 @@ proc AlignmentsMatRenUpdateCamera {} {
     #Set the scale for the letter actors in the new renderer
     set scale [expr $View(fov) * $Anno(letterSize) ]
     foreach axis "R A S L P I" {
-    ${axis}ActorMatRen SetScale  $scale $scale $scale
+        ${axis}ActorMatRen SetScale  $scale $scale $scale
     }
 
     set pos [expr   $View(fov) * 0.6]
@@ -2928,38 +2929,38 @@ proc AlignmentsGetCurrentView {widget x y} {
 
     #check if you are in the fiducial pick screen and if the
     if {$Matrix(FidAlignEntered) == 1 && $Matrix(splitScreen) == 1} {
- set View(bgColor) "0.7 0.7 0.9"
- set width [expr [lindex [[$Gui(fViewWin) GetRenderWindow] GetSize] 0] /2]
+        set View(bgColor) "0.7 0.7 0.9"
+        set width [expr [lindex [[$Gui(fViewWin) GetRenderWindow] GetSize] 0] /2]
         #The viewRen renderer
- if {$x < $width} {
-     AlignmentsSetActiveSlicer Slicer
-     FiducialsSetActiveList $Matrix(FidAlignRefVolumeList)
-     set Matrix(currentDataList) $Matrix(FidAlignRefVolumeList)
-     set Matrix(currentTextFrame) $Matrix(FidRefVolPointBoxes)
-     #Change the color of the renderer to indicate that it is the active one
-     eval matRen SetBackground $View(bgColor)
-     set View(bgColor) "0.9 0.9 0.1"
-     eval viewRen SetBackground $View(bgColor)
- 
- #The matRen renderer
- } else {
-     AlignmentsSetActiveSlicer MatSlicer
-     FiducialsSetActiveList $Matrix(FidAlignVolumeList)
-     set Matrix(currentDataList) $Matrix(FidAlignVolumeList)
-     set Matrix(currentTextFrame) $Matrix(FidVolPointBoxes)
-     #Change the color of the renderer to indicate that it is the active one
-     eval viewRen SetBackground $View(bgColor)
-     set View(bgColor) "0.9 0.9 0.1"
-     eval matRen SetBackground $View(bgColor)
- }
- #2D Slice Windows
- AlignmentsSetSliceWindows $Matrix(activeSlicer)
- 
+        if {$x < $width} {
+            AlignmentsSetActiveSlicer Slicer
+            FiducialsSetActiveList $Matrix(FidAlignRefVolumeList)
+            set Matrix(currentDataList) $Matrix(FidAlignRefVolumeList)
+            set Matrix(currentTextFrame) $Matrix(FidRefVolPointBoxes)
+            #Change the color of the renderer to indicate that it is the active one
+            eval matRen SetBackground $View(bgColor)
+            set View(bgColor) "0.9 0.9 0.1"
+            eval viewRen SetBackground $View(bgColor)
+
+            #The matRen renderer
+        } else {
+            AlignmentsSetActiveSlicer MatSlicer
+            FiducialsSetActiveList $Matrix(FidAlignVolumeList)
+            set Matrix(currentDataList) $Matrix(FidAlignVolumeList)
+            set Matrix(currentTextFrame) $Matrix(FidVolPointBoxes)
+            #Change the color of the renderer to indicate that it is the active one
+            eval viewRen SetBackground $View(bgColor)
+            set View(bgColor) "0.9 0.9 0.1"
+            eval matRen SetBackground $View(bgColor)
+        }
+        #2D Slice Windows
+        AlignmentsSetSliceWindows $Matrix(activeSlicer)
+
         #Display slice information for only the dataset the user is interacting with
- AlignmentsConfigSliceGUI
- 
- RenderSlices
- Render3D
+        AlignmentsConfigSliceGUI
+
+        RenderSlices
+        Render3D
     }
 }
 
@@ -2978,13 +2979,13 @@ proc AlignmentsSetActiveScreen {} {
     set View(bgColor) "0.7 0.7 0.9"
 
     if {$Matrix(activeSlicer) == "Slicer"} {
- eval matRen SetBackground $View(bgColor)
- set View(bgColor) "0.9 0.9 0.1"
- eval viewRen SetBackground $View(bgColor)
+        eval matRen SetBackground $View(bgColor)
+        set View(bgColor) "0.9 0.9 0.1"
+        eval viewRen SetBackground $View(bgColor)
     } else {
- eval viewRen SetBackground $View(bgColor)
- set View(bgColor) "0.9 0.9 0.1"
- eval matRen SetBackground $View(bgColor)
+        eval viewRen SetBackground $View(bgColor)
+        set View(bgColor) "0.9 0.9 0.1"
+        eval matRen SetBackground $View(bgColor)
     }
 
     Render3D
@@ -3010,16 +3011,16 @@ proc AlignmentsFiducialsUpdated {} {
          [lsearch $Fiducials(listOfNames) $Matrix(FidAlignRefVolumeList)] == -1} {
         return
     } else {
- 
- #Visibilities of fiducials
- #set the visibilties of every other fiducial list to be 0
- foreach list $Fiducials(listOfNames) {
-     FiducialsSetFiducialsVisibility $list 0 viewRen
-     FiducialsSetFiducialsVisibility $list 0 matRen
- }
- #set the visibilities of only the fiducials that will be used for fidalign
- FiducialsSetFiducialsVisibility $Matrix(FidAlignRefVolumeList) 1 viewRen
- FiducialsSetFiducialsVisibility $Matrix(FidAlignVolumeList) 1 matRen
+     
+        #Visibilities of fiducials
+        #set the visibilties of every other fiducial list to be 0
+        foreach list $Fiducials(listOfNames) {
+            FiducialsSetFiducialsVisibility $list 0 viewRen
+            FiducialsSetFiducialsVisibility $list 0 matRen
+        }
+        #set the visibilities of only the fiducials that will be used for fidalign
+        FiducialsSetFiducialsVisibility $Matrix(FidAlignRefVolumeList) 1 viewRen
+        FiducialsSetFiducialsVisibility $Matrix(FidAlignVolumeList) 1 matRen
     }
 }
 
@@ -3046,7 +3047,7 @@ proc AlignmentsNewFidListChosen {whichvolume} {
     #want to load a fid list for a volume that may not be "active"
     if {$whichvolume == "RefVolume"} {
         AlignmentsRemoveBoxes $Matrix(oldFidAlign${whichvolume}List) $Matrix(FidRefVolPointBoxes)
- AlignmentsRebuildBoxes $Matrix(FidAlign${whichvolume}List)  $Matrix(FidRefVolPointBoxes)
+        AlignmentsRebuildBoxes $Matrix(FidAlign${whichvolume}List)  $Matrix(FidRefVolPointBoxes)
    } else {
         AlignmentsRemoveBoxes $Matrix(oldFidAlign${whichvolume}List) $Matrix(FidVolPointBoxes)
         AlignmentsRebuildBoxes $Matrix(FidAlign${whichvolume}List) $Matrix(FidVolPointBoxes)
@@ -3055,7 +3056,7 @@ proc AlignmentsNewFidListChosen {whichvolume} {
     #Visibilities of fiducials
     #set the visibilties of every other fiducial list to be 0
     foreach list $Fiducials(listOfNames) {
- FiducialsSetFiducialsVisibility $list 0 viewRen
+        FiducialsSetFiducialsVisibility $list 0 viewRen
         FiducialsSetFiducialsVisibility $list 0 matRen
     }
     #set the visibilities of only the fiducials that will be used for fidalign
@@ -3228,13 +3229,13 @@ proc AlignmentsSlicesSetOrient {s orient} {
     global Slice Volume View Module Matrix Gui
 
     if {$Matrix(activeSlicer) == "Slicer"} {
- set cam View(viewCam)
- set sliceorient Slice($s,orient)
- set sliceoffset Slice($s,offset)
+        set cam View(viewCam)
+        set sliceorient Slice($s,orient)
+        set sliceoffset Slice($s,offset)
     } else {
- set cam View(MatCam)
- set sliceorient Matrix($s,orient)
- set sliceoffset Matrix($s,offset)
+        set cam View(MatCam)
+        set sliceorient Matrix($s,orient)
+        set sliceoffset Matrix($s,offset)
     }
 
     eval $Matrix(activeSlicer) ComputeNTPFromCamera $$cam
@@ -3315,9 +3316,9 @@ proc AlignmentsSlicesSetSliderRange {s} {
     global Slice Matrix Gui
 
     if {$Matrix(activeSlicer) == "Slicer"} {
-    set offset Slice($s,offset)
+        set offset Slice($s,offset)
     } else {
-    set offset Matrix($s,offset)
+        set offset Matrix($s,offset)
     }
 
     set lo [Slicer GetOffsetRangeLow  $s]
@@ -3347,16 +3348,16 @@ proc AlignmentsSlicesSetOffsetIncrement {s {incr ""}} {
     global Slice Matrix
 
     if {$Matrix(activeSlicer) == "Slicer"} {
-    set offsetIncr Slice($s,offsetIncrement)
+        set offsetIncr Slice($s,offsetIncrement)
     } else {
-    set offsetIncr Matrix($s,offsetIncrement)
+        set offsetIncr Matrix($s,offsetIncrement)
     }
 
     # set slider increments to 1 if in original orientation
     set orient [$Matrix(activeSlicer) GetOrientString $s]
     if {$orient == "AxiSlice" || $orient == "CorSlice" \
         || $orient == "SagSlice" || $orient == "OrigSlice" } {
-    set incr 1
+        set incr 1
     }
 
     # if called without an incr arg it's from user entry
@@ -3393,36 +3394,36 @@ proc AlignmentsSlicesSetOffset {s whichSlicer {value ""}} {
     global Slice Matrix
 
     if {$Matrix(activeSlicer) == "Slicer"} {
-    set offsetval $Slice($s,offset)
+        set offsetval $Slice($s,offset)
     } else {
-    set offsetval $Matrix($s,offset)
+        set offsetval $Matrix($s,offset)
     }
 
     if {$value == ""} {
-    set value $offsetval
+        set value $offsetval
     } elseif {$value == "Prev"} {
-    set value [expr $offsetval - 1]
+        set value [expr $offsetval - 1]
 
     } elseif {$value == "Next"} {
-    set value [expr $offsetval + 1]
+        set value [expr $offsetval + 1]
     }
 
     if {[ValidateFloat $value] == 0}  {
-    set value [$Matrix(activeSlicer) GetOffset $s]
+        set value [$Matrix(activeSlicer) GetOffset $s]
     }
 
     if {$Matrix(activeSlicer) == "Slicer"} {
-    set Slice($s,offset) $value
-    Slicer SetOffset $s $value
-    AlignmentsSlicesRefreshClip $s Slicer
+        set Slice($s,offset) $value
+        Slicer SetOffset $s $value
+        AlignmentsSlicesRefreshClip $s Slicer
     } else {
-    set Matrix($s,offset) $value
-    MatSlicer SetOffset $s $value
-    AlignmentsSlicesRefreshClip $s MatSlicer
+        set Matrix($s,offset) $value
+        MatSlicer SetOffset $s $value
+        AlignmentsSlicesRefreshClip $s MatSlicer
     }
 
- Render3D
- RenderSlices
+    Render3D
+    RenderSlices
 }
 
 #-------------------------------------------------------------------------------
@@ -3528,7 +3529,7 @@ proc AlignmentsSlicesRefreshClip {s whichSlicer} {
 proc AlignmentsSetSliceWindows {whichSlicer} {
     global Slice Volume Matrix
 
-   foreach s $Slice(idList) {
+    foreach s $Slice(idList) {
        sl${s}Mapper SetInput [$whichSlicer GetCursor $s]
     }
     RenderSlices
@@ -3621,8 +3622,8 @@ proc AlignmentsFidAlignViewUpdate {} {
         # Make the thumbnails for the fiducial selection mode pop up when
         # mouse goes over Orient thumbnail instead of the original slicer controls.
         foreach s $Slice(idList) {
-        lower $Gui(fSlice$s).fThumb
-        raise $Gui(fSlice$s).fThumbMat
+            lower $Gui(fSlice$s).fThumb
+            raise $Gui(fSlice$s).fThumbMat
         }
     }
     MatSlicer Update
@@ -3638,7 +3639,7 @@ proc AlignmentsShowSliceControls {s} {
     global Gui Matrix
 
     if {$Matrix(FidAlignEntered) == 1} {
- raise $Gui(fSlice$s).fControlsMat
+        raise $Gui(fSlice$s).fControlsMat
     }
 }
 
@@ -3652,9 +3653,9 @@ proc AlignmentsHideSliceControls {} {
     global Gui Matrix
 
     if {$Matrix(FidAlignEntered) == 1} {
- lower $Gui(fSlice0).fControlsMat $Gui(fSlice0).fImage
- lower $Gui(fSlice1).fControlsMat $Gui(fSlice1).fImage
- lower $Gui(fSlice2).fControlsMat $Gui(fSlice2).fImage
+        lower $Gui(fSlice0).fControlsMat $Gui(fSlice0).fImage
+        lower $Gui(fSlice1).fControlsMat $Gui(fSlice1).fImage
+        lower $Gui(fSlice2).fControlsMat $Gui(fSlice2).fImage
     }
 }
 
@@ -3678,11 +3679,11 @@ proc AlignmentsSetRegTabState {mode} {
         $Matrix(rFidAlign) config -state $mode
             $Matrix(rMI) config -state $mode
         }
-    default {
-        $Matrix(rFidAlign) config -state $mode
-        $Matrix(rTPS) config -state $mode
-            $Matrix(rMI) config -state $mode
-    }
+        default {
+            $Matrix(rFidAlign) config -state $mode
+            $Matrix(rTPS) config -state $mode
+                $Matrix(rMI) config -state $mode
+        }
     }
     #set the volume buttons
     $Matrix(mbVolume) config -state $mode
@@ -3713,47 +3714,47 @@ proc AlignmentsSetColorCorrespondence {} {
 
     #Check to see that the volume to move and the reference volume are set.
     if {$Matrix(volume) == $Volume(idNone) || $Matrix(refVolume) == $Volume(idNone)} {
-    tk_messageBox -icon error -message "Either the reference volume or the volume to move has not yet been set"
-    set Matrix(regMode) ""
-    raise $Matrix(fAlignBegin)
-    return
+        tk_messageBox -icon error -message "Either the reference volume or the volume to move has not yet been set"
+        set Matrix(regMode) ""
+        raise $Matrix(fAlignBegin)
+        return
     }
 
     if {$Matrix(colorCorresp) == 1} {
 
-    MainSlicesSetVolumeAll Fore $Matrix(refVolume)
-    MainSlicesSetVolumeAll Back $Matrix(volume)
+        MainSlicesSetVolumeAll Fore $Matrix(refVolume)
+        MainSlicesSetVolumeAll Back $Matrix(volume)
 
         #set the reference volume to be red
         set Volume(activeID) $Matrix(refVolume)
-    foreach v $Lut(idList) {
+        foreach v $Lut(idList) {
             if {$Lut($v,name) == "Desert"} {
-        MainVolumesSetParam LutID $v
-        MainVolumesSetParam AutoThreshold 1
+                MainVolumesSetParam LutID $v
+                MainVolumesSetParam AutoThreshold 1
+            }
         }
-    }
 
         #set the volume to move to be blue
-    set Volume(activeID) $Matrix(volume)
-    foreach v $Lut(idList) {
-        if {$Lut($v,name) == "Ocean"} {
-        MainVolumesSetParam LutID $v
-        MainVolumesSetParam AutoThreshold 1
+        set Volume(activeID) $Matrix(volume)
+        foreach v $Lut(idList) {
+            if {$Lut($v,name) == "Ocean"} {
+                MainVolumesSetParam LutID $v
+                MainVolumesSetParam AutoThreshold 1
+            }
         }
-    }
 
     #if the color correspondence button is set to off then set both volumes to grey
     } elseif {$Matrix(colorCorresp) == 0} {
-    foreach v $Lut(idList) {
-        if {$Lut($v,name) == "Gray"} {
-        set Volume(activeID) $Matrix(refVolume)
-        MainVolumesSetParam LutID $v
-        MainVolumesSetParam AutoThreshold
-        set Volume(activeID) $Matrix(volume)
-        MainVolumesSetParam LutID $v
-        MainVolumesSetParam AutoThreshold
+        foreach v $Lut(idList) {
+            if {$Lut($v,name) == "Gray"} {
+                set Volume(activeID) $Matrix(refVolume)
+                MainVolumesSetParam LutID $v
+                MainVolumesSetParam AutoThreshold
+                set Volume(activeID) $Matrix(volume)
+                MainVolumesSetParam LutID $v
+                MainVolumesSetParam AutoThreshold
+            }
         }
-    }
     }
     RenderAll
 }
