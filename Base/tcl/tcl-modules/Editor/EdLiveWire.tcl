@@ -148,13 +148,14 @@ proc EdLiveWireBuildVTK {} {
 	# these filters find directional edge maps
 	set Ed(EdLiveWire,numEdgeFilters) \
 		[Ed(EdLiveWire,lwSetup$s) GetNumberOfEdgeFilters]
-	for {set f 0} {$f < $Ed(EdLiveWire,numEdgeFilters)} {incr f} {
-	    set filt [Ed(EdLiveWire,lwSetup$s) GetEdgeFilter $f]
-	    $filt SetStartMethod EdLiveWireStartProgress
-	    $filt SetProgressMethod \
-		    "EdLiveWireShowProgress Ed(EdLiveWire,lwPath$s)"
-	    $filt SetEndMethod EdLiveWireEndProgress
-	}
+
+	# attach progress callback to first filter only
+	set f 0
+	set filt [Ed(EdLiveWire,lwSetup$s) GetEdgeFilter $f]
+	$filt SetStartMethod EdLiveWireStartProgress
+	$filt SetProgressMethod \
+		"EdLiveWireShowProgress $filt"
+	$filt SetEndMethod EdLiveWireEndProgress
 
 	# debug
 	Ed(EdLiveWire,lwPath$s)  SetVerbose 0
@@ -1533,10 +1534,10 @@ proc EdLiveWireReformatSlice {offset realReformat {volume "Working"}} {
     set node Volume($v,node)
 
     # proper way to set fov for correct reformatting
-    # Lauren this should be used for all reformatting in the slicer!
-    set dim     [lindex [$node GetDimensions] 0]
-    set spacing [lindex [$node GetSpacing] 0]
-    set fov     [expr $dim*$spacing]
+    # Lauren the fov should be update for all reformatting in the slicer
+    #set dim     [lindex [$node GetDimensions] 0]
+    #set spacing [lindex [$node GetSpacing] 0]
+    #set fov     [expr $dim*$spacing]
 
     # use a reformat IJK to compute the reformat matrix
     vtkImageReformatIJK reformat
@@ -1587,10 +1588,12 @@ proc EdLiveWireReformatSlice {offset realReformat {volume "Working"}} {
     $realReformat SetWldToIjkMatrix [$node GetWldToIjk]
     # no interpolation for Working
     $realReformat InterpolateOff
-    # Lauren fix these: should match current reformatter settings
-    # so that images will line up.
+    # These should match current reformatter settings
+    # (in the vtkMrmlSlicer object) so that images will line up. 
+    # Lauren if reformatting is not at 256 resolution in future 
+    # this will need to be fixed
     $realReformat SetResolution 256
-    $realReformat SetFieldOfView 240
+    $realReformat SetFieldOfView [Slicer GetFieldOfView]
 
     reformat Delete
     ref Delete
