@@ -691,8 +691,8 @@ if { $SLICER(versionInfo) != "" } {
         catch "set itkVersion [vtkitkver GetITKVersion]"
         catch "vtkitkver Delete"
     }
-    set libVersions "LibName1: VTK LibVersion1: ${vtkVersion} LibName2: TCL LibVersion2: ${tcl_patchLevel} LibName3: TK LibVersion2: ${tk_patchLevel} LibName4: ITK LibVersion4: ${itkVersion}"
-    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: [ParseCVSInfo "" {$Name:  $}] CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.81.2.2 2004/12/02 23:46:19 nicole Exp $}] "
+    set libVersions "LibName: VTK LibVersion: ${vtkVersion} LibName: TCL LibVersion: ${tcl_patchLevel} LibName: TK LibVersion: ${tk_patchLevel} LibName: ITK LibVersion: ${itkVersion}"
+    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: [ParseCVSInfo "" {$Name:  $}] CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.81.2.3 2005/02/11 20:16:42 nicole Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
