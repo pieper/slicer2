@@ -50,6 +50,8 @@ class FMpdf : public vtkObject
 
   bool willUseGaussian( void );
 
+
+  void reset( void );  
   double value( double k );
   void addRealization( double k );
   void removeRealization( double k );

@@ -22,6 +22,14 @@ FMpdf::~FMpdf()
   delete [] bins;
 }
 
+void FMpdf::reset( void )
+{
+  m1=m2=0.0;
+  N=0;
+  sigma2=mean=0.0;
+}
+
+
 bool FMpdf::willUseGaussian( void )
 {
   return N<50*sqrt(getSigma2());
