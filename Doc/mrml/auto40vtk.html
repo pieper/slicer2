@@ -12,39 +12,37 @@ parsing implemented in TCL since that's so easy.
 Here is an example of creating and writing a MRML tree:
 
 <!----------------------------- Code Block --------------------------------->
-<pre><p class=code>#Construct MRML nodes after parsing the file
-vtkMrmlVolumeNode skin
-&nbsp;&nbsp;&nbsp;skin SetName Skin
-&nbsp;&nbsp;&nbsp;skin SetPrefix models/Skin.vtk
-&nbsp;&nbsp;&nbsp;skin SetOpacity 0.7
-&nbsp;&nbsp;&nbsp;skin SetColor Tan
+<pre><p class=code>
+#Construct MRML nodes after parsing the file
+<br>vtkMrmlVolumeNode skin
+<br>&nbsp;&nbsp;&nbsp;skin SetName Skin
+<br>&nbsp;&nbsp;&nbsp;skin SetPrefix models/Skin.vtk
+<br>&nbsp;&nbsp;&nbsp;skin SetOpacity 0.7
+<br>&nbsp;&nbsp;&nbsp;skin SetColor Tan
 
-vtkMrmlColorNode tan
-&nbsp;&nbsp;&nbsp;tan SetName Tan
-&nbsp;&nbsp;&nbsp;tan SetDiffuseColor 1.0 0.8 0.7
+<br>vtkMrmlColorNode tan
+<br>&nbsp;&nbsp;&nbsp;tan SetName Tan
+<br>&nbsp;&nbsp;&nbsp;tan SetDiffuseColor 1.0 0.8 0.7
 
-# Construct tree
-vtkMrmlTree tree
-&nbsp;&nbsp;&nbsp;tree AddNode model
-&nbsp;&nbsp;&nbsp;tree AddNode tan
+<br># Construct tree
+<br>vtkMrmlTree tree
+<br>&nbsp;&nbsp;&nbsp;tree AddNode model
+<br>&nbsp;&nbsp;&nbsp;tree AddNode tan
 
-# Traverse tree
-tree InitTraversal
-set node [tree GetNextItem]
-while {$node != ""} {
-&nbsp;&nbsp;&nbsp;puts "name='[$node GetName]'"
-&nbsp;&nbsp;&nbsp;set node [tree GetNextItem]
-}
+<br># Traverse tree
+<br>tree InitTraversal
+<br>set node [tree GetNextItem]
+<br>while {$node != ""} {
+<br>&nbsp;&nbsp;&nbsp;puts "name='[$node GetName]'"
+<br>&nbsp;&nbsp;&nbsp;set node [tree GetNextItem]
+<br>}
 
-# Write MRML file
-tree Write "scene.xml"</p></pre>
+<br># Write MRML file
+<br>tree Write "scene.xml"</p></pre>
 
 <p>
 To assist developers who would like to use MRML, we offer our TCL parser and 
-VTK classes.  These files have the standard copyright issued with all source code
-for the <i>3D Slicer</i>, but we can grant permission to violate this copyright
-for the MRML toolkit if you email us at <a href='mailto:slicer@ai.mit.edu'>
-slicer@ai.mit.edu</a>.
+VTK classes. 
 
 <h3>Download MRML Toolkit</h3>
 <ul>
