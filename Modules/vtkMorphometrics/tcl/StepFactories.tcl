@@ -525,6 +525,19 @@ proc MorphometricsModelChooserOnExit {internalId} {
     # foreach length ..
     foreach iter $Morphometrics(StepFactories,ModelChooser,$internalId,names) {
     lappend Morphometrics(StepFactories,ModelChooser,$internalId,id) $Morphometrics(mModel$counter) 
+
+    # find index for the menubutton
+    set index [lsearch -exact $Model(mbActiveList) $Morphometrics(workflowFrame).fMiddle.f$counter.mbModel$counter]
+    # remove the index
+    set Model(mbActiveList) [lreplace $Model(mbActiveList) $index $index]
+
+
+    # find index for the menu
+    set index [lsearch -exact $Model(mActiveList) $Morphometrics(workflowFrame).fMiddle.f$counter.mbModel$counter.m]
+    # remove the index
+    set Model(mActiveList) [lreplace $Model(mActiveList) $index $index]
+
+
     set counter [expr $counter + 1]
     }
 
