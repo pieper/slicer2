@@ -142,7 +142,7 @@ class circularQueue {
 
  private:
   int GetBucket(int cost);
-  int FindMinBucket(vtkFloatingPointType cost);
+  int FindMinBucket(int cost);
 
   linkedList *A;
   listElement *Circle;
