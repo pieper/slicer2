@@ -107,19 +107,25 @@ public:
   //vtkSetMacro(NumberOfFeatures, int);
 
   // Description:
+  // Set/Gets are for access from tcl
+  // Lauren check bounds!!!!!!!!!!
   // Set a parameter used to compute this feature
-  // Lauren check bounds?
-  void SetTransformParam(int featureNum, int paramNum, float param) 
+  void SetParamForFeature(int featureNum, int paramNum, float param) 
     {this->FeatureSettings[featureNum].TransformParams[paramNum] = param;};
+  // Get total number of parameters used to compute this feature
+  int GetNumberOfParamsForFeature(int f) 
+    {return this->FeatureSettings[f].NumberOfParams;};
+  // Get value of a parameter
+  float GetParamForFeature(int f, int p)
+    {return this->FeatureSettings[f].TransformParams[p];};
+  float GetWeightForFeature(int f)
+    {return this->FeatureSettings[f].Weight;};
+  float SetWeightForFeature(int f, float w)
+    {this->FeatureSettings[f].Weight = w;};
 
   // Description:
   // Get all parameters used to compute the ith feature
   featureProperties *GetFeatureSettings(int f) {return &this->FeatureSettings[f];};
-  // for access from tcl
-  int GetNumberOfParamsForFeature(int f) 
-    {return this->FeatureSettings[f].NumberOfParams;};
-  float GetParamForFeature(int f, int p)
-    {return this->FeatureSettings[f].TransformParams[p];};
 
 protected:
   vtkImageLiveWireEdgeWeights();
