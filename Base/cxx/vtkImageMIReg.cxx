@@ -747,134 +747,137 @@ void vtkImageMIReg::Execute()
         // Do some O(n) stuff..
         //
         for (i=0; i < SS; i++) 
-      {
-        // Choose coordinates of samples at random. Expresses as voxel indices (ijk).
-        RandomIjkCoordinate(B, ref);
+        {
+            // Choose coordinates of samples at random. Expresses as voxel indices (ijk).
+            RandomIjkCoordinate(B, ref);
 
-          // Lookup scalar values of Reference at sample coordinates
-        b = B->GetElements();
-          U[i] = ref->GetScalarComponentAsFloat(b[0], b[1], b[2], 0);
+            // Lookup scalar values of Reference at sample coordinates
+            b = B->GetElements();
+            U[i] = ref->GetScalarComponentAsFloat(b[0], b[1], b[2], 0);
 
-          // Express coordinates in millimeter space (xyz).
-        refRasToIjk->IjkToRasTransformVector3(B, X);
+            // Express coordinates in millimeter space (xyz).
+            refRasToIjk->IjkToRasTransformVector3(B, X);
 
-          // Transform the sample coordinates by the current pose
-          this->CurrentPose->Transform(Tx, X);
+            // Transform the sample coordinates by the current pose
+            this->CurrentPose->Transform(Tx, X);
 
-          // Lookup scalar values of Subject at transformed sample coordinates
-          // Lookup gradient of Subject at transformed sample coordinates.
-          V[i] = (float)GetGradientAndInterpolation(dVdd[i], subj, subRasToIjk, Tx);
+            // Lookup scalar values of Subject at transformed sample coordinates
+            // Lookup gradient of Subject at transformed sample coordinates.
+            V[i] = (float)GetGradientAndInterpolation(dVdd[i], subj, subRasToIjk, Tx);
 
-          // Pre-calculate the differential rotation increments
-        //   dVdr = Tx x dVdd
-          dVdr[i]->Cross(Tx, dVdd[i]);
+            // Pre-calculate the differential rotation increments
+            //   dVdr = Tx x dVdd
+            dVdr[i]->Cross(Tx, dVdd[i]);
         }
 
-      //
+        //
         // Now, the O(n^2) stuff...
         // Calculate the weight matrices: W_v[i][j] and W_uv[i][j]
         // First, just fill them with the Gaussians...
         //
         for (i=0; i < SS; i++) 
-      {
-        for (j=0; j <= i; j++) 
         {
-            W_v[i][j]  = W_v[j][i]  = qgauss(inv_sigma_v, V[i] - V[j]);
+            for (j=0; j <= i; j++) 
+            {
+                W_v[i][j]  = W_v[j][i]  = qgauss(inv_sigma_v, V[i] - V[j]);
 
-          W_uv[i][j] = W_uv[j][i] = qgauss(inv_sigma_uu, U[i] - U[j]) 
+                W_uv[i][j] = W_uv[j][i] = qgauss(inv_sigma_uu, U[i] - U[j]) 
                 * qgauss(inv_sigma_vv, V[i] - V[j]);
+            }
         }
-      }
 
         // ...then, normalize them.
         for (i=0; i < SS; i++) 
-      {
-          // Normalize W_v
-        sum=0;
-          for (j=0; j < SS; j++) {
-          sum += W_v[i][j];
-        }
-          denom = sum - W_v[i][i]; // Don't include W_v[i][i] which is a gaussian of zero
-          inv_denom = 1.0f / (denom + pMin);
-          for (j=0; j < SS; j++) {
-          W_v[i][j] *= inv_denom;
-        }
+        {
+            // Normalize W_v
+            sum=0;
+            for (j=0; j < SS; j++) {
+                sum += W_v[i][j];
+            }
+            denom = sum - W_v[i][i]; // Don't include W_v[i][i] which is a gaussian of zero
+            inv_denom = 1.0f / (denom + pMin);
+            for (j=0; j < SS; j++) {
+                W_v[i][j] *= inv_denom;
+            }
 
-          // Normalize W_uv
-        sum=0;
-        for (j=0; j < SS; j++) {
-          sum += W_uv[i][j];
+            // Normalize W_uv
+            sum=0;
+            for (j=0; j < SS; j++) {
+                sum += W_uv[i][j];
+            }
+            denom = sum - W_uv[i][i];
+            inv_denom = 1.0f / (denom + pMin);
+            for (j=0; j < SS; j++) {
+                W_uv[i][j] *= inv_denom;
+            }
         }
-          denom = sum - W_uv[i][i];
-          inv_denom = 1.0f / (denom + pMin);
-        for (j=0; j < SS; j++) {
-          W_uv[i][j] *= inv_denom;
-        }
-      }
 
         // Finally, calculate the transformation update.  First zero it,
         dIdd->Zero();
         dIdr->Zero();
 
-      // The double-sum is where all the time is spent, so speed it up:
-      didd = dIdd->GetElements();
-      didr = dIdr->GetElements();
-      for (i=0; i < SS; i++) {
-        memcpy(&dvdd[i*3], dVdd[i]->GetElements(), 3*sizeof(double));
-        memcpy(&dvdr[i*3], dVdr[i]->GetElements(), 3*sizeof(double));
-      }
+        // The double-sum is where all the time is spent, so speed it up:
+        didd = dIdd->GetElements();
+        didr = dIdr->GetElements();
+        for (i=0; i < SS; i++) {
+            memcpy(&dvdd[i*3], dVdd[i]->GetElements(), 3*sizeof(double));
+            memcpy(&dvdr[i*3], dVdr[i]->GetElements(), 3*sizeof(double));
+        }
 
-      // Next, accumulate the double sum:
-      for (i=0; i < SS; i++) {
-        for (j=0; j < SS; j++) {
-            if (i != j) {
-              left_part = (double)((V[i] - V[j]) * 
-              (inv_sigma_v_2 * W_v[i][j] - inv_sigma_vv_2 * W_uv[i][j]));
+        // Next, accumulate the double sum:
+        for (i=0; i < SS; i++) 
+        {
+            for (j=0; j < SS; j++) 
+            {
+                if (i != j) 
+                {
+                    left_part = (double)((V[i] - V[j]) * 
+                    (inv_sigma_v_2 * W_v[i][j] - inv_sigma_vv_2 * W_uv[i][j]));
 
-            // The following block is a BIG speed-up of the next 2 lines.
-            // Using 1D arrays proved faster than 2D arrays.
-            // dIdd += (dVdd[i] - dVdd[j]) * left_part;
-              // dIdr += (dVdr[i] - dVdr[j]) * left_part;
+                    // The following block is a BIG speed-up of the next 2 lines.
+                    // Using 1D arrays proved faster than 2D arrays.
+                    // dIdd += (dVdd[i] - dVdd[j]) * left_part;
+                    // dIdr += (dVdr[i] - dVdr[j]) * left_part;
 
-            i3 = i*3;
-            j3 = j*3;
-            didd[0] += (dvdd[i3+0] - dvdd[j3+0]) * left_part;
-            didd[1] += (dvdd[i3+1] - dvdd[j3+1]) * left_part;
-            didd[2] += (dvdd[i3+2] - dvdd[j3+2]) * left_part;
+                    i3 = i*3;
+                    j3 = j*3;
+                    didd[0] += (dvdd[i3+0] - dvdd[j3+0]) * left_part;
+                    didd[1] += (dvdd[i3+1] - dvdd[j3+1]) * left_part;
+                    didd[2] += (dvdd[i3+2] - dvdd[j3+2]) * left_part;
 
-            didr[0] += (dvdr[i3+0] - dvdr[j3+0]) * left_part;
-            didr[1] += (dvdr[i3+1] - dvdr[j3+1]) * left_part;
-            didr[2] += (dvdr[i3+2] - dvdr[j3+2]) * left_part;
+                    didr[0] += (dvdr[i3+0] - dvdr[j3+0]) * left_part;
+                    didr[1] += (dvdr[i3+1] - dvdr[j3+1]) * left_part;
+                    didr[2] += (dvdr[i3+2] - dvdr[j3+2]) * left_part;
+                }
             }
         }
-      }
 
         // Then normalize it,
         dIdd->Multiply(1.0f / SS);
         dIdr->Multiply(1.0f / SS);
 
         //
-      // Update the transform...
-      //
+        // Update the transform...
+        //
 
         //  Calculate the small rotation and translation
-      d->Copy(dIdd);
-      d->Multiply(lambda_d);
+        d->Copy(dIdd);
+        d->Multiply(lambda_d);
         r->Copy(dIdr);
-      r->Multiply(lambda_r);
+        r->Multiply(lambda_r);
     
         // Convert the small rotation to a quaternion
-      // using small-angle linear approximation
-      r->Multiply(0.5);
+        // using small-angle linear approximation
+        r->Multiply(0.5);
         q->Set(1.0, r);  
     
         // Compute the update for the big translation
         // and compound the small and large rotation quaternions
         // insuring that it doesn't drift from being a valid rotation
-      delta->Set(q, d);
-      this->CurrentPose->Concat(delta);
-      this->CurrentPose->Normalize();
-    }
+        delta->Set(q, d);
+        this->CurrentPose->Concat(delta);
+        this->CurrentPose->Normalize();
+      }
   }
 
   // Are we there yet? (for good)
@@ -924,7 +927,8 @@ int vtkImageMIReg::GetResolution()
   if (!this->InProgress) return -1;
   
   int i;
-  for (i=0; i<3; i++) {
+  for (i=0; i<3; i++) 
+  {
     if (this->CurIteration[i] < this->NumIterations[i])
       break;
   }
