@@ -47,12 +47,9 @@
 #   FMRIEngineBuildUIForLoad the
 #   FMRIEngineScaleActivation the
 #   FMRIEngineSetImageFormat the
-#   FMRIEngineBuildUIForAnalyze the
 #   FMRIEngineEnter
 #   FMRIEngineExit
 #   FMRIEngineUpdateVolume the
-#   FMRIEngineLoadVolumes 
-#   FMRIEngineLoadAnalyzeVolumes 
 #   FMRIEngineComputeActivationVolume 
 #   FMRIEngineSetWindowLevelThresholds
 #   FMRIEnginePushBindings 
@@ -169,7 +166,7 @@ proc FMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.30 $} {$Date: 2004/11/12 17:30:15 $}]
+        {$Revision: 1.31 $} {$Date: 2004/11/16 20:45:26 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -251,27 +248,22 @@ proc FMRIEngineBuildGUI {} {
     # Write the "help" in the form of psuedo-html.  
     # Refer to the documentation for details on the syntax.
     set help "
-    This module allows you to load a sequence of fMRI data volumes, \
-    to input paradigm design file, to compute activation volume, and \
-    to view time course voxel by voxel. You can save the activation \
-    volume and easily load it at a later time.
+
+    The fMRIEngine module is intended to process/display fMRI data.
     <P>
-    Tab content descriptions:
-    <BR>
-    <LI><B>Load:</B><BR>
-    By browsing you can input any file name in a sequence of fMRI data \
-    volumes. The Name field displays a name for each volume. Press Load button \
-    to start loading. After all volumes are loaded, you can move the slider \
-    to check volumes one at a time. Use Clear button to clean the module \
-    for next activation computation; it removes all volumes inside the module \
-    and updates the display accordingly.
-    <BR>
-    <LI><B>Compute:</B><BR>
-    Input your paradigm design file. Hit Compute button to compute activation \
-    volume. After the computation is done, adjust window, level and thresholds \
-    to make the activation volume a better view. Re-enter the FMRIEngine module, \
-    and then you can view a voxel time course plot by hittig any voxel on \
-    one of the three slices at the bottom part of the view window.
+    <B>Sequence</B> allows you to load/select a sequence of fMRI \
+    volumes to process.
+    <P>
+    <B>Compute</B> lets you to input a paradigm design, select \
+    an activation detector and compute activation.
+    <P>
+    <B>Display</B> gives you the ability to view the activation \
+    volume at different thresholds and dynamically plot any voxel \
+    time course.
+    <P>
+
+    Check the file README.txt in the root directory of this module \
+    for details about how to build and use the module.
     "
     regsub -all "\n" $help {} help
     MainHelpApplyTags FMRIEngine $help
@@ -392,6 +384,7 @@ proc FMRIEngineBuildGUI {} {
         pack $f.r$param -side top -pady $Gui(pad) 
     } 
 
+    $f.rROI configure -state disabled
     set FMRIEngine(tcPlottingOption) None
 }
 
@@ -418,7 +411,7 @@ proc FMRIEngineBuildUIForDetectors {parent} {
     set f $parent.fType
 
     # Build pulldown menu image format 
-    eval {label $f.l -text "Detector Type:"} $Gui(BLA)
+    eval {label $f.l -text "Choose a detector:"} $Gui(BLA)
     pack $f.l -side left -padx $Gui(pad) -fill x -anchor w
 
     # GLM is default format 
@@ -445,10 +438,12 @@ proc FMRIEngineBuildUIForDetectors {parent} {
     eval {entry $f.eName -width 20 \
                 -textvariable FMRIEngine(actVolName)} $Gui(WEA)
     pack $f.label $f.eName -side left -expand false -fill x -padx 6
-
+    bind $f.eName <Enter> "FMRIEngineComputeActivationVolume"
+    TooltipAdd $f.eName "Input a name for your activation volume."
+ 
     # Apply frame
     set f $parent.fApply
-    DevAddButton $f.bApply "Compute" "FMRIEngineComputeActivationVolume" 8
+    DevAddButton $f.bApply "Compute" "FMRIEngineComputeActivationVolume" 10 
     grid $f.bApply -padx $Gui(pad)
 
     # Status frame    
@@ -491,15 +486,15 @@ proc FMRIEngineBuildUIForParadigm {parent} {
     global FMRIEngine Gui
 
     Notebook:create $parent.fNotebook \
-                    -pages {Load Input} \
+                    -pages {{Load from file} {Input from user}} \
                     -pad 2 \
                     -bg $Gui(activeWorkspace) \
                     -height 356 \
                     -width 240
     pack $parent.fNotebook -fill both -expand 1
 
-    set fLoad [Notebook:frame $parent.fNotebook Load]
-    set fInput [Notebook:frame $parent.fNotebook Input]
+    set fLoad [Notebook:frame $parent.fNotebook {Load from file}]
+    set fInput [Notebook:frame $parent.fNotebook {Input from user}]
 
     #-------------------------------------------
     # Load tab 
@@ -540,8 +535,12 @@ proc FMRIEngineBuildUIForParadigm {parent} {
         incr i
     }
 
-    DevAddButton $f.bStore "Store" "FMRIEngineStoreParadigm" 7 
-    DevAddButton $f.bSave "Save" "FMRIEngineSaveParadigm" 7 
+    DevAddButton $f.bStore "Done" "FMRIEngineStoreParadigm" 10 
+    TooltipAdd $f.bStore "Hit this button if you finish your input."
+ 
+    DevAddButton $f.bSave "Save" "FMRIEngineSaveParadigm" 8 
+    TooltipAdd $f.bSave "Save all values into a paradigm design file."
+ 
     grid $f.bStore $f.bSave -padx $Gui(pad) -pady $Gui(pad) -sticky e
     grid $f.bSave -sticky w
 }
@@ -575,7 +574,11 @@ proc FMRIEngineBuildUIForSelect {parent} {
 
     set f $parent.fMiddle
     DevAddButton $f.bSelect "Select" "FMRIEngineSelectSequence" 10 
+    TooltipAdd $f.bSelect "Select a sequence."
+ 
     DevAddButton $f.bUpdate "Update" "FMRIEngineUpdateSequences" 10 
+    TooltipAdd $f.bUpdate "Update the sequence list."
+ 
     pack $f.bUpdate $f.bSelect -side left -expand 1 -pady $Gui(pad) -padx $Gui(pad) -fill both
 
     # The Navigate frame
@@ -585,8 +588,9 @@ proc FMRIEngineBuildUIForSelect {parent} {
         "FMRIEngineSetWindowLevelThresholds" 30
     TooltipAdd $f.bSet \
         "Set window, level and low/high threshold\n\
-        for the first volume. Hit this button to set\n\
-        the same values for the entire sequence."
+        for the first volume within the selected \n\
+        sequence. Hit this button to set the same \n\
+        values for the entire sequence.             "
  
     DevAddLabel $f.lVolNo "Vol Index:"
     eval { scale $f.sSlider \
@@ -601,7 +605,7 @@ proc FMRIEngineBuildUIForSelect {parent} {
 
     set FMRIEngine(slider) $f.sSlider
     TooltipAdd $f.sSlider \
-        "Slide this scale to navigate multi-volume sequence."
+        "Slide this scale to navigate the selected multi-volume sequence."
  
     #The "sticky" option aligns items to the left (west) side
     grid $f.bSet -row 0 -column 0 -columnspan 2 -padx 5 -pady 3 -sticky w
@@ -738,101 +742,6 @@ proc FMRIEngineBuildUIForLoad {parent} {
 }
 
 
-# FMRIEngineBuildUIForLoad back up
-proc FMRIEngineBuildUIForLoad-bak {parent} {
-    global FMRIEngine Gui
-
-    frame $parent.fTop -bg $Gui(backdrop) -relief sunken -bd 2  
-    frame $parent.fMiddle -bg $Gui(activeWorkspace) -height 270  
-    frame $parent.fBot -bg $Gui(activeWorkspace)   
-
-    grid $parent.fTop    -row 1 -column 0 -sticky ew 
-    grid $parent.fMiddle -row 2 -column 0 -sticky ew 
-    grid $parent.fBot    -row 4 -column 0 -sticky ew -pady 0 
- 
-    #------------------------------
-    # Bottom frame
-    #------------------------------
-    set f $parent.fBot
-    frame $f.fLogos  -bg $Gui(activeWorkspace)
-    pack $f.fLogos \
-        -side bottom -fill x -pady $Gui(pad)
-
-    # Bottom->Logos frame
-    set f $parent.fBot.fLogos
-    set uselogo [image create photo -file \
-        $FMRIEngine(modulePath)/tcl/images/LogosForIbrowser.gif]
-    eval {label $f.lLogoImages -width 200 -height 45 \
-        -image $uselogo -justify center} $Gui(BLA)
-    pack $f.lLogoImages -side bottom -padx 0 -pady $Gui(pad) -expand 0
-
-    #------------------------------
-    # Middle frame
-    #------------------------------
-    set f $parent.fMiddle
-
-    # All image formats supported
-    set imgFormatList {Analyze BXH}
-
-    # Makes a frame for each reader submodule
-    foreach m $imgFormatList {
-        frame $f.f${m} -bg $Gui(activeWorkspace)
-        place $f.f${m} -in $f -relheight 1.0 -relwidth 1.0
-
-        switch $m {
-            "Analyze" {
-                FMRIEngineBuildUIForAnalyze $f.f${m}
-            }
-            "BXH" {
-                VolBXHBuildGUI $f.f${m}
-            }
-        }
-        set FMRIEngine(f$m) $f.f${m}
-    }
-    # raise the default one 
-    raise $FMRIEngine(fAnalyze)
-
-    #------------------------------
-    # Top frame
-    #------------------------------
-    set f $parent.fTop
-
-    frame $f.fType   -bg $Gui(backdrop)
-    pack $f.fType -side top -fill x -pady $Gui(pad) -padx $Gui(pad)
-
-    # Top->Type frame
-    set f $parent.fTop.fType
-
-    # Build pulldown menu image format 
-    eval {label $f.l -text "Image Format:"} $Gui(BLA)
-    pack $f.l -side left -padx $Gui(pad) -fill x -anchor w
-
-    # Analyze is default format 
-    set df [lindex $imgFormatList 0] 
-    eval {menubutton $f.mbType -text $df \
-          -relief raised -bd 2 -width 20 \
-          -menu $f.mbType.m} $Gui(WMBA)
-    eval {menu $f.mbType.m} $Gui(WMA)
-    pack  $f.mbType -side left -pady 1 -padx $Gui(pad)
-
-    # Add menu items
-    foreach m $imgFormatList  {
-        $f.mbType.m add command -label $m \
-            -command "FMRIEngineSetImageFormat $m"
-    }
-
-    # save menubutton for config
-    set FMRIEngine(gui,mbImgFormat) $f.mbType
-    # put a tooltip over the menu
-    # TooltipAdd $f.mbType \
-    #        "Choose the type of file information to display."
-
-    # Analyze is default format
-    FMRIEngineSetImageFormat $df
-    set FMRIEngine(imageFormat) $df
-}
-
-
 #-------------------------------------------------------------------------------
 # .PROC FMRIEngineScaleActivation
 # Scales the activation volume 
@@ -916,64 +825,6 @@ proc FMRIEngineSetImageFormat {imgFormat} {
 
 
 #-------------------------------------------------------------------------------
-# .PROC FMRIEngineBuildUIForAnalyze
-# Creates UI for Analyze input 
-# .ARGS
-# parent the parent frame 
-# .END
-#-------------------------------------------------------------------------------
-proc FMRIEngineBuildUIForAnalyze {parent} {
-    global FMRIEngine Gui Volume 
-
-    set f $parent
-    frame $f.fVolume     -bg $Gui(activeWorkspace) -relief groove -bd 3
-    frame $f.fSlider     -bg $Gui(activeWorkspace)
-    frame $f.fApply      -bg $Gui(activeWorkspace)
-    frame $f.fStatus     -bg $Gui(activeWorkspace)
- 
-    pack $f.fVolume $f.fSlider $f.fApply $f.fStatus \
-        -side top -fill x -pady $Gui(pad)
-
-    set f $parent.fVolume
-    DevAddFileBrowse $f Volume "VolAnalyze,FileName" "Analyze Header File:" \
-        "VolAnalyzeSetFileName" "hdr" "\$Volume(DefaultDir)" \
-        "Open" "Browse for an Analyze header file (.hdr) that has a matching .img" \
-        "" "Absolute"
-    DevAddLabel $f.label "Filter:"
-    eval {entry $f.entry -width 30 \
-              -textvariable FMRIEngine(filter)} $Gui(WEA)
-    bind $f.entry <Return> "FMRIEngineLoadVolumes"              
-    pack $f.label $f.entry -side left -padx $Gui(pad) -pady 5
- 
-    set f $parent.fSlider
-    DevAddLabel $f.label "Volume No:"
-    eval { scale $f.slider \
-        -orient horizontal \
-        -from 0 -to 0 \
-        -resolution 1 \
-        -bigincrement 10 \
-        -length 160 \
-        -state disabled \
-        -command {FMRIEngineUpdateVolume}} \
-        $Gui(WSA) {-showvalue 1}
-
-    set FMRIEngine(slider) $f.slider
-    pack $f.label $f.slider -side left -expand false -fill x
-
-    set f $parent.fApply
-    DevAddButton $f.bApply "Load" "FMRIEngineLoadVolumes" 8 
-    DevAddButton $f.bThrlds "Set Win/Lev/Thresholds" \
-        "FMRIEngineSetWindowLevelThresholds" 20 
-    grid $f.bApply $f.bThrlds -padx $Gui(pad)
-
-    set f $parent.fStatus
-    set FMRIEngine(name) " "
-    eval {label $f.eName -textvariable FMRIEngine(name) -width 50} $Gui(WLA)
-    pack $f.eName -side left -padx 0 -pady 25 
-}
-
-
-#-------------------------------------------------------------------------------
 # .PROC FMRIEngineEnter
 # Called when this module is entered by the user. 
 # .ARGS
@@ -1025,103 +876,6 @@ proc FMRIEngineUpdateVolume {volumeNo} {
     set id [expr $FMRIEngine(firstMRMLid)+$v]
 
     MainSlicesSetVolumeAll Back $id 
-    RenderAll
-}
-
-
-#-------------------------------------------------------------------------------
-# .PROC FMRIEngineLoadVolumes 
-# Reads a series of Analyze files
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc FMRIEngineLoadVolumes {} {
-    global FMRIEngine 
-
-    switch $FMRIEngine(imageFormat) {
-        "Analyze" {
-            FMRIEngineLoadAnalyzeVolumes 
-        }
-        "BXH" {
-            VolBXHLoadVolumes
-        }
-    }
-}
-
-
-#-------------------------------------------------------------------------------
-# .PROC FMRIEngineLoadAnalyzeVolumes 
-# Reads a series of Analyze files
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc FMRIEngineLoadAnalyzeVolumes {} {
-    global AnalyzeCache FMRIEngine Volume Mrml
-
-    $FMRIEngine(slider) set 0 
-    $FMRIEngine(slider) configure -showvalue 1 
-
-    unset -nocomplain FMRIEngine(noOfVolumes)
-    unset -nocomplain FMRIEngine(firstMRMLid)
-    unset -nocomplain FMRIEngine(lastMRMLid)
-
-    set fileName $Volume(VolAnalyze,FileName)
-    if {$fileName == ""} {
-        DevErrorWindow "File name field is empty."
-        return
-    }
-
-    # file filter
-    set path [file dirname $fileName]
-    set filter $FMRIEngine(filter)
-    string trim $filter
-    set len [string length $filter]
-    if {$len == 0} {
-        lappend analyzeFiles $fileName
-    } else {
-        set hdr ".hdr"
-        set ext [file extension $filter]
-
-        if {$ext == ".*"} {
-            set filter [string replace $filter [expr $len-2] end $hdr] 
-        } elseif {$ext == $hdr} {
-        } else {
-            set filter $filter$hdr
-        }
-        set pattern [file join $path $filter]
-        set fileList [glob -nocomplain $pattern]
-        if {$fileList == ""} {
-            DevErrorWindow "No Analyze file is selected through your filter: $filter"
-            return
-        }
-
-        set analyzeFiles [lsort -dictionary $fileList]
-    }
-
-    unset -nocomplain AnalyzeCache(MRMLid)
-    foreach f $analyzeFiles { 
-       
-        # VolAnalyzeApply without argument is for Cindy's data (IS scan order) 
-        # VolAnalyzeApply "PA" is for Chandlee's data (PA scan order) 
-        # set id [VolAnalyzeApply "PA"]
-        # lappend mrmlIds [VolAnalyzeApply]
-
-       set AnalyzeCache(fileName) $f 
-       AnalyzeApply
-    }
-
-    set FMRIEngine(firstMRMLid) [lindex $AnalyzeCache(MRMLid) 0] 
-    set FMRIEngine(lastMRMLid) [lindex $AnalyzeCache(MRMLid) end] 
-    set FMRIEngine(noOfVolumes) [llength $AnalyzeCache(MRMLid)] 
-    set ext [[Volume([lindex $AnalyzeCache(MRMLid) 0],vol) GetOutput] GetWholeExtent]
-    set FMRIEngine(volumeExtent) $ext 
-
-    $FMRIEngine(slider) configure -from 1 -to [llength $AnalyzeCache(MRMLid)] 
-    $FMRIEngine(slider) configure -state active
-    $FMRIEngine(slider) configure -showvalue 1 
-
-    # show the first volume by default
-    MainSlicesSetVolumeAll Back [lindex $AnalyzeCache(MRMLid) 0] 
     RenderAll
 }
 
