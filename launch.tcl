@@ -162,18 +162,38 @@ if {$resp == "cancel"} {
     exit
 }
 
+proc file_event {fp} {
+    global END
+    if {[eof $fp]} {
+        catch "close $fp"
+        set END 1
+    } else {
+        gets $fp line
+        puts $line
+    }
+}
+
 switch $env(BUILD) {
     "solaris8" -
     "redhat7.3" {
         # - need to run the specially modified tcl interp in the executable 'vtk' on unix
         # - don't put process in background so that jdemo can track its status
-        eval exec $env(VTK_BIN_DIR)/bin/vtk $env(SLICER_HOME)/Base/tcl/Go.tcl $argv
+        #eval exec $env(VTK_BIN_DIR)/bin/vtk $env(SLICER_HOME)/Base/tcl/Go.tcl $argv
+        set fp [open "| $env(VTK_BIN_DIR)/bin/vtk $env(SLICER_HOME)/Base/tcl/Go.tcl $argv" r]
     }
     "Win32VC7" {
         # put slicer in the background on windows so it won't be "Not Responding" in
         # task manager
-        eval exec $env(TCL_BIN_DIR)/wish84.exe $env(SLICER_HOME)/Base/tcl/Go.tcl $argv &
+        # eval exec $env(TCL_BIN_DIR)/wish84.exe $env(SLICER_HOME)/Base/tcl/Go.tcl $argv &
+        set fp [open "| $env(TCL_BIN_DIR)/wish84.exe $env(SLICER_HOME)/Base/tcl/Go.tcl $argv" r]
     }
+}
+
+fileevent $fp readable "file_event $fp"
+
+set END 0
+while { ![catch "pid $fp"] && ![eof $fp] } {
+    vwait END
 }
 
 exit
