@@ -220,6 +220,10 @@ proc VolAnalyzeApply {{EPIReconOrder ""}} {
         puts "proc VolAnalyze Apply\nFiletype -s $Volume(VolAnalyze,FileType)"
     }
 
+    if { $Volume(VolAnalyze,FileName) == "" } {
+        return
+    }
+
     if { ![info exists Volume(name)] } { set Volume(name) "Analyze"}
 
     if {[ValidateName $Volume(name)] == 0} {
