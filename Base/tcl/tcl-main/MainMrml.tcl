@@ -78,7 +78,7 @@ proc MainMrmlInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainMrml \
-        {$Revision: 1.62 $} {$Date: 2002/08/21 14:08:50 $}]
+        {$Revision: 1.63 $} {$Date: 2002/08/22 18:53:45 $}]
 
     set Mrml(colorsUnsaved) 0
 }
@@ -428,7 +428,7 @@ proc MainMrmlDeleteNode {nodeType id} {
     Mrml($tree) RemoveItem ${nodeType}($id,node)
     ${nodeType}($id,node) Delete
 
-    #MainUpdateMRML
+    MainUpdateMRML
 
     MainMrmlClearList
 }
