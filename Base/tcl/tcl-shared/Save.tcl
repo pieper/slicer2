@@ -51,7 +51,7 @@ proc SaveInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.5 $} {$Date: 2003/01/20 16:32:17 $}]
+            {$Revision: 1.6 $} {$Date: 2003/01/20 16:46:14 $}]
 
     SaveInitTables
 }
@@ -161,11 +161,14 @@ proc SaveRendererToFile {directory filename imageType {mag 1} {renderer ""}} {
 proc SaveImageToFile {directory filename imageType image} {
     if {$imageType == ""} {
         set newImageType [SaveGetImageType $filename]
-        if {"$newImageType" == ""} {
-            error "unknown type for image $imageType"
-        }
-        set imageType $newImageType
+    } else {
+        set newImageType [SaveGetImageType $imageType]  
     }
+
+    if {"$newImageType" == ""} {
+        error "unknown type for image $imageType"
+    }
+    set imageType $newImageType
 
     set filename [SaveGetFilePath $directory $filename $imageType]
     vtk${imageType}Writer saveWriter
@@ -199,6 +202,7 @@ proc SaveGetFilePath {directory filename {imageType ""}} {
         set imageType $newImageType
     } else {
         #explicit image type, add extension (if different)
+        set imageType [SaveGetImageType $imageType]
         set ext $SaveImageTypeToExtensionMap($imageType)
         set curExt [string tolower [string range [file extension $filename] 1 end]]
         if {"$ext" != "$curExt"} {
