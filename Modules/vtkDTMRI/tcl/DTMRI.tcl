@@ -123,7 +123,7 @@ proc DTMRIInit {} {
     set Module($m,author) "Lauren O'Donnell"
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.30 $} {$Date: 2004/09/17 15:40:26 $}]
+                  {$Revision: 1.31 $} {$Date: 2004/10/08 19:13:46 $}]
 
      # Define Tabs
     #------------------------------------
@@ -545,10 +545,15 @@ proc DTMRIInit {} {
     set DTMRI(vtk,BSpline,init) 0
     set DTMRI(vtk,BSpline,data) 0
 
+    if {[info command vtkITKBSplineImageFilter] == ""} {
+            DevErrorWindow "DTMRI\nERROR: vtkITKBSplineImageFilter does not exist, cannot use bspline filter"
+    }
     for {set i 0} {$i < 6} {incr i 1} {
-    DTMRIMakeVTKObject vtkBSplineInterpolateImageFunction impComp($i)
-    DTMRI(vtk,itf) AddImplicitFunction DTMRI(vtk,impComp($i)) $i
-    DTMRIMakeVTKObject vtkITKBSplineImageFilter bspline($i)
+        DTMRIMakeVTKObject vtkBSplineInterpolateImageFunction impComp($i)
+        DTMRI(vtk,itf) AddImplicitFunction DTMRI(vtk,impComp($i)) $i
+        if {[info command vtkITKBSplineImageFilter] != ""} {
+            DTMRIMakeVTKObject vtkITKBSplineImageFilter bspline($i)
+        } 
     DTMRIMakeVTKObject vtkExtractTensorComponents extractor($i)
     DTMRI(vtk,extractor($i)) PassTensorsToOutputOff
     DTMRI(vtk,extractor($i)) ExtractScalarsOn
