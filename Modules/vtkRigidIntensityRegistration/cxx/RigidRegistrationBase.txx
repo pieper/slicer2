@@ -41,10 +41,9 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "itkCommand.h"
 
 #include "vtkMatrix4x4.h"
-#include "NewStoppingCondition.h"
 #include "vnl/vnl_math.h"
 
-
+#include "NewStoppingCondition.h"
 #include "itkVTKImageImport.h"
 #include "vtkImageExport.h"
 #include "vtkITKUtility.h"
@@ -108,9 +107,7 @@ RigidRegistrationBase<TFixedImage,TMovingImage,TMetricType>::RigidRegistrationBa
   m_ObserverTag = m_Registration->AddObserver( IterationEvent(), command );
 
   // Set up an observer that searcher for convergence
-  NewStoppingCondition::Pointer StoppingObserver = NewStoppingCondition::New();
-  m_OptimizeObserverTag = m_Optimizer->AddObserver( IterationEvent(), 
-                                                     StoppingObserver );
+  m_OptimizeObserverTag = 0;
 
 }
 
@@ -212,6 +209,18 @@ void RigidRegistrationBase<TFixedImage,TMovingImage,TMetricType>::Initialize
   TargetShrink[1] = self->GetTargetShrinkFactors(1);
   TargetShrink[2] = self->GetTargetShrinkFactors(2);
   this->SetFixedImageShrinkFactors(TargetShrink);
+
+  //
+  // The Callback Function on the optimizer
+  //
+
+  // Might be bad if called many times...could have many identical observers
+  NewStoppingCondition::Pointer StoppingCondition=NewStoppingCondition::New();
+  StoppingCondition->SetUpdateIter(100);
+  StoppingCondition->SetCallbackFunction(self,
+                     vtkITKRigidRegistrationConditionCallback);
+  m_OptimizeObserverTag = m_Optimizer->AddObserver( IterationEvent(),
+                                                    StoppingCondition );
 }
 
 //----------------------------------------------------------------------------
