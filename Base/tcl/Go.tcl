@@ -83,13 +83,14 @@ proc raisesplash {} { if {[winfo exists .splash]} {raise .splash; after 100 "aft
 raisesplash
 
 
-# Load vtktcl.dll on PCs
-catch {load vtktcl}
+source Base/tcl/tkcon.tcl
+tkcon attach main
+package require vtkSlicerBase
 
 # turn of warnings about old function use
 if { $tcl_platform(platform) == "windows" } {
     vtkObject o
-    o SetGlobalWarningDisplay 0
+    # o SetGlobalWarningDisplay 0
     o Delete
 }
 
