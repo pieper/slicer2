@@ -60,8 +60,10 @@ proc tarup { {destdir "auto"} } {
         set resp [tk_messageBox -message "$destdir exists\nDelete it?" -type okcancel]
         if { $resp == "cancel" } {return}
         file delete -force $destdir
-        file mkdir $destdir
     }
+
+    file mkdir $destdir
+
     if { ![file writable $destdir] } {
         error "can't write to $destdir"
     }
@@ -102,8 +104,20 @@ proc tarup { {destdir "auto"} } {
 
     #
     # grab the vtk libraries and binaries
+    # - bring in the tcl wrapping files and a specially modified
+    #   version of pkgIndex.tcl that allows for relocatable packages
     #
     puts " -- copying vtk files"
+    file mkdir $destdir/Lib/$::env(BUILD)/vtk/VTK/Wrapping/Tcl
+    set vtkparts { vtk vtkbase vtkcommon vtkpatented vtkfiltering
+            vtkrendering vtkgraphics vtkhybrid vtkimaging 
+            vtkinteraction vtkio }
+    foreach vtkpart $vtkparts {
+        file copy -force $::env(VTK_SRC_DIR)/Wrapping/Tcl/$vtkpart $destdir/Lib/$::env(BUILD)/vtk/VTK/Wrapping/Tcl
+    }
+
+
+
     file mkdir $destdir/Lib/$::env(BUILD)/vtk/VTK-build/Wrapping/Tcl
     switch $::env(BUILD) {
         "solaris8" -
@@ -127,14 +141,16 @@ proc tarup { {destdir "auto"} } {
                 set ll [file tail $lib]
                 exec strip $destdir/Lib/$::env(BUILD)/vtk/VTK-build/bin/$ll
             }
-        file copy Lib/$::env(BUILD)/vtk/VTK-build/bin/vtk $destdir/Lib/$::env(BUILD)/vtk/VTK-build/bin
+            file copy Lib/$::env(BUILD)/vtk/VTK-build/bin/vtk $destdir/Lib/$::env(BUILD)/vtk/VTK-build/bin
+            file copy -force $::env(SLICER_HOME)/Scripts/slicer-vtk-pkgIndex.tcl $destdir/Lib/$::env(BUILD)/vtk/VTK-build/Wrapping/Tcl/pkgIndex.tcl
         }
         "Darwin" {
             set libs [glob Lib/$::env(BUILD)/vtk/VTK-build/bin/*.dylib]
             foreach lib $libs {
                 file copy $lib $destdir/Lib/$::env(BUILD)/vtk/VTK-build/bin
             }
-        file copy Lib/$::env(BUILD)/vtk/VTK-build/bin/vtk $destdir/Lib/$::env(BUILD)/vtk/VTK-build/bin
+            file copy Lib/$::env(BUILD)/vtk/VTK-build/bin/vtk $destdir/Lib/$::env(BUILD)/vtk/VTK-build/bin
+            file copy -force $::env(SLICER_HOME)/Scripts/slicer-vtk-pkgIndex.tcl $destdir/Lib/$::env(BUILD)/vtk/VTK-build/Wrapping/Tcl/pkgIndex.tcl
         }
         "Win32VC7" { 
             file mkdir $destdir/Lib/$::env(BUILD)/vtk/VTK-build/bin/debug
@@ -142,8 +158,10 @@ proc tarup { {destdir "auto"} } {
             foreach lib $libs {
                 file copy $lib $destdir/Lib/$::env(BUILD)/vtk/VTK-build/bin/debug
             }
+            file copy -force $::env(SLICER_HOME)/Scripts/slicer-vtk-pkgIndex.tcl $destdir/Lib/$::env(BUILD)/vtk/VTK-build/Wrapping/Tcl/debug/pkgIndex.tcl
         }
     }
+
 
     #
     # grab the Base build and tcl
