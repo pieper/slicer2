@@ -90,9 +90,9 @@ proc BlueGrayLine {} {
 	return "
 <!-------------------------- Blue/Gray line ------------------------------>
 <table border=0 cellspacing=0 width=100%>
-<tr><td bgcolor=#FFFFFF><table cellspacing=0 cellpadding=0><tr><td height=2></td></tr></table></td></tr>
-<tr><td bgcolor=#e5e5e5><table cellspacing=0 cellpadding=0><tr><td height=2></td></tr></table></td></tr>
-<tr><td bgcolor=#333399><table cellspacing=0 cellpadding=0><tr><td height=2></td></tr></table></td></tr></table>"
+<tr><td bgcolor=#FFFFFF><table border=0 cellspacing=0 cellpadding=0><tr><td height=2></td></tr></table></td></tr>
+<tr><td bgcolor=#e5e5e5><table border=0 cellspacing=0 cellpadding=0><tr><td height=2></td></tr></table></td></tr>
+<tr><td bgcolor=#333399><table border=0 cellspacing=0 cellpadding=0><tr><td height=2></td></tr></table></td></tr></table>"
 }
 
 #-------------------------------------------------------------------------------
