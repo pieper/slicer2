@@ -60,8 +60,17 @@ void vtkMrmlFiducialsNode::Write(ofstream& of, int nIndent)
   
   vtkIndent i1(nIndent);
 
-  of << i1 << "<Fiducials>\n";
-
+  of << i1 << "<Fiducials";
+  // Strings
+  if (this->Name && strcmp(this->Name, "")) 
+    {
+      of << " name='" << this->Name << "'";
+    }
+  if (this->Description && strcmp(this->Description, "")) 
+    {
+      of << " description='" << this->Description << "'";
+    }
+  of << ">\n";
 }
 
 //----------------------------------------------------------------------------

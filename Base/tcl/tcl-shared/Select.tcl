@@ -137,6 +137,15 @@ proc SelectPick { picker widget x y } {
 				[$picker GetCellId] < 0 } {
 		return 0
 	} else {
+	    # new way of picking the FIRST actor hit by the ray in vtk3.2
+	    set assemblyPath [$picker GetPath]
+	    $assemblyPath InitTraversal
+	    set assemblyNode [$assemblyPath GetLastNode]
+	    set Select(actor) [$assemblyNode GetProp]
+
+	    if { $Select(actor) == ""} {
+		return 0
+	    }
 		set Select(actor) [$picker GetActor]
 		set Select(xyz) [$picker GetPickPosition]
 		set Select(cellId) [$picker GetCellId]
