@@ -69,7 +69,7 @@ proc MainFileInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainFile \
-        {$Revision: 1.36 $} {$Date: 2002/07/02 22:47:49 $}]
+        {$Revision: 1.37 $} {$Date: 2002/07/27 20:31:32 $}]
 
     set File(filePrefix) data
 }
@@ -223,11 +223,24 @@ proc MainFileBuildSaveAsGUI {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainFileClose
-# 
+#  At the beginning, there is a hook for modules who wish to delete anything
+#  that doesnt get deleted in the MainMrmlDeleteAll callback
+#  To use this, declare the following in your module's init routine:
+#  set Module($m,procMainFileCloseUpdate) MyModuleMainFileCloseUpdate.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainFileClose {} {
+    global Module
+
+    # Call each Module's FileCloseUpdate Routine
+    #-------------------------------------------
+    foreach m $Module(idList) {
+        if {[info exists Module($m,procMainFileCloseUpdateEntered)] == 1} {
+            if {$Module(verbose) == 1} {puts "procMainFileCloseUpdateEntered: $m"}
+            $Module($m,procMainFileCloseUpdate)
+        }
+    }
 
     MainMrmlDeleteAll
     MainUpdateMRML
