@@ -273,19 +273,19 @@ static void vtkImageStatisticsExecute(vtkImageStatistics *self,
       self->SetMin      (0);
     }
 
-  cout  << "NumExaminedElements: " <<self->GetNumExaminedElements()<< "\n";
-  cout  << "Quartile1: " <<self->GetQuartile1() << "\n"; 
-  cout  << "Median: "    <<self->GetMedian()    << "\n"; 
-  cout  << "Quartile3: " <<self->GetQuartile3() << "\n";
-  cout  << "Quintile1: " <<self->GetQuintile1() << "\n";
-  cout  << "Quintile2: " <<self->GetQuintile2() << "\n";
-  cout  << "Quintile3: " <<self->GetQuintile3() << "\n";
-  cout  << "Quintile4: " <<self->GetQuintile4() << "\n";
-  cout  << "Average: "   <<self->GetAverage()   << "\n";
-  cout  << "Stdev: "     <<self->GetStdev()     << "\n";
-  cout  << "Max: "       <<self->GetMax()     << "\n";
-  cout  << "Min: "       <<self->GetMin()     << "\n";
-  cout  << "Igore Zero? "<<self->GetIgnoreZero()   << "\n";
+//  cout  << "NumExaminedElements: " <<self->GetNumExaminedElements()<< "\n";
+//  cout  << "Quartile1: " <<self->GetQuartile1() << "\n"; 
+//  cout  << "Median: "    <<self->GetMedian()    << "\n"; 
+//  cout  << "Quartile3: " <<self->GetQuartile3() << "\n";
+//  cout  << "Quintile1: " <<self->GetQuintile1() << "\n";
+//  cout  << "Quintile2: " <<self->GetQuintile2() << "\n";
+//  cout  << "Quintile3: " <<self->GetQuintile3() << "\n";
+//  cout  << "Quintile4: " <<self->GetQuintile4() << "\n";
+//  cout  << "Average: "   <<self->GetAverage()   << "\n";
+//  cout  << "Stdev: "     <<self->GetStdev()     << "\n";
+//  cout  << "Max: "       <<self->GetMax()     << "\n";
+//  cout  << "Min: "       <<self->GetMin()     << "\n";
+//  cout  << "Igore Zero? "<<self->GetIgnoreZero()   << "\n";
 }
 
 	
