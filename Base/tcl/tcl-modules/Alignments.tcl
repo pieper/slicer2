@@ -51,9 +51,7 @@
 #   AlignmentsManualRotate
 #   AlignmentsSetRefVolume v
 #   AlignmentsSetVolume
-#   AlignmentsAutoRun
 #   AlignmentsCopyRegImages
-#   AlignmentsAutoUndo
 #   AlignmentsB1
 #   AlignmentsB1Motion
 #   AlignmentsB3Motion x y
@@ -142,11 +140,11 @@ proc AlignmentsInit {} {
     set Module($m,fiducialsStartCallback) AlignmentsFiducialsUpdated
 
     # Define Dependencies
-    set Module($m,depend) ""
+    set Module($m,depend) "MIReg"
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.17 $} {$Date: 2003/06/06 19:32:11 $}]
+            {$Revision: 1.18 $} {$Date: 2003/07/14 22:35:36 $}]
 
     # Props
     set Matrix(propertyType) Basic
@@ -169,14 +167,13 @@ proc AlignmentsInit {} {
     lappend Matrix(eventManager) { $Gui(fViewWin) <Motion> { AlignmentsGetCurrentView %W %x %y } }
 
     #Auto, FidAlign and TPS Registration Vars
+
     set Matrix(regMode) ""
-    set Matrix(autoFast) mi-fast.txt
-    set Matrix(autoSlow) mi-slow.txt
-    set Matrix(autoSpeed)  Fast
+
+    set Matrix(tAuto) ""
     set Matrix(volume) $Volume(idNone)
     set Matrix(refVolume) $Volume(idNone)
-    set Matrix(allowAutoUndo) 0
-    set Matrix(tAuto) ""
+
     set Matrix(activeSlicer) Slicer
     set Matrix(currentDataList) ""
     set Matrix(FidAlignRefVolumeName) None
@@ -315,7 +312,12 @@ proc AlignmentsBuildGUI {} {
 
     <BR>
     <LI><B>Auto:
-    </B> Automatic and semi-automatic registration mechanisms. The <B>FidAlign</B> tab allows selection of corresponding fiducial points on the volume to move and the reference volume. Once this button is pressed, the screen is split into half and the volume to move is displayed in the screen on the right while the reference volume is displayed on the left. The screen color indicates which screen is the active one (yellow) and which one is the inactive one (blue). The active screen is set either by the motion of the mouse or the radio buttons found on the control panel. It is important to note that only the control panel for the active volume is shown. In the FidAlign mode, pick at least three corresponding points on each of the volumes and click the apply button to obtain a coarse registration of the two volumes. Click the cancel button to exit the fiducial selection mode. The matrix is set to the transformation matrix that was used to coarsly align the volume to move with the reference volume. This matrix can be set as the active matrix for MI or it can be manually adjusted using the sliders on the manual tab. The <B>TPS</B> button will be used to access registration using the thin plate spline method in the future. It is currently not available in this version. Clicking on the <B>MI<\B> button performs automatic registration using the method of Mutual Information (MI). This will set the matrix to the transformation matrix needed to align the <B>Volume to Move</B> with the <B>Reference Vol.</B>.<BR><B>TIP:</B> Set the <B>Run Speed</B> to <I>Fast</I> if the 2 volumes are already roughly aligned. Click on the <I>View color correspondence between the two overlayed images</I> button to visually assess the quality of registration. When the reference volume(red) and the volume to move(blue) overlap, they form a pink color.
+    </B> Automatic and semi-automatic registration mechanisms. 
+       <UL> 
+          <LI> The <B>FidAlign</B> tab allows selection of corresponding fiducial points on the volume to move and the reference volume. Once this button is pressed, the screen is split into half and the volume to move is displayed in the screen on the right while the reference volume is displayed on the left. The screen color indicates which screen is the active one (yellow) and which one is the inactive one (blue). The active screen is set either by the motion of the mouse or the radio buttons found on the control panel. It is important to note that only the control panel for the active volume is shown. In the FidAlign mode, pick at least three corresponding points on each of the volumes and click the apply button to obtain a coarse registration of the two volumes. Click the cancel button to exit the fiducial selection mode. The matrix is set to the transformation matrix that was used to coarsly align the volume to move with the reference volume. This matrix can be set as the active matrix for MI or it can be manually adjusted using the sliders on the manual tab. 
+          <LI> The <B>TPS</B> button will be used to access registration using the thin plate spline method in the future. It is currently not available in this version. 
+          <LI> The <B>MI</B> button performs automatic registration using the method of Mutual Information (MI). This will set the matrix to the transformation matrix needed to align the <B>Volume to Move</B> with the <B>Reference Vol.</B>.<BR><B>TIP:</B> Set the <B>Run Speed</B> to <I>Fast</I> if the 2 volumes are already roughly aligned. Click on the <I>View color correspondence between the two overlayed images</I> button to visually assess the quality of registration. When the reference volume(red) and the volume to move(blue) overlap, they form a pink color.
+       </UL>
     </UL>"
     regsub -all "\n" $help { } help
     MainHelpApplyTags Alignments $help
@@ -667,7 +669,7 @@ proc AlignmentsBuildGUI {} {
     set f $fAuto.fBot
 
     #Frames for FidAlign, TPS and MI and a "choose alignment" screen
-    foreach type "AlignBegin FidAlign TPS MI" {
+    foreach type "AlignBegin FidAlign MI TPS" {
         frame $f.f${type} -bg $Gui(activeWorkspace)
         place $f.f${type} -in $f -relheight 1.0 -relwidth 1.0
         set Matrix(f${type}) $f.f${type}
@@ -738,7 +740,7 @@ proc AlignmentsBuildGUI {} {
 
     eval {label $f.l -text "Registration Mode:"} $Gui(BLA)
     frame $f.fmodes -bg $Gui(backdrop)
-    foreach mode "FidAlign TPS MI" {
+    foreach mode "FidAlign MI TPS" {
         eval {radiobutton $f.fmodes.r$mode \
             -text "$mode" -command "AlignmentsSetRegistrationMode" \
             -variable Matrix(regMode) -value $mode -width 10 \
@@ -1078,53 +1080,21 @@ proc AlignmentsBuildGUI {} {
     #-------------------------------------------
     set f $fAuto.fBot.fMI
 
-    frame $f.fDesc    -bg $Gui(activeWorkspace)
-    frame $f.fSpeed   -bg $Gui(activeWorkspace) -relief groove -bd 2
-    frame $f.fRun     -bg $Gui(activeWorkspace)
+    ##
+    ## If the MIReg Module exists, use it
+    ##
+    ## Otherwise, don't use it.
 
-    pack $f.fDesc $f.fSpeed $f.fRun -pady $Gui(pad) \
-
-    #-------------------------------------------
-    # Auto->Bot->MI->Desc frame
-    #-------------------------------------------
-    set f $fAuto.fBot.fMI.fDesc
-
-    eval {label $f.l -text "\Press 'Run' to start the program \nthat performs automatic registration\nby Mutual Information.\n\Your manual registration is used\n\ as an initial pose.\ "} $Gui(WLA)
-    pack $f.l -pady $Gui(pad)
-
-    #-------------------------------------------
-    # Auto->Bot->Mi->Speed Frame
-    #-------------------------------------------
-    set f $fAuto.fBot.fMI.fSpeed
-
-    frame $f.fTitle -bg $Gui(activeWorkspace)
-    frame $f.fBtns -bg $Gui(activeWorkspace)
-    pack $f.fTitle $f.fBtns -side left -padx 5
-
-    eval {label $f.fTitle.lSpeed -text "Run Speed:"} $Gui(WLA)
-    pack $f.fTitle.lSpeed
-
-    foreach text "Fast Slow" value "Fast Slow" \
-        width "6 6" {
-        eval {radiobutton $f.fBtns.rSpeed$value -width $width \
-            -text "$text" -value "$value" -variable Matrix(autoSpeed) \
-            -indicatoron 0} $Gui(WCA)
-        pack $f.fBtns.rSpeed$value -side left -padx 4 -pady 2
+    ### bad hack
+    global env
+    source $env(SLICER_HOME)/Modules/vtkMIReg/tcl/MIReg.tcl
+    
+    if {[info commands MIRegBuildSubGui] == ""} {
+        DevAddLabel $f.lbadnews "I'm sorry but the MIReg Module\n is not loaded so that Mutual\n Information Registration is not available."
+    pack $f.lbadnews -pady $Gui(pad)
+    } else {
+        MIRegBuildSubGui $f
     }
-
-    #-------------------------------------------
-    # Auto->Bot->MI->Run frame
-    #-------------------------------------------
-    set f $fAuto.fBot.fMI.fRun
-
-    foreach str "Run Cancel Undo" {
-        eval {button $f.b$str -text "$str" -width [expr [string length $str]+1] \
-            -command "AlignmentsAuto$str"} $Gui(WBA)
-        set Matrix(b$str) $f.b$str
-    }
-    pack $f.bRun $f.bUndo -side left -padx $Gui(pad) -pady $Gui(pad)
-    set Matrix(bUndo) $f.bUndo
-    $f.bUndo configure -state disabled
 
     #-------------------------------------------
     # Minimized Slice Controls used to switch
@@ -1744,172 +1714,6 @@ proc AlignmentsSetVolume {{v ""}} {
 }
 
 #-------------------------------------------------------------------------------
-#        AUTO REGISTRATION
-#-------------------------------------------------------------------------------
-
-#-------------------------------------------------------------------------------
-# .PROC AlignmentsAutoRun
-#
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc AlignmentsAutoRun {} {
-    if { [info command vtkITKMutualInformationTransform] == "" } {
-        AlignmentsAutoRun_vtk 
-    } else {
-        AlignmentsAutoRun_itk 
-    }
-}
-
-proc AlignmentsAutoRun_vtk {} {
-    global Path env Gui Matrix Volume
-
-    # v = ID of volume to register
-    # r = ID of reference volume
-    set v $Matrix(volume)
-    set r $Matrix(refVolume)
-
-    # Store which transform we're editing
-    # If the user has not selected a tranform, then create a new one by default
-    # and append it to the volume to register (ie. "Volume to Move")
-    set t $Matrix(activeID)
-    set Matrix(tAuto) $t
-    if {$t == ""} {
-        DataAddTransform append Volume($v,node) Volume($v,node)
-    }
-
-    vtkRasToIjkTransform refTrans
-    eval refTrans SetExtent  [[Volume($r,vol) GetOutput] GetExtent]
-    eval refTrans SetSpacing [[Volume($r,vol) GetOutput] GetSpacing]
-    refTrans SetSlicerMatrix [Volume($r,node) GetRasToIjk]
-    refTrans ComputeCornersFromSlicerMatrix
-
-    vtkRasToIjkTransform subTrans
-    eval subTrans SetExtent  [[Volume($v,vol) GetOutput] GetExtent]
-    eval subTrans SetSpacing [[Volume($v,vol) GetOutput] GetSpacing]
-    subTrans SetSlicerMatrix [Volume($v,node) GetRasToIjk]
-    subTrans ComputeCornersFromSlicerMatrix
-
-    # Get the initial Pose
-    # This is either identity when no manual reg has been done
-    # or the matrix obtained from manual registration
-    set tran   [Matrix($t,node) GetTransform]
-    set matrix [$tran GetMatrix]
-    vtkMatrix4x4 initMatrix
-    initMatrix DeepCopy $matrix
-    initMatrix Invert
-    vtkPose initPose
-    initPose ConvertFromMatrix4x4 initMatrix
-    puts "Initial Pose = [initPose Print]"
-
-    # Run MI Registration
-    vtkImageMIReg reg
-    reg SetReference [Volume($r,vol) GetOutput]
-    reg SetSubject   [Volume($v,vol) GetOutput]
-    reg SetRefTrans refTrans
-    reg SetSubTrans subTrans
-    reg SetInitialPose initPose
-
-    # Set parameters (ordered from small res to large)
-    reg SetNumIterations 16000 4000 4000 4000
-    reg SetLambdaDisplacement .2 0.1 0.05 0.01
-    reg SetLambdaRotation 0.00005 0.00002 0.000005 0.000001
-    reg SetSampleSize 50
-    reg SetSigmaUU 2
-    reg SetSigmaVV 2
-    reg SetSigmaV 4
-    reg SetPMin 0.01
-    reg SetUpdateIterations 200
-
-    # Initialize (downsample images)
-    set res -1
-    set resDisplay 3
-    set Gui(progressText) "MI Initializing"
-    MainStartProgress
-    MainShowProgress reg
-    reg Update
-
-    # Iterate
-    while {[reg GetInProgress] == 1} {
-        reg Update
-
-        # Update the pose (set the transform's matrix)
-        set currentPose [reg GetCurrentPose]
-        $currentPose ConvertToMatrix4x4 $matrix
-        $matrix Invert
-
-        # If we're not done, then display intermediate results
-        if {[reg GetInProgress] == 1} {
-
-          # Print out the current status
-          set res  [reg GetResolution]
-          set iter [reg GetIteration]
-          set Gui(progressText) "MI res=$res iter=$iter"
-          MainShowProgress reg
-
-          # Update the image data to display
-          # Copy the new Subject if its resolution changed since last update
-          if {$res != $resDisplay} {
-            puts "Current Pose  at res=$res is: [$currentPose Print]"
-            set resDisplay $res
-            AlignmentsCopyRegImages $res $r $v
-          }
-        }
-
-        # Update MRML and display
-        MainUpdateMRML
-        RenderAll
-   }
-   MainEndProgress
-
-   # Cleanup
-   refTrans Delete
-   subTrans Delete
-   initMatrix Delete
-   initPose Delete
-   reg Delete
-
-   #Return the user back to the pick alignment mode tab
-   set Matrix(regMode) ""
-   raise $Matrix(fAlignBegin)
-}
-
-#
-# use the vtkITK interface to the ITK MI registration routines
-# - builds a new user interface panel to control the process
-#
-proc AlignmentsAutoRun_itk {} {
-    global Path env Gui Matrix Volume
-
-    # v = ID of volume to register (moving)
-    # r = ID of reference volume
-    set v $Matrix(volume)
-    set r $Matrix(refVolume)
-
-    # Store which transform we're editing
-    # If the user has not selected a tranform, then create a new one by default
-    # and append it to the volume to register (ie. "Volume to Move")
-    set t $Matrix(activeID)
-    set Matrix(tAuto) $t
-    if {$t == ""} {
-        DataAddTransform append Volume($v,node) Volume($v,node)
-    }
-
-    # TODO make islicer a package
-    source $env(SLICER_HOME)/Modules/iSlicer/tcl/isregistration.tcl
-
-    catch "destroy .mi"
-    toplevel .mi
-
-    isregistration .mi.reg \
-        -transform $t \
-        -moving [Volume($v,node) GetName] \
-        -reference [Volume($r,node) GetName]
-
-    pack .mi.reg -fill both -expand true
-}
-
-#-------------------------------------------------------------------------------
 # .PROC AlignmentsCopyRegImages
 #
 # .ARGS
@@ -1965,27 +1769,6 @@ proc AlignmentsCopyRegImages {res r v} {
 
   # Update pipeline and GUI
   MainVolumesUpdate $r
-}
-
-#-------------------------------------------------------------------------------
-# .PROC AlignmentsAutoUndo
-#
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc AlignmentsAutoUndo {} {
-    global Matrix
-
-    set t $Matrix(tAuto)
-    set tran [Matrix($t,node) GetTransform]
-    $tran Pop
-
-    # Disallow undo
-    $Matrix(bUndo) configure -state disabled
-
-    # Update MRML
-    MainUpdateMRML
-    RenderAll
 }
 
 ################################################################################
