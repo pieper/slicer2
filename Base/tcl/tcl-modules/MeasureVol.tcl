@@ -111,7 +111,7 @@ proc MeasureVolInit {} {
     # Set version info
     #------------------------------------
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.18 $} {$Date: 2003/08/11 14:04:28 $}]
+        {$Revision: 1.19 $} {$Date: 2003/12/07 18:16:44 $}]
     
     # Initialize module-level variables
     #------------------------------------
@@ -413,7 +413,7 @@ proc MeasureVolExit {} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc MeasureVolVolume {} {
+proc MeasureVolVolume { {view_prompt "yes"} } {
     global MeasureVol Volume Module
     
     # validate input from Basic tab
@@ -476,9 +476,11 @@ proc MeasureVolVolume {} {
         "Results for [Volume($v,node) GetName] volume:"
 
     # tab to Results frame if desired
-    YesNoPopup test1 100 100 \
-        "Done measuring volume [Volume($v,node) GetName].\nView output file?" \
-        {Tab MeasureVol row1 Results}
+    if { $view_prompt == "yes" } {
+        YesNoPopup test1 100 100 \
+            "Done measuring volume [Volume($v,node) GetName].\nView output file?" \
+            {Tab MeasureVol row1 Results}
+    }
 
 }
 
