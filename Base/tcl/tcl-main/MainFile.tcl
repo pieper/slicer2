@@ -68,7 +68,7 @@ proc MainFileInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainFile \
-        {$Revision: 1.32 $} {$Date: 2002/05/21 18:45:23 $}]
+        {$Revision: 1.33 $} {$Date: 2002/05/24 22:47:30 $}]
 
     set File(filePrefix) data
 }
@@ -806,9 +806,13 @@ proc CheckFileExists {filename {verbose 1}} {
 # 
 #-------------------------------------------------------------------------------
 proc MainFileFindImageNumber {which firstFile} {
-
+    # this assumes you have a dot separating the file name and the extensions
     if {[regexp {\.([0-9]*)([^0-9]*)$} $firstFile match firstNum suffix] == 0} {
-        return ""
+        # try it without a dot
+        if {[regexp {([0-9]*)([^0-9]*)$} $firstFile match firstNum suffix] == 0} {
+            DevErrorWindow "Could not find the number of the first file in string $firstFile"
+            return ""
+        }
     }
     # Rid unnecessary 0's
     set firstNum [string trimleft $firstNum "0"]
