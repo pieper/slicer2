@@ -153,7 +153,7 @@ proc FSLReaderRetrieveTimeCourse {i j k} {
 
         set vol [Volume($start,vol) GetOutput]
         $vol Update
-        set val [$vol GetScalarComponentAsFloat $i $j $k 0]
+        set val [$vol $::getScalarComponentAs $i $j $k 0]
         timeCourse SetComponent $ii 0 $val 
 
         incr ii
