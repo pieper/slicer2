@@ -22,7 +22,7 @@ vtkTensorMask.cxx
 vtkTensorMathematics.cxx
 vtkVectorToOuterProductDualBasis.cxx
 vtkHyperStreamlineDTMRI.cxx
-vtkHyperPointandArray.cxx
+#vtkHyperPointandArray.cxx
 )
 
 SET_SOURCE_FILES_PROPERTIES(
