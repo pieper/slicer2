@@ -58,7 +58,9 @@ proc KullbackLeiblerRegistrationInit {} {
     #   procedures are optional.  If they exist, then their name (which
     #   can be anything) is registered with a line like this:
     #
-    #   set Module($m,procVTK) KullbackLeiblerRegistrationBuildVTK
+
+    set Module($m,procVTK) KullbackLeiblerRegistrationBuildVTK
+
     #
     #   All the options are:
 
@@ -83,6 +85,7 @@ proc KullbackLeiblerRegistrationInit {} {
 #    set Module($m,procVTK) KullbackLeiblerRegistrationBuildVTK
 #    set Module($m,procEnter) KullbackLeiblerRegistrationEnter
 #    set Module($m,procExit) KullbackLeiblerRegistrationExit
+     set Module($m,procMRML) KullbackLeiblerRegistrationUpdateGUI
 
     # Define Dependencies
     #------------------------------------
@@ -102,7 +105,7 @@ proc KullbackLeiblerRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.3 $} {$Date: 2003/12/18 02:25:04 $}]
+        {$Revision: 1.4 $} {$Date: 2003/12/21 22:57:24 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -111,17 +114,22 @@ proc KullbackLeiblerRegistrationInit {} {
     #   This is a handy method for organizing the global variables that
     #   the procedures in this module and others need to access.
     #
-    set RigidIntensityRegistration(sourceId) $Volume(idNone)
-    set RigidIntensityRegistration(targetId) $Volume(idNone)
-    set RigidIntensityRegistration(matrixId) ""
 
-    set RigidIntensityRegistration(Repeat) 1
+    ## put here to show KL specific param
+    set KullbackLeiblerRegistration(NumberOfSamples)         50
+    set KullbackLeiblerRegistration(SourceStandardDeviation) 0.4
+    set KullbackLeiblerRegistration(TargetStandardDeviation) 0.4
 
-    global Matrix 
-    set Matrix(allowAutoUndo) 0
+    set KullbackLeiblerRegistration(HistSizeSource) 64
+    set KullbackLeiblerRegistration(HistSizeTarget) 64
+    set KullbackLeiblerRegistration(Epsilon)        1e-12
 
     ## Set the default to fast registration
     KullbackLeiblerRegistrationVerySlowParam
+
+    global Volume
+    set KullbackLeiblerRegistration(TrainRefVol) $Volume(idNone)
+    set KullbackLeiblerRegistration(TrainMovVol) $Volume(idNone)
 }
 #-------------------------------------------------------------------------------
 # .PROC KullbackLeiblerRegistrationBuildSubGui
@@ -223,7 +231,7 @@ will not work. Also, arbitrary cascades of transforms are not allowed. All of th
     <LI><B>Advanced</B>
     Change these at your own risk. The input images are normalized, so that the source and target standard deviations should generally be smaller than 1. There are arguments they should be much smaller than 1, but changing them does not seem to make a big difference. The number of samples per iteration can be increased, but also does not seem to help alot. The translation scale is roughly a measure of how much to scale translations over rotations. A variety of numbers may work here. The learning rate should generally be less than 0.001, and often much smaller. The number of update iterations is generally between 100 and 2500
     <LI><B>Known Bugs</B>
-    The .mi window is left open and the pipeline is left taking lots of 
+    The .kl window is left open and the pipeline is left taking lots of 
     memory.
     </UL>"
 
@@ -244,20 +252,34 @@ will not work. Also, arbitrary cascades of transforms are not allowed. All of th
 
     set f $fnormal
 
-    frame $f.fDesc    -bg $Gui(activeWorkspace)
-    frame $f.fSpeed   -bg $Gui(activeWorkspace)
-    frame $f.fRepeat  -bg $Gui(activeWorkspace)
-    frame $f.fRun     -bg $Gui(activeWorkspace)
+    frame $f.fDesc     -bg $Gui(activeWorkspace)
+    frame $f.fTraining -bg $Gui(activeWorkspace)
+    frame $f.fSpeed    -bg $Gui(activeWorkspace)
+    frame $f.fRepeat   -bg $Gui(activeWorkspace)
+    frame $f.fRun      -bg $Gui(activeWorkspace)
 
-    pack $f.fDesc $f.fSpeed $f.fRepeat $f.fRun -pady $Gui(pad) 
+    pack $f.fDesc $f.fTraining $f.fSpeed $f.fRepeat $f.fRun -pady $Gui(pad) 
 
     #-------------------------------------------
     # Level->Normal->Desc frame
     #-------------------------------------------
     set f $fnormal.fDesc
 
-    eval {label $f.l -text "\Press 'Start' to start the program \nthat performs automatic registration\nby Mutual Information.\n\Your manual registration is used\n\ as an initial pose.\ "} $Gui(WLA)
+    eval {label $f.l -text "\Press 'Start' to start the program that\n
+  performs automatic registration\nby Kullback Leibler.\n\Your manual
+  registration is used\n\ as an initial pose.\ "} $Gui(WLA)
     pack $f.l -pady $Gui(pad)
+
+    #-------------------------------------------
+    # Level->Normal->Training frame
+    #-------------------------------------------
+     ## 
+    set f $fnormal.fTraining
+
+    DevAddSelectButton KullbackLeiblerRegistration $f \
+        TrainMovVol "TrainingMoving"     Grid
+    DevAddSelectButton KullbackLeiblerRegistration $f \
+        TrainRefVol "TrainingReference:" Grid
 
     #-------------------------------------------
     # Level->Normal->Speed Frame
@@ -347,7 +369,7 @@ will not work. Also, arbitrary cascades of transforms are not allowed. All of th
         set f $fadvanced.fParam
         frame $f.f$param   -bg $Gui(activeWorkspace)
         pack $f.f$param -side top -fill x -pady 2
-        
+
         set f $f.f$param
         eval {label $f.l$param -text "$name:"} $Gui(WLA)
         eval {entry $f.e$param -width 10 -textvariable RigidIntensityRegistration($param)} $Gui(WEA)
@@ -359,12 +381,18 @@ will not work. Also, arbitrary cascades of transforms are not allowed. All of th
                    {NumberOfSamples} \
                    {SourceStandardDeviation} \
                    {TargetStandardDeviation} \
+                   {HistSizeSource} \
+                   {HistSizeTarget} \
+                   {Epsilon} \
                    } name \
                   { \
                    {Number Of Samples} \
                    {Source Standard Deviation} \
                    {Target Standard Deviation} \
-                   } {
+           {Histogram Size Source} \
+           {Histogram Size Target} \
+           {Epsilon to replace 0 bins} \
+           } {
         set f $fadvanced.fParam
         frame $f.f$param   -bg $Gui(activeWorkspace)
         pack $f.f$param -side top -fill x -pady 2
@@ -406,6 +434,59 @@ proc KullbackLeiblerRegistrationSetLevel {} {
     set level $KullbackLeiblerRegistration(Level)
     raise $KullbackLeiblerRegistration(f${level})
     focus $KullbackLeiblerRegistration(f${level})
+}
+
+#-------------------------------------------------------------------------------
+# .PROC VolumeMathUpdateGUI
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc KullbackLeiblerRegistrationUpdateGUI {} {
+    global KullbackLeiblerRegistration Volume
+
+### I once ran into errors that KullbackLeiblerRegistration(TrainRefVol)
+### did not exist. Might need to check for it one day and set it if
+### it does not exist
+
+    DevUpdateNodeSelectButton Volume KullbackLeiblerRegistration \
+      TrainRefVol TrainRefVol DevSelectNode
+    DevUpdateNodeSelectButton Volume KullbackLeiblerRegistration \
+      TrainMovVol TrainMovVol DevSelectNode
+}
+
+#-------------------------------------------------------------------------------
+# .PROC KullbackLeiblerRegistrationBuildVTK
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc KullbackLeiblerRegistrationBuildVTK {} {
+    global KullbackLeiblerRegistration Volume
+
+    ### normalize and center the training target
+    vtkImageChangeInformation KLTrainTargetChangeInfo
+    KLTrainTargetChangeInfo SetInput [Volume($Volume(idNone),vol) GetOutput]
+    KLTrainTargetChangeInfo CenterImageOn
+
+    vtkImageCast KLTrainTargetCast
+    KLTrainTargetCast SetOutputScalarTypeToFloat
+    KLTrainTargetCast SetInput [KLTrainTargetChangeInfo GetOutput]
+
+    vtkITKNormalizeImageFilter KLTrainTargetNorm
+    KLTrainTargetNorm SetInput [KLTrainTargetCast GetOutput]
+
+    ### normalize and center the training source
+    vtkImageChangeInformation KLTrainSourceChangeInfo
+    KLTrainSourceChangeInfo SetInput [Volume($Volume(idNone),vol) GetOutput]
+    KLTrainSourceChangeInfo CenterImageOn
+
+    vtkImageCast KLTrainSourceCast
+    KLTrainSourceCast SetOutputScalarTypeToFloat
+    KLTrainSourceCast SetInput [KLTrainSourceChangeInfo GetOutput]
+
+    vtkITKNormalizeImageFilter KLTrainSourceNorm
+    KLTrainSourceNorm SetInput [KLTrainSourceCast GetOutput]
 }
 
 #-------------------------------------------------------------------------------
@@ -467,6 +548,9 @@ proc KullbackLeiblerRegistrationFineParam {} {
     set KullbackLeiblerRegistration(SourceStandardDeviation) 0.4
     set KullbackLeiblerRegistration(TargetStandardDeviation) 0.4
     set KullbackLeiblerRegistration(NumberOfSamples)  50
+    set KullbackLeiblerRegistration(HistSizeSource) 64
+    set KullbackLeiblerRegistration(HistSizeTarget) 64
+    set KullbackLeiblerRegistration(Epsilon)        1e-12
 }
 
 
@@ -497,6 +581,9 @@ proc KullbackLeiblerRegistrationGSlowParam {} {
     set KullbackLeiblerRegistration(NumberOfSamples)  50
     set KullbackLeiblerRegistration(SourceStandardDeviation) 0.4
     set KullbackLeiblerRegistration(TargetStandardDeviation) 0.4
+    set KullbackLeiblerRegistration(HistSizeSource) 64
+    set KullbackLeiblerRegistration(HistSizeTarget) 64
+    set KullbackLeiblerRegistration(Epsilon)        1e-12
 }
 
 #-------------------------------------------------------------------------------
@@ -527,6 +614,9 @@ proc KullbackLeiblerRegistrationVerySlowParam {} {
     set KullbackLeiblerRegistration(NumberOfSamples)          "50"
     set KullbackLeiblerRegistration(SourceStandardDeviation) 0.4
     set KullbackLeiblerRegistration(TargetStandardDeviation) 0.4
+    set KullbackLeiblerRegistration(HistSizeSource) 64
+    set KullbackLeiblerRegistration(HistSizeTarget) 64
+    set KullbackLeiblerRegistration(Epsilon)        1e-12
 }
 
 
@@ -585,7 +675,7 @@ proc KullbackLeiblerRegistrationExit {} {
 proc KullbackLeiblerRegistrationAutoRun {} {
     global Matrix RigidIntensityRegistration KullbackLeiblerRegistration
 
-    if {[RigidIntensityRegistrationCheckSetUp] == 0} {
+    if {[RigidIntensityRegistrationSetUp] == 0} {
       return 0
     }
 
@@ -596,56 +686,32 @@ proc KullbackLeiblerRegistrationAutoRun {} {
     source $env(SLICER_HOME)/Modules/iSlicer/tcl/isregistration.tcl
 
     ## if it is not already there, create it.
-    set notalreadythere [catch ".mi cget -background"]
+    set notalreadythere [catch ".kl cget -background"]
     if {$notalreadythere} {
-        toplevel .mi
-        wm withdraw .mi
-        isregistration .mi.reg
+        toplevel .kl
+        wm withdraw .kl
+        isregistration .kl.reg 
     }
-    # catch "destroy .mi"
+    # catch "destroy .kl"
 
-    .mi.reg config \
-        -update_procedure KullbackLeiblerRegistrationUpdateParam         \
-        -stop_procedure KullbackLeiblerRegistrationStop                  \
-        -source          $KullbackLeiblerRegistration(sourceId)          \
-        -target          $KullbackLeiblerRegistration(targetId)          \
-        -resolution      $KullbackLeiblerRegistration(Resolution)        
+    .kl.reg config \
+        -source          $RigidIntensityRegistration(sourceId)          \
+        -target          $RigidIntensityRegistration(targetId)          \
+        -resolution      $RigidIntensityRegistration(Resolution)        \
+        -update_procedure RigidIntensityRegistrationUpdateParam         \
+        -stop_procedure    KullbackLeiblerRegistrationStop              \
+        -set_metric_option KullbackLeiblerRegistrationSetMetricOption   \
+        -vtk_itk_reg       vtkITKKullbackLeiblerTransform
 
-    puts "to see the pop-up window, type: pack .mi.reg -fill both -expand true"
-  #  pack .mi.reg -fill both -expand true
+    puts "to see the pop-up window, type: pack .kl.reg -fill both -expand true"
+  #  pack .kl.reg -fill both -expand true
     $KullbackLeiblerRegistration(b1Run) configure -command \
                                       "KullbackLeiblerRegistrationStop"
     $KullbackLeiblerRegistration(b2Run) configure -command \
                                       "KullbackLeiblerRegistrationStop"
     $KullbackLeiblerRegistration(b1Run) configure -text "Stop"
     $KullbackLeiblerRegistration(b2Run) configure -text "Stop"
-    .mi.reg start
-}
-
-#-------------------------------------------------------------------------------
-# .PROC KullbackLeiblerRegistrationUpdateParam
-#
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc KullbackLeiblerRegistrationUpdateParam {} {
-    global RigidIntensityRegistration KullbackLeiblerRegistration
-
-    .mi.reg config \
-        -update_procedure KullbackLeiblerRegistrationUpdateParam         \
-        -transform       $RigidIntensityRegistration(matrixId)          \
-        -source          $RigidIntensityRegistration(sourceId)          \
-        -target          $RigidIntensityRegistration(targetId)          \
-        -resolution      $RigidIntensityRegistration(Resolution)        \
-        -iterations      $RigidIntensityRegistration(UpdateIterations)  \
-        -learningrate    $RigidIntensityRegistration(LearningRate)      \
-        -translatescale  $RigidIntensityRegistration(TranslateScale)    \
-        -source_shrink   $RigidIntensityRegistration(SourceShrinkFactors) \
-        -target_shrink   $RigidIntensityRegistration(TargetShrinkFactors) \
-        -auto_repeat     $RigidIntensityRegistration(Repeat)              \
-        -samples         $KullbackLeiblerRegistration(NumberOfSamples)   \
-        -source_standarddev $KullbackLeiblerRegistration(SourceStandardDeviation)  \
-        -target_standarddev $KullbackLeiblerRegistration(TargetStandardDeviation)  \
+    .kl.reg start
 }
 
 #-------------------------------------------------------------------------------
@@ -656,7 +722,7 @@ proc KullbackLeiblerRegistrationUpdateParam {} {
 #-------------------------------------------------------------------------------
 proc KullbackLeiblerRegistrationStop {} {
     global RigidIntensityRegistration KullbackLeiblerRegistration
-.mi.reg stop
+.kl.reg stop
 $KullbackLeiblerRegistration(b1Run) configure -command \
                                       "KullbackLeiblerRegistrationAutoRun"
 $KullbackLeiblerRegistration(b2Run) configure -command \
@@ -665,6 +731,70 @@ $KullbackLeiblerRegistration(b1Run) configure -text "Start"
 $KullbackLeiblerRegistration(b2Run) configure -text "Start"
 }
 
+#-------------------------------------------------------------------------------
+# .PROC KullbackLeiblerSetMetricOption
+#
+# takes in a vtkITKKullbackLeibler object
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc KullbackLeiblerRegistrationSetMetricOption { vtkITKKL } {
+    global KullbackLeiblerRegistration 
 
+    $vtkITKKL SetSourceStandardDeviation $KullbackLeiblerRegistration(SourceStandardDeviation)
+    $vtkITKKL SetTargetStandardDeviation $KullbackLeiblerRegistration(TargetStandardDeviation)
+    $vtkITKKL SetNumberOfSamples $KullbackLeiblerRegistration(NumberOfSamples)
 
+    $vtkITKKL SetHistSizeSource $KullbackLeiblerRegistration(HistSizeSource)
+    $vtkITKKL SetHistSizeTarget $KullbackLeiblerRegistration(HistSizeSource)
+    $vtkITKKL SetHistEpsilon    $KullbackLeiblerRegistration(Epsilon)
 
+    KLTrainSourceChangeInfo SetInput \
+        [Volume($KullbackLeiblerRegistration(TrainMovVol),vol) GetOutput]
+    KLTrainSourceNorm Update
+    KLTrainTargetChangeInfo SetInput \
+        [Volume($KullbackLeiblerRegistration(TrainRefVol),vol) GetOutput]
+    KLTrainTargetNorm Update
+
+    $vtkITKKL SetTrainingSourceImage [KLTrainSourceNorm GetOutput]
+    $vtkITKKL SetTrainingTargetImage [KLTrainTargetNorm GetOutput]
+    $vtkITKKL SetTrainingTransform   [KullbackLeiblerRegistrationGetTrainingTransform ]
+}
+
+#-------------------------------------------------------------------------------
+# .PROC KullbackLeiblerSetMetricOption
+#
+# takes in a vtkITKKullbackLeibler object
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc KullbackLeiblerRegistrationGetTrainingTransform {}  {
+    global KullbackLeiblerRegistration
+
+   catch {vtkMatrix4x4 KLp1}
+   catch {vtkMatrix4x4 KLp2}
+   catch {vtkMatrix4x4 KLTrainMat}
+
+   # p1 mat^-1 p2^-1 
+
+   # target, reference,
+   GetSlicerRASToItkMatrix \
+      Volume($KullbackLeiblerRegistration(TrainRefVol),node) \
+      KLp2
+
+   KLp2 Invert
+
+   # source, reference,
+   GetSlicerRASToItkMatrix \
+      Volume($KullbackLeiblerRegistration(TrainMovVol),node) \
+      KLp1
+
+   KLTrainMat Multiply4x4 KLp1 KLp2 KLTrainMat
+
+   KLp1 Delete
+   KLp2 Delete
+
+   return KLTrainMat
+}
