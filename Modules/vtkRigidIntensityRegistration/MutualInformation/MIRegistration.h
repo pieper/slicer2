@@ -131,7 +131,7 @@ public:
   typedef Superclass::OptimizerType           OptimizerType;
 
   /** Metric Type. */
-  typedef Superclass::MetricType              MetricType;
+  typedef typename Superclass::MetricType              MetricType;
 
   /** Interpolation Type. */
   typedef Superclass::InterpolatorType        InterpolatorType;
@@ -146,11 +146,11 @@ public:
   typedef Superclass::RegistrationType        RegistrationType;
 
   /** Transform parameters type. */
-  typedef Superclass::ParametersType          ParametersType;
+  typedef typename Superclass::ParametersType          ParametersType;
 
   /** Affine transform type. */
-  typedef Superclass::AffineTransformType    AffineTransformType;
-  typedef Superclass::AffineTransformPointer AffineTransformPointer;
+  typedef typename Superclass::AffineTransformType    AffineTransformType;
+  typedef typename Superclass::AffineTransformPointer AffineTransformPointer;
 
   // ----------------------------------------------------------------------
   // Set the Parameters for the Metric
