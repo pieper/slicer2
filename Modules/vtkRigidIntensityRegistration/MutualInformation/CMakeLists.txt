@@ -1,4 +1,4 @@
-SET (LOCAL_LIBRARY_BASENAME vtkRigidIntensityRegistration)
+SET (LOCAL_LIBRARY_BASENAME vtkMutualInformationRegistration)
 
 INCLUDE (${VTKRIGIDINTENSITYREGISTRATION_SOURCE_DIR}/MutualInformation/CMakeListsLocal.txt)
 
@@ -9,17 +9,17 @@ INCLUDE (${VTKRIGIDINTENSITYREGISTRATION_SOURCE_DIR}/MutualInformation/CMakeList
 # Create the vtkRigidIntensityRegistration C++ library
 #
 # (Doesn't work here because of a CMake bug)
-# ADD_LIBRARY (vtkRigidIntensityRegistration LOCAL_MODULE_SRCS)
+# ADD_LIBRARY (vtkMutualInformationRegistration LOCAL_MODULE_SRCS)
 
 #
-# Create the vtkRigidIntensityRegistration Tcl library
+# Create the vtkMutualInformationRegistration Tcl library
 #
 
 IF (VTK_WRAP_TCL AND VTKRIGIDINTENSITYREGISTRATION_WRAP_TCL)
 
-  VTK_WRAP_TCL (vtkRigidIntensityRegistrationTCL RigidIntensityRegistrationTCL_SRCS LOCAL_MODULE_SRCS)
-  ADD_LIBRARY (vtkRigidIntensityRegistrationTCL RigidIntensityRegistrationTCL_SRCS)
-  TARGET_LINK_LIBRARIES (vtkRigidIntensityRegistrationTCL 
+  VTK_WRAP_TCL (vtkMutualInformationRegistrationTCL RigidIntensityRegistrationTCL_SRCS LOCAL_MODULE_SRCS)
+  ADD_LIBRARY (vtkMutualInformationRegistrationTCL RigidIntensityRegistrationTCL_SRCS)
+  TARGET_LINK_LIBRARIES (vtkMutualInformationRegistrationTCL 
                          vtkIOTCL 
                          vtkGraphicsTCL 
                          vtkImagingTCL 
@@ -27,39 +27,39 @@ IF (VTK_WRAP_TCL AND VTKRIGIDINTENSITYREGISTRATION_WRAP_TCL)
                          vtkCommonTCL
                          ${TCL_LIBRARY})
   IF (VTK_USE_HYBRID)
-    TARGET_LINK_LIBRARIES (vtkRigidIntensityRegistrationTCL vtkHybridTCL)
+    TARGET_LINK_LIBRARIES (vtkMutualInformationRegistrationTCL vtkHybridTCL)
   ENDIF (VTK_USE_HYBRID)
 
   IF (VTK_USE_PARALLEL)
-    TARGET_LINK_LIBRARIES (vtkRigidIntensityRegistrationTCL vtkParallelTCL)
+    TARGET_LINK_LIBRARIES (vtkMutualInformationRegistrationTCL vtkParallelTCL)
   ENDIF (VTK_USE_PARALLEL)
 
   IF (VTK_USE_PATENTED)
-    TARGET_LINK_LIBRARIES (vtkRigidIntensityRegistrationTCL vtkPatentedTCL)
+    TARGET_LINK_LIBRARIES (vtkMutualInformationRegistrationTCL vtkPatentedTCL)
   ENDIF (VTK_USE_PATENTED)
 
   IF (VTK_USE_RENDERING)
-    TARGET_LINK_LIBRARIES (vtkRigidIntensityRegistrationTCL vtkRenderingTCL)
+    TARGET_LINK_LIBRARIES (vtkMutualInformationRegistrationTCL vtkRenderingTCL)
   ENDIF (VTK_USE_RENDERING)
 
 ENDIF (VTK_WRAP_TCL AND VTKRIGIDINTENSITYREGISTRATION_WRAP_TCL)
 
 #
-# Create the vtkRigidIntensityRegistration Python library
+# Create the vtkMutualInformationRegistration Python library
 #
 
 IF (VTK_WRAP_PYTHON AND VTKRIGIDINTENSITYREGISTRATION_WRAP_PYTHON)
 
-  VTK_WRAP_PYTHON (vtkRigidIntensityRegistrationPython RigidIntensityRegistrationPython_SRCS LOCAL_MODULE_SRCS)
+  VTK_WRAP_PYTHON (vtkMutualInformationRegistrationPython RigidIntensityRegistrationPython_SRCS LOCAL_MODULE_SRCS)
 
   IF (APPLE)
-    ADD_LIBRARY (vtkRigidIntensityRegistrationPython MODULE RigidIntensityRegistrationPython_SRCS)
+    ADD_LIBRARY (vtkMutualInformationRegistrationPython MODULE RigidIntensityRegistrationPython_SRCS)
   ELSE (APPLE)
-    ADD_LIBRARY (vtkRigidIntensityRegistrationPython SHARED RigidIntensityRegistrationPython_SRCS)
+    ADD_LIBRARY (vtkMutualInformationRegistrationPython SHARED RigidIntensityRegistrationPython_SRCS)
   ENDIF (APPLE)
 
   IF (WIN32)
-    TARGET_LINK_LIBRARIES (vtkRigidIntensityRegistrationPython 
+    TARGET_LINK_LIBRARIES (vtkMutualInformationRegistrationPython 
                            vtkIOPython
                            vtkGraphicsPython
                            vtkImagingPython
@@ -68,7 +68,7 @@ IF (VTK_WRAP_PYTHON AND VTKRIGIDINTENSITYREGISTRATION_WRAP_PYTHON)
                            debug ${PYTHON_DEBUG_LIBRARY} 
                            optimized ${PYTHON_LIBRARY})
   ELSE (WIN32)
-    TARGET_LINK_LIBRARIES (vtkRigidIntensityRegistrationPython 
+    TARGET_LINK_LIBRARIES (vtkMutualInformationRegistrationPython 
                            vtkIOPython
                            vtkGraphicsPython
                            vtkImagingPython
@@ -78,51 +78,51 @@ IF (VTK_WRAP_PYTHON AND VTKRIGIDINTENSITYREGISTRATION_WRAP_PYTHON)
   ENDIF (WIN32)
 
   IF (VTK_USE_HYBRID)
-    TARGET_LINK_LIBRARIES (vtkRigidIntensityRegistrationPython vtkHybridPython)
+    TARGET_LINK_LIBRARIES (vtkMutualInformationRegistrationPython vtkHybridPython)
   ENDIF (VTK_USE_HYBRID)
 
   IF (VTK_USE_PARALLEL)
-    TARGET_LINK_LIBRARIES (vtkRigidIntensityRegistrationPython vtkParallelPython)
+    TARGET_LINK_LIBRARIES (vtkMutualInformationRegistrationPython vtkParallelPython)
   ENDIF (VTK_USE_PARALLEL)
 
   IF (VTK_USE_PATENTED)
-    TARGET_LINK_LIBRARIES (vtkRigidIntensityRegistrationPython vtkPatentedPython)
+    TARGET_LINK_LIBRARIES (vtkMutualInformationRegistrationPython vtkPatentedPython)
   ENDIF (VTK_USE_PATENTED)
 
   IF (VTK_USE_RENDERING)
-    TARGET_LINK_LIBRARIES (vtkRigidIntensityRegistrationPython vtkRenderingPython)
+    TARGET_LINK_LIBRARIES (vtkMutualInformationRegistrationPython vtkRenderingPython)
   ENDIF (VTK_USE_RENDERING)
 
 ENDIF (VTK_WRAP_PYTHON AND VTKRIGIDINTENSITYREGISTRATION_WRAP_PYTHON)
 
 #
-# Create the vtkRigidIntensityRegistration Java library
+# Create the vtkMutualInformationRegistration Java library
 #
 
 IF (VTK_WRAP_JAVA AND VTKRIGIDINTENSITYREGISTRATION_WRAP_JAVA)
 
-  VTK_WRAP_JAVA (vtkRigidIntensityRegistrationJava RigidIntensityRegistrationJava_SRCS LOCAL_MODULE_SRCS)
-  ADD_LIBRARY (vtkRigidIntensityRegistrationJava SHARED RigidIntensityRegistrationJava_SRCS)
-  TARGET_LINK_LIBRARIES (vtkRigidIntensityRegistrationJava 
+  VTK_WRAP_JAVA (vtkMutualInformationRegistrationJava RigidIntensityRegistrationJava_SRCS LOCAL_MODULE_SRCS)
+  ADD_LIBRARY (vtkMutualInformationRegistrationJava SHARED RigidIntensityRegistrationJava_SRCS)
+  TARGET_LINK_LIBRARIES (vtkMutualInformationRegistrationJava 
                          vtkIOJava
                          vtkGraphicsJava
                          vtkImagingJava 
                          vtkFilteringJava
                          vtkCommonJava)
   IF (VTK_USE_HYBRID)
-    TARGET_LINK_LIBRARIES (vtkRigidIntensityRegistrationJava vtkHybridJava)
+    TARGET_LINK_LIBRARIES (vtkMutualInformationRegistrationJava vtkHybridJava)
   ENDIF (VTK_USE_HYBRID)
 
   IF (VTK_USE_PARALLEL)
-    TARGET_LINK_LIBRARIES (vtkRigidIntensityRegistrationJava vtkParallelJava)
+    TARGET_LINK_LIBRARIES (vtkMutualInformationRegistrationJava vtkParallelJava)
   ENDIF (VTK_USE_PARALLEL)
 
   IF (VTK_USE_PATENTED)
-    TARGET_LINK_LIBRARIES (vtkRigidIntensityRegistrationJava vtkPatentedJava)
+    TARGET_LINK_LIBRARIES (vtkMutualInformationRegistrationJava vtkPatentedJava)
   ENDIF (VTK_USE_PATENTED)
 
   IF (VTK_USE_RENDERING)
-    TARGET_LINK_LIBRARIES (vtkRigidIntensityRegistrationJava vtkRenderingJava)
+    TARGET_LINK_LIBRARIES (vtkMutualInformationRegistrationJava vtkRenderingJava)
   ENDIF (VTK_USE_RENDERING)
 
 ENDIF (VTK_WRAP_JAVA AND VTKRIGIDINTENSITYREGISTRATION_WRAP_JAVA)
@@ -132,7 +132,7 @@ ENDIF (VTK_WRAP_JAVA AND VTKRIGIDINTENSITYREGISTRATION_WRAP_JAVA)
 #
 
 LINK_LIBRARIES (
-  vtkRigidIntensityRegistration
+  vtkMutualInformationRegistration
   vtkIO
   vtkGraphics
   vtkImaging 
@@ -155,3 +155,4 @@ ENDIF (VTK_USE_PATENTED)
 IF (VTK_USE_RENDERING)
   LINK_LIBRARIES (vtkRendering)
 ENDIF (VTK_USE_RENDERING)
+
