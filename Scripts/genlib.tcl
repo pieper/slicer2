@@ -37,6 +37,12 @@ set iwidgetsTag "iwidgets-4-0-1"
 set bltTag "blt24z"
 set gslTag "release-1-4"
 
+if {[info exists ::env(CVS)]} {
+    set ::CVS $::env(CVS)
+} else {
+    set ::CVS cvs
+}
+
 # when using this on window, some things will have to be run from the cygwin terminal
 set winMsg "Sorry, this isn't all automated for windows. Open a cygwin terminal and do the following:\n"
 
@@ -96,10 +102,17 @@ if {$argc > 1 } {
 # Utilities:
 
 proc runcmd {args} {
+    global isWindows
     puts "running: $args"
 
     # print the results line by line to provide feedback during long builds
-    set fp [open "| $args |& cat" "r"]
+    # interleaves the results of stdout and stderr, except on Windows
+    if { $isWindows } {
+        # Windows does not provide native support for cat
+        set fp [open "| $args" "r"]
+    } else {
+        set fp [open "| $args |& cat" "r"]
+    }
     while { ![eof $fp] } {
         gets $fp line
         puts $line
@@ -107,9 +120,14 @@ proc runcmd {args} {
     set ret [catch "close $fp" res] 
     if { $ret } {
         puts stderr $res
-        error $ret
+        if { $isWindows } {
+            # Does not work on Windows
+        } else {
+            error $ret
+        }
     } 
 }
+
 
 ################################################################################
 # First, set up the directory
@@ -218,7 +236,7 @@ switch $tcl_platform(os) {
         set vtkTkLib $TCL_LIB_DIR/tk84.lib
         set vtkTclsh $TCL_BIN_DIR/tclsh84.exe
         set itkTestFile $ITK_BINARY_PATH/bin/$VTK_BUILD_TYPE/libITKCommon.dll
-#        set itkTestFile $ITK_BINARY_PATH/bin/$VTK_BUILD_TYPE/ITKCommon.dll
+        #        set itkTestFile $ITK_BINARY_PATH/bin/$VTK_BUILD_TYPE/ITKCommon.dll
     }
 }
 
@@ -243,8 +261,8 @@ if { ![file exists $CMAKE] } {
         puts stderr ""
         exit
     } else {
-        runcmd cvs -d :pserver:anonymous:cmake@www.cmake.org:/cvsroot/CMake login
-        runcmd cvs -z3 -d :pserver:anonymous@www.cmake.org:/cvsroot/CMake checkout -r $cmakeTag CMake
+        runcmd $::CVS -d :pserver:anonymous:cmake@www.cmake.org:/cvsroot/CMake login
+        runcmd $::CVS -z3 -d :pserver:anonymous@www.cmake.org:/cvsroot/CMake checkout -r $cmakeTag CMake
 
         cd $CMAKE_PATH
         if { $isSolaris } {
@@ -280,8 +298,8 @@ if { ![file exists $tclTestFile] } {
     file mkdir $SLICER_LIB/tcl
     cd $SLICER_LIB/tcl
 
-    runcmd cvs -d :pserver:anonymous:@cvs.sourceforge.net:/cvsroot/tcl login
-    runcmd cvs -z3 -d :pserver:anonymous@cvs.sourceforge.net:/cvsroot/tcl checkout -r $tclTag tcl
+    runcmd $::CVS -d :pserver:anonymous:@cvs.sourceforge.net:/cvsroot/tcl login
+    runcmd $::CVS -z3 -d :pserver:anonymous@cvs.sourceforge.net:/cvsroot/tcl checkout -r $tclTag tcl
 
     if {$isWindows} {
         # can't do windows
@@ -297,8 +315,8 @@ if { ![file exists $tclTestFile] } {
 if { ![file exists $tkTestFile] } {
     cd $SLICER_LIB/tcl
 
-    runcmd cvs -d :pserver:anonymous:@cvs.sourceforge.net:/cvsroot/tktoolkit login
-    runcmd cvs -z3 -d :pserver:anonymous@cvs.sourceforge.net:/cvsroot/tktoolkit checkout -r $tkTag tk
+    runcmd $::CVS -d :pserver:anonymous:@cvs.sourceforge.net:/cvsroot/tktoolkit login
+    runcmd $::CVS -z3 -d :pserver:anonymous@cvs.sourceforge.net:/cvsroot/tktoolkit checkout -r $tkTag tk
 
     if {$isDarwin} {
         if { ![file exists $SLICER_HOME/isPatched] } {
@@ -336,8 +354,8 @@ if { ![file exists $tkTestFile] } {
 if { ![file exists $itclTestFile] } {
     cd $SLICER_LIB/tcl
 
-    runcmd cvs -d :pserver:anonymous:@cvs.sourceforge.net:/cvsroot/incrtcl login
-    runcmd cvs -z3 -d :pserver:anonymous@cvs.sourceforge.net:/cvsroot/incrtcl checkout -r $itclTag incrTcl
+    runcmd $::CVS -d :pserver:anonymous:@cvs.sourceforge.net:/cvsroot/incrtcl login
+    runcmd $::CVS -z3 -d :pserver:anonymous@cvs.sourceforge.net:/cvsroot/incrtcl checkout -r $itclTag incrTcl
 
     cd $SLICER_LIB/tcl/incrTcl
 
@@ -361,8 +379,8 @@ if { ![file exists $itclTestFile] } {
 if { ![file exists $iwidgetsTestFile] } {
     cd $SLICER_LIB/tcl
 
-    runcmd cvs -d :pserver:anonymous:@cvs.sourceforge.net:/cvsroot/incrtcl login
-    runcmd cvs -z3 -d :pserver:anonymous@cvs.sourceforge.net:/cvsroot/incrtcl checkout -r $iwidgetsTag iwidgets
+    runcmd $::CVS -d :pserver:anonymous:@cvs.sourceforge.net:/cvsroot/incrtcl login
+    runcmd $::CVS -z3 -d :pserver:anonymous@cvs.sourceforge.net:/cvsroot/incrtcl checkout -r $iwidgetsTag iwidgets
 
 
     if {$isWindows} {
@@ -384,8 +402,8 @@ if { ![file exists $iwidgetsTestFile] } {
 if { ![file exists $bltTestFile] } {
     cd $SLICER_LIB/tcl
     
-    runcmd cvs -d:pserver:anonymous:@cvs.sourceforge.net:/cvsroot/blt login
-    runcmd cvs -z3 -d:pserver:anonymous:@cvs.sourceforge.net:/cvsroot/blt co -r $bltTag blt
+    runcmd $::CVS -d:pserver:anonymous:@cvs.sourceforge.net:/cvsroot/blt login
+    runcmd $::CVS -z3 -d:pserver:anonymous:@cvs.sourceforge.net:/cvsroot/blt co -r $bltTag blt
 
     if { $isWindows } {
         # can't do Windows
@@ -413,10 +431,10 @@ if { ![file exists $gslTestFile] } {
 
     cd $SLICER_LIB/gsl-build
 
-    runcmd cvs -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer login
-    runcmd cvs -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer co gsl-mirror
-    #    runcmd cvs -d:pserver:anoncvs:anoncvs@sources.redhat.com:/cvs/gsl login
-    #    runcmd cvs -z3 -d:pserver:anoncvs:anoncvs@sources.redhat.com:/cvs/gsl co -r $gslTag gsl
+#    runcmd $::CVS -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer login
+#    runcmd $::CVS -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer co gsl-mirror
+    runcmd $::CVS -d:pserver:anoncvs:anoncvs@sources.redhat.com:/cvs/gsl login
+    runcmd $::CVS -z3 -d:pserver:anoncvs:anoncvs@sources.redhat.com:/cvs/gsl co -r $gslTag gsl
 
     if { !$isWindows } {
         # can't do Windows
@@ -454,8 +472,8 @@ if { ![file exists $gslTestFile] } {
 if { ![file exists $vtkTestFile] } {
     cd $SLICER_LIB
 
-    runcmd cvs -d :pserver:anonymous:vtk@public.kitware.com:/cvsroot/VTK login
-    runcmd cvs -z3 -d :pserver:anonymous@public.kitware.com:/cvsroot/VTK checkout -r $vtkTag VTK
+    runcmd $::CVS -d :pserver:anonymous:vtk@public.kitware.com:/cvsroot/VTK login
+    runcmd $::CVS -z3 -d :pserver:anonymous@public.kitware.com:/cvsroot/VTK checkout -r $vtkTag VTK
 
     file mkdir $SLICER_LIB/VTK-build
     cd $SLICER_LIB/VTK-build
@@ -484,7 +502,7 @@ if { ![file exists $vtkTestFile] } {
         -DTCL_LIBRARY:FILEPATH=$vtkTclLib \
         -DTK_LIBRARY:FILEPATH=$vtkTkLib \
         -DTCL_TCLSH:FILEPATH=$vtkTclsh \
-         $USE_VTK_ANSI_STDLIB \
+        $USE_VTK_ANSI_STDLIB \
         ../VTK
 
 
@@ -496,10 +514,10 @@ if { ![file exists $vtkTestFile] } {
     }
     
     if { $isWindows } {
-       if { $MSVC6 } {
-       runcmd $::MAKE VTK.dsw /MAKE "ALL_BUILD - $::VTK_BUILD_TYPE"
-       } else {
-       runcmd $::MAKE VTK.SLN /build  $::VTK_BUILD_TYPE
+        if { $MSVC6 } {
+            runcmd $::MAKE VTK.dsw /MAKE "ALL_BUILD - $::VTK_BUILD_TYPE"
+        } else {
+            runcmd $::MAKE VTK.SLN /build  $::VTK_BUILD_TYPE
         }
     } else {
         eval runcmd $::MAKE
@@ -513,8 +531,8 @@ if { ![file exists $vtkTestFile] } {
 if { ![file exists $itkTestFile] } {
     cd $SLICER_LIB
 
-    runcmd cvs -d :pserver:anoncvs:@www.itk.org:/cvsroot/Insight login
-    runcmd cvs -z3 -d :pserver:anoncvs@www.itk.org:/cvsroot/Insight checkout -r $itkTag Insight
+    runcmd $::CVS -d :pserver:anoncvs:@www.itk.org:/cvsroot/Insight login
+    runcmd $::CVS -z3 -d :pserver:anoncvs@www.itk.org:/cvsroot/Insight checkout -r $itkTag Insight
 
     file mkdir $SLICER_LIB/Insight-build
     cd $SLICER_LIB/Insight-build
@@ -533,11 +551,11 @@ if { ![file exists $itkTestFile] } {
 
     if {$isWindows} {
         if { $MSVC6 } {
-        runcmd $::MAKE ITK.dsw /MAKE "ALL_BUILD - $::VTK_BUILD_TYPE"
+            runcmd $::MAKE ITK.dsw /MAKE "ALL_BUILD - $::VTK_BUILD_TYPE"
         } else {
-        runcmd $::MAKE ITK.SLN /build  $::VTK_BUILD_TYPE
+            runcmd $::MAKE ITK.SLN /build  $::VTK_BUILD_TYPE
         }
-     } else {
+    } else {
         eval runcmd $::MAKE 
     }
 }
