@@ -380,6 +380,12 @@ if { ![file exists $bltTestFile] } {
 
     if {$isWindows} {
         # can't do windows
+    } elseif { $isDarwin } {
+        # this fails, but gets blt far enough along to build what is needed 
+        cd $SLICER_LIB/tcl/blt
+        runcmd ./configure --with-tcl=$SLICER_LIB/tcl-build --with-tk=$SLICER_LIB/tcl-build --prefix=$SLICER_LIB/tcl-build 
+        catch "eval runcmd make"
+        catch "eval runcmd make install"
     } else {
         cd $SLICER_LIB/tcl/blt
         runcmd ./configure --with-tcl=$SLICER_LIB/tcl-build --with-tk=$SLICER_LIB/tcl-build --prefix=$SLICER_LIB/tcl-build 
@@ -406,13 +412,20 @@ if { ![file exists $gslTestFile] } {
         # can't do windows
     } else {
         cd $SLICER_LIB/gsl-build/gsl
-        runcmd ./autogen.sh
+        if { $isDarwin } {
+            # equivalent of autogen.sh for Darwin (libtoolize => glibtoolize)    
+            runcmd glibtoolize --automake
+            runcmd aclocal
+            runcmd automake --add-missing --gnu
+            runcmd autoconf
+        } else {
+            runcmd ./autogen.sh
+        }
         runcmd ./configure --prefix=$SLICER_LIB/gsl
         runcmd touch doc/version-ref.texi
         runcmd make
         runcmd make install
     }
-
 }
 
 ################################################################################
@@ -453,6 +466,12 @@ if { ![file exists $vtkTestFile] } {
         -DTCL_TCLSH:FILEPATH=$vtkTclsh \
         ../VTK
 
+    if { $isDarwin } {
+        # Darwin will fail on the first make, then succeed on the second
+        catch "eval runcmd make -j4"
+        set OpenGLString "-framework OpenGL -lgl"
+        runcmd $CMAKE -G$GENERATOR -DOPENGL_gl_LIBRARY:STRING=$OpenGLString -DVTK_USE_SYSTEM_ZLIB:BOOL=ON ../VTK
+    }
     if {$isWindows} {
         runcmd devenv VTK.SLN /build  $::VTK_BUILD_TYPE
     } else {
