@@ -43,14 +43,14 @@ public:
   vtkTypeMacro(vtkImageOverlay,vtkImageMultipleInputFilter);
   void PrintSelf(ostream& os, vtkIndent indent);
 
-  // Description:
-  // Turns a layer off.
-  // To turn the layer back on, use SetInput. 
-  void SetInputOff(int layer);
-
   // Sets the opacity used to overlay this layer on the others
   double GetOpacity(int layer);
   void SetOpacity(int layer, double opacity);
+
+  // Sets whether to fade out the background even when the 
+  // foreground is clearn
+  int GetFade(int layer);
+  void SetFade(int layer, int fade);
 
 protected:
   vtkImageOverlay();
@@ -59,6 +59,8 @@ protected:
   void operator=(const vtkImageOverlay&) {};
   double *Opacity;
   int nOpacity;
+  int *Fade;
+  int nFade;
 
   void UpdateForNumberOfInputs();
   void ThreadedExecute(vtkImageData **inDatas, vtkImageData *outData,

@@ -49,6 +49,9 @@ vtkImageOverlay::vtkImageOverlay()
 {
   this->Opacity = NULL;
   this->nOpacity = 0;
+
+  this->Fade = NULL;
+  this->nFade = 0;
 }
 
 //----------------------------------------------------------------------------
@@ -58,6 +61,10 @@ vtkImageOverlay::~vtkImageOverlay()
   {
     delete [] this->Opacity;
   }
+  if (this->Fade != NULL) 
+  {
+    delete [] this->Fade;
+  }
 }
 
 //----------------------------------------------------------------------------
@@ -65,6 +72,7 @@ void vtkImageOverlay::UpdateForNumberOfInputs()
 {
   int i, nInputs = this->NumberOfInputs;
 
+  // Update Opacity
   if (this->nOpacity != this->NumberOfInputs) 
   {
     // Make new array to store the opacity of each input
@@ -91,6 +99,35 @@ void vtkImageOverlay::UpdateForNumberOfInputs()
     // Set the new array
     this->Opacity = opacity;
     this->nOpacity = nInputs;
+  }
+
+  // Update Fade
+  if (this->nFade != this->NumberOfInputs) 
+  {
+    // Make new array to store the fade of each input
+    int *fade = new int[nInputs];
+
+    // Initialize 
+    for (i=0; i < nInputs; i++)
+    {
+      fade[i] = 0;
+    }
+
+    if (this->Fade != NULL) 
+    {
+      // Copy old Fades
+      for (i=0; i < this->nFade && i < nInputs; i++)
+      {
+        fade[i] = this->Fade[i];
+      }
+
+      // Delete the previous array
+      delete [] this->Fade;
+    }
+    
+    // Set the new array
+    this->Fade = fade;
+    this->nFade = nInputs;
   }
 }
 
@@ -128,15 +165,36 @@ void vtkImageOverlay::SetOpacity(int layer, double opacity)
 }
 
 //----------------------------------------------------------------------------
-void vtkImageOverlay::SetInputOff(int layer) 
+int vtkImageOverlay::GetFade(int layer)
 {
+  if (layer >= this->nFade)
+  {
+    this->UpdateForNumberOfInputs();
+  }
+  if (layer < 0 || layer >= this->NumberOfInputs)
+  {
+    vtkErrorMacro(<< "Layer "<<layer<<" is not between 0 and "<<
+      this->NumberOfInputs);
+    return 0.0;
+  }
+  return this->Fade[layer];
+}
+
+//----------------------------------------------------------------------------
+void vtkImageOverlay::SetFade(int layer, int fade) 
+{
+  if (layer >= this->nFade) 
+  {
+    this->UpdateForNumberOfInputs();
+  }
   if (layer < 0 || layer >= this->NumberOfInputs)
   {
     vtkErrorMacro(<< "Layer "<<layer<<" is not between 0 and "<<
       this->NumberOfInputs);
     return;
   }
-  this->SetInput(layer, (vtkImageData *)NULL);
+  this->Fade[layer] = fade;
+  this->Modified();
 }
 
 //----------------------------------------------------------------------------
@@ -155,6 +213,7 @@ static void vtkImageOverlayExecute(vtkImageOverlay *self,
   int ncomp = inData->GetNumberOfScalarComponents();
   unsigned long count = 0;
   unsigned long target;
+  int fade;
 
   // find the region to loop over
   maxX = outExt[1] - outExt[0];
@@ -201,6 +260,7 @@ static void vtkImageOverlayExecute(vtkImageOverlay *self,
   // overwriting when opacity=1.
   else
   {
+    fade = self->GetFade(layer);
     alpha = self->GetOpacity(layer);
     beta = 1.0 - alpha;
     
@@ -210,50 +270,98 @@ static void vtkImageOverlayExecute(vtkImageOverlay *self,
       // Overwrite
       if (alpha == 1.0)
       {
-        for (idxZ = 0; idxZ <= maxZ; idxZ++) {
-        for (idxY = 0; idxY <= maxY; idxY++) {
-        for (idxX = 0; idxX <= maxX; idxX++)
+        // Fade away the background even where the foreground is 0
+        if (fade)
         {
-          // Check alpha
-          if (inPtr[3]) 
+          for (idxZ = 0; idxZ <= maxZ; idxZ++) {
+          for (idxY = 0; idxY <= maxY; idxY++) {
+          for (idxX = 0; idxX <= maxX; idxX++)
+          {
+            // Check alpha
+            if (inPtr[3]) 
+            {
+              memcpy(outPtr, inPtr, pixSize);
+            }
+            inPtr  += ncomp;
+            outPtr += ncomp;
+          }//for x
+          outPtr += outIncY;
+          inPtr += outIncY;
+          }//for y
+          outPtr += outIncZ;
+          inPtr += outIncZ;
+          }//for z
+        }
+        else
+        {
+          for (idxZ = 0; idxZ <= maxZ; idxZ++) {
+          for (idxY = 0; idxY <= maxY; idxY++) {
+          for (idxX = 0; idxX <= maxX; idxX++)
           {
             memcpy(outPtr, inPtr, pixSize);
-          }
-          inPtr  += ncomp;
-          outPtr += ncomp;
-        }//for x
-        outPtr += outIncY;
-        inPtr += outIncY;
-        }//for y
-        outPtr += outIncZ;
-        inPtr += outIncZ;
-        }//for z
+            inPtr  += ncomp;
+            outPtr += ncomp;
+          }//for x
+          outPtr += outIncY;
+          inPtr += outIncY;
+          }//for y
+          outPtr += outIncZ;
+          inPtr += outIncZ;
+          }//for z
+        }
       }
       // Blend 
       else if (alpha != 0)
       {
-        for (idxZ = 0; idxZ <= maxZ; idxZ++) {
-        for (idxY = 0; idxY <= maxY; idxY++) {
-        for (idxX = 0; idxX <= maxX; idxX++)
+        // Fade away the background even where the foreground is 0
+        if (fade)
         {
-          if (inPtr[3]) 
+          for (idxZ = 0; idxZ <= maxZ; idxZ++) {
+          for (idxY = 0; idxY <= maxY; idxY++) {
+          for (idxX = 0; idxX <= maxX; idxX++)
           {
             for (c=0; c<ncomp; c++)
             {
               outPtr[c] = (T)(outPtr[c]*beta + inPtr[c]*alpha);
             }
-          }
-          inPtr  += ncomp;
-          outPtr += ncomp;
-        }//for x
-        outPtr += outIncY;
-        inPtr += outIncY;
-        }//for y
-        outPtr += outIncZ;
-        inPtr += outIncZ;
-        }//for z
+            inPtr  += ncomp;
+            outPtr += ncomp;
+          }//for x
+          outPtr += outIncY;
+          inPtr += outIncY;
+          }//for y
+          outPtr += outIncZ;
+          inPtr += outIncZ;
+          }//for z
+        }//fade
+
+        // Don't Fade away the background where the foreground is 0
+        else
+        {
+          for (idxZ = 0; idxZ <= maxZ; idxZ++) {
+          for (idxY = 0; idxY <= maxY; idxY++) {
+          for (idxX = 0; idxX <= maxX; idxX++)
+          {
+            if (inPtr[3]) 
+            {
+              for (c=0; c<ncomp; c++)
+              {
+                outPtr[c] = (T)(outPtr[c]*beta + inPtr[c]*alpha);
+              }
+            }
+            inPtr  += ncomp;
+            outPtr += ncomp;
+          }//for x
+          outPtr += outIncY;
+          inPtr += outIncY;
+          }//for y
+          outPtr += outIncZ;
+          inPtr += outIncZ;
+          }//for z
+        }//else
       }//blend
     }//4-comp
+
 
     // Not 4-components
     else
@@ -261,65 +369,113 @@ static void vtkImageOverlayExecute(vtkImageOverlay *self,
       // Overwrite
       if (alpha == 1.0)
       {
-        for (idxZ = 0; idxZ <= maxZ; idxZ++) {
-        for (idxY = 0; idxY <= maxY; idxY++) {
-        for (idxX = 0; idxX <= maxX; idxX++)
+        // Fade away the background even where the foreground is 0
+        if (fade)
         {
-          // See if this pixel has any non-zero components
-          zero = 1;
-          for (c=0; c<ncomp; c++)
-          {
-            if (inPtr[c]) {
-              zero = 0;
-            }
-          }
-          // If input is non-zero, then copy to output
-          if (!zero)
+          for (idxZ = 0; idxZ <= maxZ; idxZ++) {
+          for (idxY = 0; idxY <= maxY; idxY++) {
+          for (idxX = 0; idxX <= maxX; idxX++)
           {
             memcpy(outPtr, inPtr, pixSize);
-          }
-          inPtr  += ncomp;
-          outPtr += ncomp;
-        }//for x
-        outPtr += outIncY;
-        inPtr += outIncY;
-        }//for y
-        outPtr += outIncZ;
-        inPtr += outIncZ;
-        }//for z
+            inPtr  += ncomp;
+            outPtr += ncomp;
+          }//for x
+          outPtr += outIncY;
+          inPtr += outIncY;
+          }//for y
+          outPtr += outIncZ;
+          inPtr += outIncZ;
+          }//for z
+        } 
+        else
+        {
+          for (idxZ = 0; idxZ <= maxZ; idxZ++) {
+          for (idxY = 0; idxY <= maxY; idxY++) {
+          for (idxX = 0; idxX <= maxX; idxX++)
+          {
+            // See if this pixel has any non-zero components
+            zero = 1;
+            for (c=0; c<ncomp; c++)
+            {
+              if (inPtr[c]) 
+              {
+                zero = 0;
+              }
+            }
+            // If input is non-zero, then copy to output
+            if (!zero)
+            {
+              memcpy(outPtr, inPtr, pixSize);
+            }
+            inPtr  += ncomp;
+            outPtr += ncomp;
+          }//for x
+          outPtr += outIncY;
+          inPtr += outIncY;
+          }//for y
+          outPtr += outIncZ;
+          inPtr += outIncZ;
+          }//for z
+        }
       }
       // Blend 
       else if (alpha != 0)
       {
-        for (idxZ = 0; idxZ <= maxZ; idxZ++) {
-        for (idxY = 0; idxY <= maxY; idxY++) {
-        for (idxX = 0; idxX <= maxX; idxX++)
+        // Fade away the background even where the foreground is 0
+        if (fade)
         {
-          // See if this pixel has any non-zero components
-          zero = 1;
-          for (c=0; c<ncomp; c++)
-          {
-            if (inPtr[c]) {
-              zero = 0;
-            }
-          }
-          // If input is non-zero, then blend it
-          if (!zero)
+          for (idxZ = 0; idxZ <= maxZ; idxZ++) {
+          for (idxY = 0; idxY <= maxY; idxY++) {
+          for (idxX = 0; idxX <= maxX; idxX++)
           {
             for (c=0; c<ncomp; c++)
             {
               outPtr[c] = (T)(outPtr[c]*beta + inPtr[c]*alpha);
             }
-          }
-          inPtr  += ncomp;
-          outPtr += ncomp;
-        }//for x
-        outPtr += outIncY;
-        inPtr += outIncY;
-        }//for y
-        outPtr += outIncZ;
-        inPtr += outIncZ;
-        }//for z
+            inPtr  += ncomp;
+            outPtr += ncomp;
+          }//for x
+          outPtr += outIncY;
+          inPtr += outIncY;
+          }//for y
+          outPtr += outIncZ;
+          inPtr += outIncZ;
+          }//for z
+        }//fade
+
+        // Don't Fade away the background where the foreground is 0
+        else
+        {
+          for (idxZ = 0; idxZ <= maxZ; idxZ++) {
+          for (idxY = 0; idxY <= maxY; idxY++) {
+          for (idxX = 0; idxX <= maxX; idxX++)
+          {
+            // See if this pixel has any non-zero components
+            zero = 1;
+            for (c=0; c<ncomp; c++)
+            {
+              if (inPtr[c]) {
+                zero = 0;
+              }
+            }
+            // If input is non-zero, then blend it
+            if (!zero)
+            {
+              for (c=0; c<ncomp; c++)
+              {
+                outPtr[c] = (T)(outPtr[c]*beta + inPtr[c]*alpha);
+              }
+            }
+            inPtr  += ncomp;
+            outPtr += ncomp;
+          }//for x
+          outPtr += outIncY;
+          inPtr += outIncY;
+          }//for y
+          outPtr += outIncZ;
+          inPtr += outIncZ;
+          }//for z
+        }//else
       }//blend
     }//not 4-comp
   }//not first layer
@@ -341,6 +497,10 @@ void vtkImageOverlay::ThreadedExecute(vtkImageData **inData,
 
   // Ensure we have opacity info for each layer
   if (this->nOpacity < this->NumberOfInputs) 
+  {
+    this->UpdateForNumberOfInputs();
+  }
+  if (this->nFade < this->NumberOfInputs) 
   {
     this->UpdateForNumberOfInputs();
   }
@@ -466,6 +626,12 @@ void vtkImageOverlay::PrintSelf(ostream& os, vtkIndent indent)
   {
     os << indent << "Layer "<<layer<<", Opacity: " << 
       this->Opacity[layer] << "\n";
+  }
+
+  for (layer=0; layer < this->GetNumberOfInputs(); layer++) 
+  {
+    os << indent << "Layer "<<layer<<", Fade: " << 
+      this->Fade[layer] << "\n";
   }
 }
 

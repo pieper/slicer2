@@ -1089,6 +1089,7 @@ proc EditorResetDisplay {} {
 
 		# Slice opacity
 		MainSlicesSetOpacityAll 0.3
+		MainSlicesSetFadeAll 0
 
 		# Cursor
 		MainAnnoSetHashesVisibility slices 0

@@ -143,9 +143,14 @@ public:
   int GetForePixel(int s, int x, int y);
   int GetBackPixel(int s, int x, int y);
 
-  // Opacity
+  // Sets the opacity used to overlay this layer on the others
   void SetForeOpacity(float opacity);
   vtkGetMacro(ForeOpacity, float);
+
+  // Sets whether to fade out the background even when the 
+  // foreground is clearn
+  void SetForeFade(int fade);
+  vtkGetMacro(ForeFade, int);
 
   // Coloring label maps
   void SetLabelIndirectLUT(vtkIndirectLookupTable *lut);
@@ -285,6 +290,7 @@ protected:
   int DoubleSliceSize;
   float FieldOfView;
   float ForeOpacity;
+  int ForeFade;
 
   double CamN[3];
   double CamT[3];

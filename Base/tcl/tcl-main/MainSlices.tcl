@@ -69,7 +69,7 @@ proc MainSlicesInit {} {
 	lappend Module(procMRML) MainSlicesUpdateMRML
 	lappend Module(procStorePresets) MainSlicesStorePresets
 	lappend Module(procRecallPresets) MainSlicesRecallPresets
-	set Module(Slices,presets) "opacity='1.0' \
+	set Module(Slices,presets) "opacity='1.0' fade='0' \
 0,visibility='0' 0,backVolID='0' 0,foreVolID='0' 0,labelVolID='0' \
 0,orient='Axial' 0,offset='0' 0,zoom='1.0' 0,clipState='1'\
 1,visibility='0' 1,backVolID='0' 1,foreVolID='0' 1,labelVolID='0' \
@@ -981,6 +981,21 @@ proc MainSlicesSetOpacityAll {{value ""}} {
 	Slicer SetForeOpacity $value
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MainSlicesSetFadeAll
+# .END
+#-------------------------------------------------------------------------------
+proc MainSlicesSetFadeAll {{value ""}} {
+	global Slice
+	
+	if {$value == ""} {
+		set value $Slice(fade)
+	} else {
+		set Slice(fade) $value
+	}
+	Slicer SetForeFade $value
+}
+
 proc MainSlicesSave {} {
 	global Mrml Slice
 
@@ -1096,6 +1111,7 @@ proc MainSlicesStorePresets {p} {
 		set Preset(Slices,$p,$s,labelVolID) $Slice($s,labelVolID)
 	}
 	set Preset(Slices,$p,opacity) $Slice(opacity)
+	set Preset(Slices,$p,fade) $Slice(fade)
 }
 	    
 proc MainSlicesRecallPresets {p} {
@@ -1113,4 +1129,5 @@ proc MainSlicesRecallPresets {p} {
 		MainSlicesSetClipState $s $Preset(Slices,$p,$s,clipState)
 	}
 	MainSlicesSetOpacityAll $Preset(Slices,$p,opacity)
+	MainSlicesSetFadeAll $Preset(Slices,$p,fade)
 }

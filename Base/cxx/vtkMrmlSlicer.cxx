@@ -699,7 +699,7 @@ void vtkMrmlSlicer::BuildUpper(int s)
   // If the None volume, then turn the Fore input off
   if (v == this->NoneVolume) 
   {
-	  this->Overlay[s]->SetInputOff(1);
+	  this->Overlay[s]->SetInput(1, NULL);
   } 
   else 
   {
@@ -752,7 +752,7 @@ void vtkMrmlSlicer::BuildUpper(int s)
   // If the None volume, then turn the Label input off
   if (v == this->NoneVolume) 
   {
-    this->Overlay[s]->SetInputOff(2);
+    this->Overlay[s]->SetInput(2, NULL);
   }
   else
   {
@@ -1786,4 +1786,14 @@ void vtkMrmlSlicer::SetForeOpacity(float opacity)
   }
 }
 
+//----------------------------------------------------------------------------
+// Fore Opacity
+//----------------------------------------------------------------------------
+void vtkMrmlSlicer::SetForeFade(int fade)
+{
+  for (int s=0; s<NUM_SLICES; s++)
+  {
+	  this->Overlay[s]->SetOpacity(1, fade);
+  }
+}
 
