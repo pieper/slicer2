@@ -67,7 +67,7 @@ proc ModelMakerInit {} {
 
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.35 $} {$Date: 2002/05/09 16:17:52 $}]
+        {$Revision: 1.36 $} {$Date: 2002/11/13 23:16:53 $}]
 
     # Create
     set ModelMaker(idVolume) $Volume(idNone)
@@ -421,7 +421,7 @@ proc ModelMakerTransform {volume} {
         set m $Model(activeID)
         set v $Matrix(activeID)
     
-        set mat [[Matrix($v,node) GetTransform] GetMatrixPointer]
+        set mat [[Matrix($v,node) GetTransform] GetMatrix]
     }
 
     vtkTransform tran
