@@ -68,6 +68,8 @@ vtkMrmlSceneOptionsNode::vtkMrmlSceneOptionsNode()
   this->DICOMStartDir = NULL;
   this->FileNameSortParam = NULL;
   this->DICOMDataDictFile = NULL;
+  this->ViewTextureResolution = NULL;
+  this->ViewTextureInterpolation = NULL;
   
   // Numbers
   this->ShowAxes = 0;
@@ -115,6 +117,11 @@ vtkMrmlSceneOptionsNode::~vtkMrmlSceneOptionsNode()
   {
     delete [] this->ViewBgColor;
     this->ViewBgColor=NULL;
+  }
+  if (this->ViewTextureResolution)
+  {
+      delete [] this->ViewTextureResolution;
+      this->ViewTextureResolution=NULL;
   }
   if (this->DICOMStartDir)
   {
@@ -166,6 +173,14 @@ void vtkMrmlSceneOptionsNode::Write(ofstream& of, int nIndent)
   if (this->ViewBgColor && strcmp(this->ViewBgColor,""))
   {
     of << " viewBgColor='" << this->ViewBgColor << "'";
+  }
+  if (this->ViewTextureResolution && strcmp(this->ViewTextureResolution,""))
+  {
+    of << " textureResolution='" << this->ViewTextureResolution << "'";
+  }
+  if (this->ViewTextureInterpolation && strcmp(this->ViewTextureInterpolation,""))
+  {
+    of << " textureInterpolation='" << this->ViewTextureInterpolation << "'";
   }
   if (this->DICOMStartDir && strcmp(this->DICOMStartDir,""))
   {
@@ -243,6 +258,8 @@ void vtkMrmlSceneOptionsNode::Copy(vtkMrmlNode *anode)
   this->SetClippingRange(node->ClippingRange);
   this->SetViewMode(node->ViewMode);
   this->SetViewBgColor(node->ViewBgColor);
+  this->SetViewTextureResolution(node->ViewTextureResolution);
+  this->SetViewTextureInterpolation(node->ViewTextureInterpolation);
   this->SetDICOMStartDir(node->DICOMStartDir);
   this->SetFileNameSortParam(node->FileNameSortParam);
   this->SetDICOMDataDictFile(node->DICOMDataDictFile);
@@ -273,6 +290,8 @@ void vtkMrmlSceneOptionsNode::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "ClippingRange: " << (this->ClippingRange ? this->ClippingRange : "(none)") << "\n";
   os << indent << "ViewMode: " << (this->ViewMode ? this->ViewMode : "(none)") << "\n";
   os << indent << "ViewBgColor: " << (this->ViewBgColor ? this->ViewBgColor : "(none)") << "\n";
+  os << indent << "ViewTextureResolution: " << (this->ViewTextureResolution ? this->ViewTextureResolution : "(none)") << "\n";
+  os << indent << "ViewTextureInterpolation: " << (this->ViewTextureInterpolation ? this->ViewTextureInterpolation : "(none)") << "\n";
   os << indent << "DICOMStartDir: " << (this->DICOMStartDir ? this->DICOMStartDir : "(none)") << "\n";
   os << indent << "FileNameSortParam: " << (this->FileNameSortParam ? this->FileNameSortParam : "(none)") << "\n";
   os << indent << "DICOMDataDictFile: " << (this->DICOMDataDictFile ? this->DICOMDataDictFile : "(none)") << "\n";
