@@ -498,7 +498,9 @@ proc IbrowserMakeVscrollCanvas {c c2 args } {
 
     set sb $::IbrowserController(Geom,Ival,scrollBuf)
     scrollbar $c.yscroll -orient vertical -width $sb -highlightthickness 0 \
-        -borderwidth 0 -elementborderwidth 1 -command [list $c.canvas yview]
+        -borderwidth 0 -elementborderwidth 1 -command [list $c.canvas yview] \
+        -background #DDDDDD \
+        -activebackground #DDDDDD
 
     #set ::IbrowserController(ScrollWidth) [ c.yscroll cget -width ]
     grid $c.canvas $c.yscroll -sticky news 
@@ -532,7 +534,9 @@ proc IbrowserMakeGangedHscrollCanvas { c c2 args } {
     label $c.lspacer2 -bg white -width 2
 
     scrollbar $c.xscroll -orient horizontal -borderwidth 0 -elementborderwidth 1 -highlightthickness 0 \
-      -command [ list IbrowserBindXview [ list $c.canvas $c2.canvas ] ]
+      -command [ list IbrowserBindXview [ list $c.canvas $c2.canvas ] ] \
+      -background #DDDDDD \
+      -activebackground #DDDDDD
     grid $c.canvas $c.lspacer1 -sticky news 
     grid $c.xscroll $c.lspacer2 -sticky ew 
 

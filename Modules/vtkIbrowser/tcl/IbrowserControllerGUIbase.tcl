@@ -123,7 +123,10 @@ proc IbrowserMakeMessagePanel { f args } {
                -relief groove -font $::IbrowserController(UI,Medfont) \
                -yscrollcommand [ list $f.yscroll set ] } $args
     
-    scrollbar $f.yscroll -orient vertical -borderwidth 1 -highlightthickness 0 -command [list $f.text yview]
+    scrollbar $f.yscroll -orient vertical -borderwidth 1 -highlightthickness 0 \
+            -command [list $f.text yview] \
+            -background #DDDDDD \
+            -activebackground #DDDDDD            
     grid $f.text $f.yscroll -sticky news
     grid rowconfigure $f 0 -weight 1
     grid columnconfigure $f 0 -weight 1
