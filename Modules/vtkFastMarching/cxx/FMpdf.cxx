@@ -2,6 +2,8 @@
 
 FMpdf::FMpdf( int realizationMax )
 {
+  sigma2SmoothPDF=0.25;
+
   this->realizationMax=realizationMax;
 
   bins = new int [realizationMax+1];
@@ -143,7 +145,7 @@ void FMpdf::update( void )
   sigma2=m2/double(nRealInBins)-mean*mean;
 
   // create smoothed histogram
-  double sigma2Smooth=0.25*sigma2;
+  double sigma2Smooth=sigma2SmoothPDF*sigma2;
   
   // create lookup table for smoothing
   for(int k=0;k<=realizationMax;k++)
@@ -186,7 +188,13 @@ void FMpdf::addRealization( int k )
 
   counter++;
 
-  if( (updateRate!=-1) && (counter%updateRate)==0 )
+  // update if (either or) :
+  // - we have not been updated for updateRate rounds
+  // - the number of points waiting to be taken into
+  //   consideration  is more than half of our memory
+  if( (updateRate!=-1) && 
+      ( (counter%updateRate)==0 
+    || (toBeAdded.size()>memorySize/2) ) )
     update();
 }
 

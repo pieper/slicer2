@@ -61,6 +61,7 @@ proc EdFastMarchingInit {} {
     set EdFastMarching(versionTCL) "$EdFastMarching(majorVersionTCL).$EdFastMarching(minorVersionTCL) \t($EdFastMarching(dateVersionTCL))"
 
     set EdFastMarching(shouldDisplayWarningVersion) 1
+
 }
 
 #-------------------------------------------------------------------------------
@@ -289,6 +290,9 @@ proc EdFastMarchingEnter {} {
     # create the vtk object 
     vtkFastMarching EdFastMarching(FastMarching) 
 
+    vtkImageCast EdFastMarching(castToShort)
+    EdFastMarching(castToShort) SetOutputScalarTypeToShort
+    EdFastMarching(FastMarching) SetInput [EdFastMarching(castToShort) GetOutput]
 
     set EdFastMarching(majorVersionCXX) [EdFastMarching(FastMarching) cxxMajorVersion]
     set EdFastMarching(versionCXX) [EdFastMarching(FastMarching) cxxVersionString]
@@ -329,8 +333,17 @@ proc EdFastMarchingEnter {} {
 
     MainStartProgress
 
+    # insert a cast to SHORT before the editor
+    # note: no effect if data already SHORT
+    EdFastMarching(castToShort) SetInput [Ed(editor) GetInput]
+    Ed(editor)  SetInput [EdFastMarching(castToShort) GetOutput]
+
     EdFastMarching(FastMarching) Modified
-    Ed(editor) Apply EdFastMarching(FastMarching) EdFastMarching(FastMarching)
+
+#note: that would work too but would screw up the progress bar
+#Ed(editor) Apply EdFastMarching(castToShort) EdFastMarching(FastMarching)
+
+    Ed(editor) Apply  EdFastMarching(FastMarching) EdFastMarching(FastMarching)
 
     # necessary for init
     EdFastMarchingLabel 
@@ -356,6 +369,7 @@ proc EdFastMarchingExit {} {
 
     #delete the object
     EdFastMarching(FastMarching) Delete
+    EdFastMarching(castToShort) Delete
 
     FiducialsDeleteList "FastMarching-seeds"
 
@@ -466,8 +480,17 @@ proc EdFastMarchingSegment {} {
 
     MainStartProgress
 
+    # insert a cast to SHORT before the editor
+    # note: no effect if data already SHORT
+    EdFastMarching(castToShort) SetInput [Ed(editor) GetInput]
+    Ed(editor)  SetInput [EdFastMarching(castToShort) GetOutput]
+
     EdFastMarching(FastMarching) Modified
-    Ed(editor) Apply EdFastMarching(FastMarching) EdFastMarching(FastMarching)
+
+#note: that would work too but would screw up the progress bar
+#Ed(editor) Apply EdFastMarching(castToShort) EdFastMarching(FastMarching)
+
+    Ed(editor) Apply  EdFastMarching(FastMarching) EdFastMarching(FastMarching)
 
     MainEndProgress
 

@@ -65,8 +65,11 @@ float vtkFastMarching::speed( int index )
   // note: put the emphasis on pI... 
   s=(float)pI*pI*pH;
 
+  s=pow(s, powerSpeed);
+
   // make sure speed is not too small
   s*=1e10;
+
   if( (s<1.0/(INF/1e6)) || finite(s)==0 )
     {
       if(finite(s)==0)
@@ -102,15 +105,18 @@ void vtkFastMarching::setSeed( int index )
 
   knownPoints.push_back(index);
 
-  // add all 26-neighbors to trial band
+  // add all FAR 26-neighbors to TRIAL
   for(int n=1;n<=26;n++)
     {
       FMleaf f;
       f.nodeIndex=index + shiftNeighbor(n);
+      if( node[ f.nodeIndex ].status==fmsFAR )
+    {
       node[f.nodeIndex].status=fmsTRIAL;
       node[f.nodeIndex].T = distanceNeighbor(n) / speed(f.nodeIndex);
       
       insert( f ); // insert in minheap
+    }
     }
 }
 
@@ -482,13 +488,13 @@ void vtkFastMarching::ExecuteData(vtkDataObject *)
       somethingReallyWrong = true;
       return;
     }
-
+  
   /* Need short data */
   s = inData->GetScalarType();
   if (s != VTK_SHORT) 
     {
       vtkErrorMacro("Input scalars are type "<< s 
-            << " instead of "<<VTK_SHORT);
+            << " instead of "<< VTK_SHORT);
       somethingReallyWrong = true;
       return;
     }
@@ -694,6 +700,8 @@ vtkFastMarching::vtkFastMarching()
 
 void vtkFastMarching::init(int dimX, int dimY, int dimZ, int depth, double dx, double dy, double dz)
 {
+  powerSpeed = 1.0;
+
   this->dx=dx;
   this->dy=dy;
   this->dz=dz;
@@ -1156,9 +1164,14 @@ void vtkFastMarching::unInit( void )
   delete [] inhomo;
   delete [] median;
 
-  delete pdfIntensityIn;
-  
-  delete pdfInhomoIn;
+  // these are VTK objects, they should be destroyed by VTK's
+  // garbage collector
+
+  pdfIntensityIn->Delete();
+  pdfInhomoIn->Delete();
+
+  //  delete pdfIntensityIn;
+  //  delete pdfInhomoIn;
 
   while(tree.size()>0)
     tree.pop_back();
@@ -1173,6 +1186,24 @@ void vtkFastMarching::unInit( void )
 
 
 
+void vtkFastMarching::tweak(char *name, double value)
+{
+  if( strcmp( name, "sigma2SmoothPDF" )==0 )
+    {
+      pdfIntensityIn->sigma2SmoothPDF=value;
+      pdfInhomoIn->sigma2SmoothPDF=value;
+      return;
+    }
+
+  if( strcmp( name, "powerSpeed" )==0 )
+    {
+      powerSpeed=value;
+      return;
+    }
+
+
+  vtkErrorMacro("Error in vtkFastMarching::tweak(...): '" << name << "' not recognized !");
+}
 
 
 

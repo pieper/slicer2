@@ -27,6 +27,10 @@ of Intensity and Inhomogeneity
 
 class FMpdf : public vtkObject
 {
+  friend class vtkFastMarching;
+
+  double sigma2SmoothPDF;
+
   int realizationMax;
 
   int counter;
@@ -83,6 +87,7 @@ class FMpdf : public vtkObject
 
   const char* GetClassName(void)
     {return "FMpdf"; };
+
 };
 
 #endif

@@ -65,6 +65,8 @@ class VTK_FASTMARCHING_EXPORT vtkFastMarching : public vtkImageToImageFilter
  private:
   bool somethingReallyWrong;
 
+  double powerSpeed;
+
   int nNeighbors; // =6 pb wrap, cannot be defined as constant
   int arrayShiftNeighbor[27];
   double arrayDistanceNeighbor[27];
@@ -220,6 +222,8 @@ class VTK_FASTMARCHING_EXPORT vtkFastMarching : public vtkImageToImageFilter
     {
       return MAJOR_VERSION;
     };
+
+  void tweak(char *name, double value);
 
  protected:
   void ExecuteData(vtkDataObject *);
