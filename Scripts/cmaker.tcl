@@ -26,6 +26,7 @@ switch $tcl_platform(os) {
     "SunOS" {
         set SLICER_HOME /projects/birn/slicer2/latest/slicer2
         set VTK_BINARY_PATH /projects/birn/slicer2/Lib/solaris8/vtk/VTK-build
+        set ITK_BINARY_PATH ""
         set BUILD solaris8
         set VTKSLICERBASE_BUILD_LIB $SLICER_HOME/Base/builds/$BUILD/bin/vtkSlicerBase.so
         set GENERATOR "Unix Makefiles"
@@ -35,6 +36,7 @@ switch $tcl_platform(os) {
     "Linux" {
         set SLICER_HOME /home/pieper/slicer2/latest/slicer2
         set VTK_BINARY_PATH /home/pieper/vtk/latest/VTK-build
+        set ITK_BINARY_PATH ""
         set BUILD redhat7.3
         set VTKSLICERBASE_BUILD_LIB $SLICER_HOME/Base/builds/$BUILD/bin/vtkSlicerBase.so
         set GENERATOR "Unix Makefiles" 
@@ -44,6 +46,7 @@ switch $tcl_platform(os) {
     "Darwin" {
         set SLICER_HOME /Users/pieper/slicer2/latest/slicer2
         set VTK_BINARY_PATH /Users/pieper/downloads/vtk/vtk4.2/VTK-4.2.1-build
+        set ITK_BINARY_PATH /Users/pieper/downloads/itk/itk-build
         set VTK_SRC_PATH /Users/pieper/downloads/vtk/vtk4.2/VTK-4.2.1
         set BUILD Darwin
         set VTKSLICERBASE_BUILD_LIB $SLICER_HOME/Base/builds/$BUILD/bin/vtkSlicerBase.dylib
@@ -58,6 +61,7 @@ switch $tcl_platform(os) {
 
         set SLICER_HOME c:/pieper/bwh/slicer2/latest/slicer2
         set VTK_BINARY_PATH c:/downloads/vtk/latest/Win32VC7
+        set ITK_BINARY_PATH ""
         set BUILD Win32VC7
         set VTKSLICERBASE_BUILD_LIB $SLICER_HOME/Base/builds/$BUILD/bin/debug/vtkSlicerBase.lib
         set GENERATOR "Visual Studio 7" 
@@ -143,6 +147,11 @@ switch $tcl_platform(os) {
 }
 # make sure to generate shared libraries
 set VTK_ARG6 "-DBUILD_SHARED_LIBS:BOOL=ON"
+if { $ITK_BINARY_PATH != "" } {
+    set VTK_ARG7 "-DITK_DIR:FILEPATH=$ITK_BINARY_PATH"
+} else {
+    set VTK_ARG5 "-DDUMMY:BOOL=ON"
+}
 
 set SLICER_ARG1 "-DVTKSLICERBASE_SOURCE_DIR:PATH=$SLICER_HOME/Base"
 set SLICER_ARG2 "-DVTKSLICERBASE_BUILD_DIR:PATH=$SLICER_HOME/Base/builds/$BUILD"
@@ -161,10 +170,10 @@ foreach target $TARGETS {
 
     puts "running cmake ..."
     puts "$CMAKE $target -G$GENERATOR \
-        $VTK_ARG1 $VTK_ARG2 $VTK_ARG3 $VTK_ARG4 $VTK_ARG5 $VTK_ARG6 \
+        $VTK_ARG1 $VTK_ARG2 $VTK_ARG3 $VTK_ARG4 $VTK_ARG5 $VTK_ARG6 $VTK_ARG7 \
         $SLICER_ARG1 $SLICER_ARG2 $SLICER_ARG3"
     exec $CMAKE $target -G$GENERATOR \
-        $VTK_ARG1 $VTK_ARG2 $VTK_ARG3 $VTK_ARG4 $VTK_ARG5 $VTK_ARG6 \
+        $VTK_ARG1 $VTK_ARG2 $VTK_ARG3 $VTK_ARG4 $VTK_ARG5 $VTK_ARG6 $VTK_ARG7 \
         $SLICER_ARG1 $SLICER_ARG2 $SLICER_ARG3
 
     switch $tcl_platform(os) {
