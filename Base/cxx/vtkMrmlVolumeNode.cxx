@@ -270,7 +270,7 @@ void vtkMrmlVolumeNode::Write(ofstream& of, int nIndent)
   char CheckVolumeFile[1000];
   if(this->GetNumberOfDICOMFiles() == 0)
   {
-      CheckVolumeFile[0] == '\0';
+      CheckVolumeFile[0] = '\0';
       sprintf(CheckVolumeFile,this->FilePattern,this->FullPrefix,this->ImageRange[0]);
       vtkDebugMacro(<< "vtkMrmlVolumeNode: checking for existence of first volume file:\n " << CheckVolumeFile << "\n\tfile prefix = " << this->FilePrefix << "\n\tfull prefix = " << this->FullPrefix << endl);
       
