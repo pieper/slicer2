@@ -152,7 +152,7 @@ proc MIRIADSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.30 $} {$Date: 2004/11/23 15:50:32 $}]
+        {$Revision: 1.31 $} {$Date: 2005/01/28 23:21:10 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -1152,10 +1152,10 @@ proc MIRIADSegmentSamplesFromSegmentation {class SEGid label} {
         for {set y 0} {$y < $ysize} {incr y} {
             set y 128
             for {set x 0} {$x < $xsize} {incr x} {
-                if { $label == [$SEGimage GetScalarComponentAsFloat $x $y $z 0] } {
-                    set sample [$T2image GetScalarComponentAsFloat $x $y $z 0]
+                if { $label == [$SEGimage $::getScalarComponentAs $x $y $z 0] } {
+                    set sample [$T2image $::getScalarComponentAs $x $y $z 0]
                     lappend ::EMSegment(Cattrib,$class,$T2id,Sample) [list $x $y $z $sample]
-                    set sample [$PDimage GetScalarComponentAsFloat $x $y $z 0]
+                    set sample [$PDimage $::getScalarComponentAs $x $y $z 0]
                     lappend ::EMSegment(Cattrib,$class,$PDid,Sample) [list $x $y $z $sample]
                 }
             }

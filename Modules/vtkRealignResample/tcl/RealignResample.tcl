@@ -21,10 +21,11 @@ proc RealignResampleInit {} {
     set Module($m,procGUI) RealignResampleBuildGUI
     set Module($m,procMRML) RealignResampleUpdateMRML
   
-    set Module($m,depend) "Morphometrics"
+    # took this out for the release, as Morphometrics is removed due to instability
+#    set Module($m,depend) "Morphometrics"
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.4 $} {$Date: 2004/08/20 16:16:13 $}]
+        {$Revision: 1.5 $} {$Date: 2005/01/28 23:21:36 $}]
 
     set Matrix(volume) $Volume(idNone)
     set Matrix(RealignResampleVolumeName2) None
@@ -308,7 +309,7 @@ proc RealignResampleSetACPCList {{v ""}} {
 
     set RealignResample(ACPCList) "$v"
     $RealignResample(mbACPC) config -text "$v"
-    puts "ACPC List: $v"
+    if {$::Module(verbose)} { puts "ACPC List: $v" }
 }
 
 #-------------------------------------------------------------------------------
@@ -322,7 +323,7 @@ proc RealignResampleSetMidlineList {{v ""}} {
 
     set RealignResample(MidlineList) "$v"
     $RealignResample(mbMidline) config -text "$v"
-    puts "Midline List: $v"
+    if {$::Module(verbose)} {  puts "Midline List: $v" }
 }
 
 #-------------------------------------------------------------------------------
@@ -342,7 +343,7 @@ proc RealignResampleSetVolume2 {{v ""}} {
     catch "ModelRasToVtk Delete"
     vtkMatrix4x4 ModelRasToVtk
     set position [Volume($Matrix(volume),node) GetPositionMatrix]
-    puts "$position"
+    if {$::Module(verbose)} { puts "$position" }
     ModelRasToVtk Identity
     set ii 0
     for {set i 0} {$i < 4} {incr i} {
@@ -366,13 +367,13 @@ proc RealignResampleSetVolume2 {{v ""}} {
 
     set spacing [split [[Volume($Matrix(volume),vol) GetOutput] GetSpacing]]     
     set point  [ModelRasToVtk MultiplyPoint [lindex $spacing 0] [lindex $spacing 1] [lindex $spacing 2] 1 ]
-    puts "LR PA IS $point"
+    if {$::Module(verbose)} {  puts "LR PA IS $point"} 
     set RealignResample(OutputSpacingLR) [expr abs([lindex $point 0])]
     set RealignResample(OutputSpacingPA) [expr abs([lindex $point 1])]
     set RealignResample(OutputSpacingIS) [expr abs([lindex $point 2])]
     
     set extent [split [[Volume($Matrix(volume),vol) GetOutput] GetWholeExtent]]     
-    puts $extent
+    if {$::Module(verbose)} { puts $extent }
     set dimension  [ModelRasToVtk MultiplyPoint [lindex $extent 1] [lindex $extent 3] [lindex $extent 5] 1 ]
     set RealignResample(OutputExtentLR) [expr round(abs([lindex $dimension 0])) + 1]
     set RealignResample(OutputExtentPA) [expr round(abs([lindex $dimension 1])) + 1]
@@ -388,7 +389,9 @@ proc RealignResampleSetVolume2 {{v ""}} {
     set Matrix(RealignResampleVolumeName2) "[Volume($v,node) GetName]"
 
     #Print out what the user has set as the volume to move
-    puts "this is the VolumeName: $Matrix(RealignResampleVolumeName2)"   
+    if {$::Module(verbose)} {
+        puts "RealignResampleSetVolume2: this is the VolumeName: $Matrix(RealignResampleVolumeName2)"   
+    }
 }
 #-------------------------------------------------------------------------------
 # .PROC AutoSpacing
@@ -402,7 +405,7 @@ proc AutoSpacing {} {
     catch "ModelRasToVtk Delete"
     vtkMatrix4x4 ModelRasToVtk
     set position [Volume($Matrix(volume),node) GetPositionMatrix]
-    puts "$position"
+    if {$::Module(verbose)} { puts "$position" }
     ModelRasToVtk Identity
     set ii 0
     for {set i 0} {$i < 4} {incr i} {
@@ -426,7 +429,7 @@ proc AutoSpacing {} {
 
     set spacing [split [[Volume($Matrix(volume),vol) GetOutput] GetSpacing]]     
     set point  [ModelRasToVtk MultiplyPoint [lindex $spacing 0] [lindex $spacing 1] [lindex $spacing 2] 1 ]
-    puts "LR PA IS $point"
+    if {$::Module(verbose)} {  puts "LR PA IS $point" }
     set RealignResample(OutputSpacingLR) [expr abs([lindex $point 0])]
     set RealignResample(OutputSpacingPA) [expr abs([lindex $point 1])]
     set RealignResample(OutputSpacingIS) [expr abs([lindex $point 2])]
@@ -644,26 +647,28 @@ proc RealignResampleSaveAs {value} {
     set RealignResample(SaveAs) "$value"
 
     #Print out what the user has set as the volume to move
-    puts "Save As: $value"   
+    if {$::Module(verbose)} {  puts "Save As: $value"    }
 }
 
 proc RealignCalculate {} {
     global RealignResample Module Matrix Volume Fiducials Point
-    puts $RealignResample(MidlineList)
-    puts $RealignResample(ACPCList)
+    if {$::Module(verbose)} { 
+        puts $RealignResample(MidlineList)
+        puts $RealignResample(ACPCList)
+    }
     catch "trans Delete"
     vtkTransform trans
     trans Identity
     trans PostMultiply
     if {$RealignResample(MidlineList) != "None" } {
-    puts "Doing Midline..."
+        if {$::Module(verbose)} {  puts "Doing Midline..." }
     set fids $Fiducials($Fiducials($RealignResample(MidlineList),fid),pointIdList) 
     catch "math Delete"
     vtkMath math
     set x 0
     foreach fid $fids {
         set list($x) [split [FiducialsGetPointCoordinates $fid] " "]
-        puts "Point $x: $list($x)"
+        if {$::Module(verbose)} {  puts "Point $x: $list($x)" }
         incr x
     }
     catch "polydata Delete"
@@ -672,25 +677,27 @@ proc RealignCalculate {} {
     vtkPolyData output
     catch "points Delete"
     vtkPoints points
-    puts "Total Number of Points: $x"
+        if {$::Module(verbose)} { puts "Total Number of Points: $x" }
     points SetNumberOfPoints $x
     for {set i 0} {$i < $x} {incr i} {
         points SetPoint $i [lindex $list($i) 0] [lindex $list($i) 1] [lindex $list($i) 2]
     }
     polydata SetPoints points
-    puts "Calling vtkPrincipleAxes"
+        if {$::Module(verbose)} { puts "Calling vtkPrincipleAxes" } 
     catch "pa Delete"
     vtkPrincipalAxes pa
-    puts "Making vtkPoints"
-    puts "Set Input to PrincipleAxes"
+    if {$::Module(verbose)} { 
+        puts "Making vtkPoints"
+        puts "Set Input to PrincipleAxes"
+    }
     pa SetInput polydata
-    puts "Executing PrincipleAxes"
+        if {$::Module(verbose)} { puts "Executing PrincipleAxes" } 
     pa Update
     set normal [pa GetZAxis]
     set nx [lindex $normal 0 ]
     set ny [lindex $normal 1 ]
     set nz [lindex $normal 2 ]
-    puts "$nx $ny $nz"
+        if {$::Module(verbose)} { puts "$nx $ny $nz"} 
     
     set Max $nx
     if {[expr $ny*$ny] > [expr $Max*$Max]} {
@@ -722,7 +729,7 @@ proc RealignCalculate {} {
     mat SetElement 2 2 [expr 1  - [mat GetElement 2 0] * [mat GetElement 2 0] / $oneAndAlpha]
     # Check the sign of the determinant    
     set det [mat Determinant]
-    puts "Determinant $det"
+        if {$::Module(verbose)} { puts "Determinant $det"} 
     
     catch "matInverse Delete"
     vtkMatrix4x4 matInverse
@@ -739,24 +746,24 @@ proc RealignCalculate {} {
     }
 
     if {$RealignResample(ACPCList) != "None"} {
-    puts "Doing ACPC..."
+        if {$::Module(verbose)} { puts "Doing ACPC..." } 
     set acpc $Fiducials($Fiducials($RealignResample(ACPCList),fid),pointIdList) 
     set y 0
     foreach fid $acpc {
         if { $y < 2 } {
         set ACPCpoints($y) [split [FiducialsGetPointCoordinates $fid] " "]
-        puts "ACPC Point $y: $ACPCpoints($y)"
+            if {$::Module(verbose)} { puts "ACPC Point $y: $ACPCpoints($y)" }
         incr y
         }
     }
     set top [expr [lindex $ACPCpoints(0) 2] - [lindex $ACPCpoints(1) 2]]
     set bot [expr [lindex $ACPCpoints(0) 1] - [lindex $ACPCpoints(1) 1]]
     set tangent [expr atan( $top / $bot) * (180.0/(4.0*atan(1.0)))]
-    puts $tangent
+        if {$::Module(verbose)} { puts $tangent } 
     trans RotateX [expr $tangent * -1]
     }
     set det [[trans GetMatrix] Determinant]
-    puts "Determinant $det"
+    if {$::Module(verbose)} { puts "Determinant $det" }
     [Matrix($Matrix(activeID),node) GetTransform] SetMatrix [trans GetMatrix]
     MainUpdateMRML
     RenderAll
@@ -768,7 +775,10 @@ proc RealignCalculate {} {
 proc Resample {} {
     global RealignResample Module Matrix Volume
        
-  
+    if {$Matrix(activeID) == ""} {
+        DevErrorWindow "You must set an active matrix first..."
+        return
+    }
     # Create a new Volume node
     set newvol [DevCreateNewCopiedVolume  $Matrix(volume) "" "$RealignResample(NewVolume)"]
     set Matrix(NewVolume) $newvol
@@ -859,9 +869,9 @@ proc Resample {} {
     reslice SetOutputSpacing $spacex $spacey $spacez
 
     # Set the extent to user or calculated values
-    puts "Extent: 0 $RealignResample(OutputExtentLR) 0 $RealignResample(OutputExtentPA) 0 $RealignResample(OutputExtentIS)"
+    if {$::Module(verbose)} { puts "Extent: 0 $RealignResample(OutputExtentLR) 0 $RealignResample(OutputExtentPA) 0 $RealignResample(OutputExtentIS)" }
     set dimension [InvRasToVtk MultiplyPoint $RealignResample(OutputExtentLR) $RealignResample(OutputExtentPA) $RealignResample(OutputExtentIS) 1]
-    puts "Extent: $dimension"
+    if {$::Module(verbose)} { puts "Extent: $dimension" }
     set extentx [expr round(abs([lindex $dimension 0]))]
     set extenty [expr round(abs([lindex $dimension 1]))]
     set extentz [expr round(abs([lindex $dimension 2]))]
@@ -869,7 +879,7 @@ proc Resample {} {
                          0 [expr $extenty - 1]\
                          0 [expr $extentz - 1] 
     # Set the interpolation mode 
-    puts "SetInterpolationModeTo$RealignResample(InterpolationMode)"
+    if {$::Module(verbose)} {  puts "SetInterpolationModeTo$RealignResample(InterpolationMode)" }
     reslice SetInterpolationModeTo$RealignResample(InterpolationMode)
     # Reslice!
     reslice Update
