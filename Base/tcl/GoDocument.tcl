@@ -19,7 +19,7 @@ if {[info exists env(SLICER_HOME)] == 0 || $env(SLICER_HOME) == ""} {
 # set SLICER_DOC to mystuff.
 
 if {[info exists env(SLICER_DOC)] == 0 || $env(SLICER_DOC) == ""} {
-	set outputdir [file dirname $prog]
+	set outputdir ""
 } else {
 	set outputdir $env(SLICER_DOC)
 }

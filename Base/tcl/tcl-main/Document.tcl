@@ -453,7 +453,7 @@ proc DocumentAll {prog {outputdir ""} {what "doc tcl"}} {
 	#------------------------------------------
 	if {[lsearch $what "doc"] != -1} {
 	    if {$outputdir != ""} {
-		set docdir [file join $outputdir doc]} else {
+		set docdir $outputdir} else {
 		    set docdir [file join [file dirname $prog] doc]}
 
 		foreach file [glob -nocomplain $docdir/*] {
@@ -483,7 +483,7 @@ proc DocumentAll {prog {outputdir ""} {what "doc tcl"}} {
 	    
 
 	    if {$outputdir != ""} {
-		set docdir [file join [file join $outputdir doc] tcl]} else {
+		set docdir [file join $outputdir tcl]} else {
 		    set docdir [file join [file join [file dirname $prog] \
 			    doc] tcl]}
 
