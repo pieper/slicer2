@@ -58,7 +58,7 @@
 
 # set up variables for the OS Builds, to facilitate the move to solaris9
 # can be solaris8 or solaris9
-set solaris "solaris9"
+set solaris "solaris8"
 set linux "redhat7.3"
 set darwin "Darwin"
 set windows "Win32VC7"
@@ -106,7 +106,7 @@ if {[catch {
 }
 
 # if it is an empty string or doesn't exist, set the LD_LIBRARY_PATH 
-if { $env(BUILD) == "Darwin" && [catch {
+if { $env(BUILD) == $darwin && [catch {
     if {$env(DYLD_LIBRARY_PATH) == ""} { 
         set env(DYLD_LIBRARY_PATH) " " 
     }} ex]} {
@@ -234,7 +234,7 @@ foreach modulePath $modulePaths {
 }
 
 
-if { $env(BUILD) == "Darwin" } {
+if { $env(BUILD) == $darwin } {
     # vtk uses the LD_ version to do it's own search for what to load
     # so need to set this even though MAC OSX uses the DYLD_ version
     set env(LD_LIBRARY_PATH) $env(DYLD_LIBRARY_PATH)
