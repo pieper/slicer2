@@ -34,31 +34,6 @@
 # 
 #
 #===============================================================================
-# FILE:        TetraMesh.tcl
-# PROCEDURES:  
-#   TetraMeshInit
-#   TetraMeshBuildGUI
-#   TetraMeshCreateMesh
-#   TetraMeshReadMesh
-#   TetraMeshWriteMesh
-#   TetraMeshPropsApply
-#   TetraMeshPropsCancel
-#   TetraMeshEnter
-#   TetraMeshExit
-#   TetraMeshUpdateGUI
-#   TetraMeshSetProcessType
-#   TetraMeshProcessTetraMesh
-#   TetraMeshFileNameEntered
-#   TetraMeshGetData
-#   SetModelMoveOriginMatrix n matrix
-#   TetraMeshGetTransform
-#   TetraMeshProcessEdges
-#   TetraMeshProcessScalarField
-#   TetraMeshProcessNodes
-#   TetraMeshProcessVectorField
-#   TetraMeshProcessSurfaces
-#   TetraMeshCopyPolyData PolyData number
-#   TetraMeshCreateModel
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -151,12 +126,13 @@
 # Slicer to ITK Transformation
 # ======================
 #
-# Now, let's say you had 2 volumes read into the slicer. Let's assume there
-# are no RAS to world matricies, so what we need is a matrix from RAS space
-# of the first volume to RAS space of the second volume. Call that M''
+# Now, let's say you had 2 volumes read into the slicer. Let's assume
+# there are no RAS to world matricies, and we do an alignment so that
+# we have a matrix from RAS space of the first volume to RAS space of
+# the second volume. Call that M'' 
 #
 # Let P1 and P2 be the matricies that goes from RAS space of volume 1 and 2
-# to ITK space.
+# to ITK stand-alone space.
 #
 # M'' = P2^-1 M P1
 # M'' = ( yflip Trans2 P2)^-1 Mvtk ( yflip Trans1 P1)
@@ -178,7 +154,7 @@
 # Then P1 = PosFix1 Pos1
 #      P2 = PosFix2 Pos2
 #
-# Then M''=(yflip Trans2 PosFix2 Pos2)^-1 Mvtk (yflip Trans1 P1 PosFix1 Pos1)
+# Then M''=(yflip Trans2 PosFix2 Pos2)^-1 Mvtk (yflip Trans1 PosFix1 Pos1)
 #
 # ===============
 # Problems
@@ -196,15 +172,70 @@
 # compared to the other, I have no way of doing that right now.
 #
 #-------------------------------------------------------------------------------
- 
+
 #-------------------------------------------------------------------------------
-#  Variables
-#  These are the variables defined by this module.
-# 
-#  int TetraMesh(count) counts the button presses for the demo 
-#  list TetraMesh(eventManager)  list of event bindings used by this module
+# .PROC GetSlicerWldToItkMatrix
+#
+# For a Volume, get the Wld to ITK transform
+# This is the transform used to go from RAS space to ITK space
+# if the volume was read in by the slicer (which it was)
+#
+# .END
 #-------------------------------------------------------------------------------
 
+proc GetSlicerWldToItkMatrix {vnode matrix} {
+ 
+    GetSlicerRASToItkStandAloneMatrix $vnode $matrix
+
+    vtkMatrix4x4 WldToRAS_
+      WldToRAS_ DeepCopy [$vnode GetRasToWld]
+      WldToRAS_ Invert
+
+    $matrix Multiply4x4 $matrix WldToRAS_ $matrix
+
+    WldToRAS_ Delete
+}
+
+ 
+#-------------------------------------------------------------------------------
+# .PROC GetSlicerRASToItkMatrix
+#
+# For a Volume, get the RAS to ITK transform
+# This is the transform used to go from RAS space to ITK space
+# if the volume was read in by the slicer (which it was)
+#
+# .END
+#-------------------------------------------------------------------------------
+
+proc GetSlicerRASToItkMatrix {vnode matrix} {
+
+    GetSlicerToItkStandAloneMatrix $vnode $matrix
+
+    vtkMatrix4x4 SlicerToItkTmp_
+    GetYFlippedItkCenteringMatrix  $vnode SlicerToItkTmp_
+
+    $matrix Multiply4x4 SlicerToItkTmp_ $matrix $matrix
+
+    SlicerToItkTmp_ Delete
+}
+
+#-------------------------------------------------------------------------------
+# .PROC GetSlicerRasToItkStandAloneMatrix
+#
+# For a Volume, get the RAS to ITK transform
+# where ITK coordinates refers to the coordinates that would be
+# used if ITK read in the volume as a stand-alone program.
+#
+# This is P = PosFix*Pos, as described above.
+#
+# .END
+#-------------------------------------------------------------------------------
+
+proc GetSlicerToItkStandAloneMatrix  {vnode matrix} {
+    SetModelMoveOriginMatrix $vnode $matrix
+    $matrix Multiply4x4 [$vnode GetPosition] $matrix $matrix
+    $matrix Invert
+}
 
 #-------------------------------------------------------------------------------
 # .PROC GetYFlippedItkCenteringMatrix
@@ -233,42 +264,3 @@ proc GetYFlippedItkCenteringMatrix  {vnode matrix} {
     $matrix SetElement 2 3 [ expr ($num2 - 1 ) * $Space2 * -0.5 ]
 }
 
-#-------------------------------------------------------------------------------
-# .PROC GetSlicerRasToItkStandAloneMatrix
-#
-# For a Volume, get the RAS to ITK transform
-# where ITK coordinates refers to the coordinates that would be
-# used if ITK read in the volume as a stand-alone program.
-#
-# This is P = PosFix*Pos, as described above.
-#
-# .END
-#-------------------------------------------------------------------------------
-
-proc GetSlicerToItkStandAloneMatrix  {vnode matrix} {
-    SetModelMoveOriginMatrix $vnode $matrix
-    $matrix Multiply4x4 [$vnode GetPosition] $matrix $matrix
-    $matrix Invert
-}
-
-#-------------------------------------------------------------------------------
-# .PROC GetSlicerToItkMatrix
-#
-# For a Volume, get the RAS to ITK transform
-# This is the transform used to go from RAS space to ITK space
-# if the volume was read in by the slicer (which it was)
-#
-# .END
-#-------------------------------------------------------------------------------
-
-proc GetSlicerToItkMatrix {vnode matrix} {
-
-    GetSlicerToItkStandAloneMatrix $vnode $matrix
-
-    vtkMatrix4x4 SlicerToItkTmp_
-    GetYFlippedItkCenteringMatrix  $vnode SlicerToItkTmp_
-
-    $matrix Multiply4x4 SlicerToItkTmp_ $matrix $matrix
-
-    SlicerToItkTmp_ Delete
-}
