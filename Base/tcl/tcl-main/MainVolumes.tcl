@@ -33,7 +33,7 @@
 #   MainVolumesCopyData dst src clear
 #   MainVolumesCreate
 #   MainVolumesRead
-#   MainVolumesWrite
+#   MainVolumesWrite v prefix
 #   MainVolumesDelete
 #   MainVolumesBuildGUI
 #   MainVolumesPopupGo
@@ -63,7 +63,7 @@ proc MainVolumesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.31 $} {$Date: 2000/03/01 02:21:30 $}]
+		{$Revision: 1.32 $} {$Date: 2000/07/28 17:55:26 $}]
 
 	set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -287,8 +287,12 @@ proc MainVolumesRead {v} {
 }
 #-------------------------------------------------------------------------------
 # .PROC MainVolumesWrite
+# Writes out a volume created in the Slicer and an accompanying mrml file
+# (the "Working.xml" file).
 # 
 # .ARGS
+# int v ID number of the volume to write
+# str prefix file prefix where the volume will be written
 # .END
 #-------------------------------------------------------------------------------
 proc MainVolumesWrite {v prefix} {
@@ -341,7 +345,12 @@ since the last time it was saved."
 			set dir ""
 		}
 	}
-	Volume($v,node) SetFilePrefix $filePrefix
+
+	# the MRML file will go in the directory where the volume was saved.
+	# So the relative file prefix is just the name of the file.
+	set name [file root [file tail $fileFull]]
+	Volume($v,node) SetFilePrefix $name
+	# Tell volume node where it should be written
 	Volume($v,node) SetFullPrefix $fileFull
 
 	# Determine if littleEndian
@@ -357,9 +366,8 @@ since the last time it was saved."
 	Volume($v,vol) Write
 	puts " ...done."
 
-	# Put the MRML file in the current directory so the relative
-	# paths to data are correct
-	set filename [file join $Mrml(dir) [Volume($v,node) GetName].xml]
+	# put MRML file in dir where volume was saved, name it after the volume
+	set filename [file join [file dirname $fileFull] $name.xml]
 
 	# Write MRML file
 	vtkMrmlTree tree
@@ -368,6 +376,10 @@ since the last time it was saved."
 	tree RemoveAllItems
 	tree Delete
 	puts "Saved MRML file: $filename"
+
+	# Reset the pathnames to be relative to Mrml(dir)
+	Volume($v,node) SetFilePrefix $filePrefix
+	Volume($v,node) SetFullPrefix $fileFull
 
 	# Wrote it, so not dirty (changed since read/wrote)
 	set Volume($v,dirty) 0
