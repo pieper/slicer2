@@ -101,7 +101,7 @@ proc FiducialsInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.35 $} {$Date: 2003/05/27 21:53:16 $}]
+        {$Revision: 1.36 $} {$Date: 2003/05/29 17:40:36 $}]
     
     # Initialize module-level variables
     
@@ -1177,7 +1177,7 @@ proc FiducialsCheckListExistence {name} {
 #  str name the name of the new List
 # .END
 #-------------------------------------------------------------------------------
-proc FiducialsCreateFiducialsList {type name {textSize ""} {symbolSize ""}} {
+proc FiducialsCreateFiducialsList {type name {textSize "6"} {symbolSize "6"}} {
     global Fiducials Point
     
     # search in the existing lists to see if one already exists with that name
