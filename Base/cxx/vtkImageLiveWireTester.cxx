@@ -151,25 +151,25 @@ void vtkImageLiveWireTester::WriteFilterSettings()
 
 //----------------------------------------------------------------------------
 // Description:
-// Perform the main function of this filter:
-// feed edge images to livewire filter (hook up the pipeline)
+// Hook up the edge filters to  Livewire filter.
+//
+// The rest of the pipeline is set up outside this filter.
+// The whole pipeline is like this:
+//
+// thisFilter -> many edge filters -> -> -> -> livewire (inputs 1-max)
+// and
+// thisFilter -> livewire (input 0)
+// 
 void vtkImageLiveWireTester::InitializePipeline()
 {
-  // Lauren max edge cost of edge filters and live wire need to match
+  // Max edge cost of edge filters and live wire need to match
 
-  // give each edge weight filter the same input as this filter has
-  for (int i = 0; i < this->NumberOfEdgeFilters; i++)
-    {
-      this->EdgeFilters[i]->SetOriginalImage(this->GetInput());
-    }
-
+  // give live wire all edge inputs
   this->LiveWire->SetUpEdges(this->EdgeFilters[0]->GetOutput());
   this->LiveWire->SetDownEdges(this->EdgeFilters[1]->GetOutput());
   this->LiveWire->SetLeftEdges(this->EdgeFilters[2]->GetOutput());
   this->LiveWire->SetRightEdges(this->EdgeFilters[3]->GetOutput());
 
-  // Lauren test
-  //this->LiveWire->SetOriginalImage(this->GetInput());
 }
 
 //----------------------------------------------------------------------------
