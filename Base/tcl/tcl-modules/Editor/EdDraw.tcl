@@ -64,6 +64,9 @@ proc EdDrawInit {} {
 	set Ed($e,radius) 0
 	set Ed($e,shape)  Polygon
 	set Ed($e,render) Active
+
+	set Ed($e,eventManager) {}
+    
 }
 
 #-------------------------------------------------------------------------------
@@ -73,7 +76,7 @@ proc EdDrawInit {} {
 # .END
 #-------------------------------------------------------------------------------
 proc EdDrawBuildGUI {} {
-	global Ed Gui Label
+	global Ed Gui Label Editor
 
 	#-------------------------------------------
 	# Draw frame
@@ -173,15 +176,15 @@ proc EdDrawBuildGUI {} {
 	# Draw->Toggle frame
 	#-------------------------------------------
 	set f $Ed(EdDraw,frame).fToggle
-
-	#frame $f.fToggle -bg $Gui(activeWorkspace)
 	
+	set Editor(toggleWorking) 0
 	eval {checkbutton $f.cW -width 21 -indicatoron 0 \
-		-variable Editor(toggleWorking) -text "peek under labelmap"  \
+		-variable Editor(toggleWorking) \
+		-text "peek under labelmap"  \
 		-command EditorToggleWorking} $Gui(WCA) 
 	pack $f.cW -side top -padx $Gui(pad) -pady $Gui(pad)
 
-	TooltipAdd  $f.cW "Click or hit the l key to see grayscale only."
+	TooltipAdd  $f.cW "Click to see grayscale only."
 
 	#-------------------------------------------
 	# Draw->Apply frame
@@ -227,6 +230,9 @@ proc EdDrawEnter {} {
 	} else {
 		Slicer DrawSetColor 0 0 0
 	}
+
+	# use the bindings stack for adding new bindings.
+	pushEventManager $Ed($e,eventManager)
 }
 
 #-------------------------------------------------------------------------------
@@ -240,6 +246,8 @@ proc EdDrawExit {} {
 	# Delete points
 	EdDrawUpdate DeleteAll
 	RenderActive
+
+    popEventManager
 }
 
 #-------------------------------------------------------------------------------

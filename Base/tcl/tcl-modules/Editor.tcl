@@ -97,7 +97,7 @@ proc EditorInit {} {
     
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.34 $} {$Date: 2000/10/31 00:30:28 $}]
+	    {$Revision: 1.35 $} {$Date: 2000/11/01 20:04:49 $}]
     
     # Initialize globals
     set Editor(idOriginal)  $Volume(idNone)
@@ -112,8 +112,7 @@ proc EditorInit {} {
     set Editor(fgName) Working
     set Editor(bgName) Composite
     set Editor(nameWorking) Working
-    set Editor(eventManager)  { \
-	    {all <KeyPress-l>  {EditorToggleWorking}} }
+    set Editor(eventManager)  {  }
     
     # Look for Editor effects and form an array, Ed, for them.
     # Each effect has a *.tcl file in the tcl-modules/Editor directory.
@@ -1325,21 +1324,12 @@ proc EditorResetDisplay {} {
 # .END
 #-------------------------------------------------------------------------------
 proc EditorToggleWorking {} {
-    global Editor Slice
+    global Editor
 
-    set w [EditorGetWorkingID]
-    set ok 1
-    foreach s $Slice(idList) {
-	set f [[[Slicer GetForeVolume  $s] GetMrmlNode] GetID]
-	set l [[[Slicer GetLabelVolume $s] GetMrmlNode] GetID]
-	if {$f != $w} {set ok 0}
-	if {$l != $w} {set ok 0}
-    }
-    
-    if {$ok == 0} {
-	EditorShowWorking
-    } else {
+    if {$Editor(toggleWorking) == 1} {
 	EditorHideWorking
+    } else {
+	EditorShowWorking
     }
 }
 
