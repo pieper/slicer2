@@ -79,6 +79,15 @@ Be SURE you are in your new directory when you run this command!
   paths for include files and libraries. See
   http://www.cmake.org/HTML/Index.html for more information.
 
+* In CMakeListsLocal.txt, add these last two lines to the
+  INCLUDE_DIRECTORIES section if your code depends on the slicer code:
+
+  INCLUDE_DIRECTORIES(
+  ${VTKMYCLASS_SOURCE_DIR}/include
+  ${VTKMYCLASS_SOURCE_DIR}/../../Base/cxx/
+  ${VTKMYCLASS_SOURCE_DIR}/../../Base/builds/Solaris/
+  )
+  
 * Change to the tcl directory (e.g. /home/halazar/slicer2/Modules/vtkTest/tcl)
 and put your tcl code in the skeleton file, ie Test.tcl.
 
