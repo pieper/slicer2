@@ -189,7 +189,7 @@ void vtkImageDICOMReader::ComputeInternalFileName(int slice)
     this->InternalFileName = DICOMFileList[0];
   else
     this->InternalFileName = DICOMFileList[slice-1];
-
+  vtkDebugMacro("ComputeInternalFilename: set internal file name to " << this->InternalFileName << ", prefix = " << this->FilePrefix << endl);
   //vtkGenericWarningMacro("InternalFileName: " << InternalFileName << "\n");
 
   return;

@@ -233,15 +233,25 @@ void vtkMrmlVolumeNode::Write(ofstream& of, int nIndent)
     strcpy(this->Description, this->ScanOrder);
   }
   char CheckVolumeFile[1000];
-  sprintf(CheckVolumeFile,this->FilePattern,this->FullPrefix,this->ImageRange[0]);
-  FILE *file = fopen(CheckVolumeFile,"r"); 
-  if ( file== NULL) {
-    cerr << "Could not open " << CheckVolumeFile << "! "<< endl;
-    cerr << "Volume node will not be saved. Might not have read access to the file !" << endl;
-    return;
+  if(this->GetNumberOfDICOMFiles() == 0)
+  {
+      sprintf(CheckVolumeFile,this->FilePattern,this->FullPrefix,this->ImageRange[0]);
+      cerr << "vtkMrmlVolumeNode: checking for existence of first volume file: " << CheckVolumeFile
+           << "\n\tfile prefix = " << this->FilePrefix << "\n\tfull prefix = " << this->FullPrefix << endl;
+      
+      FILE *file = fopen(CheckVolumeFile,"r"); 
+      if ( file == NULL) {
+          cerr << "Could not open \"" << CheckVolumeFile << "\"! "<< endl;
+          cerr << "Volume node will not be saved. Might not have read access to the file !" << endl;
+          return;
+      }
+      fclose(file);
   }
-  fclose(file);
-
+  else
+  {
+      sprintf(CheckVolumeFile,this->GetDICOMFileName(0));
+      cerr <<  "vtkMrmlVolumeNode: NOT checking for existence of first DICOM volume file: " << CheckVolumeFile << endl;
+  }
   vtkIndent i1(nIndent);
   of << i1 << "<Volume";
 
@@ -274,7 +284,16 @@ void vtkMrmlVolumeNode::Write(ofstream& of, int nIndent)
       {
           if(i > 0)
               of << " ";
-          of << GetDICOMFileName(i);
+          // check for a space in the file name, if there, enclose the
+          // filename as an atom, otherwise print normally
+          if (strstr(GetDICOMFileName(i), " ") != NULL)
+          {
+              of << "{" << GetDICOMFileName(i) << "}";
+          }
+          else
+          {
+              of << GetDICOMFileName(i);
+          }
       }
       of << "'";
   }

@@ -64,6 +64,7 @@ void vtkMrmlTree::Write(char *filename)
   if (file.fail())
   {
     vtkErrorMacro("Write: Could not open file " << filename);
+    cerr << "Write: Could not open file " << filename;
     return;
   }
   
