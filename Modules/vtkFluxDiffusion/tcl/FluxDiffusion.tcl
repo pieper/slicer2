@@ -156,7 +156,7 @@ proc FluxDiffusionInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.4 $} {$Date: 2003/05/14 18:36:23 $}]
+        {$Revision: 1.5 $} {$Date: 2003/05/15 15:54:22 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -174,7 +174,8 @@ proc FluxDiffusionInit {} {
     set FluxDiffusion(Attachment)    "0.05"
     set FluxDiffusion(Iterations)    "5"
     set FluxDiffusion(IsoCoeff)      "0.2"
-    set FluxDiffusion(NumberOfThreads)    "4"
+    set FluxDiffusion(TruncNegValues)  "0"
+    set FluxDiffusion(NumberOfThreads) "4"
 
     set FluxDiffusion(TangCoeff)     "1"
 
@@ -296,6 +297,7 @@ proc FluxDiffusionBuildHelpFrame {} {
     <LI><B> Attachment:        </B> Coefficient of the data attachment term 
     <LI><B> Iterations:        </B> Number of iterations
     <LI><B> NumberOfThreads:   </B> Number of threads
+    <LI><B> TruncNegValues:    </B> 0 or 1, if 1 set negative intensities to 0 after processing
     "
     regsub -all "\n" $help {} help
     MainHelpApplyTags FluxDiffusion $help
@@ -321,18 +323,20 @@ proc FluxDiffusionBuildMainFrame {} {
     set fMain $Module(FluxDiffusion,fMain)
     set f $fMain
   
-    frame $f.fIO              -bg $Gui(activeWorkspace) -relief groove -bd 3
-    frame $f.fDimension       -bg $Gui(activeWorkspace)
-    frame $f.fThreshold       -bg $Gui(activeWorkspace)
-    frame $f.fIterations      -bg $Gui(activeWorkspace)
+    frame $f.fIO               -bg $Gui(activeWorkspace) -relief groove -bd 3
+    frame $f.fDimension        -bg $Gui(activeWorkspace)
+    frame $f.fThreshold        -bg $Gui(activeWorkspace)
+    frame $f.fIterations       -bg $Gui(activeWorkspace)
     frame $f.fNumberOfThreads  -bg $Gui(activeWorkspace)
-    frame $f.fRun             -bg $Gui(activeWorkspace)
+    frame $f.fTruncNegValues   -bg $Gui(activeWorkspace)
+    frame $f.fRun              -bg $Gui(activeWorkspace)
 
     pack  $f.fIO \
       $f.fDimension  \
       $f.fThreshold  \
       $f.fIterations \
       $f.fNumberOfThreads \
+      $f.fTruncNegValues \
           $f.fRun \
       -side top -padx 0 -pady 1 -fill x
     
@@ -434,6 +438,20 @@ proc FluxDiffusionBuildMainFrame {} {
     eval {entry $f.eNumberOfThreads -justify right -width 6 \
           -textvariable  FluxDiffusion(NumberOfThreads)  } $Gui(WEA)
     grid $f.lNumberOfThreads $f.eNumberOfThreads \
+    -pady 2 -padx $Gui(pad) -sticky e
+
+
+    #-------------------------------------------
+    # Parameters->TruncNegValues Frame
+    #-------------------------------------------
+    set f $fMain.fTruncNegValues
+    
+    
+    eval {label $f.lTruncNegValues -text "TruncNegValues:"\
+          -width 16 -justify right } $Gui(WLA)
+    eval {entry $f.eTruncNegValues -justify right -width 6 \
+          -textvariable  FluxDiffusion(TruncNegValues)  } $Gui(WEA)
+    grid $f.lTruncNegValues $f.eTruncNegValues \
     -pady 2 -padx $Gui(pad) -sticky e
 
 
@@ -777,6 +795,7 @@ proc RunFluxDiffusion {} {
   puts "RunFluxDiffusion 4"
 
   aniso SetNumberOfThreads     $FluxDiffusion(NumberOfThreads)
+  aniso SetTruncNegValues      $FluxDiffusion(TruncNegValues)
 
 
   # This is necessary so that the data is updated correctly.

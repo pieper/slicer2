@@ -37,8 +37,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkAnisoGaussSeidel.h,v $
   Language:  C++
-  Date:      $Date: 2003/04/14 20:08:49 $
-  Version:   $Revision: 1.4 $
+  Date:      $Date: 2003/05/15 15:54:22 $
+  Version:   $Revision: 1.5 $
   Author:    Karl Krissian
 
 =========================================================================*/
@@ -87,6 +87,10 @@ public:
   // Dimensionality 2 for 2D, 3 for 3D
   vtkSetMacro(mode,int);
   vtkGetMacro(mode,int);
+
+  // 0 or 1, if 1 set negatives values to 0
+  vtkSetMacro(TruncNegValues,int);
+  vtkGetMacro(TruncNegValues,int);
 
   // 
   vtkSetMacro(NumberOfIterations,int);
@@ -193,6 +197,8 @@ protected:
   float**         _gamma_z;
   
   int             mode;
+  int             TruncNegValues;
+
   //  unsigned char   use_filtre_rec;
   unsigned char   opt_mem;
   float           sigma;

@@ -37,8 +37,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkAnisoGaussSeidel.cxx,v $
   Language:  C++
-  Date:      $Date: 2003/05/07 16:34:48 $
-  Version:   $Revision: 1.5 $
+  Date:      $Date: 2003/05/15 15:54:22 $
+  Version:   $Revision: 1.6 $
 
 =========================================================================*/
 
@@ -187,6 +187,7 @@ vtkAnisoGaussSeidel::vtkAnisoGaussSeidel()
 
   IsoCoeff           = 0.2;
 
+  TruncNegValues     = 0;
 
 } // vtkAnisoGaussSeidel::vtkAnisoGaussSeidel()
 
@@ -1838,6 +1839,7 @@ void vtkAnisoGaussSeidel::ExecuteData(vtkDataObject *out)
   // Check the limits
   tmp2_ptr = (float*) im_tmp2->GetScalarPointer(0,0,0);
   min = image_resultat->GetScalarTypeMin();
+  if ((TruncNegValues)&&(min<0))  min = 0;
   max = image_resultat->GetScalarTypeMax();
 
   for(i=0;i<txy*tz;i++) {
