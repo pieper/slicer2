@@ -1,5 +1,5 @@
 <!ELEMENT MRML (Transform | Volume | Model | Color | Options |
-	ColorLUT | TransferFunction | ModelGroup)*>
+    ColorLUT | TransferFunction | ModelGroup)*>
 
 <!ELEMENT Transform (Matrix *, (Transform | Volume | Model | ModelGroup)*)>
 
@@ -37,7 +37,7 @@
     imageRange NMTOKENS "1 1"
     dimensions NMTOKENS "256 256"
     spacing NMTOKENS "1 1 1"
-	transferFunction IDREF #IMPLIED>
+    transferFunction IDREF #IMPLIED>
 
 <!ELEMENT Model (#PCDATA)>
 <!ATTLIST Model 
@@ -92,17 +92,17 @@
 
 <!ELEMENT TFPoint (#PCDATA)>
 <!ATTLIST TFPoint 
-	r NMTOKEN "0"
-	g NMTOKEN "0"
-	b NMTOKEN "0">
+    r NMTOKEN "0"
+    g NMTOKEN "0"
+    b NMTOKEN "0">
 
 <!ELEMENT ColorLUT (#PCDATA)>
 <!ATTLIST ColorLUT 
-	name NMTOKEN #REQUIRED
-	numberOfColors NMTOKEN "256"
-	fileName CDATA ""
-	hueRange NMTOKENS "0 0.8"
-	saturationRange NMTOKENS "0 0"
-	valueRange NMTOKENS "0 1"
-	annoColor NMTOKENS "1 0 0">
+    name NMTOKEN #REQUIRED
+    numberOfColors NMTOKEN "256"
+    fileName CDATA ""
+    hueRange NMTOKENS "0 0.8"
+    saturationRange NMTOKENS "0 0"
+    valueRange NMTOKENS "0 1"
+    annoColor NMTOKENS "1 0 0">
 
