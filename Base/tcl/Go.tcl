@@ -22,6 +22,10 @@
 #===============================================================================
 # FILE:        Go.tcl
 # PROCEDURES:  
+#   Usage
+#   SplashShow
+#   SplashRaise
+#   SplashKill
 #   ReadModuleNames
 #   FindNames
 #   ReadModuleNamesLocalOrCentral
@@ -66,7 +70,7 @@ set SLICER(version) "$SLICER(major_version).$SLICER(minor_version)$SLICER(revisi
 # simple command line argument parsing
 #
 
-proc usage {} {
+proc Usage {} {
     global SLICER
 
     set msg "usage: slicer2-<arch> [options] \[MRML file name .xml | dir with MRML file\]"
@@ -95,7 +99,7 @@ foreach a $argv {
         }
         "--help" -
         "-h" {
-            usage
+            Usage
             exit 1
         }
         "--no-threads" {
@@ -106,7 +110,7 @@ foreach a $argv {
         }
         "-*" {
             puts stderr "unknown option $a\n"
-            usage
+            Usage
         }
         default {
             lappend strippedargs $a
@@ -117,7 +121,7 @@ set argv $strippedargs
 set argc [llength $argv]
 
 if {$argc > 1 } {
-    usage
+    Usage
     exit 1
 }
 
@@ -152,25 +156,51 @@ set Path(program) $prog
 # simple splash screen 
 #                      
 # do this before loading vtk dlls so people have something
-# to look at during startup
+# to look at during startup (and so they see the important
+# warning message!)
 ########################
  
-toplevel .splash -relief raised -borderwidth 6 -width 500 -height 400 -bg white
-wm overrideredirect .splash 1
-wm geometry .splash +[expr [winfo screenwidth .splash]/2-250]+[expr [winfo screenheight .splash]/2-200]
-# added the program path so slicer can find the picture no matter what directory it is started in 
-global Path
-set splashim [image create photo -file [file join $Path(program) gui/welcome.ppm]]
-label .splash.l -image $splashim
-place .splash.l -relx 0.5 -rely 0.35 -anchor center
-label .splash.t -text "Please be aware that Slicer is not validated and \nis for Research Use Only.\n\nSee www.slicer.org for license details." -bg white -fg red
-place .splash.t -relx 0.5 -rely 0.75 -anchor center
-label .splash.v -text "Version: $SLICER(version)" -bg white -fg darkblue
-place .splash.v -relx 0.5 -rely 0.95 -anchor center
-after 7000 "destroy .splash; image delete $splashim"
-proc raisesplash {} { if {[winfo exists .splash]} {raise .splash; after 100 "after idle raisesplash"}}
-raisesplash
-update
+proc SplashRaise {} { 
+    if {[winfo exists .splash]} {raise .splash; after 100 "after idle SplashRaise"}
+}
+
+proc SplashKill {} { 
+    global splashim
+    catch "destroy .splash" 
+    catch "image delete $splashim"
+}
+
+proc SplashShow { {delayms 7000} } {
+    global Path SLICER splashim
+
+    set oscaling [tk scaling]
+    # ignore screen based default scaling and pick scale so words show up nicely inside box
+    tk scaling 1.5
+    set splashfont [font create -family Helvetica -size 10]
+    set splashfontb [font create -family Helvetica -size 10 -weight bold]
+    toplevel .splash -relief raised -borderwidth 6 -width 500 -height 400 -bg white
+    wm overrideredirect .splash 1
+    wm geometry .splash +[expr [winfo screenwidth .splash]/2-250]+[expr [winfo screenheight .splash]/2-200]
+
+    # add the program path so slicer can find the picture no matter what directory it is started in 
+    set splashim [image create photo -file [file join $Path(program) gui/welcome.ppm]]
+    label .splash.l -image $splashim
+    place .splash.l -relx 0.5 -rely 0.35 -anchor center
+    label .splash.t1 -text "Slicer is not an FDA approved medical device \nand is for Research Use Only." -bg white -fg red -font $splashfontb
+    label .splash.t2 -text "See www.slicer.org for license details." -bg white -fg red -font $splashfont
+    place .splash.t1 -relx 0.5 -rely 0.70 -anchor center
+    place .splash.t2 -relx 0.5 -rely 0.80 -anchor center
+    label .splash.v -text "Version: $SLICER(version)" -bg white -fg darkblue -font $splashfont
+    place .splash.v -relx 0.5 -rely 0.95 -anchor center
+    after $delayms SplashKill
+    SplashRaise
+    update
+    bind .splash <1> SplashKill
+    tk scaling $oscaling
+}
+
+SplashShow
+
 
 
 #
