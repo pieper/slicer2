@@ -15,7 +15,7 @@
 #  include <unistd.h>
 #else
 #  include <io.h>
-#  include <GL/glext.h>
+#  include "glext.h"
 #endif
 
 
