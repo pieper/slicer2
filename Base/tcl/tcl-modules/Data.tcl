@@ -75,7 +75,7 @@ proc DataInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.24 $} {$Date: 2000/03/05 23:51:00 $}]
+		{$Revision: 1.25 $} {$Date: 2000/05/05 19:03:35 $}]
 
 	set Data(index) ""
 	set Data(clipboard) ""
@@ -220,13 +220,13 @@ to quickly cut and paste items.
 	bind $Data(fNodeList) <Double-1>  {DataEditNode}
 
 	# initialize key-bindings (and hide class Listbox Control button ops)
-	set Data(eventMgr) [subst { \
-		Listbox,<Control-Button-1>  {} \
-		Listbox,<Control-B1-Motion>  {} \
-		all,<Control-e> {DataEditNode} \
-		all,<Control-x> {DataCutNode} \
-		all,<Control-v> {DataPasteNode} \
-		all,<Control-d> {DataDeleteNode} }]
+	set Data(eventManager) { \
+	    {Listbox <Control-Button-1>  {}} \
+	    {Listbox <Control-B1-Motion>  {}} \
+	    {all <Control-e> {DataEditNode}} \
+	    {all <Control-x> {DataCutNode}} \
+	    {all <Control-v> {DataPasteNode}} \
+	    {all <Control-d> {DataDeleteNode}} }
 
 #	bind all <Control-c> {DataCopyNode}
 
@@ -914,8 +914,7 @@ proc DataCheckSelectedTransforms {selection lastItem} {
 proc DataEnter {} { 
     global Data
 
-    array set mgr $Data(eventMgr)
-    pushEventManager mgr
+    pushEventManager $Data(eventManager)
 
 }
 
