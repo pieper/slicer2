@@ -17,6 +17,7 @@ set windows "Win32VC7"
 ## variables that are the same for all systems
 set SLICER_DATA_ROOT ""
 
+set env(SLICER_HOME) "C:/slicer2-checkout/slicer2-2004-03-23-checkout/slicer2"
 
 if {[info exists env(SLICER_HOME)]} {
     # already set by the launcher
@@ -86,14 +87,15 @@ switch $tcl_platform(os) {
         # (VC7 is Visual C++ 7.0, also known as the .NET version)
 
         set env(BUILD) $windows
-        set VTK_BINARY_PATH c:/downloads/vtk/VTK-4.2.5-build
-        set VTK_SRC_DIR c:/downloads/vtk/VTK-4.2.5
+        set VTK_BINARY_PATH $env(SLICER_HOME)/Lib/Win32VC7/vtk/VTK-build
+        set VTK_SRC_DIR $env(SLICER_HOME)/Lib/Win32VC7/vtk/VTK
         set VTK_DIR $VTK_BINARY_PATH
         set ITK_BINARY_PATH "c:/downloads/itk/InsightToolkit-1.4.0-build"
         set VTKSLICERBASE_BUILD_LIB $SLICER_HOME/Base/builds/$env(BUILD)/bin/debug/vtkSlicerBase.lib
         set VTKSLICERBASE_BUILD_TCL_LIB $SLICER_HOME/Base/builds/$env(BUILD)/bin/debug/vtkSlicerBaseTCL.lib
         set GENERATOR "Visual Studio 7" 
-        set COMPILER_PATH "C:/Program Files/Microsoft Visual Studio .NET/Vc7/bin"
+        #set COMPILER_PATH "C:/Program Files/Microsoft Visual Studio .NET/Vc7/bin"
+        set COMPILER_PATH "C:/Program Files/Microsoft Visual Studio .NET 2003/Vc7/bin"
         set COMPILER "cl"
         set CMAKE "c:/Program Files/CMake/bin/cmake.exe"
         set MAKE make

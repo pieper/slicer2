@@ -83,7 +83,7 @@
 # .END
 #-------------------------------------------------------------------------------
 proc FiducialsInit {} {
-    global Fiducials Module Volume Model
+    global Fiducials Module Volume Model Point
     
     set m Fiducials
     set Module($m,row1List) "Help Display Edit"
@@ -93,8 +93,7 @@ proc FiducialsInit {} {
     set Module($m,procEnter) FiducialsEnter
     set Module($m,procExit) FiducialsExit
     set Module($m,procMRML) FiducialsUpdateMRML
-    
-    
+        
     set Module($m,procGUI) FiducialsBuildGUI
 
     set Module($m,overview) "Create and manage fiducial points, in 2D and 3D"
@@ -105,7 +104,7 @@ proc FiducialsInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.48 $} {$Date: 2004/03/16 00:59:48 $}]
+        {$Revision: 1.49 $} {$Date: 2004/04/09 20:06:58 $}]
     
     # Initialize module-level variables
     
@@ -663,18 +662,22 @@ proc FiducialsVTKCreateFiducialsList { id type {scale ""} {textScale ""} {visibi
 proc FiducialsVTKCreatePoint { fid pid visibility} {
     global Fiducials Point Mrml Module
     
-    
-    if { [info command vtkTextureText] != "" } {
+    if { [info command vtkTextureText] != "" } {            
         vtkTextureText Point($pid,text)
-        Point($pid,text) SetBlur 2
-        Point($pid,text) SetStyle 2
+        set Fiducials(FontManager) [Point($pid,text) GetFontParameters]
+        [Point($pid,text) GetFontParameters] SetFontFileName "ARIAL.TTF"
+        [Point($pid,text) GetFontParameters] SetBlur 2
+        [Point($pid,text) GetFontParameters] SetStyle 2
+        Point($pid,text) SetText "   [Point($pid,node) GetName]"
+        Point($pid,text) CreateTextureText
     } else {
         vtkVectorText Point($pid,text)
         Point($pid,text) SetText "   [Point($pid,node) GetName]"
         vtkPolyDataMapper Point($pid,mapper)
         Point($pid,mapper) SetInput [Point($pid,text) GetOutput]
     }
-    Point($pid,text) SetText "   [Point($pid,node) GetName]"
+    # mikey - wasn't this redundant??
+    #Point($pid,text) SetText "   [Point($pid,node) GetName]"
 
     foreach r $Fiducials(renList) {
         vtkFollower Point($pid,follower,$r)
