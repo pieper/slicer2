@@ -1,5 +1,5 @@
 #=auto==========================================================================
-# (c) Copyright 2001 Massachusetts Institute of Technology
+# (c) Copyright 2002 Massachusetts Institute of Technology
 #
 # Permission is hereby granted, without payment, to copy, modify, display 
 # and distribute this software and its documentation, if any, for any purpose, 
@@ -92,7 +92,7 @@ proc MainSlicesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainSlices \
-        {$Revision: 1.39 $} {$Date: 2002/03/18 20:54:49 $}]
+        {$Revision: 1.40 $} {$Date: 2002/03/21 23:05:23 $}]
 
     # Initialize Variables
     set Slice(idList) "0 1 2"

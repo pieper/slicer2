@@ -1,5 +1,5 @@
 #=auto==========================================================================
-# (c) Copyright 2001 Massachusetts Institute of Technology
+# (c) Copyright 2002 Massachusetts Institute of Technology
 #
 # Permission is hereby granted, without payment, to copy, modify, display 
 # and distribute this software and its documentation, if any, for any purpose, 
@@ -36,6 +36,7 @@
 #   MainTetraMeshSetActive v
 #   MainTetraMeshVtkDataToTclData VtkMrmlTetraMeshNode
 #   MainTetraMeshTclDataToVtkData
+#   MainTetraMeshProcessMrml attr
 #   MainTetraMeshSetParam
 #   MainTetraMeshUpdateSliderRange
 #   MainTetraMeshSetGUIDefaults 
@@ -64,7 +65,7 @@ proc MainTetraMeshInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.8 $} {$Date: 2002/03/18 20:54:49 $}]
+        {$Revision: 1.9 $} {$Date: 2002/03/21 23:05:23 $}]
 
     set TetraMesh(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 

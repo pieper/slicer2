@@ -1,5 +1,5 @@
 #=auto==========================================================================
-# (c) Copyright 2001 Massachusetts Institute of Technology
+# (c) Copyright 2002 Massachusetts Institute of Technology
 #
 # Permission is hereby granted, without payment, to copy, modify, display 
 # and distribute this software and its documentation, if any, for any purpose, 
@@ -48,7 +48,7 @@ proc MainViewerInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainViewer \
-        {$Revision: 1.20 $} {$Date: 2002/03/18 20:54:50 $}]
+        {$Revision: 1.21 $} {$Date: 2002/03/21 23:05:23 $}]
 
         # Props
     set Gui(midHeight) 1

@@ -1,5 +1,5 @@
 #=auto==========================================================================
-# (c) Copyright 2001 Massachusetts Institute of Technology
+# (c) Copyright 2002 Massachusetts Institute of Technology
 #
 # Permission is hereby granted, without payment, to copy, modify, display 
 # and distribute this software and its documentation, if any, for any purpose, 
@@ -42,7 +42,7 @@ proc MainHelpInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainHelp \
-        {$Revision: 1.15 $} {$Date: 2002/03/18 20:54:48 $}]
+        {$Revision: 1.16 $} {$Date: 2002/03/21 23:05:22 $}]
 
     set Help(tagNormal)   "-font {times 10}"
     set Help(tagItalic)   "-font {times 10 italic}"

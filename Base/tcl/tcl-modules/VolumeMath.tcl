@@ -1,5 +1,5 @@
 #=auto==========================================================================
-# (c) Copyright 2001 Massachusetts Institute of Technology
+# (c) Copyright 2002 Massachusetts Institute of Technology
 #
 # Permission is hereby granted, without payment, to copy, modify, display 
 # and distribute this software and its documentation, if any, for any purpose, 
@@ -37,6 +37,7 @@
 #   VolumeMathDoAdd
 #   VolumeMathDoHausdorff
 #   VolumeMathDoDistMap
+#   VolumeMathDoAbs
 #   VolumeMathDoResample
 #   VolumeMathDoAnd
 #==========================================================================auto=
@@ -135,7 +136,7 @@ proc VolumeMathInit {} {
     #   appropriate info when the module is checked in.
     #   
         lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.24 $} {$Date: 2002/03/18 20:52:41 $}]
+        {$Revision: 1.25 $} {$Date: 2002/03/21 23:05:28 $}]
 
     # Initialize module-level variables
     #------------------------------------

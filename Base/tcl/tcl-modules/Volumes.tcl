@@ -1,5 +1,5 @@
 #=auto==========================================================================
-# (c) Copyright 2001 Massachusetts Institute of Technology
+# (c) Copyright 2002 Massachusetts Institute of Technology
 #
 # Permission is hereby granted, without payment, to copy, modify, display 
 # and distribute this software and its documentation, if any, for any purpose, 
@@ -80,13 +80,12 @@
 #   VolumesExit
 #   VolumesStorePresets
 #   VolumesRecallPresets
-#   VolumesChangeReformatGUI
 #   VolumesSetReformatOrientation
+#   VolumesProjectVectorOnPlane
 #   VolumesReformatSlicePlane
 #   VolumesRotateSlicePlane
+#   VolumesReformatSave orientation slice
 #   VolumesReformatSave
-#   VolumesReformatSave
-#   VolumesProjectVectorOnPlane
 #==========================================================================auto=
 
 
@@ -167,7 +166,7 @@ DICOMDataDictFile='$Volumes(DICOMDataDictFile)'"
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-                {$Revision: 1.63 $} {$Date: 2002/03/18 20:52:41 $}]
+                {$Revision: 1.64 $} {$Date: 2002/03/21 23:05:28 $}]
 
     # Props
     set Volume(propertyType) Basic
@@ -3878,6 +3877,12 @@ proc VolumesRotateSlicePlane {orientation} {
 # turn into smart image writer
 
 
+#-------------------------------------------------------------------------------
+# .PROC VolumesReformatSave
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc VolumesReformatSave {} {
     
     global Slices Slice Volume Gui Volumes

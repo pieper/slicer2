@@ -1,5 +1,5 @@
 #=auto==========================================================================
-# (c) Copyright 2001 Massachusetts Institute of Technology
+# (c) Copyright 2002 Massachusetts Institute of Technology
 #
 # Permission is hereby granted, without payment, to copy, modify, display 
 # and distribute this software and its documentation, if any, for any purpose, 
@@ -58,7 +58,7 @@ proc GuiInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo Gui \
-        {$Revision: 1.35 $} {$Date: 2002/03/20 19:34:35 $}]
+        {$Revision: 1.36 $} {$Date: 2002/03/21 23:05:21 $}]
 
 
     # enable tooltips by default.  This should check user preferences somehow.

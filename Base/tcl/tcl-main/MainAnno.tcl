@@ -1,5 +1,5 @@
 #=auto==========================================================================
-# (c) Copyright 2001 Massachusetts Institute of Technology
+# (c) Copyright 2002 Massachusetts Institute of Technology
 #
 # Permission is hereby granted, without payment, to copy, modify, display 
 # and distribute this software and its documentation, if any, for any purpose, 
@@ -52,7 +52,7 @@ proc MainAnnoInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainAnno \
-        {$Revision: 1.16 $} {$Date: 2002/03/18 20:54:48 $}]
+        {$Revision: 1.17 $} {$Date: 2002/03/21 23:05:21 $}]
 
     # Preset Defaults
     set Module(Anno,presets) "box='1' axes='0' outline='0' letters='1' cross='1'\

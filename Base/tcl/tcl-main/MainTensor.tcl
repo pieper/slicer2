@@ -1,5 +1,5 @@
 #=auto==========================================================================
-# (c) Copyright 2001 Massachusetts Institute of Technology
+# (c) Copyright 2002 Massachusetts Institute of Technology
 #
 # Permission is hereby granted, without payment, to copy, modify, display 
 # and distribute this software and its documentation, if any, for any purpose, 
@@ -83,7 +83,7 @@ proc MainTensorInit {} {
     # Set version info
     #-------------------------------------------
     lappend Module(versions) [ParseCVSInfo MainTensor \
-        {$Revision: 1.7 $} {$Date: 2002/03/18 20:54:49 $}]
+        {$Revision: 1.8 $} {$Date: 2002/03/21 23:05:23 $}]
 
 
     # List variables that shadow the active MRML node 

@@ -1,5 +1,5 @@
 #=auto==========================================================================
-# (c) Copyright 2001 Massachusetts Institute of Technology
+# (c) Copyright 2002 Massachusetts Institute of Technology
 #
 # Permission is hereby granted, without payment, to copy, modify, display 
 # and distribute this software and its documentation, if any, for any purpose, 
@@ -65,7 +65,7 @@ viewMode='Normal' viewBgColor='Blue'"
 
         set m MainView
         lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.36 $} {$Date: 2002/03/18 20:54:49 $}]
+        {$Revision: 1.37 $} {$Date: 2002/03/21 23:05:23 $}]
 
     set View(viewerHeightNormal) 656
     set View(viewerWidth)  956 

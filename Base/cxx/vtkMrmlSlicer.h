@@ -1,8 +1,8 @@
 /*=auto=========================================================================
-  
-  (c) Copyright 2001 Massachusetts Institute of Technology
-  
-  Permission is hereby granted, without payment, to copy, modify, display 
+
+(c) Copyright 2002 Massachusetts Institute of Technology
+
+Permission is hereby granted, without payment, to copy, modify, display 
 and distribute this software and its documentation, if any, for any purpose, 
 provided that the above copyright notice and the following three paragraphs 
 appear on all copies of this software.  Use of this software constitutes 

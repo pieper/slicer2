@@ -1,5 +1,5 @@
 #=auto==========================================================================
-# (c) Copyright 2001 Massachusetts Institute of Technology
+# (c) Copyright 2002 Massachusetts Institute of Technology
 #
 # Permission is hereby granted, without payment, to copy, modify, display 
 # and distribute this software and its documentation, if any, for any purpose, 
@@ -97,7 +97,7 @@ proc MeasureVolInit {} {
     # Set version info
     #------------------------------------
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.14 $} {$Date: 2002/03/18 20:52:39 $}]
+        {$Revision: 1.15 $} {$Date: 2002/03/21 23:05:26 $}]
     
     # Initialize module-level variables
     #------------------------------------
