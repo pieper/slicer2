@@ -113,7 +113,7 @@ proc TensorInit {} {
     # Set Version Info
     #------------------------------------
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.11 $} {$Date: 2002/03/21 23:05:27 $}]
+        {$Revision: 1.12 $} {$Date: 2002/03/22 20:45:07 $}]
     
     # Props: GUI tab we are currently on
     #------------------------------------
@@ -219,7 +219,7 @@ proc TensorInit {} {
 
     # type of thresholding to use to reduce number of tensors
     set Tensor(mode,threshold) None
-    set Tensor(mode,thresholdList) {None Trace Anisotropy}
+    set Tensor(mode,thresholdList) {None Trace LinearMeasure SphericalMeasure PlanarMeasure}
     set Tensor(mode,thresholdList,tooltips) {{No thresholding.  Display all tensors.} {Only display tensors where the trace is between the threshold values.}  {Only display tensors where the anisotropy is between the threshold values.}}
 
     # type of masking to use to reduce volume of tensors
@@ -238,9 +238,10 @@ proc TensorInit {} {
     # math op to produce scalars from tensors
     set Tensor(scalars,operation) Trace
     set Tensor(scalars,operationList) [list Trace Determinant \
-        RelativeAnisotropy FractionalAnisotropy LinearAnisotropy \
-        PlanarAnisotropy SphericalAnisotropy MaxEigenvalue \
+        RelativeAnisotropy FractionalAnisotropy LinearMeasure \
+        PlanarMeasure SphericalMeasure MaxEigenvalue \
         MiddleEigenvalue MinEigenvalue ColorByOrientation D11 D22 D33]
+
     set Tensor(scalars,operationList,tooltip) "Produce a scalar volume from tensor data.\nTrace, Determinant, Anisotropy, and Eigenvalues produce grayscale volumes,\nwhile Orientation produces a 3-component (Color) volume that is best viewed in the 3D window."
 
     # whether to compute vol from ROI or whole tensor volume
@@ -314,7 +315,7 @@ proc TensorInit {} {
 # .END
 #-------------------------------------------------------------------------------
 proc TensorUpdateMRML {} {
-    puts "Lauren in TensorUpdateMRML"
+    #puts "Lauren in TensorUpdateMRML"
 }
 
 #-------------------------------------------------------------------------------
@@ -961,6 +962,7 @@ proc TensorBuildGUI {} {
     eval {menubutton $f.mbMath -text $Tensor(scalars,operation) \
         -relief raised -bd 2 -width 12 \
         -menu $f.mbMath.m} $Gui(WMBA)
+
     eval {menu $f.mbMath.m} $Gui(WMA)
     pack $f.lMath $f.mbMath -side left -pady $Gui(pad) -padx $Gui(pad)
     # Add menu items
@@ -1711,21 +1713,21 @@ proc TensorUpdateGlyphEigenvector {} {
 #-------------------------------------------------------------------------------
 proc TensorUpdateGlyphColor {} {
     global Tensor
-
+    
     set mode $Tensor(mode,glyphColor)
     
     # display new mode while we are working...
     $Tensor(gui,mbGlyphColor)    config -text $mode
-
+    
     switch $mode {
     "Linear" {
-        Tensor(vtk,glyphs) ColorGlyphsWithLinearAnisotropy
+        Tensor(vtk,glyphs) ColorGlyphsWithLinearMeasure
     }
     "Planar" {
-        Tensor(vtk,glyphs) ColorGlyphsWithPlanarAnisotropy
+        Tensor(vtk,glyphs) ColorGlyphsWithPlanarMeasure
     }
     "Spherical" {
-        Tensor(vtk,glyphs) ColorGlyphsWithSphericalAnisotropy
+        Tensor(vtk,glyphs) ColorGlyphsWithSphericalMeasure
     }
     "Max" {
         Tensor(vtk,glyphs) ColorGlyphsWithMaxEigenvalue
@@ -1748,9 +1750,8 @@ proc TensorUpdateGlyphColor {} {
     "Direction" {
         Tensor(vtk,glyphs) ColorGlyphsWithDirection
     }
-
+    
     }
-
     # Tell actor where to get scalar range
     set Tensor(mode,glyphScalarRange) Auto
     TensorUpdateGlyphScalarRange
@@ -1944,25 +1945,17 @@ proc TensorUpdate {} {
 
         # We are reformatting a slice of glyphs
         Tensor(vtk,reformat) SetInput $preprocessedSource
-        puts "Lauren, reformat resolution? image size?"
 
-        # Lauren note that the FOV should be set based
-        # on the characteristics of the tensor volume
-        # when it is read in!
-        # set FOV same as for volumes in the slicer?
-        #set dim     [lindex [Volume($v,node) GetDimensions] 0]
-        #set spacing [lindex [Volume($v,node) GetSpacing] 0]
-        #set fov     [expr $dim*$spacing]
-        #set View(fov) $fov
-        #MainViewSetFov
+        # set fov same as volume we are overlaying
         Tensor(vtk,reformat) SetFieldOfView [Slicer GetFieldOfView]
 
+        # tell reformatter to obey the node
         set node Tensor($Tensor(activeID),node)
         Tensor(vtk,reformat) SetInterpolate [$node GetInterpolate]
         Tensor(vtk,reformat) SetWldToIjkMatrix [$node GetWldToIjk]
         
-        # Lauren these should match the tensor resolution?
-        # Use the extents to figure this out
+        #  reformat resolution should match the tensor resolution.
+        # Use the extents to figure this out.
         set ext [[Tensor($Tensor(activeID),data) GetOutput] GetExtent]
         set resx [expr [lindex $ext 1] - [lindex $ext 0] + 1]
         set resy [expr [lindex $ext 3] - [lindex $ext 2] + 1]
@@ -1971,10 +1964,9 @@ proc TensorUpdate {} {
         } else {
             set res $resy
         }
-        #Tensor(vtk,reformat) SetResolution 128
+
         Tensor(vtk,reformat) SetResolution $res
 
-        #Tensor(vtk,reformat) SetFieldOfView 128
         set m [Slicer GetReformatMatrix $slice]
         Tensor(vtk,reformat) SetReformatMatrix $m
         set visSource [Tensor(vtk,reformat) GetOutput]
@@ -1984,10 +1976,7 @@ proc TensorUpdate {} {
         # matrix.  We can't just move the actor in space
         # since this will rotate the tensors, so this is wrong:
         # Tensor(vtk,glyphs,actor) SetUserMatrix $m
-        vtkTransform t1
-        t1 SetMatrix $m
-        Tensor(vtk,glyphs) SetUserMatrix t1
-        t1 Delete
+        Tensor(vtk,glyphs) SetUserMatrix $m
 
         } else {
         # We are displaying the whole volume of glyphs!
@@ -2002,8 +1991,7 @@ proc TensorUpdate {} {
         # matrix.  We can't just move the actor in space
         # since this will rotate the tensors, so this is wrong:
         #Tensor(vtk,glyphs,actor) SetUserMatrix [t1 GetMatrix]
-        Tensor(vtk,glyphs) SetUserMatrix t1
-        t1 Delete
+        Tensor(vtk,glyphs) SetUserMatrix [t1 GetMatrix]
         }
 
 
@@ -2399,6 +2387,7 @@ proc TensorBuildVTK {} {
     # compute scalar data for thresholding
     set object thresh,math
     TensorMakeVTKObject vtkTensorMathematics $object
+    TensorAddObjectProperty $object ExtractEigenvalues 1 bool {Extract Eigenvalues}
 
     # threshold the scalar data to produce binary mask 
     set object thresh,threshold
@@ -2726,46 +2715,49 @@ proc ConvertVolumeToTensors {} {
     # Rotate tensors to RAS
     # --------------------------------------------------------
     # We want the tensors to be calculated in the RAS coordinate system
-    # So rotate the gradient basis.
-    # (this matrix JUST does the rotation needed for ijk->ras)
+    # So rotate the gradient basis from IJK into RAS space.
 
-    #{0 -1 0 0}  \
-        #{1 0 0 0}  \
-        #    {0  0 -1 0}  \
-         #   {0  0 0 1}  \
+    # The upper left 3x3 part of this matrix is the rotation.
+    # (It also has voxel scaling which we will remove.)
+    # -------------------------------------
 
-    # Rotate tensors into RAS coordinate system.
-    # the upper left 3x3 part of this matrix is the rotation
-    # it also has voxel scaling, so we want to remove this
     vtkTransform transform
     transform SetMatrix [Volume($v,node)  GetRasToIjk]
-    # now it's ijk to ras
+    # Now it's ijk to ras
     transform Inverse
-    # remove the scaling
+
+    # Remove the voxel scaling from the matrix.
+    # -------------------------------------
     scan [Volume($v,node) GetSpacing] "%g %g %g" res_x res_y res_z
-    # if the volume was swapped these are reversed
+    # If the volume was swapped these are reversed
     if {[Volume($v,node) GetFrequencyPhaseSwap] == 1} {
     set tmp $res_x
     set res_x $res_y
     set res_y $tmp
     }
-    # we want -y since vtk flips the y axis
+    # We want -y since vtk flips the y axis
     set res_y [expr -$res_y]
     transform Scale [expr 1.0 / $res_x] [expr 1.0 / $res_y] \
         [expr 1.0 / $res_z]
-    # remove the translation part from the last column
+
+    # Remove the translation part from the last column.
+    # (This was in there to center the volume in the cube.)
+    # -------------------------------------
+
     [transform GetMatrix] SetElement 0 3 0
     [transform GetMatrix] SetElement 1 3 0
     [transform GetMatrix] SetElement 2 3 0
-    # set element (4,4) to 1: homogeneous point
+    # Set element (4,4) to 1: homogeneous point
     [transform GetMatrix] SetElement 3 3 1
-    # Tensor creation filter will transform gradient dirs by this matrix
+
+    # Tensor creation filter will transform gradient dirs by this matrix.
+    # (Now this matrix JUST does the rotation needed for ijk->ras.)
+    # -------------------------------------
     tensor SetTransform transform
     puts "-----------------------------------"
     puts [transform Print]
     puts "-----------------------------------"
     transform Delete
-
     # --------------------------------------------------------
     # End rotate tensors to RAS
     # --------------------------------------------------------
@@ -3020,7 +3012,7 @@ proc TensorRecalculateTensors {} {
 #-------------------------------------------------------------------------------
 # .PROC TensorWriteStructuredPoints
 # Dump tensors to structured points file.  this ignores
-# world to ijk now.
+# world to RAS, tensors are just written in RAS coordinate system.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -3496,6 +3488,7 @@ proc TensorSeedStreamlinesFromSegmentation {} {
     foreach point $Tensor(streamlineList) {
     puts "..$point"
 
+
     # Lauren test
     # randomly seed some number of points around the ijk point also
     #set offset [expr rand()]
@@ -3508,7 +3501,6 @@ proc TensorSeedStreamlinesFromSegmentation {} {
     eval {TensorSelect} $world
     # save point to make a streamline there
     #eval {TensorSelect} $point
-
 
     }
 
@@ -3583,4 +3575,36 @@ proc TensorExecuteForProgrammableFilter {} {
     # ignore output for now, we don't care
     #[[Tensor(vtk,programmableFilt) GetOutput] GetPointData] SetScalars scalars
         
+}
+
+
+proc TensorMrmlizeStructuredPoints {sp v} {
+    global Tensor Volume
+
+    # put structured points output into a MRML tensor volume
+    # Create the node (vtkMrmlVolumeNode class)
+    set newvol [MainMrmlAddNode Volume Tensor]
+    $newvol Copy Volume($v,node)
+    $newvol SetDescription "tensor volume"
+    $newvol SetName [Volume($v,node) GetName]
+    set n [$newvol GetID]
+
+    # create vtkMrmlDataVolume to go along with the node
+    MainDataCreate Tensor $n
+    
+    Tensor($n,data) SetData $sp 
+    
+    # remove self-reference count 
+    $sp Delete
+
+    # This updates all the buttons to say that the
+    # Volume List has changed.
+    MainUpdateMRML
+    # If failed, then it's no longer in the idList
+    if {[lsearch $Tensor(idList) $n] == -1} {
+    puts "Lauren node doesn't exist, should unfreeze and fix volumes.tcltoo"
+    } else {
+    # Activate the new data object
+    MainDataSetActive Tensor $n
+    }
 }
