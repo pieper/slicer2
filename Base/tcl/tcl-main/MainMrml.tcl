@@ -98,7 +98,7 @@ proc MainMrmlInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo MainMrml \
-    {$Revision: 1.99 $} {$Date: 2004/01/01 20:31:07 $}]
+    {$Revision: 1.100 $} {$Date: 2004/01/26 13:07:16 $}]
 
     set Mrml(colorsUnsaved) 0
 }
@@ -906,6 +906,7 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
                         "id"              {$n SetVolumeID       $val}
                         "desc"            {$n SetDescription    $val}
                         "name"            {$n SetName           $val}
+                        "filetype"        {$n SetFileType       $val}
                         "filepattern"     {$n SetFilePattern    $val}
                         "fileprefix"      {$n SetFilePrefix     $val}
                         "imagerange"      {eval $n SetImageRange $val}
