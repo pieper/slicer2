@@ -175,6 +175,8 @@ vtkLevelSets::vtkLevelSets()
   // Initialization of the level set
   initImage       = NULL;
   InitThreshold   = 30.0;
+  InitIntensity   = Bright;
+
   NumInitPoints   = 0;
   InitPoints      = NULL;
 
@@ -2054,7 +2056,7 @@ void vtkLevelSets::Evolve3D( )
   
 #ifdef _SOLARIS_
     if (GB_debug)  fprintf(stderr,"thr_setconurrency(%d) \n",this->EvolveThreads);
-    code = thr_setconcurrency(this->EvolveThreads);
+    //    code = thr_setconcurrency(this->EvolveThreads);
 #endif
 
     vtkMultiThreader* threader = vtkMultiThreader::New();
@@ -2352,7 +2354,7 @@ void vtkLevelSets::Evolve3D( int first_band, int last_band)
     //--------------------------------------------------
 
     imcomp = 0;
-    if (fabsf(AdvectionCoeff)>1E-10) {
+    if (fabs(AdvectionCoeff)>1E-10) {
       
       // BELOW IS WHAT WAS USED FOR IPMI PAPER 
       if (UseCosTerm) {
@@ -2441,7 +2443,7 @@ void vtkLevelSets::Evolve3D( int first_band, int last_band)
     //--------------------------------------------------
 
     balloonterm = 0.0;
-    if (fabsf(balloon_coeff)>1E-10) {
+    if (fabs(balloon_coeff)>1E-10) {
       balloonterm = balloon_coeff;
       if (Probability!=NULL) 
     balloonterm *= Probability[(int) (im[p]*10)];
@@ -2450,7 +2452,7 @@ void vtkLevelSets::Evolve3D( int first_band, int last_band)
     if (balloon_image != NULL) 
       balloonterm = ((float*)balloon_image->GetScalarPointer())[p];
 
-    if (fabsf(balloon_coeff)>1E-10) {
+    if (fabs(balloon_coeff)>1E-10) {
       if (balloonterm>0) {
         Gx = Gy = Gz = 0;
         if (D_x>=0) Gx = D_x;
@@ -2715,8 +2717,16 @@ void vtkLevelSets::InitEvolution()
      {
      case DISTMAP_CURVES:
        for (i=0; i<imsize; i++) {
-         if (*inPtr >= th)      *outPtr = VESSEL;
-         else                   *outPtr = NOT_VESSEL;
+     switch (InitIntensity) {
+     case Bright:
+       if (*inPtr >= th)      *outPtr = VESSEL;
+       else                   *outPtr = NOT_VESSEL;
+       break;
+     case Dark:
+       if (*inPtr <= th)      *outPtr = VESSEL;
+       else                   *outPtr = NOT_VESSEL;
+       break;
+     }
        inPtr++;
        outPtr++;
        }
@@ -2727,8 +2737,10 @@ void vtkLevelSets::InitEvolution()
      case DISTMAP_SHAPE:        // Shape levelset initialization
        fprintf(stderr,"Fast Marching or Chamferevolution \n");
        for (i=0; i<imsize; i++) {
-         if (*inPtr >= th)      *outPtr = th-*inPtr;
-         else                   *outPtr = th-*inPtr;
+     switch (InitIntensity) {
+     case Bright: *outPtr = th-*inPtr; break;
+     case Dark:   *outPtr = *inPtr-th; break;
+     }
          inPtr++;
          outPtr++;
        }
@@ -2738,6 +2750,13 @@ void vtkLevelSets::InitEvolution()
    else 
      {
        outputImage->CopyAndCastFrom(initImage,initImage->GetExtent());
+       for (i=0; i<imsize; i++) {
+     switch (InitIntensity) {
+     case Bright: *outPtr = -*outPtr+th; break;
+     case Dark:   *outPtr -= th; break;
+     }
+         outPtr++;
+       }
      }
 
   this->current = 0;
