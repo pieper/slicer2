@@ -220,7 +220,7 @@ static void vtkImageConnectivityExecute(vtkImageConnectivity *self,
   short minForegnd = (short)self->GetMinForeground();
   short maxForegnd = (short)self->GetMaxForeground();
   short newLabel = (short)self->GetOutputLabel();
-  short seedLabel, maxLabel;
+  short seedLabel;
   int largest, len=1, nxy, z, nz, j;
   int *census = NULL;
   int seed[3];
@@ -824,8 +824,13 @@ static void vtkImageConnectivityExecute(vtkImageConnectivity *self,
 // algorithm to fill the output from the input.
 // It just executes a switch statement to call the correct function for
 // the datas data types.
-void vtkImageConnectivity::Execute(vtkImageData *inData, vtkImageData *outData)
+void vtkImageConnectivity::ExecuteData(vtkDataObject *)
 {
+  vtkImageData *inData = this->GetInput();
+  vtkImageData *outData = this->GetOutput();
+  outData->SetExtent(outData->GetWholeExtent());
+  outData->AllocateScalars();
+
   int outExt[6], id=0, s;
   outData->GetWholeExtent(outExt);
   void *inPtr = inData->GetScalarPointerForExtent(outExt);

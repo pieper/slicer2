@@ -661,6 +661,10 @@ static void vtkImageFillROIExecute(vtkImageFillROI* self,
 //----------------------------------------------------------------------------
 void vtkImageFillROI::ExecuteData(vtkDataObject *)
 {
+  vtkImageData *outData = this->GetOutput();
+  outData->SetExtent(outData->GetWholeExtent());
+  outData->AllocateScalars();
+
     void *ptr = NULL;
     int x1, *inExt;
   

@@ -440,12 +440,12 @@ void vtkImagePlot::vtkImagePlotExecute(
 //----------------------------------------------------------------------------
 void vtkImagePlot::ExecuteData(vtkDataObject *)
 {
-  int inExt[6], outExt[6];
   vtkImageData *inData = this->GetInput();
   vtkImageData *outData = this->GetOutput();
-
   outData->SetExtent(this->GetOutput()->GetWholeExtent());
   outData->AllocateScalars();
+
+  int inExt[6], outExt[6];
 
   outData->GetExtent(outExt);
   this->ComputeInputUpdateExtent(inExt, outExt);

@@ -102,7 +102,7 @@ protected:
     int function;
   int SliceBySlice;
     
-    void Execute(vtkImageData *inData, vtkImageData *outData);
+    void ExecuteData(vtkDataObject *);
 };
 
 #endif

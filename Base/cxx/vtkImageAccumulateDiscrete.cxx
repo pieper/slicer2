@@ -152,11 +152,11 @@ void vtkImageAccumulateDiscrete::ExecuteData(vtkDataObject *)
 {
   vtkImageData *inData = this->GetInput();
   vtkImageData *outData = this->GetOutput();
-  void *inPtr;
-  int *outPtr;
-  
   outData->SetExtent(this->GetOutput()->GetWholeExtent());
   outData->AllocateScalars();
+
+  void *inPtr;
+  int *outPtr;
 
   inPtr  = inData->GetScalarPointer();
   outPtr = (int *)outData->GetScalarPointer();

@@ -914,13 +914,14 @@ void vtkImageDrawROI::DrawBoxes(vtkImageData *outData, int outExt[6])
 void vtkImageDrawROI::ExecuteData(vtkDataObject *)
 {
 
-    vtkImageData *inData = this->GetInput();
-    vtkImageData *outData = this->GetOutput();
+  vtkImageData *inData = this->GetInput();
+  vtkImageData *outData = this->GetOutput();
+  int *outExt = outData->GetWholeExtent();
 
-    int *outExt = outData->GetWholeExtent();
-    outData->SetExtent(outExt);
+  outData->SetExtent(outExt);
+  outData->AllocateScalars();
 
-    int x1, *inExt;
+  int x1, *inExt;
   
     // ensure 3 component data
     x1 = this->GetInput()->GetNumberOfScalarComponents();

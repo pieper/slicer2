@@ -118,7 +118,7 @@ protected:
     void DrawCursor(vtkImageData *outData, int outExt[6]);
 
     // Not threaded because its too simple of a filter
-    void Execute(vtkImageData *inData, vtkImageData *outData);
+    void ExecuteData(vtkDataObject *);
 };
 
 #endif
