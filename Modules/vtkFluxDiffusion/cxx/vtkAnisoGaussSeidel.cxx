@@ -37,8 +37,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkAnisoGaussSeidel.cxx,v $
   Language:  C++
-  Date:      $Date: 2005/02/08 21:44:04 $
-  Version:   $Revision: 1.12 $
+  Date:      $Date: 2005/03/30 18:17:16 $
+  Version:   $Revision: 1.13 $
 
 =========================================================================*/
 
@@ -68,32 +68,9 @@
 #endif
 //ETX
 
-// FOR
-#define For(number, min, max)  for(number=min; number<=max; number++) {
-#define EndFor                 }
-
-#define Pour(number, min, max)  for(number=min; number<=max; number++) {
-#define FinPour                 }
-
-#define Si       if(
-#define Alors    ) {
-#define AlorsFait ) 
-#define Sinon    } else {
-#define FinSi    }
 #define Local
-#define Entier   int
-#define Reel     float
-#define Registre register
-#define Retourne return
-#define FAUX     0
-#define VRAI     1
 #define FALSE    0
 #define TRUE     1
-#define DebutFonction {
-#define FinFonction   }
-#define Rien          void
-#define Non           !
-#define Et            &&
 
 #define macro_min(n1,n2) ((n1)<(n2)?(n1):(n2))
 #define macro_max(n1,n2) ((n1)>(n2)?(n1):(n2))
@@ -168,8 +145,8 @@ vtkAnisoGaussSeidel::vtkAnisoGaussSeidel()
   im_tmp1               = NULL;
   im_tmp2               = NULL;
 
-  //  use_filtre_rec     = FAUX;
-  opt_mem            = FAUX;
+  //  use_filtre_rec     = FALSE;
+  opt_mem            = FALSE;
 
   sigma              = 1;
   beta               = 0.05;
@@ -183,7 +160,7 @@ vtkAnisoGaussSeidel::vtkAnisoGaussSeidel()
 
   epsilon            = 1E-2;
 
-  SmoothedParam      = FAUX;
+  SmoothedParam      = FALSE;
 
   IsoCoeff           = 0.2;
 
@@ -202,21 +179,21 @@ vtkAnisoGaussSeidel::~vtkAnisoGaussSeidel()
   DeleteCoefficients();
 
   /*
-  Si image_lissee != NULL Alors
+  if( image_lissee != NULL ) {
     image_lissee->Delete();
     image_lissee=NULL;
-  FinSi
+  }
   */
 
-  Si im_tmp1 != NULL Alors
+  if( im_tmp1 != NULL ) {
     im_tmp1->Delete();
     im_tmp1 = NULL;
-  FinSi
+  }
 
-  Si im_tmp2 != NULL Alors
+  if( im_tmp2 != NULL ) {
     im_tmp2->Delete();
     im_tmp2 = NULL;
-  FinSi
+  }
 
 
 } // vtkAnisoGaussSeidel::~vtkAnisoGaussSeidel()
@@ -240,9 +217,9 @@ void vtkAnisoGaussSeidel::Init( )
   }
   else {
 
-    //    Si opt_mem Alors
-    //      use_filtre_rec = VRAI;
-    //    FinSi
+    //    if( opt_mem ) {
+    //      use_filtre_rec = TRUE;
+    //    }
     
     // check the image is in float format, or convert
     type = GetInput()->GetScalarType();
@@ -272,8 +249,8 @@ void vtkAnisoGaussSeidel::Init( )
     tz = this->im_tmp1->GetDimensions()[2];
     txy = tx*ty;
     
-    Si tz>1 Alors mode=MODE_3D; Sinon mode=MODE_2D; 
-    FinSi
+    if( tz>1 ) { mode=MODE_3D; } else {  mode=MODE_2D; 
+    }
                               
     //--- image_resultat
     image_resultat      = this->GetOutput();
@@ -307,33 +284,33 @@ void vtkAnisoGaussSeidel::InitCoefficients()
 {
 
   Local
-    Entier x;
+    int x;
 
   _alpha_y = new float[tx];
   _gamma_y = new float[tx];
 
   _alpha_x = _gamma_x = 0;
-  Pour(x,0,tx-1)
-    _alpha_y[x] = _gamma_y[x] = 0;
-  FinPour
+  for (x=0; x<=tx-1; x++) {
+      _alpha_y[x] = _gamma_y[x] = 0;
+  }
 
-  Si mode == MODE_3D Alors
-    Entier y;
+  if( mode == MODE_3D ) {
+    int y;
 
     _alpha_z = new float*[tx];
     _gamma_z = new float*[tx];
-    Pour(x,0,tx-1)
+    for (x=0; x <= tx-1; x++) {
       _alpha_z[x] = new float[ty];
       _gamma_z[x] = new float[ty];
 
 
-      Pour(y,0,ty-1)
-    _alpha_z[x][y] = _gamma_z[x][y] = 0;
-      FinPour
+      for (y=0; y<ty-1; y++) {
+          _alpha_z[x][y] = _gamma_z[x][y] = 0;
+      }
 
-    FinPour
+    }
 
-  FinSi
+  }
 
 } // vtkAnisoGaussSeidel::InitCoefficients()
 
@@ -347,34 +324,34 @@ void vtkAnisoGaussSeidel::InitCoefficients(float& alpha_x, float*& alpha_y, floa
 {
 
   Local
-    Entier x;
+    int x;
 
 
   alpha_y = new float[sx];
   gamma_y = new float[sx];
 
   alpha_x = gamma_x = 0;
-  Pour(x,0,sx-1)
+  for (x=0; x <= sx-1; x++) { 
     alpha_y[x] = gamma_y[x] = 0;
-  FinPour
+  }
 
-  Si mode == MODE_3D Alors
-    Entier y;
+  if( mode == MODE_3D ) {
+    int y;
 
     alpha_z = new float*[sx];
     gamma_z = new float*[sx];
-    Pour(x,0,sx-1)
+    for (x=0; x <= sx-1; x++) { 
       alpha_z[x] = new float[sy];
       gamma_z[x] = new float[sy];
 
 
-      Pour(y,0,sy-1)
-    alpha_z[x][y] = gamma_z[x][y] = 0;
-      FinPour
+      for (y=0; y <= sy-1; y++) {
+          alpha_z[x][y] = gamma_z[x][y] = 0;
+      }
 
-    FinPour
+    }
 
-  FinSi
+  }
 
 } // vtkAnisoGaussSeidel::InitCoefficients()
 
@@ -386,24 +363,24 @@ void vtkAnisoGaussSeidel::ResetCoefficients()
 {
 
   Local
-    Entier x;
+    int x;
 
   _alpha_x = _gamma_x = 0;
 
-  Pour(x,0,tx-1)
+  for (x=0; x <= tx-1; x++) {
     _alpha_y[x] = _gamma_y[x] = 0;
-  FinPour
+  }
 
-  Si mode == MODE_3D Alors
-    Entier y;
+  if( mode == MODE_3D ) {
+    int y;
 
-    Pour(x,0,tx-1)
-      Pour(y,0,ty-1)
-    _alpha_z[x][y] = _gamma_z[x][y] = 0;
-      FinPour
-    FinPour
+    for (x=0; x <= tx-1; x++) {
+      for (y=0; y <= ty-1; y++) {
+          _alpha_z[x][y] = _gamma_z[x][y] = 0;
+      }
+    }
 
-  FinSi
+  }
 
 } // vtkAnisoGaussSeidel::ResetCoefficients()
 
@@ -417,24 +394,24 @@ void vtkAnisoGaussSeidel::ResetCoefficients(float& alpha_x, float* alpha_y, floa
 {
 
   Local
-    Entier x;
+    int x;
 
   alpha_x = gamma_x = 0;
 
-  Pour(x,0,sx-1)
+  for (x=0; x <= sx-1; x++) {
     alpha_y[x] = gamma_y[x] = 0;
-  FinPour
+  }
 
-  Si mode == MODE_3D Alors
-    Entier y;
+  if( mode == MODE_3D ) {
+    int y;
 
-    Pour(x,0,sx-1)
-      Pour(y,0,sy-1)
-    alpha_z[x][y] = gamma_z[x][y] = 0;
-      FinPour
-    FinPour
+    for (x=0; x <= sx-1; x++) {
+        for (y=0; y<=sy-1; y++) {
+            alpha_z[x][y] = gamma_z[x][y] = 0;
+        }
+    }
 
-  FinSi
+  }
 
 } // vtkAnisoGaussSeidel::ResetCoefficients(outExt)
 
@@ -445,25 +422,25 @@ void vtkAnisoGaussSeidel::DeleteCoefficients()
 //                        ------------------
 {
 
-  Si _alpha_y != NULL Alors
+  if( _alpha_y != NULL ) {
 
     delete [] _alpha_y;
     _alpha_y = NULL;
 
     delete [] _gamma_y;
 
-    Si mode == MODE_3D Alors
-      Entier i;
+    if( mode == MODE_3D ) {
+      int i;
 
-      Pour(i,0,tx-1)
+      for (i=0; i <= tx-1; i++) {
         delete [] _alpha_z[i];
         delete [] _gamma_z[i];
-      FinPour
+      }
       delete [] _alpha_z;
       delete [] _gamma_z;
 
-    FinSi
-  FinSi
+    }
+  }
 
 } // vtkAnisoGaussSeidel::DeleteCoefficients()
 
@@ -476,25 +453,25 @@ void vtkAnisoGaussSeidel::DeleteCoefficients( float*& alpha_y, float**& alpha_z,
                          int sx)
 {
 
-  Si alpha_y != NULL Alors
+  if( alpha_y != NULL ) {
 
     delete [] alpha_y;
     alpha_y = NULL;
 
     delete [] gamma_y;
 
-    Si mode == MODE_3D Alors
-      Entier i;
+    if( mode == MODE_3D ) {
+      int i;
 
-      Pour(i,0,sx-1)
+      for (i=0; i <=sx-1; i++) {
         delete [] alpha_z[i];
         delete [] gamma_z[i];
-      FinPour
+      }
       delete [] alpha_z;
       delete [] gamma_z;
 
-    FinSi
-  FinSi
+    }
+  }
 
 } // vtkAnisoGaussSeidel::DeleteCoefficients()
 
@@ -504,24 +481,24 @@ float vtkAnisoGaussSeidel::Iterate()
 {
 
   Local
-    Reel       erreur;
+    float       erreur;
 
-  Si image_resultat==NULL Alors
+  if( image_resultat==NULL ) {
     fprintf(stderr,"vtkAnisoGaussSeidel::Iterate() vtkAnisoGaussSeidel not initialized \n");
     return 0.0;
-  FinSi
+  }
 
   iteration++;
 
-  Si mode == MODE_2D Alors
+  if( mode == MODE_2D ) {
     erreur = Iterate2D( );
-  Sinon
-    Si MaxcurvCoeff > 1E-5 Alors
+  } else { 
+    if( MaxcurvCoeff > 1E-5 ) {
     //      erreur = Itere3D_2(    image_resultat);
-    //    Sinon
+    //    } else { 
       erreur = Iterate3D( );
-    FinSi
-  FinSi
+    }
+  }
     
   printf(" iteration %d : %f \n", iteration,erreur);
   
@@ -536,29 +513,29 @@ float vtkAnisoGaussSeidel::Iterate2D()
 {
 
   Local 
-    Entier x,y,z; //,n,i;
-    Reel   val0,val1;
-    Reel   val1div;
-    Reel   u_e0;
-    Reel   u_e1;
-    Reel   alpha1_x, gamma1_x;
-    Reel   alpha1_y, gamma1_y;
-    Reel*  in;
-    Registre Reel    *Iconv; 
-    Reel gradient[2];
-    Reel hessien[2][2];
+    int x,y,z; //,n,i;
+    float   val0,val1;
+    float   val1div;
+    float   u_e0;
+    float   u_e1;
+    float   alpha1_x, gamma1_x;
+    float   alpha1_y, gamma1_y;
+    float*  in;
+    register float    *Iconv; 
+    float gradient[2];
+    float hessien[2][2];
 
     point3D e0;
     point3D e1;
-    Reel     norm;
+    float     norm;
 
     vector3D grad;
 
-    Reel   erreur; //,norm_grad;
-    Entier nb_points_instables;
-    Entier erreur_x,erreur_y,erreur_z;
+    float   erreur; //,norm_grad;
+    int nb_points_instables;
+    int erreur_x,erreur_y,erreur_z;
 
-    Reel   phi0_param;
+    float   phi0_param;
 
     //  fprintf(stderr,"vtkAnisoGaussSeidel.cxx begin \n");
 
@@ -572,169 +549,169 @@ float vtkAnisoGaussSeidel::Iterate2D()
   Iconv = (float*) this->image_lissee  ->GetScalarPointer(0,0,0);
 
 
-  Pour(z,0,tz-1)
-  Pour(y,0,ty-1)
-  Pour(x,0,tx-1)
+  for (z=0; z <= tz-1; z++) {
+      for (y=0; y <= ty-1; y++) {
+          for (x=0; x <= tx-1; x++) {
   
 
-    val0 = *in;
+              val0 = *in;
 
-    //----- Calcul de alpha1_x, gamma1_x
-
-    // Gradient en (x+1/2,y)
-    // et Calcul de e0, e1
-    Si (x<tx-1) Et (y > 0)Et(y < ty-1) Alors
-        grad.y = (*(in   +tx)-*(in   -tx)+*(in   +tx+1)-*(in   -tx+1))/4.0;
-        e0.y   = (*(Iconv+tx)-*(Iconv-tx)+*(Iconv+tx+1)-*(Iconv-tx+1))/4.0;
-    Sinon
-        grad.y = 0;
-        e0.y   = 0;
-    FinSi
- 
-    Si (x>0) Et (x < tx-1)  Alors
-        grad.x = *(in+1)  - *in;
-        e0.x   = *(Iconv+1) - *(Iconv);
-    Sinon
-        grad.x = 0;
-        e0.x   = 0;
-    FinSi
-
-    norm = sqrt(e0.x*e0.x+e0.y*e0.y);
-    Si norm > 1E-5 Alors
-        e0.x /= norm;
-        e0.y /= norm;
-    Sinon
-        e0.x = 1.0;
-        e0.y = 0;
-    FinSi
-    e1.x = -e0.y;
-    e1.y = e0.x;
-
-    // Derivees directionnelles
-
-    u_e0 = grad.x*e0.x + grad.y*e0.y;
-    u_e1 = grad.x*e1.x + grad.y*e1.y;
-
-    Si SmoothedParam Alors
-      phi0_param = norm;
-    Sinon
-      phi0_param = u_e0;
-    FinSi
-
-    alpha1_x = phi0(phi0_param)*e0.x*e0.x + 
-               phi1(u_e1)*e1.x*e1.x;
-
-    gamma1_x  = grad.y*( e0.y*phi0(phi0_param)*e0.x + 
-                         e1.y*phi1(u_e1)*e1.x );
-
-    //----- Calcul de alpha1_y, gamma1_y 
-     
-    // Gradient en (x,y+1/2)
-    Si  (y>0) Et (y < ty -1)  Alors
-      //        grad.y = (*(in  +tx+tx) - *(in) + (*in+tx) - (*in-tx))/4.0;
-      grad.y = *(in   +tx) - *(in);
-      e0.y   = *(Iconv+tx) - *(Iconv);
-    Sinon
-      grad.y  = 0.0;
-        e0.y    = 0.0;
-    FinSi
- 
-    //  gradient en X
-    Si (y < ty -1) Et (x > 0) Et (x< tx-1)  Alors
-      grad.x = (*(in   +1)-*(in   -1)+*(in   +1+tx)-*(in   -1+tx))/4.0;
-      e0.x   = (*(Iconv+1)-*(Iconv-1)+*(Iconv+1+tx)-*(Iconv-1+tx))/4.0;
-    Sinon
-      grad.x = 0;
-      e0.x = 0.0;
-    FinSi
-
-
-    // Calcul de e0, e1
-
-    norm = sqrt(e0.x*e0.x+e0.y*e0.y); 
-    Si norm > 1E-5 Alors
-      e0.x /= norm;
-      e0.y /= norm;
-    Sinon
-      e0.x = 1.0;
-      e0.y = 0.0;
-    FinSi
-
-    e1.x = -e0.y;
-    e1.y = e0.x;
-
-    // Derivees directionnelles
-    u_e0 = grad.x*e0.x + grad.y*e0.y;
-    u_e1 = grad.x*e1.x + grad.y*e1.y;
-
-    Si SmoothedParam Alors
-      phi0_param = norm;
-    Sinon
-      phi0_param = u_e0;
-    FinSi
-
-    alpha1_y = phi0(phi0_param)*e0.y*e0.y + 
-               phi1(u_e1)*e1.y*e1.y;
-
-    gamma1_y = grad.x*e0.x*phi0(phi0_param)*e0.y + 
-               grad.x*e1.x*phi1(u_e1)*e1.y;
-
-
-    //----- Mise a jour de l'image
-
-    val1    =  beta* (*((float*)(this->im_tmp1->GetScalarPointer(x,y,z))));
-    val1div = beta;
+              //----- Calcul de alpha1_x, gamma1_x
+              
+              // Gradient en (x+1/2,y)
+              // et Calcul de e0, e1
+              if( (x<tx-1) && (y > 0)&&(y < ty-1) ) {
+                  grad.y = (*(in   +tx)-*(in   -tx)+*(in   +tx+1)-*(in   -tx+1))/4.0;
+                  e0.y   = (*(Iconv+tx)-*(Iconv-tx)+*(Iconv+tx+1)-*(Iconv-tx+1))/4.0;
+              } else { 
+                  grad.y = 0;
+                  e0.y   = 0;
+              }
+              
+              if( (x>0) && (x < tx-1)  ) {
+                  grad.x = *(in+1)  - *in;
+                  e0.x   = *(Iconv+1) - *(Iconv);
+              } else { 
+                  grad.x = 0;
+                  e0.x   = 0;
+              }
+              
+              norm = sqrt(e0.x*e0.x+e0.y*e0.y);
+              if( norm > 1E-5 ) {
+                  e0.x /= norm;
+                  e0.y /= norm;
+              } else { 
+                  e0.x = 1.0;
+                  e0.y = 0;
+              }
+              e1.x = -e0.y;
+              e1.y = e0.x;
+              
+              // Derivees directionnelles
+              
+              u_e0 = grad.x*e0.x + grad.y*e0.y;
+              u_e1 = grad.x*e1.x + grad.y*e1.y;
+              
+              if( SmoothedParam ) {
+                  phi0_param = norm;
+              } else { 
+                  phi0_param = u_e0;
+              }
+              
+              alpha1_x = phi0(phi0_param)*e0.x*e0.x + 
+                  phi1(u_e1)*e1.x*e1.x;
+              
+              gamma1_x  = grad.y*( e0.y*phi0(phi0_param)*e0.x + 
+                                   e1.y*phi1(u_e1)*e1.x );
+              
+              //----- Calcul de alpha1_y, gamma1_y 
+              
+              // Gradient en (x,y+1/2)
+              if(  (y>0) && (y < ty -1)  ) {
+                  //        grad.y = (*(in  +tx+tx) - *(in) + (*in+tx) - (*in-tx))/4.0;
+                  grad.y = *(in   +tx) - *(in);
+                  e0.y   = *(Iconv+tx) - *(Iconv);
+              } else { 
+                  grad.y  = 0.0;
+                  e0.y    = 0.0;
+              }
+              
+              //  gradient en X
+              if( (y < ty -1) && (x > 0) && (x< tx-1)  ) {
+                  grad.x = (*(in   +1)-*(in   -1)+*(in   +1+tx)-*(in   -1+tx))/4.0;
+                  e0.x   = (*(Iconv+1)-*(Iconv-1)+*(Iconv+1+tx)-*(Iconv-1+tx))/4.0;
+              } else { 
+                  grad.x = 0;
+                  e0.x = 0.0;
+              }
+              
+              
+              // Calcul de e0, e1
+              
+              norm = sqrt(e0.x*e0.x+e0.y*e0.y); 
+              if( norm > 1E-5 ) {
+                  e0.x /= norm;
+                  e0.y /= norm;
+              } else { 
+                  e0.x = 1.0;
+                  e0.y = 0.0;
+              }
+              
+              e1.x = -e0.y;
+              e1.y = e0.x;
+              
+              // Derivees directionnelles
+              u_e0 = grad.x*e0.x + grad.y*e0.y;
+              u_e1 = grad.x*e1.x + grad.y*e1.y;
+              
+              if( SmoothedParam ) {
+                  phi0_param = norm;
+              } else { 
+                  phi0_param = u_e0;
+              }
+              
+              alpha1_y = phi0(phi0_param)*e0.y*e0.y + 
+                  phi1(u_e1)*e1.y*e1.y;
+              
+              gamma1_y = grad.x*e0.x*phi0(phi0_param)*e0.y + 
+                  grad.x*e1.x*phi1(u_e1)*e1.y;
+              
+              
+              //----- Mise a jour de l'image
+              
+              val1    =  beta* (*((float*)(this->im_tmp1->GetScalarPointer(x,y,z))));
+              val1div = beta;
+              
+              if( (x>0)&&(x<tx-1) ) {
+                  val1 += alpha1_x  * (*(in+1 )) + 
+                      _alpha_x   * (*(in-1 )) +
+                      gamma1_x  - _gamma_x;
+                  
+                  val1div += alpha1_x + _alpha_x;
+              }
+              
+              if( (y>0)&&(y<ty-1) ) {
+                  val1 += alpha1_y  * (*(in+tx )) + 
+                      _alpha_y [x]  * (*(in-tx )) +
+                      gamma1_y  - _gamma_y[x];
+                  
+                  val1div += alpha1_y + _alpha_y[x];
+              }
+              
+              if( fabs(val1div)<1E-5 ) {
+                  val1 = *((float*)(this->im_tmp1->GetScalarPointer(x,y,z)));
+              } else { 
+                  val1/= val1div;
+              }
+              
+              _alpha_y[x] = alpha1_y;
+              _alpha_x    = alpha1_x;
+              
+              _gamma_y[x] = gamma1_y;
+              _gamma_x    = gamma1_x;
+              
+              
+              if( fabs(val1-val0) > epsilon ) {
+                  nb_points_instables++;
+              }
+              
+              if( fabs(val1-val0) > erreur ) {
+                  erreur = fabs(val1-val0);
+                  erreur_x = x;
+                  erreur_y = y;
+                  erreur_z = z;
+              }
+              
+              *((float*)(im_tmp2->GetScalarPointer(x,y,z))) = val1;
+              
+              
+              in++;
+              Iconv++;
+              
+          }
+      }
+  }
   
-    Si (x>0)Et(x<tx-1) Alors
-      val1 += alpha1_x  * (*(in+1 )) + 
-              _alpha_x   * (*(in-1 )) +
-              gamma1_x  - _gamma_x;
-
-      val1div += alpha1_x + _alpha_x;
-    FinSi
-
-    Si (y>0)Et(y<ty-1) Alors
-      val1 += alpha1_y  * (*(in+tx )) + 
-              _alpha_y [x]  * (*(in-tx )) +
-              gamma1_y  - _gamma_y[x];
-
-      val1div += alpha1_y + _alpha_y[x];
-    FinSi
-
-    Si fabs(val1div)<1E-5 Alors
-      val1 = *((float*)(this->im_tmp1->GetScalarPointer(x,y,z)));
-    Sinon
-      val1/= val1div;
-    FinSi
-
-    _alpha_y[x] = alpha1_y;
-    _alpha_x    = alpha1_x;
-
-    _gamma_y[x] = gamma1_y;
-    _gamma_x    = gamma1_x;
-
- 
-    Si fabs(val1-val0) > epsilon Alors
-      nb_points_instables++;
-    FinSi
-
-    Si fabs(val1-val0) > erreur Alors
-      erreur = fabs(val1-val0);
-      erreur_x = x;
-      erreur_y = y;
-      erreur_z = z;
-    FinSi
-
-    *((float*)(im_tmp2->GetScalarPointer(x,y,z))) = val1;
-
-
-    in++;
-    Iconv++;
-
-  FinPour
-  FinPour
-  FinPour
-
 
   im_tmp1->CopyAndCastFrom(this->im_tmp2,
                this->im_tmp2->GetExtent());
@@ -747,7 +724,7 @@ float vtkAnisoGaussSeidel::Iterate2D()
   //  cout << "nb de points variables " << nb_points_instables << endl;
 
 
-  Retourne erreur;
+  return erreur;
 
 } // Iterate2D()
 
@@ -757,19 +734,19 @@ float vtkAnisoGaussSeidel::Iterate3D()
 {
 
   Local 
-    Entier x,y,z; //,n,i;
-    Reel   val0,val1;
-    Reel   val1div;
-    Reel   u_e0;
-    Reel   u_e1;
-    Reel   u_e2;
-    Reel   alpha1_x, gamma1_x;
-    Reel   alpha1_y, gamma1_y;
-    Reel   alpha1_z, gamma1_z;
-    Reel*  in;
-    Registre Reel    *Iconv; 
-    Reel gradient[3];
-    Reel hessien[3][3];
+    int x,y,z; //,n,i;
+    float   val0,val1;
+    float   val1div;
+    float   u_e0;
+    float   u_e1;
+    float   u_e2;
+    float   alpha1_x, gamma1_x;
+    float   alpha1_y, gamma1_y;
+    float   alpha1_z, gamma1_z;
+    float*  in;
+    register float    *Iconv; 
+    float gradient[3];
+    float hessien[3][3];
     float vmax[3];
     float vmin[3];
     float lmin;
@@ -781,10 +758,10 @@ float vtkAnisoGaussSeidel::Iterate3D()
 
     vector3D grad;
 
-    Reel   erreur,norm_grad;
+    float   erreur,norm_grad;
     double diff;
-    Entier nb_points_instables;
-    Entier erreur_x,erreur_y,erreur_z;
+    int nb_points_instables;
+    int erreur_x,erreur_y,erreur_z;
 
     unsigned long nbpts_isotropic    = 0;
     unsigned long nbpts_anisotropic  = 0;
@@ -801,395 +778,395 @@ float vtkAnisoGaussSeidel::Iterate3D()
 
   diff = 0;
 
-  Pour(z,0,tz-1)
+  for (z=0; z<=tz-1; z++) {
 
-    /*
-    Si z==0 Alors
+      /*
+      if( z==0 ) {
       printf("z = %3d",z);
       fflush(stdout);
-    Sinon 
+      } else {  
       printf("\b\b\b");
       printf("%3d",z);
       fflush(stdout);
-    FinSi
-    */
+      }
+      */
 
-  Pour(y,0,ty-1)
-  Pour(x,0,tx-1)
+      for (y=0; y <= ty-1; y++) {
+          for (x=0; x <= tx-1; x++) {
+              
+              
+              val1 = val0 = *in;
+              
+              if( x>0 && x<tx-1 && y>0 && y<ty-1 && z>0 && z<tz-1 ) {
+                  
+                  // Gradient en (x+1/2,y,z)
+                  //----- Calcul de alpha1_x, gamma1_x
+                  grad.x = *(in+1) - *(in);
+                  grad.y = ( *(in + tx) - *(in - tx) + *(in+tx+1) - *(in-tx+1) )/ 4.0;
+                  grad.z = (*(in+txy)   - *(in-txy  )+ *(in+txy+1)- *(in-txy+1))/ 4.0;
+                  
+                  // Calcul du gradient, du hessien en (x+1/2,y,z)
+                  gradient[0] = *(Iconv+1) - *Iconv;
+                  gradient[1] = ((*(Iconv+tx )-*(Iconv-tx ))+(*(Iconv+tx+1 )-*(Iconv-tx+1 )))/4.0;
+                  gradient[2] = ((*(Iconv+txy)-*(Iconv-txy))+(*(Iconv+txy+1)-*(Iconv-txy+1)))/4.0;
+                  
+                  
+                  // Courbures principales
+                  norm_grad =  sqrt(gradient[0]*gradient[0] + 
+                                    gradient[1]*gradient[1] +
+                                    gradient[2]*gradient[2]);
+                  
+                  isotropic = TRUE;
+                  
+                  if( norm_grad > k*IsoCoeff ) {
+                      
+                      // Compute the Hessian Matrix in (x+1/2,y,z)
+                      if( x<tx-2 ) {
+                          hessien[0][0] = ((*(Iconv+2)-*Iconv)-(*(Iconv+1)-*(Iconv-1)))/2.0;
+                      } else { 
+                          hessien[0][0] = ((*(Iconv+1)-*Iconv)-(*(Iconv+1)-*(Iconv-1)))/2.0;
+                      }
+                      
+                      hessien[1][0] = 
+                          hessien[0][1] = ((*(Iconv+1+tx)-*(Iconv+tx))-(*(Iconv+1-tx)-*(Iconv-tx)))/2.0;
+                      hessien[2][0] = 
+                          hessien[0][2] = ((*(Iconv+1+txy)-*(Iconv+txy))-(*(Iconv+1-txy)-*(Iconv-txy)))/2.0;
+                      
+                      hessien[1][1] = ((*(Iconv+tx)   - 2* *Iconv     + *(Iconv-tx  )) +
+                                       (*(Iconv+tx+1) - 2* *(Iconv+1) + *(Iconv-tx+1))
+                          )/2.0;
+                      hessien[2][1] = 
+                          
+                          hessien[1][2] = ( (*(Iconv+tx+txy)-*(Iconv-tx+txy)) -
+                                            (*(Iconv+tx-txy)-*(Iconv-tx-txy)) +
+                                            (*(Iconv+tx+txy+1)-*(Iconv-tx+txy+1)) -
+                                            (*(Iconv+tx-txy+1)-*(Iconv-tx-txy+1)) 
+                              )/8.0;
+                      
+                      hessien[2][2] = ( *(Iconv+txy  ) - 2*(*Iconv  ) + *(Iconv-txy  ) +
+                                        *(Iconv+txy+1) - 2*(*(Iconv+1)) + *(Iconv-txy+1)
+                          )/2.0;
+                      
+                      // Compute the basis (e0, e1, e2):
+                      if( ::FluxDiffusion::CurvaturasPrincipales(  hessien, 
+                                                                   (float*) gradient, 
+                                                                   (float*) vmax, 
+                                                                   (float*) vmin, 
+                                                                   &lmax, &lmin,
+                                                                   1E-2) != -1 ) {
+                          e0.x = gradient[0]/norm_grad;
+                          e0.y = gradient[1]/norm_grad;
+                          e0.z = gradient[2]/norm_grad;
+                          e1.x = vmax[0]; e1.y = vmax[1]; e1.z = vmax[2];
+                          e2.x = vmin[0]; e2.y = vmin[1]; e2.z = vmin[2];
+                          isotropic = FALSE;
+                      } else { 
+                          fprintf(stderr,"CurvaturasPrincipales failed \n");
+                          fprintf(stderr,"  %d %d %d \n", x,y,z);
+                          fprintf(stderr," grad = %f %f %f \n", gradient[0], gradient[1], gradient[2]);
+                      }
+                      
+                  }
+                  
+                  if( !(isotropic) ) {
+                      nbpts_anisotropic++;
+                  } else { 
+                      nbpts_isotropic++;
+                  }
+                  
+                  // Directional Derivatives
+                  if( !(isotropic) ) {
+                      u_e0 = grad.x*e0.x + grad.y*e0.y + grad.z*e0.z;
+                      u_e1 = grad.x*e1.x + grad.y*e1.y + grad.z*e1.z;
+                      u_e2 = grad.x*e2.x + grad.y*e2.y + grad.z*e2.z;
+                      
+                      alpha1_x = phi3D_0(u_e0)*e0.x*e0.x + 
+                          phi3D_1(u_e1)*e1.x*e1.x +
+                          phi3D_2(u_e2)*e2.x*e2.x;
+                      
+                      gamma1_x = (grad.y*e0.y + grad.z*e0.z)*phi3D_0(u_e0)*e0.x + 
+                          (grad.y*e1.y + grad.z*e1.z)*phi3D_1(u_e1)*e1.x +
+                          (grad.y*e2.y + grad.z*e2.z)*phi3D_2(u_e2)*e2.x;
+                  } else { 
+                      alpha1_x = phi3D_0(grad.x);
+                      gamma1_x = 0;
+                  }
+                  
+                  
+                  //----- Calcul de alpha1_y, gamma1_y 
+                  
+                  // Gradient en (x,y+1/2)
+                  grad.x = (*(in   +1)-*(in   -1)+*(in   +1+tx)-*(in   -1+tx))/4.0;
+                  grad.y = *(in   +tx) - *(in);
+                  grad.z = (*(in   +txy)-*(in   -txy)+*(in   +txy+tx)-*(in   -txy+tx))/4.0;
+                  
+                  // Calcul du gradient, du hessien en (x,y+1/2,z)
+                  gradient[0] = ((*(Iconv+1)-*(Iconv-1))+(*(Iconv+1+tx)-*(Iconv-1+tx)))/4.0;
+                  gradient[1] = (*(Iconv+tx) - *Iconv      );
+                  gradient[2] = ((*(Iconv+txy)-*(Iconv-txy))+(*(Iconv+txy+tx)-*(Iconv-txy+tx)))/4.0;
+                  
+                  // Courbures principales
+                  norm_grad =  sqrt(gradient[0]*gradient[0] + 
+                                    gradient[1]*gradient[1] +
+                                    gradient[2]*gradient[2]);
+                  
+                  isotropic = TRUE;
+                  
+                  if( norm_grad > k*IsoCoeff ) {
+                      // Computing the Hessian matrix in (x,y+1/2,z)
+                      hessien[0][0] = (
+                          *(Iconv+1   )-2*(*Iconv   )+*(Iconv-1   ) +
+                          *(Iconv+1+tx)-2*(*(Iconv+tx))+*(Iconv-1+tx) 
+                          )/2.0;
+                      
+                      hessien[1][0] = 
+                          hessien[0][1] = ((*(Iconv+1+tx)-*(Iconv-1+tx))-(*(Iconv+1)-*(Iconv-1)))/2.0;
+                      
+                      hessien[2][0] = 
+                          hessien[0][2] = (
+                              (*(Iconv+1+txy)-*(Iconv-1+txy))-
+                              (*(Iconv+1-txy)-*(Iconv-1-txy)) +
+                              (*(Iconv+1+txy+tx)-*(Iconv-1+txy+tx))-
+                              (*(Iconv+1-txy+tx)-*(Iconv-1-txy+tx)) 
+                              )/8.0;
+                      
+                      if( y<ty-2 ) {
+                          hessien[1][1] = ((*(Iconv+2*tx) - (*Iconv)) - (*(Iconv+tx)-*(Iconv-tx)))/2.0;
+                      } else { 
+                          hessien[1][1] = ((*(Iconv+tx) - (*Iconv)) - (*(Iconv+tx)-*(Iconv-tx)))/2.0;
+                      }
+                      
+                      hessien[2][1] = 
+                          hessien[1][2] = ( (*(Iconv+tx+txy)-*(Iconv+txy)) -
+                                            (*(Iconv+tx-txy)-*(Iconv-txy))  )/2.0;
+                      
+                      hessien[2][2] = (
+                          *(Iconv+txy)    - 2*(*Iconv   ) + *(Iconv-txy) +
+                          *(Iconv+txy+tx) - 2*(*(Iconv+tx)) + *(Iconv-txy+tx)
+                          )/2.0;
+                      
+                      
+                      // Calcul de la base (e0, e1, e2):
+                      if ( ::FluxDiffusion::CurvaturasPrincipales(  hessien, 
+                                                                    (float*) gradient, 
+                                                                    (float*) vmax, 
+                                                                    (float*) vmin, 
+                                                                    &lmax, &lmin,
+                                                                    1E-2) != -1 ) {
+                          e0.x = gradient[0]/norm_grad;
+                          e0.y = gradient[1]/norm_grad;
+                          e0.z = gradient[2]/norm_grad;
+                          e1.x = vmax[0]; e1.y = vmax[1]; e1.z = vmax[2];
+                          e2.x = vmin[0]; e2.y = vmin[1]; e2.z = vmin[2];
+                          isotropic = FALSE;
+                      } else { 
+                          fprintf(stderr,"CurvaturasPrincipales failed \n");
+                          fprintf(stderr,"  %d %d %d \n", x,y,z);
+                          fprintf(stderr," grad = %f %f %f \n", gradient[0], gradient[1], gradient[2]);
+                      }
+                  }
+                  
+                  if ( !(isotropic) ) {
+                      nbpts_anisotropic++;
+                  } else { 
+                      nbpts_isotropic++;
+                  }
+                  
+                  // Directional Derivatives
+                  if ( !(isotropic) ) {
+                      u_e0 = grad.x*e0.x + grad.y*e0.y + grad.z*e0.z;
+                      u_e1 = grad.x*e1.x + grad.y*e1.y + grad.z*e1.z;
+                      u_e2 = grad.x*e2.x + grad.y*e2.y + grad.z*e2.z;
+                      
+                      alpha1_y = phi3D_0(u_e0)*e0.y*e0.y + 
+                          phi3D_1(u_e1)*e1.y*e1.y +
+                          phi3D_2(u_e2)*e2.y*e2.y;
+                      
+                      gamma1_y = (grad.x*e0.x + grad.z*e0.z)*phi3D_0(u_e0)*e0.y + 
+                          (grad.x*e1.x + grad.z*e1.z)*phi3D_1(u_e1)*e1.y +
+                          (grad.x*e2.x + grad.z*e2.z)*phi3D_2(u_e2)*e2.y;
+                  } else { 
+                      alpha1_y = phi3D_1(grad.y);
+                      gamma1_y = 0;
+                  }
+                  
+                  
+                  //----- Calcul de alpha1_z, gamma1_z 
+                  grad.x = (*(in+1 ) - *(in-1 ) + *(in+1 +txy) - *(in-1 +txy))/4.0;
+                  grad.y = (*(in+tx) - *(in-tx) + *(in+tx+txy) - *(in-tx+txy))/4.0; 
+                  grad.z = *(in+txy)-*in;
+                  
+                  // Calcul du gradient, du hessien en (x,y,z+1/2)
+                  gradient[0] = ((*(Iconv+1)-*(Iconv-1))+(*(Iconv+1+txy)-*(Iconv-1+txy)))/4.0;
+                  gradient[1] = ((*(Iconv+tx)-*(Iconv-tx))+(*(Iconv+tx+txy)-*(Iconv-tx+txy)))/4.0;
+                  gradient[2] = (*(Iconv+txy)- *(Iconv)    );
+                  
+                  
+                  // Courbures principales
+                  norm_grad =  sqrt(gradient[0]*gradient[0] + 
+                                    gradient[1]*gradient[1] +
+                                    gradient[2]*gradient[2]);
+                  
+                  isotropic = TRUE;
+                  
+                  if ( norm_grad > k*IsoCoeff ) {
+                      
+                      // Computing the Hessian matrix in (x,y,z+1/2)
+                      hessien[0][0] = ( *(Iconv+1)    -2*(*Iconv    )+*(Iconv-1    ) +
+                                        *(Iconv+1+txy)-2*(*(Iconv+txy))+*(Iconv-1+txy)
+                          )/2.0;
+                      
+                      hessien[1][0] = 
+                          hessien[0][1] = (
+                              (*(Iconv+1+tx    )-*(Iconv-1+tx    ))-
+                              (*(Iconv+1-tx    )-*(Iconv-1-tx    )) +
+                              (*(Iconv+1+tx+txy)-*(Iconv-1+tx+txy))-
+                              (*(Iconv+1-tx+txy)-*(Iconv-1-tx+txy)) 
+                              )/8.0;
+                      
+                      
+                      hessien[2][0] = 
+                          hessien[0][2] = ((*(Iconv+1+txy)-*(Iconv-1+txy))-
+                                           (*(Iconv+1    )-*(Iconv-1    )) )/2.0;
+                      
+                      hessien[1][1] = ( 
+                          *(Iconv+tx) - 2*(*Iconv) + *(Iconv-tx) +
+                          *(Iconv+tx+txy) - 2*(*(Iconv+txy)) + *(Iconv-tx+txy)
+                          )/2.0;
+                      
+                      hessien[2][1] = 
+                          hessien[1][2] = ( (*(Iconv+tx+txy)-*(Iconv-tx+txy)) -
+                                            (*(Iconv+tx    )-*(Iconv-tx    ))  )/2.0;
+                      
+                      
+                      if ( z<tz-2 ) {
+                          hessien[2][2] = ((*(Iconv+2*txy)-*(Iconv    )) - 
+                                           (*(Iconv+  txy)-*(Iconv-txy))  )/2.0;
+                      } else { 
+                          hessien[2][2] = ((*(Iconv+txy)-*(Iconv    )) - 
+                                           (*(Iconv+txy)-*(Iconv-txy))  )/2.0;
+                      }
+                      
+                      // Calcul de la base (e0, e1, e2):
+                      if ( ::FluxDiffusion::CurvaturasPrincipales(  hessien, 
+                                                                    (float*) gradient, 
+                                                                    (float*) vmax, 
+                                                                    (float*) vmin, 
+                                                                    &lmax, &lmin,
+                                                                    1E-2) != -1 ) {
+                          e0.x = gradient[0]/norm_grad;
+                          e0.y = gradient[1]/norm_grad;
+                          e0.z = gradient[2]/norm_grad;
+                          e1.x = vmax[0]; e1.y = vmax[1]; e1.z = vmax[2];
+                          e2.x = vmin[0]; e2.y = vmin[1]; e2.z = vmin[2];
+                          isotropic = FALSE;
+                      } else { 
+                          fprintf(stderr,"CurvaturasPrincipales failed \n");
+                          fprintf(stderr,"  %d %d %d \n", x,y,z);
+                          fprintf(stderr," grad = %f %f %f \n", gradient[0], gradient[1], gradient[2]);
+                      }
+                  }
+                  
+                  // Derivees directionnelles
+                  if ( !(isotropic) ) {
+                      nbpts_anisotropic++;
+                  } else { 
+                      nbpts_isotropic++;
+                  }
+                  
+                  // Directional Derivatives
+                  if ( !(isotropic) ) {
+                      u_e0 = grad.x*e0.x + grad.y*e0.y + grad.z*e0.z;
+                      u_e1 = grad.x*e1.x + grad.y*e1.y + grad.z*e1.z;
+                      u_e2 = grad.x*e2.x + grad.y*e2.y + grad.z*e2.z;
+                      
+                      alpha1_z = phi3D_0(u_e0)*e0.z*e0.z + 
+                          phi3D_1(u_e1)*e1.z*e1.z +
+                          phi3D_2(u_e2)*e2.z*e2.z;
+                      
+                      gamma1_z = (grad.x*e0.x + grad.y*e0.y)*phi3D_0(u_e0)*e0.z + 
+                          (grad.x*e1.x + grad.y*e1.y)*phi3D_1(u_e1)*e1.z +
+                          (grad.x*e2.x + grad.y*e2.y)*phi3D_2(u_e2)*e2.z;
+                  } else { 
+                      alpha1_z = phi3D_2(grad.z);
+                      gamma1_z = 0;
+                  }
+                  
+                  
+                  //----- Mise a jour de l'image
+                  
+                  val1    =  beta**((float*)(this->im_tmp1->GetScalarPointer(x,y,z)));
+                  val1div =  beta;
+                  
+                  val1    += alpha1_x    * (*(in+1  )) +
+                      _alpha_x     * (*(in-1  )) +
+                      gamma1_x  - _gamma_x;
+                  
+                  val1div += alpha1_x + _alpha_x;
+                  
+                  val1    += alpha1_y     * (*(in+tx )) +
+                      _alpha_y[x]   * (*(in-tx )) +
+                      gamma1_y  - _gamma_y[x];
+                  
+                  val1div += alpha1_y + _alpha_y[x];
+                  
+                  val1    += alpha1_z      * (*(in+txy  )) +
+                      _alpha_z[x][y] * (*(in-txy  )) +
+                      gamma1_z  - _gamma_z[x][y];
+                  
+                  val1div += alpha1_z + _alpha_z[x][y];
+                  
+                  if ( fabs(val1div)>1E-4 ) {
+                      val1 /= val1div;
+                  } else { 
+                      fprintf(stderr,"AnisoGaussSeidel.c:Itere3D() \t fabs(val1div)<1E-4 ");
+                      fprintf(stderr,"%d %d %d \n",x,y,z);
+                      val1 = *in;
+                  }
+                  
+                  _alpha_z[x][y] = alpha1_z;
+                  _alpha_y[x]    = alpha1_y;
+                  _alpha_x       = alpha1_x;
+                  
+                  _gamma_z[x][y] = gamma1_z;
+                  _gamma_y[x]    = gamma1_y;
+                  _gamma_x       = gamma1_x;
+                  
+              } else { 
+                  
+                  val1 = *in;
+                  
+                  _alpha_z[x][y] = 
+                      _alpha_y[x]    = 
+                      _alpha_x       = 
+                      _gamma_z[x][y] = 
+                      _gamma_y[x]    = 
+                      _gamma_x       = 0;
+                  
+              }
+              
+              
+              if ( fabs(val1-val0) > epsilon ) {
+                  nb_points_instables++;
+              }
+              
+              diff += (val1-val0)*(val1-val0);
+              if ( fabs(val1-val0) > erreur ) {
+                  erreur = fabs(val1-val0);
+                  erreur_x = x;
+                  erreur_y = y;
+                  erreur_z = z;
+              }
+              
+              *((float*)(im_tmp2->GetScalarPointer(x,y,z))) = val1;
+              
+              in++;
+              Iconv++;
+              
+          }
+      }
+  }
   
-
-    val1 = val0 = *in;
-
-    Si x>0 Et x<tx-1 Et y>0 Et y<ty-1 Et z>0 Et z<tz-1 Alors
-
-      // Gradient en (x+1/2,y,z)
-      //----- Calcul de alpha1_x, gamma1_x
-      grad.x = *(in+1) - *(in);
-      grad.y = ( *(in + tx) - *(in - tx) + *(in+tx+1) - *(in-tx+1) )/ 4.0;
-      grad.z = (*(in+txy)   - *(in-txy  )+ *(in+txy+1)- *(in-txy+1))/ 4.0;
-
-      // Calcul du gradient, du hessien en (x+1/2,y,z)
-      gradient[0] = *(Iconv+1) - *Iconv;
-      gradient[1] = ((*(Iconv+tx )-*(Iconv-tx ))+(*(Iconv+tx+1 )-*(Iconv-tx+1 )))/4.0;
-      gradient[2] = ((*(Iconv+txy)-*(Iconv-txy))+(*(Iconv+txy+1)-*(Iconv-txy+1)))/4.0;
-
-
-      // Courbures principales
-      norm_grad =  sqrt(gradient[0]*gradient[0] + 
-                        gradient[1]*gradient[1] +
-                        gradient[2]*gradient[2]);
-
-      isotropic = TRUE;
-
-      Si norm_grad > k*IsoCoeff Alors
-
-        // Compute the Hessian Matrix in (x+1/2,y,z)
-        Si x<tx-2 Alors
-          hessien[0][0] = ((*(Iconv+2)-*Iconv)-(*(Iconv+1)-*(Iconv-1)))/2.0;
-        Sinon
-          hessien[0][0] = ((*(Iconv+1)-*Iconv)-(*(Iconv+1)-*(Iconv-1)))/2.0;
-        FinSi
-
-        hessien[1][0] = 
-        hessien[0][1] = ((*(Iconv+1+tx)-*(Iconv+tx))-(*(Iconv+1-tx)-*(Iconv-tx)))/2.0;
-        hessien[2][0] = 
-        hessien[0][2] = ((*(Iconv+1+txy)-*(Iconv+txy))-(*(Iconv+1-txy)-*(Iconv-txy)))/2.0;
-
-        hessien[1][1] = ((*(Iconv+tx)   - 2* *Iconv     + *(Iconv-tx  )) +
-                         (*(Iconv+tx+1) - 2* *(Iconv+1) + *(Iconv-tx+1))
-                )/2.0;
-        hessien[2][1] = 
-
-        hessien[1][2] = ( (*(Iconv+tx+txy)-*(Iconv-tx+txy)) -
-                          (*(Iconv+tx-txy)-*(Iconv-tx-txy)) +
-                          (*(Iconv+tx+txy+1)-*(Iconv-tx+txy+1)) -
-                          (*(Iconv+tx-txy+1)-*(Iconv-tx-txy+1)) 
-                )/8.0;
-
-        hessien[2][2] = ( *(Iconv+txy  ) - 2*(*Iconv  ) + *(Iconv-txy  ) +
-              *(Iconv+txy+1) - 2*(*(Iconv+1)) + *(Iconv-txy+1)
-                )/2.0;
-
-        // Compute the basis (e0, e1, e2):
-        Si ::FluxDiffusion::CurvaturasPrincipales(  hessien, 
-                 (float*) gradient, 
-                 (float*) vmax, 
-                 (float*) vmin, 
-                 &lmax, &lmin,
-                 1E-2) != -1 Alors
-          e0.x = gradient[0]/norm_grad;
-          e0.y = gradient[1]/norm_grad;
-          e0.z = gradient[2]/norm_grad;
-          e1.x = vmax[0]; e1.y = vmax[1]; e1.z = vmax[2];
-          e2.x = vmin[0]; e2.y = vmin[1]; e2.z = vmin[2];
-      isotropic = FALSE;
-        Sinon
-          fprintf(stderr,"CurvaturasPrincipales failed \n");
-          fprintf(stderr,"  %d %d %d \n", x,y,z);
-          fprintf(stderr," grad = %f %f %f \n", gradient[0], gradient[1], gradient[2]);
-        FinSi
-
-      FinSi
-
-      Si Non(isotropic) Alors
-      nbpts_anisotropic++;
-      Sinon
-      nbpts_isotropic++;
-      FinSi
-
-      // Directional Derivatives
-      Si Non(isotropic) Alors
-        u_e0 = grad.x*e0.x + grad.y*e0.y + grad.z*e0.z;
-        u_e1 = grad.x*e1.x + grad.y*e1.y + grad.z*e1.z;
-        u_e2 = grad.x*e2.x + grad.y*e2.y + grad.z*e2.z;
-
-        alpha1_x = phi3D_0(u_e0)*e0.x*e0.x + 
-                   phi3D_1(u_e1)*e1.x*e1.x +
-                   phi3D_2(u_e2)*e2.x*e2.x;
-
-        gamma1_x = (grad.y*e0.y + grad.z*e0.z)*phi3D_0(u_e0)*e0.x + 
-                   (grad.y*e1.y + grad.z*e1.z)*phi3D_1(u_e1)*e1.x +
-                   (grad.y*e2.y + grad.z*e2.z)*phi3D_2(u_e2)*e2.x;
-      Sinon
-        alpha1_x = phi3D_0(grad.x);
-        gamma1_x = 0;
-      FinSi
-
-
-      //----- Calcul de alpha1_y, gamma1_y 
-   
-      // Gradient en (x,y+1/2)
-      grad.x = (*(in   +1)-*(in   -1)+*(in   +1+tx)-*(in   -1+tx))/4.0;
-      grad.y = *(in   +tx) - *(in);
-      grad.z = (*(in   +txy)-*(in   -txy)+*(in   +txy+tx)-*(in   -txy+tx))/4.0;
-
-      // Calcul du gradient, du hessien en (x,y+1/2,z)
-      gradient[0] = ((*(Iconv+1)-*(Iconv-1))+(*(Iconv+1+tx)-*(Iconv-1+tx)))/4.0;
-      gradient[1] = (*(Iconv+tx) - *Iconv      );
-      gradient[2] = ((*(Iconv+txy)-*(Iconv-txy))+(*(Iconv+txy+tx)-*(Iconv-txy+tx)))/4.0;
-
-      // Courbures principales
-      norm_grad =  sqrt(gradient[0]*gradient[0] + 
-                        gradient[1]*gradient[1] +
-                        gradient[2]*gradient[2]);
-
-      isotropic = TRUE;
-
-      Si norm_grad > k*IsoCoeff Alors
-    // Computing the Hessian matrix in (x,y+1/2,z)
-        hessien[0][0] = (
-                         *(Iconv+1   )-2*(*Iconv   )+*(Iconv-1   ) +
-                 *(Iconv+1+tx)-2*(*(Iconv+tx))+*(Iconv-1+tx) 
-                )/2.0;
-
-        hessien[1][0] = 
-        hessien[0][1] = ((*(Iconv+1+tx)-*(Iconv-1+tx))-(*(Iconv+1)-*(Iconv-1)))/2.0;
-
-        hessien[2][0] = 
-        hessien[0][2] = (
-                    (*(Iconv+1+txy)-*(Iconv-1+txy))-
-                          (*(Iconv+1-txy)-*(Iconv-1-txy)) +
-                  (*(Iconv+1+txy+tx)-*(Iconv-1+txy+tx))-
-                          (*(Iconv+1-txy+tx)-*(Iconv-1-txy+tx)) 
-                )/8.0;
-
-        Si y<ty-2 Alors
-          hessien[1][1] = ((*(Iconv+2*tx) - (*Iconv)) - (*(Iconv+tx)-*(Iconv-tx)))/2.0;
-        Sinon
-          hessien[1][1] = ((*(Iconv+tx) - (*Iconv)) - (*(Iconv+tx)-*(Iconv-tx)))/2.0;
-        FinSi
-
-        hessien[2][1] = 
-        hessien[1][2] = ( (*(Iconv+tx+txy)-*(Iconv+txy)) -
-                          (*(Iconv+tx-txy)-*(Iconv-txy))  )/2.0;
-
-        hessien[2][2] = (
-                   *(Iconv+txy)    - 2*(*Iconv   ) + *(Iconv-txy) +
-                 *(Iconv+txy+tx) - 2*(*(Iconv+tx)) + *(Iconv-txy+tx)
-                )/2.0;
-
-
-        // Calcul de la base (e0, e1, e2):
-        Si ::FluxDiffusion::CurvaturasPrincipales(  hessien, 
-                 (float*) gradient, 
-                 (float*) vmax, 
-                 (float*) vmin, 
-                 &lmax, &lmin,
-                 1E-2) != -1 Alors
-          e0.x = gradient[0]/norm_grad;
-          e0.y = gradient[1]/norm_grad;
-          e0.z = gradient[2]/norm_grad;
-          e1.x = vmax[0]; e1.y = vmax[1]; e1.z = vmax[2];
-          e2.x = vmin[0]; e2.y = vmin[1]; e2.z = vmin[2];
-      isotropic = FALSE;
-        Sinon
-          fprintf(stderr,"CurvaturasPrincipales failed \n");
-          fprintf(stderr,"  %d %d %d \n", x,y,z);
-          fprintf(stderr," grad = %f %f %f \n", gradient[0], gradient[1], gradient[2]);
-        FinSi
-      FinSi
-
-      Si Non(isotropic) Alors
-      nbpts_anisotropic++;
-      Sinon
-      nbpts_isotropic++;
-      FinSi
-
-      // Directional Derivatives
-      Si Non(isotropic) Alors
-        u_e0 = grad.x*e0.x + grad.y*e0.y + grad.z*e0.z;
-        u_e1 = grad.x*e1.x + grad.y*e1.y + grad.z*e1.z;
-        u_e2 = grad.x*e2.x + grad.y*e2.y + grad.z*e2.z;
-
-        alpha1_y = phi3D_0(u_e0)*e0.y*e0.y + 
-                   phi3D_1(u_e1)*e1.y*e1.y +
-                   phi3D_2(u_e2)*e2.y*e2.y;
-
-        gamma1_y = (grad.x*e0.x + grad.z*e0.z)*phi3D_0(u_e0)*e0.y + 
-                   (grad.x*e1.x + grad.z*e1.z)*phi3D_1(u_e1)*e1.y +
-                   (grad.x*e2.x + grad.z*e2.z)*phi3D_2(u_e2)*e2.y;
-      Sinon
-        alpha1_y = phi3D_1(grad.y);
-        gamma1_y = 0;
-      FinSi
-
-
-      //----- Calcul de alpha1_z, gamma1_z 
-      grad.x = (*(in+1 ) - *(in-1 ) + *(in+1 +txy) - *(in-1 +txy))/4.0;
-      grad.y = (*(in+tx) - *(in-tx) + *(in+tx+txy) - *(in-tx+txy))/4.0; 
-      grad.z = *(in+txy)-*in;
-
-      // Calcul du gradient, du hessien en (x,y,z+1/2)
-      gradient[0] = ((*(Iconv+1)-*(Iconv-1))+(*(Iconv+1+txy)-*(Iconv-1+txy)))/4.0;
-      gradient[1] = ((*(Iconv+tx)-*(Iconv-tx))+(*(Iconv+tx+txy)-*(Iconv-tx+txy)))/4.0;
-      gradient[2] = (*(Iconv+txy)- *(Iconv)    );
-
-
-      // Courbures principales
-      norm_grad =  sqrt(gradient[0]*gradient[0] + 
-                        gradient[1]*gradient[1] +
-                        gradient[2]*gradient[2]);
-
-      isotropic = TRUE;
-
-      Si norm_grad > k*IsoCoeff Alors
-
-    // Computing the Hessian matrix in (x,y,z+1/2)
-        hessien[0][0] = ( *(Iconv+1)    -2*(*Iconv    )+*(Iconv-1    ) +
-               *(Iconv+1+txy)-2*(*(Iconv+txy))+*(Iconv-1+txy)
-                )/2.0;
-
-        hessien[1][0] = 
-        hessien[0][1] = (
-                 (*(Iconv+1+tx    )-*(Iconv-1+tx    ))-
-                 (*(Iconv+1-tx    )-*(Iconv-1-tx    )) +
-                 (*(Iconv+1+tx+txy)-*(Iconv-1+tx+txy))-
-                 (*(Iconv+1-tx+txy)-*(Iconv-1-tx+txy)) 
-                )/8.0;
-
- 
-        hessien[2][0] = 
-        hessien[0][2] = ((*(Iconv+1+txy)-*(Iconv-1+txy))-
-                           (*(Iconv+1    )-*(Iconv-1    )) )/2.0;
-
-        hessien[1][1] = ( 
-                   *(Iconv+tx) - 2*(*Iconv) + *(Iconv-tx) +
-                 *(Iconv+tx+txy) - 2*(*(Iconv+txy)) + *(Iconv-tx+txy)
-                 )/2.0;
-
-        hessien[2][1] = 
-        hessien[1][2] = ( (*(Iconv+tx+txy)-*(Iconv-tx+txy)) -
-                          (*(Iconv+tx    )-*(Iconv-tx    ))  )/2.0;
-
-  
-        Si z<tz-2 Alors
-          hessien[2][2] = ((*(Iconv+2*txy)-*(Iconv    )) - 
-                           (*(Iconv+  txy)-*(Iconv-txy))  )/2.0;
-        Sinon
-          hessien[2][2] = ((*(Iconv+txy)-*(Iconv    )) - 
-                         (*(Iconv+txy)-*(Iconv-txy))  )/2.0;
-        FinSi
-
-        // Calcul de la base (e0, e1, e2):
-        Si ::FluxDiffusion::CurvaturasPrincipales(  hessien, 
-                 (float*) gradient, 
-                 (float*) vmax, 
-                 (float*) vmin, 
-                 &lmax, &lmin,
-                 1E-2) != -1 Alors
-          e0.x = gradient[0]/norm_grad;
-          e0.y = gradient[1]/norm_grad;
-          e0.z = gradient[2]/norm_grad;
-          e1.x = vmax[0]; e1.y = vmax[1]; e1.z = vmax[2];
-          e2.x = vmin[0]; e2.y = vmin[1]; e2.z = vmin[2];
-      isotropic = FALSE;
-        Sinon
-          fprintf(stderr,"CurvaturasPrincipales failed \n");
-          fprintf(stderr,"  %d %d %d \n", x,y,z);
-          fprintf(stderr," grad = %f %f %f \n", gradient[0], gradient[1], gradient[2]);
-        FinSi
-      FinSi
-
-      // Derivees directionnelles
-      Si Non(isotropic) Alors
-      nbpts_anisotropic++;
-      Sinon
-      nbpts_isotropic++;
-      FinSi
-
-      // Directional Derivatives
-      Si Non(isotropic) Alors
-        u_e0 = grad.x*e0.x + grad.y*e0.y + grad.z*e0.z;
-        u_e1 = grad.x*e1.x + grad.y*e1.y + grad.z*e1.z;
-        u_e2 = grad.x*e2.x + grad.y*e2.y + grad.z*e2.z;
-
-        alpha1_z = phi3D_0(u_e0)*e0.z*e0.z + 
-                   phi3D_1(u_e1)*e1.z*e1.z +
-                   phi3D_2(u_e2)*e2.z*e2.z;
-
-        gamma1_z = (grad.x*e0.x + grad.y*e0.y)*phi3D_0(u_e0)*e0.z + 
-                   (grad.x*e1.x + grad.y*e1.y)*phi3D_1(u_e1)*e1.z +
-                   (grad.x*e2.x + grad.y*e2.y)*phi3D_2(u_e2)*e2.z;
-      Sinon
-    alpha1_z = phi3D_2(grad.z);
-        gamma1_z = 0;
-      FinSi
-
-
-      //----- Mise a jour de l'image
-
-      val1    =  beta**((float*)(this->im_tmp1->GetScalarPointer(x,y,z)));
-      val1div =  beta;
-
-      val1    += alpha1_x    * (*(in+1  )) +
-                 _alpha_x     * (*(in-1  )) +
-                 gamma1_x  - _gamma_x;
-
-      val1div += alpha1_x + _alpha_x;
-
-      val1    += alpha1_y     * (*(in+tx )) +
-                 _alpha_y[x]   * (*(in-tx )) +
-                 gamma1_y  - _gamma_y[x];
-
-      val1div += alpha1_y + _alpha_y[x];
-
-      val1    += alpha1_z      * (*(in+txy  )) +
-                 _alpha_z[x][y] * (*(in-txy  )) +
-                 gamma1_z  - _gamma_z[x][y];
-
-      val1div += alpha1_z + _alpha_z[x][y];
-
-      Si fabs(val1div)>1E-4 Alors
-        val1 /= val1div;
-      Sinon
-        fprintf(stderr,"AnisoGaussSeidel.c:Itere3D() \t fabs(val1div)<1E-4 ");
-        fprintf(stderr,"%d %d %d \n",x,y,z);
-        val1 = *in;
-      FinSi
-
-      _alpha_z[x][y] = alpha1_z;
-      _alpha_y[x]    = alpha1_y;
-      _alpha_x       = alpha1_x;
-
-      _gamma_z[x][y] = gamma1_z;
-      _gamma_y[x]    = gamma1_y;
-      _gamma_x       = gamma1_x;
-
-    Sinon
-
-      val1 = *in;
-    
-      _alpha_z[x][y] = 
-      _alpha_y[x]    = 
-      _alpha_x       = 
-      _gamma_z[x][y] = 
-      _gamma_y[x]    = 
-      _gamma_x       = 0;
-
-    FinSi
-
-
-    Si fabs(val1-val0) > epsilon Alors
-      nb_points_instables++;
-    FinSi
-
-    diff += (val1-val0)*(val1-val0);
-    Si fabs(val1-val0) > erreur Alors
-      erreur = fabs(val1-val0);
-      erreur_x = x;
-      erreur_y = y;
-      erreur_z = z;
-    FinSi
-
-    *((float*)(im_tmp2->GetScalarPointer(x,y,z))) = val1;
-
-    in++;
-    Iconv++;
-
-  FinPour
-  FinPour
-  FinPour
-
     /*
   image_resultat->CopyAndCastFrom(this->im_tmp,
                   this->im_tmp->GetExtent());
@@ -1210,7 +1187,7 @@ float vtkAnisoGaussSeidel::Iterate3D()
   cout << "diff =" << sqrt(diff) << endl;
     */
 
-  Retourne erreur;
+  return erreur;
 
 
 } // Iterate3D()
@@ -1222,16 +1199,16 @@ float vtkAnisoGaussSeidel::Iterate3D( vtkImageData *inData,  int inExt[6],
 {
 
   Local 
-    register Entier x,y,z; 
-  //    Entier x1,y1,z1;
-    Reel   val0,val1;
-    Reel   val1div;
-    Reel   u_e0;
-    Reel   u_e1;
-    Reel   u_e2;
-    Reel   alpha1_x, gamma1_x;
-    Reel   alpha1_y, gamma1_y;
-    Reel   alpha1_z, gamma1_z;
+    register int x,y,z; 
+  //    int x1,y1,z1;
+    float   val0,val1;
+    float   val1div;
+    float   u_e0;
+    float   u_e1;
+    float   u_e2;
+    float   alpha1_x, gamma1_x;
+    float   alpha1_y, gamma1_y;
+    float   alpha1_z, gamma1_z;
 
     float           alpha_x;
     float           gamma_x;
@@ -1240,10 +1217,10 @@ float vtkAnisoGaussSeidel::Iterate3D( vtkImageData *inData,  int inExt[6],
     float**         alpha_z;
     float**         gamma_z;
 
-    Reel*  in;
-    Registre Reel    *Iconv; 
-    Reel gradient[3];
-    Reel hessien[3][3];
+    float*  in;
+    register float    *Iconv; 
+    float gradient[3];
+    float hessien[3][3];
     float vmax[3];
     float vmin[3];
     float lmin;
@@ -1255,11 +1232,11 @@ float vtkAnisoGaussSeidel::Iterate3D( vtkImageData *inData,  int inExt[6],
 
     vector3D grad;
 
-    Reel   erreur;
-    Reel   norm_grad;
+    float   erreur;
+    float   norm_grad;
     double diff;
-    Entier nb_points_instables;
-    Entier erreur_x,erreur_y,erreur_z;
+    int nb_points_instables;
+    int erreur_x,erreur_y,erreur_z;
 
     unsigned long nbpts_isotropic    = 0;
     unsigned long nbpts_anisotropic  = 0;
@@ -1299,458 +1276,458 @@ float vtkAnisoGaussSeidel::Iterate3D( vtkImageData *inData,  int inExt[6],
   sy = inExt[3]-inExt[2]+1;
   sz = inExt[5]-inExt[4]+1;
 
-  Pour(z,0,sz-1)
+  for(z=0; z<=sz-1; z++) {
 
-    z1 = z+inExt[4];
-    zm = -txy;
-    if (z1==0)    zm = 0;
-    zp =  txy;
-    if (z1==tz-1) zp = 0;
-
-
-    partial_progress += 1.0*(outExt[1]-outExt[0]+1)*(outExt[3]-outExt[2]+1)*(outExt[5]-outExt[4]+1)
-                        /(inExt[5]-inExt[4]+1.0);
-    if ((partial_progress > target)&&(!update_busy)) {
-      update_busy = 1;
-      while (partial_progress > target)
-    {     
-      partial_progress -= target;
-      progress         += target;
-    }
-      //      printf("progress %f \n", progress/total);
-      if (threadId==0)
-    this->UpdateProgress( progress / total);
-      update_busy = 0;
-    }
-
-  Pour(y,0,sy-1)
-
-  y1 = y+inExt[2];
-  ym = -tx;
-  if (y1==0)    ym = 0;
-  yp =  tx;
-  if (y1==ty-1) yp = 0;
-
-  in    = (float*) inData             ->GetScalarPointer(inExt[0],y1,z1);
-  Iconv = (float*) this->image_lissee ->GetScalarPointer(inExt[0],y1,z1);
-
-  Pour(x,0,sx-1)
-
-    x1 = x+inExt[0];
-    xm = -1;
-    if (x1==0)     xm = 0;
-    xp =  1;
-    if (x1==tx-1)  xp = 0;
-  
-    val1 = val0 = *in;
-
-  //    printf("%d %d %d; 1 \n",x,y,z);
-
-  // I should compute the 27 neighborhood for all cases ...
-
-    //    Si x1>wholeExtent[0] Et x1<wholeExtent[1] Et 
-    //       y1>wholeExtent[2] Et y1<wholeExtent[3] Et 
-    //       z1>wholeExtent[4] Et z1<wholeExtent[5]
-    //    Alors
-
-      //      printf("%d %d %d; 1 \n",x,y,z);
-      // Gradient en (x+1/2,y,z)
-      //----- Calcul de alpha1_x, gamma1_x
-      grad.x = *(in+xp) - *(in);
-      grad.y = ( *(in+yp) - *(in+ym) + *(in+yp+xp) - *(in+ym+xp) )/ 4.0;
-      grad.z = (*(in+zp)   - *(in+zm  )+ *(in+zp+xp)- *(in+zm+xp))/ 4.0;
-
-      // Calcul du gradient, du hessien en (x+1/2,y,z)
-      gradient[0] = *(Iconv+xp) - *Iconv;
-      gradient[1] = ((*(Iconv+yp)-*(Iconv+ym ))+(*(Iconv+yp+xp )-*(Iconv+ym+xp )))/4.0;
-      gradient[2] = ((*(Iconv+zp)-*(Iconv+zm))+(*(Iconv+zp+xp)-*(Iconv+zm+xp)))/4.0;
-
-
-      // Courbures principales
-      norm_grad =  sqrt(gradient[0]*gradient[0] + 
-                        gradient[1]*gradient[1] +
-                        gradient[2]*gradient[2]);
-
-      isotropic = TRUE;
-
-      Si norm_grad > k*IsoCoeff Alors
-
-        // Compute the Hessian Matrix in (x+1/2,y,z)
-        Si x1<tx-2 Alors
-          hessien[0][0] = ((*(Iconv+2)-*Iconv)-(*(Iconv+xp)-*(Iconv+xm)))/2.0;
-        Sinon
-          hessien[0][0] = ((*(Iconv+xp)-*Iconv)-(*(Iconv+xp)-*(Iconv+xm)))/2.0;
-        FinSi
-
-        hessien[1][0] = 
-        hessien[0][1] = ((*(Iconv+xp+yp)-*(Iconv+yp))-(*(Iconv+xp+ym)-*(Iconv+ym)))/2.0;
-        hessien[2][0] = 
-        hessien[0][2] = ((*(Iconv+xp+zp)-*(Iconv+zp))-(*(Iconv+xp+zm)-*(Iconv+zm)))/2.0;
-
-        hessien[1][1] = ((*(Iconv+yp)   - 2* *Iconv     + *(Iconv+ym  )) +
-                         (*(Iconv+yp+xp) - 2* *(Iconv+xp) + *(Iconv+ym+xp))
-                )/2.0;
-        hessien[2][1] = 
-
-        hessien[1][2] = ( (*(Iconv+yp+zp)-*(Iconv+ym+zp)) -
-                          (*(Iconv+yp+zm)-*(Iconv+ym+zm)) +
-                          (*(Iconv+yp+zp+xp)-*(Iconv+ym+zp+xp)) -
-                          (*(Iconv+yp+zm+xp)-*(Iconv+ym+zm+xp)) 
-                )/8.0;
-
-        hessien[2][2] = ( *(Iconv+zp  ) - 2*(*Iconv  ) + *(Iconv+zm  ) +
-              *(Iconv+zp+xp) - 2*(*(Iconv+xp)) + *(Iconv+zm+xp)
-                )/2.0;
-
-        // Compute the basis (e0, e1, e2):
-        Si ::FluxDiffusion::CurvaturasPrincipales(  hessien, 
-                 (float*) gradient, 
-                 (float*) vmax, 
-                 (float*) vmin, 
-                 &lmax, &lmin,
-                 1E-2) != -1 Alors
-          e0.x = gradient[0]/norm_grad;
-          e0.y = gradient[1]/norm_grad;
-          e0.z = gradient[2]/norm_grad;
-          e1.x = vmax[0]; e1.y = vmax[1]; e1.z = vmax[2];
-          e2.x = vmin[0]; e2.y = vmin[1]; e2.z = vmin[2];
-      isotropic = FALSE;
-        Sinon
-      /*
-          fprintf(stderr,"CurvaturasPrincipales failed \n");
-          fprintf(stderr,"  %d %d %d \n", x,y,z);
-          fprintf(stderr," grad = %f %f %f \n", gradient[0], gradient[1], gradient[2]);
-      */
-        FinSi
-
-      FinSi
-
-      Si Non(isotropic) Alors
-      nbpts_anisotropic++;
-      Sinon
-      nbpts_isotropic++;
-      FinSi
-
-      // Directional Derivatives
-      Si Non(isotropic) Alors
-        u_e0 = grad.x*e0.x + grad.y*e0.y + grad.z*e0.z;
-        u_e1 = grad.x*e1.x + grad.y*e1.y + grad.z*e1.z;
-        u_e2 = grad.x*e2.x + grad.y*e2.y + grad.z*e2.z;
-
-        alpha1_x = phi3D_0(u_e0)*e0.x*e0.x + 
-                   phi3D_1(u_e1)*e1.x*e1.x +
-                   phi3D_2(u_e2)*e2.x*e2.x;
-
-        gamma1_x = (grad.y*e0.y + grad.z*e0.z)*phi3D_0(u_e0)*e0.x + 
-                   (grad.y*e1.y + grad.z*e1.z)*phi3D_1(u_e1)*e1.x +
-                   (grad.y*e2.y + grad.z*e2.z)*phi3D_2(u_e2)*e2.x;
-      Sinon
-        alpha1_x = phi3D_0(grad.x);
-        gamma1_x = 0;
-      FinSi
-
-
-      //----- Calcul de alpha1_y, gamma1_y 
-   
-    //      printf("%d %d %d; 2 \n",x,y,z);
-      // Gradient en (x,y+1/2)
-      grad.x = (*(in+xp)-*(in+xm)+*(in+xp+yp)-*(in+xm+yp))/4.0;
-      grad.y = *(in+yp) - *(in);
-      grad.z = (*(in+zp)-*(in+zm)+*(in+zp+yp)-*(in+zm+yp))/4.0;
-
-      // Calcul du gradient, du hessien en (x,y+1/2,z)
-      gradient[0] = ((*(Iconv+xp)-*(Iconv+xm))+(*(Iconv+xp+yp)-*(Iconv+xm+yp)))/4.0;
-      gradient[1] = (*(Iconv+yp) - *Iconv      );
-      gradient[2] = ((*(Iconv+zp)-*(Iconv+zm))+(*(Iconv+zp+yp)-*(Iconv+zm+yp)))/4.0;
-
-      // Courbures principales
-      norm_grad =  sqrt(gradient[0]*gradient[0] + 
-                        gradient[1]*gradient[1] +
-                        gradient[2]*gradient[2]);
-
-      isotropic = TRUE;
-
-      Si norm_grad > k*IsoCoeff Alors
-    // Computing the Hessian matrix in (x,y+1/2,z)
-        hessien[0][0] = (
-                         *(Iconv+xp   )-2*(*Iconv   )+*(Iconv+xm   ) +
-                 *(Iconv+xp+yp)-2*(*(Iconv+yp))+*(Iconv+xm+yp) 
-                )/2.0;
-
-        hessien[1][0] = 
-        hessien[0][1] = ((*(Iconv+xp+yp)-*(Iconv+xm+yp))-(*(Iconv+xp)-*(Iconv+xm)))/2.0;
-
-
-        hessien[2][0] = 
-        hessien[0][2] = (
-                    (*(Iconv+xp+zp)-*(Iconv+xm+zp))-
+      z1 = z+inExt[4];
+      zm = -txy;
+      if (z1==0)    zm = 0;
+      zp =  txy;
+      if (z1==tz-1) zp = 0;
+      
+      
+      partial_progress += 1.0*(outExt[1]-outExt[0]+1)*(outExt[3]-outExt[2]+1)*(outExt[5]-outExt[4]+1)
+          /(inExt[5]-inExt[4]+1.0);
+      if ((partial_progress > target)&&(!update_busy)) {
+          update_busy = 1;
+          while (partial_progress > target)
+          {     
+              partial_progress -= target;
+              progress         += target;
+          }
+          //      printf("progress %f \n", progress/total);
+          if (threadId==0)
+              this->UpdateProgress( progress / total);
+          update_busy = 0;
+      }
+      
+      for(y=0; y<=sy-1; y++) {
+          
+          y1 = y+inExt[2];
+          ym = -tx;
+          if (y1==0)    ym = 0;
+          yp =  tx;
+          if (y1==ty-1) yp = 0;
+          
+          in    = (float*) inData             ->GetScalarPointer(inExt[0],y1,z1);
+          Iconv = (float*) this->image_lissee ->GetScalarPointer(inExt[0],y1,z1);
+          
+          for (x=0; x <= sx-1; x++) {
+              
+              x1 = x+inExt[0];
+              xm = -1;
+              if (x1==0)     xm = 0;
+              xp =  1;
+              if (x1==tx-1)  xp = 0;
+              
+              val1 = val0 = *in;
+              
+              //    printf("%d %d %d; 1 \n",x,y,z);
+              
+              // I should compute the 27 neighborhood for all cases ...
+              
+              //    if ( x1>wholeExtent[0] && x1<wholeExtent[1] && 
+              //       y1>wholeExtent[2] && y1<wholeExtent[3] && 
+              //       z1>wholeExtent[4] && z1<wholeExtent[5]
+              //    ) {
+              
+              //      printf("%d %d %d; 1 \n",x,y,z);
+              // Gradient en (x+1/2,y,z)
+              //----- Calcul de alpha1_x, gamma1_x
+              grad.x = *(in+xp) - *(in);
+              grad.y = ( *(in+yp) - *(in+ym) + *(in+yp+xp) - *(in+ym+xp) )/ 4.0;
+              grad.z = (*(in+zp)   - *(in+zm  )+ *(in+zp+xp)- *(in+zm+xp))/ 4.0;
+              
+              // Calcul du gradient, du hessien en (x+1/2,y,z)
+              gradient[0] = *(Iconv+xp) - *Iconv;
+              gradient[1] = ((*(Iconv+yp)-*(Iconv+ym ))+(*(Iconv+yp+xp )-*(Iconv+ym+xp )))/4.0;
+              gradient[2] = ((*(Iconv+zp)-*(Iconv+zm))+(*(Iconv+zp+xp)-*(Iconv+zm+xp)))/4.0;
+              
+              
+              // Courbures principales
+              norm_grad =  sqrt(gradient[0]*gradient[0] + 
+                                gradient[1]*gradient[1] +
+                                gradient[2]*gradient[2]);
+              
+              isotropic = TRUE;
+              
+              if ( norm_grad > k*IsoCoeff ) {
+                  
+                  // Compute the Hessian Matrix in (x+1/2,y,z)
+                  if ( x1<tx-2 ) {
+                      hessien[0][0] = ((*(Iconv+2)-*Iconv)-(*(Iconv+xp)-*(Iconv+xm)))/2.0;
+                  } else { 
+                      hessien[0][0] = ((*(Iconv+xp)-*Iconv)-(*(Iconv+xp)-*(Iconv+xm)))/2.0;
+                  }
+                  
+                  hessien[1][0] = 
+                      hessien[0][1] = ((*(Iconv+xp+yp)-*(Iconv+yp))-(*(Iconv+xp+ym)-*(Iconv+ym)))/2.0;
+                  hessien[2][0] = 
+                      hessien[0][2] = ((*(Iconv+xp+zp)-*(Iconv+zp))-(*(Iconv+xp+zm)-*(Iconv+zm)))/2.0;
+                  
+                  hessien[1][1] = ((*(Iconv+yp)   - 2* *Iconv     + *(Iconv+ym  )) +
+                                   (*(Iconv+yp+xp) - 2* *(Iconv+xp) + *(Iconv+ym+xp))
+                      )/2.0;
+                  hessien[2][1] = 
+                      
+                      hessien[1][2] = ( (*(Iconv+yp+zp)-*(Iconv+ym+zp)) -
+                                        (*(Iconv+yp+zm)-*(Iconv+ym+zm)) +
+                                        (*(Iconv+yp+zp+xp)-*(Iconv+ym+zp+xp)) -
+                                        (*(Iconv+yp+zm+xp)-*(Iconv+ym+zm+xp)) 
+                          )/8.0;
+                  
+                  hessien[2][2] = ( *(Iconv+zp  ) - 2*(*Iconv  ) + *(Iconv+zm  ) +
+                                    *(Iconv+zp+xp) - 2*(*(Iconv+xp)) + *(Iconv+zm+xp)
+                      )/2.0;
+                  
+                  // Compute the basis (e0, e1, e2):
+                  if ( ::FluxDiffusion::CurvaturasPrincipales(  hessien, 
+                                                                (float*) gradient, 
+                                                                (float*) vmax, 
+                                                                (float*) vmin, 
+                                                                &lmax, &lmin,
+                                                                1E-2) != -1 ) {
+                      e0.x = gradient[0]/norm_grad;
+                      e0.y = gradient[1]/norm_grad;
+                      e0.z = gradient[2]/norm_grad;
+                      e1.x = vmax[0]; e1.y = vmax[1]; e1.z = vmax[2];
+                      e2.x = vmin[0]; e2.y = vmin[1]; e2.z = vmin[2];
+                      isotropic = FALSE;
+                  } else { 
+                      /*
+                        fprintf(stderr,"CurvaturasPrincipales failed \n");
+                        fprintf(stderr,"  %d %d %d \n", x,y,z);
+                        fprintf(stderr," grad = %f %f %f \n", gradient[0], gradient[1], gradient[2]);
+                      */
+                  }
+                  
+              }
+              
+              if ( !(isotropic) ) {
+                  nbpts_anisotropic++;
+              } else { 
+                  nbpts_isotropic++;
+              }
+              
+              // Directional Derivatives
+              if ( !(isotropic) ) {
+                  u_e0 = grad.x*e0.x + grad.y*e0.y + grad.z*e0.z;
+                  u_e1 = grad.x*e1.x + grad.y*e1.y + grad.z*e1.z;
+                  u_e2 = grad.x*e2.x + grad.y*e2.y + grad.z*e2.z;
+                  
+                  alpha1_x = phi3D_0(u_e0)*e0.x*e0.x + 
+                      phi3D_1(u_e1)*e1.x*e1.x +
+                      phi3D_2(u_e2)*e2.x*e2.x;
+                  
+                  gamma1_x = (grad.y*e0.y + grad.z*e0.z)*phi3D_0(u_e0)*e0.x + 
+                      (grad.y*e1.y + grad.z*e1.z)*phi3D_1(u_e1)*e1.x +
+                      (grad.y*e2.y + grad.z*e2.z)*phi3D_2(u_e2)*e2.x;
+              } else { 
+                  alpha1_x = phi3D_0(grad.x);
+                  gamma1_x = 0;
+              }
+              
+              
+              //----- Calcul de alpha1_y, gamma1_y 
+              
+              //      printf("%d %d %d; 2 \n",x,y,z);
+              // Gradient en (x,y+1/2)
+              grad.x = (*(in+xp)-*(in+xm)+*(in+xp+yp)-*(in+xm+yp))/4.0;
+              grad.y = *(in+yp) - *(in);
+              grad.z = (*(in+zp)-*(in+zm)+*(in+zp+yp)-*(in+zm+yp))/4.0;
+              
+              // Calcul du gradient, du hessien en (x,y+1/2,z)
+              gradient[0] = ((*(Iconv+xp)-*(Iconv+xm))+(*(Iconv+xp+yp)-*(Iconv+xm+yp)))/4.0;
+              gradient[1] = (*(Iconv+yp) - *Iconv      );
+              gradient[2] = ((*(Iconv+zp)-*(Iconv+zm))+(*(Iconv+zp+yp)-*(Iconv+zm+yp)))/4.0;
+              
+              // Courbures principales
+              norm_grad =  sqrt(gradient[0]*gradient[0] + 
+                                gradient[1]*gradient[1] +
+                                gradient[2]*gradient[2]);
+              
+              isotropic = TRUE;
+              
+              if ( norm_grad > k*IsoCoeff ) {
+                  // Computing the Hessian matrix in (x,y+1/2,z)
+                  hessien[0][0] = (
+                      *(Iconv+xp   )-2*(*Iconv   )+*(Iconv+xm   ) +
+                      *(Iconv+xp+yp)-2*(*(Iconv+yp))+*(Iconv+xm+yp) 
+                      )/2.0;
+                  
+                  hessien[1][0] = 
+                      hessien[0][1] = ((*(Iconv+xp+yp)-*(Iconv+xm+yp))-(*(Iconv+xp)-*(Iconv+xm)))/2.0;
+                  
+                  
+                  hessien[2][0] = 
+                      hessien[0][2] = (
+                          (*(Iconv+xp+zp)-*(Iconv+xm+zp))-
                           (*(Iconv+xp+zm)-*(Iconv+xm+zm)) +
-                  (*(Iconv+xp+zp+yp)-*(Iconv+xm+zp+yp))-
+                          (*(Iconv+xp+zp+yp)-*(Iconv+xm+zp+yp))-
                           (*(Iconv+xp+zm+yp)-*(Iconv+xm+zm+yp)) 
-                )/8.0;
-
-        Si y1<ty-2 Alors
-          hessien[1][1] = ((*(Iconv+2*tx) - (*Iconv)) - (*(Iconv+yp)-*(Iconv+ym)))/2.0;
-        Sinon
-          hessien[1][1] = ((*(Iconv+yp) - (*Iconv)) - (*(Iconv+yp)-*(Iconv+ym)))/2.0;
-        FinSi
-
-        hessien[2][1] = 
-        hessien[1][2] = ( (*(Iconv+yp+zp)-*(Iconv+zp)) -
-                          (*(Iconv+yp+zm)-*(Iconv+zm))  )/2.0;
-
-        hessien[2][2] = (
-                   *(Iconv+zp)    - 2*(*Iconv   ) + *(Iconv+zm) +
-                 *(Iconv+zp+yp) - 2*(*(Iconv+yp)) + *(Iconv+zm+yp)
-                )/2.0;
-
-
-        // Calcul de la base (e0, e1, e2):
-        Si ::FluxDiffusion::CurvaturasPrincipales(  hessien, 
-                 (float*) gradient, 
-                 (float*) vmax, 
-                 (float*) vmin, 
-                 &lmax, &lmin,
-                 1E-2) != -1 Alors
-          e0.x = gradient[0]/norm_grad;
-          e0.y = gradient[1]/norm_grad;
-          e0.z = gradient[2]/norm_grad;
-          e1.x = vmax[0]; e1.y = vmax[1]; e1.z = vmax[2];
-          e2.x = vmin[0]; e2.y = vmin[1]; e2.z = vmin[2];
-      isotropic = FALSE;
-        Sinon
-      /*
-          fprintf(stderr,"CurvaturasPrincipales failed \n");
-          fprintf(stderr,"  %d %d %d \n", x,y,z);
-          fprintf(stderr," grad = %f %f %f \n", gradient[0], gradient[1], gradient[2]);
-      */
-        FinSi
-      FinSi
-
-      Si Non(isotropic) Alors
-      nbpts_anisotropic++;
-      Sinon
-      nbpts_isotropic++;
-      FinSi
-
-      // Directional Derivatives
-      Si Non(isotropic) Alors
-        u_e0 = grad.x*e0.x + grad.y*e0.y + grad.z*e0.z;
-        u_e1 = grad.x*e1.x + grad.y*e1.y + grad.z*e1.z;
-        u_e2 = grad.x*e2.x + grad.y*e2.y + grad.z*e2.z;
-
-        alpha1_y = phi3D_0(u_e0)*e0.y*e0.y + 
-                   phi3D_1(u_e1)*e1.y*e1.y +
-                   phi3D_2(u_e2)*e2.y*e2.y;
-
-        gamma1_y = (grad.x*e0.x + grad.z*e0.z)*phi3D_0(u_e0)*e0.y + 
-                   (grad.x*e1.x + grad.z*e1.z)*phi3D_1(u_e1)*e1.y +
-                   (grad.x*e2.x + grad.z*e2.z)*phi3D_2(u_e2)*e2.y;
-      Sinon
-        alpha1_y = phi3D_1(grad.y);
-        gamma1_y = 0;
-      FinSi
-
-
-    //      printf("%d %d %d; 3 \n",x,y,z);
-      //----- Calcul de alpha1_z, gamma1_z 
-      grad.x = (*(in+xp) - *(in+xm) + *(in+xp+zp) - *(in+xm+zp))/4.0;
-      grad.y = (*(in+yp) - *(in+ym) + *(in+yp+zp) - *(in+ym+zp))/4.0; 
-      grad.z = *(in+zp)-*in;
-
-      // Calcul du gradient, du hessien en (x,y,z+1/2)
-      gradient[0] = ((*(Iconv+xp)-*(Iconv+xm))+(*(Iconv+xp+zp)-*(Iconv+xm+zp)))/4.0;
-      gradient[1] = ((*(Iconv+yp)-*(Iconv+ym))+(*(Iconv+yp+zp)-*(Iconv+ym+zp)))/4.0;
-      gradient[2] = (*(Iconv+zp)- *(Iconv)    );
-
-
-      // Courbures principales
-      norm_grad =  sqrt(gradient[0]*gradient[0] + 
-                        gradient[1]*gradient[1] +
-                        gradient[2]*gradient[2]);
-
-      isotropic = TRUE;
-
-      Si norm_grad > k*IsoCoeff Alors
-
-    // Computing the Hessian matrix in (x,y,z+1/2)
-        hessien[0][0] = ( *(Iconv+xp)    -2*(*Iconv    )+*(Iconv+xm    ) +
-               *(Iconv+xp+zp)-2*(*(Iconv+zp))+*(Iconv+xm+zp)
-                )/2.0;
-
-        hessien[1][0] = 
-        hessien[0][1] = (
-                 (*(Iconv+xp+yp   )-*(Iconv+xm+yp   ))-
-                 (*(Iconv+xp+ym   )-*(Iconv+xm+ym   )) +
-                 (*(Iconv+xp+yp+zp)-*(Iconv+xm+yp+zp))-
-                 (*(Iconv+xp+ym+zp)-*(Iconv+xm+ym+zp)) 
-                )/8.0;
-
- 
-        hessien[2][0] = 
-        hessien[0][2] = ((*(Iconv+xp+zp)-*(Iconv+xm+zp))-
-                         (*(Iconv+xp   )-*(Iconv+xm    )) )/2.0;
-
-        hessien[1][1] = ( 
-                   *(Iconv+yp) - 2*(*Iconv) + *(Iconv+ym) +
-                 *(Iconv+yp+zp) - 2*(*(Iconv+zp)) + *(Iconv+ym+zp)
-                 )/2.0;
-
-        hessien[2][1] = 
-        hessien[1][2] = ( (*(Iconv+yp+zp)-*(Iconv+ym+zp)) -
-                          (*(Iconv+yp   )-*(Iconv+ym    ))  )/2.0;
-
+                          )/8.0;
+                  
+                  if ( y1<ty-2 ) {
+                      hessien[1][1] = ((*(Iconv+2*tx) - (*Iconv)) - (*(Iconv+yp)-*(Iconv+ym)))/2.0;
+                  } else { 
+                      hessien[1][1] = ((*(Iconv+yp) - (*Iconv)) - (*(Iconv+yp)-*(Iconv+ym)))/2.0;
+                  }
+                  
+                  hessien[2][1] = 
+                      hessien[1][2] = ( (*(Iconv+yp+zp)-*(Iconv+zp)) -
+                                        (*(Iconv+yp+zm)-*(Iconv+zm))  )/2.0;
+                  
+                  hessien[2][2] = (
+                      *(Iconv+zp)    - 2*(*Iconv   ) + *(Iconv+zm) +
+                      *(Iconv+zp+yp) - 2*(*(Iconv+yp)) + *(Iconv+zm+yp)
+                      )/2.0;
+                  
+                  
+                  // Calcul de la base (e0, e1, e2):
+                  if ( ::FluxDiffusion::CurvaturasPrincipales(  hessien, 
+                                                                (float*) gradient, 
+                                                                (float*) vmax, 
+                                                                (float*) vmin, 
+                                                                &lmax, &lmin,
+                                                                1E-2) != -1 ) {
+                      e0.x = gradient[0]/norm_grad;
+                      e0.y = gradient[1]/norm_grad;
+                      e0.z = gradient[2]/norm_grad;
+                      e1.x = vmax[0]; e1.y = vmax[1]; e1.z = vmax[2];
+                      e2.x = vmin[0]; e2.y = vmin[1]; e2.z = vmin[2];
+                      isotropic = FALSE;
+                  } else { 
+                      /*
+                        fprintf(stderr,"CurvaturasPrincipales failed \n");
+                        fprintf(stderr,"  %d %d %d \n", x,y,z);
+                        fprintf(stderr," grad = %f %f %f \n", gradient[0], gradient[1], gradient[2]);
+                      */
+                  }
+              }
+              
+              if ( !(isotropic) ) {
+                  nbpts_anisotropic++;
+              } else { 
+                  nbpts_isotropic++;
+              }
+              
+              // Directional Derivatives
+              if ( !(isotropic) ) {
+                  u_e0 = grad.x*e0.x + grad.y*e0.y + grad.z*e0.z;
+                  u_e1 = grad.x*e1.x + grad.y*e1.y + grad.z*e1.z;
+                  u_e2 = grad.x*e2.x + grad.y*e2.y + grad.z*e2.z;
+                  
+                  alpha1_y = phi3D_0(u_e0)*e0.y*e0.y + 
+                      phi3D_1(u_e1)*e1.y*e1.y +
+                      phi3D_2(u_e2)*e2.y*e2.y;
+                  
+                  gamma1_y = (grad.x*e0.x + grad.z*e0.z)*phi3D_0(u_e0)*e0.y + 
+                      (grad.x*e1.x + grad.z*e1.z)*phi3D_1(u_e1)*e1.y +
+                      (grad.x*e2.x + grad.z*e2.z)*phi3D_2(u_e2)*e2.y;
+              } else { 
+                  alpha1_y = phi3D_1(grad.y);
+                  gamma1_y = 0;
+              }
+              
+              
+              //      printf("%d %d %d; 3 \n",x,y,z);
+              //----- Calcul de alpha1_z, gamma1_z 
+              grad.x = (*(in+xp) - *(in+xm) + *(in+xp+zp) - *(in+xm+zp))/4.0;
+              grad.y = (*(in+yp) - *(in+ym) + *(in+yp+zp) - *(in+ym+zp))/4.0; 
+              grad.z = *(in+zp)-*in;
+              
+              // Calcul du gradient, du hessien en (x,y,z+1/2)
+              gradient[0] = ((*(Iconv+xp)-*(Iconv+xm))+(*(Iconv+xp+zp)-*(Iconv+xm+zp)))/4.0;
+              gradient[1] = ((*(Iconv+yp)-*(Iconv+ym))+(*(Iconv+yp+zp)-*(Iconv+ym+zp)))/4.0;
+              gradient[2] = (*(Iconv+zp)- *(Iconv)    );
+              
+              
+              // Courbures principales
+              norm_grad =  sqrt(gradient[0]*gradient[0] + 
+                                gradient[1]*gradient[1] +
+                                gradient[2]*gradient[2]);
+              
+              isotropic = TRUE;
+              
+              if ( norm_grad > k*IsoCoeff ) {
+                  
+                  // Computing the Hessian matrix in (x,y,z+1/2)
+                  hessien[0][0] = ( *(Iconv+xp)    -2*(*Iconv    )+*(Iconv+xm    ) +
+                                    *(Iconv+xp+zp)-2*(*(Iconv+zp))+*(Iconv+xm+zp)
+                      )/2.0;
+                  
+                  hessien[1][0] = 
+                      hessien[0][1] = (
+                          (*(Iconv+xp+yp   )-*(Iconv+xm+yp   ))-
+                          (*(Iconv+xp+ym   )-*(Iconv+xm+ym   )) +
+                          (*(Iconv+xp+yp+zp)-*(Iconv+xm+yp+zp))-
+                          (*(Iconv+xp+ym+zp)-*(Iconv+xm+ym+zp)) 
+                          )/8.0;
+                  
+                  
+                  hessien[2][0] = 
+                      hessien[0][2] = ((*(Iconv+xp+zp)-*(Iconv+xm+zp))-
+                                       (*(Iconv+xp   )-*(Iconv+xm    )) )/2.0;
+                  
+                  hessien[1][1] = ( 
+                      *(Iconv+yp) - 2*(*Iconv) + *(Iconv+ym) +
+                      *(Iconv+yp+zp) - 2*(*(Iconv+zp)) + *(Iconv+ym+zp)
+                      )/2.0;
+                  
+                  hessien[2][1] = 
+                      hessien[1][2] = ( (*(Iconv+yp+zp)-*(Iconv+ym+zp)) -
+                                        (*(Iconv+yp   )-*(Iconv+ym    ))  )/2.0;
+                  
+                  
+                  if ( z1<tz-2 ) {
+                      hessien[2][2] = ((*(Iconv+2*txy)-*(Iconv    )) - 
+                                       (*(Iconv+  txy)-*(Iconv+zm))  )/2.0;
+                  } else { 
+                      hessien[2][2] = ((*(Iconv+zp)-*(Iconv    )) - 
+                                       (*(Iconv+zp)-*(Iconv+zm))  )/2.0;
+                  }
+                  
+                  // Calcul de la base (e0, e1, e2):
+                  if ( ::FluxDiffusion::CurvaturasPrincipales(  hessien, 
+                                                                (float*) gradient, 
+                                                                (float*) vmax, 
+                                                                (float*) vmin, 
+                                                                &lmax, &lmin,
+                                                                1E-2) != -1 ) {
+                      e0.x = gradient[0]/norm_grad;
+                      e0.y = gradient[1]/norm_grad;
+                      e0.z = gradient[2]/norm_grad;
+                      e1.x = vmax[0]; e1.y = vmax[1]; e1.z = vmax[2];
+                      e2.x = vmin[0]; e2.y = vmin[1]; e2.z = vmin[2];
+                      isotropic = FALSE;
+                  } else { 
+                      /*
+                        fprintf(stderr,"CurvaturasPrincipales failed \n");
+                        fprintf(stderr,"  %d %d %d \n", x,y,z);
+                        fprintf(stderr," grad = %f %f %f \n", gradient[0], gradient[1], gradient[2]);
+                      */
+                  }
+              }
+              
+              // Derivees directionnelles
+              if ( !(isotropic) ) {
+                  nbpts_anisotropic++;
+              } else { 
+                  nbpts_isotropic++;
+              }
+              
+              // Directional Derivatives
+              if ( !(isotropic) ) {
+                  u_e0 = grad.x*e0.x + grad.y*e0.y + grad.z*e0.z;
+                  u_e1 = grad.x*e1.x + grad.y*e1.y + grad.z*e1.z;
+                  u_e2 = grad.x*e2.x + grad.y*e2.y + grad.z*e2.z;
+                  
+                  alpha1_z = phi3D_0(u_e0)*e0.z*e0.z + 
+                      phi3D_1(u_e1)*e1.z*e1.z +
+                      phi3D_2(u_e2)*e2.z*e2.z;
+                  
+                  gamma1_z = (grad.x*e0.x + grad.y*e0.y)*phi3D_0(u_e0)*e0.z + 
+                      (grad.x*e1.x + grad.y*e1.y)*phi3D_1(u_e1)*e1.z +
+                      (grad.x*e2.x + grad.y*e2.y)*phi3D_2(u_e2)*e2.z;
+              } else { 
+                  alpha1_z = phi3D_2(grad.z);
+                  gamma1_z = 0;
+              }
+              
+              
+              //----- Mise a jour de l'image
+              
+              if ( x==0 ) {
+                  gamma_x = 0;
+                  alpha_x = 1;
+              }
+              if ( y == 0 ) {
+                  gamma_y[x] = 0;
+                  alpha_y[x] = 1;
+              }
+              if ( z == 0 ) {
+                  gamma_z[x][y] = 0;
+                  alpha_z[x][y] = 1;
+              }
+              
+              //      if ( x>0 && y>0 && z>0  ) {
+              
+              val1    =  beta**((float*)(this->im_tmp1->GetScalarPointer(x1,y1,z1)));
+              val1div =  beta;
+              
+              val1    += alpha1_x    * (*(in+xp  )) +
+                  alpha_x     * (*(in+xm  )) +
+                  gamma1_x  - gamma_x;
+              
+              val1div += alpha1_x + alpha_x;
+              
+              val1    += alpha1_y     * (*(in+yp )) +
+                  alpha_y[x]   * (*(in+ym )) +
+                  gamma1_y  - gamma_y[x];
+              
+              val1div += alpha1_y + alpha_y[x];
+              
+              val1    += alpha1_z      * (*(in+zp  )) +
+                  alpha_z[x][y] * (*(in+zm  )) +
+                  gamma1_z  - gamma_z[x][y];
+              
+              val1div += alpha1_z + alpha_z[x][y];
+              
+              if ( fabs(val1div)>1E-4 ) {
+                  val1 /= val1div;
+              } else { 
+                  fprintf(stderr,"AnisoGaussSeidel.c:Itere3D() \t fabs(val1div)<1E-4 ");
+                  fprintf(stderr,"%d %d %d \n",x1,y1,z1);
+                  val1 = *in;
+              }
+              
+              //      } else { 
+              
+              //         val1 = *in;
+              
+              //      }
+              
+              alpha_z[x][y] = alpha1_z;
+              alpha_y[x]    = alpha1_y;
+              alpha_x       = alpha1_x;
+              
+              gamma_z[x][y] = gamma1_z;
+              gamma_y[x]    = gamma1_y;
+              gamma_x       = gamma1_x;
+              
+              //    } else { 
+              
+              //      alpha_z[x][y] = 
+              //      alpha_y[x]    = 
+              //      alpha_x       = phi3D_1(0);
+              
+              //      gamma_z[x][y] = 
+              //      gamma_y[x]    = 
+              //      gamma_x       = 0;
+              
+              //    }
+              
+              
+              if ( fabs(val1-val0) > epsilon ) {
+                  nb_points_instables++;
+              }
+              
+              diff += (val1-val0)*(val1-val0);
+              if ( fabs(val1-val0) > erreur ) {
+                  erreur = fabs(val1-val0);
+                  erreur_x = x;
+                  erreur_y = y;
+                  erreur_z = z;
+              }
+              
+              *((float*)(outData->GetScalarPointer(x1,y1,z1))) = val1;
+              
+              in++;
+              Iconv++;
+              
+          }
+      }
+  }
   
-        Si z1<tz-2 Alors
-          hessien[2][2] = ((*(Iconv+2*txy)-*(Iconv    )) - 
-                           (*(Iconv+  txy)-*(Iconv+zm))  )/2.0;
-        Sinon
-          hessien[2][2] = ((*(Iconv+zp)-*(Iconv    )) - 
-                         (*(Iconv+zp)-*(Iconv+zm))  )/2.0;
-        FinSi
-
-        // Calcul de la base (e0, e1, e2):
-        Si ::FluxDiffusion::CurvaturasPrincipales(  hessien, 
-                 (float*) gradient, 
-                 (float*) vmax, 
-                 (float*) vmin, 
-                 &lmax, &lmin,
-                 1E-2) != -1 Alors
-          e0.x = gradient[0]/norm_grad;
-          e0.y = gradient[1]/norm_grad;
-          e0.z = gradient[2]/norm_grad;
-          e1.x = vmax[0]; e1.y = vmax[1]; e1.z = vmax[2];
-          e2.x = vmin[0]; e2.y = vmin[1]; e2.z = vmin[2];
-      isotropic = FALSE;
-        Sinon
-      /*
-          fprintf(stderr,"CurvaturasPrincipales failed \n");
-          fprintf(stderr,"  %d %d %d \n", x,y,z);
-          fprintf(stderr," grad = %f %f %f \n", gradient[0], gradient[1], gradient[2]);
-      */
-        FinSi
-      FinSi
-
-      // Derivees directionnelles
-      Si Non(isotropic) Alors
-      nbpts_anisotropic++;
-      Sinon
-      nbpts_isotropic++;
-      FinSi
-
-      // Directional Derivatives
-      Si Non(isotropic) Alors
-        u_e0 = grad.x*e0.x + grad.y*e0.y + grad.z*e0.z;
-        u_e1 = grad.x*e1.x + grad.y*e1.y + grad.z*e1.z;
-        u_e2 = grad.x*e2.x + grad.y*e2.y + grad.z*e2.z;
-
-        alpha1_z = phi3D_0(u_e0)*e0.z*e0.z + 
-                   phi3D_1(u_e1)*e1.z*e1.z +
-                   phi3D_2(u_e2)*e2.z*e2.z;
-
-        gamma1_z = (grad.x*e0.x + grad.y*e0.y)*phi3D_0(u_e0)*e0.z + 
-                   (grad.x*e1.x + grad.y*e1.y)*phi3D_1(u_e1)*e1.z +
-                   (grad.x*e2.x + grad.y*e2.y)*phi3D_2(u_e2)*e2.z;
-      Sinon
-    alpha1_z = phi3D_2(grad.z);
-        gamma1_z = 0;
-      FinSi
-
-
-      //----- Mise a jour de l'image
-
-      Si x==0 Alors
-    gamma_x = 0;
-        alpha_x = 1;
-      FinSi
-      Si y == 0 Alors
-    gamma_y[x] = 0;
-        alpha_y[x] = 1;
-      FinSi
-      Si z == 0 Alors
-    gamma_z[x][y] = 0;
-        alpha_z[x][y] = 1;
-      FinSi
-
-    //      Si x>0 Et y>0 Et z>0  Alors
-
-        val1    =  beta**((float*)(this->im_tmp1->GetScalarPointer(x1,y1,z1)));
-        val1div =  beta;
-
-        val1    += alpha1_x    * (*(in+xp  )) +
-                   alpha_x     * (*(in+xm  )) +
-                   gamma1_x  - gamma_x;
-
-        val1div += alpha1_x + alpha_x;
-  
-        val1    += alpha1_y     * (*(in+yp )) +
-                   alpha_y[x]   * (*(in+ym )) +
-                   gamma1_y  - gamma_y[x];
-
-        val1div += alpha1_y + alpha_y[x];
-
-        val1    += alpha1_z      * (*(in+zp  )) +
-                   alpha_z[x][y] * (*(in+zm  )) +
-                   gamma1_z  - gamma_z[x][y];
-
-        val1div += alpha1_z + alpha_z[x][y];
-    
-        Si fabs(val1div)>1E-4 Alors
-          val1 /= val1div;
-        Sinon
-          fprintf(stderr,"AnisoGaussSeidel.c:Itere3D() \t fabs(val1div)<1E-4 ");
-          fprintf(stderr,"%d %d %d \n",x1,y1,z1);
-          val1 = *in;
-        FinSi
-
-      //      Sinon
-
-      //         val1 = *in;
-    
-      //      FinSi
-
-      alpha_z[x][y] = alpha1_z;
-      alpha_y[x]    = alpha1_y;
-      alpha_x       = alpha1_x;
-
-      gamma_z[x][y] = gamma1_z;
-      gamma_y[x]    = gamma1_y;
-      gamma_x       = gamma1_x;
-
-      //    Sinon
-
-      //      alpha_z[x][y] = 
-      //      alpha_y[x]    = 
-      //      alpha_x       = phi3D_1(0);
-
-      //      gamma_z[x][y] = 
-      //      gamma_y[x]    = 
-      //      gamma_x       = 0;
-
-      //    FinSi
-
-
-    Si fabs(val1-val0) > epsilon Alors
-      nb_points_instables++;
-    FinSi
-
-    diff += (val1-val0)*(val1-val0);
-    Si fabs(val1-val0) > erreur Alors
-      erreur = fabs(val1-val0);
-      erreur_x = x;
-      erreur_y = y;
-      erreur_z = z;
-    FinSi
-
-    *((float*)(outData->GetScalarPointer(x1,y1,z1))) = val1;
-
-    in++;
-    Iconv++;
-
-  FinPour
-  FinPour
-  FinPour
-
 
     /*    
   fprintf(stderr," Pourcentage of isotropic points = %2.5f \n",
@@ -1771,7 +1748,7 @@ float vtkAnisoGaussSeidel::Iterate3D( vtkImageData *inData,  int inExt[6],
              gamma_y,gamma_z,
              inExt[1]-inExt[0]+1);
 
-  Retourne erreur;
+  return erreur;
 
 
 } // Iterate3D(in,out,outExt)
