@@ -7,8 +7,7 @@ vtkImageReader reader
   reader ReleaseDataFlagOff
   reader SetDataByteOrderToLittleEndian
   reader SetDataExtent 0 63 0 63 1 93
-  #reader SetFilePrefix ${VTK_DATA_ROOT}/Data/headsq/quarter
-  reader SetFilePrefix c:/downloads/vtk40/VTKData/Data/headsq/quarter
+  reader SetFilePrefix ${VTK_DATA_ROOT}/Data/headsq/quarter
   reader SetDataMask 0x7fff
 
 vtkImageMagnify mag
