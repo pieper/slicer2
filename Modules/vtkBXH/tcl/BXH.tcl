@@ -653,15 +653,15 @@ proc VolBXHCreateVolumeFromAnalyze {fileName} {
 
 #-------------------------------------------------------------------------------
 # .PROC VolBXHGetScanOrder 
-# Computes scan order 
+# Computes the scan order 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc VolBXHGetScanOrder {} {
     global VolBXH
- 
-    # Analyze file convention is the radiological convention - LAS system:
-    # +X = L
+
+    # BXH uses RAS system
+    # +X = R
     # +Y = A
     # +Z = S
  
@@ -710,9 +710,9 @@ proc VolBXHGetScanOrder {} {
     } elseif {$x == 0 && $y == 0 && $z == -1} {
         set so {SI}
     } elseif {$x == 1 && $y == 0 && $z == 0} {
-        set so {RL}
-    } elseif {$x == -1 && $y == 0 && $z == 0} {
         set so {LR}
+    } elseif {$x == -1 && $y == 0 && $z == 0} {
+        set so {RL}
     } elseif {$x == 0 && $y == 1 && $z == 0} {
         set so {PA}
     } elseif {$x == 0 && $y == -1 && $z == 0} {
