@@ -262,7 +262,7 @@ proc EndoscopicInit {} {
     set Module($m,category) "Visualisation"
     
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.87 $} {$Date: 2005/01/11 21:01:28 $}] 
+    {$Revision: 1.88 $} {$Date: 2005/01/18 21:41:42 $}] 
        
     # Define Procedures
     #------------------------------------
@@ -6619,20 +6619,27 @@ proc EndoscopicUpdateTargetsInFlatWindow {widget} {
 
                     for {set i 0} {$i < $numP} {incr i} {
                          set pid [lindex $list $i]
-                         set pointId [Point($pid,node) GetDescription]
+                         set pointIdT1 [Point($pid,node) GetDescription]
     #    puts "p was $pointId"     
-             set pointId [expr $pointId + $numP3D]
+             set pointIdT2 [expr $pointIdT1 + $numP3D]
         #       puts "p is $pointId"
                          set polyData $Endoscopic($name,polyData)
-                         set point(xyz) [$polyData GetPoint $pointId]
+                         set pointT1(xyz) [$polyData GetPoint $pointIdT1]
+             set pointT2(xyz) [$polyData GetPoint $pointIdT2]
 
              # find the position of the point
              
-             set x [lindex $point(xyz) 0]
-             set y [lindex $point(xyz) 1]
-             set z [lindex $point(xyz) 2]
+             set x1 [lindex $pointT1(xyz) 0]
+             set y1 [lindex $pointT1(xyz) 1]
+             set z1 [lindex $pointT1(xyz) 2]
+         
+         set x2 [lindex $pointT2(xyz) 0]
+             set y2 [lindex $pointT2(xyz) 1]
+             set z2 [lindex $pointT2(xyz) 2]
+
              
-             EndoscopicAddTargetInFlatWindow $widget $x $y $z
+             EndoscopicAddTargetInFlatWindow $widget $x1 $y1 $z1
+         EndoscopicAddTargetInFlatWindow $widget $x2 $y2 $z2
 
                     }
          }
