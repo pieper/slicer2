@@ -209,7 +209,7 @@ class VTK_FASTMARCHING_EXPORT vtkFastMarching : public vtkImageToImageFilter
   int addSeed( float r, float a, float s );
 
   void show(float r);
-
+/*
   char * cxxVersionString(void)
     {
       char *text = new char[100];
@@ -218,11 +218,13 @@ class VTK_FASTMARCHING_EXPORT vtkFastMarching : public vtkImageToImageFilter
       return text;
     }; 
 
-  int cxxMajorVersion(void)
+   int cxxMajorVersion(void)
     {
       return MAJOR_VERSION;
     };
-
+*/
+    char * cxxVersionString(void);
+    int cxxMajorVersion(void);
   void tweak(char *name, double value);
 
  protected:

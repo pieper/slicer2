@@ -1209,6 +1209,18 @@ void vtkFastMarching::unInit( void )
 }
 
 
+char *vtkFastMarching::cxxVersionString(void)
+{
+    char *text = new char[100];
+    
+    sprintf(text,"%d.%d \t(%s)",MAJOR_VERSION,MINOR_VERSION,DATE_VERSION);
+    return text;
+}
+
+int vtkFastMarching::cxxMajorVersion(void)
+{
+    return MAJOR_VERSION;
+}
 
 void vtkFastMarching::tweak(char *name, double value)
 {
