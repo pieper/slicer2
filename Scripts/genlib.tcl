@@ -447,16 +447,13 @@ if { ![file exists $gslTestFile] } {
             runcmd automake --add-missing --gnu
             runcmd autoconf
         } else {
-            # equivalent of autogen.sh with hack to make autoconf run on Solaris
+            # equivalent of autogen.sh with hack to make autoconf run on Solaris and RH 7.3.  
             runcmd libtoolize --automake
             runcmd aclocal
             runcmd automake --add-missing --gnu
-            if { $isSolaris } {
-                catch "runcmd autoconf -I ."
-                runcmd autoconf -I .
-            } else {
-                runcmd autoconf -I .
-            }
+        # autoconf will fail the first time, then succeed on RH 7.3 and Solaris 
+        catch "runcmd autoconf -I ."
+        runcmd autoconf -I .
         }   
         runcmd ./configure --prefix=$SLICER_LIB/gsl
         runcmd touch doc/version-ref.texi
