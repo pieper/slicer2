@@ -53,6 +53,7 @@ proc EdFastMarchingInit {} {
 
     set EdFastMarching(nExpand) 10
     set EdFastMarching(userExpand) 0
+    set EdFastMarching(totalExpand) 0
 
     set EdFastMarching(majorVersionTCL) 3
     set EdFastMarching(minorVersionTCL) 1
@@ -177,13 +178,13 @@ When satisfied with the segmentation use other editing modules on the labelmap (
 
     set f $Ed(EdFastMarching,frame).fTabbedFrame.fBasic.fUserExpand
 
-    eval {scale $f.sExpand -from 0 -to 100 \
-            -length 220 -variable EdFastMarching(userExpand) -resolution 1 \
+    eval {scale $f.sExpand -from 0.0 -to 1.0 \
+            -length 220 -variable EdFastMarching(userExpand) -resolution 1 -orient horizontal \
             -command "EdFastMarchingUserExpand $EdFastMarching(userExpand)"} \
-            $Gui(WSA) {-sliderlength 22}
-
+            $Gui(WSA) -showvalue true -digits 4 -resolution .01 {-sliderlength 22}
+    
+    $f.sExpand configure -to $EdFastMarching(totalExpand) 
     grid $f.sExpand -sticky w
-
     #-------------------------------------------
     # TabbedFrame->Advanced frame
     #-------------------------------------------
@@ -208,6 +209,38 @@ When satisfied with the segmentation use other editing modules on the labelmap (
     grid $f.lTextTCL $f.lTCL -padx 2 -pady $Gui(pad)
 }
 
+proc ConversiontomL {Voxels} {
+    global EdFastMarching Ed
+
+    set e EdFastMarching
+    set v [EditorGetInputID $Ed($e,input)]
+     
+    scan [Volume($v,node) GetSpacing] "%f %f %f" dx dy dz
+    set voxelvolume [expr $dx * $dy * $dz]
+    set conversion 1000
+      
+    set voxelamount [expr $Voxels * $voxelvolume]
+    set mL [expr round($voxelamount) / $conversion]
+
+    return $mL
+}
+
+proc ConversiontoVoxels {mL} {
+    global EdFastMarching Ed
+
+    set e EdFastMarching
+    set v [EditorGetInputID $Ed($e,input)]
+     
+    scan [Volume($v,node) GetSpacing] "%f %f %f" dx dy dz
+    set voxelvolume [expr $dx * $dy * $dz]
+    set conversion 1000
+      
+    set voxelamount [expr $mL / $voxelvolume]
+    set Voxels [expr round($voxelamount) * $conversion]
+
+    return $Voxels
+}
+
 proc EdFastMarchingUserExpand {zero userExpand} {
     global EdFastMarching
 
@@ -222,8 +255,10 @@ proc EdFastMarchingUserExpand {zero userExpand} {
 
         EdSetupBeforeApplyEffect $v $Ed($e,scope) Native
         Ed(editor)  UseInputOn
-          
-        EdFastMarching(FastMarching) show [expr $userExpand/100.0]
+        
+    if {$EdFastMarching(totalExpand) > 0} {
+        EdFastMarching(FastMarching) show [expr $userExpand/$EdFastMarching(totalExpand)]
+    }
 
         Ed(editor)  SetInput ""
         Ed(editor)  UseInputOff
@@ -245,21 +280,16 @@ proc EdFastMarchingExpand {} {
         return
     }      
 
-    set e EdFastMarching
-    set v [EditorGetInputID $Ed($e,input)]
-     
-    scan [Volume($v,node) GetSpacing] "%f %f %f" dx dy dz
-    set voxelvolume [expr $dx * $dy * $dz]
-    set conversion 1000
-      
-    set EdFastMarching(voxelamount) [expr $EdFastMarching(nExpand) / $voxelvolume]
-    set EdFastMarching(voxelnumber) [expr round($EdFastMarching(voxelamount)) * $conversion]
-
-    EdFastMarching(FastMarching) setNPointsEvolution $EdFastMarching(voxelnumber)
+    set voxelnumber [ConversiontoVoxels $EdFastMarching(nExpand)] 
+    EdFastMarching(FastMarching) setNPointsEvolution $voxelnumber
 
     EdFastMarchingSegment
-
-    set EdFastMarching(userExpand) 100
+    
+    set f $Ed(EdFastMarching,frame).fTabbedFrame.fBasic.fUserExpand
+    
+    set EdFastMarching(totalExpand) [expr $EdFastMarching(nExpand) + $EdFastMarching(userExpand)]
+    $f.sExpand configure -to $EdFastMarching(totalExpand)
+    set EdFastMarching(userExpand) [expr $EdFastMarching(totalExpand)] 
     EdFastMarchingUserExpand 0 $EdFastMarching(userExpand)
 }
 
@@ -419,8 +449,8 @@ proc EdFastMarchingSegment {} {
     return
     }
    
-    if {[ValidateInt $EdFastMarching(nExpand)] == 0} {
-    tk_messageBox -message "Expansion is not an integer !"
+    if {[ValidateFloat $EdFastMarching(nExpand)] == 0} {
+    tk_messageBox -message "Expansion is not a valid number !"
     return
     } 
   
