@@ -154,7 +154,7 @@ proc FluxDiffusionInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.7 $} {$Date: 2003/12/10 23:57:39 $}]
+        {$Revision: 1.8 $} {$Date: 2004/01/27 17:50:49 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -173,8 +173,10 @@ proc FluxDiffusionInit {} {
     set FluxDiffusion(Iterations)    "5"
     set FluxDiffusion(IsoCoeff)      "0.2"
     set FluxDiffusion(TruncNegValues)  "1"
-    vtkMultiThreader v
-    set FluxDiffusion(NumberOfThreads) [v GetGlobalDefaultNumberOfThreads]
+
+    vtkMultiThreader FluxDiffusion(vtk,v)
+    set FluxDiffusion(NumberOfThreads)   [FluxDiffusion(vtk,v) GetGlobalDefaultNumberOfThreads]
+    FluxDiffusion(vtk,v) Delete
 
     set FluxDiffusion(TangCoeff)     "1"
 
