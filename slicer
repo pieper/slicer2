@@ -24,8 +24,6 @@ endif
 setenv VTK_SRC_DIR /usr/local/src/vtk4/VTK/Wrapping/Tcl
 setenv TCLLIBPATH "${SLICER_HOME}/Base/Wrapping/Tcl/vtkSlicerBase /usr/local/src/vtk4/VTK/Wrapping/Tcl ${TCLLIBPATH}"
 
-setenv SLICER_LOCAL 0
-
 echo TCL_LIBRARY  is $TCL_LIBRARY
 echo TK_LIBRARY  is $TK_LIBRARY
 echo SLICER_HOME  is $SLICER_HOME
