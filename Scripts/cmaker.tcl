@@ -25,7 +25,6 @@ exec tclsh "$0" "$@"
 switch $tcl_platform(os) {
     "SunOS" {
         set SLICER_HOME /projects/birn/nicole/slicer2
-        set VTK_BINARY_PATH /projects/birn/slicer2/Lib/solaris8/vtk/VTK-build-4.2.2
         set VTK_DIR /projects/birn/slicer2/Lib/solaris8/vtk/VTK-build-4.2.2
         set ITK_BINARY_PATH /projects/birn/itk/itk-1.2/itk-build
         set BUILD solaris8
@@ -36,8 +35,6 @@ switch $tcl_platform(os) {
     }
     "Linux" {
         set SLICER_HOME /home/nicole/slicer2
-        # set VTK_BINARY_PATH /home/pieper/downloads/vtk/VTK-build
-        set VTK_BINARY_PATH /usr/local/include/vtk
         set ITK_BINARY_PATH /home/pieper/downloads/itk/itk-build
         set BUILD redhat7.3
         set VTKSLICERBASE_BUILD_LIB $SLICER_HOME/Base/builds/$BUILD/bin/vtkSlicerBase.so
@@ -47,7 +44,6 @@ switch $tcl_platform(os) {
     }
     "Darwin" {
         set SLICER_HOME /Users/pieper/slicer2/latest/slicer2
-        set VTK_BINARY_PATH /Users/pieper/downloads/vtk/vtk4.2/VTK-4.2.1-build
         set ITK_BINARY_PATH /Users/pieper/downloads/itk/itk-build
         set VTK_SRC_PATH /Users/pieper/downloads/vtk/vtk4.2/VTK-4.2.1
         set BUILD Darwin
@@ -61,10 +57,11 @@ switch $tcl_platform(os) {
         # that if it doesn't match above it must be windows
         # (VC7 is Visual C++ 7.0, also known as the .NET version)
 
-        set SLICER_HOME c:/pieper/bwh/slicer2/slicer2.1/slicer2
-        set VTK_BINARY_PATH c:/downloads/vtk/VTK-4.2.2-build
-        set ITK_BINARY_PATH "c:/downloads/itk/InsightToolkit-1.2.0-build"
         set BUILD Win32VC7
+        set SLICER_HOME c:/pieper/bwh/slicer2/latest/slicer2
+        set VTK_DIR c:/downloads/vtk/build
+        #set VTK_DIR $SLICER_HOME/Lib/$BUILD/vtk/VTK-4.2.2-build
+        set ITK_BINARY_PATH "c:/downloads/itk/itk-build"
         set VTKSLICERBASE_BUILD_LIB $SLICER_HOME/Base/builds/$BUILD/bin/debug/vtkSlicerBase.lib
         set GENERATOR "Visual Studio 7" 
         set COMPILER "cl"
@@ -74,7 +71,7 @@ switch $tcl_platform(os) {
 
 # use an already built version of vtk
 set VTK_ARG1 "-DUSE_BUILT_VTK:BOOL=ON"
-set VTK_ARG2 "-DVTK_BINARY_PATH:PATH=$VTK_BINARY_PATH"
+set VTK_ARG2 "-DVTK_DIR:PATH=$VTK_DIR"
 switch $tcl_platform(os) {
     "SunOS" {
         # in order to bypass warnings about Source files
@@ -132,8 +129,11 @@ set CLEANFLAG 0
 foreach dir $modulePaths {
     if { ![file isdirectory $dir] } {continue}
     set moduleName [file tail $dir]
-    # if it's not the custom one (the example) but starts with vtk, append it to the list of targets
-    if { [string match "vtk*" $moduleName] && ![string match "*CustomModule*" $moduleName] } {
+    # if it's not the custom one (the example) 
+    # but starts with vtk and has some c++ code, append it to the list of targets
+    if { [string match "vtk*" $moduleName] 
+            && ![string match "*CustomModule*" $moduleName] 
+            && [file exists $dir/cxx] } {
         lappend TARGETS $dir
     }
 }
@@ -172,18 +172,21 @@ foreach t $TARGETS {
 }
 puts ""
 
-
+# clean all first if needed
+if { $CLEANFLAG } {
+    foreach target $TARGETS {
+        set build $target/builds/$BUILD 
+        puts "Deleting $build"
+        catch "file delete -force $build"
+    }
+}
 
 foreach target $TARGETS {
 
     puts "\n----\nprocessing $target..."
 
-    #set build $SLICER_HOME/$target/builds/$BUILD 
     set build $target/builds/$BUILD 
-    if {$CLEANFLAG } {
-        puts "Deleting $build"
-        catch "file delete -force $build"
-    }
+
     catch "file mkdir $build"
     cd $build
     puts "enter directory $build..."
