@@ -67,6 +67,7 @@ if {[catch {
 set env(VTK_SRC_DIR) ${env(SLICER_HOME)}/Lib/${env(BUILD)}/vtk/VTK
 set env(VTK_BIN_DIR) ${env(SLICER_HOME)}/Lib/${env(BUILD)}/vtk/VTK-build
 set env(TCL_BIN_DIR) ${env(SLICER_HOME)}/Lib/${env(BUILD)}/ActiveTcl-8.4.1/bin
+set env(TCL_LIB_DIR) ${env(SLICER_HOME)}/Lib/${env(BUILD)}/ActiveTcl-8.4.1/bin
 
 
 #
@@ -80,7 +81,7 @@ switch $env(BUILD) {
         # add slicer bins
         set env(LD_LIBRARY_PATH) $env(SLICER_HOME)/Base/builds/$env(BUILD)/bin:$env(LD_LIBRARY_PATH)
         # add tcl bins
-        set env(LD_LIBRARY_PATH) $env(TCL_BIN_DIR):$env(LD_LIBRARY_PATH)
+        set env(LD_LIBRARY_PATH) $env(TCL_LIB_DIR):$env(LD_LIBRARY_PATH)
     }
     "Win32VC7" {
         # add vtk bins
@@ -122,8 +123,7 @@ foreach dir $modulePaths {
 }
 
 
-set msg "
-Slicer is an experimental software package.
+set msg "Slicer is an experimental software package.
 Any human use requires proper research controls.  
 Clicking \"Ok\" below binds you to the license agreement.
 See www.slicer.org for details.
