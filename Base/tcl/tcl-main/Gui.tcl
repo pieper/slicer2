@@ -58,7 +58,7 @@ proc GuiInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo Gui \
-		{$Revision: 1.30 $} {$Date: 2001/12/26 15:23:39 $}]
+		{$Revision: 1.31 $} {$Date: 2001/12/26 15:31:54 $}]
 
         # Are we running under Windows?
 	if {$tcl_platform(platform) == "windows"} {
@@ -83,8 +83,7 @@ proc GuiInit {} {
 	} else {
 	    # make font larger for Linux display
 	    if {$Gui(linux) == 1} {
-		set Gui(largeFont) 0
-		set Gui(smallFont) 1
+		set Gui(largeFont) 1
 	    }
 	}
 
