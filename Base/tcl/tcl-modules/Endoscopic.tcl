@@ -259,7 +259,7 @@ proc EndoscopicInit {} {
     set Module($m,category) "Visualisation"
     
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.67 $} {$Date: 2004/10/06 18:40:55 $}] 
+    {$Revision: 1.68 $} {$Date: 2004/10/08 17:37:53 $}] 
        
     # Define Procedures
     #------------------------------------
@@ -5208,8 +5208,7 @@ proc EndoscopicCreateFlatBindings {widget} {
  #    bind $widget <ButtonRelease-1> {puts Button}
  #    bind $widget <KeyPress-c> {EndoscopicPickFlatPoint %W %x %y}
 
-    EvDeclareEventHandler FlatWindowEvents <Double-Any-ButtonPress> {EndoscopicPickFlatPoint %W %x %y; \
-    EndoscopicAddTargetFromFlatColon $Select(cellId)}
+    EvDeclareEventHandler FlatWindowEvents <Double-Any-ButtonPress> {EndoscopicPickFlatPoint %W %x %y}
  #test   
     EvDeclareEventHandler FlatMotionEvents <Motion> {EndoscopicMouseLocation %W %x %y}
 
@@ -5252,18 +5251,37 @@ proc EndoscopicPickFlatPoint {widget xcoord ycoord} {
     
     vtkCellPicker TempCellPicker
     TempCellPicker SetTolerance 0.001
-
-    if {[SelectPick TempCellPicker $widget $xcoord $ycoord]} {
+    
+    
+#get the target coordinates in the flat window and draw a vertical red target line
+    if {[SelectPick TempCellPicker $widget $xcoord $ycoord] != 0} {
     
     set fx [lindex $Select(xyz) 0]
-#test 
-puts "fx is $fx"
     
     EndoscopicAddTargetInFlatWindow $widget $fx
     
-    }
+#get the picked pointId from the picker, and pass the pointId to the 3D model in slicer
+
+    set name $Endoscopic(name)  
+    set polyData $Endoscopic($name,polyData)
+       
+    vtkPointLocator tempPointLocator
+    tempPointLocator SetDataSet $polyData
+
+    set x [lindex $Select(xyz) 0]
+    set y [lindex $Select(xyz) 1]
+    set z [lindex $Select(xyz) 2]
     
+    set pointId [tempPointLocator FindClosestPoint $x $y $z]
+       
+    EndoscopicAddTargetFromFlatColon $pointId
+            
+    } else {
+    return
+    }
+   
     TempCellPicker Delete
+    tempPointLocator Delete
 }
 
 #-------------------------------------------------------------------
@@ -5309,7 +5327,7 @@ proc EndoscopicAddTargetInFlatWindow {widget x} {
 # corresponds to the location selected on the flattened colon
 #-------------------------------------------------------------------
 
-proc EndoscopicAddTargetFromFlatColon {ScellId} {
+proc EndoscopicAddTargetFromFlatColon {pointId} {
 
     global Endoscopic Point Fiducials Select Model View Path Slice
     
@@ -5320,18 +5338,17 @@ proc EndoscopicAddTargetFromFlatColon {ScellId} {
     return
     }    
     
-        set cellId $ScellId
+        set pointId $pointId
 
-puts "cellId from FlatColon is $cellId"
+puts "pointId from FlatColon is $pointId"
 
-# get the active actor   
+# get the xyz coordinates of the point (picked from the flat colon) in the 3D colon.  
        set model $Model(activeID)
        if {$model != ""} {
 
        set polyData $Model($model,polyData)
-       set cell [$polyData GetCell $cellId]
-       set points [$cell GetPoints]
-       set Select(xyz) [$points GetPoint 1]
+       
+       set point(xyz) [$polyData GetPoint $pointId]
 
        set actor Model($model,actor,viewRen)
 
@@ -5354,7 +5371,7 @@ puts "cellId from FlatColon is $cellId"
     set pidCoord [FiducialsGetPointCoordinates $pid]
     set dist 0
       for {set ii 0} {$ii<3} {incr ii} {
-      set diff [expr [lindex $Select(xyz) $ii] - [lindex $pidCoord $ii]]
+      set diff [expr [lindex $point(xyz) $ii] - [lindex $pidCoord $ii]]
       set diff [expr $diff * $diff]
       set dist [expr $dist + $diff]
       }
@@ -5370,14 +5387,14 @@ puts "cellId from FlatColon is $cellId"
     set minDistIndex [lsearch -exact $oldlist $mindist]
     set closestPid [lindex $list $minDistIndex]
 
-# change the FXYZ of the closestPid to the coordinates of Select(xyz) obtained from the cellId of the picked point.
-    set fx [lindex $Select(xyz) 0]
-    set fy [lindex $Select(xyz) 1]
-    set fz [lindex $Select(xyz) 2]
+# change the FXYZ of the closestPid to the coordinates of point(xyz) obtained from the picked point.
+    set fx [lindex $point(xyz) 0]
+    set fy [lindex $point(xyz) 1]
+    set fz [lindex $point(xyz) 2]
 
     Point($closestPid,node) SetFXYZ $fx $fy $fz
-# use the SetDescription to store and save $cellId information.
-    Point($closestPid,node) SetDescription $cellId
+# use the SetDescription to store and save $pointId information.
+    Point($closestPid,node) SetDescription $pointId
 
     MainUpdateMRML
     
@@ -5413,13 +5430,11 @@ proc EndoscopicAddTargetFromSlices {x y z} {
     return
     }
 
-    
+# get the pointId from the 3D model    
     if {[info exists Select(actor)] != 0} {
         set actor $Select(actor)
-        set cellId $Select(cellId)
     } else {
         set actor ""
-        set cellId ""
     }
 
      set model $Model(activeID)
@@ -5427,19 +5442,13 @@ proc EndoscopicAddTargetFromSlices {x y z} {
      set polyData $Model($model,polyData)
      }
    
-    set Select(xyz) [list $x $y $z]
+     vtkPointLocator tempPointLocator
+     tempPointLocator SetDataSet $polyData
 
-    vtkPointLocator tempPointLocator
-    tempPointLocator SetDataSet $polyData
+     set pointId [tempPointLocator FindClosestPoint $x $y $z]
+     set point(xyz) [$polyData GetPoint $pointId]
 
-    set pointid [tempPointLocator FindClosestPoint $x $y $z]
-
-    vtkIdList cellList
-    $polyData GetPointCells $pointid cellList
-# for now: choose the 1st cell in that list
-    set cellId [cellList GetId 0]
-    set $Select(cellId) $cellId
-puts "cellId from Slices is: $Select(cellId)"
+puts "pointId from Slices is: $pointId"
 
 #  active list (should be the default path just created from the automatic tab)
     set fid $Fiducials($Fiducials(activeList),fid)
@@ -5457,7 +5466,7 @@ puts "cellId from Slices is: $Select(cellId)"
     set pidCoord [FiducialsGetPointCoordinates $pid]
     set dist 0
       for {set ii 0} {$ii<3} {incr ii} {
-      set diff [expr [lindex $Select(xyz) $ii] - [lindex $pidCoord $ii]]
+      set diff [expr [lindex $point(xyz) $ii] - [lindex $pidCoord $ii]]
       set diff [expr $diff * $diff]
       set dist [expr $dist + $diff]
       }
@@ -5473,17 +5482,15 @@ puts "cellId from Slices is: $Select(cellId)"
     set minDistIndex [lsearch -exact $oldlist $mindist]
     set closestPid [lindex $list $minDistIndex]
     
-# change the FXYZ of the closestPid to the coordinates of Select(xyz) obtained from the picked point.
-    set fx [lindex $Select(xyz) 0]
-    set fy [lindex $Select(xyz) 1]
-    set fz [lindex $Select(xyz) 2]
+# change the FXYZ of the closestPid to the coordinates of point(xyz) obtained from the picked point.
+    set fx [lindex $point(xyz) 0]
+    set fy [lindex $point(xyz) 1]
+    set fz [lindex $point(xyz) 2]
 
     Point($closestPid,node) SetFXYZ $fx $fy $fz
 # use the SetDescription to store and save $cellId information.
-    Point($closestPid,node) SetDescription $cellId
+    Point($closestPid,node) SetDescription $pointId
     
-puts "cellId from 2D slices is: $cellId"
-
     MainUpdateMRML
     
     EndoscopicFiducialsPointSelectedCallback $fid $closestPid
@@ -5495,7 +5502,6 @@ puts "cellId from 2D slices is: $cellId"
     Render3D
     
 tempPointLocator Delete
-cellList Delete
 
 # reset the driver to user
     set driver User
@@ -5543,10 +5549,24 @@ proc EndoscopicAddTargetFromWorldCoordinates {sx sy sz cellId} {
         set cellId ""
     }
 
-      set Select(xyz) [list $sx $sy $sz]
-      set Select(cellId) $cellId
-puts "cellId from 3D is: $Select(cellId)"
+     set Select(xyz) [list $sx $sy $sz]
+      
+     set model $Model(activeID)
+     if {$model != ""} {
+     set polyData $Model($model,polyData)
+     }
+   
+     vtkPointLocator tempPointLocator
+     tempPointLocator SetDataSet $polyData
 
+     set pointId [tempPointLocator FindClosestPoint $sx $sy $sz]
+     set point(xyz) [$polyData GetPoint $pointId]
+
+puts "pointId from Slices is: $pointId"
+
+      tempPointLocator Delete
+      
+# get active path-fiducial list
       set fid $Fiducials($Fiducials(activeList),fid)
       set listName $Fiducials(activeList)
 
@@ -5562,7 +5582,7 @@ puts "cellId from 3D is: $Select(cellId)"
         set pidCoord [FiducialsGetPointCoordinates $pid]
         set dist 0
         for {set ii 0} {$ii<3} {incr ii} {
-        set diff [expr [lindex $Select(xyz) $ii] - [lindex $pidCoord $ii]]
+        set diff [expr [lindex $point(xyz) $ii] - [lindex $pidCoord $ii]]
         set diff [expr $diff * $diff]
         set dist [expr $dist + $diff]
      }
@@ -5578,14 +5598,14 @@ puts "cellId from 3D is: $Select(cellId)"
     set minDistIndex [lsearch -exact $oldlist $mindist]
     set closestPid [lindex $list $minDistIndex]
 
-# change the FXYZ of the closestPid to the coordinates of Select(xyz) obtained from the picked point.
-    set fx [lindex $Select(xyz) 0]
-    set fy [lindex $Select(xyz) 1]
-    set fz [lindex $Select(xyz) 2]
+# change the FXYZ of the closestPid to the coordinates of point(xyz) obtained from the picked point.
+    set fx [lindex $point(xyz) 0]
+    set fy [lindex $point(xyz) 1]
+    set fz [lindex $point(xyz) 2]
 
     Point($closestPid,node) SetFXYZ $fx $fy $fz    
 # use the SetDescription to store and save $cellId information.
-    Point($closestPid,node) SetDescription $cellId
+    Point($closestPid,node) SetDescription $pointId
     
     MainUpdateMRML
 
@@ -5695,8 +5715,8 @@ proc EndoscopicCreateTargets {} {
 # save its XYZ FXYZ (Note: Camera fp_actor location is not always the same as the FXYZ of the Point)
     set savedFXYZ [Point($pid,node) GetFXYZ] 
     set savedXYZ [Point($pid,node) GetXYZ]
-# save its cellId
-    set cellId [Point($pid,node) GetDescription]
+# save its pointId
+    set pointId [Point($pid,node) GetDescription]
    
 # append the listname with "-targets"
     set listname $Fiducials($fid,name)
@@ -5744,7 +5764,7 @@ proc EndoscopicCreateTargets {} {
     set index [expr $index + 1]
     Point($targetpid,node) SetName [concat $Fiducials($targetfid,name) $index]
 # use the SetDescription to store and save $cellId information.
-    Point($targetpid,node) SetDescription $cellId
+    Point($targetpid,node) SetDescription $pointId
 
     MainUpdateMRML
 
@@ -5753,7 +5773,7 @@ proc EndoscopicCreateTargets {} {
     set Endoscopic(totalTargets) [llength $Fiducials($targetfid,pointIdList)]
     set Endoscopic(selectedTarget) $index
 
-puts " Target $index, cellId is $cellId"
+puts " Target $index, pointId is $pointId"
 }
 
 #-------------------------------------------------------------------------------------
@@ -5937,16 +5957,12 @@ proc EndoscopicSelectTarget {sT} {
     
     set widget .t$name.fView.flatRenderWidget$name
    
-    set cellId [Point($pid,node) GetDescription]
+    set pointId [Point($pid,node) GetDescription]
     
     set polyData $Endoscopic($name,polyData)
-    set cell [$polyData GetCell $cellId]
-    set points [$cell GetPoints]
-    set point1 [$points GetPoint 0]
-    set point2 [$points GetPoint 1]
-    set point3 [$points GetPoint 2]
+    set point(xyz) [$polyData GetPoint $pointId]
 
-    set camx [expr [expr [expr [lindex $point1 0]+[lindex $point2 0]]+[lindex $point2 0]]/3]
+    set camx [lindex $point(xyz) 0]
 
     set position [$Endoscopic($name,camera) GetPosition]
   
@@ -6073,20 +6089,15 @@ puts "widget is $widget, name is $name"
 
                     for {set i 0} {$i < $numP} {incr i} {
                          set pid [lindex $list $i]
-                         set cellId [Point($pid,node) GetDescription]
+                         set pointId [Point($pid,node) GetDescription]
        
                          set polyData $Endoscopic($name,polyData)
-                         set cell [$polyData GetCell $cellId]
+                         set point(xyz) [$polyData GetPoint $pointId]
     #test         
     set dummy [expr $i +1]     
-    puts "target $dummy , cellId is $cellId"
+    puts "target $dummy , pointId is $pointId"
     #test end     
-                         set points [$cell GetPoints]
-                         set point1 [$points GetPoint 0]
-                         set point2 [$points GetPoint 1]
-                         set point3 [$points GetPoint 2]
-             
-                         set x [expr [expr [expr [lindex $point1 0]+[lindex $point2 0]]+[lindex $point2 0]]/3]
+                         set x [lindex $point(xyz) 0]
 
                          set count $Endoscopic($name,lineCount)
                          set renderer [[[$widget GetRenderWindow] GetRenderers] GetItemAsObject 0]
