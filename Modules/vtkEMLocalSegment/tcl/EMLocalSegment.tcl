@@ -231,7 +231,12 @@ proc EMSegmentInit {} {
     set Module($m,procExit)  EMSegmentExit
     set Module($m,procMRML)  EMSegmentUpdateMRML
     set Module($m,procMRMLLoad)  EMSegmentLoadMRML
-    MainMrmlAppendnodeTypeList "Segmenter EndSegmenter SegmenterGraph SegmenterInput SegmenterSuperClass EndSegmenterSuperClass SegmenterClass  EndSegmenterClass SegmenterCIM SegmenterPCAEigen"  
+    # Initialize values 
+    set EMSegment(MrmlNode,TypeList) "Segmenter EndSegmenter SegmenterGraph SegmenterInput SegmenterSuperClass EndSegmenterSuperClass"
+    set EMSegment(MrmlNode,TypeList) "$EMSegment(MrmlNode,TypeList) SegmenterClass EndSegmenterClass SegmenterCIM SegmenterPCAEigen"
+
+    MainMrmlAppendnodeTypeList "$EMSegment(MrmlNode,TypeList)"
+
 
     # Define Dependencies
     #------------------------------------
@@ -249,7 +254,7 @@ proc EMSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.42 $} {$Date: 2004/09/25 12:14:30 $}]
+        {$Revision: 1.43 $} {$Date: 2004/10/05 18:16:31 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -360,7 +365,7 @@ proc EMSegmentInit {} {
     #    lappend EMSegment(ColorLabelList) [lindex [Color(1,node) GetLabels] 0]
     # It is always <color> <corresponding label> 
     set EMSegment(ColorLabelList) [list #ffccb2 2 #ffffff 3 #66b2ff 4 #e68080 5 #80e680 6 #80e6e6 7 #e6e680 8 #e6b2e6 9 #e6e680 10]
-
+                   
     # EMSegment(MenuColor,$Color) :
     # -2  = Has not been displayed in list or assigned in class
     # -1  = Has been assigned to class
@@ -400,13 +405,13 @@ proc EMSegmentInit {} {
         set EMSegment(Graph,$i,Ysca) 0.5
         set EMSegment(Graph,$i,Ymin) 0.0
         set EMSegment(Graph,$i,Ymax) 1.0
-    set EMSegment(Graph,$i,Yfor) "%0.2f"
+        set EMSegment(Graph,$i,Yfor) "%0.2f"
         set EMSegment(Graph,$i,Dimension) 1
       } else {
         set EMSegment(Graph,$i,Ysca) $EMSegment(Graph,$i,Xsca)
         set EMSegment(Graph,$i,Ymin) $EMSegment(Graph,$i,Xmin)
         set EMSegment(Graph,$i,Ymax) $EMSegment(Graph,$i,Xmax)
-      set EMSegment(Graph,$i,Yfor) "%3.0f"
+        set EMSegment(Graph,$i,Yfor) "%3.0f"
         set EMSegment(Graph,$i,Dimension) 2
         # The Minimum Display value that should be displayed in the graph
         # Leave it away right now set EMSegment(Graph,MinDisplayValue,$i) 0.000000001  
@@ -436,6 +441,21 @@ proc EMSegmentInit {} {
 
     set EMSegment(SuperClass) -1
     set EMSegment(NumClassesNew) 1
+                   
+    foreach NodeType $EMSegment(MrmlNode,TypeList) {
+        switch $NodeType {
+            SegmenterGraph -
+            SegmenterInput -
+            SegmenterSuperClass -
+            SegmenterClass -
+            SegmenterCIM {set AddSetCommandList "SetName"}
+        default {set AddSetCommandList ""}
+    }
+    set blubList [EMSegmentDefineNodeAttributeList $NodeType "$AddSetCommandList"]
+     set EMSegment(MrmlNode,$NodeType,SetList)       [lindex $blubList 0]
+     set EMSegment(MrmlNode,$NodeType,SetListLower)  [lindex $blubList 1]
+     set EMSegment(MrmlNode,$NodeType,AttributeList) [lindex $blubList 2]
+    }
 
     EMSegmentCreateDeleteClasses 0 1 1 
     # Set Head Class to superclass
@@ -473,6 +493,7 @@ proc EMSegmentInit {} {
                 {$widget  <Leave>            {MainInteractorExit %W;EMSegmentBindingCallback Leave   %x %y}} \
                 {$widget  <Enter>            {MainInteractorEnter %W %x %y;EMSegmentBindingCallback Enter %x %y}} "
     }
+    puts "--------- EndSegmenterInit"
 
 }
 
@@ -505,6 +526,7 @@ proc EMSegmentBuildGUI {} {
     global Gui EMSegment Module Volume Model
     # This has to be done here otherwise reboot does not work correctly
     set EMSegment(DisplaySampleFlag) 0
+    puts "EMSegmentBuildGUI Start"
 
     # Initialize Gui variables
     set EMSegment(mbEraseSample) ""
@@ -1532,30 +1554,38 @@ proc EMSegmentBindingCallback { event x y} {
     }
 }
 
-
-
-proc EMSegmentLoadMRMLNode {NodeType attr AddSetCommandList } {
-    global Mrml  
+# Filters out all the SetCommands of a node 
+proc EMSegmentDefineNodeAttributeList {MrmlNodeType AddSetCommandList} {
     set SetList ""          
     set SetListLower ""
-    set n [MainMrmlAddNode $NodeType]
-    set nMethods [$n ListMethods] 
-
+    set AttributeList ""
+    vtkMrml${MrmlNodeType}Node blub
+    set nMethods [blub ListMethods] 
+    blub Delete
     # Cut out everyhting than it is not directly connected with the MrmlSegmenterNode!  
-    # If you want to chnage it just take the SetOptions out - that is why I am duing it 
-    set nMethods "[lrange $nMethods [expr [lsearch $nMethods vtkMrml${NodeType}Node:]+ 1] end] $AddSetCommandList"
+    # If you want to change it just take the SetOptions out - that is why I am duing it 
+    set nMethods "[lrange $nMethods [expr [lsearch $nMethods vtkMrml${MrmlNodeType}Node:]+ 1] end] $AddSetCommandList"
     foreach index [lsearch -glob -all $nMethods  Set*] {
         set SetCommand  [lindex $nMethods $index]
         lappend SetList $SetCommand
         lappend SetListLower [string tolower $SetCommand] 
+        lappend AttributeList [string range $SetCommand 3 end] 
     }
+    return "{$SetList} {$SetListLower} {$AttributeList}" 
+}
+
+# Loads Mrml parameters of a certain type
+proc EMSegmentLoadMRMLNode {NodeType attr} {
+    global Mrml EMSegment
+    set n [MainMrmlAddNode $NodeType]
+ 
     foreach a $attr {
         set key [lindex $a 0]
         set val [lreplace $a 0 0]
-        set CommandIndex [lsearch $SetListLower set[string tolower $key]]
+        set CommandIndex [lsearch $EMSegment(MrmlNode,$NodeType,SetListLower) set[string tolower $key]]
         
         if {$CommandIndex > -1} {
-           if {[catch {eval $n [lindex $SetList $CommandIndex] $val}] } {$n [lindex $SetList $CommandIndex] $val }}
+           if {[catch {eval $n [lindex $EMSegment(MrmlNode,$NodeType,SetList) $CommandIndex] $val}] } {$n [lindex $EMSegment(MrmlNode,$NodeType,SetList) $CommandIndex] $val }}
     }
     return $n
 }
@@ -1570,62 +1600,30 @@ proc EMSegmentLoadMRMLNode {NodeType attr AddSetCommandList } {
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentLoadMRML {tag attr} {
-  global Mrml 
+  global Mrml EMSegment
 
   # Just note : The tree does not know anything about dependencies / hierarchy 
   # between different nodes - it is not really a tree but a list of nodes 
   # where when we printed out the vtkIndent indent variables is just set so it looks 
   # like we have a tree structure   
-  switch $tag {
-    "Segmenter" {
-        set n [EMSegmentLoadMRMLNode Segmenter "$attr" "" ]
-        # Have to address legacy Attributes in UpdateMrml and Save Setting ! 
-        # The tree is a 1D list of nodes - see also the note above
-        # => Never delete varaibles from vtkMrml..Node.h if some XML files you use 
-        # still have them and cannot easily change it up here such as NumClasses 
-        foreach a $attr {
-          set key [lindex $a 0]
-          set val [lreplace $a 0 0]
-          switch $key {
-            "StartSlice" {$n SetSegmentationBoundaryMin 1 1 $val;}  
-            "EndSlice"   {$n SetSegmentationBoundaryMax 256 256 $val}  
-          }
-       
-        }
-    }
-    "EndSegmenter" {
-            set n [MainMrmlAddNode EndSegmenter]
-    }
-    "SegmenterGraph" {
-            EMSegmentLoadMRMLNode SegmenterGraph "$attr" "SetName" 
-    }
-    "SegmenterInput" {
-            EMSegmentLoadMRMLNode SegmenterInput "$attr" "SetName" 
-    }
-    "SegmenterSuperClass" {
-            EMSegmentLoadMRMLNode SegmenterSuperClass "$attr" "SetName" 
-    }
-    "EndSegmenterSuperClass" {
-            set n [MainMrmlAddNode EndSegmenterSuperClass]
-    }
-    "SegmenterClass" {
-             EMSegmentLoadMRMLNode SegmenterClass "$attr" "SetName" 
-    }
-    "EndSegmenterClass" {
-            set n [MainMrmlAddNode EndSegmenterClass]
-    }
-    "SegmenterPCAEigen" {
-            EMSegmentLoadMRMLNode SegmenterPCAEigen "$attr"  ""
-    }
-     
-    "SegmenterCIM" {
-        EMSegmentLoadMRMLNode SegmenterCIM "$attr" "SetName" 
-    }
+  if {[lsearch $EMSegment(MrmlNode,TypeList) $tag] > -1 } {
+      set n [EMSegmentLoadMRMLNode $tag "$attr" ] 
   }
-  
+  if {$tag == "Segmenter"} {
+     # Have to address legacy Attributes in UpdateMrml and Save Setting ! 
+     # The tree is a 1D list of nodes - see also the note above
+     # => Never delete varaibles from vtkMrml..Node.h if some XML files you use 
+     # still have them and cannot easily change it up here such as NumClasses 
+     foreach a $attr {
+        set key [lindex $a 0]
+        set val [lreplace $a 0 0]
+        switch $key {
+          "StartSlice" {$n SetSegmentationBoundaryMin 1 1 $val;}  
+          "EndSlice"   {$n SetSegmentationBoundaryMax 256 256 $val}  
+        }
+     }
+  }  
 }
-
-
 
 
 #-------------------------------------------------------------------------------
@@ -1713,26 +1711,15 @@ proc EMSegmentUpdateMRML {} {
           # 3.) Update variables 
           # -------------------------------------------------
           EMSegmentSetMaxInputChannelDef            [Segmenter($pid,node) GetMaxInputChannelDef]
-          set EMSegment(EMShapeIter)                [Segmenter($pid,node) GetEMShapeIter]
-          set EMSegment(EMiteration)                [Segmenter($pid,node) GetEMiteration]
-          set EMSegment(MFAiteration)               [Segmenter($pid,node) GetMFAiteration]                
-          set EMSegment(Alpha)                      [Segmenter($pid,node) GetAlpha]                       
-          set EMSegment(SmWidth)                    [Segmenter($pid,node) GetSmWidth]                     
-          set EMSegment(SmSigma)                    [Segmenter($pid,node) GetSmSigma] 
-          set EMSegment(PrintDir)                   [Segmenter($pid,node) GetPrintDir]  
+          set EMSegment(Graph,DisplayProbNew)       [Segmenter($pid,node) GetDisplayProb]                 
+          if {$EMSegment(Graph,DisplayProbNew) != $EMSegment(Graph,DisplayProb)} { set EMSegment(Graph,DisplayProb) $EMSegment(Graph,DisplayProbNew); EMSegmentUpdateClasses 0 }    
+
           set BoundaryMin                           [Segmenter($pid,node) GetSegmentationBoundaryMin]
           set BoundaryMax                           [Segmenter($pid,node) GetSegmentationBoundaryMax]
           for {set i 0} {$i < 3} {incr i} { 
             set EMSegment(SegmentationBoundaryMin,$i) [lindex $BoundaryMin $i]
             set EMSegment(SegmentationBoundaryMax,$i) [lindex $BoundaryMax $i]
           }      
-          set EMSegment(Graph,DisplayProbNew)       [Segmenter($pid,node) GetDisplayProb]                 
-          if {$EMSegment(Graph,DisplayProbNew) != $EMSegment(Graph,DisplayProb)} { set EMSegment(Graph,DisplayProb) $EMSegment(Graph,DisplayProbNew); EMSegmentUpdateClasses 0 }    
-          set EMSegment(NumberOfTrainingSamples)    [Segmenter($pid,node) GetNumberOfTrainingSamples]
-          set IntensityAvgClass                     [Segmenter($pid,node) GetIntensityAvgClass]  
-
-          set EMSegment(EMShapeIter)                [Segmenter($pid,node) GetEMShapeIter]
-
 
           # If the path is not the same, define all Segmenter variables
           # Delete old values Kilian: Could do it but would cost to much time 
@@ -1749,6 +1736,15 @@ proc EMSegmentUpdateMRML {} {
          } else {
             set CurrentClassList 0
          }
+         set IntensityAvgClass                     [Segmenter($pid,node) GetIntensityAvgClass]  
+         set OldIntensityAvgClass  $EMSegment(IntensityAvgClass)
+
+     # Define all parameters without special consideration
+         foreach NodeAttribute $EMSegment(MrmlNode,Segmenter,AttributeList) { 
+          set EMSegment($NodeAttribute)     [Segmenter($pid,node) Get${NodeAttribute}]
+     }
+         set EMSegment(IntensityAvgClass) $OldIntensityAvgClass 
+
        } elseif {$ClassName == "vtkMrmlSegmenterGraphNode" } {
           # --------------------------------------------------
           # 4.) Only change Graph variables until graph 
@@ -1817,7 +1813,6 @@ proc EMSegmentUpdateMRML {} {
 
           }
           
-          set EMSegment(Cattrib,$NumClass,LocalPriorWeight)    [SegmenterSuperClass($pid,node) GetLocalPriorWeight]
           set InputChannelWeights [SegmenterSuperClass($pid,node) GetInputChannelWeights]
           for {set y 0} {$y < $EMSegment(MaxInputChannelDef)} {incr y} {
              if {[lindex $InputChannelWeights $y] == ""} {set EMSegment(Cattrib,$NumClass,InputChannelWeights,$y) 1.0
@@ -1825,31 +1820,17 @@ proc EMSegmentUpdateMRML {} {
                set EMSegment(Cattrib,$NumClass,InputChannelWeights,$y) [lindex $InputChannelWeights $y]
              }
           }
-      
-          set EMSegment(Cattrib,$NumClass,Prob)     [SegmenterSuperClass($pid,node) GetProb]
-
-          set EMSegment(Cattrib,$NumClass,PrintWeights)    [SegmenterSuperClass($pid,node) GetPrintWeights]
-          set EMSegment(Cattrib,$NumClass,PrintFrequency)  [SegmenterSuperClass($pid,node) GetPrintFrequency]
-          set EMSegment(Cattrib,$NumClass,PrintBias)       [SegmenterSuperClass($pid,node) GetPrintBias]
-          set EMSegment(Cattrib,$NumClass,PrintLabelMap)   [SegmenterSuperClass($pid,node) GetPrintLabelMap]
-
-          set EMSegment(Cattrib,$NumClass,PrintEMLabelMapConvergence)  [SegmenterSuperClass($pid,node)  GetPrintEMLabelMapConvergence]       
-          set EMSegment(Cattrib,$NumClass,PrintEMWeightsConvergence)   [SegmenterSuperClass($pid,node)  GetPrintEMWeightsConvergence]       
-          set EMSegment(Cattrib,$NumClass,BoundaryStopEMType)          [SegmenterSuperClass($pid,node)  GetBoundaryStopEMType]
-          set EMSegment(Cattrib,$NumClass,BoundaryStopEMValue)         [SegmenterSuperClass($pid,node)  GetBoundaryStopEMValue]
-          set EMSegment(Cattrib,$NumClass,BoundaryStopEMMaxIterations) [SegmenterSuperClass($pid,node)  GetBoundaryStopEMMaxIterations]
-
-      set EMSegment(Cattrib,$NumClass,PrintMFALabelMapConvergence)  [SegmenterSuperClass($pid,node)  GetPrintMFALabelMapConvergence]       
-          set EMSegment(Cattrib,$NumClass,PrintMFAWeightsConvergence)   [SegmenterSuperClass($pid,node)  GetPrintMFAWeightsConvergence]       
-          set EMSegment(Cattrib,$NumClass,BoundaryStopMFAType)          [SegmenterSuperClass($pid,node)  GetBoundaryStopMFAType]
-          set EMSegment(Cattrib,$NumClass,BoundaryStopMFAValue)         [SegmenterSuperClass($pid,node)  GetBoundaryStopMFAValue]
-          set EMSegment(Cattrib,$NumClass,BoundaryStopMFAMaxIterations) [SegmenterSuperClass($pid,node)  GetBoundaryStopMFAMaxIterations]
-
 
           # Create Sub Classes
           set EMSegment(NumClassesNew)          [SegmenterSuperClass($pid,node) GetNumClasses]       
           EMSegmentCreateDeleteClasses $InitiHeadClassFlag 0 0
-      
+
+      # Define all parameters without special consideration
+          return
+          foreach NodeAttribute $EMSegment(MrmlNode,SegmentSuperClass,AttributeList) { 
+          set EMSegment(Cattrib,$NumClass,$NodeAttribute)     [SegmenterSuperClass($pid,node) Get${NodeAttribute}]
+      }
+
           set EMSegment(Cattrib,$NumClass,Node) $item
           set CurrentClassList $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList)
       # puts "End vtkMrmlSegmenterSuperClassNode"
@@ -1884,32 +1865,19 @@ proc EMSegmentUpdateMRML {} {
 
         EMSegmentClickLabel $NumClass [expr !$EMSegment(SuperClass)] [SegmenterClass($pid,node) GetLabel] 
 
-        set EMSegment(Cattrib,$NumClass,PrintWeights)    [SegmenterClass($pid,node) GetPrintWeights]
-        set EMSegment(Cattrib,$NumClass,PrintPCA)        [SegmenterClass($pid,node) GetPrintPCA]
-        set EMSegment(Cattrib,$NumClass,PrintQuality)    [SegmenterClass($pid,node) GetPrintQuality]
+    # Define all parameters that do not be specially considered
+        foreach NodeAttribute $EMSegment(MrmlNode,SegmenterClass,AttributeList) { 
+        set EMSegment(Cattrib,$NumClass,$NodeAttribute)     [SegmenterClass($pid,node) Get${NodeAttribute}]
+    }
         # Is defined later 
         set EMSegment(Cattrib,$NumClass,ReferenceStandardData) $Volume(idNone)
         
-        set EMSegment(Cattrib,$NumClass,Prob)             [SegmenterClass($pid,node) GetProb]
-        set EMSegment(Cattrib,$NumClass,ShapeParameter)   [SegmenterClass($pid,node) GetShapeParameter]
-
-
         set LocalPriorPrefix [SegmenterClass($pid,node) GetLocalPriorPrefix]
         set LocalPriorName   [SegmenterClass($pid,node) GetLocalPriorName]
         set LocalPriorRange  [SegmenterClass($pid,node) GetLocalPriorRange]
-        set EMSegment(Cattrib,$NumClass,LocalPriorWeight)    [SegmenterClass($pid,node) GetLocalPriorWeight]
-
         set EMSegment(Cattrib,$NumClass,ProbabilityData) $Volume(idNone) 
-        set EMSegment(Cattrib,$NumClass,PCAFileRange)    [SegmenterClass($pid,node) GetPCAFileRange]
-        set EMSegment(Cattrib,$NumClass,PCATranslation)  [SegmenterClass($pid,node) GetPCATranslation]
-        set EMSegment(Cattrib,$NumClass,PCARotation)     [SegmenterClass($pid,node) GetPCARotation]
-        set EMSegment(Cattrib,$NumClass,PCAScale)        [SegmenterClass($pid,node) GetPCAScale]
-        set EMSegment(Cattrib,$NumClass,PCAMaxDist)      [SegmenterClass($pid,node) GetPCAMaxDist]
-        set EMSegment(Cattrib,$NumClass,PCADistVariance) [SegmenterClass($pid,node) GetPCADistVariance]
-
         set EMSegment(Cattrib,$NumClass,PCAMeanData) $Volume(idNone) 
         set PCAMeanName   [SegmenterClass($pid,node) GetPCAMeanName]
-
         set ReferenceStandardFileName  [SegmenterClass($pid,node) GetReferenceStandardFileName]
 
         foreach VolID $Volume(idList) VolAttr $VolumeList {
@@ -3939,12 +3907,6 @@ proc EMSegmentCreateDeleteClasses {ChangeGui DeleteNode InitClasses} {
           }
         }
         # Class Definition
-        unset EMSegment(Cattrib,$i,ColorCode) EMSegment(Cattrib,$i,Label)  
-        unset EMSegment(Cattrib,$i,Prob) EMSegment(Cattrib,$i,ProbabilityData)
-        unset EMSegment(Cattrib,$i,PCAMeanData) EMSegment(Cattrib,$i,PCAFileRange) 
-        unset EMSegment(Cattrib,$i,PCATranslation) EMSegment(Cattrib,$i,PCARotation) EMSegment(Cattrib,$i,PCAScale) 
-        unset EMSegment(Cattrib,$i,PCAMaxDist) EMSegment(Cattrib,$i,PCADistVariance) 
-
         foreach EigenList $EMSegment(Cattrib,$i,PCAEigen) {
            if {[lindex $EigenList 3] != ""} {MainMrmlDeleteNode SegmenterPCAEigen [[lindex $EigenList 3] GetID] }
         }
@@ -3961,27 +3923,14 @@ proc EMSegmentCreateDeleteClasses {ChangeGui DeleteNode InitClasses} {
         foreach v $EMSegment(SelVolList,VolumeList) { unset EMSegment(Cattrib,$i,$v,Sample)  }
         # Overview Table
         destroy $EMSegment(fTableOverview)$i
-      
-      # Class and SuperClass variables
-      unset EMSegment(Cattrib,$i,PrintWeights)  
-      unset EMSegment(Cattrib,$i,PrintQuality) 
-      unset EMSegment(Cattrib,$i,ReferenceStandardData) 
-      unset EMSegment(Cattrib,$i,PrintPCA)  
-      # SuperClass Variables
-      unset EMSegment(Cattrib,$i,PrintBias) 
-      unset EMSegment(Cattrib,$i,PrintLabelMap)  
-      unset EMSegment(Cattrib,$i,PrintFrequency) 
-      unset EMSegment(Cattrib,$i,PrintEMLabelMapConvergence)
-      unset EMSegment(Cattrib,$i,PrintEMWeigthsMapConvergence)
-      unset EMSegment(Cattrib,$i,BoundaryStopEMType)
-      unset EMSegment(Cattrib,$i,BoundaryStopEMValue)
-      unset EMSegment(Cattrib,$i,BoundaryStopEMMaxIterations)
 
-      unset EMSegment(Cattrib,$i,PrintMFALabelMapConvergence)
-      unset EMSegment(Cattrib,$i,PrintMFAWeigthsMapConvergence)
-      unset EMSegment(Cattrib,$i,BoundaryStopMFAType)
-      unset EMSegment(Cattrib,$i,BoundaryStopMFAValue)
-      unset EMSegment(Cattrib,$i,BoundaryStopMFAMaxIterations)
+        unset EMSegment(Cattrib,$i,ColorCode) EMSegment(Cattrib,$i,Label) EMSegment(Cattrib,$i,PCAMeanData)
+        foreach NodeAttribute "$EMSegment(MrmlNode,SegmenterSuperClass,AttributeList) $EMSegment(MrmlNode,SegmenterClass,AttributeList)" {
+            unset EMSegment(Cattrib,$i,$NodeAttribute)
+    }
+      # Class and SuperClass variables
+      unset EMSegment(Cattrib,$i,ReferenceStandardData) 
+      # SuperClass Variables
       }
       # Reconfigure width and height of canvas
       if {$ChangeGui} {EMSegmentSetCIMMatrix} 
@@ -4026,15 +3975,30 @@ proc EMSegmentCreateDeleteClasses {ChangeGui DeleteNode InitClasses} {
       lappend EMSegment(GlobalClassList) $i
       lappend EMSegment(Cattrib,$EMSegment(SuperClass),ClassList) $i 
 
+      foreach NodeAttribute "$EMSegment(MrmlNode,SegmenterClass,AttributeList) $EMSegment(MrmlNode,SegmenterSuperClass,AttributeList)" { 
+      switch $NodeAttribute {
+          ShapeParameter -
+          LocalPriorWeight -
+          PCAMaxDist -
+          PCADistVariance -
+          BoundaryStopEMValue  -
+              BoundaryStopMFAValue  {set EMSegment(Cattrib,$i,$NodeAttribute) 0.0}
+              Label                 {set EMSegment(Cattrib,$i,Label)     [lindex $EMSegment(ColorLabelList) [expr 2*(($i-1)%$ColorLabelLength)+1]]}
+              PCAFileRange          {set EMSegment(Cattrib,$i,$NodeAttribute) "0 0" }
+          PCARotation -
+              PCATranslation        {set EMSegment(Cattrib,$i,$NodeAttribute) "0.0 0.0 0.0"} 
+          PCAScale              {set EMSegment(Cattrib,$i,$NodeAttribute) "1.0 1.0 1.0"} 
+              default               {set EMSegment(Cattrib,$i,$NodeAttribute) 0} 
+      }
+      }
+
+      set EMSegment(Cattrib,$i,PCAEigen) ""
       set EMSegment(Cattrib,$i,Prob) $Cprob 
       set EMSegment(Cattrib,$i,ClassList) ""
-      set EMSegment(Cattrib,$i,ShapeParameter) 0.0
-
       set EMSegment(Cattrib,$i,Node)  ""   
       set EMSegment(Cattrib,$i,EndNode) ""
       set EMSegment(Cattrib,$i,IsSuperClass) 0
-      set EMSegment(Cattrib,$i,LocalPriorWeight) 0.0
- 
+
       for {set y 0} {$y <  $EMSegment(MaxInputChannelDef)} {incr y} {
           set  EMSegment(Cattrib,$i,LogMean,$y) -1
           for {set x 0} {$x <  $EMSegment(MaxInputChannelDef)} {incr x} { 
@@ -4047,40 +4011,11 @@ proc EMSegmentCreateDeleteClasses {ChangeGui DeleteNode InitClasses} {
       }
       set EMSegment(Cattrib,$i,ColorCode) [lindex $EMSegment(ColorLabelList) [expr 2*(($i-1)%$ColorLabelLength)]]
       # Graph of class is plottet (== 1) or not (== 0)  
-      set EMSegment(Cattrib,$i,Label)     [lindex $EMSegment(ColorLabelList) [expr 2*(($i-1)%$ColorLabelLength)+1]]
 
       set EMSegment(Cattrib,$i,ProbabilityData) $Volume(idNone)
-      set EMSegment(Cattrib,$i,PCAFileRange) "0 0" 
-      set EMSegment(Cattrib,$i,PCATranslation) "0.0 0.0 0.0" 
-      set EMSegment(Cattrib,$i,PCARotation) "0.0 0.0 0.0" 
-      set EMSegment(Cattrib,$i,PCAScale) "1.0 1.0 1.0" 
-      set EMSegment(Cattrib,$i,PCAMaxDist) "0.0" 
-      set EMSegment(Cattrib,$i,PCADistVariance) "0.0" 
+
       set EMSegment(Cattrib,$i,PCAMeanData) $Volume(idNone)
-      set EMSegment(Cattrib,$i,PCAEigen) "" 
-
-      # Class and SuperClass variables
-      set EMSegment(Cattrib,$i,PrintWeights) 0 
-      set EMSegment(Cattrib,$i,PrintQuality) 0
       set EMSegment(Cattrib,$i,ReferenceStandardData) $Volume(idNone)
-      set EMSegment(Cattrib,$i,PrintPCA)  0
-      # SuperClass Variables
-      set EMSegment(Cattrib,$i,PrintBias) 0
-      set EMSegment(Cattrib,$i,PrintLabelMap) 0 
-      set EMSegment(Cattrib,$i,PrintFrequency) 0
-
-      set EMSegment(Cattrib,$i,PrintEMLabelMapConvergence)   0
-      set EMSegment(Cattrib,$i,PrintEMWeigthsMapConvergence) 0
-      set EMSegment(Cattrib,$i,BoundaryStopEMType)  0
-      set EMSegment(Cattrib,$i,BoundaryStopEMValue) 0.0
-      set EMSegment(Cattrib,$i,BoundaryStopEMMaxIterations) 0 
-
-      set EMSegment(Cattrib,$i,PrintMFALabelMapConvergence)   0
-      set EMSegment(Cattrib,$i,PrintMFAWeigthsMapConvergence) 0
-      set EMSegment(Cattrib,$i,BoundaryStopMFAType)  0
-      set EMSegment(Cattrib,$i,BoundaryStopMFAValue) 0.0
-      set EMSegment(Cattrib,$i,BoundaryStopMFAMaxIterations) 0 
-
     }
     # Define CIM Field as Matrix M(Class1,Class2,Relation of Pixels)
     # where the "Relation of the Pixels" can be set as Pixel with "left", 

@@ -117,7 +117,7 @@ public:
   vtkGetMacro(PrintWeights, int);
   vtkSetMacro(PrintWeights, int);
 
- // Description:
+  // Description:
   // Prints out the number of voxels changed from last to this EM iteration
   vtkGetMacro(PrintEMLabelMapConvergence, int);  
   vtkSetMacro(PrintEMLabelMapConvergence, int);  
@@ -143,6 +143,33 @@ public:
 
   vtkGetMacro(BoundaryStopEMMaxIterations,int); 
   vtkSetMacro(BoundaryStopEMMaxIterations,int); 
+
+ // Description:
+  // Prints out the number of voxels changed from last to this MFA iteration
+  vtkGetMacro(PrintMFALabelMapConvergence, int);  
+  vtkSetMacro(PrintMFALabelMapConvergence, int);  
+
+  // Description:
+  // Prints out the difference in percent 
+  vtkGetMacro(PrintMFAWeightsConvergence, int);
+  vtkSetMacro(PrintMFAWeightsConvergence, int);
+
+  // Description:  
+  // After which criteria should be stopped   
+  // 0 = fixed iterations 
+  // 1 = Absolut measure 
+  // 2 = Relative measure 
+  vtkGetMacro(BoundaryStopMFAType,int); 
+  vtkSetMacro(BoundaryStopMFAType,int); 
+  
+  // Description:  
+  // What is the obundary value, note if the number of iterations 
+  // extend MFAiter than stops than
+  vtkGetMacro(BoundaryStopMFAValue,float);      
+  vtkSetMacro(BoundaryStopMFAValue,float); 
+
+  vtkGetMacro(BoundaryStopMFAMaxIterations,int); 
+  vtkSetMacro(BoundaryStopMFAMaxIterations,int); 
 
 protected:
   vtkMrmlSegmenterSuperClassNode();
@@ -173,6 +200,12 @@ protected:
                                 // if (BoundaryStopEMType = 1) than it is percent
 
   int BoundaryStopEMMaxIterations;
+
+  int PrintMFALabelMapConvergence;  
+  int PrintMFAWeightsConvergence; 
+  int BoundaryStopMFAType;       
+  float BoundaryStopMFAValue;    
+  int BoundaryStopMFAMaxIterations;
 };
 
 #endif
