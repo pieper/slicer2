@@ -151,7 +151,7 @@ proc MIRIADSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.9 $} {$Date: 2003/11/05 03:32:47 $}]
+        {$Revision: 1.10 $} {$Date: 2003/11/14 19:09:57 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -160,6 +160,7 @@ proc MIRIADSegmentInit {} {
     #   This is a handy method for organizing the global variables that
     #   the procedures in this module and others need to access.
     #
+
     set MIRIADSegment(archive)  "gpop.bwh.harvard.edu:/nas/nas0/pieper/data/MIRIAD/Project_0002"
     set MIRIADSegment(subject_dir)  ""
 
@@ -326,11 +327,11 @@ proc MIRIADSegmentExit {} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc MIRIADSegmentProcessStudy { {BIRNID "000397921927"} {visit 001} } {
+proc MIRIADSegmentProcessStudy { {archive "default"} {BIRNID "000397921927"} {visit 001} } {
 
     set ::MIRIADSegment(version) 1
 
-    MIRIADSegmentLoadStudy $BIRNID $visit 
+    MIRIADSegmentLoadStudy $archive $BIRNID $visit 
 
     MIRIADSegmentSetEMParameters
     MIRIADSegmentRunEM
@@ -346,37 +347,52 @@ proc MIRIADSegmentProcessStudy { {BIRNID "000397921927"} {visit 001} } {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc MIRIADSegmentLoadStudy { {BIRNID "000397921927"} {visit 001} {atlas "spl"} } {
+proc MIRIADSegmentLoadStudy { {archive "default"} {BIRNID "000397921927"} {visit 001} {atlas "spl"} } {
 
     MainFileClose 
 
-    #
-    # first, make the local directory for the data
-    #
-    set ::MIRIADSegment(subject_dir) $::MIRIADSegment(tmpdir)/$BIRNID/Visit_$visit/Study_0001
-    file mkdir $::MIRIADSegment(subject_dir)
-    set ::MIRIADSegment(archive_dir) $::MIRIADSegment(archive)/${BIRNID}/Visit_$visit/Study_0001
+    if { $archive != "default" } {
+        set ::MIRIADSegment(archive) $archive
+    }
 
     #
-    # then, bring over the data with rsync and load it up
+    # first, make the local directory for the data if needed or use local dir
+    # - a ":" in the archive string means it is a remote archive that needs to be rsync'd
     #
-    puts "rsyncing..." ; update
-    exec $::MIRIADSegment(rsync) -rz --rsh=ssh $::MIRIADSegment(archive_dir)/ $::MIRIADSegment(subject_dir)/
+    if { [string first ":" $::MIRIADSegment(archive)] == -1 } {
+        set ::MIRIADSegment(subject_dir) $::MIRIADSegment(archive)/$BIRNID/Visit_$visit/Study_0001
+    } else {
+        set ::MIRIADSegment(subject_dir) $::MIRIADSegment(tmpdir)/$BIRNID/Visit_$visit/Study_0001
+        file mkdir $::MIRIADSegment(subject_dir)
+        set ::MIRIADSegment(archive_dir) $::MIRIADSegment(archive)/${BIRNID}/Visit_$visit/Study_0001
 
+        #
+        # then, bring over the data with rsync 
+        #
+        puts "rsyncing..." ; update
+        exec $::MIRIADSegment(rsync) -rz --rsh=ssh $::MIRIADSegment(archive_dir)/ $::MIRIADSegment(subject_dir)/
+    }
+
+    #
+    # load up the data...
+    #
     puts "loading raw..." ; update
     MIRIADSegmentLoadDukeStudy $::MIRIADSegment(subject_dir)/RawData/001.ser
 
     #
     # either read the existing warped atlas, or create it
     #
-    puts "loading atlas..." ; update
-    if { $atlas == "loni" } {
-        MIRIADSegmentLoadLONIWarpedAtlas $::MIRIADSegment(subject_dir)/DerivedData/LONI/mri/atlases/bwh_prob/air_252p
-    } else {
-        if { [MIRIADSegmentLoadSPLWarpedAtlas] } {
-            puts "creating atlas..." ; update
-            MIRIADSegmentLoadSPLAtlas $::MIRIADSegment(splatlas) 
-            MIRIADSegmentCreateSPLWarpedAtlas 
+    puts "loading atlas $atlas..." ; update
+    switch $atlas {
+        "loni" {
+            MIRIADSegmentLoadLONIWarpedAtlas $::MIRIADSegment(subject_dir)/DerivedData/LONI/mri/atlases/bwh_prob/air_252p
+        }
+        "spl" {
+            if { [MIRIADSegmentLoadSPLWarpedAtlas] } {
+                puts "creating atlas..." ; update
+                MIRIADSegmentLoadSPLAtlas $::MIRIADSegment(splatlas) 
+                MIRIADSegmentCreateSPLWarpedAtlas 
+            }
         }
     }
     puts "done" ; update
@@ -401,8 +417,10 @@ proc MIRIADSegmentSaveResults { } {
     set ::File(filePrefix) AtlasAndSegmentation
     MainFileSaveAsApply
 
-    puts "saving results to archive..." ; update
-    exec $::MIRIADSegment(rsync) -rz --rsh=ssh $::MIRIADSegment(subject_dir)/ $::MIRIADSegment(archive_dir)/
+    if { [string first ":" $::MIRIADSegment(archive)] != -1 } {
+        puts "saving results to archive..." ; update
+        exec $::MIRIADSegment(rsync) -rz --rsh=ssh $::MIRIADSegment(subject_dir)/ $::MIRIADSegment(archive_dir)/
+    }
 
 }
 
