@@ -89,11 +89,11 @@ proc MainMrmlReadVersion2.x {fileName {verbose 1}} {
         return 0
     }
     set mrml [read $fid]
-        if {[catch {close $fid} errorMessage]} {
-           tk_messageBox -type ok -message "The following error occurred saving a file: ${errorMessage}" 
-           puts "Aborting due to : ${errorMessage}"
-           exit 1
-        }
+    if {[catch {close $fid} errorMessage]} {
+       tk_messageBox -type ok -message "The following error occurred saving a file: ${errorMessage}" 
+       puts "Aborting due to : ${errorMessage}"
+       exit 1
+    }
 
     # Check that it's the right file type and version
     # accepts all versions from MRML 2.0 to 2.5
