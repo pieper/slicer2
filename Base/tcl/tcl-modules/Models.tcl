@@ -82,7 +82,7 @@ proc ModelsInit {} {
 
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.54 $} {$Date: 2003/09/19 18:25:41 $}]
+            {$Revision: 1.55 $} {$Date: 2003/09/23 22:34:56 $}]
 
     # Props
     set Model(propertyType) Basic
@@ -429,7 +429,7 @@ proc ModelsBuildGUI {} {
     #-------------------------------------------
     set f $fProps.fBot.fBasic.fFileName
 
-    DevAddFileBrowse $f Model FileName "Model File (.vtk)" "ModelsSetFileName" "vtk" "\$Model(DefaultDir)" "Open"  "Browse for a Model" 
+    DevAddFileBrowse $f Model FileName "Model File (.vtk)" "ModelsSetFileName" "vtk" "\$Model(DefaultDir)" "Open"  "Browse for a Model" "Absolute"
 
     #-------------------------------------------
     # Props->Bot->Basic->Color frame

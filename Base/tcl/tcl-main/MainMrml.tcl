@@ -98,7 +98,7 @@ proc MainMrmlInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainMrml \
-        {$Revision: 1.90 $} {$Date: 2003/07/25 19:09:19 $}]
+        {$Revision: 1.91 $} {$Date: 2003/09/23 22:34:55 $}]
 
     set Mrml(colorsUnsaved) 0
 }
@@ -1884,9 +1884,12 @@ proc MainMrmlRelativity {oldRoot} {
 
     Mrml(dataTree) InitTraversal
     set node [Mrml(dataTree) GetNextItem]
+    
     while {$node != ""} {
         set class [$node GetClassName]
-
+        if {$Module(verbose)} {
+            puts "MainMrmlRelativity: class = $class"
+        }
         if {$class == "vtkMrmlVolumeNode"} {
 
             if {$Module(verbose) == 1} {
@@ -1929,17 +1932,22 @@ proc MainMrmlRelativity {oldRoot} {
             # << AT 7/6/01, sp 2002-08-20
             # Kilian : Check if path exists 02/03
               
-            } elseif {$class == "vtkMrmlModelNode"} {
-
-            set ext [file extension [$node GetFileName]]
-            $node SetFileName [MainFileGetRelativePrefix \
-                                   [file join $oldRoot [$node GetFileName]]]$ext
-            $node SetFullFileName [file join $Mrml(dir) \
+        } elseif {$class == "vtkMrmlModelNode"} {
+            if {$Module(verbose)} {
+                puts "MainMrmlRelativity: have a model node, using new relativity"
+            }
+            # use the new version with real relative paths
+            $node SetFileName [MainFileGetRelativePrefixNew [$node GetFullFileName]]
+            if {0} {
+                puts "NOT using old setting of the file name"
+                set ext [file extension [$node GetFileName]]
+                $node SetFileName [MainFileGetRelativePrefix \
                                        [file join $oldRoot [$node GetFileName]]]$ext
-            
-            # use the new version with real relative paths - doesn't work 
-            # $node SetFileName [MainFileGetRelativePrefixNew [$node GetFileName]]
-        }
+                $node SetFullFileName [file join $Mrml(dir) \
+                                           [file join $oldRoot [$node GetFileName]]]$ext
+            }
+        } 
+        
         set node [Mrml(dataTree) GetNextItem]
     }
 }
