@@ -101,7 +101,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.96 $} {$Date: 2004/07/19 22:18:25 $}]
+            {$Revision: 1.97 $} {$Date: 2004/07/22 15:46:09 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -877,7 +877,10 @@ proc VolumesManualSetPropertyType {n} {
     set parsing [MainFileParseImageFile $Volume(firstFile) 0]
 
 #    $n SetFilePrefix [file root $Volume(firstFile)]
-    puts "Volumes.tcl: VolumesManualSetPropertyType: setting file prefix to [lindex $parsing 1]"
+    if {$::Module(verbose)} {
+        puts "Volumes.tcl: VolumesManualSetPropertyType: setting file prefix to [lindex $parsing 1]"
+        DevInfoWindow "Volumes.tcl: VolumesManualSetPropertyType: setting file prefix to [lindex $parsing 1]"
+    }
     $n SetFilePrefix [lindex $parsing 1]
 
     # this check should be obsolete now
