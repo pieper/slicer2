@@ -1,11 +1,6 @@
 package require vtk
 package require vtkSlicerBase
 
-# this script tests vtkImageCloseUp2D 
-
-catch {load vtktcl}
-source vtkImageInclude.tcl
-
 # Image pipeline
 
 vtkPNGReader reader

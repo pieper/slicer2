@@ -1,14 +1,11 @@
+package require vtk
+package require vtkSlicerBase
+
 # Test the filter vtkImageEMMarkov
 #-------------------------------------------------------------------------------
 # 1. Step Initialize 
 #-------------------------------------------------------------------------------
-
-# This is just so it works on PCs
-catch {load vtktcl}
-# vtkImageViewer viewer
-#
 set EMSegment(SegmentMode) 0
-source ../../imaging/examplesTcl/vtkImageInclude.tcl  
 set EMSegment(XMLDir)        TestImageEMSegmentData.xml
 wm withdraw .
 

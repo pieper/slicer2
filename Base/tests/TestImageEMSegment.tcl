@@ -1,3 +1,7 @@
+package require vtk
+package require vtkSlicerBase
+
+
 # This script allows the direct access of the vtkImageEMLocalSegmenter Filter. It is very useful for batch processing.
 # Function can be called through
 # setenv EMBATCH_HOME /home/ai2/kpohl/slicer_devel/vtk3.2/local/examplesTcl
@@ -9,13 +13,10 @@
 # 1. Step Initialize 
 #-------------------------------------------------------------------------------
 
-# This is just so it works on PCs
-catch {load vtktcl}
 # vtkImageViewer viewer
 #
 set EMSegment(SegmentMode) 0
 puts "Result will be written as TestImageEMSegmentTestResult.* - compare it too TestImageEMSegmentResult.*"
-source ../../imaging/examplesTcl/vtkImageInclude.tcl  
 set EMSegment(XMLDir)        TestImageEMSegmentData.xml
 set EMSegment(DisplayWindow) 0
 if {$EMSegment(DisplayWindow) == 0} {

@@ -1,14 +1,18 @@
-catch {load vtktcl}
-source vtkImageInclude.tcl
+package require vtk
+package require vtkSlicerBase
 
 # Image pipeline
 
 vtkImageReader reader
-reader ReleaseDataFlagOff
-reader SetDataByteOrderToLittleEndian
-reader SetDataExtent 0 255 0 255 1 93
-reader SetFilePrefix "../../../vtkdata/fullHead/headsq"
-reader SetDataMask 0x7fff
+  reader ReleaseDataFlagOff
+  reader SetDataByteOrderToLittleEndian
+  reader SetDataExtent 0 63 0 63 1 93
+  reader SetFilePrefix ${VTK_DATA_ROOT}/Data/headsq/quarter
+  reader SetDataMask 0x7fff
+
+vtkImageMagnify mag
+  mag SetInput [reader GetOutput]
+  mag SetMagnificationFactors 4 4 1
 
 vtkMatrix4x4 m
 m SetElement 0 0 -0.16214
@@ -54,7 +58,7 @@ m2 SetElement 3 2 0
 m2 SetElement 3 3 1 
 
 vtkImageClipInteractive clipint
-clipint SetInput [reader GetOutput]
+clipint SetInput [mag GetOutput]
 clipint SetReformatMatrix m
 clipint SetWldToIjkMatrix m2
 clipint SetClipExtent 30 125 60 185 1 93

@@ -1,6 +1,7 @@
-# This file tests creation of a MRML tree containing all node types
+package require vtk
+package require vtkSlicerBase
 
-catch {load vtktcl}
+# This file tests creation of a MRML tree containing all node types
 
 # Please add all nodes to the list
 set nodeTypeList "vtkMrmlVolumeNode vtkMrmlTransformNode"

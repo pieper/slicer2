@@ -1,16 +1,20 @@
-catch {load vtktcl}
-source vtkImageInclude.tcl
+package require vtk
+package require vtkSlicerBase
 
 # Image pipeline
 
 vtkImageReader reader
-reader ReleaseDataFlagOff
-reader SetDataByteOrderToLittleEndian
-reader SetDataExtent 0 255 0 255 1 93
-reader SetFilePrefix "../../../vtkdata/fullHead/headsq"
-reader SetDataMask 0x7fff
+  reader ReleaseDataFlagOff
+  reader SetDataByteOrderToLittleEndian
+  reader SetDataExtent 0 63 0 63 1 93
+  reader SetFilePrefix ${VTK_DATA_ROOT}/Data/headsq/quarter
+  reader SetDataMask 0x7fff
 
-vtkImageThreshold th
+vtkImageMagnify mag
+  mag SetInput [reader GetOutput]
+  mag SetMagnificationFactors 4 4 1
+
+vtkImageThreshold mag
   th SetReplaceIn 1
   th SetReplaceOut 0
   th SetInValue 4000

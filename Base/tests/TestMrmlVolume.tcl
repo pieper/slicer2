@@ -1,13 +1,15 @@
-catch {load vtktcl}
-source vtkImageInclude.tcl
+package require vtk
+package require vtkSlicerBase
+
+# Image pipeline
 
 vtkMrmlVolumeNode node
 node LittleEndianOn
 node SetDescription "This code better work!"
 node SetName "Dave"
-node SetFilePrefix "../../../vtkdata/fullHead/headsq"
+node SetFilePrefix ${VTK_DATA_ROOT}/Data/headsq/quarter
 # the full prefix is used by the reader, not the file prefix.
-node SetFullPrefix "../../../vtkdata/fullHead/headsq"
+node SetFilePrefix ${VTK_DATA_ROOT}/Data/headsq/quarter
 node SetFilePattern "%s.%d"
 node SetImageRange 1 93
 node SetDimensions 256 256
