@@ -350,7 +350,8 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
           
 
           // regularization to compensate for small eigenvalues
-          float r = 0.000001;
+          //float r = 0.000001;
+          float r = 0.0001;
           trace += r;
 
           // Lauren note that RA and LA could be computed
