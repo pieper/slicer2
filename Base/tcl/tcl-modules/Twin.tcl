@@ -65,6 +65,7 @@ proc TwinInit {} {
     # Define Procedures
     set Module($m,procGUI) TwinBuildGUI
     set Module($m,procVTK) TwinBuildVTK
+#    set Module($m,procMainExit) TwinMainExit
 
     set Twin(mode) Off
     set Twin(xPos) 0
@@ -78,7 +79,7 @@ proc TwinInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.19 $} {$Date: 2004/04/13 21:00:11 $}]
+        {$Revision: 1.20 $} {$Date: 2005/01/28 19:17:07 $}]
 }
 
 #-------------------------------------------------------------------------------
@@ -90,11 +91,16 @@ proc TwinInit {} {
 proc TwinBuildVTK {} {
     global Twin viewWin twinWin
 
+    
     vtkXDisplayWindow Twin(display)
 
     vtkRenderer twinRen
 
     vtkImageFrameSource Twin(src)
+    if {$::Module(verbose)} {
+#        DevInfoWindow "TwinBuildVTK allocated a vtkImageFrameSource Twin(src)"
+        puts "TwinBuildVTK allocated a vtkImageFrameSource Twin(src)"
+    }
     Twin(src) SetExtent 0 [expr $Twin(width)-1] 0 [expr $Twin(height)-1]
     Twin(src) SetRenderWindow $viewWin
         
@@ -213,5 +219,32 @@ proc TwinApply {} {
         if {[info exists twinWin] == 1 && [info command $twinWin] != ""} {
             $twinWin Delete
         }
+    }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC TwinMainExit
+# Added to try and clean up allocated memory objects, as when used in conjunction
+# with the vktKinematics module, a segmentation fault occurs. If you supress Twin and use 
+# vtkKinematics and the fault does not occur. Still not quite fixed.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc TwinMainExit {} {
+    global Module Twin twinWin
+
+    if {$::Module(verbose)} {
+        DevInfoWindow "TwinMainExit"
+    }
+    Twin(actor) Delete
+    Twin(mapper) Delete
+    Twin(src) Delete
+
+    # If window exists, delete it
+    if {[info exists twinWin] == 1 && [info command $twinWin] != ""} {
+        $twinWin Delete
+    }
+    if {$::Module(verbose)} {
+        DevInfoWindow "TwinMainExit done"
     }
 }
