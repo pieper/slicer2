@@ -61,7 +61,8 @@ proc MainDataInitialize {ModuleArray} {
     # If the module is not loaded in the Slicer, do nothing.
     #--------------------------------------------------------
     if {[IsModule $ModuleArray] == "0"} {
-        return
+        ## not all data types are module names, so don't return - steve & raul 2004-02-24
+        #return
     }
 
     # Get access to the global module array
@@ -132,7 +133,8 @@ proc MainDataUpdateMRML {ModuleArray} {
     # If the module is not loaded in the Slicer, do nothing.
     #--------------------------------------------------------
     if {[IsModule $ModuleArray] == "0"} {
-        return
+        ## not all data types are module names, so don't return - steve & raul 2004-02-24
+        #return
     }
 
     # Get access to the global module array
@@ -209,7 +211,8 @@ proc MainDataCreate {ModuleArray d {objectType ""}} {
     # If the module is not loaded in the Slicer, do nothing.
     #--------------------------------------------------------
     if {[IsModule $ModuleArray] == "0"} {
-        return
+        ## not all data types are module names, so don't return - steve & raul 2004-02-24
+        #return
     }
 
     # Default value of vtkMrmlData subclass to create
@@ -281,7 +284,8 @@ proc MainDataRead {ModuleArray d} {
     # If the module is not loaded in the Slicer, do nothing.
     #--------------------------------------------------------
     if {[IsModule $ModuleArray] == "0"} {
-        return
+        ## not all data types are module names, so don't return - steve & raul 2004-02-24
+        #return
     }
 
     # Get access to the global module array
@@ -346,7 +350,8 @@ proc MainDataDelete {ModuleArray d} {
     # If the module is not loaded in the Slicer, do nothing.
     #--------------------------------------------------------
     if {[IsModule $ModuleArray] == "0"} {
-        return
+        ## not all data types are module names, so don't return - steve & raul 2004-02-24
+        #return
     }
 
     # Get access to the global module array
@@ -405,7 +410,8 @@ proc MainDataSetActive {ModuleArray d} {
     # If the module is not loaded in the Slicer, do nothing.
     #--------------------------------------------------------
     if {[IsModule $ModuleArray] == "0"} {
-        return
+        ## not all data types are module names, so don't return - steve & raul 2004-02-24
+        #return
     }
 
     # Get access to the global module array
