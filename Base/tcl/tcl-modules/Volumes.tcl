@@ -80,7 +80,7 @@ proc VolumesInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-                {$Revision: 1.35 $} {$Date: 2000/10/24 17:43:28 $}
+                {$Revision: 1.36 $} {$Date: 2000/10/25 18:20:46 $}]
 
 	# Props
 	set Volume(propertyType) Basic
