@@ -548,18 +548,18 @@ proc MainInteractorB2Motion {widget x y} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainInteractorB3Motion {widget x y} {
-    global Interactor Module
+    global Interactor Module 
 
     set s $Interactor(s)
     scan [MainInteractorXY $s $x $y] "%d %d %d %d" xs ys x y 
   
     #This should be replaced with Mike Halle's binding mechanism
-    switch $Module(activeID) {  
-        "Alignments" {
-            AlignmentsB3Motion $x $y
-            return
-        }
-    }
+    #switch $Module(activeID) {  
+    #    "Alignments" {
+    #        AlignmentsB3Motion $widget $x $y
+    #        return
+    #    }
+    #}
 
     # Zoom using screen coordinates so that the same number
     # of screen pixels covered (not % of image) produces the
