@@ -104,7 +104,7 @@ proc EditorInit {} {
     
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.48 $} {$Date: 2001/03/10 01:20:08 $}]
+	    {$Revision: 1.49 $} {$Date: 2001/04/03 23:57:39 $}]
     
     # Initialize globals
     set Editor(idOriginal)  $Volume(idNone)
@@ -1042,12 +1042,6 @@ proc EditorEnter {} {
     # update GUI
     EditorSetSaveVolume
 
-    # if we have entered right to the Details tab, need to call 
-    # the procEnter of the effect
-    if {$Module(Editor,$Module(Editor,row),tab) == "Details"} {
-	EditorUpdateEffect
-    }
-
 }
 
 
@@ -1058,17 +1052,18 @@ proc EditorEnter {} {
 # .END
 #-------------------------------------------------------------------------------
 proc EditorExit {} {
-    global Editor Ed
+    global Editor Ed Module
 
     # undo any new bindings we may have added
     popEventManager
 
     set e $Editor(activeID)
 
-    # make sure exit gets called for the active effect
-    # (to turn off effects that use pipelined filters w/ Slicer)
-    EditorExitEffect $e
-    
+    # now the active effect is None (this exits from current effect, too)
+    EditorSetEffect EdNone
+    # start out at the volumes tab next (and every) time
+    set Module(Editor,row1,tab) Volumes
+
     # logging
     EditorStopTiming "Editor"
 }
