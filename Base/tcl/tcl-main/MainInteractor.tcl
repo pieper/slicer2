@@ -370,6 +370,9 @@ proc MainInteractorB1Release {widget x y} {
 	"Matrices" {
 		MatricesB1Release $x $y
 	}
+	"CTPaky" {
+		CTPakyB1Release $x $y
+	    }
 	}
 
 	Anno($s,msg,actor)  SetVisibility 0
