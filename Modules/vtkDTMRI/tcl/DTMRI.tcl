@@ -104,7 +104,7 @@ proc DTMRIInit {} {
     set Module($m,author) "Lauren O'Donnell"
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.5 $} {$Date: 2004/03/12 12:13:39 $}]
+            {$Revision: 1.6 $} {$Date: 2004/03/22 20:54:09 $}]
 
     # Define Tabs
     #------------------------------------
@@ -604,7 +604,7 @@ especially Diffusion DTMRI MRI.
     set f $fDisplay.fActive
 
     # menu to select active DTMRI
-    DevAddSelectButton  DTMRI $f Active "Active DTMRI:" Grid \
+    DevAddSelectButton  Tensor $f Active "Active DTMRI:" Grid \
             "Active DTMRI" 13 BLA
     
     # Append these menus and buttons to lists 
@@ -1139,7 +1139,7 @@ especially Diffusion DTMRI MRI.
     set f $fROI.fActive
 
     # menu to select active DTMRI
-    DevAddSelectButton  DTMRI $f Active "Active DTMRI:" Grid \
+    DevAddSelectButton  Tensor $f Active "Active DTMRI:" Grid \
             "Active DTMRI" 13 BLA
     
     # Append these menus and buttons to lists 
@@ -1258,7 +1258,7 @@ especially Diffusion DTMRI MRI.
 
     # menu to select a volume: will set Volume(activeID)
     set name MaskLabelmap
-    DevAddSelectButton  DTMRI $f $name "Mask Labelmap:" Grid \
+    DevAddSelectButton  Volume $f $name "Mask Labelmap:" Grid \
             "Select a labelmap volume to use as a mask.\nDTMRIs will be displayed only where the label matches the label you select below." \
             13
     
@@ -1312,7 +1312,7 @@ especially Diffusion DTMRI MRI.
     set f $fScalars.fActive
 
     # menu to select active DTMRI
-    DevAddSelectButton  DTMRI $f Active "Active DTMRI:" Grid \
+    DevAddSelectButton  Tensor $f Active "Active DTMRI:" Grid \
             "Active DTMRI" 13 BLA
     
     # Append these menus and buttons to lists 
@@ -3356,6 +3356,28 @@ proc DTMRIDoMath {{operation ""}} {
         }
     }
 
+    #Set up proper scale factor
+    #Map result between 1 - 1000
+    set rangexx [[[$input GetPointData] GetTensors] GetRange 0]
+    set rangeyy [[[$input GetPointData] GetTensors] GetRange 4]
+    set rangezz [[[$input GetPointData] GetTensors] GetRange 8]
+    
+    set maxTrace [expr [lindex $rangexx 1] + [lindex $rangeyy 1] + [lindex $rangezz 1]]
+    
+    puts "Running oper: $operation"
+    puts "Max Trace: $maxTrace"
+    
+    switch -regexp -- $operation {
+       {^(Trace|Determinant|D11|D22|D33|MaxEigenvalue|MiddleEigenvalue|MinEigenvalue)$} {
+          set DTMRI(scalars,scaleFactor) [expr 1000 / $maxTrace]
+       }
+       {^(RelativeAnisotropy|FractionalAnisotropy|LinearMeasure|PlanarMeasure|SphericalMeasure|ColorByOrientation)$} {
+          set DTMRI(scalars,scaleFactor) 1000
+       }
+     }
+            
+   puts "DTMR: scale factor $DTMRI(scalars,scaleFactor)"
+
     # create vtk object to do the operation
     vtkTensorMathematics math
     math SetScaleFactor $DTMRI(scalars,scaleFactor)
@@ -3376,7 +3398,7 @@ proc DTMRIDoMath {{operation ""}} {
 
 
     math SetInput 0 ""    
-    math SetInput 1 ""    
+    math SetInput 1 ""
     # this is to disconnect the pipeline
     # this object hangs around, so try this trick from Editor.tcl:
     math SetOutput ""
@@ -4250,7 +4272,7 @@ proc ConvertLSDIrecon {} {
     $newvol ComputeRasToIjkFromScanOrder $order
     
     puts "SPACING [$newvol GetSpacing] DIMS [$newvol GetDimensions] MAT [$newvol GetRasToIjkMatrix]"
-    MainDataCreate DTMRI $n Volume
+    MainDataCreate Tensor $n Volume
     
     # Set the slicer object's image data to what we created
     DTMRI Update
@@ -4557,6 +4579,10 @@ proc DTMRISaveStreamlinesAsModel {subdir name {verbose "1"}} {
     #set thelist {0 1 2}
     set thelist $DTMRI(vtk,streamline,idList)
 
+    if {[llength $thelist] == 0} {
+      tk_messageBox -message "Nothing to save. You must create tracts first."
+      return
+    }  
     # find first color
     set id [lindex $thelist 0]
     set streamline streamln,$id
@@ -4625,7 +4651,7 @@ proc DTMRISaveStreamlinesAsModel {subdir name {verbose "1"}} {
     catch "tree Delete"
     vtkMrmlTree tree
     foreach appender $appenderList color $colorList {
-#        set filename "$name$appender.vtk"
+        #set filename "$name$appender.vtk"
         #set filename "/spl/tmp/talos.vtk"
         set filename [tk_getSaveFile -defaultextension ".vtk" -title "Save Tracts"]
         if { $filename == "" } {
