@@ -39,7 +39,6 @@
 #   IbrowserBuildDisplayFrame
 #   IbrowserUpdateMainViewer
 #   IbrowserSetIntervalParam
-#   IbrowserSetIntervalParamActiveVol
 #==========================================================================auto=
 
 
@@ -53,7 +52,8 @@ proc IbrowserBuildDisplayFrame { } {
     global Gui Module Volume
 
     set fDisplay $::Module(Ibrowser,fDisplay)
-
+    #--- initialize to save values that Volumes module starts with.
+    
     set w $fDisplay
 
     #--- Frames: use packer to put them in place.
@@ -111,7 +111,7 @@ proc IbrowserBuildDisplayFrame { } {
 
     foreach value "1 0" text "Auto Manual" width "5 7" {
         eval {radiobutton $f.fAuto.rAuto$value -width $width -indicatoron 0\
-            -text "$text" -value "$value" -variable Volume(autoWindowLevel) \
+            -text "$text" -value "$value" -variable ::Volume(autoWindowLevel) \
                   -command "IbrowserSetIntervalParam AutoWindowLevel" \
             } $Gui(WCA)
         pack $f.fAuto.rAuto$value -side left -fill x
@@ -120,84 +120,76 @@ proc IbrowserBuildDisplayFrame { } {
     #-------------------------------------------
     # W/L Sliders
     #-------------------------------------------
-    foreach slider "Window Level" {
-        eval {label $f.l${slider} -text "${slider}:"} $Gui(WLA)
-        eval {entry $f.e${slider} -width 5 \
-            -textvariable Volume([Uncap ${slider}])} $Gui(WEA)
-        bind $f.e${slider} <Return>   \
+    foreach slider "Window Level" text "Win Lev" {
+        DevAddLabel $f.l${slider} "$text:"
+        eval {entry $f.e${slider} -width 6 \
+                  -textvariable ::Volume([Uncap ${slider}]) } $Gui(WEA)
+       bind $f.e${slider} <Return>   \
             "IbrowserSetIntervalParam ${slider}"
         bind $f.e${slider} <FocusOut> \
             "IbrowserSetIntervalParam ${slider}"
-        eval {scale $f.s${slider} -from 1 -to 1024 \
-            -variable Volume([Uncap ${slider}]) -length 90 -resolution 1 \
-                  -command "IbrowserSetIntervalParamActiveVol ${slider}" \
-             } $Gui(WSA)
+        eval {scale $f.s${slider} -from 1 -to 700 -length 90 \
+            -variable ::Volume([Uncap ${slider}]) -resolution 1 \
+                  -command "MainVolumesSetParam ${slider}; MainVolumesRender" \
+              } $Gui(WSA) {-sliderlength 14}
         bind $f.s${slider} <ButtonRelease-1> "IbrowserSetIntervalParam ${slider}"
-
-        grid $f.l${slider} $f.e${slider} $f.s${slider} \
-           -pady $Gui(pad) -padx $Gui(pad)
-        grid $f.l${slider} -sticky e
-        grid $f.s${slider} -sticky w
-
-        #grid $f.l${slider} $f.e${slider} $f.s${slider} \
-        #   -pady $Gui(pad) -padx $Gui(pad) -columnspan 3
-        #grid $f.l$slider -sticky e 
-        #grid $f.s$slider -sticky w
-        set Volume(s$slider) $f.s$slider
+        grid $f.l${slider} $f.e${slider} $f.s${slider} -padx 2 -pady $Gui(pad) -sticky news
+        set ::Ibrowser(s$slider) $f.s$slider
     }
     # Append widgets to list that's refreshed in MainVolumesUpdateSliderRange
     lappend Volume(sWindowList) $f.sWindow
     lappend Volume(sLevelList) $f.sLevel
 
     #-------------------------------------------
-    # Popup->Thresh frame
+    # Display->Threshold frame
     #-------------------------------------------
     set f $w.fThresh
-
-    #-------------------------------------------
-    # Auto Threshold
-    #-------------------------------------------
-    eval {label $f.lAuto -text "Threshold:"} $Gui(WLA)
     frame $f.fAuto -bg $Gui(activeWorkspace)
-    grid $f.lAuto $f.fAuto -pady $Gui(pad) -padx $Gui(pad) -sticky e
-    grid $f.fAuto -columnspan 2 -sticky w
-
+    frame $f.fSliders -bg $Gui(activeWorkspace)
+    pack $f.fAuto $f.fSliders -side top -fill x -expand 1
+    
+    #-------------------------------------------
+    # Display->Threshold->Auto Threshold
+    #-------------------------------------------
+    set f $w.fThresh.fAuto
+    
+    DevAddLabel $f.lAuto "Threshold: "
+    frame $f.fAuto -bg $Gui(activeWorkspace)
+    pack $f.lAuto $f.fAuto -side left -pady $Gui(pad) -fill x
+    
     foreach value "1 0" text "Auto Manual" width "5 7" {
         eval {radiobutton $f.fAuto.rAuto$value -width $width -indicatoron 0\
-            -text "$text" -value "$value" -variable Volume(autoThreshold) \
+            -text "$text" -value "$value" -variable ::Volume(autoThreshold) \
                   -command "IbrowserSetIntervalParam AutoThreshold;"} $Gui(WCA)
+        pack $f.fAuto.rAuto$value -side left -fill x
     }
     eval {checkbutton $f.cApply \
-        -text "Apply" -variable Volume(applyThreshold) \
+        -text "Apply" -variable ::Volume(applyThreshold) \
               -command "IbrowserSetIntervalParam ApplyThreshold" -width 6 \
         -indicatoron 0} $Gui(WCA)
-    
-    grid $f.fAuto.rAuto1 $f.fAuto.rAuto0 $f.cApply
-    grid $f.cApply -padx $Gui(pad)
+    pack $f.cApply -side left -padx $Gui(pad)
 
     #-------------------------------------------
-    # Threshold Sliders
+    # Display->Threshold-> Sliders Frame
     #-------------------------------------------
-    foreach slider "Lower Upper" {
-        eval {label $f.l${slider} -text "${slider}:"} $Gui(WLA)
+    set f $w.fThresh.fSliders
+    
+    foreach slider "Lower Upper" text "Lo Hi" {
+        DevAddLabel $f.l${slider} "$text:"
         eval {entry $f.e${slider} -width 5 \
-            -textvariable Volume([Uncap ${slider}]Threshold)} $Gui(WEA)
+            -textvariable ::Volume([Uncap ${slider}]Threshold)} $Gui(WEA)
             bind $f.e${slider} <Return>   \
             "IbrowserSetIntervalParam ${slider}Threshold"
             bind $f.e${slider} <FocusOut> \
             "IbrowserSetIntervalParam ${slider}Threshold"
-
-        eval {scale $f.s${slider} -from 1 -to 1024 \
-            -variable Volume([Uncap ${slider}]Threshold) -length 90 -resolution 1 \
-                  -command "IbrowserSetIntervalParamActiveVol ${slider}Threshold" \
-             } $Gui(WSA)
+        eval {scale $f.s${slider} -from 1 -to 700 -length 90 \
+            -variable ::Volume([Uncap ${slider}]Threshold) -resolution 1 \
+                  -command "MainVolumesSetParam ${slider}Threshold; MainVolumesRender" \
+              } $Gui(WSA) {-sliderlength 14}
         bind $f.s${slider} <ButtonRelease-1> "IbrowserSetIntervalParam ${slider}Threshold"
-        
-        grid $f.l${slider} $f.e${slider} $f.s${slider} \
-             -padx $Gui(pad) -pady $Gui(pad)
-        grid $f.l$slider -sticky e
-        grid $f.s$slider -sticky w
-        set Volume(s$slider) $f.s$slider
+        #bind $f.s${slider} <Leave> "IbrowserSetIntervalParam ${slider}Threshold"
+        grid $f.l${slider} $f.e${slider} $f.s${slider} -padx 2 -pady $Gui(pad) -sticky news
+        set ::Ibrowser(s$slider) $f.s$slider
     }
     # Append widgets to list that's refreshed in MainVolumesUpdateSliderRange
     lappend Volume(sLevelList) $f.sLower
@@ -213,8 +205,8 @@ proc IbrowserBuildDisplayFrame { } {
     pack $f.fLut $f.fHistBorder -side left -padx $Gui(pad) -pady $Gui(pad)
     
     #-------------------------------------------
-    # Lut frame
-    #--- having some trouble with this one.
+    # 
+    # Display->Histogram->LUT frame
     #-------------------------------------------
     set f $w.fHistogram.fLut
 
@@ -223,35 +215,35 @@ proc IbrowserBuildDisplayFrame { } {
         -text "$::Lut([lindex $::Lut(idList) 0],name)" \
             -relief raised -bd 2 -width 9 \
         -menu $f.mbLUT.menu} $Gui(WMBA)
-        eval {menu $f.mbLUT.menu} $Gui(WMA)
-        # Add menu items
-        foreach l $::Lut(idList) {
-            $f.mbLUT.menu add command -label $::Lut($l,name) \
-                -command  "IbrowserSetIntervalParam LutID $l"
-        }
-        set Volume(mbLUT) $f.mbLUT
-
+    set ::Ibrowser(mbLUT) $f.mbLUT
+    eval {menu $f.mbLUT.menu} $Gui(WMA)
+    # Add menu items
+    foreach l $::Lut(idList) {
+        $f.mbLUT.menu add command -label $::Lut($l,name) \
+            -command  "$::Ibrowser(mbLUT) config -text $::Lut($l,name); IbrowserSetIntervalParam LutID $l"
+    }
+   
     pack $f.lLUT $f.mbLUT -pady $Gui(pad) -side top
 
     #-------------------------------------------
-    # HistBorder frame
+    # Display->Histogram->HistBorder frame
     #-------------------------------------------
     set f $w.fHistogram.fHistBorder
 
-    if {$Volume(histogram) == "On"} {
-        MakeVTKImageWindow hist
-        histMapper SetInput [Volume(0,vol) GetHistogramPlot]
+    if {$::Volume(histogram) == "On"} {
+        MakeVTKImageWindow histIB
+        histIBMapper SetInput [::Volume(0,vol) GetHistogramPlot]
 
         set wid [expr $Volume(histWidth) - 8]
         
-        vtkTkRenderWidget $f.fHist -rw histWin \
-            -width $wid -height $Volume(histHeight)  
-        bind $f.fHist <Expose> {ExposeTkImageViewer %W %x %y %w %h}
-        pack $f.fHist
+        vtkTkRenderWidget $f.fHistIB -rw histIBWin \
+            -width $wid -height $::Volume(histHeight)  
+        bind $f.fHistIB <Expose> {ExposeTkImageViewer %W %x %y %w %h}
+        pack $f.fHistIB
     }
 
     #-------------------------------------------
-    # Interpolate frame
+    # Display->Interpolate frame
     #-------------------------------------------
     set f $w.fInterpolate
 
@@ -260,13 +252,10 @@ proc IbrowserBuildDisplayFrame { } {
 
     foreach value "1 0" text "On Off" width "4 4" {
         eval {radiobutton $f.rInterp$value -width $width -indicatoron 0\
-            -text "$text" -value "$value" -variable Volume(interpolate) \
+            -text "$text" -value "$value" -variable ::Volume(interpolate) \
             -command "IbrowserSetIntervalParam Interpolate"} $Gui(WCA)
         pack $f.rInterp$value -side left -fill x
     }
-
-    
-
 }
 
 
@@ -338,6 +327,8 @@ proc IbrowserUpdateMainViewer { n } {
         }
         RenderAll
     }
+
+
 }
 
 
@@ -349,20 +340,15 @@ proc IbrowserUpdateMainViewer { n } {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc IbrowserSetIntervalParam { setThis { thing -10} } {
-    global Volume
+proc IbrowserSetIntervalParam { setThis { myparam -10} } {
+    global Volume Lut
     
-    #---sets display parameters for the volumes in the active interval
-    if {$thing == -10 } {
-        set ignoreVal 1
-    } else {
-        set ignoreVal 0
-    }
+    #---sets display parameters for all volumes in the active interval
     set activeVol $::Volume(activeID)
     set activeIval $::Ibrowser(activeInterval)
     set start $::Ibrowser($activeIval,firstMRMLid)
     set stop $::Ibrowser($activeIval,lastMRMLid)
-
+    
     set pcount 0
     set numvols [ expr $stop - $start ]
     IbrowserRaiseProgressBar
@@ -382,21 +368,21 @@ proc IbrowserSetIntervalParam { setThis { thing -10} } {
             #--- '.'s to the tkcon. Slows things down a little,
             #--- but not terribly much. Better ideas are welcome.
             IbrowserPrintProgressFeedback
-            
-            #--- set the volume param
+
+            #--- temporarily set this drop to be active so its params are set
             set ::Volume(activeID) $i
-            if { $ignoreVal } {
+            if { $myparam == -10 } {
                 MainVolumesSetParam $setThis
             } else {
-                MainVolumesSetParam $setThis $thing
+                MainVolumesSetParam $setThis $myparam
             }
             incr pcount
         }
         IbrowserEndProgressFeedback
-        #---shouldn't this be the one in the viewer?
-        #--- and so shouldn't it be the one rendered?
+        #--- set the active volume back to what it originally was.
         set ::Volume(activeID) $activeVol
-        IbrowserUpdateMainViewer $::Ibrowser($activeIval,$::Ibrowser(ViewDrop),MRMLid)
+        MainVolumesRender
+        #IbrowserUpdateMainViewer $::Ibrowser($activeIval,$::Ibrowser(ViewDrop),MRMLid)
 
         set tt "Set $setThis for all volumes in $::Ibrowser($activeIval,name)"
         IbrowserSayThis $tt 0
@@ -405,41 +391,3 @@ proc IbrowserSetIntervalParam { setThis { thing -10} } {
 }
 
 
-
-
-
-#-------------------------------------------------------------------------------
-# .PROC IbrowserSetIntervalParamActiveVol
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc IbrowserSetIntervalParamActiveVol { setThis { thing -10} } {
-    global Volume
-    
-    #---sets display parameters for the volumes in the active interval
-    if {$thing == -10 } {
-        set ignoreVal 1
-    } else {
-        set ignoreVal 0
-    }
-    set activeVol $::Volume(activeID)
-    set activeIval $::Ibrowser(activeInterval)
-
-    #for each mrml volume, set "setThis"
-    if { $activeIval != $::Ibrowser(idNone) } {
-        set i $activeVol
-        #--- set the volume param
-        set ::Volume(activeID) $i
-        if { $ignoreVal } {
-            MainVolumesSetParam $setThis
-        } else {
-            MainVolumesSetParam $setThis $thing
-        }
-        #---shouldn't this be the one in the viewer?
-        #--- and so shouldn't it be the one rendered?
-        #IbrowserUpdateMainViewer $::Ibrowser($activeIval,$::Ibrowser(ViewDrop),MRMLid)
-        #puts "ActiveVol same?: viewdrop = $::Ibrowser(ViewDrop) active = $activeVol" 
-        IbrowserUpdateMainViewer $activeVol
-    }        
-}
