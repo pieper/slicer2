@@ -123,7 +123,7 @@ proc VolumeMathInit {} {
 	#   appropriate info when the module is checked in.
 	#   
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.16 $} {$Date: 2001/12/17 17:43:28 $}]
+		{$Revision: 1.17 $} {$Date: 2001/12/20 23:56:37 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -266,7 +266,6 @@ files. Sometimes it doesn't work.
 	#-------------------------------------------
 	set f $fMath.fSelectMath
 
-        eval {label $f.l -text "Type:"} $Gui(BLA)
 	frame $f.f -bg $Gui(backdrop)
 
         # the first row and second row
@@ -289,7 +288,7 @@ files. Sometimes it doesn't work.
             if { $p == "Resample" } {incr row};
 	}
 
-	pack $f.l $f.f -side left -padx $Gui(pad) -fill x -anchor w
+	pack $f.f -side left -padx $Gui(pad) -fill x -anchor w
 
         set VolumeMath(MathType) Subtract
 
