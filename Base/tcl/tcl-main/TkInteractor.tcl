@@ -104,7 +104,7 @@ proc CreateAndBindTkEvents { widget } {
     
     if { [IsModule Endoscopic] == 1 } {
     EvDeclareEventHandler tkRegularEvents <KeyPress-t> { if { [SelectPick Endoscopic(picker) %W %x %y] != 0 } \
-    { eval EndoscopicAddTargetFromWorldCoordinates $Select(xyz)}}
+    { eval EndoscopicAddTargetFromWorldCoordinates [lindex $Select(xyz) 0] [lindex $Select(xyz) 1] [lindex $Select(xyz) 2]}}
     }
      
   # end
@@ -368,6 +368,7 @@ proc Pitch {widget x y} {
     global View Module Endoscopic
 
     if { ! $RendererFound } { return }
+    
     if {[info exists Module(Endoscopic,procEnter)] == 1} {
         set tmp $Endoscopic(cam,rxStr) 
         set Endoscopic(cam,rxStr) [expr $tmp + (-$LastY + $y)]
@@ -375,6 +376,7 @@ proc Pitch {widget x y} {
         Render3D
         set LastY $y
     }
+    
 }
 
 
@@ -400,6 +402,7 @@ proc Yaw {widget x y} {
         Render3D
         set LastX $x
     }
+
 }
 
 #-------------------------------------------------------------------------------
@@ -422,7 +425,7 @@ proc Roll {widget x y} {
         EndoscopicSetCameraDirection "ry"
         Render3D
         set LastX $x
-    }
+   }
     
 }
 
@@ -441,6 +444,7 @@ proc LR {widget x y} {
 
 
     if { ! $RendererFound } { return }
+    
     if {[info exists Module(Endoscopic,procEnter)] == 1} {    
         set tmp $Endoscopic(cam,xStr) 
         set Endoscopic(cam,xStr) [expr $tmp + ($LastX - $x)]
@@ -448,7 +452,8 @@ proc LR {widget x y} {
         Render3D
         
         set LastX $x
-    }
+   }
+
 }
 
 
@@ -501,6 +506,7 @@ proc UD {widget x y} {
         
         set LastY $y
     }
+
 }
 
 #-------------------------------------------------------------------------------
