@@ -235,6 +235,11 @@ set env(TCLLIBPATH) "$env(SLICER_HOME)/Base/Wrapping/Tcl/vtkSlicerBase $env(TCLL
 #
 regsub -all {\\} $env(SLICER_HOME) / slicer_home
 regsub -all {\\} $env(HOME) / home
+
+# check for trailing slashes - on Windows, an extra slash breaks the module finding
+set slicer_home [string trimright $slicer_home "/"]
+set home [string trimright $home "/"]
+
 set modulePaths $slicer_home/Modules
 lappend modulePaths $home/Modules
 if { [info exists env(SLICER_MODULES)] } {
