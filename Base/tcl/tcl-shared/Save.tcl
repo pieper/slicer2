@@ -62,7 +62,7 @@ proc SaveInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.9 $} {$Date: 2003/01/22 17:04:35 $}]
+            {$Revision: 1.10 $} {$Date: 2003/01/22 17:06:31 $}]
 
     SaveInitTables
 
@@ -491,6 +491,7 @@ proc SaveDisplayOptionsWindow {{toplevelName .saveOptions}} {
     grid [tkSpace $f.space2 -height 10] -columnspan 2
     button $f.bCloseWindow -text "Close" -command "destroy $root"
     button $f.bSaveNow     -text "Save View Now" -command "Save3DImage"
+    TooltipAdd $f.bSaveNow "Save the image now.  Shortcut: use Control-S in the view window."
     GuiApplyStyle WBA $f.bSaveNow $f.bCloseWindow
     grid $f.bCloseWindow $f.bSaveNow -sticky we -padx $Gui(pad) -pady $Gui(pad) -ipadx 2 -ipady 5
 
