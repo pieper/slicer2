@@ -218,9 +218,11 @@ void RigidRegistrationBase<TFixedImage,TMovingImage,TMetricType>::Initialize
   NewStoppingCondition::Pointer StoppingCondition=NewStoppingCondition::New();
   StoppingCondition->SetUpdateIter(100);
   StoppingCondition->SetCallbackFunction(self,
-                     vtkITKRigidRegistrationConditionCallback);
+             vtkITKRigidRegistrationTransformBase::DataCallback);
   m_OptimizeObserverTag = m_Optimizer->AddObserver( IterationEvent(),
                                                     StoppingCondition );
+  // Do not abort.
+  self->SetAbort(0);
 }
 
 //----------------------------------------------------------------------------
