@@ -25,6 +25,8 @@
 #   EdPhaseWireInit
 #   EdPhaseWireBuildVTK
 #   EdPhaseWireBuildGUI
+#   EdPhaseConvertToRadians
+#   EdPhaseConvertToDegrees
 #   EdPhaseWirePrettyPicture
 #   EdPhaseWireRaiseEdgeImageWin
 #   EdPhaseWireUpdateEdgeImageWin viewerWidget edgeNum
@@ -39,6 +41,7 @@
 #   EdPhaseWireRenderInteractive
 #   EdPhaseWireLabel
 #   EdPhaseWireClearCurrentSlice
+#   EdLiveWireResetPhaseDefaults
 #   EdPhaseWireClearLastSegment
 #   EdPhaseWireResetSlice s
 #   EdPhaseWireApply
@@ -470,6 +473,12 @@ proc EdPhaseWireBuildGUI {} {
 
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EdPhaseConvertToRadians
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EdPhaseConvertToRadians {degrees} {
     
     # we want radians scaled by 1000, since that is how the
@@ -482,6 +491,12 @@ proc EdPhaseConvertToRadians {degrees} {
     return [expr $degrees * -17.453278]
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EdPhaseConvertToDegrees
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EdPhaseConvertToDegrees {radians} {
 
     # this is equivalent to:
@@ -1007,6 +1022,12 @@ proc EdPhaseWireClearCurrentSlice {} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC EdLiveWireResetPhaseDefaults
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EdLiveWireResetPhaseDefaults {} {
     global Ed
 

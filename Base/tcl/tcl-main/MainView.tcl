@@ -26,11 +26,12 @@
 #   MainViewBuildVTK
 #   MainViewBuildGUI
 #   MainViewSetBackgroundColor
+#   MainViewSetBackgroundColor
 #   MainViewSetFov
 #   MainViewSetParallelProjection
 #   MainViewLightFollowCamera
 #   MainViewNavReset
-#   MainViewRotate
+#   MainViewRotate dir deg
 #   MainViewNavRotate
 #   MainViewSetStereo
 #   MainViewSpin
@@ -63,7 +64,7 @@ viewMode='Normal' viewBgColor='Blue'"
 
         set m MainView
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.29 $} {$Date: 2001/05/24 17:16:30 $}]
+		{$Revision: 1.30 $} {$Date: 2001/05/25 19:01:37 $}]
 
 	set View(viewerHeightNormal) 656
 	set View(viewerWidth)  956 
@@ -340,13 +341,19 @@ proc MainViewBuildGUI {} {
 #-----------------------------------------------------------------------------
 # .PROC MainViewSetBackgroundColor
 #  Change the background color of all the renderers in Module(Renderers)
-#  The background color is stored in View(bgName) and it should match "Blue",
-#  "Midnight" or "Black"
+#  The background color is stored in View(bgName) and it should match \"Blue\",
+#  \"Midnight\" or \"Black\"
 #
 # .ARGS
 # .END
 #-----------------------------------------------------------------------------
 
+#-------------------------------------------------------------------------------
+# .PROC MainViewSetBackgroundColor
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc MainViewSetBackgroundColor {{col ""}} {
     global View Module
     

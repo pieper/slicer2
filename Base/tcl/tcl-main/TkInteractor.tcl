@@ -29,6 +29,7 @@
 #   StartMotion
 #   EndMotion
 #   Rotate
+#   PitchYaw
 #   Pan
 #   Zoom
 #   Reset

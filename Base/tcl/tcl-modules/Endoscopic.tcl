@@ -34,7 +34,6 @@
 #   EndoscopicBuildGUI
 #   EndoscopicCreateLabelAndSlider
 #   EndoscopicCreateCheckbutton
-#   EndoscopicUpdateGUI
 #   EndoscopicAddEndoscopicView
 #   EndoscopicRemoveEndoscopicView
 #   EndoscopicCreateAdvancedGUI
@@ -44,11 +43,13 @@
 #   EndoscopicSetSize
 #   EndoscopicSetCameraPosition
 #   EndoscopicResetCameraPosition
+#   EndoscopicResetCameraDirection
 #   EndoscopicSetCameraDirection
-#   EndoscopicSetCameraZoom
-#   EndoscopicSetCameraViewAngle
 #   EndoscopicSetFocalAndCameraPosition
 #   EndoscopicUpdateCamera
+#   EndoscopicSetCameraZoom
+#   EndoscopicSetCameraViewAngle
+#   EndoscopicAddLandmarkAtWorldPos
 #   EndoscopicAddLandmark
 #   EndoscopicDeleteLandmark
 #   EndoscopicComputePath
@@ -70,6 +71,7 @@
 #   EndoscopicSetSliceDriver
 #   EndoscopicSetSlicePosition
 #   EndoscopicUpdateMRML
+#   EndoscopicCameraMotionFromUser
 #==========================================================================auto=
 
     
@@ -343,6 +345,7 @@ proc EndoscopicBuildVTK {} {
 # .PROC EndoscopicCreateCamera
 #
 # Create the Camera vtk actor
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 
@@ -444,6 +447,7 @@ proc EndoscopicBuildVTK {} {
 # .PROC EndoscopicSetParamCamera
 #
 # effects: Set the size parameters for the camera and the focal point
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 
@@ -599,13 +603,14 @@ proc EndoscopicCreatePath {} {
 	    Endoscopic(fPath,polyData)     SetPoints Endoscopic(fLand,points)
     }
 
+
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicBuildGUI
-#
 # Create the Graphical User Interface.
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
-
 proc EndoscopicBuildGUI {} {
 	global Gui Module Model View Advanced Endoscopic Path
 
@@ -1402,14 +1407,6 @@ proc EndoscopicSetVisibility {a} {
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicSetSize
-#
-# 
-# 
-# .END
-#-------------------------------------------------------------------------------
-
-#-------------------------------------------------------------------------------
-# .PROC EndoscopicSetSize
 # 
 # .ARGS
 # .END
@@ -1831,6 +1828,7 @@ proc EndoscopicSetCameraViewAngle {} {
 #
 # 
 # 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicAddLandmarkAtWorldPos {x y z} {
@@ -1859,6 +1857,7 @@ proc EndoscopicAddLandmarkAtWorldPos {x y z} {
 #
 # 
 # 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicAddLandmark {} {
@@ -1932,6 +1931,7 @@ proc EndoscopicAddLandmark {} {
 #
 # 
 # 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicDeleteLandmark {} {
@@ -2116,6 +2116,7 @@ proc EndoscopicComputeRandomPath {} {
 #
 # 
 # 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicCreateNewPath {} {
@@ -2292,6 +2293,7 @@ proc EndoscopicSetPathFrame {} {
 # automatically, we only want to update the Mrml file once with the new path
 # So the developper is responsible for calling MainUpdateMrml once it is 
 # appropriate to write the new nodes to the Mrml file
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicAddToMrml {id cx cy cz fx fy fz} {
@@ -2475,6 +2477,7 @@ proc EndoscopicSetSlicePosition {a} {
 # .PROC EndoscopicUpdateMRML
 #
 # Update the Fiducials
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicUpdateMRML {} {
@@ -2574,6 +2577,7 @@ proc EndoscopicUpdateMRML {} {
 # the graphical endoscopic camera with the virtual endoscopic camera
 # (i.e if the user changes the view of the endoscopic window with the mouse,
 #  we want to change the position of the graphical camera)
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicCameraMotionFromUser {} {
