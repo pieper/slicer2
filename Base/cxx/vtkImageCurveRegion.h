@@ -24,6 +24,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 // .NAME vtkImageCurveRegion - Abstract Filter used in slicer to plot graphs
 #ifndef __vtkImageCurveRegion_h
 #define __vtkImageCurveRegion_h
+#include "vtkImageData.h"
 #include "vtkImageSource.h"
 
 // Copied from vtkImageGeneral.h
