@@ -40,9 +40,16 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkStimulusGenerator.h"
 #include "vtkObjectFactory.h"
 
+#ifdef _WIN32
 #include <fstream>
 #include <ostream>
 #include <string>
+#else
+#include <fstream.h>
+#include <ostream.h>
+#include <string.h>
+#endif
+
 using std::string;
 
 
@@ -149,7 +156,7 @@ int vtkStimulusGenerator::ParseParadigmFile()
     }
 
     // Reads and parses file contents
-    static const std::string COLON = ":";
+    static const string COLON = ":";
     static const string START = "start with";
     static const string TOTAL_VOLUMES = "total volumes";
     static const string VOLUMES_PER_TASK = "volumes per task";
