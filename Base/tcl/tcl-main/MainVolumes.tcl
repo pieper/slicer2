@@ -72,7 +72,7 @@ proc MainVolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.55 $} {$Date: 2003/03/19 19:16:26 $}]
+    {$Revision: 1.56 $} {$Date: 2003/05/01 17:50:15 $}]
 
     set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -321,7 +321,24 @@ proc MainVolumesRead {v} {
     set Gui(progressText) "Reading [Volume($v,node) GetName]"
 
     puts "Reading volume: [Volume($v,node) GetName]..."
-    Volume($v,vol) Read
+    
+    if { [info exists Volume($v,type)] && $Volume($v,type) == "Analyze" } {
+        if { [info commands vtkCISGAnalyzeReader] == "" } {
+            DevErrorWindow "No Analyze Reader available."
+            return -1
+        }
+        catch "anreader Delete"
+        vtkCISGAnalyzeReader anreader
+
+        anreader SetFlippingSequence "0"
+        anreader SetFileName [Volume($v,node) GetFullPrefix]
+        anreader Update
+        Volume($v,vol) SetImageData [anreader GetOutput]
+        anreader Delete
+    } else {
+        Volume($v,vol) Read
+    }
+
     Volume($v,vol) Update
     puts "...finished reading [Volume($v,node) GetName]"
 
