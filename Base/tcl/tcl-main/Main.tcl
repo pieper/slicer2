@@ -259,7 +259,6 @@ The 3D Slicer will exit so the problem can be corrected."
                     }
                     if {$program == "slicer" && $contents == "presets"} {
                         MainOptionsParsePresets $attr
-                        puts "preset=$attr"
                     }
                 }
             }
@@ -371,7 +370,7 @@ proc MainInit {} {
 
         # Set version info
     lappend Module(versions) [ParseCVSInfo Main \
-        {$Revision: 1.85 $} {$Date: 2002/11/05 14:29:39 $}]
+        {$Revision: 1.86 $} {$Date: 2002/11/05 14:34:19 $}]
 
     # Call each "Init" routine that's not part of a module
     #-------------------------------------------
