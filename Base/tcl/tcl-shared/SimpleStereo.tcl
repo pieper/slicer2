@@ -100,6 +100,7 @@ proc ::SimpleStereo::formatCameraParams {cam} {
     set params [::NestedList::setValue $params Position [$cam GetPosition]]
     set params [::NestedList::setValue $params ViewShear [$cam GetViewShear]]
     set params [::NestedList::setValue $params ViewAngle [$cam GetViewAngle]]
+    set params [::NestedList::setValue $params ViewUp [$cam GetViewUp]]
     set params [::NestedList::setValue $params FocalDisk [$cam GetFocalDisk]]
     return $params
 }
@@ -116,5 +117,6 @@ proc ::SimpleStereo::restoreCameraParams {cam params} {
     eval $cam SetPosition      [::NestedList::getValue $params Position]
     eval $cam SetViewShear     [::NestedList::getValue $params ViewShear]
     eval $cam SetViewAngle     [::NestedList::getValue $params ViewAngle]
+    eval $cam SetViewUp        [::NestedList::getValue $params ViewUp]
     eval $cam SetFocalDisk     [::NestedList::getValue $params FocalDisk]
 }
