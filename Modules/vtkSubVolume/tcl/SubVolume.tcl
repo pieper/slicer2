@@ -105,7 +105,7 @@ proc SubVolumeInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.4 $} {$Date: 2004/06/04 12:58:37 $}]
+        {$Revision: 1.5 $} {$Date: 2004/07/19 19:20:19 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -425,7 +425,13 @@ proc SubVolume3DOpacity {opacity} {
  }
 }
 
+#----------------------------------------------------------------------
+#
+#
+#
+#----------------------------------------------------------------------
 proc SubVolumeApply {} {
+#    --------------
 
 global SubVolume Volume
 
@@ -482,6 +488,30 @@ set z2 [expr round([lindex $SubVolume(Ext3D,Ijk) 5])]
   # It's weird ... : I need to call SetRasToWld in order to update RasToIjk !!!
   Volume($newvol,node) SetRasToWld $ras1wld1
 
+  MainVolumesUpdate $newvol
+
+  MainMrmlUpdateMRML
+  #
+  # Add a Transform 
+  #
+
+  set tid [DataAddTransform 0 Volume($newvol,node) Volume($newvol,node)]
+
+  #
+  # Set the Transform
+  #
+  set n Matrix($tid,node)
+
+  set Dx  [lindex  [Volume($volID,node) GetDimensions] 0]
+  set Dy  [lindex  [Volume($volID,node) GetDimensions] 1]
+  set Dz1 [lindex  [Volume($volID,node) GetImageRange] 0]
+  set Dz2 [lindex  [Volume($volID,node) GetImageRange] 1]
+
+  set dx  [lindex  [Volume($newvol,node) GetDimensions] 0]
+  set dy  [lindex  [Volume($newvol,node) GetDimensions] 1]
+  set dz1 [lindex  [Volume($newvol,node) GetImageRange] 0]
+  set dz2 [lindex  [Volume($newvol,node) GetImageRange] 1]
+
   set ras2ijk2 [Volume($newvol,node) GetRasToIjk]
 
   vtkMatrix4x4 ijk2ijk1
@@ -494,19 +524,22 @@ set z2 [expr round([lindex $SubVolume(Ext3D,Ijk) 5])]
   ijk1ras1 DeepCopy [Volume($volID,node) GetRasToIjk]
   ijk1ras1 Invert
 
-  vtkMatrix4x4 ras2wld2 
-  ras2wld2 Identity
-  ras2wld2 Multiply4x4 ijk2ijk1  $ras2ijk2  ras2wld2
-  ras2wld2 Multiply4x4 ijk1ras1  ras2wld2   ras2wld2
-  ras2wld2 Multiply4x4 $ras1wld1 ras2wld2   ras2wld2
+  vtkMatrix4x4 ras2ras1
+  ras2ras1 Identity
+  ras2ras1 Multiply4x4 ijk2ijk1  $ras2ijk2  ras2ras1
+  ras2ras1 Multiply4x4 ijk1ras1  ras2ras1   ras2ras1
 
-  Volume($newvol,node) SetRasToWld ras2wld2
-  
-  MainVolumesUpdate $newvol
+  vtkTransform transf
+  transf SetMatrix ras2ras1
+  $n SetTransform transf
+
+  MainMrmlUpdateMRML
 
   ijk2ijk1    Delete
   ijk1ras1    Delete
-  ras2wld2    Delete
+  ras2ras1    Delete
+  transf      Delete
+
 
 }
 
