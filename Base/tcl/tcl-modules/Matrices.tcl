@@ -70,7 +70,7 @@ proc MatricesInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.22 $} {$Date: 2001/02/19 17:53:30 $}]
+		{$Revision: 1.23 $} {$Date: 2002/01/11 16:45:28 $}]
 
 	# Props
 	set Matrix(propertyType) Basic
@@ -91,6 +91,10 @@ proc MatricesInit {} {
 	set Matrix(prevTranLR) 0
 	set Matrix(prevTranPA) 0
 	set Matrix(prevTranIS) 0
+	set Matrix(rotAxis) "XX"
+        set Matrix(regRotLR) 0
+        set Matrix(regRotIS) 0
+        set Matrix(regRotPA) 0
 }
 
 #-------------------------------------------------------------------------------
@@ -462,7 +466,7 @@ are already roughly aligned.
 	#-------------------------------------------
 	set f $fManual.fRotate
 
-	eval {label $f.lTitle -text "Rotation (mm)"} $Gui(WLA)
+	eval {label $f.lTitle -text "Rotation (deg)"} $Gui(WLA)
 	grid $f.lTitle -columnspan 3 -pady $Gui(pad) -padx 1 
 
 	foreach slider "LR PA IS" {
@@ -655,7 +659,10 @@ proc MatricesSetVolumeMatrix {type} {
 
 #-------------------------------------------------------------------------------
 # .PROC MatricesIdentity
-# 
+#
+#  Resets the transformation to the identity, i.e. to the transform with
+#  no effect.
+#
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -666,12 +673,18 @@ proc MatricesIdentity {} {
 	if {$m == ""} {return}
 	
 	[Matrix($m,node) GetTransform] Identity
+	set Matrix(rotAxis) "XX"
+        set Matrix(regRotLR) 0
+        set Matrix(regRotIS) 0
+        set Matrix(regRotPA) 0
 	MainUpdateMRML
 }
 
 #-------------------------------------------------------------------------------
 # .PROC MatricesInvert
-# 
+#
+# Replaces the current transform with its inverse.
+#
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -682,6 +695,10 @@ proc MatricesInvert {} {
 	if {$m == ""} {return}
 	
 	[Matrix($m,node) GetTransform] Inverse
+	set Matrix(rotAxis) "XX"
+        set Matrix(regRotLR) 0
+        set Matrix(regRotIS) 0
+        set Matrix(regRotPA) 0
 	MainUpdateMRML
 }
 
@@ -827,7 +844,9 @@ proc MatricesPropsCancel {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MatricesManualTranslate
-# 
+#
+# Adjusts the "translation part" of the transformation matrix.
+#
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -880,6 +899,10 @@ proc MatricesManualTranslate {param {value ""}} {
 			$mat SetElement 2 3 $value
 		}
 		}
+		set Matrix(rotAxis) "XX"
+		set Matrix(regRotLR) 0
+		set Matrix(regRotIS) 0
+		set Matrix(regRotPA) 0
 		MainUpdateMRML
 		Render$Matrix(render)
 	}
@@ -967,6 +990,10 @@ proc MatricesManualTranslateDual {param1 value1 param2 value2} {
 		}
 	}
 	if {$oldVal2 != $value2 || $oldVal1 != $value1} {
+		set Matrix(rotAxis) "XX"
+		set Matrix(regRotLR) 0
+		set Matrix(regRotIS) 0
+		set Matrix(regRotPA) 0
 		MainUpdateMRML
 		if {$Matrix(render) == "All"} {
 			Render3D
@@ -977,7 +1004,12 @@ proc MatricesManualTranslateDual {param1 value1 param2 value2} {
 
 #-------------------------------------------------------------------------------
 # .PROC MatricesManualRotate
-# 
+#
+# Adjusts the "rotation part" of the transformation matrix.
+# If the previous manual adjustment to the transform was a rotation
+# about the same axis as the current adjustment, then only the change
+# in the degrees specified is applied.
+#
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -1012,7 +1044,7 @@ proc MatricesManualRotate {param {value ""} {mouse 0}} {
 	if {$axis != $Matrix(rotAxis)} {
 		[Matrix($t,node) GetTransform] GetMatrix Matrix(rotMatrix)
 		set Matrix(rotAxis) $axis
-		# O-out the rotation in the other 2 axi
+		# O-out the rotation in the other 2 axes
 		switch $axis {
 			"LR" {
 				set Matrix(regRotPA) 0
@@ -1030,7 +1062,7 @@ proc MatricesManualRotate {param {value ""} {mouse 0}} {
 	}
 
 	# Now, concatenate the rotation with the stored transform
-	set tran Matrix($t,transform)
+	set tran [Matrix($t,node) GetTransform]
 	$tran SetMatrix Matrix(rotMatrix)
 	switch $param {
 		"regRotLR" {
