@@ -75,6 +75,13 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   // complete coverage of anatomy.
   void SeedStreamlinesEvenlyInROI();
 
+
+  // Description
+  // One-shot function which clusters paths from ROI and displays using
+  // one actor per color. After, streamlines can't be edited.  To
+  // allow a high number of tracts without overhead of one actor per tract.
+  void SeedStreamlinesFromROIClusterAndDisplay();
+
   // Description
   // Start a streamline from the input point.
   // The point should be in the world coordinates of the scene.
