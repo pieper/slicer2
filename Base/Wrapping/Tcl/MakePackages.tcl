@@ -4,6 +4,6 @@
 
 # Packages
 
-pkg_mkIndex -direct -verbose vtkSlicerCore
+pkg_mkIndex -direct -verbose vtkSlicerBase
 
 exit
