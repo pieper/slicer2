@@ -78,7 +78,7 @@ proc MainMrmlInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainMrml \
-        {$Revision: 1.72 $} {$Date: 2003/02/01 03:37:30 $}]
+        {$Revision: 1.73 $} {$Date: 2003/02/20 03:26:38 $}]
 
     set Mrml(colorsUnsaved) 0
 }
@@ -1797,9 +1797,13 @@ proc MainMrmlRelativity {oldRoot} {
 
             $node SetFilePrefix [MainFileGetRelativePrefix \
                 [file join $oldRoot [$node GetFilePrefix]]]
-            $node SetFullPrefix [file join $Mrml(dir) \
-                [file join $oldRoot [$node GetFilePrefix]]]
             
+            # Kilian 02/03 I do not know what old root is good for but I will just leave it here
+        if {$oldRoot == $Mrml(dir)} { $node SetFullPrefix [file join $Mrml(dir) [$node GetFilePrefix]]
+        } else { 
+              $node SetFullPrefix [file join $Mrml(dir) \
+                  [file join $oldRoot [$node GetFilePrefix]]]
+        }
             # >> AT 7/6/01, sp 2002-08-20
 
             set num [$node GetNumberOfDICOMFiles]
@@ -1813,7 +1817,8 @@ proc MainMrmlRelativity {oldRoot} {
             }
 
             # << AT 7/6/01, sp 2002-08-20
-
+            # Kilian : Check if path exists 02/03
+              
         } elseif {$class == "vtkMrmlModelNode"} {
 
             set ext [file extension [$node GetFileName]]
@@ -1839,10 +1844,20 @@ proc MainMrmlWrite {filename} {
     # Store the new root and filePrefix
     set oldRoot $Mrml(dir)
     MainMrmlSetFile $filename
-
     # Rename all file with relative path names
     MainMrmlRelativity $oldRoot
 
+    # Check if all the volumes also have 
+    MainMrmlCheckVolumes $filename
+}
+#-------------------------------------------------------------------------------
+# .PROC MainMrmlWriteProceed
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MainMrmlWriteProceed {filename} {
+    global Mrml
     # See if colors are different than the defaults
     MainMrmlCheckColors
 
@@ -1878,3 +1893,25 @@ proc MainMrmlWrite {filename} {
     # Colors don't need saving now
     set Mrml(colorsUnsaved) 0
 }
+#-------------------------------------------------------------------------------
+# .PROC MainMrmlCheckVolumes
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MainMrmlCheckVolumes {filename} {
+   global Mrml
+   Mrml(dataTree) InitTraversal
+   set node [Mrml(dataTree) GetNextItem]
+   set volumelist ""
+   while {$node != ""} {
+       set class [$node GetClassName]
+       if {($class == "vtkMrmlVolumeNode") && ([file exist [format [$node GetFilePattern] [$node GetFullPrefix] [lindex [$node GetImageRange] 0]]] == 0)} {
+          set volumelist "$volumelist [$node GetName] \n"
+       }
+       set node [Mrml(dataTree) GetNextItem]
+  }
+  if {[string length $volumelist]} {
+      YesNoPopup MrmlCheckVolumes 20 50 "The following volumes will not be saved in the XML-file,\n because we could not read their volume file:\n $volumelist" "MainMrmlWriteProceed $filename" 
+  } else {MainMrmlWriteProceed $filename}
+} 

@@ -57,7 +57,7 @@
 #-------------------------------------------------------------------------------
 proc GraphCreate {varName path {graphWidth 140}  {graphHeight 50} {graphLUT ""} {graphBgRange "0 0"} {graphCurveRad 0} {graphDim 1} {descrFlag 0}\
                  {title ""} {coordXmin 0} {coordXmax 100} {coordXsca 50} {coordXformat "%d"} {coordYmin 0.0} {coordYmax 1.0} {coordYsca 0.5} \
-         {coordYformat "%01.2f"} {graphExtFlag 0}} {
+         {coordYformat "%01.2f"} {graphExtFlag 0} {XLabelSca ""} {XTitle ""} {Xoffset 0}}  {
     global Gui
     # 1. Step : Set up structur 
     upvar #0 $varName localArray
@@ -72,18 +72,26 @@ proc GraphCreate {varName path {graphWidth 140}  {graphHeight 50} {graphLUT ""} 
     set localArray(Graph,$path,Xlen) $graphWidth
     set localArray(Graph,$path,Ylen) $graphHeight
     # Set some global variables  
-    set localArray(Graph,$path,descrFlag) $descrFlag
-    set localArray(Graph,$path,Xsca)      $coordXsca
+    if {$XLabelSca != ""} {
+    set coordXsca 1
+        set coordXmin 0
+    set coordXmax [expr [llength $XLabelSca] -1] 
+    }  
+    set localArray(Graph,$path,XLabelSca) $XLabelSca
     set localArray(Graph,$path,Xmin)      $coordXmin
     set localArray(Graph,$path,Xmax)      $coordXmax
-    set localArray(Graph,$path,XInvUnit)  [GraphCalcInvUnit $coordXmin $coordXmax  $graphWidth]
+    set localArray(Graph,$path,Xoffset)   $Xoffset
+    set localArray(Graph,$path,descrFlag) $descrFlag
+    set localArray(Graph,$path,Xsca)      $coordXsca
+    set localArray(Graph,$path,XInvUnit)  [GraphCalcInvUnit $coordXmin $coordXmax $graphWidth $Xoffset]
 
     set localArray(Graph,$path,Xformat) $coordXformat
     set localArray(Graph,$path,Ysca) $coordYsca
     set localArray(Graph,$path,Ymin) $coordYmin
     set localArray(Graph,$path,Ymax) $coordYmax
+    set localArray(Graph,$path,Yoffset) 0   
     if {$graphDim == 2} {
-      set localArray(Graph,$path,YInvUnit)  [GraphCalcInvUnit $coordYmin $coordYmax  $graphHeight]
+      set localArray(Graph,$path,YInvUnit)  [GraphCalcInvUnit $coordYmin $coordYmax  $graphHeight 0]
     }
     set localArray(Graph,$path,Yformat) $coordYformat
     # Currently only defined for 1 dimension
@@ -98,11 +106,20 @@ proc GraphCreate {varName path {graphWidth 140}  {graphHeight 50} {graphLUT ""} 
     frame $path.fGraph -bg $Gui(activeWorkspace)
     pack $path.fGraph -side top -padx 0 -pady 0 
 
+    GraphCalculateScnScp $varName $path 0 
+    GraphCalculateScnScp $varName $path 1
+
     if {$descrFlag} {
       set localArray(Graph,$path,XboL) 30
       set localArray(Graph,$path,XboR) 30
-      set localArray(Graph,$path,YboU) 12
+      # This is a frame around the graph where nothing gets printed
+      set localArray(Graph,$path,YboU) 10
+      # Space for titel text 
+      set localArray(Graph,$path,YboUadd) 15 
+      if {$title != ""} { incr localArray(Graph,$path,YboU) $localArray(Graph,$path,YboUadd)}
       set localArray(Graph,$path,YboD) 12
+      set localArray(Graph,$path,YboDadd) 15 
+      if {$XTitle != ""} { incr localArray(Graph,$path,YboD) $localArray(Graph,$path,YboDadd)}
       # Length of scalling lines 
       set localArray(Graph,$path,Xscl) 3
       set localArray(Graph,$path,Yscl) 3
@@ -110,11 +127,8 @@ proc GraphCreate {varName path {graphWidth 140}  {graphHeight 50} {graphLUT ""} 
       set localArray(Graph,$path,Xsct) 5
       set localArray(Graph,$path,Ysct) 12
     
-      GraphCalculateScnScp $varName $path 0 
-      GraphCalculateScnScp $varName $path 1
-
       # Set Colors of coordinates 
-      set localArray(Graph,$path,CoordColor) red
+      set localArray(Graph,$path,CoordColor) black
       canvas $path.fGraph.caYAxis -width $localArray(Graph,$path,XboL)\
         -height [expr $graphHeight + $localArray(Graph,$path,YboD)+$localArray(Graph,$path,YboU)]\
         -background $Gui(activeWorkspace) -border 0 -highlightthickness 0
@@ -129,6 +143,15 @@ proc GraphCreate {varName path {graphWidth 140}  {graphHeight 50} {graphLUT ""} 
       frame $path.fGraph.fRight.fMiddle -bg $Gui(activeWorkspace)
       canvas $path.fGraph.fRight.caXAxis -width $XLength -height $localArray(Graph,$path,YboD)\
           -background $Gui(activeWorkspace) -border 0 -highlightthickness 0
+
+      if {$XTitle != ""} {
+    set y [expr $localArray(Graph,$path,Xsct) + $localArray(Graph,$path,Xscl)]
+        $path.fGraph.fRight.caXAxis create text [expr ($XLength - $localArray(Graph,$path,XboR))  /2]  [expr $localArray(Graph,$path,YboD) + $localArray(Graph,$path,Xsct) - $localArray(Graph,$path,YboDadd)]  -text $XTitle \
+        -tag XAxisTitle -font {Helvetica 6} -fill $localArray(Graph,$path,CoordColor) 
+      } 
+
+
+
       GraphInteractor $varName $path $path.fGraph.fRight.caXAxis
       pack $path.fGraph.fRight.caTitle $path.fGraph.fRight.fMiddle $path.fGraph.fRight.caXAxis -side top -padx 0 -pady 0 
 
@@ -138,6 +161,7 @@ proc GraphCreate {varName path {graphWidth 140}  {graphHeight 50} {graphLUT ""} 
           -background $Gui(activeWorkspace) -border 0 -highlightthickness 0
       GraphInteractor $varName $path $path.fGraph.fRight.fMiddle.caRBorder
       pack $path.fGraph.fRight.fMiddle.caGraph $path.fGraph.fRight.fMiddle.caRBorder -side left -padx 0  -pady 0
+
       # Set path variables 
       set localArray(Graph,$path,caYAxis)   $path.fGraph.caYAxis
       set localArray(Graph,$path,caXAxis)   $path.fGraph.fRight.caXAxis
@@ -145,7 +169,7 @@ proc GraphCreate {varName path {graphWidth 140}  {graphHeight 50} {graphLUT ""} 
       set localArray(Graph,$path,caTitle)   $path.fGraph.fRight.caTitle
       set localArray(Graph,$path,caRBorder) $path.fGraph.fRight.fMiddle.caRBorder
       # 2. Step:  Define a title if necessary 
-      $localArray(Graph,$path,caTitle) create text [expr $graphWidth/2] [expr $localArray(Graph,$path,YboU) - $localArray(Graph,$path,Xsct)]\
+      $localArray(Graph,$path,caTitle) create text [expr $graphWidth/2] [expr $localArray(Graph,$path,YboU) - $localArray(Graph,$path,YboUadd)  + $localArray(Graph,$path,Xsct)]\
           -text $title -tag Title -font {Helvetica 6} -fill $Gui(textDark)
 
       set localArray(Graph,$path,Title) $title
@@ -227,21 +251,29 @@ proc GraphCreateXLabels {varName path} {
     set ca $localArray(Graph,$path,caXAxis)
     # Lables of X Coordinate Axis
     set y [expr $localArray(Graph,$path,Xsct) + $localArray(Graph,$path,Xscl)]
+
+    if {$localArray(Graph,$path,Xoffset) == 0} {
     $ca create text -2 $y -text [format "$localArray(Graph,$path,Xformat)" $localArray(Graph,$path,Xmin)] \
-                          -tag XAxisTX0 -font {Helvetica 6} -fill $localArray(Graph,$path,CoordColor)
+        -tag XAxisTX0 -font {Helvetica 6} -fill $localArray(Graph,$path,CoordColor)
     $localArray(Graph,$path,caYAxis) create text $localArray(Graph,$path,XboL) [expr $y + $localArray(Graph,$path,YboU) + $localArray(Graph,$path,Ylen)] \
         -text [format "$localArray(Graph,$path,Xformat)" $localArray(Graph,$path,Xmin)] \
-            -tag XAxisTY0 -font {Helvetica 6} -fill $localArray(Graph,$path,CoordColor)
-
-    for {set i 1} { $i <= $localArray(Graph,$path,Xscn)} {incr i} {
-        set x [expr int($i*$localArray(Graph,$path,Xscp))]
+        -tag XAxisTY0 -font {Helvetica 6} -fill $localArray(Graph,$path,CoordColor)
+    set start 1
+    set OffLength 0.0
+    } else { 
+    set start 0
+        set OffLength [expr $localArray(Graph,$path,Xscp) / 2.0]
+    }
+    for {set i $start} { $i <= $localArray(Graph,$path,Xscn)} {incr i} {
+        set x [expr int($i*$localArray(Graph,$path,Xscp) + $OffLength )]
         # Shift it to the right - otherwise it wont be fully displayed ! 
         $ca create line $x 0 $x $localArray(Graph,$path,Xscl) -width 1 -fill $localArray(Graph,$path,CoordColor) -tag XAxisL$i 
-        $ca create text $x $y -text [format "$localArray(Graph,$path,Xformat)" [expr ($i * $localArray(Graph,$path,Xsca)) + $localArray(Graph,$path,Xmin)]]\
-            -tag XAxisT$i -font {Helvetica 6} -fill $localArray(Graph,$path,CoordColor)
+    if {$localArray(Graph,$path,XLabelSca) == ""} {
+        set labelText [format "$localArray(Graph,$path,Xformat)" [expr ($i * $localArray(Graph,$path,Xsca)) + $localArray(Graph,$path,Xmin)]]
+    } else { set labelText [lindex $localArray(Graph,$path,XLabelSca) $i]}
+        $ca create text $x $y -text $labelText  -tag XAxisT$i -font {Helvetica 6} -fill $localArray(Graph,$path,CoordColor)
     } 
 }
-
 #-------------------------------------------------------------------------------
 # .PROC GraphCreateYLabels 
 # Creates the Lables for the Graph's Y-Axis
@@ -286,9 +318,9 @@ proc GraphCalculateScnScp {varName path axis} {
     if {$axis} {set Aname Y
     } else { set Aname X }
     # Number of scalling lines
-    set localArray(Graph,$path,${Aname}scn) [expr int(double($localArray(Graph,$path,${Aname}max) - $localArray(Graph,$path,${Aname}min)) / double($localArray(Graph,$path,${Aname}sca)))]
+    set localArray(Graph,$path,${Aname}scn) [expr int(double($localArray(Graph,$path,${Aname}max) - $localArray(Graph,$path,${Aname}min) + $localArray(Graph,$path,${Aname}offset)) / double($localArray(Graph,$path,${Aname}sca)))]
     # Distance between scalling lines 
-    set dist [expr double($localArray(Graph,$path,${Aname}max) - $localArray(Graph,$path,${Aname}min))]
+    set dist [expr double($localArray(Graph,$path,${Aname}max) - $localArray(Graph,$path,${Aname}min) + $localArray(Graph,$path,${Aname}offset))]
     if {$dist > 0.0} {
     set localArray(Graph,$path,${Aname}scp) [expr $localArray(Graph,$path,${Aname}len)*$localArray(Graph,$path,${Aname}sca) / $dist] 
     } else {
@@ -479,27 +511,28 @@ proc GraphRescaleAxis {varName path Min Max Sca Axis} {
     set localArray(Graph,$path,${Aname}min) $Min
     set localArray(Graph,$path,${Aname}max) $Max
     set localArray(Graph,$path,${Aname}sca) $Sca
-    set localArray(Graph,$path,${Aname}InvUnit)  [GraphCalcInvUnit $Min $Max $localArray(Graph,$path,${Aname}len)]
+    set localArray(Graph,$path,${Aname}InvUnit)  [GraphCalcInvUnit $Min $Max $localArray(Graph,$path,${Aname}len) $localArray(Graph,$path,${Aname}offset)]
     # Delete Labeling of ${Aname}-Axis
-    if {$Axis} {
-    set start 0
-    } else {
+    if {$localArray(Graph,$path,descrFlag)} {
+      if {$Axis} {
+        set start 0
+      } else {
     $localArray(Graph,$path,ca${Aname}Axis) delete XAxisTX0
     $localArray(Graph,$path,caYAxis) delete XAxisTY0
-    set start 1
+        set start 1
+      }
+      for {set i $start} { $i <= $localArray(Graph,$path,${Aname}scn)} {incr i} {
+        $localArray(Graph,$path,ca${Aname}Axis) delete ${Aname}AxisL$i
+        $localArray(Graph,$path,ca${Aname}Axis) delete ${Aname}AxisT$i
+      }
     }
-    for {set i $start} { $i <= $localArray(Graph,$path,${Aname}scn)} {incr i} {
-    $localArray(Graph,$path,ca${Aname}Axis) delete ${Aname}AxisL$i
-    $localArray(Graph,$path,ca${Aname}Axis) delete ${Aname}AxisT$i
-    }
-    
     # calulate localArray(Graph,$path,${Aname}leU), localArray(Graph,$path,${Aname}scn) and localArray(Graph,$path,${Aname}scp) 
     GraphCalculateScnScp $varName $path $Axis
     # Relabel ${Aname}-Axis
-    GraphCreate${Aname}Labels $varName $path
+    if {$localArray(Graph,$path,descrFlag)} {GraphCreate${Aname}Labels $varName $path}
     
     if {($Axis == 0) || ($localArray(Graph,$path,Dimension) == 2) } {
-    set localArray(Graph,$path,${Aname}InvUnit) [GraphCalcInvUnit $Min $Max $localArray(Graph,$path,${Aname}len)]
+    set localArray(Graph,$path,${Aname}InvUnit) [GraphCalcInvUnit $Min $Max $localArray(Graph,$path,${Aname}len) $localArray(Graph,$path,${Aname}offset)]
 
     if {[llength [info procs ${varName}Graph${Aname}AxisUpdate]] } {
         ${varName}Graph${Aname}AxisUpdate $path $Min $Max $Sca
@@ -644,7 +677,8 @@ proc GraphCreateHistogramCurve {varDataName Volume Xmin Xmax Xlen} {
     # set origin [lindex $inputRange 0]
     # set numBins [lindex $inputRange 1]
  
-    set extent  [expr int($Xmax - $Xmin - 1)]
+    # Kilian changed set extent  [expr int($Xmax - $Xmin - 1)
+    set extent  [expr int($Xmax - $Xmin)]
     # How many bins , e.g. 10
     # ${varDataName}Accu SetComponentExtent 0 [expr $Xlen-1] 0 0 0 0
     ${varDataName}Accu SetComponentExtent 0 $extent 0 0 0 0
@@ -671,7 +705,7 @@ proc GraphCreateHistogramCurve {varDataName Volume Xmin Xmax Xlen} {
     }
 
     # This is necessary because otherwise you get a wired histograph (you could defined it also in vtkImageAccu... but results are not good
-    set XInvUnit [GraphCalcInvUnit $Xmax $Xmin $Xlen]
+    set XInvUnit [GraphCalcInvUnit $Xmax $Xmin $Xlen 0]
     vtkImageResample ${varDataName}Res
     ${varDataName}Res SetDimensionality 1
     ${varDataName}Res SetAxisOutputSpacing 0 1.0
@@ -739,8 +773,8 @@ proc GraphCalcUnit {Min Max Length} {
 # int   Length Pixel length of axis 
 # .END
 #-------------------------------------------------------------------------------
-proc GraphCalcInvUnit {Min Max Length} {
-   set Dist [expr double($Max - $Min) ] 
+proc GraphCalcInvUnit {Min Max Length Offset} {
+   set Dist [expr double($Max - $Min + $Offset ) ] 
    if {$Dist > 0} {
     set InvUnit [expr double($Length) / $Dist ]
     while {[expr $Dist * $InvUnit ] <  $Length} { set InvUnit [expr $InvUnit * 1.001] }

@@ -269,17 +269,22 @@ proc DevAddSelectButton { TabName f aLabel message pack {tooltip ""} \
     set Label       "$f.l$aLabel"
     set menubutton  "$f.mb$aLabel"
     set menu        "$f.mb$aLabel.m"
-
-    DevAddLabel $Label $message $color
+   
+    # Kilian: Why should we create a label if we do not have a message
+    if {$message != ""} {
+      DevAddLabel $Label $message $color
+    }
 
     eval {menubutton $menubutton -text "None" \
             -relief raised -bd 2 -width $width -menu $menu} $Gui(WMBA)
     eval {menu $menu} $Gui(WMA)
 
     if {$pack == "Pack"} {
-    pack $Label $menubutton -side left -padx $Gui(pad) -pady 0 
+    if {$message != ""} {pack $Label -side left -padx $Gui(pad) -pady 0} 
+       pack $menubutton -side left -padx $Gui(pad) -pady 0 
     } else {
-        grid $Label $menubutton -sticky e -padx $Gui(pad) -pady $Gui(pad)
+    if {$message != ""} { grid $Label -sticky e -padx $Gui(pad) -pady $Gui(pad)}
+        grid $menubutton -sticky e -padx $Gui(pad) -pady $Gui(pad)
         grid $menubutton -sticky w
     }
 

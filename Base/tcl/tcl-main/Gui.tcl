@@ -62,7 +62,7 @@ proc GuiInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo Gui \
-    {$Revision: 1.43 $} {$Date: 2003/01/22 17:04:32 $}]
+    {$Revision: 1.44 $} {$Date: 2003/02/20 03:26:38 $}]
 
 
     # enable tooltips by default.  This should check user preferences somehow.
@@ -606,7 +606,7 @@ proc ScrollSet {scrollbar geoCmd offset size} {
 proc ScrolledListbox {f xAlways yAlways {args ""}} {
     global Gui
     
-    frame $f
+    frame $f -bg $Gui(activeWorkspace)
     if {$xAlways == 1 && $yAlways == 1} { 
         listbox $f.list -selectmode single \
             -xscrollcommand "$f.xscroll set" \
