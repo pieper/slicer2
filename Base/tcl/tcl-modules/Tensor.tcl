@@ -78,8 +78,8 @@ proc TensorInit {} {
     set Module($m,row1Name) "{Help} {Disp} {ROI} {Scalars} {Props}"
     set Module($m,row1,tab) Display
     # Use these lines to add a second row of tabs
-    set Module($m,row2List) "Advanced"
-    set Module($m,row2Name) "{VTK}"
+    set Module($m,row2List) "Advanced Devel"
+    set Module($m,row2Name) "{VTK} {Devel}"
     set Module($m,row2,tab) Advanced
     
     # Define Procedures
@@ -97,7 +97,7 @@ proc TensorInit {} {
     # Set Version Info
     #------------------------------------
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.3 $} {$Date: 2002/01/26 23:59:03 $}]
+	    {$Revision: 1.4 $} {$Date: 2002/01/31 22:47:18 $}]
     
     # Props: GUI tab we are currently on
     #------------------------------------
@@ -229,6 +229,24 @@ proc TensorInit {} {
     lappend Tensor(eventManager) {$Gui(fViewWin)  <KeyPress-l> \
 	    { if { [SelectPick Tensor(vtk,picker) %W %x %y] != 0 } \
 	    { eval TensorSelect $Select(xyz);Render3D } } }
+
+    #------------------------------------
+    # Developers panel variables
+    #------------------------------------
+    set Tensor(devel,fileName) "tensors.vtk"
+    set tmp "\
+	    {1 0 0 0}  \
+	    {0 1 0 0}  \
+	    {0 0 1 0}  \
+	    {0 0 0 1}  "
+    set rows {0 1 2 3}
+    set cols {0 1 2 3}    
+    foreach row $rows {
+	foreach col $cols {
+	    set Tensor(recalculate,userMatrix,$row,$col) \
+		    [lindex [lindex $tmp $row] $col]
+	} 
+    }
 }
 
 ################################################################
@@ -320,6 +338,7 @@ proc TensorBuildGUI {} {
     # Scalars
     # Props
     # Advanced
+    # Devel
     #-------------------------------------------
 
     puts "Lauren in TensorBuildGUI, fix the frame hierarchy comment"
@@ -717,7 +736,7 @@ proc TensorBuildGUI {} {
 	eval {entry $f.e$slider -width 6 \
 		-textvariable Tensor(thresh,threshold,[Uncap $slider])} \
 		$Gui(WEA)
-	#bind $f.e$slider <Return>   "EdThresholdUpdate; RenderActive;"
+	bind $f.e$slider <Return>   "TensorUpdateThreshold"
 	#bind $f.e$slider <FocusOut> "EdThresholdUpdate; RenderActive;"
 	eval {scale $f.s$slider -from $Tensor(thresh,threshold,rangeLow) \
 		-to $Tensor(thresh,threshold,rangeHigh) \
@@ -1068,8 +1087,52 @@ proc TensorBuildGUI {} {
     # Here's a button with text "Apply" that calls "AdvancedApply"
     DevAddButton $fAdvanced.fMiddle.bApply Apply TensorAdvancedApply
     pack $fAdvanced.fMiddle.bApply -side top -padx $Gui(pad) -pady $Gui(pad)
+
+    #-------------------------------------------
+    # Devel frame
+    #-------------------------------------------
+    set fDevel $Module(Tensor,fDevel)
+    set f $fDevel
     
- 
+    foreach frame "Top Middle Bottom" {
+	frame $f.f$frame -bg $Gui(activeWorkspace)
+	pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
+    }
+
+    #-------------------------------------------
+    # Devel->Top frame
+    #-------------------------------------------
+    set f $fDevel.fTop
+
+    DevAddButton $f.bSave "Save Structured Points" {TensorWriteStructuredPoints $Tensor(devel,fileName)}
+    pack $f.bSave -side top -padx $Gui(pad) -pady $Gui(pad)
+
+    #-------------------------------------------
+    # Devel->Middle frame
+    #-------------------------------------------
+    set f $fDevel.fMiddle
+    frame $f.fEntry
+    frame $f.fButton
+    pack $f.fEntry $f.fButton -side top -padx $Gui(pad) -pady $Gui(pad)
+
+    set rows {0 1 2 3}
+    set cols {0 1 2 3}    
+    foreach row $rows {
+	set f $fDevel.fMiddle.fEntry
+	frame $f.f$row
+	pack $f.f$row -side top -padx $Gui(pad) -pady $Gui(pad)
+	set f $f.f$row
+	foreach col $cols {
+	    eval {entry $f.e$col -width 5 \
+			    -textvariable \
+			    Tensor(recalculate,userMatrix,$row,$col) \
+			} $Gui(WEA)
+	    pack $f.e$col -side left -padx $Gui(pad) -pady 2	    
+	}
+    }    
+    set f $fDevel.fMiddle.fButton
+    DevAddButton $f.bApply "Recalculate Tensors" {TensorRecalculateTensors}
+    pack $f.bApply -side top -padx $Gui(pad) -pady $Gui(pad) 
 }
 
 
@@ -1211,7 +1274,12 @@ proc TensorPropsApply {} {
     if {$d == "NEW"} {
 
 	# Create the node
-	set n [MainMrmlAddNode Volume Tensor]
+	# Lauren HUGE HACK!
+	# When we convert to tensors we are using a volume node
+	# here for structured points files we use a tensor node
+	# this should be only one kind of node
+	set n [MainMrmlAddNode Tensor]
+	#set n [MainMrmlAddNode Volume Tensor]
 	set i [$n GetID]
 
 	# Set everything up in the node.
@@ -1387,27 +1455,37 @@ proc TensorSelect {x y z} {
 	    [Tensor(vtk,picker) GetSubId] \
 	    [Tensor(vtk,picker) GetPCoords]"
 
-    puts "Select Picker xyz:  $x $y $z  cell: $location, (x,y,z): $x $y $z"
-
-    #return
+    set pickPos [Tensor(vtk,picker) GetPickPosition]
+    set xp [lindex $pickPos 0] 
+    set yp [lindex $pickPos 1]
+    set zp [lindex $pickPos 2]
     
+    puts "Select Picker  (x,y,z):  $x $y $z  cell: $location,  (x,y,z):  $xp $yp $zp"
+
+
     set t $Tensor(activeID)
     if {$t == "" || $t == $Tensor(idNone)} {
 	puts "TensorSelect: No tensors have been read into the slicer"
 	return
     }
+
+    # use out world to ijk matrix information:
+    # Transform x y z.  The tensors don't know about their
+    # actor's UserMatrix.  We need to transform xyz by
+    # the inverse of this to put the point where the
+    # tensors think it is...
+    vtkTransform transform
+    TensorCalculateActorMatrix transform $t
     
+    transform Inverse
+#    transform PreMultiply
+    set point [transform TransformPoint $x $y $z]
+    set x [lindex $point 0]
+    set y [lindex $point 1]
+    set z [lindex $point 2]
+    transform Delete
+
     #puts "find cell: [[Tensor($t,data) GetOutput] FindCell $x $y $z]"
-
-    # Lauren: must put the tensors in the right place in 3D!!!!!!
-
-    # attempt to convert points to ijk from world, see if this works
-    #vtkTransform t1
-    #t1 SetMatrix [Tensor(vtk,glyphs,actor) GetUserMatrix]
-    #[t1 GetMatrix] Invert
-    #set ijxXYZ [t1 TransformPoint $x $y $z]
-    #puts $ijxXYZ
-    #t1 Delete
 
     # start pipeline (never use reformatted data here)
     #------------------------------------
@@ -1420,13 +1498,13 @@ proc TensorSelect {x y z} {
     # can't always be found and sometimes this causes a 
     # core dump.  It doesn't seem to work if pick
     # near two crossing lines
-    #Tensor(vtk,streamln) SetStartPosition $x $y $z
+    Tensor(vtk,streamln) SetStartPosition $x $y $z
     
     #set location "0 0 0 0 0"
-    set location "10 0 0 0 0"
+    #set location "10 0 0 0 0"
     # this may not work at all, though it should since
     # the class is now using this information
-    eval {Tensor(vtk,streamln) SetStartLocation} $location
+    #eval {Tensor(vtk,streamln) SetStartLocation} $location
 
     # for test hacked code: use both and all our info
     #Tensor(vtk,streamln) SetStartPosition $x $y $z
@@ -1434,14 +1512,25 @@ proc TensorSelect {x y z} {
     # Lauren debug
     #------------------------------------
     Tensor(vtk,streamln) DebugOn
-    Tensor(vtk,streamln) Update
+    #Tensor(vtk,streamln) Update
     #puts [Tensor(vtk,streamln) Print]
 
 
-    # Add the actor now that it has inputs
+    # Add the actor to the scene now that it has inputs
     #------------------------------------
     MainAddActor Tensor(vtk,streamln,actor)
-    #Render3D
+
+    # Put the output streamline's actor in the right place
+    # just use the same matrix we use to position the tensors
+    #------------------------------------
+    vtkTransform transform
+    TensorCalculateActorMatrix transform $t
+    Tensor(vtk,streamln,actor) SetUserMatrix [transform GetMatrix]
+    transform Delete
+
+    # Force pipeline execution and render scene
+    #------------------------------------
+    Render3D
 }
 
 
@@ -1451,7 +1540,7 @@ proc TensorSelect {x y z} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc TensorUpdateThreshold {not_used} {
+proc TensorUpdateThreshold {{not_used ""}} {
     global Tensor
     
     Tensor(vtk,thresh,threshold)  ThresholdBetween \
@@ -1551,11 +1640,15 @@ proc TensorUpdateGlyphColor {} {
 
     $Tensor(gui,mbGlyphColor)	config -text $mode
 
+    # Tell actor where to get scalar range
     set Tensor(mode,glyphScalarRange) Auto
     TensorUpdateGlyphScalarRange
 
     # Update pipelines
     Render3D
+
+    # After update grab real scalar range for slider
+    TensorUpdateGlyphScalarRange
 }
 
 #-------------------------------------------------------------------------------
@@ -1571,13 +1664,14 @@ proc TensorUpdateGlyphScalarRange {{not_used ""}} {
 
     switch $mode {
 	"Auto" {
+
 	    scan [[Tensor(vtk,glyphs) GetOutput] GetScalarRange] \
 		    "%f %f" \
 		    Tensor(mode,glyphScalarRange,low) \
 		    Tensor(mode,glyphScalarRange,hi) 
 
 	    Tensor(vtk,glyphs,mapper) SetScalarRange \
-		    $Tensor(mode,glyphScalarRange,low) \
+	    $Tensor(mode,glyphScalarRange,low) \
 		    $Tensor(mode,glyphScalarRange,hi) 
 
 	}
@@ -1607,18 +1701,22 @@ proc TensorUpdateActor {actor} {
 #-------------------------------------------------------------------------------
 # .PROC TensorUpdate
 # The whole enchilada (if this were a vtk filter, this would be
-# the Update function...)
+# the Execute function...)
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc TensorUpdate {} {
-    global Tensor Slice Volume Label
+    global Tensor Slice Volume Label Gui
 
     set t $Tensor(activeID)
     if {$t == "" || $t == $Tensor(idNone)} {
 	puts "TensorUpdate: Can't visualize Nothing"
 	return
     }
+
+
+    # reset progress text for any filter that uses the blue bar
+    set Gui(progressText) "Working..."
 
     #------------------------------------
     # preprocessing pipeline
@@ -1700,6 +1798,7 @@ proc TensorUpdate {} {
 	    set slice $Tensor(mode,reformatType)
 	    if {$slice != "None"} {
 
+		# We are reformatting a slice of glyphs
 		Tensor(vtk,reformat) SetInput $preprocessedSource
 		puts "Lauren, reformat resolution? image size?"
 
@@ -1733,19 +1832,21 @@ proc TensorUpdate {} {
 		Tensor(vtk,glyphs,actor) SetUserMatrix $m
 		
 	    } else {
+		# We are displaying the whole volume of glyphs!
 		set visSource $preprocessedSource
 		
-		set node Tensor($Tensor(activeID),node)
-
 		# Want actor to be positioned in center with slices
 		vtkTransform t1
-		t1 Identity
-		t1 PreMultiply
-		t1 SetMatrix [$node GetWldToIjk]
-		t1 Inverse
-		scan [$node GetSpacing] "%g %g %g" res_x res_y res_z
-		t1 PostMultiply
-		t1 Scale [expr 1.0 / $res_x] [expr 1.0 / $res_y] [expr 1.0 / $res_z]
+		TensorCalculateActorMatrix t1 $Tensor(activeID)
+
+		#t1 Identity
+		#t1 PreMultiply
+		#t1 SetMatrix [$node GetWldToIjk]
+		#t1 Inverse
+		#scan [$node GetSpacing] "%g %g %g" res_x res_y res_z
+		##t1 PostMultiply
+		#t1 PreMultiply
+		#t1 Scale [expr 1.0 / $res_x] [expr 1.0 / $res_y] [expr 1.0 / $res_z]
 		Tensor(vtk,glyphs,actor) SetUserMatrix [t1 GetMatrix]
 		t1 Delete
 	    }
@@ -1790,8 +1891,6 @@ proc TensorUpdate {} {
 	    #------------------------------------
 	    MainAddActor Tensor(vtk,glyphs,actor)
 
-	    TensorUpdateGlyphScalarRange
-
 	}
 	"Tracks" {
 
@@ -1822,6 +1921,10 @@ proc TensorUpdate {} {
 
     # config menubutton
     $Tensor(gui,mbVisMode)	config -text $mode
+
+
+    # make sure the scalars are updated
+    TensorUpdateGlyphScalarRange
 
     # update 3D window (causes pipeline update)
     Render3D
@@ -2202,7 +2305,7 @@ proc TensorBuildVTK {} {
     #Tensor(vtk,picker) DebugOn
 
     # Lauren test by displaying picked point
-    Tensor(vtk,picker) SetEndPickMethod "annotatePick Tensor(vtk,picker)"
+    #Tensor(vtk,picker) SetEndPickMethod "annotatePick Tensor(vtk,picker)"
     vtkTextMapper textMapper
     textMapper SetFontFamilyToArial
     textMapper SetFontSize 20
@@ -2323,7 +2426,7 @@ proc TensorBuildVTK {} {
     Tensor(vtk,$object) SetProgressMethod  "MainShowProgress Tensor(vtk,$object)"
     Tensor(vtk,$object) SetEndMethod        MainEndProgress
 
-    TensorAddObjectProperty $object StartPosition {9 9 -9} float {Start Pos}
+    #TensorAddObjectProperty $object StartPosition {9 9 -9} float {Start Pos}
     #TensorAddObjectProperty $object IntegrateMinorEigenvector \
 	    #1 bool IntegrateMinorEv
     TensorAddObjectProperty $object MaximumPropagationDistance 20.0 \
@@ -2433,6 +2536,7 @@ proc ConvertVolumeToTensors {} {
     set offsetsGradient "0 1 2 3 4 5"
     set offsetsNoGradient "6 7"
     set numberOfGradientImages 6
+    # Lauren the gradient dirs should also be settable
 
     # volume we use for input
     set input [Volume($v,vol) GetOutput]
@@ -2457,8 +2561,110 @@ proc ConvertVolumeToTensors {} {
     #matRotate Delete
     # --------------------------------------------------------
 
+    # Lauren perhaps rm the rotation matrix stuff above and in the class
+
+    # Rotate the gradient vectors if needed.
+    set order [Volume($v,node) GetScanOrder]
+    set id 0
+    switch $order {
+	"IS" { 
+	    set id 0
+	}
+	"SI" {
+	    set id 0
+	}
+	"AP" {
+	    set id 1
+	}
+	"PA" {
+	    set id 1
+	}
+	"LR" {
+	    set id 2
+	}
+	"RL" {
+	    set id 2
+	}
+    }
+
+    # only sag is okay -- maybe we need -y!  since the
+    # vtk y-axis is negative perhaps the polydata is messed up.
+
+    # I don't get it
+    # it seems that if the gradient vectors are in RAS-space
+    # then we are set.
+    # so it seems that this could happen once to the gradients
+    # and be the same for all orientations since supine.  why not?
+    # (note that applying an external transform to the volume
+    # will not work on the tensors too right now)
+    switch $id {
+	"0" {
+	    # axial: swap x/y in plane of tensors is goal?
+	    # tried swap xy, rot 90 abt z, swap xz...
+	    set elements "\
+		    {0 0 1 0}  \
+		    {0 1 0 0}  \
+		    {1 0 0 0}  \
+		    {0 0 0 1}  \
+		    "
+	}
+	"1" {
+	    # coronal: rotate tensors 90 deg in plane
+	    # so swap y and z
+	    set elements "\
+		    {1 0 0 0}  \
+		    {0 0 1 0}  \
+		    {0 -1 0 0}  \
+		    {0 0 0 1}  \
+		    "
+	    
+	}
+	"2" {
+	    # sagittal: do nothing
+	    # the gradient vectors are correct for sagittal
+	    # identity matrix
+	    set elements "\
+		    {1 0 0 0}  \
+		    {0 1 0 0}  \
+		    {0 0 1 0}  \
+		    {0 0 0 1}  \
+		    "
+	}
+    }
+
+
+    # try -y!!!!!
+    set elements "\
+	    {1  0 0 0}  \
+	    {0 -1 0 0}  \
+	    {0  0 1 0}  \
+	    {0  0 0 1}  \
+	    "
+
+    # Lauren test
+    # do nothing always!
+    set elements "\
+	    {1 0 0 0}  \
+	    {0 1 0 0}  \
+	    {0 0 1 0}  \
+	    {0 0 0 1}  "
+
+    vtkTransform trans    
+    set rows {0 1 2 3}
+    set cols {0 1 2 3}    
+    foreach row $rows {
+	foreach col $cols {
+	    [trans GetMatrix] SetElement $row $col \
+		    [lindex [lindex $elements $row] $col]
+	}
+    }
+    
+    # Tensor creation filter will transform gradient dirs by this matrix
+    tensor SetTransform trans
+
     # produce input vols for tensor creation
     set inputNum 0
+    set Tensor(recalculate,gradientVolumes) ""
     foreach slice $offsetsGradient {
 	vtkImageExtractSlices extract$slice
 	extract$slice SetInput $input
@@ -2478,9 +2684,11 @@ proc ConvertVolumeToTensors {} {
 	# Lauren this should be optional
 	# make a MRMLVolume for this output
 	set name [Volume($v,node) GetName]
-	set name gradient${slice}_$name
 	set description "$slice gradient volume derived from volume $name"
+	set name gradient${slice}_$name
 	set id [DevCreateNewCopiedVolume $v $description $name]
+	# save id in case we recalculate the tensors
+	lappend Tensor(recalculate,gradientVolumes) $id
 	puts "created volume $id"
 	Volume($id,vol) SetImageData [extract$slice GetOutput]
 	# fix the image range in the node (less slices than the original)
@@ -2500,6 +2708,8 @@ proc ConvertVolumeToTensors {} {
 	MainVolumesUpdate $id
 	
     }
+    # save ids in case we recalculate the tensors
+    set Tensor(recalculate,noGradientVolumes) ""
     foreach slice $offsetsNoGradient {
 	vtkImageExtractSlices extract$slice
 	extract$slice SetInput $input
@@ -2517,6 +2727,8 @@ proc ConvertVolumeToTensors {} {
 	set name noGradient${slice}_$name
 	set description "$slice no gradient volume derived from volume $name"
 	set id [DevCreateNewCopiedVolume $v $description $name]
+	# save id in case we recalculate the tensors
+	lappend Tensor(recalculate,noGradientVolumes) $id
 	puts "created volume $id"
 	Volume($id,vol) SetImageData [extract$slice GetOutput]
 	# fix the image range in the node (less slices than the original)
@@ -2591,4 +2803,140 @@ proc ConvertVolumeToTensors {} {
 	extract$slice Delete
     }
     tensor Delete
+    trans Delete
+}
+
+proc TensorRecalculateTensors {} {
+    global Tensor
+
+    set t $Tensor(activeID)
+
+    # setup - Lauren these should be globals linked with GUI
+    set slicePeriod 8
+    set offsetsGradient "0 1 2 3 4 5"
+    set offsetsNoGradient "6 7"
+    set numberOfGradientImages 6
+    # Lauren the gradient dirs should also be settable
+
+    # tensor creation filter
+    vtkImageDiffusionTensor tensor
+    # Lauren Regularization factor should go in GUI
+    tensor SetRegularization $Tensor(regularization)
+
+    tensor SetNumberOfGradients $numberOfGradientImages
+    tensor DebugOn
+    [tensor GetDualBasis] DebugOn
+    # gradient image inputs
+    set inputNum 0
+    foreach v $Tensor(recalculate,gradientVolumes) {
+	tensor SetDiffusionImage $inputNum [Volume($v,vol) GetOutput]
+	incr inputNum
+    }
+    
+    # also set the no diffusion input
+    # Lauren the real pipeline should average these 2
+    set v [lindex $Tensor(recalculate,noGradientVolumes) 0]
+    tensor SetNoDiffusionImage [Volume($v,vol) GetOutput]
+
+
+    # Use matrix entered by user
+    #set elements $Tensor(recalculate,userMatrix)
+    #set elements "\
+	    #	    {1 0 0 0}  \
+	    #	    {0 1 0 0}  \
+	    #	    {0 0 1 0}  \
+	    #	    {0 0 0 1}  "
+
+    vtkTransform trans    
+    set rows {0 1 2 3}
+    set cols {0 1 2 3}    
+    foreach row $rows {
+	foreach col $cols {
+	    [trans GetMatrix] SetElement $row $col \
+		    $Tensor(recalculate,userMatrix,$row,$col)
+	    #[lindex [lindex $elements $row] $col]
+	}
+    }    
+    foreach row $rows {
+	foreach col $cols {
+	    puts -nonewline "$Tensor(recalculate,userMatrix,$row,$col) "
+	    #[lindex [lindex $elements $row] $col]
+	}
+	puts ""
+    }    
+
+    # Tensor creation filter will transform gradient dirs by this matrix
+    # This will really transform the output tensors in the same way
+    tensor SetTransform trans
+
+    # Recreate the tensors
+    tensor Update
+    Tensor($t,data) SetData [tensor GetOutput]
+    puts [Tensor($t,data) Print]
+
+    # Display the new stuff
+    TensorUpdate
+
+    # clean up
+    tensor Delete
+    trans Delete
+}
+
+proc TensorWriteStructuredPoints {filename} {
+    global Tensor
+
+    set t $Tensor(activeID)
+
+    vtkStructuredPointsWriter writer
+    writer SetInput [Tensor($t,data) GetOutput]
+    writer SetFileName $filename
+    puts "Writing $filename..."
+    writer Write
+    writer Delete
+    puts "Wrote tensor data, id $t, as $filename"
+}
+
+proc TensorTest {s opacity} {
+    global Slice
+
+    # Property
+    #set Model($m,prop,$r)  [Model($m,actor,$r) GetProperty]
+
+    #$Model($m,prop,$Model(activeRenderer)) SetOpacity [Model($m,node) GetOpacity]
+	
+    #Tensor(vtk,glyphs,actor) SetUserMatrix $m
+
+    #vtkActor Slice($s,planeActor)
+
+    [Slice($s,planeActor) GetProperty] SetOpacity $opacity
+    Render3D
+}
+
+
+proc TensorCalculateActorMatrix {transform t} {
+
+    # Grab the node whose data we want to position 
+    set node Tensor($t,node)
+
+    # the user matrix is either the reformat matrix
+    # to place the slice, OR it needs to place the entire 
+    # tensor volume.
+
+    # In this procedure we calculate the second kind of matrix,
+    # to place the whole volume.
+    $transform Identity
+    $transform PreMultiply
+
+    # Get positioning information from the MRML node
+    # world space (what you see in the viewer) to ijk (array) space
+    $transform SetMatrix [$node GetWldToIjk]
+
+    # now it's ijk to world
+    $transform Inverse
+
+    # the data knows its spacing already so remove it
+    # (otherwise the actor would be stretched, ouch)
+    scan [$node GetSpacing] "%g %g %g" res_x res_y res_z
+    $transform Scale [expr 1.0 / $res_x] [expr 1.0 / $res_y] \
+	    [expr 1.0 / $res_z]
 }

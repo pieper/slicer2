@@ -83,16 +83,21 @@ proc MainTensorInit {} {
     # Set version info
     #-------------------------------------------
     lappend Module(versions) [ParseCVSInfo MainTensor \
-	    {$Revision: 1.3 $} {$Date: 2001/08/03 16:24:27 $}]
+	    {$Revision: 1.4 $} {$Date: 2002/01/31 22:47:17 $}]
 
 
     # List variables that shadow the active MRML node 
     # These should correspond exactly to vtkMrmlTensor.h
+    # These will be automatically set into the node when
+    # MainTensorSetAllVariablesToNode is called.
+    # Each of these should have a GUI interface created
+    # in the module (tcl-modules/Tensor.tcl)
     #------------------------------------
     # vtkMrmlNode (superclass) attributes
     lappend Tensor(MrmlNode,tclVars) {Name String}
     lappend Tensor(MrmlNode,tclVars) {Description String}
     # vtkMrmlTensorNode attributes
+    # Lauren we don't have this in the regular volume node!
     lappend Tensor(MrmlNode,tclVars) {FileName String}
 
     # Lauren we need more attribs, many are so much like volumes...
@@ -100,7 +105,7 @@ proc MainTensorInit {} {
     # Init variables that shadow active MRML node
     #-------------------------------------------
     # Lauren uncomment this in CVS when check in any nodes
-    #MainTensorGetAllVariablesFromNode "default"
+    MainTensorGetAllVariablesFromNode "default"
 }
 
 #-------------------------------------------------------------------------------
@@ -110,7 +115,7 @@ proc MainTensorInit {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainTensorUpdateMRML {} {
-
+    puts "Lauren in MainTensorUpdateMRML"
     MainDataUpdateMRML Tensor
 
 }
@@ -209,7 +214,7 @@ proc MainTensorGetAllVariablesFromNode {n} {
     global Tensor
 
     # Lauren temporary fix for CVS since no tensor node there yet
-    return
+    #return
 
     puts "Lauren set tensors vars from node $n"
     
@@ -232,7 +237,10 @@ proc MainTensorGetAllVariablesFromNode {n} {
 	set variable [lindex $variableInfo 0]
 	puts $variable
 	# Get the value from the node and save in tcl-land
-	set Tensor($variable) [$node Get$variable]
+	set err [catch {set Tensor($variable) [$node Get$variable]}]
+	if {$err != "0" } {
+	    puts "MainTensor Set all vars to node error: $err"
+	}
     }
     
     # Remove temporary node if created
