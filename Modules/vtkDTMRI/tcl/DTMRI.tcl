@@ -134,7 +134,7 @@ proc DTMRIInit {} {
     set Module($m,author) "Lauren O'Donnell"
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.46 $} {$Date: 2004/11/16 04:42:01 $}]
+                  {$Revision: 1.47 $} {$Date: 2004/11/16 21:07:59 $}]
 
      # Define Tabs
     #------------------------------------
@@ -4177,11 +4177,13 @@ proc DTMRISeedStreamlinesFromSegmentation {{verbose 1}} {
     transform Delete
 
     # create all streamlines
-    puts [[DTMRI(vtk,streamlineControl) GetStreamlines] GetNumberOfItems]
+    puts "Original number of tracts: [[DTMRI(vtk,streamlineControl) GetStreamlines] GetNumberOfItems]"
     DTMRI(vtk,streamlineControl) SeedStreamlinesFromROI
-    puts [[DTMRI(vtk,streamlineControl) GetStreamlines] GetNumberOfItems]
+    puts "New number of tracts will be: [[DTMRI(vtk,streamlineControl) GetStreamlines] GetNumberOfItems]"
+    puts "Creating and displaying new tracts..."
 
-    # actually display streamlines
+    # actually display streamlines 
+    # (this is the slow part since it causes pipeline execution)
     DTMRI(vtk,streamlineControl) AddStreamlinesToScene
 }
 

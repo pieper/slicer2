@@ -27,28 +27,37 @@ vtkMultipleStreamlineController* vtkMultipleStreamlineController::New()
 //----------------------------------------------------------------------------
 vtkMultipleStreamlineController::vtkMultipleStreamlineController()
 {
+  // Initialize these to identity, so if the user doesn't set them it's okay.
   this->ROIToWorld = vtkTransform::New();
   this->WorldToTensorScaledIJK = vtkTransform::New();
 
+  // The user must set these for the class to function.
   this->InputTensorField = NULL;
   this->InputROI = NULL;
   this->InputRenderers = vtkCollection::New();
+  this->InputROIValue = -1;
 
-
+  // collections
   this->Streamlines = vtkCollection::New();
   this->Mappers = vtkCollection::New();
   this->Actors = vtkCollection::New();
 
-  // Streamline parameters
+  // Streamline parameters for all streamlines
   this->IntegrationDirection = VTK_INTEGRATE_BOTH_DIRECTIONS;
-  this->StreamlineProperty = vtkProperty::New();
   this->ScalarVisibility=0;
+
+  // user-accessible property and lookup table for all streamlines
+  this->StreamlineProperty = vtkProperty::New();
   this->StreamlineLookupTable = vtkLookupTable::New();
-  // make 0 dark blue, not red
+  // default: make 0 dark blue, not red
   this->StreamlineLookupTable->SetHueRange(.6667, 0.0);
+
+  // if the user doesn't set these they will be ignored
   this->VtkHyperStreamlineSettings=NULL;
   this->VtkHyperStreamlinePointsSettings=NULL;
   this->VtkPreciseHyperStreamlinePointsSettings=NULL;
+
+  // default to vtkHyperStreamline class creation
   this->UseVtkHyperStreamline();
 
   // the number of actors displayed in the scene
@@ -330,10 +339,19 @@ void vtkMultipleStreamlineController::SaveStreamlinesAsTextFiles(char *filename)
   vtkPoints *hs0, *hs1;
   double point[3];
 
+
   // traverse streamline collection
   this->Streamlines->InitTraversal();
   // TO DO: make sure this is a vtkHyperStreamlinePoints object
   currStreamline= (vtkHyperStreamlinePoints *)this->Streamlines->GetNextItemAsObject();
+
+  // test we have streamlines
+  if (currStreamline == NULL)
+    {
+      vtkErrorMacro("No streamlines have been created yet.");
+      return;      
+    }
+
 
   cout << "Traverse STREAMLINES" << endl;
 
@@ -438,12 +456,12 @@ void vtkMultipleStreamlineController::SaveStreamlinesAsPolyData(char *filename,
   currStreamline= (vtkHyperStreamline *)this->Streamlines->GetNextItemAsObject();
   currActor= (vtkActor *)this->Actors->GetNextItemAsObject();
 
-  if (currActor == NULL)
+  // test we have actors and streamlines
+  if (currActor == NULL || currStreamline == NULL)
     {
-      cout <<"vtkMultipleStreamlineController has no streamlines yet." << endl;
-      return;
+      vtkErrorMacro("No streamlines have been created yet.");
+      return;      
     }
-
 
   // init things with the first streamline.
   currActor->GetProperty()->GetColor(rgb);
@@ -774,6 +792,13 @@ void vtkMultipleStreamlineController::SeedStreamlineFromPoint(double x,
   double pointw[3], point[3];
   vtkHyperStreamline *newStreamline;
 
+  // test we have input
+  if (this->InputTensorField == NULL)
+    {
+      vtkErrorMacro("No tensor data input.");
+      return;      
+    }
+
   pointw[0]=x;
   pointw[1]=y;
   pointw[2]=z;
@@ -809,8 +834,32 @@ void vtkMultipleStreamlineController::SeedStreamlinesFromROI()
   short *inPtr;
   vtkHyperStreamline *newStreamline;
 
+  // test we have input
+  if (this->InputROI == NULL)
+    {
+      vtkErrorMacro("No ROI input.");
+      return;      
+    }
+  if (this->InputTensorField == NULL)
+    {
+      vtkErrorMacro("No tensor data input.");
+      return;      
+    }
+  // check ROI's value of interest
+  if (this->InputROIValue <= 0)
+    {
+      vtkErrorMacro("Input ROI value has not been set or is 0. (value is "  << this->InputROIValue << ".");
+      return;      
+    }
+  // make sure it is short type
+  if (this->InputROI->GetScalarType() != VTK_SHORT)
+    {
+      vtkErrorMacro("Input ROI is not of type VTK_SHORT");
+      return;      
+    }
+
   // currently this filter is not multithreaded, though in the future 
-  // it could be (if it inherits from an image filter class)
+  // it could be (especially if it inherits from an image filter class)
   this->InputROI->GetWholeExtent(inExt);
   this->InputROI->GetContinuousIncrements(inExt, inIncX, inIncY, inIncZ);
 
@@ -819,12 +868,12 @@ void vtkMultipleStreamlineController::SeedStreamlinesFromROI()
   maxY = inExt[3] - inExt[2]; 
   maxZ = inExt[5] - inExt[4];
 
-  cout << "Dims: " << maxX << " " << maxY << " " << maxZ << endl;
-  cout << "Incr: " << inIncX << " " << inIncY << " " << inIncZ << endl;
+  //cout << "Dims: " << maxX << " " << maxY << " " << maxZ << endl;
+  //cout << "Incr: " << inIncX << " " << inIncY << " " << inIncZ << endl;
 
   // for progress notification
-  target = (unsigned long)((maxZ+1)*(maxY+1)/50.0);
-  target++;
+  //target = (unsigned long)((maxZ+1)*(maxY+1)/50.0);
+  //target++;
 
   // start point in input integer field
   inPtr = (short *) this->InputROI->GetScalarPointerForExtent(inExt);
@@ -834,21 +883,21 @@ void vtkMultipleStreamlineController::SeedStreamlinesFromROI()
       //for (idxY = 0; !this->AbortExecute && idxY <= maxY; idxY++)
       for (idxY = 0; idxY <= maxY; idxY++)
         {
-          if (!(count%target)) 
-            {
+          //if (!(count%target)) 
+          //{
               //this->UpdateProgress(count/(50.0*target) + (maxZ+1)*(maxY+1));
               //cout << (count/(50.0*target) + (maxZ+1)*(maxY+1)) << endl;
-              cout << "progress: " << count << endl;
-            }
-          count++;
+              //cout << "progress: " << count << endl;
+          //}
+          //count++;
           
           for (idxX = 0; idxX <= maxX; idxX++)
             {
               // If the point is equal to the ROI value then seed here.
               if (*inPtr == this->InputROIValue)
                 {
-                  cout << "***** multiple streamline " << idxX << " " <<
-                    idxY << " " << idxZ << " *****" << endl;
+                  vtkDebugMacro( << "start streamline at: " << idxX << " " <<
+                                 idxY << " " << idxZ);
 
                   // First transform to world space.
                   point[0]=idxX;

@@ -97,8 +97,11 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   vtkGetObjectMacro(InputTensorField, vtkImageData);
 
   // Description
-  // Streamlines will be started at locations with this value in InputROI
-  vtkSetMacro(InputROIValue, int);
+  // Streamlines will be started at locations with this value in the InputROI.
+  // The value must be greater than 0. A 0 value is not allowed because it
+  // would allow users to accidentally start streamlines outside of their
+  // ROI.
+  vtkSetClampMacro(InputROIValue, int, 1, VTK_SHORT_MAX);
   vtkGetMacro(InputROIValue, int);
 
   // Description
