@@ -106,6 +106,8 @@ vtkMrmlSegmenterNode \
 vtkMrmlEndSegmenterNode \
 vtkMrmlSegmenterGraphNode \
 vtkMrmlSegmenterInputNode \
+vtkMrmlSegmenterSuperClassNode \
+vtkMrmlEndSegmenterSuperClassNode \
 vtkMrmlSegmenterClassNode \
 vtkMrmlSegmenterCIMNode 
 

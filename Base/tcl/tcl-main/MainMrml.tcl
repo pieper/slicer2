@@ -62,7 +62,7 @@ proc MainMrmlInit {} {
         Point Path EndPath Landmark \
         Hierarchy EndHierarchy ModelGroup EndModelGroup ModelRef \
         Scenes EndScenes VolumeState EndVolumeState CrossSection SceneOptions ModelState \
-    Locator TetraMesh Segmenter EndSegmenter SegmenterGraph SegmenterInput SegmenterClass SegmenterCIM"
+    Locator TetraMesh Segmenter EndSegmenter SegmenterGraph SegmenterInput SegmenterSuperClass EndSegmenterSuperClass SegmenterClass SegmenterCIM"
 
     MainMrmlInitIdLists 
 
@@ -78,7 +78,7 @@ proc MainMrmlInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainMrml \
-        {$Revision: 1.69 $} {$Date: 2002/11/19 17:25:03 $}]
+        {$Revision: 1.70 $} {$Date: 2002/11/23 13:46:53 $}]
 
     set Mrml(colorsUnsaved) 0
 }
@@ -153,7 +153,7 @@ proc MainMrmlPrint {tags} {
         set attr [lreplace $pair 0 0]
 
         # Process EndTransform & EndFiducials & EndPath & EndModelGroup & EndHierarchy
-        if {$tag == "EndTransform" || $tag == "EndFiducials" || $tag == "EndPath" || $tag == "EndModelGroup" || $tag == "EndHierarchy" || $tag == "EndSegmenter"} {
+        if {$tag == "EndTransform" || $tag == "EndFiducials" || $tag == "EndPath" || $tag == "EndModelGroup" || $tag == "EndHierarchy" || $tag == "EndSegmenter" || $tag == "EndSegmenterSuperClass"} {
             set level [expr $level - 1]
         }
         set indent ""
@@ -164,7 +164,7 @@ proc MainMrmlPrint {tags} {
         puts "${indent}$tag"
 
         # Process Transform & Fiducials & Path & ModelGroup & Hierarchy
-        if {$tag == "Transform" || $tag == "Fiducials" || $tag == "Path" || $tag == "ModelGroup" || $tag == "Hierarchy" || $tag == "Segmenter"} {
+        if {$tag == "Transform" || $tag == "Fiducials" || $tag == "Path" || $tag == "ModelGroup" || $tag == "Hierarchy" || $tag == "Segmenter" || $tag == "SegmenterSuperClass" } {
             incr level
         }
         set indent ""
@@ -1386,6 +1386,21 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
             "intensityavgvaluepredef"  {$n SetIntensityAvgValuePreDef $val}
                 }
             }
+    }
+    "SegmenterSuperClass" {
+            set n [MainMrmlAddNode SegmenterSuperClass]
+            foreach a $attr {
+                set key [lindex $a 0]
+                set val [lreplace $a 0 0]
+                switch [string tolower $key] {
+                    "numclasses" {$n SetNumClasses $val}
+                    "name"       {$n SetName $val}
+            "prob"       {$n SetProb $val}
+                }
+            }
+    }
+    "EndSegmenterSuperClass" {
+            set n [MainMrmlAddNode EndSegmenterSuperClass]
     }
     "SegmenterClass" {
             set n [MainMrmlAddNode SegmenterClass]

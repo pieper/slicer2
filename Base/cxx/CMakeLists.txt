@@ -38,6 +38,7 @@ SOURCE_FILES (Base_SRCS
 	vtkImageEMSegmenter.cxx
 	vtkMrmlEndSegmenterNode.cxx vtkMrmlSegmenterClassNode.cxx vtkMrmlSegmenterInputNode.cxx  
         vtkMrmlSegmenterCIMNode.cxx vtkMrmlSegmenterGraphNode.cxx vtkMrmlSegmenterNode.cxx 
+        vtkMrmlSegmenterSuperClassNode.cxx vtkMrmlEndSegmenterSuperClassNode.cxx
 	# MI Registration
 	vtkVector3.cxx vtkQuaternion.cxx vtkPose.cxx 
 	vtkImageFastGaussian.cxx vtkImageMIReg.cxx

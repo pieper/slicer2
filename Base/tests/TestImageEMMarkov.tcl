@@ -43,13 +43,13 @@ proc EMSegmentTrainCIMField {} {
     EMCIM SetImgTestDivision 1 
     EMCIM SetImgTestPixel    1 
 
-    for {set i 1} { $i<= $EMSegment(NumClasses)} {incr i} {
+
+    for {set i 0} { $i< $EMSegment(NumClasses)} {incr i} {
+        EMCIM SetLabelNumber $i 1 
         if {$EMSegment(ImgTestNo) < 1} { 
-            EMCIM SetMu           $EMSegment(Cattrib,$i,Label) $i
-            EMCIM SetSigma        1.0 $i
+            EMCIM SetLabel           $i $EMSegment(Cattrib,[expr $i+1],Label) 
         } else {     
-            EMCIM SetMu           [expr (($i-1)*255)/($EMSegment(NumClasses)-1)] $i
-            EMCIM SetSigma        10 $i
+            EMCIM SetLabel           $i [expr ($i*255)/($EMSegment(NumClasses)-1)]
         }
     }  
 
@@ -61,16 +61,15 @@ proc EMSegmentTrainCIMField {} {
     $data Update
 
     for {set x 1} {$x <= $EMSegment(NumClasses) } {incr x} {
-        set EMSegment(Cattrib,$x,Prob) [EMCIM GetProbability $x]
+        set EMSegment(Cattrib,$x,Prob) [EMCIM GetProbability [expr $x-1]]
         # EMCIM traines the matrix (y=t, x=t-1) just the other way EMSegment (y=t-1, x=t) needs it - Sorry !
         for {set y 1} {$y <=  $EMSegment(NumClasses) } {incr y} {
             for {set z 0} {$z < 6} {incr z} {
-        # Different order than in EMSegment bc I can ignore error that has been made in EMSegment.tcl
+              # Different order than in EMSegment bc I can ignore error that has been made in EMSegment.tcl
               set EMSegment(CIMMatrix,$x,$y,[lindex $EMSegment(CIMList) $z])  [expr round([$data GetScalarComponentAsFloat [expr $x-1] [expr $y-1] $z 0]*10000)/10000.0]        
             }
         }
     }
-   
     # Delete instance
     EMCIM Delete 
 }
@@ -444,26 +443,55 @@ EMSegmentTrainCIMField
 #-------------------------------------------------------------------------------
 # 4. Display result 
 #-------------------------------------------------------------------------------
-puts "The outcome is :"
-foreach dir $EMSegment(CIMList) {
-  puts  "=========== $dir ================"
-  puts "The outcome should be :"
-  switch $dir {
-    "West"  {puts "0.899 0.039 0.000";puts "0.100 0.901 0.027";puts "0.001 0.060 0.973"}
-    "North" {puts "0.891 0.042 0.000";puts "0.107 0.901 0.026";puts "0.002 0.058 0.974"}
-    "Up"    {puts "0.845 0.059 0.000";puts "0.150 0.873 0.035";puts "0.005 0.068 0.965"}
-    "East"  {puts "0.899 0.039 0.000";puts "0.100 0.901 0.027";puts "0.001 0.060 0.973"}
-    "South" {puts "0.891 0.041 0.000";puts "0.108 0.901 0.026";puts "0.001 0.058 0.974"}
-    "Down"  {puts "0.845 0.058 0.001";puts "0.153 0.864 0.030";puts "0.002 0.078 0.969"}
+set correct(West)  " 0.899 0.039 0.000\n 0.100 0.901 0.027\n 0.001 0.060 0.973"
+set correct(North) " 0.891 0.042 0.000\n 0.107 0.901 0.026\n 0.002 0.058 0.974" 
+set correct(Up)    " 0.845 0.059 0.000\n 0.150 0.873 0.035\n 0.005 0.068 0.965"
+set correct(East)  " 0.899 0.039 0.000\n 0.100 0.901 0.027\n 0.001 0.060 0.973"
+set correct(South) " 0.891 0.041 0.000\n 0.108 0.901 0.026\n 0.001 0.058 0.974" 
+set correct(Down)  " 0.845 0.058 0.001\n 0.153 0.864 0.030\n 0.002 0.078 0.969"
 
-  } 
-  puts "The result of the Test is:"
+set flag 1
+foreach dir $EMSegment(CIMList) {
+  set result($dir) ""
   for {set x 1} {$x <= $EMSegment(NumClasses)} {incr x} {
      for {set y 1} {$y <= $EMSegment(NumClasses)} {incr y} {
-          puts -nonewline "[format %5.3f $EMSegment(CIMMatrix,$x,$y,$dir)] "
+          set result($dir) "$result($dir) [format %6.4f $EMSegment(CIMMatrix,$x,$y,$dir)]"
      }
-     puts ""
-  } 
+     if {$x < $EMSegment(NumClasses)} {set result($dir) "$result($dir)\n"}
+  }
+  if {$result($dir) != $correct($dir)} {set flag 0; puts "$dir incorrect";}
+} 
+
+puts "The outcome is :"
+if {$flag} {
+ puts "CIM Matric Calculation passed test successfully"
+} else {
+  puts " ===================== ERROR =============="
+  puts " Error in CIM Matrix Calculation"
+  puts " =========================================="
+
+  foreach dir $EMSegment(CIMList) {
+    puts  "=========== $dir ================"
+    puts "The outcome should be :"
+    puts $correct($dir)
+    puts "The result of the Test is:"
+    puts $result($dir)
+  }
+}
+
+set correct(prob) "0.106893 0.275955 0.617152 "
+set result(prob) ""
+for {set x 1} {$x <= $EMSegment(NumClasses)} {incr x} { set result(prob) "$result(prob)$EMSegment(Cattrib,$x,Prob) "}
+if {$correct(prob) == $result(prob)} {
+  puts "Class Probability Calculation passed test successfully"
+} else {
+  puts " ===================== ERROR =============="
+  puts " Error in Class Probability Calculation"
+  puts " =========================== =============="
+  puts "The outcome should be : "
+  puts $correct(prob)
+  puts "The result of the Test is:"
+  puts $result(prob)
 }
 
 #-------------------------------------------------------------------------------

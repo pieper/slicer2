@@ -86,8 +86,7 @@ void vtkMrmlSegmenterClassNode::Write(ofstream& of, int nIndent)
   vtkIndent i1(nIndent);
 
   of << i1 << "<SegmenterClass";
-  if (this->Name && strcmp(this->Name, "")) 
-  {
+  if (this->Name && strcmp(this->Name, ""))  {
     of << " name ='" << this->Name << "'";
   }
   of << " Label='" << this->Label << "'";
@@ -154,7 +153,6 @@ void vtkMrmlSegmenterClassNode::PrintSelf(ostream& os, vtkIndent indent)
     (this->LogMean ? this->LogMean : "(none)") << "\n";
    os << indent << "LogCovariance: " <<
     (this->LogCovariance ? this->LogCovariance : "(none)") << "\n";
-   os << ")\n";
 }
 
 

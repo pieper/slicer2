@@ -69,7 +69,10 @@ vtkMrmlSegmenterNode::vtkMrmlSegmenterNode()
 //----------------------------------------------------------------------------
 vtkMrmlSegmenterNode::~vtkMrmlSegmenterNode()
 {
-
+  if (this->BiasRootFileName) {
+    delete [] this->BiasRootFileName;
+    this->BiasRootFileName = NULL;
+  }
 }
 
 //----------------------------------------------------------------------------
