@@ -34,9 +34,8 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkMrmlNode.h"
 #include "vtkMatrix4x4.h"
 #include "vtkTransform.h"
-#include "vtkSlicer.h"
 
-class VTK_SLICER_BASE_EXPORT vtkMrmlFiducialsNode : public vtkMrmlNode
+class VTK_EXPORT vtkMrmlFiducialsNode : public vtkMrmlNode
 {
 public:
   static vtkMrmlFiducialsNode *New();
@@ -55,11 +54,42 @@ public:
   // Copy the node's attributes to this object
   void Copy(vtkMrmlNode *node);
 
+
+  // Description:
+  // Get/Set for Symbol size
+  vtkSetMacro(SymbolSize,float);
+  vtkGetMacro(SymbolSize,float);
+
+
+  // Description:
+  // Get/Set for Symbol size
+  vtkSetMacro(Visibility,float);
+  vtkGetMacro(Visibility,float);
+
+  // Description:
+  // Get/Set for Text size
+  vtkSetMacro(TextSize,float);
+  vtkGetMacro(TextSize,float);
+
+  vtkSetStringMacro(Type);
+  vtkGetStringMacro(Type);
+
+void SetTypeToEndoscopic();
+void SetTypeToMeasurement();
+void SetTypeToDefault();
+
+
+
 protected:
   vtkMrmlFiducialsNode();
   ~vtkMrmlFiducialsNode();
   vtkMrmlFiducialsNode(const vtkMrmlFiducialsNode&) {};
   void operator=(const vtkMrmlFiducialsNode&) {};
+
+float SymbolSize;
+float TextSize;
+int Visibility;
+char  *Type;
 
 };
 
