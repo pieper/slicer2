@@ -21,6 +21,7 @@
     name NMTOKEN ""
     filePattern CDATA "s.03d"
     filePrefix CDATA #REQUIRED
+    dicomFileNameList CDATA ""
     rasToIjkMatrix NMTOKENS "1 0 0 0  0 1 0 0  0 0 1 0  0 0 0 1"
     rasToVtkMatrix NMTOKENS "1 0 0 0  0 -1 0 0  0 0 1 0  0 0 0 1"
     positionMatrix NMTOKENS "1 0 0 0  0 1 0 0  0 0 1 0  0 0 0 1"
