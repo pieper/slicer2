@@ -288,7 +288,6 @@ proc file_event {fp} {
 # - change backslashes to forward slashes (for windows paths)
 # - escape the spaces in each of the arguments
 # - then remove the curly braces
-tk_messageBox -message $argv
 
 regsub -all "\\\\" $argv "/" argv
 
