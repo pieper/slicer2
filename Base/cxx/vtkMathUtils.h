@@ -57,6 +57,10 @@ class VTK_EXPORT vtkMathUtils : public vtkObject
   // Description:
   // Dump matrix contents to cout
   static void PrintMatrix(double **A, int rowA, int colA);
+  // Description:
+  // For use in PrintSelf Methods 
+  static void PrintMatrix(double **A, int rowA, int colA, ostream& os, 
+                          vtkIndent indent);
 };
 
 #endif

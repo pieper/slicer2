@@ -307,3 +307,22 @@ void vtkMathUtils::Outer2(float x[2], float y[2], float A[2][2])
 
 }
 
+
+
+void vtkMathUtils::PrintMatrix(double **A, int rowA, 
+                               int colA, ostream& os, 
+                               vtkIndent indent)
+{
+  int j,k;
+
+  for (j = 0; j < rowA; j++)
+    {
+      os << indent;
+      for (k = 0; k < colA; k++)
+        {
+          os << A[j][k] << " ";
+        }
+      os << "\n";
+    }
+}
+
