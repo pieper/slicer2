@@ -56,6 +56,35 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 //----------------------------------------------------------------------------
 
+// 
+// It is probably a good idea to leave RigidRegistration as a LinearTransform
+// Since it is not a Process Object, we need a helper. Here it is:
+//
+class VTK_RIGIDINTENSITYREGISTRATION_EXPORT vtkRegProcessObject : public vtkProcessObject
+{
+ public:
+  vtkTypeMacro(vtkRegProcessObject,vtkProcessObject);
+  static vtkRegProcessObject *New();
+ protected:
+  vtkRegProcessObject() {};
+};
+
+//------------------------------------------------------------------------------
+vtkRegProcessObject* vtkRegProcessObject::New()
+{
+  // First try to create the object from the vtkObjectFactory
+  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkRegProcessObject");
+  if(ret)
+    {
+    return (vtkRegProcessObject*)ret;
+    }
+  // If the factory was unable to create the object, then create it here.
+  return new vtkRegProcessObject;
+}
+
+
+//----------------------------------------------------------------------------
+
 vtkITKRigidRegistrationTransformBase::vtkITKRigidRegistrationTransformBase()
 {
   // Default Images
@@ -70,6 +99,10 @@ vtkITKRigidRegistrationTransformBase::vtkITKRigidRegistrationTransformBase()
   this->NumberOfSamples = 50;
   this->MetricValue = 0;
   this->Matrix->Identity();
+
+  // The output matrix
+  this->OutputMatrix = vtkMatrix4x4::New();
+    this->OutputMatrix->Zero();
 
   // the last iteration finished with no error
   this->Error = 0;
@@ -95,32 +128,36 @@ vtkITKRigidRegistrationTransformBase::vtkITKRigidRegistrationTransformBase()
     this->ZFlipMat->Identity();
     this->ZFlipMat->SetElement(2,2,-1);
 
-    // The output matrix
-  this->OutputMatrix = vtkMatrix4x4::New();
-    this->OutputMatrix->Zero();
+  this->ProcessObject = vtkRegProcessObject::New();
 
+  // Do not abort this process
+  this->SetAbort(0);
 }
 
 //----------------------------------------------------------------------------
 
-void vtkITKRigidRegistrationConditionCallback(void *voidself,
-                          int NumLevel, 
-                          int NumIter) 
+int vtkITKRigidRegistrationTransformBase::DataCallback(void *voidself,
+                            int NumLevel, 
+                            int NumIter)
 {
   vtkITKRigidRegistrationTransformBase *self = 
-    (vtkITKRigidRegistrationTransformBase *) self;
+    (vtkITKRigidRegistrationTransformBase *) voidself;
+  vtkProcessObject *obj = self->GetProcessObject();
 
   int total_num = 0;
   int done_num = 0;
   for(int i=0;i<self->GetMaxNumberOfIterations()->GetNumberOfTuples();i++)
     {
-      total_num += self->GetMaxNumberOfIterations()->GetValue(i);
-      if (i < NumLevel)     done_num = total_num;
-      else if (i==NumLevel) done_num += NumIter;
+    total_num += self->GetMaxNumberOfIterations()->GetValue(i);
+    if (i < NumLevel)     done_num = total_num;
+    else if (i==NumLevel) done_num += NumIter;
     }
   std::cout << ((float)done_num)/total_num << std::endl;
   // fraction done is done_num/total_num
   // set something in tcl
+  obj->UpdateProgress((float)done_num/total_num);
+
+  return self->GetAbort();
 }
 
 //----------------------------------------------------------------------------
@@ -139,6 +176,8 @@ vtkITKRigidRegistrationTransformBase::~vtkITKRigidRegistrationTransformBase()
   this->MaxNumberOfIterations->Delete();
   this->ImageFlip->Delete();
   this->ZFlipMat->Delete();
+  this->OutputMatrix->Delete();
+  this->ProcessObject->Delete();
 }
 
 //----------------------------------------------------------------------------
