@@ -61,7 +61,7 @@ proc MainAlignmentsInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo MainAlignments \
-            {$Revision: 1.4 $} {$Date: 2003/08/22 21:44:32 $}]
+            {$Revision: 1.5 $} {$Date: 2003/10/03 15:47:08 $}]
 
     # Append widgets to list that gets refreshed during UpdateMRML
     set Matrix(mbActiveList) ""
@@ -99,6 +99,9 @@ proc MainAlignmentsInit {} {
 proc MainAlignmentsUpdateMRML {} {
     global Matrix
 
+    if {$::Module(verbose)} {
+        puts "MainAlignmentsUpdateMRML: building volumes, deleting old ones, forming the menu, etc"
+    }
     # Build any new volumes
     #--------------------------------------------------------
     foreach t $Matrix(idList) {
@@ -345,10 +348,11 @@ proc AlignmentsSetMatrixIntoNode {m} {
     foreach i $Matrix(rows) {
         foreach j $Matrix(cols) {
             set str "$str $Matrix(matrix,$i,$j)"
-            puts $str
         }
     }
-    puts "---- $str"
 
+    if {$::Module(verbose)} {
+        puts "AlignmentsSetMatrixIntoNode: setting matrix node $m to $str"
+    }
     Matrix($m,node) SetMatrix $str
 }
