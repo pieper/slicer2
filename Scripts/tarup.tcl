@@ -45,7 +45,7 @@ proc tarup { {destdir "auto"} } {
 
     ### Some simple error checking to see if the directories exist
 
-    foreach dirname "VTK_DIR VTK_SRC_DIR ITK_BINARY_PATH TCL_BIN_DIR " {
+    foreach dirname "VTK_DIR VTK_SRC_DIR ITK_BINARY_PATH TCL_BIN_DIR GSL_LIB_DIR" {
        set dir $::env($dirname)
        eval { \
              if {[file exist $dir] == 0} { \
@@ -61,7 +61,7 @@ proc tarup { {destdir "auto"} } {
         "darwin-ppc" { set target darwin-ppc }
         "redhat7.3" -
         "linux-x86" { set target linux-x86 }
-        "Win32VC7" { set target win32 ; set exe .exe}
+        "win32" { set target win32 ; set exe .exe}
         default {error "unknown build target $::env(BUILD)"}
     }
 
@@ -78,7 +78,7 @@ proc tarup { {destdir "auto"} } {
                     switch $::env(BUILD) {
                         "solaris8" { set destdir /tmp }
                         "Darwin" - "darwin-ppc" - "linux-x86" - "redhat7.3" { set destdir /var/tmp }
-                        "Win32VC7" { set destdir c:/Temp }
+                        "win32" { set destdir c:/Temp }
                     }
                 }
             }
@@ -126,6 +126,9 @@ proc tarup { {destdir "auto"} } {
     file copy -force $::env(TCL_LIB_DIR) $destdir/Lib/$::env(BUILD)/tcl-build/lib
     file copy -force $::env(TCL_BIN_DIR) $destdir/Lib/$::env(BUILD)/tcl-build/bin
 
+    puts " -- copying gsl files"
+    file mkdir $destdir/Lib/$::env(BUILD)/gsl
+    file copy -force $::env(GSL_LIB_DIR) $destdir/Lib/$::env(BUILD)/gsl/lib
 
     #
     # grab the vtk libraries and binaries
@@ -151,7 +154,7 @@ proc tarup { {destdir "auto"} } {
         "darwin-ppc" {
             file copy -force $::env(VTK_DIR)/Wrapping/Tcl/pkgIndex.tcl $destdir/Lib/$::env(BUILD)/VTK-build/Wrapping/Tcl
         }
-        "Win32VC7" { 
+        "win32" { 
             file mkdir $destdir/Lib/$::env(BUILD)/VTK-build/Wrapping/Tcl/$::env(VTK_BUILD_TYPE)
             file copy -force $::env(VTK_DIR)/Wrapping/Tcl/$::env(VTK_BUILD_TYPE)/pkgIndex.tcl $destdir/Lib/$::env(BUILD)/VTK-build/Wrapping/Tcl/$::env(VTK_BUILD_TYPE)
         }
@@ -179,7 +182,7 @@ proc tarup { {destdir "auto"} } {
             file copy $::env(VTK_DIR)/vtk $destdir/Lib/$::env(BUILD)/VTK-build/bin
             file copy -force $::env(SLICER_HOME)/Scripts/slicer-vtk-pkgIndex.tcl $destdir/Lib/$::env(BUILD)/VTK-build/Wrapping/Tcl/pkgIndex.tcl
         }
-        "Win32VC7" { 
+        "win32" { 
             file mkdir $destdir/Lib/$::env(BUILD)/VTK-build/bin/$::env(VTK_BUILD_TYPE)
             set libs [glob $::env(VTK_DIR)/bin/$::env(VTK_BUILD_TYPE)/*.dll]
             foreach lib $libs {
@@ -212,7 +215,7 @@ proc tarup { {destdir "auto"} } {
                 file copy $lib $destdir/Lib/$::env(BUILD)/Insight-build/bin
             }
         }
-        "Win32VC7" { 
+        "win32" { 
             file mkdir $destdir/Lib/$::env(BUILD)/Insight-build/bin/$::env(VTK_BUILD_TYPE)
             set libs [glob -nocomplain $::env(ITK_BINARY_PATH)/bin/$::env(VTK_BUILD_TYPE)/*.dll]
             foreach lib $libs {
@@ -250,7 +253,7 @@ proc tarup { {destdir "auto"} } {
                 file copy $lib $destdir/Base/builds/$::env(BUILD)/bin
             }
         }
-        "Win32VC7" { 
+        "win32" { 
             file mkdir $destdir/Base/builds/$::env(BUILD)/bin/$::env(VTK_BUILD_TYPE)
             set libs [glob Base/builds/$::env(BUILD)/bin/$::env(VTK_BUILD_TYPE)/*.dll]
             foreach lib $libs {
@@ -313,7 +316,7 @@ proc tarup { {destdir "auto"} } {
                     file copy $lib $moddest/builds/$::env(BUILD)/bin
                 }
             }
-            "Win32VC7" { 
+            "win32" { 
                 file mkdir $moddest/builds/$::env(BUILD)/bin/$::env(VTK_BUILD_TYPE)
                 set libs [glob -nocomplain $moddir/builds/$::env(BUILD)/bin/$::env(VTK_BUILD_TYPE)/*.dll]
                 foreach lib $libs {
@@ -367,7 +370,7 @@ proc tarup { {destdir "auto"} } {
                 puts " -- making $archroot.tar.gz"
                 exec tar cfz $archroot.tar.gz $archroot
             }
-            "Win32VC7" { 
+            "win32" { 
                 puts " -- making $archroot.zip"
                 exec zip -r $archroot.zip $archroot
             }
@@ -375,12 +378,7 @@ proc tarup { {destdir "auto"} } {
     }
 
     if { $do_upload == "true" } {
-        if { $::SLICER(state) == "-dev" } {
-            set scpdestination "pieper@slicerl.bwh.harvard.edu:/usr/local/apache2/htdocs/snapshots"
-        } else {
-            set scpdestination "pieper@gpop.bwh.harvard.edu:slicer-dist"
-        }
-
+    set scpdestination "$::env(USER)@slicerl.bwh.harvard.edu:/usr/local/apache2/htdocs/snapshots/slicer2.4"
         puts " -- upload to $scpdestination"
         switch $::env(BUILD) {
             "solaris8" -
@@ -389,7 +387,7 @@ proc tarup { {destdir "auto"} } {
             "darwin-ppc" {
                 exec xterm -e scp $archroot.tar.gz $scpdestination
             }
-            "Win32VC7" { 
+            "win32" { 
                 exec rxvt -e scp $archroot.zip $scpdestination &
             }
         }
