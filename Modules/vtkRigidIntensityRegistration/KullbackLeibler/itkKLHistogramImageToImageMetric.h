@@ -3,8 +3,8 @@
   Program:   Insight Segmentation & Registration Toolkit
   Module:    $RCSfile: itkKLHistogramImageToImageMetric.h,v $
   Language:  C++
-  Date:      $Date: 2003/12/17 03:36:23 $
-  Version:   $Revision: 1.7 $
+  Date:      $Date: 2003/12/23 22:43:37 $
+  Version:   $Revision: 1.8 $
 
   Copyright (c) Insight Software Consortium. All rights reserved.
   See ITKCopyright.txt or http://www.itk.org/HTML/Copyright.htm for details.
@@ -21,25 +21,46 @@
 
 namespace itk
 {
-  /** \class KLHistogramImageToImageMetric
-       \brief Computes the Kubler Lieblach metric between two images to
-       be registered by comparing the histograms of the intensities in the 
-       images to a Training histogram.
+  /** \class KLHistogramImageToImageMetric 
+    *  \brief Computes the Kubler Lieblach(KL) metric between the histogram
+    *  of the two images to be registered and a training histogram.
+    *
+    *  This class is templated over the type of the fixed and moving
+    *  images to be compared.
+    *
+    *  This class computers the KL-metric by comparing the histograms
+    *  of the testing histogram formed by the overlap of intensities in
+    *  the images, to a training histogram. It is based on the
+    *  following paper:
+    *
+    *  Albert C.S. Chung, William M. Wells III, Alexander Norbash, and
+    *  W. Eric L.  Grimson, Multi-modal Image Registration by
+    *  Minimising Kullback-Leibler Distance, In Medical Image Computing
+    *  and Computer-Assisted Intervention - MICCAI 2002, LNCS 2489,
+    *  pp. 525 - 532.
+    *
+    *  \par PARAMETERS 
+    *  Epsilon is added to every bin in both histograms. This prevents
+    *  division by zero problems. Epsilon should generally be set to a
+    *  number smaller than one divided by the total number bins in
+    *  the histogram. So, for a 256 by 256 histogram, Epsilon should be
+    *  much less than 1e-5. Tests have shown that choices of epsilon are 
+    *  not very important as long as it is small enough. The default is 1e-12.
+    *  I doubt you will need to change it.
+    *
+    *  \author Samson Timoner
+    *
+    *  \par SUPPORT
+    *  This work was supported by the Functional Imaging Research in
+    *  Schizophrenia Testbed (FIRST) Biomedical Informatics Research
+    *  Network (BIRN, http://www.nbirn.net), which is funded by the
+    *  National Center for Research Resources at the National
+    *  Institutes of Health (NIH).  This work is also funded by the
+    *  Neuroimage Analysis Center (P41 RR13218).
+    *
+    *  \ingroup RegistrationMetrics 
+    */
 
-      This class is templated over the type of the fixed and moving
-      images to be compared.
-
-      This metric computes the similarity between the histogram produced
-      by two images overlapping and a training histogram.
-
-      Generally, the histogram from the pre-aligned data is to be
-      computed in exactly the same way as the way the histogram from
-      the images to be compared are computed. Thus, the user can set
-      the interpolator, region, two training images and the transfrom
-      and the histogram will be formed. OR, the user can simply set
-      the histogram.
-
-      \ingroup RegistrationMetrics */
 template <class TFixedImage, class TMovingImage>
 class ITK_EXPORT KLHistogramImageToImageMetric :
 public CompareHistogramImageToImageMetric<TFixedImage, TMovingImage>
@@ -87,7 +108,7 @@ public CompareHistogramImageToImageMetric<TFixedImage, TMovingImage>
   typedef typename Superclass::InterpolatorType         InterpolatorType;
   typedef typename Superclass::InterpolatorPointer      InterpolatorPointer;
 
-  /** Set epsilon, the histogram frequency to use if the frequency is 0 */
+  /** Set epsilon, which is added to each bin in both Histogram */
   itkSetMacro( Epsilon, double );
 
   /** Get epsilon, the histogram frequency to use if the frequency is 0 */
