@@ -279,8 +279,10 @@ proc EMSegmentAlgorithmStart { } {
    EMSegment(vtkEMSegment) SetPrintIntermediateResults    $EMSegment(PrintIntermediateResults) 
    EMSegment(vtkEMSegment) SetPrintIntermediateSlice      $EMSegment(PrintIntermediateSlice) 
    EMSegment(vtkEMSegment) SetPrintIntermediateFrequency  $EMSegment(PrintIntermediateFrequency) 
-   EMSegment(vtkEMSegment) SetPrintPCAParameters          $EMSegment(PrintPCAParameters) 
-   EMSegment(vtkEMSegment) SetPrintDICEResults            $EMSegment(PrintDICEResults) 
+   if {$EMSegment(SegmentMode) > 1} {
+       EMSegment(vtkEMSegment) SetPrintPCAParameters          $EMSegment(PrintPCAParameters) 
+       EMSegment(vtkEMSegment) SetPrintDICEResults            $EMSegment(PrintDICEResults) 
+   }
 
    return $NumInputImagesSet
 }
