@@ -61,7 +61,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 
 #include <vtkFMRIEngineConfigure.h>
-#include <gsl_multifit.h>
+#include <gsl/gsl_multifit.h>
 
 class VTK_FMRIENGINE_EXPORT GeneralLinearModel
 {

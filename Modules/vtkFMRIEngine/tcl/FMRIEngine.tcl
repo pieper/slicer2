@@ -186,7 +186,7 @@ proc FMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.41 $} {$Date: 2005/01/21 16:48:01 $}]
+        {$Revision: 1.42 $} {$Date: 2005/01/28 22:32:55 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -475,7 +475,7 @@ proc FMRIEngineViewGNULicense {} {
         pack $f.t -side left -fill both -expand true
 
         # Reads the data file
-        set gplText [file join $env(SLICER_HOME) Modules vtkFMRIEngine docs gpl.txt]
+        set gplText [file join $env(SLICER_HOME) Modules vtkFMRIEngine data gpl.txt]
         set fp [open $gplText r]
         set data [read $fp]
         regsub -all "\f" $data {} data 
