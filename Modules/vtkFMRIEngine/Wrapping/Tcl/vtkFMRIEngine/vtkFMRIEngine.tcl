@@ -1,4 +1,5 @@
 package require vtk
+package require vtkAnalyze
 
 #
 # rely on the fact that a class loaded from the shared
