@@ -27,7 +27,8 @@ vtkPoints roiPoints
   roiPoints InsertNextPoint 220 50 0
   roiPoints InsertNextPoint 4 10 0
 
-#vtkImageLabelMerge flroi
+### This is not a good test.
+### It does not test the different types of shapes
 vtkImageFillROI flroi
 #flroi SetInput [reader GetOutput]
 flroi SetInput [clip GetOutput]
@@ -42,8 +43,8 @@ flroi SetPoints roiPoints
 vtkImageViewer viewer
 viewer SetInput [flroi GetOutput]
 viewer SetZSlice 22
-viewer SetColorWindow 2000
-viewer SetColorLevel 1000
+viewer SetColorWindow 1031
+viewer SetColorLevel 818
 
 #make interface
 source [file join [file dirname [info script]] WindowLevelInterface.tcl]

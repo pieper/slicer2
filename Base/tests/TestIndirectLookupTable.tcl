@@ -17,6 +17,9 @@ vtkImageMagnify mag
 vtkLookupTable lut1
   lut1 Build
 
+set level 2000
+set window 700
+
 vtkIndirectLookupTable iLut
   iLut SetLookupTable lut1
   iLut SetLevel $level
@@ -30,9 +33,9 @@ vtkImageMapToRGBA map
 
 vtkImageViewer viewer
 viewer SetInput [map GetOutput]
-viewer SetZSlice 0 
-viewer SetColorWindow 2000
-viewer SetColorLevel 1000
+viewer SetZSlice 24
+viewer SetColorWindow 1092
+viewer SetColorLevel -328
 
 #make interface
 source [file join [file dirname [info script]] WindowLevelInterface.tcl]
