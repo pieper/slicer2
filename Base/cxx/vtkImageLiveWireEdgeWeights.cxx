@@ -288,7 +288,7 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
   inDatas[0]->GetIncrements(inInc0, inInc1, inInc2); 
   self->GetInput()->GetWholeExtent(inImageMin0, inImageMax0, inImageMin1,
 				   inImageMax1, inImageMin2, inImageMax2);
-  //cout << inImageMin2 << " " << inImageMax2 << endl;
+  //cout << inImageMin2 << " " << inImageMax2 << '\n';
   outData->GetIncrements(outInc0, outInc1, outInc2); 
   outMin0 = outExt[0];   outMax0 = outExt[1];
   outMin1 = outExt[2];   outMax1 = outExt[3];
@@ -303,7 +303,7 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
   hoodMax0 = 1;
   hoodMax1 = 1;
   hoodMax2 = 0;
-  //cout << hoodMin0<<hoodMax0<<hoodMin1 <<hoodMax1 << hoodMin2 <<hoodMax2 << endl;
+  //cout << hoodMin0<<hoodMax0<<hoodMin1 <<hoodMax1 << hoodMin2 <<hoodMax2 << '\n';
   // Set up mask info
   //  maskPtr = (unsigned char *)(self->GetMaskPointer());
   // Lauren use to loop through hoodCopy
@@ -421,7 +421,7 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
 	    cout << "ERROR in vtkImageLiveWireEdgeWeights: "
 		 << "bad edge direction of: "
 		 << self->GetEdgeDirection() 
-		 << "Defaulting to UP_EDGE" << endl;
+		 << "Defaulting to UP_EDGE" << '\n';
 	    self->SetEdgeDirection(UP_EDGE);
 	    t = 7; 
 	    u = 8;
@@ -513,7 +513,7 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
 	  inTPtr0 = inTPtr1;
 	  for (outIdx0 = outMin0; outIdx0 <= outMax0; outIdx0++)
 	    {
-	      //cout << "(" << outIdx0 << "," << outIdx1 <<"," << outIdx2 <<")" << endl;
+	      //cout << "(" << outIdx0 << "," << outIdx1 <<"," << outIdx2 <<")" << '\n';
 
 	      // ---- Neighborhood Operations ---- //
 
@@ -547,12 +547,12 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
 		      // Compute various features:			  
 		      features[2] = *(ptr+n[p]) - *(ptr+n[q]);
 
-		      //  		  cout << n[p] << endl;
-		      //  			  cout << n[q] << endl;
-		      //  			  cout << n[t] << endl;
-		      //  			  cout << n[u] << endl;
-		      //  			  cout << n[v] << endl;
-		      //  			  cout << n[w] << endl;
+		      //  		  cout << n[p] << '\n';
+		      //  			  cout << n[q] << '\n';
+		      //  			  cout << n[t] << '\n';
+		      //  			  cout << n[u] << '\n';
+		      //  			  cout << n[v] << '\n';
+		      //  			  cout << n[w] << '\n';
 
 		      features[3] = .333333*(*(ptr+n[p])+*(ptr+n[t])+*(ptr+n[v])-*(ptr+n[u])-*(ptr+n[q])-*(ptr+n[w]));
 
@@ -688,7 +688,7 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
 			  // junk for testing:
 			  float tmp2 = GaussianC(features[i],props->TransformParams[0],props->TransformParams[1]);
 			  if (tmp2 > 1)
-			    cout << "feature " << i << " too large: " << tmp2 << endl;
+			    cout << "feature " << i << " too large: " << tmp2 << '\n';
 			  
 			  float tmp = props->Weight*tmp2;
 			  if (tmp < testMin) 
@@ -714,7 +714,7 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
 
 		  if (*outPtr0 > maxEdge) 
 		    {
-		      cout << "ERROR in vtkImageLWEdgeWeights: edge cost too high " << *outPtr0 << endl;
+		      cout << "ERROR in vtkImageLWEdgeWeights: edge cost too high " << *outPtr0 << '\n';
 		    }
 		      
 		}  // end neighborhood operations
@@ -755,7 +755,7 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
       numPoints += numberOfTrainingPoints;
       self->SetRunningNumberOfTrainingPoints(numPoints);
 
-      cout << "total points: " << numPoints << "num points: " << numberOfTrainingPoints << endl;
+      cout << "total points: " << numPoints << "num points: " << numberOfTrainingPoints << '\n';
 
       // if we are not doing running totals, finish computing averages
       // (this could also be the last slice of a running total)
@@ -772,7 +772,7 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
 		variance[i] = variance[i]/numPoints - (average[i])*(average[i]);
 		cout << "var: " << variance[i] << " ";
 	      }			  
-	    cout << endl;
+	    cout << '\n';
 	    
 	    // set the total number of points used to compute the averages
 	    self->SetNumberOfTrainingPoints(numPoints);
@@ -789,7 +789,7 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
 	      }
 	  }
 	  else {
-	    cout << "No contour points to train on!" << endl;
+	    cout << "No contour points to train on!" << '\n';
 	  }
 
 	  // turn off Training Mode since we are done
@@ -797,10 +797,10 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
 	}
     }
 
-  //cout << "min: " << testMin << " max: " << testMax << " min2: " << testMin2 << " max2: " << testMax2 << endl;
+  //cout << "min: " << testMin << " max: " << testMax << " min2: " << testMin2 << " max2: " << testMax2 << '\n';
   tEnd = clock();
   tDiff = tEnd - tStart;
-  cout << "time: " << tDiff << endl;
+  cout << "time: " << tDiff << '\n';
 }
 
 //----------------------------------------------------------------------------
