@@ -144,7 +144,7 @@ proc LevelSetsInit {} {
     #   Record any other modules that this one depends on.  This is used 
     #   to check that all necessary modules are loaded when Slicer runs.
     #   
-    set Module($m,depend) ""
+    set Module($m,depend) "Fiducials"
 
     # Set version info
     #------------------------------------
@@ -154,7 +154,7 @@ proc LevelSetsInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.5 $} {$Date: 2003/05/20 18:22:39 $}]
+        {$Revision: 1.6 $} {$Date: 2003/05/27 21:26:22 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -175,23 +175,12 @@ proc LevelSetsInit {} {
     set LevelSets(LowIThreshold)          "-1"
     set LevelSets(HighIThreshold)         "-1"
 
-    set LevelSets(NumInitPoints)          "1"
 
-    set LevelSets(P0x)                    "128"
-    set LevelSets(P0y)                    "162"
-# 255-93=162
-    set LevelSets(P0z)                    "78"
-    set LevelSets(P0r)                    "5"
+    set LevelSets(FidPointList)          0
 
-    set LevelSets(P1x)                    "0"
-    set LevelSets(P1y)                    "0"
-    set LevelSets(P1z)                    "0"
-    set LevelSets(P1r)                    "4"
- 
-    set LevelSets(P2x)                    "0"
-    set LevelSets(P2y)                    "0"
-    set LevelSets(P2z)                    "0"
-    set LevelSets(P2r)                    "4"
+    # Remove this part ...
+    set LevelSets(NumInitPoints)          "0"
+    set LevelSets(InitRadius)             "4"
 
     set LevelSets(MeanIntensity)              "100"
     set LevelSets(SDIntensity)                 "15"
@@ -393,12 +382,14 @@ proc LevelSetsBuildInitFrame {} {
   
     frame $f.fInitImage            -bg $Gui(activeWorkspace) -relief groove -bd 3
     frame $f.fInitThreshold        -bg $Gui(activeWorkspace) -relief groove -bd 3
-    frame $f.fInitPoints           -bg $Gui(activeWorkspace) -relief groove -bd 3
+    frame $f.fInitRadius           -bg $Gui(activeWorkspace) -relief groove -bd 3
+    frame $f.fInitFidPoints        -bg $Gui(activeWorkspace) -relief groove -bd 3
     frame $f.fIntensityThresholds  -bg $Gui(activeWorkspace) -relief groove -bd 3
 
     pack  $f.fInitImage \
           $f.fInitThreshold \
-          $f.fInitPoints \
+          $f.fInitRadius \
+          $f.fInitFidPoints \
       $f.fIntensityThresholds \
       -side top -padx 0 -pady 1 -fill x
     
@@ -426,60 +417,28 @@ proc LevelSetsBuildInitFrame {} {
     grid $f.eInitThreshold  -sticky w
 
     #-------------------------------------------
-    # Parameters->Points Frame
+    # Parameters->Radius Frame
     #-------------------------------------------
-    set f $fInit.fInitPoints
+    set f $fInit.fInitRadius
 
-    eval {label $f.lNumPoints -text "Points:"} $Gui(WLA)
+    eval {label $f.lInitRadius -text "Radius:"} $Gui(WLA)
 
-    eval {entry $f.eNumPoints -justify right -width 4 \
-          -textvariable  LevelSets(NumInitPoints)  } $Gui(WEA)    
+    eval {entry $f.eInitRadius -justify right -width 4 \
+          -textvariable  LevelSets(InitRadius)  } $Gui(WEA)    
         
-    eval {scale $f.sNumPoints -from 0 -to 3     \
-          -variable  LevelSets(NumInitPoints)\
+    eval {scale $f.sInitRadius -from 1 -to 5     \
+          -variable  LevelSets(InitRadius)\
           -orient vertical     \
           -resolution 1      \
           } $Gui(WSA)
 
-    grid $f.lNumPoints $f.eNumPoints 
-#$f.sNumPoints 
-#-pady $Gui(pad) -padx $Gui(pad) -sticky e
+    grid $f.lInitRadius $f.eInitRadius $f.sInitRadius
 
-    eval {label $f.lPoint1 -text "Point1:"} $Gui(WLA)
-    eval {entry $f.eP0x -justify right -width 4 \
-          -textvariable  LevelSets(P0x)  } $Gui(WEA)
-    eval {entry $f.eP0y -justify right -width 4 \
-          -textvariable  LevelSets(P0y)  } $Gui(WEA)
-    eval {entry $f.eP0z -justify right -width 4 \
-          -textvariable  LevelSets(P0z)  } $Gui(WEA)
-    eval {entry $f.eP0r -justify right -width 4 \
-          -textvariable  LevelSets(P0r)  } $Gui(WEA)
-
-    grid $f.lPoint1 $f.eP0x $f.eP0y $f.eP0z $f.eP0r -pady 0 -padx 0 -sticky e
-
-    eval {label $f.lPoint2 -text "Point2:"} $Gui(WLA)
-    eval {entry $f.eP1x -justify right -width 4 \
-          -textvariable  LevelSets(P1x)  } $Gui(WEA)
-    eval {entry $f.eP1y -justify right -width 4 \
-          -textvariable  LevelSets(P1y)  } $Gui(WEA) 
-    eval {entry $f.eP1z -justify right -width 4 \
-          -textvariable  LevelSets(P1z)  } $Gui(WEA) 
-    eval {entry $f.eP1r -justify right -width 4 \
-          -textvariable  LevelSets(P1r)  } $Gui(WEA) 
-
-    grid $f.lPoint2 $f.eP1x $f.eP1y $f.eP1z $f.eP1r  -sticky e
-
-    eval {label $f.lPoint3 -text "Point3:"} $Gui(WLA)
-    eval {entry $f.eP2x -justify right -width 4 \
-          -textvariable  LevelSets(P2x)  } $Gui(WEA)
-    eval {entry $f.eP2y -justify right -width 4 \
-          -textvariable  LevelSets(P2y)  } $Gui(WEA)
-    eval {entry $f.eP2z -justify right -width 4 \
-          -textvariable  LevelSets(P2z)  } $Gui(WEA)
-    eval {entry $f.eP2r -justify right -width 4 \
-          -textvariable  LevelSets(P2r)  } $Gui(WEA)
-
-    grid $f.lPoint3 $f.eP2x $f.eP2y $f.eP2z $f.eP2r  -sticky e
+    #-------------------------------------------
+    # Parameters->FidPoints Frame
+    #-------------------------------------------
+    set f $fInit.fInitFidPoints
+    FiducialsAddActiveListFrame $f 7 25 "LevelSets-seeds"
 
     #-------------------------------------------
     # Parameters->Intensity Thresholds
@@ -911,6 +870,14 @@ proc LevelSetsEnter {} {
     #   (See slicer/program/tcl-shared/Events.tcl for more details.)
     pushEventManager $LevelSets(eventManager)
 
+
+#    puts
+    if {$LevelSets(FidPointList) == 0} {
+      set LevelSets(FidPointList) 1
+      FiducialsCreateFiducialsList "default" "LevelSets-seeds"
+    }
+    FiducialsSetActiveList "LevelSets-seeds"
+
     # clear the text box and put instructions there
 #    $LevelSets(textBox) delete 1.0 end
 #    $LevelSets(textBox) insert end "Shift-Click anywhere!\n"
@@ -934,6 +901,9 @@ proc LevelSetsExit {} {
     #   previous ones.
     #
     popEventManager
+
+    #Remove Fiducial List
+#    FiducialsDeleteList "LevelSets-seeds"
 }
 
 
@@ -999,6 +969,12 @@ proc LevelSetsBindingCallback { event W X Y x y t } {
         set LevelSets(P2x) [expr round($xi)]
         set LevelSets(P2y) [expr round($yi)]
         set LevelSets(P2z) [expr round($zi)]
+    }
+    if {[string compare $event "KeyPress-p"] == 0} {
+        puts "Adding Fiducial..."
+    }
+    if {[string compare $event "KeyPress-d"] == 0} {
+        puts "Removing Fiducial..."
     }
 
 }
@@ -1200,16 +1176,30 @@ proc RunLevelSetsBegin {} {
   # ------ Initialize the level set ---------------------
   #
 
+  #
+  #------- Check Fiducial list
+  #
+  set fidlist [FiducialsGetPointIdListFromName "LevelSets-seeds"]
+
+  #Update numPoints module variable  
+  set LevelSets(NumInitPoints) [llength $fidlist]
+
   if {$LevelSets(NumInitPoints) > 0} {
-    LevelSets(curv) SetNumInitPoints       $LevelSets(NumInitPoints)
+    LevelSets(curv) SetNumInitPoints $LevelSets(NumInitPoints)
   }
 
+  set radius 4
+  set RASToIJKMatrix [Volume($input,node) GetRasToIjk]
   for {set n 0} {$n < $LevelSets(NumInitPoints)} {incr n} {
-    set point P$n
-      LevelSets(curv) SetInitPoint  $n $LevelSets(${point}x) \
-    $LevelSets(${point}y) \
-    $LevelSets(${point}z) \
-    $LevelSets(${point}r) 
+    set coord [FiducialsGetPointCoordinates [lindex $fidlist $n]]
+    set cr [lindex $coord 0]
+    set ca [lindex $coord 1]
+    set cs [lindex $coord 2]
+    #Transform from RAS to IJK
+    scan [$RASToIJKMatrix MultiplyPoint $cr $ca $cs 1] "%g %g %g %g" xi yi zi hi
+    puts "LevelSets(curv) SetInitPoint  $n $xi $yi $zi $LevelSets(InitRadius)"
+      LevelSets(curv) SetInitPoint  $n [expr round($xi)] [expr round($yi)] \
+                                       [expr round($zi)] $LevelSets(InitRadius)
   }
 
   if {$LevelSets(NumInitPoints) == 0} {
@@ -1459,11 +1449,7 @@ proc SetSPGR_WM_Param {} {
   set LevelSets(ProbabilityThreshold)       "0.3"
 
 
-  set LevelSets(NumInitPoints)          "1"
-  set LevelSets(P0x)                    "128"
-  set LevelSets(P0y)                    "93"
-  set LevelSets(P0z)                    "78"
-  set LevelSets(P0r)                    "5"
+  set LevelSets(NumInitPoints)          "0"
   
 #  set LevelSets(InitThreshold)          "80"
 
