@@ -73,7 +73,7 @@ proc MatricesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.28 $} {$Date: 2002/04/08 23:02:28 $}]
+            {$Revision: 1.29 $} {$Date: 2002/05/09 15:56:34 $}]
 
     # Props
     set Matrix(propertyType) Basic
@@ -872,7 +872,7 @@ proc MatricesManualTranslate {param {value ""}} {
 
     # Transfer values from GUI to active transform
     set tran [Matrix($t,node) GetTransform]
-    set mat  [$tran GetMatrixPointer]
+    set mat  [$tran GetMatrix]
     
     switch $param {
         "regTranLR" {
@@ -937,7 +937,7 @@ proc MatricesManualTranslateDual {param1 value1 param2 value2} {
 
     # Transfer values from GUI to active transform
     set tran [Matrix($t,node) GetTransform]
-    set mat  [$tran GetMatrixPointer]
+    set mat  [$tran GetMatrix]
     
     switch $param1 {
         "regTranLR" {
@@ -1077,8 +1077,8 @@ proc MatricesManualRotate {param {value ""} {mouse 0}} {
     }
 
     # Only UpdateMRML if the transform changed
-    set mat1 [Matrix($t,transform) GetMatrixPointer]
-    set mat2 [[Matrix($t,node) GetTransform] GetMatrixPointer]
+    set mat1 [Matrix($t,transform) GetMatrix]
+    set mat2 [[Matrix($t,node) GetTransform] GetMatrix]
     set differ 0
     for {set i 0} {$i < 4} {incr i} {
         for {set j 0} {$j < 4} {incr j} {
