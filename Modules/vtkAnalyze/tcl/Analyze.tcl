@@ -162,7 +162,7 @@ proc AnalyzeInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.6 $} {$Date: 2004/07/30 15:52:56 $}]
+        {$Revision: 1.7 $} {$Date: 2004/08/24 19:40:38 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -600,7 +600,7 @@ proc AnalyzeLoadVolumes {} {
         set load "Loading volume:\n"
         append load $Volume(name) 
         set FMRIEngine(name) $load
-        puts "Loading volume: $Volume(name) ..."
+        puts "Loading Volume $Volume(name)..."
 
         set yBase [expr $y*$z*($j-1)]
         while {$i <= $z} {
@@ -642,7 +642,7 @@ proc AnalyzeLoadVolumes {} {
         set volData [imageAppend GetOutput] 
         set id [AnalyzeCreateMrmlNodeForVolume $Volume(name) $volData]
         lappend AnalyzeCache(MRMLid) $id 
-        puts "done."
+        puts "...done"
 
         imageAppend Delete
 
