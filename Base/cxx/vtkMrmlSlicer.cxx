@@ -316,11 +316,11 @@ vtkMrmlSlicer::vtkMrmlSlicer()
  
   // >> Bouix 4/23/03 use old approach for the Zoom. 
   // >> AT 3/26/01 11/07/01
-  //// Use the original approach by default.
-  this->DrawDoubleApproach = 0;
+  // Use the original approach by default.
+  //this->DrawDoubleApproach = 0;
 
   // Should be this one from now (11/07/01)
-  //  this->DrawDoubleApproach = 1;
+    this->DrawDoubleApproach = 1;
   // << AT 3/26/01 11/07/01
   // << Bouix
   // reformatting additions
