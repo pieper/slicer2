@@ -27,7 +27,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkObject.h"
 #include <vtkEMLocalSegmentConfigure.h>
 
-class VTK_EXPORT vtkFileOps { //; prevent man page generation
+class VTK_EMLOCALSEGMENT_EXPORT vtkFileOps { //; prevent man page generation
   public:
   static vtkFileOps *New() {return (new vtkFileOps);}
 

@@ -59,7 +59,7 @@ typedef struct {
 //ETX
 // End of parallel specific implementation
 
-class VTK_EXPORT vtkImageEMLocalSegmenter : public vtkImageEMGeneral
+class VTK_EMLOCALSEGMENT_EXPORT vtkImageEMLocalSegmenter : public vtkImageEMGeneral
 {
   public:
   // -----------------------------------------------------

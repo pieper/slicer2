@@ -45,7 +45,8 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include <math.h>
 #include <ctype.h>
 #include <string.h>
- 
+
+#include "vtkEMLocalSegmentConfigure.h" 
 #include "vtkImageData.h"
 #include "vtkImageToImageFilter.h"
 #include "vtkSlicer.h"
@@ -63,7 +64,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 
 
-class VTK_SLICER_BASE_EXPORT vtkImageEMMarkov : public vtkImageToImageFilter
+class VTK_EMLOCALSEGMENT_EXPORT vtkImageEMMarkov : public vtkImageToImageFilter
 {
   public:
   static vtkImageEMMarkov *New();

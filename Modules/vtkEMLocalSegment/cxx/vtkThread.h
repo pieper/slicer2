@@ -42,7 +42,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 // ----------------------------------------------------------------------------------------------
 // Definitions for paralising algorithm from
 // workpile.h Simon Warfield simonw@bwh.harvard.edu */
-// $Id: vtkThread.h,v 1.4 2003/05/18 21:04:15 pieper Exp $ */
+// $Id: vtkThread.h,v 1.5 2003/08/22 18:21:21 pohl Exp $ */
 // ----------------------------------------------------------------------------------------------
 
 #include <stdlib.h>
@@ -77,7 +77,7 @@ typedef struct workpile_struct {
 #endif
 
 //ETX  
-class VTK_EXPORT vtkThread { //; prevent man page generation
+class VTK_EMLOCALSEGMENT_EXPORT vtkThread { //; prevent man page generation
 public:
   static vtkThread *New() {return (new vtkThread);}
 //BTX

@@ -84,7 +84,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #define EMSEGMENT_TABLE_EPSILON       1e-4    // Cut of for smallest eps value: x < Eps  => GausTable(x) = 0
 #define EMSEGMENT_TABLE_EPSILON_MULTI 1e-3    // Cut of for smallest eps value: x < Eps  => GausTable(x) = 0
 
-class VTK_EXPORT vtkImageEMGeneral : public vtkImageMultipleInputFilter
+class VTK_EMLOCALSEGMENT_EXPORT vtkImageEMGeneral : public vtkImageMultipleInputFilter
 {
   public:
   // -------------------------------

@@ -245,7 +245,7 @@ proc EMSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.3 $} {$Date: 2003/08/22 17:37:05 $}]
+        {$Revision: 1.4 $} {$Date: 2003/08/22 18:21:21 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -275,7 +275,7 @@ proc EMSegmentInit {} {
     set EMSegment(AllVolList,VolumeList) {}
     set EMSegment(SelVolList,VolumeList) {}
 
-    vtkImageEMSegmenter vtkEMInit
+    vtkImageEMLocalSegmenter vtkEMInit
     # Default Paramter from vtkEMSegm
     # set EMSegment(EMiteration)  1  
     # set EMSegment(MFAiteration) 1 
