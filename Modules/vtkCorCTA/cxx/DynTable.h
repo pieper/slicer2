@@ -27,7 +27,11 @@
 #define FALSE 0
 #define Boolean unsigned char
 
+#ifdef _WIN32
 #include <ostream>
+#else
+#include <ostream.h>
+#endif
 
 class OutOfArray {};
 
