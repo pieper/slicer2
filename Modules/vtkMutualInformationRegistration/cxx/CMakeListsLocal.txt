@@ -9,10 +9,10 @@ ENDIF(USE_ITK_FILE)
 
 SET( LOCAL_MODULE_SRCS
  vtkITKMutualInformationTransform.cxx
- # MI Registration ala Dave Gering
- vtkVector3.cxx vtkQuaternion.cxx vtkPose.cxx
- vtkImageFastGaussian.cxx vtkImageMIReg.cxx
- vtkRasToIjkTransform.cxx
+ # MI Registration ala Dave Gering, not used anymore
+ #vtkVector3.cxx vtkQuaternion.cxx vtkPose.cxx
+ #vtkImageFastGaussian.cxx vtkImageMIReg.cxx
+ #vtkRasToIjkTransform.cxx
 )
 
 SET ( LOCAL_NO_WRAP_SRC
