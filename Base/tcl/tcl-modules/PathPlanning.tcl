@@ -354,7 +354,7 @@ proc PathPlanningExtractCenterline {} {
 
             if { $m != $PathPlanning(lastActiveModel)} {
                 PathPlanning(dist) Delete
-                vtkImageEuclideanDistanceTransformation PathPlanning(dist)
+                vtkImageEuclideanDistance PathPlanning(dist)
             }
             if {$voxelize} {
                 PathPlanning(dist) SetInput [PathPlanning(labelMapFilter) GetOutput]
