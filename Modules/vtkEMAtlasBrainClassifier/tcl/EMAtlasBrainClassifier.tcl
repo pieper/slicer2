@@ -42,7 +42,7 @@ proc EMAtlasBrainClassifierInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.3 $} {$Date: 2004/12/16 20:02:19 $}]
+        {$Revision: 1.4 $} {$Date: 2005/01/06 22:16:58 $}]
 
 
     set EMAtlasBrainClassifier(Volume,SPGR) $Volume(idNone)
@@ -455,7 +455,7 @@ proc EMAtlasBrainClassifierLoadAtlasVolume {AtlasDir AtlasName} {
     set Volume(pixelHeight) 0.9375
     set Volume(sliceThickness) 1.5
     set Volume(sliceSpacing) 0.0
-    set Volume(scanOrder)   LR
+    set Volume(scanOrder)   PA
     set Volume(scalarType)  Short
     set Volume(gantryDetectorTilt)  0
     set Volume(numScalars)   1
@@ -633,20 +633,20 @@ proc EMAtlasBrainClassifierStartSegmentation { } {
 
     set TemplateIDInput $EMAtlasBrainClassifier(Volume,NormalizedSPGR)
     puts "=========== Register atlas spgr with patient ============ "
-    # Load SPGR 
-    set VolIDInput      [EMAtlasBrainClassifierLoadAtlasVolume spgr  AtlasSPGR]
-    if {$VolIDInput == "" } {return}
+    # Load Atlas SPGR 
+    set VolIDSource      [EMAtlasBrainClassifierLoadAtlasVolume spgr  AtlasSPGR]
+    if {$VolIDSource == "" } {return}
+    set EMAtlasBrainClassifier(Volume,AtlasSPGR) $VolIDSource
+    # Target file is the normalized SPGR
+    set VolIDTarget $EMAtlasBrainClassifier(Volume,NormalizedSPGR)
+    if {$VolIDTarget == "" } {return}
 
+    EMAtlasBrainClassifierRegistration $VolIDTarget $VolIDSource
     # Define Registration output volume 
     set VolIDOutput [DevCreateNewCopiedVolume $TemplateIDInput "" "RegisteredSPGR"]
-
-    # Sylvain register spgr of atlas to patient
-    # Input Volume ID:  VolIDInput ,  EMAtlasBrainClassifier(Volume,NormalizedSPGR) or EMAtlasBrainClassifier(Volume,SPGR) 
-    # Output Volume ID: VolIDOutput
+    # Resample the Atlas SPGR
+    EMAtlasBrainClassifierResample  $VolIDTarget $VolIDSource $VolIDOutput
   
-        puts  "Dummy function so we see it works for right now "
-    EMAtlasBrainClassifier_Normalize  $VolIDInput $VolIDOutput SPGR 
-
     # Clean up 
     if {$EMAtlasBrainClassifier(Save,Atlas)} {
         set Prefix "$EMAtlasBrainClassifier(WorkingDirectory)/atlas/spgr/I"
@@ -654,29 +654,25 @@ proc EMAtlasBrainClassifierStartSegmentation { } {
         Volume($VolIDOutput,node) SetFullPrefix "$Prefix" 
         EMAtlasBrainClassifierVolumeWriter $VolIDOutput
     }
-    MainMrmlDeleteNode Volume $VolIDInput 
-    MainMrmlDeleteNode Volume $VolIDOutput 
+    MainMrmlDeleteNode Volume $VolIDSource 
     MainUpdateMRML
     RenderAll
 
-    # b.2 Resmaple atlas 
+    # b.2 Resample atlas 
     foreach Dir "$RegisterAtlasDirList" Name "$RegisterAtlasNameList" {
         puts "=========== Resample Atlas $Name  ============ "
         # Load In the New Atlases
         set VolIDInput [EMAtlasBrainClassifierLoadAtlasVolume $Dir Atlas$Name]
-
         # Define Registration output volumes
         set VolIDOutput [DevCreateNewCopiedVolume $TemplateIDInput "" "$Name"]
         set Prefix "$EMAtlasBrainClassifier(WorkingDirectory)/atlas/$Dir/I"
         Volume($VolIDOutput,node) SetFilePrefix "$Prefix"
         Volume($VolIDOutput,node) SetFullPrefix "$Prefix" 
 
-        # Sylvain resample atlas
-        # Input Volume ID:  VolIDInput 
-        # Output Volume ID: VolIDOutput
-            puts  "Dummy function so we see it works for right now "
-        EMAtlasBrainClassifier_Normalize  $VolIDInput $VolIDOutput SPGR 
+        # Resample the Atlas
+        EMAtlasBrainClassifierResample  $VolIDTarget $VolIDInput $VolIDOutput  
         # Clean up 
+
         if {$EMAtlasBrainClassifier(Save,Atlas)} {EMAtlasBrainClassifierVolumeWriter $VolIDOutput}
         MainMrmlDeleteNode Volume $VolIDInput 
         MainUpdateMRML
@@ -715,3 +711,139 @@ proc EMAtlasBrainClassifierStartSegmentation { } {
     puts "=========== Finshed  ============ "
 }
 
+
+
+proc EMAtlasBrainClassifierRegistration {inTarget inSource} {
+    global EMAtlasBrainClassifier Volume AG 
+   
+    
+    catch "Target Delete"
+    catch "Source Delete"
+    vtkImageData Target
+    vtkImageData Source
+
+    puts "Initialize Source and Target"
+    #If source and target have two channels, combine them into one vtkImageData object 
+    Target DeepCopy  [ Volume($inTarget,vol) GetOutput]
+    Source DeepCopy  [ Volume($inSource,vol) GetOutput]
+    
+    # Initial transform stuff
+    catch "TransformEMAtlasBrainClassifier Delete"
+    vtkGeneralTransform TransformEMAtlasBrainClassifier
+    puts "No initial transform"
+    TransformEMAtlasBrainClassifier PostMultiply 
+
+    ## to be changed to EMAtlaspreprocess
+    AGPreprocess Source Target $inSource $inTarget
+
+    if { [info commands __dummy_transform] == ""} {
+            vtkTransform __dummy_transform
+    }
+
+    puts "Start the linear registration"
+    ###### Linear Tfm ######
+    catch "GCR Delete"
+    vtkImageGCR GCR
+    GCR SetVerbose 1
+
+    # Set i/o
+    GCR SetTarget Target
+    GCR SetSource Source
+    GCR PostMultiply 
+ 
+    # Set parameters
+    GCR SetInput  __dummy_transform  
+    [GCR GetGeneralTransform] SetInput TransformEMAtlasBrainClassifier
+    ## Metric: 1=GCR-L1,2=GCR-L2,3=Correlation,4=MI
+    GCR SetCriterion       4 
+    ## Tfm type: -1=translation, 0=rigid, 1=similarity, 2=affine
+    GCR SetTransformDomain 2 
+    ## 2D registration only?
+    GCR SetTwoD 0
+  
+    # Do it!
+    GCR Update     
+    TransformEMAtlasBrainClassifier Concatenate [[GCR GetGeneralTransform] GetConcatenatedTransform 1]
+    
+
+    ###### Warp #######
+    catch "warp Delete"
+    vtkImageWarp warp
+
+    # Set i/o
+    warp SetSource Source
+    warp SetTarget Target 
+
+    # Set the parameters
+    warp SetVerbose 2
+    [warp GetGeneralTransform] SetInput TransformEMAtlasBrainClassifier
+    ## do tensor registration?
+    warp SetResliceTensors 0 
+    ## 1=demon, 2=optical flow 
+    warp SetForceType 1          
+    warp SetMinimumIterations  0 
+    warp SetMaximumIterations  50
+    ## What does it mean?
+    warp SetMinimumLevel -1  
+    warp SetMaximumLevel -1  
+    ## Use SSD? 1 or 0 
+    warp SetUseSSD 1
+    warp SetSSDEpsilon  1e-3    
+    warp SetMinimumStandardDeviation 0.85 
+    warp SetMaximumStandardDeviation 1.25     
+
+    # Do it!
+    warp Update
+    TransformEMAtlasBrainClassifier Concatenate warp
+
+
+    # save the transform
+    set EMAtlasBrainClassifier(Transform) TransformEMAtlasBrainClassifier
+}
+
+
+proc EMAtlasBrainClassifierResample {inTarget inSource outResampled} {
+    global EMAtlasBrainClassifier Volume Gui
+    
+    catch "Source Delete"
+    vtkImageData Source  
+    Source DeepCopy  [ Volume($inSource,vol) GetOutput]
+    catch "Target Delete"
+    vtkImageData Target
+    Target DeepCopy  [ Volume($inTarget,vol) GetOutput]
+    AGPreprocess Source Target $inSource $inTarget
+  
+    catch "Cast Delete"
+    vtkImageCast Cast
+    Cast SetInput Source
+    Cast SetOutputScalarType [Target GetScalarType] 
+
+    catch "ITrans Delete"
+    vtkImageTransformIntensity ITrans
+    ITrans SetInput [Cast GetOutput]
+
+    catch "Reslicer Delete"
+    vtkImageReslice Reslicer
+    Reslicer SetInput [ITrans GetOutput]
+    Reslicer SetInterpolationMode 1
+    
+    # We have to invers the transform before we reslice the grid.     
+    Reslicer SetResliceTransform [$EMAtlasBrainClassifier(Transform)  GetInverse]
+    
+    # Reslicer SetInformationInput Target
+    Reslicer SetInformationInput Target
+    # Do it!
+    Reslicer Update
+
+    catch "Resampled Delete"
+    vtkImageData Resampled
+    Resampled DeepCopy [Reslicer GetOutput]
+
+    Volume($outResampled,vol) SetImageData  Resampled
+    Resampled SetOrigin 0 0 0
+    Source Delete
+    Target Delete
+    Cast Delete
+    ITrans Delete
+    Reslicer Delete
+}
