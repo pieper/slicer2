@@ -416,40 +416,42 @@ void vtkImageCurveRegion::ExecuteDataGauss(vtkDataObject *output) {
       value[0] = this->Xmin;
       for (idxR = 0; idxR < rowLength; idxR++) {
         // Pixel operation
-    if (this->Dimension > 1) {
-      switch (this->Function) {
-        case 1:  *outPtr = Probability*FastGauss2(InvSqrtDetCov,value,this->Mean, InvCov);
-             break;
-
-            case 2:  LogValue[0] = log (value[0] +1.0); 
-                *outPtr = Probability*FastGauss2(InvSqrtDetCov,LogValue,this->Mean, InvCov);
-          // *outPtr = Probability * GeneralGauss(LogValue,this->Mean,InvCov, InvSqrtDetCov,2);  
-             break;
-      }
-    } else {
+        if (this->Dimension > 1) {
           switch (this->Function) {
-        case 1:  *outPtr = Probability*FastGauss(InvSqrtDetCov,value[0] - this->Mean[0]);
-      // *outPtr = Probability* GeneralGauss(value[0] - this->Mean[0],InvSqrtDetCov);
-             break;
-        case 2:  *outPtr = Probability*FastGauss(InvSqrtDetCov,log(value[0] +1.0) - this->Mean[0]);
-      // *outPtr = Probability* GeneralGauss(log(value[0] + 1.0) - this->Mean[0],InvSqrtDetCov);
+            case 1:  *outPtr = Probability*FastGauss2(InvSqrtDetCov,value,this->Mean, InvCov);
                  break;
-      }
-    }
-    // Define Maximum and Minimum value of the function 
-    if (!FlagInit) {
-      this->FctMin = this->FctMax = *outPtr;
-      FlagInit = true;
-    } else {
-      if (*outPtr > this->FctMax) this->FctMax = *outPtr;
-      else if (*outPtr < this->FctMin) this->FctMin = *outPtr;
-    }
+
+                case 2:  LogValue[0] = log (value[0] +1.0); 
+                    *outPtr = Probability*FastGauss2(InvSqrtDetCov,LogValue,this->Mean, InvCov);
+              // *outPtr = Probability * GeneralGauss(LogValue,this->Mean,InvCov, InvSqrtDetCov,2);  
+                 break;
+          }
+        } else {
+              switch (this->Function) {
+                  case 1:  *outPtr = Probability*FastGauss(InvSqrtDetCov,value[0] - this->Mean[0]);
+                  // *outPtr = Probability* GeneralGauss(value[0] - this->Mean[0],InvSqrtDetCov);
+                  break;
+                  case 2:  *outPtr = Probability*FastGauss(InvSqrtDetCov,log(value[0] +1.0) - this->Mean[0]);
+                  // *outPtr = Probability* GeneralGauss(log(value[0] + 1.0) - this->Mean[0],InvSqrtDetCov);
+                  break;
+          }
+        }
+        // Define Maximum and Minimum value of the function 
+        if (!FlagInit) {
+          this->FctMin = this->FctMax = *outPtr;
+          FlagInit = true;
+        } else {
+          if (*outPtr > this->FctMax) this->FctMax = *outPtr;
+          else if (*outPtr < this->FctMin) this->FctMin = *outPtr;
+        }
 
         outPtr++;
-    value[0] += this->Xunit;
+        value[0] += this->Xunit;
       }
-      if (this->Dimension >1) value[1] += this->Yunit;
-      if (this->Function == 2) LogValue[1] = log(value[1] + 1.0);
+      if (this->Dimension >1) 
+      { value[1] += this->Yunit;
+        if (this->Function == 2) LogValue[1] = log(value[1] + 1.0);
+      }
       outPtr += outIncY;
     }
     outPtr += outIncZ;
