@@ -10,7 +10,7 @@
 // the superclass had these classes in the vtkHyperStreamline.cxx file:
 #include "vtkHyperPointandArray.cxx"
 
-vtkCxxRevisionMacro(vtkHyperStreamlineDTMRI, "$Revision: 1.4 $");
+vtkCxxRevisionMacro(vtkHyperStreamlineDTMRI, "$Revision: 1.5 $");
 vtkStandardNewMacro(vtkHyperStreamlineDTMRI);
 
 // Construct object with initial starting position (0,0,0); integration step 
@@ -335,7 +335,7 @@ void vtkHyperStreamlineDTMRI::Execute()
             //vtkDebugMacro(<<K);
             //cout << pointCount << "    " << K << endl;
 
-            if (K>1.3) 
+            if (K > this->MaxCurvature) 
               {
                 integrationAngleGood=0;
               }

@@ -52,9 +52,9 @@ public:
   static vtkHyperStreamlineDTMRI *New();
 
   // Description:
-  // If angle of curvature becomes larger than this angle, tracking stops.
-  vtkGetMacro(Angle,vtkFloatingPointType);
-  vtkSetMacro(Angle,vtkFloatingPointType);
+  // If degree curvature becomes larger than this number, tracking stops.
+  vtkGetMacro(MaxCurvature,vtkFloatingPointType);
+  vtkSetMacro(MaxCurvature,vtkFloatingPointType);
 
 protected:
   vtkHyperStreamlineDTMRI();
@@ -64,7 +64,7 @@ protected:
   void Execute();
   //void BuildTube();
 
-  vtkFloatingPointType Angle;
+  vtkFloatingPointType MaxCurvature;
 
 private:
   vtkHyperStreamlineDTMRI(const vtkHyperStreamlineDTMRI&);  // Not implemented.
