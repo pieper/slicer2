@@ -62,5 +62,28 @@ TEST_BIG_ENDIAN(CMAKE_WORDS_BIGENDIAN)
 
 ENDIF (VTKSLICER_CAN_BUILD)
 
+SET(SLICER_EXECUTABLE "" CACHE STRING "Path to Slicer executable")
+
 # Include the standard Dart testing module
-INCLUDE (${CMAKE_ROOT}/Modules/Dart.cmake)
+INCLUDE (Dart)
+
+ENABLE_TESTING()
+
+## Add a test to open each xml file in the TestData directory, then
+## close it.  Test will fail after timeout specified in
+## DartConfiguration.tcl
+
+# Pick up xml files to test
+FILE(GLOB_RECURSE xmlfiles "${SLICER_HOME}/slicer2/Testing/TestData/*.xml")
+
+# List xml files for debugging purposes
+#MESSAGE("${xmlfiles}")
+
+# Try to open each xml file
+FOREACH(xmlfile ${xmlfiles}) 
+STRING(REGEX REPLACE "/" "_" testname "${xmlfile}")
+ADD_TEST("slicer${testname}" "${SLICER_EXECUTABLE}" --agree_to_license --no-tkcon "${xmlfile}" --exec exit)
+ENDFOREACH(xmlfile)
+
+
+
