@@ -28,7 +28,7 @@ proc EndoscopicEnter {} {
     foreach a $Endoscopic(actors) {
 	EndoscopicUpdateVisibility $a
     }
-    
+    Render3D
     if {$Endoscopic(endoview,visibility) == 1} {
 	EndoscopicAddEndoscopicView
     }
@@ -62,6 +62,7 @@ proc EndoscopicExit {} {
 	    EndoscopicSetPickable $a 0
             
 	}
+	Render3D
 	EndoscopicRemoveEndoscopicView
     }
     popEventManager
@@ -170,7 +171,7 @@ proc EndoscopicAddEndoscopicViewRemoveMainView {} {
 	foreach a $Endoscopic(actors) {
 	    EndoscopicUpdateVisibility $a
 	}
-	
+	Render3D
 	EndoscopicUpdateCamera
         $viewWin AddRenderer endoscopicRen
 	$viewWin RemoveRenderer viewRen
@@ -237,6 +238,7 @@ proc EndoscopicAddMainViewRemoveEndoscopicView {} {
 	    EndoscopicSetPickable $a 0
             
 	}
+	Render3D
 	$viewWin AddRenderer viewRen
         $viewWin RemoveRenderer endoscopicRen	
 	viewRen SetViewport 0 0 1 1
@@ -280,7 +282,7 @@ proc EndoscopicInit {} {
     set m Endoscopic
     set Module($m,row1List) "Help Display Camera Path Advanced"
     set Module($m,row1Name) "{Help} {Display} {Camera} {Path} {Advanced}"
-    set Module($m,row1,tab) Display    
+    set Module($m,row1,tab) Camera    
 #    set Module($m,row2List) "Advanced Automatic"
 #    set Module($m,row2Name) "{Advanced} {Automatic}"
 #    set Module($m,row2,tab) Advanced
@@ -1041,7 +1043,6 @@ proc EndoscopicUpdateVisibility {a {visibility ""}} {
     }
     Endoscopic($a,actor) SetVisibility $Endoscopic($a,visibility)
     EndoscopicSetPickable $a $Endoscopic($a,visibility)
-    Render3D
 }
 
 
@@ -1071,7 +1072,6 @@ proc EndoscopicSetPickable {a pickability} {
     } else {
 	Endoscopic($a,actor) Pickable$p 
     }
-    Render3D
 }
 
 
@@ -1317,7 +1317,7 @@ proc EndoscopicBuildGUI {} {
     eval {entry $f.fBtns.eWidth -width 5 -textvariable View(viewerWidth)} $Gui(WEA)
     bind $f.fBtns.eWidth  <Return> {MainViewerSetMode}
     eval {menubutton $f.fMBtns -text "choose" -menu $f.fMBtns.fMenu} $Gui(WMBA)
-    TooltipAdd $f.fMBtns "Choose from the flollowing sizes"
+    TooltipAdd $f.fMBtns "Choose from the following sizes"
     eval {menu $f.fMBtns.fMenu} $Gui(WMA)
     $f.fMBtns.fMenu add command -label 1000 -command {set View(viewerWidth) 1000; MainViewerSetMode}
     $f.fMBtns.fMenu add command -label 768 -command {set View(viewerWidth) 768; MainViewerSetMode}
@@ -1333,10 +1333,13 @@ proc EndoscopicBuildGUI {} {
 
     set f $fDisplay.fEndo
         eval {label $f.fexpl -text "Endoscopic View parameters:"} $Gui(WLA)
-    eval {checkbutton $f.cEndoView -variable Endoscopic(endoview,visibility) -text "Show Endoscopic View" -command "EndoscopicUpdateEndoscopicViewVisibility" -indicatoron 1} $Gui(WCA)    
-
+    
+    EndoscopicCreateCheckButton $f.cEndoView Endoscopic(endoview,visibility)   "Show Endoscopic View" "EndoscopicUpdateEndoscopicViewVisibility" 1
+    
+    #    eval {checkbutton $f.cEndoView -variable Endoscopic(endoview,visibility) -text "Show Endoscopic View" -command "EndoscopicUpdateEndoscopicViewVisibility" -indicatoron 1} $Gui(WCA)    
+    
     eval {checkbutton $f.cExitEndoView -variable Endoscopic(endoview,hideOnExit) -text "Hide Endoscopic View on Exit" -indicatoron 1} $Gui(WCA)    
-
+    
     eval {checkbutton $f.cslices -variable Endoscopic(SlicesVisibility) -text "Show 2D Slices" -command "EndoscopicSetSlicesVisibility" -indicatoron 1} $Gui(WCA)
     pack $f.fexpl -side top -pady 2
     pack $f.cEndoView $f.cExitEndoView -side top -padx $Gui(pad) -pady 0
@@ -1382,7 +1385,7 @@ proc EndoscopicBuildGUI {} {
     
     set f $fCamera.fTop.fGyro
     
-    eval {checkbutton $f.cgyro -variable Endoscopic(gyro,visibility) -text "Use the 3D Gyro" -command "EndoscopicUpdateVisibility gyro" -indicatoron 0 } $Gui(WBA)
+    eval {checkbutton $f.cgyro -variable Endoscopic(gyro,visibility) -text "Use the 3D Gyro" -command "EndoscopicUpdateVisibility gyro; Render3D" -indicatoron 0 } $Gui(WBA)
 
     eval {label $f.lgyroSize -text "Size"} $Gui(WTA)
 
@@ -1599,7 +1602,7 @@ proc EndoscopicBuildGUI {} {
 
 	set Endoscopic(path,stepScale) $f.sstep
 	
-	# default color values for the lens sliders
+	# default value
 	$f.sstep set 0
 	
 	# Grid
@@ -1901,14 +1904,17 @@ proc EndoscopicBuildGUI {} {
 	frame $f.fBtns -bg $Gui(activeWorkspace)
 	eval {button $f.fBtns.bAdd -text "Add" -width 4 \
 		-command "EndoscopicAddLandmarkDirectionSpecified; EndoscopicBuildInterpolatedPath; Render3D"} $Gui(WBA)
+	TooltipAdd $f.fBtns.bAdd "To add a Landmark: place the Camera where desired and click Add"
 	eval {button $f.fBtns.bDelete -text "Delete" -width 7 \
 		-command "EndoscopicDeleteLandmark; Render3D"} $Gui(WBA)
+	TooltipAdd $f.fBtns.bDelete "To delete a Landmark: select a Landmark and click Delete"
 	eval {button $f.fBtns.bMove -text "Update" -width 7 \
 		-command "EndoscopicUpdateLandmark; Render3D"} $Gui(WBA)
+	TooltipAdd $f.fBtns.bMove "Select a Landmark, move the Camera where you wish to move the Landmark, then click Update"
 	eval {button $f.fBtns.bDeletePath -text "Delete Path" -width 10 \
 		-command "EndoscopicDeletePath; Render3D"} $Gui(WBA)
+	TooltipAdd $f.fBtns.bDeletePath "Deletes the whole Path"
 	pack $f.fBtns.bAdd $f.fBtns.bMove $f.fBtns.bDelete $f.fBtns.bDeletePath -side top -padx $Gui(pad) -pady $Gui(pad)
-	
 	pack $f.lTitle $f.lTitle2 -side top -pady 0
 	pack $f.list $f.fBtns -side left -pady $Gui(pad)
     }
@@ -1952,13 +1958,13 @@ proc EndoscopicBuildGUI {} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc EndoscopicCreateCheckButton {ButtonName VariableName Message Command {Width 0} } {
+    proc EndoscopicCreateCheckButton {ButtonName VariableName Message Command {Indicatoron 0} {Width 0} } {
 	global Gui
     if {$Width == 0 } {
         set Width [expr [string length $Message]]
     }
     eval  {checkbutton $ButtonName -variable $VariableName -text \
-    $Message -width $Width -indicatoron 0 -command $Command } $Gui(WCA)
+    $Message -width $Width -indicatoron $Indicatoron -command $Command } $Gui(WCA)
 } 
 
 
@@ -1977,7 +1983,7 @@ proc EndoscopicCreateAdvancedGUI {f a {vis ""} {col ""} {size ""}} {
 	eval {checkbutton $f.c$a \
 		-text $Endoscopic($a,name) -wraplength 65 -variable Endoscopic($a,visibility) \
 		-width 11 -indicatoron 0\
-		-command "EndoscopicUpdateVisibility $a"} $Gui(WCA)
+		-command "EndoscopicUpdateVisibility $a; Render3D"} $Gui(WCA)
     } else {
 	eval {label $f.c$a -text $Endoscopic($a,name)} $Gui(WLA)
     }
@@ -2062,6 +2068,7 @@ proc EndoscopicPopupCallback {} {
 	    eval [Endoscopic(Box2,actor) GetProperty] SetColor    [Color($color,node) GetDiffuseColor]
 
 	}
+	Render3D
 }
 
 
@@ -3967,6 +3974,7 @@ proc EndoscopicUpdateMRML {} {
 	    set lid [$item GetID]
 	    set i [Landmark($lid,node) GetPathPosition]
 	    set l [Landmark($lid,node) GetXYZ]
+	    puts "in updateMrml	set Endoscopic(cLand,$i,x) [lindex $l 0]"
 	    set Endoscopic(cLand,$i,x) [lindex $l 0]
 	    set Endoscopic(cLand,$i,y) [lindex $l 1]
 	    set Endoscopic(cLand,$i,z) [lindex $l 2]
@@ -4316,22 +4324,3 @@ proc EndoscopicReadPathData {} {
 
 }
 
-
-# change user interface
-# general : slider appears only for bigger frames
-#            arrow next to the status slider to cover the bottom frame
-#	    (make current frame bigger, set bottom frame to 0)
-# => once done, email Arne
-
-# - when selection in landmark list, highlight the landmark
-# - figure out how to do the colors right w/ vectors and landmarks
-
-# - fix collision detection
-
-# - add all the options to MRMLPathNode, 
-#    make MRMLLandmark a subclass of MRMLPoints?
-
-# add a renderer popup button to select models properties per renderer
-#
-
-# use a matrix to move/rotate the camera
