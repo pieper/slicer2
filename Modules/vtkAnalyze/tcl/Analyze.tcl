@@ -162,7 +162,7 @@ proc AnalyzeInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.4 $} {$Date: 2004/07/22 21:27:44 $}]
+        {$Revision: 1.5 $} {$Date: 2004/07/22 21:49:17 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -599,8 +599,8 @@ proc AnalyzeLoadVolumes {} {
         set Volume(name) $volName$dash$j
         set load "Loading volume:\n"
         append load $Volume(name) 
-        puts "Loading volume: $Volume(name) ..."
         set FMRIEngine(name) $load
+        puts "Loading volume: $Volume(name) ..."
 
         set yBase [expr $y*$z*($j-1)]
         while {$i <= $z} {
