@@ -26,6 +26,7 @@ int main(int argc, char *argv[])
     imadd1->SetOperationToAdd();
     imadd1->SetInput1(ns1->GetOutput());
     imadd1->SetInput2(gs1->GetOutput());
+    imadd1->GetOutput()->Update();
 
   vtkImageGaussianSource *gs2 = vtkImageGaussianSource::New();
      gs2->SetWholeExtent(1,64,1,64,1,64);
@@ -42,6 +43,7 @@ int main(int argc, char *argv[])
     imadd2->SetOperationToAdd();
     imadd2->SetInput1(ns2->GetOutput());
     imadd2->SetInput2(gs2->GetOutput());
+    imadd2->GetOutput()->Update();
 
   vtkMatrix4x4 *TrainingTrans = vtkMatrix4x4::New();
      TrainingTrans->Identity();
@@ -63,6 +65,10 @@ int main(int argc, char *argv[])
     KL->SetSourceShrinkFactors(1,1,1);
     KL->SetTargetShrinkFactors(1,1,1);
     KL->SetNumberOfSamples(50);
+
+    KL->ResetMultiResolutionSettings();
+    KL->SetNextLearningRate(0.001);
+    KL->SetNextMaxNumberOfIterations(1);
 
 //    KL->ResetMultiResolutionSettings
 //    foreach iter  "1" {
