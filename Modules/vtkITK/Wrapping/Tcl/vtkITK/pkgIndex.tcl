@@ -8,4 +8,6 @@
 # script is sourced, the variable $dir must contain the
 # full path name of this file's directory.
 
+global PACKAGE_DIR_VTKITK
+set PACKAGE_DIR_VTKITK $dir
 package ifneeded vtkITK 1.0 [list source [file join $dir vtkITK.tcl]]
