@@ -184,7 +184,7 @@ proc FMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.32 $} {$Date: 2004/11/19 16:41:35 $}]
+        {$Revision: 1.33 $} {$Date: 2004/11/19 20:52:11 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -238,7 +238,7 @@ proc FMRIEngineInit {} {
 #-------------------------------------------------------------------------------
 proc FMRIEngineBuildGUI {} {
     global Gui FMRIEngine Module Volume Model
-    
+
     # A frame has already been constructed automatically for each tab.
     # A frame named "FMRI" can be referenced as follows:
     #   
@@ -282,11 +282,45 @@ proc FMRIEngineBuildGUI {} {
 
     Check the file README.txt in the root directory of this module \
     for details about how to build and use the module.
+    <BR><BR>
+    ----------------------
+    <BR><BR>
+    (c) Copyright 2004 Massachusetts Institute of Technology (MIT) \
+    All Rights Reserved.
+    <P>
+    This program is free software; you can redistribute it and/or
+    modify it under the terms of the GNU General Public License
+    as published by the Free Software Foundation; either version 2
+    of the License, or (at your option) any later version.
+    <P>
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+    <P>
+
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    Library General Public License for more details.
     "
     regsub -all "\n" $help {} help
     MainHelpApplyTags FMRIEngine $help
     MainHelpBuildGUI FMRIEngine
-    
+
+    set helpWidget $FMRIEngine(helpWidget) 
+    $helpWidget configure -height 22
+
+    set fHelp $Module(FMRIEngine,fHelp)
+    set f $fHelp
+    frame $f.fGPL -bg $Gui(activeWorkspace) 
+    pack $f.fGPL -side top 
+
+    DevAddButton $f.fGPL.bView "View GNU License" \
+        "FMRIEngineViewGNULicense" 22
+    pack $f.fGPL.bView -side left -pady 5 
+
     #-------------------------------------------
     # Sequence tab 
     #-------------------------------------------
@@ -406,6 +440,22 @@ proc FMRIEngineBuildGUI {} {
     set FMRIEngine(tcPlottingOption) None
 }
 
+
+#-------------------------------------------------------------------------------
+# .PROC FMRIEngineViewGNULicense
+# Displays GNU license information 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc FMRIEngineViewGNULicense {} {
+    global env 
+
+    set gplText [file join $env(SLICER_HOME) Modules vtkFMRIEngine gpl.txt]
+    set browser "mozilla" 
+
+    catch {exec $browser $gplText &}
+
+}
 
 #-------------------------------------------------------------------------------
 # .PROC FMRIEngineBuildUIForDetectors
