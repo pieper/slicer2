@@ -170,7 +170,7 @@ proc FMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.18 $} {$Date: 2004/07/21 21:01:15 $}]
+        {$Revision: 1.19 $} {$Date: 2004/07/21 22:26:09 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -194,7 +194,7 @@ proc FMRIEngineInit {} {
     source "$FMRIEngine(modulePath)/tcl/FMRIEnginePlot.tcl"
     source "$FMRIEngine(modulePath)/tcl/FMRIEngineParadigmParser.tcl"
     source "$FMRIEngine(modulePath)/tcl/notebook.tcl"
-    source "$FMRIEngine(modulePath)/tcl/AnalyzeReader.tcl"
+    #source "$FMRIEngine(modulePath)/tcl/AnalyzeReader.tcl"
 }
 
 
