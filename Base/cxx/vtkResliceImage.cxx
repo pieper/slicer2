@@ -81,7 +81,6 @@ vtkMatrix4x4 *vtkResliceImage::GetIJKtoIJKMatrix(float Spacing2[3],
   if (MM2toMM1 != NULL)
     {
       vtkMatrix4x4::Multiply4x4(MM2toMM1,XformIJKtoMM,Xform2to1);
-      cout << "did a multiply \n";
     }
   else
     {
@@ -200,13 +199,13 @@ static void vtkResliceImageExecute(vtkResliceImage *self, int id,
   inData->GetIncrements(inIncX, inIncY, inIncZ);
   outData->GetIncrements(outIncX, outIncY, outIncZ);
 
-  cout << "Input Extent: ";
-  cout << InExt[0] << ' ' << InExt[1] << ' ' << InExt[2] << ' '
-       << InExt[3] << ' ' << InExt[4] << ' ' << InExt[5] << '\n';
-
-  cout << "Output Extent: ";
-  cout << OutExt[0] << ' ' << OutExt[1] << ' ' << OutExt[2] << ' '
-       << OutExt[3] << ' ' << OutExt[4] << ' ' << OutExt[5] << '\n';
+//  cout << "Input Extent: ";
+//  cout << InExt[0] << ' ' << InExt[1] << ' ' << InExt[2] << ' '
+//       << InExt[3] << ' ' << InExt[4] << ' ' << InExt[5] << '\n';
+//
+//  cout << "Output Extent: ";
+//  cout << OutExt[0] << ' ' << OutExt[1] << ' ' << OutExt[2] << ' '
+//       << OutExt[3] << ' ' << OutExt[4] << ' ' << OutExt[5] << '\n';
 
   float InSpace[3];   inData->GetSpacing(InSpace);
   float OutSpace[3]; outData->GetSpacing(OutSpace);
@@ -218,7 +217,7 @@ static void vtkResliceImageExecute(vtkResliceImage *self, int id,
                                        self->GetTransformOutputToInput(),
                                        InSpace,InOrigin);
 
-  float InputIJK[4];
+  //  float InputIJK[4];
   T *outVol1,*outVol2;
   T *InVol, *OutVol;
   OutVol = outVol2 = outVol1 = outPtr;
@@ -227,25 +226,46 @@ static void vtkResliceImageExecute(vtkResliceImage *self, int id,
   max = (T) inData->GetScalarTypeMin();
   min = (T) inData->GetScalarTypeMax();
 
-  for(int i=OutExt[0];i<=OutExt[1];i++)
+  //  cout << "Increments:" << outIncX << ' ' << outIncY << ' ' << outIncZ << '\n';
+
+  //
+  // This is interesting
+  // Rather than doing lots of matrix multiplies, simply pick off
+  // the results of the matrix to a bunch of basis vectors and add
+  //
+  float InijkX[4],InijkY[4],InijkZ[4]; // the position vectors
+  float ijkIncrementX[3],ijkIncrementY[3],ijkIncrementZ[3];
+  vtkResliceImage::FindInputIJK(InijkX,IJKtoIJK,OutExt[0],OutExt[2],OutExt[4]);
+  for(int p=0;p<3;p++)
     {
-      for(int j=OutExt[2];j<=OutExt[3];j++)
+      InijkY[p] = InijkZ[p] = InijkX[p];
+      ijkIncrementX[p] = IJKtoIJK->GetElement(p,0);
+      ijkIncrementY[p] = IJKtoIJK->GetElement(p,1);
+      ijkIncrementZ[p] = IJKtoIJK->GetElement(p,2);
+    }
+
+  for(int k=OutExt[4];k<=OutExt[5];k++)  
+    {
+      for(int j=OutExt[2];j<=OutExt[3];j++)  
         {
-          for(int k=OutExt[4];k<=OutExt[5];k++)
+          for(int i=OutExt[0];i<=OutExt[1];i++)
             {
-              vtkResliceImage::FindInputIJK(InputIJK,IJKtoIJK,i,j,k);
+              //  vtkResliceImage::FindInputIJK(InputIJK,IJKtoIJK,i,j,k);
+//              cout << i << ' ' << j << ' ' << k << ":"
+//                   << InputIJK[0] - InijkX[0] << ' '
+//                   << InputIJK[1] - InijkX[1] << ' '
+//                   << InputIJK[2] - InijkX[2] << '\n';
 
-
-              if ((InputIJK[0] >= InExt[0])&&(InputIJK[0] <= InExt[1])&&
-                  (InputIJK[1] >= InExt[2])&&(InputIJK[1] <= InExt[3])&&
-                  (InputIJK[2] >= InExt[4])&&(InputIJK[2] <= InExt[5]))
+              if ((InijkX[0] >= InExt[0])&&(InijkX[0] <= InExt[1])&&
+                  (InijkX[1] >= InExt[2])&&(InijkX[1] <= InExt[3])&&
+                  (InijkX[2] >= InExt[4])&&(InijkX[2] <= InExt[5]))
                 {
-                  int x0 = (int) floor(InputIJK[0]);
-                  float x = InputIJK[0] - x0;
-                  int y0 = (int) floor(InputIJK[1]);
-                  float y = InputIJK[1] - y0;
-                  int z0 = (int) floor(InputIJK[2]);
-                  float z = InputIJK[2] - z0;
+                  int x0 = (int) floor(InijkX[0]);
+                  float x = InijkX[0] - x0;
+                  int y0 = (int) floor(InijkX[1]);
+                  float y = InijkX[1] - y0;
+                  int z0 = (int) floor(InijkX[2]);
+                  float z = InijkX[2] - z0;
                   
                   InVol = inPtr + (x0-InExt[0])*inIncX
                     +(y0-InExt[2])*inIncY
@@ -282,9 +302,9 @@ static void vtkResliceImageExecute(vtkResliceImage *self, int id,
 //                       << g << '\n';
 //
 
-//                 cout << i << ' ' << j << ' ' << k << ":" 
-//                       << InputIJK[0] << ' ' << InputIJK[1] << ' ' 
-//                       << InputIJK[2] << ": ";
+//                  cout << i << ' ' << j << ' ' << k << ":" 
+//                       << InijkX[0] << ' ' << InijkX[1] << ' ' 
+//                       << InijkX[2] << ": ";
 //                  cout << *OutVol << '\n';
                 }
               else
@@ -293,12 +313,30 @@ static void vtkResliceImageExecute(vtkResliceImage *self, int id,
                 }
               if (*(OutVol) > max) max = *OutVol;
               if (*(OutVol) < min) min = *OutVol;
-              OutVol += outIncZ;
+              OutVol += outIncX;
+              InijkX[0] += ijkIncrementX[0];
+              InijkX[1] += ijkIncrementX[1];
+              InijkX[2] += ijkIncrementX[2];
             }
           outVol2 += outIncY;
           OutVol = outVol2;
+          InijkY[0] += ijkIncrementY[0];
+          InijkY[1] += ijkIncrementY[1];
+          InijkY[2] += ijkIncrementY[2];
+
+          InijkX[0] = InijkY[0];
+          InijkX[1] = InijkY[1];
+          InijkX[2] = InijkY[2];
         }
-      outVol1 += outIncX;
+      InijkZ[0] += ijkIncrementZ[0];
+      InijkZ[1] += ijkIncrementZ[1];
+      InijkZ[2] += ijkIncrementZ[2];
+
+      InijkY[0] = InijkX[0] = InijkZ[0];
+      InijkY[1] = InijkX[1] = InijkZ[1];
+      InijkY[2] = InijkX[2] = InijkZ[2];
+
+      outVol1 += outIncZ;
       OutVol = outVol2 = outVol1;
     }
   cout << "min: " << min << '\n';
