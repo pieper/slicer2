@@ -101,7 +101,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.102 $} {$Date: 2004/11/11 22:50:17 $}]
+            {$Revision: 1.103 $} {$Date: 2004/11/11 23:07:46 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -2038,36 +2038,16 @@ proc VolumesCORExport {} {
         if {$::Module(verbose)} {
             DevInfoWindow "VolumesCORExport: converting volume $v to unsigned char before saving"
         }
-        # make a new volume
-        set name [Volume($v,node) GetName]-UC
-        set vCast [DevCreateNewCopiedVolume $v "" $name]
-
-        DevInfoWindow "VolumesCORExport: casting active volume to unsigned char before saving, creating $name"
-
-        set node [Volume($vCast,vol) GetMrmlNode]
-        Mrml(dataTree) RemoveItem $node
-        set nodeBefore [Volume($v,vol) GetMrmlNode]
-        Mrml(dataTree) InsertAfterItem $nodeBefore $node
-        MainUpdateMRML
-
-        # cast it
-        catch "VolumesCORExportCast Delete"
-        vtkImageCast VolumesCORExportCast
-        VolumesCORExportCast SetInput [Volume($v,vol) GetOutput]
-        VolumesCORExportCast SetOutputScalarTypeToUnsignedChar
-        VolumesCORExportCast ClampOverflowOn
-        VolumesCORExportCast Update
-
-        # Start copying in the output data.
-        # Taken from VolumeMathDoCast
-        Volume($vCast,vol) SetImageData [VolumesCORExportCast GetOutput]
-        Volume($vCast,node) SetScalarTypeToUnsignedChar
-        MainVolumesUpdate $vCast
-
-        VolumesCORExportCast Delete
-        
-        # now use this new volume's id for writing out
-        set v $vCast
+        if {[info command vtkFreeSurferReadersCast] == "vtkFreeSurferReadersCast"} {
+            set vCast [vtkFreeSurferReadersCast $v UnsignedChar]
+            if {$vCast != -1} {
+                # write out the new volume
+                set v $vCast
+                DevInfoWindow "VolumesCORExport: created UnsignedChar volume for export"
+            }
+        } else {
+            DevInfoWindow "VolumesCORExport: vtkFreeSurferReaders module needed to cast volume before export"
+        }
     }
 
 
