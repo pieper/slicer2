@@ -239,7 +239,7 @@ proc EMSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.12 $} {$Date: 2002/06/28 20:11:16 $}]
+        {$Revision: 1.13 $} {$Date: 2002/07/03 18:10:37 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -356,7 +356,6 @@ proc EMSegmentInit {} {
     } else {
       set EMSegment(NumGraph) 1
     }
-    set EMSegment(NumGraph) 1
     EMSegmentCreateDeleteClasses 
     # Define for Class 0 for Histogram
     for {set i 0} { $i < $EMSegment(NumGraph)} {incr i} {
@@ -4414,10 +4413,8 @@ proc EMSegmentTrainCIMField {} {
         # EMCIM traines the matrix (y=t, x=t-1) just the other way EMSegment (y=t-1, x=t) needs it - Sorry !
         for {set y 1} {$y <=  $EMSegment(NumClasses) } {incr y} {
             for {set z 0} {$z < 6} {incr z} {
-              set EMSegment(CIMMatrix,$x,$y,[lindex $EMSegment(CIMList) $z]) \
-                  [expr round([EMCIM GetMarkovMatrix $y $x [expr $z+1]]*10000)/10000.0]
-              # Right now is an error in there
-              # set EMSegment(CIMMatrix,$x,$y,[lindex $EMSegment(CIMList) $z]) [$data GetScalarComponentAsFloat [expr $x-1] [expr $y-1]  $z 0]        
+              # Error made in x,y coordinates in EMSegment - I checked everything - it owrkes in XML and CIM Display in correct order - so do not worry - it is just a little bit strange - but strange things happen
+              set EMSegment(CIMMatrix,$x,$y,[lindex $EMSegment(CIMList) $z]) [expr round([$data GetScalarComponentAsFloat [expr $y-1] [expr $x-1]  $z 0]*100000)/100000.0]        
             }
         }
     }

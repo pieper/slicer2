@@ -65,10 +65,8 @@ proc EMSegmentTrainCIMField {} {
         # EMCIM traines the matrix (y=t, x=t-1) just the other way EMSegment (y=t-1, x=t) needs it - Sorry !
         for {set y 1} {$y <=  $EMSegment(NumClasses) } {incr y} {
             for {set z 0} {$z < 6} {incr z} {
-              set EMSegment(CIMMatrix,$x,$y,[lindex $EMSegment(CIMList) $z]) \
-                  [expr round([EMCIM GetMarkovMatrix $y $x [expr $z+1]]*10000)/10000.0]
-              # Right now is an error in there
-              # set EMSegment(CIMMatrix,$x,$y,[lindex $EMSegment(CIMList) $z]) [$data GetScalarComponentAsFloat [expr $x-1] [expr $y-1]  $z 0]        
+        # Different order than in EMSegment bc I can ignore error that has been made in EMSegment.tcl
+              set EMSegment(CIMMatrix,$x,$y,[lindex $EMSegment(CIMList) $z])  [expr round([$data GetScalarComponentAsFloat [expr $x-1] [expr $y-1] $z 0]*10000)/10000.0]        
             }
         }
     }
@@ -451,12 +449,13 @@ foreach dir $EMSegment(CIMList) {
   puts  "=========== $dir ================"
   puts "The outcome should be :"
   switch $dir {
-    "West"  {puts "0.899 0.100 0.001";puts "0.039 0.901 0.060";puts "0.000 0.027 0.973"}
-    "North" {puts "0.891 0.107 0.002";puts "0.042 0.901 0.058";puts "0.000 0.026 0.974"}
-    "Up"    {puts "0.845 0.150 0.005";puts "0.059 0.873 0.068";puts "0.000 0.035 0.965"}
-    "East"  {puts "0.899 0.100 0.001";puts "0.039 0.901 0.060";puts "0.000 0.027 0.973"}
-    "South" {puts "0.891 0.108 0.001";puts "0.041 0.901 0.058";puts "0.000 0.026 0.974"}
-    "Down"  {puts "0.845 0.153 0.002";puts "0.058 0.864 0.078";puts "0.001 0.030 0.969"}
+    "West"  {puts "0.899 0.039 0.000";puts "0.100 0.901 0.027";puts "0.001 0.060 0.973"}
+    "North" {puts "0.891 0.042 0.000";puts "0.107 0.901 0.026";puts "0.002 0.058 0.974"}
+    "Up"    {puts "0.845 0.059 0.000";puts "0.150 0.873 0.035";puts "0.005 0.068 0.965"}
+    "East"  {puts "0.899 0.039 0.000";puts "0.100 0.901 0.027";puts "0.001 0.060 0.973"}
+    "South" {puts "0.891 0.041 0.000";puts "0.108 0.901 0.026";puts "0.001 0.058 0.974"}
+    "Down"  {puts "0.845 0.058 0.001";puts "0.153 0.864 0.030";puts "0.002 0.078 0.969"}
+
   } 
   puts "The result of the Test is:"
   for {set x 1} {$x <= $EMSegment(NumClasses)} {incr x} {

@@ -109,9 +109,6 @@ void vtkImageEMMarkov::ExecuteInformation(vtkImageData *inData, vtkImageData *ou
   outData->SetNumberOfScalarComponents(1);
   outData->SetWholeExtent(ext);
   outData->SetSpacing(spacing);
-  // outData->SetScalarType(VTK_FLOAT);
-  // The problem why I cannot use the outcome for the filter directly reading from tcl bc if I set the filter to VTK_FLOAT I get grabage
-  // If I set it to VTK_SHORT everything is fine
   outData->SetScalarType(VTK_FLOAT);
 }
 
@@ -122,7 +119,7 @@ void vtkImageEMMarkov::ExecuteInformation(vtkImageData *inData, vtkImageData *ou
 //----------------------------------------------------------------------------
 // This templated function executes the filter for any type of data.
 template <class T>
-static void vtkImageEMMarkovExecute(vtkImageEMMarkov *self,vtkImageData *in1Data, T *in1Ptr,int inExt[6],vtkImageData *outData, T *outPtr,int outExt[6], int maxZ, int id)
+static void vtkImageEMMarkovExecute(vtkImageEMMarkov *self,vtkImageData *in1Data, T *in1Ptr,int inExt[6],vtkImageData *outData, float *outPtr,int outExt[6], int maxZ, int id)
 {
   int idxR, idxY, idxZ;
   int maxY;
@@ -181,11 +178,10 @@ static void vtkImageEMMarkovExecute(vtkImageEMMarkov *self,vtkImageData *in1Data
   // If I set it to VTK_SHORT everything is fine
 
  // 4.) Transfere CIM Matrix
-  for (idxZ = 1; idxZ < 7; idxZ++) {
-    for (idxY = 1; idxY <= self->GetNumClasses(); idxY++) {
-      for (idxR = 1; idxR <= self->GetNumClasses(); idxR++) {
-        *outPtr = (T) 1.01;
-    // Kilian: this cannot work outIncX == 0 -> should be outPtr ++ 
+  for (idxZ = 0; idxZ < 6; idxZ++) {
+    for (idxY = 0; idxY < self->GetNumClasses(); idxY++) {
+      for (idxR = 0; idxR < self->GetNumClasses(); idxR++) {
+        *outPtr = (float) self->GetMarkovMatrix(idxR,idxY, idxZ);
         outPtr ++;
       }
       outPtr += outIncY;
@@ -233,8 +229,12 @@ void vtkImageEMMarkov::ThreadedExecute(vtkImageData *inData, vtkImageData *outDa
     return;
   }
   
+  if (outData->GetScalarType() != VTK_FLOAT) {
+     vtkErrorMacro(<< "Output image has to be of Data Type VTK_FLOAT.");
+     return;
+  }
   switch (inData->GetScalarType()) {
-    vtkTemplateMacro9(vtkImageEMMarkovExecute, this, inData, (VTK_TT *)(inPtr),inExt, outData, (VTK_TT *)(outPtr),outExt, maxZ,id);
+    vtkTemplateMacro9(vtkImageEMMarkovExecute, this, inData, (VTK_TT *)(inPtr),inExt, outData, (float *)(outPtr),outExt, maxZ,id);
   default:
     vtkErrorMacro(<< "Execute: Unknown ScalarType");
     return;
@@ -376,16 +376,6 @@ double vtkImageEMMarkov::GetProbability(int index) {
   return this->ClassProbability[index-1];
 }
 
-double vtkImageEMMarkov::GetMarkovMatrix(int x, int y, int z) {
-  if ((x<1) || (x > this->NumClasses) ||
-      (y<1) || (y > this->NumClasses) ||
-      (z<1) || (z > 6)) {
-    vtkErrorMacro(<< "Error:vtkImageEMSegm::GetMarkovMatrix: Indicees exceeds dimensions :");
-    this->Error = -11;
-    return -11;
-  }
-  return this->MarkovMatrix[z-1][y-1][x-1];
-}
 void vtkImageEMMarkov::SetMu(double mu, int index){
   if ((index<1) || (index > this->NumClasses) ||
       (mu < 0) ){

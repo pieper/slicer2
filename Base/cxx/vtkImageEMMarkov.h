@@ -87,12 +87,13 @@ class VTK_EXPORT vtkImageEMMarkov : public vtkImageToImageFilter
 
 
   double GetProbability(int index);
-  // Description:
-  // Defines the tissue class interaction matrix MarkovMatrix(z,y,x)
-  // where z = direction [1...6], 
+  // Returns tissue class interaction matrix MarkovMatrix(z,y,x)
+  // where z = direction [0...5], 
   //       y = class of the current pixel t+1 
   //       x = class of neighbouring pixel t 
-  double GetMarkovMatrix(int x,int y, int z);
+//BTX
+  double GetMarkovMatrix(int x,int y, int z) {return this->MarkovMatrix[z][y][x];}
+//ETX
 
   int get_StartSlice() {return StartSlice;}
   int get_EndSlice() {return EndSlice;}
