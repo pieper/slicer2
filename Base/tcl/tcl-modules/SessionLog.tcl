@@ -68,6 +68,8 @@
 #  The "Init" procedure is called automatically by the slicer.  
 #  It puts information about the module into a global array called Module, 
 #  and it also initializes module-level variables.
+# This procedure can automatically log certain users if the path is set
+# for logging and the file UsersToAutomaticallyLog exists.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -97,16 +99,16 @@ proc SessionLogInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.6 $} {$Date: 2001/04/05 23:38:13 $}]
+	    {$Revision: 1.7 $} {$Date: 2001/04/09 20:35:39 $}]
 
     # Initialize module-level variables
     set SessionLog(fileName)  ""
     set SessionLog(currentlyLogging) 0
     set SessionLog(autoLogging) 0
 
-    # default directory to log to
-    # (set from Options.xml as a Preset?)
-    set SessionLog(defaultDir) "/scratch/src/data_analysis/slicerTestLogData"
+    # default directory to log to (used for auto logging)
+    # (should be set from Options.xml)
+    set SessionLog(defaultDir) "/projects/slicer/logs/editorLogs"
     if {[file isdirectory $SessionLog(defaultDir)] == 0} {
 	set SessionLog(defaultDir) ""
     }
@@ -118,21 +120,32 @@ proc SessionLogInit {} {
     #SessionLogInitRandomFortune
 
     # figure out if we should automatically log this user.
-    # Lauren put all this stuff in Options.xml!
+    # (this info should be in Options.xml but then people could save their
+    # own and old Options.xml files would ruin the auto-logging experiment)
 
+    # if username is set in the env global array
     if {[info exists env(LOGNAME)] == 1} {
 	#puts "logname: $env(LOGNAME)"
 	set logname $env(LOGNAME)
+
+
+	# if the file listing which users to log exists
+	# ExpandPath looks first in current dir then in program directory
 	set filename [ExpandPath "UsersToAutomaticallyLog"]
 	if {[file exists $filename]} {
+
 	    #puts "file $filename found"
 	    set in [open $filename]
 	    set users [read $in]
 	    close $in
+
+	    # check and see if this user in file (then should be logged)
 	    foreach user $users {
 		#puts $user
 		if {$logname == $user} {
 		    #puts "match: $user == $logname"
+
+		    # automatically log this user
 		    set SessionLog(autoLogging) 1
 		    puts "Automatically logging user $user.  Thanks!"
 		    SessionLogStartLogging
