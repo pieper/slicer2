@@ -53,6 +53,28 @@ vtkImageLiveWireEdgeWeights* vtkImageLiveWireEdgeWeights::New()
   return new vtkImageLiveWireEdgeWeights;
 }
 
+// inverse "Gaussian": low cost for good edges
+inline float GaussianC(float x, float mean, float var)
+{
+  // This is the time bottleneck of this filter.
+  // So only bother to compute the gaussian if this is a 
+  // "good feature" (with a value close to the mean).
+  // Else return the max value of 1.
+  //    float tmp = x-mean;
+  //    if (tmp < var)
+  //      return(1 - exp(-(tmp*tmp)/(2*var))/sqrt(6.28318*var));  
+  //    else
+  //      return 1;
+
+  // we need between 0 and 1 always, so:
+  // forget about the scale factor.  the feature weight does this.
+  // so just do the e^-((x-u)^2/2*sigma^2)
+
+  float tmp = x-mean;
+  return(1 - exp( -(tmp*tmp)/(2*var) ));  
+
+}
+
 //----------------------------------------------------------------------------
 // Description:
 // Constructor sets default values
@@ -890,25 +912,4 @@ float featureProperties::GaussianCost(float x)
   return(exp(-((x-mean)*(x-mean))/(2*var))/sqrt(6.28318*var));  
 }
 
-// inverse "Gaussian": low cost for good edges
-inline float GaussianC(float x, float mean, float var)
-{
-  // This is the time bottleneck of this filter.
-  // So only bother to compute the gaussian if this is a 
-  // "good feature" (with a value close to the mean).
-  // Else return the max value of 1.
-  //    float tmp = x-mean;
-  //    if (tmp < var)
-  //      return(1 - exp(-(tmp*tmp)/(2*var))/sqrt(6.28318*var));  
-  //    else
-  //      return 1;
-
-  // we need between 0 and 1 always, so:
-  // forget about the scale factor.  the feature weight does this.
-  // so just do the e^-((x-u)^2/2*sigma^2)
-
-  float tmp = x-mean;
-  return(1 - exp( -(tmp*tmp)/(2*var) ));  
-
-}
 

@@ -350,7 +350,7 @@ static void vtkImageResizeExecute2D(vtkImageResize *self,
   // interpolation
     float x0, y0, x1, y1, dx0, dx1;
     // multiple components
-  int nxc, idxC, numComps, scalarSize, inRowLength;
+    int nxc, idxC, numComps, scalarSize;
   // whole input extent
   int wExt[6];
   inData->GetWholeExtent(wExt);
@@ -369,7 +369,6 @@ static void vtkImageResizeExecute2D(vtkImageResize *self,
   maxY = outExt[3];
   inMaxX = inExt[1] - inExt[0]; 
   inMaxY = inExt[3] - inExt[2]; 
-  inRowLength = (inMaxX+1)*numComps;
   scalarSize = numComps*sizeof(T);
 
   // We will walk output (resized) space and calculate input space
@@ -458,10 +457,15 @@ static void vtkImageResizeExecute2D(vtkImageResize *self,
 
 //----------------------------------------------------------------------------
 template <class T>
-static void vtkImageResizeExecute3D(vtkImageResize *self,
-  vtkImageData *inData, T *inPtr, int inExt[6],
-  vtkImageData *outData, T *outPtr, int outExt[6], 
-  int id)
+static void vtkImageResizeExecute3D(
+  vtkImageResize *self,
+  vtkImageData *vtkNotUsed(inData),
+  T *vtkNotUsed(inPtr),
+  int vtkNotUsed(inExt)[6],
+  vtkImageData *vtkNotUsed(outData),
+  T *vtkNotUsed(outPtr),
+  int vtkNotUsed(outExt)[6], 
+  int vtkNotUsed(id))
 {
 }
 
