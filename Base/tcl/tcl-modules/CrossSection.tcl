@@ -998,9 +998,9 @@ proc CrossSectionSetSize {a} {
 #-------------------------------------------------------------------------------
 proc CrossSectionPopBindings {} {
     global Ev Csys
-    EvDeactivateBindingSet Slice0Events
-    EvDeactivateBindingSet Slice1Events
-    EvDeactivateBindingSet Slice2Events
+    EvDeactivateBindingSet CrossSectionSlice0Events
+    EvDeactivateBindingSet CrossSectionSlice1Events
+    EvDeactivateBindingSet CrossSectionSlice2Events
 }
 
 #-------------------------------------------------------------------------------
@@ -1014,9 +1014,9 @@ proc CrossSectionPushBindings {} {
 
     # push onto the event stack a new event manager that deals with
     # events when the CrossSection module is active
-    EvActivateBindingSet Slice0Events
-    EvActivateBindingSet Slice1Events
-    EvActivateBindingSet Slice2Events
+    EvActivateBindingSet CrossSectionSlice0Events
+    EvActivateBindingSet CrossSectionSlice1Events
+    EvActivateBindingSet CrossSectionSlice2Events
 }
 
 #-------------------------------------------------------------------------------
@@ -1031,15 +1031,16 @@ proc CrossSectionCreateBindings {} {
     # Creates events sets we'll  need for this module
     # create the event manager for the ability to move the gyro
    
-    EvDeclareEventHandler CrossSection(Events) <Double-Any-ButtonPress> { if { [SelectPick CrossSection(picker) %W %x %y] != 0 } { eval CrossSectionSetWorldPosition $Select(xyz);Render3D }}   
+    EvDeclareEventHandler CrossSection(Events) <Double-Any-ButtonPress> { if { [SelectPick CrossSection(picker) %W %x %y] != 0 }\
+    {eval CrossSectionSetWorldPosition [lindex $Select(xyz) 0] [lindex $Select(xyz) 1] [lindex $Select(xyz) 2];Render3D }}   
     
     # endoscopic events for slice windows (in addition to already existing events)
 
-    EvDeclareEventHandler EndoKeySlicesEvents <KeyPress-c> { if { [SelectPick2D %W %x %y] != 0 } { eval CrossSectionSetWorldPosition $Select(xyz);Render3D }} 
+    EvDeclareEventHandler CrossSectionKeySlicesEvents <KeyPress-c> { if { [SelectPick2D %W %x %y] != 0 } { eval CrossSectionSetWorldPosition $Select(xyz);Render3D }} 
     
-    EvAddWidgetToBindingSet Slice0Events $Gui(fSl0Win) {EndoKeySlicesEvents}
-    EvAddWidgetToBindingSet Slice1Events $Gui(fSl1Win) {EndoKeySlicesEvents}
-    EvAddWidgetToBindingSet Slice2Events $Gui(fSl2Win) {EndoKeySlicesEvents}
+    EvAddWidgetToBindingSet CrossSectionSlice0Events $Gui(fSl0Win) {CrossSectionKeySlicesEvents}
+    EvAddWidgetToBindingSet CrossSectionSlice1Events $Gui(fSl1Win) {CrossSectionKeySlicesEvents}
+    EvAddWidgetToBindingSet CrossSectionSlice2Events $Gui(fSl2Win) {CrossSectionKeySlicesEvents}
 
 }
 
