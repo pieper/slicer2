@@ -21,7 +21,7 @@ if { [itcl::find class regions] == "" } {
 
         variable _Blabel ""
 
-        variable _sites "google arrowsmith pubmed jneurosci mediator all"
+        variable _sites "google arrowsmith pubmed jneurosci ibvd mediator all"
         variable _terms ""
 
         variable _name ""
@@ -321,18 +321,21 @@ itcl::body regions::query {} {
         }
 
         "google" {
-            catch "exec \"$browser\" http://www.google.com/search?q=$terms"
+            catch "exec \"$browser\" http://www.google.com/search?q=$terms &"
         }
         "pubmed" {
-            catch "exec \"$browser\" http://www.ncbi.nlm.nih.gov/entrez/query.fcgi?cmd=search&db=PubMed&term=$terms"
+            catch "exec \"$browser\" http://www.ncbi.nlm.nih.gov/entrez/query.fcgi?cmd=search&db=PubMed&term=$terms &"
         }
         "jneurosci" {
-            catch "exec \"$browser\" http://www.jneurosci.org/cgi/search?volume=&firstpage=&sendit=Search&author1=&author2=&titleabstract=&fulltext=$terms"
+            catch "exec \"$browser\" http://www.jneurosci.org/cgi/search?volume=&firstpage=&sendit=Search&author1=&author2=&titleabstract=&fulltext=$terms &"
+        }
+        "ibvd" {
+            catch "exec \"$browser\" http://www.cma.mgh.harvard.edu/ibvd/search.php?f_submission=true&f_structure\\\[\\\]=$terms &"
         }
         "all" {
-            catch "exec \"$browser\" http://www.google.com/search?q=$terms"
-            catch "exec \"$browser\" http://www.ncbi.nlm.nih.gov/entrez/query.fcgi?cmd=search&db=PubMed&term=$terms"
-            catch "exec \"$browser\" http://www.jneurosci.org/cgi/search?volume=&firstpage=&sendit=Search&author1=&author2=&titleabstract=&fulltext=$terms"
+            catch "exec \"$browser\" http://www.google.com/search?q=$terms &"
+            catch "exec \"$browser\" http://www.ncbi.nlm.nih.gov/entrez/query.fcgi?cmd=search&db=PubMed&term=$terms &"
+            catch "exec \"$browser\" http://www.jneurosci.org/cgi/search?volume=&firstpage=&sendit=Search&author1=&author2=&titleabstract=&fulltext=$terms &"
         }
         "mediator" {
             tk_messageBox -title "Slicer" -message "Mediator interface not yet implemented." -type ok -icon error
