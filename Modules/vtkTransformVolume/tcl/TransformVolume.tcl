@@ -105,7 +105,7 @@ proc TransformVolumeInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1 $} {$Date: 2005/02/25 00:35:24 $}]
+        {$Revision: 1.2 $} {$Date: 2005/03/07 20:41:53 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -350,15 +350,17 @@ proc TransformVolumeGetVolumes {transformId} {
     set node [$tree GetNextItem]
     
     set insideTransform 0
-    set first "true"
-    while {$node != "" && ($insideTransform != 0 || $first == "true")} {
+    set done 0
+    while {$node != ""} {
         
         set nodeClass [$node GetClassName]
         
         switch $nodeClass {
             "vtkMrmlVolumeNode" {
-                set id [DataGetIdFromNode $node]
-                lappend volIDs $id
+                if {$insideTransform != 0} {
+                    set id [DataGetIdFromNode $node]
+                    lappend volIDs $id
+                }
             }
             "vtkMrmlTransformNode" {
                 if {[$node GetName] == [Transform($transformId,node) GetName]} {
@@ -368,10 +370,13 @@ proc TransformVolumeGetVolumes {transformId} {
             "vtkMrmlEndTransformNode" {
                 if {[$node GetName] == [EndTransform($transformId,node) GetName]} {
                     incr insideTransform -1
+                    set done 1
                 }
             }
         }
-        set first "false"
+        if {$done} {
+            break
+        }
         set node [$tree GetNextItem]
     }
     return $volIDs
