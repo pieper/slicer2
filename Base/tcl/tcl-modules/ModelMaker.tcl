@@ -248,39 +248,49 @@ Models are fun. Do you like models, Ron?
 	set f $fEdit.fGrid
 
 	eval {label $f.lTitle -text "Apply an Effect"} $Gui(WTA)
-	grid $f.lTitle -columnspan 3 -pady $Gui(pad)
+	frame $f.fSmooth  -bg $Gui(activeWorkspace)
+	frame $f.fReverse -bg $Gui(activeWorkspace)
+	pack $f.lTitle $f.fSmooth $f.fReverse -side top -pady $Gui(pad)
 
 	set Param Smooth
-	eval {label $f.l$Param -text "$Param:"} $Gui(WLA)
-	eval {entry $f.e$Param -width 7 \
+	set ff $f.fSmooth
+	eval {label $ff.l$Param -text "$Param:"} $Gui(WLA)
+	eval {entry $ff.e$Param -width 7 \
 		-textvariable ModelMaker(edit,[Uncap $Param])} $Gui(WEA)
-	eval {button $f.bSmooth -text "Smooth" -width 7 \
+	eval {button $ff.b$Param -text "$Param" -width 7 \
 		-command "ModelMakerSmoothWrapper; Render3D"} $Gui(WBA)
-	grid $f.l$Param $f.e$Param $f.bSmooth \
+	grid $ff.l$Param $ff.e$Param $ff.b$Param \
 		-padx $Gui(pad) -pady $Gui(pad) -sticky e
-	grid $f.e$Param -sticky w
+	grid $ff.e$Param -sticky w
+
+	set Param Reverse
+	set ff $f.fReverse
+	eval {label $ff.l$Param -text "Reverse Normals:"} $Gui(WLA)
+	eval {button $ff.b$Param -text "$Param" -width 8 \
+		-command "ModelMakerReverseNormals; Render3D"} $Gui(WBA)
+	grid $ff.l$Param $ff.b$Param \
+		-padx $Gui(pad) -pady $Gui(pad) -sticky e
 
 	#-------------------------------------------
 	# Edit->Position frame
 	#-------------------------------------------
 	set f $fEdit.fPosition
 
-	eval {label $f.l -text "Transform the Polygons"} $Gui(WTA)
-
+	eval {label $f.l -text "Transform by Any Matrix"} $Gui(WTA)
 	frame $f.f -bg $Gui(activeWorkspace)
+	pack $f.l $f.f -side top -pady $Gui(pad)
+
 	eval {label $f.f.l -text "Matrix: "} $Gui(WLA)
-	eval {menubutton $f.f.mb -text "None" -relief raised -bd 2 -width 20 \
+	eval {menubutton $f.f.mb -text "None" -relief raised -bd 2 -width 13 \
 		-menu $f.f.mb.m} $Gui(WMBA)
 	eval {menu $f.f.mb.m} $Gui(WMA)
-	pack $f.f.l $f.f.mb -side left
+	eval {button $f.f.b -text "Apply" -width 6 \
+		-command "ModelMakerTransform 0; Render3D"} $Gui(WBA)
+	pack $f.f.l $f.f.mb $f.f.b -side left -padx $Gui(pad)
 
 	# Append widgets to list that gets refreshed during UpdateMRML
 	lappend Matrix(mbActiveList) $f.f.mb
 	lappend Matrix(mActiveList)  $f.f.mb.m
-
-	eval {button $f.b -text "Transform it" -width 13 \
-		-command "ModelMakerTransform 0; Render3D"} $Gui(WBA)
-	pack $f.l $f.f $f.b -side top -pady $Gui(pad)
 
 	#-------------------------------------------
 	# Edit->Volume frame
@@ -288,21 +298,20 @@ Models are fun. Do you like models, Ron?
 	set f $fEdit.fVolume
 
 	eval {label $f.l -text "Transform from ScaledIJK to RAS"} $Gui(WTA)
-
 	frame $f.f -bg $Gui(activeWorkspace)
+	pack $f.l $f.f -side top -pady $Gui(pad)
+
 	eval {label $f.f.l -text "Volume: "} $Gui(WLA)
-	eval {menubutton $f.f.mb -text "None" -relief raised -bd 2 -width 20 \
+	eval {menubutton $f.f.mb -text "None" -relief raised -bd 2 -width 13 \
 		-menu $f.f.mb.m} $Gui(WMBA)
 	eval {menu $f.f.mb.m} $Gui(WMA)
-	pack $f.f.l $f.f.mb -side left
+	eval {button $f.f.b -text "Apply" -width 6 \
+		-command "ModelMakerTransform 1; Render3D"} $Gui(WBA)
+	pack $f.f.l $f.f.mb $f.f.b -side left -padx $Gui(pad)
 
 	# Append widgets to list that gets refreshed during UpdateMRML
 	lappend Volume(mbActiveList) $f.f.mb
 	lappend Volume(mActiveList)  $f.f.mb.m
-
-	eval {button $f.b -text "Transform it" -width 13 \
-		-command "ModelMakerTransform 1; Render3D"} $Gui(WBA)
-	pack $f.l $f.f $f.b -side top -pady $Gui(pad)
 
 	#-------------------------------------------
 	# Save frame
@@ -613,6 +622,59 @@ proc ModelMakerSmooth {m iterations} {
 
 	stripper SetOutput ""
 	foreach p "smoother normals stripper" {
+		$p SetInput ""
+		$p Delete
+	}
+
+	# Mark this model as unsaved
+	set Model($m,dirty) 1
+}
+
+#-------------------------------------------------------------------------------
+# .PROC ModelMakerReverseNormals
+# .END
+#-------------------------------------------------------------------------------
+proc ModelMakerReverseNormals {{m ""}} {
+	global Model Gui ModelMaker
+
+	if {$m == ""} {
+		set m $Model(activeID)
+	}
+	if {$m == ""} {return}
+
+	set name [Model($m,node) GetName]
+
+	set p reverser
+	vtkReverseSense $p
+    $p SetInput $Model($m,polyData)
+    $p ReverseNormalsOn
+    [$p GetOutput] ReleaseDataFlagOn
+	set Gui(progressText) "Reversing $name"
+	$p SetStartMethod     MainStartProgress
+	$p SetProgressMethod "MainShowProgress $p"
+	$p SetEndMethod       MainEndProgress
+	set ModelMaker(t,$p) [expr [lindex [time {$p Update}] 0]/1000000.0]
+	set ModelMaker(n,$p) [[$p GetOutput] GetNumberOfPolys]
+	set ModelMaker($m,nPolys) $ModelMaker(n,$p)
+
+	set p normals
+	vtkPolyDataNormals $p
+    $p SetInput [reverser GetOutput]
+    $p SetFeatureAngle 60
+    [$p GetOutput] ReleaseDataFlagOn
+
+	set p stripper
+	vtkStripper $p
+    $p SetInput [normals GetOutput]
+	[$p GetOutput] ReleaseDataFlagOff
+
+	# polyData will survive as long as it's the input to the mapper
+	set Model($m,polyData) [$p GetOutput]
+	$Model($m,polyData) Update
+	Model($m,mapper) SetInput $Model($m,polyData)
+
+	stripper SetOutput ""
+	foreach p "reverser normals stripper" {
 		$p SetInput ""
 		$p Delete
 	}
