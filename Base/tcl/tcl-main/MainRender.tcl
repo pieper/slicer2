@@ -70,16 +70,20 @@ proc Render3D {{scale ""}} {
     set rencount [$rens GetNumberOfItems] 
     for {set r 0} {$r < $rencount} {incr r} {
         set ren [$rens GetItemAsObject $r]
-    # don't reset clipping planes for the endoscopic
-    # screen, otherwise it does not look good when
-    # the endoscope is inside a model
-    if {$ren != "endoscopicScreen"} {
-         # wrap this in global flag to avoid possible render loop
+        # don't reset clipping planes for the endoscopic
+        # screen, otherwise it does not look good when
+        # the endoscope is inside a model
+        if {$ren != "endoscopicScreen"} {
+             # wrap this in global flag to avoid possible render loop
              if {$View(resetCameraClippingRange) == 1} {
                  $ren ResetCameraClippingRange    
              }
+         }  
+    }
 
-    }  
+    ## TODO - this should be made a module callback
+    foreach sch [vtkSortCommandHelper ListInstances] {
+        $sch DepthSort
     }
 
     $viewWin Render
