@@ -97,6 +97,7 @@ proc vtkFreeSurferReadersInit {} {
     set vtkFreeSurferReaders(QADefaultVolTypes) {T1}
     set vtkFreeSurferReaders(QAVolFiles) ""
     set vtkFreeSurferReaders(QAUseSubjectsFile) 0
+    set vtkFreeSurferReaders(QADefaultView) "Quad256"
 
     lappend Module($m,fiducialsPointCreatedCallback) FreeSurferReadersFiducialsPointCreatedCallback
 
@@ -194,7 +195,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.11 $} {$Date: 2005/03/08 23:37:21 $}]
+        {$Revision: 1.12 $} {$Date: 2005/03/09 00:14:24 $}]
 
 }
 
@@ -508,6 +509,8 @@ proc vtkFreeSurferReadersBuildGUI {} {
     pack $f.slbQASubjects  -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
 
     # if the list of subjects has already been set, populate it
+    vtkFreeSurferReadersQAResetSubjectsListBox
+    if {0} {
     if {[info exist vtkFreeSurferReaders(QASubjectNames)] && $vtkFreeSurferReaders(QASubjectNames) != ""} {
         if {$::Module(verbose)} { puts "Using already set QASubjectNames" }
         foreach sub $vtkFreeSurferReaders(QASubjectNames) {
@@ -516,12 +519,13 @@ proc vtkFreeSurferReadersBuildGUI {} {
             $vtkFreeSurferReaders(qaSubjectsListbox) selection set end end
         }
     }
+    }
 
     DevAddLabel $f.lClick "Click on Subjects you wish to load for QA\nOR set a subjects file name below"
     pack $f.lClick  -side top -padx $Gui(pad) -pady 0
 
     # alternately, read in the list of subjects from a file
-    DevAddFileBrowse $f vtkFreeSurferReaders "QASubjectsFileName" "File with subject list:" {vtkFreeSurferReadersSetQASubjectsFileName ; vtkFreeSurferReadersSetQASubjects} "csh" "\$vtkFreeSurferReaders(QADirName)" "Open" "Browse for the subjects.csh containing a list of subjects"
+    DevAddFileBrowse $f vtkFreeSurferReaders "QASubjectsFileName" "File with subject list:" {vtkFreeSurferReadersSetQASubjectsFileName ; vtkFreeSurferReadersSetQASubjects ; vtkFreeSurferReadersQAResetSubjectsListBox} "csh" "\$vtkFreeSurferReaders(QADirName)" "Open" "Browse for the subjects.csh containing a list of subjects"
 
     #---------------
     # QA -> Volumes
@@ -3954,11 +3958,14 @@ proc vtkFreeSurferReadersSetQADirName { { startdir $::env(SLICER_HOME) } } {
 
     # pick up subject dirs from this directory and put them in the list box
     vtkFreeSurferReadersSetQASubjects
+    vtkFreeSurferReadersQAResetSubjectsListBox
+    if {0} {
     $vtkFreeSurferReaders(qaSubjectsListbox) delete 0 end
     foreach sub $vtkFreeSurferReaders(QASubjectNames) {
         $vtkFreeSurferReaders(qaSubjectsListbox) insert end $sub
         # for now make them all active
         $vtkFreeSurferReaders(qaSubjectsListbox) selection set end end
+    }
     }
 }
 
@@ -4012,8 +4019,21 @@ proc vtkFreeSurferReadersSetQASubjects {} {
     } else {
         # parse the names from the subject file
         
-        puts "TBD: parsing $vtkFreeSurferReaders(QASubjectsFileName)"
-        DevInfoWindow "TBD: parsing $vtkFreeSurferReaders(QASubjectsFileName)"
+        # open the file
+        set qasubfid [open $vtkFreeSurferReaders(QASubjectsFileName) r]
+
+        # run through it looking for the set SUBJECTS line
+        while {![eof $qasubfid]} {
+            set line [gets $qasubfid]
+            if {[regexp "set SUBJECTS = (.*)" $line matchVar subjectstr] == 1} {
+                if {$::Module(verbose)} { puts "Got subjects $subjectstr"}
+                # take the brackets off and convert to a list, the subject names are space separated
+                set subjectstrtrim [string trim $subjectstr {( )}]
+                set subjectnames [split $subjectstrtrim]
+            }
+        }
+        # close the file
+        close $qasubfid
     }
     if {$::Module(verbose)} {
         puts "vtkFreeSurferReadersSetQASubjects: dirs =\n$dirs\nnames = \n$subjectnames"
@@ -4072,7 +4092,7 @@ proc vtkFreeSurferReadersStartQA {} {
     set vtkFreeSurferReaders(castToShort) 0
     # turn it into a better viewing set up
     set viewmode $::View(mode)
-    MainViewerSetMode Quad256
+    MainViewerSetMode $vtkFreeSurferReaders(QADefaultView)
 
     set islabelmap 0
 
@@ -4161,3 +4181,17 @@ proc vtkFreeSurferReadersContinueQA {} {
     DevInfoWindow "Not Implemented"
 }
 
+proc vtkFreeSurferReadersQAResetSubjectsListBox {} {
+    global vtkFreeSurferReaders
+
+    if {[info exist vtkFreeSurferReaders(QASubjectNames)] && $vtkFreeSurferReaders(QASubjectNames) != ""} {
+        if {$::Module(verbose)} { puts "vtkFreeSurferReadersQAResetSubjectsListBox: Using already set QASubjectNames" }
+        # clear out the old stuff
+        $vtkFreeSurferReaders(qaSubjectsListbox) delete 0 end
+        foreach sub $vtkFreeSurferReaders(QASubjectNames) {
+            $vtkFreeSurferReaders(qaSubjectsListbox) insert end $sub
+            # for now make them all active as add them
+            $vtkFreeSurferReaders(qaSubjectsListbox) selection set end end
+        }
+    }
+}
