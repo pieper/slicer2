@@ -44,9 +44,8 @@ class VTK_SLICER_BASE_EXPORT vtkImageStatistics : public vtkImageToImageFilter
   vtkTypeMacro(vtkImageStatistics,vtkImageToImageFilter);
   void PrintSelf(ostream& os, vtkIndent indent);
 
-
   // Description:
-  // Should the data will value 0 be ignored?
+  // Should the data with value 0 be ignored?
   // Note that this DOES work with float data.
   vtkSetMacro(IgnoreZero,int);
   vtkGetMacro(IgnoreZero,int);
@@ -72,6 +71,8 @@ class VTK_SLICER_BASE_EXPORT vtkImageStatistics : public vtkImageToImageFilter
   vtkGetMacro(Max      ,double);
   vtkGetMacro(Min      ,double);
 
+  // Description
+  // Don't use these.
   vtkSetMacro(Quartile1,double);
   vtkSetMacro(Median   ,double);
   vtkSetMacro(Quartile3,double);
@@ -106,15 +107,7 @@ class VTK_SLICER_BASE_EXPORT vtkImageStatistics : public vtkImageToImageFilter
 
   void ExecuteInformation(vtkImageData *input, vtkImageData *output);
   void ComputeInputUpdateExtent(int inExt[6], int outExt[6]);
-  void Execute(vtkImageData *inData, vtkImageData *outData);
-
-  // Description:
-  // Generate more than requested.  Called by the superclass before
-  // an execute, and before output memory is allocated.
-  void EnlargeOutputUpdateExtents( vtkDataObject *data );
-
-  //  template <class T>
-  //  static int vtkImageStatistics::SortCompare<T>(const void *a, const void *b);
+  void ExecuteData(vtkDataObject *);
 };
 
 #endif

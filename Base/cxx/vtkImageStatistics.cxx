@@ -93,15 +93,6 @@ void vtkImageStatistics::ComputeInputUpdateExtent(int inExt[6],
 }
 
 //----------------------------------------------------------------------------
-void vtkImageStatistics::EnlargeOutputUpdateExtents(vtkDataObject *vtkNotUsed(data) )
-{
-  int wholeExtent[8];
-  
-  this->GetOutput()->GetWholeExtent(wholeExtent);
-  this->GetOutput()->SetUpdateExtent(wholeExtent);
-}
-
-//----------------------------------------------------------------------------
 
 template <class T>
 class vtkImageStatisticsHelper {
@@ -136,12 +127,12 @@ static void vtkImageStatisticsExecute(vtkImageStatistics *self,
   int numelement = (max0-min0+1)*(max1-min1+1)*(max2-min2+1);
   int numC = 1;  // It had better be!
 
-  cout << "in: " << min0 << " " << max0 << " " 
-       << min1 << " " << max1 << " "
-       << min2 << " " << max2 << "\n";
-  cout << "out: " << Amin0 << " " << Amax0 << " " 
-       << Amin1 << " " << Amax1 << " "
-       << Amin2 << " " << Amax2 << "\n";
+//  cout << "in: " << min0 << " " << max0 << " " 
+//       << min1 << " " << max1 << " "
+//       << min2 << " " << max2 << "\n";
+//  cout << "out: " << Amin0 << " " << Amax0 << " " 
+//       << Amin1 << " " << Amax1 << " "
+//       << Amin2 << " " << Amax2 << "\n";
 
   //
   // Put the zeros first if we are to ignore them.
@@ -295,12 +286,19 @@ static void vtkImageStatisticsExecute(vtkImageStatistics *self,
 // algorithm to fill the output from the input.
 // It just executes a switch statement to call the correct function for
 // the Datas data types.
-void vtkImageStatistics::Execute(vtkImageData *inData, 
-                 vtkImageData *outData)
+void vtkImageStatistics::ExecuteData(vtkDataObject *)
+
 {
   void *inPtr;
   int *outPtr;
-  
+  int outExt[6];
+
+  vtkImageData *inData = this->GetInput(); 
+  vtkImageData *outData = this->GetOutput();
+    outData->GetWholeExtent(outExt);
+    outData->SetExtent(outExt);
+    outData->AllocateScalars();
+
   inPtr  = inData->GetScalarPointer();
   outPtr = (int *)outData->GetScalarPointer();
   
