@@ -99,7 +99,7 @@ proc RigidIntensityRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.4 $} {$Date: 2003/12/09 01:58:41 $}]
+        {$Revision: 1.5 $} {$Date: 2003/12/18 02:24:34 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -282,7 +282,7 @@ proc RigidIntensityRegistrationExit {} {
 # .END
 #-------------------------------------------------------------------------------
 proc RigidIntensityRegistrationCheckSetUp {} {
-  global Matrix Volume
+  global Matrix Volume RigidIntensityRegistration
     ###
     ### Check for Errors
     ###
@@ -324,6 +324,21 @@ proc RigidIntensityRegistrationCheckSetUp {} {
       DevErrorWindow $err1
     return 0
     }
+
+    if {[llength $RigidIntensityRegistration(LearningRate) ] != \
+        [llength $RigidIntensityRegistration(UpdateIterations) ] } {
+        DevErrorWindow "Must Have same number of levels of iterations as learning rates"
+       return 0
+     }
+
+    # sourceId = ID of volume to register (source, moving)
+    # targetId = ID of reference volume   (target, stationary)
+    # matrixId = ID of the transform to change
+    set RigidIntensityRegistration(sourceId) $Matrix(volume)
+    set RigidIntensityRegistration(targetId) $Matrix(refVolume)
+    set RigidIntensityRegistration(matrixId) $Matrix(activeID)
+
+     return 1
 }
 
 #-------------------------------------------------------------------------------
