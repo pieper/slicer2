@@ -1,27 +1,31 @@
-catch {load vtktcl}
-source vtkImageInclude.tcl
+package require vtk
+package require vtkSlicerBase
 
 # Image pipeline
 
 vtkImageReader reader
-reader ReleaseDataFlagOff
-reader SetDataByteOrderToLittleEndian
-reader SetDataExtent 0 255 0 255 1 93
-reader SetFilePrefix "../../../vtkdata/fullHead/headsq"
-reader SetDataMask 0x7fff
+  reader ReleaseDataFlagOff
+  reader SetDataByteOrderToLittleEndian
+  reader SetDataExtent 0 63 0 63 1 93
+  reader SetFilePrefix ${VTK_DATA_ROOT}/Data/headsq/quarter
+  reader SetDataMask 0x7fff
+
+vtkImageMagnify mag
+  mag SetInput [reader GetOutput]
+  mag SetMagnificationFactors 4 4 1
 
 # get just one slice
 vtkImageClip clip
-clip SetInput [reader GetOutput]
-clip SetOutputWholeExtent 0 255 0 255 10 10
-clip ClipDataOn
-clip ReleaseDataFlagOff
+  clip SetInput [mag GetOutput]
+  clip SetOutputWholeExtent 0 255 0 255 10 10
+  clip ClipDataOn
+  clip ReleaseDataFlagOff
 
 vtkPoints roiPoints
-roiPoints InsertNextPoint 2 2 0
-roiPoints InsertNextPoint 200 230 0
-roiPoints InsertNextPoint 220 50 0
-roiPoints InsertNextPoint 4 10 0
+  roiPoints InsertNextPoint 2 2 0
+  roiPoints InsertNextPoint 200 230 0
+  roiPoints InsertNextPoint 220 50 0
+  roiPoints InsertNextPoint 4 10 0
 
 #vtkImageLabelMerge flroi
 vtkImageFillROI flroi
@@ -42,11 +46,4 @@ viewer SetColorWindow 2000
 viewer SetColorLevel 1000
 
 #make interface
-source WindowLevelInterface.tcl
-
-
-
-
-
-
-
+source [file join [file dirname [info script]] WindowLevelInterface.tcl]

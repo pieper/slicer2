@@ -1,14 +1,18 @@
-catch {load vtktcl}
-source vtkImageInclude.tcl
+package require vtk
+package require vtkSlicerBase
 
 # Image pipeline
 
 vtkImageReader reader
 reader ReleaseDataFlagOff
 reader SetDataByteOrderToLittleEndian
-reader SetDataExtent 0 255 0 255 1 93
-reader SetFilePrefix "../../../vtkdata/fullHead/headsq"
+reader SetDataExtent 0 63 0 63 1 93
+reader SetFilePrefix ${VTK_DATA_ROOT}/Data/headsq/quarter
 reader SetDataMask 0x7fff
+
+vtkImageMagnify mag
+  mag SetInput [reader GetOutput]
+  mag SetMagnificationFactors 4 4 1
 
 vtkMatrix4x4 m
 m SetElement 0 0 -0.16214
@@ -54,7 +58,7 @@ m2 SetElement 3 2 0
 m2 SetElement 3 3 1 
 
 vtkImageReformat ireform
-ireform SetInput [reader GetOutput]
+ireform SetInput [mag GetOutput]
 ireform SetReformatMatrix m
 ireform SetWldToIjkMatrix m2
 ireform InterpolateOff
@@ -68,7 +72,7 @@ viewer SetColorWindow 2000
 viewer SetColorLevel 1000
 
 #make interface
-source WindowLevelInterface.tcl
+source [file join [file dirname [info script]] WindowLevelInterface.tcl]
 
 ireform SetPoint 20 30
 puts "wld = [ireform GetWldPoint]"

@@ -1,13 +1,13 @@
-catch {load vtktcl}
-source vtkImageInclude.tcl
+package require vtk
+package require vtkSlicerBase
 
 # Image pipeline
 
 vtkImageReader reader
   reader ReleaseDataFlagOff
   reader SetDataByteOrderToLittleEndian
-  reader SetDataExtent 0 255 0 255 22 22
-  reader SetFilePrefix "../../../vtkdata/fullHead/headsq"
+  reader SetDataExtent 0 63 0 63 1 93
+  reader SetFilePrefix ${VTK_DATA_ROOT}/Data/headsq/quarter
   reader SetDataMask 0x7fff
   set a [ reader GetDataSpacing]
   reader SetDataSpacing 1 2 0
@@ -17,24 +17,22 @@ vtkImageReader reader
   set b "$b  0"
   puts $b
 
-
-
 vtkImageCast ImCast
   ImCast SetOutputScalarTypeToUnsignedChar
   ImCast SetInput [reader GetOutput] 
 
 vtkImageAppendComponents AppCom
-  AppCom SetInput1 [ ImCast GetOutput]
-  AppCom SetInput2 [ ImCast GetOutput]
+  AppCom SetInput 0 [ ImCast GetOutput]
+  AppCom SetInput 1 [ ImCast GetOutput]
 
 vtkImageAppendComponents AppCom2
-  AppCom2 SetInput1 [ ImCast GetOutput]
-  AppCom2 SetInput2 [ AppCom GetOutput]
+  AppCom2 SetInput 0 [ ImCast GetOutput]
+  AppCom2 SetInput 1 [ AppCom GetOutput]
 
 
 vtkImageCrossHair2D CrossH
   CrossH SetInput [AppCom2 GetOutput]
-  CrossH SetCursor 50 50  
+  CrossH SetCursor 25 25
   CrossH ShowCursorOn
   CrossH IntersectCrossOff
   CrossH SetMagnification 2
@@ -49,11 +47,4 @@ vtkImageViewer viewer
   viewer SetColorLevel 1000
 
 #make interface
-source WindowLevelInterface.tcl
-
-
-
-
-
-
-
+source [file join [file dirname [info script]] WindowLevelInterface.tcl]
