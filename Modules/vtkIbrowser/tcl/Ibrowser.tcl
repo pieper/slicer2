@@ -95,9 +95,10 @@ proc IbrowserInit {} {
     #---Dependencies
     set Module($m,depend) "MultiVolumeReader"
 
-    #---Set version info
+    #---Set category and version info
+    set Module($m,category) "Alpha"
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.5 $} {$Date: 2004/11/21 14:51:06 $}]
+        {$Revision: 1.6 $} {$Date: 2004/11/23 11:28:23 $}]
 
     #---Initialize module-level variables
     #---Global array with the same name as the module. Ibrowser()
