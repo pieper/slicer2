@@ -259,7 +259,7 @@ proc EndoscopicInit {} {
     set Module($m,category) "Visualisation"
     
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.62 $} {$Date: 2004/06/22 17:33:06 $}] 
+    {$Revision: 1.63 $} {$Date: 2004/06/22 21:36:45 $}] 
        
     # Define Procedures
     #------------------------------------
@@ -271,6 +271,10 @@ proc EndoscopicInit {} {
     set Module($m,procEnter) EndoscopicEnter
     set Module($m,procExit) EndoscopicExit
     set Module($m,procMRML) EndoscopicUpdateMRML
+    
+    # jeanette: reset endoscopic global variables
+    set Module($m,procMainFileCloseUpdateEntered) EndoscopicMainFileCloseUpdated
+    
     # callbacks so that the endoscopic module knows when things happen with the
     # fiducials
     lappend Module($m,fiducialsStartUpdateMRMLCallback) EndoscopicStartCallbackFiducialsUpdateMRML
@@ -5477,8 +5481,7 @@ proc EndoscopicLoadTargets { }  {
          if {[lsearch $Fiducials(listOfNames) $targetlistname] != -1} {
         
          set targetlist [FiducialsGetPointIdListFromName $targetlistname]
-         set num [llength $targetlist]
-
+         set num [llength $targetlist] 
          set Endoscopic(selectedTarget) 1
          EndoscopicSelectTarget
          set Endoscopic(totalTargets) $num
@@ -5489,6 +5492,28 @@ proc EndoscopicLoadTargets { }  {
     }
 
 }
+
+proc EndoscopicMainFileCloseUpdated {}  {
+     global Endoscopic Model Module
+     
+     if {$Endoscopic(totalTargets) != 0} {
+     
+     set Endoscopic(totalTargets) 0
+     set Endoscopic(selectedTarget) 0
+     
+     set Endoscopic(path,activeId) "None"
+    # change the text on menu buttons
+        foreach mb $Endoscopic(mbPathList) {
+            $mb config -text "None"
+        }
+     $Endoscopic(mbPath4Fly) config -text "None"
+
+     
+     }
+
+}
+
+
 
 proc EndoscopicCreateTargets {} {
 
