@@ -120,7 +120,7 @@ proc VolumeMathInit {} {
 	#   appropriate info when the module is checked in.
 	#   
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.10 $} {$Date: 2001/06/13 15:32:54 $}]
+		{$Revision: 1.11 $} {$Date: 2001/06/15 16:31:01 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -253,7 +253,7 @@ Also, this module only does subtraction.
 
         eval {label $f.l -text "Type:"} $Gui(BLA)
 	frame $f.f -bg $Gui(backdrop)
-	foreach p "Subtract Resample" {
+	foreach p "Subtract Resample Abs" {
             eval {radiobutton $f.f.r$p \
 			-text "$p" -command "VolumeMathSetMathType" \
 			-variable VolumeMath(MathType) -value $p -width 10 \
@@ -493,6 +493,10 @@ proc VolumeMathSetMathType {}  {
         $a configure -text "Resample"
         $b configure -text "in the coordinates of"
         $c configure -text "and put the results in"
+    } elseif {$VolumeMath(MathType) == "Abs" } {
+        $a configure -text "Absolute Value"
+        $b configure -text "(not used)"
+        $c configure -text "and put the results in"
     }
 }
 
@@ -528,7 +532,7 @@ proc VolumeMathPrepareResultVolume {}  {
         set v3name  [Volume($v3,node) GetName]
 	set continue [DevOKCancel "Overwrite $v3name?"]
           
-        if {$continue == "cancel"} return 1
+        if {$continue == "cancel"} { return 1 }
         # They say it is OK, so overwrite!
               
         Volume($v3,node) Copy Volume($v2,node)
@@ -569,8 +573,7 @@ proc VolumeMathDoMath {} {
 
     if { $VolumeMath(MathType) == "Subtract" } {VolumeMathDoSubtract}
     if { $VolumeMath(MathType) == "Resample" } {VolumeMathDoResample}
-
-
+    if { $VolumeMath(MathType) == "Abs" }      {VolumeMathDoAbs}
 
     # This is necessary so that the data is updated correctly.
     # If the programmers forgets to call it, it looks like nothing
@@ -616,6 +619,45 @@ proc VolumeMathDoSubtract {} {
 
     SubMath Delete
 }
+
+#-------------------------------------------------------------------------------
+# .PROC VolumeMathDoAbs
+#   Actually do the VolumeMath
+#
+# .END
+#-------------------------------------------------------------------------------
+proc VolumeMathDoAbs {} {
+	global VolumeMath Volume
+
+        # Check to make sure no volume is none
+
+    if {[VolumeMathCheckErrors] == 1} {
+        return
+    }
+    if {[VolumeMathPrepareResultVolume] == 1} {
+        return
+    }
+
+    set v3 $VolumeMath(Volume3)
+    set v2 $VolumeMath(Volume2)
+    set v1 $VolumeMath(Volume1)
+
+    # Set up the VolumeMath Subtract
+
+    vtkImageMathematics SubMath
+    SubMath SetInput1 [Volume($v2,vol) GetOutput]
+    SubMath SetInput2 [Volume($v1,vol) GetOutput]
+    SubMath SetOperationToAbsoluteValue
+
+    # Start copying in the output data.
+    # Taken from MainVolumesCopyData
+
+    Volume($v3,vol) SetImageData [SubMath GetOutput]
+    MainVolumesUpdate $v3
+
+    SubMath Delete
+}
+
 
 #-------------------------------------------------------------------------------
 # .PROC VolumeMathDoResample
