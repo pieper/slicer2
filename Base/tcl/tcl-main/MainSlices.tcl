@@ -88,7 +88,7 @@ proc MainSlicesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainSlices \
-		{$Revision: 1.33 $} {$Date: 2002/01/28 19:04:49 $}]
+		{$Revision: 1.34 $} {$Date: 2002/02/03 23:01:32 $}]
 
 	# Initialize Variables
 	set Slice(idList) "0 1 2"
@@ -1126,8 +1126,10 @@ proc MainSlicesSetZoomAll {zoom} {
 	# Change Slice's Zoom variable
 	foreach s $Slice(idList) {
 		set Slice($s,zoom) $zoom
+	    # Attila's new zooming function
+	    Slicer SetZoomNew $s $zoom
 	}
-	Slicer SetZoom $zoom
+	#Slicer SetZoom $zoom
 	Slicer Update
 }
 
@@ -1180,8 +1182,10 @@ proc MainSlicesSetZoom {s {zoom ""}} {
 
     # Change Slice's Zoom variable
     set Slice($s,zoom) $zoom
-    
-    Slicer SetZoom $s $zoom
+
+    # Use Attila's new zooming code
+    Slicer SetZoomNew $s $zoom
+    #Slicer SetZoom $s $zoom
     Slicer Update
 }
 

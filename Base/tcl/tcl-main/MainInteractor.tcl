@@ -656,10 +656,15 @@ proc MainInteractorZoom {s x y xLast yLast} {
     set z [format "%.2f" $zoom]
 
     Anno($s,msg,mapper)  SetInput "ZOOM: x $z"
-    
-    Slicer SetZoomNew $s $zoom
-    Slicer Update
-    RenderAll
+
+    # Use this instead of directly accessing the slicer
+    # object.  MainSlices.tcl uses Attila's "newzoom" method
+    # now too.
+    MainSlicesSetZoom $s $z
+
+    #Slicer SetZoomNew $s $zoom
+    #Slicer Update
+    #RenderAll
 }
 
 #-------------------------------------------------------------------------------
