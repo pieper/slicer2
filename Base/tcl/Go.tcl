@@ -32,24 +32,35 @@
 wm withdraw .
 update
 
-#
-# version control for slicer
+#######################
+# version number control for slicer
 #
 
 # bump major when incompatibile changes happen either within slicer
 # or in vtk or tcl
+
 set SLICER(major_version) 2
+
 # bump minor when features accumulate to a stable state for release
+
 set SLICER(minor_version) 0
+
 # bump revision for something that has been given out to non-developers
 # (e.g. bump revsion before packaging, then again after packaging
 #  so there's a unique label for the packaged version)
-set SLICER(revision) a1
-# when packaging for distribution, set state to ""
-#  otherwise leave it as "dev"
-set SLICER(state) dev
-set SLICER(version) "$SLICER(major_version).$SLICER(minor_version)$SLICER(revision)-$SLICER(state)"
 
+set SLICER(revision) a2
+
+# when packaging a release for distribution, set state to ""
+# when packaging a release for testing, set state to the date as "-YYYY-MM-DD"
+#  otherwise leave it as "-dev"
+
+set SLICER(state) -dev
+
+set SLICER(version) "$SLICER(major_version).$SLICER(minor_version)$SLICER(revision)$SLICER(state)"
+
+#
+#######################
 
 #
 # simple command line argument parsing
