@@ -106,9 +106,11 @@ if { $tcl_platform(platform) == "windows" } {
 #
 # startup with the tkcon
 # 
+set av $argv; set argv "" ;# keep tkcon from trying to interpret command line args
 source $prog/tkcon.tcl
 wm geometry .tkcon +10-50
 tkcon attach main
+set argv $av
 
 
 # Source Tcl scripts
