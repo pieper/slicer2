@@ -233,7 +233,7 @@ proc EMSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.11 $} {$Date: 2003/10/26 03:28:40 $}]
+        {$Revision: 1.12 $} {$Date: 2003/10/29 14:19:49 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -2015,7 +2015,7 @@ proc EMSegmentSaveSettingSuperClass {SuperClass LastNode} {
           SegmenterClass($pid,node) SetLabel               $EMSegment(Cattrib,$i,Label)
           SegmenterClass($pid,node) SetProb                $EMSegment(Cattrib,$i,Prob)
           SegmenterClass($pid,node) SetShapeParameter      $EMSegment(Cattrib,$i,ShapeParameter)
-          SegmenterSuperClass($pid,node) SetLocalPriorWeight $EMSegment(Cattrib,$i,LocalPriorWeight)    
+          SegmenterClass($pid,node) SetLocalPriorWeight $EMSegment(Cattrib,$i,LocalPriorWeight)    
           set v $EMSegment(Cattrib,$i,ProbabilityData)
           if {$v != $Volume(idNone) } {
              SegmenterClass($pid,node) SetLocalPriorPrefix     [Volume($v,node) GetFilePrefix]
@@ -2044,7 +2044,7 @@ proc EMSegmentSaveSettingSuperClass {SuperClass LastNode} {
             lappend LogCovariance "|"
           }
           SegmenterClass($pid,node) SetLogMean "$LogMean"
-          SegmenterSuperClass($pid,node) SetInputChannelWeights $InputChannelWeights
+          SegmenterClass($pid,node) SetInputChannelWeights $InputChannelWeights
           SegmenterClass($pid,node) SetLogCovariance "[lrange $LogCovariance 0 [expr [llength $LogCovariance]-2]]"
        }
    }
@@ -4743,17 +4743,61 @@ proc EMSegmentWriteClassModels {SuperClass} {
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentMakeModels { } {  
-   global EMSegment ModelMaker  Volume 
+   global EMSegment ModelMaker Volume Color Label Mrml
    if {$EMSegment(ModelMakerSelectedVolume) == $Volume(idNone)} {
      puts "Error:EMSegmentMakeModels:First select a volume before generating models"
      return
    }
-   set ModelMaker(smooth) 0 
+   set ModelMaker(smooth) 20 
    set ModelMaker(decimate) 0
    set ModelMaker(SplitNormals) Off
    set ModelMaker(PointNormals) Off
    set ModelMaker(idVolume) $EMSegment(ModelMakerSelectedVolume)
-   EMSegmentWriteClassModels 0
+
+
+   # Figure out all labels 
+   vtkImageAccumulate histo
+   histo  SetInput [Volume($EMSegment(ModelMakerSelectedVolume),vol) GetOutput]
+   histo Update
+   set min [lindex [histo GetMin] 0]
+   set max [lindex [histo GetMax] 0]  
+
+   set bins  [expr int($max - $min)]
+   histo SetComponentOrigin $min 0.0 0.0 
+   histo SetComponentExtent 0 $bins 0 0 0 0
+   histo SetComponentSpacing 1.0 0.0 0.0
+   histo Update
+
+   set data [histo GetOutput]
+   for {set i 0} {$i <= $bins} {incr i} {
+       set val [$data GetScalarComponentAsFloat $i 0 0 0]
+       set Label(label)  [expr $i + $min]  
+       if {$val >0 &&  $Label(label) != 0} {
+          
+          # LabelsFindLabel
+          foreach c $Color(idList) {
+            set labelID [lsearch -exact [Color($c,node) GetLabels] $Label(label)]
+            if {$labelID > -1} { break}
+          }
+          if {$labelID > -1} {              
+          set Label(name) [Color($c,node) GetName]
+          } 
+
+          set ModelMaker(label2) $Label(label)
+ 
+          set ModelMaker(name) EMModel$Label(label)
+          set m [ModelMakerCreate]
+
+          set oldMrmlDir $Mrml(dir)
+      set Mrml(dir) [file dirname [Volume($ModelMaker(idVolume),node) GetFullPrefix]]
+          MainModelsWrite $m $ModelMaker(name)
+          MainModelsSetActive $m 
+          set Mrml(dir) $oldMrmlDir
+          Render3D
+    }
+   }
+   histo Delete
+   # EMSegmentWriteClassModels 0
 }
 
 
