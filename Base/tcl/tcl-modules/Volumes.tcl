@@ -167,7 +167,7 @@ DICOMDataDictFile='$Volumes(DICOMDataDictFile)'"
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-                {$Revision: 1.61 $} {$Date: 2002/02/15 15:40:26 $}]
+                {$Revision: 1.62 $} {$Date: 2002/02/22 22:15:12 $}]
 
 	# Props
 	set Volume(propertyType) Basic
@@ -3891,8 +3891,18 @@ proc VolumesReformatSave {} {
 	    [file join $Volume(DefaultDir) [Volume($v,node) GetName]]
     }
     
+    if {$Gui(pc) == 1} {
+	    # this is a hack to get a full path for the save directory - sp
+	    global Mrml savedir
+	    set savedir $Mrml(dir) 
+	    set Mrml(dir) ""
+    }
     # Show user a File dialog box
     set Volumes(prefixSave) [MainFileSaveVolume $v $Volumes(prefixSave)]
+    if {$Gui(pc) == 1} {
+	    global Mrml savedir
+	    set Mrml(dir) $savedir
+    }
     if {$Volumes(prefixSave) == ""} {return}
     
     
@@ -3923,7 +3933,8 @@ proc VolumesReformatSave {} {
     
     set ref [Slicer GetReformatMatrix $s]
     
-    for {set i $lo} {$i<= $hi} {incr i} {
+    set ii 0
+    for {set i $lo} {$i<= $hi} {set i [expr $i + 1]} {
 	
 	MainSlicesSetOffset $s $i
 	Volumes(reformatter) SetReformatMatrix $ref
@@ -3932,11 +3943,14 @@ proc VolumesReformatSave {} {
 	#RenderBoth $s
 	Volumes(writer) SetInput [Volumes(reformatter) GetOutput]
 	set ext [expr $i + $hi]
-	Volumes(writer) SetFileName "$Volumes(prefixSave).$ext"
+	set iii [format %03d $ii]
+	Volumes(writer) SetFileName "$Volumes(prefixSave).$iii"
 	set Gui(progressText) "Writing slice $ext"
 	Volumes(writer) Write
+	incr ii
     }
     set Gui(progressText) "Done!"
+    Volumes(writer) UpdateProgress 0
     
 }
 
