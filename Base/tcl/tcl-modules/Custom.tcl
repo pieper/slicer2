@@ -26,8 +26,7 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        Custom.tcl
-# DATE:        02/16/2000 09:13
-# LAST EDITOR: gering
+# DATE:        02/22/2000 11:27
 # PROCEDURES:  
 #   CustomInit
 #   CustomBuildGUI
@@ -116,7 +115,7 @@ proc CustomInit {} {
 	#   appropriate info when the module is checked in.
 	#   
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.6 $} {$Date: 2000/02/22 03:50:44 $}]
+		{$Revision: 1.7 $} {$Date: 2000/02/22 16:30:14 $}]
 
 	# Initialize module-level variables
 	#------------------------------------

@@ -26,8 +26,7 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        MainVolumes.tcl
-# DATE:        02/16/2000 09:12
-# LAST EDITOR: gering
+# DATE:        02/22/2000 11:11
 # PROCEDURES:  
 #   MainVolumesInit
 #   MainVolumesBuildVTK
@@ -63,7 +62,7 @@ proc MainVolumesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.26 $} {$Date: 2000/02/22 03:50:43 $}]
+		{$Revision: 1.27 $} {$Date: 2000/02/22 16:30:12 $}]
 
 	set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 

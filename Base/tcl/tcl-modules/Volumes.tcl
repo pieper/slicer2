@@ -26,8 +26,7 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        Volumes.tcl
-# DATE:        02/16/2000 09:13
-# LAST EDITOR: gering
+# DATE:        02/22/2000 11:27
 # PROCEDURES:  
 #   VolumesInit
 #   VolumesBuildGUI
@@ -71,7 +70,7 @@ proc VolumesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.25 $} {$Date: 2000/02/22 03:50:48 $}]
+		{$Revision: 1.26 $} {$Date: 2000/02/22 16:30:19 $}]
 
 	# Props
 	set Volume(propertyType) Basic

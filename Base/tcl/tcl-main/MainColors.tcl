@@ -26,8 +26,7 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        MainColors.tcl
-# DATE:        02/16/2000 09:10
-# LAST EDITOR: gering
+# DATE:        02/22/2000 11:11
 # PROCEDURES:  
 #   MainColorsInit
 #   MainColorsUpdateMRML
@@ -48,7 +47,7 @@ proc MainColorsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainColors \
-		{$Revision: 1.9 $} {$Date: 2000/02/22 03:50:39 $}]
+		{$Revision: 1.10 $} {$Date: 2000/02/22 16:30:08 $}]
 
 	set Color(activeID) ""
 	set Color(name) ""

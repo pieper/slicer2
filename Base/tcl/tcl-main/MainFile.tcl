@@ -26,8 +26,7 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        MainFile.tcl
-# DATE:        02/16/2000 09:10
-# LAST EDITOR: gering
+# DATE:        02/22/2000 11:11
 # PROCEDURES:  
 #   MainFileBuildGUI
 #   MainFileBuildOpenGUI
@@ -38,6 +37,7 @@
 #   MainFileSaveAsApply
 #   MainFileSave
 #   MainFileSaveWithOptions
+#   MainFileSaveOptions
 #   MainFileOpenPopup
 #   MainFileOpen
 #   MainFileOpenApply
@@ -65,7 +65,7 @@ proc MainFileInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainFile \
-		{$Revision: 1.16 $} {$Date: 2000/02/22 03:50:40 $}]
+		{$Revision: 1.17 $} {$Date: 2000/02/22 16:30:08 $}]
 
 	set File(filePrefix) data
 }

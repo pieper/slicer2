@@ -26,8 +26,7 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        Models.tcl
-# DATE:        02/16/2000 09:13
-# LAST EDITOR: gering
+# DATE:        02/22/2000 11:27
 # PROCEDURES:  
 #   ModelsInit
 #   ModelsUpdateMRML
@@ -67,7 +66,7 @@ proc ModelsInit {} {
 
         # Set Version Info
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.15 $} {$Date: 2000/02/22 03:50:46 $}]
+		{$Revision: 1.16 $} {$Date: 2000/02/22 16:30:17 $}]
 	# Props
 	set Model(propertyType) Basic
 

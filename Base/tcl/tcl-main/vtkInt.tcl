@@ -26,8 +26,7 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        vtkInt.tcl
-# DATE:        01/20/2000 09:41
-# LAST EDITOR: gering
+# DATE:        02/22/2000 11:11
 # PROCEDURES:  
 #   vtkInteract
 #==========================================================================auto=

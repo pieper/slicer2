@@ -26,8 +26,7 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        Events.tcl
-# DATE:        02/16/2000 09:10
-# LAST EDITOR: gering
+# DATE:        02/22/2000 11:27
 # PROCEDURES:  
 #   EventsInit
 #   pushHandler
@@ -63,7 +62,7 @@ proc EventsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.3 $} {$Date: 2000/02/22 03:50:48 $}]
+		{$Revision: 1.4 $} {$Date: 2000/02/22 16:30:22 $}]
 
 	# Props
 	set EventManagerStack ""

@@ -26,8 +26,7 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        MainViewer.tcl
-# DATE:        02/16/2000 09:12
-# LAST EDITOR: gering
+# DATE:        02/22/2000 11:11
 # PROCEDURES:  
 #   MainViewerInit
 #   MainViewerBuildGUI
@@ -50,7 +49,7 @@ proc MainViewerInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainViewer \
-		{$Revision: 1.8 $} {$Date: 2000/02/22 03:50:42 $}]
+		{$Revision: 1.9 $} {$Date: 2000/02/22 16:30:12 $}]
 
         # Props
 	set Gui(midHeight) 1

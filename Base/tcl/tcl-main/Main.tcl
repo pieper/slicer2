@@ -26,8 +26,7 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        Main.tcl
-# DATE:        02/16/2000 09:10
-# LAST EDITOR: gering
+# DATE:        02/22/2000 11:11
 # PROCEDURES:  
 #   BootSlicer
 #   MainInit
@@ -329,7 +328,7 @@ proc MainInit {} {
 
         # Set version info
 	lappend Module(versions) [ParseCVSInfo Main \
-		{$Revision: 1.33 $} {$Date: 2000/02/22 05:03:35 $}]
+		{$Revision: 1.34 $} {$Date: 2000/02/22 16:30:07 $}]
 
 	# Call each "Init" routine that's not part of a module
 	#-------------------------------------------
@@ -447,6 +446,8 @@ proc MainBuildGUI {} {
 		set Gui(m$m) .menubar.m$m
 		.menubar add cascade -label $m -menu .menubar.m$m
 	}
+
+	# File menu
 	$Gui(mFile) add command -label "Open..." -command \
 		"MainMenu File Open"
 	$Gui(mFile) add command -label "Save" -command \
@@ -472,6 +473,7 @@ proc MainBuildGUI {} {
 		"MainMenu File Close"
 	$Gui(mFile) add command -label "Exit" -command MainExitQuery
 
+	# View Menu
 	$Gui(mView) add command -label "Normal" -command \
 		"MainMenu View Normal"
 	$Gui(mView) add command -label "3D" -command \
@@ -482,6 +484,15 @@ proc MainBuildGUI {} {
 		"MainMenu View Single512"
 	$Gui(mView) add command -label "4x256" -command \
 		"MainMenu View Quad256"
+	$Gui(mView) add separator
+	$Gui(mView) add command -label "Black" -command \
+		"MainViewSetBackgroundColor Black; Render3D"
+	$Gui(mView) add command -label "Blue" -command \
+		"MainViewSetBackgroundColor Blue; Render3D"
+	$Gui(mView) add command -label "Midnight" -command \
+		"MainViewSetBackgroundColor Midnight; Render3D"
+
+	# Help menu
 	$Gui(mHelp) add command -label "Documentation..." -command \
 		"MainMenu Help Documentation"
 	$Gui(mHelp) add command -label "Copyright..." -command \

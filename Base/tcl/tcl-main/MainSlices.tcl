@@ -26,8 +26,7 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        MainSlices.tcl
-# DATE:        02/16/2000 09:12
-# LAST EDITOR: gering
+# DATE:        02/22/2000 11:11
 # PROCEDURES:  
 #   MainSlicesInit
 #   MainSlicesBuildVTK
@@ -87,7 +86,7 @@ proc MainSlicesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainSlices \
-		{$Revision: 1.15 $} {$Date: 2000/02/22 03:50:42 $}]
+		{$Revision: 1.16 $} {$Date: 2000/02/22 16:30:11 $}]
 
 	# Initialize Variables
 	set Slice(idList) "0 1 2"

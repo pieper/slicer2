@@ -278,7 +278,7 @@ void vtkMrmlVolumeNode::Write(ofstream& of, int nIndent)
   {
     of << " level='" << this->Level << "'";
   }
-  if (this->AutoThreshold != 1)
+  if (this->AutoThreshold != 0)
   {
     of << " autoThreshold='" << (this->AutoThreshold ? "yes" : "no") << "'";
   }

@@ -26,15 +26,16 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        MainMrml.tcl
-# DATE:        02/16/2000 09:11
-# LAST EDITOR: gering
+# DATE:        02/22/2000 11:11
 # PROCEDURES:  
 #   MainMrmlInit
 #   MainMrmlInitIdLists
 #   MainMrmlUpdateMRML
 #   MainMrmlDumpTree
+#   MainMrmlPrint
 #   MainMrmlClearList
 #   MainMrmlAddNode
+#   MainMrmlUndoAddNode
 #   MainMrmlDeleteNodeDuringUpdate
 #   MainMrmlDeleteNode
 #   MainMrmlDeleteAll
@@ -71,7 +72,7 @@ proc MainMrmlInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainMrml \
-		{$Revision: 1.27 $} {$Date: 2000/02/22 03:50:41 $}]
+		{$Revision: 1.28 $} {$Date: 2000/02/22 16:30:10 $}]
 
 	set Mrml(filePrefix) data
 	set Mrml(colorsUnsaved) 0
@@ -126,6 +127,45 @@ proc MainMrmlDumpTree {type} {
 }
 
 #-------------------------------------------------------------------------------
+# .PROC MainMrmlPrint
+# .END
+#-------------------------------------------------------------------------------
+proc MainMrmlPrint {tags} {
+
+	set level 0
+	foreach pair $tags {
+		set tag  [lindex $pair 0]
+		set attr [lreplace $pair 0 0]
+
+		# Process EndTransform
+		if {$tag == "EndTransform"} {
+			set level [expr $level - 1]
+		}
+		set indent ""
+		for {set i 0} {$i < $level} {incr i} {
+			set indent "$indent  "
+		}
+
+		puts "${indent}$tag"
+
+		# Process Transform
+		if {$tag == "Transform"} {
+			incr level
+		}
+		set indent ""
+		for {set i 0} {$i < $level} {incr i} {
+			set indent "$indent  "
+		}
+
+		foreach a $attr {
+			set key   [lindex $a 0]
+			set value [lreplace $a 0 0]
+			puts "${indent}  $key=$value"
+		}
+	}
+}
+
+#-------------------------------------------------------------------------------
 # .PROC MainMrmlClearList
 # .END
 #-------------------------------------------------------------------------------
@@ -177,6 +217,10 @@ proc MainMrmlAddNode {nodeType} {
 	return ${nodeType}($i,node)
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MainMrmlUndoAddNode
+# .END
+#-------------------------------------------------------------------------------
 proc MainMrmlUndoAddNode {nodeType n} {
 	global Mrml Model Volume Color Transform EndTransform Matrix Options
 	global TransferFunction WindowLevel TFPoint ColorLUT 

@@ -26,8 +26,7 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        View.tcl
-# DATE:        02/16/2000 09:13
-# LAST EDITOR: gering
+# DATE:        02/22/2000 11:27
 # PROCEDURES:  
 #   ViewInit
 #   ViewBuildGUI
@@ -64,7 +63,7 @@ proc ViewInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.6 $} {$Date: 2000/02/22 03:50:48 $}]
+		{$Revision: 1.7 $} {$Date: 2000/02/22 16:30:19 $}]
 }
 
 #-------------------------------------------------------------------------------
@@ -113,11 +112,11 @@ Models are fun. Do you like models, Ron?
 	#-------------------------------------------
 	set f $fView.fBg
 	
-    set c {label $f.l -text "Background Color: " $Gui(WLA)}
+    set c {label $f.l -text "Background: " $Gui(WLA)}
 		eval [subst $c]
 	pack $f.l -side left -padx $Gui(pad) -pady 0
 
-	foreach value "Blue Black" width "5 6" {
+	foreach value "Blue Black Midnight" width "5 6 9" {
 		set c {radiobutton $f.r$value -width $width \
 			-text "$value" -value "$value" -variable View(bgName) \
 			-indicatoron 0 -command "MainViewSetBackgroundColor; Render3D" $Gui(WCA)}

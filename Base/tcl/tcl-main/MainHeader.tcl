@@ -26,8 +26,7 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        MainHeader.tcl
-# DATE:        01/20/2000 09:40
-# LAST EDITOR: gering
+# DATE:        02/22/2000 11:11
 # PROCEDURES:  
 #   ReadHeader
 #   ParsePrintHeader
@@ -243,7 +242,6 @@ proc DumpHeader {aHeader} {
 
 #-------------------------------------------------------------------------------
 # .PROC GetHeaderInfo
-# Return an error message if files don't exist, else "".
 # .END
 #-------------------------------------------------------------------------------
 proc GetHeaderInfo {img1 num2 node tk} {

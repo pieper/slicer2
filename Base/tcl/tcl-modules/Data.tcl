@@ -26,8 +26,7 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        Data.tcl
-# DATE:        02/16/2000 09:13
-# LAST EDITOR: gering
+# DATE:        02/22/2000 11:27
 # PROCEDURES:  
 #   DataInit
 #   DataUpdateMRML
@@ -75,7 +74,7 @@ proc DataInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.17 $} {$Date: 2000/02/20 15:17:38 $}]
+		{$Revision: 1.18 $} {$Date: 2000/02/22 16:30:15 $}]
 
 	set Data(index) ""
 	set Data(clipboard) ""

@@ -1,18 +1,15 @@
-#! /bin/csh
+#! /bin/csh -f
 
-setenv SLICER_HOME /export/bigsur/vtk/vtk3.0/slicer/slicer_12_99
-
-setenv LD_LIBRARY_PATH ${SLICER_HOME}/lib:/local/lib:${LD_LIBRARY_PATH}
-if (${?DISPLAY} == 0) then
-	setenv DISPLAY `${SLICER_HOME}/program/bin/finddisplay`
+if (${?SLICER_HOME} == 0) then
+    setenv SLICER_HOME /export/bigsur/slicer
 endif
-setenv TCL_LIBRARY ${SLICER_HOME}/lib/tcl8.2
-setenv VTK_RENDERER OpenGL
 
-echo TCL_LIBRARY  is $TCL_LIBRARY
-echo SLICER_HOME  is $SLICER_HOME
-echo DISPLAY      is $DISPLAY
-echo LD_LIBRARY_PATH is $LD_LIBRARY_PATH
+if (${?LD_LIBRARY_PATH} == 0) then
+    setenv LD_LIBRARY_PATH ${SLICER_HOME}/lib:/local/lib
+else
+    setenv LD_LIBRARY_PATH ${SLICER_HOME}/lib:/local/lib:${LD_LIBRARY_PATH}
+endif
 
-exec $SLICER_HOME/program/vtk $SLICER_HOME/program/printmrml.tcl $1 $2
+setenv TCL_LIBRARY ${SLICER_HOME}/lib/tcl8.3
 
+exec $SLICER_HOME/program/tclsh $SLICER_HOME/program/GoPrintMrml.tcl $1

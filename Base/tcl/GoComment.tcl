@@ -1,15 +1,8 @@
 
 # Check if the user invoked this script incorrectly
-if {$argc != 1} {
-    puts "Unix Usage: tclsh83 GoComment.tcl <file to comment>"
-    puts "Windows Usage: tclsh82.exe GoComment.tcl <file to comment>"
-	exit
-}
-
-# Check if file exists, but be nice if it doesn't.
-set filename [lindex $argv 0]
-if {[file exists $filename] == 0} {
-	puts "File '$filename' does not exist, stupid!"
+if {$argc != 0} {
+    puts "Unix Usage: tclsh83 GoComment.tcl"
+    puts "Windows Usage: tclsh82.exe GoComment.tcl"
 	exit
 }
 
@@ -22,17 +15,26 @@ if {[info exists env(SLICER_HOME)] == 0 || $env(SLICER_HOME) == ""} {
 }
 
 # Read source files
-source [file join $prog [file join tcl-main Comment.tcl]]
+source [file join $prog Comment.tcl]
 
 # Run
-set ext [file extension $filename]
-puts $filename
-if {$ext == ".tcl"} { 
-	# Go to town
-	CommentFile $filename
-} else {
-	# Just add the copyright
-	CopyrightFile $filename
+set dirs "tcl-main tcl-modules tcl-shared ../vtksrc"
+if {[file exists tcl-modules/Editor] == 1} {
+	set dirs "$dirs tcl-modules/Editor"
+}
+foreach dir $dirs {
+	foreach file "[glob -nocomplain $dir/*.tcl] \
+		[glob -nocomplain $dir/*.h] [glob -nocomplain $dir/*.cxx]" {
+		puts $file
+		set ext [file extension $file]
+		if {$ext == ".tcl"} { 
+			# Go to town
+			CommentFile $file
+		} else {
+			# Just add the copyright
+			CopyrightFile $file
+		}
+	}
 }
 
 exit

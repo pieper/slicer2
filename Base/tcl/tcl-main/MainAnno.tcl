@@ -26,8 +26,7 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        MainAnno.tcl
-# DATE:        02/16/2000 09:10
-# LAST EDITOR: gering
+# DATE:        02/22/2000 11:11
 # PROCEDURES:  
 #   MainAnnoInit
 #   MainAnnoBuildVTK
@@ -55,7 +54,7 @@ proc MainAnnoInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainAnno \
-		{$Revision: 1.6 $} {$Date: 2000/02/22 03:50:39 $}]
+		{$Revision: 1.7 $} {$Date: 2000/02/22 16:30:08 $}]
 
 	# Preset Defaults
 	set Module(Anno,presets) "box='1' axes='0' outline='0' letters='1' cross='1'\

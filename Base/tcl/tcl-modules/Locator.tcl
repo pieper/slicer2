@@ -26,8 +26,7 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        Locator.tcl
-# DATE:        02/16/2000 09:13
-# LAST EDITOR: gering
+# DATE:        02/22/2000 11:27
 # PROCEDURES:  
 #   LocatorInit
 #   LocatorUpdateMRML
@@ -49,6 +48,8 @@
 #   LocatorSetRealtime
 #   LocatorWrite
 #   LocatorRead
+#   LocatorRegisterCallback
+#   LocatorUnRegisterCallback
 #   LocatorPause
 #   LocatorConnect
 #   LocatorLoopFile
@@ -89,7 +90,7 @@ proc LocatorInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.13 $} {$Date: 2000/02/22 03:50:45 $}]
+		{$Revision: 1.14 $} {$Date: 2000/02/22 16:30:16 $}]
 
 	# Patient/Table position
 	set Locator(tblPosList)   "Front Side"
@@ -1289,6 +1290,10 @@ proc LocatorRead {data} {
 	MainVolumesSetActive $v
 }
 
+#-------------------------------------------------------------------------------
+# .PROC LocatorRegisterCallback
+# .END
+#-------------------------------------------------------------------------------
 proc LocatorRegisterCallback {cb} {
 	global Locator 
 
@@ -1297,6 +1302,10 @@ proc LocatorRegisterCallback {cb} {
 	}
 }
 
+#-------------------------------------------------------------------------------
+# .PROC LocatorUnRegisterCallback
+# .END
+#-------------------------------------------------------------------------------
 proc LocatorUnRegisterCallback {cb} {
 	global Locator 
 

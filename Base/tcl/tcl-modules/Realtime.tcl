@@ -26,8 +26,7 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        Realtime.tcl
-# DATE:        02/16/2000 09:13
-# LAST EDITOR: gering
+# DATE:        02/22/2000 11:27
 # PROCEDURES:  
 #   RealtimeInit
 #   RealtimeBuildVTK
@@ -73,7 +72,7 @@ proc RealtimeInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.8 $} {$Date: 2000/02/22 03:50:47 $}]
+		{$Revision: 1.9 $} {$Date: 2000/02/22 16:30:18 $}]
 
 	# Initialize globals
 	set Realtime(idRealtime)     $Volume(idNone)

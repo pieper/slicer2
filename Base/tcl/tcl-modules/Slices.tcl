@@ -26,8 +26,7 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        Slices.tcl
-# DATE:        02/16/2000 09:13
-# LAST EDITOR: gering
+# DATE:        02/22/2000 11:27
 # PROCEDURES:  
 #   SlicesBuildGUI
 #==========================================================================auto=
@@ -49,7 +48,7 @@ proc SlicesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.7 $} {$Date: 2000/02/22 03:50:47 $}]
+		{$Revision: 1.8 $} {$Date: 2000/02/22 16:30:18 $}]
 
 	# Props
 	set Slice(prefix) slice

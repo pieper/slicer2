@@ -1,4 +1,3 @@
-#!/usr/local/bin/tclsh8.0
 #=auto==========================================================================
 # Copyright (c) 1999 Surgical Planning Lab, Brigham and Women's Hospital
 #  
@@ -35,15 +34,6 @@
 #   CommentFile
 #   Polish
 #==========================================================================auto=
-
-if {$argc < 1} {
-	puts "Usage: comment <filename> [-v]"
-	exit
-}
-set verbose 0
-if {$argc > 1} {
-	set verbose 1
-}
 
 #-------------------------------------------------------------------------------
 # .PROC PrintCopyright
@@ -112,7 +102,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 # .END
 #-------------------------------------------------------------------------------
 proc CopyrightFile {filename} {
-	global env Comments
+	global Comments
 
 	# Read file into "data"
 	if {[catch {set fid [open $filename r]} errmsg] == 1} {
@@ -140,8 +130,8 @@ proc CopyrightFile {filename} {
 # .PROC CommentFile
 # .END
 #-------------------------------------------------------------------------------
-proc CommentFile {filename} {
-	global verbose env Comments
+proc CommentFile {filename {verbose 0}} {
+	global Comments
 
 	# Read file into "data"
 	if {[catch {set fid [open $filename r]} errmsg] == 1} {
@@ -168,10 +158,9 @@ proc CommentFile {filename} {
 	puts $fid "#=auto=========================================================================="
 	PrintCopyright $fid 1
 	puts $fid "#==============================================================================="
-	puts $fid "# FILE:        $filename"
+	puts $fid "# FILE:        [file tail $filename]"
 	set str "%m/%d/%Y %H:%M"
 	puts $fid "# DATE:        [clock format [clock seconds] -format $str]"
-	puts $fid "# LAST EDITOR: $env(USER)"
 	puts $fid "# PROCEDURES:  "
 	foreach i $Comments(idList) {
 		puts -nonewline $fid "#   $Comments($i,proc)"
@@ -312,18 +301,3 @@ proc Comment {data} {
 
 }
 
-# Check if file exists, but be nice if it doesn't.
-set filename [lindex $argv 0]
-if {[file exists $filename] == 0} {
-	puts "File '$filename' does not exist, stupid!"
-	exit
-}
-
-# Just add the copyright to any non-tcl files
-set ext [file extension $filename]
-if {$ext == ".h" || $ext == ".cxx"} { 
-	CopyrightFile $filename
-} else {
-	# Go to town
-	CommentFile $filename
-}

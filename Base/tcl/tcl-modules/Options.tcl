@@ -26,8 +26,7 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        Options.tcl
-# DATE:        02/16/2000 09:13
-# LAST EDITOR: gering
+# DATE:        02/22/2000 11:27
 # PROCEDURES:  
 #   OptionsInit
 #   OptionsUpdateMRML
@@ -53,7 +52,7 @@ proc OptionsInit {} {
 	set m Options
 	set Module($m,row1List) "Help Props Modules"
         set Module($m,row1Name) "{Help} {Props} {Modules}"
-	set Module($m,row1,tab) Props
+	set Module($m,row1,tab) Modules
 
 	# Define Procedures
 	set Module($m,procGUI)  OptionsBuildGUI
@@ -64,7 +63,7 @@ proc OptionsInit {} {
 
         # Set Version Info
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.8 $} {$Date: 2000/02/22 03:50:46 $}]
+		{$Revision: 1.9 $} {$Date: 2000/02/22 16:30:18 $}]
 
 	# Initialize Globals
 	set Options(propertyType) Basic

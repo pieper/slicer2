@@ -26,14 +26,14 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        Editor.tcl
-# DATE:        02/16/2000 09:13
-# LAST EDITOR: gering
+# DATE:        02/22/2000 11:27
 # PROCEDURES:  
 #   EditorInit
 #   EditorBuildVTK
 #   EditorUpdateMRML
 #   EditorBuildGUI
 #   EditorEnter
+#   EditorMakeModel
 #   EditorB1
 #   EditorB1Motion
 #   EditorB1Release
@@ -58,6 +58,7 @@
 #   EdBuildInputGUI
 #   EdBuildInteractGUI
 #   EdBuildRenderGUI
+#   EdIsNativeSlice
 #   EdSetupBeforeApplyEffect
 #   EdUpdateAfterApplyEffect
 #   EditorWrite
@@ -90,7 +91,7 @@ proc EditorInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.19 $} {$Date: 2000/02/22 03:50:44 $}]
+		{$Revision: 1.20 $} {$Date: 2000/02/22 16:30:15 $}]
 
 	# Initialize globals
 	set Editor(idOriginal)  $Volume(idNone)
@@ -733,6 +734,10 @@ proc EditorEnter {} {
 	}
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EditorMakeModel
+# .END
+#-------------------------------------------------------------------------------
 proc EditorMakeModel {} {
 	global Editor
 
@@ -1433,6 +1438,10 @@ proc EdBuildRenderGUI {f var {options ""}} {
 	pack $f.l $f.f -side left -padx $Gui(pad) -fill x -anchor w
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EdIsNativeSlice
+# .END
+#-------------------------------------------------------------------------------
 proc EdIsNativeSlice {} {
 	global Ed
 	

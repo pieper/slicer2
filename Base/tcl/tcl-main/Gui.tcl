@@ -26,8 +26,7 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        Gui.tcl
-# DATE:        02/16/2000 09:10
-# LAST EDITOR: gering
+# DATE:        02/22/2000 11:11
 # PROCEDURES:  
 #   GuiInit
 #   ValidateFloat
@@ -64,7 +63,7 @@ proc GuiInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo Gui \
-		{$Revision: 1.13 $} {$Date: 2000/02/22 03:50:38 $}]
+		{$Revision: 1.14 $} {$Date: 2000/02/22 16:30:06 $}]
 
 	if {$tcl_platform(platform) == "windows"} {
 		set Gui(pc) 1

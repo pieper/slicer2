@@ -26,8 +26,7 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        Labels.tcl
-# DATE:        02/16/2000 09:10
-# LAST EDITOR: gering
+# DATE:        02/22/2000 11:27
 # PROCEDURES:  
 #   LabelsInit
 #   LabelsUpdateMRML
@@ -69,7 +68,7 @@ proc LabelsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.11 $} {$Date: 2000/02/22 03:50:49 $}]
+		{$Revision: 1.12 $} {$Date: 2000/02/22 16:30:22 $}]
 
 	# Props
 	set Label(nameBrowse) ""

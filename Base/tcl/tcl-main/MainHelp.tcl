@@ -26,8 +26,7 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        MainHelp.tcl
-# DATE:        02/16/2000 09:11
-# LAST EDITOR: gering
+# DATE:        02/22/2000 11:11
 # PROCEDURES:  
 #   MainHelpInit
 #   MainHelpBuildGUI
@@ -47,7 +46,7 @@ proc MainHelpInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainFile \
-		{$Revision: 1.5 $} {$Date: 2000/02/22 03:50:40 $}]
+		{$Revision: 1.6 $} {$Date: 2000/02/22 16:30:09 $}]
 
 	set Help(tagNormal)   "-font {times 10}"
 	set Help(tagItalic)   "-font {times 10 italic}"

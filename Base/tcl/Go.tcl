@@ -39,20 +39,17 @@
 catch {load vtktcl}
 
 if {$argc > 1} {
-    puts "Usage: vtk Go.tcl <MRML file name without .mrml>"
+    puts "UNIX Usage: vtk Go.tcl <MRML file name without .mrml>"
+    puts "Windows Usage: wish82.exe Go.tcl <MRML file name without .mrml>"
     exit
 }
 
 # verbose
 set verbose 0
 
-# Determine Slicer's home directory where the program is installed
-# If the SLICER_HOME environment is not defined, then use the 
-# root directory of this script ($argv0).
-#
-if {[info exists env(SLICER_HOME)] == 0} {
-	set prog [file dirname $argv0]
-} elseif {$env(SLICER_HOME) == ""} {
+# Determine Slicer's home directory from the SLICER_HOME environment 
+# variable, or the root directory of this script ($argv0).
+if {[info exists env(SLICER_HOME)] == 0 || $env(SLICER_HOME) == ""} {
 	set prog [file dirname $argv0]
 } else {
 	set prog [file join $env(SLICER_HOME) program]
@@ -194,7 +191,7 @@ proc GetFullPath {name ext {dir "" } {verbose 1}} {
 #
 
 # Source Parse.tcl to read the XML
-set path [GetFullPath Parse tcl]
+set path [GetFullPath Parse tcl tcl-main]
 source $path
 
 # Look for an Options.xml file locally and then centrally

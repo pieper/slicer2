@@ -26,8 +26,7 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        MainMatrices.tcl
-# DATE:        02/16/2000 09:11
-# LAST EDITOR: gering
+# DATE:        02/22/2000 11:11
 # PROCEDURES:  
 #   MainMatricesInit
 #   MainMatricesUpdateMRML
@@ -49,7 +48,7 @@ proc MainMatricesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainMatrices \
-		{$Revision: 1.8 $} {$Date: 2000/02/22 03:50:41 $}]
+		{$Revision: 1.9 $} {$Date: 2000/02/22 16:30:10 $}]
 
 	# Append widgets to list that gets refreshed during UpdateMRML
 	set Matrix(mbActiveList) ""

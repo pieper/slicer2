@@ -26,11 +26,12 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        Twin.tcl
-# DATE:        02/16/2000 09:13
-# LAST EDITOR: gering
+# DATE:        02/22/2000 11:27
 # PROCEDURES:  
 #   TwinInit
+#   TwinBuildVTK
 #   TwinBuildGUI
+#   TwinApply
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -62,9 +63,13 @@ proc TwinInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.3 $} {$Date: 2000/02/22 03:50:47 $}]
+		{$Revision: 1.4 $} {$Date: 2000/02/22 16:30:19 $}]
 }
 
+#-------------------------------------------------------------------------------
+# .PROC TwinBuildVTK
+# .END
+#-------------------------------------------------------------------------------
 proc TwinBuildVTK {} {
 	global Twin viewWin twinWin
 
@@ -162,6 +167,10 @@ Models are fun. Do you like models, Ron?
 	grid $f.b -columnspan 2 -padx $Gui(pad) -pady $Gui(pad) 
 }
 
+#-------------------------------------------------------------------------------
+# .PROC TwinApply
+# .END
+#-------------------------------------------------------------------------------
 proc TwinApply {} {
 	global Twin twinWin
 

@@ -26,8 +26,7 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        MainModels.tcl
-# DATE:        02/16/2000 09:11
-# LAST EDITOR: gering
+# DATE:        02/22/2000 11:11
 # PROCEDURES:  
 #   MainModelsInit
 #   MainModelsUpdateMRML
@@ -72,7 +71,7 @@ proc MainModelsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainModels \
-		{$Revision: 1.18 $} {$Date: 2000/02/22 03:50:41 $}]
+		{$Revision: 1.19 $} {$Date: 2000/02/22 16:30:10 $}]
 
 	set Model(idNone) -1
 	set Model(activeID) ""

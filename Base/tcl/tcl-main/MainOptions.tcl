@@ -26,8 +26,7 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        MainOptions.tcl
-# DATE:        02/16/2000 09:12
-# LAST EDITOR: gering
+# DATE:        02/22/2000 11:11
 # PROCEDURES:  
 #   MainOptionsInit
 #   MainOptionsUpdateMRML
@@ -36,10 +35,13 @@
 #   MainOptionsDelete
 #   MainOptionsSetActive
 #   MainOptionsParsePresets
+#   MainOptionsUseDefaultPresets
 #   MainOptionsParseDefaults
 #   MainOptionsUnparsePresets
 #   MainOptionsPreset
 #   MainOptionsPresetCallback
+#   MainOptionsRecallPresets
+#   MainOptionsStorePresets
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -61,7 +63,7 @@ proc MainOptionsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainOptions \
-		{$Revision: 1.9 $} {$Date: 2000/02/22 03:50:42 $}]
+		{$Revision: 1.10 $} {$Date: 2000/02/22 16:30:11 $}]
 
 	# Props
 	set Options(program) "slicer"
@@ -235,6 +237,10 @@ proc MainOptionsParsePresets {attr} {
 	}
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MainOptionsUseDefaultPresets
+# .END
+#-------------------------------------------------------------------------------
 proc MainOptionsUseDefaultPresets {} {
 	global Module Preset
 
@@ -418,6 +424,10 @@ proc MainOptionsPresetCallback {p} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC MainOptionsRecallPresets
+# .END
+#-------------------------------------------------------------------------------
 proc MainOptionsRecallPresets {p} {
     global Module
 
@@ -427,6 +437,10 @@ proc MainOptionsRecallPresets {p} {
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MainOptionsStorePresets
+# .END
+#-------------------------------------------------------------------------------
 proc MainOptionsStorePresets {p} {
     global Module
     
