@@ -1,3 +1,8 @@
+
+vtkAG - custom module for registration.
+
+
+
 vtkCustomModule -- a system for creating new VTK Modules
 
 Michael Halle and Steve Pieper 
