@@ -3606,6 +3606,7 @@ proc EndoscopicFiducialsPointCreatedCallback {type fid pid} {
                                 MainModelsSetActive $id
                             }
                         }
+   
                     }
                 }
                 $Endoscopic(sourceLabel) configure -text "[Point($pid,node) GetName]"
