@@ -72,7 +72,7 @@ proc MainVolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.60 $} {$Date: 2003/06/06 19:30:33 $}]
+    {$Revision: 1.61 $} {$Date: 2003/06/18 22:15:34 $}]
 
     set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -847,15 +847,15 @@ proc MainVolumesSetActive {v} {
             foreach s $Slice(idList) {
                 if {$v == $Slice($s,backVolID)} {
                     MainSlicesConfigGui $s fOrient.mbBackVolume$s \
-                        "-text [Volume($v,node) GetName]"
+                        "-text \"[Volume($v,node) GetName]\""
                 }
                 if {$v == $Slice($s,foreVolID)} {
                     MainSlicesConfigGui $s fVolume.mbForeVolume$s \
-                        "-text [Volume($v,node) GetName]"
+                        "-text \"[Volume($v,node) GetName]\""
                 }
                 if {$v == $Slice($s,labelVolID)} {
                     MainSlicesConfigGui $s fVolume.mbLabelVolume$s \
-                        "-text [Volume($v,node) GetName]"
+                        "-text \"[Volume($v,node) GetName]\""
                 }
             }
 

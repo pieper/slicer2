@@ -109,7 +109,7 @@ proc MainSlicesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainSlices \
-        {$Revision: 1.48 $} {$Date: 2003/04/24 03:02:55 $}]
+        {$Revision: 1.49 $} {$Date: 2003/06/18 22:16:07 $}]
 
     # Initialize Variables
     set Slice(idList) "0 1 2"
@@ -860,10 +860,10 @@ proc MainSlicesSetVolumeAll {Layer v} {
         # Change button text
         if {$Layer == "Back"} {
             MainSlicesConfigGui $s fOrient.mb${Layer}Volume$s \
-                "-text [Volume($v,node) GetName]"
+                "-text \"[Volume($v,node) GetName]\""
         } else {
             MainSlicesConfigGui $s fVolume.mb${Layer}Volume$s \
-                "-text [Volume($v,node) GetName]"
+                "-text \"[Volume($v,node) GetName]\""
         }
 
         # Always update Slider Range when change volume or orient
@@ -899,10 +899,10 @@ proc MainSlicesSetVolume {Layer s v} {
     # Change button text
     if {$Layer == "Back"} {
         MainSlicesConfigGui $s fOrient.mb${Layer}Volume$s \
-            "-text [Volume($v,node) GetName]"
+            "-text \"[Volume($v,node) GetName]\""
     } else {
         MainSlicesConfigGui $s fVolume.mb${Layer}Volume$s \
-            "-text [Volume($v,node) GetName]"
+            "-text \"[Volume($v,node) GetName]\""
     }
 
     # Set the volume in the Slicer
@@ -1076,7 +1076,7 @@ proc MainSlicesSetOrientAll {orient} {
         set Slice($s,offset) [Slicer GetOffset $s]
 
         # Change text on menu button
-        MainSlicesConfigGui $s fOrient.mbOrient$s "-text $orient"
+        MainSlicesConfigGui $s fOrient.mbOrient$s "-text \"$orient\""
         $Slice($s,lOrient) config -text $orient
 
         # Anno
@@ -1112,7 +1112,7 @@ proc MainSlicesSetOrient {s orient} {
     
 
     # Change text on menu button
-    MainSlicesConfigGui $s fOrient.mbOrient$s "-text $orient"
+    MainSlicesConfigGui $s fOrient.mbOrient$s "-text \"$orient\""
     $Slice($s,lOrient) config -text $orient
 
     # Anno
