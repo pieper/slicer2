@@ -14,6 +14,7 @@ set __comment__ {
     - copies the toplevel launcher and script
     - copies the tcl libs and binaries
     - copies the vtk libs and wrapping files
+    - copies the itk libs
     - copies the slicerbase libs and wrapping files
     - copies each of the modules libs and wrapping files
     - removes CVS dirs that have been copied by accident
@@ -175,6 +176,37 @@ proc tarup { {destdir "auto"} } {
         }
     }
 
+    #
+    # grab the itk libraries 
+    #
+    puts " -- copying itk files"
+    file mkdir $destdir/Lib/$::env(BUILD)/itk/ITK-build/bin
+
+    switch $::env(BUILD) {
+        "solaris8" -
+        "redhat7.3" { 
+            set libs [glob $::env(ITK_BIN_DIR)/bin/*.so]
+            foreach lib $libs {
+                file copy $lib $destdir/Lib/$::env(BUILD)/itk/ITK-build/bin
+                set ll [file tail $lib]
+                exec strip $destdir/Lib/$::env(BUILD)/vtk/VTK-build/bin/$ll
+            }
+        }
+        "Darwin" {
+            set libs [glob $::env(ITK_BIN_DIR)/bin/*.dylib]
+            foreach lib $libs {
+                file copy $lib $destdir/Lib/$::env(BUILD)/itk/ITK-build/bin
+            }
+        }
+        "Win32VC7" { 
+            file mkdir $destdir/Lib/$::env(BUILD)/itk/ITK-build/bin/debug
+            set libs [glob $::env(ITK_BIN_DIR)/bin/debug/*.dll]
+            foreach lib $libs {
+                file copy $lib $destdir/Lib/$::env(BUILD)/itk/ITK-build/bin/debug
+            }
+        }
+    }
+
 
     #
     # grab the Base build and tcl
@@ -316,7 +348,7 @@ proc tarup { {destdir "auto"} } {
             exec xterm -e scp $archroot.tar.gz pieper@gpop.bwh.harvard.edu:slicer-dist
         }
         "Win32VC7" { 
-            exec rxvt -e scp $archroot.zip pieper@gpop.bwh.harvard.edu:slicer-dist
+            exec rxvt -e scp $archroot.zip pieper@gpop.bwh.harvard.edu:slicer-dist &
         }
     }
 
