@@ -39,7 +39,6 @@
 #   AlignmentsSetVolume
 #   AlignmentsWritePseudoMrmlVolume
 #   AlignmentsAutoRun
-#   AlignmentsAutoCancel
 #   AlignmentsPoll
 #   AlignmentsAutoApply
 #   AlignmentsAutoUndo
@@ -132,7 +131,7 @@ proc AlignmentsInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.6 $} {$Date: 2002/07/28 06:41:36 $}]
+            {$Revision: 1.7 $} {$Date: 2002/07/29 21:47:45 $}]
 
     # Props
     set Matrix(propertyType) Basic
@@ -1687,35 +1686,6 @@ proc AlignmentsSetVolume {{v ""}} {
 #-------------------------------------------------------------------------------
 
 #-------------------------------------------------------------------------------
-# .PROC AlignmentsWritePseudoMrmlVolume
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc AlignmentsWritePseudoMrmlVolume {fid v} {
-    global Volume
-    
-    scan [Volume($v,node) GetDimensions] "%d %d" x y
-    set filePattern [Volume($v,node) GetFilePattern]
-    set filePrefix [Volume($v,node) GetFullPrefix]
-    set imageRange [Volume($v,node) GetImageRange]
-    set filename [format $filePattern $filePrefix [lindex $imageRange 0]]
-    set headerSize [expr [file size $filename] - ($x * $y * 2)]
-
-    puts $fid "filePrefix $filePrefix"
-    puts $fid "filePattern $filePattern"
-    puts $fid "headerSize $headerSize"
-    puts $fid "imageRange $imageRange"
-    puts $fid "dimensions [Volume($v,node) GetDimensions]"
-    puts $fid "spacing [Volume($v,node) GetSpacing]"
-    puts $fid "rasToIjkMatrix [Volume($v,node) GetRasToIjkMatrix]"
-    puts $fid "littleEndian [Volume($v,node) GetLittleEndian]"
-    puts $fid "window [Volume($v,node) GetWindow]"
-    puts $fid "level [Volume($v,node) GetLevel]"
-
-}
-
-#-------------------------------------------------------------------------------
 # .PROC AlignmentsAutoRun
 # 
 # .ARGS
@@ -1723,13 +1693,6 @@ proc AlignmentsWritePseudoMrmlVolume {fid v} {
 #-------------------------------------------------------------------------------
 proc AlignmentsAutoRun {} {
     global Path env Gui Matrix Volume
-    
-    # No-can-do on PCs
-    if {$Gui(pc) == 1} {
-        tk_messageBox -message "\
-                Automatic registration is presently available only on UNIX systems."
-        return
-    }
 
     # Store which transform we're editing
     set t $Matrix(activeID)
@@ -1761,287 +1724,154 @@ proc AlignmentsAutoRun {} {
         return
     }
 
-    # Write a "pseudo-MRML" file for the MI program consisting of:
-    #   - Reference volume
-    #   - Initial pose (from manual registration)
-    #   - Volume to register
+    vtkRasToIjkTransform refTrans
+    eval refTrans SetExtent  [[Volume($r,vol) GetOutput] GetExtent]
+    eval refTrans SetSpacing [[Volume($r,vol) GetOutput] GetSpacing]
+    refTrans SetSlicerMatrix [Volume($r,node) GetRasToIjk]
+    refTrans ComputeCornersFromSlicerMatrix
 
-    set filename $Matrix(autoInput)
-    set fid [open $filename w]
+    vtkRasToIjkTransform subTrans
+    eval subTrans SetExtent  [[Volume($v,vol) GetOutput] GetExtent]
+    eval subTrans SetSpacing [[Volume($v,vol) GetOutput] GetSpacing]
+    subTrans SetSlicerMatrix [Volume($v,node) GetRasToIjk]
+    subTrans ComputeCornersFromSlicerMatrix
 
-    AlignmentsWritePseudoMrmlVolume $fid $r
-    puts $fid "matrix [Matrix($t,node) GetMatrix]"
-    AlignmentsWritePseudoMrmlVolume $fid $v
-
-    if {[catch {close $fid} errorMessage]} {
-        tk_messageBox -type ok -message "The following error occurred saving a file: ${errorMessage}"
-        puts "Aborting due to : ${errorMessage}"
-        exit 1
-    }
-
-    # Command to run MI
-    set argBin     "[file join $Path(program) mi-bin]"
-    set argProgram "[file join $argBin mi]" 
-    set argInput   "[file join $env(PWD) $filename]"
-    set argTmp     "$Path(tmpDir)"
-    if {$Matrix(autoSpeed) == "Fast"} {
-        set argSpeed fast
-    } else {
-        set argSpeed slow 
-    }
-    set cmd "$argProgram $argBin $argInput $argSpeed $argTmp"
-    puts "MI command:\n$cmd"
-
-    # Delete the output file
-    catch {file delete $Matrix(autoOutput)}
-
-    # Exec
-    catch {set pid [eval exec $cmd &]} errmsg
-
-    # pid does not exist on error
-    if {[info exists pid] == 0} {
-        puts "Attempt to run MI produced error:\n'$errmsg'"
-        return
-    }
-    puts "Running MI with pid=$pid"
-    set Matrix(pid) $pid
-
-    AlignmentsPoll
-}
-
-#-------------------------------------------------------------------------------
-# .PROC AlignmentsAutoCancel
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc AlignmentsAutoCancel {} {
-    global Matrix Gui
-
-    set pid $Matrix(pid)
-    if {$pid == ""} {
-        return
-    }
-
-    set cmd "kill -9 $pid"
-    catch {exec $cmd} errmsg
-    puts "$cmd --> $errmsg"
-}
-
-#-------------------------------------------------------------------------------
-# .PROC AlignmentsPoll
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc AlignmentsPoll {} {
-    global Matrix Gui
-    
-    set pid $Matrix(pid)
-    
-    if {$pid != ""} {
-        catch {exec kill -0 $pid} errmsg
-        if {$errmsg != ""} {
-            
-            # Stop polling
-            set Matrix(pid) ""
-            
-            # Determine status (if file exists, then success)
-            set filename $Matrix(autoOutput)
-            set status 1 
-            if {[CheckFileExists $filename 0] == "0"} {
-                set status 0
-            }
-
-            # Apply and Notify user with popup
-            if {$status == 1} {
-                # Overwrite initial pose with final pose
-                AlignmentsAutoApply
-                set msg "Automatic registration completed successfully." 
-                
-                # Delete the output file
-                catch {file delete $Matrix(autoOutput)}
-                catch {file delete $Matrix(autoInput)}
-
-            } else {
-                set msg "Automatic registration failed." 
-            }
-            set x [winfo rootx $Matrix(bRun)]
-            set y [winfo rooty $Matrix(bRun)]
-            MsgPopup RegistrationReady $x $y $msg "Registration Complete"
-            return
-        }
-    }
-    
-    # Poll every 10 seconds
-    after 10000 AlignmentsPoll
-}
-
-#-------------------------------------------------------------------------------
-# .PROC AlignmentsAutoApply
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc AlignmentsAutoApply {} {
-    global Volume Matrix Mrml
-
-    set v $Matrix(volume)
-    if {$v == $Volume(idNone)} {return}
-
-    # Read transform from mrml file created by MI
-    set filename $Matrix(autoOutput)
-    set dag [MRMLRead $filename]
-
-    if {$dag == "-1"} {
-        tk_messageBox -icon error -message "Failed to read '$filename'"
-        return
-    }
-    set dag [MRMLExpandUrls $dag $Mrml(dir)]
-    set dag [MRMLComputeRelationships $dag]
-
-    set n [MRMLCountTypeOfNode $dag Transform]
-    if {$n == 0} {
-        tk_messageBox -icon error -message \
-                "No transform nodes in MRML file '$filename'."
-        return
-    }
-
-    set i    [MRMLGetIndexOfNodeInDag $dag 0 Transform]
-    set node [MRMLGetNode $dag $i] 
-    set str  [MRMLGetValue $node matrix]
-
-    tk_messageBox -message "Automatic Registration Matrix:$str"
-
-    # Convert str to matrix
-    vtkMatrix4x4 mat
-    for {set i 0} {$i < 4} {incr i} {
-        for {set j 0} {$j < 4} {incr j} {
-            mat SetElement $i $j [lindex $str [expr $i*4+$j]]
-        }
-    }
-
-    # Set the current transform to this matrix
-    set t $Matrix(tAuto)
-    set tran [Matrix($t,node) GetTransform]
-    $tran Push
-    $tran SetMatrix mat
-    mat Delete
-
-    # Change name
-    set name [Matrix($t,node) GetName]
-    if {[regexp {^manual(.*)} $name match id] == 1} {
-        Matrix($t,node) SetName auto$id
-    }
-
-    # Allow undo
-    $Matrix(bUndo) configure -state normal
-
-    # Update MRML
-    MainUpdateMRML
-    RenderAll
-}
-
-
-
-#*********************************************************************
-#This is for running Dave's new MI code
-#****
-proc AlignmentsAutoRunTest {} {
-    global Path env Gui Matrix Volume
-    
-    # No-can-do on PCs
-    if {$Gui(pc) == 1} {
-        tk_messageBox -message "\
-Automatic registration is presently available only on UNIX systems."
-        return
-    }
-
-    # Store which transform we're editing
-    set t $Matrix(activeID)
-    set Matrix(tAuto) $t
-    if {$t == ""} {
-        tk_messageBox -message "Please select a transform"
-    }
-
-    # v = ID of volume to register
-    # r = ID of reference volume
-    set v $Matrix(volume)
-    set r $Matrix(refVolume)
-
-    # Check that the volumes exist
-    scan [Volume($v,node) GetImageRange] "%d %d" lo hi
-    if {[CheckVolumeExists [Volume($v,node) GetFullPrefix] \
-        [Volume($v,node) GetFilePattern] $lo $hi] != ""} {
-        set str "The [Volume($v,node) GetName] volume cannot be found on disk."
-        puts $str
-        tk_messageBox -message $str
-        return
-    }
-    scan [Volume($r,node) GetImageRange] "%d %d" lo hi
-    if {[CheckVolumeExists [Volume($r,node) GetFullPrefix] \
-        [Volume($r,node) GetFilePattern] $lo $hi] != ""} {
-        set str "The [Volume($r,node) GetName] volume cannot be found on disk."
-        puts $str
-        tk_messageBox -message $str
-        return
-    }
-
-    # Read parameters
-    set filename $Matrix(autoInput)
-    set fid [open $filename w]
-
-    if {$Matrix(autoSpeed) == "Fast"} {
-        set filename $Matrix(autoFast)
-    } else {
-        set filename $Matrix(autoSlow)
-    }
-
-    set fid [open $filename]
-    set params(cmdList) ""
-    foreach line [split [read $fid] \n] {
-        set cmd [lindex $line 0]
-        set val [lindex $line 1]
-        lappend params(cmdList) $cmd
-        set params($cmd) $val
-        puts "$cmd $val"
-    }
-    close $fid
-
-    # Get initial pose
-    set tran [Matrix($t,node) GetTransform]
-    set init  [$tran GetMatrix]
-    puts "initialPose = [$init Print]"
+    # Get the initial Pose
+    # This is either identity when no manual reg has been done
+    # or the matrix obtained from manual registration
+    set tran   [Matrix($t,node) GetTransform]
+    set matrix [$tran GetMatrix]
+    vtkMatrix4x4 initMatrix
+    initMatrix DeepCopy $matrix
+    initMatrix Invert
+    vtkPose initPose
+    initPose ConvertFromMatrix4x4 initMatrix
+    puts "Initial Pose = [initPose Print]"
 
     # Run MI Registration
     vtkImageMIReg reg
     reg SetReference [Volume($r,vol) GetOutput]
     reg SetSubject   [Volume($v,vol) GetOutput]
-    reg SetInitialPose $init
-    reg SetRefNode Volume($r,node)
-    reg SetSubNode Volume($v,node)
+    reg SetRefTrans refTrans
+    reg SetSubTrans subTrans
+    reg SetInitialPose initPose
 
-    foreach cmd $params(cmdList) {
-        #reg $cmd $params($cmd)
-    }
-    puts "GetNumIter= [reg GetNumIterations]"
+    # Set parameters (ordered from small res to large)
+    reg SetNumIterations 16000 4000 4000 4000
+    reg SetLambdaDisplacement .2 0.1 0.05 0.01
+    reg SetLambdaRotation 0.00005 0.00002 0.000005 0.000001
+    reg SetSampleSize 50
+    reg SetSigmaUU 2
+    reg SetSigmaVV 2
+    reg SetSigmaV 4
+    reg SetPMin 0.01
+    reg SetUpdateIterations 200
+
+    # Initialize (downsample images)
+    set res -1
+    set resDisplay 3
+    set Gui(progressText) "MI Initializing"
+    MainStartProgress
+    MainShowProgress reg
     reg Update
-    set final [reg GetFinalPose]
-    puts "finalPose = [$final GetElement 0 3]"
 
-    # Transfer values from finalPose to active transform
-    $tran SetMatrix $final
-    for {set i 0} {$i < 10} {incr i} {
+    # Iterate
+    while {[reg GetInProgress] == 1} {
         reg Update
-        puts "finalPose = [$final GetElement 0 3]"
-        
-        # Update all MRML
-        MainUpdateMRML
-        Render$Matrix(render)
-    }
 
-    # Cleanup
-    reg Delete
+        # Update the pose (set the transform's matrix)
+        set currentPose [reg GetCurrentPose]
+        $currentPose ConvertToMatrix4x4 $matrix
+        $matrix Invert
+
+        # If we're not done, then display intermediate results
+        if {[reg GetInProgress] == 1} {
+
+          # Print out the current status
+          set res  [reg GetResolution]
+          set iter [reg GetIteration]
+          set Gui(progressText) "MI res=$res iter=$iter"
+          MainShowProgress reg
+
+          # Update the image data to display
+          # Copy the new Subject if its resolution changed since last update
+          if {$res != $resDisplay} {
+            puts "Current Pose  at res=$res is: [$currentPose Print]"
+            set resDisplay $res
+            AlignmentsCopyRegImages $res $r $v
+          }
+        }
+
+        # Update MRML and display
+        MainUpdateMRML
+        RenderAll
+   }
+   MainEndProgress
+
+   # Cleanup
+   refTrans Delete
+   subTrans Delete
+   initMatrix Delete
+   initPose Delete
+   reg Delete
+}
+
+#-------------------------------------------------------------------------------
+# .PROC AlignmentsCopyRegImages
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc AlignmentsCopyRegImages {res r v} {
+  global Volume
+
+  #
+  # Copy Subject
+  #
+
+  # Copy the downsampled ImageData
+  vtkImageCopy copy
+  copy SetInput [reg GetSub $res]
+  copy Update
+  copy SetInput ""
+  Volume($v,vol) SetImageData [copy GetOutput]
+  copy SetOutput ""
+  copy Delete
+
+  # Copy the RasToIjk matrix of downsampled data
+  set imgMatrix [[reg GetSubRasToIjk $res] GetRasToIjk]
+  puts "Subject RasToIjk = [$imgMatrix Print]"
+  set n Volume($v,node)
+  set str [$n GetMatrixToString $imgMatrix]
+  $n SetRasToVtkMatrix $str
+  $n UseRasToVtkMatrixOn
+
+  # Update pipeline and GUI
+  MainVolumesUpdate $v
+
+  #
+  # Copy Reference
+  #
+
+  # Copy the downsampled ImageData
+  vtkImageCopy copy
+  copy SetInput [reg GetRef $res]
+  copy Update
+  copy SetInput ""
+  Volume($r,vol) SetImageData [copy GetOutput]
+  copy SetOutput ""
+  copy Delete
+
+  # Copy the RasToIjk matrix of downsampled data
+  set imgMatrix [[reg GetRefRasToIjk $res] GetRasToIjk]
+  # puts "Reference RasToIjk = [$imgMatrix Print]"
+  set n Volume($r,node)
+  set str [$n GetMatrixToString $imgMatrix]
+  $n SetRasToVtkMatrix $str
+  $n UseRasToVtkMatrixOn
+
+  # Update pipeline and GUI
+  MainVolumesUpdate $r
 }
 
 #-------------------------------------------------------------------------------
