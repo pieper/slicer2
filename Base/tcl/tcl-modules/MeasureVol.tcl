@@ -97,7 +97,7 @@ proc MeasureVolInit {} {
     # Set version info
     #------------------------------------
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.4 $} {$Date: 2000/11/03 03:21:44 $}]
+	    {$Revision: 1.5 $} {$Date: 2000/11/03 04:32:16 $}]
     
     # Initialize module-level variables
     #------------------------------------
@@ -481,7 +481,6 @@ proc MeasureVolVolume {} {
     # delete objects we created
     measure Delete
     clip Delete
-    puts "Lauren check file exists"
 
     # display the output that was written to the file.
     set in [open $MeasureVol(fileName)]
