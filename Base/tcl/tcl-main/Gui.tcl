@@ -57,20 +57,41 @@ proc GuiInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo Gui \
-		{$Revision: 1.24 $} {$Date: 2001/04/04 21:13:16 $}]
+		{$Revision: 1.25 $} {$Date: 2001/04/05 23:11:33 $}]
 
+        # Are we running under Windows?
 	if {$tcl_platform(platform) == "windows"} {
 		set Gui(pc) 1
 	} else {
 		set Gui(pc) 0
 	}
-	if {$Gui(pc) == 0} {
-		set Gui(smallFont) 0
-		set Gui(xViewer) 254
+        # Are we running under Linux?
+	if {$tcl_platform(os) == "Linux"} {
+		set Gui(linux) 1
 	} else {
-		set Gui(smallFont) 1
-		set Gui(xViewer) 244
+		set Gui(linux) 0
 	}
+	# Else we assume we're under Solaris
+
+	# handle font sizes across machines:
+	set Gui(smallFont) 0
+	set Gui(largeFont) 0
+	if {$Gui(pc) == 1} {
+	    # small font for Windows display
+	    set Gui(smallFont) 1
+	} else {
+	    # make font larger for Linux display
+	    if {$Gui(linux) == 1} {
+		set Gui(largeFont) 1
+	    }
+	}
+
+	if {$Gui(pc) == 0} {
+	    set Gui(xViewer) 254
+	} else {
+	    set Gui(xViewer) 244
+	}
+
 	set Gui(progressText) "Working..."
 	set Gui(waitWin) ""
 	set Gui(title) "3D Slicer"
@@ -222,13 +243,17 @@ proc GuiInit {} {
 	lappend attr SMA 
 	set Gui(SMA) { -tearoff 0}
 
-	# Change font to large
+	# Change font to large 
 	if {$Gui(smallFont) == 0} {
-		foreach a $attr {
-			regsub {helvetica 8} $Gui($a) {helvetica 10 bold} Gui($a)
-		} 
+	    if {$Gui(largeFont) == 1} {
+		set newfont {helvetica 12 bold} 
+	    } else {
+		set newfont {helvetica 10 bold} 
+	    }
+	    foreach a $attr {
+		regsub {helvetica 8} $Gui($a) $newfont Gui($a)
+	    } 
 	}
-
 
 	# Workspace Scrollbar Attributes (WSBA)
 	lappend attr WSBA 
