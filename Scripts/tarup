@@ -20,9 +20,6 @@ cp -r ../cvs/slicer/program .
 echo Copy the doc directory
 cp -r ../cvs/slicer/doc .
 
-echo Copy tclsh
-cp /local/share/src/tcl8.2.2/unix/tclsh program/bin
-
 echo Copy tcl tcl binaries
 mkdir lib
 cp /local/share/src/tcl8.2.2/unix/libtcl8.2.so lib
@@ -41,6 +38,9 @@ cp /local/src/vtk3.01/local/*.so lib
 
 echo Copy vtk executable
 cp /local/src/vtk3.01/tcl/vtk program
+
+echo Copy tclsh
+cp /local/share/src/tcl8.2.2/unix/tclsh program
 
 echo Copy vtk scripts 
 cp ../cvs/slicer/slicer2k .

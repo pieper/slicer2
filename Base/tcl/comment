@@ -1,4 +1,6 @@
-#!/usr/local/bin/tclsh8.0
+#!/d/bigdaily/lauren/slicer/program/tclsh
+puts hi
+exit
 #=auto==========================================================================
 # Copyright (c) 1999 Surgical Planning Lab, Brigham and Women's Hospital
 #  
@@ -6,7 +8,7 @@
 # The following terms apply to all files associated with the software unless
 # explicitly disclaimed in individual files.   
 # 
-# The authors hereby grant permission to use, copy, and distribute this
+# The authors hereby grant permission to use, copy, (but NOT distribute) this
 # software and its documentation for any NON-COMMERCIAL purpose, provided
 # that existing copyright notices are retained verbatim in all copies.
 # The authors grant permission to modify this software and its documentation 
@@ -36,8 +38,6 @@
 #   Polish
 #==========================================================================auto=
 
-source /export/bigsur/vtk/comment.tcl
-
 if {$argc < 1} {
 	puts "Usage: comment <filename> [-v]"
 	exit
@@ -59,7 +59,7 @@ proc PrintCopyright {fid isTcl} {
 # The following terms apply to all files associated with the software unless
 # explicitly disclaimed in individual files.   
 # 
-# The authors hereby grant permission to use, copy, and distribute this
+# The authors hereby grant permission to use, copy, (but NOT distribute) this
 # software and its documentation for any NON-COMMERCIAL purpose, provided
 # that existing copyright notices are retained verbatim in all copies.
 # The authors grant permission to modify this software and its documentation 
@@ -86,7 +86,7 @@ Direct all questions on this copyright to slicer@ai.mit.edu.
 The following terms apply to all files associated with the software unless
 explicitly disclaimed in individual files.   
 
-The authors hereby grant permission to use, copy, and distribute this
+The authors hereby grant permission to use, copy (but NOT distribute) this
 software and its documentation for any NON-COMMERCIAL purpose, provided
 that existing copyright notices are retained verbatim in all copies.
 The authors grant permission to modify this software and its documentation 
