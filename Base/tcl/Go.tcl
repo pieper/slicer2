@@ -155,6 +155,7 @@ place .splash.t -relx 0.5 -rely 0.75 -anchor center
 after 7000 "destroy .splash; image delete $splashim"
 proc raisesplash {} { if {[winfo exists .splash]} {raise .splash; after 100 "after idle raisesplash"}}
 raisesplash
+update
 
 
 #
@@ -460,7 +461,10 @@ if {$verbose == 1} {
 }
 
 # Bootup
+global View
+set View(render_on) 1
 MainBoot [lindex $argv 0]
+set View(render_on) 0
 
 
 # override the built in exit routine to provide cleanup
