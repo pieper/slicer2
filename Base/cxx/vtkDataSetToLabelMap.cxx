@@ -1,6 +1,8 @@
 //#include <math.h>
 //#include <stdio.h>
-
+#include "vtkPointData.h"
+#include "vtkPoints.h"
+#include "vtkCell.h"
 #include "vtkDataSetToLabelMap.h"
 #include "vtkIntArray.h"
 #include "vtkObjectFactory.h"

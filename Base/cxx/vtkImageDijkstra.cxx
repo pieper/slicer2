@@ -1,3 +1,4 @@
+#include "vtkPointData.h"
 #include "vtkImageDijkstra.h"
 #include <math.h>
 #include <stdlib.h>

@@ -23,6 +23,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 =========================================================================auto=*/
 #include <stdio.h>
 #include <string.h>
+#include "vtkPointData.h"
 #include "vtkMrmlSlicer.h"
 #include "vtkObjectFactory.h"
 #include "vtkImageCanvasSource2D.h"

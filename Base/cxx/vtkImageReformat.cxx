@@ -21,6 +21,7 @@ THE SOFTWARE IS PROVIDED "AS IS."  MIT HAS NO OBLIGATION TO PROVIDE
 MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 =========================================================================auto=*/
+#include "vtkPointData.h"
 #include "vtkImageReformat.h"
 #include "vtkObjectFactory.h"
 #include "vtkPointData.h"
