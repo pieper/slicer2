@@ -69,7 +69,7 @@ proc MainFileInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainFile \
-        {$Revision: 1.42 $} {$Date: 2002/10/24 22:33:55 $}]
+        {$Revision: 1.43 $} {$Date: 2002/11/12 12:58:50 $}]
 
     set File(filePrefix) data
 }
@@ -713,7 +713,11 @@ proc MainFileGetRelativeDirPrefix {dir} {
             break
         }
     }
-    return "[eval file join $prefixlist] [eval file join $dirlist]"
+    if { $prefixlist != "" } {
+        return "[eval file join $prefixlist] [eval file join $dirlist]"
+    } else {
+        return "{} [eval file join $dirlist]"
+    }
 }
 
 #-------------------------------------------------------------------------------
