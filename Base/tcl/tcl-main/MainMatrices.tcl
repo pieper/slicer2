@@ -28,6 +28,9 @@
 #   MainMatricesCreate
 #   MainMatricesDelete
 #   MainMatricesSetActive
+#   MatricesSetMatrix str
+#   MatricesValidateMatrix
+#   MatricesSetMatrixIntoNode m
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -42,9 +45,9 @@ proc MainMatricesInit {} {
     # Define Procedures
     lappend Module(procVTK)  MainMatricesBuildVTK
 
-        # Set version info
-        lappend Module(versions) [ParseCVSInfo MainMatrices \
-        {$Revision: 1.15 $} {$Date: 2002/03/21 23:05:22 $}]
+    # Set version info
+    lappend Module(versions) [ParseCVSInfo MainMatrices \
+            {$Revision: 1.16 $} {$Date: 2002/04/08 23:02:19 $}]
 
     # Append widgets to list that gets refreshed during UpdateMRML
     set Matrix(mbActiveList) ""
@@ -63,7 +66,14 @@ proc MainMatricesInit {} {
     # Props
     set Matrix(name) "manual"
     set Matrix(desc) ""
-    set Matrix(matrix) "1 0 0 0  0 1 0 0  0 0 1 0  0 0 0 1"
+
+    # size of current matrix
+    set Matrix(rows) {0 1 2 3}
+    set Matrix(cols) {0 1 2 3}
+    # Initialize to default matrix, I
+    MatricesSetMatrix "1 0 0 0  0 1 0 0  0 0 1 0  0 0 0 1"
+
+
 }
 
 #-------------------------------------------------------------------------------
@@ -101,7 +111,7 @@ proc MainMatricesUpdateMRML {} {
         $m delete 0 end
         foreach t $Matrix(idList) {
             $m add command -label [Matrix($t,node) GetName] \
-                -command "MainMatricesSetActive $t"
+                    -command "MainMatricesSetActive $t"
         }
     }
 
@@ -191,7 +201,7 @@ proc MainMatricesSetActive {t} {
     if {$t != "" && $t != "NEW" && $t == $Matrix(activeID)} {
         set Matrix(name)   [Matrix($t,node) GetName]
         set Matrix(desc)   [Matrix($t,node) GetDescription]
-        set Matrix(matrix) [Matrix($t,node) GetMatrix]
+        MatricesSetMatrix [Matrix($t,node) GetMatrix]
         set mat [[Matrix($t,node) GetTransform] GetMatrix]
         set Matrix(regTranLR) [$mat GetElement 0 3]
         set Matrix(regTranPA) [$mat GetElement 1 3]
@@ -220,7 +230,7 @@ proc MainMatricesSetActive {t} {
         vtkMrmlMatrixNode default
         set Matrix(name)   "manual"
         set Matrix(desc)   [default GetDescription]
-        set Matrix(matrix) [default GetMatrix]
+        MatricesSetMatrix [default GetMatrix]
         default Delete
         set Matrix(regTranLR) 0
         set Matrix(regTranPA) 0
@@ -233,7 +243,7 @@ proc MainMatricesSetActive {t} {
         # Update GUI
         set Matrix(name)   [Matrix($t,node) GetName]
         set Matrix(desc)   [Matrix($t,node) GetDescription]
-        set Matrix(matrix) [Matrix($t,node) GetMatrix]
+        MatricesSetMatrix [Matrix($t,node) GetMatrix]
         set mat [[Matrix($t,node) GetTransform] GetMatrix]
         set Matrix(regTranLR) [$mat GetElement 0 3]
         set Matrix(regTranPA) [$mat GetElement 1 3]
@@ -246,3 +256,76 @@ proc MainMatricesSetActive {t} {
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MatricesSetMatrix
+# Set the matrix displayed on the GUI.
+# .ARGS
+# string str 16 numbers in row-major order.
+# .END
+#-------------------------------------------------------------------------------
+proc MatricesSetMatrix {str} {
+    global Matrix
+
+    set count 0
+
+    foreach i $Matrix(rows) {
+        foreach j $Matrix(cols) {
+            set Matrix(matrix,$i,$j) [lindex $str $count]
+            incr count
+        }
+    }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MatricesValidateMatrix
+# Validate each number in the matrix in the GUI.
+# If a number is no good (not a float), pops up an error window.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MatricesValidateMatrix {} {
+    global Matrix
+
+    set okay 1
+
+    foreach i $Matrix(rows) {
+        foreach j $Matrix(cols) {
+            if {[ValidateFloat $Matrix(matrix,$i,$j)] == 0} {
+                set okay 0
+                set badrow $i
+                set badcol $j
+                set badnum $Matrix(matrix,$i,$j)
+            }
+        }
+    }
+
+    if {$okay == 0} {
+        tk_messageBox -message \
+                "The matrix must be 16 numbers \n\
+                to form a 4-by-4 row-major matrix,\n\
+                but '$badnum' at row $badrow, column $badcol \n\
+                is not a floating point number."
+    }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MatricesSetMatrixIntoNode
+# Set the matrix from the GUI into a vtkMrmlMatrixNode.
+# .ARGS
+# int m ID number of the Matrix node to set the matrix for
+# .END
+#-------------------------------------------------------------------------------
+proc MatricesSetMatrixIntoNode {m} {
+
+    # this replaces the old code:
+    #Matrix($m,node) SetMatrix $Matrix(matrix)
+
+    set str ""
+    foreach i $Matrix(rows) {
+        foreach j $Matrix(cols) {
+            set str [lappend $str $Matrix(matrix,$i,$j)]
+        }
+    }
+
+    Matrix($m,node) SetMatrix $str
+}

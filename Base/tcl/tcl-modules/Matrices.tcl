@@ -73,7 +73,7 @@ proc MatricesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.27 $} {$Date: 2002/03/21 23:05:26 $}]
+            {$Revision: 1.28 $} {$Date: 2002/04/08 23:02:28 $}]
 
     # Props
     set Matrix(propertyType) Basic
@@ -95,9 +95,9 @@ proc MatricesInit {} {
     set Matrix(prevTranPA) 0
     set Matrix(prevTranIS) 0
     set Matrix(rotAxis) "XX"
-        set Matrix(regRotLR) 0
-        set Matrix(regRotIS) 0
-        set Matrix(regRotPA) 0
+    set Matrix(regRotLR) 0
+    set Matrix(regRotIS) 0
+    set Matrix(regRotPA) 0
 }
 
 #-------------------------------------------------------------------------------
@@ -128,7 +128,7 @@ proc MatricesUpdateMRML {} {
     foreach v $Volume(idList) {
         if {$v != $Volume(idNone) && [Volume($v,node) GetLabelMap] == "0"} {
             $m add command -label "[Volume($v,node) GetName]" \
-                -command "MatricesSetVolume $v"
+                    -command "MatricesSetVolume $v"
         }
     }
 
@@ -139,7 +139,7 @@ proc MatricesUpdateMRML {} {
     foreach v $Volume(idList) {
         if {$v != $Volume(idNone) && [Volume($v,node) GetLabelMap] == "0"} {
             $m add command -label "[Volume($v,node) GetName]" \
-                -command "MatricesSetRefVolume $v"
+                    -command "MatricesSetRefVolume $v"
         }
     }
 }
@@ -173,25 +173,25 @@ proc MatricesBuildGUI {} {
     # Help frame
     #-------------------------------------------
     set help "
-Description by tab:<BR>
-<UL>
-<LI><B>Props:</B> Directly set the matrix. The line of 16 numbers are
-in order of the first row, second row, etc. Click <B>Advanced</B> to
-copy one of the matrices derived from the header of a volume.
-<BR><LI><B>Manual:</B> Set the matrix using manual rigid registration
-with 6 degrees of freedom (3 translation, 3 rotation). 
-Either move the sliders, or click the left mouse button on a slice window 
-and drag it.  The <B>Mouse Action</B> buttons indicate whether to translate
-or rotate the volume in the Slice windows.  
-<BR><B>TIP:</B> The <B>Render</B> buttons indicate which windows to render
-as you move the sliders or mouse.  Rendering just one slice is much faster.
-<BR><LI><B>Auto:</B> Automatic registration using the method of Mutual 
-Information (MI) will set the matrix to the transformation matrix needed
-to align the <B>Volume to Move</B> with the <B>Reference Vol.</B>. 
-<BR><B>TIP:</B> Set the <B>Run Speed</B> to <I>Fast</I> if the 2 volumes 
-are already roughly aligned.
-<BR><B>Fiducial:</B> Fiducial registration is not available in this version.
-</UL>"
+    Description by tab:<BR>
+    <UL>
+    <LI><B>Props:</B> Directly set the matrix. The line of 16 numbers are
+    in order of the first row, second row, etc. Click <B>Advanced</B> to
+    copy one of the matrices derived from the header of a volume.
+    <BR><LI><B>Manual:</B> Set the matrix using manual rigid registration
+    with 6 degrees of freedom (3 translation, 3 rotation). 
+    Either move the sliders, or click the left mouse button on a slice window 
+    and drag it.  The <B>Mouse Action</B> buttons indicate whether to translate
+    or rotate the volume in the Slice windows.  
+    <BR><B>TIP:</B> The <B>Render</B> buttons indicate which windows to render
+    as you move the sliders or mouse.  Rendering just one slice is much faster.
+    <BR><LI><B>Auto:</B> Automatic registration using the method of Mutual 
+    Information (MI) will set the matrix to the transformation matrix needed
+    to align the <B>Volume to Move</B> with the <B>Reference Vol.</B>. 
+    <BR><B>TIP:</B> Set the <B>Run Speed</B> to <I>Fast</I> if the 2 volumes 
+    are already roughly aligned.
+    <BR><B>Fiducial:</B> Fiducial registration is not available in this version.
+    </UL>"
     regsub -all "\n" $help { } help
     MainHelpApplyTags Matrices $help
     MainHelpBuildGUI  Matrices
@@ -235,7 +235,7 @@ are already roughly aligned.
 
     eval {label $f.lActive -text "Active Matrix: "} $Gui(BLA)
     eval {menubutton $f.mbActive -text "None" -relief raised -bd 2 -width 20 \
-        -menu $f.mbActive.m} $Gui(WMBA)
+            -menu $f.mbActive.m} $Gui(WMBA)
     eval {menu $f.mbActive.m} $Gui(WMA)
     pack $f.lActive $f.mbActive -side left
 
@@ -252,9 +252,9 @@ are already roughly aligned.
     frame $f.f -bg $Gui(backdrop)
     foreach p "Basic Advanced" {
         eval {radiobutton $f.f.r$p \
-            -text "$p" -command "MatricesSetPropertyType" \
-            -variable Matrix(propertyType) -value $p -width 8 \
-            -indicatoron 0} $Gui(WCA)
+                -text "$p" -command "MatricesSetPropertyType" \
+                -variable Matrix(propertyType) -value $p -width 8 \
+                -indicatoron 0} $Gui(WCA)
         pack $f.f.r$p -side left -padx 0
     }
     pack $f.l $f.f -side left -padx $Gui(pad) -fill x -anchor w
@@ -268,7 +268,7 @@ are already roughly aligned.
     frame $f.fMatrix  -bg $Gui(activeWorkspace)
     frame $f.fApply   -bg $Gui(activeWorkspace)
     pack $f.fName $f.fMatrix $f.fApply \
-        -side top -fill x -pady $Gui(pad)
+            -side top -fill x -pady $Gui(pad)
 
     #-------------------------------------------
     # Props->Bot->Advanced frame
@@ -279,7 +279,7 @@ are already roughly aligned.
     frame $f.fVolume  -bg $Gui(activeWorkspace) -relief groove -bd 3
     frame $f.fApply   -bg $Gui(activeWorkspace)
     pack $f.fDesc $f.fVolume $f.fApply \
-        -side top -fill x -pady $Gui(pad)
+            -side top -fill x -pady $Gui(pad)
 
     #-------------------------------------------
     # Props->Bot->Basic->Name frame
@@ -297,19 +297,30 @@ are already roughly aligned.
     set f $fProps.fBot.fBasic.fMatrix
 
     eval {label $f.l -text "Matrix:" } $Gui(WLA)
-    eval {entry $f.e -textvariable Matrix(matrix)} $Gui(WEA)
     pack $f.l -side top -padx $Gui(pad) -anchor w
-    pack $f.e -side top -padx $Gui(pad)  -anchor w -expand 1 -fill x
 
+    foreach row $Matrix(rows) {
+        set f $fProps.fBot.fBasic.fMatrix
+        frame $f.f$row -bg $Gui(activeWorkspace)
+        pack $f.f$row -side top -padx $Gui(pad) -pady $Gui(pad)
+        set f $f.f$row
+        foreach col $Matrix(cols) {
+            eval {entry $f.e$col -width 5 \
+                    -textvariable \
+                    Matrix(matrix,$row,$col) \
+                } $Gui(WEA)
+            pack $f.e$col -side left -padx $Gui(pad) -pady 2        
+        }
+    }  
     #-------------------------------------------
     # Props->Bot->Basic->Apply frame
     #-------------------------------------------
     set f $fProps.fBot.fBasic.fApply
 
     eval {button $f.bApply -text "Apply" \
-        -command "MatricesPropsApply; RenderAll"} $Gui(WBA) {-width 8}
+            -command "MatricesPropsApply; RenderAll"} $Gui(WBA) {-width 8}
     eval {button $f.bCancel -text "Cancel" \
-        -command "MatricesPropsCancel"} $Gui(WBA) {-width 8}
+            -command "MatricesPropsCancel"} $Gui(WBA) {-width 8}
     grid $f.bApply $f.bCancel -padx $Gui(pad) -pady $Gui(pad)
 
     #-------------------------------------------
@@ -331,7 +342,7 @@ are already roughly aligned.
     frame $f.fVolume  -bg $Gui(activeWorkspace)
     frame $f.fMatrix  -bg $Gui(activeWorkspace)
     pack $f.l $f.fVolume $f.fMatrix \
-        -side top -fill x -pady $Gui(pad)
+            -side top -fill x -pady $Gui(pad)
 
     #-------------------------------------------
     # Props->Bot->Advanced->Volume->Volume frame
@@ -340,7 +351,7 @@ are already roughly aligned.
 
     eval {label $f.lActive -text "Volume: "} $Gui(WLA)
     eval {menubutton $f.mbActive -text "None" -relief raised -bd 2 -width 20 \
-        -menu $f.mbActive.m} $Gui(WMBA)
+            -menu $f.mbActive.m} $Gui(WMBA)
     eval {menu $f.mbActive.m} $Gui(WMA)
     pack $f.lActive $f.mbActive -side left -pady $Gui(pad) -padx $Gui(pad)
 
@@ -357,7 +368,7 @@ are already roughly aligned.
     # ------------------------------------
     eval {label $f.l -text "Type of Matrix: "} $Gui(WLA)
     eval {menubutton $f.mb -text "$Matrix(volumeMatrix)" -relief raised -bd 2 -width 20 \
-        -menu $f.mb.m} $Gui(WMBA)
+            -menu $f.mb.m} $Gui(WMBA)
     set Matrix(mbVolumeMatrix) $f.mb
     eval {menu $f.mb.m} $Gui(WMA)
     pack $f.l $f.mb -side left -pady $Gui(pad) -padx $Gui(pad)
@@ -372,9 +383,9 @@ are already roughly aligned.
     set f $fProps.fBot.fAdvanced.fApply
 
     eval {button $f.bApply -text "Apply" \
-        -command "MatricesPropsApply; RenderAll"} $Gui(WBA) {-width 8}
+            -command "MatricesPropsApply; RenderAll"} $Gui(WBA) {-width 8}
     eval {button $f.bCancel -text "Cancel" \
-        -command "MatricesPropsCancel"} $Gui(WBA) {-width 8}
+            -command "MatricesPropsCancel"} $Gui(WBA) {-width 8}
     grid $f.bApply $f.bCancel -padx $Gui(pad) -pady $Gui(pad)
 
     #-------------------------------------------
@@ -391,7 +402,7 @@ are already roughly aligned.
     frame $f.fBtns      -bg $Gui(activeWorkspace)
     frame $f.fMouse    -bg $Gui(activeWorkspace)
     pack $f.fActive $f.fRender  $f.fTranslate $f.fRotate $f.fBtns $f.fMouse\
-        -side top -pady 4 -padx $Gui(pad) -fill x
+            -side top -pady 4 -padx $Gui(pad) -fill x
 
     #-------------------------------------------
     # Manual->Btns frame
@@ -399,9 +410,9 @@ are already roughly aligned.
     set f $fManual.fBtns
 
     eval {button $f.bIdentity -text "Identity" \
-        -command "MatricesIdentity; RenderAll"} $Gui(WBA) {-width 8}
+            -command "MatricesIdentity; RenderAll"} $Gui(WBA) {-width 8}
     eval {button $f.bInvert -text "Invert" \
-        -command "MatricesInvert; RenderAll"} $Gui(WBA) {-width 8}
+            -command "MatricesInvert; RenderAll"} $Gui(WBA) {-width 8}
     grid $f.bIdentity $f.bInvert -padx $Gui(pad) -pady $Gui(pad)
 
     #-------------------------------------------
@@ -411,7 +422,7 @@ are already roughly aligned.
 
     eval {label $f.lActive -text "Active Matrix: "} $Gui(BLA)
     eval {menubutton $f.mbActive -text "None" -relief raised -bd 2 -width 20 \
-        -menu $f.mbActive.m} $Gui(WMBA)
+            -menu $f.mbActive.m} $Gui(WMBA)
     eval {menu $f.mbActive.m} $Gui(WMA)
     pack $f.lActive $f.mbActive -side left -pady $Gui(pad) -padx $Gui(pad)
 
@@ -431,8 +442,8 @@ are already roughly aligned.
     frame $f.f -bg $Gui(activeWorkspace)
     foreach mode $modes name $names {
         eval {radiobutton $f.f.r$mode -width [expr [string length $name]+1]\
-            -text "$name" -variable Matrix(render) -value $mode \
-            -indicatoron 0} $Gui(WCA)
+                -text "$name" -variable Matrix(render) -value $mode \
+                -indicatoron 0} $Gui(WCA)
         pack $f.f.r$mode -side left -padx 0 -pady 0
     }
     pack $f.l $f.f -side left -padx $Gui(pad) -fill x -anchor w
@@ -450,15 +461,15 @@ are already roughly aligned.
         eval {label $f.l${slider} -text "${slider} : "} $Gui(WLA)
 
         eval {entry $f.e${slider} -textvariable Matrix(regTran${slider}) \
-            -width 4} $Gui(WEA)
-            bind $f.e${slider} <Return> \
+                -width 4} $Gui(WEA)
+        bind $f.e${slider} <Return> \
                 "MatricesManualTranslate regTran${slider}"
-            bind $f.e${slider} <FocusOut> \
+        bind $f.e${slider} <FocusOut> \
                 "MatricesManualTranslate regTran${slider}"
 
         eval {scale $f.s${slider} -from -240 -to 240 -length 120 \
-            -command "MatricesManualTranslate regTran${slider}" \
-            -variable Matrix(regTran${slider}) -resolution 1} $Gui(WSA)
+                -command "MatricesManualTranslate regTran${slider}" \
+                -variable Matrix(regTran${slider}) -resolution 1} $Gui(WSA)
         bind $f.s${slider} <Leave> "MatricesManualTranslate regTran$slider"
 
         grid $f.l${slider} $f.e${slider} $f.s${slider} -pady 2
@@ -477,15 +488,15 @@ are already roughly aligned.
         eval {label $f.l${slider} -text "${slider} : "} $Gui(WLA)
 
         eval {entry $f.e${slider} -textvariable Matrix(regRot${slider}) \
-            -width 4} $Gui(WEA)
-            bind $f.e${slider} <Return> \
+                -width 4} $Gui(WEA)
+        bind $f.e${slider} <Return> \
                 "MatricesManualRotate regRot${slider}"
-            bind $f.e${slider} <FocusOut> \
+        bind $f.e${slider} <FocusOut> \
                 "MatricesManualRotate regRot${slider}"
 
         eval {scale $f.s${slider} -from -180 -to 180 -length 120 \
-            -command "MatricesManualRotate regRot${slider}" \
-            -variable Matrix(regRot${slider}) -resolution 1} $Gui(WSA)
+                -command "MatricesManualRotate regRot${slider}" \
+                -variable Matrix(regRot${slider}) -resolution 1} $Gui(WSA)
 
         grid $f.l${slider} $f.e${slider} $f.s${slider} -pady 2
     }
@@ -503,13 +514,13 @@ are already roughly aligned.
     pack $f.fTitle.l
 
     foreach text "Translate Rotate" value "Translate Rotate" \
-        width "10 7" {
+            width "10 7" {
         eval {radiobutton $f.fBtns.rSpeed$value -width $width \
-            -text "$text" -value "$value" -variable Matrix(mouse) \
-            -indicatoron 0} $Gui(WCA)
+                -text "$text" -value "$value" -variable Matrix(mouse) \
+                -indicatoron 0} $Gui(WCA)
         pack $f.fBtns.rSpeed$value -side left -padx 0 -pady 0
         TooltipAdd  $f.fBtns.rSpeed$value  \
-        "$value volumes in the Slice Window"
+                "$value volumes in the Slice Window"
 
     }
 
@@ -528,7 +539,7 @@ are already roughly aligned.
     frame $f.fRun     -bg $Gui(activeWorkspace)
 
     pack $f.fActive  $f.fVolumes $f.fDesc $f.fSpeed $f.fRun \
-        -side top -pady $Gui(pad) -padx $Gui(pad) -fill x
+            -side top -pady $Gui(pad) -padx $Gui(pad) -fill x
 
     #-------------------------------------------
     # Auto->Active frame
@@ -537,7 +548,7 @@ are already roughly aligned.
 
     eval {label $f.lActive -text "Active Matrix: "} $Gui(BLA)
     eval {menubutton $f.mbActive -text "None" -relief raised -bd 2 -width 20 \
-        -menu $f.mbActive.m} $Gui(WMBA)
+            -menu $f.mbActive.m} $Gui(WMBA)
     eval {menu $f.mbActive.m} $Gui(WMA)
     pack $f.lActive $f.mbActive -side left -pady $Gui(pad) -padx $Gui(pad)
 
@@ -552,12 +563,12 @@ are already roughly aligned.
 
     eval {label $f.lVolume -text "Volume to Move"} $Gui(WLA)
     eval {menubutton $f.mbVolume -text "None" \
-        -relief raised -bd 2 -width 13 -menu $f.mbVolume.m} $Gui(WMBA)
+            -relief raised -bd 2 -width 13 -menu $f.mbVolume.m} $Gui(WMBA)
     eval {menu $f.mbVolume.m} $Gui(WMA)
 
     eval {label $f.lRefVolume -text "Reference Vol."} $Gui(WLA)
     eval {menubutton $f.mbRefVolume -text "None" \
-        -relief raised -bd 2 -width 13 -menu $f.mbRefVolume.m} $Gui(WMBA)
+            -relief raised -bd 2 -width 13 -menu $f.mbRefVolume.m} $Gui(WMBA)
     eval {menu $f.mbRefVolume.m} $Gui(WMA)
     grid $f.lVolume $f.mbVolume -sticky e -padx $Gui(pad) -pady $Gui(pad)
     grid $f.mbVolume -sticky w
@@ -574,12 +585,12 @@ are already roughly aligned.
     set f $fAuto.fDesc
 
     eval {label $f.l -justify left -text "\
-        Press 'Run' to start the program\n\
-        that performs automatic registration\n\
-        by Mutual Information.\n\
-        Your manual registration is used\n\
-        as an initial pose.\
-        "} $Gui(WLA)
+            Press 'Run' to start the program\n\
+            that performs automatic registration\n\
+            by Mutual Information.\n\
+            Your manual registration is used\n\
+            as an initial pose.\
+            "} $Gui(WLA)
     pack $f.l
     
     #-------------------------------------------
@@ -595,10 +606,10 @@ are already roughly aligned.
     pack $f.fTitle.lSpeed
 
     foreach text "Fast Slow" value "Fast Slow" \
-        width "5 5" {
+            width "5 5" {
         eval {radiobutton $f.fBtns.rSpeed$value -width $width \
-            -text "$text" -value "$value" -variable Matrix(autoSpeed) \
-            -indicatoron 0} $Gui(WCA)
+                -text "$text" -value "$value" -variable Matrix(autoSpeed) \
+                -indicatoron 0} $Gui(WCA)
         pack $f.fBtns.rSpeed$value -side left -padx 0 -pady 0
     }
 
@@ -609,7 +620,7 @@ are already roughly aligned.
 
     foreach str "Run Cancel Undo" {
         eval {button $f.b$str -text "$str" -width [expr [string length $str]+1] \
-            -command "MatricesAuto$str"} $Gui(WBA)
+                -command "MatricesAuto$str"} $Gui(WBA)
         set Matrix(b$str) $f.b$str
     }
     pack $f.bRun $f.bUndo -side left -padx $Gui(pad) -pady $Gui(pad)
@@ -627,7 +638,7 @@ are already roughly aligned.
     frame $f.fPeter  -bg $Gui(activeWorkspace) -relief groove -bd 3
 
     pack $f.fActive $f.fPeter \
-        -side top -pady $Gui(pad) -padx $Gui(pad) -fill x
+            -side top -pady $Gui(pad) -padx $Gui(pad) -fill x
 
     #-------------------------------------------
     # Fiducial->Active frame
@@ -636,7 +647,7 @@ are already roughly aligned.
 
     eval {label $f.lActive -text "Active Matrix: "} $Gui(BLA)
     eval {menubutton $f.mbActive -text "None" -relief raised -bd 2 -width 20 \
-        -menu $f.mbActive.m} $Gui(WMBA)
+            -menu $f.mbActive.m} $Gui(WMBA)
     eval {menu $f.mbActive.m} $Gui(WMA)
     pack $f.lActive $f.mbActive -side left -pady $Gui(pad) -padx $Gui(pad)
 
@@ -656,8 +667,8 @@ proc MatricesSetVolumeMatrix {type} {
 
     set Matrix(volumeMatrix) $type
 
-        # update the button text
-        $Matrix(mbVolumeMatrix) config -text $type
+    # update the button text
+    $Matrix(mbVolumeMatrix) config -text $type
 }
 
 #-------------------------------------------------------------------------------
@@ -677,9 +688,9 @@ proc MatricesIdentity {} {
     
     [Matrix($m,node) GetTransform] Identity
     set Matrix(rotAxis) "XX"
-        set Matrix(regRotLR) 0
-        set Matrix(regRotIS) 0
-        set Matrix(regRotPA) 0
+    set Matrix(regRotLR) 0
+    set Matrix(regRotIS) 0
+    set Matrix(regRotPA) 0
     MainUpdateMRML
 }
 
@@ -699,9 +710,9 @@ proc MatricesInvert {} {
     
     [Matrix($m,node) GetTransform] Inverse
     set Matrix(rotAxis) "XX"
-        set Matrix(regRotLR) 0
-        set Matrix(regRotIS) 0
-        set Matrix(regRotPA) 0
+    set Matrix(regRotLR) 0
+    set Matrix(regRotIS) 0
+    set Matrix(regRotPA) 0
     MainUpdateMRML
 }
 
@@ -731,23 +742,9 @@ proc MatricesPropsApply {} {
         tk_messageBox -message "Please create a matrix first from the Data panel"
         Tab Data row1 List
     }
-        
-    # Validate Input
     
-    # Ensure matrix is 16 numbers
-    if {[llength $Matrix(matrix)] != 16} {
-        tk_messageBox -message \
-        "The matrix must be 16 numbers to form a 4-by-4 row-major matrix"
-        return
-    }
-    foreach n $Matrix(matrix) {
-        if {[ValidateFloat $n] == 0} {
-            tk_messageBox -message "\
-The matrix must be 16 numbers to form a 4-by-4 row-major matrix,\n\
-but '$n' is not a number."
-            return
-        }
-    }
+    # Validate Input
+    MatricesValidateMatrix
 
     # Validate name
     if {$Matrix(name) == ""} {
@@ -783,20 +780,20 @@ but '$n' is not a number."
     # If user wants to use the matrix from a volume, set it here
     set v $Volume(activeID)
     switch $Matrix(volumeMatrix) {
-    "None" {}
-    "ScaledIJK->RAS" {
-        set Matrix(matrix) [Volume($v,node) GetPositionMatrix]
-    }
-    "RAS->IJK" {
-        set Matrix(matrix) [Volume($v,node) GetRasToIjkMatrix]
-    }
-    "RAS->VTK" {
-        set Matrix(matrix) [Volume($v,node) GetRasToVtkMatrix]
-    }
+        "None" {}
+        "ScaledIJK->RAS" {
+            MatricesSetMatrix [Volume($v,node) GetPositionMatrix]
+        }
+        "RAS->IJK" {
+            MatricesSetMatrix [Volume($v,node) GetRasToIjkMatrix]
+        }
+        "RAS->VTK" {
+            MatricesSetMatrix [Volume($v,node) GetRasToVtkMatrix]
+        }
     }
 
     Matrix($m,node) SetName $Matrix(name)
-    Matrix($m,node) SetMatrix $Matrix(matrix)
+    MatricesSetMatrixIntoNode $m
 
     # Return to Basic
     if {$Matrix(propertyType) == "Advanced"} {
@@ -892,15 +889,15 @@ proc MatricesManualTranslate {param {value ""}} {
     # Update all MRML only if the values changed
     if {$oldVal != $value} {
         switch $param {
-        "regTranLR" {
-            $mat SetElement 0 3 $value
-        }
-        "regTranPA" {
-            $mat SetElement 1 3 $value
-        }
-        "regTranIS" {
-            $mat SetElement 2 3 $value
-        }
+            "regTranLR" {
+                $mat SetElement 0 3 $value
+            }
+            "regTranPA" {
+                $mat SetElement 1 3 $value
+            }
+            "regTranIS" {
+                $mat SetElement 2 3 $value
+            }
         }
         set Matrix(rotAxis) "XX"
         set Matrix(regRotLR) 0
@@ -968,28 +965,28 @@ proc MatricesManualTranslateDual {param1 value1 param2 value2} {
     # Update all MRML only if the values changed
     if {$oldVal1 != $value1} {
         switch $param1 {
-        "regTranLR" {
-            $mat SetElement 0 3 $value1
-        }
-        "regTranPA" {
-            $mat SetElement 1 3 $value1
-        }
-        "regTranIS" {
-            $mat SetElement 2 3 $value1
-        }
+            "regTranLR" {
+                $mat SetElement 0 3 $value1
+            }
+            "regTranPA" {
+                $mat SetElement 1 3 $value1
+            }
+            "regTranIS" {
+                $mat SetElement 2 3 $value1
+            }
         }
     }
     if {$oldVal2 != $value2} {
         switch $param2 {
-        "regTranLR" {
-            $mat SetElement 0 3 $value2
-        }
-        "regTranPA" {
-            $mat SetElement 1 3 $value2
-        }
-        "regTranIS" {
-            $mat SetElement 2 3 $value2
-        }
+            "regTranLR" {
+                $mat SetElement 0 3 $value2
+            }
+            "regTranPA" {
+                $mat SetElement 1 3 $value2
+            }
+            "regTranIS" {
+                $mat SetElement 2 3 $value2
+            }
         }
     }
     if {$oldVal2 != $value2 || $oldVal1 != $value1} {
@@ -1184,7 +1181,7 @@ proc MatricesAutoRun {} {
     # No-can-do on PCs
     if {$Gui(pc) == 1} {
         tk_messageBox -message "\
-Automatic registration is presently available only on UNIX systems."
+                Automatic registration is presently available only on UNIX systems."
         return
     }
 
@@ -1203,7 +1200,7 @@ Automatic registration is presently available only on UNIX systems."
     # Check that the volumes exist
     scan [Volume($v,node) GetImageRange] "%d %d" lo hi
     if {[CheckVolumeExists [Volume($v,node) GetFullPrefix] \
-        [Volume($v,node) GetFilePattern] $lo $hi] != ""} {
+            [Volume($v,node) GetFilePattern] $lo $hi] != ""} {
         set str "The [Volume($v,node) GetName] volume cannot be found on disk."
         puts $str
         tk_messageBox -message $str
@@ -1211,7 +1208,7 @@ Automatic registration is presently available only on UNIX systems."
     }
     scan [Volume($r,node) GetImageRange] "%d %d" lo hi
     if {[CheckVolumeExists [Volume($r,node) GetFullPrefix] \
-        [Volume($r,node) GetFilePattern] $lo $hi] != ""} {
+            [Volume($r,node) GetFilePattern] $lo $hi] != ""} {
         set str "The [Volume($r,node) GetName] volume cannot be found on disk."
         puts $str
         tk_messageBox -message $str
@@ -1233,8 +1230,8 @@ Automatic registration is presently available only on UNIX systems."
     if {[catch {close $fid} errorMessage]} {
         tk_messageBox -type ok -message "The following error occurred saving a file: ${errorMessage}"
         puts "Aborting due to : ${errorMessage}"
-           exit 1
-      }
+        exit 1
+    }
 
     # Command to run MI
     set argBin     "[file join $Path(program) mi-bin]"
@@ -1293,16 +1290,16 @@ proc MatricesAutoCancel {} {
 #-------------------------------------------------------------------------------
 proc MatricesPoll {} {
     global Matrix Gui
- 
+    
     set pid $Matrix(pid)
- 
+    
     if {$pid != ""} {
         catch {exec kill -0 $pid} errmsg
         if {$errmsg != ""} {
-           
+            
             # Stop polling
             set Matrix(pid) ""
-           
+            
             # Determine status (if file exists, then success)
             set filename $Matrix(autoOutput)
             set status 1 
@@ -1315,7 +1312,7 @@ proc MatricesPoll {} {
                 # Overwrite initial pose with final pose
                 MatricesAutoApply
                 set msg "Automatic registration completed successfully." 
-    
+                
                 # Delete the output file
                 catch {file delete $Matrix(autoOutput)}
                 catch {file delete $Matrix(autoInput)}
@@ -1329,11 +1326,11 @@ proc MatricesPoll {} {
             return
         }
     }
- 
+    
     # Poll every 10 seconds
     after 10000 MatricesPoll
 }
- 
+
 #-------------------------------------------------------------------------------
 # .PROC MatricesAutoApply
 # 
@@ -1360,7 +1357,7 @@ proc MatricesAutoApply {} {
     set n [MRMLCountTypeOfNode $dag Transform]
     if {$n == 0} {
         tk_messageBox -icon error -message \
-            "No transform nodes in MRML file '$filename'."
+                "No transform nodes in MRML file '$filename'."
         return
     }
 
@@ -1438,7 +1435,7 @@ proc MatricesB1 {x y} {
     set orient [Slicer GetOrientString $s]
     if {[lsearch "Axial Sagittal Coronal" $orient] == -1} {
         tk_messageBox -message \
-            "Set 'Orient' to Axial, Sagittal, or Coronal."
+                "Set 'Orient' to Axial, Sagittal, or Coronal."
         return
     }
     set Matrix(xHome) $x
@@ -1451,7 +1448,7 @@ proc MatricesB1 {x y} {
         Anno($s,r1,actor)  SetVisibility 1
         Anno($s,r1,source) SetPoint1 $x $y 0
         Anno($s,r1,source) SetPoint2 $x [expr $y+1] 0
-            
+        
         # To make this translation add to the current translation amount,
         # store the current amount.
         set Matrix(prevTranLR) $Matrix(regTranLR)
@@ -1489,7 +1486,7 @@ proc MatricesB1Motion {x y} {
 
     # Translate
     if {$Matrix(mouse) == "Translate"} {
-    
+        
         set xPixels [expr $x - $Matrix(xHome)]
         set yPixels [expr $y - $Matrix(yHome)]
         set xMm [PixelsToMm $xPixels $View(fov) 256 $Slice($s,zoom)]
@@ -1504,8 +1501,8 @@ proc MatricesB1Motion {x y} {
                 set text "LR: $xMm, PA: $yMm mm"
                 Anno($s,msg,mapper)  SetInput $text
                 MatricesManualTranslateDual \
-                    regTranLR [expr $xMm + $Matrix(prevTranLR)] \
-                    regTranPA [expr $yMm + $Matrix(prevTranPA)]
+                        regTranLR [expr $xMm + $Matrix(prevTranLR)] \
+                        regTranPA [expr $yMm + $Matrix(prevTranPA)]
             }
             Sagittal {
                 # X:A->P, Y:I->S
@@ -1513,8 +1510,8 @@ proc MatricesB1Motion {x y} {
                 set text "PA: $xMm, IS: $yMm mm"
                 Anno($s,msg,mapper)  SetInput $text
                 MatricesManualTranslateDual \
-                    regTranPA [expr $xMm + $Matrix(prevTranPA)] \
-                    regTranIS [expr $yMm + $Matrix(prevTranIS)]
+                        regTranPA [expr $xMm + $Matrix(prevTranPA)] \
+                        regTranIS [expr $yMm + $Matrix(prevTranIS)]
             }
             Coronal {
                 # X:R->L, Y:I->S
@@ -1522,20 +1519,20 @@ proc MatricesB1Motion {x y} {
                 set text "LR: $xMm, IS: $yMm mm"
                 Anno($s,msg,mapper)  SetInput $text
                 MatricesManualTranslateDual \
-                    regTranLR [expr $xMm + $Matrix(prevTranLR)] \
-                    regTranIS [expr $yMm + $Matrix(prevTranIS)]
+                        regTranLR [expr $xMm + $Matrix(prevTranLR)] \
+                        regTranIS [expr $yMm + $Matrix(prevTranIS)]
             }
         }
     }
 
     # Rotate
     if {$Matrix(mouse) == "Rotate"} {
-    
+        
         set degrees [Angle2D 128 128 $Matrix(xHome) $Matrix(yHome) \
-            128 128 $x $y]
+                128 128 $x $y]
         set degrees [expr int($degrees)]
         Anno($s,r2,source) SetPoint2 $x $y 0
-            
+        
         switch $orient {
             Axial {
                 # IS-axis
