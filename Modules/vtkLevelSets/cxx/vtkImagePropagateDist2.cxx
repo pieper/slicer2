@@ -1499,7 +1499,7 @@ void vtkImagePropagateDist2::new3D_update_neighbors2( const int& k,  int* n, flo
     register PD_element2& neighbor = list_elts[pn]; \
     list1[list1_size++]=pn; \
     neighbor.SetState(POINT_TRIAL_INLIST);\
-        val =    current_dist+sum;\
+    val =    DISTANCE(dx1,dy1,dz1);\
     if (buf[pn]<0)   val =  -val;\
     neighbor.SetPosTrack( dx1,dy1,dz1, tp, val);\
       }  break;\
@@ -1510,11 +1510,13 @@ void vtkImagePropagateDist2::new3D_update_neighbors2( const int& k,  int* n, flo
     register float     neigh_dist;\
 \
     neigh_dist = neighbor.GetSquareDist();\
-    val =  current_dist+sum;\
+    val = DISTANCE(dx1,dy1,dz1);\
     if (neigh_dist>0) \
       if (val<neigh_dist)  neighbor.SetPosTrack( dx1,dy1,dz1, tp,val);\
-    else \
-      if (-val>neigh_dist) neighbor.SetPosTrack( dx1,dy1,dz1, tp,-val);\
+    else {\
+      val=-val;\
+      if (val>neigh_dist) neighbor.SetPosTrack( dx1,dy1,dz1, tp,val);\
+    }\
       }  break;\
     } // end switch
 
