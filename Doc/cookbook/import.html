@@ -1,0 +1,84 @@
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<body bgcolor="#FFFFFF">
+
+
+<h2>
+<center>
+Understanding and Importing your data into the Slicer</h2></center>
+The slicer can read a number of different image formats, including:
+G.E. genesis, G.E. signa, DICOM, and noheader format. 
+</center>
+You can use the following sequence to load your data into the slicer:
+<ul>
+<li> type the command <br>
+slicer
+<li> select the data tab 
+<li> select the "Add Volume" tab
+</ul>
+At this point you should see the following:
+<center> 
+<p><img SRC="gifs/browser.gif" ></center> </a>
+<center> 
+<p><b>Slicer browser interface<p></B>
+</center>
+If your data is in DICOM format, hit the right-most Properties: button labelled DICOM (sometimes all of the letters of DICOM dont show up) and
+go to <br><A HREF="slicer_dicom.html">Reading DICOM data into 3D Slicer</A>
+<br>
+For other data formats hit the Browse ... button. The slicer will open the 
+browser in the directory where you started running slicer from. When you have 
+reached the directory where the data is, double-click on one of the images that you want to work on and then hit the Apply button. What the slicer does now
+is to try to figure out what kind of data you have so it can properly load and
+orient your data in the slicer. The slicer uses a program called <A HREF="print_header.html">print_header</A>.
+to read your data. If print_header works, the slicer will load your data and youwill be able to see your images. If print_header fails, slicer will display a
+message saying to enter the header information manually and the following 
+panel will be displayed:
+<center>
+<p><img SRC="gifs/header.jpg" ></center> </a>
+<center>
+<p><b>Default Slicer header parameters<p></B>
+</center>
+The parameters above are what is minimally required by the slicer in order
+to load your data. The slicer uses these parameters to determine the <em>geometry</em> of your data.  For example, lets assume you have 60 MR images and the parameters for your data are the same as the default parameters, then we (and the slicer) would know the following about your data:
+<ul>
+<li>The <em> Field Of View</em>(FOV) of your data or the distance across your image is the product of the pixel size and the width in pixels of the image so in this case the FOV, in millimeters(mm) would be .9375 x 256 = 240 mm
+<li> A <em>voxel</em> is a 3-dimensional pixel. The size of a voxel is the product of the pixel_size_width, the pixel_size_height and slice Thickness + slice Spacing so  in the  this case the voxel size is .9375 * .9375 * (1.5 + 0.0) = 1.3183 cubic mm
+<li> the <em>volume of a slice</em> is the voxel_size * Width in pixels * height in pixels so in this case the volume of a slice is 1.3183 * 256 * 256 = 86396 cubic mm.
+<li> The <em> total volume</em> of this dataset is the prouct of the volume of a slice  and the total number of slices so in this case the total volume of the dataset is  86396 * 60 slice = 5183760 cubic mm.
+</ul>
+The default parameters are commonly used parameters but 
+you will need to know the correct values to view your data properly. Most
+of these parameters should be self-explanatory, except the File Pattern:
+the default for this is %s.%03d  - this means that the slicer is able to
+read images numbered xxx.001 to xxx.highest_image_number
+if your images are numbered xxx.1 to xxx.highest_image_number you will need
+to change the file pattern to %s.%d
+When you have entered all of the parameters, correctly for your data, hit
+Apply and slicer will load the data.
+<p>
+Please note that when you have finished <A HREF="editor.html">editing your data,</A> the segmented/edited images 
+that the slicer writes out do not contain any header information. The slicer
+encodes this header information into a <em>mrml file</em> when you save  your 
+scene. This file describes the volumes that you have loaded into the slicer
+and how you have modified them using the slicers tools. 
+<p>
+In most cases you will want to load more than one dataset. To load more data,
+simply repeat the procedure above. Slicer typically will display at <em> one
+time </em> up to three datasets: a foreground, a background, and a segmented 
+dataset. To learn how this works please see 
+<LI> <A HREF="view.html"> viewing your data in the slicer</A>
+When the Data tab is active, the datasets that comprise the current scene are
+displayed in the panel labelled MRML File Contents (Current Scene): which looks
+like:
+<center>
+<p><img SRC="gifs/mrmlscene.gif" ></center> </a>
+</center>
+<center>
+<p><b>Description of Scene<p></B>
+</center>
+If some of your data is incorrect or you want to rearrange the order in which
+your data is loaded, you can move or delete it: click the left mouse on 
+the offending data and then click the right mouse and select from the menu  to either delete it or move it with cut and paste.
+<p>
+</body>
+</html>

@@ -1,0 +1,160 @@
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<body bgcolor="#FFFFFF">
+
+<h2>
+<center>
+print_header program</h2></center>
+
+the print_header program reads informtion from the image header if the
+header exists and tries to extract useful information to help you understand
+your data. print_header can usually read headers from the following datatypes:
+
+<ul>
+<li> G.E. signa data (this is usually old data)
+<li> Siemens Somatom 
+<li> G.E. genesis data (slicer was designed for this type of data originally
+but has been expanded to accomodate other formats.
+<li> DICOM data - the slicer program can usually read your dicom data directly. Please see 
+
+<br><A HREF="slicer_dicom.html">Reading DICOM data into 3D Slicer</A>
+
+But since dicom is a large and flexible spec 
+the DICOM naming convention is confusing to print_header. 
+if this is the case with your DICOM image names, you could 
+try the  <A HREF="#a">make_dicom_links</A> command
+
+</ul>
+
+To run the program simply type (assuming that you have an image called I.001)<br>
+<br>
+print_header I.001
+<br>
+<br>
+the print_header program will print out something like:
+<br>
+
+print_header V1.0
+ENTRY AND POSITION ARE 1 1 <br>
+input_prefix = I<br>
+output_prefix = <br>
+suffix = <none><br>
+filename_format = %s.%03d<br>
+patient_name = mrsmith<br>
+patient_sex = F<br>
+date = 8/25/93<br>
+time_hr_min_sec = 07:01:32<br>
+study_desc = *SPL*LINOMIDE<br>
+series_desc = *SPL*FILTER(2d2chan)<br>
+hospital_name = BRIGHAM WOMENS HARVARD BAY 2<br>
+patient_id = 05672720<br>
+exam_modality = MR<br>
+image_type_text = genesis<br>
+image_type = N/A<br>
+sop_instance_uid = N/A<br>
+image_time = N/A<br>
+manufacturer = N/A<br>
+referring_physician = <br>
+physician_reading_study = N/A<br>
+manufacturers_model_name = Ü<br>
+anatomic_structure = N/A<br>
+birth_date = N/A<br>
+weight = N/A<br>
+body_part_examined = N/A<br>
+repetition_time = N/A<br>
+echo_time = N/A<br>
+inversion_time = N/A<br>
+reconstruction_diameter = N/A<br>
+generator_power = N/A<br>
+series_in_study = N/A<br>
+images_in_acquisition = N/A<br>
+rescale_intercept = N/A<br>
+rescale_slope = N/A<br>
+requested_proc_desc = N/A<br>
+patient_age = 36<br>
+x_resolution = 256<br>
+y_resolution = 256<br>
+bytes_per_slice = 131072<br>
+header_size = 7900<br>
+slice_number = 1<br>
+image_type_num = 2<br>
+byte_order = 0<br>
+status = 1<br>
+number_echoes = 2<br>
+echo_number = 1<br>
+compressed = 0<br>
+first_slice = 1<br>
+last_slice = 1<br>
+num_missing = 0<br>
+bytes_per_pixel = 2<br>
+num_bytes_data = 131072<br>
+num_bytes_header = 7900<br>
+bits_stored = 65535<br>
+high_bit = 65535<br>
+bits_allocated = 65535<br>
+patient_position = HFS<br>
+patient_orientation = N/A<br>
+number_of_slices = 1<br>
+exam_number = 56168<br>
+series_number = 1<br>
+gantry_tilt = 0.100000<br>
+pixel_xsize = 0.937500<br>
+pixel_ysize = 0.937500<br>
+fov =  240.000000<br>
+aspect =  3.200000<br>
+thick =  3.000000<br>
+space =  0.000000<br>
+image_location =  -20.000000<br>
+coord_center_r =  0.000000<br>
+coord_center_a =  0.000000<br>
+coord_center_s =  -65.000000<br>
+coord_normal_r =  0.000000<br>
+coord_normal_a =  0.000000<br>
+coord_normal_s =  1.000000<br>
+coord_r_top_left =  120.000000<br>
+coord_a_top_left =  120.000000<br>
+coord_s_top_left =  -65.000000<br>
+coord_r_top_right =  -120.000000<br>
+coord_a_top_right =  120.000000<br>
+coord_s_top_right =  -65.000000<br>
+coord_r_bottom_right =  -120.000000<br>
+coord_a_bottom_right =  -120.000000<br>
+coord_s_bottom_right =  -65.000000<br>
+imagepositionpatient =  0.000000 0.000000 0.000000<br>
+imageorientationpatient =  0.000000 0.000000 0.000000 0.000000 0.000000 0.000000<br>
+There are several things to note about the output of print_header:
+<ul>
+<li> the information may not be correct, and will be inaccurate if you change 
+the images without changing the headers. 
+<li> not all of the parameters have meaning for all datatypes - 
+<li> print_header can read your data in compressed (.gz or .Z) format as well as
+uncompressed
+</ul>
+<P><A NAME="a"><B>make_dicom_links</B></A></P>
+
+If print_header cant read your DICOM data, it is often because of the 
+numbering schemes that some DICOM software uses. If this is the case with
+your data, try the following sequence of commands:
+<ul>
+<li> cd to the directory where your images are 
+<li> make sure there are only your images and no other files!
+<li> type the command: <br> make_spldicom_links
+</ul>
+this will create a <em>symbolic link</em> for each of your DICOM images. If you now list the files in this directory, you will see something like the following:
+<br>
+lrwxrwxrwx   1 mark           28 Jul  5 19:11 J.097 -> long_dicom_image_name_97.dcm<br>
+lrwxrwxrwx   1 mark           28 Jul  5 19:11 J.096 -> long_dicom_image_name_96.dcm<br>
+lrwxrwxrwx   1 mark           28 Jul  5 19:11 J.095 -> long_dicom_image_name_95.dcm<br>
+lrwxrwxrwx   1 mark           28 Jul  5 19:11 J.094 -> long_dicom_image_name_94.dcm<br>
+lrwxrwxrwx   1 mark           28 Jul  5 19:11 J.093 -> long_dicom_image_name_93.dcm<br>
+lrwxrwxrwx   1 mark           28 Jul  5 19:11 J.092 -> long_dicom_image_name_92.dcm<br>
+lrwxrwxrwx   1 mark           28 Jul  5 19:11 J.091 -> long_dicom_image_name_91.dcm<br>
+lrwxrwxrwx   1 mark           28 Jul  5 19:11 J.090 -> long_dicom_image_name_90.dcm<br>
+<br>
+These images numbered J.097,J.096, etc. point to your real DICOM data. This should 
+allow the print_header program to work properly. If it still wont work, send email
+to <a href="mailto:mark@bwh.harvard.edu">Mark Anderson</a> and he can help to 
+sort out your data.
+
+</body>
+</html>
