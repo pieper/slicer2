@@ -45,7 +45,7 @@ public:
   void SetOpacity(int layer, double opacity);
 
   // Sets whether to fade out the background even when the 
-  // foreground is clearn
+  // foreground is clear
   int GetFade(int layer);
   void SetFade(int layer, int fade);
 
