@@ -68,7 +68,7 @@ proc MainFileInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainFile \
-        {$Revision: 1.33 $} {$Date: 2002/05/24 22:47:30 $}]
+        {$Revision: 1.34 $} {$Date: 2002/07/02 19:35:25 $}]
 
     set File(filePrefix) data
 }
@@ -662,7 +662,7 @@ proc MainFileGetRelativePrefix {filename} {
     if {[regexp "^$root/(\.*)" $absPrefix match relPrefix] == 1} {
         return $relPrefix
     } else {
-        return [file rootname $absPrefix]
+        return $absPrefix
     }
 }
 
