@@ -148,7 +148,7 @@ proc TetraMeshInit {} {
 	#   appropriate revision number and date when the module is checked in.
 	#   
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.20 $} {$Date: 2001/09/03 16:19:46 $}]
+		{$Revision: 1.21 $} {$Date: 2001/09/06 21:41:59 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -704,47 +704,70 @@ $CurrentTetraMesh Update
 # END
 #
 # Simon refers to the way it is done in the slicer. To correct for it,
-# one rotates 90 degrees and does a translation
+# one inverts the y-axis and does a translation.
 #
-# This code effectively takes the position matrix and adds a 90 degree
-# rotation and a translation
+# To show this, I did the following:
+# Create a volume by hand size (64,64,64) with noticable stuff in each corner
+# I then created 8 different models consisting of small cubes at (0,0,0)
+# (0,64,0), etc.
+# I then made correspondances:
 #
-# 0 -1 0 ?
-# 1  0 0 0 
-# 0  0 1 0
-# 0  0 1 1
+# in model    in (i,j,k) of image
+# (0,0,0)    ->  (0,64,0)
+# (64,0,0)   ->  (64,64,0)
+# (64,64,0)  ->  (64,0,0)
+# (0,64,0)   ->  (0,0,0)
+# 
+# (64,64,64) ->  (64,0,64)
 #
-# The only thing that needs to be determined in the translation
-# The y position become the negative x-position
-# We therefore need to grab the y-translation*2 that is found in the
-# position matrix.  Once to undo what was done,
-# once to move it in the correct direction.
-# This is 2*PositionMatrix[1][3].
+# It seems pretty cleas that x and z are unchanged.
+# y is reflected about the center of its axis.
+# That is, (New y) = 64 - (Old y);
+#
+# This should be the matrix to take care of this:
+#
+# 1   0 0 0
+# 0  -1 0 Y Size of image in mm.
+# 0   0 1 0
+# 0   0 0 1
+#
+# Note: take incoming data, multiply by above matrix, then the position matrix!
+# 
+# Transform
+## Matrix: Above Matrix
+## Matrix: Position matrix
+## Model 
+# End Transform
+#
+# Now, while the above test is nice, I did NOT pay careful attention
+# to exact placement. So, we may need to translate the resulting image
+# by, say, a half voxel dimension or something like that.
 #
 # DAVE GERING WROTE:
 # For medical reasons, an object that fills a 240 mm
 # Field of View better be 240 mm long, or we all get sued. The
 # PositionMatrix (scaledIJK->RAS) positions the origin exactly in the
-# middle of this field. That would like between voxels in a volume
+# middle of this field. That would be between voxels in a volume
 # with an even number of voxels across its width, and mid-voxel if
 # odd. 
 # END
 #
+# I conclude from the above that (0,0,0) is on the edge of a voxel.
 # I want the origin (0,0,0) to be the middle of a voxel, not the
-# corner of a voxel! Thus since my points are already in existance,
-# all I must do is shift all the points by 0.5 voxel.
+# corner of a voxel! Thus all I must do is shift all the points by 0.5 voxel.
+# Note that you do this BEFORE the inversion of the y-axis.
+## (Think of an example: 10 points, spacing = 1. Want 0 -> 9.5. Want 9 -> 0.5).
 #
-# 0 -1 0 2*PositionMatrix[1][3]  
-# 1  0 0 0 
+# 1  0 0 0
+# 0 -1 0 Y Size of image in mm.  
 # 0  0 1 0                       + Translation(Spacex/2,Spacey/2,Spacez/2) 
-# 0  0 1 1
+# 0  0 0 1
 #
-#
-#
-# 0 -1 0 2*PositionMatrix[1][3] + Spacex/2
-# 1  0 0 Space_y/2 
-# 0  0 1 Space_z/2
-# 0  0 1 1
+# = 
+# 1  0 0 Spacex/2
+# 0 -1 0 Size of image in mm - spacey/2 
+# 0  0 1 Spacez/2
+# 0  0 0 1
 #
 #
 # Problems: Things may change slightly for gantry tilt, but I don't think
@@ -760,8 +783,8 @@ proc SetModelMoveOriginMatrix {n matrix} {
 
     # Deal with 90 degree rotation problem
     $matrix Zero
-    $matrix SetElement 0 1 -1
-    $matrix SetElement 1 0  1
+    $matrix SetElement 0 0  1
+    $matrix SetElement 1 1 -1
     $matrix SetElement 2 2  1
     $matrix SetElement 3 3  1
 
@@ -770,19 +793,19 @@ proc SetModelMoveOriginMatrix {n matrix} {
     set Space1 [lindex [$n GetSpacing] 1]
     set Space2 [lindex [$n GetSpacing] 2]
 
-    $matrix SetElement 1 3 [ expr $Space1 * 0.5 ]
+    $matrix SetElement 0 3 [ expr $Space0 * 0.5 ]
     $matrix SetElement 2 3 [ expr $Space2 * 0.5 ]
 
-    set xtrans [expr 2 * [ [$n GetPosition] GetElement 1 3 ] ]
-    puts $xtrans
-    set xtrans [expr $xtrans + $Space0 * 0.5 ]
-    $matrix SetElement 0 3 $xtrans
+    set numy [lindex [$n GetDimensions] 1]
+    set ytrans [expr $numy * $Space1 ]
+    puts $ytrans
+    set ytrans [expr $ytrans - $Space1 * 0.5 ]
+    $matrix SetElement 1 3 $ytrans
 
     puts [$matrix GetElement 0 3]
     puts [$matrix GetElement 1 3]
     puts [$matrix GetElement 2 3]
     puts [$matrix GetElement 3 3]
-
 }
 
 #-------------------------------------------------------------------------------
@@ -809,10 +832,8 @@ proc TetraMeshGetTransform {} {
   if {$v != "" && $v != $Volume(idNone) } {
       SetModelMoveOriginMatrix Volume($v,node) ModelMoveOriginMatrix
       ModelMoveOriginMatrix Print
-      puts "Got Here"
       TheTransform PostMultiply
       TheTransform Concatenate ModelMoveOriginMatrix
-      TheTransform Inverse
       TheTransform Concatenate [Volume($v,node) GetPosition]
      } else {
        TheTransform Identity
