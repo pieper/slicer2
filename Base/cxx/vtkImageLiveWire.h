@@ -353,18 +353,6 @@ public:
   vtkImageData *GetRightEdges() {return this->GetInput(4);}
 
   // Description:
-  // Cumulative cost of current path.
-  // Don't set this; it's here for access from vtkImageLiveWireExecute
-  vtkSetMacro(CurrentCC, int);
-  vtkGetMacro(CurrentCC, int);
-
-  // Description:
-  // Current point of "longest shortest" path found so far.
-  // Don't set this; it's here for access from vtkImageLiveWireExecute
-  vtkSetVector2Macro(CurrentPoint, int);
-  vtkGetVector2Macro(CurrentPoint, int);
-  
-  // Description:
   // Edges on the chosen contour
   vtkGetObjectMacro(ContourEdges, vtkPoints);
 
@@ -381,6 +369,10 @@ public:
   // Pixels on the new shortest path (moving wire at end of contour).
   // The output image also has these highlighted.
   vtkGetObjectMacro(NewPixels, vtkPoints);
+
+  // Description:
+  // Clears the saved contour points (to start again from a new StartPoint)
+  void ClearContour();
 
   // Lauren these are public for access from vtkImageLiveWireExecute (change...)
   // ---- Data structures for internal use in path computation -- //
@@ -418,6 +410,18 @@ public:
   // vtkImageLiveWireExecute...  Don't call this.
   void AllocatePathInformation(int numRows, int numCols);
 
+  // Description:
+  // Cumulative cost of current path.
+  // Don't set this; it's here for access from vtkImageLiveWireExecute
+  vtkSetMacro(CurrentCC, int);
+  vtkGetMacro(CurrentCC, int);
+
+  // Description:
+  // Current point of "longest shortest" path found so far.
+  // Don't set this; it's here for access from vtkImageLiveWireExecute
+  vtkSetVector2Macro(CurrentPoint, int);
+  vtkGetVector2Macro(CurrentPoint, int);
+  
 protected:
   vtkImageLiveWire();
   ~vtkImageLiveWire();

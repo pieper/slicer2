@@ -82,6 +82,13 @@ vtkImageLiveWireTester::~vtkImageLiveWireTester()
     }
   
   delete [] this->EdgeFilters;
+
+  // We must UnRegister any object that has a vtkSetObjectMacro
+  if (this->LiveWire != NULL) 
+  {
+    this->LiveWire->UnRegister(this);
+  }
+
 }
 
 
@@ -123,6 +130,10 @@ void vtkImageLiveWireTester::SetOutsidePixel(float val)
     }
 }
 
+
+//----------------------------------------------------------------------------
+// Description:
+// return output of edge filter
 vtkImageData *vtkImageLiveWireTester::GetEdgeImage(int filter)
 {
   if (filter < this->NumberOfEdgeFilters)
@@ -168,7 +179,7 @@ static void vtkImageLiveWireTesterExecute(vtkImageLiveWireTester *self,
       edgeFilters[i]->SetInput(inData);
       // Lauren this sets precision.
       //edgeFilters[i]->SetMaxEdgeWeight();
-      //edgeFilters[i]->Update();
+      edgeFilters[i]->Update();
     }
 
   liveWire->SetUpEdges(edgeFilters[0]->GetOutput());

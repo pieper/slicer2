@@ -202,6 +202,103 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
 			   (outMax1-outMin1+1)/50.0);
   target++;
 
+
+  // set up filter directionality
+  // ----------------------------------------------
+  // From paper, layout of neighborhood is:
+  // t | u
+  //   ^
+  // p | q  (p,q = the "bel" whose upward edge we are computing)
+  // v | w
+  // I want clockwise segmentation, so "q" should be inside.
+
+  int t,u,p,q,v,w;
+  if (self->GetKernelSize()[0] == 3) 
+    {
+      // compute these edges at each pixel, x:
+      //
+      //  ->  ^
+      //  | x |
+      //  V  <-
+      //
+      // then the right and down belong to the upper left corner
+      // and the other two to the lower right corner.
+      // so shifting output images will give the correct
+      //
+      //    ^
+      //  <-|->
+      //    V
+      // where each pixel has the correct weight for 
+      // all of one corner's outward paths
+      // (segmentation is done on the borders between pixels)
+      
+      // neighborhood looks like:
+      // 0 1 2
+      // 3 4 5
+      // 6 7 8
+      // rotate neighborhood for all edges.
+      
+      switch (self->GetEdgeDirection()) 
+	{
+	case UP_EDGE:
+	  {
+				// bel:           ^
+				//      | 4 (out) | 5 (in)|
+	    t = 1; 
+	    u = 2;
+	    p = 4;
+	    q = 5;
+	    v = 7;
+	    w = 8;
+	    break;
+	  }
+	case DOWN_EDGE:
+	  {
+				// bel: | 3 (in) | 4 (out) |
+				//               V
+	    t = 7; 
+	    u = 6;
+	    p = 4;
+	    q = 3;
+	    v = 1;
+	    w = 0;
+	    break;
+	  }
+	case LEFT_EDGE:
+	  {
+				// bel: 4 (in)
+				//     <----
+				//      7 (out)
+	    t = 6; 
+	    u = 3;
+	    p = 4;
+	    q = 4;
+	    v = 5;
+	    w = 2;
+	    break;
+	  }
+	case RIGHT_EDGE:
+	  {
+				// bel: 1 (out)
+				//      ---->
+				//      4 (in)
+	    t = 2; 
+	    u = 5;
+	    p = 1;
+	    q = 4;
+	    v = 0;
+	    w = 3;
+	    break;
+	  }
+	default:
+	  {
+	    cout << "ERROR: bad edge direction" << endl;
+	    return;
+	  }
+	}
+      
+    }
+
   // scale factor (edges go from 1 to this number)
   int maxEdge = self->GetMaxEdgeWeight();
 
@@ -224,11 +321,15 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
 	  for (outIdx1 = outMin1; 
 	       !self->AbortExecute && outIdx1 <= outMax1; outIdx1++)
 	    {
-	      if (!id) {
-		if (!(count%target))
-		  self->UpdateProgress(count/(50.0*target));
-		count++;
-	      }
+	      if (!id) 
+		{
+		  if (!(count%target))
+		    {
+		      self->UpdateProgress(count/(50.0*target));
+		    }
+		  count++;
+		}
+
 	      outPtr0 = outPtr1;
 	      inPtr0 = inPtr1;
 	      for (outIdx0 = outMin0; outIdx0 <= outMax0; outIdx0++)
@@ -277,17 +378,10 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
 			  hoodCopyPtr2 += maskInc2;
 			}//for2  
 
-		      // ----------------------------------------------
-		      // From paper, layout of neighborhood is:
-		      // t | u
-		      //   ^
-		      // p | q  (p,q = the "bel" whose upward edge we are computing)
-		      // v | w
-		      // I want clockwise segmentation, so "q" should be inside.
 
 		      // Lauren!  if gradient doesn't agree with desired one,
 		      // this is when q/p should be switched!  so 
-		      // need to keep track of this!  It is not correct right now!
+		      // need to keep track of *desired* gradient!  It is not correct right now!
 
 		      // Document all new features here:
 		      // 0: in pix magnitude = q OR p, depending on gradient dir
@@ -297,92 +391,8 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
 		      // 4: gradient = (1/2)*(p+t/2+v/2 -u-q/2-w/2)
 		      // 5: gradient = (1/4)*(p-u + t-q + p-w + v-q)
 		      // ----------------------------------------------
-
 		      if (self->GetKernelSize()[0] == 3) 
 			{
-			  // compute these edges at each pixel, x:
-			  //
-			  //  ->  ^
-			  //  | x |
-			  //  V  <-
-			  //
-			  // then the right and down belong to the upper left corner
-			  // and the other two to the lower right corner.
-			  // so shifting output images will give the correct
-			  //
-			  //    ^
-			  //  <-|->
-			  //    V
-			  // where each pixel has the correct weight for 
-			  // all of one corner's outward paths
-			  // (segmentation is done on the borders between pixels)
-
-			  // neighborhood looks like:
-			  // 0 1 2
-			  // 3 4 5
-			  // 6 7 8
-			  // rotate neighborhood for all edges.
-
-			  int t,u,p,q,v,w;
-			  switch (self->GetEdgeDirection()) 
-			    {
-			    case UP_EDGE:
-			      {
-				// bel:           ^
-				//      | 4 (out) | 5 (in)|
-				t = 1; 
-				u = 2;
-				p = 4;
-				q = 5;
-				v = 7;
-				w = 8;
-				break;
-			      }
-			    case DOWN_EDGE:
-			      {
-				// bel: | 3 (in) | 4 (out) |
-				//               V
-				t = 7; 
-				u = 6;
-				p = 4;
-				q = 3;
-				v = 1;
-				w = 0;
-				break;
-			      }
-			    case LEFT_EDGE:
-			      {
-				// bel: 4 (in)
-				//     <----
-				//      7 (out)
-				t = 6; 
-				u = 3;
-				p = 4;
-				q = 4;
-				v = 5;
-				w = 2;
-				break;
-			      }
-			    case RIGHT_EDGE:
-			      {
-				// bel: 1 (out)
-				//      ---->
-				//      4 (in)
-				t = 2; 
-				u = 5;
-				p = 1;
-				q = 4;
-				v = 0;
-				w = 3;
-				break;
-			      }
-			    default:
-			      {
-				cout << "ERROR: bad edge direction" << endl;
-				return;
-			      }
-			    }
-
 			  // Compute various features:			  
 			  features[2] = n[p]-n[q];
 			  features[3] = .333333*(n[p]+n[t]+n[v]-n[u]-n[q]-n[w]);
@@ -401,40 +411,6 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
 					    -n[u]-n[q]/2-n[w]/2);
 			  features[5] = .25*(n[p]-n[u] + n[t]-n[q] + 
 					     n[p]-n[w] + n[v]-n[q]);
-
-
-
-//  			  // The "in" features correspond to 
-//  			  // the side of the bel with higher intensity.
-//  			  // inpix-outpix = p-q
-//  			  features[2] = n[3]-n[4];
-//  			  features[3] = .333333*(n[3]+n[0]+n[6]-n[1]-n[4]-n[7]);
-//  			  if (features[3] > 0)
-//  			    {
-//  			      // in pix magnitude = q
-//  			      features[0] = n[4];
-//  			      // out pix magnitude = p
-//  			      features[1] = n[3];
-//  			    }
-//  			  else 
-//  			    {
-//  			      // in pix magnitude = p
-//  			      features[0] = n[3];
-//  			      // out pix magnitude = q
-//  			      features[1] = n[4];
-//  			    }
-			      
-//  			  // inpix-outpix = p-q
-//  			  //features[2] = n[3]-n[4];
-//  			  // gradient = (1/3)*(p+t+v-u-q-w)
-//  			  //features[3] = .333333*(n[3]+n[0]+n[6]-n[1]-n[4]-n[7]);
-//  			  // gradient = (1/2)*(p+t/2+v/2 -u-q/2-w/2)
-//  			  features[4] = .5*(n[3]+n[0]/2+n[6]/2
-//  					    -n[1]-n[4]/2-n[7]/2);
-//  			  // gradient = (1/4)*(p-u + t-q + p-w + v-q)
-//  			  features[5] = .25*(n[3]-n[1] + n[0]-n[4] + 
-//  					     n[3]-n[7] + n[6]-n[4]);
-
 			}
 		      else
 			if (self->GetKernelSize()[0] == 5) 
@@ -529,6 +505,7 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
 			  sum += GaussianC(features[i],props->TransformParams[0],props->TransformParams[1]);
 			}
 
+		      // Lauren normalize using sum of weights, not num features!
 		      // each feature is between 0 and 1.  normalize sum to 1 
 		      // then multiply by max edge cost.
 		      *outPtr0 = (sum/self->GetNumberOfFeatures())*maxEdge;

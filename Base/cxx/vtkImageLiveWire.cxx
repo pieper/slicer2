@@ -90,6 +90,14 @@ vtkImageLiveWire::~vtkImageLiveWire()
     {
       this->ContourPixels->Delete();
     }
+  if (this->NewPixels)
+    {
+      this->NewPixels->Delete();
+    }
+  if (this->NewEdges)
+    {
+      this->NewEdges->Delete();
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -222,17 +230,18 @@ void vtkImageLiveWire::SetStartPoint(int x, int y)
       y  = this->EndPoint[1];     
 
       // Lauren make sure curve goes through this point??
-      cout <<"ok 1"<<endl;
+
       // append new points to the saved contour
-      for (int i = 0; i < this->NewEdges->GetNumberOfPoints(); i++)
+      int numPoints = this->NewEdges->GetNumberOfPoints();
+      for (int i = 0; i < numPoints; i++)
 	{
 	  this->ContourEdges->InsertNextPoint(this->NewEdges->GetPoint(i));
 	}
-      for (int i = 0; i < this->NewPixels->GetNumberOfPoints(); i++)
+      numPoints = this->NewPixels->GetNumberOfPoints();
+      for (int i = 0; i < numPoints; i++)
 	{
 	  this->ContourPixels->InsertNextPoint(this->NewPixels->GetPoint(i));
 	}
-      cout <<"ok"<<endl;
     }
   else
     {
@@ -262,9 +271,12 @@ void vtkImageLiveWire::SetStartPoint(int x, int y)
 	if (y > extent[3])
 	  y = extent[3];
 
+      // also put the end point here since starting a new contour
+      this->EndPoint[0] = x;
+      this->EndPoint[1] = y;
     }
 
-  cout << "Coords of start point: (" << x << "," << y << ")" << endl;      
+  //cout << "Coords of start point: (" << x << "," << y << ")" << endl;      
 
   // Lauren check this first???
   if (this->StartPoint[0] != x)
@@ -285,7 +297,7 @@ void vtkImageLiveWire::SetStartPoint(int x, int y)
       // delete everything
       this->DeallocatePathInformation();
       // Lauren don't set Modified until EndPoint is also set?
-      this->Modified();
+
     }
   //cout << "deallocated" << endl;
 }
@@ -324,7 +336,7 @@ void vtkImageLiveWire::SetEndPoint(int x, int y)
 	if (y > extent[3]) y = extent[3];
     }
 
-  cout << "Coords of end point: (" << x << "," << y << ")" << endl;      
+  //cout << "Coords of end point: (" << x << "," << y << ")" << endl;      
   
   if (this->EndPoint[0] != x)
     {
@@ -340,6 +352,36 @@ void vtkImageLiveWire::SetEndPoint(int x, int y)
   if (modified)
     {
       this->Modified();
+    }
+}
+
+//----------------------------------------------------------------------------
+// This method clears old saved paths 
+// (use it to start over from a new start point)
+void vtkImageLiveWire::ClearContour()
+{
+  if (this->Verbose > 0)
+    {
+      cout << "Clear Contour" << endl;
+    }
+
+  this->ContourPixels->Reset();
+  this->ContourEdges->Reset();
+  // clear output points
+  if (this->NewEdges)
+    {
+      this->NewEdges->Delete();
+      this->NewEdges = NULL;
+    }
+  if (this->NewPixels)
+    {
+      this->NewPixels->Delete();
+      this->NewPixels = NULL;
+    }
+
+  if (this->Verbose > 0)
+    {
+      cout << "Clear Contour Done" << endl;
     }
 }
 
@@ -532,6 +574,7 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
   // clear old shortest path points
   vtkPoints *newEdges = self->GetNewEdges();
   vtkPoints *newPixels = self->GetNewPixels();
+  vtkPoints *tempPixels = vtkPoints::New();
 
   // current spot on path of arrows
   int traceX = end[0];
@@ -547,7 +590,7 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
   newEdges->InsertNextPoint(traceX,traceY,0);
   colorX = traceX + color[Dir(traceX,traceY)][0];
   colorY = traceY + color[Dir(traceX,traceY)][1];
-  newPixels->InsertNextPoint(colorX,colorY,0);
+  tempPixels->InsertNextPoint(colorX,colorY,0);
 
   // follow "arrows" backwards to the start point
   while (traceX!=start[0] || traceY!=start[1])
@@ -577,7 +620,7 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
 	}
 
       // add to path lists
-      newPixels->InsertNextPoint(colorX,colorY,0);
+      tempPixels->InsertNextPoint(colorX,colorY,0);
       newEdges->InsertNextPoint(traceX,traceY,0);
 
     } // end while
@@ -585,6 +628,18 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
   if (self->GetVerbose() > 0) 
     {
       cout << "(" << traceX << "," << traceY << ")" << endl;
+    }  
+
+  // fix (reverse) the order of the pixels list.
+  int numPoints = tempPixels->GetNumberOfPoints();
+  newPixels->SetNumberOfPoints(numPoints);
+  float *point;
+  int count = 0;
+  for (int i=numPoints-1; i>=0; i--)
+    {
+      point = tempPixels->GetPoint(i);
+      newPixels->SetPoint(count,point);
+      count++;
     }  
 
   // ----------------  Output Image  ------------------ //
@@ -602,8 +657,7 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
   T outLabel = (T)self->GetLabel();
 
   // draw points over image
-  int numPoints = newPixels->GetNumberOfPoints();
-  float *point;
+  numPoints = newPixels->GetNumberOfPoints();
   for (int i=0; i<numPoints; i++)
     {
       //cout << ".";
@@ -635,7 +689,7 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
   // ------------- end test --------------
 
   // test points
-  cout << "num points C++ " << newEdges->GetNumberOfPoints() << endl;
+  //cout << "num points C++ " << newEdges->GetNumberOfPoints() << endl;
 
   tEnd = clock();
   tDiff = tEnd - tStart;
@@ -684,10 +738,12 @@ void vtkImageLiveWire::Execute(vtkImageData **inData,
   if (this->NewEdges)
     {
       this->NewEdges->Delete();
+      this->NewEdges = NULL;
     }
   if (this->NewPixels)
     {
       this->NewPixels->Delete();
+      this->NewPixels = NULL;
     }
   this->NewEdges = vtkPoints::New();
   this->NewPixels = vtkPoints::New();
@@ -751,16 +807,6 @@ void vtkImageLiveWire::ExecuteInformation(vtkImageData **inputs,
     {
       vtkErrorMacro(<< "ExecuteInformation: Expected " << this->NumberOfRequiredInputs << " inputs, got only " << this->NumberOfInputs);
       return;      
-    }
-
-  // also make sure none are NULL (Lauren not needed?)
-  for (int i = 0; i < this->NumberOfRequiredInputs; i++)
-    {
-      if ( ! inputs[i] )
-	{
-	  vtkErrorMacro(<< "ExecuteInformation: Input " << i << " is not set.");
-	  return;
-	}
     }
 
   // Lauren fix this to check all extents are the same size.
