@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkMGHReader.h,v $
   Language:  C++
-  Date:      $Date: 2003/04/14 20:08:49 $
-  Version:   $Revision: 1.2 $
+  Date:      $Date: 2004/07/22 19:45:54 $
+  Version:   $Revision: 1.3 $
 
 =========================================================================*/
 // .NAME vtkMGHReader - read an MGH (.mgh) volume file from Freesurfer tools
@@ -55,15 +55,32 @@ public:
   // Description:
   vtkGetVectorMacro(DataDimensions,int,3);
 
+    vtkGetVectorMacro(RASMatrix,float,12);
+    
   // Description: 
   // Other objects make use of these methods but we don't. Left here
   // but not implemented.
   vtkImageData *GetImage(int ImageNumber);
+
+  // Description:
+  // Reads the MGH file and gets header information from it.
+  void          ReadVolumeHeader();
+  // Description:
+  // Reads the MGH file and creates an array of values.
+  vtkDataArray *ReadVolumeData();
+ 
+
+    // expose the values that the read volume header function sets
+    vtkGetMacro(ScalarType,int);
+    vtkGetMacro(NumFrames,int);
     
 protected:
   vtkMGHReader();
   ~vtkMGHReader();
 
+    // for testing
+    void SetOutput();
+    
   void Execute();
   void ExecuteInformation();
 
@@ -85,13 +102,6 @@ protected:
   // RAS registration matrix. (currently unused)
   float RASMatrix[12];
 
-  // Description:
-  // Reads the MGH file and creates an array of values.
-  vtkDataArray *ReadVolumeData();
-
-  // Description:
-  // Reads the MGH file and gets header information from it.
-  void          ReadVolumeHeader();
 
   // Description:
   // Sets the current frame for the volume.
