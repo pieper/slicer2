@@ -168,7 +168,7 @@ proc LevelSetsInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.32 $} {$Date: 2004/09/17 15:42:31 $}]
+        {$Revision: 1.33 $} {$Date: 2004/11/24 16:17:34 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -809,6 +809,7 @@ proc LevelSetsBuildMainFrame {} {
         "SPGR WM"   {SetSPGR_WM_Param}
         MRA         {SetMRAParam}
         "US liver"  {SetUSLiverParam}
+        "Heart CT"  {SetHeartCTParam}
     }
     }
 
@@ -820,7 +821,7 @@ proc LevelSetsBuildMainFrame {} {
 
     pack $f.protocol -side top 
 
-    foreach o {"SPGR WM" "MRA" "US liver"} {
+    foreach o {"SPGR WM" "MRA" "US liver" "Heart CT"} {
     $f.protocol insert end $o
     }
 
@@ -2079,6 +2080,50 @@ proc SetUSLiverParam {} {
 
 }
 #----- SetUSLiverParam
+
+#----------------------------------------------------------------------
+# .PROC SetUSLiver
+#
+#   Predefined parameters for US Liver
+#
+# .END
+#----------------------------------------------------------------------
+proc SetHeartCTParam {} {
+#    ---------------
+
+  global LevelSets Volume Gui
+
+  #
+  # Main
+  #
+  set LevelSets(Dimension)                  "3"
+  set LevelSets(HistoGradThreshold)         "0.2"
+  #
+  # Equation
+  #
+  set LevelSets(AdvectionCoeff)             "0.5"
+  set LevelSets(StepDt)                     "0.6"
+  set LevelSets(SmoothingScheme)            "Minimal Curvature"
+  set LevelSets(ReinitFreq)                 "6"
+  set LevelSets(SmoothingCoeff)             "0.2"
+  set LevelSets(BalloonCoeff)               "0.5"
+  set LevelSets(BandSize)                   "3"
+  set LevelSets(TubeSize)                   "2"
+  set LevelSets(NumIters)                   "300"
+  #
+  # Prob
+  #
+  set LevelSets(LowIThreshold)              "970"
+  set LevelSets(MeanIntensity)              "1070"
+  set LevelSets(SDIntensity)                "25"
+  set LevelSets(ProbabilityThreshold)       "0.3"
+  set LevelSets(NumInitPoints)              "0"
+  # upwind vectors scheme
+  # set LevelSets(AdvectionScheme)            $LevelSets(AdvectionScheme0)
+
+}
+#----- SetUSLiverParam
+
 
 #----------------------------------------------------------------------
 # .PROC LevelSetsSaveParam
