@@ -71,7 +71,7 @@
 # .END
 #-------------------------------------------------------------------------------
 proc TetraMeshInit {} {
-	global TetraMesh Module Volume Model
+	global TetraMesh Module Model
 
 	# Define Tabs
 	#------------------------------------
@@ -154,7 +154,7 @@ proc TetraMeshInit {} {
 	#   appropriate revision number and date when the module is checked in.
 	#   
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.29 $} {$Date: 2002/02/07 15:38:25 $}]
+		{$Revision: 1.30 $} {$Date: 2002/02/19 01:28:15 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -879,7 +879,7 @@ proc TetraMeshExit {} {
 # .END
 #-------------------------------------------------------------------------------
 proc TetraMeshUpdateGUI {} {
-	global TetraMesh Volume
+	global TetraMesh 
 
     set TetraMesh(modelbasename) $TetraMesh(Name)
 }
@@ -957,7 +957,7 @@ proc TetraMeshProcessTetraMesh {} {
 # .END
 #-------------------------------------------------------------------------------
 proc TetraMeshFileNameEntered {} {
-	global TetraMesh Volume
+	global TetraMesh 
 
     set TetraMesh(DefaultDir) [file dirname $TetraMesh(FileName)]
     if  {$TetraMesh(modelbasename) == "" } {
@@ -980,7 +980,7 @@ proc TetraMeshFileNameEntered {} {
 # .END
 #-------------------------------------------------------------------------------
 proc TetraMeshGetData {} {
-	global TetraMesh Model Volume
+	global TetraMesh Model
 
     set modelbasename "$TetraMesh(modelbasename)"
 
@@ -1112,7 +1112,6 @@ proc TetraMeshGetData {} {
 # .END
 #-------------------------------------------------------------------------------
 proc SetModelMoveOriginMatrix {n matrix} {
-  global Volume
 
     # Deal with 90 degree rotation problem
     $matrix Zero
@@ -1184,7 +1183,7 @@ proc TetraMeshGetTransform {} {
 # .END
 #-------------------------------------------------------------------------------
 proc TetraMeshProcessEdges {} {
-	global TetraMesh Model Volume Module
+	global TetraMesh Model Module
 
 ######################################################################
 #### Get the input mesh
@@ -1245,7 +1244,6 @@ vtkThreshold Thresh
   ######################################################################
 
   TetraMeshGetTransform
-  set v $Volume(activeID)
 
 vtkTransformPolyDataFilter TransformPolyData
   TransformPolyData SetInput [TetraEdges GetOutput]
@@ -1326,7 +1324,7 @@ return $ReturnVal
 # .END
 #-------------------------------------------------------------------------------
 proc TetraMeshProcessScalars {} {
-	global TetraMesh Model Volume Module
+	global TetraMesh Model Module
 
 ######################################################################
 #### Get the data
@@ -1350,7 +1348,6 @@ proc TetraMeshProcessScalars {} {
 #######################################################################
 
   TetraMeshGetTransform
-  set v $Volume(activeID)
 
 vtkMaskPoints PointSelection
   PointSelection SetInput $CurrentTetraMesh
@@ -1407,7 +1404,7 @@ return $m
 # .END
 #-------------------------------------------------------------------------------
 proc TetraMeshProcessNodes {} {
-	global TetraMesh Model Volume Module
+	global TetraMesh Model Module
 
 ######################################################################
 #### Get the data
@@ -1431,7 +1428,6 @@ proc TetraMeshProcessNodes {} {
 #######################################################################
 
   TetraMeshGetTransform
-  set v $Volume(activeID)
 
 vtkMaskPoints PointSelection
   PointSelection SetInput $CurrentTetraMesh
@@ -1483,7 +1479,7 @@ return $m
 # .END
 #-------------------------------------------------------------------------------
 proc TetraMeshProcessVectors {} {
-	global TetraMesh Model Volume Module
+	global TetraMesh Model Module
 
 ######################################################################
 #### Get the data
@@ -1525,6 +1521,8 @@ set TetraMeshArrowScale $TetraMesh(VectorScaling)
 #### Setup the pipeline: Cones -> PointMaskSelection -> Glyph data
 #######################################################################
 
+  TetraMeshGetTransform
+
 vtkConeSource TetraCone
   TetraCone SetResolution 2
   TetraCone SetHeight 1
@@ -1533,27 +1531,29 @@ vtkMaskPoints PointSelection
     PointSelection SetInput $CurrentTetraMesh
     PointSelection SetOnRatio $TetraMeshFractionOn
     PointSelection RandomModeOff
+vtkTransformFilter TransPoints
+  TransPoints SetTransform TheTransform
+  TransPoints SetInput [PointSelection GetOutput]
 vtkGlyph3D VectorGlyph
-  VectorGlyph SetInput [PointSelection GetOutput]
+  VectorGlyph SetInput [TransPoints GetOutput]
   VectorGlyph SetSource [TetraCone GetOutput]
   VectorGlyph SetScaleModeToScaleByVector
 #  VectorGlyph SetScaleModeToDataScalingOff
   VectorGlyph SetScaleFactor $TetraMeshArrowScale
   VectorGlyph Print
+VectorGlyph Update
   ######################################################################
   #### Now, determine the transform
   #### If a volume has been selected, use that volumes ScaledIJK to RAS
   #### Otherwise, just use the identity.
   ######################################################################
 
-  TetraMeshGetTransform
-  set v $Volume(activeID)
 
-vtkTransformPolyDataFilter TransformPolyData
-  TransformPolyData SetInput [VectorGlyph GetOutput]
-  TransformPolyData SetTransform TheTransform
-
-TransformPolyData Update
+#vtkTransformPolyDataFilter TransformPolyData
+#  TransformPolyData SetInput [VectorGlyph GetOutput]
+#  TransformPolyData SetTransform TheTransform
+#
+#TransformPolyData Update
 
 set m [ TetraMeshCreateModel ${modelbasename}Vector 0 10 ]
 
@@ -1569,7 +1569,7 @@ set m [ TetraMeshCreateModel ${modelbasename}Vector 0 10 ]
   TetraMeshCopyPolyData [VectorGlyph GetOutput] $m
 
 TheTransform Delete
-TransformPolyData Delete
+TransPoints Delete
 TetraCone Delete
 PointSelection Delete
 VectorGlyph Delete
@@ -1588,7 +1588,7 @@ return $m
 # .END
 #-------------------------------------------------------------------------------
 proc TetraMeshProcessSurfaces {} {
-	global TetraMesh Model Volume Module
+	global TetraMesh Model Module
 
 ######################################################################
 #### Get the data
@@ -1661,7 +1661,6 @@ vtkGeometryFilter gf
   ######################################################################
 
   TetraMeshGetTransform  
-  set v $Volume(activeID)
 
 vtkTransformPolyDataFilter TransformPolyData
   TransformPolyData SetInput [gf GetOutput]
@@ -1781,7 +1780,7 @@ proc TetraMeshCopyPolyData  {PolyData m} {
 # .END
 #-------------------------------------------------------------------------------
 proc TetraMeshCreateModel  {name scalarLo scalarHi} {
-    global Model Volume Mrml Label
+    global Model Mrml Label
 
  set n [MainMrmlAddNode Model]
  set i [$n GetID]
