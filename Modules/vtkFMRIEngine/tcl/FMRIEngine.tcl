@@ -112,9 +112,9 @@ proc FMRIEngineInit {} {
     #   row2Name = like row1
     #   row2,tab = like row1 
     #
-    set Module($m,row1List) "Help Input Compute Display"
-    set Module($m,row1Name) "{Help} {Input} {Compute} {Display}"
-    set Module($m,row1,tab) Input 
+    set Module($m,row1List) "Help Sequence Compute Display"
+    set Module($m,row1Name) "{Help} {Sequence} {Compute} {Display}"
+    set Module($m,row1,tab) Sequence 
 
     # Define Procedures
     #------------------------------------
@@ -170,7 +170,7 @@ proc FMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.16 $} {$Date: 2004/07/12 19:54:38 $}]
+        {$Revision: 1.17 $} {$Date: 2004/07/12 20:25:53 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -278,17 +278,17 @@ proc FMRIEngineBuildGUI {} {
     MainHelpBuildGUI FMRIEngine
     
     #-------------------------------------------
-    # Input tab 
+    # Sequence tab 
     #-------------------------------------------
-    set fInput $Module(FMRIEngine,fInput)
-    set f $fInput
+    set fSequence $Module(FMRIEngine,fSequence)
+    set f $fSequence
     frame $f.fOption -bg $Gui(activeWorkspace) 
     grid $f.fOption -row 0 -column 0 -sticky ew 
     
     #------------------------------
-    # Input->Option frame
+    # Sequence->Option frame
     #------------------------------
-    set f $fInput.fOption
+    set f $fSequence.fOption
 
     Notebook:create $f.fNotebook \
                     -pages {{Load Seq} {Select Seq}} \
@@ -889,7 +889,6 @@ proc FMRIEngineLoadAnalyzeVolumes {} {
     if {$filter == ""} {
         set pattern [file join $path $wildcard]
     } else {
-        set len [string length $filter]
         if {$len < 5} {
             set pattern [file join $path $filter$hdr]
         } else {
