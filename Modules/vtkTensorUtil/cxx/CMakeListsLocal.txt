@@ -14,6 +14,7 @@
 SET(LOCAL_MODULE_SRCS
 vtkHyperStreamlinePoints.cxx
 vtkPreciseHyperStreamlinePoints.cxx
+vtkPreciseHyperStreamline.cxx
 vtkTensorImplicitFunctionToFunctionSet.cxx
 vtkBSplineInterpolateImageFunction.cxx
 vtkInteractiveTensorGlyph.cxx
