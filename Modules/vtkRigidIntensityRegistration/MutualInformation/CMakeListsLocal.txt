@@ -15,11 +15,11 @@ SET( LOCAL_MODULE_SRCS
  #vtkRasToIjkTransform.cxx
 )
 
+#SET_SOURCE_FILES_PROPERTIES (
+#ABSTRACT
+#)
+
 SET ( LOCAL_NO_WRAP_SRC
- itkGradientDescentOptimizerWithStopCondition.cxx
- itkQuaternionRigidTransformGradientDescentOptimizerModified.cxx
- AveragingStoppingCondition.cxx
- NewStoppingCondition.cxx
 )
 
 #### if you code depends on SlicerBase, uncomment the 

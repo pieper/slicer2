@@ -133,6 +133,7 @@ ENDIF (VTK_WRAP_JAVA AND VTKRIGIDINTENSITYREGISTRATION_WRAP_JAVA)
 
 LINK_LIBRARIES (
   vtkMutualInformationRegistration
+  vtkRigidIntensityRegistration
   vtkIO
   vtkGraphics
   vtkImaging 
