@@ -140,6 +140,12 @@ proc EMLocalSegmentInit {} {
     EMSegmentInit
 }
 
+proc EMSegmentForceInit {} {
+    global EMSegment
+    array unset EMSegment 
+    EMSegmentInit
+}
+
 proc EMSegmentInit {} {
     global EMSegment Module Volume Model Mrml Color Slice Gui env
 
@@ -252,8 +258,7 @@ proc EMSegmentInit {} {
     #   The strings with the $ symbol tell CVS to automatically insert the
     #   appropriate revision number and date when the module is checked in.
     #   
-    lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.46 $} {$Date: 2004/11/05 18:44:54 $}]
+    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.47 $} {$Date: 2004/11/10 00:17:16 $}]}
 
     # Initialize module-level variables
     #------------------------------------
@@ -452,9 +457,7 @@ proc EMSegmentInit {} {
     set EMSegment(MrmlNode,JointSegmenterSuperClassAndClass,InitValueList) "$EMSegment(MrmlNode,SegmenterGenericClass,InitValueList) $EMSegment(MrmlNode,SegmenterSuperClass,InitValueList) $EMSegment(MrmlNode,SegmenterClass,InitValueList)"
 
     foreach ListType "SetList SetListLower AttributeList InitValueList" {
-    puts "EMSegment(MrmlNode,SegmenterSuperClass,$ListType)  $EMSegment(MrmlNode,SegmenterSuperClass,$ListType) "
         set EMSegment(MrmlNode,SegmenterSuperClass,$ListType) "$EMSegment(MrmlNode,SegmenterGenericClass,$ListType) $EMSegment(MrmlNode,SegmenterSuperClass,$ListType)"
-    puts "EMSegment(MrmlNode,SegmenterClass,$ListType)  $EMSegment(MrmlNode,SegmenterClass,$ListType) "
         set EMSegment(MrmlNode,SegmenterClass,$ListType) "$EMSegment(MrmlNode,SegmenterGenericClass,$ListType) $EMSegment(MrmlNode,SegmenterClass,$ListType)"
     }
 
@@ -4022,76 +4025,50 @@ proc EMSegmentCreateDeleteClasses {ChangeGui DeleteNode InitClasses} {
             # Delete Node from Graph 
             if {($EMSegment(Cattrib,$i,Node) != "") && $DeleteNode} { MainMrmlDeleteNode SegmenterClass [$EMSegment(Cattrib,$i,Node) GetID] }
             if {($EMSegment(Cattrib,$i,EndNode) != "") && $DeleteNode} { MainMrmlDeleteNode EndSegmenterClass [$EMSegment(Cattrib,$i,EndNode) GetID] }
-        }
-    
-        # Unset variables - CIM Variable is unset a little bit later
-        unset EMSegment(Cattrib,$i,Node)     
-        unset EMSegment(Cattrib,$i,EndNode)
-        unset EMSegment(Cattrib,$i,IsSuperClass)
-     
-        if  {$EMSegment(Cattrib,$i,Label) ==  $EMSegment(IntensityAvgClass)} {
+          }
+      
+      if  {$EMSegment(Cattrib,$i,Label) ==  $EMSegment(IntensityAvgClass)} {
           EMSegmentChangeIntensityClass -1 1
-        }
-        # Delete Additonal CIM Fields
-        # Free the variables 
-        if {$ChangeGui} { 
+      }
+    
+      # Delete Additonal CIM Fields
+      # Free the variables 
+      if {$ChangeGui} { 
           destroy $f.fLineL.l$i
           destroy $f.fLine$i
-        }
-     
-        foreach k $EMSegment(CIMList) {
-          unset EMSegment(Cattrib,$i,CIMMatrix,$k,Node)
-          foreach j $SuperClassClassList {
-            unset EMSegment(Cattrib,$EMSegment(SuperClass),CIMMatrix,$i,$j,$k) 
-            if {[lsearch $DeleteList $j] < 0} {
-              if {$ChangeGui} {destroy $f.fLine$j.eCol$i}
-              unset EMSegment(Cattrib,$EMSegment(SuperClass),CIMMatrix,$j,$i,$k)
-            } 
-          }
-        }
-        # Class Definition
-        foreach EigenList $EMSegment(Cattrib,$i,PCAEigen) {
-           if {[lindex $EigenList 3] != ""} {MainMrmlDeleteNode SegmenterPCAEigen [[lindex $EigenList 3] GetID] }
-        }
-        unset EMSegment(Cattrib,$i,PCAEigen) 
-
-
-        for {set y 0} {$y <  $EMSegment(MaxInputChannelDef)} {incr y} {
-          unset  EMSegment(Cattrib,$i,LogMean,$y)
-          for {set x 0} {$x <  $EMSegment(MaxInputChannelDef)} {incr x} { 
-            unset EMSegment(Cattrib,$i,LogCovariance,$y,$x) 
-          }
-        }
-        # Sample List
-        foreach v $EMSegment(SelVolList,VolumeList) { unset EMSegment(Cattrib,$i,$v,Sample)  }
-        # Overview Table
-        destroy $EMSegment(fTableOverview)$i
-
-        unset EMSegment(Cattrib,$i,ColorCode) EMSegment(Cattrib,$i,PCAMeanData) EMSegment(Cattrib,$i,ClassList) EMSegment(Cattrib,$i,ProbabilityData)
-      foreach NodeAttribute "$EMSegment(MrmlNode,JointSegmenterSuperClassAndClass,AttributeList)" { 
-            unset EMSegment(Cattrib,$i,$NodeAttribute)
-        }
-      # Class and SuperClass variables
-      unset EMSegment(Cattrib,$i,ReferenceStandardData) 
-      # SuperClass Variables
       }
-      # Reconfigure width and height of canvas
+
+      # Class Definition
+      foreach EigenList $EMSegment(Cattrib,$i,PCAEigen) {
+          if {[lindex $EigenList 3] != ""} {MainMrmlDeleteNode SegmenterPCAEigen [[lindex $EigenList 3] GetID] }
+      }
+      
+      foreach j $SuperClassClassList {
+            if {[lsearch $DeleteList $j] < 0} {
+        if {$ChangeGui} {destroy $f.fLine$j.eCol$i}
+        array unset EMSegment Cattrib,$EMSegment(SuperClass),CIMMatrix,$j,$i,*
+            } 
+      }
+      # Overview Table
+      destroy $EMSegment(fTableOverview)$i      
       if {$ChangeGui} {EMSegmentSetCIMMatrix} 
-    
+
       # Update Values of new Class
       # Recaluclate Probabilites
       EMSegmentCalcProb
       # Have to change this to first class of child or other!
       if {$ChangeGui && ($EMSegment(SuperClass) !=  $EMSegment(Class))} {
-         EMSegmentChangeClass [lindex $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList) 0]
+          EMSegmentChangeClass [lindex $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList) 0]
       } else {
           EMSegmentUpdateClassNavigationButton 
       }
 
-
-
+      # Unset all variables
+      array unset EMSegment Cattrib,$EMSegment(SuperClass),CIMMatrix,$i,*
+      array unset EMSegment Cattrib,$i,* 
+      }
       return
-    } 
+   }
 
     # ---------------------------------------------------------------------------------
     # Now $EMSegment(NumClassesNew) > $NumClasses 
