@@ -99,7 +99,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.79.2.1 $} {$Date: 2003/07/21 22:24:58 $}]
+            {$Revision: 1.79.2.2 $} {$Date: 2003/08/06 23:13:49 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -1754,7 +1754,12 @@ proc VolumesReformatSave {} {
     
     set ref [Slicer GetReformatMatrix $s]
     
-    set ii 0
+    # need the slices to be written out as 1-n, instead of 0-(n-1)
+    # set ii 0
+    set ii 1
+    if {$::Module(verbose)} {
+        puts "VolumesReformatSave: starting file names from $ii"
+    }
     set lo [expr -1 * round ($maxfov / 2.)]
     set hi [expr -1 * $lo]
     for {set i $lo} {$i<= $hi} {set i [expr $i + 1]} {
