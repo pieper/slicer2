@@ -414,7 +414,10 @@ proc VolGenericMainFileCloseUpdate {} {
 proc VolGenericReaderProc {v} {
     global Volume
 
-    set Volume(VolGeneric,FileName) $Volume(firstFile)
+    if { ! [ file exists [Volume($v,node) GetFullPrefix] ] } {
+        DevErrorWindow "Generic volume does not exist: [Volume($v,node) GetFullPrefix]"
+        return -1
+    }
 
     if { [info commands vtkITKArchetypeImageSeriesReader] == "" } {
         DevErrorWindow "No Generic Reader available."
@@ -422,9 +425,10 @@ proc VolGenericReaderProc {v} {
     }
     catch "genreader Delete"
     vtkITKArchetypeImageSeriesReader genreader
-    genreader SetArchetype $Volume(firstFile)
-    genreader SetOutputScalarTypeTo$Volume(scalarType)
+    genreader SetArchetype [Volume($v,node) GetFullPrefix]
+    genreader SetOutputScalarType [Volume($v,node) GetScalarType]
 
+    catch "flip Delete"
     vtkImageFlip flip
     flip SetFilteredAxis 1
     flip SetInput  [genreader GetOutput]   
