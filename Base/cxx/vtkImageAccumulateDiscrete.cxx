@@ -45,13 +45,15 @@ vtkImageAccumulateDiscrete::vtkImageAccumulateDiscrete()
 {
 }
 
+#define  MAX_ACCUMULATION_BIN 65535
 //----------------------------------------------------------------------------
 void vtkImageAccumulateDiscrete::ExecuteInformation(vtkImageData *vtkNotUsed(input), 
 					    vtkImageData *output)
 {
   int ext[6];
   memset(ext, 0, 6*sizeof(int));
-  ext[1] = 65535;
+
+  ext[1] = MAX_ACCUMULATION_BIN;
 
   float origin[3], spacing[1];
   spacing[0] = spacing[1] = spacing[2] = 1;
@@ -137,9 +139,11 @@ static void vtkImageAccumulateDiscreteExecute(vtkImageAccumulateDiscrete *self,
       inPtr0  = inPtr1;
       for (idx0 = min0; idx0 <= max0; ++idx0)
       {
-	      outPtr[(int)(*inPtr0) + offset]++;
+        int a = (int)(*inPtr0) + offset;
+        if ((a<MAX_ACCUMULATION_BIN)&&(a>0))
+          outPtr[a]++;
 	      inPtr0 += inInc0;
-	    }
+      }
       inPtr1 += inInc1;
     }
     inPtr2 += inInc2;
