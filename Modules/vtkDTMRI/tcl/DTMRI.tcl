@@ -122,7 +122,7 @@ proc DTMRIInit {} {
     set Module($m,author) "Lauren O'Donnell"
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.38 $} {$Date: 2004/11/12 07:00:06 $}]
+                  {$Revision: 1.39 $} {$Date: 2004/11/12 07:04:45 $}]
 
      # Define Tabs
     #------------------------------------
@@ -5769,83 +5769,6 @@ proc DTMRISaveStreamlinesAsModel {subdir name {verbose "1"}} {
 
 }
 
-#-------------------------------------------------------------------------------
-# .PROC DTMRIGetPointsFromSegmentationInIJKofDTMRIVolume
-# just for development -- write out list of point in segmentation
-# in the ijk coord of the tensor volume, for use in matlab. 
-# .ARGS
-# int verbose default is 1
-# .END
-#-------------------------------------------------------------------------------
-proc DTMRIGetPointsFromSegmentationInIJKofDTMRIVolume {{verbose 1}} {
-    global DTMRI Volume Tensor
-    set v $Volume(activeID)
-
-    # ask for user confirmation first
-    if {$verbose == "1"} {
-    set name [Volume($v,node) GetName]
-    set msg "About to list all labelled voxels of volume $name.Go ahead?"
-    if {[tk_messageBox -type yesno -message $msg] == "no"} {
-        return
-    }
-    }
-
-    # filter to grab list of points in the segmentation
-    vtkProgrammableAttributeDataFilter DTMRI(vtk,programmableFilt)
-
-    set t $Tensor(activeID)
-    set v $Volume(activeID)
-
-    DTMRI(vtk,programmableFilt) SetInput [Volume($v,vol) GetOutput] 
-    DTMRI(vtk,programmableFilt) SetExecuteMethod \
-    DTMRIExecuteForProgrammableFilter
-    # output points are stored here
-    set DTMRI(streamlineList) ""
-    DTMRI(vtk,programmableFilt) Update
-    DTMRI(vtk,programmableFilt) Delete
-
-    # Now convert each point to ijk of DTMRI volume
-    # transform point into world coordinates
-    catch "trans Delete"
-    vtkTransform trans
-    trans SetMatrix [Volume($v,node) GetWldToIjk]
-    # now it's ijk to world
-    trans Inverse    
-    # now transform it into ijk of other volume
-    catch "trans2 Delete"
-    vtkTransform trans2
-    trans2 SetMatrix [Tensor($t,node) GetWldToIjk]
-
-    # to check point is in bounds of the other dataset
-    set dims [[Tensor($t,data) GetOutput] GetDimensions]
-
-    # output file
-    set out [open points.txt w]
-
-    foreach point $DTMRI(streamlineList) {
-        # find out where the point actually is in other ijk space
-        set world [eval {trans TransformPoint} $point]
-        set ijk [eval {trans2 TransformPoint} $world]
-
-        # if inside other dataset write to file
-        set ok 1
-        foreach d $dims p $ijk {
-            if {$p < 0} {
-                set ok 0
-            } elseif {$p > $d} {
-                set ok 0
-            }
-        }
-        if {$ok} {
-            puts $out $ijk        
-        }
-    }
-    close $out
-
-    trans Delete
-    trans2 Delete
-    set DTMRI(streamlineList) ""
-}
 
 ################################################################
 #  Procedures that deal with coordinate systems
@@ -6047,7 +5970,6 @@ proc DTMRISetActive {n} {
     # this also sets up the correct color for the first tract.
     DTMRIUpdateTractColorToSolid
 
-    
 #     # set up the BSpline tractography pipeline
 #     set DTMRI(vtk,BSpline,data) 1
 #     set DTMRI(vtk,BSpline,init) 1;
