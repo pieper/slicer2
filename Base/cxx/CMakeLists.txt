@@ -36,6 +36,8 @@ SOURCE_FILES (Base_SRCS
 	vtkResliceImage.cxx vtkSurfaceProps.cxx
 	vtkPolyBoolean.cxx 
 	vtkImageEMSegmenter.cxx
+	vtkMrmlEndSegmenterNode.cxx vtkMrmlSegmenterClassNode.cxx vtkMrmlSegmenterInputNode.cxx  
+        vtkMrmlSegmenterCIMNode.cxx vtkMrmlSegmenterGraphNode.cxx vtkMrmlSegmenterNode.cxx 
 	# vtkDistractorSource.cxx
 	# vtkImageEuclideanDistanceTransformation.cxx 
 )

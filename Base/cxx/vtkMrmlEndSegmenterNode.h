@@ -29,8 +29,9 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #define __vtkMrmlEndSegmenterNode_h
 
 #include "vtkMrmlNode.h"
+#include "vtkSlicer.h"
 
-class VTK_EXPORT vtkMrmlEndSegmenterNode : public vtkMrmlNode
+class VTK_SLICER_BASE_EXPORT vtkMrmlEndSegmenterNode : public vtkMrmlNode
 {
 public:
   static vtkMrmlEndSegmenterNode *New();
