@@ -259,7 +259,7 @@ proc EndoscopicInit {} {
     set Module($m,category) "Visualisation"
     
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.59 $} {$Date: 2004/05/10 18:27:21 $}] 
+    {$Revision: 1.60 $} {$Date: 2004/06/20 18:21:39 $}] 
        
     # Define Procedures
     #------------------------------------
@@ -1102,6 +1102,8 @@ proc EndoscopicPopBindings {} {
     EvDeactivateBindingSet Slice0Events
     EvDeactivateBindingSet Slice1Events
     EvDeactivateBindingSet Slice2Events
+    
+#    EvDeactivateBindingSet 3DEvents
 }
 
 #-------------------------------------------------------------------------------
@@ -1118,7 +1120,9 @@ proc EndoscopicPushBindings {} {
     EvActivateBindingSet Slice0Events
     EvActivateBindingSet Slice1Events
     EvActivateBindingSet Slice2Events
-# puts "binding pushed"       
+    
+#    EvActivateBindingSet 3DEvents
+#  puts "binding pushed"       
 }
 
 #-------------------------------------------------------------------------------
@@ -1132,23 +1136,26 @@ proc EndoscopicCreateBindings {} {
     
     # Creates events sets we'll  need for this module
     # create the event manager for the ability to move the gyro
-    
-# The following binding for double click is currently activated in TkInteractor.tcl
-#     EvDeclareEventHandler 3DEvents <Double-Any-ButtonPress> { if { [SelectPick Endoscopic(picker) %W %x %y] != 0 } \
-    { eval EndoscopicAddLandmarkFromWorldCoordinates $Select(xyz);Render3D }}
-    
+     
 # endoscopic events for slice windows (in addition to already existing events)
 
-       
-   EvDeclareEventHandler EndoKeySlicesEvents <KeyPress-m> { if { [SelectPick2D %W %x %y] != 0 } \
+#  <KeyPress-m> allows the user to move the endoscope quickly to a 3D location defined by the mouse, without using the gyro      
+   EvDeclareEventHandler EndoKeyMoveSlicesEvents <KeyPress-m> { if { [SelectPick2D %W %x %y] != 0 } \
    {eval EndoscopicSetWorldPosition [lindex $Select(xyz) 0] [lindex $Select(xyz) 1] [lindex $Select(xyz) 2]; Render3D} }
 
-   EvDeclareEventHandler EndoMouseSlicesEvents <Double-Any-ButtonPress> { if {[SelectPick2D %W %x %y] != 0} \
+# <KeyPress-t> allows the user to select a target on the 3D colon, and in the 2D slices
+   EvDeclareEventHandler EndoKeySelectSlicesEvents <KeyPress-t> { if {[SelectPick2D %W %x %y] != 0} \
    {eval EndoscopicAddLandmarkFromSlices [lindex $Select(xyz) 0] [lindex $Select(xyz) 1] [lindex $Select(xyz) 2]} }
 
-   EvAddWidgetToBindingSet Slice0Events $Gui(fSl0Win) {{EndoKeySlicesEvents} {EndoMouseSlicesEvents}}
-   EvAddWidgetToBindingSet Slice1Events $Gui(fSl1Win) {{EndoKeySlicesEvents} {EndoMouseSlicesEvents}}
-   EvAddWidgetToBindingSet Slice2Events $Gui(fSl2Win) {{EndoKeySlicesEvents} {EndoMouseSlicesEvents}}
+   EvAddWidgetToBindingSet Slice0Events $Gui(fSl0Win) {{EndoKeySelectSlicesEvents} {EndoKeyMoveSlicesEvents}}
+   EvAddWidgetToBindingSet Slice1Events $Gui(fSl1Win) {{EndoKeySelectSlicesEvents} {EndoKeyMoveSlicesEvents}}
+   EvAddWidgetToBindingSet Slice2Events $Gui(fSl2Win) {{EndoKeySelectSlicesEvents} {EndoKeyMoveSlicesEvents}}
+   
+   EvDeclareEventHandler EndoKeySelect3DEvents <KeyPress-t> { if { [SelectPick Endoscopic(picker) %W %x %y] != 0 } \
+    { eval EndoscopicAddLandmarkFromWorldCoordinates [lindex $Select(xyz) 0] [lindex $Select(xyz) 1] [lindex $Select(xyz) 2] }}
+    
+   EvAddWidgetToBindingSet 3DEvents $Gui(fViewWin) {EndoKeySelect3DEvents}
+   
        
 }
 
@@ -4884,12 +4891,12 @@ proc EndoscopicAddFlatView {} {
     frame .t$name.fView
     set f .t$name.fView
     wm title .t$name $name
-    wm geometry .t$name -0+0
+    wm geometry .t$name -0-0
     wm protocol .t$name WM_DELETE_WINDOW "EndoscopicRemoveFlatView $name"
     wm withdraw .
    
     # create a vtkTkRenderWidget to draw the flattened image into
-    vtkTkRenderWidget $f.flatRenderWidget$name -width 220 -height $View(viewerHeightNormal)
+    vtkTkRenderWidget $f.flatRenderWidget$name -width 600 -height $View(viewerHeightNormal)
     set Endoscopic($f.flatRenderWidget$name,name) $name
     
     # control frame
@@ -5386,6 +5393,11 @@ proc EndoscopicAddLandmarkFromWorldCoordinates {sx sy sz} {
       set Select(xyz) [list $sx $sy $sz]
 
 #  active list (should be the default path just created from the automatic tab)
+    if {$Endoscopic(path,activeId) == "None"} {
+
+    return
+    }
+
       set fid $Fiducials($Fiducials(activeList),fid)
       set listName $Fiducials(activeList)
 
