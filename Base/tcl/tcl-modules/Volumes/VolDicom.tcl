@@ -147,8 +147,22 @@ proc VolDicomBuildGUI {parentFrame} {
     #-------------------------------------------
     # Props->Bot->DICOM frame
     #-------------------------------------------
-    set f $parentFrame
     
+
+    if {[catch {package require Iwidgets} err] != 1} {
+        iwidgets::scrolledframe $parentFrame.sfVolDicom \
+            -vscrollmode dynamic -hscrollmode dynamic \
+            -background $Gui(activeWorkspace)  -activebackground $Gui(activeButton) \
+            -troughcolor $Gui(normalButton)  -highlightthickness 0 \
+            -relief flat -sbwidth 10
+        pack $parentFrame.sfVolDicom -expand 1 -fill both
+        set f [$parentFrame.sfVolDicom childsite]
+        # this is to make the rest of the proc think nothing's changed
+        set parentFrame [$parentFrame.sfVolDicom childsite]
+    }
+
+    set f $parentFrame
+
     frame $f.fVolume  -bg $Gui(activeWorkspace) -relief groove -bd 3
     frame $f.fApply   -bg $Gui(activeWorkspace)
     pack $f.fVolume $f.fApply \
@@ -168,6 +182,9 @@ proc VolDicomBuildGUI {parentFrame} {
     #frame $f.fHeaders  -bg $Gui(activeWorkspace)
     #frame $f.fLabelMap -bg $Gui(activeWorkspace)
     set fileNameListbox [ScrolledListbox $f.fFiles 0 0 -height 5 -bg $Gui(activeWorkspace)]
+    # make the scroll bars a bit skinnier when they appear
+    $f.fFiles.xscroll configure -width 10
+    $f.fFiles.yscroll configure -width 10
     set Volume(dICOMFileListbox) $fileNameListbox
     #frame $f.fFiles -bg $Gui(activeWorkspace)
     frame $f.fOptions  -bg $Gui(activeWorkspace)
