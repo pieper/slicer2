@@ -117,6 +117,13 @@ public:
   vtkGetMacro(HistSizeTarget, int);
 
   // Description:
+  // Set the histogram frequency to use if the frequency is 0
+  // This number should be very small compared with the number
+  // of bins in the histogram. 1e-12 is the default.
+  vtkSetMacro(HistEpsilon, double);
+  vtkGetMacro(HistEpsilon, double);
+
+  // Description:
   // Set the standard deviations of the parzen window density estimators.
   vtkSetMacro(SourceStandardDeviation, double);
   vtkGetMacro(SourceStandardDeviation, double);
@@ -241,6 +248,7 @@ protected:
   vtkMatrix4x4 *GivenTransform;
   int HistSizeSource;
   int HistSizeTarget;
+  double HistEpsilon;
   void *GivenHistogram;
 
   int FlipTargetZAxis;     // 1 if flipped z-axis on target

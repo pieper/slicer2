@@ -295,6 +295,12 @@ public:
   void SetHistogramSize( const SizeType histSize )
     { m_Metric->SetHistogramSize(histSize); }
 
+    // Description:
+    // Set the histogram frequency to use if the frequency is 0
+  void SetHistogramEpsilon( const double Epsilon) 
+    { m_Metric->SetEpsilon(Epsilon);  }
+
+
 protected:
   KLRegistration();
   ~KLRegistration();

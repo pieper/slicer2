@@ -74,7 +74,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 #include "KLRegistration.h"
 
-vtkCxxRevisionMacro(vtkITKKullbackLeiblerTransform, "$Revision: 1.2 $");
+vtkCxxRevisionMacro(vtkITKKullbackLeiblerTransform, "$Revision: 1.3 $");
 vtkStandardNewMacro(vtkITKKullbackLeiblerTransform);
 
 //----------------------------------------------------------------------------
@@ -92,6 +92,7 @@ vtkITKKullbackLeiblerTransform::vtkITKKullbackLeiblerTransform()
 
   this->HistSizeSource = 32;
   this->HistSizeTarget = 32;
+  this->HistEpsilon = 1e-12;
   this->GivenHistogram = NULL; // No Histogram until calculated
 
   // the last iteration finished with no error
@@ -304,6 +305,8 @@ static void vtkITKKLExecute(vtkITKKullbackLeiblerTransform *self,
   histSize[1] = self->GetHistSizeTarget();
   KLRegistrator->SetHistogramSize(histSize);
 
+  KLRegistrator->SetHistogramEpsilon(self->GetHistEpsilon());
+
   // ----------------------------------------
   // Do the Registratioon Configuration
   // ----------------------------------------
@@ -314,13 +317,6 @@ static void vtkITKKLExecute(vtkITKKullbackLeiblerTransform *self,
  // Setup the optimizer
 
   KLRegistrator->SetTranslationScale(1.0/vnl_math_sqr(self->GetTranslateScale()));
-//  // This is the scale on translation
-//  for (int j=4; j<7; j++)
-//    {
-//    scales[j] = KLReg_TranslationScale;
-//    // This was chosen by Steve. I'm not sure why.
-//    scales[j] = 1.0/vnl_math_sqr(self->GetTranslateScale());
-//    }
 
   // Set metric related parameters
   KLRegistrator->SetMovingImageStandardDeviation(self->GetSourceStandardDeviation());
