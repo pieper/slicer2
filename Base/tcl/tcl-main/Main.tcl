@@ -450,7 +450,7 @@ proc MainInit {} {
 
         # Set version info
     lappend Module(versions) [ParseCVSInfo Main \
-        {$Revision: 1.101 $} {$Date: 2003/08/18 22:13:05 $}]
+        {$Revision: 1.102 $} {$Date: 2003/08/18 23:52:58 $}]
 
     # Call each "Init" routine that's not part of a module
     #-------------------------------------------
@@ -1817,7 +1817,7 @@ proc MainExitProgram { } {
     # give the modules a chance to clean up if needed
     foreach m $Module(idList) {
         if {[info exists Module($m,procMainExit)] == 1} {
-            $Module($prevID,procMainExit)
+            $Module($m,procMainExit)
         }
     }
 
