@@ -10,7 +10,6 @@ if { [itcl::find class regions] == "" } {
     itcl::class regions {
 
         public variable model "" {}
-        public variable labelfile "" {}
         public variable annotfile "" {}
         public variable talfile "" {}
         public variable browser {/usr/bin/mozilla} {}
@@ -78,16 +77,6 @@ itcl::body regions::constructor {args} {
     }
     pack $_modelmenu -expand true -fill x
 
-    frame $cs.label
-    pack $cs.label -expand true -fill x
-    iwidgets::entryfield $cs.label.elabel \
-        -textvariable [itcl::scope labelfile] \
-        -labeltext "Label File:"
-    pack $cs.label.elabel -side left -expand true -fill x
-    button $cs.label.blabel -text "Browse..." \
-        -command "$this configure -labelfile \[tk_getOpenFile -filetypes { { {Label Files} {.txt} } } -initialfile \[$this cget -labelfile\] \]"
-    pack $cs.label.blabel -side left
-
     frame $cs.annot
     pack $cs.annot -expand true -fill x
     iwidgets::entryfield $cs.annot.eannot \
@@ -95,7 +84,7 @@ itcl::body regions::constructor {args} {
         -labeltext "Annotation File:"
     pack $cs.annot.eannot -side left -expand true -fill x
     button $cs.annot.bannot -text "Browse..." \
-        -command "$this configure -annotfile \[tk_getOpenFile -filetypes { {{Parsed Annotations} {.pannot}} {{Annotation Files} {.annot}} } -initialfile \[$this cget -annotfile\] \]"
+        -command "$this configure -annotfile \[tk_getOpenFile -filetypes { {{Annotations} {.annot}} {{All Files} {.*}} } -initialfile \[$this cget -annotfile\] \]"
     pack $cs.annot.bannot -side left
 
     frame $cs.tal
@@ -108,7 +97,7 @@ itcl::body regions::constructor {args} {
         -command "$this configure -talfile \[tk_getOpenFile -filetypes { {{AFNI Talairach File} {.HEAD}} {{Freesurfer Talairach File} {.xfm}} } -initialfile \[$this cget -talfile\] \]"
     pack $cs.tal.btal -side left
 
-    ::iwidgets::Labeledwidget::alignlabels $_modelmenu $cs.label.elabel $cs.annot.eannot 
+    ::iwidgets::Labeledwidget::alignlabels $_modelmenu $cs.annot.eannot $cs.tal.etal 
 
     button $cs.apply -text "Apply" -command "$this apply"
     pack $cs.apply
@@ -208,73 +197,47 @@ itcl::configbody regions::model {
 itcl::body regions::apply {} {
     global Model
 
-    if { $model == "" || $labelfile == "" || $annotfile == "" } {
-        DevErrorWindow "Please select a model, label file, and annotation file."
+    if { [file ext $annotfile] != ".annot" } {
+        DevErrorWindow "Can only handle annotation files (.annot) currently."
         return
     }
 
-    if { [file ext $annotfile] != ".pannot" } {
-        DevErrorWindow "Can only handle parsed annotations (.pannot) currently."
-        return
+    #
+    # parse the annotation file
+    # - make a scalar field for the labels if needed
+    # - set the colors for the model's lookuptable
+    # - put the anatomical labels into a member array for access later
+    #
+    set scalaridx [[$Model($_id,polyData) GetPointData] SetActiveScalars "labels"] 
+
+    if { $scalaridx == "-1" } {
+        set scalars scalars_$_name
+        catch "$scalars Delete"
+        vtkIntArray $scalars
+        $scalars SetName "labels"
+        [$Model($_id,polyData) GetPointData] AddArray $scalars
+        [$Model($_id,polyData) GetPointData] SetActiveScalars "labels"
+    } else {
+        set scalars [[$Model($_id,polyData) GetPointData] GetScalars $scalaridx]
     }
 
     set lut [Model($_id,mapper,viewRen) GetLookupTable]
-
     $lut SetRampToLinear
 
-    #
-    # parse the label file
-    #
+    set fssar fssar_$_name
+    catch "$fssar Delete"
+    vtkFSSurfaceAnnotationReader $fssar
+    $fssar SetFileName $annotfile
+    $fssar SetOutput $scalars
+    $fssar SetColorTableOutput $lut
+    $fssar ReadFSAnnotation
+
     array unset _labels
-    set fp [open $labelfile "r"]
-    while { ![eof $fp] } {
-        gets $fp line
-        scan $line "%d %s %d %d %d %d" idx name r g b other
-        set _labels($idx,name) $name
-        set _labels($idx,rgb) "$r $g $b"
-        set packed_rgb [format "%02x%02x%02x" $b $g $r]
-        set _labels($idx,packed_rgb) $packed_rgb
-        set _labels($packed_rgb,idx) $idx
+    array set _labels [$fssar GetColorTableNames]
 
-        set rr [expr $r / 255.]
-        set gg [expr $g / 255.]
-        set bb [expr $b / 255.]
-        $lut SetTableValue $idx $rr $gg $bb 1
-    }
-    close $fp
-    
-    #
-    # parse the annotation file
-    #
-
-    set scalars [[$Model($_id,polyData) GetPointData] GetScalars]
-
-    if { $scalars == "" } {
-        set scalars ${_name}_scalars
-        vtkFloatArray $scalars
-        $scalars SetNumberOfComponents 1
-        [$Model($_id,polyData) GetPointData] SetScalars $scalars
-    }
-
-    set fp [open $annotfile "r"]
-    gets $fp nn
-
-    $scalars SetNumberOfTuples $nn
-    for {set n 0} {$n < $nn} {incr n} {
-        gets $fp line
-        set i [lindex $line 0]
-        set c [lindex $line 1]
-
-        if { ![info exists _labels($c,idx)] } {
-            #puts stderr "No label for color $c, index $i"
-            continue
-        } 
-
-        $scalars SetValue $i $_labels($c,idx)
-    }
-
-    close $fp
-
+    set ::Model(scalarVisibilityAuto) 0
+    set entries [lsort -integer [array names _labels]]
+    MainModelsSetScalarRange $_id [lindex $entries 0] [lindex $entries end]
     MainModelsSetScalarVisibility $_id 1
     Render3D
 }
@@ -287,7 +250,6 @@ itcl::body regions::query {} {
     foreach l $_ptlabels {
 
         regsub -all "(-|_)" $l " " t
-        puts "$l go $t"
 
         # special case abbreviations 
         if { [lindex $t 0] == "G" } {
@@ -343,7 +305,6 @@ itcl::body regions::query {} {
     }
 
     regsub -all " " $terms "+" terms
-    puts $terms
     switch $site {
         "arrowsmith" {
             set query [open $arrow r]
@@ -430,11 +391,11 @@ itcl::body regions::findptscalars {} {
         set scalars [[$Model($_id,polyData) GetPointData] GetScalars]
         set s [$scalars GetValue $minpt]
         lappend _ptscalars $s
-        lappend _ptlabels $_labels($s,name)
+        lappend _ptlabels $_labels($s)
         if { $mindist > 2} {
            $_labellistbox insert end "Point Not on Surface" 
         } else {
-           $_labellistbox insert end "pt $id $_labels($s,name) ($s)" 
+           $_labellistbox insert end "pt $id $_labels($s) ($s)" 
         }
         $this talairach
         if { $_Blabel != "" } {
@@ -595,14 +556,13 @@ itcl::body regions::demo {} {
     # - make scalars visible
 
 
-    $this configure -labelfile $::PACKAGE_DIR_VTKFREESURFERREADERS/../../../tcl/Simple_surface_labels2002.txt
     $this configure -arrow $::PACKAGE_DIR_VTKFREESURFERREADERS/../../../tcl/QueryA.html
     $this configure -arrowout [$this cget -tmpdir]/QueryAout.html
 
-    set jorgedata c:/pieper/bwh/data/MGH-Siemens15-JJ
-    if { [file exists $jorgedata] } {
-        $this configure -annotfile $jorgedata/label/rh.aparc.pannot 
-        $this configure -talfile $jorgedata/mri/transforms/talairach.xfm
+    set mydata c:/pieper/bwh/data/MGH-Siemens15-SP.1-uw
+    if { [file exists $mydata] } {
+        $this configure -annotfile $mydata/label/rh.aparc.annot 
+        $this configure -talfile $mydata/mri/transforms/talairach.xfm
 
     } else {
         $this configure -labelfile "/home/ajoyner/slicer/Simple_surface_labels2002.txt"
