@@ -29,7 +29,6 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 #include <stdio.h>
 #include <math.h>
-#include <cmath>
 #include <ctype.h>
 #include <string.h>
  
@@ -147,7 +146,6 @@ protected:
   void operator=(const vtkImageEMMarkov&) {};
 
   void ThreadedExecute(vtkImageData *inData, vtkImageData *outData,int outExt[6], int id);
-  void ExecuteInformation(){this->vtkImageToImageFilter::ExecuteInformation();};
 
   // Description:
   // Calculates the Maximum Class Probability for each brightness value  
