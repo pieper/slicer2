@@ -603,7 +603,9 @@ if { $SLICER(versionInfo) != "" } {
     # have to get the compiler information after MainBoot
     set compilerVersion [Slicer GetCompilerVersion]
     set compilerName [Slicer GetCompilerName]
-    set SLICER(versionInfo) "$SLICER(versionInfo) CVS: [ParseCVSInfo Go {$Id: Go.tcl,v 1.49 2003/03/19 23:00:27 nicole Exp $}] ${compilerName}: $compilerVersion"
+    set vtkVersion [Slicer GetVTKVersion]
+    set libVersions "VTK: ${vtkVersion} TCL: ${tcl_patchLevel} TK: ${tk_patchLevel}"
+    set SLICER(versionInfo) "$SLICER(versionInfo) ${compilerName}: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.50 2003/04/01 20:15:46 nicole Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
