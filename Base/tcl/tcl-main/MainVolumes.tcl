@@ -72,7 +72,7 @@ proc MainVolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.56 $} {$Date: 2003/05/01 17:50:15 $}]
+    {$Revision: 1.57 $} {$Date: 2003/05/21 19:55:49 $}]
 
     set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -310,7 +310,7 @@ proc MainVolumesRead {v} {
         # DICOM requires another approach
         for {set i 0} {$i < $num} {incr i} {
             if {[CheckFileExists [Volume($v,node) GetDICOMFileName $i] 0] == "0"} {
-                DevErrorWindow "DICOM volume file [Volume($v,node) GetDICOMFileName $i] does not exist, file number $i"
+                DevErrorWindow "DICOM volume file [Volume($v,node) GetDICOMFileName $i] does not exist, file number $i, v=$v"
                 return -1
             }
         }
