@@ -56,11 +56,6 @@
 proc FSLReaderPopUpPlot {x y} {
     global FSLReader
 
-    # timer to remove the time course plot
-    if {[info exists FSLReader(timer)]} {
-        after cancel $FSLReader(timer)
-    }
-
     if {! [info exists FSLReader(firstMRMLid)] ||
         ! [info exists FSLReader(lastMRMLid)]} {
         # DevErrorWindow "Please load filtered_func_data.hdr first."
@@ -131,6 +126,11 @@ proc FSLReaderPopUpPlot {x y} {
 
     #Update the graph for the new data
     $FSLReader(renWin) Render 
+
+    # timer to remove the time course plot
+    if {[info exists FSLReader(timer)]} {
+        after cancel $FSLReader(timer)
+    }
     set FSLReader(timer) [after 6000 {FSLReaderCloseTimeCourseWindow}]
 }
 
