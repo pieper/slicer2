@@ -248,6 +248,7 @@ proc VolAnalyzeApply {} {
                 DevErrorWindow $res
                 return
             }
+            set Volume(VolAnalyze,FileNameSave) $Volume(VolAnalyze,FileName) 
             set Volume(VolAnalyze,FileName) /tmp/$tail.hdr
         }
     }
@@ -378,6 +379,7 @@ proc VolAnalyzeApply {} {
     if { $compressed } {
         file delete /tmp/$tail.hdr
         file delete /tmp/$tail.img
+        set Volume(VolAnalyze,FileName) $Volume(VolAnalyze,FileNameSave) 
     }
 
     return $i
