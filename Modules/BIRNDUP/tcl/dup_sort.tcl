@@ -64,11 +64,11 @@ itcl::body dup_sort::constructor {args} {
     set f $cs.info
     iwidgets::labeledframe $f -labeltext "Study Info" -labelpos nw
     set fcs [$f childsite]
-    pack [iwidgets::entryfield $fcs.sourcedir -labeltext "Source Dir: " -state readonly]
-    pack [iwidgets::entryfield $fcs.project -labeltext "Project #: " -textvariable [itcl::scope _study(project)]]
-    pack [iwidgets::entryfield $fcs.visit -labeltext "Visit #: " -textvariable [itcl::scope _study(visit)]]
-    pack [iwidgets::entryfield $fcs.study -labeltext "Study #: " -textvariable [itcl::scope _study(study)]]
-    pack [iwidgets::entryfield $fcs.birnid -labeltext "BIRN ID: " -textvariable [itcl::scope _study(birnid)]] 
+    pack [iwidgets::entryfield $fcs.sourcedir -labeltext "Source Dir: " -state readonly] -fill x
+    pack [iwidgets::entryfield $fcs.project -labeltext "Project #: " -textvariable [itcl::scope _study(project)]] -fill x
+    pack [iwidgets::entryfield $fcs.visit -labeltext "Visit #: " -textvariable [itcl::scope _study(visit)]] -fill x
+    pack [iwidgets::entryfield $fcs.study -labeltext "Study #: " -textvariable [itcl::scope _study(study)]] -fill x
+    pack [iwidgets::entryfield $fcs.birnid -labeltext "BIRN ID: " -textvariable [itcl::scope _study(birnid)]]  -fill x
     ::iwidgets::Labeledwidget::alignlabels $fcs.sourcedir $fcs.project $fcs.visit $fcs.study $fcs.birnid
     set f $cs.series
     ::iwidgets::scrolledframe $f -hscrollmode dynamic -vscrollmode dynamic
@@ -166,6 +166,39 @@ itcl::body dup_sort::fill {dir} {
         }
     }
 
+    #
+    # set the BIRN ID for this subject
+    # - first be sure that the entry exists for this birn id
+    # - then pull the value from the table
+    #
+
+    set birnid_manager [$parent pref UPLOAD2_DIR]/external/birnid_man.jar
+    set linktable [$parent pref LINKTABLE]
+    set inst [$parent pref INSTITUTION]
+
+    if { [catch "exec java -jar $birnid_manager -create -p $inst -l $linktable -c $patient" err] } {
+        DevErrorWindow "Cannot execute BIRN ID manager.  Ensure that UPLOAD2_DIR preference is correct and that Java is installed on your machine."
+        return
+    }
+
+    set resp [exec java -jar $birnid_manager -find -l $linktable -c $patient]
+    if { [catch "exec java -jar $birnid_manager -find -l $linktable -c $patient" err] } {
+        DevErrorWindow "Cannot execute BIRN ID manager to access BIRN ID.  Ensure that LINKTABLE preference is correct."
+        return
+    }
+
+    scan $resp {Birn ID=%[^,]s} birnid
+    
+    set _study(birnid) $birnid
+    $infocs.birnid configure -state normal
+    $infocs.birnid delete 0 end
+    $infocs.birnid insert end $birnid
+    $infocs.birnid configure -state readonly
+
+
+    #
+    # create the facial deidentification options
+    #
     set sf [[$this childsite].series childsite]
     set _series(master) ""
     grid [iwidgets::entryfield $sf.lmaster -labeltext "Mask Master:" -textvariable [itcl::scope _series(master)] -state readonly] -columnspan 4
