@@ -261,7 +261,7 @@ void vtkPolyBoolean::UpdateCutter()
   vtkPolyData *pd[2];
 
   // make sure input is available
-    if ( this->Inputs[0] == NULL || this->PolyDataB == NULL )
+  if ( this->Inputs[0] == NULL || this->PolyDataB == NULL )
     {
     vtkErrorMacro(<< "No input...can't execute!");
     return;
@@ -297,9 +297,9 @@ void vtkPolyBoolean::UpdateCutter()
     for (AorB=0; AorB<2; AorB++)
       {
       if ( pd[AorB]->GetDataReleased() )
-    {
-    pd[AorB]->Update();
-    }
+        {
+        pd[AorB]->Update();
+        }
       }
     /*
       if ( this->StartMethod )
@@ -658,7 +658,7 @@ int vtkPolyBoolean::ProcessTwoNodes( vtkOBBNode *nodeA,
   vtkIdType *ptIds;
   static vtkIdList *cellIdsA = vtkIdList::New();
   static vtkIdList *cellIdsB = vtkIdList::New();
-  vtkFloatingPointType *p[3];
+  vtkFloatingPointType p[3][3];
 
   cellIdsA->Allocate(CELLS_PER_BUCKET+10);
   cellIdsB->Allocate(CELLS_PER_BUCKET+10);
@@ -693,9 +693,9 @@ int vtkPolyBoolean::ProcessTwoNodes( vtkOBBNode *nodeA,
       {
       case VTK_TRIANGLE:
         pbool->PolyDataB->GetCellPoints( cellIdB, numPts, ptIds );
-        p[0] = pbool->BPoints->GetPoint( ptIds[0] );
-        p[1] = pbool->BPoints->GetPoint( ptIds[1] );
-        p[2] = pbool->BPoints->GetPoint( ptIds[2] );
+        pbool->BPoints->GetPoint( ptIds[0], p[0] );
+        pbool->BPoints->GetPoint( ptIds[1], p[1] );
+        pbool->BPoints->GetPoint( ptIds[2], p[2] );
         // ptIds[] holds the ids if the B triangle points.
         // Go further only if triB intersects OBB-A
         if ( pbool->OBBTreeA->vtkOBBTree::TriangleIntersectsNode(
@@ -733,9 +733,9 @@ int vtkPolyBoolean::ProcessTwoNodes( vtkOBBNode *nodeA,
       {
       case VTK_TRIANGLE:
       pbool->GetInput()->GetCellPoints( cellIdA, numPts, ptIds );
-      p[0] = InputA->GetPoint( ptIds[0] );
-      p[1] = InputA->GetPoint( ptIds[1] );
-      p[2] = InputA->GetPoint( ptIds[2] );
+      InputA->GetPoint( ptIds[0], p[0] );
+      InputA->GetPoint( ptIds[1], p[1] );
+      InputA->GetPoint( ptIds[2], p[2] );
       // ptIds[] holds the ids if the A triangle points.
       // Go further only if triA intersects OBB-B
       if ( pbool->OBBTreeB->vtkOBBTree::TriangleIntersectsNode(
@@ -797,7 +797,7 @@ int vtkPolyBoolean::IntersectBoolTriPair( vtkBoolTri *triA, vtkBoolTri *triB )
   vtkPiercePoint *thisPP, *nextPP, *intPPs[2][2], *startPP, *endPP, **prevPPP;
   vtkPiercePoint tmpPPs[2][2];
   vtkPoints *points;
-  vtkFloatingPointType xprod[3], offsets[2][3], *p0, *p1, param, offset0, offset1, deltaX;
+  vtkFloatingPointType xprod[3], offsets[2][3], p0[3], p1[3], param, offset0, offset1, deltaX;
   int PPEdgeIndices[2][2];
   vtkFloatingPointType ang_eps = this->AngleResolution*3.14159/180,
         dist_eps = this->DistanceResolution;
@@ -826,7 +826,7 @@ int vtkPolyBoolean::IntersectBoolTriPair( vtkBoolTri *triA, vtkBoolTri *triB )
         flip_dir = 0;
       else
         flip_dir = 1;
-      p0 = points->GetPoint( thisEdge->Points[flip_dir] );
+      points->GetPoint( thisEdge->Points[flip_dir], p0 );
       offsets[AorB][ii] = vtkMath::Dot( p0, otherTri->Normal )
                           - otherTri->Offset;
       }
@@ -862,8 +862,8 @@ int vtkPolyBoolean::IntersectBoolTriPair( vtkBoolTri *triA, vtkBoolTri *triB )
       if ( thisPP == NULL )
         { // make a new tmpPP
         thisPP = &tmpPPs[AorB][ii];
-    thisPP->NewId = -2; // -2 marks it as a local temporary variable
-    thisPP->Next = thisPP->Prev = thisPP->Merge = NULL;
+        thisPP->NewId = -2; // -2 marks it as a local temporary variable
+        thisPP->Next = thisPP->Prev = thisPP->Merge = NULL;
         thisPP->NextEdge[0] = thisPP->NextEdge[1] = NULL;
         thisPP->Triangle = otherTri;
         thisPP->Edge = thisEdge;
@@ -879,8 +879,8 @@ int vtkPolyBoolean::IntersectBoolTriPair( vtkBoolTri *triA, vtkBoolTri *triB )
           }
         snapIdx = -1;
         param = offset0/(offset0 - offset1);
-        p0 = points->GetPoint( thisEdge->Points[0] );
-        p1 = points->GetPoint( thisEdge->Points[1] );
+        points->GetPoint( thisEdge->Points[0], p0 );
+        points->GetPoint( thisEdge->Points[1], p1 );
         if ( param < 0.5 && fabs( offset0 ) < dist_eps )
           { // snap PP to equivalent endpoint
           param = 0.0;
@@ -906,7 +906,9 @@ int vtkPolyBoolean::IntersectBoolTriPair( vtkBoolTri *triA, vtkBoolTri *triB )
           thisPP->Point[2] = p0[2] + param*(p1[2] - p0[2]);
           }
         }
-      p0 = thisPP->Point;
+      p0[0] = thisPP->Point[0];
+      p0[1] = thisPP->Point[1];
+      p0[2] = thisPP->Point[2];
       thisPP->Xparam = vtkMath::Dot( xprod, p0 );
       intPPs[AorB][ii] = thisPP;
       }
@@ -1654,7 +1656,7 @@ void vtkPolyBoolean::AddNewPolygons( vtkBoolTri *thisTri )
   vtkIdType *tris, outerLoop[3];
   vtkBoolTess *tess = this->Tess;
   int flagBit, addOuterLoop = 0;
-  vtkFloatingPointType *p0, *p1, xprod[3], areavec[3];
+  vtkFloatingPointType p0[3], p1[3], xprod[3], areavec[3];
 
   // Generate new triangles from the loops on this triangle.
   thisLoop = thisTri->NewLoops;
@@ -1672,15 +1674,17 @@ void vtkPolyBoolean::AddNewPolygons( vtkBoolTri *thisTri )
     areavec[0] = areavec[1] = areavec[2] = 0.0;
     do {
       nPts = thisLoop->Points->GetNumberOfIds();
-      p0 = this->NewPoints->GetPoint( thisLoop->Points->GetId(nPts-1) );
+      this->NewPoints->GetPoint( thisLoop->Points->GetId(nPts-1), p0 );
       for ( ii=0; ii<nPts; ii++ )
         {
-        p1 = this->NewPoints->GetPoint( thisLoop->Points->GetId(ii) );
+        this->NewPoints->GetPoint( thisLoop->Points->GetId(ii), p1 );
         vtkMath::Cross( p0, p1, xprod );
         areavec[0] += xprod[0];
         areavec[1] += xprod[1];
         areavec[2] += xprod[2];
-        p0 = p1;
+        p0[0] = p1[0];
+        p0[1] = p1[1];
+        p0[2] = p1[2];
         }
       thisLoop = thisLoop->Next;
       }while( thisLoop != NULL );
@@ -1756,7 +1760,7 @@ void vtkPolyBoolean::AddCellTriangles( vtkIdType cellId, vtkIdType *ptIds,
   int invertB = 0;
   vtkPoints *points;
   vtkPolyData *dataset;
-  vtkFloatingPointType *p, *q, *r, v0[3], v1[3], *norm;
+  vtkFloatingPointType p[3], q[3], r[3], v0[3], v1[3], *norm;
   vtkIdList *cellNeighbors = vtkIdList::New();
   vtkBoolTriEdge *thisEdge;
 
@@ -1813,9 +1817,9 @@ void vtkPolyBoolean::AddCellTriangles( vtkIdType cellId, vtkIdType *ptIds,
           triPts[1] = triPts[2];
           triPts[2] = kk;
           }
-        p = points->GetPoint( triPts[0] );
-        q = points->GetPoint( triPts[1] );
-        r = points->GetPoint( triPts[2] );
+        points->GetPoint( triPts[0], p );
+        points->GetPoint( triPts[1], r );
+        points->GetPoint( triPts[2], q );
         for ( jj=0; jj<3; jj++ )
           {
           v0[jj] = q[jj] - p[jj];
@@ -1891,9 +1895,9 @@ void vtkPolyBoolean::AddCellTriangles( vtkIdType cellId, vtkIdType *ptIds,
           else
             triPts[ii] = thisEdge->Points[1];
           }
-        p = points->GetPoint( triPts[0] );
-        q = points->GetPoint( triPts[1] );
-        r = points->GetPoint( triPts[2] );
+        points->GetPoint( triPts[0], p );
+        points->GetPoint( triPts[1], r );
+        points->GetPoint( triPts[2], q );
         for ( jj=0; jj<3; jj++ )
           {
           v0[jj] = q[jj] - p[jj];
