@@ -206,7 +206,7 @@ proc VolDicomBuildGUI {parentFrame} {
     #-------------------------------------------
     set f $parentFrame.fApply
     
-    DevAddButton $f.bApply "Header" "set Volume(propertyType) Header; VolumesSetPropertyType" 8
+    DevAddButton $f.bApply "Header" "VolumesSetPropertyType VolHeader" 8
     DevAddButton $f.bCancel "Cancel" "VolumesPropsCancel" 8
     grid $f.bApply $f.bCancel -padx $Gui(pad)
     
@@ -1297,8 +1297,7 @@ proc HandleExtractHeader {} {
     set filename [lindex $Volume(dICOMFileList) $fileidx]
     DICOMReadHeaderValues $filename
 
-    set Volume(propertyType) Header
-    VolumesSetPropertyType
+    VolumesSetPropertyType VolHeader
 }
 
 #-------------------------------------------------------------------------------
