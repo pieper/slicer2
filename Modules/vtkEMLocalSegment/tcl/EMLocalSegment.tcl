@@ -234,7 +234,7 @@ proc EMSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.15 $} {$Date: 2003/11/06 19:36:55 $}]
+        {$Revision: 1.16 $} {$Date: 2003/11/26 16:53:23 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -271,8 +271,6 @@ proc EMSegmentInit {} {
     # set EMSegment(Alpha)       0.7
     # set EMSegment(SmWidth)    11 
     # set EMSegment(SmSigma)    5
-    # set EMSegment(StartSlice) 1    
-    # set EMSegment(EndSlice)   1
 
    # Sequence of how CIM values are represented
     # Where                      pixel to the North  
@@ -324,8 +322,15 @@ proc EMSegmentInit {} {
     set EMSegment(Alpha)          [vtkEMInit GetAlpha]
     set EMSegment(SmWidth)        [vtkEMInit GetSmoothingWidth]
     set EMSegment(SmSigma)        [vtkEMInit GetSmoothingSigma]
-    set EMSegment(StartSlice)     [vtkEMInit GetStartSlice]
-    set EMSegment(EndSlice)    -1 
+
+    set EMSegment(SegmentationBoundaryMin,0) 1
+    set EMSegment(SegmentationBoundaryMin,1) 1
+    set EMSegment(SegmentationBoundaryMin,2) 1
+
+    set EMSegment(SegmentationBoundaryMax,0) 256
+    set EMSegment(SegmentationBoundaryMax,1) 256
+    set EMSegment(SegmentationBoundaryMax,2) -1
+
 
     set EMSegment(PrintIntermediateResults)     [vtkEMInit GetPrintIntermediateResults] 
     set EMSegment(PrintIntermediateSlice)       [vtkEMInit GetPrintIntermediateSlice] 
@@ -393,7 +398,7 @@ proc EMSegmentInit {} {
     } else {
       set EMSegment(NumGraph) 1
     }
-    set EMSegment(NumGraph) 1
+    set EMSegment(NumGraph) 3
     # Define Histogram 
     set EMSegment(Cattrib,0,ColorGraphCode) #ffb2b2 
 
@@ -620,15 +625,13 @@ Description of the tabs:
 
     DevAddLabel $f.l "Step 2: Define Settings"
     frame $f.fCol -bg $Gui(activeWorkspace)
-    DevAddLabel $f.lHelp "\nNote\n-No. of Classes: Define number of classes to \n    be segmented\n-Iterations: Choose value between 10 and 20"    
+    DevAddLabel $f.lHelp "\nNote\n-No. of Classes: Define number of classes to \n    be segmented\n-Iterations: Choose value between 10 and 20\n-Boundary Min/Max: defines the area to be    \n     segmented. To figure out coordinates set \n     Slicer Cursor to IJK (go to Anno->Mode)\n      and go with mouse over window to read  \n     parameter in upper right corner.             "    
     
     pack $f.l $f.fCol $f.lHelp -side top -padx $Gui(pad) -pady $Gui(pad)
 
     frame $f.fCol.f1 -bg $Gui(activeWorkspace)
     frame $f.fCol.f2 -bg $Gui(activeWorkspace)
-    frame $f.fCol.f3 -bg $Gui(activeWorkspace)
-    frame $f.fCol.f4 -bg $Gui(activeWorkspace)
-    pack $f.fCol.f1 $f.fCol.f2 $f.fCol.f3 $f.fCol.f4 -side left -padx 0 -pady 2 -fill x 
+    pack $f.fCol.f1 $f.fCol.f2 -side left -padx 0 -pady 2 -fill x 
 
     DevAddLabel $f.fCol.f1.lNumClasses "No. of Classes:"  
     eval {entry $f.fCol.f2.eNumClasses -width 4 -textvariable EMSegment(NumClassesNew) } $Gui(WEA)
@@ -637,22 +640,49 @@ Description of the tabs:
     bind $f.fCol.f2.eNumClasses <Tab>    "EMSegmentCreateDeleteClasses 1 1"
     bind $f.fCol.f2.eNumClasses <Leave>  "EMSegmentCreateDeleteClasses 1 1"
 
-    DevAddLabel $f.fCol.f3.lEMI "Iterations:"
-    eval {entry $f.fCol.f4.eEMI -width 4 -textvariable EMSegment(EMiteration) } $Gui(WEA)
-    TooltipAdd $f.fCol.f4.eEMI "Number of EM Iterations"
+    DevAddLabel $f.fCol.f1.lEMI "Iterations:"
+    eval {entry $f.fCol.f2.eEMI -width 4 -textvariable EMSegment(EMiteration) } $Gui(WEA)
+    TooltipAdd $f.fCol.f2.eEMI "Number of EM Iterations"
 
-    DevAddLabel $f.fCol.f1.lStartSlice "Start Slice:"
-    eval {entry $f.fCol.f2.eStartSlice -width 4 -textvariable EMSegment(StartSlice) } $Gui(WEA)
-    TooltipAdd $f.fCol.f2.eStartSlice "Slice Number to start EM-EMSegment"
+    pack  $f.fCol.f1.lNumClasses $f.fCol.f1.lEMI      -side top -padx $Gui(pad) -pady 2 -anchor w  
+    pack  $f.fCol.f2.eNumClasses $f.fCol.f2.eEMI      -side top -padx $Gui(pad) -pady 1 -anchor w  
 
-    DevAddLabel $f.fCol.f3.lEndSlice "End Slice:"
-    eval {entry $f.fCol.f4.eEndSlice -width 4 -textvariable EMSegment(EndSlice) } $Gui(WEA)
-    TooltipAdd $f.fCol.f4.eEndSlice "Slice number to end EM-EMSegment"
+    if {$EMSegment(SegmentMode) < 2} {
+      DevAddLabel $f.fCol.f1.lStartSlice "Start Slice:"
+      eval {entry $f.fCol.f2.eStartSlice -width 4 -textvariable EMSegment(SegmentationBoundaryMin,2) } $Gui(WEA)
+      TooltipAdd $f.fCol.f2.eStartSlice "Slice Number to start EM-EMSegment"
 
-    pack  $f.fCol.f1.lNumClasses $f.fCol.f3.lEMI      -side top -padx $Gui(pad) -pady 2 -anchor w  
-    pack  $f.fCol.f1.lStartSlice $f.fCol.f3.lEndSlice -side top -padx $Gui(pad) -pady 2 -anchor w 
-    pack  $f.fCol.f2.eNumClasses $f.fCol.f4.eEMI      -side top -padx $Gui(pad) -pady 1 -anchor w  
-    pack  $f.fCol.f2.eStartSlice $f.fCol.f4.eEndSlice -side top -padx $Gui(pad) -pady 1 -anchor w 
+      DevAddLabel $f.fCol.f1.lEndSlice "End Slice:"
+      eval {entry $f.fCol.f2.eEndSlice -width 4 -textvariable  EMSegment(SegmentationBoundaryMax,2) } $Gui(WEA)
+      TooltipAdd $f.fCol.f2.eEndSlice "Slice number to end EM-EMSegment"
+      pack  $f.fCol.f1.lStartSlice $f.fCol.f1.lEndSlice -side top -padx $Gui(pad) -pady 2 -anchor w 
+      pack  $f.fCol.f2.eStartSlice $f.fCol.f2.eEndSlice -side top -padx $Gui(pad) -pady 1 -anchor w 
+
+      # DevAddButton $f.fSect1.fCol2.fEndSlice.b Max EMSegmentEndSlice
+      # $f.fSect1.fCol2.fEndSlice.b configure -width 4 -command {EMSegmentEndSlice 1}
+      #TooltipAdd $f.fSect1.fCol2.fEndSlice.b "Setting End Slice to the last Slice of the current Volume"  
+    } else {
+      DevAddLabel $f.fCol.f1.lBoundaryMin "Boundary Min:"
+      frame $f.fCol.f2.fBoundaryMin -bg $Gui(activeWorkspace)
+      TooltipAdd $f.fCol.f2.fBoundaryMin "Minimum of Segmentation Boundary"
+
+      DevAddLabel $f.fCol.f1.lBoundaryMax "Boundary Max:"
+      frame $f.fCol.f2.fBoundaryMax -bg $Gui(activeWorkspace)
+      TooltipAdd $f.fCol.f2.fBoundaryMax "Maximum of Segmentation Boundary"
+
+      pack  $f.fCol.f1.lBoundaryMin $f.fCol.f1.lBoundaryMax -side top -padx $Gui(pad) -pady 2 -anchor w 
+      pack  $f.fCol.f2.fBoundaryMin $f.fCol.f2.fBoundaryMax -side top -padx $Gui(pad) -pady 1 -anchor w 
+
+      eval {entry $f.fCol.f2.fBoundaryMin.eMin0 -width 4 -textvariable EMSegment(SegmentationBoundaryMin,0) } $Gui(WEA)
+      eval {entry $f.fCol.f2.fBoundaryMin.eMin1 -width 4 -textvariable EMSegment(SegmentationBoundaryMin,1) } $Gui(WEA)
+      eval {entry $f.fCol.f2.fBoundaryMin.eMin2 -width 4 -textvariable EMSegment(SegmentationBoundaryMin,2) } $Gui(WEA)
+      eval {entry $f.fCol.f2.fBoundaryMax.eMax0 -width 4 -textvariable EMSegment(SegmentationBoundaryMax,0) } $Gui(WEA)
+      eval {entry $f.fCol.f2.fBoundaryMax.eMax1 -width 4 -textvariable EMSegment(SegmentationBoundaryMax,1) } $Gui(WEA)
+      eval {entry $f.fCol.f2.fBoundaryMax.eMax2 -width 4 -textvariable EMSegment(SegmentationBoundaryMax,2) } $Gui(WEA)
+      pack  $f.fCol.f2.fBoundaryMin.eMin0  $f.fCol.f2.fBoundaryMin.eMin1  $f.fCol.f2.fBoundaryMin.eMin2  -side left -padx 1
+      pack  $f.fCol.f2.fBoundaryMax.eMax0  $f.fCol.f2.fBoundaryMax.eMax1  $f.fCol.f2.fBoundaryMax.eMax2  -side left -padx 1
+    }
+
 
     #-------------------------------------------
     # EM->Sec2 Frame: Define Class settings
@@ -1199,18 +1229,6 @@ Description of the tabs:
     eval {entry $f.fSect1.fCol2.eWriteFrequency -width 4 -textvariable EMSegment(PrintIntermediateFrequency) } $Gui(WEA)
     TooltipAdd $f.fSect1.fCol2.eWriteFrequency "Print out the result after how many steps ?"
 
-    DevAddLabel $f.fSect1.fCol1.lStartSlice "Start Slice:"
-    eval {entry $f.fSect1.fCol2.eStartSlice -width 4 -textvariable EMSegment(StartSlice) } $Gui(WEA)
-    TooltipAdd $f.fSect1.fCol2.eStartSlice "Slice Number to start EM-EMSegment"
-
-    DevAddLabel $f.fSect1.fCol1.lEndSlice "End Slice:"
-    frame $f.fSect1.fCol2.fEndSlice -bg $Gui(activeWorkspace)
-    eval {entry $f.fSect1.fCol2.fEndSlice.e -width 4 -textvariable EMSegment(EndSlice) } $Gui(WEA)
-    TooltipAdd $f.fSect1.fCol2.fEndSlice.e "Slice number to end EM-EMSegment"
-    DevAddButton $f.fSect1.fCol2.fEndSlice.b Max EMSegmentEndSlice
-    $f.fSect1.fCol2.fEndSlice.b configure -width 4 -command {EMSegmentEndSlice 1}
-    TooltipAdd $f.fSect1.fCol2.fEndSlice.b "Setting End Slice to the last Slice of the current Volume"  
-
     DevAddLabel $f.fSect1.fCol1.lUseProb "Use Probability:"
     frame  $f.fSect1.fCol2.fUseProb -bg $Gui(activeWorkspace)
     foreach value "1 0" text "On Off" width "4 4" {
@@ -1327,12 +1345,6 @@ Description of the tabs:
     pack $f.fSect1.fCol1.lEMI $f.fSect1.fCol1.lMRFI $f.fSect1.fCol1.lAlpha -side top -padx $Gui(pad) -pady 2 -anchor w 
     pack $f.fSect1.fCol2.eEMI $f.fSect1.fCol2.eMRFI $f.fSect1.fCol2.eAlpha -side top -anchor w
     pack $f.fSect1.fCol1.lEmpty2 $f.fSect1.fCol2.lEmpty2 -side top -padx $Gui(pad) -pady 1 -anchor w  
-
-    #Pack 3. Block
-    pack $f.fSect1.fCol1.lStartSlice $f.fSect1.fCol1.lEndSlice -side top -padx $Gui(pad) -pady 2 -anchor w 
-    pack $f.fSect1.fCol2.eStartSlice $f.fSect1.fCol2.fEndSlice -side top -anchor w
-    pack $f.fSect1.fCol1.lEmpty3 $f.fSect1.fCol2.lEmpty3 -side top -padx $Gui(pad) -pady 1 -anchor w 
-    pack $f.fSect1.fCol2.fEndSlice.e $f.fSect1.fCol2.fEndSlice.b -side left
 
     #Pack 4.Block
     pack $f.fSect1.fCol1.lSmWidth $f.fSect1.fCol1.lSmSigma -side top -padx $Gui(pad) -pady 2 -anchor w 
@@ -1598,8 +1610,17 @@ proc EMSegmentUpdateMRML {} {
         set EMSegment(PrintIntermediateResults)   [Segmenter($pid,node) GetPrintIntermediateResults]    
         set EMSegment(PrintIntermediateSlice)     [Segmenter($pid,node) GetPrintIntermediateSlice]      
         set EMSegment(PrintIntermediateFrequency) [Segmenter($pid,node) GetPrintIntermediateFrequency]  
-        set EMSegment(StartSlice)                 [Segmenter($pid,node) GetStartSlice]
-        set EMSegment(EndSlice)                   [Segmenter($pid,node) GetEndSlice]                 
+    set BoundaryMin                           [Segmenter($pid,node) GetSegmentationBoundaryMin]
+        set BoundaryMax                           [Segmenter($pid,node) GetSegmentationBoundaryMax]
+        for {set i 0} {$i < 3} {incr i} { 
+        set EMSegment(SegmentationBoundaryMin,$i) [lindex $BoundaryMin $i]
+        set EMSegment(SegmentationBoundaryMax,$i) [lindex $BoundaryMax $i]
+    }
+        # Kilian - think about it later - have to be comlient with older versions 
+        set EMSegment(SegmentationBoundaryMin,2)  [Segmenter($pid,node) GetStartSlice]
+        set EMSegment(SegmentationBoundaryMax,2)  [Segmenter($pid,node) GetEndSlice]                
+
+
         set EMSegment(Graph,DisplayProbNew)       [Segmenter($pid,node) GetDisplayProb]                 
         if {$EMSegment(Graph,DisplayProbNew) != $EMSegment(Graph,DisplayProb)} { set EMSegment(Graph,DisplayProb) $EMSegment(Graph,DisplayProbNew); EMSegmentUpdateClasses 0 }    
         set EMSegment(NumberOfTrainingSamples)    [Segmenter($pid,node) GetNumberOfTrainingSamples]
@@ -1956,8 +1977,13 @@ proc EMSegmentSaveSetting {FileFlag {FileName -1}} {
     Segmenter($pid,node) SetPrintIntermediateResults    $EMSegment(PrintIntermediateResults)  
     Segmenter($pid,node) SetPrintIntermediateSlice      $EMSegment(PrintIntermediateSlice)  
     Segmenter($pid,node) SetPrintIntermediateFrequency  $EMSegment(PrintIntermediateFrequency)  
-    Segmenter($pid,node) SetStartSlice                  $EMSegment(StartSlice)  
-    Segmenter($pid,node) SetEndSlice                    $EMSegment(EndSlice)  
+    Segmenter($pid,node) SetStartSlice                  $EMSegment(SegmentationBoundaryMin,2)  
+    Segmenter($pid,node) SetEndSlice                    $EMSegment(SegmentationBoundaryMax,2)  
+    if {$EMSegment(SegmentMode) == 2} {
+    eval Segmenter($pid,node) SetSegmentationBoundaryMin $EMSegment(SegmentationBoundaryMin,0) $EMSegment(SegmentationBoundaryMin,1) $EMSegment(SegmentationBoundaryMin,2)
+    eval Segmenter($pid,node) SetSegmentationBoundaryMax $EMSegment(SegmentationBoundaryMax,0) $EMSegment(SegmentationBoundaryMax,1) $EMSegment(SegmentationBoundaryMax,2)
+    }
+
     Segmenter($pid,node) SetDisplayProb                 $EMSegment(Graph,DisplayProb)  
     Segmenter($pid,node) SetNumberOfTrainingSamples     $EMSegment(NumberOfTrainingSamples)
     Segmenter($pid,node) SetIntensityAvgClass           $EMSegment(IntensityAvgClass)
@@ -2152,12 +2178,13 @@ proc EMSegmentStartEM { {save_mode "save"} } {
        return
    }
    
-   if {$EMSegment(StartSlice) < 1 } {
-       DevErrorWindow "Start Slice must be greater than 0 !" 
+  if {($EMSegment(SegmentationBoundaryMin,0) < 1) ||  ($EMSegment(SegmentationBoundaryMin,1) < 1) || ($EMSegment(SegmentationBoundaryMin,2) < 1)} {
+       DevErrorWindow "Boundary box must be greater than 0 !" 
        return
    }
-   if  { [EMSegmentEndSlice 0] <  $EMSegment(EndSlice)} {
-       DevErrorWindow "End Slices is greate than the existing number of slices!" 
+    set boundaryMax [EMSegmentSegmentationBoundaryMax 0]
+   if  { ([lindex $boundaryMax 0] <  $EMSegment(SegmentationBoundaryMax,0)) || ([lindex $boundaryMax 1] <  $EMSegment(SegmentationBoundaryMax,1)) ||  ([lindex $boundaryMax 2] <  $EMSegment(SegmentationBoundaryMax,2))} {
+       DevErrorWindow "Boundary Box exceed image limits !" 
        return
    }
    # ----------------------------------------------
@@ -4039,27 +4066,32 @@ proc EMSegmentChangeCIMMatrix {CIMType} {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC EMSegmentEndSlice 
+# .PROC EMSegmentSegmentationBoundaryMax 
 # Calculates the last slice of the current selected Volume 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc EMSegmentEndSlice {flag {VolID -1}} {
+proc EMSegmentSegmentationBoundaryMax {flag {VolID -1}} {
     global EMSegment Volume
     if {$VolID == -1} {
-    if {$EMSegment(NumInputChannel)} {
+      if {$EMSegment(NumInputChannel)} {
         set VolID [lindex $EMSegment(SelVolList,VolumeList) 0]
-    } else {
+      } else {
         DevErrorWindow "Before calculating the last slice a volume for segmentation must be selected"
         return -1
-    }
+      }
     }
     set SlideRange [Volume($VolID,node) GetImageRange] 
-    set result [expr ([lindex $SlideRange 1] - [lindex $SlideRange 0] + 1)]
+    set result(2) [expr ([lindex $SlideRange 1] - [lindex $SlideRange 0] + 1)]
+    set Extent [Volume($VolID,node) GetDimensions]
+    set result(1) [lindex $Extent 1]
+    set result(0) [lindex $Extent 0] 
     if {$flag} {
-       set EMSegment(EndSlice) $result
+    set EMSegment(SegmentationBoundaryMax,0) $result(0) 
+    set EMSegment(SegmentationBoundaryMax,1) $result(1) 
+    set EMSegment(SegmentationBoundaryMax,2) $result(2) 
     } else {
-       return $result
+       return "$result(0) $result(1) $result(2)"
     }
 }
 
@@ -4195,8 +4227,15 @@ proc EMSegmentTransfereVolume {from} {
         }
       }
       # Define End Slice
-      set EndSlice [EMSegmentEndSlice 0  $VolumeID] 
-      if {[expr (($EMSegment(EndSlice) == -1) || ($EndSlice < $EMSegment(EndSlice)))] } { set EMSegment(EndSlice) $EndSlice}
+      set BoundaryMax [EMSegmentSegmentationBoundaryMax 0  $VolumeID]
+      if {[expr (($EMSegment(SegmentationBoundaryMax,0) < 1) || ($EMSegment(SegmentationBoundaryMax,1) < 1) || ($EMSegment(SegmentationBoundaryMax,2) < 1)  || ([lindex $BoundaryMax 0] < $EMSegment(SegmentationBoundaryMax,0)) || ([lindex $BoundaryMax 1] < $EMSegment(SegmentationBoundaryMax,1)) || ([lindex $BoundaryMax 2] < $EMSegment(SegmentationBoundaryMax,2)))] } { 
+    set EMSegment(SegmentationBoundaryMax,0) [lindex $BoundaryMax 0]
+    set EMSegment(SegmentationBoundaryMax,1) [lindex $BoundaryMax 1]
+    set EMSegment(SegmentationBoundaryMax,2) [lindex $BoundaryMax 2] 
+      }
+      if {$EMSegment(SegmentationBoundaryMin,0) < 1 } {set EMSegment(SegmentationBoundaryMin,0) 1}
+      if {$EMSegment(SegmentationBoundaryMin,1) < 1 } {set EMSegment(SegmentationBoundaryMin,1) 1}
+      if {$EMSegment(SegmentationBoundaryMin,2) < 1 } {set EMSegment(SegmentationBoundaryMin,2) 1}
       set EMSegment(AllVolList,VolumeList) [lreplace $EMSegment(AllVolList,VolumeList) $EMSegment(AllVolList,ActiveID) $EMSegment(AllVolList,ActiveID)]
 
     } else { 
@@ -4335,7 +4374,7 @@ proc EMSegmentDeleteFromSelList {args} {
          if { [llength $EMSegment(Cattrib,$EMSegment(Class),$v,Sample)] > 0 }  {
          foreach fsample $EMSegment(mEraseSample) {fsample delete 1 end}
          } 
-         set EMSegment(EndSlice) -1
+         set EMSegment(SegmentationBoundaryMax,2) -1
        }
     # Delete from Graph Volume List
     # Kilian : Has to be changed later if we have different input channels for different classes !
@@ -4776,8 +4815,26 @@ proc EMSegmentCalcDice { } {
    if {($EMSegment(DICESelectedVolume) !=  $Volume(idNone)) && ($EMSegment(LatestLabelMap) != $Volume(idNone))} {
        vtkImageEMGeneral EMDice
        foreach label $EMSegment(DICELabelList) {
-       puts "======================= Result for Label $label ===================="
-       EMDice CalcSimularityMeasure [Volume($EMSegment(LatestLabelMap),vol) GetOutput] [Volume($EMSegment(DICESelectedVolume),vol) GetOutput] $label 1
+         puts "======================= Result for Label $label ===================="
+     puts "Dice Measure: [EMDice CalcSimularityMeasure [Volume($EMSegment(LatestLabelMap),vol) GetOutput] [Volume($EMSegment(DICESelectedVolume),vol) GetOutput] $label 1]"
+         set Sclass  $EMSegment(Class)
+     if {$EMSegment(Cattrib,$Sclass,IsSuperClass) == 0} {
+            puts "Current Setting of active class ($EMSegment(Cattrib,$Sclass,Label)):"  
+            puts -nonewline "Prob: $EMSegment(Cattrib,$Sclass,Prob) * Mean:"
+            for {set y 0} {$y < $EMSegment(MaxInputChannelDef)} {incr y} {
+               puts -nonewline " $EMSegment(Cattrib,$Sclass,LogMean,$y) "
+        }
+
+            puts -nonewline " * Cov:"
+            for {set y 0} {$y < $EMSegment(MaxInputChannelDef)} {incr y} {
+        if {$y} {puts -nonewline " |" }
+        for {set x 0} {$x < $EMSegment(MaxInputChannelDef)} {incr x} {
+            puts -nonewline " $EMSegment(Cattrib,$Sclass,LogCovariance,$y,$x)"
+        }
+        }
+            puts " "
+     }
+
        }
        EMDice Delete
    }

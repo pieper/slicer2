@@ -71,10 +71,14 @@ proc EMSegmentSetVtkSuperClassSetting {SuperClass NumInputImagesSet } {
       }
       incr x
   }
-  
+  # Kilian: Problem with EMSegment(Cattrib,$i,LocalPriorWeight)
+  # The  following sceanrio: superclass has EMSegment(Cattrib,$i,LocalPriorWeight) > 0 
+  # The subclass has EMSegment(Cattrib,$i,LocalPriorWeight) == 0 but EMSegment(Cattrib,$sub,ProbabilityData) exists 
+  # =>  EMSegment(Cattrib,$sub,ProbabilityData) will not be transfered => superclass cannot access it even though it needs it !
   foreach i $EMSegment(Cattrib,$SuperClass,ClassList) {
     if {$EMSegment(Cattrib,$i,IsSuperClass)} {
-      EMSegment(vtkEMSegment) CreateNextSuperClass 
+       EMSegment(vtkEMSegment) CreateNextSuperClass 
+       EMSegment(vtkEMSegment) SetProbDataWeight $EMSegment(Cattrib,$i,LocalPriorWeight)
     } else {
       EMSegment(vtkEMSegment) CreateNextClass
       EMSegment(vtkEMSegment) SetLabel             $EMSegment(Cattrib,$i,Label) 
@@ -238,8 +242,13 @@ proc EMSegmentAlgorithmStart { } {
    EMSegment(vtkEMSegment) SetSmoothingWidth  $EMSegment(SmWidth)    
    EMSegment(vtkEMSegment) SetSmoothingSigma  $EMSegment(SmSigma)      
 
-   EMSegment(vtkEMSegment) SetStartSlice      $EMSegment(StartSlice)
-   EMSegment(vtkEMSegment) SetEndSlice        $EMSegment(EndSlice)
+   if {$EMSegment(SegmentMode) < 2}  {
+    EMSegment(vtkEMSegment) SetStartSlice      $EMSegment(SegmentationBoundaryMin,2)
+    EMSegment(vtkEMSegment) SetEndSlice        $EMSegment(SegmentationBoundaryMax,2)
+   } else {
+       eval EMSegment(vtkEMSegment) SetSegmentationBoundaryMin $EMSegment(SegmentationBoundaryMin,0) $EMSegment(SegmentationBoundaryMin,1) $EMSegment(SegmentationBoundaryMin,2)
+       eval EMSegment(vtkEMSegment) SetSegmentationBoundaryMax $EMSegment(SegmentationBoundaryMax,0) $EMSegment(SegmentationBoundaryMax,1) $EMSegment(SegmentationBoundaryMax,2)
+   }
 
    EMSegment(vtkEMSegment) SetPrintIntermediateResults  $EMSegment(PrintIntermediateResults) 
    EMSegment(vtkEMSegment) SetPrintIntermediateSlice  $EMSegment(PrintIntermediateSlice) 
@@ -285,8 +294,8 @@ proc EMSegmentTrainCIMField {} {
        # EM Specific Information
        set NumClasses [llength $EMSegment(Cattrib,$i,ClassList)]
        EMCIM SetNumClasses     $NumClasses  
-       EMCIM SetStartSlice     $EMSegment(StartSlice)
-       EMCIM SetEndSlice       $EMSegment(EndSlice)
+       EMCIM SetStartSlice     $EMSegment(SegmentationBoundaryMin,2)
+       EMCIM SetEndSlice       $EMSegment(SegmentationBoundaryMax,2)
 
         # Kilian : Get rid of those 
         EMCIM SetImgTestNo       -1 
