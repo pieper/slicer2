@@ -343,6 +343,15 @@ if {$verbose == 1} {
 # Bootup
 MainBoot [lindex $argv 0]
 
+
+# override the built in exit routine to provide cleanup
+# (for people who type exit into the console)
+rename exit tcl_exit
+proc exit {} {
+    MainExitProgram
+}
+
+
 ### Did someone set the SLICER_SCRIPT environment variable
 ### If they did and it is a tcl file, source it.
 ### If the SlicerScript function exists, run it
