@@ -11,6 +11,12 @@ if { [info command ::istask] == "" } {
     source $env(SLICER_HOME)/Modules/iSlicer/tcl/istask.tcl
 }
 
+if { [info command ::isprogress] == "" } {
+    global env
+    source $env(SLICER_HOME)/Modules/iSlicer/tcl/isprogress.tcl
+}
+
+
 #########################################################
 #
 if {0} { ;# comment
@@ -353,6 +359,14 @@ itcl::configbody isregistration::resolution {
 itcl::body isregistration::step {} {
     global Matrix
 
+    if {$itk_option(-auto_repeat) == 0} {
+         isprogress .regprogress \
+         -title "Rigid Registration 0 levels" -geometry 300x100  \
+         -cancel_text "Stop Registration" \
+         -initial_progress_text "Starting Registration" \
+     -abort_command "puts yo"
+    }
+
     ## update any parameters
     $itk_option(-update_procedure) $this
 
@@ -426,8 +440,9 @@ itcl::body isregistration::step {} {
     set _firsttime 0;
 
     if {$itk_option(-auto_repeat) == 0} {
+    destroy .regprogress
         $itk_option(-stop_procedure);
-    stop
+        stop
     }
 }
 
