@@ -551,16 +551,13 @@ proc ModelMakerMarch {m v decimateIterations smoothIterations} {
 		set src Volume($v,vol)
 	}
 
-	vtkImageToStructuredPoints to
-	to SetInput [$src GetOutput]
-
 	# Threshold so the only values are the desired label.
 	# But do this only for label maps.
 	set p thresh
 	vtkImageThresholdBeyond $p
-	$p SetInput [to GetOutput]
-	$p SetReplaceIn 0
-	$p SetReplaceOut 0
+	$p SetInput [$src GetOutput]
+	$p SetReplaceIn 0 
+	$p SetReplaceOut 0 
 	if {[Volume($v,node) GetLabelMap] == 1} {
 		$p SetReplaceIn 1
 		$p SetReplaceOut 1
@@ -574,9 +571,12 @@ proc ModelMakerMarch {m v decimateIterations smoothIterations} {
 	$p SetProgressMethod "MainShowProgress $p"
 	$p SetEndMethod       MainEndProgress
 
+	vtkImageToStructuredPoints to
+	to SetInput [$p GetOutput]
+
 	set p mcubes
 	vtkMarchingCubes $p
-	$p SetInput [thresh GetOutput]
+	$p SetInput [to GetOutput]
 	$p SetValue 0 1
 	$p ComputeScalarsOff
 	$p ComputeGradientsOff
