@@ -38,6 +38,9 @@
 # PROCEDURES:  
 #   FMRIEngineInit
 #   FMRIEngineBuildGUI
+#   FMRIEngineBuildUIForDetectors the
+#   FMRIEngineSetDetector the
+#   FMRIEngineBuildUIForParadigm the
 #   FMRIEngineBuildUIForSelect the
 #   FMRIEngineSelectSequence
 #   FMRIEngineUpdateSequences
@@ -167,7 +170,7 @@ proc FMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.14 $} {$Date: 2004/07/09 20:35:52 $}]
+        {$Revision: 1.15 $} {$Date: 2004/07/12 15:43:04 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -279,7 +282,6 @@ proc FMRIEngineBuildGUI {} {
     #-------------------------------------------
     set fInput $Module(FMRIEngine,fInput)
     set f $fInput
-
     frame $f.fOption -bg $Gui(activeWorkspace) 
     grid $f.fOption -row 0 -column 0 -sticky ew 
     
@@ -305,22 +307,26 @@ proc FMRIEngineBuildGUI {} {
     #-------------------------------------------
     set fCompute $Module(FMRIEngine,fCompute)
     set f $fCompute
+    frame $f.fOption -bg $Gui(activeWorkspace) 
+    grid $f.fOption -row 0 -column 0 -sticky ew 
+    
+    #------------------------------
+    # Compute->Option frame
+    #------------------------------
+    set f $fCompute.fOption
 
-    frame $f.fFile   -bg $Gui(activeWorkspace)
-    frame $f.fApply   -bg $Gui(activeWorkspace)
+    Notebook:create $f.fNotebook \
+                    -pages {Paradigm Detectors} \
+                    -pad 2 \
+                    -bg $Gui(activeWorkspace) \
+                    -height 356 \
+                    -width 240
+    pack $f.fNotebook -fill both -expand 1
 
-    pack $f.fFile $f.fApply \
-        -side top -fill x -pady $Gui(pad)
-
-    # File frame
-    DevAddFileBrowse $f.fFile FMRIEngine "paradigmFileName" "Paradigm design file:" \
-        "" "txt" "\$Volume(DefaultDir)" \
-        "Open" "Browse for a text file" "" "Absolute" 
-
-    # Apply frame
-    set f $f.fApply
-    DevAddButton $f.bApply "Compute" "FMRIEngineComputeActivationVolume" 8
-    grid $f.bApply -padx $Gui(pad)
+    set w [Notebook:frame $f.fNotebook Paradigm]
+    FMRIEngineBuildUIForParadigm $w
+    set w [Notebook:frame $f.fNotebook Detectors]
+    FMRIEngineBuildUIForDetectors $w
 
     #-------------------------------------------
     # Display tab 
@@ -355,6 +361,103 @@ proc FMRIEngineBuildGUI {} {
         grid $f.l$param $f.e$param -padx $Gui(pad) -pady $Gui(pad) -sticky e
         grid $f.e$param -sticky w
     }
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC FMRIEngineBuildUIForDetectors
+# Creates UI for Detectors page 
+# .ARGS
+# parent the parent frame 
+# .END
+#-------------------------------------------------------------------------------
+proc FMRIEngineBuildUIForDetectors {parent} {
+    global FMRIEngine Gui
+
+    frame $parent.fType  -bg $Gui(backdrop)
+    frame $parent.fApply -bg $Gui(activeWorkspace)
+    frame $parent.fName  -bg $Gui(activeWorkspace)
+    pack $parent.fType -side top -fill x -pady $Gui(pad) -padx $Gui(pad)
+    pack $parent.fName $parent.fApply -side top -fill x -pady $Gui(pad)
+
+    # Type frame
+    set f $parent.fType
+
+    # Build pulldown menu image format 
+    eval {label $f.l -text "Detector Type:"} $Gui(BLA)
+    pack $f.l -side left -padx $Gui(pad) -fill x -anchor w
+
+    # GLM is default format 
+    set detectorList [list t-test GLM MI-1 MI-2]
+    set df [lindex $detectorList 1] 
+    eval {menubutton $f.mbType -text $df \
+          -relief raised -bd 2 -width 20 \
+          -menu $f.mbType.m} $Gui(WMBA)
+    eval {menu $f.mbType.m} $Gui(WMA)
+    pack  $f.mbType -side left -pady 1 -padx $Gui(pad)
+
+    # Add menu items
+    foreach m $detectorList  {
+        $f.mbType.m add command -label $m \
+            -command "FMRIEngineSetDetector $m"
+    }
+
+    # save menubutton for config
+    set FMRIEngine(gui,mbActDetector) $f.mbType
+
+    # Name frame
+    set f $parent.fName
+    DevAddLabel $f.label "Volume Name:"
+    eval {entry $f.eName -width 20 \
+                -textvariable FMRIEngine(actVolName)} $Gui(WEA)
+    pack $f.label $f.eName -side left -expand false -fill x -padx 6
+
+    # Apply frame
+    set f $parent.fApply
+    DevAddButton $f.bApply "Compute" "FMRIEngineComputeActivationVolume" 8
+    grid $f.bApply -padx $Gui(pad)
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC FMRIEngineSetDetector
+# Switches activation detector 
+# .ARGS
+# actDetector the activation detector 
+# .END
+#-------------------------------------------------------------------------------
+proc FMRIEngineSetDetector {detector} {
+    global FMRIEngine
+    
+    set FMRIEngine(actDetector) $detector
+
+    # configure menubutton
+    $FMRIEngine(gui,mbActDetector) config -text $detector 
+
+#    set f  $FMRIEngine(f${imgFormat})
+#    raise $f
+#    focus $f
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC FMRIEngineBuildUIForParadigm
+# Creates UI for Paradigm page 
+# .ARGS
+# parent the parent frame 
+# .END
+#-------------------------------------------------------------------------------
+proc FMRIEngineBuildUIForParadigm {parent} {
+    global FMRIEngine Gui
+
+    frame $parent.fFile  -bg $Gui(activeWorkspace)
+    pack $parent.fFile -side top -fill x -pady $Gui(pad)
+
+    # File frame
+    set f $parent.fFile
+    DevAddFileBrowse $f FMRIEngine "paradigmFileName" "Paradigm design file:" \
+        "" "txt" "\$Volume(DefaultDir)" \
+        "Open" "Browse for a text file" "" "Absolute" 
 }
 
 
@@ -581,7 +684,7 @@ proc FMRIEngineScaleActivation {no} {
         set FMRIEngine(pValue) $p
         set FMRIEngine(tStat) $t
 
-        set index [MIRIADSegmentGetVolumeByName actvol] 
+        set index [MIRIADSegmentGetVolumeByName $FMRIEngine(actVolName)] 
         if {$index > 0} {
 
             # map the t value into the range between 1 and 100
@@ -832,6 +935,13 @@ proc FMRIEngineComputeActivationVolume {} {
         return
     }
 
+    # Checks if a name is entered for the act volume 
+    string trim $FMRIEngine(actVolName)
+    if {$FMRIEngine(actVolName) == ""} {
+        DevErrorWindow "Please input a name for the activation volume."
+        return
+    }
+
     # Add volumes into vtkActivationVolumeGenerator
     if {[info commands FMRIEngine(actvolgen)] != ""} {
         FMRIEngine(actvolgen) Delete
@@ -883,8 +993,8 @@ proc FMRIEngineComputeActivationVolume {} {
     MainVolumesCreate $i
 
     # set the name and description of the volume
-    $n SetName "actvol"
-    $n SetDescription "actvol"
+    $n SetName $FMRIEngine(actVolName) 
+    $n SetDescription $FMRIEngine(actVolName) 
 
     eval Volume($i,node) SetSpacing [$act GetSpacing]
     Volume($i,node) SetScanOrder [Volume($FMRIEngine(firstMRMLid),node) GetScanOrder]
