@@ -35,8 +35,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkLevelSetFastMarching.cxx,v $
   Language:  C++
-  Date:      $Date: 2005/02/25 00:52:29 $
-  Version:   $Revision: 1.5 $
+  Date:      $Date: 2005/03/15 16:36:39 $
+  Version:   $Revision: 1.6 $
 
 =========================================================================*/
 #include "vtkLevelSetFastMarching.h"
@@ -1241,8 +1241,8 @@ void vtkLevelSetFastMarching::Init2D(int cx, int cy, int radius)
   For(x,cx-myrad2,cx+myrad2)
   For(y,cy-myrad2,cy+myrad2)
 
-    val =  sqrt((x-cx)*(x-cx)+
-        (y-cy)*(y-cy)) - 
+    val =  sqrt((double)((x-cx)*(x-cx)+
+        (y-cy)*(y-cy))) - 
                 (radius-margin);
 
 
@@ -1408,9 +1408,9 @@ void vtkLevelSetFastMarching::Init3D(int cx, int cy, int cz, int radius)
   For(y,cy-myrad2,cy+myrad2)
   For(z,cz-myrad2,cz+myrad2)
 
-    val =  sqrt((x-cx)*(x-cx)+
+    val =  sqrt((double)((x-cx)*(x-cx)+
         (y-cy)*(y-cy)+
-        (z-cz)*(z-cz)) - 
+        (z-cz)*(z-cz))) - 
                 (radius-d);
 
     pos = x+y*tx+z*txy;
