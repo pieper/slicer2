@@ -831,8 +831,8 @@ void vtkODFGlyph::Execute() {
       delete this->ImageExtract;
        
        //Allocate New Data
-       this->ImageExtract = new (vtkImageExtractComponents *)[numInComponents];
-       this->ImageReformat = new (vtkImageReformat *)[numInComponents];
+       this->ImageExtract = new vtkImageExtractComponents *[numInComponents];
+       this->ImageReformat = new vtkImageReformat *[numInComponents];
        this->NumberOfInputComponents = numInComponents;
        
        for (int i=0 ; i<this->NumberOfInputComponents ; i++)
