@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkITKAntiAliasBinaryImageFilter.h,v $
   Language:  C++
-  Date:      $Date: 2003/01/16 18:58:07 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2003/04/14 19:44:06 $
+  Version:   $Revision: 1.2 $
 */
 // .NAME vtkITKAntiAliasBinaryImageFilter - Wrapper class around itk::AntiAliasBinaryImageFilterImageFilter
 // .SECTION Description
@@ -64,7 +64,7 @@ private:
   void operator=(const vtkITKAntiAliasBinaryImageFilter&);  // Not implemented.
 };
 
-vtkCxxRevisionMacro(vtkITKAntiAliasBinaryImageFilter, "$Revision: 1.1 $");
+vtkCxxRevisionMacro(vtkITKAntiAliasBinaryImageFilter, "$Revision: 1.2 $");
 vtkStandardNewMacro(vtkITKAntiAliasBinaryImageFilter);
 
 #endif

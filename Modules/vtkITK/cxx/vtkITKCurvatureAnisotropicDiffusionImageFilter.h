@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkITKCurvatureAnisotropicDiffusionImageFilter.h,v $
   Language:  C++
-  Date:      $Date: 2003/01/16 19:01:28 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2003/04/14 19:44:06 $
+  Version:   $Revision: 1.2 $
 */
 // .NAME vtkITKCurvatureAnisotropicDiffusionImageFilter - Wrapper class around itk::CurvatureAnisotropicDiffusionImageFilterImageFilter
 // .SECTION Description
@@ -35,14 +35,14 @@ class VTK_EXPORT vtkITKCurvatureAnisotropicDiffusionImageFilter : public vtkITKI
     DelegateITKOutputMacro(GetConductanceParameter) ;
   };
 
-  unsigned int GetIterations ()
+  unsigned int GetNumberOfIterations ()
   {
-    DelegateITKOutputMacro(GetIterations) ;
+    DelegateITKOutputMacro(GetNumberOfIterations) ;
   };
 
-  void SetIterations ( unsigned int value )
+  void SetNumberOfIterations( unsigned int value )
   {
-    DelegateITKInputMacro ( SetIterations, value );
+    DelegateITKInputMacro ( SetNumberOfIterations, value );
   };
 
   void SetTimeStep ( double value )
@@ -69,7 +69,7 @@ private:
   void operator=(const vtkITKCurvatureAnisotropicDiffusionImageFilter&);  // Not implemented.
 };
 
-vtkCxxRevisionMacro(vtkITKCurvatureAnisotropicDiffusionImageFilter, "$Revision: 1.1 $");
+vtkCxxRevisionMacro(vtkITKCurvatureAnisotropicDiffusionImageFilter, "$Revision: 1.2 $");
 vtkStandardNewMacro(vtkITKCurvatureAnisotropicDiffusionImageFilter);
 
 #endif

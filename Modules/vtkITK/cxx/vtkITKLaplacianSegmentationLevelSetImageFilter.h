@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkITKLaplacianSegmentationLevelSetImageFilter.h,v $
   Language:  C++
-  Date:      $Date: 2003/01/16 19:01:33 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2003/04/14 19:44:07 $
+  Version:   $Revision: 1.2 $
 */
 // .NAME vtkITKLaplacianSegmentationLevelSetImageFilter - Wrapper class around itk::LaplacianSegmentationLevelSetImageFilterImageFilter
 // .SECTION Description
@@ -139,7 +139,7 @@ private:
   
 };
 
-vtkCxxRevisionMacro(vtkITKLaplacianSegmentationLevelSetImageFilter, "$Revision: 1.1 $");
+vtkCxxRevisionMacro(vtkITKLaplacianSegmentationLevelSetImageFilter, "$Revision: 1.2 $");
 vtkStandardNewMacro(vtkITKLaplacianSegmentationLevelSetImageFilter);
 
 #endif

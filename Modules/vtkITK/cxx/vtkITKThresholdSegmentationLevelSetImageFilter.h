@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkITKThresholdSegmentationLevelSetImageFilter.h,v $
   Language:  C++
-  Date:      $Date: 2003/01/16 19:01:34 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2003/04/14 19:44:08 $
+  Version:   $Revision: 1.2 $
 */
 // .NAME vtkITKThresholdSegmentationLevelSetImageFilter - Wrapper class around itk::ThresholdSegmentationLevelSetImageFilterImageFilter
 // .SECTION Description
@@ -149,7 +149,7 @@ private:
   
 };
 
-vtkCxxRevisionMacro(vtkITKThresholdSegmentationLevelSetImageFilter, "$Revision: 1.1 $");
+vtkCxxRevisionMacro(vtkITKThresholdSegmentationLevelSetImageFilter, "$Revision: 1.2 $");
 vtkStandardNewMacro(vtkITKThresholdSegmentationLevelSetImageFilter);
 
 #endif

@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkITKConfidenceConnectedImageFilter.h,v $
   Language:  C++
-  Date:      $Date: 2003/01/16 18:58:07 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2003/04/14 19:44:06 $
+  Version:   $Revision: 1.2 $
 */
 // .NAME vtkITKConfidenceConnectedImageFilter - Wrapper class around itk::ConfidenceConnectedImageFilter
 // .SECTION Description
@@ -67,7 +67,7 @@ private:
   void operator=(const vtkITKConfidenceConnectedImageFilter&);  // Not implemented.
 };
 
-vtkCxxRevisionMacro(vtkITKConfidenceConnectedImageFilter, "$Revision: 1.1 $");
+vtkCxxRevisionMacro(vtkITKConfidenceConnectedImageFilter, "$Revision: 1.2 $");
 vtkStandardNewMacro(vtkITKConfidenceConnectedImageFilter);
 
 #endif

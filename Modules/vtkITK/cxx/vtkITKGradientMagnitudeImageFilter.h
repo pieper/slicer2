@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkITKGradientMagnitudeImageFilter.h,v $
   Language:  C++
-  Date:      $Date: 2003/01/16 19:01:29 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2003/04/14 19:44:07 $
+  Version:   $Revision: 1.2 $
 */
 // .NAME vtkITKGradientMagnitudeImageFilter - Wrapper class around itk::GradientMagnitudeImageFilterImageFilter
 // .SECTION Description
@@ -39,7 +39,7 @@ private:
   void operator=(const vtkITKGradientMagnitudeImageFilter&);  // Not implemented.
 };
 
-vtkCxxRevisionMacro(vtkITKGradientMagnitudeImageFilter, "$Revision: 1.1 $");
+vtkCxxRevisionMacro(vtkITKGradientMagnitudeImageFilter, "$Revision: 1.2 $");
 vtkStandardNewMacro(vtkITKGradientMagnitudeImageFilter);
 
 #endif

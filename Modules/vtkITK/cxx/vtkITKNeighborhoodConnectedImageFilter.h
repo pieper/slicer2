@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkITKNeighborhoodConnectedImageFilter.h,v $
   Language:  C++
-  Date:      $Date: 2003/01/16 19:01:34 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2003/04/14 19:44:07 $
+  Version:   $Revision: 1.2 $
 */
 // .NAME vtkITKNeighborhoodConnectedImageFilter - Wrapper class around itk::NeighborhoodConnectedImageFilter
 // .SECTION Description
@@ -88,7 +88,7 @@ private:
   void operator=(const vtkITKNeighborhoodConnectedImageFilter&);  // Not implemented.
 };
 
-vtkCxxRevisionMacro(vtkITKNeighborhoodConnectedImageFilter, "$Revision: 1.1 $");
+vtkCxxRevisionMacro(vtkITKNeighborhoodConnectedImageFilter, "$Revision: 1.2 $");
 vtkStandardNewMacro(vtkITKNeighborhoodConnectedImageFilter);
 
 #endif

@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkITKWatershedImageFilter.h,v $
   Language:  C++
-  Date:      $Date: 2003/01/16 19:01:35 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2003/04/14 19:44:08 $
+  Version:   $Revision: 1.2 $
 */
 // .NAME vtkITKWatershedImageFilter - Wrapper class around itk::WatershedImageFilterImageFilter
 // .SECTION Description
@@ -43,7 +43,7 @@ private:
   void operator=(const vtkITKWatershedImageFilter&);  // Not implemented.
 };
 
-vtkCxxRevisionMacro(vtkITKWatershedImageFilter, "$Revision: 1.1 $");
+vtkCxxRevisionMacro(vtkITKWatershedImageFilter, "$Revision: 1.2 $");
 vtkStandardNewMacro(vtkITKWatershedImageFilter);
 
 #endif

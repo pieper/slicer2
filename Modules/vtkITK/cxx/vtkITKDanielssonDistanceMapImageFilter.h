@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkITKDanielssonDistanceMapImageFilter.h,v $
   Language:  C++
-  Date:      $Date: 2003/01/16 19:01:28 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2003/04/14 19:44:06 $
+  Version:   $Revision: 1.2 $
 */
 // .NAME vtkITKDanielssonDistanceMapImageFilter - Wrapper class around itk::DanielssonDistanceMapImageFilter
 // .SECTION Description
@@ -70,7 +70,7 @@ private:
   void operator=(const vtkITKDanielssonDistanceMapImageFilter&);  // Not implemented.
 };
 
-vtkCxxRevisionMacro(vtkITKDanielssonDistanceMapImageFilter, "$Revision: 1.1 $");
+vtkCxxRevisionMacro(vtkITKDanielssonDistanceMapImageFilter, "$Revision: 1.2 $");
 vtkStandardNewMacro(vtkITKDanielssonDistanceMapImageFilter);
 
 #endif

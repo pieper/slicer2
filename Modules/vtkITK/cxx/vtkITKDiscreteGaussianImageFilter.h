@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkITKDiscreteGaussianImageFilter.h,v $
   Language:  C++
-  Date:      $Date: 2003/01/16 19:01:28 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2003/04/14 19:44:07 $
+  Version:   $Revision: 1.2 $
 */
 // .NAME vtkITKDiscreteGaussianImageFilter - Wrapper class around itk::DiscreteGaussianImageFilterImageFilter
 // .SECTION Description
@@ -61,7 +61,7 @@ private:
   void operator=(const vtkITKDiscreteGaussianImageFilter&);  // Not implemented.
 };
 
-vtkCxxRevisionMacro(vtkITKDiscreteGaussianImageFilter, "$Revision: 1.1 $");
+vtkCxxRevisionMacro(vtkITKDiscreteGaussianImageFilter, "$Revision: 1.2 $");
 vtkStandardNewMacro(vtkITKDiscreteGaussianImageFilter);
 
 #endif

@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkITKBilateralImageFilter.h,v $
   Language:  C++
-  Date:      $Date: 2003/01/16 18:58:07 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2003/04/14 19:44:06 $
+  Version:   $Revision: 1.2 $
 */
 // .NAME vtkITKBilateralImageFilter - Wrapper class around itk::BilateralImageFilterImageFilter
 // .SECTION Description
@@ -50,7 +50,7 @@ private:
   void operator=(const vtkITKBilateralImageFilter&);  // Not implemented.
 };
 
-vtkCxxRevisionMacro(vtkITKBilateralImageFilter, "$Revision: 1.1 $");
+vtkCxxRevisionMacro(vtkITKBilateralImageFilter, "$Revision: 1.2 $");
 vtkStandardNewMacro(vtkITKBilateralImageFilter);
 
 #endif

@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkITKConnectedThresholdImageFilter.h,v $
   Language:  C++
-  Date:      $Date: 2003/01/16 18:58:08 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2003/04/14 19:44:06 $
+  Version:   $Revision: 1.2 $
 */
 // .NAME vtkITKConnectedThresholdImageFilter - Wrapper class around itk::ConnectedThresholdImageFilter
 // .SECTION Description
@@ -68,7 +68,7 @@ private:
   void operator=(const vtkITKConnectedThresholdImageFilter&);  // Not implemented.
 };
 
-vtkCxxRevisionMacro(vtkITKConnectedThresholdImageFilter, "$Revision: 1.1 $");
+vtkCxxRevisionMacro(vtkITKConnectedThresholdImageFilter, "$Revision: 1.2 $");
 vtkStandardNewMacro(vtkITKConnectedThresholdImageFilter);
 
 #endif

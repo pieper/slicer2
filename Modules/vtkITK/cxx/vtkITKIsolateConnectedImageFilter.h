@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkITKIsolateConnectedImageFilter.h,v $
   Language:  C++
-  Date:      $Date: 2003/01/16 19:01:32 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2003/04/14 19:44:07 $
+  Version:   $Revision: 1.2 $
 */
 // .NAME vtkITKIsolatedConnectedImageFilter - Wrapper class around itk::IsolatedConnectedImageFilter
 // .SECTION Description
@@ -72,7 +72,7 @@ private:
   void operator=(const vtkITKIsolatedConnectedImageFilter&);  // Not implemented.
 };
 
-vtkCxxRevisionMacro(vtkITKIsolatedConnectedImageFilter, "$Revision: 1.1 $");
+vtkCxxRevisionMacro(vtkITKIsolatedConnectedImageFilter, "$Revision: 1.2 $");
 vtkStandardNewMacro(vtkITKIsolatedConnectedImageFilter);
 
 #endif

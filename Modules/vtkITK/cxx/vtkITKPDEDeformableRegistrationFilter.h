@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkITKPDEDeformableRegistrationFilter.h,v $
   Language:  C++
-  Date:      $Date: 2003/01/16 19:01:34 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2003/04/14 19:44:08 $
+  Version:   $Revision: 1.2 $
 */
 // .NAME vtkITKPDEDeformableRegistrationFilter - Wrapper class around itk::PDEDeformableRegistrationImageFilter
 // .SECTION Description
@@ -175,7 +175,7 @@ private:
   
 };
 
-vtkCxxRevisionMacro(vtkITKPDEDeformableRegistrationFilter, "$Revision: 1.1 $");
+vtkCxxRevisionMacro(vtkITKPDEDeformableRegistrationFilter, "$Revision: 1.2 $");
 vtkStandardNewMacro(vtkITKPDEDeformableRegistrationFilter);
 
 #endif
