@@ -86,9 +86,9 @@ proc Render3D {{scale ""}} {
         vtkImageAppend imAppendSl
         imAppendSl SetAppendAxis 0
         foreach s $Slice(idList) {
-        vtkWindowToImageFilter IFSl$s
-        IFSl$s SetInput sl${s}Win
-        imAppendSl AddInput [IFSl$s GetOutput]
+            vtkWindowToImageFilter IFSl$s
+            IFSl$s SetInput sl${s}Win
+            imAppendSl AddInput [IFSl$s GetOutput]
         }
 
         set w [winfo width .tViewer]
@@ -122,11 +122,11 @@ proc Render3D {{scale ""}} {
         #imClip ReleaseDataFlagOff
 
         # Write file
-    vtk${View(movieFileType)}Writer writer
-    writer SetInput [imAppendAll GetOutput]
-    writer SetFileName $filename
-    writer Write
-    writer Delete
+        vtk${View(movieFileType)}Writer writer
+        writer SetInput [imAppendAll GetOutput]
+        writer SetFileName $filename
+        writer Write
+        writer Delete
 
         imAppendSl Delete
         imAppendAll Delete
@@ -194,7 +194,7 @@ proc RenderAll { {scale ""}} {
     global Slice
 
     foreach s $Slice(idList) {
-    RenderSlice $s
+        RenderSlice $s
     }
     # render3d last in case we want the newly rendered slices in the movie
     Render3D
