@@ -66,15 +66,6 @@ void vtkImageBimodalAnalysis::ComputeInputUpdateExtent(int inExt[6],
 }
 
 //----------------------------------------------------------------------------
-void vtkImageBimodalAnalysis::EnlargeOutputUpdateExtents( vtkDataObject *vtkNotUsed(data) )
-{
-  int wholeExtent[8];
-  
-  this->GetOutput()->GetWholeExtent(wholeExtent);
-  this->GetOutput()->SetUpdateExtent(wholeExtent);
-}
-
-//----------------------------------------------------------------------------
 // This templated function executes the filter for any type of data.
 template <class T>
 static void vtkImageBimodalAnalysisExecute(vtkImageBimodalAnalysis *self,
@@ -244,12 +235,16 @@ static void vtkImageBimodalAnalysisExecute(vtkImageBimodalAnalysis *self,
 // algorithm to fill the output from the input.
 // It just executes a switch statement to call the correct function for
 // the Datas data types.
-void vtkImageBimodalAnalysis::Execute(vtkImageData *inData, 
-                 vtkImageData *outData)
+void vtkImageBimodalAnalysis::ExecuteData(vtkDataObject *)
 {
+  vtkImageData *inData = this->GetInput();
+  vtkImageData *outData = this->GetOutput();
   void *inPtr;
   float *outPtr;
   
+  outData->SetExtent(this->GetOutput()->GetWholeExtent());
+  outData->AllocateScalars();
+
   inPtr  = inData->GetScalarPointer();
   outPtr = (float *)outData->GetScalarPointer();
   
@@ -264,7 +259,7 @@ void vtkImageBimodalAnalysis::Execute(vtkImageData *inData,
   // this filter expects that output is type float.
   if (outData->GetScalarType() != VTK_FLOAT)
   {
-    vtkErrorMacro(<< "Execute: out ScalarType " << outData->GetScalarType()
+    vtkErrorMacro(<< "ExecuteData: out ScalarType " << outData->GetScalarType()
           << " must be float\n");
     return;
   }
@@ -312,7 +307,7 @@ void vtkImageBimodalAnalysis::Execute(vtkImageData *inData,
               inData, (double *)(inPtr), outData, outPtr);
       break;
     default:
-      vtkErrorMacro(<< "Execute: Unsupported ScalarType");
+      vtkErrorMacro(<< "ExecuteData: Unsupported ScalarType");
       return;
     }
 }

@@ -97,7 +97,7 @@ protected:
 
   void ComputeInputUpdateExtent(int inExt[6], int outExt[6]);
   void ExecuteInformation(vtkImageData *inData, vtkImageData *outData);
-  void Execute(vtkImageData *inData, vtkImageData *outData);
+  void ExecuteData(vtkDataObject *);
   void vtkImagePlotExecute(
                   vtkImageData *inData,  unsigned char *inPtr,  int inExt[6],
                   vtkImageData *outData, unsigned char *outPtr, int outExt[6]);

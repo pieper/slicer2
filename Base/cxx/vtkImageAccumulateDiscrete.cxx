@@ -80,15 +80,6 @@ void vtkImageAccumulateDiscrete::ComputeInputUpdateExtent(int inExt[6],
 }
 
 //----------------------------------------------------------------------------
-void vtkImageAccumulateDiscrete::EnlargeOutputUpdateExtents(vtkDataObject *vtkNotUsed(data) )
-{
-  int wholeExtent[8];
-  
-  this->GetOutput()->GetWholeExtent(wholeExtent);
-  this->GetOutput()->SetUpdateExtent(wholeExtent);
-}
-
-//----------------------------------------------------------------------------
 // This templated function executes the filter for any type of data.
 template <class T>
 static void vtkImageAccumulateDiscreteExecute(vtkImageAccumulateDiscrete *self,
@@ -157,12 +148,16 @@ static void vtkImageAccumulateDiscreteExecute(vtkImageAccumulateDiscrete *self,
 // algorithm to fill the output from the input.
 // It just executes a switch statement to call the correct function for
 // the Datas data types.
-void vtkImageAccumulateDiscrete::Execute(vtkImageData *inData, 
-                 vtkImageData *outData)
+void vtkImageAccumulateDiscrete::ExecuteData(vtkDataObject *)
 {
+  vtkImageData *inData = this->GetInput();
+  vtkImageData *outData = this->GetOutput();
   void *inPtr;
   int *outPtr;
   
+  outData->SetExtent(this->GetOutput()->GetWholeExtent());
+  outData->AllocateScalars();
+
   inPtr  = inData->GetScalarPointer();
   outPtr = (int *)outData->GetScalarPointer();
   

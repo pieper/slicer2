@@ -438,9 +438,15 @@ void vtkImagePlot::vtkImagePlotExecute(
 }
 
 //----------------------------------------------------------------------------
-void vtkImagePlot::Execute(vtkImageData *inData, vtkImageData *outData)
+void vtkImagePlot::ExecuteData(vtkDataObject *)
 {
   int inExt[6], outExt[6];
+  vtkImageData *inData = this->GetInput();
+  vtkImageData *outData = this->GetOutput();
+
+  outData->SetExtent(this->GetOutput()->GetWholeExtent());
+  outData->AllocateScalars();
+
   outData->GetExtent(outExt);
   this->ComputeInputUpdateExtent(inExt, outExt);
   void *inPtr = inData->GetScalarPointerForExtent(inExt);
@@ -450,7 +456,7 @@ void vtkImagePlot::Execute(vtkImageData *inData, vtkImageData *outData)
   // this filter expects that input is the same type as output.
   if (outData->GetScalarType() != VTK_UNSIGNED_CHAR)
   {
-    vtkErrorMacro(<< "Execute: output ScalarType, " << outData->GetScalarType()
+    vtkErrorMacro(<< "ExecuteData: output ScalarType, " << outData->GetScalarType()
       << ", must be VTK_UNSIGNED_CHAR");
     return;
   }
@@ -502,7 +508,7 @@ void vtkImagePlot::Execute(vtkImageData *inData, vtkImageData *outData)
                  outData, outPtr, outExt);
       break;
     default:
-      vtkErrorMacro(<< "Execute: Unknown ScalarType");
+      vtkErrorMacro(<< "ExecuteData: Unknown ScalarType");
       return;
   }
   */
