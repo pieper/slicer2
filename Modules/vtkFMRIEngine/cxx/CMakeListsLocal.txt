@@ -11,29 +11,13 @@
 #
 
 # system dependent link and include dirs
-IF (WIN32)
-   LINK_DIRECTORIES( 
-        ${VTKFMRIENGINE_SOURCE_DIR}/GSL/gsl-1.4/GSLLIBML/Release
-        "c:/Program Files/GSL/lib"
-        )
-   INCLUDE_DIRECTORIES(
-         ${VTKFMRIENGINE_SOURCE_DIR}/GSL/gsl-1.4
-         ${VTKFMRIENGINE_SOURCE_DIR}/GSL/gsl-1.4/gsl
-        "c:/Program Files/GSL/include"
-        "c:/Program Files/GSL/include/gsl"
-    )
-ELSE (WIN32)
-     LINK_DIRECTORIES(
-        /local/os/lib
-        /usr/local/lib
-        )
-     INCLUDE_DIRECTORIES(
-        /usr/local/include
-        /usr/local/include/gsl
-	/local/os/include
-	/local/os/include/gsl
-        )
-ENDIF (WIN32)
+LINK_DIRECTORIES(
+	${GSL_LIB_DIR}
+)
+INCLUDE_DIRECTORIES(
+	${GSL_INC_DIR}
+	${GSL_INC_DIR}/gsl
+)
 
 SET(FMRIENGINE_LOCAL_LIBS
         gsl
