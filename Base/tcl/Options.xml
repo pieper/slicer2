@@ -16,8 +16,9 @@ ordered='Data
 	Slices 
 	Colors
 	EMSegment 
+	Twin
 	Custom'
-suppressed='Twin'
+suppressed=''
 
 </Options>
 </MRML>
