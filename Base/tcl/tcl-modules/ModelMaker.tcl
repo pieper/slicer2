@@ -81,7 +81,7 @@ proc ModelMakerInit {} {
 
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.41 $} {$Date: 2003/03/19 19:16:33 $}]
+        {$Revision: 1.42 $} {$Date: 2003/04/29 21:54:52 $}]
 
     # Create
     set ModelMaker(idVolume) $Volume(idNone)
@@ -696,9 +696,25 @@ Decimate: $ModelMaker(t,decimator) sec.\n\
 Smooth: $ModelMaker(t,smoother) sec.\n\
 $ModelMaker(n,mcubes) polygons reduced to $ModelMaker(n,decimator)."
 
+    # put the model inside the same transform as the source volume
+    set nitems [Mrml(dataTree) GetNumberOfItems]
+    for {set midx 0} {$midx < $nitems} {incr midx} {
+        if { [Mrml(dataTree) GetNthItem $midx] == "Model($m,node)" } {
+            break
+        }
+    }
+    if { $midx < $nitems } {
+        Mrml(dataTree) RemoveItem $midx
+        Mrml(dataTree) InsertAfterItem Volume($v,node) Model($m,node)
+        MainUpdateMRML
+    }
+
+
     MainUpdateMRML
     MainModelsSetActive $m
     $ModelMaker(bCreate) config -state normal
+
+
     set name [Model($m,node) GetName]
     tk_messageBox -message "The model '$name' has been created."
 }

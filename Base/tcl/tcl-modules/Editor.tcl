@@ -123,7 +123,7 @@ proc EditorInit {} {
     
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.68 $} {$Date: 2003/03/19 19:16:31 $}]
+        {$Revision: 1.69 $} {$Date: 2003/04/29 21:54:52 $}]
     
     # Initialize globals
     set Editor(idOriginal)  $Volume(idNone)
@@ -1747,7 +1747,24 @@ proc EditorResetDisplay {} {
 
     # Set slice volumes
     set o [EditorGetOriginalID]
+    set oldid $Editor(idWorking)
     set w [EditorGetWorkingID]
+
+    # put the new working volume inside the same transform as the Original volume
+    if { $oldid == "NEW" } {
+        set nitems [Mrml(dataTree) GetNumberOfItems]
+        for {set widx 0} {$widx < $nitems} {incr widx} {
+            if { [Mrml(dataTree) GetNthItem $widx] == "Volume($w,node)" } {
+                break
+            }
+        }
+        if { $widx < $nitems } {
+            Mrml(dataTree) RemoveItem $widx
+            Mrml(dataTree) InsertAfterItem Volume($o,node) Volume($w,node)
+            MainUpdateMRML
+        }
+    }
+
 
     # display label layer only if the user wants it shown
     if {$Editor(display,labelOn) == 1} {
