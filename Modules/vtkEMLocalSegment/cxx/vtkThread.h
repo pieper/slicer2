@@ -26,6 +26,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 #include <vtkEMLocalSegmentConfigure.h>
 #include "vtkObject.h"
+
 #ifndef _WIN32
 
 
@@ -41,7 +42,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 // ----------------------------------------------------------------------------------------------
 // Definitions for paralising algorithm from
 // workpile.h Simon Warfield simonw@bwh.harvard.edu */
-// $Id: vtkThread.h,v 1.3 2003/05/18 14:18:27 pieper Exp $ */
+// $Id: vtkThread.h,v 1.4 2003/05/18 21:04:15 pieper Exp $ */
 // ----------------------------------------------------------------------------------------------
 
 #include <stdlib.h>

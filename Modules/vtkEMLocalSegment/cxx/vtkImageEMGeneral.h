@@ -379,7 +379,9 @@ inline double vtkImageEMGeneral::FastGauss(double inverse_sigma, double x)
 inline double vtkImageEMGeneral::FastGaussTest(double inverse_sigma, double x)
 {
     float tmp = float(inverse_sigma * x);
-    cout << "Result " << tmp << " " << inverse_sigma * x << " " << qnexp2(EMSEGMENT_MINUS_ONE_OVER_2_LOG_2 * tmp * tmp) << endl;
+#ifndef _WIN32
+    cerr << "Result " << tmp << " " << inverse_sigma * x << " " << qnexp2(EMSEGMENT_MINUS_ONE_OVER_2_LOG_2 * tmp * tmp) << endl ;
+#endif
     return (double) EMSEGMENT_ONE_OVER_ROOT_2_PI * inverse_sigma 
     * qnexp2(EMSEGMENT_MINUS_ONE_OVER_2_LOG_2 * tmp * tmp);
 }

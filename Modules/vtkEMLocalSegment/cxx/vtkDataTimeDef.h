@@ -182,7 +182,9 @@ public:
   EMVolume & operator = (const EMVolume &trg) {
     if ( this->Data == trg.Data ) return *this;
     if ((this->MaxX != trg.MaxX) || (this->MaxY != trg.MaxY) ||(this->MaxZ != trg.MaxZ)) {
-      cerr << "Error:EMVolume & operator = : Dimesion of target was not equal to source" << endl;
+#ifndef _WIN32
+        cerr << "Error:EMVolume & operator = : Dimesion of target was not equal to source" << endl;
+#endif
     }
     int mul = this->MaxXY*this->MaxZ;
     for (int i = 0; i < mul; i++ ) this->Data[i] = trg.Data[i];

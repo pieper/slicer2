@@ -15,17 +15,16 @@ vtkDataTimeDef
 vtkFileOps
 vtkImageEMLocalSegmenter
 vtkImageEMGeneral  
-vtkThread
 )
 
 
 # Place names of abstract class implementations here. No file suffixes.
 # Comment this out if there are no abstracts.
 
-#ABSTRACT_FILES (
-#vtkMyAbstractClass1
-#...
-#)
+SET_SOURCE_FILES_PROPERTIES (
+vtkThread
+ABSTRACT
+)
 
 # You can add additional include paths here
 #INCLUDE_DIRECTORIES(
