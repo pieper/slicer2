@@ -45,6 +45,7 @@ proc Render3D {{scale ""}} {
     # Apply the fog parameters to all the renderers of viewWin
     FogApply $viewWin
 
+    viewRen ResetCameraClippingRange    
     $viewWin Render
     
     if {[IsModule Twin] == 1 && $Twin(mode) == "On"} {
