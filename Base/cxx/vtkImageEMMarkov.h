@@ -22,7 +22,6 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 =========================================================================auto=*/
 // .NAME vtkImageEMMarkov
-
 #ifndef __vtkImageEMMarkov_h
 #define __vtkImageEMMarkov_h
 
@@ -57,7 +56,7 @@ class VTK_EXPORT vtkImageEMMarkov : public vtkImageToImageFilter
   // Description:
   // Changing NumClasses re-defines also all the arrays which depon the number of classes e.g. prob
   void SetNumClasses(int NumberOfClasses);
-  vtkGetMacro(NumClasses, int);
+  int GetNumClasses() {return this->NumClasses;}
 
   vtkSetMacro(StartSlice, int);
   vtkGetMacro(StartSlice, int);
@@ -115,8 +114,8 @@ class VTK_EXPORT vtkImageEMMarkov : public vtkImageToImageFilter
   void SetSigma(double sigma, int index);
 
   void SetComponentExtent(int extent[6]);
-  void SetComponentExtent(int minX, int maxX, int minY, int maxY, 
-              int minZ, int maxZ);
+  void SetComponentExtent(int minX, int maxX, int minY, int maxY,
+    int minZ, int maxZ);
 
   void GetComponentExtent(int extent[6]);
   int *GetComponentExtent() {return this->ComponentExtent;}
@@ -147,6 +146,8 @@ protected:
 
   void ThreadedExecute(vtkImageData *inData, vtkImageData *outData,int outExt[6], int id);
   void ExecuteInformation(){this->vtkImageToImageFilter::ExecuteInformation();};
+  void ExecuteInformation(vtkImageData *inData,vtkImageData *outData);
+  void ComputeInputUpdateExtent(int inExt[6], int outExt[6]);
 
   // Description:
   // Calculates the Maximum Class Probability for each brightness value  
@@ -191,7 +192,7 @@ protected:
 
 
 
-
+ 
 
 
 
