@@ -1037,7 +1037,7 @@ void vtkImagePropagateDist::PropagateDanielsson3D( )
 
   save_intermediate_images = 1;
   //  SaveProjection(0);
-  SaveSkeleton(0);
+  //  SaveSkeleton(0);
 
   FreeLists();
   FreeDistanceArray();
