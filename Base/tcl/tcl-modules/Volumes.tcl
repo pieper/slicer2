@@ -35,6 +35,28 @@
 #   VolumesSetScanOrder
 #   VolumesSetScalarType
 #   VolumesSetLast
+#   AddListUnique
+#   FindDICOM2
+#   FindDICOM
+#   CreateStudyList
+#   CreateSeriesList
+#   CreateFileNameList
+#   ClickListIDsNames
+#   ClickListStudyUIDs
+#   ClickListSeriesUIDs
+#   DICOMListSelectClose
+#   DICOMListSelect
+#   ChangeDir
+#   ClickDirList
+#   DICOMHelp
+#   DICOMSelectDirHelp
+#   DICOMSelectDir
+#   DICOMSelectMain
+#   HandleExtractHeader
+#   DICOMReadHeaderValues
+#   DICOMPredictScanOrder
+#   VolumesEnter
+#   VolumesExit
 #==========================================================================auto=
 
 
@@ -80,7 +102,7 @@ proc VolumesInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-                {$Revision: 1.36 $} {$Date: 2000/10/25 18:20:46 $}]
+                {$Revision: 1.37 $} {$Date: 2000/10/31 00:30:29 $}]
 
 	# Props
 	set Volume(propertyType) Basic
@@ -1062,6 +1084,12 @@ proc VolumesSetLast {} {
 # Any comments? tanacs@cs.jhu.edu
 #-------------------------------------------------------------------------------
 
+#-------------------------------------------------------------------------------
+# .PROC AddListUnique
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc AddListUnique { list arg } {
     upvar $list list2
     if { [expr [lsearch -exact $list2 $arg] == -1] } {
@@ -1154,6 +1182,12 @@ proc DICOMScrolledListbox {f xAlways yAlways variable {labeltext "labeltext"} {a
 	return $fmain.f.list
 }
 
+#-------------------------------------------------------------------------------
+# .PROC FindDICOM2
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc FindDICOM2 { StartDir AddDir Pattern } {
     global DICOMFiles
     global FindDICOMCounter
@@ -1267,6 +1301,12 @@ proc FindDICOM2 { StartDir AddDir Pattern } {
     cd $pwd
 }
 
+#-------------------------------------------------------------------------------
+# .PROC FindDICOM
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc FindDICOM { StartDir Pattern } {
     global DICOMFiles
     global FindDICOMCounter
@@ -1300,6 +1340,12 @@ proc FindDICOM { StartDir Pattern } {
     cd $pwd
 }
 
+#-------------------------------------------------------------------------------
+# .PROC CreateStudyList
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc CreateStudyList { PatientIDName } {
     global DICOMFiles
     global FindDICOMCounter
@@ -1315,6 +1361,12 @@ proc CreateStudyList { PatientIDName } {
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC CreateSeriesList
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc CreateSeriesList { PatientIDName StudyUID } {
     global DICOMFiles
     global FindDICOMCounter
@@ -1332,6 +1384,12 @@ proc CreateSeriesList { PatientIDName StudyUID } {
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC CreateFileNameList
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc CreateFileNameList { PatientIDName StudyUID SeriesUID} {
     global DICOMFiles
     global FindDICOMCounter
@@ -1360,6 +1418,12 @@ proc CreateFileNameList { PatientIDName StudyUID SeriesUID} {
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC ClickListIDsNames
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc ClickListIDsNames { idsnames study series filenames } {
     global DICOMPatientIDsNames
     global DICOMStudyList
@@ -1379,6 +1443,12 @@ proc ClickListIDsNames { idsnames study series filenames } {
     set DICOMListSelectSeriesUID "none selected"
 }
 
+#-------------------------------------------------------------------------------
+# .PROC ClickListStudyUIDs
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc ClickListStudyUIDs { idsnames study series filenames } {
     global DICOMPatientIDsNames
     global DICOMStudyList
@@ -1398,6 +1468,12 @@ proc ClickListStudyUIDs { idsnames study series filenames } {
     set DICOMListSelectSeriesUID "none selected"
 }
 
+#-------------------------------------------------------------------------------
+# .PROC ClickListSeriesUIDs
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc ClickListSeriesUIDs { idsnames study series filenames } {
     global DICOMPatientIDsNames
     global DICOMStudyList
@@ -1423,6 +1499,12 @@ proc ClickListSeriesUIDs { idsnames study series filenames } {
     $filenames selection set 0 end
 }
 
+#-------------------------------------------------------------------------------
+# .PROC DICOMListSelectClose
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc DICOMListSelectClose { parent filelist } {
     global DICOMFileNameList
     
@@ -1435,6 +1517,12 @@ proc DICOMListSelectClose { parent filelist } {
     destroy $parent
 }
 
+#-------------------------------------------------------------------------------
+# .PROC DICOMListSelect
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc DICOMListSelect { parent values } {
     global DICOMListSelectPatientName
     global DICOMListSelectStudyUID
@@ -1487,6 +1575,12 @@ proc DICOMListSelect { parent values } {
 #
 #
 
+#-------------------------------------------------------------------------------
+# .PROC ChangeDir
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc ChangeDir { dirlist } {
     global DICOMStartDir
     
@@ -1505,6 +1599,12 @@ proc ChangeDir { dirlist } {
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC ClickDirList
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc ClickDirList { dirlist } {
     global DICOMStartDir
     set diridx [$dirlist curselection]
@@ -1515,6 +1615,12 @@ proc ClickDirList { dirlist } {
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC DICOMHelp
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc DICOMHelp { parent msg {textparams {}}} {
     global Gui
 
@@ -1535,6 +1641,12 @@ proc DICOMHelp { parent msg {textparams {}}} {
     pack $parent.b.close -padx 10 -pady 10
 }
 
+#-------------------------------------------------------------------------------
+# .PROC DICOMSelectDirHelp
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc DICOMSelectDirHelp {} {
     set msg "Select the start directory of DICOM studies either clicking \
 the directory names in the listbox or typing the exact name and pressing Enter (or \
@@ -1551,6 +1663,12 @@ files will be collected into a list."
 #    tk_messageBox -type ok -message "Help" -title "Title" -icon  info
 }
 
+#-------------------------------------------------------------------------------
+# .PROC DICOMSelectDir
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc DICOMSelectDir { top } {
     global DICOMStartDir
     global Pressed
@@ -1601,6 +1719,12 @@ proc DICOMSelectDir { top } {
     #cd $pwd
 }
 
+#-------------------------------------------------------------------------------
+# .PROC DICOMSelectMain
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc DICOMSelectMain { fileNameListbox } {
     global DICOMStartDir
     global Pressed
@@ -1651,6 +1775,12 @@ proc DICOMSelectMain { fileNameListbox } {
     cd $pwd
 }
 
+#-------------------------------------------------------------------------------
+# .PROC HandleExtractHeader
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc HandleExtractHeader {} {
     global Volume
 
@@ -1666,6 +1796,12 @@ proc HandleExtractHeader {} {
     VolumesSetPropertyType
 }
 
+#-------------------------------------------------------------------------------
+# .PROC DICOMReadHeaderValues
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc DICOMReadHeaderValues { filename } {
     global Volume
 
@@ -1780,6 +1916,12 @@ proc DICOMReadHeaderValues { filename } {
     set Volume(readHeaders) 0
 }
 
+#-------------------------------------------------------------------------------
+# .PROC DICOMPredictScanOrder
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc DICOMPredictScanOrder { file1 file2 } {
     global Volume
 
@@ -1870,12 +2012,24 @@ proc DICOMPredictScanOrder { file1 file2 } {
     parser Delete
 }
 
+#-------------------------------------------------------------------------------
+# .PROC VolumesEnter
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc VolumesEnter {} {
     DataExit
     bind Listbox <Control-Button-1> {tkListboxBeginToggle %W [%W index @%x,%y]}
     #tk_messageBox -type ok -message "VolumesEnter" -title "Title" -icon  info
 }
 
+#-------------------------------------------------------------------------------
+# .PROC VolumesExit
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc VolumesExit {} {
     #tk_messageBox -type ok -message "VolumesExit" -title "Title" -icon  info
 }

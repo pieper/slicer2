@@ -33,6 +33,8 @@
 #   MainViewerHideSliceControls
 #   MainViewerUserResize
 #   MainViewerAnno
+#   MainViewerAddViewsSeparation
+#   MainViewerSetEndoscopicViewOff
 #   MainViewerSetMode
 #==========================================================================auto=
 
@@ -50,7 +52,7 @@ proc MainViewerInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainViewer \
-		{$Revision: 1.13 $} {$Date: 2000/09/14 21:34:54 $}]
+		{$Revision: 1.14 $} {$Date: 2000/10/31 00:32:16 $}]
 
         # Props
 	set Gui(midHeight) 1
@@ -72,6 +74,7 @@ proc MainViewerBuildGUI {} {
 	toplevel     .tViewer -visual {truecolor 24} -bg $Gui(backdrop)
 	wm resizable .tViewer 0 1
 	wm title     .tViewer "Viewer"
+	# sum heights of 3d window, slice, and middle button frame
 	set h [expr $View(viewerHeightNormal) + 256 + $Gui(midHeight)]
 	wm geometry  .tViewer +$Gui(xViewer)+0
 	set Gui(fViewer) .tViewer
@@ -340,6 +343,12 @@ proc MainViewerSetEndoscopicViewOn {} {
     set View(EndoscopicViewOn) 1
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MainViewerSetEndoscopicViewOff
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc MainViewerSetEndoscopicViewOff {} {
 
     global View

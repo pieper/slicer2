@@ -32,6 +32,7 @@
 #   EditorUpdateMRML
 #   EditorBuildGUI
 #   EditorEnter
+#   EditorExit
 #   EditorMakeModel
 #   EditorB1
 #   EditorB1Motion
@@ -47,6 +48,9 @@
 #   EditorGetWorkingID
 #   EditorGetCompositeID
 #   EditorResetDisplay
+#   EditorToggleWorking
+#   EditorHideWorking
+#   EditorShowWorking
 #   EditorSetEffect
 #   EditorGetInputID
 #   EditorActivateUndo
@@ -93,7 +97,7 @@ proc EditorInit {} {
     
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.33 $} {$Date: 2000/10/17 05:33:24 $}]
+	    {$Revision: 1.34 $} {$Date: 2000/10/31 00:30:28 $}]
     
     # Initialize globals
     set Editor(idOriginal)  $Volume(idNone)
@@ -835,6 +839,12 @@ proc EditorEnter {} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC EditorExit
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EditorExit {} {
     popEventManager
 }
@@ -1308,6 +1318,12 @@ proc EditorResetDisplay {} {
 	}
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EditorToggleWorking
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EditorToggleWorking {} {
     global Editor Slice
 
@@ -1327,6 +1343,12 @@ proc EditorToggleWorking {} {
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EditorHideWorking
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EditorHideWorking {} {
     global Volume
 
@@ -1336,6 +1358,12 @@ proc EditorHideWorking {} {
     RenderSlices
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EditorShowWorking
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EditorShowWorking {} {
     global Editor Volume
 

@@ -28,7 +28,7 @@
 # FILE:        Widgets.tcl
 # PROCEDURES:  
 #   ScrolledText
-#   TabbedFrame
+#   TabbedFrame arrayName buttonsFrame tabsFrame buttonsLabel tabs titles tooltips
 #==========================================================================auto=
 
 # This file contains widgets that may be useful to developers

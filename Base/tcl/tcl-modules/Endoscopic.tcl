@@ -28,8 +28,78 @@
 # FILE:        Endoscopic.tcl
 # PROCEDURES:  
 #   EndoscopicInit
+#   EndoscopicBuildVTK
+#   EndoscopicBuildVTK
+#   EndoscopicCreateCamera
+#   EndoscopicSetParamCamera
+#   EndoscopicCreateFocalPoint
+#   EndoscopicCreateFocalPoint
+#   EndoscopicCreateLandmarks
+#   EndoscopicCreateLandmarks
+#   EndoscopicCreatePath
+#   EndoscopicCreatePath
 #   EndoscopicBuildGUI
-#   EndoscopicCount
+#   EndoscopicBuildGUI
+#   EndoscopicEnter
+#   EndoscopicExit
+#   EndoscopicUpdateGUI
+#   EndoscopicAddEndoscopicView
+#   EndoscopicAddEndoscopicView
+#   EndoscopicRemoveEndoscopicView
+#   EndoscopicRemoveEndoscopicView
+#   EndoscopicCreateAdvancedGUI
+#   EndoscopicCreateAdvancedGUI
+#   EndoscopicSetActive
+#   EndoscopicPopupCallback
+#   EndoscopicSetVisibility
+#   EndoscopicSetSize
+#   EndoscopicSetSize
+#   EndoscopicSetCameraPosition
+#   EndoscopicSetCameraPosition
+#   EndoscopicSetCameraDirection
+#   EndoscopicSetCameraDirection
+#   EndoscopicSetCameraZoom
+#   EndoscopicSetCameraZoom
+#   EndoscopicSetCameraAngle
+#   EndoscopicSetCameraAngle
+#   EndoscopicSetFocalAndCameraPath
+#   EndoscopicSetFocalAndCameraPath
+#   EndoscopicUpdateCamera
+#   EndoscopicUpdateCamera
+#   EndoscopicComputeRandomPath
+#   EndoscopicComputeRandomPath
+#   EndoscopicDeleteRandomPath
+#   EndoscopicDeleteRandomPath
+#   EndoscopicComputePath
+#   EndoscopicComputePath
+#   EndoscopicViewPath
+#   EndoscopicViewPath
+#   EndoscopicStopPath
+#   EndoscopicStopPath
+#   EndoscopicResetStopPath
+#   EndoscopicResetPath
+#   EndoscopicResetPath
+#   EndoscopicSetPathFrame
+#   EndoscopicSetPathFrame
+#   EndoscopicAddLandmark
+#   EndoscopicDeleteLandmark
+#   EndoscopicSetFlyDirection
+#   EndoscopicSetSpeed
+#   EndoscopicSetCameraAxis
+#   EndoscopicDeletePath
+#   EndoscopicDeletePathAndMrml
+#   EndoscopicLightFollowEndoCamera
+#   EndoscopicViewSetBackgroundColor
+#   EndoscopicViewSetBackgroundColor
+#   EndoscopicSetModelsVisibilityInside
+#   EndoscopicSetModelsVisibilityInside
+#   EndoscopicSetSliceDriver
+#   EndoscopicSetSliceDriver
+#   EndoscopicSetPosition
+#   EndoscopicSetSlicePosition
+#   EndoscopicUpdateMRML
+#   EndoscopicReadNewPath
+#   MainMrmlInsertBeforeNode nodeType
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -151,7 +221,7 @@ proc EndoscopicInit {} {
 	#   The strings with the $ symbol tell CVS to automatically insert the
 	#   appropriate revision number and date when the module is checked in.
 	#  	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.1 $} {$Date: 2000/09/14 21:34:55 $}]
+		{$Revision: 1.2 $} {$Date: 2000/10/31 00:30:29 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -277,6 +347,12 @@ proc EndoscopicInit {} {
 # .END
 #-------------------------------------------------------------------------------
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicBuildVTK
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicBuildVTK {} {
         global Endoscopic Model
 
@@ -480,6 +556,12 @@ proc EndoscopicBuildVTK {} {
 # .END
 #-------------------------------------------------------------------------------
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicCreateFocalPoint
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicCreateFocalPoint {} {
          global Model
 
@@ -505,6 +587,12 @@ proc EndoscopicCreateFocalPoint {} {
 # .END
 #-------------------------------------------------------------------------------
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicCreateLandmarks
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicCreateLandmarks {} {
          global Model
 
@@ -547,6 +635,12 @@ proc EndoscopicCreateLandmarks {} {
 # .END
 #-------------------------------------------------------------------------------
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicCreatePath
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicCreatePath {} {
          global Model
 
@@ -581,6 +675,12 @@ proc EndoscopicCreatePath {} {
 # .END
 #-------------------------------------------------------------------------------
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicBuildGUI
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicBuildGUI {} {
 	global Gui Endoscopic Path Module Volume Model Advanced Slice
 
@@ -1239,6 +1339,12 @@ proc EndoscopicUpdateGUI {} {
 # .END
 #----------------------------------------------------------------------------
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicAddEndoscopicView
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicAddEndoscopicView {} {
     global View viewWin Gui
 
@@ -1276,6 +1382,12 @@ proc EndoscopicAddEndoscopicView {} {
 # .END
 #----------------------------------------------------------------------------
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicRemoveEndoscopicView
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicRemoveEndoscopicView {} {
     global Endoscopic View viewWin Gui
 
@@ -1309,6 +1421,12 @@ proc EndoscopicRemoveEndoscopicView {} {
 # .END
 #----------------------------------------------------------------------------
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicCreateAdvancedGUI
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicCreateAdvancedGUI {f a {vis ""} {col ""} {size ""}} {
     global Gui Model Color Advanced
 
@@ -1429,6 +1547,12 @@ proc EndoscopicSetVisibility {a} {
 # .END
 #-------------------------------------------------------------------------------
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicSetSize
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicSetSize {a} {
     global Advanced Model Path
     
@@ -1451,6 +1575,12 @@ proc EndoscopicSetSize {a} {
 # .END
 #-------------------------------------------------------------------------------
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicSetCameraPosition
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicSetCameraPosition {{value ""}} {
 	global Endoscopic View Model
 
@@ -1533,6 +1663,12 @@ proc EndoscopicSetCameraPosition {{value ""}} {
 # .END
 #-------------------------------------------------------------------------------
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicSetCameraDirection
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicSetCameraDirection {{value ""}} {
 	global Endoscopic View Model
 
@@ -1603,6 +1739,12 @@ proc EndoscopicSetCameraDirection {{value ""}} {
 # .END
 #-------------------------------------------------------------------------------
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicSetCameraZoom
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicSetCameraZoom {} {
     global Endoscopic Model View
     
@@ -1632,6 +1774,12 @@ proc EndoscopicSetCameraZoom {} {
 # .END
 #-------------------------------------------------------------------------------
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicSetCameraAngle
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicSetCameraAngle {} {
     global Endoscopic Model View
 
@@ -1647,6 +1795,12 @@ proc EndoscopicSetCameraAngle {} {
 # .END
 #-----------------------------------------------------------------------------
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicSetFocalAndCameraPath
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicSetFocalAndCameraPath {x y z FPx FPy FPz} {
 	global Endoscopic View Path Model
 
@@ -1725,6 +1879,12 @@ proc EndoscopicSetFocalAndCameraPath {x y z FPx FPy FPz} {
 # .END
 #-------------------------------------------------------------------------------
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicUpdateCamera
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicUpdateCamera {} {
     global Endoscopic Model View
    
@@ -1756,6 +1916,12 @@ proc EndoscopicUpdateCamera {} {
 # .END
 #-------------------------------------------------------------------------------
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicComputeRandomPath
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicComputeRandomPath {} {
     global Endoscopic View Path Model
    
@@ -1825,6 +1991,12 @@ proc EndoscopicComputeRandomPath {} {
 # .END
 #-------------------------------------------------------------------------------
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicDeleteRandomPath
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicDeleteRandomPath {} {
     global Endoscopic Model View Path
    
@@ -1859,6 +2031,12 @@ proc EndoscopicDeleteRandomPath {} {
 # .END
 #-------------------------------------------------------------------------------
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicComputePath
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicComputePath {{? ""} {d ""}} {
     global Endoscopic Model View Path 
    
@@ -1932,6 +2110,12 @@ proc EndoscopicComputePath {{? ""} {d ""}} {
 # .END
 #-------------------------------------------------------------------------------
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicViewPath
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicViewPath {} {
     global Endoscopic Model View Path Module
     
@@ -1964,12 +2148,24 @@ proc EndoscopicViewPath {} {
 # .END
 #-------------------------------------------------------------------------------
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicStopPath
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicStopPath {} {
     global Endoscopic Model View Path Module
     	
 	set Path(stop) 1
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicResetStopPath
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicResetStopPath {} {
     global Endoscopic Model View Path Module
     	
@@ -1985,6 +2181,12 @@ proc EndoscopicResetStopPath {} {
 # .END
 #-------------------------------------------------------------------------------
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicResetPath
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicResetPath {} {
     global Endoscopic Model View Path Module
     	
@@ -2004,6 +2206,12 @@ proc EndoscopicResetPath {} {
 # .END
 #-------------------------------------------------------------------------------
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicSetPathFrame
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicSetPathFrame {} {
     global Endoscopic Model View Path
     
@@ -2274,6 +2482,12 @@ proc EndoscopicLightFollowEndoCamera {} {
 # .END
 #-------------------------------------------------------------------------------
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicViewSetBackgroundColor
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicViewSetBackgroundColor {} {
     global View
     
@@ -2290,6 +2504,12 @@ proc EndoscopicViewSetBackgroundColor {} {
 # .END
 #-------------------------------------------------------------------------------
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicSetModelsVisibilityInside
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicSetModelsVisibilityInside {} {
     global View Model Advanced
 
@@ -2313,6 +2533,12 @@ proc EndoscopicSetModelsVisibilityInside {} {
 # .END
 #-------------------------------------------------------------------------------
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicSetSliceDriver
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicSetSliceDriver {a} {
     global Endoscopic Model View Slice
 
@@ -2352,6 +2578,12 @@ proc EndoscopicSetSliceDriver {a} {
 # .END
 #-------------------------------------------------------------------------------
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicSetSlicePosition
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicSetSlicePosition {a} {
     global Model View Slice
 

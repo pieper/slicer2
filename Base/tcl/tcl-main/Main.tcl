@@ -34,7 +34,9 @@
 #   MainBuildModuleTabs ModuleName
 #   MainUpdateMRML
 #   MainAddActor
+#   MainAddModelActor
 #   MainRemoveActor
+#   MainRemoveModelActor
 #   MainSetup
 #   IsModule
 #   Tab
@@ -336,7 +338,7 @@ proc MainInit {} {
 
         # Set version info
 	lappend Module(versions) [ParseCVSInfo Main \
-		{$Revision: 1.47 $} {$Date: 2000/09/14 21:34:52 $}]
+		{$Revision: 1.48 $} {$Date: 2000/10/31 00:32:16 $}]
 
 	# Call each "Init" routine that's not part of a module
 	#-------------------------------------------

@@ -32,6 +32,7 @@
 #   MainViewBuildGUI
 #   MainViewSetBackgroundColor
 #   MainViewSetFov
+#   MainViewSetParallelProjection
 #   MainViewLightFollowCamera
 #   MainViewNavReset
 #   MainViewRotate
@@ -67,7 +68,7 @@ viewMode='Normal' viewBgColor='Blue'"
 
         set m MainView
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.22 $} {$Date: 2000/10/02 19:57:38 $}]
+		{$Revision: 1.23 $} {$Date: 2000/10/31 00:32:16 $}]
 
 	set View(viewerHeightNormal) 656
 	set View(viewerWidth)  956 
