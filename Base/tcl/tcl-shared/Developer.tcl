@@ -115,17 +115,11 @@ proc DevFatalErrorWindow {{message "Fatal Error"}} {
 #  Creates a label
 #  Example:  DevAddLabel $f.lmylabel \"Have a nice day\"
 #
+# 
 # .ARGS
 #  str LabelName  Name of the button (i.e. $f.stuff.lmylabel)
 #  str Message    The text on the label
 #  str Color      Label color and attribs from Gui.tcl (BLA or WLA). Optional
-# .END
-#-------------------------------------------------------------------------------
-
-#-------------------------------------------------------------------------------
-# .PROC DevAddLabel
-# 
-# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc DevAddLabel { LabelName Message {Color WLA}} {
