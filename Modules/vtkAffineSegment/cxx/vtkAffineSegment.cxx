@@ -54,7 +54,7 @@ vtkAffineSegment* vtkAffineSegment::New()
 // speed at index
 float vtkAffineSegment::speed( int index )
 {
- float s;
+  float s;
     
   s = 1;
 
@@ -80,219 +80,219 @@ void vtkAffineSegment::ComputeAffine_phihat(short *inData)
   int offset_xf,xyz,frame_size;
   float H,J;
 
-    for (idxZ = 0; idxZ < dimZ; idxZ++)
-         {
-            for (idxY = 0;idxY < dimY; idxY++)
-            {
+  for (idxZ = 0; idxZ < dimZ; idxZ++)
+    {
+      for (idxY = 0;idxY < dimY; idxY++)
+    {
                
-                frame_size = dimX*dimY;
-                xyz = idxY*dimX+idxZ*frame_size;
-                offset_xf = xyz+frame_size; //for offset in z-direction
+      frame_size = dimX*dimY;
+      xyz = idxY*dimX+idxZ*frame_size;
+      offset_xf = xyz+frame_size; //for offset in z-direction
 
-                /* idxR + xyz gives our current position */
+      /* idxR + xyz gives our current position */
 
-                for (idxR = 0; idxR < dimX; idxR++)
-                    {
+      for (idxR = 0; idxR < dimX; idxR++)
+        {
 
-                    /* at the boundaries we need to do some special things
-                       so that we have access to the correct data or else we will crash
-                       as we will access data not present */
-                      if((idxR == 0) || (idxR == dimX-1) || (idxY == 0) || (idxY == dimY-1) || (idxZ == 0) || (idxZ == dimZ-1)) 
-                        {
-                            if(idxZ == 0)
-                            {
-                                lz = (1/(2*dz)) * (inData[idxR+offset_xf] - inData[idxR+xyz]);
-                                lzz = (1/(dz*dz)) * 2 * lz;
+          /* at the boundaries we need to do some special things
+         so that we have access to the correct data or else we will crash
+         as we will access data not present */
+          if((idxR == 0) || (idxR == dimX-1) || (idxY == 0) || (idxY == dimY-1) || (idxZ == 0) || (idxZ == dimZ-1)) 
+        {
+          if(idxZ == 0)
+            {
+              lz = (1/(2*dz)) * (inData[idxR+offset_xf] - inData[idxR+xyz]);
+              lzz = (1/(dz*dz)) * 2 * lz;
 
-                                if((idxR != 0) && (idxR != dimX -1))
-                                    lxz = (1/(4*dx*dz)) * (inData[idxR+1+offset_xf] - inData[idxR+1+xyz] - inData[idxR-1+offset_xf]
-                                              + inData[idxR-1+xyz]);
+              if((idxR != 0) && (idxR != dimX -1))
+            lxz = (1/(4*dx*dz)) * (inData[idxR+1+offset_xf] - inData[idxR+1+xyz] - inData[idxR-1+offset_xf]
+                           + inData[idxR-1+xyz]);
 
-                                if(idxR == dimX -1 )
-                                    lxz = (1/(4*dx*dz)) * (inData[idxR+offset_xf] - inData[idxR+xyz] - inData[idxR-1+offset_xf]
+              if(idxR == dimX -1 )
+            lxz = (1/(4*dx*dz)) * (inData[idxR+offset_xf] - inData[idxR+xyz] - inData[idxR-1+offset_xf]
                                                + inData[idxR-1+xyz]);
 
-                                if(idxR == 0)
-                                    lxz = (1/(4*dx*dz)) * (inData[idxR+1+offset_xf] - inData[idxR+1+xyz] - inData[idxR+offset_xf]
-                                              + inData[idxR+xyz]);
+              if(idxR == 0)
+            lxz = (1/(4*dx*dz)) * (inData[idxR+1+offset_xf] - inData[idxR+1+xyz] - inData[idxR+offset_xf]
+                           + inData[idxR+xyz]);
 
-                                if((idxY != 0) && (idxY != dimY -1))
-                                    lyz = (1/(4*dy*dz)) * (inData[idxR+dimX+offset_xf] - inData[idxR+dimX+xyz] -
-                                              inData[idxR-dimX+offset_xf] + inData[idxR+xyz-dimX]);
-                                if(idxY == 0)
-                                    lyz = (1/(4*dy*dz)) * (inData[idxR+dimX+offset_xf] - inData[idxR+dimX+xyz] -
-                                              inData[idxR+offset_xf] + inData[idxR+xyz]);
-                                if(idxY == dimY-1)
-                                    lyz = (1/(4*dy*dz)) * (inData[idxR+offset_xf] - inData[idxR+xyz] -
-                                                inData[idxR-dimX+offset_xf] + inData[idxR+xyz-dimX]);
-
-
-                            }
-
-                            if(idxZ == dimZ-1)
-                            {
-
-                                lz = (1/(2*dz)) * (inData[idxR+xyz] - inData[idxR+xyz-frame_size]);
-                                lzz = (1/(dz*dz)) * 2 * lz;
-
-                                if((idxR != 0) && (idxR != dimX -1))
-                                    lxz = (1/(4*dx*dz)) * (inData[idxR+1+xyz] - inData[idxR+xyz+1-frame_size] - inData[idxR-1+xyz]
-                                              + inData[idxR+xyz-1-frame_size]);
-                                if(idxR == 0)
-                                    lxz = (1/(4*dx*dz)) * (inData[idxR+1+xyz] - inData[idxR+xyz+1-frame_size] - inData[idxR+xyz]
-                                              + inData[idxR+xyz-frame_size]);
-                                if(idxR == dimX-1)
-                                    lxz = (1/(4*dx*dz)) * (inData[idxR+xyz] - inData[idxR+xyz-frame_size] - inData[idxR-1+xyz]
-                                              + inData[idxR+xyz-1-frame_size]);
+              if((idxY != 0) && (idxY != dimY -1))
+            lyz = (1/(4*dy*dz)) * (inData[idxR+dimX+offset_xf] - inData[idxR+dimX+xyz] -
+                           inData[idxR-dimX+offset_xf] + inData[idxR+xyz-dimX]);
+              if(idxY == 0)
+            lyz = (1/(4*dy*dz)) * (inData[idxR+dimX+offset_xf] - inData[idxR+dimX+xyz] -
+                           inData[idxR+offset_xf] + inData[idxR+xyz]);
+              if(idxY == dimY-1)
+            lyz = (1/(4*dy*dz)) * (inData[idxR+offset_xf] - inData[idxR+xyz] -
+                           inData[idxR-dimX+offset_xf] + inData[idxR+xyz-dimX]);
 
 
-                                if((idxY != 0) && (idxY != dimY -1))
-                                    lyz = (1/(4*dy*dz)) * (inData[idxR+dimX+xyz] - inData[idxR+xyz+dimX-frame_size] -
-                                              inData[idxR-dimX+xyz] + inData[idxR+xyz-dimX-frame_size]);
-                                if(idxY == 0)
-                                    lyz = (1/(4*dy*dz)) * (inData[idxR+dimX+xyz] - inData[idxR+xyz+dimX-frame_size] -
-                                              inData[idxR+xyz] + inData[idxR+xyz-frame_size]);
-                                if(idxY == dimY-1)
-                                    lyz = (1/(4*dy*dz)) * (inData[idxR+xyz] - inData[idxR+xyz-frame_size] -
-                                              inData[idxR-dimX+xyz] + inData[idxR+xyz-dimX-frame_size]);
+            }
+
+          if(idxZ == dimZ-1)
+            {
+
+              lz = (1/(2*dz)) * (inData[idxR+xyz] - inData[idxR+xyz-frame_size]);
+              lzz = (1/(dz*dz)) * 2 * lz;
+
+              if((idxR != 0) && (idxR != dimX -1))
+            lxz = (1/(4*dx*dz)) * (inData[idxR+1+xyz] - inData[idxR+xyz+1-frame_size] - inData[idxR-1+xyz]
+                           + inData[idxR+xyz-1-frame_size]);
+              if(idxR == 0)
+            lxz = (1/(4*dx*dz)) * (inData[idxR+1+xyz] - inData[idxR+xyz+1-frame_size] - inData[idxR+xyz]
+                           + inData[idxR+xyz-frame_size]);
+              if(idxR == dimX-1)
+            lxz = (1/(4*dx*dz)) * (inData[idxR+xyz] - inData[idxR+xyz-frame_size] - inData[idxR-1+xyz]
+                           + inData[idxR+xyz-1-frame_size]);
+
+
+              if((idxY != 0) && (idxY != dimY -1))
+            lyz = (1/(4*dy*dz)) * (inData[idxR+dimX+xyz] - inData[idxR+xyz+dimX-frame_size] -
+                           inData[idxR-dimX+xyz] + inData[idxR+xyz-dimX-frame_size]);
+              if(idxY == 0)
+            lyz = (1/(4*dy*dz)) * (inData[idxR+dimX+xyz] - inData[idxR+xyz+dimX-frame_size] -
+                           inData[idxR+xyz] + inData[idxR+xyz-frame_size]);
+              if(idxY == dimY-1)
+            lyz = (1/(4*dy*dz)) * (inData[idxR+xyz] - inData[idxR+xyz-frame_size] -
+                           inData[idxR-dimX+xyz] + inData[idxR+xyz-dimX-frame_size]);
                                 
-                            } 
+            } 
 
 
-                            if(idxR == 0)
-                            {
-                                lx = (1/(2*dx)) * (inData[(idxR+1)+xyz] - inData[idxR+xyz]);
-                                lxx = (1/(dx*dx)) * (inData[(idxR+1)+xyz] - 2 * inData[idxR+xyz] + inData[idxR+xyz]);
-                                if(idxY == 0)
-                                {
-                                  ly = (1/(2*dy)) * (inData[idxR+xyz+dimX] - inData[idxR +xyz]);
-                                  lyy = (1/(dy*dy)) * (inData[idxR+xyz+dimX] - 2*inData[idxR+xyz] + inData[idxR+xyz]);
-                                  lxy = (1/(4*dx*dy)) * (inData[idxR+1+xyz+dimX] - inData[idxR+1+xyz] -
-                                      inData[idxR+xyz+dimX] + inData[idxR+xyz]);
-                                }
-                                else if(idxY == dimY-1)
-                                {
-                                  ly = (1/(2*dy)) * (inData[idxR+xyz] - inData[idxR +xyz-dimX]);
-                                  lyy = (1/(dy*dy)) * (inData[idxR+xyz] - 2*inData[idxR+xyz] + inData[idxR+xyz-dimX]);
-                                  lxy = (1/(4*dx*dy)) * (inData[idxR+1+xyz] - inData[idxR+1+xyz-dimX] -
-                                      inData[idxR+xyz] + inData[idxR+xyz-dimX]);
-                                }
-                                else
-                                {
-                                ly = (1/(2*dy)) * (inData[idxR+xyz+dimX] - inData[idxR +xyz-dimX]);
-                                lyy = (1/(dy*dy)) * (inData[idxR+xyz+dimX] - 2*inData[idxR+xyz] + inData[idxR+xyz-dimX]);
-                                lxy = (1/(4*dx*dy)) * (inData[idxR+1+xyz+dimX] - inData[idxR+1+xyz-dimX] -
-                                      inData[idxR+xyz+dimX] + inData[idxR+xyz-dimX]);
-                                }
+          if(idxR == 0)
+            {
+              lx = (1/(2*dx)) * (inData[(idxR+1)+xyz] - inData[idxR+xyz]);
+              lxx = (1/(dx*dx)) * (inData[(idxR+1)+xyz] - 2 * inData[idxR+xyz] + inData[idxR+xyz]);
+              if(idxY == 0)
+            {
+              ly = (1/(2*dy)) * (inData[idxR+xyz+dimX] - inData[idxR +xyz]);
+              lyy = (1/(dy*dy)) * (inData[idxR+xyz+dimX] - 2*inData[idxR+xyz] + inData[idxR+xyz]);
+              lxy = (1/(4*dx*dy)) * (inData[idxR+1+xyz+dimX] - inData[idxR+1+xyz] -
+                         inData[idxR+xyz+dimX] + inData[idxR+xyz]);
+            }
+              else if(idxY == dimY-1)
+            {
+              ly = (1/(2*dy)) * (inData[idxR+xyz] - inData[idxR +xyz-dimX]);
+              lyy = (1/(dy*dy)) * (inData[idxR+xyz] - 2*inData[idxR+xyz] + inData[idxR+xyz-dimX]);
+              lxy = (1/(4*dx*dy)) * (inData[idxR+1+xyz] - inData[idxR+1+xyz-dimX] -
+                         inData[idxR+xyz] + inData[idxR+xyz-dimX]);
+            }
+              else
+            {
+              ly = (1/(2*dy)) * (inData[idxR+xyz+dimX] - inData[idxR +xyz-dimX]);
+              lyy = (1/(dy*dy)) * (inData[idxR+xyz+dimX] - 2*inData[idxR+xyz] + inData[idxR+xyz-dimX]);
+              lxy = (1/(4*dx*dy)) * (inData[idxR+1+xyz+dimX] - inData[idxR+1+xyz-dimX] -
+                         inData[idxR+xyz+dimX] + inData[idxR+xyz-dimX]);
+            }
 
-                            }
+            }
 
-                            if(idxR == dimX-1)
-                            {
-                                lx = (1/(2*dx)) * (inData[idxR+xyz] - inData[idxR-1+xyz]);
-                                lxx = (1/(dx*dx)) * (inData[idxR+xyz] - 2 * inData[idxR+xyz] + inData[idxR-1+xyz]);
-                                if(idxY == 0)
-                                { 
-                                  ly = (1/(2*dy)) * (inData[idxR+xyz+dimX] - inData[idxR +xyz]);
-                                  lyy = (1/(dy*dy)) * (inData[idxR+xyz+dimX] - 2*inData[idxR+xyz] + inData[idxR+xyz]);
-                                  lxy = (1/(4*dx*dy)) * (inData[idxR+xyz+dimX] - inData[idxR+xyz] -
-                                      inData[idxR-1+xyz+dimX] + inData[idxR-1+xyz]);
-                                }
-                                 else if(idxY == dimY -1)
-                                {
-                                  ly = (1/(2*dy)) * (inData[idxR+xyz] - inData[idxR +xyz-dimX]);
-                                  lyy = (1/(dy*dy)) * (inData[idxR+xyz] - 2*inData[idxR+xyz] + inData[idxR+xyz-dimX]);
-                                  lxy = (1/(4*dx*dy)) * (inData[idxR+xyz] - inData[idxR+xyz-dimX] -
-                                      inData[idxR-1+xyz] + inData[idxR-1+xyz-dimX]);
-                                }
-                                 else
-                                {
-                                ly = (1/(2*dy)) * (inData[idxR+xyz+dimX] - inData[idxR +xyz-dimX]);
-                                lyy = (1/(dy*dy)) * (inData[idxR+xyz+dimX] - 2*inData[idxR+xyz] + inData[idxR+xyz-dimX]);
-                                lxy = (1/(4*dx*dy)) * (inData[idxR+xyz+dimX] - inData[idxR+xyz-dimX] -
-                                      inData[idxR-1+xyz+dimX] + inData[idxR-1+xyz-dimX]);
-                                }
+          if(idxR == dimX-1)
+            {
+              lx = (1/(2*dx)) * (inData[idxR+xyz] - inData[idxR-1+xyz]);
+              lxx = (1/(dx*dx)) * (inData[idxR+xyz] - 2 * inData[idxR+xyz] + inData[idxR-1+xyz]);
+              if(idxY == 0)
+            { 
+              ly = (1/(2*dy)) * (inData[idxR+xyz+dimX] - inData[idxR +xyz]);
+              lyy = (1/(dy*dy)) * (inData[idxR+xyz+dimX] - 2*inData[idxR+xyz] + inData[idxR+xyz]);
+              lxy = (1/(4*dx*dy)) * (inData[idxR+xyz+dimX] - inData[idxR+xyz] -
+                         inData[idxR-1+xyz+dimX] + inData[idxR-1+xyz]);
+            }
+              else if(idxY == dimY -1)
+            {
+              ly = (1/(2*dy)) * (inData[idxR+xyz] - inData[idxR +xyz-dimX]);
+              lyy = (1/(dy*dy)) * (inData[idxR+xyz] - 2*inData[idxR+xyz] + inData[idxR+xyz-dimX]);
+              lxy = (1/(4*dx*dy)) * (inData[idxR+xyz] - inData[idxR+xyz-dimX] -
+                         inData[idxR-1+xyz] + inData[idxR-1+xyz-dimX]);
+            }
+              else
+            {
+              ly = (1/(2*dy)) * (inData[idxR+xyz+dimX] - inData[idxR +xyz-dimX]);
+              lyy = (1/(dy*dy)) * (inData[idxR+xyz+dimX] - 2*inData[idxR+xyz] + inData[idxR+xyz-dimX]);
+              lxy = (1/(4*dx*dy)) * (inData[idxR+xyz+dimX] - inData[idxR+xyz-dimX] -
+                         inData[idxR-1+xyz+dimX] + inData[idxR-1+xyz-dimX]);
+            }
 
-                            }
+            }
 
-                            if((idxY == 0) && (idxR != 0) && (idxR != dimX-1))
-                            {
-                                lx = (1/(2*dx)) * (inData[(idxR+1)+xyz] - inData[idxR-1+xyz]);
-                                ly = (1/(2*dy)) * (inData[idxR+xyz+dimX] - inData[idxR+xyz]);
-                                lxx = (1/(dx*dx)) * (inData[(idxR+1)+xyz] - 2 * inData[idxR+xyz] + inData[idxR-1+xyz]);
-                                lyy = (1/(dy*dy)) * (inData[idxR+xyz+dimX] - inData[idxR+xyz]);
-                                lxy = (1/(4*dx*dy)) * (inData[idxR+1+xyz+dimX] - inData[idxR+1+xyz] -
-                                      inData[idxR-1+xyz+dimX] + inData[idxR-1+xyz]);
-                            }
+          if((idxY == 0) && (idxR != 0) && (idxR != dimX-1))
+            {
+              lx = (1/(2*dx)) * (inData[(idxR+1)+xyz] - inData[idxR-1+xyz]);
+              ly = (1/(2*dy)) * (inData[idxR+xyz+dimX] - inData[idxR+xyz]);
+              lxx = (1/(dx*dx)) * (inData[(idxR+1)+xyz] - 2 * inData[idxR+xyz] + inData[idxR-1+xyz]);
+              lyy = (1/(dy*dy)) * (inData[idxR+xyz+dimX] - inData[idxR+xyz]);
+              lxy = (1/(4*dx*dy)) * (inData[idxR+1+xyz+dimX] - inData[idxR+1+xyz] -
+                         inData[idxR-1+xyz+dimX] + inData[idxR-1+xyz]);
+            }
 
-                            if((idxY == dimY-1) && (idxR != 0) && (idxR != dimX-1))
-                             {
-                                lx = (1/(2*dx)) * (inData[(idxR+1)+xyz] - inData[idxR-1+xyz]);
-                                ly = (1/(2*dy)) * (inData[idxR+xyz] - inData[idxR+xyz-dimX]);
-                                lxx = (1/(dx*dx)) * (inData[(idxR+1)+xyz] - 2 * inData[idxR+xyz] + inData[idxR-1+xyz]);
-                                lyy = (1/(dy*dy)) * (-1*inData[idxR+xyz] + inData[idxR+xyz-dimX]);
-                                lxy = (1/(4*dx*dy)) * (inData[idxR+1+xyz] - inData[idxR+1+xyz-dimX] -
-                                      inData[idxR-1+xyz] + inData[idxR-1+xyz-dimX]);
-                            }
+          if((idxY == dimY-1) && (idxR != 0) && (idxR != dimX-1))
+            {
+              lx = (1/(2*dx)) * (inData[(idxR+1)+xyz] - inData[idxR-1+xyz]);
+              ly = (1/(2*dy)) * (inData[idxR+xyz] - inData[idxR+xyz-dimX]);
+              lxx = (1/(dx*dx)) * (inData[(idxR+1)+xyz] - 2 * inData[idxR+xyz] + inData[idxR-1+xyz]);
+              lyy = (1/(dy*dy)) * (-1*inData[idxR+xyz] + inData[idxR+xyz-dimX]);
+              lxy = (1/(4*dx*dy)) * (inData[idxR+1+xyz] - inData[idxR+1+xyz-dimX] -
+                         inData[idxR-1+xyz] + inData[idxR-1+xyz-dimX]);
+            }
                             
 
-                            J = (((lyy*lzz-lyz*lyz)*lx*lx) + ((lxx*lzz-lxz*lxz)*ly*ly) + ((lxx*lyy-lxy*lxy)*lz*lz) +
-                                     (2*lx*ly*(lxz*lyz-lxy*lzz)) + (2*ly*lz*(lxy*lxz-lyz*lxx)) +
-                                     (2*lx*lz*(lxy*lyz-lxz*lyy)));
+          J = (((lyy*lzz-lyz*lyz)*lx*lx) + ((lxx*lzz-lxz*lxz)*ly*ly) + ((lxx*lyy-lxy*lxy)*lz*lz) +
+               (2*lx*ly*(lxz*lyz-lxy*lzz)) + (2*ly*lz*(lxy*lxz-lyz*lxx)) +
+               (2*lx*lz*(lxy*lyz-lxz*lyy)));
                             
 
-                            H = lxx*(lyy*lzz-lyz*lyz) - lxy*(lxy*lzz-lyz*lxz) + lxz*(lxy*lyz-lxz*lyy);
+          H = lxx*(lyy*lzz-lyz*lyz) - lxy*(lxy*lzz-lyz*lxz) + lxz*(lxy*lyz-lxz*lyy);
 
 
-                            phi_hat[idxR+xyz] = sqrt(H*H/(J*J + 1));
-                            eucl_phi[idxR+xyz] = 1.0/(1+lx*lx+ly*ly+lz*lz);
+          phi_hat[idxR+xyz] = sqrt(H*H/(J*J + 1));
+          eucl_phi[idxR+xyz] = 1.0/(1+lx*lx+ly*ly+lz*lz);
                             
 
-                            continue;
-                    } //end if (the BIG OR's)
+          continue;
+        } //end if (the BIG OR's)
 
-                        /*if not on any of the boundaries of the cube, compute
-                          as normal stuff */
+          /*if not on any of the boundaries of the cube, compute
+        as normal stuff */
 
-                        lx = (1/(2*dx)) * (inData[(idxR+1)+xyz] - inData[idxR-1+xyz]);
-                        ly = (1/(2*dy)) * (inData[idxR+xyz+dimX] - inData[idxR+xyz-dimX]);
-                        lz = (1/(2*dz)) * (inData[idxR+offset_xf] - inData[idxR+xyz-frame_size]);
+          lx = (1/(2*dx)) * (inData[(idxR+1)+xyz] - inData[idxR-1+xyz]);
+          ly = (1/(2*dy)) * (inData[idxR+xyz+dimX] - inData[idxR+xyz-dimX]);
+          lz = (1/(2*dz)) * (inData[idxR+offset_xf] - inData[idxR+xyz-frame_size]);
 
-                        lxx = (1/(dx*dx)) * (inData[(idxR+1)+xyz] - 2 * inData[idxR+xyz] + inData[idxR-1+xyz]);
-                        lyy = (1/(dy*dy)) * (inData[idxR+xyz+dimX] - 2*inData[idxR+xyz] + inData[idxR+xyz-dimX]);
-                        lzz = (1/(dz*dz)) * (inData[idxR+offset_xf] - 2*inData[idxR+xyz] + inData[idxR+xyz-frame_size]);
+          lxx = (1/(dx*dx)) * (inData[(idxR+1)+xyz] - 2 * inData[idxR+xyz] + inData[idxR-1+xyz]);
+          lyy = (1/(dy*dy)) * (inData[idxR+xyz+dimX] - 2*inData[idxR+xyz] + inData[idxR+xyz-dimX]);
+          lzz = (1/(dz*dz)) * (inData[idxR+offset_xf] - 2*inData[idxR+xyz] + inData[idxR+xyz-frame_size]);
 
 
-                        lxy = (1/(4*dx*dy)) * (inData[idxR+1+xyz+dimX] - inData[idxR+1+xyz-dimX] -
-                                      inData[idxR-1+xyz+dimX] + inData[idxR-1+xyz-dimX]);
-                        lyz = (1/(4*dy*dz)) * (inData[idxR+dimX+offset_xf] - inData[idxR+dimX+xyz-frame_size] -
-                                              inData[idxR-dimX+offset_xf] + inData[idxR+xyz-dimX-frame_size]);
-                        lxz = (1/(4*dx*dz)) * (inData[idxR+1+offset_xf] - inData[idxR+1+xyz-frame_size] - inData[idxR-1+offset_xf]
-                                              + inData[idxR+xyz-1-frame_size]);
+          lxy = (1/(4*dx*dy)) * (inData[idxR+1+xyz+dimX] - inData[idxR+1+xyz-dimX] -
+                     inData[idxR-1+xyz+dimX] + inData[idxR-1+xyz-dimX]);
+          lyz = (1/(4*dy*dz)) * (inData[idxR+dimX+offset_xf] - inData[idxR+dimX+xyz-frame_size] -
+                     inData[idxR-dimX+offset_xf] + inData[idxR+xyz-dimX-frame_size]);
+          lxz = (1/(4*dx*dz)) * (inData[idxR+1+offset_xf] - inData[idxR+1+xyz-frame_size] - inData[idxR-1+offset_xf]
+                     + inData[idxR+xyz-1-frame_size]);
 
-                        J = (((lyy*lzz-lyz*lyz)*lx*lx) + ((lxx*lzz-lxz*lxz)*ly*ly) + ((lxx*lyy-lxy*lxy)*lz*lz) +
-                                     (2*lx*ly*(lxz*lyz-lxy*lzz)) + (2*ly*lz*(lxy*lxz-lyz*lxx)) +
-                                     (2*lx*lz*(lxy*lyz-lxz*lyy)));
+          J = (((lyy*lzz-lyz*lyz)*lx*lx) + ((lxx*lzz-lxz*lxz)*ly*ly) + ((lxx*lyy-lxy*lxy)*lz*lz) +
+           (2*lx*ly*(lxz*lyz-lxy*lzz)) + (2*ly*lz*(lxy*lxz-lyz*lxx)) +
+           (2*lx*lz*(lxy*lyz-lxz*lyy)));
                             
 
-                        H = lxx*(lyy*lzz-lyz*lyz) - lxy*(lxy*lzz-lyz*lxz) + lxz*(lxy*lyz-lxz*lyy);
+          H = lxx*(lyy*lzz-lyz*lyz) - lxy*(lxy*lzz-lyz*lxz) + lxz*(lxy*lyz-lxz*lyy);
 
-                        //our temporary storage of affine invariant gradient
-                        phi_hat[idxR+xyz] = (J*J+1)/(H*H+J*J+1);
+          //our temporary storage of affine invariant gradient
+          phi_hat[idxR+xyz] = (J*J+1)/(H*H+J*J+1);
                      
-                        //euclidean phi_hat
-                        eucl_phi[idxR+xyz] = 1.0/(1+lx*lx+ly*ly+lz*lz);
+          //euclidean phi_hat
+          eucl_phi[idxR+xyz] = 1.0/(1+lx*lx+ly*ly+lz*lz);
 
-                } //end for(idxR < dimX)
+        } //end for(idxR < dimX)
 
-            } //end for(idxY < dimY)
-
-
-
-        } //end for(idxZ < dimZ)
+    } //end for(idxY < dimY)
 
 
-    return;
+
+    } //end for(idxZ < dimZ)
+
+
+  return;
 }
 
 /* compute the first derivatives of affine invariant term phi_hat */
@@ -306,110 +306,110 @@ void vtkAffineSegment::Compute_phi_hat_xyz(float *inData)
   int offset_xf,xyz,frame_size;
  
  
-    for (idxZ = 0; idxZ < dimZ; idxZ++)
-         {
-            for (idxY = 0;idxY < dimY; idxY++)
-            {
+  for (idxZ = 0; idxZ < dimZ; idxZ++)
+    {
+      for (idxY = 0;idxY < dimY; idxY++)
+    {
                
-                frame_size = dimX*dimY;
-                xyz = idxY*dimX+idxZ*frame_size;
-                offset_xf = xyz+frame_size; //for offset in z-direction
+      frame_size = dimX*dimY;
+      xyz = idxY*dimX+idxZ*frame_size;
+      offset_xf = xyz+frame_size; //for offset in z-direction
 
-                /* idxR + xyz gives our current position */
+      /* idxR + xyz gives our current position */
 
-                for (idxR = 0; idxR < dimX; idxR++)
-                    {
+      for (idxR = 0; idxR < dimX; idxR++)
+        {
 
-                    /* at the boundaries we need to do some special things
-                       so that we have access to the correct data or else we will crash
-                       as we will access data not present */
-                      if((idxR == 0) || (idxR == dimX-1) || (idxY == 0) || (idxY == dimY-1) || (idxZ == 0) || (idxZ == dimZ-1)) 
-                        {
-                            if(idxZ == 0)
-                                lz = (1/(2*dz)) * (inData[idxR+offset_xf] - inData[idxR+xyz]);
+          /* at the boundaries we need to do some special things
+         so that we have access to the correct data or else we will crash
+         as we will access data not present */
+          if((idxR == 0) || (idxR == dimX-1) || (idxY == 0) || (idxY == dimY-1) || (idxZ == 0) || (idxZ == dimZ-1)) 
+        {
+          if(idxZ == 0)
+            lz = (1/(2*dz)) * (inData[idxR+offset_xf] - inData[idxR+xyz]);
 
-                            if(idxZ == dimZ-1)
-                                lz = (1/(2*dz)) * (inData[idxR+xyz] - inData[idxR+xyz-frame_size]);
+          if(idxZ == dimZ-1)
+            lz = (1/(2*dz)) * (inData[idxR+xyz] - inData[idxR+xyz-frame_size]);
 
 
-                            if(idxR == 0)
-                            {
-                                lx = (1/(2*dx)) * (inData[(idxR+1)+xyz] - inData[idxR+xyz]);
+          if(idxR == 0)
+            {
+              lx = (1/(2*dx)) * (inData[(idxR+1)+xyz] - inData[idxR+xyz]);
                           
-                                if(idxY == 0)
-                                {
-                                  ly = (1/(2*dy)) * (inData[idxR+xyz+dimX] - inData[idxR +xyz]);
-                                }
-                                else if(idxY == dimY-1)
-                                {
-                                  ly = (1/(2*dy)) * (inData[idxR+xyz] - inData[idxR +xyz-dimX]);
-                                }
-                                else
-                                {
-                                ly = (1/(2*dy)) * (inData[idxR+xyz+dimX] - inData[idxR +xyz-dimX]);
-                                }
+              if(idxY == 0)
+            {
+              ly = (1/(2*dy)) * (inData[idxR+xyz+dimX] - inData[idxR +xyz]);
+            }
+              else if(idxY == dimY-1)
+            {
+              ly = (1/(2*dy)) * (inData[idxR+xyz] - inData[idxR +xyz-dimX]);
+            }
+              else
+            {
+              ly = (1/(2*dy)) * (inData[idxR+xyz+dimX] - inData[idxR +xyz-dimX]);
+            }
 
-                            }
+            }
 
-                            if(idxR == dimX-1)
-                            {
-                                lx = (1/(2*dx)) * (inData[idxR+xyz] - inData[idxR-1+xyz]);
-                                if(idxY == 0)
-                                { 
-                                  ly = (1/(2*dy)) * (inData[idxR+xyz+dimX] - inData[idxR +xyz]);
-                                }
-                                 else if(idxY == dimY -1)
-                                {
-                                  ly = (1/(2*dy)) * (inData[idxR+xyz] - inData[idxR +xyz-dimX]);
-                                }
-                                 else
-                                {
-                                ly = (1/(2*dy)) * (inData[idxR+xyz+dimX] - inData[idxR +xyz-dimX]);
-                                }
+          if(idxR == dimX-1)
+            {
+              lx = (1/(2*dx)) * (inData[idxR+xyz] - inData[idxR-1+xyz]);
+              if(idxY == 0)
+            { 
+              ly = (1/(2*dy)) * (inData[idxR+xyz+dimX] - inData[idxR +xyz]);
+            }
+              else if(idxY == dimY -1)
+            {
+              ly = (1/(2*dy)) * (inData[idxR+xyz] - inData[idxR +xyz-dimX]);
+            }
+              else
+            {
+              ly = (1/(2*dy)) * (inData[idxR+xyz+dimX] - inData[idxR +xyz-dimX]);
+            }
 
-                            }
+            }
 
-                            if((idxY == 0) && (idxR != 0) && (idxR != dimX-1))
-                            {
-                                lx = (1/(2*dx)) * (inData[(idxR+1)+xyz] - inData[idxR-1+xyz]);
-                                ly = (1/(2*dy)) * (inData[idxR+xyz+dimX] - inData[idxR+xyz]);
-                            }
+          if((idxY == 0) && (idxR != 0) && (idxR != dimX-1))
+            {
+              lx = (1/(2*dx)) * (inData[(idxR+1)+xyz] - inData[idxR-1+xyz]);
+              ly = (1/(2*dy)) * (inData[idxR+xyz+dimX] - inData[idxR+xyz]);
+            }
 
-                            if((idxY == dimY-1) && (idxR != 0) && (idxR != dimX-1))
-                             {
-                                lx = (1/(2*dx)) * (inData[(idxR+1)+xyz] - inData[idxR-1+xyz]);
-                                ly = (1/(2*dy)) * (inData[idxR+xyz] - inData[idxR+xyz-dimX]);
-                            }
+          if((idxY == dimY-1) && (idxR != 0) && (idxR != dimX-1))
+            {
+              lx = (1/(2*dx)) * (inData[(idxR+1)+xyz] - inData[idxR-1+xyz]);
+              ly = (1/(2*dy)) * (inData[idxR+xyz] - inData[idxR+xyz-dimX]);
+            }
                           
-                            phi_hat_x[idxR+xyz] = lx;
-                            phi_hat_y[idxR+xyz] = ly;
-                            phi_hat_z[idxR+xyz] = lz;
+          phi_hat_x[idxR+xyz] = lx;
+          phi_hat_y[idxR+xyz] = ly;
+          phi_hat_z[idxR+xyz] = lz;
                             
 
-                            continue;
-                    } //end if (the BIG OR's)
+          continue;
+        } //end if (the BIG OR's)
 
-                        /*if not on any of the boundaries of the cube, compute
-                          as normal stuff */
+          /*if not on any of the boundaries of the cube, compute
+        as normal stuff */
 
-                        lx = (1/(2*dx)) * (inData[(idxR+1)+xyz] - inData[idxR-1+xyz]);
-                        ly = (1/(2*dy)) * (inData[idxR+xyz+dimX] - inData[idxR+xyz-dimX]);
-                        lz = (1/(2*dz)) * (inData[idxR+offset_xf] - inData[idxR+xyz-frame_size]);
+          lx = (1/(2*dx)) * (inData[(idxR+1)+xyz] - inData[idxR-1+xyz]);
+          ly = (1/(2*dy)) * (inData[idxR+xyz+dimX] - inData[idxR+xyz-dimX]);
+          lz = (1/(2*dz)) * (inData[idxR+offset_xf] - inData[idxR+xyz-frame_size]);
                          
-                        phi_hat_x[idxR+xyz] = lx;
-                        phi_hat_y[idxR+xyz] = ly;
-                        phi_hat_z[idxR+xyz] = lz;
+          phi_hat_x[idxR+xyz] = lx;
+          phi_hat_y[idxR+xyz] = ly;
+          phi_hat_z[idxR+xyz] = lz;
 
-                } //end for(idxR < dimX)
+        } //end for(idxR < dimX)
 
-            } //end for(idxY < dimY)
-
-
-
-        } //end for(idxZ < dimZ)
+    } //end for(idxY < dimY)
 
 
-    return;
+
+    } //end for(idxZ < dimZ)
+
+
+  return;
 }
 
 //Allocate Space to the all arrays we will need
@@ -417,57 +417,57 @@ void vtkAffineSegment::Compute_phi_hat_xyz(float *inData)
 //called only once
 void vtkAffineSegment::Allocate_Space()
 {
-        this->level_set = (float*) calloc(this->dimZ*this->dimY*this->dimX,sizeof(float));
-        if(!(this->level_set))
-        return;
-
-        this->sdist = (float*) calloc(this->dimZ*this->dimY*this->dimX,sizeof(float));
-        if(!(this->sdist))
-        return;
-
-        /* assign appropriate memory */
-          
-        this->phi_hat = new float[this->dimXYZ];
-        if(!(this->phi_hat))
-        return;
-
-        this->eucl_phi = new float[this->dimXYZ];
-        if(!(this->eucl_phi))
-        return;
-
-        this->phi_hat_x = new float[this->dimXYZ];
-        if(!(this->phi_hat_x))
-        return;
-
-        this->phi_hat_y = new float[this->dimXYZ];
-        if(!(this->phi_hat_y))
-        return;
-
-        this->phi_hat_z = new float[this->dimXYZ];
-        if(!(this->phi_hat_z))
-        return;
-
-        this->temp_phi_ext_x = new float[this->dimXYZ];
-        if(!(this->temp_phi_ext_x))
-        return;
-
-        this->temp_phi_ext_y = new float[this->dimXYZ];
-        if(!(this->temp_phi_ext_y))
-        return;
-
-        this->temp_phi_ext_z = new float[this->dimXYZ];
-        if(!(this->temp_phi_ext_z))
-        return;
-
-        this->temp_phi_ext = new float[this->dimXYZ];
-        if(!(this->temp_phi_ext))
-        return; 
-
-        this->temp_eucl_phi = new float[this->dimXYZ];
-        if(!(this->temp_eucl_phi))
-        return;
-
+  this->level_set = (float*) calloc(this->dimZ*this->dimY*this->dimX,sizeof(float));
+  if(!(this->level_set))
     return;
+
+  this->sdist = (float*) calloc(this->dimZ*this->dimY*this->dimX,sizeof(float));
+  if(!(this->sdist))
+    return;
+
+  /* assign appropriate memory */
+          
+  this->phi_hat = new float[this->dimXYZ];
+  if(!(this->phi_hat))
+    return;
+
+  this->eucl_phi = new float[this->dimXYZ];
+  if(!(this->eucl_phi))
+    return;
+
+  this->phi_hat_x = new float[this->dimXYZ];
+  if(!(this->phi_hat_x))
+    return;
+
+  this->phi_hat_y = new float[this->dimXYZ];
+  if(!(this->phi_hat_y))
+    return;
+
+  this->phi_hat_z = new float[this->dimXYZ];
+  if(!(this->phi_hat_z))
+    return;
+
+  this->temp_phi_ext_x = new float[this->dimXYZ];
+  if(!(this->temp_phi_ext_x))
+    return;
+
+  this->temp_phi_ext_y = new float[this->dimXYZ];
+  if(!(this->temp_phi_ext_y))
+    return;
+
+  this->temp_phi_ext_z = new float[this->dimXYZ];
+  if(!(this->temp_phi_ext_z))
+    return;
+
+  this->temp_phi_ext = new float[this->dimXYZ];
+  if(!(this->temp_phi_ext))
+    return; 
+
+  this->temp_eucl_phi = new float[this->dimXYZ];
+  if(!(this->temp_eucl_phi))
+    return;
+
+  return;
 }
 
 //Release space once we are done
@@ -475,32 +475,32 @@ void vtkAffineSegment::Allocate_Space()
 void vtkAffineSegment::Release_Space()
 {
 
-    if(!this->level_set)
-        free(this->level_set);
-    if(!this->sdist)
-        free(this->sdist);
-    if(!this->phi_hat)
-        delete[] this->phi_hat;
-    if(!this->eucl_phi)
-        delete[] this->eucl_phi;
-    if(!this->phi_hat_x)
-        delete[] this->phi_hat_x;
-    if(!this->phi_hat_y)
-        delete[] this->phi_hat_y;
-    if(!this->phi_hat_z)
-        delete[] this->phi_hat_z;
-    if(!this->temp_phi_ext)
-        delete [] this->temp_phi_ext;
-    if(!this->temp_eucl_phi)
-        delete [] this->temp_eucl_phi;
-    if(!this->temp_phi_ext_x)
-        delete [] this->temp_phi_ext_x;
-    if(!this->temp_phi_ext_y)
-        delete [] this->temp_phi_ext_y;
-    if(!this->temp_phi_ext_z)
-        delete [] this->temp_phi_ext_z; 
+  if(!this->level_set)
+    free(this->level_set);
+  if(!this->sdist)
+    free(this->sdist);
+  if(!this->phi_hat)
+    delete[] this->phi_hat;
+  if(!this->eucl_phi)
+    delete[] this->eucl_phi;
+  if(!this->phi_hat_x)
+    delete[] this->phi_hat_x;
+  if(!this->phi_hat_y)
+    delete[] this->phi_hat_y;
+  if(!this->phi_hat_z)
+    delete[] this->phi_hat_z;
+  if(!this->temp_phi_ext)
+    delete [] this->temp_phi_ext;
+  if(!this->temp_eucl_phi)
+    delete [] this->temp_eucl_phi;
+  if(!this->temp_phi_ext_x)
+    delete [] this->temp_phi_ext_x;
+  if(!this->temp_phi_ext_y)
+    delete [] this->temp_phi_ext_y;
+  if(!this->temp_phi_ext_z)
+    delete [] this->temp_phi_ext_z; 
 
-    return;
+  return;
 
 }
 
@@ -517,9 +517,9 @@ void vtkAffineSegment::Release_Space()
 //as a result, if the seedPoints are less than 20, we have nothing
 //much to contract !
 static void vtkAffineSegmentContract(vtkAffineSegment *self,
-                vtkImageData *inData, short *inPtr,
-                vtkImageData *outData, short *outPtr, 
-                int outExt[6], int id)
+                     vtkImageData *inData, short *inPtr,
+                     vtkImageData *outData, short *outPtr, 
+                     int outExt[6], int id)
 {
   
   double lx,ly,lxx,lyy,lxy,lzz,lz, lyz, lxz;
@@ -556,30 +556,30 @@ static void vtkAffineSegmentContract(vtkAffineSegment *self,
 
   //if the interface has less than ten points, then there is really nothing to contract
   if(self->seedPoints.size()<20)
-      return;
+    return;
 
   dx = inData->GetSpacing()[0];
   dy = inData->GetSpacing()[1];
   dz = inData->GetSpacing()[2];
   if((dx <= 0) || (dy <= 0) || (dz <= 0))
-      dx = dy = dz = 1.0;
+    dx = dy = dz = 1.0;
 
-/*
-  #ifdef DEBUG
+  /*
+    #ifdef DEBUG
     FILE *fp = 0;
     self->fpc = NULL;
     fp = NULL;
     fp = fopen("c:\\cygwin\\slicer2\\Modules\\vtkAffineSegment\\contract3d.txt","w+");
     if(fp == NULL)
-        return;
+    return;
     fprintf(fp,"dimX=%d,dimY=%d,dimZ=%d\n",dimX,dimY,dimZ);
     fprintf(fp,"scalar Type %s\n",inData->GetScalarTypeAsString());
     fprintf(fp,"seedPoint Size = %d\n",self->seedPoints.size());
     fflush(fp);
     
- #endif
+    #endif
 
-*/
+  */
   //we assume that we have the seedPoints array filled with the
   // interface points.
   
@@ -590,164 +590,164 @@ static void vtkAffineSegmentContract(vtkAffineSegment *self,
 
   //now start doing our iterations
   for(int iter = 0;!self->AbortExecute && iter < self->NumberOfContractions;iter++)
-  {
+    {
       
       if(((iter%1)==0)||(iter==0))
-      {
-        count = -2*initial_interface_size;
-        self->Compute_Extension(self);
-        initial_interface_size = self->zero_set.size();
-        count += self->knownPoints.size();
-        //fprintf(fp,"finished computing Extension# %d, seedPoints = %d,count=%d\n",iter,self->seedPoints.size(),count);
-        //fflush(fp);
-      }
+    {
+      count = -2*initial_interface_size;
+      self->Compute_Extension(self);
+      initial_interface_size = self->zero_set.size();
+      count += self->knownPoints.size();
+      //fprintf(fp,"finished computing Extension# %d, seedPoints = %d,count=%d\n",iter,self->seedPoints.size(),count);
+      //fflush(fp);
+    }
       
 
 
       //if no known points, dont do anything
       if(self->knownPoints.size()<1)
-            continue;
+    continue;
 
-        //modify our data based on this  time-step
-        //initialize data
-        t_max=0.0;
-        psi_hat_x = 0.0;
-        psi_hat_y = 0.0;
-        psi_hat_z = 0.0;
-        eucl_grad = 0.0;
+      //modify our data based on this  time-step
+      //initialize data
+      t_max=0.0;
+      psi_hat_x = 0.0;
+      psi_hat_y = 0.0;
+      psi_hat_z = 0.0;
+      eucl_grad = 0.0;
 
-           for(x=0;x<(int)count;x++)
-           {
-                curr_pos = self->knownPoints[x];
-                 // update progress bar
-                int currentPercentage = GRANULARITY_PROGRESS*iter*x / (count*self->NumberOfContractions);
+      for(x=0;x<(int)count;x++)
+    {
+      curr_pos = self->knownPoints[x];
+      // update progress bar
+      int currentPercentage = GRANULARITY_PROGRESS*iter*x / (count*self->NumberOfContractions);
         
-                if( currentPercentage > lastPercentageProgressBarUpdated )
-                {
-                    lastPercentageProgressBarUpdated = currentPercentage;
-                    self->UpdateProgress(float(currentPercentage)/float(GRANULARITY_PROGRESS));
-                }
+      if( currentPercentage > lastPercentageProgressBarUpdated )
+        {
+          lastPercentageProgressBarUpdated = currentPercentage;
+          self->UpdateProgress(float(currentPercentage)/float(GRANULARITY_PROGRESS));
+        }
 
 
-                //calculate the second term (inflation term) using the Upwind differencing scheme        
-                psi_hat_xm = 0.0;
-                psi_hat_ym = 0.0;
-                psi_hat_zm = 0.0;
-                psi_hat_xp = 0.0;
-                psi_hat_yp = 0.0;
-                psi_hat_zp = 0.0;
+      //calculate the second term (inflation term) using the Upwind differencing scheme        
+      psi_hat_xm = 0.0;
+      psi_hat_ym = 0.0;
+      psi_hat_zm = 0.0;
+      psi_hat_xp = 0.0;
+      psi_hat_yp = 0.0;
+      psi_hat_zp = 0.0;
      
-                psi_hat_xm = self->level_set[curr_pos] - self->level_set[curr_pos-1];
-                psi_hat_xp = self->level_set[curr_pos+1] - self->level_set[curr_pos]; 
-                psi_hat_ym = self->level_set[curr_pos] - self->level_set[curr_pos-1*dimX];
-                psi_hat_yp = self->level_set[curr_pos+1*dimX] - self->level_set[curr_pos];
-                psi_hat_zm = self->level_set[curr_pos] - self->level_set[curr_pos-1*dimXY];
-                psi_hat_zp = self->level_set[curr_pos+1*dimXY] - self->level_set[curr_pos];
-                //do upwind differencing scheme for calculating second term
-                if(self->phi_ext_x[x] < 0)
-                    psi_hat_x = psi_hat_xm;
-                else
-                    psi_hat_x = psi_hat_xp;
+      psi_hat_xm = self->level_set[curr_pos] - self->level_set[curr_pos-1];
+      psi_hat_xp = self->level_set[curr_pos+1] - self->level_set[curr_pos]; 
+      psi_hat_ym = self->level_set[curr_pos] - self->level_set[curr_pos-1*dimX];
+      psi_hat_yp = self->level_set[curr_pos+1*dimX] - self->level_set[curr_pos];
+      psi_hat_zm = self->level_set[curr_pos] - self->level_set[curr_pos-1*dimXY];
+      psi_hat_zp = self->level_set[curr_pos+1*dimXY] - self->level_set[curr_pos];
+      //do upwind differencing scheme for calculating second term
+      if(self->phi_ext_x[x] < 0)
+        psi_hat_x = psi_hat_xm;
+      else
+        psi_hat_x = psi_hat_xp;
 
-                if(self->phi_ext_y[x] < 0)
-                    psi_hat_y = psi_hat_ym;
-                else
-                    psi_hat_y = psi_hat_yp;
+      if(self->phi_ext_y[x] < 0)
+        psi_hat_y = psi_hat_ym;
+      else
+        psi_hat_y = psi_hat_yp;
 
-                if(self->phi_ext_z[x] < 0)
-                    psi_hat_z = psi_hat_zm;
-                else
-                    psi_hat_z = psi_hat_zp;
+      if(self->phi_ext_z[x] < 0)
+        psi_hat_z = psi_hat_zm;
+      else
+        psi_hat_z = psi_hat_zp;
 
-                if(self->eucl_ext[x] >= 0)
-                    eucl_grad = sqrt(pow(min(psi_hat_xm,0),2.0) + pow(max(psi_hat_xp,0),2.0) + pow(min(psi_hat_ym,0),2.0) +
-                                    pow(max(psi_hat_yp,0),2.0) + pow(min(psi_hat_zm,0),2.0) + pow(max(psi_hat_zp,0),2.0));
-                else
-                    eucl_grad = sqrt(pow(max(psi_hat_xm,0),2.0) + pow(min(psi_hat_xp,0),2.0) + pow(max(psi_hat_ym,0),2.0) +
-                                    pow(min(psi_hat_yp,0),2.0) + pow(max(psi_hat_zm,0),2.0) + pow(min(psi_hat_zp,0),2.0));
-
-
-               //now lets calculate the (sign(H) x kappa) -- term
-                lx = (1/(2*dx)) * (self->level_set[curr_pos+1] - self->level_set[curr_pos-1]);
-                ly = (1/(2*dy)) * (self->level_set[curr_pos+dimX] - self->level_set[curr_pos-dimX]);
-                lz = (1/(2*dz)) * (self->level_set[curr_pos+dimXY] - self->level_set[curr_pos-dimXY]);
-
-                lxx = (1/(dx*dx)) * (self->level_set[curr_pos+1] - 2 * self->level_set[curr_pos] + self->level_set[curr_pos-1]);
-                lyy = (1/(dy*dy)) * (self->level_set[curr_pos+dimX] - 2*self->level_set[curr_pos] + self->level_set[curr_pos-dimX]);
-                lzz = (1/(dz*dz)) * (self->level_set[curr_pos+dimXY] - 2*self->level_set[curr_pos] + self->level_set[curr_pos-dimXY]);
+      if(self->eucl_ext[x] >= 0)
+        eucl_grad = sqrt(pow((double)min(psi_hat_xm,0),2.0) + pow((double)max(psi_hat_xp,0),2.0) + pow((double)min(psi_hat_ym,0),2.0) +
+                 pow((double)max(psi_hat_yp,0),2.0) + pow((double)min(psi_hat_zm,0),2.0) + pow((double)max(psi_hat_zp,0),2.0));
+      else
+        eucl_grad = sqrt(pow((double)max(psi_hat_xm,0),2.0) + pow((double)min(psi_hat_xp,0),2.0) + pow((double)max(psi_hat_ym,0),2.0) +
+                 pow((double)min(psi_hat_yp,0),2.0) + pow((double)max(psi_hat_zm,0),2.0) + pow((double)min(psi_hat_zp,0),2.0));
 
 
-                lxy = (1/(4*dx*dy)) * (self->level_set[curr_pos+1+dimX] - self->level_set[curr_pos+1-dimX] -
-                                self->level_set[curr_pos-1+dimX] + self->level_set[curr_pos-1-dimX]);
-                lyz = (1/(4*dy*dz)) * (self->level_set[curr_pos+dimX+dimXY] - self->level_set[curr_pos+dimX-dimXY] -
-                                        self->level_set[curr_pos-dimX+dimXY] + self->level_set[curr_pos-dimX-dimXY]);
-                lxz = (1/(4*dx*dz)) * (self->level_set[curr_pos+1+dimXY] - self->level_set[curr_pos+1-dimXY] - self->level_set[curr_pos-1+dimXY]
-                                        + self->level_set[curr_pos-1-dimXY]);
+      //now lets calculate the (sign(H) x kappa) -- term
+      lx = (1/(2*dx)) * (self->level_set[curr_pos+1] - self->level_set[curr_pos-1]);
+      ly = (1/(2*dy)) * (self->level_set[curr_pos+dimX] - self->level_set[curr_pos-dimX]);
+      lz = (1/(2*dz)) * (self->level_set[curr_pos+dimXY] - self->level_set[curr_pos-dimXY]);
 
-                // this is gaussian curvature                      
-                kapa4 = (((lyy*lzz-lyz*lyz)*lx*lx) + ((lxx*lzz-lxz*lxz)*ly*ly) + ((lxx*lyy-lxy*lxy)*lz*lz) +
-                                (2*lx*ly*(lxz*lyz-lxy*lzz)) + (2*ly*lz*(lxy*lxz-lyz*lxx)) +
-                                (2*lx*lz*(lxy*lyz-lxz*lyy))); 
+      lxx = (1/(dx*dx)) * (self->level_set[curr_pos+1] - 2 * self->level_set[curr_pos] + self->level_set[curr_pos-1]);
+      lyy = (1/(dy*dy)) * (self->level_set[curr_pos+dimX] - 2*self->level_set[curr_pos] + self->level_set[curr_pos-dimX]);
+      lzz = (1/(dz*dz)) * (self->level_set[curr_pos+dimXY] - 2*self->level_set[curr_pos] + self->level_set[curr_pos-dimXY]);
 
-                //calculate mean curvature so that we can use its sign
-                kapa4_mean = ((lx*lx*(lyy+lzz)) + (ly * ly *(lzz+lxx)) + (lz*lz*(lxx+lyy)) -
-                    (2*lx*ly*lxy) - (2*ly*lz*lyz) - (2*lx*lz*lxz));
 
-                if(kapa4 < 0)
-                    kapa4=0.0;
-                else
-                    kapa4 = pow(kapa4,0.25); 
+      lxy = (1/(4*dx*dy)) * (self->level_set[curr_pos+1+dimX] - self->level_set[curr_pos+1-dimX] -
+                 self->level_set[curr_pos-1+dimX] + self->level_set[curr_pos-1-dimX]);
+      lyz = (1/(4*dy*dz)) * (self->level_set[curr_pos+dimX+dimXY] - self->level_set[curr_pos+dimX-dimXY] -
+                 self->level_set[curr_pos-dimX+dimXY] + self->level_set[curr_pos-dimX-dimXY]);
+      lxz = (1/(4*dx*dz)) * (self->level_set[curr_pos+1+dimXY] - self->level_set[curr_pos+1-dimXY] - self->level_set[curr_pos-1+dimXY]
+                 + self->level_set[curr_pos-1-dimXY]);
+
+      // this is gaussian curvature                      
+      kapa4 = (((lyy*lzz-lyz*lyz)*lx*lx) + ((lxx*lzz-lxz*lxz)*ly*ly) + ((lxx*lyy-lxy*lxy)*lz*lz) +
+           (2*lx*ly*(lxz*lyz-lxy*lzz)) + (2*ly*lz*(lxy*lxz-lyz*lxx)) +
+           (2*lx*lz*(lxy*lyz-lxz*lyy))); 
+
+      //calculate mean curvature so that we can use its sign
+      kapa4_mean = ((lx*lx*(lyy+lzz)) + (ly * ly *(lzz+lxx)) + (lz*lz*(lxx+lyy)) -
+            (2*lx*ly*lxy) - (2*ly*lz*lyz) - (2*lx*lz*lxz));
+
+      if(kapa4 < 0)
+        kapa4=0.0;
+      else
+        kapa4 = pow(kapa4,0.25); 
                 
 
-                /* use the sign of mean curvature. Without using this, the algorithm is highly
-                    unstable and basically blows up. Using the sign of H instead of K gives the right
-                    smoothing effect. */
-                    if(kapa4_mean < 0)
-                        kapa4 = -kapa4;
+      /* use the sign of mean curvature. Without using this, the algorithm is highly
+         unstable and basically blows up. Using the sign of H instead of K gives the right
+         smoothing effect. */
+      if(kapa4_mean < 0)
+        kapa4 = -kapa4;
 
-                //gradient
-                edge_val = sqrt(lx*lx+ly*ly+lz*lz);
+      //gradient
+      edge_val = sqrt(lx*lx+ly*ly+lz*lz);
 
-                if(edge_val != 0)
-                    temp = (self->phi_ext[x] * kapa4) + (self->phi_ext_x[x] * psi_hat_x + self->phi_ext_y[x] * psi_hat_y +
-                        self->phi_ext_z[x] * psi_hat_z) * (kapa4/edge_val) + v * eucl_grad * self->eucl_ext[x]; 
-                else
-                    temp = (self->phi_ext[x] * kapa4) + (self->phi_ext_x[x] * psi_hat_x + self->phi_ext_y[x] * psi_hat_y +
-                        self->phi_ext_z[x] * psi_hat_z) * (kapa4/0.01) +  v * eucl_grad * self->eucl_ext[x]; 
+      if(edge_val != 0)
+        temp = (self->phi_ext[x] * kapa4) + (self->phi_ext_x[x] * psi_hat_x + self->phi_ext_y[x] * psi_hat_y +
+                         self->phi_ext_z[x] * psi_hat_z) * (kapa4/edge_val) + v * eucl_grad * self->eucl_ext[x]; 
+      else
+        temp = (self->phi_ext[x] * kapa4) + (self->phi_ext_x[x] * psi_hat_x + self->phi_ext_y[x] * psi_hat_y +
+                         self->phi_ext_z[x] * psi_hat_z) * (kapa4/0.01) +  v * eucl_grad * self->eucl_ext[x]; 
 
                 
-                if(fabs(temp)>t_max)
-                    t_max = fabs(temp);
+      if(fabs(temp)>t_max)
+        t_max = fabs(temp);
 
-                update_term.push_back(temp);
+      update_term.push_back(temp);
 
 
-            } //finished calculating the update term
+    } //finished calculating the update term
 
-            self->dt = 0.5 / t_max;
+      self->dt = 0.5 / t_max;
 
-            //update our level set
-            for(x=0;x<(int)update_term.size();x++)
-            {
-              curr_pos = self->knownPoints[x];
-              self->level_set[curr_pos] = self->level_set[curr_pos] + self->dt * update_term[x];
-             }
-            //fprintf(fp,"dt = %f, t_max = %f\n",self->dt,t_max);
-            update_term.clear();
+      //update our level set
+      for(x=0;x<(int)update_term.size();x++)
+    {
+      curr_pos = self->knownPoints[x];
+      self->level_set[curr_pos] = self->level_set[curr_pos] + self->dt * update_term[x];
+    }
+      //fprintf(fp,"dt = %f, t_max = %f\n",self->dt,t_max);
+      update_term.clear();
             
             
             
 
     } //end for(iterations )
 
-/*
-#ifdef DEBUG
+  /*
+    #ifdef DEBUG
     if(!fp)
-        fclose(fp);
-#endif
-*/
+    fclose(fp);
+    #endif
+  */
 
-    return;
+  return;
 }
 
 //This is the funciton called when the user says "Expand"
@@ -761,9 +761,9 @@ static void vtkAffineSegmentContract(vtkAffineSegment *self,
 //The user should typically call this function first
 
 static void vtkAffineSegmentInflation(vtkAffineSegment *self,
-                vtkImageData *inData, short *inPtr,
-                vtkImageData *outData, short *outPtr, 
-                int outExt[6], int id)
+                      vtkImageData *inData, short *inPtr,
+                      vtkImageData *outData, short *outPtr, 
+                      int outExt[6], int id)
 {
   
   
@@ -794,50 +794,50 @@ static void vtkAffineSegmentInflation(vtkAffineSegment *self,
   dimXY = self->dimXY;
 
   if(self->seedPoints.size()<1)
-      return;
- /*
-  #ifdef DEBUG
+    return;
+  /*
+    #ifdef DEBUG
     FILE *fp = 0;
     self->fpc = NULL;
     fp = NULL;
     fp = fopen("c:\\cygwin\\slicer2\\Modules\\vtkAffineSegment\\out3d.txt","w+");
     if(fp == NULL)
-        return;
+    return;
     self->fpc = fopen("c:\\cygwin\\slicer2\\Modules\\vtkAffineSegment\\compute_T.txt","w+");
     if(self->fpc == NULL)
-        return;
+    return;
     fprintf(fp,"dimX=%d,dimY=%d,dimZ=%d\n",dimX,dimY,dimZ);
     fprintf(fp,"scalar Type %s\n",inData->GetScalarTypeAsString());
     fprintf(fp,"seedPoint Size = %d\n",self->seedPoints.size());
     fprintf(fp,"IntialSize = %d\n",self->InitialSize);
     fflush(fp);
     
- #endif
-*/
+    #endif
+  */
 
   //# of points to update in the level_set
   int initial_size = self->seedPoints.size();
 
   //if we are coming for the first time, compute everything or else we have already computed these
   if(!self->already_computed)
-  {
-    //generate our initial ellipsoid which will act as our starting level set
-    //we use the fiducials that the user created to generate an ellipsoid around them
+    {
+      //generate our initial ellipsoid which will act as our starting level set
+      //we use the fiducials that the user created to generate an ellipsoid around them
 
-    self->Calculate_SignedDistance(self,self->InitialSize,false);
-    self->FindInitialBoundary();
+      self->Calculate_SignedDistance(self,self->InitialSize,false);
+      self->FindInitialBoundary();
 
-    //compute affine invariant phi_hat. 
-    self->ComputeAffine_phihat(inPtr);
+      //compute affine invariant phi_hat. 
+      self->ComputeAffine_phihat(inPtr);
 
-    //compute phi_hat_x,y,z
-    self->Compute_phi_hat_xyz(self->phi_hat);
+      //compute phi_hat_x,y,z
+      self->Compute_phi_hat_xyz(self->phi_hat);
 
-    //first compute the signed distance function which is stored in "level_set"
-    //this acts as our level set with negative inside and positive outside
-    self->Calculate_SignedDistance(self,300000,true);
-    self->already_computed = true;
-  }
+      //first compute the signed distance function which is stored in "level_set"
+      //this acts as our level set with negative inside and positive outside
+      self->Calculate_SignedDistance(self,300000,true);
+      self->already_computed = true;
+    }
   
   //get the inflationary term selected by the user
   int v = self->Inflation;
@@ -847,7 +847,7 @@ static void vtkAffineSegmentInflation(vtkAffineSegment *self,
 
   //now start doing our iterations
   for(int iter = 0;!self->AbortExecute && iter < self->NumberOfIterations;iter++)
-  {
+    {
       //compute extension every 10th time. We assume that there is not going to be much
       //change in the values of extensions since we dont move that much in every iteraiton
       // however the number 10 is arbitary and we should find a way to fix this
@@ -855,114 +855,114 @@ static void vtkAffineSegmentInflation(vtkAffineSegment *self,
       //of level set array
 
       if(((iter%10)==0)||(iter==0))
-      {
-        count = -1*initial_size;
-        self->Compute_Extension(self);
-        count += self->knownPoints.size();
-        //fprintf(fp,"finished computing Extension# %d, seedPoints = %d,count=%d\n",iter,self->seedPoints.size(),count);
-        //fflush(fp);
-      }
+    {
+      count = -1*initial_size;
+      self->Compute_Extension(self);
+      count += self->knownPoints.size();
+      //fprintf(fp,"finished computing Extension# %d, seedPoints = %d,count=%d\n",iter,self->seedPoints.size(),count);
+      //fflush(fp);
+    }
       
 
 
       //if no known points, dont do anything
       if(self->knownPoints.size()<1)
-            continue;
+    continue;
 
-        //modify our data based on this  time-step
-        //initialize data
-        t_max=0.0;
-        psi_hat_x = 0.0;
-        psi_hat_y = 0.0;
-        psi_hat_z = 0.0;
-        eucl_grad = 0.0;
+      //modify our data based on this  time-step
+      //initialize data
+      t_max=0.0;
+      psi_hat_x = 0.0;
+      psi_hat_y = 0.0;
+      psi_hat_z = 0.0;
+      eucl_grad = 0.0;
 
-           for(x=0;x<(int)count;x++)
-           {
-                curr_pos = self->knownPoints[x];
-                 // update progress bar
-                int currentPercentage = GRANULARITY_PROGRESS*iter*x / (count*self->NumberOfIterations);
+      for(x=0;x<(int)count;x++)
+    {
+      curr_pos = self->knownPoints[x];
+      // update progress bar
+      int currentPercentage = GRANULARITY_PROGRESS*iter*x / (count*self->NumberOfIterations);
         
-                if( currentPercentage > lastPercentageProgressBarUpdated )
-                {
-                    lastPercentageProgressBarUpdated = currentPercentage;
-                    self->UpdateProgress(float(currentPercentage)/float(GRANULARITY_PROGRESS));
-                }
+      if( currentPercentage > lastPercentageProgressBarUpdated )
+        {
+          lastPercentageProgressBarUpdated = currentPercentage;
+          self->UpdateProgress(float(currentPercentage)/float(GRANULARITY_PROGRESS));
+        }
 
 
-                //calculate the second term using the Upwind differencing scheme        
-                psi_hat_xm = 0.0;
-                psi_hat_ym = 0.0;
-                psi_hat_zm = 0.0;
-                psi_hat_xp = 0.0;
-                psi_hat_yp = 0.0;
-                psi_hat_zp = 0.0;
+      //calculate the second term using the Upwind differencing scheme        
+      psi_hat_xm = 0.0;
+      psi_hat_ym = 0.0;
+      psi_hat_zm = 0.0;
+      psi_hat_xp = 0.0;
+      psi_hat_yp = 0.0;
+      psi_hat_zp = 0.0;
      
-                psi_hat_xm = self->level_set[curr_pos] - self->level_set[curr_pos-1];
-                psi_hat_xp = self->level_set[curr_pos+1] - self->level_set[curr_pos]; 
-                psi_hat_ym = self->level_set[curr_pos] - self->level_set[curr_pos-1*dimX];
-                psi_hat_yp = self->level_set[curr_pos+1*dimX] - self->level_set[curr_pos];
-                psi_hat_zm = self->level_set[curr_pos] - self->level_set[curr_pos-1*dimXY];
-                psi_hat_zp = self->level_set[curr_pos+1*dimXY] - self->level_set[curr_pos];
-                //do upwind differencing scheme for calculating second term
-                if(self->phi_ext_x[x] < 0)
-                    psi_hat_x = psi_hat_xm;
-                else
-                    psi_hat_x = psi_hat_xp;
+      psi_hat_xm = self->level_set[curr_pos] - self->level_set[curr_pos-1];
+      psi_hat_xp = self->level_set[curr_pos+1] - self->level_set[curr_pos]; 
+      psi_hat_ym = self->level_set[curr_pos] - self->level_set[curr_pos-1*dimX];
+      psi_hat_yp = self->level_set[curr_pos+1*dimX] - self->level_set[curr_pos];
+      psi_hat_zm = self->level_set[curr_pos] - self->level_set[curr_pos-1*dimXY];
+      psi_hat_zp = self->level_set[curr_pos+1*dimXY] - self->level_set[curr_pos];
+      //do upwind differencing scheme for calculating second term
+      if(self->phi_ext_x[x] < 0)
+        psi_hat_x = psi_hat_xm;
+      else
+        psi_hat_x = psi_hat_xp;
 
-                if(self->phi_ext_y[x] < 0)
-                    psi_hat_y = psi_hat_ym;
-                else
-                    psi_hat_y = psi_hat_yp;
+      if(self->phi_ext_y[x] < 0)
+        psi_hat_y = psi_hat_ym;
+      else
+        psi_hat_y = psi_hat_yp;
 
-                if(self->phi_ext_z[x] < 0)
-                    psi_hat_z = psi_hat_zm;
-                else
-                    psi_hat_z = psi_hat_zp;
+      if(self->phi_ext_z[x] < 0)
+        psi_hat_z = psi_hat_zm;
+      else
+        psi_hat_z = psi_hat_zp;
 
-                if(self->eucl_ext[x] <= 0)
-                    eucl_grad = sqrt(pow(min(psi_hat_xm,0),2.0) + pow(max(psi_hat_xp,0),2.0) + pow(min(psi_hat_ym,0),2.0) +
-                                    pow(max(psi_hat_yp,0),2.0) + pow(min(psi_hat_zm,0),2.0) + pow(max(psi_hat_zp,0),2.0));
-                else
-                    eucl_grad = sqrt(pow(max(psi_hat_xm,0),2.0) + pow(min(psi_hat_xp,0),2.0) + pow(max(psi_hat_ym,0),2.0) +
-                                    pow(min(psi_hat_yp,0),2.0) + pow(max(psi_hat_zm,0),2.0) + pow(min(psi_hat_zp,0),2.0));
+      if(self->eucl_ext[x] <= 0)
+        eucl_grad = sqrt(pow((double)min(psi_hat_xm,0),2.0) + pow((double)max(psi_hat_xp,0),2.0) + pow((double)min(psi_hat_ym,0),2.0) +
+                 pow((double)max(psi_hat_yp,0),2.0) + pow((double)min(psi_hat_zm,0),2.0) + pow((double)max(psi_hat_zp,0),2.0));
+      else
+        eucl_grad = sqrt(pow((double)max(psi_hat_xm,0),2.0) + pow((double)min(psi_hat_xp,0),2.0) + pow((double)max(psi_hat_ym,0),2.0) +
+                 pow((double)min(psi_hat_yp,0),2.0) + pow((double)max(psi_hat_zm,0),2.0) + pow((double)min(psi_hat_zp,0),2.0));
 
-                temp = v * eucl_grad * self->eucl_ext[x];
+      temp = v * eucl_grad * self->eucl_ext[x];
 
                 
-                if(fabs(temp)>t_max)
-                    t_max = fabs(temp);
+      if(fabs(temp)>t_max)
+        t_max = fabs(temp);
 
-                update_term.push_back(temp);
+      update_term.push_back(temp);
 
 
-            } //finished calculating the update term
+    } //finished calculating the update term
 
-            self->dt = 0.5 / t_max;
+      self->dt = 0.5 / t_max;
 
-            for(x=0;x<(int)update_term.size();x++)
-            {
-              curr_pos = self->knownPoints[x];
-              self->level_set[curr_pos] = self->level_set[curr_pos] - self->dt * update_term[x];
-             }
-            //fprintf(fp,"dt = %f, t_max = %f\n",self->dt,t_max);
-            update_term.clear();
+      for(x=0;x<(int)update_term.size();x++)
+    {
+      curr_pos = self->knownPoints[x];
+      self->level_set[curr_pos] = self->level_set[curr_pos] - self->dt * update_term[x];
+    }
+      //fprintf(fp,"dt = %f, t_max = %f\n",self->dt,t_max);
+      update_term.clear();
             
             
             
 
     } //end for(iterations )
 
-/*
-#ifdef DEBUG
+  /*
+    #ifdef DEBUG
     if(!fp)
-        fclose(fp);
+    fclose(fp);
     if(!self->fpc)
-        fclose(self->fpc);
-#endif
-*/
+    fclose(self->fpc);
+    #endif
+  */
     
- return;
+  return;
 
 }
 
@@ -976,34 +976,34 @@ static void vtkAffineSegmentInflation(vtkAffineSegment *self,
 
 void vtkAffineSegment::Calculate_SignedDistance(vtkAffineSegment *self,int evolve_upto,bool make_negative)
 {
-    //assume that seedPoints contains some initial data
+  //assume that seedPoints contains some initial data
 
-    /*
-#ifdef DEBUG
-  FILE *fp = 0;
+  /*
+    #ifdef DEBUG
+    FILE *fp = 0;
     fp = NULL;
     fp = fopen("c:\\cygwin\\slicer2\\Modules\\vtkAffineSegment\\signed_dist.txt","w+");
     fprintf(fp,"SeedPoint size = %d, index=%d\n",self->seedPoints.size(),seedPoints[0]);
     if(self->seedPoints.size()<1)
-        return;
+    return;
     if(fp == NULL)
-        return;
-#endif
-*/
+    return;
+    #endif
+  */
 
-    //clear and initialize everything
-      int index=0;
-      int k,n,i,j;
-      int indx = 0;
-      knownPoints.clear();
-      tree.clear();
-      zero_set.clear();
+  //clear and initialize everything
+  int index=0;
+  int k,n,i,j;
+  int indx = 0;
+  knownPoints.clear();
+  tree.clear();
+  zero_set.clear();
 
-     for(k=0;k<dimZ;k++)
+  for(k=0;k<dimZ;k++)
     {
       for(j=0;j<dimY;j++)
         for(i=0;i<dimX;i++)
-            {
+      {
 
             node[index].T=(float)INF;
             node[index].status=fmsFAR;
@@ -1015,115 +1015,115 @@ void vtkAffineSegment::Calculate_SignedDistance(vtkAffineSegment *self,int evolv
             temp_phi_ext_z[index] = 0.0;
             temp_eucl_phi[index]=0.0;
 
-                if( (i<BAND_OUT) || (j<BAND_OUT) ||  (k<BAND_OUT) ||
+        if( (i<BAND_OUT) || (j<BAND_OUT) ||  (k<BAND_OUT) ||
                 (i>=(dimX-BAND_OUT)) || (j>=(dimY-BAND_OUT)) || (k>=(dimZ-BAND_OUT)) )
-                {
-                    node[index].status=fmsOUT;
-                }
+          {
+        node[index].status=fmsOUT;
+          }
             index++;
               
-            }
+      }
     }
     
 
-    //make the fiducial very very small, but not zero so that later on
-    //we dont think it is the boundary of the interface
-        if(!make_negative)
-            level_set[self->seedPoints[0]] = 0.000001;
+  //make the fiducial very very small, but not zero so that later on
+  //we dont think it is the boundary of the interface
+  if(!make_negative)
+    level_set[self->seedPoints[0]] = 0.000001;
 
-    //the seedPoints r the zero level set pts, so they are known.
-    //here we already know the extension vals. so put them in temps
-    //these are useful in "computeT" func
-        while(self->seedPoints.size()>0)
-        {
-            index=self->seedPoints[self->seedPoints.size()-1];
-            self->seedPoints.pop_back();
-            knownPoints.push_back(index);
-            node[index].T=sdist[index];
-            node[index].status=fmsKNOWN;
-            temp_phi_ext[index] = phi_hat[index];
-            temp_phi_ext_x[index] = phi_hat_x[index];
-            temp_phi_ext_y[index] = phi_hat_y[index];
-            temp_phi_ext_z[index] = phi_hat_z[index];
-            temp_eucl_phi[index] = eucl_phi[index];
-            //zero_set.push_back(index);
-        }
+  //the seedPoints r the zero level set pts, so they are known.
+  //here we already know the extension vals. so put them in temps
+  //these are useful in "computeT" func
+  while(self->seedPoints.size()>0)
+    {
+      index=self->seedPoints[self->seedPoints.size()-1];
+      self->seedPoints.pop_back();
+      knownPoints.push_back(index);
+      node[index].T=sdist[index];
+      node[index].status=fmsKNOWN;
+      temp_phi_ext[index] = phi_hat[index];
+      temp_phi_ext_x[index] = phi_hat_x[index];
+      temp_phi_ext_y[index] = phi_hat_y[index];
+      temp_phi_ext_z[index] = phi_hat_z[index];
+      temp_eucl_phi[index] = eucl_phi[index];
+      //zero_set.push_back(index);
+    }
 
-        // if the points  have a KNOWN neighbor, put them  in TRIAL
-        for(k=0;k<(int)self->knownPoints.size();k++)
+  // if the points  have a KNOWN neighbor, put them  in TRIAL
+  for(k=0;k<(int)self->knownPoints.size();k++)
+    {
+      int index = self->knownPoints[k];
+      int indexN;
+      bool hasKnownNeighbor =  false;
+      for(n=1;n<=self->nNeighbors;n++)
+    {
+      indexN=index+self->shiftNeighbor(n);
+      if((node[indexN].status==fmsKNOWN ) || (node[indexN].status == fmsTRIAL))
+        hasKnownNeighbor=true;
+      //if this neighbour is already known or trial, then dont put again
+      if(!(hasKnownNeighbor))
         {
-            int index = self->knownPoints[k];
-            int indexN;
-            bool hasKnownNeighbor =  false;
-            for(n=1;n<=self->nNeighbors;n++)
-            {
-            indexN=index+self->shiftNeighbor(n);
-            if((node[indexN].status==fmsKNOWN ) || (node[indexN].status == fmsTRIAL))
-                hasKnownNeighbor=true;
-             //if this neighbour is already known or trial, then dont put again
-              if(!(hasKnownNeighbor))
-                {
-                FMleaf f;
-                self->node[indexN].T=self->computeT(indexN);
-                self->node[indexN].status=fmsTRIAL;     
-                f.nodeIndex=indexN;
-                self->insert( f );
-                }
-                hasKnownNeighbor =  false;
-            }
+          FMleaf f;
+          self->node[indexN].T=self->computeT(indexN);
+          self->node[indexN].status=fmsTRIAL;     
+          f.nodeIndex=indexN;
+          self->insert( f );
         }
+      hasKnownNeighbor =  false;
+    }
+    }
     
-      //fprintf(fp,"Now Evolve, tree size = %d\n",tree.size());
+  //fprintf(fp,"Now Evolve, tree size = %d\n",tree.size());
  
 
-       for(n=0;n<(int)evolve_upto;n++)
-        {
+  for(n=0;n<(int)evolve_upto;n++)
+    {
         
-            //should calculate extension and store it
-            float T=self->step(&indx);
-            level_set[indx] = T;
+      //should calculate extension and store it
+      float T=self->step(&indx);
+      level_set[indx] = T;
     
-            if(!make_negative)
-              inside_sphere.push_back(indx);
-            //zero_set.push_back(indx);
+      if(!make_negative)
+    inside_sphere.push_back(indx);
+      //zero_set.push_back(indx);
 
-            if( T==INF )
-            { 
-                self->vtkErrorWrapper( "AffineSegment: nowhere else to go. End of evolution." );
-                break;
-            } 
-        }
+      if( T==INF )
+    { 
+      self->vtkErrorWrapper( "AffineSegment: nowhere else to go. End of evolution." );
+      break;
+    } 
+    }
 
 
-      self->minHeapIsSorted();
-      //fprintf(fp,"Now Evolve, sphere_size = %d\n",inside_sphere.size());
+  self->minHeapIsSorted();
+  //fprintf(fp,"Now Evolve, sphere_size = %d\n",inside_sphere.size());
 
-      if(make_negative)
-        MakeNegative_Inside();
- /*
+  if(make_negative)
+    MakeNegative_Inside();
+  /*
     if(!fp)
-        fclose(fp);
+    fclose(fp);
 
-*/
-    return;
+  */
+  return;
 }
 
 /* makes the initial level set to have negative distance vals
    inside 
    we keep the indices that are supposed to be negative in the array "inside_sphere"
-   */
+*/
 void vtkAffineSegment::MakeNegative_Inside()
 {
   int i;
   int curr_pos;
   for(i=0;i<(int)inside_sphere.size();i++)
-  {
+    {
       curr_pos = inside_sphere[i];
       level_set[curr_pos] = -level_set[curr_pos];
-  }
+    }
   inside_sphere.clear();
 
-    return;
+  return;
 }
 //----------------------------------------------------------------------------
 //This is used to find the boundary for the very first time when we create the
@@ -1133,50 +1133,50 @@ void vtkAffineSegment::FindInitialBoundary()
 {
     
 
-    int k;
-    long curr_pos;
-/*
-#ifdef DEBUG
-  FILE *fp = 0;
+  int k;
+  long curr_pos;
+  /*
+    #ifdef DEBUG
+    FILE *fp = 0;
     fp = NULL;
     fp = fopen("c:\\cygwin\\slicer2\\Modules\\vtkAffineSegment\\init_bdry.txt","w+");
     if(fp == NULL)
-        return;
-#endif
-*/
-curr_pos=0;
+    return;
+    #endif
+  */
+  curr_pos=0;
 
 
-    //clear the seedpoints array
-    this->seedPoints.clear();
-    for(k=0;k<dimXYZ;k++)
+  //clear the seedpoints array
+  this->seedPoints.clear();
+  for(k=0;k<dimXYZ;k++)
     {
         
-        if((curr_pos+dimXY < dimXYZ) && (curr_pos-dimXY>=0))
+      if((curr_pos+dimXY < dimXYZ) && (curr_pos-dimXY>=0))
         if(((level_set[curr_pos]==0) && (level_set[curr_pos+1]>0)) || 
-            ((level_set[curr_pos]==0) && (level_set[curr_pos+dimX]>0)) ||
-            ((level_set[curr_pos]==0) && (level_set[curr_pos+1*dimXY]>0)) ||
-            ((level_set[curr_pos]==0) && (level_set[curr_pos-1]>0)) ||
-            ((level_set[curr_pos]==0) && (level_set[curr_pos-dimX]>0)) ||
-            ((level_set[curr_pos]==0) && (level_set[curr_pos-1*dimXY]>0)))
-        {
+       ((level_set[curr_pos]==0) && (level_set[curr_pos+dimX]>0)) ||
+       ((level_set[curr_pos]==0) && (level_set[curr_pos+1*dimXY]>0)) ||
+       ((level_set[curr_pos]==0) && (level_set[curr_pos-1]>0)) ||
+       ((level_set[curr_pos]==0) && (level_set[curr_pos-dimX]>0)) ||
+       ((level_set[curr_pos]==0) && (level_set[curr_pos-1*dimXY]>0)))
+      {
             seedPoints.push_back(curr_pos); 
             //zero_set.push_back(curr_pos);
-         }
+      }
 
         
-        curr_pos++;
+      curr_pos++;
         
     }
-/*
-#ifdef DEBUG
+  /*
+    #ifdef DEBUG
     if(!fp)
-        fclose(fp);
-#endif
-*/
+    fclose(fp);
+    #endif
+  */
 
 
-    return;
+  return;
 }
 
 // this is one of the most widely used function
@@ -1205,133 +1205,133 @@ void vtkAffineSegment::Compute_Extension(vtkAffineSegment *self)
   self->tree.clear();
   self->zero_set.clear();
   self->eucl_ext.clear();
-/*
-#ifdef DEBUG
-  FILE *fp = 0;
+  /*
+    #ifdef DEBUG
+    FILE *fp = 0;
     fp = NULL;
     fp = fopen("c:\\cygwin\\slicer2\\Modules\\vtkAffineSegment\\compute_ext.txt","w+");
     fprintf(fp,"SeedPoint size = %d\n",self->seedPoints.size());
     if(fp == NULL)
-        return;
-#endif
+    return;
+    #endif
   */  
-      self->initialized = true;
-      index = 0;
+  self->initialized = true;
+  index = 0;
  
 
-    for(k=0;k<dimZ;k++)
+  for(k=0;k<dimZ;k++)
     {
       for(j=0;j<dimY;j++)
         for(i=0;i<dimX;i++)
-            {
+      {
 
             node[index].T=(float)INF;
             node[index].status=fmsFAR;
           
-                if( (i<BAND_OUT) || (j<BAND_OUT) ||  (k<BAND_OUT) ||
+        if( (i<BAND_OUT) || (j<BAND_OUT) ||  (k<BAND_OUT) ||
                 (i>=(dimX-BAND_OUT)) || (j>=(dimY-BAND_OUT)) || (k>=(dimZ-BAND_OUT)) )
-                {
-                    node[index].status=fmsOUT;
-                }
+          {
+        node[index].status=fmsOUT;
+          }
             index++;
               
-            }
+      }
     }
 
 
-    // for all seed points, set the current distance from zero level set
-    // initialize the signed distance function for calculating extensions
+  // for all seed points, set the current distance from zero level set
+  // initialize the signed distance function for calculating extensions
 
-       Initialize_sdist(false);
+  Initialize_sdist(false);
       
-/*
-#ifdef DEBUG
-      fprintf(fp,"Reached after sdist\n");
-      fprintf(fp,"after sdist seedpoint size = %d, known Points = %d\n",self->seedPoints.size(),self->knownPoints.size());
-      fprintf(fp,"tree size = %d\n",tree.size());
-      fflush(fp);
-#endif
-*/
+  /*
+    #ifdef DEBUG
+    fprintf(fp,"Reached after sdist\n");
+    fprintf(fp,"after sdist seedpoint size = %d, known Points = %d\n",self->seedPoints.size(),self->knownPoints.size());
+    fprintf(fp,"tree size = %d\n",tree.size());
+    fflush(fp);
+    #endif
+  */
 
-      while(self->seedPoints.size()>0)
+  while(self->seedPoints.size()>0)
+    {
+      index=self->seedPoints[self->seedPoints.size()-1];
+      self->seedPoints.pop_back();
+      knownPoints.push_back(index);
+      zero_set.push_back(index);
+      node[index].T=sdist[index];
+      node[index].status=fmsKNOWN;
+      //assign the corresponding extension values
+      phi_ext.push_back(temp_phi_ext[index]);
+      phi_ext_x.push_back(temp_phi_ext_x[index]);
+      phi_ext_y.push_back(temp_phi_ext_y[index]);
+      phi_ext_z.push_back(temp_phi_ext_z[index]);
+      eucl_ext.push_back(temp_eucl_phi[index]);
+    }
+
+  // if the points  have a KNOWN neighbor, put them  in TRIAL
+  for(k=0;k<(int)self->knownPoints.size();k++)
+    {
+      int index = self->knownPoints[k];
+      int indexN;
+      bool hasKnownNeighbor =  false;
+      for(n=1;n<=self->nNeighbors;n++)
+    {
+      indexN=index+self->shiftNeighbor(n);
+      if((node[indexN].status==fmsKNOWN )|| (node[indexN].status == fmsTRIAL)) 
+        hasKnownNeighbor=true;
+
+      if(!(hasKnownNeighbor))
         {
-            index=self->seedPoints[self->seedPoints.size()-1];
-            self->seedPoints.pop_back();
-            knownPoints.push_back(index);
-            zero_set.push_back(index);
-            node[index].T=sdist[index];
-            node[index].status=fmsKNOWN;
-            //assign the corresponding extension values
-            phi_ext.push_back(temp_phi_ext[index]);
-            phi_ext_x.push_back(temp_phi_ext_x[index]);
-            phi_ext_y.push_back(temp_phi_ext_y[index]);
-            phi_ext_z.push_back(temp_phi_ext_z[index]);
-            eucl_ext.push_back(temp_eucl_phi[index]);
+          FMleaf f;
+          //fprintf(fp,"Status= %d, index=%d\n",node[indexN].status,indexN);
+          self->node[indexN].T=self->computeT(indexN);        
+          f.nodeIndex=indexN;
+          self->insert( f );
+          self->node[indexN].status=fmsTRIAL;
         }
+      hasKnownNeighbor =  false;
+    }
+    }
 
-        // if the points  have a KNOWN neighbor, put them  in TRIAL
-        for(k=0;k<(int)self->knownPoints.size();k++)
-        {
-            int index = self->knownPoints[k];
-            int indexN;
-            bool hasKnownNeighbor =  false;
-            for(n=1;n<=self->nNeighbors;n++)
-            {
-            indexN=index+self->shiftNeighbor(n);
-            if((node[indexN].status==fmsKNOWN )|| (node[indexN].status == fmsTRIAL)) 
-                hasKnownNeighbor=true;
+  //arbitarily chosen
+  self->nPointsEvolution = 15*knownPoints.size();
 
-              if(!(hasKnownNeighbor))
-                {
-                FMleaf f;
-                //fprintf(fp,"Status= %d, index=%d\n",node[indexN].status,indexN);
-                self->node[indexN].T=self->computeT(indexN);        
-                f.nodeIndex=indexN;
-                self->insert( f );
-                self->node[indexN].status=fmsTRIAL;
-                }
-                hasKnownNeighbor =  false;
-            }
-        }
-
-        //arbitarily chosen
-       self->nPointsEvolution = 15*knownPoints.size();
-
-       for(n=0;n<self->nPointsEvolution;n++)
-        {
+  for(n=0;n<self->nPointsEvolution;n++)
+    {
             
-            //should calculate extension and store it
-            float T=self->step(&indx);
-            //zero_set.push_back(indx);
+      //should calculate extension and store it
+      float T=self->step(&indx);
+      //zero_set.push_back(indx);
 
-            if( T==INF )
-            { 
-                self->vtkErrorWrapper( "AffineSegment: nowhere else to go. End of evolution." );
-                break;
-            } 
-        }
+      if( T==INF )
+    { 
+      self->vtkErrorWrapper( "AffineSegment: nowhere else to go. End of evolution." );
+      break;
+    } 
+    }
 
-        /*
-#ifdef DEBUG
-      fprintf(fp,"finished computing extension, nPoints= %d\n",self->nPointsEvolution);
-      fflush(fp);
-#endif
-*/
-        // check minHeap still OK
-        self->minHeapIsSorted();
+  /*
+    #ifdef DEBUG
+    fprintf(fp,"finished computing extension, nPoints= %d\n",self->nPointsEvolution);
+    fflush(fp);
+    #endif
+  */
+  // check minHeap still OK
+  self->minHeapIsSorted();
 
-        self->firstPassThroughShow = true;
+  self->firstPassThroughShow = true;
 
-        //now we have created the extensions
-        // extensions are in phi_hat, phi_hat_x, phi_hat_y, phi_hat_z
+  //now we have created the extensions
+  // extensions are in phi_hat, phi_hat_x, phi_hat_y, phi_hat_z
 
-    /*
-#ifdef DEBUG
-   if(!fp)
-     fclose(fp);
-#endif
-*/
-        return;
+  /*
+    #ifdef DEBUG
+    if(!fp)
+    fclose(fp);
+    #endif
+  */
+  return;
 
 }
 
@@ -1341,171 +1341,171 @@ void vtkAffineSegment::Compute_Extension(vtkAffineSegment *self)
 
 void vtkAffineSegment::Initialize_sdist(bool isnegative)
 {
-    int k;
-    float dist_to_zero;
-    float dl,dr;
-    float tmp;
-    long curr_pos;
-    float phi_extension,phi_extension_x,phi_extension_y,phi_extension_z;
-    float eucl_phi_ext;
-/*
-#ifdef DEBUG
-  FILE *fp = 0;
+  int k;
+  float dist_to_zero;
+  float dl,dr;
+  float tmp;
+  long curr_pos;
+  float phi_extension,phi_extension_x,phi_extension_y,phi_extension_z;
+  float eucl_phi_ext;
+  /*
+    #ifdef DEBUG
+    FILE *fp = 0;
     fp = NULL;
     fp = fopen("c:\\cygwin\\slicer2\\Modules\\vtkAffineSegment\\init_sdist.txt","w+");
     fprintf(fp,"dimX=%d,dimY=%d,dimZ=%d,dimXY=%d,dimXYZ=%d\n",dimX,dimY,dimZ,dimXY,dimXYZ);
     if(fp == NULL)
-        return;
-#endif
-*/
-curr_pos=0;
+    return;
+    #endif
+  */
+  curr_pos=0;
 
 
-    //clear the seedpoints array
-    this->seedPoints.clear();
-    for(k=0;k<dimXYZ;k++,curr_pos++)
+  //clear the seedpoints array
+  this->seedPoints.clear();
+  for(k=0;k<dimXYZ;k++,curr_pos++)
     {
-             //keep the indices which have negative vals, could be useful in
-             //re-initialization of level set
-               if(isnegative)
-                  if(level_set[curr_pos] < 0)
-                      inside_sphere.push_back(curr_pos);
+      //keep the indices which have negative vals, could be useful in
+      //re-initialization of level set
+      if(isnegative)
+    if(level_set[curr_pos] < 0)
+      inside_sphere.push_back(curr_pos);
 
-               //initially the array is empty
-               sdist[curr_pos] = 0;
-               temp_phi_ext[curr_pos] = 0;
-               temp_phi_ext_x[curr_pos] = 0;
-               temp_phi_ext_y[curr_pos] = 0;
-               temp_phi_ext_z[curr_pos] = 0;
-               temp_eucl_phi[curr_pos] = 0;
+      //initially the array is empty
+      sdist[curr_pos] = 0;
+      temp_phi_ext[curr_pos] = 0;
+      temp_phi_ext_x[curr_pos] = 0;
+      temp_phi_ext_y[curr_pos] = 0;
+      temp_phi_ext_z[curr_pos] = 0;
+      temp_eucl_phi[curr_pos] = 0;
 
-               dl = fabs(level_set[curr_pos]);
-               dist_to_zero = 100;
+      dl = fabs(level_set[curr_pos]);
+      dist_to_zero = 100;
 
-               if(curr_pos+1 < dimXYZ)
-               if((level_set[curr_pos]>=0) && (level_set[curr_pos+1]<0))
-               {
-                   dr = fabs(level_set[curr_pos+1]);
-                   //fprintf(fp,"dl = %f, +1 = %f, curr_pos = %d\n",level_set[curr_pos],level_set[curr_pos+1],curr_pos);
-                   tmp = dl/(dl+dr);
-                   if(tmp < dist_to_zero)
-                    {
-                        dist_to_zero = tmp;
-                        phi_extension = -dist_to_zero * (phi_hat[curr_pos] - phi_hat[curr_pos+1]) + phi_hat[curr_pos];
-                        phi_extension_x = -dist_to_zero * (phi_hat_x[curr_pos] - phi_hat_x[curr_pos+1]) + phi_hat_x[curr_pos];
-                        phi_extension_y = -dist_to_zero * (phi_hat_y[curr_pos] - phi_hat_y[curr_pos+1]) + phi_hat_y[curr_pos];
-                        phi_extension_z = -dist_to_zero * (phi_hat_z[curr_pos] - phi_hat_z[curr_pos+1]) + phi_hat_z[curr_pos];
-                        eucl_phi_ext = -dist_to_zero * (eucl_phi[curr_pos] - eucl_phi[curr_pos+1]) + eucl_phi[curr_pos];
-                    }
-               }
-               if(curr_pos-1 >= 0)
-               if((level_set[curr_pos]>=0) && (level_set[curr_pos-1]<0))
-                {
-                    dr = fabs(level_set[curr_pos-1]);
-                    //fprintf(fp,"dl = %f, -1 = %f, curr_pos = %d\n",level_set[curr_pos],level_set[curr_pos-1],curr_pos);
-                    tmp = dl/(dl+dr);
-                    if(tmp < dist_to_zero)
-                    {
-                        dist_to_zero = tmp;
-                        phi_extension = -dist_to_zero * (phi_hat[curr_pos] - phi_hat[curr_pos-1]) + phi_hat[curr_pos];
-                        phi_extension_x = -dist_to_zero * (phi_hat_x[curr_pos] - phi_hat_x[curr_pos-1]) + phi_hat_x[curr_pos];
-                        phi_extension_y = -dist_to_zero * (phi_hat_y[curr_pos] - phi_hat_y[curr_pos-1]) + phi_hat_y[curr_pos];
-                        phi_extension_z = -dist_to_zero * (phi_hat_z[curr_pos] - phi_hat_z[curr_pos-1]) + phi_hat_z[curr_pos];
-                        eucl_phi_ext = -dist_to_zero * (eucl_phi[curr_pos] - eucl_phi[curr_pos-1]) + eucl_phi[curr_pos];
-                    }
-                }
+      if(curr_pos+1 < dimXYZ)
+    if((level_set[curr_pos]>=0) && (level_set[curr_pos+1]<0))
+      {
+        dr = fabs(level_set[curr_pos+1]);
+        //fprintf(fp,"dl = %f, +1 = %f, curr_pos = %d\n",level_set[curr_pos],level_set[curr_pos+1],curr_pos);
+        tmp = dl/(dl+dr);
+        if(tmp < dist_to_zero)
+          {
+        dist_to_zero = tmp;
+        phi_extension = -dist_to_zero * (phi_hat[curr_pos] - phi_hat[curr_pos+1]) + phi_hat[curr_pos];
+        phi_extension_x = -dist_to_zero * (phi_hat_x[curr_pos] - phi_hat_x[curr_pos+1]) + phi_hat_x[curr_pos];
+        phi_extension_y = -dist_to_zero * (phi_hat_y[curr_pos] - phi_hat_y[curr_pos+1]) + phi_hat_y[curr_pos];
+        phi_extension_z = -dist_to_zero * (phi_hat_z[curr_pos] - phi_hat_z[curr_pos+1]) + phi_hat_z[curr_pos];
+        eucl_phi_ext = -dist_to_zero * (eucl_phi[curr_pos] - eucl_phi[curr_pos+1]) + eucl_phi[curr_pos];
+          }
+      }
+      if(curr_pos-1 >= 0)
+    if((level_set[curr_pos]>=0) && (level_set[curr_pos-1]<0))
+      {
+        dr = fabs(level_set[curr_pos-1]);
+        //fprintf(fp,"dl = %f, -1 = %f, curr_pos = %d\n",level_set[curr_pos],level_set[curr_pos-1],curr_pos);
+        tmp = dl/(dl+dr);
+        if(tmp < dist_to_zero)
+          {
+        dist_to_zero = tmp;
+        phi_extension = -dist_to_zero * (phi_hat[curr_pos] - phi_hat[curr_pos-1]) + phi_hat[curr_pos];
+        phi_extension_x = -dist_to_zero * (phi_hat_x[curr_pos] - phi_hat_x[curr_pos-1]) + phi_hat_x[curr_pos];
+        phi_extension_y = -dist_to_zero * (phi_hat_y[curr_pos] - phi_hat_y[curr_pos-1]) + phi_hat_y[curr_pos];
+        phi_extension_z = -dist_to_zero * (phi_hat_z[curr_pos] - phi_hat_z[curr_pos-1]) + phi_hat_z[curr_pos];
+        eucl_phi_ext = -dist_to_zero * (eucl_phi[curr_pos] - eucl_phi[curr_pos-1]) + eucl_phi[curr_pos];
+          }
+      }
 
-               //make sure we dont overstep into next frame or out of bound
-                if(curr_pos+dimX < dimXYZ)
-                if((level_set[curr_pos]>=0) && (level_set[curr_pos+dimX]<0))
-                {
-                    dr = fabs(level_set[curr_pos+dimX]);
-                    //fprintf(fp,"dl = %f, +dimX = %f, curr_pos = %d\n",level_set[curr_pos],level_set[curr_pos+dimX],curr_pos);
-                    tmp = dl/(dl+dr);
-                    if(tmp < dist_to_zero)
-                    {
-                        dist_to_zero = tmp;
-                        phi_extension = -dist_to_zero * (phi_hat[curr_pos] - phi_hat[curr_pos+1*dimX]) + phi_hat[curr_pos];
-                        eucl_phi_ext = -dist_to_zero * (eucl_phi[curr_pos] - eucl_phi[curr_pos+1*dimX]) + eucl_phi[curr_pos];
-                        phi_extension_x = -dist_to_zero * (phi_hat_x[curr_pos] - phi_hat_x[curr_pos+dimX]) + phi_hat_x[curr_pos];
-                        phi_extension_y = -dist_to_zero * (phi_hat_y[curr_pos] - phi_hat_y[curr_pos+dimX]) + phi_hat_y[curr_pos];
-                        phi_extension_z = -dist_to_zero * (phi_hat_z[curr_pos] - phi_hat_z[curr_pos+dimX]) + phi_hat_z[curr_pos];
-                    }
-                }
-               if(curr_pos-dimX >= 0)
-                if((level_set[curr_pos]>=0) && (level_set[curr_pos-1*dimX]<0)) 
-                {
-                    dr = fabs(level_set[curr_pos-1*dimX]);
-                    //fprintf(fp,"dl = %f, -dimX = %f, curr_pos = %d\n",level_set[curr_pos],level_set[curr_pos-dimX],curr_pos);
-                    tmp = dl/(dl+dr);
-                    if(tmp < dist_to_zero)
-                    {
-                        dist_to_zero = tmp;
-                        phi_extension = -dist_to_zero * (phi_hat[curr_pos] - phi_hat[curr_pos-1*dimX]) + phi_hat[curr_pos];
-                        eucl_phi_ext = -dist_to_zero * (eucl_phi[curr_pos] - eucl_phi[curr_pos-1*dimX]) + eucl_phi[curr_pos];
-                        phi_extension_x = -dist_to_zero * (phi_hat_x[curr_pos] - phi_hat_x[curr_pos-1*dimX]) + phi_hat_x[curr_pos];
-                        phi_extension_y = -dist_to_zero * (phi_hat_y[curr_pos] - phi_hat_y[curr_pos-1*dimX]) + phi_hat_y[curr_pos];
-                        phi_extension_z = -dist_to_zero * (phi_hat_z[curr_pos] - phi_hat_z[curr_pos-1*dimX]) + phi_hat_z[curr_pos];
-                    }
-                }
-               if(curr_pos-dimXY>=0)
-               if((level_set[curr_pos]>=0) && (level_set[curr_pos-1*dimXY]<0))
-                {
-                    dr = fabs(level_set[curr_pos-1*dimXY]);
-                    //fprintf(fp,"dl = %f, -dimXY = %f, curr_pos = %d\n",level_set[curr_pos],level_set[curr_pos-dimXY],curr_pos);
-                    tmp = dl/(dl+dr);
-                    if(tmp < dist_to_zero)
-                    {
-                        dist_to_zero = tmp;
-                        phi_extension = -dist_to_zero * (phi_hat[curr_pos] - phi_hat[curr_pos-1*dimXY]) + phi_hat[curr_pos];
-                        eucl_phi_ext = -dist_to_zero * (eucl_phi[curr_pos] - eucl_phi[curr_pos-1*dimXY]) + eucl_phi[curr_pos];
-                        phi_extension_x = -dist_to_zero * (phi_hat_x[curr_pos] - phi_hat_x[curr_pos-1*dimXY]) + phi_hat_x[curr_pos];
-                        phi_extension_y = -dist_to_zero * (phi_hat_y[curr_pos] - phi_hat_y[curr_pos-1*dimXY]) + phi_hat_y[curr_pos];
-                        phi_extension_z = -dist_to_zero * (phi_hat_z[curr_pos] - phi_hat_z[curr_pos-1*dimXY]) + phi_hat_z[curr_pos];
-                    }
-                }
+      //make sure we dont overstep into next frame or out of bound
+      if(curr_pos+dimX < dimXYZ)
+    if((level_set[curr_pos]>=0) && (level_set[curr_pos+dimX]<0))
+      {
+        dr = fabs(level_set[curr_pos+dimX]);
+        //fprintf(fp,"dl = %f, +dimX = %f, curr_pos = %d\n",level_set[curr_pos],level_set[curr_pos+dimX],curr_pos);
+        tmp = dl/(dl+dr);
+        if(tmp < dist_to_zero)
+          {
+        dist_to_zero = tmp;
+        phi_extension = -dist_to_zero * (phi_hat[curr_pos] - phi_hat[curr_pos+1*dimX]) + phi_hat[curr_pos];
+        eucl_phi_ext = -dist_to_zero * (eucl_phi[curr_pos] - eucl_phi[curr_pos+1*dimX]) + eucl_phi[curr_pos];
+        phi_extension_x = -dist_to_zero * (phi_hat_x[curr_pos] - phi_hat_x[curr_pos+dimX]) + phi_hat_x[curr_pos];
+        phi_extension_y = -dist_to_zero * (phi_hat_y[curr_pos] - phi_hat_y[curr_pos+dimX]) + phi_hat_y[curr_pos];
+        phi_extension_z = -dist_to_zero * (phi_hat_z[curr_pos] - phi_hat_z[curr_pos+dimX]) + phi_hat_z[curr_pos];
+          }
+      }
+      if(curr_pos-dimX >= 0)
+    if((level_set[curr_pos]>=0) && (level_set[curr_pos-1*dimX]<0)) 
+      {
+        dr = fabs(level_set[curr_pos-1*dimX]);
+        //fprintf(fp,"dl = %f, -dimX = %f, curr_pos = %d\n",level_set[curr_pos],level_set[curr_pos-dimX],curr_pos);
+        tmp = dl/(dl+dr);
+        if(tmp < dist_to_zero)
+          {
+        dist_to_zero = tmp;
+        phi_extension = -dist_to_zero * (phi_hat[curr_pos] - phi_hat[curr_pos-1*dimX]) + phi_hat[curr_pos];
+        eucl_phi_ext = -dist_to_zero * (eucl_phi[curr_pos] - eucl_phi[curr_pos-1*dimX]) + eucl_phi[curr_pos];
+        phi_extension_x = -dist_to_zero * (phi_hat_x[curr_pos] - phi_hat_x[curr_pos-1*dimX]) + phi_hat_x[curr_pos];
+        phi_extension_y = -dist_to_zero * (phi_hat_y[curr_pos] - phi_hat_y[curr_pos-1*dimX]) + phi_hat_y[curr_pos];
+        phi_extension_z = -dist_to_zero * (phi_hat_z[curr_pos] - phi_hat_z[curr_pos-1*dimX]) + phi_hat_z[curr_pos];
+          }
+      }
+      if(curr_pos-dimXY>=0)
+    if((level_set[curr_pos]>=0) && (level_set[curr_pos-1*dimXY]<0))
+      {
+        dr = fabs(level_set[curr_pos-1*dimXY]);
+        //fprintf(fp,"dl = %f, -dimXY = %f, curr_pos = %d\n",level_set[curr_pos],level_set[curr_pos-dimXY],curr_pos);
+        tmp = dl/(dl+dr);
+        if(tmp < dist_to_zero)
+          {
+        dist_to_zero = tmp;
+        phi_extension = -dist_to_zero * (phi_hat[curr_pos] - phi_hat[curr_pos-1*dimXY]) + phi_hat[curr_pos];
+        eucl_phi_ext = -dist_to_zero * (eucl_phi[curr_pos] - eucl_phi[curr_pos-1*dimXY]) + eucl_phi[curr_pos];
+        phi_extension_x = -dist_to_zero * (phi_hat_x[curr_pos] - phi_hat_x[curr_pos-1*dimXY]) + phi_hat_x[curr_pos];
+        phi_extension_y = -dist_to_zero * (phi_hat_y[curr_pos] - phi_hat_y[curr_pos-1*dimXY]) + phi_hat_y[curr_pos];
+        phi_extension_z = -dist_to_zero * (phi_hat_z[curr_pos] - phi_hat_z[curr_pos-1*dimXY]) + phi_hat_z[curr_pos];
+          }
+      }
  
-               if(curr_pos+dimXY<dimXYZ)
-               if((level_set[curr_pos]>=0) && (level_set[curr_pos+1*dimXY]<0))
-                {
-                    dr = fabs(level_set[curr_pos+1*dimXY]);
-                    //fprintf(fp,"dl = %f, +dimXY = %f, curr_pos = %d\n",level_set[curr_pos],level_set[curr_pos+dimXY],curr_pos);
-                    tmp = dl/(dl+dr);
-                    if(tmp < dist_to_zero)
-                    {
-                        dist_to_zero = tmp;
-                        phi_extension = -dist_to_zero * (phi_hat[curr_pos] - phi_hat[curr_pos+1*dimXY]) + phi_hat[curr_pos];
-                        eucl_phi_ext = -dist_to_zero * (eucl_phi[curr_pos] - eucl_phi[curr_pos+1*dimXY]) + eucl_phi[curr_pos];
-                        phi_extension_x = -dist_to_zero * (phi_hat_x[curr_pos] - phi_hat_x[curr_pos+dimXY]) + phi_hat_x[curr_pos];
-                        phi_extension_y = -dist_to_zero * (phi_hat_y[curr_pos] - phi_hat_y[curr_pos+dimXY]) + phi_hat_y[curr_pos];
-                        phi_extension_z = -dist_to_zero * (phi_hat_z[curr_pos] - phi_hat_z[curr_pos+dimXY]) + phi_hat_z[curr_pos];
-                    }
-                }
+      if(curr_pos+dimXY<dimXYZ)
+    if((level_set[curr_pos]>=0) && (level_set[curr_pos+1*dimXY]<0))
+      {
+        dr = fabs(level_set[curr_pos+1*dimXY]);
+        //fprintf(fp,"dl = %f, +dimXY = %f, curr_pos = %d\n",level_set[curr_pos],level_set[curr_pos+dimXY],curr_pos);
+        tmp = dl/(dl+dr);
+        if(tmp < dist_to_zero)
+          {
+        dist_to_zero = tmp;
+        phi_extension = -dist_to_zero * (phi_hat[curr_pos] - phi_hat[curr_pos+1*dimXY]) + phi_hat[curr_pos];
+        eucl_phi_ext = -dist_to_zero * (eucl_phi[curr_pos] - eucl_phi[curr_pos+1*dimXY]) + eucl_phi[curr_pos];
+        phi_extension_x = -dist_to_zero * (phi_hat_x[curr_pos] - phi_hat_x[curr_pos+dimXY]) + phi_hat_x[curr_pos];
+        phi_extension_y = -dist_to_zero * (phi_hat_y[curr_pos] - phi_hat_y[curr_pos+dimXY]) + phi_hat_y[curr_pos];
+        phi_extension_z = -dist_to_zero * (phi_hat_z[curr_pos] - phi_hat_z[curr_pos+dimXY]) + phi_hat_z[curr_pos];
+          }
+      }
 
-                /* if we found the interface, then put that value into our array 
-                   to initialize it for doing Fast Marching */
+      /* if we found the interface, then put that value into our array 
+     to initialize it for doing Fast Marching */
 
-                if(dist_to_zero != 100) {
-                  sdist[curr_pos] = dist_to_zero;
-                  //fprintf(fp,"dist = %f,dl = %f, dr = %f\n",dist_to_zero,dl,dr);
-                  temp_phi_ext[curr_pos] = phi_extension;
-                  temp_phi_ext_x[curr_pos] = phi_extension_x;
-                  temp_phi_ext_y[curr_pos] = phi_extension_y;
-                  temp_phi_ext_z[curr_pos] = phi_extension_z;
-                  temp_eucl_phi[curr_pos] = eucl_phi_ext;
-                  seedPoints.push_back(curr_pos); 
-                  }
+      if(dist_to_zero != 100) {
+    sdist[curr_pos] = dist_to_zero;
+    //fprintf(fp,"dist = %f,dl = %f, dr = %f\n",dist_to_zero,dl,dr);
+    temp_phi_ext[curr_pos] = phi_extension;
+    temp_phi_ext_x[curr_pos] = phi_extension_x;
+    temp_phi_ext_y[curr_pos] = phi_extension_y;
+    temp_phi_ext_z[curr_pos] = phi_extension_z;
+    temp_eucl_phi[curr_pos] = eucl_phi_ext;
+    seedPoints.push_back(curr_pos); 
+      }
 
                 
     }
 
-/*
-#ifdef DEBUG
+  /*
+    #ifdef DEBUG
     if(!fp)
-        fclose(fp);
-#endif
-*/
-    return;
+    fclose(fp);
+    #endif
+  */
+  return;
 }
 
 //This function puts the chosen label val to output
@@ -1527,11 +1527,11 @@ void vtkAffineSegment::show()
   
   seedPoints.clear();
   for(int i =0;i<(int)zero_set.size();i++)
-  {
+    {
       outPtr[zero_set[i]] = label;
       //store the interface, we may require it later on
       seedPoints.push_back(zero_set[i]);
-  }
+    }
 
   
   return;
@@ -1550,8 +1550,8 @@ void vtkAffineSegment::setActiveLabel(int label)
 // It just executes a switch statement to call the correct function for
 // the datas data types.
 void vtkAffineSegment::ThreadedExecute(vtkImageData *inData, 
-                                  vtkImageData *outData,
-                                  int outExt[6], int id)
+                       vtkImageData *outData,
+                       int outExt[6], int id)
 {
 
   outData->SetExtent(this->GetOutput()->GetWholeExtent());
@@ -1582,17 +1582,17 @@ void vtkAffineSegment::ThreadedExecute(vtkImageData *inData,
       return;
     }
 
-//depending on whether we called Expand or Contract
-if(Evolve == 1)
- if(!Contract)
+  //depending on whether we called Expand or Contract
+  if(Evolve == 1)
+    if(!Contract)
       vtkAffineSegmentInflation(this, inData, (short *)inPtr, 
-             outData, (short *)(outPtr), outExt,0); 
- else
- {
-     vtkAffineSegmentContract(this, inData, (short *)inPtr, 
-             outData, (short *)(outPtr), outExt,0); 
-     Contract = false;
- }
+                outData, (short *)(outPtr), outExt,0); 
+    else
+      {
+    vtkAffineSegmentContract(this, inData, (short *)inPtr, 
+                 outData, (short *)(outPtr), outExt,0); 
+    Contract = false;
+      }
   
 
 }
@@ -1900,7 +1900,7 @@ void vtkAffineSegment::init(int dimX, int dimY, int dimZ, int depth, double dx, 
 
   node = new FMnode[ dimX*dimY*dimZ ];
 
- //allocate space for arrays
+  //allocate space for arrays
   Allocate_Space();
 
   // assert( node!=NULL );
@@ -2053,9 +2053,9 @@ float vtkAffineSegment::step( int *indx )
 
       t2 = node[indexN].T;
       if( t2<t1 )
-          upTree( node[indexN].leafIndex );
+        upTree( node[indexN].leafIndex );
       else
-          downTree( node[indexN].leafIndex );
+        downTree( node[indexN].leafIndex );
 
     }
     }
@@ -2113,7 +2113,7 @@ float vtkAffineSegment::computeT(int index )
   Tzm = node[index+shiftNeighbor(5)].T;
   Tzp = node[index+shiftNeighbor(6)].T;
   
-/*extension values */
+  /*extension values */
   Pxm = temp_phi_ext[index+shiftNeighbor(4)];
   Pxp = temp_phi_ext[index+shiftNeighbor(2)];
   Pym = temp_phi_ext[index+shiftNeighbor(1)];
@@ -2253,14 +2253,14 @@ float vtkAffineSegment::computeT(int index )
       {
         candidateT = node[candidateIndex].T + distanceNeighbor(n)/s;
         if( candidateT<Tij )
-        {
-            Tij=candidateT;
-            temp_phi_ext[index] = temp_phi_ext[candidateIndex];
-            temp_phi_ext_x[index] = temp_phi_ext_x[candidateIndex];
-            temp_phi_ext_y[index] = temp_phi_ext_y[candidateIndex];
-            temp_phi_ext_z[index] = temp_phi_ext_z[candidateIndex];
-            temp_eucl_phi[index] =  temp_eucl_phi[candidateIndex];
-        }
+          {
+        Tij=candidateT;
+        temp_phi_ext[index] = temp_phi_ext[candidateIndex];
+        temp_phi_ext_x[index] = temp_phi_ext_x[candidateIndex];
+        temp_phi_ext_y[index] = temp_phi_ext_y[candidateIndex];
+        temp_phi_ext_z[index] = temp_phi_ext_z[candidateIndex];
+        temp_eucl_phi[index] =  temp_eucl_phi[candidateIndex];
+          }
         
       }
       }
@@ -2268,13 +2268,13 @@ float vtkAffineSegment::computeT(int index )
     
     if(!( Tij<INF ))
       {
-          vtkErrorMacro("Error in vtkAffineSegment::computeT(...): !( Tij<INF )");
-          return (float)INF;
+    vtkErrorMacro("Error in vtkAffineSegment::computeT(...): !( Tij<INF )");
+    return (float)INF;
       }
    
-   //if(Tij > INF)
-      //fprintf(fpc,"Tij is greater than INF !!!, = %f\n",Tij);
-   return (float)Tij;
+    //if(Tij > INF)
+    //fprintf(fpc,"Tij is greater than INF !!!, = %f\n",Tij);
+    return (float)Tij;
   }
 
   /*
@@ -2362,8 +2362,8 @@ void vtkAffineSegment::unInit( void )
     return;
 
   Release_Space();
-   if(!this->node)
-     delete [] this->node;
+  if(!this->node)
+    delete [] this->node;
 
   while(tree.size()>0)
     tree.pop_back();
@@ -2402,8 +2402,8 @@ void vtkAffineSegment::Reset()
   short *outPtr = (short *) outData->GetScalarPointer();
 
   for(int i =0;i<(int)zero_set.size();i++)
-     outPtr[zero_set[i]] = 0;
-   //make sure everything is clear
+    outPtr[zero_set[i]] = 0;
+  //make sure everything is clear
   knownPoints.clear();
   seedPoints.clear();
   zero_set.clear();
@@ -2411,7 +2411,7 @@ void vtkAffineSegment::Reset()
 
   Evolve = 1;
 
-    return;
+  return;
 }
 
 //this function is called when we only want the
@@ -2423,13 +2423,13 @@ void vtkAffineSegment::OutputReset()
   short *outPtr = (short *) outData->GetScalarPointer();
 
   for(int i =0;i<(int)zero_set.size();i++)
-     outPtr[zero_set[i]] = 0;
-   //make sure everything is clear
-    knownPoints.clear();
-    zero_set.clear();
- Evolve = 1;
+    outPtr[zero_set[i]] = 0;
+  //make sure everything is clear
+  knownPoints.clear();
+  zero_set.clear();
+  Evolve = 1;
 
-    return;
+  return;
 }
 
 
