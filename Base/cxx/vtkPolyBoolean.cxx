@@ -364,7 +364,7 @@ void vtkPolyBoolean::Execute()
   numInputPointsB = inputB->GetNumberOfPoints();
   this->IdOffsetB = numInputPointsA;
   this->IdOffsetNew = numInputPointsA + numInputPointsB;
-  numNewPointsExpected = int(2*(sqrt( numInputPointsA ) + sqrt( numInputPointsB )));
+  numNewPointsExpected = int(2*(sqrt( static_cast<double>(numInputPointsA) ) + sqrt( static_cast<double>(numInputPointsB) )));
 
   if ( this->Operation != BOOL_A_TOUCHES_B && this->Operation != BOOL_A_AND_B_1D )
     operationOutputs3D = 1;
