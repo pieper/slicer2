@@ -397,8 +397,8 @@ proc DevAddSelectButton { TabName f aLabel message pack {tooltip ""} \
 proc DevUpdateNodeSelectButton { type ArrayName Label Name { CommandSet "DevSelect" } { None 1 } { New 0 } { LabelMap 1 } {Command2Set ""} } {
 
     global Volume Model
-        upvar $ArrayName LocalArray
-        upvar 0 $type NodeType
+    upvar $ArrayName LocalArray
+    upvar 0 $type NodeType
 
     # See if the NodeType for each menu actually exists.
     # If not, use the None NodeType
@@ -421,17 +421,19 @@ proc DevUpdateNodeSelectButton { type ArrayName Label Name { CommandSet "DevSele
 
             # Show LabelMaps?
             if {($LabelMap==0) && ($type=="Volume") && $test }  {
-                set test Expr[ [NodeType($v,node) GetLabelMap] == 0]
+                if { [${type}($v,node) GetLabelMap] != 0 } {
+                    set test 0
+                }
             }
             if $test {
                 $m add command -label [${type}($v,node) GetName] \
             -command "$CommandSet $type $v $ArrayName $Label $Name; $Command2Set"
         }
     }
-        if {$New} {
-            $m add command -label "Create New" \
-           -command "$CommandSet $type -5 $ArrayName $Label $Name"
-        }
+    if {$New} {
+        $m add command -label "Create New" \
+       -command "$CommandSet $type -5 $ArrayName $Label $Name"
+    }
 }
 
 
