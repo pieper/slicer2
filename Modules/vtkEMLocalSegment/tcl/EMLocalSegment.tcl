@@ -235,7 +235,7 @@ proc EMSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.21 $} {$Date: 2004/02/19 00:36:55 $}]
+        {$Revision: 1.22 $} {$Date: 2004/02/19 03:04:16 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -1636,12 +1636,11 @@ proc EMSegmentLoadMRML {tag attr} {
                 set key [lindex $a 0]
                 set val [lreplace $a 0 0]
                 switch [string tolower $key] {
-            "number"          {$n SetNumber $val}
+                    "number"          {$n SetNumber $val}
                     "eigenvectorname" {$n SetEigenVectorName $val}
                     "eigenvalue"      {$n SetEigenValue $val}
-        }
-        }
-
+                }
+            }
     }
      
     "SegmenterCIM" {

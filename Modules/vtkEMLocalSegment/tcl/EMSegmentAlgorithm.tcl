@@ -106,6 +106,11 @@ proc EMSegmentSetVtkSuperClassSetting {SuperClass NumInputImagesSet } {
              incr index
           } 
       }
+      # Setup PCA parameter
+      if {$EMSegment(Cattrib,$i,PCAMeanData) !=  $Volume(idNone) } {
+         # Kilian: Define here  
+      }
+
     }
     EMSegment(vtkEMSegment) SetTissueProbability $EMSegment(Cattrib,$i,Prob)
     for {set y 0} {$y < $EMSegment(NumInputChannel)} {incr y} {
