@@ -380,7 +380,7 @@ proc MainInit {} {
 
         # Set version info
     lappend Module(versions) [ParseCVSInfo Main \
-        {$Revision: 1.92 $} {$Date: 2002/12/03 00:28:06 $}]
+        {$Revision: 1.93 $} {$Date: 2003/01/22 17:04:32 $}]
 
     # Call each "Init" routine that's not part of a module
     #-------------------------------------------
@@ -517,10 +517,10 @@ proc MainBuildGUI {} {
     $Gui(mFile) add separator
     $Gui(mFile) add command -label "Save 3D View" -command \
         "MainMenu File Save3D"
+    $Gui(mFile) add command -label "Set Save 3D View Parameters..." -command \
+        "MainMenu File Save3DSetParams"
     $Gui(mFile) add command -label "Save Active Slice" -command \
         "MainMenu File SaveSlice"
-    $Gui(mFile) add command -label "Save 3D View As..." -command \
-        "MainMenu File Save3DAs"
     $Gui(mFile) add command -label "Save Active Slice As..." -command \
         "MainMenu File SaveSliceAs"
     $Gui(mFile) add separator
@@ -645,7 +645,7 @@ proc MainBuildGUI {} {
             if {$Module($m,more) == 0} {
                 eval {radiobutton $f.$row.r$m -width 10 \
                     -text "$m" -variable Module(btn) -value $m \
-                    -command "Tab $m" -indicatoron 0} $Gui(WCA)
+                    -command "Tab $m" -indicatoron 0} $Gui(WRA)
                 pack $f.$row.r$m -side left -padx 0 -pady 0
 
                 #if {[info exists Module($m,overview)]} {
@@ -1520,13 +1520,13 @@ proc MainMenu {menu cmd} {
                 MainFileSaveOptions
             }
             "Save3D" {
-                MainViewSaveView
+                Save3DImage
             }
             "SaveSlice" {
                 MainSlicesSave
             }
-            "Save3DAs" {
-                MainViewSaveViewPopup
+            "Save3DSetParams" {
+                SaveDisplayOptionsWindow
             }
             "SaveSliceAs" {
                 MainSlicesSavePopup

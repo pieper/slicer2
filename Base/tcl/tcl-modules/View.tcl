@@ -70,13 +70,7 @@ proc ViewInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.34 $} {$Date: 2002/11/12 13:10:52 $}]
-
-    set View(movie) 0
-    set View(movieDirectory) "/tmp"
-    set View(movieFilePrefix) "slicer-"
-    set View(movieFrame) 1
-    set View(movieFileType) "PNG"
+        {$Revision: 1.35 $} {$Date: 2003/01/22 17:04:35 $}]
 }
 
 #-------------------------------------------------------------------------------
@@ -115,12 +109,8 @@ around the mouse cursor.  This option is not presently available on PCs.
 then select the CrystalEyes stereo mode.
 <BR><LI><B>Background Color</B> When you threshold graylevel volumes,
 the view will look better if the background is black.
-<BR><LI><B>Record Movie</B> When this button is activated the 3D view
-is recorded as a .ppm file each time it is re-rendered. By default, each
-frame is recorded as /tmp/movieNNNN.ppm. These frames can be converted into
-a movie using various utilities. One way is to use <I>convert</I> which accepts
-a command line like: <I>convert movie*.ppm movie.mpg</I> to create a movie
-called <I>movie.mpg</I>.
+<BR><LI><B>Record Movie</B>This functionality is now located in the
+<I>File->Set Save 3D View Parameters...</I> menu option.
 <BR><LI><B>Texture</B> The Texture panel controls the rendering of the slices
 displayed in the 3D window.  <B>Resolution</B> controls the number of pixels
 in the texture.  Choose higher values up to the resolution of your source
@@ -152,9 +142,8 @@ light parameters (e.g., overall intensity) to be adjusted.
     frame $f.fBg      -bg $Gui(activeWorkspace)
     frame $f.fStereo  -bg $Gui(activeWorkspace) -relief groove -bd 3
     frame $f.fCloseup -bg $Gui(activeWorkspace)
-    frame $f.fMovie   -bg $Gui(activeWorkspace) -relief groove -bd 3
-    frame $f.fMovieSlices   -bg $Gui(activeWorkspace) -relief groove -bd 3
-    pack $f.fSize $f.fBg $f.fCloseup $f.fStereo $f.fMovie $f.fMovieSlices\
+    frame $f.fMovie   -bg $Gui(activeWorkspace)
+    pack $f.fSize $f.fBg $f.fCloseup $f.fStereo $f.fMovie \
         -side top -pady $Gui(pad) -padx $Gui(pad) -fill x
 
     #-------------------------------------------
@@ -248,49 +237,11 @@ light parameters (e.g., overall intensity) to be adjusted.
     # View->Movie Frame
     #-------------------------------------------
     
-
-
-
-
-        set f $fView.fMovie
-        eval {checkbutton $f.cMovie -text "Save View" -variable View(movie) \
-        -width 22 -indicatoron 0 } $Gui(WCA)
-    TooltipAdd $f.cMovie "When this button is selected, you can save the 
-current View (with or without the slice windows) by 
-left-clicking in 3D View. If you leave this button selected, 
-a frame will be saved everytime the 3D View is rendered "
-    
-    eval {checkbutton $f.cMovieSlices -text "with slice windows" -variable View(movieSlices) -indicatoron 1 } $Gui(WCA)
-    TooltipAdd $f.cMovieSlices "When this button is selected, the frames saved will contain the 2D window slices"
-
-    eval {label $f.lFrame -text "Next frame #:"} $Gui(WLA)
-    eval {entry $f.eFrame -width 6 -textvariable View(movieFrame)} $Gui(WEA)
+    set f $fView.fMovie
  
-    eval {label $f.lDir -text "Directory:"} $Gui(WLA)
+    eval {label $f.cDeprecatedNote -text "Movie functionality is now in the\n\"File->Set Save 3D View Params...\"\nSlicer menu item."} $Gui(WLA) -justify left
 
-    eval {entry $f.eDir -width 16 -textvariable View(movieDirectory)} $Gui(WEA)
-
-    eval {label $f.lPrefix -text "File prefix:"} $Gui(WLA)
-
-    eval {entry $f.ePrefix -width 16 -textvariable View(movieFilePrefix)} $Gui(WEA)
-
-    grid $f.cMovie -columnspan 2 -padx $Gui(pad) -pady $Gui(pad)
-    grid $f.cMovieSlices -columnspan 2 -padx $Gui(pad) -pady $Gui(pad)
-    grid $f.lFrame $f.eFrame -sticky w -padx $Gui(pad) -pady $Gui(pad)
-    grid $f.lDir $f.eDir -sticky w -padx $Gui(pad) -pady $Gui(pad)
-    grid $f.lPrefix $f.ePrefix -sticky w -padx $Gui(pad) -pady $Gui(pad)
-        grid configure $f.lFrame -sticky e
-        grid configure $f.lDir -sticky e
-        grid configure $f.lPrefix -sticky e
-
-    # File type
-    eval {label $f.lFile -text "File type:"} $Gui(WLA)
-
-    eval {tk_optionMenu $f.mbFile View(movieFileType)} [SaveGetSupportedImageTypes]
-    eval $f.mbFile configure $Gui(WMBA)
-
-    grid $f.lFile $f.mbFile -sticky w -padx $Gui(pad) -pady $Gui(pad)
-    grid configure $f.lFile -sticky e
+    pack $f.cDeprecatedNote -expand true -fill both
 
     #-------------------------------------------
     # Fog frame
@@ -357,30 +308,35 @@ a frame will be saved everytime the 3D View is rendered "
     pack $f.rbHL -side top -anchor w -padx $Gui(pad) -pady $Gui(pad)
 
     set f $fLights.fLightIntensity
-     eval {scale $f.sIntensity -from 0.0 -to 2.0 -showvalue true \
-               -label "Light Intensity" -tickinterval 0.5 \
-               -variable View(LightIntensity) -resolution 0.1 -orient horizontal \
+     eval {scale $f.sIntensity -from 0.0 -to 1.5 -showvalue true \
+               -label "Main Light Intensity" -tickinterval 0.25 \
+               -variable View(LightIntensity) -resolution 0.05 -orient horizontal \
                -command ViewUpdateLightIntensity} $Gui(WSA)
 
     TooltipAdd $f.sIntensity "Set the overall lighting intensity of the scene."
+
     pack $f.sIntensity -fill x -side top -padx $Gui(pad) -pady $Gui(pad) -expand true
-}
 
-#-------------------------------------------------------------------------------
-# .PROC ViewSetMovieFileType
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc ViewSetMovieFileType {item} {
-    global View Module
+     eval {scale $f.sFillRatio -from 0.5 -to 7.5 -showvalue true \
+               -label "Fill Ratio" -tickinterval 2.0 \
+               -variable View(LightKeyToFillRatio) -resolution 0.05 -orient horizontal \
+               -command ViewUpdateLightIntensity} $Gui(WSA)
 
-    # Update variable
-    set View(movieFileType) $item
+    set View(FillRatioScale) $f.sFillRatio
 
-    # Update GUI
-    set f $Module(View,fView).fMovie
-    eval $f.mbFile config "-text $item"
+    TooltipAdd $f.sFillRatio "Set the ratio of the main light to fill light from below."
+    pack $f.sFillRatio -fill x -side top -padx $Gui(pad) -pady $Gui(pad) -expand true
+
+     eval {scale $f.sHeadRatio -from 0.5 -to 7.5 -showvalue true \
+               -label "Headlight Ratio" -tickinterval 2.0 \
+               -variable View(LightKeyToHeadRatio) -resolution 0.05 -orient horizontal \
+               -command ViewUpdateLightIntensity} $Gui(WSA)
+
+    set View(HeadRatioScale) $f.sHeadRatio    
+
+    TooltipAdd $f.sHeadRatio "Set the ratio of the main light to the camera's headlight."
+    pack $f.sHeadRatio -fill x -side top -padx $Gui(pad) -pady $Gui(pad) -expand true
+
 }
 
 #-------------------------------------------------------------------------------
@@ -402,7 +358,9 @@ proc ViewBuildVTK {} {
 proc ViewBuildLightsVTK {} {
     global View
     ViewCreateLightKit
-    set View(LightIntensity) 1.0
+    set View(LightIntensity) 0.7
+    set View(LightKeyToFillRatio) 2
+    set View(LightKeyToHeadRatio) 1.75
 
     ViewSwitchLightKit 1
     set View(LightModeIndicator) "LightKit"
@@ -489,8 +447,20 @@ proc ViewSwitchLightKit {{state ""}} {
 
     if {$View(LightMode) == "Headlight"} {
         $View(LightSavedHeadlight) SetIntensity $View(LightIntensity)
+
+        catch {
+            $View(HeadRatioScale) config -state disabled
+            $View(FillRatioScale) config -state disabled
+        }
     } else {
+        catch {
+            $View(HeadRatioScale) config -state normal
+            $View(FillRatioScale) config -state normal
+        }
         $View(LightKit) SetKeyLightIntensity $View(LightIntensity)
+        $View(LightKit) SetKeyToFillRatio $View(LightKeyToFillRatio)
+        $View(LightKit) SetKeyToHeadRatio $View(LightKeyToHeadRatio)
+
     }   
     Render3D
 }

@@ -81,6 +81,7 @@ proc CreateAndBindTkEvents { widget } {
     EvDeclareEventHandler tkRegularEvents <KeyPress-u> {wm deiconify .vtkInteract}
     EvDeclareEventHandler tkRegularEvents <KeyPress-w> Wireframe
     EvDeclareEventHandler tkRegularEvents <KeyPress-s> Surface
+    EvDeclareEventHandler tkRegularEvents <Control-s> Save3DImage
     EvDeclareEventHandler tkRegularEvents <Enter> {Enter %W %x %y;}
     EvDeclareEventHandler tkRegularEvents <Leave> {Leave %W %x %y;}
     EvDeclareEventHandler tkRegularEvents <Expose> {Expose %W}

@@ -62,7 +62,7 @@ proc GuiInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo Gui \
-    {$Revision: 1.42 $} {$Date: 2003/01/21 22:25:10 $}]
+    {$Revision: 1.43 $} {$Date: 2003/01/22 17:04:32 $}]
 
 
     # enable tooltips by default.  This should check user preferences somehow.
@@ -116,24 +116,26 @@ proc GuiInit {} {
 
     # COLORS
 
-    set Gui(darkGray)    " 81  81  81"
-    set Gui(mediumGray)  "132 132 132"
-    set Gui(lightGray)   "181 181 181"
-    set Gui(darkCream)   "226 205 186"
-    set Gui(lightCream)  "239 221 211"
-    set Gui(brightCream) "255 242 235"
-    set Gui(black)       "  0   0   0"
-    set Gui(white)       "255 255 255"
-    set Gui(red)         "200 150 150"
-    set Gui(green)       "150 200 150"
-    set Gui(yellow)      "220 220 100"
-    set Gui(lightYellow) "250 250 200"
+    set Gui(darkGray)     " 81  81  81"
+    set Gui(mediumGray)   "132 132 132"
+    set Gui(lightGray)    "181 181 181"
+    set Gui(darkCream)    "226 205 186"
+    set Gui(lightCream)   "239 221 211"
+    set Gui(brightCream)  "255 242 235"
+    set Gui(black)        "  0   0   0"
+    set Gui(white)        "255 255 255"
+    set Gui(red)          "200 150 150"
+    set Gui(saturatedRed) "150   0   0"
+    set Gui(green)        "150 200 150"
+    set Gui(yellow)       "220 220 100"
+    set Gui(lightYellow)  "250 250 200"
 
     set Gui(backdrop)          [MakeColor $Gui(mediumGray)]
     set Gui(inactiveWorkspace) [MakeColor $Gui(lightGray)]
     set Gui(activeWorkspace)   [MakeColor $Gui(darkCream)]
     set Gui(normalButton)      [MakeColor $Gui(lightCream)]
     set Gui(activeButton)      [MakeColor $Gui(brightCream)]
+    set Gui(indicatorColor)    [MakeColor $Gui(brightCream)]
     set Gui(textDark)          [MakeColor $Gui(black)]
     set Gui(textLight)         [MakeColor $Gui(white)]
     set Gui(textDisabled)      [MakeColor $Gui(mediumGray)]
@@ -185,6 +187,10 @@ proc GuiInit {} {
         -bg $Gui(activeWorkspace) -fg $Gui(textDark) \
         -bd 0 -padx 1 -pady 1 -relief flat }
 
+    # Workspace Frame Attributes (WFA)
+    lappend attr WFA 
+    set Gui(WFA) {-bg $Gui(activeWorkspace)}
+
     # Workspace Title Attributes (WTA)
     lappend attr WTA 
     set Gui(WTA) {-font {helvetica 8 bold} \
@@ -210,7 +216,7 @@ proc GuiInit {} {
     set Gui(WCA) { -font {helvetica 8}\
         -bg $Gui(activeWorkspace) -fg $Gui(textDark) \
         -activebackground $Gui(activeButton) -highlightthickness 0 \
-        -bd $Gui(borderWidth) -selectcolor $Gui(activeButton) \
+        -bd $Gui(borderWidth) -selectcolor $Gui(indicatorColor) \
         -padx 0 -pady 0 -relief flat}
 
     # Workspace Radiobutton Attributes (WRA)
@@ -218,6 +224,7 @@ proc GuiInit {} {
     set Gui(WRA) { -font {helvetica 8}\
         -bg $Gui(activeWorkspace) -fg $Gui(textDark) \
         -activebackground $Gui(activeButton) -highlightthickness 0 \
+        -selectcolor $Gui(indicatorColor) \
         -bd $Gui(borderWidth) -relief flat}
 
     # Workspace Scale Attributes (WSA)
@@ -233,6 +240,10 @@ proc GuiInit {} {
     set Gui(WTTA) { -font {helvetica 8}\
         -bg $Gui(toolTip) -fg $Gui(textDark) \
         -bd 2 -padx 2 -pady 2 -relief raised }
+
+    # Workspace Pad Attributes (WPA)
+    lappend attr WPA
+    set Gui(WPA) {-padx $Gui(pad) -pady $Gui(pad)}
 
     # Backdrop Label Attributes (BLA)
     lappend attr BLA 
@@ -296,7 +307,7 @@ proc GuiApplyStyle {stylenames args} {
 # .END
 #-------------------------------------------------------------------------------
 proc ValidateFloat { var } {
-    return [expr ![ catch { expr $var + 1.0 } ] ]
+    return [expr {![ catch { expr $var + 1.0 } ]}] 
 }
 
 #-------------------------------------------------------------------------------
@@ -318,10 +329,8 @@ proc ValidateName {s} {
 #-------------------------------------------------------------------------------
 proc ValidateInt {s} {
     # Return 1 if valid, else 0
-    if {$s == ""} {return 0}
-    return [regexp {^([0-9-]*)$} $s]
+    return [expr {[regexp {^(-*[0-9][0-9]*)$} $s]}]
 }
-
 #-------------------------------------------------------------------------------
 # .PROC InfoWidget
 # 

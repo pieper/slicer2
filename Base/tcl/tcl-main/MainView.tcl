@@ -69,7 +69,7 @@ viewMode='Normal' viewBgColor='Blue'"
 
     set m MainView
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.44 $} {$Date: 2003/01/21 23:55:15 $}]
+    {$Revision: 1.45 $} {$Date: 2003/01/22 17:04:34 $}]
 
     set View(viewerHeightNormal) 656
     set View(viewerWidth)  956 
@@ -772,117 +772,6 @@ proc MainViewSetFocalPoint {x y z} {
 #    }
 
     MainAnnoUpdateFocalPoint $x $y $z
-}
-
-#-------------------------------------------------------------------------------
-# .PROC MainViewSaveView
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc MainViewSaveView {} {
-    global Mrml View
-
-    # Prefix cannot be blank
-    if {$View(viewPrefix) == ""} {
-        tk_messageBox -message "Please specify a file name."
-        return
-    }
-
-    # Get a unique filename by appending a number to the prefix
-    set filename [MainFileFindUniqueName $Mrml(dir) $View(viewPrefix) $View(ext)]
-
-    MainViewWriteView $filename
-}
-
-#-------------------------------------------------------------------------------
-# .PROC MainViewSaveViewPopup
-# Provide a popup for saving the 3D view to disk.
-# See also: MainViewSaveView
-# .END
-#-------------------------------------------------------------------------------
-proc MainViewSaveViewPopup {} {
-    global View Mrml Gui
-
-    # Cannot have blank prefix
-    if {$View(viewPrefix) == ""} {
-        set View(viewPrefix) view
-    }
-
-     # Show popup initialized to the last file saved
-    set filename [file join $Mrml(dir) $View(viewPrefix)]
-    set dir [file dirname $filename]
-    set typelist {
-        {"TIFF File" {".tif"}}
-        {"PPM File" {".ppm"}}
-        {"BMP File" {".bmp"}}
-        {"All Files" {*}}
-    }
-    set filename [tk_getSaveFile -title "Save 3D View" -defaultextension $View(ext)\
-        -filetypes $typelist -initialdir "$dir" -initialfile $filename]
-
-    # Do nothing if the user cancelled
-    if {$filename == ""} {return}
-
-    MainViewWriteView $filename
-}
-
-#-------------------------------------------------------------------------------
-# .PROC MainViewWriteView
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc MainViewWriteView {filename} {
-    global viewWin Mrml View Gui
-
-    MainFileCreateDirectory $filename
-    
-    # Write it
-    set ext [file extension $filename]
-    switch $ext {
-    ".tif" {
-        vtkWindowToImageFilter filter
-        filter SetInput $viewWin
-
-        vtkTIFFWriter writer
-        writer SetInput [filter GetOutput]
-        writer SetFileName $filename
-        writer Write
-        filter Delete
-        writer Delete
-    }
-    ".bmp" {
-        vtkWindowToImageFilter filter
-        filter SetInput $viewWin
-
-        vtkBMPWriter writer
-        writer SetInput [filter GetOutput]
-        writer SetFileName $filename
-        writer Write
-        filter Delete
-        writer Delete
-    }
-    ".ppm" {
-        $viewWin SetFileName $filename
-        $viewWin SaveImageAsPPM
-    }
-    }
-    puts "Saved view: $filename"
-
-    # Store the new prefix for next time
-    set root $Mrml(dir)
-    set absPrefix [file rootname $filename]
-    if {$Gui(pc) == 1} {
-        set absPrefix [string tolower $absPrefix]
-        set root [string tolower $Mrml(dir)]
-    }
-    if {[regexp "^$root/(\[^0-9\]*)(\[0-9\]*)" $absPrefix match relPrefix num] == 1} {
-        set View(viewPrefix) $relPrefix
-    } else {
-        set View(viewPrefix) [file rootname $absPrefix]
-    }
-    set View(ext) [file extension $filename]
 }
 
 #-------------------------------------------------------------------------------
