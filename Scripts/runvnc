@@ -1,0 +1,194 @@
+#!/bin/sh
+# the next line starts tcl \
+exec tclsh "$0" "$@"
+
+#
+# simple command line argument parsing
+#
+
+set VERSION 1.0
+
+proc Usage { {msg ""} } {
+    
+    set msg "$msg\nusage: runvnc \[options\] \[command\]"
+    set msg "$msg\n  \[options\] is one of the following:"
+    set msg "$msg\n   -h | --help : prints this message and exits"
+    set msg "$msg\n   :<number> | -d <number> | --display <number> : use the specified display number"
+    set msg "$msg\n   --Xvnc <path to X server>"
+    set msg "$msg\n   --wm <path to window manager>"
+    set msg "$msg\n   -v | --verbose : increase debugging level"
+    set msg "$msg\n   --version : print out the version info and continue"
+    puts stderr "$msg\n"
+    exit 1
+}
+
+#
+# simple arg parsing 
+#
+set DISPLAY ""
+set VERBOSE 0
+set XVNC [file dirname [info script]]/Xvnc
+set WM ""
+#set WM gnome-session
+#set WM /usr/bin/startkde
+
+set strippedargs ""
+set argc [llength $argv]
+for {set i 0} {$i < $argc} {incr i} {
+    set a [lindex $argv $i]
+    switch -glob -- $a {
+        "--verbose" - "-v" {
+            set VERBOSE 1
+        }
+        "--help" - "-h" {
+            Usage
+            exit 0
+        }
+        "-d" - "--display" {
+            incr i
+            if { $i == $argc } {
+                Usage "missing argument for $a\n"
+            } else {
+                set DISPLAY [lindex $argv $i]
+            }
+        }
+        ":*" {
+            set DISPLAY [string range $a 1 end]
+            if { ![string length $DISPLAY] } {
+                Usage "missing display number :\n"
+            }
+        }
+        "--xvnc" - "--Xvnc" {
+            incr i
+            if { $i == $argc } {
+                Usage "missing argument for $a\n"
+            } else {
+                set XVNC [lindex $argv $i]
+            }
+        }
+        "--wm" - "--WM" {
+            incr i
+            if { $i == $argc } {
+                Usage "missing argument for $a\n"
+            } else {
+                set WM [lindex $argv $i]
+            }
+            
+        }
+        "-v" - "--version" {
+            puts $VERSION
+        }
+        "--" {
+            incr i
+            set strippedargs [concat $strippedargs [lrange $argv $i end]]
+            break
+        }
+        "-*" {
+            Usage "unknown option $a\n"
+        }
+        default {
+            lappend strippedargs $a
+        }
+    }
+}
+set argv $strippedargs
+set argc [llength $argv]
+
+#
+# find an open display number to use
+# - port = 5900 + display
+#   so look for unused port to determine the display
+#
+proc echo {args} {puts $args}
+
+if { $DISPLAY == "" } {
+    # look for an open port
+    for {set p 5900} {$p < 6000} {incr p} {
+        if { ![ catch "set sp \[socket -server echo $p\]" ] } {
+            set DISPLAY [expr $p - 5900]
+            close $sp
+            break
+        }
+    }
+}
+
+if { $DISPLAY == "" } {
+    puts stderr "couldn't find a free vnc display port between 5900 and 6000"
+    exit -1
+} else {
+    puts "using display :$DISPLAY"
+}
+
+
+#
+# start the server
+#
+
+if { ![file exists "/tmp/logs"] } {
+    file mkdir /tmp/logs
+}
+
+set STARTDATE [exec date -Iseconds]
+
+#
+# look for the fonts - special trick for compute nodes that don't have
+# a full X distribution
+#
+set fparg ""
+set fpdirs {/usr/X11R6/lib/X11/fonts ~/fonts birn/lib/fonts}
+foreach fpdir $fpdirs {
+    if { [file isdirectory $fpdir] } {
+        set fparg "/dev/null" ;# start with a dummy for simplicity
+        foreach fdir [glob $fpdir/*] {
+            set fparg "$fparg,$fdir"
+        }
+        break
+    }
+}
+
+set vncpid [exec $XVNC :$DISPLAY -fp $fparg -alwaysshared -localhost -depth 32 -geometry 1280x1024 >& /tmp/logs/vnclog$STARTDATE &]
+
+set cwd [pwd]
+cd /tmp/logs
+catch "exec rm vnclog"
+exec ln -s  vnclog$STARTDATE vnclog
+cd $cwd 
+
+set tries 0
+
+while { [catch "exec grep Listening /tmp/logs/vnclog"] } {
+    incr tries
+    if { $tries > 50 } {
+        puts stderr "vnc didn't start correctly (log follows)\n"
+        puts stderr [exec cat /tmp/logs/vnclog]
+        exit 1
+    }
+    after 100
+}
+
+#
+# start the clients
+#
+
+set env(DISPLAY) :$DISPLAY
+
+if { $WM != "" } {
+    set wmpid [exec $WM &]
+}
+
+# if there was a command line arg, run the program and then exit
+if { $argc > 0 } {
+    set cmd ""
+    foreach arg $argv {
+        lappend cmd $arg
+    }
+    set ret [catch "exec $cmd" res]
+    puts $res
+    if { $WM != "" } {
+        exec kill $wmpid
+    }
+    exec kill $vncpid
+}
+
+exit 0
+
