@@ -72,7 +72,7 @@ proc MainVolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.82 $} {$Date: 2005/01/31 16:22:38 $}]
+    {$Revision: 1.83 $} {$Date: 2005/04/04 15:50:46 $}]
 
     set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -351,6 +351,12 @@ proc MainVolumesRead {v} {
             }
         }
         "Generic" {
+            if { ! [ file exists [Volume($v,node) GetFullPrefix] ] } {
+                DevErrorWindow "Generic volume does not exist: [Volume($v,node) GetFullPrefix]"
+                return -1
+            }
+        }
+        "Nrrd" {
             if { ! [ file exists [Volume($v,node) GetFullPrefix] ] } {
                 DevErrorWindow "Generic volume does not exist: [Volume($v,node) GetFullPrefix]"
                 return -1
