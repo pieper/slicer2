@@ -51,4 +51,4 @@ tclsh $SLICER_HOME/program/GoDocument.tcl
 
 # Produce the VTK class documentation
 # echo "Producing the VTK documentation, based on SLICER_HOME = ${SLICER_HOME}"
-# doxygen $SLICER_HOME/vtksrc/Doxyfile
+doxygen $SLICER_HOME/vtksrc/Doxyfile
