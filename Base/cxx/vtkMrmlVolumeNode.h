@@ -308,6 +308,18 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlVolumeNode : public vtkMrmlNode
   vtkSetStringMacro(PositionMatrix);
   vtkGetStringMacro(PositionMatrix);
 
+
+  // Description:
+  // This function solves the 4x4 matrix equation
+  // A*B=C for the unknown matrix A, given matrices B and C.
+  // While this is equivalent to A=C*Inverse(B), this function uses
+  // faster and more accurate methods (LU factorization) than finding a 
+  // matrix inverse and multiplying.  Returns 0 on failure.
+  static int SolveABeqCforA(vtkMatrix4x4 * A,  vtkMatrix4x4 * B,
+                vtkMatrix4x4 * C);
+  static int SolveABeqCforB(vtkMatrix4x4 * A,  vtkMatrix4x4 * B,
+                vtkMatrix4x4 * C);
+
   //--------------------------------------------------------------------------
   // Used by the MRML Interpreter
   //--------------------------------------------------------------------------

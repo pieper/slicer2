@@ -517,8 +517,8 @@ void vtkMrmlVolumeNode::SetScanOrder(char *s)
 // faster and more accurate methods (LU factorization) than finding a 
 // matrix inverse and multiplying.  Returns 0 on failure.
 //----------------------------------------------------------------------------
-static int SolveABeqCforB(vtkMatrix4x4 * A,  vtkMatrix4x4 * B,
-  vtkMatrix4x4 * C)
+int vtkMrmlVolumeNode::SolveABeqCforB(vtkMatrix4x4 * A,  vtkMatrix4x4 * B,
+                      vtkMatrix4x4 * C)
 {
   double *a[4],*ct[4];
   double ina[16],inct[16];
@@ -552,8 +552,8 @@ static int SolveABeqCforB(vtkMatrix4x4 * A,  vtkMatrix4x4 * B,
 // faster and more accurate methods (LU factorization) than finding a 
 // matrix inverse and multiplying.  Returns 0 on failure.
 //----------------------------------------------------------------------------
-static int SolveABeqCforA(vtkMatrix4x4 * A,  vtkMatrix4x4 * B,
-  vtkMatrix4x4 * C)
+int vtkMrmlVolumeNode::SolveABeqCforA(vtkMatrix4x4 * A,  vtkMatrix4x4 * B,
+                      vtkMatrix4x4 * C)
 {
   double *a[4],*ct[4];
   double ina[16],inct[16];
