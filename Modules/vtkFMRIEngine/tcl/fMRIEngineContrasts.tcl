@@ -171,16 +171,34 @@ proc fMRIEngineAddOrEditContrast {} {
 
     set vec [string trim $fMRIEngine(entry,contrastVector)]
     if {$vec == ""} {
-        DevErrorWindow "Input a contrast vector."
+        DevErrorWindow "Input the contrast vector."
         return
     }
 
+    # replace multiple spaces in the middle of the string by one space  
+    regsub -all {( )+} $vec " " vec 
+    set vecList [split $vec " "]     
+    set len [llength $vecList]
+    foreach i $vecList { 
+        set v [string trim $i]
+        set b [string is integer -strict $v]
+        if {$b == 0} {
+            DevErrorWindow "Input a valid contrast vector." 
+            return
+        }
+    }
+
     if {! [info exists fMRIEngine($name,contrastName)]} {
+        set curs [$fMRIEngine(contrastsListBox) curselection]
+        if {$curs != ""} {
+            fMRIEngineDeleteContrast
+        }
         $fMRIEngine(contrastsListBox) insert end $name 
     } else {
         if {$name == $fMRIEngine($name,contrastName) &&
             $vec == $fMRIEngine($name,contrastVector)} {
-            DevErrorWindow "The following contrast has been added:\nName: $name\nVector: $vec"
+            DevErrorWindow "This contrast already exists:\nName: $name\nVector: $vec"
+            return
         }
     }
 
@@ -191,7 +209,7 @@ proc fMRIEngineAddOrEditContrast {} {
 
 #-------------------------------------------------------------------------------
 # .PROC fMRIEngineDeleteContrast
-# 
+# Deletes a contrast 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -207,6 +225,8 @@ proc fMRIEngineDeleteContrast {} {
         }
 
         $fMRIEngine(contrastsListBox) delete $curs 
+    } else {
+        DevErrorWindow "Select a contrast to delete."
     }
 }
 
@@ -227,6 +247,8 @@ proc fMRIEngineShowContrastToEdit {} {
             set fMRIEngine(entry,contrastName) $name
             set fMRIEngine(entry,contrastVector) $fMRIEngine($name,contrastVector) 
         }
+    } else {
+        DevErrorWindow "Select a contrast to edit."
     }
 }
 
