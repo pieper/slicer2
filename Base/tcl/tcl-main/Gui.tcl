@@ -58,7 +58,7 @@ proc GuiInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo Gui \
-        {$Revision: 1.34 $} {$Date: 2002/03/18 20:54:47 $}]
+        {$Revision: 1.35 $} {$Date: 2002/03/20 19:34:35 $}]
 
 
     # enable tooltips by default.  This should check user preferences somehow.
@@ -85,9 +85,9 @@ proc GuiInit {} {
         # small font for Windows display
         set Gui(smallFont) 1
     } else {
-        # make font larger for Linux display
+        # make font smaller for Linux display
         if {$Gui(linux) == 1} {
-        set Gui(largeFont) 1
+        set Gui(smallFont) 1
         }
     }
 
