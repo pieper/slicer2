@@ -115,7 +115,7 @@ void vtkImageEMMarkov::ExecuteInformation(vtkImageData *inData, vtkImageData *ou
 //----------------------------------------------------------------------------
 // This templated function executes the filter for any type of data.
 template <class T>
-static void vtkImageEMMarkovExecute(vtkImageEMMarkov *self,vtkImageData *in1Data, T *in1Ptr,int inExt[6],vtkImageData *outData, float *outPtr,int outExt[6], int maxZ, int id)
+static void vtkImageEMMarkovExecute(vtkImageEMMarkov *self,vtkImageData *in1Data, T *in1Ptr,int inExt[6],vtkImageData *outData, float *outPtr,int outExt[6], int maxZ)
 {
   int idxR, idxY, idxZ;
   int maxY;
@@ -177,15 +177,24 @@ static void vtkImageEMMarkovExecute(vtkImageEMMarkov *self,vtkImageData *in1Data
 // It just executes a switch statement to call the correct function for
 // the datas data types.
 
-void vtkImageEMMarkov::ThreadedExecute(vtkImageData *inData, vtkImageData *outData,int outExt[6], int id)
+// void vtkImageEMMarkov::ThreadedExecute(vtkImageData *inData, vtkImageData *outData,int outExt[6], int id)
+void vtkImageEMMarkov::ExecuteData(vtkDataObject *)
 {
   void *inPtr;
   void *outPtr;
 
   int inExt[6];
   int maxZ;
+  int outExt[6];
   // Necessary  for VTK
   this->ComputeInputUpdateExtent(inExt,outExt);
+ // vtk4
+  vtkImageData *inData  = this->GetInput();
+  vtkImageData *outData = this->GetOutput();
+  outData->SetExtent(this->GetOutput()->GetWholeExtent());
+  outData->AllocateScalars();
+  outData->GetWholeExtent(outExt);
+  // vtk4
 
   vtkDebugMacro(<< "Execute: inData = " << inData << ", outData = " << outData);
  
@@ -196,7 +205,6 @@ void vtkImageEMMarkov::ThreadedExecute(vtkImageData *inData, vtkImageData *outDa
 
   inPtr = inData->GetScalarPointerForExtent(inExt);
   outPtr = outData->GetScalarPointerForExtent(outExt);
-
   maxZ = inExt[5] - inExt[4] + 1; // outExt[5/4] = Relative Maximum/Minimum Slice index  
 
   // Making sure values are set correctly
@@ -210,7 +218,7 @@ void vtkImageEMMarkov::ThreadedExecute(vtkImageData *inData, vtkImageData *outDa
      return;
   }
   switch (inData->GetScalarType()) {
-    vtkTemplateMacro9(vtkImageEMMarkovExecute, this, inData, (VTK_TT *)(inPtr),inExt, outData, (float *)(outPtr),outExt, maxZ,id);
+    vtkTemplateMacro8(vtkImageEMMarkovExecute, this, inData, (VTK_TT *)(inPtr),inExt, outData, (float *)(outPtr),outExt, maxZ);
   default:
     vtkErrorMacro(<< "Execute: Unknown ScalarType");
     return;
@@ -289,7 +297,7 @@ void vtkImageEMMarkov::SetLabel(int index, int Label){
 void vtkImageEMMarkov::TrainMarkovMatrix(int ***Image, int Ydim, int Xdim, float *outPtr) {
   // Nothing to do
   if (this->NumClasses == 0 ) return;
- 
+  cout << "vtkImageEMMarkov::TrainMarkovMatrix" << endl; 
   int z,x,y,i,j, search;
   int NumSlices = this->EndSlice - this->StartSlice +1;
   int missfits = 0;
@@ -333,7 +341,6 @@ void vtkImageEMMarkov::TrainMarkovMatrix(int ***Image, int Ydim, int Xdim, float
   
 
   // Transfer labels to their parent classes if necessary
-  
   for (z=0; z < NumSlices; z++) {
     for (y=0; y < Ydim; y++) {
       for (x=0; x < Xdim; x++) {
@@ -425,6 +432,7 @@ void vtkImageEMMarkov::TrainMarkovMatrix(int ***Image, int Ydim, int Xdim, float
       index += outDimXY;
     }
   }
+   cout << "End vtkImageEMMarkov::TrainMarkovMatrix" << endl; 
 }
 
 //----------------------------------------

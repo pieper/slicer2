@@ -426,17 +426,17 @@ void vtkImageCurveRegion::ExecuteDataGauss(vtkDataObject *output) {
              break;
 
             case 2:  LogValue[0] = log (value[0] +1.0); 
-                 // *outPtr = Probability*FastGauss2(InvSqrtDetCov,LogValue,this->Mean, InvCov);
-                 *outPtr = Probability * GeneralGauss(LogValue,this->Mean,InvCov, InvSqrtDetCov,2);  
+                *outPtr = Probability*FastGauss2(InvSqrtDetCov,LogValue,this->Mean, InvCov);
+          // *outPtr = Probability * GeneralGauss(LogValue,this->Mean,InvCov, InvSqrtDetCov,2);  
              break;
       }
     } else {
           switch (this->Function) {
-        case 1:  // *outPtr = Probability*FastGauss(InvSqrtDetCov,value[0] - this->Mean[0]);
-                 *outPtr = Probability* GeneralGauss(value[0] - this->Mean[0],InvSqrtDetCov);
+        case 1:  *outPtr = Probability*FastGauss(InvSqrtDetCov,value[0] - this->Mean[0]);
+      // *outPtr = Probability* GeneralGauss(value[0] - this->Mean[0],InvSqrtDetCov);
              break;
-        case 2:  // *outPtr = Probability*FastGauss(InvSqrtDetCov,log(value[0] +1.0) - this->Mean[0]);
-                 *outPtr = Probability* GeneralGauss(log(value[0] + 1.0) - this->Mean[0],InvSqrtDetCov);
+        case 2:  *outPtr = Probability*FastGauss(InvSqrtDetCov,log(value[0] +1.0) - this->Mean[0]);
+      // *outPtr = Probability* GeneralGauss(log(value[0] + 1.0) - this->Mean[0],InvSqrtDetCov);
                  break;
       }
     }

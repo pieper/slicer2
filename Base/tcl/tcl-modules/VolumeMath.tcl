@@ -155,7 +155,7 @@ proc VolumeMathInit {} {
     #   appropriate info when the module is checked in.
     #   
         lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.29 $} {$Date: 2003/03/19 19:16:35 $}]
+        {$Revision: 1.30 $} {$Date: 2003/04/11 22:48:21 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -1218,7 +1218,7 @@ proc VolumeMathDoHausdorff {} {
     Logic SetOperationToNot
     Logic SetInput1 $vol1
 
-    vtkImageEuclideanDistanceTransformation DistMap
+    vtkImageEuclideanDistance DistMap
     DistMap ConsiderAnisotropyOn
     DistMap InitializeOn
     DistMap SetInput [Logic GetOutput]

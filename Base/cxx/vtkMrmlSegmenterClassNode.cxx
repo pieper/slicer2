@@ -65,6 +65,7 @@ vtkMrmlSegmenterClassNode::vtkMrmlSegmenterClassNode()
   this->LogCovariance    = NULL;
   this->Label            = 0;
   this->Prob             = 0.0;
+  this->ShapeParameter   = 0.0;
 }
 
 //----------------------------------------------------------------------------
@@ -105,6 +106,8 @@ void vtkMrmlSegmenterClassNode::Write(ofstream& of, int nIndent)
   }
   of << " Label='" << this->Label << "'";
   of << " Prob='" << this->Prob << "'";
+  of << " ShapeParameter='" << this->ShapeParameter << "'";
+  
   if (this->LocalPriorPrefix && strcmp(this->LocalPriorPrefix, "")) 
   {
     of << " LocalPriorPrefix='" << this->LocalPriorPrefix << "'";
@@ -139,6 +142,7 @@ void vtkMrmlSegmenterClassNode::Copy(vtkMrmlNode *anode)
 
   this->SetLabel(node->Label);
   this->SetProb(node->Prob);
+  this->SetShapeParameter(node->ShapeParameter);
   this->SetLocalPriorPrefix(node->LocalPriorPrefix); 
   this->SetLocalPriorName(node->LocalPriorName); 
   this->SetLocalPriorRange(node->LocalPriorRange); 
@@ -154,7 +158,9 @@ void vtkMrmlSegmenterClassNode::PrintSelf(ostream& os, vtkIndent indent)
    os << indent << "Name: " <<
     (this->Name ? this->Name : "(none)") << "\n";
    os << indent << "Label: " << this->Label << "\n";
-   os << indent << "Prob: " << this->Prob << "\n"; 
+   os << indent << "Prob: " << this->Prob << "\n";
+   os << indent << "ShapeParameter: " << this->ShapeParameter << "\n";
+
    os << indent << "LocalPriorPrefix: " <<
     (this->LocalPriorPrefix ? this->LocalPriorPrefix : "(none)") << "\n";
    os << indent << "LocalPriorName: " <<

@@ -63,6 +63,7 @@ vtkMrmlSegmenterNode::vtkMrmlSegmenterNode()
   this->AlreadyRead        = 0;
   this->MaxInputChannelDef    = 0;
   this->NumClasses         = 1;
+  this->EMShapeIter        = 1;
   this->EMiteration        = 1;
   this->MFAiteration       = 1;
   this->Alpha              = 0.0;   
@@ -109,7 +110,8 @@ void vtkMrmlSegmenterNode::Write(ofstream& of, int nIndent)
   //    }
 
   of << " NumClasses ='"                 << this->NumClasses << "'";
-  of << " MaxInputChannelDef ='"            << this->MaxInputChannelDef << "'";
+  of << " MaxInputChannelDef ='"         << this->MaxInputChannelDef << "'";
+  of << " EMShapeIter ='"                << this->EMShapeIter << "'";
   of << " EMiteration ='"                << this->EMiteration << "'";
   of << " MFAiteration ='"               << this->MFAiteration << "'";
   of << " Alpha ='"                      << this->Alpha << "'";
@@ -160,7 +162,8 @@ void vtkMrmlSegmenterNode::PrintSelf(ostream& os, vtkIndent indent)
   vtkMrmlNode::PrintSelf(os,indent);
   os << indent << "AlreadyRead: "               << this->AlreadyRead     <<  "\n"; 
   os << indent << "NumClasses: "                << this->NumClasses      <<  "\n"; 
-  os << indent << "MaxInputChannelDef: "           << this->MaxInputChannelDef <<  "\n"; 
+  os << indent << "MaxInputChannelDef: "        << this->MaxInputChannelDef <<  "\n"; 
+  os << indent << "EMShapeIter: "               << this->EMShapeIter     <<  "\n"; 
   os << indent << "EMiteration: "               << this->EMiteration     <<  "\n"; 
   os << indent << "MFAiteration: "              << this->MFAiteration <<  "\n"; 
   os << indent << "Alpha: "                     << this->Alpha <<  "\n"; 

@@ -98,7 +98,7 @@ proc MainMrmlInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainMrml \
-        {$Revision: 1.75 $} {$Date: 2003/03/19 19:16:25 $}]
+        {$Revision: 1.76 $} {$Date: 2003/04/11 22:48:20 $}]
 
     set Mrml(colorsUnsaved) 0
 }
@@ -1359,15 +1359,16 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
                 switch [string tolower $key] {
                     "numclasses" {$n SetNumClasses $val}
                     "maxinputchanneldef" {$n SetMaxInputChannelDef $val}
-                    "emiteration" {$n SetEMiteration $val}
-                    "mfaiteration" {$n SetMFAiteration $val}
-                    "alpha" {$n SetAlpha $val}
-                    "smwidth" {$n SetSmWidth $val}
-                    "smsigma" {$n SetSmSigma $val}
+            "emshapeiter"        {$n SetEMShapeIter $val}
+                    "emiteration"        {$n SetEMiteration $val}
+                    "mfaiteration"       {$n SetMFAiteration $val}
+                    "alpha"              {$n SetAlpha $val}
+                    "smwidth"            {$n SetSmWidth $val}
+                    "smsigma"            {$n SetSmSigma $val}
                     "printintermediateresults" {$n SetPrintIntermediateResults $val}
                     "printintermediateslice" {$n SetPrintIntermediateSlice $val}
                     "printintermediatefrequency" {$n SetPrintIntermediateFrequency $val}
-            "printintermediatedir" {$n SetPrintIntermediateDir $val}
+                     "printintermediatedir" {$n SetPrintIntermediateDir $val}
                     "biasprint" {$n SetBiasPrint $val}
                     "startslice" {$n SetStartSlice $val}
                     "endslice" {$n SetEndSlice $val}
@@ -1436,6 +1437,7 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
                     "logcovariance"     {$n SetLogCovariance $val}
                     "label"             {$n SetLabel $val}
                     "prob"              {$n SetProb $val}
+                    "shapeparameter"    {$n SetShapeParameter $val}
                 }
             }
         }

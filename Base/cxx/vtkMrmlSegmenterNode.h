@@ -86,6 +86,11 @@ public:
 
   // Description:
   // Get/Set for Segmenter
+  vtkSetMacro(EMShapeIter, int);
+  vtkGetMacro(EMShapeIter, int);
+
+  // Description:
+  // Get/Set for Segmenter
   vtkSetMacro(EMiteration, int);
   vtkGetMacro(EMiteration, int);
 
@@ -168,6 +173,7 @@ protected:
   int    AlreadyRead; 
   int    MaxInputChannelDef;
   int    NumClasses;
+  int    EMShapeIter;
   int    EMiteration;
   int    MFAiteration;
   double Alpha;

@@ -81,6 +81,10 @@ public:
 
   // Description:
   // Get/Set for SegmenterClass
+  vtkGetMacro(ShapeParameter, float);
+  vtkSetMacro(ShapeParameter, float);
+  // Description:
+  // Get/Set for SegmenterClass
   vtkSetStringMacro(LocalPriorPrefix);
   vtkGetStringMacro(LocalPriorPrefix);
 
@@ -113,11 +117,12 @@ protected:
   // I do not know how to better Identify my Images
   int    Label;
   double Prob;
-  char *LocalPriorPrefix; 
-  char *LocalPriorName;
-  int  LocalPriorRange[2];
-  char *LogMean;
-  char *LogCovariance;
+  float  ShapeParameter;
+  char   *LocalPriorPrefix; 
+  char   *LocalPriorName;
+  int    LocalPriorRange[2];
+  char   *LogMean;
+  char   *LogCovariance;
 };
 
 #endif

@@ -77,6 +77,7 @@ proc EMSegmentSetVtkSuperClassSetting {SuperClass NumInputImagesSet } {
     } else {
       EMSegment(vtkEMSegment) CreateNextClass
       EMSegment(vtkEMSegment) SetLabel             $EMSegment(Cattrib,$i,Label) 
+      EMSegment(vtkEMSegment) SetShapeParameter    $EMSegment(Cattrib,$i,ShapeParameter)
       if {$EMSegment(Cattrib,$i,ProbabilityData) != $Volume(idNone)} {
           EMSegment(vtkEMSegment) SetProbDataLocal 1 
           EMSegment(vtkEMSegment) SetInputIndex $NumInputImagesSet [Volume($EMSegment(Cattrib,$i,ProbabilityData),vol) GetOutput]
@@ -109,10 +110,10 @@ proc EMSegmentSetVtkSuperClassSetting {SuperClass NumInputImagesSet } {
     EMSegment(vtkEMSegment) SetTissueProbability $EMSegment(Cattrib,$i,Prob)
     # puts "$i is superclass $EMSegment(Cattrib,$i,IsSuperClass)"
     if {$EMSegment(Cattrib,$i,IsSuperClass)} {
-    set NumInputImagesSet [EMSegmentSetVtkSuperClassSetting $i $NumInputImagesSet]
-    # just to go back to super class => go up a level 
-    EMSegment(vtkEMSegment) MoveToNextClass
-   }
+      set NumInputImagesSet [EMSegmentSetVtkSuperClassSetting $i $NumInputImagesSet]
+      # just to go back to super class => go up a level 
+      EMSegment(vtkEMSegment) MoveToNextClass
+    }
 
    }
    return $NumInputImagesSet
@@ -146,6 +147,8 @@ proc EMSegmentAlgorithmStart { } {
        # Transfer Bias Print out Information
        EMSegment(vtkEMSegment) SetBiasPrint $EMSegment(BiasPrint)
        EMSegment(vtkEMSegment) SetPrintIntermediateDir $EMSegment(PrintIntermediateDir)
+       EMSegment(vtkEMSegment) SetNumEMShapeIter  $EMSegment(EMShapeIter)  
+
    }
 
    # This is just here for memory -> that's how the structure was before introducing hirachy
@@ -227,6 +230,102 @@ proc EMSegmentAlgorithmStart { } {
    EMSegment(vtkEMSegment) SetPrintIntermediateSlice  $EMSegment(PrintIntermediateSlice) 
    EMSegment(vtkEMSegment) SetPrintIntermediateFrequency  $EMSegment(PrintIntermediateFrequency) 
 
+   # This is for debuging purposes so extra volumes can be loaded into the segmentation process 
+   if {$EMSegment(DebugVolume)} {
+       set index 1 
+       set foundindex 0
+       while {$foundindex > -1} {
+      set foundindex [lsearch -exact $EMSegment(VolumeNameList)  EMDEBUG${index}] 
+       if {$foundindex > -1} {
+           EMSegment(vtkEMSegment) SetInputIndex $NumInputImagesSet [Volume([lindex $Volume(idList) $foundindex],vol) GetOutput]
+           incr NumInputImagesSet
+           incr index
+       }
+       }
+   }
+
    return $NumInputImagesSet
 }
 
+#-------------------------------------------------------------------------------
+# .PROC  EMSegmentSuperClassChildren 
+# Finds out the all children, grandchildren and ... of a super class
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc EMSegmentSuperClassChildren {SuperClass} {
+    global EMSegment
+    if {$EMSegment(Cattrib,$SuperClass,IsSuperClass) == 0} {
+    return     $EMSegment(Cattrib,$SuperClass,Label)
+    }
+    set result ""
+    foreach i $EMSegment(Cattrib,$SuperClass,ClassList) {
+    if {$EMSegment(Cattrib,$i,IsSuperClass)} {
+           # it is defined as SetType<TYPE> <ID>  
+       set result "$result [EMSegmentSuperClassChildren $i]" 
+    } else {
+        lappend result $EMSegment(Cattrib,$i,Label)  
+    }
+     } 
+     return $result
+ }
+
+#-------------------------------------------------------------------------------
+# .PROC EMSegmentTrainCIMField
+# Traines the CIM Field with a given Image
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc EMSegmentTrainCIMField {} {
+    global EMSegment Volume
+    # Transferring Information
+    foreach i $EMSegment(GlobalSuperClassList) {
+       vtkImageEMMarkov EMCIM    
+       # EM Specific Information
+       set NumClasses [llength $EMSegment(Cattrib,$i,ClassList)]
+       EMCIM SetNumClasses     $NumClasses  
+       EMCIM SetStartSlice     $EMSegment(StartSlice)
+       EMCIM SetEndSlice       $EMSegment(EndSlice)
+
+        # Kilian : Get rid of those 
+        EMCIM SetImgTestNo       -1 
+        EMCIM SetImgTestDivision  0 
+        EMCIM SetImgTestPixel     0 
+        set index 0
+        foreach j $EMSegment(Cattrib,$i,ClassList) {
+        set LabelList [EMSegmentSuperClassChildren $j]
+        EMCIM SetLabelNumber $index [llength $LabelList]
+        foreach l $LabelList {
+        EMCIM SetLabel $index $l
+        }
+      incr index
+    }
+
+    # Transfer image information
+    EMCIM SetInput [Volume($Volume(activeID),vol) GetOutput]
+    set data [EMCIM GetOutput]
+    # This Command calls the Thread Execute function
+    $data Update
+    set xindex 0 
+    foreach x $EMSegment(Cattrib,$i,ClassList) {
+        set EMSegment(Cattrib,$x,Prob) [EMCIM GetProbability $xindex]
+        set yindex 0
+        # EMCIM traines the matrix (y=t, x=t-1) just the other way EMSegment (y=t-1, x=t) needs it - Sorry !
+        foreach y $EMSegment(Cattrib,$i,ClassList) {
+        for {set z 0} {$z < 6} {incr z} {
+            # Error made in x,y coordinates in EMSegment - I checked everything - it workes in XML and CIM Display in correct order - so do not worry - it is just a little bit strange - but strange things happen
+            set temp [$data GetScalarComponentAsFloat $yindex $xindex  $z 0]
+            set EMSegment(Cattrib,$i,CIMMatrix,$x,$y,[lindex $EMSegment(CIMList) $z]) [expr round($temp*100000)/100000.0]        
+        }
+        incr yindex
+        }
+        incr xindex
+    }
+    # Delete instance
+    EMCIM Delete
+    }
+    # Jump to edit field 
+    # EMSegmentExecuteCIM Edit
+    # Move Button to Edit
+    # set EMSegment(TabbedFrame,$EMSegment(Ma-tabCIM),tab) Edit
+}

@@ -137,6 +137,7 @@ proc EMSegmentInit {} {
           set EMSegment(SegmentMode) 0
         }
     } 
+          set EMSegment(SegmentMode) 0
     # EMSegment(SegmentMode) == 0 <=> Set all Probabilty maps to none, EMSegment(SegmentMode) == 1
     # Soucre EMSegmentAlgorithm.tcl File in sudirectory 
     set found [FindNames tcl-modules/EMSegment]
@@ -226,7 +227,7 @@ proc EMSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.22 $} {$Date: 2003/03/19 19:16:30 $}]
+        {$Revision: 1.23 $} {$Date: 2003/04/11 22:48:20 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -246,7 +247,8 @@ proc EMSegmentInit {} {
     set EMSegment(SegmenterInputNodeList) ""
 
     set EMSegment(Debug) 0
-
+    # This way additionaly volumes can be transfere to the EMSegment filter - look for it in EMSegmentAlgorithm.tcl
+    set EMSegment(DebugVolume) 1
     # This is important for multiple Input images
     set EMSegment(AllVolList,ActiveID) -1
     set EMSegment(SelVolList,ActiveID) -1
@@ -300,19 +302,19 @@ proc EMSegmentInit {} {
     set EMSegment(SuperClass) 0 
 
     set EMSegment(NewSuperClassName) $EMSegment(Cattrib,0,Name)
- 
+
     # The next variable is needed so variables are independent from input
     set EMSegment(MaxInputChannelDef) 0
     # Current Number of Input Channels
     set EMSegment(NumInputChannel) 0
 
-
-    set EMSegment(EMiteration)  [vtkEMInit GetNumIter]
-    set EMSegment(MFAiteration) [vtkEMInit GetNumRegIter]
-    set EMSegment(Alpha)        [vtkEMInit GetAlpha]
-    set EMSegment(SmWidth)      [vtkEMInit GetSmoothingWidth]
-    set EMSegment(SmSigma)      [vtkEMInit GetSmoothingSigma]
-    set EMSegment(StartSlice)   [vtkEMInit GetStartSlice]
+    set EMSegment(EMShapeIter)    1
+    set EMSegment(EMiteration)    [vtkEMInit GetNumIter]
+    set EMSegment(MFAiteration)   [vtkEMInit GetNumRegIter]
+    set EMSegment(Alpha)          [vtkEMInit GetAlpha]
+    set EMSegment(SmWidth)        [vtkEMInit GetSmoothingWidth]
+    set EMSegment(SmSigma)        [vtkEMInit GetSmoothingSigma]
+    set EMSegment(StartSlice)     [vtkEMInit GetStartSlice]
     set EMSegment(EndSlice)    -1 
 
     set EMSegment(PrintIntermediateResults)     [vtkEMInit GetPrintIntermediateResults] 
@@ -374,7 +376,7 @@ proc EMSegmentInit {} {
     } else {
       set EMSegment(NumGraph) 1
     }
-    # set EMSegment(NumGraph) 1
+    set EMSegment(NumGraph) 1
     # Define Histogram 
     set EMSegment(Cattrib,0,ColorGraphCode) #ffb2b2 
 
@@ -602,7 +604,7 @@ Description of the tabs:
     DevAddLabel $f.fCol3.lEndSlice "End Slice:"
     eval {entry $f.fCol4.eEndSlice -width 4 -textvariable EMSegment(EndSlice) } $Gui(WEA)
     TooltipAdd $f.fCol4.eEndSlice "Slice number to end EM-EMSegment"
-
+  
     pack  $f.fCol1.lNumClasses $f.fCol3.lEMI      -side top -padx $Gui(pad) -pady 2 -anchor w  
     pack  $f.fCol1.lStartSlice $f.fCol3.lEndSlice -side top -padx $Gui(pad) -pady 2 -anchor w 
     pack  $f.fCol2.eNumClasses $f.fCol4.eEMI      -side top -padx $Gui(pad) -pady 1 -anchor w  
@@ -837,12 +839,21 @@ Description of the tabs:
     #-------------------------------------------
     set f $EMSegment(Cl-fClass).f0.frest
 
-    frame $f.fProb -bg $Gui(activeWorkspace)
-    pack $f.fProb -side left -padx 2 -pady 2
+    frame $f.fLeft -bg $Gui(activeWorkspace)
+    pack $f.fLeft -side left -padx 2 -pady 2
     frame $f.fColor -bg $Gui(activeWorkspace)
-    pack $f.fColor -side right -padx 2 -pady 2
+    pack $f.fColor -side right -padx 2 -pady 2 -fill y
 
-    EMSegmentProbWindow $f.fProb Cl $Sclass
+    frame $f.fLeft.fProb -bg $Gui(activeWorkspace) 
+    frame $f.fLeft.fShape -bg $Gui(activeWorkspace)
+    pack $f.fLeft.fProb $f.fLeft.fShape -side top -padx 0 -pady 1 -fill x
+
+    EMSegmentProbWindow $f.fLeft.fProb Cl $Sclass
+
+    DevAddLabel $f.fLeft.fShape.lShape "Shape Parameter: "
+    eval {entry $f.fLeft.fShape.eShape -width 4 -textvariable EMSegment(Cattrib,$Sclass,ShapeParameter) } $Gui(WEA)
+    pack $f.fLeft.fShape.lShape $f.fLeft.fShape.eShape -side left
+    set EMSegment(Cl-eShapeParameter)  $f.fLeft.fShape.eShape
 
     #Define Color
     DevAddLabel $f.lColorLabel "Color/Label:"
@@ -850,8 +861,8 @@ Description of the tabs:
     $f.bColorLabel configure -bg $EMSegment(Cattrib,$Sclass,ColorCode) -activebackground $EMSegment(Cattrib,$Sclass,ColorCode)
     TooltipAdd $f.bColorLabel "Choose label value for class."
     set  EMSegment(Cl-bColorLabel) $f.bColorLabel
-    pack $f.lColorLabel -side left
-    pack $f.bColorLabel -side left -padx 1
+    pack $f.lColorLabel -side left  -anchor n -pady 4
+    pack $f.bColorLabel -side left  -anchor n -padx 1 -pady 2
 
     EMSegmentCreateGraphDisplayButton $EMSegment(Cl-fClass).f0
     #-------------------------------------------
@@ -962,7 +973,7 @@ Description of the tabs:
 
     DevAddLabel $f.fAction.lStep4 "Step 4: Start training for MRF-Paramters"
     pack $f.fAction.lStep4 -side top -padx $Gui(pad) -pady 1 -anchor w
-    DevAddButton $f.fAction.bStep4 "Run Algorithm" EMSegmentTrainCIMField 
+    DevAddButton $f.fAction.bStep4 "Run Algorithm" "EMSegmentTrainCIMField; EMSegmentExecuteCIM Edit;  set EMSegment(TabbedFrame,$EMSegment(Ma-tabCIM),tab) Edit"
 
     DevAddLabel $f.fAction.lCaution "Caution: Training with the Training Volume \n will not only change the Random Field \n Definition but also class probablity !" 
     $f.fAction.lCaution configure -fg red
@@ -1070,7 +1081,11 @@ Description of the tabs:
     frame $f.fSect1.fCol$i -bg $Gui(activeWorkspace)
     pack $f.fSect1.fCol$i -side left -padx 0 -pady $Gui(pad) 
     }
-    
+
+    DevAddLabel $f.fSect1.fCol1.lESI "EM - Shape:"
+    eval {entry $f.fSect1.fCol2.eESI -width 4 -textvariable EMSegment(EMShapeIter) } $Gui(WEA)
+    TooltipAdd $f.fSect1.fCol2.eESI "Number of EM - Shaoe Iterations"
+
     DevAddLabel $f.fSect1.fCol1.lEMI "EM-Iterations:"
     eval {entry $f.fSect1.fCol2.eEMI -width 4 -textvariable EMSegment(EMiteration) } $Gui(WEA)
     TooltipAdd $f.fSect1.fCol2.eEMI "Number of EM Iterations"
@@ -1216,8 +1231,8 @@ Description of the tabs:
 
    
     # Pack 2. Block
-    pack $f.fSect1.fCol1.lEMI $f.fSect1.fCol1.lMRFI $f.fSect1.fCol1.lAlpha -side top -padx $Gui(pad) -pady 2 -anchor w 
-    pack $f.fSect1.fCol2.eEMI $f.fSect1.fCol2.eMRFI $f.fSect1.fCol2.eAlpha -side top -anchor w
+    pack $f.fSect1.fCol1.lESI $f.fSect1.fCol1.lEMI $f.fSect1.fCol1.lMRFI $f.fSect1.fCol1.lAlpha -side top -padx $Gui(pad) -pady 2 -anchor w 
+    pack $f.fSect1.fCol2.eESI $f.fSect1.fCol2.eEMI $f.fSect1.fCol2.eMRFI $f.fSect1.fCol2.eAlpha -side top -anchor w
     pack $f.fSect1.fCol1.lEmpty2 $f.fSect1.fCol2.lEmpty2 -side top -padx $Gui(pad) -pady 1 -anchor w  
 
     #Pack 3. Block
@@ -1472,6 +1487,7 @@ proc EMSegmentUpdateMRML {} {
         EMSegmentSetMaxInputChannelDef            [Segmenter($pid,node) GetMaxInputChannelDef]
         EMSegmentCreateDeleteClasses 1 0
         set CurrentClassList $EMSegment(Cattrib,0,ClassList)       
+        set EMSegment(EMShapeIter)                [Segmenter($pid,node) GetEMShapeIter]
         set EMSegment(EMiteration)                [Segmenter($pid,node) GetEMiteration]
         set EMSegment(MFAiteration)               [Segmenter($pid,node) GetMFAiteration]                
         set EMSegment(Alpha)                      [Segmenter($pid,node) GetAlpha]                       
@@ -1569,7 +1585,9 @@ proc EMSegmentUpdateMRML {} {
         set EMSegment(Cattrib,$NumClass,Node)  $item
 
         EMSegmentClickLabel $NumClass [expr !$EMSegment(SuperClass)] [SegmenterClass($pid,node) GetLabel] 
-        set EMSegment(Cattrib,$NumClass,Prob)   [SegmenterClass($pid,node) GetProb]
+        set EMSegment(Cattrib,$NumClass,Prob)             [SegmenterClass($pid,node) GetProb]
+        set EMSegment(Cattrib,$NumClass,ShapeParameter)   [SegmenterClass($pid,node) GetShapeParameter]
+
 
         set LocalPriorPrefix [SegmenterClass($pid,node) GetLocalPriorPrefix]
         set LocalPriorName   [SegmenterClass($pid,node) GetLocalPriorName]
@@ -1736,6 +1754,7 @@ proc EMSegmentSaveSetting {FileFlag {FileName -1}} {
     Segmenter($pid,node) SetAlreadyRead                 1
     Segmenter($pid,node) SetNumClasses                  [llength $EMSegment(Cattrib,$SuperClass,ClassList)]
     Segmenter($pid,node) SetMaxInputChannelDef          $EMSegment(MaxInputChannelDef)
+    Segmenter($pid,node) SetEMShapeIter                 $EMSegment(EMShapeIter)
     Segmenter($pid,node) SetEMiteration                 $EMSegment(EMiteration)
     Segmenter($pid,node) SetMFAiteration                $EMSegment(MFAiteration)  
     Segmenter($pid,node) SetAlpha                       $EMSegment(Alpha)  
@@ -1775,7 +1794,9 @@ proc EMSegmentSaveSetting {FileFlag {FileName -1}} {
        SegmenterInput($pid,node) SetFilePrefix [Volume($v,node) GetFilePrefix]
        SegmenterInput($pid,node) SetFileName   [Volume($v,node) GetName]
        eval SegmenterInput($pid,node) SetImageRange [Volume($v,node) GetImageRange] 
-       SegmenterInput($pid,node) SetIntensityAvgValuePreDef $EMSegment(IntensityAvgValue,$v)
+       if {$EMSegment(IntensityAvgClass) > -1} {
+         SegmenterInput($pid,node) SetIntensityAvgValuePreDef $EMSegment(IntensityAvgValue,$v)
+       }
    }
    # -------------------------------------------------------------------
    # 4.) SegmenterSuperClass - Class - CIM
@@ -1804,7 +1825,7 @@ proc EMSegmentSaveSettingSuperClass {SuperClass LastNode} {
           # Check if UpdateNodeFlag is set => delete current node if it exists !
           if {$EMSegment(Cattrib,$i,Node) == ""} {set EMSegment(Cattrib,$i,Node) [MainMrmlInsertAfterNode $LastNode SegmenterSuperClass] }
           set pid [$EMSegment(Cattrib,$i,Node) GetID]
-      SegmenterSuperClass($pid,node) SetName        $EMSegment(Cattrib,$i,Name)
+          SegmenterSuperClass($pid,node) SetName        $EMSegment(Cattrib,$i,Name)
           SegmenterSuperClass($pid,node) SetProb        $EMSegment(Cattrib,$i,Prob)  
           SegmenterSuperClass($pid,node) SetNumClasses  [llength $EMSegment(Cattrib,$i,ClassList)]
 
@@ -1813,12 +1834,13 @@ proc EMSegmentSaveSettingSuperClass {SuperClass LastNode} {
       # A normal class
       if {$EMSegment(Cattrib,$i,Node) == ""} {set EMSegment(Cattrib,$i,Node) [MainMrmlInsertAfterNode $LastNode SegmenterClass] }
           set pid [$EMSegment(Cattrib,$i,Node) GetID]
-      set LastNode $EMSegment(Cattrib,$i,Node)
+          set LastNode $EMSegment(Cattrib,$i,Node)
 
           # Set Values
-          SegmenterClass($pid,node) SetName  "$EMSegment(Cattrib,$i,Label)"
-          SegmenterClass($pid,node) SetLabel $EMSegment(Cattrib,$i,Label)
-          SegmenterClass($pid,node) SetProb  $EMSegment(Cattrib,$i,Prob)
+          SegmenterClass($pid,node) SetName           "$EMSegment(Cattrib,$i,Label)"
+          SegmenterClass($pid,node) SetLabel          $EMSegment(Cattrib,$i,Label)
+          SegmenterClass($pid,node) SetProb           $EMSegment(Cattrib,$i,Prob)
+          SegmenterClass($pid,node) SetShapeParameter $EMSegment(Cattrib,$i,ShapeParameter)  
           set v $EMSegment(Cattrib,$i,ProbabilityData)
           if {$v != $Volume(idNone) } {
              SegmenterClass($pid,node) SetLocalPriorPrefix     [Volume($v,node) GetFilePrefix]
@@ -1943,6 +1965,9 @@ proc EMSegmentStartEM { } {
       bell
       bell
    } else {
+     # Kilian: Just for debugging - should be better integrated 
+     set EMSegment(VolumeNameList) ""
+     foreach v $Volume(idList) {lappend EMSegment(VolumeNameList)  [Volume($v,node) GetName]}
      set NumInputImagesSet [EMSegmentAlgorithmStart] 
    }  
    # ----------------------------------------------
@@ -2417,7 +2442,8 @@ proc EMSegmentChangeClass {Sclass} {
     $EMSegment(EM-eProb)  config  -textvariable EMSegment(Cattrib,$Sclass,Prob)
     $EMSegment(Cl-eProb)  config  -textvariable EMSegment(Cattrib,$Sclass,Prob)
     $EMSegment(ClSuper-eProb) config -textvariable EMSegment(Cattrib,$Sclass,Prob)
-
+    $EMSegment(Cl-eShapeParameter) config  -textvariable EMSegment(Cattrib,$Sclass,ShapeParameter)
+ 
     $EMSegment(EM-mbClasses) config -bg $EMSegment(Cattrib,$Sclass,ColorCode) -activebackground $EMSegment(Cattrib,$Sclass,ColorCode)
     $EMSegment(Cl-mbClasses) config -bg $EMSegment(Cattrib,$Sclass,ColorCode) -activebackground $EMSegment(Cattrib,$Sclass,ColorCode)
     $EMSegment(Cl-bColorLabel) config -bg $EMSegment(Cattrib,$Sclass,ColorCode) -text $EMSegment(Cattrib,$Sclass,Label)\
@@ -2723,7 +2749,7 @@ proc EMSegmentCreateDeleteClasses {ChangeGui DeleteNode} {
                 if {$EMSegment(Cattrib,$i,CIMMatrix,$dir,Node) != ""}  {MainMrmlDeleteNode SegmenterCIM [$EMSegment(Cattrib,$i,CIMMatrix,$dir,Node) GetID]}
               } 
               if {$EMSegment(Cattrib,$i,EndNode) != ""} { MainMrmlDeleteNode EndSegmenterSuperClass [$EMSegment(Cattrib,$i,EndNode) GetID] }
-       }
+            }
         } else {
             # ----------------------------------------------------
             # Delete normal class
@@ -2748,7 +2774,7 @@ proc EMSegmentCreateDeleteClasses {ChangeGui DeleteNode} {
 
             # Delete Node from Graph 
             if {($EMSegment(Cattrib,$i,Node) != "") && $DeleteNode} { MainMrmlDeleteNode SegmenterClass [$EMSegment(Cattrib,$i,Node) GetID] }
-    }
+        }
     
         # Unset variables - CIM Variable is unset a little bit later
         unset EMSegment(Cattrib,$i,Node)     
@@ -2768,30 +2794,29 @@ proc EMSegmentCreateDeleteClasses {ChangeGui DeleteNode} {
         foreach k $EMSegment(CIMList) {
           unset EMSegment(Cattrib,$i,CIMMatrix,$k,Node)
           foreach j $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList) {
-          unset EMSegment(Cattrib,$EMSegment(SuperClass),CIMMatrix,$i,$j,$k) 
-          if {[lsearch $DeleteList $j] < 0} {
-             if {$ChangeGui} {destroy $f.fLine$j.eCol$i}
-             unset EMSegment(Cattrib,$EMSegment(SuperClass),CIMMatrix,$j,$i,$k)
-          } 
+            unset EMSegment(Cattrib,$EMSegment(SuperClass),CIMMatrix,$i,$j,$k) 
+            if {[lsearch $DeleteList $j] < 0} {
+              if {$ChangeGui} {destroy $f.fLine$j.eCol$i}
+              unset EMSegment(Cattrib,$EMSegment(SuperClass),CIMMatrix,$j,$i,$k)
+            } 
+          }
         }
-    }
-    # Class Definition
-    unset EMSegment(Cattrib,$i,ColorCode) EMSegment(Cattrib,$i,Label)  
-    unset EMSegment(Cattrib,$i,Prob) EMSegment(Cattrib,$i,ProbabilityData)
-    
-    for {set y 0} {$y <  $EMSegment(MaxInputChannelDef)} {incr y} {
-        unset  EMSegment(Cattrib,$i,LogMean,$y)
-        for {set x 0} {$x <  $EMSegment(MaxInputChannelDef)} {incr x} { 
-        unset EMSegment(Cattrib,$i,LogCovariance,$y,$x) 
+        # Class Definition
+        unset EMSegment(Cattrib,$i,ColorCode) EMSegment(Cattrib,$i,Label)  
+        unset EMSegment(Cattrib,$i,Prob) EMSegment(Cattrib,$i,ProbabilityData)
+        unset EMSegment(Cattrib,$i,ShapeParameter)
+
+        for {set y 0} {$y <  $EMSegment(MaxInputChannelDef)} {incr y} {
+          unset  EMSegment(Cattrib,$i,LogMean,$y)
+          for {set x 0} {$x <  $EMSegment(MaxInputChannelDef)} {incr x} { 
+            unset EMSegment(Cattrib,$i,LogCovariance,$y,$x) 
+          }
         }
+        # Sample List
+        foreach v $EMSegment(SelVolList,VolumeList) { unset EMSegment(Cattrib,$i,$v,Sample)  }
     }
-    # Sample List
-    foreach v $EMSegment(SelVolList,VolumeList) {
-        unset EMSegment(Cattrib,$i,$v,Sample) 
-    }
-      }
-      # Destory elements from list
-      set EMSegment(Cattrib,$EMSegment(SuperClass),ClassList) [lrange $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList) 0 [expr $EMSegment(NumClassesNew) -1]] 
+    # Destory elements from list
+    set EMSegment(Cattrib,$EMSegment(SuperClass),ClassList) [lrange $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList) 0 [expr $EMSegment(NumClassesNew) -1]] 
       # Reconfigure width and height of canvas
       if {$ChangeGui} {EMSegmentSetCIMMatrix} 
     
@@ -2835,6 +2860,7 @@ proc EMSegmentCreateDeleteClasses {ChangeGui DeleteNode} {
 
       set EMSegment(Cattrib,$i,Prob) $Cprob 
       set EMSegment(Cattrib,$i,ClassList) ""
+      set EMSegment(Cattrib,$i,ShapeParameter) 0.0
 
       set EMSegment(Cattrib,$i,Node)  ""   
       set EMSegment(Cattrib,$i,EndNode) ""
@@ -3362,89 +3388,6 @@ proc EMSegmentChangeCIMMatrix {CIMType} {
            $f.fLine$i.eCol$j configure -textvariable EMSegment(Cattrib,$EMSegment(SuperClass),CIMMatrix,$j,$i,$CIMType) 
        }
    }
-}
-
-#-------------------------------------------------------------------------------
-# .PROC  EMSegmentSuperClassChildren 
-# Finds out the all children, grandchildren and ... of a super class
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EMSegmentSuperClassChildren {SuperClass} {
-    global EMSegment
-    if {$EMSegment(Cattrib,$SuperClass,IsSuperClass) == 0} {
-    return     $EMSegment(Cattrib,$SuperClass,Label)
-    }
-    set result ""
-    foreach i $EMSegment(Cattrib,$SuperClass,ClassList) {
-    if {$EMSegment(Cattrib,$i,IsSuperClass)} {
-           # it is defined as SetType<TYPE> <ID>  
-       set result "$result [EMSegmentSuperClassChildren $i]" 
-    } else {
-        lappend result $EMSegment(Cattrib,$i,Label)  
-    }
-     } 
-     return $result
- }
-
-#-------------------------------------------------------------------------------
-# .PROC EMSegmentTrainCIMField
-# Traines the CIM Field with a given Image
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EMSegmentTrainCIMField {} {
-    global EMSegment Volume
-    # Transferring Information
-    foreach i $EMSegment(GlobalSuperClassList) {
-    vtkImageEMMarkov EMCIM    
-    # EM Specific Information
-    set NumClasses [llength $EMSegment(Cattrib,$i,ClassList)]
-        EMCIM SetNumClasses     $NumClasses  
-    EMCIM SetStartSlice     $EMSegment(StartSlice)
-    EMCIM SetEndSlice       $EMSegment(EndSlice)
-
-        # Kilian : Get rid of those 
-    EMCIM SetImgTestNo       -1 
-    EMCIM SetImgTestDivision  0 
-    EMCIM SetImgTestPixel     0 
-        set index 0
-        foreach j $EMSegment(Cattrib,$i,ClassList) {
-        set LabelList [EMSegmentSuperClassChildren $j]
-        EMCIM SetLabelNumber $index [llength $LabelList]
-        foreach l $LabelList {
-        EMCIM SetLabel $index $l
-        }
-            incr index
-    }
-
-    # Transfer image information
-    EMCIM SetInput [Volume($Volume(activeID),vol) GetOutput]
-    set data [EMCIM GetOutput]
-    # This Command calls the Thread Execute function
-    $data Update
-    set xindex 0 
-    foreach x $EMSegment(Cattrib,$i,ClassList) {
-        set EMSegment(Cattrib,$x,Prob) [EMCIM GetProbability $xindex]
-        set yindex 0
-        # EMCIM traines the matrix (y=t, x=t-1) just the other way EMSegment (y=t-1, x=t) needs it - Sorry !
-        foreach y $EMSegment(Cattrib,$i,ClassList) {
-        for {set z 0} {$z < 6} {incr z} {
-            # Error made in x,y coordinates in EMSegment - I checked everything - it workes in XML and CIM Display in correct order - so do not worry - it is just a little bit strange - but strange things happen
-            set temp [$data GetScalarComponentAsFloat $yindex $xindex  $z 0]
-            set EMSegment(Cattrib,$i,CIMMatrix,$x,$y,[lindex $EMSegment(CIMList) $z]) [expr round($temp*100000)/100000.0]        
-        }
-        incr yindex
-        }
-        incr xindex
-    }
-    # Delete instance
-    EMCIM Delete
-    }
-    # Jump to edit field 
-    EMSegmentExecuteCIM Edit
-    # Move Button to Edit
-    set EMSegment(TabbedFrame,$EMSegment(Ma-tabCIM),tab) Edit
 }
 
 #-------------------------------------------------------------------------------
