@@ -14,7 +14,7 @@ exec tclsh "$0" "$@"
 # - configure (or cmake) with needed options
 # - build for this platform
 #
-# Packages: cmake, tcl, itcl, ITK, VTK, blt
+# Packages: cmake, tcl, itcl, ITK, VTK, blt, gsl
 # 
 # Usage:
 #   genlib [options] [target]
@@ -35,6 +35,7 @@ set tkTag "core-8-4-6"
 set itclTag "itcl-3-2-1"
 set iwidgetsTag "iwidgets-4-0-1"
 set bltTag "blt24z"
+set gslTag "release-1-4"
 
 # when using this on window, some things will have to be run from the cygwin terminal
 set winMsg "Sorry, this isn't all automated for windows. Open a cygwin terminal and do the following:\n"
@@ -160,6 +161,7 @@ switch $tcl_platform(os) {
         set itclTestFile $TCL_LIB_DIR/libitclstub3.2.a
         set iwidgetsTestFile $TCL_LIB_DIR/iwidgets4.0.1/iwidgets.tcl
         set bltTestFile $TCL_BIN_DIR/bltwish
+        set gslTestFile $GSL_LIB_DIR/libgsl.so
         set vtkTestFile $VTK_DIR/bin/vtk
         set vtkTclLib $TCL_LIB_DIR/libtcl8.4.so 
         set vtkTkLib $TCL_LIB_DIR/libtk8.4.so
@@ -174,6 +176,7 @@ switch $tcl_platform(os) {
         set itclTestFile $TCL_LIB_DIR/itcl3.2/itcl32.dll
         set iwidgetsTestFile $TCL_LIB_DIR/iwidgets4.0.2/iwidgets.tcl
         set bltTestFile $TCL_BIN_DIR/BLT24.dll
+        set gslTestFile $GSL_LIB_DIR/gsl.dll
         set vtkTestFile $VTK_DIR/bin/$VTK_BUILD_TYPE/vtk.exe
         set vtkTclLib $TCL_LIB_DIR/tcl84.lib
         set vtkTkLib $TCL_LIB_DIR/tk84.lib
@@ -323,6 +326,32 @@ if { ![file exists $bltTestFile] } {
     } else {
         cd $SLICER_LIB/tcl/blt
         runcmd ./configure --with-tcl=$SLICER_LIB/tcl-build --with-tk=$SLICER_LIB/tcl-build --prefix=$SLICER_LIB/tcl-build 
+        runcmd make
+        runcmd make install
+    }
+
+}
+
+################################################################################
+# Get and build gsl
+#
+
+if { ![file exists $gslTestFile] } {
+    file mkdir $SLICER_LIB/gsl-build
+    file mkdir $SLICER_LIB/gsl
+
+    cd $SLICER_LIB/gsl-build
+    
+    runcmd cvs -d:pserver:anoncvs:anoncvs@sources.redhat.com:/cvs/gsl login
+    runcmd cvs -z3 -d:pserver:anoncvs:anoncvs@sources.redhat.com:/cvs/gsl co -r $gslTag gsl
+
+    if {$isWindows} {
+        # can't do windows
+    } else {
+        cd $SLICER_LIB/gsl-build/gsl
+        runcmd ./autogen.sh
+        runcmd ./configure --prefix=$SLICER_LIB/gsl
+        runcmd touch doc/version-ref.texi
         runcmd make
         runcmd make install
     }
