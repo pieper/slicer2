@@ -259,7 +259,7 @@ proc EndoscopicInit {} {
     set Module($m,category) "Visualisation"
     
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.77 $} {$Date: 2004/11/02 18:31:24 $}] 
+    {$Revision: 1.78 $} {$Date: 2004/11/15 21:24:19 $}] 
        
     # Define Procedures
     #------------------------------------
@@ -376,6 +376,11 @@ proc EndoscopicInit {} {
     # lights
     set Endoscopic(flatColon,LightElev) 0
     set Endoscopic(flatColon,LightAzi) 0
+    
+    # flatcolon scalar visibility and range
+    set Endoscopic(flatColon,scalarVisibility) 0
+    set Endoscopic(flatColon,scalarLow) 0
+    set Endoscopic(flatColon,scalarHigh) 100
     
     # number of targets
     set Endoscopic(totalTargets) 0
@@ -4973,23 +4978,53 @@ proc EndoscopicAddFlatView {} {
     set optzfrm [frame $yfrm.optzfrm]
     set optzbut [button $optzfrm.optzbut -text "Center Viewpoint" -font {helvetica 10 bold} \
     -command "EndoscopicResetFlatCameraDist $f.flatRenderWidget$name"]
-    
-    set quitbut [button $optzfrm.quitbut -text "Close Flat Colon" -font {helvetica 10 bold} \
-    -command "EndoscopicRemoveFlatView $name"]
     pack $optzbut -side top -pady 4 -expand yes -fill x
-    pack $quitbut -side bottom -pady 4 -expand yes -fill x
+    
+    
+    set scalarOnOfffrm [frame $yfrm.scalarOnOfffrm]
+    set scaOnOfflbl [label $scalarOnOfffrm.lbl -text "Curvature Analysis:" -font {helvetica 10 bold}]
+    pack $scaOnOfflbl -side left -padx 2
+    
+    foreach text "{On} {Off}" \
+            value "1 0" \
+            width "4 4" {
+        eval {radiobutton $scalarOnOfffrm.$value -width $width \
+            -font {helvetica 10 bold}\
+                -text "$text" -value "$value" -variable Endoscopic(flatColon,scalarVisibility) \
+                -command "EndoscopicSetFlatColonScalarVisibility $f.flatRenderWidget$name" \
+                -indicatoron 0}
+        pack $scalarOnOfffrm.$value -side left -padx 2
+    }
 
     
+    
+    set scalarRangefrm [frame $yfrm.scalarRangefrm]
+    set scaRangelbl [label $scalarRangefrm.lbl -text "Threshold Range:" -font {helvetica 10 bold}]
+    eval {entry $scalarRangefrm.eLo -width 6 -textvariable Endoscopic(flatColon,scalarLow) }
+    bind $scalarRangefrm.eLo <Return> "EndoscopicSetFlatColonScalarRange $f.flatRenderWidget$name"
+    bind $scalarRangefrm.eLo <FocusOut> "EndoscopicSetFlatColonScalarRange $f.flatRenderWidget$name"
+    eval {entry $scalarRangefrm.eHi -width 6 -textvariable Endoscopic(flatColon,scalarHigh) }
+    bind $scalarRangefrm.eHi <Return> "EndoscopicSetFlatColonScalarRange $f.flatRenderWidget$name"
+    bind $scalarRangefrm.eHi <FocusOut> "EndoscopicSetFlatColonScalarRange $f.flatRenderWidget$name"
+    pack $scaRangelbl $scalarRangefrm.eLo $scalarRangefrm.eHi -side left -padx 2
+
+    
+
+
     #pack yfrm
-    pack $zoomfrm -side top -pady 4 -expand yes
-    pack $optzfrm -side top -pady 4 -expand yes
+    pack $zoomfrm -side top -pady 2 -expand yes
+    pack $optzfrm -side top -pady 2 -expand yes
+    pack $scalarOnOfffrm -side top -pady 2 -expand yes
+    pack $scalarRangefrm -side top -pady 2 -expand yes
+   
 
     # the following scale is left un-packed, because it will be removed eventually
     set udlbl [label $yfrm.lbl -text "Up/Down" -font {helvetica 10} ]
     set Endoscopic(flatScale,panud) [scale $yfrm.updown -from -10 -to 10 -res 0.5 -orient vertical -variable Endoscopic(flatColon,yCamDist)]
     #pack $udlbl $Endoscopic(flatScale,panud) -side top -pady 4 -expand yes
 
-        
+   
+
     # light frame: change the light positions, elevation and azimuth
     set lfrm [frame .t$name.controls.lfrm]
     
@@ -5007,13 +5042,24 @@ proc EndoscopicAddFlatView {} {
     pack $azilbl -side top
     pack $Endoscopic(flatScale,azimuth) -side top
     
-    set coordfrm [frame .t$name.controls.lfrm.coordfrm]
-    set coordlbl [label $coordfrm.lbl -text "x: 0 y: "]
-    pack $coordlbl -side top
+    
+    set quitfrm [frame .t$name.controls.lfrm.quitfrm]
+    set quitbut [button $quitfrm.quitbut -text "Close Flat Colon" -font {helvetica 10 bold} \
+    -command "EndoscopicRemoveFlatView $name"]
+    pack $quitbut -side bottom -pady 4 -expand yes -fill x
+    
+    
+    #the following is left unpacked, since the test function will be removed eventually
+    #set coordfrm [frame .t$name.controls.lfrm.coordfrm]
+    #set coordlbl [label $coordfrm.lbl -text "x: 0 y: "]
+    #pack $coordlbl -side top
+    #pack $coordfrm -side top -pady 4 -expand yes
 
-    pack $elefrm -side top -pady 4 -expand yes
-    pack $azifrm -side top -pady 4 -expand yes
-    pack $coordfrm -side top -pady 4 -expand yes
+
+    pack $elefrm -side top -pady 2 -expand yes
+    pack $azifrm -side top -pady 2 -expand yes
+    pack $quitfrm -side top -pady 2 -expand yes
+    
     
     # pack control frames
     pack .t$name.controls.xfrm -side left  -padx 1 -anchor n -expand yes
@@ -5031,8 +5077,10 @@ proc EndoscopicAddFlatView {} {
     Endoscopic($name,renderer) SetBackground 0.5 0.5 0.5
     [$f.flatRenderWidget$name GetRenderWindow] AddRenderer Endoscopic($name,renderer)
     lappend $Endoscopic(FlatRenderers) Endoscopic($name,renderer)
-    #vtkRenderWindowInteractor iren
-    #iren SetRenderWindow [$f.flatRenderWidget$name GetRenderWindow]
+    
+    #activate interactor
+#    vtkRenderWindowInteractor iren
+#    iren SetRenderWindow [$f.flatRenderWidget$name GetRenderWindow]
 
 
     # set and activate event bindings for this widget
@@ -5046,9 +5094,11 @@ proc EndoscopicAddFlatView {} {
     TempPolyReader SetFileName $Endoscopic(FlatSelect)
 
     # create a vtkPolyDataMapper
-    vtkPolyDataMapper TempMapper
-    TempMapper SetInput [TempPolyReader GetOutput]
-    TempMapper ScalarVisibilityOff
+    vtkPolyDataMapper Endoscopic($name,FlatColonMapper)
+    Endoscopic($name,FlatColonMapper) SetInput [TempPolyReader GetOutput]
+#    Endoscopic($name,FlatColonMapper) ScalarVisibilityOn
+#    Endoscopic($name,FlatColonMapper) SetScalarRange 0 100
+    Endoscopic($name,FlatColonMapper) ScalarVisibilityOff
         
     # save the polydata where we can find it later
     set Endoscopic($name,polyData) [TempPolyReader GetOutput]
@@ -5065,7 +5115,7 @@ proc EndoscopicAddFlatView {} {
    
    [Endoscopic($name,FlatColonActor) GetProperty] BackfaceCullingOff
     
-    Endoscopic($name,FlatColonActor) SetMapper TempMapper
+    Endoscopic($name,FlatColonActor) SetMapper Endoscopic($name,FlatColonMapper)
     Endoscopic($name,renderer) AddActor Endoscopic($name,FlatColonActor)
     
     #create Outline
@@ -5075,6 +5125,10 @@ proc EndoscopicAddFlatView {} {
       outlineMapper SetInput [colonOutline GetOutput]
     vtkActor Endoscopic($name,outlineActor)
       Endoscopic($name,outlineActor) SetMapper outlineMapper
+      
+  #    Endoscopic($name,outlineActor) SetScale 1.0 1. 1.0
+  #    Endoscopic($name,outlineActor) SetPosition 0.0 0.0 0.0
+      
       [Endoscopic($name,outlineActor) GetProperty] SetColor 0 0 0
     Endoscopic($name,renderer) AddActor Endoscopic($name,outlineActor)
     
@@ -5107,7 +5161,7 @@ proc EndoscopicAddFlatView {} {
     set Endoscopic(flatColon,yCamDist) $Endoscopic(flatColon,yMid)
     $Endoscopic(flatScale,panud) set $Endoscopic(flatColon,yCamDist)
     
-    set Endoscopic(flatColon,zCamDist) $Endoscopic(flatColon,zOpt)    
+    set Endoscopic(flatColon,zCamDist) $Endoscopic(flatColon,zOpt) 
     $Endoscopic(flatScale,camZoom) set $Endoscopic(flatColon,zCamDist)
     
     set Endoscopic($name,camera) [Endoscopic($name,renderer) GetActiveCamera]
@@ -5155,7 +5209,7 @@ proc EndoscopicAddFlatView {} {
     [$f.flatRenderWidget$name GetRenderWindow] Render    
 
     TempPolyReader Delete
-    TempMapper Delete
+#    TempMapper Delete
     colonOutline Delete
     outlineMapper Delete
 
@@ -5176,7 +5230,8 @@ proc EndoscopicRemoveFlatView {{name ""}} {
     destroy .t$name
     
     Endoscopic($name,renderer) Delete
-    Endoscopic($name,FlatColonActor) Delete    ;
+    Endoscopic($name,FlatColonActor) Delete
+    Endoscopic($name,FlatColonMapper) Delete
     # actor for flattened image
     Endoscopic($name,outlineActor) Delete
     Endoscopic($name,lightKit) Delete
@@ -5213,6 +5268,11 @@ proc EndoscopicRemoveFlatView {{name ""}} {
     }
     set Endoscopic(FlatSelect) ""
     set Endoscopic(name) ""
+    
+    set Endoscopic(flatColon,scalarVisibility) 0
+    set Endoscopic(flatColon,scalarLow) 0    
+    set Endoscopic(flatColon,scalarHigh) 100
+    
  # de-activate bindings for the flat window   
     EndoscopicPopFlatBindings
 }
@@ -5243,10 +5303,10 @@ proc EndoscopicCreateFlatBindings {widget} {
     EvDeclareEventHandler FlatWindowEvents <Shift-Double-1> {EndoscopicPickFlatPoint %W %x %y}
 
 #test binding to track mouse position
-    EvDeclareEventHandler FlatMotionEvents <Motion> {EndoscopicMouseLocation %W %x %y}
+#    EvDeclareEventHandler FlatMotionEvents <Motion> {EndoscopicMouseLocation %W %x %y}
 
 #add various events to the binding set for the flat window
-    EvAddWidgetToBindingSet bindFlatWindowEvents $widget {{FlatWindowEvents} {FlatMotionEvents} {FlatWindowExpose} \
+    EvAddWidgetToBindingSet bindFlatWindowEvents $widget {{FlatWindowEvents} {FlatWindowExpose} \
     {FlatWindowStartPan} {FlatWindowB2Motion} {FlatWindowEndPan}}
     
 # the zoom function with B3 is temporarily disabled, pending feed back from user
@@ -5396,6 +5456,12 @@ proc EndoscopicPickFlatPoint {widget xcoord ycoord} {
 
     set name $Endoscopic(name)  
     set polyData $Endoscopic($name,polyData)
+    
+#reduce point number by half
+    set numP [$polyData GetNumberOfPoints]
+ puts "nump for the doubled model is: $numP"
+    set numP  [expr $numP/2] 
+ puts "nump for the single model is: $numP"    
        
     vtkPointLocator tempPointLocator
     tempPointLocator SetDataSet $polyData
@@ -5405,6 +5471,14 @@ proc EndoscopicPickFlatPoint {widget xcoord ycoord} {
     set z [lindex $Select(xyz) 2]
     
     set pointId [tempPointLocator FindClosestPoint $x $y $z]
+ puts "picked pointId from the double model is $pointId"
+    
+# check if the pointId is larger than numP
+       if {$pointId > $numP} {
+       set pointId [expr $pointId - $numP]
+       }
+       
+ puts "picked pointId from the single model is $pointId"     
        
     EndoscopicAddTargetFromFlatColon $pointId
             
@@ -5541,7 +5615,7 @@ proc EndoscopicAddTargetFromFlatColon {pointId} {
     
         set pointId $pointId
 
-puts "pointId from FlatColon is $pointId"
+# puts "pointId from FlatColon is $pointId"
 
 # get the xyz coordinates of the point (picked from the flat colon) in the 3D colon.  
        set model $Model(activeID)
@@ -5943,6 +6017,10 @@ proc EndoscopicMainFileCloseUpdated {}  {
 
      
      }
+     
+     set Endoscopic(flatColon,scalarVisibility) 0
+     set Endoscopic(flatColon,scalarLow) 0
+     set Endoscopic(flatColon,scalarHigh) 100
 
 }
 
@@ -6573,4 +6651,49 @@ proc EndoscopicResetStop {} {
      set Endoscopic(flatColon,stop) 0
 }
 
+proc EndoscopicSetFlatColonScalarVisibility {widget} {
+     
+     global Endoscopic
+     
+     set name $Endoscopic($widget,name)
+     
+     if {$Endoscopic(flatColon,scalarVisibility) == 0} {
+     
+     Endoscopic($name,FlatColonMapper) ScalarVisibilityOff
+     
+     } else {
+     
+     Endoscopic($name,FlatColonMapper) ScalarVisibilityOn
+     Endoscopic($name,FlatColonMapper) SetScalarRange $Endoscopic(flatColon,scalarLow) $Endoscopic(flatColon,scalarHigh)
+     }
+     
+     
+    [$widget GetRenderWindow] Render
 
+
+}
+
+proc EndoscopicSetFlatColonScalarRange {widget} {
+     
+     global Endoscopic
+     
+     set name $Endoscopic($widget,name)
+     
+     if {$Endoscopic(flatColon,scalarVisibility) == 1} {
+     
+     Endoscopic($name,FlatColonMapper) ScalarVisibilityOn
+     Endoscopic($name,FlatColonMapper) SetScalarRange $Endoscopic(flatColon,scalarLow) $Endoscopic(flatColon,scalarHigh)
+     
+     } 
+#     else {
+     
+#     set Endoscopic(flatColon,scalarVisibility) 1
+#     Endoscopic($name,FlatColonMapper) ScalarVisibilityOn
+#     Endoscopic($name,FlatColonMapper) SetScalarRange $Endoscopic(flatColon,scalarLow) $Endoscopic(flatColon,scalarHigh)
+#     }
+     
+    [$widget GetRenderWindow] Render
+
+
+
+}
