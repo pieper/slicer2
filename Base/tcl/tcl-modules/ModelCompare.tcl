@@ -29,9 +29,11 @@
 #   ModelCompareDeleteModelGUI widget int
 #   ModelCompareUpdateGUI
 #   ModelCompareCorrespondSurfaces
-#   ModelCompareCorrespondSurfaces
 #   ModelCompareMatchSurface
 #   ModelCompareMatchSurface
+#   ModelCompareFormArray
+#   ModelCompareUndoArray
+#   ModelCompareSetAll Setting
 #==========================================================================auto=
 
 
@@ -131,7 +133,7 @@ proc ModelCompareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1 $} {$Date: 2002/06/28 20:35:14 $}]
+        {$Revision: 1.2 $} {$Date: 2002/07/02 22:46:16 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -613,14 +615,12 @@ proc ModelCompareCorrespondSurfaces {} {
   Render3D
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC ModelCompareMatchSurface
 # 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-
 proc ModelCompareMatchSurface {m} {
     global ModelCompare Model Volume Module
 
