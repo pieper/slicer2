@@ -103,7 +103,7 @@ itcl::body isprogress::constructor {args} {
 
     update ;# make sure the window exists before grabbing events
     raise $_w
-    #catch "grab -global $_w"
+    catch "grab $_w"
 
     eval itk_initialize $args
 }
