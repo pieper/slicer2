@@ -3,8 +3,8 @@
   Program:   Insight Segmentation & Registration Toolkit
   Module:    $RCSfile: itkKLCompareHistogramImageToImageMetric.txx,v $
   Language:  C++
-  Date:      $Date: 2003/12/24 02:18:49 $
-  Version:   $Revision: 1.2 $
+  Date:      $Date: 2004/01/01 01:04:16 $
+  Version:   $Revision: 1.3 $
 
   Copyright (c) Insight Software Consortium. All rights reserved.
   See ITKCopyright.txt or http://www.itk.org/HTML/Copyright.htm for details.
@@ -83,7 +83,7 @@ TMovingImage>
   // than the number of counst because we add m_Epsilon to every bin
   double AdjustedTotalTrainingFreq = totalTrainingFreq +
     m_HistogramSize[0]*m_HistogramSize[1]*m_Epsilon;
-  double AdjustedTotalMeasuredFreq = totalTrainingFreq +
+  double AdjustedTotalMeasuredFreq = totalMeasuredFreq +
     m_HistogramSize[0]*m_HistogramSize[1]*m_Epsilon;
 
   KL = -KL/static_cast<MeasureType>(AdjustedTotalTrainingFreq)
