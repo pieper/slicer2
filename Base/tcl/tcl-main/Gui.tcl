@@ -54,11 +54,11 @@
 # .END
 #-------------------------------------------------------------------------------
 proc GuiInit {} {
-    global Gui Path tcl_platform
+    global Gui Path tcl_platform SLICER
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo Gui \
-    {$Revision: 1.39 $} {$Date: 2002/08/22 19:35:55 $}]
+    {$Revision: 1.40 $} {$Date: 2002/11/05 17:34:23 $}]
 
 
     # enable tooltips by default.  This should check user preferences somehow.
@@ -99,7 +99,7 @@ proc GuiInit {} {
 
     set Gui(progressText) "Working..."
     set Gui(waitWin) ""
-    set Gui(title) "3D Slicer"
+    set Gui(title) "3D Slicer $SLICER(version)"
     
     # INIT
     set Gui(waitSemaphore) 0

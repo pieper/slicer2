@@ -29,17 +29,49 @@
 #   START_THE_SLICER
 #==========================================================================auto=
 
-if {$argc > 1} {
-    puts "UNIX Usage: slicer <MRML file name .xml>"
-    puts "Windows Usage: slicer.bat <MRML file name .xml>"
+wm withdraw .
+update
+
+#
+# version control for slicer
+#
+
+# bump major when incompatibile changes happen either within slicer
+# or in vtk or tcl
+set SLICER(major_version) 2
+# bump minor when features accumulate to a stable state for release
+set SLICER(minor_version) 0
+# bump revision for something that has been given out to non-developers
+# (e.g. bump revsion before packaging, then again after packaging
+#  so there's a unique label for the packaged version)
+set SLICER(revision) a1
+# when packaging for distribution, set state to ""
+#  otherwise leave it as "dev"
+set SLICER(state) dev
+set SLICER(version) "$SLICER(major_version).$SLICER(minor_version)$SLICER(revision)-$SLICER(state)"
+
+
+#
+# simple command line argument parsing
+#
+
+if {$argc > 1 ||
+        ($argc == 1 && [lindex $argv 0] == "--help") } {
+    set msg "usage: slicer2-<arch> \[MRML file name .xml | dir with MRML file\]"
+    set msg "$msg\n  <arch> is one of win32.exe, solaris-sparc, or linux-x86"
+    tk_messageBox -message $msg -title $SLICER(version) -type ok
     exit
 }
 
-# verbose
+#
+# verbose mode for debugging
+#
 set verbose 0
 
+#
 # Determine Slicer's home directory from the SLICER_HOME environment 
 # variable, or the root directory of this script ($argv0).
+#
 if {[info exists env(SLICER_HOME)] == 0 || $env(SLICER_HOME) == ""} {
     # set prog [file dirname $argv0]
     set prog [file dirname [info script]]
@@ -79,8 +111,6 @@ label .splash.l -image $splashim
 place .splash.l -relx 0.5 -rely 0.35 -anchor center
 label .splash.t -text "Please be aware that Slicer is not validated and \nis for Research Use Only.\n\nSee www.slicer.org for license details." -bg white -fg red
 place .splash.t -relx 0.5 -rely 0.75 -anchor center
-wm withdraw .
-update
 after 7000 "destroy .splash; image delete $splashim"
 proc raisesplash {} { if {[winfo exists .splash]} {raise .splash; after 100 "after idle raisesplash"}}
 raisesplash
@@ -125,6 +155,9 @@ foreach dir $modulePaths {
     }
 }
 
+# special hack for BIRN
+source ${slicer_home}/Modules/mrmlyze/mrmlyze.tcl
+
 # turn off warnings about old function use
 if { $tcl_platform(platform) == "windows" } {
     vtkObject o
@@ -136,12 +169,12 @@ if { $tcl_platform(platform) == "windows" } {
 # startup with the tkcon
 #
 if {1} { 
-set av $argv; set argv "" ;# keep tkcon from trying to interpret command line args
-source $prog/tkcon.tcl
-::tkcon::Init
-tkcon attach main
-wm geometry .tkcon +10-50
-set argv $av
+    set av $argv; set argv "" ;# keep tkcon from trying to interpret command line args
+    source $prog/tkcon.tcl
+    ::tkcon::Init
+    tkcon attach main
+    wm geometry .tkcon +10-50
+    set argv $av
 }
 
 # Source Tcl scripts
