@@ -148,11 +148,6 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlData : public vtkProcessObject {
   // For internal use during Read/Write
   vtkGetObjectMacro(ProcessObject, vtkProcessObject);
 
-  // Description
-  // set the update progress method
-  // recieves a vtkMrmlData
-  static void vtkMrmlDataProgress(void *MrmlData);
-
 protected:
   vtkMrmlData();
   // The virtual descructor is critical!!
@@ -177,13 +172,11 @@ protected:
   int NeedToWrite;
   vtkProcessObject *ProcessObject;
   
-#if (VTK_MAJOR_VERSION == 4 && VTK_MINOR_VERSION > 2)
   // Callback registered with the ProgressObserver.
   static void ProgressCallbackFunction(vtkObject*, unsigned long, void*,
                                        void*);
   // The observer to report progress from the internal writer.
   vtkCallbackCommand* ProgressObserver;  
-#endif  
 };
 
 #endif

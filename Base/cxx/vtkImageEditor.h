@@ -222,13 +222,11 @@ protected:
   vtkImageData *Region;     // the output if we undo a Single slice effect
   vtkIntArray *Indices;     // the indices for how Region was extracted 
 
-#if (VTK_MAJOR_VERSION == 4 && VTK_MINOR_VERSION > 2)
   // Callback registered with the ProgressObserver.
   static void ProgressCallbackFunction(vtkObject*, unsigned long, void*,
                                        void*);
   // The observer to report progress from the internal writer.
   vtkCallbackCommand* ProgressObserver;  
-#endif  
 };
 
 #endif

@@ -64,6 +64,10 @@ vtkMrmlDataTetraMesh::vtkMrmlDataTetraMesh()
   // Allocate VTK objects
   this->TheMesh = NULL;
 
+  // Setup a callback for the internal writer to report progress.
+  this->ProgressObserver = vtkCallbackCommand::New();
+  this->ProgressObserver->SetCallback(&vtkMrmlData::ProgressCallbackFunction);
+  this->ProgressObserver->SetClientData(this);
 }
 
 //----------------------------------------------------------------------------
@@ -185,13 +189,8 @@ int vtkMrmlDataTetraMesh::Write()
   writer->SetInput(this->TheMesh);
   
   // Progress callback
-#if (VTK_MAJOR_VERSION == 4 && VTK_MINOR_VERSION >2)
   writer->AddObserver (vtkCommand::ProgressEvent,
                        this->ProgressObserver);
-#else
-  writer->SetProgressMethod(vtkMrmlData::vtkMrmlDataProgress,
-                            (void *)this);
-#endif
   // The progress callback function needs a handle to the writer 
   this->ProcessObject = writer;
  
