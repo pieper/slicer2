@@ -30,15 +30,15 @@
    The full GNU Lesser General Public License file is in vtkLevelSets/LesserGPL_license.txt
 */
 
-// .NAME vtkFastMarching - short description
+// .NAME vtkLevelSetFastMarching - short description
 
 // .SECTION Description
-// vtkFastMarching 
+// vtkLevelSetFastMarching 
 //
 //
 
-#ifndef __vtkFastMarching_h
-#define __vtkFastMarching_h
+#ifndef __vtkLevelSetFastMarching_h
+#define __vtkLevelSetFastMarching_h
 
 #include <vtkLevelSetsConfigure.h>
 #include "vtkPointData.h"
@@ -145,15 +145,15 @@ public:
 //ETX
 
 //----------------------------------------------------------------------
-class VTK_EXPORT vtkFastMarching : public vtkImageToImageFilter
+class VTK_EXPORT vtkLevelSetFastMarching : public vtkImageToImageFilter
 {
 public:
-  vtkTypeMacro(vtkFastMarching,vtkImageToImageFilter);
+  vtkTypeMacro(vtkLevelSetFastMarching,vtkImageToImageFilter);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:
   // Construct object to extract all of the input data.
-  static vtkFastMarching *New();
+  static vtkLevelSetFastMarching *New();
 
   //
   vtkSetMacro(dim,int);
@@ -216,11 +216,11 @@ public:
   void SetNarrowBand( int* band, int size);
 
 protected:
-  vtkFastMarching();
-  ~vtkFastMarching();
+  vtkLevelSetFastMarching();
+  ~vtkLevelSetFastMarching();
 
-  vtkFastMarching(const vtkFastMarching&);
-  void operator=(const vtkFastMarching&);
+  vtkLevelSetFastMarching(const vtkLevelSetFastMarching&);
+  void operator=(const vtkLevelSetFastMarching&);
 
   void ExecuteData(vtkDataObject* output);
   void InitParam();

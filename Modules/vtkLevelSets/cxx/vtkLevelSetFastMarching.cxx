@@ -33,13 +33,13 @@
  /*=========================================================================
 
   Program:   Visualization Toolkit
-  Module:    $RCSfile: vtkFastMarching.cxx,v $
+  Module:    $RCSfile: vtkLevelSetFastMarching.cxx,v $
   Language:  C++
-  Date:      $Date: 2003/04/29 17:48:41 $
-  Version:   $Revision: 1.2 $
+  Date:      $Date: 2003/05/15 00:10:03 $
+  Version:   $Revision: 1.1 $
 
 =========================================================================*/
-#include "vtkFastMarching.h"
+#include "vtkLevelSetFastMarching.h"
 #include "vtkObjectFactory.h"
 #include "vtkStructuredPointsWriter.h"
 #include "vtkFloatArray.h"
@@ -123,24 +123,24 @@ void UpdateMinHeapPos(const FM_TrialPoint& tp, int pos, void* data)
 }
 
 //-----------------------------------------------------------------------
-vtkFastMarching* vtkFastMarching::New()
+vtkLevelSetFastMarching* vtkLevelSetFastMarching::New()
 {
   // First try to create the object from the vtkObjectFactory
-  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkFastMarching");
+  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkLevelSetFastMarching");
   if(ret)
     {
-    return (vtkFastMarching*)ret;
+    return (vtkLevelSetFastMarching*)ret;
     }
   // If the factory was unable to create the object, then create it here.
-  return new vtkFastMarching;
+  return new vtkLevelSetFastMarching;
 
-} // vtkFastMarching::New()
+} // vtkLevelSetFastMarching::New()
 
 
 //----------------------------------------------------------------------
 // Construct object to extract all of the input data.
 //
-vtkFastMarching::vtkFastMarching() : mh(100000)
+vtkLevelSetFastMarching::vtkLevelSetFastMarching() : mh(100000)
 {
 
   mask   = NULL;
@@ -175,11 +175,11 @@ vtkFastMarching::vtkFastMarching() : mh(100000)
   narrowband = NULL;
   bandsize   = 0;
 
-} // vtkFastMarching::vtkFastMarching()
+} // vtkLevelSetFastMarching::vtkLevelSetFastMarching()
 
 
 //----------------------------------------------------------------------
-vtkFastMarching::~vtkFastMarching()
+vtkLevelSetFastMarching::~vtkLevelSetFastMarching()
 {
   if (mask_allocated)  mask ->Delete();
   if (force_allocated) force->Delete();
@@ -194,15 +194,15 @@ vtkFastMarching::~vtkFastMarching()
     mhPos = NULL;
   }
 
-} // ~vtkFastMarching
+} // ~vtkLevelSetFastMarching
 
 //----------------------------------------------------------------------
-void vtkFastMarching::InitParam()
+void vtkLevelSetFastMarching::InitParam()
 {
 
   int type;
 
-  fprintf(stderr,"vtkFastMarching::InitParam() begin\n");
+  fprintf(stderr,"vtkLevelSetFastMarching::InitParam() begin\n");
 
   // Get force image from input
   force  = this->GetInput();
@@ -329,13 +329,13 @@ void vtkFastMarching::InitParam()
   // Empty the min heap structure just in case
   mh.RemoveAll();
 
-  fprintf(stderr,"vtkFastMarching::InitParam() end \n");
+  fprintf(stderr,"vtkLevelSetFastMarching::InitParam() end \n");
 
-} // vtkFastMarching::InitParam()
+} // vtkLevelSetFastMarching::InitParam()
 
 
 //----------------------------------------------------------------------------
-void vtkFastMarching::SetNarrowBand( int* band, int size)
+void vtkLevelSetFastMarching::SetNarrowBand( int* band, int size)
 {
   narrowband = band;
   bandsize = size;
@@ -343,7 +343,7 @@ void vtkFastMarching::SetNarrowBand( int* band, int size)
 
 
 //----------------------------------------------------------------------
-void vtkFastMarching::ExecuteData(vtkDataObject *outData)
+void vtkLevelSetFastMarching::ExecuteData(vtkDataObject *outData)
 {
   
   FM_TrialPoint p;
@@ -356,8 +356,8 @@ void vtkFastMarching::ExecuteData(vtkDataObject *outData)
   //  Si dim==VTK_MODE_2D AlorsFait
   //    ImEvol = new InrImage(tx,ty,50,WT_FLOAT,"evol_fm.ami.gz");
 
-  fprintf(stderr,"vtkFastMarching::Execute() begin ----------------------------- \n");
-  fprintf(stderr,"vtkFastMarching::Execute() initparam \n");
+  fprintf(stderr,"vtkLevelSetFastMarching::Execute() begin ----------------------------- \n");
+  fprintf(stderr,"vtkLevelSetFastMarching::Execute() initparam \n");
 
   InitParam();
 
@@ -437,16 +437,16 @@ void vtkFastMarching::ExecuteData(vtkDataObject *outData)
     T_buf     [pos] *= -1;
   }
 
-  fprintf(stderr,"vtkFastMarching::Execute() end ----------------------------- \n");
+  fprintf(stderr,"vtkLevelSetFastMarching::Execute() end ----------------------------- \n");
 
   // Check for the maximum
 
-} // vtkFastMarching::Execute()
+} // vtkLevelSetFastMarching::Execute()
 
 
 //----------------------------------------------------------------------
 //
-void vtkFastMarching::AddAcceptedPoint( short x, short y, short z, int pos)
+void vtkLevelSetFastMarching::AddAcceptedPoint( short x, short y, short z, int pos)
 //                    ----------------
 {
 
@@ -559,7 +559,7 @@ void vtkFastMarching::AddAcceptedPoint( short x, short y, short z, int pos)
 //----------------------------------------------------------------------
 // Solution: ne pas s'approcher trop du bord ...
 //
-void vtkFastMarching::AddTrialPointsOld( short x, short y, short z, int pos)
+void vtkLevelSetFastMarching::AddTrialPointsOld( short x, short y, short z, int pos)
 //                    -----------------
 {
 
@@ -661,7 +661,7 @@ void vtkFastMarching::AddTrialPointsOld( short x, short y, short z, int pos)
 // y in [2,ty-3]
 // si 3D alors z in [2,tz-3]
 //
-void vtkFastMarching::AddTrialPoints( short x, short y, short z, int pos)
+void vtkLevelSetFastMarching::AddTrialPoints( short x, short y, short z, int pos)
 //                    --------------
 {
 
@@ -821,7 +821,7 @@ void vtkFastMarching::AddTrialPoints( short x, short y, short z, int pos)
 
 //----------------------------------------------------------------------
 //
-float vtkFastMarching::ComputeValue( short x, short y, short z, int pos)
+float vtkLevelSetFastMarching::ComputeValue( short x, short y, short z, int pos)
 //                     ------------
 {
 
@@ -838,7 +838,7 @@ float vtkFastMarching::ComputeValue( short x, short y, short z, int pos)
 
 //----------------------------------------------------------------------
 //
-inline float vtkFastMarching::ComputeValueDikjstra( short x, short y, short z, int pos)
+inline float vtkLevelSetFastMarching::ComputeValueDikjstra( short x, short y, short z, int pos)
 //                            --------------------
 {
 
@@ -895,12 +895,12 @@ inline float vtkFastMarching::ComputeValueDikjstra( short x, short y, short z, i
 
   return 1;
 
-} // FastMarching::ComputeValueDikjstra()
+} // LevelSetFastMarching::ComputeValueDikjstra()
  
 
 //----------------------------------------------------------------------
 //
-unsigned char vtkFastMarching::ComputeValue( FM_TrialPoint& trial, float val, unsigned char dir)
+unsigned char vtkLevelSetFastMarching::ComputeValue( FM_TrialPoint& trial, float val, unsigned char dir)
 //                                    ------------
 {
 
@@ -928,7 +928,7 @@ unsigned char vtkFastMarching::ComputeValue( FM_TrialPoint& trial, float val, un
 // 
 // Output
 //    computes trial.value
-unsigned char vtkFastMarching::ComputeValueSethian( FM_TrialPoint& trial, float value, unsigned char dir)
+unsigned char vtkLevelSetFastMarching::ComputeValueSethian( FM_TrialPoint& trial, float value, unsigned char dir)
 //                                    -------------------
 {
 
@@ -1017,10 +1017,10 @@ unsigned char vtkFastMarching::ComputeValueSethian( FM_TrialPoint& trial, float 
   else
     trial.SetValue(res);
 
-//  fprintf(stderr,"FastMarching::ComputeValue() \t case not found \n");
+//  fprintf(stderr,"LevelSetFastMarching::ComputeValue() \t case not found \n");
   return 1;
 
-} // FastMarching::ComputeValueSethian()
+} // LevelSetFastMarching::ComputeValueSethian()
  
 
 //----------------------------------------------------------------------
@@ -1035,7 +1035,7 @@ unsigned char vtkFastMarching::ComputeValueSethian( FM_TrialPoint& trial, float 
 // Output
 //    computes trial.value
 //
-inline unsigned char vtkFastMarching::ComputeValueSethian2( FM_TrialPoint& trial, float value, unsigned char dir)
+inline unsigned char vtkLevelSetFastMarching::ComputeValueSethian2( FM_TrialPoint& trial, float value, unsigned char dir)
 //                            -------------------
 {
 
@@ -1137,21 +1137,21 @@ inline unsigned char vtkFastMarching::ComputeValueSethian2( FM_TrialPoint& trial
   else
     trial.SetValue(res);
 
-//  fprintf(stderr,"FastMarching::ComputeValue() \t case not found \n");
+//  fprintf(stderr,"LevelSetFastMarching::ComputeValue() \t case not found \n");
   return 1;
 
-} // FastMarching::ComputeValueSethian2()
+} // LevelSetFastMarching::ComputeValueSethian2()
  
 
 //----------------------------------------------------------------------
-void vtkFastMarching::PrintSelf(ostream& os, vtkIndent indent)
+void vtkLevelSetFastMarching::PrintSelf(ostream& os, vtkIndent indent)
 {
   // Nothing for the moment ...
 }
 
 //----------------------------------------------------------------------
 //
-void vtkFastMarching::Init(int cx, int cy, int cz, int radius)
+void vtkLevelSetFastMarching::Init(int cx, int cy, int cz, int radius)
 //
 {
 
@@ -1161,12 +1161,12 @@ void vtkFastMarching::Init(int cx, int cy, int cz, int radius)
     this->Init2D(cx,cy,radius);
 
 
-} // vtkFastMarching::Init()
+} // vtkLevelSetFastMarching::Init()
 
 
 //----------------------------------------------------------------------
 //
-void vtkFastMarching::Init2D(int cx, int cy, int radius)
+void vtkLevelSetFastMarching::Init2D(int cx, int cy, int radius)
 //                    -----
 {
     int   x, y, myrad2;
@@ -1186,16 +1186,16 @@ void vtkFastMarching::Init2D(int cx, int cy, int radius)
 
   margin=2;
 
-  fprintf(stderr,"vtkFastMarching::Init2D() 1 \n");
+  fprintf(stderr,"vtkLevelSetFastMarching::Init2D() 1 \n");
 
   myrad2 = radius+margin+margin;
 
-  fprintf(stderr,"vtkFastMarching::Init2D() 2 --- \n");
+  fprintf(stderr,"vtkLevelSetFastMarching::Init2D() 2 --- \n");
   // Initialisation to maxTime and VAL_FAR
 
   T_buf1      = T_buf;
 
-  fprintf(stderr,"vtkFastMarching::Init2D() 3 \n");
+  fprintf(stderr,"vtkLevelSetFastMarching::Init2D() 3 \n");
   status_buf = this->status;
 
   for(pos=0;pos<this->T->GetNumberOfPoints();pos++) {
@@ -1203,17 +1203,17 @@ void vtkFastMarching::Init2D(int cx, int cy, int radius)
     status_buf[pos] = VTK_VAL_FAR;
   }
 
-  fprintf(stderr,"vtkFastMarching::Init2D() 4 \n");
+  fprintf(stderr,"vtkLevelSetFastMarching::Init2D() 4 \n");
 
-  //  if ( GB_debug AlorsFait fprintf(stderr,"FastMarching::Init() \t 2 \n");
+  //  if ( GB_debug AlorsFait fprintf(stderr,"LevelSetFastMarching::Init() \t 2 \n");
     if ( (this->T->FindPoint(cx-myrad2,cy-myrad2,0)<0) ||
          (this->T->FindPoint(cx+myrad2,cy+myrad2,0)<0) 
      ) {
-      //      if ( GB_debug ) fprintf(stderr,"FastMarching::Init() \t Error, out of image \n");
+      //      if ( GB_debug ) fprintf(stderr,"LevelSetFastMarching::Init() \t Error, out of image \n");
       return;
     } // end if
     
-    //  if ( GB_debug ) fprintf(stderr,"FastMarching::Init() \t 3 \n");
+    //  if ( GB_debug ) fprintf(stderr,"LevelSetFastMarching::Init() \t 3 \n");
 
   // Initialization of mhPos image
   surf = new float[tx*ty*tz];
@@ -1252,7 +1252,7 @@ void vtkFastMarching::Init2D(int cx, int cy, int radius)
 
   For(n,1,1000)
 
-      //      if ( GB_debug ) fprintf(stderr,"FastMarching::Init() \t 7 \n");
+      //      if ( GB_debug ) fprintf(stderr,"LevelSetFastMarching::Init() \t 7 \n");
       For(y,cy-myrad2,cy+myrad2)
       For(x,cx-myrad2,cx+myrad2)
 
@@ -1290,7 +1290,7 @@ void vtkFastMarching::Init2D(int cx, int cy, int radius)
     EndFor
 
 
-      //  if ( GB_debug ) fprintf(stderr,"FastMarching::Init() \t 10 \n");
+      //  if ( GB_debug ) fprintf(stderr,"LevelSetFastMarching::Init() \t 10 \n");
 
       //  surf->Sauve();
       //  this->T->Sauve();
@@ -1328,14 +1328,14 @@ void vtkFastMarching::Init2D(int cx, int cy, int radius)
 
       //  delete surf;
 
-    fprintf(stderr," vtkFastMarching::Init2D() end \n");
+    fprintf(stderr," vtkLevelSetFastMarching::Init2D() end \n");
 
-} // vtkFastMarching::Init2D()
+} // vtkLevelSetFastMarching::Init2D()
 
 
 //----------------------------------------------------------------------
 //
-void vtkFastMarching::Init3D(int cx, int cy, int cz, int radius)
+void vtkLevelSetFastMarching::Init3D(int cx, int cy, int cz, int radius)
 //                    -----
 {
 
@@ -1371,12 +1371,12 @@ void vtkFastMarching::Init3D(int cx, int cy, int cz, int radius)
   }
 
 
-  //  if ( GB_debug AlorsFait fprintf(stderr,"FastMarching::Init() \t 2 \n");
+  //  if ( GB_debug AlorsFait fprintf(stderr,"LevelSetFastMarching::Init() \t 2 \n");
     if ( (this->T->FindPoint(cx-myrad2,cy-myrad2,cz-myrad2)<0) ||
          (this->T->FindPoint(cx+myrad2,cy+myrad2,cz+myrad2)<0) 
      ) {
       //      if ( GB_debug )
-      fprintf(stderr,"FastMarching::Init() \t Error, out of image \n");
+      fprintf(stderr,"LevelSetFastMarching::Init() \t Error, out of image \n");
       return;
     } // end if
     
@@ -1499,7 +1499,7 @@ void vtkFastMarching::Init3D(int cx, int cy, int cz, int radius)
 
   fprintf(stderr,"Init3D() end \n");
 
-} // vtkFastMarching::Init3D()
+} // vtkLevelSetFastMarching::Init3D()
 
 
 //----------------------------------------------------------------------
@@ -1519,7 +1519,7 @@ void vtkFastMarching::Init3D(int cx, int cy, int cz, int radius)
 //
 //  We suppose the initial image positive
 //
-void vtkFastMarching::InitWithImage()
+void vtkLevelSetFastMarching::InitWithImage()
 //                    -------------
 {
 
@@ -1596,7 +1596,7 @@ void vtkFastMarching::InitWithImage()
 //    T_buf   : pointer to the data of T (resulting time for the eikonal equation)
 //
 //
-void vtkFastMarching::InitIsoSurf()
+void vtkLevelSetFastMarching::InitIsoSurf()
 //                    -----------
 {
 
