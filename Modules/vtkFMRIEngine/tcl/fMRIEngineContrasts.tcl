@@ -94,13 +94,17 @@ proc fMRIEngineBuildUIForContrasts {parent} {
     # Compose a contrast 
     #-----------------------
     set f $parent.fTop.fComp
-    DevAddLabel $f.lName "Name: "
-    eval {entry $f.eName -width 22 -textvariable fMRIEngine(entry,contrastName)} $Gui(WEA)
+    DevAddLabel $f.lName "Name:"
+    eval {entry $f.eName -width 21 -textvariable fMRIEngine(entry,contrastName)} $Gui(WEA)
     grid $f.lName $f.eName -padx 1 -pady 1 -sticky e
 
-    DevAddLabel $f.lExp "Vector: "
+    DevAddLabel $f.lVolName "Vol Name:"
+    eval {entry $f.eVolName -width 21 -textvariable fMRIEngine(entry,contrastVolName)} $Gui(WEA)
+    grid $f.lVolName $f.eVolName -padx 1 -pady 1 -sticky e
+
+    DevAddLabel $f.lExp "Vector:"
     DevAddButton $f.bHelp "?" "fMRIEngineHelpSetupContrasts" 2
-    eval {entry $f.eExp -width 22 -textvariable fMRIEngine(entry,contrastVector)} $Gui(WEA)
+    eval {entry $f.eExp -width 21 -textvariable fMRIEngine(entry,contrastVector)} $Gui(WEA)
     grid $f.lExp $f.eExp $f.bHelp -padx 1 -pady 1 -sticky e
 
     #-----------------------
@@ -108,7 +112,7 @@ proc fMRIEngineBuildUIForContrasts {parent} {
     #-----------------------
     set f $parent.fTop.fActions
     DevAddButton $f.bOK "OK" "fMRIEngineAddOrEditContrast" 6 
-    grid $f.bOK -padx 2 -pady 3 
+    grid $f.bOK -padx 2 -pady 2 
 
     #-------------------------------------------
     # Middle frame 
@@ -124,7 +128,7 @@ proc fMRIEngineBuildUIForContrasts {parent} {
 
     set f $parent.fMiddle.fUp
     DevAddLabel $f.l "Specified contrasts:"
-    grid $f.l -padx 1 -pady 3
+    grid $f.l -padx 1 -pady 2 
 
     set f $parent.fMiddle.fMiddle
     scrollbar $f.vs -orient vertical -bg $Gui(activeWorkspace)
@@ -175,6 +179,11 @@ proc fMRIEngineAddOrEditContrast {} {
         return
     }
 
+    set vname [string trim $fMRIEngine(entry,contrastVolName)]
+    if {$vname == ""} {
+        set vname "ActVol"
+    }
+
     # replace multiple spaces in the middle of the string by one space  
     regsub -all {( )+} $vec " " vec 
     set vecList [split $vec " "]     
@@ -188,22 +197,25 @@ proc fMRIEngineAddOrEditContrast {} {
         }
     }
 
-    if {! [info exists fMRIEngine($name,contrastName)]} {
+    set key "$name-$vname"
+    if {! [info exists fMRIEngine($key,contrastName)]} {
         set curs [$fMRIEngine(contrastsListBox) curselection]
         if {$curs != ""} {
             fMRIEngineDeleteContrast
         }
-        $fMRIEngine(contrastsListBox) insert end $name 
+        $fMRIEngine(contrastsListBox) insert end $key 
     } else {
-        if {$name == $fMRIEngine($name,contrastName) &&
-            $vec == $fMRIEngine($name,contrastVector)} {
-            DevErrorWindow "This contrast already exists:\nName: $name\nVector: $vec"
+        if {$name == $fMRIEngine($key,contrastName)     &&
+            $vname == $fMRIEngine($key,contrastVolName) &&
+            $vec == $fMRIEngine($key,contrastVector)} {
+            DevErrorWindow "This contrast already exists:\nName: $name\nVol Name: $vname\nVector: $vec"
             return
         }
     }
 
-    set fMRIEngine($name,contrastName) $name
-    set fMRIEngine($name,contrastVector) $vec
+    set fMRIEngine($key,contrastName) $name
+    set fMRIEngine($key,contrastVolName) $vname
+    set fMRIEngine($key,contrastVector) $vec
 }
 
 
@@ -221,6 +233,7 @@ proc fMRIEngineDeleteContrast {} {
         set name [$fMRIEngine(contrastsListBox) get $curs] 
         if {$name != ""} {
             unset -nocomplain fMRIEngine($name,contrastName) 
+            unset -nocomplain fMRIEngine($name,contrastVolName) 
             unset -nocomplain fMRIEngine($name,contrastVector)
         }
 
