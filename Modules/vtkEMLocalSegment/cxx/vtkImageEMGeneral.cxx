@@ -601,6 +601,8 @@ FILE* vtkImageEMGeneral::OpenTextFile(const char* FileDir, const char FileName[]
   if (IterFlag)      sprintf(OpenFileName,"%s_I%02d",OpenFileName,iter);
   sprintf(OpenFileName,"%s.txt",OpenFileName);
 
+  if (vtkFileOps::makeDirectoryIfNeeded(OpenFileName) == -1) return NULL;
+  
 #ifdef _WIN32
   OpenFile= fopen(OpenFileName, "wb");
 #else 

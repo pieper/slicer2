@@ -37,6 +37,8 @@ class VTK_EMLOCALSEGMENT_EXPORT vtkFileOps { //; prevent man page generation
   void WriteVectorMatlabFile (char *filename, char *varname,double *vec, int xMax) const;
   void WriteMatrixMatlabFile (char *filename,char *varname, double **mat, int imgY, int imgX) const;
 
+  // ----------------------------------------------
+  // Kilian: Old Stuff - I think you can take all of this out  
   // GE Format
   int  WriteMRIfile(char *fname, unsigned char *header, int headersize, short *data, int npixels);
   // Transforms a double vec (with values between min and max) into an unsigned short file where min is 0 and max is MaxOutput
@@ -44,6 +46,8 @@ class VTK_EMLOCALSEGMENT_EXPORT vtkFileOps { //; prevent man page generation
   void WriteDoubleToUShortToGEFile(char* FileName, double* vec, int XSize, int YSize, int XYSize , double min, double max, unsigned short MaxOutput,  bool FlagUpsideDown) const; 
   // Does not work correclty
   int  WriteMRIfile(char *fname, double *data, int np);
+  //  End of old stuff
+  // ----------------------------------------------
 
   // -------------------------------
   // Write MRI Functions from fileops.c

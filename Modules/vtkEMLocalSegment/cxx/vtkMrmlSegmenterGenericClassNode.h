@@ -135,8 +135,8 @@ public:
 
   // Description:
   // Prints out the registration cost at each voxel 
-  vtkGetMacro(PrintRegistrationCost, int);
-  vtkSetMacro(PrintRegistrationCost, int);
+  vtkGetMacro(PrintRegistrationSimularityMeasure, int);
+  vtkSetMacro(PrintRegistrationSimularityMeasure, int);
   
 
 protected:
@@ -150,7 +150,7 @@ protected:
   char   *InputChannelWeights;  
   int    PrintWeights;
   int    PrintRegistrationParameters;
-  int    PrintRegistrationCost;
+  int    PrintRegistrationSimularityMeasure;
 
 
   double RegistrationTranslation[3];
