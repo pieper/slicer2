@@ -17,15 +17,15 @@ set __comment {
 
 
 puts "making linux..."
-exec sdx wrap slicer2 -runtime starkit-200209/tclkit-linux-x86
+exec tclkit starkit-200209/sdx.kit wrap slicer2 -runtime starkit-200209/tclkit-linux-x86
 file rename -force slicer2 ../../slicer2-linux-x86
 
 puts "making solaris..."
-exec sdx wrap slicer2 -runtime starkit-200209/tclkit-solaris-sparc
+exec tclkit starkit-200209/sdx.kit wrap slicer2 -runtime starkit-200209/tclkit-solaris-sparc
 file rename -force slicer2 ../../slicer2-solaris-sparc
 
 puts "making win32..."
-#exec sdx wrap slicer2.exe -runtime starkit-200209/tclkit-win32.exe
+#exec  tclkit starkit-200209/sdx.kit wrap slicer2.exe -runtime starkit-200209/tclkit-win32.exe
 #file rename -force slicer2.exe ../../slicer2-win32.exe
 puts "NOTE: the windows starpack method doesn't pass arguments correctly."
 puts "Use \"freewrap.exe slicer2-win32.tcl\" to create the launcher"
