@@ -98,6 +98,8 @@ itcl::body dup_upload::run {dir} {
         close [open $studydir/uploaded "w"]
     }
 
+    tk_messageBox -message "Note: upload not yet integrated.  See the information in the upload2 directory for manual upload instructions"
+
     $parent log "finished upload of $dir"
     $parent refresh upload
 }
