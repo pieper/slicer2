@@ -43,6 +43,12 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkMath.h"
 #include "vtkObjectFactory.h"
 
+// Initialize static member that resampling -- 
+  // This offset will be changed to 0.5 from 0.0 per 2/8/2002 Slicer 
+  // development meeting, to move ijk coordinates to voxel centers.
+static float vtkMrmlVolumeNodeGlobalVoxelOffset = 0.5;
+
+
 //------------------------------------------------------------------------------
 vtkMrmlVolumeNode* vtkMrmlVolumeNode::New()
 {
@@ -199,6 +205,18 @@ vtkMrmlVolumeNode::~vtkMrmlVolumeNode()
 
   delete [] DICOMMultiFrameOffsetList;
   // End
+}
+
+
+// control static variable for all volumes
+void vtkMrmlVolumeNode::SetGlobalVoxelOffset(float offset)
+{
+  vtkMrmlVolumeNodeGlobalVoxelOffset = offset;
+}
+
+float vtkMrmlVolumeNode::GetGlobalVoxelOffset()
+{
+  return vtkMrmlVolumeNodeGlobalVoxelOffset;
 }
 
 //----------------------------------------------------------------------------
@@ -975,7 +993,9 @@ int vtkMrmlVolumeNode::ComputeRasToIjkFromCorners(
 
   // This offset will be changed to 0.5 from 0.0 per 2/8/2002 Slicer 
   // development meeting, to move ijk coordinates to voxel centers.
-  offset=0.0;
+  // -- default is set above, and can be modified through methods for this class
+  //offset=0.0;
+  offset= vtkMrmlVolumeNodeGlobalVoxelOffset; // default set above, can 
 
   Ijk_->Zero();
   // ftl in Ijk coordinates

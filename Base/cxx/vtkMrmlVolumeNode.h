@@ -68,6 +68,11 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlVolumeNode : public vtkMrmlNode
   static vtkMrmlVolumeNode *New();
   vtkTypeMacro(vtkMrmlVolumeNode,vtkMrmlNode);
   void PrintSelf(ostream& os, vtkIndent indent);
+
+  // these control the center of the voxel in ijk space - default is 0.5, center
+  // of the voxel while 0.0 would be upper corner
+  static void SetGlobalVoxelOffset(float offset);
+  static float GetGlobalVoxelOffset();
   
   //--------------------------------------------------------------------------
   // Utility Functions
