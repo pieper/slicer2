@@ -282,7 +282,7 @@ proc VolAnalyzeApply {} {
     set Volume(numScalars) 1
     set Volume(littleEndian) 1
     set Volume(scanOrder) {IS}
-    set Volume(scalarType) {Short}
+    set Volume(scalarType) [$imdata GetScalarTypeAsString]
     set Volume(readHeaders) 0
     set Volume(filePattern) %s
     set Volume(dimensions) "[lindex $dims 0] [lindex $dims 1]"
@@ -308,7 +308,7 @@ proc VolAnalyzeApply {} {
     Volume($i,node) SetFilePrefix [Volume($i,vol,rw) GetFileName] ;# NB: just one file, not a pattern
     Volume($i,node) SetFullPrefix [Volume($i,vol,rw) GetFileName] ;# needed in the range check
     Volume($i,node) SetImageRange [lindex $Volume(imageRange) 0] [lindex $Volume(imageRange) 1]
-    Volume($i,node) SetScalarTypeToUnsignedChar
+    Volume($i,node) SetScalarType [$imdata GetScalarType]
     Volume($i,node) SetDimensions [lindex $Volume(dimensions) 0] [lindex $Volume(dimensions) 1]
     Volume($i,node) ComputeRasToIjkFromScanOrder $Volume(scanOrder)
 
