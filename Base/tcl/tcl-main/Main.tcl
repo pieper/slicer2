@@ -51,6 +51,7 @@
 #   Distance
 #   FormatCVSInfo
 #   FormatModuleInfo
+#   FormatModuleCredits
 #==========================================================================auto=
 
 
@@ -354,7 +355,7 @@ proc MainInit {} {
 
         # Set version info
 	lappend Module(versions) [ParseCVSInfo Main \
-		{$Revision: 1.68 $} {$Date: 2002/01/26 23:34:30 $}]
+		{$Revision: 1.69 $} {$Date: 2002/01/26 23:59:03 $}]
 
 	# Call each "Init" routine that's not part of a module
 	#-------------------------------------------
@@ -1761,6 +1762,12 @@ proc FormatModuleInfo {} {
     return $s
 }
 
+#-------------------------------------------------------------------------------
+# .PROC FormatModuleCredits
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc FormatModuleCredits {} {
     global Module
 

@@ -36,14 +36,27 @@
 #   TensorPropsCancel
 #   TensorAdvancedApply
 #   TensorSetFileName
+#   TensorUpdateScalarBar
+#   TensorShowScalarBar
+#   TensorHideScalarBar
 #   TensorSelect
+#   TensorUpdateThreshold
+#   TensorUpdateMaskLabel
+#   TensorUpdateGlyphEigenvector
+#   TensorUpdateGlyphColor
+#   TensorUpdateGlyphScalarRange
+#   TensorUpdateActor
 #   TensorUpdate
+#   TensorUpdateMathParams
 #   TensorCreateEmptyVolume
 #   TensorDoMath
+#   TensorGrabVol
 #   TensorApplyVisualizationParameters
 #   TensorMakeVTKObject
 #   TensorAddObjectProperty
 #   TensorBuildVTK
+#   annotatePick
+#   ConvertVolumeToTensors
 #==========================================================================auto=
 
 
@@ -84,7 +97,7 @@ proc TensorInit {} {
     # Set Version Info
     #------------------------------------
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.2 $} {$Date: 2002/01/26 23:53:37 $}]
+	    {$Revision: 1.3 $} {$Date: 2002/01/26 23:59:03 $}]
     
     # Props: GUI tab we are currently on
     #------------------------------------
@@ -1311,6 +1324,12 @@ proc TensorSetFileName {} {
 #  Procedures to handle visualization interaction
 ################################################################
 
+#-------------------------------------------------------------------------------
+# .PROC TensorUpdateScalarBar
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc TensorUpdateScalarBar {} {
     global Tensor
 
@@ -1326,12 +1345,24 @@ proc TensorUpdateScalarBar {} {
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC TensorShowScalarBar
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc TensorShowScalarBar {} {
     TensorUpdateGlyphScalarRange
     Tensor(vtk,scalarBar,actor) VisibilityOn
     #viewRen AddProp Tensor(vtk,scalarBar,actor)
 }
 
+#-------------------------------------------------------------------------------
+# .PROC TensorHideScalarBar
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc TensorHideScalarBar {} {
     Tensor(vtk,scalarBar,actor) VisibilityOff
     #viewRen RemoveActor Tensor(vtk,scalarBar,actor)
@@ -1414,6 +1445,12 @@ proc TensorSelect {x y z} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC TensorUpdateThreshold
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc TensorUpdateThreshold {not_used} {
     global Tensor
     
@@ -1425,6 +1462,12 @@ proc TensorUpdateThreshold {not_used} {
     Render3D
 }
 
+#-------------------------------------------------------------------------------
+# .PROC TensorUpdateMaskLabel
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc TensorUpdateMaskLabel {} {
     global Label
 
@@ -1438,6 +1481,12 @@ proc TensorUpdateMaskLabel {} {
     Render3D
 }
 
+#-------------------------------------------------------------------------------
+# .PROC TensorUpdateGlyphEigenvector
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc TensorUpdateGlyphEigenvector {} {
     global Tensor
 
@@ -1461,6 +1510,12 @@ proc TensorUpdateGlyphEigenvector {} {
     Render3D
 }
 
+#-------------------------------------------------------------------------------
+# .PROC TensorUpdateGlyphColor
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc TensorUpdateGlyphColor {} {
     global Tensor
 
@@ -1503,6 +1558,12 @@ proc TensorUpdateGlyphColor {} {
     Render3D
 }
 
+#-------------------------------------------------------------------------------
+# .PROC TensorUpdateGlyphScalarRange
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc TensorUpdateGlyphScalarRange {{not_used ""}} {
     global Tensor
 
@@ -1528,6 +1589,12 @@ proc TensorUpdateGlyphScalarRange {{not_used ""}} {
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC TensorUpdateActor
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc TensorUpdateActor {actor} {
     global Tensor
     
@@ -1764,6 +1831,12 @@ proc TensorUpdate {} {
 #  Procedures used to derive scalar volumes from tensor data
 ################################################################
 
+#-------------------------------------------------------------------------------
+# .PROC TensorUpdateMathParams
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc TensorUpdateMathParams {} {
     global Tensor
 
@@ -1895,6 +1968,12 @@ proc TensorDoMath {operation} {
     set Gui(progressText) ""
 }
 
+#-------------------------------------------------------------------------------
+# .PROC TensorGrabVol
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc TensorGrabVol {filter} {
     global Tensor
 
@@ -2301,6 +2380,12 @@ proc TensorBuildVTK {} {
 
 }
 
+#-------------------------------------------------------------------------------
+# .PROC annotatePick
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc annotatePick {picker} {
     if { [$picker GetCellId] < 0 } {
 	textActor VisibilityOff
@@ -2328,6 +2413,12 @@ proc annotatePick {picker} {
 # this should happen automatically and be in MRML
 # but to get things working try here first
 
+#-------------------------------------------------------------------------------
+# .PROC ConvertVolumeToTensors
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc ConvertVolumeToTensors {} {
     global Tensor Volume
 
