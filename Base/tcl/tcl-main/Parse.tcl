@@ -84,7 +84,8 @@ proc MainMrmlReadVersion2.0 {fileName {verbose 1}} {
 		}
 
 		# Strip off this tag, so we can continue.
-		if {[lsearch "Transform /Transform" $tag] != -1} {
+		if {[lsearch "Transform /Transform" $tag] != -1 || \
+		    [lsearch "Fiducials /Fiducials" $tag] != -1 } {
 			set str "<$tag>"
 		} else {
 			set str "</$tag>"
@@ -95,6 +96,11 @@ proc MainMrmlReadVersion2.0 {fileName {verbose 1}} {
 		# Give the EndTransform tag a name
 		if {$tag == "/Transform"} {
 			set tag EndTransform
+		}
+
+		# Give the EndFiducials tag a name
+		if {$tag == "/Fiducials"} {
+			set tag EndFiducials
 		}
 
 		# Append to List of tags1

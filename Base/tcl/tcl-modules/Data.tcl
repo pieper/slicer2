@@ -75,7 +75,7 @@ proc DataInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.26 $} {$Date: 2000/07/19 05:00:24 $}]
+		{$Revision: 1.27 $} {$Date: 2000/07/25 17:11:27 $}]
 
 	set Data(index) ""
 	set Data(clipboard) ""
@@ -278,6 +278,8 @@ proc DataDisplayTree {{index end}} {
     while {$node != ""} {
 
 		set class [$node GetClassName]
+		set classlen [string length $class]
+		set classnickname [string range $class 7 [expr $classlen - 5]]
 
 		# Add node-dependent descriptions
 		switch $class {
@@ -328,9 +330,15 @@ proc DataDisplayTree {{index end}} {
 				set name [$node GetContents]
 				set line "Options: $name"
 			}
+			default {
+				set name [$node GetName]
+				set desc [$node GetDescription]
+				set line "$classnickname: $name"
+			}
 		}
 		
-		if {$class == "vtkMrmlEndTransformNode"} {
+		if {$class == "vtkMrmlEndTransformNode" || \
+		    $class == "vtkMrmlEndFiducialsNode" } {
 			set depth [expr $depth - 1]
 		}
 
@@ -340,7 +348,8 @@ proc DataDisplayTree {{index end}} {
 		}
 		$Data(fNodeList) insert end ${tabs}$line
 
-		if {$class == "vtkMrmlTransformNode"} {
+		if {$class == "vtkMrmlTransformNode" || \
+		    $class == "vtkMrmlFiducialsNode" } {
 			incr depth
 		}
 

@@ -1,6 +1,14 @@
-<!ELEMENT MRML (Transform | Volume | Model | Color | Options)*>
+<!ELEMENT MRML (Transform | Volume | Model | Color | Options | Fiducials)*>
 
-<!ELEMENT Transform (Transform | Matrix | Volume | Model)*>
+<!ELEMENT Transform (Transform | Matrix | Volume | Model | Fiducials)*>
+
+<!ELEMENT Point (#PCDATA)>
+<!ATTLIST Point
+    name NMTOKEN #REQUIRED
+    xyz NMTOKENS "0.0 0.0 0.0"
+    description CDATA "">
+
+<!ELEMENT Fiducials (Point)*>
 
 <!ELEMENT Matrix (#PCDATA)>
 <!ATTLIST Matrix 
@@ -8,7 +16,7 @@
     description CDATA ""
     matrix NMTOKENS "1 0 0 0  0 1 0 0  0 0 1 0  0 0 0 1">
 
-<!ELEMENT Volume (#PCDATA)>
+<!ELEMENT Volume (#PCDATA | Fiducials)>
 <!ATTLIST Volume 
     name NMTOKEN ""
     filePattern CDATA "s.03d"
@@ -37,7 +45,7 @@
     dimensions NMTOKENS "256 256"
     spacing NMTOKENS "1 1 1">
 
-<!ELEMENT Model (#PCDATA)>
+<!ELEMENT Model (#PCDATA | Fiducials)>
 <!ATTLIST Model 
     name NMTOKEN ""
     fileName CDATA  #REQUIRED

@@ -59,7 +59,7 @@ proc MainViewInit {} {
 	lappend Module(procStorePresets) MainViewStorePresets
 	lappend Module(procRecallPresets) MainViewRecallPresets
 	set Module(View,presets) "viewUp='0 0 1' position='0 750 0' \
-focalPoint='0 0 0' clippingRange='1 2001' \
+focalPoint='0 0 0' clippingRange='21 2001' \
 viewMode='Normal' viewBgColor='Blue'"
 
 	# The MainViewBuildGUI proc is called specifically
@@ -67,7 +67,7 @@ viewMode='Normal' viewBgColor='Blue'"
 
         set m MainView
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.19 $} {$Date: 2000/07/20 18:24:18 $}]
+		{$Revision: 1.20 $} {$Date: 2000/07/25 17:11:26 $}]
 
 	set View(viewerHeightNormal) 656
 	set View(viewerWidth)  956 
