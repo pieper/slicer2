@@ -8,10 +8,10 @@ CFLAGS = -g $(IFLAGS)
 all:spl_server
 
 spl_server: spl_server.o $(EXTN_OBJS) Makefile
-	$(CC) -o $@ $@.o ${CFLAGS} $(OBJS) $(EXTN_OBJS) $(LIBS)
+    $(CC) -o $@ $@.o ${CFLAGS} $(OBJS) $(EXTN_OBJS) $(LIBS)
 
 spl_server.o: spl_server.c $(EXTN_HOME)/mror_imagebuf.h $(EXTN_HOME)/mror.h
-	$(CC) ${CFLAGS} -c spl_server.c
+    $(CC) ${CFLAGS} -c spl_server.c
 
 clean:
-	rm *.o
+    rm *.o
