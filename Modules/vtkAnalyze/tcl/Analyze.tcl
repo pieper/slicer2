@@ -162,7 +162,7 @@ proc AnalyzeInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.7 $} {$Date: 2004/08/24 19:40:38 $}]
+        {$Revision: 1.8 $} {$Date: 2004/11/12 16:53:32 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -465,7 +465,8 @@ proc AnalyzeCreateMrmlNodeForVolume {volName volData} {
     $n SetName $volName 
     $n SetDescription $volName 
 
-    Volume($i,node) SetScanOrder {SI} 
+    # Volume($i,node) SetScanOrder {SI} 
+    Volume($i,node) SetScanOrder {IS} 
     Volume($i,node) SetLittleEndian $AnalyzeCache(byteOrder) 
 
     $volData Update 
@@ -513,7 +514,7 @@ proc AnalyzeCreateVolumeNameFromFileName {fileName} {
 
     set tail [file tail $fileName]
     set dot [string last "." $tail]
-    set name [string replace $tail $dot $dot "-"] 
+    set name [string replace $tail $dot $dot "_"] 
 
     return $name
 }
@@ -526,7 +527,7 @@ proc AnalyzeCreateVolumeNameFromFileName {fileName} {
 # .END
 #-------------------------------------------------------------------------------
 proc AnalyzeLoadVolumes {} {
-    global AnalyzeCache Volume FMRIEngine
+    global AnalyzeCache Volume 
 
     vtkImageReader ir
 
@@ -583,7 +584,7 @@ proc AnalyzeLoadVolumes {} {
 
     set volName [AnalyzeCreateVolumeNameFromFileName \
         $AnalyzeCache(fileName)]
-    set dash "-"
+    set us "_"
 
     set x1 0 
     set x2 $maxX 
@@ -595,12 +596,11 @@ proc AnalyzeLoadVolumes {} {
         # then you should set the AppendAxis to 2 (Z axis).
         vtkImageAppend imageAppend 
         imageAppend SetAppendAxis 2 
- 
-        set Volume(name) $volName$dash$j
+
+        set vName $volName$us$j
         set load "Loading volume:\n"
-        append load $Volume(name) 
-        set FMRIEngine(name) $load
-        puts "Loading Volume $Volume(name)..."
+        append load $vName
+        puts "Loading volume $vName..."
 
         set yBase [expr $y*$z*($j-1)]
         while {$i <= $z} {
@@ -640,8 +640,9 @@ proc AnalyzeLoadVolumes {} {
         }
 
         set volData [imageAppend GetOutput] 
-        set id [AnalyzeCreateMrmlNodeForVolume $Volume(name) $volData]
+        set id [AnalyzeCreateMrmlNodeForVolume $vName $volData]
         lappend AnalyzeCache(MRMLid) $id 
+        set Volume(name) $vName
         puts "...done"
 
         imageAppend Delete
@@ -650,7 +651,9 @@ proc AnalyzeLoadVolumes {} {
         set i 1
     }
 
-    set FMRIEngine(name) "" 
+    set AnalyzeCache(volumeExtent) \
+        [[Volume([lindex $AnalyzeCache(MRMLid) 0],vol) GetOutput] GetWholeExtent]
+
     ir Delete
 }
 

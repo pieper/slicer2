@@ -85,18 +85,11 @@ proc VolBXHLoadVolumes {} {
     # The directory the bxh file is located
     set dir [file dirname $fn]
     set VolBXH(bxh-dir) $dir
-
     set VolBXH(bxh-noOfImgFiles) 0
 
-    if {[info exists VolBXH(bxh-dimensions)]} {
-        unset VolBXH(bxh-dimensions)
-    }
-    if {[info exists VolBXH(bxh-imageType)]} {
-        unset VolBXH(bxh-imageType)
-    }
-    if {[info exists VolBXH(bxh-dim,outputSelect)]} {
-        unset VolBXH(bxh-dim,outputSelect)
-    }
+    unset -nocomplain VolBXH(bxh-dimensions)
+    unset -nocomplain VolBXH(bxh-imageType)
+    unset -nocomplain VolBXH(bxh-dim,outputSelect)
     if {[info exists VolBXH(lastIndex)]} {
         set i 1
         while {$i <= $VolBXH(lastIndex)} {
@@ -140,6 +133,9 @@ proc VolBXHLoadVolumes {} {
             incr i
         }
     }
+
+    unset -nocomplain VolBXH(MRMLid)
+    unset -nocomplain VolBXH(volumeExtent)
 
     # Reads image or volume(s)
     switch $VolBXH(bxh-imageType) {
@@ -316,6 +312,10 @@ proc VolBXHDisplayDCMSingleVolume {fileName volData} {
     set VolBXH(1,id) $id
     set VolBXH(lastIndex) 1
 
+    lappend VolBXH(MRMLid) $id
+    set VolBXH(volumeExtent) \
+        [[Volume($id,vol) GetOutput] GetWholeExtent]
+
     MainSlicesSetVolumeAll Back $id 
     RenderAll
 }
@@ -454,12 +454,16 @@ proc VolBXHLoadSiemensMosaic {} {
         set volData [VolBXH(imageAppend) GetOutput] 
         set id [VolBXHCreateMrmlNodeForVolume $volName $volData]
         set VolBXH($i,id) $id
+        lappend VolBXH(MRMLid) $id
 
         incr i
         VolBXH(imageAppend) Delete
     }
 
     set VolBXH(lastIndex) $VolBXH(bxh-noOfImgFiles)
+
+    set VolBXH(volumeExtent) \
+        [[Volume([lindex $VolBXH(MRMLid) 0],vol) GetOutput] GetWholeExtent]
 
     # show the first volume by default
     MainSlicesSetVolumeAll Back $VolBXH(1,id)
@@ -507,6 +511,10 @@ proc VolBXHCreateMrmlNodeForVolume {volName volData} {
     Volume($i,node) SetScanOrder $VolBXH(bxh-scanOrder)
     Volume($i,node) SetLittleEndian $VolBXH(bxh-littleEndian) 
 
+# puts "bxh scan order = $VolBXH(bxh-scanOrder)"
+# puts "bxh little endian = $VolBXH(bxh-littleEndian)"
+
+
     $volData Update 
 
     set spc [$volData GetSpacing]
@@ -515,12 +523,21 @@ proc VolBXHCreateMrmlNodeForVolume {volName volData} {
     set sliceThickness [lindex $spc 2]
     set zSpacing [expr $sliceThickness + $VolBXH(bxh-sliceGap)]
 
+# puts "bxh pixelWidth = $pixelWidth"
+# puts "bxh pixelHeight = $pixelHeight"
+# puts "bxh sliceThickness = $sliceThickness"
+# puts "bxh zSpacing = $zSpacing"
+
+
+
+
     eval Volume($i,node) SetSpacing $pixelWidth $pixelHeight $zSpacing 
     Volume($i,node) SetNumScalars [$volData GetNumberOfScalarComponents]
     set ext [$volData GetWholeExtent]
     Volume($i,node) SetImageRange [expr 1 + [lindex $ext 4]] [expr 1 + [lindex $ext 5]]
     Volume($i,node) SetScalarType [$volData GetScalarType]
-    Volume($i,node) SetDimensions [lindex [$volData GetDimensions] 0] [lindex [$volData GetDimensions] 1]
+    Volume($i,node) SetDimensions [lindex [$volData GetDimensions] 0] \
+        [lindex [$volData GetDimensions] 1]
     Volume($i,node) ComputeRasToIjkFromScanOrder [Volume($i,node) GetScanOrder]
 
     MainUpdateMRML
@@ -557,12 +574,15 @@ proc VolBXHLoadAnalyze {} {
         set volData [VolBXH(imageAppend) GetOutput] 
         set id [VolBXHCreateMrmlNodeForVolume $volName $volData]
         set VolBXH($i,id) $id
+        lappend VolBXH(MRMLid) $id
 
         incr i
         VolBXH(imageAppend) Delete
     }
 
     set VolBXH(lastIndex) $VolBXH(bxh-noOfImgFiles)
+    set VolBXH(volumeExtent) \
+        [[Volume([lindex $VolBXH(MRMLid) 0],vol) GetOutput] GetWholeExtent]
 
     set m [expr $i-1]
     VolBXHSetSliders $m
@@ -602,6 +622,15 @@ proc VolBXHCreateVolumeFromAnalyze {fileName} {
     set z $VolBXH(bxh-dim,z,size) 
     set maxX [expr $x - 1] 
     set maxY [expr $y * $z - 1] 
+
+# puts "bxh x = $x"
+# puts "bxh y = $y"
+# puts "bxh z = $z"
+
+# puts "bxh littleEndian = $VolBXH(bxh-littleEndian)"
+# puts "bxh VolBXH(bxh-dim,x,spacing) = $VolBXH(bxh-dim,x,spacing)"  
+# puts "bxh VolBXH(bxh-dim,y,spacing) = $VolBXH(bxh-dim,y,spacing)"  
+# puts "bxh VolBXH(bxh-sliceThickness) = $VolBXH(bxh-sliceThickness)"
 
     ir SetFileName $fileName
     ir SetDataScalarTypeToShort
