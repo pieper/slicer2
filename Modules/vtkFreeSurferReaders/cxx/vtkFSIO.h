@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkFSIO.h,v $
   Language:  C++
-  Date:      $Date: 2003/02/19 23:55:11 $
-  Version:   $Revision: 1.2 $
+  Date:      $Date: 2003/04/22 22:24:23 $
+  Version:   $Revision: 1.3 $
 
 =========================================================================*/
 // .NAME vtkFSIO - Some IO functions for irregular FreeSurface files.
@@ -16,6 +16,7 @@
 #define __vtkFSIO_h
 
 #include <stdio.h>
+
 
 class  vtkFSIO {
  public:
