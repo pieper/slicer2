@@ -83,11 +83,16 @@ proc HtmlHead {fid title {styleFile "../../style.css"} \
 </td>
 </table>
 
+[BlueGrayLine]"
+}
+
+proc BlueGrayLine {} {
+	return "
 <!-------------------------- Blue/Gray line ------------------------------>
 <table border=0 cellspacing=0 width=100%>
-<tr><td bgcolor=#FFFFFF height=4></td></tr>
-<tr><td bgcolor=#e5e5e5 height=4></td></tr>
-<tr><td bgcolor=#333399 height=4></td></tr></table>"
+<tr><td bgcolor=#FFFFFF><table cellspacing=0 cellpadding=0><tr><td height=2></td></tr></table></td></tr>
+<tr><td bgcolor=#e5e5e5><table cellspacing=0 cellpadding=0><tr><td height=2></td></tr></table></td></tr>
+<tr><td bgcolor=#333399><table cellspacing=0 cellpadding=0><tr><td height=2></td></tr></table></td></tr></table>"
 }
 
 #-------------------------------------------------------------------------------
@@ -338,11 +343,7 @@ proc DocumentGenerateAuto {dir} {
 </td>
 </table>
 
-<!-------------------------- Blue/Gray line ------------------------------>
-<table border=0 cellspacing=0 width=100%>
-<tr><td bgcolor=#FFFFFF height=4></td></tr>
-<tr><td bgcolor=#e5e5e5 height=4></td></tr>
-<tr><td bgcolor=#333399 height=4></td></tr></table>
+[BlueGrayLine]
 
 <!---------------------------------------------------------------------------
                            Introduction
@@ -405,9 +406,7 @@ proc DocumentGenerateAuto {dir} {
 	puts $fid \
 "</table>
 </blockquote>
-<!-------------------------- Blue/Gray line ------------------------------>
-<table border=0 cellspacing=0 width=100%><tr><td bgcolor=#e5e5e5 height=4>
-</td></tr><tr><td bgcolor=#333399 height=4></td></tr></table>
+[BlueGrayLine]
 "
 
 	#--------------------------------------------------
