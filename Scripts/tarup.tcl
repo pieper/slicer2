@@ -101,18 +101,20 @@ proc tarup { {destdir "auto"} } {
     switch $::env(BUILD) {
         "solaris8" -
         "redhat7.3" { 
-            set libs [glob Lib/$::env(BUILD)/vtk/VTK-build/bin/*.dylib]
+            set libs [glob Lib/$::env(BUILD)/vtk/VTK-build/bin/*.so]
             foreach lib $libs {
                 file copy $lib $destdir/Lib/$::env(BUILD)/vtk/VTK-build/bin
                 set ll [file tail $lib]
                 exec strip $destdir/Lib/$::env(BUILD)/vtk/VTK-build/bin/$ll
             }
+        file copy Lib/$::env(BUILD)/vtk/VTK-build/bin/vtk $destdir/Lib/$::env(BUILD)/vtk/VTK-build/bin
         }
         "Darwin" {
             set libs [glob Lib/$::env(BUILD)/vtk/VTK-build/bin/*.dylib]
             foreach lib $libs {
                 file copy $lib $destdir/Lib/$::env(BUILD)/vtk/VTK-build/bin
             }
+        file copy Lib/$::env(BUILD)/vtk/VTK-build/bin/vtk $destdir/Lib/$::env(BUILD)/vtk/VTK-build/bin
         }
         "Win32VC7" { 
             file mkdir $destdir/Lib/$::env(BUILD)/vtk/VTK-build/bin/debug
@@ -188,31 +190,33 @@ proc tarup { {destdir "auto"} } {
 
         set moddest $destdir/Modules/$mod
         file mkdir $moddest
-        file copy -force $moddir/tcl $moddest
+        if { [file exists $moddir/tcl] } {
+            file copy -force $moddir/tcl $moddest
+        }
         file mkdir $moddest/Wrapping/Tcl/$mod
         file copy $moddir/Wrapping/Tcl/$mod/pkgIndex.tcl $moddest/Wrapping/Tcl/$mod
         file copy $moddir/Wrapping/Tcl/$mod/$mod.tcl $moddest/Wrapping/Tcl/$mod
         switch $::env(BUILD) {
             "solaris8" -
             "redhat7.3" { 
-                file mkdir $destdir/Base/builds/$::env(BUILD)/bin
-                set libs [glob Base/builds/$::env(BUILD)/bin/*.so]
+                file mkdir $moddest/builds/$::env(BUILD)/bin
+                set libs [glob -nocomplain $moddir/builds/$::env(BUILD)/bin/*.so]
                 foreach lib $libs {
-                    file copy $lib $destdir/Base/builds/$::env(BUILD)/bin
+                    file copy $lib $moddest/builds/$::env(BUILD)/bin
                     set ll [file tail $lib]
-                    exec strip $destdir/Base/builds/$::env(BUILD)/bin/$ll
+                    exec strip $moddest/builds/$::env(BUILD)/bin/$ll
                 }
             }
             "Darwin" {
-                file mkdir $destdir/Base/builds/$::env(BUILD)/bin
-                set libs [glob Base/builds/$::env(BUILD)/bin/*.dylib]
+                file mkdir $moddest/builds/$::env(BUILD)/bin
+                set libs [glob -nocomplain $moddir/builds/$::env(BUILD)/bin/*.dylib]
                 foreach lib $libs {
-                    file copy $lib $destdir/Base/builds/$::env(BUILD)/bin
+                    file copy $lib $moddest/builds/$::env(BUILD)/bin
                 }
             }
             "Win32VC7" { 
                 file mkdir $moddest/builds/$::env(BUILD)/bin/debug
-                set libs [glob $moddir/builds/$::env(BUILD)/bin/debug/*.dll]
+                set libs [glob -nocomplain $moddir/builds/$::env(BUILD)/bin/debug/*.dll]
                 foreach lib $libs {
                     file copy $lib $moddest/builds/$::env(BUILD)/bin/debug
                 }
