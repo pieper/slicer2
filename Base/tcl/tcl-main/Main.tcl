@@ -353,7 +353,7 @@ proc MainInit {} {
 
         # Set version info
 	lappend Module(versions) [ParseCVSInfo Main \
-		{$Revision: 1.66 $} {$Date: 2001/11/19 02:30:19 $}]
+		{$Revision: 1.67 $} {$Date: 2002/01/12 00:42:38 $}]
 
 	# Call each "Init" routine that's not part of a module
 	#-------------------------------------------
@@ -911,6 +911,9 @@ proc MainUpdateMRML {} {
 	if {$verbose == 1} {puts "MRML: MainModels"}
 	MainModelsUpdateMRML
 	if {$verbose == 1} {puts "MRML: MainMatrices"}
+	MainTetraMeshUpdateMRML
+	if {$verbose == 1} {puts "MRML: MainTetraMesh"}
+
 	MainMatricesUpdateMRML
 
 	foreach p $Module(procMRML) {
@@ -1017,6 +1020,7 @@ proc MainRemoveModelActor { m } {
 #-------------------------------------------------------------------------------
 proc MainSetup {} {
 	global Module Gui Volume Slice View Model Color Matrix Options Preset
+        global TetraMesh 
 
 	# Set current values to preset 0 (user preferences)
 	MainOptionsRecallPresets $Preset(userOptions)
@@ -1052,6 +1056,12 @@ proc MainSetup {} {
 	set m [lindex $Model(idList) 0]
 	if {$m != ""} {	
 		MainModelsSetActive $m
+	}
+
+	# Active TetraMesh
+	set m [lindex $TetraMesh(idList) 0]
+	if {$m != ""} {	
+		MainTetraMeshSetActive $m
 	}
 
 	# Active transform
@@ -1517,7 +1527,7 @@ http://www.slicer.org"
 # .END
 #-------------------------------------------------------------------------------
 proc MainExitQuery { } {
-	global Gui Volume Model
+	global Gui Volume Model TetraMesh
 
 	# See if any models or volumes are unsaved
 	set volumes ""
@@ -1544,21 +1554,40 @@ proc MainExitQuery { } {
 			}
 		}
 	}
+	set tetmesh ""
+	foreach v $TetraMesh(idList) {
+		if {[info exists TetraMesh($v,dirty)] == 1} {
+			if {$TetraMesh($v,dirty) == 1} {
+				if {$tetmesh == ""} {
+                                    set tetmesh "[TetraMesh($v,node) GetName]"
+				} else {
+				    set tetmesh "${tetmesh}, [TetraMesh($v,node) GetName]"
+				}
+			}
+		}
+	}
 
-	if {[llength "$models $volumes"] == 0} {
+	if {[llength "$tetmesh $models $volumes"] == 0} {
 		MainExitProgram
 	}
 
+        set msg "";
 	if {$volumes != ""} {
 		set msg "\
-The image data for the following volumes are unsaved:\n\
+$msg The image data for the following volumes are unsaved:\n\
 $volumes\n\n"
 	}
 	if {$models != ""} {
 		set msg "\
-The polygon data for the following surface models are unsaved:\n\
+$msg The polygon data for the following surface models are unsaved:\n\
 $models\n\n"
 	}
+	if {$tetmesh != ""} {
+		set msg "\
+$msg The Volume Meshes for the following tetrahedral mesh are unsaved:\n\
+$tetmesh\n\n"
+	}
+
 	set msg "${msg}Exit anyway?" 
 
 #	set x 0

@@ -1,4 +1,4 @@
-<!ELEMENT MRML (Transform | Volume | Model | Color | Options | Fiducials)*>
+<!ELEMENT MRML (Transform | Volume | Model | TetraMesh Color | Options | Fiducials)*>
 
 <!ELEMENT Transform (Transform | Matrix | Volume | Model | Fiducials)*>
 
@@ -45,6 +45,25 @@
     imageRange NMTOKENS "1 1"
     dimensions NMTOKENS "256 256"
     spacing NMTOKENS "1 1 1">
+
+<!ELEMENT TetraMesh (#PCDATA | Fiducials)>
+<!ATTLIST TetraMesh 
+    name NMTOKEN ""
+    fileName CDATA  #REQUIRED
+    description CDATA ""
+    Opacity NMTOKEN "1.0"
+    Clipping (yes | no) "no"
+    DisplaySurfaces (yes | no) "no"
+    DisplayEdges    (yes | no) "no"
+    DisplayNodes    (yes | no) "no"
+      NodeScaling    NMTOKEN "9.5"
+      NodeSkip       NMTOKEN "2"
+    DisplayScalars  (yes | no) "no"
+      ScalarScaling  NMTOKEN "9.5"
+      ScalarSkip     NMTOKEN "2"
+    DisplayVectors (yes | no) "no"
+      VectorScaling  NMTOKEN "9.5"
+      VectorSkip     NMTOKEN "2">
 
 <!ELEMENT Model (#PCDATA | Fiducials)>
 <!ATTLIST Model 

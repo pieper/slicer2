@@ -69,7 +69,7 @@ proc MainMrmlInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainMrml \
-		{$Revision: 1.47 $} {$Date: 2002/01/05 17:43:13 $}]
+		{$Revision: 1.48 $} {$Date: 2002/01/12 00:42:38 $}]
 
 	set Mrml(filePrefix) data
 	set Mrml(colorsUnsaved) 0
@@ -78,12 +78,14 @@ proc MainMrmlInit {} {
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlInitIdLists
 # 
+# Init the Id list for each data type
+#
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlInitIdLists {} {
 	global Mrml
-	global Model Volume Color Transform EndTransform Matrix
+	global Model Volume Color Transform EndTransform Matrix TetraMesh
 	global TransferFunction WindowLevel TFPoint ColorLUT Options
 	global Fiducials EndFiducials Point
         global Path EndPath Landmark
@@ -97,7 +99,7 @@ proc MainMrmlInitIdLists {} {
 		Fiducials EndFiducials Point Path EndPath Landmark \
 		Hierarchy EndHierarchy ModelGroup EndModelGroup ModelRef \
 		Scenes EndScenes VolumeState EndVolumeState CrossSection \
-		SceneOptions ModelState Locator" {
+		SceneOptions ModelState Locator TetraMesh" {
 		set ${node}(nextID) 0
 		set ${node}(idList) ""
 		set ${node}(idListDelete) ""
@@ -183,11 +185,13 @@ proc MainMrmlPrint {tags} {
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlClearList
 # 
+# Delete the Id list for each data type
+#
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlClearList {} {
-	global Model Volume Color Transform EndTransform Matrix
+	global Model Volume Color Transform EndTransform Matrix TetraMesh
 	global TransferFunction WindowLevel TFPoint ColorLUT Options
 	global Fiducials EndFiducials Point
         global Path EndPath Landmark
@@ -200,7 +204,7 @@ proc MainMrmlClearList {} {
 		Fiducials EndFiducials Point Path EndPath Landmark \
 		Hierarchy EndHierarchy ModelGroup EndModelGroup ModelRef \
 		Scenes EndScenes VolumeState EndVolumeState CrossSection \
-		SceneOptions ModelState Locator" {
+		SceneOptions ModelState Locator TetraMesh" {
 		set ${node}(idListDelete) ""
 	}
 }
@@ -217,6 +221,7 @@ proc MainMrmlClearList {} {
 #-------------------------------------------------------------------------------
 proc MainMrmlAddNode {nodeType} {
 	global Mrml Model Volume Color Transform EndTransform Matrix Options
+        global TetraMesh
 	global TransferFunction WindowLevel TFPoint ColorLUT 
 	global Fiducials EndFiducials Point 
         global Path EndPath Landmark Array
@@ -270,7 +275,7 @@ proc MainMrmlInsertBeforeNode {nodeBefore nodeType} {
 	global Mrml Model Volume Color Transform EndTransform Matrix Options
 	global TransferFunction WindowLevel TFPoint ColorLUT 
 	global Fiducials EndFiducials Point 
-        global Path EndPath Landmark Array
+        global Path EndPath Landmark Array TetraMesh
         global Hierarchy EndHierarchy ModelGroup EndModelGroup ModelRef
         global Scenes EndScenes VolumeState EndVolumeState CrossSection
         global SceneOptions ModelState Locator
@@ -320,7 +325,7 @@ proc MainMrmlInsertBeforeNode {nodeBefore nodeType} {
 proc MainMrmlInsertAfterNode {nodeBefore nodeType} {
 	global Mrml Model Volume Color Transform EndTransform Matrix Options
 	global TransferFunction WindowLevel TFPoint ColorLUT 
-	global Fiducials EndFiducials Point 
+	global Fiducials EndFiducials Point TetraMesh
         global Path EndPath Landmark Array
         global Hierarchy EndHierarchy ModelGroup EndModelGroup ModelRef
         global Scenes EndScenes VolumeState EndVolumeState CrossSection
@@ -373,7 +378,7 @@ proc MainMrmlInsertAfterNode {nodeBefore nodeType} {
 proc MainMrmlUndoAddNode {nodeType n} {
 	global Mrml Model Volume Color Transform EndTransform Matrix Options
 	global TransferFunction WindowLevel TFPoint ColorLUT 
-	global Fiducials EndFiducials Point
+	global Fiducials EndFiducials Point TetraMesh
         global Path EndPath Landmark Array
         global Hierarchy EndHierarchy ModelGroup EndModelGroup ModelRef
         global Scenes EndScenes VolumeState EndVolumeState CrossSection
@@ -407,7 +412,7 @@ proc MainMrmlUndoAddNode {nodeType n} {
 proc MainMrmlDeleteNodeDuringUpdate {nodeType id} {
 	global Mrml Model Volume Color Transform EndTransform Matrix
 	global TransferFunction WindowLevel TFPoint ColorLUT Options
-	global Fiducials EndFiducials Point
+	global Fiducials EndFiducials Point TetraMesh
         global Path EndPath Landmark
         global Hierarchy EndHierarchy ModelGroup EndModelGroup ModelRef
         global Scenes EndScenes VolumeState EndVolumeState CrossSection
@@ -441,7 +446,7 @@ proc MainMrmlDeleteNodeDuringUpdate {nodeType id} {
 #-------------------------------------------------------------------------------
 proc MainMrmlDeleteNode {nodeType id} {
 	global Mrml Model Volume Color Transform EndTransform Matrix Options
-	global TransferFunction WindowLevel TFPoint ColorLUT 
+	global TransferFunction WindowLevel TFPoint ColorLUT TetraMesh
 	global Fiducials EndFiducials Point
         global Path EndPath Landmark
         global Hierarchy EndHierarchy ModelGroup EndModelGroup ModelRef
@@ -485,7 +490,7 @@ proc MainMrmlDeleteNode {nodeType id} {
 proc MainMrmlDeleteAll {} {
 	global Mrml Model Volume Color Transform EndTransform Matrix
 	global TransferFunction WindowLevel TFPoint ColorLUT Options
-	global Fiducials EndFiducials Point
+	global Fiducials EndFiducials Point TetraMesh
         global Path EndPath Landmark
         global Hierarchy EndHierarchy ModelGroup EndModelGroup ModelRef
         global Scenes EndScenes VolumeState EndVolumeState CrossSection
@@ -509,7 +514,7 @@ proc MainMrmlDeleteAll {} {
 	}
 
 	# dataTree
-	foreach node "Model Transform EndTransform Matrix \
+	foreach node "Model TetraMesh Transform EndTransform Matrix \
 		TransferFunction WindowLevel TFPoint ColorLUT Options \
 		Fiducials EndFiducials Point Path EndPath Landmark \
 		Hierarchy EndHierarchy ModelGroup EndModelGroup ModelRef \
@@ -688,7 +693,7 @@ proc MainMrmlRead {mrmlFile} {
 #-------------------------------------------------------------------------------
 proc MainMrmlBuildTreesVersion2.0 {tags} {
 	global Mrml
-	global Model Volume Color Transform EndTransform Matrix
+	global Model Volume Color Transform EndTransform Matrix TetraMesh
 	global TransferFunction WindowLevel TFPoint ColorLUT Options
 	global Preset Fiducials EndFiducials Point
         global Path EndPath Landmark
@@ -879,6 +884,46 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 			
 			$n UseRasToVtkMatrixOn
 		}
+
+		"TetraMesh" {
+			set n [MainMrmlAddNode TetraMesh]
+			foreach a $attr {
+				set key [lindex $a 0]
+				set val [lreplace $a 0 0]
+				switch [string tolower $key] {
+				"id"	           {$n SetModelID      $val}
+				"desc"             {$n SetDescription  $val}
+				"name"             {$n SetName         $val}
+				"filename"         {$n SetFileName     $val}
+				"opacity"          {$n SetOpacity      $val}
+				"clipping" {
+					if {$val == "yes" || $val == "true"} {
+						$n SetClipping 1
+					} else {
+						$n SetClipping 0
+					}
+				}
+				"DisplaySurfaces" {
+					if {$val == "yes" || $val == "true"} {
+						$n SetDisplaySurfaces 1
+					} else {
+						$n SetDisplaySurfaces 0
+					}
+				}
+				"DisplaySurfaces" {
+					if {$val == "yes" || $val == "true"} {
+						$n SetDisplaySurfaces 1
+					} else {
+						$n SetDisplaySurfaces 0
+					}
+				}
+                            }
+			}
+
+			# Compute full path name relative to the MRML file
+			$n SetFileName [file join $Mrml(dir) [$n GetFileName]]
+                    }
+
 
 		"Options" {
 			# Legacy: options shouldn't be stored in an options tag,
@@ -1630,9 +1675,6 @@ proc MainMrmlWrite {filename} {
 	} else {
 		Mrml(dataTree) Write $filename
 	}
-	
 	# Colors don't need saving now
 	set Mrml(colorsUnsaved) 0
-
 }
-
