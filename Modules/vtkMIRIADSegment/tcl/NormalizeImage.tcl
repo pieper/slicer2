@@ -28,28 +28,31 @@
 # setenv LD_LIBRARY_PATH /home/ai2/kpohl/slicer_devel/pkg/lib:${LD_LIBRARY_PATH}
 # /home/ai2/kpohl/slicer_devel/pkg/bin/vtk $SLICER_HOME/program/tcl-modules/EMSegment/NormalizeImage.tcl <Mrml File Defining Segmentation> <MaxValue>
 # ------------------------------------------------------------------------------
-catch {load vtktcl}
+
 #-------------------------------------------------------------------------------
 # 1. Step Initialize and check Parameters 
 #-------------------------------------------------------------------------------
-if {[info exists env(SCRIPT_HOME)] != 0} {
-    set Script_Home $env(SCRIPT_HOME)
-} else {
-    if {[info exists env(SLICER_HOME)] == 0 || $env(SLICER_HOME) == ""} {
-    set Script_Home ""
-    } else { 
-    set Script_Home $env(SLICER_HOME)
+
+proc NormImage1 {} {
+    if {[info exists env(SCRIPT_HOME)] != 0} {
+        set Script_Home $env(SCRIPT_HOME)
+    } else {
+        if {[info exists env(SLICER_HOME)] == 0 || $env(SLICER_HOME) == ""} {
+        set Script_Home ""
+        } else { 
+        set Script_Home $env(SLICER_HOME)
+        }
     }
-}
 
-source [file join $Script_Home tcl/EMSegmentXMLReaderWriter.tcl] 
+    source [file join $Script_Home tcl/EMSegmentXMLReaderWriter.tcl] 
 
-# If $argc == 3 => it is sourced from another program 
-if {$argc < 2} {
-    puts "Input for NormailzeImage has to be :"
-    puts "NormalizeImage <Mrml File Defining Segmentation> <MaxValue>"
-    puts "<MaxValue> : 0 = it will automatically only normalize the Propabilbity Maps to value EMSegment(NumberOfTrainingSamples)  "
-    exit 1
+    # If $argc == 3 => it is sourced from another program 
+    if {$argc < 2} {
+        puts "Input for NormailzeImage has to be :"
+        puts "NormalizeImage <Mrml File Defining Segmentation> <MaxValue>"
+        puts "<MaxValue> : 0 = it will automatically only normalize the Propabilbity Maps to value EMSegment(NumberOfTrainingSamples)  "
+        exit 1
+    }
 }
 
 proc NormImage {MaxValue NormList resultsDir} { 
@@ -113,40 +116,41 @@ proc NormImage {MaxValue NormList resultsDir} {
 #-------------------------------------------------------------------------------
 # 2. Start program if it is called from a different function
 #-------------------------------------------------------------------------------
-if {$argc == 2} {
-    puts "============================ Start NormalizeImage ======================="
-    set XMLFile  [lindex $argv 0] 
-    set MaxValue [lindex $argv 1]
-    EMSegmentReadXMLFile $XMLFile
-    set NormList ""
-    if {$MaxValue} {
-    for {set i 1} {$i <= $EMSegment(VolNumber)} {incr i} {
-        lappend NormList $i
-    } 
-    } else {
-    if {$EMSegment(NumberOfTrainingSamples) == 0} {
-        puts "NormailzeImage:Error:"
-        puts "Cannot normailze image because MaxValue == 0 and EMSegment(NumberOfTrainingSamples) == 0 "
-        exit 1
-    }
-    set MaxValue $EMSegment(NumberOfTrainingSamples)
-    for {set i 1} {$i <= $EMSegment(VolNumber)} {incr i} {
-        if {[lsearch $EMSegment(SelVolList,VolumeList) $i] == -1} {
-        lappend NormList $i
+proc NormImage2 {} {
+    if {$argc == 2} {
+        puts "============================ Start NormalizeImage ======================="
+        set XMLFile  [lindex $argv 0] 
+        set MaxValue [lindex $argv 1]
+        EMSegmentReadXMLFile $XMLFile
+        set NormList ""
+        if {$MaxValue} {
+            for {set i 1} {$i <= $EMSegment(VolNumber)} {incr i} {
+                lappend NormList $i
+            } 
+        } else {
+            if {$EMSegment(NumberOfTrainingSamples) == 0} {
+                puts "NormailzeImage:Error:"
+                puts "Cannot normailze image because MaxValue == 0 and EMSegment(NumberOfTrainingSamples) == 0 "
+                exit 1
+            }
+            set MaxValue $EMSegment(NumberOfTrainingSamples)
+            for {set i 1} {$i <= $EMSegment(VolNumber)} {incr i} {
+                if {[lsearch $EMSegment(SelVolList,VolumeList) $i] == -1} {
+                    lappend NormList $i
+                }
+            } 
         }
-    } 
+        
+        # Now rounding errors for later when doing maximum 
+        # set tcl_precision 17
+        #-------------------------------------------------------------------------------
+        # 3. Normilze images if necessary 
+        #-------------------------------------------------------------------------------
+        NormImage $MaxValue "$NormList"
+        #-------------------------------------------------------------------------------
+        # 4. Delete all Volumes 
+        #-------------------------------------------------------------------------------
+        DeleteVolumes 
+        puts "============================ End NormalizeImage ======================="
     }
-    
-    # Now rounding errors for later when doing maximum 
-    # set tcl_precision 17
-    #-------------------------------------------------------------------------------
-    # 3. Normilze images if necessary 
-    #-------------------------------------------------------------------------------
-    NormImage $MaxValue "$NormList"
-    #-------------------------------------------------------------------------------
-    # 4. Delete all Volumes 
-    #-------------------------------------------------------------------------------
-    DeleteVolumes 
-    puts "============================ End NormalizeImage ======================="
-    exit 0
 }

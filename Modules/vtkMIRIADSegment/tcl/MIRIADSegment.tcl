@@ -154,7 +154,7 @@ proc MIRIADSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1 $} {$Date: 2003/10/03 12:48:07 $}]
+        {$Revision: 1.2 $} {$Date: 2003/10/03 16:47:16 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -274,7 +274,7 @@ proc MIRIADSegmentBuildGUI {} {
     #-------------------------------------------
     set f $fDeface.fRange
 
-    eval {button $f.select -text "Select Images" -width 20 -command "DefaceSelectMain"} $Gui(WBA)
+    eval {button $f.select -text "Load Atlas" -width 20 -command "MIRIADSegmentLoadBWHAtlas"} $Gui(WBA)
     
     pack $f.select -pady $Gui(pad) -side top -fill y -expand 1
 
@@ -300,4 +300,97 @@ proc MIRIADSegmentEnter {} {
 proc MIRIADSegmentExit {} {
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MIRIADSegmentLoadAtlas 
+# Reads the bwh probability atlas
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MIRIADSegmentLoadBWHAtlas { {dir "choose"} } {
+
+    if { $dir == "choose"} {
+        set dir [tk_chooseDirectory]
+        if { $dir == "" } {
+            return
+        }
+    }
+
+    set vols {
+        case2/spgr/case2.001
+        case2/t2w/case2.001
+        sumbackground/I.001
+        sumcsf/I.001
+        sumgreymatter/I.001
+        sumwhitematter/I.001
+    }
+        
+    foreach vol $vols {
+        set name atlas-[file tail [file dir $vol]]
+        regsub -all "\\." $name "" name
+        MIRIADSegmentDeleteVolumeByName $name
+
+        #set ::Volume(activeID) "NEW"
+        MainVolumesSetActive "NEW"
+        set ::Volume(name) $name
+        set ::Volume(desc) "BWH Atlas $vol"
+        set ::Volume(firstFile) $dir/$vol
+        set ::Volume(lastNum) 124
+        set ::Volume(isDICOM) 0
+        set ::Volume(width) 256
+        set ::Volume(height) 256
+        set ::Volume(pixelWidth) .9375
+        set ::Volume(pixelHeight) .9375
+        set ::Volume(sliceThickness) 1.5
+        set ::Volume(sliceSpacing) 0
+        set ::Volume(gantryDetectorTilt) 0
+        set ::Volume(numScalars) 1
+        set ::Volume(readHeaders) 0
+        set ::Volume(labelMap) 0
+        set ::Volume(scanOrder) "PA"
+        set ::Volume(scalarType) "Short"
+        VolumesPropsApply 
+    }
+    RenderAll
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC MIRIADSegmentDeleteVolumeByName 
+# clean up volumes before reloading them
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MIRIADSegmentDeleteVolumeByName {name} {
+
+    set nvols [Mrml(dataTree) GetNumberOfVolumes]
+    for {set vv 0} {$vv < $nvols} {incr vv} {
+        set n [Mrml(dataTree) GetNthVolume $vv]
+        if { $name == [$n GetName] } {
+            set id [DataGetIdFromNode $n]
+            global Volume
+            MainMrmlDeleteNode Volume $id
+            break
+        }
+    }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MIRIADSegmentLoadDukeStudy 
+# Reads the bwh probability atlas
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MIRIADSegmentLoadDukeStudy { {dir "choose"} } {
+
+    MIRIADSegmentDeleteVolumeByName "T2"
+    MIRIADSegmentDeleteVolumeByName "PD"
+
+    set T2id [DICOMLoadStudy $dir *\[02468\].dcm]
+    set PDid [DICOMLoadStudy $dir *\[13579\].dcm]
+
+    Volume($T2id,node) SetName "T2"
+    Volume($PDid,node) SetName "PD"
+
+    MainUpdateMRML
+}
 
