@@ -21,17 +21,17 @@
 #       /Modules - slicer modules code and builds
 #       /Lib - has all support Libs for all platforms
 #           /solaris8
-#               /ActiveTcl-8.4.1 - all tcl libs
+#               /tcl - all tcl libs
 #               /vtk
 #                   /VTK - vtk source (or just Wrapping for distribution)
 #                   /VTK-build - vtk build tree (or just stripped libs in bin for distribution)
 #           /redhat7.3
-#               /ActiveTcl-8.4.1 - all tcl libs
+#               /tcl - all tcl libs
 #               /vtk
 #                   /VTK - vtk source (or just Wrapping for distribution)
 #                   /VTK-build - vtk build tree (or just stripped libs in bin for distribution)
 #           /Win32VC7
-#               /ActiveTcl-8.4.1 - all tcl libs
+#               /tcl - all tcl libs
 #               /vtk
 #                   /VTK - vtk source (or just Wrapping for distribution)
 #                   /VTK-build - vtk build tree (or just stripped libs in bin for distribution)
@@ -103,10 +103,10 @@ if { ![info exists env(VTK_BIN_DIR)] || $env(VTK_BIN_DIR) == "" } {
     set env(VTK_BIN_DIR) ${env(SLICER_HOME)}/Lib/${env(BUILD)}/vtk/VTK-build
 }
 if { ![info exists env(TCL_BIN_DIR)] || $env(TCL_BIN_DIR) == "" } {
-    set env(TCL_BIN_DIR) ${env(SLICER_HOME)}/Lib/${env(BUILD)}/ActiveTcl-8.4.1/bin
+    set env(TCL_BIN_DIR) ${env(SLICER_HOME)}/Lib/${env(BUILD)}/tcl/bin
 }
 if { ![info exists env(TCL_LIB_DIR)] || $env(TCL_LIB_DIR) == "" } {
-    set env(TCL_LIB_DIR) ${env(SLICER_HOME)}/Lib/${env(BUILD)}/ActiveTcl-8.4.1/lib
+    set env(TCL_LIB_DIR) ${env(SLICER_HOME)}/Lib/${env(BUILD)}/tcl/lib
 }
 
 
@@ -137,8 +137,8 @@ switch $env(BUILD) {
 
 # set the base tcl/tk library paths, looking in the slicer home Lib 
 # subdirectory for this build. 
-set env(TCL_LIBRARY) $env(SLICER_HOME)/Lib/$env(BUILD)/ActiveTcl-8.4.1/lib/tcl8.4
-set env(TK_LIBRARY) $env(SLICER_HOME)/Lib/$env(BUILD)/ActiveTcl-8.4.1/lib/tk8.4
+set env(TCL_LIBRARY) $env(SLICER_HOME)/Lib/$env(BUILD)/tcl/lib/tcl8.4
+set env(TK_LIBRARY) $env(SLICER_HOME)/Lib/$env(BUILD)/tcl/lib/tk8.4
 
 #
 # add the default search locations for tcl packages
@@ -174,7 +174,7 @@ if { [info exists env(SLICER_MODULES)] } {
     eval lappend modulePaths $env(SLICER_MODULES)
 }
 
-set env(SLICER_MODULES_TO_REQUIRE) ""
+set env(SLICER_MODULES_TO_REQUIRE) " "
 foreach modulePath $modulePaths {
     set modules [glob -nocomplain $modulePath/vtk*]
     foreach dir $modules {
@@ -210,12 +210,12 @@ if { $env(BUILD) == "Darwin" } {
 }
 
 set msg "Slicer is an experimental software package.
-Any human use requires proper research controls.  
+Any clinical use requires proper research controls.  
 Clicking \"Ok\" below binds you to the license agreement.
 See www.slicer.org for details.
 "
-set resp okay
-#set resp [tk_messageBox -message $msg -type okcancel -title "Slicer2"]
+#set resp okay
+set resp [tk_messageBox -message $msg -type okcancel -title "Slicer2"]
 
 if {$resp == "cancel"} {
     exit
