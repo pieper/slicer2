@@ -399,7 +399,7 @@ proc VolNrrdReaderProc {v} {
     catch "nrrdReader Delete"
     vtkNRRDReader nrrdReader
 
-    if {![nrrdReader CanReadFile [Volume($v,node) GetFullPrefix]} {
+    if {![nrrdReader CanReadFile [Volume($v,node) GetFullPrefix]]} {
         DevErrorWindow "Cannot read file [Volume($v,node) GetFullPrefix]"
         return
     }
