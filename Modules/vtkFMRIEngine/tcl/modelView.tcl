@@ -1,0 +1,2206 @@
+#---------------------------------------------------------------------------
+#--- fMRIEngine assumptions and notes:
+#---------------------------------------------------------------------------
+#--- 1. each condition, when entered, will cause an associated EV
+#--- to be created. Depending on the type of design specified
+#--- (blocked, event-related, mixed) the default signal type, in
+#---  $::fMRIModelView(Design,Run$r,EV$i,SignalType) = "boxcar"
+#--- should be set.
+#
+#--- 2. all data in fMRIModelViewFakeUserInput will be generated
+#--- in the fMRIEngine, thru GUI or processing of GUI input.
+#
+#--- 3. after user enters/updates a new condition, updates signal
+#--- modeling on that condition, or enters/updates a new contrast,
+#--- and appropriate global variables like the following are created:
+#---   fMRIModelView(Design,Run$r,Condition$i,Onsets)
+#---   fMRIModelView(Design,Run$r,Condition$i,Durations)
+#---   fMRIModelView(Design,Run$r,Condition$i,Intensities)
+#---   (for now you can fill Intensities with all 1's)
+#---   fMRIModelView(Design,Run$r,EV$i,SignalType) 
+#---   fMRIModelView(Design,TContrast$i,Vector)
+#----  fMRIModelView(Design,TContrast$i,Vector)
+#
+#--- 4. For a proper model to be generated, the number of
+#--- elements in each TContrast vector must be equal to
+#--- fMRIModelView(Design,totalEVs). An error check should
+#--- be performed to make sure TContrast vectors are of
+#--- the correct length or model viewer will fail.
+#
+#--- 5. fMRIEngine can compute signal modeling on those inputs
+#--- and generate the model data or a model view by calling *either*
+#--- fMRIModelViewGenerate or fMRIModelViewLaunchModelView.
+#--- When to use each:
+#--- When a user clicks "View Model" button, call fMRIModelViewLaunch;
+#--- this will BOTH generate the model and display it in a popup window too.
+#--- To generate the model independent of the popup model view,
+#--- call fMRIModelViewGenerate. If the model view window is open
+#--- already, fMRIModelViewGenerate will call fMRIModelViewLaunch
+#--- to *both* generate and display the model. Otherwise, it will just
+#--- generate the data you need for GLM computation.
+#
+#--- 6. Global variables are here collected in ::fMRIModelView array
+#--- here for testing, but probably want to contain these in fMRIEngine
+#--- array instead. In addition, proc names are begun with 'fMRIModelView'
+#--- and that too probably needs to be changed to fit with fMRIEngine's
+#--- convention.
+#
+#--- 7. When finally exiting, use the proc fMRIModelViewCloseAndCleanAndExit 
+#--- which gets rid of all user input and all other global variables.
+#
+#--- 8. please keep the product [$::fMRIModelView(Design,Run$r,TR) *
+#--- $::fMRIModelView(Design,Run$r,TimeIncrement)] an integer value.
+#--- otherwise the subsampling routine will break.
+#
+#--- 9. The X vector to use for each column in the design matrix is
+#--- contained in list fMRIModelView(Data,Run$r,EV$i,EVData) after the
+#--- signal modeling is performed; its values range between [-1.0 and 1.0].
+#
+#--- 10. Please check the new fMRIModelViewFakeUserInput proc
+#--- since it has at least one new global (called fMRIModelView(Layout,NoDisplay))
+#--- which should be set depending on whether the model view popup
+#--- window is open.
+#---------------------------------------------------------------------------
+
+
+proc fMRIModelViewLaunchModelView { {toplevelName .wfMRIModelView} } {
+    #---
+    #--- fMRIModelViewLaunchModelView gets run at button press
+    #--- if the window already exists, but is iconified,
+    #--- clean stuff up, empty and delete canvas;
+    #--- leave nothing but toplevel win, and then
+    #--- regenerate everything inside it fresh and new.
+    #---
+    #--- freeing everything but user input
+    fMRIModelViewCleanForRegeneration
+
+    if { [winfo exists $toplevelName] } {
+        wm deiconify $toplevelName
+        set root $::fMRIModelView(modelViewWin)
+    } else {
+        #--- set up window
+        set fMRIModelWinXpos 300
+        set fMRIModelWinYpos 100
+        set fMRIModelWinMinWid 200
+        set fMRIModelWinMinHit 175
+        set fMRIModelWinBaseWid 400
+        set fMRIModelWinBaseHit 300
+        set root [ toplevel $toplevelName ]
+        wm title $root "design matrix and contrasts"
+        wm geometry $root +$fMRIModelWinXpos+$fMRIModelWinYpos
+        wm minsize $root $fMRIModelWinMinWid $fMRIModelWinMinHit
+        wm protocol $root WM_DELETE_WINDOW "fMRIModelViewCloseAndClean"
+    }
+    #--- hardcode a name for the window.
+    set ::fMRIModelView(modelViewWin) ".wfMRIModelView"
+    set ::fMRIModelView(Layout,NoDisplay) 0
+
+    #--- initialize fonts and colors
+    fMRIModelViewSetFonts
+    fMRIModelViewSetColors
+
+    fMRIModelViewSortUserInput
+
+    #--- if there's no model to view, nothing will happen.
+    if { $::fMRIModelView(Design,numRuns) == 0 } {
+        for { set r 1 } { $r < $::fMRIModelView(Design,numRuns) } { incr r } {
+            if { $::fMRIModelView(Design,Run$r,numConditions) == 0 } {
+                DevErrorWindow "No conditions are specified for Run $r."
+                return
+            }
+        }
+    }
+    #--- autoconfigure the layout 
+    fMRIModelViewSetInitialOrthogonalityDim
+    fMRIModelViewSetElementSpacing
+    fMRIModelViewComputeCaptionBuffers
+    fMRIModelViewSetupLayout
+
+    #--- create a frame, canvas within it, set up canvases and scrollregions.
+    $root configure -background $::fMRIModelView(Colors,hexwhite)
+    set fMRIModelWinScrollWid $::fMRIModelView(Layout,totalWid) 
+    set fMRIModelWinScrollHit $::fMRIModelView(Layout,totalHit) 
+    set fMRIModelWinBaseWid 400
+    set fMRIModelWinBaseHit 300
+    fMRIModelViewScrolledCanvas $root.fDesignMatrix -relief groove -borderwidth 1 \
+        -bg $::fMRIModelView(Colors,bkg) \
+        -width $fMRIModelWinBaseWid -height $fMRIModelWinBaseHit \
+        -scrollregion "0 0 $fMRIModelWinScrollWid $fMRIModelWinScrollHit"
+    pack $root.fDesignMatrix -fill both -expand true
+
+    #--- put up little message
+    $::fMRIModelView(modelViewCanvas) create text  200 150 \
+        -text "....generating / updating model...." -anchor center \
+        -font $::fMRIModelView(UI,Medfont) \
+        -tag $::fMRIModelView(Layout,WaitTag)
+    update 
+    
+    #--- and build all the stuff to visualize the model.
+    #--- if something fails, clean up and close window
+    #--- not sure if this works!
+    if { ! [fMRIModelViewDisplayModelView $root.fDesignMatrix] } {
+        fMRIModelViewCloseAndClean
+    }
+
+}
+
+
+proc fMRIModelViewGenerateModel { {toplevelName .wfMRIModelView} } {
+    #---
+    #--- fMRIModelViewGenerateModel gets run each time someone
+    #--- enters a new condition, updates signal modeling on that
+    #--- condition, or enters a new contrast.
+    #--- if window is already up, also update the visual display
+    #---
+    if { [winfo exists $toplevelName] } {
+        fMRIModelViewLaunchModelView
+        set ::fMRIModelView(Layout,NoDisplay) 0
+    } else {
+        #--- otherwise, no view update is required or requested.
+        #--- compute all new signal modeling without generating
+        #--- visual display. This does more work than we need, 
+        #--- but we'll fix that later when we have more time.
+        #---
+        #--- free everything but user input.
+        fMRIModelViewCleanForRegeneration
+        #--- regenerate.
+        fMRIModelViewSetFonts
+        fMRIModelViewSetColors
+        fMRIModelViewSortUserInput
+        set ::fMRIModelView(Layout,NoDisplay) 1
+        fMRIModelViewSetInitialOrthogonalityDim
+        fMRIModelViewSetElementSpacing
+        fMRIModelViewComputeCaptionBuffers
+        fMRIModelViewSetupLayout
+        set imgwid $::fMRIModelView(Layout,EVBufWid) 
+
+        for { set r 1 } { $r <= $::fMRIModelView(Design,numRuns) } { incr r } {
+            set imghit [ expr $::fMRIModelView(Design,Run$r,numTimePoints) * \
+                             $::fMRIModelView(Layout,pixelsPerTimePoint) ]
+            set cols [ expr $::fMRIModelView(Design,Run$r,numConditionEVs) + \
+                           $::fMRIModelView(Design,Run$r,numAdditionalEVs) ] 
+            for { set i 1 } { $i <= $cols } { incr i } {
+                set signalType $::fMRIModelView(Design,Run$r,EV$i,SignalType)
+                fMRIModelViewBuildModelSignals $r $i $imghit $imgwid $signalType 
+                set ok [ fMRIModelViewBuildEVData  $r $i ]
+                if {$ok == 0 } {
+                    DevErrorWindow "Error: no model generated. Please check your inputs."
+                    return 0
+                }
+            }
+        }
+    }
+    return 1
+}
+
+
+proc fMRIModelViewCreatePopup { w title x y } {
+    #---
+    toplevel $w -class Dialog -background ::fMRIModelView(Colors,hexwhite)
+    wm title $w $title
+    wm iconname $w Dialog
+    wm geometry $w +$x+$y
+    focus $w
+}
+
+
+proc fMRIModelViewRaisePopup { w } {
+    #---
+    if {[winfo exists $w] != 0} {
+        raise $w
+        focus $w
+        wm deiconify $w
+        return 1
+    }
+    return 0
+}
+
+
+proc fMRIModelViewShowPopup { w x y } {
+    #---
+    wm deiconify $w
+    update idletasks
+    set wWin [winfo width  $w]
+    set hWin [winfo height $w]
+    set wScr [winfo screenwidth  .]
+    set hScr [winfo screenheight .]
+    
+    set xErr [expr $wScr - 30 - ($x + $wWin)]
+    if {$xErr < 0} {
+        set x [expr $x + $xErr]
+    }
+    set yErr [expr $hScr - 30 - ($y + $hWin)]
+    if {$yErr < 0} {
+        set y [expr $y + $yErr]
+    }
+    
+    raise $w
+    wm geometry $w +$x+$y
+}
+
+
+proc fMRIModelViewSetConditionOnsets { r cnum clist } {
+    #---
+    set ::fMRIModelView(Design,Run$r,Condition$cnum,Onsets) $clist
+}
+
+
+proc fMRIModelViewSetConditionDurations { r cnum clist } {
+    #---
+    set ::fMRIModelView(Design,Run$r,Condition$cnum,Durations) $clist
+}
+
+
+proc fMRIModelViewSetConditionIntensities { r cnum clist } {
+    #---
+    set ::fMRIModelView(Design,Run$r,Condition$cnum,Intensities) $clist
+}
+
+
+proc fMRIModelViewSetTContrast { cnum clist } {
+    #---
+    set ::fMRIModelView(Design,TContrast$cnum,Vector) $clist
+}
+
+
+proc fMRIModelViewSetEVSignalType { r evnum signal } {
+    #---
+    set ::fMRIModelView(Design,Run$r,EV$evnum,SignalType) $signal
+}
+
+
+proc fMRIModelViewAddConditionName { r cnum cname } {
+    #---
+    lappend ::fMRIModelView(Design,Run$r,ConditionNames) $cname
+}
+
+
+proc fMRIModelViewSetTContrastName {cnum cname } {
+    #---
+    lappend ::fMRIModelView(Design,TContrastNames) $cname
+}
+
+
+proc fMRIModelViewSetTContrastLabel { cnum } {
+    #---
+    # Haiying's change
+    # lappend ::fMRIModelView(Design,TContrasts) "c$cnum"
+    lappend ::fMRIModelView(Design,TContrasts) ""
+}
+
+
+proc fMRIModelViewGenerateEVName { evnum r } {
+    #---
+    #--- The name for ev1 derives from name of condition1;
+    #--- condition1 name is the zero-th element in conditionnames list.
+    #--- add to condition name some indication of signal modeling
+    #--- that produced the EV.
+    #---
+    set j [ expr $evnum - 1 ]
+    set basename [ lindex $::fMRIModelView(Design,Run$r,ConditionNames) $j ]
+    set type $::fMRIModelView(Design,Run$r,EV$evnum,SignalType)
+    if { $type == "boxcar" } {
+        lappend ::fMRIModelView(Design,evNames) "$basename.boxcar"
+    } elseif { $type == "boxcar_dt" } {
+        lappend ::fMRIModelView(Design,evNames) "$basename.boxcar.dt"
+    } elseif { $type == "boxcar_cHRF" } {
+        lappend ::fMRIModelView(Design,evNames) "$basename.boxcar.HRF"
+    } elseif { $type == "boxcar_cHRF_dt" } {
+        lappend ::fMRIModelView(Design,evNames) "$basename.boxcar.HRF.dt"
+    } elseif { $type == "halfsine" } {
+        lappend ::fMRIModelView(Design,evNames) "$basename.halfsine"
+    } elseif { $type == "halfsine_dt" } {        
+        lappend ::fMRIModelView(Design,evNames) "$basename.halfsine.dt"
+    } elseif { $type == "halfsine_cHRF" } {
+        lappend ::fMRIModelView(Design,evNames) "$basename.halfsine.HRF"
+    } elseif { $type == "halfsine_cHRF_dt" } {
+        lappend ::fMRIModelView(Design,evNames) "$basename.halfsine.HRF.dt"
+    } elseif { $type == "baseline" } {
+        lappend ::fMRIModelView(Design,evNames) "baseline"
+    } elseif { $type == "DCbasis0" } {
+        lappend ::fMRIModelView(Design,evNames) "DCbasis"
+    } elseif { $type == "DCbasis1" } {
+        lappend ::fMRIModelView(Design,evNames) "DCbasis"
+    } elseif { $type == "DCbasis2" } {
+        lappend ::fMRIModelView(Design,evNames) "DCbasis"
+    } elseif { $type == "DCbasis3" } {
+        lappend ::fMRIModelView(Design,evNames) "DCbasis"
+    } elseif { $type == "DCbasis4" } {
+        lappend ::fMRIModelView(Design,evNames) "DCbasis"
+    } elseif { $type == "DCbasis5" } {
+        lappend ::fMRIModelView(Design,evNames) "DCbasis"
+    } elseif { $type == "DCbasis6" } {
+        lappend ::fMRIModelView(Design,evNames) "DCbasis"
+    }
+}
+
+
+proc fMRIModelViewGenerateEVLabel { evnum } {
+    #---
+    #--- stick all explanatory variable lables in one list
+    #---
+    lappend ::fMRIModelView(Design,evs) "v$evnum"
+}
+
+
+proc fMRIModelViewAddFileName { fname } {
+    #---
+    #--- stick all filenames in one long list
+    #---
+    lappend ::fMRIModelView(Design,fileNames) $fname
+}
+
+
+proc fMRIModelViewSetInitialOrthogonalityDim { } {
+    #---
+    #--- optimal dimensions of the design orthogonality matrix
+    #---
+    set ::fMRIModelView(Layout,OrthogonalityDim) 120
+    set ::fMRIModelView(Layout,OrthogonalityCellDim) 14
+}
+
+
+proc fMRIModelViewSetElementSpacing { } {
+    #---
+    #--- some little space buffers for the canvas
+    #---
+    set ::fMRIModelView(Layout,VSpace) 6
+    set ::fMRIModelView(Layout,HSpace) 6
+    set ::fMRIModelView(Layout,moreVSpace) 8
+    set ::fMRIModelView(Layout,moreHSpace) 8
+    set ::fMRIModelView(Layout,bigVSpace) 12
+    set ::fMRIModelView(Layout,bigHSpace) 12   
+    set ::fMRIModelView(Layout,hugeVSpace) 18
+    set ::fMRIModelView(Layout,hugeHSpace) 18   
+}
+
+
+proc fMRIModelViewComputeCaptionBuffers { } {
+    #---
+    #--- configure regions for captions;
+    #--- compute buffer requirements
+    #--- based on width of names of
+    #--- EVs, contrasts, and filenames.
+    #---
+
+    #--- top buffer height is arbitrarily set; enough room for
+    #--- the name of any EV to appear on rollover and a
+    #--- good looking whitespace above.
+    #--- buffer on top for explanatory variable name labels
+    set fnt $::fMRIModelView(UI,Medfont)
+    set ::fMRIModelView(Layout,EVnameBufHit) 30
+    set buf [ fMRIModelViewBufFromChars $::fMRIModelView(Design,evNames) $fnt ]
+    set ::fMRIModelView(Layout,EVnameBufWid) [ expr $buf + $::fMRIModelView(Layout,HSpace) ]
+
+    #--- buffer on top for explanatory variable labels
+    #--- make enough space to label ev's atop Design matrix.
+    #--- give equal vertical and horizontal space for the characters.
+    set fnt $::fMRIModelView(UI,Smallfont)
+    set buf [ fMRIModelViewBufFromChars $::fMRIModelView(Design,evs) $fnt ]
+    set ::fMRIModelView(Layout,EVBufHit) [ expr $buf + $::fMRIModelView(Layout,bigHSpace) ]
+    set ::fMRIModelView(Layout,EVBufWid) [ expr $buf + $::fMRIModelView(Layout,HSpace) ]
+    
+    #--- buffer on the right for filenames
+    set fnt $::fMRIModelView(UI,Medfont)
+    set buf [ fMRIModelViewBufFromChars $::fMRIModelView(Design,fileNames) $fnt ]
+    set ::fMRIModelView(Layout,FilenameBufWid) [ expr $buf + $::fMRIModelView(Layout,HSpace) ]
+    
+    #--- make sure buffer is at least as big as the Design Orthogonality Matrix dimension
+    if { $::fMRIModelView(Layout,FilenameBufWid) < $::fMRIModelView(Layout,OrthogonalityDim) } {
+        set ::fMRIModelView(Layout,FilenameBufWid) $::fMRIModelView(Layout,OrthogonalityDim) 
+    }
+
+    if { $::fMRIModelView(Design,numTContrasts) > 0 } {
+        #--- buffer on the left for contrast name labels
+        set buf [ fMRIModelViewBufFromChars $::fMRIModelView(Design,TContrastNames) $fnt ]
+        set ::fMRIModelView(Layout,ContrastNameBufWid) [ expr $buf + $::fMRIModelView(Layout,HSpace) ]
+
+        #--- buffer on the left for contrast labels
+        set buf [ fMRIModelViewBufFromChars $::fMRIModelView(Design,TContrasts) $fnt ]
+        set ::fMRIModelView(Layout,ContrastBufWid) [ expr $buf + $::fMRIModelView(Layout,HSpace) ]
+    } else {
+        set ::fMRIModelView(Layout,ContrastNameBufWid) $::fMRIModelView(Layout,HSpace)
+        set ::fMRIModelView(Layout,ContrastBufWid) $::fMRIModelView(Layout,HSpace)
+    }
+    
+    #--- now adjust rightmost and leftmost buffers if necessary
+    #--- to ensure that explanatory variable name label fits, as
+    #--- it will be centered above each column in the design matrix.
+    set halfwid [ expr $::fMRIModelView(Layout,EVnameBufWid) / 2 ]
+    if { $::fMRIModelView(Layout,ContrastNameBufWid) < $halfwid }  {
+        set ::fMRIModelView(Layout,ContrastNameBufWid) $halfwid
+    }
+    if { $::fMRIModelView(Layout,FilenameBufWid) < $halfwid } {
+        set ::fMRIModelView(Layout,FilenameBufWid) $halfwid
+    }
+
+}
+
+
+proc fMRIModelViewSetupLayout { } {
+    #---    
+    #--- dimensions, in pixels, of image of each timepoint
+    #--- adjust it to fit the available space.
+    #---
+    if { $::fMRIModelView(Design,totalTimePoints) < 150 } {
+        set ::fMRIModelView(Layout,pixelsPerTimePoint) 2
+    } else {
+        set ::fMRIModelView(Layout,pixelsPerTimePoint) 1
+    }
+    #--- pixels allocated to little lines that point to
+    #--- user-specified EVnames upon mouse rollover.
+    set ::fMRIModelView(Layout,evLineBufHit) 4
+    set ::fMRIModelView(Layout,TContrastWid) $::fMRIModelView(Layout,EVBufWid)
+    set ::fMRIModelView(Layout,TContrastHit) 16
+    #--- dim of save and close buttons
+    set numbuttons 3
+    set ::fMRIModelView(Layout,ButtonWid) 60
+    set ::fMRIModelView(Layout,ButtonHit) 20
+    #--- buffer below the contrast table.
+    set ::fMRIModelView(Layout,botBufHit) [ expr $::fMRIModelView(Layout,OrthogonalityDim) + \
+                  $::fMRIModelView(Layout,bigVSpace) ]
+    
+    #--- configure window size, pos, scrollregions based on content
+    set ::fMRIModelView(Layout,totalWid) [ expr $::fMRIModelView(Layout,ContrastNameBufWid) + \
+                                               $::fMRIModelView(Layout,ContrastBufWid) + \
+                                               ($::fMRIModelView(Design,totalEVs) * \
+                                                    $::fMRIModelView(Layout,EVBufWid) ) + \
+                                               $::fMRIModelView(Layout,FilenameBufWid) ]
+    set dmatHit [ expr $::fMRIModelView(Design,totalTimePoints) * \
+                      $::fMRIModelView(Layout,pixelsPerTimePoint) ]
+    set ::fMRIModelView(Layout,totalHit) [ expr $::fMRIModelView(Layout,EVnameBufHit) + \
+                                               $::fMRIModelView(Layout,EVBufHit) + \
+                                               $dmatHit + \
+                                               ($::fMRIModelView(Design,numTContrasts) * \
+                                               $::fMRIModelView(Layout,VSpace)) + \
+                                               ($::fMRIModelView(Design,numTContrasts) * \
+                                               $::fMRIModelView(Layout,TContrastHit)) +\
+                                               $::fMRIModelView(Layout,botBufHit) ]
+    set ::fMRIModelView(Layout,SaveRectTag) "fMRIModelView_saveHILO"
+    set ::fMRIModelView(Layout,SaveTag) "fMRIModelView_save"
+    set ::fMRIModelView(Layout,UpdateRectTag) "fMRIModelView_updateHILO"
+    set ::fMRIModelView(Layout,UpdateTag) "fMRIModelView_update"
+    set ::fMRIModelView(Layout,CloseRectTag) "fMRIModelView_closeHILO"
+    set ::fMRIModelView(Layout,CloseTag) "fMRIModelView_close"
+    set ::fMRIModelView(Layout,WaitTag) "fMRIModelView_wait"
+    set totalcols $::fMRIModelView(Design,totalEVs)
+
+    #--- make a tag for every column of the design matrix.
+    #--- these will be used to trigger the display of user-specified
+    #--- evnames associated with each column of the design matrix
+    #--- on mouse rollover.
+    for { set r 1 } { $r <= $::fMRIModelView(Design,numRuns) } { incr r } {
+        set evs [ expr $::fMRIModelView(Design,Run$r,numConditionEVs) + \
+                     $::fMRIModelView(Design,Run$r,numAdditionalEVs) ]
+        for { set i 1 } { $i <= $evs } { incr i } {
+            set ::fMRIModelView(Layout,EVnameTag,Run$r,$i) "fMRIModelView_evname$i$r"
+            set ::fMRIModelView(Layout,dmColumnTag,Run$r,$i) "fMRIModelView_designmatCol$i$r"
+        }
+    }
+    #--- make a tag for every filename loaded in the study.
+    #--- These will be used to trigger the display of a filename
+    #--- associated with a timepoint on mouse rollover.
+    for { set i 0 } { $i < $::fMRIModelView(Design,totalTimePoints) } { incr i } {
+        set ::fMRIModelView(Layout,FilenameTag$i) "fMRIModelView_filename$i"
+    }
+}
+
+
+proc fMRIModelViewDisplayModelView { f } {
+    #---
+    set c $::fMRIModelView(modelViewCanvas) 
+
+    #--- compute layout parameters 
+    set refX [ expr $::fMRIModelView(Layout,ContrastNameBufWid) + \
+                   $::fMRIModelView(Layout,ContrastBufWid) ]
+    set refY [ expr $::fMRIModelView(Layout,EVnameBufHit) + \
+                   $::fMRIModelView(Layout,evLineBufHit) + \
+                   $::fMRIModelView(Layout,EVBufHit) ]
+    set dmatHit [ expr $::fMRIModelView(Layout,pixelsPerTimePoint) * \
+                            $::fMRIModelView(Design,totalTimePoints) ]
+    set dmatWid [ expr  ($::fMRIModelView(Design,totalEVs) * \
+                             $::fMRIModelView(Layout,EVBufWid) ) ]
+    set cmatHit [ expr $::fMRIModelView(Design,numTContrasts) * \
+                          ($::fMRIModelView(Layout,TContrastHit) + \
+                               $::fMRIModelView(Layout,VSpace)) ]
+    set cmatWid $dmatWid
+    set borderWid 1
+
+    #--- draw design matrix; if model fails, bail out.
+    if { ! [fMRIModelViewBuildDesignMatrix $c $refX $refY $dmatHit $dmatWid $borderWid ] } {
+        return 0
+    }
+
+    #--- draw table of contrasts if there are contrasts...
+    if { $::fMRIModelView(Design,numTContrasts) > 0 } {
+        fMRIModelViewBuildContrastTable $c $refX $refY \
+            $dmatHit $dmatWid $cmatHit $cmatWid $borderWid
+    }
+    fMRIModelViewSetupOrthogonalityImage $c $refX $refY \
+        $dmatHit $dmatWid $cmatHit $cmatWid $borderWid
+
+    #--- label EVs and contrasts
+    fMRIModelViewLabelEVs $c $refX $refY $dmatWid
+    fMRIModelViewLabelEVnames  $c $refX $refY $dmatWid 
+    if { $::fMRIModelView(Design,numTContrasts) > 0 } {    
+        fMRIModelViewLabelTContrasts $c $refX $refY $dmatHit $cmatHit
+        fMRIModelViewLabelTContrastNames $c $refX $refY $dmatHit $cmatHit
+    }
+    
+    #--- buttons
+    fMRIModelViewSetupButtonImages $c $refX $refY \
+        $dmatHit $dmatWid $cmatHit $cmatWid
+    #--- make filenames surfable.
+    fMRIModelViewLabelFilenames $c $refX $refY $dmatHit $dmatWid
+    return 1
+}
+
+
+proc fMRIModelViewBuildDesignMatrix { c refX refY dmatHit dmatWid borderWid } {
+    #---
+    #--- For each column of the design matrix, compute an 
+    #--- image that represents the EV, a list that will
+    #--- hold the signal for modeling, and a list containing
+    #--- EV data for computation.
+    #---
+    #--- Fill all matrix columns with zerogrey (which represents
+    #--- signal zero, and then blit in the images at the appropriate
+    #--- height in the correct design matrix column.
+
+    #--- draw zerogrey columns with no outline.
+    set x1 $refX 
+    set y1 $refY 
+    set y2 [expr $refY + $dmatHit ]
+    for { set r 1 } { $r <= $::fMRIModelView(Design,numRuns) } { incr r } {
+        set cols [ expr $::fMRIModelView(Design,Run$r,numConditionEVs) + \
+                       $::fMRIModelView(Design,Run$r,numAdditionalEVs) ]
+        for { set i 1 } { $i <= $cols } { incr i } {
+            set x2 [expr $x1 + $::fMRIModelView(Layout,EVBufWid) ]
+            $c create rect $x1 $y1 $x2 $y2 -width 0 -fill $::fMRIModelView(Colors,hexzeroGrey) \
+                -tag $::fMRIModelView(Layout,dmColumnTag,Run$r,$i)
+            #--- and bind.
+            $c bind $::fMRIModelView(Layout,dmColumnTag,Run$r,$i) <Enter> \
+                "fMRIModelViewEVnameRollover $c $refY $i $r"
+            $c bind $::fMRIModelView(Layout,dmColumnTag,Run$r,$i) <Motion> \
+                "fMRIModelViewFilenameRollover $c  $refY $dmatHit %y"
+            $c bind $::fMRIModelView(Layout,dmColumnTag,Run$r,$i) <Leave> \
+                "fMRIModelViewHideRolloverInfo $c"
+            #--- increment draw position
+            set x1 [ expr $x1 + $::fMRIModelView(Layout,EVBufWid) ]
+        }
+    }
+    #---
+    #--- Now, compute signals, images and EVData for activation detection.
+    set x1 $refX
+    set y1 $refY
+    set imghit [ expr $dmatHit / $::fMRIModelView(Design,numRuns) ]
+    set imgwid $::fMRIModelView(Layout,EVBufWid) 
+    for { set r 1 } { $r <= $::fMRIModelView(Design,numRuns) } { incr r } {
+        set cols [ expr $::fMRIModelView(Design,Run$r,numConditionEVs) + \
+                       $::fMRIModelView(Design,Run$r,numAdditionalEVs) ]
+        for { set i 1 } { $i <= $cols } { incr i } {
+            set signalType $::fMRIModelView(Design,Run$r,EV$i,SignalType)
+            fMRIModelViewBuildModelSignals $r $i $imghit $imgwid $signalType
+            set ok [ fMRIModelViewBuildEVData  $r $i ]
+            if {$ok == 0 } {
+                DevErrorWindow "Error: no model generated. Please check your inputs."
+                return 0
+            }
+            if { $::fMRIModelView(Layout,NoDisplay) == 0 } {
+                fMRIModelViewBuildEVImages $r $i $imgwid
+            }
+            $c create image $x1 $y1 \
+                -image $::fMRIModelView(Images,Run$r,EV$i,Image) \
+                -anchor nw -tag $::fMRIModelView(Layout,dmColumnTag,Run$r,$i)
+            #--- and bind.
+            $c bind $::fMRIModelView(Layout,dmColumnTag,Run$r,$i) <Enter> \
+                "fMRIModelViewEVnameRollover $c $refY $i $r"
+            $c bind $::fMRIModelView(Layout,dmColumnTag,Run$r,$i) <Motion> \
+                "fMRIModelViewFilenameRollover $c $refY $dmatHit %y"
+            $c bind $::fMRIModelView(Layout,dmColumnTag,Run$r,$i) <Leave> \
+                "fMRIModelViewHideRolloverInfo $c"
+            set x1 [ expr $x1 + $::fMRIModelView(Layout,EVBufWid) ]
+        }
+        set y1 [ expr $y1 + $imghit ]
+    }
+
+    #--- delete little wait message.
+    $::fMRIModelView(modelViewCanvas) delete $::fMRIModelView(Layout,WaitTag)
+    update idletasks
+    
+    #--- draw matrix outlines
+    set x1 $refX 
+    set y1 $refY 
+    set y2 [expr $refY + $dmatHit ]
+    for { set r 1 } { $r <= $::fMRIModelView(Design,numRuns) } { incr r } {
+        set cols [ expr $::fMRIModelView(Design,Run$r,numConditionEVs) + \
+                       $::fMRIModelView(Design,Run$r,numAdditionalEVs) ]
+        for { set i 1 } { $i <= $cols } { incr i } {
+            set x2 [expr $x1 + $::fMRIModelView(Layout,EVBufWid) ]
+            $c create rect $x1 $y1 $x2 $y2 -outline $::fMRIModelView(Colors,hexblack) \
+                -width $borderWid -tag $::fMRIModelView(Layout,dmColumnTag,Run$r,$i)
+            #--- and bind.
+            $c bind $::fMRIModelView(Layout,dmColumnTag,Run$r,$i) <Enter> \
+                "fMRIModelViewEVnameRollover $c $refY $i $r"
+            $c bind $::fMRIModelView(Layout,dmColumnTag,Run$r,$i) <Motion> \
+                "fMRIModelViewFilenameRollover $c  $refY $dmatHit %y"
+            $c bind $::fMRIModelView(Layout,dmColumnTag,Run$r,$i) <Leave> \
+                "fMRIModelViewHideRolloverInfo $c"
+            #--- increment draw position
+            set x1 [ expr $x1 + $::fMRIModelView(Layout,EVBufWid) ]
+        }
+    }
+    return 1
+}
+
+
+proc fMRIModelViewBuildEVData { r i } {
+    #---
+    #--- Return 1 if successful; 0 if no model can be generated.
+    #--- Create an EVdata list, filled with zeros, for computation.
+    #--- $::fMRIModelView(Design,Run$r,numTimePoints) samples in this list
+    #---
+    if { ($::fMRIModelView(Design,identicalRuns)) && ($r > 1) } {
+        #--- just reuse data first Run.
+        set ::fMRIModelView(Data,Run$r,EV$i,EVData) $::fMRIModelView(Data,Run1,EV$i,EVData)
+        return 1
+    } else {
+        #--- compute new...
+        set timepoints $::fMRIModelView(Design,Run$r,numTimePoints)
+        for { set t 0 } { $t < $timepoints } { incr t } {
+            lappend ::fMRIModelView(Data,Run$r,EV$i,EVData) 0.0
+        }
+        #--- see if signal exists
+        set siglen [ llength $::fMRIModelView(Data,Run$r,EV$i,Signal) ]
+        if { $siglen == 0 } {
+            return 0
+        }
+        #---
+        #--- generate EVData directly when using analytic functions in model,
+        #--- or by downsampling hi-res convolved, derivative signals
+        set signalType $::fMRIModelView(Design,Run$r,EV$i,SignalType)
+        if { $signalType == "boxcar" } {
+            #--- generate this analytic functions directly.
+            if { [ info exists ::fMRIModelView(Design,Run$r,Condition$i,Onsets) ] } {
+                set indx 0
+                    foreach onset $::fMRIModelView(Design,Run$r,Condition$i,Onsets) {
+                        set duration [lindex $::fMRIModelView(Design,Run$r,Condition$i,Durations) $indx ]
+                        set start $onset 
+                        set len $duration
+                        for { set t $start } { $t < [ expr $start + $len ] } { incr t } {
+                            set ::fMRIModelView(Data,Run$r,EV$i,EVData) \
+                                [ lreplace $::fMRIModelView(Data,Run$r,EV$i,EVData) $t $t 1.0 ]
+                        }
+                        incr indx
+                    }
+                }
+            } elseif { $signalType == "baseline" } {
+                #--- generate this analytic functions directly.
+                for { set t 0 } { $t < $timepoints } { incr t } {
+                    set ::fMRIModelView(Data,Run$r,EV$i,EVData) \
+                        [ lreplace $::fMRIModelView(Data,Run$r,EV$i,EVData) $t $t 1.0 ]
+                }
+            } elseif { $signalType == "halfsine" } {
+                #--- generate this analytic functions directly.
+                if { [ info exists ::fMRIModelView(Design,Run$r,Condition$i,Onsets) ] } {
+                    set PI 3.14159265
+                    set indx 0
+                    foreach onset $::fMRIModelView(Design,Run$r,Condition$i,Onsets) {
+                        set duration [lindex $::fMRIModelView(Design,Run$r,Condition$i,Durations) $indx ]
+                        set start $onset 
+                        set len $duration
+                        set period [ expr 2 * $len ]
+                        set m [ expr 2 * $PI / $period ]
+                        set tau 0
+                        for { set t $start } { $t < [ expr $start + $len ] } { incr t } {
+                            set sineVal [ expr sin ($m * $tau) ]
+                            set ::fMRIModelView(Data,Run$r,EV$i,EVData) \
+                                [ lreplace $::fMRIModelView(Data,Run$r,EV$i,EVData) $t $t $sineVal ]
+                            incr tau
+                        }
+                        incr indx
+                    }
+                }
+            } else {
+                #--- gaussian subsample signal to make evData.
+                set evlen [ expr double($::fMRIModelView(Design,Run$r,numTimePoints)) ]
+                set ::fMRIModelView(Data,Run$r,EV$i,EVData) [ fMRIModelViewGaussianDownsampleList \
+                                                                  $i $r $siglen $evlen $::fMRIModelView(Data,Run$r,EV$i,Signal) ]
+            }
+            #---
+            #--- rescales range of evData to [-1.0 and 1.0]
+            #---
+            set max -1000000.0
+            set min 100000.0
+            set evlen [ llength $::fMRIModelView(Data,Run$r,EV$i,EVData) ]
+            for { set t 0 } { $t < $evlen } { incr t } {
+            set v [ lindex $::fMRIModelView(Data,Run$r,EV$i,EVData) $t ]
+                if { $v > $max } {
+                    set max $v
+                }
+                if { $v < $min } {
+                    set min $v
+                }
+            }
+            set ::fMRIModelView(Data,Run$r,EV$i,EVData) [ fMRIModelViewRangemapList  \
+                                                              $::fMRIModelView(Data,Run$r,EV$i,EVData) 1.0 0.0 ]
+            return 1
+        }
+}
+
+
+proc  fMRIModelViewBuildEVImages { r i imgwid } {
+        #--- 
+        #--- Compute Image samples from EVData; store in a list, convert to image.
+        #--- $::fMRIModelView(Design,Run$r,numTimePoints) samples in list.
+        #--- $::fMRIModelView(Design,Run$r,numTimePoints) *
+        #--- $::fMRIModelView(Layout,pixelsPerTimePoint) samples in image,
+        #--- each sample in list is repeated xx(Layout,pixelsPerTimePoint) times.
+        #--- 
+          if { ($::fMRIModelView(Design,identicalRuns)) && ($r > 1) } {
+            #--- just reuse image from first Run.
+              set ::fMRIModelView(Images,Run$r,EV$i,Image) $::fMRIModelView(Images,Run1,EV$i,Image)
+              #set ::fMRIModelView(Images,Run$r,EV$i,Image) [image create photo ]
+              #$::fMRIModelView(Images,Run$r,EV$i,Image) copy $::fMRIModelView(Images,Run1,EV$i,Image)
+          } else {
+              #--- generate fresh images.
+              set ::fMRIModelView(Images,Run$r,EV$i,Image) [image create photo ]
+              set max -1000000.0
+              set min 100000.0
+
+              set timepoints $::fMRIModelView(Design,Run$r,numTimePoints)
+              set ppt $::fMRIModelView(Layout,pixelsPerTimePoint)
+              #--- create imglist from EVData; repeat each sample ppt times.
+              for { set p 0 } { $p < $timepoints } { incr p } {
+                  set v [ lindex $::fMRIModelView(Data,Run$r,EV$i,EVData) $p ]
+                  if { $v > $max } {
+                      set max $v
+                  }
+                  if { $v < $min } {
+                      set min $v
+                  }
+                  for { set pp 0 } { $pp < $ppt } { incr pp } {
+                      lappend imglist $v
+                  }
+              }
+              #--- make image
+              set zerogrey $::fMRIModelView(Colors,zeroGrey)
+              set ilen [ expr $ppt * $timepoints ]
+              #--- range map the list
+              set imglist [ fMRIModelViewRangemapListForImage $min $max $ilen $imglist 255 $zerogrey  ]
+              #--- generate image data
+              set imagedata [ fMRIModelViewListToImage $ilen $imgwid 1 $imglist ]
+              $::fMRIModelView(Images,Run$r,EV$i,Image) put $imagedata -to 0 0
+              unset imglist
+              unset imagedata
+            }
+}
+
+
+proc fMRIModelViewBuildModelSignals { r i imghit imgwid signalType } {
+        #---
+        #--- Calls procs to generate appropriate signal for
+        #--- a given explanatory variable. Also creates image
+        #--- for the model viewer, if appropriate, and creates
+        #--- a list  fMRIModelView(Data,Run$r,EV$i,EVData,
+        #--- which contains the explanatory variable sampled
+        #--- at each timepoint for activation detection.
+        #---
+        if { ($::fMRIModelView(Design,identicalRuns)) && ($r > 1) } {
+            #--- just reuse signal from first Run.
+            set ::fMRIModelView(Data,Run$r,EV$i,Signal) $::fMRIModelView(Data,Run1,EV$i,Signal)
+        } else {
+            #---
+            #--- signal
+            #--- and create a corresponding Signal list filled with zeros for actual modeling;
+            #--- list has a value for each sec in the sequence, rather than only at scan timepoints.
+            #--- usually this will have more samples in it than the image does.
+            set samples  [ expr ($::fMRIModelView(Design,Run$r,numTimePoints) * \
+                               $::fMRIModelView(Design,Run$r,TR))  / \
+                               $::fMRIModelView(Design,Run$r,TimeIncrement) ]
+
+            for { set t 0 } { $t < $samples } { incr t } {
+                lappend ::fMRIModelView(Data,Run$r,EV$i,Signal) 0.0
+            }
+            
+            #--- if this image is associated with a user-specified condition, then insert
+            #--- requested or default signal footprints into the image and signal 
+            #--- where appropriate 
+            set listIndex 0
+            if { [ info exists ::fMRIModelView(Design,Run$r,Condition$i,Onsets) ] } {
+                foreach onset $::fMRIModelView(Design,Run$r,Condition$i,Onsets) {
+                set duration [lindex $::fMRIModelView(Design,Run$r,Condition$i,Durations) $listIndex ]
+                #--- compute footprint for each event or epoch;
+                #--- depending on the signal type
+                #--- SIGNALS:
+                if { $signalType == "boxcar" } {
+                    #--- BOXCAR
+                    fMRIModelViewComputeBoxCar $onset $duration $imgwid $r $i
+                } elseif { $signalType == "boxcar_dt" } {
+                    #--- BOXCAR + TEMPORAL DERIVATIVE
+                    fMRIModelViewComputeBoxCar $onset $duration $imgwid $r $i
+                } elseif { $signalType == "boxcar_cHRF" } {
+                    #--- BOXCAR convolved with HRF
+                    fMRIModelViewComputeBoxCar $onset $duration $imgwid $r $i
+                } elseif { $signalType == "boxcar_cHRF_dt" } {                    
+                    #--- BOXCAR convolved with HRF + TEMPORAL DERIVATIVE
+                    fMRIModelViewComputeBoxCar $onset $duration $imgwid $r $i
+                } elseif { $signalType == "halfsine" } {
+                    #--- HALFSINE
+                    fMRIModelViewComputeHalfSine $onset $duration $imgwid $r $i
+                } elseif { $signalType == "halfsine_dt" } {
+                    #--- HALFSINE + TEMPORAL DERIVATIVE
+                    fMRIModelViewComputeHalfSine $onset $duration $imgwid $r $i
+                } elseif { $signalType == "halfsine_cHRF" } {                    
+                    #--- HALFSINE convolved with HRF
+                    fMRIModelViewComputeHalfSine $onset $duration $imgwid $r $i
+                } elseif { $signalType == "halfsine_cHRF_dt" } {
+                    #--- HALFSINE convolved with HRF + TEMPORAL DERIVATIVE
+                    fMRIModelViewComputeHalfSine $onset $duration $imgwid $r $i
+                }
+                incr listIndex
+            }
+        }
+        
+        #--- Add in temporal derivatives if requested:
+        #--- Here, I'm computing the derivative of
+        #--- signal (sampled at every time increment)
+        #--- and downsampling the result to generate
+        #--- the images (for visualizing the model) and
+        #--- the lists of EVdata (sampled at every
+        #--- timepoint) for now.
+        if { $signalType == "boxcar_dt" } {
+            fMRIModelViewAddDerivatives $imgwid $imghit $r $i
+        } elseif { $signalType == "halfsine_dt" } {
+            fMRIModelViewAddDerivatives $imgwid $imghit $r $i
+        } elseif { $signalType == "boxcar_cHRF_dt" } {
+            fMRIModelViewAddDerivatives $imgwid $imghit $r $i
+        } elseif { $signalType == "halfsine_cHRF_dt" } {
+            fMRIModelViewAddDerivatives $imgwid $imghit $r $i
+        }
+
+        #--- Convolve with HRF if requested:
+        #--- I'm computing convolution of the signal
+        #--- (sampled at every time increment)
+        #--- and the HRF (also sampled at every time increment),
+        #--- and then downsampling the result to
+        #--- generate the images (for visualizing the
+        #--- model) and the lists of EVdata (sampled at
+        #--- every timepoint) for now. 
+        if { $signalType == "boxcar_cHRF_dt" } {
+            fMRIModelViewConvolveWithHRF $imgwid $imghit $r $i 
+        } elseif { $signalType == "boxcar_cHRF" } {
+            fMRIModelViewConvolveWithHRF $imgwid $imghit $r $i 
+        } elseif { $signalType == "halfsine_cHRF_dt" } {
+            fMRIModelViewConvolveWithHRF $imgwid $imghit $r $i 
+        }  elseif { $signalType == "halfsine_cHRF" } {
+            fMRIModelViewConvolveWithHRF $imgwid $imghit $r $i
+        }
+
+        #--- add constant baseline image, signal and evdata by default?
+        if { $signalType == "baseline" } {
+            fMRIModelViewBuildBaseline $imgwid $imghit $r $i
+        }
+
+        #--- add DCT images, signals and evdata if requested.
+        if { $signalType == "DCbasis0" } {
+            #--- hardcode this here for now.
+            #--- later generate an appropriate number of basis funcs
+            #--- based on the calculated increment
+            set ::fMRIModelView(Design,numCosineBases) 7
+            fMRIModelViewLongestEpochSpacing
+            set f $::fMRIModelView(Design,CosineBasisIncrement)
+            fMRIModelViewBuildDCBasis $imgwid $imghit $r $i $f
+        } elseif { $signalType == "DCbasis1" } {
+            set f [ expr $::fMRIModelView(Design,CosineBasisIncrement) * 2.0 ]
+            fMRIModelViewBuildDCBasis $imgwid $imghit $r $i $f
+        } elseif { $signalType == "DCbasis2" } {
+            set f [ expr $::fMRIModelView(Design,CosineBasisIncrement) * 3.0 ]
+            fMRIModelViewBuildDCBasis $imgwid $imghit $r $i $f
+        } elseif { $signalType == "DCbasis3" } {
+            set f [ expr $::fMRIModelView(Design,CosineBasisIncrement) * 4.0 ]
+            fMRIModelViewBuildDCBasis $imgwid $imghit $r $i $f
+        } elseif { $signalType == "DCbasis4" } {
+            set f [ expr $::fMRIModelView(Design,CosineBasisIncrement) * 5.0 ]
+            fMRIModelViewBuildDCBasis $imgwid $imghit $r $i $f
+        } elseif { $signalType == "DCbasis5" } {
+            set f [ expr $::fMRIModelView(Design,CosineBasisIncrement) * 6.0 ]
+            fMRIModelViewBuildDCBasis $imgwid $imghit $r $i $f
+        } elseif { $signalType == "DCbasis6" } {
+            set f [ expr $::fMRIModelView(Design,CosineBasisIncrement) * 7.0 ]
+            fMRIModelViewBuildDCBasis $imgwid $imghit $r $i $f
+        }
+    }
+}
+
+
+proc fMRIModelViewLongestEpochSpacing { } {
+    #---
+    set T 0.0
+    for { set r 1 } { $r <= $::fMRIModelView(Design,numRuns) } { incr r } {
+        for { set c 1 } { $c <= $::fMRIModelView(Design,Run$r,numConditions) } { incr c } {
+            #--- compute interval between epochs in seconds
+            set lastOnset 0
+            set i 0
+            foreach onset $::fMRIModelView(Design,Run$r,Condition$c,Onsets) {
+                set thisOnset [ lindex $::fMRIModelView(Design,Run$r,Condition$c,Onsets) $i ]
+                set diff [ expr $::fMRIModelView(Design,Run$r,TR) * ($thisOnset - $lastOnset) ]
+                if { $diff > $T } {
+                    set T $diff
+                }
+                set lastOnset $thisOnset
+                incr i
+            }
+        }
+    }
+    set ::fMRIModelView(Design,longestEpoch) $T
+    #--- let fmax = 0.9/T (just less than the lowest frequency in paradigm)
+    #--- and let's compute seven frequencies that span that band.
+    set num [ expr double ($::fMRIModelView(Design,numCosineBases)) ]
+    set ::fMRIModelView(Design,CosineBasisIncrement) [ expr (0.9/$T) / $num ]
+}
+
+
+proc fMRIModelViewBuildDCBasis { imgwid imghit r evnum freq } {
+    #--- Discrete Cosine basis functions to capture drift
+    #--- basis functions look like:
+    #--- cos [ (2PI u / 2M) * (2t + 1) ] where M is the number of samples
+    #---
+    set min 100000.0
+    set max -10000.0
+    #set u [ expr $freq * $::fMRIModelView(Design,Run$r,TR) ]
+    #--- build signal
+    set siglen [ llength $::fMRIModelView(Data,Run$r,EV$evnum,Signal) ]
+    set inc $::fMRIModelView(Design,Run$r,TimeIncrement) 
+    set M [ expr $::fMRIModelView(Design,Run$r,numTimePoints) * \
+               $::fMRIModelView(Design,Run$r,TR) ] 
+    set u [ expr $freq * $M  * 2.0 ]
+    set t 0.0
+    for { set y 0 } { $y < $siglen} { incr y } {
+        set v [ expr cos ( (2.0 * $t + 1.0 ) * (3.14159 * $u) / (2.0 * $M)) ]
+        if { $t == 0 } {
+            set v [ expr $v / sqrt(2.0) ]
+        } 
+        if { $v > $max } {
+            set max $v
+        }
+        if {$v < $min } {
+            set min $v
+        }
+        set ::fMRIModelView(Data,Run$r,EV$evnum,Signal) \
+            [ lreplace $::fMRIModelView(Data,Run$r,EV$evnum,Signal) $y $y $v ]
+        set t [ expr $t + $inc ]
+    }
+}
+
+
+
+proc  fMRIModelViewBuildBaseline { imgwid imghit r evnum } {
+    #---
+    set min 0.0
+    set max 1.0
+    set signaldim [ expr ($::fMRIModelView(Design,Run$r,numTimePoints) * \
+                        $::fMRIModelView(Design,Run$r,TR)) / \
+                        $::fMRIModelView(Design,Run$r,TimeIncrement) ]
+
+    #--- build a constant basis function to capture baseline.
+    #--- signal first
+    for { set y 0 } { $y < $signaldim } { incr y } {
+        lappend ::fMRIModelView(Data,Run$r,EV$evnum,Signal) 1.0
+    }
+}
+
+
+proc fMRIModelViewComputeBoxCar { onset duration imgwid r i } {
+    #---
+    #--- what row of the image should this footprint begin on?
+    #--- and how many rows of the image should this footprint span?
+    #---
+    set ystart [ expr $onset * $::fMRIModelView(Layout,pixelsPerTimePoint) ]
+    set imghit [ expr $duration * $::fMRIModelView(Layout,pixelsPerTimePoint) ]
+
+    #--- what second of the signal should this footprint begin on?
+    #--- andhow many seconds should the signal footprintspan?
+    set sigstart  [ expr ($onset * $::fMRIModelView(Design,Run$r,TR)) / \
+                       $::fMRIModelView(Design,Run$r,TimeIncrement) ]
+    set sigLen [ expr ($duration * $::fMRIModelView(Design,Run$r,TR)) / \
+                    $::fMRIModelView(Design,Run$r,TimeIncrement) ]
+    
+    #--- compute a boxcar signal footprint and insert into signal list
+    #--- boxcar signal goes from 0.0 to 1.0
+    set sigstart [ expr round($sigstart) ]
+    set sigLen [ expr round ($sigLen) ]
+    for { set t $sigstart } { $t < [ expr $sigstart + $sigLen ] } { incr t } {
+        set ::fMRIModelView(Data,Run$r,EV$i,Signal) [ lreplace $::fMRIModelView(Data,Run$r,EV$i,Signal) $t $t 1.0 ]
+    }
+}
+
+
+proc fMRIModelViewComputeHalfSine { onset duration imgwid r i } {
+    #---
+    #--- what row of the image should this footprint begin on?
+    #--- and how many rows of the image should this footprint span?
+    #---
+    set ystart [ expr $onset * $::fMRIModelView(Layout,pixelsPerTimePoint) ]
+    set imghit [ expr $duration * $::fMRIModelView(Layout,pixelsPerTimePoint) ]
+
+    #--- what second of the signal should this footprint begin on?
+    #--- andhow many seconds should the signal footprintspan?
+    set sigstart  [ expr ($onset * $::fMRIModelView(Design,Run$r,TR)) / \
+                       $::fMRIModelView(Design,Run$r,TimeIncrement) ]
+    set sigLen [ expr ($duration * $::fMRIModelView(Design,Run$r,TR)) / \
+                    $::fMRIModelView(Design,Run$r,TimeIncrement) ]
+    set PI 3.14159265
+    set period [ expr 2 * $sigLen ]
+    set m [ expr 2 * $PI / $period ]
+    set tau 0
+    #--- signal:
+    #--- compute a half-sine signal footprint and insert into signal list
+    #--- signal values vary between 0.0 and 1.0
+    set sigstart [ expr round ($sigstart) ]
+    set sigLen [ expr round ($sigLen) ]
+    for { set t $sigstart } { $t < [ expr $sigstart + $sigLen ] } { incr t } {
+        set v [ expr sin ($m * $tau ) ]
+        set ::fMRIModelView(Data,Run$r,EV$i,Signal) [ lreplace $::fMRIModelView(Data,Run$r,EV$i,Signal) $t $t $v ]
+        set tau [ expr $tau + $::fMRIModelView(Design,Run$r,TimeIncrement) ]
+    }
+}
+
+
+proc fMRIModelViewComputeHRF { r } {
+    #---
+    #--- computes a single HRF for each run.
+    #--- compute HRF as difference of two gammas,
+    #--- as recommended in:  G.H. Glover, "Deconvolultion
+    #--- of impulse response in event-related BOLD fMRI",
+    #--- Neuroimage 9, 416-29. (using parameters below).
+    #--- Sample function $HRFsamps times from t=0 to 30secs.
+    #--- 30 seconds seems to make the gammas come to peak,
+    #--- dip below zero and then come back to baseline.
+    #---
+    if { ! [info exists ::fMRIModelView(Design,Run$r,HRF) ] } {
+        set tinc $::fMRIModelView(Design,Run$r,TimeIncrement) 
+        set seemsEnough [ expr 30.0 / $tinc ]
+        set HRFsamps [ expr round ($seemsEnough) ]
+        set a1 6
+        set a2 12
+        set b1 0.9
+        set b2 0.9
+        set c 0.35
+        set d1 [ expr $a1 * $b1 ]
+        set d2 [ expr $a2 * $b2 ]
+        
+        #--- compute first gamma function g1
+        set t 0
+        for { set x 0 } { $x < $HRFsamps } { incr x } {
+            set v [ expr pow( ($t / $d1), $d1) * exp( -($t-$d1) / $b1 ) ]
+            lappend g1 $v
+            set t [ expr $t + $tinc ]
+        }
+
+        #--- compute second gamma function g2
+        set t 0
+        for { set x 0 } { $x < $HRFsamps } { incr x } {
+            set v [ expr pow( ($t / $d2), $d2) * exp( -($t-$d2) / $b2 ) ]
+            lappend g2 $v
+            set t [ expr $t + $tinc ]
+        }
+
+        #--- set h as difference of g1 and g2
+        set max -100000.0
+        set min 100000.0
+        for { set x 0 } { $x < $HRFsamps } { incr x } {
+            set v1 [ lindex $g1 $x ] 
+            set v2 [ lindex $g2 $x ]
+            set v [ expr $v1 - ($c * $v2) ]
+            if { $v > $max } {
+                set max $v
+            }
+            if {$v < $min } {
+                set min $v
+            }
+            lappend HRF $v
+        }    
+
+        unset g1
+        unset g2
+
+        # flip HRF for convolution
+        set end [ expr $HRFsamps - 1 ]
+        for { set x $end } { $x >= 0 } { set x [ expr $x - 1] } {
+            set v [ lindex $HRF $x ]
+            lappend flipHRF $v
+        }
+        unset HRF
+
+        set ::fMRIModelView(Design,Run$r,HRF) $flipHRF
+    }
+    return $::fMRIModelView(Design,Run$r,HRF)
+}
+
+
+proc fMRIModelViewConvolveWithHRF { imgwid imghit run evnum } {
+    #---
+    #--- Convolve image with canonical hemodynamic response
+    #--- HRF swings between -1.0 and 1.0
+    #--- want to convolve this with the signal
+    #--- which also swings from -1.0 to 1.0.
+    #--- Do this in the following way:
+    #--- 1. get or compute the flipped HRF
+    #--- 2. use the signal list, which contains a
+    #---     sample for every time increment,
+    #---     as does the HRF.
+    #--- 3. zeropad signal on both ends for convolution
+    #--- 4. convolve HRF with data
+    #--- 5. save signal 
+    #---    
+    #--- 1: compute or get flipped HRF
+    set HRF [ fMRIModelViewComputeHRF $run ]
+    set HRFsamps [ llength $HRF ]
+
+    #--- 2&3: make zeropadded signal list
+    set negvals 0
+    set posvals $HRFsamps    
+    set len [ llength $::fMRIModelView(Data,Run$run,EV$evnum,Signal) ]
+    for { set t 0 } { $t < $posvals } { incr t } {
+        #--- zero pad
+        lappend data 0.0
+    }
+    for { set t 0 } { $t < $len } { incr t } {
+        #--- data from image
+        set v [ lindex $::fMRIModelView(Data,Run$run,EV$evnum,Signal) $t ]
+        lappend data $v
+    }
+    for { set t 0 } { $t < $negvals } { incr t } {
+        #--- zero pad
+        lappend data 0.0
+    }
+
+    #--- 4: convolve
+    #--- start at first samp of $data; shift $HRF;
+    #--- compute imghit + $posvals shifts and function mults;
+    #--- append each function multiply to $convResult.
+    set shift 0
+    for { set y $posvals } { $y < [ expr $len + $posvals ] } { incr y } {
+        set sum 0
+        for { set s 0 } { $s < $HRFsamps } { incr s } {
+            set sval [ lindex $data [ expr $s + $shift ] ]                            
+            set hval [ lindex $HRF $s ]
+            set sum [ expr $sum + ($sval * $hval) ]
+        }
+        lappend convResult $sum
+        incr shift
+    }
+    unset data
+
+    #--- 5: save signal
+    set ::fMRIModelView(Data,Run$run,EV$evnum,Signal) $convResult
+}
+
+
+proc fMRIModelViewAddDerivatives { imgwid imghit r evnum } {
+    #---    
+    #--- computes derivative of Signal
+    #--- and downsamples to generate image
+    #--- compute new Signal from the Signal List
+    #---
+    set dt $::fMRIModelView(Design,Run$r,TimeIncrement)
+    set sigLen [ expr ($::fMRIModelView(Design,Run$r,numTimePoints) * \
+                     $::fMRIModelView(Design,Run$r,TR)) / \
+                     $::fMRIModelView(Design,Run$r,TimeIncrement) ]
+
+    #--- march thru the signal;
+    #--- sample it, compute derivative, and
+    #--- and create a new signal. 
+    for { set y 0 } { $y < $sigLen } { incr y } {
+        #--- last timepoint
+        if { $y == 0 } {
+            set lastsamp 0.0
+        } else {
+            set ylast [ expr $y - 1 ]
+            set lastsamp [ lindex $::fMRIModelView(Data,Run$r,EV$evnum,Signal) $ylast ]        
+        }        
+        #--- current timepoint
+        set thissamp [ lindex $::fMRIModelView(Data,Run$r,EV$evnum,Signal) $y ]        
+        #--- next timepoint
+        if { $y == [ expr $sigLen - 1 ] } {
+            set nextsamp 0.0
+        } else {
+            set ynext [ expr $y + 1]
+            set nextsamp [ lindex $::fMRIModelView(Data,Run$r,EV$evnum,Signal) $ynext ]        
+        }
+        #--- compute derivative 
+        set deriv [ expr ( ($thissamp - $lastsamp) + ($nextsamp - $thissamp)) / $dt ]
+        set newval [ expr  $thissamp - $deriv ]
+        lappend derivData $newval
+    }
+
+    #--- fill the Signal List
+    set ::fMRIModelView(Data,Run$r,EV$evnum,Signal) $derivData
+}
+
+
+proc fMRIModelViewComputeGaussianFilter { r } {
+    #---
+    #--- Computes a gaussian kernel for convolution
+    #--- Define the filter's cutoff frequency fmax = 1/(2*TR),
+    #--- so wmax = 2pi * fmax = numsigmas*sigma.
+    #--- use g(t) = 1/(sqrt(2pi)sigma) * exp ( -t^2 / 2sigma^2)
+    #--- and sigma = 1/ ((2pi * numsigmas) * 2TR)
+    #--- Assumes that all explanatory variables within a run
+    #--- have the same TR.
+    #---
+    if { ! [ info exists ::fMRIModelView(Design,Run$r,GaussianFilter) ] } {
+        set TR $::fMRIModelView(Design,Run$r,TR)
+        set PI 3.14159265
+        #--- use 2 or 3 sigmas out for now, 
+        #--- where gaussian approaches zero...
+        set numsigmas 3.0
+        set sigma [ expr 2.0 * $PI / ( $numsigmas *2.0*$TR ) ]
+        set inc $::fMRIModelView(Design,Run$r,TimeIncrement)
+
+        #--- how many samples of the time-domain kernel do
+        #--- we need? Choose t = numsigmas x 1/sigma as a guess.
+        set numsecs [ expr round ($numsigmas / $sigma) ]
+        #--- now compute the gaussian to convolve with.
+        for {set t -$numsecs } { $t <= $numsecs } { set t [ expr $t + $inc] } {
+            set v  [ expr ( 1.0 / (sqrt (2.0 * $PI)) ) * \
+                         exp ( - ($sigma*$sigma*$t*$t) / 2.0) ]
+            lappend kernel $v
+        }
+
+        #--- save the filter we used for downsampling this run
+        set ::fMRIModelView(Design,Run$r,GaussianFilter) $kernel
+    }
+    return $::fMRIModelView(Design,Run$r,GaussianFilter) 
+}
+
+
+proc fMRIModelViewGaussianDownsampleList { i r olen nlen inputList } {
+    #---
+    #--- takes a list in, subsamples it to a new length
+    #--- and returns the new list.
+    #---
+    #--- get or generate filter and find out its length
+    #--- *notice we are expecting inc to be an integer!
+    #--- so we never land between pixels when downsampling.
+    set Gkernel [ fMRIModelViewComputeGaussianFilter $r ]
+    set numsamps [ llength $Gkernel ]
+    set half [ expr floor ($numsamps / 2) ]
+    set inc [ expr $olen / $nlen ]
+    
+    #---filter and subsample
+    for { set t 0 } { $t < $olen } { set t [ expr $t + $inc] } {
+        if { $t < $half  } {
+            set start [ expr $half - $t ]
+            set stop [ expr $numsamps - 1 ]
+        } elseif { $t > [expr $olen - ($half + 1) ] } {
+            set start 0
+            set stop [ expr $half + ($olen - 1 - $t ) ]
+        } else {
+            set start 0
+            set stop [ expr $numsamps - 1 ]
+        }
+        set sum 0.0
+        for { set j $start } { $j <= $stop } { incr j } {
+            set k [ expr  round ( $t - $half + $j ) ]
+            set j [ expr round ($j) ]
+            set v1 [ lindex $inputList $k ]
+            set v2 [ lindex $Gkernel $j ]
+            set sum [ expr $sum + ($v1 * $v2) ]
+        }
+        lappend evlist [ expr $sum / double ($numsamps) ]
+    }
+
+    return $evlist
+}
+
+
+proc fMRIModelViewRangemapList { data  finalRangeMax finalRangeMid } {
+    #---
+    #--- compute $data's positive range (>0)
+    #--- and $data's negative range (<0)
+    #--- see which range is bigger;
+    #--- normalize to the size of bigger range
+    #--- so output list ranges between [-1.0 to 1.0]
+    #---
+    set max -1000000.0
+    set min 100000.0
+    set dim [ llength $data ]
+    for { set t 0 } { $t < $dim } { incr t } {
+        set v [ lindex $data $t ]
+        if { $v > $max } {
+            set max $v
+        }
+        if { $v < $min } {
+            set min $v
+        }
+    }
+
+    set min [ expr double($min) ]
+    set max [ expr double($max) ]
+    if { $max >= 0.0 } {
+        set posrange $max
+    } else {
+        set posrange 0.0
+    }
+    if { $min <= 0.0 } {
+        set negrange $min
+    } else {
+        set negrange 0.0
+    }
+    set absprange [ expr abs ($posrange) ]
+    set absnrange [ expr abs ($negrange) ]
+    
+    if { $absprange > $absnrange } {
+        #--- normalize to positive half
+        set range $absprange
+    } elseif { $absnrange > $absprange } {
+        #--- normalize to negative half
+        set range $absnrange
+    } elseif {$absnrange == $absprange } {
+        #--- either value will work
+        set range $absprange
+    }
+
+    #--- normalize
+    for { set i 0 } { $i < $dim } { incr i } {
+        set v [ lindex $data $i ]
+        if { $range != 0.0 } {
+            set nv [ expr $v/$range ]
+        } else {
+            set nv 0.0
+        }
+        set data [ lreplace $data $i $i $nv ]
+    }
+    return $data
+}
+
+
+proc fMRIModelViewRangemapListForImage { min max dim data  finalRangeMax finalRangeMid } {
+    #---
+    #--- In the image, we need zerogrey to correspond to signal zero.
+    #--- Input list varies between [ -1.0 to 1.0 ]
+    #--- Output list should vary between [0.0 to 255.0] with 
+    #--- $finalRangeMid corresponding to input zero.
+    #---
+    set halfrange [ expr ($finalRangeMax - $finalRangeMid) - 1.0 ]
+    for { set i 0 } { $i < $dim } { incr i } {
+        set v [ lindex $data $i ]
+        set nv [ expr ($v * $halfrange) + $halfrange ]
+        set data [ lreplace $data $i $i $nv ]
+    }
+    return $data
+}
+
+
+proc fMRIModelViewListToImage { imghit imgwid rowrun lst } {
+    #---
+    #--- converts a list of values from [ 0 to 255] into an image
+    #--- by replicating each list element along a new row.
+    #---
+    for { set y 0 } { $y < [ expr $imghit / $rowrun ] } { incr y } {
+        set v [ lindex $lst $y ]
+        set v [ expr round ($v) ]
+        set hexval [ format "#%02x%02x%02x" $v $v $v ]
+        #--- add to image.
+        for { set row 0 } { $row < $rowrun } { incr row } {
+            if { [info exists rowdata ] } { unset rowdata } 
+            for { set x 0 } { $x < $imgwid } { incr x } {
+                lappend rowdata $hexval
+            }
+            lappend newimage $rowdata
+        }
+    }
+    unset rowdata
+    return $newimage
+}
+
+
+proc fMRIModelViewComputeDotProduct { v1 v2 len } {
+    #---
+    #--- takes dot product of two vectors of equal len
+    #--- 
+    set dot 0.0
+    for { set i 0 } { $i < $len } { incr i } {
+        set a [ lindex $v1 $i ]
+        set b [ lindex $v2 $i ]
+        set dot [ expr $dot + ( $a * $b) ]
+    }
+    return $dot
+}
+
+
+proc fMRIModelViewComputeVectorMagnitude { v len } {
+    #---
+    #--- computes magnitude of vector in a list
+    #--- 
+    set mag 0.0
+    for { set i 0 } { $i < $len } { incr i } {
+        set a [ lindex $v $i ]
+        set mag [ expr $mag + ($a * $a) ]
+    }
+    set mag [ expr double ($mag) ]
+    set mag [ expr sqrt ($mag) ]
+    return $mag
+}
+
+
+proc fMRIModelViewBuildContrastTable { c refX refY dmatHit dmatWid cmatHit cmatWid borderWid } {
+    #---
+    #--- For each contrast, populate the
+    #--- contrast area of canvas.
+    #--- draw grid AND zero-line thru center of each region.
+    #--- ...first compactify a little
+    #---
+    set v $::fMRIModelView(Layout,VSpace)
+    set cH $::fMRIModelView(Layout,TContrastHit)
+    set cW $::fMRIModelView(Layout,TContrastWid)
+    set hit [ expr $cH + $v ]
+    set halfhit [ expr round ($hit / 2.0) ]
+    set halfcH [ expr round ($cH / 2.0) ]
+
+    set cols $::fMRIModelView(Design,totalEVs)
+    #--- draw T-contrast blocks
+    for { set i 1 } { $i <= $::fMRIModelView(Design,numTContrasts) } { incr i } {
+        for { set index 0 } { $index < $cols } { incr index } {
+            set val [ lindex $::fMRIModelView(Design,TContrast$i,Vector) $index ]
+            #--- val is either 1, -1 or zero.
+            set x1 [ expr $refX + ( $index * $cW) ]
+            set x2 [ expr $x1 + $cW ]
+            set y1 [ expr $refY + $dmatHit + $v + ( ($i-1) * $hit ) + $halfhit ]
+            set y2 [ expr $y1 + ( -$val * $halfcH ) ]
+            $c create rect $x1 $y1 $x2 $y2 -outline $::fMRIModelView(Colors,liteGrey) \
+                -width 0 -fill $::fMRIModelView(Colors,contrastRect)
+        }
+    }
+    
+    #--- draw horizontal axes:
+    set x1 $refX
+    set x2 [ expr $x1 + $cmatWid ]
+    set y1 [ expr $refY + $dmatHit +  $v ]
+    set y2 [ expr $y1 + $cmatHit ]
+    for { set i 0 } { $i < $::fMRIModelView(Design,numTContrasts) } { incr i } {
+        set y [ expr $y1 + ( $i * $hit ) + $halfhit ]
+        $c create line $x1 $y $x2 $y -width 1 -fill $::fMRIModelView(Colors,contrastRect) 
+    }
+
+    #--- draw vertical grid markers
+    for { set i 0} { $i < $cols } { incr i } {
+        set x1 [expr $refX + $i * $cW ]
+        $c create line $x1 $y1 $x1 $y2 -width 1 -fill $::fMRIModelView(Colors,liteGrey) 
+    }
+
+    #--- draw horizonal demarcations between contrasts
+    set x1 $refX
+    for { set i 0 } { $i < $::fMRIModelView(Design,numTContrasts) } { incr i } {
+        set y [ expr $y1 + ( $i * $hit) ]
+        $c create line $x1 $y $x2 $y -width 1 -fill $::fMRIModelView(Colors,hexblack) 
+    }
+
+    #--- draw surrounding rect:
+    $c create rect $x1 $y1 $x2 $y2 -outline $::fMRIModelView(Colors,hexblack) \
+        -width $borderWid 
+}
+
+
+proc fMRIModelViewBufFromChars { thinglist whichfont } {
+    #---    
+    #--- this routine takes in a list of strings and a fontsize
+    #--- and figures out how big the pixel buffer should be
+    #--- to display it. Used in auto-configuration of a canvas.
+    set maxchars 0
+    set length [ llength $thinglist ]
+    
+    for { set i 0 } { $i < $length } { incr i } {
+        set thing [ lindex $thinglist $i ]
+        set numchars [ string length $thing ]
+        if { $numchars > $maxchars } {
+            set maxchars $numchars
+        }
+    }
+
+    #--- determine a pixelspace that will
+    #--- accommodate the characters.
+    #--- I am guessing about the number of pixels
+    #--- to allocate for each character.
+    #--- is there a better way to do this?
+    #--- one point (printer's point) should = 1/72 inch.
+    #--- is there a way to determine display size and
+    #--- pixel res, and convert xpoints = 1/72" * pixels/inch?
+    if { $whichfont == $::fMRIModelView(UI,Bigfont) } {
+        set pix 6
+        set buf [ expr $maxchars * $pix + $::fMRIModelView(Layout,HSpace) ]
+    } elseif { $whichfont == $::fMRIModelView(UI,Medfont) } {
+        set pix 5
+        set buf [ expr $maxchars * $pix + $::fMRIModelView(Layout,HSpace) ]
+    } elseif { $whichfont == $::fMRIModelView(UI,Smallfont) } {
+        set pix 4
+        set buf [ expr $maxchars * $pix + $::fMRIModelView(Layout,HSpace) ]
+    }
+}
+
+
+proc fMRIModelViewScrolledCanvas { f args } {
+    #---
+    frame $f
+    $f configure -background $::fMRIModelView(Colors,hexwhite)
+    eval { canvas $f.cDesignMatrix \
+               -highlightbackground $::fMRIModelView(Colors,activeBkg) \
+               -highlightcolor $::fMRIModelView(Colors,activeBkg) \
+               -yscrollcommand [list $f.yscroll set ] \
+               -xscrollcommand [list  $f.xscroll set ] } $args
+    scrollbar $f.yscroll -orient vertical -highlightthickness 0 \
+        -borderwidth 0 -elementborderwidth 1 -command [ list $f.cDesignMatrix yview ] \
+        -background $::fMRIModelView(Colors,activeBkg) \
+        -activebackground $::fMRIModelView(Colors,activeBkg) 
+    scrollbar $f.xscroll -orient horizontal -highlightthickness 0 \
+        -borderwidth 0 -elementborderwidth 1 -command [ list $f.cDesignMatrix xview ] \
+        -background $::fMRIModelView(Colors,activeBkg) \
+        -activebackground $::fMRIModelView(Colors,activeBkg) \
+
+    grid $f.cDesignMatrix $f.yscroll -sticky news
+    grid $f.xscroll -sticky ew
+    grid rowconfigure $f 0 -weight 1
+    grid columnconfigure $f 0 -weight 1
+    
+    set ::fMRIModelView(modelViewFrame) $f
+    set ::fMRIModelView(modelViewCanvas) $f.cDesignMatrix
+    return $f.cDesignMatrix
+}
+
+
+proc fMRIModelViewSetFonts { } {
+    # Haiying's change ---
+    # option add "*font" "-Adobe-Helvetica-Bold-R-Normal-*-12-*-*-*-*-*-*-*"
+    # option add "*font" "-Adobe-Helvetica-Bold-R-Normal-*-10-*-*-*-*-*-*-*"
+    # option add "*font" "-Adobe-Helvetica-Bold-R-Normal-*-8-*-*-*-*-*-*-*"
+    set ::fMRIModelView(UI,Bigfont) "-Adobe-Helvetica-Bold-R-Normal-*-12-*-*-*-*-*-*-*"
+    set ::fMRIModelView(UI,Medfont) "-Adobe-Helvetica-Bold-R-Normal-*-10-*-*-*-*-*-*-*"
+    set ::fMRIModelView(UI,Smallfont) "-Adobe-Helvetica-Bold-R-Normal-*-8-*-*-*-*-*-*-*"      
+}
+
+
+proc fMRIModelViewSetColors { } {
+    #---
+    set ::fMRIModelView(Colors,bkg) #FFFFFF
+    set ::fMRIModelView(Colors,activeBkg) #DDDDDD
+    set ::fMRIModelView(Colors,black) 0
+    set ::fMRIModelView(Colors,hexblack) #000000
+    set ::fMRIModelView(Colors,white) 255
+    set ::fMRIModelView(Colors,hexwhite) #FFFFFF
+    set ::fMRIModelView(Colors,liteGrey) #AAAAAA
+    set ::fMRIModelView(Colors,darkGrey) #333333
+    set ::fMRIModelView(Colors,zeroGrey) 127
+    set ::fMRIModelView(Colors,hexzeroGrey) #7F7F7F
+    set ::fMRIModelView(Colors,contrastRect) #77BB44
+}
+
+
+proc fMRIModelViewSetupButtonImages { c refX refY dmatHit dmatWid cmatHit cmatWid }  {
+    #---
+    #--- xy dimensions:
+    #--- leave one button-height worth of space between
+    #--- buttons and the table of contrasts.
+    set x2 [ expr $refX + $dmatWid ]
+    set y1 [ expr $refY +  $dmatHit + $cmatHit + $::fMRIModelView(Layout,ButtonHit) ]
+    set $::fMRIModelView(Layout,ButtonWid) $::fMRIModelView(Layout,OrthogonalityDim)
+    set x1 [ expr $x2 - $::fMRIModelView(Layout,ButtonWid) ]
+    set y2 [ expr $y1 + $::fMRIModelView(Layout,ButtonHit) ]
+    set xtext [ expr $x1 + ($::fMRIModelView(Layout,ButtonWid) / 2 ) ]
+    set ytext [ expr $y1 + ( $::fMRIModelView(Layout,ButtonHit) / 2 ) ]
+    
+    #--- draw surrounding SAVE rect and text; tag...
+    $c create rect $x1 $y1 $x2 $y2 -outline $::fMRIModelView(Colors,liteGrey) \
+        -width 1 -fill $::fMRIModelView(Colors,hexwhite) \
+        -tag $::fMRIModelView(Layout,UpdateRectTag)
+    $c create text  $xtext $ytext -text "update" -anchor center \
+        -font $::fMRIModelView(UI,Smallfont) \
+        -tag $::fMRIModelView(Layout,UpdateTag)
+    #--- and bind.
+    $c bind $::fMRIModelView(Layout,UpdateTag) <Enter> \
+        "%W itemconfig $::fMRIModelView(Layout,UpdateRectTag) -outline $::fMRIModelView(Colors,hexblack) "
+    $c bind $::fMRIModelView(Layout,UpdateTag) <Leave> \
+        "%W itemconfig $::fMRIModelView(Layout,UpdateRectTag) -outline $::fMRIModelView(Colors,liteGrey) "
+    $c bind $::fMRIModelView(Layout,UpdateTag) <Button-1> "fMRIModelViewGenerateModel" 
+
+    $c bind $::fMRIModelView(Layout,UpdateRectTag) <Enter> \
+        "%W itemconfig $::fMRIModelView(Layout,UpdateRectTag) -outline $::fMRIModelView(Colors,hexblack) "
+    $c bind $::fMRIModelView(Layout,UpdateRectTag) <Leave> \
+        "%W itemconfig $::fMRIModelView(Layout,UpdateRectTag) -outline $::fMRIModelView(Colors,liteGrey) "
+    $c bind $::fMRIModelView(Layout,UpdateRectTag) <Button-1> "fMRIModelViewGenerateModel" 
+
+    #--- draw surrounding CLOSE rect and text; tag...
+    set y1 [ expr $y2 + $::fMRIModelView(Layout,VSpace) ]
+    set y2 [ expr $y1 + $::fMRIModelView(Layout,ButtonHit) ]
+    set ytext [ expr $y1 + ( $::fMRIModelView(Layout,ButtonHit) / 2 ) ]
+    $c create rect $x1 $y1 $x2 $y2 -outline $::fMRIModelView(Colors,liteGrey) \
+        -width 1 -fill $::fMRIModelView(Colors,hexwhite) \
+        -tag $::fMRIModelView(Layout,SaveRectTag)
+    $c create text  $xtext $ytext -text "save ps" -anchor center \
+        -font $::fMRIModelView(UI,Smallfont) \
+        -tag $::fMRIModelView(Layout,SaveTag)
+    #--- and bind.
+    $c bind $::fMRIModelView(Layout,SaveTag) <Enter> \
+        "%W itemconfig $::fMRIModelView(Layout,SaveRectTag) -outline $::fMRIModelView(Colors,hexblack) "
+    $c bind $::fMRIModelView(Layout,SaveTag) <Leave> \
+        "%W itemconfig $::fMRIModelView(Layout,SaveRectTag) -outline $::fMRIModelView(Colors,liteGrey) "
+    $c bind $::fMRIModelView(Layout,SaveTag) <Button-1> "fMRIModelViewSaveModelPostscript $c"
+
+    $c bind $::fMRIModelView(Layout,SaveRectTag) <Enter> \
+        "%W itemconfig $::fMRIModelView(Layout,SaveRectTag) -outline $::fMRIModelView(Colors,hexblack) "
+    $c bind $::fMRIModelView(Layout,SaveRectTag) <Leave> \
+        "%W itemconfig $::fMRIModelView(Layout,SaveRectTag) -outline $::fMRIModelView(Colors,liteGrey) "
+    $c bind $::fMRIModelView(Layout,SaveRectTag) <Button-1> "fMRIModelViewSaveModelPostscript $c"
+
+    #--- draw surrounding CLOSE rect and text; tag...
+    set y1 [ expr $y2 + $::fMRIModelView(Layout,VSpace) ]
+    set y2 [ expr $y1 + $::fMRIModelView(Layout,ButtonHit) ]
+    set ytext [ expr $y1 + ( $::fMRIModelView(Layout,ButtonHit) / 2 ) ]
+    $c create rect $x1 $y1 $x2 $y2 -outline $::fMRIModelView(Colors,liteGrey) \
+        -width 1 -fill $::fMRIModelView(Colors,hexwhite) \
+        -tag $::fMRIModelView(Layout,CloseRectTag)
+    $c create text  $xtext $ytext -text "close" -anchor center \
+        -font $::fMRIModelView(UI,Smallfont) \
+        -tag $::fMRIModelView(Layout,CloseTag)
+    #--- and bind.
+    $c bind $::fMRIModelView(Layout,CloseTag) <Enter> \
+        "%W itemconfig $::fMRIModelView(Layout,CloseRectTag) -outline $::fMRIModelView(Colors,hexblack) "
+    $c bind $::fMRIModelView(Layout,CloseTag) <Leave> \
+        "%W itemconfig $::fMRIModelView(Layout,CloseRectTag) -outline $::fMRIModelView(Colors,liteGrey) "
+    $c bind $::fMRIModelView(Layout,CloseTag) <Button-1> "fMRIModelViewCloseAndClean"
+
+    $c bind $::fMRIModelView(Layout,CloseRectTag) <Enter> \
+        "%W itemconfig $::fMRIModelView(Layout,CloseRectTag) -outline $::fMRIModelView(Colors,hexblack) "
+    $c bind $::fMRIModelView(Layout,CloseRectTag) <Leave> \
+        "%W itemconfig $::fMRIModelView(Layout,CloseRectTag) -outline $::fMRIModelView(Colors,liteGrey) "
+    $c bind $::fMRIModelView(Layout,CloseRectTag) <Button-1> "fMRIModelViewCloseAndClean"
+
+}
+
+
+proc fMRIModelViewSaveModelPostscript { c } {
+    #---
+    #--- default filename for now.
+    #--- later, pop up a file browse box and enter filename.
+    #---
+    set fn "$::FMRIEngine(modulePath)/designmatrix.ps"
+    puts "saving file to $fn"
+    $c postscript -file $fn -colormode color -pageheight 9.0i -pagewidth 7.0i
+    #$c postscript -file $fn -colormode grey -pageheight 9.0i -pagewidth 7.0i
+    
+    #--- hmmm, saves outline around two rects covering up
+    #--- filename text and explanatory variable names.
+    #--- need to fix.
+}
+
+
+proc fMRIModelViewSetupOrthogonalityImage { c refX refY dmatHit dmatWid cmatHit cmatWid b } {
+    #---
+    #--- computes and visualizes design orthogonality matrix.
+    #---
+    set ybuf $::fMRIModelView(Layout,EVnameBufHit)
+    set xbuf $::fMRIModelView(Layout,FilenameBufWid) 
+
+    #--- if the same conditions exist for all runs, 
+    #--- (assuming conditions are the same in each run)
+    #--- compute design orthogonality; otherwise, draw nothing.
+    #--- only consider condition-related explanatory variables.
+    set n $::fMRIModelView(Design,Run1,numConditionEVs)
+    for { set r 1 } { $r <= $::fMRIModelView(Design,numRuns) } { incr r } {
+        set lastn $n
+        set n $::fMRIModelView(Design,Run$r,numConditionEVs)
+        if { $lastn != $n } {
+            #--- not computable; draw nothing.
+            return
+        }
+    }
+
+    #--- adjust dimension of nxn orthogonality matrix if necessary.
+    set totaldim [ expr $n * $::fMRIModelView(Layout,OrthogonalityCellDim) ]
+    if { $totaldim <= $::fMRIModelView(Layout,OrthogonalityDim) } {
+        set dim $::fMRIModelView(Layout,OrthogonalityCellDim)
+        #set dim $idealdim
+    } else {
+        set newdim [ expr $::fMRIModelView(Layout,OrthogonalityDim) / $n ]
+        #--- too small; draw nothing.
+        if { $n < 3 } {
+            return
+        }
+        set dim $newdim
+    }
+
+    #--- xy dimensions:
+    set x1 [ expr $refX + $dmatWid + $::fMRIModelView(Layout,HSpace) ]
+    set x2 [ expr $x1 + ($dim * $n) ]
+    set y1 [ expr $refY +  $dmatHit + $cmatHit + $::fMRIModelView(Layout,ButtonHit) ]
+    set y2 [ expr $y1 + ($dim * $n) ]
+
+    #--- compute and fill elements 
+    #--- assume all runs have identical EVs, so just use Run 1
+    for { set i 1 } { $i <= $n } { incr i } {
+        set v1 $::fMRIModelView(Data,Run1,EV$i,EVData) 
+        set len1 [ llength $v1 ]
+        set magv1 [ fMRIModelViewComputeVectorMagnitude $v1 $len1 ]
+        #--- some rectangle draw y coords
+        set b1 [ expr $y1 + ($dim * ($i-1)) ]
+        set b2 [ expr $b1 + $dim ]
+
+        for { set j $i } { $j <= $n } { incr j } {
+            #--- compute vector dot product and vector magnitude
+            set v2 $::fMRIModelView(Data,Run1,EV$j,EVData) 
+            set len2 [ llength $v2 ]
+            set vdot [ fMRIModelViewComputeDotProduct $v1 $v2 $len2]
+            set vdot [ expr abs ( $vdot ) ]
+            set magv2 [ fMRIModelViewComputeVectorMagnitude $v2 $len2 ]
+            #--- let zero mean correlated; 1 mean uncorrelated
+            set val [ expr 1.0 - ($vdot / ( $magv1 * $magv2)) ]
+            #--- convert range from [ 0 to 1 ] to [ 0 to 255 ]
+            set fillval [ expr round ($val * 255) ]
+            set hexval [ format "#%02x%02x%02x" $fillval $fillval $fillval ]
+            #--- draw a filled rect
+            set a1 [ expr $x1 + ($dim *  ($j-1)) ]
+            set a2 [ expr $a1 + $dim ]
+            $c create rect $a1 $b1 $a2 $b2 -outline $hexval -width 1 -fill $hexval
+        }
+    }
+
+    #--- draw columns.
+    for { set x $x1 } { $x < $x2 } { set x [ expr $x + $dim ] } {
+        $c create line $x $y1 $x $y2 -width 1 -fill $::fMRIModelView(Colors,darkGrey)         
+    }
+    #--- draw rows
+    for { set y $y1 } { $y < $y2 } { set y [ expr $y + $dim ] } {
+        $c create line $x1 $y $x2 $y -width 1 -fill $::fMRIModelView(Colors,darkGrey)         
+    }
+    #--- draw surrounding rect:
+    $c create rect $x1 $y1 $x2 $y2 -outline $::fMRIModelView(Colors,hexblack) \
+        -width $b
+
+    #--- text label beneath
+#    set x1 [ expr $x1 + ( ($x2 - $x1)/2)  ]
+#    set y1 [ expr $y2 + $::fMRIModelView(Layout,bigVSpace) ]
+#    $c create text  $x1 $y1 -text "design orthogonality" -anchor center \
+#        -font $::fMRIModelView(UI,Smallfont) -fill $::fMRIModelView(Colors,hexblack)
+}
+
+
+proc  fMRIModelViewLabelTContrasts { c refX refY dmatHit cmatHit } {
+    #---
+    #--- xy start positions and increment
+    set inc [ expr $cmatHit / $::fMRIModelView(Design,numTContrasts) ]
+    set y1 [ expr $refY + $dmatHit + $::fMRIModelView(Layout,VSpace) + ($inc / 2) ]
+    set x1 [ expr $refX -  $::fMRIModelView(Layout,bigHSpace) ]
+
+    for { set i 0 } { $i < $::fMRIModelView(Design,numTContrasts) } { incr i } {
+        set name [ lindex $::fMRIModelView(Design,TContrasts) $i ]
+        $c create text  $x1 $y1 -text $name -anchor center \
+            -font $::fMRIModelView(UI,Medfont) -fill $::fMRIModelView(Colors,hexblack)
+        set y1 [ expr $y1 + $inc ]
+    }
+}
+
+
+proc  fMRIModelViewLabelTContrastNames { c refX refY dmatHit cmatHit } {
+    #---
+    #--- xy start positions and increment
+    set inc [ expr $cmatHit / $::fMRIModelView(Design,numTContrasts) ]
+    set y1 [ expr $refY + $dmatHit + $::fMRIModelView(Layout,VSpace) + ($inc / 2) ]
+    set pixelsPerChar 4
+    
+    for { set i 0 } { $i < $::fMRIModelView(Design,numTContrasts) } { incr i } {
+        set name [ lindex $::fMRIModelView(Design,TContrastNames) $i ]
+        set numchars [ string length $name ]
+        set x1 [ expr $refX -  ($numchars * $pixelsPerChar) - \
+                     ( $::fMRIModelView(Layout,HSpace)) ]
+        # Haiying's change
+        # $c create text  $x1 $y1 -text "$name - " -anchor center 
+        $c create text  $x1 $y1 -text "$name" -anchor center \
+            -font $::fMRIModelView(UI,Smallfont) -fill $::fMRIModelView(Colors,hexblack)
+        set y1 [ expr $y1 + $inc ]
+    }
+}
+
+
+proc fMRIModelViewLabelEVs { c refX refY dmatWid } {
+    #---
+    #--- xy start positions and increment
+    set m $::fMRIModelView(Design,totalEVs)
+    set inc [ expr $dmatWid / $m ]
+    set x1 [ expr $refX + ($inc / 2) ]
+    set y1 [ expr $refY -  $::fMRIModelView(Layout,moreHSpace) ]
+
+    #--- make text labels for all explanatory varibles.
+    #--- all names are stuffed into one long list.
+    set indx 0
+    for { set r 1 } { $r <= $::fMRIModelView(Design,numRuns) } { incr r } {
+        set cols [ expr $::fMRIModelView(Design,Run$r,numConditionEVs) + \
+                      $::fMRIModelView(Design,Run$r,numAdditionalEVs) ]
+        for { set i 1 } { $i <= $cols } { incr i } {
+            set name [ lindex $::fMRIModelView(Design,evs) $indx ]
+            $c create text  $x1 $y1 -text $name -anchor center \
+                -font $::fMRIModelView(UI,Smallfont) -fill $::fMRIModelView(Colors,hexblack)
+            set x1 [ expr $x1 + $inc ]
+            incr indx
+        }
+    }
+}
+
+
+proc  fMRIModelViewLabelEVnames { c refX refY dmatWid  } {
+    #---
+    #--- make little lines pointing up from columns
+    #--- these encroach a little on EVBufHit, but
+    #--- probably there's room, fontwilling.
+    #---
+    set yoffset $::fMRIModelView(Layout,hugeVSpace) 
+    set inc [ expr $dmatWid / $::fMRIModelView(Design,totalEVs) ]
+    set x1 [ expr $refX + ($inc / 2) ]
+    set y1 [ expr $refY - $::fMRIModelView(Layout,EVBufHit) + \
+                 $::fMRIModelView(Layout,moreVSpace) ]
+    set y2 [ expr $y1 - $::fMRIModelView(Layout,evLineBufHit) ]
+    for { set r 1 } { $r <= $::fMRIModelView(Design,numRuns) } { incr r } {    
+        set cols [ expr $::fMRIModelView(Design,Run$r,numConditionEVs) + \
+                      $::fMRIModelView(Design,Run$r,numAdditionalEVs) ]
+        for { set i 1 } { $i <= $cols } { incr i } {
+            $c create line $x1 $y1 $x1 $y2 -width 1 -fill $::fMRIModelView(Colors,hexblack) \
+                -tag $::fMRIModelView(Layout,EVnameTag,Run$r,$i) 
+            set x1 [ expr $x1 + $inc ]
+        }
+    }
+
+    #--- make labels for all explanatory variable names
+    set x1 [ expr $refX + ($inc / 2) ]
+    set y1 [ expr $refY - $::fMRIModelView(Layout,EVBufHit) - \
+                 $::fMRIModelView(Layout,evLineBufHit) ]
+    set indx 0
+    for { set r 1 } { $r <= $::fMRIModelView(Design,numRuns) } { incr r } {
+        set cols [ expr $::fMRIModelView(Design,Run$r,numConditionEVs) + \
+                      $::fMRIModelView(Design,Run$r,numAdditionalEVs) ]
+        for { set i 1 } { $i <= $cols } { incr i } {
+            set name [ lindex $::fMRIModelView(Design,evNames)  $indx ]
+            $c create text $x1 $y1 -text "$name" -anchor center \
+                -font $::fMRIModelView(UI,Smallfont) \
+                -fill $::fMRIModelView(Colors,hexblack) \
+                -tag $::fMRIModelView(Layout,EVnameTag,Run$r,$i)             
+            set x1 [ expr $x1 + $inc ]
+            incr indx
+        }
+    }
+
+    #--- make a rect that covers up the pile of names;
+    #--- raise each upon design matrix column rollover.
+    set x1 0
+    set x2 [ expr $refX + $dmatWid + $::fMRIModelView(Layout,FilenameBufWid) ]
+    set y1 0
+    set y2 [ expr $refY - $::fMRIModelView(Layout,EVBufHit) + \
+                 $::fMRIModelView(Layout,moreVSpace) + 1 ]
+    set ::fMRIModelView(EVnameCover) [ $c create rect $x1 $y1 $x2 $y2 \
+                                       -fill $::fMRIModelView(Colors,hexwhite) -width 1 \
+                                           -outline $::fMRIModelView(Colors,hexwhite) ]
+}
+
+
+proc fMRIModelViewEVnameRollover { c refY evnum runNum } {
+    #---
+    $c raise $::fMRIModelView(EVnameCover)
+    $c raise $::fMRIModelView(Layout,EVnameTag,Run$runNum,$evnum)
+
+}
+
+
+proc fMRIModelViewLabelFilenames { c refX refY dmatHit dmatWid } {
+    #---
+    #--- position of first filename
+    set x1 [ expr $refX + $dmatWid + $::fMRIModelView(Layout,HSpace) ]
+    set y $refY
+    #--- increment between files.
+    set numFiles $::fMRIModelView(Design,totalTimePoints) 
+    set inc [ expr $dmatHit / double($numFiles) ]
+    
+    #--- make all filenames in their place.
+    for { set i 0 } { $i < $numFiles } { incr i } {
+        set name [ lindex $::fMRIModelView(Design,fileNames) $i ]
+        $c create text  $x1 $y -text " - $name" -anchor w \
+            -font $::fMRIModelView(UI,Smallfont) \
+            -fill $::fMRIModelView(Colors,hexblack) \
+            -tag $::fMRIModelView(Layout,FilenameTag$i) 
+        set y [ expr $y + $inc ]
+        #set y [ expr round ($y) ]
+    }
+        
+    #--- make a rect and set it atop all filenames to cover.
+    set y1 [ expr $refY - $::fMRIModelView(Layout,VSpace) ]
+    set y2 [ expr $refY + $dmatHit + $::fMRIModelView(Layout,VSpace) ]
+    set x2 [ expr $x1 + $::fMRIModelView(Layout,FilenameBufWid) ]
+    set ::fMRIModelView(filenameCover) [ $c create rect $x1 $y1 $x2 $y2 \
+                                       -fill $::fMRIModelView(Colors,hexwhite) -width 1 \
+                                            -outline $::fMRIModelView(Colors,hexwhite) ]
+}
+
+
+proc fMRIModelViewFilenameRollover { c  refY dmatHit mousey} {
+    #---
+    #--- map mousey to filenames
+    set ytop $refY
+    set yend [ expr $ytop + $dmatHit ]
+    set numFiles [ expr $::fMRIModelView(Design,totalTimePoints) ]
+    set binsize [ expr $dmatHit / double( $numFiles ) ]
+
+    #--- correct for canvas scrolling
+    set adjusty [ $c canvasy $mousey ]
+    #--- what bin does $mousey fall into
+    #--- fix xlates due to scrolling here...
+    set absy [ expr $adjusty - $ytop ]
+    set binnum [ expr $absy / $binsize ]
+    set binnum [ expr round($binnum) ]
+
+    #--- expose corresponding filename
+    $c raise $::fMRIModelView(filenameCover)
+    if { $binnum < $numFiles && $binnum >= 0 } {
+        $c raise $::fMRIModelView(Layout,FilenameTag$binnum)
+    }
+}
+
+
+proc fMRIModelViewHideRolloverInfo { c } {
+    #---
+    #--- cover up filenames and EVnames
+    $c raise $::fMRIModelView(filenameCover)
+    $c raise $::fMRIModelView(EVnameCover)
+}
+
+
+proc fMRIModelViewFreeCanvasTags { } {
+    #---
+    #--- unset tags
+    unset -nocomplain ::fMRIModelView(Layout,SaveRectTag)
+    unset -nocomplain ::fMRIModelView(Layout,SaveTag)
+    unset -nocomplain ::fMRIModelView(Layout,UpdateRectTag)
+    unset -nocomplain ::fMRIModelView(Layout,UpdateTag)
+    unset -nocomplain ::fMRIModelView(Layout,CloseRectTag)
+    unset -nocomplain ::fMRIModelView(Layout,CloseTag)
+
+    if { [ info exists ::fMRIModelView(Design,totalTimePoints) ] } {
+        set totFiles [ expr $::fMRIModelView(Design,totalTimePoints) ]
+        for { set i 0 } { $i < $totFiles } { incr i } {
+            unset -nocomplain ::fMRIModelView(Layout,FilenameTag$i) 
+        }
+        unset -nocomplain ::fMRIModelView(filenameCover)
+    }
+
+    if { [info exists ::fMRIModelView(Design,numRuns) ] } {
+        for { set r 1 } { $r <= $::fMRIModelView(Design,numRuns) } { incr r } {
+            set evs [ expr $::fMRIModelView(Design,Run$r,numConditionEVs) + \
+                          $::fMRIModelView(Design,Run$r,numAdditionalEVs) ] 
+            for { set i 1 } { $i <= $evs } { incr i } {
+                unset -nocomplain ::fMRIModelView(Layout,EVnameTag,Run$r,$i) 
+                unset -nocomplain ::fMRIModelView(Layout,dmColumnTag,Run$r,$i)
+            }
+        }
+        unset -nocomplain ::fMRIModelView(EVnameCover)
+    }
+}
+
+
+proc fMRIModelViewFreeFonts { } {
+    #---
+    #--- unset fonts
+    unset -nocomplain ::fMRIModelView(UI,Bigfont)
+    unset -nocomplain ::fMRIModelView(UI,Medfont)    
+    unset -nocomplain ::fMRIModelView(UI,Smallfont)
+}
+
+
+proc fMRIModelViewFreeColors { } {
+    #---
+    #--- unset colors
+    unset -nocomplain ::fMRIModelView(Colors,bkg)
+    unset -nocomplain ::fMRIModelView(Colors,activeBkg)
+    unset -nocomplain ::fMRIModelView(Colors,black)
+    unset -nocomplain ::fMRIModelView(Colors,hexblack)
+    unset -nocomplain ::fMRIModelView(Colors,white)
+    unset -nocomplain ::fMRIModelView(Colors,hexwhite)
+    unset -nocomplain ::fMRIModelView(Colors,liteGrey)
+    unset -nocomplain ::fMRIModelView(Colors,darkGrey)
+    unset -nocomplain ::fMRIModelView(Colors,zeroGrey)
+    unset -nocomplain ::fMRIModelView(Colors,contrastRect)
+}
+
+
+proc fMRIModelViewFreeModel { } {
+    #---
+    #--- clears all modeling derived from user input
+    #--- and from additionally requested explanatory variables.
+    #--- if all runs are identical, then first run's data is used for
+    #--- all runs, and only need to free it.
+    #--- otherwise, free all runs' data.
+    if { [info exists ::fMRIModelView(Design,numRuns) ] } {
+        for { set r 1 } { $r <= $::fMRIModelView(Design,numRuns) } { incr r } {
+            set evs [ expr $::fMRIModelView(Design,Run$r,numConditionEVs) + \
+                          $::fMRIModelView(Design,Run$r,numAdditionalEVs) ]
+            for { set i 1 } { $i <= $evs } { incr i } {
+                unset -nocomplain ::fMRIModelView(Images,Run$r,EV$i,Image)
+                unset -nocomplain ::fMRIModelView(Data,Run$r,EV$i,EVData)
+                unset -nocomplain ::fMRIModelView(Data,Run$r,EV$i,Signal)
+            }
+            unset -nocomplain ::fMRIModelView(Design,Run$r,GaussianFilter) 
+        }
+    }
+}
+
+
+proc fMRIModelViewClearUserInput { } {
+    #---
+    #--- unset all user input 
+    for { set r 1 } { $r < $::fMRIModelView(Design,numRuns) } { incr r } {
+        unset -nocomplain ::fMRIModelView(Design,Run$r,Type)
+    }
+
+    #--- unset ev signal configuration
+    set evs [ expr $::fMRIModelView(Design,Run$r,numConditionEVs) + \
+                  $::fMRIModelView(Design,Run$r,numAdditionalEVs) ]
+    for { set i 1 } { $i <= $evs } { incr i } {
+        unset -nocomplain ::fMRIModelView(Design,Run$r,EV$i,SignalType)
+    }
+
+    for { set r 1 } { $r < $::fMRIModelView(Design,numRuns) } { incr r } {
+        for { set i 1 } { $i < $::fMRIModelView(Design,Run$r,numConditions) } { incr i } {
+            unset -nocomplain ::fMRIModelView(Design,Run$r,Condition$i,Onsets)
+            unset -nocomplain ::fMRIModelView(Design,Run$r,Condition$i,Durations)
+            unset -nocomplain ::fMRIModelView(Design,Run$r,Condition$i,Intensities) 
+        }
+        unset -nocomplain ::fMRIModelView(Design,Run$r,numConditions)
+    }
+
+    for { set i 1 } { $i < $::fMRIModelView(Design,numTContrasts) } { incr i } {
+        unset -nocomplain ::fMRIModelView(Design,TContrast$i,Vector)
+    }    
+    unset -nocomplain ::fMRIModelView(Design,numTContrasts)
+    unset -nocomplain ::fMRIModelView(Design,TContrastNames)
+    unset -nocomplain ::fMRIModelView(Design,TContrasts)
+
+    for { set r 1 } { $r < $::fMRIModelView(Design,numRuns) } { incr r } {
+        unset -nocomplain ::fMRIModelView(Design,Run$r,numConditionEVs)
+        unset -nocomplain ::fMRIModelView(Design,Run$r,numAdditionalEVs)
+        unset -nocomplain ::fMRIModelView(Design,Run$r,UseDCBasis) 
+        unset -nocomplain ::fMRIModelView(Design,Run$r,UsePolyBasis)
+        unset -nocomplain ::fMRIModelView(Design,Run$r,UseSplineBasis)
+        unset -nocomplain ::fMRIModelView(Design,Run$r,UseExploratoryBasis)
+        unset -nocomplain ::fMRIModelView(Design,Run$r,UseBaseline) 
+        unset -nocomplain ::fMRIModelView(Design,Run$r,HRF)
+        unset -nocomplain ::fMRIModelView(Design,Run$r,TR)        
+        unset -nocomplain ::fMRIModelView(Design,Run$r,TimeIncrement)        
+        unset -nocomplain ::fMRIModelView(Design,Run$r,numTimePoints)        
+    }
+    unset -nocomplain ::fMRIModelView(Design,numRuns)
+    unset -nocomplain ::fMRIModelView(Design,totalEVs)
+    unset -nocomplain ::fMRIModelView(Design,evNames)
+    unset -nocomplain ::fMRIModelView(Design,evs)
+    unset -nocomplain ::fMRIModelView(Design,fileNames)
+    unset -nocomplain ::fMRIModelView(Design,totalTimePoints) 
+    unset -nocomplain ::fMRIModelView(Layout,NoDisplay)
+}
+
+
+proc fMRIModelViewFreeVisualLayout { } {
+    #---
+    #--- unset drawing and layout things
+    unset -nocomplain ::fMRIModelView(Layout,OrthogonalityDim)
+    unset -nocomplain ::fMRIModelView(Layout,VSpace)
+    unset -nocomplain ::fMRIModelView(Layout,HSpace)
+    unset -nocomplain ::fMRIModelView(Layout,moreVSpace) 
+    unset -nocomplain ::fMRIModelView(Layout,moreHSpace) 
+    unset -nocomplain ::fMRIModelView(Layout,bigVSpace) 
+    unset -nocomplain ::fMRIModelView(Layout,bigHSpace)    
+    unset -nocomplain ::fMRIModelView(Layout,hugeVSpace)
+    unset -nocomplain ::fMRIModelView(Layout,hugeHSpace)   
+
+    unset -nocomplain ::fMRIModelView(Layout,EVBufHit)
+    unset -nocomplain ::fMRIModelView(Layout,EVBufWid)
+    unset -nocomplain ::fMRIModelView(Layout,evLineBufHit)
+    unset -nocomplain ::fMRIModelView(Layout,FilenameBufWid)
+    unset -nocomplain ::fMRIModelView(Layout,EVnameBufHit)
+    unset -nocomplain ::fMRIModelView(Layout,EVnameBufWid)
+    unset -nocomplain ::fMRIModelView(Layout,ContrastNameBufWid)
+    unset -nocomplain ::fMRIModelView(Layout,ContrastBufWid)
+    unset -nocomplain ::fMRIModelView(Layout,pixelsPerTimePoint)
+    unset -nocomplain ::fMRIModelView(Layout,TContrastWid)
+    unset -nocomplain ::fMRIModelView(Layout,TContrastHit)
+    unset -nocomplain ::fMRIModelView(Layout,ButtonWid)
+    unset -nocomplain ::fMRIModelView(Layout,ButtonHit)
+    unset -nocomplain ::fMRIModelView(Layout,botBufHit)
+    unset -nocomplain ::fMRIModelView(Layout,totalWid)
+    unset -nocomplain ::fMRIModelView(Layout,totalHit)
+}
+
+
+proc fMRIModelViewCleanCanvas { } { 
+    #---
+    #--- deletes all canvas elements, the
+    #--- pile of globals used to create display
+    #--- and the canvas and its frame
+
+    if { [ info exists ::fMRIModelView(modelViewCanvas) ] } {
+        $::fMRIModelView(modelViewCanvas) delete all
+        destroy $::fMRIModelView(modelViewCanvas)
+        unset -nocomplain ::fMRIModelView(modelViewCanvas)
+    }
+    if { [ info exists ::fMRIModelView(modelViewFrame) ] } {
+        destroy $::fMRIModelView(modelViewFrame)
+        unset -nocomplain ::fMRIModelView(modelViewFrame)
+    }
+}
+
+
+proc fMRIModelViewCleanForRegeneration { } {
+    #---
+    #--- freeing everything but user input
+    #---
+    fMRIModelViewFreeCanvasTags
+    fMRIModelViewFreeFonts
+    fMRIModelViewFreeColors
+    fMRIModelViewFreeModel
+    fMRIModelViewFreeVisualLayout
+    fMRIModelViewCleanCanvas
+
+}
+
+
+proc fMRIModelViewCloseAndClean { } {
+    #---
+    #--- freeing everything but user input
+    #--- deletes toplevel win
+    #---
+    set ::fMRIModelView(Layout,NoDisplay) 1
+    fMRIModelViewCleanForRegeneration
+    if { [ info exists ::fMRIModelView(modelViewWin) ] } {
+        destroy $::fMRIModelView(modelViewWin)
+        unset -nocomplain ::fMRIModelView(modelViewWin)
+    }
+}
+
+
+proc fMRIModelViewCloseAndCleanAndExit { } {
+    #---
+    #--- unset all globals, canvas,
+    #--- deletes toplevel win
+    #--- unsets user input.
+    #---
+    if { 0 } {
+        fMRIModelViewFreeCanvasTags
+        fMRIModelViewFreeFonts
+        fMRIModelViewFreeColors
+        fMRIModelViewFreeModel  
+        fMRIModelViewClearUserInput  
+        fMRIModelViewFreeVisualLayout
+        fMRIModelViewCleanCanvas
+        if { [ info exists ::fMRIModelView(modelViewWin) ] } {
+            destroy $::fMRIModelView(modelViewWin)
+            unset -nocomplain ::fMRIModelView(modelViewWin)
+        }
+    }
+    fMRIModelViewCloseAndClean
+    fMRIModelViewClearUserInput
+}
+
