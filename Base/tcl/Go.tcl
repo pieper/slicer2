@@ -29,6 +29,19 @@
 #   START_THE_SLICER
 #==========================================================================auto=
 
+# simple splash screen 
+toplevel .splash -relief raised -borderwidth 6 -width 500 -height 400 -bg white
+wm overrideredirect .splash 1
+wm geometry .splash +[expr [winfo screenwidth .splash]/2-250]+[expr [winfo screenheight .splash]/2-200]
+set splashim [image create photo -file gui/welcome.ppm]
+label .splash.l -image $splashim
+place .splash.l -relx 0.5 -rely 0.35 -anchor center
+label .splash.t -text "Please be aware that Slicer is for Research Use Only.\n\nSee www.slicer.org for license details." -bg white -fg red
+place .splash.t -relx 0.5 -rely 0.75 -anchor center
+wm withdraw .
+update
+after 10000 "destroy .splash; image delete $splashim"
+
 # Load vtktcl.dll on PCs
 catch {load vtktcl}
 
