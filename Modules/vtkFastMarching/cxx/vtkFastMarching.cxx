@@ -4,6 +4,8 @@
 #endif
 
 #include <stdio.h>
+#include <stdlib.h>
+
 #include <math.h>
 #include "vtkObjectFactory.h"
 
@@ -75,6 +77,10 @@ void vtkFastMarching::setSeed( int index )
     }
 }
 
+int compareShortInt(const void *a, const void *b)
+{
+  return  (*(short int*)a) >= (*(short int*)b);
+}
 
 void vtkFastMarchingExecute(vtkFastMarching *self,
                    vtkImageData *inData, short *inPtr,
@@ -99,8 +105,14 @@ void vtkFastMarchingExecute(vtkFastMarching *self,
     }
 
       int index=0;
+
+      short int neighborhood[27];
+
+      int addJ = self->dimX - 3;
+      int addK = self->dimXY - 3 * (self->dimX);
+
       for(int k=0;k<self->dimZ;k++)
-    for(int j=0;j<self->dimY;j++)
+      for(int j=0;j<self->dimY;j++)
       for(int i=0;i<self->dimX;i++)
         {
           self->node[index].T=INF;
@@ -115,19 +127,55 @@ void vtkFastMarchingExecute(vtkFastMarching *self,
         {
           // we're not on one of the border of the volume
 
+      
+      int k = 0;
           // extended median filtering
-          VecInt intensities;
+      //vector<short int> intensities;
+      /*
           for(int kp=-1;kp<=1;kp++)
           for(int jp=-1;jp<=1;jp++)
           for(int ip=-1;ip<=1;ip++)
-            {
-              int indexNei = index + self->dimXY*kp + self->dimX * jp + ip;
-              intensities.push_back( self->indata[indexNei] );
-            }
+          */
+
+      // int indexNei = index - self->dimXY - self->dimX -1;
+
+      for(k=0;k<27;k++)
+        {
+          neighborhood[k] = self->indata[index + self->shiftNeighbor(k)];
+        }
+      /*
+          for(int kp=-1;kp<=1;kp++)
+        {
+          
+          for(int jp=-1;jp<=1;jp++)
+        {
+          for(int ip=-1;ip<=1;ip++)
+        {
+          neighborhood[k++] = self->indata[indexNei];
+          indexNei++;
+        }
+      indexNei += addJ;
+        }
+      indexNei += addK;
+        }
+      */
+      /*
+      {
+        //int indexNei = index + self->dimXY*kp + self->dimX * jp + ip;
+        //intensities.push_back( self->indata[indexNei] );
+          neighborhood[k++]=self->indata[indexNei];
+        }
           sort( intensities.begin(),intensities.end() );
           
           self->inhomo[ index ] = intensities[21] - intensities[5];
           self->median[ index ] = intensities[13];
+      */
+
+      qsort( (void*)neighborhood, 27, sizeof(short int), &compareShortInt );
+      
+
+      self->inhomo[ index ] = neighborhood[21] - neighborhood[5];
+      self->median[ index ] = neighborhood[13];
 
           self->pdfIntensityAll->addRealization( self->median[ index ] );
           self->pdfInhomoAll->addRealization( self->inhomo[ index ] );
@@ -490,6 +538,34 @@ void vtkFastMarching::init(int dimX, int dimY, int dimZ, int depth)
   this->dimZ=dimZ;
   this->dimXY=dimX*dimY;
 
+  arrayShiftNeighbor[0] = 0; // neighbor 0 is the node itself
+  arrayShiftNeighbor[1] = -dimX;
+  arrayShiftNeighbor[2] = +1;
+  arrayShiftNeighbor[3] = dimX;
+  arrayShiftNeighbor[4] = -1;
+  arrayShiftNeighbor[5] = -dimXY;
+  arrayShiftNeighbor[6] = dimXY;
+  arrayShiftNeighbor[7] =  -dimX+dimXY;
+  arrayShiftNeighbor[8] =  -dimX+dimXY;
+  arrayShiftNeighbor[9] =   dimX+dimXY;
+  arrayShiftNeighbor[10] =  dimX-dimXY;
+  arrayShiftNeighbor[11] = -1+dimXY;
+  arrayShiftNeighbor[12] = -1-dimXY;
+  arrayShiftNeighbor[13] = +1+dimXY;
+  arrayShiftNeighbor[14] = +1-dimXY;
+  arrayShiftNeighbor[15] = +1-dimX;
+  arrayShiftNeighbor[16] = +1-dimX-dimXY;
+  arrayShiftNeighbor[17] = +1-dimX+dimXY;
+  arrayShiftNeighbor[18] = 1+dimX;
+  arrayShiftNeighbor[19] = 1+dimX-dimXY;
+  arrayShiftNeighbor[20] = 1+dimX+dimXY;
+  arrayShiftNeighbor[21] = -1+dimX;
+  arrayShiftNeighbor[22] = -1+dimX-dimXY;
+  arrayShiftNeighbor[23] = -1+dimX+dimXY;
+  arrayShiftNeighbor[24] = -1-dimX;
+  arrayShiftNeighbor[25] = -1-dimX-dimXY;
+  arrayShiftNeighbor[26] = -1-dimX+dimXY;
+
   this->depth=depth;
 
   node = new FMnode[ dimX*dimY*dimZ ];
@@ -532,8 +608,12 @@ vtkFastMarching::~vtkFastMarching()
 
 inline int vtkFastMarching::shiftNeighbor(int n)
 {
+  /*
+
   assert(initialized);
   assert(n>=0 && n<=nNeighbors);
+
+  */
 
   /*
     1
@@ -541,10 +621,14 @@ inline int vtkFastMarching::shiftNeighbor(int n)
     3
   */
 
+  return arrayShiftNeighbor[n];
+
+  /*
+
   switch(n)
     {
     case 0: return 0; // neighbor 0 is the node itself
-    case 1: return -dimX;
+    case 1: return -dimX;!
     case 2: return +1;
     case 3: return dimX;
     case 4: return -1;
@@ -575,6 +659,8 @@ inline int vtkFastMarching::shiftNeighbor(int n)
   // we should never be there...
   assert( false );
   return 0;
+
+  */
 }
 
 double vtkFastMarching::step( void )

@@ -57,6 +57,7 @@ class VTK_FASTMARCHING_EXPORT vtkFastMarching : public vtkImageToImageFilter
 {
  private:
   unsigned int nNeighbors; // =6 pb wrap, cannot be defined as constant
+  int arrayShiftNeighbor[27];
   double dx; // =1
 
   bool initialized;
