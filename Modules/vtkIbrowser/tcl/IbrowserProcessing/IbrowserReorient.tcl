@@ -1,32 +1,57 @@
 
 proc IbrowserBuildReorientGUI { f master } {
-
+    global Gui
     #--- This GUI allows a volume to be flipped from
     #--- left to right, up to down in display space.
     #--- set a global variable for frame
     set ::Ibrowser(fProcessReorient) $f
     
-    DevAddLabel $f.lSpace "" 
-    DevAddLabel $f.lText "Reorient Volume:"
-    DevAddButton $f.bFlipLR "Flip LR" "IbrowserFlipVolumeLR" 20
-    DevAddButton $f.bFlipUD "Flip IS" "IbrowserFlipVolumeUD" 20
-    DevAddButton $f.bFlipAP "Flip AP" "IbrowserFlipVolumeAP" 20
-    DevAddButton $f.bRevert "Revert to original" "IbrowserRevertVolumeOrientation" 20
-
-    grid $f.lText 
-    grid $f.lText -padx 3 -ipady 5
+    frame $f.fSpace -bg $::Gui(activeWorkspace) -bd 2 
+    eval { label $f.fSpace.lSpace -text "       " } $Gui(WLA)
+    pack $f.fSpace -side top 
+    pack $f.fSpace.lSpace -side top -pady 4 -padx 20 -anchor w -fill x
     
-    grid $f.bFlipLR
-    grid $f.bFlipLR -padx 3 -ipady 3
+    #--- frame to specify the interval to be processed.
+    frame $f.fSelectInterval -bg $::Gui(activeWorkspace) -bd 2
+    pack $f.fSelectInterval -side top -anchor w -fill x
+    eval { label $f.fSelectInterval.lText -text "interval to process:" } $Gui(WLA)    
+    eval { menubutton $f.fSelectInterval.mbIntervals -text "none" -width 20 -relief raised \
+               -height 1 -menu $f.fSelectInterval.mbIntervals.m -bg $::Gui(activeWorkspace) \
+               -indicatoron 1 } $Gui(WBA)
+    eval { menu $f.fSelectInterval.mbIntervals.m } $Gui(WMA)
+    foreach i $::Ibrowser(idList) {
+        puts "adding $::Ibrowser($i,name)"
+        $f.mbVolumes.m add command -label $::Ibrowser($i,name) \
+            -command "IbrowserSetActiveInterval $i"
+    }
+    set ::Ibrowser(Process,Reorient,mbIntervals) $f.fSelectInterval.mbIntervals
+    set ::Ibrowser(Process,Reorient,mIntervals) $f.fSelectInterval.mbIntervals.m
+    pack $f.fSelectInterval.lText -pady 2 -padx 2 -anchor w
+    pack $f.fSelectInterval.mbIntervals -pady 2 -padx 2 -anchor w
+    
+    #--- frame to configure and drive the reorienting
+    frame $f.fConfiguration -bg $Gui(activeWorkspace) -bd 2 -relief groove
+    pack $f.fConfiguration -side top -anchor w -padx 2 -pady 5 -fill x
+    DevAddLabel $f.fConfiguration.lText "reorient volumes:"
+    DevAddButton $f.fConfiguration.bFlipLR "flip LR" "IbrowserFlipVolumeLR" 20
+    DevAddButton $f.fConfiguration.bFlipIS "flip IS" "IbrowserFlipVolumeIS" 20
+    DevAddButton $f.fConfiguration.bFlipAP "flip AP" "IbrowserFlipVolumeAP" 20
+    DevAddButton $f.fConfiguration.bRevert "revert to original" "IbrowserRevertVolumeOrientation" 20
 
-    grid $f.bFlipUD
-    grid $f.bFlipUD -padx 3 -ipady 3
+    grid $f.fConfiguration.lText 
+    grid $f.fConfiguration.lText -padx 3 -ipady 5
+    
+    grid $f.fConfiguration.bFlipLR
+    grid $f.fConfiguration.bFlipLR -padx 3 -ipady 3
 
-    grid $f.bFlipAP
-    grid $f.bFlipAP -padx 3 -ipady 3
+    grid $f.fConfiguration.bFlipIS
+    grid $f.fConfiguration.bFlipIS -padx 3 -ipady 3
 
-    grid $f.bRevert
-    grid $f.bRevert -padx 3 -ipady 3
+    grid $f.fConfiguration.bFlipAP
+    grid $f.fConfiguration.bFlipAP -padx 3 -ipady 3
+
+    grid $f.fConfiguration.bRevert
+    grid $f.fConfiguration.bRevert -padx 3 -ipady 3
 
     place $f -in $master -relwidth 1.0 -relheight 1.0 -y 0
 
@@ -34,7 +59,11 @@ proc IbrowserBuildReorientGUI { f master } {
 }
 
 
-
+proc  IbrowserInitializeOrientation { id } {
+    set ::Ibrowser($id,ISFlip) 0
+    set ::Ibrowser($id,LRFlip) 0
+    set ::Ibrowser($id,APFlip) 0
+}
 
 
 proc IbrowserFlipVolumeLR { } {
@@ -79,10 +108,10 @@ global Volume
     IbrowserLowerProgressBar
     
     #--- keeps track of whether the volume is LR flipped
-    if { $::Ibrowser($iid,HorizontalFlip) == 1 } {
-        set ::Ibrowser($iid,HorizontalFlip) 0
+    if { $::Ibrowser($iid,LRFlip) == 1 } {
+        set ::Ibrowser($iid,LRFlip) 0
     } else {
-        set ::Ibrowser($iid,HorizontalFlip) 1
+        set ::Ibrowser($iid,LRFlip) 1
     }
 
 
@@ -129,10 +158,10 @@ global Volume
     IbrowserLowerProgressBar
     
     #--- keeps track of whether the volume is LR flipped
-    if { $::Ibrowser($iid,FrontBackFlip) == 1 } {
-        set ::Ibrowser($iid,FrontBackFlip) 0
+    if { $::Ibrowser($iid,APFlip) == 1 } {
+        set ::Ibrowser($iid,APFlip) 0
     } else {
-        set ::Ibrowser($iid,FrontBackFlip) 1
+        set ::Ibrowser($iid,APFlip) 1
     }
 
 
@@ -141,7 +170,7 @@ global Volume
 
 
 
-proc IbrowserFlipVolumeUD { } {
+proc IbrowserFlipVolumeIS { } {
 global Volume
 
     #--- Flips a volume around the horizontal axis,
@@ -167,13 +196,13 @@ global Volume
         #--- but not terribly much. Better ideas are welcome.
         IbrowserPrintProgressFeedback
         
-        vtkImageFlip flipUD
-        flipUD SetInput [ ::Volume($v,vol) GetOutput ]
-        flipUD SetFilteredAxis 2
-        ::Volume($v,vol) SetImageData [ flipUD GetOutput ]
+        vtkImageFlip flipIS
+        flipIS SetInput [ ::Volume($v,vol) GetOutput ]
+        flipIS SetFilteredAxis 2
+        ::Volume($v,vol) SetImageData [ flipIS GetOutput ]
         
         MainVolumesUpdate $v
-        flipUD Delete
+        flipIS Delete
         incr pcount
     }
     IbrowserEndProgressFeedback
@@ -183,11 +212,11 @@ global Volume
 
     IbrowserLowerProgressBar
 
-    #--- keeps track of whether the volume is UD flipped
-    if { $::Ibrowser($iid,VerticalFlip) == 1 } {
-        set ::Ibrowser($iid,VerticalFlip) 0
+    #--- keeps track of whether the volume is IS flipped
+    if { $::Ibrowser($iid,ISFlip) == 1 } {
+        set ::Ibrowser($iid,ISFlip) 0
     } else {
-        set ::Ibrowser($iid,VerticalFlip) 1
+        set ::Ibrowser($iid,ISFlip) 1
     }
 
 }
@@ -208,7 +237,7 @@ global Volume
     set numvols $::Ibrowser($iid,numDrops)
 
     #--- any vertical flip?
-    if { $::Ibrowser($iid,VerticalFlip) } {
+    if { $::Ibrowser($iid,ISFlip) } {
 
         for { set v $firstID } { $v <= $lastID } { incr v } {
             set progress [ expr double ( $pcount ) / double ( $numvols ) ]
@@ -221,24 +250,24 @@ global Volume
             #--- but not terribly much. Better ideas are welcome.
             IbrowserPrintProgressFeedback
             
-            vtkImageFlip flipUD
-            flipUD SetInput [ ::Volume($v,vol) GetOutput ]
-            flipUD SetFilteredAxis 2
-            ::Volume($v,vol) SetImageData [ flipUD GetOutput ]
+            vtkImageFlip flipIS
+            flipIS SetInput [ ::Volume($v,vol) GetOutput ]
+            flipIS SetFilteredAxis 2
+            ::Volume($v,vol) SetImageData [ flipIS GetOutput ]
             
             MainVolumesUpdate $v
-            flipUD Delete
+            flipIS Delete
             incr pcount
         }
         IbrowserEndProgressFeedback
         RenderAll
-        set ::Ibrowser($iid,VerticalFlip) 0
+        set ::Ibrowser($iid,ISFlip) 0
     }
 
     set pcount 0
     set numvols $::Ibrowser($iid,numDrops)
     #--- any horizontal flip?
-    if { $::Ibrowser($iid,HorizontalFlip) } {
+    if { $::Ibrowser($iid,LRFlip) } {
 
         for { set v $firstID } { $v <= $lastID } { incr v } {
             set progress [ expr double ( $pcount ) / double ( $numvols ) ]
@@ -262,13 +291,13 @@ global Volume
         }
         IbrowserEndProgressFeedback
         RenderAll
-        set ::Ibrowser($iid,HorizontalFlip) 0
+        set ::Ibrowser($iid,LRFlip) 0
     }
 
     set pcount 0
     set numvols $::Ibrowser($iid,numDrops)
     #--- any frontback flip?
-    if { $::Ibrowser($iid,FrontBackFlip) } {
+    if { $::Ibrowser($iid,APFlip) } {
 
         for { set v $firstID } { $v <= $lastID } { incr v } {
             set progress [ expr double ( $pcount ) / double ( $numvols ) ]
@@ -292,7 +321,7 @@ global Volume
         }
         IbrowserEndProgressFeedback
         RenderAll
-        set ::Ibrowser($iid,FrontBackFlip) 0
+        set ::Ibrowser($iid,APFlip) 0
     }
 
     set tt "Volumes in interval $iid are reset"
