@@ -124,7 +124,7 @@ proc FiducialsInit {} {
 	#   appropriate info when the module is checked in.
 	#   
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.7 $} {$Date: 2001/02/19 17:53:29 $}]
+		{$Revision: 1.8 $} {$Date: 2001/04/02 18:20:11 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -525,6 +525,7 @@ proc FiducialsCreatePoint { fid pid } {
 	  Point($pid,follower) SetMapper Point($pid,mapper)
 	  Point($pid,follower) SetCamera [viewRen GetActiveCamera]
 	  Point($pid,follower) SetUserMatrix [Point(textXform) GetMatrix]
+	  Point($pid,follower) SetPickable 0
 	  eval [Point($pid,follower) GetProperty] SetColor $Fiducials(textColor)
 
 	viewRen AddActor Point($pid,follower)
@@ -557,3 +558,20 @@ proc FiducialsUpdatePoints {} {
 		Fiducials($fid,pointsPD) Modified
 	}
 }
+
+proc FiducialsPointIdFromGlyphCellId { fid cid } {
+	global Fiducials Point
+
+	set num [[Fiducials(symbolXformFilter) GetOutput] GetNumberOfCells]
+	set vtkId [expr $cid/$num]
+	return [lindex $Fiducials($fid,pointIdList) $vtkId]
+	}
+
+proc FiducialsWorldPointXYZ { fid pid } {
+	global Fiducials Point
+
+	Fiducials(tmpXform) SetMatrix Fiducials($fid,xform)
+	eval Fiducials(tmpXform) SetPoint [Point($pid,node) GetXYZ] 1
+	set xyz [Fiducials(tmpXform) GetPoint]
+	return $xyz
+	}
