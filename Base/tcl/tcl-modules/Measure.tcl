@@ -109,7 +109,7 @@ proc MeasureInit {} {
     
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.22 $} {$Date: 2004/04/13 21:00:06 $}]
+        {$Revision: 1.23 $} {$Date: 2004/07/22 15:48:37 $}]
     
     # Initialize module-level variables
     #    set Measure(Model1) $Model(idNone)
@@ -757,28 +757,32 @@ proc MeasureVolume {} {
     set vol -1000
     
     foreach id $Selected(Model) {
-    set currModel [Mrml(dataTree) GetNthModel $id]
-    #    puts $name
-    set name [$currModel GetName]
+        set currModel [Mrml(dataTree) GetNthModel $id]
+        #    puts $name
+        set name [$currModel GetName]
     
-    set r  [lindex $Module(Renderers) 0]
-    
-    surfProps SetInput [Model($id,mapper,viewRen) GetInput]
-    surfProps Update
-    #    set vol [surfProps GetTest]
-    set vol [surfProps GetVolume]
-    if { $vol < 0.0 } {
-        set vol [expr -1*$vol]
-    }
-    set msg [concat "Volume of" $name "=" [expr $vol*.001] "(ml)"]
-    MeasureOutput $msg
-    set err [surfProps GetVolumeError]
-    if { [expr $err * 10000] > $vol } {
-        set msg [concat "Warning:" $name "volume may not be valid."]
+        set r  [lindex $Module(Renderers) 0]
+       
+        # changed viewRen to r since you get the first renderer above
+        surfProps SetInput [Model($id,mapper,$r) GetInput]
+        surfProps Update
+        #    set vol [surfProps GetTest]
+        set vol [surfProps GetVolume]
+        if { $vol < 0.0 } {
+            set vol [expr -1*$vol]
+        }
+        set msg [concat "Volume of" $name "=" [expr $vol*.001] "(ml)"]
         MeasureOutput $msg
-    }
+        set err [surfProps GetVolumeError]
+        if { [expr $err * 10000] > $vol } {
+            set msg [concat "Warning:" $name "volume may not be valid."]
+            MeasureOutput $msg
+        }
     }
     
+    # when vtk debugging is on, get an error after this Delete:
+    # Deleting unknown object: vtkProcessObject
+    # surfProps RemoveAllInputs doesn't get rid of it
     surfProps Delete
 }
 
