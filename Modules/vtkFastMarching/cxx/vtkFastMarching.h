@@ -8,7 +8,7 @@
 #ifdef _WIN32
 #include <assert.h>
 #include <vector>
-#include <algo>
+#include <algorithm>
 #include <iostream>
 #else
 #include <vector.h>
