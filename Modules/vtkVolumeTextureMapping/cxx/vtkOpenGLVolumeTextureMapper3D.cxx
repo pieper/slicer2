@@ -15,7 +15,7 @@
 #define volumeBox 3
 
 #ifndef VTK_IMPLEMENT_MESA_CXX
-vtkCxxRevisionMacro(vtkOpenGLVolumeTextureMapper3D, "$Revision: 1.10.2.2 $");
+vtkCxxRevisionMacro(vtkOpenGLVolumeTextureMapper3D, "$Revision: 1.10.2.3 $");
 vtkStandardNewMacro(vtkOpenGLVolumeTextureMapper3D);
 #endif
 
@@ -23,10 +23,17 @@ vtkStandardNewMacro(vtkOpenGLVolumeTextureMapper3D);
 # include <unistd.h>
 #endif
 
+#ifdef WIN32
 PFNGLTEXIMAGE3DEXTPROC glTexImage3DEXT_pointer;
 PFNGLTEXSUBIMAGE3DEXTPROC glTexSubImage3DEXT_pointer;
 PFNGLCOLORTABLEEXTPROC glColorTableEXT_pointer;
 PFNGLCOLORTABLEPROC glColorTableNOT_EXT_pointer;
+#else
+#define glTexImage3DEXT_pointer glTexImage3DEXT
+#define glTexSubImage3DEXT_pointer glTexSubImage3DEXT
+#define glColorTableEXT_pointer glColorTableEXT
+#define glColorTableNOT_EXT_pointer glColorTableNOT_EXT
+#endif
 
 int intersectionPlanes[12][4] ={0, 1, 0, 1,
                                 2, 6, 0, 3, 
@@ -187,10 +194,6 @@ void vtkOpenGLVolumeTextureMapper3D::Render(vtkRenderer *ren, vtkVolume *vol)
        #define GL_TEXTURE_3D_EXT GL_TEXTURE_3D                
        #endif
         using_palette = isExtensionSupported("GL_EXT_paletted_texture");        
-        glTexImage3DEXT_pointer = glTexImage3DEXT;
-        glTexSubImage3DEXT_pointer = glTexSubImage3DEXT;
-        glColorTableEXT_pointer = glColorTableEXT;
-        glColorTableNOT_EXT_pointer = glColorTable;
     #endif
 
     boxSize = this->GetBoxSize();
