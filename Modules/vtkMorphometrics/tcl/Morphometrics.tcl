@@ -52,6 +52,8 @@
 #    MorphometricsToolName tool
 #    MorphometricsToolWorkflow tool
 #    MorphometricsToolProvides tool
+#    MorphometricsToolInitFunction tool
+#    MorphometricsReplaceInitWithDummy
 #===============================================================================
 # How to add a new morphometric tool:
 # 1.) Write an initialization function for your tool. In this function you
@@ -190,7 +192,7 @@ proc MorphometricsInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.2 $} {$Date: 2004/01/23 20:59:55 $}]
+        {$Revision: 1.3 $} {$Date: 2004/01/23 21:43:57 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -452,13 +454,14 @@ proc MorphometricsUpdateChooseMeasurementTab {tool} {
 # str nameOfTool comprehensive name of the tool
 # str nameOfWorkflow   name of the workflow of the tool
 # str providedMeasurements list of measurements the user gets when using your tool
+# str initFunction function which initializes the tool itself
 # .END
 #------------------------------------------------------------------------
-proc MorphometricsAddMeasurement {nameOfTool nameOfWorkflow providedMeasurements} {
+proc MorphometricsAddMeasurement {nameOfTool nameOfWorkflow providedMeasurements initFunction} {
     global Morphometrics Module Gui
 
     # add it to the list of available tools
-    lappend Morphometrics(measurementTools) [list $nameOfTool $nameOfWorkflow $providedMeasurements]
+    lappend Morphometrics(measurementTools) [list $nameOfTool $nameOfWorkflow $providedMeasurements $initFunction]
 
     # add it to the user-visible list of available tools
     $Module(Morphometrics,fChooseMeasurement).fTop.mbAvailMeasurements.mAvailMeasurements add command -background $Gui(activeWorkspace) -command "MorphometricsUpdateChooseMeasurementTab [list $nameOfTool]" -label $nameOfTool
@@ -492,6 +495,12 @@ proc  MorphometricsStartMeasure {} {
     lset Module(Morphometrics,row1Name) $index_actual $Morphometrics(measurementName)
     $Module(Morphometrics,bToolWorkflow) invoke
     $Module(Morphometrics,bToolWorkflow) configure -text $Morphometrics(measurementName)
+
+    # initialize the module:
+    eval [MorphometricsToolInitFunction [MorphometricsGetTool $Morphometrics(measurementName)]]
+    
+    # and replace its init function by a dummy call, thus the init function will be called once
+    MorphometricsReplaceInitWithDummy
 
     # Then we start the workflow
     WorkflowStart [MorphometricsToolWorkflow [MorphometricsGetTool $Morphometrics(measurementName)]]
@@ -553,3 +562,29 @@ proc MorphometricsToolProvides {tool} {
     return [lindex $tool 2]
 }
 
+#------------------------------------------------------------------------
+# .PROC MorphometricsToolInitFunction
+# Retrieve the init function of the tool. The variable tool
+# is the internal representation of a morphometric tool
+# .ARGS
+# list tool internal representation of a tool
+# .END
+#------------------------------------------------------------------------
+proc MorphometricsToolInitFunction {tool} {
+    return [lindex $tool 3]
+}
+
+
+#------------------------------------------------------------------------
+# .PROC MorphometricsReplaceInitWithDummy
+# Replaces the init function of the currently choosen tool by a dummy function.
+# This is needed in order to ensure, that the init function is only called once.
+# .ARGS
+# .END
+#------------------------------------------------------------------------
+proc MorphometricsReplaceInitWithDummy {} {
+    global Morphometrics
+    set index [lsearch -exact $Morphometrics(measurementTools) [MorphometricsGetTool $Morphometrics(measurementName)]]
+    set newTool [lreplace [MorphometricsGetTool $Morphometrics(measurementName)]  3 3 MorphometricsDoNothingOnEnterExit]
+    set Morphometrics(measurementTools) [lreplace $Morphometrics(measurementTools) $index $index $newTool]
+}
