@@ -16,6 +16,8 @@ proc Usage { {msg ""} } {
     set msg "$msg\n   :<number> | -d <number> | --display <number> : use the specified display number"
     set msg "$msg\n   --Xvnc <path to X server>"
     set msg "$msg\n   --wm <path to window manager>"
+    set msg "$msg\n   --not-secure : accept connections from other hosts"
+    set msg "$msg\n   -rfbauth : vnc passwd file"
     set msg "$msg\n   -v | --verbose : increase debugging level"
     set msg "$msg\n   --version : print out the version info and continue"
     puts stderr "$msg\n"
@@ -30,6 +32,7 @@ set VERBOSE 0
 set XVNC [file dirname [info script]]/Xvnc
 set WM ""
 set AUTHORIZATION "-localhost"
+set RFBAUTH "$::env(HOME)/.vnc/passwd"
 #set WM gnome-session
 #set WM /usr/bin/startkde
 
@@ -74,11 +77,18 @@ for {set i 0} {$i < $argc} {incr i} {
             } else {
                 set WM [lindex $argv $i]
             }
-            
         }
         "--not-secure" {
             puts stderr "warning: allowing connections from anywhere"
             set AUTHORIZATION "-rfbauth /home/pieper/.vnc/passwd"
+        }
+        "-rfbauth" {
+            incr i
+            if { $i == $argc } {
+                Usage "missing argument for $a\n"
+            } else {
+                set RFBAUTH [lindex $argv $i]
+            }
         }
         "-v" - "--version" {
             puts $VERSION
@@ -158,7 +168,7 @@ if { $AUTHORIZATION == "-localhost" } {
     set vncpid [exec $XVNC :$DISPLAY -fp $fparg -alwaysshared $AUTHORIZATION -depth 32 -geometry 1280x1024 >& $LOGFILE &]
 } else {
     # TODO - pass the passwd file in on the command line
-    set vncpid [exec $XVNC :$DISPLAY -fp $fparg -alwaysshared -rfbauth /home/pieper/.vnc/passwd -depth 32 -geometry 1280x1024 >& $LOGFILE &]
+    set vncpid [exec $XVNC :$DISPLAY -fp $fparg -alwaysshared -rfbauth $RFBAUTH -httpd [file dirname [info script]]/vnc-classes -depth 32 -geometry 1280x1024 >& $LOGFILE &]
 }
 
 set tries 0
