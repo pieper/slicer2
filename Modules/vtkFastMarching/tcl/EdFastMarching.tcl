@@ -33,7 +33,7 @@
 proc EdFastMarchingInit {} {
     global Ed Gui EdFastMarching Volume Slice Fiducials
 
-    puts "EdFastMarchingInit"
+    #puts "EdFastMarchingInit"
 
     set e EdFastMarching
     set Ed($e,name)      "Fast Marching"
@@ -306,7 +306,7 @@ proc EdFastMarchingEnter {} {
 proc EdFastMarchingExit {} {
     global Ed EdFastMarching
 
-    puts "EdFastMarchingExit"
+    #puts "EdFastMarchingExit"
 
     EdFastMarching(FastMarching) unInit
 
@@ -388,18 +388,12 @@ proc EdFastMarchingSegment {} {
     set ca [lindex $coord 1]
     set cs [lindex $coord 2]
 
-    puts $EdFastMarching(fidFiducialList)
-    puts $s
-
     if { [EdFastMarching(FastMarching) addSeed $cr $ca $cs]==0 } {
-        puts "before delete"
         FiducialsDeletePoint $EdFastMarching(fidFiducialList) $s
-        puts "after delete"
         tk_messageBox -message "Seed $l is outside of the volume.\nIt has therefore been removed."
     }
-    }
 
-    puts "after deletion of invalid points"
+    }
 
     set l [FiducialsGetPointIdListFromName "FastMarching-seeds"]
 

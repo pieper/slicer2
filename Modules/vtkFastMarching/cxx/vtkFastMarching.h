@@ -27,7 +27,7 @@
 // outside margin
 #define BAND_OUT 1
 
-#define GRANULARITY_PROGRESS 100
+#define GRANULARITY_PROGRESS 20
 
 ///////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////
@@ -58,14 +58,16 @@ class VTK_FASTMARCHING_EXPORT vtkFastMarching : public vtkImageToImageFilter
  private:
   unsigned int nNeighbors; // =6 pb wrap, cannot be defined as constant
   int arrayShiftNeighbor[27];
+  int tmpNeighborhood[27]; // allocate it here so that we do not have to
+  // allocate it over and over in getMedianInhomo
   double dx; // =1
 
   bool initialized;
   bool firstCall;
 
   FMnode *node;  // arrival time and status for all voxels
-  short *inhomo; // inhomogeneity 
-  short *median; // medican intensity
+  int *inhomo; // inhomogeneity 
+  int *median; // medican intensity
 
   short* outdata; // output
   short* indata;  // input
@@ -75,7 +77,7 @@ class VTK_FASTMARCHING_EXPORT vtkFastMarching : public vtkImageToImageFilter
   int dimY;
   int dimZ;
   int dimXY; // dimX*dimY
-
+  int dimXYZ; // dimX*dimY*dimZ
   // coeficients of the RAS2IJK matrix
   float m11;
   float m12;
@@ -125,6 +127,8 @@ class VTK_FASTMARCHING_EXPORT vtkFastMarching : public vtkImageToImageFilter
   FMleaf removeSmallest( void );
   void downTree(int index);
   void upTree(int index);
+
+  void getMedianInhomo( int index, int &median, int &inhomo );
 
   int shiftNeighbor(int n);
   double computeT(int index );

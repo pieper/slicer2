@@ -1,4 +1,3 @@
-
 #ifdef _WIN32
 #define _USE_MATH_DEFINES
 #endif
@@ -24,28 +23,34 @@ vtkFastMarching* vtkFastMarching::New()
     {
       return (vtkFastMarching*)ret;
     }
+
   // If the factory was unable to create the object, then create it here.
   return new vtkFastMarching;
 }
 
 void vtkFastMarching::collectInfoSeed( int index )
 {
-     for(int ip=-1;ip<=1;ip++)
+  for(int ip=-1;ip<=1;ip++)
     for(int jp=-1;jp<=1;jp++)
       for(int kp=-1;kp<=1;kp++)
         {
           int neiIndex = index + ip + jp*dimY + kp*dimXY;
 
-          pdfIntensityIn->addRealization( median[ neiIndex ] );
-          pdfInhomoIn->addRealization( inhomo[ neiIndex ] );
+      int med, inh;
+      getMedianInhomo(neiIndex, med, inh);
+
+          pdfIntensityIn->addRealization( med );
+          pdfInhomoIn->addRealization( inh );
         }
 }
 
 // speed at index
 double vtkFastMarching::speed( int index )
 {
-  int I = median[ index ];
-  int H = inhomo[ index ];
+  int I;
+  int H;
+
+  getMedianInhomo( index, I, H );
 
   return min(pdfIntensityIn->value(I)/pdfIntensityAll->value(I),
          pdfInhomoIn->value(H)/pdfInhomoAll->value(H));
@@ -53,6 +58,8 @@ double vtkFastMarching::speed( int index )
 
 void vtkFastMarching::setSeed( int index )
 {
+  assert( (index>=(1+dimX+dimXY)) && (index<(dimXYZ-1-dimX-dimXY)) );
+
   if( node[index].status!=fmsFAR )
     // this seed has already been planted
     return;
@@ -60,6 +67,7 @@ void vtkFastMarching::setSeed( int index )
   // by definition, T=0, and that voxel is known
   node[index].T=0.0;
   node[index].status=fmsKNOWN;
+
   knownPoints[nEvolutions].push_back(index);
 
   // add all FAR neighbors to trial band
@@ -77,15 +85,39 @@ void vtkFastMarching::setSeed( int index )
     }
 }
 
-int compareShortInt(const void *a, const void *b)
+int compareInt(const void *a, const void *b)
 {
-  return  (*(short int*)a) >= (*(short int*)b);
+  return  (*(int*)a) >= (*(int*)b);
+}
+
+inline void vtkFastMarching::getMedianInhomo( int index, int &med, int &inh )
+{
+  // assert( (index>=(1+dimX+dimXY)) && (index<(dimXYZ-1-dimX-dimXY)) );
+
+  inh = inhomo[index];
+  if( inh != (-1) )
+    // then the values have already been computed
+    {
+      med = median[index]; 
+      return;
+    }
+
+  // otherwise, just do it
+  for(int k=0;k<27;k++)
+    tmpNeighborhood[k] = (int)indata[index + arrayShiftNeighbor[k]];
+
+  qsort( (void*)tmpNeighborhood, 27, sizeof(int), &compareInt );
+      
+  inh = inhomo[ index ] = (tmpNeighborhood[21] - tmpNeighborhood[5]);
+  med = median[ index ] = tmpNeighborhood[13];
+
+  return;
 }
 
 void vtkFastMarchingExecute(vtkFastMarching *self,
-                   vtkImageData *inData, short *inPtr,
-                   vtkImageData *outData, short *outPtr, 
-                   int outExt[6])
+                vtkImageData *inData, short *inPtr,
+                vtkImageData *outData, short *outPtr, 
+                int outExt[6])
 {
   int n=0;
 
@@ -105,89 +137,56 @@ void vtkFastMarchingExecute(vtkFastMarching *self,
     }
 
       int index=0;
+      int lastPercentageProgressBarUpdated=-1;
 
-      short int neighborhood[27];
-
-      int addJ = self->dimX - 3;
-      int addK = self->dimXY - 3 * (self->dimX);
+      int I, H;
+      int sparseSampling=100;
 
       for(int k=0;k<self->dimZ;k++)
-      for(int j=0;j<self->dimY;j++)
+    for(int j=0;j<self->dimY;j++)
       for(int i=0;i<self->dimX;i++)
         {
           self->node[index].T=INF;
           self->node[index].status=fmsFAR;
+      
+          self->inhomo[index]=-1; // meaning inhomo and median have not been computed there
 
           if( (i<BAND_OUT) || (j<BAND_OUT) ||  (k<BAND_OUT) ||
-          (i>=self->dimX-BAND_OUT) || (j>=self->dimY-BAND_OUT) || (k>=self->dimZ-BAND_OUT) )
+          (i>=(self->dimX-BAND_OUT)) || (j>=(self->dimY-BAND_OUT)) || (k>=(self->dimZ-BAND_OUT)) )
         {
+
+          // update progress bar
+          int currentPercentage = GRANULARITY_PROGRESS*index 
+            / self->dimXYZ;
+          
+          if( currentPercentage > lastPercentageProgressBarUpdated )
+            {
+              lastPercentageProgressBarUpdated = currentPercentage;
+              self->UpdateProgress(double(currentPercentage)/double(GRANULARITY_PROGRESS));
+            }
+
           self->node[index].status=fmsOUT;
+
+          // we should never have to look at these values anyway !
+          self->inhomo[ index ] = self->depth;
+          self->median[ index ] = 0;
         }
           else
         {
           // we're not on one of the border of the volume
-
       
-      int k = 0;
-          // extended median filtering
-      //vector<short int> intensities;
-      /*
-          for(int kp=-1;kp<=1;kp++)
-          for(int jp=-1;jp<=1;jp++)
-          for(int ip=-1;ip<=1;ip++)
-          */
-
-      // int indexNei = index - self->dimXY - self->dimX -1;
-
-      for(k=0;k<27;k++)
-        {
-          neighborhood[k] = self->indata[index + self->shiftNeighbor(k)];
+          // pick some values to estimate the properties of the grayscale values
+          if( (index % sparseSampling) == 0)
+            {
+              self->getMedianInhomo( index, I, H );
+              self->pdfIntensityAll->addRealization( I );
+              self->pdfInhomoAll->addRealization( H );
+            }
         }
-      /*
-          for(int kp=-1;kp<=1;kp++)
-        {
-          
-          for(int jp=-1;jp<=1;jp++)
-        {
-          for(int ip=-1;ip<=1;ip++)
-        {
-          neighborhood[k++] = self->indata[indexNei];
-          indexNei++;
-        }
-      indexNei += addJ;
-        }
-      indexNei += addK;
-        }
-      */
-      /*
-      {
-        //int indexNei = index + self->dimXY*kp + self->dimX * jp + ip;
-        //intensities.push_back( self->indata[indexNei] );
-          neighborhood[k++]=self->indata[indexNei];
-        }
-          sort( intensities.begin(),intensities.end() );
-          
-          self->inhomo[ index ] = intensities[21] - intensities[5];
-          self->median[ index ] = intensities[13];
-      */
-
-      qsort( (void*)neighborhood, 27, sizeof(short int), &compareShortInt );
-      
-
-      self->inhomo[ index ] = neighborhood[21] - neighborhood[5];
-      self->median[ index ] = neighborhood[13];
-
-          self->pdfIntensityAll->addRealization( self->median[ index ] );
-          self->pdfInhomoAll->addRealization( self->inhomo[ index ] );
-        }
-
-          // update progress bar
-          if( index % ((self->dimX*self->dimY*self->dimZ)/GRANULARITY_PROGRESS) == 0 )
-        self->UpdateProgress(double(index)/double(self->dimX*self->dimY*self->dimZ));
 
           index++;
         }
-
+      
       return;
     }
 
@@ -229,9 +228,8 @@ void vtkFastMarchingExecute(vtkFastMarching *self,
             self->downTree( self->node[indexN].leafIndex );
           }
           }
-
       }
-    
+
     // if the points still have a KNOWN neighbor, put them back in TRIAL
     for(int k=self->nPointsBeforeLeakEvolution;k<self->knownPoints[self->nEvolutions].size();k++)
       {
@@ -246,7 +244,7 @@ void vtkFastMarchingExecute(vtkFastMarching *self,
           hasKnownNeighbor=true;
           }
 
-        if(hasKnownNeighbor)
+        if( (hasKnownNeighbor) && (self->node[index].status!=fmsOUT) )
           {
         FMleaf f;
 
@@ -259,11 +257,21 @@ void vtkFastMarchingExecute(vtkFastMarching *self,
       }
 
     // remove all the points from the displayed knownPoints
+    // ok since (self->knownPoints[self->nEvolutions].size()-1>self->nPointsBeforeLeakEvolution)
+    // is true
     while(self->knownPoints[self->nEvolutions].size()>self->nPointsBeforeLeakEvolution)
       self->knownPoints[self->nEvolutions].pop_back();
       }
 
+  // start a new evolution
+  VecInt v;
+  self->knownPoints.push_back(v);
+  self->nEvolutions++;
+  self->nPointsBeforeLeakEvolution=-1;
+
   // use the seeds
+  // note: we have to make sure knownPoints[nEvolution] is ready to receive
+  // indexes, ok
   while(self->seedPoints.size()>0)
     {
       int index=self->seedPoints[self->seedPoints.size()-1];
@@ -272,10 +280,6 @@ void vtkFastMarchingExecute(vtkFastMarching *self,
       self->setSeed( index );
     }
   
-  // start a new evolution
-  self->nEvolutions++;
-  self->nPointsBeforeLeakEvolution=-1;
-
   for(n=0;n<self->nPointsEvolution;n++)
     {
       if( n % (self->nPointsEvolution/GRANULARITY_PROGRESS) == 0 )
@@ -361,9 +365,6 @@ void vtkFastMarching::ExecuteData(vtkDataObject *)
             << " instead of "<<VTK_SHORT);
       return;
     }
-
-  VecInt v;
-  knownPoints.push_back(v);
 
   vtkFastMarchingExecute(this, inData, (short *)inPtr, 
              outData, (short *)(outPtr), outExt);
@@ -537,6 +538,7 @@ void vtkFastMarching::init(int dimX, int dimY, int dimZ, int depth)
   this->dimY=dimY;
   this->dimZ=dimZ;
   this->dimXY=dimX*dimY;
+  this->dimXYZ=dimX*dimY*dimZ;
 
   arrayShiftNeighbor[0] = 0; // neighbor 0 is the node itself
   arrayShiftNeighbor[1] = -dimX;
@@ -572,11 +574,11 @@ void vtkFastMarching::init(int dimX, int dimY, int dimZ, int depth)
   assert( node!=NULL );
   // else there was not enough memory
 
-  inhomo = new short[ dimX*dimY*dimZ ];
+  inhomo = new int[ dimX*dimY*dimZ ];
   assert( inhomo!=NULL );
   // else there was not enough memory
   
-  median = new short[ dimX*dimY*dimZ ];
+  median = new int[ dimX*dimY*dimZ ];
   assert( median!=NULL );
   // else there was not enough memory
   
@@ -608,59 +610,10 @@ vtkFastMarching::~vtkFastMarching()
 
 inline int vtkFastMarching::shiftNeighbor(int n)
 {
-  /*
-
-  assert(initialized);
-  assert(n>=0 && n<=nNeighbors);
-
-  */
-
-  /*
-    1
-    4 0 2 on the XY plane, 5 is below 0 and 6 is above 0
-    3
-  */
+  //assert(initialized);
+  //assert(n>=0 && n<=nNeighbors);
 
   return arrayShiftNeighbor[n];
-
-  /*
-
-  switch(n)
-    {
-    case 0: return 0; // neighbor 0 is the node itself
-    case 1: return -dimX;!
-    case 2: return +1;
-    case 3: return dimX;
-    case 4: return -1;
-    case 5: return -dimXY;
-    case 6: return dimXY;
-    case 7: return  -dimX+dimXY;
-    case 8: return  -dimX+dimXY;
-    case 9: return   dimX+dimXY;
-    case 10: return  dimX-dimXY;
-    case 11: return -1+dimXY;
-    case 12: return -1-dimXY;
-    case 13: return +1+dimXY;
-    case 14: return +1-dimXY;
-    case 15: return +1-dimX;
-    case 16: return +1-dimX-dimXY;
-    case 17: return +1-dimX+dimXY;
-    case 18: return 1+dimX;
-    case 19: return 1+dimX-dimXY;
-    case 20: return 1+dimX+dimXY;
-    case 21: return -1+dimX;
-    case 22: return -1+dimX-dimXY;
-    case 23: return -1+dimX+dimXY;
-    case 24: return -1-dimX;
-    case 25: return -1-dimX-dimXY;
-    case 26: return -1-dimX+dimXY;
-    }
-
-  // we should never be there...
-  assert( false );
-  return 0;
-
-  */
 }
 
 double vtkFastMarching::step( void )
@@ -674,7 +627,7 @@ double vtkFastMarching::step( void )
      it in fmsKNOWN */
 
   if( emptyTree() )
-      return INF;
+    return INF;
 
   min=removeSmallest();
 
@@ -688,7 +641,7 @@ double vtkFastMarching::step( void )
   double EPS=1e-1;
 
   while( speed(min.nodeIndex)<EPS )
-  {
+    {
       if( emptyTree() )
     {
       return INF;
@@ -701,8 +654,11 @@ double vtkFastMarching::step( void )
       knownPoints[nEvolutions].push_back(min.nodeIndex);
     }
 
-  pdfIntensityIn->addRealization( median[min.nodeIndex] );
-  pdfInhomoIn->addRealization( inhomo[min.nodeIndex] );
+  int I, H;
+  getMedianInhomo( min.nodeIndex, I, H );
+
+  pdfIntensityIn->addRealization( I );
+  pdfInhomoIn->addRealization( H );
 
   node[min.nodeIndex].status=fmsKNOWN;
   knownPoints[nEvolutions].push_back(min.nodeIndex);
