@@ -80,7 +80,7 @@ viewMode='Normal' viewBgColor='Blue'"
 
     set m MainView
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.47 $} {$Date: 2003/03/19 19:16:26 $}]
+    {$Revision: 1.48 $} {$Date: 2004/03/01 15:48:06 $}]
 
     set View(viewerHeightNormal) 656
     set View(viewerWidth)  956 
@@ -100,6 +100,9 @@ viewMode='Normal' viewBgColor='Blue'"
     set View(bgName) Blue
     set View(fov) 220.0
     set View(spin) 0
+    set View(rock) 0
+    set View(rockLength) 200
+    set View(rockCount) 0
     set View(spinDir) Right
     set View(spinMs) 5 
     set View(spinDegrees) 2 
@@ -299,7 +302,7 @@ proc MainViewBuildGUI {} {
 
     # Preset Button
     
-    eval {menubutton $f.cm -text "Select" -width 10 -menu $f.cm.m} $Gui(WBA)
+    eval {menubutton $f.cm -text "Select" -width 6 -menu $f.cm.m} $Gui(WBA)
     pack $f.cm -side left -padx 2
     
     # Store the widget path for later access
@@ -321,10 +324,17 @@ proc MainViewBuildGUI {} {
 
     # MainViewSpin button
     eval {checkbutton $f.cMainViewSpin \
-        -text "Spin" -variable View(spin) -width 5 \
+        -text "Spin" -variable View(spin) -width 4 \
         -indicatoron 0 -command "MainViewSpin"} $Gui(WCA)
     pack $f.cMainViewSpin -side left -padx 2 
     TooltipAdd $f.cMainViewSpin "Spin view: continuously rotate the 3D scene."
+
+    # MainViewRock button
+    eval {checkbutton $f.cMainViewRock \
+        -text "Rock" -variable View(rock) -width 4 \
+        -indicatoron 0 -command "MainViewRock"} $Gui(WCA)
+    pack $f.cMainViewRock -side left -padx 2 
+    TooltipAdd $f.cMainViewRock "Rock view: continuously rotate smoothly back and forth."
 
     #-------------------------------------------
     # View->Nav->Bot->Center Frame
@@ -701,9 +711,40 @@ proc MainViewSpin {} {
     global View
 
     if {$View(spin) == "1"} {
+
+        set View(rock) 0
+
         MainViewRotate $View(spinDir) $View(spinDegrees)
         update idletasks
         after $View(spinMs) MainViewSpin
+    }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MainViewRock
+#
+# Shares a lot with MainviewSpin above, but gently rocks back and forth
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MainViewRock {} {
+    global View
+
+    if {$View(rock) == "1"} {
+
+        set View(spin) 0
+
+        set cam [viewRen GetActiveCamera]
+        set p [expr (1.0 * $View(rockCount)) / $View(rockLength)]
+        set amt [expr 1.5 * cos ( 2.0 * 3.1415926 * ($p - floor($p)) ) ]
+        incr View(rockCount)
+
+        $cam Azimuth $amt
+        Render3D
+
+        update idletasks
+        after $View(spinMs) MainViewRock
     }
 }
 
