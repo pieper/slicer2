@@ -1,4 +1,4 @@
-#!/d/bigdaily/lauren/slicer/program/tclsh
+#!/usr/local/bin/tclsh8.0
 #=auto==========================================================================
 # Copyright (c) 1999 Surgical Planning Lab, Brigham and Women's Hospital
 #  

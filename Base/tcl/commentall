@@ -1,4 +1,4 @@
-#!/d/bigdaily/lauren/slicer/program/tclsh
+#!/usr/local/bin/tclsh8.0
 
 foreach file "[glob -nocomplain *.tcl] [glob -nocomplain *.h] \
 	[glob -nocomplain *.cxx]" {
