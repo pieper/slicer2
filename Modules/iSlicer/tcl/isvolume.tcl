@@ -76,6 +76,7 @@ if { [itcl::find class isvolume] == "" } {
         # vtk objects in the slice render
         variable _name
         variable _tkrw
+        variable _renwin
         variable _ren
         variable _mapper
         variable _actor
@@ -186,7 +187,10 @@ itcl::body isvolume::constructor {args} {
     pack $itk_interior.sframe -fill both -expand true
     set cs [$itk_interior.sframe childsite]
     set _tkrw $cs.tkrw
-    vtkTkRenderWidget $_tkrw -width 256 -height 256
+    set _renwin ::renwin_$_name
+    catch "$_renwin Delete"
+    vtkRenderWindow $_renwin
+    vtkTkRenderWidget $_tkrw -width 256 -height 256 -rw $_renwin
 
     pack $_tkrw -expand true -fill both
     bind $_tkrw <Expose> "$this expose"
@@ -251,6 +255,7 @@ itcl::body isvolume::constructor {args} {
 
 
 itcl::body isvolume::destructor {} {
+    catch "$_renwin Delete"
     destroy $_tkrw 
     $_ren Delete
     $_mapper Delete
