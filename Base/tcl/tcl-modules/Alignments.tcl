@@ -144,7 +144,7 @@ proc AlignmentsInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.22 $} {$Date: 2003/07/16 14:06:17 $}]
+            {$Revision: 1.23 $} {$Date: 2003/07/29 13:41:32 $}]
 
     # Props
     set Matrix(propertyType) Basic
@@ -1550,6 +1550,23 @@ proc AlignmentsManualTranslateDual {param1 value1 param2 value2} {
 proc AlignmentsManualRotate {param {value ""} {mouse 0}} {
     global Matrix
 
+    #
+    # catch a callback loop caused when updating the scale and entry
+    # widgets for the rotation - set the inManualRotate flag here
+    # and reset it at the end of the proc
+    #
+    if { ![info exists Matrix(inManualRotate)] } {
+        set Matrix(inManualRotate) 0
+    } 
+    if { $Matrix(inManualRotate) } {
+        if { $::Module(verbose) } {
+            puts "********************** already in manual rotate - returning"
+        }
+        return
+    } 
+    set Matrix(inManualRotate) 1
+
+
     # "value" is blank if used entry field instead of slider
     if {$value == ""} {
         set value $Matrix($param)
@@ -1632,6 +1649,7 @@ proc AlignmentsManualRotate {param {value ""} {mouse 0}} {
             Render$Matrix(render)
         }
     }
+    set Matrix(inManualRotate) 0
 }
 
 #-------------------------------------------------------------------------------
