@@ -99,7 +99,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.82 $} {$Date: 2003/07/17 16:37:47 $}]
+            {$Revision: 1.83 $} {$Date: 2003/07/21 22:10:50 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -1012,7 +1012,7 @@ proc VolumesPropsApply {} {
 
         # add a MRML node for this volume (so that in UpdateMRML we can read it in according to the path, etc. in the node)
         set n [MainMrmlAddNode Volume]
-        set i [$n GetID]
+        set newID [$n GetID]
            
         # Added by Attila Tanacs 10/11/2000 1/4/02
 
@@ -1058,7 +1058,7 @@ proc VolumesPropsApply {} {
 
         MainUpdateMRML
         # If failed, then it's no longer in the idList
-        if {[lsearch $Volume(idList) $i] == -1} {
+        if {[lsearch $Volume(idList) $newID] == -1} {
             return
         }
 
@@ -1066,10 +1066,10 @@ proc VolumesPropsApply {} {
         set Volume(freeze) 0
 
         # set active volume on all menus
-        MainVolumesSetActive $i
+        MainVolumesSetActive $newID
 
         # save the ID for later in this proc
-        set m $i
+        set m $newID
 
         # if we are successful set the FOV for correct display of this volume
         # (check all dimensions and pix max - special cases for z for dicom, 
@@ -1077,8 +1077,8 @@ proc VolumesPropsApply {} {
         # z extent yet.  TODO: fix GE z extent parsing)
         set fov 0
         for {set i 0} {$i < 2} {incr i} {
-            set dim     [lindex [Volume($i,node) GetDimensions] $i]
-            set spacing [lindex [Volume($i,node) GetSpacing] $i]
+            set dim     [lindex [Volume($newID,node) GetDimensions] $i]
+            set spacing [lindex [Volume($newID,node) GetSpacing] $i]
             set newfov     [expr $dim * $spacing]
             if { $newfov > $fov } {
                 set fov $newfov
@@ -1088,7 +1088,7 @@ proc VolumesPropsApply {} {
         if { $dim == 0 } {
             # do nothing for non-dicom because size isn't known yet
         } else {
-            set spacing [lindex [Volume($i,node) GetSpacing] 2]
+            set spacing [lindex [Volume($newID,node) GetSpacing] 2]
             set newfov [expr $dim * $spacing]
             if { $newfov > $fov } {
                 set fov $newfov
@@ -1098,7 +1098,7 @@ proc VolumesPropsApply {} {
         MainViewSetFov
 
         # display the new volume in the background of all slices
-        MainSlicesSetVolumeAll Back $i
+        MainSlicesSetVolumeAll Back $newID
     } else {
         # End   if the Volume is NEW
         ## Maybe we would like to do a reread of the file?
