@@ -5,7 +5,7 @@
 
 SET (LOCAL_LIBRARY_BASENAME vtkFastMarching)
 
-INCLUDE (${VTKFASTMARCHING_SOURCE_DIR}/cxx/CMakeListsLocal.txt
+INCLUDE (${VTKFASTMARCHING_SOURCE_DIR}/cxx/CMakeListsLocal.txt)
 
 # --------------------------------------------------------------------------
 # You probably do not need to modify anything below this line
