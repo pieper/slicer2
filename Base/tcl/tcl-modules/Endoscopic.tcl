@@ -262,7 +262,7 @@ proc EndoscopicInit {} {
     set Module($m,category) "Visualisation"
     
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.88 $} {$Date: 2005/01/18 21:41:42 $}] 
+    {$Revision: 1.89 $} {$Date: 2005/01/18 22:10:53 $}] 
        
     # Define Procedures
     #------------------------------------
@@ -5254,6 +5254,9 @@ proc EndoscopicRemoveFlatView {{name ""}} {
     Endoscopic($name,lightKit) Delete
     Endoscopic($name,light) Delete
     
+    Endoscopic(flatColon,$name,Line1Actor) Delete
+    Endoscopic(flatColon,$name,Line2Actor) Delete
+    
     
     for {set linecount 0} {$linecount < $Endoscopic($name,lineCount)} {incr linecount} {
        Endoscopic($name,aLineActor,$linecount) Delete
@@ -5277,12 +5280,12 @@ proc EndoscopicRemoveFlatView {{name ""}} {
 
         foreach frame $Endoscopic(FlatWindows) {
         destroy .t$frame
-puts "frame close $frame"      
+#puts "frame close $frame"      
         Endoscopic($frame,renderer) Delete
         Endoscopic($frame,FlatColonActor) Delete
         Endoscopic($frame,outlineActor) Delete
         Endoscopic($frame,lightKit) Delete
-        Endoscopic($frame,light) Delete
+        Endoscopic($frame,light) Delete    
         }
     
      set index [lsearch -exact $Endoscopic(FlatWindows) $name]
@@ -5448,6 +5451,11 @@ proc EndoscopicBuildFlatBoundary {{name ""}} {
      
     Endoscopic($name,renderer) AddActor Endoscopic(flatColon,$name,Line1Actor)
     
+    Line1Points Delete
+    Line1Cells Delete
+    Line1 Delete
+    Line1Mapper Delete
+    
 # Create the 2nd boundary line
 
      set fp2 [open $line2name r]
@@ -5490,6 +5498,12 @@ proc EndoscopicBuildFlatBoundary {{name ""}} {
      [Endoscopic(flatColon,$name,Line2Actor) GetProperty] SetColor 0 0 0
      
     Endoscopic($name,renderer) AddActor Endoscopic(flatColon,$name,Line2Actor)
+    
+    Line2Points Delete
+    Line2Cells Delete
+    Line2 Delete
+    Line2Mapper Delete
+
     
 }
 
@@ -6440,7 +6454,7 @@ proc EndoscopicSelectTarget {sT} {
 
 #test
     set pointId [Point($pid,node) GetDescription]
-puts "the id of the verticie is $pointId"
+#puts "the id of the verticie is $pointId"
 #test end        
     EndoscopicResetCameraDirection    
     EndoscopicUpdateVirtualEndoscope $Endoscopic(activeCam) [concat [Point($pid,node) GetFXYZ] [Point($pid,node) GetXYZ]]
@@ -6633,13 +6647,13 @@ proc EndoscopicUpdateTargetsInFlatWindow {widget} {
              set y1 [lindex $pointT1(xyz) 1]
              set z1 [lindex $pointT1(xyz) 2]
          
-         set x2 [lindex $pointT2(xyz) 0]
+             set x2 [lindex $pointT2(xyz) 0]
              set y2 [lindex $pointT2(xyz) 1]
              set z2 [lindex $pointT2(xyz) 2]
 
              
              EndoscopicAddTargetInFlatWindow $widget $x1 $y1 $z1
-         EndoscopicAddTargetInFlatWindow $widget $x2 $y2 $z2
+             EndoscopicAddTargetInFlatWindow $widget $x2 $y2 $z2
 
                     }
          }
@@ -6649,7 +6663,12 @@ proc EndoscopicUpdateTargetsInFlatWindow {widget} {
              tk_messageBox -message "Please select a path first"
          }
      
+     if {$Endoscopic(selectedTarget) == 0} {
+     EndoscopicLoadTargets
+     } else {
      EndoscopicSelectTarget $Endoscopic(selectedTarget)
+     }
+     
 }
 
 proc EndoscopicFlatLightElevationAzimuth {widget {Endoscopic(flatColon,LightElev)"" Endoscopic(flatColon,LightAzi)""}} {
