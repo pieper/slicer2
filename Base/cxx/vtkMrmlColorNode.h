@@ -48,6 +48,10 @@ public:
   //--------------------------------------------------------------------------
 
   // Description:
+  // Write the node's attributes
+  void Write(ofstream& of, int indent);
+
+  // Description:
   // Copy the nodes attributes to this object
   void Copy(vtkMrmlColorNode *node);
 

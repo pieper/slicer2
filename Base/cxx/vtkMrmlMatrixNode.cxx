@@ -29,24 +29,24 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include <ctype.h>
 #include <string.h>
 #include <math.h>
-#include "vtkMrmlColorNode.h"
+#include "vtkMrmlMatrixNode.h"
 #include "vtkObjectFactory.h"
 
 //------------------------------------------------------------------------------
-vtkMrmlColorNode* vtkMrmlColorNode::New()
+vtkMrmlMatrixNode* vtkMrmlMatrixNode::New()
 {
   // First try to create the object from the vtkObjectFactory
-  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkMrmlColorNode");
+  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkMrmlMatrixNode");
   if(ret)
   {
-    return (vtkMrmlColorNode*)ret;
+    return (vtkMrmlMatrixNode*)ret;
   }
   // If the factory was unable to create the object, then create it here.
-  return new vtkMrmlColorNode;
+  return new vtkMrmlMatrixNode;
 }
 
 //----------------------------------------------------------------------------
-vtkMrmlColorNode::vtkMrmlColorNode()
+vtkMrmlMatrixNode::vtkMrmlMatrixNode()
 {
   // vtkMrmlNode's attributes
   this->ID = 0;
@@ -54,135 +54,68 @@ vtkMrmlColorNode::vtkMrmlColorNode()
   this->Options = NULL;
   this->Ignore = 0;
 
-  // Strings
   this->Name = NULL;
-  this->Labels = NULL;
-
-  // Numbers
-  this->Ambient = 0.0;
-  this->Diffuse = 1.0;
-  this->Specular = 0.0;
-  this->Power = 1;
-  
-  // Arrays
-  this->DiffuseColor[0] = 1.0;
-  this->DiffuseColor[1] = 1.0;
-  this->DiffuseColor[2] = 1.0;
+  this->Transform = vtkTransform::New();
 }
 
 //----------------------------------------------------------------------------
-vtkMrmlColorNode::~vtkMrmlColorNode()
+vtkMrmlMatrixNode::~vtkMrmlMatrixNode()
 {
   if (this->Name)
   {
     delete [] this->Name;
     this->Name = NULL;
   }
-  if (this->Labels)
-  {
-    delete [] this->Labels;
-    this->Labels = NULL;
-  }
+  this->Transform->Delete();
 }
 
 //----------------------------------------------------------------------------
-void vtkMrmlColorNode::Write(ofstream& of, int nIndent)
+void vtkMrmlMatrixNode::Write(ofstream& of, int nIndent)
 {
-  vtkIndent i1(nIndent);
-
   // Write all attributes not equal to their defaults
   
-  of << i1 << "<Color";
-  
+  vtkIndent i1(nIndent);
+
+  of << i1 << "<Matrix";
+
   // Strings
   if (this->Name && strcmp(this->Name, "")) 
   {
     of << " name='" << this->Name << "'";
-  }
-  if (this->Labels && strcmp(this->Labels, "")) 
-  {
-    of << " labels='" << this->Labels << "'";
   }
   if (this->Description && strcmp(this->Description, "")) 
   {
     of << " description='" << this->Description << "'";
   }
 
-  // Numbers
-  if (this->Ambient != 0)
-  {
-    of << " ambient='" << this->Ambient << "'";
-  }
-  if (this->Diffuse != 1.0)
-  {
-    of << " diffuse='" << this->Diffuse << "'";
-  }
-  if (this->Specular != 0)
-  {
-    of << " specular='" << this->Specular << "'";
-  }
-  if (this->Power != 1)
-  {
-    of << " power='" << this->Power << "'";
-  }
-  if (this->Ignore != 0)
-  {
-    of << " ignore='" << this->Ignore << "'";
-  }
+  // Matrix
+  of << " matrix='" << 
+    GetMatrixToString(this->Transform->GetMatrixPointer()) << "'";
 
-  // Arrays
-  if (this->DiffuseColor[0] != 1.0 || this->DiffuseColor[1] != 1.0 ||
-      this->DiffuseColor[2] != 1.0)
-  {
-    of << " diffuseColor='" << this->DiffuseColor[0] << " "
-       << this->DiffuseColor[1] << " " << this->DiffuseColor[2] << "'";
-  }
-
-  of << "></Color>\n";
+  of << "></Matrix>\n";;
 }
 
 //----------------------------------------------------------------------------
 // Copy the node's attributes to this object.
-// Does NOT copy: ID, Name
-void vtkMrmlColorNode::Copy(vtkMrmlColorNode *node)
+// Does NOT copy: ID, FilePrefix, Name
+void vtkMrmlMatrixNode::Copy(vtkMrmlMatrixNode *node)
 {
   vtkMrmlNode::Copy(node);
 
-  // Strings
-  this->SetLabels(node->Labels);
-
-  // Vectors
-  this->SetDiffuseColor(node->DiffuseColor);
-  
-  // Numbers
-  this->SetAmbient(node->Ambient);
-  this->SetDiffuse(node->Diffuse);
-  this->SetSpecular(node->Specular);
-  this->SetPower(node->Power);
+  this->Transform->DeepCopy(node->Transform);
 }
 
-
 //----------------------------------------------------------------------------
-void vtkMrmlColorNode::PrintSelf(ostream& os, vtkIndent indent)
+void vtkMrmlMatrixNode::PrintSelf(ostream& os, vtkIndent indent)
 {
-  int idx;
-  
   vtkMrmlNode::PrintSelf(os,indent);
 
   os << indent << "Name: " <<
     (this->Name ? this->Name : "(none)") << "\n";
-  os << indent << "Labels: " <<
-    (this->Labels ? this->Labels : "(none)") << "\n";
 
-  os << indent << "Ambient:           " << this->Ambient << "\n";
-  os << indent << "Diffuse:           " << this->Diffuse << "\n";
-  os << indent << "Specular:          " << this->Specular << "\n";
-  os << indent << "Power:             " << this->Power << "\n";
-
-  os << "DiffuseColor:\n";
-  for (idx = 0; idx < 3; ++idx)
-  {
-    os << indent << ", " << this->DiffuseColor[idx];
-  }
-  os << ")\n";
+  // Transform
+  os << indent << "Transform:\n";
+    this->Transform->PrintSelf(os, indent.GetNextIndent());  
 }
+
+

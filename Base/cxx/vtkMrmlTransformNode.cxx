@@ -54,19 +54,22 @@ vtkMrmlTransformNode::vtkMrmlTransformNode()
   this->Options = NULL;
   this->Ignore = 0;
 
-  this->Name = NULL;
-  this->Transform = vtkTransform::New();
 }
 
 //----------------------------------------------------------------------------
 vtkMrmlTransformNode::~vtkMrmlTransformNode()
 {
-  if (this->Name)
-  {
-    delete [] this->Name;
-    this->Name = NULL;
-  }
-  this->Transform->Delete();
+}
+
+//----------------------------------------------------------------------------
+void vtkMrmlTransformNode::Write(ofstream& of, int nIndent)
+{
+  // Write all attributes not equal to their defaults
+  
+  vtkIndent i1(nIndent);
+
+  of << i1 << "<Transform>\n";
+
 }
 
 //----------------------------------------------------------------------------
@@ -76,7 +79,6 @@ void vtkMrmlTransformNode::Copy(vtkMrmlTransformNode *node)
 {
   vtkMrmlNode::Copy(node);
 
-  this->Transform->DeepCopy(node->Transform);
 }
 
 //----------------------------------------------------------------------------
@@ -84,12 +86,4 @@ void vtkMrmlTransformNode::PrintSelf(ostream& os, vtkIndent indent)
 {
   vtkMrmlNode::PrintSelf(os,indent);
 
-  os << indent << "Name: " <<
-    (this->Name ? this->Name : "(none)") << "\n";
-
-  // Transform
-  os << indent << "Transform:\n";
-    this->Transform->PrintSelf(os, indent.GetNextIndent());  
 }
-
-

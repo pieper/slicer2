@@ -55,44 +55,50 @@ vtkMrmlVolumeNode::vtkMrmlVolumeNode()
   this->Ignore = 0;
 
   // vtkMrmlVolumeNode's attributes
+
+  // Strings
   this->Name = NULL;
   this->FilePattern = NULL;
   this->FilePrefix = NULL;
-  this->FullPrefix = NULL;
   this->RasToIjkMatrix = NULL;
   this->RasToVtkMatrix = NULL;
   this->LUTName = NULL;
+  this->FullPrefix = NULL;
+  this->ScanOrder = NULL;
+
+  // Numbers
+  this->ScalarType = VTK_SHORT;
+  this->NumScalars = 1;
+  this->LabelMap = 0;
+  this->Interpolate = 1;
+  this->LittleEndian = 0;
+  this->Tilt = 0.0;
+  this->AutoWindowLevel = 1;
+  this->Window = 256;
+  this->Level = 128;
+  this->AutoThreshold = 0;
+  this->LowerThreshold = VTK_SHORT_MIN;
+  this->UpperThreshold = VTK_SHORT_MAX;
+
+  // Arrays
+  memset(this->ImageRange,0,2*sizeof(int));
+  memset(this->Dimensions,0,2*sizeof(int));
+  memset(this->Spacing,0,3*sizeof(float));
 
   // ScanOrder can never be NULL
   this->ScanOrder = new char[3];
   strcpy(this->ScanOrder, "SI");
 
+  // Matrices
   this->WldToIjk = vtkMatrix4x4::New();
   this->RasToWld = vtkMatrix4x4::New();
   this->RasToIjk = vtkMatrix4x4::New();
 
-  memset(this->Spacing,0,3*sizeof(float));
-  memset(this->ImageRange,0,2*sizeof(int));
-  memset(this->Dimensions,0,2*sizeof(int));
-
-  this->Tilt = 0.0;
-  this->LabelMap = 0;
-  this->LittleEndian = 0;
-  this->ScalarType = VTK_SHORT;
-  this->NumScalars = 1;
-  this->AutoWindowLevel = 1;
-  this->Window = 256;
-  this->Level = 128;
-  this->AutoThreshold = 0;
-  this->UpperThreshold = VTK_SHORT_MAX;
-  this->LowerThreshold = VTK_SHORT_MIN;
-  this->Interpolate = 1;
-
   // Initialize to 64x64x1
   this->SetImageRange(1, 1);
-  this->SetDimensions(64, 64);
-  this->SetSpacing(1.0, 1.0, 1.0);
-  this->ComputeRasToIjkFromScanOrder("SI");
+  this->SetDimensions(256, 256);
+  this->SetSpacing(0.9375, 0.9375, 1.5);
+  this->ComputeRasToIjkFromScanOrder("LR");
 }
 
 //----------------------------------------------------------------------------
@@ -117,11 +123,6 @@ vtkMrmlVolumeNode::~vtkMrmlVolumeNode()
     delete [] this->FilePrefix;
     this->FilePrefix = NULL;
   }
-  if (this->FullPrefix)
-  {
-    delete [] this->FilePrefix;
-    this->FilePrefix = NULL;
-  }
   if (this->RasToVtkMatrix)
   {
     delete [] this->RasToVtkMatrix;
@@ -132,16 +133,161 @@ vtkMrmlVolumeNode::~vtkMrmlVolumeNode()
     delete [] this->RasToIjkMatrix;
     this->RasToIjkMatrix = NULL;
   }
-  if (this->ScanOrder)
-  {
-    delete [] this->ScanOrder;
-    this->ScanOrder = NULL;
-  }
   if (this->LUTName)
   {
     delete [] this->LUTName;
     this->LUTName = NULL;
   }
+  if (this->FullPrefix)
+  {
+    delete [] this->FilePrefix;
+    this->FilePrefix = NULL;
+  }
+  if (this->ScanOrder)
+  {
+    delete [] this->ScanOrder;
+    this->ScanOrder = NULL;
+  }
+}
+
+//----------------------------------------------------------------------------
+void vtkMrmlVolumeNode::Write(ofstream& of, int nIndent)
+{
+  // Write all attributes not equal to their defaults
+  
+  // If the description is blank, set it to the scan order
+  if (this->Description && strcmp(this->Description, ""))
+  {
+    delete [] this->Description;
+    this->Description = NULL;
+  }
+  if (this->Description == NULL)
+  {
+    this->Description = new char[3];
+    strcpy(this->Description, this->ScanOrder);
+  }
+
+  vtkIndent i1(nIndent);
+
+  of << i1 << "<Volume";
+  
+  // Strings
+  if (this->Name && strcmp(this->Name, "")) 
+  {
+    of << " name='" << this->Name << "'";
+  }
+  if (this->FilePattern && strcmp(this->FilePattern, "")) 
+  {
+    of << " filePattern='" << this->FilePattern << "'";
+  }
+  if (this->FilePrefix && strcmp(this->FilePrefix, "")) 
+  {
+    of << " filePrefix='" << this->FilePrefix << "'";
+  }
+  if (this->RasToIjkMatrix && strcmp(this->RasToIjkMatrix, "")) 
+  {
+    of << " rasToIjkMatrix='" << this->RasToIjkMatrix << "'";
+  }
+  if (this->RasToVtkMatrix && strcmp(this->RasToVtkMatrix, "")) 
+  {
+    of << " rasToVtkMatrix='" << this->RasToVtkMatrix << "'";
+  }
+  if (this->Description && strcmp(this->Description, "")) 
+  {
+    of << " description='" << this->Description << "'";
+  }
+  if (this->LUTName && strcmp(this->LUTName, "")) 
+  {
+    of << " colorLUT='" << this->LUTName << "'";
+  }
+
+  // Numbers
+  of << " scalarType='";
+  switch (this->ScalarType)
+  {
+  case VTK_VOID:           of << "Void"; break;
+  case VTK_BIT:            of << "Bit"; break;
+  case VTK_CHAR:           of << "Char"; break;
+  case VTK_UNSIGNED_CHAR:  of << "UnsignedChar"; break;
+  case VTK_SHORT:          of << "Short"; break;
+  case VTK_UNSIGNED_SHORT: of << "UnsignedShort"; break;
+  case VTK_INT:            of << "Int"; break;
+  case VTK_UNSIGNED_INT:   of << "UnsignedInt"; break;
+  case VTK_LONG:           of << "Long"; break;
+  case VTK_UNSIGNED_LONG:  of << "UnsignedLong"; break;
+  case VTK_FLOAT:          of << "Float"; break;
+  case VTK_DOUBLE:         of << "Double"; break;
+  }
+  of << "'";
+  if (this->NumScalars != 1)
+  {
+    of << " numScalars='" << this->NumScalars << "'";
+  }
+  if (this->LabelMap != 0)
+  {
+    of << " labelMap='" << this->LabelMap << "'";
+  }
+  if (this->Interpolate != 1)
+  {
+    of << " interpolate='" << this->Interpolate << "'";
+  }
+  if (this->LittleEndian != 0)
+  {
+    of << " littleEndian='" << this->LittleEndian << "'";
+  }
+  if (this->Tilt != 0.0)
+  {
+    of << " tilt='" << this->Tilt << "'";
+  }
+  if (this->AutoWindowLevel != 1)
+  {
+    of << " autoWindowLevel='" << this->AutoWindowLevel << "'";
+  }
+  if (this->Window != 256)
+  {
+    of << " window='" << this->Window << "'";
+  }
+  if (this->Level != 128)
+  {
+    of << " level='" << this->Level << "'";
+  }
+  if (this->AutoThreshold != 1)
+  {
+    of << " autoThreshold='" << this->AutoThreshold << "'";
+  }
+  if (this->LowerThreshold != VTK_SHORT_MIN)
+  {
+    of << " lowerThreshold='" << this->LowerThreshold << "'";
+  }
+  if (this->UpperThreshold != VTK_SHORT_MAX)
+  {
+    of << " upperThreshold='" << this->UpperThreshold << "'";
+  }
+  if (this->Ignore != 0)
+  {
+    of << " ignore='" << this->Ignore << "'";
+  }
+
+  // Arrays
+  if (this->ImageRange[0] != 1 || this->ImageRange[1] != 1)
+  {
+    of << " imageRange='" << this->ImageRange[0] << " "
+       << this->ImageRange[1] << "'";
+  }
+  if (this->Dimensions[0] != 256 || this->Dimensions[1] != 256)
+  {
+    of << " dimensions='" << this->Dimensions[0] << " "
+       << this->Dimensions[1] << "'";
+  }
+  if (this->Spacing[0] != 0.9375 || this->Spacing[1] != 0.9375 ||
+      this->Spacing[2] != 1.5)
+  {
+    of << " spacing='" << this->Spacing[0] << " "
+       << this->Spacing[1] << " " << this->Spacing[2] << "'";
+  }
+
+  //End
+  of << "></Volume>\n";;
 }
 
 //----------------------------------------------------------------------------
@@ -155,8 +301,8 @@ void vtkMrmlVolumeNode::Copy(vtkMrmlVolumeNode *node)
   this->SetFilePattern(node->FilePattern);
   this->SetRasToIjkMatrix(node->RasToIjkMatrix);
   this->SetRasToVtkMatrix(node->RasToVtkMatrix);
-  this->SetScanOrder(node->ScanOrder);
   this->SetLUTName(node->LUTName);
+  this->SetScanOrder(node->ScanOrder);
 
   // Vectors
   this->SetSpacing(node->Spacing);

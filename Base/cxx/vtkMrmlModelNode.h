@@ -50,6 +50,10 @@ public:
   //--------------------------------------------------------------------------
 
   // Description:
+  // Write the node's attributes
+  void Write(ofstream& of, int indent);
+
+  // Description:
   // Copy the node's attributes to this object
   void Copy(vtkMrmlModelNode *node);
 
@@ -62,6 +66,11 @@ public:
   // 
   vtkSetStringMacro(FileName);
   vtkGetStringMacro(FileName);
+
+  // Description:
+  // 
+  vtkSetStringMacro(FullFileName);
+  vtkGetStringMacro(FullFileName);
 
   // Description:
   // 
@@ -120,6 +129,7 @@ private:
 
   char *Name;
   char *FileName;
+  char *FullFileName;
   char *Color;
   char *RasToIjkMatrix;
 

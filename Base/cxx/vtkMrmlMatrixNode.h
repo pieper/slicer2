@@ -25,12 +25,12 @@ PARTICULAR PURPOSE, AND NON-INFRINGEMENT.  THIS SOFTWARE IS PROVIDED ON AN
 'AS IS' BASIS, AND THE AUTHORS AND DISTRIBUTORS HAVE NO OBLIGATION TO PROVIDE
 MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 =========================================================================auto=*/
-// .NAME vtkMrmlTransformNode - Writes images to files.
+// .NAME vtkMrmlMatrixNode - Writes images to files.
 // .SECTION Description
 // 
 
-#ifndef __vtkMrmlTransformNode_h
-#define __vtkMrmlTransformNode_h
+#ifndef __vtkMrmlMatrixNode_h
+#define __vtkMrmlMatrixNode_h
 
 #include <iostream.h>
 #include <fstream.h>
@@ -38,30 +38,68 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkMatrix4x4.h"
 #include "vtkTransform.h"
 
-class VTK_EXPORT vtkMrmlTransformNode : public vtkMrmlNode
+class VTK_EXPORT vtkMrmlMatrixNode : public vtkMrmlNode
 {
 public:
-  static vtkMrmlTransformNode *New();
-  const char *GetClassName() {return "vtkMrmlTransformNode";};
+  static vtkMrmlMatrixNode *New();
+  const char *GetClassName() {return "vtkMrmlMatrixNode";};
   void PrintSelf(ostream& os, vtkIndent indent);
   
-  //--------------------------------------------------------------------------
-  // Utility Functions
-  //--------------------------------------------------------------------------
-
   // Description:
   // Write the node's attributes
   void Write(ofstream& of, int indent);
 
   // Description:
+  //
+  vtkSetStringMacro(Name);
+  vtkGetStringMacro(Name);
+
+  // Description:
+  void SetMatrix(char *str) {
+    this->SetMatrixToString(this->Transform->GetMatrixPointer(), str);};
+  char *GetMatrix() { 
+    return this->GetMatrixToString(this->Transform->GetMatrixPointer());};
+
+  // Description:
+  // Rotate around each axis: x,y, and z in degrees
+  void Scale(float x, float y, float z) {
+    this->Transform->Scale(x, y, z);};
+
+  // Description:
+  // Rotate around each axis: x,y, and z in degrees
+  void RotateX(float d) {
+    this->Transform->RotateX(d);};
+  void RotateY(float d) {
+    this->Transform->RotateY(d);};
+  void RotateZ(float d) {
+    this->Transform->RotateZ(d);};
+
+  // Description:
+  // Rotate around each axis: x,y, and z in degrees
+  void Translate(float x, float y, float z) {
+    this->Transform->Translate(x, y, z);};
+
+  //--------------------------------------------------------------------------
+  // Utility Functions
+  //--------------------------------------------------------------------------
+
+  // Description:
   // Copy the node's attributes to this object
-  void Copy(vtkMrmlTransformNode *node);
+  void Copy(vtkMrmlMatrixNode *node);
+
+  // Description:
+  // Get/Set for Matrix
+  vtkGetObjectMacro(Transform, vtkTransform);
+  vtkSetObjectMacro(Transform, vtkTransform);
 
 private:
-  vtkMrmlTransformNode();
-  ~vtkMrmlTransformNode();
-  vtkMrmlTransformNode(const vtkMrmlTransformNode&) {};
-  void operator=(const vtkMrmlTransformNode&) {};
+  vtkMrmlMatrixNode();
+  ~vtkMrmlMatrixNode();
+  vtkMrmlMatrixNode(const vtkMrmlMatrixNode&) {};
+  void operator=(const vtkMrmlMatrixNode&) {};
+
+  char *Name;
+  vtkTransform *Transform;
 
 };
 

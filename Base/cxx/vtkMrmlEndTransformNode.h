@@ -50,6 +50,10 @@ public:
   //--------------------------------------------------------------------------
 
   // Description:
+  // Write the node's attributes
+  void Write(ofstream& of, int indent);
+
+  // Description:
   // Copy the node's attributes to this object
   void Copy(vtkMrmlEndTransformNode *node);
 

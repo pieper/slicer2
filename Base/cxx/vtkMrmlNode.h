@@ -70,6 +70,8 @@ public:
   vtkSetMacro(Ignore, int);
   vtkBooleanMacro(Ignore, int);
 
+  virtual void Write(ofstream& of, int indent) {};
+
   vtkMrmlNode();
   ~vtkMrmlNode();
 

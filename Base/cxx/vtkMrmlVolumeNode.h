@@ -53,6 +53,9 @@ public:
   // Copy the node's attributes to this object
   void Copy(vtkMrmlVolumeNode *node);
 
+  // Description:
+  // Write the node's attributes
+  void Write(ofstream& of, int indent);
 
   //--------------------------------------------------------------------------
   // Header Information
@@ -116,6 +119,21 @@ public:
   // Description:
   void ComputeRasToIjkFromCorners(float *fc, float *ftl, float *ftr, 
     float *fbr, float *lc, float *ltl);
+  void ComputeRasToIjkFromCorners(
+    float fcR,  float fcA,  float fcS,
+    float ftlR, float ftlA, float ftlS, 
+    float ftrR, float ftrA, float ftrS, 
+    float fbrR, float fbrA, float fbrS, 
+    float lcR,  float lcA,  float lcS, 
+    float ltlR, float ltlA, float ltlS) {
+    float fc[3], ftl[3], ftr[3], fbr[3], lc[3], ltl[3];
+    fc[0]=fcR; fc[1]=fcA; fc[2]=fcS;
+    ftl[0]=ftlR; ftl[1]=ftlA; ftl[2]=ftlS;
+    ftr[0]=ftrR; ftr[1]=ftrA; ftr[2]=ftrS;
+    fbr[0]=fbrR; fbr[1]=fbrA; fbr[2]=fbrS;
+    lc[0]=lcR; lc[1]=lcA; lc[2]=lcS;
+    ltl[0]=ltlR; ltl[1]=ltlA; ltl[2]=ltlS;
+    this->ComputeRasToIjkFromCorners(fc, ftl, ftr, fbr, lc, ltl);};
 
   // Description:
   // 

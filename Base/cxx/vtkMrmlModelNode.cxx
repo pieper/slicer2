@@ -54,21 +54,25 @@ vtkMrmlModelNode::vtkMrmlModelNode()
   this->Options = NULL;
   this->Ignore = 0;
 
+  // Strings
   this->Name = NULL;
   this->FileName = NULL;
   this->Color = NULL;
   this->RasToIjkMatrix = NULL;
+  this->FullFileName = NULL;
 
-  memset(this->ScalarRange, 0, 2*sizeof(int));
-
-  this->RasToWld = vtkMatrix4x4::New();
-
+  // Numbers
   this->Opacity = 1.0;
   this->Visibility = 1;
-  this->ScalarVisibility = 0;
+  this->Clipping = 0;
   this->BackfaceCulling = 1;
-  this->Clipping = 0;  
+  this->ScalarVisibility = 0;
+  
+  // Arrays
+  this->ScalarRange[0] = 0;
+  this->ScalarRange[1] = 100;
 
+  this->RasToWld = vtkMatrix4x4::New();
 }
 
 //----------------------------------------------------------------------------
@@ -86,6 +90,11 @@ vtkMrmlModelNode::~vtkMrmlModelNode()
     delete [] this->FileName;
     this->FileName = NULL;
   }
+  if (this->FullFileName)
+  {
+    delete [] this->FullFileName;
+    this->FullFileName = NULL;
+  }
   if (this->Color)
   {
     delete [] this->Color;
@@ -99,6 +108,69 @@ vtkMrmlModelNode::~vtkMrmlModelNode()
 }
 
 //----------------------------------------------------------------------------
+void vtkMrmlModelNode::Write(ofstream& of, int nIndent)
+{
+  // Write all attributes not equal to their defaults
+  
+  vtkIndent i1(nIndent);
+
+  of << i1 << "<Model";
+
+  // Strings
+  if (this->Name && strcmp(this->Name, "")) 
+  {
+    of << " name='" << this->Name << "'";
+  }
+  if (this->FileName && strcmp(this->FileName, "")) 
+  {
+    of << " fileName='" << this->FileName << "'";
+  }
+  if (this->Color && strcmp(this->Color, "")) 
+  {
+    of << " color='" << this->Color << "'";
+  }
+  if (this->RasToIjkMatrix && strcmp(this->RasToIjkMatrix, "")) 
+  {
+    of << " rasToIjkMatrix='" << this->RasToIjkMatrix << "'";
+  }
+  if (this->Description && strcmp(this->Description, "")) 
+  {
+    of << " description='" << this->Description << "'";
+  }
+
+  // Numbers
+  if (this->Opacity != 1.0)
+  {
+    of << " opacity='" << this->Opacity << "'";
+  }
+  if (this->Visibility != 1)
+  {
+    of << " visibility='" << this->Visibility << "'";
+  }
+  if (this->Clipping != 0)
+  {
+    of << " clipping='" << this->Clipping << "'";
+  }
+  if (this->BackfaceCulling != 1)
+  {
+    of << " backfaceCulling='" << this->BackfaceCulling << "'";
+  }
+  if (this->ScalarVisibility != 0)
+  {
+    of << " scalarVisibility='" << this->ScalarVisibility << "'";
+  }
+
+  // Arrays
+  if (this->ScalarRange[0] != 0 || this->ScalarRange[1] != 100)
+  {
+    of << " scalarRange='" << this->ScalarRange[0] << " "
+       << this->ScalarRange[1] << "'";
+  }
+
+  of << "></Model>\n";;
+}
+
+//----------------------------------------------------------------------------
 // Copy the node's attributes to this object.
 // Does NOT copy: ID, FilePrefix, Name
 void vtkMrmlModelNode::Copy(vtkMrmlModelNode *node)
@@ -107,6 +179,7 @@ void vtkMrmlModelNode::Copy(vtkMrmlModelNode *node)
 
   // Strings
   this->SetFileName(node->FileName);
+  this->SetFullFileName(node->FullFileName);
   this->SetColor(node->Color);
   this->SetRasToIjkMatrix(node->RasToIjkMatrix);
 
@@ -140,8 +213,10 @@ void vtkMrmlModelNode::PrintSelf(ostream& os, vtkIndent indent)
 
   os << indent << "Name: " <<
     (this->Name ? this->Name : "(none)") << "\n";
-  os << indent << "FilePattern: " <<
+  os << indent << "FileName: " <<
     (this->FileName ? this->FileName : "(none)") << "\n";
+  os << indent << "FullFileName: " <<
+    (this->FullFileName ? this->FullFileName : "(none)") << "\n";
   os << indent << "Color: " <<
     (this->Color ? this->Color : "(none)") << "\n";
   os << indent << "RasToIjkMatrix: " <<

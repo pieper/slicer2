@@ -428,7 +428,7 @@ void vtkMrmlVolume::Read()
   reader->SetDataByteOrder(node->GetLittleEndian());
   reader->SetDataSpacing(node->GetSpacing());
   reader->SetFilePattern(node->GetFilePattern());
-  reader->SetFilePrefix(node->GetFilePrefix());
+  reader->SetFilePrefix(node->GetFullPrefix());
   reader->SetDataExtent(ext);
 
   // Progress callback
@@ -471,7 +471,7 @@ void vtkMrmlVolume::Write()
   
   vtkImageWriter *writer = vtkImageWriter::New();
   writer->SetFilePattern(node->GetFilePattern());
-  writer->SetFilePrefix(node->GetFilePrefix());
+  writer->SetFilePrefix(node->GetFullPrefix());
   writer->SetInput(this->ImageData);
   
   // Progress callback

@@ -62,6 +62,16 @@ vtkMrmlEndTransformNode::~vtkMrmlEndTransformNode()
 }
 
 //----------------------------------------------------------------------------
+void vtkMrmlEndTransformNode::Write(ofstream& of, int nIndent)
+{
+  // Write all attributes not equal to their defaults
+  
+  vtkIndent i1(nIndent);
+
+  of << i1 << "</Transform>\n";
+}
+
+//----------------------------------------------------------------------------
 // Copy the node's attributes to this object.
 // Does NOT copy: ID, FilePrefix, Name
 void vtkMrmlEndTransformNode::Copy(vtkMrmlEndTransformNode *node)

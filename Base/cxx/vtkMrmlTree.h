@@ -15,6 +15,7 @@
 #include "vtkMrmlVolumeNode.h"
 #include "vtkMrmlModelNode.h"
 #include "vtkMrmlTransformNode.h"
+#include "vtkMrmlMatrixNode.h"
 #include "vtkMrmlColorNode.h"
 
 class VTK_EXPORT vtkMrmlTree : public vtkCollection
@@ -22,6 +23,10 @@ class VTK_EXPORT vtkMrmlTree : public vtkCollection
 public:
   static vtkMrmlTree *New();
   const char *GetClassName() {return "vtkMrmlTree";};
+  void PrintSelf(ostream& os, vtkIndent indent);
+
+  // Description:
+  void Write(char *filename);
 
   // Description:
   // Add a path to the list.
@@ -50,6 +55,8 @@ public:
     return (vtkMrmlModelNode*)this->GetNextItemByClass("vtkMrmlModelNode");};
   vtkMrmlTransformNode *GetNextTransform() {
     return (vtkMrmlTransformNode*)this->GetNextItemByClass("vtkMrmlTransformNode");};
+  vtkMrmlMatrixNode *GetNextMatrix() {
+    return (vtkMrmlMatrixNode*)this->GetNextItemByClass("vtkMrmlMatrixNode");};
   vtkMrmlColorNode *GetNextColor() {
     return (vtkMrmlColorNode*)this->GetNextItemByClass("vtkMrmlColorNode");};
 
@@ -59,6 +66,8 @@ public:
     return (vtkMrmlModelNode*)this->InitTraversalByClass("vtkMrmlModelNode");};
   vtkMrmlTransformNode *InitTransformTraversal() {
     return (vtkMrmlTransformNode*)this->InitTraversalByClass("vtkMrmlTransformNode");};
+  vtkMrmlMatrixNode *InitMatrixTraversal() {
+    return (vtkMrmlMatrixNode*)this->InitTraversalByClass("vtkMrmlMatrixNode");};
   vtkMrmlColorNode *InitColorTraversal() {
     return (vtkMrmlColorNode*)this->InitTraversalByClass("vtkMrmlColorNode");};
 
@@ -69,6 +78,8 @@ public:
     return (vtkMrmlModelNode*)this->GetNthItemByClass(n, "vtkMrmlModelNode");};
   vtkMrmlTransformNode *GetNthTransform(int n) {
     return (vtkMrmlTransformNode*)this->GetNthItemByClass(n, "vtkMrmlTransformNode");};
+  vtkMrmlMatrixNode *GetNthMatrix(int n) {
+    return (vtkMrmlMatrixNode*)this->GetNthItemByClass(n, "vtkMrmlMatrixNode");};
   vtkMrmlColorNode *GetNthColor(int n) {
     return (vtkMrmlColorNode*)this->GetNthItemByClass(n, "vtkMrmlColorNode");};
 
@@ -78,6 +89,8 @@ public:
     return this->GetNumberOfItemsByClass("vtkMrmlModelNode");};
   int GetNumberOfTransforms() {
     return this->GetNumberOfItemsByClass("vtkMrmlTransformNode");};
+  int GetNumberOfMatrices() {
+    return this->GetNumberOfItemsByClass("vtkMrmlMatrixNode");};
   int GetNumberOfColors() {
     return this->GetNumberOfItemsByClass("vtkMrmlColorNode");};
 

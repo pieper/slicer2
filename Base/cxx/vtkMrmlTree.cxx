@@ -15,6 +15,53 @@ vtkMrmlTree* vtkMrmlTree::New()
 }
 
 //------------------------------------------------------------------------------
+void vtkMrmlTree::Write(char *filename)
+{
+  vtkCollectionElement *elem=this->Top;
+  vtkMrmlNode *node;
+  ofstream file;
+  int i, indent=0;
+
+  // Open file
+  file.open(filename);
+  if (file.fail())
+  {
+    vtkErrorMacro("Write: Could not open file " << filename);
+    delete file;
+    return;
+  }
+  
+  file << "<?xml version=\"1.0\" standalone='no'?>\n";
+  file << "<!DOCTYPE MRML SYSTEM \"mrml20.dtd\">\n";
+  file << "<MRML>\n";
+   
+  // Write each node
+  while (elem != NULL)
+  {
+    node = (vtkMrmlNode*)elem->Item;
+
+    if (!strcmp(node->GetClassName(), "vtkMrmlEndTransformNode"))
+    {
+      indent -=2;
+    }
+
+    node->Write(file, indent);
+
+    if (!strcmp(node->GetClassName(), "vtkMrmlTransformNode"))
+    {
+      indent += 2;
+    }
+
+    elem = elem->Next;
+  }
+
+  file << "</MRML>\n";
+
+  // Close file
+  file.close();
+}
+
+//------------------------------------------------------------------------------
 int vtkMrmlTree::GetNumberOfItemsByClass(char *className)
 {
   vtkCollectionElement *elem=this->Top;
@@ -124,7 +171,7 @@ void vtkMrmlTree::ComputeTransforms()
   vtkMrmlNode *n;
   vtkTransform *tran = vtkTransform::New();
   vtkMatrix4x4 *mat = vtkMatrix4x4::New();
-  vtkMrmlTransformNode *t;
+  vtkMrmlMatrixNode *t;
   vtkCollectionElement *elem;
 
 	// Set the vtkTransform to PostMultiply so a concatenated matrix, C,
@@ -140,14 +187,19 @@ void vtkMrmlTree::ComputeTransforms()
     if (!strcmp("vtkMrmlTransformNode", n->GetClassName()))
     {
       tran->Push();
-      t = (vtkMrmlTransformNode*)n;
-      tran->Concatenate(t->GetTransform()->GetMatrixPointer());
     }
 
     // EndTransform
     else if (!strcmp("vtkMrmlEndTransformNode", n->GetClassName()))
     {
       tran->Pop();
+    }
+
+    // Matrix
+    else if (!strcmp("vtkMrmlMatrixNode", n->GetClassName()))
+    {
+      t = (vtkMrmlMatrixNode*)n;
+      tran->Concatenate(t->GetTransform()->GetMatrixPointer());
     }
 
     // Volume
@@ -206,3 +258,13 @@ void vtkMrmlTree::InsertAfterItem(vtkMrmlNode *item, vtkMrmlNode *n)
   }
 }
 
+void vtkMrmlTree::PrintSelf(ostream& os, vtkIndent indent)
+{
+  vtkCollection::PrintSelf(os,indent);
+
+  os << indent << "Number Of Volumes: " << this->GetNumberOfVolumes() << "\n";
+  os << indent << "Number Of Models: " << this->GetNumberOfModels() << "\n";
+  os << indent << "Number Of Transforms: " << this->GetNumberOfTransforms() << "\n";
+  os << indent << "Number Of Matrices: " << this->GetNumberOfMatrices() << "\n";
+  os << indent << "Number Of Colors: " << this->GetNumberOfColors() << "\n";
+}
