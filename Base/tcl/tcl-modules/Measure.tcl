@@ -99,22 +99,23 @@ proc MeasureInit {} {
     
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.11 $} {$Date: 2002/09/03 20:00:07 $}]
+        {$Revision: 1.12 $} {$Date: 2002/09/04 14:02:36 $}]
     
     # Initialize module-level variables
     #    set Measure(Model1) $Model(idNone)
     array set Point {scale 5.0 selected {} \
         vtkPoints "Point(vtkPoints)" \
     vtkFloatArray "Point(vtkScalars)" -1,name "<None>"}
+
     # Event Bindings
-    set Measure(eventManager) { \
-        {$Gui(fViewWin) <Control-1> {addGlyphPoint %W %x %y}} \
-        {$Gui(fViewWin) <KeyPress-p> {addGlyphPoint %W %x %y}} \
-        {$Gui(fViewWin) <KeyPress-d> {delGlyphPoint %W %x %y}} \
-        {$Gui(fViewWin) <Control-2> {selGlyphPoint %W %x %y}} \
-        {$Gui(fViewWin) <KeyPress-c> {ExtractComponent %W %x %y}} \        
-    {$Gui(fViewWin) <KeyPress-q> {selGlyphPoint %W %x %y}} \    
-    {$Gui(fViewWin) <Shift-1> {addGlyphPoint %W %x %y}} }
+#    set Measure(eventManager) { \
+#        {$Gui(fViewWin) <Control-1> {addGlyphPoint %W %x %y}} \
+#        {$Gui(fViewWin) <KeyPress-p> {addGlyphPoint %W %x %y}} \
+#        {$Gui(fViewWin) <KeyPress-d> {delGlyphPoint %W %x %y}} \
+#        {$Gui(fViewWin) <Control-2> {selGlyphPoint %W %x %y}} \
+#        {$Gui(fViewWin) <KeyPress-c> {ExtractComponent %W %x %y}} \        
+#    {$Gui(fViewWin) <KeyPress-q> {selGlyphPoint %W %x %y}} \    
+#    {$Gui(fViewWin) <Shift-1> {addGlyphPoint %W %x %y}} }
 }
 
 
@@ -180,9 +181,100 @@ proc MeasureBuildGUI {} {
     #-----------------------------------------
     
     set help "
-    These measuring tools can be used to calculate Surface Area, Volume, and Cross Sectional Area.
+<B> Introduction to Measurement Tools </B>
+The measurement tools can be used to calculate the: 
+   <LI> position of a fiducial in world 
+          coordinates
+   <LI> distance between two fiducials
+   <LI> angle formed by three fiducials
+   <LI> surface area of a model
+   <LI> volume of a model
+   <LI> volume of interesection of two 
+          models
+
+   Fiducials can be added, grouped, edited, and deleted in the 'Fiducials' module (found by clicking on the 'More:' button above).  Models can be added and deleted in the 'Models' module (found at the top of this window).
+
+<B>Using Measurement Tools </B>
+   Below you will find a description of how to use the measurement tools found in this module.  Please recognize that these tools have not been validated.
+
+   All of the Measurement Tools share a similar interface.  There are two sorts of objects the Measurement Tools work with: Fiducials and Models.  The user must first select one or more of these objects, as is appropriate, and then make the desired measurement by selecting from the list of tools found under the 'Measure' drop down list box found at the top of this pane (just under the 'Help' and 'Measure' tabs).  For example, to determine the coordinates of a fiducial, the user would first select the appropriate fiducial, and then select 'Position' from the 'Measure' drop down list box.  The coordinates will be reported in the text area just beneath the 'Measure' drop down button.  The user can click on 'Clear Output' to clear the text area at any time.
+
+<LI> <B>position of a fiducial in world
+          coordinates</B>
+          Select one or more fiducials using 
+          the Fiducials interface or by 
+          pointing to the fiducials and 
+          pressing the 'q' key.  Then select 
+          'Position' from the 'Measure' drop 
+          down list box.
+
+<LI> <B>distance between two fiducials</B>
+          Select two fiducials using the 
+          Fiducials interface or by pointing 
+          to the fiducials using the 'q' key.  
+          Then select 'Distance' from the 
+          'Measure' drop down list box.  
+          Note that only the distance 
+          between the first two fiducials 
+          selected will be reported if
+          more than one fiducial has been
+          selected.
+
+<LI> <B>angle formed by three fiducials</B>
+          Select three fiducials using the 
+          Fiducials interface or by pointing
+          to the fiducials using the 'q'
+          key.  Then select 'Angle' from
+          the 'Measure' drop down list
+          box.  Note that only the angle
+          between the first three
+          fiducials selected will be
+          reported if more than one
+          fiducial has been selected.
+          Also, note that the angle
+          measured is the angle between
+          the vector formed by the
+          first and second selected points
+          and the vector formed by the
+          second and third selected points.
+
+<LI> <B>surface area of a model</B>
+          Select a model from the 'Models:'
+          drop down list box located below
+          the text area and 'Clear Output'
+          button on the 'Measure' tab. 
+          The model will change color and
+          will be denoted as selected in
+          the drop down list box.  Then
+          select 'Surface' from the
+          Measure' drop down list box.
+
+<LI> <B>volume of a model</B>
+          Select a model from the 'Models:'
+          drop down list box located below
+          the text area and 'Clear Output'
+          button on the 'Measure' tab. 
+          The model will change color and
+          will be denoted as selected in
+          the drop down list box.  Then
+          select 'Volume' from the
+          Measure' drop down list box.
+
+<LI> <B>volume of interesection of two
+          models</B>
+          Select two models from the
+          Models:' drop down list box
+          located below the
+          text area and 'Clear Output'
+          button on the 'Measure' tab.
+          The models will change color
+          and will be denoted as
+          selected in the drop down
+          list box.  Then select
+          Intersection' from the
+          Measure' drop down list box.
     
-NOTE: None of the slicer measurement tools have been validated...the results may be (wildly) inaccurate.  The functionality is still under development.  Use at your own risk."  
+NOTE: None of the slicer measurement tools have been validated...the results may be (wildly) inaccurate.  The functionality is still under development.  Use at your own risk."
     MainHelpApplyTags Measure $help
     MainHelpBuildGUI Measure
     
@@ -258,10 +350,11 @@ proc TopFrameBuildGUI {} {
 
     set Measure(Csys,visible) 0
     # Add Csys visibility button
-    set c { checkbutton $f.cCsys -text "Csys" -variable Measure(Csys,visible) \
-        -width 6 -indicatoron 0 -command "MeasureSetCsysVisibility" $Gui(WCA) }
-    eval [subst $c]
-    pack $f.cCsys -side bottom -pady $Gui(pad) -in $f
+##    set c { checkbutton $f.cCsys -text "Csys" -variable Measure(Csys,visible) \
+##        -width 6 -indicatoron 0 -command "MeasureSetCsysVisibility" $Gui(WCA) }
+
+##    eval [subst $c]
+##    pack $f.cCsys -side bottom -pady $Gui(pad) -in $f
 
 }
 
@@ -344,23 +437,23 @@ proc UpdateModelSelector {fRoot} {
     set numModels [Mrml(dataTree) GetNumberOfModels]
 
     for {set i 0} {$i < $numModels} {incr i} {
-        set currModel [Mrml(dataTree) GetNthModel $i]
-        set currID    [string trimleft [$currModel GetModelID] M]
+    set currModel [Mrml(dataTree) GetNthModel $i]
+    set currID    [string trimleft [$currModel GetModelID] M]
 
-        set r  [lindex $Module(Renderers) 0]
+    set r  [lindex $Module(Renderers) 0]
 
-        if { [info exists Model($currID,selected)] == 0 } {
-            set Model($currID,selected) 0        
-        }
-        
-        if { [Model($currID,actor,$r) GetVisibility] } {
-            set state normal
-        } else {
-            set state disabled
-        }
-        $m add checkbutton -label [$currModel GetName] \
-            -command "SelectModel $fRoot $currID" \
-            -variable Model($currID,selected) -state $state
+    if { [info exists Model($currID,selected)] == 0 } {
+        set Model($currID,selected) 0        
+    }
+    
+    if { [Model($currID,actor,$r) GetVisibility] } {
+        set state normal
+    } else {
+        set state disabled
+    }
+    $m add checkbutton -label [$currModel GetName] \
+        -command "SelectModel $fRoot $currID" \
+        -variable Model($currID,selected) -state $state
     }   
     
     $m add command -label "<None>" -command "SelectModel $fRoot -1"
@@ -469,7 +562,7 @@ proc MeasureBuildVTK {} {
 proc MeasureEnter {} {
     global Measure
 
-    pushEventManager $Measure(eventManager)
+#    pushEventManager $Measure(eventManager)
     MeasureRefreshGUI
 }
 
@@ -481,7 +574,7 @@ proc MeasureEnter {} {
 #-------------------------------------------------------------------------------
 proc MeasureExit {} {
 #    DebugMsg "Exiting Measure Tab"
-    popEventManager
+#    popEventManager
 }
 
 
@@ -497,19 +590,26 @@ proc MeasureExit {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MeasurePosition {} {
-    global Point
-    
-    foreach id $Point(selected) {
-    set pos $Point($id,xyz)
-    set msg [eval format {"%s: %.2f %.2f %.2f"} $Point($id,name) \
-        $pos]
+    set list [FiducialsGetAllSelectedPointIdList]
+    foreach id $list {
+    set name [Point($id,node) GetName]
+    set msg "$name: [FiducialsGetPointCoordinates $id]"
     MeasureOutput $msg
     }
-    foreach id $Point(selected) {
-    PointsSelect $id 0
-    }
-    MeasureRefreshGUI
-    Render3D
+
+#    global Point
+#    
+#    foreach id $Point(selected) {
+#    set pos $Point($id,xyz)
+#    set msg [eval format {"%s: %.2f %.2f %.2f"} $Point($id,name) \
+#        $pos]
+#    MeasureOutput $msg
+#    }
+#    foreach id $Point(selected) {
+#    PointsSelect $id 0
+#    }
+#    MeasureRefreshGUI
+#    Render3D
 }
 
 
@@ -520,10 +620,14 @@ proc MeasurePosition {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MeasureDistance {} {
-    global Point
-    
-    set idA [lindex $Point(selected) 0]
-    set idB [lindex $Point(selected) 1]
+##    global Point
+
+    set list [FiducialsGetAllSelectedPointIdList]
+    set idA [lindex $list 0]
+    set idB [lindex $list 1]
+
+##    set idA [lindex $Point(selected) 0]
+##    set idB [lindex $Point(selected) 1]
     #    MeasureTmpPoints SetNumberOfPoints 2
     #    eval MeasureTmpPoints InsertPoint 0 $Point($idA,xyz)
     #    eval MeasureTmpPoints InsertPoint 1 $Point($idB,xyz)
@@ -531,11 +635,15 @@ proc MeasureDistance {} {
     #        MeasureTmpLines InsertCellPoint 0
     #        MeasureTmpLines InsertCellPoint 1
     set dist [format "%.2f" [get_distance $idA $idB]]
-    set msg [concat "Distance from" $Point($idA,name) "to" \
-        $Point($idB,name) "=" $dist "(mm)"]
+
+    set nameA [Point($idA,node) GetName]
+    set nameB [Point($idB,node) GetName]
+
+    set msg [concat "Distance from" $nameA "to" \
+        $nameB "=" $dist "(mm)"]
     MeasureOutput $msg
-    PointsSelect $idA 0
-    PointsSelect $idB 0
+##    PointsSelect $idA 0
+##    PointsSelect $idB 0
     Render3D
     MeasureRefreshGUI
 }
@@ -549,24 +657,37 @@ proc MeasureDistance {} {
 proc MeasureAngle {} {
     global Point
     
-    set idA [lindex $Point(selected) 0]
-    set idB [lindex $Point(selected) 1]
-    set idC [lindex $Point(selected) 2]
-    set npts [llength $Point(selected)]
+    set list [FiducialsGetAllSelectedPointIdList]
+    set idA [lindex $list 0]
+    set idB [lindex $list 1]
+    set idC [lindex $list 2]
+    set npts [llength $list]
+    ##    set idA [lindex $Point(selected) 0]
+    ##    set idB [lindex $Point(selected) 1]
+    ##    set idC [lindex $Point(selected) 2]
+    ##    set npts [llength $Point(selected)]
+    
+    
     if { $npts == 4 } {
-    set idD [lindex $Point(selected) 3]
-    set xyzB $Point($idB,xyz)
-    set xyzC $Point($idC,xyz)
-    set xyzD $Point($idD,xyz)
+    ##    set idD [lindex $Point(selected) 3]
+    ##    set xyzB $Point($idB,xyz)
+    ##    set xyzC $Point($idC,xyz)
+    ##    set xyzD $Point($idD,xyz)
+    set idD [lindex $list 3]
+    
+    set xyzB [FiducialsGetPointCoordinates $idB]
+    set xyzC [FiducialsGetPointCoordinates $idC]
+    set xyzD [FiducialsGetPointCoordinates $idD]
+        
     set cx [expr [lindex $xyzD 0] - \
         [lindex $xyzC 0] + [lindex $xyzB 0 ]]
     set cy [expr [lindex $xyzD 1] - \
         [lindex $xyzC 1] + [lindex $xyzB 1 ]]
     set cz [expr [lindex $xyzD 2] - \
         [lindex $xyzC 2] + [lindex $xyzB 2 ]]
-    PointsSelect $idD 0
-    PointsSelect $idC 0
-    set Point(model) ""
+    ##    PointsSelect $idD 0
+    ##    PointsSelect $idC 0
+    ##    set Point(model) ""
     set idC [PointsNew $cx $cy $cz]
     }
     #    MeasureTmpPoints SetNumberOfPoints 3
@@ -578,12 +699,17 @@ proc MeasureAngle {} {
     #        MeasureTmpLines InsertCellPoint 1
     #        MeasureTmpLines InsertCellPoint 2
     set angle [format "%.2f" [get_angle $idA $idB $idC]]
-    set msg [concat "Angle" $Point($idA,name) $Point($idB,name) \
-        $Point($idC,name) "=" $angle "deg."]
+
+    set nameA [Point($idA,node) GetName]
+    set nameB [Point($idB,node) GetName]
+    set nameC [Point($idC,node) GetName]
+
+    set msg [concat "Angle" $nameA $nameB \
+        $nameC "=" $angle "deg."]
     MeasureOutput $msg
-    PointsSelect $idA 0
-    PointsSelect $idB 0
-    PointsSelect $idC 0
+##    PointsSelect $idA 0
+##    PointsSelect $idB 0
+##    PointsSelect $idC 0
     Render3D
     MeasureRefreshGUI
 }
@@ -754,8 +880,10 @@ proc MeasureOutput { msg } {
 proc get_distance { a_id b_id } {
     global Point
     
-    set a_pos $Point($a_id,xyz)
-    set b_pos $Point($b_id,xyz)
+##    set a_pos $Point($a_id,xyz)
+##    set b_pos $Point($b_id,xyz)
+    set a_pos [FiducialsGetPointCoordinates $a_id]
+    set b_pos [FiducialsGetPointCoordinates $b_id]
     set dist 0
     for { set ii 0 } { $ii<3 } { incr ii } {
         set delta [expr [lindex $a_pos $ii] - [lindex $b_pos $ii]]
@@ -776,9 +904,12 @@ proc get_distance { a_id b_id } {
 proc get_angle { a_id b_id c_id } {
     global Point
     
-    set a_vec $Point($a_id,xyz)
-    set c_vec $Point($c_id,xyz)
-    set b_pos $Point($b_id,xyz)
+##    set a_vec $Point($a_id,xyz)
+##    set c_vec $Point($c_id,xyz)
+##    set b_pos $Point($b_id,xyz)
+    set a_vec [FiducialsGetPointCoordinates $a_id]
+    set c_vec [FiducialsGetPointCoordinates $c_id]
+    set b_pos [FiducialsGetPointCoordinates $b_id]
     set dotprod 0
     for { set ii 0 } { $ii<3 } { incr ii } {
     set delta [expr [lindex $a_vec $ii] - [lindex $b_pos $ii]]
