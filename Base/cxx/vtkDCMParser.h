@@ -25,6 +25,13 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 /* 
    dcmparse.h
 */
+//
+// DICOM header parser
+// Attila Tanacs
+// ERC for CISST, Johns Hopkins University, USA
+// Dept. of Applied Informatics, University of Szeged, Hungary
+// tanacs@cs.jhu.edu tanacs@inf.u-szeged.hu
+//
 
 #ifndef DCMPARSE_H
 #define DCMPARSE_H
@@ -57,7 +64,7 @@ typedef unsigned long ULONG;*/
 //			     unsigned short element_code, unsigned int length,
 //			     char *vr, int *stop);
 
-typedef struct DCMDataElementStruct
+struct DCMDataElementStruct
 {
   char VR[4];
   unsigned short GroupCode;
@@ -74,7 +81,7 @@ static char *TFS_String[32] =
   "Unknown"
 };
 
-typedef class vtkDCMParser;
+class vtkDCMParser;
 
 typedef void (*dcm_callback)(DCMDataElementStruct des, int *stop, vtkDCMParser *parser);
 
@@ -126,6 +133,8 @@ class VTK_EXPORT vtkDCMParser : public vtkObject
   void CloseFile();
   FILE *GetFileID();
   long GetFilePosition();
+  int SetFilePosition(long position);
+  char * GetTCLPreviewRow(int width, int SkipColumn, int max);
 
  protected:
   void Init();
@@ -149,6 +158,8 @@ class VTK_EXPORT vtkDCMParser : public vtkObject
   
   long PrevFilePos;
   long HeaderStartPos;
+
+  char *aux_ret;
 };
 
 #endif

@@ -23,6 +23,13 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 =========================================================================auto=*/
 
 // dcmprs.cxx
+//
+// DICOM header parser
+// Attila Tanacs
+// ERC for CISST, Johns Hopkins University, USA
+// Dept. of Applied Informatics, University of Szeged, Hungary
+// tanacs@cs.jhu.edu tanacs@inf.u-szeged.hu
+//
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -75,6 +82,7 @@ vtkDCMParser::vtkDCMParser(const char *filename)
 vtkDCMParser::~vtkDCMParser()
 {
   CloseFile();
+  delete [] aux_ret;
 }
 
 void vtkDCMParser::Init()
@@ -99,6 +107,8 @@ void vtkDCMParser::Init()
   PrevFileIOMessage = FileIOMessage = 0;
   
   PrevFilePos = HeaderStartPos = 0;
+
+  aux_ret = NULL;
 }
 
 void vtkDCMParser::Skip(unsigned int Length)
@@ -781,4 +791,40 @@ long vtkDCMParser::GetFilePosition()
     return ftell(this->file_in);
   else
     return 0l;
+}
+
+int vtkDCMParser::SetFilePosition(long position)
+{
+  if(this->file_in)
+    return fseek(this->file_in, position, SEEK_SET);
+  else
+    return -1;
+}
+
+char * vtkDCMParser::GetTCLPreviewRow(int width, int SkipColumn, int max)
+{
+  int i, idx;
+  int pix, grey;
+  double sc;
+
+  if(this->aux_ret == NULL)
+    this->aux_ret = new char [65535];
+
+  this->aux_ret[0] = '\0';
+
+  sc = 255.0 / double(max);
+  for(i=0, idx = 0; i < width; i++, idx += 8)
+    {
+      pix = this->ReadUINT16();
+      grey = int(pix * sc);
+      if(grey < 0)
+	grey = 0;
+      if(grey > 255)
+	grey = 255;
+      sprintf(this->aux_ret + idx, "#%02x%02x%02x ", grey, grey, grey);
+      //this->Skip(6);
+      this->Skip(SkipColumn);
+    }
+  
+  return this->aux_ret;
 }
