@@ -39,6 +39,8 @@ option add *is3d.longitude 0 widgetDefault
 option add *is3d.latitude 0 widgetDefault
 option add *is3d.distance 800 widgetDefault
 option add *is3d.colorscheme "gray" widgetDefault
+option add *is3d.rotationgain "1." widgetDefault
+option add *is3d.scalegain "1." widgetDefault
 
 #
 # The class definition - define if needed (not when re-sourcing)
@@ -64,9 +66,18 @@ if { [itcl::find class is3d] == "" } {
       itk_option define -latitude latitude Latitude {}
       itk_option define -distance distance Distance {}
       itk_option define -colorscheme colorscheme Colorscheme {}
+      itk_option define -rotationgain rotationgain Rotationgain {}
+      itk_option define -scalegain scalegain Scalegain {}
 
       # widgets for the control area
       variable _controls
+
+      # state variables for interaction
+      variable _dragstate ""
+      variable _dragpos ""
+      variable _draglong ""
+      variable _draglat ""
+      variable _dragdist ""
 
       # vtk objects in the render
       variable _name
@@ -89,6 +100,9 @@ if { [itcl::find class is3d] == "" } {
       # methods
       method expose {} {}
       method winresize {} {}
+      method bindings {} {}
+      method pickcb {cmd x y} {}
+      method dragcb {state x y} {}
       method actor {} {return $_actor}
       method mapper {} {return $_mapper}
       method ren {} {return $_ren}
@@ -124,7 +138,7 @@ itcl::body is3d::constructor {args} {
     set cs [$_controls childsite]
 
     set _slider $cs.slider
-    scale $_slider -from -180 -to 180 -orient horizontal -command "$this configure -longitude "
+    scale $_slider -from -180 -to 180 -orient horizontal -command "$this configure -longitude"
     pack $_slider -side top -expand true -fill x
 
     
@@ -148,6 +162,7 @@ itcl::body is3d::constructor {args} {
     vtkRenderer $_ren
     [$this rw] AddRenderer $_ren
 
+    $this bindings 
 
     #
     # Initialize the widget based on the command line options.
@@ -159,14 +174,16 @@ itcl::body is3d::constructor {args} {
 itcl::body is3d::destructor {} {
     destroy $_tkrw 
     catch "$_ren Delete"
-    catch "$_cast Delete"
-    catch "$_flip Delete"
-    catch "$_gradxfer Delete"
-    catch "$_colxfer Delete"
-    catch "$_volprop Delete"
-    catch "$_compfunc Delete"
-    catch "$_volmapper Delete"
-    catch "$_vol Delete"
+    if { [info exists _cast] } {
+        catch "$_cast Delete"
+        catch "$_flip Delete"
+        catch "$_gradxfer Delete"
+        catch "$_colxfer Delete"
+        catch "$_volprop Delete"
+        catch "$_compfunc Delete"
+        catch "$_volmapper Delete"
+        catch "$_vol Delete"
+    }
 }
 
 # ------------------------------------------------------------------
@@ -226,6 +243,10 @@ itcl::configbody is3d::distance {
 # DESCRIPTION: pre-canned rendering parameters
 #-------------------------------------------------------------------------------
 itcl::configbody is3d::colorscheme {
+
+    if { ! [info exists _opaxfer] } {
+        return
+    }
 
     switch $itk_option(-colorscheme) {
         "gray" {
@@ -298,6 +319,10 @@ itcl::configbody is3d::colorscheme {
 }
 
 itcl::configbody is3d::isvolume {
+
+    if { $isvolume == "" } {
+        return
+    }
 
     set _cast ::cast_$_name
     set _flip ::flip_$_name
@@ -383,6 +408,101 @@ itcl::body is3d::winresize {} {
 
 }
 
+itcl::body is3d::bindings {} {
+
+    bind $_tkrw <Control-ButtonPress-1> "$this pickcb pick %x %y"
+    bind $_tkrw <Control-B1-Motion> "$this pickcb pick %x %y"
+    bind $_tkrw <Control-ButtonRelease-1> "$this pickcb noop %x %y"
+
+    bind $_tkrw <ButtonPress-1> "$this dragcb rotstart %x %y"
+    bind $_tkrw <B1-Motion> "$this dragcb rot %x %y"
+    bind $_tkrw <ButtonRelease-1> "$this dragcb rotend %x %y"
+
+    #bind $_tkrw <Control-ButtonPress-3> "$this dragcb hscalestart %x %y"
+    #bind $_tkrw <Control-B3-Motion> "$this dragcb hscale %x %y"
+    #bind $_tkrw <Control-ButtonRelease-3> "$this dragcb hscaleend %x %y"
+
+    bind $_tkrw <ButtonPress-3> "$this dragcb scalestart %x %y"
+    bind $_tkrw <B3-Motion> "$this dragcb scale %x %y"
+    bind $_tkrw <ButtonRelease-3> "$this dragcb scaleend %x %y"
+
+}
+
+itcl::body is3d::pickcb {cmd x y} {
+
+if {0} {
+    if {$cmd == "noop"} return
+    set size [$_ren GetSize]
+    set yy [expr [lindex $size 1] - $y]
+    set _probestring "Probe value: --"
+    if {[$_picker Pick $x $yy 0 $_ren]} {
+
+        set data [$_picker GetDataSet]
+        set cid [$_picker GetCellId]
+        set cell [$data GetCell $cid]
+        set nopts [$cell GetNumberOfPoints]
+        set pdata [$data GetPointData]
+        set scalars [$pdata GetScalars]
+        if {$scalars != "" && $nopts == 3} {
+            set value 0.0
+            if {$nopts != 3} {error "non triangular element"}
+            set pc [$_picker GetPCoords]
+            set weights(0) [expr 1. - [lindex $pc 0] - [lindex $pc 1]]
+            set weights(1) [lindex $pc 0]
+            set weights(2) [lindex $pc 1]
+            for {set pt 0} {$pt < $nopts} {incr pt} {
+                set pp [$cell GetPointId $pt]
+                set value [expr $value + $weights($pt) * [$scalars GetScalar $pp]]
+            }
+
+            set _probestring [format "Probe value: %.2f" $value]
+        } 
+        $cell Delete
+    }
+}
+
+}
+
+itcl::body is3d::dragcb {state x y} {
+
+    switch -- $state {
+        "rotstart" {
+            set _dragpos "$x $y"
+            set _dragstate "rot"
+        }
+        "rot" {
+            set _dragstate "rot"
+            set _draglong [expr $itk_option(-longitude) + \
+                ($x - [lindex $_dragpos 0]) * $itk_option(-rotationgain)]
+            set _draglat [expr $itk_option(-latitude) + \
+                ($y - [lindex $_dragpos 1]) * $itk_option(-rotationgain)]
+            if { $_draglat  < -89.9 } {set _draglat  -89.9}
+            if { $_draglat  >  89.9 } {set _draglat   89.9}
+
+            longlatdist $_draglong $_draglat $itk_option(-distance)
+        }
+        "rotend" {
+            set _dragstate ""
+            $this configure -longitude $_draglong -latitude $_draglat
+        }
+        "scalestart" {
+            set _dragpos "$x $y"
+            set _dragstate "scale"
+        }
+        "scale" {
+            set _dragstate "scale"
+            set _dragdist [expr $itk_option(-distance) - ($y - [lindex $_dragpos 1]) * $itk_option(-scalegain)]
+            if { $_dragdist < 0.1 } {set _dragdist 0.1}
+            longlatdist $itk_option(-longitude) $itk_option(-latitude) $_dragdist
+        }
+        "scaleend" {
+            set _dragstate ""
+            $this configure -distance $_dragdist
+        }
+    }
+    $this expose
+}
+
 proc is3d::dtor {d} {
     # pi rad = 180 deg => rad/deg = pi/180
     return [expr $d * 3.14159 / 180.]
@@ -392,13 +512,12 @@ itcl::body is3d::longlatdist { {long 0} {lat 0} {dist 0} } {
 
     # (0 1 0) is looking down nose 
 
-
     set long [is3d::dtor $long]
     set lat [is3d::dtor $lat]
 
-    set x [expr $dist * sin($long)]
-    set y [expr $dist * cos($long)]
-    set z 0
+    set x [expr $dist * sin($long) * cos($lat)]
+    set y [expr $dist * cos($long) * cos($lat)]
+    set z [expr $dist * sin($lat)]
 
     [$this camera] SetPosition $x $y $z
     [$this camera] SetViewUp 0 0 1
@@ -493,4 +612,5 @@ proc is3d_demo_movie { filebase {steps 10} } {
     }
     puts "done."
 }
+
 
