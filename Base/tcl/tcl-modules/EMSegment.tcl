@@ -243,7 +243,7 @@ proc EMSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.15 $} {$Date: 2002/11/23 13:46:54 $}]
+        {$Revision: 1.16 $} {$Date: 2002/11/27 13:26:16 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -605,7 +605,7 @@ Description of the tabs:
     # EM->Step2 frame: Set EM Parameters
     #-------------------------------------------
     set f $fEM.fStep2
-    DevAddLabel $f.l "Step 2: Define Settings Blubber"
+    DevAddLabel $f.l "Step 2: Define Settings"
     pack $f.l -side top -padx $Gui(pad) -pady $Gui(pad)
     frame $f.fCol1 -bg $Gui(activeWorkspace)
     frame $f.fCol2 -bg $Gui(activeWorkspace)
