@@ -285,6 +285,49 @@ void vtkMrmlTree::InsertAfterItem(vtkMrmlNode *item, vtkMrmlNode *n)
   }
 }
 
+//------------------------------------------------------------------------------
+void vtkMrmlTree::InsertBeforeItem(vtkMrmlNode *item, vtkMrmlNode *n)
+{
+  int i;
+  vtkCollectionElement *elem, *newElem, *prev;
+  
+  // Empty list
+  if (!this->Top)
+  {
+    return;
+  }
+
+  newElem = new vtkCollectionElement;
+  n->Register(this);
+  newElem->Item = n;
+
+
+  elem = this->Top;
+
+  // if insert before 1st elem
+  if (elem->Item == item)
+  {
+    newElem->Next = this->Top;
+    this->Top = newElem;
+    this->NumberOfItems++;
+    return;
+  }
+
+  for (i = 1; i < this->NumberOfItems; i++)
+  {
+    prev = elem;
+    elem = elem->Next;
+
+    if (elem->Item == item)
+    {
+      newElem->Next = prev->Next;
+      prev->Next = newElem;
+      this->NumberOfItems++;
+      return;
+    }
+  }
+}
+
 void vtkMrmlTree::PrintSelf(ostream& os, vtkIndent indent)
 {
   vtkCollection::PrintSelf(os,indent);

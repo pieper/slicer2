@@ -124,6 +124,7 @@ public:
   void ComputeTransforms();
 
   void InsertAfterItem( vtkMrmlNode *item, vtkMrmlNode *newItem);
+  void InsertBeforeItem( vtkMrmlNode *item, vtkMrmlNode *newItem);
 
 protected:
   vtkMrmlTree() {};
