@@ -1,5 +1,5 @@
 #=auto==========================================================================
-# Copyright (c) 2000 Surgical Planning Lab, Brigham and Women's Hospital
+# Copyright (c) 2001 Surgical Planning Lab, Brigham and Women's Hospital
 #  
 # Direct all questions regarding this copyright to slicer@ai.mit.edu.
 # The following terms apply to all files associated with the software unless
@@ -29,6 +29,7 @@
 # PROCEDURES:  
 #   ScrolledText
 #   TabbedFrame arrayName buttonsFrame tabsFrame buttonsLabel tabs titles tooltips
+#   TabbedFrameTab
 #==========================================================================auto=
 
 # This file contains widgets that may be useful to developers
@@ -192,6 +193,12 @@ proc TabbedFrame {arrayName containerFrame buttonsLabel tabs titles \
     raise $fBottom.f$first
 }
 
+#-------------------------------------------------------------------------------
+# .PROC TabbedFrameTab
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc TabbedFrameTab {frame} {
 
     raise $frame

@@ -1,5 +1,5 @@
 #=auto==========================================================================
-# Copyright (c) 2000 Surgical Planning Lab, Brigham and Women's Hospital
+# Copyright (c) 2001 Surgical Planning Lab, Brigham and Women's Hospital
 #  
 # Direct all questions regarding this copyright to slicer@ai.mit.edu.
 # The following terms apply to all files associated with the software unless
@@ -62,7 +62,7 @@ proc GuiInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo Gui \
-		{$Revision: 1.21 $} {$Date: 2000/09/14 21:34:52 $}]
+		{$Revision: 1.22 $} {$Date: 2001/01/11 18:48:34 $}]
 
 	if {$tcl_platform(platform) == "windows"} {
 		set Gui(pc) 1
@@ -377,6 +377,9 @@ proc YesNoPopup {win x y msg {yesCmd ""} {noCmd ""} \
 #
 # If the window 'w' exists, then this procedure raises it, gives it the focus,
 # and returns 1.  Else returns 0
+#
+# .ARGS
+# .END
 #-------------------------------------------------------------------------------
 proc RaisePopup {w} {
 	if {[winfo exists $w] != 0} {
@@ -391,6 +394,9 @@ proc RaisePopup {w} {
 # CreatePopup
 #
 # Create window 'w' at screen coordinates (x, y) with 'title'
+#
+# .ARGS
+# .END
 #-------------------------------------------------------------------------------
 proc CreatePopup {w title x y } {
 	global Gui
@@ -405,6 +411,7 @@ proc CreatePopup {w title x y } {
 
 #-------------------------------------------------------------------------------
 # .PROC ShowPopup
+#
 # 
 # .ARGS
 # .END
@@ -475,7 +482,7 @@ proc ExposeTkImageViewer {widget x y w h} {
       return
    }
 
-   # empty the que of any other expose events
+   # empty the queue of any other expose events
    SetWidgetVariableValue $widget Rendering 1
    update
    SetWidgetVariableValue $widget Rendering 0

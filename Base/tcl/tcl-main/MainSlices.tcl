@@ -1,5 +1,5 @@
 #=auto==========================================================================
-# Copyright (c) 2000 Surgical Planning Lab, Brigham and Women's Hospital
+# Copyright (c) 2001 Surgical Planning Lab, Brigham and Women's Hospital
 #  
 # Direct all questions regarding this copyright to slicer@ai.mit.edu.
 # The following terms apply to all files associated with the software unless
@@ -87,7 +87,7 @@ proc MainSlicesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainSlices \
-		{$Revision: 1.23 $} {$Date: 2000/11/16 22:45:09 $}]
+		{$Revision: 1.24 $} {$Date: 2001/01/11 18:48:38 $}]
 
 	# Initialize Variables
 	set Slice(idList) "0 1 2"

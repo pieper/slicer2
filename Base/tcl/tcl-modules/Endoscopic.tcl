@@ -1,5 +1,5 @@
 #=auto==========================================================================
-# Copyright (c) 2000 Surgical Planning Lab, Brigham and Women's Hospital
+# Copyright (c) 2001 Surgical Planning Lab, Brigham and Women's Hospital
 #  
 # Direct all questions regarding this copyright to slicer@ai.mit.edu.
 # The following terms apply to all files associated with the software unless
@@ -221,7 +221,7 @@ proc EndoscopicInit {} {
 	#   The strings with the $ symbol tell CVS to automatically insert the
 	#   appropriate revision number and date when the module is checked in.
 	#  	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.2 $} {$Date: 2000/10/31 00:30:29 $}]
+		{$Revision: 1.3 $} {$Date: 2001/01/11 18:48:42 $}]
 
 	# Initialize module-level variables
 	#------------------------------------

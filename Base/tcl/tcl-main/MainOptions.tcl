@@ -1,5 +1,5 @@
 #=auto==========================================================================
-# Copyright (c) 2000 Surgical Planning Lab, Brigham and Women's Hospital
+# Copyright (c) 2001 Surgical Planning Lab, Brigham and Women's Hospital
 #  
 # Direct all questions regarding this copyright to slicer@ai.mit.edu.
 # The following terms apply to all files associated with the software unless
@@ -64,7 +64,7 @@ proc MainOptionsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainOptions \
-		{$Revision: 1.12 $} {$Date: 2000/02/28 17:56:11 $}]
+		{$Revision: 1.13 $} {$Date: 2001/01/11 18:48:38 $}]
 
 	# Props
 	set Options(program) "slicer"

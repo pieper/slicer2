@@ -1,5 +1,5 @@
 #=auto==========================================================================
-# Copyright (c) 2000 Surgical Planning Lab, Brigham and Women's Hospital
+# Copyright (c) 2001 Surgical Planning Lab, Brigham and Women's Hospital
 #  
 # Direct all questions regarding this copyright to slicer@ai.mit.edu.
 # The following terms apply to all files associated with the software unless
@@ -75,7 +75,7 @@ proc MatricesInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.20 $} {$Date: 2000/07/31 18:45:03 $}]
+		{$Revision: 1.21 $} {$Date: 2001/01/11 18:48:43 $}]
 
 	# Props
 	set Matrix(propertyType) Basic

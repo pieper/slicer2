@@ -1,5 +1,5 @@
 #=auto==========================================================================
-# Copyright (c) 2000 Surgical Planning Lab, Brigham and Women's Hospital
+# Copyright (c) 2001 Surgical Planning Lab, Brigham and Women's Hospital
 #  
 # Direct all questions regarding this copyright to slicer@ai.mit.edu.
 # The following terms apply to all files associated with the software unless
@@ -68,7 +68,7 @@ proc ModelMakerInit {} {
 
 	# Set Version Info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.24 $} {$Date: 2000/10/19 18:08:32 $}]
+		{$Revision: 1.25 $} {$Date: 2001/01/11 18:48:43 $}]
 
 	# Create
 	set ModelMaker(idVolume) $Volume(idNone)

@@ -1,5 +1,5 @@
 #=auto==========================================================================
-# Copyright (c) 2000 Surgical Planning Lab, Brigham and Women's Hospital
+# Copyright (c) 2001 Surgical Planning Lab, Brigham and Women's Hospital
 #  
 # Direct all questions regarding this copyright to slicer@ai.mit.edu.
 # The following terms apply to all files associated with the software unless
@@ -35,6 +35,7 @@
 #   TetraMeshFileNameEntered
 #   TetraMeshCheckErrors
 #   TetraMeshProcessEdges
+#   TetraMeshProcessEdges2
 #   TetraMeshProcessSurface
 #   TetraMeshCreateModel
 #==========================================================================auto=
@@ -142,7 +143,7 @@ proc TetraMeshInit {} {
 	#   appropriate revision number and date when the module is checked in.
 	#   
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.7 $} {$Date: 2000/11/16 22:46:15 $}]
+		{$Revision: 1.8 $} {$Date: 2001/01/11 18:48:45 $}]
 
 	# Initialize module-level variables
 	#------------------------------------

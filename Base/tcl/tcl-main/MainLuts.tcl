@@ -1,5 +1,5 @@
 #=auto==========================================================================
-# Copyright (c) 2000 Surgical Planning Lab, Brigham and Women's Hospital
+# Copyright (c) 2001 Surgical Planning Lab, Brigham and Women's Hospital
 #  
 # Direct all questions regarding this copyright to slicer@ai.mit.edu.
 # The following terms apply to all files associated with the software unless
@@ -46,7 +46,7 @@ proc MainLutsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainLuts \
-		{$Revision: 1.9 $} {$Date: 2000/02/28 17:56:10 $}]
+		{$Revision: 1.10 $} {$Date: 2001/01/11 18:48:36 $}]
 
 	# Create an ID for Labels
 	set Lut(idLabel) -1

@@ -1,5 +1,5 @@
 #=auto==========================================================================
-# Copyright (c) 2000 Surgical Planning Lab, Brigham and Women's Hospital
+# Copyright (c) 2001 Surgical Planning Lab, Brigham and Women's Hospital
 #  
 # Direct all questions regarding this copyright to slicer@ai.mit.edu.
 # The following terms apply to all files associated with the software unless
@@ -72,7 +72,7 @@ proc MainMrmlInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainMrml \
-		{$Revision: 1.35 $} {$Date: 2000/09/14 21:34:53 $}]
+		{$Revision: 1.36 $} {$Date: 2001/01/11 18:48:37 $}]
 
 	set Mrml(filePrefix) data
 	set Mrml(colorsUnsaved) 0

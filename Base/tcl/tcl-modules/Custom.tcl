@@ -1,5 +1,5 @@
 #=auto==========================================================================
-# Copyright (c) 2000 Surgical Planning Lab, Brigham and Women's Hospital
+# Copyright (c) 2001 Surgical Planning Lab, Brigham and Women's Hospital
 #  
 # Direct all questions regarding this copyright to slicer@ai.mit.edu.
 # The following terms apply to all files associated with the software unless
@@ -140,7 +140,7 @@ proc CustomInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.21 $} {$Date: 2000/11/09 01:07:57 $}]
+	    {$Revision: 1.22 $} {$Date: 2001/01/11 18:48:40 $}]
 
     # Initialize module-level variables
     #------------------------------------

@@ -1,5 +1,5 @@
 #=auto==========================================================================
-# Copyright (c) 2000 Surgical Planning Lab, Brigham and Women's Hospital
+# Copyright (c) 2001 Surgical Planning Lab, Brigham and Women's Hospital
 #  
 # Direct all questions regarding this copyright to slicer@ai.mit.edu.
 # The following terms apply to all files associated with the software unless
@@ -73,7 +73,7 @@ proc MainFileInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainFile \
-		{$Revision: 1.22 $} {$Date: 2000/08/28 18:22:18 $}]
+		{$Revision: 1.23 $} {$Date: 2001/01/11 18:48:35 $}]
 
 	set File(filePrefix) data
 }
