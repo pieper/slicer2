@@ -330,7 +330,7 @@ itcl::body regions::query {} {
             catch "exec \"$browser\" http://www.jneurosci.org/cgi/search?volume=&firstpage=&sendit=Search&author1=&author2=&titleabstract=&fulltext=$terms &"
         }
         "ibvd" {
-            catch "exec \"$browser\" http://www.cma.mgh.harvard.edu/ibvd/search.php?f_submission=true&f_structure\\\[\\\]=$terms &"
+            catch "exec \"$browser\" http://www.cma.mgh.harvard.edu/ibvd/search.php?f_submission=true&f_free=$terms &"
         }
         "all" {
             catch "exec \"$browser\" http://www.google.com/search?q=$terms &"
