@@ -210,9 +210,22 @@ The 3D Slicer will exit so the problem can be corrected."
 	#-------------------------------------------
 	# Load MRML data
 	#-------------------------------------------	
-	update
+# This line causes an X error on tumor, so temporarily comment it out (Lauren)
+#	update
 	MainMrmlRead $mrmlFile
 	MainUpdateMRML
+
+	#-------------------------------------------
+	# Read user options from Options.xml
+	#-------------------------------------------
+	set fileName [ExpandPath "Options.xml"]
+	if {[CheckFileExists $fileName 0] == "1"} {
+	    puts "Reading $fileName"
+	    set tags [MainMrmlReadVersion2.0 $fileName]
+	    if {$tags != "0"} {
+		MainMrmlBuildTreesVersion2.0 $tags
+	    }
+	}
 
 	#-------------------------------------------
 	# Initialize the Program State
