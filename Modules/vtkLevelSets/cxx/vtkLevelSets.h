@@ -358,7 +358,7 @@ protected:
   int SliceNum; // slice number for 2D level set
 
   int tx,ty,tz,txy;
-  unsigned long imsize;
+  int imsize;
 
   // values of the narrow Band
   float*         u[2];

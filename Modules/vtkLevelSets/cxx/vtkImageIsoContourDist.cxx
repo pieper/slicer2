@@ -36,6 +36,8 @@
 //#include "vtkScalars.h"
 #include "vtkFloatArray.h"
 #include "vtkMultiThreader.h"
+#include "vtkPointData.h"
+#include "vtkImageData.h"
 #include "vtkStructuredPointsWriter.h"
 
 #define TRUE    1

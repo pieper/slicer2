@@ -44,14 +44,21 @@
 
 //#include "style.hpp"
 #include <vtkLevelSetsConfigure.h>
+#ifdef _WIN32
+#include <iostream>
+#else
 #include <iostream.h>
+#endif
 #include <stdio.h>
+
+
+//BTX
 
 // Template ??
 //
 
 //----------------------------------------------------------------------
-template < class T > class VTK_LEVELSETS_EXPORT vtkMinHeap
+template < class T > class /* VTK_LEVELSETS_EXPORT */ vtkMinHeap
 //                                              ----------
 {
 
@@ -277,10 +284,11 @@ T& vtkMinHeap<T> :: operator[](int n)
 {
 
   if ((n<1) || (n>num_elts))
-       fprintf(stderr,
-           "vtkMinHeap<T> operator[]\t Invalid Index... %d [0 %d]\n",
+  {     fprintf(stderr,
+           "vtkMinHeap<T> operator[]\t Invalid Index... %d [1 %d]\n",
            n, num_elts);
-  else
+      return array[1];
+  } else
       return array[n];
       
 } // operator[]
@@ -337,5 +345,6 @@ ostream& operator << (ostream& os, const vtkMinHeap<T>& p)
 } // operator << ( , const vtkMinHeap<T>&)
 
 
+//ETX
 
 #endif

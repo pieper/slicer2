@@ -36,13 +36,18 @@
 #include "vtkStructuredPointsWriter.h"
 #include "vtkFloatArray.h"
 
+#include "vtkPointData.h"
 #include "vtkImageData.h"
 //#include "vtkImageIsoContourDist.h"
 //#include "vtkImageFastSignedChamfer.h"
 #include "vtkMultiThreader.h"
 
 #include <malloc.h>
+#ifdef _WIN32
+#include <string.h>
+#else
 #include <strings.h>
+#endif
 
 #define NOT_VESSEL 2  // can be anything positive
 #define VESSEL    -1   // anything negative
@@ -492,7 +497,7 @@ void vtkLevelSets::DistanceMapCurves()
    for (s=1;s>=-1;s-=2) {
 
      bpc = 0;
-     bzero(myflag,sizeof(unsigned char)*imsize);
+     memset(myflag,0,sizeof(unsigned char)*imsize);
 
      for(loop=0;loop<this->bnd_pc;loop++) {
 
@@ -514,7 +519,7 @@ void vtkLevelSets::DistanceMapCurves()
      for (loop=0;loop < bpc0;loop++) {
 
        if ((GB_debug)&&(bpc0>100)&&(loop%(bpc0/10)==0))
-     fprintf(stderr," loop %2.2f \% \n",(100.0*loop)/bpc0);
+        fprintf(stderr," loop %2.2f %% \n",(100.0*loop)/bpc0);
 
        p  = myBand[loop];
        u0 = U[p];
@@ -717,8 +722,6 @@ void vtkLevelSets::DistanceMapFMOld()
    float*        U    = u[this->current];
    float*        newU = u[1-this->current];
    vtkImageData* current_image = vtkImageData::New();
-   float*        ptr;
-   int           i;
 
   
    if (GB_debug) fprintf(stderr, "DistanceMapFM() begin \n");
@@ -924,7 +927,6 @@ void vtkLevelSets::DistanceMapChamfer()
    int           i;
 
    vtkImageData*              current_image;
-   float*                     buf_result;
    vtkImageData*              res1;
 
    //   if (GB_debug) 
@@ -1061,11 +1063,8 @@ void vtkLevelSets::DistanceMapShape()
 {
    float*        U    = u[this->current];
    float*        newU = u[1-this->current];
-   float*        ptr;
-   int           i;
 
    vtkImageData*              current_image;
-   float*                     buf_result;
 
    //   if (GB_debug) 
    fprintf(stderr, "DistanceMapShape() .");fflush(stderr);
@@ -1317,7 +1316,7 @@ void vtkLevelSets::MakeBand0( )
   this->bnd_pc=0;
 
   // Set by default to OUTBAND (0)
-  bzero(flag,imsize);
+  memset(flag,0,imsize);
   
   switch (DMmethod) {  
 
@@ -1670,13 +1669,13 @@ void vtkLevelSets::Evolve2D()
     float* newU = this->u[1-current];
     float* im   = (float*) this->inputImage->GetScalarPointer();
 
-    register float u0,upx,upy,upz,umx,umy,umz;
+    register float u0,upx,upy,umx,umy;
     register float D0x,D0y;
     register float i0x,i0y;
 
     float          delta0,sqrtdelta0;
 
-    register float imx,imy,g;
+    register float imx,imy;
 
     register float D0xy;
     float          normcompsq;
@@ -2033,8 +2032,6 @@ void vtkLevelSets::Evolve3D( )
 //
 {
 
-  int code;
-
   this->touched=0;
 
   if (GB_debug) fprintf(stderr,"Evolve3D() threads %d \n",this->EvolveThreads);
@@ -2158,7 +2155,7 @@ void vtkLevelSets::Evolve3D( int first_band, int last_band)
     register float D0x,D0y,D0z;
     register float i0x,i0y,i0z;
     register float delta0,sqrtdelta0;
-    register float imx,imy,imz,g;
+    register float imx,imy,imz;
     register float D0xy,D0yz,D0zx;
     register float normcompsq;
     register float D_x,Dx,D_y,Dy,D_z,Dz;
@@ -3373,7 +3370,6 @@ void vtkLevelSets::ExecuteData( vtkDataObject *outData)
 //                   -------
 {
 
-  int n;
 
   if (GB_debug) fprintf(stderr,"Execute begin \n");
   

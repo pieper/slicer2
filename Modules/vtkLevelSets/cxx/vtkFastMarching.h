@@ -41,6 +41,8 @@
 #define __vtkFastMarching_h
 
 #include <vtkLevelSetsConfigure.h>
+#include "vtkPointData.h"
+#include "vtkImageData.h"
 #include "vtkImageToImageFilter.h"
 
 
@@ -105,6 +107,7 @@ public:
     valmin[0] = p.valmin[0];
     valmin[1] = p.valmin[1];
     valmin[2] = p.valmin[2];
+    return *this;
   }
 
 

@@ -35,15 +35,18 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkFastMarching.cxx,v $
   Language:  C++
-  Date:      $Date: 2003/04/28 18:13:22 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2003/04/29 17:48:41 $
+  Version:   $Revision: 1.2 $
 
 =========================================================================*/
 #include "vtkFastMarching.h"
 #include "vtkObjectFactory.h"
 #include "vtkStructuredPointsWriter.h"
 #include "vtkFloatArray.h"
+
+#ifndef _WIN32
 #include <strings.h>
+#endif
 
 //
 //  Code by Karl Krissian oct-nov 2001
@@ -198,7 +201,6 @@ void vtkFastMarching::InitParam()
 {
 
   int type;
-  unsigned long x;
 
   fprintf(stderr,"vtkFastMarching::InitParam() begin\n");
 
@@ -317,7 +319,7 @@ void vtkFastMarching::InitParam()
     mhPos = new unsigned int[imsize];
 
   // initializing mhPos to 0
-  bzero(mhPos,imsize*sizeof(unsigned int));
+  memset(mhPos,0,imsize*sizeof(unsigned int));
   //  for(x=0;x<imsize;x++) mhPos[x] = 0;
     
   // Set the callback function to update the position image
@@ -345,10 +347,8 @@ void vtkFastMarching::ExecuteData(vtkDataObject *outData)
 {
   
   FM_TrialPoint p;
-  char  Tname[256];
 
   //  InrImage* ImEvol;
-  int   x,y,n;
   float last_value = 0;
   int iterations;
 
@@ -450,7 +450,6 @@ void vtkFastMarching::AddAcceptedPoint( short x, short y, short z, int pos)
 //                    ----------------
 {
 
-  float val;
   unsigned char* status_buf;
   unsigned char* mask_buf;
   register int neighbors[6];
@@ -516,7 +515,7 @@ void vtkFastMarching::AddAcceptedPoint( short x, short y, short z, int pos)
       cost = 1;
     else {
           F    =  force_buf[neighbors[n]];
-      if (F<1E-5) 
+      if (F < 1E-5)
         cost = 1E5;
       else
         cost = 1.0/F;
@@ -564,16 +563,14 @@ void vtkFastMarching::AddTrialPointsOld( short x, short y, short z, int pos)
 //                    -----------------
 {
 
-  float val;
   unsigned char* status_buf;
   unsigned char* mask_buf;
-  unsigned char* mask_buf0;
 
   register int neighbors[6];
   register short neighb_x [6];
   register short neighb_y [6];
   register short neighb_z [6];
-  int n,nb,npos,ndir;
+  int n,nb;
 
   // direction: 0,1,2 for X,Y,Z
   unsigned char dir[6];
@@ -668,11 +665,9 @@ void vtkFastMarching::AddTrialPoints( short x, short y, short z, int pos)
 //                    --------------
 {
 
-  float val;
-  unsigned char* status_buf;
+  
   unsigned char* mask_buf;
-  int n,nb,npos,ndir;  // direction: 0,1,2 for X,Y,Z
-  int nx,ny,nz;
+  int npos,ndir;  // direction: 0,1,2 for X,Y,Z
   register FM_TrialPoint trial;
   register float valmin;
 
@@ -834,6 +829,8 @@ float vtkFastMarching::ComputeValue( short x, short y, short z, int pos)
     //    case 0: return ComputeValueSethian( x,y,z,pos);
     case 1: 
       return ComputeValueDikjstra(x,y,z,pos);
+    default:
+      return 0.;
   }
 
 } // ComputeValue()
@@ -916,6 +913,8 @@ unsigned char vtkFastMarching::ComputeValue( FM_TrialPoint& trial, float val, un
     case 1: 
       trial.SetValue(ComputeValueDikjstra(trial.x,trial.y,trial.z,trial.impos));
       return 1;
+    default:
+      return 0;
   }
 
 } // ComputeValue()
@@ -1170,15 +1169,11 @@ void vtkFastMarching::Init(int cx, int cy, int cz, int radius)
 void vtkFastMarching::Init2D(int cx, int cy, int radius)
 //                    -----
 {
-
-  //  Local
-    int   d=2;
-    int   x,y;
-    int   rad2;
-    int   rad3;
+    int   x, y, myrad2;
     float t,dt,NG;
     int   n;
-    unsigned long pos;
+    int   margin;
+    long pos;
 
     float*        surf;
     float         newval,val;
@@ -1189,16 +1184,14 @@ void vtkFastMarching::Init2D(int cx, int cy, int radius)
     float*         surf_buf;
     float*         force_buf1;
 
+  margin=2;
 
   fprintf(stderr,"vtkFastMarching::Init2D() 1 \n");
-    //  if ( GB_debug ) {Fait fprintf(stderr,"FastMarching::Init() \t 1 \n");
 
-  rad2 = radius+d+d;
+  myrad2 = radius+margin+margin;
 
   fprintf(stderr,"vtkFastMarching::Init2D() 2 --- \n");
   // Initialisation to maxTime and VAL_FAR
-
-  fprintf(stderr,"%d \n",this->T);
 
   T_buf1      = T_buf;
 
@@ -1213,8 +1206,8 @@ void vtkFastMarching::Init2D(int cx, int cy, int radius)
   fprintf(stderr,"vtkFastMarching::Init2D() 4 \n");
 
   //  if ( GB_debug AlorsFait fprintf(stderr,"FastMarching::Init() \t 2 \n");
-    if ( (this->T->FindPoint(cx-rad2,cy-rad2,0)<0) ||
-         (this->T->FindPoint(cx+rad2,cy+rad2,0)<0) 
+    if ( (this->T->FindPoint(cx-myrad2,cy-myrad2,0)<0) ||
+         (this->T->FindPoint(cx+myrad2,cy+myrad2,0)<0) 
      ) {
       //      if ( GB_debug ) fprintf(stderr,"FastMarching::Init() \t Error, out of image \n");
       return;
@@ -1231,12 +1224,12 @@ void vtkFastMarching::Init2D(int cx, int cy, int radius)
   for(pos=0;pos<tx*ty*tz;pos++) surf_buf[pos] = 0.0;
 
   // Distance function around the surface
-  For(x,cx-rad2,cx+rad2)
-  For(y,cy-rad2,cy+rad2)
+  For(x,cx-myrad2,cx+myrad2)
+  For(y,cy-myrad2,cy+myrad2)
 
     val =  sqrt((x-cx)*(x-cx)+
         (y-cy)*(y-cy)) - 
-                (radius-d);
+                (radius-margin);
 
 
     surf_buf  = surf+x+y*tx;
@@ -1260,8 +1253,8 @@ void vtkFastMarching::Init2D(int cx, int cy, int radius)
   For(n,1,1000)
 
       //      if ( GB_debug ) fprintf(stderr,"FastMarching::Init() \t 7 \n");
-      For(y,cy-rad2,cy+rad2)
-      For(x,cx-rad2,cx+rad2)
+      For(y,cy-myrad2,cy+myrad2)
+      For(x,cx-myrad2,cx+myrad2)
 
         pos = x+y*tx;
         surf_buf  = surf + pos;
@@ -1305,13 +1298,13 @@ void vtkFastMarching::Init2D(int cx, int cy, int radius)
   // 1. substract d to the time image
   T_buf1 =  T_buf;
   for(pos=0;pos<T->GetNumberOfPoints();pos++) 
-    if (T_buf1[pos]<999) T_buf1[pos] = T_buf1[pos]-d;
+    if (T_buf1[pos]<999) T_buf1[pos] = T_buf1[pos]-margin;
 
   // 2. Set the known, trial, and far away points
 
-  For(y,cy-rad2,cy+rad2)
+  For(y,cy-myrad2,cy+myrad2)
     // fprintf(stderr,"y= %d \n",y);
-  For(x,cx-rad2,cx+rad2)
+  For(x,cx-myrad2,cx+myrad2)
 
     T_buf1      = (float*)         this->T     ->GetScalarPointer(x,y,0);
     status_buf = this->status+x+y*tx;
@@ -1320,7 +1313,7 @@ void vtkFastMarching::Init2D(int cx, int cy, int radius)
     if ( val<=0 ) {
       *status_buf = VTK_VAL_ACCEPTED;
     } else {
-      if ( val<=d ) {
+      if ( val<=margin ) {
         *status_buf = VTK_VAL_TRIAL;
     this->mh   += FM_TrialPoint(x,y,0,x+y*tx,val);
       } // end if
@@ -1349,11 +1342,10 @@ void vtkFastMarching::Init3D(int cx, int cy, int cz, int radius)
   //  Local
     int   d=2;
     int   x,y,z;
-    int   rad2;
-    int   rad3;
+    int   myrad2;
     float t,dt,NG;
     int   n;
-    unsigned long pos;
+    long pos;
 
     float*        surf;
     float         newval,val;
@@ -1366,7 +1358,7 @@ void vtkFastMarching::Init3D(int cx, int cy, int cz, int radius)
 
     fprintf(stderr,"Init3D() begin \n");
 
-  rad2 = radius+d+d;
+  myrad2 = radius+d+d;
 
   // Initialisation to 1000 and VAL_FAR
   T_buf1      = T_buf;
@@ -1380,8 +1372,8 @@ void vtkFastMarching::Init3D(int cx, int cy, int cz, int radius)
 
 
   //  if ( GB_debug AlorsFait fprintf(stderr,"FastMarching::Init() \t 2 \n");
-    if ( (this->T->FindPoint(cx-rad2,cy-rad2,cz-rad2)<0) ||
-         (this->T->FindPoint(cx+rad2,cy+rad2,cz+rad2)<0) 
+    if ( (this->T->FindPoint(cx-myrad2,cy-myrad2,cz-myrad2)<0) ||
+         (this->T->FindPoint(cx+myrad2,cy+myrad2,cz+myrad2)<0) 
      ) {
       //      if ( GB_debug )
       fprintf(stderr,"FastMarching::Init() \t Error, out of image \n");
@@ -1398,9 +1390,9 @@ void vtkFastMarching::Init3D(int cx, int cy, int cz, int radius)
   for(pos=0;pos<tx*ty*tz;pos++) surf_buf[pos] = 0.0;
 
   // Distance function around the surface
-  For(x,cx-rad2,cx+rad2)
-  For(y,cy-rad2,cy+rad2)
-  For(z,cz-rad2,cz+rad2)
+  For(x,cx-myrad2,cx+myrad2)
+  For(y,cy-myrad2,cy+myrad2)
+  For(z,cz-myrad2,cz+myrad2)
 
     val =  sqrt((x-cx)*(x-cx)+
         (y-cy)*(y-cy)+
@@ -1430,9 +1422,9 @@ void vtkFastMarching::Init3D(int cx, int cy, int cz, int radius)
   For(n,1,1000)
 
 
-      For(z,cz-rad2,cz+rad2)
-      For(y,cy-rad2,cy+rad2)
-      For(x,cx-rad2,cx+rad2)
+      For(z,cz-myrad2,cz+myrad2)
+      For(y,cy-myrad2,cy+myrad2)
+      For(x,cx-myrad2,cx+myrad2)
 
         pos = x+y*tx+z*txy;
         surf_buf  = surf + pos;
@@ -1480,9 +1472,9 @@ void vtkFastMarching::Init3D(int cx, int cy, int cz, int radius)
 
   // 2. Set the known, trial, and far away points
 
-  For(z,cz-rad2,cz+rad2)
-  For(y,cy-rad2,cy+rad2)
-  For(x,cx-rad2,cx+rad2)
+  For(z,cz-myrad2,cz+myrad2)
+  For(y,cy-myrad2,cy+myrad2)
+  For(x,cx-myrad2,cx+myrad2)
 
     pos = x+y*tx+z*txy;
     T_buf1     = T_buf+pos;
@@ -1533,7 +1525,6 @@ void vtkFastMarching::InitWithImage()
 
     int            x,y,z;
     unsigned char* status_buf;
-    float          val;
     float*         init_buf;
     int            pos,p,i;
     int*           tab_pos;

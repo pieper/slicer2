@@ -34,6 +34,8 @@
 #include "vtkImageFastSignedChamfer.h"
 #include "vtkObjectFactory.h"
 //#include "vtkScalars.h"
+#include "vtkPointData.h"
+#include "vtkImageData.h"
 #include "vtkFloatArray.h"
 
 #define TRUE    1
