@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkFSSurfaceReader.cxx,v $
   Language:  C++
-  Date:      $Date: 2002/10/04 17:43:13 $
-  Version:   $Revision: 1.2 $
+  Date:      $Date: 2002/10/04 20:49:54 $
+  Version:   $Revision: 1.3 $
 
 =========================================================================*/
 #include "vtkFSSurfaceReader.h"
@@ -138,6 +138,7 @@ void vtkFSSurfaceReader::Execute()
 {
   FILE* surfaceFile;
   int magicNumber;
+  char line[256];
   int numVertices = 0;
   int numFaces = 0;
   int vIndex, fIndex;
@@ -175,15 +176,30 @@ void vtkFSSurfaceReader::Execute()
   // Get the three byte magic number. We support two file types.
   ReadInt3 (surfaceFile, magicNumber);
   if (magicNumber != FS_QUAD_FILE_MAGIC_NUMBER &&
-      magicNumber != FS_NEW_QUAD_FILE_MAGIC_NUMBER) {
-      vtkErrorMacro (<< "vtkFSSurfaceReader.cxx Execute: Wrong file type when loading " << this->FileName << "\n magic number = " << magicNumber << ", should be " << FS_QUAD_FILE_MAGIC_NUMBER << " or " << FS_NEW_QUAD_FILE_MAGIC_NUMBER);
+      magicNumber != FS_NEW_QUAD_FILE_MAGIC_NUMBER &&
+      magicNumber != FS_TRIANGLE_FILE_MAGIC_NUMBER) {
+    vtkErrorMacro (<< "vtkFSSurfaceReader.cxx Execute: Wrong file type when loading " << this->FileName << "\n magic number = " << magicNumber << ". Supported ar " << FS_QUAD_FILE_MAGIC_NUMBER << ", " << FS_NEW_QUAD_FILE_MAGIC_NUMBER << ", and " << FS_TRIANGLE_FILE_MAGIC_NUMBER );
     return;
   }
 
-  // Read the number of vertices and faces, three bytes each.
-  ReadInt3 (surfaceFile, numVertices);
-  ReadInt3 (surfaceFile, numFaces);
-  
+  // Triangle file has some kind of header string at the
+  // beginning. Skip it.
+  if (FS_TRIANGLE_FILE_MAGIC_NUMBER == magicNumber) {
+    fgets (line, 200, surfaceFile);
+    fscanf (surfaceFile, "\n");
+  }
+
+  // Triangle files use normal ints to store their number of vertices
+  // and faces, while quad files use three byte ints.
+  if (FS_TRIANGLE_FILE_MAGIC_NUMBER == magicNumber) {
+    fread (&numVertices, sizeof(int), 1, surfaceFile);
+    fread (&numFaces, sizeof(int), 1, surfaceFile);
+
+  } else {
+    ReadInt3 (surfaceFile, numVertices);
+    ReadInt3 (surfaceFile, numFaces);
+  }  
+
   // Allocate our VTK arrays.
   outputVertices = vtkPoints::New();
   outputVertices->Allocate (numVertices);
@@ -211,7 +227,9 @@ void vtkFSSurfaceReader::Execute()
 
     // Depending on the file type, read in three two bytes ints and
     // convert them from meters to millimeters or read in three floats
-    // in millimeters. Insert them into the vertices array.
+    // in millimeters. Insert them into the vertices array.  The old
+    // quad format uses the ints and the new quad and triangle formats
+    // use floats.
     if (FS_QUAD_FILE_MAGIC_NUMBER == magicNumber) {
       ReadInt2 (surfaceFile, tmpX);
       ReadInt2 (surfaceFile, tmpY);
@@ -219,6 +237,7 @@ void vtkFSSurfaceReader::Execute()
       locations[0] = (float)tmpX / 100.0;
       locations[1] = (float)tmpY / 100.0;
       locations[2] = (float)tmpZ / 100.0;
+
     } else {
       ReadFloat (surfaceFile, locations[0]);
       ReadFloat (surfaceFile, locations[1]);
@@ -249,8 +268,15 @@ void vtkFSSurfaceReader::Execute()
     // For each vertex in the face...
     for (fvIndex = 0; fvIndex < FS_NUM_SIDES_IN_FACE; fvIndex++) {
 
-      // Read in a three byte vertex index.
-      ReadInt3 (surfaceFile, tmpfIndex);
+      // Read in a vertex index. Triangle format gets a normal int,
+      // quad formats get three byte ints.
+      if (FS_TRIANGLE_FILE_MAGIC_NUMBER == magicNumber) {
+    fread (&tmpfIndex, sizeof(int), 1, surfaceFile);
+    
+      } else {
+    ReadInt3 (surfaceFile, tmpfIndex);
+      }
+
       faceIndices[fvIndex] = tmpfIndex;
 
 #if FS_CALC_NORMALS
