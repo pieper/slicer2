@@ -81,11 +81,12 @@ FILE(GLOB_RECURSE xmlfiles "${CTEST_SLICER_HOME}/Testing/TestData/*.xml")
 # MESSAGE("${testname}")
 # MESSAGE(" path is: [${CTEST_SLICER_HOME}/Testing/TestData/*.xml]")
 # MESSAGE(" executable is: [${SLICER_EXECUTABLE}")
+# ADD_TEST("slicer${testname}" "${SLICER_EXECUTABLE}" --agree_to_license --no-tkcon "${xmlfile}" --exec exit)
 
 # Try to open each xml file
 FOREACH(xmlfile ${xmlfiles}) 
 STRING(REGEX REPLACE "/" "_" testname "${xmlfile}")
-ADD_TEST("slicer${testname}" "${SLICER_EXECUTABLE}" --agree_to_license --no-tkcon "${xmlfile}" --exec exit)
+ADD_TEST("slicer-vnc${testname}" "${CTEST_SLICER_HOME}/Scripts/runvnc" "--Xvnc" "${CTEST_XVNC_EXECUTABLE}" "-d" "44" "--not-secure" "--" "${SLICER_EXECUTABLE}" "--agree_to_license" "${xmlfile}" --exec exit)
 ENDFOREACH(xmlfile)
 
 
