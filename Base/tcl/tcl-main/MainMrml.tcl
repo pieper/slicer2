@@ -78,7 +78,7 @@ proc MainMrmlInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainMrml \
-        {$Revision: 1.65 $} {$Date: 2002/10/07 20:56:32 $}]
+        {$Revision: 1.66 $} {$Date: 2002/10/24 22:38:44 $}]
 
     set Mrml(colorsUnsaved) 0
 }
@@ -1565,7 +1565,64 @@ proc MainMrmlBuildTreesVersion1.0 {} {
         set n [MainMrmlAddNode EndTransform]
     }
 }
+#-------------------------------------------------------------------------------
+# .PROC MainMrmlDeleteColors
+# Deletes all the color nodes.
+# .ARGS
+# tags the array to clear of colors
+# .END
+#-------------------------------------------------------------------------------
+proc MainMrmlDeleteColors {} {
+    global Module Mrml Color
 
+puts "MainMrmlDeleteColors"
+    set tree "colorTree"
+    set nodeType Color
+
+    # the #0 puts the nodeType in global scope
+    upvar #0 $nodeType Array
+
+    MainMrmlClearList
+    
+    foreach id $Color(idList) {
+        set Array(idListDelete) $id
+        # Remove node's ID from idList
+        set i [lsearch $Array(idList) $id]
+        set Array(idList) [lreplace $Array(idList) $i $i]
+
+        # remove the item
+        Mrml($tree) RemoveItem Color($id,node)
+        # delete the node
+        Color($id,node) Delete
+    }
+    MainUpdateMRML
+
+    MainMrmlClearList
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MainMrmlAddColorsFromFile
+# Reads in colour information from a given xml file, adding to the mrml tree.
+# Returns -1 if it cannot read the file, 1 on success.
+# .ARGS
+# fileName the name of the xml file to open and search for colours
+# .END
+#-------------------------------------------------------------------------------
+proc MainMrmlAddColorsFromFile {fileName} {
+    global Module
+
+puts "MainMrmlAddColorsFromFile: reading colours from file \'$fileName\'"
+    set tagsColors [MainMrmlReadVersion2.x $fileName]
+    if {$tagsColors == 0} {
+        set msg "Unable to read file MRML color file '$fileName'"
+        puts $msg
+        tk_messageBox -message $msg
+        return -1
+    }
+    # build the new nodes
+    MainMrmlBuildTreesVersion2.0 $tagsColors
+    return 1
+}
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlAddColors
 # 
@@ -1573,6 +1630,7 @@ proc MainMrmlBuildTreesVersion1.0 {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlAddColors {tags} {
+    global Module
 
     # If there are no Color nodes, then read, and append default colors.
     # Return a new list of tags, possibly including default colors.
@@ -1595,8 +1653,27 @@ proc MainMrmlAddColors {tags} {
         return $tags
     }
 
+    if {0} {
+    # check to see if any sub modules have defined an AddColors routine
+    set tagsModuleColors ""
+    foreach m $Module(idList) {
+        if {[info exists Module($m,procColor)] == 1} {
+            if {$Module(verbose) == 1} {
+                puts "mainmrml.tcl: found a colour proc for $m = $Module($m,procColor)"
+            }
+            # this deals with the case such as if the Volumes module has sub 
+            # modules that each registered a color procedure
+            foreach p $Module($m,procColor) {
+                set tagsModuleColors [$p $tagsModuleColors]
+            }
+        }
+    }
+    return "$tags $tagsColors $tagsModuleColors"
+}
     return "$tags $tagsColors"
 }
+
+
 
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlCheckColors
