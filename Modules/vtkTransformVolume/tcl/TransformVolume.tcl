@@ -86,6 +86,7 @@ proc TransformVolumeInit {} {
     set Module($m,procGUI) TransformVolumeBuildGUI
     set Module($m,procVTK) TransformVolumeBuildVTK
     set Module($m,procEnter) TransformVolumeEnter
+    set Module($m,procExit) TransformVolumeExit
     set Module($m,procMainExit) TransformVolumeExit
     set Module($m,procMRML) TransformVolumeUpdateGUI
 
@@ -105,7 +106,7 @@ proc TransformVolumeInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.14 $} {$Date: 2005/03/28 23:12:50 $}]
+        {$Revision: 1.15 $} {$Date: 2005/03/29 23:02:29 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -160,17 +161,20 @@ proc TransformVolumeBuildVTK {} {
 
 }
 proc TransformVolumeEnter {} {
-    global TransformVolume
-    # Push event manager
-    #------------------------------------
-    # Description:
-    #   So that this module's event bindings don't conflict with other 
-    #   modules, use our bindings only when the user is in this module.
-    #   The pushEventManager routine saves the previous bindings on 
-    #   a stack and binds our new ones.
-    #   (See slicer/program/tcl-shared/Events.tcl for more details.)
+    global TransformVolume Gui
 
-    #pushEventManager $TransformVolume(eventManager)
+    if {[info exists TransformVolume(fResample)] && (![info exists TransformVolume(isv)] || $TransformVolume(isv) == "") } {
+        set f $TransformVolume(fResample)
+        
+        catch "destroy $f.isv"
+        
+        isvolume $f.isv
+        pack $f.isv -side top -padx $Gui(pad) -pady $Gui(pad) -ipady 100
+        
+        set TransformVolume(isv) $f.isv
+        
+        TransformVolumeUpdatePreview
+    }
 }
 
 
@@ -198,6 +202,8 @@ proc TransformVolumeExit {} {
     if {[info exists TransformVolume(isv)]} {
         destroy $TransformVolume(isv)
     }
+    set TransformVolume(OutputIsv) ""
+    set TransformVolume(isv) ""
 }
 
 
@@ -477,14 +483,9 @@ proc TransformVolumeBuildGUI {} {
     pack $f.bAutoDimension -side top -padx $Gui(pad) -pady $Gui(pad)
     lappend TransformVolume(resampleConrols) $f.bAutoDimension 
 
-
-    catch "destroy $fResample.isv"
-
-    isvolume $fResample.isv
-    pack $fResample.isv -side top -padx $Gui(pad) -pady $Gui(pad) -ipady 100
-
-    set TransformVolume(isv) $fResample.isv
-
+    set TransformVolume(fResample) $fResample
+    TransformVolumeEnter
+    TransformVolumeResampleMode
 }
 
 proc TransformVolumeUpdateGUI {} {
@@ -500,9 +501,10 @@ proc TransformVolumeRun {} {
     $TransformVolume(brun) configure -state disabled
 
     # get displacement volume
+    set TransformVolume(DispVolume) [$TransformVolume(displacementVol) selectedID]
     set vDisp $TransformVolume(DispVolume)
     
-    if {![info exists TransformVolume(OutputIsv)]} {
+    if {![info exists TransformVolume(OutputIsv)] || $TransformVolume(OutputIsv) == ""} {
         catch "destroy .isv"
         isvolume .isv
         set  TransformVolume(OutputIsv) .isv
@@ -511,6 +513,7 @@ proc TransformVolumeRun {} {
     
     $isv volmenu_update
 
+    set TransformVolume(VolIDs) [TransformVolumeGetVolumes [$TransformVolume(transform) selectedID]]
     foreach v $TransformVolume(VolIDs) {
         
         puts " TransformVolume : transforming volume [Volume($v,node) GetName]"
@@ -718,9 +721,11 @@ proc TransformVolumeUpdateResample {} {
     global TransformVolume Volume
     
     # set reference volume
+    set TransformVolume(RefVolume) [$TransformVolume(referenceVol) selectedID]
     set vRef $TransformVolume(RefVolume)
     
     # get volumes to transform under a transform node
+    set TransformVolume(VolIDs) [TransformVolumeGetVolumes [$TransformVolume(transform) selectedID]]
     set volIDs $TransformVolume(VolIDs)
     
     set v $Volume(idNone)
@@ -762,6 +767,7 @@ proc TransformVolumeUpdatePreview {} {
     global TransformVolume Volume
 
     # get volumes to transform under a transform node
+    set TransformVolume(VolIDs) [TransformVolumeGetVolumes [$TransformVolume(transform) selectedID]]
     set volIDs $TransformVolume(VolIDs)
         
     set v $Volume(idNone)
@@ -771,10 +777,11 @@ proc TransformVolumeUpdatePreview {} {
     }
     
     # get displacement volume
+    set TransformVolume(DispVolume) [$TransformVolume(displacementVol) selectedID]
     set vDisp $TransformVolume(DispVolume)
     
-    if {$v != $Volume(idNone)} {
-
+    if {$v != $Volume(idNone) && [info exists TransformVolume(isv)] && $TransformVolume(isv) != ""} {
+        
         set isv $TransformVolume(isv)
 
         $isv volmenu_update
@@ -818,6 +825,7 @@ proc TransformVolumeAutoSpacing {} {
     global Matrix Volume TransformVolume
 
     # get volumes to transform under a transform node
+    set TransformVolume(VolIDs) [TransformVolumeGetVolumes [$TransformVolume(transform) selectedID]]   
     set volIDs $TransformVolume(VolIDs)
         
     set v $Volume(idNone)
@@ -872,6 +880,7 @@ proc TransformVolumeAutoSpacing {} {
 proc TransformVolumeAutoDimension {} {
     global TransformVolume Module Matrix Volume
 
+    set TransformVolume(VolIDs) [TransformVolumeGetVolumes [$TransformVolume(transform) selectedID]]
     set volIDs $TransformVolume(VolIDs)   
 
     set v $Volume(idNone)
@@ -1160,3 +1169,4 @@ proc TransformVolumeOutputDimensionIS {{dimension ""} } {
     }
     
 }
+
