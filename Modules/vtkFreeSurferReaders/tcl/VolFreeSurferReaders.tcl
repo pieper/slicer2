@@ -135,6 +135,7 @@ proc VolFreeSurferReadersBuildGUI {parentFrame} {
         pack $f.fBtns.rMode$value -side left -padx 0 -pady 0
     }
 
+
     if {$Module(verbose) == 1} {
         puts "Done packing the label map stuff"
     }
@@ -167,6 +168,27 @@ proc VolFreeSurferReadersBuildGUI {parentFrame} {
     DevAddButton $f.bCancel "Cancel" "VolumesPropsCancel" 8
     grid $f.bApply $f.bCancel -padx $Gui(pad)
 
+    #-------------------------------------------
+    # Demo Button
+    #-------------------------------------------
+    set f $parentFrame
+    eval button $f.demo -text Demo -command "VolFreeSurferDemo" $Gui(WBA)
+    pack $f.demo -side left -padx $Gui(pad) -pady 0
+
+}
+
+#-------------------------------------------------------------------------------
+# .PROC VolFreeSurferDemo
+# A hack for testing/development.  Assumes you have the correct data available 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc VolFreeSurferDemo {} {
+    global env
+
+    source $env(SLICER_HOME)/Modules/vtkFreeSurferReaders/tcl/regions.tcl
+    set r [regions #auto]
+    $r demo
 }
 
 
