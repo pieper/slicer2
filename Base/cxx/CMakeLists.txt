@@ -32,12 +32,16 @@ SOURCE_FILES (Base_SRCS
 	vtkMrmlSceneOptionsNode.cxx vtkMrmlScenesNode.cxx vtkMrmlSlicer.cxx
 	vtkMrmlTetraMeshNode.cxx vtkMrmlTransformNode.cxx vtkMrmlTree.cxx
 	vtkMrmlVolumeNode.cxx vtkMrmlVolumeStateNode.cxx vtkMrmlWindowLevelNode.cxx
-	vtkResliceImage.cxx vtkSurfaceProps.cxx vtkXDisplayWindow.cxx
+	vtkResliceImage.cxx vtkSurfaceProps.cxx
 	# vtkPolyBoolean.cxx 
 	# vtkImageEMSegmenter.cxx
 	# vtkDistractorSource.cxx
 	# vtkImageEuclideanDistanceTransformation.cxx 
 )
+
+IF(UNIX)
+SOURCE_FILES (Base_SRCS vtkXDisplayWindow.cxx)
+ENDIF(UNIX)
 
 # --------------------------------------------------------------------------
 # You probably do not need to modify anything below this line
