@@ -31,14 +31,14 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 //------------------------------------------------------------------------------
 vtkImageReformat* vtkImageReformat::New()
 {
-  // First try to create the object from the vtkObjectFactory
-  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkImageReformat");
-  if(ret)
+    // First try to create the object from the vtkObjectFactory
+    vtkObject* ret = vtkObjectFactory::CreateInstance("vtkImageReformat");
+    if(ret)
     {
-    return (vtkImageReformat*)ret;
+        return (vtkImageReformat*)ret;
     }
-  // If the factory was unable to create the object, then create it here.
-  return new vtkImageReformat;
+    // If the factory was unable to create the object, then create it here.
+    return new vtkImageReformat;
 }
 
 
@@ -52,10 +52,10 @@ vtkImageReformat::vtkImageReformat()
     this->WldToIjkMatrix = NULL;
     this->Resolution = 256;
     this->FieldOfView = 240.0;
-  this->RunTime = 0;
-    
-  for (int i=0; i<3; i++) 
-  {
+    this->RunTime = 0;
+
+    for (int i=0; i<3; i++) 
+    {
         this->XStep[i] = 0;
         this->YStep[i] = 0;
         this->Origin[i] = 0;
@@ -63,37 +63,37 @@ vtkImageReformat::vtkImageReformat()
         this->IjkPoint[i] = 0;
     }
 
-  // >> AT 11/07/01
-  this->OriginShift[0] = this->OriginShift[1] = 0.0;
-  this->Zoom = 1.0;
-  this->PanScale = this->FieldOfView / (this->Resolution * this->Zoom);
-  this->OriginShiftMtx = vtkMatrix4x4::New();
-  // << AT 11/07/01
+    // >> AT 11/07/01
+    this->OriginShift[0] = this->OriginShift[1] = 0.0;
+    this->Zoom = 1.0;
+    this->PanScale = this->FieldOfView / (this->Resolution * this->Zoom);
+    this->OriginShiftMtx = vtkMatrix4x4::New();
+    // << AT 11/07/01
 }
 
 //----------------------------------------------------------------------------
 vtkImageReformat::~vtkImageReformat()
 {
-  // Delete ImageData if self-created or if no one else is using it
-  if (this->ReformatMatrix != NULL) 
-  {
-    // Signal that we're no longer using it
-    this->ReformatMatrix->UnRegister(this);
-  }
-  if (this->WldToIjkMatrix != NULL) 
-  {
-    this->WldToIjkMatrix->UnRegister(this);
-  }
+    // Delete ImageData if self-created or if no one else is using it
+    if (this->ReformatMatrix != NULL) 
+    {
+        // Signal that we're no longer using it
+        this->ReformatMatrix->UnRegister(this);
+    }
+    if (this->WldToIjkMatrix != NULL) 
+    {
+        this->WldToIjkMatrix->UnRegister(this);
+    }
 
-  // >> AT 11/07/01
-  this->OriginShiftMtx->Delete();
-  // << AT 11/07/01
+    // >> AT 11/07/01
+    this->OriginShiftMtx->Delete();
+    // << AT 11/07/01
 }
 
 void vtkImageReformat::PrintSelf(ostream& os, vtkIndent indent)
 {
     vtkImageToImageFilter::PrintSelf(os,indent);
-  
+
     os << indent << "YStep[0]:    " << this->YStep[0] << "\n";
     os << indent << "YStep[1]:    " << this->YStep[1] << "\n";
     os << indent << "YStep[2]:    " << this->YStep[2] << "\n";
@@ -119,50 +119,50 @@ void vtkImageReformat::PrintSelf(ostream& os, vtkIndent indent)
     os << indent << "WldPoint[1]: " << this->WldPoint[1] << "\n";
     os << indent << "WldPoint[2]: " << this->WldPoint[2] << "\n";
 
-  os << indent << "Resolution:  " << this->Resolution << "\n";
-  os << indent << "FieldOfView: " << this->FieldOfView << "\n";
-  os << indent << "Interpolate: " << this->Interpolate << "\n";
-    
-  if (this->ReformatMatrix)
-  {
-    os << indent << "ReformatMatrix:\n";
-    this->ReformatMatrix->PrintSelf (os, indent.GetNextIndent ());
-  }
-  else
-  {
-    os << indent << "ReformatMatrix: (none)\n";
-  }
+    os << indent << "Resolution:  " << this->Resolution << "\n";
+    os << indent << "FieldOfView: " << this->FieldOfView << "\n";
+    os << indent << "Interpolate: " << this->Interpolate << "\n";
 
-  if (this->WldToIjkMatrix)
-  {
-    os << indent << "WldToIjkMatrix:\n";
-    this->WldToIjkMatrix->PrintSelf (os, indent.GetNextIndent ());
-  }
-  else
-  {
-    os << indent << "WldToIjkMatrix: (none)\n";
-  }
+    if (this->ReformatMatrix)
+    {
+        os << indent << "ReformatMatrix:\n";
+        this->ReformatMatrix->PrintSelf (os, indent.GetNextIndent ());
+    }
+    else
+    {
+        os << indent << "ReformatMatrix: (none)\n";
+    }
+
+    if (this->WldToIjkMatrix)
+    {
+        os << indent << "WldToIjkMatrix:\n";
+        this->WldToIjkMatrix->PrintSelf (os, indent.GetNextIndent ());
+    }
+    else
+    {
+        os << indent << "WldToIjkMatrix: (none)\n";
+    }
 }
 
 //----------------------------------------------------------------------------
 void vtkImageReformat::ExecuteInformation(vtkImageData *inData, vtkImageData *outData)
 {
     int ext[6];
-  float pix;
+    float pix;
 
     // Set output to 2D, size specified by user
     ext[1] = this->Resolution - 1;
     ext[3] = this->Resolution - 1;
     ext[0] = ext[2] = ext[5] = ext[4] = 0;
 
-  outData->SetWholeExtent(ext);
+    outData->SetWholeExtent(ext);
 
-  // We don't use these anyway since we handle obliques with the
-  // WldToIjkMatrix
-  //
+    // We don't use these anyway since we handle obliques with the
+    // WldToIjkMatrix
+    //
     pix = this->FieldOfView / this->Resolution;
-  outData->SetSpacing(pix, pix, 1.0);
-  outData->SetOrigin(0, 0, 0);
+    outData->SetSpacing(pix, pix, 1.0);
+    outData->SetOrigin(0, 0, 0);
 }
 
 //----------------------------------------------------------------------------
@@ -179,23 +179,23 @@ void vtkImageReformat::SetPoint(int x, int y)
     int i;
 
     for (i=0; i<3; i++) 
-  {
+    {
         this->WldPoint[i] = this->Origin[i] + this->XStep[i]*(float)x + 
-          this->YStep[i]*(float)y;
-  }
+            this->YStep[i]*(float)y;
+    }
 
     for (i=0; i<3; i++) 
-  {
+    {
         ras[i] = this->WldPoint[i];
-  }
+    }
     ras[3] = 1.0;
 
     this->WldToIjkMatrix->MultiplyPoint(ras, ijk);
 
-  for (i=0; i<3; i++) 
-  {
+    for (i=0; i<3; i++) 
+    {
         this->IjkPoint[i] = ijk[i];
-  }
+    }
 }
 
 
@@ -239,14 +239,14 @@ static void vtkImageReformatExecuteInt(vtkImageReformat *self,
     float x, y, z, scale;
     int nx, ny, nz, nx2, ny2, nz2, nz1, xi, yi, zi;
     T *ptr, *outPtr;
-  vtkMatrix4x4 *mat = self->GetReformatMatrix();
-  vtkMatrix4x4 *world = self->GetWldToIjkMatrix();
-  //fast
-  int fround, fx, fy, fz, fxStep[3], fyStep[3], fxRewind[3];
+    vtkMatrix4x4 *mat = self->GetReformatMatrix();
+    vtkMatrix4x4 *world = self->GetWldToIjkMatrix();
+    //fast
+    int fround, fx, fy, fz, fxStep[3], fyStep[3], fxRewind[3];
     int fone, fx0, fy0, fz0, fx1, fy1, fz1, fdx0, fdx1, fdxy0, fdxy1;
-  // time
-  clock_t tStart=0;
-  if (id == 0) {tStart = clock();}
+    // time
+    clock_t tStart=0;
+    if (id == 0) {tStart = clock();}
 
     // Find input dimensions
     nz = inExt[5] - inExt[4] + 1;
@@ -256,24 +256,24 @@ static void vtkImageReformatExecuteInt(vtkImageReformat *self,
     nx2 = nx-2;
     ny2 = ny-2;
     nz2 = nz-2;
-  nz1 = nz-1;
+    nz1 = nz-1;
 
-  // When the input extent is 0-based, then an index into it can be calculated as:
-  // idx = zi*nxy + ni*nx + x
-  // instead of the slower:
-  // idx = (zi-inExt[4])*nxy + (yi-inExt[2])*nx + (xi-inExt[0])
-  // so we'll only handle 0-based for now.
-  //
-  if (inExt[0] != 0 || inExt[2] != 0 || inExt[4] != 0)
-  {
-    fprintf(stderr, "Change vtkImageReformat to handle non-0-based extents.\n");
-    return;
-  }
-    
-  // find the region to loop over: this is the max pixel coordinate
+    // When the input extent is 0-based, then an index into it can be calculated as:
+    // idx = zi*nxy + ni*nx + x
+    // instead of the slower:
+    // idx = (zi-inExt[4])*nxy + (yi-inExt[2])*nx + (xi-inExt[0])
+    // so we'll only handle 0-based for now.
+    //
+    if (inExt[0] != 0 || inExt[2] != 0 || inExt[4] != 0)
+    {
+        fprintf(stderr, "Change vtkImageReformat to handle non-0-based extents.\n");
+        return;
+    }
+
+    // find the region to loop over: this is the max pixel coordinate
     maxX = outExt[1]; 
     maxY = outExt[3];
-  
+
     // Get pointer to output for this extent
     outPtr = (T*)outData->GetScalarPointerForExtent(outExt);
 
@@ -300,9 +300,9 @@ static void vtkImageReformatExecuteInt(vtkImageReformat *self,
     //
 
     // Scale mx, my by FOV/RESOLUTION
-  res = self->GetResolution();
-  if(self->GetZoom() < 0.0001)
-    self->SetZoom(0.0001);
+    res = self->GetResolution();
+    if(self->GetZoom() < 0.0001)
+        self->SetZoom(0.0001);
     scale = self->GetFieldOfView() / (res * self->GetZoom());
 
     //self->PanScale = self->GetFieldOfView() / (res * self->Zoom);
@@ -346,19 +346,19 @@ static void vtkImageReformatExecuteInt(vtkImageReformat *self,
     origin[3] = 1.0;
 
     /*origin[0] = mc[0] - (mx[0] + my[0]) * res / 2.0;
-    origin[1] = mc[1] - (mx[1] + my[1]) * res / 2.0;
-    origin[2] = mc[2] - (mx[2] + my[2]) * res / 2.0;
-    origin[3] = 1.0;*/
+      origin[1] = mc[1] - (mx[1] + my[1]) * res / 2.0;
+      origin[2] = mc[2] - (mx[2] + my[2]) * res / 2.0;
+      origin[3] = 1.0;*/
 
     // Advance to the origin of this output extent (used for threading)
     // x
-     scale = (float)(outExt[0]-wExt[0]);
+    scale = (float)(outExt[0]-wExt[0]);
     begin[0] = origin[0] + scale*mx[0];
     begin[1] = origin[1] + scale*mx[1];
     begin[2] = origin[2] + scale*mx[2];
     begin[3] = 1.0;
     // y
-     scale = (float)(outExt[2]-wExt[2]);    
+    scale = (float)(outExt[2]-wExt[2]);    
     begin[0] = begin[0] + scale*my[0];
     begin[1] = begin[1] + scale*my[1];
     begin[2] = begin[2] + scale*my[2];
@@ -366,10 +366,10 @@ static void vtkImageReformatExecuteInt(vtkImageReformat *self,
 
     // Convert origin from RAS IJK space
     world->MultiplyPoint(begin, originIJK);
-  world->MultiplyPoint(zero,  zeroIJK);
+    world->MultiplyPoint(zero,  zeroIJK);
     world->MultiplyPoint(mx,    mxIJK);
     world->MultiplyPoint(my,    myIJK);
-    
+
     // step vector in x direction
     xStep[0] = mxIJK[0] - zeroIJK[0];
     xStep[1] = mxIJK[1] - zeroIJK[1];
@@ -379,7 +379,7 @@ static void vtkImageReformatExecuteInt(vtkImageReformat *self,
     yStep[0] = myIJK[0] - zeroIJK[0];
     yStep[1] = myIJK[1] - zeroIJK[1];
     yStep[2] = myIJK[2] - zeroIJK[2];
-    
+
     // Initialize volume coords x, y, z to origin
     x = originIJK[0];
     y = originIJK[1];
@@ -392,26 +392,26 @@ static void vtkImageReformatExecuteInt(vtkImageReformat *self,
 
     // Prepare to convert and return points to the user
     for (i=0; i<3; i++) 
-  {
+    {
         self->Origin[i] = origin[i];
         self->XStep[i] = mx[i] - zero[i];
         self->YStep[i] = my[i] - zero[i];
     }
 
-  // Convert float to fast
-  fx = FLOAT_TO_FAST1(x);
-  fy = FLOAT_TO_FAST1(y);
-  fz = FLOAT_TO_FAST1(z);
-  for (i=0; i<3; i++) 
-  {
+    // Convert float to fast
+    fx = FLOAT_TO_FAST1(x);
+    fy = FLOAT_TO_FAST1(y);
+    fz = FLOAT_TO_FAST1(z);
+    for (i=0; i<3; i++) 
+    {
         fxStep[i] = FLOAT_TO_FAST1(xStep[i]);
-      fyStep[i] = FLOAT_TO_FAST1(yStep[i]);
+        fyStep[i] = FLOAT_TO_FAST1(yStep[i]);
         fxRewind[i] = FLOAT_TO_FAST1(xRewind[i]);
     }
-  fround = FLOAT_TO_FAST1(0.49);
-  fone = FLOAT_TO_FAST2(1.0);
+    fround = FLOAT_TO_FAST1(0.49);
+    fone = FLOAT_TO_FAST2(1.0);
 
-  //
+    //
     // Interpolation
     //
     if (self->GetInterpolate())
@@ -419,36 +419,36 @@ static void vtkImageReformatExecuteInt(vtkImageReformat *self,
         // Loop through output pixels
         for (idxY = outExt[2]; idxY <= maxY; idxY++)
         {
-      fxRewind[0] = fx;
-      fxRewind[1] = fy;
-      fxRewind[2] = fz;
-        
+            fxRewind[0] = fx;
+            fxRewind[1] = fy;
+            fxRewind[2] = fz;
+
             for (idxX = outExt[0]; idxX <= maxX; idxX++)
             {
                 // Compute integer parts of volume coordinates
-        xi = FAST1_TO_INT(fx);
+                xi = FAST1_TO_INT(fx);
                 yi = FAST1_TO_INT(fy);
                 zi = FAST1_TO_INT(fz);
 
                 // Test if coordinates are outside volume
                 if ((xi < 0) || (yi < 0) || (zi < 0) ||
-                  (xi > nx2) || (yi > ny2) || (zi > nz1))
+                        (xi > nx2) || (yi > ny2) || (zi > nz1))
                 {
                     // Indicate out of bounds with a -1
                     *outPtr = 0;
                 }
-        // Handle the case of being on the last slice
-        else if (zi == nz1)
-        {
+                // Handle the case of being on the last slice
+                else if (zi == nz1)
+                {
                     fx1 = FAST1_TO_FAST2(fx) - INT_TO_FAST2(xi);
                     fy1 = FAST1_TO_FAST2(fy) - INT_TO_FAST2(yi);
- 
+
                     fx0 = fone - fx1;
                     fy0 = fone - fy1;
 
                     // Interpolate in X and Y at Z0
                     //
-          idx = zi*nxy + yi*nx + xi;
+                    idx = zi*nxy + yi*nx + xi;
                     ptr = &inPtr[idx];
 
                     fdx0 = FAST2_MULT(fx0, INT_TO_FAST2((int)ptr[0])) + 
@@ -456,24 +456,24 @@ static void vtkImageReformatExecuteInt(vtkImageReformat *self,
                     ptr += nx;
                     fdx1 = FAST2_MULT(fx0, INT_TO_FAST2((int)ptr[0])) + 
                         FAST2_MULT(fx1, INT_TO_FAST2((int)ptr[1]));
-        
+
                     fdxy0 = FAST2_MULT(fy0, fdx0) + FAST2_MULT(fy1, fdx1);
-        
+
                     *outPtr = (T)FAST2_TO_FLOAT(fdxy0);
                 }
                 else 
-        {
+                {
                     fx1 = FAST1_TO_FAST2(fx) - INT_TO_FAST2(xi);
                     fy1 = FAST1_TO_FAST2(fy) - INT_TO_FAST2(yi);
                     fz1 = FAST1_TO_FAST2(fz) - INT_TO_FAST2(zi);
- 
+
                     fx0 = fone - fx1;
                     fy0 = fone - fy1;
                     fz0 = fone - fz1;
 
                     // Interpolate in X and Y at Z0
                     //
-          idx = zi*nxy + yi*nx + xi;
+                    idx = zi*nxy + yi*nx + xi;
                     ptr = &inPtr[idx];
 
                     fdx0 = FAST2_MULT(fx0, INT_TO_FAST2((int)ptr[0])) + 
@@ -481,14 +481,14 @@ static void vtkImageReformatExecuteInt(vtkImageReformat *self,
                     ptr += nx;
                     fdx1 = FAST2_MULT(fx0, INT_TO_FAST2((int)ptr[0])) + 
                         FAST2_MULT(fx1, INT_TO_FAST2((int)ptr[1]));
-        
+
                     fdxy0 = FAST2_MULT(fy0, fdx0) + FAST2_MULT(fy1, fdx1);
-        
+
                     // Interpolate in X and Y at Z1
                     //
                     ptr = &inPtr[idx+nxy];
 
-          fdx0 = FAST2_MULT(fx0, INT_TO_FAST2((int)ptr[0])) + 
+                    fdx0 = FAST2_MULT(fx0, INT_TO_FAST2((int)ptr[0])) + 
                         FAST2_MULT(fx1, INT_TO_FAST2((int)ptr[1]));
                     ptr += nx;
                     fdx1 = FAST2_MULT(fx0, INT_TO_FAST2((int)ptr[0])) + 
@@ -499,9 +499,9 @@ static void vtkImageReformatExecuteInt(vtkImageReformat *self,
                     // Interpolate in Z
                     //
                     *outPtr = (T)(FAST2_TO_FLOAT(
-            FAST2_MULT(fz0, fdxy0) + FAST2_MULT(fz1, fdxy1)));
-        }
-              outPtr++;
+                                FAST2_MULT(fz0, fdxy0) + FAST2_MULT(fz1, fdxy1)));
+                }
+                outPtr++;
 
                 // Step volume coordinates in xs direction
                 fx += fxStep[0];
@@ -522,28 +522,28 @@ static void vtkImageReformatExecuteInt(vtkImageReformat *self,
     //
     else 
     {
-      nx2 = nx-1;
-      ny2 = ny-1;
-      nz2 = nz-1;
+        nx2 = nx-1;
+        ny2 = ny-1;
+        nz2 = nz-1;
 
-    // Loop through output pixels
+        // Loop through output pixels
         for (idxY = outExt[2]; idxY <= maxY; idxY++)
         {
-      fxRewind[0] = fx;
-      fxRewind[1] = fy;
-      fxRewind[2] = fz;
-        
+            fxRewind[0] = fx;
+            fxRewind[1] = fy;
+            fxRewind[2] = fz;
+
             for (idxX = outExt[0]; idxX <= maxX; idxX++)
             {
                 // Compute integer parts of volume coordinates
-        xi = FAST1_TO_INT(fx + fround);
+                xi = FAST1_TO_INT(fx + fround);
                 yi = FAST1_TO_INT(fy + fround);
                 zi = FAST1_TO_INT(fz + fround);
-                
+
                 // Test if coordinates are outside volume
                 if ((xi < 0) || (yi < 0) || (zi < 0) ||
-                  (xi > nx2) || (yi > ny2) || (zi > nz2))
-              {
+                        (xi > nx2) || (yi > ny2) || (zi > nz2))
+                {
                     *outPtr = 0; 
                 }
                 else {
@@ -568,10 +568,10 @@ static void vtkImageReformatExecuteInt(vtkImageReformat *self,
         }
     }//withoutInterpolation
 
-  if (id == 0) 
-  {
-    self->SetRunTime(clock() - tStart);
-  }
+    if (id == 0) 
+    {
+        self->SetRunTime(clock() - tStart);
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -592,14 +592,14 @@ static void vtkImageReformatExecute(vtkImageReformat *self,
     float x0, y0, z0, x1, y1, z1, dx0, dx1, dxy0, dxy1;
     int nx, ny, nz, nx2, ny2, nz2, nz1, xi, yi, zi;
     T *ptr, *outPtr;
-  vtkMatrix4x4 *mat = self->GetReformatMatrix();
-  vtkMatrix4x4 *world = self->GetWldToIjkMatrix();
+    vtkMatrix4x4 *mat = self->GetReformatMatrix();
+    vtkMatrix4x4 *world = self->GetWldToIjkMatrix();
     // multiple components
-  int nxc, idxC, numComps, scalarSize, inRowLength;
-  // time
-  clock_t tStart=0;
-  if (id == 0)
-    tStart = clock();
+    int nxc, idxC, numComps, scalarSize, inRowLength;
+    // time
+    clock_t tStart=0;
+    if (id == 0)
+        tStart = clock();
 
     // Find input dimensions
     numComps = inData->GetNumberOfScalarComponents();
@@ -614,24 +614,24 @@ static void vtkImageReformatExecute(vtkImageReformat *self,
     nx2 = nx-2;
     ny2 = ny-2;
     nz2 = nz-2;
-  nz1 = nz-1;
+    nz1 = nz-1;
 
-  // When the input extent is 0-based, then an index into it can be calculated as:
-  // idx = zi*nxy + ni*nx + x
-  // instead of the slower:
-  // idx = (zi-inExt[4])*nxy + (yi-inExt[2])*nx + (xi-inExt[0])
-  // so we'll only handle 0-based for now.
-  //
-  if (inExt[0] != 0 || inExt[2] != 0 || inExt[4] != 0)
-  {
-    fprintf(stderr, "Change vtkImageReformat to handle non-0-based extents.\n");
-    return;
-  }
-    
-  // find the region to loop over: this is the max pixel coordinate
+    // When the input extent is 0-based, then an index into it can be calculated as:
+    // idx = zi*nxy + ni*nx + x
+    // instead of the slower:
+    // idx = (zi-inExt[4])*nxy + (yi-inExt[2])*nx + (xi-inExt[0])
+    // so we'll only handle 0-based for now.
+    //
+    if (inExt[0] != 0 || inExt[2] != 0 || inExt[4] != 0)
+    {
+        fprintf(stderr, "Change vtkImageReformat to handle non-0-based extents.\n");
+        return;
+    }
+
+    // find the region to loop over: this is the max pixel coordinate
     maxX = outExt[1]; 
     maxY = outExt[3];
-  
+
     // Get pointer to output for this extent
     outPtr = (T*)outData->GetScalarPointerForExtent(outExt);
 
@@ -660,13 +660,13 @@ static void vtkImageReformatExecute(vtkImageReformat *self,
     // Scale mx, my by FOV/RESOLUTION
     res = self->GetResolution();
     if(self->GetZoom() < 0.0001)
-      self->SetZoom(0.0001);
+        self->SetZoom(0.0001);
     scale = self->GetFieldOfView() / (res * self->GetZoom());
     //    scale = self->GetFieldOfView() / res;
-    
+
     //self->PanScale = self->GetFieldOfView() / (res * self->Zoom);
     self->SetPanScale(scale);
-    
+
     mx[0] = mat->Element[0][0] * scale;
     mx[1] = mat->Element[1][0] * scale;
     mx[2] = mat->Element[2][0] * scale;
@@ -702,19 +702,19 @@ static void vtkImageReformatExecute(vtkImageReformat *self,
     origin[3] = 1.0;
 
     /*origin[0] = mc[0] - (mx[0] + my[0]) * res / 2.0;
-    origin[1] = mc[1] - (mx[1] + my[1]) * res / 2.0;
-    origin[2] = mc[2] - (mx[2] + my[2]) * res / 2.0;
-    origin[3] = 1.0;*/
+      origin[1] = mc[1] - (mx[1] + my[1]) * res / 2.0;
+      origin[2] = mc[2] - (mx[2] + my[2]) * res / 2.0;
+      origin[3] = 1.0;*/
 
     // Advance to the origin of this output extent (used for threading)
     // x
-     scale = (float)(outExt[0]-wExt[0]);
+    scale = (float)(outExt[0]-wExt[0]);
     begin[0] = origin[0] + scale*mx[0];
     begin[1] = origin[1] + scale*mx[1];
     begin[2] = origin[2] + scale*mx[2];
     begin[3] = 1.0;
     // y
-     scale = (float)(outExt[2]-wExt[2]);    
+    scale = (float)(outExt[2]-wExt[2]);    
     begin[0] = begin[0] + scale*my[0];
     begin[1] = begin[1] + scale*my[1];
     begin[2] = begin[2] + scale*my[2];
@@ -722,10 +722,10 @@ static void vtkImageReformatExecute(vtkImageReformat *self,
 
     // Convert origin from RAS IJK space
     world->MultiplyPoint(begin, originIJK);
-  world->MultiplyPoint(zero,  zeroIJK);
+    world->MultiplyPoint(zero,  zeroIJK);
     world->MultiplyPoint(mx,    mxIJK);
     world->MultiplyPoint(my,    myIJK);
-    
+
     // step vector in x direction
     xStep[0] = mxIJK[0] - zeroIJK[0];
     xStep[1] = mxIJK[1] - zeroIJK[1];
@@ -735,7 +735,7 @@ static void vtkImageReformatExecute(vtkImageReformat *self,
     yStep[0] = myIJK[0] - zeroIJK[0];
     yStep[1] = myIJK[1] - zeroIJK[1];
     yStep[2] = myIJK[2] - zeroIJK[2];
-    
+
     // Initialize volume coords x, y, z to origin
     x = originIJK[0];
     y = originIJK[1];
@@ -748,7 +748,7 @@ static void vtkImageReformatExecute(vtkImageReformat *self,
 
     // Prepare to convert and return points to the user
     for (i=0; i<3; i++) 
-  {
+    {
         self->Origin[i] = origin[i];
         self->XStep[i] = mx[i] - zero[i];
         self->YStep[i] = my[i] - zero[i];
@@ -771,61 +771,61 @@ static void vtkImageReformatExecute(vtkImageReformat *self,
 
                 // Test if coordinates are outside volume
                 if ((xi < 0) || (yi < 0) || (zi < 0) ||
-                  (xi > nx2) || (yi > ny2) || (zi > nz1))
+                        (xi > nx2) || (yi > ny2) || (zi > nz1))
                 {
                     // Indicate out of bounds with a -1
                     memset(outPtr, 0, scalarSize);
-                  outPtr += numComps;
+                    outPtr += numComps;
                 }
-        // Handle the case of being on the last slice
-        else if (zi == nz1)
-        {
+                // Handle the case of being on the last slice
+                else if (zi == nz1)
+                {
                     x1 = x - xi;
                     y1 = y - yi;
- 
+
                     x0 = 1.0 - x1;
                     y0 = 1.0 - y1;
 
                     idx = zi*nxy + yi*nx + xi;
-          idx *= numComps;
+                    idx *= numComps;
 
                     for (idxC = 0; idxC < numComps; idxC++)
                     {
-                      // Interpolate in X and Y at Z0
-                      //
+                        // Interpolate in X and Y at Z0
+                        //
                         ptr = &inPtr[idx+idxC];
                         dx0 = x0*ptr[0] + x1*ptr[numComps]; ptr += nxc;
                         dx1 = x0*ptr[0] + x1*ptr[numComps];
-        
+
                         dxy0 = y0*dx0 + y1*dx1;
-        
+
                         *outPtr = (T)dxy0;
-            outPtr++;
+                        outPtr++;
                     }//for c
-        }
+                }
                 else 
-        {
+                {
                     x1 = x - xi;
                     y1 = y - yi;
                     z1 = z - zi;
- 
+
                     x0 = 1.0 - x1;
                     y0 = 1.0 - y1;
                     z0 = 1.0 - z1;
 
                     idx = zi*nxy + yi*nx + xi;
-          idx *= numComps;
+                    idx *= numComps;
 
                     for (idxC = 0; idxC < numComps; idxC++)
                     {
-                      // Interpolate in X and Y at Z0
-                      //
+                        // Interpolate in X and Y at Z0
+                        //
                         ptr = &inPtr[idx+idxC];
                         dx0 = x0*ptr[0] + x1*ptr[numComps]; ptr += nxc;
                         dx1 = x0*ptr[0] + x1*ptr[numComps];
-        
+
                         dxy0 = y0*dx0 + y1*dx1;
-        
+
                         // Interpolate in X and Y at Z1
                         //
                         ptr = &inPtr[idx+idxC+nxy*numComps];
@@ -837,7 +837,7 @@ static void vtkImageReformatExecute(vtkImageReformat *self,
                         // Interpolate in Z
                         //
                         *outPtr = (T)(z0*dxy0 + z1*dxy1);
-            outPtr++;
+                        outPtr++;
                     }//for c
                 }// else
 
@@ -865,9 +865,9 @@ static void vtkImageReformatExecute(vtkImageReformat *self,
     //
     else 
     {
-      nx2 = nx-1;
-      ny2 = ny-1;
-      nz2 = nz-1;
+        nx2 = nx-1;
+        ny2 = ny-1;
+        nz2 = nz-1;
 
         // Loop through output pixels
         for (idxY = outExt[2]; idxY <= maxY; idxY++)
@@ -878,11 +878,11 @@ static void vtkImageReformatExecute(vtkImageReformat *self,
                 xi = (int)(x + 0.5);
                 yi = (int)(y + 0.5);
                 zi = (int)(z + 0.5);
-                
+
                 // Test if coordinates are outside volume
                 if ((xi < 0) || (yi < 0) || (zi < 0) ||
-                  (xi > nx2) || (yi > ny2) || (zi > nz2))
-              {
+                        (xi > nx2) || (yi > ny2) || (zi > nz2))
+                {
                     memset(outPtr, 0, scalarSize);
                 }
                 else {
@@ -914,10 +914,10 @@ static void vtkImageReformatExecute(vtkImageReformat *self,
         }
     }//withoutInterpolation
 
-  if (id == 0) 
-  {
-    self->SetRunTime(clock() - tStart);
-  }
+    if (id == 0) 
+    {
+        self->SetRunTime(clock() - tStart);
+    }
 }
 
 
@@ -939,506 +939,506 @@ static void vtkImageReformatExecuteTensor(vtkImageReformat *self,
                                           int outExt[6], int wExt[6], 
                                           int id)
 {
-  int res, i, idx, nxy, idxX, idxY, maxY, maxX;
-  int inIncX, inIncY, inIncZ, outIncX, outIncY, outIncZ;
-  float begin[4], origin[4], mx[4], my[4], mc[4], zero[4]={0.0,0.0,0.0,1.0};
-  float originIJK[4], mxIJK[4], myIJK[4], zeroIJK[4];
-  float xStep[3], yStep[3], xRewind[3];
-  float x, y, z, scale;
-  float x0, y0, z0, x1, y1, z1, dx0, dx1, dxy0, dxy1;
-  int nx, ny, nz, nx2, ny2, nz2, nz1, xi, yi, zi;
-  T *outPtr;
-  vtkMatrix4x4 *mat = self->GetReformatMatrix();
-  vtkMatrix4x4 *world = self->GetWldToIjkMatrix();
-  // multiple components
-  int nxc, numComps, scalarSize, inRowLength;
-  // time
-  clock_t tStart=0;
-  // tensors 
-  int numCompsI, numCompsJ;
-  int outTensorIdx, j;
-  vtkDataArray *inTensorData, *outTensorData;
-  float outT[3][3];
+    int res, i, idx, nxy, idxX, idxY, maxY, maxX;
+    int inIncX, inIncY, inIncZ, outIncX, outIncY, outIncZ;
+    float begin[4], origin[4], mx[4], my[4], mc[4], zero[4]={0.0,0.0,0.0,1.0};
+    float originIJK[4], mxIJK[4], myIJK[4], zeroIJK[4];
+    float xStep[3], yStep[3], xRewind[3];
+    float x, y, z, scale;
+    float x0, y0, z0, x1, y1, z1, dx0, dx1, dxy0, dxy1;
+    int nx, ny, nz, nx2, ny2, nz2, nz1, xi, yi, zi;
+    T *outPtr;
+    vtkMatrix4x4 *mat = self->GetReformatMatrix();
+    vtkMatrix4x4 *world = self->GetWldToIjkMatrix();
+    // multiple components
+    int nxc, numComps, scalarSize, inRowLength;
+    // time
+    clock_t tStart=0;
+    // tensors 
+    int numCompsI, numCompsJ;
+    int outTensorIdx, j;
+    vtkDataArray *inTensorData, *outTensorData;
+    float outT[3][3];
 
-  // execution time 
-  if (id == 0)
-    tStart = clock();
+    // execution time 
+    if (id == 0)
+        tStart = clock();
 
-  // Number of tensor components.
-  // Do all 9 tensor components for now, though
-  // optimally should do only 6.
-  numCompsI = 3;
-  numCompsJ = 3;
+    // Number of tensor components.
+    // Do all 9 tensor components for now, though
+    // optimally should do only 6.
+    numCompsI = 3;
+    numCompsJ = 3;
 
-  inRowLength = (inExt[1] - inExt[0]+1);
-  nz = inExt[5] - inExt[4] + 1;
-  ny = inExt[3] - inExt[2] + 1;
-  nx = inExt[1] - inExt[0] + 1;
-  nxy = nx * ny;
+    inRowLength = (inExt[1] - inExt[0]+1);
+    nz = inExt[5] - inExt[4] + 1;
+    ny = inExt[3] - inExt[2] + 1;
+    nx = inExt[1] - inExt[0] + 1;
+    nxy = nx * ny;
 
-  // Set the origin explicitly so structured points tensors 
-  // will align with image data
-  float pix = self->GetFieldOfView() / self->GetResolution();
-  outData->SetOrigin(-wExt[1]*pix/2, -wExt[3]*pix/2, 0);
+    // Set the origin explicitly so structured points tensors 
+    // will align with image data
+    float pix = self->GetFieldOfView() / self->GetResolution();
+    outData->SetOrigin(-wExt[1]*pix/2, -wExt[3]*pix/2, 0);
 
-  // If there are no scalars in the input, clear the output scalars
-  if ((inData->GetPointData()->GetScalars() == NULL) ||
-      (inData->GetPointData()->GetScalars()->GetNumberOfTuples() == 0))
+    // If there are no scalars in the input, clear the output scalars
+    if ((inData->GetPointData()->GetScalars() == NULL) ||
+            (inData->GetPointData()->GetScalars()->GetNumberOfTuples() == 0))
     {
-      vtkGenericWarningMacro("Execute: no scalars with tensors in input image data");
+        vtkGenericWarningMacro("Execute: no scalars with tensors in input image data");
 
-      // account for multiple scalars per pixel
-      numComps = inData->GetNumberOfScalarComponents();
-      scalarSize = sizeof(T)*numComps;
-      nxc = nx * numComps;
+        // account for multiple scalars per pixel
+        numComps = inData->GetNumberOfScalarComponents();
+        scalarSize = sizeof(T)*numComps;
+        nxc = nx * numComps;
 
-      // Get pointer to output for this extent
-      outPtr = (T*)outData->GetScalarPointerForExtent(outExt);
-        
-      memset(outPtr, 0, nxc*ny*nz*sizeof(T));   
+        // Get pointer to output for this extent
+        outPtr = (T*)outData->GetScalarPointerForExtent(outExt);
+
+        memset(outPtr, 0, nxc*ny*nz*sizeof(T));   
     }
 
-  // this is max index for bounds checking.
-  // -2 since we access each pixel and the next for interpolating
-  // (this copied code is dumb since this is re-assigned for 
-  // no interpolation, but keep things consistent)
-  nx2 = nx-2;
-  ny2 = ny-2;
-  nz2 = nz-2;
-  nz1 = nz-1;
+    // this is max index for bounds checking.
+    // -2 since we access each pixel and the next for interpolating
+    // (this copied code is dumb since this is re-assigned for 
+    // no interpolation, but keep things consistent)
+    nx2 = nx-2;
+    ny2 = ny-2;
+    nz2 = nz-2;
+    nz1 = nz-1;
 
-  // Get input pointer to tensor data, which is always float
-  inTensorData = inData->GetPointData()->GetTensors();
-  outTensorData = outData->GetPointData()->GetTensors();
+    // Get input pointer to tensor data, which is always float
+    inTensorData = inData->GetPointData()->GetTensors();
+    outTensorData = outData->GetPointData()->GetTensors();
 
-  // When the input extent is 0-based, then an index into it can be calculated as:
-  // idx = zi*nxy + ni*nx + x
-  // instead of the slower:
-  // idx = (zi-inExt[4])*nxy + (yi-inExt[2])*nx + (xi-inExt[0])
-  // so we'll only handle 0-based for now.
-  //
-  if (inExt[0] != 0 || inExt[2] != 0 || inExt[4] != 0)
+    // When the input extent is 0-based, then an index into it can be calculated as:
+    // idx = zi*nxy + ni*nx + x
+    // instead of the slower:
+    // idx = (zi-inExt[4])*nxy + (yi-inExt[2])*nx + (xi-inExt[0])
+    // so we'll only handle 0-based for now.
+    //
+    if (inExt[0] != 0 || inExt[2] != 0 || inExt[4] != 0)
     {
-      fprintf(stderr, "Change vtkImageReformat to handle non-0-based extents.\n");
-      return;
-    }
-        
-  // find the region to loop over: this is the max pixel coordinate
-  maxX = outExt[1]; 
-  maxY = outExt[3];
-  
-  // Get index into output tensor data for this output extent
-  // Lauren if multithread breaks look here first
-  outTensorIdx = outExt[0] + outExt[2]*(nx) + outExt[4]*(nxy);
-  //cout << "START IDX " << outTensorIdx << endl;
-
-  // Get increments to march through data 
-  outData->GetContinuousIncrements(outExt, outIncX, outIncY, outIncZ);
-  inData->GetContinuousIncrements(inExt, inIncX, inIncY, inIncZ);
-
-  // RAS-to-IJK Matrix looks like:
-  //
-  // mx0 my0 mz0 mc0
-  // mx1 my1 mz1 mc1
-  // mx2 my2 mz2 mc3
-  //   0   0   0   1
-  //
-  // Where:
-  // mx = normal vector along the x-direction of the output image
-  // my = normal vector along the y-direction of the output image
-  // mc = center of image
-  //
-  // Note:
-  // The bottom row of the matrix needs to be "1"s
-  // to treat each column as a homogeneous point for
-  // matrix multiplication.
-  //
-
-  // Scale mx, my by FOV/RESOLUTION  (size of a pixel in output image)
-  res = self->GetResolution();
-  scale = self->GetFieldOfView() / res;
-
-  mx[0] = mat->Element[0][0] * scale;
-  mx[1] = mat->Element[1][0] * scale;
-  mx[2] = mat->Element[2][0] * scale;
-  mx[3] = 1.0;
-  my[0] = mat->Element[0][1] * scale;
-  my[1] = mat->Element[1][1] * scale;
-  my[2] = mat->Element[2][1] * scale;
-  my[3] = 1.0;
-  mc[0] = mat->Element[0][3];
-  mc[1] = mat->Element[1][3];
-  mc[2] = mat->Element[2][3];
-  mc[3] = 1.0;
-
-  // Find the RAS origin (upper-left corner of reformatted image).
-  // The direction from the center to the origin is backwards from
-  // the sum of the x-dir, y-dir vectors.
-  // The length is half the OUTPUT image size.
-
-  origin[0] = mc[0] - (mx[0] + my[0]) * res / 2.0;
-  origin[1] = mc[1] - (mx[1] + my[1]) * res / 2.0;
-  origin[2] = mc[2] - (mx[2] + my[2]) * res / 2.0;
-  origin[3] = 1.0;
-
-  // Advance to the origin of this output extent (used for threading)
-  // x
-  scale = (float)(outExt[0]-wExt[0]);
-  begin[0] = origin[0] + scale*mx[0];
-  begin[1] = origin[1] + scale*mx[1];
-  begin[2] = origin[2] + scale*mx[2];
-  begin[3] = 1.0;
-  // y
-  scale = (float)(outExt[2]-wExt[2]);   
-  begin[0] = begin[0] + scale*my[0];
-  begin[1] = begin[1] + scale*my[1];
-  begin[2] = begin[2] + scale*my[2];
-  begin[3] = 1.0;
-
-  // Convert origin from RAS to IJK space
-  world->MultiplyPoint(begin, originIJK);
-  world->MultiplyPoint(zero,  zeroIJK);
-  world->MultiplyPoint(mx,    mxIJK);
-  world->MultiplyPoint(my,    myIJK);
-        
-  // step vector in x direction
-  xStep[0] = mxIJK[0] - zeroIJK[0];
-  xStep[1] = mxIJK[1] - zeroIJK[1];
-  xStep[2] = mxIJK[2] - zeroIJK[2];
-
-  // step vector in y direction
-  yStep[0] = myIJK[0] - zeroIJK[0];
-  yStep[1] = myIJK[1] - zeroIJK[1];
-  yStep[2] = myIJK[2] - zeroIJK[2];
-        
-  // Initialize volume coords x, y, z to origin
-  x = originIJK[0];
-  y = originIJK[1];
-  z = originIJK[2];
-
-  // rewind steps in x direction
-  xRewind[0] = xStep[0] * (maxX+1);
-  xRewind[1] = xStep[1] * (maxX+1);
-  xRewind[2] = xStep[2] * (maxX+1);
-
-  // Prepare to convert and return points to the user
-  for (i=0; i<3; i++) 
-    {
-      self->Origin[i] = origin[i];
-      self->XStep[i] = mx[i] - zero[i];
-      self->YStep[i] = my[i] - zero[i];
+        fprintf(stderr, "Change vtkImageReformat to handle non-0-based extents.\n");
+        return;
     }
 
+    // find the region to loop over: this is the max pixel coordinate
+    maxX = outExt[1]; 
+    maxY = outExt[3];
 
-  //
-  // Interpolation
-  //
-  if (self->GetInterpolate())
+    // Get index into output tensor data for this output extent
+    // Lauren if multithread breaks look here first
+    outTensorIdx = outExt[0] + outExt[2]*(nx) + outExt[4]*(nxy);
+    //cout << "START IDX " << outTensorIdx << endl;
+
+    // Get increments to march through data 
+    outData->GetContinuousIncrements(outExt, outIncX, outIncY, outIncZ);
+    inData->GetContinuousIncrements(inExt, inIncX, inIncY, inIncZ);
+
+    // RAS-to-IJK Matrix looks like:
+    //
+    // mx0 my0 mz0 mc0
+    // mx1 my1 mz1 mc1
+    // mx2 my2 mz2 mc3
+    //   0   0   0   1
+    //
+    // Where:
+    // mx = normal vector along the x-direction of the output image
+    // my = normal vector along the y-direction of the output image
+    // mc = center of image
+    //
+    // Note:
+    // The bottom row of the matrix needs to be "1"s
+    // to treat each column as a homogeneous point for
+    // matrix multiplication.
+    //
+
+    // Scale mx, my by FOV/RESOLUTION  (size of a pixel in output image)
+    res = self->GetResolution();
+    scale = self->GetFieldOfView() / res;
+
+    mx[0] = mat->Element[0][0] * scale;
+    mx[1] = mat->Element[1][0] * scale;
+    mx[2] = mat->Element[2][0] * scale;
+    mx[3] = 1.0;
+    my[0] = mat->Element[0][1] * scale;
+    my[1] = mat->Element[1][1] * scale;
+    my[2] = mat->Element[2][1] * scale;
+    my[3] = 1.0;
+    mc[0] = mat->Element[0][3];
+    mc[1] = mat->Element[1][3];
+    mc[2] = mat->Element[2][3];
+    mc[3] = 1.0;
+
+    // Find the RAS origin (upper-left corner of reformatted image).
+    // The direction from the center to the origin is backwards from
+    // the sum of the x-dir, y-dir vectors.
+    // The length is half the OUTPUT image size.
+
+    origin[0] = mc[0] - (mx[0] + my[0]) * res / 2.0;
+    origin[1] = mc[1] - (mx[1] + my[1]) * res / 2.0;
+    origin[2] = mc[2] - (mx[2] + my[2]) * res / 2.0;
+    origin[3] = 1.0;
+
+    // Advance to the origin of this output extent (used for threading)
+    // x
+    scale = (float)(outExt[0]-wExt[0]);
+    begin[0] = origin[0] + scale*mx[0];
+    begin[1] = origin[1] + scale*mx[1];
+    begin[2] = origin[2] + scale*mx[2];
+    begin[3] = 1.0;
+    // y
+    scale = (float)(outExt[2]-wExt[2]);   
+    begin[0] = begin[0] + scale*my[0];
+    begin[1] = begin[1] + scale*my[1];
+    begin[2] = begin[2] + scale*my[2];
+    begin[3] = 1.0;
+
+    // Convert origin from RAS to IJK space
+    world->MultiplyPoint(begin, originIJK);
+    world->MultiplyPoint(zero,  zeroIJK);
+    world->MultiplyPoint(mx,    mxIJK);
+    world->MultiplyPoint(my,    myIJK);
+
+    // step vector in x direction
+    xStep[0] = mxIJK[0] - zeroIJK[0];
+    xStep[1] = mxIJK[1] - zeroIJK[1];
+    xStep[2] = mxIJK[2] - zeroIJK[2];
+
+    // step vector in y direction
+    yStep[0] = myIJK[0] - zeroIJK[0];
+    yStep[1] = myIJK[1] - zeroIJK[1];
+    yStep[2] = myIJK[2] - zeroIJK[2];
+
+    // Initialize volume coords x, y, z to origin
+    x = originIJK[0];
+    y = originIJK[1];
+    z = originIJK[2];
+
+    // rewind steps in x direction
+    xRewind[0] = xStep[0] * (maxX+1);
+    xRewind[1] = xStep[1] * (maxX+1);
+    xRewind[2] = xStep[2] * (maxX+1);
+
+    // Prepare to convert and return points to the user
+    for (i=0; i<3; i++) 
     {
-      //cout << "Reformatting tensors with interpolation" << endl;
-      // Loop through output pixels
-      for (idxY = outExt[2]; idxY <= maxY; idxY++)
+        self->Origin[i] = origin[i];
+        self->XStep[i] = mx[i] - zero[i];
+        self->YStep[i] = my[i] - zero[i];
+    }
+
+
+    //
+    // Interpolation
+    //
+    if (self->GetInterpolate())
+    {
+        //cout << "Reformatting tensors with interpolation" << endl;
+        // Loop through output pixels
+        for (idxY = outExt[2]; idxY <= maxY; idxY++)
         {
-          for (idxX = outExt[0]; idxX <= maxX; idxX++)
+            for (idxX = outExt[0]; idxX <= maxX; idxX++)
             {
-              // Compute integer parts of volume coordinates
-              xi = (int)x;
-              yi = (int)y;
-              zi = (int)z;
+                // Compute integer parts of volume coordinates
+                xi = (int)x;
+                yi = (int)y;
+                zi = (int)z;
 
-              // Test if coordinates are outside volume
-              if ((xi < 0) || (yi < 0) || (zi < 0) ||
-                  (xi > nx2) || (yi > ny2) || (zi > nz1))
+                // Test if coordinates are outside volume
+                if ((xi < 0) || (yi < 0) || (zi < 0) ||
+                        (xi > nx2) || (yi > ny2) || (zi > nz1))
                 {
 
-                  //-TENSOR- vtkTensor *tensor = outTensorData->GetTuple(outTensorIdx);
+                    //-TENSOR- vtkTensor *tensor = outTensorData->GetTuple(outTensorIdx);
 
-                  //              // set all components to 0
-                  //              for (i = 0; i < numCompsI; i++)
-                  //                {
-                  //                  for (j = 0; j < numCompsJ; j++)
-                  //                    {
-                  //                      tensor->SetComponent(i, j, 0);
-                  //                    }
-                  //                }
-                  //-TENSOR- tensor->Initialize();
-                  for (i = 0; i < numCompsI; i++)
+                    //              // set all components to 0
+                    //              for (i = 0; i < numCompsI; i++)
+                    //                {
+                    //                  for (j = 0; j < numCompsJ; j++)
+                    //                    {
+                    //                      tensor->SetComponent(i, j, 0);
+                    //                    }
+                    //                }
+                    //-TENSOR- tensor->Initialize();
+                    for (i = 0; i < numCompsI; i++)
                     {
-                      for (j = 0; j < numCompsJ; j++)
+                        for (j = 0; j < numCompsJ; j++)
                         {
-                          outT[i][j] = 0;
+                            outT[i][j] = 0;
                         }
                     }
                 }
-              // Handle the case of being on the last slice
-              else if (zi == nz1)
+                // Handle the case of being on the last slice
+                else if (zi == nz1)
                 {
-                  // point we want, x, falls between two indices
-                  // x1 is fractional distance to first index             
-                  // x0 is fractional distance to the other
-                  x1 = x - xi;
-                  y1 = y - yi;
- 
-                  x0 = 1.0 - x1;
-                  y0 = 1.0 - y1;
+                    // point we want, x, falls between two indices
+                    // x1 is fractional distance to first index             
+                    // x0 is fractional distance to the other
+                    x1 = x - xi;
+                    y1 = y - yi;
 
-                  // closest integer index into volume
-                  // (corresponds to x1 above)
-                  idx = zi*nxy + yi*nx + xi;
+                    x0 = 1.0 - x1;
+                    y0 = 1.0 - y1;
 
-                  // tensor indices.  Grab 4 tensors for interpolation.
-                  int idx1 = zi*nxy + yi*nx + xi;
-                  int idx2 = idx1 + 1;
-                  int idx3 = idx1 + nx;
-                  int idx4 = idx2 + nx;
+                    // closest integer index into volume
+                    // (corresponds to x1 above)
+                    idx = zi*nxy + yi*nx + xi;
 
-                  // get the tensors at these image indices
-                  //-TENSOR- vtkTensor *tensor1 = inTensorData->GetTuple(idx1);
-                  //-TENSOR- vtkTensor *tensor2 = inTensorData->GetTuple(idx2);
-                  //-TENSOR- vtkTensor *tensor3 = inTensorData->GetTuple(idx3);
-                  //-TENSOR- vtkTensor *tensor4 = inTensorData->GetTuple(idx4);
+                    // tensor indices.  Grab 4 tensors for interpolation.
+                    int idx1 = zi*nxy + yi*nx + xi;
+                    int idx2 = idx1 + 1;
+                    int idx3 = idx1 + nx;
+                    int idx4 = idx2 + nx;
 
-                  float inT1[3][3], inT2[3][3], inT3[3][3], inT4[3][3];
-                  inTensorData->GetTuple(idx1,(float *)inT1);
-                  inTensorData->GetTuple(idx2,(float *)inT2);
-                  inTensorData->GetTuple(idx3,(float *)inT3);
-                  inTensorData->GetTuple(idx4,(float *)inT4);
+                    // get the tensors at these image indices
+                    //-TENSOR- vtkTensor *tensor1 = inTensorData->GetTuple(idx1);
+                    //-TENSOR- vtkTensor *tensor2 = inTensorData->GetTuple(idx2);
+                    //-TENSOR- vtkTensor *tensor3 = inTensorData->GetTuple(idx3);
+                    //-TENSOR- vtkTensor *tensor4 = inTensorData->GetTuple(idx4);
 
-                  // find output location
-                  //-TENSOR- vtkTensor *tensor = outTensorData->GetTuple(outTensorIdx);
-                  
-                  // go through output tensor components
-                  for (i = 0; i < numCompsI; i++)
+                    float inT1[3][3], inT2[3][3], inT3[3][3], inT4[3][3];
+                    inTensorData->GetTuple(idx1,(float *)inT1);
+                    inTensorData->GetTuple(idx2,(float *)inT2);
+                    inTensorData->GetTuple(idx3,(float *)inT3);
+                    inTensorData->GetTuple(idx4,(float *)inT4);
+
+                    // find output location
+                    //-TENSOR- vtkTensor *tensor = outTensorData->GetTuple(outTensorIdx);
+
+                    // go through output tensor components
+                    for (i = 0; i < numCompsI; i++)
                     {
-                      for (j = 0; j < numCompsJ; j++)
+                        for (j = 0; j < numCompsJ; j++)
                         {
-                          // Interpolate in X and Y at Z0
-                          //
-                          //-TENSOR- float comp1 = tensor1->GetComponent(i,j);
-                          //-TENSOR- float comp2 = tensor2->GetComponent(i,j);
-                          //-TENSOR- float comp3 = tensor3->GetComponent(i,j);
-                          //-TENSOR- float comp4 = tensor4->GetComponent(i,j);
+                            // Interpolate in X and Y at Z0
+                            //
+                            //-TENSOR- float comp1 = tensor1->GetComponent(i,j);
+                            //-TENSOR- float comp2 = tensor2->GetComponent(i,j);
+                            //-TENSOR- float comp3 = tensor3->GetComponent(i,j);
+                            //-TENSOR- float comp4 = tensor4->GetComponent(i,j);
 
-                          // interpolate in x
-                          //-TENSOR- dx0 = x0*comp1 + x1*comp2; 
-                          //-TENSOR- dx1 = x0*comp3 + x1*comp4;
+                            // interpolate in x
+                            //-TENSOR- dx0 = x0*comp1 + x1*comp2; 
+                            //-TENSOR- dx1 = x0*comp3 + x1*comp4;
 
-                          dx0 = x0*inT1[i][j] + x1*inT2[i][j]; 
-                          dx1 = x0*inT3[i][j] + x1*inT4[i][j];
-                          
-                          // and interpolate in y
-                          dxy0 = y0*dx0 + y1*dx1;
-                          
-                          // Set output tensor value
-                          //-TENSOR- tensor->SetComponent(i, j, dxy0);
-                          outT[i][j] = dxy0;
+                            dx0 = x0*inT1[i][j] + x1*inT2[i][j]; 
+                            dx1 = x0*inT3[i][j] + x1*inT4[i][j];
+
+                            // and interpolate in y
+                            dxy0 = y0*dx0 + y1*dx1;
+
+                            // Set output tensor value
+                            //-TENSOR- tensor->SetComponent(i, j, dxy0);
+                            outT[i][j] = dxy0;
                         }
                     }
                 }
-              // Not out of bounds or last slice
-              else 
+                // Not out of bounds or last slice
+                else 
                 {
-                  x1 = x - xi;
-                  y1 = y - yi;
-                  z1 = z - zi;
- 
-                  x0 = 1.0 - x1;
-                  y0 = 1.0 - y1;
-                  z0 = 1.0 - z1;
+                    x1 = x - xi;
+                    y1 = y - yi;
+                    z1 = z - zi;
 
-                  idx = zi*nxy + yi*nx + xi;
+                    x0 = 1.0 - x1;
+                    y0 = 1.0 - y1;
+                    z0 = 1.0 - z1;
 
-                  // tensor indices.  Grab 8 tensors for interpolation.
-                  int idx1 = zi*nxy + yi*nx + xi;
-                  int idx2 = idx1 + 1;
-                  int idx3 = idx1 + nx;
-                  int idx4 = idx2 + nx;
+                    idx = zi*nxy + yi*nx + xi;
 
-                  int idx5 = idx1 + nxy;
-                  int idx6 = idx5 + 1;
-                  int idx7 = idx5 + nx;
-                  int idx8 = idx6 + nx;
+                    // tensor indices.  Grab 8 tensors for interpolation.
+                    int idx1 = zi*nxy + yi*nx + xi;
+                    int idx2 = idx1 + 1;
+                    int idx3 = idx1 + nx;
+                    int idx4 = idx2 + nx;
 
-                  // get the tensors at these image indices
-                  //-TENSOR- vtkTensor *tensor1 = inTensorData->GetTuple(idx1);
-                  //-TENSOR- vtkTensor *tensor2 = inTensorData->GetTuple(idx2);
-                  //-TENSOR- vtkTensor *tensor3 = inTensorData->GetTuple(idx3);
-                  //-TENSOR- vtkTensor *tensor4 = inTensorData->GetTuple(idx4);
-                  //-TENSOR- vtkTensor *tensor5 = inTensorData->GetTuple(idx5);
-                  //-TENSOR- vtkTensor *tensor6 = inTensorData->GetTuple(idx6);
-                  //-TENSOR- vtkTensor *tensor7 = inTensorData->GetTuple(idx7);
-                  //-TENSOR- vtkTensor *tensor8 = inTensorData->GetTuple(idx8);
+                    int idx5 = idx1 + nxy;
+                    int idx6 = idx5 + 1;
+                    int idx7 = idx5 + nx;
+                    int idx8 = idx6 + nx;
 
-                  float inT1[3][3], inT2[3][3], inT3[3][3], inT4[3][3];
-                  float inT5[3][3], inT6[3][3], inT7[3][3], inT8[3][3];
-                  inTensorData->GetTuple(idx1,(float *)inT1);
-                  inTensorData->GetTuple(idx2,(float *)inT2);
-                  inTensorData->GetTuple(idx3,(float *)inT3);
-                  inTensorData->GetTuple(idx4,(float *)inT4);
-                  inTensorData->GetTuple(idx5,(float *)inT5);
-                  inTensorData->GetTuple(idx6,(float *)inT6);
-                  inTensorData->GetTuple(idx7,(float *)inT7);
-                  inTensorData->GetTuple(idx8,(float *)inT8);
+                    // get the tensors at these image indices
+                    //-TENSOR- vtkTensor *tensor1 = inTensorData->GetTuple(idx1);
+                    //-TENSOR- vtkTensor *tensor2 = inTensorData->GetTuple(idx2);
+                    //-TENSOR- vtkTensor *tensor3 = inTensorData->GetTuple(idx3);
+                    //-TENSOR- vtkTensor *tensor4 = inTensorData->GetTuple(idx4);
+                    //-TENSOR- vtkTensor *tensor5 = inTensorData->GetTuple(idx5);
+                    //-TENSOR- vtkTensor *tensor6 = inTensorData->GetTuple(idx6);
+                    //-TENSOR- vtkTensor *tensor7 = inTensorData->GetTuple(idx7);
+                    //-TENSOR- vtkTensor *tensor8 = inTensorData->GetTuple(idx8);
 
-                  // find output location
-                  //-TENSOR- vtkTensor *tensor = outTensorData->GetTuple(outTensorIdx);
+                    float inT1[3][3], inT2[3][3], inT3[3][3], inT4[3][3];
+                    float inT5[3][3], inT6[3][3], inT7[3][3], inT8[3][3];
+                    inTensorData->GetTuple(idx1,(float *)inT1);
+                    inTensorData->GetTuple(idx2,(float *)inT2);
+                    inTensorData->GetTuple(idx3,(float *)inT3);
+                    inTensorData->GetTuple(idx4,(float *)inT4);
+                    inTensorData->GetTuple(idx5,(float *)inT5);
+                    inTensorData->GetTuple(idx6,(float *)inT6);
+                    inTensorData->GetTuple(idx7,(float *)inT7);
+                    inTensorData->GetTuple(idx8,(float *)inT8);
 
-                  // go through tensor components
-                  for (i = 0; i < numCompsI; i++)
+                    // find output location
+                    //-TENSOR- vtkTensor *tensor = outTensorData->GetTuple(outTensorIdx);
+
+                    // go through tensor components
+                    for (i = 0; i < numCompsI; i++)
                     {
-                      for (j = 0; j < numCompsJ; j++)
+                        for (j = 0; j < numCompsJ; j++)
                         {
-                          // Interpolate in X and Y at Z0
-                          //
-                          //-TENSOR- float comp1 = tensor1->GetComponent(i,j);
-                          //-TENSOR- float comp2 = tensor2->GetComponent(i,j);
-                          //-TENSOR- float comp3 = tensor3->GetComponent(i,j);
-                          //-TENSOR- float comp4 = tensor4->GetComponent(i,j);
+                            // Interpolate in X and Y at Z0
+                            //
+                            //-TENSOR- float comp1 = tensor1->GetComponent(i,j);
+                            //-TENSOR- float comp2 = tensor2->GetComponent(i,j);
+                            //-TENSOR- float comp3 = tensor3->GetComponent(i,j);
+                            //-TENSOR- float comp4 = tensor4->GetComponent(i,j);
 
-                          // interpolate in x
-                          //-TENSOR- dx0 = x0*comp1 + x1*comp2; 
-                          //-TENSOR- dx1 = x0*comp3 + x1*comp4;                      
-                         
-                          dx0 = x0*inT1[i][j] + x1*inT2[i][j]; 
-                          dx1 = x0*inT3[i][j] + x1*inT4[i][j];
-                          
-                          // and interpolate in y
-                          dxy0 = y0*dx0 + y1*dx1;
-                          
-                          // Interpolate in X and Y at Z1
-                          //
-                          //-TENSOR- float comp5 = tensor5->GetComponent(i,j);
-                          //-TENSOR- float comp6 = tensor6->GetComponent(i,j);
-                          //-TENSOR- float comp7 = tensor7->GetComponent(i,j);
-                          //-TENSOR- float comp8 = tensor8->GetComponent(i,j);
+                            // interpolate in x
+                            //-TENSOR- dx0 = x0*comp1 + x1*comp2; 
+                            //-TENSOR- dx1 = x0*comp3 + x1*comp4;                      
 
-                          // interpolate in x
-                          //-TENSOR- dx0 = x0*comp5 + x1*comp6; 
-                          //-TENSOR- dx1 = x0*comp7 + x1*comp8;      
-                          dx0 = x0*inT5[i][j] + x1*inT6[i][j]; 
-                          dx1 = x0*inT7[i][j] + x1*inT8[i][j];
-                          
-                          // and interpolate in y
-                          dxy1 = y0*dx0 + y1*dx1;
-                          
-                          // Interpolate in Z
-                          //
-                          //-TENSOR- tensor->SetComponent(i, j, z0*dxy0 + z1*dxy1);
-                          outT[i][j] = z0*dxy0 + z1*dxy1;
+                            dx0 = x0*inT1[i][j] + x1*inT2[i][j]; 
+                            dx1 = x0*inT3[i][j] + x1*inT4[i][j];
+
+                            // and interpolate in y
+                            dxy0 = y0*dx0 + y1*dx1;
+
+                            // Interpolate in X and Y at Z1
+                            //
+                            //-TENSOR- float comp5 = tensor5->GetComponent(i,j);
+                            //-TENSOR- float comp6 = tensor6->GetComponent(i,j);
+                            //-TENSOR- float comp7 = tensor7->GetComponent(i,j);
+                            //-TENSOR- float comp8 = tensor8->GetComponent(i,j);
+
+                            // interpolate in x
+                            //-TENSOR- dx0 = x0*comp5 + x1*comp6; 
+                            //-TENSOR- dx1 = x0*comp7 + x1*comp8;      
+                            dx0 = x0*inT5[i][j] + x1*inT6[i][j]; 
+                            dx1 = x0*inT7[i][j] + x1*inT8[i][j];
+
+                            // and interpolate in y
+                            dxy1 = y0*dx0 + y1*dx1;
+
+                            // Interpolate in Z
+                            //
+                            //-TENSOR- tensor->SetComponent(i, j, z0*dxy0 + z1*dxy1);
+                            outT[i][j] = z0*dxy0 + z1*dxy1;
                         }
                     }
 
                 } // else
 
-              // copy outT to output
-              outTensorData->SetTuple(outTensorIdx,(float *)outT);
-              // test
-              // outTensorData->SetTuple9(outTensorIdx,
-//                                     outT[0][0],
-//                                     outT[0][1],
-//                                     outT[0][2],
-//                                     outT[1][0],
-//                                     outT[1][1],
-//                                     outT[1][2],
-//                                     outT[2][0],
-//                                     outT[2][1],
-//                                     outT[2][2]);
+                // copy outT to output
+                outTensorData->SetTuple(outTensorIdx,(float *)outT);
+                // test
+                // outTensorData->SetTuple9(outTensorIdx,
+                //                                     outT[0][0],
+                //                                     outT[0][1],
+                //                                     outT[0][2],
+                //                                     outT[1][0],
+                //                                     outT[1][1],
+                //                                     outT[1][2],
+                //                                     outT[2][0],
+                //                                     outT[2][1],
+                //                                     outT[2][2]);
 
-              //outTensorData->SetTuple9(outTensorIdx,1,0,0,0.0,1.0,0.0,0.0,0.0,1.0);
+                //outTensorData->SetTuple9(outTensorIdx,1,0,0,0.0,1.0,0.0,0.0,0.0,1.0);
 
-              // go to next output tensor
-              outTensorIdx++;
+                // go to next output tensor
+                outTensorIdx++;
 
-              // Step volume coordinates in xs direction
-              x += xStep[0];
-              y += xStep[1];
-              z += xStep[2];
-              
+                // Step volume coordinates in xs direction
+                x += xStep[0];
+                y += xStep[1];
+                z += xStep[2];
+
             }  // end loop over X (row)
 
-          // Rewind volume coordinates back to first column
-          x -= xRewind[0];
-          y -= xRewind[1];
-          z -= xRewind[2];
+            // Rewind volume coordinates back to first column
+            x -= xRewind[0];
+            y -= xRewind[1];
+            z -= xRewind[2];
 
-          // Step volume coordinates in y direction
-          x += yStep[0];
-          y += yStep[1];
-          z += yStep[2];
+            // Step volume coordinates in y direction
+            x += yStep[0];
+            y += yStep[1];
+            z += yStep[2];
         }
     }//interp
 
-  //
-  // Without interpolation 
-  //
-  else 
+    //
+    // Without interpolation 
+    //
+    else 
     {
-      //cout << "Reformatting tensors without interpolation" << endl;
-      nx2 = nx-1;
-      ny2 = ny-1;
-      nz2 = nz-1;
+        //cout << "Reformatting tensors without interpolation" << endl;
+        nx2 = nx-1;
+        ny2 = ny-1;
+        nz2 = nz-1;
 
-      // Loop through output pixels
-      for (idxY = outExt[2]; idxY <= maxY; idxY++)
+        // Loop through output pixels
+        for (idxY = outExt[2]; idxY <= maxY; idxY++)
         {
-          for (idxX = outExt[0]; idxX <= maxX; idxX++)
+            for (idxX = outExt[0]; idxX <= maxX; idxX++)
             {
-              // Compute integer parts of volume coordinates
-              xi = (int)(x + 0.5);
-              yi = (int)(y + 0.5);
-              zi = (int)(z + 0.5);
-                                
-              // Test if coordinates are outside volume
-              if ((xi < 0) || (yi < 0) || (zi < 0) ||
-                  (xi > nx2) || (yi > ny2) || (zi > nz2))
+                // Compute integer parts of volume coordinates
+                xi = (int)(x + 0.5);
+                yi = (int)(y + 0.5);
+                zi = (int)(z + 0.5);
+
+                // Test if coordinates are outside volume
+                if ((xi < 0) || (yi < 0) || (zi < 0) ||
+                        (xi > nx2) || (yi > ny2) || (zi > nz2))
                 {
-                  //-TENSOR- outTensorData->GetTuple(outTensorIdx)->Initialize();
-                  for (i = 0; i < numCompsI; i++)
+                    //-TENSOR- outTensorData->GetTuple(outTensorIdx)->Initialize();
+                    for (i = 0; i < numCompsI; i++)
                     {
-                      for (j = 0; j < numCompsJ; j++)
+                        for (j = 0; j < numCompsJ; j++)
                         {
-                          outT[i][j] = 0;
+                            outT[i][j] = 0;
                         }
                     }
-                  outTensorData->SetTuple(outTensorIdx,(float *)outT);
+                    outTensorData->SetTuple(outTensorIdx,(float *)outT);
                 }
-              else {
-                // Compute 'idx', the index into the input volume
-                // where the output pixel value comes from.
-                idx = zi*nxy + yi*nx + xi;
+                else {
+                    // Compute 'idx', the index into the input volume
+                    // where the output pixel value comes from.
+                    idx = zi*nxy + yi*nx + xi;
 
-                // Set output tensor value to match
-                outTensorData->SetTuple(outTensorIdx,inTensorData->GetTuple(idx));
+                    // Set output tensor value to match
+                    outTensorData->SetTuple(outTensorIdx,inTensorData->GetTuple(idx));
 
-              }
+                }
 
-              // go to next output tensor
-              outTensorIdx ++;
+                // go to next output tensor
+                outTensorIdx ++;
 
-              // Step volume coordinates in xs direction
-              x += xStep[0];
-              y += xStep[1];
-              z += xStep[2];
+                // Step volume coordinates in xs direction
+                x += xStep[0];
+                y += xStep[1];
+                z += xStep[2];
             }
 
-          // Rewind volume coordinates back to first column
-          x -= xRewind[0];
-          y -= xRewind[1];
-          z -= xRewind[2];
+            // Rewind volume coordinates back to first column
+            x -= xRewind[0];
+            y -= xRewind[1];
+            z -= xRewind[2];
 
-          // Step volume coordinates in ys direction
-          x += yStep[0];
-          y += yStep[1];
-          z += yStep[2];
+            // Step volume coordinates in ys direction
+            x += yStep[0];
+            y += yStep[1];
+            z += yStep[2];
         }
     }//withoutInterpolation
 
-  // keep track of run time (of one thread at least)
-  if (id == 0) 
+    // keep track of run time (of one thread at least)
+    if (id == 0) 
     {
-      self->SetRunTime(clock() - tStart);
-      // testing
-      cout << "tensor reformat time: " << clock() - tStart << endl;
+        self->SetRunTime(clock() - tStart);
+        // testing
+        cout << "tensor reformat time: " << clock() - tStart << endl;
     }
 }
 
@@ -1454,31 +1454,31 @@ static void vtkImageReformatExecuteTensor(vtkImageReformat *self,
 //void vtkImageReformat::Execute()
 void vtkImageReformat::ExecuteData(vtkDataObject *out)
 {
-  //vtkImageData *output = this->GetOutput();
-  vtkImageData *output = vtkImageData::SafeDownCast(out);
+    //vtkImageData *output = this->GetOutput();
+    vtkImageData *output = vtkImageData::SafeDownCast(out);
 
-  output->SetExtent(output->GetUpdateExtent());
-  //output->AllocateScalars();  (done by superclass)
+    output->SetExtent(output->GetUpdateExtent());
+    //output->AllocateScalars();  (done by superclass)
 
-  // If we have tensors in the input
-  if (this->GetInput()->GetPointData()->GetTensors() != NULL) {
+    // If we have tensors in the input
+    if (this->GetInput()->GetPointData()->GetTensors() != NULL) {
 
-    if (this->GetInput()->GetPointData()->GetTensors()->GetNumberOfTuples() > 0)
-      {
-        // allocate output tensors
-        vtkFloatArray *data = vtkFloatArray::New(); 
-        data->SetNumberOfComponents(9);
-        int* dims = output->GetDimensions();
-        data->SetNumberOfTuples(dims[0]*dims[1]*dims[2]);
-        output->GetPointData()->SetTensors(data);
-        data->Delete();
+        if (this->GetInput()->GetPointData()->GetTensors()->GetNumberOfTuples() > 0)
+        {
+            // allocate output tensors
+            vtkFloatArray *data = vtkFloatArray::New(); 
+            data->SetNumberOfComponents(9);
+            int* dims = output->GetDimensions();
+            data->SetNumberOfTuples(dims[0]*dims[1]*dims[2]);
+            output->GetPointData()->SetTensors(data);
+            data->Delete();
 
-      }
-  }
-  // jump back into normal pipeline: call standard superclass method here
-  //this->vtkImageToImageFilter::Execute(this->GetInput(), output);
-  //this->vtkImageToImageFilter::Execute();
-  this->vtkImageToImageFilter::ExecuteData(output);
+        }
+    }
+    // jump back into normal pipeline: call standard superclass method here
+    //this->vtkImageToImageFilter::Execute(this->GetInput(), output);
+    //this->vtkImageToImageFilter::Execute();
+    this->vtkImageToImageFilter::ExecuteData(output);
 }
 
 //----------------------------------------------------------------------------
@@ -1505,101 +1505,101 @@ void vtkImageReformat::ThreadedExecute(vtkImageData *inData,
 
     // If no matrices provided, then create defaults
     if (!this->ReformatMatrix) 
-  {
-    // If the user has not set the ReformatMatrix, then create it.
-    // The key is to perform: New(), Register(), Delete().
-    // Then we can call UnRegister() in the destructor, and it will delete
-    // the object if no one else is using it.  We don't have to distinguish
-    // between whether we created the object, or someone else did!
+    {
+        // If the user has not set the ReformatMatrix, then create it.
+        // The key is to perform: New(), Register(), Delete().
+        // Then we can call UnRegister() in the destructor, and it will delete
+        // the object if no one else is using it.  We don't have to distinguish
+        // between whether we created the object, or someone else did!
         this->ReformatMatrix = vtkMatrix4x4::New();
-    this->ReformatMatrix->Register(this);
-    this->ReformatMatrix->Delete();
+        this->ReformatMatrix->Register(this);
+        this->ReformatMatrix->Delete();
     }
     if (!this->WldToIjkMatrix) 
-  {
-        this->WldToIjkMatrix = vtkMatrix4x4::New();
-    this->WldToIjkMatrix->Register(this);
-    this->WldToIjkMatrix->Delete();
-
-    this->GetInput()->GetWholeExtent(ext);
-        for (i=0; i<3; i++)
     {
+        this->WldToIjkMatrix = vtkMatrix4x4::New();
+        this->WldToIjkMatrix->Register(this);
+        this->WldToIjkMatrix->Delete();
+
+        this->GetInput()->GetWholeExtent(ext);
+        for (i=0; i<3; i++)
+        {
             this->WldToIjkMatrix->SetElement(i, 3, 
-                (ext[i*2+1] - ext[i*2] + 1) / 2.0);
+                    (ext[i*2+1] - ext[i*2] + 1) / 2.0);
+        }
     }
+
+
+    // If we have tensors in the input
+    if (inData->GetPointData()->GetTensors() != NULL) {
+
+        if (inData->GetPointData()->GetTensors()->GetNumberOfTuples() > 0)
+        {
+            vtkDebugMacro("Execute: tensors  in input image data");
+
+            // For now just reformat tensors, ignore scalars
+            vtkImageReformatExecuteTensor(this, inData, inExt, 
+                    (short *)(inPtr), 
+                    outData, outExt, wExt, id);
+            // just remove this return to do scalars too
+            // (inefficiently)
+            return;
+        }
     }
 
 
-  // If we have tensors in the input
-  if (inData->GetPointData()->GetTensors() != NULL) {
+    // Use integer math for short and unsigned char data.
 
-    if (inData->GetPointData()->GetTensors()->GetNumberOfTuples() > 0)
-      {
-        vtkDebugMacro("Execute: tensors  in input image data");
-
-        // For now just reformat tensors, ignore scalars
-        vtkImageReformatExecuteTensor(this, inData, inExt, 
-                                      (short *)(inPtr), 
-                                      outData, outExt, wExt, id);
-        // just remove this return to do scalars too
-        // (inefficiently)
-        return;
-      }
-  }
-
-
-  // Use integer math for short and unsigned char data.
-    
     switch (inData->GetScalarType())
     {
-    case VTK_DOUBLE:
+        case VTK_DOUBLE:
             vtkImageReformatExecute(this, inData, inExt, (double *)(inPtr), 
-                outData, outExt, wExt, id);
+                    outData, outExt, wExt, id);
             break;
         case VTK_FLOAT:
             vtkImageReformatExecute(this, inData, inExt, (float *)(inPtr), 
-                outData, outExt, wExt, id);
+                    outData, outExt, wExt, id);
             break;
-    case VTK_LONG:
+        case VTK_LONG:
             vtkImageReformatExecute(this, inData, inExt, (long *)(inPtr), 
-                outData, outExt, wExt, id);
+                    outData, outExt, wExt, id);
             break;
-    case VTK_UNSIGNED_LONG:
+        case VTK_UNSIGNED_LONG:
             vtkImageReformatExecute(this, inData, inExt, (unsigned long *)(inPtr), 
-                outData, outExt, wExt, id);
+                    outData, outExt, wExt, id);
             break;
         case VTK_INT:
             vtkImageReformatExecute(this, inData, inExt, (int *)(inPtr), 
-                outData, outExt, wExt, id);
+                    outData, outExt, wExt, id);
             break;
-    case VTK_UNSIGNED_INT:
+        case VTK_UNSIGNED_INT:
             vtkImageReformatExecute(this, inData, inExt, (unsigned int *)(inPtr), 
-                outData, outExt, wExt, id);
+                    outData, outExt, wExt, id);
             break;
-    case VTK_SHORT:
-      if (numComps == 1) {
-              vtkImageReformatExecuteInt(this, inData, inExt, (short *)(inPtr), outData, outExt, wExt, id);
+        case VTK_SHORT:
+            if (numComps == 1) {
+                vtkImageReformatExecuteInt(this, inData, inExt, (short *)(inPtr), outData, outExt, wExt, id);
             } else {
-              vtkImageReformatExecute(this, inData, inExt, (short *)(inPtr), outData, outExt, wExt, id);
+                vtkImageReformatExecute(this, inData, inExt, (short *)(inPtr), outData, outExt, wExt, id);
             }
             break;
         case VTK_UNSIGNED_SHORT:
             vtkImageReformatExecute(this, inData, inExt, (unsigned short *)(inPtr), 
-                outData, outExt, wExt, id);
+                    outData, outExt, wExt, id);
             break;
         case VTK_CHAR:
-      if (numComps == 1) {
-              vtkImageReformatExecuteInt(this, inData, inExt, (char *)(inPtr), outData, outExt, wExt, id);
+            if (numComps == 1) {
+                vtkImageReformatExecuteInt(this, inData, inExt, (char *)(inPtr), outData, outExt, wExt, id);
             } else {
-              vtkImageReformatExecute(this, inData, inExt, (char *)(inPtr), outData, outExt, wExt, id);
+                vtkImageReformatExecute(this, inData, inExt, (char *)(inPtr), outData, outExt, wExt, id);
             }
             break;
-    case VTK_UNSIGNED_CHAR:
-      if (numComps == 1) {
-             vtkImageReformatExecuteInt(this, inData, inExt, (unsigned char *)(inPtr), outData, outExt, wExt, id);
-      } else {
-             vtkImageReformatExecute(this, inData, inExt, (unsigned char *)(inPtr), outData, outExt, wExt, id);
-      }
+        case VTK_UNSIGNED_CHAR:
+            if (numComps == 1) {
+                vtkImageReformatExecuteInt(this, inData, inExt, (unsigned char *)(inPtr), outData, outExt, wExt, id);
+            } else {
+                vtkImageReformatExecute(this, inData, inExt, (unsigned char *)(inPtr), outData, outExt, wExt, id);
+            }
             break;
         default:
             vtkErrorMacro(<< "Execute: Unknown input ScalarType");
@@ -1614,19 +1614,19 @@ void vtkImageReformat::ThreadedExecute(vtkImageData *inData,
 // the MTime of the filter
 unsigned long vtkImageReformat::GetMTime()
 {
-  unsigned long mTime=this->vtkObject::GetMTime();
-  unsigned long time;
+    unsigned long mTime=this->vtkObject::GetMTime();
+    unsigned long time;
 
-  if ( this->ReformatMatrix != NULL )
+    if ( this->ReformatMatrix != NULL )
     {
-      time = this->ReformatMatrix->GetMTime();
-      mTime = ( time > mTime ? time : mTime );
+        time = this->ReformatMatrix->GetMTime();
+        mTime = ( time > mTime ? time : mTime );
     }
-  if ( this->WldToIjkMatrix != NULL)
+    if ( this->WldToIjkMatrix != NULL)
     {
-      time = this->WldToIjkMatrix->GetMTime();
-      mTime = ( time > mTime ? time : mTime );
+        time = this->WldToIjkMatrix->GetMTime();
+        mTime = ( time > mTime ? time : mTime );
     }
 
-  return mTime;
+    return mTime;
 }

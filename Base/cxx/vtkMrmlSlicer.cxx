@@ -98,9 +98,9 @@ vtkMrmlSlicer::vtkMrmlSlicer()
     // Volumes
     this->BackVolume[s]  = NULL;
     this->SetBackVolume(s, this->NoneVolume);
-      this->ForeVolume[s]  = NULL;
+    this->ForeVolume[s]  = NULL;
     this->SetForeVolume(s, this->NoneVolume);
-      this->LabelVolume[s] = NULL;
+    this->LabelVolume[s] = NULL;
     this->SetLabelVolume(s, this->NoneVolume);
 
     // Reformatters
@@ -171,28 +171,28 @@ vtkMrmlSlicer::vtkMrmlSlicer()
     // Upper Pipeline
     
     // Double
-      this->Double[s] = vtkImageDouble2D::New();
+    this->Double[s] = vtkImageDouble2D::New();
     this->DoubleSliceSize[s] = 0;
 
     // Zoom
-      this->Zoom[s] = vtkImageZoom2D::New();
+    this->Zoom[s] = vtkImageZoom2D::New();
 
     // Cursor
     this->Cursor[s] = vtkImageCrossHair2D::New();
-      // DAVE need a SetAnnoColor
-      this->Cursor[s]->SetCursorColor(1.0, 1.0, 0.5);
-      this->Cursor[s]->SetCursor(127, 127);
-      this->Cursor[s]->SetHashGap(10);
-      this->Cursor[s]->SetHashLength(6);
+    // DAVE need a SetAnnoColor
+    this->Cursor[s]->SetCursorColor(1.0, 1.0, 0.5);
+    this->Cursor[s]->SetCursor(127, 127);
+    this->Cursor[s]->SetHashGap(10);
+    this->Cursor[s]->SetHashLength(6);
 
-      // Offset and Orient
+    // Offset and Orient
 
-      this->ComputeOffsetRangeIJK(s);
+    this->ComputeOffsetRangeIJK(s);
     for (int j=0; j<MRML_SLICER_NUM_ORIENT; j++)
     {
       this->InitOffset(s, this->GetOrientString(j), 0.0);
     }
-      this->Driver[s] = 0;
+    this->Driver[s] = 0;
     this->SetOrient(s, MRML_SLICER_ORIENT_ORIGSLICE);
 
     // Filter
@@ -471,42 +471,42 @@ void vtkMrmlSlicer::DeepCopy(vtkMrmlSlicer *src)
       this->DrawIjkPoints->DeepCopy(src->DrawIjkPoints);
 
       for (int s=0; s<NUM_SLICES; s++)
-    {
-      this->ReformatMatrix[s]->DeepCopy(src->ReformatMatrix[s]);
-      
-      // Lower Pipeline
-      
-      // Volumes
-      this->SetBackVolume(s, src->GetBackVolume(s));
-      this->SetForeVolume(s, src->GetForeVolume(s));
-      this->SetLabelVolume(s, src->GetLabelVolume(s));
-      
-      // Reformatters: set matrices to new ones
-      this->BackReformat[s]->SetReformatMatrix(this->ReformatMatrix[s]);
-      this->ForeReformat[s]->SetReformatMatrix(this->ReformatMatrix[s]);
-      this->LabelReformat[s]->SetReformatMatrix(this->ReformatMatrix[s]);
+      {
+          this->ReformatMatrix[s]->DeepCopy(src->ReformatMatrix[s]);
 
-      // the newer reformatters>> AT 11/09/01
-      this->BackReformat3DView[s]->SetReformatMatrix(this->ReformatMatrix[s]);
-      this->ForeReformat3DView[s]->SetReformatMatrix(this->ReformatMatrix[s]);
-      this->LabelReformat3DView[s]->SetReformatMatrix(this->ReformatMatrix[s]);
-      // << AT 11/09/01
+          // Lower Pipeline
 
-      // Overlays
-      this->ForeOpacity = src->ForeOpacity;
-      this->Overlay[s]->SetOpacity(1, this->ForeOpacity);
-      this->Overlay3DView[s]->SetOpacity(1, this->ForeOpacity);
+          // Volumes
+          this->SetBackVolume(s, src->GetBackVolume(s));
+          this->SetForeVolume(s, src->GetForeVolume(s));
+          this->SetLabelVolume(s, src->GetLabelVolume(s));
 
-      // Upper Pipeline
-    
-      // Offset and Orient
-      this->Driver[s] = src->Driver[s];
-      this->SetOrient(s, src->Orient[s]);
-      
-      // Filter: don't worry about this now
-      //this->FirstFilter[s] = NULL;
-      //this->LastFilter[s] = NULL;
-    }
+          // Reformatters: set matrices to new ones
+          this->BackReformat[s]->SetReformatMatrix(this->ReformatMatrix[s]);
+          this->ForeReformat[s]->SetReformatMatrix(this->ReformatMatrix[s]);
+          this->LabelReformat[s]->SetReformatMatrix(this->ReformatMatrix[s]);
+
+          // the newer reformatters>> AT 11/09/01
+          this->BackReformat3DView[s]->SetReformatMatrix(this->ReformatMatrix[s]);
+          this->ForeReformat3DView[s]->SetReformatMatrix(this->ReformatMatrix[s]);
+          this->LabelReformat3DView[s]->SetReformatMatrix(this->ReformatMatrix[s]);
+          // << AT 11/09/01
+
+          // Overlays
+          this->ForeOpacity = src->ForeOpacity;
+          this->Overlay[s]->SetOpacity(1, this->ForeOpacity);
+          this->Overlay3DView[s]->SetOpacity(1, this->ForeOpacity);
+
+          // Upper Pipeline
+
+          // Offset and Orient
+          this->Driver[s] = src->Driver[s];
+          this->SetOrient(s, src->Orient[s]);
+
+          // Filter: don't worry about this now
+          //this->FirstFilter[s] = NULL;
+          //this->LastFilter[s] = NULL;
+      }
       
       //this->BackFilter = 0;
       //this->ForeFilter = 0;

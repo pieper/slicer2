@@ -485,35 +485,35 @@ int vtkMrmlDataVolume::Write()
 
   if (this->ReadWrite == NULL) 
     {
-  // Make the z extent equal the desired range of image numbers
-  // so that the writer will start on the right image number (.001 not .000)
-  int tmpExt[6], saveExt[6], range[2];
-  this->ImageData->GetExtent(saveExt);
-  this->ImageData->GetExtent(tmpExt);
-  node->GetImageRange(range);
-  tmpExt[4] = range[0];
-  tmpExt[5] = range[1];
-  this->ImageData->SetExtent(tmpExt);
+      // Make the z extent equal the desired range of image numbers
+      // so that the writer will start on the right image number (.001 not .000)
+      int tmpExt[6], saveExt[6], range[2];
+      this->ImageData->GetExtent(saveExt);
+      this->ImageData->GetExtent(tmpExt);
+      node->GetImageRange(range);
+      tmpExt[4] = range[0];
+      tmpExt[5] = range[1];
+      this->ImageData->SetExtent(tmpExt);
 
-  // Set up the image writer
-  vtkImageWriter *writer = vtkImageWriter::New();
-  writer->SetFilePattern(node->GetFilePattern());
-  writer->SetFilePrefix(node->GetFullPrefix());
-  writer->SetInput(this->ImageData);
-  
-  // Progress callback
-  writer->SetProgressMethod(vtkMrmlData::vtkMrmlDataProgress, (void *)this);
-  // The progress callback function needs a handle to the writer 
-  this->ProcessObject = writer;
- 
-  // Write it
-  writer->Write();
+      // Set up the image writer
+      vtkImageWriter *writer = vtkImageWriter::New();
+      writer->SetFilePattern(node->GetFilePattern());
+      writer->SetFilePrefix(node->GetFullPrefix());
+      writer->SetInput(this->ImageData);
+      
+      // Progress callback
+      writer->SetProgressMethod(vtkMrmlData::vtkMrmlDataProgress, (void *)this);
+      // The progress callback function needs a handle to the writer 
+      this->ProcessObject = writer;
+     
+      // Write it
+      writer->Write();
 
-  writer->SetInput(NULL);
-  writer->Delete();
+      writer->SetInput(NULL);
+      writer->Delete();
 
-  // Reset the original extent of the data
-  this->ImageData->SetExtent(saveExt);
+      // Reset the original extent of the data
+      this->ImageData->SetExtent(saveExt);
     }  // end if ReadWrite is NULL
   else 
     {
