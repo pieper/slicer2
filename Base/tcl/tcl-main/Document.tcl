@@ -494,8 +494,10 @@ proc DocumentAll {prog {outputdir ""} {what "doc tcl"}} {
     #------------------------------------------
     if {[lsearch $what "doc"] != -1} {
         if {$outputdir != ""} {
-        set docdir $outputdir} else {
-            set docdir [file join [file dirname $prog] doc]}
+            set docdir $outputdir
+        } else {
+            set docdir [file join [file dirname $prog] doc]
+        }
 
         foreach file [glob -nocomplain $docdir/*] {
             if {[file isdirectory $file] == 1} {
@@ -512,7 +514,7 @@ proc DocumentAll {prog {outputdir ""} {what "doc tcl"}} {
                     puts $dir
                     DocumentParseAuto $dir $fileList
                     DocumentGenerateAuto $dir
-                }
+                } 
             }
         }
     }
@@ -530,10 +532,10 @@ proc DocumentAll {prog {outputdir ""} {what "doc tcl"}} {
 
         # Document each file
         set Index(dirList) ""
-        set dirs "tcl-main tcl-modules tcl-shared tcl-modules/Editor" 
+        set dirs "tcl-main tcl-modules tcl-shared tcl-modules/Editor tcl-modules/Volumes" 
         # levels we are deep in the directory structure, 
         # relative to slicer/program
-        set levels " 1 1 1 2"
+        set levels " 1 1 1 2 2"
 
         foreach dir $dirs level $levels {
             puts $dir
