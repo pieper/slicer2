@@ -143,7 +143,7 @@ When satisfied with the segmentation use other editing modules on the labelmap (
     frame $f.fUserExpand   -bg $Gui(activeWorkspace)
 
     pack $f.fLogo $f.fGrid $f.fExpand $f.fUserExpand \
-    -side top -fill x 
+        -side top -fill x 
 
     #-------------------------------------------
     # FastMarching->Logo Frame
@@ -168,7 +168,7 @@ When satisfied with the segmentation use other editing modules on the labelmap (
     bind $f.eOutput <Return>   "EdFastMarchingLabel"
     bind $f.eOutput <FocusOut> "EdFastMarchingLabel"
     eval {entry $f.eName -width 14 -textvariable Label(name)} $Gui(WEA) \
-    {-bg $Gui(activeWorkspace) -state disabled}
+        {-bg $Gui(activeWorkspace) -state disabled}
     grid $f.bOutput $f.eOutput $f.eName -padx 2 -pady $Gui(pad)
     grid $f.eOutput $f.eName -sticky w
 
@@ -272,10 +272,10 @@ proc EdFastMarchingUserExpand {zero userExpand} {
             EdFastMarching(FastMarching) show [expr $userExpand/$EdFastMarching(totalExpand)]
 
 
-# the progress bar should not be updated
-#     EdFastMarching(FastMarching) SetStartMethod     ""
-#     EdFastMarching(FastMarching) SetProgressMethod  ""
-#     EdFastMarching(FastMarching) SetEndMethod       ""
+            # the progress bar should not be updated
+            #     EdFastMarching(FastMarching) SetStartMethod     ""
+            #     EdFastMarching(FastMarching) SetProgressMethod  ""
+            #     EdFastMarching(FastMarching) SetEndMethod       ""
 
             EdFastMarching(FastMarching) Modified
             EdFastMarching(FastMarching) Update
@@ -426,28 +426,28 @@ proc EdFastMarchingEnter {} {
 
         EdFastMarching(FastMarching) Modified
 
-    #note: that would work too but would screw up the progress bar
-    #Ed(editor) Apply EdFastMarching(castToShort) EdFastMarching(FastMarching)
+        #note: that would work too but would screw up the progress bar
+        #Ed(editor) Apply EdFastMarching(castToShort) EdFastMarching(FastMarching)
 
 ################### try that
-set o [EditorGetOriginalID]
-set w [EditorGetWorkingID]
+        set o [EditorGetOriginalID]
+        set w [EditorGetWorkingID]
 
-set vtkImageDataOriginal [Volume($o,vol) GetOutput]
-set vtkImageDataWorking [Volume($w,vol) GetOutput]
+        set vtkImageDataOriginal [Volume($o,vol) GetOutput]
+        set vtkImageDataWorking [Volume($w,vol) GetOutput]
 
-EdFastMarching(castToShort) SetInput $vtkImageDataOriginal
+        EdFastMarching(castToShort) SetInput $vtkImageDataOriginal
 
-EdFastMarching(FastMarching) SetInput [EdFastMarching(castToShort) GetOutput]
-EdFastMarching(FastMarching) SetOutput $vtkImageDataWorking
+        EdFastMarching(FastMarching) SetInput [EdFastMarching(castToShort) GetOutput]
+        EdFastMarching(FastMarching) SetOutput $vtkImageDataWorking
 
-    EdFastMarching(FastMarching) AddObserver StartEvent MainStartProgress
-    EdFastMarching(FastMarching) AddObserver ProgressEvent "MainShowProgress EdFastMarching(FastMarching)"
-    EdFastMarching(FastMarching) AddObserver EndEvent MainEndProgress
-MainStartProgress
+            EdFastMarching(FastMarching) AddObserver StartEvent MainStartProgress
+            EdFastMarching(FastMarching) AddObserver ProgressEvent "MainShowProgress EdFastMarching(FastMarching)"
+            EdFastMarching(FastMarching) AddObserver EndEvent MainEndProgress
+        MainStartProgress
 
-EdFastMarching(FastMarching) Modified
-EdFastMarching(FastMarching) Update
+        EdFastMarching(FastMarching) Modified
+        EdFastMarching(FastMarching) Update
 
 
 #$vtkImageDataWorking Update
@@ -498,20 +498,20 @@ proc EdFastMarchingLabel {} {
 
     LabelsFindLabel
     if $Label(label)!=$EdFastMarching(label) {
-    if {$EdFastMarching(fastMarchingInitialized) == 1} {
+        if {$EdFastMarching(fastMarchingInitialized) == 1} {
 
-        set EdFastMarching(label) $Label(label)
+            set EdFastMarching(label) $Label(label)
 
-        EdFastMarching(FastMarching) setActiveLabel $Label(label)
- 
-        FiducialsDeleteList "FastMarching-seeds"
-        
-        set EdFastMarching(fidFiducialList) \
-        [ FiducialsCreateFiducialsList "default" "FastMarching-seeds" 0 3 ]
-        
-        EdFastMarching(FastMarching) initNewExpansion
-        set EdFastMarching(userExpand) 0
-    }
+            EdFastMarching(FastMarching) setActiveLabel $Label(label)
+     
+            FiducialsDeleteList "FastMarching-seeds"
+            
+            set EdFastMarching(fidFiducialList) \
+                [ FiducialsCreateFiducialsList "default" "FastMarching-seeds" 0 3 ]
+            
+            EdFastMarching(FastMarching) initNewExpansion
+            set EdFastMarching(userExpand) 0
+        }
     }
 }
 
@@ -522,23 +522,23 @@ proc EdFastMarchingSegment {} {
     global Label Fiducials EdFastMarching Volume Ed Gui
 
     if {[ValidateInt $Label(label)] == 0} {
-    tk_messageBox -message "Output label is not an integer !"
-    return
+        tk_messageBox -message "Output label is not an integer !"
+        return
     }
 
     if {[ValidateInt $Label(label)] <= 0} {
-    tk_messageBox -message "Output label is not positive !"
-    return
+        tk_messageBox -message "Output label is not positive !"
+        return
     }
    
     if {[ValidateFloat $EdFastMarching(nExpand)] == 0} {
-    tk_messageBox -message "Expansion is not a valid number !"
-    return
+        tk_messageBox -message "Expansion is not a valid number !"
+        return
     } 
   
     if { $EdFastMarching(nExpand) <= 0 } {
-    tk_messageBox -message "Expansion is not positive !"
-    return
+        tk_messageBox -message "Expansion is not positive !"
+        return
     }   
 
     set e EdFastMarching
@@ -565,16 +565,16 @@ proc EdFastMarchingSegment {} {
 
     foreach s $l {
 
-    set coord [FiducialsGetPointCoordinates $s]
+        set coord [FiducialsGetPointCoordinates $s]
 
-    set cr [lindex $coord 0]
-    set ca [lindex $coord 1]
-    set cs [lindex $coord 2]
+        set cr [lindex $coord 0]
+        set ca [lindex $coord 1]
+        set cs [lindex $coord 2]
 
-    if { [EdFastMarching(FastMarching) addSeed $cr $ca $cs]==0 } {
-        FiducialsDeletePoint $EdFastMarching(fidFiducialList) $s
-        tk_messageBox -message "Seed $s is outside of the volume.\nIt has therefore been removed."
-    }
+        if { [EdFastMarching(FastMarching) addSeed $cr $ca $cs]==0 } {
+            FiducialsDeletePoint $EdFastMarching(fidFiducialList) $s
+            tk_messageBox -message "Seed $s is outside of the volume.\nIt has therefore been removed."
+        }
 
     }
 
@@ -584,8 +584,8 @@ proc EdFastMarchingSegment {} {
     Ed(editor)  UseInputOn
 
     if { [EdFastMarching(FastMarching) nValidSeeds]<=0 } {
-    tk_messageBox -message "No seeds defined !\n(see help section)"
-    return
+        tk_messageBox -message "No seeds defined !\n(see help section)"
+        return
     }
 
     set Gui(progressText) "FastMarching"
@@ -597,33 +597,33 @@ proc EdFastMarchingSegment {} {
 
     EdFastMarching(FastMarching) Modified
 
-#note: that would work too but would screw up the progress bar
-#Ed(editor) Apply EdFastMarching(castToShort) EdFastMarching(FastMarching)
+    #note: that would work too but would screw up the progress bar
+    #Ed(editor) Apply EdFastMarching(castToShort) EdFastMarching(FastMarching)
 
 ################### try that
-set o [EditorGetOriginalID]
-set w [EditorGetWorkingID]
+    set o [EditorGetOriginalID]
+    set w [EditorGetWorkingID]
 
-set vtkImageDataOriginal [Volume($o,vol) GetOutput]
-set vtkImageDataWorking [Volume($w,vol) GetOutput]
+    set vtkImageDataOriginal [Volume($o,vol) GetOutput]
+    set vtkImageDataWorking [Volume($w,vol) GetOutput]
 
-EdFastMarching(castToShort) SetInput $vtkImageDataOriginal
+    EdFastMarching(castToShort) SetInput $vtkImageDataOriginal
 
-EdFastMarching(FastMarching) SetInput [EdFastMarching(castToShort) GetOutput]
-EdFastMarching(FastMarching) SetOutput $vtkImageDataWorking
+    EdFastMarching(FastMarching) SetInput [EdFastMarching(castToShort) GetOutput]
+    EdFastMarching(FastMarching) SetOutput $vtkImageDataWorking
 
-#MainShowProgress EdFastMarching(FastMarching)
-#MainStartProgress
+    #MainShowProgress EdFastMarching(FastMarching)
+    #MainStartProgress
 
     EdFastMarching(FastMarching) AddObserver StartEvent MainStartProgress
     EdFastMarching(FastMarching) AddObserver ProgressEvent "MainShowProgress EdFastMarching(FastMarching)"
     EdFastMarching(FastMarching) AddObserver EndEvent MainEndProgress
 
 
-EdFastMarching(FastMarching) Modified
-EdFastMarching(FastMarching) Update
+    EdFastMarching(FastMarching) Modified
+    EdFastMarching(FastMarching) Update
 
-#$vtkImageDataWorking Update
+    #$vtkImageDataWorking Update
 ###################
 
 #    Ed(editor) Apply  EdFastMarching(FastMarching) EdFastMarching(FastMarching)
