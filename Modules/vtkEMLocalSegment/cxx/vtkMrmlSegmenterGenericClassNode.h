@@ -128,6 +128,17 @@ public:
   vtkGetVectorMacro(RegistrationCovariance,double,9); 
   vtkSetVectorMacro(RegistrationCovariance,double,9);
 
+  // Description:
+  // Prints out the registration parameters translation - rotation -scaling 
+  vtkGetMacro(PrintRegistrationParameters, int);
+  vtkSetMacro(PrintRegistrationParameters, int);
+
+  // Description:
+  // Prints out the registration cost at each voxel 
+  vtkGetMacro(PrintRegistrationCost, int);
+  vtkSetMacro(PrintRegistrationCost, int);
+  
+
 protected:
   vtkMrmlSegmenterGenericClassNode();
   ~vtkMrmlSegmenterGenericClassNode();
@@ -138,6 +149,9 @@ protected:
   float  LocalPriorWeight;
   char   *InputChannelWeights;  
   int    PrintWeights;
+  int    PrintRegistrationParameters;
+  int    PrintRegistrationCost;
+
 
   double RegistrationTranslation[3];
   double RegistrationRotation[3];

@@ -62,6 +62,9 @@ vtkMrmlSegmenterGenericClassNode::vtkMrmlSegmenterGenericClassNode() {
   this->LocalPriorWeight = 1.0;
   this->InputChannelWeights = NULL;
   this->PrintWeights        = 0;
+  this->PrintRegistrationParameters = 0;
+  this->PrintRegistrationCost = 0;
+
 
   memset(this->RegistrationTranslation,0,3*sizeof(double));
   memset(this->RegistrationRotation,0,3*sizeof(double));
@@ -89,7 +92,9 @@ void vtkMrmlSegmenterGenericClassNode::Write(ofstream& of, int nIndent)
   }
   of << " LocalPriorWeight='" << this->LocalPriorWeight << "'";
 
-  of << " PrintWeights='" << this->PrintWeights << "'";
+  if (this->PrintWeights) of << " PrintWeights='" << this->PrintWeights << "'";
+  if (this->PrintRegistrationParameters) of << " PrintRegistrationParameters='" << this->PrintRegistrationParameters << "'";
+  if (this->PrintRegistrationCost) of << " PrintRegistrationCost='" << this->PrintRegistrationCost << "'";
 
   if  (this->RegistrationTranslation[0] || this->RegistrationTranslation[1] || this->RegistrationTranslation[2]) 
     of << " RegistrationTranslation='" << this->RegistrationTranslation[0] << " " << this->RegistrationTranslation[1] << " " << this->RegistrationTranslation[2] << "'";
@@ -113,7 +118,10 @@ void vtkMrmlSegmenterGenericClassNode::Copy(vtkMrmlNode *anode)
   this->Prob = node->Prob;
   this->SetInputChannelWeights(node->InputChannelWeights);
   this->SetLocalPriorWeight(node->LocalPriorWeight);
-  this->PrintWeights   = node->PrintWeights;
+
+  this->PrintWeights                  = node->PrintWeights;
+  this->PrintRegistrationParameters   = node->PrintRegistrationParameters;
+  this->PrintRegistrationCost         = node->PrintRegistrationCost;
 
   memcpy(this->RegistrationTranslation,node->RegistrationTranslation,3*sizeof(double));
   memcpy(this->RegistrationRotation, node->RegistrationRotation,3*sizeof(double));
@@ -124,14 +132,15 @@ void vtkMrmlSegmenterGenericClassNode::Copy(vtkMrmlNode *anode)
 //----------------------------------------------------------------------------
 void vtkMrmlSegmenterGenericClassNode::PrintSelf(ostream& os, vtkIndent indent)
 {
-  os << indent << "Prob: " << this->Prob << "\n"; 
-  os << indent << "InputChannelWeights: " <<
+  os << indent << "Prob:                         " << this->Prob << "\n"; 
+  os << indent << "InputChannelWeights:          " <<
     (this->InputChannelWeights ? this->InputChannelWeights : "(none)") << "\n";
 
-  os << indent << "LocalPriorWeight: " << this->LocalPriorWeight << "\n";
+  os << indent << "LocalPriorWeight:             " << this->LocalPriorWeight << "\n";
 
-  os << indent << "PrintWeights:   " << this->PrintWeights << "\n";
-
+  os << indent << "PrintWeights:                 " << this->PrintWeights << "\n";
+  os << indent << "PrintRegistrationParameters:  " << this->PrintRegistrationParameters << "\n";
+  os << indent << "PrintRegistrationCost:        " << this->PrintRegistrationCost << "\n";
   os << indent << "RegistrationTranslation:      " << this->RegistrationTranslation[0] << ", " << this->RegistrationTranslation[1] << ", " << this->RegistrationTranslation[2] << "\n" ;
   os << indent << "RegistrationRotation:         " << this->RegistrationRotation[0] << ", " << this->RegistrationRotation[1] << ", " << this->RegistrationRotation[2] << "\n" ;
   os << indent << "RegistrationScale:            " << this->RegistrationScale[0] << ", " << this->RegistrationScale[1] << ", " << this->RegistrationScale[2] << "\n" ;
