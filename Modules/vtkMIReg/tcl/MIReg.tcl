@@ -99,7 +99,7 @@ proc MIRegInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1 $} {$Date: 2003/07/14 22:34:08 $}]
+        {$Revision: 1.2 $} {$Date: 2003/07/15 16:08:19 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -113,13 +113,21 @@ proc MIRegInit {} {
     set MIReg(Model1)  $Model(idNone)
     set MIReg(FileName)  ""
 
-    global Matrix
+    global Matrix MIReg
     set Matrix(autoFast) mi-fast.txt
     set Matrix(autoSlow) mi-slow.txt
     set MIReg(autoSpeed)  Fast
     set Matrix(allowAutoUndo) 0
-}
 
+    set MIReg(Resolution)       128
+    set MIReg(UpdateIterations) 5
+    set MIReg(NumberOfSamples) 50
+    set MIReg(LearningRate)    .01
+    set MIReg(TranslateScale)  64
+    # do not know for these a good default value yet
+    set MIReg(SourceStandardDeviation) 1 
+    set MIReg(TargetStandardDeviation) 1
+     }
 #-------------------------------------------------------------------------------
 # .PROC MIRegBuildSubGui
 #
@@ -132,28 +140,90 @@ proc MIRegInit {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MIRegBuildSubGui {f} {
-    global Gui Matrix 
+    global Gui Matrix MIReg
 
     set framename $f
-    
+
+    #-------------------------------------------
+    # Frame Hierarchy:
+    #-------------------------------------------
+    # Select
+    # Level
+    #   Normal
+    #   Advanced
+    # Props
+    #   Top
+    #     Active
+    #     Type
+    #   Bot
+    #     Basic
+    #     Advanced
+    # Manual
+    # Auto
+    #-------------------------------------------
+
+    # The select and Level Frames
+    frame $f.fSelect -bg $Gui(backdrop) -relief sunken -bd 2
+    frame $f.fLevel  -bg $Gui(activeWorkspace) -height 500
+    pack $f.fSelect $f.fLevel -side top -pady $Gui(pad) -padx $Gui(pad) -fill x
+
+    #-------------------------------------------
+    # Select frame
+    #-------------------------------------------
+
+    set f $framename.fSelect
+
+    foreach level "Normal Advanced" {
+        eval {radiobutton $f.r$level \
+            -text "$level" -command "MIRegSetLevel" \
+            -variable MIReg(Level) -value $level -width 10 \
+            -indicatoron 0} $Gui(WRA)
+        set MIReg(r${level}) $f.r$level
+        pack $f.r$level -side left -padx 0 
+    }
+
+    #-------------------------------------------
+    # Level frame
+    #-------------------------------------------
+
+    set f $framename.fLevel
+    #
+    # Swappable Frames for Normal and Advanced Screens
+    #
+    foreach type "Normal Advanced" {
+        frame $f.f${type} -bg $Gui(activeWorkspace)
+        place $f.f${type} -in $f -relheight 1.0 -relwidth 1.0
+        set MIReg(f${type}) $f.f${type}
+    }
+    raise $MIReg(fNormal)
+
+    set fnormal   $framename.fLevel.fNormal
+    set fadvanced $framename.fLevel.fAdvanced
+
+    #-------------------------------------------
+    # Level->Normal frame
+    #-------------------------------------------
+
+    set f $fnormal
+
     frame $f.fDesc    -bg $Gui(activeWorkspace)
-    frame $f.fSpeed   -bg $Gui(activeWorkspace) -relief groove -bd 2
+    frame $f.fSpeed   -bg $Gui(activeWorkspace)
     frame $f.fRun     -bg $Gui(activeWorkspace)
 
-    pack $f.fDesc $f.fSpeed $f.fRun -pady $Gui(pad) \
+    pack $f.fDesc $f.fSpeed $f.fRun -pady $Gui(pad) 
 
     #-------------------------------------------
-    # MI->Desc frame
+    # Level->Normal->Desc frame
     #-------------------------------------------
-    set f $framename.fDesc
+    set f $fnormal.fDesc
 
     eval {label $f.l -text "\Press 'Run' to start the program \nthat performs automatic registration\nby Mutual Information.\n\Your manual registration is used\n\ as an initial pose.\ "} $Gui(WLA)
     pack $f.l -pady $Gui(pad)
 
     #-------------------------------------------
-    # Mi->Speed Frame
+    # Level->Normal->Speed Frame
     #-------------------------------------------
-    set f $framename.fSpeed
+    set f $fnormal.fSpeed
 
     frame $f.fTitle -bg $Gui(activeWorkspace)
     frame $f.fBtns -bg $Gui(activeWorkspace)
@@ -171,19 +241,78 @@ proc MIRegBuildSubGui {f} {
     }
 
     #-------------------------------------------
-    # MI->Run frame
+    # Level->Normal->Run frame
     #-------------------------------------------
-    set f $framename.fRun
+    set f $fnormal.fRun
 
     foreach str "Run Cancel Undo" {
         eval {button $f.b$str -text "$str" -width [expr [string length $str]+1] \
-            -command "AlignmentsAuto$str"} $Gui(WBA)
-        set Matrix(b$str) $f.b$str
+            -command "MIRegAuto$str"} $Gui(WBA)
+        set MIReg(b$str) $f.b$str
     }
     pack $f.bRun $f.bUndo -side left -padx $Gui(pad) -pady $Gui(pad)
-    set Matrix(bUndo) $f.bUndo
+    set MIReg(bUndo) $f.bUndo
     $f.bUndo configure -state disabled
+
+    #-------------------------------------------
+    # Level->Advanced
+    #-------------------------------------------
+
+    set f $fadvanced
+
+    foreach param {{SampleSize} \
+                   {SigmaUU} \
+                   {SigmaVV} \
+                   {SigmaV} \
+                   {Pmin} \
+                   {UpdateIterations}  \
+                   {LearningRate} \
+                   {SourceStandardDeviation} \
+                   {TargetStandardDeviation} \
+                   {NumberOfSamples} \
+                   {TranslateScale} \
+                   } name \
+                  {{SampleSize}  \
+                   {SigmaUU}  \
+                   {SigmaVV}  \
+                   {SigmaV}  \
+                   {Pmin}  \
+                   {Update Iterations} \
+                   {Learning Rate} \
+                   {Source Standard Deviation} \
+                   {Target Standard Deviation} \
+                   {Number Of Samples} \
+                   {Translate Scale} \
+                    } {
+        set f $fadvanced
+        frame $f.f$param   -bg $Gui(activeWorkspace)
+        pack $f.f$param -side top -fill x -pady 2
+        
+        set f $f.f$param
+        eval {label $f.l$param -text "$name:"} $Gui(WLA)
+        eval {entry $f.e$param -width 5 -textvariable MIReg($param)} $Gui(WEA)
+        pack $f.l$param -side left -padx $Gui(pad) -fill x -anchor w
+        pack $f.e$param -side left -padx $Gui(pad) -expand 1
+    }
 }
+
+#-------------------------------------------------------------------------------
+# .PROC MIRegSetLevel
+#
+# Set the registration mechanism depending on which button the user selected in
+# the Auto tab.
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MIRegSetLevel {} {
+    global MIReg
+
+    set level $MIReg(Level)
+    raise $MIReg(f${level})
+    focus $MIReg(f${level})
+}
+
 
 #-------------------------------------------------------------------------------
 # .PROC MIRegEnter
@@ -236,28 +365,109 @@ proc MIRegExit {} {
 #-------------------------------------------------------------------------------
 
 #-------------------------------------------------------------------------------
-# .PROC AlignmentsAutoRun
+# .PROC MIRegAutoRun
 #
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc AlignmentsAutoRun {} {
+proc MiRegAutoRun {} {
     if { [info command vtkITKMutualInformationTransform] == "" } {
-        AlignmentsAutoRun_vtk 
+        MIRegAutoRun_vtk 
     } else {
-        AlignmentsAutoRun_itk 
+        MIRegAutoRun_itk 
     }
 }
 
+
 #-------------------------------------------------------------------------------
-# .PROC AlignmentsAutoRun_vtk
+# .PROC MIRegAutoRun_itk
 #
+# use the vtkITK interface to the ITK MI registration routines
+# - builds a new user interface panel to control the process
 #
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc AlignmentsAutoRun_vtk {} {
-    global Path env Gui Matrix Volume
+
+proc MIRegAutoRun_itk {} {
+    global Path env Gui Matrix Volume MIReg
+
+    # v = ID of volume to register (moving)
+    # r = ID of reference volume
+    set v $Matrix(volume)
+    set r $Matrix(refVolume)
+
+    # Store which transform we're editing
+    # If the user has not selected a tranform, then create a new one by default
+    # and append it to the volume to register (ie. "Volume to Move")
+    set t $Matrix(activeID)
+    set Matrix(tAuto) $t
+    if {$t == ""} {
+        DataAddTransform append Volume($v,node) Volume($v,node)
+    }
+
+    # TODO make islicer a package
+    source $env(SLICER_HOME)/Modules/iSlicer/tcl/isregistration.tcl
+
+    catch "destroy .mi"
+    toplevel .mi
+
+    isregistration .mi.reg \
+        -transform $t \
+        -moving [Volume($v,node) GetName] \
+        -reference [Volume($r,node) GetName] \
+        -resolution      $MiReg(Resolution)     \
+        -iterations      $MiReg(UpdateIterations)     \
+        -samples         $MIReg(NumberOfSamples)      \
+        -learningrate    $MIReg(LearningRate)         \
+        -translatescale  $MIReg(TranslateScale)       
+
+#                         $MIReg(SourceStandardDeviation) \
+#                         $MIReg(TargetStandardDeviation) \
+                   
+                   
+                   
+                   
+
+
+    pack .mi.reg -fill both -expand true
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC MIRegAutoUndo
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MIRegAutoUndo {} {
+    global Matrix MIReg
+
+    set t $Matrix(tAuto)
+    set tran [Matrix($t,node) GetTransform]
+    $tran Pop
+
+    # Disallow undo
+    $MIReg(bUndo) configure -state disabled
+
+    # Update MRML
+    MainUpdateMRML
+    RenderAll
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC MIRegAutoRun_vtk
+#
+#
+# These are the tools written by Dave Gering (and implemented by Hanifa Dostmohamed)
+# They are not currently used, though they should work.
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MIRegAutoRun_vtk {} {
+    global Path env Gui Matrix Volume MIReg
 
     # v = ID of volume to register
     # r = ID of reference volume
@@ -345,9 +555,9 @@ proc AlignmentsAutoRun_vtk {} {
           # Update the image data to display
           # Copy the new Subject if its resolution changed since last update
           if {$res != $resDisplay} {
-            puts "Current Pose  at res=$res is: [$currentPose Print]"
+            puts "Current Pose at res=$res is: [$currentPose Print]"
             set resDisplay $res
-            AlignmentsCopyRegImages $res $r $v
+            MIRegCopyRegImages $res $r $v
           }
         }
 
@@ -370,66 +580,63 @@ proc AlignmentsAutoRun_vtk {} {
 }
 
 
-#-------------------------------------------------------------------------------
-# .PROC AlignmentsAutoRun_vtk
 #
-# use the vtkITK interface to the ITK MI registration routines
-# - builds a new user interface panel to control the process
+#-------------------------------------------------------------------------------
+# .PROC MIRegCopyRegImages
 #
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-
-proc AlignmentsAutoRun_itk {} {
-    global Path env Gui Matrix Volume
-
-    # v = ID of volume to register (moving)
-    # r = ID of reference volume
-    set v $Matrix(volume)
-    set r $Matrix(refVolume)
-
-    # Store which transform we're editing
-    # If the user has not selected a tranform, then create a new one by default
-    # and append it to the volume to register (ie. "Volume to Move")
-    set t $Matrix(activeID)
-    set Matrix(tAuto) $t
-    if {$t == ""} {
-        DataAddTransform append Volume($v,node) Volume($v,node)
-    }
-
-    # TODO make islicer a package
-    source $env(SLICER_HOME)/Modules/iSlicer/tcl/isregistration.tcl
-
-    catch "destroy .mi"
-    toplevel .mi
-
-    isregistration .mi.reg \
-        -transform $t \
-        -moving [Volume($v,node) GetName] \
-        -reference [Volume($r,node) GetName]
-
-    pack .mi.reg -fill both -expand true
-}
-
-
-#-------------------------------------------------------------------------------
-# .PROC AlignmentsAutoUndo
+# Stuff for Dave Gering implementation
 #
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc AlignmentsAutoUndo {} {
-    global Matrix
+proc MIRegCopyRegImages {res r v} {
+  global Volume
 
-    set t $Matrix(tAuto)
-    set tran [Matrix($t,node) GetTransform]
-    $tran Pop
+  #
+  # Copy Subject
+  #
 
-    # Disallow undo
-    $Matrix(bUndo) configure -state disabled
+  # Copy the downsampled ImageData
+  vtkImageCopy copy
+  copy SetInput [reg GetSub $res]
+  copy Update
+  copy SetInput ""
+  Volume($v,vol) SetImageData [copy GetOutput]
+  copy SetOutput ""
+  copy Delete
 
-    # Update MRML
-    MainUpdateMRML
-    RenderAll
+  # Copy the RasToIjk matrix of downsampled data
+  set imgMatrix [[reg GetSubRasToIjk $res] GetRasToIjk]
+  puts "Subject RasToIjk = [$imgMatrix Print]"
+  set n Volume($v,node)
+  set str [$n GetMatrixToString $imgMatrix]
+  $n SetRasToVtkMatrix $str
+  $n UseRasToVtkMatrixOn
+
+  # Update pipeline and GUI
+  MainVolumesUpdate $v
+
+  #
+  # Copy Reference
+  #
+
+  # Copy the downsampled ImageData
+  vtkImageCopy copy
+  copy SetInput [reg GetRef $res]
+  copy Update
+  copy SetInput ""
+  Volume($r,vol) SetImageData [copy GetOutput]
+  copy SetOutput ""
+  copy Delete
+
+  # Copy the RasToIjk matrix of downsampled data
+  set imgMatrix [[reg GetRefRasToIjk $res] GetRasToIjk]
+  # puts "Reference RasToIjk = [$imgMatrix Print]"
+  set n Volume($r,node)
+  set str [$n GetMatrixToString $imgMatrix]
+  $n SetRasToVtkMatrix $str
+  $n UseRasToVtkMatrixOn
+
+  # Update pipeline and GUI
+  MainVolumesUpdate $r
 }
-
