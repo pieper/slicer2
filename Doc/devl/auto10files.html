@@ -19,8 +19,9 @@ These are the files the 3D Slicer must have in order to run.
 <td class=box1>
 	<div class=q>tcl-modules</div>
 	<div class=a>
-These files are optional, and they contain the code to handle the modules that
-are accessed using the buttons on the 3D Slicer's main menu.
+These files are optional, and each one implements a specific function
+of the Slicer.  Tcl files in this directory are referred to as
+modules.
 	</div>
 </td>
 </tr>
@@ -28,7 +29,11 @@ are accessed using the buttons on the 3D Slicer's main menu.
 <td class=box0>
 	<div class=q>tcl-shared</div>
 	<div class=a>
-These files may be shared by multiple modules.
+
+These files implement functionality that may be shared by multiple
+modules.  For example, generally helpful procedures or new widgets are
+located here.
+
 	</div>
 </td>
 </tr>

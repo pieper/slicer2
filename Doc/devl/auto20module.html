@@ -1,18 +1,50 @@
 <title>Add a Module</title>
 
-<p>
-New modules are added to the directory slicer/program/tcl-modules.
-Inside this directory there is an example file called Custom.tcl that explains in detail how to create your own module. 
+<table border=0 cellspacing=0 cellpadding=0'> 
+<tr> 
+<td valign=top> 
 
 <p>
-Any new Tcl files that Slicer finds in the tcl-modules and tcl-shared directories will automatically be sourced when the Slicer is run.  
-Files in the tcl-modules directory (generally referred to here as "modules") will automatically receive a button on the Slicer's main menu.
-If you create procedures that are (or could be) useful to several modules, place them in the tcl-shared directory.
+New modules are added to the directory
+<b>slicer/program/tcl-modules</b>.  Inside this directory there is an
+example file called <b>Custom.tcl</b> that explains in detail how to
+create your own module. 
 
 <p>
-To allow multiple users to develop their own modules on Unix systems, Slicer will preferentially source modules in any tcl-modules, tcl-shared, and/or tcl-main directories that it finds in the directory from which it was run.  
-So, if you have your own program/tcl-modules directory, running Slicer from inside your program directory will source any Tcl files you put in your tcl-modules directory.  
-Then Slicer will source the rest of the files in the Tcl directories where it was installed.
+All files in the tcl-modules directory (generally referred to here as
+"modules") will automatically receive a button on the Slicer's main
+menu.  They will also be provided with a tab on the GUI.
+
+<p>
+To allow multiple users to develop their own modules on Unix systems,
+Slicer will preferentially source modules in any local tcl-modules,
+tcl-shared, and/or tcl-main directories that it finds in the directory
+from which it was run. Then the Slicer will continue on to source the
+rest of the tcl files it finds in the directory where it was
+installed.
+
+</td> 
+ 
+<!-- Space --> 
+<td>&nbsp;&nbsp;&nbsp;</td> 
+ 
+<!------------------------------- Tidbit -----------------------------------> 
+<td valign=top width=35%> 
+        <p class=tidbit><em>Easy Development Tip</em><br><br> 
+<small>
+
+Run slicer from inside your personal <b>slicer/program</b> directory
+and it will find your new modules.  This is because Slicer will
+preferentially source tcl files in your local tcl-modules, tcl-shared,
+and/or tcl-main directories.
+
+</small> 
+        </p> 
+</td> 
+</tr> 
+</table> 
+
+
 
 
 

@@ -1,17 +1,35 @@
 <title>Build VTK</title>
 
+<p> These instructions are for Unix/Linux machines, but doing basically the same thing under Windows will also work.
+
 <p>
-First, obtain the VTK (Visualization Toolkit) source code.  It can be downloaded from 
-<a href="http://www.kitware.com/vtk.html" target="Resource Window">Kitware</a>.
+Make sure that Tcl and Tk are installed on your machine.  They can be downloaded from
+<a href="http://dev.scriptics.com/software/tcltk/">http://dev.scriptics.com/software/tcltk/</a>.
+<p>
+Obtain the VTK (Visualization Toolkit) source code.  It can be downloaded from 
+<a href="http://public.kitware.com/">http://public.kitware.com/</a>.
 
-<p> The code that Slicer adds to VTK is found in the directory slicer/vtksrc.  
-In order to compile this code with VTK, copy all files from this directory into 
-the vtk/local directory. (This is the directory provided by Kitware for local development.)
+<p> The classes that Slicer adds to VTK are found in the directory
+slicer/vtksrc.  In order to compile our code with VTK, copy all files
+from this directory into the vtk/local directory. (This is the
+directory provided by Kitware for local development.)
 
-<p> Configure and make VTK.  
-(<a href="http://dev.scriptics.com/software/tcltk/" target="Resource Window">Tcl and Tk</a>
-should already be installed on your machine before you do this.)
-Run configure with the following options, plus any others you want to add.
-<pre><p class=code>./configure --with-tcl --with-tkwidget --with-patented --with-local --with-shared</p></pre>
-Additional information can be found in the README.html file in the vtk directory.
-(Note that after you build vtk, the executable can be found in the vtk/tcl directory.)
+<pre><p class=code>cp -rp slicer/vtksrc/* vtk/local/ </p></pre> 
+
+<p> Configure and make VTK.  Run configure with the following options,
+plus any others you want to add.  Note that under Windows you just
+check the same things in the pcmaker program.
+
+<pre><p class=code>./configure --with-tcl --with-tkwidget
+--with-patented --with-local --with-shared</p></pre> 
+
+<p>Additional information can be found in the README.html file in the
+vtk directory, on the vtk website, and on their helpful vtkusers
+mailing list.  (Note that after you build vtk, the executable can be
+found in the vtk/tcl directory.)
+
+<p>
+To run slicer using your newly-built vtk, read the slicer script and
+place the vtk executable and library files in the expected locations.
+Or edit the slicer script so that it will find your files.
+

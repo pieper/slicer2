@@ -5,17 +5,26 @@
 <!--
 var i=0
 var toc = new Array();
+
+// Toplevel: home page
+// -----------------------------------
 toc[i++] = new tocCreate(1, "Welcome", "welcome.html");
 
+// Intro folder
+// -----------------------------------
 toc[i++] = new tocCreate(1, "Introduction", "");
 toc[i++] = new tocCreate(2, "Overview", "intro/index.html");
 toc[i++] = new tocCreate(2, "Acknowledgement", "intro/index.html#2");
 
+// Get the SW folder
+// -----------------------------------
 toc[i++] = new tocCreate(1, "Get the Software", "");
 toc[i++] = new tocCreate(2, "Download", "download/index.html");
 toc[i++] = new tocCreate(2, "Install on Solaris", "download/index.html#2a");
 toc[i++] = new tocCreate(2, "Install on Windows", "download/index.html#2b");
 
+// MRML aid folder
+// -----------------------------------
 toc[i++] = new tocCreate(1, "MRMLaid", "");
 toc[i++] = new tocCreate(2, "Table of Contents", "mrml/index.html");
 toc[i++] = new tocCreate(2, "Motivations", "mrml/index.html#1");
@@ -31,6 +40,8 @@ toc[i++] = new tocCreate(3, "Proposed DTD", "mrml/mrml21.dtd");
 toc[i++] = new tocCreate(2, "Implementation", "mrml/index.html#4");
 toc[i++] = new tocCreate(2, "MRML Sample", "mrml/tutorial.xml");
 
+// Tutorial folder
+// -----------------------------------
 toc[i++] = new tocCreate(1, "Tutorial", "");
 toc[i++] = new tocCreate(2, "Table of Contents", "tutorial/index.html");
 toc[i++] = new tocCreate(2, "Quick Tour", "tutorial/index.html#1");
@@ -56,16 +67,22 @@ toc[i++] = new tocCreate(3, "Save MRML", "tutorial/index.html#6a");
 toc[i++] = new tocCreate(3, "Save Images", "tutorial/index.html#6b");
 toc[i++] = new tocCreate(3, "Save Options", "tutorial/index.html#6c");
 
+// User's Guide folder
+// -----------------------------------
 toc[i++] = new tocCreate(1, "User's Guide", "");
 toc[i++] = new tocCreate(2, "Table of Contents", "users/index.html");
 toc[i++] = new tocCreate(2, "Mailing List", "users/index.html#1");
 toc[i++] = new tocCreate(2, "Registration", "users/index.html#2");
 toc[i++] = new tocCreate(2, "Making Models", "users/index.html#3");
 
+// User's Guide->Segmentation subfolder
+// -----------------------------------
 toc[i++] = new tocCreate(2, "Segmentation", "");
 toc[i++] = new tocCreate(3, "Table of Contents", "seg/index.html");
 toc[i++] = new tocCreate(3, "Overview", "seg/index.html#1");
 
+// Devl Guide folder
+// -----------------------------------
 toc[i++] = new tocCreate(1, "Developer's Guide", "");
 toc[i++] = new tocCreate(2, "Table of Contents", "devl/index.html");
 toc[i++] = new tocCreate(2, "Overview", "devl/index.html#1");
@@ -73,13 +90,22 @@ toc[i++] = new tocCreate(2, "File Organization", "devl/index.html#2");
 toc[i++] = new tocCreate(2, "Add a Module", "devl/index.html#3");
 toc[i++] = new tocCreate(2, "Build VTK", "devl/index.html#4");
 toc[i++] = new tocCreate(2, "Add Editor Effect", "devl/index.html#5");
-toc[i++] = new tocCreate(2, "Helpful Links", "devl/index.html#6");
-toc[i++] = new tocCreate(2, "CVS access", "devl/index.html#7");
-toc[i++] = new tocCreate(2, "Mailing List", "devl/index.html#8");
+toc[i++] = new tocCreate(2, "Commenting Code", "devl/index.html#6");
+toc[i++] = new tocCreate(2, "Generating Docs", "devl/index.html#7");
+toc[i++] = new tocCreate(2, "Helpful Links", "devl/index.html#8");
+toc[i++] = new tocCreate(2, "CVS access", "devl/index.html#9");
+toc[i++] = new tocCreate(2, "Mailing List", "devl/index.html#10");
 toc[i++] = new tocCreate(2, "Doc. Template", "template/index.html");
 toc[i++] = new tocCreate(2, "Tcl Source Code", "tcl/index.html");
 toc[i++] = new tocCreate(2, "This Web Site", "devl/how-the-heck.txt");
 
+// FAQ folder
+// -----------------------------------
+toc[i++] = new tocCreate(1, "FAQ", "");
+toc[i++] = new tocCreate(2, "Table of Contents", "faq/index.html");
+
+// Pubs folder
+// -----------------------------------
 toc[i++] = new tocCreate(1, "Publications", "");
 toc[i++] = new tocCreate(2, "Engineering", "pubs/index.html");
 toc[i++] = new tocCreate(2, "Applications", "pubs/index.html#1");
@@ -89,6 +115,7 @@ toc[i++] = new tocCreate(2, "Applications", "pubs/index.html#1");
 //   open:   true if the folder is open
 //   name:   link text
 //   url:    link url
+// -----------------------------------
 function tocCreate(level,name,url) {
 	this.level = level
 	this.name = name
