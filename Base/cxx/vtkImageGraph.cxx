@@ -683,9 +683,6 @@ void vtkImageGraph::Draw2DGraph(vtkImageData *data, int NumRegion, float* CurveR
   int                 outIncX, outIncY, outIncZ;
   unsigned char       *outPtr;
 
-#ifdef _WIN32
-  return;
-#else
   GraphEntryList *ListPtr    = &(this->GraphList); 
 
   outExt = data->GetExtent();
@@ -725,7 +722,6 @@ void vtkImageGraph::Draw2DGraph(vtkImageData *data, int NumRegion, float* CurveR
   delete[] RegionColor;
   delete[] RegionPtr;
   delete[] RegionIncY;  
-#endif
 }
 
 //----------------------------------------------------------------------------
@@ -740,8 +736,8 @@ void vtkImageGraph::CalculateGraphMinGraphMax (float* CurveRegionMin, float* Cur
     // Initialize global min and max;
     if (this->Dimension < 2) { 
       while((ListPtr->GetIgnoreGraphMinGraphMax() == true) && (ListPtr->GetNext() != NULL)) {
-    ListPtr = ListPtr->GetNext();
-    index ++;
+        ListPtr = ListPtr->GetNext();
+        index ++;
       }
     }
     if ((ListPtr->GetIgnoreGraphMinGraphMax() == false) || (this->Dimension > 1)){  
@@ -749,38 +745,35 @@ void vtkImageGraph::CalculateGraphMinGraphMax (float* CurveRegionMin, float* Cur
       TempExt = TempCurve->GetExtent();
       TempCurve->GetContinuousIncrements(TempExt, TempIncX, TempIncY, TempIncZ);
       switch (TempCurve->GetScalarType()) {
-    vtkTemplateMacro6(vtkImageGraphGetMinMax, (VTK_TT*) TempCurve->GetScalarPointerForExtent(TempExt), TempExt, TempIncY, TempIncZ,CurveRegionMin[index], CurveRegionMax[index]);
-      default:
-    vtkErrorMacro(<< "Execute: Unknown ScalarType");
-    return;
+        vtkTemplateMacro6(vtkImageGraphGetMinMax, (VTK_TT*) TempCurve->GetScalarPointerForExtent(TempExt), TempExt, TempIncY, TempIncZ,CurveRegionMin[index], CurveRegionMax[index]);
+        default:
+          vtkErrorMacro(<< "Execute: Unknown ScalarType");
+          return;
       }
       this->GraphMin = CurveRegionMin[index];
       this->GraphMax = CurveRegionMax[index];
       while (ListPtr->GetNext() != NULL) {
-    ListPtr = ListPtr->GetNext();
-    index ++;
-    if ((ListPtr->GetIgnoreGraphMinGraphMax() == false) || (this->Dimension > 1)) { 
-      TempCurve = ListPtr->GetGraphEntry();
-      TempExt = TempCurve->GetExtent();
-      TempCurve->GetContinuousIncrements(TempExt, TempIncX, TempIncY, TempIncZ);
-      switch (TempCurve->GetScalarType()) {
-        vtkTemplateMacro6(vtkImageGraphGetMinMax,(VTK_TT*) TempCurve->GetScalarPointerForExtent(TempExt), TempExt, TempIncY, TempIncZ,CurveRegionMin[index], CurveRegionMax[index]);
-      default:
-        vtkErrorMacro(<< "Execute: Unknown ScalarType");
-        return;
-      }
-      if (this->GraphMax < CurveRegionMax[index]) this->GraphMax = CurveRegionMax[index];
-      if (this->GraphMin > CurveRegionMin[index]) this->GraphMin = CurveRegionMin[index];
-    }
+        ListPtr = ListPtr->GetNext();
+        index ++;
+        if ((ListPtr->GetIgnoreGraphMinGraphMax() == false) || (this->Dimension > 1)) { 
+          TempCurve = ListPtr->GetGraphEntry();
+          TempExt = TempCurve->GetExtent();
+          TempCurve->GetContinuousIncrements(TempExt, TempIncX, TempIncY, TempIncZ);
+          switch (TempCurve->GetScalarType()) {
+            vtkTemplateMacro6(vtkImageGraphGetMinMax,(VTK_TT*) TempCurve->GetScalarPointerForExtent(TempExt), TempExt, TempIncY, TempIncZ,CurveRegionMin[index], CurveRegionMax[index]);
+          default:
+            vtkErrorMacro(<< "Execute: Unknown ScalarType");
+            return;
+          }
+          if (this->GraphMax < CurveRegionMax[index]) this->GraphMax = CurveRegionMax[index];
+          if (this->GraphMin > CurveRegionMin[index]) this->GraphMin = CurveRegionMin[index];
+        }
       }
     }
   }
 }
 //----------------------------------------------------------------------------
 void vtkImageGraph::DrawBackground(unsigned char *outPtr, int outIncY) {
-#ifdef _WIN32
-  return;
-#else
   float          val,BackUnits; 
   int            idxX, idxY;
   int            SIZE_OF_CHAR    = 3*sizeof(unsigned char);
@@ -804,7 +797,6 @@ void vtkImageGraph::DrawBackground(unsigned char *outPtr, int outIncY) {
     outPtr += NumXScalar;
   }
   delete[] BackXAxis; 
-#endif
 }
 
 //----------------------------------------------------------------------------
