@@ -13,6 +13,7 @@ if { [info commands MIRIADSegmentInit] == "" } {
     # source the Module's tcl file that contains it's init procedure
     set files {
         MIRIADSegment.tcl
+        MIRIADParameters.tcl
         birnPipelineFunctions.tcl
         NormalizeImage.tcl
         birnPipelineMain.tcl

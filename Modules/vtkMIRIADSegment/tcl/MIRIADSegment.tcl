@@ -151,7 +151,7 @@ proc MIRIADSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.21 $} {$Date: 2004/02/17 18:03:46 $}]
+        {$Revision: 1.22 $} {$Date: 2004/02/19 00:45:59 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -338,6 +338,8 @@ proc MIRIADSegmentProcessStudy { {archive "default"} {BIRNID "000397921927"} {vi
         puts "MIRIADSegment Failed"
         return
     }
+
+    MIRIADParametersDefault
 
     MIRIADSegmentSetEMParameters
     MIRIADSegmentRunEM
@@ -741,6 +743,18 @@ proc MIRIADSegmentSubTreeClassDefinition {SuperClass} {
         lcov $::MIRIADSegment(logcovs,$SuperClass) {
             EMSegmentChangeClass $class
             if {$::EMSegment(Cattrib,$class,IsSuperClass)} { 
+                # set dummy values so we pass the error check
+                for {set y 0} {$y < $::EMSegment(NumInputChannel)} {incr y} {
+                    set ::EMSegment(Cattrib,$class,LogMean,$y) 1
+                    for {set x 0} {$x < $::EMSegment(NumInputChannel)} {incr x} {
+                        if { $x == $y } {
+                            set ::EMSegment(Cattrib,$class,LogCovariance,$y,$x)  1
+                        } else {
+                            set ::EMSegment(Cattrib,$class,LogCovariance,$y,$x)  0
+                        }
+                    }
+                }
+                # define the real values through the subclass
                 MIRIADSegmentSubTreeClassDefinition $class ;# recursive call to this proc
             } else {
                 if { $probvol != "none" } {
@@ -770,13 +784,16 @@ proc MIRIADSegmentSubTreeClassDefinition {SuperClass} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc MIRIADSegmentSetEMParameters {} {
+proc MIRIADSegmentSetEMParameters { } {
 
-    # Kilian: 08-Feb-04 To use Hierarchy Setting you currently need SegmentMode 2
-    # Generally this variable should neve be set without running  EMSegmentBuildGUI  
-    # Talk with Steve about it 
+    # error if no private segment
+    if { [catch "package require vtkEMPrivateSegment"] } {
+        DevErrorWindow "Must have the Private Segment module"
+        return
+    }
 
-    # TODO error if no private segment
+    upvar #0 MIRIADParameters mp  ;# for typing simplicity and readability
+
 
     set ::EMSegment(DebugVolume) 1
 
@@ -825,11 +842,11 @@ proc MIRIADSegmentSetEMParameters {} {
     EMSegmentClickLabel 0 1 0 ""
     # class Air 
     set ::EMSegment(Cattrib,1,Name) Air 
-    set ::EMSegment(Cattrib,1,Prob) .05
+    set ::EMSegment(Cattrib,1,Prob) $mp(Air,prob)
     EMSegmentClickLabel 1 1 1 ""
     # class Tissue
     set ::EMSegment(Cattrib,2,Name) Tissue 
-    set ::EMSegment(Cattrib,2,Prob) .20
+    set ::EMSegment(Cattrib,2,Prob) $mp(OtherTissue,prob)
     EMSegmentClickLabel 2 1 2 ""
 
     # -------------------------------
@@ -858,16 +875,16 @@ proc MIRIADSegmentSetEMParameters {} {
 
     # CSF
     set ::EMSegment(Cattrib,4,Name) CSF 
-    set ::EMSegment(Cattrib,4,Prob) .25
+    set ::EMSegment(Cattrib,4,Prob) $mp(CSF,prob)
     EMSegmentClickLabel 4 1 4 ""
     # GM 
     set ::EMSegment(Cattrib,5,Name) GrayMatter 
-    set ::EMSegment(Cattrib,5,Prob) .25
+    set ::EMSegment(Cattrib,5,Prob) $mp(CorticalGrayMatter,prob)
     EMSegmentClickLabel 5 1 5 ""
     # -------------------------------
     # SUPERCLASS: WM
     set ::EMSegment(Cattrib,6,Name) WhiteMatter 
-    set ::EMSegment(Cattrib,6,Prob) .25
+    set ::EMSegment(Cattrib,6,Prob) $mp(NormalWhiteMatter,prob)
     EMSegmentClickLabel 6 1 6 ""
 
     EMSegmentSumGlobalUpdate                  
@@ -882,11 +899,11 @@ proc MIRIADSegmentSetEMParameters {} {
     
     # WMNormal 
     set ::EMSegment(Cattrib,7,Name) WMNormal 
-    set ::EMSegment(Cattrib,7,Prob) .25
+    set ::EMSegment(Cattrib,7,Prob) $mp(NormalWhiteMatter,prob)
     EMSegmentClickLabel 7 1 7 ""
     # WMLesion 
     set ::EMSegment(Cattrib,8,Name) WMLesion 
-    set ::EMSegment(Cattrib,8,Prob) .25
+    set ::EMSegment(Cattrib,8,Prob) $mp(LesionedWhiteMatter,prob)
     EMSegmentClickLabel 8 1 8 ""
 
 
@@ -916,7 +933,11 @@ proc MIRIADSegmentSetEMParameters {} {
     set l 9
     foreach gp $grayparcels {
         set ::EMSegment(Cattrib,$l,Name) $gp
-        set ::EMSegment(Cattrib,$l,Prob) .25
+        if { [MIRIADParametersGrayType $gp] == "cortical" } {
+            set ::EMSegment(Cattrib,$l,Prob) $mp(CorticalGrayMatter,prob)
+        } else {
+            set ::EMSegment(Cattrib,$l,Prob) $mp(SubCorticalGrayMatter,prob)
+        }
         EMSegmentClickLabel $l 1 $l ""
         incr l
     }
@@ -932,28 +953,28 @@ proc MIRIADSegmentSetEMParameters {} {
     # Air, Tissue, Brain
     set ::MIRIADSegment(probvols,0) "resample_atlas-sumbackground resample_atlas-sumbackground none" 
 
-    set ::MIRIADSegment(logmeans,0) {
-        {2.6544 2.5259} {63429 5.1534} {"not used"} 
-    }
-    set ::MIRIADSegment(logcovs,0) {
-        {0.7816 0.6958 0.6958 1.1833} 
-        {0.1243 0.1911 0.1911 0.3905} 
-        {"not used"} 
-    }
+    set ::MIRIADSegment(logmeans,0) [list \
+        "$mp(Air,logmeans,PD) $mp(Air,logmeans,T2)" \
+        "$mp(OtherTissue,logmeans,PD) $mp(OtherTissue,logmeans,T2)" \
+        {"not used"} ]
+    set ::MIRIADSegment(logcovs,0) [list \
+        "$mp(Air,logcov,PD) $mp(Air,logcov,cross) $mp(Air,logcov,cross) $mp(Air,logcov,T2)" \
+        "$mp(OtherTissue,logcov,PD) $mp(OtherTissue,logcov,cross) $mp(OtherTissue,logcov,cross) $mp(OtherTissue,logcov,T2)" \
+        {"not used"} ]
 
     # ---------------------------------------------------------------------------------
     # Define parameters for children of BRAIN
     # CSF WM GM
     set ::MIRIADSegment(probvols,3) "resample_atlas-sumcsf resample_atlas-sumgreymatter_all resample_atlas-sumwhitematter"
 
-    set ::MIRIADSegment(logmeans,3) {
-        {4.5678 4.2802} {6.3836 5.1253} {6.3364 5.0624}
-    }
-    set ::MIRIADSegment(logcovs,3) {
-        {7.6805 5.0207 5.0207 7.3293} 
-        {0.0026 0.004 0.004 0.0562}
-        {0.0049 -0.0019 -0.0019 0.0711} 
-    }
+    set ::MIRIADSegment(logmeans,3) [list \
+        "$mp(CSF,logmeans,PD) $mp(CSF,logmeans,T2)" \
+        "$mp(NormalWhiteMatter,logmeans,PD) $mp(NormalWhiteMatter,logmeans,T2)" \
+        "$mp(CorticalGrayMatter,logmeans,PD) $mp(CorticalGrayMatter,logmeans,T2)" ]
+    set ::MIRIADSegment(logcovs,3) [list \
+        "$mp(CSF,logcov,PD) $mp(CSF,logcov,cross) $mp(CSF,logcov,cross) $mp(CSF,logmeans,T2)" \
+        "$mp(NormalWhiteMatter,logcov,PD) $mp(NormalWhiteMatter,logcov,cross) $mp(NormalWhiteMatter,logcov,cross) $mp(NormalWhiteMatter,logmeans,T2)" \
+        "$mp(CorticalGrayMatter,logcov,PD) $mp(CorticalGrayMatter,logcov,cross) $mp(CorticalGrayMatter,logcov,cross) $mp(CorticalGrayMatter,logmeans,T2)" ]
 
     # ---------------------------------------------------------------------------------
     # Define parameters for children of GM
@@ -985,23 +1006,27 @@ proc MIRIADSegmentSetEMParameters {} {
     # TODO - get all the intensity values correct
     set ::MIRIADSegment(logmeans,5) {}
     set ::MIRIADSegment(logcovs,5) {}
-    foreach gp $::MIRIADSegment(probvols,5) {
-        lappend ::MIRIADSegment(logmeans,5) {4.5678 4.2802} 
-        lappend ::MIRIADSegment(logcovs,5) {7.6805 5.0207 5.0207 7.3293} 
+    # loop through the gray parcels -- they are in the same order as the probvol list
+    foreach gp $grayparcels { 
+        if { [MIRIADParametersGrayType $gp] == "cortical" } {
+            lappend ::MIRIADSegment(logmeans,5) "$mp(CorticalGrayMatter,logmeans,PD) $mp(CorticalGrayMatter,logmeans,T2)"
+            lappend ::MIRIADSegment(logcovs,5) "$mp(CorticalGrayMatter,logcov,PD) $mp(CorticalGrayMatter,logcov,cross) $mp(CorticalGrayMatter,logcov,cross) $mp(CorticalGrayMatter,logcov,T2)"
+        } else {
+            lappend ::MIRIADSegment(logmeans,5) "$mp(SubCorticalGrayMatter,logmeans,PD) $mp(SubCorticalGrayMatter,logmeans,T2)"
+            lappend ::MIRIADSegment(logcovs,5) "$mp(SubCorticalGrayMatter,logcov,PD) $mp(SubCorticalGrayMatter,logcov,cross) $mp(SubCorticalGrayMatter,logcov,cross) $mp(SubCorticalGrayMatter,logcov,T2)"
+        }
     }
 
     # ---------------------------------------------------------------------------------
     # Define parameters for children of WM
     # WMNormal WMLesion
     set ::MIRIADSegment(probvols,6) "resample_atlas-sumwhitematter resample_atlas-sumwhitematter"
-    # TODO - normal and lesion means and covs
-    set ::MIRIADSegment(logmeans,6) {
-        {4.5678 4.2802} {6.3836 5.1253} 
-    }
-    set ::MIRIADSegment(logcovs,6) {
-        {7.6805 5.0207 5.0207 7.3293} 
-        {0.0026 0.004 0.004 0.0562}
-    }
+    set ::MIRIADSegment(logmeans,6) [list \
+        "$mp(NormalWhiteMatter,logmeans,PD) $mp(NormalWhiteMatter,logmeans,T2)" \
+        "$mp(LesionedWhiteMatter,logmeans,PD) $mp(LesionedWhiteMatter,logmeans,T2)" ]
+    set ::MIRIADSegment(logcovs,6) [list \
+        "$mp(NormalWhiteMatter,logcov,PD) $mp(NormalWhiteMatter,logcov,cross) $mp(NormalWhiteMatter,logcov,cross) $mp(NormalWhiteMatter,logcov,T2)" \
+        "$mp(LesionedWhiteMatter,logcov,PD) $mp(LesionedWhiteMatter,logcov,cross) $mp(LesionedWhiteMatter,logcov,cross) $mp(LesionedWhiteMatter,logcov,T2)" ]
 
     EMSegmentChangeSuperClass 0 1 ;# change gui to show HEAD node
 
@@ -1017,20 +1042,28 @@ proc MIRIADSegmentSetEMParameters {} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc MIRIADSegmentRunEM {} {
+proc MIRIADSegmentRunEM { {mode "full"} } {
 
-    set ::EMSegment(StartSlice) 29
-    set ::EMSegment(EndSlice) 31
+    if { $mode == "full" } {
+        set ::EMSegment(SegmentationBoundaryMin,0) 1
+        set ::EMSegment(SegmentationBoundaryMin,1) 1
+        set ::EMSegment(SegmentationBoundaryMin,2) 1
+        set ::EMSegment(SegmentationBoundaryMax,0) 256
+        set ::EMSegment(SegmentationBoundaryMax,1) 256
+        set ::EMSegment(SegmentationBoundaryMax,2) 256
+        set ::EMSegment(EMiteration) 5
+        set ::EMSegment(MFAiteration) 2
+    } else {
+        set ::EMSegment(SegmentationBoundaryMin,0) 1
+        set ::EMSegment(SegmentationBoundaryMin,1) 1
+        set ::EMSegment(SegmentationBoundaryMin,2) 27
+        set ::EMSegment(SegmentationBoundaryMax,0) 128
+        set ::EMSegment(SegmentationBoundaryMax,1) 256
+        set ::EMSegment(SegmentationBoundaryMax,2) 27
+        set ::EMSegment(EMiteration) 3
+        set ::EMSegment(MFAiteration) 2
+    }
 
-    set ::EMSegment(SegmentationBoundaryMin,0) 1
-    set ::EMSegment(SegmentationBoundaryMin,1) 1
-    set ::EMSegment(SegmentationBoundaryMin,2) 29
-    set ::EMSegment(SegmentationBoundaryMax,0) 128
-    set ::EMSegment(SegmentationBoundaryMax,1) 256
-    set ::EMSegment(SegmentationBoundaryMax,2) 30
-
-    set ::EMSegment(EMiteration) 5
-    set ::EMSegment(MFAiteration) 2
 
     set ::EMSegment(Alpha) 1.0
 
@@ -1038,6 +1071,9 @@ proc MIRIADSegmentRunEM {} {
     EMSegmentSumGlobalUpdate
 
     EMSegmentExecute "EM" "Run" "do_not_save"
+
+    puts "[clock format [clock seconds]] done"
+    RenderAll
 }
 
 #-------------------------------------------------------------------------------

@@ -74,17 +74,144 @@ proc MIRIADParametersDefaults {} {
     set mp(LesionedWhiteMatter,logcov,T2) 0.0562
     set mp(LesionedWhiteMatter,InputChannelWeight,PD) 0.2
     set mp(LesionedWhiteMatter,InputChannelWeight,T2) 1.0
+
+    return
 }
+
+proc MIRIADParametersLoad { {filename ""} } {
+
+    if { $filename == "" } {
+        set filename [tk_getOpenFile]
+    }
+    if { $filename == "" } return;
+
+    set fp [open $filename r]
+    array set ::MIRIADParameters [read $fp]
+    close $fp
+}
+
+proc MIRIADParametersSave { {filename ""} } {
+
+    if { $filename == "" } {
+        set filename [tk_getSaveFile -initialdir $::env(SLICER_HOME)/Modules/vtkMIRIADSegment/data -initialfile params-[clock format [clock seconds]]]
+    }
+    if { $filename == "" } return;
+
+    set fp [open $filename w]
+    puts $fp [array get ::MIRIADParameters]
+    close $fp
+}
+
+proc MIRIADParametersPreview { } {
+
+    MIRIADSegmentSetEMParameters 
+    MIRIADSegmentRunEM "preview"
+
+}
+
+proc MIRIADParametersRun { } {
+
+    MIRIADSegmentSetEMParameters 
+    MIRIADSegmentRunEM
+
+}
+
+proc MIRIADParametersGrayType { p } {
+
+    switch $p {
+        "OtherGray" -
+        "LAnteriorInsulaCortex" - 
+        "RAnteriorInsulaCortex" -
+        "LInferiorTemporalGyrus" -
+        "RInferiorTemporalGyrus" -
+        "LMiddleTemporalGyrus" -
+        "RMiddleTemporalGyrus" -
+        "LPosteriorInsulaCortex" -
+        "RPosteriorInsulaCortex" -
+        "LSuperiorTemporalGyrus" - 
+        "RSuperiorTemporalGyrus" -
+        "LTemporalLobe" -
+        "RTemporalLobe" {
+            return "cortical"
+        }
+        "LThalamus" -
+        "RThalamus" -
+        "LAmygdala" -
+        "RAmygdala" -
+        "LHippocampus" -
+        "RHippocampus" -
+        "LParahippocampus" -
+        "RParahippocampus" {
+            return "subcortical"
+        }
+        default {
+            error "unknown gray matter parcel $p"
+        }
+    }
+}
+
 
 proc MIRIADParameters {} {
 
+    upvar #0 MIRIADParameters mp  ;# for typing simplicity and readability
 
     catch "destroy .mp"
+    toplevel .mp
+    wm title .mp "MIRIAD Parameters"
+    wm geometry .mp 750x610+50+20
 
+    pack [::iwidgets::scrolledframe .mp.f -hscrollmode dynamic -vscrollmode dynamic] -fill both -expand true
 
+    set cs [.mp.f childsite]
 
+    set i 0
+    foreach pc $mp(pclasses) {
 
+        set f [::iwidgets::labeledframe $cs.f$i -labeltext $pc -labelpos nw]
+        pack $f -fill both -expand true
 
+        set fcs [$f childsite]
+        ::iwidgets::spinfloat $fcs.prob \
+            -textvariable ::MIRIADParameters($pc,prob) -range "0 1" -width 7 \
+            -labeltext "Prob" -labelpos nw
+        ::iwidgets::spinfloat $fcs.logmeanpd \
+            -textvariable ::MIRIADParameters($pc,logmeans,PD)  -width 7 \
+            -labeltext "PDlmean" -labelpos nw
+        ::iwidgets::spinfloat $fcs.logmeant2 \
+            -textvariable ::MIRIADParameters($pc,logmeans,T2)  -width 7 \
+            -labeltext "T2lmean" -labelpos nw
+        ::iwidgets::spinfloat $fcs.logcovpd \
+            -textvariable ::MIRIADParameters($pc,logcov,PD)  -width 7 \
+            -labeltext "PDlcov" -labelpos nw
+        ::iwidgets::spinfloat $fcs.logcovcross \
+            -textvariable ::MIRIADParameters($pc,logcov,cross)  -width 7 \
+            -labeltext "cross cov" -labelpos nw
+        ::iwidgets::spinfloat $fcs.logcovt2 \
+            -textvariable ::MIRIADParameters($pc,logcov,T2)  -width 7 \
+            -labeltext "T2lcov" -labelpos nw
+        ::iwidgets::spinfloat $fcs.probweight \
+            -textvariable ::MIRIADParameters($pc,ProbDataWeight) -range "0 1"  -width 7 \
+            -labeltext "Pweight" -labelpos nw
+        ::iwidgets::spinfloat $fcs.weightpd \
+            -textvariable ::MIRIADParameters($pc,InputChannelWeight,PD) -range "0 1" -width 7 \
+            -labeltext "PDweight" -labelpos nw
+        ::iwidgets::spinfloat $fcs.weightt2 \
+            -textvariable ::MIRIADParameters($pc,InputChannelWeight,T2) -range "0 1" -width 7 \
+            -labeltext "T2weight" -labelpos nw
 
+        pack $fcs.prob $fcs.logmeanpd $fcs.logmeant2 $fcs.logcovpd $fcs.logcovcross $fcs.logcovt2 $fcs.probweight $fcs.weightpd $fcs.weightt2 -side left -padx 2
+
+        incr i
+    }
+
+    
+
+    set f [frame $cs.fbuttons]  
+
+    pack [button $f.load -text "Load..." -command MIRIADParametersLoad] -side left
+    pack [button $f.save -text "Save..." -command MIRIADParametersSave] -side left
+    pack [button $f.preview -text "Preview" -command MIRIADParametersPreview] -side left
+    pack [button $f.run -text "Run" -command MIRIADParametersRun] -side left
+    pack $f 
 }
 
