@@ -369,8 +369,9 @@ if { ![file exists $vtkTestFile] } {
     runcmd cvs -z3 -d :pserver:anonymous@public.kitware.com:/cvsroot/VTK checkout -r $vtkTag VTK
 
     # Andy's temporary hack to get around wrong permissions in VTK cvs repository
+    # catch statement is to make file attributes work with RH 7.3
     if { !$isWindows } {
-        file attributes $SLICER_LIB/VTK/VTKConfig.cmake.in -permissions a+rw
+        catch "file attributes $SLICER_LIB/VTK/VTKConfig.cmake.in -permissions a+rw"
     }
 
     file mkdir $SLICER_LIB/VTK-build
