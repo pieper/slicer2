@@ -119,7 +119,11 @@ vtkLevelSets::vtkLevelSets()
   ShapeMinDist   = -20;
   Band           = 4;
   Tube           = 2;
+
+  // rescaling to [0,255] parameters
   RescaleImage   = 1;
+  minu           = 0;
+  maxu           = 100;
 
   UseLowThreshold  = 0;
   UseHighThreshold = 0;
@@ -2592,8 +2596,6 @@ void vtkLevelSets::InitEvolution()
      float *inPtr;
      float *outPtr;
      // Rescale parameters
-     float maxu = -1000;
-     float minu =  1000;
      float vs[3];
      int   i,n;
      float th;
@@ -2778,17 +2780,7 @@ void vtkLevelSets::InitEvolution()
   //
   // Set the Balloon Force Parameters
   //
-  if (NumGaussians!=0) {
-    // Computes a lookup table for the balloon force
-    if (RescaleImage) {
-      Probability = new float[2551];
-      for(i=0;i<2551;i++) {
-    // force the computation of the probability by setting the 2nd param to 1
-    Probability[i] = this->ExpansionMap(i/2550.0*(maxu-minu)+minu,1);
-      }
-    }
-
-  }
+  ComputeProbabilityLUT();
 
   //
   // Set the Advection Parameters
@@ -3374,6 +3366,117 @@ int vtkLevelSets::UpdateResult(){
   return 0;
 
 } // UpdateResult()
+
+
+/*
+//----------------------------------------------------------------------
+// Compute mean and standard deviation of the intensity
+// within the initial spheres or disks
+//
+float *vtkLevelSets::GetInitPointsStatistics()
+{
+
+  float* res;
+
+  res=new float[2];
+  this->InitPointsStatistics(res);
+
+  return res;
+}
+*/
+
+//----------------------------------------------------------------------
+// Compute mean and standard deviation of the intensity
+// within the initial spheres or disks
+//
+void vtkLevelSets::InitPointsStatistics( float stats[2])
+{
+
+  int i;
+  int x0,y0,z0,r;
+  int x,y,z;
+  int totalpoints;
+  double mean,sd,d;
+
+  if (this->inputImage==NULL)
+    {
+      stats[0]=stats[1]=0;
+      return;
+    }
+
+  mean=0;
+  totalpoints=0;
+
+  // compute mean
+  for(i=0;i<NumInitPoints;i++) {
+    x0 = InitPoints[i][0];
+    y0 = InitPoints[i][1];
+    z0 = InitPoints[i][2];
+    r  = InitPoints[i][3];
+    for (x=x0-r; x<=x0+r; x++) {
+      if ((x<0)||(x>tx-1)) continue;
+      for (y=y0-r; y<=y0+r; y++) {
+    if ((y<0)||(y>ty-1)) continue;
+    for (z=z0-r; z<=z0+r; z++) {
+      if ((z<0)||(z>tz-1)) continue;
+      mean += this->inputImage->GetScalarComponentAsFloat(x,y,z,0);
+      totalpoints++;
+    }
+      }
+    }
+  }
+
+  mean /= totalpoints;
+  sd = 0;
+
+  // compute standard deviation
+  for(i=0;i<NumInitPoints;i++) {
+    x0 = InitPoints[i][0];
+    y0 = InitPoints[i][1];
+    z0 = InitPoints[i][2];
+    r  = InitPoints[i][3];
+    for (x=x0-r; x<=x0+r; x++) {
+      if ((x<0)||(x>tx-1)) continue;
+      for (y=y0-r; y<=y0+r; y++) {
+    if ((y<0)||(y>ty-1)) continue;
+    for (z=z0-r; z<=z0+r; z++) {
+      if ((z<0)||(z>tz-1)) continue;
+      d = this->inputImage->GetScalarComponentAsFloat(x,y,z,0)-mean;
+      sd += d*d;
+    }
+      }
+    }
+  }
+
+  sd = sqrt(sd/totalpoints);
+
+  stats[0]=mean;
+  stats[1]=sd;
+
+
+} // InitPointsStatistics()
+
+
+//----------------------------------------------------------------------
+// Precompute the probability Lookup Table is the image
+// was rescaled to [0,255]
+void vtkLevelSets::ComputeProbabilityLUT()
+{
+  int i;
+
+  if (this->NumGaussians!=0) {
+    // Computes a lookup table for the balloon force
+    if (this->RescaleImage) {
+      this->Probability = new float[2551];
+      for(i=0;i<2551;i++) {
+        // force the computation of the probability by setting the 2nd param to 1
+        this->Probability[i] = this->ExpansionMap(i/2550.0*(this->maxu-this->minu)+this->minu,1);
+      }
+    }
+
+  }
+
+} // ComputeProbabilityLUT()
 
 
 //----------------------------------------------------------------------

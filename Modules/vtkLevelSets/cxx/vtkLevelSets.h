@@ -308,6 +308,16 @@ public:
   // Updates the resulting image so that it contains the current result
   int UpdateResult();
 
+  // Compute mean and standard deviation of the intensity
+  // within the initial spheres or disks
+  //
+  //float *InitPointsStatistics();
+  void InitPointsStatistics(float stats[2]);
+
+  // Precompute the probability Lookup Table is the image
+  // was rescaled to [0,255]
+  void ComputeProbabilityLUT();
+
   // Probability of the tissue based on the image intensity
   float ExpansionMap( float I, unsigned char compute=0);
 
@@ -341,6 +351,7 @@ protected:
 
 //BTX
   int   RescaleImage;
+  float minu,maxu;
 
   // Minimal distance computed inside the structure for 
   // searching the skeleton in case of Shape-based level set
