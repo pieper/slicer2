@@ -409,7 +409,7 @@ void RigidRegistrationBase<TFixedImage,TMovingImage,TMetricType>::Execute()
                       m_FixedImage->GetBufferedRegion());
 
   std::cout << "Starting Iteration" << endl;
-  this->Print(std::cout);
+  //this->Print(std::cout); // don't print now, causes a warning that output not set yet
   //
   // Do the Registration
   //
