@@ -1,0 +1,21 @@
+<?xml version="1.0" standalone='no'?>
+<!DOCTYPE MRML SYSTEM "mrml20.dtd">
+<MRML>
+<Options program='slicer' contents='modules'>
+ordered='Data 
+	Volumes 
+	Models 
+	Matrices 
+	Editor 
+	ModelMaker
+	Locator 
+	Realtime 
+	Guidance 
+	View 
+	Anno 
+	Slices 
+	Colors 
+	Custom'
+suppressed=''
+</Options>
+</MRML>
