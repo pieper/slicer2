@@ -99,7 +99,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.79.2.3 $} {$Date: 2003/08/08 19:53:33 $}]
+            {$Revision: 1.79.2.4 $} {$Date: 2003/08/14 17:54:35 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -944,6 +944,13 @@ proc VolumesPropsApply {} {
         tk_messageBox -message "The name can consist of letters, digits, dashes, or underscores"
         return
     }
+
+    # first file
+    if {[file exists $Volume(firstFile)] == 0} {
+        tk_messageBox -message "The first file must exist, if you haven't saved a newly created volume, please press cancel and then go to the Editor Module, Volumes tab, Save button"
+        return
+    }
+
     # lastNum
     if { $Volume(isDICOM) == 0 } {
         if {[ValidateInt $Volume(lastNum)] == 0} {
