@@ -136,7 +136,7 @@ proc DTMRIInit {} {
 
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.53 $} {$Date: 2005/01/16 16:44:36 $}]
+                  {$Revision: 1.54 $} {$Date: 2005/01/16 20:59:24 $}]
 
      # Define Tabs
     #------------------------------------
@@ -5365,7 +5365,7 @@ proc ConvertVolumeToTensors {} {
 
         # pass along in pipeline
         DTMRI SetDiffusionImage \
-        $inputNum [extract$slice GetOutput]
+            $inputNum [extract$slice GetOutput]
         incr inputNum
         
         # put the filter output into a slicer volume
@@ -5704,10 +5704,10 @@ proc ConvertVolumeToTensors {} {
     }
 
     if {$numberOfNoGradientImages > 1} {
-    math SetOutput ""
-    math2 SetOutput ""
-    math Delete
-    math2 Delete
+        math SetOutput ""
+        math2 SetOutput ""
+        math Delete
+        math2 Delete
     }
     
     math_g SetOutput ""
@@ -5717,6 +5717,9 @@ proc ConvertVolumeToTensors {} {
     
     DTMRI SetOutput ""
     DTMRI Delete
+
+    # display volume so the user knows something happened
+    MainSlicesSetVolumeAll Back $id
 
     # display the new volume in the slices
     RenderSlices
