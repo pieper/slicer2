@@ -33,7 +33,7 @@
 
 
 if (${?SLICER_HOME} == 0) then
-    setenv SLICER_HOME /d/bigweekly/lauren/slicer-1.1.0
+    setenv SLICER_HOME /home/nicole/Src/slicer
 endif
 
 if (${?LD_LIBRARY_PATH} == 0) then
@@ -44,4 +44,11 @@ endif
 
 setenv TCL_LIBRARY ${SLICER_HOME}/lib/tcl8.3
 
-exec $SLICER_HOME/program/tclsh $SLICER_HOME/program/GoDocument.tcl
+# Produce the web pages and tcl documentation
+# exec 
+echo "Producing documentation pages - web site and tcl code docs"
+tclsh $SLICER_HOME/program/GoDocument.tcl
+
+# Produce the VTK class documentation
+echo "Producing the VTK documentation, based on SLICER_HOME = ${SLICER_HOME}"
+doxygen $SLICER_HOME/vtksrc/Doxyfile
