@@ -459,7 +459,7 @@ proc MainInit {} {
 
         # Set version info
     lappend Module(versions) [ParseCVSInfo Main \
-        {$Revision: 1.113 $} {$Date: 2004/11/03 22:14:16 $}]
+        {$Revision: 1.114 $} {$Date: 2004/11/08 21:04:04 $}]
 
     # Call each "Init" routine that's not part of a module
     #-------------------------------------------
@@ -1670,6 +1670,13 @@ proc MainMenu {menu cmd} {
                 global SLICER tcl_patchLevel
                 catch "__version Delete"
                 vtkVersion __version
+                if {[info command vtkITKVersion] == ""} {
+                    set itkMsg "ITK not used" 
+                } else {
+                    vtkITKVersion __itkversion
+                    set itkMsg "ITK Version [__itkversion GetITKVersion]
+http://www.itk.org"
+                }
                 set msg "Slicer Version $SLICER(version)
 http://www.slicer.org
 
@@ -1677,8 +1684,11 @@ Tcl/Tk Version $tcl_patchLevel
 http://www.tcl.tk
 
 VTK Version [__version GetVTKVersion]
-http://www.vtk.org"
+http://www.vtk.org
+
+$itkMsg"
                 catch "__version Delete"
+                catch "__itkversion Delete"
                 MsgPopup Version $x $y $msg {About Slicer}
             }
             "Copyright" {
