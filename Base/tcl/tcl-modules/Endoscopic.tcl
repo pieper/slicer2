@@ -1592,25 +1592,29 @@ by selecting it in the scrolltext and right-click to get a menu. "
     
     pack $f.cmodels
 
-        #-------------------------------------------
+    # The following GUI commands are commented out because collision detection has not
+    # been tested since the upgrade from slicer1 to slicer2 and the sunchronized fly-through
+    # code is for internal research only at this point.
+
+    #-------------------------------------------
     # Advanced->Mid->Toggle frame
     #-------------------------------------------
 
-    set f $fAdvanced.fMid.fToggle
+    #set f $fAdvanced.fMid.fToggle
     
 
 
-    eval {label $f.l -height 2 -text "Collision Detection:"} $Gui(WTA)
-    eval {menubutton $f.fMBtns -text "off" -menu $f.fMBtns.fMenu} $Gui(WMBA)  
-    eval {menu $f.fMBtns.fMenu} $Gui(WMA) 
+    #eval {label $f.l -height 2 -text "Collision Detection:"} $Gui(WTA)
+    #eval {menubutton $f.fMBtns -text "off" -menu $f.fMBtns.fMenu} $Gui(WMBA)  
+    #eval {menu $f.fMBtns.fMenu} $Gui(WMA) 
     
-    $f.fMBtns.fMenu add command -label "off" -command {EndoscopicSetCollision 0;}
-    $f.fMBtns.fMenu add command -label "on" -command {EndoscopicSetCollision 1}
+    #$f.fMBtns.fMenu add command -label "off" -command {EndoscopicSetCollision 0;}
+    #$f.fMBtns.fMenu add command -label "on" -command {EndoscopicSetCollision 1}
     
-    eval {label $f.l2 -height 2 -text "distance: 0"} $Gui(WTA)
-    set Endoscopic(collMenu) $f.fMBtns
-    set Endoscopic(collDistLabel) $f.l2
-    grid $f.l $f.fMBtns $f.l2 -padx 1 -pady 1
+    #eval {label $f.l2 -height 2 -text "distance: 0"} $Gui(WTA)
+    #set Endoscopic(collMenu) $f.fMBtns
+    #set Endoscopic(collDistLabel) $f.l2
+    #grid $f.l $f.fMBtns $f.l2 -padx 1 -pady 1
     
 
 
@@ -2934,6 +2938,7 @@ proc EndoscopicAddLandmarkDirectionSpecified {{coords ""} {list ""}} {
             set list Path${numList}_
             incr Endoscopic(path,nextAvailableId)
         } else {
+        puts "set fid $Fiducials($Fiducials(activeList),fid)"
             set fid $Fiducials($Fiducials(activeList),fid)
             
             if { [Fiducials($fid,node) GetType] != "endoscopic" } {
