@@ -5,7 +5,7 @@ Direct all questions on this copyright to slicer@ai.mit.edu.
 The following terms apply to all files associated with the software unless
 explicitly disclaimed in individual files.   
 
-The authors hereby grant permission to use, copy, and distribute this
+The authors hereby grant permission to use, copy (but NOT distribute) this
 software and its documentation for any NON-COMMERCIAL purpose, provided
 that existing copyright notices are retained verbatim in all copies.
 The authors grant permission to modify this software and its documentation 
