@@ -68,14 +68,15 @@ public:
   vtkImageData *GetOriginalImage() {return this->GetInput(0);}
 
   // Description:
-  // colormap with previous (2D) image's contour drawn
-  void SetPreviousContourImage(vtkImageData *image) {this->SetInput(1,image);}
-  vtkImageData *GetPreviousContourImage() {return this->GetInput(1);}
+  // colormap with points of interest marked for training
+  void SetTrainingPointsImage(vtkImageData *image) {this->SetInput(1,image);}
+  vtkImageData *GetTrainingPointsImage() {return this->GetInput(1);}
 
   // Description:
-  // colormap with points of interest marked for training
-  void SetTrainingPointsImage(vtkImageData *image) {this->SetInput(2,image);}
-  vtkImageData *GetTrainingPointsImage() {return this->GetInput(2);}
+  // colormap with previous (2D) image's contour drawn
+  // not yet used.
+  void SetPreviousContourImage(vtkImageData *image) {this->SetInput(2,image);}
+  vtkImageData *GetPreviousContourImage() {return this->GetInput(2);}
 
   // Description:
   // Maximum edge weight that this filter will output

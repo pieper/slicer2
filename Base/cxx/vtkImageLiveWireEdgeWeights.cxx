@@ -467,7 +467,7 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
   // loop through pixels of output
   outPtr2 = outPtr;
   inPtr2 = inPtrs[0];
-  inTPtr2 = inPtrs[2];
+  inTPtr2 = inPtrs[1];
   for (outIdx2 = outMin2; outIdx2 <= outMax2; outIdx2++)
     {
       outPtr1 = outPtr2;
@@ -768,6 +768,9 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
 	  else {
 	    cout << "No contour points to train on!" << endl;
 	  }
+
+	  // turn off Training Mode since we are done
+	  self->TrainingModeOff();
 	}
     }
 
