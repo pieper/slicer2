@@ -315,7 +315,8 @@ private:
   ParametersType                       m_InitialParameters;
   AffineTransformPointer               m_AffineTransform;
                    
-  unsigned long                        m_Tag;
+  unsigned long                        m_ObserverTag;
+  unsigned long                        m_OptimizeObserverTag;
 
 };
 

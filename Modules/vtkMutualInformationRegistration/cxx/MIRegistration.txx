@@ -41,10 +41,10 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "itkCommand.h"
 
 #include "vtkMatrix4x4.h"
+#include "NewStoppingCondition.h"
 
 namespace itk
 {
-
 
 template <typename TFixedImage, typename TMovingImage>
 MIRegistration<TFixedImage,TMovingImage>::MIRegistration()
@@ -95,13 +95,19 @@ MIRegistration<TFixedImage,TMovingImage>::MIRegistration()
   m_AffineTransform  = AffineTransformType::New();
 
   // Setup a registration observer
-  // Not Sure what to do with observers
+  // The observer watches when a new level is started
   typedef SimpleMemberCommand<Self> CommandType;
   typename CommandType::Pointer command = CommandType::New();
   command->SetCallbackFunction( this, &Self::StartNewLevel );
-  m_Tag = m_Registration->AddObserver( IterationEvent(), command );
+  m_ObserverTag = m_Registration->AddObserver( IterationEvent(), command );
 
-  this->Test();
+  // Set up an observer that searcher for convergence
+  NewStoppingCondition::Pointer StoppingObserver = NewStoppingCondition::New();
+  m_OptimizeObserverTag = m_Optimizer->AddObserver( IterationEvent(), 
+                                                     StoppingObserver );
+
+  // Ability to test the parameters to matrix and reverse
+  //  this->Test();
 }
 
 //----------------------------------------------------------------------
@@ -110,7 +116,8 @@ MIRegistration<TFixedImage,TMovingImage>::MIRegistration()
 template <typename TFixedImage, typename TMovingImage>
 MIRegistration<TFixedImage,TMovingImage>::~MIRegistration()
 {
-  m_Registration->RemoveObserver(m_Tag);
+  m_Registration->RemoveObserver(m_ObserverTag);
+  m_Optimizer->RemoveObserver(m_OptimizeObserverTag);
 }
 
 
@@ -142,7 +149,8 @@ void MIRegistration<TFixedImage,TMovingImage>
   os << indent << "InitialParameters: " 
         <<   m_InitialParameters            << endl;
   os << indent << "AffineTransform: " << m_AffineTransform  << endl;
-  os << indent << "Tag: "       <<   m_Tag  << endl;
+  os << indent << "ObserveTag: "  <<   m_ObserverTag  << endl;
+  os << indent << "OptimizeTag: " <<   m_OptimizeObserverTag  << endl;
 
   os << indent << "FixedImage: " <<  m_FixedImage          << endl;
   os << indent << "MovingImage: " <<  m_MovingImage         << endl;
@@ -190,13 +198,9 @@ void MIRegistration<TFixedImage,TMovingImage>::InitializeRegistration(
   m_InitialParameters[5] = matrix->Element[1][3];
   m_InitialParameters[6] = matrix->Element[2][3];
 
-  cout << "Initial Quaternion Setup" << endl;
-  m_Transform->Print(cout);
   // The guess is: a quaternion followed by a translation
   m_Registration->SetInitialTransformParameters(m_InitialParameters);
-  cout << "Initial Param Set:" << m_InitialParameters << endl;
   m_Transform->SetParameters(m_InitialParameters);
-  m_Transform->Print(cout);
 }
 
 //----------------------------------------------------------------------------
@@ -247,8 +251,8 @@ void MIRegistration<TFixedImage,TMovingImage>::Test()
   ParamToMatrix(test,mat);
   InitializeRegistration(mat);
 
-  cout << "Testing for initial stuff " 
-       << m_InitialParameters << endl;
+  std::cout << "Testing for initial stuff " 
+           << m_InitialParameters << endl;
 
   mat->Delete();
 }
@@ -304,8 +308,8 @@ void MIRegistration<TFixedImage,TMovingImage>::Execute()
   m_Registration->SetFixedImageRegion(
                       m_FixedImage->GetBufferedRegion());
 
-  cout << "Starting Iteration" << endl;
-  this->Print(cout);
+  std::cout << "Starting Iteration" << endl;
+  this->Print(std::cout);
   //
   // Do the Registration
   //
@@ -317,8 +321,8 @@ void MIRegistration<TFixedImage,TMovingImage>::Execute()
       throw err;
     }
 
-  cout << "Ending Iteration" << endl;
-  this->Print(cout);
+  std::cout << "Ending Iteration" << endl;
+  this->Print(std::cout);
 }
 
 //----------------------------------------------------------------------
