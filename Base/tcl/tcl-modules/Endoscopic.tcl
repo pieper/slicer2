@@ -1701,6 +1701,9 @@ proc EndoscopicExecutePathTab {command} {
 proc EndoscopicBuildFlyThroughGUI {} {
     global Gui Endoscopic
     
+    # in case 
+    set Endoscopic(activeCam) [endoscopicScreen GetActiveCamera]
+
     #-------------------------------------------
     # Labels Popup Window
     #-------------------------------------------
@@ -3556,11 +3559,11 @@ proc EndoscopicFiducialsPointSelectedCallback {fid pid} {
         EndoscopicResetCameraDirection    
         EndoscopicUpdateVirtualEndoscope $Endoscopic(activeCam) [concat [Point($pid,node) GetXYZ] [Point($pid,node) GetFXYZ]]
     } 
-    # else {
-    # look at the point instead
-    #EndoscopicResetCameraDirection    
-    #EndoscopicUpdateVirtualEndoscope $Endoscopic(activeCam) [concat [Point($pid,node) GetFXYZ] [Point($pid,node) GetXYZ]]
-    #}
+     else {
+     look at the point instead
+     EndoscopicResetCameraDirection    
+     EndoscopicUpdateVirtualEndoscope $Endoscopic(activeCam) [concat [Point($pid,node) GetFXYZ] [Point($pid,node) GetXYZ]]
+    }
     EndoscopicUpdateActorFromVirtualEndoscope $Endoscopic(activeCam)
     Render3D
 }
@@ -3579,9 +3582,9 @@ proc EndoscopicFiducialsPointCreatedCallback {type fid pid} {
 
     global Endoscopic Fiducials Select Module Model
     # jump to that point only if it is not an endoscopic point
-    #if { $type != "endoscopic" } {
-    #EndoscopicFiducialsPointSelectedCallback $fid $pid
-    #}
+    if { $type != "endoscopic" } {
+    EndoscopicFiducialsPointSelectedCallback $fid $pid
+    }
 
     # if the point is added to the reformat list and the Volumes/Reformat Tab 
     # is currently active, then select the last 2 or 3 points (depending on what step we're in)
