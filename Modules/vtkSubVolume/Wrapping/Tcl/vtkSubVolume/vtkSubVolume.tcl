@@ -21,6 +21,7 @@ package require vtk
 #}
 
     global PACKAGE_DIR_VTKSubVolume
+    package provide vtkSubVolume 1.0
     source [file join $PACKAGE_DIR_VTKSubVolume/../../../tcl/SubVolume.tcl]
     # add this module's name to the list of custom modules in order 
     # to have it's init procedure get called, @ModuleName@Init will be 
