@@ -266,6 +266,53 @@ The 3D Slicer will exit so the problem can be corrected."
         puts "Done Reading $fileName"; update
     }
 
+    # detect an archive as an argment
+    # - unpack it to a tmp directory and open an xml file in it
+
+    set tmpdir ""
+    if { [string match "*.zip" $mrmlFile] } {
+        # unzip to temp directory, 
+        if { [catch "package require vfs"] } {
+            DevWarningWindow "Zipfile archive on command line not supported."
+        } else {
+            # need to source -- package require zipvfs broken in ActiveTcl8.4.1
+            global env
+            source $env(TCL_LIB_DIR)/vfs1.0/zipvfs.tcl
+            ::vfs::zip::Mount $mrmlFile zipfile
+            
+            if { [info exists env(TMP)] } { set tmpdir [file normalize $env(TMP)] }
+            if { [info exists env(TEMP)] } { set tmpdir [file normalize $env(TEMP)] }
+            if { $tmpdir == "" } { 
+                DevErrorWindow "No TMP or TEMP environment variable.  Can't open zip archive."
+                exit
+            } 
+            if { [catch "file mkdir $tmpdir/slicer.[pid]"] } {
+                DevErrorWindow "Can't make tmp dir.  Can't open zip archive."
+                exit
+            } 
+            if {$verbose} {
+                puts "Copying from $mrmlFile to $tmpdir/slicer.[pid]"
+            }
+            if { [catch "file copy zipfile $tmpdir/slicer.[pid]" res] } {
+                DevErrorWindow "Can't copy to tmp dir.  $res."
+                exit
+            } 
+            # made it here, must be okay
+            set mrmlFile $tmpdir/slicer.[pid]/zipfile
+
+            # look for a single directory in the zip archive, if so, use it
+            set listing [glob -nocomplain $mrmlFile/*]
+            if { [llength $listing] == 1 } {
+                set mrmlFile [lindex $listing 0]
+            }
+
+            # should be:
+            # ::vfs::zip::Mount $mrmlFile zipfile
+            # but this works instead:
+            ::vfs::filesystem unmount zipfile
+        }
+    }
+
     #-------------------------------------------
     # Load MRML data
     # - if a file, load it
@@ -276,6 +323,9 @@ The 3D Slicer will exit so the problem can be corrected."
     if { [file isdirectory $mrmlFile] } {
         set mrmlfiles [glob -nocomplain -directory $mrmlFile *.xml]
         if { [llength $mrmlfiles] == 1 } {
+            if { $verbose } {
+                puts "Found [lindex $mrmlfiles 0] in $mrmlFile"
+            }
             set mrmlFile [lindex $mrmlfiles 0]
         } else {
             set mrmlFile ""
@@ -287,6 +337,14 @@ The 3D Slicer will exit so the problem can be corrected."
     MainMrmlRead $mrmlFile
     MainUpdateMRML
     MainOptionsRetrievePresetValues
+
+    if { $tmpdir != "" } {
+        # clean up data extracted from archive
+        if { $verbose } {
+            puts "Removing $tmpdir/slicer.[pid]"
+        }
+        file delete -force $tmpdir/slicer.[pid]
+    }
 
     #-------------------------------------------
     # Initialize the Program State
@@ -324,8 +382,6 @@ The 3D Slicer will exit so the problem can be corrected."
 #-------------------------------------------------------------------------------
 proc MainInit {} {
     global Module Gui env Path View Anno Mrml
-    
-    set Module(verbose) 0
     
     set Path(tmpDir) tmp 
     set Path(printHeaderPath) bin/print_header
@@ -380,7 +436,7 @@ proc MainInit {} {
 
         # Set version info
     lappend Module(versions) [ParseCVSInfo Main \
-        {$Revision: 1.93 $} {$Date: 2003/01/22 17:04:32 $}]
+        {$Revision: 1.94 $} {$Date: 2003/01/25 22:32:50 $}]
 
     # Call each "Init" routine that's not part of a module
     #-------------------------------------------
