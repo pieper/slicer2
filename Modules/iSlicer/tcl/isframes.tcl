@@ -47,6 +47,12 @@ if { [itcl::find class isframes] == "" } {
 
       # widgets for the control area
       variable _task
+      variable _patternentry
+      variable _patternentry_value
+      variable _startentry
+      variable _startentry_value
+      variable _endentry
+      variable _endentry_value
       variable _slider
 
       # state variables
@@ -69,6 +75,7 @@ if { [itcl::find class isframes] == "" } {
       method rw     {}   {return [$_tkrw GetRenderWindow]}
 
       method next     {}   {}
+      method entrycallback {}   {}
     }
 }
 
@@ -93,6 +100,20 @@ itcl::body isframes::constructor {args} {
     set _task $itk_interior.task
     istask $_task -taskcommand "$this next; update"
     pack $_task -side top -expand false -fill x
+
+    set _patternentry $itk_interior.pentry
+    iwidgets::entryfield $_patternentry \
+        -labeltext "Pattern: " -textvariable [itcl::scope _patternentry_value] \
+        -command "$this entrycallback"
+    set _startentry $itk_interior.sentry
+    iwidgets::entryfield $_startentry \
+        -labeltext "Start: " -textvariable [itcl::scope _startentry_value] \
+        -command "$this entrycallback"
+    set _endentry $itk_interior.eentry
+    iwidgets::entryfield $_endentry \
+        -labeltext "End: " -textvariable [itcl::scope _endentry_value] \
+        -command "$this entrycallback"
+    pack $_patternentry $_startentry $_endentry -side top -expand false -fill x
 
     set _slider $itk_interior.slider
     scale $_slider -orient horizontal -command "$this configure -frame "
@@ -152,6 +173,15 @@ itcl::body isframes::destructor {} {
 # DESCRIPTION: e.g. c:/tmp/frames-%0d.jpg
 #-------------------------------------------------------------------------------
 itcl::configbody isframes::filepattern {
+    set _patternentry_value $itk_option(-filepattern)
+    if { [string first "*" $itk_option(-filepattern)] != -1 } {
+        set files [glob $itk_option(-filepattern)]
+        set numfiles [llength $files]
+        if { $numfiles > 0 } {
+            $this configure -start 0
+            $this configure -end [expr $numfiles - 1]
+        }
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -161,9 +191,15 @@ itcl::configbody isframes::filepattern {
 #-------------------------------------------------------------------------------
 itcl::configbody isframes::start {
     $_slider configure -from $itk_option(-start)
+    if { $_startentry_value != $itk_option(-start) } {
+        set _startentry_value $itk_option(-start)
+    }
 }
 itcl::configbody isframes::end {
     $_slider configure -to $itk_option(-end)
+    if { $_endentry_value != $itk_option(-end) } {
+        set _endentry_value $itk_option(-end)
+    }
 }
 itcl::configbody isframes::skip {
     $_slider configure -resolution $itk_option(-skip)
@@ -187,7 +223,12 @@ itcl::configbody isframes::frame {
     set imgr ::imgr_$_name
     catch "$imgr Delete"
 
-    set filename [format $itk_option(-filepattern) $itk_option(-frame)]
+    if { [string first "*" $itk_option(-filepattern)] != -1 } {
+        set files [lsort -dictionary [glob $itk_option(-filepattern)]]
+        set filename [lindex $files $itk_option(-frame)]
+    } else {
+        set filename [format $itk_option(-filepattern) $itk_option(-frame)]
+    }
 
     set ext [string tolower [file extension $filename]]
     switch $ext {
@@ -243,6 +284,16 @@ itcl::body isframes::next {} {
     $this configure -frame $f
 }
 
+itcl::body isframes::entrycallback {} {
+    
+    $this configure -filepattern $_patternentry_value
+    if { $_startentry_value != "" } {
+        $this configure -start $_startentry_value
+    }
+    if { $_endentry_value != "" } {
+        $this configure -end $_endentry_value
+    }
+}
 
 # ------------------------------------------------------------------
 
