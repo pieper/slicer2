@@ -67,9 +67,6 @@ proc Render3D {{scale ""}} {
 proc RenderSlice {s {scale ""}} {
 	global Slice View Interactor
 
-	# Clear que of render events to make panning much more interactive
-	update
-	
 	sl${s}Win Render
 
 	if {$s == $Interactor(s)} {
