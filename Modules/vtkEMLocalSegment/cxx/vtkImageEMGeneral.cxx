@@ -260,7 +260,7 @@ float vtkImageEMGeneral_qgauss_sqrt(float inverse_sigma, float x)
 
   // The following is the same in Matlab as sum(p.*log(x+1)) with x =[0:iMax-1] and p =Gauss(x,mu,sigma)
   for (i = 0; i < SequenceMax; i++) {
-    LogTestSequence[i] = log(i+1);
+    LogTestSequence[i] = log(double(i+1));
     for (j=0; j < NumberOfClasses; j++) {
       ProbMatrix[j][i] =  vtkImageEMGeneral::FastGauss(SigmaInverse[j],i - mu[j]);
       LogMu[j] +=  ProbMatrix[j][i]*LogTestSequence[i];

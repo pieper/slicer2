@@ -48,7 +48,7 @@
 #endif
 
 #ifdef _WIN32
-#include <string.h>
+#include <string>
 #else
 #include <strings.h>
 #endif
