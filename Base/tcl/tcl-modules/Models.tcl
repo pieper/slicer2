@@ -68,13 +68,15 @@ proc ModelsInit {} {
 
 	# Set Version Info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.26 $} {$Date: 2000/08/08 15:36:29 $}]
+		{$Revision: 1.27 $} {$Date: 2000/08/28 18:26:52 $}]
 
 	# Props
 	set Model(propertyType) Basic
 
 	# Meter
 	set Model(meter,first) 1
+
+        set Model(DefaultDir) "";
 }
 
 #-------------------------------------------------------------------------------
@@ -335,7 +337,7 @@ If <B>Backface Culling</B> is on, you will see nothing when looking inside a cli
 	#-------------------------------------------
 	set f $fProps.fBot.fBasic.fFileName
 
-        DevAddFileBrowse $f Model FileName "Model File (.vtk)" "ModelsSetFileName" "vtk" ""  "Browse for a Model" 
+        DevAddFileBrowse $f Model FileName "Model File (.vtk)" "ModelsSetFileName" "vtk" "\$Model(DefaultDir)"  "Browse for a Model" 
 
 	#-------------------------------------------
 	# Props->Bot->Basic->Color frame
@@ -677,6 +679,9 @@ proc ModelsSetFileName {} {
 
 	# Do nothing if the user cancelled
 	if {$Model(FileName) == ""} {return}
+
+        # Update the Default Directory
+        set Model(DefaultDir) [file dirname $Model(FileName)]
 
 	# Name the model based on the entered file.
 	set Model(name) [ file root [file tail $Model(FileName)]]
