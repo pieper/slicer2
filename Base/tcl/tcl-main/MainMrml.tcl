@@ -78,7 +78,7 @@ proc MainMrmlInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainMrml \
-		{$Revision: 1.51 $} {$Date: 2002/01/27 21:39:47 $}]
+		{$Revision: 1.52 $} {$Date: 2002/02/07 15:40:28 $}]
 
 	set Mrml(colorsUnsaved) 0
 }
@@ -823,44 +823,7 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 		}
 
 		"TetraMesh" {
-			set n [MainMrmlAddNode TetraMesh]
-			foreach a $attr {
-                            set key [lindex $a 0]
-                            set lowkey [string tolower $key]
-                            set val [lreplace $a 0 0]
-				switch $lowkey {
-				"id"	           {$n SetModelID      $val}
-				"desc"             {$n SetDescription  $val}
-				"name"             {$n SetName         $val}
-				"filename"         {$n SetFileName     $val}
-				"opacity"          {$n SetOpacity      $val}
-				"clipping" {
-					if {$val == "yes" || $val == "true"} {
-						$n SetClipping 1
-					} else {
-						$n SetClipping 0
-					}
-				}
-                                "nodescaling"      {$n SetNodeScaling   $val}
-                                "nodeskip"         {$n SetNodeSkip      $val}
-                                "scalarscaling"    {$n SetScalarScaling $val}
-                                "scalarskip"       {$n SetScalarSkip    $val}
-                                "vectorscaling"    {$n SetVectorScaling $val}
-                                "vectorskip"       {$n SetVectorSkip    $val}
-                            }
-                          foreach item "Surfaces Nodes Edges Scalars Vectors" {
-                              if {[string tolower "Display$item"] == $lowkey} {
-                                  if {$val == "yes" || $val == "true"} {
-                                      $n SetDisplay$item 1
-                                  } else {
-                                      $n SetDisplay$item 0
-                                  }
-                              }
-                          }
-
-                      }
-                      # Compute full path name relative to the MRML file
-                      $n SetFileName [file join $Mrml(dir) [$n GetFileName]]
+                    MainTetraMeshProcessMrml "$attr"
                   }
 
 		"Options" {

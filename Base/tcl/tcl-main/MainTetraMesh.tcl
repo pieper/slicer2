@@ -64,7 +64,7 @@ proc MainTetraMeshInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.4 $} {$Date: 2002/01/23 14:41:58 $}]
+		{$Revision: 1.5 $} {$Date: 2002/02/07 15:40:28 $}]
 
 	set TetraMesh(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -639,7 +639,8 @@ proc MainTetraMeshVtkDataToTclData {mrmlnode} {
     global TetraMesh
 
     foreach item     "Name FileName Description Opacity \
-            Clipping  DisplaySurfaces DisplayEdges    \
+            Clipping  DisplaySurfaces SurfacesUseCellData \
+            DisplayEdges    \
             DisplayNodes    NodeScaling NodeSkip      \
             DisplayScalars  ScalarScaling  ScalarSkip \
             DisplayVectors  VectorScaling  VectorSkip" {
@@ -659,12 +660,81 @@ proc MainTetraMeshTclDataToVtkData {mrmlnode} {
     global TetraMesh
 
     foreach item     "Name FileName Description Opacity \
+            Clipping  DisplaySurfaces SurfacesUseCellData \
+            DisplayEdges    \
             Clipping        DisplaySurfaces DisplayEdges  \
             DisplayNodes    NodeScaling     NodeSkip \
             DisplayScalars  ScalarScaling   ScalarSkip \
             DisplayVectors  VectorScaling   VectorSkip" {
         $mrmlnode Set$item $TetraMesh($item)
     }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MainTetraMeshProcessMrml
+# 
+# The Mrml file has been parsed. These are the keyword pairs found for
+# a TetraMesh. Take them and create a new TetraMeshMrmlNode
+#
+# Note that this function should assume a user edited the file so that
+# the keywords may not have the correct case. It is best to deal with 
+# everything in all lower case. Also, don't forget that a TetraMeshMrmlNode
+# is a TetraMeshNode, so it must parse the mrml node functionality.
+#
+# .ARGS
+# array attr is a list of keyword pairs.
+# .END
+#-------------------------------------------------------------------------------
+proc MainTetraMeshProcessMrml {attr} {
+    global Mrml 
+    set n [MainMrmlAddNode TetraMesh]
+    foreach a $attr {
+        set key [lindex $a 0]
+        set lowkey [string tolower $key]
+        set val [lreplace $a 0 0]
+        switch $lowkey {
+            "id"	       {$n SetID           $val}
+            "desc"             {$n SetDescription  $val}
+            "name"             {$n SetName         $val}
+            "filename"         {$n SetFileName     $val}
+            "opacity"          {$n SetOpacity      $val}
+            "clipping" {
+                if {$val == "yes" || $val == "true"} {
+                    $n SetClipping 1
+                } else {
+                    $n SetClipping 0
+                }
+            }
+            "nodescaling"      {$n SetNodeScaling   $val}
+            "nodeskip"         {$n SetNodeSkip      $val}
+            "scalarscaling"    {$n SetScalarScaling $val}
+            "scalarskip"       {$n SetScalarSkip    $val}
+            "vectorscaling"    {$n SetVectorScaling $val}
+            "vectorskip"       {$n SetVectorSkip    $val}
+        }
+        foreach item "Clipping SurfacesUseCellData" {
+            if {[string tolower $item] == $lowkey} {
+                if {$val == "yes" || $val == "true"} {
+                    $n Set$item 1
+                } else {
+                    $n Set$item 0
+                }
+            }
+        }
+
+        foreach item "Surfaces Nodes Edges Scalars Vectors" {
+            if {[string tolower "Display$item"] == $lowkey} {
+                if {$val == "yes" || $val == "true"} {
+                    $n SetDisplay$item 1
+                } else {
+                    $n SetDisplay$item 0
+                }
+            }
+        }
+        
+    }
+    # Compute full path name relative to the MRML file
+    $n SetFileName [file join $Mrml(dir) [$n GetFileName]]
 }
 
 #-------------------------------------------------------------------------------
