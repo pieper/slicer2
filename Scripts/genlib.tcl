@@ -141,9 +141,38 @@ if { [file exists $localvarsfile] } {
     exit 1
 }
 
+#initialize Windows and Darwin platform variables
+switch $tcl_platform(os) {
+    "SunOS" -
+    "Linux" { 
+        set isWindows 0
+        set isDarwin 0
+    }
+    "Darwin" { 
+        set isWindows 0
+        set isDarwin 1
+    }
+    default { 
+        set isWindows 1
+        set isDarwin 0
+    }
+}
+
 
 if { $GENLIB(clean) } {
-    file delete -force $SLICER_LIB
+    if { $isDarwin } {
+        runcmd rm -rf $SLICER_LIB
+        if { [file exists $SLICER_HOME/isPatched] } {
+            runcmd rm $SLICER_HOME/isPatched
+        }
+    } elseif { $isWindows }  {
+        file delete -force $SLICER_LIB/VTK
+        file delete -force $SLICER_LIB/VTK-build
+        file delete -force $SLICER_LIB/Insight
+        file delete -force $SLICER_LIB/Insight-build
+    } else {
+        file delete -force $SLICER_LIB
+    }
 }
 
 if { ![file exists $SLICER_LIB] } {
@@ -262,6 +291,28 @@ if { ![file exists $tkTestFile] } {
 
     runcmd cvs -d :pserver:anonymous:@cvs.sourceforge.net:/cvsroot/tktoolkit login
     runcmd cvs -z3 -d :pserver:anonymous@cvs.sourceforge.net:/cvsroot/tktoolkit checkout -r $tkTag tk
+
+    if {$isDarwin} {
+        if { ![file exists $SLICER_HOME/isPatched] } {
+            if { [file exists $tkEventPatch] } {
+                puts "Patching..."
+                cd $SLICER_LIB/tcl/tk/generic
+                runcmd cp $SLICER_HOME/tkEventPatch.diff $SLICER_LIB/tcl/tk/generic 
+                runcmd patch -i tkEventPatch.diff
+
+                # create a file to make sure tkEvent.c isn't patched twice
+                runcmd touch $SLICER_HOME/isPatched
+                file delete $SLICER_LIB/tcl/tk/generic/tkEventPatch.diff
+            } else { 
+                puts "Download tkEvent patch from Xythos and place in $SLICER_HOME"  
+                puts "then run genlib.tcl again.  Download from:"
+                puts "https://share.spl.harvard.edu/xythoswfs/webui/share/birn/public/software/External/Patches"
+                exit
+            } 
+        } else {
+            puts "tkEvent.c already patched."
+        }
+    }
 
     if {$isWindows} {
         # can't do windows
