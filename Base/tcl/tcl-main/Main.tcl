@@ -269,17 +269,17 @@ The 3D Slicer will exit so the problem can be corrected."
 	#-------------------------------------------
 	# Initial tab
 	#-------------------------------------------
-	$Gui(lBoot) config -text "Ready!"
+	$Gui(lBoot) config -text ""
 
-	set Module(bootDone) 0
+	
 	if {$Module(activeID) == ""} {
-		Tab [lindex $Module(idList) 0]
+	    Tab [lindex $Module(idList) 0]
 	}
 	bind .tViewer <Configure> "MainViewerUserResize"
 	puts "Ready"
-	set Module(bootDone) 1
-}
 
+    }
+    
 #-------------------------------------------------------------------------------
 # .PROC MainInit
 #
@@ -317,9 +317,6 @@ proc MainInit {} {
 	#-------------------------------------------
 	set Module(activeID) ""
 	set Module(freezer) ""
-	set Module(bootDone) 0
-	set Module(bootModule) ""
-	set Module(moduleTabsAdded) 0
 
 	foreach m $Module(idList) {
 		set Module($m,more) 0
@@ -341,13 +338,15 @@ proc MainInit {} {
 	set Module(procSessionLog) ""
 	set Module(Renderers) ""
 
-	set Module(controlsHeight) 396
-	set Module(controlsWidth) 239
+	set Module(.tMain.fControls,height) 420
+	# the minimum height of all frames contained in .tMain.fControls
+	set Module(.tMain.fControls,scrolledHeight) 396
+	set Module(.tMain.fControls,winsMinWidth) 239
 	set Module(scrollIncr) 10
 
         # Set version info
 	lappend Module(versions) [ParseCVSInfo Main \
-		{$Revision: 1.62 $} {$Date: 2001/07/27 21:20:00 $}]
+		{$Revision: 1.63 $} {$Date: 2001/08/21 23:23:00 $}]
 
 	# Call each "Init" routine that's not part of a module
 	#-------------------------------------------
@@ -432,7 +431,7 @@ proc MainBuildGUI {} {
 	# Status bar dimensions
 
 	frame $f.fModules  -bd $Gui(borderWidth) -bg $Gui(backdrop)
-	frame $f.fControls -bd $Gui(borderWidth) -bg $Gui(backdrop) -height 420
+    frame $f.fControls -bd $Gui(borderWidth) -bg $Gui(backdrop) -height $Module(.tMain.fControls,height)
 	frame $f.fDisplay  -bd $Gui(borderWidth) -bg $Gui(backdrop)
 	frame $f.fStatus   -bd $Gui(borderWidth) -bg $Gui(inactiveWorkspace) \
 		-relief sunken
@@ -628,7 +627,7 @@ proc MainBuildGUI {} {
         eval { scrollbar $s -command "MainCheckScrollLimits $Module(canvas) yview" } $Gui(WSBA)
 	
 	# default scroll
-        $Module(canvas) config -scrollregion "0 0 1 $Module(controlsHeight)"
+        $Module(canvas) config -scrollregion "0 0 1 $Module(.tMain.fControls,scrolledHeight)"
 	$Module(canvas) config -yscrollincrement $Module(scrollIncr) -confine true
 	
 	pack $f.fTabs -side top -fill x        
@@ -650,14 +649,14 @@ proc MainBuildGUI {} {
             MainBuildModuleTabs $m
 	}
 
-	# Blank page to show during boot
+	# Blank page to show during boot 
 
 	frame $fWork.fBoot -bg $Gui(activeWorkspace)
-	eval {label $fWork.fBoot.l -text "Loading data..."} $Gui(WLA)
+	eval {label $fWork.fBoot.l -width 232 -height 396 -text "Loading data..." -justify center} $Gui(WLA)
 	set Gui(lBoot) $fWork.fBoot.l
-	pack $fWork.fBoot.l -fill both -expand t
+	pack $fWork.fBoot.l 
 	place $fWork.fBoot -in $fWork -relheight 1.0 -relwidth 1.0
-	raise $fWork.fBoot 
+
 	
 	#-------------------------------------------
 	# Main->Display Frame
@@ -754,10 +753,21 @@ proc MainBuildGUI {} {
 	#-------------------------------------------
 	set f .tMain.fStatus
 	
+
+	# Add the arrow image (the one that makes the scrollbar appear) 
+	# at the end of the row 
+	set Module(scrollbar,image) [image create photo -file \
+		[ExpandPath [file join gui moduleArrows.gif]]]
+	
+	eval {checkbutton $f.bDn -image $Module(scrollbar,image) -variable Module(display,lowered) -width 10 -indicatoron 0 -command "MainResizeDisplayFrame" -height 20} $Gui(WBA)
+	
+	# Tooltip example: Add a tooltip for the image checkbutton
+	TooltipAdd $f.bDn "Press this button to lower or raise the frame above"
+
 	set Gui(fStatus) $f
 	canvas $f.canvas -borderwidth 0 -highlightthickness 0 \
-		-width 232 -height 20
-	pack $f.canvas
+		-width 222 -height 20
+	pack $f.bDn $f.canvas -side left
 
 	foreach p "MainAnnoBuildGUI " {
 		if {$Module(verbose) == 1} {
@@ -786,8 +796,10 @@ proc MainBuildModuleTabs {ModuleName}  {
     # Make page frames for each tab
     foreach tab "$Module($m,row1List) $Module($m,row2List)" {
 	# create the frame for that module/tab, but don't pack it yet, 
-	# it is done in MainAddModuleTabs
+	# it is done in MainPackModuleTabs called at the end of MainBoot 
+	# once we know their required height
         frame $fWork.f${m}${tab} -bg $Gui(activeWorkspace)
+	$fWork create window 0 0 -anchor nw -width $Module(.tMain.fControls,winsMinWidth) -window $fWork.f${m}${tab} 	
         set Module($m,f${tab}) $fWork.f${m}${tab}
     }
     
@@ -814,46 +826,10 @@ proc MainBuildModuleTabs {ModuleName}  {
     }
 }
 
-
-#-------------------------------------------------------------------------------
-# .PROC MainAddModuleTabs
-# 
-#  Add the frames of module ModuleName to the canvas so it can be scrolled
-#  This procedure has to be called once the 3D Slicer window is rendered 
-#  on the screen, otherwise the height of the frames is not yet initialized
-#
-# .ARGS
-# str ModuleName the name of the Module.
-# .END
-#-------------------------------------------------------------------------------
-proc MainAddModuleTabs {ModuleName}  {
-    global Module Gui
-
-    set m $ModuleName
-    set fWork .tMain.fControls.fWorkspace
-    set f .tMain.fControls.fTabs
-
-    # Make page frames for each tab
-    foreach tab "$Module($m,row1List) $Module($m,row2List)" {
-        set Module($m,f$tab,height) [winfo reqheight $fWork.f${m}${tab}]
-	
-	if {$Module($m,f$tab,height) < $Module(controlsHeight)} {
-	    set Module($m,f$tab,height) $Module(controlsHeight)
-	}
-	
-	# give the default width and height initially so that each module 
-	# frame fills the controls area, otherwise some module
-	# frames will overlap (if one is smaller than the other)
-	$fWork create window 0 0 -width $Module(controlsWidth) -height $Module($m,f$tab,height) -anchor nw -window $fWork.f${m}${tab} 	
-    }
-
-}
     
-
-
 # This procedure allows scrolling only if the entire frame is not visible
 proc MainCheckScrollLimits {args} {
-
+    
     set canvas [lindex $args 0]
     set view   [lindex $args 1]
     set fracs [$canvas $view]
@@ -1071,28 +1047,7 @@ proc IsModule {m} {
 #-------------------------------------------------------------------------------
 proc Tab {m {row ""} {tab ""}} {
 	global Module Gui View
-
-    # if Tab is called before the boot, add the active panel to the canvas
-    # so it can be shown (it will have the default panel height)
-    #
-    # The first time Tab is called after the boot, add all the other modules
-    # tabs to the canvas now that we know their required size 
-    # (for some reason we can't get the size of a frame with "winfo" 
-    # unless the 3D Slicer window is rendered on the screen)
- 
-   if { $Module(bootDone) == 0 } {
-       MainAddModuleTabs $m
-	set Module(bootModule) $m
-    
-   } elseif { $Module(moduleTabsAdded) == 0 } {
-	foreach t $Module(idList) {
-	    if {$t != $Module(bootModule) } {
-		MainAddModuleTabs $t
-	    }
-	}
-	set Module(moduleTabsAdded) 1
-    }
-    
+   
     # Frozen?
     if {$Module(freezer) != ""} {
 	set Module(btn) $Module(activeID)
@@ -1196,10 +1151,15 @@ proc Tab {m {row ""} {tab ""}} {
 	}
     }
     
+    # Raise the default screen first to hide the previous module tab
+    # (if the old module tab is bigger than the new one, some of it will show 
+    # in the canvas since there is no -expand true type of command)
+    raise .tMain.fControls.fWorkspace.fBoot
     # Show panel
     raise $Module($m,f$tab)
     
-    # Show scrollbar (if it is visible and we are not in a Help panel)
+    # Show scrollbar (if the height of the panel is higher than the height 
+    # of the container frame and we are not in a Help panel)
     # and reconfigure its height based on the height required by 
     # the current panel
     
@@ -1212,7 +1172,11 @@ proc Tab {m {row ""} {tab ""}} {
 	set Module(scrollbar,helpTabActive) 0
 	set reqHeight [winfo reqheight $Module($m,f$tab)] 
 	MainSetScrollbarHeight $reqHeight
-	MainSetScrollbarVisibility
+	if {$reqHeight > [winfo height .tMain.fControls.fWorkspace]} { 
+	    MainSetScrollbarVisibility 1
+	} else {
+	    MainSetScrollbarVisibility 0
+	}
     }
     
     set Module(btn) $m
@@ -1254,7 +1218,10 @@ proc MainSetScrollbarHeight {reqHeight} {
     # Make the scrollbar slightly smaller so that we don't see the bottom of
     # previous frames
     set reqHeight [expr $reqHeight - 5]
+    set canvasHeight  [winfo height .tMain.fControls.fWorkspace]
+    
     $Module(canvas) config -scrollregion "0 0 1 $reqHeight"
+
 }
 
 #-------------------------------------------------------------------------------
@@ -1268,13 +1235,56 @@ proc MainSetScrollbarHeight {reqHeight} {
 # .END
 #-------------------------------------------------------------------------------
 
-proc MainSetScrollbarVisibility {} {
+proc MainSetScrollbarVisibility {{vis ""}} {
     
     global Module
+        
+    # if the user has specified a visibility, change Module(scrollbar,visible)
+    if { $vis == 1 || $vis == 0} {
+	set Module(scrollbar,visible) $vis
+    }
+    # otherwise leave Module(scrollbar,visible) the way it is
+	
     if { $Module(scrollbar,visible) == 1 && $Module(scrollbar,helpTabActive) == 0} {
 	raise $Module(scrollbar,widget)
     } else {
 	lower $Module(scrollbar,widget)
+    }
+    
+}
+
+
+proc MainResizeDisplayFrame {} {
+
+    global Module
+
+    set displayHeight [winfo reqheight .tMain.fDisplay]
+
+    if {$Module(display,lowered) == 1} {
+	pack forget .tMain.fDisplay 
+	set Module(.tMain.fControls,height) [expr $Module(.tMain.fControls,height) + $displayHeight]
+	set Module(.tMain.fControls,scrolledHeight) [expr $Module(.tMain.fControls,scrolledHeight) + $displayHeight]
+	.tMain.fControls configure -height $Module(.tMain.fControls,height)
+    } else {
+	pack .tMain.fDisplay -before .tMain.fStatus -expand 1 -fill both -padx 0 -pady 0
+	set Module(.tMain.fControls,height) [expr $Module(.tMain.fControls,height) - $displayHeight]
+	set Module(.tMain.fControls,scrolledHeight) [expr $Module(.tMain.fControls,scrolledHeight) - $displayHeight]
+	.tMain.fControls configure -height $Module(.tMain.fControls,height)
+    }   
+
+    # update the scrollbar
+
+    set m $Module(activeID)
+    set r $Module($m,row)
+    set tab $Module($m,$r,tab)
+
+    set reqHeight [winfo reqheight $Module($m,f$tab)] 
+    MainSetScrollbarHeight $reqHeight
+
+    if {$reqHeight > $Module(.tMain.fControls,scrolledHeight)} { 
+	MainSetScrollbarVisibility 1
+    } else {
+	MainSetScrollbarVisibility 0
     }
     
 }

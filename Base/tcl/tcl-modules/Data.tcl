@@ -71,7 +71,7 @@ proc DataInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.33 $} {$Date: 2001/07/19 10:39:21 $}]
+		{$Revision: 1.34 $} {$Date: 2001/08/21 23:23:01 $}]
 
 	set Data(index) ""
 	set Data(clipboard) ""
@@ -211,7 +211,7 @@ to quickly cut and paste items.
 	#-------------------------------------------
 	set f $fList.fList
 
-	set Data(fNodeList) [ScrolledListbox $f.list 0 0 -selectmode extended]
+	set Data(fNodeList) [ScrolledListbox $f.list 0 0 -height 16 -selectmode extended]
 	bind $Data(fNodeList) <Button-3>  {DataPostRightMenu %X %Y}
 	bind $Data(fNodeList) <Double-1>  {DataEditNode}
 

@@ -42,7 +42,7 @@ proc MainHelpInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainFile \
-		{$Revision: 1.12 $} {$Date: 2001/04/05 23:42:35 $}]
+		{$Revision: 1.13 $} {$Date: 2001/08/21 23:23:00 $}]
 
 	set Help(tagNormal)   "-font {times 10}"
 	set Help(tagItalic)   "-font {times 10 italic}"
@@ -127,7 +127,7 @@ proc MainHelpBuildGUI {ModuleName} {
 proc HelpWidget {f} {
 	global Gui
 
-	set t [text $f.t -height 6 -setgrid true -wrap word \
+	set t [text $f.t -height 23 -setgrid true -wrap word \
 		-yscrollcommand "$f.sy set" -cursor arrow -insertontime 0]
 	scrollbar $f.sy -orient vert -command "$f.t yview"
 
