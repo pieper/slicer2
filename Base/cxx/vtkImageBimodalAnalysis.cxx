@@ -234,7 +234,7 @@ static void vtkImageBimodalAnalysisExecute(vtkImageBimodalAnalysis *self,
   self->SetMax(max + offset);
   self->SetLevel(centroid + offset);
   self->SetWindow(window);
-  self->SetSignalRange(minSignal, maxSignal);
+  self->SetSignalRange((int)minSignal, (int)maxSignal);
 
   outData->GetExtent(clipExt);
   clipExt[0] = min;

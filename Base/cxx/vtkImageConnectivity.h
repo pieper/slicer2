@@ -93,12 +93,12 @@ public:
     vtkGetMacro(OutputLabel, int);
     vtkSetMacro(MinSize, int);
     vtkGetMacro(MinSize, int);
-    vtkSetMacro(Background, float);
-    vtkGetMacro(Background, float);
-    vtkSetMacro(MinForeground, float);
-    vtkGetMacro(MinForeground, float);
-    vtkSetMacro(MaxForeground, float);
-    vtkGetMacro(MaxForeground, float);
+    vtkSetMacro(Background, short);
+    vtkGetMacro(Background, short);
+    vtkSetMacro(MinForeground, short);
+    vtkGetMacro(MinForeground, short);
+    vtkSetMacro(MaxForeground, short);
+    vtkGetMacro(MaxForeground, short);
 
 protected:
     vtkImageConnectivity();
@@ -106,9 +106,9 @@ protected:
     vtkImageConnectivity(const vtkImageConnectivity&) {};
     void operator=(const vtkImageConnectivity&) {};
 
-    float Background;
-    float MinForeground;
-    float MaxForeground;
+    short Background;
+    short MinForeground;
+    short MaxForeground;
     int LargestIslandSize;
     int IslandSize;
     int MinSize;

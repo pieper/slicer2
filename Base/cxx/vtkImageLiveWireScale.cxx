@@ -226,7 +226,7 @@ static void vtkImageLiveWireScaleBuildLookupTable(vtkImageLiveWireScale *self,
   self->SetMinimumBin(minBin);
   self->SetMaximumBin(maxBin);
 
-  vtkFloatingPointType maxPixInBin = 0;
+  int maxPixInBin = 0;
 
   LookupTable->SetNumberOfValues(numBins);
   int i;
@@ -253,7 +253,7 @@ static void vtkImageLiveWireScaleBuildLookupTable(vtkImageLiveWireScale *self,
 
       // if max pixel count in any bin so far
       if (numpix > maxPixInBin)
-    maxPixInBin = numpix;
+        maxPixInBin = numpix;
 
       // increment bin count
       LookupTable->SetValue(bin,numpix+1);
@@ -269,7 +269,7 @@ static void vtkImageLiveWireScaleBuildLookupTable(vtkImageLiveWireScale *self,
 
   // now smooth the histogram
   // need to keep track of max pix
-  vtkFloatingPointType maxPixInSmoothedBin = 0;
+  int maxPixInSmoothedBin = 0;
   vtkFloatArray *tempBins = vtkFloatArray::New();
   tempBins->SetNumberOfValues(numBins);
   for (i=0; i<numBins; i++)
@@ -285,20 +285,20 @@ static void vtkImageLiveWireScaleBuildLookupTable(vtkImageLiveWireScale *self,
       vtkFloatingPointType numpix = LookupTable->GetValue(i);
 
       for (int j = 0; j < 6; j++)
-    {
-      int bin = i+offsets[j];
-
-      if (bin >= 0 && bin < numBins)
         {
-          // add fraction of central bin to this one
-          vtkFloatingPointType count = tempBins->GetValue(bin);
-          count += numpix*fractions[j];
-          tempBins->SetValue(bin,count);
+          int bin = i+offsets[j];
 
-          if (count > maxPixInSmoothedBin)
-        maxPixInSmoothedBin = count;
+          if (bin >= 0 && bin < numBins)
+            {
+              // add fraction of central bin to this one
+              vtkFloatingPointType count = tempBins->GetValue(bin);
+              count += numpix*fractions[j];
+              tempBins->SetValue(bin,count);
+
+              if (count > maxPixInSmoothedBin)
+                maxPixInSmoothedBin = count;
+            }
         }
-    }
     }
 
   // now need to add these "extra fractions" onto the real bins

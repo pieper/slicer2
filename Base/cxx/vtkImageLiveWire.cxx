@@ -1166,7 +1166,7 @@ int circularQueue::GetBucket(int cost)
   return div(cost,this->C+1).rem;
 }
 
-int circularQueue::FindMinBucket(vtkFloatingPointType cost)
+int circularQueue::FindMinBucket(int cost)
 {
   int bucket = this->GetBucket(cost);
   int count = 0;

@@ -129,10 +129,10 @@ class VTK_SLICER_BASE_EXPORT vtkImageLiveWireScale : public vtkImageToImageFilte
   vtkSetMacro(MaximumBin,int);
   vtkGetMacro(MaximumBin,int);
 
-  vtkSetMacro(MeanForGaussianModel,int);
-  vtkGetMacro(MeanForGaussianModel,int);
-  vtkSetMacro(VarianceForGaussianModel,int);
-  vtkGetMacro(VarianceForGaussianModel,int);
+  vtkSetMacro(MeanForGaussianModel,vtkFloatingPointType);
+  vtkGetMacro(MeanForGaussianModel,vtkFloatingPointType);
+  vtkSetMacro(VarianceForGaussianModel,vtkFloatingPointType);
+  vtkGetMacro(VarianceForGaussianModel,vtkFloatingPointType);
 
   protected:
   vtkImageLiveWireScale();
@@ -148,8 +148,8 @@ class VTK_SLICER_BASE_EXPORT vtkImageLiveWireScale : public vtkImageToImageFilte
 
   int UseLookupTable;
   int UseGaussianLookup;
-  int MeanForGaussianModel;
-  int VarianceForGaussianModel;
+  vtkFloatingPointType MeanForGaussianModel;
+  vtkFloatingPointType VarianceForGaussianModel;
 
   int UseTransformationFunction;
   int TransformationFunctionNumber;
