@@ -63,10 +63,6 @@ public:
   /** Run-time type information (and related methods). */
   itkTypeMacro(NewStoppingCondition, Object);
 
-protected:
-  NewStoppingCondition();
-  ~NewStoppingCondition();
-
 public:
   //
   // The type definitions
@@ -81,6 +77,21 @@ public:
   typedef RegistratorType::AffineTransformType   AffineTransformType;
   typedef AffineTransformType::Pointer AffineTransformPointer;
 
+  /** Set the thing to abort **/
+  void AbortProcess() { abort = 1;}
+
+  /** Call an Update Function Every UpdateIter, default 100 */
+  itkSetMacro(UpdateIter, int);
+  itkGetMacro(UpdateIter, int);
+
+ /** Update Function(object,num_level,num_iter) and object to be called */
+  void SetCallbackFunction(void* object,
+               void (*f)(void *,int,int))
+  {
+    CallbackData = object;
+    Callback = f;
+  }
+
   /** A new iteration is starting, so reset all convergence settings */
   void Reset();
 
@@ -94,6 +105,16 @@ public:
 protected:
   vtkMatrix4x4 *last,*current,*change_mat;
   TransformType::Pointer             m_Transform;
+  int abort;
+  int m_UpdateIter;
+  void (*Callback)(void *,int,int);
+  void *CallbackData;
+  int m_CurrentIter;
+  int m_CurrentLevel;
+
+protected:
+  NewStoppingCondition();
+  ~NewStoppingCondition();
 };
 
 } /* end namespace itk */

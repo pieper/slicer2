@@ -41,21 +41,25 @@ namespace itk
 
 NewStoppingCondition::NewStoppingCondition() 
 {
-  last       = vtkMatrix4x4::New();
-  current    = vtkMatrix4x4::New();
-  change_mat = vtkMatrix4x4::New();
+  last        = vtkMatrix4x4::New();
+  current     = vtkMatrix4x4::New();
+  change_mat  = vtkMatrix4x4::New();
   m_Transform = TransformType::New();
-
   last->Identity();
   current->Identity();
-};
+  abort           = 0;
+  m_UpdateIter    = 100;
+  CallbackData    = NULL;
+  m_CurrentIter   = 0;
+  m_CurrentLevel  = -1;
+}
 
 /* ====================================================================== */
 
 void NewStoppingCondition::Reset()
 {
-
- 
+  m_CurrentIter = 0;
+  m_CurrentLevel++;
 }
 
 /* ====================================================================== */
@@ -79,10 +83,25 @@ void NewStoppingCondition::Execute(itk::Object * object,
       {
       return;
       }
-
     if (optimizer->GetCurrentIteration() == 0)
       {
         this->Reset();
+      }
+
+    this->m_CurrentIter = optimizer->GetNumberOfIterations();
+    if(m_CurrentIter % m_UpdateIter == 0)
+      {
+    if (CallbackData != NULL)
+      {
+        this->Callback(CallbackData,
+               this->m_CurrentLevel,
+               this->m_CurrentIter);
+      }
+      }
+    if (this->abort)
+      {
+    optimizer->StopOptimization();
+    return;
       }
 
     // The current matrix becomes the old one
