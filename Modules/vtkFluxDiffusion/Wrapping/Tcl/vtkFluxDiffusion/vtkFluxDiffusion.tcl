@@ -5,7 +5,7 @@ package require vtk
 # library is uniquely available through this module
 #
 
-if {[info commands vtkFluxDiffusion] != "" ||
+if {[info commands vtkAnisoGaussSeidel] != "" ||
     [::vtk::load_component vtkFluxDiffusionTCL] == ""} {
     global PACKAGE_DIR_VTKFLUXDIFFUSION
     source  $PACKAGE_DIR_VTKFLUXDIFFUSION/../../../tcl/FluxDiffusion.tcl
