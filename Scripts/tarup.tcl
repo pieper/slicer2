@@ -22,6 +22,18 @@ set __comment__ {
 
     It does all this while taking into account platform differences in naming schemes
     and directory layouts.
+    
+
+    NB: remember to check that all shared libraries are included in the appropriate
+    bin directory.  These should be placed in the VTK_BIN_DIR
+    for windows visual studio 7, the following files are needed for a debug build:
+        msvci70d.dll msvcp70d.dll msvcr70d.dll
+    for linux redhat7.3
+        ld-2.2.5.so libpthread-0.9.so libstdc++-3-libc6.2-2-2.10.0.so  
+    for solaris
+        libgcc_s.so.1 libstdc++.so.3  
+    for darwin
+        nothing known
 }
 
 proc tarup { {destdir "auto"} } {
