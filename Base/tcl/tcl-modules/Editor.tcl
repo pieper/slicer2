@@ -68,7 +68,7 @@
 
 #-------------------------------------------------------------------------------
 # .PROC EditorInit
-# 
+# Sets up tabs and global variables.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -92,7 +92,7 @@ proc EditorInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.25 $} {$Date: 2000/03/01 03:55:10 $}]
+		{$Revision: 1.26 $} {$Date: 2000/04/01 18:59:09 $}]
 
 	# Initialize globals
 	set Editor(idOriginal)  $Volume(idNone)
@@ -152,7 +152,9 @@ proc EditorInit {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EditorBuildVTK
-# 
+# Calls BuildVTK procs for files in Editor subdirectory. <br>
+# Makes VTK objects vtkImageEditorEffects Ed(editor) and 
+# vtkMrmlVolumeNode Editor(undoNode).
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -183,7 +185,8 @@ proc EditorBuildVTK {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EditorUpdateMRML
-# 
+# Redoes the menus for picking volumes to edit (since these may have changed with
+# a change in MRML).
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -260,7 +263,9 @@ proc EditorUpdateMRML {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EditorBuildGUI
-# 
+# Builds the GUI for the Editor tab.  
+# Calls the BuildGUI proc for each file in the Editor subdirectory, and gives each
+# one a frame inside the Details->Effect frame.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -733,7 +738,9 @@ abreviation for the effect at the top of the <B>Details</B> tab.
 
 #-------------------------------------------------------------------------------
 # .PROC EditorEnter
-# 
+# Called when the Editor panel is entered by the user. 
+# If no "Original" volume has been selected, tries to set it to the one being 
+# displayed as background.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -756,7 +763,8 @@ proc EditorEnter {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EditorMakeModel
-# 
+# Sets the active volume (to the first one of Composite, Working, or Original 
+# that has been defined by the user).  Then tabs to ModelMaker panel. 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -782,7 +790,7 @@ proc EditorMakeModel {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EditorB1
-# 
+# Effect-specific response to B1 mouse click.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -830,7 +838,8 @@ proc EditorB1 {x y} {
 
 #-------------------------------------------------------------------------------
 # .PROC EditorB1Motion
-# 
+# Effect-specific response to B1 mouse motion. 
+# Currently only used for Draw.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -869,7 +878,8 @@ proc EditorB1Motion {x y} {
 
 #-------------------------------------------------------------------------------
 # .PROC EditorB1Release
-# 
+# Effect-specific response to B1 mousebutton release.
+# Currently only used for Draw.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -1121,8 +1131,8 @@ proc EditorGetWorkingID {} {
 #-------------------------------------------------------------------------------
 # .PROC EditorGetCompositeID
 #
-# Returns the working volume's ID.
-# If there is no working volume (Editor(idComposite)==NEW), then it creates one.
+# Returns the composite volume's ID.
+# If there is no composite volume (Editor(idComposite)==NEW), then it creates one.
 # .END
 #-------------------------------------------------------------------------------
 proc EditorGetCompositeID {} {
