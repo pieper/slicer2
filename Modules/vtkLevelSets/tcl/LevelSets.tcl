@@ -168,7 +168,7 @@ proc LevelSetsInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.27 $} {$Date: 2004/04/22 15:27:37 $}]
+        {$Revision: 1.28 $} {$Date: 2004/07/06 16:01:11 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -313,8 +313,6 @@ set Gui(myWLA) {  -font {helvetica 8} \
 proc LevelSetsUpdateGUI {} {
     global LevelSets Volume
     
-puts "LevelSetsUpdateGui \n"
-
     DevUpdateNodeSelectButton Volume LevelSets InputVol        InputVol        DevSelectNode
     DevUpdateNodeSelectButton Volume LevelSets InitVol         InitVol         DevSelectNode 
 #    DevUpdateNodeSelectButton Volume LevelSets ResultVol       ResultVol       DevSelectNode 0 1 0
