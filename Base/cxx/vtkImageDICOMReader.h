@@ -191,7 +191,7 @@ public:
   vtkGetStringMacro(InternalFileName);
   
   int GetDICOMHeaderSize(int idx);
-  void SetDICOMFileNames(int, char **);
+  void SetDICOMFileNames(int, char **, int, int *);
   void Start();
   
 protected:
@@ -234,6 +234,9 @@ protected:
   
   int DICOMFiles;
   char **DICOMFileList;
+
+  int DICOMMultiFrameOffsets;
+  int *DICOMMultiFrameOffsetList;
 
   void ExecuteInformation();
   void Execute() { this->vtkImageSource::Execute(); };

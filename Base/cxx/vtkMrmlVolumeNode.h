@@ -288,7 +288,7 @@ class VTK_EXPORT vtkMrmlVolumeNode : public vtkMrmlNode
   vtkGetObjectMacro(RasToIjk, vtkMatrix4x4);
   vtkGetObjectMacro(Position, vtkMatrix4x4);
 
-  // Added by Attila Tanacs 10/10/2000
+  // Added by Attila Tanacs 10/10/2000 1/4/02
 
   // DICOMFileList
   int GetNumberOfDICOMFiles() { return DICOMFiles; }
@@ -298,6 +298,11 @@ class VTK_EXPORT vtkMrmlVolumeNode : public vtkMrmlNode
   void DeleteDICOMFileNames();
   char **GetDICOMFileNamesPointer() { return DICOMFileList;}
 
+  int GetNumberOfDICOMMultiFrameOffsets() {return DICOMMultiFrameOffsets;}
+  void AddDICOMMultiFrameOffset(int offset);
+  int GetDICOMMultiFrameOffset(int idx);
+  void DeleteDICOMMultiFrameOffsets();
+  int *GetDICOMMultiFrameOffsetPointer() {return DICOMMultiFrameOffsetList;}
   // End
 
 protected:
@@ -348,9 +353,12 @@ protected:
   vtkMatrix4x4 *RasToIjk;
   vtkMatrix4x4 *Position;
 
-  // Added by Attila Tanacs 10/10/2000
+  // Added by Attila Tanacs 10/10/2000 1/4/02
   int DICOMFiles;
   char **DICOMFileList;
+
+  int DICOMMultiFrameOffsets;
+  int *DICOMMultiFrameOffsetList;
   // End
 };
 

@@ -156,7 +156,7 @@ DICOMDataDictFile='$Volumes(DICOMDataDictFile)'"
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-                {$Revision: 1.53 $} {$Date: 2001/11/29 21:07:00 $}]
+                {$Revision: 1.54 $} {$Date: 2002/01/05 17:21:22 $}]
 
 	# Props
 	set Volume(propertyType) Basic
@@ -1068,9 +1068,10 @@ proc VolumesPropsApply {} {
         set n [MainMrmlAddNode Volume]
         set i [$n GetID]
            
-        # Added by Attila Tanacs 10/11/2000
+        # Added by Attila Tanacs 10/11/2000 1/4/02
 
         $n DeleteDICOMFileNames
+	$n DeleteDICOMMultiFrameOffsets
         for  {set j 0} {$j < [llength $Volume(dICOMFileList)]} {incr j} {
             $n AddDICOMFileName [$Volume(dICOMFileListbox) get $j]
         }
@@ -1078,7 +1079,14 @@ proc VolumesPropsApply {} {
         if { $Volume(isDICOM) } {
             #$Volume(dICOMFileListbox) insert 0 [$n GetNumberOfDICOMFiles];
             set firstNum 1
-            set Volume(lastNum) [llength $Volume(dICOMFileList)]
+	    if {$Volume(DICOMMultiFrameFile) == "0"} {
+		set Volume(lastNum) [llength $Volume(dICOMFileList)]
+	    } else {
+		set Volume(lastNum) $Volume(DICOMMultiFrameFile)
+		for {set j 0} {$j < $Volume(lastNum)} {incr j} {
+		    $n AddDICOMMultiFrameOffset [lindex $Volume(DICOMSliceOffsets) $j]
+		}
+	    }
         }	    
 
         # End of Part added by Attila Tanacs
@@ -2240,7 +2248,8 @@ proc DICOMSelectMain { fileNameListbox } {
         focus .list
         grab .list
         tkwait window .list
-        
+
+        # >> AT 1/4/02
 	if { $Pressed == "OK" } {
 	    #puts $DICOMFileNameList
 	    $fileNameListbox delete 0 end
@@ -2252,20 +2261,81 @@ proc DICOMSelectMain { fileNameListbox } {
 		}
 	    }
 	    #set Volume(dICOMFileList) $DICOMFileNameList
-	    
-	    # use the second and the third
-# 	    set file1 [lindex $DICOMFileNameList 1]
-# 	    set file2 [lindex $DICOMFileNameList 2]
-# 	    DICOMReadHeaderValues [lindex $DICOMFileNameList 0]
- 	    set file1 [lindex $Volume(dICOMFileList) 1]
- 	    set file2 [lindex $Volume(dICOMFileList) 2]
- 	    DICOMReadHeaderValues [lindex $Volume(dICOMFileList) 0]
-	    DICOMPredictScanOrder $file1 $file2
+
+	    set Volume(DICOMMultiFrameFile) 0
+	    DICOMReadHeaderValues [lindex $Volume(dICOMFileList) 0]
+	    if {[llength $Volume(dICOMFileList)] == "1"} {
+#		set file [lindex $Volume(dICOMFileList) 0]
+
+		vtkDCMParser Volumes(parser)
+		Volumes(parser) OpenFile [lindex $DICOMFileNameList 0]
+		set numberofslices 1
+		if { [Volumes(parser) FindElement 0x0054 0x0081] == "1" } {
+		    Volumes(parser) ReadElement
+		    set numberofslices [Volumes(parser) ReadUINT16]
+		}
+
+		set Volume(DICOMMultiFrameFile) 0
+		if {$numberofslices > 1} {
+		    set Volume(DICOMMultiFrameFile) $numberofslices
+
+		    set height 0
+		    if { [Volumes(parser) FindElement 0x0028 0x0010] == "1" } {
+			Volumes(parser) ReadElement
+			set height [Volumes(parser) ReadUINT16]
+		    }
+
+		    set width 0
+		    if { [Volumes(parser) FindElement 0x0028 0x0011] == "1" } {
+			Volumes(parser) ReadElement
+			set width [Volumes(parser) ReadUINT16]
+		    }
+
+		    set bitsallocated 16
+		    if { [Volumes(parser) FindElement 0x0028 0x0100] == "1" } {
+			Volumes(parser) ReadElement
+			set bitsallocated [Volumes(parser) ReadUINT16]
+		    }
+		    set bytesallocated [expr 1 + int(($bitsallocated - 1) / 8)]
+		    set slicesize [expr $width * $height * $bytesallocated]
+		    
+		    set Volume(DICOMSliceNumbers) {}
+		    if { [Volumes(parser) FindElement 0x0054 0x0080] == "1" } {
+#			set NextBlock [lindex [split [Volumes(parser) ReadElement]] 4]
+			Volumes(parser) ReadElement
+			for {set j 0} {$j < $numberofslices} {incr j} {
+			    set ImageNumber [Volumes(parser) ReadUINT16]
+			    lappend Volume(DICOMSliceOffsets) [expr ($ImageNumber - 1) * $slicesize]
+#			    $fileNameListbox insert end [expr ($ImageNumber - 1) * $slicesize]
+			}
+		    } else {
+			for {set j 0} {$j < $numberofslices} {incr j} {
+			    lappend Volume(DICOMSliceOffsets) [expr $j * $slicesize]
+#			    $fileNameListbox insert end $j
+			}
+		    }
+		}
+		
+		Volumes(parser) CloseFile
+		Volumes(parser) Delete
+
+		# TODO: predict scan order
+		VolumesSetScanOrder "IS"
+	    } else {
+		# use the second and the third
+		# set file1 [lindex $DICOMFileNameList 1]
+		# set file2 [lindex $DICOMFileNameList 2]
+		# DICOMReadHeaderValues [lindex $DICOMFileNameList 0]
+		set file1 [lindex $Volume(dICOMFileList) 1]
+		set file2 [lindex $Volume(dICOMFileList) 2]
+		DICOMPredictScanOrder $file1 $file2
+	    }
 	    
 	    set Volumes(DICOMStartDir) $DICOMStartDir
 	}
     }
-    
+    # << AT 1/4/02
+
     cd $pwd
 }
 
@@ -2575,21 +2645,60 @@ proc DICOMPreviewAllButton {} {
 
     DICOMHideAllSettings
     $Volumes(ImageTextbox) delete 1.0 end
-    for {set i 0} {$i < [llength $DICOMFileNameList]} {incr i} {
-	set img [image create photo -width $Volumes(DICOMPreviewWidth) -height $Volumes(DICOMPreviewHeight) -palette 256]
-	DICOMPreviewFile [lindex $DICOMFileNameList $i] $img
-	if {[lindex $DICOMFileNameSelected $i] == "1"} {
-	    set color green
-	} else {
-	    set color red
-	}
-	label $Volumes(ImageTextbox).l$i -image $img -background $color -cursor hand1
-	bind $Volumes(ImageTextbox).l$i <ButtonRelease-1> "DICOMPreviewImageClick $Volumes(ImageTextbox).l$i $i"
-	#label $Volumes(ImageTextbox).l$i -image $img -background green
-	$Volumes(ImageTextbox) window create insert -window $Volumes(ImageTextbox).l$i
-	#$Volumes(ImageTextbox) insert insert " "
-	update idletasks
+
+    # >> AT 1/4/02 multiframe modification
+
+    vtkDCMParser Volumes(PABparser)
+    set found [Volumes(PABparser) OpenFile [lindex $DICOMFileNameList 0]]
+    if {$found == "0"} {
+	puts stderr "Can't open file $file\n"
+	Volumes(PABparser) Delete
+	return
     }
+    
+    set numberofslices 1
+    if { [Volumes(PABparser) FindElement 0x0054 0x0081] == "1" } {
+	Volumes(PABparser) ReadElement
+	set numberofslices [Volumes(PABparser) ReadUINT16]
+    }
+    Volumes(PABparser) CloseFile
+    Volumes(PABparser) Delete
+    
+    if {$numberofslices > 1} {
+	for {set i 0} {$i < $numberofslices} {incr i} {
+	    set img [image create photo -width $Volumes(DICOMPreviewWidth) -height $Volumes(DICOMPreviewHeight) -palette 256]
+	    DICOMPreviewFile [lindex $DICOMFileNameList 0] $img $i
+	    if {[lindex $DICOMFileNameSelected 0] == "1"} {
+		set color green
+	    } else {
+		set color red
+	    }
+	    label $Volumes(ImageTextbox).l$i -image $img -background $color -cursor hand1
+#	    bind $Volumes(ImageTextbox).l$i <ButtonRelease-1> "DICOMPreviewImageClick $Volumes(ImageTextbox).l$i $i"
+#	    #label $Volumes(ImageTextbox).l$i -image $img -background green
+	    $Volumes(ImageTextbox) window create insert -window $Volumes(ImageTextbox).l$i
+	    #$Volumes(ImageTextbox) insert insert " "
+	    update idletasks
+	}
+    } else {
+	for {set i 0} {$i < [llength $DICOMFileNameList]} {incr i} {
+	    set img [image create photo -width $Volumes(DICOMPreviewWidth) -height $Volumes(DICOMPreviewHeight) -palette 256]
+	    DICOMPreviewFile [lindex $DICOMFileNameList $i] $img 0
+	    if {[lindex $DICOMFileNameSelected $i] == "1"} {
+		set color green
+	    } else {
+		set color red
+	    }
+	    label $Volumes(ImageTextbox).l$i -image $img -background $color -cursor hand1
+	    bind $Volumes(ImageTextbox).l$i <ButtonRelease-1> "DICOMPreviewImageClick $Volumes(ImageTextbox).l$i $i"
+	    #label $Volumes(ImageTextbox).l$i -image $img -background green
+	    $Volumes(ImageTextbox) window create insert -window $Volumes(ImageTextbox).l$i
+	    #$Volumes(ImageTextbox) insert insert " "
+	    update idletasks
+	}
+    }
+
+    # << AT 1/4/02 multiframe modification
 }
 
 #-------------------------------------------------------------------------------
@@ -2672,7 +2781,7 @@ proc DICOMListHeader {filename} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc DICOMPreviewFile {file img} {
+proc DICOMPreviewFile {file img {slicenumber 0}} {
     global Volumes Volume
 
     vtkDCMLister parser
@@ -2700,16 +2809,38 @@ proc DICOMPreviewFile {file img} {
 	return
     }
 
-    set SkipColumn [expr int(($width - 1) / $Volumes(DICOMPreviewWidth)) * 2]
-    set SkipRow [expr int(($height - 1) / $Volumes(DICOMPreviewHeight)) * $width * 2]
-    set WidthInBytes [expr $width * 2]
+    # >> AT 1/4/02 multiframe modification
+
+    set bitsallocated 16
+    if { [parser FindElement 0x0028 0x0100] == "1" } {
+	parser ReadElement
+	set bitsallocated [parser ReadUINT16]
+    }
+    set bytesallocated [expr 1 + int(($bitsallocated - 1) / 8)]
+    set slicesize [expr $width * $height * $bytesallocated]
+    
+#    set SkipColumn [expr int(($width - 1) / $Volumes(DICOMPreviewWidth)) * 2]
+#    set SkipRow [expr int(($height - 1) / $Volumes(DICOMPreviewHeight)) * $width * 2]
+#    set WidthInBytes [expr $width * 2]
+
+    set SkipColumn [expr int(($width - 1) / $Volumes(DICOMPreviewWidth)) * $bytesallocated]
+    set SkipRow [expr int(($height - 1) / $Volumes(DICOMPreviewHeight)) * $width * $bytesallocated]
+    set WidthInBytes [expr $width * $bytesallocated]
+
+    # << AT 1/4/02 multiframe modification
 
     if { [parser FindElement 0x7fe0 0x0010] == "1" } {
 	parser ReadElement
 
+	if {$slicenumber != "0"} {
+	    set offset [parser GetFilePosition]
+	    set offset [expr $offset + $slicenumber * $slicesize]
+	    parser SetFilePosition $offset
+	}
+
 	for {set i 0} {$i < $Volumes(DICOMPreviewHeight)} {incr i} {
 	    set row {}
-
+		
 	    set FilePos [parser GetFilePosition]
 	    $img put [list [parser GetTCLPreviewRow $Volumes(DICOMPreviewWidth) $SkipColumn $Volumes(DICOMPreviewHighestValue)]] -to 0 $i
 	    parser SetFilePosition [expr $FilePos + $WidthInBytes]
@@ -2740,7 +2871,7 @@ proc DICOMCheckFiles {} {
 	incr num $selected
     }
     if {$num < 2} {
-	$t insert insert "Not a volume - can't check.\n"
+	$t insert insert "Single file - no need to check.\n"
 	return
     }
 

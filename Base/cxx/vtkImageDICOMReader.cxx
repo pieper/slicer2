@@ -41,19 +41,24 @@ int vtkImageDICOMReader::GetDICOMHeaderSize(int idx)
   vtkDCMParser *parser = vtkDCMParser::New();
 
   if(!parser->OpenFile(this->InternalFileName))
-    {
-      vtkErrorMacro("Can't open file " << this->InternalFileName << "\n");
-      return 0;
-    }
-
+  {
+    vtkErrorMacro("Can't open file " << this->InternalFileName << "\n");
+    return 0;
+  }
+  
   if(parser->FindElement(0x7fe0, 0x0010))
-    {
-      parser->ReadElement(&des);
-      size = parser->GetFilePosition();
-    }
-
+  {
+    parser->ReadElement(&des);
+    size = parser->GetFilePosition();
+  }
+  
   parser->CloseFile();
   parser->Delete();
+  
+  if(this->DICOMMultiFrameOffsets > 0)
+  {
+    size += DICOMMultiFrameOffsetList[idx - 1];
+  }
 
   return size;
 }
@@ -120,6 +125,9 @@ vtkImageDICOMReader::vtkImageDICOMReader()
 
   this->DICOMFiles = 0;
   this->DICOMFileList = NULL;
+
+  this->DICOMMultiFrameOffsets = 0;
+  this->DICOMMultiFrameOffsetList = NULL;
 }
 
 //----------------------------------------------------------------------------
@@ -160,7 +168,10 @@ vtkImageDICOMReader::~vtkImageDICOMReader()
 // This function sets the name of the file. 
 void vtkImageDICOMReader::ComputeInternalFileName(int slice)
 {
-  this->InternalFileName = DICOMFileList[slice-1];
+  if(this->DICOMMultiFrameOffsets > 0)
+    this->InternalFileName = DICOMFileList[0];
+  else
+    this->InternalFileName = DICOMFileList[slice-1];
 
   //vtkGenericWarningMacro("InternalFileName: " << InternalFileName << "\n");
 
@@ -1276,10 +1287,12 @@ void vtkImageDICOMReader::ComputeInverseTransformedIncrements(int inIncr[3],
     }
 }
 
-void vtkImageDICOMReader::SetDICOMFileNames(int num, char **ptr)
+void vtkImageDICOMReader::SetDICOMFileNames(int num, char **ptr, int offsets, int *offsetptr)
 {
   DICOMFiles = num;
   DICOMFileList = ptr;
+  DICOMMultiFrameOffsets = offsets;
+  DICOMMultiFrameOffsetList = offsetptr;
 }
 
 void vtkImageDICOMReader::Start()

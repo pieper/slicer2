@@ -92,13 +92,16 @@ vtkMrmlVolumeNode::vtkMrmlVolumeNode()
   this->SetSpacing(0.9375, 0.9375, 1.5);
   this->ComputeRasToIjkFromScanOrder("LR");
 
-  // Added by Attila Tanacs 10/10/2000
+  // Added by Attila Tanacs 10/10/2000 1/4/02
 
   // DICOMFileNames
   this->DICOMFiles = 0;
   this->DICOMFileList = new char *[500];
   for(int i=0; i<500; i++)
     DICOMFileList[i] = NULL;
+
+  this->DICOMMultiFrameOffsets = 0;
+  this->DICOMMultiFrameOffsetList = new int [500];
 
   //AddDICOMFileName("first.dcm");
   //AddDICOMFileName("second.dcm");
@@ -160,11 +163,12 @@ vtkMrmlVolumeNode::~vtkMrmlVolumeNode()
     this->ScanOrder = NULL;
   }
 
-  // Added by Attila Tanacs 10/10/2000
+  // Added by Attila Tanacs 10/10/2000 1/4/02
 
   for(int i=0; i<500; i++)
     delete [] DICOMFileList[i];
 
+  delete [] DICOMMultiFrameOffsetList;
   // End
 }
 
@@ -245,6 +249,24 @@ void vtkMrmlVolumeNode::Write(ofstream& of, int nIndent)
     }
 
   // << AT 4/2/01
+
+  // >> AT 1/4/02
+
+  if(this->GetNumberOfDICOMMultiFrameOffsets() > 0)
+    {
+      of << " dicomMultiFrameOffsetList='";
+      int i;
+      int num = GetNumberOfDICOMMultiFrameOffsets();
+      for(i = 0; i < num; i++)
+	{
+	  if(i > 0)
+	    of << " ";
+	  of << GetDICOMMultiFrameOffset(i);
+	}
+      of << "'";
+    }
+
+  // << AT 1/4/02
 
   if (this->RasToIjkMatrix && strcmp(this->RasToIjkMatrix, "")) 
   {
@@ -993,7 +1015,7 @@ int vtkMrmlVolumeNode::ComputeRasToIjkFromCorners(
   return(0);
 }
 
-// Added by Attila Tanacs 10/10/2000
+// Added by Attila Tanacs 10/10/2000 1/4/02
 
 // DICOMFileList
 void vtkMrmlVolumeNode::AddDICOMFileName(char *str)
@@ -1026,6 +1048,22 @@ void vtkMrmlVolumeNode::DeleteDICOMFileNames()
       }
 
   DICOMFiles = 0;
+}
+
+void vtkMrmlVolumeNode::AddDICOMMultiFrameOffset(int offset)
+{
+  DICOMMultiFrameOffsetList[DICOMMultiFrameOffsets] = offset;
+  DICOMMultiFrameOffsets++;
+}
+
+int vtkMrmlVolumeNode::GetDICOMMultiFrameOffset(int idx)
+{
+  return DICOMMultiFrameOffsetList[idx];
+}
+
+void vtkMrmlVolumeNode::DeleteDICOMMultiFrameOffsets()
+{
+  DICOMMultiFrameOffsets = 0;
 }
 
 // End

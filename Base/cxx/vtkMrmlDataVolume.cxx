@@ -349,7 +349,9 @@ void vtkMrmlDataVolume::DicomReaderSetup(vtkImageDICOMReader *dcmreader,
   dcmreader->SetDataExtent(ext);
 
   dcmreader->SetDICOMFileNames(node->GetNumberOfDICOMFiles(),
-                               node->GetDICOMFileNamesPointer());
+                               node->GetDICOMFileNamesPointer(),
+			       node->GetNumberOfDICOMMultiFrameOffsets(),
+			       node->GetDICOMMultiFrameOffsetPointer());
 }
 
 //----------------------------------------------------------------------------

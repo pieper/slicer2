@@ -455,7 +455,7 @@ void vtkMrmlVolume::Read()
       dcmreader->SetFilePrefix(node->GetFullPrefix());
       dcmreader->SetDataExtent(ext);
 
-      dcmreader->SetDICOMFileNames(node->GetNumberOfDICOMFiles(), node->GetDICOMFileNamesPointer());
+      dcmreader->SetDICOMFileNames(node->GetNumberOfDICOMFiles(), node->GetDICOMFileNamesPointer(), node->GetNumberOfDICOMMultiFrameOffsets(), node->GetDICOMMultiFrameOffsetList());
 
       //if(dcmreader->GetDICOMHeaderSize(ext[4]) != -1)
       //{ // DICOM
