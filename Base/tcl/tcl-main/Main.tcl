@@ -331,6 +331,7 @@ Slicer will exit so the problem can be corrected."
     # Load MRML data
     # - if a file, load it
     # - if a dir, load single xml file if it exists
+    #             else save the dir and try to load dicom files from it
     # - if nothing, set some defaults
     #-------------------------------------------    
     update ;# draw the UI before loading the file
@@ -342,6 +343,7 @@ Slicer will exit so the problem can be corrected."
             }
             set mrmlFile [lindex $mrmlfiles 0]
         } else {
+            set ::SLICER(load-dicom) $mrmlFile
             set mrmlFile ""
         }
     }
@@ -455,7 +457,7 @@ proc MainInit {} {
 
         # Set version info
     lappend Module(versions) [ParseCVSInfo Main \
-        {$Revision: 1.110 $} {$Date: 2004/06/11 20:57:03 $}]
+        {$Revision: 1.111 $} {$Date: 2004/07/24 15:00:59 $}]
 
     # Call each "Init" routine that's not part of a module
     #-------------------------------------------

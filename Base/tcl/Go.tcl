@@ -657,7 +657,7 @@ if { $SLICER(versionInfo) != "" } {
     set compilerName [Slicer GetCompilerName]
     set vtkVersion [Slicer GetVTKVersion]
     set libVersions "LibName1: VTK LibVersion1: ${vtkVersion} LibName2: TCL LibVersion2: ${tcl_patchLevel} LibName3: TK LibVersion2: ${tk_patchLevel}"
-    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: [ParseCVSInfo "" {$Name:  $}] CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.76 2004/05/20 16:30:23 hliu Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: [ParseCVSInfo "" {$Name:  $}] CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.77 2004/07/24 15:00:59 pieper Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
@@ -666,6 +666,7 @@ if { $SLICER(versionInfo) != "" } {
 # - if it's a dir full of files, load that dir as a volume
 # - if it's a dir full of dirs, load each dir as a volume
 # - if it's "", it will be ignored
+# - note: the flag can be set if a directory is specified on the command line
 #
 foreach arg $SLICER(load-dicom) {
     DICOMLoadStudy $arg
