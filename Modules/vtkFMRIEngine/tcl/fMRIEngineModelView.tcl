@@ -1684,7 +1684,7 @@ proc fMRIModelViewSaveModelPostscript { c } {
     #--- default filename for now.
     #--- later, pop up a file browse box and enter filename.
     #---
-    set fn "$::FMRIEngine(modulePath)/designmatrix.ps"
+    set fn "$::fMRIEngine(modulePath)/designmatrix.ps"
     puts "saving file to $fn"
     $c postscript -file $fn -colormode color -pageheight 9.0i -pagewidth 7.0i
     #$c postscript -file $fn -colormode grey -pageheight 9.0i -pagewidth 7.0i
