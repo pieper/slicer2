@@ -63,7 +63,7 @@ proc ModelMakerInit {} {
 
 	# Set Version Info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.29 $} {$Date: 2001/06/06 12:30:18 $}]
+		{$Revision: 1.30 $} {$Date: 2001/07/03 07:15:39 $}]
 
 	# Create
 	set ModelMaker(idVolume) $Volume(idNone)
@@ -870,7 +870,15 @@ proc ModelMakerMarch {m v decimateIterations smoothIterations} {
 	# Do normals need reversing?
 	set mm [rot GetMatrix] 
 	if {[$mm Determinant] < 0} {
-	tk_messageBox -message Reverse
+#      
+# History: In a note to Samson Timoner, Dave Gering wrote:
+# With some scan orders (AP PA LR RL IS SI), the normals need to be reversed
+# for proper surface rendering. I meant to one day validate that this was
+# happening correctly, but I never got around to making a model from every
+# type of scan order. The popup was to aid my testing, and it certainly
+# shouldn't still be in there!!
+#
+#	tk_messageBox -message Reverse
 		set p reverser
 		$p SetInput [decimator GetOutput]
 		$p ReverseNormalsOn
