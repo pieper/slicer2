@@ -168,7 +168,7 @@ if { $AUTHORIZATION == "-localhost" } {
     set vncpid [exec $XVNC :$DISPLAY -fp $fparg -alwaysshared $AUTHORIZATION -depth 32 -geometry 1280x1024 >& $LOGFILE &]
 } else {
     # TODO - pass the passwd file in on the command line
-    set vncpid [exec $XVNC :$DISPLAY -fp $fparg -alwaysshared -rfbauth $RFBAUTH -httpd [file dirname [info script]]/vnc-classes -depth 32 -geometry 1280x1024 >& $LOGFILE &]
+    set vncpid [exec $XVNC :$DISPLAY -fp $fparg -alwaysshared -rfbauth $RFBAUTH -rfbwait 2000 -httpd [file dirname [info script]]/vnc-classes -depth 32 -geometry 1280x1024 >& $LOGFILE &]
 }
 
 set tries 0
