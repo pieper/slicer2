@@ -72,7 +72,7 @@ proc MainMrmlInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainMrml \
-		{$Revision: 1.28 $} {$Date: 2000/02/22 16:30:10 $}]
+		{$Revision: 1.29 $} {$Date: 2000/02/24 17:11:19 $}]
 
 	set Mrml(filePrefix) data
 	set Mrml(colorsUnsaved) 0
@@ -306,6 +306,9 @@ proc MainMrmlDeleteNode {nodeType id} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlDeleteAll
+# 
+#  Delete all volumes, models and transforms.
+#
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlDeleteAll {} {
@@ -399,6 +402,12 @@ proc MainMrmlSetFile {filename} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlRead
+#
+#
+#  Delete the loaded Mrml data from memory.  Replace with a new Mrml file.
+#  Append ".xml" or ".mrml" an necessary to the file name as necessary.
+# .ARGS
+# str mrmlFile name of a MRML file to load
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlRead {mrmlFile} {
