@@ -66,7 +66,7 @@ proc ModelsInit {} {
 
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.47 $} {$Date: 2002/08/22 19:04:52 $}]
+            {$Revision: 1.48 $} {$Date: 2002/10/04 17:51:13 $}]
 
     # Props
     set Model(propertyType) Basic
@@ -320,7 +320,7 @@ proc ModelsBuildGUI {} {
     #-------------------------------------------
     set f $fProps.fBot
 
-    foreach type "Basic Advanced" {
+    foreach type "Basic Advanced FreeSurfer" {
         frame $f.f${type} -bg $Gui(activeWorkspace)
         place $f.f${type} -in $f -relheight 1.0 -relwidth 1.0
         set Model(f${type}) $f.f${type}
@@ -358,7 +358,7 @@ proc ModelsBuildGUI {} {
 
     eval {label $f.l -text "Properties:"} $Gui(BLA)
     frame $f.f -bg $Gui(backdrop)
-    foreach p "Basic Advanced" {
+    foreach p "Basic Advanced FreeSurfer" {
         eval {radiobutton $f.f.r$p \
                 -text "$p" -command "ModelsSetPropertyType" \
                 -variable Model(propertyType) -value $p -width 8 \
@@ -454,6 +454,64 @@ proc ModelsBuildGUI {} {
     DevAddButton $f.bApply "Apply" "ModelsPropsApply; Render3D" 8
     DevAddButton $f.bCancel "Cancel" "ModelsPropsCancel" 8
     grid $f.bApply $f.bCancel -padx $Gui(pad) -pady $Gui(pad)
+
+    #-------------------------------------------
+    # Props->Bot->FreeSurfer frame
+    #-------------------------------------------
+    set f $fProps.fBot.fFreeSurfer
+
+    frame $f.fFileName -bg $Gui(activeWorkspace) -relief groove -bd 3
+    frame $f.fName    -bg $Gui(activeWorkspace)
+    frame $f.fGrid    -bg $Gui(activeWorkspace)
+    frame $f.fApply   -bg $Gui(activeWorkspace)
+    pack $f.fFileName $f.fName $f.fGrid $f.fApply \
+        -side top -fill x -pady $Gui(pad)
+
+    #-------------------------------------------
+    # Props->Bot->FreeSurfer->FileName frame
+    #-------------------------------------------
+    set f $fProps.fBot.fFreeSurfer.fFileName
+    DevAddFileBrowse $f Model FileName "Model File (.inflated)" "ModelsSetFileName" "inflated" "\$Model(DefaultDir)"  "Browse for a Free Surfer Model" 
+
+    #-------------------------------------------
+    # Props->Bot->FreeSurfer->Name frame
+    #-------------------------------------------
+    set f $fProps.fBot.fFreeSurfer.fName
+
+    DevAddLabel $f.l "Name:" 
+    eval {entry $f.e -textvariable Model(name)} $Gui(WEA)
+    pack $f.l -side left -padx $Gui(pad)
+    pack $f.e -side left -padx $Gui(pad) -expand 1 -fill x
+
+    #-------------------------------------------
+    # Props->Bot->FreeSurfer->Grid frame
+    #-------------------------------------------
+    set f $fProps.fBot.fFreeSurfer.fGrid
+
+    # Visible
+    DevAddLabel $f.lV "Visible:"
+    eval {checkbutton $f.c \
+         -variable Model(visibility) -indicatoron 1} $Gui(WCA)
+
+    # Opacity
+    DevAddLabel $f.lO "Opacity:"
+    eval {entry $f.e -textvariable Model(opacity) \
+        -width 3} $Gui(WEA)
+    eval {scale $f.s -from 0.0 -to 1.0 -length 50 \
+        -variable Model(opacity) \
+        -resolution 0.1} $Gui(WSA) {-sliderlength 14}
+
+    grid $f.lV $f.c $f.lO $f.e $f.s
+
+    #-------------------------------------------
+    # Props->Bot->FreeSurfer->Apply frame
+    #-------------------------------------------
+    set f $fProps.fBot.fFreeSurfer.fApply
+
+    DevAddButton $f.bApply "Apply" "ModelsFreeSurferPropsApply; Render3D" 8
+    DevAddButton $f.bCancel "Cancel" "ModelsPropsCancel" 8
+    grid $f.bApply $f.bCancel -padx $Gui(pad) -pady $Gui(pad)
+
 
     #-------------------------------------------
     # Props->Bot->Advanced->Clipping frame
@@ -1033,4 +1091,92 @@ proc ModelsMeter {} {
         set Model(meter,first) 0
         ModelsMeter
     }
+}
+#-------------------------------------------------------------------------------
+# .PROC ModelsFreeSurferPropsApply
+# 
+# This either updates the information about the model or it creates
+# a new model if the model is new.
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc ModelsFreeSurferPropsApply {} {
+    global Model Label Module Mrml
+
+    # Validate name
+    if {$Model(name) == ""} {
+        DevWarningWindow "Please enter a name that will allow you to distinguish this model."
+        return
+    }
+    if {[ValidateName $Model(name)] == 0} {
+        DevWarningWindow "The name can consist of letters, digits, dashes, or underscores"
+        return
+    }
+
+    # Validate scalar range
+    if {[ValidateFloat $Model(scalarLo)] == 0} {
+        DevWarningWindow "The scalar range must be numbers"
+        return
+    }
+    if {[ValidateFloat $Model(scalarHi)] == 0} {
+        DevWarningWindow "The scalar range must be numbers"
+        return
+    }
+
+    set m $Model(activeID)
+    if {$m == ""} {
+        DevWarningWindow "Model active ID is empty string"
+        return
+    }
+
+    if {$m == "NEW"} {
+        # Ensure FileName not blank
+        if {$Model(FileName) == ""} {
+            DevWarningWindow "Please enter a model file name."
+            return
+        }
+        set n [MainMrmlAddNode Model]
+        set i [$n GetID]
+        $n SetModelID M$i
+        $n SetOpacity          1.0
+        $n SetVisibility       1
+        $n SetClipping         0
+
+        # These get set down below, but we need them before MainUpdateMRML
+        $n SetName $Model(name)
+        $n SetFileName "$Model(FileName)"
+        $n SetFullFileName [file join $Mrml(dir) [$n GetFileName]]
+        $n SetColor $Label(name)
+
+        MainUpdateMRML
+
+        # If failed, then it's no longer in the idList
+        if {[lsearch $Model(idList) $i] == -1} {
+            return
+        }
+        set Model(freeze) 0
+        set m $i
+    }
+
+    Model($m,node) SetName $Model(name)
+    Model($m,node) SetFileName "$Model(FileName)"
+    Model($m,node) SetFullFileName [file join $Mrml(dir) [Model($m,node) GetFileName]]
+    Model($m,node) SetDescription $Model(desc)
+    MainModelsSetClipping $m $Model(clipping)
+    MainModelsSetVisibility $m $Model(visibility)
+    MainModelsSetOpacity $m $Model(opacity)
+    MainModelsSetCulling $m $Model(culling)
+    MainModelsSetScalarVisibility $m $Model(scalarVisibility)
+    MainModelsSetScalarRange $m $Model(scalarLo) $Model(scalarHi)
+    MainModelsSetColor $m $Label(name)
+
+    # If tabs are frozen, then return to the "freezer"
+    if {$Module(freezer) != ""} {
+        set cmd "Tab $Module(freezer)"
+        set Module(freezer) ""
+        eval $cmd
+    }
+    
+    MainUpdateMRML
 }
