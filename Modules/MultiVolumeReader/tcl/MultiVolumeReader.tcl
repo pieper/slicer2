@@ -71,7 +71,7 @@ proc MultiVolumeReaderInit {} {
     #  Set the level of development that this module falls under, from the list defined in Main.tcl,
     #  Module(categories) or pick your own
     #  This is included in the Help->Module Categories menu item
-    set Module($m,category) "I/O"
+    set Module($m,category) "IO"
 
     # Define Tabs
     #------------------------------------
@@ -149,7 +149,7 @@ proc MultiVolumeReaderInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.13 $} {$Date: 2005/01/21 15:25:42 $}]
+        {$Revision: 1.14 $} {$Date: 2005/01/28 20:44:15 $}]
 
     # Initialize module-level variables
     #------------------------------------
