@@ -18,6 +18,9 @@ if { [itcl::find class regions] == "" } {
         public variable browser {c:/Program Files/mozilla.org/Mozilla/mozilla.exe} {}
         public variable site "google" {}
 
+        variable _sites "google pubmed jneurosci mediator all"
+        variable _terms ""
+
         variable _name ""
         variable _w ""
         variable _labellistbox ""
@@ -106,9 +109,20 @@ itcl::body regions::constructor {args} {
     set _labellistbox $cs.lb
     ::iwidgets::Scrolledlistbox $_labellistbox -hscrollmode dynamic -vscrollmode dynamic
     pack $_labellistbox -fill both -expand true
+
+
+    ::iwidgets::Entryfield $cs.terms -labeltext "Extra Terms:" -textvariable [::itcl::scope _terms]
+    pack $cs.terms -fill both -expand true
+    
     
     button $cs.update -text "Update" -command "$this findptscalars"
     pack $cs.update -side left
+
+    ::iwidgets::Optionmenu $cs.site -labeltext "Site:" -command "$this configure -site \[$cs.site get\]"
+    foreach s $_sites {
+        $cs.site insert end $s
+    }
+    pack $cs.site -side left
 
     button $cs.query -text "Query" -command "$this query"
     pack $cs.query -side left
@@ -247,13 +261,24 @@ itcl::body regions::query {} {
 
     regsub -all " " $terms "+" terms
 
+    foreach t $_terms {
+        set terms "$terms+$t"
+    }
+
     switch $site {
         "google" {
-            puts [catch "exec \"$browser\" http://www.google.com/search?q=$terms" res]
-            puts $res
+            catch "exec \"$browser\" http://www.google.com/search?q=$terms"
         }
         "pubmed" {
             catch "exec \"$browser\" http://www.ncbi.nlm.nih.gov/entrez/query.fcgi?cmd=search&db=PubMed&term=$terms"
+        }
+        "jneurosci" {
+            catch "exec \"$browser\" http://www.jneurosci.org/cgi/search?volume=&firstpage=&sendit=Search&author1=&author2=&titleabstract=&fulltext=$terms"
+        }
+        "all" {
+            catch "exec \"$browser\" http://www.google.com/search?q=$terms"
+            catch "exec \"$browser\" http://www.ncbi.nlm.nih.gov/entrez/query.fcgi?cmd=search&db=PubMed&term=$terms"
+            catch "exec \"$browser\" http://www.jneurosci.org/cgi/search?volume=&firstpage=&sendit=Search&author1=&author2=&titleabstract=&fulltext=$terms"
         }
         "mediator" {
             tk_messageBox -title "Slicer" -message "Mediator interface not yet implemented." -type ok -icon error
@@ -322,13 +347,13 @@ itcl::body regions::demo {} {
     # - read in lh.pial 
     # - make scalars visible
 
-    # $this configure -labelfile "C:/pieper/bwh/freesurfer/Simple_surface_labels2002.txt"
-    # $this configure -annotfile "C:/pieper/bwh/data/MGH-Siemens15-JJ/label/lh.aparc.pannot"
-    # $this configure -model lh-pial
-
-    $this configure -labelfile "$env(SLICER_HOME)/Modules/vtkFreeSurferReaders/tcl/Simple_surface_labels2002.txt"
-    $this configure -annotfile "$env(SLICER_HOME)/../../slicerdata/freesurferInterop/label/lh.aparc.pannot"
+    $this configure -labelfile "C:/pieper/bwh/freesurfer/Simple_surface_labels2002.txt"
+    $this configure -annotfile "C:/pieper/bwh/data/MGH-Siemens15-JJ/label/lh.aparc.pannot"
     $this configure -model lh-pial
+
+    # $this configure -labelfile "$env(SLICER_HOME)/Modules/vtkFreeSurferReaders/tcl/Simple_surface_labels2002.txt"
+    # $this configure -annotfile "$env(SLICER_HOME)/../../slicerdata/freesurferInterop/label/lh.aparc.pannot"
+    # $this configure -model lh-pial
 
     $this apply
 
