@@ -138,13 +138,11 @@ proc PathPlanningSetPlaneOffset {{arg ""}} {
 #-------------------------------------------------------------------------------
 proc PathPlanningSetVoxelSize {} {
     global PathPlanning
-    puts "voxel size $PathPlanning(voxelSize)"
 }
 
 
 proc PathPlanningSetMaximumDistance {} {
     global PathPlanning
-    puts "max dist $PathPlanning(dist,maxDistance)"
 }
 
 proc PathPlanningSetSource {fid pid} {
@@ -152,8 +150,7 @@ proc PathPlanningSetSource {fid pid} {
 
     set PathPlanning(source,coord) [FiducialsGetPointCoordinates $pid]
     #later find closest point in the inside of the volume to 
-    puts "source coord $PathPlanning(source,coord)"
-    
+
 }
 
 proc PathPlanningSetSink {fid pid} {
@@ -161,7 +158,6 @@ proc PathPlanningSetSink {fid pid} {
     
     set PathPlanning(sink,coord) [FiducialsGetPointCoordinates $pid]
     #later find closest point in the inside of the volume to 
-    puts "sink coord $PathPlanning(sink,coord)"
     
 }
 
@@ -278,7 +274,7 @@ proc PathPlanningShrink {arg} {
         PathPlanning(shrinkFilter) SetTransform transform
         Model($m,mapper,viewRen) SetInput [PathPlanning(shrinkFilter) GetOutput]
         Render3D
-        transform Delete
+    transform Delete
         set PathPlanning(shrink) 1
     }
 }
@@ -325,9 +321,9 @@ proc PathPlanningExtractCenterline {} {
 
             PathPlanning(labelMapFilter) Delete
             vtkDataSetToLabelMap PathPlanning(labelMapFilter)
-            PathPlanning(labelMapFilter) SetStartMethod       MainStartProgress
-            PathPlanning(labelMapFilter) SetProgressMethod   "MainShowProgress PathPlanning(labelMapFilter)"
-            PathPlanning(labelMapFilter) SetEndMethod         MainEndProgress
+            #PathPlanning(labelMapFilter) SetStartMethod       MainStartProgress
+            #PathPlanning(labelMapFilter) SetProgressMethod   "MainShowProgress PathPlanning(labelMapFilter)"
+            #PathPlanning(labelMapFilter) SetEndMethod         MainEndProgress
             PathPlanning(labelMapFilter) SetUseBoundaryVoxels 1
             PathPlanning(labelMapFilter) SetInput [PathPlanning(triangleFilter) GetOutput]
             PathPlanning(labelMapFilter) SetOutputSpacing $PathPlanning(voxelSize) $PathPlanning(voxelSize) $PathPlanning(voxelSize)
@@ -361,6 +357,10 @@ proc PathPlanningExtractCenterline {} {
             } else {
                 PathPlanning(dist) SetInput [Volume(1,vol) GetOutput]
             }
+
+        #PathPlanning(dist) SetStartMethod       MainStartProgress
+            #PathPlanning(dist) SetProgressMethod   "MainShowProgress PathPlanning(dist)"
+            #PathPlanning(dist) SetEndMethod         MainEndProgress
             PathPlanning(dist) SetMaximumDistance $PathPlanning(dist,maxDistance)
             PathPlanning(dist) SetInitialize 1
             PathPlanning(dist) SetConsiderAnisotropy 0
@@ -410,7 +410,11 @@ proc PathPlanningExtractCenterline {} {
 
             PathPlanning(dijkstra) Delete
             vtkImageDijkstra PathPlanning(dijkstra)
-            #PathPlanning(dijkstra) SetStartMethod       MainStartProgress
+            
+        # DO NOT UNCOMMENT UNTIL vtkImageDijkstra has appropriate
+        # UpdateProgress calls...
+
+        #PathPlanning(dijkstra) SetStartMethod       MainStartProgress
             #PathPlanning(dijkstra) SetProgressMethod   "MainShowProgress PathPlanning(dijkstra)"
             #PathPlanning(dijkstra) SetEndMethod         MainEndProgress
 
@@ -454,7 +458,7 @@ proc PathPlanningExtractCenterline {} {
                 if {[PathPlanning(dijkstra) GetNumberOfPathNodes] > 1} {
                     set list [EndoscopicGetAvailableListName [Model($m,node) GetName]]
                     set id [FiducialsCreateFiducialsList "endoscopic" $list]
-                    puts "Fiducials($id,node) SetTextSize 0.0"
+                    #puts "Fiducials($id,node) SetTextSize 0.0"
                     Fiducials($id,node) SetTextSize 0.0
                     MainUpdateMRML
 
