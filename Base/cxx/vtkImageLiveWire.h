@@ -151,6 +151,11 @@ public:
   vtkGetMacro(Label, int);
 
   // Description:
+  // Label value of clicks on output contour
+  vtkSetMacro(ClickLabel, int);
+  vtkGetMacro(ClickLabel, int);
+
+  // Description:
   // Starting point of shortest path (mouse click #1)
   void SetStartPoint(int x, int y);
   void SetStartPoint(int *point){this->SetStartPoint(point[0],point[1]);};
@@ -320,6 +325,7 @@ protected:
   int MaxEdgeCost;
   int Verbose;
   int Label;
+  int ClickLabel;
   int NumberOfNeighbors;
   int InvisibleLastSegment;
 

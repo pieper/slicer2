@@ -56,6 +56,7 @@ vtkImageLiveWire::vtkImageLiveWire()
   this->MaxEdgeCost = 255;
   this->Verbose = 0;
   this->Label = 2;
+  this->ClickLabel = 10;
   this->CurrentCC = 0;
 
   // output
@@ -759,6 +760,7 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
   // ----------------  Output Image  ------------------ //
   // draw points over image
   T outLabel = (T)self->GetLabel();
+  T clickLabel = (T)self->GetClickLabel();
   numPoints = newPixels->GetNumberOfPoints();
 
   // don't draw last section if it should be invisible
@@ -776,7 +778,7 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
 	      if ((int)point[2] == 1)
 		{
 		  // color endpoints differently
-		  outPtr[(int)point[0] + ((int)point[1])*sizeX] = 10;	  
+		  outPtr[(int)point[0] + ((int)point[1])*sizeX] = clickLabel;
 		}
 	      else
 		{
@@ -798,7 +800,7 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
       if ((int)point[2] == 1)
 	{
 	  // color endpoints differently
-	  outPtr[(int)point[0] + ((int)point[1])*sizeX] = 10;	  
+	  outPtr[(int)point[0] + ((int)point[1])*sizeX] = clickLabel;	  
 	}
       else
 	{
