@@ -59,15 +59,6 @@ vtkImageMeasureVoxels::~vtkImageMeasureVoxels()
 }
 
 //----------------------------------------------------------------------------
-void vtkImageMeasureVoxels::EnlargeOutputUpdateExtents(vtkDataObject *vtkNotUsed(data) )
-{
-  int wholeExtent[8];
-  
-  this->GetOutput()->GetWholeExtent(wholeExtent);
-  this->GetOutput()->SetUpdateExtent(wholeExtent);
-}
-
-//----------------------------------------------------------------------------
 // This templated function executes the filter for any type of data.
 template <class T>
 static void vtkImageMeasureVoxelsExecute(vtkImageMeasureVoxels *self,
@@ -82,7 +73,8 @@ static void vtkImageMeasureVoxelsExecute(vtkImageMeasureVoxels *self,
   int label;
   unsigned long count = 0;
   unsigned long target;
-  float origin[3], dimension[3], voxelVolume, volume;
+  float origin[3], dimension[3];
+  double  voxelVolume, volume;
   ofstream file;
   char *filename;
 
@@ -129,7 +121,7 @@ static void vtkImageMeasureVoxelsExecute(vtkImageMeasureVoxels *self,
   // Get voxel dimensions (in mm)
   inData->GetSpacing(dimension);
   // Convert to voxel volume (in mL)
-  voxelVolume = dimension[0]*dimension[1]*dimension[2]/1000;
+  voxelVolume = dimension[0]*dimension[1]*dimension[2]/1000.0;
   // printf("dimensions: %f %f %f, vol: %f \n", dimension[0], dimension[1], dimension[2], voxelVolume);
 
   // Loop through histogram pixels (really histogram is 1D, only X matters.)
@@ -164,7 +156,7 @@ static void vtkImageMeasureVoxelsExecute(vtkImageMeasureVoxels *self,
         ////int width = 15 - (label>=10) - (label>=100);
         //file << setw(15)  << vol2 << '\n';
         file.width(15);
-        file << vol2 << "\n";
+        file << vol2 << "\n" ;
         // << End of modifications 7/27/01
           }
         histPtr++;
@@ -184,9 +176,17 @@ static void vtkImageMeasureVoxelsExecute(vtkImageMeasureVoxels *self,
 // algorithm to fill the output from the input.
 // It just executes a switch statement to call the correct function for
 // the Datas data types.
-void vtkImageMeasureVoxels::Execute(vtkImageData *inData, 
-                 vtkImageData *outData)
+void vtkImageMeasureVoxels::ExecuteData(vtkDataObject *)
 {
+
+  int outExt[6];
+
+  vtkImageData *inData = this->GetInput(); 
+  vtkImageData *outData = this->GetOutput();
+    outData->GetWholeExtent(outExt);
+    outData->SetExtent(outExt);
+    outData->AllocateScalars();
+
   void *inPtr;
   int *outPtr;
 

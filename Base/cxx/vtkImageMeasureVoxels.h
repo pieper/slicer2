@@ -47,7 +47,6 @@ public:
   vtkSetStringMacro(FileName);
   vtkGetStringMacro(FileName);
 
-
 protected:
   vtkImageMeasureVoxels();
   ~vtkImageMeasureVoxels();
@@ -56,13 +55,7 @@ protected:
 
   char *FileName;
 
-  void Execute(vtkImageData *inData, vtkImageData *outData);
-
-  // Description:
-  // Generate more than requested.  Called by the superclass before
-  // an execute, and before output memory is allocated.
-  void EnlargeOutputUpdateExtents( vtkDataObject *data );
-
+  void ExecuteData(vtkDataObject *);
 };
 
 #endif
