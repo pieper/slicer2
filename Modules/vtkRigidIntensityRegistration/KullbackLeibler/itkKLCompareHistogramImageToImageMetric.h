@@ -1,10 +1,10 @@
 /*=========================================================================
 
   Program:   Insight Segmentation & Registration Toolkit
-  Module:    $RCSfile: itkKLHistogramImageToImageMetric.h,v $
+  Module:    $RCSfile: itkKLCompareHistogramImageToImageMetric.h,v $
   Language:  C++
-  Date:      $Date: 2003/12/23 22:43:37 $
-  Version:   $Revision: 1.8 $
+  Date:      $Date: 2003/12/23 22:51:46 $
+  Version:   $Revision: 1.1 $
 
   Copyright (c) Insight Software Consortium. All rights reserved.
   See ITKCopyright.txt or http://www.itk.org/HTML/Copyright.htm for details.
@@ -14,8 +14,8 @@
      PURPOSE.  See the above copyright notices for more information.
 
 =========================================================================*/
-#ifndef __itkKLHistogramImageToImageMetric_h
-#define __itkKLHistogramImageToImageMetric_h
+#ifndef __itkKLCompareHistogramImageToImageMetric_h
+#define __itkKLCompareHistogramImageToImageMetric_h
 
 #include "itkCompareHistogramImageToImageMetric.h"
 
@@ -146,7 +146,7 @@ private:
 } // End namespace itk.
 
 #ifndef ITK_MANUAL_INSTANTIATION
-#include "itkKLHistogramImageToImageMetric.txx"
+#include "itkKLCompareHistogramImageToImageMetric.txx"
 #endif
 
-#endif // __itkKLHistogramImageToImageMetric_h
+#endif // __itkKLCompareHistogramImageToImageMetric_h
