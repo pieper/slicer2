@@ -172,7 +172,8 @@ void vtkConvexHullInexact::UpdateConvexHull(vtkPoints* v)
 
 
   // Initialize to one point
-  for(int i =0;i<NumberNormals;i++)
+  int i;
+  for(i =0;i<NumberNormals;i++)
     {
       for(int j=1;j<3;j++)
     {
@@ -182,7 +183,7 @@ void vtkConvexHullInexact::UpdateConvexHull(vtkPoints* v)
     }
 
   // iterative updating of the convex hull
-  for (int i = 0; i< v->GetNumberOfPoints();i++)
+  for (i = 0; i< v->GetNumberOfPoints();i++)
     {
       vtkFloatingPointType* p0 = v->GetPoint(i);
       for(int j= 0; j<NumberNormals;j++)
@@ -330,10 +331,11 @@ void vtkConvexHullInexact::SetGranularity(int newGranularity)
 
   GeometricRepresentation->RemoveAllPlanes();
 
+  int i;
   // free the current memory
   if(ConvexHull!=NULL)
     {
-      for(int i = 0;i<NumberNormals;i++)
+      for(i = 0;i<NumberNormals;i++)
     {
       for(int j = 0;j<3;j++)
         free(ConvexHull[i][j]);
@@ -346,7 +348,7 @@ void vtkConvexHullInexact::SetGranularity(int newGranularity)
   NumberNormals = ((int)pow(2*Granularity +1,Dimension) - (int)pow(2*Granularity -1, Dimension)) / 2;
 
   ConvexHull = (vtkFloatingPointType***) malloc(NumberNormals*sizeof(vtkFloatingPointType**));
-  for(int i =0;i<NumberNormals;i++)
+  for(i =0;i<NumberNormals;i++)
     {
       ConvexHull[i] = (vtkFloatingPointType**) malloc(3*sizeof(vtkFloatingPointType*));
       for(int j=0;j<3;j++)
@@ -359,10 +361,10 @@ void vtkConvexHullInexact::SetGranularity(int newGranularity)
   // insert new normals
   vtkFloatingPointType* n = (vtkFloatingPointType*) malloc(Dimension*sizeof(vtkFloatingPointType));
 
-  for(int i=0;i<Dimension;i++)
+  for(i=0;i<Dimension;i++)
     n[i] = 0;
 
-  int i = 0;
+  i = 0;
 
   while(i != NumberNormals)
     {

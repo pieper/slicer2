@@ -74,30 +74,31 @@ void vtkLargeLeastSquaresProblem::Initialize(int NumberVariables)
   
   // allocate new memory
   Ab = (double**)malloc(NumberRows * sizeof(double*));
-  for(int i = 0;i<NumberRows;i++)
+  int i;
+  for(i = 0;i<NumberRows;i++)
     Ab[i] = (double*)malloc(NumberColumns * sizeof(double));
 
   tempAb = (double**)malloc(NumberRows * sizeof(double*));
-  for(int i = 0;i<NumberRows;i++)
+  for(i = 0;i<NumberRows;i++)
     tempAb[i] = (double*)malloc(NumberColumns * sizeof(double));
 
   Householder = (double**)malloc(NumberRows * sizeof(double*));
-  for(int i = 0;i<NumberRows;i++)
+  for(i = 0;i<NumberRows;i++)
     Householder[i] = (double*)malloc(NumberRows * sizeof(double));
 
   omega = (double*)malloc(NumberRows*sizeof(double));
 
 
   // initialize
-  for(int i=0;i<NumberRows;i++)
+  for(i=0;i<NumberRows;i++)
     for(int j=0;j<NumberColumns;j++)
       Ab[i][j] = 0;
 
-  for(int i=0;i<NumberRows;i++)
+  for(i=0;i<NumberRows;i++)
     for(int j=0;j<NumberRows;j++)
       Householder[i][j] = 0;
 
-  for(int i=0;i<NumberRows;i++)
+  for(i=0;i<NumberRows;i++)
     omega[i] = 0;
 
   CurrentIndex = 0;
@@ -118,8 +119,9 @@ void vtkLargeLeastSquaresProblem::AddLine(double* Entries,double Beta)
 }
 void vtkLargeLeastSquaresProblem::GenerateHouseholder(int i)
 {
+  int l;
   // Reset Householder[][] to identity
-  for(int l=0;l<NumberRows;l++)
+  for(l=0;l<NumberRows;l++)
     {
       for(int j=0;j<NumberRows;j++)
     Householder[l][j]=0;
@@ -128,7 +130,7 @@ void vtkLargeLeastSquaresProblem::GenerateHouseholder(int i)
   
   // test whether we actually have to / can construct a householder matrix
   bool zeroBelowAii = true;
-  for(int l=i;l<NumberRows;l++)
+  for(l=i;l<NumberRows;l++)
     {
       if(fabs(Ab[l][i])>EPSILON)
     {
@@ -143,7 +145,8 @@ void vtkLargeLeastSquaresProblem::GenerateHouseholder(int i)
   // straight forward implementation for
   // generating the householder matrix
   double rho = 0;
-  for(int j = i;j<NumberRows;j++)
+  int j;
+  for(j = i;j<NumberRows;j++)
     rho += Ab[j][i]*Ab[j][i];
   rho = sqrt(rho);
   if(Ab[i][i] <0)
@@ -152,17 +155,17 @@ void vtkLargeLeastSquaresProblem::GenerateHouseholder(int i)
   int sizeOmega = NumberRows - i;
 
   omega[0] = Ab[i][i] + rho;
-  for(int j=1;j<sizeOmega;j++)
+  for(j=1;j<sizeOmega;j++)
     omega[j] = Ab[i+j][i];
 
   double normOmega = 0;
-  for(int j=0;j<sizeOmega;j++)
+  for(j=0;j<sizeOmega;j++)
     normOmega += omega[j]*omega[j];
   normOmega = sqrt(normOmega);
-  for(int j=0;j<sizeOmega;j++)
+  for(j=0;j<sizeOmega;j++)
     omega[j] = omega[j]/normOmega;
 
-  for(int j=0;j<sizeOmega;j++)
+  for(j=0;j<sizeOmega;j++)
     for(int k=0;k<sizeOmega;k++)
       {
     Householder[i+j][i+k] = Householder[i+j][i+k] - 2*omega[j]*omega[k];
@@ -178,7 +181,8 @@ void vtkLargeLeastSquaresProblem::Reduce()
       // A := Householder*A
       
       // update tempA;
-      for(int k=0;k<NumberRows;k++)
+      int k;
+      for(k=0;k<NumberRows;k++)
     for(int l=0;l<NumberColumns;l++)
       {
         tempAb[k][l] = Ab[k][l];
@@ -186,11 +190,11 @@ void vtkLargeLeastSquaresProblem::Reduce()
       }
 
       
-      for(int k=0;k<NumberRows;k++)
+      for(k=0;k<NumberRows;k++)
     for(int l=0;l<NumberColumns;l++)
       for(int m = 0;m<NumberRows;m++)
         Ab[k][l] += Householder[k][m]*tempAb[m][l];
-      for(int k=i+1;k<NumberRows;k++)
+      for(k=i+1;k<NumberRows;k++)
     Ab[k][i] = 0;
 
 
@@ -201,7 +205,8 @@ void vtkLargeLeastSquaresProblem::Solve(double* FinalResult)
 {
   // for vtk, we have to split Ab into a matrix A and a matrix b
   double** Result = (double**) malloc((NumberColumns -1)*sizeof(double*));
-  for(int i =0;i<NumberColumns-1;i++)
+  int i;
+  for(i =0;i<NumberColumns-1;i++)
     {
       Result[i] = (double*)malloc(1*sizeof(double));
       Result[i][0] = 0;
@@ -209,14 +214,15 @@ void vtkLargeLeastSquaresProblem::Solve(double* FinalResult)
   
   double** b = (double**)malloc(NumberRows*sizeof(double*));
 
-  for(int k=0;k<NumberRows;k++)
+  int k;
+  for(k=0;k<NumberRows;k++)
     {
       b[k] = (double*)malloc(1*sizeof(double));
       b[k][0] = Ab[k][NumberColumns -1];
     }
 
   double** A = (double**)malloc(NumberRows*sizeof(double*));
-  for(int i=0;i<NumberRows;i++)
+  for(i=0;i<NumberRows;i++)
     {
       A[i] = (double*)malloc((NumberColumns-1)*sizeof(double));
       for(int j=0;j<NumberColumns-1;j++)
@@ -225,17 +231,17 @@ void vtkLargeLeastSquaresProblem::Solve(double* FinalResult)
   
   vtkMath::SolveLeastSquares(NumberRows,A,NumberColumns-1,b,1,Result);
 
-  for(int i =0;i<NumberColumns -1;i++)
+  for(i =0;i<NumberColumns -1;i++)
     {
       FinalResult[i] = Result[i][0];
       free(Result[i]);
     }
 
-  for(int k=0;k<NumberRows;k++)
+  for(k=0;k<NumberRows;k++)
     free(A[k]);
   free(A);
   free(Result);
-  for(int k=0;k<NumberRows;k++)
+  for(k=0;k<NumberRows;k++)
     {
       free(b[k]);
     }

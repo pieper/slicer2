@@ -402,7 +402,8 @@ void vtkImageEMLocalSuperClass::ExecuteData(vtkDataObject *)
      }
    } 
    // Look for the first ProbData entry and then define scalar type accordingly
-   for (int i = 0; i <this->NumClasses; i++) {
+   int i;
+   for (i = 0; i <this->NumClasses; i++) {
      if (this->ClassListType[i] == CLASS) {
        this->ProbDataScalarType = ((vtkImageEMLocalClass*) this->ClassList[i])->GetProbDataScalarType(); 
        if (this->ProbDataScalarType > -1) i = this->NumClasses;
@@ -414,7 +415,7 @@ void vtkImageEMLocalSuperClass::ExecuteData(vtkDataObject *)
      
    // ==================================================
    // Check own values
-   for (int i=0;i <  this->NumClasses; i++) {
+   for (i=0;i <  this->NumClasses; i++) {
     for (int j = 0; j < this->NumClasses; j++) {
       for (int k = 0; k < 6; k++) {
     if ((this->MrfParams[k][j][i] < 0) || (this->MrfParams[k][j][i] > 1)) {
@@ -427,7 +428,7 @@ void vtkImageEMLocalSuperClass::ExecuteData(vtkDataObject *)
 
    // ==================================================
    // Check values of subclasses
-   for (int i = 0; i <this->NumClasses; i++) {
+   for (i = 0; i <this->NumClasses; i++) {
      if (this->ClassListType[i] == CLASS) {
        if (((vtkImageEMLocalClass*) this->ClassList[i])->GetProbDataPtr()) {
          // Check if any input data was defined 

@@ -49,10 +49,11 @@ static vtkFloatingPointType* add = NULL;
 struct less_mag : public std::binary_function<vtkFloatingPointType*, vtkFloatingPointType*, bool> {
   bool operator()(vtkFloatingPointType* x,vtkFloatingPointType* y) 
   {
-    for(int i =0;i<3;i++)
+    int i;
+    for(i =0;i<3;i++)
       add[i] = x[i] + headCenter[i];
     vtkFloatingPointType a = vtkMath::Dot(add,add);
-    for(int i =0;i<3;i++)
+    for(i =0;i<3;i++)
       add[i] = y[i] + headCenter[i];
     vtkFloatingPointType b = vtkMath::Dot(add,add);
     return a < b;
@@ -67,18 +68,19 @@ void vtkFemurMetric::FindPoints()
   if(headCenter == NULL)
     headCenter = (vtkFloatingPointType*) malloc (3*sizeof(vtkFloatingPointType));
   
-  for(int i =0;i<3;i++)
+  int i;
+  for(i =0;i<3;i++)
     headCenter[i] = - HeadSphere->GetCenter()[i];
 
   std::vector<vtkFloatingPointType*> V;
-  for(int i = 0;i<p->GetNumberOfPoints();i++)
+  for(i = 0;i<p->GetNumberOfPoints();i++)
     {
       V.push_back(p->GetPoint(i));
     }
   
   std::sort(V.begin(), V.end(), less_mag());
   vtkFloatingPointType* last = V.back();
-  for(int i =0;i<3;i++)
+  for(i =0;i<3;i++)
     DistalPoint[i] = V.back()[i];
 
   std::vector<vtkFloatingPointType> diff;
@@ -90,7 +92,7 @@ void vtkFemurMetric::FindPoints()
     break;
       vtkFloatingPointType* a = *(iter--);
       vtkFloatingPointType a_minus_b = 0;
-      for(int i =0;i<3;i++)
+      for(i =0;i<3;i++)
     a_minus_b = (a[i] - b[i]) * (a[i] - b[i]);
       diff.push_back(sqrt(a_minus_b));
     }
@@ -98,13 +100,13 @@ void vtkFemurMetric::FindPoints()
 
   int index = std::distance(diff.begin(),maxDiff);
 
-  for(int i =0;i<3;i++)
+  for(i =0;i<3;i++)
     DistalPoint[i] = V.back()[i];
 
-  for(int i =0;i<3;i++)
+  for(i =0;i<3;i++)
     NeckShaftCenter[i] = V[index][i];
 
-  for(int i =0;i<3;i++)
+  for(i =0;i<3;i++)
     HeadCenter[i] = HeadSphere->GetCenter()[i];
 }
 
@@ -384,7 +386,7 @@ void vtkFemurMetric::FindDeepestPoint(vtkFloatingPointType* p)
         }
     }
 
-  for(int i=0;i<3;i++)
+  for(i=0;i<3;i++)
     p[i] = DepthAnnotatedVolume->GetOutput()->GetPoint(DepthAnnotatedVolume->GetOutput()->ComputePointId(coords))[i];
   free(coords);
 }

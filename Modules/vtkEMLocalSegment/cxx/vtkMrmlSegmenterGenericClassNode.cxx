@@ -68,8 +68,9 @@ vtkMrmlSegmenterGenericClassNode::vtkMrmlSegmenterGenericClassNode() {
 
   memset(this->RegistrationTranslation,0,3*sizeof(double));
   memset(this->RegistrationRotation,0,3*sizeof(double));
-  for (int i =0; i < 3; i++) RegistrationScale[i]= 1.0;
-  for (int i = 0; i < 6; i++) this->RegistrationCovariance[i] = 1.0;
+  int i;
+  for (i = 0; i < 3; i++) RegistrationScale[i]= 1.0;
+  for (i = 0; i < 6; i++) this->RegistrationCovariance[i] = 1.0;
   this->RegistrationCovariance[6] = this->RegistrationCovariance[7] = this->RegistrationCovariance[8] = 0.1;
 }
 

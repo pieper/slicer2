@@ -120,10 +120,11 @@ void vtkImageEMLocalClass::SetNumInputImages(int number) {
     // Create new space for variables
     this->LogMu               = new double[number];
     this->LogCovariance       = new double*[number];
-    for (int z=0; z < number; z++) {
+    int z;
+    for (z=0; z < number; z++) {
       this->LogCovariance[z] = new double[number];
     }
-    for (int z= 0; z < number; z++) {
+    for (z= 0; z < number; z++) {
     this->LogMu[z] = -1;
     memset(this->LogCovariance[z], 0,number*sizeof(double));
     }

@@ -45,23 +45,24 @@ void vtkPrincipalAxes::Execute()
   vtkIdType nr_points = input->GetNumberOfPoints();
   vtkFloatingPointType* x ;
 
+  int i;
   // reset the intermediate arrays
-  for(int i =0;i<3;i++)
+  for(i =0;i<3;i++)
     Center[i] = 0;
 
-  for(int i =0;i<3;i++)
+  for(i =0;i<3;i++)
     for(int j = 0;j<3;j++)
       eigenvalueProblem[i][j] = 0;
   
-  for(int i =0;i<3;i++)
+  for(i =0;i<3;i++)
     for(int j = 0;j<3;j++)
       eigenvalueProblemDiag[i][j] = 0;
 
 
   // compute the center
-  for(vtkIdType i=0;i<input->GetNumberOfPoints();i++)
+  for(vtkIdType j=0;j<input->GetNumberOfPoints();j++)
     {
-      x = input->GetPoint(i);
+      x = input->GetPoint(j);
       Center[0] += x[0];
       Center[1] += x[1];
       Center[2] += x[2];
@@ -74,7 +75,7 @@ void vtkPrincipalAxes::Execute()
   // create the eigenvalue-problem
   // using the symmetry of the result matrix
 
-  for(int i=0;i<3;i++)
+  for(i=0;i<3;i++)
     for(int j = i;j<3;j++)
       eigenvalueProblem[i][j] = - Center[i]*nr_points*Center[j];
 
@@ -86,11 +87,11 @@ void vtkPrincipalAxes::Execute()
     for(int j = i;j<3;j++)
       eigenvalueProblemDiag[i][j] +=  x[i]*x[j];
     }
-  for(int i=0;i<3;i++)
+  for(i=0;i<3;i++)
     for(int j = i;j<3;j++)
       eigenvalueProblem[i][j] += eigenvalueProblemDiag[i][j];
   
-  for(int i=0;i<3;i++)
+  for(i=0;i<3;i++)
     for(int j= 0;j<i;j++)
       eigenvalueProblem[i][j] = eigenvalueProblem[j][i];
 
@@ -113,8 +114,8 @@ void vtkPrincipalAxes::Execute()
 vtkPrincipalAxes* vtkPrincipalAxes::New()
 {
   // First try to create the object from the vtkObjectFactory
-  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkPrincipalAxes")
-;
+  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkPrincipalAxes");
+
   if(ret)
     {
     return (vtkPrincipalAxes*)ret;
@@ -156,15 +157,16 @@ vtkPrincipalAxes::vtkPrincipalAxes()
   ZAxis[2] = 1;
 
   eigenvalueProblem = (double**)malloc(sizeof(double*)*3);
-  for(int i = 0;i<3;i++)
+  int i;
+  for(i = 0;i<3;i++)
     eigenvalueProblem[i] = (double*) malloc(3*sizeof(double));
 
   eigenvalueProblemDiag = (double**)malloc(sizeof(double*)*3);
-  for(int i = 0;i<3;i++)
+  for(i = 0;i<3;i++)
     eigenvalueProblemDiag[i] = (double*) malloc(3*sizeof(double));
   
   eigenvectors = (double**)malloc(sizeof(double*)*3);
-  for(int i = 0;i<3;i++)
+  for(i = 0;i<3;i++)
     eigenvectors[i] = (double*) malloc(3*sizeof(double));
 
   eigenvalues = (double*)malloc(sizeof(double)*3);

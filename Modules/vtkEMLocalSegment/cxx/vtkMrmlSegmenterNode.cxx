@@ -108,11 +108,12 @@ void vtkMrmlSegmenterNode::Write(ofstream& of, int nIndent)
   of << " SmWidth ='"                    << this->SmWidth << "'";
   of << " SmSigma ='"                    << this->SmSigma << "'";
   of << " SegmentationBoundaryMin ='" ;
-  for (int i=0; i < 3; i++) of << this->SegmentationBoundaryMin[i]<< " " ; // Upper bound of the boundary box where the image gets segments.
+  int i;
+  for (i=0; i < 3; i++) of << this->SegmentationBoundaryMin[i]<< " " ; // Upper bound of the boundary box where the image gets segments.
   of << "'";
 
   of << " SegmentationBoundaryMax ='" ;
-  for (int i=0; i < 3; i++) of << this->SegmentationBoundaryMax[i]<< " " ; // Upper bound of the boundary box where the image gets segments.
+  for (i=0; i < 3; i++) of << this->SegmentationBoundaryMax[i]<< " " ; // Upper bound of the boundary box where the image gets segments.
   of << "'";
 
   of << " DisplayProb  ='"               << this->DisplayProb  << "'";
@@ -166,11 +167,12 @@ void vtkMrmlSegmenterNode::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "IntensityAvgClass: "         << this->IntensityAvgClass << "\n";
   os << indent << "PrintDir: "                  << this->PrintDir << "\n"; 
   os << indent << "SegmentationBoundaryMin: " ;
-  for (int i=0; i < 3; i++) os << this->SegmentationBoundaryMin[i] << " " ; // Upper bound of the boundary box where the image gets segments.
+  int i;
+  for (i=0; i < 3; i++) os << this->SegmentationBoundaryMin[i] << " " ; // Upper bound of the boundary box where the image gets segments.
   os << "\n";
 
   os << indent << "SegmentationBoundaryMax: " ;
-  for (int i=0; i < 3; i++) os << this->SegmentationBoundaryMax[i] << " " ; // Upper bound of the boundary box where the image gets segments.
+  for (i=0; i < 3; i++) os << this->SegmentationBoundaryMax[i] << " " ; // Upper bound of the boundary box where the image gets segments.
 
   os << indent << "RegistrationInterpolationType: " << this->RegistrationInterpolationType << "\n";  
   os << "\n";

@@ -286,7 +286,8 @@ void vtkPelvisMetric::SymmetryAdaptedWorldCsys(void)
 
   vtkFloatingPointType* candidate = vPA->GetXAxis();
   NormalizeXAxis(candidate);
-  for(int i =0;i<3;i++)
+  int i;
+  for(i =0;i<3;i++)
     obj->SetElement(i,0,candidate[i]);
 
   vtkFloatingPointType distance = vtkMath::Distance2BetweenPoints(candidate,axis);
@@ -296,7 +297,7 @@ void vtkPelvisMetric::SymmetryAdaptedWorldCsys(void)
   if(vtkMath::Distance2BetweenPoints(candidate,axis) < distance)
     {
       distance = vtkMath::Distance2BetweenPoints(candidate,axis);
-      for(int i =0;i<3;i++)
+      for(i =0;i<3;i++)
     obj->SetElement(i,0,candidate[i]);
     } 
 
@@ -310,7 +311,7 @@ void vtkPelvisMetric::SymmetryAdaptedWorldCsys(void)
     } 
 
   // projection of (0,1,0) onto the plane orthogonal to the symmetry axis
-  for(int i =0;i<3;i++)
+  for(i =0;i<3;i++)
     candidate[i] = obj->GetElement(i,0);
 
   axis[0] = 0;
@@ -318,18 +319,18 @@ void vtkPelvisMetric::SymmetryAdaptedWorldCsys(void)
   axis[2] = 0;
 
   vtkFloatingPointType p = vtkMath::Dot(candidate,axis);
-  for(int i = 0;i < 3;i++)
+  for(i = 0;i < 3;i++)
     axis[i] = axis[i] - p*candidate[i];
   vtkMath::Normalize(axis);
 
-  for(int i = 0;i < 3;i++)
+  for(i = 0;i < 3;i++)
     obj->SetElement(i,1,axis[i]);
 
   // the last vector is automatically the crossproduct of the first two.
   vtkFloatingPointType* third = (vtkFloatingPointType*)malloc(3*sizeof(vtkFloatingPointType));
   vtkMath::Cross(candidate,axis,third);
 
-  for(int i = 0;i < 3;i++)
+  for(i = 0;i < 3;i++)
     obj->SetElement(i,2,third[i]);
 
   free(axis);

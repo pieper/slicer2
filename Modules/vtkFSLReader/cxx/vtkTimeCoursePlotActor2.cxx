@@ -97,7 +97,8 @@ void vtkTimeCoursePlotActor2::SetPlot(vtkFloatArray *timeCourse, vtkFloatArray *
 
     // Creates x points
     vtkFloatingPointType *xPoints = new vtkFloatingPointType [timeCourse->GetNumberOfTuples()];
-    for (int i = 0; i < timeCourse->GetNumberOfTuples(); i++)
+    int i;
+    for (i = 0; i < timeCourse->GetNumberOfTuples(); i++)
     {
         xPoints[i] = i;
     }
@@ -118,7 +119,7 @@ void vtkTimeCoursePlotActor2::SetPlot(vtkFloatArray *timeCourse, vtkFloatArray *
     tc->SetNumberOfTuples(size);
     tc->SetNumberOfComponents(1);
     vtkFloatingPointType tmp;
-    for (int i = 0; i < size; i++)
+    for (i = 0; i < size; i++)
     {
         tmp = stimPtr[i] - diff;
         tc->SetComponent(i, 0, tmp);

@@ -122,11 +122,12 @@ void vtkAnalyzeHeaderExtractor::Read()
                 this->Orient = (int)this->Hdr.hist.orient;
 
                 this->FileFormat = (this->Hdr.dime.dim[4] > 1 ? 4 : 3);
-                for (int i = 0; i < 4; i++)
+                int i;
+                for (i = 0; i < 4; i++)
                 {
                     this->ImageDim[i] = this->Hdr.dime.dim[i+1];
                 }
-                for (int i = 0; i < 3; i++)
+                for (i = 0; i < 3; i++)
                 {
                     this->PixDim[i] = this->Hdr.dime.pixdim[i+1];
                 }
@@ -191,7 +192,8 @@ void vtkAnalyzeHeaderExtractor::ShowHeader()
     cout << "hkey_un0: " << this->Hdr.hk.hkey_un0 << endl; 
     
     // Image Dimension  
-    for (int i = 0; i < 8; i++) 
+    int i;
+    for (i = 0; i < 8; i++) 
     {
         cout << "dim[" << i << "]: " << this->Hdr.dime.dim[i] << endl; 
     }
@@ -201,7 +203,7 @@ void vtkAnalyzeHeaderExtractor::ShowHeader()
     cout << "datatype: " << this->Hdr.dime.datatype << endl;
     cout << "bitpix: " << this->Hdr.dime.bitpix << endl; 
     
-    for (int i = 0; i < 8;i++) 
+    for (i = 0; i < 8;i++) 
     {
         cout << "pixdim[" << i << "]: " << this->Hdr.dime.pixdim[i] << endl; 
     }
