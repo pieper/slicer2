@@ -40,7 +40,30 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 // vtkMrmlTree represents and provides methods to manipulate a list of
 // MRML objects. The list is core and duplicate
 // entries are not prevented.
-
+//
+// SECTION Transforms
+//  The question is: in what order are transforms applied?
+//  Twice in vtkMrmlTree.cxx, we set tran->PreMultiply();
+//  The result is that if we traverse a MRML tree, and we
+//  run into transforms M1 and then M2 as we traverse down
+//  the tree, the resulting transform is M = M1*M2.
+//
+//  Just to be clear, given the following structure:
+//  Transform
+//    Matrix: M1
+//    Transform
+//      Matrix: M2
+//      Matrix: M3
+//      Volume: V1
+//      Model:  Model1
+//    End Transform
+//  End Transform
+//
+// Then the effective transform applied to V1 is  M1*M2*M3.
+// Note that the Transform is the RAS to World transform for the volume V1.
+// It is the same for the Model, Model1. Though, the RasToWld matrix is
+// only set explicitly for models and volumes.
+//
 // .SECTION see also
 // vtkMrmlNode vtkCollection 
 

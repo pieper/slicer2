@@ -216,9 +216,9 @@ void vtkMrmlTree::ComputeTransforms()
   vtkMrmlMatrixNode *t;
   vtkCollectionElement *elem;
 
-    // Set the vtkTransform to PostMultiply so a concatenated matrix, C,
-    // is multiplied by the existing matrix, M: C*M (not M*C)
-  tran->PostMultiply();
+    // Set the vtkTransform to PreMultiply so a concatenated matrix, C,
+    // is applied before the existing matrix, M: M*C (not C*M)
+  tran->PreMultiply();
 
   elem = this->Top;
   while (elem != NULL)
@@ -270,9 +270,9 @@ void vtkMrmlTree::ComputeNodeTransform( vtkMrmlNode *node, vtkTransform *tran )
   vtkMrmlMatrixNode *t;
   vtkCollectionElement *elem;
 
-    // Set the vtkTransform to PostMultiply so a concatenated matrix, C,
-    // is multiplied by the existing matrix, M: C*M (not M*C)
-  tran->PostMultiply();
+    // Set the vtkTransform to PreMultiply so a concatenated matrix, C,
+    // is applied before the existing matrix, M: M*C (not C*M)
+  tran->PreMultiply();
 
   elem = this->Top;
   while ((vtkMrmlNode*)(elem->Item) != node)
