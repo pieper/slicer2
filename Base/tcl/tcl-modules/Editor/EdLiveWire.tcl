@@ -1886,6 +1886,13 @@ proc EdLiveWireTrain {} {
 
     }
 
+    # we have disconnected these filters from our pipeline,
+    # so reconnect them here
+    for {set f 0} {$f < $Ed(EdLiveWire,numEdgeFilters)} {incr f} {
+	set filt [Ed(EdLiveWire,lwSetup$s) GetEdgeFilter $f]
+	$filt SetOriginalImage [Ed(EdLiveWire,lwSetup$s) GetOutput]
+    }
+
     Slicer ReformatModified
     Slicer Update
 
@@ -1988,6 +1995,8 @@ proc EdLiveWireReadFeatureParams {} {
 	EdLiveWireSetFeatureParams $number
     }
 
+    # clear any old cached computed contour info
+    EdLiveWireResetSlice $s
 
     puts "Read settings from file $Ed($e,trainingInputFileName)"
 }
