@@ -36,6 +36,7 @@
 #   DevCreateNewCopiedVolume VolumeId Description VolName
 #   DevGetFile filename MustPop DefaultExt DefaultDir Title Action
 #   DevAddFileBrowse Frame ArrayName VarFileName Message Command DefaultExt DefaultDir Action Title Tooltip PathType
+#   DevFileExists
 #==========================================================================auto=
 # This file exists specifically for user to help fast development
 # of Slicer modules
@@ -693,6 +694,12 @@ proc DevGetFile { filename { MustPop 0} { DefaultExt "" } { DefaultDir "" } {Tit
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC DevFileExists
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc DevFileExists {filename} {
     global Mrml
 

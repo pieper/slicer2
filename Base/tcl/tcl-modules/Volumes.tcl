@@ -32,6 +32,11 @@
 #   VolumesSetScalarType
 #   VolumesSetLast
 #   AddListUnique
+#   DICOMFileNameTextBoxVisibleButton
+#   DICOMPreviewImageClick
+#   DICOMFillFileNameTextbox
+#   DICOMIncrDecrButton
+#   DICOMScrolledTextbox
 #   FindDICOM2
 #   FindDICOM
 #   CreateStudyList
@@ -51,8 +56,27 @@
 #   HandleExtractHeader
 #   DICOMReadHeaderValues
 #   DICOMPredictScanOrder
+#   DICOMPreviewAllButton
+#   DICOMListHeadersButton
+#   DICOMListHeader
+#   DICOMPreviewFile
+#   DICOMCheckFiles
+#   DICOMCheckVolumeInit
+#   DICOMCheckFile
+#   DICOMShowPreviewSettings
+#   DICOMHidePreviewSettings
+#   DICOMShowDataDictSettings
+#   DICOMHideDataDictSettings
+#   DICOMHideAllSettings
+#   DICOMSelectFragment
+#   DICOMImageTextboxFragmentEnter
+#   DICOMImageTextboxFragmentLeave
+#   DICOMImageTextboxSelectAll
+#   DICOMImageTextboxDeselectAll
 #   VolumesEnter
 #   VolumesExit
+#   VolumesStorePresets
+#   VolumesRecallPresets
 #==========================================================================auto=
 
 
@@ -127,7 +151,7 @@ DICOMDataDictFile='$Volumes(DICOMDataDictFile)'"
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-                {$Revision: 1.47 $} {$Date: 2001/05/08 16:18:17 $}]
+                {$Revision: 1.48 $} {$Date: 2001/05/12 15:50:43 $}]
 
 	# Props
 	set Volume(propertyType) Basic
@@ -1137,6 +1161,12 @@ proc AddListUnique { list arg } {
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC DICOMFileNameTextBoxVisibleButton
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc DICOMFileNameTextBoxVisibleButton {t idx value} {
     global DICOMFileNameSelected
 
@@ -1146,6 +1176,12 @@ proc DICOMFileNameTextBoxVisibleButton {t idx value} {
     #$t see $idx.0
 }
 
+#-------------------------------------------------------------------------------
+# .PROC DICOMPreviewImageClick
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc DICOMPreviewImageClick {w idx} {
     global Volumes DICOMFileNameSelected
 
@@ -1159,6 +1195,12 @@ proc DICOMPreviewImageClick {w idx} {
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC DICOMFillFileNameTextbox
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc DICOMFillFileNameTextbox {t} {
     global DICOMFileNameList DICOMFileNameSelected
 
@@ -1204,6 +1246,12 @@ proc DICOMFillFileNameTextbox {t} {
     $t configure -state disabled
 }
 
+#-------------------------------------------------------------------------------
+# .PROC DICOMIncrDecrButton
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc DICOMIncrDecrButton {filenames} {
     global Volumes DICOMFileNameList DICOMFileNameSelected
 
@@ -1307,6 +1355,12 @@ proc DICOMScrolledListbox {f xAlways yAlways variable {labeltext "labeltext"} {a
 	return $fmain.f.list
 }
 
+#-------------------------------------------------------------------------------
+# .PROC DICOMScrolledTextbox
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc DICOMScrolledTextbox {f xAlways yAlways variable {labeltext "labeltext"} {args ""}} {
 	global Gui
 	
@@ -2382,6 +2436,12 @@ proc DICOMPredictScanOrder { file1 file2 } {
     parser Delete
 }
 
+#-------------------------------------------------------------------------------
+# .PROC DICOMPreviewAllButton
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc DICOMPreviewAllButton {} {
     global Volumes DICOMFileNameList DICOMFileNameSelected
 
@@ -2404,6 +2464,12 @@ proc DICOMPreviewAllButton {} {
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC DICOMListHeadersButton
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc DICOMListHeadersButton {} {
     global Volumes DICOMFileNameList DICOMFileNameSelected
 
@@ -2434,6 +2500,12 @@ proc DICOMListHeadersButton {} {
     Volumes(lister) Delete
 }
 
+#-------------------------------------------------------------------------------
+# .PROC DICOMListHeader
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc DICOMListHeader {filename} {
     global Volumes
 
@@ -2466,6 +2538,12 @@ proc DICOMListHeader {filename} {
     Volumes(lister) CloseFile
 }
 
+#-------------------------------------------------------------------------------
+# .PROC DICOMPreviewFile
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc DICOMPreviewFile {file img} {
     global Volumes Volume
 
@@ -2515,6 +2593,12 @@ proc DICOMPreviewFile {file img} {
     parser Delete
 }
 
+#-------------------------------------------------------------------------------
+# .PROC DICOMCheckFiles
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc DICOMCheckFiles {} {
     global Volumes Volume DICOMFileNameList DICOMFileNameSelected
 
@@ -2617,6 +2701,12 @@ proc DICOMCheckFiles {} {
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC DICOMCheckVolumeInit
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc DICOMCheckVolumeInit {file1 file2 file1idx} {
     global Volumes Volume
 
@@ -2683,6 +2773,12 @@ proc DICOMCheckVolumeInit {file1 file2 file1idx} {
     return 1
 }
 
+#-------------------------------------------------------------------------------
+# .PROC DICOMCheckFile
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc DICOMCheckFile {file idx previdx} {
     global Volumes Volume
 
@@ -2733,6 +2829,12 @@ proc DICOMCheckFile {file idx previdx} {
     return 1
 }
 
+#-------------------------------------------------------------------------------
+# .PROC DICOMShowPreviewSettings
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc DICOMShowPreviewSettings {} {
     global Volumes
 
@@ -2740,12 +2842,24 @@ proc DICOMShowPreviewSettings {} {
     DICOMHideDataDictSettings
 }
 
+#-------------------------------------------------------------------------------
+# .PROC DICOMHidePreviewSettings
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc DICOMHidePreviewSettings {} {
     global Volumes
 
     lower $Volumes(DICOMPreviewSettingsFrame) $Volumes(ImageTextbox)
 }
 
+#-------------------------------------------------------------------------------
+# .PROC DICOMShowDataDictSettings
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc DICOMShowDataDictSettings {} {
     global Volumes
 
@@ -2753,12 +2867,24 @@ proc DICOMShowDataDictSettings {} {
     DICOMHidePreviewSettings
 }
 
+#-------------------------------------------------------------------------------
+# .PROC DICOMHideDataDictSettings
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc DICOMHideDataDictSettings {} {
     global Volumes
 
     lower $Volumes(DICOMDataDictSettingsFrame) $Volumes(ImageTextbox)
 }
 
+#-------------------------------------------------------------------------------
+# .PROC DICOMHideAllSettings
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc DICOMHideAllSettings {} {
     global Volumes
 
@@ -2766,6 +2892,12 @@ proc DICOMHideAllSettings {} {
     DICOMHideDataDictSettings
 }
 
+#-------------------------------------------------------------------------------
+# .PROC DICOMSelectFragment
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc DICOMSelectFragment {fragment} {
     global Volumes DICOMFileNameList DICOMFileNameSelected
 
@@ -2821,6 +2953,12 @@ proc DICOMImageTextboxFragmentLeave {w tag} {
     $f2 tag configure $tag -background {} -relief flat
 }
 
+#-------------------------------------------------------------------------------
+# .PROC DICOMImageTextboxSelectAll
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc DICOMImageTextboxSelectAll {} {
     global Volumes DICOMFileNameSelected
 
@@ -2832,6 +2970,12 @@ proc DICOMImageTextboxSelectAll {} {
     DICOMFillFileNameTextbox $Volumes(DICOMFileNameTextbox)    
 }
 
+#-------------------------------------------------------------------------------
+# .PROC DICOMImageTextboxDeselectAll
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc DICOMImageTextboxDeselectAll {} {
     global Volumes DICOMFileNameSelected
 
@@ -2874,6 +3018,12 @@ proc VolumesExit {} {
 
 # >> Presets
 
+#-------------------------------------------------------------------------------
+# .PROC VolumesStorePresets
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc VolumesStorePresets {p} {
     global Preset Volumes
 
@@ -2885,6 +3035,12 @@ proc VolumesStorePresets {p} {
     set Preset(Volumes,$p,DICOMDataDictFile) $Volumes(DICOMDataDictFile)
 }
 
+#-------------------------------------------------------------------------------
+# .PROC VolumesRecallPresets
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc VolumesRecallPresets {p} {
     global Preset Volumes
 

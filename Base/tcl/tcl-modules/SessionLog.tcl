@@ -23,6 +23,7 @@
 # FILE:        SessionLog.tcl
 # PROCEDURES:  
 #   SessionLogInit
+#   SessionLogShouldWeLog
 #   SessionLogBuildGUI
 #   SessionLogEnter
 #   SessionLogExit
@@ -99,7 +100,7 @@ proc SessionLogInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.8 $} {$Date: 2001/04/09 20:59:17 $}]
+	    {$Revision: 1.9 $} {$Date: 2001/05/12 15:50:42 $}]
 
     # Initialize module-level variables
     set SessionLog(fileName)  ""
@@ -108,7 +109,8 @@ proc SessionLogInit {} {
 
     # default directory to log to (used for auto logging)
     # (should be set from Options.xml)
-    set SessionLog(defaultDir) "/projects/slicer/logs/editorLogs"
+    set SessionLog(defaultDir) "/scratch/images/slicerLogOld"
+
     if {[file isdirectory $SessionLog(defaultDir)] == 0} {
 	set SessionLog(defaultDir) ""
     }
@@ -136,6 +138,12 @@ proc SessionLogInit {} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC SessionLogShouldWeLog
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc SessionLogShouldWeLog {} {
     global SessionLog env
 

@@ -1,4 +1,3 @@
-
 #=auto==========================================================================
 # (c) Copyright 2001 Massachusetts Institute of Technology
 #
@@ -52,6 +51,7 @@
 #   MainModelsToggleScalarBar m
 #==========================================================================auto=
 
+
 #-------------------------------------------------------------------------------
 # .PROC MainModelsInit
 # 
@@ -71,7 +71,7 @@ proc MainModelsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainModels \
-		{$Revision: 1.36 $} {$Date: 2001/04/29 02:43:07 $}]
+		{$Revision: 1.37 $} {$Date: 2001/05/12 15:50:41 $}]
 
 	set Model(idNone) -1
 	set Model(activeID) ""

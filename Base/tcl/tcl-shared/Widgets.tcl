@@ -23,7 +23,7 @@
 # FILE:        Widgets.tcl
 # PROCEDURES:  
 #   ScrolledText
-#   TabbedFrame arrayName buttonsFrame tabsFrame buttonsLabel tabs titles tooltips
+#   TabbedFrame arrayName buttonsFrame tabsFrame buttonsLabel tabs titles tooltips extraTopFrame firstTab
 #   TabbedFrameTab
 #==========================================================================auto=
 

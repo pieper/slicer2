@@ -37,7 +37,7 @@
 #   ScrollSet
 #   MakeColor
 #   MakeColorNormalized
-#   ColorSlider
+#   ColorSlider widget list
 #   ExpandPath
 #   Uncap
 #   Cap
@@ -58,7 +58,7 @@ proc GuiInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo Gui \
-		{$Revision: 1.26 $} {$Date: 2001/04/12 17:44:58 $}]
+		{$Revision: 1.27 $} {$Date: 2001/05/12 15:50:41 $}]
 
         # Are we running under Windows?
 	if {$tcl_platform(platform) == "windows"} {

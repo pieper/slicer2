@@ -27,6 +27,7 @@
 #   EdLiveWireBuildGUI
 #   EdLiveWireSetActiveEdgeDirection
 #   EdLiveWireToggleWeight feat
+#   EdLiveWirePrettyPicture
 #   EdLiveWireRaiseEdgeImageWin
 #   EdLiveWireUpdateEdgeImageWin viewerWidget edgeNum
 #   EdLiveWireWriteEdgeImage
@@ -39,16 +40,13 @@
 #   EdLiveWireStopPipeline
 #   EdLiveWireEnter
 #   EdLiveWireExit
-#   EdLiveWireUpdateInteractive
-#   EdLiveWireSetInteract
-#   EdLiveWireUpdateInit
 #   EdLiveWireUpdate
 #   EdLiveWireB1
 #   EdLiveWireMotion
-#   EdLiveWireB1Motion
 #   EdLiveWireRenderInteractive
 #   EdLiveWireLabel
 #   EdLiveWireClearCurrentSlice
+#   EdLiveWireClearLastSegment
 #   EdLiveWireResetSlice s
 #   EdLiveWireApply
 #   EdLiveWireStartProgress
@@ -623,6 +621,12 @@ proc EdLiveWireToggleWeight {feat} {
 
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EdLiveWirePrettyPicture
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EdLiveWirePrettyPicture {}  {
     global Slice
 
@@ -1237,6 +1241,12 @@ proc EdLiveWireClearCurrentSlice {} {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC EdLiveWireClearLastSegment
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EdLiveWireClearLastSegment {} {
     global Slice
     

@@ -27,7 +27,7 @@
 #   ColorsApply
 #   ColorsUpdateMRML
 #   ColorsDisplayColors
-#   ColorsSelectColor
+#   ColorsSelectColor optional
 #   ColorsSetColor
 #   ColorsAddColor
 #   ColorsDeleteColor
@@ -63,7 +63,7 @@ proc ColorsInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.16 $} {$Date: 2001/04/12 17:44:59 $}]
+		{$Revision: 1.17 $} {$Date: 2001/05/12 15:50:42 $}]
 }
 
 #-------------------------------------------------------------------------------

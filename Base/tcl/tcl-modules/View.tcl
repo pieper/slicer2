@@ -24,6 +24,7 @@
 # PROCEDURES:  
 #   ViewInit
 #   ViewBuildGUI
+#   ViewSetMovieFileType
 #==========================================================================auto=
 #
 # Use this Module for Changing the Viewing Windows sizes
@@ -59,7 +60,7 @@ proc ViewInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.17 $} {$Date: 2001/04/27 15:24:56 $}]
+		{$Revision: 1.18 $} {$Date: 2001/05/12 15:50:42 $}]
 
 	set View(movie) 0
 	set View(movieDirectory) "/tmp"
@@ -224,6 +225,12 @@ called <I>movie.mpg</I>.
 
 }
 
+#-------------------------------------------------------------------------------
+# .PROC ViewSetMovieFileType
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc ViewSetMovieFileType {item} {
 	global View Module
 

@@ -22,7 +22,33 @@
 #===============================================================================
 # FILE:        EdPhaseWire.tcl
 # PROCEDURES:  
-#
+#   EdPhaseWireInit
+#   EdPhaseWireBuildVTK
+#   EdPhaseWireBuildGUI
+#   EdPhaseWirePrettyPicture
+#   EdPhaseWireRaiseEdgeImageWin
+#   EdPhaseWireUpdateEdgeImageWin viewerWidget edgeNum
+#   EdPhaseWireWriteEdgeImage
+#   EdPhaseWireStartPipeline
+#   EdPhaseWireStopPipeline
+#   EdPhaseWireEnter
+#   EdPhaseWireExit
+#   EdPhaseWireUpdate
+#   EdPhaseWireB1
+#   EdPhaseWireMotion
+#   EdPhaseWireRenderInteractive
+#   EdPhaseWireLabel
+#   EdPhaseWireClearCurrentSlice
+#   EdPhaseWireClearLastSegment
+#   EdPhaseWireResetSlice s
+#   EdPhaseWireApply
+#   EdPhaseWireStartProgress
+#   EdPhaseWireShowProgress
+#   EdPhaseWireEndProgress
+#   EdPhaseWireUseDistanceFromPreviousContour
+#   EdPhaseWireFindInputPhaseVolumes
+#   EdPhaseWireUsePhasePipeline
+#   EdPhaseWireTestCF2
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -64,6 +90,12 @@ proc EdPhaseWireInit {} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC EdPhaseWireBuildVTK
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EdPhaseWireBuildVTK {} {
     global Ed Volume Slice
 
@@ -332,6 +364,12 @@ proc EdPhaseWireBuildGUI {} {
 
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EdPhaseWirePrettyPicture
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EdPhaseWirePrettyPicture {}  {
     global Slice
 
@@ -805,6 +843,12 @@ proc EdPhaseWireClearCurrentSlice {} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC EdPhaseWireClearLastSegment
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EdPhaseWireClearLastSegment {} {
     global Slice
     
@@ -974,6 +1018,12 @@ proc EdPhaseWireUseDistanceFromPreviousContour {} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC EdPhaseWireFindInputPhaseVolumes
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EdPhaseWireFindInputPhaseVolumes {} {
     global Ed Volume
 
@@ -1013,6 +1063,12 @@ proc EdPhaseWireFindInputPhaseVolumes {} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC EdPhaseWireUsePhasePipeline
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EdPhaseWireUsePhasePipeline {} {
     global Ed Slice
 
