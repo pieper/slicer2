@@ -140,7 +140,6 @@ proc EMSegmentInit {} {
     # For later version where we can use local prios
     # Public Version  = 1
     # Private Version = 2
-
     if { [catch "package require vtkEMPrivateSegment"] } {
       set EMSegment(SegmentMode) 1
     } else {
@@ -218,7 +217,7 @@ proc EMSegmentInit {} {
     set Module($m,procExit)  EMSegmentExit
     set Module($m,procMRML)  EMSegmentUpdateMRML
     set Module($m,procMRMLLoad)  EMSegmentLoadMRML
-    MainMrmlUpdateIdLists "Segmenter EndSegmenter SegmenterGraph SegmenterInput SegmenterSuperClass EndSegmenterSuperClass SegmenterClass SegmenterCIM"
+    MainMrmlUpdateIdLists "Segmenter EndSegmenter SegmenterGraph SegmenterInput SegmenterSuperClass EndSegmenterSuperClass SegmenterClass  EndSegmenterClass SegmenterCIM SegmenterPCAEigen"
 
     # Define Dependencies
     #------------------------------------
@@ -236,7 +235,7 @@ proc EMSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.20 $} {$Date: 2004/02/18 22:56:11 $}]
+        {$Revision: 1.21 $} {$Date: 2004/02/19 00:36:55 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -1548,7 +1547,7 @@ proc EMSegmentLoadMRML {tag attr} {
                     "printintermediatefrequency" {$n SetPrintIntermediateFrequency $val}
                     "printintermediatedir" {$n SetPrintIntermediateDir $val}
                     "biasprint" {$n SetBiasPrint $val}
-                    "startslice" {$printintermediatefrequencyn SetStartSlice $val}
+                    "startslice" {$n SetStartSlice $val}
                     "endslice" {$n SetEndSlice $val}
                     "displayprob" {$n SetDisplayProb $val}
                     "numberoftrainingsamples" {$n SetNumberOfTrainingSamples $val}
@@ -1709,10 +1708,10 @@ proc EMSegmentUpdateMRML {} {
        set ClassName [$item GetClassName]
 
        # Check if Last SegmenterClassNode had a EndSegmenterClassNode defined or not 
-       if {$SetEndSegmenterClassNodeFlag && ($ClassName != "vtkMrmlEndSegmenterClassNode" || $ClassName != "vtkMrmlSegmenterPCAEigenNode")}  {
+       if {$SetEndSegmenterClassNodeFlag && $ClassName != "vtkMrmlEndSegmenterClassNode" && $ClassName != "vtkMrmlSegmenterPCAEigenNode"}  {
           # Insert the End node  
-      MainMrmlInsertAfterNode $EMSegment(Cattrib,$EMSegment(Class),Node) EndSegmenterClass
-      set SetEndSegmenterClassNodeFlag 0
+          MainMrmlInsertAfterNode $EMSegment(Cattrib,$EMSegment(Class),Node) EndSegmenterClass
+          set SetEndSegmenterClassNodeFlag 0
        } 
 
        if { $ClassName == "vtkMrmlSegmenterNode" } {
@@ -2264,7 +2263,7 @@ proc EMSegmentSaveSettingSuperClass {SuperClass LastNode} {
              SegmenterClass($pid,node) SetLocalPriorPrefix ""
              SegmenterClass($pid,node) SetLocalPriorName   ""
           }
-          SegemnterClass($pid,node) SetPCAFileRange  $EMSegment(Cattrib,$i,PCAFileRange)
+          eval SegmenterClass($pid,node) SetPCAFileRange  $EMSegment(Cattrib,$i,PCAFileRange)
           if {$EMSegment(Cattrib,$i,PCAMeanData) != $Volume(idNone) } {
              SegmenterClass($pid,node) SetPCAMeanName  [Volume($EMSegment(Cattrib,$i,PCAMeanData),node) GetName]
       } else {
@@ -2272,24 +2271,24 @@ proc EMSegmentSaveSettingSuperClass {SuperClass LastNode} {
       }
           set index 0
           foreach EigenList $EMSegment(Cattrib,$i,PCAEigen)  {
-          set Number [lindex $EigneList 0]
-          set EigenValue [lindex $EigneList 1]
-          set EigenVectorData [lindex $EigneList 2]
-              set NodeItem [lindex $EigneList 3]
+             set Number [lindex $EigneList 0]
+             set EigenValue [lindex $EigneList 1]
+             set EigenVectorData [lindex $EigneList 2]
+             set NodeItem [lindex $EigneList 3]
 
               #No Node defined 
-          if {NodeItem == ""} { 
-          set NodeItem [MainMrmlInsertAfterNode $LastNode SegmenterPCAEigen] 
+             if { $NodeItem == "" } { 
+                  set NodeItem [MainMrmlInsertAfterNode $LastNode SegmenterPCAEigen] 
                   set EMSegment(Cattrib,$i,PCAEigen) [lreplace  $EMSegment(Cattrib,$i,PCAEigen) $index $index "$Number $EigenValue $EigenVectorData $NodeItem"]
-              }
-              set LastNode $NodeItem
-          set pid [$NodeItem GetID]
-          SegmenterPCAEigen($pid,node) SetNumber $Number
-          SegmenterPCAEigen($pid,node) SetEigenValue $EigenValue
-          if {$EigenVectorData != $Volume(idNone) } {
-          SegmenterPCAEigen($pid,node) SetEigenVectorName  [Volume($EigenVectorData,node) GetName]
+             }
+             set LastNode $NodeItem
+             set pid [$NodeItem GetID]
+             SegmenterPCAEigen($pid,node) SetNumber $Number
+             SegmenterPCAEigen($pid,node) SetEigenValue $EigenValue
+             if {$EigenVectorData != $Volume(idNone) } {
+             SegmenterPCAEigen($pid,node) SetEigenVectorName  [Volume($EigenVectorData,node) GetName]
           } else {
-          SegmenterPCAEigen($pid,node) SetEigenVectorName  ""
+             SegmenterPCAEigen($pid,node) SetEigenVectorName  ""
           }
       }
 

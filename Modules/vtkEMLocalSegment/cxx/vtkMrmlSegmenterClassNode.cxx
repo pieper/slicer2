@@ -58,6 +58,8 @@ vtkMrmlSegmenterClassNode* vtkMrmlSegmenterClassNode::New()
 //----------------------------------------------------------------------------
 vtkMrmlSegmenterClassNode::vtkMrmlSegmenterClassNode()
 {
+  // vtkMrmlNode's attributes => Tabs following sub classes  
+  this->Indent     = 1;
   this->LocalPriorPrefix = NULL; 
   this->LocalPriorName   = NULL; 
   memset(this->LocalPriorRange,0,2*sizeof(int));
@@ -70,6 +72,7 @@ vtkMrmlSegmenterClassNode::vtkMrmlSegmenterClassNode()
   this->InputChannelWeights = NULL;
   this->PCAMeanName      = NULL; 
   memset(this->PCAFileRange,0,2*sizeof(int));
+   
 }
 
 //----------------------------------------------------------------------------
@@ -156,7 +159,7 @@ void vtkMrmlSegmenterClassNode::Write(ofstream& of, int nIndent)
     of << " PCAMeanName='" << this->PCAMeanName << "'";
   }
   if  (this->PCAFileRange[0] || this->PCAFileRange[1]) of << " PCAFileRange='" << this->PCAFileRange[0] << " " << this->PCAFileRange[1] << "'";
-  of << ">";
+  of << ">\n";
 }
 
 //----------------------------------------------------------------------------

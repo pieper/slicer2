@@ -91,15 +91,6 @@ proc EMSegmentSetVtkSuperClassSetting {SuperClass NumInputImagesSet } {
           EMSegment(vtkEMSegment) SetProbDataWeight 0.0 
       }
 
-      # Necessary for the shape matcher 
-      if {$EMSegment(Cattrib,$i,WeightConfidenceData) != $Volume(idNone)} {
-          EMSegment(vtkEMSegment) SetWeightConfidence 1 
-          EMSegment(vtkEMSegment) SetInputIndex $NumInputImagesSet [Volume($EMSegment(Cattrib,$i,WeightConfidenceData),vol) GetOutput]
-          incr NumInputImagesSet
-      } else {
-          EMSegment(vtkEMSegment) SetWeightConfidence 0
-      }
-
       for {set y 0} {$y < $EMSegment(NumInputChannel)} {incr y} {
           EMSegment(vtkEMSegment) SetLogMu $EMSegment(Cattrib,$i,LogMean,$y) $y
           for {set x 0} {$x < $EMSegment(NumInputChannel)} {incr x} {
