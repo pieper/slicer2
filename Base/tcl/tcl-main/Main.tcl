@@ -129,7 +129,7 @@
 # .END
 #-------------------------------------------------------------------------------
 proc MainBoot {{mrmlFile ""}} {
-    global Module Gui Dag Anno View Slice viewWin verbose
+    global Module Gui Anno View Slice viewWin verbose
 
     set mrmlFile [file normalize $mrmlFile] ;# remove backslashes on windows
 
@@ -178,7 +178,7 @@ proc MainBoot {{mrmlFile ""}} {
                     tk_messageBox -message "\
 The '$m' module depends on the '$d' module, which is not present.\n\
 Slicer will exit so the problem can be corrected."
-                    exit
+                    # exit
                 }
             }
         }
@@ -459,7 +459,7 @@ proc MainInit {} {
 
         # Set version info
     lappend Module(versions) [ParseCVSInfo Main \
-        {$Revision: 1.115 $} {$Date: 2004/12/02 18:00:31 $}]
+        {$Revision: 1.116 $} {$Date: 2005/01/13 15:18:54 $}]
 
     # Call each "Init" routine that's not part of a module
     #-------------------------------------------
