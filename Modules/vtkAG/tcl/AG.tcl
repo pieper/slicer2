@@ -148,7 +148,7 @@ proc AGInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.6 $} {$Date: 2004/11/24 22:06:20 $}]
+        {$Revision: 1.7 $} {$Date: 2005/01/10 21:50:23 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -2204,7 +2204,7 @@ proc AGTransformOneVolume {SourceVolume TargetVolume} {
 
     # if only linear transform, to not change resolution of source
     set AG(resamplesource) 0
-    if {$AG(initial_grid)} {
+    if {$AG(Initial_grid)} {
       set AG(resamplesource) 1
     }
     if {![info exist AG(Transform)]} {
