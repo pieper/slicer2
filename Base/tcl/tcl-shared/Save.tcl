@@ -50,7 +50,7 @@ proc SaveWindowToFile {directory filename imageType {window ""}} {
 
     vtkWindowToImageFilter saveFilter
     saveFilter SetInput $window
-    saveImageToFile $directory $filename $imageType [saveFilter GetOutput]
+    SaveImageToFile $directory $filename $imageType [saveFilter GetOutput]
     saveFilter Delete
 }
 
