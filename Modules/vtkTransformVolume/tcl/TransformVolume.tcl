@@ -106,7 +106,7 @@ proc TransformVolumeInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.18 $} {$Date: 2005/04/05 01:30:48 $}]
+        {$Revision: 1.19 $} {$Date: 2005/04/06 13:44:55 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -532,12 +532,15 @@ proc TransformVolumeRun {} {
             $isv configure -interpolation "NearestNeighbor"
         }
 
-        $isv set_spacing $TransformVolume(OutputSpacingLR) \
-            $TransformVolume(OutputSpacingPA) \
-            $TransformVolume(OutputSpacingIS)
-        $isv set_dimensions $TransformVolume(OutputDimensionLR) \
-            $TransformVolume(OutputDimensionPA) \
-            $TransformVolume(OutputDimensionIS)
+        TransformVolumePermuteDimensions
+        TransformVolumePermuteSpacing
+
+        $isv set_spacing $TransformVolume(OutputSpacingI) \
+            $TransformVolume(OutputSpacingJ) \
+            $TransformVolume(OutputSpacingK)
+        $isv set_dimensions $TransformVolume(OutputDimensionI) \
+            $TransformVolume(OutputDimensionJ) \
+            $TransformVolume(OutputDimensionK)
         
         if {$vDisp != "" && $vDisp != $Volume(idNone)} {
             $isv configure -warpvolume [Volume($vDisp,node) GetName]
@@ -806,18 +809,21 @@ proc TransformVolumeUpdatePreview {} {
             $isv configure -interpolation "NearestNeighbor"
         }
 
-        $isv set_spacing $TransformVolume(OutputSpacingLR) \
-            $TransformVolume(OutputSpacingPA) \
-            $TransformVolume(OutputSpacingIS)
-        $isv set_dimensions $TransformVolume(OutputDimensionLR) \
-            $TransformVolume(OutputDimensionPA) \
-            $TransformVolume(OutputDimensionIS)
+        TransformVolumePermuteDimensions
+        TransformVolumePermuteSpacing
+
+        $isv set_spacing $TransformVolume(OutputSpacingI) \
+            $TransformVolume(OutputSpacingJ) \
+            $TransformVolume(OutputSpacingK)
+        $isv set_dimensions $TransformVolume(OutputDimensionI) \
+            $TransformVolume(OutputDimensionJ) \
+            $TransformVolume(OutputDimensionK)
         
         if {$vDisp != "" && $vDisp != $Volume(idNone)} {
             $isv configure -warpvolume [Volume($vDisp,node) GetName]
         }
         
-        $isv configure -slice [expr int(0.5*$TransformVolume(OutputDimensionIS))]
+        $isv configure -slice [expr int(0.5*$TransformVolume(OutputDimensionK))]
     }
         
 }
@@ -1178,3 +1184,76 @@ proc TransformVolumeOutputDimensionIS {{dimension ""} } {
     
 }
 
+#-------------------------------------------------------------------------------
+# .PROC TransformVolumePermuteDimensions
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc TransformVolumePermuteDimensions {} {
+    global TransformVolume
+
+    switch $TransformVolume(OutputOrientation) {
+        "RL" -
+        "LR" {
+            set dimI $TransformVolume(OutputDimensionPA)
+            set dimJ $TransformVolume(OutputDimensionIS)
+            set dimK $TransformVolume(OutputDimensionLR)
+        }
+        "PA" -
+        "AP" {
+            set dimI $TransformVolume(OutputDimensionLR)
+            set dimJ $TransformVolume(OutputDimensionIS)
+            set dimK $TransformVolume(OutputDimensionPA)
+        }
+        "SI" -
+        "IS" {
+            set dimI $TransformVolume(OutputDimensionLR)
+            set dimJ $TransformVolume(OutputDimensionPA)
+            set dimK $TransformVolume(OutputDimensionIS)
+        }
+        default {
+            tk_messageBox -message "Unknown orientation: $TransformVolume(OutputOrientation)"
+        }
+    }
+    set TransformVolume(OutputDimensionI) $dimI
+    set TransformVolume(OutputDimensionJ) $dimJ
+    set TransformVolume(OutputDimensionK) $dimK
+}
+
+#-------------------------------------------------------------------------------
+# .PROC TransformVolumePermuteSpacing
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc TransformVolumePermuteSpacing {} {
+    global TransformVolume
+
+    switch $TransformVolume(OutputOrientation) {
+        "RL" -
+        "LR" {
+            set spacingI $TransformVolume(OutputSpacingPA)
+            set spacingJ $TransformVolume(OutputSpacingIS)
+            set spacingK $TransformVolume(OutputSpacingLR)
+        }
+        "PA" -
+        "AP" {
+            set spacingI $TransformVolume(OutputSpacingLR)
+            set spacingJ $TransformVolume(OutputSpacingIS)
+            set spacingK $TransformVolume(OutputSpacingPA)
+        }
+        "SI" -
+        "IS" {
+            set spacingI $TransformVolume(OutputSpacingLR)
+            set spacingJ $TransformVolume(OutputSpacingPA)
+            set spacingK $TransformVolume(OutputSpacingIS)
+        }
+        default {
+            tk_messageBox -message "Unknown orientation: $TransformVolume(OutputOrientation)"
+        }
+    }
+    set TransformVolume(OutputSpacingI) $spacingI
+    set TransformVolume(OutputSpacingJ) $spacingJ
+    set TransformVolume(OutputSpacingK) $spacingK
+}
