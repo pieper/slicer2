@@ -51,6 +51,10 @@ if { [itcl::find class regions] == "" } {
         variable _mtx
         variable _ptlabels ""
         variable _xyz ""
+
+        # ccdb class to set further search terms
+        public variable _ccdb ""
+
         constructor {args} {}
         destructor {}
 
@@ -63,6 +67,7 @@ if { [itcl::find class regions] == "" } {
         method umls {} {}
         method fdemo {} {}
         method demo {} {}
+        method getUMLS {} {}
     }
 }
 
@@ -453,6 +458,24 @@ itcl::body regions::query {} {
         "jneurosci" {
             catch "exec \"$browser\" http://www.jneurosci.org/cgi/search?volume=&firstpage=&sendit=Search&author1=&author2=&titleabstract=&fulltext=$terms &"
         }
+        "ccdb" {
+            # check for fiducials with matching UMLS ids
+            set umls [$this getUMLS]
+            puts "UMLS values defined for selected points: $umls"
+
+            # pass them on to the umls server and get canonical names
+
+            # open a new window and select the other search terms
+            if {[$this cget -_ccdb] == ""} {
+                $this configure -_ccdb [ccdb \#auto $_w $browser]
+            } else {
+                # the above will open a window to set the query terms and 
+                # then call this again when it's done (user hits set ccdb query terms button), 
+                # at which point the _ccdb var will be set so we can just query it for the search string
+                set searchURL [[$this cget -_ccdb] cget -searchURL]
+                puts "Close $browser in order to continue using Slicer.\nOpening $browser with URL \$searchURL"
+                catch "exec \"$browser\" $searchURL"
+            }
         "ibvd" {
             catch "exec \"$browser\" http://www.cma.mgh.harvard.edu/ibvd/search.php?f_submission=true&f_free=$terms &"
         }
@@ -460,6 +483,7 @@ itcl::body regions::query {} {
             catch "exec \"$browser\" http://www.google.com/search?q=$terms &"
             catch "exec \"$browser\" http://www.ncbi.nlm.nih.gov/entrez/query.fcgi?cmd=search&db=PubMed&term=$terms &"
             catch "exec \"$browser\" http://www.jneurosci.org/cgi/search?volume=&firstpage=&sendit=Search&author1=&author2=&titleabstract=&fulltext=$terms &"
+            catch "exec \"$browser\" http://donor.ucsd.edu/CCDB/servlet/project1.SearchBrief?id=&keyword=&psname=&producttype=single+tilt&cell=&structure=${terms}&organ=brain&protein=&name=mouse&Submit=Submit"
         }
         "mediator" {
             tk_messageBox -title "Slicer" -message "Mediator interface not yet implemented." -type ok -icon error
@@ -949,3 +973,23 @@ itcl::body regions::demo {} {
     }
     $this apply
 }
+
+# use the point scalar values as an index into the list of mapping 
+# from ids to surface labels and umls ids, and return a list of umls ids
+itcl::body regions::getUMLS {} {
+    global VolFreeSurferReadersSurface
+
+    set umls ""
+    # for each point in the fiducials list, get the colour
+    foreach colour $_ptscalars {
+        # see if it has a umls id, add to return variable
+        if {$VolFreeSurferReadersSurface($colour,umls) != ""} {
+            lappend umls $VolFreeSurferReadersSurface($colour,umls)
+        }
+    }
+    
+    return $umls
+}
+
+}
+
