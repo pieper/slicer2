@@ -22,19 +22,15 @@ exec tclsh "$0" "$@"
 # and get the build working from there.
 #
 
-# set up variables for the OS Builds, to facilitate the move to solaris9
-# can be solaris8 or solaris9
-set solaris "solaris8"
-set linux "redhat7.3"
-set darwin "Darwin"
-set windows "Win32VC7"
+
+
 
 #
-# Note: the local vars file overrides the default values in this script
+# Note: the local vars file, slicer2/slicer_variables.tcl, overrides the default values in this script
 # - use it to set your local environment and then your change won't 
 #   be overwritten when this file is updated
 #
-set localvarsfile [file dirname [info script]]/cmaker_variables.tcl
+set localvarsfile [file normalize [file dirname [info script]]/../slicer_variables.tcl]
 if { [file exists $localvarsfile] } {
     source $localvarsfile
 } else {
@@ -50,7 +46,7 @@ foreach var "VTK_ARG1 VTK_ARG2 VTK_ARG3 VTK_ARG4 VTK_ARG5 VTK_ARG6 VTK_ARG7 VTK_
 }
 
 set SLICER_ARG1 "-DVTKSLICERBASE_SOURCE_DIR:PATH=$SLICER_HOME/Base"
-set SLICER_ARG2 "-DVTKSLICERBASE_BUILD_DIR:PATH=$SLICER_HOME/Base/builds/$BUILD"
+set SLICER_ARG2 "-DVTKSLICERBASE_BUILD_DIR:PATH=$SLICER_HOME/Base/builds/$env(BUILD)"
 set SLICER_ARG3 "-DVTKSLICERBASE_BUILD_LIB:PATH=$VTKSLICERBASE_BUILD_LIB"
 set SLICER_ARG4 "-DVTKSLICERBASE_BUILD_TCL_LIB:PATH=$VTKSLICERBASE_BUILD_TCL_LIB"
 
@@ -111,15 +107,18 @@ foreach dir $modulePaths {
     if { ![file isdirectory $dir] } {continue}
     set moduleName [file tail $dir]
     # if it's not the custom one (the example) 
-    # but starts with vtk and has some c++ code, append it to the list of targets
+    # but starts with vtk and has some c++ code, and has a cxx/CMakeLists.txt file append it to the list of targets
     if { [string match "vtk*" $moduleName] 
-            && ![string match "*CustomModule*" $moduleName] 
-            && [file exists $dir/cxx] } {
+         && ![string match "*CustomModule*" $moduleName] 
+         && [file exists $dir/cxx] 
+         && [file exists $dir/cxx/CMakeLists.txt]} {
         if {[file exists [file join $dir cmaker_local.tcl]]} {
-           lappend TARGETS $dir
+            lappend TARGETS $dir
         } else {
-           set TARGETS "$dir $TARGETS"
+            set TARGETS "$dir $TARGETS"
         }
+    } else {
+        puts "Skipping invalid module $moduleName..."
     }
 }
 
@@ -144,7 +143,7 @@ if { $argv != "" && $argv != {} } {
     foreach argmodule $argv {
         set idx [lsearch -glob $TARGETS *$argmodule]
         if { $idx == -1 } {
-            puts stderr "can't find module $argmodule in search path (options are: $TARGETS)"
+            puts stderr "Can't find module $argmodule in search path, it may be invalid (options are: $TARGETS)"
             exit
         } else {
             lappend newtargets [lindex $TARGETS $idx]
@@ -163,7 +162,7 @@ puts ""
 # clean all first if needed
 if { $CLEANFLAG } {
     foreach target $TARGETS {
-        set build $target/builds/$BUILD 
+        set build $target/builds/$env(BUILD) 
         puts "Deleting $build"
         catch "file delete -force $build"
     }
@@ -174,7 +173,7 @@ foreach target $TARGETS {
 
     puts "\n----\nprocessing $target..."
 
-    set build $target/builds/$BUILD 
+    set build $target/builds/$env(BUILD) 
 
     catch "file mkdir $build"
     cd $build
@@ -188,16 +187,22 @@ foreach target $TARGETS {
         puts "$CMAKE $target -G$GENERATOR \
             $VTK_ARG1 $VTK_ARG2 $VTK_ARG3 $VTK_ARG4 $VTK_ARG5 $VTK_ARG6 $VTK_ARG7 \
             $SLICER_ARG1 $SLICER_ARG2 $SLICER_ARG3 $SLICER_ARG4 $SLICER_MODULE_ARG1 $SLICER_MODULE_ARG2 $SLICER_MODULE_ARG3 $SLICER_MODULE_ARG4"
-        exec $CMAKE $target -G$GENERATOR \
+        if { [ catch "exec $CMAKE $target -G$GENERATOR \
             $VTK_ARG1 $VTK_ARG2 $VTK_ARG3 $VTK_ARG4 $VTK_ARG5 $VTK_ARG6 $VTK_ARG7 \
-            $SLICER_ARG1 $SLICER_ARG2 $SLICER_ARG3 $SLICER_ARG4 $SLICER_MODULE_ARG1 $SLICER_MODULE_ARG2 $SLICER_MODULE_ARG3 $SLICER_MODULE_ARG4
+            $SLICER_ARG1 $SLICER_ARG2 $SLICER_ARG3 $SLICER_ARG4 $SLICER_MODULE_ARG1 $SLICER_MODULE_ARG2 $SLICER_MODULE_ARG3 $SLICER_MODULE_ARG4" err ]} {
+            # catch here so that the build can continue if they're just warnings
+            puts "\n--------\nCMAKE error using cmaker_local.tcl: $err\n--------\n"
+        }
     } else {
         puts "$CMAKE $target -G$GENERATOR \
             $VTK_ARG1 $VTK_ARG2 $VTK_ARG3 $VTK_ARG4 $VTK_ARG5 $VTK_ARG6 $VTK_ARG7 \
             $SLICER_ARG1 $SLICER_ARG2 $SLICER_ARG3 $SLICER_ARG4 "
-        exec $CMAKE $target -G$GENERATOR \
-            $VTK_ARG1 $VTK_ARG2 $VTK_ARG3 $VTK_ARG4 $VTK_ARG5 $VTK_ARG6 $VTK_ARG7 \
-            $SLICER_ARG1 $SLICER_ARG2 $SLICER_ARG3 $SLICER_ARG4
+        if { [ catch [list exec $CMAKE $target -G$GENERATOR \
+                          $VTK_ARG1 $VTK_ARG2 $VTK_ARG3 $VTK_ARG4 $VTK_ARG5 $VTK_ARG6 $VTK_ARG7 \
+                          $SLICER_ARG1 $SLICER_ARG2 $SLICER_ARG3 $SLICER_ARG4] err]} {
+            # catch here so that the build can continue if they're just warnings
+            puts "\n----------\nCMAKE error: $err\n-----------\n"
+        }
     }
 
     switch $tcl_platform(os) {
