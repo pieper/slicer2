@@ -54,8 +54,8 @@ proc ViewInit {} {
 
     # Define Tabs
     set m View
-    set Module($m,row1List) "Help View Fog Lights"
-    set Module($m,row1Name) "Help View Fog Lights"
+    set Module($m,row1List) "Help View Texture Fog Lights"
+    set Module($m,row1Name) "Help View Texture Fog Lights"
     set Module($m,row1,tab) View
 
     # Module Summary Info
@@ -70,7 +70,7 @@ proc ViewInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.33 $} {$Date: 2002/10/28 15:17:59 $}]
+        {$Revision: 1.34 $} {$Date: 2002/11/12 13:10:52 $}]
 
     set View(movie) 0
     set View(movieDirectory) "/tmp"
@@ -121,6 +121,12 @@ frame is recorded as /tmp/movieNNNN.ppm. These frames can be converted into
 a movie using various utilities. One way is to use <I>convert</I> which accepts
 a command line like: <I>convert movie*.ppm movie.mpg</I> to create a movie
 called <I>movie.mpg</I>.
+<BR><LI><B>Texture</B> The Texture panel controls the rendering of the slices
+displayed in the 3D window.  <B>Resolution</B> controls the number of pixels
+in the texture.  Choose higher values up to the resolution of your source
+images for better quality.  Choose smaller values for faster rendering.
+<B>Interpolation</B> controls whether pixel blocks are smoothed as they are
+magnified.
 <BR><LI><B>Fog</B> The fog allows to mix the  color of the 3D object
 with the background depending on its distance to the camera.
 The transformation is linear with two parameters <I>Start</I> and <I>End</I>.
@@ -209,7 +215,7 @@ light parameters (e.g., overall intensity) to be adjusted.
 
     frame $f.fStereoType -bg $Gui(activeWorkspace)
     frame $f.fStereoOn -bg $Gui(activeWorkspace)
-       pack $f.fStereoType $f.fStereoOn -side top -pady 5
+    pack $f.fStereoType $f.fStereoOn -side top -pady 5
 
     #-------------------------------------------
     # View->Stereo->StereoType Frame
@@ -291,6 +297,37 @@ a frame will be saved everytime the 3D View is rendered "
     #-------------------------------------------
 
     FogBuildGui $Module(View,fFog)
+
+    #-------------------------------------------
+    # Texture frame
+    #-------------------------------------------
+
+    set f $Module(View,fTexture)
+
+    frame $f.fTitle -bg $Gui(activeWorkspace)
+    frame $f.fBtns -bg $Gui(activeWorkspace)
+    pack $f.fTitle $f.fBtns -side top -pady 5
+
+    eval {label $f.fTitle.lTitle -text "Texture Display:"} $Gui(WLA)
+    pack $f.fTitle.lTitle -side left -padx $Gui(pad) -pady 0
+
+    eval {label $f.fBtns.lR -text "Resolution:"} $Gui(WLA)
+    eval {entry $f.fBtns.eRes -width 5 -textvariable View(textureResolution)} $Gui(WEA)
+    bind $f.fBtns.eRes  <Return> {MainViewSetTexture}
+    pack $f.fBtns.lR $f.fBtns.eRes \
+        -side left -padx $Gui(pad)
+
+    frame $f.fInterp -bg $Gui(activeWorkspace) -relief groove -bd 3
+    pack $f.fInterp -side top -pady $Gui(pad) -padx $Gui(pad) -fill x
+    eval {label $f.fInterp.lInterp -text "Interpolate: "} $Gui(WLA)
+    pack $f.fInterp.lInterp -side left -padx $Gui(pad) -pady 0
+
+    foreach value "On Off" width "4 4" {
+        eval {radiobutton $f.fInterp.rInterp$value -width $width \
+            -text "$value" -value "$value" -variable View(textureInterpolation) \
+            -indicatoron 0 -command "MainViewSetTexture"} $Gui(WCA)
+        pack $f.fInterp.rInterp$value -side left -padx 0 -pady 0
+    }
 
     #-------------------------------------------
     # Lights frame
