@@ -27,6 +27,8 @@ vtkLargeLeastSquaresProblem.cxx
 vtkFemurMetric.cxx
 vtkPelvisMetric.cxx
 vtkAxisSource.cxx
+vtkConePredicate.cxx
+vtkDistanceSpherePredicate.cxx
 )
 
 ## classes that one does not want tcl wrapped
@@ -51,11 +53,11 @@ INCLUDE_DIRECTORIES(
 #### INCLUDE_DIRECTORIES and LINK_LIBRARIES
 #### lines below
 ####
-#INCLUDE_DIRECTORIES( 
-#   ${VTKSLICERBASE_SOURCE_DIR}/cxx 
-#   ${VTKSLICERBASE_BUILD_DIR}
-#)
-#LINK_LIBRARIES (${VTKSLICERBASE_BUILD_LIB})
+INCLUDE_DIRECTORIES( 
+   ${VTKSLICERBASE_SOURCE_DIR}/cxx 
+   ${VTKSLICERBASE_BUILD_DIR}
+)
+LINK_LIBRARIES (${VTKSLICERBASE_BUILD_LIB})
 
 
 # Add additional directories to look in for libraries
