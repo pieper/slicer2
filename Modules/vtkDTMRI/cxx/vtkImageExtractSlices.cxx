@@ -257,14 +257,14 @@ static void vtkImageExtractSlicesExecute1(vtkImageExtractSlices *self,
       if (avrep)
         extract = 1;
       else
-        extract = (((int) floor((slice/numSlices)/period)) == rep);
+        extract = (((int) floor((float)(slice/numSlices)/period)) == rep);
        */
                
       if (self->GetMode() == MODESLICE)
         {
       extract = (fmod((float)slice,(float)period) == offset);
       //Check slice is in the limits of outExt[5]-outExt[4]
-      outslice = (int)floor(slice/period);
+      outslice = (int)floor((float)slice/period);
       if(outslice>=outExt[4] && outslice<=outExt[5])
         extract = extract && 1;
       else
