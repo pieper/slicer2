@@ -19,7 +19,7 @@ proc IbrowserBuildLoadFrame { } {
     set f $fNew.fOption
 
     Notebook:create $f.fNotebook \
-                    -pages {Load Select} \
+                    -pages {Load} \
                     -pad 2 \
                     -bg $Gui(activeWorkspace) \
                     -height 300 \
@@ -28,9 +28,6 @@ proc IbrowserBuildLoadFrame { } {
     #--- Load or construct a sequence from disk
     set w [ Notebook:frame $f.fNotebook Load ]
     IbrowserBuildUIForLoad $w
-    #--- Select or construct a sequence from elsewhere in Slicer
-    set w [ Notebook:frame $f.fNotebook Select ]
-    IbrowserBuildUIForSelect $w
 
     #---------------------------------------------------------------
     #--- fNew->fLogos (packer)
@@ -49,7 +46,7 @@ proc IbrowserBuildLoadFrame { } {
 
 
 
-proc IbrowserBuildUIForSelect { parent } {
+proc IbrowserBuildUIForImport { parent } {
        global Gui
 
     frame $parent.fTop    -bg $Gui(activeWorkspace) 
@@ -67,9 +64,9 @@ proc IbrowserBuildUIForSelect { parent } {
 
     #--- Frame for Sequence listbox buttons
     set f $parent.fMiddle
-    DevAddButton $f.bSelect "Select" "IbrowserSelectSequence" 10 
+    DevAddButton $f.bImport "Import" "IbrowserImportSequenceFromOtherModule" 10 
     DevAddButton $f.bUpdate "Update" "IbrowserUpdateSequences" 10 
-    pack $f.bUpdate $f.bSelect -side left -expand 1 -pady $Gui(pad) -padx $Gui(pad) -fill both
+    pack $f.bUpdate $f.bImport -side left -expand 1 -pady $Gui(pad) -padx $Gui(pad) -fill both
 
     #--- Frame for previewing new sequence
     set f $parent.fBottom
@@ -108,6 +105,305 @@ proc IbrowserBuildUIForSelect { parent } {
 
 
 
+
+proc IbrowserBuildUIForAppend { parent } {
+       global Gui
+
+    frame $parent.fTop    -bg $Gui(activeWorkspace) 
+    frame $parent.fMiddle -bg $Gui(activeWorkspace) 
+    frame $parent.fBottom -bg $Gui(activeWorkspace) 
+    pack $parent.fTop $parent.fMiddle -side top -padx $Gui(pad) 
+    pack $parent.fBottom -side top -pady 15 
+
+    # let top hold the persistent label
+    set f $parent.fTop
+    set f $parent.fMiddle
+    set f $parent.fBottom
+}
+
+
+proc IbrowserBuildUIForAssemble { parent } {
+       global Gui
+
+    frame $parent.fChoose -bg $Gui(activeWorkspace) -relief groove -bd 2 
+    frame $parent.fAssembleFrom -bg $Gui(activeWorkspace) -relief groove -bd 2 -height 70
+    frame $parent.fApply -bg $Gui(activeWorkspace) 
+    pack $parent.fChoose -side top -padx $Gui(pad) -fill x
+    pack $parent.fAssembleFrom -side top -padx $Gui(pad) -fill x
+    pack $parent.fApply -side top -pady 5 -fill x
+
+    #----------------- CHOOSE ---------------------------------
+    #--- Create the persistent label and radiobutton select menu
+    #--- in the top fChoose frame
+    set f $parent.fChoose
+    DevAddLabel $f.lNote "Assemble new sequence from:             "
+    pack $f.lNote -side top -pady 2 -padx 10 -anchor w
+    eval {radiobutton $f.r1 -width 27 -text {selected files on disk} \
+              -variable ::Ibrowser(New,assembleChoice) -value 0 \
+              -relief flat -offrelief flat -overrelief raised \
+              -command "raise $parent.fAssembleFrom.fFiles" \
+              -selectcolor white} $Gui(WEA)
+    pack $f.r1 -side top -pady 2 -padx 10 -anchor w
+
+    eval {radiobutton $f.r2 -width 27 -text {selected Slicer sequences} \
+              -variable ::Ibrowser(New,assembleChoice) -value 1 \
+              -relief flat -offrelief flat -overrelief raised \
+              -command "raise $parent.fAssembleFrom.fSequences" \
+              -selectcolor white} $Gui(WEA)
+    pack $f.r2 -side top -pady 2 -padx 10 -anchor w
+
+    eval {radiobutton $f.r3 -width 27 -text {selected Slicer volumes} \
+              -variable ::Ibrowser(New,assembleChoice) -value 2 \
+              -relief flat -offrelief flat -overrelief raised \
+              -command "raise $parent.fAssembleFrom.fVolumes" \
+        -selectcolor white} $Gui(WEA)
+    pack $f.r3 -side top -pady 2 -padx 10 -anchor w
+
+    #----------------- ASSEMBLE FROM ------------------------
+    #--- Create sequence assembly frames that all
+    #--- load into the same master frame, depending on
+    #--- the chosen type of assembly.
+    set f $parent.fAssembleFrom
+    frame $f.fFiles -bg $Gui(activeWorkspace)
+    frame $f.fSequences -bg $Gui(activeWorkspace)
+    frame $f.fVolumes -bg $Gui(activeWorkspace) 
+    
+    #--- Populate the assembly frames.
+    #--- Assemble from selected files on disk:
+    #------------------------------------------------------------------------
+    set f $parent.fAssembleFrom.fFiles
+    DevAddLabel $f.lNote "(option not yet supported)"
+    pack $f.lNote -side top -pady 2 -padx 10
+    frame $f.fSelectFiles -bg $Gui(activeWorkspace)
+    pack $f.fSelectFiles -side top -pady 2 -anchor w
+    #--- put things in the frame: select volume button, add button, and listbox.
+    set f $f.fSelectFiles
+    DevAddButton $f.bFiles "file browse" "" 20 
+    DevAddButton $f.bAdd "add" "" 7
+    pack $f.bFiles -pady 2 -padx 2 -side left -anchor n 
+    pack $f.bAdd -side left -padx 5 -pady 2 -anchor n
+    raise $f
+
+    #------------------------------------------------------------------------
+    
+    
+    #--- Assemble from selected Slicer sequences:
+    #------------------------------------------------------------------------
+    set f $parent.fAssembleFrom.fSequences
+    DevAddLabel $f.lNote "(select sequence, add, & repeat until done)"
+    pack $f.lNote -side top -pady 2 -padx 10
+    frame $f.fSelectSequences -bg $Gui(activeWorkspace)
+    pack $f.fSelectSequences -side top -pady 2 -anchor w
+    #--- put things in the frame: select volume button, add button, and listbox.
+    set f $f.fSelectSequences
+    eval { menubutton $f.mbSequences -text "select sequence" -width 20 -relief raised \
+               -height 1 -menu $f.mbSequences.m -bg $Gui(activeWorkspace) -indicatoron 1 } $Gui(WBA)
+    eval { menu $f.mbSequences.m } $Gui(WMA)
+    foreach id $::Ibrowser(idList) {
+        if { $id != 0 } {
+            $f.mbSequences.m add command -label $::Ibrowser($id,name)  \
+                -command ""
+        }
+    }
+    set ::Ibrowser(New,mbAssembleSequences) $f.mbSequences
+    set ::Ibrowser(New,mAssembleSequences) $f.mbSequences.m
+    eval { button $f.bAdd -text "add" -width 7 -height 1 \
+              -command "" } $Gui(WBA)
+    pack $f.mbSequences -pady 2 -padx 2 -side left -anchor n -ipady 1
+    pack $f.bAdd -side left -padx 5 -pady 2 -anchor n
+
+    #------------------------------------------------------------------------
+
+    
+    #--- Assemble from selected Slicer volumes:
+    #------------------------------------------------------------------------
+    set f $parent.fAssembleFrom.fVolumes
+    DevAddLabel $f.lNote "(select volume, add, & repeat until done)"
+    pack $f.lNote -side top -pady 2 -padx 10
+    frame $f.fSelectVolumes -bg $Gui(activeWorkspace)
+    pack $f.fSelectVolumes -side top -pady 2 -anchor w
+    #--- put things in the frame: select volume button, add button, and listbox.
+    set f $f.fSelectVolumes
+    eval { menubutton $f.mbVolumes -text "select volume" -width 20 -relief raised \
+               -height 1 -menu $f.mbVolumes.m -bg $Gui(activeWorkspace) -indicatoron 1 } $Gui(WBA)
+    eval { menu $f.mbVolumes.m } $Gui(WMA)
+    foreach v $::Volume(idList) {
+        if { $v != 0 } {
+            $f.mbVolumes.m add command -label [::Volume($v,node) GetName ] \
+                -command "IbrowserSelectVolumeForSequenceList $v"
+        }
+    }
+    set ::Ibrowser(New,mbAssembleVolume) $f.mbVolumes
+    set ::Ibrowser(New,mAssembleVolume) $f.mbVolumes.m
+    eval { button $f.bAdd -text "add" -width 7 -height 1 \
+              -command "IbrowserAddVolumeToSequenceList" } $Gui(WBA)
+    pack $f.mbVolumes -pady 2 -padx 2 -side left -anchor n -ipady 1
+    pack $f.bAdd -side left -padx 5 -pady 2 -anchor n
+
+    #------------------------------------------------------------------------
+    #--- Place all assembly frames in the same master frame.
+    #--- assembleFrom has a height of 70.
+    set f $parent.fAssembleFrom
+    place $f.fFiles -in $f -relwidth 1.0 -relheight 1.0
+    place $f.fSequences -in $f -relwidth 1.0 -relheight 1.0    
+    place $f.fVolumes -in $f -relwidth 1.0 -relheight 1.0
+
+
+    #-------------------- APPLY ---------------------------------
+    #--- whether we're selecting volumes, sequences or files
+    #--- list them in this box as they're added, and provide
+    #--- apply and cancel buttons.
+    
+    set f $parent.fApply
+    frame $f.fListBox -bg $Gui(activeWorkspace)
+    frame $f.fButtons -bg $Gui(activeWorkspace)
+    pack $f.fListBox -side left -padx 2
+    pack $f.fButtons -side left -padx 2
+
+    set f $parent.fApply.fListBox
+    eval { scrollbar $f.scroll -command "$f.lbVolumes yview" }
+    eval { listbox $f.lbVolumes -bg $Gui(normalButton) -font {helvetica 8 } \
+               -fg $Gui(textDark) -width 25 -yscrollcommand "$f.scroll set"}
+    set ::Ibrowser(New,lbAssemble) $f.lbVolumes
+    pack $f.lbVolumes -padx 2 -side left
+    pack $f.scroll -padx 0 -side right -fill y
+
+    set f $parent.fApply.fButtons
+    DevAddButton $f.bApply "apply" "IbrowserAssembleSequence" 7
+    DevAddButton $f.bCancel "cancel" "IbrowserCancelAssembleSequence" 7
+    pack $f.bApply -side top -anchor nw -pady 2
+    pack $f.bCancel -side top -anchor nw -pady 2
+
+}
+
+proc IbrowserAssembleSequence { } {
+
+    if { $::Ibrowser(New,assembleChoice) == 0 } {
+        IbrowserAssembleSequenceFromFiles
+    } elseif { $::Ibrowser(New,assembleChoice) == 1 } {
+        IbrowserAssembleSequenceFromSequences
+    } elseif { $::Ibrowser(New,assembleChoice) == 2 } {
+        IbrowserAssembleSequenceFromVolumes
+    }
+}
+
+proc IbrowserAssembleSequenceFromFiles { } {
+}
+
+proc IbrowserAssembleSequenceFromSequences { } {
+}
+
+proc IbrowserAssembleSequenceFromVolumes { } {
+    IbrowserRaiseProgressBar
+
+    #--- get the interval started
+    set ivalID $::Ibrowser(uniqueNum)
+    set ::Ibrowser(loadVol,name) [format "imageData-%d" $ivalID]
+    set ::Ibrowser(seqName) $::Ibrowser(loadVol,name)
+    set iname $::Ibrowser(seqName)
+    set ::Ibrowser($ivalID,name) $iname
+    set ::Ibrowser($iname,intervalID) $ivalID
+
+    #--- get the list of volumeIDs
+    #--- how many entries are in the list?
+    if { [info exists ::Ibrowser(New,assembleList) ] } {
+        set numVols [ llength $::Ibrowser(New,assembleList) ]
+        #--- create $numVols new MRMLVolumenodes
+        for {set i 0} { $i < $numVols } { incr i } {
+            set node [MainMrmlAddNode Volume ]
+            lappend tmpList  $node 
+        }
+
+        #--- copy one selected volume into each new node
+        set i 0
+        foreach sID $::Ibrowser(New,assembleList) {
+            #--- destin: get new MRMLid out of tmpIDList 
+            #--- source: get Volume from list of selected
+            #--- copy source to destination.
+            set newvol [ lindex $tmpList $i ]
+            set dstID [$newvol GetID ]
+            $newvol Copy Volume($sID,node)
+            MainVolumesCreate $dstID
+            MainVolumesCopyData $dstID $sID Off
+            #--- create a volume name.
+            $newvol SetName ${iname}_${i}
+            #--- add new mrml volume id to interval's idlist
+            set ::Ibrowser($ivalID,$i,MRMLid) $dstID
+            incr i
+        }
+
+        #--- set first and last MRMLids in the interval
+        #--- and make a new Interval to hold volumes
+        set ::Ibrowser($ivalID,firstMRMLid) [ [lindex $tmpList 0] GetID ]
+        set ::Ibrowser($ivalID,lastMRMLid) [ [lindex $tmpList end] GetID ]
+        set spanmax [ expr $numVols - 1 ]
+        IbrowserMakeNewInterval $iname $::IbrowserController(Info,Ival,imageIvalType) \
+            0.0 $spanmax $numVols
+    }
+
+    #--- empty assembleList
+    set ::Ibrowser(New,assembleList) ""
+    #--- configure assembleListbox
+    $::Ibrowser(New,lbAssemble) delete 0 end
+    #--- reset queued volume
+    set ::Ibrowser(New,selectedVolumeID) ""
+    #--- reset select menubutton
+    $::Ibrowser(New,mbAssembleVolume) config -text "select volume"
+
+    IbrowserLowerProgressBar
+
+}
+
+proc IbrowserCancelAssembleSequence { } {
+
+    if { $::Ibrowser(assembleChoice) == 0 } {
+    } elseif { $::Ibrowser(assembleChoice) == 1 } {
+    } elseif { $::Ibrowser(assembleChoice) == 2 } {
+    }
+
+    puts "canceling sequence"
+    #--- empty assembleList
+    set ::Ibrowser(New,assembleList) ""
+    #--- configure assembleListbox
+    $::Ibrowser(New,lbAssemble) delete 0 end
+    #--- reset queued volume
+    set ::Ibrowser(New,selectedVolumeID) ""
+    #--- reset select menubutton
+    $::Ibrowser(New,mbAssembleVolume) config -text "select volume"
+
+}
+
+
+proc IbrowserAddVolumeToSequenceList { } {
+
+    if { $::Ibrowser(New,selectedVolumeID) != ""} {
+        #--- get id and name
+        set id $::Ibrowser(New,selectedVolumeID)
+        set vname  [ ::Volume($id,node) GetName ] 
+
+        #--- add ID to assembleList
+        lappend ::Ibrowser(New,assembleList) $id
+        #--- add name to assembleListbox
+        $::Ibrowser(New,lbAssemble) insert end $vname
+
+        #--- reset queued volume
+        set ::Ibrowser(New,selectedVolumeID) ""
+        #--- reset select menubutton
+        $::Ibrowser(New,mbAssembleVolume) config -text "select volume"
+    }
+}
+
+proc IbrowserSelectVolumeForSequenceList { id } {
+
+    #--- modify menu button
+    set vname  [ ::Volume($id,node) GetName ] 
+    $::Ibrowser(New,mbAssembleVolume) config -text $vname
+    #--- queue the volume for adding 
+    set ::Ibrowser(New,selectedVolumeID) $id
+
+}
+
+
 proc IbrowserBuildUIForLoad { parent } {
         global Gui
 
@@ -125,12 +421,10 @@ proc IbrowserBuildUIForLoad { parent } {
         pack $f.lError -side top -pady 30
         return
     }
-    #--- This duplicates the interface for MultiVolumeReaderBuildGUI
-    #--- as of 11/22/04. Must fix rather than duplicate code.
+    #--- This is slightly different from MultiVolumeReader's GUI
     IbrowserMultiVolumeReaderBuildGUI $f
     
 }
-
 
 
 
@@ -150,9 +444,8 @@ proc IbrowserMultiVolumeReaderBuildGUI {parent} {
     pack $f.fConfig -side top
 
     set f $parent.fVols.fConfig
-    set MultiVolumeReader(fileTypes) {hdr .bxh}
     DevAddFileBrowse $f MultiVolumeReader "fileName" "File from load dir:" \
-        "MultiVolumeReaderSetFileFilter" "\$MultiVolumeReader(fileTypes)" \
+        "MultiVolumeReaderSetFileFilter" "bxh .dcm .hdr" \
         "\$Volume(DefaultDir)" "Open" "Browse for a volume file" "" "Absolute"
 
     frame $f.fFilter -bg $Gui(activeWorkspace)
@@ -203,7 +496,7 @@ proc IbrowserMultiVolumeReaderBuildGUI {parent} {
     frame $f.fVName -bg $Gui(activeWorkspace)
     pack $f.fVName  -pady 2
     set f $f.fVName
-    DevAddLabel $f.lVName "Loading:"
+    DevAddLabel $f.lVName "Volume name:"
     label $f.eVName -width 20 -relief flat  -textvariable ::Volume(name) \
         -bg $Gui(activeWorkspace) -fg $Gui(textDark) -font {helvetica 8 }
     grid $f.lVName -row 0 -column 0 -padx 1 -pady 3 -sticky w
@@ -215,12 +508,7 @@ proc IbrowserMultiVolumeReaderBuildGUI {parent} {
 
     #--- for now; need to create MultiVolumeReader(slider) but don't
     #--- want to do anything with it.
-    if { 0 } {
-    scale $f.sHack -orient horizontal -from 0 -to $::Ibrowser(MaxDrops) \
-        -resolution 1 -bigincrement 10 -length 100 -state disabled -showvalue 1
-    set MultiVolumeReader(slider) $f.sHack
-    }
-    DevAddLabel $f.lVolNo "Volume:"
+    DevAddLabel $f.lVolNo "Volume index:"
     eval { scale $f.sSlider \
                -orient horizontal \
                -from 0 -to $::Ibrowser(MaxDrops) \
@@ -283,7 +571,7 @@ proc IbrowserUpdateSequences { } {
     }
 }
 
-proc IbrowserSelectSequence { } {
+proc IbrowserImportSequenceFromOtherModule { } {
     global MultiVolumeReader
 
     set ci [$::Ibrowser(seqsListBox) cursel]
@@ -351,68 +639,19 @@ proc IbrowserMultiVolumeReaderLoad { } {
     for {set i $first } { $i <= $last } { incr i } {
         #--- give ibrowser a way to refer to each vol
         set ::Ibrowser($id,$vcount,MRMLid) $i
-        puts "loading mrmlID $i"
         incr vcount
     }
+
+    #--- set first and last MRML ids in the interval,
+    #--- and create new interval in the controller.
     set ::Ibrowser($id,firstMRMLid) $first
     set ::Ibrowser($id,lastMRMLid) $last
-    set m [ expr $::MultiVolumeReader(noOfVolumes) -1 ]
-    set tt "Loaded $::MultiVolumeReader(noOfVolumes) files: populating interval"
-    
-    #--- populate intervalBrowser controller.
-    IbrowserMakeNewInterval $iname $::IbrowserController(Info,Ival,imageIvalType) 0.0 $m
+    set m $::MultiVolumeReader(noOfVolumes)
+    set spanmax [ expr $m - 1 ]
+    IbrowserMakeNewInterval $iname $::IbrowserController(Info,Ival,imageIvalType) 0.0 $spanmax $m
 
-    #--- For now, fill a position array with the
-    #--- time point that each drop represents.
-    #--- Assume the interval is m units long.
-    #--- how many files do we have?
-    set top $::MultiVolumeReader(noOfVolumes)
-    set ::Ibrowser($id,numDrops) $top
-    for {set zz 0} {$zz < $top} { incr zz} {
-        set posVec($zz) $zz
-    }
-    IbrowserCreateImageDrops  $iname posVec $::Ibrowser($id,numDrops)
-
-    if { $::Ibrowser($id,numDrops) == 1 } {
-        set ::Ibrowser($id,lastMRMLid) $::Ibrowser($id,firstMRMLid)
-    }
-
-    #--- reconfigure the loadSlider, displaySlider and selectSlider
-    IbrowserUpdateMaxDrops
-    IbrowserSynchronizeAllSliders "active"
-    
-    #--- report in Ibrowser's message panel"
-    set tt "Finished populating interval."
-    IbrowserSayThis $tt 0
-
-    #--- make this the active interval.
-    #--- display the first volume
-    #--- make it the active volume
-    #--- and put it in the background
-    #--- as is the loading convention.
-    IbrowserDeselectActiveInterval $::IbrowserController(Icanvas)
-    IbrowserDeselectBGIcon $::IbrowserController(Icanvas)
-
-    set ::Ibrowser(activeInterval) $id
-    set ::Ibrowser(BGInterval) $id
-
-    IbrowserSelectActiveInterval $id $::IbrowserController(Icanvas)
-    IbrowserSelectBGIcon $id $::IbrowserController(Icanvas)
-
-    MainSlicesSetVolumeAll Back $::Ibrowser($id,0,MRMLid) 
-    MainVolumesSetActive $::Ibrowser($id,0,MRMLid)
-    MainSlicesSetVisibilityAll 1
-    RenderAll
     set ::Ibrowser(loadVol,name) "imageData"
     set ::Volume(VolAnalyze,FileName) ""
-
-    #--- remove traces of these volumes from the MultiVolumeReader
-    #--- this way, no sequence represented in the Ibrowser Module
-    #--- will also be represented in the MultiVolumeReader Module
-    #--- which seems to preserve info for the last sequence read.
-    unset -nocomplain ::MultiVolumeReader(noOfVolumes)
-    unset -nocomplain ::MultiVolumeReader(firstMRMLid)
-    unset -nocomplain ::MultiVolumeReader(lastMRMLid)
-    unset -nocomplain ::MultiVolumeReader(volumeExtent)
     set ::Volume(name) ""
+    IbrowserUpdateMRML
 }

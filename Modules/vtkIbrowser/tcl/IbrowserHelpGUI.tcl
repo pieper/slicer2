@@ -54,16 +54,16 @@ proc IbrowserBuildHelpFrame { } {
     set help " The <B> Ibrowser </B> is still in early form; bug fixes, new viewing and recording functions, 
 processing options, more flexible load and populate options, and the ability to load models, label maps and other 
 data will be added in the future. The Ibrowser build has been tested on Windows and Solaris, not yet under Linux or OS X. 
-Some known bugs exist in the canvas scrolling, animation controls, and slice visibility options. Multi-volume sequences 
-loaded through the Ibrowser are selectable in the <B> fMRIEngine </B> module for statistical processing.<P> 
+Some known bugs exist in the canvas scrolling and animation controls. <P> 
  The <B> Ibrowser </B> provides a way to view time-series, multi-channel, 
 and other sequences or collections of data in the Slicer. Intervals which contain the data, 
 as well as individual data 'drops' are represented on an independent popup control panel. 
 Selected data is displayed, manipulated and animated in the Slicer's Main Viewer. 
 <P> <B>New</B> lets you create and populate intervals. The Ibrowser currently reads 
-only Analyze format images and will create a sequence out of either a single file, or multiple files from a 
+Analyze, DICOM and BXH format images and will create a sequence out of either a single file, or multiple files from a 
 single directory, specified using a filter. 
-More loading options are being developed. <P> <B>Display</B> options allow 
+More loading options are being developed. Multi-volume sequences 
+loaded through the Ibrowser are selectable in the <B> fMRIEngine </B> module for statistical processing.<P> <B>Display</B> options allow 
 you to view a sequence or collection, and to adjust window, level and threshold 
 for the entire sequence on 'mouse UP'. <P> <B>Process</B> options allow you to perform general processing 
 operations on the sequence.  A suite of options is being developed.<P> 

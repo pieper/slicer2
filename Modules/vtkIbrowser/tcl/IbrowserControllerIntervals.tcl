@@ -174,8 +174,9 @@ proc IbrowserInitIntervalInfo { } {
     #---------------
     set ::IbrowserController(Info,Ival,defaultUnitSpanMin) 0.0
     set ::IbrowserController(Info,Ival,defaultUnitSpanMax) 0.0
-    set ::IbrowserController(Info,Ival,defaultUnitSpan) [ expr $::IbrowserController(Info,Ival,defaultUnitSpanMax) - \
-                                                   $::IbrowserController(Info,Ival,defaultUnitSpanMin) ]
+    set ::IbrowserController(Info,Ival,defaultUnitSpan) \
+        [ expr $::IbrowserController(Info,Ival,defaultUnitSpanMax) - \
+              $::IbrowserController(Info,Ival,defaultUnitSpanMin) ]
     # Global units at default
     #---------------
     set ::IbrowserController(Info,Ival,globalIvalUnitSpanMax) $::IbrowserController(Info,Ival,defaultUnitSpan)
@@ -186,8 +187,9 @@ proc IbrowserInitIntervalInfo { } {
     #---------------
     set ::IbrowserController(Info,Ival,globalIvalPixSpanMax) 0
     set ::IbrowserController(Info,Ival,globalIvalPixSpanMin) 0
-    set ::IbrowserController(Info,Ival,globalIvalPixSpan)  [ expr $::IbrowserController(Info,Ival,globalIvalPixSpanMax) - \
-                                                      $::IbrowserController(Info,Ival,globalIvalPixSpanMin) ]
+    set ::IbrowserController(Info,Ival,globalIvalPixSpan) \
+        [ expr $::IbrowserController(Info,Ival,globalIvalPixSpanMax) - \
+              $::IbrowserController(Info,Ival,globalIvalPixSpanMin) ]
 
     set ::IbrowserController(Info,Ival,globalIvalPixXstart) 0
     
@@ -250,8 +252,6 @@ proc IbrowserInitIntervalInfo { } {
     #---------------
     set ::IbrowserController(Info,Ival,isVisible) visible
     set ::IbrowserController(Info,Ival,isInvisible) invisible
-    set ::IbrowserController(Info,Ival,isOpaque) opaque
-    set ::IbrowserController(Info,Ival,isTransparent) transparent
     set ::IbrowserController(Info,Ival,hold) hold
     set ::IbrowserController(Info,Ival,nohold) nohold
     
@@ -408,8 +408,8 @@ proc IbrowserUpdateGlobalXspan { } {
     #---------------
     set tmp 0
     foreach id $::Ibrowser(idList) {
-        if { $::IbrowserController($id,trueUnitSpan) > $tmp } {
-            set tmp $::IbrowserController($id,trueUnitSpan)
+        if { $::IbrowserController($id,myUnitSpan) > $tmp } {
+            set tmp $::IbrowserController($id,myUnitSpan)
             set keepid $id
         }
     }
@@ -423,8 +423,8 @@ proc IbrowserUpdateGlobalXspan { } {
         #---------------
         # SHRINKING SPAN
         #---------------
-        set ::IbrowserController(Info,Ival,globalIvalUnitSpanMin) $::IbrowserController($keepid,trueUnitSpanMin)
-        set ::IbrowserController(Info,Ival,globalIvalUnitSpanMax) $::IbrowserController($keepid,trueUnitSpanMax)
+        set ::IbrowserController(Info,Ival,globalIvalUnitSpanMin) $::IbrowserController($keepid,myUnitSpanMin)
+        set ::IbrowserController(Info,Ival,globalIvalUnitSpanMax) $::IbrowserController($keepid,myUnitSpanMax)
         #globalIvalPixSpanMin is always pegged here.
         set ::IbrowserController(Info,Ival,globalIvalPixSpanMin) $::IbrowserController(Info,Ival,globalIvalPixXstart)
         #compute global unit span and pixel span
@@ -534,8 +534,52 @@ proc  IbrowserDeleteIntervalArray { ivalName } {
 
     set id $::Ibrowser($ivalName,intervalID)
 
-    #---somehow delete ::Ibrowser($id,everything). How?
-
+    #--- delete interval info
+    unset -nocomplain ::Ibrowser($id,name)
+    unset -nocomplain ::Ibrowser($id,type)
+    unset -nocomplain ::Ibrowser($id,opacity)
+    unset -nocomplain ::Ibrowser($id,order)
+    for {set v 0 } { $v < $::Ibrowser($id,numDrops) } { incr v } {
+        unset -nocomplain ::Ibrowser($id,v,pos)
+        unset -nocomplain ::Ibrowser($id,v,dropTAG)
+    }
+    unset -nocomplain ::Ibrowser($id,numDrops)
+    unset -nocomplain ::Ibrowser($ivalName,intervalID)
+    #--- delete state variables
+    unset -nocomplain ::Ibrowser($id,orderStatus)
+    unset -nocomplain ::Ibrowser($id,visStatus)
+    unset -nocomplain ::Ibrowser($id,opaqStatus)
+    unset -nocomplain ::Ibrowser($id,holdStatus)
+    unset -nocomplain ::Ibrowser($id,isEmpty)
+    unset -nocomplain ::IbrowserController($id,nametextSelected)
+    unset -nocomplain ::IbrowserController($id,nametextEditing)
+    #--- delete drawing parameters
+    unset -nocomplain ::IbrowserController($id,adaptiveUnitSpanMin)
+    unset -nocomplain ::IbrowserController($id,adaptiveUnitSpanMax)        
+    unset -nocomplain ::IbrowserController($id,adaptiveUnitSpan)
+    unset -nocomplain ::IbrowserController($id,myUnitSpanMin)
+    unset -nocomplain ::IbrowserController($id,myUnitSpanMax)    
+    unset -nocomplain ::IbrowserController($id,myUnitSpan)
+    unset -nocomplain ::IbrowserController($id,pixspan)
+    unset -nocomplain ::IbrowserController($id,pixytop)
+    unset -nocomplain ::IbrowserController($id,pixxstart)
+    unset -nocomplain ::IbrowserController($id,fillCol)    
+    unset -nocomplain ::IbrowserController($id,outlineCol)
+    #--- delete icon image tags
+    foreach imgTag $::IbrowserController(iconImageTagList) {
+        unset -nocomplain ::IbrowserController($id,$imgTag) 
+    }
+    #--- delete icon text tags
+    foreach txtTag $::IbrowserController(iconTextTagList) {
+        unset -nocomplain ::IbrowserController($id,$txtTag) 
+    }
+    #--- delete icon highlight tags
+    foreach hiloTag $::IbrowserController(iconHilightTagList) {
+        unset -nocomplain ::IbrowserController($id,$hiloTag) 
+    }
+    #--- delete interval and drop tags
+    unset -nocomplain ::IbrowserController($id,intervalHILOtag)
+    unset -nocomplain ::IbrowserController($id,allDROPtag)
 
 }
 
@@ -556,8 +600,9 @@ proc IbrowserDeleteIntervalVolumes { id } {
         set ::Ibrowser(FGInterval) $::Ibrowser(none,intervalID)
     } elseif { $id == $::Ibrowser(BGInterval) } {
         set ::Ibrowser(BGInterval) $::Ibrowser(none,intervalID)
-    } elseif { $id == $::Ibrowser(activeInterval) } {
-        set ::Ibrowser(activeInterval) $::Ibrowser(none, intervalID)
+    }
+    if { $id == $::Ibrowser(activeInterval) } {
+        set ::Ibrowser(activeInterval) $::Ibrowser(none,intervalID)
     }
 
     IbrowserRaiseProgressBar
@@ -600,25 +645,26 @@ proc IbrowserCopyIntervalVolumes { sourceName copyName numVols } {
             set progress [ expr double( $i ) / double ( $top ) ]        
             IbrowserUpdateProgressBar $progress "::"
         }
+
         #--- create a new MrmlVolumeNode
+        #--- and the vtkMrmlDataVolume Volume($vid,vol)
         set newvol [ MainMrmlAddNode Volume ]
         set vid [$newvol GetID]
-        #--- copy the data... Note: FilePrefix and Name
-        #--- are not copied! This makes sense I think.
-        $newvol Copy Volume($sid,node)
-        #--- create the vtkMrmlDataVolume Volume($vid,vol)
         MainVolumesCreate $vid
-        MainVolumesCopyData $vid $sid Off
-
-        #--- if it's the first or last volume in the new sequence,
-        #--- save its id as the firstMRMLid or lastMRMLid.
-        #--- reference this new volume in the Ibrowser:
-        set ::Ibrowser($id,$i,MRMLid) $vid
+        
+        #--- note first and last MRML IDs in the interval.
         if { $i == 0 } {
             set ::Ibrowser($id,firstMRMLid) $vid
         } elseif { $i == $top } {
             set ::Ibrowser($id,lastMRMLid) $vid
         }
+
+        #--- copy the node data and imagedata... 
+        #--- and the node data.
+        $newvol Copy Volume($sid,node)
+        $newvol SetName ${copyName}_${i}
+        MainVolumesCopyData $vid $sid Off
+        set ::Ibrowser($id,$i,MRMLid) $vid
         incr sid
     }
     IbrowserLowerProgressBar
@@ -637,56 +683,20 @@ proc IbrowserCopyInterval { sourceName copyName } {
 
     set sourceID $::Ibrowser($sourceName,intervalID)
     set m $::Ibrowser($sourceID,numDrops)
-    set copyID $::Ibrowser(uniqueNum)
-    set id $::Ibrowser(uniqueNum)
+    set spanmax [ expr $m - 1 ]
 
-    #--- get the new interval started.
-    set ::Ibrowser($id,name) $copyName
-    set ::Ibrowser($copyName,intervalID) $id
+    set id [ IbrowserInitNewInterval $copyName ]
 
     #--- copy reference drops.
     IbrowserCopyIntervalVolumes $sourceName $copyName $m
     
-    #--- populate intervalBrowser controller.
-    IbrowserMakeNewInterval $copyName $::IbrowserController(Info,Ival,imageIvalType) 0.0 $m
-
-    #--- For now, fill a position array with the
-    #--- time point that each drop represents.
-    #--- Assume the interval is m units long.
-    #--- how many files do we have?
-
-    set ::Ibrowser($id,numDrops) $::Ibrowser($sourceID,numDrops)
-    for {set zz 0} {$zz < $m} { incr zz} {
-        set posVec($zz) $zz
-    }
-    IbrowserCreateImageDrops  $copyName posVec $::Ibrowser($id,numDrops)
-
-    #--- reconfigure all Sliders
-    IbrowserUpdateMaxDrops
-    IbrowserSynchronizeAllSliders "active"
-
+    #--- create interval to contain the volumes.
+    IbrowserMakeNewInterval $copyName $::IbrowserController(Info,Ival,imageIvalType) 0.0 $spanmax $m
+    
     #--- report in Ibrowser's message panel"
     set tt "Copied $sourceName to $copyName."
     IbrowserSayThis $tt 0
 
-    #--- make this the active interval.
-    #--- display the first volume
-    #--- make it the active volume
-    #--- and put it in the background
-    #--- as is the loading convention.
-    IbrowserDeselectActiveInterval $::IbrowserController(Icanvas)
-    IbrowserDeselectBGIcon $::IbrowserController(Icanvas)
-
-    set ::Ibrowser(activeInterval) $id
-    set ::Ibrowser(BGInterval) $id
-
-    IbrowserSelectActiveInterval $id $::IbrowserController(Icanvas)
-    IbrowserSelectBGIcon $id $::IbrowserController(Icanvas)
-
-    MainSlicesSetVolumeAll Back $::Ibrowser($id,0,MRMLid) 
-    MainVolumesSetActive $::Ibrowser($id,0,MRMLid)
-    MainSlicesSetVisibilityAll 1
-    RenderAll
 }
 
 
@@ -708,11 +718,11 @@ proc IbrowserDeleteInterval { ivalName } {
     
     #    delete corresponding array, remove from list, delete drops
     #---------------
-    IbrowserDeleteIntervalArray $::Ibrowser($id,name)
     IbrowserDeleteFromList $::Ibrowser($id,name) 
     IbrowserDecrementIntervalCount
     IbrowserDeleteIntervalVolumes $id
     IbrowserDeleteIntervalDrops $::Ibrowser($id,name)
+    IbrowserDeleteIntervalArray $::Ibrowser($id,name)
     
     #    find new global span
     #---------------    
@@ -760,6 +770,7 @@ proc IbrowserDeleteInterval { ivalName } {
     if { $::IbrowserController(Info,Ival,ivalCount) == 1 } {
         IbrowserSynchronizeAllSliders "disabled"
     }
+    MainUpdateMRML
 }
 
 
@@ -810,6 +821,55 @@ proc IbrowserUpdateMaxDrops { } {
 
 
 
+proc IbrowserInitNewInterval { newname } {
+
+    set id $::Ibrowser(uniqueNum)
+    #--- get the new interval started.
+    set ::Ibrowser($id,name) $newname
+    set ::Ibrowser($newname,intervalID) $id
+    return $id
+    
+}
+
+
+proc IbrowserMakeNoneInterval { } {
+    set ival "none"
+    set w $::Ibrowser(initIntervalWid)
+    if { [ IbrowserUniqueNameCheck $ival ] } {
+        IbrowserMakeNewInterval $ival $::IbrowserController(Info,Ival,imageIvalType) 0.0 $w 0
+    }
+    IbrowserCreateImageDrops $ival nullVec 0
+    set ::Ibrowser(0,numDrops) 0
+}
+
+
+
+proc IbrowserSetActiveInterval { id } {
+    
+    IbrowserDeselectActiveInterval $::IbrowserController(Icanvas)
+    set ::Ibrowser(activeInterval) $id
+    IbrowserSelectActiveInterval $id $::IbrowserController(Icanvas)
+
+    #--- configure all menu buttons which reflect the active interval
+    if { [ info exists ::Ibrowser(Process,Smooth,mbIntervals) ] } {
+        $::Ibrowser(Process,Smooth,mbIntervals) config -text $::Ibrowser($id,name)
+    }
+    if { [ info exists ::Ibrowser(Process,Reorient,mbIntervals) ] } {
+        $::Ibrowser(Process,Reorient,mbIntervals) config -text $::Ibrowser($id,name)
+    }
+    if { [ info exists ::Ibrowser(Process,Reassemble,mbIntervals) ] } {
+        $::Ibrowser(Process,Reassemble,mbIntervals) config -text $::Ibrowser($id,name)
+    }
+    if { [ info exists ::Ibrowser(Process,MotionCorrect,mbIntervals) ] } {
+        $::Ibrowser(Process,MotionCorrect,mbIntervals) config -text $::Ibrowser($id,name)
+    }
+    if { [ info exists ::Ibrowser(Process,KeyframeRegister,mbIntervals) ] } {    
+        $::Ibrowser(Process,KeyframeRegister,mbIntervals) config -text $::Ibrowser($id,name)
+    }
+}
+
+
+
 #-------------------------------------------------------------------------------
 # .PROC IbrowserMakeNewInterval
 # Called to create the default startup interval, or whenever
@@ -822,16 +882,17 @@ proc IbrowserUpdateMaxDrops { } {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc IbrowserMakeNewInterval { intval ikind spanmin spanmax } {
+proc IbrowserMakeNewInterval { intval ikind spanmin spanmax numDrops } {
     
     # For first interval, need to set up some
-    # conversion factors...
+    # conversion factors for redrawing the canvas
     #---------------
     if { $::IbrowserController(Info,Ival,firstIval) } {
         IbrowserSetInitialPixelsPerUnit $spanmin $spanmax
         set ::IbrowserController(Info,Ival,firstIval) 0
     }
 
+    #------------------ GLOBAL BOOKKEEPING ------------------------------
     # First, add the newly named interval to
     # the global list of intervals
     #---------------
@@ -841,24 +902,24 @@ proc IbrowserMakeNewInterval { intval ikind spanmin spanmax } {
     #--- for getting id from name and name from id.
     set ::Ibrowser($intval,intervalID) $id
     set ::Ibrowser($id,name) $intval
-    set ::Ibrowser($id,VerticalFlip) 0
-    set ::Ibrowser($id,HorizontalFlip) 0
-    set ::Ibrowser($id,FrontBackFlip) 0
+
+    IbrowserInitializeOrientation $id
     IbrowserAddToList $intval
 
-    # and increment the interval Count.
-    #---------------
-    IbrowserIncrementIntervalCount
-    
     # Fill toplevel array with with the interval's properties.
     # First set interval's basic info and default status
     # The first interval has order #0.
     #---------------    
     set ::Ibrowser($id,name) $intval
     set ::Ibrowser($id,type) $ikind
-    set ::Ibrowser($id,order) [ expr $::IbrowserController(Info,Ival,ivalCount) - 1 ]
     set ::Ibrowser($id,opacity) 1.0
+    set ::Ibrowser($id,order) $::IbrowserController(Info,Ival,ivalCount) 
     
+    # and increment the interval Count.
+    #---------------
+    IbrowserIncrementIntervalCount
+
+    #------------------ CANVAS MANAGEMENT -----------------------------
     # Compute interval's span in user-specified units
     # increase the span a bit so all samples
     # fit inside. adaptiveUnitSpanMax, adaptiveUnitSpanMin, and adaptiveUnitSpan
@@ -869,14 +930,14 @@ proc IbrowserMakeNewInterval { intval ikind spanmin spanmax } {
     set ::IbrowserController($id,adaptiveUnitSpanMax) [ lindex $vlist 1 ]
     set ::IbrowserController($id,adaptiveUnitSpan) [ lindex $vlist 2 ]
    
-    # trueUnitSpanMin, trueUnitSpanMax and trueUnitSpan are 
+    # myUnitSpanMin, myUnitSpanMax and myUnitSpan are 
     # each interval's remembered actual unit span, which are 
     # used to scale the intervals back down when global
     # span shrinks.
     #---------------        
-    set ::IbrowserController($id,trueUnitSpanMin) [ lindex $vlist 0 ]
-    set ::IbrowserController($id,trueUnitSpanMax) [ lindex $vlist 1 ]
-    set ::IbrowserController($id,trueUnitSpan) [ lindex $vlist 2 ]
+    set ::IbrowserController($id,myUnitSpanMin) [ lindex $vlist 0 ]
+    set ::IbrowserController($id,myUnitSpanMax) [ lindex $vlist 1 ]
+    set ::IbrowserController($id,myUnitSpan) [ lindex $vlist 2 ]
 
     set ::Ibrowser($id,numDrops) 0
     set myspan [ expr $::IbrowserController($id,adaptiveUnitSpanMax) - $::IbrowserController($id,adaptiveUnitSpanMin) ]
@@ -910,50 +971,28 @@ proc IbrowserMakeNewInterval { intval ikind spanmin spanmax } {
     #---------------        
     set ::Ibrowser($id,orderStatus) $::Ibrowser($id,order)
     set ::Ibrowser($id,visStatus) $::IbrowserController(Info,Ival,isVisible)
-    set ::Ibrowser($id,opaqStatus) $::IbrowserController(Info,Ival,isOpaque)
     set ::Ibrowser($id,holdStatus) $::IbrowserController(Info,Ival,hold)
     set ::Ibrowser($id,isEmpty) 1 
     set ::IbrowserController($id,ivalRECTtag) ${id}_IvalRECT
 
-    
-    # These are the actual icon image tags
-    #---------------    
-    set ::IbrowserController($id,nameIMGtag)  ${id}_NameIMG
-    set ::IbrowserController($id,orderIMGtag)  ${id}_OrderIMG
-    set ::IbrowserController($id,visIMGtag)      ${id}_VisIMG
-    set ::IbrowserController($id,invisIMGtag)   ${id}_InvisIMG
-    set ::IbrowserController($id,opIMGtag)      ${id}_OpaqIMG
-    set ::IbrowserController($id,transpIMGtag) ${id}_TranspIMG
-    set ::IbrowserController($id,FGIMGtag) ${id}_FGIMG
-    set ::IbrowserController($id,BGIMGtag) ${id}_BGIMG
-    set ::IbrowserController($id,holdIMGtag) ${id}_holdIMG
-    set ::IbrowserController($id,noholdIMGtag) ${id}_noholdIMG
-    set ::IbrowserController($id,deleteIMGtag) ${id}_deleteIMG
-    set ::IbrowserController($id,copyIMGtag) ${id}_copyIMG
-    
-    # These are the icon text tags
-    #---------------
-    set ::IbrowserController($id,nameTXTtag)    ${id}_NameTXT
-    set ::IbrowserController($id,orderTXTtag)    ${id}_OrderTXT
+    #--- Tag all icon images, icon text and icon highlights.
+    #--- (so we can manipulate or reconfigure them on canvas.)
+    foreach imgTag $::IbrowserController(iconImageTagList) {
+        set ::IbrowserController($id,$imgTag) ${id}_${imgTag}
+    }
+    foreach txtTag $::IbrowserController(iconTextTagList) {
+        set ::IbrowserController($id,$txtTag) ${id}_${txtTag}
+    }
+    foreach hiloTag $::IbrowserController(iconHilightTagList) {
+        set ::IbrowserController($id,$hiloTag) ${id}_${hiloTag}
+    }
 
-    # These are the icon HILITE rectangle tags for icons and interval bar
-    #---------------
-    set ::IbrowserController($id,nameIconHILOtag)    ${id}_NameHILO
-    set ::IbrowserController($id,orderIconHILOtag)    ${id}_OrderHILO    
-    set ::IbrowserController($id,visIconHILOtag)    ${id}_VisHILO    
-    set ::IbrowserController($id,opaqIconHILOtag)    ${id}_OpaqHILO    
-    set ::IbrowserController($id,FGIconHILOtag)   ${id}_FGHILO
-    set ::IbrowserController($id,BGIconHILOtag)   ${id}_BGHILO
-    set ::IbrowserController($id,holdIconHILOtag) ${id}_holdHILO
-    set ::IbrowserController($id,noholdIconHILOtag) ${id}_noholdHILO
-    set ::IbrowserController($id,deleteIconHILOtag) ${id}_deleteHILO
-    set ::IbrowserController($id,copyIconHILOtag) ${id}_copyHILO    
-    set ::IbrowserController($id,intervalHILOtag)      ${id}_HILO
-
-    # This tags the drops within an interval
+    # Tag the drops within an interval and the interval itself.
+    #--- (so we can manipulate or reconfigure them on canvas.)
     #---------------
     set ::IbrowserController($id,allDROPtag) ${id}_dropTAG
-
+    set ::IbrowserController($id,intervalHILOtag)      ${id}_HILO
+    
     #size, draw the interval, its icons and hitlite outline
     #---------------    
     IbrowserCreateIcons $::Ibrowser($id,name)
@@ -978,8 +1017,40 @@ proc IbrowserMakeNewInterval { intval ikind spanmin spanmax } {
     IbrowserUpdateIndexAndSliderBox 
     IbrowserUpdateIndexAndSliderMarker 
 
-    #--- Eventually move this into MainUpdateMRML
-    IbrowserUpdateMRML
+
+    #---------------- ADD DROPS ---------------------------------------
+    #--- For now, fill a position array with the
+    #--- time point that each drop represents.
+    #--- Assume the interval is m units long.
+    #--- how many files do we have?
+    set ::Ibrowser($id,numDrops) $numDrops
+    if { $numDrops > 0 } {
+        for {set zz 0} {$zz < $numDrops} { incr zz} {
+            set posVec($zz) $zz
+        }
+        IbrowserCreateImageDrops $::Ibrowser($id,name) posVec $::Ibrowser($id,numDrops)
+    
+        #--- reconfigure all Sliders
+        IbrowserUpdateMaxDrops
+        IbrowserSynchronizeAllSliders "active"
+
+        #--- make this the active interval.
+        IbrowserSetActiveInterval $id
+        #--- display the first volume
+        #--- make it the active volume
+        #--- and put it in the background
+        #--- as is the loading convention.
+        IbrowserDeselectBGIcon $::IbrowserController(Icanvas)
+        set ::Ibrowser(BGInterval) $id
+        IbrowserSelectBGIcon $id $::IbrowserController(Icanvas)
+
+        #------------------ UPDATE & RENDER ---------------------------------
+        MainSlicesSetVolumeAll Back $::Ibrowser($id,0,MRMLid) 
+        MainVolumesSetActive $::Ibrowser($id,0,MRMLid)
+        MainSlicesSetVisibilityAll 1
+        MainUpdateMRML
+        RenderAll
+    }
 
 }
 
@@ -1331,7 +1402,16 @@ proc IbrowserRenameInterval { old new } {
     #--- derives the intervalID from the name
     unset ::Ibrowser($old,intervalID)
     set ::Ibrowser($new,intervalID) $id
-    IbrowserUpdateMRML
+
+    #--- rename all the volumes in interval.
+    set first $::Ibrowser($id,firstMRMLid)
+    set last $::Ibrowser($id,lastMRMLid)
+    set i 0
+    for { set vid $first } { $vid <= $last } { incr vid} {
+        ::Volume($vid,node) SetName ${new}_${i}
+        incr i
+    }
+    MainUpdateMRML
 }
 
 

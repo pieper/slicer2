@@ -49,7 +49,6 @@
 #   IbrowserMakeOrderIcon
 #   IbrowserMakeVisibilityIcon
 #   IbrowserMakeCopyIcon
-#   IbrowserMakeOpacityIcon
 #   IbrowserToggleHoldIcon
 #   IbrowserToggleVisibilityIcon
 #   IbrowserMakeHoldIcon
@@ -67,7 +66,6 @@
 #   IbrowserDeleteIntervalPopUp
 #   IbrowserOrderPopUp
 #   IbrowserSetupNewNames
-#   IbrowserOpacityPopUp
 #==========================================================================auto=
 
 
@@ -90,11 +88,18 @@ proc IbrowserSetupIcons { } {
 # .PROC IbrowserInitIconImages
 # Creates all image icons and stuffs them into an array
 # indexed by a name that describes what the icon shows.
-# Make a new thingIcon for each new option or state you'd
-# like an icon to indicate. For instance, if you want to add a
-# new compositing method that performs an XOR operation
-# on two inputs, define an 'IbrowserController(Images,Icon,xorIcon)' here.
-# 
+#
+# IF YOU WANT TO ADD A NEW ICON FOR EACH INTERVAL:
+#
+# You will have to touch two procs and add a new one in this file.
+# FIRST: in proc IbrowserInitIconImages{}, duplicate the infrastructure
+# of an existing icon to support your new icon, AND appropriately
+# increment ::IbrowserController(Info,Icon,numIconsPerInterval)
+# SECOND: add similar infrastructure in proc IbrowserCreateIcons{}
+# which will need to call a new proc called MakeXXXXXIcon{}; and
+# THIRD: define a new proc called MakeXXXXXIcon{} similar to an
+# existing proc such as MakeCopyIcon{}.
+#
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -112,83 +117,170 @@ proc IbrowserInitIconImages { } {
     set tmpstr [string trimright $tmpstr "Wrapping" ]
     set modulePath [format "%s%s" $tmpstr "tcl/"]
 
+    #--- If more icons are added to each interval, please ajust this number.
+    #--- The number should be the same for all intervals.
+    set ::IbrowserController(Info,Icon,numIconsPerInterval) 8
+    set ::IbrowserController(iconImageList) ""
+
+    #--- If we should use small images for the interface...
+    #--- These now just use the same 20x20 gifs that IbrowserController(UI,Big) 
+    #--- uses, but will someday use some 30x30 (or some appropriate res)
+    #--- versions of the images that are not yet created.
     if { $::IbrowserController(UI,Small) } {
+        #--- visible
         set ::IbrowserController(Images,Icon,visIcon) \
             [image create photo \
                  -file ${modulePath}iconPix/20x20/gifs/canvas/visible.gif]
+        lappend ::IbrowserController(iconImageList) $::IbrowserController(Images,Icon,visIcon)
+
+        #--- not visible
         set ::IbrowserController(Images,Icon,invisIcon) \
             [image create photo \
                  -file ${modulePath}iconPix/20x20/gifs/canvas/invisible.gif]
-        set ::IbrowserController(Images,Icon,opaqIcon) \
-            [image create photo \
-                 -file ${modulePath}iconPix/20x20/gifs/canvas/opaque.gif]
-        set ::IbrowserController(Images,Icon,transpIcon)  \
-            [image create photo \
-                 -file ${modulePath}iconPix/20x20/gifs/canvas/semi-transp.gif]
+        lappend ::IbrowserController(iconImageList) $::IbrowserController(Images,Icon,invisIcon)
+
+        #--- order
         set ::IbrowserController(Images,Icon,orderIcon)  \
             [image create photo \
                  -file ${modulePath}iconPix/20x20/gifs/canvas/under-order2.gif]
+        lappend ::IbrowserController(iconImageList) $::IbrowserController(Images,Icon,orderIcon)
+        
+        #--- name
         set ::IbrowserController(Images,Icon,nameIcon)  \
             [image create photo \
                  -file ${modulePath}iconPix/20x20/gifs/canvas/under-name2.gif]
+        lappend ::IbrowserController(iconImageList) $::IbrowserController(Images,Icon,nameIcon)
+        
+        #--- hold
         set ::IbrowserController(Images,Icon,holdIcon) \
             [image create photo \
                  -file ${modulePath}iconPix/20x20/gifs/canvas/hold.gif]
+        lappend ::IbrowserController(iconImageList) $::IbrowserController(Images,Icon,holdIcon)
+        
+        #--- don't hold
         set ::IbrowserController(Images,Icon,noholdIcon) \
             [image create photo \
                  -file ${modulePath}iconPix/20x20/gifs/canvas/nohold.gif]
+        lappend ::IbrowserController(iconImageList) $::IbrowserController(Images,Icon,noholdIcon)
+        
+        #--- foreground
         set ::IbrowserController(Images,Icon,FGIcon)  \
             [image create photo \
                  -file ${modulePath}iconPix/20x20/gifs/canvas/FG.gif]
+        lappend ::IbrowserController(iconImageList) $::IbrowserController(Images,Icon,FGIcon)
+        
+        #--- background
         set ::IbrowserController(Images,Icon,BGIcon)  \
             [image create photo \
                  -file ${modulePath}iconPix/20x20/gifs/canvas/BG.gif]
+        lappend ::IbrowserController(iconImageList) $::IbrowserController(Images,Icon,BGIcon)
+        
+        #--- delete
         set ::IbrowserController(Images,Icon,deleteIcon)  \
             [image create photo \
                  -file ${modulePath}iconPix/20x20/gifs/canvas/delete.gif]
+        lappend ::IbrowserController(iconImageList) $::IbrowserController(Images,Icon,deleteIcon)        
+
+        #--- copy
         set ::IbrowserController(Images,Icon,copyIcon)  \
             [image create photo \
                  -file ${modulePath}iconPix/20x20/gifs/canvas/copy.gif]
-
+        lappend ::IbrowserController(iconImageList) $::IbrowserController(Images,Icon,copyIcon)
+        
+        #--- If $::IbrowserController(UI,Big) 
     } else {
+        #--- visible
         set ::IbrowserController(Images,Icon,visIcon) \
             [image create photo \
                  -file ${modulePath}iconPix/20x20/gifs/canvas/visible.gif]
+        lappend ::IbrowserController(iconImageList) $::IbrowserController(Images,Icon,visIcon)
+
+        #--- not visible
         set ::IbrowserController(Images,Icon,invisIcon) \
             [image create photo \
                  -file ${modulePath}iconPix/20x20/gifs/canvas/invisible.gif]
+        lappend ::IbrowserController(iconImageList) $::IbrowserController(Images,Icon,invisIcon)
+
+        #--- order
         set ::IbrowserController(Images,Icon,orderIcon)  \
             [image create photo \
                  -file ${modulePath}iconPix/20x20/gifs/canvas/under-order2.gif]
+        lappend ::IbrowserController(iconImageList) $::IbrowserController(Images,Icon,orderIcon)
+        
+        #--- name
         set ::IbrowserController(Images,Icon,nameIcon)  \
             [image create photo \
                  -file ${modulePath}iconPix/20x20/gifs/canvas/under-name2.gif]
-        set ::IbrowserController(Images,Icon,opaqIcon) \
-            [image create photo \
-                 -file ${modulePath}iconPix/20x20/gifs/canvas/opaque.gif]
-        set ::IbrowserController(Images,Icon,transpIcon)  \
-            [image create photo \
-                 -file ${modulePath}iconPix/20x20/gifs/canvas/semi-transp.gif]
+        lappend ::IbrowserController(iconImageList) $::IbrowserController(Images,Icon,nameIcon)
+        
+        #--- hold
         set ::IbrowserController(Images,Icon,holdIcon) \
             [image create photo \
                  -file ${modulePath}iconPix/20x20/gifs/canvas/hold.gif]
+        lappend ::IbrowserController(iconImageList) $::IbrowserController(Images,Icon,holdIcon)
+        
+        #--- don't hold
         set ::IbrowserController(Images,Icon,noholdIcon) \
             [image create photo \
                  -file ${modulePath}iconPix/20x20/gifs/canvas/nohold.gif]
+        lappend ::IbrowserController(iconImageList) $::IbrowserController(Images,Icon,noholdIcon)
+        
+        #--- foreground
         set ::IbrowserController(Images,Icon,FGIcon)  \
             [image create photo \
                  -file ${modulePath}iconPix/20x20/gifs/canvas/FG.gif]
+        lappend ::IbrowserController(iconImageList) $::IbrowserController(Images,Icon,FGIcon)
+        
+        #--- background
         set ::IbrowserController(Images,Icon,BGIcon)  \
             [image create photo \
                  -file ${modulePath}iconPix/20x20/gifs/canvas/BG.gif]
+        lappend ::IbrowserController(iconImageList) $::IbrowserController(Images,Icon,BGIcon)
+        
+        #--- delete
         set ::IbrowserController(Images,Icon,deleteIcon)  \
             [image create photo \
                  -file ${modulePath}iconPix/20x20/gifs/canvas/delete.gif]
+        lappend ::IbrowserController(iconImageList) $::IbrowserController(Images,Icon,deleteIcon)        
+
+        #--- copy
         set ::IbrowserController(Images,Icon,copyIcon)  \
             [image create photo \
                  -file ${modulePath}iconPix/20x20/gifs/canvas/copy.gif]
-
+        lappend ::IbrowserController(iconImageList) $::IbrowserController(Images,Icon,copyIcon)
     }
+
+    #--- and create infrastructure for tagging each new interval's icons.
+    #--- these lists are used for creating, moving, configuring, deleting icons.
+    set ::IbrowserController(iconImageTagList) ""
+    lappend ::IbrowserController(iconImageTagList) opaqIconTag
+    lappend ::IbrowserController(iconImageTagList) nameIconTag
+    lappend ::IbrowserController(iconImageTagList) orderIconTag
+    lappend ::IbrowserController(iconImageTagList) visIconTag
+    lappend ::IbrowserController(iconImageTagList) invisIconTag
+    lappend ::IbrowserController(iconImageTagList) FGIconTag
+    lappend ::IbrowserController(iconImageTagList) BGIconTag
+    lappend ::IbrowserController(iconImageTagList) holdIconTag
+    lappend ::IbrowserController(iconImageTagList) noholdIconTag
+    lappend ::IbrowserController(iconImageTagList) deleteIconTag
+    lappend ::IbrowserController(iconImageTagList) copyIconTag
+
+    set ::IbrowserController(iconTextTagList) ""
+    lappend ::IbrowserController(iconTextTagList) nameTXTtag
+    lappend ::IbrowserController(iconTextTagList) orderTXTtag
+
+    set ::IbrowserController(iconHilightTagList) ""
+    lappend ::IbrowserController(iconHilightTagList) opaqIconHILOtag
+    lappend ::IbrowserController(iconHilightTagList) nameIconHILOtag
+    lappend ::IbrowserController(iconHilightTagList) orderIconHILOtag
+    lappend ::IbrowserController(iconHilightTagList) visIconHILOtag
+    lappend ::IbrowserController(iconHilightTagList) FGIconHILOtag
+    lappend ::IbrowserController(iconHilightTagList) BGIconHILOtag
+    lappend ::IbrowserController(iconHilightTagList) holdIconHILOtag
+    lappend ::IbrowserController(iconHilightTagList) noholdIconHILOtag
+    lappend ::IbrowserController(iconHilightTagList) deleteIconHILOtag
+    lappend ::IbrowserController(iconHilightTagList) copyIconHILOtag
+
 }
 
 
@@ -202,11 +294,7 @@ proc IbrowserInitIconImages { } {
 #-------------------------------------------------------------------------------
 proc IbrowserInitIconInfo { } {
     
-    # If you add a new icon to the interval bar,
-    # please adjust 'numIconsPerInterval' below.
-    # This number is the same for all intervals
-    #---------------
-    set ::IbrowserController(Info,Icon,numIconsPerInterval) 8
+
     set ::IbrowserController(Info,Icon,iconCount) 0
 
     # These are different states that various
@@ -219,8 +307,6 @@ proc IbrowserInitIconInfo { } {
     #---------------    
     set ::IbrowserController(Info,Icon,isVisible) $::IbrowserController(Info,Ival,isVisible)
     set ::IbrowserController(Info,Icon,isInvisible) $::IbrowserController(Info,Ival,isInvisible)
-    set ::IbrowserController(Info,Icon,isOpaque) $::IbrowserController(Info,Ival,isOpaque)
-    set ::IbrowserController(Info,Icon,isTransparent) $::IbrowserController(Info,Ival,isTransparent)
     set ::IbrowserController(Info,Icon,hold) $::IbrowserController(Info,Ival,hold)
 }
 
@@ -354,60 +440,21 @@ proc IbrowserMoveIcons { Iname oldy newy } {
     #---------------
     set yy [ expr $newy - $oldy ]
 
-
-    
     #get id from name
     set id $::Ibrowser($Iname,intervalID)
     
-    #--- now move the icon image, its rectangular outline, and text if it has any.
-    #name
-    #---------------    
-    $::IbrowserController(Icanvas) move $::IbrowserController($id,nameIMGtag) 0.0 $yy
-    $::IbrowserController(Icanvas) move $::IbrowserController($id,nameIconHILOtag) 0.0 $yy
-    $::IbrowserController(Icanvas) move $::IbrowserController($id,nameTXTtag) 0.0 $yy
-
-    #order
-    #---------------    
-    $::IbrowserController(Icanvas) move $::IbrowserController($id,orderIMGtag) 0.0 $yy
-    $::IbrowserController(Icanvas) move $::IbrowserController($id,orderIconHILOtag) 0.0 $yy
-    $::IbrowserController(Icanvas) move $::IbrowserController($id,orderTXTtag) 0.0 $yy
-
-    #visibility
-    #---------------    
-    $::IbrowserController(Icanvas) move $::IbrowserController($id,visIMGtag) 0.0 $yy
-    $::IbrowserController(Icanvas) move $::IbrowserController($id,visIconHILOtag) 0.0 $yy
-
-    #opacity
-    #---------------    
-    $::IbrowserController(Icanvas) move $::IbrowserController($id,opIMGtag) 0.0 $yy
-    $::IbrowserController(Icanvas) move $::IbrowserController($id,opaqIconHILOtag) 0.0 $yy
-
-    #hold
-    #---------------    
-    $::IbrowserController(Icanvas) move $::IbrowserController($id,holdIMGtag) 0.0 $yy
-    $::IbrowserController(Icanvas) move $::IbrowserController($id,holdIconHILOtag) 0.0 $yy
-
-    
-    #FG
-    #---------------    
-    $::IbrowserController(Icanvas) move $::IbrowserController($id,FGIMGtag) 0.0 $yy
-    $::IbrowserController(Icanvas) move $::IbrowserController($id,FGIconHILOtag) 0.0 $yy
-
-    #BG
-    #---------------    
-    $::IbrowserController(Icanvas) move $::IbrowserController($id,BGIMGtag) 0.0 $yy
-    $::IbrowserController(Icanvas) move $::IbrowserController($id,BGIconHILOtag) 0.0 $yy
-
-    #delete
-    #---------------    
-    $::IbrowserController(Icanvas) move $::IbrowserController($id,deleteIMGtag) 0.0 $yy
-    $::IbrowserController(Icanvas) move $::IbrowserController($id,deleteIconHILOtag) 0.0 $yy
-
-    #copy
-    #---------------    
-    $::IbrowserController(Icanvas) move $::IbrowserController($id,copyIMGtag) 0.0 $yy
-    $::IbrowserController(Icanvas) move $::IbrowserController($id,copyIconHILOtag) 0.0 $yy
-    
+    #--- delete icon image tags
+    foreach imgTag $::IbrowserController(iconImageTagList) {
+        $::IbrowserController(Icanvas) move $::IbrowserController($id,$imgTag) 0.0 $yy
+    }
+    #--- delete icon text tags
+    foreach txtTag $::IbrowserController(iconTextTagList) {
+          $::IbrowserController(Icanvas) move $::IbrowserController($id,$txtTag) 0.0 $yy
+    }
+    #--- delete icon highlight tags
+    foreach hiloTag $::IbrowserController(iconHilightTagList) {
+        $::IbrowserController(Icanvas) move $::IbrowserController($id,$hiloTag) 0.0 $yy
+    }
 }
 
 
@@ -424,38 +471,19 @@ proc IbrowserDeleteIntervalIcons { ivalName } {
 
     #--- get id from name
     set id $::Ibrowser($ivalName,intervalID)
-    $::IbrowserController(Icanvas) delete $::IbrowserController($id,nameTXTtag)
-    $::IbrowserController(Icanvas) delete $::IbrowserController($id,nameIMGtag)
-    $::IbrowserController(Icanvas) delete $::IbrowserController($id,nameIconHILOtag)
 
-    $::IbrowserController(Icanvas) delete $::IbrowserController($id,orderIMGtag)
-    $::IbrowserController(Icanvas) delete $::IbrowserController($id,orderIconHILOtag)
-    $::IbrowserController(Icanvas) delete $::IbrowserController($id,orderTXTtag)
-
-    $::IbrowserController(Icanvas) delete $::IbrowserController($id,visIMGtag)
-    $::IbrowserController(Icanvas) delete $::IbrowserController($id,invisIMGtag)
-    $::IbrowserController(Icanvas) delete $::IbrowserController($id,visIconHILOtag)
-
-    $::IbrowserController(Icanvas) delete $::IbrowserController($id,opIMGtag)
-    $::IbrowserController(Icanvas) delete $::IbrowserController($id,transpIMGtag)
-    $::IbrowserController(Icanvas) delete $::IbrowserController($id,opaqIconHILOtag)
-
-    $::IbrowserController(Icanvas) delete $::IbrowserController($id,holdIMGtag)
-    $::IbrowserController(Icanvas) delete $::IbrowserController($id,holdIconHILOtag)
-    $::IbrowserController(Icanvas) delete $::IbrowserController($id,noholdIconHILOtag)
-    
-    $::IbrowserController(Icanvas) delete $::IbrowserController($id,FGIMGtag)
-    $::IbrowserController(Icanvas) delete $::IbrowserController($id,FGIconHILOtag)
-
-    $::IbrowserController(Icanvas) delete $::IbrowserController($id,BGIMGtag)
-    $::IbrowserController(Icanvas) delete $::IbrowserController($id,BGIconHILOtag)
-
-    $::IbrowserController(Icanvas) delete $::IbrowserController($id,deleteIMGtag)
-    $::IbrowserController(Icanvas) delete $::IbrowserController($id,deleteIconHILOtag)
-
-    $::IbrowserController(Icanvas) delete $::IbrowserController($id,copyIMGtag)
-    $::IbrowserController(Icanvas) delete $::IbrowserController($id,copyIconHILOtag)
-
+    #--- delete icon image tags
+    foreach imgTag $::IbrowserController(iconImageTagList) {
+        $::IbrowserController(Icanvas) delete $::IbrowserController($id,$imgTag) 
+    }
+    #--- delete icon text tags
+    foreach txtTag $::IbrowserController(iconTextTagList) {
+          $::IbrowserController(Icanvas) delete $::IbrowserController($id,$txtTag) 
+    }
+    #--- delete icon highlight tags
+    foreach hiloTag $::IbrowserController(iconHilightTagList) {
+        $::IbrowserController(Icanvas) delete $::IbrowserController($id,$hiloTag) 
+    }
 }
 
 
@@ -537,14 +565,6 @@ proc IbrowserCreateIcons { ivalName } {
         $::IbrowserController(Geom,Icon,iconXstart) $::IbrowserController(Geom,Icon,iconYstart) \
         [expr $::IbrowserController(Geom,Icon,iconXstart) + $::IbrowserController(Geom,Icon,iconWid)] $y2
     
-    #opacity
-    #---------------
-    #set ::IbrowserController(Geom,Icon,iconXstart) [expr $::IbrowserController(Geom,Icon,iconXstart) + $dx ]    
-    #IbrowserMakeOpacityIcon  $id \
-    #    $::IbrowserController(Geom,Icon,iconXstart) $::IbrowserController(Geom,Icon,iconYstart) \
-    #    [expr $::IbrowserController(Geom,Icon,iconXstart) + $::IbrowserController(Geom,Icon,iconWid)] $y2
-
-
     
 }
 
@@ -570,7 +590,7 @@ proc IbrowserMakeNameIcon { id x1 y1 x2 y2 fnt } {
 
     set q [ $::IbrowserController(Icanvas) create image $x1 $y1 \
                 -image $::IbrowserController(Images,Icon,nameIcon) \
-                -anchor nw -tag "$::IbrowserController($id,nameIMGtag)" ]
+                -anchor nw -tag "$::IbrowserController($id,nameIconTag)" ]
     set namejigger 2
     set xx [ expr $x1 + $namejigger ]
     set yy [ expr $y2 - $y1 ]
@@ -609,11 +629,11 @@ proc IbrowserMakeNameIcon { id x1 y1 x2 y2 fnt } {
 
     # rectangle hilights during mouse-over of rect too
     #---------------
-    $::IbrowserController(Icanvas) bind $::IbrowserController($id,nameIMGtag) <Enter> \
+    $::IbrowserController(Icanvas) bind $::IbrowserController($id,nameIconTag) <Enter> \
         "%W itemconfig $::IbrowserController($id,nameIconHILOtag) -outline $::IbrowserController(Colors,hilite) "
-    $::IbrowserController(Icanvas) bind $::IbrowserController($id,nameIMGtag) <Leave> \
+    $::IbrowserController(Icanvas) bind $::IbrowserController($id,nameIconTag) <Leave> \
         "%W itemconfig $::IbrowserController($id,nameIconHILOtag) -outline $::IbrowserController(Colors,lolite) "
-    $::IbrowserController(Icanvas) bind $::IbrowserController($id,nameIMGtag) <Button-1> \
+    $::IbrowserController(Icanvas) bind $::IbrowserController($id,nameIconTag) <Button-1> \
         "IbrowserCanvasSelectText $id $::IbrowserController($id,nameTXTtag)"
     $::IbrowserController(Icanvas) bind $::IbrowserController($id,nameTXTtag) <Delete> \
         "IbrowserCanvasDelete $::IbrowserController($id,nameTXTtag)"
@@ -652,7 +672,7 @@ proc IbrowserMakeOrderIcon { id order x1 y1 x2 y2 fnt} {
     #---------------
     set q [ $::IbrowserController(Icanvas) create image $x1 $y1 \
                 -image $::IbrowserController(Images,Icon,orderIcon) \
-                -anchor nw -tag "$::IbrowserController($id,orderIMGtag)" ]
+                -anchor nw -tag "$::IbrowserController($id,orderIconTag)" ]
     set xx [ expr $x2 - $x1 ]
     set xx [ expr $xx / 2 ]
     set yy [ expr $y2 - $y1 ]
@@ -667,11 +687,11 @@ proc IbrowserMakeOrderIcon { id order x1 y1 x2 y2 fnt} {
         -tag "$::IbrowserController($id,orderIconHILOtag)"
 
     #---------------
-    $::IbrowserController(Icanvas) bind $::IbrowserController($id,orderIMGtag) <Enter> \
+    $::IbrowserController(Icanvas) bind $::IbrowserController($id,orderIconTag) <Enter> \
         "%W itemconfig $::IbrowserController($id,orderIconHILOtag) -outline $::IbrowserController(Colors,hilite) "
-    $::IbrowserController(Icanvas) bind $::IbrowserController($id,orderIMGtag) <Leave> \
+    $::IbrowserController(Icanvas) bind $::IbrowserController($id,orderIconTag) <Leave> \
         "%W itemconfig $::IbrowserController($id,orderIconHILOtag) -outline $::IbrowserController(Colors,lolite) "
-    $::IbrowserController(Icanvas) bind $::IbrowserController($id,orderIMGtag) <Button-1> \
+    $::IbrowserController(Icanvas) bind $::IbrowserController($id,orderIconTag) <Button-1> \
         " IbrowserOrderPopUp orderpopup $id $::IbrowserController(popupX) $::IbrowserController(popupY)"
     
     #---------------
@@ -707,18 +727,18 @@ proc IbrowserMakeVisibilityIcon { id state x1 y1 x2 y2 } {
     if { $state == $::IbrowserController(Info,Icon,isVisible) } {
         set q [ $::IbrowserController(Icanvas) create image $x1 $y1  \
                     -image $::IbrowserController(Images,Icon,visIcon) \
-                    -anchor nw -tag "$::IbrowserController($id,visIMGtag)" ]
+                    -anchor nw -tag "$::IbrowserController($id,visIconTag)" ]
 
         #hilite rect on mouseover
         #---------------
-        $::IbrowserController(Icanvas) bind $::IbrowserController($id,visIMGtag)  <Enter> \
+        $::IbrowserController(Icanvas) bind $::IbrowserController($id,visIconTag)  <Enter> \
             "%W itemconfig $::IbrowserController($id,visIconHILOtag) -outline $::IbrowserController(Colors,hilite) "
-        $::IbrowserController(Icanvas) bind $::IbrowserController($id,visIMGtag)  <Leave> \
+        $::IbrowserController(Icanvas) bind $::IbrowserController($id,visIconTag)  <Leave> \
             "%W itemconfig $::IbrowserController($id,visIconHILOtag) -outline $::IbrowserController(Colors,lolite) "
 
         #toggle image on rightclick
         #---------------
-        $::IbrowserController(Icanvas) bind $::IbrowserController($id,visIMGtag) <Button-1> \
+        $::IbrowserController(Icanvas) bind $::IbrowserController($id,visIconTag) <Button-1> \
             "IbrowserToggleVisibilityIcon $id"
 
         #post help on leftclick
@@ -727,18 +747,18 @@ proc IbrowserMakeVisibilityIcon { id state x1 y1 x2 y2 } {
     } elseif { $state ==  $::IbrowserController(Info,Icon,isInvisible) } {
         set q [ $::IbrowserController(Icanvas) create image $x1 $y1 \
                     -image $::IbrowserController(Images,Icon,invisIcon) \
-                    -anchor nw -tag "$::IbrowserController($id,invisIMGtag)" ]
+                    -anchor nw -tag "$::IbrowserController($id,invisIconTag)" ]
         
         #hilite rect on mouseover
         #---------------
-        $::IbrowserController(Icanvas) bind $::IbrowserController($id,invisIMGtag) <Enter> \
+        $::IbrowserController(Icanvas) bind $::IbrowserController($id,invisIconTag) <Enter> \
             "%W itemconfig $::IbrowserController($id,visIconHILOtag) -outline $::IbrowserController(Colors,hilite) "
-        $::IbrowserController(Icanvas) bind $::IbrowserController($id,invisIMGtag) <Leave> \
+        $::IbrowserController(Icanvas) bind $::IbrowserController($id,invisIconTag) <Leave> \
             "%W itemconfig $::IbrowserController($id,visIconHILOtag) -outline $::IbrowserController(Colors,lolite) "
 
         #toggle image on rightclick
         #---------------
-        $::IbrowserController(Icanvas) bind $::IbrowserController($id,invisIMGtag) <Button-1> \
+        $::IbrowserController(Icanvas) bind $::IbrowserController($id,invisIconTag) <Button-1> \
             "IbrowserToggleVisibilityIcon $id"
 
         #post help on leftclick
@@ -769,16 +789,16 @@ proc IbrowserMakeCopyIcon { id x1 y1 x2 y2 } {
     #--- the selected interval's contents.
     set q [ $::IbrowserController(Icanvas) create image $x1 $y1 \
                 -image $::IbrowserController(Images,Icon,copyIcon) \
-                -anchor nw -tag "$::IbrowserController($id,copyIMGtag)" ]
+                -anchor nw -tag "$::IbrowserController($id,copyIconTag)" ]
     $::IbrowserController(Icanvas) create rect $x1 $y1  [expr $x1 + $::IbrowserController(Geom,Icon,iconWid) -1 ] \
         [expr $y1 + $::IbrowserController(Geom,Icon,iconHit) -1 ] -outline $::IbrowserController(Colors,lolite) \
         -tag "$::IbrowserController($id,copyIconHILOtag)"
 
-    $::IbrowserController(Icanvas) bind $::IbrowserController($id,copyIMGtag) <Enter> \
+    $::IbrowserController(Icanvas) bind $::IbrowserController($id,copyIconTag) <Enter> \
         "%W itemconfig $::IbrowserController($id,copyIconHILOtag) -outline $::IbrowserController(Colors,hilite) "
-    $::IbrowserController(Icanvas) bind $::IbrowserController($id,copyIMGtag) <Leave> \
+    $::IbrowserController(Icanvas) bind $::IbrowserController($id,copyIconTag) <Leave> \
         "%W itemconfig $::IbrowserController($id,copyIconHILOtag) -outline $::IbrowserController(Colors,lolite) "
-    $::IbrowserController(Icanvas) bind $::IbrowserController($id,copyIMGtag) <Button-1> \
+    $::IbrowserController(Icanvas) bind $::IbrowserController($id,copyIconTag) <Button-1> \
         "IbrowserCopyIntervalPopUp copypopup $id $::IbrowserController(popupX) $::IbrowserController(popupY)"
     
     IbrowserIncrementIconCount
@@ -786,53 +806,6 @@ proc IbrowserMakeCopyIcon { id x1 y1 x2 y2 } {
 
 
 }
-
-
-#-------------------------------------------------------------------------------
-# .PROC IbrowserMakeOpacityIcon
-# This routine is called each time a new interval is
-# created. It creates an opacity icon indicating the interval's
-# default or specified opacity, and returns the icon's ID value.
-# If there's a bogus transparency setting, then return 0.
-# FOR NOW, ID these and capture clicks with tags???????
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc IbrowserMakeOpacityIcon { id x1 y1 x2 y2 } {
-
-    set state $::Ibrowser($id,opaqStatus)
-    
-    if { $state == $::IbrowserController(Info,Ival,isOpaque) } {
-        set q [ $::IbrowserController(Icanvas) create image $x1 $y1 \
-                    -image $::IbrowserController(Images,Icon,opaqIcon) \
-                    -anchor nw -tag "$::IbrowserController($id,opIMGtag)" ]
-        $::IbrowserController(Icanvas) bind $::IbrowserController($id,opIMGtag) <Enter> \
-            "%W itemconfig $::IbrowserController($id,opaqIconHILOtag) -outline $::IbrowserController(Colors,hilite) "
-        $::IbrowserController(Icanvas) bind $::IbrowserController($id,opIMGtag) <Leave> \
-            "%W itemconfig $::IbrowserController($id,opaqIconHILOtag) -outline $::IbrowserController(Colors,lolite) "
-        $::IbrowserController(Icanvas) bind $::IbrowserController($id,opIMGtag) <Button-1> \
-            " IbrowserOpacityPopUp opacitypopup $id $::IbrowserController(popupX) $::IbrowserController(popupY)"        
-    } else {
-        set q [ $::IbrowserController(Icanvas) create image $x1 $y1 \
-                    -image $::IbrowserController(Images,Icon,transpIcon) \
-                    -anchor nw -tag "$::IbrowserController($id,transpIMGtag)" ]
-        $::IbrowserController(Icanvas) bind $::IbrowserController($id,transpIMGtag) <Enter> \
-            "%W itemconfig $::IbrowserController($id,opaqIconHILOtag) -outline $::IbrowserController(Colors,hilite) "
-        $::IbrowserController(Icanvas) bind $::IbrowserController($id,transpIMGtag) <Leave> \
-            "%W itemconfig $::IbrowserController($id,opaqIconHILOtag) -outline $::IbrowserController(Colors,lolite) "
-        $::IbrowserController(Icanvas) bind $::IbrowserController($id,transpIMGtag) <Button-1> \
-            " IbrowserOpacityPopUp opacitypopup $id $::IbrowserController(popupX) $::IbrowserController(popupY)"        
-    }
-    $::IbrowserController(Icanvas) create rect $x1 $y1  [expr $x1 + $::IbrowserController(Geom,Icon,iconWid) -1 ] \
-        [expr $y1 + $::IbrowserController(Geom,Icon,iconHit) -1 ] -outline $::IbrowserController(Colors,lolite) \
-        -tag "$::IbrowserController($id,opaqIconHILOtag)"
-
-    IbrowserIncrementIconCount
-}
-
-
-
 
 #-------------------------------------------------------------------------------
 # .PROC IbrowserToggleHoldIcon
@@ -884,7 +857,7 @@ proc IbrowserToggleVisibilityIcon { id } {
     if { $::Ibrowser($id,visStatus) == $::IbrowserController(Info,Ival,isVisible) } {
         #--- If the interval is currently visible,
         #--- set its status to invisible and changs the icon state.
-        set thing "$::IbrowserController($id,visIMGtag)"
+        set thing "$::IbrowserController($id,visIconTag)"
         $win itemconfig  $thing -image $::IbrowserController(Images,Icon,invisIcon)
         set ::Ibrowser($id,visStatus) $::IbrowserController(Info,Ival,isInvisible)
 
@@ -893,7 +866,7 @@ proc IbrowserToggleVisibilityIcon { id } {
             #--- must update the visibility status of the
             #--- background interval to match.
             set bgID $::Ibrowser(BGInterval)
-            set otherthing "$::IbrowserController($bgID,visIMGtag)"
+            set otherthing "$::IbrowserController($bgID,visIconTag)"
             $win itemconfig $otherthing -image $::IbrowserController(Images,Icon,invisIcon)
             set ::Ibrowser($id,visStatus) $::IbrowserController(Info,Ival,isInvisible)
 
@@ -906,7 +879,7 @@ proc IbrowserToggleVisibilityIcon { id } {
             #--- must update the visibility status of the
             #--- foreground interval to match.
             set fgID $::Ibrowser(FGInterval)
-            set otherthing "$::IbrowserController($fgID,visIMGtag)"
+            set otherthing "$::IbrowserController($fgID,visIconTag)"
             $win itemconfig $otherthing -image $::IbrowserController(Images,Icon,invisIcon)
             set ::Ibrowser($id,visStatus) $::IbrowserController(Info,Ival,isInvisible)
             
@@ -918,7 +891,7 @@ proc IbrowserToggleVisibilityIcon { id } {
     } else {
         #--- If the interval is currently invisible,
         #--- set its status to visible and changes the icon state.
-        set thing "$::IbrowserController($id,visIMGtag)"
+        set thing "$::IbrowserController($id,visIconTag)"
         $win itemconfig  $thing -image $::IbrowserController(Images,Icon,visIcon)
         set ::Ibrowser($id,visStatus) $::IbrowserController(Info,Ival,isVisible)
 
@@ -930,7 +903,7 @@ proc IbrowserToggleVisibilityIcon { id } {
             #--- must update the visibility status of the
             #--- background interval to match.
             set bgID $::Ibrowser(BGInterval)
-            set otherthing "$::IbrowserController($bgID,visIMGtag)"
+            set otherthing "$::IbrowserController($bgID,visIconTag)"
             $win itemconfig $otherthing -image $::IbrowserController(Images,Icon,visIcon)
             set ::Ibrowser($id,visStatus) $::IbrowserController(Info,Ival,isVisible)
 
@@ -943,7 +916,7 @@ proc IbrowserToggleVisibilityIcon { id } {
             #--- must update the visibility status of the
             #--- foreground interval to match.
             set fgID $::Ibrowser(FGInterval)
-            set otherthing "$::IbrowserController($fgID,visIMGtag)"
+            set otherthing "$::IbrowserController($fgID,visIconTag)"
             $win itemconfig $otherthing -image $::IbrowserController(Images,Icon,visIcon)
             set ::Ibrowser($id,visStatus) $::IbrowserController(Info,Ival,isVisible)            
 
@@ -969,18 +942,18 @@ proc IbrowserMakeHoldIcon { id state x1 y1 x2 y2 } {
     if { $state == $::IbrowserController(Info,Icon,hold) } {
         set q [ $::IbrowserController(Icanvas) create image $x1 $y1  \
                     -image $::IbrowserController(Images,Icon,holdIcon) \
-                    -anchor nw -tag "$::IbrowserController($id,holdIMGtag)" ]
+                    -anchor nw -tag "$::IbrowserController($id,holdIconTag)" ]
 
         #hilite rect on mouseover
         #---------------
-        $::IbrowserController(Icanvas) bind $::IbrowserController($id,holdIMGtag)  <Enter> \
+        $::IbrowserController(Icanvas) bind $::IbrowserController($id,holdIconTag)  <Enter> \
             "%W itemconfig $::IbrowserController($id,holdIconHILOtag) -outline $::IbrowserController(Colors,hilite) "
-        $::IbrowserController(Icanvas) bind $::IbrowserController($id,holdIMGtag)  <Leave> \
+        $::IbrowserController(Icanvas) bind $::IbrowserController($id,holdIconTag)  <Leave> \
             "%W itemconfig $::IbrowserController($id,holdIconHILOtag) -outline $::IbrowserController(Colors,lolite) "
 
         #toggle image on rightclick
         #---------------
-        $::IbrowserController(Icanvas) bind $::IbrowserController($id,holdIMGtag) <Button-1> \
+        $::IbrowserController(Icanvas) bind $::IbrowserController($id,holdIconTag) <Button-1> \
             " IbrowserToggleHoldIcon %W $id "
 
         #post help on leftclick
@@ -989,18 +962,18 @@ proc IbrowserMakeHoldIcon { id state x1 y1 x2 y2 } {
     } elseif { $state ==  $::IbrowserController(Info,Icon,nohold) } {
         set q [ $::IbrowserController(Icanvas) create image $x1 $y1 \
                     -image $::IbrowserController(Images,Icon,noholdIcon) \
-                    -anchor nw -tag "$::IbrowserController($id,noholdIMGtag)" ]
+                    -anchor nw -tag "$::IbrowserController($id,noholdIconTag)" ]
         
         #hilite rect on mouseover
         #---------------
-        $::IbrowserController(Icanvas) bind $::IbrowserController($id,noholdIMGtag) <Enter> \
+        $::IbrowserController(Icanvas) bind $::IbrowserController($id,noholdIconTag) <Enter> \
             "%W itemconfig $::IbrowserController($id,noholdHILOtag)  -outline $::IbrowserController(Colors,hilite) "
-        $::IbrowserController(Icanvas) bind $::IbrowserController($id,noholdIMGtag) <Leave> \
+        $::IbrowserController(Icanvas) bind $::IbrowserController($id,noholdIconTag) <Leave> \
             "%W itemconfig $::IbrowserController($id,noholdHILOtag) -outline $::IbrowserController(Colors,lolite) "
 
         #toggle image on rightclick
         #---------------
-        $::IbrowserController(Icanvas) bind $::IbrowserController($id,noholdIMGtag) <Button-1> \
+        $::IbrowserController(Icanvas) bind $::IbrowserController($id,noholdIconTag) <Button-1> \
             " IbrowserToggleHoldIcon %W $id "
 
         #post help on leftclick
@@ -1031,16 +1004,16 @@ proc IbrowserMakeDeleteIcon { id x1 y1 x2 y2 } {
     #--- its contents. If yes, all are deleted.
     set q [ $::IbrowserController(Icanvas) create image $x1 $y1 \
                 -image $::IbrowserController(Images,Icon,deleteIcon) \
-                -anchor nw -tag "$::IbrowserController($id,deleteIMGtag)" ]
+                -anchor nw -tag "$::IbrowserController($id,deleteIconTag)" ]
     $::IbrowserController(Icanvas) create rect $x1 $y1  [expr $x1 + $::IbrowserController(Geom,Icon,iconWid) -1 ] \
         [expr $y1 + $::IbrowserController(Geom,Icon,iconHit) -1 ] -outline $::IbrowserController(Colors,lolite) \
         -tag "$::IbrowserController($id,deleteIconHILOtag)"
 
-    $::IbrowserController(Icanvas) bind $::IbrowserController($id,deleteIMGtag) <Enter> \
+    $::IbrowserController(Icanvas) bind $::IbrowserController($id,deleteIconTag) <Enter> \
         "%W itemconfig $::IbrowserController($id,deleteIconHILOtag) -outline $::IbrowserController(Colors,hilite) "
-    $::IbrowserController(Icanvas) bind $::IbrowserController($id,deleteIMGtag) <Leave> \
+    $::IbrowserController(Icanvas) bind $::IbrowserController($id,deleteIconTag) <Leave> \
         "%W itemconfig $::IbrowserController($id,deleteIconHILOtag) -outline $::IbrowserController(Colors,lolite) "
-    $::IbrowserController(Icanvas) bind $::IbrowserController($id,deleteIMGtag) <Button-1> \
+    $::IbrowserController(Icanvas) bind $::IbrowserController($id,deleteIconTag) <Button-1> \
         "IbrowserDeleteIntervalPopUp deletepopup $id $::IbrowserController(popupX) $::IbrowserController(popupY)"
     
     IbrowserIncrementIconCount
@@ -1062,16 +1035,16 @@ proc IbrowserMakeFGIcon { id x1 y1 x2 y2 } {
     #--- to the foreground and makes them active.
     set q [ $::IbrowserController(Icanvas) create image $x1 $y1 \
                 -image $::IbrowserController(Images,Icon,FGIcon) \
-                -anchor nw -tag "$::IbrowserController($id,FGIMGtag)" ]
+                -anchor nw -tag "$::IbrowserController($id,FGIconTag)" ]
     $::IbrowserController(Icanvas) create rect $x1 $y1  [expr $x1 + $::IbrowserController(Geom,Icon,iconWid) -1 ] \
         [expr $y1 + $::IbrowserController(Geom,Icon,iconHit) -1 ] -outline $::IbrowserController(Colors,lolite) \
         -tag "$::IbrowserController($id,FGIconHILOtag)"
 
-    $::IbrowserController(Icanvas) bind $::IbrowserController($id,FGIMGtag) <Enter> \
+    $::IbrowserController(Icanvas) bind $::IbrowserController($id,FGIconTag) <Enter> \
         "%W itemconfig $::IbrowserController($id,FGIconHILOtag) -outline $::IbrowserController(Colors,hilite) "
-    $::IbrowserController(Icanvas) bind $::IbrowserController($id,FGIMGtag) <Leave> \
+    $::IbrowserController(Icanvas) bind $::IbrowserController($id,FGIconTag) <Leave> \
         "IbrowserLeaveFGIcon $id %W"
-    $::IbrowserController(Icanvas) bind $::IbrowserController($id,FGIMGtag) <Button-1> \
+    $::IbrowserController(Icanvas) bind $::IbrowserController($id,FGIconTag) <Button-1> \
         "MainSlicesSetVolumeAll Fore $::Ibrowser($id,$::Ibrowser(ViewDrop),MRMLid);
          IbrowserDeselectFGIcon %W;
          IbrowserSelectFGIcon $id %W;
@@ -1098,16 +1071,16 @@ proc IbrowserMakeBGIcon { id x1 y1 x2 y2 } {
     #--- to the background but does not make them active.
     set q [ $::IbrowserController(Icanvas) create image $x1 $y1 \
                 -image $::IbrowserController(Images,Icon,BGIcon) \
-                -anchor nw -tag "$::IbrowserController($id,BGIMGtag)" ]
+                -anchor nw -tag "$::IbrowserController($id,BGIconTag)" ]
     $::IbrowserController(Icanvas) create rect $x1 $y1  [expr $x1 + $::IbrowserController(Geom,Icon,iconWid) -1 ] \
         [expr $y1 + $::IbrowserController(Geom,Icon,iconHit) -1 ] -outline $::IbrowserController(Colors,lolite) \
         -tag "$::IbrowserController($id,BGIconHILOtag)"
 
-    $::IbrowserController(Icanvas) bind $::IbrowserController($id,BGIMGtag) <Enter> \
+    $::IbrowserController(Icanvas) bind $::IbrowserController($id,BGIconTag) <Enter> \
         "%W itemconfig $::IbrowserController($id,BGIconHILOtag) -outline $::IbrowserController(Colors,hilite) "
-    $::IbrowserController(Icanvas) bind $::IbrowserController($id,BGIMGtag) <Leave> \
+    $::IbrowserController(Icanvas) bind $::IbrowserController($id,BGIconTag) <Leave> \
         "IbrowserLeaveBGIcon $id %W"
-    $::IbrowserController(Icanvas) bind $::IbrowserController($id,BGIMGtag) <Button-1> \
+    $::IbrowserController(Icanvas) bind $::IbrowserController($id,BGIconTag) <Button-1> \
         "MainSlicesSetVolumeAll Back $::Ibrowser($id,$::Ibrowser(ViewDrop),MRMLid) ;
           IbrowserDeselectBGIcon %W; 
           IbrowserSelectBGIcon $id %W;
@@ -1467,63 +1440,4 @@ proc IbrowserSetupNewNames { this after } {
 
 
 
-
-
-#-------------------------------------------------------------------------------
-# .PROC IbrowserOpacityPopUp
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc IbrowserOpacityPopUp { win id x y } {
-    
-    set noneID $::Ibrowser(none,intervalID)
-    set typeTest 0
-    #--- only volumes and models can have opacity settings.
-    if { ( $::Ibrowser($id,type) == "Image" ) || ($::Ibrowser($id,type) == "Geom") } {
-        set typeTest 1
-    }
-    if { ($id != $noneID) && ( $typeTest ) } {
-        set w .w$win
-        if { [IbrowserRaisePopup $w] == 1} {return}
-
-        set title "Set opacity"
-        set msg "Adjust opacity for $::Ibrowser($id,name)"
-        IbrowserCreatePopup $w $title $x $y 
-
-        set f $w
-        frame $f.fMsg  -background #FFFFFF 
-        frame $f.fSlider -background #FFFFFF
-        frame $f.fButton -background #FFFFFF
-        pack $f.fMsg $f.fSlider $f.fButton -side top -pady 4 -padx 4 
-        
-        set f $w.fMsg
-        eval {label $f.label -text "$msg" -foreground #000000 } 
-        $f.label config -font $::IbrowserController(UI,Smallfont) -font $::IbrowserController(UI,Medfont) \
-            -background #FFFFFF
-        pack $f.label -padx 5 -pady 4
-
-        set f $w.fSlider
-        #--- for a volume, this is a fade; for a model, it's an opacity
-        eval { scale $f.sOpacity -orient horizontal \
-                   -from 0.0 -to 1.0 -resolution 0.01 \
-                   -length 100 -state active -variable ::Ibrowser(opacity) \
-                   -showvalue 1 -background #FFFFFF \
-                   -highlightbackground #FFFFFF \
-                   -font $::IbrowserController(UI,Smallfont) -highlightcolor #FFFFFF 
-        }
-        bind $f.sOpacity <B1-Motion> "set $::Ibrowser($id,opacity) $::Ibrowser(opacity)"
-        pack $f.sOpacity -padx 4 -pady 4 -side top
-
-        set f $w.fButton
-
-        #dismiss
-        #---------------
-        button $f.bClose -text "Close" -width 4 -bg #DDDDDD \
-            -command "destroy $w"
-        pack $f.bClose -ipadx 4 -ipady 4 -side top
-
-        IbrowserRaisePopup $w
-    }
-}
 

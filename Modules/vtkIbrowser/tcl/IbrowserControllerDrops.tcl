@@ -212,13 +212,6 @@ proc IbrowserDeleteIntervalDrops { ivalName } {
             #--- delete the ImageData and the MrmlNodes...
             unset ::Ibrowser($id,$i,data)
         }
-        if { [info exists ::Ibrowser($id,$i,pos) ] } {
-            #--- delete all the tags that go with the data..
-            unset ::Ibrowser($id,$i,pos)
-        }
-        if { [info exists ::IbrowserController($id,$i,dropTAG) ] } {
-            unset ::IbrowserController($id,$i,dropTAG)
-        }
      }
     set ::Ibrowser($id,numDrops) 0
 

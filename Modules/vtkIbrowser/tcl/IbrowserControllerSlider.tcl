@@ -243,9 +243,6 @@ proc IbrowserUpdateIndexFromGUI { } {
     #--- drag slider to there.
 
     set ticktag "IbrowserIndex$::Ibrowser(ViewDrop)"
-    #set  zot [ $::Ibrowser(displaySlider) get ]
-    #puts "viewdrop=$::Ibrowser(ViewDrop) tag=$ticktag puts sliderval=$zot"
-
     #--- the first coord in the list is the xvalue of the unit tickmark
     #--- on the scale; this is where we want to move the slider
     set xval [ lindex [ $::IbrowserController(Ccanvas) coords $ticktag ] 0 ]
@@ -288,15 +285,12 @@ proc   IbrowserSynchronizeAllSliders { target } {
     if { $target == "active" } {
         $::Ibrowser(displaySlider) configure -state active
         $::Ibrowser(loadSlider) configure -state active
-        $::Ibrowser(selectSlider) configure -state active
     } elseif { $target == "disabled" } {
         $::Ibrowser(displaySlider) configure -state disabled
         $::Ibrowser(loadSlider) configure -state disabled
-        $::Ibrowser(selectSlider) configure -state disabled
     } else {
         $::Ibrowser(displaySlider) configure -from 0 -to $target -state active
         $::Ibrowser(loadSlider) configure -from 0 -to $target -state active
-        $::Ibrowser(selectSlider) configure -from 0 -to $target -state active
     }
 }
 

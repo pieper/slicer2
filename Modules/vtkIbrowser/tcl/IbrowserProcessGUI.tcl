@@ -68,10 +68,14 @@ proc IbrowserBuildProcessFrame { } {
     #--- Developers: Add menu text for all new processing options here.
     #-------------------------------------------
     set ::Ibrowser(Process,Text,Reorient) "Reorient"
-    #set ::Ibrowser(Process,Text,MotionCorrect) "MotionCorrect"
-    #set ::Ibrowser(Process,Text,Smooth) "Smooth"
-    #set ::Ibrowser(Process,Text,Coregister) "Co-register"
-
+    #--- do not expose until code is completed.    
+    if { 0 } {
+        set ::Ibrowser(Process,Text,MotionCorrect) "MotionCorrect"
+        set ::Ibrowser(Process,Text,Smooth) "Smooth"
+        set ::Ibrowser(Process,Text,Reassemble) "Reassemble"
+        set ::Ibrowser(Process,Text,KeyframeRegister) "KeyframeRegister"
+    }
+    
     #-------------------------------------------
     #--- ProcessInfo frame; one raised for each process.
     #--- Developers: Create new process frames here.
@@ -79,23 +83,26 @@ proc IbrowserBuildProcessFrame { } {
     #--- fProcess->fProcessInfo:fReorient
     #--- fProcess->fProcessInfo:fMotionCorrect
     #--- fProcess->fProcessInfo:fSmooth
-    #--- fProcess->fProcessInfo:fCoregister
+    #--- fProcess->fProcessInfo:fKeyframeRegister
     #--- These are the set of frames inside the
     #-------------------------------------------
     set ff $f.fProcessInfo
     frame $ff.fReorient -bg  $::Gui(activeWorkspace)  
     IbrowserBuildReorientGUI $ff.fReorient $f.fProcessInfo
 
-    #--- do not expose until code is completed.
+    #--- do not expose until code is completed.    
     if { 0 } {
         frame $ff.fMotionCorrect -bg $::Gui(activeWorkspace) 
         IbrowserBuildMotionCorrectGUI $ff.fMotionCorrect $f.fProcessInfo
 
-        frame $ff.fCoregister -bg  $::Gui(activeWorkspace)
-        IbrowserBuildCoregisterGUI $ff.fCoregister $f.fProcessInfo
+        frame $ff.fReassemble -bg $::Gui(activeWorkspace)
+        IbrowserBuildReassembleGUI $ff.fReassemble $f.fProcessInfo
 
-        frame $ff.fSmooth -bg  $::Gui(activeWorkspace) 
-        IbrowserBuildSmoothGUI $ff.fSmooth $f.fProcessInfo
+        frame $ff.fSmooth -bg $::Gui(activeWorkspace)
+        IbrowserBuildSmoothGUI $ff.fSmooth $f.fProcessInfo    
+
+        frame $ff.fKeyframeRegister -bg  $::Gui(activeWorkspace)
+        IbrowserBuildKeyframeRegisterGUI $ff.fKeyframeRegister $f.fProcessInfo
     }
     raise $ff.fReorient
     
@@ -106,14 +113,14 @@ proc IbrowserBuildProcessFrame { } {
     #--- Developers: Add new processes here.
     #-------------------------------------------
     set ff $f.fProcessMaster
-    eval {label $ff.lChoose -text "Select processing: " -width 20 -justify right } $::Gui(BLA)
+    eval {label $ff.lChoose -text "Select processing: " -width 15 -justify right } $::Gui(BLA)
     pack $ff.lChoose -side left -padx $::Gui(pad) -fill x -anchor w
     #--- build a menu button with a pull-down menu
     #--- of processing options
     eval { menubutton $ff.mbProcessType -text \
                $::Ibrowser(Process,Text,Reorient) \
                -relief raised -bd 2 -width 25 \
-               -menu $ff.mbProcessType.m } $::Gui(WMBA)
+               -menu $ff.mbProcessType.m -indicatoron 1} $::Gui(WMBA)
     #--- save menu button for configuring its text later
     set ::Ibrowser(Process,ProcessSelectionButton) $ff.mbProcessType
     pack $ff.mbProcessType -side left -pady 1 -padx $::Gui(pad)
@@ -124,8 +131,8 @@ proc IbrowserBuildProcessFrame { } {
     eval { menu $ff.mbProcessType.m } $::Gui(WMA)
 
     #--- do not expose until code is complete
-    #foreach r "Reorient MotionCorrect Smooth Coregister" 
-    foreach r "Reorient" {
+   # foreach r "Reorient MotionCorrect Smooth KeyframeRegister Reassemble" 
+    foreach r "Reorient" {    
         $ff.mbProcessType.m add command -label $r \
             -command "IbrowserRaiseProcessingFrame $::Ibrowser(Process,Text,${r}) $::Ibrowser(fProcess${r})"
     }
@@ -144,7 +151,6 @@ proc IbrowserBuildProcessFrame { } {
 proc IbrowserRaiseProcessingFrame { menuText processFrame } {
 
     $::Ibrowser(Process,ProcessSelectionButton) config -text $menuText
-    puts "raising $processFrame"
     raise $processFrame
 }
 
@@ -175,7 +181,7 @@ proc IbrowserProcessingSelectInternalReference { name id } {
 proc IbrowserProcessingSelectExternalReference { name id } {
     #---specifies a reference sequence outside the sequence being processed.
     set ::Ibrowser(Process,SelectExternalReference) $id
-    $::Ibrowser(Process,Coregister,mbExtReference) config -text $name
+    $::Ibrowser(Process,KeyframeRegister,mbExtReference) config -text $name
 
 }
 
