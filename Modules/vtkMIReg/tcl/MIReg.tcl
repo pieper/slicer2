@@ -101,7 +101,7 @@ proc MIRegInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.4 $} {$Date: 2003/08/27 17:23:27 $}]
+        {$Revision: 1.5 $} {$Date: 2003/09/03 21:57:07 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -122,17 +122,17 @@ proc MIRegInit {} {
     set Matrix(allowAutoUndo) 0
 
     set MutualInfoReg(Resolution)       128
-    set MutualInfoReg(UpdateIterations) 5
+    set MutualInfoReg(UpdateIterations) 100
     set MutualInfoReg(NumberOfSamples)  50
     set MutualInfoReg(LearningRate)    .0001
-    set MutualInfoReg(TranslateScale)   1
+    set MutualInfoReg(TranslateScale)   320
     # If Wells, Viola, Atsumi, etal, 
     # used 2 and 4. Wells claims exact number not critical (personal communication)
     # They scaled data 0...256.
     # We scale data -1 to 1.
     # 2/256*2 = 0.015
-    set MutualInfoReg(SourceStandardDeviation) 0.15
-    set MutualInfoReg(TargetStandardDeviation) 0.15
+    set MutualInfoReg(SourceStandardDeviation) 0.4
+    set MutualInfoReg(TargetStandardDeviation) 0.4
 }
 #-------------------------------------------------------------------------------
 # .PROC MutualInfoRegBuildSubGui
