@@ -331,7 +331,7 @@ proc MainInit {} {
 
         # Set version info
 	lappend Module(versions) [ParseCVSInfo Main \
-		{$Revision: 1.43 $} {$Date: 2000/07/19 05:00:23 $}]
+		{$Revision: 1.44 $} {$Date: 2000/07/20 18:24:18 $}]
 
 	# Call each "Init" routine that's not part of a module
 	#-------------------------------------------
@@ -491,6 +491,8 @@ proc MainBuildGUI {} {
 		"MainViewSetBackgroundColor Black; Render3D"
 	$Gui(mView) add command -label "Blue" -command \
 		"MainViewSetBackgroundColor Blue; Render3D"
+	$Gui(mView) add command -label "Midnight" -command \
+		"MainViewSetBackgroundColor Midnight; Render3D"
 
 	# Help menu
 	$Gui(mHelp) add command -label "Documentation..." -command \

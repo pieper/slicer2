@@ -67,7 +67,7 @@ viewMode='Normal' viewBgColor='Blue'"
 
         set m MainView
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.18 $} {$Date: 2000/07/19 10:27:00 $}]
+		{$Revision: 1.19 $} {$Date: 2000/07/20 18:24:18 $}]
 
 	set View(viewerHeightNormal) 656
 	set View(viewerWidth)  956 
@@ -325,7 +325,7 @@ proc MainViewSetBackgroundColor {{col ""}} {
     
     # set View(bgName) if called with an argument
     if {$col != ""} {
-	if {$col == "Blue" || $col == "Black"} {
+	if {$col == "Blue" || $col == "Black" || $col == "Midnight"} {
 	    set View(bgName) $col
 	} else {
 	    return
