@@ -69,7 +69,7 @@ proc MainMrmlInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainMrml \
-		{$Revision: 1.46 $} {$Date: 2001/12/11 18:11:56 $}]
+		{$Revision: 1.47 $} {$Date: 2002/01/05 17:43:13 $}]
 
 	set Mrml(filePrefix) data
 	set Mrml(colorsUnsaved) 0
@@ -862,6 +862,13 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 					foreach file $filelist {
 					    set DICOMName [file join $Mrml(dir) $file]
 					    $n AddDICOMFileName $DICOMName
+					}
+				    }
+				    "dicomMultiFrameOffsetList" {
+					set offsetlist {}
+					eval {lappend offsetlist} $val
+					foreach offset $offsetlist {
+					    $n AddDICOMMultiFrameOffset $offset
 					}
 				    }
 				}
