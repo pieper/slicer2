@@ -316,6 +316,9 @@ proc tarup { {destdir "auto"} } {
         if { [file exists $moddir/images] } {
             file copy -force $moddir/images $moddest
         }
+        if { [file exists $moddir/data] } {
+            file copy -force $moddir/data $moddest
+        }
     }
 
     #
