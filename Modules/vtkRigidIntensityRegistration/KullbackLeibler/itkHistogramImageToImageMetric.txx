@@ -3,8 +3,8 @@
   Program:   Insight Segmentation & Registration Toolkit
   Module:    $RCSfile: itkHistogramImageToImageMetric.txx,v $
   Language:  C++
-  Date:      $Date: 2003/12/08 23:12:17 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2003/12/23 19:27:26 $
+  Version:   $Revision: 1.2 $
 
   Copyright (c) Insight Software Consortium. All rights reserved.
   See ITKCopyright.txt or http://www.itk.org/HTML/Copyright.htm for details.
@@ -168,7 +168,11 @@ namespace itk
     DerivativeType& derivative) const
   {
     value = GetValue(parameters);
-    GetDerivative(parameters, derivative);
+    // hack by samson
+    std::cout << "hack by samson, derivative is worthless" << std::endl;
+    // GetDerivative(parameters, derivative);
+    derivative = DerivativeType(this->GetNumberOfParameters());
+    derivative.fill(0);
   }
 
   template <class TFixedImage, class TMovingImage>
