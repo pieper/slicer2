@@ -47,13 +47,13 @@ set SLICER(major_version) 2
 
 # bump minor when features accumulate to a stable state for release
 
-set SLICER(minor_version) 0
+set SLICER(minor_version) 1
 
 # bump revision for something that has been given out to non-developers
 # (e.g. bump revsion before packaging, then again after packaging
 #  so there's a unique label for the packaged version)
 
-set SLICER(revision) a2
+set SLICER(revision) a1
 
 # when packaging a release for distribution, set state to ""
 # when packaging a release for testing, set state to the date as "-YYYY-MM-DD"
@@ -561,7 +561,7 @@ if { $SLICER(versionInfo) != "" } {
     set compilerName [Slicer GetCompilerName]
     set vtkVersion [Slicer GetVTKVersion]
     set libVersions "VTK: ${vtkVersion} TCL: ${tcl_patchLevel} TK: ${tk_patchLevel}"
-    set SLICER(versionInfo) "$SLICER(versionInfo) ${compilerName}: $compilerVersion ${libVersions} CVS: [ParseCVSInfo " " {$Id: Go.tcl,v 1.53 2003/05/18 14:17:59 pieper Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo) ${compilerName}: $compilerVersion ${libVersions} CVS: [ParseCVSInfo " " {$Id: Go.tcl,v 1.54 2003/05/18 15:28:41 pieper Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
