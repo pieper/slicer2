@@ -143,7 +143,7 @@ proc TetraMeshInit {} {
 	#   appropriate revision number and date when the module is checked in.
 	#   
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.12 $} {$Date: 2001/05/18 20:48:11 $}]
+		{$Revision: 1.13 $} {$Date: 2001/05/24 17:14:54 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -156,12 +156,23 @@ proc TetraMeshInit {} {
 	set TetraMesh(FileName) ""
         set TetraMesh(modelbasename) ""
 	set TetraMesh(eventManager)  ""
-	set TetraMesh(AlignmentVolume) $Volume(idNone)
         set TetraMesh(DefaultDir) ""
             ## Tube Radius of edges
         set TetraMesh(TetraTubeRadius) 0.01
         set TetraMesh(ArrowScale) 9.5
         set TetraMesh(ArrowSkip) 2
+
+        # A bad hack. I need to fix this....
+        vtkMatrix4x4 SamsonFix
+        # Deal with 90 degree rotation problem
+        SamsonFix Zero
+        SamsonFix SetElement 0 1 -1
+        SamsonFix SetElement 1 0  1
+        SamsonFix SetElement 2 2  1
+        SamsonFix SetElement 3 3  1
+        # Deal with Offsets
+        SamsonFix SetElement 0 3 240
+        SamsonFix SetElement 1 3 0
 }
 
 
@@ -686,6 +697,37 @@ $CurrentTetraMesh Update
     return 1
 }
 #-------------------------------------------------------------------------------
+# .PROC TetraMeshGetTransform
+#
+# This Routine Determines the correct transform
+# and returns the vtkTransform in \"TheTransform\"
+# .END
+#-------------------------------------------------------------------------------
+proc TetraMeshGetTransform {} {
+  global Volume
+
+  ######################################################################
+  #### Now, determine the transform
+  #### If a volume has been selected, use that volumes ScaledIJK to RAS
+  #### Otherwise, just use the identity.
+  ######################################################################
+
+  vtkTransform TheTransform
+
+  set v $Volume(activeID)
+
+  if {$v != "" && $v != $Volume(idNone) } {
+      TheTransform PostMultiply
+      TheTransform Concatenate SamsonFix
+      TheTransform Inverse
+      TheTransform Concatenate [Volume($v,node) GetPosition]
+     } else {
+       TheTransform Identity
+   }
+
+}
+
+#-------------------------------------------------------------------------------
 # .PROC TetraMeshProcessEdges
 #
 # This Routine Reads in the TetraMesh and produces
@@ -749,21 +791,9 @@ set HIGHSCALAR $highscalar
   #### Set Lookup Table??? Not yet...
   #############################################################
 
-  ######################################################################
-  #### Now, determine the transform
-  #### If a volume has been selected, use that volumes ScaledIJK to RAS
-  #### Otherwise, just use the identity.
-  ######################################################################
+  TetraMeshGetTransform
+  set v $Volume(activeID)
 
-  vtkTransform TheTransform
-
-  if {$TetraMesh(AlignmentVolume) != "" && \
-          $TetraMesh(AlignmentVolume) != $Volume(idNone) } {
-    
-     TheTransform Concatenate [Volume($TetraMesh(AlignmentVolume),node) GetPosition]
-     } else {
-       TheTransform Identity
-   }
 
   vtkTransformPolyDataFilter TransformPolyData
     TransformPolyData SetInput [TetraEdges GetOutput]
@@ -776,7 +806,7 @@ set HIGHSCALAR $highscalar
 
   ### Create the new Model
   set m [ TetraMeshCreateModel $modelbasename $LOWSCALAR $HIGHSCALAR \
-          $TetraMesh(AlignmentVolume) ]
+          $v ]
 
   #############################################################
   #### Copy the output
@@ -932,15 +962,9 @@ vtkThreshold Thresh
   #### Otherwise, just use the identity.
   ######################################################################
 
-vtkTransform TheTransform
+  TetraMeshGetTransform
+  set v $Volume(activeID)
 
-if {$TetraMesh(AlignmentVolume) != "" && \
-        $TetraMesh(AlignmentVolume) != $Volume(idNone) } {
-    
- TheTransform Concatenate [Volume($TetraMesh(AlignmentVolume),node) GetPosition]
-} else {
-    TheTransform Identity
-}
 
 vtkTransformPolyDataFilter TransformPolyData
   TransformPolyData SetInput [TetraEdges GetOutput]
@@ -963,7 +987,7 @@ while { [$CurrentTetraMesh GetNumberOfPoints] > 0 } {
 
   ### Create the new Model
   set m [ TetraMeshCreateModel $modelbasename$lowscalar $LOWSCALAR $HIGHSCALAR \
-          $TetraMesh(AlignmentVolume) ]
+          $v ]
 
   if { $first == $Model(idNone) }  { 
      set first $m
@@ -1114,15 +1138,9 @@ vtkGlyph3D VectorGlyph
   #### Otherwise, just use the identity.
   ######################################################################
 
-vtkTransform TheTransform
+  TetraMeshGetTransform
+  set v $Volume(activeID)
 
-if {$TetraMesh(AlignmentVolume) != "" && \
-        $TetraMesh(AlignmentVolume) != $Volume(idNone) } {
-    
- TheTransform Concatenate [Volume($TetraMesh(AlignmentVolume),node) GetPosition]
-} else {
-    TheTransform Identity
-}
 
 vtkTransformPolyDataFilter TransformPolyData
   TransformPolyData SetInput [VectorGlyph GetOutput]
@@ -1131,10 +1149,10 @@ vtkTransformPolyDataFilter TransformPolyData
 TransformPolyData Update
 
 set m [ TetraMeshCreateModel ${modelbasename}Vector 0 10 \
-          $TetraMesh(AlignmentVolume) ]
+          $v ]
 
 #set m [ TetraMeshCreateModel ${modelbasename}Vector $LOWSCALAR $HIGHSCALAR \
-#          $TetraMesh(AlignmentVolume) ]
+#          $v ]
 
   ### Need to copy the output of the pipeline so that the results
   ### Don't get over-written later. Also, when we delete the inputs,
@@ -1270,15 +1288,9 @@ vtkGeometryFilter gf
   #### Otherwise, just use the identity.
   ######################################################################
 
-vtkTransform TheTransform
+  TetraMeshGetTransform  
+  set v $Volume(activeID)
 
-if {$TetraMesh(AlignmentVolume) != "" && \
-        $TetraMesh(AlignmentVolume) != $Volume(idNone) } {
-    
- TheTransform Concatenate [Volume($TetraMesh(AlignmentVolume),node) GetPosition]
-} else {
-    TheTransform Identity
-}
 
 vtkTransformPolyDataFilter TransformPolyData
   TransformPolyData SetInput [gf GetOutput]
@@ -1301,7 +1313,7 @@ while { [$CurrentTetraMesh GetNumberOfPoints] > 0 } {
 
   ### Create the new Model
   set m [ TetraMeshCreateModel $modelbasename$lowscalar $LOWSCALAR $HIGHSCALAR \
-          $TetraMesh(AlignmentVolume) ]
+          $v ]
 
   if { $first == $Model(idNone) }  { 
      set first $m
