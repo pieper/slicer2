@@ -8,6 +8,9 @@ setenv SLICER_HOME /projects/medvis/kpohl/slicer_with_samson
 
 if ($OS == Linux) then   
     setenv VTK_EXE $SLICER_HOME/slicer2-linux-x86
+    # The following did not work
+    # setenv VTK_EXE $PWD/../../../slicer2-linux-x86
+    # setenv VTK_EXE ../../../slicer2-linux-x86
 endif 
 
 if ($OS == solaris) then   
