@@ -78,7 +78,7 @@ vtkMrmlSegmenterNode::vtkMrmlSegmenterNode()
   }
 
   // Legacy variables to stay compatibale with older versions - cannot delete it 
-  this->NumClasses         = 1;
+  this->NumClasses         = 0;
 
 }
 

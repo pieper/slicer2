@@ -48,7 +48,7 @@
 #   EMSegmentProbVolumeSelectNode
 #   EMSegmentMRMLDeleteCreateNodesNodesListEntries 
 #   EMSegmentClassNavigation
-#   EMSegmentSaveSetting 
+#   EMSegmentSaveSeting 
 #   EMSegmentSaveSettingClass 
 #   EMSegmentChangeSuperClassName
 #   EMSegmentStartEM
@@ -143,6 +143,7 @@ proc EMLocalSegmentInit {} {
 
 proc EMSegmentInit {} {
     global EMSegment Module Volume Model Mrml Color Slice Gui env
+
     # For later version where we can use local prios
     # Public Version  = 1
     # Private Version = 2
@@ -242,7 +243,7 @@ proc EMSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.32 $} {$Date: 2004/07/24 18:26:13 $}]
+        {$Revision: 1.33 $} {$Date: 2004/07/29 22:00:21 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -254,6 +255,7 @@ proc EMSegmentInit {} {
    
     # Dummy Variable
     set EMSegment(ProbVolumeSelect) $Volume(idNone)
+    set EMSegment(ReferenceStandardSelect) $Volume(idNone)
 
     set EMSegment(FileCIM) ""
    
@@ -295,40 +297,6 @@ proc EMSegmentInit {} {
     # replace 'set EMSegment(EMiteration)  [vtkEMInit GetNumIter]
     # with    'set EMSegment(EMiteration) 10
 
-    # For Test phase this is the first super class 
-
-    set EMSegment(GlobalSuperClassList) -1
-    set EMSegment(GlobalClassList) ""
-    set EMSegment(Cattrib,0,Name) "Head"
-    set EMSegment(Cattrib,0,IsSuperClass) 1
-    set EMSegment(NumClassesNew) 4 
-    set EMSegment(Cattrib,0,Prob) 0.0 
-    set EMSegment(Cattrib,0,ProbabilityData) $Volume(idNone)
-    set EMSegment(Cattrib,0,PCAFileRange) "0 0" 
-    set EMSegment(Cattrib,0,PCATranslation) "0 0 0" 
-    set EMSegment(Cattrib,0,PCARotation) "0 0 0" 
-    set EMSegment(Cattrib,0,PCAScale) "1 1 1" 
-    set EMSegment(Cattrib,0,PCAMaxDist) 0.0
-    set EMSegment(Cattrib,0,PCADistVariance) 0.0
-    set EMSegment(Cattrib,0,PCAMeanData) $Volume(idNone) 
-    set EMSegment(Cattrib,0,PCAEigen) "" 
-    set EMSegment(Cattrib,0,ClassList) ""
-    set EMSegment(Cattrib,0,ColorCode) $Gui(activeWorkspace)
-    set EMSegment(Cattrib,0,Label) $EMSegment(Cattrib,0,Name)
-    set EMSegment(Cattrib,0,Node) ""
-    set EMSegment(Cattrib,0,LocalPriorWeight) 0.0 
-
-    set EMSegment(Cattrib,0,DICEData) $Volume(idNone)
- 
-    foreach dir  $EMSegment(CIMList) { 
-       set EMSegment(Cattrib,0,CIMMatrix,$dir,Node) ""
-    }
-
-    # Current Super Class
-    set EMSegment(SuperClass) 0 
-
-    set EMSegment(NewSuperClassName) $EMSegment(Cattrib,0,Name)
-
     # The next variable is needed so variables are independent from input
     set EMSegment(MaxInputChannelDef) 0
     # Current Number of Input Channels
@@ -349,10 +317,6 @@ proc EMSegmentInit {} {
     set EMSegment(SegmentationBoundaryMax,1) 256
     set EMSegment(SegmentationBoundaryMax,2) -1
 
-
-    set EMSegment(PrintIntermediateResults)     [vtkEMInit GetPrintIntermediateResults] 
-    set EMSegment(PrintIntermediateSlice)       [vtkEMInit GetPrintIntermediateSlice] 
-    set EMSegment(PrintIntermediateFrequency)   [vtkEMInit GetPrintIntermediateFrequency] 
 
     set EMSegment(RunRemoteFlag) 0
     set EMSegment(RunRemoteServer) ""
@@ -387,12 +351,7 @@ proc EMSegmentInit {} {
     # Kilian Generally simplify structure so that you have to do the least amount of work when you enter new variables 
     # Combine intialize function for XMLReaderWriter.tcl and LocalSegment.tcl
 
-
-    set EMSegment(BiasPrint) 0
-    set EMSegment(PrintPCAParameters) 0
-    set EMSegment(PrintDICEResults) 0
-
-    set EMSegment(PrintIntermediateDir) "."
+    set EMSegment(PrintDir) "."
 
     # Class Table Overview 
     set EMSegment(ColWidth) 15 
@@ -424,8 +383,6 @@ proc EMSegmentInit {} {
       set EMSegment(NumGraph) 1
     }
     set EMSegment(NumGraph) 3
-    # Define Histogram 
-    set EMSegment(Cattrib,0,ColorGraphCode) #ffb2b2 
 
     # How many Graph buttons should be in one row 
     set EMSegment(Graph,ButtonNum) 10
@@ -473,10 +430,47 @@ proc EMSegmentInit {} {
       set EMSegment(Graph,$i,LineID,$j) -1
       }
     }
+                   
+    # ------------------------------------------------------
+    # Define classes 
 
-    # Create Classes 
-    EMSegmentCreateDeleteClasses 1 1
-    
+    # First Define the Head Class 
+  
+    # all values have to be reset so that you can call the procedure multiple times  
+    if {[info exists EMSegment(GlobalClassList)] == 0 } {set EMSegment(GlobalClassList) ""}
+    if {[info exists EMSegment(GlobalSuperClassList)] == 0 } {set EMSegment(GlobalSuperClassList) ""}
+
+    # The second time around it is not deleted              
+    if {[info exists EMSegment(Cattrib,-1,ClassList)] == 0} { set EMSegment(Cattrib,-1,ClassList) ""}
+
+    set EMSegment(SuperClass) -1
+    set EMSegment(NumClassesNew) 1
+
+    EMSegmentCreateDeleteClasses 0 1 1 
+    # Set Head Class to superclass
+
+    # Delete it from class list 
+    if {$EMSegment(GlobalClassList) == "0"} { set EMSegment(GlobalClassList) ""}
+
+    # Transfere to SuperClass 
+    set EMSegment(SuperClass) 0 
+    set EMSegment(GlobalSuperClassList) "0"
+    set EMSegment(Cattrib,0,IsSuperClass) 1
+
+    set EMSegment(Cattrib,0,Name) "Head"
+    set EMSegment(Cattrib,0,Label) $EMSegment(Cattrib,0,Name)
+   
+    # otherwise it is the seocnd run and we do not want to delete the class list 
+    # if {[info exists EMSegment(Cattrib,0,ClassList) ] == 0} { set EMSegment(Cattrib,0,ClassList) ""}
+    set EMSegment(NumClassesNew) 4 
+    set EMSegment(Cattrib,0,ColorCode) $Gui(activeWorkspace)
+    set EMSegment(Cattrib,0,ColorGraphCode) #ffb2b2 
+    set EMSegment(Cattrib,0,LocalPriorWeight)
+
+    # Create SubClasses 
+    EMSegmentCreateDeleteClasses 1 1 1
+
+    # ------------------------------------------------------
     # Event bindings! (see EMSegmentEnter, EMSegmentExit, tcl-shared/Events.tcl)
     set EMSegment(eventManager) {}
     # Not necessarily the most beautiful method but it works for right now
@@ -662,9 +656,9 @@ Description of the tabs:
     DevAddLabel $f.fCol.f1.lNumClasses "No. of Classes:"  
     eval {entry $f.fCol.f2.eNumClasses -width 4 -textvariable EMSegment(NumClassesNew) } $Gui(WEA)
     TooltipAdd $f.fCol.f2.eNumClasses "Define Number of Classes"
-    bind $f.fCol.f2.eNumClasses <Return> "EMSegmentCreateDeleteClasses 1 1"
-    bind $f.fCol.f2.eNumClasses <Tab>    "EMSegmentCreateDeleteClasses 1 1"
-    bind $f.fCol.f2.eNumClasses <Leave>  "EMSegmentCreateDeleteClasses 1 1"
+    bind $f.fCol.f2.eNumClasses <Return> "EMSegmentCreateDeleteClasses 1 1 0 "
+    bind $f.fCol.f2.eNumClasses <Tab>    "EMSegmentCreateDeleteClasses 1 1 0"
+    bind $f.fCol.f2.eNumClasses <Leave>  "EMSegmentCreateDeleteClasses 1 1 0"
 
     DevAddLabel $f.fCol.f1.lEMI "Iterations:"
     eval {entry $f.fCol.f2.eEMI -width 4 -textvariable EMSegment(EMiteration) } $Gui(WEA)
@@ -724,8 +718,15 @@ Description of the tabs:
     pack $f.lEmpty -side top -padx $Gui(pad) -pady 0
     # Naviagtion bar
     frame $f.fClassNevigation -bg $Gui(activeWorkspace) 
-    pack $f.fClassNevigation -side top -pady 5 
+    pack $f.fClassNevigation -side top -pady 0 
+
+    frame $f.fClassNevigationButtom -bg $Gui(activeWorkspace) 
+    pack $f.fClassNevigationButtom -side top  
        
+    DevAddButton $f.fClassNevigation.bUp "Up" "EMSegmentClassNavigation Up" 
+    TooltipAdd $f.fClassNevigation.bUp "Press button to define to parent class"
+    set EMSegment(EM-bNavigationUp) $f.fClassNevigation.bUp
+
     DevAddButton $f.fClassNevigation.bPrevious "Prev" "EMSegmentClassNavigation Previous" 
     TooltipAdd $f.fClassNevigation.bPrevious "Press button to define to previous class"
     set EMSegment(EM-bNavigationPrevious) $f.fClassNevigation.bPrevious
@@ -733,17 +734,26 @@ Description of the tabs:
     DevAddLabel $f.fClassNevigation.ltxt "Working on Class "
     DevAddLabel $f.fClassNevigation.lClass $Sclass
     set EMSegment(EM-lClass) $f.fClassNevigation.lClass
+
     DevAddButton $f.fClassNevigation.bNext "Next" "EMSegmentClassNavigation Next" 
     TooltipAdd $f.fClassNevigation.bNext "Press button to define to Next class"
     set EMSegment(EM-bNavigationNext) $f.fClassNevigation.bNext
+
+    DevAddButton $f.fClassNevigationButtom.bDown "Down" "EMSegmentClassNavigation Down" 
+    TooltipAdd $f.fClassNevigationButtom.bDown "Press button to define to sub class"
+    set EMSegment(EM-bNavigationDown) $f.fClassNevigationButtom.bDown
+
+    pack $f.fClassNevigation.bUp -side top -padx 5 -pady 2
     pack $f.fClassNevigation.bPrevious -side left -padx 5 -pady 0
     pack $f.fClassNevigation.ltxt $f.fClassNevigation.lClass -side left -padx 0 -pady 0
     pack $f.fClassNevigation.bNext -side left -padx 5 -pady 0
+    pack $f.fClassNevigationButtom.bDown -side top -padx 5 -pady 2
+
 
     # Die Mediziner Sicherung
     foreach text "A B C D" value "1 2 3 4" {
         frame $f.fClassStep$value -bg $Gui(activeWorkspace) -relief sunken -bd 2 
-        pack $f.fClassStep$value -side top -fill x -pady 7
+        pack $f.fClassStep$value -side top -fill x -pady 4
         # DevAddButton $f.fClassStep$value.bStep "$text" "EMSegmentClassDefinition $value"
 
         DevAddLabel $f.fClassStep$value.lStep "Step $text:" 
@@ -920,6 +930,9 @@ Description of the tabs:
     frame $f.frest -bg $Gui(activeWorkspace) -relief sunken -bd 2 
     pack $f.frest -side top -pady 2 -fill x 
 
+    frame $f.fprint -bg $Gui(activeWorkspace) -relief sunken -bd 2 
+    pack $f.fprint -side top -pady 2 -fill x 
+
     #--------------------------------------------
     # Class->Section 2->body->right Frame
     #-------------------------------------------
@@ -995,9 +1008,37 @@ Description of the tabs:
     pack $f.fBox1.fColor.lColorLabel -side left  -anchor n -pady 4
     pack $f.fBox1.fColor.bColorLabel -side left  -anchor n -padx 1 -pady 2
 
+    # Define Print Parameters 
+    set f $EMSegment(Cl-fClass).f0.fprint   
+    frame $f.ftitle      -bg $Gui(activeWorkspace) 
+    frame $f.fparameters -bg $Gui(activeWorkspace) 
+    pack $f.ftitle $f.fparameters -side top -fill x 
+
+    DevAddLabel $f.ftitle.lprint "Print Parameters: "
+    pack $f.ftitle.lprint -side left -anchor n -pady 4
+  
+    eval {checkbutton $f.fparameters.cWeight -text "Weight" -variable EMSegment(Cattrib,$Sclass,PrintWeights) -indicatoron 1} $Gui(WCA)
+    eval {checkbutton $f.fparameters.cPCA -text "PCA" -variable EMSegment(Cattrib,$Sclass,PrintPCA) -indicatoron 1} $Gui(WCA)
+    eval {checkbutton $f.fparameters.cQuality -text "Quality" -variable EMSegment(Cattrib,$Sclass,PrintQuality) -indicatoron 1} $Gui(WCA)
+
+    set menubutton   $f.fparameters.mReferenceStandardSelect 
+    set menu        $f.fparameters.mReferenceStandardSelect.m 
+
+    eval {menubutton $menubutton -text [Volume($EMSegment(Cattrib,$Sclass,ReferenceStandardData),node) GetName] -relief raised -bd 2 -width 9 -menu $menu} $Gui(WMBA)
+    eval {menu $menu} $Gui(WMA)
+    TooltipAdd $menubutton "Select reference standard for quality measure!" 
+    set EMSegment(mbCl-ReferenceStandardSelect) $menubutton
+    set EMSegment(mCl-ReferenceStandardSelect) $menu
+    set EMSegment(ReferenceStandardSelect) $EMSegment(Cattrib,$Sclass,ReferenceStandardData) 
+    DevUpdateNodeSelectButton Volume EMSegment Cl-ReferenceStandardSelect ReferenceStandardSelect EMSegmenReferenceStandardSelectNode
+
+    set EMSegment(Cl-f0-fPrintParameter)  $f.fparameters
+    pack $f.fparameters.cWeight $f.fparameters.cPCA $f.fparameters.cQuality  $f.fparameters.mReferenceStandardSelect -side left -anchor n -pady 4 -padx 3
+
     EMSegmentCreateGraphDisplayButton $EMSegment(Cl-fClass).f0
     EMSegmentCreateClassOverviewButton $EMSegment(Cl-fClass).f0
     pack $EMSegment(Cl-fClass).f0.bGeneral -side top -pady $Gui(pad) 
+
     #-------------------------------------------
     # Class->Section 3: Display SuperClass properties   
     #-------------------------------------------
@@ -1007,6 +1048,8 @@ Description of the tabs:
     pack $f.fbody -side top -pady 2 -fill x 
     frame $f.fRest -bg $Gui(activeWorkspace) -relief sunken -bd 2 
     pack $f.fRest -side top -pady 2 -fill x 
+    frame $f.fPrint -bg $Gui(activeWorkspace) -relief sunken -bd 2 
+    pack $f.fPrint -side top -pady 2 -fill x 
 
     set f $f.fbody
     frame $f.fLeft -bg $Gui(activeWorkspace)
@@ -1014,6 +1057,7 @@ Description of the tabs:
     pack $f.fLeft  $f.fRight -side left -padx 0 -pady 0
 
     DevAddLabel $f.fLeft.lName "Name:"  
+    set EMSegment(NewSuperClassName) $EMSegment(Cattrib,0,Name)
     EMSegmentAddSuperClassName $f.fRight -1
     set EMSegment(ClSuper-eName) $f.fRight.eName 
 
@@ -1024,14 +1068,33 @@ Description of the tabs:
     eval {entry $f.fRight.eNumClasses -width 4 -textvariable EMSegment(NumClassesNew) } $Gui(WEA)
 
     TooltipAdd $f.fRight.eNumClasses "Define Number of Classes"
-    bind $f.fRight.eNumClasses <Return> "EMSegmentCreateDeleteClasses 1 1"
-    bind $f.fRight.eNumClasses <Tab>    "EMSegmentCreateDeleteClasses 1 1"
-    bind $f.fRight.eNumClasses <Leave>  "EMSegmentCreateDeleteClasses 1 1"
+    bind $f.fRight.eNumClasses <Return> "EMSegmentCreateDeleteClasses 1 1 0"
+    bind $f.fRight.eNumClasses <Tab>    "EMSegmentCreateDeleteClasses 1 1 0"
+    bind $f.fRight.eNumClasses <Leave>  "EMSegmentCreateDeleteClasses 1 1 0"
 
     pack $f.fLeft.lName $f.fLeft.lProb $f.fLeft.lNumClasses -side top -pady 5 -padx $Gui(pad) -anchor w 
     pack $f.fRight.eName $f.fRight.eGlobalProb $f.fRight.eNumClasses -side top -pady 3 -side top -anchor w
    
     EMSegmentBuildWeightPannel  $EMSegment(Cl-fClass).f1.fRest $Sclass 1
+
+    set f $EMSegment(Cl-fClass).f1.fPrint   
+    frame $f.ftitle      -bg $Gui(activeWorkspace) 
+    frame $f.fparameters -bg $Gui(activeWorkspace) 
+    pack $f.ftitle $f.fparameters -side top -fill x 
+
+    DevAddLabel $f.ftitle.lprint "Print Parameters: "
+    pack $f.ftitle.lprint -side left -anchor n -pady 4
+  
+    eval {checkbutton $f.fparameters.cPrint    -text "Print"      -variable EMSegment(Cattrib,$Sclass,PrintFrequency) -indicatoron 1} $Gui(WCA)
+    eval {checkbutton $f.fparameters.cWeight   -text "Weight"     -variable EMSegment(Cattrib,$Sclass,PrintWeights) -indicatoron 1} $Gui(WCA)
+    eval {checkbutton $f.fparameters.cBias     -text "Bias"       -variable EMSegment(Cattrib,$Sclass,PrintBias) -indicatoron 1} $Gui(WCA)
+    eval {checkbutton $f.fparameters.cLabelMap -text "LabelMap"   -variable EMSegment(Cattrib,$Sclass,PrintLabelMap) -indicatoron 1} $Gui(WCA)
+
+    set EMSegment(Cl-f1-fPrintParameter)  $f.fparameters
+
+    pack $f.fparameters.cPrint $f.fparameters.cWeight $f.fparameters.cBias $f.fparameters.cLabelMap  -side left -anchor n -pady 4 -padx 3
+
+
 
     EMSegmentCreateGraphDisplayButton $EMSegment(Cl-fClass).f1
     EMSegmentCreateClassOverviewButton $EMSegment(Cl-fClass).f1 
@@ -1245,15 +1308,9 @@ Description of the tabs:
     eval {radiobutton $f.fSect1.fCol2.fCreateFile.r$value -width $width -indicatoron 0\
         -text "$text" -value "$value" -variable EMSegment(PrintIntermediateResults) } $Gui(WCA)
     }
-    TooltipAdd $f.fSect1.fCol2.fCreateFile "Create Matlab Files (EMSegmResult<iter>.m) for displaying intermediate results"
-
-    DevAddLabel $f.fSect1.fCol1.lWriteSlice "Print Slice:"
-    eval {entry $f.fSect1.fCol2.eWriteSlice -width 4 -textvariable EMSegment(PrintIntermediateSlice) } $Gui(WEA)
-    TooltipAdd $f.fSect1.fCol2.eWriteSlice "Print out the result of which slice ?"
-
-    DevAddLabel $f.fSect1.fCol1.lWriteFrequency "Printing Frequency:"
-    eval {entry $f.fSect1.fCol2.eWriteFrequency -width 4 -textvariable EMSegment(PrintIntermediateFrequency) } $Gui(WEA)
-    TooltipAdd $f.fSect1.fCol2.eWriteFrequency "Print out the result after how many steps ?"
+    DevAddLabel $f.fSect1.fCol1.lPrintDir "Printing Directory:"
+    eval {entry $f.fSect1.fCol2.ePrintDir -width 14 -textvariable EMSegment(PrintDir) } $Gui(WEA)
+    TooltipAdd $f.fSect1.fCol2.ePrintDir "In which directory should the results printed out ?"
 
     DevAddLabel $f.fSect1.fCol1.lUseProb "Use Probability:"
     frame  $f.fSect1.fCol2.fUseProb -bg $Gui(activeWorkspace)
@@ -1308,22 +1365,22 @@ Description of the tabs:
 
     TooltipAdd $f.fSect1.fCol2.fRunRemote "You can run the segmentation remotly on another machine - enter username@machine name in the blank field"
 
-    DevAddLabel $f.fSect1.fCol1.lDICEMeasure "Dice Measure:"
-    frame  $f.fSect1.fCol2.fDICEMeasure -bg $Gui(activeWorkspace)
-    DevAddSelectButton  EMSegment $f.fSect1.fCol2.fDICEMeasure  DICE "" Pack "Select Volume to calculate Dice Measure of segmentation result" 8
+    # DevAddLabel $f.fSect1.fCol1.lDICEMeasure "Dice Measure:"
+    # frame  $f.fSect1.fCol2.fDICEMeasure -bg $Gui(activeWorkspace)
+    # DevAddSelectButton  EMSegment $f.fSect1.fCol2.fDICEMeasure  DICE "" Pack "Select Volume to calculate Dice Measure of segmentation result" 8
 
-    $EMSegment(mbDICE) configure -text  [Volume($EMSegment(DICESelectedVolume),node) GetName]
-    foreach vol  $EMSegment(DICEVolumeList) {
-        $EMSegment(mDICE) add command -label [Volume($vol,node) GetName] -command "EMSegmentChangeDiceVolume $vol"
-    }
-    # Append menus and buttons to lists that get refreshed during UpdateMRML
-    # lappend Volume(mbActiveList)  $f.fSect1.fCol2.fDICEMeasure.mbDICE
-    # lappend Volume(mActiveList) $EMSegment(mDICE) 
+    # $EMSegment(mbDICE) configure -text  [Volume($EMSegment(DICESelectedVolume),node) GetName]
+    # foreach vol  $EMSegment(DICEVolumeList) {
+    #     $EMSegment(mDICE) add command -label [Volume($vol,node) GetName] -command "EMSegmentChangeDiceVolume $vol"
+    # }
+    # # Append menus and buttons to lists that get refreshed during UpdateMRML
+    # # lappend Volume(mbActiveList)  $f.fSect1.fCol2.fDICEMeasure.mbDICE
+    # # lappend Volume(mActiveList) $EMSegment(mDICE) 
 
-    eval {entry $f.fSect1.fCol2.fDICEMeasure.eDICEMeasure -width 4 -textvariable EMSegment(DICELabelList) } $Gui(WEA)
-    TooltipAdd $f.fSect1.fCol2.fDICEMeasure.eDICEMeasure "Enter labels to compare with segmented image for Dice Measure, e.g. 4 6"
+    # eval {entry $f.fSect1.fCol2.fDICEMeasure.eDICEMeasure -width 4 -textvariable EMSegment(DICELabelList) } $Gui(WEA)
+    # TooltipAdd $f.fSect1.fCol2.fDICEMeasure.eDICEMeasure "Enter labels to compare with segmented image for Dice Measure, e.g. 4 6"
 
-    DevAddButton $f.fSect1.fCol2.fDICEMeasure.bDICEMeasure "Run" "EMSegmentCalcDice"
+    # DevAddButton $f.fSect1.fCol2.fDICEMeasure.bDICEMeasure "Run" "EMSegmentCalcDice"
 
     DevAddLabel $f.fSect1.fCol1.lModelMaker "Generate Models:"
     frame  $f.fSect1.fCol2.fModelMaker -bg $Gui(activeWorkspace)
@@ -1378,9 +1435,8 @@ Description of the tabs:
     pack $f.fSect1.fCol1.lEmpty4 $f.fSect1.fCol2.lEmpty4 -side top -padx $Gui(pad) -pady 1 -anchor w 
 
     #Pack 5.Block
-    pack $f.fSect1.fCol1.lCreateFile  $f.fSect1.fCol1.lWriteSlice $f.fSect1.fCol1.lWriteFrequency -side top -padx $Gui(pad) -pady 2 -anchor w 
-    pack $f.fSect1.fCol2.fCreateFile  $f.fSect1.fCol2.eWriteSlice $f.fSect1.fCol2.eWriteFrequency -side top -anchor w
-    pack $f.fSect1.fCol2.fCreateFile.r1  $f.fSect1.fCol2.fCreateFile.r0 -side left -fill x
+    pack $f.fSect1.fCol1.lPrintDir -side top -padx $Gui(pad) -pady 2 -anchor w 
+    pack $f.fSect1.fCol2.ePrintDir -side top -anchor w
     pack $f.fSect1.fCol1.lEmpty5 $f.fSect1.fCol2.lEmpty5 -side top -padx $Gui(pad) -pady 1 -anchor w 
 
   
@@ -1406,9 +1462,9 @@ Description of the tabs:
          pack $f.fSect1.fCol2.fRunRemote -side top -anchor w
          pack $f.fSect1.fCol2.fRunRemote.r1  $f.fSect1.fCol2.fRunRemote.r0 $f.fSect1.fCol2.fRunRemote.eServer -side left -fill x
       }
-      pack $f.fSect1.fCol1.lDICEMeasure  -side top -padx $Gui(pad) -pady 2 -anchor w 
-      pack $f.fSect1.fCol2.fDICEMeasure -side top -anchor w
-      pack $f.fSect1.fCol2.fDICEMeasure.eDICEMeasure $f.fSect1.fCol2.fDICEMeasure.bDICEMeasure -side left -fill x
+      # pack $f.fSect1.fCol1.lDICEMeasure  -side top -padx $Gui(pad) -pady 2 -anchor w 
+      # pack $f.fSect1.fCol2.fDICEMeasure -side top -anchor w
+      # pack $f.fSect1.fCol2.fDICEMeasure.eDICEMeasure $f.fSect1.fCol2.fDICEMeasure.bDICEMeasure -side left -fill x
       pack $f.fSect1.fCol1.lModelMaker  -side top -padx $Gui(pad) -pady 2 -anchor w  
       pack $f.fSect1.fCol2.fModelMaker  -side top -anchor w 
       pack $f.fSect1.fCol2.fModelMaker.bModelMaker  -side left -fill x 
@@ -1587,15 +1643,16 @@ proc EMSegmentLoadMRML {tag attr} {
         set n [EMSegmentLoadMRMLNode Segmenter "$attr" "" ]
         # Have to address legacy Attributes in UpdateMrml and Save Setting ! 
         # The tree is a 1D list of nodes - see also the note above
-    # => Never delete varaibles from vtkMrml..Node.h if some XML files you use 
+        # => Never delete varaibles from vtkMrml..Node.h if some XML files you use 
         # still have them and cannot easily change it up here such as NumClasses 
-    foreach a $attr {
-        set key [lindex $a 0]
-        set val [lreplace $a 0 0]
-        switch $key {
-        "StartSlice" {$n SetSegmentationBoundaryMin 1 1 $val}  
-        "EndSlice"   {$n SetSegmentationBoundaryMin 256 256 $val}  
-        }
+        foreach a $attr {
+          set key [lindex $a 0]
+          set val [lreplace $a 0 0]
+          switch $key {
+        "StartSlice" {$n SetSegmentationBoundaryMin 1 1 $val;}  
+            "EndSlice"   {$n SetSegmentationBoundaryMax 256 256 $val}  
+          }
+       
     }
 
      }
@@ -1698,7 +1755,7 @@ proc EMSegmentUpdateMRML {} {
           # Do not overide any changes - do not have to update anything - makes it fast
           # The only time, when this 0 if a new xml file is read 
           if {$EMSegment(SegmenterNode) != "" && $pid == [$EMSegment(SegmenterNode) GetID] && [$EMSegment(SegmenterNode) GetAlreadyRead]} {
-              break   
+             break   
           }  
           set VolumeList ""
           foreach VolID $Volume(idList) {
@@ -1741,22 +1798,21 @@ proc EMSegmentUpdateMRML {} {
           set EMSegment(EMShapeIter)                [Segmenter($pid,node) GetEMShapeIter]
 
 
-      # If the path is not the same, define all Segmenter variables
-      # Delete old values Kilian: Could do it but would cost to much time 
-      # This is more efficient - but theoretically could also start from stretch bc I 
-      # only get this far when a new XML file is read ! If you get in problems just do the 
-      # following (deletes everything) 
-      # set EMSegment(NumClassesNew)   0
-      # EMSegmentCreateDeleteClasses 1 0
+          # If the path is not the same, define all Segmenter variables
+          # Delete old values Kilian: Could do it but would cost to much time 
+          # This is more efficient - but theoretically could also start from stretch bc I 
+          # only get this far when a new XML file is read ! If you get in problems just do the 
+          # following (deletes everything) 
+          # set EMSegment(NumClassesNew)   0
+          # EMSegmentCreateDeleteClasses 1 0
           set  NumClasses [Segmenter($pid,node) GetNumClasses]
-
-      if {$NumClasses} { 
-          set EMSegment(NumClassesNew)           [Segmenter($pid,node) GetNumClasses]              
-          EMSegmentCreateDeleteClasses 1 0
-          set CurrentClassList $EMSegment(Cattrib,0,ClassList)       
-      } else {
-          set CurrentClassList 0
-      }
+          if {$NumClasses} { 
+            set EMSegment(NumClassesNew)           [Segmenter($pid,node) GetNumClasses]              
+            EMSegmentCreateDeleteClasses 1 0 0
+            set CurrentClassList $EMSegment(Cattrib,0,ClassList)       
+         } else {
+            set CurrentClassList 0
+         }
        } elseif {$ClassName == "vtkMrmlSegmenterGraphNode" } {
           # --------------------------------------------------
           # 4.) Only change Graph variables until graph 
@@ -1791,6 +1847,7 @@ proc EMSegmentUpdateMRML {} {
             }
           }
        } elseif {$ClassName == "vtkMrmlSegmenterSuperClassNode" } {
+      # puts "Start vtkMrmlSegmenterSuperClassNode"
           # --------------------------------------------------
           # 6.) Update variables for SuperClass 
           # -------------------------------------------------
@@ -1799,28 +1856,28 @@ proc EMSegmentUpdateMRML {} {
           set NumClass [lindex $CurrentClassList 0]
           if {$NumClass == ""} { DevErrorWindow "Error in XML File : Super class $EMSegment(SuperClass)  has not a sub-classes defined" }
 
-      # Check If we initialize the head class 
+          # Check If we initialize the head class 
           if {$NumClass == 0} {set InitiHeadClassFlag 1
-      } else {set InitiHeadClassFlag 0}
+          } else {set InitiHeadClassFlag 0}
 
           set EMSegment(Class) $NumClass 
 
           # Save status when returning to parent of this class 
-      if {$InitiHeadClassFlag} {
-            set SclassMemory ""
-            set EMSegment(SuperClass) $NumClass
-      } else  { 
-            lappend SclassMemory [list "$EMSegment(SuperClass)" "[lrange $CurrentClassList 1 end]"] 
-            # Transfer from Class to SuperClass
-            if {$EMSegment(Cattrib,$NumClass,IsSuperClass) == 0} {
+          if {$InitiHeadClassFlag} {
+             set SclassMemory ""
+             set EMSegment(SuperClass) $NumClass
+          } else  { 
+             lappend SclassMemory [list "$EMSegment(SuperClass)" "[lrange $CurrentClassList 1 end]"] 
+             # Transfer from Class to SuperClass
+             if {$EMSegment(Cattrib,$NumClass,IsSuperClass) == 0} {
                set EMSegment(Cattrib,$NumClass,IsSuperClass) 1
                # Set current class to current SuperClass
                EMSegmentTransfereClassType 0 0
-            } else {
-               set EMSegment(SuperClass) $NumClass
-            }
-        set EMSegment(NewSuperClassName) [SegmenterSuperClass($pid,node) GetName]
-            EMSegmentChangeSuperClassName 0 -1
+             } else {
+                set EMSegment(SuperClass) $NumClass
+             }
+             set EMSegment(NewSuperClassName) [SegmenterSuperClass($pid,node) GetName]
+             EMSegmentChangeSuperClassName 0 -1
 
           }
       
@@ -1833,13 +1890,22 @@ proc EMSegmentUpdateMRML {} {
              }
           }
       
-          set EMSegment(Cattrib,$NumClass,Prob) [SegmenterSuperClass($pid,node) GetProb]
+          set EMSegment(Cattrib,$NumClass,Prob)     [SegmenterSuperClass($pid,node) GetProb]
+
+      set EMSegment(Cattrib,$NumClass,PrintWeights)    [SegmenterSuperClass($pid,node) GetPrintWeights]
+      set EMSegment(Cattrib,$NumClass,PrintFrequency)  [SegmenterSuperClass($pid,node) GetPrintFrequency]
+      set EMSegment(Cattrib,$NumClass,PrintBias)       [SegmenterSuperClass($pid,node) GetPrintBias]
+      set EMSegment(Cattrib,$NumClass,PrintLabelMap)   [SegmenterSuperClass($pid,node) GetPrintLabelMap]
+
+
+
           # Create Sub Classes
           set EMSegment(NumClassesNew)          [SegmenterSuperClass($pid,node) GetNumClasses]       
-          EMSegmentCreateDeleteClasses 0 0
+          EMSegmentCreateDeleteClasses $InitiHeadClassFlag 0 0
       
           set EMSegment(Cattrib,$NumClass,Node) $item
           set CurrentClassList $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList)
+      # puts "End vtkMrmlSegmenterSuperClassNode"
     } elseif {$ClassName == "vtkMrmlSegmenterClassNode" } {
         # --------------------------------------------------
         # 7.) Update selected Class List 
@@ -1857,19 +1923,26 @@ proc EMSegmentUpdateMRML {} {
         if {$EMSegment(Cattrib,$NumClass,IsSuperClass) == 1} {
            set EMSegment(Cattrib,$NumClass,IsSuperClass) 0
            # Set current class to current Class
-       # Needed so the right classes are deleted when loading a new XML File 
+           # Needed so the right classes are deleted when loading a new XML File 
            # -> SuperClass has to be current class  
            set SuperClass $EMSegment(SuperClass) 
            set EMSegment(SuperClass) $NumClass 
            EMSegmentTransfereClassType 0 0
            set EMSegment(SuperClass) $SuperClass
-       if {[expr !$EMSegment(SuperClass)]} {
-            EMSegmentUpdateClassOverview 
-       } 
+           if {[expr !$EMSegment(SuperClass)]} {
+              EMSegmentUpdateClassOverview 
+           } 
         }
         set EMSegment(Cattrib,$NumClass,Node)  $item
 
         EMSegmentClickLabel $NumClass [expr !$EMSegment(SuperClass)] [SegmenterClass($pid,node) GetLabel] 
+
+    set EMSegment(Cattrib,$NumClass,PrintWeights)    [SegmenterClass($pid,node) GetPrintWeights]
+    set EMSegment(Cattrib,$NumClass,PrintPCA)        [SegmenterClass($pid,node) GetPrintPCA]
+    set EMSegment(Cattrib,$NumClass,PrintQuality)    [SegmenterClass($pid,node) GetPrintQuality]
+        # Is defined later 
+        set EMSegment(Cattrib,$NumClass,ReferenceStandardData) $Volume(idNone)
+        
         set EMSegment(Cattrib,$NumClass,Prob)             [SegmenterClass($pid,node) GetProb]
         set EMSegment(Cattrib,$NumClass,ShapeParameter)   [SegmenterClass($pid,node) GetShapeParameter]
 
@@ -1890,9 +1963,7 @@ proc EMSegmentUpdateMRML {} {
         set EMSegment(Cattrib,$NumClass,PCAMeanData) $Volume(idNone) 
         set PCAMeanName   [SegmenterClass($pid,node) GetPCAMeanName]
 
-        set EMSegment(Cattrib,$NumClass,DICEData) $Volume(idNone)
-
-        set DICEFileName  [SegmenterClass($pid,node) GetReferenceStandardFileName]
+        set ReferenceStandardFileName  [SegmenterClass($pid,node) GetReferenceStandardFileName]
 
         foreach VolID $Volume(idList) VolAttr $VolumeList {
             if {([lindex $VolAttr 0] == $LocalPriorName) && ([lindex $VolAttr 1] == $LocalPriorRange) &&  ($LocalPriorName != "")} {
@@ -1901,7 +1972,9 @@ proc EMSegmentUpdateMRML {} {
             }
             if {([lindex $VolAttr 0] == $PCAMeanName) && ($PCAMeanName != "") && ([lindex $VolAttr 1] == $EMSegment(Cattrib,$NumClass,PCAFileRange)) } { set EMSegment(Cattrib,$NumClass,PCAMeanData) $VolID }
 
-            if {([lindex $VolAttr 0] == $DICEFileName) && ($DICEFileName != "") } { set EMSegment(Cattrib,$NumClass,DICEData) $VolID }
+            if {([lindex $VolAttr 0] == $ReferenceStandardFileName) && ($ReferenceStandardFileName != "") } { 
+        set EMSegment(Cattrib,$NumClass,ReferenceStandardData) $VolID 
+        }
         }
 
         set index 0
@@ -1911,16 +1984,16 @@ proc EMSegmentUpdateMRML {} {
         for {set y 0} {$y < $EMSegment(MaxInputChannelDef)} {incr y} {
            set EMSegment(Cattrib,$NumClass,LogMean,$y) [lindex $LogMean $y]
            if {[lindex $InputChannelWeights $y] == ""} {set EMSegment(Cattrib,$NumClass,InputChannelWeights,$y) 1.0
-       } else {
+        } else {
              set EMSegment(Cattrib,$NumClass,InputChannelWeights,$y) [lindex $InputChannelWeights $y]
-       }
-           for {set x 0} {$x < $EMSegment(MaxInputChannelDef)} {incr x} {
+        }
+        for {set x 0} {$x < $EMSegment(MaxInputChannelDef)} {incr x} {
               set EMSegment(Cattrib,$NumClass,LogCovariance,$y,$x)  [lindex $LogCovariance $index]
               incr index
-           }
-           # This is for the extra character at the end of the line (';')
-           incr index
         }
+        # This is for the extra character at the end of the line (';')
+        incr index
+      }
     } elseif {$ClassName == "vtkMrmlSegmenterCIMNode" } {
         # --------------------------------------------------
         # 8.) Update selected CIM List 
@@ -1944,7 +2017,7 @@ proc EMSegmentUpdateMRML {} {
         # 9.) Update PCA Eigenvalues/vectors 
         # -------------------------------------------------
         set pid [$item GetID]
-    set NumClass $EMSegment(Class)
+        set NumClass $EMSegment(Class)
         # EigenList is defined by (Number, EigenValue, EigenVectorData, NodeID)        
         set  EigenList [SegmenterPCAEigen($pid,node) GetNumber]
         lappend  EigenList [SegmenterPCAEigen($pid,node) GetEigenValue]
@@ -1954,7 +2027,7 @@ proc EMSegmentUpdateMRML {} {
             if {([lindex $VolAttr 0] == $EigenVectorName) && ($EigenVectorName != "") && ([lindex $VolAttr 1] == $EMSegment(Cattrib,$NumClass,PCAFileRange))} { 
               set EigenVectorID  $VolID 
             }
-    }
+        }
         lappend EigenList  $EigenVectorID
         lappend EigenList  $item
         # Set it in the right order 
@@ -1976,7 +2049,7 @@ proc EMSegmentUpdateMRML {} {
         set temp [lindex $SclassMemory end]
         set SclassMemory [lreplace $SclassMemory end end]
         set CurrentClassList [lindex $temp 1] 
-        EMSegmentChangeSuperClass [lindex $temp 0] 0
+        if {$temp != ""} {EMSegmentChangeSuperClass [lindex $temp 0] 0}
     } elseif {$ClassName == "vtkMrmlEndSegmenterNode" } {
         # --------------------------------------------------
         # 12.) End of Segmenter
@@ -2002,12 +2075,12 @@ proc EMSegmentUpdateMRML {} {
       # puts "Hey SuperClass $EMSegment(SuperClass)  $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList)" 
       foreach cl $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList) {
          if {$EMSegment(Cattrib,$cl,IsSuperClass) == 0} {EMSegmentUpdateLocalProb OT-ProbVolumeSelect,$cl $cl }
+     
       }
       # Had to put it in - otherwise try to delete a superclass that has a sub class that is also a super class ! 
-      if {$EMSegment(Cattrib,$EMSegment(Class),IsSuperClass) == 0} {
       EMSegmentUpdateLocalProb Cl-ProbVolumeSelect $EMSegment(Class)
       EMSegmentUpdateLocalProb EM-ProbVolumeSelect $EMSegment(Class)
-      }
+      EMSegmentUpdateReferenceStandard
   }
   # puts "---------------------- End EMSegmentUpdateMRML ---------------"
 }
@@ -2056,47 +2129,35 @@ proc EMSegmentProbVolumeSelectNode { type id ArrayName ModelLabel ModelName} {
     }
 }
 
+proc EMSegmentUpdateReferenceStandard { } {
+    global EMSegment
+    DevUpdateNodeSelectButton Volume EMSegment  Cl-ReferenceStandardSelect  ReferenceStandardSelect EMSegmentReferenceStandardSelectNode
+    EMSegmentReferenceStandardSelectNode Volume $EMSegment(Cattrib,$EMSegment(Class),ReferenceStandardData) EMSegment  Cl-ReferenceStandardSelect  blub
+}
+
 #-------------------------------------------------------------------------------
-# .PROC EMSegmentMRMLDeleteCreateNodesNodesListEntries 
+# .PROC EMSegmentReferenceStandardSelectNode
 #
-# Deletes or adds Nodes to the list - just used for Input and graph => get rid of it 
-# at some point
-# .ARGS
+# Called by when the mbCl-ReferenceStandardSelect is called 
 # .END
 #-------------------------------------------------------------------------------
-proc EMSegmentMRMLDeleteCreateNodesListEntries {Type New} {
-    global EMSegment
-
-    if {$Type == "EndSegmenterSuperClass"} {
-    set NodeName $Type
+proc EMSegmentReferenceStandardSelectNode { type id ArrayName ModelLabel ModelName} {
+    global Volume EMSegment
+    set ActiveClass $EMSegment(Class)
+    if {$id == ""} {
+      set Text "None"
+      set EMSegment(Cattrib,$ActiveClass,ReferenceStandardData) $Volume(idNone)
     } else {
-    set NodeName Segmenter${Type}
+        set EMSegment(Cattrib,$ActiveClass,ReferenceStandardData) $id
+        if {$id == -5} {
+            set Text "Create New"
+        } else { 
+            if {[catch {${type}($id,node) GetName} Text]} {set Text ""}
+        }
     }
 
-    set Old [llength $EMSegment(${NodeName}NodeList)]
-    if {$New == $Old} {return}
-
-    if {$New < $Old} {
-       # Delete Nodes that are to many 
-       foreach id [lrange $EMSegment(${NodeName}NodeList) $New end] {
-         MainMrmlDeleteNode $NodeName [$id GetID]
-       }
-       set EMSegment(${NodeName}NodeList) [lrange $EMSegment(${NodeName}NodeList) 0 [expr $New-1]]
-    } else {
-        # We Have to create new Nodes
-        for {set i $Old} { $i <$New} { incr i} {
-           set id [MainMrmlInsertBeforeNode $EMSegment(EndSegmenterNode) Segmenter${Type}]
-           lappend EMSegment(${NodeName}NodeList) $id
-        }
-   }
-   
-   for {set i 0} { $i <$New} { incr i} {
-       set id [lindex $EMSegment(Segmenter${Type}NodeList) $i]
-       switch [string tolower $Type] {
-           "graph" {Segmenter${Type}([$id GetID],node) SetName [expr $i+1]}
-           "input" {Segmenter${Type}([$id GetID],node) SetName "Channel$i"} 
-       }
-   }
+    # Change Button Volumes
+    $EMSegment(mbCl-ReferenceStandardSelect) config -text $Text
 }
 
 
@@ -2108,19 +2169,31 @@ proc EMSegmentMRMLDeleteCreateNodesListEntries {Type New} {
 #-------------------------------------------------------------------------------
 proc EMSegmentClassNavigation {direction} {
     global EMSegment
-    set position [lsearch $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList) $EMSegment(Class)]
-    if {$position < 0 } {return}
-    if {$direction == "Previous"}  {
-    if {$position > 0} {EMSegmentChangeClass [lindex $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList) [expr $position -1]]} else {
-        puts "Error: No previous class in class list"
-    }
-    } else {
-    incr position
-    if {$position < [llength $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList)]} {
-        EMSegmentChangeClass [lindex $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList) $position]
-    } else {
-        puts "Error: No next class in class list"
-    }
+    switch $direction {
+    "Previous" {    set position [lsearch $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList) $EMSegment(Class)]
+                        if {$position < 0 } {return}
+                        if {$position > 0} {EMSegmentChangeClass [lindex $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList) [expr $position -1]]
+                        } else { puts "Error: No previous class in class list" }
+                   }
+     "Next"     {     set position [lsearch $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList) $EMSegment(Class)]
+                          if {$position < 0 } {return}
+                          incr position
+                          if {$position < [llength $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList)]} {
+                              EMSegmentChangeClass [lindex $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList) $position]
+                          } else {
+                             puts "Error: No next class in class list"
+                          }
+                }
+        "Up"     {    if {$EMSegment(Class) } {EMSegmentChangeClass  $EMSegment(SuperClass)
+                       } else { 
+                              puts "Error: No class above" 
+               }
+                  }
+            "Down" {   if {$EMSegment(Cattrib,$EMSegment(SuperClass),IsSuperClass) && [llength $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList)]} {EMSegmentChangeClass  [lindex $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList) 0]
+                   } else { puts "Error: No class below" 
+                   }
+        }
+        default { puts "Error:EMSegmentClassNavigation: Do not understand direction $direction"} 
     }
 }
 
@@ -2144,26 +2217,75 @@ proc EMSegmentBuildWeightPannel {f Sclass Tab} {
 }
 
 #-------------------------------------------------------------------------------
+# .PROC EMSegmentMRMLDeleteCreateNodesNodesListEntries 
+#
+# Deletes or adds Nodes to the list - just used for Input and graph => get rid of it 
+# at some point
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc EMSegmentMRMLDeleteCreateNodesListEntries {Type New LastNode} {
+    global EMSegment
+
+    if {$Type == "EndSegmenterSuperClass"} {
+       set NodeName $Type
+    } else {
+       set NodeName Segmenter${Type}
+    }
+
+    set Old [llength $EMSegment(${NodeName}NodeList)]
+    if {$New == $Old} {
+        if {$New} {return [lindex $EMSegment(${NodeName}NodeList) end] } 
+    return $LastNode
+    }
+
+    if {$New < $Old} {
+       # Delete Nodes that are to many 
+       foreach id [lrange $EMSegment(${NodeName}NodeList) $New end] {
+         MainMrmlDeleteNode $NodeName [$id GetID]
+       }
+       set EMSegment(${NodeName}NodeList) [lrange $EMSegment(${NodeName}NodeList) 0 [expr $New-1]]
+       if {$New} {set LastNode [lindex $EMSegment(${NodeName}NodeList) end]} 
+    } else {
+        # We Have to create new Nodes
+        for {set i $Old} { $i <$New} { incr i} {
+           set id [MainMrmlInsertAfterNode $LastNode Segmenter${Type}]
+           lappend EMSegment(${NodeName}NodeList) $id
+       set LastNode $id
+        }
+   }
+   
+   for {set i 0} { $i <$New} { incr i} {
+       set id [lindex $EMSegment(Segmenter${Type}NodeList) $i]
+       switch [string tolower $Type] {
+           "graph" {Segmenter${Type}([$id GetID],node) SetName [expr $i+1]}
+           "input" {Segmenter${Type}([$id GetID],node) SetName "Channel$i"} 
+       }
+   }
+   return $LastNode
+}
+
+#-------------------------------------------------------------------------------
 # .PROC EMSegmentSaveSetting 
 # Updates the MRML Tree and saves the setting to a file  
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc EMSegmentSaveSetting {FileFlag {FileName -1} {CheckToProceed 1}} {
+proc EMSegmentSaveSetting {FileFlag {FileName -1} {CheckToProceed 1} } {
+    # puts "EMSegmentSaveSetting ... "
     global EMSegment Volume Mrml
     # -------------------------------------------------------------------
     # 1.) Segmenter 
     # -------------------------------------------------------------------
-    #Do we already have an instance or not
-    if { $EMSegment(SegmenterNode) == ""} { 
-       set EMSegment(SegmenterNode) [MainMrmlAddNode Segmenter]
-       set EMSegment(EndSegmenterNode) [MainMrmlAddNode "EndSegmenter"]
-    } 
-    # Update Segmenter values in MRML Graph
+    # Do we already have an instance or not
+    if {[ catch {set pid [$EMSegment(SegmenterNode) GetID]}]} {
+    set EMSegment(SegmenterNode) [MainMrmlAddNode Segmenter]
     set pid [$EMSegment(SegmenterNode) GetID]
+    }    
+    set LastNode $EMSegment(SegmenterNode)
+    # Update Segmenter values in MRML Graph
     set SuperClass 0
     Segmenter($pid,node) SetAlreadyRead                 1
-    Segmenter($pid,node) SetNumClasses                  [llength $EMSegment(Cattrib,$SuperClass,ClassList)]
     Segmenter($pid,node) SetMaxInputChannelDef          $EMSegment(MaxInputChannelDef)
     Segmenter($pid,node) SetEMShapeIter                 $EMSegment(EMShapeIter)
     Segmenter($pid,node) SetEMiteration                 $EMSegment(EMiteration)
@@ -2171,24 +2293,26 @@ proc EMSegmentSaveSetting {FileFlag {FileName -1} {CheckToProceed 1}} {
     Segmenter($pid,node) SetAlpha                       $EMSegment(Alpha)  
     Segmenter($pid,node) SetSmWidth                     $EMSegment(SmWidth)  
     Segmenter($pid,node) SetSmSigma                     $EMSegment(SmSigma)  
-    Segmenter($pid,node) SetPrintIntermediateResults    $EMSegment(PrintIntermediateResults)  
-    Segmenter($pid,node) SetPrintIntermediateSlice      $EMSegment(PrintIntermediateSlice)  
-    Segmenter($pid,node) SetPrintIntermediateFrequency  $EMSegment(PrintIntermediateFrequency)  
-    Segmenter($pid,node) SetStartSlice                  $EMSegment(SegmentationBoundaryMin,2)  
-    Segmenter($pid,node) SetEndSlice                    $EMSegment(SegmentationBoundaryMax,2)  
     if {$EMSegment(SegmentMode) == 2} {
         eval Segmenter($pid,node) SetSegmentationBoundaryMin $EMSegment(SegmentationBoundaryMin,0) $EMSegment(SegmentationBoundaryMin,1) $EMSegment(SegmentationBoundaryMin,2)
         eval Segmenter($pid,node) SetSegmentationBoundaryMax $EMSegment(SegmentationBoundaryMax,0) $EMSegment(SegmentationBoundaryMax,1) $EMSegment(SegmentationBoundaryMax,2)
+    } else {
+    Segmenter($pid,node) SetNumClasses                  [llength $EMSegment(Cattrib,$SuperClass,ClassList)]
+        Segmenter($pid,node) SetStartSlice                  $EMSegment(SegmentationBoundaryMin,2)  
+        Segmenter($pid,node) SetEndSlice                    $EMSegment(SegmentationBoundaryMax,2)  
     }
 
     Segmenter($pid,node) SetDisplayProb                 $EMSegment(Graph,DisplayProb)  
     Segmenter($pid,node) SetNumberOfTrainingSamples     $EMSegment(NumberOfTrainingSamples)
     Segmenter($pid,node) SetIntensityAvgClass           $EMSegment(IntensityAvgClass)
+   
+    Segmenter($pid,node) SetPrintDir                    "$EMSegment(PrintDir)"
+
 
     # -------------------------------------------------------------------
     # 2.) SegmenterGraph 
     # -------------------------------------------------------------------
-    EMSegmentMRMLDeleteCreateNodesListEntries Graph [expr $EMSegment(NumGraph) > 1 ? 2 : 1]
+    set LastNode [EMSegmentMRMLDeleteCreateNodesListEntries Graph [expr $EMSegment(NumGraph) > 1 ? 2 : 1] $LastNode]
     # Update Values
     set i 0
     # Kilian Change this here
@@ -2203,7 +2327,7 @@ proc EMSegmentSaveSetting {FileFlag {FileName -1} {CheckToProceed 1}} {
     # 3.) SegmenterInput 
     # -------------------------------------------------------------------
     
-    EMSegmentMRMLDeleteCreateNodesListEntries Input $EMSegment(NumInputChannel) 
+    set LastNode [EMSegmentMRMLDeleteCreateNodesListEntries Input $EMSegment(NumInputChannel) $LastNode]
     foreach v $EMSegment(SelVolList,VolumeList) id $EMSegment(SegmenterInputNodeList) {
        # Set Values
        set pid [$id GetID]
@@ -2217,44 +2341,67 @@ proc EMSegmentSaveSetting {FileFlag {FileName -1} {CheckToProceed 1}} {
    # -------------------------------------------------------------------
    # 4.) SegmenterSuperClass - Class - CIM
    # -------------------------------------------------------------------
-   # set EMSegment(Cattrib,$EMSegment(Class),ProbabilityData) $EMSegment(ProbVolumeSelect)
-   EMSegmentSaveSettingSuperClass 0 $id
-     
-   # We can directly save as a file
+   # set EMSegment(Cattrib,$EMSegment(Class),ProbabilityData) $EMSegment(ReferenceStandardSelect)
+   set LastNode [EMSegmentSaveSettingSuperClass -1 $LastNode]
+
+   if {[catch {$EMSegment(EndSegmenterNode) GetID}]} {
+    set EMSegment(EndSegmenterNode) [MainMrmlInsertAfterNode $LastNode EndSegmenter]
+   } 
+
+    # We can directly save as a file
    if {$FileFlag} {
        if {$FileName == -1} {MainMenu File SaveAs
        } else {MainMrmlWrite $FileName $CheckToProceed}
    }       
+
 }
 
 #-------------------------------------------------------------------------------
 # .PROC EMSegmentSaveSettingClass 
 # Just saves the class setting ! Necessary because of Super Class 
+# If you call it with superclass -1 it is to initialize it with head class
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentSaveSettingSuperClass {SuperClass LastNode} {
    global EMSegment Volume
-   foreach i $EMSegment(Cattrib,$SuperClass,ClassList) {
+   if {$SuperClass > -1} {
+       set SuperClassClassList $EMSegment(Cattrib,$SuperClass,ClassList)
+   } else  {
+       set SuperClassClassList 0
+   }
+
+   foreach i $SuperClassClassList {
       if {$EMSegment(Cattrib,$i,IsSuperClass)} { 
-      # Another Super Class
+          # Another Super Class
           # Check if UpdateNodeFlag is set => delete current node if it exists !
-          if {$EMSegment(Cattrib,$i,Node) == ""} {set EMSegment(Cattrib,$i,Node) [MainMrmlInsertAfterNode $LastNode SegmenterSuperClass] }
-          set pid [$EMSegment(Cattrib,$i,Node) GetID]
+          if {[ catch {set pid [$EMSegment(Cattrib,$i,Node) GetID]}]} {
+          set EMSegment(Cattrib,$i,Node) [MainMrmlInsertAfterNode $LastNode SegmenterSuperClass] 
+              set pid [$EMSegment(Cattrib,$i,Node) GetID]
+      }
+
           SegmenterSuperClass($pid,node) SetName                $EMSegment(Cattrib,$i,Name)
           SegmenterSuperClass($pid,node) SetProb                $EMSegment(Cattrib,$i,Prob)  
           SegmenterSuperClass($pid,node) SetNumClasses          [llength $EMSegment(Cattrib,$i,ClassList)]
           SegmenterSuperClass($pid,node) SetLocalPriorWeight    $EMSegment(Cattrib,$i,LocalPriorWeight)  
+
+      SegmenterSuperClass($pid,node) SetPrintWeights        $EMSegment(Cattrib,$i,PrintWeights)  
+      SegmenterSuperClass($pid,node) SetPrintFrequency      $EMSegment(Cattrib,$i,PrintFrequency)  
+      SegmenterSuperClass($pid,node) SetPrintBias           $EMSegment(Cattrib,$i,PrintBias)  
+      SegmenterSuperClass($pid,node) SetPrintLabelMap       $EMSegment(Cattrib,$i,PrintLabelMap)  
+
           set InputChannelWeights ""
           for {set y 0} {$y < $EMSegment(MaxInputChannelDef)} {incr y} {
             lappend InputChannelWeights $EMSegment(Cattrib,$i,InputChannelWeights,$y)     
-      }
+          }
           SegmenterSuperClass($pid,node) SetInputChannelWeights $InputChannelWeights
           set LastNode [EMSegmentSaveSettingSuperClass $i $EMSegment(Cattrib,$i,Node)]
       } else {
           # A normal class
-          if {$EMSegment(Cattrib,$i,Node) == ""} {set EMSegment(Cattrib,$i,Node) [MainMrmlInsertAfterNode $LastNode SegmenterClass] }
-          set pid [$EMSegment(Cattrib,$i,Node) GetID]
+      if {[ catch {set pid [$EMSegment(Cattrib,$i,Node) GetID]}]} {
+          set EMSegment(Cattrib,$i,Node) [MainMrmlInsertAfterNode $LastNode SegmenterClass] 
+              set pid [$EMSegment(Cattrib,$i,Node) GetID]
+      }
           set LastNode $EMSegment(Cattrib,$i,Node)
           # Set Values
           SegmenterClass($pid,node) SetName                "$EMSegment(Cattrib,$i,Label)"
@@ -2278,19 +2425,11 @@ proc EMSegmentSaveSettingSuperClass {SuperClass LastNode} {
           eval SegmenterClass($pid,node) SetPCAMaxDist         $EMSegment(Cattrib,$i,PCAMaxDist)
           eval SegmenterClass($pid,node) SetPCADistVariance    $EMSegment(Cattrib,$i,PCADistVariance)
 
-
           if {$EMSegment(Cattrib,$i,PCAMeanData) != $Volume(idNone) } {
              SegmenterClass($pid,node) SetPCAMeanName  [Volume($EMSegment(Cattrib,$i,PCAMeanData),node) GetName]
           } else {
              SegmenterClass($pid,node) SetPCAMeanName  ""
           }
-
-          if {$EMSegment(Cattrib,$i,DICEData) != $Volume(idNone) } {
-             SegmenterClass($pid,node) SetDICEFileName  [Volume($EMSegment(Cattrib,$i,DICEData),node) GetName]
-          } else {
-             SegmenterClass($pid,node) SetDICEFileName  ""
-          }
-
 
           set index 0
           foreach EigenList $EMSegment(Cattrib,$i,PCAEigen)  {
@@ -2299,11 +2438,12 @@ proc EMSegmentSaveSettingSuperClass {SuperClass LastNode} {
              set EigenVectorData [lindex $EigenList 2]
              set PCANodeItem [lindex $EigenList 3]
 
-              #No Node defined 
-             if { $PCANodeItem == "" } { 
+             #No Node defined 
+         if {[ catch {$PCANodeItem GetID}]} {
                   set PCANodeItem [MainMrmlInsertAfterNode $LastNode SegmenterPCAEigen] 
                   set EMSegment(Cattrib,$i,PCAEigen) [lreplace  $EMSegment(Cattrib,$i,PCAEigen) $index $index "$Number $EigenValue $EigenVectorData $NodeItem"]
              }
+
              set LastNode $PCANodeItem
              set PCApid [$PCANodeItem GetID]
              SegmenterPCAEigen($PCApid,node) SetNumber $Number
@@ -2313,7 +2453,7 @@ proc EMSegmentSaveSettingSuperClass {SuperClass LastNode} {
               } else {
                 SegmenterPCAEigen($PCApid,node) SetEigenVectorName  ""
               }
-      }
+          }
           set LogMean ""
           set LogCovariance ""
           set InputChannelWeights ""
@@ -2328,27 +2468,41 @@ proc EMSegmentSaveSettingSuperClass {SuperClass LastNode} {
           SegmenterClass($pid,node) SetLogMean "$LogMean"
           SegmenterClass($pid,node) SetInputChannelWeights $InputChannelWeights
           SegmenterClass($pid,node) SetLogCovariance "[lrange $LogCovariance 0 [expr [llength $LogCovariance]-2]]"
-       }
+
+          # Print Functions 
+      SegmenterClass($pid,node) SetPrintWeights    $EMSegment(Cattrib,$i,PrintWeights)  
+      SegmenterClass($pid,node) SetPrintPCA       $EMSegment(Cattrib,$i,PrintPCA)  
+
+      SegmenterClass($pid,node) SetPrintQuality        $EMSegment(Cattrib,$i,PrintQuality)  
+      set v $EMSegment(Cattrib,$i,ReferenceStandardData)
+          if {$v != $Volume(idNone) } {
+             SegmenterClass($pid,node) SetReferenceStandardFileName "[Volume($v,node) GetFilePrefix]" 
+          } else {
+             SegmenterClass($pid,node) SetReferenceStandardFileName  "" 
+          }
+
+
+          # Define the end of the definition of CLASS
+      if {[ catch {$EMSegment(Cattrib,$i,EndNode)  GetID}]} {
+             set EMSegment(Cattrib,$i,EndNode) [MainMrmlInsertAfterNode $LastNode EndSegmenterClass] 
+      }
+          set LastNode $EMSegment(Cattrib,$i,EndNode)
+      }
    }
+   # We just Initialize for HeadClass
+   if {$SuperClass < 0} {return $LastNode} 
+
    # -------------------------------------------------------------------
    # Save CIM Setting for the SuperClass 
    # -------------------------------------------------------------------
-   if {$SuperClass > 0}  {
-       if {$EMSegment(Cattrib,$SuperClass,EndNode) == "" } {
-       set EMSegment(Cattrib,$SuperClass,EndNode) [MainMrmlInsertAfterNode $LastNode EndSegmenterSuperClass] 
-       }
-       set LastNode $EMSegment(Cattrib,$SuperClass,EndNode)
-    }
     foreach dir $EMSegment(CIMList) {
       # Set Values
-      if {$EMSegment(Cattrib,$SuperClass,CIMMatrix,$dir,Node) == ""} {
-      if {$SuperClass > 0} { set EMSegment(Cattrib,$SuperClass,CIMMatrix,$dir,Node) [MainMrmlInsertBeforeNode $LastNode SegmenterCIM] 
-      } else {set EMSegment(Cattrib,$SuperClass,CIMMatrix,$dir,Node) [MainMrmlInsertAfterNode $LastNode SegmenterCIM]}
-         set pid [$EMSegment(Cattrib,$SuperClass,CIMMatrix,$dir,Node) GetID]
-         SegmenterCIM($pid,node) SetName $dir
-      } else {
-        set pid [$EMSegment(Cattrib,$SuperClass,CIMMatrix,$dir,Node) GetID]
+      if {[ catch {set pid [$EMSegment(Cattrib,$SuperClass,CIMMatrix,$dir,Node) GetID]}]} {
+      set EMSegment(Cattrib,$SuperClass,CIMMatrix,$dir,Node) [MainMrmlInsertAfterNode $LastNode SegmenterCIM] 
+          set pid [$EMSegment(Cattrib,$SuperClass,CIMMatrix,$dir,Node) GetID]
+          SegmenterCIM($pid,node) SetName $dir
       }
+      set LastNode $EMSegment(Cattrib,$SuperClass,CIMMatrix,$dir,Node)
       set CIMMatrix ""
       foreach y $EMSegment(Cattrib,$SuperClass,ClassList) {
          foreach x $EMSegment(Cattrib,$SuperClass,ClassList) {
@@ -2360,6 +2514,11 @@ proc EMSegmentSaveSettingSuperClass {SuperClass LastNode} {
           SegmenterCIM($pid,node) SetCIMMatrix "[lrange $CIMMatrix 0 [expr [llength $CIMMatrix]-2]]"  
       } 
     }
+   
+    if {[ catch {$EMSegment(Cattrib,$SuperClass,EndNode)  GetID}]} {
+    set EMSegment(Cattrib,$SuperClass,EndNode) [MainMrmlInsertAfterNode $LastNode EndSegmenterSuperClass] 
+    }
+    set LastNode $EMSegment(Cattrib,$SuperClass,EndNode)
 
     return $LastNode
 }
@@ -2432,7 +2591,7 @@ proc EMSegmentStartEM { {save_mode "save"} } {
          set ErrorFlag 1
       } else { 
 
-        EMSegmentSaveSetting 1 [file join $env(SLICER_HOME) TempBlubber.xml] 0
+        EMSegmentSaveSetting 0 [file join $env(SLICER_HOME) TempBlubber.xml] 0
 
         # 2.) Run the command
         puts "============================================================================"
@@ -2460,6 +2619,8 @@ proc EMSegmentStartEM { {save_mode "save"} } {
      foreach v $Volume(idList) {lappend EMSegment(VolumeNameList)  [Volume($v,node) GetName]}
      set NumInputImagesSet [EMSegmentAlgorithmStart] 
      EMSegment(vtkEMSegment) Update 
+     #  puts "[EMSegment(vtkEMSegment) Print]"
+
      if {($EMSegment(SegmentMode) > 0) && [EMSegment(vtkEMSegment) GetErrorFlag]} {
          set ErrorFlag 1
          DevErrorWindow "Error Report: \n[EMSegment(vtkEMSegment) GetErrorMessages]Fix errors before resegmenting !"
@@ -2547,10 +2708,11 @@ proc EMSegmentStartEM { {save_mode "save"} } {
        }
    } else {
      # This is done so the vtk instance won't be called again when saving the model
+     # if it does not work also do the same to the input of all the subclasses - should be fine 
      if {$EMSegment(SegmentMode) > 0} {
        while {$NumInputImagesSet > 0} {
            incr NumInputImagesSet -1
-           EMSegment(vtkEMSegment) SetInputIndex $NumInputImagesSet "" 
+           EMSegment(vtkEMSegment) SetImageInput $NumInputImagesSet "" 
        }
      } else {
        EMSegment(vtkEMSegment) SetInput ""
@@ -2723,6 +2885,7 @@ proc EMSegmentDisplayClassDefinition {} {
     #---------------------
     $EMSegment(Cl-mbClasses) config -text "$EMSegment(Cattrib,$Sclass,Label)"
     
+    # Update ProbablityData
     if {[lsearch -exact $Volume(idList) $EMSegment(Cattrib,$Sclass,ProbabilityData)] < 0} {
         set EMSegment(Cattrib,$Sclass,ProbabilityData) $Volume(idNone) 
     }
@@ -2730,6 +2893,14 @@ proc EMSegmentDisplayClassDefinition {} {
     $EMSegment(mbCl-ProbVolumeSelect) config -text $name
     $EMSegment(mbEM-ProbVolumeSelect) config -text $name
     set EMSegment(ProbVolumeSelect) $EMSegment(Cattrib,$Sclass,ProbabilityData)
+
+    # Update Reference Standard
+    if {[lsearch -exact $Volume(idList) $EMSegment(Cattrib,$Sclass,ReferenceStandardData)] < 0} {
+        set EMSegment(Cattrib,$Sclass,ReferenceStandardData) $Volume(idNone) 
+    }
+    set name [Volume($EMSegment(Cattrib,$Sclass,ReferenceStandardData),node) GetName]
+    $EMSegment(mbCl-ReferenceStandardSelect) config -text $name
+    set EMSegment(ReferenceStandardSelect) $EMSegment(Cattrib,$Sclass,ReferenceStandardData)
 }
 #-------------------------------------------------------------------------------
 # .PROC EMSegmentTransfereClassType
@@ -2772,7 +2943,7 @@ proc EMSegmentTransfereClassType {ActiveGui DeleteNode} {
          set EMSegment(Cattrib,$Sclass,InputChannelWeights,$y) 1.0
      }
      set EMSegment(Cattrib,$Sclass,ProbabilityData) $Volume(idNone)
-     set EMSegment(Cattrib,$Sclass,DICEData) $Volume(idNone)
+     set EMSegment(Cattrib,$Sclass,ReferenceStandardData) $Volume(idNone)
      set EMSegment(Cattrib,$Sclass,PCAMeanData) $Volume(idNone)
 
      foreach EigenList $EMSegment(Cattrib,$Sclass,PCAEigen) {
@@ -2809,8 +2980,8 @@ proc EMSegmentTransfereClassType {ActiveGui DeleteNode} {
      set EMSegment(NumClassesNew) 0     
      # Has to be that way otherwise might try to handle it like a normal class in Update
      set EMSegment(Cattrib,$Sclass,IsSuperClass) 1
-     # Kilian: changed from  EMSegmentCreateDeleteClasses 1 $DeleteNode
-     EMSegmentCreateDeleteClasses $ActiveGui $DeleteNode
+     # Kilian: changed from  EMSegmentCreateDeleteClasses 1 $DeleteNode 0
+     EMSegmentCreateDeleteClasses $ActiveGui $DeleteNode 0
      set EMSegment(Cattrib,$Sclass,IsSuperClass) 0
      # Make sure infromation from below is by default used 
      set EMSegment(Cattrib,$Sclass,LocalPriorWeight)  0.0  
@@ -2818,7 +2989,7 @@ proc EMSegmentTransfereClassType {ActiveGui DeleteNode} {
          set EMSegment(Cattrib,$Sclass,InputChannelWeights,$y) 1.0
      }
      set EMSegment(Cattrib,$Sclass,ProbabilityData) $Volume(idNone)
-     set EMSegment(Cattrib,$Sclass,DICEData) $Volume(idNone)
+     set EMSegment(Cattrib,$Sclass,ReferenceStandardData) $Volume(idNone)
      set EMSegment(Cattrib,$Sclass,PCAMeanData) $Volume(idNone)
 
      # 2.) Remove from SuperClass List and add to Class List
@@ -2881,13 +3052,11 @@ proc EMSegmentTransfereClassType {ActiveGui DeleteNode} {
      }
      EMSegmentChangeSuperClass $i $ActiveGui
   } 
-  # Define Class Label and Color
-  puts "Click Label Here $Sclass 1 $Label $Color"
   # Kilian: changed it from EMSegmentClickLabel 1 $ActiveGui $Label $Color
   EMSegmentClickLabel $Sclass $ActiveGui $Label $Color
   raise $EMSegment(Cl-fClass).f$EMSegment(Cattrib,$Sclass,IsSuperClass)
   focus $EMSegment(Cl-fClass).f$EMSegment(Cattrib,$Sclass,IsSuperClass)
-  puts "EMSegmentTransfereClassType End =================="
+  # puts "EMSegmentTransfereClassType End =================="
 }
 #-------------------------------------------------------------------------------
 # .PROC EMSegmentChangeSuperClass
@@ -3376,9 +3545,9 @@ proc EMSegmentChangeClass {Sclass} {
     $EMSegment(Cl-f1-ePriorWeight) config -textvariable EMSegment(Cattrib,$Sclass,LocalPriorWeight)
 
     foreach col $EMSegment(bColorLabel) {
-    $col config -bg $EMSegment(Cattrib,$Sclass,ColorCode) -text $EMSegment(Cattrib,$Sclass,Label)\
-        -activebackground $EMSegment(Cattrib,$Sclass,ColorCode) \
-    -command "set EMSegment(ColorLabelCurrent) $Sclass; ShowLabels EMSegmentClickLabel"
+      $col config -bg $EMSegment(Cattrib,$Sclass,ColorCode) -text $EMSegment(Cattrib,$Sclass,Label)\
+                  -activebackground $EMSegment(Cattrib,$Sclass,ColorCode) \
+                  -command "set EMSegment(ColorLabelCurrent) $Sclass; ShowLabels EMSegmentClickLabel"
     }
     $EMSegment(Cl-mbClasses) config -bg $EMSegment(Cattrib,$Sclass,ColorCode) -activebackground $EMSegment(Cattrib,$Sclass,ColorCode)
 
@@ -3392,6 +3561,15 @@ proc EMSegmentChangeClass {Sclass} {
        }
     }
 
+    # Define Print Parameters 
+    $EMSegment(Cl-f0-fPrintParameter).cWeight  config  -variable EMSegment(Cattrib,$Sclass,PrintWeights)
+    $EMSegment(Cl-f0-fPrintParameter).cQuality config  -variable EMSegment(Cattrib,$Sclass,PrintQuality)
+    $EMSegment(Cl-f0-fPrintParameter).cPCA     config  -variable EMSegment(Cattrib,$Sclass,PrintPCA)
+
+    $EMSegment(Cl-f1-fPrintParameter).cWeight    config  -variable EMSegment(Cattrib,$Sclass,PrintWeights)
+    $EMSegment(Cl-f1-fPrintParameter).cPrint     config  -variable EMSegment(Cattrib,$Sclass,PrintFrequency)
+    $EMSegment(Cl-f1-fPrintParameter).cBias      config  -variable EMSegment(Cattrib,$Sclass,PrintBias)
+    $EMSegment(Cl-f1-fPrintParameter).cLabelMap  config  -variable EMSegment(Cattrib,$Sclass,PrintLabelMap)
     # Raise the right panel 
     raise $EMSegment(Cl-fClass).f$EMSegment(Cattrib,$Sclass,IsSuperClass)
     focus $EMSegment(Cl-fClass).f$EMSegment(Cattrib,$Sclass,IsSuperClass)
@@ -3401,6 +3579,7 @@ proc EMSegmentChangeClass {Sclass} {
     # Navigation Bars 
     EMSegmentUpdateClassNavigationButton
 }
+
 proc EMSegmentUpdateClassNavigationButton { } {
     global EMSegment
     set position [lsearch $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList) $EMSegment(Class)]
@@ -3408,10 +3587,22 @@ proc EMSegmentUpdateClassNavigationButton { } {
     } else { $EMSegment(EM-bNavigationPrevious) configure -state normal }
     incr position
     if {($position == 0) || ($position == [llength $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList)])} { 
-    $EMSegment(EM-bNavigationNext) configure -state disabled
+       $EMSegment(EM-bNavigationNext) configure -state disabled
     } else { $EMSegment(EM-bNavigationNext) configure -state normal }
-}
 
+
+    if {$EMSegment(Class) } { 
+    $EMSegment(EM-bNavigationUp) configure -state normal 
+    } else {
+        $EMSegment(EM-bNavigationUp) configure -state disable 
+    } 
+    
+    if {$EMSegment(Cattrib,$EMSegment(Class),IsSuperClass) && [llength $EMSegment(Cattrib,$EMSegment(Class),ClassList)] } {
+    $EMSegment(EM-bNavigationDown) configure -state normal 
+    } else {
+    $EMSegment(EM-bNavigationDown) configure -state disable 
+    }
+}
 #-------------------------------------------------------------------------------
 # .PROC EMSegmentChangeIntensityClass 
 # Changes from one to another intensity class 
@@ -3656,14 +3847,17 @@ proc EMSegmentEraseSample {i} {
 # Creates or deletes classes for segmentation 
 # If Gui should be changed too set ChangeGui > 0
 # If it is not called from UpdateMRML DeleteNode == 1
+# InitClasses = only set it to 1 if it set from EMSegmentInit
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc EMSegmentCreateDeleteClasses {ChangeGui DeleteNode} {
+proc EMSegmentCreateDeleteClasses {ChangeGui DeleteNode InitClasses} {
     global EMSegment Volume Gui
-    # Look for super class ! 
-    set NumClasses [llength $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList)]
-    # puts "EMSegmentCreateDeleteClasses: ChangeGui $ChangeGui DeleteNode $DeleteNode NumClasses $NumClasses EMSegment(NumClassesNew) $EMSegment(NumClassesNew)"
+    # Initialize 
+    
+    set NumClasses [llength $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList)] 
+    # puts "EMSegmentCreateDeleteClasses: ChangeGui $ChangeGui DeleteNode $DeleteNode NumClasses $NumClasses EMSegment(NumClassesNew) $EMSegment(NumClassesNew) EMSegment(SuperClass) $EMSegment(SuperClass)"
+
     if {$EMSegment(NumClassesNew) == $NumClasses} { return  }
     # ---------------------------------------------------------------------------------
     # Now $EMSegment(NumClassesNew) < $NumClasses 
@@ -3687,7 +3881,7 @@ proc EMSegmentCreateDeleteClasses {ChangeGui DeleteNode} {
             set NumClassesNew $EMSegment(NumClassesNew)
             set EMSegment(SuperClass) $i
             set EMSegment(NumClassesNew) 0
-            EMSegmentCreateDeleteClasses 0 $DeleteNode
+            EMSegmentCreateDeleteClasses 0 $DeleteNode $InitClasses
             set EMSegment(SuperClass) $SuperClass 
             set EMSegment(NumClassesNew) $NumClassesNew
          
@@ -3725,7 +3919,6 @@ proc EMSegmentCreateDeleteClasses {ChangeGui DeleteNode} {
               if {$j > $i} {break}
               incr index
             } 
-            puts "$EMSegment(GlobalClassList) --- $i"
             set Cindex [lsearch -exact $EMSegment(GlobalClassList) $i]  
             incr index $Cindex
             
@@ -3771,7 +3964,6 @@ proc EMSegmentCreateDeleteClasses {ChangeGui DeleteNode} {
         unset EMSegment(Cattrib,$i,PCAMeanData) EMSegment(Cattrib,$i,PCAFileRange) 
         unset EMSegment(Cattrib,$i,PCATranslation) EMSegment(Cattrib,$i,PCARotation) EMSegment(Cattrib,$i,PCAScale) 
         unset EMSegment(Cattrib,$i,PCAMaxDist) EMSegment(Cattrib,$i,PCADistVariance) 
-        unset EMSegment(Cattrib,$i,ShapeParameter) EMSegment(Cattrib,$i,DICEData) 
 
         foreach EigenList $EMSegment(Cattrib,$i,PCAEigen) {
            if {[lindex $EigenList 3] != ""} {MainMrmlDeleteNode SegmenterPCAEigen [[lindex $EigenList 3] GetID] }
@@ -3789,6 +3981,16 @@ proc EMSegmentCreateDeleteClasses {ChangeGui DeleteNode} {
         foreach v $EMSegment(SelVolList,VolumeList) { unset EMSegment(Cattrib,$i,$v,Sample)  }
         # Overview Table
         destroy $EMSegment(fTableOverview)$i
+      
+      # Class and SuperClass variables
+      unset EMSegment(Cattrib,$i,PrintWeights)  
+      unset EMSegment(Cattrib,$i,PrintQuality) 
+      unset EMSegment(Cattrib,$i,ReferenceStandardData) 
+      unset EMSegment(Cattrib,$i,PrintPCA)  
+      # SuperClass Variables
+      unset EMSegment(Cattrib,$i,PrintBias) 
+      unset EMSegment(Cattrib,$i,PrintLabelMap)  
+      unset EMSegment(Cattrib,$i,PrintFrequency) 
       }
       # Reconfigure width and height of canvas
       if {$ChangeGui} {EMSegmentSetCIMMatrix} 
@@ -3802,6 +4004,9 @@ proc EMSegmentCreateDeleteClasses {ChangeGui DeleteNode} {
       } else {
           EMSegmentUpdateClassNavigationButton 
       }
+
+
+
       return
     } 
 
@@ -3810,27 +4015,22 @@ proc EMSegmentCreateDeleteClasses {ChangeGui DeleteNode} {
     # => Delete Menue Buttons
     # ---------------------------------------------------------------------------------
     set ColorLabelLength [expr [llength $EMSegment(ColorLabelList)] / 2]
-    if {$EMSegment(GlobalSuperClassList) == -1} {
-       set Cstart 1
-       set Cprob [expr 1 / double($EMSegment(NumClassesNew))]
-       set EMSegment(GlobalSuperClassList) "0"
-       set ClassInit 1
-    } else {
-       set GCL [lindex $EMSegment(GlobalClassList) end]
-       set GSCL [lindex $EMSegment(GlobalSuperClassList) end]
-       if {$GCL == ""} {
-          if {$GSCL ==""} {set Cstart 0
-          } else { set Cstart $GSCL}
-       } else {
-          if {$GSCL ==""} {set Cstart $GCL
-          } else { set Cstart [expr ($GSCL > $GCL ? $GSCL : $GCL)]}
-       }
-       incr Cstart 
-       set Cprob 0.0
-       set ClassInit 0
-    }
-    set Cfinish [expr $EMSegment(NumClassesNew) - $NumClasses + $Cstart]
 
+    set GCL [lindex $EMSegment(GlobalClassList) end]
+    set GSCL [lindex $EMSegment(GlobalSuperClassList) end]
+    if {$GCL == ""} {
+    if {$GSCL ==""} {set Cstart 0
+    } else { set Cstart $GSCL; incr Cstart }
+    } else {
+    if {$GSCL ==""} {set Cstart $GCL
+    } else { set Cstart [expr ($GSCL > $GCL ? $GSCL : $GCL)]}
+       incr Cstart 
+    }
+    if {$InitClasses} {set Cprob [expr 1 / double($EMSegment(NumClassesNew))]
+    } else {set Cprob 0.0}
+
+    set Cfinish [expr $EMSegment(NumClassesNew) - $NumClasses + $Cstart]
+    
     for {set i $Cstart} {$i < $Cfinish } {incr i 1} {
       lappend EMSegment(GlobalClassList) $i
       lappend EMSegment(Cattrib,$EMSegment(SuperClass),ClassList) $i 
@@ -3843,7 +4043,7 @@ proc EMSegmentCreateDeleteClasses {ChangeGui DeleteNode} {
       set EMSegment(Cattrib,$i,EndNode) ""
       set EMSegment(Cattrib,$i,IsSuperClass) 0
       set EMSegment(Cattrib,$i,LocalPriorWeight) 0.0
-
+ 
       for {set y 0} {$y <  $EMSegment(MaxInputChannelDef)} {incr y} {
           set  EMSegment(Cattrib,$i,LogMean,$y) -1
           for {set x 0} {$x <  $EMSegment(MaxInputChannelDef)} {incr x} { 
@@ -3869,38 +4069,46 @@ proc EMSegmentCreateDeleteClasses {ChangeGui DeleteNode} {
       set EMSegment(Cattrib,$i,PCAMeanData) $Volume(idNone)
       set EMSegment(Cattrib,$i,PCAEigen) "" 
 
-      set EMSegment(Cattrib,$i,DICEData) $Volume(idNone)
+      # Class and SuperClass variables
+      set EMSegment(Cattrib,$i,PrintWeights) 0 
+      set EMSegment(Cattrib,$i,PrintQuality) 0
+      set EMSegment(Cattrib,$i,ReferenceStandardData) $Volume(idNone)
+      set EMSegment(Cattrib,$i,PrintPCA)  0
+      # SuperClass Variables
+      set EMSegment(Cattrib,$i,PrintBias) 0
+      set EMSegment(Cattrib,$i,PrintLabelMap) 0 
+      set EMSegment(Cattrib,$i,PrintFrequency) 0
     }
     # Define CIM Field as Matrix M(Class1,Class2,Relation of Pixels)
     # where the "Relation of the Pixels" can be set as Pixel with "left", 
     # "right", "up" or "down" Neighbour  
     # EMSegment(Cattrib,$EMSegment(SuperClass),CIMMatrix,<y>,<x>,<Type>)
     # Add new Rows and lines to the CIM Matrix
-    foreach i $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList) {
-      # Just update only new Row elements or whole line 
-      if { $i < $Cstart} { set jlist  [lrange $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList) $NumClasses end] 
-      } else { set jlist $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList)}
-      foreach k $EMSegment(CIMList) {
-     if { $i >= $Cstart} {set EMSegment(Cattrib,$i,CIMMatrix,$k,Node) ""}
-         foreach j $jlist {
-            if {$i == $j} {
-        set EMSegment(Cattrib,$EMSegment(SuperClass),CIMMatrix,$i,$j,$k) 1
-        set EMSegment(Cattrib,$j,CIMMatrix,$k,Node) ""
 
-            } else  {set EMSegment(Cattrib,$EMSegment(SuperClass),CIMMatrix,$i,$j,$k) 0}
-         }
-      }
+    foreach i $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList) {
+        # Just update only new Row elements or whole line 
+        if { $i < $Cstart} { set jlist  [lrange $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList) $NumClasses end] 
+        } else { set jlist $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList)}
+        foreach k $EMSegment(CIMList) {
+        if { $i >= $Cstart} {set EMSegment(Cattrib,$i,CIMMatrix,$k,Node) ""}
+        foreach j $jlist {
+        if {$i == $j} {
+            set EMSegment(Cattrib,$EMSegment(SuperClass),CIMMatrix,$i,$j,$k) 1
+            set EMSegment(Cattrib,$j,CIMMatrix,$k,Node) ""
+        } else  {set EMSegment(Cattrib,$EMSegment(SuperClass),CIMMatrix,$i,$j,$k) 0}
+        }
+        }
     }
+
     # ---------------------------------------------------------------------------------    
     # Initializing GUI: Class never has changed before or GUI is not changed
     # ---------------------------------------------------------------------------------
-    if {$ClassInit} {return}
+    if {$InitClasses} {return}
 
     # ---------------------------------------------------------------------------------    
     # Add new classes on GUI
     # ---------------------------------------------------------------------------------
     # When all classes should be displayed this has to change
-
     for {set i $Cstart} {$i < $Cfinish} {incr i 1} {
       # change Menu Button when selected
       $EMSegment(Cl-mbClasses).m add command -label "$EMSegment(Cattrib,$i,Label)" -command  "EMSegmentChangeClass $i" \
@@ -3912,6 +4120,8 @@ proc EMSegmentCreateDeleteClasses {ChangeGui DeleteNode} {
     }
     if {$ChangeGui} {EMSegmentCreateCIMRowsColumns $Cstart $Cfinish}
     EMSegmentUpdateClassNavigationButton 
+    # puts "End of create delete ..."
+
 }
 
 #-------------------------------------------------------------------------------
@@ -4579,15 +4789,15 @@ proc EMSegmentUpdateVolumeList { } {
     global Volume EMSegment
     # This is for tab settings-> Dice 
     # 1.) Check if we have any old once in the list
-    set MenuIndex 0
-    foreach vol $EMSegment(DICEVolumeList) {
-       set VolIndex [lsearch -exact $Volume(idList) $vol]
-       if {$VolIndex < 0} { 
-          $EMSegment(mDICE) delete $MenuIndex $MenuIndex
-          set EMSegment(DICEVolumeList) [lreplace $EMSegment(DICEVolumeList) $MenuIndex $MenuIndex]
-            if {$vol == $EMSegment(DICESelectedVolume)} { EMSegmentChangeDiceVolume $Volume(idNone)}
-       } else { incr MenuIndex}
-    }
+    #set MenuIndex 0
+    # foreach vol $EMSegment(DICEVolumeList) {
+       # set VolIndex [lsearch -exact $Volume(idList) $vol]
+       # if {$VolIndex < 0} { 
+          # $EMSegment(mDICE) delete $MenuIndex $MenuIndex
+          # set EMSegment(DICEVolumeList) [lreplace $EMSegment(DICEVolumeList) $MenuIndex $MenuIndex]
+          # if {$vol == $EMSegment(DICESelectedVolume)} { EMSegmentChangeDiceVolume $Volume(idNone)}
+       # } else { incr MenuIndex}
+    # }
     set MenuIndex 0
     foreach vol $EMSegment(ModelMakerVolumeList) {
        set VolIndex [lsearch -exact $Volume(idList) $vol]
@@ -4634,10 +4844,10 @@ proc EMSegmentUpdateVolumeList { } {
       }
       # This is for tab settings-> Dice 
       # Look for new entries 
-      if {[lsearch -exact $EMSegment(DICEVolumeList) $v] < 0} {
-      $EMSegment(mDICE) add command -label [Volume($v,node) GetName] -command "EMSegmentChangeDiceVolume $v"
-      lappend EMSegment(DICEVolumeList) $v
-      }
+      # if {[lsearch -exact $EMSegment(DICEVolumeList) $v] < 0} {
+      #   $EMSegment(mDICE) add command -label [Volume($v,node) GetName] -command "EMSegmentChangeDiceVolume $v"
+      #   lappend EMSegment(DICEVolumeList) $v
+      # }
       if {[lsearch -exact $EMSegment(ModelMakerVolumeList) $v] < 0} {
          $EMSegment(mModelMaker) add command -label [Volume($v,node) GetName] -command "set EMSegment(ModelMakerSelectedVolume) $v; $EMSegment(mbModelMaker) configure -text  [Volume($v,node) GetName]"
          lappend EMSegment(ModelMakerVolumeList) $v
@@ -5142,25 +5352,24 @@ proc EMSegmentCalcDice { } {
        vtkImageEMGeneral EMDice
        foreach label $EMSegment(DICELabelList) {
          puts "======================= Result for Label $label ===================="
-     puts "Dice Measure: [EMDice CalcSimularityMeasure [Volume($EMSegment(LatestLabelMap),vol) GetOutput] [Volume($EMSegment(DICESelectedVolume),vol) GetOutput] $label 1]"
+         puts "Dice Measure: [EMDice CalcSimularityMeasure [Volume($EMSegment(LatestLabelMap),vol) GetOutput] [Volume($EMSegment(DICESelectedVolume),vol) GetOutput] $label 1]"
          set Sclass  $EMSegment(Class)
-     if {$EMSegment(Cattrib,$Sclass,IsSuperClass) == 0} {
+         if {$EMSegment(Cattrib,$Sclass,IsSuperClass) == 0} {
             puts "Current Setting of active class ($EMSegment(Cattrib,$Sclass,Label)):"  
             puts -nonewline "Prob: $EMSegment(Cattrib,$Sclass,Prob) * Mean:"
             for {set y 0} {$y < $EMSegment(MaxInputChannelDef)} {incr y} {
                puts -nonewline " $EMSegment(Cattrib,$Sclass,LogMean,$y) "
-        }
+            }
 
             puts -nonewline " * Cov:"
             for {set y 0} {$y < $EMSegment(MaxInputChannelDef)} {incr y} {
-        if {$y} {puts -nonewline " |" }
-        for {set x 0} {$x < $EMSegment(MaxInputChannelDef)} {incr x} {
-            puts -nonewline " $EMSegment(Cattrib,$Sclass,LogCovariance,$y,$x)"
-        }
-        }
+               if {$y} {puts -nonewline " |" }
+               for {set x 0} {$x < $EMSegment(MaxInputChannelDef)} {incr x} {
+                  puts -nonewline " $EMSegment(Cattrib,$Sclass,LogCovariance,$y,$x)"
+               }
+            }
             puts " "
-     }
-
+         }
        }
        EMDice Delete
    }

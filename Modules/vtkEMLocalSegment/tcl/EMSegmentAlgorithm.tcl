@@ -83,7 +83,7 @@ proc EMSegmentSetVtkSuperClassSetting {SuperClass} {
   global EMSegment Volume
   # Reads in the value for each class individually
   # puts "EMSegmentSetVtkSuperClassSetting $SuperClass"
-  catch { EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) destroy}
+  catch { EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) Delete}
   vtkImageEMSuperClass EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass)      
 
   # Define SuperClass specific parameters
@@ -124,9 +124,9 @@ proc EMSegmentSetVtkSuperClassSetting {SuperClass} {
              incr index
           } 
       }
-      # Setup DICE Related information
-      if {($EMSegment(Cattrib,$i,DICEData) !=  $Volume(idNone)) && $EMSegment(PrintDICEResults) } {
-         EMSegment(Cattrib,$i,vtkImageEMClass) SetReferenceStandardPtr [Volume($EMSegment(Cattrib,$i,DICEData),vol) GetOutput]
+      # Setup Quality Related information
+      if {($EMSegment(Cattrib,$i,ReferenceStandardData) !=  $Volume(idNone)) && $EMSegment(Cattrib,$i,PrintQuality) } {
+      EMSegment(Cattrib,$i,vtkImageEMClass) SetReferenceStandard [Volume($EMSegment(Cattrib,$i,ReferenceStandardData),vol) GetOutput]
       } 
       # Setup PCA parameter
       if {$EMSegment(Cattrib,$i,PCAMeanData) !=  $Volume(idNone) } {
@@ -406,7 +406,7 @@ proc EMSegmentAlgorithmStart { } {
    # EMSegment(vtkEMSegment) SetPrintIntermediateSlice      $EMSegment(PrintIntermediateSlice) 
    # EMSegment(vtkEMSegment) SetPrintIntermediateFrequency  $EMSegment(PrintIntermediateFrequency) 
 
-   return 1 
+   return  $EMSegment(NumInputChannel) 
 }
 
 #-------------------------------------------------------------------------------
@@ -498,15 +498,15 @@ proc EMSegmentTrainCIMField {} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc EMSegmentAlgorithmDeleteVtkEMSegment {SuperClass } {
+proc EMSegmentAlgorithmDeleteVtkEMSuperClass { SuperClass } {
    global EMSegment
    EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) Delete
    foreach i $EMSegment(Cattrib,$SuperClass,ClassList) {
          if {$EMSegment(Cattrib,$i,IsSuperClass)} {
-         EMSegmentAlgorithmDeletevtkEMSegment $i
-     } else {
-         EMSegment(Cattrib,$i,vtkImageEMClass) Delete
-     }
+            EMSegmentAlgorithmDeleteVtkEMSuperClass  $i
+         } else {
+            EMSegment(Cattrib,$i,vtkImageEMClass) Delete
+         }
    }  
 }
 #-------------------------------------------------------------------------------
@@ -518,5 +518,5 @@ proc EMSegmentAlgorithmDeleteVtkEMSegment {SuperClass } {
 proc EMSegmentAlgorithmDeletevtkEMSegment { } {
      global EMSegment
      EMSegment(vtkEMSegment) Delete
-     EMSegmentAlgorithmDeleteVtkEMSegment 0
+     EMSegmentAlgorithmDeleteVtkEMSuperClass 0
 }
