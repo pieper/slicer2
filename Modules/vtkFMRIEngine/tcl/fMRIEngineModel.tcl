@@ -375,7 +375,7 @@ proc fMRIEngineAskModelClearing {} {
     } elseif {$fMRIEngine(baselineEVsAdded) != 0 &&
       $fMRIEngine(baselineEVsAdded) != $fMRIEngine(noOfRuns)} {
         DevWarningWindow "The number of runs has changed. You probably need to save/clear the current model."
-        Tab fMRIEngine row1 Model
+        Tab fMRIEngine row1 Setup 
     }
 }
 
