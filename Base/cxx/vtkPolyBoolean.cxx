@@ -202,7 +202,7 @@ void vtkPolyBoolean::SetPolyDataB( vtkPolyData *polyDataB )
     {
     this->DeleteTriDirectory( 1 );
     //    vtkDebugMacro(<<" setting PolyDataB to " << (void *)polyDataB);
-    cout <<" setting PolyDataB to " << (void *)polyDataB;
+    // cout <<" setting PolyDataB to " << (void *)polyDataB;
     fflush(NULL);
 
     if (this->PolyDataB) {this->PolyDataB->UnRegister(this);}
