@@ -64,18 +64,18 @@ itcl::body dup_deidentify::refresh {} {
     }
 
     set b 0
-    foreach v [$parent visits] {
-        if { ![file exists $v/deidentify_operations] } {
-            tk_messageBox -message "Warning: no deidentify_operations for $v"
+    foreach s [$parent studies] {
+        if { ![file exists $s/deidentify_operations] } {
+            tk_messageBox -message "Warning: no deidentify_operations for $s"
             continue
         }
-        if { [file exists $v/ready_for_review] } {
+        if { [file exists $s/ready_for_review] } {
             continue
         }
-        set birnid [lindex [file split $v] end-3] 
+        set birnid [lindex [file split $s] end-3] 
         set bb $_frame.b$b 
-        pack [button $bb -text "Deidentify $birnid" -command "$this run $v"]
-        TooltipAdd $bb "$v"
+        pack [button $bb -text "Deidentify $birnid" -command "$this run $s"]
+        TooltipAdd $bb "$s"
         incr b
     }
 
@@ -89,8 +89,8 @@ itcl::body dup_deidentify::refresh {} {
 
 itcl::body dup_deidentify::runall {} {
 
-    foreach v [$parent visits] {
-        $this run $v
+    foreach s [$parent studies] {
+        $this run $s
     }
 }
 

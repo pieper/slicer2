@@ -32,7 +32,7 @@ if { [itcl::find class dup_review] == "" } {
         destructor {}
 
         method refresh {} {}
-        method run {dir} {}
+        method run {studydir} {}
     }
 }
 
@@ -63,21 +63,21 @@ itcl::body dup_review::refresh {} {
     }
 
     set defacedir [$parent pref DEFACE_DIR]
-    set visits [glob -nocomplain $defacedir/Project_*/*/Visit_*/Study_*/Raw_Data]
+    set studies [$parent studies]
     
 
     set b 0
-    foreach v $visits {
-        if { [file exists $v/ready_for_upload] } {
+    foreach s $studies {
+        if { [file exists $s/ready_for_upload] } {
             continue
         }
-        if { ![file exists $v/ready_for_review] } {
+        if { ![file exists $s/ready_for_review] } {
             continue
         }
-        set birnid [lindex [file split $v] end-3] 
+        set birnid [lindex [file split $s] end-3] 
         set bb $_frame.b$b 
-        pack [button $bb -text "Review $birnid" -command "$this run $v"]
-        TooltipAdd $bb "$v"
+        pack [button $bb -text "Review $birnid" -command "$this run $s"]
+        TooltipAdd $bb "$s"
         incr b
     }
 
@@ -87,16 +87,31 @@ itcl::body dup_review::refresh {} {
     }
 }
 
-itcl::body dup_review::run {dir} {
+itcl::body dup_review::run {studydir} {
 
-    $parent log "starting review of $dir"
+    $parent log "starting review of $studydir"
 
     # TODO - this is linux only
-    exec $::env(SLICER_HOME)/slicer2-linux-x86 $::PACKAGE_DIR_BIRNDUP/../../../tcl/gonogo.tcl $dir
+    exec $::env(SLICER_HOME)/slicer2-linux-x86 $::PACKAGE_DIR_BIRNDUP/../../../tcl/gonogo.tcl $studydir
 
-    $parent log "finished review of $dir"
-    close [open $dir/ready_for_upload "w"]
-    $parent refresh upload
-    $parent refresh review
+    package require fileutil
+    set to_upload [::fileutil::cat $dir/upload_list.txt]
+    set to_defer [::fileutil::cat $dir/defer_list.txt]
+    
+    set defercount [llength $to_defer]
+    if { $defercount > 0 } {
+        set resp [DevOkCancel "The Study contains $defercount series that did not pass review.\n\nClick Ok to upload anyway or cancel to defer the entire study."]
+        if { $resp == "ok" } {
+            close [open $studydir/ready_for_upload "w"]
+        } else {
+            set sourcedir [::fileutil::cat $dir/source_directory] 
+            DevErrorWindow "The study in $sourcedir did not pass review.  Manual defacing must be used."
+            file delete -force $dir
+        }
+    }
+
+
+    $parent log "finished review of $studydir"
+    $parent refresh 
 }
 

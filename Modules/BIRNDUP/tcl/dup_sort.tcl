@@ -144,7 +144,7 @@ itcl::body dup_sort::fill {dir} {
     for  {set i 0} {$i < $::FindDICOMCounter} {incr i} {
         if { $study != $_DICOMFiles($i,StudyInstanceUID) ||
                 $patient != $_DICOMFiles(0,PatientID) } {
-            DevErrorWindow "Multiple patients and/or studies in source directory\n\n$_DICOMFiles(0,FileName)\nand\n$_DICOMFiles($i,FileName)"
+            DevErrorWindow "Multiple patients and/or studies in source directory\n\n$_DICOMFiles(0,FileName)\nand\n$_DICOMFiles($i,FileName)\nThis must be corrected before you can run the files through this pipeline."
             return
         }
         set id $_DICOMFiles($i,SeriesInstanceUID)
@@ -257,6 +257,10 @@ itcl::body dup_sort::sort {} {
         }
     }
     $this fill ""
+    
+    set fp [open "$studypath/source_directory" w]
+    puts $fp $sourcedir
+    close $fp
 
     set fp [open "$studypath/deidentify_operations" w]
     puts $fp $deident_operations

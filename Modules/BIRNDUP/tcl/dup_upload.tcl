@@ -63,21 +63,21 @@ itcl::body dup_upload::refresh {} {
     }
 
     set defacedir [$parent pref DEFACE_DIR]
-    set visits [glob -nocomplain $defacedir/Project_*/*/Visit_*/Study_*/Raw_Data]
+    set studies [$parent studies]
     
 
     set b 0
-    foreach v $visits {
-        if { ![file exists $v/ready_for_upload] } {
+    foreach s $studies {
+        if { ![file exists $s/ready_for_upload] } {
             continue
         }
-        if { [file exists $v/uploaded] } {
+        if { [file exists $s/uploaded] } {
             continue
         }
-        set birnid [lindex [file split $v] end-3] 
+        set birnid [lindex [file split $s] end-3] 
         set bb $_frame.b$b 
-        pack [button $bb -text "Upload $birnid" -command "$this run $v"]
-        TooltipAdd $bb "$v"
+        pack [button $bb -text "Upload $birnid" -command "$this run $s"]
+        TooltipAdd $bb "$s"
         incr b
     }
 
@@ -91,7 +91,9 @@ itcl::body dup_upload::run {dir} {
 
     $parent log "starting upload of $dir"
 
+
     tk_messageBox -message "Upload of $dir" 
+    file delete -force $dir
 
     $parent log "finished upload of $dir"
     close [open $dir/uploaded "w"]

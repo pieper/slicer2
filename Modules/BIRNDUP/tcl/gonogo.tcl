@@ -386,9 +386,10 @@ proc main {} {
     set in_study_list ""
 
     # Directory structure should be:
-    # subj/visit/study/RawData/series/Deident/slices.mpg, */deface.mpg
+    # subj/visit/study/Raw_Data/series/Deident/slices.mpg, */deface.mpg
+    # - note: indir on the command line is now a studydir (sp 2004-02-23)
     #------------------------------------------------------------------
-    set in_study_list [lsort [glob -nocomplain $indir/*/*/*/Raw*Data/]]
+    set in_study_list $indir
 
     foreach study $in_study_list {
         getStudyApproval $study
@@ -411,6 +412,8 @@ proc main {} {
     }
     puts $defer_out ""
     puts $upload_out ""
+    close $defer_out 
+    close $upload_out 
 
     getDone $upload_file $defer_file
 

@@ -34,6 +34,7 @@ if { [itcl::find class dup] == "" } {
         destructor {}
 
         variable _prefs ;# array of preferences
+        variable _save_prefs ;# for the prefui dialog box
 
         variable _sort
         variable _deidentify
@@ -45,7 +46,10 @@ if { [itcl::find class dup] == "" } {
         method about_dialog {} {}
         method pref { {KEY ""} } {}
         method prefs {} {}
-        method visits {} {}
+        method prefui {} {}
+        method pref_save {} {}
+        method pref_restore {} {}
+        method studies {} {}
         method log {message} {}
 
         method fill { {dir "choose"} } {}
@@ -111,6 +115,10 @@ itcl::body dup::menus {} {
                     -helpstr "Open a New Source Directory for Deidentification" \
                     -command "$this fill"
                 separator sep1
+                command pref -label "Preferences..." \
+                    -helpstr "Application preference settings." \
+                    -command "$this prefui"
+                separator sep2
                 command exit -label "Close" -command "destroy [namespace tail $this]" \
                     -helpstr "Close BIRNDUP"
             menubutton help -text "Help" -menu {
@@ -158,7 +166,7 @@ itcl::body dup::refresh { {pane "all"} } {
     }
 }
 
-itcl::body dup::visits {} {
+itcl::body dup::studies {} {
 
     set defacedir [$this pref DEFACE_DIR]
     return [glob -nocomplain $defacedir/Project_*/*/Visit_*/Study_*/Raw_Data]
@@ -183,26 +191,82 @@ itcl::body dup::pref { {KEY ""} } {
 
 itcl::body dup::prefs { } {
 
+    #
+    # put all preference defaults here - in case the older pref
+    # file didn't contain all the entries
+    #
+    set _prefs(INSTITUTION) BWH
+    set _prefs(INSTITUTION,help) "Prefix for BIRN ID - 3 or 4 character, e.g. BWH"
+    set _prefs(DEFACE_DIR) /opt/birn/deface
+    set _prefs(DEFACE_DIR,help) "Staging directory for files to upload"
+    set _prefs(LINKTABLE) /opt/birn/deface/linktable
+    set _prefs(LINKTABLE,help) "Link table for storing the map between clinical ID and BIRN ID"
+    set _prefs(UPLOAD2_DIR) /opt/birn/upload2
+    set _prefs(UPLOAD2_DIR,help) "Location of upload2 programs."
+
+    # create a pref file if needed and let user fill in blanks
     if { ![file exists $::env(HOME)/.birndup/prefs] } {
         set resp [tk_messageBox -type okcancel -message "A preferences file must be created for you.\n\nClick Ok to continue or Cancel to exit"]
         if { $resp == "cancel" } {
             itcl::delete object $this
         }
 
-        # put all preference entries here
-        set _prefs(DEFACE_DIR) /opt/birn/deface
-
         file mkdir $::env(HOME)/.birndup    
-        set fp [open $::env(HOME)/.birndup/prefs w]
-        foreach n [array names _prefs] {
-            puts $fp "$n \"$_prefs($n)\""
-        }
-        close $fp
+        $this pref_save
+        
+        $this prefui
     }
 
     set fp [open $::env(HOME)/.birndup/prefs r]
     array set _prefs [read $fp]
     close $fp
+}
+
+itcl::body dup::pref_save { } {
+    set fp [open $::env(HOME)/.birndup/prefs w]
+    foreach n [array names _prefs] {
+        puts $fp "$n \"$_prefs($n)\""
+    }
+    close $fp
+}
+
+
+itcl::body dup::pref_restore { } {
+    array set _prefs [array get _save_prefs]
+}
+
+itcl::body dup::prefui { } {
+
+    set d $this.dup_prefui
+
+    if { [info command $d] == "" } {
+        ::iwidgets::dialog $d
+    
+        set cs [$d childsite]
+
+        array set _save_prefs [array get _prefs]
+
+        set efields ""
+        foreach n [array names _prefs] {
+            if { [string match *,help $n] } { continue }
+            lappend efiles $cs.e$n
+            ::iwidgets::entryfield $cs.e$n -labeltext $n -labelpos w -textvariable [::itcl::scope _prefs($n)]
+            TooltipAdd $cs.e$n $_prefs($n,help)
+            pack $cs.e$n -fill x -expand true
+        }
+        eval ::iwidgets::Labeledwidget::alignlabels $efields
+
+        $d hide 1
+        $d hide 3
+    }
+
+    $d buttonconfigure OK -command "$this pref_save; $d deactivate 0"
+    $d buttonconfigure Cancel -command "$this pref_restore; $d deactivate 1"
+
+    #$d configure -modality application
+
+    $d activate
+    $d center
 }
 
 proc dup_demo {} {
