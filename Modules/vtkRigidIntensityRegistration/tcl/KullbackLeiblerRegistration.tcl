@@ -105,7 +105,7 @@ proc KullbackLeiblerRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.4 $} {$Date: 2003/12/21 22:57:24 $}]
+        {$Revision: 1.5 $} {$Date: 2003/12/23 16:46:38 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -777,17 +777,17 @@ proc KullbackLeiblerRegistrationGetTrainingTransform {}  {
    catch {vtkMatrix4x4 KLp2}
    catch {vtkMatrix4x4 KLTrainMat}
 
-   # p1 mat^-1 p2^-1 
+   # p1 mat^-1 p2^-1  = p1 (p2 mat)^-1
 
    # target, reference,
-   GetSlicerRASToItkMatrix \
+   GetSlicerWldToItkMatrix \
       Volume($KullbackLeiblerRegistration(TrainRefVol),node) \
       KLp2
 
    KLp2 Invert
 
    # source, reference,
-   GetSlicerRASToItkMatrix \
+   GetSlicerWldToItkMatrix \
       Volume($KullbackLeiblerRegistration(TrainMovVol),node) \
       KLp1
 
@@ -797,4 +797,8 @@ proc KullbackLeiblerRegistrationGetTrainingTransform {}  {
    KLp2 Delete
 
    return KLTrainMat
+# 0.979259 0.13248 0.153206 6.05993 
+# -0.153108 0.979288 0.132382 -6.94748 
+# -0.132494 -0.153123 0.979272 -0.00871529 
+# -0 0 -0 1
 }

@@ -3,8 +3,8 @@
   Program:   Insight Segmentation & Registration Toolkit
   Module:    $RCSfile: itkCompareHistogramImageToImageMetric.txx,v $
   Language:  C++
-  Date:      $Date: 2003/12/17 03:36:23 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2003/12/23 16:46:38 $
+  Version:   $Revision: 1.2 $
 
   Copyright (c) Insight Software Consortium. All rights reserved.
   See ITKCopyright.txt or http://www.itk.org/HTML/Copyright.htm for details.
@@ -48,6 +48,7 @@ namespace itk
       {
       FormTrainingHistogram();
       }
+   std::cout << "DONE INITIALIZING" << std::endl;
   }
 
   template <class TFixedImage, class TMovingImage>
