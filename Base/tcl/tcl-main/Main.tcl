@@ -35,6 +35,11 @@
 #   MainSetup
 #   IsModule
 #   Tab
+#   MainSetScrollbarHeight reqHeight
+#   MainSetScrollbarHeight
+#   MainSetScrollbarVisibility
+#   MainSetScrollbarVisibility
+#   MainResizeDisplayFrame
 #   MainStartProgress
 #   MainShowProgress
 #   MainEndProgress
@@ -346,7 +351,7 @@ proc MainInit {} {
 
         # Set version info
 	lappend Module(versions) [ParseCVSInfo Main \
-		{$Revision: 1.63 $} {$Date: 2001/08/21 23:23:00 $}]
+		{$Revision: 1.64 $} {$Date: 2001/09/05 23:09:03 $}]
 
 	# Call each "Init" routine that's not part of a module
 	#-------------------------------------------
@@ -775,6 +780,48 @@ proc MainBuildGUI {} {
 		}
 		$p
 	}
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC MainRebuildModuleGui
+# 
+# Erase the old Gui for a module and build a new one.
+# Should call MainUpdateMRML when done so that the Module
+# has the correct Volumes, Models, etc. listed
+#
+# This primarily exists for the tester.
+#
+# .ARGS
+# str ModuleName The name of the module
+# .END
+#-------------------------------------------------------------------------------
+proc MainRebuildModuleGui {ModuleName} {
+    global Module Gui
+
+    if {[info exists Module($ModuleName,row1List)] == 1} {
+        foreach frame $Module($ModuleName,row1List) {
+            set f $Module($ModuleName,f$frame)
+            catch {destroy $f}
+        }
+    }
+
+    if {[info exists Module($ModuleName,row1List)] == 1} {
+        foreach frame $Module($ModuleName,row2List) {
+            set f $Module($ModuleName,f$frame)
+            catch {destroy $f}
+        }
+    }
+
+    set m $ModuleName
+    set fWork .tMain.fControls.fWorkspace
+    set f .tMain.fControls.fTabs
+
+    catch {destroy $f.f${m}row1}
+    catch {destroy $f.f${m}row2}
+    MainBuildModuleTabs $ModuleName
+    $Module($ModuleName,procGUI)
+    
 }
 
 #-------------------------------------------------------------------------------
@@ -1212,6 +1259,12 @@ proc Tab {m {row ""} {tab ""}} {
 # .END
 #-------------------------------------------------------------------------------
 
+#-------------------------------------------------------------------------------
+# .PROC MainSetScrollbarHeight
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc MainSetScrollbarHeight {reqHeight} {
     
     global Module
@@ -1235,6 +1288,12 @@ proc MainSetScrollbarHeight {reqHeight} {
 # .END
 #-------------------------------------------------------------------------------
 
+#-------------------------------------------------------------------------------
+# .PROC MainSetScrollbarVisibility
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc MainSetScrollbarVisibility {{vis ""}} {
     
     global Module
@@ -1254,6 +1313,12 @@ proc MainSetScrollbarVisibility {{vis ""}} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC MainResizeDisplayFrame
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc MainResizeDisplayFrame {} {
 
     global Module
@@ -1631,3 +1696,4 @@ proc FormatCVSInfo {versions} {
     }
     return $s
 }
+
