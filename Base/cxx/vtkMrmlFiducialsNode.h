@@ -52,7 +52,7 @@ public:
 
   // Description:
   // Copy the node's attributes to this object
-  void Copy(vtkMrmlFiducialsNode *node);
+  void Copy(vtkMrmlNode *node);
 
 protected:
   vtkMrmlFiducialsNode();

@@ -52,7 +52,7 @@ class VTK_EXPORT vtkMrmlOptionsNode : public vtkMrmlNode
 
   // Description:
   // Copy the nodes attributes to this object
-  void Copy(vtkMrmlOptionsNode *node);
+  void Copy(vtkMrmlNode *node);
 
   //--------------------------------------------------------------------------
   // Get and Set Functions

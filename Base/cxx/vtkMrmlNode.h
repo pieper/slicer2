@@ -21,7 +21,7 @@ THE SOFTWARE IS PROVIDED "AS IS."  MIT HAS NO OBLIGATION TO PROVIDE
 MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 =========================================================================auto=*/
-// .NAME vtkMrmlNode - Superclass for all specific types of MRML nodes.
+// .NAME vtkMrmlNode - Abstract Superclass for all specific types of MRML nodes.
 // .SECTION Description
 // This node encapsulates the functionality common to all types of MRML nodes.
 // This includes member variables for ID, Description, and Options,
@@ -38,15 +38,19 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 class VTK_EXPORT vtkMrmlNode : public vtkObject
 {
   public:
-  static vtkMrmlNode *New();
   vtkTypeMacro(vtkMrmlNode,vtkObject);
   void PrintSelf(ostream& os, vtkIndent indent);
   
   // Description:
-  // Copy the node's parameters to this object.
+  // Copy a MrmlNode's parameters.
   // But don't copy: ID
-  // Instances of vtkMrmlNode should call vtkMrmlNode::Copy
-  virtual void Copy(vtkMrmlNode *node);
+  void MrmlNodeCopy(vtkMrmlNode *node);
+
+  // Description:
+  // Copy everything from another node of the same type.
+  // Instances of vtkMrmlNode must define the Copy function.
+  // Instances of vtkMrmlNode::Copy should call vtkMrmlNode::CopyMrmlNode
+  virtual void Copy(vtkMrmlNode *node) = 0;
   
   // Description:
   // Set/Get a numerical ID for the calling program to use to keep track
@@ -91,7 +95,7 @@ class VTK_EXPORT vtkMrmlNode : public vtkObject
   // Only write attributes that differ from the default values,
   // which are set in the node's constructor.
   // This is a virtual function that all subclasses must overload.
-  virtual void Write(ofstream& of, int indent) {};
+  virtual void Write(ofstream& of, int indent);
 
 protected:
 

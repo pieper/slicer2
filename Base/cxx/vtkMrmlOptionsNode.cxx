@@ -100,9 +100,10 @@ void vtkMrmlOptionsNode::Write(ofstream& of, int nIndent)
 //----------------------------------------------------------------------------
 // Copy the node's attributes to this object.
 // Does NOT copy: ID, Name
-void vtkMrmlOptionsNode::Copy(vtkMrmlOptionsNode *node)
+void vtkMrmlOptionsNode::Copy(vtkMrmlNode *anode)
 {
-  vtkMrmlNode::Copy(node);
+  vtkMrmlNode::MrmlNodeCopy(anode);
+  vtkMrmlOptionsNode *node = (vtkMrmlOptionsNode *) anode;
 
   // Strings
   this->SetOptions(node->Options);

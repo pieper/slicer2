@@ -68,10 +68,9 @@ void vtkMrmlTransformNode::Write(ofstream& of, int nIndent)
 //----------------------------------------------------------------------------
 // Copy the node's attributes to this object.
 // Does NOT copy: ID, FilePrefix, Name
-void vtkMrmlTransformNode::Copy(vtkMrmlTransformNode *node)
+void vtkMrmlTransformNode::Copy(vtkMrmlNode *node)
 {
-  vtkMrmlNode::Copy(node);
-
+  vtkMrmlNode::MrmlNodeCopy(node);
 }
 
 //----------------------------------------------------------------------------

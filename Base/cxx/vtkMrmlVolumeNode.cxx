@@ -344,9 +344,10 @@ void vtkMrmlVolumeNode::Write(ofstream& of, int nIndent)
 //----------------------------------------------------------------------------
 // Copy the node's attributes to this object.
 // Does NOT copy: ID, FilePrefix, Name
-void vtkMrmlVolumeNode::Copy(vtkMrmlVolumeNode *node)
+void vtkMrmlVolumeNode::Copy(vtkMrmlNode *anode)
 {
-  vtkMrmlNode::Copy(node);
+  vtkMrmlNode::MrmlNodeCopy(anode);
+  vtkMrmlVolumeNode *node = (vtkMrmlVolumeNode *) anode;
 
   // Strings
   this->SetFilePattern(node->FilePattern);

@@ -51,7 +51,7 @@ public:
 
   // Description:
   // Copy the node's attributes to this object
-  void Copy(vtkMrmlEndPathNode *node);
+  void Copy(vtkMrmlNode *node);
 
 protected:
   vtkMrmlEndPathNode();

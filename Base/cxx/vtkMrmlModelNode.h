@@ -54,7 +54,7 @@ public:
 
   // Description:
   // Copy the node's attributes to this object
-  void Copy(vtkMrmlModelNode *node);
+  void Copy(vtkMrmlNode *node);
 
   // Description:
   // Path of the data file, relative to the MRML file

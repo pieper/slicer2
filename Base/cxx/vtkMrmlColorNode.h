@@ -56,7 +56,7 @@ public:
 
   // Description:
   // Copy the nodes attributes to this object to a MRML file in XML format
-  void Copy(vtkMrmlColorNode *node);
+  void Copy(vtkMrmlNode *node);
 
   //--------------------------------------------------------------------------
   // Get and Set Functions

@@ -30,19 +30,6 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkImageWriter.h"
 #include <time.h>
 
-//------------------------------------------------------------------------------
-vtkMrmlData* vtkMrmlData::New()
-{
-  // First try to create the object from the vtkObjectFactory
-  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkMrmlData");
-  if(ret)
-  {
-    return (vtkMrmlData*)ret;
-  }
-  // If the factory was unable to create the object, then create it here.
-  return new vtkMrmlData;
-}
-
 //----------------------------------------------------------------------------
 vtkMrmlData::vtkMrmlData()
 {
@@ -95,6 +82,7 @@ void vtkMrmlData::PrintSelf(ostream& os, vtkIndent indent)
 }
 
 //----------------------------------------------------------------------------
+
 void vtkMrmlData::CopyNode(vtkMrmlData *MrmlData)
 {
   this->GetMrmlNode()->Copy(MrmlData->GetMrmlNode());
@@ -151,13 +139,14 @@ void vtkMrmlData::CheckMrmlNode()
 {
   vtkErrorMacro("The Programmer Did not Specify \"CheckMrmlNode\" for this type of vtkMrmlData");
 
-  if (this->MrmlNode == NULL)
-  {
-    // This next line should be specific to the lower function.
-    this->MrmlNode = vtkMrmlNode::New();
-    this->MrmlNode->Register(this);
-    this->MrmlNode->Delete();
-  }
+//  Example of the type of thing that should appear here:
+//  if (this->MrmlNode == NULL)
+//  {
+//    // This next line should be specific to the lower function.
+//    this->MrmlNode = vtkMrmlNode::New();
+//    this->MrmlNode->Register(this);
+//    this->MrmlNode->Delete();
+//  }
 }
 
 //----------------------------------------------------------------------------

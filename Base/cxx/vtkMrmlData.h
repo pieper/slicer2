@@ -21,7 +21,7 @@ THE SOFTWARE IS PROVIDED "AS IS."  MIT HAS NO OBLIGATION TO PROVIDE
 MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 =========================================================================auto=*/
-// .NAME vtkMrmlData - Object used in the slicer to perform
+// .NAME vtkMrmlData - Abstract Object used in the slicer to perform
 // everything related to the access and display of data.
 // .SECTION Description
 // Used in conjunction with a vtkMrmlNode (which neatly describes
@@ -53,7 +53,6 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 class VTK_EXPORT vtkMrmlData : public vtkProcessObject {
   public:
 
-  static vtkMrmlData *New();
   vtkTypeMacro(vtkMrmlData,vtkProcessObject);
   void PrintSelf(ostream& os, vtkIndent indent);
   
@@ -67,8 +66,9 @@ class VTK_EXPORT vtkMrmlData : public vtkProcessObject {
   vtkGetObjectMacro(MrmlNode, vtkMrmlNode);
   
   // Description:
-  // Copy another MmrlVolume's MrmlData to this one
-  virtual void CopyNode(vtkMrmlData *Data);
+  // Copy another MmrlData's MrmlNode to this one
+  // This does not need to be virtual 
+  void CopyNode(vtkMrmlData *Data);
 
   //
   // Making sure the filters are UpToDate
@@ -91,8 +91,8 @@ class VTK_EXPORT vtkMrmlData : public vtkProcessObject {
   // Description:
   // Read/Write the data
   // Return 1 on success, 0 on failure.
-  virtual int Read();
-  virtual int Write();
+  virtual int Read() = 0;
+  virtual int Write() = 0;
 
   // Description:
   // Has the object been changed in a way that one would want to write
@@ -162,5 +162,3 @@ protected:
 };
 
 #endif
-
-

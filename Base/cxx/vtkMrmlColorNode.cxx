@@ -124,9 +124,10 @@ void vtkMrmlColorNode::Write(ofstream& of, int nIndent)
 //----------------------------------------------------------------------------
 // Copy the node's attributes to this object.
 // Does NOT copy: ID, Name
-void vtkMrmlColorNode::Copy(vtkMrmlColorNode *node)
+void vtkMrmlColorNode::Copy(vtkMrmlNode *anode)
 {
-  vtkMrmlNode::Copy(node);
+  vtkMrmlNode::MrmlNodeCopy(anode);
+  vtkMrmlColorNode *node = (vtkMrmlColorNode *) anode;
 
   // Strings
   this->SetLabels(node->Labels);

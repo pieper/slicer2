@@ -14,7 +14,9 @@ ABSTRACT_H =
 
 CONCRETE_H = 
 
-ABSTRACT = 
+ABSTRACT = \
+vtkMrmlData \
+vtkMrmlNode 
 
 CONCRETE = \
 vtkImageAccumulateDiscrete \
@@ -44,10 +46,8 @@ vtkImageThresholdBeyond \
 vtkImageZoom2D \
 vtkIndirectLookupTable \
 vtkMrmlSlicer \
-vtkMrmlData \
 vtkMrmlDataVolume \
 vtkMrmlMatrixNode \
-vtkMrmlNode \
 vtkMrmlVolumeNode \
 vtkMrmlModelNode \
 vtkMrmlEndTransformNode \

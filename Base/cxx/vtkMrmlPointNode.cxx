@@ -82,9 +82,10 @@ void vtkMrmlPointNode::Write(ofstream& of, int nIndent)
 //----------------------------------------------------------------------------
 // Copy the node's attributes to this object.
 // Does NOT copy: ID, FilePrefix, Name
-void vtkMrmlPointNode::Copy(vtkMrmlPointNode *node)
+void vtkMrmlPointNode::Copy(vtkMrmlNode *anode)
 {
-  vtkMrmlNode::Copy(node);
+  vtkMrmlNode::MrmlNodeCopy(anode);
+  vtkMrmlPointNode *node = (vtkMrmlPointNode *) anode;
 
   this->XYZ[0] = node->XYZ[0];
   this->XYZ[1] = node->XYZ[1];

@@ -53,7 +53,7 @@ public:
 
   // Description:
   // Copy the node's attributes to this object
-  void Copy(vtkMrmlLandmarkNode *node);
+  void Copy(vtkMrmlNode *node);
 
   // Description:
   // Get/Set for Landmark

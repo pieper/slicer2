@@ -28,19 +28,6 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkObjectFactory.h"
 
 //------------------------------------------------------------------------------
-vtkMrmlNode* vtkMrmlNode::New()
-{
-  // First try to create the object from the vtkObjectFactory
-  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkMrmlNode");
-  if(ret)
-  {
-    return (vtkMrmlNode*)ret;
-  }
-  // If the factory was unable to create the object, then create it here.
-  return new vtkMrmlNode;
-}
-
-//----------------------------------------------------------------------------
 vtkMrmlNode::vtkMrmlNode()
 {
   this->ID = 0;
@@ -124,6 +111,24 @@ char *vtkMrmlNode::GetTitle()
 
 //----------------------------------------------------------------------------
 void vtkMrmlNode::Copy(vtkMrmlNode *node)
+{
+  // Copy everything except: ID
+  cerr << "The programmer forgot to define a Copy function in some " 
+       << "instance of vtkMrmlNode. \n\n";
+  exit(-1);
+}
+
+//----------------------------------------------------------------------------
+void vtkMrmlNode::Write(ofstream& of, int indent)
+{
+  // Copy everything except: ID
+  cerr << "The programmer forgot to define a Write function in some " 
+       << "instance of vtkMrmlNode. \n\n";
+  exit(-1);
+}
+
+//----------------------------------------------------------------------------
+void vtkMrmlNode::MrmlNodeCopy(vtkMrmlNode *node)
 {
   // Copy everything except: ID
   this->SetDescription(node->Description);

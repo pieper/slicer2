@@ -66,10 +66,9 @@ void vtkMrmlEndFiducialsNode::Write(ofstream& of, int nIndent)
 //----------------------------------------------------------------------------
 // Copy the node's attributes to this object.
 // Does NOT copy: ID, FilePrefix, Name
-void vtkMrmlEndFiducialsNode::Copy(vtkMrmlEndFiducialsNode *node)
+void vtkMrmlEndFiducialsNode::Copy(vtkMrmlNode *node)
 {
-  vtkMrmlNode::Copy(node);
-
+  vtkMrmlNode::MrmlNodeCopy(node);
 }
 
 //----------------------------------------------------------------------------

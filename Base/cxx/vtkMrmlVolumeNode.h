@@ -53,7 +53,7 @@ class VTK_EXPORT vtkMrmlVolumeNode : public vtkMrmlNode
 
   // Description:
   // Copy the node's attributes to this object
-  void Copy(vtkMrmlVolumeNode *node);
+  void Copy(vtkMrmlNode *node);
 
   // Description:
   // Write the node's attributes to a MRML file in XML format

@@ -82,9 +82,10 @@ void vtkMrmlMatrixNode::Write(ofstream& of, int nIndent)
 //----------------------------------------------------------------------------
 // Copy the node's attributes to this object.
 // Does NOT copy: ID, FilePrefix, Name
-void vtkMrmlMatrixNode::Copy(vtkMrmlMatrixNode *node)
+void vtkMrmlMatrixNode::Copy(vtkMrmlNode *anode)
 {
-  vtkMrmlNode::Copy(node);
+  vtkMrmlNode::MrmlNodeCopy(anode);
+  vtkMrmlMatrixNode *node = (vtkMrmlMatrixNode *) anode;
 
   this->Transform->DeepCopy(node->Transform);
 }

@@ -147,9 +147,10 @@ void vtkMrmlModelNode::Write(ofstream& of, int nIndent)
 //----------------------------------------------------------------------------
 // Copy the node's attributes to this object.
 // Does NOT copy: ID, FilePrefix, Name
-void vtkMrmlModelNode::Copy(vtkMrmlModelNode *node)
+void vtkMrmlModelNode::Copy(vtkMrmlNode *anode)
 {
-  vtkMrmlNode::Copy(node);
+  vtkMrmlNode::MrmlNodeCopy(anode);
+  vtkMrmlModelNode *node = (vtkMrmlModelNode *) anode;
 
   // Strings
   this->SetFileName(node->FileName);

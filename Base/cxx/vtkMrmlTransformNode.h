@@ -53,7 +53,7 @@ public:
 
   // Description:
   // Copy the node's attributes to this object
-  void Copy(vtkMrmlTransformNode *node);
+  void Copy(vtkMrmlNode *node);
 
 protected:
   vtkMrmlTransformNode();

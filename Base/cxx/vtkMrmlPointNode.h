@@ -49,7 +49,7 @@ public:
 
   // Description:
   // Copy the node's attributes to this object
-  void Copy(vtkMrmlPointNode *node);
+  void Copy(vtkMrmlNode *node);
 
   // Description:
   // Get/Set for Point

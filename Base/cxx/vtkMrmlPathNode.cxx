@@ -113,13 +113,10 @@ void vtkMrmlPathNode::Write(ofstream& of, int nIndent)
 //----------------------------------------------------------------------------
 // Copy the node's attributes to this object.
 // Does NOT copy: ID, FilePrefix, Name
-void vtkMrmlPathNode::Copy(vtkMrmlPathNode *node)
+void vtkMrmlPathNode::Copy(vtkMrmlNode *node)
 {
-  vtkMrmlNode::Copy(node);
-
+  vtkMrmlNode::MrmlNodeCopy(node);
   //Strings, how do we do with color?
-
-
 }
 
 //----------------------------------------------------------------------------
