@@ -89,7 +89,7 @@ proc VolRendInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.9 $} {$Date: 2003/03/19 19:16:35 $}]
+        {$Revision: 1.10 $} {$Date: 2003/07/22 20:36:21 $}]
 
     set Module($m,row1List) "Help Settings Transfer"
     set Module($m,row1Name) "{Help} {Settings} {Transfer Functions}"
@@ -799,6 +799,10 @@ proc VolRendSaveTransferFunctions {} {
 
     # tell the tree to write
     tempTree Write $VolRend(transferFunctionSaveFileName)
+    if {[tempTree GetErrorCode] != 0} {
+        puts "ERROR: VolRendSaveTransferFunctions: Unable to write file $VolRend(transferFunctionSaveFileName)"
+    }
+
     tempTree RemoveAllItems
 
     tempTree Delete
