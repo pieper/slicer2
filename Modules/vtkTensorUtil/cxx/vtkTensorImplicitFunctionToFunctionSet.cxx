@@ -3,8 +3,8 @@
   Program:   Insight Segmentation & Registration Toolkit
   Module:    $RCSfile: vtkTensorImplicitFunctionToFunctionSet.cxx,v $
   Language:  C++
-  Date:      $Date: 2004/07/27 16:52:19 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2004/07/27 21:11:49 $
+  Version:   $Revision: 1.2 $
 
   Copyright (c) 2002 Insight Consortium. All rights reserved.
   See ITKCopyright.txt or http://www.itk.org/HTML/Copyright.htm for details.
@@ -21,7 +21,7 @@
 #include "vtkObjectFactory.h"
 #include "vtkTensorImplicitFunctionToFunctionSet.h"
 
-vtkCxxRevisionMacro(vtkTensorImplicitFunctionToFunctionSet, "$Revision: 1.1 $");
+vtkCxxRevisionMacro(vtkTensorImplicitFunctionToFunctionSet, "$Revision: 1.2 $");
 vtkStandardNewMacro(vtkTensorImplicitFunctionToFunctionSet);
 
 void vtkTensorImplicitFunctionToFunctionSet::PrintSelf(ostream& os, vtkIndent indent)
@@ -85,6 +85,7 @@ int vtkTensorImplicitFunctionToFunctionSet::FunctionValues(float* x, float* res)
   float f[9];
   float * val[3];
   float dist2;
+  float trace;
   float correction;
   int i,j;
 
@@ -93,9 +94,9 @@ int vtkTensorImplicitFunctionToFunctionSet::FunctionValues(float* x, float* res)
       val[i] = &(f[3*i]);
     }
   if ( GetTensor(x,f) ) {
-    LastFractionalAnisotropy = f[0]*f[4] + f[0]*f[8] + f[4]*f[8] - f[1]*f[1] - f[2]*f[2] - f[5]*f[5];
-    LastFractionalAnisotropy = sqrt(1-(LastFractionalAnisotropy/(f[0]*f[0]+2*f[1]*f[1]+2*f[2]*f[2]+f[4]*f[4]+2*f[5]*f[5]+f[8]*f[8])));
-    
+    LastFractionalAnisotropy = 2*(f[0]*f[0] + f[4]*f[4] + f[8]*f[8]) + 4*(f[1]*f[1]+f[2]*f[2]+f[5]*f[5]);
+    trace = (f[0] + f[4] + f[8])/3;
+    LastFractionalAnisotropy = sqrt(3*((f[0]-trace)*(f[0]-trace)+(f[4]-trace)*(f[4]-trace)+(f[8]-trace)*(f[8]-trace)+2*(f[1]*f[1]+f[2]*f[2]+f[5]*f[5]))/LastFractionalAnisotropy);
     if ( LastFractionalAnisotropy > LowerBoundBias && LastFractionalAnisotropy < UpperBoundBias && this->DirectionValid) {
       correction = ( UpperBoundBias - LastFractionalAnisotropy ) / ( UpperBoundBias - LowerBoundBias );
       for (i = 0 ; i < 3 ; i++ ){
