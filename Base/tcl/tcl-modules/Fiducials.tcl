@@ -82,7 +82,7 @@ proc FiducialsInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.24 $} {$Date: 2002/09/09 17:35:10 $}]
+        {$Revision: 1.25 $} {$Date: 2002/09/12 23:33:12 $}]
     
     # Initialize module-level variables
     
@@ -1304,11 +1304,11 @@ proc FiducialsDeleteList {name} {
 
     foreach pid $Fiducials($fid,pointIdList) {
     # delete from Mrml
-    MainMrmlDeleteNode Point $pid
+    MainMrmlDeleteNodeNoUpdate Point $pid
     }
-    MainUpdateMRML
-    MainMrmlDeleteNode EndFiducials $fid
-    MainMrmlDeleteNode Fiducials $fid
+    
+    MainMrmlDeleteNodeNoUpdate EndFiducials $fid
+    MainMrmlDeleteNodeNoUpdate Fiducials $fid
     
     MainUpdateMRML
     Render3D
