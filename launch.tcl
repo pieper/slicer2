@@ -336,7 +336,8 @@ if {$::env(BUILD) == $solaris ||
     } elseif {$::env(BUILD) == $linux} {
         regsub -all "{|}" $argv "\\\"" argv
         update
-        eval exec "$::env(VTK_DIR)/bin/vtk $mainscript $argv"
+        catch "eval exec \"$::env(VTK_DIR)/bin/vtk $mainscript $argv\"" res
+        puts $res
     } elseif {$::env(BUILD) == $windows} {
         # put slicer in the background on windows so it won't be "Not Responding" in
         # task manager
