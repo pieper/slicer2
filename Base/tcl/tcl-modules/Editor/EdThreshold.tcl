@@ -121,7 +121,7 @@ proc EdThresholdBuildGUI {} {
 		$f.fGrid $f.fSliders $f.fHistogram $f.fApply \
 		-side top -pady $Gui(pad) -fill x
 
-	EdBuildScopeGUI $Ed(EdThreshold,frame).fScope Ed(EdThreshold,scope)
+	EdBuildScopeGUI $Ed(EdThreshold,frame).fScope Ed(EdThreshold,scope) Multi
 
 	EdBuildInputGUI $Ed(EdThreshold,frame).fInput Ed(EdThreshold,input) \
 		"-command EdThresholdSetInput"

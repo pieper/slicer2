@@ -763,10 +763,8 @@ proc VolumesPropsApply {} {
 	}
 
 	if {$m == "NEW"} {
-		set i $Volume(nextID)
-		vtkMrmlVolumeNode Volume($i,node)
-		set n Volume($i,node)
-		$n SetID               $i
+		set n [MainMrmlAddNode Volume]
+		set i [$n GetID]
 
 		# Manual headers
 		if {$Volume(readHeaders) == "0"} {
@@ -799,12 +797,14 @@ proc VolumesPropsApply {} {
 			    # switch to vols->props->header frame
 			    set Volume(propertyType) Header
 			    VolumesSetPropertyType
+				Mrml(dataTree) RemoveItem $n
 			    $n Delete
 			    return
 			} elseif {$errmsg != ""} {
 				# File not found, most likely
 			    puts $errmsg
 			    tk_messageBox -message $errmsg
+				Mrml(dataTree) RemoveItem $n
 				$n Delete
 				return
 			}
@@ -813,10 +813,6 @@ proc VolumesPropsApply {} {
 		$n SetName $Volume(name)
 		$n SetDescription $Volume(desc)
 
-		incr Volume(nextID)
-		lappend Volume(idList) $i
-
-		Mrml(dataTree) AddItem $n
 		MainUpdateMRML
 		set Volume(freeze) 0
 		MainVolumesSetActive $i

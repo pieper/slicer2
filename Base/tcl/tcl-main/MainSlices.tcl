@@ -382,7 +382,7 @@ proc MainSlicesUpdateMRML {} {
 				set m $pre.$suffix
 
 				$m delete 0 end
-				foreach v $Volume(idListForMenu) {
+				foreach v $Volume(idList) {
 					$m add command -label [Volume($v,node) GetName] \
 						-command "MainSlicesSetVolumeAll $layer $v; \
 						MainViewerHideSliceControls; RenderAll"
@@ -396,7 +396,7 @@ proc MainSlicesUpdateMRML {} {
 				set m $pre.$suffix
 
 				$m delete 0 end
-				foreach v $Volume(idListForMenu) {
+				foreach v $Volume(idList) {
 					$m add command -label [Volume($v,node) GetName] \
 						-command "MainSlicesSetVolume ${layer} ${s} $v; \
 						MainViewerHideSliceControls; RenderBoth $s"
@@ -979,6 +979,107 @@ proc MainSlicesSetOpacityAll {{value ""}} {
 		set Slice(opacity) $value
 	}
 	Slicer SetForeOpacity $value
+}
+
+proc MainSlicesSave {} {
+	global Mrml Slice
+
+    # Prefix cannot be blank
+	if {$Slice(prefix) == ""} {
+		tk_messageBox -message "Please specify a file name."
+		return
+	}
+
+	# Get a unique filename by appending a number to the prefix
+	set filename [MainFileFindUniqueName $Mrml(dir) $Slice(prefix) $Slice(ext)]
+
+	MainSlicesWrite $filename
+}
+
+proc MainSlicesSavePopup {} {
+	global Slice Mrml Gui
+
+	# Cannot have blank prefix
+	if {$Slice(prefix) == ""} {
+		set Slice(prefix) view
+	}
+
+ 	# Show popup initialized to the last file saved
+	set filename [file join $Mrml(dir) $Slice(prefix)]
+	set dir [file dirname $filename]
+	set typelist {
+		{"TIFF File" {".tif"}}
+		{"PPM File" {".ppm"}}
+		{"BMP File" {".bmp"}}
+		{"All Files" {*}}
+	}
+	set filename [tk_getSaveFile -title "Save Slice" -defaultextension $Slice(ext)\
+		-filetypes $typelist -initialdir "$dir" -initialfile $filename]
+
+	# Do nothing if the user cancelled
+	if {$filename == ""} {return}
+
+	MainSlicesWrite $filename
+}
+
+proc MainSlicesWrite {filename} {
+	global viewWin Mrml Slice Gui
+
+	MainFileCreateDirectory $filename
+	
+	# Write it
+	set s $Slice(activeID)
+	set ext [file extension $filename]
+	switch $ext {
+	".tif" {
+		vtkWindowToImageFilter filter
+		filter SetInput sl${s}Win
+
+		vtkTIFFWriter writer
+		writer SetInput [filter GetOutput]
+		writer SetFileName $filename
+		writer Write
+		filter Delete
+		writer Delete
+	}
+	".bmp" {
+		vtkWindowToImageFilter filter
+		filter SetInput sl${s}Win
+
+		vtkBMPWriter writer
+		writer SetInput [filter GetOutput]
+		writer SetFileName $filename
+		writer Write
+		filter Delete
+		writer Delete
+	}
+	".ppm" {
+		vtkWindowToImageFilter filter
+		filter SetInput sl${s}Win
+
+		vtkPNMWriter writer
+		writer SetInput [filter GetOutput]
+		writer SetFileName $filename
+		writer Write
+		filter Delete
+		writer Delete
+	}
+	}
+	puts "Saved view: $filename"
+
+	# Store the new prefix and extension for next time
+	set root $Mrml(dir)
+	set absPrefix [file rootname $filename]
+	if {$Gui(pc) == 1} {
+		set absPrefix [string tolower $absPrefix]
+		set root [string tolower $Mrml(dir)]
+	}
+	if {[regexp "^$root/(\[^0-9\]*)(\[0-9\]*)" $absPrefix match relPrefix num] == 1} {
+		set Slice(prefix) $relPrefix
+	} else {
+		set Slice(prefix) [file rootname $absPrefix]
+	}
+	set Slice(ext) [file extension $filename]
 }
 
 proc MainSlicesStorePresets {p} {

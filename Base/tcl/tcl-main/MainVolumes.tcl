@@ -56,7 +56,7 @@ proc MainVolumesInit {} {
         
         set m MainVolumes
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.19 $} {$Date: 2000/02/13 17:31:34 $}]
+		{$Revision: 1.20 $} {$Date: 2000/02/13 21:19:12 $}]
 
 	set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -148,12 +148,10 @@ proc MainVolumesUpdateMRML {} {
 
 	# Form the menus
 	#--------------------------------------------------------
-	set Volume(idListForMenu) $Volume(idList)
-
 	# Active Volume menu
 	foreach m $Volume(mActiveList) {
 		$m delete 0 end
-		foreach v $Volume(idListForMenu) {
+		foreach v $Volume(idList) {
 			$m add command -label [Volume($v,node) GetName] \
 				-command "MainVolumesSetActive $v"
 		}
@@ -227,15 +225,12 @@ proc MainVolumesCreate {v} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainVolumesRead {v} {
-	global Volume
+	global Volume Gui
 
 	# Check that all files exist
 	scan [Volume($v,node) GetImageRange] "%d %d" lo hi
 	if {[CheckVolumeExists [Volume($v,node) GetFullPrefix] \
 		[Volume($v,node) GetFilePattern] $lo $hi] != ""} {
-		set str "Unable to build the VTK objects for Volumes."
-		puts $str
-		tk_messageBox -message $str
 		return -1
 	}
 
@@ -256,7 +251,7 @@ proc MainVolumesRead {v} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainVolumesWrite {v prefix} {
-	global Volume Gui Mrml
+	global Volume Gui Mrml tcl_platform
 
 	if {$v == ""} {
 		return
@@ -321,8 +316,11 @@ since the last time it was saved."
 	Volume($v,vol) Write
 	puts " ...done."
 
+	# Put the MRML file in the current directory so the relative
+	# paths to data are correct
+	set filename [file join $Mrml(dir) [Volume($v,node) GetName].xml]
+
 	# Write MRML file
-	set filename $fileFull.xml
 	vtkMrmlTree tree
 	tree AddItem Volume($v,node)
 	tree Write $filename
@@ -551,6 +549,8 @@ proc MainVolumesUpdate {v} {
 
 	set n $Volume(idNone)
 
+	# Update pipeline
+	Volume($v,vol) Update
 	foreach s $Slice(idList) {
  		if {$v == $Slice($s,backVolID)} {
 			Slicer SetBackVolume Volume($n,vol)
@@ -566,9 +566,20 @@ proc MainVolumesUpdate {v} {
 		}
 		MainSlicesSetOffset $s
 	}
-	Volume($v,vol) Update
 	Slicer ReformatModified
 	Slicer Update
+
+	# Update GUI
+	if {$v == $Volume(activeID)} {
+		# Refresh Volumes GUI with active volume's parameters
+		MainVolumesSetActive $v
+	}
+	# The BuildUpper() function reset the offsets to be in the middle of
+	# the volume, so I need to set them to what's on the GUI:
+	foreach s $Slice(idList) {
+		Slicer SetOffset $s $Slice($s,offset)
+	}
+
 }
 
 #-------------------------------------------------------------------------------
@@ -617,16 +628,17 @@ proc MainVolumesRenderActive {{scale ""}} {
 # .PROC MainVolumesSetActive
 # .END
 #-------------------------------------------------------------------------------
-proc MainVolumesSetActive {{v ""}} {
+proc MainVolumesSetActive {v} {
 	global Volume Lut Slice
 
 	if {$Volume(freeze) == 1} {return}
 	
 	set Volume(activeID) $v
-
 	if {$v == ""} {
-		return
-	} elseif {$v == "NEW"} {
+		set Volume(activeID) $Volume(idNone)
+	}
+
+	if {$v == "NEW"} {
 		
 		# Change button text
 		foreach mb $Volume(mbActiveList) {

@@ -97,7 +97,7 @@ proc ModelMakerUpdateMRML {} {
 	#---------------------------------------------------------------------------
 	set m $ModelMaker(mVolume)
 	$m delete 0 end
-	foreach v $Volume(idListForMenu) {
+	foreach v $Volume(idList) {
 		$m add command -label [Volume($v,node) GetName] -command \
 			"ModelMakerSetVolume $v"
 	}
@@ -448,7 +448,7 @@ proc ModelMakerWrite {} {
 # .END
 #-------------------------------------------------------------------------------
 proc ModelMakerRead {} {
-	global ModelMaker Model
+	global ModelMaker Model Mrml
 
 	# Show user a File dialog box
 	set m $Model(activeID)
@@ -456,7 +456,12 @@ proc ModelMakerRead {} {
 	if {$ModelMaker(prefix) == ""} {return}
 	
 	# Read
-	MainModelsRead $m $ModelMaker(prefix)
+	Model($m,node) SetFileName $ModelMaker(prefix).vtk
+	Model($m,node) SetFullFileName \
+		[file join $Mrml(dir) [Model($m,node) GetFileName]]
+	if {[MainModelsRead $m] < 0} {
+		return
+	}
 
 	# Prefix changed, so update the Models->Props tab
 	MainModelsSetActive $m

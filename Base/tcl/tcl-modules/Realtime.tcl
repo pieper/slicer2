@@ -16,6 +16,7 @@ proc RealtimeInit {} {
 	set Module($m,procGUI)   RealtimeBuildGUI
 	set Module($m,procMRML)  RealtimeUpdateMRML
 	set Module($m,procVTK)   RealtimeBuildVTK
+	set Module($m,procEnter) RealtimeEnter
 
 	# Define Dependencies
 	set Module($m,depend) "Locator"
@@ -26,7 +27,7 @@ proc RealtimeInit {} {
 	set Realtime(idResult)       NEW
 	set Realtime(prefixBaseline) ""
 	set Realtime(prefixResult)   ""
-	set Realtime(effect)         Average
+	set Realtime(effect)         Copy
 	set Realtime(switch)         Off
 }
 
@@ -66,7 +67,7 @@ proc RealtimeUpdateMRML {} {
 	#---------------------------------------------------------------------------
 	set m $Realtime(mRealtime)
 	$m delete 0 end
-	foreach v $Volume(idListForMenu) {
+	foreach v $Volume(idList) {
 		$m add command -label [Volume($v,node) GetName] -command \
 			"RealtimeSetRealtime $v; RenderAll"
 	}
@@ -76,7 +77,7 @@ proc RealtimeUpdateMRML {} {
 	set m $Realtime(mBaseline)
 	$m delete 0 end
 	set idBaseline ""
-	foreach v $Volume(idListForMenu) {
+	foreach v $Volume(idList) {
 		if {$v != $Volume(idNone) && $v != $Realtime(idResult)} {
 			$m add command -label [Volume($v,node) GetName] -command \
 				"RealtimeSetBaseline $v; RenderAll"
@@ -97,7 +98,7 @@ proc RealtimeUpdateMRML {} {
 	set m $Realtime(mResult)
 	$m delete 0 end
 	set idResult ""
-	foreach v $Volume(idListForMenu) {
+	foreach v $Volume(idList) {
 		if {$v != $Volume(idNone) && $v != $Realtime(idBaseline)} {
 			$m add command -label [Volume($v,node) GetName] -command \
 				"RealtimeSetResult $v; RenderAll"
@@ -216,11 +217,11 @@ Models are fun. Do you like models, Ron?
 	#-------------------------------------------
 	set f $fProcessing.fBaseline.fPrefix
 
-	eval {button $f.b -text "Browse" -width 6 \
-		-command "RealtimeSetPrefix Baseline"} $Gui(WBA)
+	eval {label $f.l -text "Prefix:"} $Gui(WLA)
 	set c {entry $f.e \
 		-textvariable Realtime(prefixBaseline) $Gui(WEA)}; eval [subst $c]
-	pack $f.b $f.e -padx 3 -side left -expand 1 -fill x
+	pack $f.l -padx 3 -side left
+	pack $f.e -padx 3 -side left -expand 1 -fill x
 
 	#-------------------------------------------
 	# Processing->Baseline->Btns
@@ -228,13 +229,12 @@ Models are fun. Do you like models, Ron?
 	set f $fProcessing.fBaseline.fBtns
 
 	set c {button $f.bWrite -text "Save" -width 5 \
-		-command "RealtimeWriteOutput Baseline; RenderAll" $Gui(WBA)}; eval [subst $c]
+		-command "RealtimeWrite Baseline; RenderAll" $Gui(WBA)}; eval [subst $c]
 	set c {button $f.bRead -text "Read" -width 5 \
-		-command "RealtimeReadOutput Baseline; RenderAll" $Gui(WBA)}; eval [subst $c]
+		-command "RealtimeRead Baseline; RenderAll" $Gui(WBA)}; eval [subst $c]
 	set c {button $f.bSet -text "Copy Realtime" -width 14 \
 		-command "RealtimeMakeBaseline; RenderAll" $Gui(WBA)}; eval [subst $c]
 	pack $f.bWrite $f.bRead $f.bSet -side left -padx $Gui(pad)
-
 
 
 	#-------------------------------------------
@@ -271,11 +271,11 @@ Models are fun. Do you like models, Ron?
 	#-------------------------------------------
 	set f $fProcessing.fResult.fPrefix
 
-	eval {button $f.b -text "Browse" -width 6 \
-		-command "RealtimeSetPrefix Result"} $Gui(WBA)
+	eval {label $f.l -text "Prefix:"} $Gui(WLA)
 	set c {entry $f.e \
 		-textvariable Realtime(prefixResult) $Gui(WEA)}; eval [subst $c]
-	pack $f.b $f.e -padx 3 -side left -expand 1 -fill x
+	pack $f.l -padx 3 -side left
+	pack $f.e -padx 3 -side left -expand 1 -fill x
 
 	#-------------------------------------------
 	# Processing->Result->Btns
@@ -283,7 +283,7 @@ Models are fun. Do you like models, Ron?
 	set f $fProcessing.fResult.fBtns
 
 	set c {button $f.bWrite -text "Save" -width 5 \
-		-command "RealtimeWriteOutput Result; RenderAll" $Gui(WBA)}; eval [subst $c]
+		-command "RealtimeWrite Result; RenderAll" $Gui(WBA)}; eval [subst $c]
 	pack $f.bWrite -side left -padx $Gui(pad)
 
 
@@ -310,7 +310,7 @@ Models are fun. Do you like models, Ron?
 	set c {menu $f.mbEffect.m $Gui(WMA)}; eval [subst $c]
 	set Realtime(mbEffect) $f.mbEffect
 	set m $Realtime(mbEffect).m
-	foreach e "Average Subtract" {
+	foreach e "Copy Subtract" {
 		$m add command -label $e -command "RealtimeSetEffect $e"
 	}
 	pack $f.l $f.mbEffect -side left -padx $Gui(pad)
@@ -332,6 +332,23 @@ Models are fun. Do you like models, Ron?
 	}
 }
 
+proc RealtimeEnter {} {
+	global Realtime Volume Slice
+
+	# If the Realtime volume is None, then select what's being displayed,
+	# otherwise the first volume in the mrml tree.
+	
+	if {[RealtimeGetRealtimeID] == $Volume(idNone)} {
+		set v [[[Slicer GetBackVolume $Slice(activeID)] GetMrmlNode] GetID]
+		if {$v == $Volume(idNone)} {
+			set v [lindex $Volume(idList) 0]
+		}
+		if {$v != $Volume(idNone)} {
+			RealtimeSetRealtime $v
+		}
+	}
+}
+
 proc RealtimeSetEffect {e} {
 	global Realtime
 
@@ -345,35 +362,118 @@ proc RealtimeSetEffect {e} {
 proc RealtimeSetSwitch {} {
 	global Realtime
 
+	# For now, just process the images once.
+	# Later, have the Locator module call RealtimeImageComponentCallback.
+	
+	if {$Realtime(switch) == "On"} {
+		RealtimeImageComponentCallback
+	}
+	set Realtime(switch) Off
 }
 
+proc RealtimeImageComponentCallback {} {
+	global Realtime
 
-#-------------------------------------------------------------------------------
-# .PROC RealtimeSetPrefix
-# .END
-#-------------------------------------------------------------------------------
-proc RealtimeSetPrefix {data} {
-	global Realtime Mrml
+	# Images may have multiple components, so this callback is called
+	# as each image component is received from the scanner.  Once all
+	# components have been received, this callback calls
+	# RealtimeImageCompleteCallback to process the complete image.
+	#
+	# For example, phase difference requires a real and imaginary
+	# image.  As each component-image arrives, it can be added to the
+	# complete-image as another component using vtkImageAppendComponent.
 
-	# Cannot have blank prefix
-	if {$Realtime(prefix$data) == ""} {
-		set Realtime(prefix$data) [Uncap $data]
+
+
+	RealtimeImageCompleteCallback
+}
+
+proc RealtimeImageCompleteCallback {} {
+	global Realtime Volume
+
+	# Perform the realtime image processing
+
+	set s [RealtimeGetRealtimeID]
+	set b [RealtimeGetBaselineID]
+	set r [RealtimeGetResultID]
+
+	# Check extents
+	set sExt [[Volume($s,vol) GetOutput] GetExtent]
+	set bExt [[Volume($b,vol) GetOutput] GetExtent]
+	if {$sExt != $bExt} {
+		tk_messageBox -icon error -message \
+			"Extents are not equal!\n\nRealtime = $sExt\nBaseline = $bExt"
+		return
 	}
 
- 	# Show popup initialized to the last file saved
-	set filename [file join $Mrml(dir) $Realtime(prefix$data)]
-	set dir [file dirname $filename]
-	set typelist {
-		{"All Files" {*}}
+	# Perform the computation here
+	switch $Realtime(effect) {
+
+	# Copy
+	"Copy" {
+		vtkImageCopy copy
+		copy SetInput [Volume($s,vol) GetOutput]
+		copy Update
+		copy SetInput ""
+		Volume($r,vol) SetImageData [copy GetOutput]
+		copy SetOutput ""
+		copy Delete
 	}
-	set filename [tk_getSaveFile -title "Save Volume" \
-		-filetypes $typelist -initialdir "$dir" -initialfile $filename]
 
-	# Do nothing if the user cancelled
-	if {$filename == ""} {return}
+	# Subtract
+	"Subtract" {
+#		vtkImageMathematics math
+#		math SetInput 1 [Volume($s,vol) GetOutput]
+#		math SetInput 2 [Volume($b,vol) GetOutput]
+#		math SetOperationToSubtract
+#		math Update
+#		math SetInput 1 ""
+#		math SetInput 2 ""
+#		Volume($r,vol) SetImageData [math GetOutput]
+#		math SetOutput ""
+#		math Delete
+	}
+	}
 
-	# Store it as a relative prefix for next time
-	set Realtime(prefix$data) [MainFileGetRelativePrefix $filename]
+	# Mark Result as unsaved
+	set Volume($r,dirty) 1
+
+	# r copies s's MrmlNode
+	Volume($r,node) Copy Volume($s,node)
+
+	# Update pipeline and GUI
+	MainVolumesUpdate $r
+
+	RenderAll
+}
+
+proc RealtimeMakeBaseline {} {
+	global Volume
+
+	# Copy the Realtime image to the Baseline image
+
+	set s [RealtimeGetRealtimeID]
+	set b [RealtimeGetBaselineID]
+
+	# Copy image pixels
+	vtkImageCopy copy
+	copy SetInput [Volume($s,vol) GetOutput]
+	copy Update
+	copy SetInput ""
+	Volume($b,vol) SetImageData [copy GetOutput]
+	copy SetOutput ""
+	copy Delete
+
+	# Mark baseline as unsaved
+	set Volume($b,dirty) 1
+
+	# b copies s's MrmlNode
+	Volume($b,node) Copy Volume($s,node)
+
+	# Update pipeline and GUI
+	MainVolumesUpdate $b
+
+	RenderAll
 }
 
 
@@ -435,8 +535,8 @@ proc RealtimeSetResult {v} {
 		tk_messageBox -message "The Realtime and Result volumes must differ."
 		return
 	}
-	if {$v == $Realtime(idResult) && $v != "NEW"} {
-		tk_messageBox -message "The Result and Result volumes must differ."
+	if {$v == $Realtime(idBaseline) && $v != "NEW"} {
+		tk_messageBox -message "The Baseline and Result volumes must differ."
 		return
 	}
 	set Realtime(idResult) $v
@@ -467,39 +567,28 @@ proc RealtimeGetRealtimeID {} {
 # .END
 #-------------------------------------------------------------------------------
 proc RealtimeGetBaselineID {} {
-	global Realtime Dag Volume Lut
+	global Realtime Volume Lut
 		
+	# If there is no Baseline volume, then create one
 	if {$Realtime(idBaseline) != "NEW"} {
 		return $Realtime(idBaseline)
 	}
+	
+	# Create the node
+	set n [MainMrmlAddNode Volume]
+	set v [$n GetID]
+	$n SetDescription "Baseline Volume=$v"
+	$n SetName        "Baseline"
 
-	# Create a Baseline volume
-	# -----------------------------------------------------
-	set v [expr [lindex [lsort -integer -decreasing $Volume(idList)] 0] + 1]
-	lappend Volume(idList) $v
-	set Realtime(idBaseline) $v
+	# Create the volume
+	MainVolumesCreate $v
 
-	tk_messageBox -message "NEW BASELINE=$v"
-
-	# MrmlVolumeNode
-	vtkMrmlVolumeNode Volume($v,node)
-	Volume($v,node) SetID          $v
-	Volume($v,node) SetDescription "Baseline Volume=$v"
-	Volume($v,node) SetName        "Baseline"
-	Volume($v,node) SetLUTName     $Lut(idLabel)
-	Volume($v,node) InterpolateOff
-
-	# MrmlVolume
-	vtkMrmlVolume Volume($v,vol)
-	Volume($v,vol) SetMrmlNode           Volume($v,node)
-	Volume($v,vol) SetHistogramWidth     $Volume(histWidth)
-	Volume($v,vol) SetHistogramHeight    $Volume(histHeight)
-	Volume($v,vol) UseLabelIndirectLUTOn
-	Volume($v,vol) SetStartMethod     MainStartProgress
-	Volume($v,vol) SetProgressMethod "MainShowProgress Volume($v,vol)"
-	Volume($v,vol) SetEndMethod       MainEndProgress
+	RealtimeSetBaseline $v
 
 	MainUpdateMRML
+
+	# Copy Realtime
+	RealtimeMakeBaseline
 
 	return $v
 }
@@ -512,37 +601,23 @@ proc RealtimeGetBaselineID {} {
 # .END
 #-------------------------------------------------------------------------------
 proc RealtimeGetResultID {} {
-	global Realtime Dag Volume Lut
+	global Realtime Volume Lut
 		
+	# If there is no Result volume, then create one
 	if {$Realtime(idResult) != "NEW"} {
 		return $Realtime(idResult)
 	}
+	
+	# Create the node
+	set n [MainMrmlAddNode Volume]
+	set v [$n GetID]
+	$n SetDescription "Result Volume=$v"
+	$n SetName        "Result"
 
-	# Create a Result volume
-	# -----------------------------------------------------
-	set v [expr [lindex [lsort -integer -decreasing $Volume(idList)] 0] + 1]
-	lappend Volume(idList) $v
-	set Realtime(idResult) $v
+	# Create the volume
+	MainVolumesCreate $v
 
-	tk_messageBox -message "NEW BASELINE=$v"
-
-	# MrmlVolumeNode
-	vtkMrmlVolumeNode Volume($v,node)
-	Volume($v,node) SetID          $v
-	Volume($v,node) SetDescription "Result Volume=$v"
-	Volume($v,node) SetName        "Result"
-	Volume($v,node) SetLUTName     $Lut(idLabel)
-	Volume($v,node) InterpolateOff
-
-	# MrmlVolume
-	vtkMrmlVolume Volume($v,vol)
-	Volume($v,vol) SetMrmlNode           Volume($v,node)
-	Volume($v,vol) SetHistogramWidth     $Volume(histWidth)
-	Volume($v,vol) SetHistogramHeight    $Volume(histHeight)
-	Volume($v,vol) UseLabelIndirectLUTOn
-	Volume($v,vol) SetStartMethod     MainStartProgress
-	Volume($v,vol) SetProgressMethod "MainShowProgress Volume($v,vol)"
-	Volume($v,vol) SetEndMethod       MainEndProgress
+	RealtimeSetResult $v
 
 	MainUpdateMRML
 
@@ -550,22 +625,8 @@ proc RealtimeGetResultID {} {
 }
 
 
-proc RealtimeMakeBaseline {} {
-}
-
-proc RealtimeReadOutput {data} {
-	global Realtime
-
-}
-
-#-------------------------------------------------------------------------------
-# .PROC RealtimeWriteOutput
-#
-# Write either the Baseline or Result output to disk.
-# .END
-#-------------------------------------------------------------------------------
-proc RealtimeWriteOutput {data} {
-	global Volume Gui Path Lut tcl_platform Mrml Realtime
+proc RealtimeWrite {data} {
+	global Volume Realtime
 
 	# If the volume doesn't exist yet, then don't write it, duh!
 	if {$Realtime(id$data) == "NEW"} {
@@ -578,64 +639,47 @@ proc RealtimeWriteOutput {data} {
 		Baseline {set v [RealtimeGetBaselineID]}
 	}
 
-	# Change prefix and header to differ from the input volume
-	#
-	set filePrefix $Realtime(prefix$data)
-	set fileFull [file join $Mrml(dir) $filePrefix]
+	# Show user a File dialog box
+	set Realtime(prefix$data) [MainFileSaveVolume $v $Realtime(prefix$data)]
+	if {$Realtime(prefix$data) == ""} {return}
 
-	# Check that it's not blank
-	if {[file isdirectory $fileFull] == 1} {
-		tk_messageBox -icon error -title $Gui(title) \
-			-message "Please enter a file prefix for the $data volume."
-		return 0
+	# Write
+	MainVolumesWrite $v $Realtime(prefix$data)
+
+	# Prefix changed, so update the Volumes->Props tab
+	MainVolumesSetActive $v
+}
+
+proc RealtimeRead {data} {
+	global Volume Realtime Mrml
+
+	# If the volume doesn't exist yet, then don't read it, duh!
+	if {$Realtime(id$data) == "NEW"} {
+		tk_messageBox -message "Nothing to read."
+		return
 	}
+
+	switch $data {
+		Result   {set v $Realtime(idResult)}
+		Baseline {set v $Realtime(idBaseline)}
+	}
+
+	# Show user a File dialog box
+	set Realtime(prefix$data) [MainFileOpenVolume $v $Realtime(prefix$data)]
+	if {$Realtime(prefix$data) == ""} {return}
 	
-	# Check that it's a prefix, not a directory
-	if {[file isdirectory $fileFull] == 1} {
-		tk_messageBox -icon error -title $Gui(title) \
-			-message "Please enter a file prefix, not a directory,\n\
-			for the $data volume."
-		return 0
+	# Read
+	Volume($v,node) SetFilePrefix $Realtime(prefix$data)
+	Volume($v,node) SetFullPrefix \
+		[file join $Mrml(dir) [Volume($v,node) GetFilePrefix]]
+	if {[MainVolumesRead $v] < 0} {
+		return
 	}
 
-	# Check that the directory exists
-	set dir [file dirname $fileFull]
-	if {[file isdirectory $dir] == 0} {
-		if {$dir != ""} {
-			file mkdir $dir
-		}
-		if {[file isdirectory $dir] == 0} {
-			tk_messageBox -icon info -type ok -title $Gui(title) \
-			-message "Failed to make '$dir', so using current directory."
-			set dir ""
-		}
-	}
-	Volume($v,node) SetFilePrefix $filePrefix
-	Volume($v,node) SetFullPrefix $fileFull
+	# Update pipeline and GUI
+	MainVolumesUpdate $v
 
-	# interpolate off
-	Volume($v,node) InterpolateOff
-
-	# Determine if littleEndian
-	if {$tcl_platform(machine) == "intel" || $tcl_platform(machine) == "mips"} {
-		Volume($v,node) SetLittleEndian 1
-	} else {
-		Volume($v,node) SetLittleEndian 1
-	}
-
-	# Write volume data
-	set Gui(progressText) "Writing [Volume($v,node) GetName]"
-	puts "Writing '$fileFull' ..."
-	Volume($v,vol) Write
-	puts " ...done."
-
-	# Write MRML file
-	set filename $fileFull.xml
-	vtkMrmlTree tree
-	tree AddItem Volume($v,node)
-	tree Write $filename
-	tree RemoveAllItems
-	tree Delete
-	puts "Saved MRML file: $filename"
+	# Prefix changed, so update the Models->Props tab
+	MainVolumesSetActive $v
 }
 

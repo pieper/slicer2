@@ -143,6 +143,12 @@ proc MainMrmlAddNode {nodeType} {
 	incr Array(nextID)
 	lappend Array(idList) $i
 
+	# Put the None volume at the end
+	if {$nodeType == "Volume"} {
+		set j [lsearch $Volume(idList) $Volume(idNone)]
+		set Volume(idList) "[lreplace $Volume(idList) $j $j] $Volume(idNone)"
+	}
+
 	# Create vtkMrmlNode
 	set n ${nodeType}($i,node)
 	vtkMrml${nodeType}Node $n
@@ -396,9 +402,8 @@ proc MainMrmlRead {mrmlFile} {
 	}
 
 	# Put the None volume at the end
-	if {[lindex $Volume(idList) 0] == $Volume(idNone)} {
-		set Volume(idList) "[lreplace $Volume(idList) 0 0] $Volume(idNone)"
-	}
+	set i [lsearch $Volume(idList) $Volume(idNone)]
+	set Volume(idList) "[lreplace $Volume(idList) $i $i] $Volume(idNone)"
 }
 
 #-------------------------------------------------------------------------------
@@ -620,10 +625,8 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 				"filePattern"     {$n SetFilePattern    $val}
 				"filePrefix"      {$n SetFilePrefix     $val}
 				"imageRange"      {eval $n SetImageRange $val}
-				"littleEndian"    {$n SetLittleEndian   $val}
 				"spacing"         {eval $n SetSpacing   $val}
 				"dimensions"      {eval $n SetDimensions $val}
-				"labelMap"        {$n SetLabelMap       $val}
 				"scalarType"      {$n SetScalarTypeTo$val}
 				"numScalars"      {$n SetNumScalars     $val}
 				"rasToIjkMatrix"  {$n SetRasToIjkMatrix $val}
@@ -654,6 +657,20 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 						$n SetInterpolate 1
 					} else {
 						$n SetInterpolate 0
+					}
+				}
+				"labelMap" {
+					if {$val == "yes"} {
+						$n SetLabelMap 1
+					} else {
+						$n SetLabelMap 0
+					}
+				}
+				"littleEndian" {
+					if {$val == "yes"} {
+						$n SetLittleEndian 1
+					} else {
+						$n SetLittleEndian 0
 					}
 				}
 				}

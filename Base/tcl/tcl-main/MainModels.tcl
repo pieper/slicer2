@@ -141,14 +141,11 @@ proc MainModelsUpdateMRML {} {
 			-troughcolor [MakeColorNormalized [Color($c,node) GetDiffuseColor]]
 	}
 
-	# Form the menus 
+	# Form the Active Model menu 
 	#--------------------------------------------------------
-	set Model(idListForMenu) $Model(idList)
-
-	# Active Model menu
 	foreach menu $Model(mActiveList) {
 		$menu delete 0 end
-		foreach m $Model(idListForMenu) {
+		foreach m $Model(idList) {
 			$menu add command -label [Model($m,node) GetName] \
 				-command "MainModelsSetActive $m"
 		}
@@ -262,10 +259,7 @@ proc MainModelsRead {m} {
 	if {$fileName == ""} {return}
 
 	# Check fileName
-	if {[CheckFileExists $fileName 0] == 0} {
-		set str "Cannot read model: '$fileName'"
-		puts $str
-		tk_messageBox -message $str
+	if {[CheckFileExists $fileName] == 0} {
 		return -1
 	}
 	set name [Model($m,node) GetName]
@@ -838,7 +832,7 @@ since the last time it was saved."
 		return
 	}
 
-	Model($m,node) SetFileName "$prefix.vtk"
+	Model($m,node) SetFileName [MainFileGetRelativePrefix $prefix.vtk]
 	Model($m,node) SetFullFileName \
 		[file join $Mrml(dir) [Model($m,node) GetFileName]]
 

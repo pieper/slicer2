@@ -621,17 +621,17 @@ proc CheckVolumeExists {filePrefix filePattern firstNum lastNum {verbose 0}} {
 
 	# Check that it's a prefix, not a directory
 	if {[file isdirectory $filePrefix] == 1} {
-		tk_messageBox -icon error -title $Gui(title) \ 
-			-message "'$filePrefix' is a directory instead of a prefix."
-		return
+		tk_messageBox -icon error -title $Gui(title) -message \
+			"'$filePrefix' is a directory instead of a prefix."
+		return ERROR
 	}
 
 	# Check directory is there
 	set dir [file dirname $filePrefix]
 	if {[file isdirectory $dir] == 0} {
-		tk_messageBox -icon info -type ok -title $Gui(title) \
-		-message "Directory '$dir' does not exist."
-		return
+		tk_messageBox -icon error -title $Gui(title) -message \
+			"Directory '$dir' does not exist."
+		return ERROR
 	}
 
 	set num $firstNum
@@ -660,22 +660,22 @@ proc CheckFileExists {filename {verbose 1}} {
 
 	if {[file exists $filename] == 0} {
 		if {$verbose == 1} {
-			tk_messageBox -icon info -type ok -title $Gui(title) \
-				-message "File '$filename' does not exist."
+			tk_messageBox -icon info -type ok -title $Gui(title) -message \
+				"File '$filename' does not exist."
 		}
 		return 0
 	}
 	if {[file isdirectory $filename] == 1} {
 		if {$verbose == 1} {
-			tk_messageBox -icon info -type ok -title $Gui(title) \
-				-message "'$filename' is a directory, not a file."
+			tk_messageBox -icon info -type ok -title $Gui(title) -message \
+				"'$filename' is a directory, not a file."
 		}
 		return 0
 	}
 	if {[file readable $filename] == 0} {
 		if {$verbose == 1} {
-			tk_messageBox -icon info -type ok -title $Gui(title) \
-				-message "'$filename' exists, but is unreadable."
+			tk_messageBox -icon info -type ok -title $Gui(title) -message \
+				"'$filename' exists, but is unreadable."
 		}
 		return 0
 	}

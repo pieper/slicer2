@@ -694,12 +694,8 @@ proc ModelsPropsApply {} {
 			tk_messageBox -message "Please enter a file prefix."
 			return
 		}
-		set i $Model(nextID)
-		incr Model(nextID)
-		lappend Model(idList) $i
-		vtkMrmlModelNode Model($i,node)
-		set n Model($i,node)
-		$n SetID               $i
+		set n [MainMrmlAddNode Model]
+		set i [$n GetID]
 		$n SetOpacity          1.0
 		$n SetVisibility       1
 		$n SetClipping         0
@@ -710,7 +706,6 @@ proc ModelsPropsApply {} {
 		$n SetFullFileName [file join $Mrml(dir) [$n GetFileName]]
 		$n SetColor $Label(name)
 
-		Mrml(dataTree) AddItem $n
 		MainUpdateMRML
 
 		# If failed, then it's no longer in the idList

@@ -83,7 +83,7 @@ proc EdMeasureIslandBuildGUI {} {
 		$f.fGrid $f.fApply $f.fResults \
 		-side top -pady $Gui(pad) -fill x
 
-	EdBuildScopeGUI $Ed(EdMeasureIsland,frame).fScope Ed(EdMeasureIsland,scope) 
+	EdBuildScopeGUI $Ed(EdMeasureIsland,frame).fScope Ed(EdMeasureIsland,scope) Multi
 	EdBuildInputGUI $Ed(EdMeasureIsland,frame).fInput Ed(EdMeasureIsland,input)
 
 	#-------------------------------------------

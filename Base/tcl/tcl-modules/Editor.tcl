@@ -96,6 +96,7 @@ proc EditorInit {} {
 	set Editor(prefixWorking) ""
 	set Editor(fgName) Working
 	set Editor(bgName) Composite
+	set Editor(native) Native
 
 	# Look for Editor effects and form an array, Ed, for them.
 	# Each effect has a *.tcl file in the tcl-modules/Editor directory.
@@ -196,7 +197,7 @@ proc EditorUpdateMRML {} {
 	#---------------------------------------------------------------------------
 	set m $Editor(mOriginal)
 	$m delete 0 end
-	foreach v $Volume(idListForMenu) {
+	foreach v $Volume(idList) {
 		$m add command -label [Volume($v,node) GetName] -command \
 			"EditorSetOriginal $v; RenderAll"
 	}
@@ -206,7 +207,7 @@ proc EditorUpdateMRML {} {
 	set m $Editor(mWorking)
 	$m delete 0 end
 	set idWorking ""
-	foreach v $Volume(idListForMenu) {
+	foreach v $Volume(idList) {
 		if {$v != $Volume(idNone) && $v != $Editor(idComposite)} {
 			$m add command -label [Volume($v,node) GetName] -command \
 				"EditorSetWorking $v; RenderAll"
@@ -227,7 +228,7 @@ proc EditorUpdateMRML {} {
 	set m $Editor(mComposite)
 	$m delete 0 end
 	set idComposite ""
-	foreach v $Volume(idListForMenu) {
+	foreach v $Volume(idList) {
 		if {$v != $Volume(idNone) && $v != $Editor(idWorking)} {
 			$m add command -label [Volume($v,node) GetName] -command \
 				"EditorSetComposite $v; RenderAll"
@@ -288,13 +289,22 @@ Models are fun. Do you like models, Ron?
 	set fVolumes $Module(Editor,fVolumes)
 	set f $fVolumes
 
+	frame $f.fHelp      -bg $Gui(activeWorkspace)
 	frame $f.fOriginal  -bg $Gui(activeWorkspace)
 	frame $f.fWorking   -bg $Gui(activeWorkspace) -relief groove -bd 3
 	frame $f.fComposite -bg $Gui(activeWorkspace) -relief groove -bd 3
 	frame $f.fMerge     -bg $Gui(activeWorkspace) -relief groove -bd 3
 
-	pack $f.fOriginal $f.fWorking $f.fComposite $f.fMerge \
+	pack $f.fOriginal $f.fHelp $f.fWorking $f.fComposite $f.fMerge \
 		-side top -padx $Gui(pad) -pady $Gui(pad) -fill x
+
+	#-------------------------------------------
+	# Volumes->Help
+	#-------------------------------------------
+	set f $fVolumes.fHelp
+
+	eval {label $f.l -text "Click the 'Effects' tab to begin."} $Gui(WLA)
+	pack $f.l
 
 	#-------------------------------------------
 	# Volumes->Original
@@ -475,8 +485,9 @@ Models are fun. Do you like models, Ron?
 
 	frame $f.fEffects   -bg $Gui(activeWorkspace) -relief groove -bd 2
 	frame $f.fActive    -bg $Gui(activeWorkspace)
+	frame $f.fNative    -bg $Gui(activeWorkspace)
 	frame $f.fTime      -bg $Gui(activeWorkspace)
-	pack $f.fEffects $f.fActive $f.fTime \
+	pack $f.fEffects $f.fActive $f.fNative $f.fTime \
 		-side top -padx $Gui(pad) -pady $Gui(pad) -fill x
 
 	#-------------------------------------------
@@ -484,13 +495,29 @@ Models are fun. Do you like models, Ron?
 	#-------------------------------------------
 	set f $fEffects.fActive
 
-	set c {label $f.lActive -text "Active Slice:" $Gui(WLA)}; eval [subst $c]
-	pack $f.lActive -side left -pady $Gui(pad) -padx $Gui(pad) -fill x
+	set c {label $f.l -text "Active Slice:" $Gui(WLA)}; eval [subst $c]
+	pack $f.l -side left -pady $Gui(pad) -padx $Gui(pad) -fill x
 
 	foreach s $Slice(idList) text "Red Yellow Green" width "4 7 6" {
 		set c {radiobutton $f.r$s -width $width -indicatoron 0\
 			-text "$text" -value "$s" -variable Slice(activeID) \
 			-command "MainSlicesSetActive" $Gui(WCA) -selectcolor  $Gui(slice$s)}
+			eval [subst $c]
+		pack $f.r$s -side left -fill x -anchor e
+	}
+
+	#-------------------------------------------
+	# Effects->Native frame
+	#-------------------------------------------
+	set f $fEffects.fNative
+
+	set c {label $f.l -text "Multi-Slice Orient:" $Gui(WLA)}; eval [subst $c]
+	pack $f.l -side left -pady $Gui(pad) -padx $Gui(pad) -fill x
+
+	foreach s "Native Active" text "Native Active" width "7 7" {
+		set c {radiobutton $f.r$s -width $width -indicatoron 0\
+			-text "$text" -value "$s" -variable Editor(native) \
+			$Gui(WCA)}
 			eval [subst $c]
 		pack $f.r$s -side left -fill x -anchor e
 	}
@@ -972,37 +999,28 @@ proc EditorGetOriginalID {} {
 # .END
 #-------------------------------------------------------------------------------
 proc EditorGetWorkingID {} {
-	global Editor Dag Volume Lut
+	global Editor Volume Lut
 		
+	# If there is no Working volume, then create one
 	if {$Editor(idWorking) != "NEW"} {
 		return $Editor(idWorking)
 	}
+	
+	# Create the node
+	set n [MainMrmlAddNode Volume]
+	set v [$n GetID]
+	$n SetDescription "Working Volume=$v"
+	$n SetName        "Working"
+	$n SetLUTName     $Lut(idLabel)
+	$n InterpolateOff
+	$n LabelMapOn
 
-	# Create a Working volume
-	# -----------------------------------------------------
-	set v [expr [lindex [lsort -integer -decreasing $Volume(idList)] 0] + 1]
-	lappend Volume(idList) $v
-	set Editor(idWorking) $v
-
-	puts "NEW WORKING=$v"
-
-	# MrmlVolumeNode
-	vtkMrmlVolumeNode Volume($v,node)
-	Volume($v,node) SetID          $v
-	Volume($v,node) SetDescription "Working Volume=$v"
-	Volume($v,node) SetName        "Working"
-	Volume($v,node) SetLUTName     $Lut(idLabel)
-	Volume($v,node) InterpolateOff
-
-	# MrmlVolume
-	vtkMrmlVolume Volume($v,vol)
-	Volume($v,vol) SetMrmlNode           Volume($v,node)
-	Volume($v,vol) SetHistogramWidth     $Volume(histWidth)
-	Volume($v,vol) SetHistogramHeight    $Volume(histHeight)
+	# Create the volume
+	MainVolumesCreate $v
 	Volume($v,vol) UseLabelIndirectLUTOn
-	Volume($v,vol) SetStartMethod     MainStartProgress
-	Volume($v,vol) SetProgressMethod "MainShowProgress Volume($v,vol)"
-	Volume($v,vol) SetEndMethod       MainEndProgress
+
+	EditorSetWorking $v
+	puts "NEW WORKING=$v"
 
 	MainUpdateMRML
 
@@ -1019,35 +1037,26 @@ proc EditorGetWorkingID {} {
 proc EditorGetCompositeID {} {
 	global Editor Dag Volume Lut
 		
+	# If there is no Composite volume, then create one
 	if {$Editor(idComposite) != "NEW"} {
 		return $Editor(idComposite)
 	}
+	
+	# Create the node
+	set n [MainMrmlAddNode Volume]
+	set v [$n GetID]
+	$n SetDescription "Composite Volume=$v"
+	$n SetName        "Composite"
+	$n SetLUTName     $Lut(idLabel)
+	$n InterpolateOff
+	$n LabelMapOn
 
-	# Create a Composite volume
-	# -----------------------------------------------------
-	set v [expr [lindex [lsort -integer -decreasing $Volume(idList)] 0] + 1]
-	lappend Volume(idList) $v
-	set Editor(idComposite) $v
-
-	puts "NEW COMPOSITE=$v"
-
-	# MrmlVolumeNode
-	vtkMrmlVolumeNode Volume($v,node)
-	Volume($v,node) SetID          $v
-	Volume($v,node) SetDescription "Composite Volume=$v"
-	Volume($v,node) SetName        "Composite"
-	Volume($v,node) SetLUTName     $Lut(idLabel)
-	Volume($v,node) InterpolateOff
-
-	# MrmlVolume
-	vtkMrmlVolume Volume($v,vol)
-	Volume($v,vol) SetMrmlNode           Volume($v,node)
-	Volume($v,vol) SetHistogramWidth     $Volume(histWidth)
-	Volume($v,vol) SetHistogramHeight    $Volume(histHeight)
+	# Create the volume
+	MainVolumesCreate $v
 	Volume($v,vol) UseLabelIndirectLUTOn
-	Volume($v,vol) SetStartMethod     MainStartProgress
-	Volume($v,vol) SetProgressMethod "MainShowProgress Volume($v,vol)"
-	Volume($v,vol) SetEndMethod       MainEndProgress
+
+	EditorSetComposite $v
+	puts "NEW COMPOSITE=$v"
 
 	MainUpdateMRML
 
@@ -1220,29 +1229,16 @@ proc EditorUpdateAfterUndo {} {
 	EditorActivateUndo [Ed(editor) GetUndoable]
 
 	# Restore MrmlNode
-	 Volume($w,node) Copy Editor(undoNode)
+	Volume($w,node) Copy Editor(undoNode)
 
-	# Update pipeline 
-	Volume($w,vol) Update
-	MainSlicesSetVolumeAll Fore $w
-	Slicer ReformatModified
-	Slicer Update
+	# Update pipeline and GUI
+	MainVolumesUpdate $w
 
-	# Update GUI
-	if {$w == $Volume(activeID)} {
-		# Refresh Volumes GUI with active volume's parameters
-		MainVolumesSetActive
-	}
 	# Update the effect panel GUI by re-running it's Enter procedure
 	if {[info exists Ed($e,procEnter)] == 1} {
 		$Ed($e,procEnter)
 	}
 
-	# The Update() function reset the offsets to be in the middle of
-	# the volume, so I need to set them to what's on the GUI:
-	foreach s $Slice(idList) {
-		Slicer SetOffset $s $Slice($s,offset)
-	}
 	RenderAll
 }
 
@@ -1376,7 +1372,7 @@ proc EdBuildRenderGUI {f var {options ""}} {
 # .END
 #-------------------------------------------------------------------------------
 proc EdSetupBeforeApplyEffect {scope v} {
-	global Volume Ed
+	global Volume Ed Editor
 
 	set o [EditorGetOriginalID]
 	set w [EditorGetWorkingID]
@@ -1415,6 +1411,23 @@ proc EdSetupBeforeApplyEffect {scope v} {
 				set order PA
 			}
 		}
+
+		# Does the user want the orien of the active slice or native slices?
+		if {$Editor(native) == "Native"} {
+			set order [Volume($o,node) GetScanOrder]
+		}
+		switch $order {
+			"SI" {
+				set order IS
+			}
+			"RL" {
+				set order LR
+			}
+			"AP" {
+				set order PA
+			}
+		}
+
 		Ed(editor) SetOutputSliceOrder $order
 		Ed(editor) SetInputSliceOrder [Volume($v,node) GetScanOrder]
 		Ed(editor) SetSlice $slice
@@ -1435,36 +1448,17 @@ proc EdUpdateAfterApplyEffect {v {render All}} {
 	Volume($w,vol) SetImageData [Ed(editor) GetOutput]
 	EditorActivateUndo [Ed(editor) GetUndoable]
 
-	# Keep a copy for undo
-#	Editor(undoNode) Copy Volume($w,node)
-
-	# Copy MrmlNode from v to w 
-#	if {$v != $w} {
-#		# w copies v 
-#		Volume($w,node) Copy Volume($v,node)
-#	}
+	# w copies o's MrmlNode
 	Volume($w,node) Copy Volume($o,node)
 	Volume($w,node) InterpolateOff
 	Volume($w,node) LabelMapOn
 	Volume($w,node) SetLUTName $Lut(idLabel)
+
+	# Keep a copy for undo
 	Editor(undoNode) Copy Volume($w,node)
 
-	# Update pipeline 
-	Volume($w,vol) Update
-	MainSlicesSetVolumeAll Fore $w
-	Slicer ReformatModified
-	Slicer Update
-
-	# Update GUI
-	if {$w == $Volume(activeID)} {
-		# Refresh Volumes GUI with active volume's parameters
-		MainVolumesSetActive
-	}
-	# The BuildUpper() function reset the offsets to be in the middle of
-	# the volume, so I need to set them to what's on the GUI:
-	foreach s $Slice(idList) {
-		Slicer SetOffset $s $Slice($s,offset)
-	}
+	# Update pipeline and GUI
+	MainVolumesUpdate $w
 
 	# Render
 	Render$render
@@ -1506,7 +1500,7 @@ proc EditorWrite {data} {
 }
 
 proc EditorRead {data} {
-	global Volume Editor
+	global Volume Editor Mrml
 
 	# If the volume doesn't exist yet, then don't read it, duh!
 	if {$Editor(id$data) == "NEW"} {
@@ -1522,12 +1516,20 @@ proc EditorRead {data} {
 	# Show user a File dialog box
 	set Editor(prefix$data) [MainFileOpenVolume $v $Editor(prefix$data)]
 	if {$Editor(prefix$data) == ""} {return}
-	
+		
 	# Read
-	MainVolumesRead $v $Editor(prefix$data)
+	Volume($v,node) SetFilePrefix $Editor(prefix$data)
+	Volume($v,node) SetFullPrefix \
+		[file join $Mrml(dir) [Volume($v,node) GetFilePrefix]]
+	if {[MainVolumesRead $v] < 0} {
+		return
+	}
+
+	# Update pipeline and GUI
+	MainVolumesUpdate $v
 
 	# Prefix changed, so update the Models->Props tab
-	MainVolumesSetActive $m
+	MainVolumesSetActive $v
 }
 
 #-------------------------------------------------------------------------------
@@ -1554,29 +1556,12 @@ proc EditorClear {data} {
 	copy ClearOn
 	copy SetInput [Volume($v,vol) GetOutput]
 	copy Update
-
 	copy SetInput ""
 	Volume($v,vol) SetImageData [copy GetOutput]
 	copy SetOutput ""
 	copy Delete
-	# This next line deletes the vol's original ImageData
-	Volume($v,vol) Update
 
-	# Refresh Volumes GUI with active volume's parameters
-	if {$v == $Volume(activeID)} {
-		MainVolumesSetActive
-	}
-
-	if {$v == [EditorGetWorkingID]} {
-		MainSlicesSetVolumeAll Fore $v
-	}
-	Slicer ReformatModified
-	Slicer Update
-	# The Update() function reset the offsets to be in the middle of
-	# the volume, so I need to set them to what's on the GUI:
-	foreach s $Slice(idList) {
-		Slicer SetOffset $s $Slice($s,offset)
-	}
+	MainVolumesUpdate $v
 	RenderAll
 }
 	
@@ -1646,7 +1631,6 @@ Merge with the Working or Composite, not '$bgName'"; return}
 		Volume($bg,vol) SetImageData [copy GetOutput]
 		copy SetOutput ""
 		copy Delete
-		Volume($bg,vol) Update
 	} else {
 		
 		vtkImageOverlay over
@@ -1659,26 +1643,10 @@ Merge with the Working or Composite, not '$bgName'"; return}
 		Volume($bg,vol) SetImageData [over GetOutput]
 		over SetOutput ""
 		over Delete
-		Volume($bg,vol) Update
 	}
 		
-	# Update pipeline 
-	Volume($bg,vol) Update
-
-	if {$bg == [EditorGetWorkingID]} {
-		MainSlicesSetVolumeAll Fore $bg
-	}
-	Slicer ReformatModified
-	Slicer Update
-
-	if {$bg == $Volume(activeID)} {
-		MainVolumesSetActive
-	}
-	# The Update() function reset the offsets to be in the middle of
-	# the volume, so I need to set them to what's on the GUI:
-	foreach s $Slice(idList) {
-		Slicer SetOffset $s $Slice($s,offset)
-	}
+	# Update pipeline and gui
+	MainVolumesUpdate $bg
 	RenderAll
 }
 

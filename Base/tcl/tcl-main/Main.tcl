@@ -309,7 +309,7 @@ proc MainInit {} {
 	set Module(procRecallPresets) ""
 	set m Main
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.17 $} {$Date: 2000/02/11 20:32:27 $}]
+		{$Revision: 1.18 $} {$Date: 2000/02/13 21:19:10 $}]
 
 	# Call each "Init" routine that's not part of a module
 	#-------------------------------------------
@@ -438,8 +438,12 @@ proc MainBuildGUI {} {
 	$Gui(mFile) add separator
 	$Gui(mFile) add command -label "Save 3D View" -command \
 		"MainMenu File Save3D"
-	$Gui(mFile) add command -label "Save Slice" -command \
+	$Gui(mFile) add command -label "Save Active Slice" -command \
 		"MainMenu File SaveSlice"
+	$Gui(mFile) add command -label "Save 3D View As..." -command \
+		"MainMenu File Save3DAs"
+	$Gui(mFile) add command -label "Save Active Slice As..." -command \
+		"MainMenu File SaveSliceAs"
 	$Gui(mFile) add separator
 	$Gui(mFile) add command -label "Close" -command \
 		"MainMenu File Close"
@@ -1038,7 +1042,13 @@ proc MainMenu {menu cmd} {
 		    MainViewSaveView
 		}
 		"SaveSlice" {
-		    SlicesSave
+		    MainSlicesSave
+		}
+		"Save3DAs" {
+		    MainViewSaveViewPopup
+		}
+		"SaveSliceAs" {
+		    MainSlicesSavePopup
 		}
 		"Close" {
 		    MainFileClose
