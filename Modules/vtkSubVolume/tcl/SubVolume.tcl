@@ -105,7 +105,7 @@ proc SubVolumeInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.3 $} {$Date: 2004/04/21 23:56:30 $}]
+        {$Revision: 1.4 $} {$Date: 2004/06/04 12:58:37 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -419,8 +419,10 @@ proc SubVolumeBuildGUI {} {
 proc SubVolume3DOpacity {opacity} {
  global SubVolume
  
- eval [SubVolume(Ext3D,CubeActor) GetProperty] SetOpacity $opacity
- Render3D
+ if { [info command SubVolume(Ext3D,CubeActor)] != "" } {
+     eval [SubVolume(Ext3D,CubeActor) GetProperty] SetOpacity $opacity
+     Render3D
+ }
 }
 
 proc SubVolumeApply {} {
@@ -756,6 +758,9 @@ proc SubVolumeUpdate3DScales { notUsed } {
   set SubVolume(Ext3D,Ijk) "[lindex $IJKmin 0] [lindex $IJKmax 0] [lindex $IJKmin 1] [lindex $IJKmax 1] [lindex $IJKmin 2] [lindex $IJKmax 2]"
   puts $SubVolume(Ext3D,Ijk)
   
+    if { [info command SubVolume(Ext3D,CubeActor)] == "" } {
+        return
+    }
 
   
   if {$SubVolume(Ext3D,RenderCube) == 1} {
