@@ -99,7 +99,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.79.2.2 $} {$Date: 2003/08/06 23:13:49 $}]
+            {$Revision: 1.79.2.3 $} {$Date: 2003/08/08 19:53:33 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -1707,7 +1707,10 @@ proc VolumesReformatSave {} {
         global Mrml savedir
         set Mrml(dir) $savedir
     }
-    if {$Volumes(prefixSave) == ""} {return}
+    if {$Volumes(prefixSave) == ""} {
+        DevErrorWindow "Set a file prefix to save the volume"
+        return
+    }
     
     
     
@@ -1716,6 +1719,11 @@ proc VolumesReformatSave {} {
     set s $Slice(activeID)
     # make the slice the right orientation to get the right reformat
     # matrix
+    # check to make sure that the saveOrder was set
+    if {[info exists Volumes(reformat,saveOrder)] == 0} {
+        DevErrorWindow "Please choose a scan order"
+        return
+    }
     MainSlicesSetOrient $s $Volumes(reformat,saveOrder)
 
     scan [Volume($Volume(activeID),node) GetImageRange] "%d %d" lo hi
