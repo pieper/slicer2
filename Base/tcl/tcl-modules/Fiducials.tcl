@@ -81,7 +81,7 @@ proc FiducialsInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.11 $} {$Date: 2002/02/06 21:01:43 $}]
+	    {$Revision: 1.12 $} {$Date: 2002/02/06 21:06:33 $}]
     
     # Initialize module-level variables
     
@@ -1012,20 +1012,6 @@ proc FiducialsSetFiducialsVisibility {rendererName name visibility} {
 #############################################################################
 
 
-
-#-------------------------------------------------------------------------------
-# .PROC FiducialsAddActiveListFrame 
-#  given a frame, this procedure packs into it an fiducials list drop down menu
-#  and a scrollbox that contains all the fiducial points of the active list
-#  This are updated automatically when a new list/point are created/selected
-#
-# .ARGS 
-#      str frame tk frame in which to pack the Fiducials panel
-#      int scrollHeight height of the scrollbar, a good range is 5<->15
-#      int scrollWidth width if the scrollbar, a good range is 5<->15
-#      list defaultNames (optional) the name of the Fiducial lists you would like to add to the drop down menu 
-# .END
-#-------------------------------------------------------------------------------
 
 
 #-------------------------------------------------------------------------------
