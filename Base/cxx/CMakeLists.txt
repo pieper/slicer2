@@ -8,7 +8,7 @@ SOURCE_FILES (Base_SRCS
 	vtkBoolTess.cxx vtkDCMLister.cxx vtkDCMParser.cxx 
 	vtkFastCellPicker.cxx vtkFog.cxx vtkImageAccumulateDiscrete.cxx
 	vtkImageBimodalAnalysis.cxx
-	vtkImageClipInteractive.cxx vtkImageClipper.cxx vtkImageCloseUp2D.cxx
+	vtkImageClipInteractive.cxx vtkImageCloseUp2D.cxx
 	vtkImageConnectivity.cxx vtkImageCopy.cxx vtkImageCrossHair2D.cxx vtkImageDICOMReader.cxx
 	vtkImageDouble2D.cxx vtkImageDrawROI.cxx vtkImageEMMarkov.cxx 
 	vtkImageEditor.cxx vtkImageEditorEffects.cxx vtkImageErode.cxx
