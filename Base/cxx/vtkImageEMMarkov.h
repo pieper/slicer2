@@ -32,7 +32,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include <cmath>
 #include <ctype.h>
 #include <string.h>
-
+ 
 #include "vtkImageToImageFilter.h"
 
 class vtkImageEMMatrix3D;
@@ -59,9 +59,14 @@ public:
   vtkImageEMVector(int dim,double val) { this->allocate(dim,val);}
   vtkImageEMVector(const vtkImageEMVector & in); // Creats new vector by copiing 'in' 
   ~vtkImageEMVector(){deallocate();}
+ 
+  double& operator [](int i) {
+    return this->vec[i];
+  }
+  const double& operator [] (int i) const { 
+    return this->vec[i]; 
+  }
 
-  double& operator [](int i) {return this->vec[i];}
-  const double& operator [] (int i) const { return this->vec[i]; }
 
   vtkImageEMVector& operator = ( const vtkImageEMVector& v);
 
@@ -77,7 +82,8 @@ public:
 
   void PrintVector(int xMax = -1);               // Prints out the Vector vec
   void MatrixCol(vtkImageEMMatrix im, int col);  // Sets 'this' equal to  Column 'col' of Matrix im  
-  void conv(vtkImageEMVector u,vtkImageEMVector v); // Convolution and polynomial multiplication . 
+  void MatrixRow(vtkImageEMMatrix im, int row);  // Sets 'this' equal to  Row 'row' of Matrix im  
+  void conv(vtkImageEMVector u,vtkImageEMVector v);  // Convolution and polynomial multiplication . 
   void WriteVectorToFile (char *filename,char *varname) const; 
   // Open up a file and writes Vector to it (varname != NULL => Matlab Format)
   void WriteVectorToFile (FILE *f,char *name) const; // Writes Vector to a file (Name != NULL => Matlab Format)
@@ -149,7 +155,7 @@ public:
   void setMatrix3D(double val);                   // Creates new 3D matrix with value val
   int get_dim(int dim);                          // dim =1 => Z Dimension, =2 => Y Dimension, = 3 => X Dimension  
   void Reshape(vtkImageEMVector v);              // Turns the vector into a 3D Matrix
-  void smoothConv(vtkImageEMMatrix3D U,vtkImageEMVector v); // Smoothes 3D-Matrix through convolution in Y,X,Z Dimension
+  void smoothConv(vtkImageEMVector v);           // Smoothes 3D-Matrix through convolution in Y,X,Z Dimension
   void conv(vtkImageEMMatrix3D U,vtkImageEMVector v);       // Convolution and polynomial multiplication in Z Dimension
 
   void WriteMatrix3DToFile (FILE *f,char *name) const; // Writes 3DMatrix to a file (Name != NULL => Matlab Format) 
