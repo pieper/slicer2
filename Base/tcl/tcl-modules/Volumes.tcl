@@ -99,7 +99,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.84 $} {$Date: 2003/08/05 13:43:31 $}]
+            {$Revision: 1.85 $} {$Date: 2003/08/11 13:05:10 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -155,15 +155,16 @@ proc VolumesInit {} {
     }
 
     if {0} {
-    # register sub modules color functions if they exist
-    foreach m $Volume(readerModules,idList) {
-        if {[info exists Volume(readerModules,$m,procColor)] == 1} {
-            lappend colorProcs $Volume(readerModules,$m,procColor)
+        # register sub modules color functions if they exist
+        foreach m $Volume(readerModules,idList) {
+            if {[info exists Volume(readerModules,$m,procColor)] == 1} {
+                lappend colorProcs $Volume(readerModules,$m,procColor)
+            }
         }
+        puts "Volumes.tcl registering colour procedures: $colorProcs"
+        set Module(Volumes,procColor) $colorProcs
     }
-    puts "Volumes.tcl registering colour procedures: $colorProcs"
-    set Module(Volumes,procColor) $colorProcs
-}
+
     # Legacy things specific to submodules 
     #---------------------------------------------
     # Added by Attila Tanacs 10/18/2000
@@ -259,7 +260,7 @@ orientation plane of the slice (To see how to create/select Fiducials, press the
     #-------------------------------------------
     set f $fDisplay.fActive
 
-        eval {label $f.lActive -text "Active Volume: "} $Gui(BLA)
+    eval {label $f.lActive -text "Active Volume: "} $Gui(BLA)
     eval {menubutton $f.mbActive -text "None" -relief raised -bd 2 -width 20 \
         -menu $f.mbActive.m} $Gui(WMBA)
     eval {menu $f.mbActive.m} $Gui(WMA)
@@ -475,7 +476,7 @@ orientation plane of the slice (To see how to create/select Fiducials, press the
     #-------------------------------------------
     set f $fProps.fTop.fActive
 
-        eval {label $f.lActive -text "Active Volume: "} $Gui(BLA)
+    eval {label $f.lActive -text "Active Volume: "} $Gui(BLA)
     eval {menubutton $f.mbActive -text "None" -relief raised -bd 2 -width 20 \
         -menu $f.mbActive.m} $Gui(WMBA)
     eval {menu $f.mbActive.m} $Gui(WMA)
@@ -538,9 +539,9 @@ orientation plane of the slice (To see how to create/select Fiducials, press the
     
     
     foreach frame "Active ReOrient Save" {
-    set f $fReformat.f$frame
-    frame $f -bg $Gui(activeWorkspace) -relief groove -bd 3
-    pack $f -side top -pady 0
+        set f $fReformat.f$frame
+        frame $f -bg $Gui(activeWorkspace) -relief groove -bd 3
+        pack $f -side top -pady 0
     }
     
     set f $fReformat.fActive
@@ -549,16 +550,16 @@ orientation plane of the slice (To see how to create/select Fiducials, press the
     pack $f.lActive -side left -pady $Gui(pad) -padx $Gui(pad) -fill x
     
     foreach s $Slice(idList) text "Red Yellow Green" width "4 7 6" {
-    eval {radiobutton $f.r$s -width $width -indicatoron 0\
-        -text "$text" -value "$s" -variable Slice(activeID) \
-        -command "MainSlicesSetActive"} $Gui(WCA) {-selectcolor $Gui(slice$s)}
-    pack $f.r$s -side left -fill x -anchor e
+        eval {radiobutton $f.r$s -width $width -indicatoron 0\
+            -text "$text" -value "$s" -variable Slice(activeID) \
+            -command "MainSlicesSetActive"} $Gui(WCA) {-selectcolor $Gui(slice$s)}
+        pack $f.r$s -side left -fill x -anchor e
     }
 
     set f $fReformat.fReOrient
     foreach frame "top middle1 middle2 bottom" {
-    frame $f.f$frame -bg $Gui(activeWorkspace) 
-    pack $f.f$frame -side top -pady 1
+        frame $f.f$frame -bg $Gui(activeWorkspace) 
+        pack $f.f$frame -side top -pady 1
     }
     set f $fReformat.fReOrient.ftop
 
@@ -794,8 +795,8 @@ you need to create and select 2 fiducials and then press the 'define new axis' b
     
     pack $f.select -pady $Gui(pad) -side top -fill y -expand 1
 
-#bind $f.fAuto <Enter>  "puts {DYW: fAuto }"
-#bind $f.fSliders <Enter> "puts {DYW: fSliders}"
+    #bind $f.fAuto <Enter>  "puts {DYW: fAuto }"
+    #bind $f.fSliders <Enter> "puts {DYW: fSliders}"
 
 # DDD2 
 }
@@ -818,9 +819,8 @@ proc VolumesCheckForManualChanges {n} {
         if {[$n GetFilePrefix] != [file root $Volume(firstFile)] } { 
             return 1 
         }
-    set firstNum [MainFileFindImageNumber First [file join $Mrml(dir) $Volume(firstFile)]]
+        set firstNum [MainFileFindImageNumber First [file join $Mrml(dir) $Volume(firstFile)]]
         if {[lindex [$n GetImageRange] 0 ]  != $firstNum }  { return 1 }
-    
         if {[lindex [$n GetImageRange] 1 ]  != $Volume(lastNum) } { return 1 }
         if {[$n GetLabelMap] != $Volume(labelMap)} { return 1 }
         if {[$n GetFilePattern] != $Volume(filePattern) } { return 1 }
@@ -1428,7 +1428,7 @@ proc VolumesProjectVectorOnPlane {A B C D V1x V1y V1z V2x V2y V2z} {
     # to project it in
     set multiplier 1
     if {$evaluateP1 < 0} {
-    set multiplier -1 
+        set multiplier -1 
     } 
     set p1projx [expr $P1(x)  - ($multiplier * $distp1 * $n(x))] 
     set p1projy [expr $P1(y)  - ($multiplier * $distp1 * $n(y))]
@@ -1436,7 +1436,7 @@ proc VolumesProjectVectorOnPlane {A B C D V1x V1y V1z V2x V2y V2z} {
     
     set multiplier 1
     if {$evaluateP2 < 0} {
-    set multiplier -1 
+        set multiplier -1 
     } 
     set p2projx [expr $P2(x)  - ($multiplier * $distp2 * $n(x))] 
     set p2projy [expr $P2(y)  - ($multiplier * $distp2 * $n(y))]
@@ -1475,138 +1475,138 @@ proc VolumesReformatSlicePlane {orientation} {
 
     # first check that we are reading the right orientation
     if {$orientation != "ReformatAxial" && $orientation != "ReformatSagittal" && $orientation != "ReformatCoronal" && $orientation != "NewOrient"} {
-    tk_messageBox -message "The orientation $orientation is not a valid one"
-    return;
+        tk_messageBox -message "The orientation $orientation is not a valid one"
+        return;
     }
     
     # next check to see that only 3 fiducials are selected
     set list [FiducialsGetAllSelectedPointIdList]
     if { [llength $list] < 3 } {
-    # give warning and exit
-    tk_messageBox -message "You have to create and select 3 fiducials"
-    return
+        # give warning and exit
+        tk_messageBox -message "You have to create and select 3 fiducials"
+        return
     } elseif { [llength $list] > 3 } {
-    # give warning and exit
-    tk_messageBox -message "Please select only 3 fiducials"
-    return
+        # give warning and exit
+        tk_messageBox -message "Please select only 3 fiducials"
+        return
     } else {
-    # get the 3 selected fiducial points coordinates
-    set count 1
-    foreach pid $list {
-        set xyz [Point($pid,node) GetXYZ]
-        set p${count}x [lindex $xyz 0]
-        set p${count}y [lindex $xyz 1]
-        set p${count}z [lindex $xyz 2]
-        incr count
-    }
-
-    # 3D plane equation
-    set N(x) [expr $p1y * ($p2z - $p3z) + $p2y * ($p3z-$p1z) + $p3y * ($p1z-$p2z)]
-    set N(y) [expr $p1z * ($p2x - $p3x) + $p2z * ($p3x-$p1x) + $p3z * ($p1x-$p2x)]
-    set N(z) [expr $p1x * ($p2y-$p3y) + $p2x * ($p3y - $p1y) + $p3x * ($p1y - $p2y)]
-    set coef [expr -($p1x * (($p2y* $p3z) - ($p3y* $p2z)) + $p2x * (($p3y * $p1z) - ($p1y * $p3z)) + $p3x * (($p1y*$p2z) - ($p2y *$p1z)))]
-
-    
-    # save the reformat plane equation coefficients
-    set s $Slice(activeID)
-    set Slice($s,reformatPlaneCoeff,A) $N(x)
-    set Slice($s,reformatPlaneCoeff,B) $N(y)
-    set Slice($s,reformatPlaneCoeff,C) $N(z)
-    set Slice($s,reformatPlaneCoeff,D) $coef
-        
-    Normalize N
-
-    ######################################################################
-    ##################### CASE AXIAL, SAGITTAL, CORONAL ##################
-    ######################################################################
-    
-    if {$orientation != "NewOrient" } {
-        # Step 1, make sure the normal is oriented the right way by taking its dot product with the original normal
-
-
-        if {$orientation == "ReformatSagittal" } {
-        set originalN(x) -1
-        set originalN(y) 0
-        set originalN(z) 0
-        set P1(x) 0
-        set P1(y) 1
-        set P1(z) 0
-        set P2(x) 0
-        set P2(y) 0
-        set P2(z) 0
-        } elseif { $orientation == "ReformatAxial" } {
-        set originalN(x) 0
-        set originalN(y) 0
-        set originalN(z) -1
-        set P1(x) 1
-        set P1(y) 0
-        set P1(z) 0
-        set P2(x) 0
-        set P2(y) 0
-        set P2(z) 0
-        } elseif { $orientation == "ReformatCoronal" } {
-        set originalN(x) 0
-        set originalN(y) 1
-        set originalN(z) 0
-        set P1(x) 1
-        set P1(y) 0
-        set P1(z) 0
-        set P2(x) 0
-        set P2(y) 0
-        set P2(z) 0
+        # get the 3 selected fiducial points coordinates
+        set count 1
+        foreach pid $list {
+            set xyz [Point($pid,node) GetXYZ]
+            set p${count}x [lindex $xyz 0]
+            set p${count}y [lindex $xyz 1]
+            set p${count}z [lindex $xyz 2]
+            incr count
         }
+
+        # 3D plane equation
+        set N(x) [expr $p1y * ($p2z - $p3z) + $p2y * ($p3z-$p1z) + $p3y * ($p1z-$p2z)]
+        set N(y) [expr $p1z * ($p2x - $p3x) + $p2z * ($p3x-$p1x) + $p3z * ($p1x-$p2x)]
+        set N(z) [expr $p1x * ($p2y-$p3y) + $p2x * ($p3y - $p1y) + $p3x * ($p1y - $p2y)]
+        set coef [expr -($p1x * (($p2y* $p3z) - ($p3y* $p2z)) + $p2x * (($p3y * $p1z) - ($p1y * $p3z)) + $p3x * (($p1y*$p2z) - ($p2y *$p1z)))]
+
         
-        if {[expr $N(x)*$originalN(x) +  $N(y)*$originalN(y) +  $N(z)*$originalN(z)] <0 } {
+        # save the reformat plane equation coefficients
+        set s $Slice(activeID)
+        set Slice($s,reformatPlaneCoeff,A) $N(x)
+        set Slice($s,reformatPlaneCoeff,B) $N(y)
+        set Slice($s,reformatPlaneCoeff,C) $N(z)
+        set Slice($s,reformatPlaneCoeff,D) $coef
+            
+        Normalize N
+
+        ######################################################################
+        ##################### CASE AXIAL, SAGITTAL, CORONAL ##################
+        ######################################################################
         
-        set N(x) [expr -$N(x)]
-        set N(y) [expr -$N(y)]
-        set N(z) [expr -$N(z)]
-        set Slice($s,reformatPlaneCoeff,A) [expr -$Slice($s,reformatPlaneCoeff,A)]
-        set Slice($s,reformatPlaneCoeff,B) [expr -$Slice($s,reformatPlaneCoeff,B)]
-        set Slice($s,reformatPlaneCoeff,C) [expr -$Slice($s,reformatPlaneCoeff,C)]
-        set Slice($s,reformatPlaneCoeff,D) [expr -$Slice($s,reformatPlaneCoeff,D)]
+        if {$orientation != "NewOrient" } {
+            # Step 1, make sure the normal is oriented the right way by taking its dot product with the original normal
+
+
+            if {$orientation == "ReformatSagittal" } {
+                set originalN(x) -1
+                set originalN(y) 0
+                set originalN(z) 0
+                set P1(x) 0
+                set P1(y) 1
+                set P1(z) 0
+                set P2(x) 0
+                set P2(y) 0
+                set P2(z) 0
+            } elseif { $orientation == "ReformatAxial" } {
+                set originalN(x) 0
+                set originalN(y) 0
+                set originalN(z) -1
+                set P1(x) 1
+                set P1(y) 0
+                set P1(z) 0
+                set P2(x) 0
+                set P2(y) 0
+                set P2(z) 0
+            } elseif { $orientation == "ReformatCoronal" } {
+                set originalN(x) 0
+                set originalN(y) 1
+                set originalN(z) 0
+                set P1(x) 1
+                set P1(y) 0
+                set P1(z) 0
+                set P2(x) 0
+                set P2(y) 0
+                set P2(z) 0
+            }
+            
+            if {[expr $N(x)*$originalN(x) +  $N(y)*$originalN(y) +  $N(z)*$originalN(z)] <0 } {
+            
+                set N(x) [expr -$N(x)]
+                set N(y) [expr -$N(y)]
+                set N(z) [expr -$N(z)]
+                set Slice($s,reformatPlaneCoeff,A) [expr -$Slice($s,reformatPlaneCoeff,A)]
+                set Slice($s,reformatPlaneCoeff,B) [expr -$Slice($s,reformatPlaneCoeff,B)]
+                set Slice($s,reformatPlaneCoeff,C) [expr -$Slice($s,reformatPlaneCoeff,C)]
+                set Slice($s,reformatPlaneCoeff,D) [expr -$Slice($s,reformatPlaneCoeff,D)]
+            }
+            
+            # get the distance from 0,0,0 to the plane
+            set dist [expr -$Slice($s,reformatPlaneCoeff,D)/ sqrt($Slice($s,reformatPlaneCoeff,A)*$Slice($s,reformatPlaneCoeff,A)+ $Slice($s,reformatPlaneCoeff,B)*$Slice($s,reformatPlaneCoeff,B) + $Slice($s,reformatPlaneCoeff,C)*$Slice($s,reformatPlaneCoeff,C))]
+        
+
+            # Step 2, project the original tangent onto the plane
+            set proj [VolumesProjectVectorOnPlane $Slice($s,reformatPlaneCoeff,A) $Slice($s,reformatPlaneCoeff,B) $Slice($s,reformatPlaneCoeff,C) $Slice($s,reformatPlaneCoeff,D) $P1(x) $P1(y) P1(z) $P2(x) $P2(y) $P2(z)]
+            set T(x) [lindex $proj 0]
+            set T(y) [lindex $proj 1]
+            set T(z) [lindex $proj 2]
+            
+            
+            # set the reformat matrix of the active slice, make the origin 0 by default.
+            Slicer SetReformatNTP $orientation $N(x) $N(y) $N(z) $T(x) $T(y) $T(z) 0 0 0
+            MainSlicesSetOrientAll "ReformatAxiSagCor"
+        } else {
+            
+            ###################################################################
+            ############################CASE NEW ORIENT  ######################
+            ###################################################################
+            # we are less smart about things, just take the 0 -1 0 vector and
+            # project it onto the new plane to get a tangent 
+            # 
+        
+
+            set P1(x) 0
+            set P1(y) 1
+            set P1(z) 0
+            set P2(x) 0
+            set P2(y) 0
+            set P2(z) 0
+            set T(x) [lindex $proj 0]
+            set T(y) [lindex $proj 1]
+            set T(z) [lindex $proj 2]
+            Slicer SetNewOrientNTP $Slice(activeID) $N(x) $N(y) $N(z) $T(x) $T(y) $T(z) 0 0 0
+            MainSlices SetOrient $Slice(activeID) "NewOrient"
         }
-        
-        # get the distance from 0,0,0 to the plane
-        set dist [expr -$Slice($s,reformatPlaneCoeff,D)/ sqrt($Slice($s,reformatPlaneCoeff,A)*$Slice($s,reformatPlaneCoeff,A)+ $Slice($s,reformatPlaneCoeff,B)*$Slice($s,reformatPlaneCoeff,B) + $Slice($s,reformatPlaneCoeff,C)*$Slice($s,reformatPlaneCoeff,C))]
-    
+        # make all 3 slices show the new Reformat orientation
 
-        # Step 2, project the original tangent onto the plane
-        set proj [VolumesProjectVectorOnPlane $Slice($s,reformatPlaneCoeff,A) $Slice($s,reformatPlaneCoeff,B) $Slice($s,reformatPlaneCoeff,C) $Slice($s,reformatPlaneCoeff,D) $P1(x) $P1(y) P1(z) $P2(x) $P2(y) $P2(z)]
-        set T(x) [lindex $proj 0]
-        set T(y) [lindex $proj 1]
-        set T(z) [lindex $proj 2]
-        
-        
-        # set the reformat matrix of the active slice, make the origin 0 by default.
-        Slicer SetReformatNTP $orientation $N(x) $N(y) $N(z) $T(x) $T(y) $T(z) 0 0 0
-        MainSlicesSetOrientAll "ReformatAxiSagCor"
-    } else {
-        
-        ###################################################################
-        ############################CASE NEW ORIENT  ######################
-        ###################################################################
-        # we are less smart about things, just take the 0 -1 0 vector and
-        # project it onto the new plane to get a tangent 
-        # 
-    
-
-        set P1(x) 0
-        set P1(y) 1
-        set P1(z) 0
-        set P2(x) 0
-        set P2(y) 0
-        set P2(z) 0
-        set T(x) [lindex $proj 0]
-        set T(y) [lindex $proj 1]
-        set T(z) [lindex $proj 2]
-        Slicer SetNewOrientNTP $Slice(activeID) $N(x) $N(y) $N(z) $T(x) $T(y) $T(z) 0 0 0
-        MainSlices SetOrient $Slice(activeID) "NewOrient"
-    }
-    # make all 3 slices show the new Reformat orientation
-
-    MainSlicesSetOffset $Slice(activeID) $dist
-    RenderAll
+        MainSlicesSetOffset $Slice(activeID) $dist
+        RenderAll
     }
 }
 
@@ -1624,88 +1624,88 @@ proc VolumesRotateSlicePlane {orientation} {
     # first check to see that only 2 fiducials are selected
     set list [FiducialsGetAllSelectedPointIdList]
     if { [llength $list] < 2 } {
-    # give warning and exit
-    tk_messageBox -message "You have to create and select 2 fiducials (they do not necessarily have to be on the reformated plane)"        
-    return
+        # give warning and exit
+        tk_messageBox -message "You have to create and select 2 fiducials (they do not necessarily have to be on the reformated plane)"        
+        return
     } elseif { [llength $list] > 2 } {
-    # give warning and exit
-    tk_messageBox -message "Please select only 2 fiducials"
-    return
+        # give warning and exit
+        tk_messageBox -message "Please select only 2 fiducials"
+        return
     } else {
-    # get the 2 points coordinates
-    set count 1
-    foreach pid $list {
-        set xyz [Point($pid,node) GetXYZ]
-        set temp${count}(x) [lindex $xyz 0]
-        set temp${count}(y) [lindex $xyz 1]
-        set temp${count}(z) [lindex $xyz 2]
-        incr count
-    }
-
-    # if we want to define a new "RL" axis for the reformatted axial,
-    # the first point needs to be the one closest to R, so with the 
-    # highest x coordinate
-    
-    if {$orientation == "ReformatAxial" || $orientation == "ReformatCoronal"} {
-        if {$temp1(x) < $temp2(x)} {
-        set P1(x) $temp2(x)
-        set P1(y) $temp2(y)
-        set P1(z) $temp2(z)
-        set P2(x) $temp1(x)
-        set P2(y) $temp1(y)
-        set P2(z) $temp1(z)
-        } else {
-        set P1(x) $temp1(x)
-        set P1(y) $temp1(y)
-        set P1(z) $temp1(z)
-        set P2(x) $temp2(x)
-        set P2(y) $temp2(y)
-        set P2(z) $temp2(z)
+        # get the 2 points coordinates
+        set count 1
+        foreach pid $list {
+            set xyz [Point($pid,node) GetXYZ]
+            set temp${count}(x) [lindex $xyz 0]
+            set temp${count}(y) [lindex $xyz 1]
+            set temp${count}(z) [lindex $xyz 2]
+            incr count
         }
-    } 
 
-    # if we want to define a new "PA" axis for the reformatted axial,
-    # the first point needs to be the one closest to R, so with the 
-    # highest y coordinate
+        # if we want to define a new "RL" axis for the reformatted axial,
+        # the first point needs to be the one closest to R, so with the 
+        # highest x coordinate
+        
+        if {$orientation == "ReformatAxial" || $orientation == "ReformatCoronal"} {
+            if {$temp1(x) < $temp2(x)} {
+                set P1(x) $temp2(x)
+                set P1(y) $temp2(y)
+                set P1(z) $temp2(z)
+                set P2(x) $temp1(x)
+                set P2(y) $temp1(y)
+                set P2(z) $temp1(z)
+            } else {
+                set P1(x) $temp1(x)
+                set P1(y) $temp1(y)
+                set P1(z) $temp1(z)
+                set P2(x) $temp2(x)
+                set P2(y) $temp2(y)
+                set P2(z) $temp2(z)
+            }
+        } 
 
-    if {$orientation == "ReformatSagittal" || $orientation == "NewOrient" } {
-        if {$temp1(y) < $temp2(y)} {
-        set P1(x) $temp2(x)
-        set P1(y) $temp2(y)
-        set P1(z) $temp2(z)
-        set P2(x) $temp1(x)
-        set P2(y) $temp1(y)
-        set P2(z) $temp1(z)
-        } else {
-        set P1(x) $temp1(x)
-        set P1(y) $temp1(y)
-        set P1(z) $temp1(z)
-        set P2(x) $temp2(x)
-        set P2(y) $temp2(y)
-        set P2(z) $temp2(z)
-        }
-    } 
-    set s $Slice(activeID)
-    set A $Slice($s,reformatPlaneCoeff,A) 
-    set B $Slice($s,reformatPlaneCoeff,B) 
-    set C $Slice($s,reformatPlaneCoeff,C) 
-    set D $Slice($s,reformatPlaneCoeff,D) 
+        # if we want to define a new "PA" axis for the reformatted axial,
+        # the first point needs to be the one closest to R, so with the 
+        # highest y coordinate
 
-    set proj [VolumesProjectVectorOnPlane $A $B $C $D $P1(x) $P1(y) P1(z) $P2(x) $P2(y) $P2(z) ]
-    set T(x) [lindex $proj 0]
-    set T(y) [lindex $proj 1]
-    set T(z) [lindex $proj 2]
-    
-    set N(x) $A
-    set N(y) $B
-    set N(z) $C
-    Normalize N
-    
-    # set the reformat matrix of the active slice
-    Slicer SetReformatNTP $orientation $N(x) $N(y) $N(z) $T(x) $T(y) $T(z) 0 0 0
+        if {$orientation == "ReformatSagittal" || $orientation == "NewOrient" } {
+            if {$temp1(y) < $temp2(y)} {
+                set P1(x) $temp2(x)
+                set P1(y) $temp2(y)
+                set P1(z) $temp2(z)
+                set P2(x) $temp1(x)
+                set P2(y) $temp1(y)
+                set P2(z) $temp1(z)
+            } else {
+                set P1(x) $temp1(x)
+                set P1(y) $temp1(y)
+                set P1(z) $temp1(z)
+                set P2(x) $temp2(x)
+                set P2(y) $temp2(y)
+                set P2(z) $temp2(z)
+            }
+        } 
+        set s $Slice(activeID)
+        set A $Slice($s,reformatPlaneCoeff,A) 
+        set B $Slice($s,reformatPlaneCoeff,B) 
+        set C $Slice($s,reformatPlaneCoeff,C) 
+        set D $Slice($s,reformatPlaneCoeff,D) 
 
-    MainSlicesSetOrientAll "ReformatAxiSagCor"
-    RenderBoth $Slice(activeID)    
+        set proj [VolumesProjectVectorOnPlane $A $B $C $D $P1(x) $P1(y) P1(z) $P2(x) $P2(y) $P2(z) ]
+        set T(x) [lindex $proj 0]
+        set T(y) [lindex $proj 1]
+        set T(z) [lindex $proj 2]
+        
+        set N(x) $A
+        set N(y) $B
+        set N(z) $C
+        Normalize N
+        
+        # set the reformat matrix of the active slice
+        Slicer SetReformatNTP $orientation $N(x) $N(y) $N(z) $T(x) $T(y) $T(z) 0 0 0
+
+        MainSlicesSetOrientAll "ReformatAxiSagCor"
+        RenderBoth $Slice(activeID)    
     }
 
 }
@@ -1739,8 +1739,8 @@ proc VolumesReformatSave {} {
     
     # set initial directory to dir where vol last opened if unset
     if {$Volumes(prefixSave) == ""} {
-    set Volumes(prefixSave) \
-        [file join $Volume(DefaultDir) [Volume($v,node) GetName]]
+        set Volumes(prefixSave) \
+            [file join $Volume(DefaultDir) [Volume($v,node) GetName]]
     }
     
     if {$Gui(pc) == 1} {
