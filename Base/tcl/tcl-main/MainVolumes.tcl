@@ -489,9 +489,14 @@ proc MainVolumesSetActive {{v ""}} {
 		foreach mb $Volume(mbActiveList) {
 			$mb config -text "NEW"
 		}
-		
-		# Use defaults to update GUI
-		MainVolumesSetGUIDefaults
+
+		if {[IsModule Volumes] == 1} {		
+		    # Use defaults to update GUI
+		    MainVolumesSetGUIDefaults
+		    # Update buttons
+		    VolumesSetScanOrder $Volume(scanOrder)
+		    VolumesSetScalarType $Volume(scalarType)
+		}
 
 	} else {
 
@@ -535,16 +540,16 @@ proc MainVolumesSetActive {{v ""}} {
 			set Volume(firstFile) [format $Volume(filePattern) \
 				[Volume($v,node) GetFilePrefix] $lo]
 
-			puts " SPACING: [scan [Volume($v,node) GetSpacing] "%d %d %d" pix pix thick]"
+			scan [Volume($v,node) GetSpacing] "%f %f %f" pix pix thick
 			set Volume(pixelSize) $pix
-#			set Volume(sliceThickness) $thick
-			# use default for spacing
+			set Volume(sliceThickness) $thick
+			# display default for spacing
 			set Volume(sliceSpacing) 0
 
 			scan [Volume($v,node) GetDimensions] "%d %d" dim dim
 			set Volume(resolution) $dim
 
-			# use default for readHeaders
+			# display default for readHeaders
 			set Volume(readHeaders) 1
 		}
 
@@ -747,9 +752,9 @@ proc MainVolumesSetGUIDefaults {} {
     set Volume(name) [default GetName]
     set Volume(filePattern) %s.%03d
     set Volume(scanOrder) SI
-    set spacing [default GetSpacing]
     set Volume(littleEndian) [default GetLittleEndian]
     set Volume(resolution) [lindex [default GetDimensions] 0]
+    set spacing [default GetSpacing]
     set Volume(pixelSize) [lindex $spacing 0]
     set Volume(sliceThickness) [lindex $spacing 2]
     set Volume(sliceSpacing) 0.0

@@ -71,7 +71,7 @@ proc VolumesInit {} {
 	# corresponding values to use in Volume(scanOrder)
 	set Volume(scanOrderList) "LR RL SI IS AP PA OB" 
 	
-	MainVolumesSetGUIDefaults
+
 
 }
 
@@ -96,6 +96,8 @@ proc VolumesBuildGUI {} {
 	#     Header
 	# Other
 	#-------------------------------------------
+
+	MainVolumesSetGUIDefaults
 
 	#-------------------------------------------
 	# Help frame
