@@ -86,7 +86,7 @@ proc TransformVolumeInit {} {
     set Module($m,procGUI) TransformVolumeBuildGUI
     set Module($m,procVTK) TransformVolumeBuildVTK
     set Module($m,procEnter) TransformVolumeEnter
-    set Module($m,procExit) TransformVolumeExit
+    set Module($m,procMainExit) TransformVolumeExit
     set Module($m,procMRML) TransformVolumeUpdateGUI
 
     # Define Dependencies
@@ -105,7 +105,7 @@ proc TransformVolumeInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.13 $} {$Date: 2005/03/28 22:29:51 $}]
+        {$Revision: 1.14 $} {$Date: 2005/03/28 23:12:50 $}]
 
     # Initialize module-level variables
     #------------------------------------
