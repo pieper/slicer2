@@ -82,7 +82,7 @@ proc MainMrmlInit {} {
         Point Path EndPath Landmark \
         Hierarchy EndHierarchy ModelGroup EndModelGroup ModelRef \
         Scenes EndScenes VolumeState EndVolumeState CrossSection SceneOptions ModelState \
-    Locator TetraMesh Segmenter EndSegmenter SegmenterGraph SegmenterInput SegmenterSuperClass EndSegmenterSuperClass SegmenterClass SegmenterCIM"
+        Locator TetraMesh Segmenter EndSegmenter SegmenterGraph SegmenterInput SegmenterSuperClass EndSegmenterSuperClass SegmenterClass SegmenterCIM"
 
     MainMrmlInitIdLists 
 
@@ -96,9 +96,9 @@ proc MainMrmlInit {} {
     }
     MRMLReadDefaults $fileName
 
-        # Set version info
-        lappend Module(versions) [ParseCVSInfo MainMrml \
-        {$Revision: 1.95 $} {$Date: 2003/12/17 15:45:16 $}]
+    # Set version info
+    lappend Module(versions) [ParseCVSInfo MainMrml \
+    {$Revision: 1.96 $} {$Date: 2003/12/17 15:53:17 $}]
 
     set Mrml(colorsUnsaved) 0
 }
@@ -1519,9 +1519,10 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
                 }
             }
             default {
-                foreach m $Module(idList) {
-                    if { [info exists ${m}(procMRMLLoad)] } {
-                        set loadproc ${m}(procMRMLLoad)
+                foreach m $::Module(idList) {
+                    if { [info exists ::${m}(procMRMLLoad)] } {
+                        global $m
+                        set loadproc [set ${m}(procMRMLLoad)]
                         $loadproc $tag $attr
                     }
                 }
