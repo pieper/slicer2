@@ -14,6 +14,8 @@ if { [info commands BIRNDUPInit] == "" } {
     set files {
         VolDeface.tcl
         BIRNDUP.tcl
+        dup.tcl
+        dup_sort.tcl
         }
         
     foreach f $files {
