@@ -42,12 +42,11 @@ JIT::JIT( int dimX, int dimY, int dimZ )
     for(int j=-MASK_SIZE;j<=MASK_SIZE;j++)
       for(int k=-MASK_SIZE;k<=MASK_SIZE;k++)
 
-      {
-    gaussian[MASK_SIZE+i][MASK_SIZE+j][MASK_SIZE+k]
-      =pow(2.0*M_PI*sigma*sigma,-3/2)
-      *exp( -(i*i+j*j+k*k)/(2.0*sigma*sigma) );
-    // fixme constant gaussian
-      }
+    {
+      gaussian[MASK_SIZE+i][MASK_SIZE+j][MASK_SIZE+k]
+        =pow(2.0*M_PI*sigma*sigma,-3/2)
+        *exp( -(i*i+j*j+k*k)/(2.0*sigma*sigma) );
+    }
 
   initialized = true;
 }
@@ -72,12 +71,12 @@ void JIT::setSigma(float s)
     for(int j=-MASK_SIZE;j<=MASK_SIZE;j++)
       for(int k=-MASK_SIZE;k<=MASK_SIZE;k++)
 
-      {
-    gaussian[MASK_SIZE+i][MASK_SIZE+j][MASK_SIZE+k]
-      =exp( -(i*i+j*j+k*k)/(2.0*sigma*sigma) );
+    {
+      gaussian[MASK_SIZE+i][MASK_SIZE+j][MASK_SIZE+k]
+        =exp( -(i*i+j*j+k*k)/(2.0*sigma*sigma) );
 
-    sum+=gaussian[MASK_SIZE+i][MASK_SIZE+j][MASK_SIZE+k];
-      }
+      sum+=gaussian[MASK_SIZE+i][MASK_SIZE+j][MASK_SIZE+k];
+    }
 
   
   for(int i=-MASK_SIZE;i<=MASK_SIZE;i++)
@@ -86,8 +85,8 @@ void JIT::setSigma(float s)
     gaussian[MASK_SIZE+i][MASK_SIZE+j][MASK_SIZE+k]/=sum;
 
   /*
-  in the continuous case the integral on R3 of the pdf should be 1
-  we force that on this window to avoid any energy problem
+    in the continuous case the integral on R3 of the pdf should be 1
+    we force that on this window to avoid any energy problem
   */
 
 }
@@ -134,31 +133,31 @@ inline float JIT::avg( int idx )
       for(int i=-MASK_SIZE;i<=MASK_SIZE;i++)
     for(int j=-MASK_SIZE;j<=MASK_SIZE;j++)
       for(int k=-MASK_SIZE;k<=MASK_SIZE;k++)
-      {
-        _avg[idx]+=
-          gaussian[MASK_SIZE+i][MASK_SIZE+j][MASK_SIZE+k]
-          *1.0/(float)depth*(float)data[idx+index(i,j,k)];
-      }
+        {
+          _avg[idx]+=
+        gaussian[MASK_SIZE+i][MASK_SIZE+j][MASK_SIZE+k]
+        *1.0/(float)depth*(float)data[idx+index(i,j,k)];
+        }
    
 
       // median filtering
       /*
-      int tabindex[(2*MASK_SIZE+1)*(2*MASK_SIZE+1)*(2*MASK_SIZE+1)];
+    int tabindex[(2*MASK_SIZE+1)*(2*MASK_SIZE+1)*(2*MASK_SIZE+1)];
 
-       for(int i=-MASK_SIZE;i<=MASK_SIZE;i++)
+    for(int i=-MASK_SIZE;i<=MASK_SIZE;i++)
     for(int j=-MASK_SIZE;j<=MASK_SIZE;j++)
-      for(int k=-MASK_SIZE;k<=MASK_SIZE;k++)
-      {
+    for(int k=-MASK_SIZE;k<=MASK_SIZE;k++)
+    {
         tabindex[ (i+MASK_SIZE)+(j+MASK_SIZE)*(2*MASK_SIZE+1) 
         + (k+MASK_SIZE)*(2*MASK_SIZE+1)*(2*MASK_SIZE+1)]
-          = data[ idx+index(i,j,k) ];
-      }
+    = data[ idx+index(i,j,k) ];
+    }
 
-       qsort((int *) tabindex, 
-         (2*MASK_SIZE+1)*(2*MASK_SIZE+1)*(2*MASK_SIZE+1), 
-         sizeof(int), JIT::medianCompare);
+    qsort((int *) tabindex, 
+    (2*MASK_SIZE+1)*(2*MASK_SIZE+1)*(2*MASK_SIZE+1), 
+    sizeof(int), JIT::medianCompare);
      
-       _avg[idx]=tabindex[ ((2*MASK_SIZE+1)*(2*MASK_SIZE+1)*(2*MASK_SIZE+1))/2  ];
+    _avg[idx]=tabindex[ ((2*MASK_SIZE+1)*(2*MASK_SIZE+1)*(2*MASK_SIZE+1))/2  ];
       */
        
       // now we have it
@@ -182,7 +181,6 @@ inline float JIT::phi( int idx )
                  + gradY*gradY 
                  + gradZ*gradZ );
 
-      // _phi[idx]=1.0/(1.0+pow(10.0*normGrad,4));
       _phi[idx]=1.0/(1.0+pow(float(depth)/float(stdev)*normGrad,4));
 
       // now we have it
@@ -195,6 +193,8 @@ inline float JIT::phi( int idx )
 float JIT::value( int idx )
 {
 
+  // we might want to use something more elaborate than that...
+
   float phiXY = phi(idx);
   return phiXY;
 } 
@@ -203,28 +203,13 @@ float JIT::value( int idx )
 ///////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////
 
-/*
-void vtkFastMarching::Update( void )
-{
-  printf("vtkFastMarching::Update\n");
-  Modified();
-  UpdateInformation();
-
-  vtkImageToImageFilter::Update();
-
-  UpdateWholeExtent();
-
-  printf("end of vtkFastMarching::Update\n");
-}
-*/
-
 vtkFastMarching* vtkFastMarching::New()
 {
   // First try to create the object from the vtkObjectFactory
   vtkObject* ret = vtkObjectFactory::CreateInstance("vtkFastMarching");
   if(ret)
     {
-    return (vtkFastMarching*)ret;
+      return (vtkFastMarching*)ret;
     }
   // If the factory was unable to create the object, then create it here.
   return new vtkFastMarching;
@@ -251,15 +236,11 @@ static void vtkFastMarchingExecute(vtkFastMarching *self,
     {
       double T=self->step();
 
-      //      printf("%d ", T);
-      
       if( T==INF )
-          break;
+    break;
     }
 
   cout << "TOTAL: " << n << " iterations" << endl;
-
-  //self->show(inPtr);
 
 }
 
@@ -305,7 +286,6 @@ void vtkFastMarching::ExecuteData(vtkDataObject *)
 {
   printf("vtkFastMarching::Execute\n");
 
-
   vtkImageData *inData = this->GetInput();
   vtkImageData *outData = this->GetOutput();
 
@@ -321,19 +301,19 @@ void vtkFastMarching::ExecuteData(vtkDataObject *)
 
   x1 = GetInput()->GetNumberOfScalarComponents();
   if (x1 != 1) 
-  {
-    vtkErrorMacro(<<"Input has "<<x1<<" instead of 1 scalar component.");
-    return;
-  }
+    {
+      vtkErrorMacro(<<"Input has "<<x1<<" instead of 1 scalar component.");
+      return;
+    }
 
   /* Need short data */
   s = inData->GetScalarType();
   if (s != VTK_SHORT) 
-  {
-    vtkErrorMacro("Input scalars are type "<<s 
-      << " instead of "<<VTK_SHORT);
-    return;
-  }
+    {
+      vtkErrorMacro("Input scalars are type "<<s 
+            << " instead of "<<VTK_SHORT);
+      return;
+    }
 
   VecInt v;
   knownPoints.push_back(v);
@@ -438,10 +418,10 @@ void vtkFastMarching::downTree(int index) {
       index = MinChild;
     }
       else
-      /*
-       * If the current leaf has a lower value than its
-       * MinChild, the job is done, force a stop.
-       */
+    /*
+     * If the current leaf has a lower value than its
+     * MinChild, the job is done, force a stop.
+     */
     index = tree.size();
      
       LeftChild = 2 * index + 1;
@@ -585,7 +565,6 @@ void vtkFastMarching::setSeedAndLabel(int xSeed, int ySeed, int zSeed,
   this->ySeed=ySeed;
   this->zSeed=zSeed;
   this->label=label;
-
 }
 
 
@@ -605,27 +584,27 @@ void vtkFastMarching::show( void )
 
   index=0;
   for(k=0;k<dimZ;k++)
-    for(j=0;j<dimY;j++)
-      for(i=0;i<dimX;i++)
-    {
-      if( (i-xSeed)*(i-xSeed)
-          + (j-ySeed)*(j-ySeed)
-          + (k-zSeed)*(k-zSeed)
-          < d*d )
-        {
+  for(j=0;j<dimY;j++)
+  for(i=0;i<dimX;i++)
+  {
+  if( (i-xSeed)*(i-xSeed)
+  + (j-ySeed)*(j-ySeed)
+  + (k-zSeed)*(k-zSeed)
+  < d*d )
+  {
         
-          node[index].T=jit->value(index);
+  node[index].T=jit->value(index);
 
-          //cout << node[index].T << endl;
+  //cout << node[index].T << endl;
 
-          if( node[index].T>max )
-        max=node[index].T;
+  if( node[index].T>max )
+  max=node[index].T;
 
-          if( node[index].T<min )
-        min=node[index].T;
-        }
-      index++;
-    }
+  if( node[index].T<min )
+  min=node[index].T;
+  }
+  index++;
+  }
 
   cout << "min=" << min << endl;
   cout << "max=" << max << endl;
@@ -633,26 +612,26 @@ void vtkFastMarching::show( void )
 
   index=0;
   for(k=0;k<dimZ;k++)
-    for(j=0;j<dimY;j++)
-      for(i=0;i<dimX;i++)
-    {
-      if( (i-xSeed)*(i-xSeed)
-          + (j-ySeed)*(j-ySeed)
-          + (k-zSeed)*(k-zSeed)
-          < d*d )
-        {
-          outdata[index]=255*(node[index].T-min)/(max-min);
-        }
-      index++;
-    }
+  for(j=0;j<dimY;j++)
+  for(i=0;i<dimX;i++)
+  {
+  if( (i-xSeed)*(i-xSeed)
+  + (j-ySeed)*(j-ySeed)
+  + (k-zSeed)*(k-zSeed)
+  < d*d )
+  {
+  outdata[index]=255*(node[index].T-min)/(max-min);
+  }
+  index++;
+  }
 
   */
   
-//   for(int index=0;index<dimX*dimY*dimZ;index++)
-//     {
-//       if( node[index].status==KNOWN )
-//     outdata[ index ]=label;
-//     }
+  //   for(int index=0;index<dimX*dimY*dimZ;index++)
+  //     {
+  //       if( node[index].status==KNOWN )
+  //     outdata[ index ]=label;
+  //     }
 
 
   int n, index;
@@ -675,36 +654,33 @@ void vtkFastMarching::show( void )
   float min=INF;
   float max=-INF;
   for(n=0;n<points.size();n++)
-    {
-      index=points[n];
+  {
+  index=points[n];
 
-      if( node[ index ].T<min )
-    min=node[ index ].T;
+  if( node[ index ].T<min )
+  min=node[ index ].T;
 
-      if( node[ index ].T>max )
-    max=node[ index ].T;
-    }
+  if( node[ index ].T>max )
+  max=node[ index ].T;
+  }
   
   for(n=0;n<points.size();n++)
-    {
-      index=points[n];
+  {
+  index=points[n];
 
-      outdata[ index ]=1+float(1000.0)*(node[ index ].T-min)/(max-min);
-      node[ index ].status=DONE;      
-    }
+  outdata[ index ]=1+float(1000.0)*(node[ index ].T-min)/(max-min);
+  node[ index ].status=DONE;      
+  }
 
-*/
+  */
 
 
   nEvolutions++;
-
-
-
 }
 
 /*
-void vtkFastMarching::showImg( short* outdata, int label )
-{
+  void vtkFastMarching::showImg( short* outdata, int label )
+  {
   assert( initialized );
 
   float max=-INF;
@@ -715,27 +691,27 @@ void vtkFastMarching::showImg( short* outdata, int label )
 
   index=0;
   for(k=0;k<dimZ;k++)
-    for(j=0;j<dimY;j++)
-      for(i=0;i<dimX;i++)
-    {
-      if( (i-xSeed)*(i-xSeed)
-          + (j-ySeed)*(j-ySeed)
-          + (k-zSeed)*(k-zSeed)
-          < d*d )
-        {
+  for(j=0;j<dimY;j++)
+  for(i=0;i<dimX;i++)
+  {
+  if( (i-xSeed)*(i-xSeed)
+  + (j-ySeed)*(j-ySeed)
+  + (k-zSeed)*(k-zSeed)
+  < d*d )
+  {
         
-          node[index].T=jit->value(index);
+  node[index].T=jit->value(index);
 
-          //cout << node[index].T << endl;
+  //cout << node[index].T << endl;
 
-          if( node[index].T>max )
-        max=node[index].T;
+  if( node[index].T>max )
+  max=node[index].T;
 
-          if( node[index].T<min )
-        min=node[index].T;
-        }
-      index++;
-    }
+  if( node[index].T<min )
+  min=node[index].T;
+  }
+  index++;
+  }
 
   cout << "min=" << min << endl;
   cout << "max=" << max << endl;
@@ -743,22 +719,22 @@ void vtkFastMarching::showImg( short* outdata, int label )
 
   index=0;
   for(k=0;k<dimZ;k++)
-    for(j=0;j<dimY;j++)
-      for(i=0;i<dimX;i++)
-    {
-      if( (i-xSeed)*(i-xSeed)
-          + (j-ySeed)*(j-ySeed)
-          + (k-zSeed)*(k-zSeed)
-          < d*d )
-        {
-          outdata[index]=(short int)(255*(node[index].T-min)/(max-min));
-        }
-      index++;
-    } 
-}
+  for(j=0;j<dimY;j++)
+  for(i=0;i<dimX;i++)
+  {
+  if( (i-xSeed)*(i-xSeed)
+  + (j-ySeed)*(j-ySeed)
+  + (k-zSeed)*(k-zSeed)
+  < d*d )
+  {
+  outdata[index]=(short int)(255*(node[index].T-min)/(max-min));
+  }
+  index++;
+  } 
+  }
 
-void vtkFastMarching::showT( short* outdata, int label )
-{
+  void vtkFastMarching::showT( short* outdata, int label )
+  {
   assert( initialized );
 
   float max=-INF;
@@ -768,20 +744,20 @@ void vtkFastMarching::showT( short* outdata, int label )
 
   index=0;
   for(k=0;k<dimZ;k++)
-    for(j=0;j<dimY;j++)
-      for(i=0;i<dimX;i++)
-    {
-      if( node[index].status==KNOWN )
-        {
+  for(j=0;j<dimY;j++)
+  for(i=0;i<dimX;i++)
+  {
+  if( node[index].status==KNOWN )
+  {
         
-          if( node[index].T>max )
-        max=node[index].T;
+  if( node[index].T>max )
+  max=node[index].T;
 
-          if( node[index].T<min )
-        min=node[index].T;
-        }
-      index++;
-    }
+  if( node[index].T<min )
+  min=node[index].T;
+  }
+  index++;
+  }
 
   cout << "min=" << min << endl;
   cout << "max=" << max << endl;
@@ -789,16 +765,16 @@ void vtkFastMarching::showT( short* outdata, int label )
 
   index=0;
   for(k=0;k<dimZ;k++)
-    for(j=0;j<dimY;j++)
-      for(i=0;i<dimX;i++)
-    {
-      if( node[index].status==KNOWN )
-        {
-          outdata[index]=(short int)(jit->depth-jit->depth*(node[index].T-min)/(max-min));
-        }
-      index++;
-    } 
-}
+  for(j=0;j<dimY;j++)
+  for(i=0;i<dimX;i++)
+  {
+  if( node[index].status==KNOWN )
+  {
+  outdata[index]=(short int)(jit->depth-jit->depth*(node[index].T-min)/(max-min));
+  }
+  index++;
+  } 
+  }
 */
 
 vtkFastMarching::~vtkFastMarching()
@@ -806,18 +782,21 @@ vtkFastMarching::~vtkFastMarching()
   // assert( initialized );
   printf("vtkFastMarching::~vtkFastMarching() %xd\n",this);
 
-//   delete [] node;
 
-//   while(tree.size()>0)
-//     tree.pop_back();
+  /* all the delete below are done by unInit() */
 
-//   while(knownPoints.size()>0)
-//     knownPoints.pop_back();  
+  //   delete [] node;
 
-//   while(maskPoints.size()>0)
-//     maskPoints.pop_back();
+  //   while(tree.size()>0)
+  //     tree.pop_back();
 
-//   delete jit;
+  //   while(knownPoints.size()>0)
+  //     knownPoints.pop_back();  
+
+  //   while(maskPoints.size()>0)
+  //     maskPoints.pop_back();
+
+  //   delete jit;
 }
 
 inline int vtkFastMarching::shiftNeighbor(int n)
@@ -826,9 +805,9 @@ inline int vtkFastMarching::shiftNeighbor(int n)
   assert(n>=0 && n<=nNeighbors);
 
   /*
-      1
+    1
     4 0 2 on the XY plane, 5 is below 0 and 6 is above 0
-      3
+    3
   */
 
   switch(n)
@@ -853,41 +832,41 @@ bool vtkFastMarching::updateEstim(int index)
 
   double TminNeighbor=INF;
 
-    for(int n=1;n<=nNeighbors;n++)
+  for(int n=1;n<=nNeighbors;n++)
     {
       if (node[index+shiftNeighbor(n)].T<TminNeighbor)
     TminNeighbor=node[index+shiftNeighbor(n)].T;
     }
 
-    // there must be at least one not INF !
-    assert( TminNeighbor!=INF );
+  // there must be at least one not INF !
+  assert( TminNeighbor!=INF );
 
-    // and it must smaller than local T
-    assert( TminNeighbor<node[index].T );
+  // and it must smaller than local T
+  assert( TminNeighbor<node[index].T );
 
-    float dt=node[index].T-TminNeighbor;
+  float dt=node[index].T-TminNeighbor;
 
-    if(estN>100)
-      {
-    float moy=estM1/(double)estN;
-    float std=sqrt( estM2/(double)estN-moy*moy );
-    assert( estM2/(double)estN-moy*moy>0.0 );
+  if(estN>100)
+    {
+      float moy=estM1/(double)estN;
+      float std=sqrt( estM2/(double)estN-moy*moy );
+      assert( estM2/(double)estN-moy*moy>0.0 );
 
-    printf("\nmoy=%f\tstd=%f ",moy,std);
+      printf("\nmoy=%f\tstd=%f ",moy,std);
 
-    if( (dt-moy) > 4.0*std )
-      {
-        //printf("\n%d rejected: dt=%f, moy=%f, std=%f\n",index,dt,moy,std);
-        return false;
-      }
-    // dt is definitely too strange
-      }
+      if( (dt-moy) > 4.0*std )
+    {
+      //printf("\n%d rejected: dt=%f, moy=%f, std=%f\n",index,dt,moy,std);
+      return false;
+    }
+      // dt is definitely too strange
+    }
 
-    estN++;
-    estM1+=dt;
-    estM2+=dt*dt;
+  estN++;
+  estM1+=dt;
+  estM2+=dt*dt;
 
-    return true;
+  return true;
 }
 
 double vtkFastMarching::step( void )
@@ -900,9 +879,8 @@ double vtkFastMarching::step( void )
   FMleaf min;
 
   /* find point in TRIAL with smallest T, remove it from TRIAL and put
-   it in KNOWN */
+     it in KNOWN */
 
-  //printf("tree.size()=%d\n",tree.size());
   if( emptyTree() )
     {
       cout << "emptyTree() is true here !" << endl;
@@ -977,7 +955,7 @@ double vtkFastMarching::computeT(int index)
   Tij = node[index].T;
 
   /* we know that all neighbors are defined
-   because this node is not OUT */
+     because this node is not OUT */
   Txm = node[index+shiftNeighbor(4)].T;
   Txp = node[index+shiftNeighbor(2)].T;
   Tym = node[index+shiftNeighbor(1)].T;
@@ -1002,46 +980,46 @@ double vtkFastMarching::computeT(int index)
       A++;
       B -= 2.0 * Txm;
       C += Txm * Txm;
-      }
+    }
     else {
       A++;
       B -= 2.0 * Txp;
       C += Txp * Txp;
-      }
     }
+  }
   if ((Dym>0.0) || (Dyp<0.0)) {
     if (Dym > -Dyp) {
       A++;
       B -= 2.0 * Tym;
       C += Tym * Tym;
-      }
+    }
     else {
       A++;
       B -= 2.0 * Typ;
       C += Typ * Typ;
-      }
     }
+  }
   if ((Dzm>0.0) || (Dzp<0.0)) {
     if (Dzm > -Dzp) {
       A++;
       B -= 2.0 * Tzm;
       C += Tzm * Tzm;
-      }
+    }
     else {
       A++;
       B -= 2.0 * Tzp;
       C += Tzp * Tzp;
-      }
     }
+  }
 
   if (A==0) {
     printf("A==0 \n");
     /*
-    printf("A=0, index=%d\n",index);
-    printf("Txm=%f, Tym=%f, Txp=%f, Typ=%f\n",Txm, Tym, Txp, Typ);
+      printf("A=0, index=%d\n",index);
+      printf("Txm=%f, Tym=%f, Txp=%f, Typ=%f\n",Txm, Tym, Txp, Typ);
     */
     return Tij;
-    }
+  }
 
   /*
    * Negative discriminant? Complex crossing times?
@@ -1050,16 +1028,16 @@ double vtkFastMarching::computeT(int index)
   if (Discr < 0.0) {
     //printf("Discr<0 ");
     /*
-    printf("Error from FMTijNew at index=%d: Discriminant = %f!\n", index, Discr);
-    printf("A, B, C = %f, %f, %f\n", A, B, C);
-    printf("Txm=%f, Tym=%f, Txp=%f, Typ=%f\n",Txm, Tym, Txp, Typ);
-    printf("Returning Tij %f\n",Tij);
+      printf("Error from FMTijNew at index=%d: Discriminant = %f!\n", index, Discr);
+      printf("A, B, C = %f, %f, %f\n", A, B, C);
+      printf("Txm=%f, Tym=%f, Txp=%f, Typ=%f\n",Txm, Tym, Txp, Typ);
+      printf("Returning Tij %f\n",Tij);
     */
 
     // this is what Tony Yezzi suggested
     float minT=INF;
     for(int n=1;n<=nNeighbors;n++)
-    minT=min(minT, node[index+shiftNeighbor(n)].T);
+      minT=min(minT, node[index+shiftNeighbor(n)].T);
     return minT+dx/speed;
 
     
@@ -1067,7 +1045,7 @@ double vtkFastMarching::computeT(int index)
     return -B/(2*A); // fixme
 
     return Tij;
-    }
+  }
 
   /*
    * Solve the quadratic equation. Note that the new crossing
@@ -1113,7 +1091,7 @@ void vtkFastMarching::setRAStoIJKmatrix
 
 
 void vtkFastMarching::addMask( float centerX, float centerY, float centerZ,
-                float R, float theta, float phi )
+                   float R, float theta, float phi )
 {
   printf("vtkFastMarching::addMask(%f,%f,%f,%f,%f,%f)\n",centerX,centerY,centerZ,R,theta,phi);
 
@@ -1209,10 +1187,6 @@ void vtkFastMarching::back1Step( void )
     }
 }
 
-void vtkFastMarching::startEvolution( void )
-{
-  ExecuteData( NULL );
-}
 
 void vtkFastMarching::unInit( void )
 {

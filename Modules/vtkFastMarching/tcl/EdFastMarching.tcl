@@ -37,15 +37,15 @@ proc EdFastMarchingInit {} {
     set e EdFastMarching
     set Ed($e,name)      "Fast Marching"
     set Ed($e,initials)  "Fm"
-    set Ed($e,desc)      "Fast Marching: PDE based segmentation"
-    set Ed($e,rank)      1 ;#FIXME
+    set Ed($e,desc)      "Fast Marching: PDE segmentation"
+    set Ed($e,rank)      14;
     set Ed($e,procGUI)   EdFastMarchingBuildGUI
     set Ed($e,procEnter) EdFastMarchingEnter
     set Ed($e,procExit)  EdFastMarchingExit
 
     set Ed($e,initialized) 0
 
-    # ID of the active mask
+    # ID of active mask
     set EdFastMarching(activeMask) "none"
 
     # total numer of masks
@@ -86,12 +86,14 @@ proc EdFastMarchingBuildGUI {} {
     pack $f.fWarning $f.fGrid $f.fMask $f.fExtra \
     -side top -fill x 
     #-------------------------------------------
-    # FastMarching->Grid frame
+    # FastMarching Disclaimer frame
     #-------------------------------------------
     set f $Ed(EdFastMarching,frame).fWarning
 
-    eval {label $f.lWarning1 -text "WARNING: for development ONLY !" } $Gui(WLA)
-    eval {label $f.lWarning2 -text "Eric Pichon <eric@ece.gatech.edu>" }  $Gui(WLA)
+    eval {label $f.lWarning1 -text "WARNING: for development ONLY !" } \
+    $Gui(WLA)
+    eval {label $f.lWarning2 -text "Eric Pichon <eric@ece.gatech.edu>" } \
+    $Gui(WLA)
 
     pack $f.lWarning1 $f.lWarning2
 
@@ -141,7 +143,8 @@ proc EdFastMarchingBuildGUI {} {
 
     eval {button $f.bRemoveMask \
           -text "remove"  \
-          -command "EdFastMarchingMaskRemove $EdFastMarching(activeMask)" } $Gui(WBA)
+          -command "EdFastMarchingMaskRemove $EdFastMarching(activeMask)" } \
+    $Gui(WBA)
 
     pack $f.mbMask $f.lMask $f.bNewMask $f.bRemoveMask \
     -side left -expand true -fill x
@@ -176,7 +179,8 @@ proc EdFastMarchingBuildGUI {} {
     eval {label $f.lCenter -text "Center:"} $Gui(WLA)
     grid $f.lCenter -row 0 -column 0 -padx 30 -sticky w
 
-    eval {button $f.bCenterClick -text "(click)" -command "EdFastMarchingToggleWaitingCenterClick" } $Gui(WBA)    
+    eval {button $f.bCenterClick -text "(click)" \
+    -command "EdFastMarchingToggleWaitingCenterClick" } $Gui(WBA)    
     grid $f.bCenterClick -row 1 -column 0 -padx 30 -sticky w
 
     eval {label $f.lNormal -text "Normal:"} $Gui(WLA)
@@ -217,7 +221,8 @@ proc EdFastMarchingBuildGUI {} {
     
     set  f $Ed(EdFastMarching,frame)
     
-    eval {button $f.bBack1Step -text "Back 1 step" -command "EdFastMarchingBack1Step" } $Gui(WBA)   
+    eval {button $f.bBack1Step -text "Back 1 step" \
+          -command "EdFastMarchingBack1Step" } $Gui(WBA)   
     
     $f.bBack1Step configure -state disabled
 
@@ -228,13 +233,16 @@ proc EdFastMarchingBuildGUI {} {
     EdFastMarchingMaskUpdateWidget "none" "disabled"
 }
 
+
+#
+# Cancel the last user click
+#
 proc EdFastMarchingBack1Step {} {
     global EdFastMarching Ed
     
     set EdFastMarching(nEvolutions) [expr $EdFastMarching(nEvolutions)-1]
 
     EdFastMarching(FastMarching) back1Step
-    # Ed(editor) FastMarchingBack1Step
 
     if { $EdFastMarching(nEvolutions) <=0 } {
     $Ed(EdFastMarching,frame).bBack1Step \
@@ -245,6 +253,10 @@ proc EdFastMarchingBack1Step {} {
     EdUpdateAfterApplyEffect $v
 }
 
+#
+# Add $incr to varName
+# (there must be an elegant way to do that)
+#
 proc EdFastMarchingAdd {varName incr} {
     global EdFastMarching
 
@@ -263,7 +275,8 @@ proc EdFastMarchingMaskAdd {} {
     incr EdFastMarching(maxIndiceMask)
     set EdFastMarching(activeMask) $EdFastMarching(maxIndiceMask)
     
-    EdFastMarchingMaskCreate $EdFastMarching(activeMask) [expr 100]  [expr 100] [expr 100] \
+    EdFastMarchingMaskCreate $EdFastMarching(activeMask) \
+    [expr 100]  [expr 100] [expr 100] \
     0 0 10
 }
 
@@ -332,8 +345,8 @@ proc EdFastMarchingMaskCreate {ID cx cy cz theta phi r} {
 
     MainAddActor EdFastMarching(actor$ID)
 
-       vtkVectorText EdFastMarching(vectorText$ID)
-       EdFastMarching(vectorText$ID) SetText "$ID"
+    vtkVectorText EdFastMarching(vectorText$ID)
+    EdFastMarching(vectorText$ID) SetText "$ID"
 
     vtkTransformFilter EdFastMarching(textTransFilter$ID);
     EdFastMarching(textTransFilter$ID) SetInput [EdFastMarching(vectorText$ID) GetOutput];
@@ -370,6 +383,9 @@ proc EdFastMarchingMaskCreate {ID cx cy cz theta phi r} {
     EdFastMarchingMaskUpdateWidget $ID $state
 }
 
+#
+# sends all mask information to the vtk object "EdFastMarching(FastMarching)"
+#
 proc EdFastMarchingOutputMask {} {
 
     global EdFastMarching Ed
@@ -383,16 +399,11 @@ proc EdFastMarchingOutputMask {} {
         set a $EdFastMarching($mask.A);
         set s $EdFastMarching($mask.S);
 
-#         set I [expr $m11*$r+$m12*$a+$m13*$s+$m14*1 ];
-#         set J [expr $m21*$r+$m22*$a+$m23*$s+$m24*1 ];
-#         set K [expr $m31*$r+$m32*$a+$m33*$s+$m34*1 ];
-
         set THETA $EdFastMarching($mask.Theta)
         set PHI $EdFastMarching($mask.Phi)
         set R $EdFastMarching($mask.r)
 
-        #Ed(editor) FastMarchingAddMask $r $a $s $R $THETA $PHI
-        EdFastMarching(FastMarching) AddMask $r $a $s $R $THETA $PHI
+        EdFastMarching(FastMarching) addMask $r $a $s $R $THETA $PHI
         puts "mask $i"
         puts "$r $a $s $THETA $PHI $R"
     }
@@ -416,7 +427,8 @@ proc EdFastMarchingChangedCoord {} {
     }
         
     foreach dimmension "Theta Phi" {
-        set EdFastMarching($mask.$dimmension) [expr $EdFastMarching($mask.$dimmension)%360]
+        set EdFastMarching($mask.$dimmension) \
+        [expr $EdFastMarching($mask.$dimmension)%360]
     }
 
     if { $EdFastMarching($mask.r)<1 } {
@@ -477,7 +489,7 @@ proc EdFastMarchingUpdateActor {ID} {
     
     EdFastMarching(trans$ID) Update;
     EdFastMarching(cyl$ID) Update;
- 
+    
     EdFastMarching(textTrans$ID) Identity
     EdFastMarching(textTrans$ID) Translate \
     0 0 [expr ($EdFastMarching($mask.r)+5)/10]
@@ -490,17 +502,11 @@ proc EdFastMarchingUpdateActor {ID} {
     RenderAll;    
 }
 
-#-------------------------------------------------------------------------------
-# .PROC EdFastMarchingEnter
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
+
+#called whenever we enter the FastMarching tab
 proc EdFastMarchingEnter {} {
     global Ed Label Slice EdFastMarching
     set e EdFastMarching
-
-    #EdFastMarchingParams
 
     EdFastMarchingLabel         
 
@@ -509,9 +515,6 @@ proc EdFastMarchingEnter {} {
 
     puts "taille $Slice(idList)"
     foreach s $Slice(idList) {
-#        puts "Volume(width)=$Volume(width) and Volume(height)=$Volume(height) Slice(num)=$Slice(num)"
-        #puts [Slicer GetOffsetRangeLow  $s]
-        #puts [Slicer GetOffsetRangeHigh $s]
         set dim$s [expr [Slicer GetOffsetRangeHigh $s]-[Slicer GetOffsetRangeLow  $s]]
     }
 
@@ -520,7 +523,7 @@ proc EdFastMarchingEnter {} {
     set Ed(EdFastMarching,initialized) 1
     puts "FM Init($dim0,$dim1,$dim2)"
 
-    #Ed(editor) FastMarchingInit [expr $dim0+1] [expr $dim2+1] [expr $dim1+1]
+    # create the vtk object and initialize it
     vtkFastMarching EdFastMarching(FastMarching) 
     puts "vtkFastMarching EdFastMarching(FastMarching)"
     EdFastMarching(FastMarching) init  [expr $dim0+1] [expr $dim2+1] [expr $dim1+1]
@@ -543,7 +546,7 @@ proc EdFastMarchingEnter {} {
     configure -state disabled
 
 
-###############
+    ###############
 
     set e EdFastMarching
 
@@ -559,20 +562,16 @@ proc EdFastMarchingEnter {} {
     set EdFastMarching(Stdev) [expr int($EdFastMarching(Depth)/60.0)]
     set EdFastMarching(Sigma) 0.1
 
-#    EdSetupBeforeApplyEffect $v $Ed($e,scope) Native
-    EdUpdateAfterApplyEffect $v
+    #? EdSetupBeforeApplyEffect $v $Ed($e,scope) Native
+    #? EdUpdateAfterApplyEffect $v
 
-EditorActivateUndo 0
+    # does not work ?
+    EditorActivateUndo 0
 
-EditorClear Working
+    EditorClear Working
 }
 
-#-------------------------------------------------------------------------------
-# .PROC EdFastMarchingExit
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
+#called whenever we exit the FastMarching tab
 proc EdFastMarchingExit {} {
     global Ed EdFastMarching
 
@@ -580,7 +579,7 @@ proc EdFastMarchingExit {} {
 
     set Ed(EdFastMarching,initialized) 0
     puts "FM Destructor"
-#    Ed(editor) FastMarchingDestructor
+
     EdFastMarching(FastMarching) unInit
     }    
 
@@ -603,18 +602,10 @@ proc EdFastMarchingExit {} {
 
 }
 
-
-#-------------------------------------------------------------------------------
-# .PROC EdFastMarchingLabel
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
 proc EdFastMarchingLabel {} {
     global Ed
 
     LabelsFindLabel
-    #EdFastMarchingUpdate
 }
 
 proc EdFastMarchingToggleWaitingCenterClick {} {
@@ -632,16 +623,12 @@ proc EdFastMarchingToggleWaitingCenterClick {} {
         configure -relief sunken
     }
 }
-#-------------------------------------------------------------------------------
-# .PROC EdFastMarchingApply
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
 
+#
+# Where the job gets done
+#
 proc EdFastMarchingApply {} {
     global Ed Volume Label Gui EdFastMarching
-
 
     puts " EdFastMarchingApply "
 
@@ -671,15 +658,13 @@ proc EdFastMarchingApply {} {
     puts "FM depth= $EdFastMarching(Depth) stdev=$EdFastMarching(Stdev)"
 
 
-#    Ed(editor) FastMarchingSetExtra $EdFastMarching(Depth) $EdFastMarching(Stdev) $EdFastMarching(Sigma)
-
+    # pass parameters to vtk object
     EdFastMarching(FastMarching) setDepth $EdFastMarching(Depth)
     puts setDepth
     EdFastMarching(FastMarching) setStdev $EdFastMarching(Stdev)
     puts setStdev
     EdFastMarching(FastMarching) setSigma $EdFastMarching(Sigma)
     puts setSigma
-
 
     scan [Volume($v,node) GetRasToVtkMatrix] \
     "%f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f" \
@@ -712,7 +697,6 @@ proc EdFastMarchingApply {} {
     puts "EdFastMarching(mask.R) $R"
 
     EdFastMarchingChangedCoord
-    #EdFastMarchingMaskUpdateWidget $EdFastMarching(activeMask) "normal"
     
     return
     }
@@ -720,7 +704,6 @@ proc EdFastMarchingApply {} {
 
     puts "FM SetRAStoIJKmatrix $m11 $m12 $m13 $m14 $m21 $m22 $m23 $m24 $m31 $m32 $m33 $m34 $m41 $m42 $m43 $m44"
 
-#    Ed(editor) FastMarchingSetRAStoIJKmatrix $m11 $m12 $m13 $m14 $m21 $m22 $m23 $m24 $m31 $m32 $m33 $m34 $m41 $m42 $m43 $m44
 
     EdFastMarching(FastMarching) setRAStoIJKmatrix $m11 $m12 $m13 $m14 $m21 $m22 $m23 $m24 $m31 $m32 $m33 $m34 $m41 $m42 $m43 $m44
 
@@ -736,19 +719,10 @@ proc EdFastMarchingApply {} {
 
     Ed(editor)  UseInputOn
 
-    #Ed(editor) FastMarchingGo $x $y $z $label
     EdFastMarching(FastMarching) setSeedAndLabel $x $y $z $label
 
     set o [EditorGetOriginalID]
     set w [EditorGetWorkingID]
-
-    
-    EdFastMarching(FastMarching) SetInput [Volume($o,vol) GetOutput]
-    EdFastMarching(FastMarching) SetOutput [Volume($w,vol) GetOutput]
-
-#    EdFastMarching(FastMarching) ExecuteData NULL
-
-#    EdFastMarching(FastMarching) startEvolution
     
     # make sure the program is run at all times
     EdFastMarching(FastMarching) Modified
@@ -759,9 +733,6 @@ proc EdFastMarchingApply {} {
     $Ed(EdFastMarching,frame).bBack1Step \
     configure -state normal
     
-    #EdFastMarching(FastMarching)  SetInput ""
-    #EdFastMarching(FastMarching)  UseInputOff
-
     Ed(editor)  SetInput ""
     Ed(editor)  UseInputOff
 

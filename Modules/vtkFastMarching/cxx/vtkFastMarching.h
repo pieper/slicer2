@@ -1,10 +1,8 @@
 #ifndef __vtkFastMarching_h
 #define __vtkFastMarching_h
 
-//#include "../../../Base/cxx/vtkSlicer.h"
 #include "vtkFastMarchingConfigure.h"
 #include "vtkImageToImageFilter.h"
-//#include "vtkImageEditor.h"
 
 #include <vector.h>
 #include <algo.h>
@@ -22,8 +20,8 @@
 // mask is (2*MASK_SIZE+1) x (2*MASK_SIZE+1)
 
 /*
-note: I really should have defined most of this class private
-but vtkWrapTcl won't take it :((
+  note: I really should have defined most of this class private
+  but vtkWrapTcl won't take it !!
 */
 
 struct JIT
@@ -55,16 +53,16 @@ struct JIT
   bool initialized;
 
   /*
-  static int medianCompare(const void *i, const void *j)
+    static int medianCompare(const void *i, const void *j)
     {
-      if( (*(int*)i) > (*(int*)j) )
+    if( (*(int*)i) > (*(int*)j) )
     return 1;
 
-      return -1;
+    return -1;
     }
   */
 
-/*  public: */
+  /*  public: */
   JIT();
   JIT( int dimX, int dimY, int dimZ );
 
@@ -78,7 +76,7 @@ struct JIT
   float value(int index); // fixme to inline !
   ~JIT();
 
-/*  private: */
+  /*  private: */
   
   inline float avg(int index);
   inline float phi(int index);
@@ -94,9 +92,12 @@ struct JIT
 //
 
 
-#define INF 1.0e+10
+// pretty big
+#define INF 1.0e+10 
 
-#define BAND_OUT 3
+// outside margin
+#define BAND_OUT 3 
+
 
 
 ///////////////////////////////////////////////////////////////////////
@@ -115,6 +116,7 @@ struct FMleaf {
   int nodeIndex;
 };
 
+// these typedef are for tclwrapper...
 typedef vector<FMleaf> VecFMleaf;
 typedef vector<int> VecInt;
 typedef vector<VecInt> VecVecInt;
@@ -122,14 +124,7 @@ typedef vector<VecInt> VecVecInt;
 ///////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////
 class VTK_FASTMARCHING_EXPORT vtkFastMarching : public vtkImageToImageFilter
-//class VTK_SLICER_BASE_EXPORT vtkFastMarching : public vtkImageEditor
 {
- public:
-
-  static vtkFastMarching *New();
-  vtkTypeMacro(vtkFastMarching,vtkImageToImageFilter);
-  void PrintSelf(ostream& os, vtkIndent indent);
-
  private:
   int nNeighbors; // =6 pb wrap, cannot be defined as constant
   double dx; // =1
@@ -138,11 +133,16 @@ class VTK_FASTMARCHING_EXPORT vtkFastMarching : public vtkImageToImageFilter
 
   FMnode *node;
 
+  // size of the input
   int dimX;
   int dimY;
   int dimZ;
+
+  // dimX*dimY
   int dimXY;
 
+
+  // coeficients of the RAS2IJK matrix
   float m11;
   float m12;
   float m13;
@@ -185,8 +185,6 @@ class VTK_FASTMARCHING_EXPORT vtkFastMarching : public vtkImageToImageFilter
   bool emptyTree(void);
   int shiftNeighbor(int n);
   double computeT(int index);
-  void AddMask( float centerX, float centerY, float centerZ,
-        float R, float theta, float phi );
   
   double estN;
   double estM1;
@@ -200,14 +198,21 @@ class VTK_FASTMARCHING_EXPORT vtkFastMarching : public vtkImageToImageFilter
 
  public:
 
-  //  void Update(void);
+  static vtkFastMarching *New();
+
+  vtkTypeMacro(vtkFastMarching,vtkImageToImageFilter);
 
   vtkFastMarching();
   ~vtkFastMarching();
+  void unInit( void );
+
+  void PrintSelf(ostream& os, vtkIndent indent);
+
   //pb wrap  vtkFastMarching()(const vtkFastMarching&);
   //pb wrap  void operator=(const vtkFastMarching&);
 
   void init(int dimX, int dimY, int dimZ);
+
   void setSeed(void);
   void setDepth(int depth);
   void setStdev(int stdev);
@@ -224,29 +229,20 @@ class VTK_FASTMARCHING_EXPORT vtkFastMarching : public vtkImageToImageFilter
              float m31, float m32, float m33, float m34,
              float m41, float m42, float m43, float m44);
 
-  /* show the arrival times T as an image
-     we scale the values between 0 and 255 */
   void show( void );
 
   void setSeedAndLabel(int x, int y, int z, int label);
 
   /*
-  void showImg( short* outdata, int label );
-  void showT( short* outdata, int label );
+    void showImg( short* outdata, int label );
+    void showT( short* outdata, int label );
   */
-
 
   /* perform one step of fast marching
      return the leaf which has just been added to KNOWN */
   double step( void );
 
   void back1Step( void );
-
-  void startEvolution( void );
-
-  void unInit( void );
-
-  
 
  protected:
   void ExecuteData(vtkDataObject *);
