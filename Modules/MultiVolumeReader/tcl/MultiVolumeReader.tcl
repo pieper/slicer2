@@ -149,7 +149,7 @@ proc MultiVolumeReaderInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.4 $} {$Date: 2004/11/12 21:53:26 $}]
+        {$Revision: 1.5 $} {$Date: 2004/11/19 22:17:32 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -251,21 +251,22 @@ proc MultiVolumeReaderBuildGUI {parent} {
     set MultiVolumeReader(filterEntry) $f.eFilter
     
     set f $parent.fVols
+    DevAddButton $f.bApply "Apply" "MultiVolumeReaderLoad" 12 
+    pack $f.bApply -side top -pady 5 
+
     frame $f.fVName -bg $Gui(activeWorkspace)
     pack $f.fVName  -pady 5 
     set f $f.fVName
-    DevAddLabel $f.lVName "Active Volume Name:"
+    DevAddLabel $f.lVName "Load status (latest loaded volume):"
+    set MultiVolumeReader(emptyLoadStatus) ""
     eval {entry $f.eVName -width 30 \
         -state normal \
-        -textvariable Volume(name)} $Gui(WEA)
+        -textvariable MultiVolumeReader(emptyLoadStatus)} $Gui(WEA)
     TooltipAdd $f.eVName \
         "Don't need to input anything here. This\n\
         entry is used to display loading status."
     pack $f.lVName $f.eVName -side top -padx $Gui(pad) -pady 2 
-
-    set f $parent.fVols
-    DevAddButton $f.bApply "Apply" "MultiVolumeReaderLoad" 12 
-    pack $f.bApply -side top -pady 5 
+    set MultiVolumeReader(loadStatusEntry) $f.eVName
 
     # The Navigate frame
     set f $parent.fNav
@@ -400,7 +401,7 @@ proc MultiVolumeReaderSetFileFilter {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MultiVolumeReaderLoad {} {
-    global MultiVolumeReader
+    global MultiVolumeReader Volume
 
     set fileName $MultiVolumeReader(fileName)
     set fileName [string trim $fileName]
@@ -411,6 +412,7 @@ proc MultiVolumeReaderLoad {} {
 
     if {! [file exists $fileName]} {
         DevErrorWindow "File doesn't exist: $fileName."
+        set MultiVolumeReader(fileName) ""
         return
     }
 
@@ -418,6 +420,9 @@ proc MultiVolumeReaderLoad {} {
     unset -nocomplain MultiVolumeReader(firstMRMLid)
     unset -nocomplain MultiVolumeReader(lastMRMLid)
     unset -nocomplain MultiVolumeReader(volumeExtent)
+
+    $MultiVolumeReader(loadStatusEntry) configure -textvariable \
+        Volume(name) 
 
     switch $MultiVolumeReader(fileExtension) {
         ".hdr" {
@@ -432,14 +437,19 @@ proc MultiVolumeReaderLoad {} {
         }
     }
 
+    set MultiVolumeReader(fileName) ""
+
     if {$val == 1} {
         return 
     }
-
+ 
     # Sets range for the volume slider
     $MultiVolumeReader(slider) configure -from 1 -to $MultiVolumeReader(noOfVolumes)
     # Sets the first volume in the sequence as the active volume
     MainVolumesSetActive $MultiVolumeReader(firstMRMLid)
+
+    $MultiVolumeReader(loadStatusEntry) configure -textvariable \
+        MultiVolumeReader(emptyLoadStatus) 
 }   
 
 
