@@ -92,7 +92,7 @@ proc MainSlicesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainSlices \
-        {$Revision: 1.40 $} {$Date: 2002/03/21 23:05:23 $}]
+        {$Revision: 1.41 $} {$Date: 2002/04/16 18:12:44 $}]
 
     # Initialize Variables
     set Slice(idList) "0 1 2"
@@ -355,12 +355,8 @@ proc MainSlicesBuildControls {s F} {
         Right-click for menu: \nzoom, slice increments, \
         volume display."
 
+    pack $f.cVisibility${s} -side left -padx 2
 
-    eval {button $f.cReformat${s} \
-        -text "R" -width 2 \
-        -command "MainSlicesUserReformat ${s}"} $Gui(WBA) 
-    pack $f.cVisibility${s} $f.cReformat${s} -side left -padx 2
-    TooltipAdd $f.cReformat${s} "Press to reformat this slice"    
 
     # Menu on the Visibility checkbutton
     eval {menu $f.cVisibility${s}.men} $Gui(WMA)
