@@ -1,7 +1,7 @@
 # Measure.tcl
 # 10/16/98 Peter C. Everett peverett@bwh.harvard.edu: Created
 # 12/19/01 Krishna C. Yeshwant kcy@bwh.harvard.edu: Edited
-
+# 05/21/02 Delphine Nain delfin@bwh : Edited
 #===============================================================================
 # FILE:        Measure.tcl
 # PROCEDURES:  
@@ -33,19 +33,21 @@ proc MeasureInit {} {
     set Module($m,procVTK) MeasureBuildVTK
     set Module($m,procEnter) MeasureEnter
     set Module($m,procExit) MeasureExit
+    # procedure called when a csys is moved
+    set Module($m,procXformMotion) MeasureCsysMotion
     
     # Define Dependencies
     set Module($m,depend) ""
     
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.6 $} {$Date: 2002/05/09 14:50:42 $}]
+        {$Revision: 1.7 $} {$Date: 2002/05/21 05:07:18 $}]
     
     # Initialize module-level variables
     #    set Measure(Model1) $Model(idNone)
     array set Point {scale 5.0 selected {} \
         vtkPoints "Point(vtkPoints)" \
-        vtkFloatArray "Point(vtkScalars)" -1,name "<None>"}
+    vtkFloatArray "Point(vtkScalars)" -1,name "<None>"}
     # Event Bindings
     set Measure(eventManager) { \
         {$Gui(fViewWin) <Control-1> {addGlyphPoint %W %x %y}} \
@@ -190,6 +192,7 @@ proc MeasureSetCsysVisibility {} {
     global Measure
     
     Measure(Csys,actor) SetVisibility $Measure(Csys,visible)
+    MeasureSetCsysPickable $Measure(Csys,visible)
     Render3D 
 }
 
@@ -300,7 +303,7 @@ proc SelectModel { fRoot id } {
     } else {
     # Add to selection list
     lappend Selected(Model) $id
-    set Model($id,selected) 1
+    set Model($id,selected) 1    
     [Model($id,actor,$r) GetProperty] SetAmbientColor 1 0 0
     [Model($id,actor,$r) GetProperty] SetAmbient .6
     }
@@ -337,11 +340,9 @@ proc MeasureBuildVTK {} {
     
     CsysCreate Measure Csys -1 -1 -1
     # will not be pickable until the user enters the measure module
-    MeasureSetCsysPickable 0
     set Measure(Csys,visible) 0
+    MeasureSetCsysVisibility
     viewRen AddActor Measure(Csys,actor)
-    #    Csys(actor) SetVisibility 1
-    Measure(Csys,actor) SetVisibility $Measure(Csys,visible)
     
     # Initialize cutter (vtkPolyBoolean.h -> operation 4 -> A_TOUCHES_B)
     set Measure(cutter)  [vtkPolyBoolean Measure(cutter)]
@@ -360,14 +361,12 @@ proc MeasureBuildVTK {} {
 proc MeasureEnter {} {
     global Measure
 
-    MeasureSetCsysPickable 1
     pushEventManager $Measure(eventManager)
     MeasureRefreshGUI
 }
 
 proc MeasureExit {} {
 #    DebugMsg "Exiting Measure Tab"
-    MeasureSetCsysPickable 0
     popEventManager
 }
 
@@ -758,12 +757,12 @@ proc addGlyphPoint { widget x y } {
     #tk_messageBox -message "addglyphpoint"
     MeasureSetModelsPickable 0
     MeasureSetGlyphsPickable 0
-    MeasureSetCsysPickable 1
+    #MeasureSetCsysPickable 1
 
     if { [SelectPick Point(picker) $widget $x $y] == 0 } {
     #    DebugMsg "NoCsysPick"
     MeasureSetModelsPickable 1
-    MeasureSetCsysPickable 0
+    #MeasureSetCsysPickable 0
     if { [SelectPick Point(picker) $widget $x $y] == 0 } {
         #        DebugMsg [concat "Nothing picked at" $x "," $y "in" $widget ]
     } else {
@@ -781,30 +780,8 @@ proc addGlyphPoint { widget x y } {
         eval PointsNew [Point(picker) GetPickPosition]
         MeasureRefreshGUI
         Render3D
-    }
-    } else {
-    #    DebugMsg "Picking Csys"
-    #tk_messageBox -message "picking csys"
-    set assemblyPath [Point(picker) GetPath]
-    $assemblyPath InitTraversal
-    set assemblyNode [$assemblyPath GetLastNode]
-    set actor [$assemblyNode GetProp]
-
-    if { [$actor GetProperty] == [Measure(Csys,Xactor) GetProperty] } {
-        
-     
-        #        DebugMsg "xaxis"
-        XformAxisStart Measure Csys $widget 0 $x $y
-    } elseif { [$actor GetProperty] == [Measure(Csys,Yactor) GetProperty] } {
-        #        DebugMsg "yaxis"
-        
-        XformAxisStart Measure Csys $widget 1 $x $y
-    } elseif { [$actor GetProperty] == [Measure(Csys,Zactor) GetProperty] } {
-        #        DebugMsg "zaxis"
-        
-        XformAxisStart Measure Csys $widget 2 $x $y
-    }
-    }
+    }  
+}
 }
 
 
@@ -835,7 +812,7 @@ proc selGlyphPoint { widget x y } {
     MeasureSetAllPickable 0
     MeasureSetModelsPickable 0
     MeasureSetGlyphsPickable 1
-    MeasureSetCsysPickable 1
+    #MeasureSetCsysPickable 1
     if { [SelectPick Point(picker) $widget $x $y] == 0 } {
     #    DebugMsg [concat "Nothing picked at" $x "," $y "in" $widget ]
     return -1
@@ -843,11 +820,11 @@ proc selGlyphPoint { widget x y } {
     set actor [Point(picker) GetActor]
     #    DebugMsg [concat "Picked actor:" $actor]
     if { [$actor GetProperty] == [Measure(Csys,Xactor) GetProperty] } {
-        XformAxisStart Measure Csys $widget 0 $x $y
+        #do nothing, handled by the main interactor
     } elseif { [$actor GetProperty] == [Measure(Csys,Yactor) GetProperty] } {
-        XformAxisStart Measure Csys $widget 1 $x $y
+    #do nothing, handled by the main interactor
     } elseif { [$actor GetProperty] == [Measure(Csys,Zactor) GetProperty] } {
-        XformAxisStart Measure Csys $widget 2 $x $y
+    #do nothing, handled by the main interactor
     } else {
         set pntid [PointIdFromGlyphCellId \
             [Point(picker) GetCellId]]
@@ -923,7 +900,32 @@ proc MeasureSetAllPickable { pickable } {
 
 
 
+proc MeasureCsysMotion {actor angle dotprod unitX unitY unitZ} {
 
+    global Csys Measure Selected Model
+
+     if {$actor == "Measure(Csys,actor)"} {
+    
+     foreach id $Selected(Model) {
+         Model($id,actor,viewRen) RotateWXYZ $angle $unitX $unitY $unitZ
+         Model($id,actor,viewRen) AddPosition [expr $unitX*$dotprod] \
+             [expr $unitY*$dotprod] [expr $unitZ*$dotprod]
+     }
+     
+     if { [info commands cutactor] != "" } {
+         cutactor AddPosition [expr $unitX*$dotprod] \
+             [expr $unitY*$dotprod] [expr $unitZ*$dotprod]
+         if { $lastAxis == 0 } {
+         cutactor RotateX $angle
+         } else {
+         if { $lastAxis == 1 } {
+             cutactor RotateY $angle
+         } else {
+             cutactor RotateZ $angle
+         }   }
+     }
+     }
+ }
 
 
 

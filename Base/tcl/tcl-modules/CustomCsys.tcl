@@ -51,7 +51,7 @@ proc CustomCsysInit {} {
     set Module($m,author) "Delphine, Nain, SlicerHaker, delfin@mit.edu"
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1 $} {$Date: 2002/04/19 16:23:45 $}]
+        {$Revision: 1.2 $} {$Date: 2002/05/21 05:07:19 $}]
 
     # Define Tabs
     #------------------------------------
@@ -80,10 +80,6 @@ proc CustomCsysInit {} {
     # This module depends on Csys
     set Module($m,depend) Csys
 
-    # Create any specific bindings for this module
-    #------------------------------------
-    #
-    CustomCsysCreateBindings
 }
 #-------------------------------------------------------------------------------
 # .PROC CustomCsysBuildVTK
@@ -178,9 +174,6 @@ pack $f.lhow
 proc CustomCsysEnter {} {
     global CustomCsys Csys
 
-    # passing the custom handler doesn't work right now
-    # I need to ask Mike for help...
-    CsysPushBindings CustomCsys CustomCsysEvents
     MainAddActor CustomCsys(csys,actor)
     Render3D
 }
@@ -194,38 +187,8 @@ proc CustomCsysEnter {} {
 #-------------------------------------------------------------------------------
 proc CustomCsysExit {} {
     global CustomCsys Csys
-    # Deactivate the bindings that were created by the procedure 
-    # CustomCsysPushBindings called from the Enter procedure in your module
-    CsysPopBindings CustomCsys 
     MainRemoveActor CustomCsys(csys,actor)
     Render3D
 }
 
-#-------------------------------------------------------------------------------
-# .PROC CustomCsysCreateBindings
-# Creates specific events sets we'll need for this module
-#
-# (and then pass that handler to the procedure CsysPushBindings that should
-# be called from the Enter procedure so that they become active when the user
-# enters the module, along with the handler to move the csys). 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc CustomCsysCreateBindings {} {
-    global Gui Ev CustomCsys Csys
-        
-    EvDeclareEventHandler CustomCsysEvents <KeyPress-c> {CustomCsysDoSomethingCool}
-    
-}
 
-
-
-#-------------------------------------------------------------------------------
-# .PROC CustomCsysDoSomethingCool
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc CustomCsysDoSomethingCool {} {
-    puts "something cool"
-}

@@ -1149,7 +1149,6 @@ proc EndoscopicSetSize {a} {
 #-------------------------------------------------------------------------------
 proc EndoscopicPopBindings {} {
     global Ev
-    CsysPopBindings Endoscopic
     EvDeactivateBindingSet Slice0Events
     EvDeactivateBindingSet Slice1Events
     EvDeactivateBindingSet Slice2Events
@@ -1165,7 +1164,6 @@ proc EndoscopicPushBindings {} {
     global Ev
     # push onto the event stack a new event manager that deals with
     # events when the Endoscopic module is active
-    CsysPushBindings Endoscopic
     EvActivateBindingSet Slice0Events
     EvActivateBindingSet Slice1Events
     EvActivateBindingSet Slice2Events
@@ -1178,7 +1176,7 @@ proc EndoscopicPushBindings {} {
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicCreateBindings {} {
-    global Gui Ev Csys
+    global Gui Ev 
     
     # Creates events sets we'll  need for this module
     # create the event manager for the ability to move the gyro
@@ -2187,7 +2185,7 @@ proc EndoscopicLandmarkSelected {{id ""}} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc EndoscopicGyroMotion {actor} {
+proc EndoscopicGyroMotion {actor angle dotprod unitX unitY unitZ} {
     
     global Endoscopic
     if {$actor == "Endoscopic(gyro,actor)"} {

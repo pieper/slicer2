@@ -57,8 +57,6 @@ proc CsysInit {} {
     
     global Csys
 
-    CsysCreateBindings
-
     vtkCellPicker Csys(picker)
     Csys(picker) SetTolerance 0.001
     
@@ -69,9 +67,10 @@ proc CsysInit {} {
     set Csys(xactor,color) "1.0 0.4 0.4"
     set Csys(yactor,color) "0.4 1.0 0.4"
     set Csys(zactor,color) "0.4 0.4 1.0"
+    
+    # store a list of modules that have Csys actors
+    set Csys(modules) ""
 
-    set Csys(activeModule) ""
-    set Csys(activeActor) ""
 }
 
 
@@ -83,111 +82,20 @@ proc CsysInit {} {
 #
 #########################################################################
 
-#-------------------------------------------------------------------------------
-# .PROC CsysPopBindings
-#  Pop the bindings activated in CsysPushBindings
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc CsysPopBindings {module} {
-    global Ev Csys
-
-    EvDeactivateBindingSet CsysEvents
-
-    set Csys(activeModule) ""
-    set Csys(activeActor) ""
-}
 
 #-------------------------------------------------------------------------------
-# .PROC CsysPushBindings
-# Push the bindings to handle the movement of the csys actor (defined in CsysCreateBindings) as well as other optional handlers
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc CsysPushBindings {module {eventHandler ""}} {
-    global Ev Csys Gui 
-
-    set Csys(activeModule) $module
-
-    # csys events for 3d view
-    EvAddWidgetToBindingSet CsysEvents $Gui(fViewWin) {{CsysMouseEvents} {tkRegularEvents} {$eventHandler}}
-    
-    # other events set we'll need if the csys wasn't selected:
-    EvAddWidgetToBindingSet CsysEventsTkMotion $Gui(fViewWin) {{tkMotionEvents} {tkRegularEvents} {CsysMouseEvents} {$eventHandler}}
-    
-    EvActivateBindingSet CsysEvents
-}
-
-#-------------------------------------------------------------------------------
-# .PROC CsysCreateBindings
-# Creates events sets we'll  need for this module
-#
-# Main events set: CsysMouseEvents
-# The entry point is the mouse click/mouse release that selects/unselects
-# => Based on whether a csys actor is selected or not, we either interact 
-# regularly with the screen (virtual camera moves) or we have a 
-# selected a csys actor. If the selected actor is a csys, then the 
-# mouse motion moves that gyro axis. 
-#
-# sub events set: CsysTkMotion (regular tk interaction)
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc CsysCreateBindings {} {
-    global Gui Ev Csys 
-            
-    EvDeclareEventHandler CsysMouseEvents <Any-ButtonPress> {CsysSelectActor %W %x %y}
-    EvDeclareEventHandler CsysMouseEvents <Any-ButtonRelease> {CsysUnselectActor %W %x %y}
-    
-}
-
-   
-
-#-------------------------------------------------------------------------------
-# .PROC CsysUnselectActor
-# Called when any mouse button is released 
-# If the user was navigating around the 3D scene (determined in SelectActor), 
-# then pop the events from the event stack so we can be ready to handle another
-# mouse click
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc CsysUnselectActor {widget x y} {
-    
-    global Csys CsysEvents
-    
-    # if we were using regular tk interaction, 
-    # then pop the tk interaction events from the stack
-    if { $Csys(tkInteraction) == 1} {
-    # deactivate the tk motion bindings
-    EvDeactivateBindingSet CsysEventsTkMotion
-    set Csys(tkInteraction) 0
-    EndMotion $widget $x $y
-    }
-}
-
-
-#-------------------------------------------------------------------------------
-# .PROC CsysSelectActor
-#  This is called when any mouse button is pressed
-#  * If the selected actor is a csys of the active module, then
-#     move or rotate it accordingly
-#  * Otherwise call a callback procedure of the active module defined in 
-#    Module(<active module>,procCsysSelectActor). If this callback returns
-#    1, that means an actor that we wanted was picked, so do nothing else
-#  * In all other cases, just push onto the event stack the regular 
-#    tk interaction events so the user can navigate in the 3D scene 
+# .PROC CsysActorSelected
+#  This is called when any mouse button is pressed (in tcl-main/TkInteractor.tcl)
+#  * If the selected actor is a csys of the active module, then call XformAxisStart with the appropriate arguments and return 1 to override the regular tk interaction events
+#  * Otherwise return 0 so that the regular tk interaction events are used (so the user can navigate in the 3D scene )
 #    
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc CsysSelectActor {widget x y} {
+proc CsysActorSelected {widget x y} {
 
     global Csys Ev 
-    global $Csys(activeModule) 
 
-    set module $Csys(activeModule)
-    set Csys(tkInteraction) 0
 
     if { [SelectPick Csys(picker) $widget $x $y] != 0 } {
     
@@ -196,18 +104,17 @@ proc CsysSelectActor {widget x y} {
     $assemblyPath InitTraversal
     set assemblyNode [$assemblyPath GetLastNode]
     set pickactor [$assemblyNode GetProp]
-    set actor [lindex $Csys($module,actors) 0]
-    
+
     # shouldn't happen, but defensive programming can't hurt
-    if {$actor == ""} {
+    if {$pickactor == ""} {
         # problem here, just go back to the regular interaction mode
-        EvActivateBindingSet CsysEventsTkMotion
-        set Csys(tkInteraction) 1
-        StartMotion $widget $x $y
-        return
+       return 0
     }
     
-    if { [$pickactor GetProperty] == [${module}($actor,Xactor) GetProperty] } {
+    foreach module $Csys(modules) {
+    foreach actor $Csys($module,actors) {
+        
+        if { [$pickactor GetProperty] == [${module}($actor,Xactor) GetProperty] } {
         
         eval [${module}($actor,Xactor) GetProperty] SetColor \
             $Csys(xactor,selectedColor)
@@ -215,65 +122,35 @@ proc CsysSelectActor {widget x y} {
             $Csys(yactor,color)
         eval [${module}($actor,Zactor) GetProperty] SetColor \
             $Csys(zactor,color)
+        Render3D
         XformAxisStart $module $actor $widget 0 $x $y
-        
-        
-    } elseif { [$pickactor GetProperty] == [${module}($actor,Yactor) GetProperty] } {
+        return 1
+        } elseif { [$pickactor GetProperty] == [${module}($actor,Yactor) GetProperty] } {
         eval [${module}($actor,Xactor) GetProperty] SetColor \
             $Csys(xactor,color) 
         eval [${module}($actor,Yactor) GetProperty] SetColor \
             $Csys(yactor,selectedColor)
         eval [${module}($actor,Zactor) GetProperty] SetColor \
-            $Csys(zactor,color) 
+            $Csys(zactor,color)
+        Render3D 
         XformAxisStart $module $actor $widget 1 $x $y
-        
-        
-    } elseif { [$pickactor GetProperty]  == [${module}($actor,Zactor) GetProperty] } {
+        return 1
+        } elseif { [$pickactor GetProperty]  == [${module}($actor,Zactor) GetProperty] } {
         eval [${module}($actor,Xactor) GetProperty] SetColor \
             $Csys(xactor,color) 
         eval [${module}($actor,Yactor) GetProperty] SetColor \
             $Csys(yactor,color) 
         eval [${module}($actor,Zactor) GetProperty] SetColor \
             $Csys(zactor,selectedColor)
+        Render3D
         XformAxisStart $module $actor $widget 2 $x $y
-    } else {
-    
-    
-    # we haven't returned at this point, which means none of the csys
-    # for the active module were picked
-    
-    # If it exists, Call the callback procedure of the active module
-    #-------------------------------------------
-        if {[info exists Module($module,procCsysSelectActor)] == 1} {
-        if { [$Module($m,procCsysSelectActor) $pickactor]== 0 } {
-            
-            # the callback function didn't find an interesting actor, interact as usual
-            # if none of the above is picked, 
-            # then interact with the virtual camera, as usual
-            # activate the tk motion bindings
-            EvActivateBindingSet CsysEventsTkMotion
-            set Csys(tkInteraction) 1
-            StartMotion $widget $x $y
-        }
-        } else {
-        # if none of the above is picked and there is no callback, 
-        # then interact with the virtual camera, as usual
-        # activate the tk motion bindings
-        EvActivateBindingSet CsysEventsTkMotion
-        set Csys(tkInteraction) 1
-        StartMotion $widget $x $y
+        return 1
         }
     }
-    } else {
-    # if none of the above is picked and there is no callback, 
-    # then interact with the virtual camera, as usual
-    # activate the tk motion bindings
-    EvActivateBindingSet CsysEventsTkMotion
-    set Csys(tkInteraction) 1
-    StartMotion $widget $x $y
     }
-
-    Render3D
+}
+# if we got to this point, no csys got selected
+return 0
 }
 
 ##################################################################
@@ -383,6 +260,10 @@ proc CsysCreate { module actor axislen axisrad conelen  } {
     vtkTransform ${module}($actor,rasToWldTransform)
     ${module}($actor,actor) SetUserMatrix [${module}($actor,rasToWldTransform) GetMatrix]
 
+    #store all the modules that have a csys actor
+
+    lappend Csys(modules) $module
+    
     # store all the csys actors by module
     if {[info exists Csys($module,actors)] == 0 } {
     set Csys($module,actors) $actor

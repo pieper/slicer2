@@ -1,5 +1,5 @@
 #=auto==========================================================================
-# (c) Copyright 2001 Massachusetts Institute of Technology
+# (c) Copyright 2002 Massachusetts Institute of Technology
 #
 # Permission is hereby granted, without payment, to copy, modify, display 
 # and distribute this software and its documentation, if any, for any purpose, 
@@ -22,7 +22,7 @@
 #===============================================================================
 # FILE:        TkInteractor.tcl
 # PROCEDURES:  
-#   BindTkRenderWidget
+#   CreateAndBindTkEvents
 #   Expose
 #   UpdateRenderer
 #   Enter
@@ -49,11 +49,11 @@
 #  - regular events set: events that are always associated with the widget
 #     ( e.g KeyPress-u brings up the interactor)
 #  - mouse click event set: events associated with mouse buttons pressed or 
-#    released. This events signify the start or end of the virtual camera 
-#    motion.
-#  - motion events set: events to interact with the virtual camera to navigate 
-#    in 3D regularly
-#      (e.g B1-Motion Rotates the virtual camera)
+#    released. If a Csys is selected, the motion events will be applied to the
+#    selected Csys. Otherwise, the motion events are applied to the virtual
+#    camera of the renderer where the user clicked the mouse.
+#  - motion events set: events to interact with the selected item from the 
+#    mouse click event (either a Csys or a virtual camera).
 #
 #   Then those 3 event sets are bound to the widget and all 3 bindings 
 #   are activated
@@ -202,10 +202,21 @@ proc StartMotion {widget x y} {
     global LastX LastY
     global RendererFound
 
+
+    # check to see if a csys is selected
+    # if a csys was selected (indicated by the fact that the call to 
+    # CsysActorSelected returns a 1), then a new event handler is activated 
+    # to handle the motion of the csys until the mouse button is released 
+    # (at which point the usual event handler becomes active again)
+
+    if { [CsysActorSelected $widget $x $y] == 0} {
+
+    # if no Csys was selected, update the renderer as usual
     UpdateRenderer $widget $x $y
     if { ! $RendererFound } { return }
-
+    
     $CurrentRenderWindow SetDesiredUpdateRate 5.0
+    }
 }
 
 #-------------------------------------------------------------------------------

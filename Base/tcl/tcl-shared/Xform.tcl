@@ -23,6 +23,8 @@ proc XformAxisStart { module actor widget axis x y } {
     ${module}($actor,xform) SetMatrix [[viewRen GetActiveCamera] GetViewTransformMatrix]
     ${module}($actor,actor) GetMatrix ${module}($actor,matrix)
     ${module}($actor,xform) Concatenate ${module}($actor,matrix)
+
+
     foreach id $Selected(Model) {
     Model($id,actor,viewRen) GetMatrix ${module}($actor,inverse)
     ${module}($actor,inverse) Invert
@@ -30,7 +32,7 @@ proc XformAxisStart { module actor widget axis x y } {
     ${module}($actor,actXform) SetMatrix ${module}($actor,matrix)
     ${module}($actor,actXform) Concatenate ${module}($actor,inverse)
     ${module}($actor,actXform) SetPoint 0 0 0 1
-    eval Model($id,$actor,viewRen) SetOrigin [${module}($actor,actXform) GetPoint]
+    eval Model($id,actor,viewRen) SetOrigin [${module}($actor,actXform) GetPoint]
     }
 #    DebugMsg [concat "Starting axis-based transformation with axis " $axis ]
     set Xform(xform) [vtkTransform Xform(xform)]
@@ -80,11 +82,9 @@ proc XformAxis { module actor widget x y button } {
 #    DebugMsg [concat "moving " $lastAxis $dotprod $xprod "..." ]
     ${module}($actor,actor) AddPosition [expr $unitX*$dotprod] [expr $unitY*$dotprod] \
         [expr $unitZ*$dotprod]
-    foreach id $Selected(Model) {
-    Model($id,actor,viewRen) RotateWXYZ $angle $unitX $unitY $unitZ
-    Model($id,actor,viewRen) AddPosition [expr $unitX*$dotprod] \
-        [expr $unitY*$dotprod] [expr $unitZ*$dotprod]
-    }
+
+    
+
     if { $lastAxis == 0 } {
     ${module}($actor,actor) RotateX $angle
     } else {
@@ -93,18 +93,7 @@ proc XformAxis { module actor widget x y button } {
     } else {
         ${module}($actor,actor) RotateZ $angle
     }   }
-    if { [info commands cutactor] != "" } {
-    cutactor AddPosition [expr $unitX*$dotprod] \
-        [expr $unitY*$dotprod] [expr $unitZ*$dotprod]
-    if { $lastAxis == 0 } {
-        cutactor RotateX $angle
-    } else {
-        if { $lastAxis == 1 } {
-        cutactor RotateY $angle
-        } else {
-        cutactor RotateZ $angle
-    }   }
-    }
+   
     
     set lastX $x
     set lastY $y
@@ -116,7 +105,7 @@ proc XformAxis { module actor widget x y button } {
     foreach m $Module(idList) {
     if {[info exists Module($m,procXformMotion)] == 1} {
         if {$Module(verbose) == 1} {puts "XformMotion: $m"}
-        $Module($m,procXformMotion) ${module}($actor,actor)
+        $Module($m,procXformMotion) ${module}($actor,actor) $angle $dotprod $unitX $unitY $unitZ
     }
     }
     Render3D    
