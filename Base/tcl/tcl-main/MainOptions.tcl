@@ -65,7 +65,7 @@ proc MainOptionsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainOptions \
-        {$Revision: 1.20 $} {$Date: 2002/03/21 23:05:22 $}]
+        {$Revision: 1.21 $} {$Date: 2002/03/27 15:44:53 $}]
 
     # Props
     set Options(program) "slicer"
@@ -396,7 +396,7 @@ proc MainOptionsRetrievePresetValues {} {
             set Preset(WindowLevel,$currentScene,$currentVolume,applyThreshold) [$node GetApplyThreshold]
             set Preset(WindowLevel,$currentScene,$currentVolume,autoThreshold) [$node GetAutoThreshold]
         }
-        if {([string compare -length 12 $node "CrossSection"] == 0) && ($currentVolume != "")} {
+        if {([string compare -length 12 $node "CrossSection"] == 0) && ($currentScene != "")} {
             set pos [$node GetPosition]
             set Preset(Slices,$currentScene,$pos,orient) [$node GetDirection]
             set Preset(Slices,$currentScene,$pos,visibility) [$node GetInModel]
