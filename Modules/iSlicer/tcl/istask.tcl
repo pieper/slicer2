@@ -49,12 +49,17 @@ if { [itcl::find class istask] == "" } {
         method w {} {return $_w}
         method on {} {}
         method off {} {}
-        method taskcb {} {}
+        method toggle {} {}
+        method istask_taskcb {} {}
 
         proc stopall {} {}
     }
 }
 
+proc istask_taskcb {} {
+    # dummy placeholder - so the task callback isn't undefined if the 
+    # class instance is destroyed before the after completes
+}
 
 # ------------------------------------------------------------------
 #                        CONSTRUCTOR/DESTRUCTOR
@@ -79,16 +84,24 @@ itcl::body istask::destructor {} {
 itcl::body istask::on {} {
     $_onoffbutton configure -text "Running..." -command "$this off" -relief sunken
     set _mode "on"
-    $this taskcb
+    $this istask_taskcb
 }
 
 itcl::body istask::off {} {
     $_onoffbutton configure -text "Start" -command "$this on" -relief raised
     set _mode "off"
-    $this taskcb
+    $this istask_taskcb
 }
 
-itcl::body istask::taskcb {} {
+itcl::body istask::toggle {} {
+    if { $_mode == "off" } {
+        $this on
+    } else {
+        $this off
+    }
+}
+
+itcl::body istask::istask_taskcb {} {
 
     switch $_mode {
         "off" {
@@ -101,7 +114,7 @@ itcl::body istask::taskcb {} {
             if {$itk_option(-taskcommand) != ""} {
                 eval $itk_option(-taskcommand)
             }
-            set _taskafter [after $itk_option(-taskdelay) "$this taskcb"]
+            set _taskafter [after $itk_option(-taskdelay) "$this istask_taskcb"]
         }
     }
 }
