@@ -175,7 +175,7 @@ int vtkImageOverlay::GetFade(int layer)
   {
     vtkErrorMacro(<< "Layer "<<layer<<" is not between 0 and "<<
       this->NumberOfInputs);
-    return 0.0;
+    return 0;
   }
   return this->Fade[layer];
 }
@@ -277,11 +277,7 @@ static void vtkImageOverlayExecute(vtkImageOverlay *self,
           for (idxY = 0; idxY <= maxY; idxY++) {
           for (idxX = 0; idxX <= maxX; idxX++)
           {
-            // Check alpha
-            if (inPtr[3]) 
-            {
-              memcpy(outPtr, inPtr, pixSize);
-            }
+            memcpy(outPtr, inPtr, pixSize);
             inPtr  += ncomp;
             outPtr += ncomp;
           }//for x
@@ -298,7 +294,11 @@ static void vtkImageOverlayExecute(vtkImageOverlay *self,
           for (idxY = 0; idxY <= maxY; idxY++) {
           for (idxX = 0; idxX <= maxX; idxX++)
           {
-            memcpy(outPtr, inPtr, pixSize);
+            // Check alpha
+            if (inPtr[3]) 
+            {
+              memcpy(outPtr, inPtr, pixSize);
+            }
             inPtr  += ncomp;
             outPtr += ncomp;
           }//for x
