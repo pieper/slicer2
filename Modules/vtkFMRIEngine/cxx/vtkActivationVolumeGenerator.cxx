@@ -119,7 +119,7 @@ void vtkActivationVolumeGenerator::SimpleExecute(vtkImageData *input, vtkImageDa
         return;
     }
 
-    float *contrastVec = new float [lenOfContrastVec];
+    int *contrastVec = new int [lenOfContrastVec];
     if (contrastVec == NULL)
     {
         vtkErrorMacro( << "Memory allocation failed.");
@@ -128,7 +128,7 @@ void vtkActivationVolumeGenerator::SimpleExecute(vtkImageData *input, vtkImageDa
 
     for (int i = 0; i < lenOfContrastVec; i++)
     {
-        contrastVec[i] = this->ContrastVector->GetComponent(i, 0);
+        contrastVec[i] = (int)this->ContrastVector->GetComponent(i, 0);
     }
 
 
@@ -158,14 +158,14 @@ void vtkActivationVolumeGenerator::SimpleExecute(vtkImageData *input, vtkImageDa
                     beta[d] = beta[d] * contrastVec[d];
                     newBeta = newBeta + beta[d];
 
-                    cov[d] = cov[d] * contrastVec[d];
-                    newcov = newcov + cov[d] * cov[d];
+                    cov[d] = cov[d] * abs(contrastVec[d]);
+                    newcov = newcov + cov[d];
                 }
 
                 float t = 0.0; 
                 if (newcov != 0.0)
                 {
-                    t = newBeta / sqrt(sqrt(newcov)); 
+                    t = newBeta / sqrt((newcov)); 
                     if (t < 0.0)
                     {
                         t = t * (-1);
