@@ -760,6 +760,9 @@ vtkHyperStreamline * vtkMultipleStreamlineController::CreateHyperStreamline()
           // MinFractionalAnisotropy
           currHSP->SetMinFractionalAnisotropy(this->VtkHyperStreamlinePointsSettings->GetMinFractionalAnisotropy());
 
+          // Eigenvector to integrate
+          currHSP->SetIntegrationEigenvector(this->VtkHyperStreamlinePointsSettings->GetIntegrationEigenvector());
+
           // IntegrationDirection (set in this class, default both ways)
           currHSP->SetIntegrationDirection(this->IntegrationDirection);
 
@@ -809,6 +812,10 @@ vtkHyperStreamline * vtkMultipleStreamlineController::CreateHyperStreamline()
           // NumberOfSides
           currPHSP->
             SetNumberOfSides(this->VtkPreciseHyperStreamlinePointsSettings->GetNumberOfSides());
+
+          // Eigenvector to integrate
+          currPHSP->SetIntegrationEigenvector(this->VtkPreciseHyperStreamlinePointsSettings->GetIntegrationEigenvector());
+
           // IntegrationDirection (set in this class, default both ways)
           currPHSP->SetIntegrationDirection(this->IntegrationDirection);
 
