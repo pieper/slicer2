@@ -64,6 +64,15 @@
 #   TensorResetDefaultVisualizationSettings
 #   TensorApplyVisualizationSettings mode
 #   TensorSetOperation math
+#   TensorAddStreamline
+#   TensorDoDiffusionNot
+#   TensorDoDiffusion
+#   TensorPreprocess
+#   TensorRoundFloatingPoint
+#   TensorRemoveAllActors
+#   TensorRemoveAllStreamlines
+#   TensorSeedStreamlinesFromSegmentation
+#   TensorExecuteForProgrammableFilter
 #==========================================================================auto=
 
 
@@ -85,8 +94,8 @@ proc TensorInit {} {
     set Module($m,row1Name) "{Help} {Disp} {ROI} {Scalars} {Props}"
     set Module($m,row1,tab) Display
     # Use these lines to add a second row of tabs
-    set Module($m,row2List) "Advanced Devel"
-    set Module($m,row2Name) "{VTK} {Devel}"
+    set Module($m,row2List) "Diffuse Advanced Devel"
+    set Module($m,row2Name) "{Diffuse} {VTK} {Devel}"
     set Module($m,row2,tab) Advanced
     
     # Define Procedures
@@ -104,7 +113,7 @@ proc TensorInit {} {
     # Set Version Info
     #------------------------------------
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.6 $} {$Date: 2002/02/06 16:39:18 $}]
+	    {$Revision: 1.7 $} {$Date: 2002/02/11 23:47:38 $}]
     
     # Props: GUI tab we are currently on
     #------------------------------------
@@ -156,8 +165,8 @@ proc TensorInit {} {
 
     # type of glyph coloring
     set Tensor(mode,glyphColor) Linear
-    set Tensor(mode,glyphColorList) {Linear Planar Spherical Max Middle Min MaxMinusMiddle RA FA}
-    set Tensor(mode,glyphColorList,tooltip) {Color tensors according to Linear, Planar, or Spherical measures, with the Max, Middle, or Min eigenvalue, or with relative or fractional anisotropy (RA or FA).}
+    set Tensor(mode,glyphColorList) {Linear Planar Spherical Max Middle Min MaxMinusMiddle RA FA Direction}
+    set Tensor(mode,glyphColorList,tooltip) {Color tensors according to Linear, Planar, or Spherical measures, with the Max, Middle, or Min eigenvalue, with relative or fractional anisotropy (RA or FA), or by direction of major eigenvector.}
 
     # How to handle display of colors: like W/L but scalar range
     set Tensor(mode,glyphScalarRange) Auto
@@ -190,6 +199,15 @@ proc TensorInit {} {
     set Tensor(mode,scalarBarList,tooltips) [list \
 	    "Display a scalar bar to show correspondence between numbers and colors." \
 	    "Do not display the scalar bar."]
+
+
+    #------------------------------------
+    # Variables vtk object creation
+    #------------------------------------
+    
+    # ID of the last streamline created
+    set Tensor(vtk,streamline,currentID) -1
+    set Tensor(vtk,streamline,idList) ""
 
     #------------------------------------
     # Variables for preprocessing
@@ -266,6 +284,23 @@ proc TensorInit {} {
 		    [lindex [lindex $tmp $row] $col]
 	} 
     }
+
+    #------------------------------------
+    # Diffusion panel variables
+    #------------------------------------
+
+
+    #------------------------------------
+    # Number display variables
+    #------------------------------------
+    # round floats to 8 digits
+    set Tensor(floatingPointFormat) "%0.5f"
+
+    
+
+    # Lauren fix this
+    set Tensor(Description) ""
+    set Tensor(Name) ""
 }
 
 ################################################################
@@ -339,18 +374,8 @@ proc TensorExit {} {
     popEventManager
 
 
-    # Remove our actors if the user wants that on module exit.
-    # We always remove for now, later if removal is optional 
-    # need to keep track of if actor was added already.
-    if {$Tensor(vtk,glyphs,actor,remove)} {
-	MainRemoveActor Tensor(vtk,glyphs,actor)
-    }
-    if {$Tensor(vtk,streamln,actor,remove)} {
-	MainRemoveActor Tensor(vtk,streamln,actor)
-    }
-    # make them actually disappear
-    Render3D
-    
+    TensorRemoveAllActors
+
     # make 3D slices opaque now
     #MainSlicesReset3DOpacity
 }
@@ -384,10 +409,11 @@ proc TensorBuildGUI {} {
     # Scalars
     # Props
     # Advanced
+    # Diffuse
     # Devel
     #-------------------------------------------
 
-    puts "Lauren in TensorBuildGUI, fix the frame hierarchy comment"
+    #puts "Lauren in TensorBuildGUI, fix the frame hierarchy comment"
 
     #-------------------------------------------
     # Help frame
@@ -677,12 +703,12 @@ proc TensorBuildGUI {} {
 	set f $f.f$slider
 
 	eval {label $f.l$slider -text "$text:"} $Gui(WLA)
-	eval {entry $f.e$slider -width 6 \
+	eval {entry $f.e$slider -width 10 \
 		-textvariable Tensor(mode,glyphScalarRange,[Uncap $slider])} \
 		$Gui(WEA)
 	eval {scale $f.s$slider -from $Tensor(mode,glyphScalarRange,min) \
 		-to $Tensor(mode,glyphScalarRange,max) \
-		-length 130 \
+		-length 90 \
 		-variable Tensor(mode,glyphScalarRange,[Uncap $slider]) \
 		-resolution 0.1 \
 		-command {TensorUpdateGlyphScalarRange; Render3D}} \
@@ -1021,6 +1047,7 @@ proc TensorBuildGUI {} {
     #-------------------------------------------
     set f $fProps.fConvert.fSelect
     # Lauren test
+    # menu to select a volume: will set Volume(activeID)
     DevAddSelectButton  Volume $f Active "Input Volume:" Grid \
 	    "Input Volume to create tensors from." 13 BLA
 
@@ -1155,6 +1182,39 @@ proc TensorBuildGUI {} {
     # Here's a button with text "Apply" that calls "AdvancedApply"
     DevAddButton $fAdvanced.fMiddle.bApply Apply TensorAdvancedApply
     pack $fAdvanced.fMiddle.bApply -side top -padx $Gui(pad) -pady $Gui(pad)
+
+    #-------------------------------------------
+    # Diffuse frame
+    #-------------------------------------------
+    set fDiffuse $Module(Tensor,fDiffuse)
+    set f $fDiffuse
+    
+    foreach frame "Top Middle Bottom" {
+	frame $f.f$frame -bg $Gui(activeWorkspace)
+	pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
+    }
+
+    #-------------------------------------------
+    # Diffuse->Top frame
+    #-------------------------------------------
+    set f $fDiffuse.fTop
+    # menu to select a volume: will set Volume(activeID)
+    DevAddSelectButton  Volume $f Active "Input Volume:" Grid \
+	    "Input Volume: heat distribution." 13 BLA
+
+    # Append these menus and buttons to lists 
+    # that get refreshed during UpdateMRML
+    lappend Volume(mbActiveList) $f.mbActive
+    lappend Volume(mActiveList) $f.mbActive.m
+
+    #-------------------------------------------
+    # Diffuse->Middle frame
+    #-------------------------------------------
+    set f $fDiffuse.fMiddle
+
+    DevAddButton $f.bRun "Run Diffusion" {TensorDoDiffusion}
+    pack $f.bRun -side top -padx $Gui(pad) -pady $Gui(pad)
+
 
     #-------------------------------------------
     # Devel frame
@@ -1407,7 +1467,7 @@ proc TensorPropsApply {} {
 # .END
 #-------------------------------------------------------------------------------
 proc TensorPropsCancel {} {
-    global Tensor
+    global Tensor Module
     puts "Lauren in TensorPropsCancel: need to get out of freezer"
 
     set Tensor(freeze) 0
@@ -1543,24 +1603,30 @@ proc TensorSelect {x y z} {
     set z [lindex $point 2]
     transform Delete
 
+    # make new hyperstreamline 
+    #------------------------------------
+    TensorAddStreamline
+    set streamln streamln,$Tensor(vtk,streamline,currentID)
+
     # start pipeline (never use reformatted data here)
     #------------------------------------
-    Tensor(vtk,streamln) SetInput [Tensor($t,data) GetOutput]
+    Tensor(vtk,$streamln) SetInput [Tensor($t,data) GetOutput]
     
     # start hyperstreamline here
     #------------------------------------
-    Tensor(vtk,streamln) SetStartPosition $x $y $z
+    Tensor(vtk,$streamln) SetStartPosition $x $y $z
     
     # Make actor visible now that it has inputs
     #------------------------------------
-    Tensor(vtk,streamln,actor) VisibilityOn
+    MainAddActor Tensor(vtk,$streamln,actor) 
+    Tensor(vtk,$streamln,actor) VisibilityOn
 
     # Put the output streamline's actor in the right place.
     # Just use the same matrix we use to position the tensors.
     #------------------------------------
     vtkTransform transform
     TensorCalculateActorMatrix transform $t
-    Tensor(vtk,streamln,actor) SetUserMatrix [transform GetMatrix]
+    Tensor(vtk,$streamln,actor) SetUserMatrix [transform GetMatrix]
     transform Delete
 
     # Force pipeline execution and render scene
@@ -1676,6 +1742,9 @@ proc TensorUpdateGlyphColor {} {
 	"FA" {
 	    Tensor(vtk,glyphs) ColorGlyphsWithFractionalAnisotropy
 	}
+	"Direction" {
+	    Tensor(vtk,glyphs) ColorGlyphsWithDirection
+	}
 
     }
 
@@ -1723,6 +1792,15 @@ proc TensorUpdateGlyphScalarRange {{not_used ""}} {
 		    $Tensor(mode,glyphScalarRange,hi) 
 	}
     }
+
+
+    # Round the scalar range numbers to requested precision
+    # This way -4e-12 will not look like a negative eigenvalue in
+    # the GUI
+    set Tensor(mode,glyphScalarRange,low) \
+	    [TensorRoundFloatingPoint $Tensor(mode,glyphScalarRange,low)]
+    set Tensor(mode,glyphScalarRange,hi) \
+	    [TensorRoundFloatingPoint $Tensor(mode,glyphScalarRange,hi)]
 
     # If we are doing streamlines, tell them how to build LUT
     # Lauren why does this have little effect?  
@@ -1958,7 +2036,10 @@ proc TensorUpdate {} {
 	    # not requested from pipeline anymore
 	    #------------------------------------
 	    Tensor(vtk,glyphs,actor) VisibilityOff
-	    Tensor(vtk,streamln,actor) VisibilityOff
+	    foreach id $Tensor(vtk,streamline,idList) {
+		set streamline streamln,$id
+		Tensor(vtk,$streamline,actor) VisibilityOff
+	    }
 	}
     }
 
@@ -2112,6 +2193,7 @@ proc TensorDoMath {{operation ""}} {
 
     math SetInput 0 ""    
     math SetInput 1 ""    
+    # this is to disconnect the pipeline
     # this object hangs around, so try this trick from Editor.tcl:
     math SetOutput ""
     math Delete
@@ -2416,7 +2498,7 @@ proc TensorBuildVTK {} {
     #Tensor(vtk,glyphs) SetSource [Tensor(vtk,glyphs,axes) GetOutput]
     #Tensor(vtk,glyphs) SetSource [Tensor(vtk,glyphs,sphere) GetOutput]
     #TensorAddObjectProperty $object ScaleFactor 1 float {Scale Factor}
-    TensorAddObjectProperty $object ScaleFactor 2000 float {Scale Factor}
+    TensorAddObjectProperty $object ScaleFactor 20000 float {Scale Factor}
     TensorAddObjectProperty $object ClampScaling 0 bool {Clamp Scaling}
     TensorAddObjectProperty $object ExtractEigenvalues 1 bool {Extract Eigenvalues}
     Tensor(vtk,$object) SetStartMethod      MainStartProgress
@@ -2523,13 +2605,25 @@ proc TensorBuildVTK {} {
     [Tensor(vtk,streamln,actor) GetProperty] SetDiffuse 0
 
     #---------------------------------------------------------------
-    # Pipeline for display of 2D tensor info in slice
+    # Pipeline for display of tensors over 2D slice
     #---------------------------------------------------------------
     
     # Lauren how should reformatting be hooked into regular
     # slicer slice reformatting?  Ideally want to follow
     # the 3 slices.
     TensorMakeVTKObject vtkImageReformat reformat
+
+
+    #---------------------------------------------------------------
+    # Pipeline for diffusion simulations
+    #---------------------------------------------------------------
+    set object diffusion    
+    TensorMakeVTKObject vtkImageTensorDiffusion $object
+    TensorAddObjectProperty $object NumberOfIterations 1 \
+	    int {Number of Iterations}
+    TensorAddObjectProperty $object S 1 \
+	    float {Diffusion Speed}
+
 
     # Apply all settings from tcl variables that were
     # created above using calls to TensorAddObjectProperty
@@ -2884,7 +2978,7 @@ proc TensorRecalculateTensors {} {
     # tensor creation filter
     vtkImageDiffusionTensor tensor
     # Lauren Regularization factor should go in GUI
-    tensor SetRegularization $Tensor(regularization)
+    #tensor SetRegularization $Tensor(regularization)
 
     tensor SetNumberOfGradients $numberOfGradientImages
     tensor DebugOn
@@ -3095,3 +3189,394 @@ proc TensorSetOperation {math} {
     $Tensor(gui,mbMath) config -text $math
 }
 
+
+#-------------------------------------------------------------------------------
+# .PROC TensorAddStreamline
+# Add a streamline to the scene
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc TensorAddStreamline {} {
+    global Tensor
+
+    incr Tensor(vtk,streamline,currentID)
+    set id $Tensor(vtk,streamline,currentID)
+    lappend Tensor(vtk,streamline,idList) $id
+
+    #---------------------------------------------------------------
+    # Pipeline for display of tractography
+    #---------------------------------------------------------------
+    set streamline streamln,$id
+    TensorMakeVTKObject vtkHyperStreamline $streamline
+    
+    Tensor(vtk,$streamline) SetStartMethod      MainStartProgress
+    Tensor(vtk,$streamline) SetProgressMethod  "MainShowProgress Tensor(vtk,$streamline)"
+    Tensor(vtk,$streamline) SetEndMethod        MainEndProgress
+
+    #TensorAddObjectProperty $streamline StartPosition {9 9 -9} float {Start Pos}
+    #TensorAddObjectProperty $streamline IntegrateMinorEigenvector \
+	    #1 bool IntegrateMinorEv
+    TensorAddObjectProperty $streamline MaximumPropagationDistance 60.0 \
+	    float {Max Propagation Distance}
+    TensorAddObjectProperty $streamline IntegrationStepLength 0.01 \
+	    float {Integration Step Length}
+    TensorAddObjectProperty $streamline StepLength 0.0001 \
+	    float {Step Length}	    
+    TensorAddObjectProperty $streamline Radius 0.25 \
+	    float {Radius}
+    TensorAddObjectProperty $streamline  NumberOfSides 30 \
+	    int {Number of Sides}
+    TensorAddObjectProperty $streamline  IntegrationDirection 2 \
+	    int {Integration Direction}
+    
+    # Display of tensor streamline: LUT and Mapper
+    #------------------------------------
+    set object $streamline,lut
+    # Lauren we may want to use this once have no neg eigenvalues
+    #TensorMakeVTKObject vtkLogLookupTable $object
+    TensorMakeVTKObject vtkLookupTable $object
+    Tensor(vtk,$object) SetHueRange .6667 0.0
+#    TensorAddObjectProperty $object HueRange \
+#	    {.6667 0.0} float {Hue Range}
+
+    set object $streamline,mapper
+    TensorMakeVTKObject vtkPolyDataMapper $object
+    Tensor(vtk,$streamline,mapper) SetInput [Tensor(vtk,$streamline) GetOutput]
+    Tensor(vtk,$streamline,mapper) SetLookupTable Tensor(vtk,$streamline,lut)
+    TensorAddObjectProperty $object ImmediateModeRendering \
+	    1 bool {Immediate Mode Rendering}    
+
+    #eval Tensor(vtk,$streamline,mapper)  SetScalarRange 0.0415224 0.784456 
+
+    # Display of tensor streamline: Actor
+    #------------------------------------
+    set object $streamline,actor
+    TensorMakeVTKObject vtkActor $object
+    Tensor(vtk,$streamline,actor) SetMapper Tensor(vtk,$streamline,mapper)
+    [Tensor(vtk,$streamline,actor) GetProperty] SetAmbient 1
+    [Tensor(vtk,$streamline,actor) GetProperty] SetDiffuse 0
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC TensorDoDiffusionNot
+# junk
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc TensorDoDiffusionNot {} {
+    global Tensor Volume
+
+    set t $Tensor(activeID)
+    # This was selected from the menu 
+    set id $Volume(activeID)
+
+    # Make sure we have float inputs
+    vtkImageCast cast
+    cast SetInput [Volume($id,vol) GetOutput]
+    cast SetOutputScalarTypeToFloat
+    
+    # This is a heat distribution, for now a segmentation
+    Tensor(vtk,diffusion) SetInput [cast GetOutput]
+    Tensor(vtk,diffusion) SetInputTensor [Tensor($t,data) GetOutput]
+    # Lauren this is dumb, this class does not need this input
+    Tensor(vtk,diffusion) SetInputTexture [cast GetOutput]
+    #Tensor(vtk,diffusion) SetS 0.5
+
+    puts "updating diffusion"
+    Tensor(vtk,diffusion) Update
+    puts "done updating diffusion"
+
+    # Put the output into a slicer volume
+    set name [Tensor($t,node) GetName]
+    set name Diffusion_$name
+    set description "Diffusion volume derived from tensor volume $name"
+    set v [TensorCreateEmptyVolume $t $description $name]
+    puts "created volume $v"
+    Volume($v,node) SetScalarTypeToFloat
+    Volume($v,vol) SetImageData [Tensor(vtk,diffusion) GetOutput]
+    MainVolumesUpdate $v
+    # display this volume so the user knows something happened
+    MainSlicesSetVolumeAll Back $v
+    RenderAll
+
+    # this is to disconnect the pipeline
+    #Tensor(vtk,diffusion) SetOutput ""
+    Tensor(vtk,diffusion) SetInput ""
+    Tensor(vtk,diffusion) SetInputTexture ""
+
+    cast Delete
+}
+
+#-------------------------------------------------------------------------------
+# .PROC TensorDoDiffusion
+# Test diffusion simulation proc
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc TensorDoDiffusion {} {
+    global Tensor Volume
+
+
+    # Lauren
+    # hack so we can use settings from GUI
+    # but pipeline will disconnect -- why won't it anyway?
+    vtkImageTensorDiffusion diff
+    foreach prop {NumberOfIterations S} {
+	diff Set$prop [Tensor(vtk,diffusion) Get$prop]
+    }
+    set t $Tensor(activeID)
+    # This was selected from the menu 
+    set id $Volume(activeID)
+
+    # Make sure we have float inputs
+    vtkImageCast cast
+    cast SetInput [Volume($id,vol) GetOutput]
+    cast SetOutputScalarTypeToFloat
+    
+    # This is an initial heat distribution
+    diff SetInput [cast GetOutput]
+    diff SetInputTensor [Tensor($t,data) GetOutput]
+    # Make a source where they segmented too
+    diff SetInputSource [cast GetOutput]
+    #diff SetS 0.5
+
+    puts "updating diffusion"
+    diff Update
+    puts "done updating diffusion"
+
+
+    # Lauren 
+    # hack to see things since floats and slicer don't work
+    vtkImageMathematics math
+    math SetOperationToMultiplyByK
+    math SetConstantK 1000
+    math SetInput 0 [diff GetOutput]
+    math Update
+
+    # Put the output into a slicer volume
+    set name [Tensor($t,node) GetName]
+    set name Diffusion_$name
+    set description "Diffusion volume derived from tensor volume $name"
+    set v [TensorCreateEmptyVolume $t $description $name]
+    puts "created volume $v"
+    Volume($v,node) SetScalarTypeToFloat
+    #Volume($v,vol) SetImageData [diff GetOutput]
+    Volume($v,vol) SetImageData [math GetOutput]
+    MainVolumesUpdate $v
+    # display this volume so the user knows something happened
+    MainSlicesSetVolumeAll Back $v
+    RenderAll
+
+
+    # hack ? to disconnect
+    #diff SetInput ""    
+    #diff SetInputTensor ""    
+    # this is to disconnect the pipeline
+    # this object hangs around, so try this trick from Editor.tcl:
+    #diff SetOutput ""
+    diff Delete
+
+    math Delete
+    cast Delete
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC TensorPreprocess
+# Test regularization proc
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc TensorPreprocess {} {
+    global Tensor Volume
+
+    # Lauren need a  menu 
+    set t $Tensor(activeID)
+
+    vtkTensorRegularization regularize
+
+    regularize SetInput [Tensor($t,data) GetOutput]
+
+    # Lauren for now replace old data with new
+    regularize Update
+    Tensor($t,data) SetData [regularize GetOutput]
+ 
+    # Display the new stuff
+    TensorUpdate
+
+   #regularize SetOperationTo
+    regularize Delete
+}
+
+#-------------------------------------------------------------------------------
+# .PROC TensorRoundFloatingPoint
+# Format floats for GUI display (we don't want -5e-11)
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc TensorRoundFloatingPoint {val} {
+    global Tensor
+
+    return [format $Tensor(floatingPointFormat) $val]
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC TensorRemoveAllActors
+# Rm all actors from scene.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc TensorRemoveAllActors {} {
+    global Tensor
+    
+    # Remove our actors if the user wants that on module exit.
+    # We always remove for now, later if removal is optional 
+    # need to keep track of if actor was added already.
+    if {$Tensor(vtk,glyphs,actor,remove)} {
+	MainRemoveActor Tensor(vtk,glyphs,actor)
+    }
+
+    TensorRemoveAllStreamlines
+    #if {$Tensor(vtk,streamln,actor,remove)} {
+	#MainRemoveActor Tensor(vtk,streamln,actor)
+    #}
+    # make them actually disappear
+    Render3D
+
+}
+
+#-------------------------------------------------------------------------------
+# .PROC TensorRemoveAllStreamlines
+# Remove all streamline actors from scene.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc TensorRemoveAllStreamlines {} {
+    global Tensor
+
+    foreach id $Tensor(vtk,streamline,idList) {
+	set streamline streamln,$id
+	MainRemoveActor Tensor(vtk,$streamline,actor) 
+    }
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC TensorSeedStreamlinesFromSegmentation
+# In conjunction with TensorExecuteForProgrammableFilter, seeds
+# streamlines at all points in a segmentation.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc TensorSeedStreamlinesFromSegmentation {} {
+    global Tensor Volume
+
+    # filter to grab list of points in the segmentation
+    vtkProgrammableAttributeDataFilter Tensor(vtk,programmableFilt)
+
+    set t $Tensor(activeID)
+    set v $Volume(activeID)
+
+    #Tensor(vtk,programmableFilt) SetInput [Tensor($t,data) GetOutput] 
+    Tensor(vtk,programmableFilt) SetInput [Volume($v,vol) GetOutput] 
+    Tensor(vtk,programmableFilt) SetExecuteMethod \
+	    TensorExecuteForProgrammableFilter
+
+    set Tensor(streamlineList) ""
+
+    Tensor(vtk,programmableFilt) Update
+    Tensor(vtk,programmableFilt) Delete
+
+    # Now do a streamline at each point
+    # Get positioning information from the MRML node
+    # world space (what you see in the viewer) to ijk (array) space
+    vtkTransform trans
+    set v $Volume(activeID)
+    set node Volume($v,node)
+    trans SetMatrix [$node GetWldToIjk]
+    # now it's ijk to world
+    trans Inverse
+    foreach point $Tensor(streamlineList) {
+	puts "..$point"
+	# find out where the point actually is in world space
+	set world [eval {trans TransformPoint} $point]
+	puts $world
+	eval {TensorSelect} $world
+	# save point to make a streamline there
+	#eval {TensorSelect} $point
+    }
+
+    trans Delete
+}
+
+#-------------------------------------------------------------------------------
+# .PROC TensorExecuteForProgrammableFilter
+# Just makes a tcl list of nonzero points in the input volume.
+# Used as execute proc of a programmable attribute data filter.
+# We call this to figure out where to seed the streamlines.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc TensorExecuteForProgrammableFilter {} {
+    global Volume Tensor
+
+    # proc for ProgrammableAttributeDataFilter.  Note the use of "double()"
+    # in the calculations.  This protects us from Tcl using ints and 
+    # overflowing.
+
+    puts "Programmable filter executing"
+    set input [Tensor(vtk,programmableFilt) GetInput]
+    set numPts [$input GetNumberOfPoints]
+    
+    set scalars [[$input GetPointData] GetScalars]
+    
+    set extent [$input GetExtent]
+    puts $extent
+    set xmin [lindex $extent 0]
+    set xmax [expr [lindex $extent 1] + 1]
+
+    set ymin [lindex $extent 2]
+    set ymax [expr [lindex $extent 3] + 1]
+
+    set zmin [lindex $extent 4]
+    set zmax [expr [lindex $extent 5] + 1]
+
+    # this programmable filter is amazing, we are really
+    # looping through the pixels in tcl code here:
+    set i 0
+    
+    for {set z $zmin} {$z < $zmax} {incr z} {
+	
+	for {set y $ymin} {$y < $ymax} {incr y} {
+	    
+	    for {set x $xmin} {$x < $xmax} {incr x} {
+		
+		set s [$scalars GetScalar $i]
+		
+		if {$s > 0} {
+		    
+		    # for each nonzero point in the segmentation
+		    # we want to start a streamline
+		    puts $s
+
+		    # save on the list of points for later use
+		    lappend Tensor(streamlineList) "$x $y $z"
+		}
+		
+		# point index
+		incr i
+		
+	    } 
+	} 
+    } 
+    
+    # should we pass the input through (points)?
+    #[$output GetCellData] PassData [$input GetCellData]
+
+    puts "done $x $y $z $i"
+    # ignore output for now, we don't care
+    #[[Tensor(vtk,programmableFilt) GetOutput] GetPointData] SetScalars scalars
+		
+}
