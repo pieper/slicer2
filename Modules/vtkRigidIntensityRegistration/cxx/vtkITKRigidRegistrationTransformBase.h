@@ -70,9 +70,10 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 class vtkMatrix4x4;
 class vtkImageFlip;
 
+
 class VTK_RIGIDINTENSITYREGISTRATION_EXPORT vtkITKRigidRegistrationTransformBase : public vtkLinearTransform
 {
-public:
+ public:
   vtkTypeMacro(vtkITKRigidRegistrationTransformBase,vtkLinearTransform);
   void PrintSelf(ostream& os, vtkIndent indent);
 
@@ -112,9 +113,9 @@ public:
   // Description:
   // Set the shrink factors for pyramid schemes.
   // Default is 1 1 1 
-  void SetSourceShrinkFactors(unsigned int i, 
+  void SetSourceShrinkFactors(unsigned int i,
                               unsigned int j, unsigned int k);
-  void SetTargetShrinkFactors(unsigned int i, 
+  void SetTargetShrinkFactors(unsigned int i,
                               unsigned int j, unsigned int k);
   unsigned int GetSourceShrinkFactors(const int &dir)
     { return SourceShrink[dir]; }
@@ -124,7 +125,7 @@ public:
   // Description:
   // Reset the Multiresolution Settings
   // It blanks the LearningRate and NumberOfIterations
-  void ResetMultiResolutionSettings() 
+  void ResetMultiResolutionSettings()
     { LearningRate->Reset(); MaxNumberOfIterations->Reset(); };
 
   // Description:
@@ -232,7 +233,7 @@ protected:
 
   vtkUnsignedIntArray  *MaxNumberOfIterations;
   vtkDoubleArray       *LearningRate;
-  
+
 private:
   vtkITKRigidRegistrationTransformBase(const vtkITKRigidRegistrationTransformBase&);  // Not implemented.
   void operator=(const vtkITKRigidRegistrationTransformBase&);  // Not implemented.
@@ -242,6 +243,10 @@ private:
   vtkMatrix4x4 *GetMatrix()
     { return this->vtkLinearTransform::GetMatrix(); }
 };
+
+void vtkITKRigidRegistrationConditionCallback(void *self, int NumLevel, int NumIter);
+
+
 // ETX
 
   

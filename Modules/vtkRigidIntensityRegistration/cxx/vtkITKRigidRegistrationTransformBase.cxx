@@ -98,6 +98,29 @@ vtkITKRigidRegistrationTransformBase::vtkITKRigidRegistrationTransformBase()
     // The output matrix
   this->OutputMatrix = vtkMatrix4x4::New();
     this->OutputMatrix->Zero();
+
+}
+
+//----------------------------------------------------------------------------
+
+void vtkITKRigidRegistrationConditionCallback(void *voidself,
+                          int NumLevel, 
+                          int NumIter) 
+{
+  vtkITKRigidRegistrationTransformBase *self = 
+    (vtkITKRigidRegistrationTransformBase *) self;
+
+  int total_num = 0;
+  int done_num = 0;
+  for(int i=0;i<self->GetMaxNumberOfIterations()->GetNumberOfTuples();i++)
+    {
+      total_num += self->GetMaxNumberOfIterations()->GetValue(i);
+      if (i < NumLevel)     done_num = total_num;
+      else if (i==NumLevel) done_num += NumIter;
+    }
+  std::cout << ((float)done_num)/total_num << std::endl;
+  // fraction done is done_num/total_num
+  // set something in tcl
 }
 
 //----------------------------------------------------------------------------
