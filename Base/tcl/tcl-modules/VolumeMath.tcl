@@ -120,7 +120,7 @@ proc VolumeMathInit {} {
 	#   appropriate info when the module is checked in.
 	#   
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.11 $} {$Date: 2001/06/15 16:31:01 $}]
+		{$Revision: 1.12 $} {$Date: 2001/06/27 10:35:36 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -228,7 +228,17 @@ proc VolumeMathBuildGUI {} {
 This Module Exists to do things like subtract and add volumes.
 It also exists to find the distance between two points in a volume.
 Currently, the distance finder is not functional.
-Also, this module only does subtraction.
+
+For Subtraction: If you wish to subtract two volumes that have
+ different spacings or numbers of voxels, or if a transform exists
+ between the two images, you MUST resample one image in the coordinates
+ of the other. (Note that this module doesn't currently check to make sure
+ you did everything correctly. One day...) Once the images are subtracted, the
+ results are sometimes difficult to look at. I recommend taking the
+ Absolute Valute of the results of the subtraction. <p>
+
+<b>Known Bugs<b>Don't set the output to be one of the input
+files. Sometimes it doesn't work.
 "
 	regsub -all "\n" $help {} help
 	MainHelpApplyTags VolumeMath $help
@@ -253,13 +263,22 @@ Also, this module only does subtraction.
 
         eval {label $f.l -text "Type:"} $Gui(BLA)
 	frame $f.f -bg $Gui(backdrop)
-	foreach p "Subtract Resample Abs" {
-            eval {radiobutton $f.f.r$p \
+
+        # the first row and second row
+        frame $f.f.1 -bg $Gui(inactiveWorkspace)
+        frame $f.f.2 -bg $Gui(inactiveWorkspace)
+        pack $f.f.1 $f.f.2 -side top -fill x -anchor w
+
+        set row 1
+	foreach p "Subtract Resample Abs DistMap" {
+            eval {radiobutton $f.f.$row.r$p \
 			-text "$p" -command "VolumeMathSetMathType" \
 			-variable VolumeMath(MathType) -value $p -width 10 \
 			-indicatoron 0} $Gui(WCA)
-		pack $f.f.r$p -side left -pady 0
+		pack $f.f.$row.r$p -side left -pady 0
+            if { $p == "Abs" } {incr row};
 	}
+
 	pack $f.l $f.f -side left -padx $Gui(pad) -fill x -anchor w
 
         set VolumeMath(MathType) Subtract
@@ -497,6 +516,10 @@ proc VolumeMathSetMathType {}  {
         $a configure -text "Absolute Value"
         $b configure -text "(not used)"
         $c configure -text "and put the results in"
+    } elseif {$VolumeMath(MathType) == "DistMap" } {
+        $a configure -text "Distance Map"
+        $b configure -text "(not used)"
+        $c configure -text "and put the results in"
     }
 }
 
@@ -574,6 +597,7 @@ proc VolumeMathDoMath {} {
     if { $VolumeMath(MathType) == "Subtract" } {VolumeMathDoSubtract}
     if { $VolumeMath(MathType) == "Resample" } {VolumeMathDoResample}
     if { $VolumeMath(MathType) == "Abs" }      {VolumeMathDoAbs}
+    if { $VolumeMath(MathType) == "DistMap" }  {VolumeMathDoDistMap}
 
     # This is necessary so that the data is updated correctly.
     # If the programmers forgets to call it, it looks like nothing
@@ -618,6 +642,51 @@ proc VolumeMathDoSubtract {} {
     MainVolumesUpdate $v3
 
     SubMath Delete
+}
+
+#-------------------------------------------------------------------------------
+# .PROC VolumeMathDoDistMap
+#   Find the distance Map
+#
+# .END
+#-------------------------------------------------------------------------------
+proc VolumeMathDoDistMap {} {
+	global VolumeMath Volume
+
+        # Check to make sure no volume is none
+
+    if {[VolumeMathCheckErrors] == 1} {
+        return
+    }
+    if {[VolumeMathPrepareResultVolume] == 1} {
+        return
+    }
+
+    set v3 $VolumeMath(Volume3)
+    set v2 $VolumeMath(Volume2)
+    set v1 $VolumeMath(Volume1)
+
+    # Set up the VolumeMath Subtract
+
+    vtkImageLogic Logic
+    Logic SetOperationToNot
+    Logic SetInput1 [Volume($v2,vol) GetOutput]
+
+    vtkImageEuclideanDistanceTransformation DistMap
+    DistMap ConsiderAnisotropyOn
+    DistMap InitializeOn
+#    DistMap SetInput [Volume($v2,vol) GetOutput]
+    DistMap SetInput [Logic GetOutput]
+
+    # Start copying in the output data.
+    # Taken from MainVolumesCopyData
+
+    Volume($v3,vol) SetImageData [DistMap GetOutput]
+    [DistMap GetOutput] Print
+    MainVolumesUpdate $v3
+
+    DistMap Delete
+    Logic Delete
 }
 
 #-------------------------------------------------------------------------------
