@@ -77,9 +77,9 @@ proc EditorInit {} {
     
     # Define Tabs
     set m Editor
-    set Module($m,row1List) "Help Setup Effects Details Merge"
-    set Module($m,row1Name) "{Help} {Setup} {Effects} {Details} {Merge}"
-    set Module($m,row1,tab) Setup
+    set Module($m,row1List) "Help Volumes Effects Details Merge"
+    set Module($m,row1Name) "{Help} {Volumes} {Effects} {Details} {Merge}"
+    set Module($m,row1,tab) Volumes
     
     # Define Procedures
     set Module($m,procGUI)   EditorBuildGUI
@@ -92,7 +92,7 @@ proc EditorInit {} {
     
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.29 $} {$Date: 2000/07/24 21:39:31 $}]
+	    {$Revision: 1.30 $} {$Date: 2000/07/28 17:50:31 $}]
     
     # Initialize globals
     set Editor(idOriginal)  $Volume(idNone)
@@ -327,43 +327,43 @@ abreviation for the effect at the top of the <B>Details</B> tab.
 
 
 	############################################################################
-	#                                 Setup
+	#                                 Volumes
 	############################################################################
 
 	#-------------------------------------------
-	# Setup frame
+	# Volumes frame
 	#-------------------------------------------
-	set fSetup $Module(Editor,fSetup)
-	set f $fSetup
+	set fVolumes $Module(Editor,fVolumes)
+	set f $fVolumes
 
 	frame $f.fHelp      -bg $Gui(activeWorkspace)
 	frame $f.fOriginal  -bg $Gui(activeWorkspace) -relief groove -bd 3
 	frame $f.fWorking   -bg $Gui(activeWorkspace) -relief groove -bd 3
 
-	pack $f.fOriginal  $f.fWorking $f.fHelp \
+	pack $f.fHelp $f.fOriginal  $f.fWorking \
 		-side top -padx $Gui(pad) -pady $Gui(pad) -fill x
 
 	#-------------------------------------------
-	# Setup->Help
+	# Volumes->Help
 	#-------------------------------------------
-	set f $fSetup.fHelp
+	set f $fVolumes.fHelp
 
 	eval {label $f.l -text "Click the 'Effects' tab to begin editing."} $Gui(WLA)
 	pack $f.l
 
 	#-------------------------------------------
-	# Setup->Original
+	# Volumes->Original
 	#-------------------------------------------
-	set f $fSetup.fOriginal
+	set f $fVolumes.fOriginal
 
 	frame $f.fMenu -bg $Gui(activeWorkspace)
 
 	pack $f.fMenu -side top -pady $Gui(pad) -fill x
 
 	#-------------------------------------------
-	# Setup->Original->Menu
+	# Volumes->Original->Menu
 	#-------------------------------------------
-	set f $fSetup.fOriginal.fMenu
+	set f $fVolumes.fOriginal.fMenu
 
 	# Volume menu
 	eval {label $f.lOriginal -text "Original Volume:"} $Gui(WTA)
@@ -380,9 +380,9 @@ abreviation for the effect at the top of the <B>Details</B> tab.
 	set Editor(mOriginal)  $f.mbOriginal.m
 
 	#-------------------------------------------
-	# Setup->Working
+	# Volumes->Working
 	#-------------------------------------------
-	set f $fSetup.fWorking
+	set f $fVolumes.fWorking
 
 	frame $f.fMenu -bg $Gui(activeWorkspace)
 	frame $f.fName -bg $Gui(activeWorkspace)
@@ -396,9 +396,9 @@ abreviation for the effect at the top of the <B>Details</B> tab.
 
 
 	#-------------------------------------------
-	# Setup->Working->Menu
+	# Volumes->Working->Menu
 	#-------------------------------------------
-	set f $fSetup.fWorking.fMenu
+	set f $fVolumes.fWorking.fMenu
 
 	# Volume menu
 	eval {label $f.lWorking -text "Working Volume:"} $Gui(WTA)
@@ -415,9 +415,9 @@ abreviation for the effect at the top of the <B>Details</B> tab.
 
 
 	#-------------------------------------------
-	# Setup->Working->Prefix
+	# Volumes->Working->Prefix
 	#-------------------------------------------
-	set f $fSetup.fWorking.fPrefix
+	set f $fVolumes.fWorking.fPrefix
 
 	eval {label $f.l -text "Filename Prefix:"} $Gui(WLA)
 	TooltipAdd $f.l "To save the Working Volume, enter the prefix here or just click Save."
@@ -426,12 +426,12 @@ abreviation for the effect at the top of the <B>Details</B> tab.
 	pack $f.e -padx 3 -side left -expand 1 -fill x
 
 	#-------------------------------------------
-	# Setup->Working->Name
+	# Volumes->Working->Name
 	#-------------------------------------------
-	set f $fSetup.fWorking.fName
+	set f $fVolumes.fWorking.fName
 
 	eval {label $f.l -text "Descriptive Name:"} $Gui(WLA)
-	TooltipAdd $f.l "This name will be displayed on the Slicer menus."
+	TooltipAdd $f.l "You may name your NEW volume."
 	eval {entry $f.e -textvariable Editor(nameWorking)} $Gui(WEA)
 	pack $f.l -padx 3 -side left
 	pack $f.e -padx 3 -side left -expand 1 -fill x
@@ -440,9 +440,9 @@ abreviation for the effect at the top of the <B>Details</B> tab.
 	set Editor(eNameWorking) $f.e
 
 	#-------------------------------------------
-	# Setup->Working->Btns
+	# Volumes->Working->Btns
 	#-------------------------------------------
-	set f $fSetup.fWorking.fBtns
+	set f $fVolumes.fWorking.fBtns
 
 	eval {button $f.bWrite -text "Save" -width 5 \
 		-command "EditorWrite Working; RenderAll"} $Gui(WBA)
@@ -636,11 +636,13 @@ abreviation for the effect at the top of the <B>Details</B> tab.
 		eval {radiobutton $f.r$e -width 2 -indicatoron 0\
 			-text $Ed($e,initials) -value $e -variable Editor(btn) \
 			-command "EditorSetEffect $e"} $Gui(WCA)
+		TooltipAdd $f.r$e $Ed($e,name)
 		pack $f.r$e -side left -fill x -anchor e
 	}
 	# Add an Undo button
 	eval {button $f.bUndo -width 2 -text Un -command "EditorUndo; RenderAll"} \
 		$Gui(WBA) {-state disabled}
+	TooltipAdd $f.bUndo "Undo last effect applied"
 	pack $f.bUndo -side left -fill x -anchor e
 	set Editor(bUndo2) $f.bUndo
 
