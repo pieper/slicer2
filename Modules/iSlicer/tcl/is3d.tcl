@@ -77,6 +77,7 @@ if { [itcl::find class is3d] == "" } {
 
       # volume rendering vtk objects
       variable _cast
+      variable _flip
       variable _opaxfer
       variable _gradxfer
       variable _colxfer
@@ -159,6 +160,7 @@ itcl::body is3d::destructor {} {
     destroy $_tkrw 
     catch "$_ren Delete"
     catch "$_cast Delete"
+    catch "$_flip Delete"
     catch "$_gradxfer Delete"
     catch "$_colxfer Delete"
     catch "$_volprop Delete"
@@ -298,6 +300,7 @@ itcl::configbody is3d::colorscheme {
 itcl::configbody is3d::isvolume {
 
     set _cast ::cast_$_name
+    set _flip ::flip_$_name
     set _opaxfer ::opaxfer_$_name
     set _gradxfer ::gradxfer_$_name
     set _colxfer ::colxfer_$_name
@@ -306,6 +309,7 @@ itcl::configbody is3d::isvolume {
     set _volmapper ::volmapper_$_name
     set _vol ::vol_$_name
     catch "$_cast Delete"
+    catch "$_flip Delete"
     catch "$_opaxfer Delete"
     catch "$_gradxfer Delete"
     catch "$_colxfer Delete"
@@ -315,8 +319,12 @@ itcl::configbody is3d::isvolume {
     catch "$_vol Delete"
 
     # volume rendering only works on char
+    vtkImageFlip $_flip
+    $_flip SetInput [$isvolume imagedata]
+    $_flip SetFilteredAxis 0
+
     vtkImageCast $_cast
-    $_cast SetInput [$isvolume imagedata]
+    $_cast SetInput [$_flip GetOutput]
     $_cast SetOutputScalarTypeToUnsignedChar
     
     # Create transfer mapping scalar value to opacity
