@@ -102,7 +102,7 @@ proc MutualInformationRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.5 $} {$Date: 2003/12/18 02:25:04 $}]
+        {$Revision: 1.6 $} {$Date: 2003/12/21 22:56:14 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -111,14 +111,12 @@ proc MutualInformationRegistrationInit {} {
     #   This is a handy method for organizing the global variables that
     #   the procedures in this module and others need to access.
     #
-    set RigidIntensityRegistration(sourceId) $Volume(idNone)
-    set RigidIntensityRegistration(targetId) $Volume(idNone)
-    set RigidIntensityRegistration(matrixId) ""
 
-    set RigidIntensityRegistration(Repeat) 1
+    ## put here to show MI specific param
+    set MutualInformationRegistration(NumberOfSamples)  50
+    set MutualInformationRegistration(SourceStandardDeviation) 0.4
+    set MutualInformationRegistration(TargetStandardDeviation) 0.4
 
-    global Matrix 
-    set Matrix(allowAutoUndo) 0
 
     ## Set the default to fast registration
     MutualInformationRegistrationVerySlowParam
@@ -597,7 +595,7 @@ proc MutualInformationRegistrationExit {} {
 proc MutualInformationRegistrationAutoRun {} {
     global Matrix MutualInformationRegistration RigidIntensityRegistration
 
-    if {[RigidIntensityRegistrationCheckSetUp] == 0} {
+    if {[RigidIntensityRegistrationSetUp] == 0} {
       return 0
     }
 
@@ -619,11 +617,14 @@ proc MutualInformationRegistrationAutoRun {} {
     # catch "destroy .mi"
 
     .mi.reg config \
-        -update_procedure MutualInformationRegistrationUpdateParam         \
-        -stop_procedure MutualInformationRegistrationStop                  \
         -source          $RigidIntensityRegistration(sourceId)          \
         -target          $RigidIntensityRegistration(targetId)          \
-        -resolution      $RigidIntensityRegistration(Resolution)        
+        -resolution      $RigidIntensityRegistration(Resolution)        \
+        -update_procedure RigidIntensityRegistrationUpdateParam        \
+        -stop_procedure    MutualInformationRegistrationStop            \
+        -set_metric_option MutualInformationRegistrationSetMetricOption \
+        -vtk_itk_reg       vtkITKMutualInformationTransform               
+
 
     puts "to see the pop-up window, type: pack .mi.reg -fill both -expand true"
   #  pack .mi.reg -fill both -expand true
@@ -634,33 +635,6 @@ proc MutualInformationRegistrationAutoRun {} {
     $MutualInformationRegistration(b1Run) configure -text "Stop"
     $MutualInformationRegistration(b2Run) configure -text "Stop"
     .mi.reg start
-}
-
-#-------------------------------------------------------------------------------
-# .PROC MutualInformationRegistrationUpdateParam
-#
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc MutualInformationRegistrationUpdateParam {} {
-    global MutualInformationRegistration RigidIntensityRegistration
-
-    .mi.reg config \
-        -update_procedure MutualInformationRegistrationUpdateParam         \
-        -transform       $RigidIntensityRegistration(matrixId)          \
-        -source          $RigidIntensityRegistration(sourceId)          \
-        -target          $RigidIntensityRegistration(targetId)          \
-        -resolution      $RigidIntensityRegistration(Resolution)        \
-        -iterations      $RigidIntensityRegistration(UpdateIterations)  \
-        -learningrate    $RigidIntensityRegistration(LearningRate)      \
-        -source_shrink   $RigidIntensityRegistration(SourceShrinkFactors) \
-        -target_shrink   $RigidIntensityRegistration(TargetShrinkFactors) \
-        -auto_repeat     $RigidIntensityRegistration(Repeat) \
-        -translatescale  $RigidIntensityRegistration(TranslateScale)    \
-        -samples         $MutualInformationRegistration(NumberOfSamples)   \
-        -source_standarddev $MutualInformationRegistration(SourceStandardDeviation)  \
-        -target_standarddev $MutualInformationRegistration(TargetStandardDeviation)  
-
 }
 
 #-------------------------------------------------------------------------------
@@ -679,6 +653,25 @@ $MutualInformationRegistration(b2Run) configure -command \
 $MutualInformationRegistration(b1Run) configure -text "Start"
 $MutualInformationRegistration(b2Run) configure -text "Start"
 }
+
+
+#-------------------------------------------------------------------------------
+# .PROC MutualInformationSetMetricOption
+#
+# takes in a vtkITKMutualInformation object
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MutualInformationRegistrationSetMetricOption { vtkITKMI } {
+    global MutualInformationRegistration 
+
+    $vtkITKMI SetSourceStandardDeviation $MutualInformationRegistration(SourceStandardDeviation)
+    $vtkITKMI SetTargetStandardDeviation $MutualInformationRegistration(TargetStandardDeviation)
+    $vtkITKMI SetNumberOfSamples $MutualInformationRegistration(NumberOfSamples)
+
+}
+
 
 #-------------------------------------------------------------------------------
 # .PROC MutualInformationRegistrationAutoRun_Vtk
