@@ -64,7 +64,7 @@ proc ViewInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.12 $} {$Date: 2000/08/16 19:57:55 $}]
+		{$Revision: 1.13 $} {$Date: 2000/08/28 16:08:52 $}]
 
 	set View(movie) 0
 	set View(moviePrefix) "/tmp/movie"
@@ -104,9 +104,14 @@ around the mouse cursor.  This option is not presently available on PCs.
 <BR><LI><B>Stereo</B> The Stereo mode allows viewing the 3D window in
 3D if you have Red/Blue glasses.  If you have chrystal eyes glasses,
 then edit the Slicer's TCL code to change the stereo mode in VTK.
-</UL>
 <BR><LI><B>Background Color</B> When you threshold graylevel volumes,
 the view will look better if the background is black.
+<BR><LI><B>Record Movie</B> When this button is activated the 3D view
+is recorded as a .ppm file each time it is re-rendered. By default, each
+frame is recorded as /tmp/movieNNNN.ppm. These frames can be converted into
+a movie using various utilities. One way is to use <I>convert</I> which accepts
+a command line like: <I>convert movie*.ppm movie.mpg</I> to create a movie
+called <I>movie.mpg</I>.
 </UL>
 "
 	regsub -all "\n" $help { } help
