@@ -23,11 +23,7 @@
 # FILE:        Csys.tcl
 # PROCEDURES:  
 #   CsysInit
-#   CsysPopBindings
-#   CsysPushBindings
-#   CsysCreateBindings
-#   CsysUnselectActor
-#   CsysSelectActor
+#   CsysActorSelected
 #   CsysParams
 #   CsysResize
 #   CsysCreate
