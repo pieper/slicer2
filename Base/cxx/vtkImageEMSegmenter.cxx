@@ -23,6 +23,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 =========================================================================auto=*/
 #include "vtkImageEMSegmenter.h"
 #include "vtkObjectFactory.h"
+#include <math.h>
 // 
 static inline double EMSegmenterGauss(double x,double m,double s) {
    if  (s > 0 ) {
@@ -533,7 +534,7 @@ void vtkImageEMSegmenter::vtkImageEMAlgorithm(double *InputOutputVector,int imgX
     // -----------------------------------------------------------
     // cY_m = abs(Y - b_m(:));  // corrected log intensities
     for (k=0; k< imgProd; k++) { 
-      *cY_M = abs(*InputOutputVector - *b_m);
+      *cY_M = fabs(*InputOutputVector - *b_m);
       cY_M++;InputOutputVector++;b_m++;
     }
     cY_M = cY_MPtr; InputOutputVector = InputOutputVectorPtr;b_m = b_mPtr;
