@@ -40,10 +40,17 @@ package ifneeded vtkinit {4.3} {
 foreach kit { Common Filtering IO Imaging Graphics
               Rendering Hybrid 
               Patented  } {
-  package ifneeded "vtk${kit}TCL" {4.3} "
-    package require -exact vtkinit {4.3}
-    ::vtk::init::load_library_package {vtk${kit}TCL} {$::env(VTK_BIN_DIR)/bin/Debug}
-  "
+    if { $::tcl_platform(platform) == "windows" } {
+      package ifneeded "vtk${kit}TCL" {4.3} "
+        package require -exact vtkinit {4.3}
+        ::vtk::init::load_library_package {vtk${kit}TCL} {$::env(VTK_BIN_DIR)/bin/Debug}
+      "
+  } else {
+      package ifneeded "vtk${kit}TCL" {4.3} "
+        package require -exact vtkinit {4.3}
+        ::vtk::init::load_library_package {vtk${kit}TCL} {$::env(VTK_BIN_DIR)/bin} lib
+      "
+  }
   package ifneeded "vtk[string tolower ${kit}]" {4.3} "
     package require -exact vtkinit {4.3}
     if {\[catch {source \[file join {$::env(VTK_SRC_DIR)/Wrapping/Tcl} {vtk[string tolower ${kit}]} {vtk[string tolower ${kit}].tcl}\]} errorMessage\]} {
