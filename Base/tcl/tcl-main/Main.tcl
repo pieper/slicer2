@@ -424,7 +424,7 @@ proc MainInit {} {
 
     # In each module's Init procedure, set Module(moduleName,category) to one of these strings.
     # If you use lindex, larger indices will indicate less tested modules.
-    set Module(categories) {Core Beta Experimental}
+    set Module(categories) {Core Beta Experimental Example Unfiled}
 
     foreach m $Module(idList) {
         set Module($m,more) 0
@@ -454,7 +454,7 @@ proc MainInit {} {
 
         # Set version info
     lappend Module(versions) [ParseCVSInfo Main \
-        {$Revision: 1.104 $} {$Date: 2004/03/11 17:54:37 $}]
+        {$Revision: 1.105 $} {$Date: 2004/03/15 20:50:55 $}]
 
     # Call each "Init" routine that's not part of a module
     #-------------------------------------------
@@ -657,28 +657,31 @@ proc MainBuildGUI {} {
     #-------------------------------------------
     set f .tMain.fModules.fMore
 
-    # Have some buttons visible, and hide the rest under "More"
+    # Have some buttons visible, and hide the rest under "More", if necessary
     set cnt 0
+    set maxVisibleButtons 6
+    set maxMoreButtonStringLength 10
+    set Module(more) 0
     foreach m $Module(idList) {
         set Module($m,more) 0
-        if {$cnt > [expr 6 - 1]} {
+        if {$cnt >= $maxVisibleButtons} {
             set Module($m,more) 1
+            # set the flag to create the More button
+            set Module(more) 1
+            if {[string length $m] > $maxMoreButtonStringLength} {
+                set maxMoreButtonStringLength [string length $m]
+            }
         }
         incr cnt
     }        
 
-    # Don't make the more button unless we'll use it
-    set Module(more) 0
-    foreach m $Module(idList) {
-        if {$Module($m,more) == 1} {set Module(more) 1}
-    }
     if {$Module(more) == 1} {
         eval {menubutton $f.mbMore -text "More:" -relief raised -bd 2 \
-            -width 6 -menu $f.mbMore.m} $Gui(WMBA)
-            eval {menu $f.mbMore.m} $Gui(WMA)
+                  -width 6 -menu $f.mbMore.m} $Gui(WMBA)
+        eval {menu $f.mbMore.m} $Gui(WMA)
         set Module(mbMore) $f.mbMore
         TooltipAdd $f.mbMore "More module menu"
-        eval {radiobutton $f.rMore -width 10 \
+        eval {radiobutton $f.rMore -width $maxMoreButtonStringLength \
             -text "None" -variable Module(moreBtn) -value 1 \
             -command "Tab Menu" -indicatoron 0} $Gui(WCA)
         set Module(rMore) $f.rMore
@@ -699,7 +702,7 @@ proc MainBuildGUI {} {
     # Tooltip example: Add a tooltip for the image checkbutton
     TooltipAdd $f.bDn "Press this button to show a scrollbar for the panel below. \n The scrollbar automatically adjusts to the height of the panel. "
 
-    pack $f.bDn -side right -padx 20
+    pack $f.bDn -side right -padx 15
     
     #-------------------------------------------
     # Main->Modules->Btns frame
@@ -712,6 +715,21 @@ proc MainBuildGUI {} {
         $moreMenu delete 0 end
         set firstMore ""
     }
+    # Grab all the modules and put them in categories
+    foreach mod $Module(idList) {
+        if {[info exists Module($mod,category)]} {
+            lappend Module(idList,$Module($mod,category)) $mod
+        } else {
+            lappend Module(idList,Unfiled) $mod
+        }
+    }
+    # put all but the core modules in alpha order
+    for {set catid 1} {$catid < [llength $Module(categories)]} {incr catid} {
+        set cat [lindex $Module(categories) $catid]
+        set tempList [lsort -dictionary $Module(idList,$cat)]
+        set Module(idList,$cat) $tempList
+    }
+
     # Display up to 3 module buttons (m1,m2,m3) on each row 
     foreach {m1 m2 m3} $Module(idList) {
         frame $f.$row -bg $Gui(inactiveWorkspace)
