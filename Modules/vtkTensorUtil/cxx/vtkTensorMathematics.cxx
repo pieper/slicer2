@@ -338,16 +338,19 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
           w[2] = vtkMath::Normalize(v2);
         }
 
+        //Correct for negative eigenvalues: absolut value
+        w[0] = fabs(w[0]);
+        w[1] = fabs(w[1]);
+        w[2] = fabs(w[2]);
+       
+
           // trace is sum of eigenvalues
           trace = w[0]+w[1]+w[2];
 
-          // we are not interested in regions with eigenvals<= 0
-          int ignore = 0;
-          if (trace <= 0 || w[2] < 0 || w[3] < 0) 
-        ignore = 1;
           
+
           // regularization to compensate for small eigenvalues
-          float r = 0.001;
+          float r = 0.000001;
           trace += r;
 
           // Lauren note that RA and LA could be computed
@@ -397,15 +400,7 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
           break;
 
         case VTK_TENS_COLOR_ORIENTATION:
-          if (ignore) 
-            {
-              memset(outPtr,0,4*sizeof(unsigned char));
-              outPtr++;
-              outPtr++;
-              outPtr++;
-            } 
-          else
-            {
+
               // map 0..1 values into the range a char takes on
               const int scale = 255;
               
@@ -430,16 +425,9 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
               
               // this is 1 - spherical anisotropy measure:
               *outPtr = (T)(scale*(1 - 3*w[2]/trace));
-            }
-          
-          break;
+              break;
 
         }
-
-
-          // we are not interested in regions with trace <= 0
-          if (ignore)
-        *outPtr = (T) 0;
 
           // scale floats if the user requested this
           if (scaleFactor != 1 && op != VTK_TENS_COLOR_ORIENTATION)
