@@ -70,7 +70,8 @@ proc MainMrmlInit {} {
 	}
 	MRMLReadDefaults $fileName
 
-	set Path(mrmlFile) ""
+	set Mrml(filePrefix) data
+	set Mrml(colorsUnsaved) 0
 }
 
 
@@ -115,6 +116,29 @@ proc MainMrmlClearList {} {
 		TransferFunction WindowLevel TFPoint ColorLUT Options" {
 		set ${node}(idListDelete) ""
 	}
+}
+
+proc MainMrmlDeleteNodeDuringUpdate {nodeType id} {
+	global Mrml Model Volume Color Transform EndTransform Matrix
+	global TransferFunction WindowLevel TFPoint ColorLUT Options
+
+	upvar $nodeType Array
+
+	set tree "dataTree"
+	if {$nodeType == "Color"} {
+		set tree "colorTree"
+	}
+
+	lappend Array(idListDelete) $id
+
+	# Remove node's ID from idList
+	set i [lsearch $Array(idList) $id]
+	if {$i == -1} {return}
+	set Array(idList) [lreplace $Array(idList) $i $i]
+
+	# Remove node from tree, and delete it
+	Mrml($tree) RemoveItem ${nodeType}($id,node)
+	${nodeType}($id,node) Delete
 }
 
 #-------------------------------------------------------------------------------
@@ -218,6 +242,26 @@ proc MainMrmlDeleteAll {} {
 	MainMrmlClearList
 }
 
+proc MainMrmlSetFile {filename} {
+	global Mrml File
+
+	# Store the directory of the MRML file as the Mrml(dir)
+	set dir [file dirname $filename]
+	if {$dir == "" || $dir == "."} {
+		set dir [pwd]
+	}
+	set Mrml(dir) $dir
+
+	# Store the new relative prefix
+	set Mrml(filePrefix) [MainFileGetRelativePrefix $filename]
+
+	# Synchronize with saving/opening MRML files from the menu bar
+	set File(filePrefix) $Mrml(filePrefix)
+
+	# Colors don't need saving now
+	set Mrml(colorsUnsaved) 0
+}
+
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlRead
 # .END
@@ -248,12 +292,7 @@ proc MainMrmlRead {mrmlFile} {
 	}
 
 	# Store file and directory name
-	set dir [file dirname $fileName]
-	if {$dir == "" || $dir == "."} {
-		set dir [pwd]
-	}
-	set Path(root) $dir
-	set Path(mrmlFile) $fileName
+	MainMrmlSetFile $fileName
 
 	# Build a MRML Tree for data, and another for colors and LUTs
 	if {[info command Mrml(dataTree)] == ""} {
@@ -294,7 +333,7 @@ proc MainMrmlRead {mrmlFile} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlReadVersion1.0 {fileName} {
-	global Lut Dag Volume Model Config Color Gui Path env Transform
+	global Lut Dag Volume Model Config Color Gui Mrml env Transform
 
 	# Read file
 	if {$fileName == ""} {
@@ -309,7 +348,7 @@ proc MainMrmlReadVersion1.0 {fileName} {
 	}
 
 	# Expand URLs
-	set Dag(expanded) [MRMLExpandUrls $Dag(read) $Path(root)]
+	set Dag(expanded) [MRMLExpandUrls $Dag(read) $Mrml(dir)]
 
 	# If there are no Color nodes, then read, expand, append default colors.
 	set n [MRMLCountTypeOfNode $Dag(expanded) Color]
@@ -352,9 +391,9 @@ proc MainMrmlReadVersion2.0 {fileName} {
 	set mrml [read $fid]
 	close $fid
 
-	# Check that it's the right file type
+	# Check that it's the right file type and version
 	if {[regexp {<!DOCTYPE MRML SYSTEM "mrml20.dtd">} $mrml match] == 0} {
-		set errmsg "The file is MRML version 2.0"
+		set errmsg "The file is NOT MRML version 2.0"
 		tk_messageBox -message $errmsg
 		return 0
 	}
@@ -454,7 +493,7 @@ proc MainMrmlAddColors {tags} {
 			set colors 1
 		}
 	}
-	if {$colors == 1} {return}
+	if {$colors == 1} {return $tags}
 	
 	set fileName [ExpandPath Colors.xml]
 	set tagsColors [MainMrmlReadVersion2.0 $fileName]
@@ -462,7 +501,7 @@ proc MainMrmlAddColors {tags} {
 		set msg "Unable to read file default MRML color file '$fileName'"
 		puts $msg
 		tk_messageBox -message $msg
-		return	
+		return $tags
 	}
 
 	return "$tags $tagsColors"
@@ -574,6 +613,7 @@ proc MainMrmlBuildTreesVersion1.0 {} {
 			$n SetDescription      [MRMLGetValue $node desc]
 			$n SetName             [MRMLGetValue $node name]
 			$n SetFileName         [MRMLGetValue $node fileName]
+			$n SetFullFileName     [MRMLGetValue $node fileName]
 			$n SetColor            [MRMLGetValue $node colorName]
 			$n SetOpacity          [MRMLGetValue $node opacity]
 			$n SetVisibility       [MRMLGetValue $node visibility]
@@ -610,19 +650,25 @@ proc MainMrmlBuildTreesVersion1.0 {} {
 			$n SetWindow           [MRMLGetValue $node window]
 			$n SetLevel            [MRMLGetValue $node level]
 			$n SetAutoWindowLevel  [MRMLGetValue $node autoWindowLevel]
+			puts "auto=[$n GetAutoWindowLevel]"
 			$n SetLabelMap         [MRMLGetValue $node labelMap]
 			$n SetScanOrder        [MRMLGetValue $node scanOrder]
 
-			# Options NOT CURRENTLY SUPPORTED
-			set program [lindex [MRMLGetValue $node options] 0]
-			set options [lrange [MRMLGetValue $node options] 1 end]
-			if {$program == "slicer"} {
-				# Parse options in format: key1 value1 key2 value2 ...
-				# Verify that options exist in the list of defaults.
-				foreach {key value} $options {
-					set $key $value
-				}
+			# Don't interpolate label maps
+			if {[MRMLGetValue $node labelMap] == 1} {
+				$n SetInterpolate [MRMLGetValue $node interpolate]
 			}
+
+			# Options NOT CURRENTLY SUPPORTED
+#			set program [lindex [MRMLGetValue $node options] 0]
+#			set options [lrange [MRMLGetValue $node options] 1 end]
+#			if {$program == "slicer"} {
+#				# Parse options in format: key1 value1 key2 value2 ...
+#				# Verify that options exist in the list of defaults.
+#				foreach {key value} $options {
+#					set $key $value
+#				}
+#			}
 #			$n SetLUTName        [MRMLGetValue $node lutID]
 #			$n SetUpperThreshold [MRMLGetValue $node showAbove]
 #			$n SetLowerThreshold [MRMLGetValue $node showBelow]
@@ -632,15 +678,6 @@ proc MainMrmlBuildTreesVersion1.0 {} {
 #			} else {
 #				$n AutoThresholdOff
 #			}
-
-			# Don't interpolate label maps
-			if {[MRMLGetValue $node labelMap] == 1} {
-				$n SetInterpolate [MRMLGetValue $node interpolate]
-			}
-
-			# If we don't specify headerSize, then it just reads the
-			# last bytes in the file as the pictures.  This allows
-			# variable file header lengths, as in is true of DICOM.
 
 			Mrml(dataTree) AddItem $n
 		}
@@ -662,7 +699,7 @@ proc MainMrmlBuildTreesVersion1.0 {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlBuildTreesVersion2.0 {tags} {
-	global Mrml Path
+	global Mrml
 	global Model Volume Color Transform EndTransform Matrix
 	global TransferFunction WindowLevel TFPoint ColorLUT Options
 	
@@ -778,7 +815,7 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 			}
 
 			# Compute full path name relative to the MRML file
-			$n SetFullFileName [file join $Path(root) [$n GetFileName]]
+			$n SetFullFileName [file join $Mrml(dir) [$n GetFileName]]
 
 			Mrml(dataTree) AddItem $n
 		}
@@ -837,7 +874,7 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 			}
 
 			# Compute full path name relative to the MRML file
-			$n SetFullPrefix [file join $Path(root) [$n GetFilePrefix]]
+			$n SetFullPrefix [file join $Mrml(dir) [$n GetFilePrefix]]
 			
 			$n UseRasToVtkMatrixOn
 
@@ -854,6 +891,108 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 proc MainMrmlWrite {filename} {
 	global Mrml
 
-	Mrml(dataTree) Write $filename
+	# See if colors are different than the defaults
+	set fileName [ExpandPath Colors.xml]
+	set tags [MainMrmlReadVersion2.0 $fileName]
+
+	if {$tags != 0} {
+		vtkMrmlColorNode default
+		set n default
+
+		Mrml(colorTree) InitTraversal
+		set node [Mrml(colorTree) GetNextItem]
+
+		foreach pair $tags {
+			set tag  [lindex $pair 0]
+			set attr [lreplace $pair 0 0]
+
+			# Are we out of nodes?
+			if {$node == ""} {
+				set Mrml(colorsUnsaved) 1
+			} else {
+				if {$tag == "Color"} {
+					foreach a $attr {
+						set key [lindex $a 0]
+						set val [lreplace $a 0 0]
+						switch $key {
+						"desc"         {$n SetDescription  $val}
+						"name"         {$n SetName         $val}
+						"ambient"      {$n SetAmbient      $val}
+						"diffuse"      {$n SetDiffuse      $val}
+						"specular"     {$n SetSpecular     $val}
+						"power"        {$n SetPower        $val}
+						"labels"       {$n SetLabels       $val}
+						"diffuseColor" {eval $n SetDiffuseColor $val}
+						}
+					}
+					if {[$node GetDescription] != [$n GetDescription]} {
+						set Mrml(colorsUnsaved) 1
+					}
+					if {[$node GetName] != [$n GetName]} {
+						set Mrml(colorsUnsaved) 1
+					}
+					if {[$node GetAmbient] != [$n GetAmbient]} {
+						set Mrml(colorsUnsaved) 1
+					}
+					if {[$node GetDiffuse] != [$n GetDiffuse]} {
+						set Mrml(colorsUnsaved) 1
+					}
+					if {[$node GetSpecular] != [$n GetSpecular]} {
+						set Mrml(colorsUnsaved) 1
+					}
+					if {[$node GetPower] != [$n GetPower]} {
+						set Mrml(colorsUnsaved) 1
+					}
+					if {[$node GetLabels] != [$n GetLabels]} {
+						set Mrml(colorsUnsaved) 1
+					}
+					if {[$node GetDiffuseColor] != [$n GetDiffuseColor]} {
+						set Mrml(colorsUnsaved) 1
+					}
+					set node [Mrml(colorTree) GetNextItem]
+				}
+			}
+		}
+		default Delete
+
+		# Out of tags
+		if {$node != ""} {
+			set Mrml(colorsUnsaved) 1
+		}
+	}
+
+
+	# If colors have changed since last save, then save colors too
+	if {$Mrml(colorsUnsaved) == 1} {
+		puts SaveColors
+
+		# Combine trees
+		vtkMrmlTree tree
+
+		# Data tree
+		Mrml(dataTree) InitTraversal
+		set node [Mrml(dataTree) GetNextItem]
+		while {$node != ""} {
+			tree AddItem $node
+			set node [Mrml(dataTree) GetNextItem]
+		}
+
+		# Color tree
+		Mrml(colorTree) InitTraversal
+		set node [Mrml(colorTree) GetNextItem]
+		while {$node != ""} {
+			tree AddItem $node
+			set node [Mrml(colorTree) GetNextItem]
+		}
+
+		tree Write $filename
+		tree RemoveAllItems
+		tree Delete
+	} else {
+		Mrml(dataTree) Write $filename
+	}
+
+	# Store the new root and filePrefix
+	MainMrmlSetFile $filename
 }
 

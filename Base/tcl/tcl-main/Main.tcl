@@ -217,12 +217,14 @@ proc MainBoot {{mrmlFile ""}} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainInit {} {
-	global Module Gui env Path View Anno
+	global Module Gui env Path View Anno Mrml
 	
 	set Path(tmpDir) tmp 
 	set Path(printHeaderPath) bin/print_header
 	set Path(printHeaderFirstWord) print_header
 	set Path(remoteHost) forest
+
+	set Mrml(dir) [pwd]
 
 	GuiInit
 	puts "Starting $Gui(title)..."
@@ -370,6 +372,8 @@ proc MainBuildGUI {} {
 	$Gui(mFile) add command -label "Save As..." -command \
 		"MainMenu File SaveAs"
 	$Gui(mFile) add separator
+	$Gui(mFile) add command -label "Close" -command \
+		"MainMenu File Close"
 	$Gui(mFile) add command -label "Exit" -command MainExitProgram
 	$Gui(mHelp) add command -label "Documentation..." -command \
 		"MainMenu Help Documentation"
@@ -945,7 +949,10 @@ proc MainMenu {menu cmd} {
 			MainFileSave
 		}
 		"SaveAs" {
-			MainFileSaveAs
+			MainFileSaveAsPopup "" 50 50
+		}
+		"Close" {
+			MainFileClose
 		}
 		}
 	}

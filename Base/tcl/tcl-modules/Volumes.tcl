@@ -63,15 +63,15 @@ proc VolumesInit {} {
 
 	# Props
 	set Volume(propertyType) Basic
-	# text for menus displayed on Volumes->Props->Header GUI
+	# menus displayed on GUI
 	set Volume(scalarTypeMenu) "Char UnsignedChar Short UnsignedShort\ 
 	{Int} UnsignedInt Long UnsignedLong Float Double"
 	set Volume(scanOrderMenu) "{Sagittal:LR} {Sagittal:RL} {Axial:SI}\
-		{Axial:IS} {Coronal:AP} {Coronal:PA} {Oblique}"
-	# corresponding values to use in Volume(scanOrder)
+		{Axial:IS} {Coronal:AP} {Coronal:PA}"
+	# corresponding scan order values to use in volume(scanOrder)
 	set Volume(scanOrderList) "LR RL SI IS AP PA OB" 
 	
-
+	MainVolumesSetGUIDefaults
 
 }
 
@@ -96,8 +96,6 @@ proc VolumesBuildGUI {} {
 	#     Header
 	# Other
 	#-------------------------------------------
-
-	MainVolumesSetGUIDefaults
 
 	#-------------------------------------------
 	# Help frame
@@ -515,10 +513,12 @@ Ron, the interpolation button won't work without downloading dll's again.
 
 	# Entry fields (the loop makes a frame for each variable)
 	foreach param "filePattern resolution \
-		pixelSize sliceThickness sliceSpacing" \
+		pixelSize sliceThickness sliceSpacing \
+		gantryDetectorTilt numScalars" \
 		name "{File Pattern} \
 		{Resolution (width in pixels)} {Pixel Size (mm)} \
-		{Slice Thickness} {Slice Spacing}" {
+		{Slice Thickness} {Slice Spacing} {Slice Tilt} \
+		{Num Scalars}" {
 
 	    set f $fProps.fBot.fHeader.fEntry
 	    frame $f.f$param   -bg $Gui(activeWorkspace)
@@ -533,71 +533,31 @@ Ron, the interpolation button won't work without downloading dll's again.
 	    pack $f.e$param -side left -padx $Gui(pad) -expand 1 -fill x
 	}
 
-	# scan order Menu
-	set param scanOrder
-	set name "Scan Order"
-	set f $fProps.fBot.fHeader.fEntry
-	frame $f.f$param -bg $Gui(activeWorkspace)
-	pack $f.f$param \
-		-side top -fill x -pady $Gui(pad)
-	
-	set f $f.f$param
-	set c {label $f.l${param} -text "$name:" $Gui(WLA)}; eval [subst $c]
-	# button text corresponds to default scan order value in Volume(scanOrder)
-	set c {menubutton $f.mb${param} -relief raised -bd 2 \
-		-text [lindex $Volume(scanOrderMenu)\
-		[lsearch $Volume(scanOrderList) $Volume(scanOrder)]] \
-		-width 10 -menu $f.mb${param}.menu $Gui(WMBA)}; eval [subst $c]
-	set Volume(mb${param}) $f.mb${param}
-	set c {menu $f.mb${param}.menu $Gui(WMA)}; eval [subst $c]
-	
-	set m $f.mb${param}.menu
-	foreach label $Volume(${param}Menu)  value $Volume(${param}List) {
-	    $m add command -label $label -command "VolumesSetScanOrder $value"
-	}
-	pack $f.l${param} -side left -padx $Gui(pad) -fill x -anchor w
-	pack $f.mb${param} -side left -padx $Gui(pad) -expand 1 -fill x 
-    
-	# scalar type menu
-	set param scalarType
-	set name "Scalar Type"
-	set f $fProps.fBot.fHeader.fEntry
-	frame $f.f$param -bg $Gui(activeWorkspace)
-	pack $f.f$param \
-		-side top -fill x -pady $Gui(pad)
-	
-	set f $f.f$param
-	set c {label $f.l${param} -text "$name:" $Gui(WLA)}; eval [subst $c]
-	set c {menubutton $f.mb${param} -relief raised -bd 2 \
-		-text $Volume(scalarType)\
-		-width 10 -menu $f.mb${param}.menu $Gui(WMBA)}; eval [subst $c]
-	set Volume(mb${param}) $f.mb${param}
-	set c {menu $f.mb${param}.menu $Gui(WMA)}; eval [subst $c]
-	
-	set m $f.mb${param}.menu
-	foreach type $Volume(${param}Menu) {
-	    $m add command -label $type -command "VolumesSetScalarType $type"
-	}
-	pack $f.l${param} -side left -padx $Gui(pad) -fill x -anchor w
-	pack $f.mb${param} -side left -padx $Gui(pad) -expand 1 -fill x 
-    
-
-	# more Entry fields (the loop makes a frame for each variable)
-	foreach param "	gantryDetectorTilt numScalars" \
-		name "{Slice Tilt} {Num Scalars}" {
+	# Menus
+	foreach param "scanOrder scalarType" name "Orient {Scalar Type}" \
+		fcn "VolumesSetScanOrder VolumesSetScalarType" {
 
 	    set f $fProps.fBot.fHeader.fEntry
-	    frame $f.f$param   -bg $Gui(activeWorkspace)
+	    frame $f.f$param -bg $Gui(activeWorkspace)
 	    pack $f.f$param \
 		    -side top -fill x -pady $Gui(pad)
 
 	    set f $f.f$param
-	    set c {label $f.l$param -text "$name:" $Gui(WLA)}; eval [subst $c]
-	    set c {entry $f.e$param -width 10 -textvariable Volume($param) $Gui(WEA)}
-	    eval [subst $c]
-	    pack $f.l$param -side left -padx $Gui(pad) -fill x -anchor w
-	    pack $f.e$param -side left -padx $Gui(pad) -expand 1 -fill x
+	    set c {label $f.l${param} -text "$name:" $Gui(WLA)}; eval [subst $c]
+	    set c {menubutton $f.mb${param} -relief raised -bd 2 \
+		    -text "[lindex $Volume(${param}Menu) 0]" \
+		    -width 10 -menu $f.mb${param}.menu $Gui(WMBA)}; eval [subst $c]
+	    set Volume(mb${param}) $f.mb${param}
+	    set c {menu $f.mb${param}.menu $Gui(WMA)}; eval [subst $c]
+	
+	    set m $f.mb${param}.menu
+	    foreach type $Volume(${param}Menu) {
+		$m add command -label $type -command "$fcn $type"
+	    }
+	    pack $f.l${param} -side left -padx $Gui(pad) -fill x -anchor w
+	    pack $f.mb${param} -side left -padx $Gui(pad) -expand 1 -fill x 
 	}
+
 
 	#-------------------------------------------
 	# Props->Bot->Header->Apply frame
@@ -697,7 +657,7 @@ proc VolumesSetPropertyType {} {
 }
  
 proc VolumesPropsApply {} {
-	global Volume Label Module Mrml Path
+	global Volume Label Module Mrml
 
 	set m $Volume(activeID)
 	if {$m == ""} {return}
@@ -714,18 +674,21 @@ proc VolumesPropsApply {} {
 
 	if {$m == "NEW"} {
 		set i $Volume(nextID)
+		incr Volume(nextID)
+		lappend Volume(idList) $i
 		vtkMrmlVolumeNode Volume($i,node)
 		set n Volume($i,node)
 		$n SetID               $i
 
+		# These get set down below, but we need them before MainUpdateMRML
 
 		# Manual headers
 		if {$Volume(readHeaders) == "0"} {
 			$n SetFilePrefix [file root $Volume(firstFile)]
 			$n SetFilePattern $Volume(filePattern)
-			$n SetFullPrefix [file join $Path(root) [$n GetFilePrefix]]
+			$n SetFullPrefix [file join $Mrml(dir) [$n GetFilePrefix]]
 			set firstNum [MainFileFindImageNumber First \
-				[file join $Path(root) $Volume(firstFile)]]
+				[file join $Mrml(dir) $Volume(firstFile)]]
 			$n SetImageRange $firstNum $Volume(lastNum)
 			$n SetDimensions $Volume(resolution) $Volume(resolution)
 			eval $n SetSpacing $Volume(pixelSize) $Volume(pixelSize) \
@@ -738,7 +701,7 @@ proc VolumesPropsApply {} {
 		
 		# Read headers
 		} else {
-			if {[GetHeaderInfo [file join $Path(root) $Volume(firstFile)] \
+			if {[GetHeaderInfo [file join $Mrml(dir) $Volume(firstFile)] \
 				$Volume(lastNum) $n 1] == "-1"} {
 			    set msg "No header information found. Please enter header info manually."
 			    puts $msg
@@ -748,18 +711,11 @@ proc VolumesPropsApply {} {
 			    # switch to vols->props->header frame
 			    set Volume(propertyType) Header
 			    VolumesSetPropertyType
-			    $n Delete
 			    return
 			}
 		}
-		
-		$n SetLabelMap $Volume(labelMap)
-		# These get set down below, but we need them before MainUpdateMRML
-		$n SetName $Volume(name)
-		$n SetDescription $Volume(desc)
 
-		incr Volume(nextID)
-		lappend Volume(idList) $i
+		$n SetName $Volume(name)
 
 		Mrml(dataTree) AddItem $n
 		MainUpdateMRML
@@ -769,7 +725,14 @@ proc VolumesPropsApply {} {
 	}
 
 	Volume($m,node) SetName $Volume(name)
-	Volume($m,node) SetDescription $Volume(desc)
+	Volume($m,node) SetFilePrefix [file root $Volume(firstFile)]
+	Volume($m,node) SetFilePattern $Volume(filePattern)
+	# *** fix this:
+	Volume($m,node) SetFullPrefix  $Volume(firstFile)
+	# this needs print header to get first image number
+	set firstNum [MainFileFindImageNumber First \
+			[file join $Mrml(dir) $Volume(firstFile)]]
+	Volume($m,node) SetImageRange $firstNum $Volume(lastNum)
 
 	# If tabs are frozen, then 
 	if {$Module(freezer) != ""} {
@@ -809,52 +772,40 @@ proc VolumesPropsCancel {} {
 # .END
 #-------------------------------------------------------------------------------
 proc VolumesSetFirst {} {
-	global Volume Path
+	global Volume Mrml
 	
 	set typelist {
 		{"All Datas" {*}}
 	}
-	set filename [GetOpenFile $Path(root) $Volume(firstFile) \
+	set filename [GetOpenFile $Mrml(dir) $Volume(firstFile) \
 		$typelist 001 "First Image in Volume" 0]
 	if {$filename == ""} {return}
     
-	# Store for next time 
-	set Path(prefixOpenVolume) [file root $filename]
-
 	# volumeFirst is a relative name (prefix.001) to the root.
 	# volumeLast is an image number
 	
 	set Volume(firstFile) $filename
 	set Volume(name)  [file root [file tail $filename]]
 	set Volume(lastNum)  [MainFileFindImageNumber Last \
-		[file join $Path(root) $filename]]
-
-puts "file tail filename [file tail $filename]"
-puts "	[file join $Path(root) $filename]"
-puts " last image number: [MainFileFindImageNumber Last\
-		[file join $Path(root) $filename]]"
+		[file join $Mrml(dir) $filename]]
 }
+
 #-------------------------------------------------------------------------------
-# .PROC VolumesSetScanOrder
+# .PROC VolumesSetOrder
 # .END
 #-------------------------------------------------------------------------------
 proc VolumesSetScanOrder {order} {
 	global Volume
     
-
-        set Volume(scanOrder) $order
-
-        # set the button text to the matching order from the scanOrderMenu
-        $Volume(mbscanOrder) config -text [lindex $Volume(scanOrderMenu)\
-		[lsearch $Volume(scanOrderList) $order]]
+        # set the scanOrder to the matching order from the scanOrderList
+        set Volume(scanOrder) [lindex $Volume(scanOrderList)\
+		[lsearch $Volume(scanOrderMenu) $order]]
+        $Volume(mbscanOrder) config -text $order
 }
 
 proc VolumesSetScalarType {type} {
 	global Volume
-
         set Volume(scalarType) $type
-
-        # update the button text
         $Volume(mbscalarType) config -text $type
 }
 
@@ -863,23 +814,9 @@ proc VolumesSetScalarType {type} {
 # .END
 #-------------------------------------------------------------------------------
 proc VolumesSetLast {} {
-	global Path Volume
+	global Mrml Volume
 
 	set Volume(lastNum) [MainFileFindImageNumber Last\
-		[file join $Path(root) $Volume(firstFile)]]
+		[file join $Mrml(dir) $Volume(firstFile)]]
 	set Volume(name) [file root [file tail $Volume(firstFile)]]
-}
-
-proc VolumesGetDefaultScanOrder {} {
-    global Volume
-
-    # find menu item that matches default Volume(scanOrder)
-    return [lindex $Volume(scanOrderMenu)\
-	    [lsearch $Volume(scanOrderList) $Volume(scanOrder)]]
-}
-
-proc VolumesGetDefaultScalarType {} {
-    global Volume
-
-    return $Volume(scalarType)
 }

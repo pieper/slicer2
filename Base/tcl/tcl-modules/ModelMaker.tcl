@@ -176,7 +176,7 @@ Models are fun. Do you like models, Ron?
 	#-------------------------------------------
 	set f $fCreate.fGrid
 
-	foreach Param "Name Smooth Decimate" width "13 7 7" {
+	foreach Param "{Model Name} Smooth Decimate" width "13 7 7" {
 		eval {label $f.l$Param -text "$Param:"} $Gui(WLA)
 		eval {entry $f.e$Param -width $width \
 			-textvariable ModelMaker([Uncap $Param])} $Gui(WEA)
@@ -253,16 +253,51 @@ Models are fun. Do you like models, Ron?
 	set f $fEdit.fWrite
 
 	eval {label $f.l -text "Save model as a VTK file"} $Gui(WTA)
-	eval {button $f.b -text "Write" -width 6 \
-		-command "MainModelsWrite; Render3D"} $Gui(WBA)
 	frame $f.f -bg $Gui(activeWorkspace)
-	pack $f.l $f.f  -side top -pady $Gui(pad) -fill x
-	pack $f.b  -side top -pady $Gui(pad)
+	eval {entry $f.e -textvariable ModelMaker(prefix) -width 50} $Gui(WEA)
+	bind $f.e <Return> {ModelMakerSetPrefix}
+	eval {button $f.b -text "Write" -width 6 \
+		-command "ModelMakerWrite; Render3D"} $Gui(WBA)
 
-	eval {label $f.f.l -text "Prefix:"} $Gui(WLA)
-	eval {entry $f.f.e -textvariable ModelMaker(prefix) -width 50} $Gui(WEA)
-	pack $f.f.l $f.f.e -side left -padx $Gui(pad) -expand 1 -fill x
+	pack $f.l $f.f -side top -pady $Gui(pad)
+	pack $f.e -side top -pady $Gui(pad) -padx $Gui(pad) -expand 1 -fill x
+	pack $f.b -side top -pady $Gui(pad)
 
+	eval {label $f.f.l -text "File Prefix (without .vtk)"} $Gui(WLA)
+	eval {button $f.f.b -text "Browse..." -width 10 \
+		-command "ModelMakerSetPrefix"} $Gui(WBA)
+	pack $f.f.l $f.f.b -side left -padx $Gui(pad)
+}
+
+proc ModelMakerSetPrefix {} {
+	global ModelMaker Mrml
+
+	# Cannot have blank prefix
+	if {$ModelMaker(prefix) == ""} {
+		set ModelMaker(prefix) model
+	}
+
+ 	# Show popup initialized to the last file saved
+	set filename [file join $Mrml(dir) $ModelMaker(prefix)]
+	set dir [file dirname $filename]
+	set typelist {
+		{"VTK Files" {.vtk}}
+		{"All Files" {*}}
+	}
+	set filename [tk_getSaveFile -title "Save Model" -defaultextension ".vtk"\
+		-filetypes $typelist -initialdir "$dir" -initialfile $filename]
+
+	# Do nothing if the user cancelled
+	if {$filename == ""} {return}
+
+	# Store it as a relative prefix for next time
+	set ModelMaker(prefix) [MainFileGetRelativePrefix $filename]
+}
+
+proc ModelMakerWrite {} {
+	global ModelMaker Model
+
+	MainModelsWrite $Model(activeID) $ModelMaker(prefix)
 }
 
 #-------------------------------------------------------------------------------
@@ -306,7 +341,7 @@ proc ModelMakerCreate {} {
 	Model($m,node) SetColor $Label(name)
 
 	# Registration
-	Model($m,node) SetRasToWld [Volume($m,node) GetRasToWld]
+	Model($m,node) SetRasToWld [Volume($v,node) GetRasToWld]
 
 	if {[ModelMakerMarch $m $v $ModelMaker(decimate) $ModelMaker(smooth)] != 0} {
 		MainModelsDelete $m

@@ -77,20 +77,6 @@ proc GuiInit {} {
 	set Gui(waitWin) ""
 	set Gui(title) "3D Slicer"
 	
-	# prefix
-	set Path(prefixSaveImage3D) img3D
-	set Path(prefixColors) Colors
-	set Path(prefixSaveCurrentDag) data
-	set Path(prefixSaveRegister) reg
-	set Path(prefixSaveFile) data
-	set Path(prefixOpenFile) data
-	set Path(prefixOpenVolume) I
-	set Path(prefixOpenModel) skin
-	set Path(prefixEditWorking) work
-	set Path(prefixEditComposite) comp
-	set Path(prefixSmgModel) skin
-	set Path(prefixEditSession) edit
-
 	# INIT
 	set Gui(waitSemaphore) 0
 	set Gui(magDim) 175

@@ -52,7 +52,7 @@ proc MainFileInit {} {
 
 	lappend Module(procGUI) MainFileBuildGUI
 
-	set File(filePrefix) $Path(prefixOpenFile)
+	set File(filePrefix) data
 }
 
 #-------------------------------------------------------------------------------
@@ -60,6 +60,13 @@ proc MainFileInit {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainFileBuildGUI {} {
+	global Gui File
+
+	MainFileBuildOpenGUI
+	MainFileBuildSaveAsGUI
+}
+
+proc MainFileBuildOpenGUI {} {
 	global Gui File
 
 	#-------------------------------------------
@@ -92,7 +99,7 @@ proc MainFileBuildGUI {} {
 	#-------------------------------------------
 	set f $w.fTop.fHelp
 
-	set c {label $f.lTitle -text "Open a MRML file." $Gui(WLA)}; eval [subst $c]
+	set c {label $f.lTitle -text "Open a MRML file with this prefix:" $Gui(WLA)}; eval [subst $c]
 	pack $f.lTitle
 	
 	#-------------------------------------------
@@ -100,7 +107,7 @@ proc MainFileBuildGUI {} {
 	#-------------------------------------------
 	set f $w.fTop.fGrid
 
-	set c {button $f.b -text "Prefix:" -width 7 \
+	set c {button $f.b -text "Browse:" -width 7 \
 		-command "MainFileOpen" $Gui(WBA)}; eval [subst $c]
 	set c {entry $f.e -textvariable File(filePrefix) -width 60 $Gui(WEA)}
 		eval [subst $c]
@@ -119,6 +126,154 @@ proc MainFileBuildGUI {} {
 	pack $f.bApply $f.bCancel -side left -padx $Gui(pad)
 }
 
+proc MainFileBuildSaveAsGUI {} {
+	global Gui File
+
+	#-------------------------------------------
+	# the "SaveAs File" Popup Window
+	#-------------------------------------------
+	set w .wSaveAs
+	set File(wSaveAs) $w
+	toplevel $w -class Dialog -bg $Gui(inactiveWorkspace)
+	wm title $w "SaveAs File"
+    wm iconname $w Dialog
+    wm protocol $w WM_DELETE_WINDOW "wm withdraw $w"
+    wm transient $w .
+	wm withdraw $w
+
+	# Frames
+	frame $w.fTop  -bg $Gui(activeWorkspace) -bd 2 -relief raised
+	frame $w.fBtns -bg $Gui(inactiveWorkspace)
+	pack $w.fTop $w.fBtns -side top -pady $Gui(pad) -padx $Gui(pad)
+
+	#-------------------------------------------
+	# Top frame
+	#-------------------------------------------
+	set f $w.fTop
+	frame $f.fHelp -bg $Gui(activeWorkspace)
+	frame $f.fGrid -bg $Gui(activeWorkspace)
+	pack $f.fHelp $f.fGrid -side top -pady $Gui(pad)
+
+	#-------------------------------------------
+	# Top->Help frame
+	#-------------------------------------------
+	set f $w.fTop.fHelp
+
+	set c {label $f.lTitle -text "Save a MRML file with this prefix:" $Gui(WLA)}; eval [subst $c]
+	pack $f.lTitle
+	
+	#-------------------------------------------
+	# Top->Grid frame
+	#-------------------------------------------
+	set f $w.fTop.fGrid
+
+	set c {button $f.b -text "Browse:" -width 7 \
+		-command "MainFileSaveAs" $Gui(WBA)}; eval [subst $c]
+	set c {entry $f.e -textvariable File(filePrefix) -width 60 $Gui(WEA)}
+		eval [subst $c]
+	bind $f.e <Return> {MainFileSaveAs}
+	pack $f.b -side left -padx $Gui(pad)
+	pack $f.e -side left -padx $Gui(pad) -fill x -expand 1
+
+	#-------------------------------------------
+	# Top->Buttons frame
+	#-------------------------------------------
+	set f $w.fBtns
+	set c {button $f.bCancel -text "Cancel" \
+		-command "wm withdraw $w" $Gui(WBA)}; eval [subst $c]
+	set c {button $f.bApply -text "Apply" \
+		-command "wm withdraw $w; MainFileSaveAsApply" $Gui(WBA)}; eval [subst $c]
+	pack $f.bApply $f.bCancel -side left -padx $Gui(pad)
+}
+
+proc MainFileClose {} {
+
+	MainMrmlDeleteAll
+	MainUpdateMRML
+	MainSetup
+	RenderAll
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MainFileSaveAsPopup
+# .END
+#-------------------------------------------------------------------------------
+proc MainFileSaveAsPopup {{callback ""} {x 100} {y 100}} {
+	global Gui File
+
+	# Recreate popup if user killed it
+	if {[winfo exists $File(wSaveAs)] == 0} {
+		MainFileBuildSaveAsGUI
+	}
+	
+	set File(callback) $callback
+
+	ShowPopup $File(wSaveAs) $x $y
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MainFileSaveAs
+# Presents a popup to allow the user to set a new File(filePrefix).
+# .END
+#-------------------------------------------------------------------------------
+proc MainFileSaveAs {} {
+	global Mrml File Gui
+	
+	# Cannot have blank prefix
+	if {$File(filePrefix) == ""} {
+		set File(filePrefix) data
+	}
+
+ 	# Show popup initialized to the last file saved
+	set filename [file join $Mrml(dir) $File(filePrefix)]
+	set dir [file dirname $filename]
+	set typelist {
+		{"XML Files" {.xml}}
+		{"All Files" {*}}
+	}
+	set filename [tk_getSaveFile -title "Save Scene" -defaultextension ".xml"\
+		-filetypes $typelist -initialdir "$dir" -initialfile $filename]
+
+	# Do nothing if the user cancelled
+	if {$filename == ""} {return}
+
+	# Make it a relative prefix
+	set File(filePrefix) [MainFileGetRelativePrefix $filename]
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MainFileSaveAsApply
+# .END
+#-------------------------------------------------------------------------------
+proc MainFileSaveAsApply {} {
+	global File Mrml
+
+	# Prefix cannot be blank
+	if {$File(filePrefix) == ""} {
+		tk_messageBox -message "A file name must be specified"
+	}
+	
+	# Relative to root
+	set filename [file join $Mrml(dir) $File(filePrefix).xml]
+
+	MainMrmlWrite $filename
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MainFileSave
+# .END
+#-------------------------------------------------------------------------------
+proc MainFileSave {} {
+	global Mrml
+
+	# Call SaveAs if the filename is blank
+	if {$Mrml(filePrefix) == ""} {
+		MainFileSaveAsPopup "" 50 50
+	}
+
+	MainFileSaveAsApply
+}
+
 #-------------------------------------------------------------------------------
 # .PROC MainFileOpenPopup
 # .END
@@ -128,9 +283,10 @@ proc MainFileOpenPopup {{callback ""} {x 100} {y 100}} {
 
 	# Recreate popup if user killed it
 	if {[winfo exists $File(wOpen)] == 0} {
-		MainFileBuildGUI
+		MainFileBuildOpenGUI
 	}
 	
+	# not using this
 	set File(callback) $callback
 
 	ShowPopup $File(wOpen) $x $y
@@ -141,19 +297,35 @@ proc MainFileOpenPopup {{callback ""} {x 100} {y 100}} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainFileOpen {} {
-	global Path File
+	global Mrml File
 	
+	# Cannot have blank prefix
+	if {$File(filePrefix) == ""} {
+		set File(filePrefix) data
+	}
+
+ 	# Show popup initialized to the last file saved
+	set filename [file join $Mrml(dir) $File(filePrefix)]
+	set dir [file dirname $filename]
 	set typelist {
+		{"XML Files" {.xml}}
 		{"MRML Files" {.mrml}}
 		{"All Files" {*}}
 	}
-	set filename [GetOpenFile $Path(root) $File(filePrefix) \
-		$typelist .mrml "Open Scene" 1 $File(wOpen)]
+	set filename [tk_getOpenFile -title "Open File" -defaultextension ".xml" \
+		-filetypes $typelist -initialdir "$dir" -initialfile $filename]
 	if {$filename == ""} {return}
 
-    # Store for next time 
-	set Path(prefixOpenFile) [file rootname $filename]
-	set File(filePrefix)   $Path(prefixOpenFile)
+	# Do nothing if the user cancelled
+	if {$filename == ""} {return}
+
+	# Make it a relative prefix
+	set File(filePrefix) [MainFileGetRelativePrefix $filename]
+
+	# If it's MRML instead of XML, then add the .mrml back
+	if {[regexp {.*\.mrml$} $filename] == 1} {
+		set File(filePrefix) $File(filePrefix).mrml
+	}
 }
 
 #-------------------------------------------------------------------------------
@@ -161,12 +333,22 @@ proc MainFileOpen {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainFileOpenApply {} {
-	global File Path
+	global File Mrml
 
-	# Relative to root
-	set mrmlFile [file join $Path(root) $File(filePrefix).mrml]
+	# Prefix cannot be blank
+	if {$File(filePrefix) == ""} {
+		tk_messageBox -message "A file name must be specified"
+	}
+	
+	# Relative to root.
+	# If it's MRML instead of XML, then don't add the .xml
+	if {[regexp {.*\.mrml$} $File(filePrefix)] == 0} {
+		set filename [file join $Mrml(dir) $File(filePrefix).xml]
+	} else {
+		set filename [file join $Mrml(dir) $File(filePrefix)]
+	}
 
-	MainMrmlRead $mrmlFile
+	MainMrmlRead $filename
 	MainUpdateMRML
 	MainSetup
 	RenderAll
@@ -176,158 +358,66 @@ proc MainFileOpenApply {} {
 	}
 }
 
+proc MainFileGetRelativePrefix {filename} {
+	global Mrml Gui
+	
+	# Returns the prefix (no extension) of filename relative to Mrml(dir)
+	set root $Mrml(dir)
+	set absPrefix [file rootname $filename]
+	if {$Gui(pc) == 1} {
+		set absPrefix [string tolower $absPrefix]
+		set root [string tolower $Mrml(dir)]
+	}
+	set relPrefix himom
+	if {[regexp "^$root/(\.*)" $absPrefix match relPrefix] == 1} {
+		return $relPrefix
+	} else {
+		return [file rootname $absPrefix]
+	}
+}
+
 #-------------------------------------------------------------------------------
-# .PROC MainFileSaveAs
+# .PROC MainFileFindUniqueName
+# Form an absolute filename by concatenating the root, name, "." and ext.
+# If a file of this name already exists, then find a number to add before the
+# extension that would make it unique.  Return this filename.
+# Note: the prefix cannot be blank, or "" is returned.
 # .END
 #-------------------------------------------------------------------------------
-proc MainFileSaveAs {} {
-	global Mrml Path
+proc MainFileFindUniqueName {root prefix ext} {
 
-}
-
-#-------------------------------------------------------------------------------
-# .PROC MainFileSave
-# .END
-#-------------------------------------------------------------------------------
-proc MainFileSave {} {
-	global Mrml Path
-
-	set filename $Path(mrmlFile)
-	if {$filename == ""} {
-		MainFileSaveAs
-	}
-
-	# Always save with an ".xml" extension
-	if {[file extension $filename] == ".mrml"} {
-		set filename "[string range $filename 0 \
-			[expr [string length $filename] - 6]].xml"
+	# See if the extension is already there
+	if {[expr [string length [file rootname $prefix]] + 1] == \
+		[string last $ext $prefix]} {
+		set prefix [file rootname $prefix]
 	}
 	
-	MainMrmlWrite $filename
-}
+	# The prefix cannot be blank
+	if {$prefix == ""} {
+		return ""
+	}
 
-#-------------------------------------------------------------------------------
-# GetSaveFile
-#
-# root     = root path
-# rel      = initial path relative to root
-# typelist = see documentation for the tk_getSaveFile proc (ie:
-#	set typelist {
-#		{"MRML File" {".mrml"}}
-#		{"All Files" {*}}
-#	}
-# ext      = default file extension (ie: mrml)
-# title    = popup window title (ie: "Save File")
-#-------------------------------------------------------------------------------
-proc GetSaveFile {root rel typelist ext title {dialog 1}} {
+    # Form an absolute prefix
+    set abs [file join $root $prefix]
 
-	set path   [file join $root $rel]
-
-	# Allow the prefix to only be a number
-	set code   [DecodeFileName $path] 
-	set dir    [lindex $code 0]
-	set prefix [lindex $code 1]
-
-	# See if the path is just a valid directory
-	if {[file isdirectory $path] == 1} {
-		# Yes, so use no prefix
-		set dir    $path
-		set prefix ""
-	} else {
-		# See if the path is a valid directory and prefix
-		if {[file isdirectory $dir] == 1} {
-		} else {
-			# No, so just use root
-			set dir    $root
-			set prefix ""
+	set num ""
+    set filename $abs$num.$ext
+    if {[file exists $filename] == 1} {
+		set num 1
+		set filename $abs$num.$ext
+		while {[file exists $filename] == 1} {
+			incr num
+			set filename $abs$num.$ext
 		}
 	}
-
-	set num [FindUniqueFileName $dir $prefix $ext]
-
-	if {$dialog == 1} {
-		set filename [tk_getSaveFile -title "$title" -defaultextension ".$ext" \
-			-filetypes $typelist -initialdir  "$dir" \
-			-initialfile [file join $dir "$prefix$num.$ext"]]
-	} else {
-		set filename [file join $dir "$prefix$num.$ext"]
-	}
-
-	return [GetRelativeFileName $root $filename]
+	return $filename
 }
 
-#-------------------------------------------------------------------------------
-# GetOpenFile
-#
-# root     = root path
-# rel      = initial path relative to root
-# typelist = see documentation for the tk_getSaveFile proc (ie:
-#	set typelist {
-#		{"MRML File" {".mrml"}}
-#		{"All Files" {*}}
-#	}
-# ext      = default file extension (ie: .mrml) including the dot
-# title    = popup window title (ie: "Save File")
-# forceExt = if 1, forces the user to select a file with extension 'ext'
-#-------------------------------------------------------------------------------
-proc GetOpenFile {root rel typelist ext title {forceExt 1} {widget ""}} {
-	global Gui
-
-	set path   [file join $root $rel]
-	set dir    [file dirname $path]
-	# Don't use "."
-	if {$dir == "."} {
-		set dir [pwd]
-	}
-	set prefix [file root [file tail $path]]
-
-	# See if the path is just a valid directory
-	if {[file isdirectory $path] == 1} {
-		# Yes, so use no prefix
-		set dir    $path
-		set prefix ""
-	} else {
-		# See if the path is a valid directory and prefix
-		if {[file isdirectory $dir] == 0} {
-			# No, so just use root
-			set dir    $root
-			set prefix ""
-		}
-	}
-
-	set filename [tk_getOpenFile -title "$title" -defaultextension "$ext" \
-		-filetypes $typelist -initialdir  "$dir" \
-		-initialfile [file join $dir "$prefix$ext"]]
-	
-	# User cancelled
-	if {$filename == ""} {return}
-
-	if {$forceExt == 1} {
-		# Allow *ext files only
-		if {[file extension $filename] != "$ext"} {
-			tk_messageBox -icon error -title $Gui(title) \
-				-message "Please select a file that ends with '$ext'"
-			if {$widget != ""} {
-				focus $widget
-			}
-			return ""
-		}
-	}
-
-	if {$widget != ""} {
-		focus $widget
-	}
-	return [GetRelativeFileName $root $filename]
-}
-
-#-------------------------------------------------------------------------------
-# .PROC FindUniqueFileName
-# .END
-#-------------------------------------------------------------------------------
-proc FindUniqueFileName {dir prefix ext} {
-	
+proc MainFileCreateDirectory {filename} {
 	# Create directory if it does not exist.
 	# If this fails, then use the current directory
+
+	set dir [file dirname $filename]
 	if {[file isdirectory $dir] == 0} {
 		if {$dir != ""} {
 			file mkdir $dir
@@ -336,56 +426,6 @@ proc FindUniqueFileName {dir prefix ext} {
 			set dir ""
 		}
 	}
-
-    # Find a unique filename
-    set name [file join $dir $prefix]
-    set num 1
-    set filename $name$num.$ext
-    while {[file exists $filename] == 1} {
-        incr num
-        set filename $name$num.$ext
-    }
-	return $num
-}
-
-#-------------------------------------------------------------------------------
-# .PROC GetRelativeFileName
-# .END
-#-------------------------------------------------------------------------------
-proc GetRelativeFileName {root full} {
-
-	set first [string first $root $full]
-	if {$first == 0} {
-		set rel [string range $full [expr [string length $root] + 1] end]
-		return $rel
-	}
-	return $full
-}
-
-#-------------------------------------------------------------------------------
-# .PROC DecodeFileName
-# .END
-#-------------------------------------------------------------------------------
-proc DecodeFileName {filename} {
-    set dir  [file dirname  $filename]
-	# Don't use "."
-	if {$dir == "."} {
-		set dir [pwd]
-	}
-    set root [file rootname $filename]
-    set i [expr [string length $root] - 1]
-    set c [string index $root $i]
-    while {$i >= 0 && [lsearch "0 1 2 3 4 5 6 7 8 9" $c] != "-1"} {
-        set i [expr $i - 1]
-        set c [string index $root $i]
-    }  
-    if {$i < 0} {
-        set i [string length $root]
-    }
-    set f [expr [string last / $filename] + 1]
-    set l $i
-    set prefix [string range $root 0 $l]
-	return "$dir $prefix" 
 }
 
 #-------------------------------------------------------------------------------

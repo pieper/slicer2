@@ -483,25 +483,44 @@ proc ModelsSetPropertyType {} {
 	
 	raise $Model(f$Model(propertyType))
 }
- 
-proc ModelsSetPrefix {} {
-	global Model Path
 
+proc ModelsSetPrefix {} {
+	global Model Mrml Color
+
+	# Cannot have blank prefix
+	if {$Model(prefix) == ""} {
+		set Model(prefix) model
+	}
+
+ 	# Show popup initialized to the last file saved
+	set filename [file join $Mrml(dir) $Model(prefix)]
+	set dir [file dirname $filename]
 	set typelist {
 		{"VTK Files" {.vtk}}
 		{"All Files" {*}}
 	}
-	set filename [GetOpenFile $Path(root) $Model(prefix) \
-		$typelist .vtk "Open Model"]
+	set filename [tk_getOpenFile -title "Open Model" -defaultextension ".vtk"\
+		-filetypes $typelist -initialdir "$dir" -initialfile $filename]
+
+	# Do nothing if the user cancelled
 	if {$filename == ""} {return}
 
-    # Store for next time 
-	set Path(prefixOpenModel) [file root $filename]
-
-	set Model(prefix) $Path(prefixOpenModel)
+	# Store it as a relative prefix for next time
+	set Model(prefix) [MainFileGetRelativePrefix $filename]
 
 	# Guess the name based on the prefix
 	set Model(name) [file tail $Model(prefix)]
+
+	# Guess the color
+	set name [string tolower $Model(name)]
+	set guess [Color($Color(activeID),node) GetName]
+	foreach c $Color(idList) {
+		set n [string tolower [Color($c,node) GetName]]
+		if {[string first $name $n] != -1} {
+			set guess [Color($c,node) GetName]
+		}
+	}
+	LabelsSetColor $guess
 }
 
 #-------------------------------------------------------------------------------
@@ -509,12 +528,17 @@ proc ModelsSetPrefix {} {
 # .END
 #-------------------------------------------------------------------------------
 proc ModelsPropsApply {} {
-	global Model Label Module Mrml Path
+	global Model Label Module Mrml
 
 	set m $Model(activeID)
 	if {$m == ""} {return}
 
 	if {$m == "NEW"} {
+		# Ensure prefix not blank
+		if {$Model(prefix) == ""} {
+			tk_messageBox -message "Please enter a file prefix."
+			return
+		}
 		set i $Model(nextID)
 		incr Model(nextID)
 		lappend Model(idList) $i
@@ -528,11 +552,16 @@ proc ModelsPropsApply {} {
 		# These get set down below, but we need them before MainUpdateMRML
 		$n SetName $Model(name)
 		$n SetFileName "$Model(prefix).vtk"
-		$n SetFullFileName [file join $Path(root) [$n GetFileName]]
+		$n SetFullFileName [file join $Mrml(dir) [$n GetFileName]]
 		$n SetColor $Label(name)
 
 		Mrml(dataTree) AddItem $n
 		MainUpdateMRML
+
+		# If failed, then it's no longer in the idList
+		if {[lsearch $Model(idList) $i] == -1} {
+			return
+		}
 		set Model(freeze) 0
 		MainModelsSetActive $i
 		set m $i
@@ -540,14 +569,14 @@ proc ModelsPropsApply {} {
 
 	Model($m,node) SetName $Model(name)
 	Model($m,node) SetFileName "$Model(prefix).vtk"
-	Model($m,node) SetFullFileName [file join $Path(root) [Model($m,node) GetFileName]]
+	Model($m,node) SetFullFileName [file join $Mrml(dir) [Model($m,node) GetFileName]]
 	Model($m,node) SetDescription $Model(desc)
 	MainModelsSetCulling $m $Model(culling)
 	MainModelsSetScalarVisibility $m $Model(scalarVisibility)
 	MainModelsSetScalarRange $m $Model(scalarLo) $Model(scalarHi)
 	MainModelsSetColor $m $Label(name)
 
-	# If tabs are frozen, then 
+	# If tabs are frozen, then return to the "freezer"
 	if {$Module(freezer) != ""} {
 		set cmd "Tab $Module(freezer)"
 		set Module(freezer) ""

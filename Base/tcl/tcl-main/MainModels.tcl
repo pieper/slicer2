@@ -87,6 +87,8 @@ proc MainModelsUpdateMRML {} {
 		if {[MainModelsCreate $m] >= 0} {
 			# Success, so Build GUI
 			MainModelsCreateGUI $Gui(wModels).fGrid $m
+		} else {
+			MainMrmlDeleteNodeDuringUpdate Model $m
 		}
 	}
 
@@ -113,7 +115,6 @@ proc MainModelsUpdateMRML {} {
 		MainModelsSetVisibility $m
 		MainModelsSetScalarVisibility $m
 		MainModelsSetOpacity $m
-
 		eval Model($m,mapper) SetScalarRange [Model($m,node) GetScalarRange]
 
 		# Color slider
@@ -228,8 +229,8 @@ proc MainModelsRead {m} {
 	if {$fileName == ""} {return}
 
 	# Check fileName
-	if {[CheckFileExists $fileName] == 0} {
-		set str "Cannot open model $m file '$fileName'"
+	if {[CheckFileExists $fileName 0] == 0} {
+		set str "Cannot read model: '$fileName'"
 		puts $str
 		tk_messageBox -message $str
 		return -1
@@ -258,6 +259,7 @@ proc MainModelsRead {m} {
 
 	# Delete the reader, leaving the data in Model($m,polyData)
 	# polyData will survive as long as it's the input to the mapper
+	#
 	set Model($m,polyData) [reader GetOutput]
 	$Model($m,polyData) Update
 	Model($m,mapper) SetInput $Model($m,polyData)
@@ -763,23 +765,25 @@ proc MainModelsRegisterModel {m rasToWld} {
 # .PROC MainModelsWrite
 # .END
 #-------------------------------------------------------------------------------
-proc MainModelsWrite {{m ""}} {
-	global Model Gui Path
+proc MainModelsWrite {m prefix} {
+	global Model Gui Mrml
 
-	if {$m == ""} {
-		set m $Model(activeID)
-	}
 	if {$m == ""} {return}
+	if {$prefix == ""} {
+		tk_messageBox -message "Please provide a file prefix."
+		return
+	}
 
-	Model($m,node) SetFileName "$Model(fileName).vtk"
-	Model($m,node) SetFullFuleName \
-		[file join $Path(root) [Model($m,node) GetFileName]]
+	Model($m,node) SetFileName "$prefix.vtk"
+	Model($m,node) SetFullFileName \
+		[file join $Mrml(dir) [Model($m,node) GetFileName]]
 
 	vtkPolyDataWriter writer
 	writer SetInput $Model($m,polyData)
 	writer SetFileType 2
 	writer SetFileName [Model($m,node) GetFullFileName]
 	set Gui(progressText) "Writing [Model($m,node) GetName]"
+	puts "Writing model: '[Model($m,node) GetFullFileName]'"
 	writer SetStartMethod     MainStartProgress
 	writer SetProgressMethod "MainShowProgress writer"
 	writer SetEndMethod       MainEndProgress

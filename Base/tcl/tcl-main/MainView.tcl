@@ -113,7 +113,7 @@ proc MainViewInit {} {
 
 	set View(magWin) Welcome
 	set View(inWin) none
-	set View(image3D) $Path(prefixSaveImage3D)
+	set View(viewPrefix) view
 }
 
 #-------------------------------------------------------------------------------
@@ -303,10 +303,10 @@ proc MainViewBuildGUI {} {
 	set f $Gui(fNav).fBot.fSave
 
 	set c {button $f.bSave -text "Save 3D" -width 7 \
-		-command "SaveScreen" $Gui(WBA)}; eval [subst $c]
-	set c {entry $f.eSave -textvariable View(image3D) $Gui(WEA)}
+		-command "MainViewSaveView" $Gui(WBA)}; eval [subst $c]
+	set c {entry $f.eSave -textvariable View(viewPrefix) $Gui(WEA)}
 		eval [subst $c]
-	bind $f.eSave <Return> {SaveImage3D}
+	bind $f.eSave <Return> {MainViewSaveViewPopup}
 	pack $f.bSave -side left -padx 3
 	pack $f.eSave -side left -padx 2 -expand 1 -fill x
 	
@@ -636,44 +636,76 @@ proc MainViewSetFocalPoint {x y z} {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC SaveScreen
+# .PROC MainViewSaveView
 # .END
 #-------------------------------------------------------------------------------
-proc SaveScreen {} {
-	global viewWin Path View
+proc MainViewSaveView {} {
+	global Mrml View
 
-    set filename [GetSaveFile $Path(root) $View(image3D) "" ppm "" 0]
-    if {$filename == ""} {return}
+    # Prefix cannot be blank
+	if {$View(viewPrefix) == ""} {
+		tk_messageBox -message "Please specify a file name."
+		return
+	}
 
-	set filename [file join $Path(root) $filename]
-	$viewWin SetFileName $filename
-	$viewWin SaveImageAsPPM
-	puts "Saved screen: $filename"
+	# Get a unique filename by appending a number to the prefix
+	set filename [MainFileFindUniqueName $Mrml(dir) $View(viewPrefix) ppm]
+
+	MainViewWriteView $filename
 }
 
 #-------------------------------------------------------------------------------
-# .PROC SaveImage3D
+# .PROC MainViewSaveViewPopup
+# Provide a popup for saving the 3D view to disk.
+# See also: MainViewSaveView
 # .END
 #-------------------------------------------------------------------------------
-proc SaveImage3D {} {
-	global View Path viewWin
+proc MainViewSaveViewPopup {} {
+	global View Mrml Gui
 
- 	set typelist {
+	# Cannot have blank prefix
+	if {$View(viewPrefix) == ""} {
+		set View(viewPrefix) view
+	}
+
+ 	# Show popup initialized to the last file saved
+	set filename [file join $Mrml(dir) $View(viewPrefix)]
+	set dir [file dirname $filename]
+	set typelist {
 		{"PPM File" {".ppm"}}
 		{"All Files" {*}}
 	}
-	set filename [GetSaveFile $Path(root) $View(image3D)  \
-		$typelist ppm "Save 3D Screen"]
+	set filename [tk_getSaveFile -title "Save 3D View" -defaultextension ".ppm"\
+		-filetypes $typelist -initialdir "$dir" -initialfile $filename]
+
+	# Do nothing if the user cancelled
 	if {$filename == ""} {return}
 
-	# Store for next time
-	set code [DecodeFileName $filename]
-	set Path(prefixSaveImage3D) [lindex $code 1]
-	set View(image3D) $Path(prefixSaveImage3D)
+	MainViewWriteView $filename
+}
 
-	set filename [file join $Path(root) $filename]
+proc MainViewWriteView {filename} {
+	global viewWin Mrml View Gui
+
+	MainFileCreateDirectory $filename
+	
+	# Write it
 	$viewWin SetFileName $filename
 	$viewWin SaveImageAsPPM
-	puts "Saved image: $filename"
+	puts "Saved view: $filename"
+
+	# Store the new prefix for next time
+	set root $Mrml(dir)
+	set absPrefix [file rootname $filename]
+	if {$Gui(pc) == 1} {
+		set absPrefix [string tolower $absPrefix]
+		set root [string tolower $Mrml(dir)]
+	}
+	if {[regexp "^$root/(\[^0-9\]*)(\[0-9\]*)" $absPrefix match relPrefix num] == 1} {
+		set View(viewPrefix) $relPrefix
+	} else {
+		set View(viewPrefix) [file rootname $absPrefix]
+	}
+
 }
 

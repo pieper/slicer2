@@ -67,7 +67,6 @@ proc DataInit {} {
 	set Module($m,procMRML) DataUpdateMRML
 
 	set Data(index) ""
-	set Data(save) $Path(prefixSaveFile)
 	set Data(clipboard) ""
 }
 

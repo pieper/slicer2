@@ -89,6 +89,8 @@ proc EditorInit {} {
 	set Editor(effectMore)  0
 	set Editor(activeID)    TBD
 	set Editor(firstReset)  0
+	set Editor(prefixComposite) ""
+	set Editor(prefixWorking) ""
 
 	# Look for Editor effects and form an array, Ed, for them.
 	# Each effect has a *.tcl file in the tcl-modules/Editor directory.
@@ -510,32 +512,34 @@ Models are fun. Do you like models, Ron?
 	frame $f.fMerge     -bg $Gui(activeWorkspace) -relief groove -bd 3
 
 	pack $f.fWorking $f.fComposite $f.fMerge \
-		-side top -padx $Gui(pad) -pady 10 -fill x
+		-side top -padx $Gui(pad) -pady $Gui(pad) -fill x
 
 	#-------------------------------------------
 	# Output->Working
 	#-------------------------------------------
 	set f $fOutput.fWorking
 
-	set c {label $f.lTitle -text "Working Volume" $Gui(WTA)}
-		eval [subst $c]
+	frame $f.f -bg $Gui(activeWorkspace)
 	frame $f.fPrefix -bg $Gui(activeWorkspace)
 	frame $f.fBtns   -bg $Gui(activeWorkspace)
-	pack $f.lTitle   -side top -pady $Gui(pad)
-	pack $f.fPrefix  -side top -pady $Gui(pad) -fill x
-	pack $f.fBtns    -side top -pady $Gui(pad)
+	pack $f.f -side top -pady $Gui(pad)
+	pack $f.fPrefix -side top -pady $Gui(pad) -fill x
+	pack $f.fBtns -side top -pady $Gui(pad)
+
+	set c {label $f.f.l -text "Working Volume" $Gui(WTA)}
+		eval [subst $c]
+	eval {button $f.f.b -text "Browse..." -width 10 \
+		-command "EditorSetPrefix Working"} $Gui(WBA)
+	pack $f.f.l $f.f.b -side left -padx $Gui(pad)
 
 	#-------------------------------------------
 	# Output->Working->Prefix
 	#-------------------------------------------
 	set f $fOutput.fWorking.fPrefix
 
-	set c {label $f.lWorking -text "Prefix:" $Gui(WLA)}
-		eval [subst $c]
-	set c {entry $f.eWorking \
-		-textvariable Path(prefixEditorWorking) $Gui(WEA)}; eval [subst $c]
-	pack $f.lWorking -padx $Gui(pad) -side left
-	pack $f.eWorking -padx $Gui(pad) -side left -expand 1 -fill x
+	set c {entry $f.e \
+		-textvariable Editor(prefixWorking) $Gui(WEA)}; eval [subst $c]
+	pack $f.e -padx $Gui(pad) -side left -expand 1 -fill x
 
 	#-------------------------------------------
 	# Output->Working->Btns
@@ -553,25 +557,27 @@ Models are fun. Do you like models, Ron?
 	#-------------------------------------------
 	set f $fOutput.fComposite
 
-	set c {label $f.lTitle -text "Composite Volume" $Gui(WTA)}
-		eval [subst $c]
+	frame $f.f -bg $Gui(activeWorkspace)
 	frame $f.fPrefix -bg $Gui(activeWorkspace)
 	frame $f.fBtns   -bg $Gui(activeWorkspace)
-	pack $f.lTitle -side top -pady $Gui(pad)
+	pack $f.f -side top -pady $Gui(pad)
 	pack $f.fPrefix -side top -pady $Gui(pad) -fill x
 	pack $f.fBtns -side top -pady $Gui(pad)
+
+	set c {label $f.f.l -text "Composite Volume" $Gui(WTA)}
+		eval [subst $c]
+	eval {button $f.f.b -text "Browse..." -width 10 \
+		-command "EditorSetPrefix Composite"} $Gui(WBA)
+	pack $f.f.l $f.f.b -side left -padx $Gui(pad)
 
 	#-------------------------------------------
 	# Output->Composite->Prefix
 	#-------------------------------------------
 	set f $fOutput.fComposite.fPrefix
 
-	set c {label $f.lComposite -text "Prefix:" $Gui(WLA)}
-		eval [subst $c]
-	set c {entry $f.eComposite \
-		-textvariable Path(prefixEditorComposite) $Gui(WEA)}; eval [subst $c]
-	pack $f.lComposite -padx $Gui(pad) -side left
-	pack $f.eComposite -padx $Gui(pad) -side left -expand 1 -fill x
+	set c {entry $f.e \
+		-textvariable Editor(prefixComposite) $Gui(WEA)}; eval [subst $c]
+	pack $f.e -padx $Gui(pad) -side left -expand 1 -fill x
 
 	#-------------------------------------------
 	# Output->Composite->Btns
@@ -603,6 +609,30 @@ Models are fun. Do you like models, Ron?
 	pack $f.lTitle $f.bMergeWorking $f.bMergeComposite $f.bMergeOriginal \
 		-side top -padx $Gui(pad) -pady $Gui(pad)
 
+}
+
+proc EditorSetPrefix {data} {
+	global Editor Mrml
+
+	# Cannot have blank prefix
+	if {$Editor(prefix$data) == ""} {
+		set Editor(prefix$data) [Uncap $data]
+	}
+
+ 	# Show popup initialized to the last file saved
+	set filename [file join $Mrml(dir) $Editor(prefix$data)]
+	set dir [file dirname $filename]
+	set typelist {
+		{"All Files" {*}}
+	}
+	set filename [tk_getSaveFile -title "Save Volume" \
+		-filetypes $typelist -initialdir "$dir" -initialfile $filename]
+
+	# Do nothing if the user cancelled
+	if {$filename == ""} {return}
+
+	# Store it as a relative prefix for next time
+	set Editor(prefix$data) [MainFileGetRelativePrefix $filename]
 }
 
 #-------------------------------------------------------------------------------
@@ -1530,7 +1560,7 @@ proc EditorMerge {data overwriteComposite} {
 # .END
 #-------------------------------------------------------------------------------
 proc EditorWriteOutput {data} {
-	global Volume Gui Path Lut tcl_platform
+	global Volume Gui Path Lut tcl_platform Mrml Editor
 
 	switch $data {
 		Composite {set v [EditorGetCompositeID]}
@@ -1539,8 +1569,8 @@ proc EditorWriteOutput {data} {
 
 	# Change prefix and header to differ from the input volume
 	#
-	set filePrefix $Path(prefixEditor$data)
-	set fileFull [file join $Path(root) $filePrefix]
+	set filePrefix $Editor(prefix$data)
+	set fileFull [file join $Mrml(dir) $filePrefix]
 
 	# Check that it's not blank
 	if {[file isdirectory $fileFull] == 1} {
@@ -1570,24 +1600,10 @@ proc EditorWriteOutput {data} {
 		}
 	}
 	Volume($v,node) SetFilePrefix $filePrefix
-	Volume($v,node) SetFullPrefix \
-		[file join $Path(root) [Volume($v,node) GetFilePrefix]]
+	Volume($v,node) SetFullPrefix $fileFull
 
-	# Write volume data
-	set Gui(progressText) "Writing [Volume($v,node) GetName]"
-	puts "Writing '$fileFull' ..."
-	Volume($v,vol) Write
-	puts " ...done."
-
-	# Write MRML file
-	# Here I have to Get Prefix because the filenames must be relative
-	# to the MRML file.
-	set filename "$fileFull.mrml"
-	Volume($v,node) SetFilePrefix [file root [file tail $filePrefix]]
-	Volume($v,node) SetFullPrefix \
-		[file join $Path(root) [Volume($v,node) GetFilePrefix]]
-
-	# DAVE interpolate off
+	# interpolate off
+	Volume($v,node) InterpolateOff
 
 	# Determine if littleEndian
 	if {$tcl_platform(machine) == "intel" || $tcl_platform(machine) == "mips"} {
@@ -1596,29 +1612,19 @@ proc EditorWriteOutput {data} {
 		Volume($v,node) SetLittleEndian 1
 	}
 
-	set dag  [MRMLCreateDag]
-	set node [MRMLCreateNode "Volume"]
-	set node [MRMLSetValue $node name           [Volume($v,node) GetName]]
-	set node [MRMLSetValue $node filePattern    [Volume($v,node) GetFilePattern]]
-	set node [MRMLSetValue $node filePrefix     [Volume($v,node) GetFilePrefix]]
-	set node [MRMLSetValue $node headerSize     0]
-	set node [MRMLSetValue $node spacing        [Volume($v,node) GetSpacing]]
-	set node [MRMLSetValue $node tilt           [Volume($v,node) GetTilt]]
-	set node [MRMLSetValue $node dimensions     [Volume($v,node) GetDimensions]]
-	set node [MRMLSetValue $node rasToIjkMatrix [Volume($v,node) GetRasToIjkMatrix]]
-	set node [MRMLSetValue $node rasToVtkMatrix [Volume($v,node) GetRasToVtkMatrix]]
-	set node [MRMLSetValue $node scanOrder      [Volume($v,node) GetScanOrder]]
-	set node [MRMLSetValue $node labelMap       [Volume($v,node) GetLabelMap]]
-	set node [MRMLSetValue $node options        [Volume($v,node) GetOptions]]
-	set node [MRMLSetValue $node littleEndian   [Volume($v,node) GetLittleEndian]]
-	set node [MRMLSetValue $node imageRange     [Volume($v,node) GetImageRange]]
-	
-	set dag    [MRMLAppendNode $dag $node]
-	set status [MRMLWrite $dag $filename]
-	if {$status != ""} {
-		puts "MRMLWrite returned: '$status'"
-	} else {
-		puts "Saved file: $filename"
-	}
+	# Write volume data
+	set Gui(progressText) "Writing [Volume($v,node) GetName]"
+	puts "Writing '$fileFull' ..."
+	Volume($v,vol) Write
+	puts " ...done."
+
+	# Write MRML file
+	set filename $fileFull.xml
+	vtkMrmlTree tree
+	tree AddItem Volume($v,node)
+	tree Write $filename
+	tree RemoveAllItems
+	tree Delete
+	puts "Saved MRML file: $filename"
 }
 

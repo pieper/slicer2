@@ -138,7 +138,7 @@ proc MainColorsSetActive {c} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainColorsAddLabel {c newLabel} {
-	global Color Gui
+	global Color Gui Mrml
 
 	# Convert to integer
 	if {$newLabel >= -32768 && $newLabel <= 32767} {
@@ -216,6 +216,7 @@ proc MainColorsAddColor {name diffuseColor \
 	}
 
 	Mrml(colorTree) AddItem $n
+
 	return $c
 }
 

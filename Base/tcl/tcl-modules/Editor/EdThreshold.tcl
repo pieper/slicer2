@@ -336,7 +336,9 @@ proc EdThresholdUpdate {} {
 	foreach s $Slice(idList) {
 		Ed(EdThreshold,thresh$s) SetReplaceIn     $Ed(EdThreshold,replaceIn)
 		Ed(EdThreshold,thresh$s) SetReplaceOut    $Ed(EdThreshold,replaceOut)
-		Ed(EdThreshold,thresh$s) SetInValue       $Label(label)
+		if {$Label(label) != ""} {
+			Ed(EdThreshold,thresh$s) SetInValue       $Label(label)
+		}
 		Ed(EdThreshold,thresh$s) SetOutValue      $Ed(EdThreshold,bg)
 		Ed(EdThreshold,thresh$s) ThresholdBetween $Ed(EdThreshold,lower) $Ed(EdThreshold,upper)
 	}
@@ -376,6 +378,11 @@ proc EdThresholdApply {} {
 
 	set Gui(progressText) "Threshold [Volume($v,node) GetName]"
 	
+	if {$Label(label) == ""} {
+		tk_messageBox -message "Please specify an input label, first."
+		return
+	}
+
 	set min        $Ed(EdThreshold,lower)
 	set max        $Ed(EdThreshold,upper)
 	set in         $Label(label)

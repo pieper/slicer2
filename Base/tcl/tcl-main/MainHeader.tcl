@@ -237,7 +237,7 @@ proc DumpHeader {aHeader} {
 # .END
 #-------------------------------------------------------------------------------
 proc GetHeaderInfo {img1 num2 node tk} {
-	global Path
+	global Mrml
 
 	# Get filename pattern
 	set prefix [file root $img1]
@@ -270,7 +270,7 @@ proc GetHeaderInfo {img1 num2 node tk} {
 
 	# Set the volume node's attributes using header info
 	$node SetFilePrefix $prefix
-	$node SetFullPrefix [file join $Path(root) [$node GetFilePrefix]]
+	$node SetFullPrefix [file join $Mrml(dir) [$node GetFilePrefix]]
 	$node SetFilePattern $filePattern
 	$node SetImageRange $num1 $num2
 	$node SetDimensions $Header1(xDim) $Header1(yDim)
