@@ -149,6 +149,7 @@ proc CsysActorSelected {widget x y} {
         # if we got to this point, no csys got selected
         return 0
     }
+    return 0
 }
 
 ##################################################################
