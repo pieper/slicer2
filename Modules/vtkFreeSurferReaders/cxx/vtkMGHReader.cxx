@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkMGHReader.cxx,v $
   Language:  C++
-  Date:      $Date: 2003/02/20 13:27:27 $
-  Version:   $Revision: 1.2 $
+  Date:      $Date: 2004/07/22 19:45:01 $
+  Version:   $Revision: 1.3 $
 
 =========================================================================*/
 #include "vtkMGHReader.h"
@@ -48,8 +48,15 @@ vtkMGHReader::~vtkMGHReader()
 
 void vtkMGHReader::ExecuteInformation()
 {
+  vtkDebugMacro(<< "vtkMGHReader: ExecuteInformation");
+    
   vtkImageData *output = this->GetOutput();
-  
+  if (!output)
+  {
+      vtkErrorMacro(<< "vtkMGHReader::ExecuteInformation: output is null");
+      cerr << "vtkMGHReader::ExecuteInformation: output is null";
+      return;
+  }
   // Read the header.
   this->ReadVolumeHeader();
 
@@ -64,11 +71,25 @@ void vtkMGHReader::ExecuteInformation()
   output->SetOrigin(this->DataOrigin);
 }
     
-    
+
+void vtkMGHReader::SetOutput()
+{
+    vtkDebugMacro(<< "vtkMGHReader: SetOutput, calling Execute\n");
+    this->Execute();
+}
+
 void vtkMGHReader::Execute()
 {
+    vtkDebugMacro(<< "vtkMGHReader: Execute");
+    
   vtkImageData *output = this->GetOutput();
 
+  if (output == NULL)
+  {
+      vtkErrorMacro(<<"vtkMGHReader: Execute: output is null");
+      cout <<"vtkMGHReader: Execute: output is null";
+      return;
+  }
   // Read the header.
   this->ReadVolumeHeader();
 
@@ -87,10 +108,23 @@ void vtkMGHReader::Execute()
   // them to the output.
   vtkDataArray *newScalars = this->ReadVolumeData();
   if ( newScalars ) 
-    {
-      output->GetPointData()->SetScalars(newScalars);
+  {
+      if (output->GetPointData() == NULL)
+      {
+          vtkErrorMacro(<<"vtkMGHReader: Execute: point data is null.");
+          cout <<"vtkMGHReader: Execute: point data is null.";
+      }
+      else
+      {
+          output->GetPointData()->SetScalars(newScalars);
+      }
       newScalars->Delete();
-    }
+  }
+  else
+  {
+      vtkErrorMacro(<<"vtkMGHReader: Execute: scalars are null");
+      cout <<"vtkMGHReader: Execute: scalars are null";
+  }
 }
 
 vtkImageData *vtkMGHReader::GetImage(int ImageNumber)
@@ -120,14 +154,16 @@ vtkDataArray *vtkMGHReader::ReadVolumeData()
   short s;
   int i;
   float f;
-
+  
   // Check the file name.
   if( NULL == this->FileName || 
       (0 == strlen( this->FileName )) ) {
     vtkErrorMacro( << "No file name specified" );
+    cout << "ReadVolumeData: No file name specified" ;
     return NULL;
   }
-
+  vtkDebugMacro(<< "vtkMGHReader: ReadVolumeData for file " << this->FileName << ", scalartype = " << this->ScalarType << "\n");
+  
   // Read header first.
   this->ReadVolumeHeader();
 
@@ -173,11 +209,13 @@ vtkDataArray *vtkMGHReader::ReadVolumeData()
     elementSize = sizeof( float );
     break;
   default:
-    vtkErrorMacro(<< "Volume type not supported.");
+    vtkDebugMacro(<< "Volume type not supported.");
+    cout <<  "Volume type not supported.";
     return NULL;
   }
   if ( NULL == scalars ) {
     vtkErrorMacro(<< "Couldn't allocate scalars array.");
+    cout << "Couldn't allocate scalars array.";
     return NULL;
   } 
   
@@ -186,6 +224,7 @@ vtkDataArray *vtkMGHReader::ReadVolumeData()
   fp = fopen( this->FileName, "rb" );
   if( !fp ) {
     vtkErrorMacro(<< "Can't find/open file: " << this->FileName);
+    cout << "Can't find/open file: " << this->FileName;
     return NULL;
   }
 
@@ -195,42 +234,45 @@ vtkDataArray *vtkMGHReader::ReadVolumeData()
   // Read in a frame. We need to do this element by element so we can
   // do byte swapping, except for the uchars because they don't need
   // it.
-  vtkDebugMacro(<< "Reading volume data" );
+  vtkDebugMacro(<< "vtkMGHReader: ReadVolumeData: starting to read, numpts=" << numPts << " of scalarType " << this->ScalarType << endl);
   if( VTK_UNSIGNED_CHAR == this->ScalarType ) {
-    numRead = fread( destData, elementSize, numPts, fp );
-    if ( numRead != numPts ) {
-      vtkErrorMacro(<<"Trying to read " << numPts << " elements, "
-            "but only got " << numRead << " of them.");
-      scalars->Delete();
-      return NULL;
-    }
+      numRead = fread( destData, elementSize, numPts, fp );
+      if ( numRead != numPts ) {
+          vtkErrorMacro(<<"Trying to read " << numPts << " elements, "
+                        "but only got " << numRead << " of them.");
+          cout <<"Trying to read " << numPts << " elements, "
+              "but only got " << numRead << " of them.";
+          scalars->Delete();
+          return NULL;
+      }
   } else {
-    short_destData = (short *)destData;
-    int_destData = (int *)destData;
-    float_destData = (float *)destData;
-    for( int nZ = 0; nZ < this->DataDimensions[2]; nZ++ ) {
-      for( int nY = 0; nY < this->DataDimensions[1]; nY++ ) {
-    for( int nX = 0; nX < this->DataDimensions[0]; nX++ ) {
-      switch ( this->ScalarType ) {
-      case VTK_SHORT:
-        vtkFSIO::ReadShort( fp, s );
-        *short_destData++ = s;
-        break;
-      case VTK_INT:
-        vtkFSIO::ReadInt( fp, i );
-        *int_destData++ = i;
-        break;
-      case VTK_FLOAT:
-        vtkFSIO::ReadFloat( fp, f );
-        *float_destData++ = f;
-        break;
-      default:
-        vtkErrorMacro(<< "Volume type not supported.");
-        return NULL;
+      short_destData = (short *)destData;
+      int_destData = (int *)destData;
+      float_destData = (float *)destData;
+      for( int nZ = 0; nZ < this->DataDimensions[2]; nZ++ ) {
+          for( int nY = 0; nY < this->DataDimensions[1]; nY++ ) {
+              for( int nX = 0; nX < this->DataDimensions[0]; nX++ ) {
+                  switch ( this->ScalarType ) {
+                  case VTK_SHORT:
+                      vtkFSIO::ReadShort( fp, s );
+                      *short_destData++ = s;
+                      break;
+                  case VTK_INT:
+                      vtkFSIO::ReadInt( fp, i );
+                      *int_destData++ = i;
+                      break;
+                  case VTK_FLOAT:
+                      vtkFSIO::ReadFloat( fp, f );
+                      *float_destData++ = f;
+                      break;
+                  default:
+                      vtkErrorMacro(<< "Volume type not supported.");
+                      cout << "Volume type not supported.";
+                      return NULL;
+                  }
+              }
+          }
       }
-    }
-      }
-    }
   }
 
   // Close the file.
@@ -248,17 +290,22 @@ void vtkMGHReader::ReadVolumeHeader()
   int dof;
   short RASgood;
 
+  
   // Check the file name.
   if( NULL == this->FileName || 
-      (0 == strlen( this->FileName )) ) {
+      (0 == strlen( this->FileName )) )
+  {
     vtkErrorMacro( << "No file name specified" );
+    cout << "ReadVolumeHeader: No file name specified";
     return;
   }
+  vtkDebugMacro(<< "vtkMGHReader: ReadVolumeHeader for file " << this->FileName << "\n");
 
   // Open the file.
   fp = fopen( this->FileName, "rb" );
   if( !fp ) {
     vtkErrorMacro(<< "Can't find/open file: " << this->FileName);
+    cout << "ReadVolumeHeader: Can't find/open file: " << this->FileName;
     return;
   }
 
@@ -297,6 +344,7 @@ void vtkMGHReader::ReadVolumeHeader()
     // c_r c_a c_s
     for( int nMatrix = 0; nMatrix < 12; nMatrix++ ) {
       vtkFSIO::ReadFloat( fp, this->RASMatrix[nMatrix] );
+      //vtkErrorMacro(<<"RASMatrix[" << nMatrix << "] = " << this->RASMatrix[nMatrix] << ".");
     }
   }
 
@@ -314,4 +362,10 @@ void vtkMGHReader::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "Scalar type: " << this->ScalarType << endl;
   os << indent << "Number of Frames: " << this->NumFrames << endl;
   os << indent << "Current Frame: " << this->CurFrame << endl;
+  os << indent << "File name: " << this->FileName << endl;
+  os << indent << "RAS to IJK matrix: " << endl;
+  os << indent << "\tx_r " << this->RASMatrix[0] << "\t\tx_a " << this->RASMatrix[1] << "\t\tx_s " << this->RASMatrix[2] << endl;
+  os << indent << "\ty_r " << this->RASMatrix[3] << "\t\ty_a " << this->RASMatrix[4] << "\t\ty_s " << this->RASMatrix[5] << endl;
+  os << indent << "\tz_r " << this->RASMatrix[6] << "\t\tz_a " << this->RASMatrix[7] << "\t\tz_s " << this->RASMatrix[8] << endl;
+  os << indent << "\tc_r " << this->RASMatrix[9] << "\tc_a " << this->RASMatrix[10] << "\tc_s " << this->RASMatrix[11] << endl;
 }
