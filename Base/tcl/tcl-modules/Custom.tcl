@@ -87,10 +87,9 @@ proc CustomInit {} {
     set Module($m,author) "First name, last name, affiliation, email"
 
     #  Set the level of development that this module falls under, from the list defined in Main.tcl,
-    #  Module(categories), use lindex to grab the text string 0=Core, higher numbers indicate
-    #  more experimental (1=Beta, 2=Experimental)
+    #  Module(categories), use lindex to grab the text string 0=Core, 1=Beta, 2=Experimental, 3=Example
     #  This is included in the Help->Module Categories menu item
-    set Module($m,category) [lindex $Module(categories) 2]
+    set Module($m,category) [lindex $Module(categories) 3]
 
     # Define Tabs
     #------------------------------------
@@ -171,7 +170,7 @@ proc CustomInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.32 $} {$Date: 2004/03/11 17:50:04 $}]
+        {$Revision: 1.33 $} {$Date: 2004/03/15 20:49:38 $}]
 
     # Initialize module-level variables
     #------------------------------------
