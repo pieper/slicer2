@@ -41,6 +41,7 @@ option add *is3d.distance 800 widgetDefault
 option add *is3d.colorscheme "gray" widgetDefault
 option add *is3d.rotationgain "1." widgetDefault
 option add *is3d.scalegain "1." widgetDefault
+option add *is3d.linked3d "" widgetDefault
 
 #
 # The class definition - define if needed (not when re-sourcing)
@@ -68,6 +69,7 @@ if { [itcl::find class is3d] == "" } {
       itk_option define -colorscheme colorscheme Colorscheme {}
       itk_option define -rotationgain rotationgain Rotationgain {}
       itk_option define -scalegain scalegain Scalegain {}
+      itk_option define -linked3d linked3d Linked3d {}
 
       # widgets for the control area
       variable _controls
@@ -469,38 +471,46 @@ itcl::body is3d::dragcb {state x y} {
         "rotstart" {
             set _dragpos "$x $y"
             set _dragstate "rot"
+            set _draglong $itk_option(-longitude)
+            set _draglat $itk_option(-latitude)
         }
         "rot" {
             set _dragstate "rot"
-            set _draglong [expr $itk_option(-longitude) + \
+            set long [expr $_draglong + \
                 ($x - [lindex $_dragpos 0]) * $itk_option(-rotationgain)]
-            set _draglat [expr $itk_option(-latitude) + \
+            set lat [expr $_draglat + \
                 ($y - [lindex $_dragpos 1]) * $itk_option(-rotationgain)]
-            if { $_draglat  < -89.9 } {set _draglat  -89.9}
-            if { $_draglat  >  89.9 } {set _draglat   89.9}
+            if { $lat  < -89.9 } {set lat  -89.9}
+            if { $lat  >  89.9 } {set lat   89.9}
 
-            longlatdist $_draglong $_draglat $itk_option(-distance)
+            $this configure -longitude $long -latitude $lat
         }
         "rotend" {
             set _dragstate ""
-            $this configure -longitude $_draglong -latitude $_draglat
         }
         "scalestart" {
             set _dragpos "$x $y"
             set _dragstate "scale"
+            set _dragdist $itk_option(-distance) 
         }
         "scale" {
             set _dragstate "scale"
-            set _dragdist [expr $itk_option(-distance) - ($y - [lindex $_dragpos 1]) * $itk_option(-scalegain)]
-            if { $_dragdist < 0.1 } {set _dragdist 0.1}
-            longlatdist $itk_option(-longitude) $itk_option(-latitude) $_dragdist
+            set dist [expr $_dragdist - ($y - [lindex $_dragpos 1]) * $itk_option(-scalegain)]
+            if { $dist < 0.1 } {set dist 0.1}
+            $this configure -distance $dist
         }
         "scaleend" {
             set _dragstate ""
-            $this configure -distance $_dragdist
         }
     }
     $this expose
+    
+    foreach is3d $itk_option(-linked3d) {
+        if { $is3d != $this } {
+            $is3d configure -longitude $itk_option(-longitude) -latitude $itk_option(-latitude) -distance $itk_option(-distance)
+            $is3d expose
+        }
+    }
 }
 
 proc is3d::dtor {d} {
