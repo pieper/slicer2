@@ -26,6 +26,7 @@
 #   MainInit
 #   MainBuildVTK
 #   MainBuildGUI
+#   MainRebuildModuleGui ModuleName
 #   MainBuildModuleTabs ModuleName
 #   MainUpdateMRML
 #   MainAddActor a
@@ -351,7 +352,7 @@ proc MainInit {} {
 
         # Set version info
 	lappend Module(versions) [ParseCVSInfo Main \
-		{$Revision: 1.64 $} {$Date: 2001/09/05 23:09:03 $}]
+		{$Revision: 1.65 $} {$Date: 2001/09/06 21:43:39 $}]
 
 	# Call each "Init" routine that's not part of a module
 	#-------------------------------------------
@@ -782,7 +783,6 @@ proc MainBuildGUI {} {
 	}
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC MainRebuildModuleGui
 # 
@@ -821,7 +821,6 @@ proc MainRebuildModuleGui {ModuleName} {
     catch {destroy $f.f${m}row2}
     MainBuildModuleTabs $ModuleName
     $Module($ModuleName,procGUI)
-    
 }
 
 #-------------------------------------------------------------------------------

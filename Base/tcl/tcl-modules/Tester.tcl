@@ -27,7 +27,6 @@
 #   TesterEnter
 #   TesterExit
 #   TesterSourceModule Module type
-#   TesterRebuildModuleGui ModuleName
 #   TesterReadNewModule Filename
 #==========================================================================auto=
 
@@ -133,7 +132,7 @@ proc TesterInit {} {
 	#   appropriate revision number and date when the module is checked in.
 	#   
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.9 $} {$Date: 2001/09/05 23:15:44 $}]
+		{$Revision: 1.10 $} {$Date: 2001/09/06 21:42:13 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
