@@ -67,12 +67,17 @@ class VTK_FMRIENGINE_EXPORT GeneralLinearModel
 {
 public:
     // Description:
-    // Computes voxel activation based on general linear model, with the following inputs:
+    // Fits the linear model, with the following inputs:
     // designMatrix - glm design matrix
     // dims - dimensions of the design matrix (dims[0]: number of rows; dims[1]: number of cols)
     // timeCourse - voxel time course
-    // The function returns t-test value for the voxel.
-    static float ComputeVoxelActivation(float **designMatrix, int *dims, float *timeCourse);
+    // beta - array of beta coefficients (output)
+    // cov - array of covariance (output)
+    static void FitModel(float **designMatrix, 
+                         int *dims, 
+                         float *timeCourse,
+                         float *beta,
+                         float *cov);
 
     // Description:
     // Frees the allocated momery 

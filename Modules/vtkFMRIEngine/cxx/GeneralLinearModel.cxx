@@ -61,7 +61,11 @@ gsl_vector *GeneralLinearModel::y = NULL;
 gsl_vector *GeneralLinearModel::c = NULL;
 gsl_multifit_linear_workspace *GeneralLinearModel::work = NULL;
 
-float GeneralLinearModel::ComputeVoxelActivation(float **designMatrix, int *dims, float *timeCourse)
+void GeneralLinearModel::FitModel(float **designMatrix, 
+                                  int *dims, 
+                                  float *timeCourse,
+                                  float *beta,
+                                  float *cov2)
 {
     int i, j;
     double xi, yi, chisq, t;
@@ -99,9 +103,11 @@ float GeneralLinearModel::ComputeVoxelActivation(float **designMatrix, int *dims
     }
 
     gsl_multifit_linear(X, y, c, cov, &chisq, work);
-    t = gsl_vector_get(c, 1) / sqrt(gsl_matrix_get(cov, 1, 1));
-
-    return (float)t;
+    for(j = 0; j < dims[1]; j++)
+    {
+        beta[j] = gsl_vector_get(c,j);
+        cov2[j] = gsl_matrix_get(cov,j,j);
+    }
 }
 
 
