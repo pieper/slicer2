@@ -94,7 +94,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "itkQuaternionRigidTransform.h"
 #include "itkMutualInformationImageToImageMetric.h"
 #include "itkLinearInterpolateImageFunction.h"
-#include "itkQuaternionRigidTransformGradientDescentOptimizer.h"
+#include "itkQuaternionRigidTransformGradientDescentOptimizerModified.h"
 #include "itkRecursiveMultiResolutionPyramidImageFilter.h"
 
 #include "itkArray.h"
@@ -140,7 +140,7 @@ public:
   typedef QuaternionRigidTransform< double >       TransformType;
 
   /** Optimizer Type. */
-  typedef QuaternionRigidTransformGradientDescentOptimizer 
+  typedef QuaternionRigidTransformGradientDescentOptimizerModified 
                                                          OptimizerType;
 
   /** Metric Type. */
