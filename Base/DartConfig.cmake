@@ -8,7 +8,7 @@ SET (DROP_LOCATION "/incoming")
 SET (DROP_SITE_USER "slicerdart")
 SET (DROP_SITE_PASSWORD "slicerdart")
 SET (TRIGGER_SITE 
-       "http://${DROP_SITE}/cgi-bin/Submit-slicer-TestingResults.pl")
+       "http://splweb.bwh.harvard.edu:8000/cgi-bin/Submit-slicer-TestingResults.pl")
 
 # Project Home Page
 SET (PROJECT_URL "http://www.slicer.org/")
