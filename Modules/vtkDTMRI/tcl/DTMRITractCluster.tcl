@@ -66,7 +66,7 @@ proc DTMRITractClusterBuildClusterFrame {} {
     frame $f.fSettings -bg  $Gui(activeWorkspace) -relief groove -bd 2
     pack $f.fSettings -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
 
-    foreach frame "Apply" {
+    foreach frame "Apply Save" {
         frame $f.f$frame -bg  $Gui(activeWorkspace) 
         pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
     }
@@ -126,6 +126,19 @@ proc DTMRITractClusterBuildClusterFrame {} {
     pack $f.b -side top -padx $Gui(pad) -pady $Gui(pad)
 
     TooltipAdd  $f.b "Apply above settings and cluster tracts.\nEach cluster will get a unique color."
+
+
+    #-------------------------------------------
+    # TractCluster->Bottom->Save frame
+    #-------------------------------------------
+    set f $fCluster.fBottom.fSave
+    DevAddButton $f.bSave "Save clusters" \
+        {DTMRIractClusterSaveTractClusters}
+
+    TooltipAdd $f.bSave "Save text files with the tract paths, FA, and class lebals.\n This does not save vtk models, please save those under Display->Tracts->SaveTracts."
+
+    pack $f.bSave -side top -padx $Gui(pad) -pady $Gui(pad) 
+
 }
 
 
@@ -344,3 +357,37 @@ proc DTMRITractClusterAdvancedViewMatrices {} {
 
 }
 
+
+#-------------------------------------------------------------------------------
+# .PROC DTMRIractClusterSaveTractClusters
+# Save all points from the streamline paths as text files
+# .ARGS
+# int verbose default is 1 
+# .END
+#-------------------------------------------------------------------------------
+proc DTMRIractClusterSaveTractClusters {{verbose "1"}} {
+    
+    # check we have streamlines
+    if {[DTMRI(vtk,streamlineControl) GetNumberOfStreamlines] < 1} {
+        set msg "There are no tracts to save. Please create tracts first."
+        tk_messageBox -message $msg
+        return
+    }
+
+    # set base filename for all stored files
+    set filename [tk_getSaveFile  -title "Save Tracts: Choose Initial Filename"]
+    if { $filename == "" } {
+        return
+    }
+
+    # save the tracts
+    DTMRI(vtk,streamlineControl) SaveTractClustersAsTextFiles \
+        $filename 
+
+    # let user know something happened
+    if {$verbose == "1"} {
+        set msg "Finished writing tracts. The filenames are: $filename*.*"
+        tk_messageBox -message $msg
+    }
+
+} 

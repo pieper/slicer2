@@ -691,7 +691,7 @@ void vtkMultipleStreamlineController::SaveStreamlinesAsPolyData(char *filename,
 int vtkMultipleStreamlineController::PointWithinTensorData(double *point, double *pointw)
 {
   vtkFloatingPointType *bounds;
-  int i, inbounds;
+  int inbounds;
 
   bounds=this->InputTensorField->GetBounds();
   vtkDebugMacro("Bounds " << bounds[0] << " " << bounds[1] << " " << bounds[2] << " " << bounds[3] << " " << bounds[4] << " " << bounds[5]);
@@ -1207,13 +1207,113 @@ void vtkMultipleStreamlineController::SeedAndSaveStreamlinesFromROI(char *points
   transformer->Delete();
   writer->Delete();
 
-  // Close text file
+  // Close text files
   filePoints.close();
   fileAttribs.close();
 
 }
 
 
+// Output streamlines in our temporary matlab text format, along
+// with FA and class number
+//----------------------------------------------------------------------------
+void vtkMultipleStreamlineController::SaveTractClustersAsTextFiles(char *filename)
+{
+  std::stringstream fileNameStr;
+  int idx=0;
+  ofstream filePoints, fileAttribs, fileLabels;
+  vtkHyperStreamline *currStreamline;
+
+  vtkClusterTracts::OutputType * membershipSample =  this->TractClusterer->GetOutputMembershipSample();
+
+  if (membershipSample == NULL)
+    {
+      vtkErrorMacro("Error: clusters have not been computed.");
+      return;      
+    }
+
+
+  // Open text files
+
+  // Save all points to one text file.
+  fileNameStr << filename << ".3dpts";
+  // Open file
+  filePoints.open(fileNameStr.str().c_str());
+  if (filePoints.fail())
+    {
+      vtkErrorMacro("Write: Could not open file " 
+                    << fileNameStr.str().c_str());
+      cerr << "Write: Could not open file " << fileNameStr.str().c_str();
+      return;
+    }                   
+
+  // Save all features (FA) to one text file.
+  fileNameStr.str("");
+  fileNameStr << filename << ".3dfeats";
+  // Open file
+  fileAttribs.open(fileNameStr.str().c_str());
+  if (fileAttribs.fail())
+    {
+      vtkErrorMacro("Write: Could not open file " 
+                    << fileNameStr.str().c_str());
+      cerr << "Write: Could not open file " << fileNameStr.str().c_str();
+      return;
+    }                   
+
+  // Save all class labels to one text file.
+  fileNameStr.str("");
+  fileNameStr << filename << ".3dlabels";
+  // Open file
+  fileLabels.open(fileNameStr.str().c_str());
+  if (fileLabels.fail())
+    {
+      vtkErrorMacro("Write: Could not open file " 
+                    << fileNameStr.str().c_str());
+      cerr << "Write: Could not open file " << fileNameStr.str().c_str();
+      return;
+    }                   
+
+
+  // Iterate over all class labels and save the info
+  vtkClusterTracts::OutputType::ConstIterator iter = membershipSample->Begin();
+
+  while ( iter != membershipSample->End() )
+    {
+      vtkDebugMacro("index = " << idx << "class label = " << iter.GetClassLabel());
+      
+      currStreamline= (vtkHyperStreamline *) 
+    this->Streamlines->GetItemAsObject(idx);
+
+      
+      if (currStreamline) 
+    {
+      // Save the center points to disk
+      if (currStreamline->IsA("vtkHyperStreamlinePoints"))
+        {
+          this->SaveStreamlineAsTextFile(filePoints,fileAttribs,(vtkHyperStreamlinePoints *) currStreamline);
+        }
+      // Save the class label to disk also
+      fileLabels << iter.GetClassLabel() << endl;
+    }
+      else
+    {
+      vtkErrorMacro("Streamline " << idx << " not found.");
+    }
+      
+      idx++;
+      ++iter;
+    }
+
+  // Close text files
+  filePoints.close();
+  fileAttribs.close();
+  fileLabels.close();
+}
+
+
+// Call the tract clustering object, and then color our hyperstreamlines
+// according to their cluster numbers.
+//----------------------------------------------------------------------------
 void vtkMultipleStreamlineController::ClusterTracts(int tmp)
 {
   // First make sure none of the streamlines have 0 length

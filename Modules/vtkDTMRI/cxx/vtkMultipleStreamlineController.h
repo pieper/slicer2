@@ -89,9 +89,16 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   void SaveStreamlinesAsPolyData(char *filename, char *name);
 
   // Description
-  // Save streamlines as text files.
+  // Save streamlines as text files (one streamline per file).
   // This can be replaced by a better file format.
   void SaveStreamlinesAsTextFiles(char *filename);
+
+  // Description
+  // Save all streamlines in one text file, save FA in another, and save
+  // the class labels in a third.  Temporary function to write
+  // matlab-readable data from the slicer.
+  // This should be replaced by a better file format.
+  void SaveTractClustersAsTextFiles(char *filename);
 
   // Description
   // Save streamlines as vtkPolyData models.
