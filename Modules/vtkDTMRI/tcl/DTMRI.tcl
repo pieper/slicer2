@@ -123,7 +123,7 @@ proc DTMRIInit {} {
     set Module($m,author) "Lauren O'Donnell"
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.22 $} {$Date: 2004/08/13 21:55:27 $}]
+                  {$Revision: 1.23 $} {$Date: 2004/08/16 18:12:48 $}]
 
      # Define Tabs
     #------------------------------------
@@ -2075,7 +2075,7 @@ set FrameOption3 [Notebook:frame $f {Option 3}]
 #nowworking
     set f $fConvert.fConvert.fPattern
 
-    DevAddLabel $f.lLabel "Pattern:"
+    DevAddLabel $f.lLabel "Protocol:"
     $f.lLabel configure -bg $Gui(backdrop) -fg white
     eval {menubutton $f.mbPattern -text "None" -relief raised -bd 2 -menu $f.mbPattern.menu -width 15} $Gui(WMBA)
     eval {menu $f.mbPattern.menu}  $Gui(WMA)
@@ -2087,7 +2087,7 @@ set FrameOption3 [Notebook:frame $f {Option 3}]
 
     pack $f.lLabel $f.bProp -side left -padx $Gui(pad) -pady $Gui(pad)
     DTMRILoadPattern
-    TooltipAdd $f.lLabel "Choose a pattern to convert tensors.\n If desired does not exist, create one in the frame below."
+    TooltipAdd $f.lLabel "Choose a protocol to convert tensors.\n If desired does not exist, create one in the frame below."
     
 
 #    #-------------------------------------------
@@ -2103,12 +2103,12 @@ set FrameOption3 [Notebook:frame $f {Option 3}]
     #-------------------------------------------
     set f $fConvert.fShowPattern
     
-    DevAddLabel $f.lLabel "Create a new pattern if your data\n does not fit the predefined ones"
+    DevAddLabel $f.lLabel "Create a new protocol if your data\n does not fit the predefined ones"
 
-    button $f.bShow -text "Create Pattern" -bg $Gui(backdrop) -fg white -font {helvetica 9 bold} -command {
+    button $f.bShow -text "Create New Protocol" -bg $Gui(backdrop) -fg white -font {helvetica 9 bold} -command {
         ShowPatternFrame 
         after 250 DTMRIDisplayScrollBar DTMRI Convert}
-    TooltipAdd $f.bShow "Press this button to enter Create-Pattern Frame"
+    TooltipAdd $f.bShow "Press this button to enter Create-Protocol Frame"
     pack $f.lLabel $f.bShow -side top -pady 2 -fill x
 
 
@@ -2125,7 +2125,7 @@ set FrameOption3 [Notebook:frame $f {Option 3}]
 #    set f $fConvert.fPattern.fTitle
 #    set f $Page.fTitle
    
-#    DevAddLabel $f.lWellcome "Create New Pattern"
+#    DevAddLabel $f.lWellcome "Create New Protocol"
 #    $f.lWellcome configure -fg White -font {helvetica 10 bold}  -bg $Gui(backdrop) -bd 0 -relief groove
 #    pack $f.lWellcome -side top -padx $Gui(pad) -pady 0
    
@@ -2177,7 +2177,7 @@ set FrameOption3 [Notebook:frame $f {Option 3}]
     set f $fConvert.fPattern.fTitle
 #    set f $Page.fTitle
    
-#    DevAddLabel $f.lWellcome "Create New Pattern"
+#    DevAddLabel $f.lWellcome "Create New Protocol"
 #    $f.lWellcome configure -fg White -font {helvetica 10 bold}  -bg $Gui(backdrop) -bd 0 -relief groove
 #    pack $f.lWellcome -side top -padx $Gui(pad) -pady $Gui(pad)
    
@@ -2190,7 +2190,7 @@ set FrameOption3 [Notebook:frame $f {Option 3}]
     set f $Page.fName
 
     $f configure -relief raised -padx 2 -pady 2
-    DevAddLabel $f.lTitle "Pattern Name:"
+    DevAddLabel $f.lTitle "Protocol Name:"
 #   $f.lTitle configure -relief sunken -background gray -bd 2
     DevAddEntry DTMRI name,name $f.eName 15
     pack $f.lTitle $f.eName -side left -padx $Gui(pad) -pady 4 -fill x
@@ -2308,9 +2308,9 @@ set FrameOption3 [Notebook:frame $f {Option 3}]
     #-------------------------------------------
 
     set f $FrameCont.fCreate
-    DevAddButton $f.bCreate "Create Pattern" DTMRICreatePatternSlice 8
+    DevAddButton $f.bCreate "Create New Protocol" DTMRICreatePatternSlice 8
     pack $f.bCreate -side top -pady $Gui(pad) -fill x
-    TooltipAdd $f.bCreate "Click this button to create a new pattern after filling in parameters entries"
+    TooltipAdd $f.bCreate "Click this button to create a new protocol after filling in parameters entries"
     
 
     #-------------------------------------------
@@ -2318,9 +2318,9 @@ set FrameOption3 [Notebook:frame $f {Option 3}]
     #-------------------------------------------
 
     set f $FrameInter.fCreate
-    DevAddButton $f.bCreate "Create Pattern" DTMRICreatePatternVolume 8
+    DevAddButton $f.bCreate "Create New Protocol" DTMRICreatePatternVolume 8
     pack $f.bCreate -side top -pady $Gui(pad) -fill x
-    TooltipAdd $f.bCreate "Click this button to create a new pattern after filling in parameters entries"
+    TooltipAdd $f.bCreate "Click this button to create a new protocol after filling in parameters entries"
     
 
 
@@ -2786,7 +2786,7 @@ proc RunLSDIrecon {} {
              DevInfoWindow "You don't have permission \n to write in the selected directory."
              return
          }
-         DevErrorWindow
+         
          return
     }
 
@@ -3163,7 +3163,7 @@ proc RunLSDIrecon {} {
         $Module(DTMRI,fConvert).fConvert.fPattern.mbPattern.menu add command -label $z -command "
         set DTMRI(selectedpattern) $DTMRI(patt)
         $Module(DTMRI,fConvert).fConvert.fPattern.mbPattern config -text $DTMRI(patt) 
-        set DTMRI($DTMRI(patt),tip) {Selected Pattern:\n $DTMRI(patt) \n Number of gradients:\n [lindex $DTMRI($DTMRI(patt),parameters) 0] \n First Gradient in Slice:\n [lindex $DTMRI($DTMRI(patt),parameters) 1] \n Last Gradient in Slice:\n [lindex $DTMRI($DTMRI(patt),parameters) 2] \n Baselines:\n from [lindex $DTMRI($DTMRI(patt),parameters) 3] to [lindex $DTMRI($DTMRI(patt),parameters) 4] \n B-value:\n [lindex $DTMRI($DTMRI(patt),parameters) 5] \n Gradients Directions:\n [lindex $DTMRI($DTMRI(patt),parameters) 6] \n The gradient order is:\n [lindex $DTMRI($DTMRI(patt),parameters) 7] interleaved}
+        set DTMRI($DTMRI(patt),tip) {Selected Protocol:\n $DTMRI(patt) \n Number of gradients:\n [lindex $DTMRI($DTMRI(patt),parameters) 0] \n First Gradient in Slice:\n [lindex $DTMRI($DTMRI(patt),parameters) 1] \n Last Gradient in Slice:\n [lindex $DTMRI($DTMRI(patt),parameters) 2] \n Baselines:\n from [lindex $DTMRI($DTMRI(patt),parameters) 3] to [lindex $DTMRI($DTMRI(patt),parameters) 4] \n B-value:\n [lindex $DTMRI($DTMRI(patt),parameters) 5] \n Gradients Directions:\n [lindex $DTMRI($DTMRI(patt),parameters) 6] \n The gradient order is:\n [lindex $DTMRI($DTMRI(patt),parameters) 7] interleaved}
      
         "
 
@@ -5541,7 +5541,7 @@ if {[info exists DTMRI(selectedpattern)]} {
 
 } else {
 
-    puts "Please select a pattern"
+    puts "Please select a protocol"
     return
 
 }
