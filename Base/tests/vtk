@@ -1,0 +1,8 @@
+#! /bin/csh
+
+setenv TCL_LIBRARY /export/bigsur/slicer3/lib/tcl8.2
+ 
+echo TCL_LIBRARY is $TCL_LIBRARY
+echo DISPLAY      is $DISPLAY
+
+exec /export/bigsur/vtk/vtk3.0/vtk/tcl/vtk $1
