@@ -674,8 +674,6 @@ proc VolumesPropsApply {} {
 
 	if {$m == "NEW"} {
 		set i $Volume(nextID)
-		incr Volume(nextID)
-		lappend Volume(idList) $i
 		vtkMrmlVolumeNode Volume($i,node)
 		set n Volume($i,node)
 		$n SetID               $i
@@ -711,11 +709,15 @@ proc VolumesPropsApply {} {
 			    # switch to vols->props->header frame
 			    set Volume(propertyType) Header
 			    VolumesSetPropertyType
+			    $n Delete
 			    return
 			}
 		}
 
 		$n SetName $Volume(name)
+
+		incr Volume(nextID)
+		lappend Volume(idList) $i
 
 		Mrml(dataTree) AddItem $n
 		MainUpdateMRML
@@ -729,7 +731,6 @@ proc VolumesPropsApply {} {
 	Volume($m,node) SetFilePattern $Volume(filePattern)
 	# *** fix this:
 	Volume($m,node) SetFullPrefix  $Volume(firstFile)
-	# this needs print header to get first image number
 	set firstNum [MainFileFindImageNumber First \
 			[file join $Path(root) $Volume(firstFile)]]
 	Volume($m,node) SetImageRange $firstNum $Volume(lastNum)
