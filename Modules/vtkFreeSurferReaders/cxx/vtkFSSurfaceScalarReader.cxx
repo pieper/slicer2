@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkFSSurfaceScalarReader.cxx,v $
   Language:  C++
-  Date:      $Date: 2002/10/07 22:02:32 $
-  Version:   $Revision: 1.2 $
+  Date:      $Date: 2002/10/07 22:07:00 $
+  Version:   $Revision: 1.3 $
 
 =========================================================================*/
 #include "vtkFSSurfaceScalarReader.h"

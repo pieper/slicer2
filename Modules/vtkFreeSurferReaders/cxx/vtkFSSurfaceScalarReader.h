@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkFSSurfaceScalarReader.h,v $
   Language:  C++
-  Date:      $Date: 2002/10/07 22:02:32 $
-  Version:   $Revision: 1.2 $
+  Date:      $Date: 2002/10/07 22:07:01 $
+  Version:   $Revision: 1.3 $
 
 =========================================================================*/
 // .NAME vtkFSSurfaceScalarReader - read a surface scalar file from
