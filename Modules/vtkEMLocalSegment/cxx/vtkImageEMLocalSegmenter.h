@@ -233,6 +233,9 @@ class VTK_EXPORT vtkImageEMLocalSegmenter : public vtkImageEMGeneral
   vtkGetMacro(BiasPrint, int);
   vtkSetMacro(BiasPrint, int);
 
+  vtkGetMacro(ErrorFlag, int);
+  char* GetErrorMessages(); 
+
 protected:
   vtkImageEMLocalSegmenter();
   vtkImageEMLocalSegmenter(const vtkImageEMLocalSegmenter&) {};
@@ -246,6 +249,10 @@ protected:
   // Description:
   // Checks all intput image if they have coresponding dimensions 
   bool CheckInputImage(vtkImageData * inData,int DataTypeOrig, int DataTypeNew, int num,int *outExt);
+
+  // Description:
+  // Resets the error flag and messages 
+  void ResetErrorSettings();  
 
   int NumClasses;      // Number of Classes
   int NumIter;         // Number of EM-iterations
@@ -291,6 +298,10 @@ protected:
   // Bias Field Print Out Variables
   char* BiasRootFileName;
   int BiasPrint;
+
+  vtkOStrStreamWrapper *ErrorMessage;
+  int ErrorFlag;
+
 };
 #endif
 
