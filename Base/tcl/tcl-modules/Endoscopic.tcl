@@ -1,3 +1,135 @@
+#=auto==========================================================================
+# (c) Copyright 2003 Massachusetts Institute of Technology (MIT) All Rights Reserved.
+#
+# This software ("3D Slicer") is provided by The Brigham and Women's 
+# Hospital, Inc. on behalf of the copyright holders and contributors. 
+# Permission is hereby granted, without payment, to copy, modify, display 
+# and distribute this software and its documentation, if any, for internal 
+# research purposes only, provided that (1) the above copyright notice and 
+# the following four paragraphs appear on all copies of this software, and 
+# (2) that source code to any modifications to this software be made 
+# publicly available under terms no more restrictive than those in this 
+# License Agreement. Use of this software constitutes acceptance of these 
+# terms and conditions.
+# 
+# 3D Slicer Software has not been reviewed or approved by the Food and 
+# Drug Administration, and is for non-clinical, IRB-approved Research Use 
+# Only.  In no event shall data or images generated through the use of 3D 
+# Slicer Software be used in the provision of patient care.
+# 
+# IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND CONTRIBUTORS BE LIABLE TO 
+# ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL 
+# DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, 
+# EVEN IF THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE BEEN ADVISED OF THE 
+# POSSIBILITY OF SUCH DAMAGE.
+# 
+# THE COPYRIGHT HOLDERS AND CONTRIBUTORS SPECIFICALLY DISCLAIM ANY EXPRESS 
+# OR IMPLIED WARRANTIES INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+# WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND 
+# NON-INFRINGEMENT.
+# 
+# THE SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS 
+# IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
+# PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+# 
+#
+#===============================================================================
+# FILE:        Endoscopic.tcl
+# PROCEDURES:  
+#   EndoscopicEnter
+#   EndoscopicExit
+#   EndoscopicInit
+#   EndoscopicCreateRenderer
+#   EndoscopicBuildVTK
+#   EndoscopicCreateCamera
+#   EndoscopicCameraParams
+#   EndoscopicCreateFocalPoint
+#   EndoscopicCreateVTKPath
+#   EndoscopicResetPathVariables
+#   EndoscopicCreatePath
+#   EndoscopicCreateVector
+#   EndoscopicVectorParams
+#   EndoscopicUpdateVisibility name (optional)
+#   EndoscopicSetPickable name 0
+#   EndoscopicUpdateSize name
+#   EndoscopicPopBindings
+#   EndoscopicPushBindings
+#   EndoscopicCreateBindings
+#   EndoscopicBuildGUI
+#   EndoscopicShowFlyThroughPopUp
+#   EndoscopicExecutePathTab 
+#   EndoscopicBuildFlyThroughGUI
+#   EndoscopicCreateLabelAndSlider
+#   EndoscopicCreateCheckButton
+#   EndoscopicSetVisibility
+#   EndoscopicCreateAdvancedGUI
+#   EndoscopicSetActive
+#   EndoscopicPopupCallback
+#   EndoscopicUseGyro
+#   EndoscopicSelectActor
+#   EndoscopicVectorSelected
+#   EndoscopicLandmarkSelected
+#   EndoscopicGyroMotion
+#   EndoscopicSetGyroOrientation
+#   EndoscopicSetWorldPosition
+#   EndoscopicSetWorldOrientation
+#   EndoscopicSetCameraPosition
+#   EndoscopicResetCameraPosition
+#   EndoscopicSetCameraDirection
+#   EndoscopicResetCameraDirection
+#   EndoscopicUpdateActorFromVirtualEndoscope
+#   EndoscopicUpdateVirtualEndoscope $Endoscopic(activeCam)
+#   EndoscopicLightFollowEndoCamera
+#   EndoscopicSetCameraZoom
+#   EndoscopicSetCameraViewAngle
+#   EndoscopicSetCameraAxis
+#   EndoscopicCameraMotionFromUser
+#   EndoscopicSetCollision
+#   EndoscopicMoveGyroToLandmark
+#   EndoscopicUpdateVectors
+#   EndoscopicGetAvailableListName
+#   EndoscopicAddLandmarkNoDirectionSpecified
+#   EndoscopicAddLandmarkNoDirectionSpecified
+#   EndoscopicAddLandmarkDirectionSpecified
+#   EndoscopicUpdateLandmark
+#   EndoscopicBuildInterpolatedPath
+#   EndoscopicDeletePath
+#   EndoscopicComputeRandomPath
+#   EndoscopicShowPath
+#   EndoscopicFlyThroughPath
+#   EndoscopicSetPathFrame
+#   EndoscopicStopPath
+#   EndoscopicResetStopPath
+#   EndoscopicResetPath
+#   EndoscopicSetFlyDirection
+#   EndoscopicSetSpeed
+#   EndoscopicCheckDriver
+#   EndoscopicReformatSlices
+#   EndoscopicSetSliceDriver
+#   EndoscopicFiducialsPointSelectedCallback
+#   EndoscopicFiducialsPointCreatedCallback
+#   EndoscopicUpdateMRML
+#   EndoscopicStartCallbackFiducialUpdateMRML
+#   EndoscopicStartCallbackFiducialsUpdateMRML
+#   EndoscopicEndCallbackFiducialUpdateMRML
+#   EndoscopicEndCallbackFiducialsUpdateMRML
+#   EndoscopicCallbackFiducialUpdateMRML
+#   EndoscopicCallbackFiducialsUpdateMRML
+#   EndoscopicCreateAndActivatePath
+#   EndoscopicSelectActivePath
+#   EndoscopicDistanceBetweenTwoPoints
+#   EndoscopicUpdateSelectionLandmarkList
+#   EndoscopicSetModelsVisibilityInside
+#   EndoscopicSetSlicesVisibility
+#   EndoscopicUpdateEndoscopicViewVisibility
+#   EndoscopicUpdateMainViewVisibility
+#   EndoscopicAddEndoscopicView
+#   EndoscopicAddMainView
+#   EndoscopicAddEndoscopicViewRemoveMainView
+#   EndoscopicRemoveEndoscopicView
+#   EndoscopicRemoveMainView
+#   EndoscopicAddMainViewRemoveEndoscopicView
+#==========================================================================auto=
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicEnter
@@ -313,6 +445,12 @@ proc EndoscopicInit {} {
     set Endoscopic(viewOn) 0
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicCreateRenderer
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicCreateRenderer {renName} {
 
     global Endoscopic $renName View Module
@@ -601,6 +739,12 @@ proc EndoscopicCreateFocalPoint {} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicCreateVTKPath
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicCreateVTKPath {id} {
 
     global Endoscopic
@@ -879,6 +1023,12 @@ proc EndoscopicSetSize {a} {
 #
 ##############################################################################
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicPopBindings
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicPopBindings {} {
     global Ev Csys
     EvDeactivateBindingSet Slice0Events
@@ -886,6 +1036,12 @@ proc EndoscopicPopBindings {} {
     EvDeactivateBindingSet Slice2Events
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicPushBindings
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicPushBindings {} {
     global Ev Csys
 
@@ -896,6 +1052,12 @@ proc EndoscopicPushBindings {} {
     EvActivateBindingSet Slice2Events
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicCreateBindings
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicCreateBindings {} {
     global Gui Ev 
     
@@ -1680,6 +1842,12 @@ eval {label $f.lTitle -text "Step 4. "} $Gui(WTA)
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicShowFlyThroughPopUp
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicShowFlyThroughPopUp {{x 100} {y 100}} {
     global Gui Endoscopic 
     
@@ -1702,6 +1870,12 @@ proc EndoscopicExecutePathTab {command} {
     focus $Endoscopic(tabbedFrame).f$command
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicBuildFlyThroughGUI
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicBuildFlyThroughGUI {} {
     global Gui Endoscopic
     
@@ -1939,6 +2113,12 @@ proc EndoscopicCreateCheckButton {ButtonName VariableName Message Command {Indic
 } 
 
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicSetVisibility
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicSetVisibility {a} {
 
     global Endoscopic
@@ -2060,6 +2240,12 @@ proc EndoscopicPopupCallback {} {
 #
 #############################################################################
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicUseGyro
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicUseGyro {} {
     global Endoscopic
     
@@ -2167,6 +2353,12 @@ proc EndoscopicUseGyro {} {
 #
 #############################################################################
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicGyroMotion
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicGyroMotion {actor angle dotprod unitX unitY unitZ} {
     
     global Endoscopic
@@ -2882,6 +3074,12 @@ proc EndoscopicUpdateVectors {id} {
 #############################################################################
 
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicGetAvailableListName
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicGetAvailableListName {model} {
     global Endoscopic
 
@@ -2910,6 +3108,12 @@ proc EndoscopicGetAvailableListName {model} {
 # .END
 #-------------------------------------------------------------------------------
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicAddLandmarkNoDirectionSpecified
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicAddLandmarkNoDirectionSpecified {x y z {list ""}} {
     global Endoscopic Point Fiducials
     
@@ -3518,6 +3722,12 @@ proc EndoscopicSetSliceDriver {name} {
 #############################################################################
 
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicFiducialsPointSelectedCallback
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicFiducialsPointSelectedCallback {fid pid} {
     
     global Endoscopic Fiducials Select Module Model
@@ -3630,6 +3840,12 @@ proc EndoscopicFiducialsPointCreatedCallback {type fid pid} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicUpdateMRML
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicUpdateMRML {} {
 
     global Models Model Endoscopic
@@ -3649,6 +3865,12 @@ proc EndoscopicUpdateMRML {} {
 # .END
 #-------------------------------------------------------------------------------
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicStartCallbackFiducialsUpdateMRML
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicStartCallbackFiducialsUpdateMRML {} {
 
     global Endoscopic
@@ -3679,6 +3901,12 @@ proc EndoscopicStartCallbackFiducialsUpdateMRML {} {
 # .END
 #-------------------------------------------------------------------------------
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicEndCallbackFiducialsUpdateMRML
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicEndCallbackFiducialsUpdateMRML {} {
     
     global Endoscopic
@@ -3693,6 +3921,12 @@ proc EndoscopicEndCallbackFiducialsUpdateMRML {} {
 # .END
 #-------------------------------------------------------------------------------
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicCallbackFiducialsUpdateMRML
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicCallbackFiducialsUpdateMRML {type id listOfPoints} {
     global Mrml Path Endoscopic
     
@@ -3753,6 +3987,12 @@ proc EndoscopicCallbackFiducialsUpdateMRML {type id listOfPoints} {
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicCreateAndActivatePath
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicCreateAndActivatePath {name} {
     global Endoscopic Fiducials
     
@@ -3803,6 +4043,12 @@ proc EndoscopicFiducialsActivatedListCallback {type name id} {
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicSelectActivePath
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicSelectActivePath {id} {
     
     global Endoscopic
