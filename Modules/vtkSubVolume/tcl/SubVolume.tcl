@@ -105,7 +105,7 @@ proc SubVolumeInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.2 $} {$Date: 2004/04/21 22:50:41 $}]
+        {$Revision: 1.3 $} {$Date: 2004/04/21 23:56:30 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -164,6 +164,8 @@ proc SubVolumeInit {} {
     
     set SubVolume(Ext3D,CubeColor) "1 0 0"
     set SubVolume(Ext3D,CubeOpacity) 0.5
+    set SubVolume(Ext3D,OutlineColor) "0 0 1"
+    set SubVolume(Ext3D,OutlineOpacity) 1
     set SubVolume(Ext3D,RenderCube) 1
 }
 
@@ -235,7 +237,7 @@ proc SubVolumeBuildGUI {} {
     set fExtract $Module(SubVolume,fExtract)
     set f $fExtract
     
-    foreach frame "IO 2D 3D Apply" {
+    foreach frame "IO 3D Apply Render" {
     frame $f.f$frame -bg $Gui(activeWorkspace) -relief groove -bd 3
     pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
     }
@@ -373,11 +375,6 @@ proc SubVolumeBuildGUI {} {
      #grid $f.l$type $f.b$type $f.e$type $f.s$type  -sticky w -pady 0 -padx 0    
      pack $f.l$type $f.b$type $f.e$type $f.s$type -side left -padx 0 -pady 0 -fill x
    } 
-   frame $fControl.fRender -bg $Gui(activeWorkspace)
-   pack $fControl.fRender -side top -padx 0 -pady 1 -fill x
-   set f $fControl.fRender
-   eval {checkbutton $f.c3D -text "3D Bounding Box" -variable SubVolume(Ext3D,RenderCube) -indicatoron 1 -command SubVolumeRenderCube} $Gui(WCA)
-   pack $f.c3D -pady 2 -padx 1    
    
    #-------------------------------------------
    # Extract->Apply
@@ -392,8 +389,39 @@ proc SubVolumeBuildGUI {} {
     pack $f.bApply -side top -pady $Gui(pad) -padx $Gui(pad) \
         -fill x -expand true
     
+   #-------------------------------------------
+   # Extract->Render
+   #-------------------------------------------
+   set f $fExtract.fRender
+   
+   eval {checkbutton $f.c3D -text "Render 3D Bounding Box" -variable SubVolume(Ext3D,RenderCube) -indicatoron 1 -command SubVolumeRenderCube} $Gui(WCA)
+   pack $f.c3D -side top -pady 2 -padx 1
+   
+   eval {label $f.lOpacity -text "Opacity:"\
+          -width 11 -justify right } $Gui(WTA)
+
+    eval {entry $f.eOpacity -justify right -width 4 \
+          -textvariable SubVolume(Ext3D,CubeOpacity)  } $Gui(WEA)
+
+    eval {scale $f.sOpacity -from 0 -to 1     \
+          -variable  SubVolume(Ext3D,CubeOpacity)\
+          -orient vertical     \
+          -resolution 0.1      \
+      -command { SubVolume3DOpacity } \
+          } $Gui(WSA)
+     
+     pack  $f.lOpacity $f.eOpacity $f.sOpacity -side left -padx 3 -pady 2 -expand 0
+      
+
+
 }
 
+proc SubVolume3DOpacity {opacity} {
+ global SubVolume
+ 
+ eval [SubVolume(Ext3D,CubeActor) GetProperty] SetOpacity $opacity
+ Render3D
+}
 
 proc SubVolumeApply {} {
 
@@ -760,13 +788,17 @@ proc SubVolumeUpdate3DScales { notUsed } {
     SubVolume(Ext3D,XformFilter) SetTransform SubVolume(Ext3D,CubeXform)
   
     SubVolume(Ext3D,CubeMapper) Update
+    SubVolume(Ext3D,OutlineMapper) Update
   
     eval [SubVolume(Ext3D,CubeActor) GetProperty] SetColor $SubVolume(Ext3D,CubeColor)
-  
     eval [SubVolume(Ext3D,CubeActor) GetProperty] SetOpacity $SubVolume(Ext3D,CubeOpacity)
+    
+    eval [SubVolume(Ext3D,OutlineActor) GetProperty] SetColor $SubVolume(Ext3D,OutlineColor)
+    eval [SubVolume(Ext3D,OutlineActor) GetProperty] SetOpacity $SubVolume(Ext3D,OutlineOpacity)  
   
   } else {
     eval [SubVolume(Ext3D,CubeActor) GetProperty] SetOpacity 0
+    eval [SubVolume(Ext3D,OutlineActor) GetProperty] SetOpacity 0
   }  
   Render3D 
 
@@ -785,32 +817,37 @@ proc SubVolumeCreate3DCube {} {
   global SubVolume
   
   vtkCubeSource SubVolume(Ext3D,Cube)
-  vtkContourFilter SubVolume(Ext3D,Contour)
+  vtkOutlineFilter SubVolume(Ext3D,Outline)
   vtkTubeFilter SubVolume(Ext3D,Tube)
-  vtkAppendPolyData SubVolume(Ext3D,Model)
   vtkTransform  SubVolume(Ext3D,CubeXform)
   vtkTransformPolyDataFilter SubVolume(Ext3D,XformFilter)
   vtkPolyDataMapper SubVolume(Ext3D,CubeMapper)
+  vtkPolyDataMapper SubVolume(Ext3D,OutlineMapper)
   vtkActor SubVolume(Ext3D,CubeActor)
-  
+  vtkActor SubVolume(Ext3D,OutlineActor)
   #Create Pipeline
-  SubVolume(Ext3D,Contour) SetInput [SubVolume(Ext3D,Cube) GetOutput]
-  SubVolume(Ext3D,Tube) SetInput [SubVolume(Ext3D,Cube) GetOutput]
-  SubVolume(Ext3D,Tube) SetRadius 5
-  SubVolume(Ext3D,Model) AddInput [SubVolume(Ext3D,Cube) GetOutput]
-  #SubVolume(Ext3D,Model) AddInput [SubVolume(Ext3D,Tube) GetOutput]
+  
   SubVolume(Ext3D,XformFilter) SetTransform SubVolume(Ext3D,CubeXform)
-  SubVolume(Ext3D,XformFilter) SetInput [SubVolume(Ext3D,Model) GetOutput]
+  SubVolume(Ext3D,XformFilter) SetInput [SubVolume(Ext3D,Cube) GetOutput]
+  SubVolume(Ext3D,Outline) SetInput [SubVolume(Ext3D,XformFilter) GetOutput]
+  SubVolume(Ext3D,Tube) SetInput [SubVolume(Ext3D,Outline) GetOutput]
+  SubVolume(Ext3D,Tube) SetRadius 0.1
   SubVolume(Ext3D,CubeMapper) SetInput [SubVolume(Ext3D,XformFilter) GetOutput]
   SubVolume(Ext3D,CubeActor) SetMapper SubVolume(Ext3D,CubeMapper)
-  
+  SubVolume(Ext3D,OutlineMapper) SetInput [SubVolume(Ext3D,Tube) GetOutput]
+  SubVolume(Ext3D,OutlineActor) SetMapper SubVolume(Ext3D,OutlineMapper)
   #Set up default Actor properties
   eval "[SubVolume(Ext3D,CubeActor) GetProperty] SetColor" $SubVolume(Ext3D,CubeColor)
   eval "[SubVolume(Ext3D,CubeActor) GetProperty] SetOpacity" 0
   SubVolume(Ext3D,CubeActor) PickableOff
+  eval "[SubVolume(Ext3D,OutlineActor) GetProperty] SetColor" $SubVolume(Ext3D,OutlineColor)
+  eval "[SubVolume(Ext3D,OutlineActor) GetProperty] SetOpacity" 0
+  SubVolume(Ext3D,OutlineActor) PickableOff
+  
   
   #Add to the renderer
   MainAddActor SubVolume(Ext3D,CubeActor)
+  MainAddActor SubVolume(Ext3D,OutlineActor)
 
 }
 
@@ -823,17 +860,19 @@ proc SubVolumeCreate3DCube {} {
 proc SubVolumeDelete3DCube {} {
   
   MainRemoveActor SubVolume(Ext3D,CubeActor)
+  MainRemoveActor SubVolume(Ext3D,OutlineActor)
   Render3D
   
   #Delete Objects
   SubVolume(Ext3D,Cube) Delete
-  SubVolume(Ext3D,Contour) Delete
+  SubVolume(Ext3D,Outline) Delete
   SubVolume(Ext3D,Tube) Delete
-  SubVolume(Ext3D,Model) Delete
   SubVolume(Ext3D,CubeXform) Delete
   SubVolume(Ext3D,XformFilter) Delete
   SubVolume(Ext3D,CubeMapper) Delete
   SubVolume(Ext3D,CubeActor) Delete
+  SubVolume(Ext3D,OutlineMapper) Delete
+  SubVolume(Ext3D,OutlineActor) Delete
 }  
 
 #-------------------------------------------------------------------------------
@@ -850,6 +889,7 @@ proc SubVolumeRenderCube { } {
     SubVolumeUpdate3DScales 0
   } else {
     eval [SubVolume(Ext3D,CubeActor) GetProperty] SetOpacity 0
+    eval [SubVolume(Ext3D,OutlineActor) GetProperty] SetOpacity 0
     Render3D  
   }
 }
