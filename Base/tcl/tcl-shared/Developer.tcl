@@ -597,6 +597,7 @@ proc DevCreateNewCopiedVolume { OrigId {Description ""} { VolName ""} } {
 # str DefaultDir The name of the default directory to choose from: Default is the directory Slicer was started from.
 # str Title      The title of the window to display.  Optional.
 # str Action     Whether to Open (file must exist) or Save.  Default is \"Open\".
+# str PathType   Relative or Absolute
 # .END
 #-------------------------------------------------------------------------------
 proc DevGetFile { filename { MustPop 0} { DefaultExt "" } { DefaultDir "" } {Title "Choose File"} {Action "Open"} {PathType "Relative"}} {
@@ -617,70 +618,72 @@ proc DevGetFile { filename { MustPop 0} { DefaultExt "" } { DefaultDir "" } {Tit
        ######  Default dir.
        ######  Do this only if the filename is not "" and is not a dir.
        ############################################################
-
-        if {$filename != "" && ![file isdir $filename] && !$MustPop} {
-            if [file exists $filename]  {
-                return [MainFileGetRelativePrefix $filename][file \
-                        extension $filename]
-            }
-            if [file exists "$filename.$DefaultExt"] {
-                return [MainFileGetRelativePrefix $filename].$DefaultExt
-            }
-            set filename [file join $DefaultDir $filename]
-            if [file exists $filename]  {
-                return [MainFileGetRelativePrefix $filename][file \
-                        extension $filename]
-            }
-            if [file exists "$filename.$DefaultExt"] {
-                return [MainFileGetRelativePrefix $filename].$DefaultExt
-            }
+    if {$::Module(verbose)} {
+        puts "DevGetFile: filename = $filename, pathtype = $PathType"
+    }
+    if {$filename != "" && ![file isdir $filename] && !$MustPop} {
+        if [file exists $filename]  {
+            return [MainFileGetRelativePrefix $filename][file \
+                                                             extension $filename]
         }
-
-       ############################################################
-       ######  Didn't find it, now set up filter for files
-       ######  If an extension is provided, use it.
-       ############################################################
-
-        if { $DefaultExt != ""} {
-            set typelist \
-                    " \{\"$DefaultExt Files\" \{\*.$DefaultExt\}\} \{\"All Files\" \{\*\}\}"
-#            set typelist [ eval $typelist ]
-        } else {
-            set typelist {
-        {"All Files" {*}}
-            }
+        if [file exists "$filename.$DefaultExt"] {
+            return [MainFileGetRelativePrefix $filename].$DefaultExt
         }
-
-       ############################################################
-       ######  Browse for the file
-       ############################################################
-
-        set dir [file dirname $filename]
-        if { $filename == "" && $DefaultDir != "" } { set dir $DefaultDir }
-        if { [file isdir $filename] } { set dir $filename }
-
+        set filename [file join $DefaultDir $filename]
+        if [file exists $filename]  {
+            return [MainFileGetRelativePrefix $filename][file \
+                                                             extension $filename]
+        }
+        if [file exists "$filename.$DefaultExt"] {
+            return [MainFileGetRelativePrefix $filename].$DefaultExt
+        }
+    }
+    
+    ############################################################
+    ######  Didn't find it, now set up filter for files
+    ######  If an extension is provided, use it.
+    ############################################################
+    
+    if { $DefaultExt != ""} {
+        set typelist \
+            " \{\"$DefaultExt Files\" \{\*.$DefaultExt\}\} \{\"All Files\" \{\*\}\}"
+        #            set typelist [ eval $typelist ]
+    } else {
+        set typelist {
+            {"All Files" {*}}
+        }
+    }
+    
+    ############################################################
+    ######  Browse for the file
+    ############################################################
+    
+    set dir [file dirname $filename]
+    if { $filename == "" && $DefaultDir != "" } { set dir $DefaultDir }
+    if { [file isdir $filename] } { set dir $filename }
+    
     # if we are saving, the file doesn't have to exist yet.
     if {$Action == "Save"} {
         set filename [tk_getSaveFile -title $Title \
-            -filetypes $typelist -initialdir "$dir" -initialfile $filename]
+                          -filetypes $typelist -initialdir "$dir" -initialfile $filename]
     } else {
         set filename [tk_getOpenFile -title $Title \
-            -filetypes $typelist -initialdir "$dir" -initialfile $filename]
+                          -filetypes $typelist -initialdir "$dir" -initialfile $filename]
     }
     
-
-       ############################################################
-       ######  Return Nothing is nothing was selected
-       ######  Return the file relative to the current path otherwise
-       ############################################################
-
+    
+    ############################################################
+    ######  Return Nothing is nothing was selected
+    ######  Return the file relative to the current path otherwise
+    ############################################################
+    
     # Return nothing if the user cancelled
     if {$filename == ""} {return "" }
-
+    
     # if the file will be Saved (not Opened) make sure it has an extension
     if {$Action == "Save"} {
         if {[file extension $filename] == ""} {
-        set filename "$filename.$DefaultExt"
+            set filename "$filename.$DefaultExt"
         }   
     }
     
@@ -688,12 +691,12 @@ proc DevGetFile { filename { MustPop 0} { DefaultExt "" } { DefaultDir "" } {Tit
     if {$PathType == "Absolute"} {
         return $filename
     }
-        
+    
     # Store first image file as a relative filename to the root 
     # Return the relative Directory Path
     return [MainFileGetRelativePrefix $filename][file \
-        extension $filename]
-    }   
+                                                     extension $filename]
+}   
 
 #-------------------------------------------------------------------------------
 # .PROC DevAddFileBrowse
@@ -727,40 +730,46 @@ proc DevGetFile { filename { MustPop 0} { DefaultExt "" } { DefaultDir "" } {Tit
 # .END
 #-------------------------------------------------------------------------------
 
-    proc DevAddFileBrowse {Frame ArrayName VarFileName Message { Command ""} { DefaultExt "" } { DefaultDir "" } {Action ""} {Title ""} {Tooltip ""} {PathType ""}} {
+proc DevAddFileBrowse {Frame ArrayName VarFileName Message { Command ""} { DefaultExt "" } { DefaultDir "" } {Action ""} {Title ""} {Tooltip ""} {PathType ""}} {
 
     global Gui $ArrayName Model
-
-        set f $Frame
-        $f configure  -relief groove -bd 3 -bg $Gui(activeWorkspace)
-
+    
+    if {$::Module(verbose)} {
+        puts "\nDevAddFileBrowse:\n\t frame $Frame \n\t arrayname $ArrayName \n\t varfilename $VarFileName \n\t  message $Message \n\t command $Command \n\t defaultext $DefaultExt\n\t defaultdir $DefaultDir \n\t action $Action \n\t title $Title \n\t tooltip $Tooltip \n\t pathtype $PathType"
+    }
+    if {$Action != "" && $Action != "Open" && $Action != "Save"} {
+        DevErrorWindow "DevAddFileBrowse: Action should be Open or Save, \"$Action\" is not valid\nFrame: $Frame"
+    }
+    set f $Frame
+    $f configure  -relief groove -bd 3 -bg $Gui(activeWorkspace)
+    
     frame $f.f -bg $Gui(activeWorkspace)
     pack $f.f -side top -padx $Gui(pad) -pady $Gui(pad)
-
-        ## Need to make the string that will become the command.
+    
+    ## Need to make the string that will become the command.
     # this pops up file browser when the button is pressed.
-       set SetVarString  "set $ArrayName\($VarFileName\) \[ DevGetFile \"\$$ArrayName\($VarFileName\)\" 1  \"$DefaultExt\" \"$DefaultDir\" \"$Title\"  \"$Action\" \"$PathType\" \]; if \{\[DevFileExists \$$ArrayName\($VarFileName\)\] || \"$Action\" == \"Save\"\}  \{ $Command \}"
-#$Action == Save
-#        puts $SetVarString
-
-        DevAddLabel  $f.f.l $Message
-        DevAddButton $f.f.b "Browse..." $SetVarString
-
-        pack $f.f.l $f.f.b -side left -padx $Gui(pad)
+    set SetVarString  "set $ArrayName\($VarFileName\) \[ DevGetFile \"\$$ArrayName\($VarFileName\)\" 1  \"$DefaultExt\" \"$DefaultDir\" \"$Title\"  \"$Action\" \"$PathType\" \]; if \{\[DevFileExists \$$ArrayName\($VarFileName\)\] || \"$Action\" == \"Save\"\}  \{ $Command \}"
+    #$Action == Save
+    #        puts $SetVarString
+    
+    DevAddLabel  $f.f.l $Message
+    DevAddButton $f.f.b "Browse..." $SetVarString
+    
+    pack $f.f.l $f.f.b -side left -padx $Gui(pad)
     
     # tooltip over the button.
     if {$Tooltip != ""} {
         TooltipAdd $f.f.b $Tooltip
     }
-
+    
     # this pops up file browser when return is hit.
     set SetVarString  "set $ArrayName\($VarFileName\) \[ DevGetFile \"\$$ArrayName\($VarFileName\)\" 0  \"$DefaultExt\" \"$DefaultDir\" \"$Title\" \"$Action\" \"$PathType\" \]; if \{\[DevFileExists \$$ArrayName\($VarFileName\)\] || \"$Action\" == \"Save\"\}  \{ $Command \}"
-
+    
     eval {entry $f.efile -textvariable "$ArrayName\($VarFileName\)" -width 50} $Gui(WEA)
-        bind $f.efile <Return> $SetVarString
-
-        pack $f.efile -side top -pady $Gui(pad) -padx $Gui(pad) \
-                -expand 1 -fill x
+    bind $f.efile <Return> $SetVarString
+    
+    pack $f.efile -side top -pady $Gui(pad) -padx $Gui(pad) \
+        -expand 1 -fill x
 }
 
 
