@@ -171,7 +171,7 @@ for {set i 0} {$i < $argc} {incr i} {
                 }
             }
             # add in the compiler info after MainBoot is called
-            set SLICER(versionInfo)  "$execName $argv\nTimestamp: [clock format [clock seconds] -format "%D-%T-%Z"] Version: ${SLICER(version)} User: $env(USER) Machine: $tcl_platform(machine) Platform: $tcl_platform(os) PlatformVersion: $tcl_platform(osVersion)"
+            set SLICER(versionInfo)  "ProgramName: $execName ProgramArguments: $argv\nTimestamp: [clock format [clock seconds] -format "%D-%T-%Z"] Version: ${SLICER(version)} User: $env(USER) Machine: $tcl_platform(machine) Platform: $tcl_platform(os) PlatformVersion: $tcl_platform(osVersion)"
 
         }
         "-*" {
@@ -275,7 +275,7 @@ if { $SLICER(tkcon) == "true" } {
     source $prog/tkcon.tcl
     ::tkcon::Init
     tkcon attach main
-    wm geometry .tkcon +10-50
+    wm geometry .tkcon +10-90
     set argv $av
 }
 
@@ -291,6 +291,7 @@ update
 puts "Loading Base..."
 package require vtkSlicerBase ;# this pulls in all of slicer
 
+# this is required by the widget interactors
 package require vtkinteraction
 
 foreach m $env(SLICER_MODULES_TO_REQUIRE) {
@@ -576,7 +577,7 @@ if { $SLICER(versionInfo) != "" } {
     set compilerName [Slicer GetCompilerName]
     set vtkVersion [Slicer GetVTKVersion]
     set libVersions "LibName1: VTK LibVersion1: ${vtkVersion} LibName2: TCL LibVersion2: ${tcl_patchLevel} LibName3: TK LibVersion2: ${tk_patchLevel}"
-    set SLICER(versionInfo) "$SLICER(versionInfo) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.62 2003/08/05 22:58:03 pieper Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.63 2003/08/15 20:55:24 nicole Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
