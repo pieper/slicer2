@@ -51,9 +51,9 @@
 #   MainModelsRegisterModel
 #   MainModelsWrite
 #   MainModelsStorePresets
-#   MainModelsRaiseScalarBar
-#   MainModelsRemoveScalarBar
-#   MainModelsToggleScalarBar
+#   MainModelsRaiseScalarBar m
+#   MainModelsRemoveScalarBar m
+#   MainModelsToggleScalarBar m
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -75,7 +75,7 @@ proc MainModelsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainModels \
-		{$Revision: 1.27 $} {$Date: 2000/11/09 01:07:57 $}]
+		{$Revision: 1.28 $} {$Date: 2000/11/09 01:12:45 $}]
 
 	set Model(idNone) -1
 	set Model(activeID) ""
@@ -975,8 +975,11 @@ proc MainModelsRecallPresets {p} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainModelsRaiseScalarBar
-# 
+# Display a scalar bar: what colors the numbers are displayed as.
+# Should only be used if the model has scalars and they are
+# visible..
 # .ARGS
+# int m model id that should get the bar displayed.  Optional, defaults to idActive.
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsRaiseScalarBar { {m ""} } {
@@ -1018,8 +1021,9 @@ proc MainModelsRaiseScalarBar { {m ""} } {
 
 #-------------------------------------------------------------------------------
 # .PROC MainModelsRemoveScalarBar
-# 
+# Kill scalar bar if it is displayed
 # .ARGS
+# int m model id that should get the bar displayed.  Optional, defaults to idActive.
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsRemoveScalarBar { {m ""} } {
@@ -1044,8 +1048,9 @@ proc MainModelsRemoveScalarBar { {m ""} } {
 
 #-------------------------------------------------------------------------------
 # .PROC MainModelsToggleScalarBar
-# 
+# Turn scalar bar on/off depending on current state
 # .ARGS
+# int m model id that should get the bar displayed.  Optional, defaults to idActive.
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsToggleScalarBar {m} {
