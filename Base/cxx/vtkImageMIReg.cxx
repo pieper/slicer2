@@ -71,6 +71,7 @@ vtkImageMIReg::vtkImageMIReg()
     this->Refs[i] = NULL;
     this->Subs[i] = NULL;
     this->RefIjkToRas[i] = vtkMatrix4x4::New();
+    this->RefRasToIjk[i] = vtkMatrix4x4::New();
     this->SubRasToIjk[i] = vtkMatrix4x4::New();
   }
 
@@ -132,6 +133,10 @@ vtkImageMIReg::~vtkImageMIReg()
     if (this->RefIjkToRas[i]) {
       this->RefIjkToRas[i]->Delete();
       this->RefIjkToRas[i] = NULL;
+    }
+    if (this->RefRasToIjk[i]) {
+      this->RefRasToIjk[i]->Delete();
+      this->RefRasToIjk[i] = NULL;
     }
     if (this->SubRasToIjk[i]) {
       this->SubRasToIjk[i]->Delete();
@@ -276,7 +281,8 @@ int vtkImageMIReg::Initialize()
   this->Refs[3]->Register((vtkObject*)NULL);
   this->Subs[3] = this->Subject;
   this->Subs[3]->Register((vtkObject*)NULL);
-  this->RefIjkToRas[3]->DeepCopy(this->RefNode->GetRasToIjk());
+  this->RefRasToIjk[3]->DeepCopy(this->RefNode->GetRasToIjk());
+  this->RefIjkToRas[3]->DeepCopy(this->RefRasToIjk[3]);
   this->RefIjkToRas[3]->Invert();
   this->SubRasToIjk[3]->DeepCopy(this->SubNode->GetRasToIjk());
 
@@ -287,11 +293,17 @@ int vtkImageMIReg::Initialize()
   {
     for (i=2; i >= 0; i--)
     {
+      //
+      // Reference image
+      //
+
+      // Smooth image
       smooth = vtkImageFastGaussian::New();
-      smooth->SetInput(Refs[i+1]);
+      smooth->SetInput(this->Refs[i+1]);
       smooth->Modified(); 
       smooth->Update();
 
+      // Downsample image
       down = vtkImageShrink3D::New();
       down->SetMean(0);
       down->SetShrinkFactors(2,2,2);
@@ -310,17 +322,48 @@ int vtkImageMIReg::Initialize()
       down->SetOutput(NULL);
       down->Delete();
 
-      // Compute Reference's Ijk-To-Ras matrices for downsampled image
+      // Compute Ijk-To-Ras matrices for downsampled image
       ext = Refs[i]->GetExtent();
       node->SetImageRange(ext[4], ext[5]);
       node->SetDimensions(ext[1]-ext[0]+1, ext[3]-ext[2]+1);
-      node->SetSpacing(this->Refs[i]->GetSpacing());
+      spacing = this->Refs[i]->GetSpacing();
+      node->SetSpacing(spacing);
       node->ComputeRasToIjkFromScanOrder(this->RefNode->GetScanOrder());
       node->SetRasToWld(identity);
-      this->RefIjkToRas[i]->DeepCopy(node->GetRasToIjk());
+      this->RefRasToIjk[i]->DeepCopy(node->GetRasToIjk());
+      this->RefIjkToRas[i]->DeepCopy(this->RefRasToIjk[i]);
       this->RefIjkToRas[i]->Invert();
 
-      // Compute Subject's Ras-to-Ijk matrices for downsampled image
+      //
+      // Subject image
+      //
+
+      // Smooth image
+      smooth = vtkImageFastGaussian::New();
+      smooth->SetInput(this->Subs[i+1]);
+      smooth->Modified(); 
+      smooth->Update();
+
+      // Downsample image
+      down = vtkImageShrink3D::New();
+      down->SetMean(0);
+      down->SetShrinkFactors(2,2,2);
+      down->SetInput(smooth->GetOutput()); 
+      down->Modified(); 
+      down->Update();
+
+      // Attach output to me
+      this->Subs[i] = down->GetOutput();
+      this->Subs[i]->Register((vtkObject*)NULL);
+
+      // Detach output from source
+      this->Subs[i]->SetSource(NULL);
+      smooth->SetOutput(NULL);
+      smooth->Delete();
+      down->SetOutput(NULL);
+      down->Delete();
+
+      // Compute Ras-to-Ijk matrices for downsampled image
       ext = Subs[i]->GetExtent();
       node->SetImageRange(ext[4], ext[5]);
       node->SetDimensions(ext[1]-ext[0]+1, ext[3]-ext[2]+1);
@@ -335,9 +378,10 @@ int vtkImageMIReg::Initialize()
   this->CurrentPose->DeepCopy(this->InitialPose);
 
   identity->Delete();
-  node->DeleteDICOMFileNames();
+  node->Delete();
   return 0;
 }
+
 
 //----------------------------------------------------------------------------
 // Cleanup
@@ -607,6 +651,8 @@ void vtkImageMIReg::Execute()
         numIter < this->UpdateIterations; 
         numIter++, this->CurIteration[res]++) 
     {
+      for (int g=0; g<1000000; g++);
+      /* NEED TO FIX BUG IN GetGradientAndInterpolation()
         //
         // Do some O(n) stuff..
         //
@@ -769,9 +815,10 @@ void vtkImageMIReg::Execute()
       this->CurrentPose->SetElement(0,3,this->CurrentPose->GetElement(0,3) + td[0]);
       this->CurrentPose->SetElement(1,3,this->CurrentPose->GetElement(1,3) + td[1]);
       this->CurrentPose->SetElement(2,3,this->CurrentPose->GetElement(2,3) + td[2]);
+      */
     }
   }
-
+     
   // Are we there yet? (for good)
   if (this->CurIteration[3] >= this->NumIterations[3]) 
   {
