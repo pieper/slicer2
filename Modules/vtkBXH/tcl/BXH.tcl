@@ -317,9 +317,6 @@ proc VolBXHDisplayDCMSingleVolume {fileName volData} {
     lappend VolBXH(MRMLid) $id
     set VolBXH(volumeExtent) \
         [[Volume($id,vol) GetOutput] GetWholeExtent]
-
-    MainSlicesSetVolumeAll Back $id 
-    RenderAll
 }
 
 
@@ -466,10 +463,6 @@ proc VolBXHLoadSiemensMosaic {} {
 
     set VolBXH(volumeExtent) \
         [[Volume([lindex $VolBXH(MRMLid) 0],vol) GetOutput] GetWholeExtent]
-
-    # show the first volume by default
-    MainSlicesSetVolumeAll Back $VolBXH(1,id)
-    RenderAll
 }
 
 
@@ -516,7 +509,6 @@ proc VolBXHCreateMrmlNodeForVolume {volName volData} {
 # puts "bxh scan order = $VolBXH(bxh-scanOrder)"
 # puts "bxh little endian = $VolBXH(bxh-littleEndian)"
 
-
     $volData Update 
 
     set spc [$volData GetSpacing]
@@ -530,9 +522,6 @@ proc VolBXHCreateMrmlNodeForVolume {volName volData} {
 # puts "bxh sliceThickness = $sliceThickness"
 # puts "bxh zSpacing = $zSpacing"
 
-
-
-
     eval Volume($i,node) SetSpacing $pixelWidth $pixelHeight $zSpacing 
     Volume($i,node) SetNumScalars [$volData GetNumberOfScalarComponents]
     set ext [$volData GetWholeExtent]
@@ -542,7 +531,7 @@ proc VolBXHCreateMrmlNodeForVolume {volName volData} {
         [lindex [$volData GetDimensions] 1]
     Volume($i,node) ComputeRasToIjkFromScanOrder [Volume($i,node) GetScanOrder]
 
-    MainUpdateMRML
+#    MainUpdateMRML
     Volume($i,vol) SetImageData $volData
     MainVolumesSetActive $i
 
@@ -588,10 +577,6 @@ proc VolBXHLoadAnalyze {} {
 
     set m [expr $i-1]
     VolBXHSetSliders $m
-
-    # show the first volume by default
-    MainSlicesSetVolumeAll Back $VolBXH(1,id)
-    RenderAll
 }
 
 
