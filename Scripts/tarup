@@ -42,8 +42,10 @@ cp /local/src/vtk3.01/local/*.so lib
 echo Copy vtk executable
 cp /local/src/vtk3.01/tcl/vtk .
 
-echo Copy vtk script 
+echo Copy vtk scripts 
 cp ../cvs/slicer/slicer2k .
+cp ../cvs/slicer/mrmlize .
+cp ../cvs/slicer/printmrml .
 
 echo Copy the VTK Sources
 cp -r ../cvs/slicer/vtksrc slicer/vtksrc

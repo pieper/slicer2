@@ -1,10 +1,8 @@
-set argv "dave.xml"
-set argc 1
 
 if {$argc != 1} {
-    puts "Usage: vtk MRMLParse.tcl <filename>"
+    puts "Usage: printmrml <filename>"
 	puts "where: <filename> = name of a MRML file (including the suffix)"
-	puts "Example: vtk MRMLParse.tcl /data/mr/case.mrml"
+	puts "Example: printmrml /data/mr/case.mrml"
     exit
 }
 

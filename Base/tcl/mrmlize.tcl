@@ -3,10 +3,10 @@
 #set argc 2
 
 if {$argc != 2} {
-    puts "Usage: vtk MRMLize.tcl <img1> <num2>"
+    puts "Usage: mrmlize <img1> <num2>"
 	puts "where: <img1> = full pathname of the first image in the volume."
 	puts "       <num2> = just the number of the last image"
-	puts "Example: vtk MRMLize.tcl /data/mr/I.001 124"
+	puts "Example: mrmlize /data/mr/I.001 124"
 	puts "Output: output.mrml is written in the current directory."
     exit
 }
