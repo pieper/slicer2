@@ -86,7 +86,7 @@ proc MainFileInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainFile \
-        {$Revision: 1.58.2.1 $} {$Date: 2004/12/03 18:51:05 $}]
+        {$Revision: 1.58.2.2 $} {$Date: 2005/01/07 20:10:59 $}]
 
     set File(filePrefix) data
 }
@@ -511,7 +511,8 @@ proc MainFileOpenApply {} {
     MainMrmlRead $filename
     MainUpdateMRML
     MainOptionsRetrievePresetValues
-    MainSetup
+    # need to pass a scene number here, or user or system defaults
+    MainSetup $::Scenes(currentScene)
     RenderAll
 
     if {$File(callback) != ""} {

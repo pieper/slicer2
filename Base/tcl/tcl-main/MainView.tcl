@@ -69,18 +69,20 @@ proc MainViewInit {} {
     # set global flag (used to avoid possible render loop)
     set View(resetCameraClippingRange) 1
 
+    if {$::Module(verbose)} { puts "Starting MainViewInit"}
     lappend Module(procStorePresets) MainViewStorePresets
     lappend Module(procRecallPresets) MainViewRecallPresets
     set Module(View,presets) "viewUp='0 0 1' position='0 750 0' \
 focalPoint='0 0 0' clippingRange='21 2001' \
-viewMode='Normal' viewBgColor='Blue'"
+viewMode='Normal' viewBgColor='Blue' \
+textureInterpolation='On' textureResolution='512'"
 
     # The MainViewBuildGUI proc is called specifically
     lappend Module(procVTK)  MainViewBuildVTK
 
     set m MainView
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.49 $} {$Date: 2004/07/22 15:55:07 $}]
+    {$Revision: 1.49.2.1 $} {$Date: 2005/01/07 20:11:00 $}]
 
     set View(viewerHeightNormal) 656
     set View(viewerWidth)  956 
@@ -111,8 +113,8 @@ viewMode='Normal' viewBgColor='Blue'"
     set View(closeupVisibility) On
     set View(createMagWin) Yes
     set View(parallelScale) $View(fov)
-    set View(textureResolution) 256
-    set View(textureInterpolation) Off
+    set View(textureResolution) 512
+    set View(textureInterpolation) "On"
 
     # sp-2002-02-22: removed for 1.3; seems to work on modern Windows
     if {0} {
@@ -321,7 +323,7 @@ proc MainViewBuildGUI {} {
     #    TooltipAdd $f.c$p "Saved view number $p: click to recall, hold down to save."
     #    pack $f.c$p -side left -padx 2 
     #}
-
+    
     # MainViewSpin button
     eval {checkbutton $f.cMainViewSpin \
         -text "Spin" -variable View(spin) -width 4 \
@@ -390,72 +392,103 @@ proc MainViewSelectView {p} {
 #  \"Midnight\",\"Black\" or \"White\"
 #
 # .ARGS
+# col value of the color
 # .END
 #-----------------------------------------------------------------------------
-
-#-------------------------------------------------------------------------------
-# .PROC MainViewSetBackgroundColor
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
 proc MainViewSetBackgroundColor {{col ""}} {
     global View Module
     
     
     # set View(bgName) if called with an argument
     if {$col != ""} {
-    if {$col == "Blue" || $col == "Black" || $col == "Midnight" || $col == "White"} {
-        set View(bgName) $col
-    } else {
-        return
-    }   
+        if {$col == "Blue" || $col == "Black" || $col == "Midnight" || $col == "White"} {
+            set View(bgName) $col
+        } else {
+            if {$::Module(verbose)} {
+                DevInfoWindow "MainViewSetBackgroundColor:\nInvalid background colour selected, $col.\nValid colours are Blue, Black, Midnight, White"
+            }
+            return
+        }   
     }    
     
     switch $View(bgName) {
-    "Blue" {
-        set View(bgColor) "0.7 0.7 0.9"
-    }
-    "Black" {
-        set View(bgColor) "0 0 0"
-    }
-    "Midnight" {
-        set View(bgColor) "0 0 0.3"
-    }
-    "White" {
-        set View(bgColor) "1 1 1"
-    }
+        "Blue" {
+            set View(bgColor) "0.7 0.7 0.9"
+        }
+        "Black" {
+            set View(bgColor) "0 0 0"
+        }
+        "Midnight" {
+            set View(bgColor) "0 0 0.3"
+        }
+        "White" {
+            set View(bgColor) "1 1 1"
+        }
     }
 
     # make sure color of axis letters contrasts with background
     foreach axis "R A S L P I" {
-      if {$View(bgName)=="White"} {
-        [${axis}Actor GetProperty] SetColor 0 0 1
-      } else {
-        [${axis}Actor GetProperty] SetColor 1 1 1
-      }   
+        if {$View(bgName)=="White"} {
+            [${axis}Actor GetProperty] SetColor 0 0 1
+        } else {
+            [${axis}Actor GetProperty] SetColor 1 1 1
+        }   
     }
-
+    
     foreach m $Module(Renderers) {
-    eval $m SetBackground $View(bgColor)
+        eval $m SetBackground $View(bgColor)
     }
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC MainViewSetTextureResolution
+# sets the texture resolution
+# .ARGS
+# res resolution to set it to
+# .END
+#-------------------------------------------------------------------------------
+proc MainViewSetTextureResolution { {res 512}} {
+    global View
+
+    if {$::Module(verbose)} { puts "MainViewSetTextureResolution $res"}
+    set View(textureResolution) $res
+    # MainViewSetTexture
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MainViewSetTextureInterpolation
+# sets the texture interpolation to On or Off
+# .ARGS
+# interpolationFlag value to set interpolation flag to
+# .END
+#-------------------------------------------------------------------------------
+proc MainViewSetTextureInterpolation { {interpolationFlag "On"}} {
+    global View
+
+    if {$::Module(verbose)} { puts  "MainViewSetTextureInterpolation $interpolationFlag" }
+    set View(textureInterpolation) $interpolationFlag
+    # MainViewSetTexture
 }
 
 #-------------------------------------------------------------------------------
 # .PROC MainViewSetFov
 # 
 # .ARGS
+# sceneNum if default, reset the main view's camera, otherwise leave it alone
 # .END
 #-------------------------------------------------------------------------------
-proc MainViewSetFov {} {
+proc MainViewSetFov { {sceneNum "default"} } {
     global View Gui Slice
 
     if {$::Module(verbose)} {
         puts "MainViewSetFov View(fov) = $View(fov)"
     }
     Slicer SetFieldOfView $View(fov)
-    MainViewNavReset 55 42 click
-    MainViewNavReset 0 0 leave
+    if {$sceneNum == "default"} {
+        MainViewNavReset 55 42 click
+        MainViewNavReset 0 0 leave
+    }
 
     # Update slice offset, registration annotation
     MainAnnoSetFov
@@ -498,7 +531,7 @@ proc MainViewSetParallelProjection {} {
 proc MainViewSetTexture {} {
     global View 
 
-
+    if {$::Module(verbose)} { puts "Starting MainViewSetTexture" }
     for {set s 0} {$s < 3} {incr s} {
         Slice($s,texture) Interpolate$View(textureInterpolation)
         [Slicer GetBackReformat3DView $s] SetResolution $View(textureResolution)
@@ -511,6 +544,8 @@ proc MainViewSetTexture {} {
         }
     }
     Render3D
+    if {$::Module(verbose)} { puts "Done MainViewSetTexture" }
+
 }
 
 #-------------------------------------------------------------------------------
@@ -838,22 +873,43 @@ proc MainViewSetFocalPoint {x y z} {
 proc MainViewStorePresets {p} {
     global Preset View
 
+    if {$::Module(verbose)} { puts "Starting MainViewSTOREPresets" }
+
     set Preset(View,$p,position)      [$View(viewCam) GetPosition]
     set Preset(View,$p,viewUp)        [$View(viewCam) GetViewUp]
     set Preset(View,$p,focalPoint)    [$View(viewCam) GetFocalPoint]
     set Preset(View,$p,clippingRange) [$View(viewCam) GetClippingRange]
     set Preset(View,$p,viewMode)      $View(mode)
     set Preset(View,$p,viewBgColor)   $View(bgName)
+
+    set Preset(View,$p,textureResolution) $View(textureResolution)
+    set Preset(View,$p,textureInterpolation) $View(textureInterpolation)
+
+    if {$::Module(verbose)} { puts "Done MainViewStorePresets" }
+
 }
         
 proc MainViewRecallPresets {p} {
     global Preset View
 
+    if {$::Module(verbose)} { puts "Starting MainViewRecallPresets" }
     eval $View(viewCam) SetPosition      $Preset(View,$p,position)
     eval $View(viewCam) SetViewUp        $Preset(View,$p,viewUp)
     eval $View(viewCam) SetClippingRange $Preset(View,$p,clippingRange)
 
     eval MainViewSetFocalPoint $Preset(View,$p,focalPoint)
-    MainViewerSetMode $Preset(View,$p,viewMode)
-    MainViewSetBackgroundColor $Preset(View,$p,viewBgColor)
+    eval MainViewerSetMode $Preset(View,$p,viewMode)
+    eval MainViewSetBackgroundColor $Preset(View,$p,viewBgColor)
+
+    if {$::Module(verbose)} { 
+        puts "MainViewRecallPresets $p about to call texture res"
+    }
+
+    eval MainViewSetTextureResolution $Preset(View,$p,textureResolution)
+    eval MainViewSetTextureInterpolation $Preset(View,$p,textureInterpolation)
+    # this call sets it for the slices
+    MainViewSetTexture 
+
+    if {$::Module(verbose)} { puts "Done MainViewRecallPresets"}
+
 }

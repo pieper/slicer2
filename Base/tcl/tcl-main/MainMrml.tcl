@@ -98,7 +98,7 @@ proc MainMrmlInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo MainMrml \
-    {$Revision: 1.104 $} {$Date: 2004/11/03 22:13:16 $}]
+    {$Revision: 1.104.2.1 $} {$Date: 2005/01/07 20:10:59 $}]
 
     set Mrml(colorsUnsaved) 0
 }
@@ -1270,6 +1270,8 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
                         "clippingrange" {$n SetClippingRange $val}
                         "viewmode" {$n SetViewMode $val}
                         "viewbgcolor" {$n SetViewBgColor $val}
+                        "textureresolution" {$n SetViewTextureResolution $val}
+                        "textureinterpolation" {$n SetViewTextureInterpolation $val}
                         "showaxes" {
                             if {$val == "true"} {
                                 $n SetShowAxes 1

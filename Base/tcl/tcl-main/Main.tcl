@@ -370,7 +370,7 @@ Slicer will exit so the problem can be corrected."
     if {$verbose} {
         puts "MainSetup..."; update
     }
-    MainSetup
+    MainSetup default
     if {$verbose} {
         puts "RenderAll..."; update
     }
@@ -459,7 +459,7 @@ proc MainInit {} {
 
         # Set version info
     lappend Module(versions) [ParseCVSInfo Main \
-        {$Revision: 1.114.2.3 $} {$Date: 2004/12/22 17:28:19 $}]
+        {$Revision: 1.114.2.4 $} {$Date: 2005/01/07 20:10:59 $}]
 
     # Call each "Init" routine that's not part of a module
     #-------------------------------------------
@@ -746,9 +746,11 @@ proc MainBuildGUI {} {
                     -command "Tab $m" -indicatoron 0} $Gui(WRA)
                 pack $f.$row.r$m -side left -padx 0 -pady 0
 
-                #if {[info exists Module($m,overview)]} {
-                #TooltipAdd  $f.$row.r$m $Module($m,overview)
-                #}
+                # if {$::Module(verbose)} {
+                  #  if {[info exists Module($m,overview)]} {
+                  #      TooltipAdd  $f.$row.r$m $Module($m,overview)
+                  #  }
+                # }
             } else {
                 if {$firstMore == ""} {
                     set firstMore $m
@@ -758,6 +760,7 @@ proc MainBuildGUI {} {
                     $moreMenu add command -label $m \
                         -command "set Module(btn) More; Tab $m; \
                         $Module(rMore) config -text $m"
+                    
                 }
             }
         }
@@ -1171,18 +1174,22 @@ proc MainRemoveModelActor { m } {
 
 #-------------------------------------------------------------------------------
 # .PROC MainSetup
-# Set many settings to their initial values.
+# Set many settings to their saved values.
 # Called when a scene (mrml file) is opened or closed, and when the
 # program starts.
 # .ARGS
+# sceneNum which preset set of values to restore to, 0 should be user prefs, default are system prefs
 # .END
 #-------------------------------------------------------------------------------
-proc MainSetup {} {
+proc MainSetup { {sceneNum "default"}} {
     global Module Gui Volume Slice View Model Color Matrix Options Preset
         global TetraMesh Tensor
 
     # Set current values to preset 0 (user preferences)
-    MainOptionsRecallPresets $Preset(userOptions)
+    # Change: preset 0 is over written by opening a mrml file, reset to system default if no scene is passed in
+    if {$::Module(verbose)} { puts "MainSetup: setting to scene $sceneNum" }
+    # MainOptionsRecallPresets $Preset(userOptions)
+    MainOptionsRecallPresets $sceneNum
 
     # Set active volume
     set v [lindex $Volume(idList) 0]
@@ -1193,7 +1200,9 @@ proc MainSetup {} {
     set spacing [lindex [Volume($v,node) GetSpacing] 0]
     set fov     [expr $dim*$spacing]
     set View(fov) $fov
-    MainViewSetFov
+    # this call will reset the camera via a call to MainViewNavReset, pass it the sceneNum so it can flag that out
+    if {$::Module(verbose)} { puts "Calling MainViewSetFov with $sceneNum" }
+    MainViewSetFov $sceneNum
 
     # If no volume set in all slices' background, set the active one
     set doit 1 
