@@ -21,7 +21,10 @@ exec tclsh "$0" "$@"
 # go to the appropriate build directory and run make or dev studio by hand
 # and get the build working from there.
 #
-
+# Because this script isn't started through the launch wrappers, make sure that your 
+# PATH and LD_LIBRARY_PATH environment variables point to the tclsh from the version of tcl
+# that you want to compile against. Setting your SLICER_HOME enviroment variable may
+# be necessary as well if you're using a version of tcl that does not support file normalize.
 
 
 
