@@ -1,27 +1,41 @@
 #=auto==========================================================================
-# (c) Copyright 2003 Massachusetts Institute of Technology
+# (c) Copyright 2004 Massachusetts Institute of Technology (MIT) All Rights Reserved.
 #
+# This software ("3D Slicer") is provided by The Brigham and Women's 
+# Hospital, Inc. on behalf of the copyright holders and contributors. 
 # Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for any purpose, 
-# provided that the above copyright notice and the following three paragraphs 
-# appear on all copies of this software.  Use of this software constitutes 
-# acceptance of these terms and conditions.
-#
-# IN NO EVENT SHALL MIT BE LIABLE TO ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, 
-# INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE 
-# AND ITS DOCUMENTATION, EVEN IF MIT HAS BEEN ADVISED OF THE POSSIBILITY OF 
-# SUCH DAMAGE.
-#
-# MIT SPECIFICALLY DISCLAIMS ANY EXPRESS OR IMPLIED WARRANTIES INCLUDING, 
-# BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR 
-# A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
-#
-# THE SOFTWARE IS PROVIDED "AS IS."  MIT HAS NO OBLIGATION TO PROVIDE 
-# MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS. 
+# and distribute this software and its documentation, if any, for 
+# research purposes only, provided that (1) the above copyright notice and 
+# the following four paragraphs appear on all copies of this software, and 
+# (2) that source code to any modifications to this software be made 
+# publicly available under terms no more restrictive than those in this 
+# License Agreement. Use of this software constitutes acceptance of these 
+# terms and conditions.
+# 
+# 3D Slicer Software has not been reviewed or approved by the Food and 
+# Drug Administration, and is for non-clinical, IRB-approved Research Use 
+# Only.  In no event shall data or images generated through the use of 3D 
+# Slicer Software be used in the provision of patient care.
+# 
+# IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND CONTRIBUTORS BE LIABLE TO 
+# ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL 
+# DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, 
+# EVEN IF THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE BEEN ADVISED OF THE 
+# POSSIBILITY OF SUCH DAMAGE.
+# 
+# THE COPYRIGHT HOLDERS AND CONTRIBUTORS SPECIFICALLY DISCLAIM ANY EXPRESS 
+# OR IMPLIED WARRANTIES INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+# WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND 
+# NON-INFRINGEMENT.
+# 
+# THE SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS 
+# IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
+# PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+# 
 #
 #===============================================================================
-# FILE:        DTMRI.tcl
-# PROCEDURES:
+# FILE:        tmp.tcl
+# PROCEDURES:  
 #   DTMRIInit
 #   DTMRIUpdateMRML
 #   DTMRIEnter
@@ -32,6 +46,17 @@
 #   DTMRICheckScrollLimits
 #   DTMRISizeScrolledGUI f
 #   DTMRISetPropertyType
+#   RunLSDIrecon               -------->    Convert Volume Data from Scanner to a DTMRImodule readable format (from I.## to D.##)  
+#   ShowPatternFrame
+#   DTMRIDisplayScrollBar
+#   ShowPatternFrame           -------->    Show and hide Create-Pattern frame
+#   DTMRIDisplayScrollBar      -------->    Show Scrollbar when resizing a frame
+#   DTMRICreatePatternSlice    -------->    Create a new tensor convertion pattern for slice interleaved data. This procedure writes the information of the new patterns in $env(HOME). To declare a permanent pattern so that Slicer is able to load it, you have to write in the file"patterns.txt" located in vtkDTMRI subdirectory.
+#   DTMRICreatePatternVolume   -------->    Create a new tensor convertion pattern for volume interleaved data. This procedure writes the information of the new patterns in $env(HOME). To declare a permanent pattern so that Slicer is able to load it, you have to write in the file "patterns.txt" located in vtkDTMRI subdirectory.
+#   DTMRILoadPattern           -------->    Looks for files with pattern information and adds them to the menubutton in the Create Pattern Frame.
+#   DTMRIUpdateTipsPattern
+#   DTMRIViewProps             -------->    Show properties of the selected pattern
+#   DTMRIDisplayNewData         -------->    Once converted de New Data, load it and display it automatically
 #   DTMRIPropsApply
 #   DTMRIPropsCancel
 #   DTMRIAdvancedApply
@@ -46,7 +71,6 @@
 #   DTMRIHideScalarBar
 #   DTMRIUpdateThreshold
 #   DTMRIUpdateMaskLabel
-#   DTMRIUpdateActor
 #   DTMRISpecificVisualizationSettings
 #   DTMRIResetDefaultVisualizationSettings
 #   DTMRIApplyVisualizationSettings mode
@@ -54,20 +78,18 @@
 #   DTMRIUpdateGlyphColor
 #   DTMRIUpdateGlyphScalarRange
 #   DTMRISelectRemoveHyperStreamline
-#   DTMRISelectStartTractography x y z
 #   DTMRISelectStartHyperStreamline x y z
-#   DTMRISelectStartPreciseHyperStreamline x y z
+#   DTMRIUpdateStreamlineSettings
 #   DTMRIUpdateStreamlines
-#   DTMRIAddStreamline
-#   DTMRIAddPreciseStreamline
 #   DTMRIUpdateTractingMethod
 #   DTMRIUpdateBSplineOrder
+#   DTMRIUpdateTractColorToSolid
+#   DTMRIUpdateTractColorToMulti
 #   DTMRIUpdateTractColor
 #   DTMRIRemoveAllStreamlines
 #   DTMRIAddAllStreamlines
 #   DTMRIDeleteAllStreamlines
 #   DTMRISeedStreamlinesFromSegmentation
-#   DTMRIExecuteForProgrammableFilter
 #   DTMRIUpdate
 #   DTMRISetOperation math
 #   DTMRIUpdateMathParams
@@ -83,21 +105,11 @@
 #   DTMRISaveStreamlinesAsIJKPoints subdir name verbose
 #   DTMRISaveStreamlinesAsPolyLines subdir name verbose
 #   DTMRISaveStreamlinesAsModel
-#   DTMRIGetPointsFromSegmentationInIJKofDTMRIVolume verbose
 #   DTMRIGetScaledIjkCoordinatesFromWorldCoordinates x y z
 #   DTMRICalculateActorMatrix transform t
 #   DTMRICalculateIJKtoRASRotationMatrix
-#   RunLSDIrecon               -------->    Convert Volume Data from Scanner to a DTMRImodule readable format (from I.## to D.##)   
-#   DTMRIDisplayNewData        -------->    Once converted de New Data, load it and display it automatically
-#   ShowPatternFrame           -------->    Show and hide Create-Pattern frame
-#   DTMRIDisplayScrollBar      -------->    Show Scrollbar when resizing a frame
-#   DTMRICreatePatternSlice    -------->    Create a new tensor convertion pattern for slice interleaved data. This procedure writes the information of the new patterns in $env(HOME). To declare a permanent pattern so that Slicer is able to load it, you have to write in the file"patterns.txt" located in vtkDTMRI subdirectory.
-#   DTMRICreatePatternVolume   -------->    Create a new tensor convertion pattern for volume interleaved data. This procedure writes the information of the new patterns in $env(HOME). To declare a permanent pattern so that Slicer is able to load it, you have to write in the file "patterns.txt" located in vtkDTMRI subdirectory.
-#   DTMRILoadPattern           -------->    Looks for files with pattern information and adds them to the menubutton in the Create Pattern Frame.
-#   DTMRIUpdateTipsPattern
-#   DTMRIViewProps             -------->    Show properties of the selected pattern
+#   DTMRI SetActive
 #==========================================================================auto=
-
 
 #-------------------------------------------------------------------------------
 # .PROC DTMRIInit
@@ -122,7 +134,7 @@ proc DTMRIInit {} {
     set Module($m,author) "Lauren O'Donnell"
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.39 $} {$Date: 2004/11/12 07:04:45 $}]
+                  {$Revision: 1.40 $} {$Date: 2004/11/12 07:20:11 $}]
 
      # Define Tabs
     #------------------------------------
@@ -2672,12 +2684,12 @@ proc DTMRISetPropertyType {} {
 
 #-------------------------------------------------------------------------------
 # .PROC RunLSDIrecon
-#  Convert volume data from scanner to a module readable data so that DTMRI can convert tensors
-#  active MRML node (this is NEW or an existing node).  
+# Convert volume data from scanner to a module readable data 
+# so that DTMRI can convert tensors
+#  active MRML node (this is NEW or an existing node). 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-
 proc RunLSDIrecon {} {
     global DTMRI Volume  Mrml Module PACKAGE_DIR_VTKDTMRI
     
@@ -2771,13 +2783,14 @@ proc RunLSDIrecon {} {
 
 }
 
+
 #-------------------------------------------------------------------------------
 # .PROC DTMRICreatePatternSlice
 # Write new patterns defined by user in $env(HOME)/PatternData and update patterns selectbutton
-#  
+# .ARGS
+# .END
 #-------------------------------------------------------------------------------
-
-    proc DTMRICreatePatternSlice {} {
+proc DTMRICreatePatternSlice {} {
         global Module Gui Volume DTMRI Mrml env
 
         set DTMRI(patternpar) ""
@@ -2852,8 +2865,7 @@ proc RunLSDIrecon {} {
 # Write new patterns defined by user in $env(HOME)/PatternData and update patterns selectbutton
 #  
 #-------------------------------------------------------------------------------
-
-    proc DTMRICreatePatternVolume {} {
+proc DTMRICreatePatternVolume {} {
       global Module Gui Volume DTMRI Mrml env
 
       set DTMRI(patternpar) ""
@@ -3113,6 +3125,12 @@ proc RunLSDIrecon {} {
 #  
 #-------------------------------------------------------------------------------
 
+#-------------------------------------------------------------------------------
+# .PROC DTMRIViewProps
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc DTMRIViewProps {} {
 puts $DTMRI(selectedpattern)
 
@@ -3126,9 +3144,9 @@ puts $DTMRI(selectedpattern)
 #-------------------------------------------------------------------------------
 # .PROC DTMRIDisplayNewData
 #  Once converted the volume data with LSDI script, load and display new data.
-#  
+# .ARGS
+# .END
 #-------------------------------------------------------------------------------
-
 proc DTMRIDisplayNewData {} {
     
     global DTMRI Volume  Mrml Module
@@ -3808,6 +3826,12 @@ proc DTMRISelectStartHyperStreamline {x y z {render "true"} } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC DTMRIUpdateStreamlineSettings
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc DTMRIUpdateStreamlineSettings {} {
     global DTMRI
 
@@ -3961,10 +3985,22 @@ proc DTMRIUpdateBSplineOrder { SplineOrder } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC DTMRIUpdateTractColorToSolid
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc DTMRIUpdateTractColorToSolid {} {
     DTMRIUpdateTractColor SolidColor
 }
 
+#-------------------------------------------------------------------------------
+# .PROC DTMRIUpdateTractColorToMulti
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc DTMRIUpdateTractColorToMulti {} {
     DTMRIUpdateTractColor MultiColor
 }
