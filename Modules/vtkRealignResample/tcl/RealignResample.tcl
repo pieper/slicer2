@@ -24,7 +24,7 @@ proc RealignResampleInit {} {
     set Module($m,depend) "Morphometrics"
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.4 $} {$Date: 2004/08/20 16:16:13 $}]
+        {$Revision: 1.4.2.1 $} {$Date: 2004/12/03 15:15:27 $}]
 
     set Matrix(volume) $Volume(idNone)
     set Matrix(RealignResampleVolumeName2) None
@@ -388,7 +388,9 @@ proc RealignResampleSetVolume2 {{v ""}} {
     set Matrix(RealignResampleVolumeName2) "[Volume($v,node) GetName]"
 
     #Print out what the user has set as the volume to move
-    puts "this is the VolumeName: $Matrix(RealignResampleVolumeName2)"   
+    if {$::Module(verbose)} {
+        puts "RealignResampleSetVolume2: this is the VolumeName: $Matrix(RealignResampleVolumeName2)"   
+    }
 }
 #-------------------------------------------------------------------------------
 # .PROC AutoSpacing
