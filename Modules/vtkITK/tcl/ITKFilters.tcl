@@ -105,7 +105,7 @@ proc ITKFiltersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.3 $} {$Date: 2005/01/23 21:19:37 $}]
+        {$Revision: 1.4 $} {$Date: 2005/02/01 00:51:37 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -566,14 +566,14 @@ proc ITKFiltersAfterUpdate { } {
 
 proc ITKFiltersSpatialObjectsApply {} {
 
-    if { [info command vtkITKSceneSpatialObjectVisualizer] == "" } {
+    if { [info command vtkITKSceneSpatialObjectViewer] == "" } {
         DevWarningWindow "SpatialObjects not available in this version of vtkITK"
         return
     }
 
     catch "ssov Delete"
-    vtkITKSceneSpatialObjectVisualizer ssov
+    vtkITKSceneSpatialObjectViewer ssov
     ssov SetRenderer viewRen
     ssov SetFileName $::ITKFilters(SpatialObjects,filename)
-    sov AddActors
+    ssov AddActors
 }
