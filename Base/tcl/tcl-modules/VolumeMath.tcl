@@ -29,7 +29,7 @@
 #   VolumeMathExit
 #   VolumeMathSetMathType
 #   VolumeMathSetLogicType
-#   VolumeMathPrepareResultVolume
+#   VolumeMathPrepareResultVolume logic
 #   VolumeMathPrepareResult
 #   VolumeMathDoMath
 #   VolumeMathDoLogic
@@ -37,9 +37,8 @@
 #   VolumeMathDoAdd
 #   VolumeMathDoHausdorff
 #   VolumeMathDoDistMap
-#   VolumeMathDoAnd
 #   VolumeMathDoResample
-#   VolumeMathCount
+#   VolumeMathDoAnd
 #==========================================================================auto=
 #-------------------------------------------------------------------------------
 # .PROC VolumeMathInit
@@ -127,7 +126,7 @@ proc VolumeMathInit {} {
 	#   appropriate info when the module is checked in.
 	#   
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.20 $} {$Date: 2002/01/13 22:25:43 $}]
+		{$Revision: 1.21 $} {$Date: 2002/01/14 17:29:47 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -253,22 +252,49 @@ proc VolumeMathBuildGUI {} {
 	set help "
 This Module Exists to do things like subtract and add volumes.
 It also exists to find the distance between two points in a volume.
-Currently, the distance finder is not functional.<P>
+Currently, the distance finder is not functional.
 
-For Subtraction or Addition: If you wish to subtract two volumes that have
- different spacings or numbers of voxels, or if a transform exists
- between the two images, you MUST resample one image in the coordinates
- of the other. (Note that this module doesn't currently check to make sure
- you did everything correctly. One day...) Once the images are subtracted, the
- results are sometimes difficult to look at. I recommend taking the
- Absolute Valute of the results of the subtraction. <P>
+<P><B>Output volume:</B> The output volume will be called
+VolumeMath*Result, where * is the name of the mathematical operation
+you have done to make the volume.  This name can be changed under
+Volumes->Props->Basic if desired.
 
+<P>
+<B>For Subtraction or Addition</B>: If you wish to subtract two
+volumes that have different spacings or numbers of voxels, or if a
+transform exists between the two images, you MUST resample one image
+in the coordinates of the other. (Note that this module doesn't
+currently check to make sure you did everything correctly. One day...)
+Once the images are subtracted, the results are sometimes difficult to
+look at. I recommend taking the Absolute Value of the results of the
+subtraction. 
+
+<P>
 Distance Maps yield the square of the distance.
 
-<P><B>Known Bugs</B>Don't set the output to be one of the input
+<P>
+<B>Logic Tab</B>: This is for logical operations on volumes, such as AND.
+Practically, the AND function can be used to select all voxels that
+are labeled in both of two volumes.  
+
+<P>For example, if you wish to threshold only within a segmented
+region, use the Editor to produce two Working volumes.  The first
+Working volume is a labelmap of the desired region.  The second
+Working volume is made by applying the desired threshold (to the whole
+volume).
+
+<P>Then you can use the VolumeMath module to create a new volume where
+the thresholding is restricted to the segmented area.  Do this by
+selecting Working1 and Working2 as Volumes 1 and 2 under
+VolumeMath->Logic->And.  Then for Volume3, select Create New.  Make
+sure to select the label of interest in the Working volumes.  The new
+output volume will be thresholded only within the region of the
+original segmentation.
+
+<P><B>Known Bugs</B> Don't set the output to be one of the input
 files. Sometimes it doesn't work.
 "
-	regsub -all "\n" $help {} help
+	regsub -all "\n" $help " " help
 	MainHelpApplyTags VolumeMath $help
 	MainHelpBuildGUI VolumeMath
 
@@ -526,12 +552,14 @@ files. Sometimes it doesn't work.
         #
 
         set row 1
-	foreach p "And" {
+	set tips {"Label all pixels that are labeled in BOTH of the input Volumes (1 and 2).\nUseful for thresholding within a segmented region only."}
+	foreach p "And" tip $tips {
             eval {radiobutton $f.f.$row.r$p \
 			-text "$p" -command "VolumeMathSetLogicType" \
 			-variable VolumeMath(LogicType) -value $p -width 10 \
 			-indicatoron 0} $Gui(WCA)
 		pack $f.f.$row.r$p -side left -pady 0
+	    TooltipAdd $f.f.$row.r$p $tip
             #if { $p == "Resample" } {incr row};
 	}
 
@@ -545,13 +573,17 @@ files. Sometimes it doesn't work.
 	set f $fLogic.fLabel
 
 	# Output label
+	set tip "Label of interest (input/output TRUE value)."
 	eval {button $f.bOutput -text "Label:" \
 		-command "ShowLabels"} $Gui(WBA)
+	TooltipAdd  $f.bOutput $tip
 	eval {entry $f.eOutput -width 6 \
 		-textvariable Label(label)} $Gui(WEA)
+	TooltipAdd  $f.eOutput $tip
 	eval {entry $f.eName -width 14 \
 		-textvariable Label(name)} $Gui(WEA) \
 		{-bg $Gui(activeWorkspace) -state disabled}
+	TooltipAdd  $f.eName $tip
 	grid $f.bOutput $f.eOutput $f.eName -padx 2 -pady $Gui(pad)
 	grid $f.eOutput $f.eName -sticky w
 
@@ -565,9 +597,11 @@ files. Sometimes it doesn't work.
 
 	set f $fLogic.fGrid
 
-        DevAddSelectButton VolumeMath $f Volume2L "Volume2:"   Grid
-        DevAddSelectButton VolumeMath $f Volume1L "- Volume1:" Grid
-        DevAddSelectButton VolumeMath $f Volume3L "= Volume3:" Grid
+	set tip "Input Volume"
+        DevAddSelectButton VolumeMath $f Volume2L "Volume2:"   Grid $tip
+        DevAddSelectButton VolumeMath $f Volume1L "AND Volume1:" Grid $tip
+	set tip "Output Volume"
+        DevAddSelectButton VolumeMath $f Volume3L "= Volume3:" Grid $tip
 
 	#-------------------------------------------
 	# Logic->Pack frame
@@ -578,6 +612,7 @@ files. Sometimes it doesn't work.
         DevAddButton $f.bRun "Run" "VolumeMathDoLogic"
 
 	pack $f.bRun
+	TooltipAdd $f.bRun "Do the logical operation and output Volume3."
 
     }   
 
@@ -606,7 +641,7 @@ proc VolumeMathEnter {} {
 # .END
 #-------------------------------------------------------------------------------
 proc VolumeMathExit {} {
-    popEventManager
+    #popEventManager
 }
 
 
@@ -651,16 +686,12 @@ proc VolumeMathSetMathType {} {
         $a configure -text "Undir. Par. Haus. Dist. V2"
         $b configure -text "V1"
         $c configure -text "and put the results in"
-    } elseif {$VolumeMath(MathType) == "And" } {
-        $a configure -text "Volume2"
-        $b configure -text "AND Volume1"
-        $c configure -text "and put the results in"
     }
 }
 
 #-------------------------------------------------------------------------------
 # .PROC VolumeMathSetLogicType
-# 
+#   Set the type of Logic to be Done
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -676,9 +707,9 @@ proc VolumeMathSetLogicType {} {
     set c $f.lVolume3L
 
     if {$VolumeMath(LogicType) == "And" } {
-        $a configure -text "Volume2"
-        $b configure -text "AND Volume1"
-        $c configure -text "and put the results in"
+        $a configure -text "Volume2:"
+        $b configure -text "AND Volume1:"
+        $c configure -text "= Volume3:"
     }
 }
 
@@ -686,6 +717,9 @@ proc VolumeMathSetLogicType {} {
 # .PROC VolumeMathPrepareResultVolume
 #   Check for Errors in the setup
 #   returns 1 if there are errors, 0 otherwise
+# 
+# .ARGS
+# boolean logic default is 0; if calling from the Logic tab, set this to 1
 # .END
 #-------------------------------------------------------------------------------
 proc VolumeMathPrepareResultVolume {{logic "0"}}  {
@@ -773,7 +807,7 @@ proc VolumeMathDoMath {} {
 
 #-------------------------------------------------------------------------------
 # .PROC VolumeMathDoLogic
-# 
+# Calls the correct function
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -997,8 +1031,76 @@ proc VolumeMathDoDistMap {} {
 }
 
 #-------------------------------------------------------------------------------
+# .PROC VolumeMathDoResample
+#   Actually do the Resampling
+#
+# .END
+#-------------------------------------------------------------------------------
+proc VolumeMathDoResample {} {
+	global VolumeMath Volume
+
+        # Check to make sure no volume is none
+
+    if {[VolumeMathCheckErrors] == 1} {
+        return
+    }
+    if {[VolumeMathPrepareResultVolume] == 1} {
+        return
+    }
+
+    set v3 $VolumeMath(Volume3)
+    set v2 $VolumeMath(Volume2)
+    set v1 $VolumeMath(Volume1)
+
+    puts "$v3 $v2 $v1"
+
+    # Set up the VolumeMath Resampling
+
+    # You would think we would want 
+    # ScaledIJKtoRAS2^-1 * ScaledIJKtoRAS1 
+    # But in fact, if there is a transformation matrix affecting
+    # the two volumes, it shows up in the RasToWld matrix.
+    # so that we want
+    # (RasToWld2*ScaledIJKToWld2)^-1 (RasToWld1*ScaledIJKToWld1)
+
+    # Get ScaledIJKs
+    set sIJK2 [Volume($v2,node) GetPosition]
+    set sIJK1 [Volume($v1,node) GetPosition]
+    # Get RasToWlds
+    set RasWld2 [Volume($v2,node) GetRasToWld]
+    set RasWld1 [Volume($v1,node) GetRasToWld]
+
+    vtkMatrix4x4 Amatrix
+    Amatrix Multiply4x4 $RasWld2 $sIJK2 Amatrix
+    Amatrix Invert
+    Amatrix Multiply4x4 Amatrix $RasWld1 Amatrix
+    Amatrix Multiply4x4 Amatrix $sIJK1   Amatrix
+
+    Amatrix Print
+    # Resampling
+
+    vtkResliceImage Reslice
+     Reslice SetInput            [Volume($v2,vol) GetOutput]
+     Reslice SetOutputImageParam [Volume($v1,vol) GetOutput]
+     Reslice SetTransformOutputToInput Amatrix
+     Reslice Update
+
+    [Reslice GetOutput] Print
+    Volume($v3,vol) SetImageData [Reslice GetOutput]
+#    [Volume($v3,vol) GetOutput] Print
+    puts "$v3 $v2 $v1"
+
+    MainVolumesUpdate $v3
+    Amatrix Delete
+    Reslice Delete
+}
+
+################# Procedures from Logic Tab #################
+
+#-------------------------------------------------------------------------------
 # .PROC VolumeMathDoAnd
-#   Actually do the VolumeMath
+#   Actually do the And.  Replace label of interest with 1,
+# then AND the volumes.  Output true value is label of interest.
 #
 # .END
 #-------------------------------------------------------------------------------
@@ -1070,85 +1172,4 @@ proc VolumeMathDoAnd {} {
     thresh2 Delete
 }
 
-
-
-#-------------------------------------------------------------------------------
-# .PROC VolumeMathDoResample
-#   Actually do the Resampling
-#
-# .END
-#-------------------------------------------------------------------------------
-proc VolumeMathDoResample {} {
-	global VolumeMath Volume
-
-        # Check to make sure no volume is none
-
-    if {[VolumeMathCheckErrors] == 1} {
-        return
-    }
-    if {[VolumeMathPrepareResultVolume] == 1} {
-        return
-    }
-
-    set v3 $VolumeMath(Volume3)
-    set v2 $VolumeMath(Volume2)
-    set v1 $VolumeMath(Volume1)
-
-    puts "$v3 $v2 $v1"
-
-    # Set up the VolumeMath Resampling
-
-    # You would think we would want 
-    # ScaledIJKtoRAS2^-1 * ScaledIJKtoRAS1 
-    # But in fact, if there is a transformation matrix affecting
-    # the two volumes, it shows up in the RasToWld matrix.
-    # so that we want
-    # (RasToWld2*ScaledIJKToWld2)^-1 (RasToWld1*ScaledIJKToWld1)
-
-    # Get ScaledIJKs
-    set sIJK2 [Volume($v2,node) GetPosition]
-    set sIJK1 [Volume($v1,node) GetPosition]
-    # Get RasToWlds
-    set RasWld2 [Volume($v2,node) GetRasToWld]
-    set RasWld1 [Volume($v1,node) GetRasToWld]
-
-    vtkMatrix4x4 Amatrix
-    Amatrix Multiply4x4 $RasWld2 $sIJK2 Amatrix
-    Amatrix Invert
-    Amatrix Multiply4x4 Amatrix $RasWld1 Amatrix
-    Amatrix Multiply4x4 Amatrix $sIJK1   Amatrix
-
-    Amatrix Print
-    # Resampling
-
-    vtkResliceImage Reslice
-     Reslice SetInput            [Volume($v2,vol) GetOutput]
-     Reslice SetOutputImageParam [Volume($v1,vol) GetOutput]
-     Reslice SetTransformOutputToInput Amatrix
-     Reslice Update
-
-    [Reslice GetOutput] Print
-    Volume($v3,vol) SetImageData [Reslice GetOutput]
-#    [Volume($v3,vol) GetOutput] Print
-    puts "$v3 $v2 $v1"
-
-    MainVolumesUpdate $v3
-    Amatrix Delete
-    Reslice Delete
-}
-
-
-#-------------------------------------------------------------------------------
-# .PROC VolumeMathCount
-#
-# This routine demos how to make button callbacks and use global arrays
-# for object oriented programming.
-# .END
-#-------------------------------------------------------------------------------
-proc VolumeMathCount {} {
-	global VolumeMath
-
-	incr VolumeMath(count)
-	$VolumeMath(lStuff) config -text "You clicked the button $VolumeMath(count) times"
-}
 
