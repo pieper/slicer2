@@ -1,0 +1,43 @@
+<title>EM Segment</title>
+
+<h1>What is EM Segment?</h1>
+
+It was developed by <a href="mailto:pohl@mit.edu">Kilian Pohl</a>. The
+EMSegment module is a realization of the EM-MF Algorithm based on Kapur's algorithm PhD thesis. A paper about the current implementation can be found at <a href="http://www.ai.mit.edu/people/kpohl/pohl_miccai02.pdf">http://www.ai.mit.edu/people/kpohl/pohl_miccai02.pdf</A>.
+
+<h1>How to Test the Module</h1>
+
+This test will verify that the module is working correctly.<br>
+<ul>
+<li>Change to the testing scripts directory, slicer2/Base/tests.
+<li>Execute TestImageEM*.tcl.
+<li>Compare TestEMSegmentImage.00* with TestEMSegmentResult.00*.
+</ul>
+
+<h1>How to Use the Module</h1>
+<ul>
+<li>Start the version of Slicer for your operating system.
+<li>Load a scene or create one.
+<li>Enter the EMSegment module
+<li>Select the EM tab
+<li>Select the volume to be segmented from the available volumes.
+<li>Define the EM specific parameters:
+	<ul>
+	<li>Class = Into how many classes should the volume be segmented 
+	<li>Iteration = For how many iterations should EM run (e.g. 10) 
+	<li>Start Slice = First slice to be segmented from selected Volume(e.g. 1) 
+	<li>End Slice = Last Slice to be segmented from selected Volume (e.g. 124) 
+	</ul>
+<li>Define the Tissue classes:
+	<ul>
+	<li>Check the Use Sample button.
+	<li>Select a class and take samples from the volume slices in the
+slice views by holding down Ctrl and clicking with the left
+mouse button. Repeat for all the classes. You can view the graphs of
+the points on the Class tab. Make sure the Use Samples button is depressed.
+	<li>Define the global probability (Prob.) of the tissue class in 
+comparison to the other classes.
+	</ul>
+<li>Press Segment Button
+</ul>
+
