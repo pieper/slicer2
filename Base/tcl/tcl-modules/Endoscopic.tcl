@@ -259,7 +259,7 @@ proc EndoscopicInit {} {
     set Module($m,category) "Visualisation"
     
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.74 $} {$Date: 2004/10/26 17:00:52 $}] 
+    {$Revision: 1.75 $} {$Date: 2004/11/01 22:04:57 $}] 
        
     # Define Procedures
     #------------------------------------
@@ -5530,7 +5530,7 @@ proc EndoscopicAddTargetInFlatWindow {widget x y z} {
 
 proc EndoscopicAddTargetFromFlatColon {pointId} {
 
-    global Endoscopic Point Fiducials Select Model View Path Slice
+    global Endoscopic Point Fiducials Select Model View Path Slice Volume Volumes
     
 #  If no path selected, do nothing.
 
@@ -5601,17 +5601,27 @@ puts "pointId from FlatColon is $pointId"
     
     EndoscopicFiducialsPointSelectedCallback $fid $closestPid
     
-# set the driver to point at the colon wall.
-    set driver Intersection
-    EndoscopicSetSliceDriver $driver
-    RenderSlices
+# set the original axial slice to that location
+    #set driver User
+    #EndoscopicSetSliceDriver $driver
 
-    Render3D
+    MainSlicesSetOrientAll Slices
+    set vol $Volume(activeID)
+    set oriSlice [[Volume($vol,node) GetRasToIjk] MultiplyPoint $fx $fy $fz 1]
+    set scanOrder [Volume($vol,node) GetScanOrder]
+    set dim [Volume($vol,node) GetDimensions]
     
-# reset the driver to user so that they can use the slicer to move the 2D slices.
-    set driver User
-    EndoscopicSetSliceDriver $driver
+    if {$scanOrder == "IS" } {
+    MainSlicesSetOffset 0 [expr floor([lindex $oriSlice 2])]
+    MainSlicesSetOffset 1 [expr [lindex $dim 0] - [expr floor([lindex $oriSlice 0])]]
+    MainSlicesSetOffset 2 [expr floor([lindex $oriSlice 1])]
 
+    } else {
+    return
+    }
+    
+    RenderAll
+    
 # create targets   
     EndoscopicCreateTargets
 }
@@ -5622,7 +5632,7 @@ puts "pointId from FlatColon is $pointId"
 #-----------------------------------------------------------------------------------------
 proc EndoscopicAddTargetFromSlices {x y z} {
 
-    global Endoscopic Point Fiducials Select Model View Slice
+    global Endoscopic Point Fiducials Select Model View Slice Volume Volumes
     
 #  If no path selected, do nothing.
 
@@ -5689,25 +5699,37 @@ puts "pointId from Slices is: $pointId"
     set fz [lindex $point(xyz) 2]
 
     Point($closestPid,node) SetFXYZ $fx $fy $fz
-# use the SetDescription to store and save $cellId information.
+# use the SetDescription to store and save $pointId information.
     Point($closestPid,node) SetDescription $pointId
     
     MainUpdateMRML
     
     EndoscopicFiducialsPointSelectedCallback $fid $closestPid
-
-    set driver Intersection
-    EndoscopicSetSliceDriver $driver
-    RenderSlices
-
-    Render3D
     
 tempPointLocator Delete
 
-# reset the driver to user
-    set driver User
-    EndoscopicSetSliceDriver $driver
+# set the original axial slice to that location
+    #set driver User
+    #EndoscopicSetSliceDriver $driver
+
+    MainSlicesSetOrientAll Slices
+    set vol $Volume(activeID)
+    set oriSlice [[Volume($vol,node) GetRasToIjk] MultiplyPoint $fx $fy $fz 1]
+    set scanOrder [Volume($vol,node) GetScanOrder]
+    set dim [Volume($vol,node) GetDimensions]
     
+    if {$scanOrder == "IS" } {
+    MainSlicesSetOffset 0 [expr floor([lindex $oriSlice 2])]
+    MainSlicesSetOffset 1 [expr [lindex $dim 0] - [expr floor([lindex $oriSlice 0])]]
+    MainSlicesSetOffset 2 [expr floor([lindex $oriSlice 1])]
+
+    } else {
+    return
+    }
+    
+    RenderAll
+    
+
 # Create Targets    
     EndoscopicCreateTargets
     
@@ -5727,7 +5749,7 @@ tempPointLocator Delete
 }
 
 #-----------------------------------------------------------------------------------------
-# .PROC EndoscopicAddTargetFromSlices
+# .PROC EndoscopicAddTargetFromWorldCoordinates
 #  When a user selects a location on the 3D model, the 2D slices sychronises.
 #-----------------------------------------------------------------------------------------
 
@@ -5805,23 +5827,34 @@ puts "pointId from 3D colon is: $pointId"
     set fz [lindex $point(xyz) 2]
 
     Point($closestPid,node) SetFXYZ $fx $fy $fz    
-# use the SetDescription to store and save $cellId information.
+# use the SetDescription to store and save $pointId information.
     Point($closestPid,node) SetDescription $pointId
     
     MainUpdateMRML
 
     EndoscopicFiducialsPointSelectedCallback $fid $closestPid
 
-    set driver Intersection
-    EndoscopicSetSliceDriver $driver
-    RenderSlices
+# set the original axial slice to that location
+    #set driver User
+    #EndoscopicSetSliceDriver $driver
 
+    MainSlicesSetOrientAll Slices
+    set vol $Volume(activeID)
+    set oriSlice [[Volume($vol,node) GetRasToIjk] MultiplyPoint $fx $fy $fz 1]
+    set scanOrder [Volume($vol,node) GetScanOrder]
+    set dim [Volume($vol,node) GetDimensions]
+    
+    if {$scanOrder == "IS" } {
+    MainSlicesSetOffset 0 [expr floor([lindex $oriSlice 2])]
+    MainSlicesSetOffset 1 [expr [lindex $dim 0] - [expr floor([lindex $oriSlice 0])]]
+    MainSlicesSetOffset 2 [expr floor([lindex $oriSlice 1])]
 
-    Render3D
-
-# reset the driver to user
-    set driver User
-    EndoscopicSetSliceDriver $driver
+    } else {
+    return
+    }
+    
+    RenderAll
+    
     
 # Create Targets    
     EndoscopicCreateTargets
@@ -5975,7 +6008,7 @@ proc EndoscopicCreateTargets {} {
    
     set index [expr $index + 1]
     Point($targetpid,node) SetName [concat $Fiducials($targetfid,name) $index]
-# use the SetDescription to store and save $cellId information.
+# use the SetDescription to store and save $pointId information.
     Point($targetpid,node) SetDescription $pointId
 
     MainUpdateMRML
@@ -6144,19 +6177,37 @@ proc EndoscopicSelectTarget {sT} {
     set index [expr $index - 1]
     set pid [lindex $list $index]
     
+    set fx [lindex [Point($pid,node) GetFXYX] 0]
+    set fy [lindex [Point($pid,node) GetFXYX] 1]
+    set fz [lindex [Point($pid,node) GetFXYX] 2]
+    
     EndoscopicResetCameraDirection    
     EndoscopicUpdateVirtualEndoscope $Endoscopic(activeCam) [concat [Point($pid,node) GetFXYZ] [Point($pid,node) GetXYZ]]
    
     EndoscopicUpdateActorFromVirtualEndoscope $Endoscopic(activeCam)
-    Render3D
+#    Render3D
     
-    set driver Intersection
-    EndoscopicSetSliceDriver $driver
-    RenderSlices
+# set the original axial slice to that location
+    #set driver User
+    #EndoscopicSetSliceDriver $driver
 
-# reset the driver to user
-    set driver User
-    EndoscopicSetSliceDriver $driver
+    MainSlicesSetOrientAll Slices
+    set vol $Volume(activeID)
+    set oriSlice [[Volume($vol,node) GetRasToIjk] MultiplyPoint $fx $fy $fz 1]
+    set scanOrder [Volume($vol,node) GetScanOrder]
+    set dim [Volume($vol,node) GetDimensions]
+    
+    if {$scanOrder == "IS" } {
+    MainSlicesSetOffset 0 [expr floor([lindex $oriSlice 2])]
+    MainSlicesSetOffset 1 [expr [lindex $dim 0] - [expr floor([lindex $oriSlice 0])]]
+    MainSlicesSetOffset 2 [expr floor([lindex $oriSlice 1])]
+
+    } else {
+    return
+    }
+    
+    RenderAll
+    
 
 
 # select the corresponding target in the flat window
