@@ -1,3 +1,14 @@
+# reconfig
+# Use this script to run configure again in a vtk subdirectory.
+# This is to avoid configuring all of vtk if you only want to 
+# rebuild this directory.
+#
+# Note:
+# The vtk subdirectory local/ should contain the files from the 
+# slicer/vtksrc directory, in addition to files provided by 
+# vtk in local/ (like configure and configure.in).
+#
+
 echo
 echo "Reconfiguring in current directory."
 echo
