@@ -258,13 +258,14 @@ void vtkVectorToOuterProductDualBasis::SetInputVector(int num,
     }
 
   // normalize vector
-  for (int i=0; i < VTK_VECTOR_LENGTH; i++)
+  int i;
+  for (i=0; i < VTK_VECTOR_LENGTH; i++)
     {
       length += vector[i]*vector[i];  
     }
   length = sqrt(length);
 
-  for (int i=0; i < VTK_VECTOR_LENGTH; i++)
+  for (i=0; i < VTK_VECTOR_LENGTH; i++)
     {
       this->V[num][i] = vector[i]/length;  
     }

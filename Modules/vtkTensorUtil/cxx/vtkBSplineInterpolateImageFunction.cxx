@@ -1,6 +1,6 @@
 #include "vtkBSplineInterpolateImageFunction.h"
 
-vtkCxxRevisionMacro(vtkBSplineInterpolateImageFunction, "$Revision: 1.3 $");
+vtkCxxRevisionMacro(vtkBSplineInterpolateImageFunction, "$Revision: 1.4 $");
 vtkStandardNewMacro(vtkBSplineInterpolateImageFunction);
 
 void vtkBSplineInterpolateImageFunction::SetInterpolationWeights( vtkFloatingPointType *x, long * EvaluateIndex[ImageDimension], double * weights[ImageDimension], unsigned int splineOrder ) const
@@ -9,11 +9,12 @@ void vtkBSplineInterpolateImageFunction::SetInterpolationWeights( vtkFloatingPoi
   // function pointers to reference the correct weight order.
   // Left as is for now for readability.
   double w, w2, w4, t, t0, t1;
+  unsigned int n;
   
   switch (splineOrder)
     {
     case 3:
-      for (unsigned int n = 0; n < ImageDimension; n++)
+      for (n = 0; n < ImageDimension; n++)
         {
         w = x[n] - (double) EvaluateIndex[n][1];
         weights[n][3] = (1.0 / 6.0) * w * w * w;
@@ -23,13 +24,13 @@ void vtkBSplineInterpolateImageFunction::SetInterpolationWeights( vtkFloatingPoi
         }
       break;
     case 0:
-      for (unsigned int n = 0; n < ImageDimension; n++)
+      for (n = 0; n < ImageDimension; n++)
         {
         weights[n][0] = 1; // implements nearest neighbor
         }
       break;
     case 1:
-      for (unsigned int n = 0; n < ImageDimension; n++)
+      for (n = 0; n < ImageDimension; n++)
         {
         w = x[n] - (double) EvaluateIndex[n][0];
         weights[n][1] = w;
@@ -37,7 +38,7 @@ void vtkBSplineInterpolateImageFunction::SetInterpolationWeights( vtkFloatingPoi
         }
       break;
     case 2:
-      for (unsigned int n = 0; n < ImageDimension; n++)
+      for (n = 0; n < ImageDimension; n++)
         {
         /* x */
         w = x[n] - (double)EvaluateIndex[n][1];
@@ -47,7 +48,7 @@ void vtkBSplineInterpolateImageFunction::SetInterpolationWeights( vtkFloatingPoi
         }
       break;
     case 4:
-      for (unsigned int n = 0; n < ImageDimension; n++)
+      for (n = 0; n < ImageDimension; n++)
         {
         /* x */
         w = x[n] - (double)EvaluateIndex[n][2];
@@ -65,7 +66,7 @@ void vtkBSplineInterpolateImageFunction::SetInterpolationWeights( vtkFloatingPoi
         }
       break;
     case 5:
-      for (unsigned int n = 0; n < ImageDimension; n++)
+      for (n = 0; n < ImageDimension; n++)
         {
         /* x */
         w = x[n] - (double)EvaluateIndex[n][2];
@@ -103,27 +104,28 @@ void vtkBSplineInterpolateImageFunction::SetDerivativeWeights( vtkFloatingPointT
   // Left as is for now for readability.
   double w, w1, w2, w3, w4, w5, t, t0, t1, t2;
   int derivativeSplineOrder = (int) splineOrder -1;
-  
+  unsigned int n;
+
   switch (derivativeSplineOrder)
     {
     
       // Calculates B(splineOrder) ( (x + 1/2) - xi) - B(splineOrder -1) ( (x - 1/2) - xi)
     case -1:
       // Why would we want to do this?
-      for (unsigned int n = 0; n < ImageDimension; n++)
+      for (n = 0; n < ImageDimension; n++)
         {
       weights[n][0] = 0.0;
         }
       break;
     case 0:
-      for (unsigned int n = 0; n < ImageDimension; n++)
+      for (n = 0; n < ImageDimension; n++)
         {
       weights[n][0] = -1.0;
       weights[n][1] =  1.0;
         }
       break;
     case 1:
-      for (unsigned int n = 0; n < ImageDimension; n++)
+      for (n = 0; n < ImageDimension; n++)
         {
       w = x[n] + 0.5 - (double)EvaluateIndex[n][1];
       // w2 = w;
@@ -134,9 +136,8 @@ void vtkBSplineInterpolateImageFunction::SetDerivativeWeights( vtkFloatingPointT
       weights[n][2] = w; 
         }
       break;
-    case 2:
-      
-      for (unsigned int n = 0; n < ImageDimension; n++)
+    case 2: 
+      for (n = 0; n < ImageDimension; n++)
         {
       w = x[n] + .5 - (double)EvaluateIndex[n][2];
       w2 = 0.75 - w * w;
@@ -150,8 +151,7 @@ void vtkBSplineInterpolateImageFunction::SetDerivativeWeights( vtkFloatingPointT
         }
       break;
     case 3:
-      
-      for (unsigned int n = 0; n < ImageDimension; n++)
+      for (n = 0; n < ImageDimension; n++)
         {
       w = x[n] + 0.5 - (double)EvaluateIndex[n][2];
       w4 = (1.0 / 6.0) * w * w * w;
@@ -167,7 +167,7 @@ void vtkBSplineInterpolateImageFunction::SetDerivativeWeights( vtkFloatingPointT
         }
       break;
     case 4:
-      for (unsigned int n = 0; n < ImageDimension; n++)
+      for (n = 0; n < ImageDimension; n++)
         {
       w = x[n] + .5 - (double)EvaluateIndex[n][3];
       t2 = w * w;
@@ -212,10 +212,11 @@ void vtkBSplineInterpolateImageFunction::GeneratePointsToIndex()
     {
       int pp = p;
       indexFactor[0] = 1;
-      for (int j=1; j< ImageDimension; j++) {
+      int j;
+      for (j=1; j< ImageDimension; j++) {
     indexFactor[j] = indexFactor[j-1] * ( m_SplineOrder + 1 );
       }
-      for (int j = (ImageDimension - 1); j >= 0; j--) {
+      for (j = (ImageDimension - 1); j >= 0; j--) {
     m_PointsToIndex[j][p] = pp / indexFactor[j];
     pp = pp % indexFactor[j];
       }

@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkTensorImplicitFunctionToFunctionSet.h,v $
   Language:  C++
-  Date:      $Date: 2004/09/17 17:59:21 $
-  Version:   $Revision: 1.3 $
+  Date:      $Date: 2005/01/17 00:33:08 $
+  Version:   $Revision: 1.4 $
 */
 // .NAME vtkTensorImplicitFunctionToFunctionSet - Wrapper class around itk::BSplineInterpolateImageFuntion
 // .SECTION Description
@@ -97,11 +97,12 @@ class VTK_TENSORUTIL_EXPORT vtkTensorImplicitFunctionToFunctionSet : public vtkF
 
   vtkTensorImplicitFunctionToFunctionSet()
     {
-      for ( int i = 0 ; i < 6 ; i++ ) {
+    int i;
+    for (i = 0 ; i < 6 ; i++ ) {
     TensorComponent[i]=0;
     DataExtent[i]=0;
       }
-      for ( int i = 0 ; i < 3 ; i++ ) {
+    for (i = 0 ; i < 3 ; i++ ) {
     DataOrigin[i]=0.0;
     DataSpacing[i]=1.0;
     eigVec[i] = &(vec[3*i]);
