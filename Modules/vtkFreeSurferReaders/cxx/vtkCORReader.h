@@ -3,11 +3,11 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkCORReader.h,v $
   Language:  C++
-  Date:      $Date: 2002/11/04 20:36:39 $
-  Version:   $Revision: 1.3 $
+  Date:      $Date: 2003/02/19 23:54:40 $
+  Version:   $Revision: 1.4 $
 
 =========================================================================*/
-// .NAME vtkFSSurfaceReader - read a surface file from Freesurfer tools
+// .NAME vtkFSCORReader - read COR file volume from Freesurfer tools
 // .SECTION Description
 // .SECTION Caveats
 // .SECTION See Also
