@@ -99,7 +99,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
   }
 
 
-vtkCxxRevisionMacro(vtkITKMutualInformationTransform, "$Revision: 1.7 $");
+vtkCxxRevisionMacro(vtkITKMutualInformationTransform, "$Revision: 1.8 $");
 vtkStandardNewMacro(vtkITKMutualInformationTransform);
 
 //----------------------------------------------------------------------------
@@ -133,6 +133,7 @@ vtkITKMutualInformationTransform::vtkITKMutualInformationTransform()
   this->FlipTargetZAxis = 0;
   this->ImageFlip = vtkImageFlip::New();
     this->ImageFlip->SetFilteredAxis(2);
+    this->ImageFlip->FlipAboutOriginOn();
   this->ZFlipMat = vtkMatrix4x4::New();
     this->ZFlipMat->Identity();
     this->ZFlipMat->SetElement(2,2,-1);
@@ -213,8 +214,6 @@ static void vtkITKMutualInformationExecute(vtkITKMutualInformationTransform *sel
                                vtkMatrix4x4 *matrix,
                                T vtkNotUsed(dummy))
 {
-  self->Print(std::cout);
-
   // Declare the input and output types
   typedef itk::Image<T,3>                       OutputImageType;
   typedef itk::VTKImageImport<OutputImageType>  ImageImportType;
@@ -240,10 +239,13 @@ static void vtkITKMutualInformationExecute(vtkITKMutualInformationTransform *sel
     }
   else 
     {
+      std::cout << "Z-Flipping Target Input" << std::endl;
       self->GetImageFlip()->SetInput(target);
       self->GetImageFlip()->Update();
       fixedVtkExporter->SetInput(self->GetImageFlip()->GetOutput());
     }
+
+   self->Print(std::cout);
 
   // Target Image that is not moving into ITK
   ImageImportType::Pointer fixedItkImporter = ImageImportType::New();
@@ -274,7 +276,6 @@ static void vtkITKMutualInformationExecute(vtkITKMutualInformationTransform *sel
   std::cout << "Printing actually set matrix" << endl;
   matt->Print(std::cout);
   matt->Delete();
-
 
  // Setup the optimizer
 
@@ -403,11 +404,14 @@ void vtkITKMutualInformationTransform::InternalUpdate()
 
 void vtkITKMutualInformationTransform::Initialize(vtkMatrix4x4 *mat)
 {
+  this->Matrix->DeepCopy(mat);
+
   // Do we need the flip?
   if (mat->Determinant()<0)
     {
+      std::cout << "Z-Flipping Input Matrix" << std::endl;
       this->FlipTargetZAxis = 1;
-      vtkMatrix4x4::Multiply4x4(this->ZFlipMat,mat,this->Matrix);
+      vtkMatrix4x4::Multiply4x4(mat,this->ZFlipMat,this->Matrix);
     }
   else
     {
@@ -422,7 +426,8 @@ vtkMatrix4x4 *vtkITKMutualInformationTransform::GetOutputMatrix()
 {
   if(this->FlipTargetZAxis)
     {
-      vtkMatrix4x4::Multiply4x4(this->ZFlipMat,this->Matrix,
+      std::cout << "Z-Flipping Output Matrix" << std::endl;
+      vtkMatrix4x4::Multiply4x4(this->Matrix,this->ZFlipMat,
                                 this->OutputMatrix);
     }
   else
