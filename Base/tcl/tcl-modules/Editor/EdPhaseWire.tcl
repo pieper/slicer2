@@ -199,7 +199,6 @@ proc EdPhaseWireSetOmega {omega} {
             set fullpath [file join $central $prefix]
         }
 
-
         Ed($e,phase,reader$o) SetFilePattern "%s.%03d"
         Ed($e,phase,reader$o) SetDataByteOrderToBigEndian
         Ed($e,phase,reader$o) SetDataExtent 0 $width 0 $width $o $o
@@ -215,7 +214,8 @@ proc EdPhaseWireSetOmega {omega} {
         # will multiply both real and imag parts
         # of the fft of the image this way)
         #-------------------------------------------
-        foreach input {1 2} {
+
+        foreach input {0 1} {
             Ed($e,phase,kernel$o) SetInput $input [ Ed($e,phase,cast$o) GetOutput]
         }
         
@@ -323,8 +323,8 @@ proc EdPhaseWireBuildVTK {} {
         #-------------------------------------------
         vtkImageMathematics Ed($e,phase,mult$o)
         Ed($e,phase,mult$o) SetOperationToMultiply
-        Ed($e,phase,mult$o) SetInput 1 [Ed($e,phase,fftSlice) GetOutput]
-        Ed($e,phase,mult$o) SetInput 2 [Ed($e,phase,kernel$o) GetOutput]
+        Ed($e,phase,mult$o) SetInput 0 [Ed($e,phase,fftSlice) GetOutput]
+        Ed($e,phase,mult$o) SetInput 1 [Ed($e,phase,kernel$o) GetOutput]
         
         # reverse fft: back to spatial domain
         #-------------------------------------------
@@ -857,7 +857,7 @@ proc EdPhaseWireBuildGUI {} {
 
     # read default filter kernel at startup to avoid update
     # of vtk classes that don't have their inputs yet
-    EdPhaseWireSetOmega $Ed(EdPhaseWire,omega,id)]
+    EdPhaseWireSetOmega $Ed(EdPhaseWire,omega,id)
 
 
 }
@@ -1270,6 +1270,13 @@ proc EdPhaseWireEnter {} {
 
     # Make sure we're colored
     LabelsColorWidgets
+
+    # ensure label to draw with is set at least to default
+    # otherwise the label is the empty string
+    #LabelsFindLabel
+    if {$Label(label) == ""} {
+        set Label(label) 2
+    }
 
     # make sure we're drawing the right color
     foreach s $Slice(idList) {
@@ -1747,8 +1754,6 @@ proc EdPhaseWireUsePhasePipeline {} {
     } else {
         Slicer SetFirstFilter $s Ed($e,phase,fftSlice) 
     }
-    #Slicer SetFirstFilter $s Ed($e,gradMag$s)
-    
 
     # put our output over the slice (so the wire is visible)
     Slicer SetLastFilter  $s Ed(EdPhaseWire,lwPath$s)  
