@@ -149,7 +149,7 @@ proc MultiVolumeReaderInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.5 $} {$Date: 2004/11/19 22:17:32 $}]
+        {$Revision: 1.6 $} {$Date: 2004/11/22 15:17:20 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -407,13 +407,13 @@ proc MultiVolumeReaderLoad {} {
     set fileName [string trim $fileName]
     if {$fileName == ""} {
         DevErrorWindow "File name is empty."
-        return
+        return 1
     }
 
     if {! [file exists $fileName]} {
         DevErrorWindow "File doesn't exist: $fileName."
         set MultiVolumeReader(fileName) ""
-        return
+        return 1
     }
 
     unset -nocomplain MultiVolumeReader(noOfVolumes)
@@ -440,16 +440,20 @@ proc MultiVolumeReaderLoad {} {
     set MultiVolumeReader(fileName) ""
 
     if {$val == 1} {
-        return 
+        return 1
     }
  
     # Sets range for the volume slider
-    $MultiVolumeReader(slider) configure -from 1 -to $MultiVolumeReader(noOfVolumes)
+    if { [info exists ::MultiVolumeReader(slider)] } {
+        $MultiVolumeReader(slider) configure -from 1 -to $MultiVolumeReader(noOfVolumes)
+    }
     # Sets the first volume in the sequence as the active volume
     MainVolumesSetActive $MultiVolumeReader(firstMRMLid)
 
     $MultiVolumeReader(loadStatusEntry) configure -textvariable \
-        MultiVolumeReader(emptyLoadStatus) 
+        MultiVolumeReader(emptyLoadStatus)
+
+    return 0
 }   
 
 
@@ -545,3 +549,4 @@ proc MultiVolumeReaderLoadBXH {} {
 
     return 0
 }
+
