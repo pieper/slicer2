@@ -259,7 +259,7 @@ proc EndoscopicInit {} {
     set Module($m,category) "Visualisation"
     
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.73 $} {$Date: 2004/10/21 20:43:18 $}] 
+    {$Revision: 1.74 $} {$Date: 2004/10/26 17:00:52 $}] 
        
     # Define Procedures
     #------------------------------------
@@ -4916,14 +4916,17 @@ proc EndoscopicAddFlatView {} {
     set xfrm [frame .t$name.controls.xfrm]
     
     set playfrm [frame .t$name.controls.xfrm.playfrm]
-    set scrbut [button $playfrm.scrbut -text "Scroll" -font {helvetica 10 bold} \
-    -command "EndoscopicScrollFlatColon $f.flatRenderWidget$name"]
+    set scrLbut [button $playfrm.scrLbut -text "<<" -font {helvetica 10 bold} \
+    -command "EndoscopicScrollLeftFlatColon $f.flatRenderWidget$name"]
     set stpbut [button $playfrm.stpbut -text "Stop" -font {helvetica 10 bold} \
     -command "EndoscopicStopFlatColon"]
+    set scrRbut [button $playfrm.scrRbut -text ">>" -font {helvetica 10 bold} \
+    -command "EndoscopicScrollRightFlatColon $f.flatRenderWidget$name"]
     set resbut [button $playfrm.resbut -text "Reset" -font {helvetica 10 bold} \
     -command "EndoscopicResetFlatColon $f.flatRenderWidget$name"]
-    pack $scrbut -side left -padx 2 -expand yes -fill x
+    pack $scrLbut -side left -padx 2 -expand yes -fill x
     pack $stpbut -side left -padx 2 -expand yes -fill x
+    pack $scrRbut -side left -padx 2 -expand yes -fill x
     pack $resbut -side left -padx 2 -expand yes -fill x
     
     
@@ -5227,7 +5230,7 @@ proc EndoscopicCreateFlatBindings {widget} {
  #    bind $widget <ButtonRelease-1> {puts Button}
  #    bind $widget <KeyPress-c> {EndoscopicPickFlatPoint %W %x %y}
  
-# FlatWindow Pan and Zoom bindings
+# FlatWindow Expose Pan and Zoom bindings
     EvDeclareEventHandler FlatWindowExpose <Expose> {%W Render}
     EvDeclareEventHandler FlatWindowStartPan <ButtonPress-2> {EndoscopicStartPan %W %x %y}
     EvDeclareEventHandler FlatWindowB2Motion <B2-Motion> {EndoscopicEndPan %W %x %y}
@@ -6272,6 +6275,8 @@ proc EndoscopicUpdateTargetsInFlatWindow {widget} {
     }
     
     set Endoscopic($name,lineCount) 0
+    
+    [$widget GetRenderWindow] Render
 
 #get the active path name, and find the corresponding target list
     if {$Endoscopic(path,activeId) != "None"} {
@@ -6285,7 +6290,9 @@ proc EndoscopicUpdateTargetsInFlatWindow {widget} {
 # note to myself: the cellId is stored by Point($pid,node) SetDescription when the target was inserted
 
          if {[lsearch $Fiducials(listOfNames) $listname] == -1} {
-                      tk_messageBox -message "You have not inserted any target along this path"
+        return
+          #  tk_messageBox -message "You have not inserted any target along this path"
+    
          } else {
 
                set targetfid $Fiducials($listname,fid)
@@ -6299,7 +6306,7 @@ proc EndoscopicUpdateTargetsInFlatWindow {widget} {
                          set polyData $Endoscopic($name,polyData)
                          set point(xyz) [$polyData GetPoint $pointId]
 
-             # make the top verticle line
+             # find the position of the point
              
              set x [lindex $point(xyz) 0]
              set y [lindex $point(xyz) 1]
@@ -6308,7 +6315,7 @@ proc EndoscopicUpdateTargetsInFlatWindow {widget} {
              EndoscopicAddTargetInFlatWindow $widget $x $y $z
 
                     }
-               }
+         }
     
          } else {
     
@@ -6423,7 +6430,7 @@ proc EndoscopicResetFlatCameraDist {widget} {
     
 }
 
-proc EndoscopicScrollFlatColon {widget} {
+proc EndoscopicScrollRightFlatColon {widget} {
 
     global Endoscopic
 
@@ -6432,13 +6439,8 @@ proc EndoscopicScrollFlatColon {widget} {
    set position [$Endoscopic($name,camera) GetPosition]
    
    set Endoscopic(flatColon,xCamDist) [lindex $position 0]
-#   set speed $Endoscopic(flatColon,speed)
    
-#   set seg [expr $Endoscopic(flatColon,xMax) / $Endoscopic(flatColon,speed)]
-#   set seg [expr ceil($seg)]
-     
-   
-     while {$Endoscopic(flatColon,xCamDist) < $Endoscopic(flatColon,xMax)} {
+   while {$Endoscopic(flatColon,xCamDist) < $Endoscopic(flatColon,xMax)} {
      
        if {$Endoscopic(flatColon,stop) == "0"} {
    
@@ -6447,15 +6449,50 @@ proc EndoscopicScrollFlatColon {widget} {
        EndoscopicMoveCameraX  $widget $Endoscopic(flatColon,xCamDist)
        
        update
+       
        } else {
+       
        EndoscopicResetStop
+       
        break
+       
        }
-     }
-   
-
+   }
      
 }
+
+
+proc EndoscopicScrollLeftFlatColon {widget} {
+
+    global Endoscopic
+
+   
+   set name $Endoscopic($widget,name)
+   set position [$Endoscopic($name,camera) GetPosition]
+   
+   set Endoscopic(flatColon,xCamDist) [lindex $position 0]
+   
+   while {$Endoscopic(flatColon,xCamDist) > $Endoscopic(flatColon,xMin)} {
+     
+       if {$Endoscopic(flatColon,stop) == "0"} {
+   
+       set  Endoscopic(flatColon,xCamDist) [expr  $Endoscopic(flatColon,xCamDist) - $Endoscopic(flatColon,speed)]
+   
+       EndoscopicMoveCameraX  $widget $Endoscopic(flatColon,xCamDist)
+       
+       update
+       
+       } else {
+       
+       EndoscopicResetStop
+       
+       break
+       
+       }
+   }
+     
+}
+
 
 proc EndoscopicStopFlatColon {} {
 
