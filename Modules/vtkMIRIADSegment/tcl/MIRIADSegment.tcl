@@ -151,7 +151,7 @@ proc MIRIADSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.8 $} {$Date: 2003/11/02 20:33:27 $}]
+        {$Revision: 1.9 $} {$Date: 2003/11/05 03:32:47 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -167,15 +167,21 @@ proc MIRIADSegmentInit {} {
     foreach tmpdir $tmpdirs {
         if { [file exists $tmpdir] } {
             set MIRIADSegment(tmpdir) $tmpdir
+            break
         }
     }
 
     if { [file exists /usr/bin/rsync] } {
         set MIRIADSegment(rsync) /usr/bin/rsync
     } else {
-        set MIRIADSegment(rsync) ~/birn/bin/rsync
+        set MIRIADSegment(rsync) $::env(HOME)/birn/bin/rsync
     }
 
+    if { [file exists $::env(HOME)/birn/data/atlas] } {
+        set ::MIRIADSegment(splatlas) $::env(HOME)/birn/data/atlas
+    } else {
+        set ::MIRIADSegment(splatlas) $::env(HOME)/data/atlas
+    }
 }
 
 
@@ -329,7 +335,9 @@ proc MIRIADSegmentProcessStudy { {BIRNID "000397921927"} {visit 001} } {
     MIRIADSegmentSetEMParameters
     MIRIADSegmentRunEM
 
-    MIRIADSegmentSaveResults $::MIRIAD(subject_dir)
+    MIRIADSegmentSaveResults 
+    
+    puts "MIRIADSegment Finished"
 }
 
 #-------------------------------------------------------------------------------
@@ -338,34 +346,40 @@ proc MIRIADSegmentProcessStudy { {BIRNID "000397921927"} {visit 001} } {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc MIRIADSegmentLoadStudy { {BIRNID "000397921927"} {visit 001} {atlas "loni"} } {
+proc MIRIADSegmentLoadStudy { {BIRNID "000397921927"} {visit 001} {atlas "spl"} } {
 
     MainFileClose 
 
     #
     # first, make the local directory for the data
     #
-    set ::MIRIAD(subject_dir) $::MIRIADSegment(tmpdir)/$BIRNID/Visit_$visit/Study_0001/
+    set ::MIRIADSegment(subject_dir) $::MIRIADSegment(tmpdir)/$BIRNID/Visit_$visit/Study_0001
     file mkdir $::MIRIADSegment(subject_dir)
-    set source $::MIRIADSegment(archive)/${BIRNID}/Visit_$visit/Study_0001/
+    set ::MIRIADSegment(archive_dir) $::MIRIADSegment(archive)/${BIRNID}/Visit_$visit/Study_0001
 
     #
     # then, bring over the data with rsync and load it up
     #
-    exec $::MIRIADSegment(rsync) -r $source $::MIRIADSegment(subject_dir)
+    puts "rsyncing..." ; update
+    exec $::MIRIADSegment(rsync) -rz --rsh=ssh $::MIRIADSegment(archive_dir)/ $::MIRIADSegment(subject_dir)/
 
-    MIRIADSegmentLoadDukeStudy $::MIRIAD(subject_dir)/RawData/001.ser
+    puts "loading raw..." ; update
+    MIRIADSegmentLoadDukeStudy $::MIRIADSegment(subject_dir)/RawData/001.ser
 
     #
     # either read the existing warped atlas, or create it
     #
+    puts "loading atlas..." ; update
     if { $atlas == "loni" } {
-        MIRIADSegmentLoadLONIWarpedAtlas $::MIRIAD(subject_dir)/DerivedData/LONI/mri/atlases/bwh_prob/air_252p
+        MIRIADSegmentLoadLONIWarpedAtlas $::MIRIADSegment(subject_dir)/DerivedData/LONI/mri/atlases/bwh_prob/air_252p
     } else {
-        MIRIADSegmentLoadLONIWarpedAtlas 
-        MIRIADSegmentLoadSPLAtlas ~/birn/data/atlas
-        MIRIADSegmentCreateSPLWarpedAtlas 
+        if { [MIRIADSegmentLoadSPLWarpedAtlas] } {
+            puts "creating atlas..." ; update
+            MIRIADSegmentLoadSPLAtlas $::MIRIADSegment(splatlas) 
+            MIRIADSegmentCreateSPLWarpedAtlas 
+        }
     }
+    puts "done" ; update
 
 }
 
@@ -379,9 +393,16 @@ proc MIRIADSegmentLoadStudy { {BIRNID "000397921927"} {visit 001} {atlas "loni"}
 proc MIRIADSegmentSaveResults { } {
 
     set SEGid [MIRIADSegmentGetVolumeByName "EMSegResult1"]
-    set resultdir $::MIRIAD(subject_dir)/DerivedData/SPL/EM-$::MIRIADSegment(version)
+    set resultdir $::MIRIADSegment(subject_dir)/DerivedData/SPL/EM-$::MIRIADSegment(version)
     file mkdir $resultdir
     MainVolumesWrite $SEGid $resultdir/EMSegResult
+
+    set ::Mrml(dir) $resultdir 
+    set ::File(filePrefix) AtlasAndSegmentation
+    MainFileSaveAsApply
+
+    puts "saving results to archive..." ; update
+    exec $::MIRIADSegment(rsync) -rz --rsh=ssh $::MIRIADSegment(subject_dir)/ $::MIRIADSegment(archive_dir)/
 
 }
 
@@ -495,13 +516,62 @@ proc MIRIADSegmentCreateSPLWarpedAtlas {} {
     foreach vol [MIRIADSegmentGetVolumesByNamePattern atlas-sum*] {
         AGTransformOneVolume $vol $::AG(InputVolTarget)
     }
-
-    foreach vol [MIRIADSegmentGetVolumesByNamePattern resample_atlas-sum*] {
+    
+    # save the atlas and the warped image data
+    set vols [MIRIADSegmentGetVolumesByNamePattern AGResult*]
+    set vols [concat $vols [MIRIADSegmentGetVolumesByNamePattern resample_atlas*]]
+    foreach vol $vols {
         set name [Volume($vol,node) GetName]
-        set resultdir $::MIRIAD(subject_dir)/DerivedData/SPL/mri/atlases/bwh_prob/AG
+        set resultdir $::MIRIADSegment(subject_dir)/DerivedData/SPL/mri/atlases/bwh_prob/AG
         file mkdir $resultdir
         MainVolumesWrite $vol $resultdir/$name
     }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MIRIADSegmentLoadSPLWarpedAtlas 
+# Reads the bwh probability atlas as warped by SPL
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MIRIADSegmentLoadSPLWarpedAtlas { } {
+
+    # TODO - don't load the atlas now - just create a new one
+    return -1
+
+
+    set resultsdir $::MIRIADSegment(subject_dir)/DerivedData/SPL/mri/atlases/bwh_prob/AG
+    if { ![file exists $resultsdir] } {
+        return -1
+    }
+
+    set all_vols {
+        sumbackground.xml sumcsf.xml sumforeground.xml 
+        sumgraymatter_amygdala.xml sumgraymatter_hippocampus.xml 
+        sumgraymatter_parrahipp_normed.xml sumgraymatter_stg_normed.xml 
+        sumgraymatter_substr.xml sumgreymatter_all.xml sumgreymatter.xml 
+        sumlamygdala.xml sumlamygdala_normed.xml sumlAnterInsulaCortex.xml 
+        sumlhippocampus.xml sumlhippocampus_normed.xml sumlInferiorTG.xml 
+        sumlMiddleTG.xml sumlparrahipp.xml sumlparrahipp_normed.xml 
+        sumlPostInsulaCortex.xml sumlstg.xml sumlstg_normed.xml 
+        sumlTempLobe.xml sumlThalamus.xml sumramygdala.xml 
+        sumramygdala_normed.xml sumrAnterInsulaCortex.xml 
+        sumrhippocampus.xml sumrhippocampus_normed.xml 
+        sumrInferiorTG.xml sumrMiddleTG.xml sumrparrahipp.xml 
+        sumrparrahipp_normed.xml sumrPostInsulaCortex.xml sumrstg.xml 
+        sumrstg_normed.xml sumrTempLobe.xml sumrThalamus.xml 
+        sumwhitematter.xml
+    }
+    set four_vols {
+        sumbackground.xml sumcsf.xml 
+        sumwhitematter.xml sumgreymatter.xml 
+    }
+        
+    foreach vol $four_vols {
+        MainMrmlImport $resultsdir/$vol
+    }
+    RenderAll
+    return 0
 }
 
 #-------------------------------------------------------------------------------
