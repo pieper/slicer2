@@ -179,7 +179,7 @@ proc FogBuildGui {fFog} {
         eval { radiobutton $f.rEnabled$value -width $width \
                -text "$value" -value "$value" -variable Fog(Enabled) \
                -indicatoron 0 -command "Render3D" \
-              } $Gui(WCA)
+              } $Gui(WRA)
     
         pack $f.rEnabled$value -side left -padx 2 -pady 2 -fill x
     }
@@ -195,7 +195,7 @@ proc FogBuildGui {fFog} {
           -variable Fog(mode) \
               -indicatoron 0 \
           -command "Render3D" \
-          }  $Gui(WCA)
+          }  $Gui(WRA)
         pack $f.r$value -side left -padx 2 -pady 2 -expand 1 -fill x
     }
 

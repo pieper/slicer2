@@ -159,7 +159,7 @@ proc TabbedFrame {arrayName containerFrame buttonsLabel tabs titles \
         -command "TabbedFrameTab $fBottom.f$tab" \
         -variable "$arrayName\(TabbedFrame,$containerFrame,tab)" \
         -value $tab -width  $width \
-        -indicatoron 0} $Gui(WCA)
+        -indicatoron 0} $Gui(WRA)
     pack $f.f.r$tab -side left -padx 0
     }
     pack $f.l $f.f -side left -padx $Gui(pad) -fill x -anchor w

@@ -86,14 +86,14 @@ proc ToolBar { frame barname args } {
         if { $toolimage == "" } {
             set c {radiobutton $f.rb$toolname -indicatoron 0 \
                 -command "ToolUpdate $barname $toolenter $toolexit" \
-                -text $toolname $Gui(WCA) \
+                -text $toolname $Gui(WRA) \
                 -variable ${barname}(tool) \
                 -value $toolname }
             eval [subst $c]
         } else {
             set c {radiobutton $f.rb$toolname -indicatoron 0 \
                 -command "ToolUpdate $barname $toolenter $toolexit" \
-                -image $toolimage $Gui(WCA) \
+                -image $toolimage $Gui(WRA) \
                 -variable ${barname}(tool) \
                 -value $toolname }
             eval [subst $c]
