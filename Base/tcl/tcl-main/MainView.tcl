@@ -65,7 +65,7 @@ viewMode='Normal' viewBgColor='Blue'"
 
         set m MainView
         lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.37 $} {$Date: 2002/03/21 23:05:23 $}]
+        {$Revision: 1.38 $} {$Date: 2002/04/16 14:47:18 $}]
 
     set View(viewerHeightNormal) 656
     set View(viewerWidth)  956 
@@ -361,7 +361,7 @@ proc MainViewSelectView {p} {
 # .PROC MainViewSetBackgroundColor
 #  Change the background color of all the renderers in Module(Renderers)
 #  The background color is stored in View(bgName) and it should match \"Blue\",
-#  \"Midnight\" or \"Black\"
+#  \"Midnight\",\"Black\" or \"White\"
 #
 # .ARGS
 # .END
@@ -379,7 +379,7 @@ proc MainViewSetBackgroundColor {{col ""}} {
     
     # set View(bgName) if called with an argument
     if {$col != ""} {
-    if {$col == "Blue" || $col == "Black" || $col == "Midnight"} {
+    if {$col == "Blue" || $col == "Black" || $col == "Midnight" || $col == "White"} {
         set View(bgName) $col
     } else {
         return
@@ -396,7 +396,20 @@ proc MainViewSetBackgroundColor {{col ""}} {
     "Midnight" {
         set View(bgColor) "0 0 0.3"
     }
+    "White" {
+        set View(bgColor) "1 1 1"
     }
+    }
+
+    # make sure color of axis letters contrasts with background
+    foreach axis "R A S L P I" {
+      if {$View(bgName)=="White"} {
+        [${axis}Actor GetProperty] SetColor 0 0 1
+      } else {
+        [${axis}Actor GetProperty] SetColor 1 1 1
+      }   
+    }
+
     foreach m $Module(Renderers) {
     eval $m SetBackground $View(bgColor)
     }

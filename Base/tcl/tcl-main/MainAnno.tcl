@@ -52,7 +52,7 @@ proc MainAnnoInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainAnno \
-        {$Revision: 1.17 $} {$Date: 2002/03/21 23:05:21 $}]
+        {$Revision: 1.18 $} {$Date: 2002/04/16 14:47:03 $}]
 
     # Preset Defaults
     set Module(Anno,presets) "box='1' axes='0' outline='0' letters='1' cross='1'\
@@ -162,7 +162,11 @@ proc MainAnnoBuildVTK {} {
             ${axis}Actor SetMapper ${axis}Mapper
             ${axis}Actor SetScale  $scale $scale $scale 
             ${axis}Actor SetPickable 0
-
+            if {$View(bgName)=="White"} {
+                [${axis}Actor GetProperty] SetColor 0 0 1
+            } else {
+                [${axis}Actor GetProperty] SetColor 1 1 1
+            }
         # add only to the Main View window
         viewRen AddActor ${axis}Actor
 

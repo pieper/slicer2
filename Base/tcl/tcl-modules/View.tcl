@@ -64,7 +64,7 @@ proc ViewInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.28 $} {$Date: 2002/03/26 20:29:06 $}]
+        {$Revision: 1.29 $} {$Date: 2002/04/16 14:47:38 $}]
 
     set View(movie) 0
     set View(movieDirectory) "/tmp"
@@ -148,7 +148,7 @@ the value 1 is the furthest position of the bounding box.
     eval {label $f.l -text "Background: "} $Gui(WLA)
     pack $f.l -side left -padx $Gui(pad) -pady 0
 
-    foreach value "Blue Black Midnight" width "5 6 9" {
+    foreach value "Blue Black Midnight White" width "5 6 9 6" {
         eval {radiobutton $f.r$value -width $width \
             -text "$value" -value "$value" -variable View(bgName) \
             -indicatoron 0 -command "MainViewSetBackgroundColor; Render3D"} $Gui(WCA)
