@@ -835,7 +835,7 @@ int vtkImageMIReg::GetResolution()
   if (!this->InProgress) return -1;
   
   int i;
-  for (int i=0; i<3; i++) {
+  for (i=0; i<3; i++) {
     if (this->CurIteration[i] < this->NumIterations[i])
       break;
   }
