@@ -66,6 +66,23 @@ proc MorphometricsPositionCsys { Center DirectionXAxis} {
     $Morphometrics(csys,actor) RotateWXYZ 180 [expr 1 + [lindex $DirectionXAxis 0]] [lindex $DirectionXAxis 1] [lindex $DirectionXAxis 2]
     $Morphometrics(csys,actor) SetPosition [lindex $Center 0] [lindex $Center 1] [lindex $Center 2]
 }
+#------------------------------------------------------------------------
+# .PROC MorphometricsHowToInteractWithCsys
+# Returns a description of how to use a csys. Copied from tcl/tcl-modules/CustomCsys.tcl
+# .ARGS
+# .END
+#------------------------------------------------------------------------
+proc MorphometricsHowToInteractWithCsys {} {
+    return "To move the coordinate system :
+
+To Translate: press the left mouse button over 
+the axis you want to translate and move the 
+mouse in the appropriate direction.
+
+To Rotate: press the right mouse button over 
+the axis you want to rotate and move the 
+mouse in the appropriate direction"
+}
 
 
 #------------------------------------------------------------------------

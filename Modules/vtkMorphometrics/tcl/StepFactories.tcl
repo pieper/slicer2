@@ -451,13 +451,16 @@ proc MorphometricsGenericPolyDataUI {customUI instructions frame} {
 
     text $frame.tInstructions -bg $Gui(normalButton) -height 5
     $frame.tInstructions insert end $instructions
-
     pack $frame.tInstructions -side top -padx $Gui(pad) -pady $Gui(pad)
+
     frame $frame.fUser -bg $Gui(activeWorkspace)
-
-
     pack $frame.fUser -side top -padx 0 -pady $Gui(pad) -fill x
     eval $customUI $frame.fUser
+
+    text $frame.tHowToCsys -bg $Gui(normalButton) -height 5
+    $frame.tHowToCsys insert end [MorphometricsHowToInteractWithCsys]
+    pack $frame.tHowToCsys -side top -padx $Gui(pad) -pady $Gui(pad)
+   
 }
 
 
