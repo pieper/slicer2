@@ -105,7 +105,8 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
 
   // Description
   // controls scalar visibility of actors created in this class
-  vtkSetMacro(ScalarVisibility,int);
+  //vtkSetMacro(ScalarVisibility,int);
+  void SetScalarVisibility(int);
   vtkGetMacro(ScalarVisibility,int);
   vtkBooleanMacro(ScalarVisibility,int);
 

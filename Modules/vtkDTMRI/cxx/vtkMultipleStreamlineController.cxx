@@ -61,6 +61,27 @@ vtkMultipleStreamlineController::~vtkMultipleStreamlineController()
   this->StreamlineLookupTable->Delete();
 }
 
+//----------------------------------------------------------------------------
+void vtkMultipleStreamlineController::SetScalarVisibility(int value)
+{
+  vtkPolyDataMapper *currMapper;
+
+  // test if we are changing the value before looping through all streamlines
+  if (this->ScalarVisibility != value)
+    {
+      this->ScalarVisibility = value;
+      // apply this to ALL streamlines
+      // traverse actor collection and make all visible
+      this->Mappers->InitTraversal();
+      currMapper= (vtkPolyDataMapper *)this->Mappers->GetNextItemAsObject();
+      while(currMapper)
+        {
+          currMapper->SetScalarVisibility(this->ScalarVisibility);
+          currMapper= (vtkPolyDataMapper *)this->Mappers->GetNextItemAsObject();      
+        }
+    }
+}
+
 // Set the properties of one streamline's graphics objects as requested
 // by the user
 //----------------------------------------------------------------------------
