@@ -144,7 +144,7 @@ proc AlignmentsInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.18 $} {$Date: 2003/07/14 22:35:36 $}]
+            {$Revision: 1.19 $} {$Date: 2003/07/15 14:46:43 $}]
 
     # Props
     set Matrix(propertyType) Basic
@@ -1085,10 +1085,11 @@ proc AlignmentsBuildGUI {} {
     ##
     ## Otherwise, don't use it.
 
-    ### bad hack
+    ### bad hack, 
+    ### What I really want is MIReg to load first, if it is loadable.
     global env
     source $env(SLICER_HOME)/Modules/vtkMIReg/tcl/MIReg.tcl
-    
+
     if {[info commands MIRegBuildSubGui] == ""} {
         DevAddLabel $f.lbadnews "I'm sorry but the MIReg Module\n is not loaded so that Mutual\n Information Registration is not available."
     pack $f.lbadnews -pady $Gui(pad)
@@ -1711,64 +1712,6 @@ proc AlignmentsSetVolume {{v ""}} {
 
     #Print out what the user has set as the volume to move
     puts "this is the FidAlignVolumeName: $Matrix(FidAlignVolumeName)"   
-}
-
-#-------------------------------------------------------------------------------
-# .PROC AlignmentsCopyRegImages
-#
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc AlignmentsCopyRegImages {res r v} {
-  global Volume
-
-  #
-  # Copy Subject
-  #
-
-  # Copy the downsampled ImageData
-  vtkImageCopy copy
-  copy SetInput [reg GetSub $res]
-  copy Update
-  copy SetInput ""
-  Volume($v,vol) SetImageData [copy GetOutput]
-  copy SetOutput ""
-  copy Delete
-
-  # Copy the RasToIjk matrix of downsampled data
-  set imgMatrix [[reg GetSubRasToIjk $res] GetRasToIjk]
-  puts "Subject RasToIjk = [$imgMatrix Print]"
-  set n Volume($v,node)
-  set str [$n GetMatrixToString $imgMatrix]
-  $n SetRasToVtkMatrix $str
-  $n UseRasToVtkMatrixOn
-
-  # Update pipeline and GUI
-  MainVolumesUpdate $v
-
-  #
-  # Copy Reference
-  #
-
-  # Copy the downsampled ImageData
-  vtkImageCopy copy
-  copy SetInput [reg GetRef $res]
-  copy Update
-  copy SetInput ""
-  Volume($r,vol) SetImageData [copy GetOutput]
-  copy SetOutput ""
-  copy Delete
-
-  # Copy the RasToIjk matrix of downsampled data
-  set imgMatrix [[reg GetRefRasToIjk $res] GetRasToIjk]
-  # puts "Reference RasToIjk = [$imgMatrix Print]"
-  set n Volume($r,node)
-  set str [$n GetMatrixToString $imgMatrix]
-  $n SetRasToVtkMatrix $str
-  $n UseRasToVtkMatrixOn
-
-  # Update pipeline and GUI
-  MainVolumesUpdate $r
 }
 
 ################################################################################
