@@ -152,8 +152,8 @@ proc tarup { {destdir "auto"} } {
             file copy -force $::env(VTK_DIR)/Wrapping/Tcl/pkgIndex.tcl $destdir/Lib/$::env(BUILD)/VTK-build/Wrapping/Tcl
         }
         "Win32VC7" { 
-            file mkdir $destdir/Lib/$::env(BUILD)/VTK-build/Wrapping/Tcl/Debug
-            file copy -force $::env(VTK_DIR)/Wrapping/Tcl/Debug/pkgIndex.tcl $destdir/Lib/$::env(BUILD)/VTK-build/Wrapping/Tcl/Debug
+            file mkdir $destdir/Lib/$::env(BUILD)/VTK-build/Wrapping/Tcl/$::env(VTK_BUILD_TYPE)
+            file copy -force $::env(VTK_DIR)/Wrapping/Tcl/$::env(VTK_BUILD_TYPE)/pkgIndex.tcl $destdir/Lib/$::env(BUILD)/VTK-build/Wrapping/Tcl/$::env(VTK_BUILD_TYPE)
         }
     }
 
@@ -180,12 +180,12 @@ proc tarup { {destdir "auto"} } {
             file copy -force $::env(SLICER_HOME)/Scripts/slicer-vtk-pkgIndex.tcl $destdir/Lib/$::env(BUILD)/VTK-build/Wrapping/Tcl/pkgIndex.tcl
         }
         "Win32VC7" { 
-            file mkdir $destdir/Lib/$::env(BUILD)/VTK-build/bin/debug
-            set libs [glob $::env(VTK_DIR)/bin/debug/*.dll]
+            file mkdir $destdir/Lib/$::env(BUILD)/VTK-build/bin/$::env(VTK_BUILD_TYPE)
+            set libs [glob $::env(VTK_DIR)/bin/$::env(VTK_BUILD_TYPE)/*.dll]
             foreach lib $libs {
-                file copy $lib $destdir/Lib/$::env(BUILD)/VTK-build/bin/debug
+                file copy $lib $destdir/Lib/$::env(BUILD)/VTK-build/bin/$::env(VTK_BUILD_TYPE)
             }
-            file copy -force $::env(SLICER_HOME)/Scripts/slicer-vtk-pkgIndex.tcl $destdir/Lib/$::env(BUILD)/VTK-build/Wrapping/Tcl/debug/pkgIndex.tcl
+            file copy -force $::env(SLICER_HOME)/Scripts/slicer-vtk-pkgIndex.tcl $destdir/Lib/$::env(BUILD)/VTK-build/Wrapping/Tcl/$::env(VTK_BUILD_TYPE)/pkgIndex.tcl
         }
     }
 
@@ -213,10 +213,10 @@ proc tarup { {destdir "auto"} } {
             }
         }
         "Win32VC7" { 
-            file mkdir $destdir/Lib/$::env(BUILD)/Insight-build/bin/debug
-            set libs [glob -nocomplain $::env(ITK_BINARY_PATH)/bin/debug/*.dll]
+            file mkdir $destdir/Lib/$::env(BUILD)/Insight-build/bin/$::env(VTK_BUILD_TYPE)
+            set libs [glob -nocomplain $::env(ITK_BINARY_PATH)/bin/$::env(VTK_BUILD_TYPE)/*.dll]
             foreach lib $libs {
-                file copy $lib $destdir/Lib/$::env(BUILD)/Insight-build/bin/debug
+                file copy $lib $destdir/Lib/$::env(BUILD)/Insight-build/bin/$::env(VTK_BUILD_TYPE)
             }
         }
     }
@@ -251,10 +251,10 @@ proc tarup { {destdir "auto"} } {
             }
         }
         "Win32VC7" { 
-            file mkdir $destdir/Base/builds/$::env(BUILD)/bin/debug
-            set libs [glob Base/builds/$::env(BUILD)/bin/debug/*.dll]
+            file mkdir $destdir/Base/builds/$::env(BUILD)/bin/$::env(VTK_BUILD_TYPE)
+            set libs [glob Base/builds/$::env(BUILD)/bin/$::env(VTK_BUILD_TYPE)/*.dll]
             foreach lib $libs {
-                file copy $lib $destdir/Base/builds/$::env(BUILD)/bin/debug
+                file copy $lib $destdir/Base/builds/$::env(BUILD)/bin/$::env(VTK_BUILD_TYPE)
             }
         }
     }
@@ -314,10 +314,10 @@ proc tarup { {destdir "auto"} } {
                 }
             }
             "Win32VC7" { 
-                file mkdir $moddest/builds/$::env(BUILD)/bin/debug
-                set libs [glob -nocomplain $moddir/builds/$::env(BUILD)/bin/debug/*.dll]
+                file mkdir $moddest/builds/$::env(BUILD)/bin/$::env(VTK_BUILD_TYPE)
+                set libs [glob -nocomplain $moddir/builds/$::env(BUILD)/bin/$::env(VTK_BUILD_TYPE)/*.dll]
                 foreach lib $libs {
-                    file copy $lib $moddest/builds/$::env(BUILD)/bin/debug
+                    file copy $lib $moddest/builds/$::env(BUILD)/bin/$::env(VTK_BUILD_TYPE)
                 }
             }
         }
