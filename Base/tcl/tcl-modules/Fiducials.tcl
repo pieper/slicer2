@@ -101,7 +101,7 @@ proc FiducialsInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.40.2.1 $} {$Date: 2003/08/06 23:11:12 $}]
+        {$Revision: 1.40.2.2 $} {$Date: 2003/08/11 16:32:33 $}]
     
     # Initialize module-level variables
     
@@ -155,8 +155,9 @@ If you want to create a new list, go to the Fiducials module.
 <BR>
 <BR> <LI><B>To create a Fiducial point </B>: point to the location with the mouse and press 'p' on the keyboard
 <BR> <LI><B> To select/unselect a Fiducial </B>: point to the Fiducial that you want to select/unselect with the mouse and press 'q' on the keyboard. You can also select/unselect Fiducials points in the scrolled textbox.
-<BR> <LI> <B> To delete a Fiducial </B>: point to the Fiducial that you want to delete with the mouse and press 'd' on the keyboard. "
-
+<BR> <LI> <B> To delete a Fiducial </B>: point to the Fiducial that you want to delete with the mouse and press 'd' on the keyboard.
+<BR> <LI> <B> To Edit a Fiducial </B>: The \"Edit...\" button brings up the widget to reposition the location of the Fiducial.  Click and drag on either the fiducial itself or on one of the grid lines to move.  The editor automatically turns off when you exit the module.
+"
 }
 
 
@@ -1944,6 +1945,10 @@ proc FiducialsAddActiveListFrame {frame scrollHeight scrollWidth {defaultNames "
     eval {label $f.xyzLabel -textvariable Fiducials(activeXYZ) } $Gui(WLA) 
 
     eval {button $f.xyzEditButton -text "Edit..." -command FiducialsInteractActiveStart} $Gui(WBA) 
+    if { !$Gui(pc) } {
+        $f.xyzEditButton configure -state disabled
+    }
+    TooltipAdd $f.xyzEditButton "Use 3D widget to move fiducial (windows only for now)"
 
     eval {entry $f.descriptionEntry -width 25 -textvariable Fiducials(activeDescription) } $Gui(WEA)
     bind $f.descriptionEntry <Return> {FiducialsDescriptionActiveUpdated}
