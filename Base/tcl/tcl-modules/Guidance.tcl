@@ -138,12 +138,13 @@ proc GuidanceBuildGUI {} {
 	#-------------------------------------------
 	# Help
 	# Target
-	#	Active
-	#   Vis
-	#   Title
-	#   Pos
-	#   Buttons
-	#
+	#   Top
+	#     Active
+	#	Bottom
+	#     Vis
+	#     Title
+	#     Pos
+	#     Buttons
 	#-------------------------------------------
 
 	#-------------------------------------------
@@ -162,30 +163,24 @@ Models are fun. Do you like models, Ron?
 	set fTarget $Module(Guidance,fTarget)
 	set f $fTarget
 
-	frame $f.fActive -bg $Gui(activeWorkspace)
-	frame $f.fVis    -bg $Gui(activeWorkspace)
-	frame $f.fTitle -bg $Gui(activeWorkspace)
-	frame $f.fPos   -bg $Gui(activeWorkspace)
-	frame $f.fButtons -bg $Gui(activeWorkspace)
-	pack $f.fTitle $f.fActive $f.fVis $f.fPos $f.fButtons \
-		-side top -padx $Gui(pad) -pady $Gui(pad)
+	frame $f.fTop -bg $Gui(backdrop) -relief sunken -bd 2
+	frame $f.fBot -bg $Gui(activeWorkspace) -height 300
+	pack $f.fTop $f.fBot -side top -pady $Gui(pad) -padx $Gui(pad) -fill x
 
 	#-------------------------------------------
-	# Target->Title Frame
+	# Target->Top frame
 	#-------------------------------------------
-	set f $fTarget.fTitle
+	set f $fTarget.fTop
 
-	set c {label $f.lTitle -text "Target Position" $Gui(WTA)}; eval [subst $c]
-	pack $f.lTitle
+	frame $f.fActive -bg $Gui(backdrop)
+	pack $f.fActive -side top -pady $Gui(pad)
 
 	#-------------------------------------------
-	# Target->Active frame
+	# Target->Top->Active frame
 	#-------------------------------------------
-	set f $fTarget.fActive
+	set f $fTarget.fTop.fActive
 
-	# Active Target
-	set c {label $f.lActive -text "Target:" $Gui(WLA)}; eval [subst $c]
-	set c {label $f.lBlank -text " " $Gui(WLA)}; eval [subst $c]
+	set c {label $f.lActive -text "Active Target:" $Gui(BLA)}; eval [subst $c]
 	frame $f.fActive -bg $Gui(activeWorkspace)
 	foreach mode "0 1" name "Red Yellow" {
 		set c {checkbutton $f.fActive.c$mode \
@@ -195,12 +190,25 @@ Models are fun. Do you like models, Ron?
 			eval [subst $c]
 		pack $f.fActive.c$mode -side left -padx 0
 	}
-	pack $f.lActive $f.lBlank $f.fActive -side left -padx $Gui(pad)
+	pack $f.lActive $f.fActive -side left -padx $Gui(pad)
+
 
 	#-------------------------------------------
-	# Target->Vis frame
+	# Target->Bot frame
 	#-------------------------------------------
-	set f $fTarget.fVis
+	set f $fTarget.fBot
+
+	frame $f.fVis     -bg $Gui(activeWorkspace)
+	frame $f.fTitle   -bg $Gui(activeWorkspace)
+	frame $f.fPos     -bg $Gui(activeWorkspace)
+	frame $f.fButtons -bg $Gui(activeWorkspace)
+	pack $f.fVis $f.fTitle $f.fPos $f.fButtons \
+		-side top -padx $Gui(pad) -pady $Gui(pad)
+
+	#-------------------------------------------
+	# Target->Bot->Vis frame
+	#-------------------------------------------
+	set f $fTarget.fBot.fVis
 
 	# Visibility
 	set c {checkbutton $f.cTarget \
@@ -211,9 +219,17 @@ Models are fun. Do you like models, Ron?
 	pack $f.cTarget
 	
 	#-------------------------------------------
-	# Target->Pos frame
+	# Target->Bot->Title frame
 	#-------------------------------------------
-	set f $fTarget.fPos
+	set f $fTarget.fBot.fTitle
+
+	set c {label $f.l -text "Target Position" $Gui(WTA)}; eval [subst $c]
+	pack $f.l
+
+	#-------------------------------------------
+	# Target->Bot->Pos frame
+	#-------------------------------------------
+	set f $fTarget.fBot.fPos
 
 	# Position Sliders
 	foreach slider $axi text $texts {
@@ -244,9 +260,9 @@ Models are fun. Do you like models, Ron?
 	grid $f.lZ -sticky e
 
 	#-------------------------------------------
-	# Target->Buttons frame
+	# Target->Bot->Buttons frame
 	#-------------------------------------------
-	set f $fTarget.fButtons
+	set f $fTarget.fBot.fButtons
 
 	set c {button $f.bFocus -text "Use as Focal Point" -width 18 \
 		-command "GuidanceSetFocalPointToTarget; RenderAll" $Gui(WBA)}

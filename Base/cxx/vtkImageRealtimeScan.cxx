@@ -559,7 +559,7 @@ void vtkImageRealtimeScan::Execute(vtkImageData *data)
 		if (this->TestPrefix == NULL)
 			this->SetTestPrefix("I");
 		errcode = Read16BitImage(this->TestPrefix, "%s.%.3d", 1, 1, 
-			256, 256, 7904, 0, fileName, outPtr);
+			256, 256, 7904, 1, fileName, outPtr);
 		if (errcode) {
 			switch (errcode) {
 			case 1:  vtkErrorMacro(<< "Open '" << fileName << "'"); break;

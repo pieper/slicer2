@@ -1107,6 +1107,13 @@ proc MatricesWritePseudoMrmlVolume {fid v} {
 proc MatricesAutoRun {} {
 	global Path env Gui Matrix Volume
 
+	# No-can-do on PCs
+	if {$Gui(pc) == 1} {
+		tk_messageBox -message "\
+Automatic registration is presently available only on UNIX systems."
+		return
+	}
+
 	# Store which transform we're editing
 	set t $Matrix(activeID)
 	set Matrix(tAuto) $t
@@ -1123,7 +1130,7 @@ proc MatricesAutoRun {} {
 	scan [Volume($v,node) GetImageRange] "%d %d" lo hi
 	if {[CheckVolumeExists [Volume($v,node) GetFullPrefix] \
 		[Volume($v,node) GetFilePattern] $lo $hi] != ""} {
-		set str "The [Volume($v,node) GetName] volume cannot be found."
+		set str "The [Volume($v,node) GetName] volume cannot be found on disk."
 		puts $str
 		tk_messageBox -message $str
 		return
@@ -1131,7 +1138,7 @@ proc MatricesAutoRun {} {
 	scan [Volume($r,node) GetImageRange] "%d %d" lo hi
 	if {[CheckVolumeExists [Volume($r,node) GetFullPrefix] \
 		[Volume($r,node) GetFilePattern] $lo $hi] != ""} {
-		set str "The [Volume($r,node) GetName] volume cannot be found."
+		set str "The [Volume($r,node) GetName] volume cannot be found on disk."
 		puts $str
 		tk_messageBox -message $str
 		return
@@ -1150,12 +1157,6 @@ proc MatricesAutoRun {} {
 	MatricesWritePseudoMrmlVolume $fid $v
 
 	close $fid
-
-	# No-can-do on PCs
-	if {$Gui(pc) == 1} {
-		tk_messageBox -message "This only runs on UNIX."
-		return
-	}
 
 	# Command to run MI
 	set argBin     "[file join $Path(prog) mi-bin]"

@@ -956,19 +956,6 @@ proc EditorCopyNode {dst src} {
 	Volume($dst,node) SetLUTName $Lut(idLabel)
 }
 
-proc EditorCopyData {dst src clear} {
-	global Volume Lut
-
-	vtkImageCopy copy
-	copy SetInput [Volume($src,vol) GetOutput]
-	copy Clear$clear
-	copy Update
-	copy SetInput ""
-	Volume($dst,vol) SetImageData [copy GetOutput]
-	copy SetOutput ""
-	copy Delete
-}
-
 #-------------------------------------------------------------------------------
 # .PROC EditorGetOriginalID
 # .END
@@ -1384,7 +1371,7 @@ proc EdSetupBeforeApplyEffect {v scope multi} {
 
 	if {[EditorSameExtents $w $o] != 1} {
 		EditorCopyNode $w $o
-		EditorCopyData $w $o On
+		MainVolumesCopyData $w $o On
 	}
 	
 	# Set the editor's input & output
@@ -1632,7 +1619,7 @@ Merge with the Working or Composite, not '$bgName'"; return}
 		EditorCopyNode $bg $fg
 
 		# copy data
-		EditorCopyData $bg $fg Off
+		MainVolumesCopyData $bg $fg Off
 	} else {
 		vtkImageOverlay over
 		over SetInput 0 [Volume($bg,vol) GetOutput]

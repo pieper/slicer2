@@ -70,6 +70,9 @@ public:
   vtkSetMacro(Ignore, int);
   vtkBooleanMacro(Ignore, int);
 
+  void SetMatrixToString(vtkMatrix4x4 *m, char *s);
+  char* GetMatrixToString(vtkMatrix4x4 *m);
+
   virtual void Write(ofstream& of, int indent) {};
 
 
@@ -79,9 +82,6 @@ protected:
   ~vtkMrmlNode();
   vtkMrmlNode(const vtkMrmlNode&) {};
   void operator=(const vtkMrmlNode&) {};
-
-  void SetMatrixToString(vtkMatrix4x4 *m, char *s);
-  char* GetMatrixToString(vtkMatrix4x4 *m);
 
   int ID;
   char *Description;

@@ -27,8 +27,9 @@ proc RealtimeInit {} {
 	set Realtime(idResult)       NEW
 	set Realtime(prefixBaseline) ""
 	set Realtime(prefixResult)   ""
-	set Realtime(effect)         Copy
 	set Realtime(switch)         Off
+	set Realtime(effectList)     "Copy"
+	set Realtime(effect)         Copy
 }
 
 #-------------------------------------------------------------------------------
@@ -310,7 +311,7 @@ Models are fun. Do you like models, Ron?
 	set c {menu $f.mbEffect.m $Gui(WMA)}; eval [subst $c]
 	set Realtime(mbEffect) $f.mbEffect
 	set m $Realtime(mbEffect).m
-	foreach e "Copy Subtract" {
+	foreach e $Realtime(effectList) {
 		$m add command -label $e -command "RealtimeSetEffect $e"
 	}
 	pack $f.l $f.mbEffect -side left -padx $Gui(pad)
@@ -422,16 +423,17 @@ proc RealtimeImageCompleteCallback {} {
 
 	# Subtract
 	"Subtract" {
-#		vtkImageMathematics math
-#		math SetInput 1 [Volume($s,vol) GetOutput]
-#		math SetInput 2 [Volume($b,vol) GetOutput]
-#		math SetOperationToSubtract
-#		math Update
-#		math SetInput 1 ""
-#		math SetInput 2 ""
-#		Volume($r,vol) SetImageData [math GetOutput]
-#		math SetOutput ""
-#		math Delete
+		# THIS DOES NOT WORK
+		vtkImageMathematics math
+		math SetInput 1 [Volume($s,vol) GetOutput]
+		math SetInput 2 [Volume($b,vol) GetOutput]
+		math SetOperationToSubtract
+		math Update
+		math SetInput 1 ""
+		math SetInput 2 ""
+		Volume($r,vol) SetImageData [math GetOutput]
+		math SetOutput ""
+		math Delete
 	}
 	}
 
@@ -577,7 +579,7 @@ proc RealtimeGetBaselineID {} {
 	# Create the node
 	set n [MainMrmlAddNode Volume]
 	set v [$n GetID]
-	$n SetDescription "Baseline Volume=$v"
+	$n SetDescription "Baseline Volume"
 	$n SetName        "Baseline"
 
 	# Create the volume
@@ -611,7 +613,7 @@ proc RealtimeGetResultID {} {
 	# Create the node
 	set n [MainMrmlAddNode Volume]
 	set v [$n GetID]
-	$n SetDescription "Result Volume=$v"
+	$n SetDescription "Result Volume"
 	$n SetName        "Result"
 
 	# Create the volume

@@ -56,53 +56,121 @@ proc LocatorInit {} {
 
 	# Define Tabs
 	set m Locator
-	set Module($m,row1List) "Help Tracking Handpiece Server"
-	set Module($m,row1Name) "Help Tracking Handpiece Server"
+	set Module($m,row1List) "Help Tracking Server Handpiece"
+	set Module($m,row1Name) "Help Tracking Server Handpiece"
 	set Module($m,row1,tab) Tracking
 
 	# Define Procedures
 	set Module($m,procGUI)   LocatorBuildGUI
 	set Module($m,procVTK)   LocatorBuildVTK
 
+	lappend Module(procStorePresets) LocatorStorePresets
+	lappend Module(procRecallPresets) LocatorRecallPresets
+	set Module(Locator,presets) "0,driver='User' 1,driver='User' 2,driver='User'\
+ visibility='0'"
+
+	# Patient/Table position
+	set Locator(tblPosList)   "Front Side"
+	set Locator(patEntryList) "Head-first Feet-first"
+	set Locator(patPosList)   "Supine Prone Left-decub Right-decub"
+	set Locator(tblPos)       [lindex $Locator(tblPosList) 0]
+	set Locator(patEntry)     [lindex $Locator(patEntryList) 0]
+	set Locator(patPos)       [lindex $Locator(patPosList) 0]
+
+	# Locator position
 	set Locator(nx) 0
 	set Locator(ny) -1
 	set Locator(nz) 0
 	set Locator(tx) 1
 	set Locator(ty) 0
 	set Locator(tz) 0
-	set Locator(px) 100 
-	set Locator(py) 100
-	set Locator(pz) 100
+	set Locator(px) 0 
+	set Locator(py) 0
+	set Locator(pz) 0
 	LocatorFormat
 
-	lappend Module(procStorePresets) LocatorStorePresets
-	lappend Module(procRecallPresets) LocatorRecallPresets
-	set Module(Locator,presets) "0,driver='User' 1,driver='User' 2,driver='User'\
- visibility='0'"
-
+	# Locator attributes
 	set Locator(visibility) 0
 	set Locator(transverseVisibility) 1
 	set Locator(normalLen) 100
 	set Locator(transverseLen) 25
 	set Locator(radius) 3.0
-	set Locator(diffuseBlocked) ".9 .1 .1"
-	set Locator(red) .9
-	set Locator(green) .9
-	set Locator(blue) .2
 	set Locator(normalOffset) 0
 	set Locator(transverseOffset) 0
 	set Locator(crossOffset) 0
 	set Locator(0,driver) User
 	set Locator(1,driver) User
 	set Locator(2,driver) User
+	set Locator(diffuseColor) ".9 .9 .1"
+	scan $Locator(diffuseColor) "%g %g %g" Locator(red) Locator(green) Locator(blue)
 
+	# Realtime image
+	set Locator(idRealtime)     NEW
+	set Locator(prefixRealtime) ""
+	
+	# Servers
+	set Locator(serverList) "SignaSP File Images"
+	set Locator(server) [lindex $Locator(serverList) 0]
 	set Locator(connect) 0
 	set Locator(pause) 0
 	set Locator(loop) 0
-	set Locator(updatePeriodInMs) 0
-	set Locator(server) File
-	set Locator(file) loc.txt
-	set Locator(fid) ""
+	set Locator(imageNum) 0
+	set Locator(recon) 0
+
+	# Server specific stuff:
+	# File
+	set Locator(File,msPoll) 100
+	set Locator(File,prefix) ""
+	set Locator(File,fid) ""
+	# SignaSP
+	set Locator(SignaSP,msPoll) 100
+	set Locator(SignaSP,port) 10000
+	set Locator(SignaSP,host) mrtsw
+	# Images
+	set Locator(Images,msPoll) 1000
+	set Locator(Images,prefix) ""
+	set Locator(Images,firstNum) 1
+	set Locator(Images,lastNum) 1
+	set Locator(Images,skip) 0
+
+}
+
+#-------------------------------------------------------------------------------
+# .PROC LocatorUpdateMRML
+# .END
+#-------------------------------------------------------------------------------
+proc LocatorUpdateMRML {} {
+	global Volume Locator
+
+	# See if the volume for each menu actually exists.
+	# If not, use the None volume
+	#
+	set n $Volume(idNone)
+	if {$Locator(idRealtime) != "NEW" && \
+		[lsearch $Volume(idList) $Locator(idRealtime)] == -1} {
+		LocatorSetRealtime NEW
+	}
+
+	# Realtime Volume menu
+	#---------------------------------------------------------------------------
+	set m $Locator(mRealtime)
+	$m delete 0 end
+	set idRealtime ""
+	foreach v $Volume(idList) {
+		if {$v != $Volume(idNone) && $v != $Locator(idResult)} {
+			$m add command -label [Volume($v,node) GetName] -command \
+				"LocatorSetRealtime $v; RenderAll"
+		}
+		if {[Volume($v,node) GetName] == "Realtime"} {
+			set idRealtime $v
+		}
+	}
+	# If there is Realtime, then select it, else add a NEW option
+	if {$idRealtime != ""} {
+		LocatorSetRealtime $idRealtime
+	} else {
+		$m add command -label NEW -command "LocatorSetRealtime NEW; RenderAll"
+	}
 }
 
 #-------------------------------------------------------------------------------
@@ -111,6 +179,12 @@ proc LocatorInit {} {
 #-------------------------------------------------------------------------------
 proc LocatorBuildVTK {} {
 	global Gui Locator View Slice Target Volume
+
+	#------------------------#
+	# Realtime image source
+	#------------------------#
+	vtkImageRealtimeScan Locator(SignaSP,src)
+#	Locator(SignaSP,src) SetTest 1
 
 	#------------------------#
 	# Construct handpiece
@@ -125,20 +199,20 @@ proc LocatorBuildVTK {} {
 	MakeVTKObject Cylinder $actor
 		${actor}Source SetRadius $Locator(radius) 
 		${actor}Source SetHeight $Locator(normalLen)
-		eval [${actor}Actor GetProperty] SetColor $Locator(diffuseBlocked)
+		eval [${actor}Actor GetProperty] SetColor $Locator(diffuseColor)
 		${actor}Actor SetUserMatrix Locator(normalMatrix)
 
 	set actor transverse
 	MakeVTKObject Cylinder ${actor}
 		${actor}Source SetRadius $Locator(radius) 
 		${actor}Source SetHeight [expr $Locator(transverseLen)]
-		eval [${actor}Actor GetProperty] SetColor $Locator(diffuseBlocked)
+		eval [${actor}Actor GetProperty] SetColor $Locator(diffuseColor)
 		${actor}Actor SetUserMatrix Locator(transverseMatrix)
 	
 	set actor tip
 	MakeVTKObject Sphere ${actor}
 		${actor}Source SetRadius [expr 1.5 * $Locator(radius)] 
-		eval [${actor}Actor GetProperty] SetColor $Locator(diffuseBlocked)
+		eval [${actor}Actor GetProperty] SetColor $Locator(diffuseColor)
 		${actor}Actor SetUserMatrix Locator(tipMatrix)
 	
 	LocatorSetMatrices
@@ -158,6 +232,7 @@ proc LocatorBuildGUI {} {
 	#-------------------------------------------
 	# Help
 	# Tracking
+	# Server
 	# Handpiece
 	#   
 	#-------------------------------------------
@@ -180,11 +255,11 @@ Models are fun. Do you like models, Ron?
 
 	# Frames
 	frame $f.fConn     -bg $Gui(activeWorkspace) -relief groove -bd 3
-	frame $f.fPos      -bg $Gui(activeWorkspace) -relief groove -bd 3
 	frame $f.fDriver   -bg $Gui(activeWorkspace) -relief groove -bd 3 
 	frame $f.fVis      -bg $Gui(activeWorkspace) 
+	frame $f.fRealtime -bg $Gui(activeWorkspace) -relief groove -bd 3
 
-	pack $f.fConn $f.fPos $f.fDriver $f.fVis \
+	pack $f.fConn $f.fVis $f.fDriver $f.fRealtime \
 		-side top -padx $Gui(pad) -pady $Gui(pad) -fill x
 
 	#-------------------------------------------
@@ -206,33 +281,6 @@ Models are fun. Do you like models, Ron?
 		-indicatoron 0 $Gui(WCA)}
 		eval [subst $c]
 	pack $f.cConnect $f.cPause -side left -pady $Gui(pad) -padx $Gui(pad)
-
-	#-------------------------------------------
-	# Tracking->Pos Frame
-	#-------------------------------------------
-	set f $fTracking.fPos
-
-	set c {label $f.l -text "Position & Orientation" $Gui(WTA)}; eval [subst $c]
-	frame $f.f -bg $Gui(activeWorkspace)
-	pack $f.l $f.f -side top -pady 3 -padx $Gui(pad)
-
-	set f $fTracking.fPos.f
-	set c {label $f.l -text "" $Gui(WLA)}; eval [subst $c]
-	foreach ax "x y z" text "R A S" {
-		set c {label $f.l$ax -text $text -width 7 $Gui(WLA)}; eval [subst $c]
-	}
-	grid $f.l $f.lx $f.ly $f.lz -pady 2 -padx $Gui(pad) -sticky e
-
-	foreach axis "N T P" var "n t p" {
-		set c {label $f.l$axis -text "$axis:" $Gui(WLA)}; eval [subst $c]
-		foreach ax "x y z" text "R A S" {
-			set c {entry $f.e$axis$ax -justify right -width 7 \
-				-textvariable Locator($var${ax}Str) $Gui(WEA)}; eval [subst $c]
-			bind $f.e$axis$ax <Return> "LocatorSetPosition; Render3D"
-		}
-		grid $f.l$axis $f.e${axis}x $f.e${axis}y $f.e${axis}z \
-			-pady $Gui(pad) -padx $Gui(pad) -sticky e
-	}
 
 	#-------------------------------------------
 	# Tracking->Driver Frame
@@ -292,60 +340,348 @@ Models are fun. Do you like models, Ron?
 
 
 	#-------------------------------------------
+	# Tracking->Realtime
+	#-------------------------------------------
+	set f $fTracking.fRealtime
+
+	frame $f.fMenu -bg $Gui(activeWorkspace)
+	frame $f.fPrefix -bg $Gui(activeWorkspace)
+	frame $f.fBtns   -bg $Gui(activeWorkspace)
+	pack $f.fMenu -side top -pady $Gui(pad)
+	pack $f.fPrefix -side top -pady $Gui(pad) -fill x
+	pack $f.fBtns -side top -pady $Gui(pad)
+
+	#-------------------------------------------
+	# Tracking->Realtime->Menu
+	#-------------------------------------------
+	set f $fTracking.fRealtime.fMenu
+
+	# Volume menu
+	set c {label $f.lRealtime -text "Realtime Volume:" $Gui(WTA)}; eval [subst $c]
+
+	set c {menubutton $f.mbRealtime -text "NEW" -relief raised -bd 2 -width 18 \
+		-menu $f.mbRealtime.m $Gui(WMBA)}; eval [subst $c]
+	set c {menu $f.mbRealtime.m $Gui(WMA)}; eval [subst $c]
+	pack $f.lRealtime $f.mbRealtime -padx $Gui(pad) -side left
+
+	# Save widgets for changing
+	set Locator(mbRealtime) $f.mbRealtime
+	set Locator(mRealtime)  $f.mbRealtime.m
+
+	#-------------------------------------------
+	# Tracking->Realtime->Prefix
+	#-------------------------------------------
+	set f $fTracking.fRealtime.fPrefix
+
+	eval {label $f.l -text "Prefix:"} $Gui(WLA)
+	set c {entry $f.e \
+		-textvariable Locator(prefixRealtime) $Gui(WEA)}; eval [subst $c]
+	pack $f.l -padx 3 -side left
+	pack $f.e -padx 3 -side left -expand 1 -fill x
+
+	#-------------------------------------------
+	# Tracking->Realtime->Btns
+	#-------------------------------------------
+	set f $fTracking.fRealtime.fBtns
+
+	set c {button $f.bWrite -text "Save" -width 5 \
+		-command "LocatorWrite Realtime; RenderAll" $Gui(WBA)}; eval [subst $c]
+	set c {button $f.bRead -text "Read" -width 5 \
+		-command "LocatorRead Realtime; RenderAll" $Gui(WBA)}; eval [subst $c]
+	pack $f.bWrite $f.bRead -side left -padx $Gui(pad)
+
+
+
+	#-------------------------------------------
+	# Server frame
+	#-------------------------------------------
+	set fServer $Module(Locator,fServer)
+	set f $fServer
+
+	frame $f.fTop -bg $Gui(backdrop) -relief sunken -bd 2
+	frame $f.fBot -bg $Gui(activeWorkspace) -height 300
+	pack $f.fTop $f.fBot -side top -pady $Gui(pad) -padx $Gui(pad) -fill x
+
+	#-------------------------------------------
+	# Server->Bot frame
+	#-------------------------------------------
+	set f $fServer.fBot
+
+	foreach s $Locator(serverList) {
+		frame $f.f$s -bg $Gui(activeWorkspace)
+		place $f.f$s -in $f -relheight 1.0 -relwidth 1.0
+		set Locator(f$s) $f.f$s
+	}
+	raise $Locator(f[lindex $Locator(serverList) 0])
+
+	#-------------------------------------------
+	# Server->Top frame
+	#-------------------------------------------
+	set f $fServer.fTop
+
+	frame $f.fActive -bg $Gui(backdrop)
+	pack $f.fActive -side top -fill x -pady $Gui(pad) -padx $Gui(pad)
+
+	#-------------------------------------------
+	# Server->Top->Active frame
+	#-------------------------------------------
+	set f $fServer.fTop.fActive
+
+	eval {label $f.lActive -text "Active Server: "} $Gui(BLA)
+	eval {menubutton $f.mbActive \
+		-text [lindex $Locator(serverList) 0] \
+		-relief raised -bd 2 -width 20 \
+		-menu $f.mbActive.m} $Gui(WMBA)
+	eval {menu $f.mbActive.m} $Gui(WMA)
+	pack $f.lActive $f.mbActive -side left
+	set Locator(mbActive) $f.mbActive
+
+	# Form the Active menu 
+	#--------------------------------------------------------
+	set m $Locator(mbActive).m
+	foreach s $Locator(serverList) {
+		$m add command -label $s \
+			-command "LocatorSetActive $s"
+	}
+
+	#-------------------------------------------
+	# Server->Bot->File frame
+	#-------------------------------------------
+	set f $fServer.fBot.fFile
+
+	frame $f.fGrid   -bg $Gui(activeWorkspace)
+	frame $f.fPrefix -bg $Gui(activeWorkspace)
+	pack $f.fPrefix $f.fGrid \
+		-side top -fill x -pady $Gui(pad)
+
+	#-------------------------------------------
+	# Server->Bot->File->Prefix frame
+	#-------------------------------------------
+	set f $fServer.fBot.fFile.fPrefix
+
+	eval {button $f.b -text "Prefix" -width 7 \
+		-command "LocatorFilePrefix"} $Gui(WBA)
+	eval {entry $f.e -textvariable Locator(File,prefix)} $Gui(WEA)
+	pack $f.b -side left -padx $Gui(pad)
+	pack $f.e -side left -padx $Gui(pad) -expand 1 -fill x
+
+	#-------------------------------------------
+	# Server->Bot->File->Grid frame
+	#-------------------------------------------
+	set f $fServer.fBot.fFile.fGrid
+
+	set s File
+	foreach x "msPoll" text \
+		"{Update Period (ms)}" {
+		set c {label $f.l$x -text "${text}:" $Gui(WLA)}; eval [subst $c]
+		set c {entry $f.e$x -textvariable Locator($s,$x) -width 7 $Gui(WEA)}; eval [subst $c]
+		grid $f.l$x $f.e$x -pady $Gui(pad) -padx $Gui(pad) -sticky e
+		grid $f.e$x -sticky w
+	}
+
+
+	#-------------------------------------------
+	# Server->Bot->Images frame
+	#-------------------------------------------
+	set f $fServer.fBot.fImages
+
+	frame $f.fGrid   -bg $Gui(activeWorkspace)
+	frame $f.fPrefix -bg $Gui(activeWorkspace)
+	pack $f.fPrefix $f.fGrid \
+		-side top -fill x -pady $Gui(pad)
+
+	#-------------------------------------------
+	# Server->Bot->Images->Prefix frame
+	#-------------------------------------------
+	set f $fServer.fBot.fImages.fPrefix
+
+	eval {button $f.b -text "Prefix" -width 7 \
+		-command "LocatorImagesPrefix"} $Gui(WBA)
+	eval {entry $f.e -textvariable Locator(Images,prefix)} $Gui(WEA)
+	pack $f.b -side left -padx $Gui(pad)
+	pack $f.e -side left -padx $Gui(pad) -expand 1 -fill x
+
+	#-------------------------------------------
+	# Server->Bot->Images->Grid frame
+	#-------------------------------------------
+	set f $fServer.fBot.fImages.fGrid
+
+	set s Images
+	foreach x "firstNum lastNum skip msPoll " text \
+		"{First image number} {Last image number} {Skip interval} {Update period (ms)}" {
+		set c {label $f.l$x -text "${text}:" $Gui(WLA)}; eval [subst $c]
+		set c {entry $f.e$x -textvariable Locator($s,$x) -width 7 $Gui(WEA)}; eval [subst $c]
+		grid $f.l$x $f.e$x -pady $Gui(pad) -padx $Gui(pad) -sticky e
+		grid $f.e$x -sticky w
+	}
+
+
+	#-------------------------------------------
+	# Server->Bot->SignaSP frame
+	#-------------------------------------------
+	set f $fServer.fBot.fSignaSP
+
+	frame $f.fStatus  -bg $Gui(activeWorkspace)
+	frame $f.fGrid    -bg $Gui(activeWorkspace) -relief groove -bd 3
+	frame $f.fPatient -bg $Gui(activeWorkspace) -relief groove -bd 3
+	pack  $f.fStatus $f.fGrid $f.fPatient \
+		-side top -fill x -pady $Gui(pad)
+
+	#-------------------------------------------
+	# Server->Bot->SignaSP->Status frame
+	#-------------------------------------------
+	set f $fServer.fBot.fSignaSP.fStatus
+
+	set c {label $f.lLocTitle -text "Locator Status" $Gui(WTA)}; eval [subst $c]
+	set c {label $f.lLocStatus -text "None" -width 8 $Gui(WLA)}; eval [subst $c]
+	grid $f.lLocTitle $f.lLocStatus -pady 0 -padx $Gui(pad)
+	set Locator(lLocStatus) $f.lLocStatus
+
+	#-------------------------------------------
+	# Server->Bot->SignaSP->Grid frame
+	#-------------------------------------------
+	set f $fServer.fBot.fSignaSP.fGrid
+
+	set c {label $f.lTitle -text "Server Connection" $Gui(WTA)}; eval [subst $c]
+	grid $f.lTitle -columnspan 2 -pady $Gui(pad)
+
+	set s SignaSP
+	foreach x "host port msPoll" text \
+		"{Host name} {Port number} {Update period (ms)}" {
+		set c {label $f.l$x -text "${text}:" $Gui(WLA)}; eval [subst $c]
+		set c {entry $f.e$x -textvariable Locator($s,$x) -width 10 $Gui(WEA)}; eval [subst $c]
+		grid $f.l$x $f.e$x -pady $Gui(pad) -padx $Gui(pad) -sticky e
+		grid $f.e$x -sticky w
+	}
+
+	#-------------------------------------------
+	# Server->Bot->SignaSP->Patient frame
+	#-------------------------------------------
+	set f $fServer.fBot.fSignaSP.fPatient
+
+	set c {label $f.lTitle -text "Patient Position" $Gui(WTA)}; eval [subst $c]
+
+	foreach pos "TblPos PatEntry PatPos" \
+		name "{Table} {Entry} {Patient}" width "12 12 12"\
+		choices "{$Locator(tblPosList)} {$Locator(patEntryList)} \
+			{$Locator(patPosList)}" {
+		set c {label $f.l$pos -text "$name:" $Gui(WLA)}; eval [subst $c]
+		set c {menubutton $f.mb$pos -text "$Locator([Uncap $pos])" \
+			-relief raised -bd 2 -width $width -menu $f.mb$pos.menu $Gui(WMBA)}
+			eval [subst $c]
+		set Locator(mb$pos) $f.mb$pos
+		set c {menu $f.mb$pos.menu $Gui(WMA)}; eval [subst $c]
+			set m $f.mb$pos.menu
+			foreach choice $choices {
+				$m add command -label $choice -command \
+					"LocatorSetPatientPosition [Uncap $pos] $choice"
+			}
+	}
+	grid $f.lTitle -columnspan 2 -pady $Gui(pad)
+	grid $f.lPatEntry $f.mbPatEntry  -padx $Gui(pad) -pady $Gui(pad) -sticky e
+	grid $f.lPatPos $f.mbPatPos  -padx $Gui(pad) -pady $Gui(pad) -sticky e
+	grid $f.lTblPos $f.mbTblPos -padx $Gui(pad) -pady $Gui(pad) -sticky e
+	grid $f.mbTblPos $f.mbPatEntry $f.mbPatPos -sticky w
+
+
+
+	#-------------------------------------------
 	# Handpiece frame
 	#-------------------------------------------
 	set fHandpiece $Module(Locator,fHandpiece)
 	set f $fHandpiece
 
 	# Frames
-	frame $f.fOffset   -bg $Gui(activeWorkspace) -relief groove -bd 3
-	frame $f.fSize     -bg $Gui(activeWorkspace) -relief groove -bd 3 
-	frame $f.fColor    -bg $Gui(activeWorkspace) -relief groove -bd 3 
+	frame $f.fOffsetSize -bg $Gui(activeWorkspace)
+	frame $f.fPos        -bg $Gui(activeWorkspace) -relief groove -bd 3
+	frame $f.fColor      -bg $Gui(activeWorkspace) -relief groove -bd 3 
 
-	pack $f.fOffset $f.fSize $f.fColor \
+	pack $f.fOffsetSize -side top -fill x
+	pack $f.fPos $f.fColor \
 		-side top -padx $Gui(pad) -pady $Gui(pad) -fill x
 
-	#-------------------------------------------
-	# Handpiece->Offset Frame
-	#-------------------------------------------
-	set f $fHandpiece.fOffset
 
-	set c {label $f.l -text "Offset from Locator Tip" $Gui(WTA)}
+	#-------------------------------------------
+	# Handpiece->OffsetSize Frame
+	#-------------------------------------------
+	set f $fHandpiece.fOffsetSize
+
+	frame $f.fOffset   -bg $Gui(activeWorkspace) -relief groove -bd 3
+	frame $f.fSize     -bg $Gui(activeWorkspace) -relief groove -bd 3 
+
+	pack $f.fOffset $f.fSize \
+		-side left -padx $Gui(pad) -pady $Gui(pad) -fill x
+
+	#-------------------------------------------
+	# Handpiece->OffsetSize->Offse Frame
+	#-------------------------------------------
+	set f $fHandpiece.fOffsetSize.fOffset
+
+	set c {label $f.l -text "Offset from Tip" $Gui(WTA)}
 		eval [subst $c]
 	frame $f.f -bg $Gui(activeWorkspace)
 	pack $f.l $f.f -side top -pady 3 -padx $Gui(pad)
 
-	set f $fHandpiece.fOffset.f
-	foreach axis "N T NxT" text "Normal Transverse {Normal x Transverse}" \
+	set f $f.f
+	foreach axis "N T NxT" text "Normal Trans. {N x T}" \
 		var "normalOffset transverseOffset crossOffset" {
-		set c {label $f.l$axis -text "$text:" $Gui(WLA)}; eval [subst $c]
+		set c {label $f.l$axis -text "$text" $Gui(WLA)}; eval [subst $c]
 		set c {entry $f.e$axis -textvariable Locator($var) \
-			-width 7 $Gui(WEA)}; eval [subst $c]
+			-width 4 $Gui(WEA)}; eval [subst $c]
 		bind $f.e$axis <Return> "LocatorSetPosition; Render3D"
-		grid $f.l$axis $f.e$axis -pady $Gui(pad) -padx $Gui(pad) -sticky e
+		grid $f.l$axis $f.e$axis -pady 2 -padx $Gui(pad) -sticky e
 		grid $f.e$axis -sticky w 
 	}
 
 	#-------------------------------------------
-	# Handpiece->Size Frame
+	# Handpiece->OffsetSize->Size Frame
 	#-------------------------------------------
-	set f $fHandpiece.fSize
+	set f $fHandpiece.fOffsetSize.fSize
 
-	set c {label $f.l -text "Size" $Gui(WTA)}
+	set c {label $f.l -text "Size (mm)" $Gui(WTA)}
 		eval [subst $c]
 	frame $f.f -bg $Gui(activeWorkspace)
 	pack $f.l $f.f -side top -pady 3 -padx $Gui(pad)
 
-	set f $fHandpiece.fSize.f
+	set f $f.f
 	foreach var "normalLen transverseLen radius" \
-		text "{Normal Length (mm)} {Transverse Length} Radius" {
-		set c {label $f.l$var -text "$text:" $Gui(WLA)}; eval [subst $c]
+		text "{Normal} {Trans.} {Radius}" {
+		set c {label $f.l$var -text "$text" $Gui(WLA)}; eval [subst $c]
 		set c {entry $f.e$var -textvariable Locator($var) \
-			-width 7 $Gui(WEA)}; eval [subst $c]
+			-width 4 $Gui(WEA)}; eval [subst $c]
 		bind $f.e$var <Return> "LocatorSetSize; LocatorSetMatrices; Render3D"
-		grid $f.l$var $f.e$var -pady $Gui(pad) -padx $Gui(pad) -sticky e
+		grid $f.l$var $f.e$var -pady 2 -padx $Gui(pad) -sticky e
 		grid $f.e$var -sticky w
 	}
+
+
+	#-------------------------------------------
+	# Handpiece->Pos Frame
+	#-------------------------------------------
+	set f $fHandpiece.fPos
+
+	set c {label $f.l -text "Position & Orientation" $Gui(WTA)}; eval [subst $c]
+	frame $f.f -bg $Gui(activeWorkspace)
+	pack $f.l $f.f -side top -pady 3 -padx $Gui(pad)
+
+	set f $f.f
+	set c {label $f.l -text "" $Gui(WLA)}; eval [subst $c]
+	foreach ax "x y z" text "R A S" {
+		set c {label $f.l$ax -text $text -width 7 $Gui(WLA)}; eval [subst $c]
+	}
+	grid $f.l $f.lx $f.ly $f.lz -pady 2 -padx $Gui(pad) -sticky e
+
+	foreach axis "N T P" var "n t p" {
+		set c {label $f.l$axis -text "$axis:" $Gui(WLA)}; eval [subst $c]
+		foreach ax "x y z" text "R A S" {
+			set c {entry $f.e$axis$ax -justify right -width 7 \
+				-textvariable Locator($var${ax}Str) $Gui(WEA)}; eval [subst $c]
+			bind $f.e$axis$ax <Return> "LocatorSetPosition; Render3D"
+		}
+		grid $f.l$axis $f.e${axis}x $f.e${axis}y $f.e${axis}z \
+			-pady 2 -padx $Gui(pad) -sticky e
+	}
+
 
 	#-------------------------------------------
 	# Handpiece->Color Frame
@@ -376,61 +712,33 @@ Models are fun. Do you like models, Ron?
 		set Locator(s$slider) $f.s$slider
 
 		grid $f.l${slider} $f.e${slider} $f.s${slider}  \
-			-pady 1 -padx 5 -sticky e
+			-pady 2 -padx 5 -sticky e
 	}
+}
 
-	#-------------------------------------------
-	# Server frame
-	#-------------------------------------------
-	set fServer $Module(Locator,fServer)
-	set f $fServer
+proc LocatorSetActive {s} {
+	global Locator
 
-	# Frames
-	frame $f.fGeneral   -bg $Gui(activeWorkspace) -relief groove -bd 3
-	frame $f.fSpecific  -bg $Gui(activeWorkspace) -relief groove -bd 3
+	set Locator(server) $s
+	$Locator(mbActive) config -text $s
+	raise $Locator(f$s)
+}
 
-	pack $f.fGeneral $f.fSpecific \
-		-side top -padx $Gui(pad) -pady $Gui(pad) -fill x
-
-	#-------------------------------------------
-	# Server->General frame
-	#-------------------------------------------
-	set f $fServer.fGeneral
-
-	set c {label $f.l -text "General" $Gui(WTA)}; eval [subst $c]
-	frame $f.f -bg $Gui(activeWorkspace)
-	pack $f.l $f.f -side top -pady 3 -padx $Gui(pad)
-
-	set f $fServer.fGeneral.f
-	foreach var "updatePeriodInMs" \
-		text "{Update Period (ms)}" {
-		set c {label $f.l$var -text "$text:" $Gui(WLA)}; eval [subst $c]
-		set c {entry $f.e$var -textvariable Locator($var) \
-			-width 7 $Gui(WEA)}; eval [subst $c]
-		grid $f.l$var $f.e$var -pady $Gui(pad) -padx $Gui(pad) -sticky e
-		grid $f.e$var -sticky w
-	}
-	bind $f.e$var <Return> "LocatorLoop"
+proc LocatorSetPatientPosition {{key ""} {value ""}} {
+	global Locator
 	
-	#-------------------------------------------
-	# Server->Specific frame
-	#-------------------------------------------
-	set f $fServer.fSpecific
-
-	set c {label $f.l -text "Specific" $Gui(WTA)}; eval [subst $c]
-	frame $f.f -bg $Gui(activeWorkspace)
-	pack $f.l $f.f -side top -pady 3 -padx $Gui(pad)
-
-	set f $fServer.fSpecific.f
-	foreach var "file" \
-		text "{File}" {
-		set c {label $f.l$var -text "$text:" $Gui(WLA)}; eval [subst $c]
-		set c {entry $f.e$var -textvariable Locator($var) \
-			-width 15 $Gui(WEA)}; eval [subst $c]
-		grid $f.l$var $f.e$var -pady $Gui(pad) -padx $Gui(pad) -sticky e
-		grid $f.e$var -sticky w
+	if {$key != ""} {
+		set Locator($key) $value
 	}
-	
+	foreach key "TblPos PatEntry PatPos" {
+		$Locator(mb$key) config -text "$Locator([Uncap $key])"
+	}
+
+	# Send to MRT workstation
+	Locator(SignaSP,src) SetPosition \
+		[lsearch $Locator(tblPosList)   $Locator(tblPos)] \
+		[lsearch $Locator(patEntryList) $Locator(patEntry)] \
+		[lsearch $Locator(patPosList)   $Locator(patPos)]
 }
 
 #-------------------------------------------------------------------------------
@@ -517,13 +825,13 @@ proc LocatorSetColor {{value ""}} {
 		return
 	}
 
-	set color "$Locator(red) $Locator(green) $Locator(blue)"
+	set Locator(diffuseColor) "$Locator(red) $Locator(green) $Locator(blue)"
 	foreach actor $Locator(actors) {
-		eval [${actor}Actor GetProperty] SetColor $color
+		eval [${actor}Actor GetProperty] SetColor $Locator(diffuseColor)
 	}
 
 	foreach slider "Red Green Blue" {
-		$Locator(s$slider) config -troughcolor [MakeColorNormalized $color]
+		$Locator(s$slider) config -troughcolor [MakeColorNormalized $Locator(diffuseColor)]
 	}
 }
 
@@ -798,6 +1106,110 @@ proc LocatorFormat {} {
 }
 
 #-------------------------------------------------------------------------------
+# .PROC LocatorGetRealtimeID
+#
+# Returns the Realtime volume's ID.
+# If there is no Realtime volume (Locator(idRealtime)==NEW), then it creates one.
+# .END
+#-------------------------------------------------------------------------------
+proc LocatorGetRealtimeID {} {
+	global Locator Volume Lut
+		
+	# If there is no Realtime volume, then create one
+	if {$Locator(idRealtime) != "NEW"} {
+		return $Locator(idRealtime)
+	}
+	
+	# Create the node
+	set n [MainMrmlAddNode Volume]
+	set v [$n GetID]
+	$n SetDescription "Realtime Volume"
+	$n SetName        "Realtime"
+
+	# Create the volume
+	MainVolumesCreate $v
+
+	LocatorSetRealtime $v
+
+	MainUpdateMRML
+
+	return $v
+}
+
+#-------------------------------------------------------------------------------
+# .PROC LocatorSetRealtime
+# .END
+#-------------------------------------------------------------------------------
+proc LocatorSetRealtime {v} {
+	global Locator Volume
+
+	set Locator(idRealtime) $v
+	
+	# Change button text
+	if {$v == "NEW"} {
+		$Locator(mbRealtime) config -text $v
+	} else {
+		$Locator(mbRealtime) config -text [Volume($v,node) GetName]
+	}
+}
+
+proc LocatorWrite {data} {
+	global Volume Locator
+
+	# If the volume doesn't exist yet, then don't write it, duh!
+	if {$Locator(id$data) == "NEW"} {
+		tk_messageBox -message "Nothing to write."
+		return
+	}
+
+	switch $data {
+		Realtime {set v [LocatorGetRealtimeID]}
+	}
+
+	# Show user a File dialog box
+	set Locator(prefix$data) [MainFileSaveVolume $v $Locator(prefix$data)]
+	if {$Locator(prefix$data) == ""} {return}
+
+	# Write
+	MainVolumesWrite $v $Locator(prefix$data)
+
+	# Prefix changed, so update the Volumes->Props tab
+	MainVolumesSetActive $v
+}
+
+proc LocatorRead {data} {
+	global Volume Locator Mrml
+
+	# If the volume doesn't exist yet, then don't read it, duh!
+	if {$Locator(id$data) == "NEW"} {
+		tk_messageBox -message "Nothing to read."
+		return
+	}
+
+	switch $data {
+		Realtime {set v $Locator(idRealtime)}
+	}
+
+	# Show user a File dialog box
+	set Locator(prefix$data) [MainFileOpenVolume $v $Locator(prefix$data)]
+	if {$Locator(prefix$data) == ""} {return}
+	
+	# Read
+	Volume($v,node) SetFilePrefix $Locator(prefix$data)
+	Volume($v,node) SetFullPrefix \
+		[file join $Mrml(dir) [Volume($v,node) GetFilePrefix]]
+	if {[MainVolumesRead $v] < 0} {
+		return
+	}
+
+	# Update pipeline and GUI
+	MainVolumesUpdate $v
+
+	# Prefix changed, so update the Models->Props tab
+	MainVolumesSetActive $v
+}
+
+#-------------------------------------------------------------------------------
 # .PROC LocatorPause
 # .END
 #-------------------------------------------------------------------------------
@@ -814,7 +1226,7 @@ proc LocatorPause {{cmd ""}} {
 # .END
 #-------------------------------------------------------------------------------
 proc LocatorConnect {{value ""}} {
-	global Gui  Locator
+	global Gui  Locator Mrml
 
 	if {$value != ""} {
 		set Locator(connect) $value
@@ -822,9 +1234,12 @@ proc LocatorConnect {{value ""}} {
 
 	# CONNECT
 	if {$Locator(connect) == "1"} {
+
 		switch $Locator(server) {
+
 		"File" {
-			if {[catch {set Locator(fid) [open $Locator(file) r]} errmsg] == 1} {
+			set filename [file join $Mrml(dir) $Locator(File,prefix)].txt
+			if {[catch {set Locator(File,fid) [open $filename r]} errmsg] == 1} {
 				puts $errmsg
 				tk_messageBox -message $errmsg
 				set Locator(loop) 0
@@ -832,20 +1247,50 @@ proc LocatorConnect {{value ""}} {
 				return
 			}
 			set Locator(loop) 1
+			$Locator(mbActive) config -state disabled
 			LocatorLoopFile
 		}
+
+		"SignaSP" {
+			if {$Gui(pc) == 1} {
+				tk_messageBox -message "\
+The 3D Slicer may connect to a GE SignaSP scanner from a 
+Sun UltraSPARC, but not a PC.\n\n\
+Set the server to 'Images' to process images on disk as
+if they were coming from a scanner in real time."
+				return
+			}
+			set Locator(loop) 1
+			$Locator(mbActive) config -state disabled
+			LocatorLoopSignaSP
+		}
+
+		"Images" {
+		}
+			set Locator(loop) 1
+			$Locator(mbActive) config -state disabled
 		}
 
 	# DISCONNECT
 	} else {
+		set Locator(loop) 0
+		$Locator(mbActive) config -state normal
+
 		switch $Locator(server) {
+
 		"File" {
-			if {[catch {close $Locator(fid)} errmsg] == 1} {
+			if {[catch {close $Locator(File,fid)} errmsg] == 1} {
 				puts $errmsg
 			}
 		}
+
+		"SignaSP" {
+			# Nothing to do
 		}
-		set Locator(loop) 0
+
+		"Images" {
+		}
+		}
 	}
 }
 
@@ -855,49 +1300,275 @@ proc LocatorConnect {{value ""}} {
 #-------------------------------------------------------------------------------
 proc LocatorLoopFile {} {
 	global Slice Volume Locator
-	
-	if {$Locator(loop) == 1} {
 
-		if {$Locator(pause) == 1} {
-			update
-			after $Locator(updatePeriodInMs) LocatorLoopFile
-			return
+	if {$Locator(loop) == 0} {
+		return
+	}
+
+	if {$Locator(pause) == 1} {
+		update
+		if {[ValidateInt $Locator(File,msPoll)] == 0} {
+			set Locator(File,msPoll) 100
 		}
+		after $Locator(File,msPoll) LocatorLoopFile
+		return
+	}
+
+	# Read matrix
+	if {[eof $Locator(File,fid)] == 1} {
+		LocatorConnect 0
+		return
+	}
+	gets $Locator(File,fid) line
+	scan $line "%d %g %g %g %g %g %g %g %g %g" t nx ny nz tx ty tz px py pz
+
+	if {[info exists pz] == 0} {
+		update
+		if {[ValidateInt $Locator(File,msPoll)] == 0} {
+			set Locator(File,msPoll) 100
+		}
+		after $Locator(File,msPoll) LocatorLoopFile
+		return
+	}
+
+	set Locator(nx) $nx
+	set Locator(ny) $ny
+	set Locator(nz) $nz
+	set Locator(tx) $tx
+	set Locator(ty) $ty
+	set Locator(tz) $tz
+	set Locator(px) $px
+	set Locator(py) $py
+	set Locator(pz) $pz
+
+	LocatorUseLocatorMatrix
+
+	# Render the slices that the locator is driving
+	foreach s $Slice(idList) {
+		if {[Slicer GetDriver $s] == 1} {
+			RenderSlice $s
+		}
+	}
+	Render3D
+	# Call update instead of update idletasks so that we
+	# process user input like changing slice orientation
+	update
+	if {[ValidateInt $Locator(File,msPoll)] == 0} {
+		set Locator(File,msPoll) 100
+	}
+	after $Locator(File,msPoll) LocatorLoopFile
+}
+
+proc LocatorLoopImages {} {
+	global Slice Volume Locator
+
+	if {$Locator(loop) == 0} {
+		return
+	}
+
+	if {$Locator(pause) == 1} {
+		update
+		if {[ValidateInt $Locator(File,msPoll)] == 0} {
+			set Locator(File,msPoll) 100
+		}
+		after $Locator(File,msPoll) LocatorLoopFile
+		return
+	}
+
+		set v [LocatorGetRealtimeID]
+	
+}
+
+proc LocatorLoopSignaSP {} {
+	global Slice Volume Locator
+	
+	if {$Locator(loop) == 0} {
+		return
+	}
+
+	if {$Locator(pause) == 1} {
+		update
+		if {[ValidateInt $Locator(SignaSP,msPoll)] == 0} {
+			set Locator(SignaSP,msPoll) 100
+		}
+		after $Locator(SignaSP,msPoll) LocatorLoopSignaSP
+		return
+	}
+
+	set status [Locator(SignaSP,src) PollRealtime]
+	if {$status == -1} {
+		puts "ERROR: PollRealtime"
+		return
+	}
+	set newImage   [Locator(SignaSP,src) GetNewImage]
+	set newLocator [Locator(SignaSP,src) GetNewLocator]
+
+	#----------------	
+	# NEW LOCATOR
+	#----------------
+	if {$newLocator != 0} {
+		set locStatus [Locator(SignaSP,src) GetLocatorStatus]
+		set locMatrix [Locator(SignaSP,src) GetLocatorMatrix]
+			
+		# Report status to user
+		if {$locStatus == 0} {
+			set locText "OK"
+		} else {
+			set locText "BLOCKED"
+		}
+		$Locator(lLocStatus) config -text $locText
 
 		# Read matrix
-		if {[eof $Locator(fid)] == 1} {
-			LocatorConnect 0
-			return
-		}
-		gets $Locator(fid) line
-		scan $line "%d %g %g %g %g %g %g %g %g %g" t nx ny nz tx ty tz px py pz
+		set Locator(px) [$locMatrix GetElement 0 0]
+		set Locator(py) [$locMatrix GetElement 1 0]
+		set Locator(pz) [$locMatrix GetElement 2 0]
+		set Locator(nx) [$locMatrix GetElement 0 1]
+		set Locator(ny) [$locMatrix GetElement 1 1]
+		set Locator(nz) [$locMatrix GetElement 2 1]
+		set Locator(tx) [$locMatrix GetElement 0 2]
+		set Locator(ty) [$locMatrix GetElement 1 2]
+		set Locator(tz) [$locMatrix GetElement 2 2]
 
-		set Locator(nx) $nx
-		set Locator(ny) $ny
-		set Locator(nz) $nz
-		set Locator(tx) $tx
-		set Locator(ty) $ty
-		set Locator(tz) $tz
-		set Locator(px) $px
-		set Locator(py) $py
-		set Locator(pz) $pz
-
+		puts "NEW LOC: P=$Locator(px) $Locator(py) $Locator(pz)"
 		LocatorUseLocatorMatrix
+	}
 
-		# Render the slices that the locator is driving
+	#----------------	
+	# NEW IMAGE
+	#----------------
+	if {$newImage != 0} {
+		
+		# Force an update so I can read the new matrix
+		Locator(SignaSP,src) Modified
+		Locator(SignaSP,src) Update
+	
+		# Update patient position
+		set Locator(tblPos)   [lindex $Locator(tblPosList) \
+			[Locator(SignaSP,src) GetTablePosition]]
+		set Locator(patEntry) [lindex $Locator(patEntryList) \
+			[Locator(SignaSP,src) GetPatientEntry]]
+		set Locator(patPos)   [lindex $Locator(patPosList) \
+			[Locator(SignaSP,src) GetPatientPosition]]
+		LocatorSetPatientPosition
+
+		# Get other header values
+		set Locator(recon)    [Locator(SignaSP,src) GetRecon]
+		set Locator(imageNum) [Locator(SignaSP,src) GetImageNum]
+		set minVal [Locator(SignaSP,src) GetMinValue]
+		set maxVal [Locator(SignaSP,src) GetMaxValue]
+		set imgMatrix [Locator(SignaSP,src) GetImageMatrix]
+		puts mat=$imgMatrix
+		puts "ima=$Locator(imageNum), recon=$Locator(recon), range=$minVal $maxVal"
+
+		# Copy the image to the Realtime volume
+		set v [LocatorGetRealtimeID]
+		vtkImageCopy copy
+		copy SetInput [Locator(SignaSP,src) GetOutput]
+		copy Update
+		copy SetInput ""
+		Volume($v,vol) SetImageData [copy GetOutput]
+		copy SetOutput ""
+		copy Delete
+
+		# Set the header info
+		set n Volume($v,node)
+		$n SetImageRange $Locator(imageNum) $Locator(imageNum)
+		$n SetLowerThreshold [Volume($v,vol) GetRangeLow]
+		$n SetUpperThreshold [Volume($v,vol) GetRangeHigh]
+		$n SetDescription "recon=$Locator(recon)"
+		set str [$n GetMatrixToString $imgMatrix]
+		$n SetRasToVtkMatrix $str
+		$n UseRasToVtkMatrixOn
+
+		# Update pipeline and GUI
+		MainVolumesUpdate $v
+
+		# If this Realtime volume is inside transforms, then
+		# compute the registration:
+		MainUpdateMRML
+	}
+
+	# Render the slices that the locator is driving
+	if {$newImage != 0 || $newLocator != 0} {
 		foreach s $Slice(idList) {
 			if {[Slicer GetDriver $s] == 1} {
 				RenderSlice $s
 			}
 		}
 		Render3D
-		# Call update instead of update idletasks so that we
-		# process user input like changing slice orientation
-		update
-		after $Locator(updatePeriodInMs) LocatorLoopFile
 	}
+
+	# Call update instead of update idletasks so that we
+	# process user input like changing slice orientation
+	update
+	if {[ValidateInt $Locator(SignaSP,msPoll)] == 0} {
+		set Locator(SignaSP,msPoll) 100
+	}
+	after $Locator(SignaSP,msPoll) LocatorLoopSignaSP
 }
 
+proc LocatorFilePrefix {} {
+	global Locator Mrml
+
+	# Cannot have blank prefix
+	set prefix $Locator(File,prefix)
+	if {$prefix == ""} {
+		set prefix loc
+	}
+
+ 	# Show popup initialized to the last file saved
+	set filename [file join $Mrml(dir) $prefix]
+	set dir [file dirname $filename]
+	set typelist {
+		{"TXT Files" {.txt}}
+		{"All Files" {*}}
+	}
+	set filename [tk_getOpenFile -title "Open File" -defaultextension .txt \
+		-filetypes $typelist -initialdir $dir -initialfile $filename]
+
+	# Do nothing if the user cancelled
+	if {$filename == ""} {return ""}
+
+	# Remember to store it as a relative prefix for next time
+	set Locator(File,prefix) [MainFileGetRelativePrefix $filename]
+}
+
+proc LocatorImagesPrefix {} {
+	global Locator Mrml
+
+	# Cannot have blank prefix
+	set prefix $Locator(Images,prefix)
+	if {$prefix == ""} {
+		set prefix I
+	}
+
+ 	# Show popup initialized to root plus any typed pathname
+	set filename [file join $Mrml(dir) $prefix]
+	set dir [file dirname $filename]
+	set typelist {
+		{"All Files" {*}}
+	}
+	set filename [tk_getOpenFile -title "First Image To Process" \
+		-filetypes $typelist -initialdir "$dir" -initialfile $filename]
+
+	# Do nothing if the user cancelled
+	if {$filename == ""} {return}
+
+	# Store first image file as a relative filename to the root (prefix.001)
+	set Locator(Images,firstFile) [MainFileGetRelativePrefix $filename][file \
+		extension $filename]
+
+	# Remember to store it as a relative prefix for next time
+	set Locator(Images,prefix) [MainFileGetRelativePrefix $filename]
+
+	set Locator(Images,name) [file root [file tail $filename]]
+
+	# Image numbers
+	set Locator(Images,firstNum) [MainFileFindImageNumber First \
+		[file join $Mrml(dir) $filename]]
+	set Locator(Images,lastNum) [MainFileFindImageNumber Last \
+		[file join $Mrml(dir) $filename]]
+}
 
 proc LocatorStorePresets {p} {
 	global Preset Locator Slice

@@ -56,7 +56,7 @@ proc MainVolumesInit {} {
         
         set m MainVolumes
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.21 $} {$Date: 2000/02/13 22:20:58 $}]
+		{$Revision: 1.22 $} {$Date: 2000/02/16 14:04:08 $}]
 
 	set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -96,12 +96,14 @@ proc MainVolumesBuildVTK {} {
 
 	vtkMrmlVolume Volume($v,vol)
 	Volume($v,vol) SetMrmlNode         Volume($v,node)
-	Volume($v,vol) SetLabelIndirectLUT Lut($Lut(idLabel),indirectLUT)
 	Volume($v,vol) SetHistogramWidth   $Volume(histWidth)
 	Volume($v,vol) SetHistogramHeight  $Volume(histHeight)
 	Volume($v,vol) SetStartMethod      MainStartProgress
 	Volume($v,vol) SetProgressMethod  "MainShowProgress Volume($v,vol)"
 	Volume($v,vol) SetEndMethod        MainEndProgress
+	# Don't call the next line, because the Lut isn't created yet.
+	# And, the None volume doesn't need it.
+	# Volume($v,vol) SetLabelIndirectLUT Lut($Lut(idLabel),indirectLUT)
 
 	# Have the slicer use this NoneVolume instead of its own creation
 	Slicer SetNoneVolume Volume($v,vol)
@@ -168,6 +170,19 @@ proc MainVolumesUpdateMRML {} {
 
 	# In case we changed the name of the active transform
 	MainVolumesSetActive $Volume(activeID)
+}
+
+proc MainVolumesCopyData {dst src clear} {
+	global Volume Lut
+
+	vtkImageCopy copy
+	copy SetInput [Volume($src,vol) GetOutput]
+	copy Clear$clear
+	copy Update
+	copy SetInput ""
+	Volume($dst,vol) SetImageData [copy GetOutput]
+	copy SetOutput ""
+	copy Delete
 }
 
 #-------------------------------------------------------------------------------
