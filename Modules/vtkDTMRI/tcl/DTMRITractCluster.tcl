@@ -452,4 +452,26 @@ proc DTMRITractClusterTest {} {
     puts "Original number of tracts: [[DTMRI(vtk,streamlineControl) GetStreamlines] GetNumberOfItems]"
     DTMRI(vtk,streamlineControl) SeedStreamlinesFromROIClusterAndDisplay
     puts "New number of tracts is: [[DTMRI(vtk,streamlineControl) GetStreamlines] GetNumberOfItems]"
+
+    Render3D
+}
+
+proc DTMRITractClusterTestUndo {} {
+    global DTMRI Module
+
+    set numActors $DTMRI(TractCluster,NumberOfClusters)
+
+    foreach ren $Module(Renderers) {
+
+        set actors [$ren GetActors]
+        set index [expr [$actors GetNumberOfItems] -1]
+
+        for {set i 0} {$i < $numActors} {incr i} {
+            set actor [$actors GetItemAsObject $index]
+            $ren RemoveActor $actor
+            $actor Delete
+            set index [expr $index - 1]
+        }
+    }  
+    Render3D
 }
