@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkMGHReader.cxx,v $
   Language:  C++
-  Date:      $Date: 2004/07/22 19:45:01 $
-  Version:   $Revision: 1.3 $
+  Date:      $Date: 2004/09/16 18:21:30 $
+  Version:   $Revision: 1.4 $
 
 =========================================================================*/
 #include "vtkMGHReader.h"
@@ -332,10 +332,12 @@ void vtkMGHReader::ReadVolumeHeader()
   // The next short is says whether the RAS registration information
   // is good. If so, read in the voxel size and then the matrix.
   vtkFSIO::ReadShort( fp, RASgood );
+  float spacing[3];
   if( RASgood ) {
 
     for( int nSpacing = 0; nSpacing < 3; nSpacing++ ) {
-      vtkFSIO::ReadFloat( fp, this->DataSpacing[nSpacing] );
+      vtkFSIO::ReadFloat( fp, spacing[nSpacing] );
+      this->DataSpacing[nSpacing] = spacing[nSpacing];
     }
 
     // x_r x_a x_s

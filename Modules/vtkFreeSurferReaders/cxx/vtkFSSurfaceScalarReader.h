@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkFSSurfaceScalarReader.h,v $
   Language:  C++
-  Date:      $Date: 2002/10/08 13:08:50 $
-  Version:   $Revision: 1.5 $
+  Date:      $Date: 2004/09/16 18:21:30 $
+  Version:   $Revision: 1.6 $
 
 =========================================================================*/
 // .NAME vtkFSSurfaceScalarReader - read a surface scalar file from
@@ -21,6 +21,7 @@
 #include <vtkFreeSurferReadersConfigure.h>
 #include "vtkDataReader.h"
 #include "vtkPolyData.h"
+#include "vtkFloatArray.h"
 
 // file type magic numbers
 const int FS_NEW_SCALAR_MAGIC_NUMBER = 16777215;
