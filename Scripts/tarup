@@ -5,11 +5,13 @@
 echo Checkout into cvs directory
 setenv CVSROOT /projects/cvs/slicer
 mkdir cvs
-mkdir slicer
 cd cvs
 cvs checkout slicer
 cd ..
+echo CVS DONE
 
+echo Making slicer directory
+mkdir slicer
 cd slicer
 
 echo Copy the program directories
