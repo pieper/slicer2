@@ -1,3 +1,6 @@
+# test script for mgh reader
+     
+
 package require vtkFreeSurferReaders
 package require vtk
 package require vtkinteraction
