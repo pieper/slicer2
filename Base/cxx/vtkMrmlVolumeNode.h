@@ -117,6 +117,12 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlVolumeNode : public vtkMrmlNode
   vtkSetStringMacro(FilePrefix);
   vtkGetStringMacro(FilePrefix);
 
+  // Description:
+  // Type of data file - e.g. Analyze, Dicom, Headerless, etc.  If not set, slicer will 
+  // try to figure it from the other header values
+  vtkSetStringMacro(FileType);
+  vtkGetStringMacro(FileType);
+
   //--------------------------------------------------------------------------
   // Header Information
   //--------------------------------------------------------------------------
@@ -376,6 +382,7 @@ protected:
   char *FilePattern;
   char *FilePrefix;
   char *FullPrefix;
+  char *FileType;
   char *RasToIjkMatrix;
   char *RasToVtkMatrix;
   char *PositionMatrix;

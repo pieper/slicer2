@@ -63,6 +63,7 @@ vtkMrmlVolumeNode::vtkMrmlVolumeNode()
   this->VolumeID = NULL;
   this->FilePattern = NULL;
   this->FilePrefix = NULL;
+  this->FileType = NULL;
   this->RasToIjkMatrix = NULL;
   this->RasToVtkMatrix = NULL;
   this->PositionMatrix = NULL;
@@ -154,6 +155,11 @@ vtkMrmlVolumeNode::~vtkMrmlVolumeNode()
   {
     delete [] this->FilePrefix;
     this->FilePrefix = NULL;
+  }
+  if (this->FileType)
+  {
+    delete [] this->FileType;
+    this->FileType = NULL;
   }
   if (this->RasToVtkMatrix)
   {
@@ -270,6 +276,10 @@ void vtkMrmlVolumeNode::Write(ofstream& of, int nIndent)
   if (this->FilePrefix && strcmp(this->FilePrefix, "")) 
   {
     of << " filePrefix='" << this->FilePrefix << "'";
+  }
+  if (this->FileType && strcmp(this->FileType, "")) 
+  {
+    of << " fileType='" << this->FileType << "'";
   }
 
   // >> AT 4/2/01
@@ -449,6 +459,7 @@ void vtkMrmlVolumeNode::Copy(vtkMrmlNode *anode)
 
   // Strings
   this->SetFilePattern(node->FilePattern);
+  this->SetFileType(node->FileType);
   this->SetRasToIjkMatrix(node->RasToIjkMatrix);
   this->SetRasToVtkMatrix(node->RasToVtkMatrix);
   this->SetPositionMatrix(node->PositionMatrix);
@@ -622,6 +633,8 @@ void vtkMrmlVolumeNode::PrintSelf(ostream& os, vtkIndent indent)
     (this->FilePattern ? this->FilePattern : "(none)") << "\n";
   os << indent << "FilePrefix: " <<
     (this->FilePrefix ? this->FilePrefix : "(none)") << "\n";
+  os << indent << "FileType: " <<
+    (this->FileType ? this->FileType : "(none)") << "\n";
   os << indent << "RasToIjkMatrix: " <<
     (this->RasToIjkMatrix ? this->RasToIjkMatrix : "(none)") << "\n";
   os << indent << "RasToVtkMatrix: " <<
