@@ -30,6 +30,7 @@
 #   MainViewSetBackgroundColor
 #   MainViewSetFov
 #   MainViewSetParallelProjection
+#   MainViewSetTexture
 #   MainViewLightFollowCamera
 #   MainViewNavReset
 #   MainViewRotate dir deg
@@ -63,9 +64,9 @@ viewMode='Normal' viewBgColor='Blue'"
     # The MainViewBuildGUI proc is called specifically
     lappend Module(procVTK)  MainViewBuildVTK
 
-        set m MainView
-        lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.40 $} {$Date: 2002/05/17 19:48:40 $}]
+    set m MainView
+    lappend Module(versions) [ParseCVSInfo $m \
+    {$Revision: 1.41 $} {$Date: 2002/11/12 13:09:53 $}]
 
     set View(viewerHeightNormal) 656
     set View(viewerWidth)  956 
@@ -93,6 +94,8 @@ viewMode='Normal' viewBgColor='Blue'"
     set View(closeupVisibility) On
     set View(createMagWin) Yes
     set View(parallelScale) $View(fov)
+    set View(textureResolution) 256
+    set View(textureInterpolation) Off
 
     # sp-2002-02-22: removed for 1.3; seems to work on modern Windows
     if {0} {
@@ -455,6 +458,31 @@ proc MainViewSetParallelProjection {} {
     $View(viewCam) ParallelProjectionOff
     }    
 
+    Render3D
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MainViewSetTexture
+# Applies current texture settings to the vtk pipeline
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MainViewSetTexture {} {
+    global View 
+
+
+    for {set s 0} {$s < 3} {incr s} {
+        Slice($s,texture) Interpolate$View(textureInterpolation)
+        [Slicer GetBackReformat3DView $s] SetResolution $View(textureResolution)
+        [Slicer GetForeReformat3DView $s] SetResolution $View(textureResolution)
+        [Slicer GetLabelReformat3DView $s] SetResolution $View(textureResolution)
+        if { [info command MatSlicer] != "" } {
+            [MatSlicer GetBackReformat3DView $s] SetResolution $View(textureResolution)
+            [MatSlicer GetForeReformat3DView $s] SetResolution $View(textureResolution)
+            [MatSlicer GetLabelReformat3DView $s] SetResolution $View(textureResolution)
+        }
+    }
     Render3D
 }
 
