@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkFSSurfaceScalarReader.cxx,v $
   Language:  C++
-  Date:      $Date: 2002/10/07 23:58:17 $
-  Version:   $Revision: 1.5 $
+  Date:      $Date: 2002/10/08 13:08:50 $
+  Version:   $Revision: 1.6 $
 
 =========================================================================*/
 #include "vtkFSSurfaceScalarReader.h"
@@ -28,6 +28,7 @@ vtkFSSurfaceScalarReader* vtkFSSurfaceScalarReader::New()
 
 vtkFSSurfaceScalarReader::vtkFSSurfaceScalarReader()
 {
+    this->scalars = NULL;
 }
 
 vtkFSSurfaceScalarReader::~vtkFSSurfaceScalarReader()
@@ -46,7 +47,7 @@ void vtkFSSurfaceScalarReader::ReadFSScalars()
   int ivalue;
   float fvalue;
   float *scalars;
-  vtkFloatArray *output = this->GetOutput();
+  vtkFloatArray *output = this->scalars;
 
   if (output == NULL)
   {
@@ -134,22 +135,4 @@ void vtkFSSurfaceScalarReader::ReadFSScalars()
 void vtkFSSurfaceScalarReader::PrintSelf(ostream& os, vtkIndent indent)
 {
   vtkDataReader::PrintSelf(os,indent);
-}
-//----------------------------------------------------------------------------
-void vtkFSSurfaceScalarReader::SetOutput(vtkFloatArray *output)
-{
-    if (output == NULL)
-    {
-        cerr << "ERROR: vtkFSSurfaceScalarReader::SetOutput passed a null pointer." << endl;
-        return;
-    }
-    if (output->IsA("vtkDataObject"))
-    {
-        this->vtkSource::SetNthOutput(0,(vtkDataObject*)output);
-    }
-    else
-    {
-        cerr << "ERROR: vtkFSSurfaceScalarReader::SetOutput passed a pointer to something not a vtkDataObject" << endl;
-        return;
-    }
 }

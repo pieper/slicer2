@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkFSSurfaceScalarReader.h,v $
   Language:  C++
-  Date:      $Date: 2002/10/07 23:33:39 $
-  Version:   $Revision: 1.4 $
+  Date:      $Date: 2002/10/08 13:08:50 $
+  Version:   $Revision: 1.5 $
 
 =========================================================================*/
 // .NAME vtkFSSurfaceScalarReader - read a surface scalar file from
@@ -33,10 +33,9 @@ public:
   void PrintSelf(ostream& os, vtkIndent indent);
 
   vtkFloatArray *GetOutput()
-    {return (vtkFloatArray *) this->vtkSource::GetOutput(0); };
-  vtkFloatArray *GetOutput(int idx)
-    {return (vtkFloatArray *) this->vtkSource::GetOutput(idx); };
-  void SetOutput(vtkFloatArray *output);
+    {return this->scalars; };
+  void SetOutput(vtkFloatArray *output)
+    {this->scalars = output; };
 
   void ReadFSScalars();
 
@@ -44,6 +43,7 @@ protected:
   vtkFSSurfaceScalarReader();
   ~vtkFSSurfaceScalarReader();
 
+  vtkFloatArray *scalars;
 
   int ReadInt3 (FILE* iFile, int& oInt);
   int ReadInt2 (FILE* iFile, int& oInt);
