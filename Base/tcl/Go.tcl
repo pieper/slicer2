@@ -86,6 +86,7 @@ proc Usage { {msg ""} } {
     set msg "$msg\n   --no-tkcon : disables tk console"
     set msg "$msg\n   --load-dicom <dir> : read dicom files from <dir> at startup"
     set msg "$msg\n   --script <file.tcl> : script to execute after slicer loads"
+    set msg "$msg\n   --exec <tcl code> : some code to execute after slicer loads"
     set msg "$msg\n   --version : print out the version info and continue"
     puts stderr $msg
     tk_messageBox -message $msg -title $SLICER(version) -type ok
@@ -100,6 +101,7 @@ set verbose 0
 set Module(verbose) 0
 set SLICER(load-dicom) ""
 set SLICER(script) ""
+set SLICER(exec) ""
 set SLICER(versionInfo) ""
 set strippedargs ""
 set argc [llength $argv]
@@ -140,6 +142,14 @@ for {set i 0} {$i < $argc} {incr i} {
                 Usage "missing argument for $a\n"
             } else {
                 set SLICER(script) [lindex $argv $i]
+            }
+        }
+        "--exec" {
+            incr i
+            if { $i == $argc } {
+                Usage "missing argument for $a\n"
+            } else {
+                set SLICER(exec) [lindex $argv $i]
             }
         }
         "--version" {
@@ -566,7 +576,7 @@ if { $SLICER(versionInfo) != "" } {
     set compilerName [Slicer GetCompilerName]
     set vtkVersion [Slicer GetVTKVersion]
     set libVersions "LibName1: VTK LibVersion1: ${vtkVersion} LibName2: TCL LibVersion2: ${tcl_patchLevel} LibName3: TK LibVersion2: ${tk_patchLevel}"
-    set SLICER(versionInfo) "$SLICER(versionInfo) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.61 2003/07/31 23:07:39 pieper Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.62 2003/08/05 22:58:03 pieper Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
@@ -612,4 +622,7 @@ if { $SLICER(script) != "" } {
     source $SLICER(script)
 }
 
+if { $SLICER(exec) != "" } {
+    eval $SLICER(exec)
+}
 
