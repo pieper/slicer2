@@ -68,7 +68,7 @@ proc MainFileInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainFile \
-		{$Revision: 1.27 $} {$Date: 2001/11/19 02:29:36 $}]
+		{$Revision: 1.28 $} {$Date: 2002/01/21 18:45:08 $}]
 
 	set File(filePrefix) data
 }
@@ -232,6 +232,8 @@ proc MainFileClose {} {
 	MainUpdateMRML
 	MainSetup
 	RenderAll
+	# Restore default MRML file name
+	MainMrmlSetFile "data"
 }
 
 #-------------------------------------------------------------------------------
@@ -316,7 +318,7 @@ proc MainFileSave {} {
 	global Mrml
 
 	# Call SaveAs if the filename is blank
-	if {$Mrml(filePrefix) == ""} {
+	if {$File(filePrefix) == ""} {
 		MainFileSaveAsPopup "" 50 50
 	}
 
@@ -334,7 +336,7 @@ proc MainFileSaveWithOptions {} {
 	MainOptionsUnparsePresets
 
 	# Call SaveAs if the filename is blank
-	if {$Mrml(filePrefix) == ""} {
+	if {$File(filePrefix) == ""} {
 		MainFileSaveAsPopup "" 50 50
 	}
 
