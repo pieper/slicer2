@@ -50,7 +50,7 @@ if { [file exists $localvarsfile] } {
 ##
 ## All arguments do nothing by default
 ##
-foreach var "VTK_ARG1 VTK_ARG2 VTK_ARG3 VTK_ARG4 VTK_ARG5 VTK_ARG6 VTK_ARG7 VTK_ARG8 VTK_ARG9 VTK_ARG_CONFIGURATIONS SLICER_ARG1 SLICER_ARG2 SLICER_ARG3 SLICER_ARG4" {
+foreach var "VTK_ARG1 VTK_ARG2 VTK_ARG3 VTK_ARG4 VTK_ARG5 VTK_ARG6 VTK_ARG7 VTK_ARG8 VTK_ARG9 VTK_ARG_CONFIGURATIONS SLICER_ARG1 SLICER_ARG2 SLICER_ARG3 SLICER_ARG4 SLICER_ARG5 SLICER_ARG6" {
     set $var "-DDUMMY:BOOL=ON"
 }
 
@@ -58,11 +58,13 @@ set SLICER_ARG1 "-DVTKSLICERBASE_SOURCE_DIR:PATH=$SLICER_HOME/Base"
 set SLICER_ARG2 "-DVTKSLICERBASE_BUILD_DIR:PATH=$SLICER_HOME/Base/builds/$env(BUILD)"
 set SLICER_ARG3 "-DVTKSLICERBASE_BUILD_LIB:PATH=$VTKSLICERBASE_BUILD_LIB"
 set SLICER_ARG4 "-DVTKSLICERBASE_BUILD_TCL_LIB:PATH=$VTKSLICERBASE_BUILD_TCL_LIB"
+set SLICER_ARG5 "-DGSL_LIB_DIR:PATH=$::GSL_LIB_DIR"
+set SLICER_ARG6 "-DGSL_INC_DIR:PATH=$::GSL_INC_DIR"
 
 # use an already built version of vtk
 set VTK_ARG1 "-DUSE_BUILT_VTK:BOOL=ON"
 set VTK_ARG2 "-DVTK_DIR:PATH=$VTK_DIR"
-set VTK_ARG_CONFIGURATIONS "-DCMAKE_CONFIGURATION_TYPES:STRING=Debug;RelWithDebInfo"
+set VTK_ARG_CONFIGURATIONS "-DCMAKE_CONFIGURATION_TYPES:STRING=Debug;RelWithDebInfo;Release"
 
 ## some operating systems 
 switch $tcl_platform(os) {
@@ -160,7 +162,7 @@ if {$tcl_platform(byteOrder) == "littleEndian"} {
 set CLEANFLAG 0
 set NOCMAKEFLAG 0
 set VTK_ARG_VERBOSE "-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF"
-set VTK_ARG_DEBUG   "-DCMAKE_BUILD_TYPE:STRING="
+set VTK_ARG_DEBUG   "-DCMAKE_BUILD_TYPE:STRING=$::env(VTK_BUILD_TYPE)"
 
 set argc [llength $argv]
 set OrigArgv "$argv"
@@ -197,7 +199,7 @@ for {set i 0} {$i < $argc} {incr i} {
         default {
             if {[string range $a 0 1 ] == "--"} { 
                 puts stderr "Do not know option $a. Currently the following attributes are defined: "
-                puts stderr " --clean: Removing build directories \n --no-cmake: Skipping cmake \n --verbose: Compiling in verbose mode \n --debug: Compiling in debug mode (-g flag)" 
+                puts stderr " --clean: Removing build directories \n --no-cmake: Skipping cmake \n --verbose: Compiling in verbose mode \n --debug: Compiling in debug mode (-g flag)\n --relwithdebinfo: Compiling in relwithdebinfo mode" 
                 exit 1
             }  
         }
@@ -270,7 +272,7 @@ foreach target $TARGETS {
             $VTK_ARG1 $VTK_ARG2 $VTK_ARG3 $VTK_ARG4 $VTK_ARG5 \
             $VTK_ARG6 $VTK_ARG7 $VTK_ARG8 $VTK_ARG9 $VTK_ARG_VERBOSE $VTK_ARG_DEBUG $VTK_ARG_ENDIAN \
             $VTK_ARG_CONFIGURATIONS \
-            $SLICER_ARG1 $SLICER_ARG2 $SLICER_ARG3 $SLICER_ARG4] 
+            $SLICER_ARG1 $SLICER_ARG2 $SLICER_ARG3 $SLICER_ARG4 $SLICER_ARG5 $SLICER_ARG6] 
 
         if {[file exists [file join $target cmaker_local.tcl]]} {
             # Define SLICER_MODULE_ARG in cmaker_local.tcl
@@ -309,11 +311,11 @@ foreach target $TARGETS {
             } else {
                 set sln [string toupper [file tail $target]].sln
             }
-            puts "running: devenv $sln /build debug"
+            puts "running: devenv $sln /build $::VTK_BUILD_TYPE"
 
             # no output from devenv so just go ahead and run it with no loop
-            set ret [catch {exec devenv $sln /build debug} res]
-            # set ret [catch {exec "c:/Program Files/Microsoft Visual Studio .NET/Common7/IDE/devenv" $sln /build debug} res]
+            set ret [catch {exec devenv $sln /build $::VTK_BUILD_TYPE} res]
+            # set ret [catch {exec "c:/Program Files/Microsoft Visual Studio .NET/Common7/IDE/devenv" $sln /build $::VTK_BUILD_TYPE} res]
 
             puts $res
             
