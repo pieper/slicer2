@@ -101,7 +101,7 @@ proc MutualInformationRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.6 $} {$Date: 2003/10/21 14:37:36 $}]
+        {$Revision: 1.7 $} {$Date: 2003/10/21 20:37:18 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -114,6 +114,10 @@ proc MutualInformationRegistrationInit {} {
     set MutualInformationRegistration(Volume1) $Volume(idNone)
     set MutualInformationRegistration(Model1)  $Model(idNone)
     set MutualInformationRegistration(FileName)  ""
+
+    set MutualInformationRegistration(sourceId) $Volume(idNone)
+    set MutualInformationRegistration(targetId) $Volume(idNone)
+    set MutualInformationRegistration(matrixId) ""
 
     global Matrix MutualInformationRegistration
     #set Matrix(autoFast) mi-fast.txt
@@ -209,10 +213,9 @@ proc MutualInformationRegistrationBuildSubGui {f} {
     <LI><B>The Algorithm </B> 
     This is an automatic method of registering two images using mutual information of the two images. It is based on the methods of Wells and Viola (1996).
     <LI><B>Limitations</B>
-    Cascades of transforms may not work. Also, to change parameters, one should
-    stop the process and then restart it.
+    Cascades of transforms may not work. 
     <LI><B>Normal: Coarse</B>
-    The Coarse method will generally do a good job on all images. It takes 5 to 10 minutes to run. It requires no user intervention; and will finish on its own. Though, it updates regularly so that the user can stop the algorithm is she is satisfied. 
+    The Coarse method will generally do a good job on all images. It takes 5 to 10 minutes to run. It requires no user intervention; and will finish on its own. Though, it updates regularly so that the user can stop the algorithm is she is satisfied.
     <LI><B>Normal: Fine</B>
     The Fine method can be run after the Coarse method to fine tune the result. Again, the Fine method updates regularly so that the user can stop the algorithm if she is satified. Otherwise, it will run until finished.
     <LI><B>Normal: Good and Slow</B>
@@ -221,6 +224,9 @@ proc MutualInformationRegistrationBuildSubGui {f} {
     This method is designed for the user to be able to walk away, and come back and find a good registration. This method can be very slow, but it works very, very well. It does not update the alignment until finished.
     <LI><B>Advanced</B>
     Change these at your own risk. The input images are normalized, so that the source and target standard deviations should generally be smaller than 1. There are arguments they should be much smaller than 1, but changing them does not seem to make a big difference. The number of samples per iteration can be increased, but also does not seem to help alot. The translation scale is roughly a measure of how much to scale translations over rotations. A variety of numbers may work here. The learning rate should generally be less than 0.001, and often much smaller. The number of update iterations is generally between 100 and 2500
+    <LI><B>Known Bugs</B>
+    The .mi window is left open and the pipeline is left taking lots of 
+    memory.
     </UL>"
     regsub -all "\n" $help { } help
     MainHelpApplyTags MutualInformationRegistration $help
@@ -291,14 +297,12 @@ proc MutualInformationRegistrationBuildSubGui {f} {
     #-------------------------------------------
     set f $fnormal.fRun
 
-    foreach str "Run Undo" {
+    foreach str "Run" {
         eval {button $f.b$str -text "$str" -width [expr [string length $str]+1] \
             -command "MutualInformationRegistrationAuto$str"} $Gui(WBA)
     }
-    pack $f.bRun $f.bUndo -side left -padx $Gui(pad) -pady $Gui(pad)
-    set MutualInformationRegistration(bUndo) $f.bUndo
+    pack $f.bRun -side left -padx $Gui(pad) -pady $Gui(pad)
     set MutualInformationRegistration(b1Run) $f.bRun
-    $f.bUndo configure -state disabled
 
     #-------------------------------------------
     # Level->Advanced
@@ -360,16 +364,14 @@ proc MutualInformationRegistrationBuildSubGui {f} {
     #-------------------------------------------
     set f $fadvanced.fRun
 
-    foreach str "Run Undo" {
+    foreach str "Run" {
         eval {button $f.b$str -text "$str" -width [expr [string length $str]+1] \
             -command "MutualInformationRegistrationAuto$str"} $Gui(WBA)
         set MutualInformationRegistration(b$str) $f.b$str
     }
-    pack $f.bRun $f.bUndo -side left -padx $Gui(pad) -pady $Gui(pad)
+    pack $f.bRun -side left -padx $Gui(pad) -pady $Gui(pad)
     set MutualInformationRegistration(b2Run) $f.bRun
 
-    set MutualInformationRegistration(bUndo) $f.bUndo
-    $f.bUndo configure -state disabled
 }
 
 #-------------------------------------------------------------------------------
@@ -597,15 +599,15 @@ proc MutualInformationRegistrationAutoRun {} {
     # sourceId = ID of volume to register (source, moving)
     # targetId = ID of reference volume   (target, stationary)
     # matrixId = ID of the transform to change
-    set sourceId $Matrix(volume)
-    set targetId $Matrix(refVolume)
-    set matrixId $Matrix(activeID)
+    set MutualInformationRegistration(sourceId) $Matrix(volume)
+    set MutualInformationRegistration(targetId) $Matrix(refVolume)
+    set MutualInformationRegistration(matrixId) $Matrix(activeID)
 
 #    MutualInformationRegistrationAutoRun_Vtk  
     if { [info command vtkITKMutualInformationTransform] == "" } {
 
     } else {
-        MutualInformationRegistrationAutoRun_Itk $sourceId $targetId $matrixId
+        MutualInformationRegistrationAutoRun_Itk 
     }
 }
 
@@ -619,7 +621,7 @@ proc MutualInformationRegistrationAutoRun {} {
 # .END
 #-------------------------------------------------------------------------------
 
-proc MutualInformationRegistrationAutoRun_Itk {sourceId targetId matrixId} {
+proc MutualInformationRegistrationAutoRun_Itk { } {
     global Path env Gui Matrix Volume MutualInformationRegistration
 
     # TODO make islicer a package
@@ -630,26 +632,19 @@ proc MutualInformationRegistrationAutoRun_Itk {sourceId targetId matrixId} {
     set notalreadythere [catch ".mi cget -background"]
     if {$notalreadythere} {
         toplevel .mi
-        isregistration .mi.reg 
+        wm withdraw .mi
+        isregistration .mi.reg
     }
     # catch "destroy .mi"
 
     .mi.reg config \
-        -transform       $matrixId                                           \
-        -source          [Volume($sourceId,node) GetID]                      \
-        -target          [Volume($targetId,node) GetID]                      \
-        -resolution      $MutualInformationRegistration(Resolution)          \
-        -iterations      $MutualInformationRegistration(UpdateIterations)    \
-        -samples         $MutualInformationRegistration(NumberOfSamples)     \
-        -learningrate    $MutualInformationRegistration(LearningRate)        \
-        -translatescale  $MutualInformationRegistration(TranslateScale)      \
-        -source_standarddev $MutualInformationRegistration(SourceStandardDeviation)  \
-        -target_standarddev $MutualInformationRegistration(TargetStandardDeviation)  \
-        -source_shrink $MutualInformationRegistration(SourceShrinkFactors) \
-        -target_shrink $MutualInformationRegistration(TargetShrinkFactors)
+        -update_procedure MutualInformationRegistrationUpdateParam         \
+        -source          $MutualInformationRegistration(sourceId)          \
+        -target          $MutualInformationRegistration(targetId)          \
+        -resolution      $MutualInformationRegistration(Resolution)        \
+
 
     puts "to see the pop-up window, type: pack .mi.reg -fill both -expand true"
-    wm withdraw .mi
   #  pack .mi.reg -fill both -expand true
     $MutualInformationRegistration(b1Run) configure -command \
                                       "MutualInformationRegistrationStop"
@@ -658,6 +653,31 @@ proc MutualInformationRegistrationAutoRun_Itk {sourceId targetId matrixId} {
     $MutualInformationRegistration(b1Run) configure -text "Stop"
     $MutualInformationRegistration(b2Run) configure -text "Stop"
     .mi.reg start
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MutualInformationRegistrationStop
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MutualInformationRegistrationUpdateParam {} {
+    global MutualInformationRegistration
+
+    .mi.reg config \
+        -update_procedure MutualInformationRegistrationUpdateParam         \
+        -transform       $MutualInformationRegistration(matrixId)          \
+        -source          $MutualInformationRegistration(sourceId)          \
+        -target          $MutualInformationRegistration(targetId)          \
+        -resolution      $MutualInformationRegistration(Resolution)        \
+        -iterations      $MutualInformationRegistration(UpdateIterations)  \
+        -samples         $MutualInformationRegistration(NumberOfSamples)   \
+        -learningrate    $MutualInformationRegistration(LearningRate)      \
+        -translatescale  $MutualInformationRegistration(TranslateScale)    \
+        -source_standarddev $MutualInformationRegistration(SourceStandardDeviation)  \
+        -target_standarddev $MutualInformationRegistration(TargetStandardDeviation)  \
+        -source_shrink $MutualInformationRegistration(SourceShrinkFactors) \
+        -target_shrink $MutualInformationRegistration(TargetShrinkFactors)
 }
 
 #-------------------------------------------------------------------------------
@@ -676,30 +696,6 @@ $MutualInformationRegistration(b2Run) configure -command \
 $MutualInformationRegistration(b1Run) configure -text "Start"
 $MutualInformationRegistration(b2Run) configure -text "Start"
 }
-
-
-
-#-------------------------------------------------------------------------------
-# .PROC MutualInformationRegistrationAutoUndo
-#
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc MutualInformationRegistrationAutoUndo {} {
-    global Matrix MutualInformationRegistration
-
-    set t $Matrix(tAuto)
-    set tran [Matrix($t,node) GetTransform]
-    $tran Pop
-
-    # Disallow undo
-    $MutualInformationRegistration(bUndo) configure -state disabled
-
-    # Update MRML
-    MainUpdateMRML
-    RenderAll
-}
-
 
 #-------------------------------------------------------------------------------
 # .PROC MutualInformationRegistrationAutoRun_Vtk
