@@ -28,6 +28,7 @@ if { [itcl::find class dup_sort] == "" } {
 
         variable _study
         variable _series
+        variable _DICOMFiles 
 
         constructor {args} {}
         destructor {}
@@ -90,22 +91,26 @@ itcl::body dup_sort::fill {dir} {
         DevErrorWindow "No DICOM files found"
     }
 
+    # save a local copy
+    array set _DICOMFiles [array get ::DICOMFiles]
+
     array unset _series
     set _series(ids) ""
-    set study $::DICOMFiles(0,StudyInstanceUID)
-    set patient $::DICOMFiles(0,PatientID)
+    set study $_DICOMFiles(0,StudyInstanceUID)
+    set patient $_DICOMFiles(0,PatientID)
 
     for  {set i 0} {$i < $::FindDICOMCounter} {incr i} {
-        if { $study != $::DICOMFiles($i,StudyInstanceUID) ||
-                $patient != $::DICOMFiles(0,PatientID) } {
-            DevErrorWindow "Multiple patients and/or studies in source directory\n$::DICOMFiles(0,FileName) and $::DICOMFiles($i,FileName)"
+        if { $study != $_DICOMFiles($i,StudyInstanceUID) ||
+                $patient != $_DICOMFiles(0,PatientID) } {
+            DevErrorWindow "Multiple patients and/or studies in source directory\n\n$_DICOMFiles(0,FileName)\nand\n$_DICOMFiles($i,FileName)"
+            return
         }
-        set id $::DICOMFiles($i,SeriesInstanceUID)
+        set id $_DICOMFiles($i,SeriesInstanceUID)
         if { [lsearch $_series(ids) $id] == -1 } {
             lappend _series(ids) $id
             set _series($id,list) $i
-            set _series($id,SeriesInstanceUID) $::DICOMFiles($i,SeriesInstanceUID)
-            set _series($id,FlipAngle) $::DICOMFiles($i,FlipAngle)
+            set _series($id,SeriesInstanceUID) $_DICOMFiles($i,SeriesInstanceUID)
+            set _series($id,FlipAngle) $_DICOMFiles($i,FlipAngle)
         } else {
             lappend _series($id,list) $i
         }
@@ -117,13 +122,13 @@ itcl::body dup_sort::fill {dir} {
 
     set row 1
     foreach id $_series(ids) {
-        label $sf.l$id -text "Ser $id, Flip $_series($id,FlipAngle)"
+        label $sf.l$id -text "Ser $id, Flip $_series($id,FlipAngle)" -anchor w -justify left
         radiobutton $sf.cb$id -value $id -variable [itcl::scope _series(master)]
         iwidgets::optionmenu $sf.om$id -command "$this setdeident $id \[$sf.om$id get\]"
         $sf.om$id insert end "Mask" "Deface" "Ignore"
         $this setdeident $id "Mask"
         button $sf.b$id -text "View" -command "$this view $id"
-        grid $sf.l$id $sf.cb$id $sf.om$id $sf.b$id -row $row
+        grid $sf.l$id $sf.cb$id $sf.om$id $sf.b$id -row $row -sticky ew
         incr row
     }
 }
@@ -175,9 +180,9 @@ itcl::body dup_sort::sort {} {
     }
 
     for  {set i 0} {$i < $::FindDICOMCounter} {incr i} {
-        set id $::DICOMFiles($i,SeriesInstanceUID)
-        set inum $::DICOMFiles($i,ImageNumber)
-        file copy $::DICOMFiles($i,FileName) $_series($id,destdir)/$inum.dcm
+        set id $_DICOMFiles($i,SeriesInstanceUID)
+        set inum $_DICOMFiles($i,ImageNumber)
+        file copy $_DICOMFiles($i,FileName) $_series($id,destdir)/$inum.dcm
     }
 
     set deient_operations ""
@@ -225,7 +230,7 @@ itcl::body dup_sort::view {id} {
     file mkdir $viewdir
 
     foreach i $_series($id,list) {
-        file copy $::DICOMFiles($i,FileName) $viewdir/
+        file copy $_DICOMFiles($i,FileName) $viewdir/
     }
 
     set volid [DICOMLoadStudy $viewdir]

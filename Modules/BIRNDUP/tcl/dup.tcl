@@ -33,8 +33,16 @@ if { [itcl::find class dup] == "" } {
         constructor {args} {}
         destructor {}
 
+        variable _sort
+        variable _deident
+        variable _review
+        variable _upload
+
+
         method menus {} {}
         method about_dialog {} {}
+
+        method fill { {dir "choose"} } {}
 
         method statusvar {} { return [itcl::scope _statusVar($this)] }
         method w {} {return $_w}
@@ -49,15 +57,10 @@ itcl::body dup::constructor {args} {
 
     $itk_component(status) configure -anchor w
 
-    
-    $this menus
-    $this configure -title "BIRN Deidentification and Upload Pipeline"
-
     set cs [$this childsite]
 
     pack [iwidgets::panedwindow $cs.panes -orient vertical] -fill both -expand true
     $cs.panes add "sort"
-    pack [dup_sort [$cs.panes childsite "sort"].sort] -fill both -expand true
     $cs.panes add "deident"
     $cs.panes add "review"
     $cs.panes add "upload"
@@ -65,6 +68,10 @@ itcl::body dup::constructor {args} {
     # put the app name and logo at the bottom
     set im [image create photo -file $::PACKAGE_DIR_BIRNDUP/../../../images/new-birn.ppm]
     pack [label $cs.logo -image $im -bg white] -fill x -anchor s
+
+    $this menus
+    $this configure -title "BIRN Deidentification and Upload Pipeline"
+
     eval itk_initialize $args
 }
 
@@ -81,10 +88,10 @@ itcl::body dup::menus {} {
                 options -tearoff false
                 command newstud -label "New Directory..." \
                     -helpstr "Open a New Source Directory for Deidentification" \
-                    -command ""
+                    -command "$this fill"
                 separator sep1
-                command exit -label "Exit" -command "::clean_exit" \
-                    -helpstr "Exit BIRNDUP"
+                command exit -label "Close" -command "destroy [namespace tail $this]" \
+                    -helpstr "Close BIRNDUP"
             menubutton help -text "Help" -menu {
                 options -tearoff false
                 command about -label "About..." \
@@ -95,6 +102,19 @@ itcl::body dup::menus {} {
                     -command {$this help}
             }
         }
+    }
+}
+
+itcl::body dup::fill { {dir "choose"} } {
+    set cs [$this childsite]
+    set _sort [$cs.panes childsite "sort"].sort
+    catch "destroy $_sort"
+    pack [dup_sort $_sort] -fill both -expand true
+    if { $dir == "choose" } {
+        set dir [tk_chooseDirectory]
+    }
+    if { $dir != "" } { 
+        $_sort fill $dir
     }
 }
 
