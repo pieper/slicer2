@@ -99,7 +99,7 @@ proc RigidIntensityRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.5 $} {$Date: 2003/12/18 02:24:34 $}]
+        {$Revision: 1.6 $} {$Date: 2003/12/21 22:52:33 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -108,11 +108,11 @@ proc RigidIntensityRegistrationInit {} {
     #   This is a handy method for organizing the global variables that
     #   the procedures in this module and others need to access.
     #
-    set RigidIntensityRegistration(count) 0
-    set RigidIntensityRegistration(Volume1) $Volume(idNone)
-    set RigidIntensityRegistration(Model1)  $Model(idNone)
-    set RigidIntensityRegistration(FileName)  ""
 
+    set RigidIntensityRegistration(sourceId) $Volume(idNone)
+    set RigidIntensityRegistration(targetId) $Volume(idNone)
+    set RigidIntensityRegistration(matrixId) ""
+    set RigidIntensityRegistration(Repeat) 1
 }
 
 # NAMING CONVENTION:
@@ -178,7 +178,7 @@ proc RigidIntensityRegistrationBuildSubGui {f} {
                 -command "RigidIntensityRegistrationSetRegType $RegType"
     }
     # save menubutton for config
-    set Volume(gui,mbPropertyType) $f.mbType
+    set RigidIntensityRegistration(gui,mbRegistrationType) $f.mbType
     # put a tooltip over the menu
     TooltipAdd $f.mbType \
             "Choose the type of Registration Algorithm. Choose MI unless you know what you are doing."
@@ -212,7 +212,11 @@ proc RigidIntensityRegistrationBuildSubGui {f} {
 proc RigidIntensityRegistrationSetRegType { RegType} {
  global RigidIntensityRegistration
 
-  raise $RigidIntensityRegistration(f$RegType)
+ set RigidIntensityRegistration(RegType) $RegType
+
+ raise $RigidIntensityRegistration(f$RegType)
+
+ $RigidIntensityRegistration(gui,mbRegistrationType) config -text $RegType
 }
 
 #-------------------------------------------------------------------------------
@@ -274,14 +278,15 @@ proc RigidIntensityRegistrationExit {} {
 
 
 #-------------------------------------------------------------------------------
-# .PROC RigidIntensityRegistrationCheckSetUp
+# .PROC RigidIntensityRegistrationSetUp
 #
 # Make sure the volumes and the transform are OK.
+# Also, set some variables
 #
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc RigidIntensityRegistrationCheckSetUp {} {
+proc RigidIntensityRegistrationSetUp {} {
   global Matrix Volume RigidIntensityRegistration
     ###
     ### Check for Errors
@@ -346,7 +351,7 @@ proc RigidIntensityRegistrationCheckSetUp {} {
 #
 # Make sure the transforms fit the restrictions
 # .ARGS
-# .END
+# .ENDn
 #-------------------------------------------------------------------------------
 proc RigidIntensityRegistrationTestTransformConnections \
        {vIdMoving vIdStationary transformid} {
@@ -373,7 +378,10 @@ proc RigidIntensityRegistrationTestTransformConnections \
 
      ## deal with a pretty typical error
      if {$NumMovTrans == $NumStaTrans-1} {
-         return "The Reference volume is being affected by one more transform than the moving volume. However, the opposite should be true! Switching the Moving and reference volumes will likely fix this problem."
+         return "One more transform is effecting the Reference volume
+than the Moving volume. However, the opposite should be true!
+Switching the Moving and Reference volumes will likely fix this
+problem."
      } else {
     return "There are $NumMovTrans transforms affecting the Moving volume and $NumStaTrans affecting the Refence Volume. The Moving volume should have one more Transform affecting it than the moving volume."
      }
@@ -381,9 +389,10 @@ proc RigidIntensityRegistrationTestTransformConnections \
 
  ### At this point there are the correct number of transforms in each
  ### Now, make sure the tree is identical.
+ ### Moving should have an extra transform at the beginning
 
  for {set i 0} {$i < $NumStaTrans} { incr i} {
-   if {[MIRegVMovingTransform GetConcatenatedTransform $i] !=
+   if {[MIRegVMovingTransform GetConcatenatedTransform [expr $i+1]] !=
        [MIRegVStationaryTransform GetConcatenatedTransform $i] } {
            MIRegVMovingTransform     Delete
            MIRegVStationaryTransform Delete
@@ -392,7 +401,7 @@ proc RigidIntensityRegistrationTestTransformConnections \
   }
 
  ### Now, is the last transform the one they selected?
- set tmptrans [MIRegVMovingTransform GetConcatenatedTransform $NumStaTrans]
+ set tmptrans [MIRegVMovingTransform GetConcatenatedTransform 0]
  if {$tmptrans != [Matrix($transformid,node) GetTransform] } {
            MIRegVMovingTransform     Delete
            MIRegVStationaryTransform Delete
@@ -421,3 +430,28 @@ proc RigidIntensityRegistrationGantryTiltTest {vId} {
     }
  return 1
 }
+
+#-------------------------------------------------------------------------------
+# .PROC RigidIntensityRegistrationUpdateParam
+#
+# Update parameters in case anyone changed them
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc RigidIntensityRegistrationUpdateParam { isreg } {
+    global RigidIntensityRegistration KullbackLeiblerRegistration
+
+    $isreg config \
+        -transform       $RigidIntensityRegistration(matrixId)            \
+        -source          $RigidIntensityRegistration(sourceId)            \
+        -target          $RigidIntensityRegistration(targetId)            \
+        -resolution      $RigidIntensityRegistration(Resolution)          \
+        -iterations      $RigidIntensityRegistration(UpdateIterations)    \
+        -learningrate    $RigidIntensityRegistration(LearningRate)        \
+        -translatescale  $RigidIntensityRegistration(TranslateScale)      \
+        -source_shrink   $RigidIntensityRegistration(SourceShrinkFactors) \
+        -target_shrink   $RigidIntensityRegistration(TargetShrinkFactors) \
+        -auto_repeat     $RigidIntensityRegistration(Repeat)
+}
+
