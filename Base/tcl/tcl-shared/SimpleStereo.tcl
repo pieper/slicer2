@@ -1,5 +1,5 @@
-package require tclVectorUtils
-package require NestedList
+# package require tclVectorUtils
+# package require NestedList
 
 namespace eval ::SimpleStereo {
     namespace export moveCameraToView formatCameraParams restoreCameraParams
