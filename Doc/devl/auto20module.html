@@ -4,7 +4,17 @@
 <tr> 
 <td valign=top> 
 
-For versions of Slicer starting with 2.0, new modules that are not part of the Slicer code base are added to the directory <b>slicer2/Modules</b>. Instructions for building a custom module can be found in <b>Modules/README.modules</b>, and sample code can be found in <b>slicer2/Modules/vtkCustomModule-1.1</b>. You will need to ensure that the tcl file is loaded during the GUI construction.
+For versions of Slicer starting with 2.0, new modules that are not
+part of the main Slicer code base are added to the directory
+<b>slicer2/Modules</b>. Instructions for building a custom module can
+be found in <b>Modules/README.modules</b>, and sample code can be
+found in <b>slicer2/Modules/vtkCustomModule</b>. 
+<br>
+To ensure that the associated tcl file is loaded during the GUI
+construction, follow the instructions in the README.txt file in the
+vtkCustomModule directory. If the renaming is done via the call to the
+vtkNameModule tcl script, your module will be registered with the
+Slicer base and will be initialized correctly.
 
 <p>
 New modules are added to the code base in the directory
@@ -38,7 +48,9 @@ installed.
 Run slicer from inside your personal <b>slicer2</b> directory
 and it will find your new modules.  This is because Slicer will
 preferentially source tcl files in your local tcl-modules, tcl-shared,
-and/or tcl-main directories.
+and/or tcl-main directories.<br>
+If you have set your HOME environment variable, Slicer will load custom 
+modules from your ${HOME}/Modules directory as well. 
 
 </small> 
         </p> 
