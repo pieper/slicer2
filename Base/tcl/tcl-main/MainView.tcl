@@ -63,7 +63,7 @@ viewMode='Normal' viewBgColor='Blue'"
 
         set m MainView
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.28 $} {$Date: 2001/05/18 22:26:56 $}]
+		{$Revision: 1.29 $} {$Date: 2001/05/24 17:16:30 $}]
 
 	set View(viewerHeightNormal) 656
 	set View(viewerWidth)  956 
@@ -521,6 +521,8 @@ proc MainViewNavReset {x y {cmd ""}} {
 # .PROC MainViewRotate
 # 
 # .ARGS
+# str dir is Up Down Left Right
+# float deg is the number of degrees to rotate, default \$View(rotateDegrees)
 # .END
 #-------------------------------------------------------------------------------
 proc MainViewRotate {dir {deg rotate}} {
@@ -597,7 +599,21 @@ proc MainViewSetStereo {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainViewSpin
-# 
+#
+# To spin, set View(spinDir) = 1;
+# Then call MainViewSpin
+# To stop spinning, set View(spinDir) = 0;
+#
+# Note that this calls MainViewRotate, which calls Render3D
+# so that saving a spinning movie is easy, simply turn on View(movie).
+#
+# Rotates the 3D Window in the direction View(spinDir) 
+# Rotates View(spinDegrees) degrees
+# Waits some amount of time given by View(spinMs).
+# Then repeats.
+#
+#
+#
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
