@@ -94,7 +94,7 @@ void vtkFastMarching::setSeed( int index )
 
 int compareInt(const void *a, const void *b)
 {
-  return  (*(int*)a) >= (*(int*)b);
+  return  (*(int*)a) - (*(int*)b);
 }
 
 inline void vtkFastMarching::getMedianInhomo( int index, int &med, int &inh )
@@ -536,8 +536,6 @@ vtkFastMarching::vtkFastMarching()
 
 void vtkFastMarching::init(int dimX, int dimY, int dimZ, int depth)
 {
-  vtkErrorMacro("In vtkFastMarching::init()" << endl);
-
   nNeighbors=6; // 6 or 26
   dx=1.0;
 
