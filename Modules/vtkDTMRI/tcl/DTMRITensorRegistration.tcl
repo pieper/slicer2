@@ -325,7 +325,7 @@ proc DTMRIBuildRegistFrame {} {
 
     DevAddButton $f.bColorComp "Color comparison" "DTMRIRegColorComparison"
     pack $f.bColorComp -side top -pady 0 -padx $Gui(pad) 
-    TooltipAdd $f.bColorComp "Create image with scalar measure of the result as red and the target as green channel."
+    TooltipAdd $f.bColorComp "Create image with scalar measure of the result as magenta and the target as green channel."
 
     set f $FrameMain.fCoreg
     frame $f -bg $Gui(activeWorkspace)
@@ -2547,7 +2547,7 @@ proc DTMRIRegColorComparison {} {
     shift SetOutputScalarTypeToUnsignedChar
     shift Update
     app SetInput 0 [shift GetOutput]
-
+    app SetInput 2 [shift GetOutput]
     catch "math Delete"
     vtkTensorMathematics math
     math SetScaleFactor $DTMRI(reg,scaleFactor)
@@ -2627,13 +2627,6 @@ proc DTMRIRegColorComparison {} {
       shift SetOutputScalarTypeToUnsignedChar
       shift Update
       app SetInput 1 [shift GetOutput]
-      catch "shift Delete"
-      vtkImageShiftScale shift    
-      shift SetInput [abs GetOutput]
-      shift SetOutputScalarTypeToUnsignedChar
-      shift SetScale 0
-      shift Update
-      app SetInput 2 [shift GetOutput]
     }
     
     set dim0 [[app GetInput 0] GetDimensions]
@@ -2706,11 +2699,11 @@ proc DTMRIRegHelpUpdate {initial} {
       append HelpText "registration on 1 slice. Registration is\n"
       append HelpText "done on the slice currently viewed in\n"
       append HelpText "scanning direction.\n"
-      append HelpText "Generate a color image with result as red\n"
-      append HelpText "and target as green channel to analyze the\n"
-      append HelpText "result of the registration. A scalar measure\n"
-      append HelpText "of result and target is derived which can be\n"
-      append HelpText "chosen at the Adv tab.\n"
+      append HelpText "Generate a color image with result as\n"
+      append HelpText "magenta and target as green channel to\n"
+      append HelpText "analyze the result of the registration. A\n"
+      append HelpText "scalar measure of result and target is\n"
+      append HelpText "derived which can bechosen at the Adv tab.\n"
       append HelpText "If a scalar volume in alignment with tensor\n"
       append HelpText "source volume is available, this can be co-\n"
       append HelpText "registered."
