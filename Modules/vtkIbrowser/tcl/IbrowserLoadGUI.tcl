@@ -458,7 +458,7 @@ proc IbrowserMultiVolumeReaderBuildGUI {parent} {
         matching the pattern in the Filter field.              "
 
     eval {radiobutton $f.r1 -width 27 -text {Load a single file} \
-        -variable MultiVolumeReader(filterChoice) -value single \
+        -variable MultiVolumeReader(fileChoice) -value single \
         -relief flat -offrelief flat -overrelief raised \
         -selectcolor white} $Gui(WEA)
     pack $f.r1 -side top -pady 2 
@@ -467,7 +467,7 @@ proc IbrowserMultiVolumeReaderBuildGUI {parent} {
     pack $f.fMulti -pady 3
     set f $f.fMulti
     eval {radiobutton $f.r2 -width 27 -text {Load multiple files} \
-        -variable MultiVolumeReader(filterChoice) -value multiple \
+        -variable MultiVolumeReader(fileChoice) -value multiple \
         -relief flat -offrelief flat -overrelief raised \
         -selectcolor white} $Gui(WEA)
     TooltipAdd $f.r2 $filter 
@@ -483,7 +483,7 @@ proc IbrowserMultiVolumeReaderBuildGUI {parent} {
     grid $f.lFilter -row 1 -column 0 -padx 1 -pady 3 -sticky w
     grid $f.eFilter -row 1 -column 1 -padx 1 -pady 3 -sticky w
 
-    set MultiVolumeReader(filterChoice) single
+    set MultiVolumeReader(fileChoice) single
     set MultiVolumeReader(singleRadiobutton) $f.r1
     set MultiVolumeReader(multipleRadiobutton) $f.r2
     set MultiVolumeReader(filterEntry) $f.eFilter
