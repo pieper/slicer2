@@ -84,6 +84,38 @@ proc LabelsInit {} {
 }
 
 #-------------------------------------------------------------------------------
+# .PROC LabelsUpdateMRML
+# .END
+#-------------------------------------------------------------------------------
+proc LabelsUpdateMRML {} {
+	global Label Color
+
+	if {$Color(idList) == ""} {
+		set Label(activeID) ""
+		set Label(nameBrowse) ""
+		set Label(name) ""
+		set Label(label) ""
+		set Label(diffuse) "0 0 0"
+		return
+	}
+	
+	# If no active color, take the first one
+	if {$Label(activeID) == "" || \
+		[lsearch $Color(idList) $Label(activeID)] == -1} {
+		LabelsSelectColor 0 0 [lindex $Color(idList) 0]
+	}
+
+	# If no label, take the first one for this color
+	if {$Label(label) == ""} {
+		set labels [Color($Label(activeID),node) GetLabels]
+		set Label(label) [lindex $labels 0]
+	}
+
+	LabelsDisplayColors
+	LabelsDisplayLabels
+}
+
+#-------------------------------------------------------------------------------
 # .PROC LabelsBuildGUI
 # .END
 #-------------------------------------------------------------------------------
@@ -321,29 +353,6 @@ proc ShowColors {{callback ""} {x 100} {y 100}} {
 
 	ShowPopup $Gui(wLabels) $x $y
 }
-
-#-------------------------------------------------------------------------------
-# .PROC LabelsUpdateMRML
-# .END
-#-------------------------------------------------------------------------------
-proc LabelsUpdateMRML {} {
-	global Label Color
-
-	# If no active color, take the first one
-	if {$Label(activeID) == "" || \
-		[lsearch $Color(idList) $Label(activeID)] == -1} {
-		LabelsSelectColor 0 0 [lindex $Color(idList) 0]
-	}
-
-	# If no label, take the first one for this color
-	if {$Label(label) == ""} {
-		set labels [Color($Label(activeID),node) GetLabels]
-		set Label(label) [lindex $labels 0]
-	}
-
-	LabelsDisplayColors
-	LabelsDisplayLabels
-}
  
 #-------------------------------------------------------------------------------
 # .PROC LabelsDisplayColors
@@ -547,7 +556,6 @@ proc LabelsSetColor {colorName} {
 	# The rest is stolen from LabelsFindLabel
 	# DAVE clean this crap up, or just leave it. Ha!
 
-puts LabelsSetColor
 	if {$c == ""} {
 		# Update GUI
 		set Label(name)    ""
