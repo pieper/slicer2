@@ -69,9 +69,8 @@ proc MainMrmlInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainMrml \
-		{$Revision: 1.49 $} {$Date: 2002/01/13 22:24:03 $}]
+		{$Revision: 1.50 $} {$Date: 2002/01/21 18:48:42 $}]
 
-	set Mrml(filePrefix) data
 	set Mrml(colorsUnsaved) 0
 }
 
@@ -581,10 +580,8 @@ proc MainMrmlSetFile {filename} {
 	set Mrml(dir) $dir
 
 	# Store the new relative prefix
-	set Mrml(filePrefix) [MainFileGetRelativePrefix $filename]
+	set File(filePrefix) [MainFileGetRelativePrefix $filename]
 
-	# Synchronize with saving/opening MRML files from the menu bar
-	set File(filePrefix) $Mrml(filePrefix)
 }
 
 #-------------------------------------------------------------------------------
