@@ -245,7 +245,7 @@ proc EMSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.36 $} {$Date: 2004/08/04 19:12:07 $}]
+        {$Revision: 1.37 $} {$Date: 2004/08/08 15:58:47 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -1567,6 +1567,7 @@ proc EMSegmentLoadMRMLNode {NodeType attr AddSetCommandList } {
 #-------------------------------------------------------------------------------
 proc EMSegmentLoadMRML {tag attr} {
   global Mrml 
+
   # Just note : The tree does not know anything about dependencies / hierarchy 
   # between different nodes - it is not really a tree but a list of nodes 
   # where when we printed out the vtkIndent indent variables is just set so it looks 
@@ -1582,13 +1583,12 @@ proc EMSegmentLoadMRML {tag attr} {
           set key [lindex $a 0]
           set val [lreplace $a 0 0]
           switch $key {
-        "StartSlice" {$n SetSegmentationBoundaryMin 1 1 $val;}  
+            "StartSlice" {$n SetSegmentationBoundaryMin 1 1 $val;}  
             "EndSlice"   {$n SetSegmentationBoundaryMax 256 256 $val}  
           }
        
+        }
     }
-
-     }
     "EndSegmenter" {
             set n [MainMrmlAddNode EndSegmenter]
     }
@@ -4805,7 +4805,7 @@ proc EMSegmentDeleteFromSelList {args} {
        # We have to destroy the menu selection because no volume is available anymore
        if {$EMSegment(NumInputChannel) == 1} {
          if { [llength $EMSegment(Cattrib,$EMSegment(Class),$v,Sample)] > 0 }  {
-         foreach fsample $EMSegment(mEraseSample) {fsample delete 1 end}
+         foreach fsample $EMSegment(mEraseSample) {$fsample delete 1 end}
          } 
          set EMSegment(SegmentationBoundaryMax,2) -1
        }
