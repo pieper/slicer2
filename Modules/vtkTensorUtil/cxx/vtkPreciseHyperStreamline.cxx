@@ -3,8 +3,8 @@
 Program:   Visualization Toolkit
 Module:    $RCSfile: vtkPreciseHyperStreamline.cxx,v $
 Language:  C++
-Date:      $Date: 2004/07/27 16:52:19 $
-Version:   $Revision: 1.1 $
+Date:      $Date: 2004/07/29 16:27:41 $
+Version:   $Revision: 1.2 $
 
 Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen 
 All rights reserved.
@@ -30,7 +30,7 @@ PURPOSE.  See the above copyright notice for more information.
 #include "vtkPreciseHyperArray.h"
 #include "vtkPreciseHyperPoint.h"
 
-vtkCxxRevisionMacro(vtkPreciseHyperStreamline, "$Revision: 1.1 $");
+vtkCxxRevisionMacro(vtkPreciseHyperStreamline, "$Revision: 1.2 $");
 vtkStandardNewMacro(vtkPreciseHyperStreamline);
 
 
@@ -333,15 +333,13 @@ void vtkPreciseHyperStreamline::Execute()
   float *tensor;
   vtkPreciseHyperPoint *sNext, *sPtr;
   int i, j, k, ptId, subId, iv, ix, iy;
+  float ev[3], xNext[3];
   vtkCell *cell;
   float tol2,closestPoint[3];
-  float ev[3], xNext[3];
   float d, step, p[3];
   float *w;
   float dist2;
   float deitActual, error, dirStart[3];
-  float fractionalAnisotropy = 1.0;
-  float FirstFractionalAnisotropy = 1.0;
   float *m[3], *v[3];
   float totalLength =0.0;
   //   float m0[3], m1[3], m2[3];
@@ -356,7 +354,6 @@ void vtkPreciseHyperStreamline::Execute()
 
   vtkDebugMacro(<<"Generating hyperstreamline(s)");
   this->NumberOfStreamers = 0;
-
   if ( ! (inTensors=pd->GetTensors()) )
     //   if ( ! (pd->GetTensors()) )
     {
@@ -386,6 +383,7 @@ void vtkPreciseHyperStreamline::Execute()
   
   tol2 = input->GetLength() / 1000.0;
   tol2 = tol2 * tol2;
+
   iv = this->IntegrationEigenvector;
   ix = (iv + 1) % 3;
   iy = (iv + 2) % 3;
@@ -427,9 +425,8 @@ void vtkPreciseHyperStreamline::Execute()
     {
       cell = input->GetCell(sPtr->CellId);
       cell->EvaluateLocation(sPtr->SubId, sPtr->P, xNext, w);
-
       //    inTensors->GetTuples(cell->PointIds, cellTensors);
-
+      
       // interpolate tensor, compute eigenfunctions
       ((vtkTensorImplicitFunctionToFunctionSet *)this->GetMethod()->GetFunctionSet())->GetTensor(xNext,m0);
       if ( vtkMath::Jacobi(m, sPtr->W, sPtr->V) ) {
@@ -437,21 +434,11 @@ void vtkPreciseHyperStreamline::Execute()
     FixVectors(NULL, sPtr->V, iv, ix, iy);
     
     if ( sPtr->W[iv] > 0 ) {
-      FirstFractionalAnisotropy = 0.5*(( sPtr->W[iv] - sPtr->W[ix] ) *( sPtr->W[iv] - sPtr->W[ix] )  +  ( sPtr->W[ix] - sPtr->W[iy] )*( sPtr->W[ix] - sPtr->W[iy] ) +  ( sPtr->W[iv] - sPtr->W[iy] )*( sPtr->W[iv] - sPtr->W[iy] ));
-      FirstFractionalAnisotropy = sqrt(FirstFractionalAnisotropy/(sPtr->W[iv]*sPtr->W[iv] + sPtr->W[iy]*sPtr->W[iy] + sPtr->W[ix]*sPtr->W[ix] ));
+      sPtr->S = 0.5*(( sPtr->W[iv] - sPtr->W[ix] ) *( sPtr->W[iv] - sPtr->W[ix] )  +  ( sPtr->W[ix] - sPtr->W[iy] )*( sPtr->W[ix] - sPtr->W[iy] ) +  ( sPtr->W[iv] - sPtr->W[iy] )*( sPtr->W[iv] - sPtr->W[iy] ));
+      sPtr->S = sqrt(sPtr->S/(sPtr->W[iv]*sPtr->W[iv] + sPtr->W[iy]*sPtr->W[iy] + sPtr->W[ix]*sPtr->W[ix] ));
     }
     else
-      FirstFractionalAnisotropy = -1.0;
-    
-    if ( inScalars ) 
-      {
-        inScalars->GetTuples(cell->PointIds, cellScalars);
-        for (sPtr->S=0, i=0; i < cell->GetNumberOfPoints(); i++)
-          {
-        sPtr->S += cellScalars->GetTuple(i)[0] * w[i];
-          }
-      }
-    
+      sPtr->S = -1.0;
     if ( this->IntegrationDirection == VTK_INTEGRATE_BOTH_DIRECTIONS )
       {
         this->Streamers[1].Direction = -1.0;
@@ -476,18 +463,15 @@ void vtkPreciseHyperStreamline::Execute()
     sPtr->V[0][2] = 0;
     sPtr->V[1][2] = 0;
     sPtr->V[2][2] = 1;
-    FirstFractionalAnisotropy = -1.0;
     sPtr->D = 0.0;
-    if ( inScalars )
-      sPtr->S = 0;
+    sPtr->S = 0;
       }
-    } //for hyperstreamline in dataset
+    }
   //
   // For each hyperstreamline, integrate in appropriate direction (using supplied IVP solver).
   //
   for (ptId=0; ptId < this->NumberOfStreamers; ptId++)
     {
-      fractionalAnisotropy = FirstFractionalAnisotropy;
       //get starting step
       sPtr = this->Streamers[ptId].GetPreciseHyperPoint(0);
       for ( i = 0 ; i < 3 ; i++ )
@@ -498,10 +482,6 @@ void vtkPreciseHyperStreamline::Execute()
       for ( i = 0 ; i < 3 ; i++ )
     dirStart[i] *= MinStep;
 
-      if ( sPtr->CellId < 0 )
-    {
-      continue;
-    }
       if ( this->GetMethod() == 0 ) 
     {
       vtkErrorMacro(<<"No initial value problem solver defined");
@@ -522,9 +502,8 @@ void vtkPreciseHyperStreamline::Execute()
       cell = input->GetCell(sPtr->CellId);
       cell->EvaluateLocation(sPtr->SubId, sPtr->P, xNext, w);
       step = this->IntegrationStepLength * sqrt((double)cell->GetLength2());
-      //    inTensors->GetTuples(cell->PointIds, cellTensors);
-      if ( inScalars ) {inScalars->GetTuples(cell->PointIds, cellScalars);}
-      while ( sPtr->CellId >= 0 && fabs(sPtr->W[0]) >= this->TerminalEigenvalue && fractionalAnisotropy >= this->TerminalFractionalAnisotropy &&
+
+      while ( sPtr->CellId >= 0 && fabs(sPtr->W[0]) >= this->TerminalEigenvalue && sPtr->S >= this->TerminalFractionalAnisotropy &&
           sPtr->D < this->MaximumPropagationDistance && this->Streamers[ptId].CosineOfAngle() > MaxAngle &&
           ((vtkTensorImplicitFunctionToFunctionSet *)this->GetMethod()->GetFunctionSet())->IsInsideImage(sPtr->X) )
     {
@@ -541,21 +520,17 @@ void vtkPreciseHyperStreamline::Execute()
         sNext->X[i] = xNext[i];
           }
 
-        if (inScalars){inScalars->GetTuples(cell->PointIds, cellScalars);}
-        
         cell->EvaluateLocation(sNext->SubId, sNext->P, xNext, w);
         ((vtkTensorImplicitFunctionToFunctionSet *)this->GetMethod()->GetFunctionSet())->GetLastEigenvalues(sNext->W);
         ((vtkTensorImplicitFunctionToFunctionSet *)this->GetMethod()->GetFunctionSet())->GetLastEigenvectors(sNext->V);
 
-        if ( inScalars )
-          sNext->S = 0;
         FixVectors(sPtr->V, sNext->V, iv, ix, iy);
         for ( i=0;i<3;i++)
           dirStart[i] = sPtr->V[i][this->IntegrationEigenvector];
         
         ((vtkTensorImplicitFunctionToFunctionSet *)this->GetMethod()->GetFunctionSet())->SetIntegrationDirection(dirStart);
 
-        fractionalAnisotropy = ((vtkTensorImplicitFunctionToFunctionSet *)this->GetMethod()->GetFunctionSet())->GetLastFractionalAnisotropy();
+        sNext->S = ((vtkTensorImplicitFunctionToFunctionSet *)this->GetMethod()->GetFunctionSet())->GetLastFractionalAnisotropy();
 
         for (i=0; i<3; i++)
           {
@@ -568,14 +543,6 @@ void vtkPreciseHyperStreamline::Execute()
         cell = input->GetCell(sNext->CellId);
         inTensors->GetTuples(cell->PointIds, cellTensors);
         if (inScalars){inScalars->GetTuples(cell->PointIds, cellScalars);}
-          }
-        
-        if ( inScalars )
-          {
-        for (sNext->S=0.0, i=0; i < cell->GetNumberOfPoints(); i++)
-          {
-            sNext->S += cellScalars->GetTuple(i)[0] * w[i];
-          }
           }
         d = sqrt((double)vtkMath::Distance2BetweenPoints(sPtr->X,sNext->X));
         sNext->D = sPtr->D + d;
@@ -597,20 +564,22 @@ void vtkPreciseHyperStreamline::Execute()
         sNext->V[0][2] = 0;
         sNext->V[1][2] = 0;
         sNext->V[2][2] = 1;
-        fractionalAnisotropy = -1.0;
         sNext->D = sPtr->D;
-        if ( inScalars )
-          sNext->S = 0;
+        sNext->S = 0;
       }
     }
       totalLength += sPtr->D;
     } //for each hyperstreamline
-  if ( totalLength >= this->MinimumPropagationDistance )
-    this->BuildTube();
-
+  if ( totalLength < this->MinimumPropagationDistance ) {
+    delete[] this->Streamers[ptId];
+    this->NumberOfStreamers = 0;
+    this->Streamers = NULL;
+  }
+  this->BuildTube();
   delete [] w;
   cellTensors->Delete();
   cellScalars->Delete();  
+
 }
 
 void vtkPreciseHyperStreamline::BuildTube()
