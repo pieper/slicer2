@@ -593,6 +593,9 @@ proc EdFastMarchingExit {} {
     }
     }
 
+    #delete the object
+    EdFastMarching(FastMarching) Delete
+
     Slicer BackFilterOff
     Slicer ForeFilterOff
     Slicer ReformatModified
@@ -747,6 +750,9 @@ proc EdFastMarchingApply {} {
 
 #    EdFastMarching(FastMarching) startEvolution
     
+    # make sure the program is run at all times
+    EdFastMarching(FastMarching) Modified
+
     Ed(editor) Apply EdFastMarching(FastMarching) EdFastMarching(FastMarching)
 
     incr EdFastMarching(nEvolutions)
