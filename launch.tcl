@@ -56,22 +56,29 @@
 # LD_LIBRARY_PATH environment variable
 #
 
+# set up variables for the OS Builds, to facilitate the move to solaris9
+# can be solaris8 or solaris9
+set solaris "solaris9"
+set linux "redhat7.3"
+set darwin "Darwin"
+set windows "Win32VC7"
+
 # check the build os: SunOS, Linux, Windows NT are possible responses
 switch $tcl_platform(os) {
     "SunOS" {
-        set env(BUILD) solaris8
+        set env(BUILD) $solaris
     }
     "Linux" {
-        set env(BUILD) redhat7.3
+        set env(BUILD) $linux
     }
     "Darwin" {
-        set env(BUILD) Darwin
+        set env(BUILD) $darwin
     }
     default {
         # different windows machines say different things, so assume
         # that if it doesn't match above it must be windows
         # (VC7 is Visual C++ 7.0, also known as the .NET version)
-        set env(BUILD) Win32VC7
+        set env(BUILD) $windows
         # take out any spaces in the slicer home dir
         if {[regexp { } $env(SLICER_HOME) match] != 0} {
             # set it to the short name
@@ -130,22 +137,22 @@ if { ![info exists env(TCL_LIB_DIR)] || $env(TCL_LIB_DIR) == "" } {
 # set the base library paths for this build 
 # 
 switch $env(BUILD) {
-    "solaris8" -
-    "redhat7.3" {
+    $solaris -
+    $linux {
         # add vtk, slicer, and tcl bins
         set env(LD_LIBRARY_PATH) $env(VTK_BIN_DIR)/bin:$env(LD_LIBRARY_PATH)
         set env(LD_LIBRARY_PATH) $env(ITK_BIN_DIR)/bin:$env(LD_LIBRARY_PATH)
         set env(LD_LIBRARY_PATH) $env(SLICER_HOME)/Base/builds/$env(BUILD)/bin:$env(LD_LIBRARY_PATH)
         set env(LD_LIBRARY_PATH) $env(TCL_LIB_DIR):$env(LD_LIBRARY_PATH)
     }
-    "Darwin" {
+    $darwin {
         # add vtk, slicer, and tcl bins
         set env(DYLD_LIBRARY_PATH) $env(VTK_BIN_DIR)/bin:$env(DYLD_LIBRARY_PATH)
         set env(DYLD_LIBRARY_PATH) $env(ITK_BIN_DIR)/bin:$env(DYLD_LIBRARY_PATH)
         set env(DYLD_LIBRARY_PATH) $env(SLICER_HOME)/Base/builds/$env(BUILD)/bin:$env(DYLD_LIBRARY_PATH)
         set env(DYLD_LIBRARY_PATH) $env(TCL_LIB_DIR):$env(DYLD_LIBRARY_PATH)
     }
-    "Win32VC7" {
+    $windows {
         # add vtk, slicer, and tcl bins
         set env(Path) $env(VTK_BIN_DIR)/bin/debug\;$env(Path)
         set env(Path) $env(ITK_BIN_DIR)/bin/debug\;$env(Path)
@@ -163,12 +170,12 @@ set env(TK_LIBRARY) $env(TCL_LIB_DIR)/tk8.4
 #  (window has special tcl packages depending on build type)
 #
 switch $env(BUILD) {
-    "solaris8" -
-    "redhat7.3" -
-    "Darwin" {
+    $solaris -
+    $linux -
+    $darwin {
         set env(TCLLIBPATH) "$env(VTK_BIN_DIR)/Wrapping/Tcl $env(TCLLIBPATH)"
     }
-    "Win32VC7" {
+    $windows {
         set env(TCLLIBPATH) "$env(VTK_BIN_DIR)/Wrapping/Tcl/Debug $env(TCLLIBPATH)"
     }
 }
@@ -208,16 +215,16 @@ foreach modulePath $modulePaths {
         if {[string first Custom $moduleName] == -1} {
             lappend env(SLICER_MODULES_TO_REQUIRE) $moduleName
             switch $env(BUILD) {
-                "solaris8" -
-                "redhat7.3" {
+                $solaris -
+                $linux {
                     set env(LD_LIBRARY_PATH) ${modulePath}/$moduleName/builds/$env(BUILD)/bin:$env(LD_LIBRARY_PATH)
                     set env(TCLLIBPATH) "${modulePath}/$moduleName/Wrapping/Tcl $env(TCLLIBPATH)"
                 }
-                "Darwin" {
+                $darwin {
                     set env(DYLD_LIBRARY_PATH) ${modulePath}/$moduleName/builds/$env(BUILD)/bin:$env(DYLD_LIBRARY_PATH)
                     set env(TCLLIBPATH) "${modulePath}/$moduleName/Wrapping/Tcl $env(TCLLIBPATH)"
                 }
-                "Win32VC7" {
+                $windows {
                     set env(Path) $modulePath/$moduleName/builds/$env(BUILD)/bin/debug\;$env(Path)
                     set env(TCLLIBPATH) "$modulePath/$moduleName/Wrapping/Tcl $env(TCLLIBPATH)"
                 }
@@ -307,15 +314,15 @@ set argv $newargv
 
 
 switch $env(BUILD) {
-    "solaris8" -
-    "Darwin" -
-    "redhat7.3" {
+    $solaris -
+    $darwin -
+    $linux {
         # - need to run the specially modified tcl interp in the executable 'vtk' on unix
         # - don't put process in background so that jdemo can track its status
         regsub -all "{|}" $argv "\\\"" argv
         set fp [open "| csh -c \"$env(VTK_BIN_DIR)/bin/vtk $mainscript $argv \" |& cat" r]
     }
-    "Win32VC7" {
+    $windows {
         # put slicer in the background on windows so it won't be "Not Responding" in
         # task manager
         regsub -all "{|}" $argv "" argv
