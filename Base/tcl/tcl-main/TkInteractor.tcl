@@ -155,13 +155,13 @@ proc CreateAndBindTkEvents { widget } {
 #-------------------------------------------------------------------------------
 proc Expose {widget} {
 
-   if {[GetWidgetVariableValue $widget InExpose] == 1} {
+   if {[::vtk::get_widget_variable_value $widget InExpose] == 1} {
       return
    }
-   SetWidgetVariableValue $widget InExpose 1
+   ::vtk::set_widget_variable_value $widget InExpose 1
    update
    [$widget GetRenderWindow] Render
-   SetWidgetVariableValue $widget InExpose 0
+   ::vtk::set_widget_variable_value $widget InExpose 0
 }
  
 # Global variable keeps track of whether active renderer was found
@@ -318,6 +318,12 @@ proc Rotate {widget x y} {
     global View Module
 
     if { ! $RendererFound } { return }
+
+    if { [info exists ::FiducialEventHandled] && $::FiducialEventHandled } { 
+        # special flag to handle point widget - TODO: generalize
+        set ::FiducialEventHandled 0
+        return
+    }
     
     $CurrentCamera Azimuth [expr ($LastX - $x)]
     $CurrentCamera Elevation [expr ($y - $LastY)]
@@ -329,10 +335,10 @@ proc Rotate {widget x y} {
     # Call each Module's "CameraMotion" routine
     #-------------------------------------------
     foreach m $Module(idList) {
-    if {[info exists Module($m,procCameraMotion)] == 1} {
-        if {$Module(verbose) == 1} {puts "CameraMotion: $m"}
-        $Module($m,procCameraMotion)
-    }
+        if {[info exists Module($m,procCameraMotion)] == 1} {
+            if {$Module(verbose) == 1} {puts "CameraMotion: $m"}
+            $Module($m,procCameraMotion)
+        }
     }
 
     Render
@@ -429,13 +435,13 @@ proc LR {widget x y} {
 
     if { ! $RendererFound } { return }
     if {[info exists Module(Endoscopic,procEnter)] == 1} {    
-    
-    set tmp $Endoscopic(cam,xStr) 
-    set Endoscopic(cam,xStr) [expr $tmp + ($LastX - $x)]
-    EndoscopicSetCameraPosition
-    Render3D
-    
-    set LastX $x
+        
+        set tmp $Endoscopic(cam,xStr) 
+        set Endoscopic(cam,xStr) [expr $tmp + ($LastX - $x)]
+        EndoscopicSetCameraPosition
+        Render3D
+        
+        set LastX $x
     }
 }
 
@@ -456,11 +462,11 @@ proc BF {widget x y} {
     if { ! $RendererFound } { return }
     
     if {[info exists Module(Endoscopic,procEnter)] == 1} {   
-    set tmp $Endoscopic(cam,yStr) 
-    set Endoscopic(cam,yStr) [expr $tmp + (-$LastY + $y)]
-    EndoscopicSetCameraPosition
-    Render3D
-    set LastY $y    
+        set tmp $Endoscopic(cam,yStr) 
+        set Endoscopic(cam,yStr) [expr $tmp + (-$LastY + $y)]
+        EndoscopicSetCameraPosition
+        Render3D
+        set LastY $y    
     }
     
 }
@@ -482,12 +488,12 @@ proc UD {widget x y} {
     if { ! $RendererFound } { return }
     
     if {[info exists Module(Endoscopic,procEnter)] == 1} {   
-    set tmp $Endoscopic(cam,zStr) 
-    set Endoscopic(cam,zStr) [expr $tmp + ($LastY - $y)]
-    EndoscopicSetCameraPosition
-    Render3D
-    
-    set LastY $y
+        set tmp $Endoscopic(cam,zStr) 
+        set Endoscopic(cam,zStr) [expr $tmp + ($LastY - $y)]
+        EndoscopicSetCameraPosition
+        Render3D
+        
+        set LastY $y
     }
 }
 
@@ -504,6 +510,12 @@ proc Pan {widget x y} {
     global View Module
 
     if { ! $RendererFound } { return }
+
+    if { [info exists ::FiducialEventHandled] && $::FiducialEventHandled } { 
+        # special flag to handle point widget - TODO: generalize
+        set ::FiducialEventHandled 0
+        return
+    }
 
     set FPoint [$CurrentCamera GetFocalPoint]
         set FPoint0 [lindex $FPoint 0]
@@ -551,18 +563,18 @@ proc Pan {widget x y} {
 
    # only move the annotations if the mainView camera is panning
     if {[info exists View(viewCam)] == 1} {
-    if {$CurrentCamera == $View(viewCam)} {
-        MainAnnoUpdateFocalPoint $FPoint0 $FPoint1 $FPoint2
-    }
+        if {$CurrentCamera == $View(viewCam)} {
+            MainAnnoUpdateFocalPoint $FPoint0 $FPoint1 $FPoint2
+        }
     }
 
     # Call each Module's "CameraMotion" routine
     #-------------------------------------------
     foreach m $Module(idList) {
-    if {[info exists Module($m,procCameraMotion)] == 1} {
-        if {$Module(verbose) == 1} {puts "CameraMotion: $m"}
-        $Module($m,procCameraMotion)
-    }
+        if {[info exists Module($m,procCameraMotion)] == 1} {
+            if {$Module(verbose) == 1} {puts "CameraMotion: $m"}
+            $Module($m,procCameraMotion)
+        }
     }
 
     Render
@@ -585,6 +597,12 @@ proc Zoom {widget x y} {
 
     if { ! $RendererFound } { return }
 
+    if { [info exists ::FiducialEventHandled] && $::FiducialEventHandled } { 
+        # special flag to handle point widget - TODO: generalize
+        set ::FiducialEventHandled 0
+        return
+    }
+
     set zoomFactor [expr pow(1.02,($y - $LastY))]
     set clippingRange [$CurrentCamera GetClippingRange]
     set minRange [lindex $clippingRange 0]
@@ -600,10 +618,10 @@ proc Zoom {widget x y} {
     # Call each Module's "CameraMotion" routine
     #-------------------------------------------
     foreach m $Module(idList) {
-    if {[info exists Module($m,procCameraMotion)] == 1} {
-        if {$Module(verbose) == 1} {puts "CameraMotion: $m"}
-        $Module($m,procCameraMotion)
-    }
+        if {[info exists Module($m,procCameraMotion)] == 1} {
+            if {$Module(verbose) == 1} {puts "CameraMotion: $m"}
+            $Module($m,procCameraMotion)
+        }
     }
 
 
