@@ -24,7 +24,12 @@
 # PROCEDURES:  
 #   ViewInit
 #   ViewBuildGUI
+#   ViewBuildVTK
 #   ViewSetMovieFileType
+#   ViewBuildLightsVTK
+#   ViewSetLightIntensity
+#   ViewUpdateLightIntensity
+#   ViewSwitchLightKit
 #==========================================================================auto=
 #
 # Use this Module for Changing the Viewing Windows sizes
@@ -58,13 +63,14 @@ proc ViewInit {} {
 
     # Define Procedures
     set Module($m,procGUI) ViewBuildGUI
+    set Module($m,procVTK) ViewBuildVTK
 
     # Define Dependencies
     set Module($m,depend) ""
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.30 $} {$Date: 2002/09/18 05:15:17 $}]
+        {$Revision: 1.31 $} {$Date: 2002/10/26 19:42:17 $}]
 
     set View(movie) 0
     set View(movieDirectory) "/tmp"
@@ -119,6 +125,10 @@ with the background depending on its distance to the camera.
 The transformation is linear with two parameters <I>Start</I> and <I>End</I>.
 The value 0 is the closest position of the bounding box and
 the value 1 is the furthest position of the bounding box.
+<BR><LI><B>Lights</B>The Lights panel lets you select between the default,
+fairly ugly 'Blair Witch'-type headlight lighting and a more pleasing multiple
+light arrangement using the vtkLightKit. The panel also allows some other 
+light parameters (e.g., overall intensity) to be adjusted.
 </UL>
 "
     regsub -all "\n" $help { } help
@@ -282,10 +292,37 @@ a frame will be saved everytime the 3D View is rendered "
     # Lights frame
     #-------------------------------------------
     set fLights $Module(View,fLights)
+    
     set f $fLights
 
-    eval {label $f.l -text "This is a nice place\n to put lighting controls\n for the light kit. "} $Gui(WLA)
-    pack $f.l -side left -padx $Gui(pad) -pady 0
+    frame $f.fLightMode -bg $Gui(activeWorkspace) -relief groove -bd 3
+    frame $f.fLightIntensity -bg $Gui(activeWorkspace) -relief groove -bd 3
+    pack $f.fLightMode $f.fLightIntensity -side top -pady 5 -fill x -padx 5
+
+    set f $fLights.fLightMode
+    eval {label $f.lLightMode -text "Light Mode"} $Gui(WLA)
+    eval {radiobutton $f.rbLK -text "LightKit (better)" \
+              -variable View(LightModeIndicator) -value "LightKit" \
+              -command "ViewSwitchLightKit 1"} $Gui(WRA)
+    TooltipAdd $f.rbLK "Light the model more naturally with three lights."
+
+    eval {radiobutton $f.rbHL -text "Headlight (VTK default)" \
+              -variable View(LightModeIndicator) -value "Headlight" \
+              -command {ViewSwitchLightKit 0}} $Gui(WRA)
+    TooltipAdd $f.rbHL "Light the model with a headlight (a light at the camera)."
+
+    pack $f.lLightMode -side top -anchor w -padx $Gui(pad) -pady $Gui(pad)
+    pack $f.rbLK -side top -anchor w -padx $Gui(pad) -pady $Gui(pad)
+    pack $f.rbHL -side top -anchor w -padx $Gui(pad) -pady $Gui(pad)
+
+    set f $fLights.fLightIntensity
+     eval {scale $f.sIntensity -from 0.0 -to 2.0 -showvalue true \
+               -label "Light Intensity" -tickinterval 0.5 \
+               -variable View(LightIntensity) -resolution 0.1 -orient horizontal \
+               -command ViewUpdateLightIntensity} $Gui(WSA)
+
+    TooltipAdd $f.sIntensity "Set the overall lighting intensity of the scene."
+    pack $f.sIntensity -fill x -side top -padx $Gui(pad) -pady $Gui(pad) -expand true
 }
 
 #-------------------------------------------------------------------------------
@@ -305,4 +342,115 @@ proc ViewSetMovieFileType {item} {
     eval $f.mbFile config "-text $item"
 }
 
+#-------------------------------------------------------------------------------
+# .PROC ViewBuildVTK
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc ViewBuildVTK {} {
+    ViewBuildLightsVTK
+}
+
+#-------------------------------------------------------------------------------
+# .PROC ViewBuildLightsVTK
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc ViewBuildLightsVTK {} {
+    global View
+    ViewCreateLightKit
+    set View(LightIntensity) 1.0
+
+    ViewSwitchLightKit 1
+    set View(LightModeIndicator) "LightKit"
+}
+
+proc ViewSaveHeadlight {} {
+    global View
+
+    set ren viewRen
+
+    set lights [$ren GetLights]
+    $lights InitTraversal
+    set hl [$lights GetNextItem]
+    set View(LightSavedHeadlight) $hl
+    set View(LightMode) "Headlight"
+    set View(LightModeIndicator) "Headlight"
+}
+
+proc ViewCreateLightKit {} {
+    global View
+    vtkLightKit ViewLightKit
+    set View(LightKit) ViewLightKit
+}
+
+#-------------------------------------------------------------------------------
+# .PROC ViewSetLightIntensity
+# 
+# .ARGS
+# float value Light intensity value
+# .END
+#-------------------------------------------------------------------------------
+proc ViewSetLightIntensity {value} {
+    global View
+    set View(LightIntensity) $value
+    ViewSwitchLightKit
+}
+#-------------------------------------------------------------------------------
+# .PROC ViewUpdateLightIntensity
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc ViewUpdateLightIntensity {args} {
+    ViewSwitchLightKit
+}
+
+#-------------------------------------------------------------------------------
+# .PROC ViewSwitchLightKit
+# 
+# .ARGS
+# str state on or off
+# .END
+#-------------------------------------------------------------------------------
+proc ViewSwitchLightKit {{state ""}} {
+    global View
+
+    set ren viewRen
+
+    if {![info exists View(LightSavedHeadlight)]} {
+        ViewSaveHeadlight
+    }
+
+    if {"$state" == ""} {
+        if {$View(LightMode) == "Headlight"} {
+            set state 0
+        } else { set state 1 }
+    }
+
+    if {($state == 1 || "$state" == "on") && 
+        $View(LightMode) == "Headlight"} {
+
+        $View(LightKit) AddLightsToRenderer $ren
+        $View(LightSavedHeadlight) SetIntensity 0.0
+
+        set View(LightMode) "LightKit"
+
+    } elseif {($state == 0 || "$state" == "off") && 
+              $View(LightMode) == "LightKit"} {
+
+        $View(LightKit) RemoveLightsFromRenderer $ren
+
+        set View(LightMode) "Headlight"
+    }
+
+    if {$View(LightMode) == "Headlight"} {
+        $View(LightSavedHeadlight) SetIntensity $View(LightIntensity)
+    } else {
+        $View(LightKit) SetKeyLightIntensity $View(LightIntensity)
+    }   
+    Render3D
+}
 
