@@ -25,9 +25,9 @@ vtkImageExtractSlices.cxx
 vtkLSDIreconTensor.cxx
 vtkMultipleStreamlineController.cxx
 vtkODFGlyph.cxx
-#vtkHighAngularResolutionGlyph.cxx
-#vtkStreamlineConvolve.cxx
-#vtkPruneStreamline.cxx
+vtkHighAngularResolutionGlyph.cxx
+vtkStreamlineConvolve.cxx
+vtkPruneStreamline.cxx
 #vtkHyperStreamlineDTMRI.cxx
 vtkTractShapeFeatures.cxx
 vtkNormalizedCuts.cxx

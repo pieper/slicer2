@@ -148,7 +148,7 @@ proc DTMRIInit {} {
 
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.61 $} {$Date: 2005/03/03 19:22:34 $}]
+                  {$Revision: 1.62 $} {$Date: 2005/03/21 23:31:40 $}]
 
     # Define Tabs
     #------------------------------------
@@ -491,8 +491,13 @@ proc DTMRIInit {} {
     #set DTMRI(stream,MaxCurvature) 1.3
     set DTMRI(stream,MaxCurvature) 1.15
     set DTMRI(stream,MinFractionalAnisotropy) 0.07
-
-    set DTMRI(activeStreamlineID) ""
+    
+     set DTMRI(activeStreamlineID) ""
+    
+    #------------------------------------
+    # Variablel to Find tracts that pass through ROI values
+    #------------------------------------
+    set DTMRI(stream,ListLabels) {0}
 
     #------------------------------------
     # Variables for auto streamline display
@@ -1730,8 +1735,12 @@ especially Diffusion DTMRI MRI.
     #-------------------------------------------
     # Display-> Notebook ->Tract frame->VisMethods->VisParams->Tracts->Entries frame
     set f $fParams.fAutoTracts.fEntries
-    foreach frame "Volume ChooseLabel Apply" {
+    foreach frame "Volume" {
         frame $f.f$frame -bg $Gui(activeWorkspace)
+        pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill both
+    }
+    foreach frame "ChooseLabel FindTracts" {
+        frame $f.f$frame -bg $Gui(activeWorkspace) -bd 2
         pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill both
     }
 
@@ -1757,7 +1766,26 @@ especially Diffusion DTMRI MRI.
     # Display-> Notebook ->Tract frame->VisMethods->VisParams->AutoTracts->Entries->ChooseLabel frame
     #-------------------------------------------
     set f $fParams.fAutoTracts.fEntries.fChooseLabel
-
+    
+    foreach frame "Title Label Apply" {
+        frame $f.f$frame -bg $Gui(activeWorkspace)
+        pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill both
+    }
+    
+    
+    #-------------------------------------------
+    # Display-> Notebook ->Tract frame->VisMethods->VisParams->AutoTracts->Entries->ChooseLabel->Title frame
+    #-------------------------------------------
+    set f $fParams.fAutoTracts.fEntries.fChooseLabel.fTitle
+    
+    DevAddLabel $f.l "Create Tracts from label value"
+    pack $f.l -side top
+    
+    #-------------------------------------------
+    # Display-> Notebook ->Tract frame->VisMethods->VisParams->AutoTracts->Entries->ChooseLabel->Label frame
+    #-------------------------------------------
+    set f $fParams.fAutoTracts.fEntries.fChooseLabel.fLabel
+    
     # mask label
     eval {button $f.bOutput -text "Label:" \
           -command "ShowLabels DTMRIUpdateMaskLabel"} $Gui(WBA)
@@ -1779,14 +1807,54 @@ especially Diffusion DTMRI MRI.
 
 
     #-------------------------------------------
-    # Display-> Notebook ->Tract frame->VisMethods->VisParams->AutoTracts->Entries->Apply frame
+    # Display-> Notebook ->Tract frame->VisMethods->VisParams->AutoTracts->Entries->ChooseLabel->Apply frame
     #-------------------------------------------
-    set f $fParams.fAutoTracts.fEntries.fApply
+    set f $fParams.fAutoTracts.fEntries.fChooseLabel.fApply
     DevAddButton $f.bApply "Seed 'Tracts' in ROI" \
         {puts "Seeding streamlines"; DTMRISeedStreamlinesFromSegmentation}
     pack $f.bApply -side top -padx $Gui(pad) -pady $Gui(pad)
     TooltipAdd  $f.bApply "Seed a 'tract' from each point in the ROI.\nThis can be slow; be patient."
 
+
+    #-------------------------------------------
+    # Display-> Notebook ->Tract frame->VisMethods->VisParams->AutoTracts->Entries->FindTracts frame
+    #-------------------------------------------
+    set f $fParams.fAutoTracts.fEntries.fFindTracts
+    
+    foreach frame "Title ListLabels Apply" {
+        frame $f.f$frame -bg $Gui(activeWorkspace)
+        pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill both
+    }
+   
+    #-------------------------------------------
+    # Display-> Notebook ->Tract frame->VisMethods->VisParams->AutoTracts->Entries->FindTracts->Title frame
+    #-------------------------------------------
+    set f $fParams.fAutoTracts.fEntries.fFindTracts.fTitle
+    
+    DevAddLabel $f.l "Choose Tracts that pass through\na set of labels"
+    pack $f.l -side top
+    
+    #-------------------------------------------
+    # Display-> Notebook ->Tract frame->VisMethods->VisParams->AutoTracts->Entries->FindTracts->ListLabels frame
+    #-------------------------------------------
+    set f $fParams.fAutoTracts.fEntries.fFindTracts.fListLabels
+    
+    DevAddLabel $f.l "List of labels:"
+    
+    eval {entry $f.eName -width 25 \
+          -textvariable DTMRI(stream,ListLabels)} $Gui(WEA) \
+            {-bg $Gui(activeWorkspace)}
+    
+    pack $f.l $f.eName -side left
+    
+    #-------------------------------------------
+    # Display-> Notebook ->Tract frame->VisMethods->VisParams->AutoTracts->Entries->FindTracts->Apply frame
+    #-------------------------------------------
+    set f $fParams.fAutoTracts.fEntries.fFindTracts.fApply
+    
+    DevAddButton $f.bApply "Find 'Tracts' through ROI" \
+        {DTMRIFindStreamlinesThroughROI}
+    pack $f.bApply -side top -padx $Gui(pad) -pady $Gui(pad)
 
 
     ##########################################################
@@ -4166,7 +4234,7 @@ proc DTMRIUpdateTractColor {{mode ""}} {
             #$prop SetDiffuse       [Color($c,node) GetDiffuse]
             #$prop SetSpecular      [Color($c,node) GetSpecular]
             #$prop SetSpecularPower [Color($c,node) GetPower]
-            eval $prop SetColor    [Color($c,node) GetDiffuseColor] 
+            eval "$prop SetColor" [Color($c,node) GetDiffuseColor] 
 
             # display solid colors instead of scalars
             DTMRI(vtk,streamlineControl) ScalarVisibilityOff
@@ -4321,7 +4389,7 @@ proc DTMRISeedStreamlinesFromSegmentation {{verbose 1}} {
 
 
 #-------------------------------------------------------------------------------
-# .PROC DTMRISeedStreamlinesFromSegmentation
+# .PROC DTMRISeedAndSaveStreamlinesFromSegmentation
 # Seeds streamlines at all points in a segmentation.
 # This does not display anything, just one by one seeds
 # the streamline and saves it to disk. So nothing is 
@@ -4402,6 +4470,75 @@ proc DTMRISeedAndSaveStreamlinesFromSegmentation {{verbose 1}} {
         tk_messageBox -message $msg
     }
 }
+
+#-------------------------------------------------------------------------------
+# .PROC DTMRIFindStreamlinesThroughROI
+# Seeds streamlines at all points in a segmentation.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc DTMRIFindStreamlinesThroughROI { {verbose 1} } {
+    global DTMRI Label Tensor Volume
+
+    set t $Tensor(activeID)
+    set v $Volume(activeID)
+
+    # make sure they are using a segmentation (labelmap)
+    if {[Volume($v,node) GetLabelMap] != 1} {
+        set name [Volume($v,node) GetName]
+        set msg "The volume $name is not a label map (segmented ROI). Continue anyway?"
+        if {[tk_messageBox -type yesno -message $msg] == "no"} {
+            return
+        }
+
+    }
+
+    # set mode to On (the Display Tracts button will go On)
+    set DTMRI(mode,visualizationType,tractsOn) On
+
+    # make sure the settings are current
+    DTMRIUpdateTractColor
+    DTMRIUpdateStreamlineSettings
+    
+    #Define list of ROI Values
+    set numLabels [llength $DTMRI(stream,ListLabels)]
+   
+    DTMRI(vtk,ListLabels) SetNumberOfValues $numLabels
+    set idx 0
+    foreach value $DTMRI(stream,ListLabels) {
+      eval "DTMRI(vtk,ListLabels) SetValue" $idx $value
+      incr idx
+    }  
+    
+    # set up the input segmented volume
+    DTMRI(vtk,streamlineControl) SetInputROI [Volume($v,vol) GetOutput] 
+    DTMRI(vtk,streamlineControl) SetInputROIValue $Label(label)
+    DTMRI(vtk,streamlineControl) SetInputMultipleROIValues DTMRI(vtk,ListLabels)
+    DTMRI(vtk,streamlineControl) SetConvolutionKernel DTMRI(vtk,convKernel)
+
+    # Get positioning information from the MRML node
+    # world space (what you see in the viewer) to ijk (array) space
+    vtkTransform transform
+    transform SetMatrix [Volume($v,node) GetWldToIjk]
+    # now it's ijk to world
+    transform Inverse
+    DTMRI(vtk,streamlineControl) SetROIToWorld transform
+    transform Delete
+
+    # create all streamlines
+    puts "Original number of tracts: [[DTMRI(vtk,streamlineControl) GetStreamlines] GetNumberOfItems]"
+    DTMRI(vtk,streamlineControl) FindStreamlinesThatPassThroughROI
+    puts "New number of tracts will be: [[DTMRI(vtk,streamlineControl) GetStreamlines] GetNumberOfItems]"
+    
+    puts "Creating and displaying new tracts..."
+    DTMRI(vtk,streamlineControl) HighlightStreamlinesPassTest
+    # actually display streamlines 
+    # (this is the slow part since it causes pipeline execution)
+    DTMRI(vtk,streamlineControl) AddStreamlinesToScene
+}
+
+
+
 
 ################################################################
 #  MAIN visualization procedure: pipeline control is here
@@ -5372,7 +5509,26 @@ proc DTMRIBuildVTK {} {
     
     set DTMRI(vtk,ivps) DTMRI(vtk,rk4)
 
+    #Objects for finding streamlines through several ROIS
+    vtkShortArray DTMRI(vtk,ListLabels)
+    vtkDoubleArray DTMRI(vtk,convKernel)    
+    
+    #Get Kernel 
+    vtkStructuredPointsReader DTMRI(vtk,tmp1)
+    global PACKAGE_DIR_VTKDTMRI
+    DTMRI(vtk,tmp1) SetFileName $PACKAGE_DIR_VTKDTMRI/../../../data/GKernel.vtk
+    DTMRI(vtk,tmp1) Update
 
+    vtkImageCast DTMRI(vtk,tmp2)
+    DTMRI(vtk,tmp2) SetInput [DTMRI(vtk,tmp1) GetOutput]
+    DTMRI(vtk,tmp2) SetOutputScalarTypeToDouble
+    DTMRI(vtk,tmp2) Update
+    
+    DTMRI(vtk,convKernel) DeepCopy [[[DTMRI(vtk,tmp2) GetOutput] GetPointData] GetScalars]
+
+    DTMRI(vtk,tmp1) Delete
+    DTMRI(vtk,tmp2) Delete
+    
     # Apply all settings from tcl variables that were
     # created above using calls to DTMRIAddObjectProperty
     #------------------------------------
@@ -5480,7 +5636,7 @@ proc ConvertVolumeToTensors {} {
     puts "If not phase-freq flipped, swapping x and y in gradient directions"
     set swap [Volume($v,node) GetFrequencyPhaseSwap]
     set scanorder [Volume($v,node) GetScanOrder]
-    
+    set swap 1
       
     if {$swap == 0} {    
         # Gunnar Farneback, April 6, 2004
@@ -5551,6 +5707,9 @@ proc ConvertVolumeToTensors {} {
         $DTMRI(mode,glyphsObject$plane) SetScaleFactor 2000
       }
     }
+    
+    DTMRI SetInputScaleFactor 1
+    DTMRI SetAlpha 50
     
     DTMRI SetTransform trans
     trans Delete

@@ -26,6 +26,10 @@
 #include "vtkProperty.h"
 #include "vtkLookupTable.h"
 #include "vtkMrmlTree.h"
+#include "vtkShortArray.h"
+#include "vtkDoubleArray.h"
+#include "vtkPolyData.h"
+#include "vtkIntArray.h"
 #include "vtkClusterTracts.h"
 
 
@@ -39,12 +43,20 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   static vtkMultipleStreamlineController *New();
   vtkTypeMacro(vtkMultipleStreamlineController,vtkObject);
 
+
   // Description
   // Start a streamline from each voxel which has the value InputROIValue
   // in the InputROI volume.  Streamlines are added to the vtkCollection
   // this->Streamlines.
   void SeedStreamlinesFromROI();
-
+  
+  // Description
+  // Start a streamline from each voxel which has the values store in
+  // the vtkShortArray InputMultipleROIValues
+  // in the InputROI volume.  Streamlines are added to the vtkCollection
+  // this->Streamlines.
+  void SeedStreamlinesFromROIWithMultipleValues();
+  
   // Description
   // Seed each streamline, cause it to Update, save its info to disk
   // and then Delete it.  This is a way to seed in the whole brain
@@ -111,6 +123,22 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   void SaveStreamlinesAsPolyData(char *filename, char *name, 
                                  vtkMrmlTree *colorTree);
   
+  
+  //Description
+  // Find the streamlines that pass through the set of ROI values
+  // stored in InputMultipleROIValues. This operation is performed
+  // by convolving  the streamline with the kernel ConvolutionKernel.
+  void FindStreamlinesThatPassThroughROI();
+  
+  //Description
+  // Convert Streamline from Points representation to PolyLines
+  void ConvertStreamlinesToPolyLines();
+  
+  void HighlightStreamlinesPassTest();
+  
+  void DeleteStreamlinesNotPassTest();
+  
+  
   // Description
   // Input tensor field in which to seed streamlines
   vtkSetObjectMacro(InputTensorField, vtkImageData);
@@ -123,6 +151,14 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   // ROI.
   vtkSetClampMacro(InputROIValue, int, 1, VTK_SHORT_MAX);
   vtkGetMacro(InputROIValue, int);
+
+  // Description
+  // Streamlines will be started at locations with these values in the InputROI.
+  // The value must be greater than 0. A 0 value is not allowed because it
+  // would allow users to accidentally start streamlines outside of their
+  // ROI.
+  vtkSetObjectMacro(InputMultipleROIValues,vtkShortArray);
+  vtkGetObjectMacro(InputMultipleROIValues,vtkShortArray);
 
   // Description
   // Input ROI volume describing where to start streamlines
@@ -156,6 +192,11 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   vtkSetObjectMacro(InputRenderers, vtkCollection);
   vtkGetObjectMacro(InputRenderers, vtkCollection);
 
+  // Description
+  // Convolution Kernel that is used to convolved the fiber with when
+  // finding the ROIs that the fiber pass through
+  vtkSetObjectMacro(ConvolutionKernel, vtkDoubleArray);
+  vtkGetObjectMacro(ConvolutionKernel, vtkDoubleArray);
 
   // Description
   // Control actor properties of created streamlines by setting
@@ -253,6 +294,9 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   vtkImageData *InputROI;
   vtkCollection *InputRenderers;
   int InputROIValue;
+  vtkShortArray *InputMultipleROIValues;
+  
+  vtkDoubleArray *ConvolutionKernel;
 
   vtkCollection *Streamlines;
   vtkCollection *Mappers;
@@ -260,7 +304,10 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   int NumberOfVisibleActors;
 
   vtkProperty *StreamlineProperty;
-
+ 
+  vtkPolyData *StreamlinesAsPolyLines;
+  vtkIntArray *StreamlineIdPassTest;
+  
   int ScalarVisibility;
   vtkLookupTable *StreamlineLookupTable;
 
