@@ -93,6 +93,7 @@ if { [itcl::find class isvolume] == "" } {
       method expose {}   {}
       method actor  {}   {return $_actor}
       method mapper {}   {return $_mapper}
+      method reslice {}  {return $_reslice}
       method ren    {}   {return $_ren}
       method tkrw   {}   {return $_tkrw}
       method rw     {}   {return [$_tkrw GetRenderWindow]}
@@ -629,7 +630,13 @@ itcl::body isvolume::slicer_volume { {name ""} } {
 
     #
     # need to construct a volume from the slicer output
+    # - make sagittal so we can flip the X axis by specifying
+    #   RL instead of LR
+    # - then copy the image data
+    # - then set up the volume node parameters and make it visible in slicer
     #
+
+    $this configure -orientation Sagittal
 
     vtkImageData $id
     eval [$this imagedata] SetUpdateExtent [[$this imagedata] GetWholeExtent]
@@ -638,15 +645,11 @@ itcl::body isvolume::slicer_volume { {name ""} } {
 
     eval ::Volume($i,node) SetSpacing [$id GetSpacing]
 
-    switch $itk_option(-orientation) {
-        Axial { ::Volume($i,node) SetScanOrder IS }
-        Sagittal { ::Volume($i,node) SetScanOrder LR }
-        Coronal { ::Volume($i,node) SetScanOrder PA }
-    }
+    ::Volume($i,node) SetScanOrder RL
     ::Volume($i,node) SetNumScalars 1
     ::Volume($i,node) SetScalarType [$id GetScalarType]
     ::Volume($i,node) SetDimensions [lindex [$id GetDimensions] 0] [lindex [$id GetDimensions] 1]
-    ::Volume($i,node) SetImageRange 0 [expr $itk_option(-resolution) - 1]
+    ::Volume($i,node) SetImageRange 1 $itk_option(-resolution)
 
     ::Volume($i,node) ComputeRasToIjkFromScanOrder [::Volume($i,node) GetScanOrder]
 
