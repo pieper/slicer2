@@ -357,7 +357,7 @@ proc MainInit {} {
 
         # Set version info
     lappend Module(versions) [ParseCVSInfo Main \
-        {$Revision: 1.79 $} {$Date: 2002/08/19 13:38:23 $}]
+        {$Revision: 1.80 $} {$Date: 2002/08/22 15:04:31 $}]
 
     # Call each "Init" routine that's not part of a module
     #-------------------------------------------
@@ -1685,6 +1685,9 @@ proc MainExitProgram { } {
     # as of vtk4, you want to close all your vtk/tk windows before
     # exiting to avoid a crash
 
+    foreach rw [vtkRenderWindow ListInstances] {
+        catch "$rw Delete"
+    }
     foreach w [info commands .*] {
         if {[winfo class $w] == "vtkTkRenderWidget"} {
             catch "destroy $w"
