@@ -314,14 +314,14 @@ proc EdLiveWireBuildGUI {} {
     #-------------------------------------------
     set f $Ed(EdLiveWire,frame).fTabbedFrame.fTraining
 
-    frame $f.fTrainingFile   -bg $Gui(activeWorkspace)
-    pack $f.fTrainingFile -side top -pady $Gui(pad) -fill x
     frame $f.fGrid   -bg $Gui(activeWorkspace)
     pack $f.fGrid -side top -pady $Gui(pad) -fill x
     frame $f.fSlices   -bg $Gui(activeWorkspace)
     pack $f.fSlices -side top -pady $Gui(pad) -fill x
     frame $f.fTrainingMode   -bg $Gui(activeWorkspace)
     pack $f.fTrainingMode -side top -pady $Gui(pad) -fill x    
+    frame $f.fTrainingFile   -bg $Gui(activeWorkspace)
+    pack $f.fTrainingFile -side top -pady $Gui(pad) -fill x
     frame $f.fTrain   -bg $Gui(activeWorkspace)
     pack $f.fTrain -side top -pady $Gui(pad) -fill x    
 
@@ -1679,8 +1679,6 @@ proc EdLiveWireTrain {} {
     set e EdLiveWire
 
     # set the training image input to the edge filter.
-    # (for now, just train with the first edge filter)
-    # $Ed($e,numEdgeFilters)
     for {set f 0} {$f < $Ed($e,numEdgeFilters)} {incr f} {
 
 	set filt [Ed($e,lwSetup$s) GetEdgeFilter $f]
@@ -1696,12 +1694,6 @@ proc EdLiveWireTrain {} {
 
 	# tell filter to do training calculations
 	$filt TrainingModeOn		
-
-	# output means, variances to a file:
-	$filt SetTrainingFileName $Ed($e,trainingOutputFileName)
-	
-	# set the input file name to read these back in easier
-	set Ed($e,trainingInputFileName) $Ed($e,trainingOutputFileName)
 
 	puts "mode: $Ed(EdLiveWire,trainingMode)"
 
@@ -1796,9 +1788,12 @@ proc EdLiveWireTrain {} {
 
     }
 
-
     Slicer ReformatModified
     Slicer Update
+
+    # save settings to the file.
+    EdLiveWireWriteFeatureParams
+    
 }
 
 #-------------------------------------------------------------------------------
