@@ -101,7 +101,7 @@ proc MutualInformationRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1 $} {$Date: 2003/09/08 15:47:39 $}]
+        {$Revision: 1.2 $} {$Date: 2003/09/10 15:07:01 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -118,21 +118,10 @@ proc MutualInformationRegistrationInit {} {
     global Matrix MutualInformationRegistration
     set Matrix(autoFast) mi-fast.txt
     set Matrix(autoSlow) mi-slow.txt
-    set MutualInformationRegistration(autoSpeed)  Fast
     set Matrix(allowAutoUndo) 0
 
-    set MutualInformationRegistration(Resolution)       128
-    set MutualInformationRegistration(UpdateIterations) 100
-    set MutualInformationRegistration(NumberOfSamples)  50
-    set MutualInformationRegistration(LearningRate)    .0001
-    set MutualInformationRegistration(TranslateScale)   320
-    # If Wells, Viola, Atsumi, etal, 
-    # used 2 and 4. Wells claims exact number not critical (personal communication)
-    # They scaled data 0...256.
-    # We scale data -1 to 1.
-    # 2/256*2 = 0.015
-    set MutualInformationRegistration(SourceStandardDeviation) 0.4
-    set MutualInformationRegistration(TargetStandardDeviation) 0.4
+    ## Set the default to fast registration
+    MutualInformationRegistrationFastParam
 }
 #-------------------------------------------------------------------------------
 # .PROC MutualInformationRegistrationBuildSubGui
@@ -155,6 +144,7 @@ proc MutualInformationRegistrationBuildSubGui {f} {
     #-------------------------------------------
     # Select
     # Level
+    #   Help
     #   Normal
     #   Advanced
     # Props
@@ -179,7 +169,7 @@ proc MutualInformationRegistrationBuildSubGui {f} {
 
     set f $framename.fSelect
 
-    foreach level "Normal Advanced" {
+    foreach level "Help Normal Advanced" {
         eval {radiobutton $f.r$level \
             -text "$level" -command "MutualInformationRegistrationSetLevel" \
             -variable MutualInformationRegistration(Level) -value $level -width 10 \
@@ -196,7 +186,7 @@ proc MutualInformationRegistrationBuildSubGui {f} {
     #
     # Swappable Frames for Normal and Advanced Screens
     #
-    foreach type "Normal Advanced" {
+    foreach type "Help Normal Advanced" {
         frame $f.f${type} -bg $Gui(activeWorkspace)
         place $f.f${type} -in $f -relheight 1.0 -relwidth 1.0
         set MutualInformationRegistration(f${type}) $f.f${type}
@@ -205,6 +195,36 @@ proc MutualInformationRegistrationBuildSubGui {f} {
 
     set fnormal   $framename.fLevel.fNormal
     set fadvanced $framename.fLevel.fAdvanced
+    set fhelp     $framename.fLevel.fHelp
+
+    #-------------------------------------------
+    # Level->Help frame
+    #-------------------------------------------
+    
+    set help "
+    Description by tab:<BR>
+    <UL>
+    <LI><B>The Algorithm </B> 
+    This is an automatic method of registering two images using mutual information of the two images. It is based on the methods of Wells and Viola (1996).
+    <LI><B>Limitations</B>
+    Cascades of transforms may not work.
+    <LI><B>Normal:Slow</B>
+    The Slow method will generally do a good job on all images. It takes 5 to 10 minutes to run. It requires no user intervention. The user can walk away and the algorithm will finish.
+    <LI><B>Normal:Fast</B>
+    The Fast method will generally do a good job on most images. The Fast method updates regularly so that the user can stop the algorithm if she is satified.
+    <LI><B>Advanced</B>
+    Change these at your own risk. The input images are normalized, so that the source and target standard deviations should generally be smaller than 1. There are arguments they should be much smaller than 1, but changing them does not seem to make a big difference. The number of samples per iteration can be increased, but also does not seem to help alot. The translation scale is roughly a measure of how much to scale translations over rotations. A variety of numbers may work here. The learning rate should generally be less than 0.001, and often much smaller. The number of update iterations is generally between 100 and 2500
+    </UL>"
+    regsub -all "\n" $help { } help
+    MainHelpApplyTags MutualInformationRegistration $help
+#    MainHelpBuildGUI  MutualInformationRegistration 
+
+    global Help
+    set f  $fhelp
+    frame $f.fWidget -bg $Gui(activeWorkspace)
+    pack $f.fWidget -side top -padx 2 -fill both -expand true
+    set tmp [HelpWidget $f.fWidget]
+    MainHelpShow $tmp MutualInformationRegistration
 
     #-------------------------------------------
     # Level->Normal frame
@@ -241,7 +261,7 @@ proc MutualInformationRegistrationBuildSubGui {f} {
     foreach text "Fast Slow" value "Fast Slow" \
         width "6 6" {
         eval {radiobutton $f.fBtns.rSpeed$value -width $width \
-            -text "$text" -value "$value" -variable MutualInformationRegistration(autoSpeed) \
+        -text "$text" -value "$value" -command MutualInformationRegistration${value}Param \
             -indicatoron 0} $Gui(WCA)
         pack $f.fBtns.rSpeed$value -side left -padx 4 -pady 2
     }
@@ -289,6 +309,8 @@ proc MutualInformationRegistrationBuildSubGui {f} {
                    {LearningRate} \
                    {SourceStandardDeviation} \
                    {TargetStandardDeviation} \
+                   {SourceShrinkFactors} \
+                   {TargetShrinkFactors} \
                    {NumberOfSamples} \
                    {TranslateScale} \
                    } name \
@@ -297,6 +319,8 @@ proc MutualInformationRegistrationBuildSubGui {f} {
                    {Learning Rate} \
                    {Source Standard Deviation} \
                    {Target Standard Deviation} \
+                   {Source MultiRes Reduction} \
+                   {Target Multires Reduction} \
                    {Number Of Samples} \
                    {Translate Scale} \
                    } {
@@ -306,7 +330,7 @@ proc MutualInformationRegistrationBuildSubGui {f} {
         
         set f $f.f$param
         eval {label $f.l$param -text "$name:"} $Gui(WLA)
-        eval {entry $f.e$param -width 7 -textvariable MutualInformationRegistration($param)} $Gui(WEA)
+        eval {entry $f.e$param -width 10 -textvariable MutualInformationRegistration($param)} $Gui(WEA)
         pack $f.l$param -side left -padx $Gui(pad) -fill x -anchor w
         pack $f.e$param -side left -padx $Gui(pad) -expand 1
     }
@@ -341,6 +365,62 @@ proc MutualInformationRegistrationSetLevel {} {
     set level $MutualInformationRegistration(Level)
     raise $MutualInformationRegistration(f${level})
     focus $MutualInformationRegistration(f${level})
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MutualInformationRegistrationFastParam
+#
+#  These parameters should allow the user the ability to intervene
+#  and decide when he/she is done.
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MutualInformationRegistrationFastParam {} {
+    global MutualInformationRegistration
+
+    set MutualInformationRegistration(Resolution)       128
+    set MutualInformationRegistration(LearningRate)    .0001
+    set MutualInformationRegistration(UpdateIterations) 100
+    set MutualInformationRegistration(NumberOfSamples)  50
+    set MutualInformationRegistration(TranslateScale)   320
+    # If Wells, Viola, Atsumi, etal, 
+    # used 2 and 4. Wells claims exact number not critical (personal communication)
+    # They scaled data 0...256.
+    # We scale data -1 to 1.
+    # 2/256*2 = 0.015
+    set MutualInformationRegistration(SourceStandardDeviation) 0.4
+    set MutualInformationRegistration(TargetStandardDeviation) 0.4
+    set MutualInformationRegistration(SourceShrinkFactors)   "1 1 1"
+    set MutualInformationRegistration(TargetShrinkFactors)   "1 1 1"
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MutualInformationRegistrationSlowParam
+#
+# This should run until completion and give a good registration
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MutualInformationRegistrationSlowParam {} {
+    global MutualInformationRegistration
+
+    set MutualInformationRegistration(Resolution)       128
+    set MutualInformationRegistration(LearningRate)    .0001
+    set MutualInformationRegistration(UpdateIterations) 2500
+    set MutualInformationRegistration(NumberOfSamples)  50
+    set MutualInformationRegistration(TranslateScale)   320
+    # If Wells, Viola, Atsumi, etal, 
+    # used 2 and 4. Wells claims exact number not critical (personal communication)
+    # They scaled data 0...256.
+    # We scale data -1 to 1.
+    # 2/256*2 = 0.015
+    set MutualInformationRegistration(SourceStandardDeviation) 0.4
+    set MutualInformationRegistration(TargetStandardDeviation) 0.4
+    set MutualInformationRegistration(SourceShrinkFactors)   "1 1 1"
+    set MutualInformationRegistration(TargetShrinkFactors)   "1 1 1"
+
 }
 
 
@@ -401,7 +481,7 @@ proc MutualInformationRegistrationExit {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MutualInformationRegistrationAutoRun {} {
-    global Matrix Volume
+    global Matrix Volume MutualInformationRegistration
 
     ###
     ### Check for Errors
@@ -415,6 +495,12 @@ proc MutualInformationRegistrationAutoRun {} {
         DevWarningWindow "The Reference Volume is None! Please choose one."
         return 0
     }
+
+    if {[llength $MutualInformationRegistration(LearningRate) ] != \
+        [llength $MutualInformationRegistration(UpdateIterations) ] } {
+       DevErrorWindow "Must Have same number of levels of iterations as learning rates"
+       return 0
+     }
 
     #
     # Store which transform we're editing
@@ -471,8 +557,10 @@ proc MutualInformationRegistrationAutoRun_Itk {sourceId targetId matrixId} {
         -samples         $MutualInformationRegistration(NumberOfSamples)     \
         -learningrate    $MutualInformationRegistration(LearningRate)        \
         -translatescale  $MutualInformationRegistration(TranslateScale)      \
-        -source_standarddev    $MutualInformationRegistration(SourceStandardDeviation)  \
-        -target_standarddev    $MutualInformationRegistration(TargetStandardDeviation)  
+        -source_standarddev  $MutualInformationRegistration(SourceStandardDeviation)  \
+        -target_standarddev  $MutualInformationRegistration(TargetStandardDeviation)  \
+        -source_shrink $MutualInformationRegistration(SourceShrinkFactors) \
+        -target_shrink $MutualInformationRegistration(TargetShrinkFactors)
 
     pack .mi.reg -fill both -expand true
 }

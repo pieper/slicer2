@@ -31,7 +31,7 @@ isregistration - a widget for running image registrations
 # Default resources
 # - sets the default colors for the widget components
 #
-option add *isregistration.target         "" widgetDefault
+option add *isregistration.target            "" widgetDefault
 option add *isregistration.source            "" widgetDefault
 option add *isregistration.transform         "" widgetDefault
 option add *isregistration.resolution       128 widgetDefault
@@ -41,7 +41,8 @@ option add *isregistration.learningrate     .01 widgetDefault
 option add *isregistration.translatescale    64 widgetDefault
 option add *isregistration.target_standarddev 1 widgetDefault
 option add *isregistration.source_standarddev 1 widgetDefault
-
+option add *isregistration.target_shrink {1 1 1} widgetDefault
+option add *isregistration.source_shrink {1 1 1} widgetDefault
 
 ## for debugging
 option add *isregistration.verbose         1 widgetDefault
@@ -66,11 +67,14 @@ if { [itcl::find class isregistration] == "" } {
         itk_option define -source source Source {}
         itk_option define -transform transform Transform {}
         itk_option define -resolution resolution Resolution 128
-        itk_option define -iterations iterations Iterations 5
         itk_option define -samples samples Samples 50
+        itk_option define -iterations iterations Iterations 5
         itk_option define -learningrate learningrate Learningrate .01
         itk_option define -target_standarddev target_stardarddev Target_standarddev 1
         itk_option define -source_standarddev source_stardarddev Source_standarddev 1
+        itk_option define -target_shrink target_shrink Target_shrink {1 1 1}
+        itk_option define -source_shrink source_shrink Source_shrink {1 1 1}
+
         itk_option define -translatescale translatescale Translatescale 64
         itk_option define -verbose verbose Verbose 1
 
@@ -316,12 +320,38 @@ itcl::body isregistration::step {} {
 #      aw Delete
 
     # set the default values
-    $_reg SetNumberOfIterations $itk_option(-iterations)
-    $_reg SetNumberOfSamples $itk_option(-samples)
-    $_reg SetLearningRate $itk_option(-learningrate)
     $_reg SetTranslateScale $itk_option(-translatescale)
+
     $_reg SetSourceStandardDeviation $itk_option(-source_standarddev)
     $_reg SetTargetStandardDeviation $itk_option(-target_standarddev)
+
+    set i [lindex $itk_option(-source_shrink) 0 ]
+    set j [lindex $itk_option(-source_shrink) 1 ]
+    set k [lindex $itk_option(-source_shrink) 2 ]
+    puts "$i $j $k $itk_option(-source_shrink)"
+    $_reg SetSourceShrinkFactors $i $j $k
+
+    set i [lindex $itk_option(-target_shrink) 0 ]
+    set j [lindex $itk_option(-target_shrink) 1 ]
+    set k [lindex $itk_option(-target_shrink) 2 ]
+    puts "$i $j $k $itk_option(-target_shrink)"
+    $_reg SetTargetShrinkFactors $i $j $k
+
+    $_reg SetNumberOfSamples $itk_option(-samples)
+
+    # set for MultiResStuff
+    foreach iter  $itk_option(-iterations) {
+        $_reg SetNextMaxNumberOfIterations $iter
+    }
+    foreach rate $itk_option(-learningrate) {
+    $_reg SetNextLearningRate  $rate
+    }
+
+    if {[llength $itk_option(-iterations) ] != \
+        [llength $itk_option(-learningrate)] } {
+       DevErrorWindow "Must Have same number of levels of iterations as learning rates"
+       return
+     }
 
     #
     # Get the current matrix - if it's different from the
