@@ -155,7 +155,10 @@ public:
   vtkGetMacro(IntensityAvgClass, int);
 
   // Description:
-  // Get/Set for Segmenter
+  // The work directory for this segmentation 
+  // Necessarry for EM to spid out intermediate results 
+  // it will generate the necessary subdirectories from here 
+  // e.g. weights 
   vtkGetStringMacro(PrintIntermediateDir);
   vtkSetStringMacro(PrintIntermediateDir);
 
