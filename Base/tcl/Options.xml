@@ -16,8 +16,10 @@ ordered='Data
 	Slices 
 	Colors
 	Twin
-	EMSegment'
-suppressed='Custom'
+        EMSegment'
+suppressed='Custom
+        CustomCsys
+        Anatomy'
 
 </Options>
 </MRML>
