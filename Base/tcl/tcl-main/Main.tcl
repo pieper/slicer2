@@ -28,10 +28,10 @@
 #   MainBuildGUI
 #   MainBuildModuleTabs ModuleName
 #   MainUpdateMRML
-#   MainAddActor
-#   MainAddModelActor
-#   MainRemoveActor
-#   MainRemoveModelActor
+#   MainAddActor a
+#   MainAddModelActor m
+#   MainRemoveActor a
+#   MainRemoveModelActor m
 #   MainSetup
 #   IsModule
 #   Tab
@@ -40,7 +40,7 @@
 #   MainEndProgress
 #   MainMenu
 #   MainExitQuery
-#   MainSaveMRMLQuery
+#   MainSaveMRMLQuery 
 #   MainExitProgram
 #   Distance
 #   FormatCVSInfo
@@ -336,7 +336,7 @@ proc MainInit {} {
 
         # Set version info
 	lappend Module(versions) [ParseCVSInfo Main \
-		{$Revision: 1.58 $} {$Date: 2001/05/27 12:48:23 $}]
+		{$Revision: 1.59 $} {$Date: 2001/05/28 05:09:25 $}]
 
 	# Call each "Init" routine that's not part of a module
 	#-------------------------------------------
@@ -816,7 +816,7 @@ proc MainUpdateMRML {} {
 
 
 #-------------------------------------------------------------------------------
-# .PROC MainAddActor {actor}
+# .PROC MainAddActor
 #  Use this method if you want to add an actor that IS NOT A MODEL
 #  If your actor is a model, use MainAddModelActor
 #
@@ -825,6 +825,7 @@ proc MainUpdateMRML {} {
 #  use the vtk call:
 #          viewRen AddActor $actor
 # .ARGS
+# actor a the actor you want to add
 # .END
 #-------------------------------------------------------------------------------
 proc MainAddActor { a } {
@@ -837,7 +838,7 @@ proc MainAddActor { a } {
 
 
 #-------------------------------------------------------------------------------
-# .PROC MainAddModelActor {modelID}
+# .PROC MainAddModelActor
 #
 #  Use this method if you want to add an actor that is a model.
 #  
@@ -847,6 +848,7 @@ proc MainAddActor { a } {
 #  properties (ie we want the bladder to be visible in the Endoscopic
 #  View, but not the MainView)
 # .ARGS
+# int m the id of the model whose actor you want to add
 # .END
 #-------------------------------------------------------------------------------
 proc MainAddModelActor { m } {
@@ -859,9 +861,10 @@ proc MainAddModelActor { m } {
 
 
 #-------------------------------------------------------------------------------
-# .PROC MainRemoveActor {actor}
+# .PROC MainRemoveActor
 #  With this procedure, the actor is removed from all existing Renderers
 # .ARGS
+# actor a the actor you want to remove
 # .END
 #-------------------------------------------------------------------------------
 proc MainRemoveActor { a } {
@@ -875,9 +878,10 @@ proc MainRemoveActor { a } {
 
 
 #-------------------------------------------------------------------------------
-# .PROC MainRemoveModelActor {modelID}
+# .PROC MainRemoveModelActor
 #  With this procedure, every actor for the model is removed from all existing Renderers
 # .ARGS
+# int m the id of the model whose actor you want to add
 # .END
 #-------------------------------------------------------------------------------
 proc MainRemoveModelActor { m } {

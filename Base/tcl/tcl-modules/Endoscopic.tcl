@@ -62,7 +62,7 @@
 #   EndoscopicResetStopPath
 #   EndoscopicResetPath
 #   EndoscopicSetPathFrame
-#   EndoscopicAddToMrml
+#   EndoscopicAddToMrml id cx cy cz fx fy fz
 #   EndoscopicSetFlyDirection
 #   EndoscopicSetSpeed
 #   EndoscopicSetCameraAxis
