@@ -1,0 +1,73 @@
+# CMakeListsLocal.txt sample file.
+# Copy it to CMakeListsLocal.txt and edit to match your files.
+
+# The names of the source files for your module go here. Include
+# abstract files noted below in this list too. Do not include file
+# suffixes.
+
+#
+# Change all 'MyClass' to appropriate source file name 
+# and 'MYCLASS' to your module name (all CAPS)
+#
+
+# system dependent link and include dirs
+IF (WIN32)
+   LINK_DIRECTORIES( 
+        ${VTKFMRIENGINE_SOURCE_DIR}/GSL/gsl-1.4/GSLLIBML/Release
+        )
+   INCLUDE_DIRECTORIES(
+         ${VTKFMRIENGINE_SOURCE_DIR}/GSL/gsl-1.4
+         ${VTKFMRIENGINE_SOURCE_DIR}/GSL/gsl-1.4/gsl
+    )
+ELSE (WIN32)
+     LINK_DIRECTORIES(
+        /local/os/lib
+        )
+     INCLUDE_DIRECTORIES(
+        /local/os/include
+        /local/os/include/gsl
+        )
+ENDIF (WIN32)
+
+SET(FMRIENGINE_LOCAL_LIBS
+        gsl
+        gslcblas
+)
+
+# note: - SET replaced SOURCE_FILES for cmake 1.6
+SET(LOCAL_MODULE_SRCS
+vtkMultiInputsSimpleImageToImageFilter.cxx
+vtkActivationVolumeGenerator.cxx
+vtkActivationDetector.cxx
+vtkStimulusGenerator.cxx
+vtkTimeCoursePlotActor.cxx
+)
+
+## classes that one does not want tcl wrapped
+SET ( LOCAL_NO_WRAP_SRCS
+GeneralLinearModel.cxx
+)
+
+
+# Place names of abstract class implementations here. No file suffixes.
+# Comment this out if there are no abstracts.
+
+# replaced ABSTRACT_FILES from cmake before 1.6
+SET_SOURCE_FILES_PROPERTIES (
+vtkMultiInputsSimpleImageToImageFilter.cxx
+ABSTRACT
+)
+
+# To add a list of additional libraries you need to link with, uncomment
+# the following line.  The library names should omit the "lib" and any
+# trailing suffix.
+LINK_LIBRARIES (${FMRIENGINE_LOCAL_LIBS})
+
+
+# Here's the rule to create the implementation C++ library.
+# It should happen in the CMakeLists.txt file that includes this one,
+# but because of a CMake bug that doesn't work.
+#
+ADD_LIBRARY (${LOCAL_LIBRARY_BASENAME} ${LOCAL_MODULE_SRCS} ${LOCAL_NO_WRAP_SRCS})
+
+
