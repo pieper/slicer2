@@ -182,8 +182,8 @@ void vtkMrmlNode::PrintSelf(ostream& os, vtkIndent indent)
 char* vtkMrmlNode::GetMatrixToString(vtkMatrix4x4 *mat)
 {
   int i, j;
-  float m[16];
-  char *s = new char[200];
+  double m[16];
+  char *s = new char[400];
  
   for (i=0; i<4; i++)
   {
@@ -192,7 +192,7 @@ char* vtkMrmlNode::GetMatrixToString(vtkMatrix4x4 *mat)
       m[i*4+j] = mat->GetElement(i, j);
     }
   }
-  sprintf(s, "%g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g",
+  sprintf(s, "%.9g %.9g %.9g %.9g %.9g %.9g %.9g %.9g %.9g %.9g %.9g %.9g %.9g %.9g %.9g %.9g",
     m[0], m[1], m[2], m[3], m[4], m[5], m[6], m[7], m[8],
     m[9], m[10], m[11], m[12], m[13], m[14], m[15]);
 
@@ -203,11 +203,12 @@ char* vtkMrmlNode::GetMatrixToString(vtkMatrix4x4 *mat)
 void vtkMrmlNode::SetMatrixToString(vtkMatrix4x4 *mat, char *s)
 {
   int i, j;
-  float m[16];
+  double m[16];
   
-  sscanf(s, "%g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g",
+  if (sscanf(s, "%lg %lg %lg %lg %lg %lg %lg %lg %lg %lg %lg %lg %lg %lg %lg %lg",
     &m[0], &m[1], &m[2], &m[3], &m[4], &m[5], &m[6], &m[7], &m[8],
-    &m[9], &m[10], &m[11], &m[12], &m[13], &m[14], &m[15]);
+    &m[9], &m[10], &m[11], &m[12], &m[13], &m[14], &m[15]) != 16)
+    vtkErrorMacro(<<"Did not have 16 numbers to set matrix!!");
 
   for (i=0; i<4; i++)
   {
@@ -217,5 +218,3 @@ void vtkMrmlNode::SetMatrixToString(vtkMatrix4x4 *mat, char *s)
     }
   }
 }
-
-

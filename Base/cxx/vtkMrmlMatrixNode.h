@@ -66,10 +66,8 @@ public:
   // Description:
   // 16 numbers that form a 4x4 matrix. The matrix is multiplied by a 
   // point (M*P) to compute the transformed point
-  void SetMatrix(char *str) {
-    this->SetMatrixToString(this->Transform->GetMatrix(), str);};
-  char *GetMatrix() { 
-    return this->GetMatrixToString(this->Transform->GetMatrix());};
+  void SetMatrix(char *str);
+  char *GetMatrix();
 
   // Description:
   // Rotate around each axis: x,y, and z in degrees

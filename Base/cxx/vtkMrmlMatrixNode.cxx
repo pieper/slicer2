@@ -70,8 +70,8 @@ vtkMrmlMatrixNode::~vtkMrmlMatrixNode()
 //----------------------------------------------------------------------------
 void vtkMrmlMatrixNode::Write(ofstream& of, int nIndent)
 {
-  // Write all attributes not equal to their defaults
-  
+  // Write all attributes not equal to their defaults 
+ 
   vtkIndent i1(nIndent);
 
   of << i1 << "<Matrix";
@@ -92,6 +92,23 @@ void vtkMrmlMatrixNode::Write(ofstream& of, int nIndent)
 
   of << "></Matrix>\n";;
 }
+
+//----------------------------------------------------------------------------
+
+void vtkMrmlMatrixNode::SetMatrix(char *str) {
+  // This line does not work.
+  //    this->SetMatrixToString(this->Transform->GetMatrix(), str);};
+  vtkMatrix4x4 *tmp = vtkMatrix4x4::New();
+  this->SetMatrixToString(tmp,str);
+  this->Transform->SetMatrix(tmp);
+  tmp->Delete();
+}
+
+//----------------------------------------------------------------------------
+
+char *vtkMrmlMatrixNode::GetMatrix() {
+  return this->GetMatrixToString(this->Transform->GetMatrix());
+};
 
 //----------------------------------------------------------------------------
 // Copy the node's attributes to this object.
