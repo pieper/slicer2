@@ -262,7 +262,7 @@ proc EndoscopicInit {} {
     set Module($m,category) "Visualisation"
     
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.93 $} {$Date: 2005/01/28 21:45:00 $}] 
+    {$Revision: 1.94 $} {$Date: 2005/02/08 19:39:13 $}] 
        
     # Define Procedures
     #------------------------------------
@@ -5109,6 +5109,7 @@ proc EndoscopicAddFlatView {} {
 #    Endoscopic($name,FlatColonMapper) ScalarVisibilityOn
 #    Endoscopic($name,FlatColonMapper) SetScalarRange 0 100
     Endoscopic($name,FlatColonMapper) ScalarVisibilityOff
+#    Endoscopic($name,FlatColonMapper) SetScalarMaterialModeToAmbientAndDiffuse
         
     # save the polydata where we can find it later
     set Endoscopic($name,polyData) [TempPolyReader GetOutput]
@@ -5118,8 +5119,8 @@ proc EndoscopicAddFlatView {} {
     vtkActor Endoscopic($name,FlatColonActor)
    [Endoscopic($name,FlatColonActor) GetProperty] SetInterpolationToPhong
    [Endoscopic($name,FlatColonActor) GetProperty] SetColor 1.0 0.8 0.7
-   [Endoscopic($name,FlatColonActor) GetProperty] SetAmbient 0.5
-   [Endoscopic($name,FlatColonActor) GetProperty] SetDiffuse 0.4 
+   [Endoscopic($name,FlatColonActor) GetProperty] SetAmbient 0.55
+   [Endoscopic($name,FlatColonActor) GetProperty] SetDiffuse 0.4
    [Endoscopic($name,FlatColonActor) GetProperty] SetSpecular 0.5
    [Endoscopic($name,FlatColonActor) GetProperty] SetSpecularPower 100
    
@@ -5192,25 +5193,29 @@ proc EndoscopicAddFlatView {} {
     $Endoscopic(flatScale,camZoom) config -command "EndoscopicMoveCameraZ $f.flatRenderWidget$name"
     
      # lightKit
+     
+     set Endoscopic(flatColon,LightElev) 0
+     set Endoscopic(flatColon,LightAzi) -45
+
      vtkLightKit Endoscopic($name,lightKit)
      Endoscopic($name,lightKit) SetKeyLightWarmth 0.5
      Endoscopic($name,lightKit) SetHeadlightWarmth 0.5
-     Endoscopic($name,lightKit) SetKeyLightIntensity 0.5
-     Endoscopic($name,lightKit) SetKeyLightAngle 30 -30
+     Endoscopic($name,lightKit) SetKeyLightIntensity 0.7
+     Endoscopic($name,lightKit) SetKeyLightElevation $Endoscopic(flatColon,LightElev)
+     Endoscopic($name,lightKit) SetKeyLightAzimuth $Endoscopic(flatColon,LightAzi)
+#     Endoscopic($name,lightKit) SetKeyLightAngle 30 -30
      Endoscopic($name,lightKit) SetKeyToFillRatio 5
      Endoscopic($name,lightKit) AddLightsToRenderer Endoscopic($name,renderer)
      
      #light
-     vtkLight Endoscopic($name,light)
-     Endoscopic($name,light) SetIntensity 0.3
-     Endoscopic($name,light) SetPosition [expr $Endoscopic(flatColon,xCamDist)-10] $Endoscopic(flatColon,yCamDist) $Endoscopic(flatColon,zCamDist)
-     Endoscopic($name,light) SetFocalPoint $Endoscopic(flatColon,xCamDist) $Endoscopic(flatColon,yCamDist) $Endoscopic(flatColon,zMin)
-     Endoscopic($name,light) SetDirectionAngle 0 0
-     Endoscopic($name,renderer) AddLight Endoscopic($name,light)
+#     vtkLight Endoscopic($name,light)
+#     Endoscopic($name,light) SetIntensity 0.3
+#     Endoscopic($name,light) SetPosition [expr $Endoscopic(flatColon,xCamDist)-10] $Endoscopic(flatColon,yCamDist) $Endoscopic(flatColon,zCamDist)
+#     Endoscopic($name,light) SetFocalPoint $Endoscopic(flatColon,xCamDist) $Endoscopic(flatColon,yCamDist) $Endoscopic(flatColon,zMin)
+#     Endoscopic($name,light) SetDirectionAngle 0 0
+#     Endoscopic($name,renderer) AddLight Endoscopic($name,light)
      
      # add command for changing the light's elevation and azimuth
-     set Endoscopic(flatColon,LightElev) -60
-     set Endoscopic(flatColon,LightAzi) -75
      $Endoscopic(flatScale,elevation) config -command "EndoscopicFlatLightElevationAzimuth $f.flatRenderWidget$name"
      $Endoscopic(flatScale,azimuth) config -command "EndoscopicFlatLightElevationAzimuth $f.flatRenderWidget$name"
   
@@ -5254,7 +5259,7 @@ proc EndoscopicRemoveFlatView {{name ""}} {
     # actor for flattened image
     Endoscopic($name,outlineActor) Delete
     Endoscopic($name,lightKit) Delete
-    Endoscopic($name,light) Delete
+#    Endoscopic($name,light) Delete
     
     Endoscopic(flatColon,$name,Line1Actor) Delete
     Endoscopic(flatColon,$name,Line2Actor) Delete
@@ -5417,7 +5422,7 @@ proc EndoscopicBuildFlatBoundary {{name ""}} {
      set line1s [split [string trim $data1] "\n"]
      
      set line1numP [lindex $line1s 0]
-     puts "line1 number of points: $line1numP"
+#     puts "line1 number of points: $line1numP"
      
      vtkPoints Line1Points
      Line1Points SetNumberOfPoints $line1numP
@@ -5465,7 +5470,7 @@ proc EndoscopicBuildFlatBoundary {{name ""}} {
      set line2s [split [string trim $data2] "\n"]
      
      set line2numP [lindex $line2s 0]
-     puts "line2 number of points: $line2numP"
+#     puts "line2 number of points: $line2numP"
      
      vtkPoints Line2Points
      Line2Points SetNumberOfPoints $line2numP
@@ -6688,7 +6693,8 @@ proc EndoscopicFlatLightElevationAzimuth {widget {Endoscopic(flatColon,LightElev
      
      set name $Endoscopic($widget,name)
      
-     Endoscopic($name,light) SetDirectionAngle $Endoscopic(flatColon,LightElev) $Endoscopic(flatColon,LightAzi)
+     Endoscopic($name,lightKit) SetKeyLightElevation $Endoscopic(flatColon,LightElev) 
+     Endoscopic($name,lightKit) SetKeyLightAzimuth $Endoscopic(flatColon,LightAzi)
      
      [$widget GetRenderWindow] Render
 
@@ -6886,13 +6892,24 @@ proc EndoscopicSetFlatColonScalarVisibility {widget} {
      if {$Endoscopic(flatColon,scalarVisibility) == 0} {
      
      Endoscopic($name,FlatColonMapper) ScalarVisibilityOff
-     [Endoscopic($name,FlatColonActor) GetProperty] SetAmbient 0.5
+     Endoscopic($name,lightKit) SetKeyLightIntensity 0.7
+    [Endoscopic($name,FlatColonActor) GetProperty] SetAmbient 0.55
+    [Endoscopic($name,FlatColonActor) GetProperty] SetDiffuse 0.4
+    [Endoscopic($name,FlatColonActor) GetProperty] SetSpecular 0.5
+    [Endoscopic($name,FlatColonActor) GetProperty] SetSpecularPower 100
+
      
      } else {
      
-     [Endoscopic($name,FlatColonActor) GetProperty] SetAmbient 0.15
-     
+    [Endoscopic($name,FlatColonActor) GetProperty] SetAmbient 0.2
+    [Endoscopic($name,FlatColonActor) GetProperty] SetDiffuse 1.0
+    [Endoscopic($name,FlatColonActor) GetProperty] SetSpecular 0.5
+    [Endoscopic($name,FlatColonActor) GetProperty] SetSpecularPower 100
+     Endoscopic($name,lightKit) SetKeyLightIntensity 0.6
      Endoscopic($name,FlatColonMapper) ScalarVisibilityOn
+     
+#     Endoscopic($name,FlatColonMapper) SetScalarMaterialModeToAmbientAndDiffuse
+     
      Endoscopic($name,FlatColonMapper) SetLookupTable Endoscopic(flatColon,lookupTable,$name)
      Endoscopic($name,FlatColonMapper) SetScalarRange $Endoscopic(flatColon,scalarLow) $Endoscopic(flatColon,scalarHigh)
      }
@@ -6911,9 +6928,16 @@ proc EndoscopicSetFlatColonScalarRange {widget} {
      
      if {$Endoscopic(flatColon,scalarVisibility) == 1} {
      
-     [Endoscopic($name,FlatColonActor) GetProperty] SetAmbient 0.15
-     
+     [Endoscopic($name,FlatColonActor) GetProperty] SetAmbient 0.2
+     [Endoscopic($name,FlatColonActor) GetProperty] SetDiffuse 1.0
+     [Endoscopic($name,FlatColonActor) GetProperty] SetSpecular 0.5
+     [Endoscopic($name,FlatColonActor) GetProperty] SetSpecularPower 100
+     Endoscopic($name,lightKit) SetKeyLightIntensity 0.6
+
      Endoscopic($name,FlatColonMapper) ScalarVisibilityOn
+     
+#     Endoscopic($name,FlatColonMapper) SetScalarMaterialModeToAmbientAndDiffuse
+     
      Endoscopic($name,FlatColonMapper) SetLookupTable Endoscopic(flatColon,lookupTable,$name)
      Endoscopic($name,FlatColonMapper) SetScalarRange $Endoscopic(flatColon,scalarLow) $Endoscopic(flatColon,scalarHigh)
      
