@@ -1,0 +1,93 @@
+Quick notes for creating your own custom VTK module.
+Michael Halle -- 2002/05/17
+Updated Steve Pieper 2002-05-29
+
+
+
+* Go into the slicer2 Modules directory ; for example:
+
+	cd /home/pieper/slicer2/Modules
+
+* Copy the entire template directory tree with a name specific to your module.  In this example we'll use "Test" as the name of your module.  
+
+    cp -r  vtkCustomModule-1.0  vtkTest
+
+* Change directories to your new module directory.
+
+    cd vtkTest
+
+* Run vtkNameModule.  This program is a simple Tcl script that
+   runs through the entire directory, substituting the name of the
+   module in many different locations.  By default, vtkNameModule
+   will get the name of the module from the directory name.
+
+    ./vtkNameModule
+
+* change to the cxx directory.
+    
+    cd cxx
+
+* Put your source and header files here.  All of your header files
+   should include the file of the form <vtk[ModuleName]Configure.h"> .
+   They should also declare your classes exported appropriately for
+   Windows platforms, with a line like the following:
+
+            class VTK_[MODULENAME]_EXPORT vtk[Modulename] : ...
+
+	    e.g.
+
+	    #include vtkTestConfigure.h
+
+		and 
+
+	    class VTK_TEST_EXPORT vtkTest : ...
+
+* Copy the file CMakeListsLocal-SAMPLE.txt to CMakeListsLocal.txt
+
+    cp CMakeListsLocal-SAMPLE.txt CMakeListsLocal.txt
+
+* Edit this file to include the names of your source files.  Be sure
+   not to include suffixes.  If you have abstract classes, put them
+   in the source files area as well as the abstract files area.  The
+   file also includes directions for adding link libraries.
+
+* Edit the files in Wrapping/Tcl to specify the version number of your
+module.  You may also need to change the vkt<Modulename>.tcl file 
+to specify a unique command that's only in your class -- by default it
+assumes there will be a class with the same name as your module.
+
+
+* You're ready to build; cd to the builds directory and make a new
+directory of the same name as the Slicer build you want to link with.
+For example:
+	cd builds /* now you're in /home/pieper/slicer2/Modules/vtkTest/builds */
+	ls /home/pieper/slicer2/Base/builds
+there should be a directory for your architecture.  For example, if it's called "solaris8" then make a new build dir for your module called solaris8.  Then go into that new dir.
+	mkdir solaris8; cd solaris8
+
+
+
+* Run CMake, using your toplevel module directory as the target.  To work with the curses interface, use:
+
+    ccmake ../..
+
+You can avoid curses by using the shortcut below to fill in the location of your VTK build on the command line.  The example uses the built VTK tree, but you could instead use the installed tree by changing the variable to be VTK_INSTALL_PATH.
+
+    ccmake -DVTK_BINARY_PATH:PATH=/local/os/src/vtk-4.0 ../..
+
+* Configure your module.  Hopefully, all you'll have to do is type
+   "c" a couple of times until the "g" option becomes available, then
+   type "g" and files will generate and the program will complete.
+
+* Make.
+
+     make
+
+* If all went well, your libraries will now be in the bin subdirectory.
+	e.g. in
+	/home/pieper/slicer2/Modules/vtkRegistration/bin/
+	will be
+	libvtkRegistration.so
+	libvtkRegistrationTCL.so
+	libvtkRegistrationPython.so (if Python was enabled in the vtk build)
+
