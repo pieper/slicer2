@@ -72,7 +72,7 @@ proc MainVolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.65 $} {$Date: 2003/09/04 15:14:46 $}]
+    {$Revision: 1.66 $} {$Date: 2003/12/21 19:06:05 $}]
 
     set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -335,7 +335,13 @@ proc MainVolumesRead {v} {
         catch "anreader Delete"
         vtkCISGAnalyzeReader anreader
 
-        anreader SetFlippingSequence "0"
+        switch $::Volume(VolAnalyze,FileType) {
+            "Radiological" {
+                anreader SetFlippingSequence "0"
+            }
+            "Neurological" {
+            }
+        }
         anreader SetFileName [Volume($v,node) GetFullPrefix]
         anreader Update
         Volume($v,vol) SetImageData [anreader GetOutput]
