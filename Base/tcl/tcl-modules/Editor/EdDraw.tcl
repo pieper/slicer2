@@ -294,6 +294,7 @@ proc EdDrawUpdate {type} {
             switch $Ed($e,mode) {
                 "Draw" {
                     Slicer DrawDeleteSelected
+                    EditorInsertPoint update
                     MainInteractorRender
                 }
                 "Select" {
@@ -350,7 +351,7 @@ proc EdDrawUpdate {type} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc EdDrawApply {} {
+proc EdDrawApply { {delete_pending true} } {
     global Ed Volume Label Gui
 
     set e EdDraw
@@ -415,6 +416,12 @@ proc EdDrawApply {} {
         EdDrawUpdate DeleteAll
     } else {
         EdDrawUpdate DeselectAll
+    }
+
+    if { $delete_pending == "true" } {
+        # the "__EditorPending_Points" is a special vtk object to communicate to 
+        # the Editor.tcl module that the user really wants to apply now
+        catch {__EditorPending_Points Delete}
     }
 
     EdUpdateAfterApplyEffect $v $Ed($e,render)

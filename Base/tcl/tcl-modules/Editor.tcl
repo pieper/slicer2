@@ -30,6 +30,8 @@
 #   EditorExit
 #   EditorMakeModel
 #   EditorMotion
+#   EditorIdleProc
+#   EditorInsertPoint
 #   EditorB1
 #   EditorB1Motion
 #   EditorB1Release
@@ -107,7 +109,7 @@ proc EditorInit {} {
     
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.63 $} {$Date: 2002/11/05 15:16:25 $}]
+        {$Revision: 1.64 $} {$Date: 2002/11/15 15:37:01 $}]
     
     # Initialize globals
     set Editor(idOriginal)  $Volume(idNone)
@@ -1176,8 +1178,9 @@ proc EditorB1 {x y} {
             #
             switch $Ed(EdDraw,mode) {
                 "Draw" {
-                    Slicer DrawInsertPoint $x $y
-                    EditorIdleProc start
+                    #Slicer DrawInsertPoint $x $y
+                    EditorInsertPoint $x $y
+                    #EditorIdleProc start
                 }
                 "Select" {
                     Slicer DrawStartSelectBox $x $y
@@ -1281,6 +1284,42 @@ proc EditorIdleProc { cmd {respawn 1} } {
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EditorInsertPoint
+# wrapper around Slicer DrawInsertPoint to allow apply and undo
+# .ARGS
+# xy point to insert, or "update" to refresh (eg. after delete)
+# .END
+#-------------------------------------------------------------------------------
+proc EditorInsertPoint {{x "update"} {y "update"}} {
+    global Ed Editor Slice Interactor
+
+    if {$x != "update"} {
+        Slicer DrawInsertPoint $x $y
+    }
+
+    set p __EditorPending_Points
+
+    if { [info command $p] == "" } {
+        # no pending points means first mouse down after apply, 
+        # so just save the point
+        vtkPoints $p
+        $p DeepCopy [Slicer DrawGetPoints]
+    } else {
+
+        set pts [[Slicer DrawGetPoints] GetNumberOfPoints]
+        # - save the current points in $p
+        # - undo the effect from before
+        # - reapply the effect with the new points
+
+        $p DeepCopy [Slicer DrawGetPoints]
+        EditorUndo false ;# don't redraw
+        EdDrawApply false ;# don't delete pending
+        for {set i 0} {$i < $pts} {incr i} {
+            eval Slicer DrawInsertPoint [lrange [$p GetPoint $i] 0 1]
+        }
+    }
+}
 
 #-------------------------------------------------------------------------------
 # .PROC EditorB1Motion
@@ -1305,8 +1344,8 @@ proc EditorB1Motion {x y} {
             #
             switch $Ed(EdDraw,mode) {
                 "Draw" {
-                    Slicer DrawInsertPoint $x $y
-                    
+                    #Slicer DrawInsertPoint $x $y
+                    EditorInsertPoint $x $y
                     # Lauren this would be better:
                     
                     # DAVE: allow drawing on non-native slices someday
@@ -1345,8 +1384,8 @@ proc EditorB1Release {x y} {
                     Slicer DrawEndSelectBox $x $y
                 }
                 "Draw" {
-                    EditorIdleProc cancel
-                    EditorIdleProc start 0
+                    #EditorIdleProc cancel
+                    #EditorIdleProc start 0
                 }
             }
         }
