@@ -336,7 +336,7 @@ proc MainInit {} {
 
         # Set version info
 	lappend Module(versions) [ParseCVSInfo Main \
-		{$Revision: 1.55 $} {$Date: 2001/03/10 01:25:01 $}]
+		{$Revision: 1.56 $} {$Date: 2001/03/23 20:20:33 $}]
 
 	# Call each "Init" routine that's not part of a module
 	#-------------------------------------------
@@ -1238,7 +1238,7 @@ MIT SPECIFICALLY DISCLAIMS ANY EXPRESS OR IMPLIED WARRANTIES INCLUDING,
 BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR 
 A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
 
-THE SOFTWARE IS PROVIDED "AS IS."  MIT HAS NO OBLIGATION TO PROVIDE 
+THE SOFTWARE IS PROVIDED \"AS IS.\"  MIT HAS NO OBLIGATION TO PROVIDE 
 MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS."
 		}
 		"Documentation" {
