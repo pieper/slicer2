@@ -109,7 +109,7 @@ proc MainSlicesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainSlices \
-        {$Revision: 1.47 $} {$Date: 2003/03/19 19:16:25 $}]
+        {$Revision: 1.48 $} {$Date: 2003/04/24 03:02:55 $}]
 
     # Initialize Variables
     set Slice(idList) "0 1 2"
@@ -1150,11 +1150,12 @@ proc MainSlicesSetZoomAll {zoom} {
     # Change Slice's Zoom variable
     foreach s $Slice(idList) {
         set Slice($s,zoom) $zoom
-
+#>> Bouix 4/23/03 put the old version of zoom to solve the drawing problem    
         # Attila's new zooming function
-        Slicer SetZoomNew $s $zoom
+#Slicer SetZoomNew $s $zoom
     }
-    #Slicer SetZoom $zoom
+    Slicer SetZoom $zoom
+#<< Bouix
     Slicer Update
 }
 
@@ -1207,11 +1208,12 @@ proc MainSlicesSetZoom {s {zoom ""}} {
 
     # Change Slice's Zoom variable
     set Slice($s,zoom) $zoom
-
+#>> Bouix 4/23/03 Back to old zoom
     # Use Attila's new zooming code
-    Slicer SetZoomNew $s $zoom
+#    Slicer SetZoomNew $s $zoom
 
-    #Slicer SetZoom $s $zoom
+    Slicer SetZoom $s $zoom
+#<< Bouix 
     Slicer Update
 }
 

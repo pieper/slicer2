@@ -313,15 +313,16 @@ vtkMrmlSlicer::vtkMrmlSlicer()
 
   this->BuildLowerTime.Modified();
   this->BuildUpperTime.Modified();
-
+ 
+  // >> Bouix 4/23/03 use old approach for the Zoom. 
   // >> AT 3/26/01 11/07/01
   //// Use the original approach by default.
-  //this->DrawDoubleApproach = 0;
+  this->DrawDoubleApproach = 0;
 
   // Should be this one from now (11/07/01)
-  this->DrawDoubleApproach = 1;
+  //  this->DrawDoubleApproach = 1;
   // << AT 3/26/01 11/07/01
-
+  // << Bouix
   // reformatting additions
   this->VolumesToReformat = vtkCollection::New();
   this->VolumeReformatters = vtkVoidArray::New();
@@ -972,10 +973,12 @@ void vtkMrmlSlicer::BuildUpper(int s)
     if (v->GetOutput()->GetNumberOfScalarComponents() > 1)
     {
       // Overlay
-      this->Overlay[s]->SetInput(0, this->ForeReformat[s]->GetOutput());
+      // >> Bouix 4/23/03 change input to 1 for the overlay was 0..
+      this->Overlay[s]->SetInput(1, this->ForeReformat[s]->GetOutput());
       // >> AT 11/09/01
-      this->Overlay3DView[s]->SetInput(0, this->ForeReformat3DView[s]->GetOutput());
+      this->Overlay3DView[s]->SetInput(1, this->ForeReformat3DView[s]->GetOutput());
       // << AT 11/09/01
+      // << Bouix
     }
     else 
     {
@@ -1140,17 +1143,17 @@ void vtkMrmlSlicer::BuildLower(int s)
     case 1:
       this->PolyDraw->SetInput(this->Overlay[s]->GetOutput());
       this->Cursor[s]->SetInput(this->PolyDraw->GetOutput());
-        break;
+      break;
     case 2:
       this->PolyDraw->SetInput(this->Overlay[s]->GetOutput());
-            this->Zoom[s]->SetInput(this->PolyDraw->GetOutput());
+      this->Zoom[s]->SetInput(this->PolyDraw->GetOutput());
       this->Cursor[s]->SetInput(this->Zoom[s]->GetOutput());
       break;
     case 3:
       this->PolyDraw->SetInput(this->Overlay[s]->GetOutput());
-        this->Double[s]->SetInput(this->PolyDraw->GetOutput());
+      this->Double[s]->SetInput(this->PolyDraw->GetOutput());
       this->Cursor[s]->SetInput(this->Double[s]->GetOutput());
-        break;
+      break;
     case 4:
       this->PolyDraw->SetInput(this->Overlay[s]->GetOutput());
       this->Zoom[s]->SetInput(this->PolyDraw->GetOutput());

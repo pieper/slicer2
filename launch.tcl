@@ -49,7 +49,7 @@ switch $tcl_platform(os) {
         set env(BUILD) solaris8
     }
     "Linux" {
-        set env(BUILD) redhat7.3
+        set env(BUILD) linux
     }
     "Darwin" {
         set env(BUILD) Darwin
@@ -59,12 +59,6 @@ switch $tcl_platform(os) {
         # that if it doesn't match above it must be windows
         # (VC7 is Visual C++ 7.0, also known as the .NET version)
         set env(BUILD) Win32VC7
-        # take out any spaces in the slicer home dir
-        if {[regexp { } $env(SLICER_HOME) match] != 0} {
-            # set it to the short name
-            set env(SLICER_HOME) [file attributes $env(SLICER_HOME) -shortname]
-            puts "Set SLICER_HOME environment variable to shortname: $env(SLICER_HOME)"
-        }
     }
 }
 puts "\nSlicer build directory set to $env(BUILD)"
@@ -108,7 +102,7 @@ if { ![info exists env(TCL_LIB_DIR)] || $env(TCL_LIB_DIR) == "" } {
 switch $env(BUILD) {
     "solaris8" -
     "Darwin" -
-    "redhat7.3" {
+    "linux" {
         # add vtk bins
         set env(LD_LIBRARY_PATH) $env(VTK_BIN_DIR)/bin:$env(LD_LIBRARY_PATH)
         # add slicer bins
@@ -155,7 +149,7 @@ foreach modulePath "${baseModulePath} ${userModulePath}" {
             switch $env(BUILD) {
                 "solaris8" -
                 "Darwin" -
-                "redhat7.3" {
+                "linux" {
                     set env(LD_LIBRARY_PATH) ${modulePath}/$moduleName/builds/$env(BUILD)/bin:$env(LD_LIBRARY_PATH)
                     set env(TCLLIBPATH) "${modulePath}/$moduleName/Wrapping/Tcl $env(TCLLIBPATH)"
                 }
@@ -220,7 +214,7 @@ proc file_event {fp} {
 switch $env(BUILD) {
     "solaris8" -
     "Darwin" -
-    "redhat7.3" {
+    "linux" {
         # - need to run the specially modified tcl interp in the executable 'vtk' on unix
         # - don't put process in background so that jdemo can track its status
         set fp [open "| csh -c \"$env(VTK_BIN_DIR)/bin/vtk $mainscript $argv \" |& cat" r]
