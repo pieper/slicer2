@@ -38,7 +38,7 @@
 #               /tcl - all tcl libs
 #               /vtk
 #                   /VTK - vtk source (or just Wrapping for distribution)
-#                   /VTK-build - vtk build tree (or just stripped libs in bin/debug for distribution)
+#                   /VTK-build - vtk build tree (or just stripped libs in bin/$VTK_BUILD_TYPE for distribution)
 #               /itk
 #                   /ITK-build - itk in bin for distribution
 #           /Darwin
@@ -156,9 +156,9 @@ if {$::env(BUILD) == $solaris ||
         set ::env(DYLD_LIBRARY_PATH) $::env(TCL_LIB_DIR):$::env(DYLD_LIBRARY_PATH)
     } elseif {$::env(BUILD) == $windows} {
         # add vtk, slicer, and tcl bins
-        set ::env(Path) $::env(VTK_DIR)/bin/debug\;$::env(Path)
-        set ::env(Path) $::env(ITK_BINARY_PATH)/bin/debug\;$::env(Path)
-        set ::env(Path) $::env(SLICER_HOME)/Base/builds/$::env(BUILD)/bin/debug\;$::env(Path)
+        set ::env(Path) $::env(VTK_DIR)/bin/$::env(VTK_BUILD_TYPE)\;$::env(Path)
+        set ::env(Path) $::env(ITK_BINARY_PATH)/bin/$::env(VTK_BUILD_TYPE)\;$::env(Path)
+        set ::env(Path) $::env(SLICER_HOME)/Base/builds/$::env(BUILD)/bin/$::env(VTK_BUILD_TYPE)\;$::env(Path)
         set ::env(Path) $::env(TCL_BIN_DIR)\;$::env(Path)
     } else {
         puts "Libraries: unknown build $::env(BUILD)"
@@ -181,7 +181,7 @@ if {$::env(BUILD) == $solaris ||
     $::env(BUILD) == $darwin} {
         set ::env(TCLLIBPATH) "$::env(VTK_DIR)/Wrapping/Tcl $::env(TCLLIBPATH)"
 } elseif {$::env(BUILD) == $windows} {
-    set ::env(TCLLIBPATH) "$::env(VTK_DIR)/Wrapping/Tcl/Debug $::env(TCLLIBPATH)"
+    set ::env(TCLLIBPATH) "$::env(VTK_DIR)/Wrapping/Tcl/$::env(VTK_BUILD_TYPE) $::env(TCLLIBPATH)"
 } else {
     puts "TCLLIBPATH: Invalid build $::env(BUILD)"
     exit
@@ -235,7 +235,7 @@ foreach modulePath $modulePaths {
                 set ::env(DYLD_LIBRARY_PATH) ${modulePath}/$moduleName/builds/$::env(BUILD)/bin:$::env(DYLD_LIBRARY_PATH)
                 set ::env(TCLLIBPATH) "${modulePath}/$moduleName/Wrapping/Tcl $::env(TCLLIBPATH)"
             } elseif {$::env(BUILD) == $windows} {
-                set ::env(Path) $modulePath/$moduleName/builds/$::env(BUILD)/bin/debug\;$::env(Path)
+                set ::env(Path) $modulePath/$moduleName/builds/$::env(BUILD)/bin/$::env(VTK_BUILD_TYPE)\;$::env(Path)
                 set ::env(TCLLIBPATH) "$modulePath/$moduleName/Wrapping/Tcl $::env(TCLLIBPATH)"
             } else {
                     puts "Modules: Invalid build $::env(BUILD)"
