@@ -55,16 +55,20 @@
 proc FMRIEnginePopUpPlot {x y} {
     global FMRIEngine
 
-    if {[info exists FMRIEngine(stimulus)] == 0} {
-        DevErrorWindow "Time course may be visisble after activation computation."
+    if {! [info exists FMRIEngine(firstMRMLid)] ||
+        ! [info exists FMRIEngine(lastMRMLid)]} {
+        # DevErrorWindow "Please load volume sequence first."
         return
-     }
+    }
 
     # Get the indices of selected voxel. Then, check
     # these indices against the dimensions of the volume.
     # If they're good values, assemble the selected voxel's
     # time-course, the reference signal, and plot both.
     scan [FMRIEngineGetVoxelFromSelection $x $y] "%d %d %d" i j k
+    if {$i == -1} {
+        return
+    }
 
     scan [FMRIEngineGetDataVolumeDimensions] "%d %d %d %d %d %d" \
         xmin ymin zmin xmax ymax zmax
@@ -73,7 +77,7 @@ proc FMRIEnginePopUpPlot {x y} {
     # is within the data volume. If not, return.
     set argstr "$i $j $k $xmin $ymin $zmin $xmax $ymax $zmax"
     if { [ FMRIEngineCheckSelectionAgainstVolumeLimits $argstr] == 0 } {
-        DevErrorWindow "Selected voxel not in volume."
+        # DevErrorWindow "Selected voxel not in volume."
         return 
     }
 
@@ -113,8 +117,15 @@ proc FMRIEnginePopUpPlot {x y} {
     $FMRIEngine(tcPlot) SetVoxelIndex $i $j $k
     $FMRIEngine(tcPlot) SetPlot [FMRIEngine(actvolgen) GetTimeCourse $i $j $k] \
         $FMRIEngine(stimulus) 
+
     #Update the graph for the new data
     $FMRIEngine(renWin) Render 
+
+    # timer to remove the time course plot
+    if {[info exists FMRIEngine(timer)]} {
+        after cancel $FMRIEngine(timer)
+    }
+    set FMRIEngine(timer) [after 6000 {FMRIEngineCloseTimeCourseWindow}]
 }
 
 
@@ -178,14 +189,21 @@ proc FMRIEngineGetDataVolumeDimensions {} {
 # .END
 #-------------------------------------------------------------------------------
 proc FMRIEngineGetVoxelFromSelection {x y} {
-    global Interactor Gui
+    global FMRIEngine Interactor Gui
     
     # Which slice was picked?
     set s $Interactor(s)
     if {$s == ""} {
         DevErrorWindow "No slice was picked."
-        return
+        return "-1 -1 -1"
     }
+
+    set fvName [[[Slicer GetForeVolume $s] GetMrmlNode] GetName]
+    if {! [info exists FMRIEngine(actVolName)] ||
+        $fvName != $FMRIEngine(actVolName)} {
+        return "-1 -1 -1"
+    }
+
     set xs $x
     set ys $y
 
