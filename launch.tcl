@@ -300,8 +300,6 @@ foreach a $argv {
     lappend newargv $a
 }
 set argv $newargv
-#regsub -all "{|}" $argv "" argv
-regsub -all "{|}" $argv "\\\"" argv
 
 
 switch $env(BUILD) {
@@ -310,11 +308,13 @@ switch $env(BUILD) {
     "redhat7.3" {
         # - need to run the specially modified tcl interp in the executable 'vtk' on unix
         # - don't put process in background so that jdemo can track its status
+        regsub -all "{|}" $argv "\\\"" argv
         set fp [open "| csh -c \"$env(VTK_BIN_DIR)/bin/vtk $mainscript $argv \" |& cat" r]
     }
     "Win32VC7" {
         # put slicer in the background on windows so it won't be "Not Responding" in
         # task manager
+        regsub -all "{|}" $argv "" argv
         set fp [open "| $env(TCL_BIN_DIR)/wish84.exe $mainscript $argv" r]
     }
     default {
