@@ -279,18 +279,13 @@ proc GetHeaderInfo {img1 num2 node tk} {
 	$node SetNumScalars $Header1(numScalars)
 	$node SetLittleEndian $Header1(littleEndian)
 	$node SetTilt $Header1(sliceTilt)
-	$node ComputeRasToIjkFromCorners \
+	set result [$node ComputeRasToIjkFromCorners \
 		$Header1(rC)  $Header1(aC)  $Header1(sC) \
 		$Header1(rTL) $Header1(aTL) $Header1(sTL) \
 		$Header1(rTR) $Header1(aTR) $Header1(sTR) \
 		$Header1(rBR) $Header1(aBR) $Header1(sBR) \
 		$Header2(rC)  $Header2(aC)  $Header2(sC) \
-		$Header2(rTL) $Header2(aTL) $Header2(sTL)
-	
-	# check for error in finding orientation
-	if {[$node GetScanOrder] == "ER"} {
-	    return "-1" 
-	} else {
-	    return "0"
-	}
+		$Header2(rTL) $Header2(aTL) $Header2(sTL)]
+	# result should be -1 if header info bad/nonexistent
+	return $result
 }
