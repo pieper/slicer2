@@ -24,6 +24,9 @@ vtkMultipleStreamlineController::vtkMultipleStreamlineController()
   this->InputROI = NULL;
 
   this->Streamlines = vtkCollection::New();
+
+  // Streamline parameters
+  this->IntegrationDirection = VTK_INTEGRATE_BOTH_DIRECTIONS;
 }
 
 //----------------------------------------------------------------------------
@@ -103,6 +106,10 @@ void vtkMultipleStreamlineController::SeedStreamlinesFromROI()
                   newStreamline->SetInput(this->InputTensorField);
                   newStreamline->SetStartPosition(point[0],point[1],point[2]);
 
+                  // Set its parameters
+                  newStreamline->
+                    SetIntegrationDirection(this->IntegrationDirection);
+                
                   // also create an actor, transform it, 
                   // add to another collection
                   // then in DTMRI.tcl just do MainAddActor to all of them

@@ -84,7 +84,7 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   // Add Parameters of standard streamlines
   //MaximumPropagationDistance IntegrationStepLength 
   //StepLength Radius  NumberOfSides IntegrationDirection
-  
+  int IntegrationDirection;
 
   // Add parameters of precise streamlines
 
