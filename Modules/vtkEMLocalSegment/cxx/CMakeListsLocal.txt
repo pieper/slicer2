@@ -16,14 +16,16 @@ IF (WIN32)
         vtkFileOps.cxx
     	vtkImageEMGeneral.cxx
         vtkImageEMLocalSegmenter.cxx
+    	vtkMrmlSegmenterNode.cxx 
     	vtkMrmlEndSegmenterNode.cxx 
     	vtkMrmlSegmenterClassNode.cxx 
+    	vtkMrmlEndSegmenterClassNode.cxx 
     	vtkMrmlSegmenterInputNode.cxx  
         vtkMrmlSegmenterCIMNode.cxx 
     	vtkMrmlSegmenterGraphNode.cxx 
-    	vtkMrmlSegmenterNode.cxx 
         vtkMrmlSegmenterSuperClassNode.cxx 
     	vtkMrmlEndSegmenterSuperClassNode.cxx
+        vtkMrmlSegmenterPCAEigenNode.cxx
     )
     SET_SOURCE_FILES_PROPERTIES ( vtkThread.cxx ABSTRACT )
 ELSE (WIN32)
@@ -33,10 +35,16 @@ ELSE (WIN32)
         vtkThread.cxx
         vtkImageEMGeneral.cxx
         vtkImageEMLocalSegmenter.cxx
-    	vtkMrmlEndSegmenterNode.cxx vtkMrmlSegmenterClassNode.cxx 
+    	vtkMrmlEndSegmenterNode.cxx 
+        vtkMrmlSegmenterClassNode.cxx    	
+        vtkMrmlEndSegmenterClassNode.cxx  
         vtkMrmlSegmenterInputNode.cxx  
-        vtkMrmlSegmenterCIMNode.cxx vtkMrmlSegmenterGraphNode.cxx vtkMrmlSegmenterNode.cxx 
-        vtkMrmlSegmenterSuperClassNode.cxx vtkMrmlEndSegmenterSuperClassNode.cxx
+        vtkMrmlSegmenterCIMNode.cxx 
+        vtkMrmlSegmenterGraphNode.cxx 
+        vtkMrmlSegmenterNode.cxx 
+        vtkMrmlSegmenterSuperClassNode.cxx 
+        vtkMrmlEndSegmenterSuperClassNode.cxx
+        vtkMrmlSegmenterPCAEigenNode.cxx
     )
 ENDIF (WIN32)
 

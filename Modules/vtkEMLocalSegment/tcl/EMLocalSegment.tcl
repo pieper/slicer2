@@ -236,7 +236,7 @@ proc EMSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.19 $} {$Date: 2004/02/13 05:09:54 $}]
+        {$Revision: 1.20 $} {$Date: 2004/02/18 22:56:11 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -297,7 +297,10 @@ proc EMSegmentInit {} {
     set EMSegment(Cattrib,0,IsSuperClass) 1
     set EMSegment(NumClassesNew) 4 
     set EMSegment(Cattrib,0,Prob) 0.0 
-    set EMSegment(Cattrib,0,ProbabilityData) $Volume(idNone) 
+    set EMSegment(Cattrib,0,ProbabilityData) $Volume(idNone)
+    set EMSegment(Cattrib,0,PCAFileRange) "0 0" 
+    set EMSegment(Cattrib,0,PCAMeanData) $Volume(idNone) 
+    set EMSegment(Cattrib,0,PCAEigen) "" 
     set EMSegment(Cattrib,0,ClassList) ""
     set EMSegment(Cattrib,0,ColorCode) $Gui(activeWorkspace)
     set EMSegment(Cattrib,0,Label) $EMSegment(Cattrib,0,Name)
@@ -1617,12 +1620,31 @@ proc EMSegmentLoadMRML {tag attr} {
                     "label"                {$n SetLabel $val}
                     "prob"                 {$n SetProb $val}
                     "shapeparameter"       {$n SetShapeParameter $val}
-                    "weightconfidencename" {$n SetWeightConfidenceName $val}
                     "localpriorweight"     {$n SetLocalPriorWeight $val}
                     "inputchannelweights"  {$n SetInputChannelWeights $val}
+                    "pcameanname"          {$n SetPCAMeanName $val}
+                    "pcafilerange"         {$n SetPCAFileRange $val}
                 }
             }
+    }
+    "EndSegmenterClass" {
+            set n [MainMrmlAddNode EndSegmenterClass]
+    }
+
+    "SegmenterPCAEigen" {
+            set n [MainMrmlAddNode SegmenterPCAEigen]
+            foreach a $attr {
+                set key [lindex $a 0]
+                set val [lreplace $a 0 0]
+                switch [string tolower $key] {
+            "number"          {$n SetNumber $val}
+                    "eigenvectorname" {$n SetEigenVectorName $val}
+                    "eigenvalue"      {$n SetEigenValue $val}
         }
+        }
+
+    }
+     
     "SegmenterCIM" {
             set n [MainMrmlAddNode SegmenterCIM]
             foreach a $attr {
@@ -1682,9 +1704,17 @@ proc EMSegmentUpdateMRML {} {
     Mrml(dataTree) InitTraversal
     set item [Mrml(dataTree) GetNextItem]
     # Was the EndSegmenter Node part of the tree
-
+    set SetEndSegmenterClassNodeFlag 0
     while { $item != "" } {
        set ClassName [$item GetClassName]
+
+       # Check if Last SegmenterClassNode had a EndSegmenterClassNode defined or not 
+       if {$SetEndSegmenterClassNodeFlag && ($ClassName != "vtkMrmlEndSegmenterClassNode" || $ClassName != "vtkMrmlSegmenterPCAEigenNode")}  {
+          # Insert the End node  
+      MainMrmlInsertAfterNode $EMSegment(Cattrib,$EMSegment(Class),Node) EndSegmenterClass
+      set SetEndSegmenterClassNodeFlag 0
+       } 
+
        if { $ClassName == "vtkMrmlSegmenterNode" } {
         # --------------------------------------------------
         # 2.) Check if we already work on this Segmenter
@@ -1708,7 +1738,7 @@ proc EMSegmentUpdateMRML {} {
     EMSegmentChangeClass 0
         # set EMSegment(Cattrib,0,ClassList) ""
         $EMSegment(SegmenterNode) SetAlreadyRead 1
-
+      
         # Reset all Input and Graph Values
         set EMSegment(SegmenterGraphNodeList) ""
         set EMSegment(SegmenterInputNodeList) ""
@@ -1793,7 +1823,7 @@ proc EMSegmentUpdateMRML {} {
         # If you get an error mesaage in the follwoing lines then CurrentClassList to short
         set NumClass [lindex $CurrentClassList 0]
         if {$NumClass == ""} { DevErrorWindow "Error in XML File : Super class $EMSegment(SuperClass)  has not a sub-classes defined" }
-        
+
         # Save status when returning to parent of this class 
         set CurrentClassList [lrange $CurrentClassList 1 end]
         lappend SclassMemory [list "$EMSegment(SuperClass)" "$CurrentClassList"]
@@ -1830,10 +1860,13 @@ proc EMSegmentUpdateMRML {} {
         # --------------------------------------------------
         # 7.) Update selected Class List 
         # -------------------------------------------------
-        # If you get an error mesaage in the follwoing lines then CurrentClassList to short
+        # If you get an error mesaage in the follwoing lines then CurrentClassList to short       
         set NumClass [lindex $CurrentClassList 0]
         if {$NumClass == ""} { DevErrorWindow "Error in XML File : Super class $EMSegment(SuperClass)  has not a sub-classes defined" }
         set CurrentClassList [lrange $CurrentClassList 1 end]
+
+        # Set Flag to see if we have an endnote
+        set SetEndSegmenterClassNodeFlag 1
 
         set EMSegment(Class) $NumClass
         set pid [$item GetID]
@@ -1855,16 +1888,16 @@ proc EMSegmentUpdateMRML {} {
         set EMSegment(Cattrib,$NumClass,LocalPriorWeight)    [SegmenterClass($pid,node) GetLocalPriorWeight]
 
         set EMSegment(Cattrib,$NumClass,ProbabilityData) $Volume(idNone) 
+        set EMSegment(Cattrib,$NumClass,PCAFileRange) [SegmenterClass($pid,node) GetPCAFileRange]
 
-        set WeightConfidenceName   [SegmenterClass($pid,node) GetWeightConfidenceName]
-        set EMSegment(Cattrib,$NumClass,WeightConfidenceData) $Volume(idNone) 
-
+        set EMSegment(Cattrib,$NumClass,PCAMeanData) $Volume(idNone) 
+        set PCAMeanName   [SegmenterClass($pid,node) GetPCAMeanName]
         foreach VolID $Volume(idList) VolAttr $VolumeList {
-            if {([lindex $VolAttr 0] == $LocalPriorName) && ([lindex $VolAttr 1] == $LocalPriorRange)} {
+            if {([lindex $VolAttr 0] == $LocalPriorName) && ([lindex $VolAttr 1] == $LocalPriorRange) &&  ($LocalPriorName != "")} {
                if {([lindex $VolAttr 2] == $LocalPriorPrefix) || ([lindex $VolAttr 3] == $LocalPriorPrefix)} {set EMSegment(Cattrib,$NumClass,ProbabilityData) $VolID
                }
             }
-            if {([lindex $VolAttr 0] == $WeightConfidenceName) && ($WeightConfidenceName != "") } { set EMSegment(Cattrib,$NumClass,WeightConfidenceData) $VolID }
+            if {([lindex $VolAttr 0] == $PCAMeanName) && ($PCAMeanName != "") && ([lindex $VolAttr 1] == $EMSegment(Cattrib,$NumClass,PCAFileRange)) } { set EMSegment(Cattrib,$NumClass,PCAMeanData) $VolID }
         }
 
         set index 0
@@ -1902,9 +1935,37 @@ proc EMSegmentUpdateMRML {} {
              incr i
           }
         }
+    } elseif {$ClassName == "vtkMrmlSegmenterPCAEigenNode" } {
+        # --------------------------------------------------
+        # 9.) Update PCA Eigenvalues/vectors 
+        # -------------------------------------------------
+        set pid [$item GetID]
+    set NumClass $EMSegment(Class)
+        # EigenList is defined by (Number, EigenValue, EigenVectorData, NodeID)        
+        set  EigenList [SegmenterPCAEigenClass($pid,node) GetNumber]
+        lappend  EigenList [SegmenterPCAEigenClass($pid,node) GetEigenValue]
+        set EigenVectorName [SegmenterPCAEigenClass($pid,node) GetEigenVectorName]
+        set EigenVectorID $Volume(idNone)
+        foreach VolID $Volume(idList) VolAttr $VolumeList {
+            if {([lindex $VolAttr 0] == $EigenVectorName) && ($EigenVectorName != "") && ([lindex $VolAttr 1] == $EMSegment(Cattrib,$NumClass,PCAFileRange))} { 
+        set EigenVectorID  $VolID 
+            }
+    }
+        lappend EigenList  $EigenVectorID
+        lappend EigenList  $item
+        # Set it in the right order 
+        lappend EMSegment(Cattrib,$NumClass,PCAEigen) "$EigenList"
+
+    } elseif {$ClassName == "vtkMrmlEndSegmenterClassNode" } {
+        # --------------------------------------------------
+        # 10.) End of class 
+        # -------------------------------------------------
+        set EMSegment(Cattrib,$EMSegment(Class),EndNode) $item
+        # Set back EndNoteFlag
+        set SetEndSegmenterClassNodeFlag 0
     } elseif {$ClassName == "vtkMrmlEndSegmenterSuperClassNode" } {
         # --------------------------------------------------
-        # 9.) End of super class 
+        # 11.) End of super class 
         # -------------------------------------------------
         set EMSegment(Cattrib,$EMSegment(SuperClass),EndNode) $item
         # Pop the last parent from the Stack
@@ -1914,7 +1975,7 @@ proc EMSegmentUpdateMRML {} {
         EMSegmentChangeSuperClass [lindex $temp 0] 0
     } elseif {$ClassName == "vtkMrmlEndSegmenterNode" } {
         # --------------------------------------------------
-        # 10.) End of Segmenter
+        # 12.) End of Segmenter
         # -------------------------------------------------
         # if there is no EndSegmenterNode yet and we are reading one, and set
         # the EMSegment(EndSegmenterNode) variable
@@ -2203,12 +2264,34 @@ proc EMSegmentSaveSettingSuperClass {SuperClass LastNode} {
              SegmenterClass($pid,node) SetLocalPriorPrefix ""
              SegmenterClass($pid,node) SetLocalPriorName   ""
           }
+          SegemnterClass($pid,node) SetPCAFileRange  $EMSegment(Cattrib,$i,PCAFileRange)
+          if {$EMSegment(Cattrib,$i,PCAMeanData) != $Volume(idNone) } {
+             SegmenterClass($pid,node) SetPCAMeanName  [Volume($EMSegment(Cattrib,$i,PCAMeanData),node) GetName]
+      } else {
+         SegmenterClass($pid,node) SetPCAMeanName  ""
+      }
+          set index 0
+          foreach EigenList $EMSegment(Cattrib,$i,PCAEigen)  {
+          set Number [lindex $EigneList 0]
+          set EigenValue [lindex $EigneList 1]
+          set EigenVectorData [lindex $EigneList 2]
+              set NodeItem [lindex $EigneList 3]
 
-          set v $EMSegment(Cattrib,$i,WeightConfidenceData) 
-          if {$v != $Volume(idNone) } {
-             SegmenterClass($pid,node) SetWeightConfidenceName [Volume($v,node) GetName]
-             if { [Volume($v,node) GetName] == ""} {puts "EMSegmentSaveSettingSuperClass: Error: No name was defined for the volume assigned to WeightConfidence!" }
-          } else { SegmenterClass($pid,node) SetWeightConfidenceName  ""}
+              #No Node defined 
+          if {NodeItem == ""} { 
+          set NodeItem [MainMrmlInsertAfterNode $LastNode SegmenterPCAEigen] 
+                  set EMSegment(Cattrib,$i,PCAEigen) [lreplace  $EMSegment(Cattrib,$i,PCAEigen) $index $index "$Number $EigenValue $EigenVectorData $NodeItem"]
+              }
+              set LastNode $NodeItem
+          set pid [$NodeItem GetID]
+          SegmenterPCAEigen($pid,node) SetNumber $Number
+          SegmenterPCAEigen($pid,node) SetEigenValue $EigenValue
+          if {$EigenVectorData != $Volume(idNone) } {
+          SegmenterPCAEigen($pid,node) SetEigenVectorName  [Volume($EigenVectorData,node) GetName]
+          } else {
+          SegmenterPCAEigen($pid,node) SetEigenVectorName  ""
+          }
+      }
 
           set LogMean ""
           set LogCovariance ""
@@ -2654,7 +2737,13 @@ proc EMSegmentTransfereClassType {ActiveGui DeleteNode} {
          set EMSegment(Cattrib,$Sclass,InputChannelWeights,$y) 1.0
      }
      set EMSegment(Cattrib,$Sclass,ProbabilityData) $Volume(idNone)
- 
+     set EMSegment(Cattrib,$Sclass,PCAMeanData) $Volume(idNone)
+
+     foreach EigenList $EMSegment(Cattrib,$Sclass,PCAEigen) {
+     if {[lindex $EigenList 3] != ""} { MainMrmlDeleteNode SegmenterPCAEigen [[lindex $EigenList 3] GetID] }
+     }
+     set EMSegment(Cattrib,$Sclass,PCAEigen) ""
+
      # 4.) Change Class Panels 
      $EMSegment(DE-mbIntClass).m delete [expr $ClassIndex + 1] [expr $ClassIndex + 1]
      # Check if it is currently selected => if so change to none
@@ -2662,8 +2751,13 @@ proc EMSegmentTransfereClassType {ActiveGui DeleteNode} {
 
      # 5.) Delete Node!
      if {$EMSegment(Cattrib,$Sclass,Node) != "" && $DeleteNode} {
-     MainMrmlDeleteNode SegmenterClass [$EMSegment(Cattrib,$Sclass,Node) GetID]
-     set EMSegment(Cattrib,$Sclass,Node) ""
+       MainMrmlDeleteNode SegmenterClass [$EMSegment(Cattrib,$Sclass,Node) GetID]
+       set EMSegment(Cattrib,$Sclass,Node) ""
+     }
+
+     if {$EMSegment(Cattrib,$Sclass,EndNode) != "" && $DeleteNode} {
+       MainMrmlDeleteNode EndSegmenterClass [$EMSegment(Cattrib,$Sclass,EndNode) GetID]
+       set EMSegment(Cattrib,$Sclass,EndNode) ""
      }
 
      # 6.) Check if Overview Table has to be updated  
@@ -2685,6 +2779,7 @@ proc EMSegmentTransfereClassType {ActiveGui DeleteNode} {
          set EMSegment(Cattrib,$Sclass,InputChannelWeights,$y) 1.0
      }
      set EMSegment(Cattrib,$Sclass,ProbabilityData) $Volume(idNone)
+     set EMSegment(Cattrib,$Sclass,PCAMeanData) $Volume(idNone)
 
      # 2.) Remove from SuperClass List and add to Class List
      set index [lsearch -exact $EMSegment(GlobalSuperClassList)  $Sclass]
@@ -2731,18 +2826,19 @@ proc EMSegmentTransfereClassType {ActiveGui DeleteNode} {
 
      # Delete Node
      if {($EMSegment(Cattrib,$Sclass,Node) != "") && $DeleteNode} {
-     MainMrmlDeleteNode SegmenterSuperClass [$EMSegment(Cattrib,$Sclass,Node) GetID]
-     foreach dir $EMSegment(CIMList) {
-         if {$EMSegment(Cattrib,$Sclass,CIMMatrix,$dir,Node) != ""}  {
-         MainMrmlDeleteNode SegmenterCIM [$EMSegment(Cattrib,$Sclass,CIMMatrix,$dir,Node) GetID]
-         set EMSegment(Cattrib,$Sclass,CIMMatrix,$dir,Node) ""
-         }
-     } 
-     if {$EMSegment(Cattrib,$Sclass,EndNode) != ""} { 
-         MainMrmlDeleteNode EndSegmenterSuperClass [$EMSegment(Cattrib,$Sclass,EndNode) GetID] 
-         set EMSegment(Cattrib,$Sclass,EndNode) ""
-     }
-     set EMSegment(Cattrib,$Sclass,Node) ""
+        MainMrmlDeleteNode SegmenterSuperClass [$EMSegment(Cattrib,$Sclass,Node) GetID]
+        set EMSegment(Cattrib,$Sclass,Node) ""
+
+        foreach dir $EMSegment(CIMList) {
+           if {$EMSegment(Cattrib,$Sclass,CIMMatrix,$dir,Node) != ""}  {
+             MainMrmlDeleteNode SegmenterCIM [$EMSegment(Cattrib,$Sclass,CIMMatrix,$dir,Node) GetID]
+             set EMSegment(Cattrib,$Sclass,CIMMatrix,$dir,Node) ""
+           }
+        } 
+        if {$EMSegment(Cattrib,$Sclass,EndNode) != ""} { 
+           MainMrmlDeleteNode EndSegmenterSuperClass [$EMSegment(Cattrib,$Sclass,EndNode) GetID] 
+           set EMSegment(Cattrib,$Sclass,EndNode) ""
+        }
      }
      EMSegmentChangeSuperClass $i $ActiveGui 
   } 
@@ -3592,6 +3688,7 @@ proc EMSegmentCreateDeleteClasses {ChangeGui DeleteNode} {
 
             # Delete Node from Graph 
             if {($EMSegment(Cattrib,$i,Node) != "") && $DeleteNode} { MainMrmlDeleteNode SegmenterClass [$EMSegment(Cattrib,$i,Node) GetID] }
+        if {($EMSegment(Cattrib,$i,EndNode) != "") && $DeleteNode} { MainMrmlDeleteNode EndSegmenterClass [$EMSegment(Cattrib,$i,EndNode) GetID] }
         }
     
         # Unset variables - CIM Variable is unset a little bit later
@@ -3622,8 +3719,13 @@ proc EMSegmentCreateDeleteClasses {ChangeGui DeleteNode} {
         # Class Definition
         unset EMSegment(Cattrib,$i,ColorCode) EMSegment(Cattrib,$i,Label)  
         unset EMSegment(Cattrib,$i,Prob) EMSegment(Cattrib,$i,ProbabilityData)
+        unset EMSegment(Cattrib,$i,PCAMeanData) EMSegment(Cattrib,$i,PCAFileRange) 
         unset EMSegment(Cattrib,$i,ShapeParameter)
-        unset EMSegment(Cattrib,$i,WeightConfidenceData)
+    foreach EigenList $EMSegment(Cattrib,$i,PCAEigen) {
+        if {[lindex $EigenList 3] != ""} {MainMrmlDeleteNode SegmenterPCAEigen [[lindex $EigenList 3] GetID] }
+    }
+        unset EMSegment(Cattrib,$i,PCAEigen) ""
+
 
         for {set y 0} {$y <  $EMSegment(MaxInputChannelDef)} {incr y} {
           unset  EMSegment(Cattrib,$i,LogMean,$y)
@@ -3708,7 +3810,9 @@ proc EMSegmentCreateDeleteClasses {ChangeGui DeleteNode} {
 
       # Special EMSegment(SegmentMode) == 1 Variables     
       set EMSegment(Cattrib,$i,ProbabilityData) $Volume(idNone)
-      set EMSegment(Cattrib,$i,WeightConfidenceData) $Volume(idNone)
+      set EMSegment(Cattrib,$i,PCAFileRange) "0 0" 
+      set EMSegment(Cattrib,$i,PCAMeanData) $Volume(idNone)
+      set EMSegment(Cattrib,$i,PCAEigen) "" 
     }
     # Define CIM Field as Matrix M(Class1,Class2,Relation of Pixels)
     # where the "Relation of the Pixels" can be set as Pixel with "left", 

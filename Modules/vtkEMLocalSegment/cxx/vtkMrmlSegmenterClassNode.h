@@ -111,12 +111,6 @@ public:
   vtkGetStringMacro(LogCovariance);
 
   // Description:
-  // This is a necessary variable for the interface between EM and the Shape Matcher
-  // The weight confidence measure describes the confidence in the weights form the EM algorithm 
-  vtkSetStringMacro(WeightConfidenceName);
-  vtkGetStringMacro(WeightConfidenceName);
-
-  // Description:
   // This variable allows to control the influence of the LocalPrioir in the segmentation process 
   // LocalPriorWeight = 1.0 default setting; 0.0 => LocalPrior is ignored 
   vtkGetMacro(LocalPriorWeight,float);
@@ -129,6 +123,16 @@ public:
   // where the length(InputChannelWeights) = # of input channels 
   vtkSetStringMacro(InputChannelWeights);
   vtkGetStringMacro(InputChannelWeights);
+
+  // Description:
+  // Get/Set for SegmenterClass
+  vtkSetStringMacro(PCAMeanName);
+  vtkGetStringMacro(PCAMeanName);
+
+  // Description:
+  // Get/Set for SegmenterClass
+  vtkGetVector2Macro(PCAFileRange, int);
+  vtkSetVector2Macro(PCAFileRange, int);
 
 protected:
   vtkMrmlSegmenterClassNode();
@@ -145,9 +149,10 @@ protected:
   int    LocalPriorRange[2];
   char   *LogMean;
   char   *LogCovariance;
-  char   *WeightConfidenceName;
   float  LocalPriorWeight;
-  char   *InputChannelWeights;  
+  char   *InputChannelWeights;
+  char   *PCAMeanName;
+  int    PCAFileRange[2];
 };
 
 #endif

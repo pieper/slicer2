@@ -66,9 +66,10 @@ vtkMrmlSegmenterClassNode::vtkMrmlSegmenterClassNode()
   this->Label            = 0;
   this->Prob             = 0.0;
   this->ShapeParameter   = 0.0;
-  this->WeightConfidenceName = NULL;
   this->LocalPriorWeight = 1.0;
   this->InputChannelWeights = NULL;
+  this->PCAMeanName      = NULL; 
+  memset(this->PCAFileRange,0,2*sizeof(int));
 }
 
 //----------------------------------------------------------------------------
@@ -94,15 +95,16 @@ vtkMrmlSegmenterClassNode::~vtkMrmlSegmenterClassNode()
     delete [] this->LogCovariance;
     this->LogCovariance = NULL;
   }
-  if (this->WeightConfidenceName)
-  {
-    delete [] this->WeightConfidenceName;
-    this->WeightConfidenceName = NULL;
-  } 
   
   if (this->InputChannelWeights) {
     delete [] this->InputChannelWeights;
     this->InputChannelWeights = NULL;
+  }
+
+  if (this->PCAMeanName)
+  {
+    delete [] this->PCAMeanName;
+    this->PCAMeanName = NULL;
   }
 }
 
@@ -142,10 +144,6 @@ void vtkMrmlSegmenterClassNode::Write(ofstream& of, int nIndent)
   {
     of << " LogCovariance='" << this->LogCovariance << "'";
   }
-  if (this->WeightConfidenceName && strcmp(this->WeightConfidenceName, "")) 
-  {
-    of << " WeightConfidenceName='" << this->WeightConfidenceName << "'";
-  }
 
   if (this->InputChannelWeights && strcmp(this->InputChannelWeights, "")) 
   {
@@ -153,7 +151,12 @@ void vtkMrmlSegmenterClassNode::Write(ofstream& of, int nIndent)
   }
   of << " LocalPriorWeight='" << this->LocalPriorWeight << "'";
 
-  of << "></SegmenterClass>\n";;
+  if (this->PCAMeanName && strcmp( this->PCAMeanName, "")) 
+  {
+    of << " PCAMeanName='" << this->PCAMeanName << "'";
+  }
+  if  (this->PCAFileRange[0] || this->PCAFileRange[1]) of << " PCAFileRange='" << this->PCAFileRange[0] << " " << this->PCAFileRange[1] << "'";
+  of << ">";
 }
 
 //----------------------------------------------------------------------------
@@ -172,9 +175,10 @@ void vtkMrmlSegmenterClassNode::Copy(vtkMrmlNode *anode)
   this->SetLocalPriorRange(node->LocalPriorRange); 
   this->SetLogMean(node->LogMean);
   this->SetLogCovariance(node->LogCovariance);
-  this->SetWeightConfidenceName(node->WeightConfidenceName);
   this->SetInputChannelWeights(node->InputChannelWeights);
   this->SetLocalPriorWeight(node->LocalPriorWeight);
+  this->SetPCAFileRange(node->PCAFileRange);
+  this->SetPCAMeanName(node->PCAMeanName);
 }
 
 //----------------------------------------------------------------------------
@@ -191,22 +195,19 @@ void vtkMrmlSegmenterClassNode::PrintSelf(ostream& os, vtkIndent indent)
     (this->LocalPriorPrefix ? this->LocalPriorPrefix : "(none)") << "\n";
    os << indent << "LocalPriorName: " <<
     (this->LocalPriorName ? this->LocalPriorName : "(none)") << "\n";
-   os << "LocalPriorRange:\n";
-   for (int idx = 0; idx < 2; ++idx) {
-     os << indent << ", " << this->LocalPriorRange[idx];
-   }
+   os << indent << "LocalPriorRange: " << this->LocalPriorRange[0] << ", " << this->LocalPriorRange[1] << "\n" ;
+   os << indent << "LocalPriorWeight: " << this->LocalPriorWeight << "\n";
 
    os << indent << "LogMean: " <<
     (this->LogMean ? this->LogMean : "(none)") << "\n";
    os << indent << "LogCovariance: " <<
     (this->LogCovariance ? this->LogCovariance : "(none)") << "\n";
-   os << indent << "WeightConfidenceName: " <<
-    (this->WeightConfidenceName ? this->WeightConfidenceName : "(none)") << "\n";
 
-   os << indent << "InputChannelWeights: " <<
+   os << indent << "InputChannelWeights: " << 
     (this->InputChannelWeights ? this->InputChannelWeights : "(none)") << "\n";
 
-   os << indent << "LocalPriorWeight: " << this->LocalPriorWeight << "\n";
+   os << indent << "PCAMeanName: " <<  (this->PCAMeanName ? this->PCAMeanName : "(none)") << "\n"; 
+   os << indent << "PCAFileRange: " << this->PCAFileRange[0] << ", " << this->PCAFileRange[1] << "\n" ;
 }
 
 
