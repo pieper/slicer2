@@ -1165,7 +1165,7 @@ proc DICOMSelectDir { top } {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc DICOMSelectMain { fileNameListbox } {
+proc DICOMSelectMain { fileNameListbox {autoload "noautoload"} } {
     global DICOMStartDir
     global Pressed
     global DICOMPatientIDsNames
@@ -1183,18 +1183,27 @@ proc DICOMSelectMain { fileNameListbox } {
     set Volume(dICOMFileList) {}
     DICOMSelectDir .select
     
-    focus .select
-    grab .select
-    tkwait window .select
+    if { $autoload != "autoload" } {
+        focus .select
+        grab .select
+        tkwait window .select
+    } else {
+        set Pressed "OK"
+        destroy .select
+    }
     
     if { $Pressed == "OK" } {
         FindDICOM $DICOMStartDir *
         
         DICOMListSelect .list $DICOMPatientIDsNames
         
-        focus .list
-        grab .list
-        tkwait window .list
+        if { $autoload != "autoload" } {
+            focus .list
+            grab .list
+            tkwait window .list
+        } else {
+            destroy .list
+        }
 
         # >> AT 1/4/02
       if { $Pressed == "OK" } {
