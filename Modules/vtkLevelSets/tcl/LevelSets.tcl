@@ -47,10 +47,11 @@
 #   LevelSetsCheckErrors
 #   LevelSetsPrepareResultVolume
 #   LevelSetsUpdateResults
-#   RunLevelSetsBegin
-#   LevelSetsStop
-#   ReRunLevelSets
-#   RunLevelSetsEnd
+#   LevelSetsRun
+#   LevelSetsStart
+#   LevelSetsPause
+#   LevelSetsContinue
+#   LevelSetsEnd
 #   LevelSetsCreateModel
 #   SetSPGR_WM_Param
 #   SetMRAParam
@@ -159,7 +160,7 @@ proc LevelSetsInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.14 $} {$Date: 2003/07/21 20:05:55 $}]
+        {$Revision: 1.15 $} {$Date: 2003/08/11 19:33:55 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -182,6 +183,13 @@ proc LevelSetsInit {} {
 
     set LevelSets(FidPointList)               0
 
+    # Initialization option
+    set LevelSets(InitSchemeList)             { 0 1 2}
+    set LevelSets(InitScheme0)                "Fiducials"
+    set LevelSets(InitScheme1)                "Label Map"
+    set LevelSets(InitScheme2)                "GreyScale Image"
+    set LevelSets(InitScheme)                 $LevelSets(InitScheme0)
+
     # Remove this part ...
     set LevelSets(NumInitPoints)              "0"
     set LevelSets(InitRadius)                 "4"
@@ -201,14 +209,28 @@ proc LevelSetsInit {} {
 
 
     set LevelSets(HistoGradThreshold)         "0.2"
-    set LevelSets(AttachCoeff)                "1"
-    set LevelSets(AdvectionScheme)            "2"
+    set LevelSets(AdvectionCoeff)                "1"
+
+    # Advection Scheme
+    set LevelSets(AdvectionSchemeList)        { 0 2}
+    set LevelSets(AdvectionScheme0)           "Upwind Vector"
+    set LevelSets(AdvectionScheme2)           "Upwind Scalar"
+    set LevelSets(AdvectionScheme)            $LevelSets(AdvectionScheme2)
+
+    # Smoothing Scheme
+    set LevelSets(SmoothingSchemeList)        { 0 1}
+    set LevelSets(SmoothingScheme0)           "Minimal Curvature"
+    set LevelSets(SmoothingScheme1)           "Mean Curvature"
+    set LevelSets(SmoothingScheme)            $LevelSets(SmoothingScheme1)
+
     set LevelSets(StepDt)                     "0.8"
 
     set LevelSets(ReinitFreq)                 "6"
-    set LevelSets(CurvCoeff)                  "0.2"
+    set LevelSets(SmoothingCoeff)                  "0.2"
 
-    set LevelSets(DoMean)                     "1"
+
+
+
     set LevelSets(DMethod)                    "DISMAP_FASTMARCHING"
 
     set LevelSets(BandSize)                   "3"
@@ -331,7 +353,7 @@ proc LevelSetsBuildHelpFrame {} {
     <LI><B> Input image:</B>
     <LI><B> 2D or 3D mode:</B> 
     <LI><B> HistoGradThreshold:  </B> Threshold on the norm of the smoothed gradient 
-    <LI><B> AttachCoeff:         </B> Coefficient of the data AttachCoeff term 
+    <LI><B> AdvectionCoeff:         </B> Coefficient of the contour attachment term 
     <LI><B> StepDt:              </B> Evolution Step for the PDE
     <LI><B> NumIters:            </B> Number of iterations
     <LI><B> NumberOfThreads:     </B> Number of threads
@@ -378,47 +400,82 @@ proc LevelSetsBuildInitFrame {} {
     set fInit $Module(LevelSets,fInit)
     set f $fInit
   
-    frame $f.fInitImage            -bg $Gui(activeWorkspace) -relief groove -bd 3
-    frame $f.fInitThreshold        -bg $Gui(activeWorkspace) -relief groove -bd 3
-    frame $f.fInitRadius           -bg $Gui(activeWorkspace) -relief groove -bd 3
-    frame $f.fInitFidPoints        -bg $Gui(activeWorkspace) -relief groove -bd 3
-    frame $f.fIntensityThresholds  -bg $Gui(activeWorkspace) -relief groove -bd 3
+    frame $f.fInitScheme           -bg $Gui(activeWorkspace) 
+    frame $f.fFloatingFrame        -bg $Gui(activeWorkspace) -height 350 
 
-    pack  $f.fInitImage \
-          $f.fInitThreshold \
-          $f.fInitRadius \
-          $f.fInitFidPoints \
-      $f.fIntensityThresholds \
-      -side top -padx 0 -pady 1 -fill x
+
+#    pack  \
+#          $f.fInitScheme    \
+#          $f.fInitImage     \
+#          $f.fInitThreshold \
+#          $f.fInitRadius    \
+#          $f.fInitFidPoints \
+#      -side top -padx 0 -pady 1 -fill x 
+   
+    pack  \
+          $f.fInitScheme    \
+          $f.fFloatingFrame    \
+      -side top -padx 0 -pady 1 -fill x -expand true
+
+
+
+    #-------------------------------------------
+    # FloatingFrame
+    #-------------------------------------------
+    set f $fInit.fFloatingFrame
+
+    foreach i  $LevelSets(InitSchemeList) {
+      frame $f.fInitScheme$i -bg $Gui(activeWorkspace) -relief groove -bd 3 
+      place $f.fInitScheme$i -in $f -relheight 1.0 -relwidth 1.0
+    }
+
+    foreach i $LevelSets(InitSchemeList) {
+      if { $LevelSets(InitScheme) == $LevelSets(InitScheme${i}) } {
+      raise  $f.fInitScheme$i
+      }
+    }
+
+    #-------------------------------------------
+    # Parameters->InitScheme Frame
+    #-------------------------------------------
+    set f $fInit.fInitScheme
+
+    eval {label $f.lInitScheme -text "Initialize with:"} $Gui(WLA)
+
+    #--------------------------------------------------
+    proc SetInitScheme { i } {
+      global Module LevelSets
+
+      set LevelSets(InitScheme) $LevelSets(InitScheme$i)
+      raise  $Module(LevelSets,fInit).fFloatingFrame.fInitScheme$i
+      focus  $Module(LevelSets,fInit).fFloatingFrame.fInitScheme$i
+    }
+
+    eval {menubutton $f.mInitScheme  \
+                      -relief raised -indicatoron on -takefocus 1 \
+                      -width 16 -justify right \
+                      -menu $f.mInitScheme.m \
+                      -textvariable  LevelSets(InitScheme) } $Gui(WEA)
+    eval {menu $f.mInitScheme.m -tearoff 0   }
     
-    #-------------------------------------------
-    # Parameters->InitImage
-    #-------------------------------------------
-    set f $fInit.fInitImage
-    
-    # Add menus that list models and volumes
-    myDevAddSelectButton  LevelSets $f InitVol "Initial Level Set" Grid
+    foreach i $LevelSets(InitSchemeList) {
+      $f.mInitScheme.m add command \
+          -label   $LevelSets(InitScheme$i) \
+          -command "SetInitScheme $i " 
+    }
 
-     #-------------------------------------------
-    # Parameters->Threshold
-    #-------------------------------------------
-    set f $fInit.fInitThreshold
-    
+    grid $f.lInitScheme $f.mInitScheme  -pady 0 -padx $Gui(pad) -sticky e
 
-    eval {label $f.lInitThreshold -text "Threshold:"\
-          -width 16 -justify right } $Gui(WLA)
-
-    eval {entry $f.eInitThreshold -justify right -width 6 \
-          -textvariable  LevelSets(InitThreshold)  } $Gui(WEA)
-
-    grid $f.lInitThreshold $f.eInitThreshold -pady $Gui(pad) -padx $Gui(pad) -sticky e
-    grid $f.eInitThreshold  -sticky w
 
     #-------------------------------------------
+    # Parameters->fInitScheme0 : Fiducials
+    #-------------------------------------------
+
+    set fch0 $fInit.fFloatingFrame.fInitScheme0
+
     # Parameters->Radius Frame
-    #-------------------------------------------
-    set f $fInit.fInitRadius
-
+    frame $fch0.fRadius      -bg $Gui(activeWorkspace) -relief groove -bd 1
+    set f $fch0.fRadius
     eval {label $f.lInitRadius -text "Radius:"} $Gui(WLA)
 
     eval {entry $f.eInitRadius -justify right -width 4 \
@@ -432,27 +489,50 @@ proc LevelSetsBuildInitFrame {} {
 
     grid $f.lInitRadius $f.eInitRadius $f.sInitRadius
 
-    #-------------------------------------------
     # Parameters->FidPoints Frame
-    #-------------------------------------------
-    set f $fInit.fInitFidPoints
-    FiducialsAddActiveListFrame $f 7 25 "LevelSets-seed"
+    frame $fch0.fFidPoints      -bg $Gui(activeWorkspace) -relief groove -bd 1
+    FiducialsAddActiveListFrame $fch0.fFidPoints 7 25 "LevelSets-seed"
+
+    pack $fch0.fRadius $fch0.fFidPoints      -side top -padx 0 -pady 1 -fill x -expand true
 
     #-------------------------------------------
-    # Parameters->Intensity Thresholds
+    # Parameters->fInitScheme1 : Label Map
     #-------------------------------------------
-    set f $fInit.fIntensityThresholds
 
-    eval {label $f.lLIT -text "Low Intensity Thresh.:"} $Gui(WLA)
-    eval {entry $f.eLIT -justify right -width 4 \
-          -textvariable  LevelSets(LowIThreshold)  } $Gui(WEA)
+    set f $fInit.fFloatingFrame.fInitScheme1
+    
+    # Add menus that list models and volumes
+    myDevAddSelectButton  LevelSets $f InitVol "Initial Level Set" Grid
 
-    eval {label $f.lHIT -text "High Intensity Thresh.:"} $Gui(WLA)
-    eval {entry $f.eHIT -justify right -width 4 \
-          -textvariable  LevelSets(HighIThreshold)  } $Gui(WEA)
-       
-   grid $f.lLIT $f.eLIT -pady $Gui(pad) -padx $Gui(pad) -sticky e
-   grid $f.lHIT $f.eHIT -pady $Gui(pad) -padx $Gui(pad) -sticky e
+    # Parameters->Threshold
+    eval {label $f.lInitThreshold -text "Threshold:"\
+          -width 16 -justify right } $Gui(WLA)
+
+    eval {entry $f.eInitThreshold -justify right -width 6 \
+          -textvariable  LevelSets(InitThreshold)  } $Gui(WEA)
+
+    grid $f.lInitThreshold $f.eInitThreshold -pady $Gui(pad) -padx $Gui(pad) -sticky e
+    grid $f.eInitThreshold  -sticky w
+
+    #-------------------------------------------
+    # Parameters->fInitScheme2 : Greyscale Image
+    #-------------------------------------------
+
+    set f $fInit.fFloatingFrame.fInitScheme2
+    
+    # Add menus that list models and volumes
+    myDevAddSelectButton  LevelSets $f InitVol "Initial Level Set" Grid
+
+    # Parameters->Threshold
+    eval {label $f.lInitThreshold -text "Threshold:"\
+          -width 16 -justify right } $Gui(WLA)
+
+    eval {entry $f.eInitThreshold -justify right -width 6 \
+          -textvariable  LevelSets(InitThreshold)  } $Gui(WEA)
+
+    grid $f.lInitThreshold $f.eInitThreshold -pady $Gui(pad) -padx $Gui(pad) -sticky e
+    grid $f.eInitThreshold  -sticky w
+
 
 }
 #----- LevelSetsBuildInitFrame
@@ -476,11 +556,30 @@ proc LevelSetsBuildProbFrame {} {
     set fProb $Module(LevelSets,fProb)
     set f $fProb
   
+    frame $f.fIntensityThresholds  -bg $Gui(activeWorkspace) -relief groove -bd 3
     frame $f.fIntensityProba       -bg $Gui(activeWorkspace) -relief groove -bd 3
 
-    pack            $f.fIntensityProba \
+    pack  \
+          $f.fIntensityThresholds \
+          $f.fIntensityProba \
       -side top -padx 0 -pady 1 -fill x
     
+    #-------------------------------------------
+    # Parameters->Intensity Thresholds
+    #-------------------------------------------
+    set f $fProb.fIntensityThresholds
+
+    eval {label $f.lLIT -text "Low Intensity Thresh.:"} $Gui(WLA)
+    eval {entry $f.eLIT -justify right -width 4 \
+          -textvariable  LevelSets(LowIThreshold)  } $Gui(WEA)
+
+    eval {label $f.lHIT -text "High Intensity Thresh.:"} $Gui(WLA)
+    eval {entry $f.eHIT -justify right -width 4 \
+           -textvariable  LevelSets(HighIThreshold)  } $Gui(WEA)
+       
+    grid $f.lLIT $f.eLIT -pady $Gui(pad) -padx $Gui(pad) -sticky e
+    grid $f.lHIT $f.eHIT -pady $Gui(pad) -padx $Gui(pad) -sticky e
+
     #-------------------------------------------
     # Parameters->Intensity Probability Frame
     #-------------------------------------------
@@ -564,6 +663,21 @@ proc myDevAddSelectButton { TabName f aLabel message {tooltip ""} \
 
    
 #-------------------------------------------------------------------------------
+# .PROC DevAddImageButton
+#
+# .END
+#-------------------------------------------------------------------------------
+proc DevAddImageButton { ButtonName Message Command {Width 0} } {
+    global Gui
+    if {$Width == 0 } {
+        set Width [expr [string length $Message] +2]
+    }
+    eval  {button $ButtonName -text $Message -width $Width \
+            -command $Command } $Gui(WBA)
+} 
+
+
+#-------------------------------------------------------------------------------
 # .PROC LevelSetsBuildMainFrame
 #
 #   Create the Main frame
@@ -581,22 +695,38 @@ proc LevelSetsBuildMainFrame {} {
     set fMain $Module(LevelSets,fMain)
     set f $fMain
   
-    frame $f.fProtocol            -bg $Gui(activeWorkspace) -relief groove -bd 3
-    frame $f.fIO                  -bg $Gui(activeWorkspace) -relief groove -bd 3
+    frame $f.flogoLMI             -bg $Gui(activeWorkspace) 
+    frame $f.fProtocol            -bg $Gui(activeWorkspace) -relief groove -bd 1
+    frame $f.fIO                  -bg $Gui(activeWorkspace) -relief groove -bd 1
     frame $f.fDimension           -bg $Gui(activeWorkspace)
     frame $f.fUpSample            -bg $Gui(activeWorkspace)
     frame $f.fScaleParams         -bg $Gui(activeWorkspace)
-    frame $f.fRun                 -bg $Gui(activeWorkspace) -relief groove -bd 3
+    frame $f.fRun                 -bg $Gui(activeWorkspace) 
     frame $f.fModel               -bg $Gui(activeWorkspace)
 
+    pack  $f.flogoLMI  -side top -anchor w
+
     pack  $f.fProtocol \
-      $f.fIO \
-       $f.fUpSample  \
-      $f.fDimension  \
-      $f.fScaleParams \
+          $f.fIO \
+          $f.fUpSample  \
+          $f.fDimension  \
+          $f.fScaleParams \
           $f.fRun $f.fModel\
-      -side top -padx 0 -pady 1 -fill x
+          -side top -padx 0 -pady 1 -fill x
     
+    #-------------------------------------------
+    # Parameters->logoLMI: LMI logo
+    #-------------------------------------------
+    set f $fMain.flogoLMI
+    
+    image create photo ilogoLMI \
+        -file [ExpandPath [file join $::PACKAGE_DIR_VTKLevelSets/../../../images/LMI_logo_2.ppm]]
+    eval {label $f.llogoLMI -image ilogoLMI  \
+           -anchor w -justify left} $Gui(WLA)
+
+    TooltipAdd $f.llogoLMI     " Laboratory of Mathematics in Imaging "
+    pack $f.llogoLMI
+
     #-------------------------------------------
     # Parameters->Protocol Frame
     #-------------------------------------------
@@ -739,12 +869,28 @@ proc LevelSetsBuildMainFrame {} {
     #-------------------------------------------
     set f $fMain.fRun
 
-    DevAddButton $f.bInitRun   "Init & Run"  "RunLevelSetsBegin"
-    DevAddButton $f.bStop      "Stop"        "LevelSetsStop"
-    DevAddButton $f.bReRun     "ReRun"       "ReRunLevelSets"
-    DevAddButton $f.bEnd       "End"         "RunLevelSetsEnd"
+    DevAddButton $f.bRun       "Start/Continue"  "LevelSetsRun"
+    DevAddButton $f.bPause     "Pause"           "LevelSetsPause"
+    DevAddButton $f.bEnd       "End"             "LevelSetsEnd"
 
-    pack  $f.bInitRun $f.bStop $f.bReRun $f.bEnd -side left -padx 2 -pady 2 -expand 1
+    $f.bRun configure -image \
+          [image create bitmap \
+           -file [ExpandPath [file join $::PACKAGE_DIR_VTKLevelSets/../../../images/play.xbm] \
+           -width 20 
+    $f.bPause configure -image \
+          [image create bitmap \
+           -file [ExpandPath [file join $::PACKAGE_DIR_VTKLevelSets/../../../images/tpause.xbm] \
+           -width 20
+    $f.bEnd configure -image \
+           [image create bitmap \
+           -file [ExpandPath [file join $::PACKAGE_DIR_VTKLevelSets/../../../images/stop.xbm] \
+           -width 20
+
+    TooltipAdd $f.bRun     " Start/Continue the current evolution "
+    TooltipAdd $f.bPause   " Pause the evolution "
+    TooltipAdd $f.bEnd     " Stop the current evolution "
+
+    pack  $f.bRun $f.bPause $f.bEnd -side left -padx 3 -pady 2 -expand 0
 
     #-------------------------------------------
     # Parameters->Model Frame
@@ -797,18 +943,38 @@ proc LevelSetsBuildEquFrame {} {
     #-------------------------------------------
     set f $fEqu.fSmoothingParam
 
-    eval {label $f.lSmoothingParam -text "Smoothing Parameters:"} $Gui(WLA)
-    grid $f.lSmoothingParam     -pady 2 -padx $Gui(pad) -sticky e
+    eval {label $f.lSmoothingParam -text "Smoothing:"} $Gui(WLA)
+#    grid $f.lSmoothingParam     -pady 2 -padx $Gui(pad) -sticky e
+
 
     #--------------------------------------------------
-    eval {label $f.lDoMean -text "DoMean:" \
-          -width 16 -justify right } $Gui(WLA)
-    eval {entry $f.eDoMean -justify right -width 6 \
-          -textvariable  LevelSets(DoMean)  } $Gui(WEA)
-    TooltipAdd $f.lDoMean " {0,1};  '0': minimal curvature evolution, '1': mean curvature evolution. "
-    grid $f.lDoMean $f.eDoMean -pady 0 -padx $Gui(pad) -sticky e
-    grid $f.eDoMean  -sticky w
+    proc SetSmoothingScheme { i } {
+      global LevelSets
+      set LevelSets(SmoothingScheme) $LevelSets(SmoothingScheme$i)
+    }
 
+    eval {menubutton $f.mSmoothingScheme  \
+                      -relief raised -indicatoron on -takefocus 1 \
+                      -width 16 -justify right \
+                      -menu $f.mSmoothingScheme.m \
+                      -textvariable  LevelSets(SmoothingScheme) } $Gui(WEA)
+    eval {menu $f.mSmoothingScheme.m -tearoff 0   }
+    
+    foreach i $LevelSets(SmoothingSchemeList) {
+      $f.mSmoothingScheme.m add command \
+          -label   $LevelSets(SmoothingScheme$i) \
+          -command "SetSmoothingScheme $i " 
+    }
+
+    grid $f.lSmoothingParam $f.mSmoothingScheme  -pady 0 -padx $Gui(pad) -sticky e
+
+#    eval {label $f.lDoMean -text "DoMean:" \
+#          -width 16 -justify right } $Gui(WLA)
+#    eval {entry $f.eDoMean -justify right -width 6 \
+#          -textvariable  LevelSets(DoMean)  } $Gui(WEA)
+#    TooltipAdd $f.lDoMean " {0,1};  '0': minimal curvature evolution, '1': mean curvature evolution. "
+#    grid $f.lDoMean $f.eDoMean -pady 0 -padx $Gui(pad) -sticky e
+#    grid $f.eDoMean  -sticky w
 
 
     #-------------------------------------------
@@ -816,18 +982,46 @@ proc LevelSetsBuildEquFrame {} {
     #-------------------------------------------
     set f $fEqu.fAdvectionParam
 
-    eval {label $f.lAdvectionParam -text "Advection Parameters:"} $Gui(WLA)
-    grid $f.lAdvectionParam     -pady 2 -padx $Gui(pad) -sticky e
-        
-    eval {label $f.lAdvectionScheme -text "Advection scheme:" \
-          -width 16 -justify right } $Gui(WLA)
+    eval {label $f.lAdvectionParam -text "Advection:"} $Gui(WLA)
+#   grid $f.lAdvectionParam     -pady 2 -padx $Gui(pad) -sticky e
 
-    TooltipAdd $f.lAdvectionScheme " {0,1 or 2};  \n '1': ADVECTION_CENTRAL_VECTORS Liana's code scheme, \n '0': ADVECTION_UPWIND_VECTORS standard scheme, gradient of the gradient norm scalar the levelset normal, \n '2': ADVECTION_MORPHO normalized zero-crossing of the sec. order derivatives in the gradient direction"
 
-    eval {entry $f.eAdvectionScheme -justify right -width 6 \
-          -textvariable  LevelSets(AdvectionScheme)  } $Gui(WEA)
-    grid $f.lAdvectionScheme $f.eAdvectionScheme     -pady 0 -padx $Gui(pad) -sticky e
-    grid $f.eAdvectionScheme  -sticky w
+
+    #--------------------------------------------------
+    proc SetAdvectionScheme { i } {
+      global LevelSets
+      set LevelSets(AdvectionScheme) $LevelSets(AdvectionScheme$i)
+    }
+ 
+
+    eval {menubutton $f.mAdvectionScheme  \
+                      -relief raised -indicatoron on -takefocus 1 \
+                      -width 16 -justify right \
+                      -menu $f.mAdvectionScheme.m \
+                      -textvariable  LevelSets(AdvectionScheme) } $Gui(WEA)
+
+
+   TooltipAdd $f.mAdvectionScheme "ADVECTION VECTOR: standard scheme, gradient of the gradient norm scalar the levelset normal, \n ADVECTION SCALAR: normalized zero-crossing of the sec. order derivatives in the gradient direction."
+
+    eval {menu $f.mAdvectionScheme.m -tearoff 0   }
+    
+    foreach i $LevelSets(AdvectionSchemeList) {
+      $f.mAdvectionScheme.m add command \
+          -label   $LevelSets(AdvectionScheme$i) \
+          -command "SetAdvectionScheme $i " 
+    }
+
+    grid $f.lAdvectionParam $f.mAdvectionScheme  -pady 0 -padx $Gui(pad) -sticky e
+      
+#    eval {label $f.lAdvectionScheme -text "Advection scheme:" \
+#          -width 16 -justify right } $Gui(WLA)
+
+#    TooltipAdd $f.lAdvectionScheme " {0,1 or 2};  \n '1': ADVECTION_CENTRAL_VECTORS Liana's code scheme, \n '0': ADVECTION_UPWIND_VECTORS standard scheme, gradient of the gradient norm scalar the levelset normal, \n '2': ADVECTION_MORPHO normalized zero-crossing of the sec. order derivatives in the gradient direction"
+
+#    eval {entry $f.eAdvectionScheme -justify right -width 6 \
+#          -textvariable  LevelSets(AdvectionScheme)  } $Gui(WEA)
+#    grid $f.lAdvectionScheme $f.eAdvectionScheme     -pady 0 -padx $Gui(pad) -sticky e
+#    grid $f.eAdvectionScheme  -sticky w
 
 
     #-------------------------------------------
@@ -835,47 +1029,72 @@ proc LevelSetsBuildEquFrame {} {
     #-------------------------------------------
     set f $fEqu.fEquationParam
 
-    eval {label $f.lEquationParam -text "Equation Parameters:"} $Gui(WLA)
+    eval {label $f.lEquationParam -text "Coefficents:"} $Gui(WLA)
         
-    grid $f.lEquationParam     -pady 2 -padx $Gui(pad) -sticky e
+    grid $f.lEquationParam -pady 2 -padx $Gui(pad)
 
     #--------------------------------------------------
-    eval {label $f.lBalloonCoeff -text "BalloonCoeff:" \
-          -width 16 -justify right } $Gui(WLA)
-    eval {entry $f.eBalloonCoeff -justify right -width 6 \
+    eval {label $f.lBalloonCoeff -text "Expansion:" -width 12 } $Gui(WLA)
+
+    eval {entry $f.eBalloonCoeff -justify right -width 4 \
           -textvariable  LevelSets(BalloonCoeff)  } $Gui(WEA)
-#    TooltipAdd $f.eBalloonCoeff " {0,1};  '0': minimal curvature evolution, '1': mean curvature evolution. "
-    grid $f.lBalloonCoeff $f.eBalloonCoeff     -pady 0 -padx $Gui(pad) -sticky e
-    grid $f.eBalloonCoeff  -sticky w
+
+    eval {scale $f.sBalloonCoeff -from 0.00 -to 1.00        \
+          -variable  LevelSets(BalloonCoeff)\
+          -orient vertical     \
+          -resolution .01      \
+          } $Gui(WSA)
+
+    grid $f.lBalloonCoeff $f.eBalloonCoeff $f.sBalloonCoeff  -pady 0 -padx 0
+
 
 
     #--------------------------------------------------
-    eval {label $f.lAttachCoeff -text "AttachCoeff:" \
-          -width 16 -justify right } $Gui(WLA)
-    eval {entry $f.eAttachCoeff -justify right -width 6 \
-          -textvariable  LevelSets(AttachCoeff)  } $Gui(WEA)
+    eval {label $f.lAdvectionCoeff -text "Advection:" \
+          -width 10 } $Gui(WLA)
+
+    eval {entry $f.eAdvectionCoeff -justify right -width 4 \
+          -textvariable  LevelSets(AdvectionCoeff)  } $Gui(WEA)
     
-    grid $f.lAttachCoeff $f.eAttachCoeff     -pady 0 -padx $Gui(pad) -sticky e
-    grid $f.eAttachCoeff  -sticky w
+    eval {scale $f.sAdvectionCoeff -from 0.00 -to 1.00        \
+          -variable  LevelSets(AdvectionCoeff)\
+          -orient vertical     \
+          -resolution .01      \
+          } $Gui(WSA)
+
+    grid $f.lAdvectionCoeff $f.eAdvectionCoeff  $f.sAdvectionCoeff  -pady 0 -padx 0
 
 
     #--------------------------------------------------
-    eval {label $f.lCurvCoeff -text "Smoothing Coeff:" \
-          -width 16 -justify right } $Gui(WLA)
-    eval {entry $f.eCurvCoeff -justify right -width 6 \
-          -textvariable  LevelSets(CurvCoeff)  } $Gui(WEA)
-    grid $f.lCurvCoeff $f.eCurvCoeff     -pady 0 -padx $Gui(pad) -sticky e
-    grid $f.eCurvCoeff  -sticky w
+    eval {label $f.lSmoothingCoeff -text "Smoothing:" \
+          -width 10  } $Gui(WLA)
+
+    eval {entry $f.eSmoothingCoeff -justify right -width 4 \
+          -textvariable  LevelSets(SmoothingCoeff)  } $Gui(WEA)
+
+    eval {scale $f.sSmoothingCoeff -from 0.00 -to 1.00        \
+          -variable  LevelSets(SmoothingCoeff)\
+          -orient vertical     \
+          -resolution .01      \
+          } $Gui(WSA)
+
+
+    grid $f.lSmoothingCoeff $f.eSmoothingCoeff $f.sSmoothingCoeff -pady 0 -padx 0
 
 
     #--------------------------------------------------
     eval {label $f.lStepDt -text "StepDt:" \
-          -width 16 -justify right } $Gui(WLA)
-    eval {entry $f.eStepDt -justify right -width 6 \
+          -width 10  } $Gui(WLA)
+    eval {entry $f.eStepDt -justify right -width 4 \
           -textvariable  LevelSets(StepDt)  } $Gui(WEA)
-    grid $f.lStepDt $f.eStepDt     -pady 0 -padx $Gui(pad) -sticky e
-    grid $f.eStepDt  -sticky w
 
+    eval {scale $f.sStepDt -from 0.01 -to 1.00        \
+          -variable  LevelSets(StepDt)\
+          -orient vertical     \
+          -resolution .01      \
+          } $Gui(WSA)
+
+    grid $f.lStepDt $f.eStepDt  $f.sStepDt    -pady 0 -padx 0
 
 
     #-------------------------------------------
@@ -1098,6 +1317,7 @@ proc LevelSetsPrepareResultVolume {}  {
 #----- LevelSetsPrepareResultVolume
 
 
+
 #-------------------------------------------------------------------------------
 # .PROC LevelSetsUpdateResults
 #
@@ -1174,10 +1394,16 @@ proc LevelSetsUpdateParams {} {
 
   # Number of iterations
   LevelSets(curv) SetNumIters            $LevelSets(NumIters)
-  LevelSets(curv) SetAdvectionCoeff      $LevelSets(AttachCoeff)
-  LevelSets(curv) Setcoeff_curvature     $LevelSets(CurvCoeff)
+  LevelSets(curv) SetAdvectionCoeff      $LevelSets(AdvectionCoeff)
+  LevelSets(curv) Setcoeff_curvature     $LevelSets(SmoothingCoeff)
   LevelSets(curv) Setballoon_coeff       $LevelSets(BalloonCoeff)
-  LevelSets(curv) SetDoMean              $LevelSets(DoMean)
+
+  foreach i $LevelSets(SmoothingSchemeList) {
+      if { $LevelSets(SmoothingScheme) == $LevelSets(SmoothingScheme${i}) } {
+      LevelSets(curv) SetDoMean              $i
+      }
+  }
+
   LevelSets(curv) SetStepDt              $LevelSets(StepDt)
   LevelSets(curv) SetEvolveThreads       $LevelSets(NumberOfThreads)
 
@@ -1190,13 +1416,95 @@ proc LevelSetsUpdateParams {} {
 
 
 #-------------------------------------------------------------------------------
-# .PROC RunLevelSetsBegin
+# .PROC LevelSetsShowProgress
+#
+#   
+#
+# .END
+#-------------------------------------------------------------------------------
+proc LevelSetsShowProgress { progress } {
+    global  LevelSets BarId TextId Gui
+
+    set k [LevelSets(curv) Getstep]
+
+    set progress $progress
+    set height   [winfo height $Gui(fStatus)]
+    set width    [winfo width $Gui(fStatus)]
+
+    if {[info exists BarId] == 1} {
+        $Gui(fStatus).canvas delete $BarId
+    }
+    if {[info exists TextId] == 1} {
+        $Gui(fStatus).canvas delete $TextId
+    }
+       
+    set BarId [$Gui(fStatus).canvas create rect 0 0 [expr $progress*$width] \
+        $height -fill [MakeColorNormalized ".5 .5 1.0"]]
+ 
+    
+    set TextId [$Gui(fStatus).canvas create text [expr $width/2] \
+        [expr $height/3] -anchor center -justify center -text \
+        "step $k"]
+ 
+    update idletasks
+}
+#--- LevelSetsShowProgress
+
+
+#-------------------------------------------------------------------------------
+# .PROC LevelSetsEndProgress
+#
+# Clears the progress bar (for when done reading off disk, etc.)
+# 
+# .END
+#-------------------------------------------------------------------------------
+proc LevelSetsEndProgress {} {
+    global BarId TextId Gui
+    
+    if {[info exists BarId] == 1} {
+        $Gui(fStatus).canvas delete $BarId
+    }
+    if {[info exists TextId] == 1} {
+        $Gui(fStatus).canvas delete $TextId
+    }
+    set height   [winfo height $Gui(fStatus)]
+    set width    [winfo width $Gui(fStatus)]
+    set BarId [$Gui(fStatus).canvas create rect 0 0 $width \
+        $height -fill [MakeColorNormalized ".7 .7 .7"]]
+    update idletasks
+}
+# --- LevelSetsEndProgress
+
+#-------------------------------------------------------------------------------
+# .PROC LevelSetsRun
+#
+#   Starts or Continues the current Level Set evolution
+#
+# .END
+#-------------------------------------------------------------------------------
+proc LevelSetsRun {} {
+#    --------------
+
+  global LevelSets Slice
+
+  if { $LevelSets(Processing) == "OFF" } {
+      LevelSetsStart
+  } else {
+      LevelSetsContinue
+  }
+
+}
+#----- LevelSetsRun
+
+
+#-------------------------------------------------------------------------------
+# .PROC LevelSetsStart
 #
 #   Initialize and run the Level Set
 #
 # .END
 #-------------------------------------------------------------------------------
-proc RunLevelSetsBegin {} {
+proc LevelSetsStart {} {
 #    -----------------
 
   global LevelSets Volume Gui Slice
@@ -1211,9 +1519,10 @@ proc RunLevelSetsBegin {} {
       return
   }
 
-  set input $LevelSets(InputVol)
-  set res   $LevelSets(ResultVol)
-  set lm    $LevelSets(LabelResultVol)
+  set input   $LevelSets(InputVol)
+  set res     $LevelSets(ResultVol)
+  set lm      $LevelSets(LabelResultVol)
+  set initvol $LevelSets(InitVol)
 
   #
   # the upsampling should not be used: NOT TESTED YET ...
@@ -1266,7 +1575,11 @@ proc RunLevelSetsBegin {} {
   LevelSets(curv) SetHistoGradThreshold  $LevelSets(HistoGradThreshold)
 
   # Scheme and Coefficient for the advection force
-  LevelSets(curv) Setadvection_scheme    $LevelSets(AdvectionScheme)
+  foreach i $LevelSets(AdvectionSchemeList) {
+      if { $LevelSets(AdvectionScheme) == $LevelSets(AdvectionScheme${i}) } {
+      LevelSets(curv) Setadvection_scheme              $i
+      }
+  }
 
   if {$LevelSets(LowIThreshold) > 0} {
       LevelSets(curv) SetUseLowThreshold 1
@@ -1305,34 +1618,46 @@ proc RunLevelSetsBegin {} {
   #
 
   #
-  #------- Check Fiducial list
+  #------- Check Initial Level Set Image
   #
-  set fidlist [FiducialsGetPointIdListFromName "LevelSets-seed"]
 
-  #Update numPoints module variable  
-  set LevelSets(NumInitPoints) [llength $fidlist]
 
-  if {$LevelSets(NumInitPoints) > 0} {
-    LevelSets(curv) SetNumInitPoints $LevelSets(NumInitPoints)
-  }
+  if { $initvol !=  $Volume(idNone) } {
+      if { $initvol != $input } {
+    puts "SetinitImage"
+        LevelSets(curv) SetinitImage [Volume($initvol,vol) GetOutput]
+      }
+      puts "SetInitThreshold"
+      LevelSets(curv) SetInitThreshold       $LevelSets(InitThreshold)
+  }  else {
 
-  set radius 4
-  set RASToIJKMatrix [Volume($input,node) GetRasToIjk]
-  for {set n 0} {$n < $LevelSets(NumInitPoints)} {incr n} {
-    set coord [FiducialsGetPointCoordinates [lindex $fidlist $n]]
-    set cr [lindex $coord 0]
-    set ca [lindex $coord 1]
-    set cs [lindex $coord 2]
-    #Transform from RAS to IJK
-    scan [$RASToIJKMatrix MultiplyPoint $cr $ca $cs 1] "%g %g %g %g" xi yi zi hi
-    puts "LevelSets(curv) SetInitPoint  $n $xi $yi $zi $LevelSets(InitRadius)"
+      puts "Fiducials"
+
+      #
+      #------- Check Fiducial list
+      #
+      set fidlist [FiducialsGetPointIdListFromName "LevelSets-seed"]
+      
+      #Update numPoints module variable  
+      set LevelSets(NumInitPoints) [llength $fidlist]
+      
+      if {$LevelSets(NumInitPoints) > 0} {
+      LevelSets(curv) SetNumInitPoints $LevelSets(NumInitPoints)
+      }
+      
+      set radius 4
+      set RASToIJKMatrix [Volume($input,node) GetRasToIjk]
+      for {set n 0} {$n < $LevelSets(NumInitPoints)} {incr n} {
+      set coord [FiducialsGetPointCoordinates [lindex $fidlist $n]]
+      set cr [lindex $coord 0]
+      set ca [lindex $coord 1]
+      set cs [lindex $coord 2]
+      #Transform from RAS to IJK
+      scan [$RASToIJKMatrix MultiplyPoint $cr $ca $cs 1] "%g %g %g %g" xi yi zi hi
+      puts "LevelSets(curv) SetInitPoint  $n $xi $yi $zi $LevelSets(InitRadius)"
       LevelSets(curv) SetInitPoint  $n [expr round($xi)] [expr round($yi)] \
-                                       [expr round($zi)] $LevelSets(InitRadius)
-  }
-
-  if {$LevelSets(NumInitPoints) == 0} {
-#    curv SetinitImage           $init
-    LevelSets(curv) SetInitThreshold       $LevelSets(InitThreshold)
+          [expr round($zi)] $LevelSets(InitRadius)
+      }
   }
 
   #
@@ -1344,7 +1669,8 @@ proc RunLevelSetsBegin {} {
   LevelSets(curv) InitEvolution
 
   for {set j 0} { ($j < $LevelSets(NumIters)) && ($LevelSets(Processing) == "ON")} {incr j} {
-    puts $j
+#    puts $j
+    LevelSetsShowProgress [expr  1.*$j/$LevelSets(NumIters)]
     LevelSets(curv) Iterate
     update
   }
@@ -1355,19 +1681,20 @@ proc RunLevelSetsBegin {} {
 #  curv SetEndMethod        MainEndProgress
 
   LevelSetsUpdateResults
+  LevelSetsEndProgress
 
 }
-#----- RunLevelSetsBegin
+#----- LevelSetsStart
 
 
 #-------------------------------------------------------------------------------
-# .PROC LevelSetsStop
+# .PROC LevelSetsPause
 #
 #   Stops the current Level Set evolution
 #
 # .END
 #-------------------------------------------------------------------------------
-proc LevelSetsStop {} {
+proc LevelSetsPause {} {
 #    -------------
 
   global LevelSets 
@@ -1375,17 +1702,17 @@ proc LevelSetsStop {} {
   set LevelSets(Processing)  "STOP"
 
 }
-#----- LevelSetsStop
+#----- LevelSetsPause
 
 
 #-------------------------------------------------------------------------------
-# .PROC ReRunLevelSets
+# .PROC LevelSetsContinue
 #
 #   Continues the current Level Set evolution
 #
 # .END
 #-------------------------------------------------------------------------------
-proc ReRunLevelSets {} {
+proc LevelSetsContinue {} {
 #    --------------
 
   global LevelSets Slice
@@ -1402,25 +1729,27 @@ proc ReRunLevelSets {} {
   LevelSetsUpdateParams
 
   for {set j 0} {($j < $LevelSets(NumIters))&& ($LevelSets(Processing) == "ON")} {incr j} {
-    puts $j
+#    puts $j
+    LevelSetsShowProgress [expr  1.*$j/$LevelSets(NumIters)]
     LevelSets(curv) Iterate
     update
   }
 
   LevelSetsUpdateResults
+  LevelSetsEndProgress
 
 }
-#----- ReRunLevelSets
+#----- LevelSetsContinue
 
 
 #-------------------------------------------------------------------------------
-# .PROC RunLevelSetsEnd
+# .PROC LevelSetsEnd
 #
 #   Ends the current evolution
 #
 # .END
 #-------------------------------------------------------------------------------
-proc RunLevelSetsEnd {} {
+proc LevelSetsEnd {} {
 
   global LevelSets 
 
@@ -1436,10 +1765,10 @@ proc RunLevelSetsEnd {} {
   LevelSets(curv) Delete
   LevelSets(output) Delete
 
-  set LevelSets(Processing) "DONE"
+  set LevelSets(Processing) "OFF"
 
 }
-#----- RunLevelSetsEnd
+#----- LevelSetsEnd
 
 
 #-------------------------------------------------------------------------------
@@ -1491,12 +1820,11 @@ proc SetSPGR_WM_Param {} {
 
   set LevelSets(Dimension)              "3"
   set LevelSets(HistoGradThreshold)     "0.2"
-  set LevelSets(AttachCoeff)            "1"
+  set LevelSets(AdvectionCoeff)            "1"
   set LevelSets(StepDt)                 "0.8"
-  set LevelSets(DoMean)                 "0"
   set LevelSets(ReinitFreq)             "6"
-  set LevelSets(CurvCoeff)              "0.2"
-  set LevelSets(DoMean)                 "1"
+  set LevelSets(SmoothingCoeff)              "0.2"
+  set LevelSets(SmoothingScheme)        "Mean Curvature"
   set LevelSets(BandSize)               "3"
   set LevelSets(TubeSize)               "2"
   set LevelSets(NumIters)               "50"
@@ -1525,12 +1853,11 @@ proc SetMRAParam {} {
   #
   set LevelSets(Dimension)                  "3"
   set LevelSets(HistoGradThreshold)         "0.4"
-  set LevelSets(AttachCoeff)                "0.8"
+  set LevelSets(AdvectionCoeff)                "0.8"
   set LevelSets(StepDt)                     "0.8"
-  set LevelSets(DoMean)                     "0"
+  set LevelSets(SmoothingScheme)            "Minimal Curvature"
   set LevelSets(ReinitFreq)                 "6"
-  set LevelSets(CurvCoeff)                  "0.1"
-  set LevelSets(DoMean)                     "0"
+  set LevelSets(SmoothingCoeff)                  "0.1"
   set LevelSets(BandSize)                   "3"
   set LevelSets(TubeSize)                   "2"
   set LevelSets(NumIters)                   "100"
