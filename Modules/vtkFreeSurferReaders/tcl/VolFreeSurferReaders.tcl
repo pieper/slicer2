@@ -294,7 +294,7 @@ proc VolFreeSurferDemo {} {
     global env
 
     source $env(SLICER_HOME)/Modules/vtkFreeSurferReaders/tcl/regions.tcl
-    source $env(SLICER_HOME)/Modules/vtkFreeSurferReaders/tcl/ccdb.tcl
+    catch "source $env(SLICER_HOME)/Modules/vtkFreeSurferReaders/tcl/ccdb.tcl"
     set r [regions #auto]
     $r demo
 }
