@@ -24,14 +24,15 @@ exec tclsh "$0" "$@"
 
 switch $tcl_platform(os) {
     "SunOS" {
-        set SLICER_HOME /projects/birn/nicole/slicer2
-        set VTK_DIR /projects/birn/slicer2/Lib/solaris8/vtk/VTK-build-4.2.2
+        set SLICER_HOME /projects/birn/slicer2/slicer2-2003-09-17
+        set VTK_DIR /projects/birn/slicer2/Lib/solaris8/vtk/VTK-build-2003-09-18
         set ITK_BINARY_PATH /projects/birn/itk/itk-1.2/itk-build
         set BUILD solaris8
         set VTKSLICERBASE_BUILD_LIB $SLICER_HOME/Base/builds/$BUILD/bin/vtkSlicerBase.so
         set GENERATOR "Unix Makefiles"
         set COMPILER "g++"
         set CMAKE cmake
+        set MAKE "gmake -j15"
     }
     "Linux" {
         set SLICER_HOME /home/nicole/slicer2
@@ -41,6 +42,7 @@ switch $tcl_platform(os) {
         set GENERATOR "Unix Makefiles" 
         set COMPILER "g++"
         set CMAKE cmake
+        set MAKE make
     }
     "Darwin" {
         set SLICER_HOME /Users/pieper/slicer2/latest/slicer2
@@ -51,6 +53,7 @@ switch $tcl_platform(os) {
         set GENERATOR "Unix Makefiles" 
         set COMPILER "c++"
         set CMAKE cmake
+        set MAKE make
     }
     default {
         # different windows machines say different things, so assume
@@ -66,6 +69,7 @@ switch $tcl_platform(os) {
         set GENERATOR "Visual Studio 7" 
         set COMPILER "cl"
         set CMAKE "c:/Program Files/CMake/bin/cmake.exe"
+        set MAKE make
     }
 }
 
@@ -203,10 +207,10 @@ foreach target $TARGETS {
         "SunOS" -
         "Darwin" -
         "Linux" {
-            puts "running: make"
+            puts "running: $MAKE"
 
             # print the results line by line to provide feedback during long builds
-            set fp [open "| gmake -j8 |& cat" "r"]
+            set fp [open "| $MAKE |& cat" "r"]
             while { ![eof $fp] } {
                 gets $fp line
                 puts $line
