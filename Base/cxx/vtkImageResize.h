@@ -21,9 +21,12 @@ THE SOFTWARE IS PROVIDED "AS IS."  MIT HAS NO OBLIGATION TO PROVIDE
 MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 =========================================================================auto=*/
-// .NAME vtkImageResize - duh
+// .NAME vtkImageResize - resize (scale) the input image
 // .SECTION Description
-// This filter does stuff
+// Currently just used in vtkMrmlVolume for the histogram, which
+// died with the advent of vtk3.1.  The histogram needs to be 
+// fixed.
+//
 
 #ifndef __vtkImageResize_h
 #define __vtkImageResize_h

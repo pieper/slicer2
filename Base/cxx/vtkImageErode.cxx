@@ -73,7 +73,6 @@ static void vtkImageErodeExecute(vtkImageErode *self,
 				     vtkImageData *outData,
 				     int outExt[6], int id)
 {
-	int *kernelMiddle, *kernelSize;
 	// For looping though output (and input) pixels.
 	int outMin0, outMax0, outMin1, outMax1, outMin2, outMax2;
 	int outIdx0, outIdx1, outIdx2;

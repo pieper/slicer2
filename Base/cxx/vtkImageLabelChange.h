@@ -21,10 +21,13 @@ THE SOFTWARE IS PROVIDED "AS IS."  MIT HAS NO OBLIGATION TO PROVIDE
 MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 =========================================================================auto=*/
-// .NAME vtkImageLabelChange -  Flexible threshold
+// .NAME vtkImageLabelChange -  Change one label value to another
+// 
 // .SECTION Description
-//  The output data type may be different than the output, but defaults
-// to the same type.
+//
+// vtkImageLabelChange is will replace one voxel value with another.
+// This is used for editing of labelmaps.
+//
 
 #ifndef __vtkImageLabelChange_h
 #define __vtkImageLabelChange_h

@@ -21,9 +21,11 @@ THE SOFTWARE IS PROVIDED "AS IS."  MIT HAS NO OBLIGATION TO PROVIDE
 MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 =========================================================================auto=*/
-// .NAME vtkImageReformat -  Flexible threshold
+// .NAME vtkImageReformat -  Reformats a 2D image from a 3D volume.
 // .SECTION Description
-// vtkImageReformat Can do binary or continous thresholding
+// vtkImageReformat allows interpolation or replication.
+//
+
 
 #ifndef __vtkImageReformat_h
 #define __vtkImageReformat_h

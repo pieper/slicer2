@@ -21,10 +21,12 @@ THE SOFTWARE IS PROVIDED "AS IS."  MIT HAS NO OBLIGATION TO PROVIDE
 MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 =========================================================================auto=*/
-// .NAME vtkImageReplaceRegion - Analysis bimodal histograms
+// .NAME vtkImageReplaceRegion - replaces a region in the input
+// with this->Region.
 // .SECTION Description
-// vtkImageReplaceRegion - This filter assumes the input comes
-// from vtkImageAccumulateDiscrete, so there.
+// vtkImageReplaceRegion - Used in vtkImageEditor.cxx to replace
+// a 2D region with the output from an editor effect.  (For
+// editing on a slice-by-slice basis.)
 
 #ifndef __vtkImageReplaceRegion_h
 #define __vtkImageReplaceRegion_h

@@ -406,7 +406,7 @@ static void DrawLines(int nx, int ny, int z, int radius,
 	T *outPtr;
 	int n = nPts;
 	int rad = radius;
-	int d = 2*rad+1;
+	//int d = 2*rad+1;
 	int dx, dy, dy2, dx2, r, dydx2;
 	int xx, yy, xInc;
 
@@ -564,7 +564,7 @@ static void DrawPoints(int nx, int ny, int z, int radius,
 	outData->GetExtent(min0, max0, min1, max1, min2, max2);
 	int n = nPts;
 	int r = radius;
-	int d = 2*r+1;
+	//int d = 2*r+1;
 
 	for (i=0; i < n; i++)
 	{
@@ -593,7 +593,7 @@ static void vtkImageFillROIExecute(vtkImageFillROI* self,
 {
 	short value = (short)(self->GetValue());
 	int r = self->GetRadius();
-	int i, j, x, y, z, nPts, nx, ny, outExt[6], draw = 0;
+	int i, j, x, y, z, nPts, nx, ny, outExt[6];
 	int *xPts, *yPts;
 	float *pt;
 

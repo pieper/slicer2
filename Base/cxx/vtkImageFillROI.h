@@ -23,7 +23,16 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 =========================================================================auto=*/
 // .NAME vtkImageFillROI - Paints on top of an image.
 // .SECTION Description
-// vtkImageFillROI will draw a cursor on a 2d image.
+// vtkImageFillROI will draw a polygon, line, or points in an
+// image.  As opposed to vtkImageDrawROI, which draws only outlines
+// around these shapes, this filter will also fill the inside of 
+// polygons.
+// This filter is used when applying image editing effects, 
+// while vtkImageDrawROI is used while the user is actually
+// drawing (for temporary interactive display).  So it is 
+// important that the output from this filter (vtkImageFIllROI)
+// correspond to that of the vtkImageDrawROI filter!
+//
 
 #ifndef __vtkImageFillROI_h
 #define __vtkImageFillROI_h

@@ -21,7 +21,8 @@ THE SOFTWARE IS PROVIDED "AS IS."  MIT HAS NO OBLIGATION TO PROVIDE
 MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 =========================================================================auto=*/
-// .NAME vtkMrmlFiducialsNode - MRML node for representing a transform.
+// .NAME vtkMrmlFiducialsNode - MRML node for representing a
+// constellation of vtkMrmlPoints.
 // .SECTION Description
 // A Fiducials is container for a constellation of vtkMrmlPoints
 

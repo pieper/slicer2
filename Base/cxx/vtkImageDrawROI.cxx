@@ -677,7 +677,6 @@ void vtkImageDrawROI::DrawSelectBox(vtkImageData *outData, int outExt[6])
 	unsigned char color[3];
 	unsigned char *outPtr = (unsigned char *) \
 		outData->GetScalarPointerForExtent(outExt);
-	int r = this->PointRadius;
 	long nxnc, nc, nx;
 	Point p1, p2, p3, p4;
 	long xMin, xMax, yMin, yMax;

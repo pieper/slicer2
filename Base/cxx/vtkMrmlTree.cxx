@@ -43,7 +43,7 @@ void vtkMrmlTree::Write(char *filename)
   vtkCollectionElement *elem=this->Top;
   vtkMrmlNode *node;
   ofstream file;
-  int i, indent=0, deltaIndent;
+  int indent=0, deltaIndent;
 
   // Open file
   file.open(filename);

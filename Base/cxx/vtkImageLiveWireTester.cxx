@@ -252,7 +252,8 @@ static void vtkImageLiveWireTesterExecute(vtkImageLiveWireTester *self,
 // the datas data types.
 void vtkImageLiveWireTester::Execute(vtkImageData *inData, vtkImageData *outData)
 {
-  int outExt[6], id=0, s;
+  int outExt[6];
+  int s;
   outData->GetWholeExtent(outExt);
   void *inPtr = inData->GetScalarPointerForExtent(outExt);
   void *outPtr = outData->GetScalarPointerForExtent(outExt);

@@ -21,13 +21,9 @@ THE SOFTWARE IS PROVIDED "AS IS."  MIT HAS NO OBLIGATION TO PROVIDE
 MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 =========================================================================auto=*/
-// .NAME vtkMrmlPathNode - MRML node to represent transformation matrices.
+// .NAME vtkMrmlPathNode - MRML node to represent a path.
 // .SECTION Description
-// The output of a rigid-body registration is a rotation and translation 
-// expressed mathematically as a transformation matrix.  These transforms 
-// can be inserted into MRML files as Path nodes.  Each matrix 
-// affects volumes and models that appear below it in the MRML file.  
-// Multiple matrices can be concatenated together. 
+//
 
 #ifndef __vtkMrmlPathNode_h
 #define __vtkMrmlPathNode_h

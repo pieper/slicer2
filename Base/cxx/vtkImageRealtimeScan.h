@@ -21,7 +21,7 @@ THE SOFTWARE IS PROVIDED "AS IS."  MIT HAS NO OBLIGATION TO PROVIDE
 MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 =========================================================================auto=*/
-// .NAME vtkImageSphereSource - Create a binary image of a sphere.
+// .NAME vtkImageRealtimeScan - Get a realtime image from the scanner.
 // .SECTION
 // vtkImageRealtimeScan just produces images filled with noise.  
 

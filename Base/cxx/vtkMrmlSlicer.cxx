@@ -1954,7 +1954,10 @@ vtkImageReformat *vtkMrmlSlicer::GetVolumeReformatter(vtkMrmlVolume *v)
       return reformat;
     }
   else
-    vtkErrorMacro("Not reformatting this volume: " << v );  
+    {
+      vtkErrorMacro("Not reformatting this volume: " << v );  
+      return NULL;
+    }
 }
 
 //----------------------------------------------------------------------------

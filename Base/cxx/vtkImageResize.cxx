@@ -319,7 +319,8 @@ static void vtkImageResizeExecute2D(vtkImageResize *self,
 {
   int idxX, idxY, maxX, maxY, inMaxX, inMaxY;
   int outIncX, outIncY, outIncZ;
-  float scale=0, step[2], origin[2], xRewind;
+  //float scale=0;
+  float step[2], origin[2], xRewind;
   float x, y;
   long idx, nx, ny, nx2, ny2, xi, yi;
   float magX, magY;

@@ -138,7 +138,6 @@ static void vtkImageBandedDistanceMapExecute(vtkImageBandedDistanceMap *self,
 				     vtkImageData *outData,
 				     int outExt[6], int id)
 {
-  int *kernelMiddle, *kernelSize;
   // For looping though output (and input) pixels.
   int outMin0, outMax0, outMin1, outMax1, outMin2, outMax2;
   int outIdx0, outIdx1, outIdx2;
@@ -146,7 +145,6 @@ static void vtkImageBandedDistanceMapExecute(vtkImageBandedDistanceMap *self,
   int outInc0, outInc1, outInc2;
   T *inPtr0, *inPtr1, *inPtr2;
   T *outPtr0, *outPtr1, *outPtr2;
-  int numComps, outIdxC;
   // For looping through hood pixels
   int hoodMin0, hoodMax0, hoodMin1, hoodMax1, hoodMin2, hoodMax2;
   int hoodIdx0, hoodIdx1, hoodIdx2;
@@ -158,7 +156,7 @@ static void vtkImageBandedDistanceMapExecute(vtkImageBandedDistanceMap *self,
   int inImageMin0, inImageMin1, inImageMin2;
   int inImageMax0, inImageMax1, inImageMax2;
   // Other
-  T backgnd = (T)(self->GetBackground());
+  //T backgnd = (T)(self->GetBackground());
   T foregnd = (T)(self->GetForeground());
   T pix;
   T *outPtr = (T*)outData->GetScalarPointerForExtent(outExt);
@@ -176,7 +174,6 @@ static void vtkImageBandedDistanceMapExecute(vtkImageBandedDistanceMap *self,
   outMin0 = outExt[0];   outMax0 = outExt[1];
   outMin1 = outExt[2];   outMax1 = outExt[3];
   outMin2 = outExt[4];   outMax2 = outExt[5];
-  numComps = outData->GetNumberOfScalarComponents();
 	
   // Neighborhood around current voxel
   self->GetRelativeHoodExtent(hoodMin0, hoodMax0, hoodMin1, 
@@ -189,8 +186,7 @@ static void vtkImageBandedDistanceMapExecute(vtkImageBandedDistanceMap *self,
   // in and out should be marching through corresponding pixels.
   inPtr = (T *)(inData->GetScalarPointer(outMin0, outMin1, outMin2));
 
-  target = (unsigned long)(numComps*(outMax2-outMin2+1)*
-			   (outMax1-outMin1+1)/50.0);
+  target = (unsigned long)((outMax2-outMin2+1)*(outMax1-outMin1+1)/50.0);
   target++;
 
   // Default output equal to the max distance+1

@@ -227,7 +227,7 @@ static void vtkImageReformatExecuteInt(vtkImageReformat *self,
   int fround, fx, fy, fz, fxStep[3], fyStep[3], fxRewind[3];
 	int fone, fx0, fy0, fz0, fx1, fy1, fz1, fdx0, fdx1, fdxy0, fdxy1;
   // time
-  clock_t tStart;
+  clock_t tStart=0;
   if (id == 0) {tStart = clock();}
 
 	// Find input dimensions
@@ -555,7 +555,7 @@ static void vtkImageReformatExecute(vtkImageReformat *self,
 	// multiple components
   int nxc, idxC, numComps, scalarSize, inRowLength;
   // time
-  clock_t tStart;
+  clock_t tStart=0;
   if (id == 0)
     tStart = clock();
 

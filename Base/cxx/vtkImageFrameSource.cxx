@@ -103,9 +103,9 @@ void vtkImageFrameSource::ExecuteInformation()
 //----------------------------------------------------------------------------
 void vtkImageFrameSource::Execute(vtkImageData *data)
 {
-	int x1, y1, x2, y2, i, idxX, idxY, idxZ, w, h;
+	int x1, y1, x2, y2, idxX, idxY, w, h;
 	int wOut, hOut, wIn, hIn, nc, nb;
-	int outIncX, outIncY, outIncZ, rowLength;
+	int outIncX, outIncY, outIncZ;
 	int *size;
 	int *outExt;
 	unsigned char *frame, *inPtr, *outPtr;

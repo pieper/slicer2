@@ -21,6 +21,14 @@ THE SOFTWARE IS PROVIDED "AS IS."  MIT HAS NO OBLIGATION TO PROVIDE
 MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 =========================================================================auto=*/
+// .NAME vtkImageEditorEffects - Implementation of effects that 
+// can be performed on volumes when editing.
+// .SECTION Description
+//
+//  Draw, threshold, clear, change island, measure island, 
+//  dilate, erode, and more.
+//
+
 #ifndef __vtkImageEditorEffects_h
 #define __vtkImageEditorEffects_h
 

@@ -21,9 +21,10 @@ THE SOFTWARE IS PROVIDED "AS IS."  MIT HAS NO OBLIGATION TO PROVIDE
 MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 =========================================================================auto=*/
-// .NAME vtkImageDouble2D -  Flexible threshold
+// .NAME vtkImageDouble2D -  Doubles size of input image
 // .SECTION Description
-// vtkImageDouble2D Can do binary or continous thresholding
+// Used in the slicer to convert 256 by 256 size reformatted images
+// into 512 by 512 size images.  Uses pixel duplication, not interpolation.
 
 #ifndef __vtkImageDouble2D_h
 #define __vtkImageDouble2D_h

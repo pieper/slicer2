@@ -21,12 +21,14 @@ THE SOFTWARE IS PROVIDED "AS IS."  MIT HAS NO OBLIGATION TO PROVIDE
 MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 =========================================================================auto=*/
-// .NAME vtkImageClipper -  Flexible threshold
+// .NAME vtkImageClipper -  Clips input; replaces out of bounds voxels
+// with value outValue
 // .SECTION Description
-// vtkImageClipper Can do binary or continous thresholding
-// for lower, upper or a range of data.
-//  The output data type may be different than the output, but defaults
-// to the same type.
+// vtkImageClipper 
+//
+// This class does not appear to be used in the slicer.  Also,
+// booleans replaceIn and replaceOut are ignored in execution,
+// as well as the variable inValue.
 
 #ifndef __vtkImageClipper_h
 #define __vtkImageClipper_h

@@ -685,8 +685,6 @@ void vtkImageLiveWireScale::Execute(vtkImageData *inData,
   void *inPtr;
   float *outPtr;
 
-  int extent[6];
-
   inPtr  = inData->GetScalarPointer();
 
   //cout << "type: " << outData->GetScalarType() << endl;

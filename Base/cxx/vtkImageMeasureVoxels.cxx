@@ -105,7 +105,7 @@ static void vtkImageMeasureVoxelsExecute(vtkImageMeasureVoxels *self,
   file.open(filename);
   if (file.fail())
     {
-    printf("Execute: Could not open file %", filename);
+    printf("Execute: Could not open file %s", filename);
     return;
     }  
 
@@ -153,7 +153,7 @@ static void vtkImageMeasureVoxelsExecute(vtkImageMeasureVoxels *self,
 		sprintf(vol2, "%.3f", volume);
 		file << setw(5) << label;
 		file << setiosflags(ios::right);
-		int width = 15 - (label>=10) - (label>=100);
+		//int width = 15 - (label>=10) - (label>=100);
 		file << setw(15)  << vol2 << '\n';
 	      }
 	    histPtr++;
@@ -179,11 +179,8 @@ void vtkImageMeasureVoxels::Execute(vtkImageData *inData,
   void *inPtr;
   int *outPtr;
 
-  int extent[6];
-
   inPtr  = inData->GetScalarPointer();
   outPtr = (int *)outData->GetScalarPointer();
-
   
   switch (inData->GetScalarType())
   {

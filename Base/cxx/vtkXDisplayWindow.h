@@ -21,6 +21,11 @@ THE SOFTWARE IS PROVIDED "AS IS."  MIT HAS NO OBLIGATION TO PROVIDE
 MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 =========================================================================auto=*/
+// .NAME vtkXDisplayWindow - Used to display a vtk window on an X display.
+// .SECTION Description
+// Can display on any screen (display) number.
+//
+
 #ifndef __vtkXDisplayWindow_h
 #define __vtkXDisplayWindow_h
 

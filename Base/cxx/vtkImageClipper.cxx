@@ -96,9 +96,9 @@ static void vtkImageClipperExecute(vtkImageClipper *self,
 	int minX, minY, minZ, maxX, maxY, maxZ;
 	int inIncX, inIncY, inIncZ;
 	int outIncX, outIncY, outIncZ;
-	int replaceIn = self->GetReplaceIn();
-	T  inValue = (T)(self->GetInValue());
-	int replaceOut = self->GetReplaceOut();
+	//int replaceIn = self->GetReplaceIn();
+	//T  inValue = (T)(self->GetInValue());
+	//int replaceOut = self->GetReplaceOut();
 	T  outValue = (T)(self->GetOutValue());
   unsigned long count = 0;
   unsigned long target;

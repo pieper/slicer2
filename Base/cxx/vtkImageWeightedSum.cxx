@@ -141,7 +141,6 @@ static void vtkImageWeightedSumExecute(vtkImageWeightedSum *self,
   int outMin0, outMax0, outMin1, outMax1, outMin2, outMax2;
   int outIdx0, outIdx1, outIdx2;
   int inInc0, inInc1, inInc2;
-  int inPhaseInc0, inPhaseInc1, inPhaseInc2;
   int outInc0, outInc1, outInc2;
   T **inPtrs0, **inPtrs1, **inPtrs2; 
   T *outPtr0, *outPtr1, *outPtr2;

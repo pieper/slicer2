@@ -21,7 +21,10 @@ THE SOFTWARE IS PROVIDED "AS IS."  MIT HAS NO OBLIGATION TO PROVIDE
 MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 =========================================================================auto=*/
-// hey
+// .NAME vtkImageFrameSource - Pulls data from a RenderWindow and outputs it.
+// .SECTION Description
+// Used to make a matching window in the Twin slicer module.
+//
 #ifndef __vtkImageFrameSource_h
 #define __vtkImageFrameSource_h
 

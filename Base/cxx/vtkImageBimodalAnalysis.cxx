@@ -83,7 +83,7 @@ static void vtkImageBimodalAnalysisExecute(vtkImageBimodalAnalysis *self,
 {
   int x, k, offset, clipExt[6];
   int min0, max0, min1, max1, min2, max2;
-  int noise = 1, width = 5, hwidth=2;
+  int noise = 1, width = 5;
   float fwidth = 1.0 / 5.0;
   T tmp, minSignal, maxSignal;
   float sum, wsum;

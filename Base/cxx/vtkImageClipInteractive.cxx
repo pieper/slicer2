@@ -117,15 +117,14 @@ static void vtkImageClipInteractiveExecute(vtkImageClipInteractive *self,
 				     vtkImageData *outData, 
 				     int outExt[6], int wExt[6], int id)
 {
-	int i, iz, idx, nxy, idxX, idxY, maxY, maxX;
+	int nxy, idxX, idxY, maxY, maxX;
 	int inIncX, inIncY, inIncZ, outIncX, outIncY, outIncZ;
 	float begin[4], origin[4], mx[4], my[4], mc[4], zero[4]={0.0,0.0,0.0,1.0};
 	float origin_ijk[4], mx_ijk[4], my_ijk[4], zero_ijk[4];
 	float xStep[3], yStep[3], xRewind[3];
 	float x, y, z, scale;
-	float x0, y0, z0, x1, y1, z1, dx0, dx1, dxy0, dxy1;
 	int nx, ny, nz, nx2, ny2, nz2, xi, yi, zi;
-	T *ptr, *outPtr;
+	T *outPtr;
 	int inExt[6], Resolution;
   int clipExt[6];
   vtkMatrix4x4 *WldToIjkMatrix = self->GetWldToIjkMatrix();

@@ -56,7 +56,6 @@ void vtkImageCloseUp2D::ExecuteInformation(vtkImageData *inData,
 					   vtkImageData *outData)
 {
 	int ext[6];
-	int x1;
 
 	inData->GetWholeExtent(ext);
 
@@ -84,7 +83,7 @@ static void vtkImageCloseUp2DExecute(vtkImageCloseUp2D *self,
 				     vtkImageData *outData, T* outPtr, 
 				     int outExt[6], int id)
 {
-	int idxX, maxX, inRowLength, idxY, maxY, idxC;
+	int idxX, maxX, inRowLength, idxY, maxY;
 	int outIncX, outIncY, outIncZ;
 	int scalarSize, numComps, inX, inY, inMaxX, inMaxY;
 	T *ptr;

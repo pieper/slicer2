@@ -207,8 +207,6 @@ static void vtkImageOverlayExecute(vtkImageOverlay *self,
   int inIncX, inIncY, inIncZ, outIncX, outIncY, outIncZ, cpyIncY, cpyIncZ;
   double alpha, beta;
   int ncomp = inData->GetNumberOfScalarComponents();
-  unsigned long count = 0;
-  unsigned long target;
   int fade;
 
   // find the region to loop over
@@ -219,8 +217,6 @@ static void vtkImageOverlayExecute(vtkImageOverlay *self,
   size = inData->GetScalarSize();
   rowSize = rowLength * size;
   pixSize = ncomp * size;
-  target = (unsigned long)((maxZ+1)*(maxY+1)/50.0);
-  target++;
 
   // Get increments to march through data
   inData->GetContinuousIncrements(inExt, inIncX, inIncY, inIncZ);

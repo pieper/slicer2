@@ -22,10 +22,19 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 =========================================================================auto=*/
 
-// .NAME vtkImageLiveWire - 
+// .NAME vtkImageLiveWire - Displays a live wire segmentation contour
 // .SECTION Description
+// Finds the shortest path between user-defined points where
+// the distance metric is based on image information.
+// Ths input images to this class (UpEdges, etc.) are treated as
+// directional edges in a weighted graph, and Dijkstra's algorithm
+// is applied to find the shortest path in this graph.
+// Currently the output path is displayed on a clear image, but
+// it could be overlayed easily on grayscale using the first input
+// to the filter, the OriginalImage.
+// The output points on the contour can be accessed using 
+// this->GetContourPixels.
 //
-
 #ifndef __vtkImageLiveWire_h
 #define __vtkImageLiveWire_h
 

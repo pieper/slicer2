@@ -21,6 +21,15 @@ THE SOFTWARE IS PROVIDED "AS IS."  MIT HAS NO OBLIGATION TO PROVIDE
 MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 =========================================================================auto=*/
+// .NAME vtkMrmlVolume - Object used in the slicer to perform
+// everything related to the access and display of image data (volumes).
+// .SECTION Description
+// Used in conjunction with a vtkMrmlVolumeNode (which neatly describes
+// display settings, file locations, etc.).  Essentially, the MRML 
+// node gives the high level description of what this class should 
+// actually do with the ImageData.
+// 
+
 #ifndef __vtkMrmlVolume_h
 #define __vtkMrmlVolume_h
 

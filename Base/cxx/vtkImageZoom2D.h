@@ -21,9 +21,10 @@ THE SOFTWARE IS PROVIDED "AS IS."  MIT HAS NO OBLIGATION TO PROVIDE
 MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 =========================================================================auto=*/
-// .NAME vtkImageZoom2D -  Flexible threshold
+// .NAME vtkImageZoom2D -  zooms (magnifies) a 2D image
 // .SECTION Description
-// vtkImageZoom2D Can do binary or continous thresholding
+// vtkImageZoom2D 
+//
 
 #ifndef __vtkImageZoom2D_h
 #define __vtkImageZoom2D_h
