@@ -1,5 +1,5 @@
 # test script for mgh reader
-     
+# oct 7/04
 
 package require vtkFreeSurferReaders
 package require vtk
