@@ -1356,8 +1356,12 @@ proc DICOMReadHeaderValues { filename } {
 
     if {$filename == ""} {
         return
+    } else {
+        if {$::Module(verbose)} {
+            puts "DICOMReadHeaderValues: filename = $filename"
+        }
     }
-    
+   
     vtkDCMParser parser
     set found [parser OpenFile $filename]
     if {[string compare $found "0"] == 0} {
@@ -1480,7 +1484,10 @@ proc DICOMReadHeaderValues { filename } {
     }
 
     parser Delete
-
+    
+    # set the file pattern and firstFile here
+    set Volume(firstFile) $filename
+    set Volume(filePattern) [lindex [MainFileParseImageFile $Volume(firstFile)] 0]
     set Volume(readHeaders) 0
 }
 
