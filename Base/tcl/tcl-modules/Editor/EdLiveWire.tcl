@@ -832,7 +832,7 @@ proc EdLiveWireGetFeatureParams {} {
     # set up parameters for control of edge filters  
     set filter [Ed(EdLiveWire,lwSetup$s) GetEdgeFilter $e]
     set Ed(EdLiveWire,numFeatures) [$filter GetNumberOfFeatures]
-    
+
     # loop over features
     for {set f 0} {$f < $Ed(EdLiveWire,numFeatures)} {incr f} {
 
@@ -1886,14 +1886,18 @@ proc EdLiveWireReadFeatureParams {} {
 	
 	# see how many features, how many parameters for each feature:
 	set numFeatures [llength $settings]
+
 	# subtract one since the weight is the first number and not a "param"
 	set numParams [expr [llength [lindex $settings 0]] - 1]
-	# check to make sure we don't have too many
+
+	# check to make sure we don't have too many features in the file
 	if {$numFeatures > $Ed(EdLiveWire,numFeatures)} {
 	    set numFeatures $Ed(EdLiveWire,numFeatures)
 	}
-	if {$numParams > $Ed(EdLiveWire,feature$number,numParams)} {
-	    set numParams $Ed(EdLiveWire,feature$number,numParams)
+	# assume all features have same number of params: does the
+	# numParams match the number we expect for the first feature?
+	if {$numParams > $Ed(EdLiveWire,feature0,numParams)} {
+	    set numParams $Ed(EdLiveWire,feature0,numParams)
 	}
 
 	# get this filter (the right number)
