@@ -87,7 +87,7 @@ proc Usage { {msg ""} } {
     set msg "$msg\n   --load-dicom <dir> : read dicom files from <dir> at startup"
     set msg "$msg\n   --script <file.tcl> : script to execute after slicer loads"
     set msg "$msg\n   --exec <tcl code> : some code to execute after slicer loads"
-    set msg "$msg\n   --version : print out the version info and continue"
+    set msg "$msg\n   --all-info : print out all of the version info and continue"
     puts stderr $msg
     tk_messageBox -message $msg -title $SLICER(version) -type ok
 }
@@ -152,7 +152,7 @@ for {set i 0} {$i < $argc} {incr i} {
                 set SLICER(exec) [lindex $argv $i]
             }
         }
-        "--version" {
+        "--all-info" {
             # for data provenance, print out the executable name, version, vtk and version, compiler name and version and arguments
             # executable-name version libname libversion [compilername compilerversion] cvstag -arg1 val1 -arg2 val2
             set execName ""
@@ -171,7 +171,7 @@ for {set i 0} {$i < $argc} {incr i} {
                 }
             }
             # add in the compiler info after MainBoot is called
-            set SLICER(versionInfo)  "ProgramName: $execName ProgramArguments: $argv\nTimestamp: [clock format [clock seconds] -format "%D-%T-%Z"] Version: ${SLICER(version)} User: $env(USER) Machine: $tcl_platform(machine) Platform: $tcl_platform(os) PlatformVersion: $tcl_platform(osVersion)"
+            set SLICER(versionInfo)  "ProgramName: $execName ProgramArguments: $argv\nTimeStamp: [clock format [clock seconds] -format "%D-%T-%Z"] Version: [ParseCVSInfo "" $Name:  $] User: $env(USER) Machine: $tcl_platform(machine) Platform: $tcl_platform(os) PlatformVersion: $tcl_platform(osVersion)"
 
         }
         "-*" {
@@ -577,7 +577,7 @@ if { $SLICER(versionInfo) != "" } {
     set compilerName [Slicer GetCompilerName]
     set vtkVersion [Slicer GetVTKVersion]
     set libVersions "LibName1: VTK LibVersion1: ${vtkVersion} LibName2: TCL LibVersion2: ${tcl_patchLevel} LibName3: TK LibVersion2: ${tk_patchLevel}"
-    set SLICER(versionInfo) "$SLICER(versionInfo) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.64 2003/08/18 15:12:06 pieper Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.65 2003/10/03 19:54:26 nicole Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
@@ -588,7 +588,6 @@ if { $SLICER(versionInfo) != "" } {
 # - if it's "", it will be ignored
 #
 DICOMLoadStudy $SLICER(load-dicom)
-
 
 #
 # override the built in exit routine to provide cleanup
