@@ -241,6 +241,7 @@ proc EndoscopicExit {} {
 proc EndoscopicInit {} {
     global Endoscopic Module Model Path Advanced View Gui Fiducials
     
+#     MainDataInitialize Endoscopic
 
     set m Endoscopic
     set Module($m,row1List) "Help Display Camera Path"
@@ -257,6 +258,9 @@ proc EndoscopicInit {} {
                 Provides correspondence between 3D Views, 2D Slices, and flattened colon View"
     set Module($m,author) "Delphine Nain, MIT, delfin@ai.mit.edu; Jeanette Meng SPL meng@bwh.harvard.edu"
     set Module($m,category) [lindex $Module(categories) 1]
+    
+    lappend Module(versions) [ParseCVSInfo $m \
+        {$Revision: 1.55 $} {$Date: 2004/04/05 19:58:06 $}]
     
     # Define Procedures
     #------------------------------------
@@ -341,8 +345,8 @@ proc EndoscopicInit {} {
     # flat viewer
     set Endoscopic(RemoveEndo) 0
     
-    set Flat(mbActiveList) ""
-    set Flat(mActiveList) ""
+    set Endoscopic(mbActiveList) ""
+    set Endoscopic(mActiveList) ""
     
     set Endoscopic(targetList,name) ""
     set Endoscopic(targetList,points) ""
@@ -1115,7 +1119,7 @@ proc EndoscopicPushBindings {} {
     EvActivateBindingSet Slice0Events
     EvActivateBindingSet Slice1Events
     EvActivateBindingSet Slice2Events
-    
+#  puts "binding pushed"
 }
 
 #-------------------------------------------------------------------------------
@@ -1125,7 +1129,7 @@ proc EndoscopicPushBindings {} {
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicCreateBindings {} {
-    global Gui Ev Endoscopic Select
+    global Gui Ev Select Endoscopic
     
     # Creates events sets we'll  need for this module
     # create the event manager for the ability to move the gyro
@@ -1136,19 +1140,35 @@ proc EndoscopicCreateBindings {} {
     
 # endoscopic events for slice windows (in addition to already existing events)
 
-    EvDeclareEventHandler EndoKeySlicesEvents <KeyPress-c> { if {[SelectPick2D %W %x %y] != 0} \
-    {eval EndoscopicSetWorldPosition [lindex $Select(xyz) 0] [lindex $Select(xyz) 1] [lindex $Select(xyz) 2]} }
-    
-    EvDeclareEventHandler EndoMouseSliceEvents <Double-Any-ButtonPress> { if { [SelectPick2D %W %x %y] != 0 } \
-     { eval EndoscopicAddLandmarkFromSlices $Select(xyz)} }
+       
+   EvDeclareEventHandler EndoKeySliceEvents <KeyPress-m> { if { [SelectPick2D %W %x %y] != 0 } \
+   { eval EndoscopicSetWorldPosition [lindex $Select(xyz) 0] [lindex $Select(xyz) 1] [lindex $Select(xyz) 2]} }
 
-    
-    EvAddWidgetToBindingSet Slice0Events $Gui(fSl0Win) {{EndoKeySlicesEvents} {EndoMouseSliceEvents}}
-    EvAddWidgetToBindingSet Slice1Events $Gui(fSl1Win) {{EndoKeySlicesEvents} {EndoMouseSliceEvents}}
-    EvAddWidgetToBindingSet Slice2Events $Gui(fSl2Win) {{EndoKeySlicesEvents} {EndoMouseSliceEvents}}
+   EvDeclareEventHandler EndoMouseSlicesEvents <Double-3> { if {[SelectPick2D %W %x %y] != 0} \
+   {eval EndoscopicAddLandmarkFromSlices [lindex $Select(xyz) 0] [lindex $Select(xyz) 1] [lindex $Select(xyz) 2]} }
+
+#   EvDeclareEventHandler EndoKeySliceEvents <KeyPress-m> {EndoscopicTestProc %W %x %y}
+
+   EvAddWidgetToBindingSet Slice0Events $Gui(fSl0Win) {{EndoKeySliceEvents} {EndoMouseSliceEvents}}
+   EvAddWidgetToBindingSet Slice1Events $Gui(fSl1Win) {{EndoKeySliceEvents} {EndoMouseSliceEvents}}
+   EvAddWidgetToBindingSet Slice2Events $Gui(fSl2Win) {{EndoKeySliceEvents} {EndoMouseSliceEvents}}
+   
+#    EvAddWidgetToBindingSet Slice0Events $Gui(fSl0Win) {EndoMouseSliceEvents}
+#    EvAddWidgetToBindingSet Slice1Events $Gui(fSl1Win) {EndoMouseSliceEvents}
+#    EvAddWidgetToBindingSet Slice2Events $Gui(fSl2Win) {EndoMouseSliceEvents}
+
+# puts "binding created"
     
 }
 
+proc EndoscopicTestProc {widget x y } {
+
+global Select Endoscopic
+
+    SelectPick2D $widget $x $y
+puts " location : $Select(xyz)"
+   EndoscopicSetWorldPosition [lindex $Select(xyz) 0] [lindex $Select(xyz) 1] [lindex $Select(xyz) 2]
+}
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicBuildGUI
@@ -2618,7 +2638,8 @@ proc EndoscopicSetWorldPosition {x y z} {
     set Endoscopic(cam,yStr,old) $y
     set Endoscopic(cam,zStr,old) $z
     Endoscopic(gyro,actor) SetPosition $x $y $z
-    
+set Select(xyz) [list $x $y $z]
+# puts "location: $Select(xyz)"    
     Render3D
 }
 
@@ -5184,7 +5205,7 @@ proc EndoscopicAddLandmarkFromSlices {x y z} {
     $polyData GetPointCells $pointid cellList
 # for now: choose the 1st cell in that list
     set Select(cellId) [cellList GetId 0]
-#puts "cellId: $Select(cellId)"
+puts "cellId: $Select(cellId) location: $Select(xyz)"
 
 #  active list (should be the default path just created from the automatic tab)
     set fid $Fiducials($Fiducials(activeList),fid)
