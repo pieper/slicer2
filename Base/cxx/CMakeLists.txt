@@ -41,6 +41,7 @@ SOURCE_FILES (Base_SRCS
 	# MI Registration
 	vtkVector3.cxx vtkQuaternion.cxx vtkPose.cxx 
 	vtkImageFastGaussian.cxx vtkImageMIReg.cxx
+        vtkRasToIjkTransform.cxx
 	# vtkDistractorSource.cxx
 	# vtkImageEuclideanDistanceTransformation.cxx 
 	# more general volume reading API
