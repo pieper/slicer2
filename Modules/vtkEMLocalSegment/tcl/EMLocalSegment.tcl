@@ -245,7 +245,7 @@ proc EMSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.6 $} {$Date: 2003/10/03 19:53:28 $}]
+        {$Revision: 1.7 $} {$Date: 2003/10/05 22:46:02 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -693,20 +693,20 @@ Description of the tabs:
 
     # Die Mediziner Sicherung
     foreach text "A B C D" value "1 2 3 4" {
-    frame $f.fClassStep$value -bg $Gui(activeWorkspace) -relief sunken -bd 2 
-    pack $f.fClassStep$value -side top -fill x -pady 7
-    # DevAddButton $f.fClassStep$value.bStep "$text" "EMSegmentClassDefinition $value"
+        frame $f.fClassStep$value -bg $Gui(activeWorkspace) -relief sunken -bd 2 
+        pack $f.fClassStep$value -side top -fill x -pady 7
+        # DevAddButton $f.fClassStep$value.bStep "$text" "EMSegmentClassDefinition $value"
 
-    DevAddLabel $f.fClassStep$value.lStep "Step $text:" 
-        if {$text == "D" || $text == "B"} { 
-        #frame $f.fClassStep$value.fLine1 -bg $Gui(activeWorkspace)
-        #pack $f.fClassStep$value.fLine1 -side top -padx 0 -pady 0 -fill x
-        #DevAddLabel $f.fClassStep$value.fLine1.lStep "Step $text:" 
-        #pack $f.fClassStep$value.fLine1.lStep -side left -padx 2 -pady 2
-        pack $f.fClassStep$value.lStep -side left -padx 2 -pady 4 -anchor n
-    } else {
-        pack $f.fClassStep$value.lStep -side left -padx 2 -pady 2 
-    }
+        DevAddLabel $f.fClassStep$value.lStep "Step $text:" 
+            if {$text == "D" || $text == "B"} { 
+            #frame $f.fClassStep$value.fLine1 -bg $Gui(activeWorkspace)
+            #pack $f.fClassStep$value.fLine1 -side top -padx 0 -pady 0 -fill x
+            #DevAddLabel $f.fClassStep$value.fLine1.lStep "Step $text:" 
+            #pack $f.fClassStep$value.fLine1.lStep -side left -padx 2 -pady 2
+            pack $f.fClassStep$value.lStep -side left -padx 2 -pady 4 -anchor n
+        } else {
+            pack $f.fClassStep$value.lStep -side left -padx 2 -pady 2 
+        }
     }
    
     #Overview button
@@ -722,8 +722,8 @@ Description of the tabs:
  
     # B Define Global Probability
     for {set i 1} { $i < 3} { incr i} {
-    frame $f.fClassStep2.fLine$i -bg $Gui(activeWorkspace)
-    pack $f.fClassStep2.fLine$i -side top -padx 0 -pady 0 -fill x
+        frame $f.fClassStep2.fLine$i -bg $Gui(activeWorkspace)
+        pack $f.fClassStep2.fLine$i -side top -padx 0 -pady 0 -fill x
     } 
     DevAddLabel $f.fClassStep2.fLine1.lProb "Define global probability:"
     EMSegmentAddGlobalProbEntry $f.fClassStep2.fLine1 $Sclass 1
@@ -1390,15 +1390,15 @@ proc EMSegmentDefineLocalProb {f Panel Sclass General} {
       eval {menu $menu} $Gui(WMA)
       TooltipAdd $menubutton "Select Probability Map representing the tissue class!"
       if {$General} {
-      set EMSegment(mb${Panel}-ProbVolumeSelect) $menubutton
-      set EMSegment(m${Panel}-ProbVolumeSelect) $menu
-      set EMSegment(ProbVolumeSelect) $EMSegment(Cattrib,$Sclass,ProbabilityData) 
-      DevUpdateNodeSelectButton Volume EMSegment ${Panel}-ProbVolumeSelect ProbVolumeSelect EMSegmentProbVolumeSelectNode
+          set EMSegment(mb${Panel}-ProbVolumeSelect) $menubutton
+          set EMSegment(m${Panel}-ProbVolumeSelect) $menu
+          set EMSegment(ProbVolumeSelect) $EMSegment(Cattrib,$Sclass,ProbabilityData) 
+          DevUpdateNodeSelectButton Volume EMSegment ${Panel}-ProbVolumeSelect ProbVolumeSelect EMSegmentProbVolumeSelectNode
       } else {
-      set EMSegment(mbOT-ProbVolumeSelect,${Sclass}) $menubutton
-      set EMSegment(mOT-ProbVolumeSelect,${Sclass}) $menu
-          set EMSegment(ProbVolumeSelect,${Sclass}) $EMSegment(Cattrib,$Sclass,ProbabilityData) 
-      DevUpdateNodeSelectButton Volume EMSegment OT-ProbVolumeSelect,${Sclass} ProbVolumeSelect,${Sclass} EMSegmentProbVolumeSelectNode
+          set EMSegment(mbOT-ProbVolumeSelect,${Sclass}) $menubutton
+          set EMSegment(mOT-ProbVolumeSelect,${Sclass}) $menu
+              set EMSegment(ProbVolumeSelect,${Sclass}) $EMSegment(Cattrib,$Sclass,ProbabilityData) 
+          DevUpdateNodeSelectButton Volume EMSegment OT-ProbVolumeSelect,${Sclass} ProbVolumeSelect,${Sclass} EMSegmentProbVolumeSelectNode
       }
     }
 }
@@ -1770,35 +1770,36 @@ proc EMSegmentUpdateMRML {} {
 #-------------------------------------------------------------------------------
 proc EMSegmentProbVolumeSelectNode { type id ArrayName ModelLabel ModelName} {
     global Volume EMSegment
+
     # Find out the class Number 
     set Num [string first , $ModelLabel]
     if {$Num > -1} {
-    set ActiveClass [string range $ModelLabel [expr $Num + 1] end] 
+        set ActiveClass [string range $ModelLabel [expr $Num + 1] end] 
         if {$ActiveClass == $EMSegment(Class)} {set EMSegment(ProbVolumeSelect) $EMSegment(ProbVolumeSelect,${ActiveClass})}
     } else {
-    set ActiveClass $EMSegment(Class)
-    set EMSegment(ProbVolumeSelect,${ActiveClass}) $EMSegment(ProbVolumeSelect)
+        set ActiveClass $EMSegment(Class)
+        set EMSegment(ProbVolumeSelect,${ActiveClass}) $EMSegment(ProbVolumeSelect)
     } 
 
     if {$id == ""} {
       set Text "None"
       set EMSegment(Cattrib,$ActiveClass,ProbabilityData) $Volume(idNone)
     } else {
-    set EMSegment(Cattrib,$ActiveClass,ProbabilityData) $id
-    if {$id == -5} {set Text "Create New"
-    } else { 
-        if {[catch {${type}($id,node) GetName} Text]} {set Text ""}
-    }
+        set EMSegment(Cattrib,$ActiveClass,ProbabilityData) $id
+        if {$id == -5} {
+            set Text "Create New"
+        } else { 
+            if {[catch {${type}($id,node) GetName} Text]} {set Text ""}
+        }
     }
 
     # Change Button Volumes
     if {$ActiveClass == $EMSegment(Class)} {
-    $EMSegment(mbCl-ProbVolumeSelect) config -text $Text
-    $EMSegment(mbEM-ProbVolumeSelect) config -text $Text
-        
+        $EMSegment(mbCl-ProbVolumeSelect) config -text $Text
+        $EMSegment(mbEM-ProbVolumeSelect) config -text $Text
     }
     if {$ActiveClass != $EMSegment(SuperClass) } {
-    $EMSegment(fTableOverview)${ActiveClass}.$EMSegment(TO-mLoalProb) config -text $Text
+        $EMSegment(fTableOverview)${ActiveClass}.$EMSegment(TO-mLoalProb) config -text $Text
     }
 }
 
@@ -2115,8 +2116,8 @@ proc EMSegmentStartEM { } {
       bell
       # Check if a file was written back if not error occured
       if {[file join $Mrml(dir) EMResult [lindex [Volume($VolIndex,node) GetImageRange] 0]] == 0} {
-      set ErrorFlag 1
-      DevErrorWindow "Error Report: \n Segmentation did not work properly. \nLook in other windows for error messages!"
+          set ErrorFlag 1
+          DevErrorWindow "Error Report: \n Segmentation did not work properly. \nLook in other windows for error messages!"
       }
    } else {
      set EMSegment(VolumeNameList) ""
@@ -2124,9 +2125,9 @@ proc EMSegmentStartEM { } {
      set NumInputImagesSet [EMSegmentAlgorithmStart] 
      EMSegment(vtkEMSegment) Update 
      if {($EMSegment(SegmentMode) > 0) && [EMSegment(vtkEMSegment) GetErrorFlag]} {
-     set ErrorFlag 1
-     DevErrorWindow "Error Report: \n[EMSegment(vtkEMSegment) GetErrorMessages]Fix errors before resegmenting !"
-     RenderAll
+         set ErrorFlag 1
+         DevErrorWindow "Error Report: \n[EMSegment(vtkEMSegment) GetErrorMessages]Fix errors before resegmenting !"
+         RenderAll
      }
    }  
    # ----------------------------------------------
@@ -2150,28 +2151,28 @@ proc EMSegmentStartEM { } {
        Volume($result,node) SetInterpolate 0
        #  Write Solution to new Volume  -> Here the thread is called
        if {$EMSegment(RunRemoteFlag)} {
-       Volume($result,node) SetFilePrefix [file join $Mrml(dir) EMResult]
-       Volume($result,node) SetFullPrefix [file join $Mrml(dir) EMResult]
-       if {$tcl_platform(byteOrder) == "littleEndian"} { Volume($result,node) SetLittleEndian 1
-       } else { Volume($result,node) SetLittleEndian 0}    
-       MainVolumesRead $result
+           Volume($result,node) SetFilePrefix [file join $Mrml(dir) EMResult]
+           Volume($result,node) SetFullPrefix [file join $Mrml(dir) EMResult]
+           if {$tcl_platform(byteOrder) == "littleEndian"} { Volume($result,node) SetLittleEndian 1
+           } else { Volume($result,node) SetLittleEndian 0}    
+           MainVolumesRead $result
        } else {
-       Volume($result,vol) SetImageData [EMSegment(vtkEMSegment) GetOutput]
-       EMSegment(vtkEMSegment) Update
-       # ----------------------------------------------
-       # 5. Recover Values 
-       # ----------------------------------------------
-       if {$EMSegment(SegmentMode) > 0} {
-           set index 0
-           foreach v $EMSegment(SelVolList,VolumeList) {
-           if {$EMSegment(IntensityAvgValue,$v) < 0} {
-               set EMSegment(IntensityAvgValue,$v) [EMSegment(vtkEMSegment) GetIntensityAvgValueCurrent $index]
+           Volume($result,vol) SetImageData [EMSegment(vtkEMSegment) GetOutput]
+           EMSegment(vtkEMSegment) Update
+           # ----------------------------------------------
+           # 5. Recover Values 
+           # ----------------------------------------------
+           if {$EMSegment(SegmentMode) > 0} {
+               set index 0
+               foreach v $EMSegment(SelVolList,VolumeList) {
+                   if {$EMSegment(IntensityAvgValue,$v) < 0} {
+                       set EMSegment(IntensityAvgValue,$v) [EMSegment(vtkEMSegment) GetIntensityAvgValueCurrent $index]
+                   }
+                   incr index
+               }
            }
-           incr index
-           }
-       }
-       # Update MRML Tree
-       EMSegmentSaveSetting 0
+           # Update MRML Tree
+           EMSegmentSaveSetting 0
        }
        # Update MRML
        MainUpdateMRML
@@ -2194,14 +2195,14 @@ proc EMSegmentStartEM { } {
      # This is done so the vtk instance won't be called again when saving the model
      if {$EMSegment(SegmentMode) > 0} {
        while {$NumInputImagesSet > 0} {
-       incr NumInputImagesSet -1
-       EMSegment(vtkEMSegment) SetInputIndex $NumInputImagesSet "" 
+           incr NumInputImagesSet -1
+           EMSegment(vtkEMSegment) SetInputIndex $NumInputImagesSet "" 
        }
      } else {
        EMSegment(vtkEMSegment) SetInput ""
      } 
      if {($EMSegment(SegmentMode) == 0) || [EMSegment(vtkEMSegment) GetErrorFlag] == 0} { 
-     Volume($result,vol) SetImageData [EMSegment(vtkEMSegment) GetOutput]
+         Volume($result,vol) SetImageData [EMSegment(vtkEMSegment) GetOutput]
      }
      EMSegment(vtkEMSegment) SetOutput ""
      # Delete instance
@@ -2747,9 +2748,14 @@ proc EMSegmentAddGlobalProbEntry {Frame Sclass General} {
 proc EMSegmentSumGlobalUpdate { } {
     global EMSegment
     set sum 0.0
-    foreach cl $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList) {set sum [expr $sum + $EMSegment(Cattrib,$cl,Prob)] }
-    if {$sum != 1.0 } { set color Red
-    } else {set color Black}
+    foreach cl $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList) {
+        set sum [expr $sum + $EMSegment(Cattrib,$cl,Prob)] 
+    }
+    if {$sum != 1.0 } { 
+        set color Red
+    } else {
+        set color Black
+    }
     $EMSegment(TO-lGlobalProbSum) configure -text [format "%.2f" $sum] -fg $color 
 }
 
@@ -3077,80 +3083,91 @@ proc EMSegmentPlotCurveRegion {numGraph} {
 #-------------------------------------------------------------------------------
 proc EMSegmentCalculateClassMeanCovariance { } {
     global EMSegment 
+
+    # save old values for later change check
     set Sclass $EMSegment(Class)
     for {set y 0} {$y < $EMSegment(NumInputChannel)} {incr y} {
-    set oldMean($y)  $EMSegment(Cattrib,$Sclass,LogMean,$y)
-    for {set x 0} {$x < $EMSegment(NumInputChannel)} {incr x} {
-        set oldCovariance($y,$x) $EMSegment(Cattrib,$Sclass,LogCovariance,$y,$x)
+        set oldMean($y)  $EMSegment(Cattrib,$Sclass,LogMean,$y)
+        for {set x 0} {$x < $EMSegment(NumInputChannel)} {incr x} {
+            set oldCovariance($y,$x) $EMSegment(Cattrib,$Sclass,LogCovariance,$y,$x)
+        }
     }
-    }
+
     if { $EMSegment(UseSamples) == 1 } {
-    #------------------------------------- 
-    # Read Sample Values 
-    #------------------------------------- 
-    # EMSegmentReadTextBox
-    
-    #------------------------------------- 
-    # Calculate Mean 
-    #-------------------------------------
-    if {$EMSegment(NumInputChannel) } {
-        set Clength [llength $EMSegment(Cattrib,$Sclass,[lindex $EMSegment(SelVolList,VolumeList) 0],Sample)]
-        for {set x 0} {$x < $EMSegment(NumInputChannel)} {incr x} {   
-        set LogMeanValue 0.0
-        set VolID [lindex $EMSegment(SelVolList,VolumeList) $x]
-        for {set i 0} {$i < $Clength} {incr i} {
-            set LogMeanValue [expr $LogMeanValue + log([lindex [lindex $EMSegment(Cattrib,$Sclass,$VolID,Sample) $i] 3] + 1)]
-        }
-        if {$Clength > 0} {
-            set EMSegment(Cattrib,$Sclass,LogMean,$x) [expr round($LogMeanValue / double($Clength)*10000.0)/10000.0] 
-                } else { 
-            set EMSegment(Cattrib,$Sclass,LogMean,$x) -1 
-        }
-        }
         #------------------------------------- 
-        # Calculate Variance 
+        # Read Sample Values 
+        #------------------------------------- 
+        # EMSegmentReadTextBox
+        
+        #------------------------------------- 
+        # Calculate Mean 
         #-------------------------------------
-        for {set y 0} {$y < $EMSegment(NumInputChannel)} {incr y} { 
-          # Covariance Matrix : cov[x][y] = cov[y][x]
-          set YVolID [lindex $EMSegment(SelVolList,VolumeList) $y]
-          for {set x $y} {$x < $EMSegment(NumInputChannel)} {incr x} { 
-            set LogCovariance 0.0 
-            set XVolID [lindex $EMSegment(SelVolList,VolumeList) $x]
-            for {set i 0} {$i < $Clength} {incr i} { 
-              # Covariance = (Sum(Sample(x,i) - mean(x))*(Sample(y,i) - mean(y)))/(n-1)
-              set LogCovariance [expr $LogCovariance + ( (log([lindex [lindex $EMSegment(Cattrib,$Sclass,$XVolID,Sample) $i] 3]+1) - $EMSegment(Cattrib,$Sclass,LogMean,$x)) * (log([lindex [lindex $EMSegment(Cattrib,$Sclass,$YVolID,Sample) $i] 3]+1) - $EMSegment(Cattrib,$Sclass,LogMean,$y)))]    
-            }        
-            if { $EMSegment(SegmentMode) < 1 } {
-              if {$Clength < 1} {
-                set EMSegment(Cattrib,$Sclass,LogCovariance,$x,$x) -1
-              } elseif {$Clength < 2} {   
-                set EMSegment(Cattrib,$Sclass,LogCovariance,$x,$x) 0.0
-              } else {
-                # We calculate Sigma => We have to square it / for the multichannel version we calculate the covariance Matrix
-                # set EMSegment(Cattrib,$Sclass,Sigma) [expr sqrt($Variance / double($Clength))]
-                set EMSegment(Cattrib,$Sclass,LogCovariance,$x,$x) [expr round(sqrt($LogCovariance / double($Clength - 1.0))*10000.0)/10000.0]
-              }
-            } else {
-              if {$Clength < 2} {
-                set EMSegment(Cattrib,$Sclass,LogCovariance,$y,$x) 0.0
-              } else {
-                set EMSegment(Cattrib,$Sclass,LogCovariance,$y,$x) [expr round($LogCovariance / double($Clength - 1.0)*10000.0)/10000.0]
-              }
-              if {$x != $y} {                
-                set EMSegment(Cattrib,$Sclass,LogCovariance,$x,$y) $EMSegment(Cattrib,$Sclass,LogCovariance,$y,$x) 
+        if {$EMSegment(NumInputChannel) } {
+            set Clength [llength $EMSegment(Cattrib,$Sclass,[lindex $EMSegment(SelVolList,VolumeList) 0],Sample)]
+            for {set x 0} {$x < $EMSegment(NumInputChannel)} {incr x} {   
+                set LogMeanValue 0.0
+                set VolID [lindex $EMSegment(SelVolList,VolumeList) $x]
+                for {set i 0} {$i < $Clength} {incr i} {
+                    set LogMeanValue [expr $LogMeanValue + log([lindex [lindex $EMSegment(Cattrib,$Sclass,$VolID,Sample) $i] 3] + 1)]
+                }
+                if {$Clength > 0} {
+                    set EMSegment(Cattrib,$Sclass,LogMean,$x) [expr round($LogMeanValue / double($Clength)*10000.0)/10000.0] 
+                } else { 
+                    set EMSegment(Cattrib,$Sclass,LogMean,$x) -1 
+                }
+            }
+            #------------------------------------- 
+            # Calculate Variance 
+            #-------------------------------------
+            for {set y 0} {$y < $EMSegment(NumInputChannel)} {incr y} {
+              # Covariance Matrix : cov[x][y] = cov[y][x]
+              set YVolID [lindex $EMSegment(SelVolList,VolumeList) $y]
+              for {set x $y} {$x < $EMSegment(NumInputChannel)} {incr x} { 
+                set LogCovariance 0.0 
+                set XVolID [lindex $EMSegment(SelVolList,VolumeList) $x]
+                for {set i 0} {$i < $Clength} {incr i} { 
+                  # Covariance = (Sum(Sample(x,i) - mean(x))*(Sample(y,i) - mean(y)))/(n-1)
+                  set LogCovariance [expr $LogCovariance + \
+                      ( (log([lindex [lindex $EMSegment(Cattrib,$Sclass,$XVolID,Sample) $i] 3]+1) - \
+                        $EMSegment(Cattrib,$Sclass,LogMean,$x)) \
+                        * \
+                        (log([lindex [lindex $EMSegment(Cattrib,$Sclass,$YVolID,Sample) $i] 3]+1) - \
+                        $EMSegment(Cattrib,$Sclass,LogMean,$y)) )]    
+                }
+                if { $EMSegment(SegmentMode) < 1 } {
+                  if {$Clength < 1} {
+                    set EMSegment(Cattrib,$Sclass,LogCovariance,$x,$x) -1
+                  } elseif {$Clength < 2} {   
+                    set EMSegment(Cattrib,$Sclass,LogCovariance,$x,$x) 0.0
+                  } else {
+                    # We calculate Sigma => We have to square it / for the multichannel version we calculate the covariance Matrix
+                    # set EMSegment(Cattrib,$Sclass,Sigma) [expr sqrt($Variance / double($Clength))]
+                    set EMSegment(Cattrib,$Sclass,LogCovariance,$x,$x) [expr round(sqrt($LogCovariance / double($Clength - 1.0))*10000.0)/10000.0]
+                  }
+                } else {
+                  if {$Clength < 2} {
+                    set EMSegment(Cattrib,$Sclass,LogCovariance,$y,$x) 0.0
+                  } else {
+                    set EMSegment(Cattrib,$Sclass,LogCovariance,$y,$x) [expr round($LogCovariance / double($Clength - 1.0)*10000.0)/10000.0]
+                  }
+                  if {$x != $y} {                
+                    set EMSegment(Cattrib,$Sclass,LogCovariance,$x,$y) $EMSegment(Cattrib,$Sclass,LogCovariance,$y,$x) 
+                  }
+                }
               }
             }
-      }
-       }
-      }
+        }
     } else {
+        # don't use sample values
       for {set y 0} {$y < $EMSegment(NumInputChannel)} {incr y} {
         set EMSegment(Cattrib,$Sclass,LogMean,$y)  [expr round($EMSegment(Cattrib,$Sclass,LogMean,$y)*10000.0)/10000.0] 
         for {set x 0} {$x < $EMSegment(NumInputChannel)} {incr x} { 
-        set EMSegment(Cattrib,$Sclass,LogCovariance,$y,$x) [expr round($EMSegment(Cattrib,$Sclass,LogCovariance,$y,$x)*10000.0)/10000.0]
+            set EMSegment(Cattrib,$Sclass,LogCovariance,$y,$x) [expr round($EMSegment(Cattrib,$Sclass,LogCovariance,$y,$x)*10000.0)/10000.0]
         }
       }
     } 
+
+    # check to see if values have changed from before
     for {set y 0} {$y < $EMSegment(NumInputChannel)} {incr y} {
       if {$EMSegment(Cattrib,$Sclass,LogMean,$y) != $oldMean($y) } { return 1}
       for {set x 0} {$x < $EMSegment(NumInputChannel)} {incr x} {
@@ -3814,9 +3831,10 @@ proc EMSegmentExecute {menue command} {
     if {$menue == "EM" && $command == "Run"} {
        if {$EMSegment(Debug) > 0} {EMSegmentDebug 
        } else { 
-     # So window is displayed
-     $EMSegment(MA-lRun) configure -text "EM Segmentation algorithm started"
-         after 500 EMSegmentStartEM
+         # So window is displayed
+         $EMSegment(MA-lRun) configure -text "EM Segmentation algorithm started"
+         update
+         EMSegmentStartEM
        } 
     } 
 }
@@ -4259,28 +4277,28 @@ proc EMSegmentCreateMeanCovarianceRowsColumns {OldNumInputCh NewNumInputCh} {
     }
 
     for {set x $OldNumInputCh} {$x < $NewNumInputCh} {incr x} {
-    eval {entry  $fcllog.e$x -textvariable EMSegment(Cattrib,$Sclass,LogMean,$x) -width 5} $Gui(WEA)
-    pack $fcllog.e$x -side left  -padx 1 -pady 1
+        eval {entry  $fcllog.e$x -textvariable EMSegment(Cattrib,$Sclass,LogMean,$x) -width 5} $Gui(WEA)
+        pack $fcllog.e$x -side left  -padx 1 -pady 1
     }
 
     set flog $EMSegment(Cl-fLogCovVar)
     for {set y 0} {$y < $OldNumInputCh} {incr y} { 
-    for {set x $OldNumInputCh} {$x < $NewNumInputCh} {incr x} { 
-        eval {entry  $flog.fLine$y.e$x -textvariable EMSegment(Cattrib,$Sclass,LogCovariance,$y,$x) -width 5} $Gui(WEA) 
-        pack $flog.fLine$y.e$x -side left  -padx 1 -pady 1
-    }
+        for {set x $OldNumInputCh} {$x < $NewNumInputCh} {incr x} { 
+            eval {entry  $flog.fLine$y.e$x -textvariable EMSegment(Cattrib,$Sclass,LogCovariance,$y,$x) -width 5} $Gui(WEA) 
+            pack $flog.fLine$y.e$x -side left  -padx 1 -pady 1
+        }
     }
     for {set y $OldNumInputCh} {$y < $NewNumInputCh} {incr y} { 
-    frame $flog.fLine$y -bg $Gui(activeWorkspace)
-    pack $flog.fLine$y -side top -padx 0 -pady 0 -fill x
-     for {set x 0} {$x < $OldNumInputCh} {incr x} { 
-        eval {entry  $flog.fLine$y.e$x -textvariable EMSegment(Cattrib,$Sclass,LogCovariance,$y,$x) -width 5} $Gui(WEA) 
-        pack $flog.fLine$y.e$x -side left  -padx 1 -pady 1
-    }
-    for {set x $OldNumInputCh} {$x < $NewNumInputCh} {incr x} { 
-        eval {entry  $flog.fLine$y.e$x -textvariable EMSegment(Cattrib,$Sclass,LogCovariance,$y,$x) -width 5} $Gui(WEA) 
-        pack $flog.fLine$y.e$x -side left  -padx 1 -pady 1
-    }
+        frame $flog.fLine$y -bg $Gui(activeWorkspace)
+        pack $flog.fLine$y -side top -padx 0 -pady 0 -fill x
+        for {set x 0} {$x < $OldNumInputCh} {incr x} { 
+            eval {entry  $flog.fLine$y.e$x -textvariable EMSegment(Cattrib,$Sclass,LogCovariance,$y,$x) -width 5} $Gui(WEA) 
+            pack $flog.fLine$y.e$x -side left  -padx 1 -pady 1
+        }
+        for {set x $OldNumInputCh} {$x < $NewNumInputCh} {incr x} { 
+            eval {entry  $flog.fLine$y.e$x -textvariable EMSegment(Cattrib,$Sclass,LogCovariance,$y,$x) -width 5} $Gui(WEA) 
+            pack $flog.fLine$y.e$x -side left  -padx 1 -pady 1
+        }
     }
 }
 
