@@ -214,7 +214,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.18 $} {$Date: 2005/03/18 22:19:18 $}]
+        {$Revision: 1.19 $} {$Date: 2005/03/18 22:25:24 $}]
 
 }
 
@@ -4628,18 +4628,16 @@ proc vtkFreeSurferReadersRecordSubjectQA { subject vol eval } {
     set fname [file join $vtkFreeSurferReaders(QADirName) $subject $vtkFreeSurferReaders(QASubjectFileName)]
     if {$::Module(verbose)} { puts "vtkFreeSurferReadersRecordSubjectQA fname = $fname" }
 
-    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $::env(USER) Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.18 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
+    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $::env(USER) Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.19 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
     
     if {[catch {set fid [open $fname "a"]} errmsg] == 1} {
         puts "Can't write to subject file $fname.\nCopy and paste this if you want to save it:\n$msg"
         DevErrorWindow "Cannot open subject's file for appending this QA run:\nfilename = $fname\n$errmsg"
-        return 
+    } else {
+        # write it out
+        puts $fid $msg
+        close $fid
     }
-    
-    # write it out
-    
-    puts $fid $msg
-    close $fid
 
     # now close down the window that called me
     if {$::Module(verbose)} {
@@ -4995,10 +4993,10 @@ proc vtkFreeSurferReadersQAStop {} {
     if {[catch {set fid [open $fname "w"]} errmsg] == 1} {
         puts "Can't write to QA file $fname.\nCopy and paste this if you want to save it:\n $vtkFreeSurferReaders(QAmsg)"
         DevErrorWindow "Cannot open file for writing about this QA run:\nfilename = $fname\n$errmsg"
-        return 
+    } else {
+        puts $fid  $vtkFreeSurferReaders(QAmsg) 
+        close $fid
     }
-    puts $fid  $vtkFreeSurferReaders(QAmsg) 
-    close $fid
     
     #        set closeup [tk_messageBox -type yesno -message "Do you want to close all subject volumes?"]
     #        if {$closeup == "yes"} {
