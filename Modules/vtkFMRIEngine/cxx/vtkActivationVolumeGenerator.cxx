@@ -65,6 +65,7 @@ vtkStandardNewMacro(vtkActivationVolumeGenerator);
 
 vtkActivationVolumeGenerator::vtkActivationVolumeGenerator()
 {
+    this->NumberOfVolumes = 0;
     this->ContrastVector = NULL;
 }
 
@@ -77,6 +78,12 @@ vtkActivationVolumeGenerator::~vtkActivationVolumeGenerator()
 void vtkActivationVolumeGenerator::SetContrastVector(vtkIntArray *vec)
 {
     this->ContrastVector = vec;
+}
+
+
+void vtkActivationVolumeGenerator::SetNumberOfVolumes(int vols)
+{
+    this->NumberOfVolumes = vols;
 }
 
 
@@ -165,7 +172,7 @@ void vtkActivationVolumeGenerator::SimpleExecute(vtkImageData *input, vtkImageDa
                 float t = 0.0; 
                 if (newcov != 0.0)
                 {
-                    t = newBeta / sqrt((newcov)); 
+                    t = newBeta / sqrt(newcov / this->NumberOfVolumes); 
                     if (t < 0.0)
                     {
                         t = t * (-1);
@@ -192,8 +199,8 @@ void vtkActivationVolumeGenerator::SimpleExecute(vtkImageData *input, vtkImageDa
     float value;
     float newValue;
     output->GetScalarRange(range);
-    this->lowRange = range[0];
-    this->highRange = range[1];
+    this->LowRange = range[0];
+    this->HighRange = range[1];
     for (int i = 0; i < indx; i++)
     {
         value = scalarsOutput->GetComponent(i, 0); 
