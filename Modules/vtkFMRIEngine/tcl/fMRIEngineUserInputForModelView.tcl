@@ -54,7 +54,13 @@ proc fMRIModelViewSortUserInput { } {
                 set indx [expr $i+1]
 
                 # Intensities
-                set onsets [split $fMRIEngine($r,$title,onsets) " "]     
+                set onsetsStr $fMRIEngine($r,$title,onsets)
+                # trim white spaces at beginning and end
+                set onsetsStr [string trim $onsetsStr]
+                # replace multiple spaces in the middle of the string by one space  
+                regsub -all {( )+} $onsetsStr " " onsetsStr 
+
+                set onsets [split $onsetsStr " "]     
                 set l [llength $onsets]
                 for {set j 0} {$j < $l} {incr j} {
                     lappend intensities
@@ -63,12 +69,17 @@ proc fMRIModelViewSortUserInput { } {
 
                 fMRIModelViewSetConditionOnsets $r $indx $onsets 
 
-                set durs [split $fMRIEngine($r,$title,durations) " "]     
+                set dursStr $fMRIEngine($r,$title,durations)
+                # trim white spaces at beginning and end
+                set dursStr [string trim $dursStr]
+                # replace multiple spaces in the middle of the string by one space  
+                regsub -all {( )+} $dursStr " " dursStr 
+
+                set durs [split $dursStr " "]     
                 fMRIModelViewSetConditionDurations $r $indx $durs 
 
                 incr i 
             }
-
         }
     }
 
@@ -249,6 +260,11 @@ proc fMRIModelViewSortUserInput { } {
         set name [$fMRIEngine(contrastsListBox) get $i]
         if {$name != ""} {
             set c $fMRIEngine($name,contrastVector)
+            # trim white spaces at beginning and end
+            set c [string trim $c]
+            # replace multiple spaces in the middle of the string by one space  
+            regsub -all {( )+} $c " " c 
+
             set l [split $c " "]
             set noOfEVs [expr $::fMRIModelView(Design,totalEVs) / $::fMRIModelView(Design,numRuns)]
             set len [llength $l]

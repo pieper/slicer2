@@ -542,6 +542,10 @@ proc fMRIEngineDrawPlotLong {x y z} {
     set name $fMRIEngine(currentActVolName)
     set cName [string range $name 11 end]
     set cVec $fMRIEngine($cName,contrastVector)
+    # trim white spaces at beginning and end
+    set cVec [string trim $cVec]
+    # replace multiple spaces in the middle of the string by one space  
+    regsub -all {( )+} $cVec " " cVec
     set cList [split $cVec " "]
     set a [lsearch -exact $cList 1]
     set b [lsearch -exact $cList -1]
