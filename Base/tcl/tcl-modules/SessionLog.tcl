@@ -41,7 +41,7 @@
 #   SessionLogRecallPresets
 #   SessionLogGenericLog
 #   SessionLogFollowSliceOffsets
-#   SessionLogTraceSliceOffsetsCallback
+#   SessionLogTraceSliceOffsetsCallback 
 #   SessionLogTraceSliceDescriptionCallback
 #   SessionLogStartTimingSlice
 #   SessionLogStartTimingAllSlices
@@ -100,7 +100,7 @@ proc SessionLogInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.9 $} {$Date: 2001/05/12 15:50:42 $}]
+	    {$Revision: 1.10 $} {$Date: 2001/06/03 14:02:42 $}]
 
     # Initialize module-level variables
     set SessionLog(fileName)  ""

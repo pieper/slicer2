@@ -23,8 +23,10 @@
 # FILE:        EdPhaseWire.tcl
 # PROCEDURES:  
 #   EdPhaseWireInit
+#   EdPhaseWireSetOmega
 #   EdPhaseWireBuildVTK
 #   EdPhaseWireBuildGUI
+#   EdPhaseUseWindowLevel
 #   EdPhaseConvertToRadians
 #   EdPhaseConvertToDegrees
 #   EdPhaseWirePrettyPicture
@@ -119,6 +121,12 @@ proc EdPhaseWireInit {} {
     set Ed(EdPhaseWire,omega,name) "pi/3"
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EdPhaseWireSetOmega
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EdPhaseWireSetOmega {omega} {
     global Ed Volume prog
 
@@ -750,6 +758,12 @@ proc EdPhaseWireBuildGUI {} {
 
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EdPhaseUseWindowLevel
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EdPhaseUseWindowLevel {} {
     global Lut Ed
 

@@ -29,7 +29,7 @@
 #   InfoWidget
 #   MailWidget
 #   MsgPopup
-#   YesNoPopup
+#   YesNoPopup win x y yesCmd yesCmd
 #   ShowPopup
 #   MakeVTKImageWindow
 #   ExposeTkImageViewer
@@ -58,7 +58,7 @@ proc GuiInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo Gui \
-		{$Revision: 1.28 $} {$Date: 2001/06/03 13:49:51 $}]
+		{$Revision: 1.29 $} {$Date: 2001/06/03 14:02:42 $}]
 
         # Are we running under Windows?
 	if {$tcl_platform(platform) == "windows"} {

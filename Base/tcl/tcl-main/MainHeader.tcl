@@ -22,7 +22,7 @@
 #===============================================================================
 # FILE:        MainHeader.tcl
 # PROCEDURES:  
-#   ReadHeaderTcl
+#   ReadHeaderTcl 
 #   ReadHeader
 #   ParsePrintHeader
 #   ParseM3list
