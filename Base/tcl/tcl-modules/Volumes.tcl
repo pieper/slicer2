@@ -722,6 +722,7 @@ proc VolumesPropsApply {} {
 
 		# Manual headers
 		if {$Volume(readHeaders) == "0"} {
+		    # These get set down below, but we need them before MainUpdateMRML
 			$n SetFilePrefix [file root $Volume(firstFile)]
 			$n SetFilePattern $Volume(filePattern)
 			$n SetFullPrefix [file join $Mrml(dir) [$n GetFilePrefix]]
@@ -753,9 +754,8 @@ proc VolumesPropsApply {} {
 			    return
 			}
 		}
-		
-		$n SetLabelMap $Volume(labelMap)
-		# These get set down below, but we need them before MainUpdateMRML
+
+
 		$n SetName $Volume(name)
 		$n SetDescription $Volume(desc)
 
@@ -769,8 +769,17 @@ proc VolumesPropsApply {} {
 		set m $i
 	}
 
+	# Update all fields that the user changed (not stuff that would 
+	# need a file reread)
+
 	Volume($m,node) SetName $Volume(name)
 	Volume($m,node) SetDescription $Volume(desc)
+	Volume($m,node) SetLabelMap $Volume(labelMap)
+	eval Volume($m,node) SetSpacing $Volume(pixelSize) $Volume(pixelSize) \
+		[expr $Volume(sliceSpacing) + $Volume(sliceThickness)]
+	Volume($m,node) SetTilt $Volume(gantryDetectorTilt)
+	Volume($m,node) ComputeRasToIjkFromScanOrder $Volume(scanOrder)
+
 
 	# If tabs are frozen, then 
 	if {$Module(freezer) != ""} {
@@ -778,6 +787,9 @@ proc VolumesPropsApply {} {
 		set Module(freezer) ""
 		eval $cmd
 	}
+	
+	# Update pipeline
+	MainVolumesUpdate $m
 	
 	MainUpdateMRML
 }
@@ -844,15 +856,11 @@ proc VolumesSetFirst {} {
 	# Do nothing if the user cancelled
 	if {$filename == ""} {return}
 
-	# Store first image file as a relative prefix to the root (prefix.001)
-#	set Volume(firstFile) [MainFileGetRelativePrefix $filename]
-#	set Volume(firstFile) $filename
-
+	# Store first image file as a relative filename to the root (prefix.001)
 	set Volume(firstFile) [MainFileGetRelativePrefix $filename][file \
 		extension $filename]
 
 	set Volume(name)  [file root [file tail $filename]]
-
 
 	# lastNum is an image number
 	set Volume(lastNum)  [MainFileFindImageNumber Last \
