@@ -14,6 +14,8 @@
 #include "vtkHyperStreamline.h"
 #include "vtkHyperStreamlinePoints.h"
 #include "vtkActor.h"
+#include "vtkProperty.h"
+#include "vtkLookupTable.h"
 
 
 class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
@@ -84,7 +86,7 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   // List of the output vtkHyperStreamlines (or subclasses)
   vtkGetObjectMacro(Streamlines, vtkCollection);
   vtkGetObjectMacro(Actors, vtkCollection);
-  vtkGetObjectMacro(LookupTables, vtkCollection);
+  //vtkGetObjectMacro(LookupTables, vtkCollection);
   vtkGetObjectMacro(Mappers, vtkCollection);
 
   // Description
@@ -94,6 +96,23 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   vtkGetObjectMacro(InputRenderers, vtkCollection);
 
 
+  // Description
+  // Control actor properties of created streamlines by setting
+  // them in this vtkProperty object.  Its parameters are copied
+  // into the streamline actors.
+  vtkSetObjectMacro(StreamlineProperty, vtkProperty);
+  vtkGetObjectMacro(StreamlineProperty, vtkProperty);
+
+  // Description
+  // controls scalar visibility of actors created in this class
+  vtkSetMacro(ScalarVisibility,int);
+  vtkGetMacro(ScalarVisibility,int);
+  vtkBooleanMacro(ScalarVisibility,int);
+
+  // Description
+  //  lookup table  for displayed streamlines
+  vtkSetObjectMacro(StreamlineLookupTable, vtkLookupTable);
+  vtkGetObjectMacro(StreamlineLookupTable, vtkLookupTable);
 
   // Description
   // To do list:
@@ -102,12 +121,14 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   // Add option to create new/old streamline classes
   // Add save function
   // Add observers for progress/implement progress updating
-  
+  // Add check on all inputs
+
  protected:
   vtkMultipleStreamlineController();
   ~vtkMultipleStreamlineController();
 
   void CreateGraphicsObjects();
+  void ApplyUserSettingsToGraphicsObject(int index);
   void DeleteStreamline(int index);
   int PointWithinTensorData(double *point, double *pointw);
 
@@ -120,11 +141,14 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   int InputROIValue;
 
   vtkCollection *Streamlines;
-  vtkCollection *LookupTables;
+  //vtkCollection *LookupTables;
   vtkCollection *Mappers;
   vtkCollection *Actors;
 
+  vtkProperty *StreamlineProperty;
 
+  int ScalarVisibility;
+  vtkLookupTable *StreamlineLookupTable;
 
   // Add Parameters of standard streamlines
   //MaximumPropagationDistance IntegrationStepLength 
@@ -132,6 +156,10 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   int IntegrationDirection;
 
   // Add parameters of precise streamlines
+
+  // Or perhaps add a representative accessible object 
+  // of each type, that the user can
+  // modify, then copy it to each new created streamline.
 
 };
 

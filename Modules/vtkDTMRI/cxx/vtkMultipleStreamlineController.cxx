@@ -28,27 +28,62 @@ vtkMultipleStreamlineController::vtkMultipleStreamlineController()
   this->InputROI = NULL;
   this->InputRenderers = vtkCollection::New();
 
+
   this->Streamlines = vtkCollection::New();
-  this->LookupTables = vtkCollection::New();
+  //this->LookupTables = vtkCollection::New();
   this->Mappers = vtkCollection::New();
   this->Actors = vtkCollection::New();
 
   // Streamline parameters
   this->IntegrationDirection = VTK_INTEGRATE_BOTH_DIRECTIONS;
+  this->StreamlineProperty = vtkProperty::New();
+  this->ScalarVisibility=0;
+  this->StreamlineLookupTable = vtkLookupTable::New();
+  // make 0 dark blue, not red
+  this->StreamlineLookupTable->SetHueRange(.6667, 0.0);
+
 }
 
 //----------------------------------------------------------------------------
 vtkMultipleStreamlineController::~vtkMultipleStreamlineController()
 {
+  this->DeleteAllStreamlines();
+
   this->ROIToWorld->Delete();
   this->WorldToTensorScaledIJK->Delete();
   this->InputTensorField->Delete();
   this->InputROI->Delete();
   this->InputRenderers->Delete();
   this->Streamlines->Delete();
-  this->LookupTables->Delete();
+  //this->LookupTables->Delete();
   this->Mappers->Delete();
   this->Actors->Delete();
+  this->StreamlineLookupTable->Delete();
+}
+
+// Set the properties of one streamline's graphics objects as requested
+// by the user
+//----------------------------------------------------------------------------
+void vtkMultipleStreamlineController::ApplyUserSettingsToGraphicsObject(int index)
+{
+  vtkPolyDataMapper *currMapper;
+  vtkActor *currActor;
+
+  currActor = (vtkActor *) this->Actors->GetItemAsObject(index);
+  currMapper = (vtkPolyDataMapper *) this->Mappers->GetItemAsObject(index);
+
+  // set the Actor's properties according to the sample 
+  // object that the user can access.
+  currActor->GetProperty()->SetAmbient(this->StreamlineProperty->GetAmbient());
+  currActor->GetProperty()->SetDiffuse(this->StreamlineProperty->GetDiffuse());
+  currActor->GetProperty()->SetSpecular(this->StreamlineProperty->GetSpecular());
+  currActor->GetProperty()->
+    SetSpecularPower(this->StreamlineProperty->GetSpecularPower());
+  currActor->GetProperty()->SetColor(this->StreamlineProperty->GetColor());    
+  // Set the scalar visibility as desired by the user
+  currMapper->SetScalarVisibility(this->ScalarVisibility);
+
+
 }
 
 // Make actors, mappers, and lookup tables as needed for streamlines
@@ -60,7 +95,7 @@ void vtkMultipleStreamlineController::CreateGraphicsObjects()
   // TO DO: see if all can use same LUT
   int numStreamlines, numActorsCreated;
   vtkHyperStreamline *currStreamline;
-  vtkLookupTable *currLookupTable;
+  //vtkLookupTable *currLookupTable;
   vtkPolyDataMapper *currMapper;
   vtkActor *currActor;
   vtkTransform *currTransform;
@@ -70,8 +105,9 @@ void vtkMultipleStreamlineController::CreateGraphicsObjects()
   numStreamlines = this->Streamlines->GetNumberOfItems();
   numActorsCreated = this->Actors->GetNumberOfItems();
 
-  cout << "in CreateGraphicsObjects " << numActorsCreated << "  " << numStreamlines << endl;
+  vtkDebugMacro(<< "in CreateGraphicsObjects " << numActorsCreated << "  " << numStreamlines);
 
+  // If we have already made all of the object needed, stop here.
   if (numActorsCreated == numStreamlines) 
     return;
 
@@ -88,16 +124,21 @@ void vtkMultipleStreamlineController::CreateGraphicsObjects()
         this->Streamlines->GetItemAsObject(numActorsCreated);
 
       // Now create the objects needed
-      currLookupTable = vtkLookupTable::New();
-      this->LookupTables->AddItem((vtkObject *)currLookupTable);
+      //currLookupTable = vtkLookupTable::New();
+      //this->LookupTables->AddItem((vtkObject *)currLookupTable);
       currActor = vtkActor::New();
       this->Actors->AddItem((vtkObject *)currActor);
       currMapper = vtkPolyDataMapper::New();
       this->Mappers->AddItem((vtkObject *)currMapper);
 
+      // Apply user's visualization settings to these objects
+      this->ApplyUserSettingsToGraphicsObject(numActorsCreated);
+
       // Hook up the pipeline
       currMapper->SetInput(currStreamline->GetOutput());
-      currMapper->SetLookupTable(currLookupTable);
+      //currMapper->SetLookupTable(currLookupTable);
+      currMapper->SetLookupTable(this->StreamlineLookupTable);
+      currMapper->UseLookupTableScalarRangeOn();
       currActor->SetMapper(currMapper);
       
       // Place the actor correctly in the scene
@@ -123,7 +164,7 @@ void vtkMultipleStreamlineController::CreateGraphicsObjects()
   numStreamlines = this->Streamlines->GetNumberOfItems();
   numActorsCreated = this->Actors->GetNumberOfItems();
 
-  cout << "in CreateGraphicsObjects " << numActorsCreated << "  " << numStreamlines << endl;
+  vtkDebugMacro(<< "in CreateGraphicsObjects " << numActorsCreated << "  " << numStreamlines);
 
 }
 
@@ -174,7 +215,7 @@ void vtkMultipleStreamlineController::DeleteAllStreamlines()
   numStreamlines = this->Streamlines->GetNumberOfItems();
   while (i < numStreamlines)
     {
-      cout << i << endl;
+      vtkDebugMacro( << "Deleting streamline " << i);
       // always delete the first streamline from the collections
       // (they change size as we do this)
       this->DeleteStreamline(0);
@@ -187,12 +228,12 @@ void vtkMultipleStreamlineController::DeleteAllStreamlines()
 void vtkMultipleStreamlineController::DeleteStreamline(int index)
 {
   vtkRenderer *currRenderer;
-  vtkLookupTable *currLookupTable;
+  //vtkLookupTable *currLookupTable;
   vtkPolyDataMapper *currMapper;
   vtkHyperStreamline *currStreamline;
   vtkActor *currActor;
 
-  cout << "actor" << endl;
+  cout << "actor " << index << endl;
   currActor = (vtkActor *) this->Actors->GetItemAsObject(index);
   currActor->VisibilityOff();
   // Remove from the scene (from each renderer)
@@ -221,10 +262,10 @@ void vtkMultipleStreamlineController::DeleteStreamline(int index)
   //currMapper->SetLookupTable(NULL);
   currMapper->Delete();
   
-  cout << "lut" << endl;
-  currLookupTable = (vtkLookupTable *) this->LookupTables->GetItemAsObject(index);
-  this->LookupTables->RemoveItem(index);
-  currLookupTable->Delete();
+  //cout << "lut" << endl;
+  //currLookupTable = (vtkLookupTable *) this->LookupTables->GetItemAsObject(index);
+  //this->LookupTables->RemoveItem(index);
+  //currLookupTable->Delete();
   
   cout << "Done" << endl;
 
@@ -234,10 +275,6 @@ void vtkMultipleStreamlineController::DeleteStreamline(int index)
 void vtkMultipleStreamlineController::DeleteStreamline(vtkActor *pickedActor)
 {
   int index;
-  vtkRenderer *currRenderer;
-  vtkLookupTable *currLookupTable;
-  vtkPolyDataMapper *currMapper;
-  vtkHyperStreamline *currStreamline;
 
   cout << "Picked actor (present?): " << pickedActor << endl;
   // find the actor on the collection and remove and delete all
@@ -250,46 +287,7 @@ void vtkMultipleStreamlineController::DeleteStreamline(vtkActor *pickedActor)
       // strange but this is necessary.
       index--;
 
-      cout << "Actor " << index << " present." << endl;
-      pickedActor->VisibilityOff();
-
-      // Remove from the scene (from each renderer)
-      // MainRemoveActor in Main.tcl removes actor from each renderer.
-      // For speed we cannot call this function.
-      this->InputRenderers->InitTraversal();
-      currRenderer= (vtkRenderer *)this->InputRenderers->GetNextItemAsObject();
-      while(currRenderer)
-        {
-          cout << "rm actor from renderer " << currRenderer << endl;
-          currRenderer->RemoveActor(pickedActor);
-          currRenderer= (vtkRenderer *)this->InputRenderers->GetNextItemAsObject();
-        }
-
-      cout << "actor" << endl;
-      this->Actors->RemoveItem(index);
-      //pickedActor->SetMapper(NULL);
-      pickedActor->Delete();
-
-      cout << "stream" << endl;
-      currStreamline = (vtkHyperStreamline *)
-        this->Streamlines->GetItemAsObject(index);
-      this->Streamlines->RemoveItem(index);
-      currStreamline->Delete();
-
-      cout << "mapper" << endl;
-      currMapper = (vtkPolyDataMapper *) this->Mappers->GetItemAsObject(index);
-      this->Mappers->RemoveItem(index);
-      //currMapper->SetInput(NULL);
-      //currMapper->SetLookupTable(NULL);
-      currMapper->Delete();
-
-      cout << "lut" << endl;
-      currLookupTable = (vtkLookupTable *) this->LookupTables->GetItemAsObject(index);
-      this->LookupTables->RemoveItem(index);
-      currLookupTable->Delete();
-
-      cout << "Done" << endl;
-
+      this->DeleteStreamline(index);
     }
 }
 
@@ -343,7 +341,9 @@ void vtkMultipleStreamlineController::SeedStreamlineFromPoint(double x,
     return;
 
   // Now create a streamline and put it on the collection.
-  newStreamline=vtkHyperStreamlineDTMRI::New();
+  //newStreamline=vtkHyperStreamline::New();
+  newStreamline=vtkHyperStreamlinePoints::New();
+  //newStreamline->DebugOn();
   this->Streamlines->AddItem((vtkObject *)newStreamline);
   
   // Set its input information.
@@ -425,6 +425,8 @@ void vtkMultipleStreamlineController::SeedStreamlinesFromROI()
                       // Now create a streamline and put it on the collection.
                       //newStreamline=vtkHyperStreamlineDTMRI::New();
                       newStreamline=vtkHyperStreamlinePoints::New();
+                      //newStreamline=vtkHyperStreamline::New();
+                      //newStreamline->DebugOn();
                       this->Streamlines->AddItem((vtkObject *)newStreamline);
                       
                       // Set its input information.
