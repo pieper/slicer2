@@ -237,7 +237,7 @@ proc DumpHeader {aHeader} {
 # .END
 #-------------------------------------------------------------------------------
 proc GetHeaderInfo {img1 num2 node tk} {
-	global Mrml
+	global Mrml Path
 
 	# Get filename pattern
 	set prefix [file root $img1]
