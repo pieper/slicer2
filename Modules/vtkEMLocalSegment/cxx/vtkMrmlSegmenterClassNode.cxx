@@ -70,10 +70,14 @@ vtkMrmlSegmenterClassNode::vtkMrmlSegmenterClassNode()
   this->LogCovariance    = NULL;
 
   this->PCAMeanName      = NULL; 
-  this->PCAMaxDist       = 0.0;
-  this->PCADistVariance  = 0.0; 
   this->ReferenceStandardFileName     = NULL; 
   
+  this->PCALogisticSlope = 1.0;
+  this->PCALogisticMin   = 0.0;
+  this->PCALogisticMax   = 20.0;
+  this->PCALogisticBoundary = 9.5;
+
+
   this->PrintQuality        = 0;
   this->PrintPCA            = 0;
 }
@@ -152,8 +156,10 @@ void vtkMrmlSegmenterClassNode::Write(ofstream& of, int nIndent)
     of << " ReferenceStandardFileName='" << this->ReferenceStandardFileName << "'";
   }
 
-  of << " PCAMaxDist='" << this->PCAMaxDist << "'";
-  of << " PCADistVariance='" << this->PCADistVariance << "'";
+  of << " PCALogisticSlope ='" << this->PCALogisticSlope << " "; 
+  of << " PCALogisticMin ='" << this->PCALogisticMin << " "; 
+  of << " PCALogisticMax ='" << this->PCALogisticMax << " "; 
+  of << " PCALogisticBoundary ='" << this->PCALogisticBoundary << " "; 
 
   of << " PrintQuality='" << this->PrintQuality << "'";
   of << " PrintPCA='" << this->PrintPCA << "'";
@@ -179,8 +185,10 @@ void vtkMrmlSegmenterClassNode::Copy(vtkMrmlNode *anode)
   this->SetPCAMeanName(node->PCAMeanName);
   this->SetReferenceStandardFileName(node->ReferenceStandardFileName);
 
-  this->SetPCAMaxDist(node->PCAMaxDist);
-  this->SetPCADistVariance(node->PCADistVariance);
+  this->SetPCALogisticSlope(node->PCALogisticSlope);
+  this->SetPCALogisticMin(node->PCALogisticMin);
+  this->SetPCALogisticMax(node->PCALogisticMax);
+  this->SetPCALogisticBoundary(node->PCALogisticBoundary);
 
   this->SetPrintQuality(node->PrintQuality);
   this->SetPrintPCA(node->PrintPCA);
@@ -207,9 +215,12 @@ void vtkMrmlSegmenterClassNode::PrintSelf(ostream& os, vtkIndent indent)
 
    os << indent << "ReferenceStandardFileName: " <<  (this->ReferenceStandardFileName ? this->ReferenceStandardFileName : "(none)") << "\n"; 
    os << indent << "PCAMeanName:               " <<  (this->PCAMeanName ? this->PCAMeanName : "(none)") << "\n"; 
-   os << indent << "PCAMaxDist:                " << this->PCAMaxDist << "\n";
-   os << indent << "PCADistVariance:           " << this->PCADistVariance << "\n";
 
    os << indent << "PrintQuality:              " << this->PrintQuality << "\n";
    os << indent << "PrintPCA:                  " << this->PrintPCA << "\n";
+   os << indent << "PCALogisticSlope:          " << this->PCALogisticSlope << "\n"; 
+   os << indent << "PCALogisticMin:            " << this->PCALogisticMin << "\n"; 
+   os << indent << "PCALogisticMax:            " << this->PCALogisticMax << "\n"; 
+   os << indent << "PCALogisticBoundary:       " << this->PCALogisticBoundary << "\n"; 
+
 }

@@ -106,13 +106,18 @@ public:
   vtkGetStringMacro(PCAMeanName);
 
   // Description:
-  // Maximum distance inside the object 
-  vtkGetMacro(PCAMaxDist,double);
-  vtkSetMacro(PCAMaxDist,double);
-  // Description:
   // Variance to maximum distance in the signed label map  
-  vtkGetMacro(PCADistVariance,double);
-  vtkSetMacro(PCADistVariance,double);
+  vtkGetMacro(PCALogisticSlope,float);
+  vtkSetMacro(PCALogisticSlope,float);
+
+  vtkGetMacro(PCALogisticMin,float);
+  vtkSetMacro(PCALogisticMin,float);
+
+  vtkGetMacro(PCALogisticMax,float);
+  vtkSetMacro(PCALogisticMax,float);
+
+  vtkGetMacro(PCALogisticBoundary,float);
+  vtkSetMacro(PCALogisticBoundary,float);
 
   // Description:
   // Currenly only the following values defined 
@@ -140,8 +145,12 @@ protected:
   float  LocalPriorWeight;
 
   char   *PCAMeanName;
-  double PCAMaxDist;
-  double PCADistVariance;
+
+  float PCALogisticSlope;
+  float PCALogisticMin;
+  float PCALogisticMax;
+  float PCALogisticBoundary;
+
   char   *ReferenceStandardFileName;
 
   int    PrintQuality;        // Prints out a quality measure of the current result ( 1=  Dice )

@@ -159,13 +159,13 @@ proc EMSegmentInit {} {
     # Public Version  = 1
     # Private Version = 2
    
-    #if { [catch "package require vtkEMPrivateSegment"] } {
-    #  set EMSegment(SegmentMode) 0
-    #} else {
-    #  puts "Load Private EM-Version"
-    #  set EMSegment(SegmentMode) 1
-    #} 
-    set EMSegment(SegmentMode) 0
+    if { [catch "package require vtkEMPrivateSegment"] } {
+      set EMSegment(SegmentMode) 0
+    } else {
+      puts "Load Private EM-Version"
+      set EMSegment(SegmentMode) 1
+    } 
+    # set EMSegment(SegmentMode) 0
 
     # Source EMSegmentAlgorithm.tcl File 
     source $::PACKAGE_DIR_VTKEMLocalSegment/../../../tcl/EMSegmentAlgorithm.tcl
@@ -259,7 +259,7 @@ proc EMSegmentInit {} {
     #   The strings with the $ symbol tell CVS to automatically insert the
     #   appropriate revision number and date when the module is checked in.
     #   
-    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.52 $} {$Date: 2005/03/07 02:43:05 $}]}
+    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.53 $} {$Date: 2005/03/18 23:46:26 $}]}
 
     # Initialize module-level variables
     #------------------------------------
@@ -1940,12 +1940,11 @@ proc EMSegmentUpdateMRML {} {
     if {($VolumeName != "") && ($VolumeIndex > -1) } { set EMSegment(Cattrib,$NumClass,PCAMeanData) [lindex $Volume(idList) $VolumeIndex]
     } else { set EMSegment(Cattrib,$NumClass,PCAMeanData) $Volume(idNone) }
 
-        set VolumeName  [SegmenterClass($pid,node) GetReferenceStandardFileName]
-    set VolumeIndex [lsearch $VolumeNameList $VolumeName]
-    if {($VolumeName != "") && ($VolumeIndex > -1) } { set EMSegment(Cattrib,$NumClass,ReferenceStandardData) [lindex $Volume(idList) $VolumeIndex]
-    } else { set EMSegment(Cattrib,$NumClass,ReferenceStandardData) $Volume(idNone) }
-
-        set index 0
+    set VolumeName  [SegmenterClass($pid,node) GetReferenceStandardFileName]
+      set VolumeIndex [lsearch $VolumeNameList $VolumeName]
+      if {($VolumeName != "") && ($VolumeIndex > -1) } { set EMSegment(Cattrib,$NumClass,ReferenceStandardData) [lindex $Volume(idList) $VolumeIndex]
+      } else { set EMSegment(Cattrib,$NumClass,ReferenceStandardData) $Volume(idNone) }
+         set index 0
         set LogCovariance  [SegmenterClass($pid,node) GetLogCovariance]
         set LogMean [SegmenterClass($pid,node) GetLogMean]
         set InputChannelWeights [SegmenterClass($pid,node) GetInputChannelWeights]
@@ -4240,7 +4239,9 @@ proc EMSegmentReadGreyValue {x y flag} {
       if {[expr (($Xmin > $xIjk) || ($Xmax < $xIjk) || ($Ymin > $yIjk) || ($Ymax < $yIjk) || ($Zmin > $zIjk) || ($Zmax < $zIjk))]} {
         set pixel 0
       } else {
-        set pixel [$ImageData $::getScalarComponentAs $xIjk $yIjk $zIjk 0]
+        # set pixel [$ImageData $::getScalarComponentAs $xIjk $yIjk $zIjk 0]
+      set pixel [$ImageData GetScalarComponentAsFloat $xIjk $yIjk $zIjk 0]
+
       }
       if {$flag} {
       lappend result "$x $y $zIjk $pixel" 

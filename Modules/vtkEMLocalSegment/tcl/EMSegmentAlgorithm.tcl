@@ -193,9 +193,11 @@ proc EMSegmentSetVtkPrivateSuperClassSetting {SuperClass} {
             foreach EigenList $EMSegment(Cattrib,$i,PCAEigen) {
               EMSegment(Cattrib,$i,vtkImageEMClass)  SetPCAEigenValues [lindex $EigenList 0] [lindex $EigenList 1] 
            }
-           # MICCAI 04 Stuff
-       # EMSegment(Cattrib,$i,vtkImageEMClass) SetPCAMaxDist      $EMSegment(Cattrib,$i,PCAMaxDist)
-           # EMSegment(Cattrib,$i,vtkImageEMClass) SetPCADistVariance $EMSegment(Cattrib,$i,PCADistVariance)
+           
+           EMSegment(Cattrib,$i,vtkImageEMClass) SetPCALogisticSlope      $EMSegment(Cattrib,$i,PCALogisticSlope)
+           EMSegment(Cattrib,$i,vtkImageEMClass) SetPCALogisticMin        $EMSegment(Cattrib,$i,PCALogisticMin)
+           EMSegment(Cattrib,$i,vtkImageEMClass) SetPCALogisticMax        $EMSegment(Cattrib,$i,PCALogisticMax)
+           EMSegment(Cattrib,$i,vtkImageEMClass) SetPCALogisticBoundary   $EMSegment(Cattrib,$i,PCALogisticBoundary)
       } 
 
       EMSegment(Cattrib,$i,vtkImageEMClass) SetPrintQuality $EMSegment(Cattrib,$i,PrintQuality)
