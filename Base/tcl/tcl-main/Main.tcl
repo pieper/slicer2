@@ -269,6 +269,7 @@ The 3D Slicer will exit so the problem can be corrected."
     #-------------------------------------------
     # Load MRML data
     #-------------------------------------------    
+    update
     MainMrmlRead $mrmlFile
     MainUpdateMRML
     MainOptionsRetrievePresetValues
@@ -359,7 +360,7 @@ proc MainInit {} {
 
         # Set version info
     lappend Module(versions) [ParseCVSInfo Main \
-        {$Revision: 1.83 $} {$Date: 2002/09/04 21:51:46 $}]
+        {$Revision: 1.84 $} {$Date: 2002/09/11 00:02:32 $}]
 
     # Call each "Init" routine that's not part of a module
     #-------------------------------------------
