@@ -6,11 +6,23 @@
 #include <stdlib.h>
 
 #include <math.h>
+
+#include <algorithm>
+
 #include "vtkObjectFactory.h"
 
 #include "vtkFastMarching.h"
 
 #include "FMpdf.cxx"
+
+///////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////
+
+// used to compute the median
+int compareInt(const void *a, const void *b)
+{
+  return  (*(int*)a) - (*(int*)b);
+}
 
 ///////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////
@@ -45,74 +57,61 @@ float vtkFastMarching::speed( int index )
 
   getMedianInhomo( index, I, H );
 
-  /*
-    if( (I<0) || (I>depth) || (H<0) || (H>depth) )
-    {
-    vtkErrorMacro( "Error in vtkFastMarching::speed(index)!" << endl
-    << "index=" << index << " I=" << I << " H=" << H 
-    << " depth=" << depth << endl );
-    }
-  */
   float s;
 
+  double pI=pdfIntensityIn->value(I);
+  double pH=pdfInhomoIn->value(H);
 
-  s = (float)pdfIntensityIn->value(I)/pdfIntensityAll->value(I)*pdfInhomoIn->value(H)/pdfInhomoAll->value(H) ;
-  
-  /*
-    s = (float)min(pdfIntensityIn->value(I)/pdfIntensityAll->value(I),pdfInhomoIn->value(H)/pdfInhomoAll->value(H)) ;
-  */
+  // note: put the emphasis on pI... 
+  s=(float)pI*pI*pH;
 
-  /*
-    with prob^2 fast speed have a strong advantage over small speed so the expanding volume
-    behaves like a very fluid fluid, less regular but deepends less on initial seeds
-   */
+  // make sure speed is not too small
+  s*=1e10;
+  if( (s<1.0/(INF/1e6)) || finite(s)==0 )
+    {
+      if(finite(s)==0)
+    vtkErrorMacro( "Error in vtkFastMarching::speed(...): finite(s)==0 " << s );
+      /*
+      else
+    vtkErrorMacro( "(s<1.0/(INF/1e6)) " << s );
+      */
+      s=1.0/(INF/1e6);
+    }
 
-  //  s=1.0;
   return s;
-
-  /*
-    return (float)min(pdfIntensityIn->value(I)/pdfIntensityAll->value(I),
-    pdfInhomoIn->value(H)/pdfInhomoAll->value(H));
-
-  */
 }
 
 void vtkFastMarching::setSeed( int index )
 {
-  assert( (index>=(1+dimX+dimXY)) && (index<(dimXYZ-1-dimX-dimXY)) );
+  //assert( (index>=(1+dimX+dimXY)) && (index<(dimXYZ-1-dimX-dimXY)) );
+  if(!( (index>=(1+dimX+dimXY)) && (index<(dimXYZ-1-dimX-dimXY)) ))
+    {
+      vtkErrorMacro("Error in vtkFastMarching::setSeed(...): !( (index>=(1+dimX+dimXY)) && (index<(dimXYZ-1-dimX-dimXY)) )");
+      return;
+    }
 
   if( node[index].status!=fmsFAR )
     {
-    // this seed has already been planted
-    return;
+      // this seed has already been planted
+      return;
     }
 
   // by definition, T=0, and that voxel is known
   node[index].T=0.0;
   node[index].status=fmsKNOWN;
 
-  knownPoints[nEvolutions].push_back(index);
+  knownPoints.push_back(index);
 
   // add all 26-neighbors to trial band
-  for(int px=-1;px<=1;px++)
-  for(int py=-1;py<=1;py++)
-  for(int pz=-1;pz<=1;pz++)
+  for(int n=1;n<=26;n++)
     {
       FMleaf f;
-      f.nodeIndex=index + px + py * dimX + pz * dimXY;
-      if( px!=0 || py!=0 || pz!=0 )
-    {
+      f.nodeIndex=index + shiftNeighbor(n);
       node[f.nodeIndex].status=fmsTRIAL;
-      node[f.nodeIndex].T= sqrt( fabs(px)*dx*dx + fabs(px)*dy*dy + fabs(px)*dz*dz )
-        / speed(f.nodeIndex);
+      node[f.nodeIndex].T = distanceNeighbor(n) / speed(f.nodeIndex);
+      
       insert( f ); // insert in minheap
     }
-    }
-}
-
-int compareInt(const void *a, const void *b)
-{
-  return  (*(int*)a) - (*(int*)b);
 }
 
 inline void vtkFastMarching::getMedianInhomo( int index, int &med, int &inh )
@@ -128,19 +127,38 @@ inline void vtkFastMarching::getMedianInhomo( int index, int &med, int &inh )
     }
 
   // otherwise, just do it
-  for(int k=0;k<27;k++)
-    tmpNeighborhood[k] = (int)indata[index + arrayShiftNeighbor[k]];
+  for(int k=0;k<=26;k++)
+      tmpNeighborhood[k] = (int)indata[index + arrayShiftNeighbor[k]];
 
   qsort( (void*)tmpNeighborhood, 27, sizeof(int), &compareInt );
-      
+  
   inh = inhomo[ index ] = (tmpNeighborhood[21] - tmpNeighborhood[5]);
   med = median[ index ] = tmpNeighborhood[13];
+  
+  /*
+    // same thing for 125-neighbors
 
-  return;
+    int p=0;
+    for(int px=-2;px<=2;px++)
+    for(int py=-2;py<=2;py++)
+    for(int pz=-2;pz<=2;pz++)
+    {
+    int k=index + px + py * dimX + pz * dimXY;
+    tmpNeighborhood[p++] = (int)indata[k];
+    }
+
+    qsort( (void*)tmpNeighborhood, 125, sizeof(int), &compareInt );
+  
+    inh = inhomo[ index ] = (tmpNeighborhood[105] - tmpNeighborhood[20]);
+    med = median[ index ] = tmpNeighborhood[63];
+  */
 }
 
 void vtkFastMarching::initNewExpansion( void )
 {
+  if(somethingReallyWrong)
+    return;
+
   pdfIntensityIn->reset();
   pdfInhomoIn->reset();
 
@@ -151,56 +169,55 @@ void vtkFastMarching::initNewExpansion( void )
       node[ tree[tree.size()-1].nodeIndex ].T=INF; 
       tree.pop_back();
     }
+
   // empty the list of known points
   while(knownPoints.size()>0)
     {
-      while(knownPoints[knownPoints.size()-1].size()>0)
-    knownPoints[knownPoints.size()-1].pop_back();
-
       knownPoints.pop_back();
     }
-
-    nEvolutions=-1;
+  nEvolutions=-1;
     
-    firstCall=true;
+  firstCall=true;
 
-    while(seedPoints.size()>0)
-      seedPoints.pop_back();
+  while(seedPoints.size()>0)
+    seedPoints.pop_back();
 
-   int index=0;
-    for(int k=0;k<dimZ;k++)
-      for(int j=0;j<dimY;j++)
-    for(int i=0;i<dimX;i++)
-      {
-        if(outdata[index]==label)
+  int index=0;
+  for(int k=0;k<dimZ;k++)
+    for(int j=0;j<dimY;j++)
+      for(int i=0;i<dimX;i++)
+    {
+      if(outdata[index]==label)
+        {
+          bool hasIntensityZeroNeighbor = false;
+          for(int n=1;n<nNeighbors;n++)
+        if(outdata[index+shiftNeighbor(n)]==0)
           {
-        bool hasIntensityZeroNeighbor = false;
-        for(int n=1;n<nNeighbors;n++)
-          if(outdata[index+shiftNeighbor(n)]==0)
-            {
-              hasIntensityZeroNeighbor=true;
-              break;
-            }
-
-        if(hasIntensityZeroNeighbor)
-          {
-            node[index].status=fmsFAR;
-            seedPoints.push_back( index );
-          }
-        else
-          {
-            node[index].status=fmsKNOWN;
-            node[index].T=0.0;
-          }
+            hasIntensityZeroNeighbor=true;
+            break;
           }
 
-        index++;
-      }
- 
+          if(hasIntensityZeroNeighbor)
+        {
+          node[index].status=fmsFAR;
+          seedPoints.push_back( index );
+        }
+          else
+        {
+          node[index].status=fmsKNOWN;
+          node[index].T=0.0;
+        }
+        }
+
+      index++;
+    }
 }
 
 int vtkFastMarching::nValidSeeds( void )
 {
+  if(somethingReallyWrong)
+    return 0;
+
   return seedPoints.size()+tree.size();
 }
 
@@ -209,6 +226,9 @@ void vtkFastMarchingExecute(vtkFastMarching *self,
                 vtkImageData *outData, short *outPtr, 
                 int outExt[6])
 {
+  if(self->somethingReallyWrong)
+    return;
+
   int n=0;
 
   self->setInData( (short *)inPtr );
@@ -218,31 +238,21 @@ void vtkFastMarchingExecute(vtkFastMarching *self,
     {
       self->initialized = true;
 
-      // make sure that there is no 0 in these pdf
-      // because we will divide by these 
-      for(int r=0;r<=self->depth;r++)
-    {
-      self->pdfIntensityAll->addRealization( r );
-      self->pdfInhomoAll->addRealization( r );
-    }
-
       int index=0;
       int lastPercentageProgressBarUpdated=-1;
 
       int I, H;
-      int sparseSampling=100;
 
       for(int k=0;k<self->dimZ;k++)
-      for(int j=0;j<self->dimY;j++)
+    for(int j=0;j<self->dimY;j++)
       for(int i=0;i<self->dimX;i++)
         {
 
           self->node[index].T=INF;
-      self->node[index].nSonsLeaked=0;
 
-      if(self->outdata[index]==0)
+          if(self->outdata[index]==0)
         self->node[index].status=fmsFAR;
-      else 
+          else 
         self->node[index].status=fmsDONE;
       
           self->inhomo[index]=-1; // meaning inhomo and median have not been computed there
@@ -267,18 +277,6 @@ void vtkFastMarchingExecute(vtkFastMarching *self,
           self->inhomo[ index ] = self->depth;
           self->median[ index ] = 0;
         }
-          else
-        {
-          // we're not on one of the border of the volume
-      
-          // pick some values to estimate the properties of the grayscale values
-          if( (index % sparseSampling) == 0)
-            {
-              self->getMedianInhomo( index, I, H );
-              self->pdfIntensityAll->addRealization( I );
-              self->pdfInhomoAll->addRealization( H );
-            }
-        }
 
           index++;
         }
@@ -289,28 +287,36 @@ void vtkFastMarchingExecute(vtkFastMarching *self,
   if( self->firstCall )
     {
       self->firstCall=false;
-
-
-      assert(self->seedPoints.size()>0);
-  
+      
+      
+      //assert(self->seedPoints.size()>0);
+      if(!(self->seedPoints.size()>0))
+    {
+      self->vtkErrorWrapper( "Error in vtkFastMarchingExecute: !(self->seedPoints.size()>0)" );
+      self->firstCall=true; // we did not complete this step
+      return;
+    }
       for(int k=0;k<(int)self->seedPoints.size();k++)
     self->collectInfoSeed( self->seedPoints[k] );
 
+      self->pdfIntensityIn->update();
+      self->pdfInhomoIn->update();
     }
 
   // reinitialize the points that were removed by the user
   if( self->nEvolutions>=0 )
-    if( (self->knownPoints[self->nEvolutions].size()>1) && 
-    ((signed)self->knownPoints[self->nEvolutions].size()-1>self->nPointsBeforeLeakEvolution) )
+    if( (self->knownPoints.size()>1) && 
+    ((signed)self->knownPoints.size()-1>self->nPointsBeforeLeakEvolution) )
       {
     // reinitialize all the points
-    for(int k=self->nPointsBeforeLeakEvolution;k<(int)self->knownPoints[self->nEvolutions].size();k++)
+    for(int k=self->nPointsBeforeLeakEvolution;k<(int)self->knownPoints.size();k++)
       {
-        int index = self->knownPoints[self->nEvolutions][k];
+        int index = self->knownPoints[k];
         self->node[ index ].status = fmsFAR;
         self->node[ index ].T = INF;
        
-        /* we also want to remove the neighbors of these points that would be in TRIAL
+        /* 
+           we also want to remove the neighbors of these points that would be in TRIAL
            as it is not trivial to remove points from the minheap, we will just set their T
            to infinity to make sure they appear in the back of the heap
         */
@@ -327,9 +333,9 @@ void vtkFastMarchingExecute(vtkFastMarching *self,
       }
 
     // if the points still have a KNOWN neighbor, put them back in TRIAL
-    for(int k=self->nPointsBeforeLeakEvolution;k<(int)self->knownPoints[self->nEvolutions].size();k++)
+    for(int k=self->nPointsBeforeLeakEvolution;k<(int)self->knownPoints.size();k++)
       {
-        int index = self->knownPoints[self->nEvolutions][k];
+        int index = self->knownPoints[k];
         int indexN;
 
         bool hasKnownNeighbor =  false;
@@ -355,20 +361,16 @@ void vtkFastMarchingExecute(vtkFastMarching *self,
     // remove all the points from the displayed knownPoints
     // ok since (self->knownPoints[self->nEvolutions].size()-1>self->nPointsBeforeLeakEvolution)
     // is true
-    while((int)self->knownPoints[self->nEvolutions].size()>self->nPointsBeforeLeakEvolution)
-      self->knownPoints[self->nEvolutions].pop_back();
+    while((int)self->knownPoints.size()>self->nPointsBeforeLeakEvolution)
+      self->knownPoints.pop_back();
       }
 
   // start a new evolution
-  VecInt v;
-  self->knownPoints.push_back(v);
   self->nEvolutions++;
-  self->nPointsBeforeLeakEvolution=-1;
+
+  self->nPointsBeforeLeakEvolution=self->knownPoints.size()-1;
 
   // use the seeds
-  // note: we have to make sure knownPoints[nEvolution] is ready to receive
-  // indexes, ok
-
   while(self->seedPoints.size()>0)
     {
       int index=self->seedPoints[self->seedPoints.size()-1];
@@ -377,82 +379,70 @@ void vtkFastMarchingExecute(vtkFastMarching *self,
       self->setSeed( index );
     }
 
-  if(!self->minHeapIsSorted())
-    {
-      /* don't seem to be able to do that outside of the class due to def of macro
-     vtkErrorMacro( "Error in vtkFastMarchingExecute: minHeap was not sorted bwfore entering main loop" << endl );
-      */
+  // check minHeap OK
+  self->minHeapIsSorted();
 
-      std::cerr << "Error in vtkFastMarchingExecute: minHeap was not sorted before entering main loop" << endl;
-    }
+  self->pdfIntensityIn->setUpdateRate(self->nPointsEvolution/100);
+  self->pdfInhomoIn->setUpdateRate(self->nPointsEvolution/100);
 
   for(n=0;n<self->nPointsEvolution;n++)
     {
-          if( (n*GRANULARITY_PROGRESS) % self->nPointsEvolution == 0 )
-    self->UpdateProgress(float(n)/float(self->nPointsEvolution));
+      if( (n*GRANULARITY_PROGRESS) % self->nPointsEvolution == 0 )
+      self->UpdateProgress(float(n)/float(self->nPointsEvolution));
 
       float T=self->step();
 
+      // all the statistics should be gathered from a band 3 pixels from the interface
+      self->pdfIntensityIn->setMemory(5*self->tree.size());
+      self->pdfInhomoIn->setMemory(5*self->tree.size());
+
       if( T==INF )
     {
-      std::cerr << "FastMarching: nowhere else to go. End of evolution." << endl;
+      self->vtkErrorWrapper( "FastMarching: nowhere else to go. End of evolution." );
       break;
     }
     }
 
-  if(!self->minHeapIsSorted())
-    {
-      /* don't seem to be able to do that outside of the class due to def of macro
-     vtkErrorMacro( "Error in vtkFastMarchingExecute: minHeap was not sorted after leaving main loop" << endl );
-      */
-      std::cerr <<  "Error in vtkFastMarchingExecute: minHeap was not sorted after leaving main loop" << endl;
-    }
+  // check minHeap still OK
+  self->minHeapIsSorted();
 
   self->firstPassThroughShow = true;
 }
 
 void vtkFastMarching::show(float r)
 {
-  assert( (r>=0) && (r<=1.0) );
+  if(somethingReallyWrong)
+    return;
+
+  //assert( (r>=0) && (r<=1.0) );
+  if(!( (r>=0) && (r<=1.0) ))
+    {
+      vtkErrorMacro("Error in vtkFastMarching::show(...): !( (r>=0) && (r<=1.0) )");
+      return;
+    }
 
   if( nEvolutions<0 )
     return;
 
-  if( knownPoints[nEvolutions].size()<1 )
+  if( knownPoints.size()<1 )
     return;
 
   int oldIndex = nPointsBeforeLeakEvolution;
-  int newIndex = (int)((knownPoints[nEvolutions].size()-1)*r);
+  int newIndex = (int)((knownPoints.size()-1)*r);
 
   if( newIndex > oldIndex )
     for(int index=(oldIndex+1);index<=newIndex;index++)
       {
-    if( node[ knownPoints[nEvolutions][index] ].status==fmsKNOWN )
-      {
-        outdata[ knownPoints[nEvolutions][index] ]=label;
-        if( !firstPassThroughShow )
-          node[ indexFather(knownPoints[nEvolutions][index]) ].nSonsLeaked
-        -=node[ knownPoints[nEvolutions][index] ].nSonsLeaked+1;
-
-        assert( node[ indexFather(knownPoints[nEvolutions][index]) ].nSonsLeaked>=0 );
-      }
+    if( node[ knownPoints[index] ].status==fmsKNOWN )
+        if(outdata[ knownPoints[index] ]==0)
+          outdata[ knownPoints[index] ]=label;
       }
   else if( newIndex < oldIndex )
     for(int index=oldIndex;index>newIndex;index--)
       {
-    if(node[  knownPoints[nEvolutions][index] ].status==fmsKNOWN )
-      {
-        outdata[ knownPoints[nEvolutions][index] ]=0;
-
-        /*
-        // visualize candidate leaking points
-        if( node[knownPoints[nEvolutions][index]].nSonsLeaked>=10 )
-          outdata[ knownPoints[nEvolutions][index] ]=label+1;
-        */
-
-        node[ indexFather(knownPoints[nEvolutions][index]) ].nSonsLeaked
-          +=node[ knownPoints[nEvolutions][index] ].nSonsLeaked+1;
-      }       
+    if(node[  knownPoints[index] ].status==fmsKNOWN )
+        if(outdata[ knownPoints[index] ]==label)
+          outdata[ knownPoints[index] ]=0;
       }
 
   nPointsBeforeLeakEvolution=newIndex;
@@ -489,6 +479,7 @@ void vtkFastMarching::ExecuteData(vtkDataObject *)
   if (x1 != 1) 
     {
       vtkErrorMacro(<<"Input has "<<x1<<" instead of 1 scalar component.");
+      somethingReallyWrong = true;
       return;
     }
 
@@ -496,8 +487,9 @@ void vtkFastMarching::ExecuteData(vtkDataObject *)
   s = inData->GetScalarType();
   if (s != VTK_SHORT) 
     {
-      vtkErrorMacro("Input scalars are type "<<s 
+      vtkErrorMacro("Input scalars are type "<< s 
             << " instead of "<<VTK_SHORT);
+      somethingReallyWrong = true;
       return;
     }
 
@@ -542,16 +534,30 @@ bool vtkFastMarching::minHeapIsSorted( void )
 {
   int N=tree.size();
   for(int k=(N-1);k>=1;k--)
-    if( node[tree[k].nodeIndex].T<node[ (int)(tree[(k-1)/2].nodeIndex) ].T )
-      {
-    /*
-      cerr << "minHeapIsSorted is false! : size=" << tree.size() << "at leafIndex=" << k 
-      << " node[tree[k].nodeIndex].T=" << node[tree[k].nodeIndex].T
-      << "<node[ (int)(tree[(k-1)/2].nodeIndex) ].T=" << node[ (int)(tree[(k-1)/2].nodeIndex) ].T
-      << endl;
-    */
-    return false;
-      }
+    {
+      if(node[tree[k].nodeIndex].leafIndex!=k)
+    {
+      vtkErrorMacro( "Error in vtkFastMarching::minHeapIsSorted(): "
+             << "tree[" << k << "] : pb leafIndex/nodeIndex (size=" 
+             << tree.size() << ")" );
+    }
+    }
+  for(int k=(N-1);k>=1;k--)
+    {
+      if( finite( node[tree[k].nodeIndex].T)==0 )
+    vtkErrorMacro( "Error in vtkFastMarching::minHeapIsSorted(): "
+               << "NaN or Inf value in minHeap : " << node[tree[k].nodeIndex].T );
+
+      if( node[tree[k].nodeIndex].T<node[ (int)(tree[(k-1)/2].nodeIndex) ].T )
+    {
+      vtkErrorMacro( "Error in vtkFastMarching::minHeapIsSorted(): "
+             << "minHeapIsSorted is false! : size=" << tree.size() << "at leafIndex=" << k 
+             << " node[tree[k].nodeIndex].T=" << node[tree[k].nodeIndex].T
+             << "<node[ (int)(tree[(k-1)/2].nodeIndex) ].T=" << node[ (int)(tree[(k-1)/2].nodeIndex) ].T);
+
+      return false;
+    }
+    }
   return true;
 }
 
@@ -563,7 +569,6 @@ void vtkFastMarching::downTree(int index) {
    * guarantees the heap property if the value at the
    * starting index is greater than all its parents.
    */
-
   int LeftChild = 2 * index + 1;
   int RightChild = 2 * index + 2;
   
@@ -630,10 +635,10 @@ void vtkFastMarching::upTree(int index) {
    * guarantees the heap property if the value at the
    * starting leaf is less than all its children.
    */
-
   while( index>0 )
     {
       int upIndex = (int) (index-1)/2;
+
       if( node[tree[index].nodeIndex].T < 
       node[tree[upIndex].nodeIndex].T )
     {
@@ -654,7 +659,6 @@ void vtkFastMarching::upTree(int index) {
     // force stop
     break;
     }
-
 }
 
 FMleaf vtkFastMarching::removeSmallest( void ) {
@@ -683,7 +687,10 @@ FMleaf vtkFastMarching::removeSmallest( void ) {
 ///////////////////////////////////////////////////////////////////////
 
 vtkFastMarching::vtkFastMarching() 
-{ initialized=false; }
+{ 
+  initialized=false; 
+  somethingReallyWrong=true;
+}
 
 void vtkFastMarching::init(int dimX, int dimY, int dimZ, int depth, double dx, double dy, double dz)
 {
@@ -695,7 +702,9 @@ void vtkFastMarching::init(int dimX, int dimY, int dimZ, int depth, double dx, d
   invDy2 = 1.0/(dy*dy);
   invDz2 = 1.0/(dz*dz);
 
-  nNeighbors=26; // 6 or 26
+  nNeighbors=6; // 6 or 26
+  //note: there seem to be some problems with discr < 0 
+  //and A==0 when 26
 
   nEvolutions=-1;
 
@@ -706,56 +715,109 @@ void vtkFastMarching::init(int dimX, int dimY, int dimZ, int depth, double dx, d
   this->dimXYZ=dimX*dimY*dimZ;
 
   arrayShiftNeighbor[0] = 0; // neighbor 0 is the node itself
+  arrayDistanceNeighbor[0] = 0.0;
+
   arrayShiftNeighbor[1] = -dimX;
+  arrayDistanceNeighbor[1] = dy;
   arrayShiftNeighbor[2] = +1;
+  arrayDistanceNeighbor[2] = dx;
   arrayShiftNeighbor[3] = dimX;
+  arrayDistanceNeighbor[3] = dy;
   arrayShiftNeighbor[4] = -1;
+  arrayDistanceNeighbor[4] = dx;
   arrayShiftNeighbor[5] = -dimXY;
+  arrayDistanceNeighbor[5] = dz;
   arrayShiftNeighbor[6] = dimXY;
+  arrayDistanceNeighbor[6] = dz;
+
   arrayShiftNeighbor[7] =  -dimX+dimXY;
-  arrayShiftNeighbor[8] =  -dimX+dimXY;
+  arrayDistanceNeighbor[7] = sqrt( dy*dy + dz*dz );
+  arrayShiftNeighbor[8] =  -dimX-dimXY;
+  arrayDistanceNeighbor[8] = sqrt( dy*dy + dz*dz );
   arrayShiftNeighbor[9] =   dimX+dimXY;
+  arrayDistanceNeighbor[9] = sqrt( dy*dy + dz*dz );
   arrayShiftNeighbor[10] =  dimX-dimXY;
+  arrayDistanceNeighbor[10] = sqrt( dy*dy + dz*dz );
   arrayShiftNeighbor[11] = -1+dimXY;
+  arrayDistanceNeighbor[11] = sqrt( dx*dx + dz*dz );
   arrayShiftNeighbor[12] = -1-dimXY;
+  arrayDistanceNeighbor[12] = sqrt( dx*dx + dz*dz );
   arrayShiftNeighbor[13] = +1+dimXY;
+  arrayDistanceNeighbor[13] = sqrt( dx*dx + dz*dz );
   arrayShiftNeighbor[14] = +1-dimXY;
+  arrayDistanceNeighbor[14] = sqrt( dx*dx + dz*dz );
   arrayShiftNeighbor[15] = +1-dimX;
-  arrayShiftNeighbor[16] = +1-dimX-dimXY;
-  arrayShiftNeighbor[17] = +1-dimX+dimXY;
-  arrayShiftNeighbor[18] = 1+dimX;
-  arrayShiftNeighbor[19] = 1+dimX-dimXY;
-  arrayShiftNeighbor[20] = 1+dimX+dimXY;
-  arrayShiftNeighbor[21] = -1+dimX;
-  arrayShiftNeighbor[22] = -1+dimX-dimXY;
-  arrayShiftNeighbor[23] = -1+dimX+dimXY;
-  arrayShiftNeighbor[24] = -1-dimX;
+  arrayDistanceNeighbor[15] = sqrt( dx*dx + dy*dy );
+  arrayShiftNeighbor[16] = +1+dimX;
+  arrayDistanceNeighbor[16] = sqrt( dx*dx + dy*dy );
+  arrayShiftNeighbor[17] = -1+dimX;
+  arrayDistanceNeighbor[17] = sqrt( dx*dx + dy*dy );
+  arrayShiftNeighbor[18] = -1-dimX;
+  arrayDistanceNeighbor[18] = sqrt( dx*dx + dy*dy );
+
+  arrayShiftNeighbor[19] = +1-dimX-dimXY;
+  arrayDistanceNeighbor[19] = sqrt( dx*dx + dy*dy + dz*dz );
+  arrayShiftNeighbor[20] = +1-dimX+dimXY;
+  arrayDistanceNeighbor[20] = sqrt( dx*dx + dy*dy + dz*dz );
+  arrayShiftNeighbor[21] = +1+dimX-dimXY;
+  arrayDistanceNeighbor[21] = sqrt( dx*dx + dy*dy + dz*dz );
+  arrayShiftNeighbor[22] = +1+dimX+dimXY;
+  arrayDistanceNeighbor[22] = sqrt( dx*dx + dy*dy + dz*dz );
+  arrayShiftNeighbor[23] = -1+dimX-dimXY;
+  arrayDistanceNeighbor[23] = sqrt( dx*dx + dy*dy + dz*dz );
+  arrayShiftNeighbor[24] = -1+dimX+dimXY;
+  arrayDistanceNeighbor[24] = sqrt( dx*dx + dy*dy + dz*dz );
   arrayShiftNeighbor[25] = -1-dimX-dimXY;
+  arrayDistanceNeighbor[25] = sqrt( dx*dx + dy*dy + dz*dz );
   arrayShiftNeighbor[26] = -1-dimX+dimXY;
+  arrayDistanceNeighbor[26] = sqrt( dx*dx + dy*dy + dz*dz );
 
   this->depth=depth;
 
   node = new FMnode[ dimX*dimY*dimZ ];
-  assert( node!=NULL );
-  // else there was not enough memory
+  // assert( node!=NULL );
+  if(!(node!=NULL))
+    {
+      vtkErrorMacro("Error in void vtkFastMarching::init(), not enough memory for allocation of 'node'");
+      return;
+    }
 
   inhomo = new int[ dimX*dimY*dimZ ];
-  assert( inhomo!=NULL );
-  // else there was not enough memory
+  //  assert( inhomo!=NULL );
+  if(!(inhomo!=NULL))
+    {
+      vtkErrorMacro("Error in void vtkFastMarching::init(), not enough memory for allocation of 'inhomo'");
+      return;
+    }
   
   median = new int[ dimX*dimY*dimZ ];
-  assert( median!=NULL );
-  // else there was not enough memory
-  
+  //  assert( median!=NULL );
+  if(!(median!=NULL))
+    {
+      vtkErrorMacro("Error in void vtkFastMarching::init(), not enough memory for allocation of 'median'");
+      return;
+    }
+
   pdfIntensityIn = new FMpdf( depth );
-  pdfIntensityAll = new FMpdf( depth );
+  if(!(pdfIntensityIn!=NULL))
+    {
+      vtkErrorMacro("Error in void vtkFastMarching::init(), not enough memory for allocation of 'pdfIntensityIn'");
+      return;
+    }
+
   pdfInhomoIn = new FMpdf( depth );
-  pdfInhomoAll = new FMpdf( depth );
+  if(!(pdfInhomoIn!=NULL))
+    {
+      vtkErrorMacro("Error in void vtkFastMarching::init(), not enough memory for allocation of 'pdfInhomoIn'");
+      return;
+    }
 
   initialized=false; // we will need one pass in the execute
   // function before we are properly initialized
 
   firstCall = true;
+
+  somethingReallyWrong = false; // so far so good
 }
 
 void vtkFastMarching::setInData(short* data)
@@ -781,13 +843,22 @@ inline int vtkFastMarching::shiftNeighbor(int n)
   return arrayShiftNeighbor[n];
 }
 
+inline double vtkFastMarching::distanceNeighbor(int n)
+{
+  //assert(initialized);
+  //assert(n>=0 && n<=nNeighbors);
+
+  return arrayDistanceNeighbor[n];
+}
+
 int vtkFastMarching::indexFather(int n )
 {
   float Tmin = INF;
   int index, indexMin;
 
-  //  for(int k=1;k<=nNeighbors;k++)
-  for(int k=1;k<=26;k++)
+  // note: has to be 6 or else topology not consistent and
+  // we get weird path to parents using the diagonals
+  for(int k=1;k<=6;k++)
     {
       int index = n+shiftNeighbor(k);
       if( node[index].T<Tmin )
@@ -797,7 +868,7 @@ int vtkFastMarching::indexFather(int n )
     }
     }
 
-  assert( Tmin < INF );
+  //assert( Tmin < INF );
   // or else there was no initialized neighbor around ?
 
   return indexMin;
@@ -805,6 +876,9 @@ int vtkFastMarching::indexFather(int n )
 
 float vtkFastMarching::step( void )
 {
+  if(somethingReallyWrong)
+    return INF;
+
   int indexN;
   int n;
   
@@ -822,40 +896,13 @@ float vtkFastMarching::step( void )
   
   if( node[min.nodeIndex].T>=INF )
     {
-      vtkErrorMacro( " node[min.nodeIndex].T>=INF " << endl );
-      
-      /*
-    for(int k=0;k<tree.size();k++)
-    {
-    cout << node[tree[k].nodeIndex].T << endl;
-    }
-      */
+      vtkErrorMacro( " node[min.nodeIndex].T>=INF " << endl );      
 
       // this would happen if the only points left were artificially put back
       // by the user playing with the slider
       // we do not want to consider those before the expansion has naturally 
       // reachjed them.
       return INF;
-    }
-  float EPS=(float)1e-2;
-
-  /* eric: I'm not sure it makes sense to force a freeze. Seems better to define a
-     tougher speed...
-     so let's just ignore that part
-  */
-  // while( speed(min.nodeIndex)<EPS )
-  while(false)
-    {
-      if( emptyTree() )
-    {
-      return INF;
-    }
-      
-      min=removeSmallest(); 
-            
-      node[min.nodeIndex].status=fmsKNOWN;
-
-      knownPoints[nEvolutions].push_back(min.nodeIndex);
     }
 
   int I, H;
@@ -865,14 +912,14 @@ float vtkFastMarching::step( void )
   pdfInhomoIn->addRealization( H );
 
   node[min.nodeIndex].status=fmsKNOWN;
-  knownPoints[nEvolutions].push_back(min.nodeIndex);
+  knownPoints.push_back(min.nodeIndex);
       
   /* then we consider all the neighbors */
   for(n=1;n<=nNeighbors;n++)
     {
       /* 'indexN' is the index of the nth neighbor 
      of node of index 'index' */
-      indexN=min.nodeIndex+shiftNeighbor(n);      
+      indexN=min.nodeIndex+shiftNeighbor(n);
       
       /*
        * Check the status of the neighbors. If
@@ -902,9 +949,10 @@ float vtkFastMarching::step( void )
       t2 = node[indexN].T;
 
       if( t2<t1 )
-        upTree( node[indexN].leafIndex );
+          upTree( node[indexN].leafIndex );
       else
-        downTree( node[indexN].leafIndex );
+          downTree( node[indexN].leafIndex );
+
     }
     }
 
@@ -928,8 +976,6 @@ float vtkFastMarching::computeT(int index )
  
     this should be cool with a volume of dimension less than 1e6, (volumes are typically 256~=1e2 to 1e3)
   */
-  if(s<1.0/(INF/1e6))
-    s=1.0/(INF/1e6);
 
   C = -1.0/( s*s ); 
 
@@ -995,52 +1041,36 @@ float vtkFastMarching::computeT(int index )
     }
   }
 
-  if (A==0) {
-    //printf("A==0 \n");
-    /*
-      printf("A=0, index=%d\n",index);
-      printf("Txm=%f, Tym=%f, Txp=%f, Typ=%f\n",Txm, Tym, Txp, Typ);
-    */
-
-    return Tij;
-  }
-
-  /*
-   * Negative discriminant? Complex crossing times?
-   */
+  
   Discr = B*B - (float)4.0*A*C;
-  if (Discr < 0.0) {
-    //printf("Discr<0 ");
-    /*
-      printf("Error from FMTijNew at index=%d: Discriminant = %f!\n", index, Discr);
-      printf("A, B, C = %f, %f, %f\n", A, B, C);
-      printf("Txm=%f, Tym=%f, Txp=%f, Typ=%f\n",Txm, Tym, Txp, Typ);
-      printf("Returning Tij %f\n",Tij);
-    */
 
-    // find the smallest neighbor and compute T linearly from it.
-    // (suggested by TY)
-    float minT=INF;
-    int minIndex, minPx, minPy, minPz;
+  // cases when the quadratic equation is singular
+  if ((A==0) || (Discr < 0.0)) {
     int candidateIndex;
-    int px, py, pz;
-    for(px=-1;px<=1;px++)
-      for(py=-1;py<=1;py++)
-    for(pz=-1;pz<=1;pz++)
+    double candidateT;
+    Tij=INF;
+    double s=speed(index);
+    for(int n=1;n<=nNeighbors;n++)
       {
-        candidateIndex=index + px + py * dimX + pz * dimXY;
-        if( node[candidateIndex].T<minT )
-          {
-        minT = node[candidateIndex].T;
-        minIndex = candidateIndex;
-        minPx = px;
-        minPy = py;
-        minPz = pz;
-          }
+    candidateIndex = index + shiftNeighbor(n);
+    if( (node[candidateIndex].status==fmsTRIAL) 
+        || (node[candidateIndex].status==fmsKNOWN) )
+      {
+        candidateT = node[candidateIndex].T + distanceNeighbor(n)/s;
+
+        if( candidateT<Tij )
+          Tij=candidateT;
       }
-    
-    return minT+sqrt( fabs(px)*dx*dx + fabs(px)*dy*dy + fabs(px)*dz*dz )/s ;
-    
+      }
+
+    //    assert( Tij<INF );
+    if(!( Tij<INF ))
+      {
+    vtkErrorMacro("Error in vtkFastMarching::computeT(...): !( Tij<INF )");
+    return INF;
+      }
+ 
+   return Tij;
   }
 
   /*
@@ -1083,6 +1113,9 @@ void vtkFastMarching::setRAStoIJKmatrix
 
 int vtkFastMarching::addSeed( float r, float a, float s )
 {
+  if(somethingReallyWrong)
+    return 0;
+
   int I, J, K;
 
   I = (int) ( m11*r + m12*a + m13*s + m14*1 );
@@ -1095,9 +1128,12 @@ int vtkFastMarching::addSeed( float r, float a, float s )
     {
       seedPoints.push_back( I+J*dimX+K*dimXY );
 
-            for(int n=0;n<=26;n++)
-    seedPoints.push_back( I+J*dimX+K*dimXY+shiftNeighbor(n) );
-      
+      // use neighbors to create statistics
+      for(int n=0;n<=26;n++)
+    collectInfoSeed( I+J*dimX+K*dimXY+shiftNeighbor(n) );
+
+      // note: the neighbors will be put in TRIAL by setseed
+  
       return 1;
     }
 
@@ -1106,33 +1142,34 @@ int vtkFastMarching::addSeed( float r, float a, float s )
 
 void vtkFastMarching::unInit( void )
 {
-  assert( initialized );
+  //assert( initialized );
+  if(!initialized)
+    {
+      vtkErrorMacro("Error in vtkFastMarching::unInit(): !initialized");
+      return;
+    }
+
+  if(somethingReallyWrong)
+    return;
 
   delete [] node;
   delete [] inhomo;
   delete [] median;
 
   delete pdfIntensityIn;
-  delete pdfIntensityAll;
   
   delete pdfInhomoIn;
-  delete pdfInhomoAll;
 
   while(tree.size()>0)
     tree.pop_back();
 
   while(knownPoints.size()>0)
     {
-      while(knownPoints[knownPoints.size()-1].size()>0)
-    knownPoints[knownPoints.size()-1].pop_back();  
-
       knownPoints.pop_back();
     }
 
   initialized = false;
 }
-
-
 
 
 

@@ -33,8 +33,6 @@
 proc EdFastMarchingInit {} {
     global Ed Gui EdFastMarching Volume Slice Fiducials
 
-    #puts "EdFastMarchingInit"
-
     set e EdFastMarching
     set Ed($e,name)      "Fast Marching"
     set Ed($e,initials)  "Fm"
@@ -56,9 +54,9 @@ proc EdFastMarchingInit {} {
     set EdFastMarching(nExpand) 10000
     set EdFastMarching(userExpand) 0
 
-    set EdFastMarching(majorVersionTCL) 2
+    set EdFastMarching(majorVersionTCL) 3
     set EdFastMarching(minorVersionTCL) 1
-    set EdFastMarching(dateVersionTCL) "2003-1-08/17:00EST"
+    set EdFastMarching(dateVersionTCL) "2003-1-27/20:00EST"
 
     set EdFastMarching(versionTCL) "$EdFastMarching(majorVersionTCL).$EdFastMarching(minorVersionTCL) \t($EdFastMarching(dateVersionTCL))"
 
@@ -115,9 +113,9 @@ http://users.ece.gatech.edu/~eric/research/slicer
 
 To segment a volume :
 
-- Define some seed points : by creating some fiducials inside (not on the border of) the region of interest. Fiducials can be created by moving the pointer to the desired region and pressing the 'p' key.  See the Fiducial module documentation for more on using fiducials.
-
 - Define a label for the segmented data : by clicking on the 'Label' button. 
+
+- Define some seed points : by creating some fiducials inside (not on the border of) the region of interest. Fiducials can be created by moving the pointer to the desired region and pressing the 'p' key.  See the Fiducial module documentation for more on using fiducials.
 
 - Start expansion of the surface : by clicking on the 'Expand' button.  The volume of the surface will be expanded by the value right of the expand button.  Increase this value to segment a bigger object.
 
@@ -242,7 +240,7 @@ proc EdFastMarchingExpand {} {
     if { $EdFastMarching(nExpand) <= 0 } {
         tk_messageBox -message "Expansion is not positive !"
         return
-    }   
+    }      
 
     EdFastMarching(FastMarching) setNPointsEvolution $EdFastMarching(nExpand)
     EdFastMarchingSegment
@@ -341,8 +339,6 @@ proc EdFastMarchingEnter {} {
 proc EdFastMarchingExit {} {
     global Ed EdFastMarching
 
-    #puts "EdFastMarchingExit"
-
     EdFastMarching(FastMarching) unInit
 
     #delete the object
@@ -364,7 +360,6 @@ proc EdFastMarchingLabel {} {
     LabelsFindLabel
     if $Label(label)!=$EdFastMarching(label) {
     if {$EdFastMarching(fastMarchingInitialized) == 1} {
-        puts "init new expansion\n";
 
         set EdFastMarching(label) $Label(label)
 

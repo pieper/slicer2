@@ -1,13 +1,22 @@
 #ifndef FMpdf_h
 #define FMpdf_h
 
-#ifdef _WIN32
+#ifdef _WIN32 // WINDOWS
+
 #include <float.h>
 #define isnan(x) _isnan(x)
+#define finite(x) _finite(x)
 #define min(a,b) __min((a),(b))
+#include <deque>
+
+#else // UNIX
+
+#include <deque.h>
+
 #endif
 
 #include <vtkObject.h>
+
 
 /*
 
@@ -18,14 +27,24 @@ of Intensity and Inhomogeneity
 
 class FMpdf : public vtkObject
 {
-  // the histogram
-  int *bins;
   int realizationMax;
 
-  // the number of realizations
-  int N;
+  int counter;
+  int memorySize; // -1=don't ever forget anything
+  int updateRate;
 
-  // first 2 moments (not centered)  
+  // the histogram
+  int *bins;
+  int nRealInBins;
+
+  double *smoothedBins;
+
+  double * coefGauss;  
+
+  std::deque<int> inBins;
+  std::deque<int> toBeAdded;
+
+  // first 2 moments (not centered, not divided by number of samples)  
   double m1;
   double m2;
 
@@ -33,30 +52,32 @@ class FMpdf : public vtkObject
   double sigma2;
   double mean;
 
-  bool needUpdateMoments;
-
-  void updateMoments( void );
-
-  double getMean( void );
-  double getSigma2( void );
-
   double valueHisto( int k );
-  double valueGauss( double k );
+  double valueGauss( int k );
 
  public:
+
+  double getMean( void ) { return mean; };
+  double getSigma2( void ) { return sigma2; };
 
   FMpdf( int realizationMax );
   ~FMpdf();
 
+  void setMemory( int mem );
+  void setUpdateRate( int rate );
+
   bool willUseGaussian( void );
 
-
   void reset( void );  
-  double value( double k );
-  void addRealization( double k );
-  void removeRealization( double k );
+  void update( void );
+
+  double value( int k );
+  void addRealization( int k );
+
+  /*
   bool isUnlikelyGauss( double k );
   bool isUnlikelyBigGauss( double k );
+  */
 
   void show( void );
 
@@ -65,3 +86,4 @@ class FMpdf : public vtkObject
 };
 
 #endif
+

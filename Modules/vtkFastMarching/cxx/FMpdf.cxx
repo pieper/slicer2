@@ -2,40 +2,73 @@
 
 FMpdf::FMpdf( int realizationMax )
 {
-  m1=m2=0.0;
-  N=0;
-  needUpdateMoments=true;
-
   this->realizationMax=realizationMax;
 
   bins = new int [realizationMax+1];
+  //  assert( bins!=NULL );
+  if(!(bins!=NULL))
+    {
+      vtkErrorMacro("Error in vtkFastMarching, FMpdf::FMpdf(...), not enough memory for allocation of 'bins'");
+      return;
+    }
 
-  assert( bins!=NULL );
-  // or else there was a problem during allocation
+  smoothedBins = new double [realizationMax+1];
+  //  assert( smoothedBins!=NULL );
+  if(!(smoothedBins!=NULL))
+    {
+      vtkErrorMacro("Error in vtkFastMarching, FMpdf::FMpdf(...), not enough memory for allocation of 'smoothedBins'");
+      return;
+    }
 
-  for(int k=0;k<=realizationMax;k++)
-    bins[k]=0;
+  coefGauss = new double[realizationMax+1];
+  //  assert( coefGauss!=NULL );
+  if(!(bins!=NULL))
+    {
+      vtkErrorMacro("Error in vtkFastMarching, FMpdf::FMpdf(...), not enough memory for allocation of 'bins'");
+      return;
+    }
+  
+  reset();
+
+  // default values
+  memorySize=10000;
+  updateRate=1000;
 }
 
 FMpdf::~FMpdf()
 {
+  reset(); // to empty the containers
+
   delete [] bins;
+  delete [] smoothedBins;
+  delete [] coefGauss;
 }
 
 void FMpdf::reset( void )
 {
-  m1=m2=0.0;
-  N=0;
-  sigma2=mean=0.0;
-}
+  counter=0;
 
+  while( inBins.size()>0 )
+    inBins.pop_back();
+
+  while( toBeAdded.size()>0 )
+    toBeAdded.pop_back();
+
+  m1=m2=0.0;
+  sigma2=mean=0.0;
+
+  for(int k=0;k<=realizationMax;k++)
+    bins[k]=0;  
+
+  nRealInBins=0;
+}
 
 bool FMpdf::willUseGaussian( void )
 {
-  return N<50*sqrt(getSigma2());
+  return nRealInBins<50*sqrt(sigma2);
 }
 
-double FMpdf::value( double k )
+double FMpdf::value( int k )
 {
   if( !( (k>=0) && (k<=realizationMax) ) )
     {
@@ -47,65 +80,117 @@ double FMpdf::value( double k )
     }
 
   // if we have enough points then use the histogram
-  // (i.e. N>50*sigma)
   if( !willUseGaussian() )
-    return valueHisto( (int)k );
+    return valueHisto( k );
 
   // otherwise we make a gaussian assumption
   return valueGauss( k );
 }
 
-double FMpdf::valueGauss( double k )
+double FMpdf::valueGauss( int k )
 {
-  double s2=getSigma2();
-  double m=getMean();
-
-  return 1.0/sqrt(2*M_PI*s2)*exp( -0.5*(k-m)*(k-m)/s2 );
+  return 1.0/sqrt(2*M_PI*sigma2)*exp( -0.5*(double(k)-mean)*(double(k)-mean)/sigma2 );
 }
 
 double FMpdf::valueHisto( int k )
 {
-  // note: assert( (k>=0) && (k<=realizationMax) )
-  // already checked in FMpdf::value()
-  if( (k>0) && (k<realizationMax) )
-    return 0.3333/double(N)*( double(bins[k-1]) 
-                  +double(bins[k]) 
-                  +double(bins[k+1]) );
-
-  return 1.0/double(N)*double(bins[k]);
+  return smoothedBins[k];
 }
 
-void FMpdf::addRealization( double k )
+void FMpdf::update( void )
 {
-  assert( !isnan(k) );
+  int r;
 
-  m1+=k;
-  m2+=(k*k);
-  N++;
-
-  if( (k>=0) && (k<=realizationMax) )
-    bins[(int)k]++;
-
-  needUpdateMoments=true;
-}
-
-void FMpdf::removeRealization( double k )
-{
-  assert( !isnan(k) );
-
-  m1-=k;
-  m2-=(k*k);
-  N--;
-
-  if( (k>=0) && (k<=realizationMax) )
+  // move all points from tobeadded to inbins
+  while(toBeAdded.size()>0)
     {
-      assert( bins[(int)k]>0 );
-      bins[(int)k]--;
+      r=toBeAdded[toBeAdded.size()-1];
+      toBeAdded.pop_back();
+
+      inBins.push_front( r );
+      bins[r]++;
+
+      m1+=r;
+      m2+=r*r;
     }
 
-  needUpdateMoments=true;
+  if(memorySize!=-1)
+    {
+      // if inbins contains too many points, remove them
+      while(inBins.size()>memorySize)
+    {
+      r=inBins[inBins.size()-1];
+      inBins.pop_back();
+      
+      bins[r]--;
+      m1-=r;
+      m2-=r*r;
+    }
+    }
+
+  nRealInBins=inBins.size();
+
+  //assert( nRealInBins>0 );
+  if(!( nRealInBins>0 ))
+    {
+      vtkErrorMacro("Error in vtkFastMarching, FMpdf::FMpdf(...), !nRealInBins>0");
+      return;
+    }
+
+
+  // update moments
+  mean=m1/double(nRealInBins);
+  sigma2=m2/double(nRealInBins)-mean*mean;
+
+  // create smoothed histogram
+  double sigma2Smooth=0.25*sigma2;
+  
+  // create lookup table for smoothing
+  for(int k=0;k<=realizationMax;k++)
+    coefGauss[k]=exp(-0.5*double(k*k)/sigma2Smooth);
+
+  {
+
+    double val;
+    double nval;
+    double coef;
+
+    for(int k=0;k<=realizationMax;k++)
+      {
+    val=0.0;
+    nval=0.0;
+
+    for(int j=0;j<=realizationMax;j++)
+      {
+        coef=coefGauss[abs(k-j)];
+
+        val+=coef*double(bins[j]);
+        nval+=coef;
+      }
+
+    smoothedBins[k]=val/nval/double(nRealInBins);
+      }
+  }
 }
 
+void FMpdf::addRealization( int k )
+{
+  //assert(finite(k)!=0);
+  if(!(finite(k)!=0))
+    {
+      vtkErrorMacro("Error in vtkFastMarching, FMpdf::FMpdf(...), !(finite(k)!=0)");
+      return;
+    }
+
+  toBeAdded.push_front(k);
+
+  counter++;
+
+  if( (updateRate!=-1) && (counter%updateRate)==0 )
+    update();
+}
+
+/*
 bool FMpdf::isUnlikelyGauss( double k )
 {
   return fabs( k-getMean() )>3.0*sqrt( getSigma2() );
@@ -115,38 +200,47 @@ bool FMpdf::isUnlikelyBigGauss( double k )
 {
   return ( k-getMean() ) > ( 2.0*sqrt( getSigma2() ) );
 }
-
-double FMpdf::getSigma2( void )
-{
-  if(needUpdateMoments)
-    updateMoments();
-
-  return sigma2;
-}
-
-double FMpdf::getMean( void )
-{
-  if(needUpdateMoments)
-    updateMoments();
-
-  return mean;
-}
-
-void FMpdf::updateMoments( void )
-{
-  mean  = 1.0/double(N)*m1;
-  sigma2 = (1.0/double(N)*m2)-mean*mean;
-}
+*/
 
 void FMpdf::show( void )
 {
   cout << "realizationMax=" << realizationMax << endl;
-  cout << "N=" << N << endl;
-  cout << "mean=" << getMean() << endl;
-  cout << "sqrt( sigma2 )=" << sqrt( getSigma2() ) << endl;
+  cout << "nRealInBins=" <<  nRealInBins << endl;
+  cout << "mean=" << mean << endl;
+  cout << "sqrt( sigma2 )=" << sqrt( sigma2 ) << endl;
 
   for(int k=0;k<=realizationMax;k++)
-    cout << bins[k] << endl;
+    cout << value(k) << endl;
 
   cout << "---" << endl;
 }
+
+void FMpdf::setMemory( int mem )
+{
+  memorySize=mem;
+}
+
+void FMpdf::setUpdateRate( int rate )
+{
+  updateRate=rate;
+
+  if( (updateRate!=-1) && (updateRate<10) )
+    updateRate=10;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

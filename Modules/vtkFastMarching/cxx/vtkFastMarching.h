@@ -5,21 +5,27 @@
 #include "vtkImageData.h"
 #include "vtkImageToImageFilter.h"
 
-#ifdef _WIN32
-#include <assert.h>
+#ifdef _WIN32 // WINDOWS
+
+//#include <assert.h> 
+//don't use asserts to avoid program crash
+
 #include <vector>
 #include <algorithm>
 #include <iostream>
-#else
+
+#else // UNIX
+
 #include <vector.h>
 #include <algo.h>
+
 #endif
 
 #include "FMpdf.h"
 
-#define MAJOR_VERSION 2
+#define MAJOR_VERSION 3
 #define MINOR_VERSION 1
-#define DATE_VERSION "2003-1-08/17:00EST"
+#define DATE_VERSION "2003-1-27/20:00EST"
 
 ///////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////
@@ -28,7 +34,7 @@
 #define INF 1e20 
 
 // outside margin
-#define BAND_OUT 1
+#define BAND_OUT 3
 
 #define GRANULARITY_PROGRESS 20
 
@@ -42,27 +48,27 @@ struct FMnode {
   FMstatus status;
   float T;
   int leafIndex;
-  int nSonsLeaked;
 };
 
 struct FMleaf {
   int nodeIndex;
 };
 
-
 // these typedef are for tclwrapper...
 typedef std::vector<FMleaf> VecFMleaf;
 typedef std::vector<int> VecInt;
-typedef std::vector<VecInt> VecVecInt;
 
 ///////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////
 class VTK_FASTMARCHING_EXPORT vtkFastMarching : public vtkImageToImageFilter
 {
  private:
+  bool somethingReallyWrong;
+
   int nNeighbors; // =6 pb wrap, cannot be defined as constant
   int arrayShiftNeighbor[27];
-  int tmpNeighborhood[27]; // allocate it here so that we do not have to
+  double arrayDistanceNeighbor[27];
+  int tmpNeighborhood[125]; // allocate it here so that we do not have to
   // allocate it over and over in getMedianInhomo
 
   float dx; 
@@ -117,8 +123,8 @@ class VTK_FASTMARCHING_EXPORT vtkFastMarching : public vtkImageToImageFilter
   int nPointsBeforeLeakEvolution;
   int nEvolutions;
 
-  VecVecInt knownPoints;
-  // vector<vector<int>> knownPoints
+  VecInt knownPoints;
+  // vector<int> knownPoints
 
   VecInt seedPoints;
   // vector<int> seedPoints
@@ -128,9 +134,7 @@ class VTK_FASTMARCHING_EXPORT vtkFastMarching : public vtkImageToImageFilter
   //  vector<FMleaf> tree;
 
   FMpdf *pdfIntensityIn;
-  FMpdf *pdfIntensityAll;
   FMpdf *pdfInhomoIn;
-  FMpdf *pdfInhomoAll;
 
   bool firstPassThroughShow;
 
@@ -146,6 +150,7 @@ class VTK_FASTMARCHING_EXPORT vtkFastMarching : public vtkImageToImageFilter
   void getMedianInhomo(int index, int &median, int &inhomo );
 
   int shiftNeighbor(int n);
+  double distanceNeighbor(int n);
   float computeT(int index );
   
   void setSeed(int index );
@@ -156,7 +161,17 @@ class VTK_FASTMARCHING_EXPORT vtkFastMarching : public vtkImageToImageFilter
   float speed(int index );
 
   bool minHeapIsSorted( void );
+
+  /* perform one step of fast marching
+     return the leaf which has just been added to fmsKNOWN */
+  float step( void );
+
  public:
+
+  void vtkErrorWrapper( char* s)
+    {
+      vtkErrorMacro( << s );
+    };
 
   static vtkFastMarching *New();
 
@@ -175,7 +190,7 @@ class VTK_FASTMARCHING_EXPORT vtkFastMarching : public vtkImageToImageFilter
 
   void setActiveLabel(int label);
 
-  void  initNewExpansion( void );
+  void initNewExpansion( void );
 
   int nValidSeeds( void );
 
@@ -191,11 +206,6 @@ class VTK_FASTMARCHING_EXPORT vtkFastMarching : public vtkImageToImageFilter
 
   int addSeed( float r, float a, float s );
 
-
-  /* perform one step of fast marching
-     return the leaf which has just been added to fmsKNOWN */
-  float step( void );
-
   void show(float r);
 
   char * cxxVersionString(void)
@@ -209,7 +219,7 @@ class VTK_FASTMARCHING_EXPORT vtkFastMarching : public vtkImageToImageFilter
   int cxxMajorVersion(void)
     {
       return MAJOR_VERSION;
-    }; 
+    };
 
  protected:
   void ExecuteData(vtkDataObject *);
@@ -221,10 +231,5 @@ class VTK_FASTMARCHING_EXPORT vtkFastMarching : public vtkImageToImageFilter
 };
 
 #endif
-
-
-
-
-
 
 
