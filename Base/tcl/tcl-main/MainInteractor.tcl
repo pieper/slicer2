@@ -28,6 +28,7 @@
 #   MainInteractorCursor
 #   MainInteractorKeyPress
 #   MainInteractorMotion
+#   MainInteractorShiftMotion
 #   MainInteractorB1
 #   MainInteractorShiftB1
 #   MainInteractorB1Release
@@ -92,6 +93,7 @@ proc MainInteractorBind {widget} {
     bind $widget <Leave>             {MainInteractorExit %W}
     bind $widget <Expose>            {MainInteractorExpose %W}
     bind $widget <Motion>            {MainInteractorMotion %W %x %y}
+    bind $widget <Shift-Motion>      {MainInteractorShiftMotion %W %x %y}
 
     # Any mouse button
     bind $widget <Any-ButtonPress>   {MainInteractorStartMotion %W %x %y}
@@ -130,6 +132,7 @@ proc MainInteractorBind {widget} {
     bind $widget <Left>              {MainInteractorKeyPress Left  %W %x %y}
     bind $widget <Right>             {MainInteractorKeyPress Right %W %x %y}
     bind $widget <Delete>            {MainInteractorKeyPress Delete %W %x %y}
+    bind $widget <KeyPress-0>        {MainInteractorKeyPress 0 %W %x %y}
 
     # Added for Fiducials
     if {[IsModule Fiducials] == 1 || [IsModule Alignments] == 1} {
@@ -301,6 +304,17 @@ proc MainInteractorKeyPress {key widget x y} {
                 }
             }
         }
+        "0" {
+            switch $Module(activeID) {
+                "Editor" {
+                    switch $Editor(activeID) {
+                        "EdDraw" {
+                            EdDrawUpdate 0
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -327,8 +341,42 @@ proc MainInteractorMotion {widget x y} {
     # Cursor
     MainInteractorCursor $s $xs $ys $x $y
 
+
     # Render this slice
     MainInteractorRender
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MainInteractorShiftMotion
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MainInteractorShiftMotion {widget x y} {
+    global Interactor Module
+
+    MainInteractorMotion $widget $x $y
+
+    set s $Interactor(s)
+    scan [MainInteractorXY $s $x $y] "%d %d %d %d" xs ys x y 
+
+    $Interactor(activeSlicer) SetReformatPoint $s $x $y
+    scan [$Interactor(activeSlicer) GetWldPoint] "%g %g %g" xRas yRas zRas 
+    scan [$Interactor(activeSlicer) GetIjkPoint] "%g %g %g" xIjk yIjk zIjk
+
+    for {set slice 0} {$slice < 3} {incr slice} {
+        if {$slice != $s} {
+            switch [$Interactor(activeSlicer) GetOrientString $slice] {
+                "Axial" { MainSlicesSetOffset $slice $zRas; RenderSlice $slice }
+                "Sagittal" { MainSlicesSetOffset $slice $xRas; RenderSlice $slice }
+                "Coronal" { MainSlicesSetOffset $slice $yRas; RenderSlice $slice }
+                "AxiSlice" { MainSlicesSetOffset $slice $yIjk; RenderSlice $slice }
+                "SagSlice" { MainSlicesSetOffset $slice $xIjk; RenderSlice $slice }
+                "CorSlice" { MainSlicesSetOffset $slice $zIjk; RenderSlice $slice }
+            }
+        }
+    }
+    Render3D
 }
 
 #-------------------------------------------------------------------------------
