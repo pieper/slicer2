@@ -186,6 +186,7 @@ proc MainBoot {{mrmlFile ""}} {
 	#-------------------------------------------
 	# Load MRML data
 	#-------------------------------------------	
+	update
 	puts "Loading MRML"
 	MainMrmlRead $mrmlFile
 	MainUpdateMRML

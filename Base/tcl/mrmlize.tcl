@@ -55,7 +55,11 @@ set Path(root) [file dirname [lindex $argv 0]]
 source [file join $Path(program) [file join tcl-main MainHeader.tcl]]
 
 # Find print_header
-set Path(printHeader) [file join $Path(program) [file join bin print_header]]
+if {$tcl_platform(platform) == "windows"} {
+	set Path(printHeader) [file join $Path(program) [file join bin print_header_NT]]
+} else {
+	set Path(printHeader) [file join $Path(program) [file join bin print_header]]
+}
 
 # Get info from headers
 set img1 [lindex $argv 0]
