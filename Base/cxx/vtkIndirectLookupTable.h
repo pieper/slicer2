@@ -79,6 +79,9 @@ public:
 
   // Description:
   // Set/get the threshold
+  vtkBooleanMacro(ApplyThreshold, int);
+  vtkSetMacro(ApplyThreshold,int);
+  vtkGetMacro(ApplyThreshold,int);
   vtkSetMacro(LowerThreshold,float);
   vtkGetMacro(LowerThreshold,float);
   vtkSetMacro(UpperThreshold,float);
@@ -156,6 +159,7 @@ protected:
   float Level;
   float UpperThreshold;
   float LowerThreshold;
+  int ApplyThreshold;
 
   short inHiPrev;
   short inLoPrev;

@@ -349,8 +349,8 @@ proc MainSlicesBuildControls {s F} {
 	#-------------------------------------------
 	set f $F.fVolume
 
-	MainSlicesBuildControlsForVolume $f $s Fore  Fg
 	MainSlicesBuildControlsForVolume $f $s Label Lb
+	MainSlicesBuildControlsForVolume $f $s Fore  Fg
 }
 
 #-------------------------------------------------------------------------------

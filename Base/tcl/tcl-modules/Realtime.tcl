@@ -35,7 +35,7 @@
 #   RealtimeBuildGUI
 #   RealtimeEnter
 #   RealtimeSetEffect
-#   RealtimeSetSwitch
+#   RealtimeSetMode
 #   RealtimeImageComponentCallback
 #   RealtimeImageCompleteCallback
 #   RealtimeMakeBaseline
@@ -77,9 +77,10 @@ proc RealtimeInit {} {
 	set Realtime(idResult)       NEW
 	set Realtime(prefixBaseline) ""
 	set Realtime(prefixResult)   ""
-	set Realtime(switch)         Off
+	set Realtime(mode)           Off
 	set Realtime(effectList)     "Copy"
 	set Realtime(effect)         Copy
+	set Realtime(pause)          0
 }
 
 #-------------------------------------------------------------------------------
@@ -183,7 +184,7 @@ proc RealtimeBuildGUI {} {
 	#   Result
 	#   Effects
 	#     Menu
-	#     Switch
+	#     Mode
 	#-------------------------------------------
 
 	#-------------------------------------------
@@ -345,8 +346,8 @@ Models are fun. Do you like models, Ron?
 	set f $fProcessing.fEffects
 
 	frame $f.fMenu   -bg $Gui(activeWorkspace)
-	frame $f.fSwitch -bg $Gui(activeWorkspace)
-	pack $f.fMenu $f.fSwitch -side top -pady $Gui(pad)
+	frame $f.fMode   -bg $Gui(activeWorkspace)
+	pack $f.fMenu $f.fMode -side top -pady $Gui(pad)
 
 	#-------------------------------------------
 	# Processing->Effects->Menu
@@ -367,20 +368,26 @@ Models are fun. Do you like models, Ron?
 	pack $f.l $f.mbEffect -side left -padx $Gui(pad)
 	
 	#-------------------------------------------
-	# Processing->Effects->Switch
+	# Processing->Effects->Mode
 	#-------------------------------------------
-	set f $fProcessing.fEffects.fSwitch
+	set f $fProcessing.fEffects.fMode
 
 	set c {label $f.lActive -text "Processing:" $Gui(WLA)}; eval [subst $c]
 	pack $f.lActive -side left -pady $Gui(pad) -padx $Gui(pad) -fill x
 
-	foreach s "On Off Pause" text "On Off Pause" width "3 4 6" {
+	foreach s "On Off" text "On Off" width "3 4" {
 		set c {radiobutton $f.r$s -width $width -indicatoron 0\
-			-text $text -value $s -variable Realtime(switch) \
-			-command "RealtimeSetSwitch" $Gui(WCA)}
+			-text $text -value $s -variable Realtime(mode) \
+			-command "RealtimeSetMode" $Gui(WCA)}
 			eval [subst $c]
 		pack $f.r$s -side left -fill x -anchor e
 	}
+
+	set c {checkbutton $f.cPause \
+		-text "Pause" -variable Realtime(pause) -command "LocatorPause" -width 6 \
+		-indicatoron 0 $Gui(WCA)}
+		eval [subst $c]
+	pack $f.cPause -side left -padx $Gui(pad)
 }
 
 #-------------------------------------------------------------------------------
@@ -419,19 +426,27 @@ proc RealtimeSetEffect {e} {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC RealtimeSetSwitch
+# .PROC RealtimeSetMode
 # .END
 #-------------------------------------------------------------------------------
-proc RealtimeSetSwitch {} {
-	global Realtime
+proc RealtimeSetMode {} {
+	global Realtime Locator
 
-	# For now, just process the images once.
-	# Later, have the Locator module call RealtimeImageComponentCallback.
-	
-	if {$Realtime(switch) == "On"} {
-		RealtimeImageComponentCallback
+	switch $Realtime(mode) {
+		"On" {
+			if {$Realtime(idRealtime) == $Locator(idRealtime)} {
+				LocatorRegisterCallback RealtimeImageComponentCallback
+			} else {
+				RealtimeImageComponentCallback
+				set Realtime(mode) Off
+			}
+		}
+		"Off" {
+			if {$Realtime(idRealtime) == $Locator(idRealtime)} {
+				LocatorUnRegisterCallback RealtimeImageComponentCallback
+			}
+		}
 	}
-	set Realtime(switch) Off
 }
 
 #-------------------------------------------------------------------------------
@@ -450,9 +465,17 @@ proc RealtimeImageComponentCallback {} {
 	# image.  As each component-image arrives, it can be added to the
 	# complete-image as another component using vtkImageAppendComponent.
 
+	# Do nothing if paused
+	if {$Realtime(pause) == "1"} {return}
 
-
-	RealtimeImageCompleteCallback
+	switch $Realtime(effect) {
+		"Copy" {
+			RealtimeImageCompleteCallback
+		}
+		"Subtract" {
+			RealtimeImageCompleteCallback
+		}
+	}
 }
 
 #-------------------------------------------------------------------------------
@@ -472,39 +495,40 @@ proc RealtimeImageCompleteCallback {} {
 	set sExt [[Volume($s,vol) GetOutput] GetExtent]
 	set bExt [[Volume($b,vol) GetOutput] GetExtent]
 	if {$sExt != $bExt} {
-		tk_messageBox -icon error -message \
-			"Extents are not equal!\n\nRealtime = $sExt\nBaseline = $bExt"
+		puts "Extents are not equal!\n\nRealtime = $sExt\nBaseline = $bExt"
+		# Just make a new baseline
+		RealtimeMakeBaseline
 		return
 	}
 
 	# Perform the computation here
 	switch $Realtime(effect) {
 
-	# Copy
-	"Copy" {
-		vtkImageCopy copy
-		copy SetInput [Volume($s,vol) GetOutput]
-		copy Update
-		copy SetInput ""
-		Volume($r,vol) SetImageData [copy GetOutput]
-		copy SetOutput ""
-		copy Delete
-	}
+		# Copy
+		"Copy" {
+			vtkImageCopy copy
+			copy SetInput [Volume($s,vol) GetOutput]
+			copy Update
+			copy SetInput ""
+			Volume($r,vol) SetImageData [copy GetOutput]
+			copy SetOutput ""
+			copy Delete
+		}
 
-	# Subtract
-	"Subtract" {
-		# THIS DOES NOT WORK
-		vtkImageMathematics math
-		math SetInput 1 [Volume($s,vol) GetOutput]
-		math SetInput 2 [Volume($b,vol) GetOutput]
-		math SetOperationToSubtract
-		math Update
-		math SetInput 1 ""
-		math SetInput 2 ""
-		Volume($r,vol) SetImageData [math GetOutput]
-		math SetOutput ""
-		math Delete
-	}
+		# Subtract
+		"Subtract" {
+			# THIS DOES NOT WORK
+			vtkImageMathematics math
+			math SetInput 1 [Volume($s,vol) GetOutput]
+			math SetInput 2 [Volume($b,vol) GetOutput]
+			math SetOperationToSubtract
+			math Update
+			math SetInput 1 ""
+			math SetInput 2 ""
+			Volume($r,vol) SetImageData [math GetOutput]
+			math SetOutput ""
+			math Delete
+		}
 	}
 
 	# Mark Result as unsaved
@@ -548,8 +572,6 @@ proc RealtimeMakeBaseline {} {
 
 	# Update pipeline and GUI
 	MainVolumesUpdate $b
-
-	RenderAll
 }
 
 
@@ -670,7 +692,7 @@ proc RealtimeGetBaselineID {} {
 	MainUpdateMRML
 
 	# Copy Realtime
-	RealtimeMakeBaseline
+	RealtimeMakeBaseline; RenderAll
 
 	return $v
 }

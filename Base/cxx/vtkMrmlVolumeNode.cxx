@@ -78,6 +78,7 @@ vtkMrmlVolumeNode::vtkMrmlVolumeNode()
   this->Window = 256;
   this->Level = 128;
   this->AutoThreshold = 0;
+  this->ApplyThreshold = 0;
   this->LowerThreshold = VTK_SHORT_MIN;
   this->UpperThreshold = VTK_SHORT_MAX;
   this->UseRasToVtkMatrix = 1;
@@ -281,6 +282,10 @@ void vtkMrmlVolumeNode::Write(ofstream& of, int nIndent)
   {
     of << " autoThreshold='" << (this->AutoThreshold ? "yes" : "no") << "'";
   }
+  if (this->ApplyThreshold != 0)
+  {
+    of << " applyThreshold='" << (this->ApplyThreshold ? "yes" : "no") << "'";
+  }
   if (this->LowerThreshold != VTK_SHORT_MIN)
   {
     of << " lowerThreshold='" << this->LowerThreshold << "'";
@@ -346,6 +351,7 @@ void vtkMrmlVolumeNode::Copy(vtkMrmlVolumeNode *node)
 	this->SetWindow(node->Window);
 	this->SetLevel(node->Level);
 	this->SetAutoThreshold(node->AutoThreshold);
+	this->SetApplyThreshold(node->ApplyThreshold);
 	this->SetUpperThreshold(node->UpperThreshold);
 	this->SetLowerThreshold(node->LowerThreshold);
 	this->SetInterpolate(node->Interpolate);
@@ -458,6 +464,7 @@ void vtkMrmlVolumeNode::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "Window:            " << this->Window << "\n";
   os << indent << "Level:             " << this->Level << "\n";
   os << indent << "AutoThreshold:     " << this->AutoThreshold << "\n";
+  os << indent << "ApplyThreshold:    " << this->ApplyThreshold << "\n";
   os << indent << "UpperThreshold:    " << this->UpperThreshold << "\n";
   os << indent << "LowerThreshold:    " << this->LowerThreshold << "\n";
   os << indent << "Interpolate:       " << this->Interpolate << "\n";

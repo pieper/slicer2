@@ -425,7 +425,9 @@ proc MainInteractorControlB1Motion {widget x y} {
 	# user to have to drag the mouse a consistent distance 
 	# across the mouse pad.
 	#
-	MainInteractorWindowLevel $s $xs $ys $Interactor(xsLast) $Interactor(ysLast)
+	# BUG: I'm commenting this out because window/leveling for too long
+	# causes a stack overflow.
+#	MainInteractorWindowLevel $s $xs $ys $Interactor(xsLast) $Interactor(ysLast)
 
 	# Cursor
 	MainInteractorCursor $s $xs $ys $x $y
@@ -455,7 +457,9 @@ proc MainInteractorAltB1Motion {widget x y} {
 	# user to have to drag the mouse a consistent distance 
 	# across the mouse pad.
 	#
-	MainInteractorThreshold $s $xs $ys $Interactor(xsLast) $Interactor(ysLast)
+	# BUG: I'm commenting this out because window/leveling for too long
+	# causes a stack overflow.
+#	MainInteractorThreshold $s $xs $ys $Interactor(xsLast) $Interactor(ysLast)
 
 	# Cursor
 	MainInteractorCursor $s $xs $ys $x $y

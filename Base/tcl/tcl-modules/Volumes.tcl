@@ -214,13 +214,19 @@ Ron, the interpolation button won't work without downloading dll's again.
 	frame $f.fAuto -bg $Gui(activeWorkspace)
 	pack $f.lAuto $f.fAuto -side left -pady $Gui(pad) -fill x
 
-	foreach value "1 0 -1" text "Auto Manual None" width "5 7 5" {
+	foreach value "1 0" text "Auto Manual" width "5 7" {
 		set c {radiobutton $f.fAuto.rAuto$value -width $width -indicatoron 0\
 			-text "$text" -value "$value" -variable Volume(autoThreshold) \
 			-command "MainVolumesSetParam AutoThreshold; MainVolumesRender" \
 			$Gui(WCA)}; eval [subst $c]
 		pack $f.fAuto.rAuto$value -side left -fill x
 	}
+	set c {checkbutton $f.cApply \
+		-text "Apply" -variable Volume(applyThreshold) \
+		-command "MainVolumesSetParam ApplyThreshold; MainVolumesRender" -width 6 \
+		-indicatoron 0 $Gui(WCA)}
+		eval [subst $c]
+	pack $f.cApply -side left -padx $Gui(pad)
 
 	#-------------------------------------------
 	# Display->Thresh->Sliders frame

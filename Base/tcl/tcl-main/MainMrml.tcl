@@ -688,6 +688,13 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 						$n SetAutoThreshold 0
 					}
 				}
+				"applyThreshold" {
+					if {$val == "yes"} {
+						$n SetApplyThreshold 1
+					} else {
+						$n SetApplyThreshold 0
+					}
+				}
 				"interpolate" {
 					if {$val == "yes"} {
 						$n SetInterpolate 1

@@ -369,6 +369,7 @@ void vtkMrmlVolume::UpdateWindowLevelThreshold()
     this->IndirectLUT->SetWindow(window);
     this->IndirectLUT->SetLowerThreshold(lower);
     this->IndirectLUT->SetUpperThreshold(upper);
+    this->IndirectLUT->SetApplyThreshold(this->MrmlNode->GetApplyThreshold());
     this->IndirectLUT->Build();
   }
 }

@@ -760,6 +760,7 @@ proc ModelMakerMarch {m v decimateIterations smoothIterations} {
 		# [permute GetMatrix] SetElement 0 0 -1
 		# reader SetTransform permute
 		flip SetInput [Volume($v,vol) GetOutput]
+		flip SetFilteredAxis 1
 		set src flip
 	} else {
 		set src Volume($v,vol)

@@ -58,6 +58,7 @@ vtkIndirectLookupTable::vtkIndirectLookupTable()
   this->Level = 128;
   this->LowerThreshold = VTK_SHORT_MIN;
   this->UpperThreshold = VTK_SHORT_MAX;
+  this->ApplyThreshold = 0;
 
   this->inLoPrev = 0;
   this->inHiPrev = 0;
@@ -95,6 +96,7 @@ void vtkIndirectLookupTable::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "Level:         " << this->Level     << "\n";
   os << indent << "LowerThreshold:" << this->LowerThreshold << "\n";
   os << indent << "UpperThreshold:" << this->UpperThreshold << "\n";
+  os << indent << "ApplyThreshold:" << this->ApplyThreshold << "\n";
   os << indent << "Direct:        " << this->Direct    << "\n";
   os << indent << "inLoPrev       " << this->inLoPrev    << "\n";
   os << indent << "inHiPrev       " << this->inHiPrev    << "\n";
@@ -347,26 +349,29 @@ void vtkIndirectLookupTable::Build()
 	  memcpy(map, winLvlMap, (max-min+1)*sizeof(short));
   }
 
-  // "AND" threshold 
-  // show values >= 'lower' AND <= 'upper'
-  // zero values <  'lower' OR  >  'upper'
-  if (lower <= upper) 
+  // Apply threshold if desired
+  if (this->GetApplyThreshold())
   {
-    // Zero out what's < 'lower'
-    memset(map, 0, (lower-min)*sizeof(short));
+    // "AND" threshold 
+    // show values >= 'lower' AND <= 'upper'
+    // zero values <  'lower' OR  >  'upper'
+    if (lower <= upper) 
+    {
+      // Zero out what's < 'lower'
+      memset(map, 0, (lower-min)*sizeof(short));
 
-    // Zero out what's > 'above'
-    memset(&(map[offset+upper+1]), 0, (max-upper)*sizeof(short));
-  } 
-  // "OR" threshold
-  // show values <  'upper' OR  > 'lower'
-  // zero values >= 'upper' AND <= 'lower'
-  else 
-  {
-    // Zero out what's >= 'upper' and <= 'lower'
-    memset(&(map[offset+upper]), 0, (lower-upper+1)*sizeof(short));
+      // Zero out what's > 'above'
+      memset(&(map[offset+upper+1]), 0, (max-upper)*sizeof(short));
+    } 
+    // "OR" threshold
+    // show values <  'upper' OR  > 'lower'
+    // zero values >= 'upper' AND <= 'lower'
+    else 
+    {
+      // Zero out what's >= 'upper' and <= 'lower'
+      memset(&(map[offset+upper]), 0, (lower-upper+1)*sizeof(short));
+    }
   }
-
   this->BuildTime.Modified();
 }
   

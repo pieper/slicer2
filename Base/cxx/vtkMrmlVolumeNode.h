@@ -241,6 +241,9 @@ public:
 
   // Description:
   //
+  vtkBooleanMacro(ApplyThreshold, int);
+  vtkGetMacro(ApplyThreshold, int);
+  vtkSetMacro(ApplyThreshold, int);
   vtkBooleanMacro(AutoThreshold, int);
   vtkGetMacro(AutoThreshold, int);
   vtkSetMacro(AutoThreshold, int);
@@ -290,6 +293,7 @@ protected:
   int AutoWindowLevel;
   int Window;
   int Level;
+  int ApplyThreshold;
   int AutoThreshold;
   int UpperThreshold;
   int LowerThreshold;

@@ -98,10 +98,10 @@ proc LabelsUpdateMRML {} {
 		return
 	}
 	
-	# If no active color, take the first one
+	# If no active color, take the second one
 	if {$Label(activeID) == "" || \
 		[lsearch $Color(idList) $Label(activeID)] == -1} {
-		LabelsSelectColor 0 0 [lindex $Color(idList) 0]
+		LabelsSelectColor 0 0 [lindex $Color(idList) 1]
 	}
 
 	# If no label, take the first one for this color
@@ -570,7 +570,7 @@ proc LabelsSetColor {colorName} {
 	# DAVE clean this crap up, or just leave it. Ha!
 
 	if {$c == ""} {
-		set c [lindex $Color(idList) 0]
+		set c [lindex $Color(idList) 1]
 	}
 	if {$c == ""} {
 		# Update GUI

@@ -80,7 +80,7 @@ proc LocatorInit {} {
 	lappend Module(procRecallPresets) LocatorRecallPresets
 	set Module(Locator,presets) "0,driver='User' 1,driver='User' 2,driver='User'\
  visibility='0' transverseVisibility='1' normalLen='100' transverseLen='25'\
- radius='3.0' diffuseColor='.9 .9 .1'"
+ radius='3.0' diffuseColor='0.9 0.9 0.1'"
 
 	# Patient/Table position
 	set Locator(tblPosList)   "Front Side"
@@ -127,8 +127,9 @@ proc LocatorInit {} {
 	set Locator(connect) 0
 	set Locator(pause) 0
 	set Locator(loop) 0
-	set Locator(imageNum) 0
+	set Locator(imageNum) ""
 	set Locator(recon) 0
+	set Locator(callbackList) ""
 
 	# Server specific stuff:
 	# File
@@ -144,7 +145,7 @@ proc LocatorInit {} {
 	set Locator(Images,prefix)   ""
 	set Locator(Images,firstNum) 1
 	set Locator(Images,lastNum)  1
-	set Locator(Images,skip)     0
+	set Locator(Images,increment) 1
 
 }
 
@@ -191,13 +192,31 @@ proc LocatorUpdateMRML {} {
 # .END
 #-------------------------------------------------------------------------------
 proc LocatorBuildVTK {} {
-	global Gui Locator View Slice Target Volume
+	global Gui Locator View Slice Target Volume Lut
 
 	#------------------------#
 	# Realtime image source
 	#------------------------#
+	# SignaSP
 	vtkImageRealtimeScan Locator(SignaSP,src)
 #	Locator(SignaSP,src) SetTest 1
+
+	# Images
+	vtkMrmlVolumeNode Locator(Images,node)
+	vtkMrmlVolume Locator(Images,vol)
+	set n Locator(Images,node)
+	set v Locator(Images,vol)
+	$n SetDescription "Realtime Images source"
+	$n SetName        "Source"
+	$n SetLUTName     [lindex $Lut(idList) 0]
+	$v SetMrmlNode          $n
+	$v SetLabelIndirectLUT  Lut($Lut(idLabel),indirectLUT)
+	$v SetLookupTable       Lut([$n GetLUTName],lut)
+	$v SetHistogramHeight   $Volume(histHeight)
+	$v SetHistogramWidth    $Volume(histWidth)
+	$v SetStartMethod       MainStartProgress
+	$v SetProgressMethod   "MainShowProgress $v"
+	$v SetEndMethod         MainEndProgress
 
 	#------------------------#
 	# Construct handpiece
@@ -290,7 +309,7 @@ Models are fun. Do you like models, Ron?
 		-indicatoron 0 -command "LocatorConnect" $Gui(WCA)}
 		eval [subst $c]
 	set c {checkbutton $f.cPause \
-		-text "Pause" -variable Locator(pause) -width 6 \
+		-text "Pause" -variable Locator(pause) -command "LocatorPause" -width 6 \
 		-indicatoron 0 $Gui(WCA)}
 		eval [subst $c]
 	pack $f.cConnect $f.cPause -side left -pady $Gui(pad) -padx $Gui(pad)
@@ -412,7 +431,7 @@ Models are fun. Do you like models, Ron?
 	set f $fServer
 
 	frame $f.fTop -bg $Gui(backdrop) -relief sunken -bd 2
-	frame $f.fBot -bg $Gui(activeWorkspace) -height 300
+	frame $f.fBot -bg $Gui(activeWorkspace) -height 330
 	pack $f.fTop $f.fBot -side top -pady $Gui(pad) -padx $Gui(pad) -fill x
 
 	#-------------------------------------------
@@ -500,7 +519,8 @@ Models are fun. Do you like models, Ron?
 
 	frame $f.fGrid   -bg $Gui(activeWorkspace)
 	frame $f.fPrefix -bg $Gui(activeWorkspace)
-	pack $f.fPrefix $f.fGrid \
+	frame $f.fNum    -bg $Gui(activeWorkspace)
+	pack $f.fPrefix $f.fGrid $f.fNum \
 		-side top -fill x -pady $Gui(pad)
 
 	#-------------------------------------------
@@ -520,13 +540,22 @@ Models are fun. Do you like models, Ron?
 	set f $fServer.fBot.fImages.fGrid
 
 	set s Images
-	foreach x "firstNum lastNum skip msPoll " text \
-		"{First image number} {Last image number} {Skip interval} {Update period (ms)}" {
+	foreach x "firstNum lastNum increment msPoll" text \
+		"{First image number} {Last image number} {Image increment} {Update period (ms)}" {
 		set c {label $f.l$x -text "${text}:" $Gui(WLA)}; eval [subst $c]
 		set c {entry $f.e$x -textvariable Locator($s,$x) -width 7 $Gui(WEA)}; eval [subst $c]
 		grid $f.l$x $f.e$x -pady $Gui(pad) -padx $Gui(pad) -sticky e
 		grid $f.e$x -sticky w
 	}
+
+	#-------------------------------------------
+	# Server->Bot->Images->Num frame
+	#-------------------------------------------
+	set f $fServer.fBot.fImages.fNum
+
+	eval {label $f.l -text "Current Image Number"} $Gui(WLA)
+	eval {entry $f.e -textvariable Locator(imageNum) -width 6 -state disabled} $Gui(WEA)
+	pack $f.l $f.e -side left -padx $Gui(pad)
 
 
 	#-------------------------------------------
@@ -537,7 +566,8 @@ Models are fun. Do you like models, Ron?
 	frame $f.fStatus  -bg $Gui(activeWorkspace)
 	frame $f.fGrid    -bg $Gui(activeWorkspace) -relief groove -bd 3
 	frame $f.fPatient -bg $Gui(activeWorkspace) -relief groove -bd 3
-	pack  $f.fStatus $f.fGrid $f.fPatient \
+	frame $f.fNum     -bg $Gui(activeWorkspace)
+	pack  $f.fStatus $f.fGrid $f.fPatient $f.fNum \
 		-side top -fill x -pady $Gui(pad)
 
 	#-------------------------------------------
@@ -595,6 +625,15 @@ Models are fun. Do you like models, Ron?
 	grid $f.lPatPos $f.mbPatPos  -padx $Gui(pad) -pady $Gui(pad) -sticky e
 	grid $f.lTblPos $f.mbTblPos -padx $Gui(pad) -pady $Gui(pad) -sticky e
 	grid $f.mbTblPos $f.mbPatEntry $f.mbPatPos -sticky w
+
+	#-------------------------------------------
+	# Server->Bot->SignaSP->Num frame
+	#-------------------------------------------
+	set f $fServer.fBot.fSignaSP.fNum
+
+	eval {label $f.l -text "Current Image Number"} $Gui(WLA)
+	eval {entry $f.e -textvariable Locator(imageNum) -width 6 -state disabled} $Gui(WEA)
+	pack $f.l $f.e -side left -padx $Gui(pad)
 
 
 
@@ -1241,15 +1280,31 @@ proc LocatorRead {data} {
 	MainVolumesSetActive $v
 }
 
+proc LocatorRegisterCallback {cb} {
+	global Locator 
+
+	if {[lsearch $Locator(callbackList) $cb] == -1} {
+		lappend Locator(callbackList) $cb
+	}
+}
+
+proc LocatorUnRegisterCallback {cb} {
+	global Locator 
+
+	if {[set i [lsearch $Locator(callbackList) $cb]] != -1} {
+		set Locator(callbackList) [lreplace Locator(callbackList) $i $i]
+	}
+}
+
 #-------------------------------------------------------------------------------
 # .PROC LocatorPause
 # .END
 #-------------------------------------------------------------------------------
-proc LocatorPause {{cmd ""}} {
+proc LocatorPause {} {
 	global Locator
 
-	if {$cmd != ""} { 
-		set Locator(pause) $cmd
+	if {$Locator(pause) == 0 && $Locator(connect) == 1} {
+		LocatorLoop$Locator(server)
 	}
 }
 
@@ -1290,6 +1345,7 @@ The 3D Slicer may connect to a GE SignaSP scanner from a
 Sun UltraSPARC, but not a PC.\n\n\
 Set the server to 'Images' to process images on disk as
 if they were coming from a scanner in real time."
+				set Locator(connect) 0
 				return
 			}
 			set Locator(loop) 1
@@ -1298,14 +1354,23 @@ if they were coming from a scanner in real time."
 		}
 
 		"Images" {
-		}
+			# Initialize
+			set n Locator(Images,node)
+			$n SetFilePrefix $Locator(Images,prefix)
+			$n SetFullPrefix [file join $Mrml(dir) [$n GetFilePrefix]]
+			$n SetFilePattern %s.%03d
+			set Locator(imageNum) ""
+
 			set Locator(loop) 1
 			$Locator(mbActive) config -state disabled
+			LocatorLoopImages
+		}
 		}
 
 	# DISCONNECT
 	} else {
 		set Locator(loop) 0
+		set Locator(imageNum) ""
 		$Locator(mbActive) config -state normal
 
 		switch $Locator(server) {
@@ -1321,6 +1386,7 @@ if they were coming from a scanner in real time."
 		}
 
 		"Images" {
+			# Nothing to do
 		}
 		}
 	}
@@ -1336,13 +1402,7 @@ proc LocatorLoopFile {} {
 	if {$Locator(loop) == 0} {
 		return
 	}
-
 	if {$Locator(pause) == 1} {
-		update
-		if {[ValidateInt $Locator(File,msPoll)] == 0} {
-			set Locator(File,msPoll) 100
-		}
-		after $Locator(File,msPoll) LocatorLoopFile
 		return
 	}
 
@@ -1355,7 +1415,6 @@ proc LocatorLoopFile {} {
 	scan $line "%d %g %g %g %g %g %g %g %g %g" t nx ny nz tx ty tz px py pz
 
 	if {[info exists pz] == 0} {
-		update
 		if {[ValidateInt $Locator(File,msPoll)] == 0} {
 			set Locator(File,msPoll) 100
 		}
@@ -1382,6 +1441,7 @@ proc LocatorLoopFile {} {
 		}
 	}
 	Render3D
+
 	# Call update instead of update idletasks so that we
 	# process user input like changing slice orientation
 	update
@@ -1396,23 +1456,89 @@ proc LocatorLoopFile {} {
 # .END
 #-------------------------------------------------------------------------------
 proc LocatorLoopImages {} {
-	global Slice Volume Locator
+	global Slice Volume Locator Mrml
 
 	if {$Locator(loop) == 0} {
 		return
 	}
-
 	if {$Locator(pause) == 1} {
-		update
-		if {[ValidateInt $Locator(File,msPoll)] == 0} {
-			set Locator(File,msPoll) 100
-		}
-		after $Locator(File,msPoll) LocatorLoopFile
 		return
 	}
 
-		set v [LocatorGetRealtimeID]
+	# Compute next image number
+	set v Locator(Images,vol)
+	set n Locator(Images,node)
+	if {$Locator(imageNum) == ""} {
+		set num $Locator(Images,firstNum)
+	} else {
+		set num [expr $Locator(imageNum) + $Locator(Images,increment)]
+		if {$num > $Locator(Images,lastNum)} {
+			LocatorConnect 0
+			return
+		}
+	}
+
+	set Locator(imageNum) $num
+	$n SetImageRange $num $num
+
+	# Read header
+	set filename [format [$n GetFilePattern] [$n GetFilePrefix] $num]
+	set errmsg ""
+	set errmsg [GetHeaderInfo [file join $Mrml(dir) $filename] $num $n 0]
+	# BUG: this should say "!=" but then the image is blank!
+	if {$errmsg == ""} {
+		puts $errmsg
+		puts "Assuming scan order of SI"
+		$n ComputeRasToIjkFromScanOrder SI
+	}
+
+	# Read image data
+	scan [$n GetImageRange] "%d %d" lo hi
+	if {[CheckVolumeExists [$n GetFullPrefix] [$n GetFilePattern] $lo $hi] != ""} {
+		LocatorConnect 0
+		return
+	}
+	set Gui(progressText) "Reading [$n GetName]"
+	$v Read
+	$v Update
+
+	# Copy the image to the Realtime volume
+	set v [LocatorGetRealtimeID]
+	set n Volume($v,node)
+	vtkImageCopy copy
+	copy SetInput [Locator(Images,vol) GetOutput]
+	copy Update
+	copy SetInput ""
+	Volume($v,vol) SetImageData [copy GetOutput]
+	copy SetOutput ""
+	copy Delete
+
+	# Set the header info
+	$n Copy Locator(Images,node)
+
+	# Update pipeline and GUI
+	MainVolumesUpdate $v
+
+	# If this Realtime volume is inside transforms, then
+	# compute the registration:
+	MainUpdateMRML
+
+	# Perform realtime image processing
+	foreach cb $Locator(callbackList) {
+		$cb
+	}
 	
+	# Render
+	RenderAll
+
+	# Loop
+	# Call update instead of update idletasks so that we
+	# process user input like changing slice orientation
+	update
+	if {[ValidateInt $Locator(Images,msPoll)] == 0} {
+		set Locator(Images,msPoll) 100
+	}
+	after $Locator(Images,msPoll) LocatorLoopImages
 }
 
 #-------------------------------------------------------------------------------
@@ -1425,13 +1551,7 @@ proc LocatorLoopSignaSP {} {
 	if {$Locator(loop) == 0} {
 		return
 	}
-
 	if {$Locator(pause) == 1} {
-		update
-		if {[ValidateInt $Locator(SignaSP,msPoll)] == 0} {
-			set Locator(SignaSP,msPoll) 100
-		}
-		after $Locator(SignaSP,msPoll) LocatorLoopSignaSP
 		return
 	}
 
@@ -1513,8 +1633,6 @@ proc LocatorLoopSignaSP {} {
 		# Set the header info
 		set n Volume($v,node)
 		$n SetImageRange $Locator(imageNum) $Locator(imageNum)
-		$n SetLowerThreshold [Volume($v,vol) GetRangeLow]
-		$n SetUpperThreshold [Volume($v,vol) GetRangeHigh]
 		$n SetDescription "recon=$Locator(recon)"
 		set str [$n GetMatrixToString $imgMatrix]
 		$n SetRasToVtkMatrix $str
@@ -1526,16 +1644,16 @@ proc LocatorLoopSignaSP {} {
 		# If this Realtime volume is inside transforms, then
 		# compute the registration:
 		MainUpdateMRML
+
+		# Perform realtime image processing
+		foreach cb $Locator(callbackList) {
+			$cb
+		}
 	}
 
-	# Render the slices that the locator is driving
+	# Render the slices that the locator is driving.
 	if {$newImage != 0 || $newLocator != 0} {
-		foreach s $Slice(idList) {
-			if {[Slicer GetDriver $s] == 1} {
-				RenderSlice $s
-			}
-		}
-		Render3D
+		RenderAll
 	}
 
 	# Call update instead of update idletasks so that we
@@ -1608,8 +1726,6 @@ proc LocatorImagesPrefix {} {
 
 	# Remember to store it as a relative prefix for next time
 	set Locator(Images,prefix) [MainFileGetRelativePrefix $filename]
-
-	set Locator(Images,name) [file root [file tail $filename]]
 
 	# Image numbers
 	set Locator(Images,firstNum) [MainFileFindImageNumber First \

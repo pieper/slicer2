@@ -75,7 +75,7 @@ proc DataInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.16 $} {$Date: 2000/02/16 14:17:05 $}]
+		{$Revision: 1.17 $} {$Date: 2000/02/20 15:17:38 $}]
 
 	set Data(index) ""
 	set Data(clipboard) ""
@@ -399,11 +399,13 @@ proc DataClipboardCopy {nodes} {
 	# If the clipboard already has a node(s), delete it
 	if {$Data(clipboard) != ""} {
 	    foreach node $Data(clipboard) {
-		set nodeType [DataGetTypeFromNode $node]
-		set id [DataGetIdFromNode $node]
-		# For the next line to work, Volume, Model, etc need to
-		# be on the "global" line of this procedure
-		MainMrmlDeleteNode $nodeType $id
+			set nodeType [DataGetTypeFromNode $node]
+			set id [DataGetIdFromNode $node]
+			
+			# For the next line to work, Volume, Model, etc need to
+			# be on the "global" line of this procedure
+			MainMrmlDeleteNode $nodeType $id
+			RenderAll
 	    }
 	}
 

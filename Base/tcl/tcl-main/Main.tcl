@@ -310,7 +310,7 @@ proc MainInit {} {
 	set Module(procRecallPresets) ""
 	set m Main
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.27 $} {$Date: 2000/02/20 02:51:19 $}]
+		{$Revision: 1.28 $} {$Date: 2000/02/20 15:17:36 $}]
 
 	# Call each "Init" routine that's not part of a module
 	#-------------------------------------------
@@ -423,7 +423,7 @@ proc MainBuildGUI {} {
 	# attach it to the main window
 	$f config -menu .menubar
 	# Create more cascade menus
-	foreach m {File Edit View Help} {
+	foreach m {File View Help} {
 		set c {menu .menubar.m$m $Gui(SMA)}; eval [subst $c]
 		set Gui(m$m) .menubar.m$m
 		.menubar add cascade -label $m -menu .menubar.m$m
@@ -976,7 +976,7 @@ proc MainStartProgress {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainShowProgress {filter} {
-	global BarId TextId Gui Edit Volume
+	global BarId TextId Gui Volume
 	
 	set progress [$filter GetProgress]
 	set height   [winfo height $Gui(fStatus)]
@@ -1130,21 +1130,25 @@ proc MainExitQuery { } {
 	# See if any models or volumes are unsaved
 	set volumes ""
 	foreach v $Volume(idList) {
-		if {$Volume($v,dirty) == 1} {
-			if {$volumes == ""} {
-				set volumes "[Volume($v,node) GetName]"
-			} else {
-				set volumes "${volumes}, [Volume($v,node) GetName]"
+		if {[info exists Volume($v,dirty)] == 1} {
+			if {$Volume($v,dirty) == 1} {
+				if {$volumes == ""} {
+					set volumes "[Volume($v,node) GetName]"
+				} else {
+					set volumes "${volumes}, [Volume($v,node) GetName]"
+				}
 			}
 		}
 	}
 	set models ""
 	foreach v $Model(idList) {
-		if {$Model($v,dirty) == 1} {
-			if {$models == ""} {
-				set models "[Model($v,node) GetName]"
-			} else {
-				set models "${models}, [Model($v,node) GetName]"
+		if {[info exists Model($v,dirty)] == 1} {
+			if {$Model($v,dirty) == 1} {
+				if {$models == ""} {
+					set models "[Model($v,node) GetName]"
+				} else {
+					set models "${models}, [Model($v,node) GetName]"
+				}
 			}
 		}
 	}

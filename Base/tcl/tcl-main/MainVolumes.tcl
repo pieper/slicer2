@@ -60,7 +60,7 @@ proc MainVolumesInit {} {
         
         set m MainVolumes
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.24 $} {$Date: 2000/02/20 00:36:54 $}]
+		{$Revision: 1.25 $} {$Date: 2000/02/20 15:17:38 $}]
 
 	set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -584,16 +584,16 @@ proc MainVolumesUpdate {v} {
 	Volume($v,vol) Update
 	foreach s $Slice(idList) {
  		if {$v == $Slice($s,backVolID)} {
-			Slicer SetBackVolume Volume($n,vol)
-			Slicer SetBackVolume Volume($v,vol)
+			Slicer SetBackVolume $s Volume($n,vol)
+			Slicer SetBackVolume $s Volume($v,vol)
 		}
  		if {$v == $Slice($s,foreVolID)} {
-			Slicer SetForeVolume Volume($n,vol)
-			Slicer SetForeVolume Volume($v,vol)
+			Slicer SetForeVolume $s Volume($n,vol)
+			Slicer SetForeVolume $s Volume($v,vol)
 		}
  		if {$v == $Slice($s,labelVolID)} {
-			Slicer SetLabelVolume Volume($n,vol)
-			Slicer SetLabelVolume Volume($v,vol)
+			Slicer SetLabelVolume $s Volume($n,vol)
+			Slicer SetLabelVolume $s Volume($v,vol)
 		}
 		MainSlicesSetOffset $s
 	}
@@ -700,7 +700,7 @@ proc MainVolumesSetActive {v} {
 
 		# Update GUI
 		foreach item "Window Level AutoWindowLevel UpperThreshold LowerThreshold \
-			AutoThreshold Interpolate" {
+			AutoThreshold ApplyThreshold Interpolate" {
 			set Volume([Uncap $item]) [Volume($v,node) Get$item]
 		}
 
@@ -782,20 +782,12 @@ proc MainVolumesSetParam {Param {value ""}} {
 	# Window/Level/Threshold
 	#
 	if {[lsearch "AutoWindowLevel Level Window UpperThreshold LowerThreshold \
-		AutoThreshold" $Param] != -1} {
+		AutoThreshold ApplyThreshold" $Param] != -1} {
 
 		# If no change, return
 		if {$value == [Volume($v,node) Get$Param]} {return}
 
 		# Update value
-		# When AutoThreshold is -1, that means NONE
-		set none 0
-		if {$Param == "AutoThreshold" && $value == "-1"} {
-			# Turn off auto threshold
-			set value 0
-			set none 1
-		}
-
 		Volume($v,node) Set$Param $value
 
 		# If changing window/level, then turn off AutoWindowLevel
@@ -817,15 +809,21 @@ proc MainVolumesSetParam {Param {value ""}} {
 			Volume($v,node) SetAutoThreshold $Volume(autoThreshold)
 		}
 
+		# If changing threshold, then turn on ApplyThreshold
+		if {[lsearch "UpperThreshold LowerThreshold AutoThreshold" $Param] != -1} {
+			set Volume(applyThreshold) 1
+			Volume($v,node) SetApplyThreshold $Volume(applyThreshold)
+		}
+
 		# If AutoThreshold, get the resulting upper/lower threshold
 		if {$Param == "AutoThreshold"} {
-			if {$none == 1} {
-				Volume($v,node) SetLowerThreshold [Volume($v,vol) GetRangeLow]
-				Volume($v,node) SetUpperThreshold [Volume($v,vol) GetRangeHigh]
-			}
 			Volume($v,vol) Update
 			set Volume(lowerThreshold) [Volume($v,node) GetLowerThreshold]
 			set Volume(upperThreshold) [Volume($v,node) GetUpperThreshold]
+		}
+
+		if {$Param == "ApplyoThreshold"} {
+			Volume($v,vol) Update
 		}
 
 	#
