@@ -1,38 +1,32 @@
 #=auto==========================================================================
-# Copyright (c) 1999 Surgical Planning Lab, Brigham and Women's Hospital
-#  
-# Direct all questions regarding this copyright to slicer@ai.mit.edu.
-# The following terms apply to all files associated with the software unless
-# explicitly disclaimed in individual files.   
-# 
-# The authors hereby grant permission to use, copy, (but NOT distribute) this
-# software and its documentation for any NON-COMMERCIAL purpose, provided
-# that existing copyright notices are retained verbatim in all copies.
-# The authors grant permission to modify this software and its documentation 
-# for any NON-COMMERCIAL purpose, provided that such modifications are not 
-# distributed without the explicit consent of the authors and that existing
-# copyright notices are retained in all copies. Some of the algorithms
-# implemented by this software are patented, observe all applicable patent law.
-# 
-# IN NO EVENT SHALL THE AUTHORS OR DISTRIBUTORS BE LIABLE TO ANY PARTY FOR
-# DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING OUT
-# OF THE USE OF THIS SOFTWARE, ITS DOCUMENTATION, OR ANY DERIVATIVES THEREOF,
-# EVEN IF THE AUTHORS HAVE BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-# 
-# THE AUTHORS AND DISTRIBUTORS SPECIFICALLY DISCLAIM ANY WARRANTIES, INCLUDING,
-# BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
-# PARTICULAR PURPOSE, AND NON-INFRINGEMENT.  THIS SOFTWARE IS PROVIDED ON AN
-# 'AS IS' BASIS, AND THE AUTHORS AND DISTRIBUTORS HAVE NO OBLIGATION TO PROVIDE
-# MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+# (c) Copyright 2001 Massachusetts Institute of Technology
+#
+# Permission is hereby granted, without payment, to copy, modify, display 
+# and distribute this software and its documentation, if any, for any purpose, 
+# provided that the above copyright notice and the following three paragraphs 
+# appear on all copies of this software.  Use of this software constitutes 
+# acceptance of these terms and conditions.
+#
+# IN NO EVENT SHALL MIT BE LIABLE TO ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, 
+# INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE 
+# AND ITS DOCUMENTATION, EVEN IF MIT HAS BEEN ADVISED OF THE POSSIBILITY OF 
+# SUCH DAMAGE.
+#
+# MIT SPECIFICALLY DISCLAIMS ANY EXPRESS OR IMPLIED WARRANTIES INCLUDING, 
+# BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR 
+# A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
+#
+# THE SOFTWARE IS PROVIDED "AS IS."  MIT HAS NO OBLIGATION TO PROVIDE 
+# MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS. 
+#
 #===============================================================================
 # FILE:        Go.tcl
-# DATE:        01/18/2000 12:11
-# LAST EDITOR: gering
 # PROCEDURES:  
 #   ReadModuleNames
 #   FindNames
 #   ReadModuleNamesLocalOrCentral
 #   GetFullPath
+#   START_THE_SLICER
 #==========================================================================auto=
 
 # Load vtktcl.dll on PCs
@@ -148,6 +142,8 @@ proc FindNames {dir} {
 
 #-------------------------------------------------------------------------------
 # .PROC ReadModuleNamesLocalOrCentral
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc ReadModuleNamesLocalOrCentral {name ext} {
@@ -195,7 +191,10 @@ proc GetFullPath {name ext {dir "" } {verbose 1}} {
 #
 # Source those files
 # Boot the slicer
-# If there is a SlicerScript, run it
+#
+# If the environment variable SLICER_SCRIPT exist, 
+# and it points to a tcl file, source the file. 
+# Then, if the function SlicerScript exists, run it after booting.
 #
 # .END
 #-------------------------------------------------------------------------------
@@ -292,11 +291,20 @@ if {$verbose == 1} {
 # Bootup
 MainBoot [lindex $argv 0]
 
-## The programmer has the opportunity to start a SlicerScript.
-## SlicerScript if possible
-##
-if {[info commands SlicerScript] != ""} {
-puts "Running slicer script..."
-SlicerScript
-puts "Done running slicer script."
+### Did someone set the SLICER_SCRIPT environment variable
+### If they did and it is a tcl file, source it.
+### If the SlicerScript function exists, run it
+
+if {[info exists env(SLICER_SCRIPT)] != 0 && $env(SLICER_SCRIPT) != ""} {
+
+    ## Is it a tcl file
+    if {[regexp "\.tcl$\s*$" $env(SLICER_SCRIPT)] == 1} {
+        source $env(SLICER_SCRIPT)
+        if {[info commands SlicerScript] != ""} {
+            puts "Running slicer script..."
+            SlicerScript
+            puts "Done running slicer script."
+        }
+    }
 }
+
