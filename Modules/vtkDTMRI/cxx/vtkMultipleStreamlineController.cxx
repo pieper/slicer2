@@ -3,6 +3,9 @@
 #include "vtkPolyDataMapper.h"
 #include "vtkActor.h"
 #include "vtkRenderer.h"
+#include "vtkAppendPolyData.h"
+#include "vtkPolyDataWriter.h"
+#include "vtkTransformPolyDataFilter.h"
 
 //------------------------------------------------------------------------------
 vtkMultipleStreamlineController* vtkMultipleStreamlineController::New()
@@ -313,6 +316,144 @@ void vtkMultipleStreamlineController::DeleteStreamline(vtkActor *pickedActor)
       this->DeleteStreamline(index);
     }
 }
+
+
+// NOTE: Limit currently is 1000 models (1000 different input colors is max).
+//----------------------------------------------------------------------------
+void vtkMultipleStreamlineController::SaveStreamlinesAsPolyData(char *filename)
+{
+  vtkHyperStreamline *currStreamline;
+  vtkActor *currActor;
+  vtkCollection *collectionOfModels;
+  vtkAppendPolyData *currAppender;
+  vtkPolyDataWriter *writer;
+  vtkTransformPolyDataFilter *currTransformer;
+  vtkTransform *currTransform;
+  float R[1000], G[1000], B[1000];
+  int arraySize=1000;
+  int lastColor;
+  int currColor, newColor, idx;
+  float rgb[3];
+  char fileName[101];
+
+  collectionOfModels = vtkCollection::New();
+  writer = vtkPolyDataWriter::New();
+
+  // traverse streamline collection, grouping streamlines into models by color
+  this->Streamlines->InitTraversal();
+  this->Actors->InitTraversal();
+  currStreamline= (vtkHyperStreamline *)this->Streamlines->GetNextItemAsObject();
+  currActor= (vtkActor *)this->Actors->GetNextItemAsObject();
+  currActor->GetProperty()->GetColor(rgb);
+
+  // init with the first one:
+  // add an appender to the collection of models.
+  currAppender = vtkAppendPolyData::New();
+  collectionOfModels->AddItem((vtkObject *)currAppender);
+  lastColor=0;
+  R[0]=rgb[0];
+  G[0]=rgb[1];
+  B[0]=rgb[2];
+
+  cout << "Traverse STREAMLINES" << endl;
+  while(currStreamline)
+    {
+      cout << "stream " << currStreamline << endl;
+      currColor=0;
+      newColor=1;
+      // If we have this color already, store its index in currColor
+      while (currColor<=lastColor && currColor<arraySize)
+        {
+          currActor->GetProperty()->GetColor(rgb);
+          if (rgb[0]==R[currColor] &&
+              rgb[1]==G[currColor] &&
+              rgb[2]==B[currColor])
+            {
+              newColor=0;
+              break;
+            }
+          currColor++;
+        }
+
+      // if this is a new color, we must create a new model to save.
+      if (newColor)
+        {
+          // add an appender to the collection of models.
+          currAppender = vtkAppendPolyData::New();
+          collectionOfModels->AddItem((vtkObject *)currAppender);
+          // increment count of colors
+          lastColor=currColor;
+          // save this color's info in the array
+          R[currColor]=rgb[0];
+          G[currColor]=rgb[1];
+          B[currColor]=rgb[2];
+        }
+      else
+        {
+          // use the appender number currColor that we found in the while loop
+          currAppender = (vtkAppendPolyData *) 
+            collectionOfModels->GetItemAsObject(currColor);
+        }
+
+      // transform models so that they are written in the coordinate
+      // system in which they are displayed.
+      // Currently this class displays them with 
+      // currActor->SetUserMatrix(currTransform->GetMatrix());
+      currTransformer = vtkTransformPolyDataFilter::New();
+      currTransform = vtkTransform::New();
+      currTransform->SetMatrix(currActor->GetUserMatrix());
+      currTransformer->SetTransform(currTransform);
+      currTransformer->SetInput(currStreamline->GetOutput());
+
+      // Append this streamline to the chosen model using the appender
+      currAppender->AddInput(currTransformer->GetOutput());
+
+      // call Delete on both to decrement the reference count
+      // so that when we delete the appender they delete too.
+      currTransformer->Delete();
+      currTransform->Delete();
+
+      // get next objects in collections
+      currStreamline= (vtkHyperStreamline *)
+        this->Streamlines->GetNextItemAsObject();
+      currActor = (vtkActor *) this->Actors->GetNextItemAsObject();
+    }
+
+
+  // traverse appender collection (collectionOfModels) and write each to disk
+  cout << "Traverse APPENDERS" << endl;
+  collectionOfModels->InitTraversal();
+  currAppender = (vtkAppendPolyData *) 
+    collectionOfModels->GetNextItemAsObject();
+  idx=0;
+  while(currAppender)
+    {
+      cout << idx << endl;
+      writer->SetInput(currAppender->GetOutput());
+      writer->SetFileType(2);
+      snprintf(fileName,100,"%s_%d.vtk",filename,idx);
+      writer->SetFileName(fileName);
+      writer->Write();
+      
+      // Delete it (but it survives until the collection it's on is deleted).
+      currAppender->Delete();
+
+      currAppender = (vtkAppendPolyData *) 
+        collectionOfModels->GetNextItemAsObject();
+      idx++;
+    } 
+
+  cout << "DELETING" << endl;
+
+  // Delete all objects we created
+  collectionOfModels->Delete();
+  writer->Delete();
+
+}
+
+
+
+
 
 // Test whether the given point is in bounds (inside the input data)
 //----------------------------------------------------------------------------

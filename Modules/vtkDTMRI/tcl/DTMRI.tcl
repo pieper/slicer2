@@ -134,7 +134,7 @@ proc DTMRIInit {} {
     set Module($m,author) "Lauren O'Donnell"
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.42 $} {$Date: 2004/11/15 20:41:18 $}]
+                  {$Revision: 1.43 $} {$Date: 2004/11/16 00:29:30 $}]
 
      # Define Tabs
     #------------------------------------
@@ -1729,17 +1729,17 @@ set FrameOption3 [Notebook:frame $f {Option 3}]
     # Display-> Notebook ->Tract frame->VisMethods->VisParams->SaveTracts->Entries->Info frame
     #-------------------------------------------
     set f $fParams.fSaveTracts.fEntries.fInfo1
-    DevAddLabel $f.l "Save currently visible tracts as a model."
+    DevAddLabel $f.l "Save the tracts you have created."
     pack $f.l -side top -padx $Gui(pad) -pady $Gui(pad)
 
     #-------------------------------------------
     # Display-> Notebook ->Tract frame->VisMethods->VisParams->SaveTracts->Entries->Apply frame
     #-------------------------------------------
     set f $fParams.fSaveTracts.fEntries.fApply1
-    DevAddButton $f.bApply "Save tracts in model file" \
-        {puts "Saving streamlines"; DTMRISaveStreamlinesAsModel "" tracts}
+    DevAddButton $f.bApply "Save tracts in model file(s)" \
+        {puts "Saving streamlines"; DTMRISaveStreamlinesAsModel}
     pack $f.bApply -side top -padx $Gui(pad) -pady $Gui(pad)
-    TooltipAdd  $f.bApply "Save visible tracts to vtk file.  Must be re-added to mrml tree."
+    TooltipAdd  $f.bApply "Save tracts to vtk file(s).\nEach color of tract will become a separate model.\n Choose the initial part of the filename, and models\nwill be saved as filename_0.vtk, filename_1.vtk, etc.\nThen you can load the models into slicer\n(they must be re-added to the mrml tree)."
 
     #-------------------------------------------
     # Display-> Notebook ->Tract frame->VisMethods->VisParams->SaveTracts->Entries->Info frame
@@ -4159,6 +4159,9 @@ proc DTMRISeedStreamlinesFromSegmentation {{verbose 1}} {
 
     # set mode to On (the Display Tracts button will go On)
     set DTMRI(mode,visualizationType,tractsOn) On
+
+    # make sure the settings are current
+    DTMRIUpdateTractColor
     
     # set up the input segmented volume
     DTMRI(vtk,streamlineControl) SetInputROI [Volume($v,vol) GetOutput] 
@@ -5654,6 +5657,17 @@ proc DTMRISaveStreamlinesAsPolyLines {subdir name {verbose "1"}} {
 
 }
 
+proc DTMRISaveStreamlinesAsModel {} {
+    
+    set filename [tk_getSaveFile  -title "Save Tracts: Choose Initial Filename"]
+    if { $filename == "" } {
+        return
+    }
+    
+    DTMRI(vtk,streamlineControl) SaveStreamlinesAsPolyData $filename
+}
+
+
 #-------------------------------------------------------------------------------
 # .PROC DTMRISaveStreamlinesAsModel
 # Save all streamlines as a vtk model(s).
@@ -5661,7 +5675,7 @@ proc DTMRISaveStreamlinesAsPolyLines {subdir name {verbose "1"}} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc DTMRISaveStreamlinesAsModel {subdir name {verbose "1"}} {
+proc DTMRISaveStreamlinesAsModelOld {subdir name {verbose "1"}} {
     global DTMRI
 
     # append all streamlines together into one model

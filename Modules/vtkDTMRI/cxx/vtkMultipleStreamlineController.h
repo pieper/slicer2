@@ -66,6 +66,11 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   void DeleteAllStreamlines();
 
   // Description
+  // Save streamlines as vtkPolyData models.
+  // Streamlines are grouped into model files based on their color.
+  void SaveStreamlinesAsPolyData(char *filename);
+  
+  // Description
   // Input tensor field in which to seed streamlines
   vtkSetObjectMacro(InputTensorField, vtkImageData);
   vtkGetObjectMacro(InputTensorField, vtkImageData);
@@ -166,9 +171,7 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
 
   // Description
   // To do list:
-  // Add access to parameters of all created streamlines.
   // Add Print function
-  // Add option to create new/old streamline classes
   // Add save function
   // Add observers for progress/implement progress updating
   // Add check on all inputs
