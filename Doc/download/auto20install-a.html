@@ -1,49 +1,66 @@
-<title>Install on Solaris</title>
+<title>Installing on Solaris</title>
 
 <h3>Compatibility</h3>
-The 3D Slicer is compatible with Solaris 2.8 (sometimes called Solaris 5.8) and OpenGL 1.2.
-We do not formally support Solaris 2.5 but other users have been able to make it work with
+Slicer is compatible with Solaris 2.8 (also known as Solaris 8 or SunOS 5.8) and OpenGL 1.2.
+Although we do not formally support Solaris 2.5, some users have been able to make it work with
 some difficulty.
 
+<h4>System Requirements</h4>
+<ul>
+<li><b>Memory</b>:  Minimum: 128 MB.
+<li><b>Disk Space</b>: tbd MB to download the installer, which expands to about tbd MB. The tutorial data set requires 37 MB.
+<li><b>Processor Speed</b>: Has run successfully on a 450-MHz machine; a faster processor speed is recommended.
+</ul>
+
+
 <h3>Installation Steps</h3>
+
+Replace <code>slicer</code> in the following instructions with the correct version, 
+for example, <code>slicer-1.3.0</code>.
+
+
 <ol>
 <li>
-Downloaded the desired version of the <b>slicer2.tar.gz</b> file to your computer. FTP instructions for the most recent version were emailed to
-you upon receipt of your signed Software License Agreement. If you have not filled this out yet,
-click <a href='index.html#1'>here</a>. Replace <i>slicer2</i> in the following instructions with the correct version, for example slicer2-2002-09.
+Download the desired version of the <code><b>slicer.tar.gz</b></code> file to your computer. 
+(Instructions about how to download the most recent version were emailed to
+you upon receipt of your signed 
+<a href="http://spl.bwh.harvard.edu:8000/pages/papers/slicer/license.html">Software License Agreement</a>. 
+If you have not filled this out yet,
+click <a href='index.html#1'>here</a>.) 
+
 
 <br>&nbsp;<li>
-At a shell prompt, type the following to uncompress the file and create a <code>slicer</code> directory:
-<pre><p class=code>gunzip slicer2.tar.gz<br>
-tar xf slicer2.tar</p></pre>
+At a shell prompt, type the following commands to uncompress the file and create a 
+<code>slicer</code> directory:
+<pre></pre>
+<p class=code>gunzip slicer.tar.gz<br>
+tar xf slicer.tar</p>
 
-<!--
 <br>&nbsp;<li>
-Edit the <code>slicer</code> file to set the <code>SLICER_HOME</code> environment variable 
-to be the directory where the <code>slicer</code> directory is installed.
+Edit the <code>slicer</code> file to set the <code>SLICER_HOME</code> environment variable
+to point to the directory where the <code>slicer</code> directory is installed.
 
 <br>&nbsp;<li>
 Move the <code>slicer</code> file to a directory that is in every user's <code>PATH</code>
 environment variable. For example, this may be <code>/user/local/bin</code>.
 
 <br>&nbsp;<li>
-Repeat the last 2 steps with the following scripts from the <code>slicer</code> directory:
+Repeat steps 3 and 4 with the following scripts from the <code>slicer</code> directory:
 <ul>
-<li>mrmlize
-<li>printmrml
+<li><code>mrmlize</code>
+<li><code>printmrml</code>
 </ul>
-If you will be contributing to the development of the 3D Slicer, then also 
-repeat the last 2 steps with these scripts:
+If you will be contributing to the development of Slicer, then also
+repeat steps 3 and 4 with these scripts:
 <ul>
-<li>comment
-<li>document
+<li><code>comment</code>
+<li><code>document</code>
 </ul>
--->
 
 <br>&nbsp;<li>
-Launch the slicer by typing the following at a shell prompt:
-<pre><p class=code>cd slicer2<br>
-slicer2-solaris-sparc</p></pre>
+Launch Slicer by typing the following command at a shell prompt:
+<pre></pre>
+<p class=code>slicer</p>
 </ol>
 
 <!---------------------------------- FAQ ------------------------------------->
@@ -55,14 +72,16 @@ slicer2-solaris-sparc</p></pre>
 <tr>
 <td class=box0>
     <div class=q>How can I load an existing data set?</div>
-    <div class=a>At the shell prompt, type <b>slicer2-solaris-sparc</b> followed by the name of your MRML file.</div>
+    <div class=a>At the shell prompt, type <b>slicer</b> followed by the name of your MRML file.</div>
 </td>
 </tr>
 <tr>
 <td class=box1>
     <div class=q>Was King Louis XIV a good decorator?</div>
-    <div class=a>He transformed a mere hunting lodge into the dazzling royal 
+    <div class=a>He transformed a mere hunting lodge into the dazzling royal
     residence that is Versailles.</div>
 </td>
 </tr>
 </table>
+
+

@@ -1,35 +1,34 @@
-<title>The print header program</title>
+<title>The <code>print_header</code> program</title>
 
 
-the print_header program reads informtion from the image header if the
-header exists and tries to extract useful information to help you understand
-your data. print_header can usually read headers from the following datatypes:
+
+The <code>print_header</code> program reads information from the header of an image (if the
+header exists) and extracts useful information to help you understand
+your data. <br>
+<br><code>print_header</code> can usually read headers for the following data types:
 
 <ul>
-<li> G.E. signa data (this is usually old data)
-<li> Siemens Somatom
-<li> G.E. genesis data (slicer was designed for this type of data originally
-but has been expanded to accomodate other formats.
-<li> DICOM data - the slicer program can usually read your dicom data directly. Since 
+<li> GE Signa (This is usually old data.)</li>
+<li> Siemens Somatom</li>
+<li> GE Genesis (Slicer was originally designed for this type of data,
+but has been expanded to accommodate other formats.)</li>
+<li> DICOM (Slicer can usually read DICOM (digital imaging and communications in medicine) data directly. However, since
 DICOM is such a complicated specification, not all DICOM data will be readable in
-slicer
-
-
+Slicer.)</li>
+<li> <code>print_header</code> can read data in compressed (<code>.gz</code> or <code>.Z</code>) format as well as
+uncompressed.</li>
 </ul>
 
-To run the program simply type (assuming that you have an image called I.001)<br>
-<br>
-print_header I.001
-<br>
-<br>
-the print_header program will print out something like:
-<br>
+To run <code>print_header</code>, type (for an image called <code>I.001</code>):
+<ul><code>print_header I.001</code></ul>
 
-print_header V1.0
+The <code>print_header</code> program will print output like this:
+<ul>
+<code>print_header V1.0
 ENTRY AND POSITION ARE 1 1 <br>
 input_prefix = I<br>
 output_prefix = <br>
-suffix = <none><br>
+suffix = &lt;none&gt;<br>
 filename_format = %s.%03d<br>
 patient_name = mrsmith<br>
 patient_sex = F<br>
@@ -113,14 +112,15 @@ coord_a_bottom_right =  -120.000000<br>
 coord_s_bottom_right =  -65.000000<br>
 imagepositionpatient =  0.000000 0.000000 0.000000<br>
 imageorientationpatient =  0.000000 0.000000 0.000000 0.000000 0.000000 0.000000<br>
-<p>
-There are several things to note about the output of print_header:
-</p>
-<ul>
-<li> the information may not be correct, and will be inaccurate if you change
-the images without changing the headers.
-<li> not all of the parameters have meaning for all datatypes 
-<li> print_header can read your data in compressed (.gz or .Z) format as well as
-uncompressed
+</code>
 </ul>
+
+There are several things to note about the output of <code>print_header</code>:
+
+<ul>
+<li> The information may not be correct, and will be inaccurate if you change
+the images without changing the headers.</li>
+<li> Not all of the parameters have meaning for all datatypes.</li>
+</ul>
+
 

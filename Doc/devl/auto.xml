@@ -9,7 +9,9 @@ How to add new software
 </teaser>
 
 <summary>
-This Developer's Guide walks you through the steps for adding a new module
-or compiling the VTK source.
+This Developer's Guide presents the steps for adding a new module,
+compiling the VTK source, and creating documentation.
 </summary>
 </auto>
+
+

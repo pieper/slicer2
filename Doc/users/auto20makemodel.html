@@ -1,32 +1,56 @@
 <title>Making Models</title>
 
-The output of the segmentation process is a set of label maps, where pixels 
-take on values corresponding to tissue type.  In our model creation pipeline, the bounding surfaces of the 
-label maps are extracted and represented as a collection of triangles using 
-marching cubes.  Decimation then reduces the number of triangles to a quantity 
-that can be more quickly rendered with little observable loss in detail.  
-For example, a typical brain surface is reduced 
+
+The output of the segmentation process is a set of label maps, where pixels
+take on values corresponding to tissue type.
+To create three-dimensional models, the bounding surfaces of the
+label maps are extracted and represented as a collection of triangles using
+marching cubes (a smoothing algorithm).
+Decimation then reduces the number of triangles to a quantity
+that can be more quickly rendered with little observable loss in detail.
+For example, a typical brain surface is reduced
 from approximately 500,000 triangles to 150,000.
 
-<p>
+<p>To create a model from a label map:</p>
 
-<ul>
-<li>To create a model from a labelmap that you have made, click on the <b>ModelMaker</b> button on the Main Menu. 
-<br>&nbsp;<li>
-In the <b>Create</b> tab, use the <b>Volume</b> pulldown menu to select the labelmap you would like to use to create the model.
-<br>&nbsp;<li>
-The largest label in this volume will be automatically selected.  If you would like to make a model from another pixel value, either click the <b>Label</b> button to choose a color, or enter the label value in the box.
-<br>&nbsp;<li>
-Next type in the <b>Name</b> you would like the model to have.
-<br>&nbsp;<li>
-Change the <b>Smooth</b> and <b>Decimate</b> parameters if necessary.
-<br>&nbsp;<li>
-Finally, click the <b>Create</b> button and wait for the model to be created.
-<br>&nbsp;<li>
-The model will then appear in the 3D Viewer.
-<br>&nbsp;<li>
-To save the model, click on the <b>Save</b> tab in ModelMaker, choose the model from the pulldown menu, optionally type in a filename, and click <b>Save</b>.  Then a dialog box will pop up for saving.
-<br>&nbsp;<li>
-Then save the scene, including the new model: click <b>File</b>, then <b>Save Scene</b> or <b>Save Scene As</b>.
+<ol>
+<li>Click <b>ModelMaker</b> on the <b>Main</b> menu.</li>
+<li>On the <b>Create</b> tab of the <b>ModelMaker</b> panel,
+use the <b>Volume</b> pull-down menu to select the label map to use.</li>
+<li>The largest label in this volume is automatically selected.
+To make a model from another pixel value, either click <b>Label</b> to select a color, or enter the label value in the field.</li>
+<li>Enter the <b>Name</b> for the model.</li>
+<li>Change the values of the <b>Smooth</b> and <b>Decimate</b> parameters, if necessary.</li>
+<li>Click <b>Create</b> and wait for the model to be created.
+The model will appear in the 3D Viewer.</li>
+<li>To save the model:
+    <ol>
+    <li>Click the <b>Save</b> tab in the <b>ModelMaker</b> panel.</li>
+    <li>Select the model from the pull-down menu.</li>
+    <li>Optionally enter a file name.</li>
+    <li>Click <b>Save</b>.  A dialog box will appear.
+    Save it to the appropriate directory. The file will be saved as a <code>.vtk</code> file.</li>
+    </ol>
 </li>
-</ul>
+<li>To save the scene, including the new model:
+    <ol>
+    <li>Click <b>File</b>.</li>
+    <li>Click <b>Save Scene</b> or <b>Save Scene As</b>.</li>
+    </ol>
+</li>
+</ol>
+
+The model
+should now be created and will appear in the 3D Viewer. You can now:
+    <ul>
+    <li>Rotate the
+    model with the left mouse button.</li>
+    <li>Translate the image with the middle mouse button.</li>
+    <li>Zoom the image with the right mouse button.</li>
+    <li>Hide and unhide the model,
+    by clicking the name of your model on the <b>Models</b> panel.</li>
+    <li>Change the opacity of the model,
+    with the sliding scale next to the name of your model on the <b>Models</b> panel.</li>
+    </ul>
+
+

@@ -1,296 +1,297 @@
-<title>Editing your data in the Slicer</title>
+<title>Editing data in Slicer</title>
 
-<p>The slicer has a set  tools that allow you to edit or <em>segment</em>
-your data. After clicking the Editor tab the following is displayed in
-the upper portion of the user interface:
+
+
+<p>Slicer has a set of effects (tools) for editing (or segmenting) your data.</p>
+
+<h3> Before Editing </h3>
+
+On the <b>Main</b> menu, click <b>Editor</b>.
+The <b>Volumes</b> tab appears:
 
 <center>
-<p><img SRC="images/edit_if_1.gif" ></center>
-</center>
+<img SRC="images/edit_if_1.gif" ></center>
 
-<h3> Begin Editing Interface</h3>
-</center>
-
-The first thing to note is that the slicer will create in memory a working version of your data that reflects your edits applied to your grayscale data. When this is saved it is called a <em>labelmap</em>.  By default this working copy is called Working. Before you start editing:
+NOTE: Slicer creates (in memory) a working version of the data that reflects your edits (called a label map). When saved, the default file name of this working copy is called <code>Working</code>.
+<br><br>Before you start editing:
 <ul>
-<li>change the name of your working version from Working to  something meaningful to your data(i.e. vessels, ventricles, etc.)
-
-<li> change the view to 4x512 (use view tab at top op user interface)
+<li>If you have multiple copies of grayscale or label maps that are part of
+your scene, select the one you currently want to edit.</li>
+<li>Enter a <b>Descriptive Name</b> that is meaningful for the data
+(such as 'vessels' or 'ventricles').</li>
+<li>Click <b>View</b> to change the view mode to 4x512.</li>
 </ul>
-If you have multiple copies of grayscale or labelmaps that are part of
-your scene, choose the one you currently want to edit.
-When you have finished editing, make sure to save your changes. The slicer
+When you have finished editing, make sure to save your changes. Slicer
 will remind you if you have unsaved volumes and will display the names of
 unsaved volumes.
-<p>NOTE: slicer will strip the headers off of the images when you save
-your data. The slicer encodes the geometry and orientation of your data
-in what it calls a <em>mrml file</em>. You can save, reload, and repeatedly
-update your mrml file until you have created the scene you want.
+<p>NOTE: Slicer will strip the headers off the images when you save
+your data. Slicer encodes the geometry and orientation of your data
+in a MRML (Medical Reality Modeling Language) file. You can save, reload, and repeatedly
+update your MRML file until you have created the scene you want.</p>
 <p>
-When you hit the Start Editing tab you will see the following:
+Click <b>Start Editing</b>. The <b>Effects</b> tab appears:
 <center>
-<p><img SRC="images/edit_if_3.gif" ></center>
-</center>
+<img SRC="images/edit_if_3.gif" ></center>
+</p>
 
-<p><h2> Editing Tools</h2>
+<h3> Editing Data</h3>
 
-You can click on the apporpriate button for your editing needs. You can
-perform your edits on either the axial(red), saggital(yellow), or coronal(green) slices depending on the Active Slice setting.
-<p>
-When you select any of the edit tools, there are three important things to note:
+Select the <b>Active Slice</b> to edit by clicking <b>Red</b>, <b>Yellow</b>, or <b>Green</b>.
+
+<h4> About the Editing Effects</h4>
+
+Some considerations are common to all the editing effects:
+<ul>
+<li>Select the correct input volume of data to edit, so that the edits will be applied properly.</li>
+<li>Set the scope of your edits properly:
+one slice (the one on the screen that you are currently editing); three
+slices (the current slice and the slices on either side of the current slice);
+or the entire volume.
+For some effects, such as drawing, it only makes sense to
+have the scope of the edits be the current slice.
+For other effects, such as thresholding, it makes sense to apply the changes to the
+entire 3D volume.</li>
+<li>When you select any of the effects, the following row of buttons
+appears:
+<center>
+<img SRC="images/little_effect_tabs.gif" ></center>
+
+The button labels are abbreviations for the effects (except for <b>PhaseWire</b> and
+<b>Measure Island</b>).
+The selected button is the current effect.
+A description appears under the row of buttons.
+<br>The right-most button is <b>Undo</b> (<b>Un</b>), which becomes available after you apply any effect.
+If you click <b>Un</b>, it undoes (or reverses) the last applied effect.
+</li>
+</ul>
+
+ <h4> Using the Effects</h4>
+
+<ul>
+<LI> <A HREF="#a"> Threshold </a></li>
+<LI> <A HREF="#b"> Change Label </a></li>
+<LI> <A HREF="#d"> Change Island </a></li>
+<LI> <A HREF="#e"> Measure Island </a></li>
+<LI> <A HREF="#f"> Erode </a></li>
+<LI> <A HREF="#g"> Draw </a></li>
+<LI> <A HREF="#i"> Save Island </a></li>
+<LI> <A HREF="#j"> PhaseWire </a></li>
+<LI> <A HREF="#h"> Remove Islands </a></li>
+<LI> <A HREF="#c"> Identify Islands </a></li>
+</ul>
+
+
+<P><A NAME="a"></A><B>Threshold effect</B></P>
+The goal of thresholding is to limit the output image to only those pixels
+whose signal intensity is between the lower and upper bounds you select.
+In the new output volume, all the pixels will have a single label (the <b>Output</b> color).
+<br><b>Threshold</b> is useful for separating the anatomy of interest
+from surrounding anatomy, based on the signal intensity of the anatomy of interest. For example, <b>Threshold</b> works well for segmenting bone in CT data.
+<br><br>To use <b>Threshold</b>:
 <ol>
-<li>
-Set the <em>input volume</em> properly! Make sure you are applying your edits
-to the correct volume of data.
-<li>Make sure to set the scope of your edits properly - the scope of edits is
-either one slice(the one on the screen that you are currently editing, three
-slices(the current slice and the ones on either side of the current slice)
-or the entire volume. In some cases, such as drawing, it only makes sense to
-have the scope of the edits be the current slice as you are drawing specific
-regions of anatomy that are different on adjacent slices. In other cases,
-for example thresholding, it makes sense to apply the changes to the
-entire 3D volume.
-<li>When you choose any of the editor effects, the following row of tabs
-appears above the interface for the effect:
+<li>Click <b>Threshold</b>. This window appears:
 <center>
-<p><img SRC="images/little_effect_tabs.gif" ></center>
-</center>
-These tabs are abbreviated names for the effects. The highlited tab is the current
-edit function with a description under the row of tabs(except for phasewire and
-Measure Island).
-Note the right-most one
-labelled Un. After you have applied an effect, this tab becomes visible. This
-is the Undo tab, which allows you to undo your last effect, so feel free to
-experiment!
+<img SRC="images/thresh_if.gif" ></center></li>
+<li>Select the <b>Input Volume</b>.</li>
+<li>Select the <b>Scope</b> and <b>Interact</b> ranges.</li>
+<li>Click <b>Output</b> and select a color, or enter an <b>Output</b> color number. You can also enter an optional label for what that color will represent. For instance, in this example, the chosen color is 2 (orange) and the label is 'skin'.</li>
+<li>Adjust the <b>Lo</b> slider to exclude points whose signal intensity is too low.</li>
+<li>Adjust the <b>Hi</b> slider to exclude points whose signal intensity is too high.</li>
+<li>Click <b>Apply</b> to apply the thresholding effect. Slicer will update the <code>Working</code> volume with your new label of thresholded data.</li>
+</ol>
+
+ <h5> Results of thresholding</h5>
+
+In the example below, we are segmenting the CT skull bone.
+Thresholding has changed the label to be blue.
+Notice that the skull is well-defined and separated from the rest of the image.
+
+<center>
+<img SRC="images/thresh_skull.gif" ></center>
+
+
+<br><br><br>
+<P><A NAME="b"></A><B>Change Label effect</B></P>
+The <b>Change Label</b> effect changes the value of the label of pixels to another value.
+<br><b>Change Label</b> is useful when you are merging two data sets together
+and you want to keep the data sets distinct from each other.
+<br><br>To use <b>Change Label</b>:
+<ol>
+<li>Click <b>Change Label</b>. This window appears:
+<center>
+<img SRC="images/change_label.gif" ></center></li>
+<li>Select the <b>Input Volume</b>.</li>
+<li>Select the <b>Scope</b> range.</li>
+<li>Enter a <b>Value to change</b>. This is the value of label of pixels in the <b>Input Volume</b> that Slicer will change.</li>
+<li>Click <b>Output</b> and select a color, or enter an <b>Output</b> color number. This is the new value that pixels with the <b>Value to change</b> will receive.</li>
+<li>Click <b>Apply</b> to apply the change label effect. Slicer will update the <code>Working</code> volume with your newly labeled data.</li>
+</ol>
+
+
+<br><br><br>
+<P><A NAME="c"></A><B>Identify Islands effect</B></P>
+<!---->This effect does not currently work.
+
+<br><br><br>
+<P><A NAME="d"></A><B>Change Island effect</B></P>
+The <b>Change Island</b> effect changes the label of an "island" of pixels.
+Slicer considers an island to be a group of connected pixels that have the same label.
+<br><b>Change Island</b> is useful when, after applying an effect (particularly thresholding) to the volume, you still are not able to separate the anatomy you are interested in.
+For example, surrounding areas may have the same signal intensity as the anatomy of interest, as in the case below: separating the skull is difficult because surrounding points have the same label as the skull itself.
+<center>
+<img SRC="images/change_island1.gif" ></center>
+
+<br><br>To use <b>Change Island</b>:
+<ol>
+<li>Click <b>Change Island</b>. This window appears:
+<center>
+<img SRC="images/changeisland_if.gif" ></center></li>
+<li>Select the <b>Input Volume</b>.</li>
+<li>Select the <b>Scope</b> and <b>Render</b> ranges.</li>
+<li>Click <b>New Label</b> and select a color, or enter a <b>New Label</b> color number. This is the new label value that pixels in the selected island will receive.</li>
+<li>Click any part of the island. The pixels that are part of that island will receive the <b>New Label</b> value.</li>
+</ol>
+
+
+<center>
+Results after using <b>Change Island</b>:
+<br><img SRC="images/change_island2.gif" ></center>
+
+<br><br><br>
+<P><A NAME="e"></A><B>Measure Island effect</B></P>
+
+The <b>Measure Island</b> effect calculates the volume of an island of pixels. Slicer considers an island to be a group of connected pixels that have the same label.
+
+<br><br>To use <b>Measure Island</b>:
+<ol>
+<li>Click <b>Measure Island</b>. This window appears:
+<center>
+<img SRC="images/measure_islands.gif" >
+</center></li>
+<li>Select the <b>Input Volume</b>.</li>
+<li>Select the <b>Scope</b> range.</li>
+<li>Click <b>Island Label</b> and select a color, or enter an <b>Island Label</b> color number. <b>Measure Island</b> will calculate the volume of the pixels with the <b>Island Label</b> color in the selected island.</li>
+<li>Click any part of the island. Slicer will display the <b>Size</b>, in pixels, of the island you clicked. Slicer will also display the size of the <b>Largest</b> island within the selected <b>Scope</b>.</li>
+</ol>
+<p>To calculate the total volume of the selected island,
+use the following formula:
+<u><code>size * pixel_size * pixel_size * (thickness + spacing)</code></u></p>
+
+<br><br><br>
+<P><A NAME="f"></A><B>Erode effect</B></P>
+The <b>Erode</b> effect removes pixels at the border of all islands. Slicer considers an island to be a group of connected pixels that have the same label. Dilation is the opposite effect, and adds pixels around the borders of all islands.
+<br><b>Erode</b> is useful for separating two distinct pieces of anatomy that are only partially connected, or for removing many small islands,
+some of which are connected to the anatomy of interest (as shown below).
+
+<center>
+<img SRC="images/erode1.gif" ></center>
+
+<br><br>To use <b>Erode</b>:
+<ol>
+<li>Click <b>Erode</b>. This window appears:
+<center><img SRC="images/erode.gif" ></center>
+</li>
+<li>Select the <b>Input Volume</b>.</li>
+<li>Select the <b>Scope</b> range. <b>Multi Slice</b> applies the one-slice erosion to each slice.
+<b>3D</b> treats the whole volume at once.
+</li>
+<li>Click <b>Value to Erode</b> and select a color, or enter a <b>Value to Erode</b> color number. <b>Erode</b> will act only on pixels with the selected <b>Value to Erode</b> color.</li>
+<li>Enter 0 for the <b>Fill value</b>.</li>
+<li>Enter the number of times to apply the effect in the <b>Iterations</b> field.</li>
+<li>Select 4 for <b>Neighborhood Size</b> for less erosion or 8 for more erosion.</li>
+<li>Select <b>Active</b> to apply <b>Erode</b> to the active view. Select <b>Native</b> to apply <b>Erode</b> to the original view.</li>
+<li>Click either:
+    <ul>
+    <li><b>Erode</b> to remove pixels with the <b>Value to Erode</b> from around islands.</li>
+    <li><b>Dilate</b> to add pixels with the <b>Value to Erode</b> around islands.</li>
+    <li><b>Erode &amp; Dilate</b> to erode, then dilate.</li>
+    <li><b>Dilate &amp; Erode</b> to dilate, then erode.</li>
+    </ul>
 </li>
 </ol>
 
- <h3> Editing Tools</h3>
-
-<p>
-
-<ul>
-<LI> <A HREF="#a"> Threshold </a>
-<LI> <A HREF="#b"> Change Label </a>
-<LI> <A HREF="#d"> Change Island </a>
-<LI> <A HREF="#e"> Measure Island </a>
-<LI> <A HREF="#f"> Erode </a>
-<LI> <A HREF="#g"> Draw </a>
-<LI> <A HREF="#i"> Save Island </a>
-<LI> <A HREF="#j"> PhaseWire </a>
-<LI> <A HREF="#h"> Remove Islands </a>
-<LI> <A HREF="#c"> Identify Islands </a>
-</ul>
-
-
-<P><A NAME="a"><B>Threshold</B></A></P>
-The Threshold tool is simple to use and often effective if you can
-separate or segment the anatomy of interest from surrounding anatomy based on the signal intensity or brightness of the anatomy of interest. Thresholding typically works well for segementing bone in CT data.
-When you click the threshold button the interface will change to the following:
 <center>
-<p><img SRC="images/thresh_if.gif" ></center>
+Results after using <b>Erode</b>:
+<br><img SRC="images/erode2.gif" ></center>
+
+
+
+<br><br><br>
+<P><A NAME="g"></A><B>Draw effect</B></P>
+
+The <b>Draw</b> effect lets you specify pixels by drawing directly on them.
+<br><b>Draw</b> is useful when automatic methods cannot segment the data correctly.
+
+<br><br>To use <b>Draw</b>:
+<ol>
+<li>Click <b>Draw</b>. This window appears:
+<center>
+<img SRC="images/draw_if.gif">
 </center>
+</li>
+<li>Click <b>Output</b> and select a color, or enter an <b>Output</b> color number. This is the new value that pixels you draw on will receive.</li>
+<li>Enter a value for the <b>Point Radius</b>, which controls how fine each line of the drawing is. Using a value of 1 or 2 allows you to select individual points.</li>
+<li>Select the <b>Mode</b> of the left mouse button in the draw window.
+<b>Draw</b> is for drawing on points. <b>Select</b> is for selecting points. <b>Move</b> is for moving selected points.</li>
+<li>If the <b>Mode</b> is <b>Select</b> or <b>Move</b>, you can use:
+    <ul>
+    <li><b>Select All</b> to select all points.</li>
+    <li><b>Deselect All</b> to deselect all points.</li>
+    <li><b>Delete Selected</b> to delete selected points.</li>
+    <li><b>Delete All</b> to delete all points.</li>
+    </ul>
+</li>
+<li>Select the <b>Render</b> range.</li>
+<li>Select the <b>Shape</b> that the left mouse represents in the draw window.</li>
+<li>Draw on the region of interest (ROI), using the left mouse button.
+You can use the right mouse button to zoom in and out on the area.
+The middle mouse button moves the image in the window.</li>
+<li>To clear the list of points after you click <b>Apply</b>, click <b>Yes</b>. To keep the same points in a list after you click <b>Apply</b>, click <b>No</b>.</li>
+<li>When you have finished drawing the outline of the ROI, click <b>Apply</b>.
+Slicer will fill the ROI with the <b>Output</b> color.</li>
+</ol>
 
- <h3> Threshold Interface</h3>
 
-The goal of thresholding is to simply adjust the sliders labelled Lo: and Hi: to <em>bound</em> the
-lower and upper signal intensity of the anatomy of interest and then to create
-a new output volume in which all of the pixels in the output volume have been
-reclassified to have a single <em>label</em> which is the Output color (labelled Skin and colored orange in this case). You can change the color by hitting the
-output button and selecting a color from the choices displayed or type a
-number in the box and your labels will be created with the color that is
-displayed.
-<p>
-In the example below we are segmenting CT skull bone have changed the label to be blue. Notice that the skull is well-defined and separated from the rest of
-the image. When you have optimally adjusted the threshold sliders for your
-data, hit the Apply button and the slicer will update the Working volume with
-your new label of thresholded data.
+<br><br><br>
+<P><A NAME="h"></A><B>Remove Islands effect</B></P>
+This function does not work.
+
+<br><br><br>
+<P><A NAME="i"></A><B>Save Island effect</B></P>
+<b>Save Island</b> will retain the selected island, and remove disconnected pixels with the same label.
+<br><b>Save Island</b> is useful for separating a single connected structure from other structures.
+
+<br><br><br>
+<P><A NAME="j"></A><B>PhaseWire effect</B></P>
+
+<b>PhaseWire</b> is a semi-automatic tool to outline features on images by following edges or contours.
+<br>Using <b>PhaseWire</b> is a rapid way to outline a feature.
 
 
+<br><br>To use <b>PhaseWire</b>:
+<ol>
+<li>Click <b>PhaseWire</b>. This window appears:
 <center>
-<p><img SRC="images/thresh_skull.gif" ></center>
+<img SRC="images/phasewire.gif">
 </center>
+</li>
+<li>Click <b>Basic</b>. (Only the <b>Basic</b> features work.)</li>
+<li>Click <b>Output</b> and select a color, or enter an <b>Output</b> color number. This is the new value that pixels you outline will receive.</li>
+<li>Select the <b>Render</b> range.</li>
+<li>Select the <b>Shape</b> of the outline.
+<b>Polygon</b> will fill in the feature when you click <b>Apply</b>.
+<b>Lines</b> will create only the outline and not fill in the feature.
+</li>
+<li>Select the <b>Image Feature Size</b>.</li>
+<li>Click the left mouse on the edge of the feature that you want to outline.
+Release the mouse button, but follow the edge with the mouse.
+<br>If the "wire" starts to stray from the edge, click the mouse button to pull in the wire.</li>
+<li>To undo the last mouse click, click <b>Undo Last Click</b>.</li>
+<li>To start the outline process again, click <b>Clear Contour</b>.
+</li>
+<li>When you have finished drawing the outline of the ROI, click <b>Apply</b>.
+If <b>Polygon</b> is selected, Slicer will fill the ROI with the <b>Output</b> color.
+If <b>Lines</b> is selected, Slicer will outline the ROI with the <b>Output</b> color.</li>
+</ol>
 
- <h3> Results of thresholding</h3>
-
-
-<P><A NAME="b"><B>Change Label</B></A></P>
-The change label feature is self-explanatory. It may be useful if you are
-going to <em>merge</em> two datasets together that have the same label value
-and you need to keep them distinct from each other.
-<center>
-<p><img SRC="images/change_label.gif" ></center>
-</center>
-
- <h3> Change Label Interface</h3>
-
-<P><A NAME="c"><B>Identify Islands</B></A></P>
- does not seem to work
-<P><A NAME="d"><B>Change Island</B></A></P>
-Sometimes after applying an effect(particularly thresholding)  to the volume we are not able to separate
-the anatomy we are interested in. Surrounding areas have the same signal intensity as our anatomy of interest will also be included as is the case below.
-<center>
-<p><img SRC="images/change_island1.gif" ></center>
-</center>
-
-<center>
-
- <h3> A Good Candidate for Change Island</h3>
-
-<p><img SRC="images/changeisland_if.gif" ></center>
-</center>
-
-
- <h3> Change Island Interface</h3>
-
-The Change Island interface is straightforward. The main thing to understand
-is that the slicer considers an <em>island</em> to be all pixels that are
-connected that have the same label. Select a new label for the island that you
-want to separate and click on any part of the island. Slicer will re-assign all
-<em>connected</em> pixels with the same input label to have the new label. Note
-that this is slightly different from change label - The change label will
-change  all pixels of the chosen label value and change island only
-changes pixels that are connected to "island" of pixels that you select.
-
-<center>
-<p><img SRC="images/change_island2.gif" ></center>
-</center>
-
- <h3> Results after applying Change Island</h3>
-
-<P><A NAME="e"><B>Measure Island</B></A></P>
-<p>
-Sometimes it is useful to calculate the volume of some editted data.
-To do this, you can use the Measure Islands feature.
-
-<center>
-<p><img SRC="images/measure_islands.gif" >
-</center>
-
-<p>
-In the case above, we have clicked on label four and the chosen the scope to
-be one slice. After clicking on our island of choice, the slicer displays two
-pieces of information: the Size: is the size <em>in pixels</em> of the island that we clicked the mouse on. The Largest is the largest island located given the
-scope we have chosen (1 slice or 3D).
-If you want to calculate the <em>total volume</em> of your island,
-you can do the following: Take the size and  use the following formula:
-<p>
-size * pixel_size * pixel_size * (thickness + spacing)
-<P><A NAME="f"><B>Erode</B></A></P>
-Another useful editor feature  is the erode/dilate tool. Erosion literally erodes
-or removes the pixels at the border of all islands and dilation does the reverse, it adds pixels around the borders of all islands. This tool is particularly good  to use if you have two distinct pieces of anatomy that are only partially connected and you want to separate them. The erosion process will break the
-connectivity. Another case could be If you have many small islands,
-some of which are connected to the structure of interest as is the case below.
-
-<center>
-<p><img SRC="images/erode1.gif" ></center>
-</center>
-
-<center>
-<p>
-Prior to Erosion/Dilation
-</center>
-<center>
-<p><img SRC="images/erode2.gif" ></center>
-</center>
-<p>
-<center>
-After Erosion/Dilation using the default parameters
-</center>
-<center>
-<p><img SRC="images/erode.gif" ></center>
-<center>
-The erode/dilate interface
-</center>
-<p>
-There are a few things to note about this feature:
-<ul>
-<li> If there is more than one label in your data, make sure to choose the
-correct one!
-<li> the fill value <em>does not seem to work -  leave the value 0 or no effect will take place.</em>
-<li> switching neighborhood size to 8 will do a more aggressive erosion/dilation
-<li> for scope of the erosion/dilation the difference between multislice and 3D is that multislice has the one slice erosion applied to each slice and the 3D
-erosion treats the whole volume at once.
-<li> Multi-Slice Orient means that if you click on a view other than the axial view with the mouse and change the Orient to Active, the erosion/dilation will
-be applied to that view instead of the Axial view.
-</ul>
-<P><A NAME="g"><B>Draw</B></A></P>
-The draw function is sometimes the only way to segment your data correctly. You can
-literally draw the outline of the Region Of Interest(ROI).
-<center>
-<p><img SRC="images/draw_if.gif">
-</center>
-
-
-
-<h3>The draw interface</h3>
-
-<p>
-To start using the draw tool, simply set the output label to the color of your choice and
-begin drawing with the left mouse on on the ROI. You can zoom the image you are drawing on with the right mouse button to make the ROI larger. When you have finished drawing the outline of the ROI, hit the Apply button and slicer will fill the ROI with the output value. You can repeat the draw/apply steps as many times
-as is necessary.
-
-It is useful to go over the function of the widgets on the Draw interface because the draw feature is
-flexible and powerful.
-<ul>
-<li> The Output: allows you to select the color of the ROI you will be creating
-<li> Point Radius (default 0) Setting this to a small positive number(1 or 2) allows you to <em>see</em>
-the points you are drawing. This is useful if you want to move or delete selected points.
-<li> The four buttons labelled Select All, Deselect All,  Delete Selected, and Delete All,  are used when
-the Mode: is set to select or move. Set the point radius to a small number and your points will be
-marked as small circles. When you select a point by clicking on it, it changes color. If you
-select all, then all points turn yellow. You can use this feature to delete or move point(s) depending
-on what you have selected.
-<li> Mode: Determines how the left mouse button works in the draw window.(middle button does translate or
-shift and right button does zoom/unzoom)In Draw mode you do the drawing, in Select mode you can choose
-points, and in Move mode, you can move selected points. Note: slicer sometimes changes the mode after an
-action as well so
-so be aware of this.
-<li>Delete Points after Apply: (default is yes) When set to yes, the list of points will be cleared
-after You hit Apply. If set to no, the points will be kept in the list after you Apply
-</ul>
-The rest of the buttons are self-explanatory.
-When you are done, remember slicer only keeps a working copy in memory, so be sure to save your
-work!
-<P><A NAME="h"><B>Remove Islands</B></A></P>
-Does not seem to work.
-<P><A NAME="i"><B>Save Island</B></A></P>
-A single <em>connected</em> structure can be separated from other structures
-with change island. Click on the labelled structure and it will retain its label while all
-other disconnected pixels of the same label will be eliminated.
-<P><A NAME="j"><B>PhaseWire</B></A></P>
-** Currently, this work-in-progress tool works only in the version of slicer called slicer-nightly -
-use only the basic features!
-**
-<p>
-This is another drawing tool for outlining features on your images.
-. Phasewire follows edges or <em>contours</em> in your images.
-Click the left mouse on the edge of the feature that you want to begin segmenting and then
-let the mouse-button  go but follow the path with the mouse on the outline of the feature.
-In most cases, Phasewire will
-track the edge of the feature without any mouse-clicks. When the "wire" starts to stray from the
-contour, click the mouse-button and the contour will be drawn automatically. Let the mouse-button go, and again pull the mouse over and along the contour
-until just before the wire fails to follow the contour you want and click. Repeat this
-until you have outlined the contour.
-Phasewire is much faster since it does the work of following the outline of your feature and can be
-more accurate than tracing by hand, assuming that the contour it follows matches the anatomy you
-are interested in.
-<p>
-<center>
-<p><img SRC="images/phasewire.gif">
-</center>
-
-<h3>The phasewire interface</h3>
-
-<p>
-There are only a few things to mention as this interface is fairly straight-forward and there are
-help messages for each widget(put the mouse over the widget to see the help message)
-<ul>
-<li> you can always back up to any point before you hit apply by using the
-Undo Last Click and Clear Contour buttons.
-<li> change the feature size button (small, medium,large) depending on the size of the
-feature you are outlining.
-<li> Shape: when set to polygon(default) will fill in the feature when you hit apply, when set to
-Lines will just create the outline and not fill in the feature.
-</ul>
 

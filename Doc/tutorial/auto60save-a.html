@@ -1,51 +1,39 @@
-<title>Save MRML</title>
+<title>Save Scene</title>
 
 
-<table border="0" cellspacing="0" cellpadding="0">
-	<tbody>
-    <tr>
-		<td valign="top">					                                                
-      <ul>
-						<li type="square">To save a description of the current scene, click
-on <b>File</b> in the pulldown menu and click on <b>Save Scene</b>. By default,
-slicer will save the description of the scene in a file called data.xml. To
-choose a filename other than the default data.xml filename, choose <b>Save
-Scene As</b> and give a your own descriptive filename for the scene. 						</li>
-        <li type="square"><b>Save Scene With Options</b> will include Options
-in the scene description. These are View Presets, background color, and other
-preferences you have set in this Slicer session. 						</li>
-        <li type="square"><b>To open a scene later</b>, click on File, then
-Open. Find the scene .xml file, double click it, and wait for the volumes
-and models to be loaded. 					</li>
-      
-      </ul>
- 					<br>
-					       		</td>
-	</tr>
-	<tr>
-		<td valign="top">			                                                 
-      <p class="tidbit"><i>Saving Volumes and Models</i><br>
-Note that you should save any new volumes and models you've created first,
-before saving the scene.</p>
-			                                                 
-      <p class="tidbit"><i>What is the Deal Here?</i><br>
-When you save a XML file, you are saving the "scene." This means that you
-are saving the pathnames to the volumes and models, not the volumes and models
-themselves. This is great because it allows you to open them all again, just
-by opening the scene file!</p>
-		</td>
-	</tr>
-                    
-  </tbody>
-</table>
-<p>
-<table border="0" cols="2" width="100%">
-	<tbody>
-    <tr>
-		<td align="left" valign="top" width="260"><img
- src="images/save-scene.jpg">
-      </td>
-		 	     </tr>
-                    
-  </tbody>
-</table>
+
+<p>You can save a description of the current scene.
+This saves the pathnames to the volumes and models in an XML file.
+You can later open them all again, just by opening the scene file.
+<br>Note: Before saving the scene, you should save any new volumes and models first.
+</p>
+
+<p>To save a description of the current scene:</p>
+      <ol>
+        <li>Click <b>File</b>. A drop-down menu appears.
+        <p><img src="images/save-scene.jpg"></p>
+        </li>
+        <li>There are several ways to save the scene,
+        depending on your preferences for file name and options.
+        <ul>
+        <li>To save the file with the default file name (<code>data.xml</code>) and no options,
+        select <b>Save Scene</b>.</li>
+        <li>To use another file name,
+        select <b>Save Scene As</b> and enter your own file name for the scene. </li>
+        <li>Use <b>Save Scene With Options</b> to include Options in the scene description.
+        These include view presets, background color, and other preferences
+        you set in this Slicer session.                 </li>
+
+        </ul>
+        </li>
+        </ol>
+<p>To open a scene later:</p>
+<ol>
+<li>Click <b>File</b>.</li>
+<li>Click <b>Open Scene</b>.</li>
+<li>Find the scene .xml file, double-click it, and wait for the volumes
+and models to load.                </li>
+
+</ol>
+
+

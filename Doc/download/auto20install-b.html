@@ -1,4 +1,4 @@
-<title>Install on Windows</title>
+<title>Installing on Windows</title>
 
 <h3>Compatibility</h3>
 
@@ -7,25 +7,25 @@ cards, but you may encounter problems depending on your system
 configuration.  Slicer was compiled and most completely tested under
 Windows 2000.
 <a href='http://www.winzip.com'>WinZip</a> must be installed on your
-computer before you may begin the installation process.
+computer before you begin the installation process.
 
 <h4>System Requirements</h4>
 <ul>
-<li><b>Memory</b>:  Minimum 128Mb, recommended 256Mb or greater.
-<li><b>Disk Space</b>: 25Mb to download the Win32 distrubution, which expands to about 90Mb. The tutorial data set requires 37Mb. You can also choose to download the full distribution, which is about 84Mb, and expands to 312Mb, and it contains the executables for Windows, Linux and Solaris.
-<li><b>Processor Speed</b>: Has been successfully run on a 333MHz machine with Win 95, though faster processor speeds are recommended.
+<li><b>Memory</b>:  Minimum: 128 MB; recommended: 256 MB or greater.
+<li><b>Disk Space</b>: 11.5 MB to download the installer, which expands to about 45 MB. The tutorial data set requires 37 MB.
+<li><b>Processor Speed</b>: Has run successfully on a 333-MHz machine with Windows 98; a faster processor speed is recommended.
 <li><b>Graphics Card</b>: Some older video cards and some laptops
 restrict the amount of memory allocated to graphics functions and may
 result in reduced image quality.
-<li><b>Screen Resolution</b>: Minimum 1024x786, recommended 1280x1024. 
-Minimum 16 bit color, 32 bit color is preferred (24 bit color works
-on most machines, but may be the cause of some rendering problems).
+<li><b>Screen Resolution and Colors</b>: Minimum screen resolution: 1024 x 786; recommended: 1280 x 1024.
+Minimum colors: 16 bit color; prefer: 32 bit color. (Note: 24 bit color works
+on most machines, but may cause some rendering problems.)
 </ul>
 
-<!-- Removed this since we now install the tcl/tk libs locally to this install
+<!-- Removed this since we now install the Tcl/Tk libs locally to this install
 <p class=warning>
 <em>WARNING</em><br><br>
-The installation may overwrite VTK or TCL/TK libraries in your 
+The installation may overwrite VTK or Tcl/Tk libraries in your
 <code>Windows/System</code> directory.</p>
 -->
 
@@ -33,45 +33,44 @@ The installation may overwrite VTK or TCL/TK libraries in your
 <ol>
 
 <li>
-If you already have an older version, such as Slicer 1.3, installed via the InstallShield self extracting executable, uninstall
-it.  Slicer can be removed using the standard tools in the Windows
+If you already have an older version of Slicer installed, uninstall
+it.  (You can uninstall Slicer using the standard tools in the Windows
 Control Panel. For example, with Windows 2000, from the <b>Start</b>
 menu, select <b>Settings</b>, then <b>Control Panel</b>, then
 <b>Add/Remove Programs</b>, and then select the version of Slicer to
-uninstall.
+uninstall. If this does not work, simply delete the Slicer program files.
+There are no Registry entries to change.)
 
 <br>&nbsp;<li>
-Download Slicer2 onto your computer. FTP instructions
-were emailed to you upon receipt of your signed Software License
-Agreement. If you have not done this yet, click <a
-href='index.html#1'>here</a>.
+Download the Windows version of Slicer onto your computer.
+(Instructions about how to download the most recent version were emailed to
+you upon receipt of your signed
+<a href="http://spl.bwh.harvard.edu:8000/pages/papers/slicer/license.html">Software License Agreement</a>.
+If you have not filled this out yet,
+click <a href='index.html#1'>here</a>.)
 
 <br>&nbsp;<li>
-Double-click on the archive files (usually a .tar.gz that Winzip can handle) to extract it to a directory using folder names. Under Options, Configuration, the Miscellaneous tab, ensure that the TAR file smart CR/LF conversion option is not checked, otherwise the image files will not be extracted properly.
-Please make sure that there are no spaces in any of the directories included in the path to  where you have extracted slicer2, for example, put it in "C:\slicer2". 
-<!--
-<br>&nbsp;<li>
-When the install shield has completed, a shortcut will appear in your
-<b>Start</b> Menu, under <b>Programs</b>.
+Double-click the self-extracting executable file to start the
+installation procedure.
+
+<br><br>
+When the installation has completed, a <b>Slicer</b> shortcut will appear in the
+<b>Start</b> menu, under <b>Programs</b>.
+
+<br><br>
+Note: The default directory for storing MRML files is the installation directory.
+If you wish to specify a different location in which to store your MRML files,
+right-click the <b>Slicer</b> shortcut and select
+<b>Properties</b>. Set the <b>Start in:</b> field to the
+directory where you store your MRML files and click <b>OK</b>.
 
 <br>&nbsp;<li>
-If you wish to specify a different location than the install directory
-in which to store your MRML files, open the shortcut and select the
-<b>Properties</b> option. Set the <b>Start in:</b> field to the
-directory where you store your data. 
+Set the environment variable <code>SLICER_HOME</code> to the directory where you installed Slicer.
+ For example, <code>C:\Program Files\Slicer</code>.
 
 <br>&nbsp;<li>
-Set the environment variable SLICER_HOME to the directory to which you installed Slicer. For example "C:\Program Files\Slicer".
-
-<br>&nbsp;<li>
-If you are running Windows 95, you will need to reboot your machine after installing Slicer.
-
-<br>&nbsp;<li>
-You are now ready to run by clicking on <b>Start</b> then
-<b>Programs</b> then the Slicer shortcut.
--->
-<br>&nbsp;<li>You are now ready to run by double clicking on <b>slicer2-win32.exe</b>.
-
+You are now ready to run Slicer by selecting <b>Start</b>, then
+<b>Programs</b>, then <b>Slicer</b>.
 </ol>
 
 <!---------------------------------- FAQ ------------------------------------->
@@ -82,19 +81,18 @@ You are now ready to run by clicking on <b>Start</b> then
 </tr>
 <tr>
 <td class=box0>
-    <div class=q>What if I need more detailed instructions for installing under Windows?</div>
-    <div class=a>Look in the Developers Guide, under <a href="../devl/index.html#5">Building Slicer</a></div>
+    <div class=q>What if I need more detailed instructions for installing with Windows NT?</div>
+    <div class=a>Look in the Developer's Guide, under <a href="../devl/index.html#5">WinNT Install</a></div>
 </td>
 </tr>
 <tr>
 <td class=box0>
     <div class=q>How can I always load a particular data set?</div>
-    <div class=a>Copy the original shortcut to create another.  
-    Then click on it once with the right (not left) mouse
-    button to open a menu, and select the <b>Properties</b>
-    option.  At the end of the 
-    <b>Target</b> line, add the name of the MRML file you wish to
-    open.  Then click <b>Apply</b>. 
+    <div class=a>Copy the original <b>Slicer</b> shortcut, then paste it to create another shortcut.
+    Right-click the new copy, and select <b>Properties</b>.
+    In the <b>Target</b> text box, type the name of the MRML file you wish to
+    open.  Then click <b>OK</b>. You can change the name of the new shortcut
+    by selecting the name, clicking the name once, typing the new name, and clicking <b>Enter</b>.
     </div>
 </td>
 </tr>
@@ -103,7 +101,10 @@ You are now ready to run by clicking on <b>Start</b> then
     <div class=q>How can I uninstall Slicer?</div>
     <div class=a>Use the standard tools in the Windows Control
     Panel to remove the version of Slicer that you no longer wish
-    to use.</div>
+    to use. For example, with Windows 2000, from the <b>Start</b>
+menu, select <b>Settings</b>, then <b>Control Panel</b>, then
+<b>Add/Remove Programs</b>, and then select the version of Slicer to
+uninstall.</div>
 </td>
 </tr>
 <tr>
@@ -113,3 +114,5 @@ You are now ready to run by clicking on <b>Start</b> then
 </td>
 </tr>
 </table>
+
+

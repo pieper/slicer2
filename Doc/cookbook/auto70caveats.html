@@ -1,48 +1,58 @@
 <title>Possible caveats</title>
 
-<h3>Some slicer caveats and (in some cases) some possible solutions </h3>
+
+<h3>Some Slicer caveats and some possible solutions </h3>
 <p>
-The slicer is a research effort and a work in progress. As such there are
-many features that dont always work in all cases. Here are some of the
-known problems and some things you can try to fix them.
+Slicer is a research effort and a work in progress. As such, there are
+many features that don't always work in all cases. Here are some
+known issues and some ways to deal with them.
 </p>
 <ul>
-<li>My data is 512x512 resolution and this seems to confuse the slicer.
+<li>My data is 512x512 resolution and this seems to confuse Slicer.
 <p>
-Originally, the slicer was designed for images that are 256x256 resolution. If
-your data is 512x512 it may be helpful to <em>reduce</em> your data to
-256x256 resolution. In most cases this will no longer be necessary as the
-slicer has been fixed to accomodate 512x512 and larger images. Please realize that:
-<ol>
-<li> Your reduced pixels will now be twice as big as they were prior to
-reducing since there are half as many pixels in the X direction and half as
-many in the Y-direction after reduction.
-<li> In most cases, the reduced datasets look visually acceptable but since
-there is one-fourth the information in each reduced slice, some of the smaller
-structures may not be acceptable for viewing/editing.
+Originally, Slicer was designed for images that are 256x256 resolution.
+However, Slicer has been modified to accommodate 512x512 and larger images.
+If your data is 512x512,
+and Slicer is still having difficulties handling it,
+try reducing the resolution of your data to 256x256 resolution.
+If you do this, please realize that:
+<ul>
+<li> Your reduced number of pixels will now be twice as big as they were,
+since there are half as many pixels in the X direction
+and half as many in the Y-direction after reduction.</li>
+<li> In most cases, the reduced data sets look visually acceptable.
+But, since there is one-fourth the information in each reduced slice,
+some smaller structures may not be acceptable for viewing or editing.
 </li>
-</ol>
-<p>
-<li> The headers on my data are confusing the slicer.
-<p>
-Some users seem to find that things work best if you note yourself the information about your images and then throw the headers away. Any data you create and
-save with the slicer will be written out in no-header format and numbered
-slice.001 to slice.xxx where xxx is the highest numbered slice.
-</p>
-<li>When I try to save my changes, slicer crashes and prints a message
-Segmentation fault
-<p>
-Segmentation fault is usually caused by one of two reasons:
-<ol>
-<li>the user is trying to write data to a directory that is owned by
-another user.
-<li>The user is trying to write data to a <em> full file system </em>
-To check if the file system is full, change to the directory where the
-data is and try to copy one image to a temporary file in the same
-directory (i.e. cp I.001 junk) if this does not work, then the file
-system is likely full. Note that the df command does not always give the
-correct results so the above approach is preferred
-</li>
-</ol>
 </ul>
 </p>
+</li>
+
+<li> The headers on my data are confusing Slicer.
+<p>
+Some users find that things work best if they record the information about their images manually,
+and then throw the headers away.
+Any data that you create and save with Slicer will be written out in no-header format and numbered
+<code>slice.001</code> to <code>slice.xxx</code> where xxx is the highest numbered slice.
+</p>
+</li>
+
+<li>When I try to save my changes, Slicer crashes and prints a "Segmentation fault" message.
+
+<p>
+Segmentation fault is usually caused by one of two reasons:
+<ul>
+<li>The user is trying to write data to a directory that is owned by
+another user.</li>
+<li>The user is trying to write data to a full file system.
+To check if the file system is full, change to the directory where the data is
+and try to copy one image to a temporary file in the same directory (for example, <code>cp I.001 junk</code>).
+If this does not work, then the file system is likely full.
+Note that the <code>df</code> command does not always give the correct results,
+so the above approach is preferred
+</li>
+</ul>
+</p>
+</li>
+</ul>
+

@@ -1,99 +1,89 @@
-<title>Install at BWH</title>
+<title>Installing on Linux</title>
 
-<h3>SPL Installation Instructions</h3>
-This is the domain of the Slicer development team, please use the globally installed version accessible by typing <i>slicer2</i>, <i>sliceri2-stable</i> or <i>slicer2-nightly</i>.<br>
-These instructions are in the process of being updated to mesh with the new Solaris OS directory hierarchy and encap system.
+<h3>Compatibility</h3>
+Slicer is compatible with Red Hat Linux 7.3.
 
-<h3>OpenMR Installation Instructions</h3>
+<h4>System Requirements</h4>
 
-<p class=warning>
-<em>WARNING</em><br><br>These instructions are out of date. Use at your own risk.
-</p>
 
-<h4>Accounts</h4>
-<p>
-Install everything as the "surg" user, and always run slicer as the "surg" user.
-
-<h4>Install the Software Packages</h4>
-<p>
-Unzip packages (from the ftp site) to create the following directory structure inside a main directory named "slicer":
 <ul>
-<li><b>pkg</b> -- contains all packages downloaded for installation
-<br>&nbsp;<li><b>slicer-1.2.2</b> -- most recent version of slicer
-<br>&nbsp;<li><b>go</b> -- old version of slicer that was stable on monk during Arya's tenure
-<br>&nbsp;<li><b>bin</b> -- executable scripts for all slicer versions
+<li><b>Memory</b>:  Minimum: 128 MB.
+<li><b>Disk Space</b>: 31.6 MB to download the installer, which expands to about 119 MB. The tutorial data set requires 37 MB.
+<li><b>Processor Speed</b>: Has run successfully on a 450-MHz machine; a faster processor speed is recommended.
 </ul>
 
-<p>
-Perform the following:
+
+<h3>Installation Steps</h3>
+
+Replace <code>slicer</code> in the following instructions with the correct version,
+for example, <code>slicer-1.3.0</code>.
+
+
 <ol>
-<li>Edit "slicer-1.2.2/program/slicer" to set the SLICER_HOME environment variable.
-<br>&nbsp;<li>Copy the "slicer" file to the "bin" directory mentioned above. 
-<br>&nbsp;<li>Add the above "bin" directory to the "PATH" environment variable in surg's "~/.tcshrc" file.
+<li>
+Download the desired version of the <code><b>slicer.tar.gz</b></code> file to your computer.
+(Instructions about how to download the most recent version were emailed to
+you upon receipt of your signed
+<a href="http://spl.bwh.harvard.edu:8000/pages/papers/slicer/license.html">Software License Agreement</a>.
+If you have not filled this out yet,
+click <a href='index.html#1'>here</a>.)
+
+
+<br>&nbsp;<li>
+At a shell prompt, type the following commands to uncompress the file and create a
+<code>slicer</code> directory:
+<pre></pre>
+<p class=code>gunzip slicer.tar.gz<br>
+tar xf slicer.tar</p>
+
+<br>&nbsp;<li>
+Edit the <code>slicer</code> file to set the <code>SLICER_HOME</code> environment variable
+to point to the directory where the <code>slicer</code> directory is installed.
+
+<br>&nbsp;<li>
+Move the <code>slicer</code> file to a directory that is in every user's <code>PATH</code>
+environment variable. For example, this may be <code>/user/local/bin</code>.
+
+<br>&nbsp;<li>
+Repeat steps 3 and 4 with the following scripts from the <code>slicer</code> directory:
+<ul>
+<li><code>mrmlize</code>
+<li><code>printmrml</code>
+</ul>
+If you will be contributing to the development of Slicer, then also
+repeat steps 3 and 4 with these scripts:
+<ul>
+<li><code>comment</code>
+<li><code>document</code>
+</ul>
+
+<br>&nbsp;<li>
+Launch Slicer by typing the following command at a shell prompt:
+<pre></pre>
+<p class=code>slicer</p>
 </ol>
 
-<h4>Edit tcl Files to Change Defaults in New Slicer</h4>
-<p>
-The files listed in the table below are located relative to the directory:<br> <b>slicer/slicer-1.2.2/program</b>.
+
+<!---------------------------------- FAQ ------------------------------------->
 <p>
 <table cellpadding=3 cellspacing=3 border=0 align=center>
 <tr>
-<th class=box>Tcl File Edits</th>
+<th class=box>Frequently Asked Questions</th>
 </tr>
 <tr>
 <td class=box0>
-  <div class=q>tcl-modules/Locator.tcl</div>
-  <div class=a>Add "LocatorSetActive SignaSP" at the end of the LocatorBuildGUI procedure.</div>
+    <div class=q>How can I load an existing data set?</div>
+    <div class=a>At the shell prompt, type <b>slicer</b> followed by the name of your MRML file.</div>
 </td>
 </tr>
 <tr>
 <td class=box1>
-  <div class=q>tcl-modules/Twin.tcl</div>
-  <div class=a>Edit "set Twin(screen) 0" to become "set Twin(screen) 1".
-  Edit any other lines as desired to change the size and position of the window. For example:<br>
-  &nbsp;&nbsp;set Twin(xPos) 30<br>
-  &nbsp;&nbsp;set Twin(yPos) 0<br>
-  &nbsp;&nbsp;set Twin(width) 550<br>
-  &nbsp;&nbsp;set Twin(height) 440<br>
-</div>
-</tr>
-<tr>
-<td class=box0>
-  <div class=q>tcl-main/MainView.tcl</div>
-  <div class=a>Edit "viewBgColor" in "MainViewInit" to be "Black" instead of "Blue"</div>
+    <div class=q>Was King Louis XIV a good decorator?</div>
+    <div class=a>He transformed a mere hunting lodge into the dazzling royal
+    residence that is Versailles.</div>
+</td>
 </tr>
 </table>
 
-<h4>Edit Init Files to Change Defaults in Old Slicer</h4>
-<p>
-Edit the file "slicer/go/program/slicer.init" so that the "View" variables are as follows:
-<pre><p class=code>View (
-        boreDisplay Image
-        boreScreen 1
-        boreRender 0
-        boreWidth 570
-        boreHeight 426
-        borePosition 25 0
-</p></pre>
 
-<h4>Start the "SPL Server" on the Imaging Workstation</h4>
-On the GE imaging workstation (machine name: mrtws), log in as mrtmstr
-which takes you to the directory /home/mrtmstr.
-Type: 
-<pre><p class=code>./spl_server</p></pre>
-
-<h4>Run the New Slicer</h4>
-<p>
-<ol>
-<li>At the command prompt, type "slicer".
-<li>Go to the "Twin" module and press "On".
-<li>Go to the "Locator" module and press "Connect".
-</ol>
-
-<h4>Run the Old Slicer</h4>
-<p>
-<ol>
-<li>At the command prompt, type "go".
-<li>Go to the "Realtime" module, and press "Bore" and "Connect".
-</ol>
 

@@ -1,59 +1,64 @@
-<title>DICOM</title>
+<title>Loading DICOM Volumes</title>
 
-<ul>
-	<li type="square">Press <b>Add Volume</b> in the <b>Data</b> panel. This
-will take you to the <b>Props</b> tab of the <b>Volumes</b> panel.      
-   
-    <p><img src="images/dicom-load.jpg">
-    </p>
-  </li>
-	<li type="square">In the <b>Properties </b>pull down menu select<b> Dicom</b>.</li>
-	<li type="square">Press <b>Select DICOM Volume</b> button.</li>
-	<li type="square">A dialog box appears. Select the start directory for searching
-for the volumes and press <b>OK</b>. After pressing <b>OK</b>, the whole directory
-structure will be traversed and every files will be checked whether they
-are DICOM files or not. Important information, such as the name and ID of
-the patient, the study UID (unique identifier), and the series UID will be
-extracted from each DICOM file.&nbsp;<b>Note</b> if you have a large number
-of files this is a&nbsp; slow process.</li>
-        
-  <p><img src="images/dicom-select.jpg">
-			</p>
-  <li type="square">After the search, a new dialog box appears. Here you can
-select a patient, a study of this patient, a series of this study, and the
-files of this series. By default, all files of the first series of the first
-study of the first patient will be selected, and an interface similar to
-the following will appear.</li>
-        
-  <p><img src="images/dicom_if.jpg">
-			</p>
-			<li type="square">After pressing <b>OK</b>, the header data of the first
-file will be extracted. Additional files may be selected. Pressing the <b>Extract
-Header</b> button will show their header info. You can check and modify the
-extracted values by pressing the <b>Header</b> button.</li>
-			<li type="square">With the <b>Image Data</b> buttons in the <b>Basic</b>
-section, select whether your images are grayscale or label maps (an output
-of a segmentation).</li>
-	<li type="square">The <b>Name</b> field is the name that your volume will
-have within the Slicer. You may change this to something descriptive, for
-example "presurgical SPGR".</li>
-	<li type="square">You may enter a description in the optional <b>Description</b>
-field.</li>
-  <li type="square"> Now hit the <b>apply</b> to set your <b>Name</b> and
-    <b>Description</b> fields.</li>
-	<li type="square">Finally, hit the <b>Apply</b> button to read in the volume.&nbsp;Your
-data will now be displayed in the 2D portion of the <b>Viewer</b> window.
-    </li>
-</ul>
-<p>DICOM is a complicated standard. The 3D Slicer is not capable of reading
+<p><b>Note:</b> DICOM (digital imaging and communications in medicine) is a complicated standard. Slicer is not capable of reading
 all flavors of it.<br>
-It is assumed that the slices of the volume are stored in seperate files,
-and they are not compressed, and that the header data is correct . Contains
-the correct values of the study and the series UIDs.<br>
-For determining the correct slice order, the Slicer uses the following method.
-First, it tries to find the Image Number (0x0020,0x0013) data element. When
-that is not present, it tries the Slice Location (0x0020,0x1041) data element.
-When none of them are available, the files will be ordered as they were found,
-possibly not in correct order.<br>
-There is a restriction of the Slicer that the slice thickness and spacing
-must be the same for every slice.</p>
+Slicer assumes that the slices of the volume are stored in separate files,
+that they are not compressed, and that the header data is correct (contains
+the correct values of the study and the series UIDs).<br>
+Slicer uses the following method to determine the correct slice order.
+First, it tries to find the Image Number (0x0020,0x0013) data element.
+If that is not present, it tries the Slice Location (0x0020,0x1041) data element.
+If neither data element is available, the files will be ordered as they were found,
+possibly not in the correct order.<br>
+Also, Slicer has a restriction that the slice thickness and spacing
+must be the same for every slice.
+</p>
+
+<p>To load DICOM volumes:</p>
+
+<ol>
+  <li>Click <b>Add Volume</b> in the <b>Data</b> panel.
+  The <b>Props</b> tab of the <b>Volumes</b> panel will appear.
+
+    <p><img src="images/dicom-load.jpg"></p>
+
+
+  </li>
+  <li>From the <b>Properties </b>pull-down menu, select<b> Dicom</b>.</li>
+  <li>Click <b>Select DICOM Volume</b>.</li>
+  <p><img src="images/dicom-select.jpg">
+        </p>
+  <li>A dialog box appears. Select the directory to start searching
+for volumes in, and click <b>OK</b>. The whole directory
+structure will be traversed to find every
+DICOM file. Important information, such as the name and ID of
+the patient, the study UID (unique identifier), and the series UID, will be
+extracted from each DICOM file.&nbsp;<b>Note</b>: if you have a large number
+of files, this is a&nbsp; slow process.</li>
+
+  <p><img src="images/dicom_if.jpg"></p>
+  <li>After the search, a new dialog box appears showing patient, studies, series, and files.
+(By default, all files of the first series of the first
+study of the first patient will appear.) Select a patient, a study of this patient, a series of this study, and the
+files of this series. Then click <b>OK</b>. </li>
+
+        <li>After clicking <b>OK</b>, the header data of the first
+file will be extracted. You may select additional files. Clicking <b>Extract
+Header</b> will show their header information. You can check and modify the
+extracted values by clicking <b>Header</b>.</li>
+        <li>In the <b>Basic</b> panel,
+you can use the <b>Image Data</b> buttons to select whether your images are grayscale or label maps
+(the output of a segmentation).</li>
+  <li>The <b>Name</b> field is the name that your volume will
+have within Slicer. You may change this to something descriptive, for
+example "Presurgical SPGR".</li>
+  <li>You may enter a description in the optional <b>Description</b>
+field.</li>
+  <li> Click <b>Apply</b> to set your <b>Name</b> and
+    <b>Description</b> choices.</li>
+  <li>Finally, click <b>Apply</b> to read in the volume.&nbsp;Your
+data will now appear in the 2D portion of the <b>Viewer</b> window.
+    </li>
+</ol>
+
+

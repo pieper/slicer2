@@ -5,17 +5,15 @@
 
 <teaser>
 How to Use the Advanced
-<br>Features of the 3D Slicer</br>
+<br>Features of Slicer</br>
 </teaser>
 
 <summary>
 
-This User's Guide assumes you are already familiar with the material
-covered in the <a href='../tutorial/index.html'>Tutorial</a>. 
-
-<p> A good place to start is the subsection on <a
-href='../seg/index.html'>Segmentation</a>, which includes a nice guide
-written by Slicer users at the SPL.
+This User's Guide assumes that you are already familiar with the material
+covered in the <a href='../tutorial/index.html'>Tutorial</a>.
 
 </summary>
 </auto>
+
+

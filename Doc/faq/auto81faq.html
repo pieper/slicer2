@@ -1,5 +1,46 @@
-<title>Run-Time Errors</title>
+<title>can't find package vtkSlicerBase or Word Too Long</title>
+<li class=faq>
+<p class=question>
+When I try to start Slicer on my Unix system, I get an error: "can't find package vtkSlicerBase" or "Word too long". 
+<p class=answer>
+The most common cause of this problem is that your environment
+variable LD_LIBRARY_PATH has become too long for your shell. 
+<p>
+This can be triggered when adding a lot of custom modules, as slicer
+is launched using the csh script (for versions between February 19,
+2003 and March 2004, before we switched to sh) which silently
+truncates environment variables if they are too long.
+You can edit the following line in slicer2/launch.tcl which originally
+reads:<br>
+<p class=code>set fp [open "| csh -c \"$env(VTK_DIR)/bin/vtk $mainscript $argv \" |& cat" r]</p>
+<br>
+to instead be:
+<br><p class=code>
+set fp [open "| /bin/sh -c \"$env(VTK_DIR)/bin/vtk $mainscript $argv \" |& cat" r]
+</p>
+<br>
 
-If you download a precompiled version, or build your own, and run it, these 
-are some possible errors that may arise.
+This can also happen if you have commands in your .cshrc or .tcshrc
+that append to LD_LIBRARY_PATH, since these commands are executed
+every time you open a new shell. If you spawn shells off from old
+shells, the environment variable will keep growing as directories are
+added again and again. Type "echo $LD_LIBRARY_PATH" and check the
+output for multiple instances of directories. Also if you have a lot
+of Modules in your version of Slicer, each one will add a directory to
+your LD_LIBRARY_PATH and you may run up against the system limit. Some
+other solutions are: 
 
+<ol>
+<li>Log out and log in again. This should reset your environment
+variables for this session. Avoid starting Slicer from a shell that
+has been spawned from another shell.
+<li>Move set or setenv or export commands dealing with your
+LD_LIBRARY_PATH into your .login (csh or tcsh) or .bash_login file
+(bash). This file is only executed once, when you log in, and this
+method will avoid the concatenation problem. You will need to log out
+and log back in for this to take effect.
+<li>Move your installed version of Slicer to a directory for which the
+path is alpha-numerically shorter, thereby reducing the length of the
+strings that will be added to your LD_LIBRARY_PATH environment variable.
+</ol>
+</li>

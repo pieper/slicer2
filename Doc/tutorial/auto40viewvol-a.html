@@ -1,48 +1,44 @@
 <title>Slices</title>
 
+
+<p>Slicer has multiple configurations to present image volumes.
+By default, the normal view is selected. In normal view, the viewer window is divided
+into two sections.
+<br>The upper portion of the view
+window shows the 3D formatted version.
+<b></b>In the lower quarter of the viewer window, a 2D multi-plane
+formatted version of the volume is shown.
+</p>
+
+<p><img src="images/2dslices.jpg"></p>
+
 <ul>
-			<li>The Slicer has multiple configurations to present image volumes.  By
-default the normal view is selected and in it, the viewer window is divided
-into two sections.  In the lower quarter of the viewer window, a 2D multi-planer
-reformatted version of the volume is shown. The upper portion of the view
-window shows the 3D formatted version.  The <b>V button</b> selects which
-image of the corresponding 2D window is added to the 3D view. 			</li>
-  <li>Both grayscale and label map images can be selected into each of the
-three (red, yellow, and green) 2D window. For example the 3D Slicer will automatically
-put the Axial grayscale images into the first (red) 2D window as the background
-layer. 			</li>
-  <li>The <b>slider</b> selects which slice of the volume is displayed in
-the corresponding 2D window.  The numerical indicator shows the slice number.
-The <b>V button</b> controls visibility of the slice in the 3D viewer.  			</li>
-  <li>The <b>Or</b>, <b>Lb</b>, <b>Fg</b>, <b>Bg</b>, buttons operate on all
-three 2D Window. 			</li>
-  <li>With the <b>Or</b> button you can change the assignment between the
-scan order and the 2D window order. For example the Axial view can be put
-into the first 2D window, the Coronal into the 2nd and the Saggital into the
-third window.  Or the Coronal view into the first and the other two into the
-other two window. Or each can be set individually, to suit your need. 			</li>
-  <li>The <b>Bg</b> button selects which volume is put into the backgroung
-layer. 			</li>
-  <li>The <b>Fg</b> button selects volume for the foreground layer, which
-superimposed over the background layer. 			</li>
-  <li>The <b>Lb</b> button selects labelmap images for the labelmap layer,
-to display results of a segmentation. Images loaded into the labelmap layer
-will be displayed as outlines around the structures that were segmented. The
-3D Slicer itself can be used to create labelmaps, and also make models from
-them. See the User's Guide for more information. 			</li>
-  <li>The buttons (red, yellow, green) to the right of the above mentioned
-buttons, operate similarly but only on the window right below them. 		</li>
+
+  <li>There are three 2D windows (red, yellow, and green).
+  You can select both grayscale and label map images into each of the 2D windows.
+  For example, Slicer will automatically put the Axial grayscale images into the first (red) 2D window as the background layer.          </li>
+  <li>In each 2D window, the <b>slider</b> selects which slice of the volume to display.
+    The numerical field shows the slice number.</li>
+  <li>The <b>V</b> toggle button controls whether the selected slice is visible in the 3D viewer or     not. In the figure above, only the slice from the green window is visible in the 3D viewer. </li>
+  <li>There are <b>Or</b> (scan order), <b>Bg</b> (background), <b>Fg</b> (foreground),
+  and <b>Lb</b> (label map) buttons
+  for each of the three 2D windows.         </li>
+  <ul>
+    <li>Use <b>Or</b> to change the scan order in each 2D window.
+      For example, you can use the Axial view in the first 2D window,
+      the Coronal in the second, and the Saggital in the third window.
+      Or you can use the Coronal view in the first and the other two views in the other two windows.
+      Or you can set each view individually, to suit your need.        </li>
+    <li>Use <b>Bg</b> to select which volume to put in the background layer.        </li>
+    <li>Use <b>Fg</b> to select a volume for the foreground layer,
+     which is superimposed over the background layer.         </li>
+    <li>Use <b>Lb</b> to select label map images for the label map layer,
+    to display results of a segmentation. Images loaded into the label map layer
+    will appear as outlines around the structures that were segmented.
+    (You can use Slicer to create label maps, and also to make models from them.
+    See the <a href='../users/index.html'>User's Guide</a> for more information.)        </li>
+  </ul>
+
 </ul>
-		
-<table border="0" cols="2" width="100%">
-	<tbody>
-    <tr>
-		<td align="left" valign="top" width="260"><img
- src="images/2dslices.jpg">
-      </td>
-	</tr>
-                    
-  </tbody>
-</table>
 
 
