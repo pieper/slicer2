@@ -227,7 +227,7 @@ proc VolDicomBuildGUI {parentFrame} {
 # .ARGS dir - start dir for loading
 # .END
 #-------------------------------------------------------------------------------
-proc DICOMLoadStudy { dir } {
+proc DICOMLoadStudy { dir {Pattern "*"} } {
     #
     # read dicom volume(s), e.g. specified on command line
     # - if it's a dir full of files, load that dir as a volume
@@ -245,6 +245,7 @@ proc DICOMLoadStudy { dir } {
             -parent .tMain ]
     }
 
+    set return_ids ""
     if { $dir != "" } {
         set files [glob -nocomplain $dir/*]
         set dirs [list $dir]
@@ -269,7 +270,7 @@ proc DICOMLoadStudy { dir } {
             } else {
                 set ::DICOMrecurse "true"
             }
-            DICOMSelectMain $::Volume(dICOMFileListbox) "autoload"
+            DICOMSelectMain $::Volume(dICOMFileListbox) "autoload" $Pattern
 
             if { $::FindDICOMCounter != 0 } {
                 VolumesSetPropertyType VolHeader
@@ -281,12 +282,14 @@ proc DICOMLoadStudy { dir } {
                 }
                 regsub -all " " $seriestag "_" seriestag
                 set ::Volume(name) $seriestag-$::Volume(name)
-                VolumesPropsApply
+                lappend return_ids [VolumesPropsApply]
             }
             RenderAll
             Tab Data
+            set ::Volume(dICOMFileList) ""
         }
     }
+    return $return_ids
 }
 
 #-------------------------------------------------------------------------------
@@ -1281,7 +1284,7 @@ proc DICOMSelectDir {} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc DICOMSelectMain { fileNameListbox {autoload "noautoload"} } {
+proc DICOMSelectMain { fileNameListbox {autoload "noautoload"} {Pattern "*"} } {
     global DICOMStartDir
     global Pressed
     global DICOMPatientIDsNames
@@ -1300,7 +1303,7 @@ proc DICOMSelectMain { fileNameListbox {autoload "noautoload"} } {
         DICOMSelectDir 
     }
     
-    FindDICOM $DICOMStartDir *
+    FindDICOM $DICOMStartDir $Pattern
     
     if { $::FindDICOMCounter == 0 } {
         destroy .list
