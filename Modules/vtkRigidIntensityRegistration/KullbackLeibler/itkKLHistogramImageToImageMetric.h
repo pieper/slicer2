@@ -3,8 +3,8 @@
   Program:   Insight Segmentation & Registration Toolkit
   Module:    $RCSfile: itkKLHistogramImageToImageMetric.h,v $
   Language:  C++
-  Date:      $Date: 2003/12/09 16:51:36 $
-  Version:   $Revision: 1.2 $
+  Date:      $Date: 2003/12/09 18:43:02 $
+  Version:   $Revision: 1.3 $
 
   Copyright (c) Insight Software Consortium. All rights reserved.
   See ITKCopyright.txt or http://www.itk.org/HTML/Copyright.htm for details.
@@ -24,18 +24,18 @@ namespace itk
   /** \class KLHistogramImageToImageMetric
        \brief Computes the Kubler Lieblach metric between two images to
        be registered by comparing the histograms of the intensities in the 
-       images to a given histogram.
+       images to a Training histogram.
 
       This class is templated over the type of the fixed and moving
       images to be compared.
 
       This metric computes the similarity between the histogram produced
-      by two images overlapping and a given histogram.
+      by two images overlapping and a training histogram.
 
       Generally, the histogram from the pre-aligned data is to be
       computed in exactly the same way as the way the histogram from
-      the images to be compared are computed. Thus, the user can 
-      set the interpolator, region, two given images and the transfrom
+      the images to be compared are computed. Thus, the user can set
+      the interpolator, region, two training images and the transfrom
       and the histogram will be formed. OR, the user can simply set
       the histogram.
 
@@ -88,40 +88,40 @@ public HistogramImageToImageMetric<TFixedImage, TMovingImage>
     InterpolatorPointer;
 
   /** Set the histogram to be used in the metric calculation */
-  itkSetMacro( GivenHistogram, HistogramPointerType );
+  itkSetMacro( TrainingHistogram, HistogramPointerType );
 
   /** Get the histogram to be used in the metric calculation */
-  itkGetConstMacro( GivenHistogram, HistogramPointerType );
+  itkGetConstMacro( TrainingHistogram, HistogramPointerType );
 
-  /** Set the Given Fixed Image.  */
-  itkSetConstObjectMacro( GivenFixedImage, FixedImageType );
+  /** Set the Training Fixed Image.  */
+  itkSetConstObjectMacro( TrainingFixedImage, FixedImageType );
 
-  /** Get the Given Fixed Image. */
-  itkGetConstObjectMacro( GivenFixedImage, FixedImageType );
+  /** Get the Training Fixed Image. */
+  itkGetConstObjectMacro( TrainingFixedImage, FixedImageType );
 
-  /** Set the Given Moving Image.  */
-  itkSetConstObjectMacro( GivenMovingImage, MovingImageType );
+  /** Set the Training Moving Image.  */
+  itkSetConstObjectMacro( TrainingMovingImage, MovingImageType );
 
-  /** Get the Given Moving Image. */
-  itkGetConstObjectMacro( GivenMovingImage, MovingImageType );
+  /** Get the Training Moving Image. */
+  itkGetConstObjectMacro( TrainingMovingImage, MovingImageType );
 
-  /** Set the Given Transform. */
-  itkSetObjectMacro( GivenTransform, TransformType );
+  /** Set the Training Transform. */
+  itkSetObjectMacro( TrainingTransform, TransformType );
 
   /** Get a pointer to the Transform.  */
-  itkGetObjectMacro( GivenTransform, TransformType );
+  itkGetObjectMacro( TrainingTransform, TransformType );
 
   /** Set the Interpolator. */
-  itkSetObjectMacro( GivenInterpolator, InterpolatorType );
+  itkSetObjectMacro( TrainingInterpolator, InterpolatorType );
 
   /** Get a pointer to the Interpolator.  */
-  itkGetObjectMacro( GivenInterpolator, InterpolatorType );
+  itkGetObjectMacro( TrainingInterpolator, InterpolatorType );
 
-  /** Set the region over which the given histogram will be computed */
-  itkSetMacro( GivenFixedImageRegion, FixedImageRegionType );
+  /** Set the region over which the training histogram will be computed */
+  itkSetMacro( TrainingFixedImageRegion, FixedImageRegionType );
 
-  /** Get the region over which the given histogram will be computed */
-  itkGetConstMacro( GivenFixedImageRegion, FixedImageRegionType );
+  /** Get the region over which the training histogram will be computed */
+  itkGetConstMacro( TrainingFixedImageRegion, FixedImageRegionType );
 
   /** Set epsilon, the histogram frequency to use if the frequency is 0 */
   itkSetMacro( Epsilon, double );
@@ -133,10 +133,7 @@ public HistogramImageToImageMetric<TFixedImage, TMovingImage>
   unsigned int GetNumberOfParameters(void) const 
   { return m_Transform->GetNumberOfParameters(); }
  
-  /** Set the 2 images **/
-  /** Set the affine transform in between */
-
-  /** Forms the histogram of the given images to prepare to evaluate the */
+  /** Forms the histogram of the training images to prepare to evaluate the */
   /** metric. Must set all parameters first */
   void Initialize() throw (ExceptionObject);
 
@@ -147,18 +144,18 @@ protected:
   virtual ~KLHistogramImageToImageMetric(){}
   void PrintSelf(std::ostream& os, Indent indent) const;
 
-  /** Form the Histogram for the Given data */
-  void FormGivenHistogram() throw (ExceptionObject);
+  /** Form the Histogram for the Training data */
+  void FormTrainingHistogram() throw (ExceptionObject);
 
   /** Evaluates the mutual information from the histogram. */
   virtual MeasureType EvaluateMeasure(HistogramType& histogram) const;
 
-  FixedImageConstPointer  m_GivenFixedImage;
-  MovingImageConstPointer m_GivenMovingImage;
-  TransformPointer        m_GivenTransform;
-  InterpolatorPointer     m_GivenInterpolator;
-  FixedImageRegionType    m_GivenFixedImageRegion;
-  HistogramPointerType    m_GivenHistogram;
+  FixedImageConstPointer  m_TrainingFixedImage;
+  MovingImageConstPointer m_TrainingMovingImage;
+  TransformPointer        m_TrainingTransform;
+  InterpolatorPointer     m_TrainingInterpolator;
+  FixedImageRegionType    m_TrainingFixedImageRegion;
+  HistogramPointerType    m_TrainingHistogram;
   double                  m_Epsilon;
 
 private:
