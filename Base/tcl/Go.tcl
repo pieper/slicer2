@@ -570,7 +570,7 @@ foreach name $ordered {
             lappend foundOrdered $name
         } 
     } else {
-        if {$verbose == 1} {puts "aready have $name"}
+        if {$verbose == 1} {puts "already have $name"}
         lappend foundOrdered $name
     }
 }
@@ -584,9 +584,13 @@ if {[info exists Module(customModules)]  == 1} {
     if { $verbose == 1 } {
         puts "Custom modules we need to add: $Module(customModules)"
     }
-    # it's already been sourced, so just add to the foundOrdered list
+    # it's already been sourced, so just add to the foundOrdered list 
     foreach customModule $Module(customModules) {
-        lappend foundOrdered $customModule
+        if {[lsearch $foundOrdered $customModule] == -1} {
+            # it's not already on the foundOrdered list - can have duplicates if 
+            # a custom module was saved to a local Options.xml file
+            lappend foundOrdered $customModule
+        }
     }
 }
 
@@ -642,7 +646,7 @@ if { $SLICER(versionInfo) != "" } {
     set compilerName [Slicer GetCompilerName]
     set vtkVersion [Slicer GetVTKVersion]
     set libVersions "LibName1: VTK LibVersion1: ${vtkVersion} LibName2: TCL LibVersion2: ${tcl_patchLevel} LibName3: TK LibVersion2: ${tk_patchLevel}"
-    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: [ParseCVSInfo "" {$Name:  $}] CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.74 2004/03/15 21:36:58 pieper Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: [ParseCVSInfo "" {$Name:  $}] CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.75 2004/04/14 17:22:01 nicole Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
