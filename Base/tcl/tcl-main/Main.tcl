@@ -436,7 +436,7 @@ proc MainInit {} {
 
         # Set version info
     lappend Module(versions) [ParseCVSInfo Main \
-        {$Revision: 1.94 $} {$Date: 2003/01/25 22:32:50 $}]
+        {$Revision: 1.95 $} {$Date: 2003/03/13 16:08:50 $}]
 
     # Call each "Init" routine that's not part of a module
     #-------------------------------------------
@@ -515,7 +515,7 @@ proc MainBuildGUI {} {
 
     toplevel     $f -bg $Gui(backdrop)
     wm title     $f $Gui(title) 
-    wm resizable $f  0 0
+    wm resizable $f  1 1
     wm geometry  $f +0+0
     wm protocol $f WM_DELETE_WINDOW "MainExitQuery"
 
