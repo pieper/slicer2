@@ -99,7 +99,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.77 $} {$Date: 2003/03/19 19:16:35 $}]
+            {$Revision: 1.78 $} {$Date: 2003/05/27 21:11:50 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -1704,25 +1704,44 @@ proc VolumesReformatSave {} {
     Volumes(reformatter) SetWldToIjkMatrix [[Volume($Volume(activeID),vol) GetMrmlNode] GetWldToIjk]
     Volumes(reformatter) SetInterpolate 1
     Volumes(reformatter) SetResolution [lindex [Volume($Volume(activeID),node) GetDimensions] 0]
-    Volumes(reformatter) SetFieldOfView [expr [lindex [Volume($Volume(activeID),node) GetDimensions] 0] * [lindex [Volume($Volume(activeID),node) GetSpacing] 0]]
+    # Volumes(reformatter) SetFieldOfView [expr [lindex [Volume($Volume(activeID),node) GetDimensions] 0] * [lindex [Volume($Volume(activeID),node) GetSpacing] 0]]
+    set maxfov 0
+    for {set i 0} {$i < 2} {incr i} {
+        set dim [lindex [Volume($Volume(activeID),node) GetDimensions] $i] 
+        set space [lindex [Volume($Volume(activeID),node) GetSpacing] $i]
+        set fov [expr $dim * $space]
+        if {$fov > $maxfov} {
+            set maxfov $fov
+        }
+    }
+    set space [lindex [Volume($Volume(activeID),node) GetSpacing] 2]
+    set fov [expr $num * $space]
+    if {$fov > $maxfov} {
+        set maxfov $fov
+    }
+
+
+    Volumes(reformatter) SetFieldOfView $maxfov
     
     set ref [Slicer GetReformatMatrix $s]
     
     set ii 0
+    set lo [expr -1 * round ($maxfov / 2.)]
+    set hi [expr -1 * $lo]
     for {set i $lo} {$i<= $hi} {set i [expr $i + 1]} {
     
-    MainSlicesSetOffset $s $i
-    Volumes(reformatter) SetReformatMatrix $ref
-    Volumes(reformatter) Modified
-    Volumes(reformatter) Update
-    #RenderBoth $s
-    Volumes(writer) SetInput [Volumes(reformatter) GetOutput]
-    set ext [expr $i + $hi]
-    set iii [format %03d $ii]
-    Volumes(writer) SetFileName "$Volumes(prefixSave).$iii"
-    set Gui(progressText) "Writing slice $ext"
-    Volumes(writer) Write
-    incr ii
+        MainSlicesSetOffset $s $i
+        Volumes(reformatter) SetReformatMatrix $ref
+        Volumes(reformatter) Modified
+        Volumes(reformatter) Update
+        #RenderBoth $s
+        Volumes(writer) SetInput [Volumes(reformatter) GetOutput]
+        set ext [expr $i + $hi]
+        set iii [format %03d $ii]
+        Volumes(writer) SetFileName "$Volumes(prefixSave).$iii"
+        set Gui(progressText) "Writing slice $ext"
+        Volumes(writer) Write
+        incr ii
     }
     set Gui(progressText) "Done!"
     Volumes(writer) UpdateProgress 0
