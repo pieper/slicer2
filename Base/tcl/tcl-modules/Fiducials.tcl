@@ -129,7 +129,7 @@ proc FiducialsInit {} {
 	#   appropriate info when the module is checked in.
 	#   
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.4 $} {$Date: 2000/08/08 15:27:59 $}]
+		{$Revision: 1.5 $} {$Date: 2000/08/16 19:57:55 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -557,6 +557,7 @@ proc FiducialsUpdatePoints {} {
 			eval Fiducials(tmpXform) SetPoint $xyz 1
 			set xyz [Fiducials(tmpXform) GetPoint]
 			eval Point($pid,follower) SetPosition $xyz
+			Point($pid,text) SetText [Point($pid,node) GetName]
 		}
 		Fiducials($fid,pointsPD) Modified
 	}

@@ -64,7 +64,11 @@ proc ViewInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.11 $} {$Date: 2000/02/28 17:56:19 $}]
+		{$Revision: 1.12 $} {$Date: 2000/08/16 19:57:55 $}]
+
+	set View(movie) 0
+	set View(moviePrefix) "/tmp/movie"
+	set View(movieFrame) 1
 }
 
 #-------------------------------------------------------------------------------
@@ -119,7 +123,8 @@ the view will look better if the background is black.
 	frame $f.fBg      -bg $Gui(activeWorkspace)
 	frame $f.fStereo  -bg $Gui(activeWorkspace)
 	frame $f.fCloseup -bg $Gui(activeWorkspace)
-	pack $f.fSize $f.fBg $f.fCloseup $f.fStereo \
+	frame $f.fMovie   -bg $Gui(activeWorkspace) -relief groove -bd 3
+	pack $f.fSize $f.fBg $f.fCloseup $f.fStereo $f.fMovie \
 		-side top -pady $Gui(pad) -padx $Gui(pad) -fill x
 
 	#-------------------------------------------
@@ -184,6 +189,26 @@ the view will look better if the background is black.
         -indicatoron 0 -command "MainViewSetStereo; Render3D"} $Gui(WCA)
  
 	pack $f.cStereo -side top -padx 0 -pady 2
+
+	#-------------------------------------------
+	# View->Movie Frame
+	#-------------------------------------------
+	set f $fView.fMovie
+	
+    	eval {checkbutton $f.cMovie -text "Record Movie" -variable View(movie) \
+		-width 16 -indicatoron 0 } $Gui(WCA)
+	eval {label $f.lFrame -text "Next frame #:"} $Gui(WLA)
+	eval {entry $f.eFrame -width 6 -textvariable View(movieFrame)} $Gui(WEA)
+ 
+	eval {label $f.lPrefix -text "PPM file prefix:"} $Gui(WLA)
+
+	eval {entry $f.ePrefix -width 16 -textvariable View(moviePrefix)} $Gui(WEA)
+
+	grid $f.cMovie -columnspan 2 -padx $Gui(pad) -pady $Gui(pad)
+	grid $f.lFrame $f.eFrame -sticky w -padx $Gui(pad) -pady $Gui(pad)
+	grid $f.lPrefix $f.ePrefix -sticky w -padx $Gui(pad) -pady $Gui(pad)
+        grid configure $f.lFrame -sticky e
+        grid configure $f.lPrefix -sticky e
 
 }
 
