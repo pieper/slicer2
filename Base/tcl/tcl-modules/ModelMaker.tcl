@@ -81,7 +81,7 @@ proc ModelMakerInit {} {
 
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.43 $} {$Date: 2003/06/03 20:49:24 $}]
+        {$Revision: 1.43.2.1 $} {$Date: 2003/08/01 21:07:57 $}]
 
     # Create
     set ModelMaker(idVolume) $Volume(idNone)
@@ -792,9 +792,9 @@ proc ModelMakerSmooth {m iterations} {
     $p BoundarySmoothingOff
     [$p GetOutput] ReleaseDataFlagOn
     set Gui(progressText) "Smoothing $name"
-    $p SetStartMethod     MainStartProgress
-    $p SetProgressMethod "MainShowProgress $p"
-    $p SetEndMethod       MainEndProgress
+    #$p SetStartMethod     MainStartProgress
+    #$p SetProgressMethod "MainShowProgress $p"
+    #$p SetEndMethod       MainEndProgress
     set ModelMaker(t,$p) [expr [lindex [time {$p Update}] 0]/1000000.0]
     set ModelMaker(n,$p) [[$p GetOutput] GetNumberOfPolys]
     set ModelMaker($m,nPolys) $ModelMaker(n,$p)
@@ -849,9 +849,9 @@ proc ModelMakerReverseNormals {{m ""}} {
     $p ReverseNormalsOn
     [$p GetOutput] ReleaseDataFlagOn
     set Gui(progressText) "Reversing $name"
-    $p SetStartMethod     MainStartProgress
-    $p SetProgressMethod "MainShowProgress $p"
-    $p SetEndMethod       MainEndProgress
+    #$p SetStartMethod     MainStartProgress
+    #$p SetProgressMethod "MainShowProgress $p"
+    #$p SetEndMethod       MainEndProgress
 
     set p stripper
     vtkStripper $p
@@ -936,9 +936,9 @@ proc ModelMakerMarch {m v decimateIterations smoothIterations} {
     $p ThresholdBetween $Label(label) $Label(label)
     [$p GetOutput] ReleaseDataFlagOn
     set Gui(progressText) "Threshold $name"
-    $p SetStartMethod     MainStartProgress
-    $p SetProgressMethod "MainShowProgress $p"
-    $p SetEndMethod       MainEndProgress
+    #$p SetStartMethod     MainStartProgress
+    #$p SetProgressMethod "MainShowProgress $p"
+    #$p SetEndMethod       MainEndProgress
 
     vtkImageToStructuredPoints to
     to SetInput [thresh GetOutput]
@@ -953,9 +953,9 @@ proc ModelMakerMarch {m v decimateIterations smoothIterations} {
     $p ComputeNormalsOff
     [$p GetOutput] ReleaseDataFlagOn
     set Gui(progressText) "Marching $name"
-    $p SetStartMethod     MainStartProgress
-    $p SetProgressMethod "MainShowProgress $p"
-    $p SetEndMethod       MainEndProgress
+    #$p SetStartMethod     MainStartProgress
+    #$p SetProgressMethod "MainShowProgress $p"
+    #$p SetEndMethod       MainEndProgress
     set ModelMaker(t,$p) [expr [lindex [time {$p Update}] 0]/1000000.0]
     set ModelMaker(n,$p) [[$p GetOutput] GetNumberOfPolys]
 
@@ -988,9 +988,9 @@ proc ModelMakerMarch {m v decimateIterations smoothIterations} {
     $p SetErrorIncrement .0002
     [$p GetOutput] ReleaseDataFlagOn
     set Gui(progressText) "Decimating $name"
-    $p SetStartMethod     MainStartProgress
-    $p SetProgressMethod "MainShowProgress $p"
-    $p SetEndMethod       MainEndProgress
+    #$p SetStartMethod     MainStartProgress
+    #$p SetProgressMethod "MainShowProgress $p"
+    #$p SetEndMethod       MainEndProgress
     set ModelMaker(t,$p) [expr [lindex [time {$p Update}] 0]/1000000.0]
     set ModelMaker(n,$p) [[$p GetOutput] GetNumberOfPolys]
     
@@ -1013,9 +1013,9 @@ proc ModelMakerMarch {m v decimateIterations smoothIterations} {
         $p ReverseNormalsOn
         [$p GetOutput] ReleaseDataFlagOn
         set Gui(progressText) "Reversing $name"
-        $p SetStartMethod     MainStartProgress
-        $p SetProgressMethod "MainShowProgress $p"
-        $p SetEndMethod       MainEndProgress
+        #$p SetStartMethod     MainStartProgress
+        #$p SetProgressMethod "MainShowProgress $p"
+        #$p SetEndMethod       MainEndProgress
     }
 
     if { $ModelMaker(UseSinc) == 1} {
@@ -1048,9 +1048,9 @@ proc ModelMakerMarch {m v decimateIterations smoothIterations} {
     $p SetInput [smoother GetOutput]
     $p SetTransform rot
     set Gui(progressText) "Transforming $name"
-    $p SetStartMethod     MainStartProgress
-    $p SetProgressMethod "MainShowProgress $p"
-    $p SetEndMethod       MainEndProgress
+    # $p SetStartMethod     MainStartProgress
+    # $p SetProgressMethod "MainShowProgress $p"
+    # $p SetEndMethod       MainEndProgress
     [$p GetOutput] ReleaseDataFlagOn
 
     set p normals
@@ -1059,18 +1059,18 @@ proc ModelMakerMarch {m v decimateIterations smoothIterations} {
     $p SetFeatureAngle 60
     $p Splitting$ModelMaker(SplitNormals)
     set Gui(progressText) "Normals $name"
-    $p SetStartMethod     MainStartProgress
-    $p SetProgressMethod "MainShowProgress $p"
-    $p SetEndMethod       MainEndProgress
+    # $p SetStartMethod     MainStartProgress
+    # $p SetProgressMethod "MainShowProgress $p"
+    # $p SetEndMethod       MainEndProgress
     [$p GetOutput] ReleaseDataFlagOn
 
     set p stripper
     vtkStripper $p
     $p SetInput [normals GetOutput]
     set Gui(progressText) "Stripping $name"
-    $p SetStartMethod     MainStartProgress
-    $p SetProgressMethod "MainShowProgress $p"
-    $p SetEndMethod       MainEndProgress
+    # $p SetStartMethod     MainStartProgress
+    # $p SetProgressMethod "MainShowProgress $p"
+    # $p SetEndMethod       MainEndProgress
     [$p GetOutput] ReleaseDataFlagOff
 
     # polyData will survive as long as it's the input to the mapper
