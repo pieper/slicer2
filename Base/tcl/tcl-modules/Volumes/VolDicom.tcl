@@ -108,7 +108,7 @@ proc VolDicomInit {} {
 
     set Volumes(DICOMPreviewWidth) 64
     set Volumes(DICOMPreviewHeight) 64
-    set Volumes(DICOMPreviewHighestValue) 2048
+    set Volumes(DICOMPreviewHighestValue) 256 ;# set default for MRI rather than CT
 
     set Volumes(DICOMCheckVolumeList) {}
     set Volumes(DICOMCheckPositionList) {}
@@ -289,9 +289,9 @@ proc DICOMFillFileNameTextbox {t} {
     $t insert insert "\n"
     $t tag add menu 1.0 1.end
 
-    $t tag config selectall -background gray -relief groove -borderwidth 2 -font {helvetica 10 bold}
+    $t tag config selectall -background gray -relief groove -borderwidth 2 -font {helvetica 12 bold}
     $t tag bind selectall <ButtonRelease-1> "DICOMImageTextboxSelectAll"
-    $t tag config deselectall -background gray -relief groove -borderwidth 2 -font {helvetica 10 bold}
+    $t tag config deselectall -background gray -relief groove -borderwidth 2 -font {helvetica 12 bold}
     $t tag bind deselectall <ButtonRelease-1> "DICOMImageTextboxDeselectAll"
     $t tag config menu -justify center
         
@@ -386,7 +386,7 @@ proc DICOMScrolledListbox {f xAlways yAlways variable {labeltext "labeltext"} {a
 
     if {$Gui(smallFont) == 1} {
         eval {$f.list configure \
-            -font {helvetica 7 bold} \
+            -font {helvetica 10 bold} \
             -bg $Gui(normalButton) -fg $Gui(textDark) \
             -selectbackground $Gui(activeButton) \
             -selectforeground $Gui(textDark) \
@@ -394,7 +394,7 @@ proc DICOMScrolledListbox {f xAlways yAlways variable {labeltext "labeltext"} {a
             -relief sunken -selectborderwidth $Gui(borderWidth)}
     } else {
         eval {$f.list configure \
-            -font {helvetica 8 bold} \
+            -font {helvetica 12 bold} \
             -bg $Gui(normalButton) -fg $Gui(textDark) \
             -selectbackground $Gui(activeButton) \
             -selectforeground $Gui(textDark) \
@@ -472,7 +472,7 @@ proc DICOMScrolledTextbox {f xAlways yAlways variable {labeltext "labeltext"} {a
 
     if {$Gui(smallFont) == 1} {
         eval {$f.list configure \
-            -font {helvetica 7 bold} \
+            -font {helvetica 10 bold} \
             -bg $Gui(normalButton) -fg $Gui(textDark) \
             -selectbackground $Gui(activeButton) \
             -selectforeground $Gui(textDark) \
@@ -480,7 +480,7 @@ proc DICOMScrolledTextbox {f xAlways yAlways variable {labeltext "labeltext"} {a
             -relief sunken -selectborderwidth $Gui(borderWidth)}
     } else {
         eval {$f.list configure \
-            -font {helvetica 8 bold} \
+            -font {helvetica 12 bold} \
             -bg $Gui(normalButton) -fg $Gui(textDark) \
             -selectbackground $Gui(activeButton) \
             -selectforeground $Gui(textDark) \
