@@ -175,7 +175,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.9 $} {$Date: 2005/02/04 22:30:02 $}]
+        {$Revision: 1.10 $} {$Date: 2005/02/11 22:33:54 $}]
 
 }
 
@@ -800,6 +800,8 @@ proc vtkFreeSurferReadersMGHApply {} {
 
     # have to fudge it a little here, read the header to get the info needed
     if {$::Module(verbose)} {
+        # set it up to be debugging on
+        Volume($i,vol,rw) DebugOn
         puts "vtkFreeSurferReadersMGHApply:\n\tReading volume header"
     }
 
@@ -903,21 +905,43 @@ proc vtkFreeSurferReadersMGHApply {} {
 
     # there's a problem with getting the MGH volume to display properly,
     # it comes up okay in slices mode but not when the RasToIjk matrix is set
+    # in the volume (ijkmat) they have:
+    # x_r x_a x_s
+    # y_r y_a y_s
+    # z_r z_a z_s
+    # c_r c_a c_s
+    # which we need to put into the form (rasmat):
+    # x_r y_r z_r c_r
+    # x_a y_a z_a c_a
+    # x_s y_s z_s c_s
+    #  0   0   0   1
     vtkMatrix4x4 rasmat$i
 
+    # x_r
     rasmat$i SetElement 0 0 [lindex $ijkmat 0]
-    rasmat$i SetElement 0 1 [lindex $ijkmat 1]
-    rasmat$i SetElement 0 2 [lindex $ijkmat 2]
+    # y_r
+    rasmat$i SetElement 0 1 [lindex $ijkmat 3]
+    # z_r
+    rasmat$i SetElement 0 2 [lindex $ijkmat 6]
+    # c_r
     rasmat$i SetElement 0 3 [lindex $ijkmat 9]
 
-    rasmat$i SetElement 1 0 [lindex $ijkmat 3]
+    # x_a
+    rasmat$i SetElement 1 0 [lindex $ijkmat 1]
+    # y_a
     rasmat$i SetElement 1 1 [lindex $ijkmat 4]
-    rasmat$i SetElement 1 2 [lindex $ijkmat 5]
+    # z_a
+    rasmat$i SetElement 1 2 [lindex $ijkmat 7]
+    # c_a
     rasmat$i SetElement 1 3 [lindex $ijkmat 10]
 
-    rasmat$i SetElement 2 0 [lindex $ijkmat 6]
-    rasmat$i SetElement 2 1 [lindex $ijkmat 7]
+    # x_s
+    rasmat$i SetElement 2 0 [lindex $ijkmat 2]
+    # y_s
+    rasmat$i SetElement 2 1 [lindex $ijkmat 5]
+    # z_s
     rasmat$i SetElement 2 2 [lindex $ijkmat 8]
+    # c_s
     rasmat$i SetElement 2 3 [lindex $ijkmat 11]
 
     rasmat$i SetElement 3 0 0
@@ -925,13 +949,30 @@ proc vtkFreeSurferReadersMGHApply {} {
     rasmat$i SetElement 3 2 0
     rasmat$i SetElement 3 3 1
 
+    # set up the scaling factor from the voxel size
+    if {[info command scalemat$i] != ""} {
+        scalemat$i Delete
+    }
+    vtkMatrix4x4 scalemat$i
+    scalemat$i Identity
+    # s_x
+    scalemat$i SetElement 0 0 $Volume(pixelWidth)
+    # s_y
+    scalemat$i SetElement 1 1 $Volume(pixelHeight)
+    # s_z
+    scalemat$i SetElement 2 2 $Volume(sliceThickness)
+
+    # now apply it to the rasmat
+    rasmat$i Multiply4x4 rasmat$i scalemat$i rasmat$i
+
     # rasmat$i Identity
 
     # invert it to get the RAS to IJK
     rasmat$i Invert
 
     # the Slicer assumption shifts the MGH volume by 128 into the R
-    # the MGH volume center is ... info to be updated when tosa@nmr.mgh.harvard.edu responds
+    # the MGH volume center: (from http://www.nmr.mgh.harvard.edu/~tosa/#coords)
+    # the c_(r,a,s) value is the RAS coordinate position of (width/2, height/2, depth/2) in the voxel coordinates.
     rasmat$i SetElement 0 3 [expr [rasmat$i GetElement 0 3] - 128]
     
     # turn off using the ras to vtk matrix, as otherwise the MGH volume is flipped in Y
