@@ -263,7 +263,7 @@ itcl::body dup_sort::sort {} {
                 lappend deident_operations "dcanon -deface $_series($id,destdir)"
             }
             "Mask" {
-                lappend deident_operations "dcanon -mask $_series($_series(master),destdir) $_series($id,destdir)"
+                lappend deident_operations "dcanon -mask $_series($_series(master),destdir)-anon $_series($id,destdir)"
             }
             "Header Only" {
                 lappend deident_operations "dcanon -convert $_series($id,destdir)"
