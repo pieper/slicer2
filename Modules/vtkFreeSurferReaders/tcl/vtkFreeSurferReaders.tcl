@@ -175,7 +175,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.6 $} {$Date: 2004/11/12 19:25:44 $}]
+        {$Revision: 1.7 $} {$Date: 2004/11/12 19:32:08 $}]
 
 }
 
@@ -700,10 +700,11 @@ proc vtkFreeSurferReadersCORApply {} {
         }
     } 
 
-    # load in free surfer colours?
-    if {$vtkFreeSurferReaders(loadColours)} {
+    # load in free surfer colours for a label map?
+    if {[Volume($i,node) GetLabelMap] == 1 &&
+        $vtkFreeSurferReaders(loadColours)} {
         if {$::Module(verbose)} {
-            puts "vtkFreeSurferReadersCORApply: loading colour file $vtkFreeSurferReaders(colourFileName)."
+            DevInfoWindow "vtkFreeSurferReadersCORApply: loading colour file $vtkFreeSurferReaders(colourFileName)."
         }
         # piggy back on the Color module
         set Color(fileName) $vtkFreeSurferReaders(colourFileName)
