@@ -44,24 +44,67 @@
 #     coord_r_top_right coord_a_top_right coord_s_top_right
 #     coord_r_bottom_right coord_a_bottom_right coord_s_bottom_right
 #
-# xDim yDim have problems
-# littleEndian has problems
-# bytes_per_Pixel or scalarSize has problems
+#
+# I've heard a rumor this might only work for MR, not CT
+# This is only called on a linux based system.
+#
+#
+# read the header info
+# Only Need xDim, yDim
+# xSpacing ySpacing zSpacing(sliceThick + sliceSpace)
+# rC aC sC rTL aTL sTL rTR aTR rTR aTR sTR rBR aBR sBR
+#
 # need to have error message for no header
 # only handles signa and genesis
+# returns 1 on success 0 on failure
 #
 # .ARGS
+# str filname   the name of the file
+# num stdout    if 1, prints the information to standard output
+# array aHeader The name of the array in which to put the information
 # .END
 #-------------------------------------------------------------------------------
-proc ReadHeaderTcl { filename } {
+proc ReadHeaderTcl { filename stdout aHeader} {
+    global tcl_platform ReadHeader
 
     upvar $aHeader Header
         
     set f [open $filename r]
     
+    ## Tcl doesn't handle floats well in binary strings.
+    ## Need to know if we need to swapbytes
+
+    if {$tcl_platform(byteOrder) == "littleEndian"} {
+        set ReadHeader(SwapBytes) 1
+    } else {
+        set ReadHeader(SwapBytes) 0
+    }
+
+    set ReadHeader(stdout) $stdout
+
+    ## decide whether or not to print
+    proc PrintVar {name var} {
+        global ReadHeader
+        if {$ReadHeader(stdout) == 1} {
+            puts "$name = $var"
+        }
+    }
+
+    ## takes in a 4 byte string and swaps the order
+    proc SwapBytesStr { str } {
+        binary scan $str c1c1c1c1 b1 b2 b3 b4
+        return [binary format c1c1c1c1 "$b4" "$b3" "$b2" "$b1" ]
+    }
+
     proc getvar_from_file {filehandle offset length {ScanString ""}} {
+        global ReadHeader
         seek $filehandle $offset start
         set var [read $filehandle $length]
+        # Might Need to swap bytes for a float
+        if {($ScanString == "f")&&($ReadHeader(SwapBytes) == 1)} {
+            set var [SwapBytesStr $var]
+        }
+        
         if {[string length $ScanString] != 0} {
             binary scan $var $ScanString var2
             return $var2
@@ -102,8 +145,11 @@ proc ReadHeaderTcl { filename } {
     set SE_se_desc 20
     
     set MR_slthick 26
+
+   # these two are misleading, they are NOT the NumX, NumY you would expect.
     set MR_dim_X 42
     set MR_dim_Y 46
+
     set MR_pixsize_X 50
     set MR_pixsize_Y 54
     set MR_dfov 34
@@ -129,36 +175,17 @@ proc ReadHeaderTcl { filename } {
     set MR_brhc_S 186
     
     
-    puts "print_header V1.0"
-    set fs [file size  $filename]
-    if {$fs > 500000} {
-        set hs [expr $fs - 524288]
-        puts -nonewline "header_size "
-        puts $hs
-        puts "x_resolution = 512"
-        puts "y_resolution = 512"
-        puts "bytes_per_slice = 524288"
-        set aHeader(xdim) 512
-        set aHeader(ydim) 512
-        
-    }
-    if {$fs > 131072} {
-        set hs [expr $fs - 131072]
-        puts -nonewline "header_size = "
-        puts $hs
-        puts "x_resolution = 256"
-        puts "y_resolution = 256"
-        puts "bytes_per_slice = 131072"
-        set aHeader(xdim) 256
-        set aHeader(ydim) 256
-    }
     set t [read $f 4]
     if {[string compare $t "IMGF"] == 0} {
         puts "image_type_text = genesis"
     } else {
         puts "image_type_text = signa"
+        return 0
     }
-    
+
+    # Genesis Data is always big Endian
+    set Header(littleEndian) 0
+
     set variable_header_count [getvar_from_file $f $p_suite2 2 S*]
 
     set exam_offset  [expr $variable_header_count + $EX_HDR_START]
@@ -168,192 +195,168 @@ proc ReadHeaderTcl { filename } {
     #patient name
     
     set var [getvar_from_file $f [expr $exam_offset+$EX_patname] 25]
-    puts  -nonewline  "patient_name = "
-    puts $var
+    PrintVar "patient_name" "$var"
     
     # patient id
     
     set var [getvar_from_file $f [expr $exam_offset+$EX_patid]  13]
-    puts  -nonewline  "patient_id = "
-    puts $var
+    PrintVar "patient_id" "$var"
     
     # exam number
     
     set var [getvar_from_file $f [expr $exam_offset+$EX_ex_no] 2 S ]
-    puts  -nonewline  "exam_number = "
-    puts $var
+    PrintVar "exam_number" "$var"
     
     #hospital
     
     set hn2 [getvar_from_file $f [expr $exam_offset+$EX_hospname] 33 a33 ]
-    puts  -nonewline  "hospital_name = "
-    puts $hn2
+    PrintVar "hospital_name" "$var"
     
     #exam description
     
     set var [getvar_from_file $f [expr $exam_offset+$EX_ex_desc]  23 a23 ]
-    puts  -nonewline  "exam_description = "
-    puts $var
+    PrintVar "exam_description" "$var"
     
     #series description
     
     set var [getvar_from_file $f [expr $series_offset+$SE_se_desc]  30 a30 ]
-    puts  -nonewline  "series_description = "
-    puts $var
+    PrintVar "series_description" "$var"
     
     # patient age
     
     set var [getvar_from_file $f [expr $exam_offset+$EX_patage]  2 S]
-    puts  -nonewline  "patient_age = "
-    puts $var
+    PrintVar "patient_age" "$var"
     
     # patient sex
     
     set var [getvar_from_file $f [expr $exam_offset+$EX_patsex]  2 s ]
-    if {$t == 2} {
-        puts  "patient_sex = female"
-    }
-    if {$t == 1} {
-        puts  "patient_sex = male"
-    }
+    if {$t == 2} {  PrintVar "patient_sex" "female" }
+    if {$t == 1} {  PrintVar "patient_sex" "male"   }
     
     #date 
     set var [getvar_from_file $f [expr $series_offset+$SE_se_actual_dt]  4 I ]
     set tm [clock format $var]
-    puts $tm
+    PrintVar "Clock" $tm
     
     #modality
     
     set var [getvar_from_file $f [expr $exam_offset+$EX_ex_typ]  3]
-    puts  -nonewline  "modality = "
-    puts $var
+    PrintVar "modality" "$var"
     
     # slice thickness
     
     set var [getvar_from_file $f [expr $image_offset+$MR_slthick]  4 f ]
-    puts  -nonewline  "thickness = "
-    puts $var
-    set aHeader(sliceThick) $var    
+    PrintVar "thickness" "$var"
+    set Header(sliceThick) $var    
     
     # spacing
     
     set var [getvar_from_file $f [expr $image_offset+$MR_scanspacing]  4 f]
-    puts  -nonewline  "spacing = "
-    puts $var
-    set aHeader(sliceSpace) $var    
+    PrintVar "spacing" "$var"
+    set Header(sliceSpace) $var    
     
+    set Header(zSpacing) [expr $Header(sliceThick) + $Header(sliceSpace)]
+
+     # number of x pixels
+
+    set var [getvar_from_file $f  8  4 I]
+    PrintVar "x_resolution" "$var"
+    set Header(xDim) $var
+
+    # number of y pixels
+
+    set var [getvar_from_file $f  12  4 I]
+    PrintVar "y_resolution" "$var"
+    set Header(yDim) $var
     
     # pxel_X_size
     
     set var [getvar_from_file $f [expr $image_offset+$MR_pixsize_X]  4 f]
-    puts  -nonewline  "pixel_x_size = "
-    puts $var
-    set aHeader(xSpacing) $var
-    
+    PrintVar "pixel_x_size" "$var"
+    set Header(xSpacing) $var
     
     # pixel_Y_size
     
     set var [getvar_from_file $f [expr $image_offset+$MR_pixsize_Y]  4 f]
-    puts  -nonewline  "pixel_y_size = "
-    puts $var
-    set aHeader(ySpacing) $var
+    PrintVar "pixel_y_size" "$var"
+    set Header(ySpacing) $var
     
     # fov
     
     set var [getvar_from_file $f [expr $image_offset+$MR_dfov]  4 f ]
-    puts  -nonewline  "field_of_view = "
-    puts $var
+    PrintVar "" "$var"
     
     # location
     
     set var [getvar_from_file $f [expr $image_offset+$MR_loc]  4 f]
-    puts  -nonewline  "image_location = "
-    puts $var
+    PrintVar "image_location" "$var"
     
     # coordinate info
     
     set var [getvar_from_file $f [expr $image_offset+$MR_ctr_R]  4 f ]
-    puts  -nonewline  "coord_center_r = "
-    puts $var
-    set aHeader(rC) $var
+    PrintVar "coord_center_r" "$var"
+    set Header(rC) $var
 
-    
     set var [getvar_from_file $f [expr $image_offset+$MR_ctr_A]  4 f]
-    puts  -nonewline  "coord_center_a = "
-    puts $var
-    set aHeader(aC) $var
+    PrintVar "coord_center_a" "$var"
+    set Header(aC) $var
     
     set var [getvar_from_file $f [expr $image_offset+$MR_ctr_S]  4 f]
-    puts  -nonewline  "coord_center_s = "
-    puts $var
-    set aHeader(sC) $var
+    PrintVar "coord_center_s" "$var"
+    set Header(sC) $var
     
     set var [getvar_from_file $f [expr $image_offset+$MR_norm_R]  4 f]
-    puts  -nonewline  "coord_normal_r = "
-    puts $var
+    PrintVar "coord_normal_r" "$var"
 
     set var [getvar_from_file $f [expr $image_offset+$MR_norm_A]  4 f]
-    puts  -nonewline  "coord_normal_a  = "
-    puts $var
+    PrintVar "coord_normal_a " "$var"
     
     set var [getvar_from_file $f [expr $image_offset+$MR_norm_S]  4 f]
-    puts  -nonewline  "coord_normal_s  = "
-    puts $var
+    PrintVar "coord_normal_s " "$var"
     
     set var [getvar_from_file $f [expr $image_offset+$MR_tlhc_R]  4 f ]
-    puts  -nonewline  "coord_r_top_left  = "
-    puts $var
-    set aHeader(rTL) $var
+    PrintVar "coord_r_top_left " "$var"
+    set Header(rTL) $var
     
     set var [getvar_from_file $f [expr $image_offset+$MR_tlhc_A]  4 f]
-    puts  -nonewline  "coord_a_top_left  = "
-    puts $var
-    set aHeader(aTL) $var
+    PrintVar "coord_a_top_left " "$var"
+    set Header(aTL) $var
     
     set var [getvar_from_file $f [expr $image_offset+$MR_tlhc_S]  4 f]
-    binary scan  $t f var
-    puts  -nonewline  "coord_s_top_left  = "
-    puts $var
-    set aHeader(sTL) $var
+    PrintVar "coord_s_top_left " "$var"
+    set Header(sTL) $var
     
     set var [getvar_from_file $f [expr $image_offset+$MR_trhc_R]  4 f]
-    puts  -nonewline  "coord_r_top_right  = "
-    puts $var
-    set aHeader(rTR) $var
+    PrintVar "coord_r_top_right " "$var"
+    set Header(rTR) $var
     
     set var [getvar_from_file $f [expr $image_offset+$MR_trhc_A]  4 f]
-    puts  -nonewline  "coord_a_top_right  = "
-    puts $var
-    set aHeader(aTR) $var
+    PrintVar "coord_a_top_right " "$var"
+    set Header(aTR) $var
 
     set var [getvar_from_file $f [expr $image_offset+$MR_trhc_S] 4 f]
-    puts  -nonewline  "coord_s_top_right  = "
-    puts $var
-    set aHeader(sTR) $var
+    PrintVar "coord_s_top_right " "$var"
+    set Header(sTR) $var
     
     set var [getvar_from_file $f [expr $image_offset+$MR_brhc_R] 4 f ]
-    puts  -nonewline  "coord_r_bottom_right  = "
-    puts $var
-    set aHeader(rBR) $var
+    PrintVar "coord_r_bottom_right " "$var"
+    set Header(rBR) $var
 
     set var [getvar_from_file $f [expr $image_offset+$MR_brhc_A]  4 f]
-    puts  -nonewline  "coord_a_bottom_right  = "
-    puts $var
-    set aHeader(aBR) $var
+    PrintVar "coord_a_bottom_right " "$var"
+    set Header(aBR) $var
     
     set var [getvar_from_file $f [expr $image_offset+$MR_brhc_S]  4 f]
-    binary scan  $t f var
-    puts  -nonewline  "coord_s_bottom_right  = "
-    puts $var
-    set aHeader(sBR) $var
+    PrintVar "coord_s_bottom_right " "$var"
+    set Header(sBR) $var
+
+    close $f
+    return 1
 }
 #-------------------------------------------------------------------------------
 # .PROC ReadHeader
 #
 # Calls the print_header program.
-# This routine is obsolete. It exists only
-# for the possible eventuality that ReadHeaderTCl does
-# not handle some type of file.
 #
 # .ARGS
 # .END
@@ -390,9 +393,6 @@ proc ReadHeader {image run utility tk} {
 #-------------------------------------------------------------------------------
 # .PROC ParsePrintHeader
 # Parses result from the print_header program
-# This routine is obsolete. It exists only
-# for the possible eventuality that ReadHeaderTCl does
-# not handle some type of file.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -576,10 +576,14 @@ proc DumpHeader {aHeader} {
 # .PROC GetHeaderInfo
 # Return an error message if files don't exist, else empty list.
 # .ARGS
+# str img1 filename of an image
+# int num2 the last image number in the volume
+# vtkMrmlVolumeNode node the node in which to set the information
+# int tk  if 1, an error message will popup a tk error window.
 # .END
 #-------------------------------------------------------------------------------
 proc GetHeaderInfo {img1 num2 node tk} {
-	global Mrml Path
+	global Mrml Path tcl_platform
 
 	if {[CheckFileExists $img1 0] == 0} {
 		return "Cannot open '$img1'."
@@ -608,7 +612,26 @@ proc GetHeaderInfo {img1 num2 node tk} {
 	if {[CheckFileExists $img2 0] == 0} {
 		return "Cannot open '$img2'."
 	}
+        
+        if {$tcl_platform(os) == "Linux"} {
 
+            if { [ReadHeaderTcl $img1 1 Header1] != 1} {
+                DevErrorWindow "Error reading header in linux. Can only read Genesis Headers."
+                return -1
+            }
+            if { [ReadHeaderTcl $img2 0 Header2] != 1} {
+                DevErrorWindow "Error reading header in linux. Can only read Genesis Headers."
+                return -1
+            }
+
+            ## numbers not in the header right now...
+            ## we can get gantry tilt...
+            set Header1(scalarType) Short
+            set Header1(numScalars) 1
+            set Header1(sliceTilt) 0
+            set Header1(order) ""
+
+        } else {
 	# Read headers
 	set hdr1 [ReadHeader $img1 1 $Path(printHeader) $tk]
 	set hdr2 [ReadHeader $img2 1 $Path(printHeader) $tk]
@@ -627,6 +650,7 @@ proc GetHeaderInfo {img1 num2 node tk} {
 	if {$errmsg != ""} {
 		return $errmsg
 	}
+        }
 
 	# Set the volume node's attributes using header info
 	$node SetFilePrefix $prefix
