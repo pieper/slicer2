@@ -52,17 +52,17 @@ proc MainAnnoInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainAnno \
-        {$Revision: 1.19 $} {$Date: 2002/10/26 18:51:28 $}]
+        {$Revision: 1.20 $} {$Date: 2002/11/05 17:35:16 $}]
 
     # Preset Defaults
-    set Module(Anno,presets) "box='1' axes='0' outline='0' letters='1' cross='1'\
+    set Module(Anno,presets) "box='1' axes='0' outline='0' letters='1' cross='0'\
 hashes='1' mouse='1'"
 
     set Anno(box) 1
     set Anno(axes) 0
     set Anno(outline) 0
     set Anno(letters) 1
-    set Anno(cross) 1
+    set Anno(cross) 0
     set Anno(hashes) 1
     set Anno(mouse) 1
 
