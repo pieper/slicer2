@@ -24,7 +24,8 @@
 # PROCEDURES:  
 #   SharedModelLookup
 #   SharedVolumeLookup
-#   SharedGetModelsInGroup
+#   SharedGetModelsInGroup the a if only
+#   SharedGetModelsInGroupOnly the a
 #   SharedGetModelGroupsInGroup
 #==========================================================================auto=
 
