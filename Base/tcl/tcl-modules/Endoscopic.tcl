@@ -254,7 +254,7 @@ proc EndoscopicInit {} {
     set Endoscopic(path,size) .5 
     set Endoscopic(path,color) ".4 .2 .6" 
     
-    set Endoscopic(path,activeId) NONE
+    set Endoscopic(path,activeId) None
     # keeps track of all the Ids of the path that currently exist
     # on the screen
     set Endoscopic(path,activeIdList) ""
@@ -1320,9 +1320,7 @@ During a fly-through, the endoscope slides on the path, as if it was a rail.
     set f $Endoscopic(tabbedFrame).fManual.fStep1.fStep1-3
         eval {label $f.lCreateList -text "create a new Path:  "} $Gui(WLA)
     eval {entry $f.eCreateList -width 15 -textvariable Fiducials(newListName) } $Gui(WEA)
-    bind $f.eCreateList <Return> {FiducialsCreateFiducialsList "endoscopic" $Fiducials(newListName)
-    FiducialsSetActiveList $Fiducials(newListName)
-    EndoscopicSetPathMenus "$Fiducials(newListName)"}
+bind $f.eCreateList <Return> {EndoscopicCreateAndActivatePath $Fiducials(newListName)}
 
     pack $f.lCreateList $f.eCreateList -side left -padx $Gui(pad) -pady $Gui(pad)
     
@@ -2911,20 +2909,15 @@ proc EndoscopicAddLandmarkNoDirectionSpecified {x y z {list ""}} {
     # if the list is not of type endoscopic, create a new endoscopic list
     if { $list == "" } {
         # add point to active path otherwise use the default path
-        if { $Fiducials(activeList) == "NONE" } {
+        if { $Endoscopic(path,activeId) == "None" } {
             set numList $Endoscopic(path,nextAvailableId)
             set list Path${numList}_
-            incr Endoscopic(path,nextAvailableId)
+        EndoscopicCreateAndActivatePath $Path${numList}_
+        incr Endoscopic(path,nextAvailableId)
         } else {
-            set fid $Fiducials($Fiducials(activeList),fid)
-            if { [Fiducials($fid,node) GetType] != "endoscopic" } {
-                set numList $Endoscopic(path,nextAvailableId)
-                set list Path${numList}_
-                incr Endoscopic(path,nextAvailableId)
-            } else {
-                set list $Fiducials(activeList)
-            }
-        }
+        set id $Endoscopic(path,activeId)
+        set list $Endoscopic($id,path,name)
+    }
     }
     # make that list active
     FiducialsSetActiveList $list
@@ -2964,25 +2957,19 @@ proc EndoscopicAddLandmarkDirectionSpecified {{coords ""} {list ""}} {
 
     global Endoscopic Point Fiducials 
     
-    ########### GET THE RIGHT LIST TO ADD THE POINT TO ############
+ ########### GET THE RIGHT LIST TO ADD THE POINT TO ############
+    # if the list is not of type endoscopic, create a new endoscopic list
     if { $list == "" } {
         # add point to active path otherwise use the default path
-        if { $Fiducials(activeList) == "NONE" } {
+        if { $Endoscopic(path,activeId) == "None" } {
             set numList $Endoscopic(path,nextAvailableId)
             set list Path${numList}_
-            incr Endoscopic(path,nextAvailableId)
+        EndoscopicCreateAndActivatePath $list
+        incr Endoscopic(path,nextAvailableId)
         } else {
-        puts "set fid $Fiducials($Fiducials(activeList),fid)"
-            set fid $Fiducials($Fiducials(activeList),fid)
-            
-            if { [Fiducials($fid,node) GetType] != "endoscopic" } {
-                set numList $Endoscopic(path,nextAvailableId)
-                set list Path${numList}_
-                incr Endoscopic(path,nextAvailableId)
-            } else {
-                set list $Fiducials(activeList)
-            }
-        }
+        set id $Endoscopic(path,activeId)
+        set list $Endoscopic($id,path,name)
+    }
     }
     # make that list active
     FiducialsSetActiveList $list
@@ -3248,7 +3235,7 @@ proc EndoscopicFlyThroughPath {listOfCams listOfPaths} {
     global Endoscopic Model View Path Module 
     
     
-    if {[lindex $listOfPaths 0] == "NONE"} {
+    if {[lindex $listOfPaths 0] == "None"} {
         return
     }
     
@@ -3284,7 +3271,7 @@ proc EndoscopicSetPathFrame {listOfCams listOfPaths} {
     global Endoscopic Model View Path 
 
 
-    if {[lindex $listOfPaths 0] == "NONE"} {
+    if {[lindex $listOfPaths 0] == "None"} {
         return
     }
     
@@ -3333,7 +3320,7 @@ proc EndoscopicResetPath {listOfCams listOfPaths} {
     global Endoscopic Path 
 
 
-    if {[lindex $listOfPaths 0] == "NONE"} {
+    if {[lindex $listOfPaths 0] == "None"} {
         return
     }
         
@@ -3652,7 +3639,7 @@ proc EndoscopicStartCallbackFiducialsUpdateMRML {} {
     }
     $Endoscopic(mPath4Fly) delete 0 end
     # FIXME?
-    #set Endoscopic(path,activeId) NONE
+    #set Endoscopic(path,activeId) None
     
 }
 
@@ -3665,27 +3652,8 @@ proc EndoscopicStartCallbackFiducialsUpdateMRML {} {
 #-------------------------------------------------------------------------------
 
 proc EndoscopicEndCallbackFiducialsUpdateMRML {} {
-
-    global Endoscopic
     
-    # if the path that was active no longer exists, then set the id to NONE
-    # and put "NONE" on the path selection menus
-    if {[lsearch $Endoscopic(path,activeIdList) $Endoscopic(path,activeId)] == -1} {
-        set Endoscopic(path,activeId) NONE
-        foreach mb $Endoscopic(mbPathList) {
-            $mb config -text "NONE"
-        }
-        $Endoscopic(mbPath4Fly) config -text "NONE"
-        # otherwise put the name of the current active list on the path selection 
-        # menus
-    } else {
-        # update the menus
-        set name $Endoscopic($Endoscopic(path,activeId),path,name)
-        foreach mb $Endoscopic(mbPathList) {
-            $mb config -text $name
-        }
-        $Endoscopic(mbPath4Fly) config -text $name
-    }    
+    global Endoscopic
 }
 
 
@@ -3704,13 +3672,15 @@ proc EndoscopicCallbackFiducialsUpdateMRML {type id listOfPoints} {
         return
     }
 
-
     # if we never heard about this Id, then this is a new path
     if {[lsearch $Endoscopic(path,allIdsUsed) $id] == -1} {
         EndoscopicCreateVTKPath $id 
         set Endoscopic($id,path,name) [Fiducials($id,node) GetName]
     }
     lappend Endoscopic(path,activeIdList) $id
+
+    # update the name field (different paths in time will have the same id)
+    set Endoscopic($id,path,name) [Fiducials($id,node) GetName]
     
     set i -1
 
@@ -3755,14 +3725,21 @@ proc EndoscopicCallbackFiducialsUpdateMRML {type id listOfPoints} {
     }
 }
 
-# simple routine to set the text of the path menus
-proc EndoscopicSetPathMenus {name} {
-    global Endoscopic
-    foreach mb $Endoscopic(mbPathList) {
-        $mb config -text $name 
+proc EndoscopicCreateAndActivatePath {name} {
+    global Endoscopic Fiducials
+    
+    set id [FiducialsCreateFiducialsList "endoscopic" $name]
+    # check to see if that exists already
+    set ext 1
+    while {$id == -1} {
+    set id [FiducialsCreateFiducialsList "endoscopic" ${name}($ext)]
+    set ext [expr $ext + 1]
     }
+    set name [Fiducials($id,node) GetName]
+    set type [Fiducials($id,node) GetType]
+    FiducialsSetActiveList $name
+    EndoscopicFiducialsActivatedListCallback "endoscopic" $name $id
 }
-
 
 # this is a callback from the fiducials module telling us which list
 # is active
@@ -3788,6 +3765,13 @@ proc EndoscopicFiducialsActivatedListCallback {type name id} {
             set numberOfOutputPoints [Endoscopic($id,cpath,graphicalInterpolatedPoints) GetNumberOfPoints]
             $Endoscopic(path,stepScale) config -to [expr $numberOfOutputPoints - 1]
         }
+    } else {
+    set Endoscopic(path,activeId) "None"
+    # change the text on menu buttons
+        foreach mb $Endoscopic(mbPathList) {
+            $mb config -text "None"
+        }
+    $Endoscopic(mbPath4Fly) config -text "None"
     }
 }
 
