@@ -455,7 +455,7 @@ itcl::body isregistration::update_slicer_mat {} {
     catch "$mat Delete"
     vtkMatrix4x4 $mat
 
-    $mat DeepCopy [$_reg GetMatrix]
+    $mat DeepCopy [$_reg GetOutputMatrix]
     puts "The real mat"
 #   0.968893 0.247481 5.18321e-05 -18.2546 
 #   -0.247481 0.968893 0.000201605 -25.8306 
@@ -559,7 +559,7 @@ itcl::body isregistration::update_slicer_mat {} {
     Matrix($t,node) SetMatrix [$this StringMatrix $mat]
 
     if {$itk_option(-verbose)} {
-    set results_mat [$this StringMatrix [$_reg GetMatrix] ]
+    set results_mat [$this StringMatrix [$_reg GetOutputMatrix] ]
         puts "resulting mat: $results_mat"
     set tmp_mat [Matrix($t,node) GetMatrix]
         puts "actually set $tmp_mat"
@@ -649,7 +649,7 @@ itcl::body isregistration::set_init_mat {} {
             puts "input matrix $matstring"
         set matstring [$this StringMatrix $_matrix ]
         puts "transformed input matrix $matstring"
-#        set matstring [$this StringMatrix [$_reg GetMatrix ]]
+#        set matstring [$this StringMatrix [$_reg GetOutputMatrix ]]
 #        puts "transformed input matrix $matstring"
         }
     
