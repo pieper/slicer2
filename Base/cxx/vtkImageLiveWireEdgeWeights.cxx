@@ -393,8 +393,15 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
 	  }
 	default:
 	  {
-	    cout << "ERROR: bad edge direction" << endl;
-	    return;
+	    cout << "ERROR in vtkImageLiveWireEdgeWeights: bad edge direction.  Defaulting to UP_EDGE" << endl;
+	    self->SetEdgeDirection(UP_EDGE);
+	    t = 7; 
+	    u = 8;
+	    p = 4;
+	    q = 5;
+	    v = 1;
+	    w = 2;
+	    break;
 	  }
 	}
       
