@@ -190,7 +190,7 @@ proc MorphometricsInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1 $} {$Date: 2004/01/19 01:49:25 $}]
+        {$Revision: 1.2 $} {$Date: 2004/01/23 20:59:55 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -461,7 +461,7 @@ proc MorphometricsAddMeasurement {nameOfTool nameOfWorkflow providedMeasurements
     lappend Morphometrics(measurementTools) [list $nameOfTool $nameOfWorkflow $providedMeasurements]
 
     # add it to the user-visible list of available tools
-    $Module(Morphometrics,fChooseMeasurement).fTop.mbAvailMeasurements.mAvailMeasurements add command -background $Gui(activeWorkspace) -command "MorphometricsUpdateChooseMeasurementTab $nameOfTool" -label $nameOfTool
+    $Module(Morphometrics,fChooseMeasurement).fTop.mbAvailMeasurements.mAvailMeasurements add command -background $Gui(activeWorkspace) -command "MorphometricsUpdateChooseMeasurementTab [list $nameOfTool]" -label $nameOfTool
 
     # if it's the first tool to add, we call MorphometricsUpdateChooseMeasurementTab in order to have an
     # initially choosen tool
