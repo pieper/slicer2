@@ -1,6 +1,10 @@
 
 Slicer2 Launcher info - sp 2002-09-10
 
+Important files:
+	slicer2.vfs/main.tcl --- controls the launch processes
+	make-launcers.tcl --- regenerates the toplevel executables
+
 This launcher code addresses a long-standing issue about
 just how to conveniently have different slicer versions
 in arbitrary directories.  The old method was to set the SLICER_HOME
