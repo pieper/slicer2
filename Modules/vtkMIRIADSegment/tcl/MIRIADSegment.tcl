@@ -151,7 +151,7 @@ proc MIRIADSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.17 $} {$Date: 2004/02/10 15:20:47 $}]
+        {$Revision: 1.18 $} {$Date: 2004/02/10 17:49:55 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -743,11 +743,13 @@ proc MIRIADSegmentSubTreeClassDefinition {SuperClass} {
             if {$::EMSegment(Cattrib,$class,IsSuperClass)} { 
                 MIRIADSegmentSubTreeClassDefinition $class ;# recursive call to this proc
             } else {
+                puts "setting class $class probvol to $probvol"
                 if { $probvol != "none" } {
                     set ::EMSegment(ProbVolumeSelect) [MIRIADSegmentGetVolumeByName $probvol]   
                     EMSegmentProbVolumeSelectNode \
                         Volume [MIRIADSegmentGetVolumeByName $probvol] \
                         EMSegment EM-ProbVolumeSelect ProbVolumeSelect
+                    puts "--- did the set of class $class probvol to $probvol"
                 }
 
                 set index 0
@@ -811,9 +813,12 @@ proc MIRIADSegmentSetEMParameters {} {
     #             |-> Gray (5)
     #                 |-> (TODO add subtree)
     #             |-> White (6)
-    #                 |-> (TODO add normal and lesions)
+    #                 |-> WMNormal (7)
+    #                 |-> WMLesion (8)
 
-    # Define SUPERCLASS Head with three subclasses
+
+    # -------------------------------
+    # SUPERCLASS: HEAD
     EMSegmentChangeClass 0
     set ::EMSegment(NumClassesNew) 3
     EMSegmentCreateDeleteClasses 1 1
@@ -826,6 +831,7 @@ proc MIRIADSegmentSetEMParameters {} {
     set ::EMSegment(Cattrib,2,Name) Tissue 
     set ::EMSegment(Cattrib,2,Prob) .20
     EMSegmentClickLabel 2 1 2 ""
+
     # -------------------------------
     # SUPERCLASS: BRAIN
     # a.) Define general parameter
@@ -858,17 +864,68 @@ proc MIRIADSegmentSetEMParameters {} {
     set ::EMSegment(Cattrib,5,Name) GrayMatter 
     set ::EMSegment(Cattrib,5,Prob) .25
     EMSegmentClickLabel 5 1 5 ""
-    # WM
+    # -------------------------------
+    # SUPERCLASS: WM
     set ::EMSegment(Cattrib,6,Name) WhiteMatter 
     set ::EMSegment(Cattrib,6,Prob) .25
     EMSegmentClickLabel 6 1 6 ""
+
     EMSegmentSumGlobalUpdate                  
+    # b.) Define SuperClass parameters
+    EMSegmentChangeClass 6                    ;# Set Active Class
+    set ::EMSegment(Cattrib,6,IsSuperClass) 1
+    EMSegmentTransfereClassType 1 1           ;# Transfer ClassType to Superclass
+    # c.) Create subclasses 
+    set ::EMSegment(NumClassesNew) 2      
+    EMSegmentCreateDeleteClasses 1 1          ;# 1. Parameter = ChangeGui; 
+                                              ;# 2. Parameter =  DeleteNode  
     
+    # WMNormal 
+    set ::EMSegment(Cattrib,7,Name) WMNormal 
+    set ::EMSegment(Cattrib,7,Prob) .25
+    EMSegmentClickLabel 7 1 7 ""
+    # WMLesion 
+    set ::EMSegment(Cattrib,8,Name) WMLesion 
+    set ::EMSegment(Cattrib,8,Prob) .25
+    EMSegmentClickLabel 8 1 8 ""
+
+
+    ## GM subclasses
+    EMSegmentSumGlobalUpdate                  
+    # b.) Define SuperClass parameters
+    EMSegmentChangeClass 5                    ;# Set Active Class
+    set ::EMSegment(Cattrib,5,IsSuperClass) 1
+    EMSegmentTransfereClassType 1 1           ;# Transfer ClassType to Superclass
+    # c.) Create subclasses 
+    set ::EMSegment(NumClassesNew) 21
+    EMSegmentCreateDeleteClasses 1 1          ;# 1. Parameter = ChangeGui; 
+
+    set grayparcels {
+        OtherGray 
+        LAmygdala RAmygdala 
+        LAnteriorInsulaCortex RAnteriorInsulaCortex
+        LHippocampus RHippocampus
+        LInferiorTemporalGyrus RInferiorTemporalGyrus
+        LMiddleTemporalGyrus RMiddleTemporalGyrus
+        LParahippocampus RParahippocampus
+        LPosteriorInsulaCortex RPosteriorInsulaCortex
+        LSuperiorTemporalGyrus RSuperiorTemporalGyrus
+        LTemporalLobe RTemporalLobe
+        LThalamus RThalamus
+    }
+    set l 9
+    foreach gp $grayparcels {
+        set ::EMSegment(Cattrib,$l,Name) $gp
+        set ::EMSegment(Cattrib,$l,Prob) .25
+        EMSegmentClickLabel $l 1 $l ""
+        incr l
+    }
+
+
+
     #
     # set the per-class parameters: class, atlas vol, mean, and covariance
     #
-    # set classes "1 2 3 4" - Defined in EMSegment(Cattrib,#of Superclass,ClassList)  
-    # e.g. currently EMSegment(Cattrib,0,ClassList) = "1 2 3"   
 
     # ---------------------------------------------------------------------------------
     # Define parameters for children of HEAD
@@ -887,7 +944,7 @@ proc MIRIADSegmentSetEMParameters {} {
     # ---------------------------------------------------------------------------------
     # Define parameters for children of BRAIN
     # CSF WM GM
-    set ::MIRIADSegment(probvols,3) "resample_atlas-sumcsf resample_atlas-sumgreymatter resample_atlas-sumwhitematter"
+    set ::MIRIADSegment(probvols,3) "resample_atlas-sumcsf resample_atlas-sumgreymatter_all resample_atlas-sumwhitematter"
 
     set ::MIRIADSegment(logmeans,3) {
         {4.5678 4.2802} {6.3836 5.1253} {6.3364 5.0624}
@@ -896,6 +953,54 @@ proc MIRIADSegmentSetEMParameters {} {
         {7.6805 5.0207 5.0207 7.3293} 
         {0.0026 0.004 0.004 0.0562}
         {0.0049 -0.0019 -0.0019 0.0711} 
+    }
+
+    # ---------------------------------------------------------------------------------
+    # Define parameters for children of GM
+    # OtherGray, LAmygdala...
+    set ::MIRIADSegment(probvols,5) {
+        resample_atlas-sumgreymatter_all
+        resample_atlas-sumlamygdala
+        resample_atlas-sumramygdala
+        resample_atlas-sumlAnterInsulaCortex
+        resample_atlas-sumrAnterInsulaCortex
+        resample_atlas-sumlhippocampus
+        resample_atlas-sumrhippocampus
+        resample_atlas-sumlInferiorTG
+        resample_atlas-sumrInferiorTG
+        resample_atlas-sumlMiddleTG
+        resample_atlas-sumrMiddleTG
+        resample_atlas-sumlparrahipp
+        resample_atlas-sumrparrahipp
+        resample_atlas-sumlPostInsulaCortex
+        resample_atlas-sumrPostInsulaCortex
+        resample_atlas-sumlstg
+        resample_atlas-sumrstg
+        resample_atlas-sumlTempLobe
+        resample_atlas-sumrTempLobe
+        resample_atlas-sumlThalamus
+        resample_atlas-sumrThalamus
+    }
+
+    # TODO - get all the intensity values correct
+    set ::MIRIADSegment(logmeans,5) {}
+    set ::MIRIADSegment(logcovs,5) {}
+    foreach gp $::MIRIADSegment(probvols,5) {
+        lappend ::MIRIADSegment(logmeans,5) {4.5678 4.2802} 
+        lappend ::MIRIADSegment(logcovs,5) {7.6805 5.0207 5.0207 7.3293} 
+    }
+
+    # ---------------------------------------------------------------------------------
+    # Define parameters for children of WM
+    # WMNormal WMLesion
+    set ::MIRIADSegment(probvols,6) "resample_atlas-sumwhitematter resample_atlas-sumwhitematter"
+    # TODO - normal and lesion means and covs
+    set ::MIRIADSegment(logmeans,6) {
+        {4.5678 4.2802} {6.3836 5.1253} 
+    }
+    set ::MIRIADSegment(logcovs,6) {
+        {7.6805 5.0207 5.0207 7.3293} 
+        {0.0026 0.004 0.004 0.0562}
     }
 
     EMSegmentChangeSuperClass 0 1 ;# change gui to show HEAD node
@@ -916,6 +1021,12 @@ proc MIRIADSegmentRunEM {} {
 
     set ::EMSegment(StartSlice) 29
     set ::EMSegment(EndSlice) 31
+    set ::EMSegment(SegmentationBoundaryMin,0) 1
+    set ::EMSegment(SegmentationBoundaryMin,1) 1
+    set ::EMSegment(SegmentationBoundaryMin,2) 27
+    set ::EMSegment(SegmentationBoundaryMax,0) 256
+    set ::EMSegment(SegmentationBoundaryMax,1) 256
+    set ::EMSegment(SegmentationBoundaryMax,2) 35
 
     set ::EMSegment(EMiteration) 5
     set ::EMSegment(MFAiteration) 2
