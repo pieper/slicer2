@@ -610,6 +610,7 @@ proc EndoscopicCreateVTKPath {id} {
     lappend Endoscopic(actors) Endoscopic($id,path,actor)
 
     #create the Vector actor
+    # TODO: need to change from vtkVectors etc to vtkFloatArray and it's friends
     #EndoscopicCreateVector $id
     #lappend Endoscopic(actors) Endoscopic($id,vector,actor)
     
