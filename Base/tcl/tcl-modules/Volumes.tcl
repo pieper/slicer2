@@ -113,7 +113,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.105 $} {$Date: 2005/01/03 22:53:25 $}]
+            {$Revision: 1.106 $} {$Date: 2005/01/30 16:54:48 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -929,7 +929,11 @@ proc VolumesManualSetPropertyType {n} {
     if {$::Module(verbose)} {
         puts "VolumesManualSetPropertyType: setting full prefix from mrml dir ($Mrml(dir)) and file prefix ([$n GetFilePrefix]) to [file join $Mrml(dir) [$n GetFilePrefix]]"
     }
-    $n SetFullPrefix [file join $Mrml(dir) [$n GetFilePrefix]]
+
+    # Generic reader uses FilePrefix so don't reset it
+    if {[$n GetFileType] != "Generic"} {
+        $n SetFullPrefix [file join $Mrml(dir) [$n GetFilePrefix]]
+    }
     if { !$Volume(isDICOM) } {
         set firstNum [MainFileFindImageNumber First [file join $Mrml(dir) $Volume(firstFile)]]
         if {$firstNum ==""} {
@@ -1054,7 +1058,8 @@ proc VolumesPropsApply {} {
     }
 
     # first file
-    if {[file exists $Volume(firstFile)] == 0} {
+    # Generic reader does not need first file, it uses FilePrefix 
+    if {[file exists $Volume(firstFile)] == 0 &&  [Volume($m,node) GetFileType] != "Generic" } {
         tk_messageBox -message "The first file $Volume(firstFile) must exist, if you haven't saved a newly created volume, please press cancel and then go to the Editor Module, Volumes tab, Save button"
         return
     }
