@@ -205,6 +205,7 @@ proc EdDrawBuildGUI {} {
 
 	eval {button $f.bApply -text "Apply" \
 		-command "EdDrawApply"} $Gui(WBA) {-width 8}
+
 	pack $f.f $f.bApply -side top -padx $Gui(pad) -pady $Gui(pad)
 
 
@@ -345,26 +346,45 @@ proc EdDrawApply {} {
 
 	EdSetupBeforeApplyEffect $v $Ed($e,scope) Active
 
-	# Only draw on native slices
-	if {[set native [EdIsNativeSlice]] != ""} {
-		tk_messageBox -message "Please draw on the slice with orient = $native."
-		return
-	}
-
 	set Gui(progressText) "Draw on [Volume($v,node) GetName]"
-	
+
 	set label    $Label(label)
 	set radius   $Ed($e,radius)
 	set shape    $Ed($e,shape)
-	set points   [Slicer DrawGetPoints]
+
+	#### How points selected by the user get here ###########
+	# odonnell, 11-3-2000
+	#
+	# 1. Click point
+	# 2. MainInteractorXY converts to "reformat point".
+	#    This point is really just y-flipped and unzoomed.
+	#    This does not actually use the reformat matrix at all.    
+	# 3. Point goes on list in vtkMrmlSlicer, a vtkImageDrawROI object
+	#    called PolyDraw.  This draws it on the screen.
+	# 4. User hits Apply.
+	# 5. Point is converted using reformat matrix from the volume
+	#    in DrawComputeIjkPoints.  The output is "sort of 3D".  It is
+	#    number,number,0 where the numbers are the i,j, or k
+	#    coordinates for the point (and the slice would define 
+	#    the other coordinate, but it is just 0).
+	#    The regular ROI points would work in the original 
+	#    (scanned) slice, but this conversion is needed for the 
+	#    other two slices.
+	#########################################################
+
+	Slicer DrawComputeIjkPoints
+	set points [Slicer GetDrawIjkPoints]
 	Ed(editor)   Draw $label $points $radius $shape
 
 	# Dump points
-#	set n [$points GetNumberOfPoints]
-#	for {set i 0} {$i < $n} {incr i} {
-#		puts [$points GetPoint $i]
-#	}
-
+	# points selected by the user and sent through MainInteractorXY
+	#set oldpoints   [Slicer DrawGetPoints]
+	#set n [$points GetNumberOfPoints]
+	# compare to points converted to '~3D space' in DrawComputeIJKPoints
+	#for {set i 0} {$i < $n} {incr i} {
+	#    puts "ijk: [$points GetPoint $i] 2D: [$oldpoints GetPoint $i]"
+	#}
+	
 	Ed(editor)   SetInput ""
 	Ed(editor)   UseInputOff
 
