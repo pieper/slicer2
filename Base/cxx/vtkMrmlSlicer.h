@@ -377,7 +377,6 @@ class VTK_EXPORT vtkMrmlSlicer : public vtkObject
   // Set reformat matrix same as that of this slice
   void ReformatVolumeLikeSlice(vtkMrmlVolume * v, int s);
 
-
   //-------------------- Draw ---------------------------//
   // Description:
   // For display of temporary drawing over slices.
@@ -559,6 +558,9 @@ protected:
   vtkImageReformat *GetVolumeReformatter(vtkMrmlVolume *v);
   void VolumeReformattersModified();
   int MaxNumberOfVolumesToReformat;
+  // Description:
+  // set field of view in al reformatters when slicer's FOV updates
+  void VolumeReformattersSetFieldOfView(float fov);
 
 };
 

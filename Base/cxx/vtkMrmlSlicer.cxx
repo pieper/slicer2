@@ -1748,6 +1748,9 @@ void vtkMrmlSlicer::SetFieldOfView(float fov)
     this->ForeReformat[s]->SetFieldOfView(fov);
     this->LabelReformat[s]->SetFieldOfView(fov);
   }
+
+  // arbitrary volume reformatting
+  this->VolumeReformattersSetFieldOfView(fov);
 }
 
 //----------------------------------------------------------------------------
@@ -1910,6 +1913,9 @@ void vtkMrmlSlicer::AddVolumeToReformat(vtkMrmlVolume *v)
   // for now only allow reformatting along with the active slice
   reformat->SetReformatMatrix(this->ReformatMatrix[this->GetActiveSlice()]);
   reformat->Modified();
+  
+  // set the field of view to match other volumes reformatted in the slicer
+  reformat->SetFieldOfView(this->FieldOfView);
 }
 
 //----------------------------------------------------------------------------
@@ -1975,6 +1981,18 @@ void vtkMrmlSlicer::VolumeReformattersModified()
     }
 }
 
+void vtkMrmlSlicer::VolumeReformattersSetFieldOfView(float fov)
+{
+  int max = this->VolumeReformatters->GetNumberOfTuples();
 
-
+  for (int i = 0; i < max; i++)
+    {
+      vtkImageReformat *ref = 
+	(vtkImageReformat *)this->VolumeReformatters->GetValue(i);
+      if (ref != NULL)
+	{
+	  ref->SetFieldOfView(fov);
+	}
+    }
+}
 
