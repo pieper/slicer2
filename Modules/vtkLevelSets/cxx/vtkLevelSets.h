@@ -308,6 +308,9 @@ public:
   // Updates the resulting image so that it contains the current result
   int UpdateResult();
 
+  // Probability of the tissue based on the image intensity
+  float ExpansionMap( float I, unsigned char compute=0);
+
 protected:
   vtkLevelSets();
   ~vtkLevelSets();

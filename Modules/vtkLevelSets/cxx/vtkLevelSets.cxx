@@ -1868,8 +1868,7 @@ void vtkLevelSets::Evolve2D()
     balloonterm = 0.0;
     if (balloon_coeff != 0) {
       balloonterm = balloon_coeff;
-      if (Probability!=NULL) 
-    balloonterm *= Probability[(int) (im[p]*10)];
+      balloonterm *= this->ExpansionMap(im[p]);
     }
     else
     if (balloon_image != NULL) 
@@ -2449,8 +2448,7 @@ void vtkLevelSets::Evolve3D( int first_band, int last_band)
     balloonterm = 0.0;
     if (fabs(balloon_coeff)>1E-10) {
       balloonterm = balloon_coeff;
-      if (Probability!=NULL) 
-    balloonterm *= Probability[(int) (im[p]*10)];
+      balloonterm *= this->ExpansionMap(im[p]);
     }
     else
     if (balloon_image != NULL) 
@@ -2785,59 +2783,11 @@ void vtkLevelSets::InitEvolution()
     if (RescaleImage) {
       Probability = new float[2551];
       for(i=0;i<2551;i++) {
-    Probability[i] = 0;
-    for(n=0;n<NumGaussians;n++) {
-          mean = (Gaussians[n][0]-minu)/(maxu-minu)*255.0;
-          sd   = Gaussians[n][1]/(maxu-minu)*255.0;
-      Probability[i] += exp(-(i/10.0-mean)*(i/10.0-mean)/sd/sd);
-    }
-        if (Probability[i]>1) Probability[i]=1;
-        // If intensity>ProbabilitHighThreshold, set Probability to 1
-    if (ProbabilityHighThreshold!=0)
-      if (i/10.0>((ProbabilityHighThreshold-minu)/(maxu-minu)*255.0))
-        Probability[i] = 1;
-    // Cut at a certain value
-        Probability[i] = (Probability[i]- ProbabilityThreshold);
+    // force the computation of the probability by setting the 2nd param to 1
+    Probability[i] = this->ExpansionMap(i/2550.0*(maxu-minu)+minu,1);
       }
-    }
-    else {
-      fprintf(stderr,"Probability without Rescaling not yet available ... \n");
     }
 
-    //
-    // Save the probability map
-    //
-    /*
-      {
-      vtkStructuredPointsWriter *writer = vtkStructuredPointsWriter::New();
-      vtkImageData* copyImage = vtkImageData::New();
-      inPtr  = (float*) inputImage ->GetScalarPointer();
-      float* ptr;
-      char name[255];
-      int  i;
-      
-      copyImage->SetScalarType( VTK_FLOAT);
-      copyImage->SetNumberOfScalarComponents(1);
-      copyImage->SetDimensions( outputImage->GetDimensions());
-      copyImage->SetOrigin(     outputImage->GetOrigin());
-      copyImage->SetSpacing(    outputImage->GetSpacing());
-      
-      copyImage->AllocateScalars();
-      
-      ptr = (float*) copyImage->GetScalarPointer();
-      for(i=0;i<imsize;i++) {
-      *ptr = Probability[(int) (inPtr[i]*10)];
-      ptr++;
-      }
-      
-      writer->SetInput(copyImage);
-      sprintf(name,"ProbMap.vtk");
-      writer->SetFileName(name);
-      writer->SetFileTypeToBinary();
-      writer->Write();
-      copyImage->Delete();
-      }
-    */
   }
 
   //
@@ -3413,7 +3363,38 @@ int vtkLevelSets::UpdateResult(){
 } // UpdateResult()
 
 
+//----------------------------------------------------------------------
+//
+// Return the expansion coefficient based on the
+// probability of having the given intensity
+//
+//
+float vtkLevelSets::ExpansionMap( float I, unsigned char compute)
+{
+  int n;
+  double tmp,res;
 
+  if ((Probability!=NULL)&&(!compute))
+    // Image has been rescale to [0,255]
+    return Probability[(int) I*10];
+
+  if (NumGaussians>0) {
+    if (ProbabilityHighThreshold!=0)
+      if (I>ProbabilityHighThreshold) return 1;
+    res = 0;
+    for(n=0;n<NumGaussians;n++) {
+      tmp = I-Gaussians[n][0];
+      res += exp(-tmp*tmp/Gaussians[n][1]/Gaussians[n][1]);
+    }
+    if (res>1) res=1;    
+    // Cut at a certain value
+    return (res-ProbabilityThreshold);
+  }
+  else
+    return 0;
+  
+} // ExpansionMap()
+ 
 //----------------------------------------------------------------------
 void vtkLevelSets::PrintParameters()
 {
