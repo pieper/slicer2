@@ -13,105 +13,25 @@
 #include <algo.h>
 #endif
 
-
-//----------------------------------------------------------
-// JIT: computes speed function from image as we need it
-// ("just in time")
-
-#define AVG 1
-#define PHI 2
-
-#define MASK_SIZE 3
-// best results with 3
-// mask is (2*MASK_SIZE+1) x (2*MASK_SIZE+1)
-
-/*
-  note: I really should have defined most of this class private
-  but vtkWrapTcl won't take it !!
-*/
-
-struct JIT
-{
-  // private:
-
-  short* data;
-
-  unsigned char* status;
-  float* _avg;
-  float* _phi;
-
-  float gaussian[2*MASK_SIZE+1][2*MASK_SIZE+1][2*MASK_SIZE+1];
-
-  int dimX;
-  int dimY;
-  int dimZ;
-  int dimXY;
-
-  // max value of the volume
-  int depth;
-
-  // estimated stdev of the zone to segment
-  float stdev;
-
-  // stdev of the blurring mask (in pixels)
-  float sigma;
-
-  bool initialized;
-
-  /*
-    static int medianCompare(const void *i, const void *j)
-    {
-    if( (*(int*)i) > (*(int*)j) )
-    return 1;
-
-    return -1;
-    }
-  */
-
-  /*  public: */
-  JIT();
-  JIT( int dimX, int dimY, int dimZ );
-
-  void setDepth(int depth);
-  void setStdev(float stdev);
-  void setSigma(float sigma);
-
-  void setInData( short* indata );
-  void setOutData( short* indata );
- 
-  float value(int index); // fixme to inline !
-  ~JIT();
-
-  /*  private: */
-  
-  inline float avg(int index);
-  inline float phi(int index);
-  inline int index(int x, int y, int Z) const;
+#include "FMpdf.h"
 
 
-};
-
-
-
-//----------------------------------------------------------
-// FAST MARCHING CODE
-//
-
+///////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////
 
 // pretty big
 #define INF 1.0e+10 
 
 // outside margin
-#define BAND_OUT 3 
+#define BAND_OUT 1
 
-
+#define GRANULARITY_PROGRESS 100
 
 ///////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////
 
 typedef enum fmstatus { fmsDONE, fmsKNOWN, fmsTRIAL, fmsFAR, fmsOUT } FMstatus;
 #define MASK_BIT 256
-
 
 struct FMnode {
   FMstatus status;
@@ -134,21 +54,24 @@ typedef std::vector<VecInt> VecVecInt;
 class VTK_FASTMARCHING_EXPORT vtkFastMarching : public vtkImageToImageFilter
 {
  private:
-  int nNeighbors; // =6 pb wrap, cannot be defined as constant
+  unsigned int nNeighbors; // =6 pb wrap, cannot be defined as constant
   double dx; // =1
 
   bool initialized;
+  bool firstCall;
 
-  FMnode *node;
+  FMnode *node;  // arrival time and status for all voxels
+  short *inhomo; // inhomogeneity 
+  short *median; // medican intensity
 
-  // size of the input
+  short* outdata; // output
+  short* indata;  // input
+
+  // size of the indata (=size outdata, node, inhomo)
   int dimX;
   int dimY;
   int dimZ;
-
-  // dimX*dimY
-  int dimXY;
-
+  int dimXY; // dimX*dimY
 
   // coeficients of the RAS2IJK matrix
   float m11;
@@ -171,39 +94,44 @@ class VTK_FASTMARCHING_EXPORT vtkFastMarching : public vtkImageToImageFilter
   float m43;
   float m44;
 
-  int xSeed;
-  int ySeed;
-  int zSeed;
   int label;
+  int depth;
   
+  int nPointsEvolution;
+  int nPointsBeforeLeakEvolution;
+  int nEvolutions;
 
-  JIT *jit;
+  VecVecInt knownPoints;
+  // vector<vector<int>> knownPoints
 
+  VecInt seedPoints;
+  // vector<int> seedPoints
+
+  // minheap used by the fast marching algorithm
   VecFMleaf tree;
   //  vector<FMleaf> tree;
 
-  short* outdata;
+  FMpdf *pdfIntensityIn;
+  FMpdf *pdfIntensityAll;
+  FMpdf *pdfInhomoIn;
+  FMpdf *pdfInhomoAll;
 
-  int nEvolutions;
-  VecVecInt knownPoints;
-  // vector<int> knownPoints;
-
-  VecInt maskPoints;
-
+  // minheap methods
   bool emptyTree(void);
-  int shiftNeighbor(int n);
-  double computeT(int index);
-  
-  double estN;
-  double estM1;
-  double estM2;
-  bool updateEstim(int index);
-
   void insert(const FMleaf leaf);
   FMleaf removeSmallest( void );
   void downTree(int index);
   void upTree(int index);
 
+  int shiftNeighbor(int n);
+  double computeT(int index );
+  
+  void setSeed( int index );
+
+  void collectInfoSeed( int index );
+  void collectInfoAll( void );
+  
+  double speed( int index );
  public:
 
   static vtkFastMarching *New();
@@ -219,41 +147,43 @@ class VTK_FASTMARCHING_EXPORT vtkFastMarching : public vtkImageToImageFilter
   //pb wrap  vtkFastMarching()(const vtkFastMarching&);
   //pb wrap  void operator=(const vtkFastMarching&);
 
-  void init(int dimX, int dimY, int dimZ);
+  void init(int dimX, int dimY, int dimZ, int depth);
 
-  void setSeed(void);
-  void setDepth(int depth);
-  void setStdev(float stdev);
-  void setSigma(float sigma);
+  void setActiveLabel(int label);
+
+  void setNPointsEvolution( int n );
 
   void setInData(short* data);
   void setOutData(short* data);
-
-  void addMask(float centerX, float centerY, float centerZ,
-           float R, float theta, float phi);
 
   void setRAStoIJKmatrix(float m11, float m12, float m13, float m14,
              float m21, float m22, float m23, float m24,
              float m31, float m32, float m33, float m34,
              float m41, float m42, float m43, float m44);
 
-  void show( void );
+  int addSeed( float r, float a, float s );
 
-  void setSeedAndLabel(int x, int y, int z, int label);
-
-  /*
-    void showImg( short* outdata, int label );
-    void showT( short* outdata, int label );
-  */
 
   /* perform one step of fast marching
      return the leaf which has just been added to fmsKNOWN */
   double step( void );
 
-  void back1Step( void );
+  void show(double r);
 
  protected:
   void ExecuteData(vtkDataObject *);
+
+ friend void vtkFastMarchingExecute(vtkFastMarching *self,
+                    vtkImageData *inData, short *inPtr,
+                    vtkImageData *outData, short *outPtr, 
+                    int outExt[6]);
 };
 
 #endif
+
+
+
+
+
+
+
