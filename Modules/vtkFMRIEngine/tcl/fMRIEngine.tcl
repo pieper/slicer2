@@ -186,7 +186,7 @@ proc fMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.4 $} {$Date: 2005/03/28 21:06:11 $}]
+        {$Revision: 1.5 $} {$Date: 2005/03/29 16:46:23 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -496,6 +496,10 @@ proc fMRIEngineComputeContrasts {} {
                 set fMRIEngine(actVolName) $name 
 
                 set vec $fMRIEngine($name,contrastVector) 
+                # trim white spaces at beginning and end
+                set vec [string trim $vec]
+                # replace multiple spaces in the middle of the string by one space  
+                regsub -all {( )+} $vec " " vec
                 set contrList [split $vec " "]
                 set len [llength $contrList]
                 if {[info commands fMRIEngine(contrast)] != ""} {
@@ -693,7 +697,7 @@ proc fMRIEngineBuildUIForInspectTab {parent} {
 #   DevAddLabel $f.lactScale "Levels:"
    eval {scale $f.sactScale \
        -orient horizontal \
-           -from 1 -to 30 \
+           -from 1 -to 40 \
            -resolution 1 \
            -bigincrement 10 \
            -length 155 \
@@ -1350,7 +1354,7 @@ proc fMRIEngineScaleActivation {no} {
     global Volume fMRIEngine MultiVolumeReader
 
     if {! [info exists fMRIEngine(allPValues)]} {
-        set i 20 
+        set i 30 
         while {$i >= 1} {
             set v [expr 1 / pow(10,$i)] 
             lappend fMRIEngine(allPValues) $v 
