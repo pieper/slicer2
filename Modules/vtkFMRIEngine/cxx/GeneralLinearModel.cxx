@@ -111,8 +111,13 @@ void GeneralLinearModel::Free()
     gsl_matrix_free(cov);
     gsl_vector_free(y);
     gsl_vector_free(c);
- 
     gsl_multifit_linear_free(work);
+
+    X = NULL;
+    cov = NULL;
+    y = NULL;
+    c = NULL;
+    work = NULL;
 }
 
 
