@@ -151,7 +151,7 @@ proc MIRIADSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.13 $} {$Date: 2004/01/31 23:33:29 $}]
+        {$Revision: 1.14 $} {$Date: 2004/02/09 16:08:01 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -401,7 +401,7 @@ proc MIRIADSegmentLoadStudy { {archive "default"} {BIRNID "000397921927"} {visit
     puts "loading atlas $atlas..." ; update
     switch $atlas {
         "loni" {
-            MIRIADSegmentLoadLONIWarpedAtlas "bseANDbet" "four"
+            MIRIADSegmentLoadLONIWarpedAtlas "bseANDbet" "full"
         }
         "spl" {
             if { [MIRIADSegmentLoadSPLWarpedAtlas] } {
@@ -628,7 +628,7 @@ proc MIRIADSegmentLoadSPLWarpedAtlas { } {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc MIRIADSegmentLoadLONIWarpedAtlas { { atlas "bseANDbet" } {labels "eleven"} } {
+proc MIRIADSegmentLoadLONIWarpedAtlas { { atlas "bseANDbet" } {labels "full"} } {
 
 
     switch $atlas {
@@ -657,21 +657,34 @@ proc MIRIADSegmentLoadLONIWarpedAtlas { { atlas "bseANDbet" } {labels "eleven"} 
         sumrstg_normed.hdr sumrTempLobe.hdr sumrThalamus.hdr 
         sumwhitematter.hdr
     }
-    set eleven_vols {
-        sumbackground.hdr sumcsf.hdr 
-        sumwhitematter.hdr
+    set full_vols {
+        sumbackground.hdr 
+        sumcsf.hdr 
         sumgreymatter_all.hdr 
-        sumlamygdala.hdr sumlAnterInsulaCortex.hdr 
-        sumlhippocampus.hdr sumlInferiorTG.hdr 
-        sumlMiddleTG.hdr sumlparrahipp.hdr 
-        sumlPostInsulaCortex.hdr sumlstg.hdr 
-        sumlTempLobe.hdr sumlThalamus.hdr sumramygdala.hdr 
+        sumwhitematter.hdr
+        
+        sumlamygdala.hdr 
+        sumlAnterInsulaCortex.hdr 
+        sumlhippocampus.hdr 
+        sumlInferiorTG.hdr 
+        sumlMiddleTG.hdr 
+        sumlparrahipp.hdr 
+        sumlPostInsulaCortex.hdr 
+        sumlstg.hdr 
+        sumlTempLobe.hdr 
+        sumlThalamus.hdr 
+
+        sumramygdala.hdr 
         sumrAnterInsulaCortex.hdr 
         sumrhippocampus.hdr 
-        sumrInferiorTG.hdr sumrMiddleTG.hdr sumrparrahipp.hdr 
-        sumrPostInsulaCortex.hdr sumrstg.hdr 
+        sumrInferiorTG.hdr 
+        sumrMiddleTG.hdr 
+        sumrparrahipp.hdr 
+        sumrPostInsulaCortex.hdr 
+        sumrstg.hdr 
         sumrTempLobe.hdr 
         sumrThalamus.hdr 
+
     }
     set four_vols {
         sumbackground.hdr sumcsf.hdr 
@@ -679,8 +692,8 @@ proc MIRIADSegmentLoadLONIWarpedAtlas { { atlas "bseANDbet" } {labels "eleven"} 
     }
 
     switch $labels {
-        "eleven" {
-            set vols $eleven_vols
+        "full" {
+            set vols $full_vols
         }
         "four" {
             set vols $four_vols
@@ -708,6 +721,40 @@ proc MIRIADSegmentLoadLONIWarpedAtlas { { atlas "bseANDbet" } {labels "eleven"} 
     }
     RenderAll
     return 0
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MIRIADSegmentSubTreeClassDefinition
+# Recursive proc to setup subtrees based on globally set parameters 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MIRIADSegmentSubTreeClassDefinition {SuperClass} {
+    EMSegmentChangeSuperClass $SuperClass 0
+
+    foreach \
+        class $::EMSegment(Cattrib,$::EMSegment(SuperClass),ClassList) \
+        probvol $::MIRIADSegment(probvols,$SuperClass) \
+        lmean $::MIRIADSegment(logmeans,$SuperClass) \
+        lcov $::MIRIADSegment(logcovs,$SuperClass) {
+            EMSegmentChangeClass $class
+            if {$::EMSegment(Cattrib,$class,IsSuperClass)} { 
+                MIRIADSegmentSubTreeClassDefinition $i ;# recursive call to this proc
+            } else {
+                set ::EMSegment(ProbVolumeSelect) [MIRIADSegmentGetVolumeByName $probvol]                   EMSegmentProbVolumeSelectNode \
+                    Volume [MIRIADSegmentGetVolumeByName $probvol] \
+                    EMSegment EM-ProbVolumeSelect ProbVolumeSelect
+
+                set index 0
+                for {set y 0} {$y < $::EMSegment(NumInputChannel)} {incr y} {
+                    set ::EMSegment(Cattrib,$class,LogMean,$y) [lindex $lmean $y]
+                    for {set x 0} {$x < $::EMSegment(NumInputChannel)} {incr x} {
+                        set ::EMSegment(Cattrib,$class,LogCovariance,$y,$x)  [lindex $lcov $index]
+                        incr index
+                    }
+                }
+            }
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -745,76 +792,98 @@ proc MIRIADSegmentSetEMParameters {} {
         }
     }
 
+    set ::EMSegment(EMiteration) 5
+    set ::EMSegment(MFAiteration) 2
+
     #
     # set the global parameters
     #
-    set ::EMSegment(EMiteration) 20
-    set ::EMSegment(MFAiteration) 10
+    # Tree is HEAD
+    #         |-> AIR
+    #         |-> Tissue (non brain, so skull, muscles, fat...)
+    #         |-> BRAIN
+    #             |-> CSF
+    #             |-> Gray
+    #                 |-> (TODO add subtree)
+    #             |-> White
+    #                 |-> (TODO add normal and lesions)
 
-    set ::EMSegment(NumClassesNew) 4
+    # Define SUPERCLASS Head with three subclasses
+    set ::EMSegment(NumClassesNew) 3
     EMSegmentCreateDeleteClasses 1 1
-
+    # class Air 
     set ::EMSegment(Cattrib,1,Prob) .05
+    # class Tissue
     set ::EMSegment(Cattrib,2,Prob) .20
+    # -------------------------------
+    # SUPERCLASS: BRAIN
+    # a) Define SuperClass parameters
+    EMSegmentChangeClass 3                    ;# Set Active Class 
+    EMSegmentTransfereClassType 0 1           ;# Transfer ClassType to Superclass
+    set ::EMSegment(Cattrib,$Sclass,Name) BRAIN 
     set ::EMSegment(Cattrib,3,Prob) .50
-    set ::EMSegment(Cattrib,4,Prob) .25
-    EMSegmentSumGlobalUpdate
+    EMSegmentSumGlobalUpdate                  ;# Update SuperClass before it is set to BRAIN
+    # b) Create subclasses 
+    set ::EMSegment(NumClassesNew) 3      
+    EMSegmentCreateDeleteClasses 0 1          ;# 1. Parameter = ChangeGui; 
+                                              ;# 2. Parameter =  DeleteNode  
+    # c) Define CIM if necessary
+    # foreach Name $EMSegment(CIMList) {
+    #    set EMSegment(Cattrib,3,CIMMatrix,$i,$y,$Name) 0.0
+    # }
 
+
+    # -------------------------------
+
+    # CSF
+    set ::EMSegment(Cattrib,4,Prob) .25
+    # GM 
+    set ::EMSegment(Cattrib,5,Prob) .25
+    # WM
+    set ::EMSegment(Cattrib,6,Prob) .25
+    EMSegmentSumGlobalUpdate                  
+    
     #
     # set the per-class parameters: class, atlas vol, mean, and covariance
     #
-    set classes "1 2 3 4" 
-    set probvols "resample_atlas-sumbackground resample_atlas-sumwhitematter resample_atlas-sumcsf resample_atlas-sumgreymatter"
-    set logmeans {
-        {0.5711 0.4534} {6.3364 5.0624} {4.5678 4.2802} {6.3836 5.1253}
+    # set classes "1 2 3 4" - Defined in EMSegment(Cattrib,#of Superclass,ClassList)  
+    # e.g. currently EMSegment(Cattrib,0,ClassList) = "1 2 3"   
+
+    # ---------------------------------------------------------------------------------
+    # Define parameters for children of HEAD
+    set ::MIRIADSegment(probvols,0) "resample_atlas-sumbackground resample_atlas-sumbackground blubber" 
+    #     set probvols(0) "resample_atlas-sumbackground  resample_atlas-sumwhitematter resample_atlas-sumcsf resample_atlas-sumgreymatter"
+
+    # TODO generate parameters for Tissue
+    set ::MIRIADSegment(logmeans,0) {
+        {0.5711 0.4534} {6.3364 5.0624} {"not used"} 
     }
-    set logcovs {
+    set ::MIRIADSegment(logcovs,0) {
         {2.915 1.9455 1.9455 1.9985} 
         {0.0049 -0.0019 -0.0019 0.0711} 
+        {"not used"} 
+    }
+
+    # ---------------------------------------------------------------------------------
+    # Define parameters for children of BRAIN
+    set ::MIRIADSegment(probvols,3) "resample_atlas-sumcsf resample_atlas-sumgreymatter resample_atlas-sumwhitematter"
+
+    # TODO generate parameters for Tissue
+    set ::MIRIADSegment(logmeans,3) {
+        {4.5678 4.2802} {6.3836 5.1253} {6.3364 5.0624}
+    }
+    set ::MIRIADSegment(logcovs,3) {
         {7.6805 5.0207 5.0207 7.3293} 
         {0.0026 0.004 0.004 0.0562}
+        {0.0049 -0.0019 -0.0019 0.0711} 
     }
-    foreach class $classes probvol $probvols lmean $logmeans lcov $logcovs {
-        EMSegmentChangeClass $class
-        set ::EMSegment(ProbVolumeSelect) [MIRIADSegmentGetVolumeByName $probvol]       
-        EMSegmentProbVolumeSelectNode \
-            Volume [MIRIADSegmentGetVolumeByName $probvol] \
-            EMSegment EM-ProbVolumeSelect ProbVolumeSelect
 
-        set index 0
-        for {set y 0} {$y < $::EMSegment(NumInputChannel)} {incr y} {
-            set ::EMSegment(Cattrib,$class,LogMean,$y) [lindex $lmean $y]
-            for {set x 0} {$x < $::EMSegment(NumInputChannel)} {incr x} {
-                set ::EMSegment(Cattrib,$class,LogCovariance,$y,$x)  [lindex $lcov $index]
-                incr index
-            }
-        }
-    }
+    MIRIADSegmentSubTreeClassDefinition 0 ;# call the recursive operation to set values
+
+    EMSegmentChangeSuperClass 0 1 ;# change gui to show HEAD node
 }
 
 
-if {0} {
-    #
-    # some left over stuff - just for reference
-    #
-    set logmeans {
-        "0.571072875212 0.453423712788 " 
-        "6.33643656174 5.06243056865 " 
-        "4.56782393077 4.28015667061 " 
-        "6.50700533879 5.52666528996 " 
-    }
-    set logcovs {
-        "2.91504731506 1.94549455788 1.94549455788 1.99850648931"
-        "0.00493500976813 -0.00186271455602 -0.00186271455602 0.0711103673701 "
-        "7.68049171392 5.02067293354 5.02067293354 7.32928998269 "
-        "0.289870642343 0.281761623486 0.281761623486 0.506977903929 "
-    }
-    set ::EMSegment(Cattrib,1,Prob) .05
-    set ::EMSegment(Cattrib,2,Prob) .25
-    set ::EMSegment(Cattrib,3,Prob) .60
-    set ::EMSegment(Cattrib,4,Prob) .10
-    
-}
 
 #-------------------------------------------------------------------------------
 # .PROC MIRIADSegmentRunEM
@@ -828,10 +897,6 @@ proc MIRIADSegmentRunEM {} {
     #set ::EMSegment(StartSlice) 29
     #set ::EMSegment(EndSlice) 31
 
-    set ::EMSegment(Cattrib,1,Prob) .25
-    set ::EMSegment(Cattrib,2,Prob) .25
-    set ::EMSegment(Cattrib,3,Prob) .25
-    set ::EMSegment(Cattrib,4,Prob) .25
     EMSegmentSumGlobalUpdate
 
     EMSegmentExecute "EM" "Run" "do_not_save"
