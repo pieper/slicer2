@@ -652,6 +652,7 @@ proc GraphCreateHistogramCurve {varDataName Volume Xmin Xmax Xlen} {
     ${varDataName}Accu SetComponentOrigin $Xmin 0.0 0.0 
     # Thicknes of the bin e.g 1000 - 2000 with 10 bins => 100   
     ${varDataName}Accu SetComponentSpacing 1.0 1.0 1.0
+    ${varDataName}Accu UpdateWholeExtent
     ${varDataName}Accu Update
 
 

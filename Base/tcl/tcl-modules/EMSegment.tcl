@@ -210,7 +210,7 @@ proc EMSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.18 $} {$Date: 2003/02/01 03:32:03 $}]
+        {$Revision: 1.19 $} {$Date: 2003/02/02 20:32:40 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -468,7 +468,7 @@ proc EMSegmentBuildGUI {} {
     #     CountDemo
     #     TextBox
     #-------------------------------------------
-    
+
     #-------------------------------------------
     # Help frame
     #-------------------------------------------
@@ -3930,7 +3930,6 @@ proc EMSegmentCreateHistogramButton {f index} {
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentGraphXAxisUpdate {path Xmin Xmax Xsca} {
-    puts "EMSegmentGraphXAxisUpdate $path $Xmin $Xmax $Xsca"
     global EMSegment
     set NumGraph 0  
     while { ($NumGraph < $EMSegment(NumGraph)) && ($EMSegment(Graph,$NumGraph,path) != $path)   } {incr NumGraph}
@@ -3938,17 +3937,18 @@ proc EMSegmentGraphXAxisUpdate {path Xmin Xmax Xsca} {
     puts "EMSegmentGraphXAxisUpdate:Error: Could not find graph with path $path" 
     return
     }
+
     # Could be done nicer but works right now
     set EMSegment(Graph,$NumGraph,Xmin) $Xmin
     set EMSegment(Graph,$NumGraph,Xmax) $Xmax
     set EMSegment(Graph,$NumGraph,Xsca) $Xsca
     if {$NumGraph < 2} {
-    # Update Histogram
-    set dist [expr $Xmax - $Xmin]
-    EMSegment(Graph,$NumGraph,Data,0)Accu SetComponentOrigin $Xmin 0.0 0.0 
-    EMSegment(Graph,$NumGraph,Data,0)Accu SetComponentExtent 0 [expr int($dist - 1)] 0 0 0 0
-    EMSegment(Graph,$NumGraph,Data,0)Accu Update
-
+      # Update Histogram
+      set dist [expr $Xmax - $Xmin]
+      EMSegment(Graph,$NumGraph,Data,0)Accu SetComponentOrigin $Xmin 0.0 0.0 
+      EMSegment(Graph,$NumGraph,Data,0)Accu SetComponentExtent 0 [expr int($dist - 1)] 0 0 0 0
+      EMSegment(Graph,$NumGraph,Data,0)Accu UpdateWholeExtent
+      EMSegment(Graph,$NumGraph,Data,0)Accu Update
     # If only the scalling changed we do not have to go through all the fuss
     if  {[ expr int($dist * [EMSegment(Graph,$NumGraph,Data,0)Res GetAxisMagnificationFactor 0])]  != $EMSegment(Graph,$path,Xlen)} {
         set XInvUnit $EMSegment(Graph,$path,XInvUnit) 
