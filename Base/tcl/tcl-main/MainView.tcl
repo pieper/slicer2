@@ -65,7 +65,7 @@ viewMode='Normal' viewBgColor='Blue'"
 
         set m MainView
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.33 $} {$Date: 2001/12/26 15:23:39 $}]
+		{$Revision: 1.34 $} {$Date: 2002/02/22 01:08:42 $}]
 
 	set View(viewerHeightNormal) 656
 	set View(viewerWidth)  956 
@@ -108,7 +108,6 @@ viewMode='Normal' viewBgColor='Blue'"
 	# Init
 	set View(rotateDegrees) 15
 	set View(baselineClippingRange) "1 2001"
-	set View(endoscopicClippingRange) "1 1000"
 	set View(magWin) Welcome
 	set View(inWin) none
 	set View(viewPrefix) view
