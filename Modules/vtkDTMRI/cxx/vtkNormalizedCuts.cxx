@@ -4,7 +4,6 @@
 #include "vtkObjectFactory.h"
 
 // ITK objects
-#include "vnl/algo/vnl_symmetric_eigensystem.h"
 #include "itkWeightedCentroidKdTreeGenerator.h"
 #include "itkKdTreeBasedKmeansEstimator.h"
 #include "itkMinimumDecisionRule.h"
@@ -18,9 +17,12 @@
 #include <ctime>
 
 
-vtkCxxRevisionMacro(vtkNormalizedCuts, "$Revision: 1.7 $");
+vtkCxxRevisionMacro(vtkNormalizedCuts, "$Revision: 1.8 $");
 vtkStandardNewMacro(vtkNormalizedCuts);
 
+vtkCxxSetObjectMacro(vtkNormalizedCuts,NormalizedWeightMatrixImage, 
+             vtkImageData);
+vtkCxxSetObjectMacro(vtkNormalizedCuts,EigenvectorsImage, vtkImageData);
 
 vtkNormalizedCuts::vtkNormalizedCuts()
 {
@@ -30,6 +32,7 @@ vtkNormalizedCuts::vtkNormalizedCuts()
 
   this->NormalizedWeightMatrixImage = NULL;
   this->EigenvectorsImage = NULL;
+  this->EigenSystem = NULL;
 }
 
 void vtkNormalizedCuts::PrintSelf(ostream& os, vtkIndent indent)
@@ -99,6 +102,7 @@ void vtkNormalizedCuts::ComputeClusters()
   if (this->NormalizedWeightMatrixImage) 
     {
       this->NormalizedWeightMatrixImage->Delete();
+      this->NormalizedWeightMatrixImage = NULL;
     }
 
   idx1=0;
@@ -125,40 +129,26 @@ void vtkNormalizedCuts::ComputeClusters()
       return;
     }
 
-  // Calculate eigenvectors
-  vnl_symmetric_eigensystem<double> eigensystem(*this->InputWeightMatrix);
-
-  vtkDebugMacro("Eigenvector matrix: " << eigensystem.V << 
-        " Eigenvalues: " << eigensystem.D);
-
-  vtkErrorMacro("Eigenvalues: " << eigensystem.D);
-
-
+  // Get rid of old values
+  if ( this->EigenSystem )
+    {
+      delete this->EigenSystem;
+    }
   if (this->EigenvectorsImage) 
     {
       this->EigenvectorsImage->Delete();
+      this->EigenvectorsImage = NULL;
     }
-  this->EigenvectorsImage = vtkImageData::New();
-  this->EigenvectorsImage->
-    SetDimensions(this->InputWeightMatrix->cols(),
-          this->InputWeightMatrix->rows(),1);
-  this->EigenvectorsImage->SetScalarTypeToDouble();
-  this->EigenvectorsImage->AllocateScalars();
-  double *eigenvectorsImage = (double *) this->EigenvectorsImage->
-    GetScalarPointer();
 
-  idx1=0;
-  while (idx1 < eigensystem.V.rows())
-    {
-      idx2=0;
-      while (idx2 < eigensystem.V.cols())
-    {
-      *eigenvectorsImage = eigensystem.V[idx1][idx2]; 
-      eigenvectorsImage++;
-      idx2++;
-    }
-      idx1++;
-    }
+  // Calculate eigenvectors
+  this->EigenSystem = 
+    new vnl_symmetric_eigensystem<double> (*this->InputWeightMatrix);
+
+
+  vtkDebugMacro("Eigenvector matrix: " << this->EigenSystem->V << 
+        " Eigenvalues: " << this->EigenSystem->D);
+
+  vtkErrorMacro("Eigenvalues: " << this->EigenSystem->D);
 
 
   // Create new feature vectors using the eigenvector embedding.
@@ -177,7 +167,7 @@ void vtkNormalizedCuts::ComputeClusters()
   idx1=0;
   // outer loop over rows of eigenvector matrix, 
   // pick out all entries for one tract
-  while (idx1 < eigensystem.V.rows())
+  while (idx1 < this->EigenSystem->V.rows())
     {    
       idx2=0;
       // inner loop over columns of eigenvector matrix
@@ -189,12 +179,12 @@ void vtkNormalizedCuts::ComputeClusters()
       while (idx2 < this->InternalNumberOfEigenvectors)
     {
       // this was wrong.
-      //ev[idx2]=(eigensystem.V[idx1][idx2+1])/rowWeightSum[idx1];
+      //ev[idx2]=(this->EigenSystem->V[idx1][idx2+1])/rowWeightSum[idx1];
       // This included the constant major eigenvector 
-      //ev[idx2]=(eigensystem.V[idx1][eigensystem.V.cols()-idx2-1]);
+      //ev[idx2]=(this->EigenSystem->V[idx1][this->EigenSystem->V.cols()-idx2-1]);
 
       // This is correct.
-      ev[idx2]=(eigensystem.V[idx1][eigensystem.V.cols()-idx2-2]);
+      ev[idx2]=(this->EigenSystem->V[idx1][this->EigenSystem->V.cols()-idx2-2]);
 
       if (this->EmbeddingNormalization == LENGTH_ONE)
     {
@@ -394,17 +384,27 @@ void vtkNormalizedCuts::ComputeClusters()
 
 vtkImageData * vtkNormalizedCuts::GetNormalizedWeightMatrixImage()
 {
-  return (this->ConvertVNLMatrixToVTKImage(this->InputWeightMatrix,this->NormalizedWeightMatrixImage));
+  if (this->NormalizedWeightMatrixImage == NULL)
+    {
+      this->SetNormalizedWeightMatrixImage(this->ConvertVNLMatrixToVTKImage(this->InputWeightMatrix));
+    }
+  return(this->NormalizedWeightMatrixImage);
 }
 
-vtkImageData * vtkNormalizedCuts::ConvertVNLMatrixToVTKImage(InputType *matrix, vtkImageData *image)
+vtkImageData * vtkNormalizedCuts::GetEigenvectorsImage()
 {
-  // If the image hasn't been created, create it
-  if (image == NULL)
+  if (this->EigenvectorsImage == NULL)
     {
-      image = vtkImageData::New();
+      this->SetEigenvectorsImage(this->ConvertVNLMatrixToVTKImage(&(this->EigenSystem->V)));
+    }
+  return (this->EigenvectorsImage);
+}
 
-      if (matrix != NULL)
+vtkImageData *vtkNormalizedCuts::ConvertVNLMatrixToVTKImage(InputType *matrix)
+{
+  vtkImageData *image = vtkImageData::New();
+
+  if (matrix != NULL)
     {
       int rows = matrix->rows();
       int cols = matrix->cols();
@@ -422,8 +422,6 @@ vtkImageData * vtkNormalizedCuts::ConvertVNLMatrixToVTKImage(InputType *matrix, 
         }
         }
     }
-    }
 
-  return (image);
-
+  return(image);
 }

@@ -19,6 +19,7 @@
 #include "vtkObject.h"
 // use itk numerics lib (vnl)
 #include "vnl/vnl_matrix.h"
+#include "vnl/algo/vnl_symmetric_eigensystem.h"
 // ITK objects
 #include "itkListSample.h"
 #include "itkVector.h"
@@ -94,7 +95,7 @@ class VTK_DTMRI_EXPORT vtkNormalizedCuts : public vtkObject
   // Get the intermediate computations of this class as images 
   // for visualization
   vtkImageData *GetNormalizedWeightMatrixImage();
-  vtkGetObjectMacro(EigenvectorsImage, vtkImageData);
+  vtkImageData *GetEigenvectorsImage();
 
   // Description
   // Normalized cuts normalization of embedding vectors
@@ -118,7 +119,7 @@ class VTK_DTMRI_EXPORT vtkNormalizedCuts : public vtkObject
 
   // Description
   // Make a vtk image to visualize contents of a vnl matrix
-  vtkImageData * ConvertVNLMatrixToVTKImage(InputType *matrix, vtkImageData *image);
+  vtkImageData *ConvertVNLMatrixToVTKImage(InputType *matrix);
 
  protected:
   vtkNormalizedCuts();
@@ -126,7 +127,7 @@ class VTK_DTMRI_EXPORT vtkNormalizedCuts : public vtkObject
 
   //BTX
   InputType *InputWeightMatrix;
-  InputType *EigenvectorMatrix;
+  vnl_symmetric_eigensystem<double> *EigenSystem;
   OutputClassifierType::Pointer OutputClassifier;
   //ETX
 
@@ -140,6 +141,8 @@ class VTK_DTMRI_EXPORT vtkNormalizedCuts : public vtkObject
 
   vtkImageData *NormalizedWeightMatrixImage;
   vtkImageData *EigenvectorsImage;
+  virtual void SetNormalizedWeightMatrixImage(vtkImageData *);
+  virtual void SetEigenvectorsImage(vtkImageData *);
 
  private:
   vtkNormalizedCuts(const vtkNormalizedCuts&); // Not implemented.
