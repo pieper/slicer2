@@ -67,7 +67,7 @@ if {$env(SLICER_CUSTOM_CONFIG) != "true"} {
 }
 # The environment variables that we need to have set for slicer 
 # to start up properly
-set envVars {VTK_DIR ITK_BINARY_PATH TCL_BIN_DIR TCL_LIB_DIR}
+set envVars {VTK_DIR VTK_SRC_DIR ITK_BINARY_PATH TCL_BIN_DIR TCL_LIB_DIR}
 # Make up a list of the environment variables that haven't been set already,
 # that we need to set
 set envVarsToSet {}
