@@ -69,7 +69,7 @@ proc MainFileInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainFile \
-        {$Revision: 1.40 $} {$Date: 2002/09/16 17:26:54 $}]
+        {$Revision: 1.41 $} {$Date: 2002/10/02 12:08:26 $}]
 
     set File(filePrefix) data
 }
@@ -871,6 +871,10 @@ proc CheckFileExists {filename {verbose 1}} {
 # 
 #-------------------------------------------------------------------------------
 proc MainFileParseImageFile {ImageFile {postfixFlag 1}} {
+
+    # skip empty filenames - these come, for example, in dicom files
+    if {$ImageFile == ""} {return}
+
     ##  Parse the file into its prefix, number, and perhaps stuff afterwards
     ##   Note: find the last consecutive string of digits
     ## Added support for - as well as . as a file separator, to add another one, 
