@@ -259,7 +259,7 @@ proc EndoscopicInit {} {
     set Module($m,category) "Visualisation"
     
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.79 $} {$Date: 2004/11/18 22:39:39 $}] 
+    {$Revision: 1.80 $} {$Date: 2004/11/19 19:05:11 $}] 
        
     # Define Procedures
     #------------------------------------
@@ -5111,7 +5111,7 @@ proc EndoscopicAddFlatView {} {
    [Endoscopic($name,FlatColonActor) GetProperty] SetAmbient 0.5
    [Endoscopic($name,FlatColonActor) GetProperty] SetDiffuse 0.4 
    [Endoscopic($name,FlatColonActor) GetProperty] SetSpecular 0.5
-   [Endoscopic($name,FlatColonActor) GetProperty] SetSpecularPower 80
+   [Endoscopic($name,FlatColonActor) GetProperty] SetSpecularPower 100
    
    [Endoscopic($name,FlatColonActor) GetProperty] BackfaceCullingOff
     
@@ -5194,8 +5194,8 @@ proc EndoscopicAddFlatView {} {
      Endoscopic($name,renderer) AddLight Endoscopic($name,light)
      
      # add command for changing the light's elevation and azimuth
-     set Endoscopic(flatColon,LightElev) 45
-     set Endoscopic(flatColon,LightAzi) -45
+     set Endoscopic(flatColon,LightElev) -75
+     set Endoscopic(flatColon,LightAzi) -75
      $Endoscopic(flatScale,elevation) config -command "EndoscopicFlatLightElevationAzimuth $f.flatRenderWidget$name"
      $Endoscopic(flatScale,azimuth) config -command "EndoscopicFlatLightElevationAzimuth $f.flatRenderWidget$name"
   
@@ -5337,30 +5337,38 @@ proc EndoscopicBuildFlatColonLookupTable {} {
      
      
      vtkLookupTable Endoscopic(flatColon,lookupTable)
-#puts "build lookup table Endoscopic(flatColon,LookupTable)"
+     #actual values are from 0 to 255
      Endoscopic(flatColon,lookupTable) SetNumberOfColors 256
      Endoscopic(flatColon,lookupTable) Build
-     # for the first 128 slots in the table, set the color to be the same as the colon (skin rgb: 1.0 0.8 0.7)
-     for {set i 0} {$i < 128} {incr i} {
+     
+     set colon 64
+     set polyp 64
+     set transL $colon
+     set transH [expr [expr 256 - $polyp] + 1]
+          
+     # for the first 64 slots in the table, set the color to be the same as the colon (skin rgb: 1.0 0.8 0.7)
+     for {set i 0} {$i < $colon} {incr i} {
         eval Endoscopic(flatColon,lookupTable) SetTableValue $i 1.0 0.8 0.7 1
      }
-     # for the next 118 slots in the table, set the color to be in transition from skin to green
-     # i.e., green value increases to 1, and both red and blue decrease to 0
-     for {set i 128} {$i < 246} {incr i} {
-         set numSteps [expr [expr 246 - 128] + 1]
+     
+     # for the next 128 slots in the table, set the color to be in transition from skin to green
+     # i.e., green value increases to 1, and both the red and the blue values decrease to 0
+     for {set i $transL} {$i < $transH} {incr i} {
+         set numSteps [expr [expr $transH - $transL] + 1]
      set redDecr [expr 1.0 / $numSteps]
      set greenIncr [expr [expr 1.0 - 0.8] / $numSteps]
      set blueDecr [expr 0.7 / $numSteps]
      
-     set red [expr 1.0 - [expr [expr $i - 127] * $redDecr]]
-     set green [expr 0.8 + [expr [expr $i - 127] * $greenIncr]]
-     set blue [expr 0.7 - [expr [expr $i - 127] * $blueDecr]]
+     set red [expr 1.0 - [expr [expr $i - $transL] * $redDecr]]
+     set green [expr 0.8 + [expr [expr $i - $transL] * $greenIncr]]
+     set blue [expr 0.7 - [expr [expr $i - $transL] * $blueDecr]]
      
-     eval Endoscopic(flatColon,lookupTable) SetTableValue $i $red $green $blue 1
+     eval Endoscopic(flatColon,lookupTable) SetTableValue $i $red $green $blue 0.9
       }
-      #for the last 10 slots in the table, set the color to be green (rgb: 0 1 0)
-      for {set i 246} {$i < 256} {incr i} {
-         eval Endoscopic(flatColon,lookupTable) SetTableValue $i 0.0 1.0 0.0 1
+      
+     # for the last 64 slots in the table, set the color to be green (rgb: 0 1 0)
+      for {set i $transH} {$i < 256} {incr i} {
+        eval Endoscopic(flatColon,lookupTable) SetTableValue $i 0.0 1.0 0.0 1
       }
 
 }
@@ -6697,8 +6705,11 @@ proc EndoscopicSetFlatColonScalarVisibility {widget} {
      if {$Endoscopic(flatColon,scalarVisibility) == 0} {
      
      Endoscopic($name,FlatColonMapper) ScalarVisibilityOff
+     [Endoscopic($name,FlatColonActor) GetProperty] SetAmbient 0.5
      
      } else {
+     
+     [Endoscopic($name,FlatColonActor) GetProperty] SetAmbient 0.15
      
      Endoscopic($name,FlatColonMapper) ScalarVisibilityOn
      Endoscopic($name,FlatColonMapper) SetLookupTable Endoscopic(flatColon,lookupTable)
@@ -6718,6 +6729,8 @@ proc EndoscopicSetFlatColonScalarRange {widget} {
      set name $Endoscopic($widget,name)
      
      if {$Endoscopic(flatColon,scalarVisibility) == 1} {
+     
+     [Endoscopic($name,FlatColonActor) GetProperty] SetAmbient 0.15
      
      Endoscopic($name,FlatColonMapper) ScalarVisibilityOn
      Endoscopic($name,FlatColonMapper) SetLookupTable Endoscopic(flatColon,lookupTable)
