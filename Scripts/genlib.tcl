@@ -438,7 +438,7 @@ if { ![file exists $gslTestFile] } {
 
     if { !$isWindows } {
         # can't do Windows
-        cd $SLICER_LIB/gsl-build/gsl-mirror
+        cd $SLICER_LIB/gsl-build/gsl
 
         if { $isDarwin } {
             # equivalent of autogen.sh for Darwin (libtoolize => glibtoolize)    
