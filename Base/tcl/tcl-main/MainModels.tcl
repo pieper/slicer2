@@ -71,7 +71,7 @@ proc MainModelsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainModels \
-		{$Revision: 1.34 $} {$Date: 2001/04/27 07:12:24 $}]
+		{$Revision: 1.35 $} {$Date: 2001/04/27 15:33:21 $}]
 
 	set Model(idNone) -1
 	set Model(activeID) ""
@@ -1003,6 +1003,15 @@ proc MainModelsRaiseScalarBar { {m ""} } {
 	if {$sb != $m} {
 	    MainModelsRemoveScalarBar $sb
 	}
+    }
+
+    # if this model doesn't have scalars visible, 
+    # don't show the bar
+    if {$Model($m,scalarVisibility) == 0} {
+	tk_messageBox -message "Please turn Scalar Visibility on for this model before displaying the scalar bar."
+	# turn off the check box
+	set Model($m,displayScalarBar) 0
+	return
     }
 
     # make scalar bar
