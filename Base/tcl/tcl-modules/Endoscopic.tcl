@@ -2694,13 +2694,13 @@ proc EndoscopicUpdateActorFromVirtualEndoscope {vcam} {
     matrix SetElement 2 3 0
     matrix SetElement 3 3 1
 
-    vtkTransform transform
-    transform SetMatrix matrix
-    set orientation [transform GetOrientation]
+    vtkTransform endoscopicTransform
+    endoscopicTransform SetMatrix matrix
+    set orientation [endoscopicTransform GetOrientation]
     set position [$Endoscopic(activeCam) GetPosition]
     eval Endoscopic(gyro,actor) SetOrientation $orientation
     eval Endoscopic(gyro,actor) SetPosition $position
-    transform Delete
+    endoscopicTransform Delete
     matrix Delete
 
     # set the sliders

@@ -309,14 +309,14 @@ proc PathPlanningShrink {arg} {
     
         # scale
         set scale $arg
-        vtkTransform transform
-        transform Scale $scale $scale $scale
+        vtkTransform shrinkTransform
+        shrinkTransform Scale $scale $scale $scale
         
         PathPlanning(shrinkFilter) SetInput $Model($m,polyData) 
-        PathPlanning(shrinkFilter) SetTransform transform
+        PathPlanning(shrinkFilter) SetTransform shrinkTransform
         Model($m,mapper,viewRen) SetInput [PathPlanning(shrinkFilter) GetOutput]
         Render3D
-    transform Delete
+        shrinkTransform Delete
         set PathPlanning(shrink) 1
     }
 }
