@@ -20,6 +20,8 @@ configurable delay between invokations and an on/off button
 # - sets the default colors for the widget components
 #
 option add *istask.taskcommand "" widgetDefault
+option add *istask.oncommand "" widgetDefault
+option add *istask.offcommand "" widgetDefault
 option add *istask.taskdelay 30 widgetDefault
 
 #
@@ -39,6 +41,8 @@ if { [itcl::find class istask] == "" } {
         # or become part of the option database
         #
         itk_option define -taskcommand taskcommand Taskcommand {}
+        itk_option define -oncommand oncommand Oncommand {}
+        itk_option define -offcommand offcommand Offcommand {}
         itk_option define -taskdelay taskdelay Taskdelay 30
 
         variable _w ""
@@ -83,12 +87,18 @@ itcl::body istask::destructor {} {
 
 itcl::body istask::on {} {
     $_onoffbutton configure -text "Running..." -command "$this off" -relief sunken
+    if { $_mode == "off" } {
+        eval $itk_option(-oncommand)
+    }
     set _mode "on"
     $this istask_taskcb
 }
 
 itcl::body istask::off {} {
     $_onoffbutton configure -text "Start" -command "$this on" -relief raised
+    if { $_mode == "on" } {
+        eval $itk_option(-offcommand)
+    }
     set _mode "off"
     $this istask_taskcb
 }
