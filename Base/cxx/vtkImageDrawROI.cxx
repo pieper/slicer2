@@ -241,9 +241,12 @@ void vtkImageDrawROI::EndSelectBox(int x, int y)
         if (p->x+r >= sbox1.x && p->x-r <= sbox2.x &&
             p->y+r >= sbox1.y && p->y-r <= sbox2.y)
         {
-            p->Select();
-            this->NumSelectedPoints++;
-            this->Modified();
+            if (!p->IsSelected())
+            {  
+                p->Select();
+                this->NumSelectedPoints++;
+                this->Modified();
+            }
         }
         p = p->GetNext();
     }
