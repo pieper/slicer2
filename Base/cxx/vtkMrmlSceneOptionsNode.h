@@ -96,6 +96,16 @@ public:
   // Background color of the 3D view
   vtkSetStringMacro(ViewBgColor);
   vtkGetStringMacro(ViewBgColor);
+
+    // Description:
+    // Resolution of the texture
+    vtkSetStringMacro(ViewTextureResolution);
+    vtkGetStringMacro(ViewTextureResolution);
+    
+    // Description:
+    // Interpolate the slices On or Off
+    vtkSetStringMacro(ViewTextureInterpolation);
+    vtkGetStringMacro(ViewTextureInterpolation);
   
   // Description:
   // Show 3D axes?
@@ -191,7 +201,9 @@ protected:
   char *DICOMStartDir;
   char *FileNameSortParam;
   char *DICOMDataDictFile;
-  
+    char *ViewTextureResolution;
+    char *ViewTextureInterpolation;
+    
   // Booleans and Numbers
   int ShowAxes;
   int ShowBox;
