@@ -302,52 +302,59 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
 	{
 	case UP_EDGE:
 	  {
-				// bel:           ^
-				//      | 4 (out) | 5 (in)|
-	    t = 1; 
-	    u = 2;
+	    //      | 7       | 8       |
+	    // bel: | 4 (out) | 5 (in)  |
+	    //                V
+	    //      | 6       | 7       |
+	    //
+	    // this seems to point down, but so does vtk's y-axis.
+	    t = 7; 
+	    u = 8;
 	    p = 4;
 	    q = 5;
-	    v = 7;
-	    w = 8;
+	    v = 1;
+	    w = 2;
 	    break;
 	  }
 	case DOWN_EDGE:
 	  {
-				// bel: | 3 (in) | 4 (out) |
-				//               V
-	    t = 7; 
-	    u = 6;
+	    //      | 6       | 7      |
+	    // bel:           ^
+	    //      | 3 (in)  | 4 (in) |
+	    //      | 0       | 1      |
+	    //
+	    t = 1; 
+	    u = 0;
 	    p = 4;
 	    q = 3;
-	    v = 1;
-	    w = 0;
+	    v = 7;
+	    w = 6;
 	    break;
 	  }
 	case LEFT_EDGE:
 	  {
-				// bel: 4 (in)
-				//     <----
-				//      7 (out)
-	    t = 6; 
-	    u = 3;
-	    p = 7;
-	    q = 4;
-	    v = 8;
-	    w = 5;
+	    //  6  bel: 7 (out)  8
+	    //         <----
+	    //  3       4 (in)   5
+	    t = 3; 
+	    u = 6;
+	    p = 4;
+	    q = 7;
+	    v = 5;
+	    w = 8;
 	    break;
 	  }
 	case RIGHT_EDGE:
 	  {
-				// bel: 1 (out)
-				//      ---->
-				//      4 (in)
-	    t = 2; 
-	    u = 5;
-	    p = 1;
-	    q = 4;
-	    v = 0;
-	    w = 3;
+	    // 3  bel: 4 (out)   5
+	    //         ---->
+	    // 0       1 (in)    2
+	    t = 5; 
+	    u = 2;
+	    p = 4;
+	    q = 1;
+	    v = 3;
+	    w = 0;
 	    break;
 	  }
 	default:
@@ -443,7 +450,6 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
     {
       sumOfWeights += self->GetWeightForFeature(i);
     }
-  cout << "sum of weights: " << sumOfWeights << endl;
 
   float testMax = -1;
   float testMin = 256;
@@ -498,7 +504,8 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
 		  // this is when q/p should be switched!  so 
 		  // need to keep track of *desired* gradient!  It is not correct right now!
 
-		  // Document all new features here:
+		  // FEATURES
+		  // (Please document all new features here.)
 		  // 0: in pix magnitude = q OR p, depending on gradient dir
 		  // 1: out pix magnitude = p OR q, "
 		  // 2: outpix-inpix = p-q
