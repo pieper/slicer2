@@ -47,27 +47,40 @@ Fiducials
 <b>Here are basics about Fiducials for Developpers</b>:
 
 <ul> It is very straightforward to use Fiducials inside your own module. It takes one line to add a Fiducials display (menu to select a list + scrollList that shows all the points for the selected list) and one line to query the xyz world coordinates of the points for any particular list. Here is a step by step description of what you should do to use Fiducials:
+<p>
 <li> First, you need to tell slicer that your module depends on the Fiducials module, so add this line to your <code><b>Init</b></code> procedure if it is not already there:
 
 <p><code> # Define Dependencies
 <br> set Module($m,depend) Fiducials
 </code>
-<p>
+<p></li>
+<li> Many modules in Slicer might use Fiducials. You might want a Fiducials list with a particular name to be created especially for your module and activated when the user enters your module. That way, when the user creates Fiducials while using your module, all the Fiducials points will belong to one list. This makes it easy to query only the position of those points by using the list name (see below). Here is how to create and active a Fiducials list call "MyCoolList" when the user enters the Tab for the module "MyCoolProgram": <p>
+<ul> 
+<li>Go inside your "Init" procedure. Add: <p>
+<code> set MyCoolProgram(fiducialsListCreated) 0 </code></li>
+<p><li>Go inside your "Enter" procedure. <br> (<i> note:  The Enter procedure is defined as follows for every module: </i><br>
+<code> set m MyCoolProgram <br>
+set Module($m,procEnter) MyCoolProgramEnter </code>, 
+<i><br> so here </i><code>MyCoolProgramEnter</code> <i>is the procEnter procedure for the "MyCoolProgram" module). </i>).</li>
+<p><li> Add: <p>
+<code>
+if {$MyCoolProgram(fiducialsListCreated) == 0} { <br>
+	set MyCoolProgram(fiducialsListCreated) 1 <br>
+	FiducialsCreateFiducialsList "default" "MyCoolList" <br>  
+    }  <br>
+    FiducialsSetActiveList "MyCoolList" <br>
+</code><p>
+You should always use the "default" type of Fiducials unless you want to define your own type of Fiducials inside the MRML Fiducials File (if you want them to have a different look for example, see the "endoscopic" type for example).
+</li>
+</ul>
 
-<li> Next, you need to use the Fiducials(eventManager) in order to recognize the 'p', 'q' and 'd' keys. To do that, add this line to the <code><b> Enter </b></code> procedure in your module:
-
-<p><code> global Fiducials
-<br> pushEventManager $Fiducials(eventManager)
-</code>
-
-<p>
-
+</li></ul>
 <table>
 <tr>
 
 <td align="left">
 <ul>
-<li> Now, you should add the Fiducials gui (shown on the right) to the panel of your Module. Add this line in your <code><b>BuildGUI</b></code> procedure:
+<li> You might also want to add the Fiducials gui (shown on the right) to the panel of your Module. so the user can have directly access to the list of points without having to go to the Fiducials Tab. <br> Add this line in your <code><b>BuildGUI</b></code> procedure:
 
 <ul>
 <p><code> FiducialsAddActiveListFrame $frame 7 25 "reformat"</code><p>
@@ -82,15 +95,15 @@ Here is the Fiducial panel <img src='fiducials.jpg'></img>
 </td></tr> </table>
 
 </table>
-<li> Now when the user enters your module, the user is able to create/select/delete Fiducials by using the usual Fiducials user interface (key presses). If you want to access information about Fiducials, here are <b>useful procedures</b>:
+<li> Now when the user enters your module, your list is activated and the user is able to create/select/delete Fiducials by using the usual Fiducials user interface (key presses). If you want to access information about Fiducials, here are <b>useful procedures</b>:
 
 <ul>
 <p>
 <li> 
 <p>
-<code> FiducialsGetPointIdListFromName $name </code>
+<code> FiducialsGetPointIdListFromName $list </code>
 <p>
-<br> This returns a list of <b>point ids</b> that belong to the Fiducial list with the name <code>$name</code>. 
+<br> This returns a list of <b>point ids</b> that belong to the Fiducial list with the name <code>$list</code>. 
 <p>
 <li> Once you have the point Ids, you can find out their <b>coordinates</b> by calling:
 <p> 
@@ -100,7 +113,7 @@ Here is the Fiducial panel <img src='fiducials.jpg'></img>
 <p>
 <li> In case you only care about the <b>selected</b> points for a particular list, you can call:
 <p>
-<code> FiducialsGetSelectedPointIdListFromName $name </code>
+<code> FiducialsGetSelectedPointIdListFromName $list </code>
 <p>
 <br> This returns a list of only the selected point Ids for the list with the name $name.
 <p>
@@ -111,7 +124,7 @@ Here is the Fiducial panel <img src='fiducials.jpg'></img>
 <br> This returns a list of all selected point Ids.
 </ul>
 <p>
-<li> Here is a list of new features for Fiducials that will appear soon:
+<li> Here is a list of other possible features for Fiducials that would be good if anybody wants to contribute to the Fiducials module:
 <ul>
 <li> ability to right click on the Fiducial point inside the scroll list and change the name and the color of the point
 <li> ability to measure a distance between 2 selected fiducials
