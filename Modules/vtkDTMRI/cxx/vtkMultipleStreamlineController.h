@@ -76,6 +76,11 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   void SaveStreamlinesAsPolyData(char *filename, char *name);
 
   // Description
+  // Save streamlines as text files.
+  // This can be replaced by a better file format.
+  void SaveStreamlinesAsTextFiles(char *filename);
+
+  // Description
   // Save streamlines as vtkPolyData models.
   // Streamlines are grouped into model files based on their color.
   // Files are saved as filename_0.vtk, filename_1.vtk, etc.
@@ -138,18 +143,17 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
 
   // Description
   // controls scalar visibility of actors created in this class
-  //vtkSetMacro(ScalarVisibility,int);
   void SetScalarVisibility(int);
   vtkGetMacro(ScalarVisibility,int);
   vtkBooleanMacro(ScalarVisibility,int);
 
   // Description
-  //  lookup table  for displayed streamlines
+  // Lookup table for all displayed streamlines
   vtkSetObjectMacro(StreamlineLookupTable, vtkLookupTable);
   vtkGetObjectMacro(StreamlineLookupTable, vtkLookupTable);
 
   // Description
-  // Type of vtkHyperStreamline subclass to create
+  // Type of vtkHyperStreamline subclass to create.
   // Use standard VTK class.
   void UseVtkHyperStreamline()
     {
@@ -157,7 +161,7 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
     }
 
   // Description
-  // Type of vtkHyperStreamline subclass to create
+  // Type of vtkHyperStreamline subclass to create.
   // Use our subclass that returns points on the streamline.
   void UseVtkHyperStreamlinePoints()
     {
@@ -165,7 +169,7 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
     }
 
   // Description
-  // Type of vtkHyperStreamline subclass to create
+  // Type of vtkHyperStreamline subclass to create.
   // Use our subclass that returns points on the streamline
   // and interpolates using BSplines.
   void UseVtkPreciseHyperStreamlinePoints()
@@ -189,7 +193,7 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   // Description
   // To do list:
   // Add Print function
-  // Add save function
+  // Add save functions
   // Add observers for progress/implement progress updating
   // Add check on all inputs
 
@@ -234,6 +238,13 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   // this is the default of this class. This prevents the objects above
   // from changing the integration direction.
   int IntegrationDirection;
+
+  // Description:
+  // The error code contains a possible error that occured while
+  // writing a file.
+  vtkSetMacro( ErrorCode, unsigned long );
+
+  unsigned long ErrorCode;
 };
 
 #endif

@@ -134,7 +134,7 @@ proc DTMRIInit {} {
     set Module($m,author) "Lauren O'Donnell"
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.45 $} {$Date: 2004/11/16 03:37:37 $}]
+                  {$Revision: 1.46 $} {$Date: 2004/11/16 04:42:01 $}]
 
      # Define Tabs
     #------------------------------------
@@ -2554,7 +2554,7 @@ set FrameOption3 [Notebook:frame $f {Option 3}]
 
     set f $fSave.fMiddle.fButton
     DevAddButton $f.bApply "Save streamlines in scaled IJK" \
-        {DTMRISaveStreamlinesAsIJKPoints $DTMRI(devel,subdir) $DTMRI(devel,fileNamePoints)}
+        {DTMRISaveStreamlinesAsIJKPoints}
 
     pack $f.bApply -side top -padx $Gui(pad) -pady $Gui(pad) 
 }
@@ -5498,64 +5498,40 @@ proc DTMRIWriteStructuredPoints {filename} {
     puts "Wrote DTMRI data, id $t, as $filename"
 }
 
+
 #-------------------------------------------------------------------------------
 # .PROC DTMRISaveStreamlinesAsIJKPoints
 # Save all points from the streamline paths as text files
 # .ARGS
-# path subdir subdirectory to save the models in
-# string name the filename prefix of each model
 # int verbose default is 1 
 # .END
 #-------------------------------------------------------------------------------
-proc DTMRISaveStreamlinesAsIJKPoints {subdir name {verbose "1"}} {
-    global DTMRI
-
-    set thelist $DTMRI(vtk,streamline,idList)
-    set thePoints ""
-    set filename "NONE"
+proc DTMRISaveStreamlinesAsIJKPoints {{verbose "1"}} {
     
-    set name [tk_getSaveFile -defaultextension ".txt" -title "Save Streamlines. Prefix name"]
-    if { $name == "" } {
-    return
+    # check we have streamlines
+    if {[DTMRI(vtk,streamlineControl) GetNumberOfStreamlines] < 1} {
+        set msg "There are no tracts to save. Please create tracts first."
+        tk_messageBox -message $msg
+        return
     }
-    
-    foreach id $thelist {
-        set streamln streamln,$id
 
-        # write the points (0,1 both dirs from start pt)
-        foreach dir {0 1} {
-            set filename "${name}_points${id}_${dir}.txt"
-            set filename [file join $subdir $filename]
-            # output file
-            set out [open $filename w]
-            set input [DTMRI(vtk,$streamln) GetHyperStreamline$dir]
-            set num [$input GetNumberOfPoints]
-            for {set i 0} {$i < $num} {incr i} {
-                puts $out [$input GetPoint $i]
-            }
-            close $out
-
-            #vtkPolyData p
-            #p SetPoints [DTMRI(vtk,$streamln) GetHyperStreamline$dir] 
-            #vtkDataSetWriter w
-            #w SetInput p
-            #w SetFileName $filename
-            #w Write
-            #w Delete
-            #p Delete
-            # write a file explaining what this is
-            #set filename "${name}_readme.txt"
-        }
+    # set base filename for all stored files
+    set filename [tk_getSaveFile  -title "Save Tracts: Choose Initial Filename"]
+    if { $filename == "" } {
+        return
     }
+
+    # save the tracts
+    DTMRI(vtk,streamlineControl) SaveStreamlinesAsTextFiles \
+        $filename 
 
     # let user know something happened
     if {$verbose == "1"} {
-    set msg "Wrote streamlines as files, last file was $filename"
-    tk_messageBox -message $msg
+        set msg "Finished writing tracts. The filenames are: $filename*.txt"
+        tk_messageBox -message $msg
     }
 
-
-}
+} 
 
 
 #-------------------------------------------------------------------------------
@@ -5673,11 +5649,13 @@ proc DTMRISaveStreamlinesAsModel {{verbose "1"}} {
         return
     }
 
+    # set base filename for all stored files
     set filename [tk_getSaveFile  -title "Save Tracts: Choose Initial Filename"]
     if { $filename == "" } {
         return
     }
-    
+
+    # set name for models in slicer interface
     set modelname [file root [file tail $filename]]
 
     # save the models as well as a MRML file with their colors

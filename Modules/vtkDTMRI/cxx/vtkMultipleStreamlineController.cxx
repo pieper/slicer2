@@ -7,6 +7,8 @@
 #include "vtkPolyDataWriter.h"
 #include "vtkTransformPolyDataFilter.h"
 #include "vtkMrmlModelNode.h"
+#include "vtkErrorCode.h"
+
 
 //------------------------------------------------------------------------------
 vtkMultipleStreamlineController* vtkMultipleStreamlineController::New()
@@ -317,6 +319,89 @@ void vtkMultipleStreamlineController::DeleteStreamline(vtkActor *pickedActor)
       this->DeleteStreamline(index);
     }
 }
+
+
+void vtkMultipleStreamlineController::SaveStreamlinesAsTextFiles(char *filename)
+{ 
+  char fileName[101];
+  vtkHyperStreamlinePoints *currStreamline;
+  ofstream file;
+  int idx, ptidx, numPts;
+  vtkPoints *hs0, *hs1;
+  double point[3];
+
+  // traverse streamline collection
+  this->Streamlines->InitTraversal();
+  // TO DO: make sure this is a vtkHyperStreamlinePoints object
+  currStreamline= (vtkHyperStreamlinePoints *)this->Streamlines->GetNextItemAsObject();
+
+  cout << "Traverse STREAMLINES" << endl;
+
+  idx=0;
+  while(currStreamline)
+    {
+      cout << "stream " << currStreamline << endl;
+      
+      snprintf(fileName,100,"%s_%d.txt",filename,idx);
+
+      // Open file
+      file.open(fileName);
+      if (file.fail())
+        {
+          vtkErrorMacro("Write: Could not open file " << fileName);
+          cerr << "Write: Could not open file " << fileName;
+#if (VTK_MAJOR_VERSION <= 5)      
+          this->SetErrorCode(2);
+#else
+          this->SetErrorCode(vtkErrorCode::GetErrorCodeFromString("CannotOpenFileError"));
+#endif
+          return;
+        }
+
+
+      //GetHyperStreamline0/1 and write their points.
+      hs0=currStreamline->GetHyperStreamline0();
+      hs1=currStreamline->GetHyperStreamline1();
+      
+      // Write the first one in reverse order since both lines
+      // travel outward from the initial point.
+      // Also, skip the first point in the second line since it
+      // is a duplicate of the initial point.
+      numPts=hs0->GetNumberOfPoints();
+      ptidx=numPts-1;
+      while (ptidx >= 0)
+        {
+          hs0->GetPoint(ptidx,point);
+          file << point[0] << " " << point[1] << " " << point[2] << endl;
+          ptidx--;
+        }
+      numPts=hs1->GetNumberOfPoints();
+      ptidx=1;
+      while (ptidx < numPts)
+        {
+          hs1->GetPoint(ptidx,point);
+          file << point[0] << " " << point[1] << " " << point[2] << endl;
+          ptidx++;
+        }
+
+      // Close file
+      file.close();
+      
+      // get next object in collection
+      currStreamline= (vtkHyperStreamlinePoints *)
+        this->Streamlines->GetNextItemAsObject();
+
+      idx++;
+    }
+
+#if (VTK_MAJOR_VERSION <= 5)      
+  this->SetErrorCode(0);
+#else
+  this->SetErrorCode(vtkErrorCode::GetErrorCodeFromString("NoError"));
+#endif
+  
+}
+
 
 void vtkMultipleStreamlineController::SaveStreamlinesAsPolyData(char *filename,
                                                                 char *name)
