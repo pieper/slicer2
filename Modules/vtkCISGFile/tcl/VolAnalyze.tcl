@@ -241,7 +241,7 @@ proc VolAnalyzeApply {} {
             # compressed version exists, uncompress and make it the one to read
             set compressed 1
             set ret [catch {
-                package require fileutil
+                package require fileutil 1.5.1
                 set tmp [::fileutil::tempdir]
                 file copy $root.hdr $tmp/$tail.hdr
                 file copy $root.img.gz $tmp/$tail.img.gz
