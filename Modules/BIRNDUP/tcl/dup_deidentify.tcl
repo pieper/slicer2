@@ -103,25 +103,41 @@ itcl::body dup_deidentify::run {dir} {
 
     ## fake
 
-    set series [glob $dir/*]
-    foreach s $series {
-        if { ![file isdirectory $s] } {
-            continue
-        }
-        file mkdir $s/Deface
-        file copy -force /tmp/face.mpg $s/Deface
-        file copy -force /tmp/slices-axial.mpg $s/Deface
-        file copy -force /tmp/slices-sagittal.mpg $s/Deface
-        file copy -force /tmp/slices-coronal.mpg $s/Deface
-    }
-    DevErrorWindow "Fake Deidentification"
-    ## end fake
+    set resp [DevOKCancel "Click Ok to run real deidentification or Cancel to bypass deidentification"]
 
-    $parent log "starting deidentify of $dir"
-    foreach op $ops {
-        puts "running $op"
+    if { $resp == "ok" } {
+
+        $parent log "starting deidentify of $dir"
+        set dcanon_dir [$parent pref DCANON_DIR]
+        foreach op $ops {
+            puts "executing $op"
+            $parent log "executing $op"
+            if { [catch "exec $dcanon_dir/$op" err] } {
+                puts "$op failed: $err"
+                $parent log "$op failed: $err"
+            }
+        }
+        $parent log "finished deidentify of $dir"
+
+        $parent log "starting rendering of $dir"
+        foreach ser [glob $dir/*-anon] {
+            puts "rendering $ser"
+            $parent log "rendering $ser"
+            # TODO - this avoids warning messages when slicer starts
+            set ::env(SLICER_CUSTOM_CONFIG) "true"
+            if { [catch "exec $::env(SLICER_HOME)/slicer2-linux-x86 --load-dicom $ser --script $::env(SLICER_HOME)/Modules/iSlicer/tcl/evaluation-movies.tcl --exec eval_movies $ser/Deface 10 10 ., exit" err] } {
+                puts "$op failed: $err"
+                $parent log "$op failed: $err"
+            }
+
+        }
+        $parent log "finished deidentify of $dir"
+
+
+    } else {
+        $parent log "bypassed deidentify of $dir"
     }
-    $parent log "finished deidentify of $dir"
+
     close [open $dir/ready_for_review "w"]
     $parent refresh review
     $parent refresh deidentify
