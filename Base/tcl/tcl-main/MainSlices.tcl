@@ -109,7 +109,7 @@ proc MainSlicesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainSlices \
-        {$Revision: 1.52 $} {$Date: 2004/01/31 23:31:36 $}]
+        {$Revision: 1.53 $} {$Date: 2004/06/28 14:23:47 $}]
 
     # Initialize Variables
     set Slice(idList) "0 1 2"
@@ -604,9 +604,24 @@ proc MainSlicesUpdateMRML {} {
 
                 $m delete 0 end
                 foreach v $Volume(idList) {
+
+                    set volnum [$m index end]
+                    set colbreak 0
+                    if {$volnum != "none"} {
+                        # first pass through, get the end index returned as none, 
+                        # second pass get 0. Have to bump it up one to get proper
+                        # column breaking
+                        incr volnum
+                        # every 40 entries, start a new column in the volumes list
+                        if {[expr fmod($volnum,40)] == 0} {
+                            set colbreak 1
+                        }
+                    }
+                
                     $m add command -label [Volume($v,node) GetName] \
                         -command "MainSlicesSetVolumeAll $layer $v; \
-                        MainViewerHideSliceControls; RenderAll"
+                        MainViewerHideSliceControls; RenderAll" \
+                        -columnbreak $colbreak 
                 }
             }
 
@@ -618,9 +633,20 @@ proc MainSlicesUpdateMRML {} {
 
                 $m delete 0 end
                 foreach v $Volume(idList) {
+
+                    set volnum [$m index end]
+                    set colbreak 0
+                    if {$volnum != "none"} {
+                        incr volnum
+                        if {[expr fmod($volnum,40)] == 0} {
+                            set colbreak 1
+                        }
+                    }
+
                     $m add command -label [Volume($v,node) GetName] \
                         -command "MainSlicesSetVolume ${layer} ${s} $v; \
-                        MainViewerHideSliceControls; RenderBoth $s"
+                        MainViewerHideSliceControls; RenderBoth $s" \
+                        -columnbreak $colbreak 
                 }
             }
         }
