@@ -154,7 +154,7 @@ proc LevelSetsInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1 $} {$Date: 2003/04/28 18:17:19 $}]
+        {$Revision: 1.2 $} {$Date: 2003/04/28 19:01:02 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -1073,7 +1073,7 @@ proc LevelSetsPrepareResultVolume {}  {
 #-------------------------------------------------------------------------------
 proc RunLevelSetsBegin {} {
 
-  global LevelSets Volume Gui
+  global LevelSets Volume Gui Slice
 
   puts "RunLevelSets 1"
   if {[LevelSetsPrepareResultVolume] == 1} {
@@ -1260,7 +1260,15 @@ proc RunLevelSetsBegin {} {
   vtk_th SetOutputScalarTypeToUnsignedChar
 
   Volume($res,vol) SetImageData [vtk_th GetOutput]
+
+  foreach s $Slice(idList) {
+    set Slice($s,foreVolID) $res
+  }
+  MainSlicesSetFadeAll 0.5
+
   MainVolumesUpdate $res
+
+  
 
   vtk_th   Delete
 
