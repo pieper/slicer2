@@ -151,7 +151,7 @@ proc VolHeaderBuildGUI {parentFrame} {
         -text [lindex $Volume(scanOrderMenu)\
         [lsearch $Volume(scanOrderList) $Volume(scanOrder)]] \
         -width 10 -menu $f.mbscanOrder.menu} $Gui(WMBA)
-    set Volume(mbscanOrder) $f.mbscanOrder
+    lappend Volume(mbscanOrder) $f.mbscanOrder
     eval {menu $f.mbscanOrder.menu} $Gui(WMA)
     
     set m $f.mbscanOrder.menu

@@ -65,7 +65,6 @@ proc VolTensorInit {} {
     set Volume(VolTensor,YAxisList) {vtk non-vtk}
     set Volume(VolTensor,YAxisList,tooltips) {"VTK coordinate system used to create tensors (-y axis) " "Non-VTK coordinate system (+y axis)"}
 
-
 }
 
 #-------------------------------------------------------------------------------
@@ -147,8 +146,8 @@ proc VolTensorBuildGUI {parentFrame} {
         -text [lindex $Volume(scanOrderMenu)\
         [lsearch $Volume(scanOrderList) $Volume(scanOrder)]] \
         -width 10 -menu $f.mbscanOrder.menu} $Gui(WMBA)
-    set Volume(mbscanOrder) $f.mbscanOrder
-    eval {menu $f.mbscanOrder.menu} $Gui(WMA)
+   lappend Volume(mbscanOrder) $f.mbscanOrder
+   eval {menu $f.mbscanOrder.menu} $Gui(WMA)
 
    set m $f.mbscanOrder.menu
    foreach label $Volume(scanOrderMenu) value $Volume(scanOrderList) {
