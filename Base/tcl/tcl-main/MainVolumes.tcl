@@ -72,7 +72,7 @@ proc MainVolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.60.2.2 $} {$Date: 2003/08/08 19:54:45 $}]
+    {$Revision: 1.60.2.3 $} {$Date: 2003/08/19 17:54:56 $}]
 
     set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -1196,12 +1196,15 @@ proc MainVolumesRenumber {vid} {
                 }
                 if {[catch {file rename $srcFile $destFile} errmsg] != 0} {
                     puts "MainVolumesRenumber: ERROR renaming $srcFile to $destFile:\n\t$errmsg"
+                    DevErrorWindow "MainVolumesRenumber: ERROR renaming $srcFile to $destFile:\n\t$errmsg"
+                    return -1
                 }
                
             }
             return 1
         } else {
             puts "MainVolumesRenumber: ERROR: either $lastFile does not exist or $newLastFile does,\nrenumbering cancelled."
+            DevErrorWindow "MainVolumesRenumber: ERROR: either $lastFile does not exist or $newLastFile does,\nrenumbering cancelled."
             return -1
         }
     } else {
