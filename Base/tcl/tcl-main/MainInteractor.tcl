@@ -120,11 +120,15 @@ proc MainInteractorBind {widget} {
     bind $widget <Control-ButtonRelease-1> \
         {MainInteractorShiftB1Release %W %x %y}
 
+    # NOTE: since this has been disabled for years, AltB1 is now
+    # mapped to PAN to support two-button mice. - sp 2002-11-14
     # Alt-B1
-    bind $widget <Alt-B1-Motion>          {MainInteractorAltB1Motion %W %x %y}
-    bind $widget <Alt-ButtonPress-1>      {MainInteractorShiftB1 %W %x %y}
-    bind $widget <Alt-ButtonRelease-1> \
-        {MainInteractorShiftB1Release %W %x %y}
+    #bind $widget <Alt-B1-Motion>          {MainInteractorAltB1Motion %W %x %y}
+    #bind $widget <Alt-ButtonPress-1>      {MainInteractorShiftB1 %W %x %y}
+    #bind $widget <Alt-ButtonRelease-1>    {MainInteractorShiftB1Release %W %x %y}
+    bind $widget <Alt-ButtonPress-1>     {MainInteractorStartMotion %W %x %y}
+    bind $widget <Alt-ButtonRelease-1>   {MainInteractorEndMotion %W %x %y}
+    bind $widget <Alt-B1-Motion>         {MainInteractorB2Motion %W %x %y}
 
     # Keyboard
     bind $widget <KeyPress-r>        {MainInteractorReset %W %x %y}
@@ -584,6 +588,9 @@ proc MainInteractorAltB1Motion {widget x y} {
     # BUG: I'm commenting this out because window/leveling for too long
     # causes a stack overflow.
 #    MainInteractorThreshold $s $xs $ys $Interactor(xsLast) $Interactor(ysLast)
+
+    # NOTE: since this has been disabled for years, AltB1 is now
+    # mapped to PAN to support two-button mice. - sp 2002-11-14
 
     # Cursor
     MainInteractorCursor $s $xs $ys $x $y

@@ -68,6 +68,7 @@ proc CreateAndBindTkEvents { widget } {
     EvDeclareEventHandler tkMotionEvents <B1-Motion> {Rotate %W %x %y}
     EvDeclareEventHandler tkMotionEvents <B2-Motion> {Pan %W %x %y}
     EvDeclareEventHandler tkMotionEvents <B3-Motion> {Zoom %W %x %y}
+    EvDeclareEventHandler tkMotionEvents <Alt-B1-Motion> {Pan %W %x %y}
     EvDeclareEventHandler tkMotionEvents <Control-B1-Motion> {LR %W %x %y}
     EvDeclareEventHandler tkMotionEvents <Control-B2-Motion> {UD %W %x %y}
     EvDeclareEventHandler tkMotionEvents <Control-B3-Motion> {BF %W %x %y}
