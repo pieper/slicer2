@@ -71,7 +71,7 @@ proc VolumesInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.33 $} {$Date: 2000/08/08 15:36:30 $}]
+		{$Revision: 1.34 $} {$Date: 2000/08/28 18:25:34 $}]
 
 	# Props
 	set Volume(propertyType) Basic
@@ -84,6 +84,8 @@ proc VolumesInit {} {
 	set Volume(scanOrderList) "LR RL SI IS AP PA" 
 	
 	MainVolumesSetGUIDefaults
+
+        set Volume(DefaultDir) ""
 }
 
 #-------------------------------------------------------------------------------
@@ -414,7 +416,7 @@ acquisition.
 
 	set f $fProps.fBot.fBasic.fVolume
 
-        DevAddFileBrowse $f Volume firstFile "First Image File:" "VolumesSetFirst" "" ""  "Browse for the first Image file" 
+        DevAddFileBrowse $f Volume firstFile "First Image File:" "VolumesSetFirst" "" "\$Volume(DefaultDir)"  "Browse for the first Image file" 
 
         bind $f.efile <Tab> "VolumesSetLast"
 
@@ -893,6 +895,7 @@ proc VolumesSetFirst {} {
 	global Volume Mrml
 
 	set Volume(name)  [file root [file tail $Volume(firstFile)]]
+        set Volume(DefaultDir) [file dirname $Volume(firstFile)]
 
 	# lastNum is an image number
 	set Volume(lastNum)  [MainFileFindImageNumber Last \
