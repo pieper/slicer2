@@ -66,6 +66,7 @@ vtkMrmlSegmenterClassNode::vtkMrmlSegmenterClassNode()
   this->Label            = 0;
   this->Prob             = 0.0;
   this->ShapeParameter   = 0.0;
+  this->WeightConfidenceName = NULL;
 }
 
 //----------------------------------------------------------------------------
@@ -86,11 +87,16 @@ vtkMrmlSegmenterClassNode::~vtkMrmlSegmenterClassNode()
     delete [] this->LogMean;
     this->LogMean = NULL;
   }
-    if (this->LogCovariance)
+  if (this->LogCovariance)
   {
     delete [] this->LogCovariance;
     this->LogCovariance = NULL;
   }
+  if (this->WeightConfidenceName)
+  {
+    delete [] this->WeightConfidenceName;
+    this->WeightConfidenceName = NULL;
+  } 
 }
 
 //----------------------------------------------------------------------------
@@ -129,6 +135,11 @@ void vtkMrmlSegmenterClassNode::Write(ofstream& of, int nIndent)
   {
     of << " LogCovariance='" << this->LogCovariance << "'";
   }
+  if (this->WeightConfidenceName && strcmp(this->WeightConfidenceName, "")) 
+  {
+    of << " WeightConfidenceName='" << this->WeightConfidenceName << "'";
+  }
+
   of << "></SegmenterClass>\n";;
 }
 
@@ -148,6 +159,7 @@ void vtkMrmlSegmenterClassNode::Copy(vtkMrmlNode *anode)
   this->SetLocalPriorRange(node->LocalPriorRange); 
   this->SetLogMean(node->LogMean);
   this->SetLogCovariance(node->LogCovariance);
+  this->SetWeightConfidenceName(node->WeightConfidenceName);
 
 }
 
@@ -169,10 +181,15 @@ void vtkMrmlSegmenterClassNode::PrintSelf(ostream& os, vtkIndent indent)
    for (int idx = 0; idx < 2; ++idx) {
      os << indent << ", " << this->LocalPriorRange[idx];
    }
+
    os << indent << "LogMean: " <<
     (this->LogMean ? this->LogMean : "(none)") << "\n";
    os << indent << "LogCovariance: " <<
     (this->LogCovariance ? this->LogCovariance : "(none)") << "\n";
+
+   os << indent << "WeightConfidenceName: " <<
+    (this->WeightConfidenceName ? this->WeightConfidenceName : "(none)") << "\n";
+
 }
 
 

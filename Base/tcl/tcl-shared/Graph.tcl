@@ -400,7 +400,6 @@ proc GraphChangeMenu {varName path widget xpos ypos} {
     }
     wm withdraw $w
 
-    ShowPopup $Gui(wGraphChangeMenu) $xpos $ypos
     # regexp {([^x]*)x([^\+]*)} [wm geometry $w] match w h
     # Frames
     set f $w
@@ -470,6 +469,8 @@ proc GraphChangeMenu {varName path widget xpos ypos} {
 
     pack  $f.fButtons.bCancel $f.fButtons.lEmpty2 $f.fButtons.bUpdate -side left  -side left -padx 0  -pady 0
 
+    update 
+    ShowPopup $Gui(wGraphChangeMenu) $xpos $ypos
 }
 
 #-------------------------------------------------------------------------------
@@ -485,7 +486,7 @@ proc GraphInteractor {varName path widget} {
         return
    }
    if {$localArray(Graph,$path,descrFlag)} {
-     bind $widget <ButtonPress-1>  "GraphChangeMenu $varName \"$path\" %W %X %Y"
+     bind $widget <Button-1>  "GraphChangeMenu $varName \"$path\" %W %X %Y"
      TooltipAdd $widget "Press left mouse button to change graph settings"
    }
 }

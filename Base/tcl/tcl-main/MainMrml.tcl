@@ -98,7 +98,7 @@ proc MainMrmlInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainMrml \
-        {$Revision: 1.91 $} {$Date: 2003/09/23 22:34:55 $}]
+        {$Revision: 1.92 $} {$Date: 2003/10/25 23:59:04 $}]
 
     set Mrml(colorsUnsaved) 0
 }
@@ -1420,7 +1420,7 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
                 switch [string tolower $key] {
                     "numclasses" {$n SetNumClasses $val}
                     "maxinputchanneldef" {$n SetMaxInputChannelDef $val}
-            "emshapeiter"        {$n SetEMShapeIter $val}
+                    "emshapeiter"        {$n SetEMShapeIter $val}
                     "emiteration"        {$n SetEMiteration $val}
                     "mfaiteration"       {$n SetMFAiteration $val}
                     "alpha"              {$n SetAlpha $val}
@@ -1465,7 +1465,7 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
                     "fileprefix"  {$n SetFilePrefix $val}
                     "filename"    {$n SetFileName $val}
                     "imagerange"  {eval $n SetImageRange  $val}
-            "intensityavgvaluepredef"  {$n SetIntensityAvgValuePreDef $val}
+                    "intensityavgvaluepredef"  {$n SetIntensityAvgValuePreDef $val}
                 }
             }
     }
@@ -1475,9 +1475,11 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
                 set key [lindex $a 0]
                 set val [lreplace $a 0 0]
                 switch [string tolower $key] {
-                    "numclasses" {$n SetNumClasses $val}
-                    "name"       {$n SetName $val}
-            "prob"       {$n SetProb $val}
+                    "numclasses"          {$n SetNumClasses $val}
+                    "name"                {$n SetName $val}
+                    "prob"                {$n SetProb $val}
+                    "localpriorweight"    {$n SetLocalPriorWeight $val}
+                    "inputchannelweights" {$n SetInputChannelWeights $val}
                 }
             }
     }
@@ -1490,15 +1492,18 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
                 set key [lindex $a 0]
                 set val [lreplace $a 0 0]
                 switch [string tolower $key] {
-                    "name"              {$n SetName $val}
-                    "localpriorprefix"  {$n SetLocalPriorPrefix $val}
-                    "localpriorname"    {$n SetLocalPriorName $val}
-                    "localpriorrange"   {eval $n SetLocalPriorRange  $val}
-                    "logmean"           {$n SetLogMean $val}
-                    "logcovariance"     {$n SetLogCovariance $val}
-                    "label"             {$n SetLabel $val}
-                    "prob"              {$n SetProb $val}
-                    "shapeparameter"    {$n SetShapeParameter $val}
+                    "name"                 {$n SetName $val}
+                    "localpriorprefix"     {$n SetLocalPriorPrefix $val}
+                    "localpriorname"       {$n SetLocalPriorName $val}
+                    "localpriorrange"      {eval $n SetLocalPriorRange  $val}
+                    "logmean"              {$n SetLogMean $val}
+                    "logcovariance"        {$n SetLogCovariance $val}
+                    "label"                {$n SetLabel $val}
+                    "prob"                 {$n SetProb $val}
+                    "shapeparameter"       {$n SetShapeParameter $val}
+                    "weightconfidencename" {$n SetWeightConfidenceName $val}
+                    "localpriorweight"     {$n SetLocalPriorWeight $val}
+                    "inputchannelweights"  {$n SetInputChannelWeights $val}
                 }
             }
         }
@@ -1884,12 +1889,9 @@ proc MainMrmlRelativity {oldRoot} {
 
     Mrml(dataTree) InitTraversal
     set node [Mrml(dataTree) GetNextItem]
-    
     while {$node != ""} {
         set class [$node GetClassName]
-        if {$Module(verbose)} {
-            puts "MainMrmlRelativity: class = $class"
-        }
+
         if {$class == "vtkMrmlVolumeNode"} {
 
             if {$Module(verbose) == 1} {
@@ -1932,22 +1934,17 @@ proc MainMrmlRelativity {oldRoot} {
             # << AT 7/6/01, sp 2002-08-20
             # Kilian : Check if path exists 02/03
               
-        } elseif {$class == "vtkMrmlModelNode"} {
-            if {$Module(verbose)} {
-                puts "MainMrmlRelativity: have a model node, using new relativity"
-            }
-            # use the new version with real relative paths
-            $node SetFileName [MainFileGetRelativePrefixNew [$node GetFullFileName]]
-            if {0} {
-                puts "NOT using old setting of the file name"
-                set ext [file extension [$node GetFileName]]
-                $node SetFileName [MainFileGetRelativePrefix \
+            } elseif {$class == "vtkMrmlModelNode"} {
+
+            set ext [file extension [$node GetFileName]]
+            $node SetFileName [MainFileGetRelativePrefix \
+                                   [file join $oldRoot [$node GetFileName]]]$ext
+            $node SetFullFileName [file join $Mrml(dir) \
                                        [file join $oldRoot [$node GetFileName]]]$ext
-                $node SetFullFileName [file join $Mrml(dir) \
-                                           [file join $oldRoot [$node GetFileName]]]$ext
-            }
-        } 
-        
+            
+            # use the new version with real relative paths - doesn't work 
+            # $node SetFileName [MainFileGetRelativePrefixNew [$node GetFileName]]
+        }
         set node [Mrml(dataTree) GetNextItem]
     }
 }

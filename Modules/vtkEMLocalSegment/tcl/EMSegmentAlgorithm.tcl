@@ -115,10 +115,10 @@ proc EMSegmentSetVtkSuperClassSetting {SuperClass NumInputImagesSet } {
     }
     # puts "blubber $i $EMSegment(Cattrib,$i,Prob)"
     EMSegment(vtkEMSegment) SetTissueProbability $EMSegment(Cattrib,$i,Prob)
-    EMSegment(vtkEMSegment) SetLocalPriorWeight $EMSegment(Cattrib,$i,LocalPriorWeight)
-    for {set y 0} {$y < $EMSegment(NumInputChannel)} {incr y} {
-       EMSegment(vtkEMSegment) SetInputChannelWeights $EMSegment(Cattrib,$i,InputChannelWeights,$y)
-    }
+    # EMSegment(vtkEMSegment) SetLocalPriorWeight $EMSegment(Cattrib,$i,LocalPriorWeight)
+    # for {set y 0} {$y < $EMSegment(NumInputChannel)} {incr y} {
+    #    EMSegment(vtkEMSegment) SetInputChannelWeights $EMSegment(Cattrib,$i,InputChannelWeights,$y)
+    # }
     # puts "$i is superclass $EMSegment(Cattrib,$i,IsSuperClass)"
     if {$EMSegment(Cattrib,$i,IsSuperClass)} {
       set NumInputImagesSet [EMSegmentSetVtkSuperClassSetting $i $NumInputImagesSet]
