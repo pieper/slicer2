@@ -99,6 +99,7 @@ proc getDone {upload_file defer_file} {
     wm geom $ROOT.done +$x+$y
     wm deiconify $ROOT.done
 
+
     # Wait on click of ok button, then return
     #-------------------------------------------------------------------
     tkwait variable done_value
@@ -249,7 +250,8 @@ proc getStudyApproval {study_path} {
     # Create button for ok, it is disabled until all series are reviewed
     #------------------------------------------------------------------
     eval button $ROOT.gonogo.ok -relief raised -text OK -state disabled -command [list "set rvalue 1"]
-    pack $ROOT.gonogo.ok -in $ROOT.gonogo.bot -side left -expand 1 -padx 5m -pady 5m
+    eval button $ROOT.gonogo.cancel -relief raised -text Cancel -command [list "set rvalue -1"]
+    pack $ROOT.gonogo.ok $ROOT.gonogo.cancel -in $ROOT.gonogo.bot -side left -expand 1 -padx 5m -pady 5m
 
     # Withdraw the window, then update all the geometry information
     # so we know how big it wants to be, then center the window in the
@@ -263,11 +265,17 @@ proc getStudyApproval {study_path} {
     wm geom $ROOT.gonogo +$x+$y
     wm deiconify $ROOT.gonogo
 
+    wm protocol $ROOT.gonogo WM_DELETE_WINDOW "set rvalue -1"
+
     # Wait on click of ok button, then return
     #-------------------------------------------------------------------
     tkwait variable rvalue
     wm withdraw $ROOT.gonogo
     destroy $ROOT.gonogo
+
+    if { $rvalue == -1 } {
+        exit
+    }
 
     foreach s [array names series_approval] {
         if {$series_approval($s) == 1} {
