@@ -460,6 +460,7 @@ proc FMRIEngineCreateCurvesFromTimeCourse {i j k} {
         # calculates std
         set v1 [expr $total * $total / $VolumesPerCondition]
         set var [expr {($qtotal - $v1) / ($VolumesPerCondition - 1)}]
+        set var [expr abs($var)]
         set std [expr sqrt($var)]
         set rv [expr round($std)]
         lappend FMRIEngine(conditionTCStd) $rv
@@ -500,6 +501,7 @@ proc FMRIEngineCreateCurvesFromTimeCourse {i j k} {
         # calculates std
         set v1 [expr $total * $total / $VolumesPerBaseline]
         set var [expr {($qtotal - $v1) / ($VolumesPerBaseline - 1)}]
+        set var [expr abs($var)]
         set std [expr sqrt($var)]
         set rv [expr round($std)]
         lappend FMRIEngine(baselineTCStd) $rv
