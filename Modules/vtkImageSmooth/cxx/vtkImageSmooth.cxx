@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkImageSmooth.cxx,v $
   Language:  C++
-  Date:      $Date: 2004/03/03 16:10:49 $
-  Version:   $Revision: 1.2 $
+  Date:      $Date: 2004/09/16 17:27:36 $
+  Version:   $Revision: 1.3 $
 
   Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen 
   All rights reserved.
@@ -38,7 +38,7 @@
 //#undef DEBUG
 //----------------------------------------------------------------------------
 
-//vtkCxxRevisionMacro(vtkImageSmooth, "$Revision: 1.2 $");
+//vtkCxxRevisionMacro(vtkImageSmooth, "$Revision: 1.3 $");
 //vtkStandardNewMacro(vtkImageSmooth);
 
 //----------------------------------------------------------------------------
@@ -98,7 +98,7 @@ float vtkImageSmooth::Init()
 
 template <class IT, class OT>
 static void vtkImageSmooth3D(vtkImageSmooth *self,
-                               vtkImageData *inData, IT *inPtr,
+                               vtkImageData *inData, IT *,
                                vtkImageData *outData, OT *outPtr,
                                int outExt[6], int id)
 {
@@ -106,8 +106,8 @@ static void vtkImageSmooth3D(vtkImageSmooth *self,
   int idxR, idxY, idxZ;
   int maxY, maxZ;
   int rowLength;
-  float *temp_ptr = 0;
-  float *edge_ptr = 0;
+  float *temp_ptr;
+/*  float *edge_ptr = 0;*/
   
   double lx,ly,lxx,lyy,lxy,lzz,lz, lyz, lxz;
   double kapa4, kapa4_mean;
@@ -122,12 +122,6 @@ static void vtkImageSmooth3D(vtkImageSmooth *self,
   int x,y,z;
 
 
-  shift_xyz =  0;
-  xyz = 0;
- 
-  temp_ptr = NULL;
-  edge_ptr = NULL;
-
   rowLength = (outExt[1] - outExt[0]+1)*inData->GetNumberOfScalarComponents();
   maxY = outExt[3] - outExt[2] + 1; 
   maxZ = outExt[5] - outExt[4] + 1;
@@ -139,18 +133,15 @@ static void vtkImageSmooth3D(vtkImageSmooth *self,
   temp_ptr = (float*) calloc(maxZ*maxY*rowLength,sizeof(float));
   if(temp_ptr == NULL)
       return;
-/*
-  edge_ptr = (float*) calloc(maxZ*maxY*rowLength,sizeof(float));
-  if(edge_ptr == NULL)
-      return;*/
 
   //make a copy of original data, before we modify it
   outData->CopyAndCastFrom(inData,outExt);
 
 
-  kapa4 = 0.0;
-  float dx,dy,dz;
-  inData->GetSpacing(dx,dy,dz);
+  vtkFloatingPointType dx,dy,dz;
+  dx = inData->GetSpacing()[0];
+  dy = inData->GetSpacing()[1];
+  dz = inData->GetSpacing()[2];
   if((dx <= 0) || (dy <= 0) || (dz <= 0))
       dx = dy = dz = 1.0;
 
@@ -158,19 +149,6 @@ static void vtkImageSmooth3D(vtkImageSmooth *self,
       //self->vtkErrorMacro("Missing input");
       return;
   }
-/*
-#ifdef DEBUG
-    FILE *fp = 0;
-    fp = NULL;
-    fp = fopen("c:\\cygwin\\slicer2\\Modules\\vtkImageSmooth\\out3d.txt","w+");
-    fprintf(fp,"rowLength=%d,maxY=%d,maxZ=%d\n",rowLength,maxY,maxZ);
-    fprintf(fp,"scalar Type %s\n",inData->GetScalarTypeAsString());
-    fprintf(fp,"dx = %f, dy = %f, dz = %f\n",dx,dy,dz);
-    fflush(fp);
-    if(fp == NULL)
-        return;
-#endif
-*/
 
   for(int iter = 0;!self->AbortExecute && iter < self->NumberOfIterations;iter++)
   {
@@ -463,10 +441,6 @@ int final;
 #endif
 */
 
-/*
-    if(!edge_ptr)
-      free(edge_ptr);
-*/
  return;
 
 }
@@ -479,7 +453,7 @@ int final;
 
 template <class IT, class OT>
 static void vtkImageSmoothExecute(vtkImageSmooth *self,
-                               vtkImageData *inData, IT *inPtr,
+                               vtkImageData *inData, IT *,
                                vtkImageData *outData, OT *outPtr,
                                int outExt[6], int id)
 {
@@ -502,7 +476,7 @@ static void vtkImageSmoothExecute(vtkImageSmooth *self,
         FILE *fp;
     fp = NULL;
     fp = fopen("c:\\cygwin\\slicer2\\Modules\\vtkImageSmooth\\outtest.txt","w+");
-    fflush(fp);
+    Fflush(fp);
 
 
         if(fp == NULL)
@@ -510,12 +484,6 @@ static void vtkImageSmoothExecute(vtkImageSmooth *self,
 #endif
 
   */
-
-  shift_xyz =  0;
-  xyz = 0;
- 
-  temp_ptr = NULL;
-  edge_ptr = NULL;
 
   // find the region to loop over
 
@@ -541,8 +509,6 @@ static void vtkImageSmoothExecute(vtkImageSmooth *self,
   edge_ptr = (float*) calloc((maxZ)*(maxY)*rowLength,sizeof(float));
   if(edge_ptr == NULL)
       return;
-
-  kapa = 0.0;
 
 /*
 #ifdef DEBUG
@@ -804,7 +770,6 @@ void vtkImageSmooth::ThreadedExecute(vtkImageData *inData,
                                   int outExt[6], int id)
 {
   int inExt[6];
-  float ret = 0.0;
   void *inPtr = inData->GetScalarPointerForExtent(outExt);
 
   //extend our image for computations

@@ -3,9 +3,8 @@
 
 
 
-#include <vtkImageSmoothConfigure.h>
 #include <vtkImageToImageFilter.h>
-
+#include "vtkImageSmoothConfigure.h"
 
 class VTK_IMAGESMOOTH_EXPORT vtkImageSmooth : public vtkImageToImageFilter
 {
@@ -31,7 +30,8 @@ class VTK_IMAGESMOOTH_EXPORT vtkImageSmooth : public vtkImageToImageFilter
   
   void ExecuteInformation(vtkImageData *inData, 
                                      vtkImageData *outData);
-  
+  void ExecuteInformation() {this->vtkImageToImageFilter::ExecuteInformation();};
+
   float Init();
  
   //Data
