@@ -105,7 +105,7 @@ proc ITKFiltersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.4 $} {$Date: 2005/02/01 00:51:37 $}]
+        {$Revision: 1.5 $} {$Date: 2005/03/25 23:36:31 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -394,7 +394,7 @@ proc vtkITKGUIFilter { filter } {
 
     set f $Module(ITKFilters,fMain).fFloating.f$filter
    
-    puts "Making GUI filter: $filter"
+    #puts "Making GUI filter: $filter"
 
     foreach param $ITKFilters($filter,params) {
         frame $f.f$param
@@ -494,7 +494,7 @@ proc ITKFiltersApply {} {
     set filter $ITKFilters(filter)
     set v1 $ITKFilters(inVolume)
     set v2 $ITKFilters(outVolume)
-    puts $v2
+    #puts $v2
     if {$v2 == -5} {
         set name [Volume($v1,node) GetName]
         set v2 [DevCreateNewCopiedVolume $v1 ""  ${name}_filter ]
