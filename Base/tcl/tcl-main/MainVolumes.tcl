@@ -72,7 +72,7 @@ proc MainVolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.58 $} {$Date: 2003/05/28 22:44:00 $}]
+    {$Revision: 1.59 $} {$Date: 2003/06/03 21:52:29 $}]
 
     set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -420,6 +420,9 @@ proc MainVolumesWrite {v prefix} {
     set name [file root [file tail $fileFull]]
     Volume($v,node) SetFilePrefix $name
     # Tell volume node where it should be written
+    if {$::Module(verbose)} {
+        puts "MainVolumesWrite: setting full prefix to $fileFull"
+    }
     Volume($v,node) SetFullPrefix $fileFull
 
     if { [Volume($v,node) GetFilePattern] == "" } {
@@ -452,6 +455,9 @@ proc MainVolumesWrite {v prefix} {
 
     # Reset the pathnames to be relative to Mrml(dir)
     Volume($v,node) SetFilePrefix $filePrefix
+    if {$::Module(verbose)} {
+        puts "MainVolumesWrite: setting full prefix to $fileFull"
+    }
     Volume($v,node) SetFullPrefix $fileFull
 
     # Wrote it, so not dirty (changed since read/wrote)

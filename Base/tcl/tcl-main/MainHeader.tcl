@@ -693,6 +693,9 @@ proc GetHeaderInfo {img1 num2 node tk} {
     
     # Set the volume node's attributes using header info
     $node SetFilePrefix $prefix
+    if {$::Module(verbose)} {
+        puts "GetHeaderInfo: setting full prefix from mrml dir ($Mrml(dir)) and file prefix ([$node GetFilePrefix]) to [file join $Mrml(dir) [$node GetFilePrefix]]"
+    }
     $node SetFullPrefix [file join $Mrml(dir) [$node GetFilePrefix]]
     $node SetFilePattern $filePattern
     $node SetImageRange $num1 $num2
