@@ -51,6 +51,9 @@
 #   MainModelsRegisterModel
 #   MainModelsWrite
 #   MainModelsStorePresets
+#   MainModelsRaiseScalarBar
+#   MainModelsRemoveScalarBar
+#   MainModelsToggleScalarBar
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -72,7 +75,7 @@ proc MainModelsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainModels \
-		{$Revision: 1.26 $} {$Date: 2000/11/07 05:14:02 $}]
+		{$Revision: 1.27 $} {$Date: 2000/11/09 01:07:57 $}]
 
 	set Model(idNone) -1
 	set Model(activeID) ""
@@ -1013,6 +1016,12 @@ proc MainModelsRaiseScalarBar { {m ""} } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC MainModelsRemoveScalarBar
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc MainModelsRemoveScalarBar { {m ""} } {
 
     global viewWin Model
@@ -1033,6 +1042,12 @@ proc MainModelsRemoveScalarBar { {m ""} } {
 
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MainModelsToggleScalarBar
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc MainModelsToggleScalarBar {m} {
     
     global Model

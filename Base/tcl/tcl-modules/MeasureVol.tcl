@@ -32,6 +32,7 @@
 #   MeasureVolEnter
 #   MeasureVolExit
 #   MeasureVolVolume
+#   MeasureVolSelectVol
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -96,7 +97,7 @@ proc MeasureVolInit {} {
     # Set version info
     #------------------------------------
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.6 $} {$Date: 2000/11/06 21:58:29 $}]
+	    {$Revision: 1.7 $} {$Date: 2000/11/09 01:07:57 $}]
     
     # Initialize module-level variables
     #------------------------------------

@@ -31,7 +31,6 @@
 #   DevErrorWindow message
 #   DevFatalErrorWindow message
 #   DevAddLabel LabelName Message Color
-#   DevAddLabel
 #   DevAddEntry
 #   DevAddButton ButtonName Message Command Width
 #   DevAddSelectButton TabName Label Message Pack Tooltip width color

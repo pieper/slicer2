@@ -34,6 +34,7 @@
 #   CustomUpdateGUI
 #   CustomCount
 #   CustomShowFile
+#   CustomBindingCallback
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -44,10 +45,11 @@
 
 #-------------------------------------------------------------------------------
 #  Variables
-#  These are the variables defined by this module.
+#  These are (some of) the variables defined by this module.
 # 
 #  int Custom(count) counts the button presses for the demo 
 #  list Custom(eventManager)  list of event bindings used by this module
+#  widget Custom(textBox)  the text box widget
 #-------------------------------------------------------------------------------
 
 
@@ -138,7 +140,7 @@ proc CustomInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.20 $} {$Date: 2000/11/09 01:04:02 $}]
+	    {$Revision: 1.21 $} {$Date: 2000/11/09 01:07:57 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -420,7 +422,13 @@ proc CustomShowFile {} {
 }
 
 
-#{all <Shift-2> {CustomBindingCallback Shift-2 %W %X %Y %x %y %t}} }
+#-------------------------------------------------------------------------------
+# .PROC CustomBindingCallback
+# Demo of callback routine for bindings
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc CustomBindingCallback { event W X Y x y t } {
     global Custom
 
