@@ -489,19 +489,7 @@ proc MainVolumesSetActive {{v ""}} {
 		}
 		
 		# Use defaults to update GUI
-		vtkMrmlVolumeNode default
-		set Volume(name) [default GetName]
-		set Volume(firstPattern) %s.%03d
-		set Volume(order) SI
-		set spacing [default GetSpacing]
-		set Volume(littleEndian) [default GetLittleEndian]
-		set Volume(resolution) [lindex [default GetDimensions] 0]
-		set Volume(pixelSize) [lindex $spacing 0]
-		set Volume(sliceThickness) [lindex $spacing 2]
-		set Volume(sliceSpacing) 0.0
-		set Volume(gantryDetectorTilt) [default GetTilt]
-		set Volume(desc) [default GetDescription]
-		default Delete
+		MainVolumesSetGUIDefaults
 
 	} else {
 
@@ -716,3 +704,30 @@ proc MainVolumesUpdateSliderRange {} {
 	}
 }
 
+# Set defaults for the Volumes GUI.
+proc MainVolumesSetGUIDefaults {} {
+    global Volume
+
+    # Get defaults from VTK 
+    vtkMrmlVolumeNode default
+    set Volume(name) [default GetName]
+    set Volume(filePattern) %s.%03d
+    set Volume(scanOrder) SI
+    set spacing [default GetSpacing]
+    set Volume(littleEndian) [default GetLittleEndian]
+    set Volume(resolution) [lindex [default GetDimensions] 0]
+    set Volume(pixelSize) [lindex $spacing 0]
+    set Volume(sliceThickness) [lindex $spacing 2]
+    set Volume(sliceSpacing) 0.0
+    set Volume(gantryDetectorTilt) [default GetTilt]
+    set Volume(desc) [default GetDescription]
+    set Volume(scalarType) [default GetScalarType]
+    set Volume(numScalars) [default GetNumScalars]
+    default Delete
+
+    # Set GUI defaults
+    set Volume(firstFile) ""
+    set Volume(readHeaders) 1
+    set Volume(labelMap) 0
+    set Volume(lastNum) ""
+}
