@@ -18,6 +18,7 @@ SET( LOCAL_MODULE_SRCS
 SET ( LOCAL_NO_WRAP_SRC
  itkGradientDescentOptimizerWithStopCondition.cxx
  itkQuaternionRigidTransformGradientDescentOptimizerModified.cxx
+ AveragingStoppingCondition.cxx
 )
 
 #### if you code depends on SlicerBase, uncomment the 
