@@ -1,65 +1,66 @@
-Quick notes for creating your own custom VTK module.
-Michael Halle -- 2002/05/17
 
+   ==================================================
+   Module: vtkFluxDiffusion
+   Author: Karl Krissian
+   Email:  karl@bwh.harvard.edu
 
-1. Copy this entire directory tree to the place where you'd like to develop
-your module.  Name it while you're doing so.
+   This module implements a version of anisotropic diffusion published in 
     
-    rsync -av vtkCustomModule/  /home/halazar/vtk/vtkTestModule
-
-2. Change directories to your new module directory.
-
-    cd /home/halazar/vtk/vtkTestModule
-
-3. Run vtkNameModule.  This program is a simple Tcl script that
-   runs through the entire directory, substituting the name of the
-   module in many different locations.  By default, vtkNameModule
-   will get the name of the module from the directory name.
-
-    ./vtkNameModule
-
-4. change to the cxx directory.
+   "Flux-Based Anisotropic Diffusion Applied to Enhancement of 3D Angiographiam"
+   Karl Krissian
+   IEEE Trans. Medical Imaging, 21(11), pp 1440-1442, nov 2002.
     
-    cd cxx
+   It aims at restoring 2D and 3D images with the ability to preserve
+   small and elongated structures.
+   It comes with a Tcl/Tk interface for the '3D Slicer'.
+   ==================================================
+   Copyright (C) 2002  Karl Krissian
 
-5. Put your source and header files here.  All of your header files
-   should include the file of the form <vtk[ModuleName]Configure.h"> .
-   They should also declare your classes exported appropriately for
-   Windows platforms, with a line like the following:
+   This library is free software; you can redistribute it and/or
+   modify it under the terms of the GNU Lesser General Public
+   License as published by the Free Software Foundation; either
+   version 2.1 of the License, or (at your option) any later version.
 
-            class VTK_[MODULENAME]_EXPORT vtk[Modulename] : ...
+   This library is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   Lesser General Public License for more details.
 
-6. Copy the file CMakeListsLocal-SAMPLE.txt to CMakeListsLocal.txt
+   You should have received a copy of the GNU Lesser General Public
+   License along with this library; if not, write to the Free Software
+   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+   ================================================== 
+   The full GNU Lesser General Public License file is in vtkFluxDiffusion/LesserGPL_license.txt
 
-    cp CMakeListsLocal-SAMPLE.txt CMakeListsLocal.txt
 
-7. Edit this file to include the names of your source files.  Be sure
-   not to include suffixes.  If you have abstract classes, put them
-   in the source files area as well as the abstract files area.  The
-   file also includes directions for adding link libraries.
 
-8. You're ready to build.  Change directory to the location where
-   you'd like to build your code.  We recommend a subdirectory of the
-   "builds" directory.  The subdirectory could have the name of your
-   machine architecture, or anything that's meaningful to you.
+10-30-2002
+Karl Krissian
 
-    cd ..; mkdir -p builds/local; cd  builds/local
 
-9. Run CMake, using your toplevel module directory as the target.  You
-   can use the shortcut below to fill in the location of your VTK 
-   build.  The example below uses the built VTK tree, but you could
-   instead use the installed tree by changing the variable 
-   to be VTK_INSTALL_PATH.
+- Anisotropic Diffusion that 
+  - uses the gradient and the principal curvature directions.
+  - is multi-threaded.
+  - uses a Gauss-Seidel scheme.
 
-    ccmake -DVTK_BINARY_PATH:PATH=/local/os/src/vtk-4.0 ../..
+References:    
+   "Flux-Based Anisotropic Diffusion Applied to Enhancement of 3D Angiography"
+   Karl Krissian
+   IEEE Trans. Medical Imaging, 21(11), pp 1440-1442, nov 2002.
 
-10.Configure your module.  Hopefully, all you'll have to do is type
-   "c" a couple of times until the "g" option becomes available, then
-   type "g" and files will generate and the program will complete.
 
-11. Make.
 
-     make
+--------------------------------------------------
+Source code:
 
-12.If all went well, your libraries will now be in the bin subdirectory.
+
+C++ source files:
+Modules/vtkFluxDiffusion/cxx/vtkAnisoGaussSeidel.h
+Modules/vtkFluxDiffusion/cxx/vtkAnisoGaussSeidel.cxx
+Modules/vtkFluxDiffusion/cxx/PrincipalCurvatures.h
+Modules/vtkFluxDiffusion/cxx/PrincipalCurvatures.cxx
+
+tcl source file:
+Base/tcl/tcl-modules/FluxDiffusion.tcl
+
 

@@ -5,9 +5,9 @@
 
     This module implements a version of anisotropic diffusion published in 
     
-    "Flux-Based Anisotropic Diffusion Applied to Enhancement of 3D Angiography"
+    "Flux-Based Anisotropic Diffusion Applied to Enhancement of 3D Angiographiam"
     Karl Krissian
-    IEEE Trans. Medical Imaging, 21(11), pp 1440-1442, nov 2003.
+    IEEE Trans. Medical Imaging, 21(11), pp 1440-1442, nov 2002.
     
     It aims at restoring 2D and 3D images with the ability to preserve
     small and elongated structures.
@@ -37,8 +37,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkAnisoGaussSeidel.h,v $
   Language:  C++
-  Date:      $Date: 2003/02/13 19:14:37 $
-  Version:   $Revision: 1.2 $
+  Date:      $Date: 2003/02/13 19:31:38 $
+  Version:   $Revision: 1.3 $
   Author:    Karl Krissian
 
 =========================================================================*/
