@@ -39,6 +39,7 @@
 #    MorphometricsDoNothingOnEnterExit
 #    MorphometricsNoUI frame
 #    MorphometricsCreateModelChooserStep workflowName modelNames modelDistributor
+#    MorphometricsCreateVolumeChooserStep workflowName volumeNames modelDistributor
 #    MorphometricsCreatePlanePlacementStep workflowName plane shortDescription instructions
 #    MorphometricsCreateSpherePlacementStep workflowName sphere shortDescription instructions
 #    MorphometricsCreateAxisPlacementStep workflowName axis shortDescription instructions
@@ -102,6 +103,35 @@ proc MorphometricsNoUI {frame} {
 }
 
 #-------------------------------------------------------------------------------
+# .PROC MorphometricsCreateVolumeChooserStep
+# Create a step in which the user can choose for a given list of names corresponding
+# volumes. When the user goes to the next or previous step, a user specified function,
+# namely the third argument, is called with a sole argument,a list of id's. 
+# This id's are the ones the user has choosen for every entry in the name list. 
+# The choice of the user for i-th element in $volumeNames is the i-th element in the 
+# argument list for $volumeDistributor
+# .ARGS
+# str workflowName name of the workflow for which a volume choosing step should be added
+# list volumeNames a list of names, for each element the user gets to choose a volume
+# str volumeDistributor a function, called with a list of id's when the user leaves this step
+# .END
+#-------------------------------------------------------------------------------
+proc MorphometricsCreateVolumeChooserStep {workflowName volumeNames volumeDistributor} {
+    global Morphometrics Volume
+    set nrChooser $Morphometrics(StepFactories,ModelChooser,Count)
+    set Morphometrics(StepFactories,ModelChooser,Count) [expr 1 + $nrChooser]
+    
+    set Morphometrics(StepFactories,ModelChooser,$nrChooser,names) $volumeNames
+    set Morphometrics(StepFactories,ModelChooser,$nrChooser,distributor) $volumeDistributor
+
+    # preset to nothing choosen
+    foreach iter $volumeNames {
+    lappend Morphometrics(StepFactories,ModelChooser,$nrChooser,id) $Volume(idNone)
+    }
+    
+    WorkflowAddStep $workflowName [list [subst -nocommand {MorphometricsVolumeChooserOnEnter $nrChooser}]] [list [subst -nocommand {MorphometricsVolumeChooserOnExit $nrChooser}]]  [list [subst -nocommand {MorphometricsVolumeChooserUI $nrChooser}]] "Choose Volume(s)"
+}
+#-------------------------------------------------------------------------------
 # .PROC MorphometricsCreateModelChooserStep
 # Create a step in which the user can choose for a given list of names corresponding
 # models. When the user goes to the next or previous step, a user specified function,
@@ -128,7 +158,7 @@ proc MorphometricsCreateModelChooserStep {workflowName modelNames modelDistribut
     lappend Morphometrics(StepFactories,ModelChooser,$nrChooser,id) $Model(idNone)
     }
     
-    WorkflowAddStep $workflowName [list [subst -nocommand {MorphometricsModelChooserOnEnter $nrChooser}]] [list [subst -nocommand {MorphometricsModelChooserOnExit $nrChooser}]]  [list [subst -nocommand {MorphometricsModelChooserUI $nrChooser}]] "Choose Models"
+    WorkflowAddStep $workflowName [list [subst -nocommand {MorphometricsModelChooserOnEnter $nrChooser}]] [list [subst -nocommand {MorphometricsModelChooserOnExit $nrChooser}]]  [list [subst -nocommand {MorphometricsModelChooserUI $nrChooser}]] "Choose Model(s)"
 }
 
 #-------------------------------------------------------------------------------
@@ -488,7 +518,6 @@ proc MorphometricsGenericPolyDataUI {customUI instructions frame} {
    
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC MorphometricsModelChooserUI
 # Display an interface in the designated frame where the user can choose for each
@@ -564,6 +593,91 @@ proc MorphometricsModelChooserOnExit {internalId} {
     set index [lsearch -exact $Model(mActiveList) $Morphometrics(workflowFrame).fMiddle.f$counter.mbModel$counter.m]
     # remove the index
     set Model(mActiveList) [lreplace $Model(mActiveList) $index $index]
+
+
+    set counter [expr $counter + 1]
+    }
+
+    # call user function with the list of choosen 
+    $Morphometrics(StepFactories,ModelChooser,$internalId,distributor) $Morphometrics(StepFactories,ModelChooser,$internalId,id)
+
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MorphometricsVolumeChooserUI
+# Display an interface in the designated frame where the user can choose for each
+# entry of a prior specified list which volume of the currently available it is.
+# .ARGS
+# int internalId necessary since the step has to perform some bookkeeping.
+# str frame name of the frame where the user interface should be constructed.
+# .END
+#-------------------------------------------------------------------------------
+proc MorphometricsVolumeChooserUI {internalId frame} {
+    global Gui Volume Morphometrics
+                                                                                
+    set neededSegs $Morphometrics(StepFactories,ModelChooser,$internalId,names)
+    set counter 0
+    foreach iter $neededSegs {
+        frame $frame.f$counter -bg $Gui(activeWorkspace)
+        pack $frame.f$counter -side top -padx 0 -pady $Gui(pad) -fill x
+    
+        DevAddSelectButton Morphometrics $frame.f$counter Volume$counter  "$iter :" Pack
+    lappend Volume(mbActiveList) $frame.f$counter.mbVolume$counter
+    lappend Volume(mActiveList) $frame.f$counter.mbVolume$counter.m
+
+    DevUpdateNodeSelectButton Volume Morphometrics Volume$counter mVolume$counter DevSelectNode
+
+    # text of the user-choosen entry
+    # is the text of the i-th label of the menu where "i-th" is the entry in the corresponding internal list
+    set usersChoiceId [lindex $Morphometrics(StepFactories,ModelChooser,$internalId,id) $counter]
+    
+    if {[expr $usersChoiceId != $Volume(idNone)]} {
+        $frame.f$counter.mbVolume$counter.m invoke $usersChoiceId
+    }
+
+    set counter [expr 1 + $counter]
+    }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MorphometricsVolumeChooserOnEnter
+# dummy function. Its only purpose at the moment is to ensure extensibility.
+# .ARGS
+# int internalId internal counter which volumechoosing step is meant.
+# .END
+#-------------------------------------------------------------------------------
+proc MorphometricsVolumeChooserOnEnter {internalId} {
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MorphometricsVolumeChooserOnExit
+# Saves user choices and also calls the function specified during creation of this
+# step. User choices are saved in order to be able to recreate user choices when he/she
+# reenters this step.
+# .ARGS
+# int internalId internal counter which volumechoosing step is meant.
+# .END
+#-------------------------------------------------------------------------------
+proc MorphometricsVolumeChooserOnExit {internalId} {
+    global Gui Volume Morphometrics
+    # save user choices into Morphometrics(StepFactories,ModelChooser,$internalId,id)
+    # init to {}
+    set counter 0
+    set Morphometrics(StepFactories,ModelChooser,$internalId,id) {}
+    # foreach length ..
+    foreach iter $Morphometrics(StepFactories,ModelChooser,$internalId,names) {
+    lappend Morphometrics(StepFactories,ModelChooser,$internalId,id) $Morphometrics(mVolume$counter) 
+
+    # find index for the menubutton
+    set index [lsearch -exact $Volume(mbActiveList) $Morphometrics(workflowFrame).fMiddle.f$counter.mbVolume$counter]
+    # remove the index
+    set Volume(mbActiveList) [lreplace $Volume(mbActiveList) $index $index]
+
+
+    # find index for the menu
+    set index [lsearch -exact $Volume(mActiveList) $Morphometrics(workflowFrame).fMiddle.f$counter.mbVolume$counter.m]
+    # remove the index
+    set Volume(mActiveList) [lreplace $Volume(mActiveList) $index $index]
 
 
     set counter [expr $counter + 1]
