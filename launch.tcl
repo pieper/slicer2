@@ -239,11 +239,16 @@ Any clinical use requires proper research controls.
 Clicking \"Ok\" below binds you to the license agreement.
 See www.slicer.org for details.
 "
-if { ![file exists $env(HOME)/.IAgreeToSlicersLicense] } {
-    set resp [tk_messageBox -message $msg -type okcancel -title "Slicer2"]
+set argv0 [lindex $argv 0]
+if { $argv == "-y" || $argv0 == "--agree_to_license" } {
+    set argv [lreplace $argv 0 0]
+} else {
+    if { ![file exists $env(HOME)/.IAgreeToSlicersLicense] } {
+        set resp [tk_messageBox -message $msg -type okcancel -title "Slicer2"]
 
-    if {$resp == "cancel"} {
-        exit
+        if {$resp == "cancel"} {
+            exit
+        }
     }
 }
 
