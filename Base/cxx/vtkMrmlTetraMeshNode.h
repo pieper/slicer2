@@ -82,6 +82,46 @@ class VTK_EXPORT vtkMrmlTetraMeshNode : public vtkMrmlNode
   vtkSetStringMacro(LUTName);
   vtkGetStringMacro(LUTName);
 
+  // Description:
+  // Opacity of display, from 0 to 1
+  vtkSetMacro(Opacity, float);
+  vtkGetMacro(Opacity, float);
+
+  // Description:
+  // Opacity of display, from 0 to 1
+  vtkSetMacro(Clipping, unsigned short);
+  vtkGetMacro(Clipping, unsigned short);
+
+  // Description:
+  // Display these things?
+  vtkSetMacro(DisplaySurfaces, unsigned short);
+  vtkGetMacro(DisplaySurfaces, unsigned short);
+  vtkSetMacro(DisplayEdges, unsigned short);
+  vtkGetMacro(DisplayEdges, unsigned short);
+  vtkSetMacro(DisplayNodes, unsigned short);
+  vtkGetMacro(DisplayNodes, unsigned short);
+  vtkSetMacro(DisplayScalars, unsigned short);
+  vtkGetMacro(DisplayScalars, unsigned short);
+  vtkSetMacro(DisplayVectors, unsigned short);
+  vtkGetMacro(DisplayVectors, unsigned short);
+
+  // Description:
+  // Parameters to display
+  vtkSetMacro(NodeScaling, float);
+  vtkGetMacro(NodeScaling, float);
+  vtkSetMacro(NodeSkip, unsigned short);
+  vtkGetMacro(NodeSkip, unsigned short);
+
+  vtkSetMacro(ScalarScaling, float);
+  vtkGetMacro(ScalarScaling, float);
+  vtkSetMacro(ScalarSkip, unsigned short);
+  vtkGetMacro(ScalarSkip, unsigned short);
+
+  vtkSetMacro(VectorScaling, float);
+  vtkGetMacro(VectorScaling, float);
+  vtkSetMacro(VectorSkip, unsigned short);
+  vtkGetMacro(VectorSkip, unsigned short);
+
 protected:
   vtkMrmlTetraMeshNode();
   ~vtkMrmlTetraMeshNode();
@@ -96,6 +136,9 @@ protected:
   char *FileName;
   char *LUTName;
 
+  float Opacity;
+  unsigned short Clipping;
+  
   // Numbers
   unsigned short DisplaySurfaces;
   unsigned short DisplayEdges;

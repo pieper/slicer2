@@ -49,6 +49,8 @@ vtkMrmlTetraMeshNode::vtkMrmlTetraMeshNode()
   this->FileName = NULL;
 
   // DisplayTypes
+  this->Clipping = 0;
+  this->Opacity  = 1.0;
 
   // Defaults are don't display anything
   this->DisplaySurfaces = 0;
@@ -62,6 +64,7 @@ vtkMrmlTetraMeshNode::vtkMrmlTetraMeshNode()
   this->DisplayVectors  = 0;
     this->VectorScaling   = 9.5;
     this->VectorSkip      = 2;
+
     
 }
 
@@ -84,6 +87,8 @@ vtkMrmlTetraMeshNode::~vtkMrmlTetraMeshNode()
 void vtkMrmlTetraMeshNode::Write(ofstream& of, int nIndent)
 {
   // Write all attributes not equal to their defaults
+  const char y[] = "yes";
+  const char n[] = "no";
 
   vtkIndent i1(nIndent);
 
@@ -109,26 +114,29 @@ void vtkMrmlTetraMeshNode::Write(ofstream& of, int nIndent)
 
   // Numbers
 
+  if (this->Clipping != 0)
+  {
+    of << " Clipping='" << (this->Clipping ? y : n) << "'";
+  }
+  if (this->Opacity != 1.0)
+  {
+    of << " Opacity='" << this->Opacity << "'";
+  }
+
   // Defaults are don't display anything
 
-    this->NodeScaling     = 9.5;
-    this->NodeSkip        = 2;
-    this->ScalarScaling   = 9.5;
-    this->ScalarSkip      = 2;
-    this->VectorScaling   = 9.5;
-    this->VectorSkip      = 2;
 
   if (this->DisplaySurfaces != 0)
   {
-    of << " DisplaySurfaces='" << this->DisplaySurfaces << "'";
+    of << " DisplaySurfaces='" << (this->DisplaySurfaces ? y : n) << "'";
   }
   if (this->DisplayEdges != 0)
   {
-    of << " DisplayEdges='" << this->DisplayEdges << "'";
+    of << " DisplayEdges='" << (this->DisplayEdges ? y : n) << "'";
   }
   if (this->DisplayNodes != 0)
   {
-    of << " DisplayNodes='" << this->DisplayNodes << "'";
+    of << " DisplayNodes='" << (this->DisplayNodes ? y : n) << "'";
   }
   if (this->NodeSkip != 2)
   {
@@ -140,7 +148,7 @@ void vtkMrmlTetraMeshNode::Write(ofstream& of, int nIndent)
   }
   if (this->DisplayScalars != 0)
   {
-    of << " DisplayScalars='" << this->DisplayScalars << "'";
+    of << " DisplayScalars='" << (this->DisplayScalars ? y : n) << "'";
   }
   if (this->ScalarSkip != 2)
   {
@@ -152,7 +160,7 @@ void vtkMrmlTetraMeshNode::Write(ofstream& of, int nIndent)
   }
   if (this->DisplayVectors != 0)
   {
-    of << " DisplayVectors='" << this->DisplayVectors << "'";
+    of << " DisplayVectors='" << (this->DisplayVectors ? y : n) << "'";
   }
   if (this->VectorSkip != 2)
   {
@@ -174,6 +182,9 @@ void vtkMrmlTetraMeshNode::Copy(vtkMrmlNode *anode)
 {
   vtkMrmlNode::MrmlNodeCopy(anode);
   vtkMrmlTetraMeshNode *node = (vtkMrmlTetraMeshNode *) anode;
+  
+  this->Clipping        = node->Clipping;
+  this->Opacity         = node->Opacity;
 
   this->DisplaySurfaces = node->DisplaySurfaces;
   this->DisplayEdges    = node->DisplayEdges;
@@ -190,6 +201,7 @@ void vtkMrmlTetraMeshNode::Copy(vtkMrmlNode *anode)
 
 
 //----------------------------------------------------------------------------
+
 void vtkMrmlTetraMeshNode::PrintSelf(ostream& os, vtkIndent indent)
 {
   int idx;
@@ -201,6 +213,8 @@ void vtkMrmlTetraMeshNode::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "Name: " <<
     (this->Name ? this->Name : "(none)") << "\n";
 
+  os << indent << "Clipping: " << this->Clipping << "\n";
+  os << indent << "Opacity: " << this->Opacity << "\n";
   os << indent << "DisplaySurfaces: " << this->DisplaySurfaces << "\n";
   os << indent << "DisplayEdges: " << this->DisplayEdges << "\n";
   os << indent << "DisplayNodes: " << this->DisplayNodes << "\n";
