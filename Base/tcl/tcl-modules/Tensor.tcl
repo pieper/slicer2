@@ -97,7 +97,7 @@ proc TensorInit {} {
     # Set Version Info
     #------------------------------------
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.4 $} {$Date: 2002/01/31 22:47:18 $}]
+	    {$Revision: 1.5 $} {$Date: 2002/02/05 17:37:13 $}]
     
     # Props: GUI tab we are currently on
     #------------------------------------
@@ -164,6 +164,10 @@ proc TensorInit {} {
     set Tensor(actor,ambient) 1
     set Tensor(actor,diffuse) .2
     set Tensor(actor,specular) .4
+
+    # Whether to remove actors on module exit
+    set Tensor(vtk,glyphs,actor,remove) 1
+    set Tensor(vtk,streamln,actor,remove) 1
 
     # scalar bar
     set Tensor(mode,scalarBar) Off
@@ -288,6 +292,13 @@ proc TensorEnter {} {
 
     # color label selection widgets
     LabelsColorWidgets
+
+    # Add our actors but make them invisible until needed
+    MainAddActor Tensor(vtk,glyphs,actor)
+    MainAddActor Tensor(vtk,streamln,actor)
+    Tensor(vtk,glyphs,actor) VisibilityOff
+    Tensor(vtk,streamln,actor) VisibilityOff
+
 }
 
 #-------------------------------------------------------------------------------
@@ -298,7 +309,8 @@ proc TensorEnter {} {
 # .END
 #-------------------------------------------------------------------------------
 proc TensorExit {} {
-
+    global Tensor
+    
     # Pop event manager
     #------------------------------------
     # Description:
@@ -307,6 +319,18 @@ proc TensorExit {} {
     #   previous ones.
     #
     popEventManager
+
+
+    # Remove our actors if the user wants that on module exit.
+    # We always remove for now, later if removal is optional 
+    # need to keep track of if actor was added already.
+    if {$Tensor(vtk,glyphs,actor,remove)} {
+	MainRemoveActor Tensor(vtk,glyphs,actor)
+    }
+    if {$Tensor(vtk,streamln,actor,remove)} {
+	MainRemoveActor Tensor(vtk,streamln,actor)
+    }
+
 }
 
 ################################################################
@@ -1516,9 +1540,9 @@ proc TensorSelect {x y z} {
     #puts [Tensor(vtk,streamln) Print]
 
 
-    # Add the actor to the scene now that it has inputs
+    # Make actor visible now that it has inputs
     #------------------------------------
-    MainAddActor Tensor(vtk,streamln,actor)
+    Tensor(vtk,streamln,actor) VisibilityOn
 
     # Put the output streamline's actor in the right place
     # just use the same matrix we use to position the tensors
@@ -1887,35 +1911,26 @@ proc TensorUpdate {} {
 		}
 	    }
 
-	    # Add our actors to the renderers
+	    # Make actor visible
 	    #------------------------------------
-	    MainAddActor Tensor(vtk,glyphs,actor)
+	    Tensor(vtk,glyphs,actor) VisibilityOn
 
 	}
 	"Tracks" {
 
 	    puts "tracks!"
-
-	    # start pipeline
-	    #------------------------------------
-	    # This is done also in TensorSelect when a point is clicked.
-	    Tensor(vtk,streamln) SetInput [Tensor($t,data) GetOutput]
-
-	    # Lauren don't do this until a point is clicked?
-	    # Add our actors to the renderers
-	    #------------------------------------
-	    #Tensor(vtk,streamln) DebugOn
-	    #MainAddActor Tensor(vtk,streamln,actor)
+	    # Lauren this button is really only to access tractography
+	    # GUI which should be its own thing anyway?
 
 	}
 	"None" {
 	    puts "Turning off tensor visualization"
 
-	    # disconnect from renderer so output
+	    # make invisible so output
 	    # not requested from pipeline anymore
 	    #------------------------------------
-	    MainRemoveActor Tensor(vtk,glyphs,actor)
-	    MainRemoveActor Tensor(vtk,streamln,actor)
+	    Tensor(vtk,glyphs,actor) VisibilityOff
+	    Tensor(vtk,streamln,actor) VisibilityOff
 	}
     }
 
