@@ -70,6 +70,7 @@ proc IbrowserControllerLaunch {{toplevelName .controllerGUI} } {
     IbrowserSetupIntervals
     IbrowserSetupIcons
     IbrowserSetupAnimationMenuImages 
+    IbrowserSetupViewPopupImages
     IbrowserSetupDropImages
     
     #--- init canvas stuff
@@ -89,16 +90,19 @@ proc IbrowserControllerLaunch {{toplevelName .controllerGUI} } {
 
     #--- make top buffer to hold some spacers, image and text labels
     #---------------
-    IbrowserMakeAnimationMenu $root
-
+    set fr [ IbrowserMakeAnimationMenu $root ]
+    IbrowserMakeViewMenu $fr
+    
     #--- make the ibrowser frame to hold the canvases and a scrollbar...
     #---------------
     frame $root.fIbrowser
-    set ::IbrowserController(Icanvas) [IbrowserMakeVscrollCanvas $root.fIbrowser.intcanv $root.fIbrowser.cntcanv \
+    set ::IbrowserController(Icanvas) \
+        [IbrowserMakeVscrollCanvas $root.fIbrowser.intcanv $root.fIbrowser.cntcanv \
                      -relief groove -borderwidth 1 -bg $::IbrowserController(Colors,interval_canvas_color) \
                      -width $iCwid -height $iChit  -scrollregion " 0 0 $Hscroll $Vscroll" ]
 
-    set ::IbrowserController(Ccanvas) [IbrowserMakeGangedHscrollCanvas $root.fIbrowser.cntcanv $root.fIbrowser.intcanv \
+    set ::IbrowserController(Ccanvas) \
+        [IbrowserMakeGangedHscrollCanvas $root.fIbrowser.cntcanv $root.fIbrowser.intcanv \
                      -relief groove -borderwidth 1 -bg $::IbrowserController(Colors,interval_canvas_color) \
                      -width $iCwid -height $cChit -scrollregion " 0 0 $Hscroll 0"]
     IbrowserInitCanvasSizeAndScrollRegion
@@ -155,7 +159,7 @@ be displayed throughout your session."
     pack $root.fibMessageBox -side left -fill both -expand false
 
 
-    #SET UP, MAKE AND TEST SOME INTERVALS.
+    #SET UP
     #---------------
     set ::IbrowserController(Info,Ival,firstIval) 1
     set ::IbrowserController(Info,Ival,globalIvalPixXstart) [ IbrowserComputeIntervalXleft ]
@@ -180,13 +184,5 @@ be displayed throughout your session."
     IbrowserSelectFGIcon 0 $::IbrowserController(Icanvas)
     MainSlicesSetVisibilityAll 1
     RenderAll
-
-    #test some basic ops
-    #---------------
-    #IbrowserOrderSortIntervalList
-    #IbrowserInsertIntervalAfterInterval imageData1 imageData2
-    #IbrowserInsertIntervalBeforeInterval noteData1 derivedData1
-    #IbrowserDeleteInterval imageData2
-    #IbrowserDeleteAllIntervals
 
 }

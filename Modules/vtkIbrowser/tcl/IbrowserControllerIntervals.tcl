@@ -559,15 +559,16 @@ proc IbrowserDeleteIntervalVolumes { id } {
     } elseif { $id == $::Ibrowser(activeInterval) } {
         set ::Ibrowser(activeInterval) $::Ibrowser(none, intervalID)
     }
-    
+
     IbrowserRaiseProgressBar
     for { set drop 0} { $drop < $::Ibrowser($id,numDrops) } { incr drop } {
+        set i $::Ibrowser($id,$drop,MRMLid)
         MainMrmlDeleteNodeDuringUpdate Volume $::Ibrowser($id,$drop,MRMLid)
         set progress [ expr double( $drop ) / double ( $::Ibrowser($id,numDrops) ) ]
         IbrowserUpdateProgressBar $progress "::"
     }
-    MainUpdateMRML
     MainMrmlClearList
+    MainUpdateMRML
     RenderAll
     IbrowserLowerProgressBar
 }
@@ -595,8 +596,10 @@ proc IbrowserCopyIntervalVolumes { sourceName copyName numVols } {
     set sid $start
     set top [ expr $numVols - 1 ]
     for { set i 0 } { $i <= $top } { incr i } {
-        set progress [ expr double( $i ) / double ( $top ) ]        
-        IbrowserUpdateProgressBar $progress "::"
+        if { $top != 0 } {
+            set progress [ expr double( $i ) / double ( $top ) ]        
+            IbrowserUpdateProgressBar $progress "::"
+        }
         #--- create a new MrmlVolumeNode
         set newvol [ MainMrmlAddNode Volume ]
         set vid [$newvol GetID]
@@ -658,9 +661,9 @@ proc IbrowserCopyInterval { sourceName copyName } {
     }
     IbrowserCreateImageDrops  $copyName posVec $::Ibrowser($id,numDrops)
 
-    #--- reconfigure the indexSlider in DisplayGUI
+    #--- reconfigure all Sliders
     IbrowserUpdateMaxDrops
-    $::Ibrowser(indexSlider) configure -state active
+    IbrowserSynchronizeAllSliders "active"
 
     #--- report in Ibrowser's message panel"
     set tt "Copied $sourceName to $copyName."
@@ -710,7 +713,7 @@ proc IbrowserDeleteInterval { ivalName } {
     IbrowserDecrementIntervalCount
     IbrowserDeleteIntervalVolumes $id
     IbrowserDeleteIntervalDrops $::Ibrowser($id,name)
-
+    
     #    find new global span
     #---------------    
     IbrowserUpdateGlobalXspan
@@ -735,7 +738,7 @@ proc IbrowserDeleteInterval { ivalName } {
     if { $::Ibrowser(ViewDrop) > $::Ibrowser(MaxDrops)} {
         set ::Ibrowser(LastViewDrop) $::Ibrowser(ViewDrop)
         set ::Ibrowser(ViewDrop) 0
-    $::Ibrowser(indexSlider) configure -from 0 -to $::Ibrowser(MaxDrops) -state active
+        IbrowserSynchronizeAllSliders $::Ibrowser(MaxDrops)
     }
 
     #    reorder all remaining intervals
@@ -752,6 +755,11 @@ proc IbrowserDeleteInterval { ivalName } {
     set tt "Deleted interval $ivalName."
     IbrowserSayThis $tt 0
     
+    #--- if just the none interval is left,
+    #--- reconfigure the loadSlider, displaySlider and selectSlider
+    if { $::IbrowserController(Info,Ival,ivalCount) == 1 } {
+        IbrowserSynchronizeAllSliders "disabled"
+    }
 }
 
 
@@ -771,6 +779,10 @@ proc IbrowserDeleteAllIntervals { } {
     
     IbrowserInitCanvasSizeAndScrollRegion
     set ::IbrowserController(Info,Ival,firstIval) 1
+
+    #--- if number if intervals is 0,
+    #--- reconfigure the loadSlider, displaySlider and selectSlider
+    IbrowserSynchronizeAllSliders "disabled"
 }
 
 
@@ -793,7 +805,7 @@ proc IbrowserUpdateMaxDrops { } {
         }
     }
     set top [ expr $::Ibrowser(MaxDrops) - 1 ]
-    $::Ibrowser(indexSlider) configure -to $top
+    IbrowserSynchronizeAllSliders $top
 }
 
 
@@ -831,6 +843,7 @@ proc IbrowserMakeNewInterval { intval ikind spanmin spanmax } {
     set ::Ibrowser($id,name) $intval
     set ::Ibrowser($id,VerticalFlip) 0
     set ::Ibrowser($id,HorizontalFlip) 0
+    set ::Ibrowser($id,FrontBackFlip) 0
     IbrowserAddToList $intval
 
     # and increment the interval Count.
@@ -965,6 +978,8 @@ proc IbrowserMakeNewInterval { intval ikind spanmin spanmax } {
     IbrowserUpdateIndexAndSliderBox 
     IbrowserUpdateIndexAndSliderMarker 
 
+    #--- Eventually move this into MainUpdateMRML
+    IbrowserUpdateMRML
 
 }
 
@@ -1316,6 +1331,7 @@ proc IbrowserRenameInterval { old new } {
     #--- derives the intervalID from the name
     unset ::Ibrowser($old,intervalID)
     set ::Ibrowser($new,intervalID) $id
+    IbrowserUpdateMRML
 }
 
 

@@ -63,3 +63,14 @@ proc IbrowserNameFromCurrent { strg } {
     set thing [ string trimright $strg $cutme ]
     return $thing
 }
+
+
+
+proc IbrowserGetAllSequenceNames { } {
+    foreach id $::Ibrowser(idList) {
+        set name $::Ibrowser(id,name)
+        lappend nameList $name
+    }
+    return $nameList
+}
+

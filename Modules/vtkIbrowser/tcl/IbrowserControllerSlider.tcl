@@ -38,8 +38,9 @@
 # PROCEDURES:  
 #   IbrowserUpdateIndexAndSliderBox
 #   IbrowserUpdateIndexAndSliderMarker
-#   IbrowserUpdateIndexFromDisplayGUI
+#   IbrowserUpdateIndexFromGUI
 #   IbrowserUpdateIndexFromAnimControls
+#   IbrowserSynchronizeAllSliders
 #   IbrowserMarkSlider
 #   IbrowserDragSlider
 #==========================================================================auto=
@@ -228,20 +229,21 @@ proc IbrowserUpdateIndexAndSliderMarker { } {
 
 
 #-------------------------------------------------------------------------------
-# .PROC IbrowserUpdateIndexFromDisplayGUI
+# .PROC IbrowserUpdateIndexFromGUI
 # 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc IbrowserUpdateIndexFromDisplayGUI { } {
+proc IbrowserUpdateIndexFromGUI { } {
     #--- if someone is sliding the scale in the Display GUI,
     #--- the slider in the controller needs to update in unison.
     #--- The display GUI slider selects the ViewDrop, so
     #--- it's as if we clicked on ViewDrop's pixel position in the canvas.
     #--- so we find the canvasx of that pixel position, and then
     #--- drag slider to there.
+
     set ticktag "IbrowserIndex$::Ibrowser(ViewDrop)"
-    #set  zot [ $::Ibrowser(indexSlider) get ]
+    #set  zot [ $::Ibrowser(displaySlider) get ]
     #puts "viewdrop=$::Ibrowser(ViewDrop) tag=$ticktag puts sliderval=$zot"
 
     #--- the first coord in the list is the xvalue of the unit tickmark
@@ -278,6 +280,28 @@ proc IbrowserUpdateIndexFromAnimControls { } {
            
 
 }
+
+
+
+proc   IbrowserSynchronizeAllSliders { target } {
+
+    if { $target == "active" } {
+        $::Ibrowser(displaySlider) configure -state active
+        $::Ibrowser(loadSlider) configure -state active
+        $::Ibrowser(selectSlider) configure -state active
+    } elseif { $target == "disabled" } {
+        $::Ibrowser(displaySlider) configure -state disabled
+        $::Ibrowser(loadSlider) configure -state disabled
+        $::Ibrowser(selectSlider) configure -state disabled
+    } else {
+        $::Ibrowser(displaySlider) configure -from 0 -to $target -state active
+        $::Ibrowser(loadSlider) configure -from 0 -to $target -state active
+        $::Ibrowser(selectSlider) configure -from 0 -to $target -state active
+    }
+}
+
+
+
 
 #-------------------------------------------------------------------------------
 # .PROC IbrowserMarkSlider

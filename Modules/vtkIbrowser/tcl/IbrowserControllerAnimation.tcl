@@ -137,160 +137,207 @@ proc IbrowserSetupAnimationMenuImages { } {
 # .END
 #-------------------------------------------------------------------------------
 proc IbrowserMakeAnimationMenu { root } {
-    
-    frame $root.fibProcAndControl -relief flat -background white -height 80 -pady 10
-    label $root.fibProcAndControl.lframe_dec -background white \
+
+    #---DECREMENT FRAME
+    frame $root.fibAnimControl -relief flat -background white -height 80 -pady 10 
+    label $root.fibAnimControl.lframe_dec -background white \
         -image $::IbrowserController(Images,Menu,frame-decLO) -relief flat
-    bind $root.fibProcAndControl.lframe_dec <Enter> {
+    bind $root.fibAnimControl.lframe_dec <Enter> {
         %W config -image $::IbrowserController(Images,Menu,frame-decHI) }
-    bind $root.fibProcAndControl.lframe_dec <Leave> {
+    bind $root.fibAnimControl.lframe_dec <Leave> {
         %W config -image $::IbrowserController(Images,Menu,frame-decLO) }
-    bind $root.fibProcAndControl.lframe_dec <Button-1> {
+    bind $root.fibAnimControl.lframe_dec <Button-1> {
         IbrowserDecrementFrame }
     
-    label $root.fibProcAndControl.lframe_curr -background white \
+    label $root.fibAnimControl.lframe_curr -background white \
         -textvariable ::Ibrowser(ViewDrop) -width 10 -relief groove 
 
-    label $root.fibProcAndControl.lframe_inc -background white \
+    #---INCREMENT FRAME
+    label $root.fibAnimControl.lframe_inc -background white \
         -image $::IbrowserController(Images,Menu,frame-incLO) -relief flat
-    bind $root.fibProcAndControl.lframe_inc <Enter> {
+    bind $root.fibAnimControl.lframe_inc <Enter> {
         %W config -image $::IbrowserController(Images,Menu,frame-incHI) }
-    bind $root.fibProcAndControl.lframe_inc <Leave> {
+    bind $root.fibAnimControl.lframe_inc <Leave> {
         %W config -image $::IbrowserController(Images,Menu,frame-incLO) }
-    bind $root.fibProcAndControl.lframe_inc <Button-1> {
+    bind $root.fibAnimControl.lframe_inc <Button-1> {
         IbrowserIncrementFrame }
 
-    label $root.fibProcAndControl.lgoto_start -background white \
+    #---GO TO FIRST FRAME
+    label $root.fibAnimControl.lgoto_start -background white \
         -image $::IbrowserController(Images,Menu,goto-startLO) -relief flat
-    bind $root.fibProcAndControl.lgoto_start <Enter> {
+    bind $root.fibAnimControl.lgoto_start <Enter> {
         %W config -image $::IbrowserController(Images,Menu,goto-startHI) }
-    bind $root.fibProcAndControl.lgoto_start <Leave> {
+    bind $root.fibAnimControl.lgoto_start <Leave> {
         %W config -image $::IbrowserController(Images,Menu,goto-startLO) }
-    bind $root.fibProcAndControl.lgoto_start <Button-1> {
+    bind $root.fibAnimControl.lgoto_start <Button-1> {
         IbrowserGoToStartFrame }    
 
-    label $root.fibProcAndControl.lanim_rew -background white \
+    #---PLAY ONCE IN REVERSE
+    label $root.fibAnimControl.lanim_rew -background white \
         -image $::IbrowserController(Images,Menu,anim-rewLO) -relief flat
-    bind $root.fibProcAndControl.lanim_rew <Enter> {
+    set ::Ibrowser(AnimButtonRew) $root.fibAnimControl.lanim_rew    
+    bind $root.fibAnimControl.lanim_rew <Enter> {
         %W config -image $::IbrowserController(Images,Menu,anim-rewHI) }
-    bind $root.fibProcAndControl.lanim_rew <Leave> {
-        %W config -image $::IbrowserController(Images,Menu,anim-rewLO) }
-    bind $root.fibProcAndControl.lanim_rew <Button-1> {
+    bind $root.fibAnimControl.lanim_rew <Leave> {
+        if { $::Ibrowser(AnimationRew) == 0 } {
+            %W config -image $::IbrowserController(Images,Menu,anim-rewLO)
+        }
+    }
+    bind $root.fibAnimControl.lanim_rew <Button-1> {
         IbrowserPlayOnceReverse }    
     
-    label $root.fibProcAndControl.lanim_stop -background white \
-        -image $::IbrowserController(Images,Menu,anim-stopLO) -relief flat
-    bind $root.fibProcAndControl.lanim_stop <Enter> {
-        %W config -image $::IbrowserController(Images,Menu,anim-stopHI) }
-    bind $root.fibProcAndControl.lanim_stop <Leave> {
-        %W config -image $::IbrowserController(Images,Menu,anim-stopLO) }
-    bind $root.fibProcAndControl.lanim_stop <Button-1> {
-        IbrowserStopAnimation }
-
-    label $root.fibProcAndControl.lanim_rec -background white \
+    #---RECORD AN ANIMATION
+    label $root.fibAnimControl.lanim_rec -background white \
     -image $::IbrowserController(Images,Menu,anim-recLO) -relief flat
-    bind $root.fibProcAndControl.lanim_rec <Enter> {
+    bind $root.fibAnimControl.lanim_rec <Enter> {
         %W config -image $::IbrowserController(Images,Menu,anim-recHI) }
-    bind $root.fibProcAndControl.lanim_rec <Leave> {
+    bind $root.fibAnimControl.lanim_rec <Leave> {
         %W config -image $::IbrowserController(Images,Menu,anim-recLO) }
-    bind $root.fibProcAndControl.lanim_rec <Button-1> {
+    bind $root.fibAnimControl.lanim_rec <Button-1> {
         IbrowserRecordAnimationToFile "mpeg" }
 
-    label $root.fibProcAndControl.lanim_pause -background white \
+    #---PAUSE AN ANIMATION
+    label $root.fibAnimControl.lanim_pause -background white \
         -image $::IbrowserController(Images,Menu,anim-pauseLO) -relief flat            
-    bind $root.fibProcAndControl.lanim_pause <Enter> {
+    set ::Ibrowser(AnimButtonPause) $root.fibAnimControl.lanim_pause
+    bind $root.fibAnimControl.lanim_pause <Enter> {
         %W config -image $::IbrowserController(Images,Menu,anim-pauseHI) }
-    bind $root.fibProcAndControl.lanim_pause <Leave> {
-        %W config -image $::IbrowserController(Images,Menu,anim-pauseLO) }
-    bind $root.fibProcAndControl.lanim_pause <Button-1> {
+    bind $root.fibAnimControl.lanim_pause <Leave> {
+        if { $::Ibrowser(AnimationPaused) == 0 } {
+            %W config -image $::IbrowserController(Images,Menu,anim-pauseLO)
+        }
+    }
+    bind $root.fibAnimControl.lanim_pause <Button-1> {
         IbrowserPauseAnimation }    
     
-    label $root.fibProcAndControl.lanim_play -background white \
+    #---PLAY AN ANIMATION ONCE
+    label $root.fibAnimControl.lanim_play -background white \
         -image $::IbrowserController(Images,Menu,anim-playLO) -relief flat
-    bind $root.fibProcAndControl.lanim_play <Enter> {
+    set ::Ibrowser(AnimButtonPlay) $root.fibAnimControl.lanim_play
+    bind $root.fibAnimControl.lanim_play <Enter> {
         %W config -image $::IbrowserController(Images,Menu,anim-playHI) }
-    bind $root.fibProcAndControl.lanim_play <Leave> {
-        %W config -image $::IbrowserController(Images,Menu,anim-playLO) }
-    bind $root.fibProcAndControl.lanim_play <Button-1> {
+    bind $root.fibAnimControl.lanim_play <Leave> {
+        if { $::Ibrowser(AnimationForw) == 0 } {
+            %W config -image $::IbrowserController(Images,Menu,anim-playLO)
+        }
+    }
+    bind $root.fibAnimControl.lanim_play <Button-1> {
         IbrowserPlayOnce }
     
-    label $root.fibProcAndControl.lgoto_end -background white \
+    #---GO TO LAST FRAME
+    label $root.fibAnimControl.lgoto_end -background white \
         -image $::IbrowserController(Images,Menu,goto-endLO) -relief flat                
-    bind $root.fibProcAndControl.lgoto_end <Enter> {
+    bind $root.fibAnimControl.lgoto_end <Enter> {
         %W config -image $::IbrowserController(Images,Menu,goto-endHI) }
-    bind $root.fibProcAndControl.lgoto_end <Leave> {
+    bind $root.fibAnimControl.lgoto_end <Leave> {
         %W config -image $::IbrowserController(Images,Menu,goto-endLO) }
-    bind $root.fibProcAndControl.lgoto_end <Button-1> {
+    bind $root.fibAnimControl.lgoto_end <Button-1> {
         IbrowserGoToEndFrame }
     
-    label $root.fibProcAndControl.lanim_loop -background white \
+    #---ANIMATE IN CONTINUOUS LOOP
+    label $root.fibAnimControl.lanim_loop -background white \
         -image $::IbrowserController(Images,Menu,anim-loopLO) -relief flat
-    bind $root.fibProcAndControl.lanim_loop <Enter> {
+    set ::Ibrowser(AnimButtonLoop) $root.fibAnimControl.lanim_loop    
+    bind $root.fibAnimControl.lanim_loop <Enter> {
         %W config -image $::IbrowserController(Images,Menu,anim-loopHI) }
-    bind $root.fibProcAndControl.lanim_loop <Leave> {
-        %W config -image $::IbrowserController(Images,Menu,anim-loopLO) }
-    bind $root.fibProcAndControl.lanim_loop <Button-1> {
+    bind $root.fibAnimControl.lanim_loop <Leave> {
+        if { $::Ibrowser(AnimationLoop) == 0 } {
+            %W config -image $::IbrowserController(Images,Menu,anim-loopLO)
+        }
+    }
+    bind $root.fibAnimControl.lanim_loop <Button-1> {
         set ::Ibrowser(AnimationInterrupt) 0
         IbrowserLoopAnimate }
     
-    label $root.fibProcAndControl.lanim_pingpong -background white \
+    #---ANIMATE IN CONTINUOUS PINGPONG
+    label $root.fibAnimControl.lanim_pingpong -background white \
         -image $::IbrowserController(Images,Menu,anim-pingpongLO) -relief flat
-    bind $root.fibProcAndControl.lanim_pingpong <Enter> {
+    set ::Ibrowser(AnimButtonPPong) $root.fibAnimControl.lanim_pingpong    
+    bind $root.fibAnimControl.lanim_pingpong <Enter> {
         %W config -image $::IbrowserController(Images,Menu,anim-pingpongHI) }
-    bind $root.fibProcAndControl.lanim_pingpong <Leave> {
-        %W config -image $::IbrowserController(Images,Menu,anim-pingpongLO) }
-    bind $root.fibProcAndControl.lanim_pingpong <Button-1> {
+    bind $root.fibAnimControl.lanim_pingpong <Leave> {
+        if { $::Ibrowser(AnimationPPong) == 0  } {
+            %W config -image $::IbrowserController(Images,Menu,anim-pingpongLO)
+        }
+    }
+    bind $root.fibAnimControl.lanim_pingpong <Button-1> {
         set ::Ibrowser(AnimationInterrupt) 0
         IbrowserPingPongAnimate }
     
-    label $root.fibProcAndControl.lzoomIn -background white \
+    #---STOP ANIMATION
+    label $root.fibAnimControl.lanim_stop -background white \
+        -image $::IbrowserController(Images,Menu,anim-stopLO) -relief flat
+    bind $root.fibAnimControl.lanim_stop <Enter> {
+        %W config -image $::IbrowserController(Images,Menu,anim-stopHI) }
+    bind $root.fibAnimControl.lanim_stop <Leave> {
+        %W config -image $::IbrowserController(Images,Menu,anim-stopLO) }
+    bind $root.fibAnimControl.lanim_stop <Button-1> {
+        $::Ibrowser(AnimButtonLoop) config \
+            -image $::IbrowserController(Images,Menu,anim-loopLO) 
+        $::Ibrowser(AnimButtonPlay) config \
+            -image $::IbrowserController(Images,Menu,anim-playLO) 
+        $::Ibrowser(AnimButtonPause) config \
+            -image $::IbrowserController(Images,Menu,anim-pauseLO) 
+        $::Ibrowser(AnimButtonRew) config \
+            -image $::IbrowserController(Images,Menu,anim-rewLO) 
+        $::Ibrowser(AnimButtonPPong) config \
+            -image $::IbrowserController(Images,Menu,anim-pingpongLO)         
+        IbrowserStopAnimation }
+
+    #---ZOOM IN ON INTERVALS
+    label $root.fibAnimControl.lzoomIn -background white \
         -image $::IbrowserController(Images,Menu,zoomIn-LO) -relief flat
-    bind $root.fibProcAndControl.lzoomIn <Enter> {
+    bind $root.fibAnimControl.lzoomIn <Enter> {
         %W config -image $::IbrowserController(Images,Menu,zoomIn-HI) }
-    bind $root.fibProcAndControl.lzoomIn <Leave> {
+    bind $root.fibAnimControl.lzoomIn <Leave> {
         %W config -image $::IbrowserController(Images,Menu,zoomIn-LO) }
-    bind $root.fibProcAndControl.lzoomIn <Button-1> {
+    bind $root.fibAnimControl.lzoomIn <Button-1> {
         IbrowserZoomIn }
 
-    label $root.fibProcAndControl.lzoomOut -background white \
+    #---ZOOM OUT ON INTERVALS
+    label $root.fibAnimControl.lzoomOut -background white \
         -image $::IbrowserController(Images,Menu,zoomOut-LO) -relief flat
-    bind $root.fibProcAndControl.lzoomOut <Enter> {
+    bind $root.fibAnimControl.lzoomOut <Enter> {
         %W config -image $::IbrowserController(Images,Menu,zoomOut-HI) }
-    bind $root.fibProcAndControl.lzoomOut <Leave> {
+    bind $root.fibAnimControl.lzoomOut <Leave> {
         %W config -image $::IbrowserController(Images,Menu,zoomOut-LO) }
-    bind $root.fibProcAndControl.lzoomOut <Button-1> {
+    bind $root.fibAnimControl.lzoomOut <Button-1> {
         IbrowserZoomOut }
 
-    label $root.fibProcAndControl.lProgressBarblank -background white \
+    #---PROGRESS BAR
+    label $root.fibAnimControl.lProgressBarblank -background white \
      -width 1 -relief flat -padx 0
     
-    label $root.fibProcAndControl.lProgressBar -background white \
+    label $root.fibAnimControl.lProgressBar -background white \
         -textvariable ::IbrowserController(ProgressBarTxt) -width 20 \
         -relief flat -padx 0 -font $::IbrowserController(UI,Medfont) \
         -highlightcolor #FFFFFF -highlightbackground #FFFFFF -foreground #FFFFFF
 
     #--- we can configure this later to have grooved or flat relief
     #--- which makes it effectively invisible or visible.
-    set ::IbrowserController(ProgressBar) $root.fibProcAndControl.lProgressBar
+    set ::IbrowserController(ProgressBar) $root.fibAnimControl.lProgressBar
     IbrowserLowerProgressBar
     
-    pack $root.fibProcAndControl.lframe_dec -side left
-    pack $root.fibProcAndControl.lframe_curr -side left
-    pack $root.fibProcAndControl.lframe_inc -side left
-    pack $root.fibProcAndControl.lzoomIn -side left
-    pack $root.fibProcAndControl.lzoomOut -side left    
-    pack $root.fibProcAndControl.lgoto_start -side left
-    pack $root.fibProcAndControl.lanim_rew -side left
-    pack $root.fibProcAndControl.lanim_stop -side left
-    pack $root.fibProcAndControl.lanim_rec -side left
-    pack $root.fibProcAndControl.lanim_pause -side left
-    pack $root.fibProcAndControl.lanim_play -side left    
-    pack $root.fibProcAndControl.lgoto_end -side left    
-    pack $root.fibProcAndControl.lanim_loop -side left    
-    pack $root.fibProcAndControl.lanim_pingpong -side left
-    pack $root.fibProcAndControl.lProgressBarblank -side left
-    pack $root.fibProcAndControl.lProgressBar -side left
-    pack $root.fibProcAndControl -side top -fill x -expand false
+    pack $root.fibAnimControl.lframe_dec -side left -padx 0 
+    pack $root.fibAnimControl.lframe_curr -side left -padx 0
+    pack $root.fibAnimControl.lframe_inc -side left -padx 0 
+    pack $root.fibAnimControl.lzoomIn -side left -padx 0 
+    pack $root.fibAnimControl.lzoomOut -side left -padx 0
+    pack $root.fibAnimControl.lgoto_start -side left -padx 0
+    pack $root.fibAnimControl.lanim_rew -side left -padx 0 
+    pack $root.fibAnimControl.lanim_stop -side left -padx 0
+    pack $root.fibAnimControl.lanim_rec -side left -padx 0 
+    pack $root.fibAnimControl.lanim_pause -side left -padx 0
+    pack $root.fibAnimControl.lanim_play -side left -padx 0 
+    pack $root.fibAnimControl.lgoto_end -side left -padx 0 
+    pack $root.fibAnimControl.lanim_loop -side left -padx 0
+    pack $root.fibAnimControl.lanim_pingpong -side left -padx 0 
+    pack $root.fibAnimControl.lProgressBarblank -side left 
+    pack $root.fibAnimControl.lProgressBar -side left 
+    pack $root.fibAnimControl -side top -fill x -expand false
+
+    #--- return frame for other use.
+    return $root.fibAnimControl
 
 }
 
@@ -304,6 +351,7 @@ proc IbrowserMakeAnimationMenu { root } {
 proc IbrowserDecrementFrame { } {
 
     set ::Ibrowser(AnimationInterrupt) 1
+    set ::Ibrowser(AnimationPaused) 0
     #--- what is current frame?
     set curDrop $::Ibrowser(ViewDrop)
 
@@ -332,6 +380,7 @@ proc IbrowserDecrementFrame { } {
 proc IbrowserIncrementFrame { } {
 
     set ::Ibrowser(AnimationInterrupt) 1
+    set ::Ibrowser(AnimationPaused) 0
     #--- what is current frame?
     set curDrop $::Ibrowser(ViewDrop)
 
@@ -356,11 +405,13 @@ proc IbrowserIncrementFrame { } {
 proc IbrowserGoToStartFrame { } {
 
     set ::Ibrowser(AnimationInterrupt) 1
+    set ::Ibrowser(AnimationPaused) 0
     set id $::Ibrowser(activeInterval)
     set ::Ibrowser(LastViewDrop) $::Ibrowser(ViewDrop)
     set ::Ibrowser(ViewDrop) 0
     IbrowserUpdateIndexFromAnimControls
     IbrowserUpdateMainViewer $::Ibrowser(ViewDrop)
+    set ::Ibrowser(AnimationInterrupt) 0
 }
 
 
@@ -373,6 +424,7 @@ proc IbrowserGoToStartFrame { } {
 proc IbrowserGoToEndFrame { } {
 
     set ::Ibrowser(AnimationInterrupt) 1
+    set ::Ibrowser(AnimationPaused) 0
     #--- how many drops in this interval?
     set id $::Ibrowser(activeInterval)
     set name $::Ibrowser($id,name)
@@ -381,7 +433,7 @@ proc IbrowserGoToEndFrame { } {
     set ::Ibrowser(ViewDrop) $numdrops
     IbrowserUpdateIndexFromAnimControls
     IbrowserUpdateMainViewer $::Ibrowser(ViewDrop)
-
+    set ::Ibrowser(AnimationInterrupt) 0
 }
 
 #-------------------------------------------------------------------------------
@@ -392,26 +444,38 @@ proc IbrowserGoToEndFrame { } {
 #-------------------------------------------------------------------------------
 proc IbrowserPlayOnce { } {
 
-    set done 0
-    set ::Ibrowser(AnimationInterrupt) 1
-    set curDrop $::Ibrowser(ViewDrop)
+    if { $::Ibrowser(AnimationInterrupt) == 0 && $::Ibrowser(AnimationPaused) == 0 } {
+        set done 0
+        set curDrop $::Ibrowser(ViewDrop)
+        set ::Ibrowser(AnimationWas) "forw"
+        set ::Ibrowser(AnimationForw) 1
+        #--- how many drops in this interval?
+        set id $::Ibrowser(activeInterval)
+        set numdrops [ expr $::Ibrowser($id,lastMRMLid) - $::Ibrowser($id,firstMRMLid) ]
 
-    #--- how many drops in this interval?
-    set id $::Ibrowser(activeInterval)
-    set numdrops [ expr $::Ibrowser($id,lastMRMLid) - $::Ibrowser($id,firstMRMLid) ]
-
-    if { $curDrop < $numdrops } {
-        set newDrop [ expr $curDrop + 1 ]
-        set ::Ibrowser(LastViewDrop) $::Ibrowser(ViewDrop)
-        set ::Ibrowser(ViewDrop) $newDrop
-        IbrowserUpdateIndexFromAnimControls
-        IbrowserUpdateMainViewer $::Ibrowser(ViewDrop)
+        if { $curDrop < $numdrops } {
+            set newDrop [ expr $curDrop + 1 ]
+            set ::Ibrowser(LastViewDrop) $::Ibrowser(ViewDrop)
+            set ::Ibrowser(ViewDrop) $newDrop
+            IbrowserUpdateIndexFromAnimControls
+            IbrowserUpdateMainViewer $::Ibrowser(ViewDrop)
+        } else {
+            set done 1
+            set ::Ibrowser(AnimationForw) 0
+            set ::Ibrowser(AnimationPaused) 0
+            set ::Ibrowser(AnimationInterrupt) 0            
+            #---lolite the icons
+            $::Ibrowser(AnimButtonPlay) config -image \
+                $::IbrowserController(Images,Menu,anim-playLO) 
+            $::Ibrowser(AnimButtonPause) config -image \
+                $::IbrowserController(Images,Menu,anim-pauseLO) 
+        }
+        if { $done == 0 } {
+            update
+            after $::Ibrowser(AnimationFrameDelay) IbrowserPlayOnce
+        }
     } else {
-        set done 1
-    }
-    if { $done == 0 } {
-        update
-        after $::Ibrowser(AnimationFrameDelay) IbrowserPlayOnce
+        set ::Ibrowser(AnimationInterrupt) 0
     }
                       
 }
@@ -428,28 +492,39 @@ proc IbrowserPlayOnce { } {
 #-------------------------------------------------------------------------------
 proc IbrowserPlayOnceReverse { } {
 
-    set done 0
-    set ::Ibrowser(AnimationInterrupt) 1
-    set curDrop $::Ibrowser(ViewDrop)    
+    if { $::Ibrowser(AnimationInterrupt) == 0 && $::Ibrowser(AnimationPaused) == 0 } {
+        set done 0
+        set curDrop $::Ibrowser(ViewDrop)    
+        set ::Ibrowser(AnimationWas) "rew" 
+        set ::Ibrowser(AnimationRew) 1
+        #--- how many drops in this interval?
+        set id $::Ibrowser(activeInterval)
+        set numdrops [ expr $::Ibrowser($id,lastMRMLid) - $::Ibrowser($id,firstMRMLid) ]
 
-    #--- how many drops in this interval?
-    set id $::Ibrowser(activeInterval)
-    set numdrops [ expr $::Ibrowser($id,lastMRMLid) - $::Ibrowser($id,firstMRMLid) ]
-
-    if { $curDrop > 0 } {
-        set newDrop [ expr $curDrop - 1 ]
-        set ::Ibrowser(LastViewDrop) $::Ibrowser(ViewDrop)
-        set ::Ibrowser(ViewDrop) $newDrop
-        IbrowserUpdateIndexFromAnimControls
-        IbrowserUpdateMainViewer $::Ibrowser(ViewDrop)
+        if { $curDrop > 0 } {
+            set newDrop [ expr $curDrop - 1 ]
+            set ::Ibrowser(LastViewDrop) $::Ibrowser(ViewDrop)
+            set ::Ibrowser(ViewDrop) $newDrop
+            IbrowserUpdateIndexFromAnimControls
+            IbrowserUpdateMainViewer $::Ibrowser(ViewDrop)
+        } else {
+            set done 1
+            set ::Ibrowser(AnimateRew) 0
+            set ::Ibrowser(AnimationPaused) 0
+            set ::Ibrowser(AnimationInterrupt) 0
+            #--- lolite the icons
+            $::Ibrowser(AnimButtonRew) config -image \
+                $::IbrowserController(Images,Menu,anim-rewLO) 
+            $::Ibrowser(AnimButtonPause) config -image \
+                $::IbrowserController(Images,Menu,anim-pauseLO) 
+        }
+        if { $done == 0 } {
+            update
+            after $::Ibrowser(AnimationFrameDelay) IbrowserPlayOnceReverse
+        }
     } else {
-        set done 1
+        set ::Ibrowser(AnimationInterrupt) 0
     }
-    if { $done == 0 } {
-        update
-        after $::Ibrowser(AnimationFrameDelay) IbrowserPlayOnceReverse
-    }
-                      
 }
 
 #-------------------------------------------------------------------------------
@@ -461,6 +536,11 @@ proc IbrowserPlayOnceReverse { } {
 proc IbrowserStopAnimation { } {
 
     set ::Ibrowser(AnimationInterrupt) 1
+    set ::Ibrowser(AnimationPaused) 0
+    set ::Ibrowser(AnimationForw) 0
+    set ::Ibrowser(AnimationRew) 0
+    set ::Ibrowser(AnimationLoop) 0
+    set ::Ibrowser(AnimationPPong) 0
 }
 
 #-------------------------------------------------------------------------------
@@ -471,7 +551,7 @@ proc IbrowserStopAnimation { } {
 #-------------------------------------------------------------------------------
 proc IbrowserRecordAnimationToFile { type } {
     set ::Ibrowser(AnimationInterrupt) 1
-    
+    set ::Ibrowser(AnimationPaused) 0    
 }
 
 #-------------------------------------------------------------------------------
@@ -482,7 +562,23 @@ proc IbrowserRecordAnimationToFile { type } {
 #-------------------------------------------------------------------------------
 proc IbrowserPauseAnimation { } {
 
-    set ::Ibrowser(AnimationInterrupt) 1
+    if { $::Ibrowser(AnimationPaused) == 0 } {
+        set ::Ibrowser(AnimationPaused) 1
+        set ::Ibrowser(AnimationInterrupt) 1
+    } else {
+        #--- resume what we were doing.
+        set ::Ibrowser(AnimationPaused) 0
+        set ::Ibrowser(AnimationInterrupt) 0
+        if { $::Ibrowser(AnimationWas) == "forw" } {
+            IbrowserPlayOnce
+        } elseif { $::Ibrowser(AnimationWas) == "rew" } {
+            IbrowserPlayOnceReverse
+        } elseif { $::Ibrowser(AnimationWas) == "loop" } {
+            IbrowserLoopAnimate
+        } elseif { $::Ibrowser(AnimationWas) == "ppong" } {
+            IbrowserPingPongAnimate
+        }
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -493,9 +589,10 @@ proc IbrowserPauseAnimation { } {
 #-------------------------------------------------------------------------------
 proc IbrowserLoopAnimate { } {
 
-    if { $::Ibrowser(AnimationInterrupt) == 0 } {
+    if { $::Ibrowser(AnimationInterrupt) == 0  && $::Ibrowser(AnimationPaused) == 0 } {
         set curDrop $::Ibrowser(ViewDrop)    
-
+        set ::Ibrowser(AnimationWas) "loop" 
+        set ::Ibrowser(AnimationLoop) 1
         #--- how many drops in this interval?
         set id $::Ibrowser(activeInterval)
         set numdrops [ expr $::Ibrowser($id,lastMRMLid) - $::Ibrowser($id,firstMRMLid) ]
@@ -529,10 +626,11 @@ proc IbrowserLoopAnimate { } {
 #-------------------------------------------------------------------------------
 proc IbrowserPingPongAnimate { } {
 
-    if { $::Ibrowser(AnimationInterrupt) == 0 } {
+    if { $::Ibrowser(AnimationInterrupt) == 0 && $::Ibrowser(AnimationPaused) == 0 } {
         #--- get the current frame
         set curDrop $::Ibrowser(ViewDrop)    
-
+        set ::Ibrowser(AnimationWas) "ppong" 
+        set ::Ibrowser(AnimationPPong) 1
         #--- how many drops in this interval?
         set id $::Ibrowser(activeInterval)
         set numdrops [ expr $::Ibrowser($id,lastMRMLid) - $::Ibrowser($id,firstMRMLid) ]

@@ -82,8 +82,9 @@ proc IbrowserInit {} {
     set Module($m,author) "Wendy Plesniak, SPL & HCNR, wjp@bwh.harvard.edu"
 
     #---Define tabs
-    set Module($m,row1List) "Help New Display Process Save"
-    set Module($m,row1Name) "{help} {new} {display} {process} {save}"
+    set Module($m,row1List) "Help New Display Process"
+    #set Module($m,row1Name) "{help} {new} {display} {process} {view} {save}"
+    set Module($m,row1Name) "{help} {new} {display} {process}"
     set Module($m,row1,tab) New
 
     #---Procedure definitions
@@ -92,11 +93,11 @@ proc IbrowserInit {} {
     set Module($m,procExit) IbrowserExit    
 
     #---Dependencies
-    set Module($m,depend) ""
+    set Module($m,depend) "MultiVolumeReader"
 
     #---Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.2 $} {$Date: 2004/08/05 18:16:51 $}]
+        {$Revision: 1.3 $} {$Date: 2004/11/21 13:56:03 $}]
 
     #---Initialize module-level variables
     #---Global array with the same name as the module. Ibrowser()
@@ -128,10 +129,16 @@ proc IbrowserInit {} {
     
     #--- Animation global variables.
     set Ibrowser(AnimationInterrupt) 0
+    set Ibrowser(AnimationPaused) 0
+    set Ibrowser(AnimationWas) ""
     set Ibrowser(AnimationFrameDelay) 50
     set Ibrowser(AnimationDirection) 1
     set Ibrowser(currFrametag) "curr_frame_textbox"
-
+    set Ibrowser(AnimationForw) 0
+    set Ibrowser(AnimationRew) 0
+    set Ibrowser(AnimationLoop) 0    
+    set Ibrowser(AnimationPPong) 0
+    
     #--- Zooming references
     set IbrowserController(zoomfactor) 0
     #--- Location of popup windows
@@ -153,23 +160,26 @@ proc IbrowserInit {} {
     #--- Source all appropriate tcl files here....
     #--- These contain broken out 
     #--- code for the Slicer GUI
-    source ${modulePath}IbrowserLoadGUI.tcl
     source ${modulePath}IbrowserDisplayGUI.tcl
+    source ${modulePath}IbrowserLoadGUI.tcl
     source ${modulePath}IbrowserProcessGUI.tcl
     source ${modulePath}IbrowserSaveGUI.tcl
+    source ${modulePath}IbrowserViewGUI.tcl
     source ${modulePath}IbrowserHelpGUI.tcl    
 
     #--- These contain extra procs for
     #--- IO / processing / visualization
     source ${modulePath}IbrowserBVolReader.tcl
-    source ${modulePath}/IbrowserProcessing/IbrowserReorient.tcl
-    source ${modulePath}/IbrowserProcessing/IbrowserMotionCorrect.tcl
-    source ${modulePath}/IbrowserProcessing/IbrowserSmooth.tcl
+    source ${modulePath}/processing/IbrowserReorient.tcl
+    source ${modulePath}/processing/IbrowserMotionCorrect.tcl
+    source ${modulePath}/processing/IbrowserSmooth.tcl
+    source ${modulePath}/processing/IbrowserCoregister.tcl
     
     #--- These contain tcl code for the interval controller
     #--- which is launched in proc IbrowserEnter().
     source ${modulePath}IbrowserControllerMain.tcl
     source ${modulePath}IbrowserControllerAnimation.tcl
+    source ${modulePath}IbrowserControllerViewPopup.tcl
     source ${modulePath}IbrowserControllerGUIbase.tcl
     source ${modulePath}IbrowserControllerArrayList.tcl
     source ${modulePath}IbrowserControllerIcons.tcl
@@ -179,6 +189,7 @@ proc IbrowserInit {} {
     source ${modulePath}IbrowserControllerSlider.tcl
     source ${modulePath}IbrowserControllerDrops.tcl
     source ${modulePath}IbrowserControllerProgressBar.tcl
+    source ${modulePath}notebook.tcl
 
     #--- Create a new Interval Collection
     #--- set its id, its number of intervals to 0
@@ -192,6 +203,12 @@ proc IbrowserInit {} {
     #Ibrowser($i,Icollection) SetCollectionID $i
     #Ibrowser($i,Icollection) SetName "Collection_0"
     #Ibrowser($i,Icollection) SetnumIntervals 0
+
+    #--- For processing....
+    set ::Ibrowser(Process,SelectSequence) "none"
+    set ::Ibrowser(Process,SelectInternalReference) "none"
+    set ::Ibrowser(Process,SelectExternalReference) "none"
+
 
     set ::VolumeGroupCollection(numCollections) 0
 }
@@ -242,13 +259,17 @@ proc IbrowserBuildGUI {} {
     # Save
     #     Top
     #     Bottom
+    # View
+    #     Top
+    #     Bottom
     #-------------------------------------------
 
     IbrowserBuildHelpFrame
     IbrowserBuildLoadFrame
     IbrowserBuildProcessFrame
     IbrowserBuildDisplayFrame
-    IbrowserBuildSaveFrame
+    #IbrowserBuildSaveFrame
+    #IbrowserBuildViewFrame
 }
 
 
@@ -269,8 +290,12 @@ proc IbrowserEnter {{toplevelName .controllerGUI} } {
     IbrowserControllerLaunch
 
     
-#    IbrowserPushBindings
+    #    IbrowserPushBindings
+    #--- These are Ibrowser windows.
     set ::IbrowserController(topLevel) $toplevelName
+    set ::IbrowserController(View,singleVolView) ".controllerVolViewMOCKUP"
+    set ::IbrowserController(View,multiVolView) ".controllerMultiVolViewMOCKUP"
+    set ::IbrowserController(View,VoxTimecourse) ".controllerVoxelTimecourseMOCKUP"
 
     #--- If you want to iconify controller; 
     if { 0 } {
@@ -294,12 +319,14 @@ proc IbrowserExit {{toplevelName .controllerGUI}} {
 # Called when this module is exited by a user. 
 
     # popEventManager
- #   IbrowserPopBindings
+    #   IbrowserPopBindings
     #--- Lower and iconify the Ibrowser Controller
     if {[winfo exists $toplevelName]} {
         lower $toplevelName
         wm iconify $toplevelName
     }
+
+
 }
 
 
@@ -423,6 +450,66 @@ proc IbrowserValidateName { } {
         tk_messageBox -message "$m1 $m2"
         return
     }
+}
+
+
+
+
+proc IbrowserUpdateMRML { } {
+    global Matrix Volume
+
+    #--- Eventually, this should be called inside MainUpdateMRML
+    #--- This routine configures all pulldown interval menus to include 
+    #--- names of new intervals as they are added by a user.
+    
+    #--- See if the sequence for each menu still exists.
+    #--- if not, use the "none" sequence.
+    set s $::Ibrowser(idNone)
+    set v $::Volume(idNone)
+    if { [ lsearch $::Ibrowser(idList) $::Ibrowser(Process,SelectSequence) ] == -1 } {
+        set ::Ibrowser(Process,SelectSequence) $s
+    } else {
+        #--- If the sequence isn't valid, use the "none" volume as reference
+        set id $::Ibrowser(Process,SelectSequence)
+        if { $::Ibrowser(Process,SelectSequence) != $s } {
+            if { $::Ibrowser(Process,SelectInternalReference) < $::Ibrowser($id,firstMRMLid)  \
+              || $::Ibrowser(Process,SelectInternalReference) > $::Ibrowser($id,lastMRMLid) } {
+                set ::Ibrowser(Process,SelectInternalReference) $v
+            }
+        }
+    }
+
+    #--- Check the external reference volume
+    if { [ lsearch $::Volume(idList) $::Ibrowser(Process,SelectExternalReference) ] == -1 } {
+            set ::Ibrowser(Process,SelectExternalReference) $v
+    }
+
+    #--- don't include until motion correction code is complete.
+    if { 0 } {
+        #---configure Menus of sequences
+        set m $::Ibrowser(Process,MotionCorrect,mSequence)
+        $m delete 0 end
+        foreach id $::Ibrowser(idList) {
+            if { $id != $::Ibrowser(idNone) } {
+                $m add command -label "$::Ibrowser($id,name)" \
+                    -command "IbrowserProcessingSelectSequence $id " 
+            }
+        }
+    }
+
+    #--- don't include until co-registration code is complete.
+    #---configure Menus of reference volumes
+    if { 0 } {
+        set m $::Ibrowser(Process,Coregister,mExtReference)
+        $m delete 0 end
+        foreach v $Volume(idList) {
+            if { $v != $Volume(idNone) && [Volume($v,node) GetLabelMap] == "0" } {
+                $m add command -label "[Volume($v,node) GetName]" \
+                    -command "IbrowserProcessingSelectExternalReference $v"
+            }
+        }
+    }
+
 }
 
 
