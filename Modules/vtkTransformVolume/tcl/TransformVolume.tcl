@@ -105,7 +105,7 @@ proc TransformVolumeInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.8 $} {$Date: 2005/03/20 00:25:24 $}]
+        {$Revision: 1.9 $} {$Date: 2005/03/21 15:15:31 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -449,7 +449,11 @@ proc TransformVolumeRun {} {
         
         .isv configure -orientation $TransformVolume(OutputOrientation)
 
-        .isv configure -interpolation $TransformVolume(InterpolationMode)
+        if {[Volume($v,node) GetInterpolate] != 0} {
+            .isv configure -interpolation $TransformVolume(InterpolationMode)
+        } else {
+            .isv configure -interpolation "NearestNeighbor"
+        }
 
         .isv set_spacing $TransformVolume(OutputSpacingLR) \
             $TransformVolume(OutputSpacingPA) \
@@ -642,7 +646,6 @@ proc TransformVolumeUpdateResample {} {
             set v $vRef
         }
     }
-    puts "TransformVolumeUpdateResample v = $v"
 
     if {$v != $Volume(idNone) && $v != ""} {
         set spacing [split [[Volume($v,vol) GetOutput] GetSpacing]] 
@@ -693,7 +696,11 @@ proc TransformVolumeUpdatePreview {} {
             $isv configure -orientation $TransformVolume(OutputOrientation)
         }
 
-        $isv configure -interpolation $TransformVolume(InterpolationMode)
+        if {[Volume($v,node) GetInterpolate] != 0} {
+            $isv configure -interpolation $TransformVolume(InterpolationMode)
+        } else {
+            $isv configure -interpolation "NearestNeighbor"
+        }
 
         $isv set_spacing $TransformVolume(OutputSpacingLR) \
             $TransformVolume(OutputSpacingPA) \
