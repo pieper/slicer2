@@ -64,7 +64,7 @@ proc MainTetraMeshInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.3 $} {$Date: 2002/01/15 01:25:46 $}]
+		{$Revision: 1.4 $} {$Date: 2002/01/23 14:41:58 $}]
 
 	set TetraMesh(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -876,6 +876,8 @@ proc MainTetraMeshVisualize { v } {
     global TetraMesh
 
     MainTetraMeshVtkDataToTclData TetraMesh($v,node)
+    set TetraMesh(modelbasename) \
+            [ file root [file tail $TetraMesh(FileName)]]
 
     set TetraMesh(ProcessMesh) [TetraMesh($v,data) GetOutput]
     foreach item "Surfaces Nodes Edges Scalars Vectors" {
