@@ -104,7 +104,7 @@ proc DTMRIInit {} {
     set Module($m,author) "Lauren O'Donnell"
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.3 $} {$Date: 2004/02/24 23:18:12 $}]
+            {$Revision: 1.4 $} {$Date: 2004/03/11 19:55:15 $}]
 
     # Define Tabs
     #------------------------------------
@@ -151,10 +151,10 @@ proc DTMRIInit {} {
     set DTMRI(convert,numberOfGradients) [_default GetNumberOfGradients]
     set DTMRI(convert,gradients) ""
     for {set i 0} {$i < $DTMRI(convert,numberOfGradients)} {incr i} {
-    _default SelectDiffusionGradient $i
-    lappend DTMRI(convert,gradients) [_default GetSelectedDiffusionGradient]
+        _default SelectDiffusionGradient $i
+        lappend DTMRI(convert,gradients) [_default GetSelectedDiffusionGradient]
     }
-    puts $DTMRI(convert,gradients)
+    # puts $DTMRI(convert,gradients)
     set DTMRI(convert,firstGradientImage) 1
     set DTMRI(convert,lastGradientImage) 6
     set DTMRI(convert,firstNoGradientImage) 7
@@ -203,9 +203,9 @@ proc DTMRIInit {} {
     set DTMRI(mode,visualizationType,tractsOn) 0n
     set DTMRI(mode,visualizationType,tractsOnList) {On Off Delete}
     set DTMRI(mode,visualizationType,tractsOnList,tooltip) [list \
-    "Display all 'tracts'" \
-    "Hide all 'tracts'" \
-    "Clear all 'tracts'" ]
+        "Display all 'tracts'" \
+        "Hide all 'tracts'" \
+        "Clear all 'tracts'" ]
     # guard against multiple actor add/remove from GUI
     set DTMRI(vtk,streamline,actorsAdded) 1
 
@@ -1065,7 +1065,7 @@ especially Diffusion DTMRI MRI.
     #-------------------------------------------
     set f $fParams.fAutoTracts.fEntries.fApply
     DevAddButton $f.bApply "Seed 'Tracts' in ROI" \
-    {puts "Seeding streamlines"; DTMRISeedStreamlinesFromSegmentation}
+        {puts "Seeding streamlines"; DTMRISeedStreamlinesFromSegmentation}
     pack $f.bApply -side top -padx $Gui(pad) -pady $Gui(pad)
     TooltipAdd  $f.bApply "Seed a 'tract' from each point in the ROI.\nThis can be slow; be patient."
 
@@ -1106,9 +1106,9 @@ especially Diffusion DTMRI MRI.
     #-------------------------------------------
     set f $fParams.fSaveTracts.fEntries.fApply
     DevAddButton $f.bApply "Save tracts in model tracts.vtk" \
-    {puts "Seeding streamlines"; DTMRISaveStreamlinesAsModel "" tracts}
+        {puts "Saving streamlines"; DTMRISaveStreamlinesAsModel "" tracts}
     pack $f.bApply -side top -padx $Gui(pad) -pady $Gui(pad)
-    TooltipAdd  $f.bApply "Save visible tracts as tracts.vtk in the directory where you started slicer."
+    TooltipAdd  $f.bApply "Save visible tracts to vtk file.  Must be re-added to mrml tree."
 
     #-------------------------------------------
     # Display->VisUpdate frame
@@ -1606,7 +1606,7 @@ especially Diffusion DTMRI MRI.
                             -padx $Gui(pad) -pady 2
                 }
                 "bool" {
-                    puts "bool: $variableName, $desc"
+                    # puts "bool: $variableName, $desc"
                     eval {checkbutton $f.r$p  \
                             -text $desc -variable $variableName \
                         } $Gui(WCA)
@@ -2502,7 +2502,7 @@ proc DTMRISelectRemoveHyperStreamline {x y z} {
 # int z 
 # .END
 #-------------------------------------------------------------------------------
-proc DTMRISelectStartHyperStreamline {x y z} {
+proc DTMRISelectStartHyperStreamline {x y z {render "true"} } {
     global DTMRI Tensor
     global Select
 
@@ -2558,7 +2558,9 @@ proc DTMRISelectStartHyperStreamline {x y z} {
 
     # Force pipeline execution and render scene
     #------------------------------------
-    Render3D
+    if { $render == "true" } {
+        Render3D
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -2574,21 +2576,20 @@ proc DTMRIUpdateStreamlines {} {
 
     switch $mode {
         "On" {
-        # add actors
-        DTMRIAddAllStreamlines
+            # add actors
+            DTMRIAddAllStreamlines
         }
-    "Off" {
-        # hide actors
-        DTMRIRemoveAllStreamlines
+        "Off" {
+            # hide actors
+            DTMRIRemoveAllStreamlines
+        }
+        "Delete" {
+            # kill all objects
+            DTMRIDeleteAllStreamlines
+            # set mode to Off (will be set to On when add new stream)
+            set DTMRI(mode,visualizationType,tractsOn) Off
+        }
     }
-    "Delete" {
-        # kill all objects
-        DTMRIDeleteAllStreamlines
-        # set mode to Off (will be set to On when add new stream)
-        set DTMRI(mode,visualizationType,tractsOn) Off
-    }
-    }
-
 }
 
 
@@ -2755,15 +2756,15 @@ proc DTMRIRemoveAllStreamlines {} {
 
     # guard against duplicate add/remove actors
     if {$DTMRI(vtk,streamline,actorsAdded) == "1"} {
-    #puts "Removing"
-    foreach id $DTMRI(vtk,streamline,idList) {
-        set streamline streamln,$id
-        MainRemoveActor DTMRI(vtk,$streamline,actor) 
-    }
-    set DTMRI(vtk,streamline,actorsAdded) 0
+        #puts "Removing"
+        foreach id $DTMRI(vtk,streamline,idList) {
+            set streamline streamln,$id
+            MainRemoveActor DTMRI(vtk,$streamline,actor) 
+        }
+        set DTMRI(vtk,streamline,actorsAdded) 0
+        Render3D
     }
     
-    Render3D
 }
 
 #-------------------------------------------------------------------------------
@@ -2777,15 +2778,15 @@ proc DTMRIAddAllStreamlines {} {
 
     # guard against duplicate add/remove actors
     if {$DTMRI(vtk,streamline,actorsAdded) == "0"} {
-    #puts "Adding"
-    foreach id $DTMRI(vtk,streamline,idList) {
-        set streamline streamln,$id
-        MainAddActor DTMRI(vtk,$streamline,actor) 
-    }
-    set DTMRI(vtk,streamline,actorsAdded) 1
+        #puts "Adding"
+        foreach id $DTMRI(vtk,streamline,idList) {
+            set streamline streamln,$id
+            MainAddActor DTMRI(vtk,$streamline,actor) 
+        }
+        set DTMRI(vtk,streamline,actorsAdded) 1
+        Render3D
     }
 
-    Render3D
 }
 
 #-------------------------------------------------------------------------------
@@ -2852,14 +2853,15 @@ proc DTMRISeedStreamlinesFromSegmentation {{verbose 1}} {
 
     # ask for user confirmation first
     if {$verbose == "1"} {
-    set name [Volume($v,node) GetName]
-    set msg "About to seed streamlines in all labelled voxels of volume $name.  This may take a while, so make sure the Tracts settings are what you want first. Go ahead?"
-    if {[tk_messageBox -type yesno -message $msg] == "no"} {
-        return
-    }
+        set name [Volume($v,node) GetName]
+        set msg "About to seed streamlines in all labelled voxels of volume $name.  This may take a while, so make sure the Tracts settings are what you want first. Go ahead?"
+        if {[tk_messageBox -type yesno -message $msg] == "no"} {
+            return
+        }
     }
 
     # filter to grab list of points in the segmentation
+    catch "DTMRI(vtk,programmableFilt) Delete"
     vtkProgrammableAttributeDataFilter DTMRI(vtk,programmableFilt)
 
     set t $Tensor(activeID)
@@ -2891,7 +2893,7 @@ proc DTMRISeedStreamlinesFromSegmentation {{verbose 1}} {
         set world [eval {trans TransformPoint} $point]
         puts $world
         flush stdout
-        eval {DTMRISelectStartHyperStreamline} $world
+        eval {DTMRISelectStartHyperStreamline} $world "false"
         
         # if we are keeping track of all of the points that 
         # were calculated in the streamline
@@ -2950,7 +2952,7 @@ proc DTMRIExecuteForProgrammableFilter {} {
                 
                 set s [$scalars GetTuple1 $i]
                 
-        # if this matches the selected label
+                # if this matches the selected label
                 if {$s == $Label(label)} {
                     
                     # for each labelled point in the segmentation
@@ -4541,6 +4543,7 @@ proc DTMRISaveStreamlinesAsModel {subdir name {verbose "1"}} {
     global DTMRI
 
     # append all streamlines together into one model
+    catch "appender0 Delete"
     vtkAppendPolyData appender0
     set appenderList 0
 
@@ -4566,6 +4569,7 @@ proc DTMRISaveStreamlinesAsModel {subdir name {verbose "1"}} {
             # then start appending to new appender
             # (make one model file for each color)
             if {$currentColor != $color } {
+                catch "appender$count Delete"
                 vtkAppendPolyData appender$count
                 lappend appenderList $count
                 lappend colorList $currentColor
@@ -4573,44 +4577,54 @@ proc DTMRISaveStreamlinesAsModel {subdir name {verbose "1"}} {
                 set color $currentColor
             }
     
-        # the model is expected to be in RAS so we must transform
-        # it by its actor matrix here
-        # ---------------------------------------------
-        vtkTransform trans
-        trans SetMatrix [DTMRI(vtk,$streamln,actor) GetUserMatrix]
-        vtkTransformPolyDataFilter transformer
-        transformer SetInput [DTMRI(vtk,$streamln) GetOutput]
-        transformer SetTransform trans
-        transformer Update
-        
-        # clean up normals
-        set p normals
-        vtkPolyDataNormals $p
-        $p SetInput [transformer GetOutput]
-        $p SetFeatureAngle 60
-        
-        # make triangle strips
-        set p stripper
-        vtkStripper $p
-        $p SetInput [normals GetOutput]
-        
-        # add this model to the output
+            # the model is expected to be in RAS so we must transform
+            # it by its actor matrix here
+            # ---------------------------------------------
+            catch "trans Delete"
+            vtkTransform trans
+            trans SetMatrix [DTMRI(vtk,$streamln,actor) GetUserMatrix]
+            catch "transformer Delete"
+            vtkTransformPolyDataFilter transformer
+            transformer SetInput [DTMRI(vtk,$streamln) GetOutput]
+            transformer SetTransform trans
+            transformer Update
+            
+            # clean up normals
+            set p normals
+            catch "$p Delete"
+            vtkPolyDataNormals $p
+            $p SetInput [transformer GetOutput]
+            $p SetFeatureAngle 60
+            
+            # make triangle strips
+            set p stripper
+            catch "$p Delete"
+            vtkStripper $p
+            $p SetInput [normals GetOutput]
+            
+            # add this model to the output
             set appender [lindex $appenderList end]
-        appender$appender AddInput [stripper GetOutput] 
-        
-        # delete vtk objects
-        transformer Delete
-        trans Delete
-        normals Delete
-        stripper Delete
-    }
+            appender$appender AddInput [stripper GetOutput] 
+            
+            # delete vtk objects
+            transformer Delete
+            trans Delete
+            normals Delete
+            stripper Delete
+        }
     }
 
     # write the models
+    catch "tree Delete"
     vtkMrmlTree tree
     foreach appender $appenderList color $colorList {
 #        set filename "$name$appender.vtk"
-        set filename "/spl/tmp/talos.vtk"
+        #set filename "/spl/tmp/talos.vtk"
+        set filename [tk_getSaveFile -defaultextension ".vtk" -title "Save Tracts"]
+        if { $filename == "" } {
+            return
+        }
+        catch "writer Delete"
         vtkPolyDataWriter writer
         #writer DebugOn
         #writer SetInput [DTMRI(vtk,$streamln) GetOutput] 
@@ -4623,6 +4637,7 @@ proc DTMRISaveStreamlinesAsModel {subdir name {verbose "1"}} {
         puts "DTMRI module finished writing model $filename."
 
         # make a MRML node for it
+        catch "node Delete"
         vtkMrmlModelNode node
         node SetName "$name$appender"
         node SetFileName  $filename
@@ -4649,14 +4664,16 @@ proc DTMRISaveStreamlinesAsModel {subdir name {verbose "1"}} {
 
     # Write the MRML file
 #    tree Write [file join $subdir "$name.xml"]
-    tree Write [file join "/spl/tmp/" "talos.xml"]
+    #tree Write [file join "/spl/tmp/" "talos.xml"]
+    
+    tree Write [file rootname $filename].xml
 
     tree Delete
     
     # let user know something happened
     if {$verbose == "1"} {
-    set msg "Wrote streamlines as file $filename along with a MRML file"
-    tk_messageBox -message $msg
+        set msg "Wrote streamlines as file $filename along with a MRML file"
+        tk_messageBox -message $msg
     }
 
 }
@@ -4698,11 +4715,13 @@ proc DTMRIGetPointsFromSegmentationInIJKofDTMRIVolume {{verbose 1}} {
 
     # Now convert each point to ijk of DTMRI volume
     # transform point into world coordinates
+    catch "trans Delete"
     vtkTransform trans
     trans SetMatrix [Volume($v,node) GetWldToIjk]
     # now it's ijk to world
     trans Inverse    
     # now transform it into ijk of other volume
+    catch "trans2 Delete"
     vtkTransform trans2
     trans2 SetMatrix [Tensor($t,node) GetWldToIjk]
 
