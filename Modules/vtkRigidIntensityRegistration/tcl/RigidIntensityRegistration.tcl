@@ -99,7 +99,7 @@ proc RigidIntensityRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.6 $} {$Date: 2003/12/21 22:52:33 $}]
+        {$Revision: 1.7 $} {$Date: 2003/12/29 21:26:29 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -440,7 +440,7 @@ proc RigidIntensityRegistrationGantryTiltTest {vId} {
 # .END
 #-------------------------------------------------------------------------------
 proc RigidIntensityRegistrationUpdateParam { isreg } {
-    global RigidIntensityRegistration KullbackLeiblerRegistration
+    global RigidIntensityRegistration
 
     $isreg config \
         -transform       $RigidIntensityRegistration(matrixId)            \
