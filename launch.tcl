@@ -49,7 +49,7 @@ switch $tcl_platform(os) {
         set env(BUILD) solaris8
     }
     "Linux" {
-        set env(BUILD) linux
+        set env(BUILD) redhat7.3
     }
     "Darwin" {
         set env(BUILD) Darwin
@@ -102,7 +102,7 @@ if { ![info exists env(TCL_LIB_DIR)] || $env(TCL_LIB_DIR) == "" } {
 switch $env(BUILD) {
     "solaris8" -
     "Darwin" -
-    "linux" {
+    "redhat7.3" {
         # add vtk bins
         set env(LD_LIBRARY_PATH) $env(VTK_BIN_DIR)/bin:$env(LD_LIBRARY_PATH)
         # add slicer bins
@@ -158,7 +158,7 @@ foreach modulePath $modulePaths {
             switch $env(BUILD) {
                 "solaris8" -
                 "Darwin" -
-                "linux" {
+                "redhat7.3" {
                     set env(LD_LIBRARY_PATH) ${modulePath}/$moduleName/builds/$env(BUILD)/bin:$env(LD_LIBRARY_PATH)
                     set env(TCLLIBPATH) "${modulePath}/$moduleName/Wrapping/Tcl $env(TCLLIBPATH)"
                 }
@@ -223,7 +223,7 @@ proc file_event {fp} {
 switch $env(BUILD) {
     "solaris8" -
     "Darwin" -
-    "linux" {
+    "redhat7.3" {
         # - need to run the specially modified tcl interp in the executable 'vtk' on unix
         # - don't put process in background so that jdemo can track its status
         set fp [open "| csh -c \"$env(VTK_BIN_DIR)/bin/vtk $mainscript $argv \" |& cat" r]
@@ -232,6 +232,10 @@ switch $env(BUILD) {
         # put slicer in the background on windows so it won't be "Not Responding" in
         # task manager
         set fp [open "| $env(TCL_BIN_DIR)/wish84.exe $mainscript $argv" r]
+    }
+    default {
+        puts stderr "Unknown build: $env(BUILD)"
+        exit
     }
 }
 
