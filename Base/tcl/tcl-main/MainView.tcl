@@ -224,15 +224,16 @@ proc MainViewBuildGUI {} {
 	set f $Gui(fNav).fTop.fMove
 	
 	frame $f.fRotate  -bg $Gui(activeWorkspace)
-	
+
+# Comment out spin button to avoid bug when hit presets during spin	
 	# MainViewSpin button
-    set c {checkbutton $f.cMainViewSpin \
-        -text "Spin" -variable View(spin) -width 6 \
-        -indicatoron 0 -command "MainViewSpin" $Gui(WCA)}
-        eval [subst $c]
+#    set c {checkbutton $f.cMainViewSpin \
+#        -text "Spin" -variable View(spin) -width 6 \
+#        -indicatoron 0 -command "MainViewSpin" $Gui(WCA)}
+#        eval [subst $c]
 
 	pack $f.fRotate -side top -pady 2 
-	pack $f.fRotate $f.cMainViewSpin -side top -pady 3 
+#	pack $f.fRotate $f.cMainViewSpin -side top -pady 3 
 	
 	#-------------------------------------------
 	# View->Nav->Top->Move->Rotate Frame
