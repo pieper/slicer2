@@ -168,7 +168,7 @@ proc LevelSetsInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.29 $} {$Date: 2004/07/19 19:26:27 $}]
+        {$Revision: 1.30 $} {$Date: 2004/08/06 17:15:40 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -1291,6 +1291,14 @@ proc LevelSetsEnter {} {
     }
     FiducialsSetActiveList "LevelSets-seed"
 
+#Change welcome logo if it exits under ./image
+    set modulepath $::PACKAGE_DIR_VTKLevelSets/../../../images
+    if {[file exist [ExpandPath [file join \
+                     $modulepath "welcome.ppm"]]]} {
+        image create photo iWelcome \
+        -file [ExpandPath [file join $modulepath "welcome.ppm"]]
+    }
+
 }
 #----- LevelSetsEnter
 
@@ -1316,10 +1324,12 @@ proc LevelSetsExit {} {
 
     #Remove Fiducial List
 #    FiducialsDeleteList "LevelSets-seed"
+
+   #Restore standar slicer logo
+    image create photo iWelcome \
+        -file [ExpandPath [file join gui "welcome.ppm"]]
+
 }
-
-
-
 
 #-------------------------------------------------------------------------------
 # .PROC LevelSetsBindingCallback
