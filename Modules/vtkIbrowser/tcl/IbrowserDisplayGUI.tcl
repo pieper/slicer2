@@ -333,7 +333,6 @@ proc IbrowserUpdateMainViewer { n } {
 
 
 
-
 #-------------------------------------------------------------------------------
 # .PROC IbrowserSetIntervalParam
 # 
