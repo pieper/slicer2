@@ -27,7 +27,7 @@ if { [itcl::find class regions] == "" } {
         public variable umlslabel0 "" {}
         public variable umlslabel1 "" {}
         public variable umlsid "" {}
-        public variable which "" {}
+        public variable which 1 {}
         public variable ucsddata "" {}
         public variable regionspath "" {}
         public variable dir "" {}
@@ -125,8 +125,8 @@ itcl::body regions::constructor {args} {
 
     ::iwidgets::Labeledwidget::alignlabels $_modelmenu $cs.annot.eannot $cs.tal.etal 
     
-    radiobutton $cs.r1 -text "Raw Image (Use AFNI Talairach Header)" -variable which -value 1
-    radiobutton $cs.r2 -text "Talaraiched Image (Do not use AFNI Talairach Header)" -variable which -value 2
+    radiobutton $cs.r1 -text "Raw Image (Use AFNI Talairach Header)" -variable [itcl::scope which] -value 1
+    radiobutton $cs.r2 -text "Talaraiched Image (Do not use AFNI Talairach Header)" -variable [itcl::scope which] -value 2
     pack $cs.r1 $cs.r2
     
     #
@@ -630,9 +630,9 @@ itcl::body regions::umls {} {
 
 itcl::body regions::talairach {} {
     global Point Model
-    global which
+
     if { ![file exists $talfile] } {
-        puts stderr "no talairach file"
+        puts stderr "no talairach file: $talfile"
         return
     }
     #get coordinate from Slicer
