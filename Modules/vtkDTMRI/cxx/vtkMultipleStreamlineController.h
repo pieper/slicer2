@@ -13,10 +13,14 @@
 #include "vtkTransform.h"
 #include "vtkHyperStreamline.h"
 #include "vtkHyperStreamlinePoints.h"
+#include "vtkPreciseHyperStreamlinePoints.h"
 #include "vtkActor.h"
 #include "vtkProperty.h"
 #include "vtkLookupTable.h"
 
+#define USE_VTK_HYPERSTREAMLINE 0
+#define USE_VTK_HYPERSTREAMLINE_POINTS 1
+#define USE_VTK_PRECISE_HYPERSTREAMLINE_POINTS 2
 
 class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
 {
@@ -116,6 +120,44 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   vtkGetObjectMacro(StreamlineLookupTable, vtkLookupTable);
 
   // Description
+  // Type of vtkHyperStreamline subclass to create
+  // Use standard VTK class.
+  void UseVtkHyperStreamline()
+    {
+      this->TypeOfHyperStreamline=USE_VTK_HYPERSTREAMLINE;
+    }
+
+  // Description
+  // Type of vtkHyperStreamline subclass to create
+  // Use our subclass that returns points on the streamline.
+  void UseVtkHyperStreamlinePoints()
+    {
+      this->TypeOfHyperStreamline=USE_VTK_HYPERSTREAMLINE_POINTS;
+    }
+
+  // Description
+  // Type of vtkHyperStreamline subclass to create
+  // Use our subclass that returns points on the streamline
+  // and interpolates using BSplines.
+  void UseVtkPreciseHyperStreamlinePoints()
+    {
+      this->TypeOfHyperStreamline=USE_VTK_PRECISE_HYPERSTREAMLINE_POINTS;
+    }
+
+  // Description
+  // Example objects whose settings will be used in creation
+  // of vtkHyperStreamline subclasses of that type.
+  // This is an alternative to duplicating the parameters of 
+  // these classes as parameters of this class.
+  vtkSetObjectMacro(VtkHyperStreamlinePointsSettings,vtkHyperStreamlinePoints);
+  vtkGetObjectMacro(VtkHyperStreamlinePointsSettings,vtkHyperStreamlinePoints);
+  vtkSetObjectMacro(VtkPreciseHyperStreamlinePointsSettings,
+                    vtkPreciseHyperStreamlinePoints);
+  vtkGetObjectMacro(VtkPreciseHyperStreamlinePointsSettings,
+                    vtkPreciseHyperStreamlinePoints);
+
+
+  // Description
   // To do list:
   // Add access to parameters of all created streamlines.
   // Add Print function
@@ -132,6 +174,7 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   void ApplyUserSettingsToGraphicsObject(int index);
   void DeleteStreamline(int index);
   int PointWithinTensorData(double *point, double *pointw);
+  vtkHyperStreamline *CreateHyperStreamline();
 
   vtkTransform *ROIToWorld;
   vtkTransform *WorldToTensorScaledIJK;
@@ -151,6 +194,12 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
 
   int ScalarVisibility;
   vtkLookupTable *StreamlineLookupTable;
+
+  int TypeOfHyperStreamline;
+
+  vtkHyperStreamline *VtkHyperStreamlineSettings;
+  vtkHyperStreamlinePoints *VtkHyperStreamlinePointsSettings;
+  vtkPreciseHyperStreamlinePoints *VtkPreciseHyperStreamlinePointsSettings;
 
   // Add Parameters of standard streamlines
   //MaximumPropagationDistance IntegrationStepLength 

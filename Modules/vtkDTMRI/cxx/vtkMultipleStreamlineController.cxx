@@ -40,6 +40,10 @@ vtkMultipleStreamlineController::vtkMultipleStreamlineController()
   this->StreamlineLookupTable = vtkLookupTable::New();
   // make 0 dark blue, not red
   this->StreamlineLookupTable->SetHueRange(.6667, 0.0);
+  this->VtkHyperStreamlineSettings=NULL;
+  this->VtkHyperStreamlinePointsSettings=NULL;
+  this->VtkPreciseHyperStreamlinePointsSettings=NULL;
+  this->UseVtkHyperStreamline();
 
   // the number of actors displayed in the scene
   this->NumberOfVisibleActors=0;
@@ -342,6 +346,132 @@ int vtkMultipleStreamlineController::PointWithinTensorData(double *point, double
   return(inbounds);
 }
 
+// Here we create the type of streamline requested by the user.
+// Elsewhere in this class, all are treated as vtkHyperStreamlines.
+// We copy settings from the example object that the user has access
+// to.  
+// (It would be nicer if we required the hyperstreamline classes to 
+// implement a copy function.)
+//----------------------------------------------------------------------------
+vtkHyperStreamline * vtkMultipleStreamlineController::CreateHyperStreamline()
+{
+  vtkHyperStreamline *currHS;
+  vtkHyperStreamlinePoints *currHSP;
+  vtkPreciseHyperStreamlinePoints *currPHSP;
+
+  cout << "in create HS -------------- " << this->TypeOfHyperStreamline << endl;
+
+  switch (this->TypeOfHyperStreamline)
+    {
+    case USE_VTK_HYPERSTREAMLINE:
+      if (this->VtkHyperStreamlineSettings) 
+        {
+          currHS=vtkHyperStreamline::New();
+          return(currHS);
+        }
+      else
+        {
+          return(vtkHyperStreamline::New());
+        }
+      break;
+    case USE_VTK_HYPERSTREAMLINE_POINTS:
+      if (this->VtkHyperStreamlinePointsSettings) 
+        {
+          // create object
+          currHSP=vtkHyperStreamlinePoints::New();
+          currHSP->DebugOn();
+          // Now copy user's settings into this object:
+          // MaximumPropagationDistance 
+          currHSP->SetMaximumPropagationDistance(this->VtkHyperStreamlinePointsSettings->GetMaximumPropagationDistance());
+          // IntegrationStepLength
+          currHSP->SetIntegrationStepLength(this->VtkHyperStreamlinePointsSettings->GetIntegrationStepLength());
+          // StepLength
+          currHSP->SetStepLength(this->VtkHyperStreamlinePointsSettings->GetStepLength());
+          // Radius
+          currHSP->SetRadius(this->VtkHyperStreamlinePointsSettings->GetRadius());
+          // NumberOfSides
+          currHSP->SetNumberOfSides(this->VtkHyperStreamlinePointsSettings->GetNumberOfSides());
+          // IntegrationDirection (set in this class, default both ways)
+
+          return((vtkHyperStreamline *)currHSP);
+        }
+      else
+        {
+          return((vtkHyperStreamline *) vtkHyperStreamlinePoints::New());
+
+        }
+
+
+      break;
+    case USE_VTK_PRECISE_HYPERSTREAMLINE_POINTS:
+      if (this->VtkPreciseHyperStreamlinePointsSettings) 
+        {
+
+          cout << "precisely!!!!!!!!!!!1" << endl;
+
+          // create object
+          currPHSP=vtkPreciseHyperStreamlinePoints::New();
+
+          
+          currPHSP->DebugOn();
+
+          // Now copy user's settings into this object:
+          // Method
+          currPHSP->
+            SetMethod(this->VtkPreciseHyperStreamlinePointsSettings->
+                      GetMethod());
+          // Terminal FA
+          currPHSP->
+            SetTerminalFractionalAnisotropy(this->VtkPreciseHyperStreamlinePointsSettings->GetTerminalFractionalAnisotropy());
+          // MaximumPropagationDistance 
+          currPHSP->
+            SetMaximumPropagationDistance(this->VtkPreciseHyperStreamlinePointsSettings->GetMaximumPropagationDistance());
+          // MinimumPropagationDistance 
+          currPHSP->
+            SetMinimumPropagationDistance(this->VtkPreciseHyperStreamlinePointsSettings->GetMinimumPropagationDistance());
+          // TerminalEigenvalue
+          currPHSP->
+            SetTerminalEigenvalue(this->VtkPreciseHyperStreamlinePointsSettings->GetTerminalEigenvalue());
+          // IntegrationStepLength
+          currPHSP->
+            SetIntegrationStepLength(this->VtkPreciseHyperStreamlinePointsSettings->GetIntegrationStepLength());
+          // StepLength 
+          currPHSP->
+            SetStepLength(this->VtkPreciseHyperStreamlinePointsSettings->GetStepLength());
+          // Radius  
+          currPHSP->
+            SetRadius(this->VtkPreciseHyperStreamlinePointsSettings->GetRadius());
+          // NumberOfSides
+          currPHSP->
+            SetNumberOfSides(this->VtkPreciseHyperStreamlinePointsSettings->GetNumberOfSides());
+          // IntegrationDirection
+          // Skip this, here we always want both directions
+          // MaxStep
+          currPHSP->
+            SetMaxStep(this->VtkPreciseHyperStreamlinePointsSettings->GetMaxStep());
+          // MinStep
+          currPHSP->
+            SetMinStep(this->VtkPreciseHyperStreamlinePointsSettings->GetMinStep());
+          // MaxError
+          currPHSP->
+            SetMaxError(this->VtkPreciseHyperStreamlinePointsSettings->GetMaxError());
+          // MaxAngle
+          currPHSP->
+            SetMaxAngle(this->VtkPreciseHyperStreamlinePointsSettings->GetMaxAngle());
+          // LengthOfMaxAngle
+          currPHSP->
+            SetLengthOfMaxAngle(this->VtkPreciseHyperStreamlinePointsSettings->GetLengthOfMaxAngle());
+
+          return((vtkHyperStreamline *) currPHSP);
+          // 
+        }
+      else
+        {
+          return((vtkHyperStreamline *) vtkPreciseHyperStreamlinePoints::New());
+        }
+      break;
+    }
+}
 
 //----------------------------------------------------------------------------
 void vtkMultipleStreamlineController::SeedStreamlineFromPoint(double x, 
@@ -365,7 +495,8 @@ void vtkMultipleStreamlineController::SeedStreamlineFromPoint(double x,
 
   // Now create a streamline and put it on the collection.
   //newStreamline=vtkHyperStreamline::New();
-  newStreamline=vtkHyperStreamlinePoints::New();
+  //newStreamline=vtkHyperStreamlinePoints::New();
+  newStreamline=this->CreateHyperStreamline();
   //newStreamline->DebugOn();
   this->Streamlines->AddItem((vtkObject *)newStreamline);
   
