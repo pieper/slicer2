@@ -105,7 +105,7 @@ proc KullbackLeiblerRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.9 $} {$Date: 2003/12/29 21:26:54 $}]
+        {$Revision: 1.10 $} {$Date: 2004/11/08 18:14:30 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -482,8 +482,12 @@ proc KullbackLeiblerRegistrationBuildVTK {} {
     KLTrainTargetCast SetOutputScalarTypeToFloat
     KLTrainTargetCast SetInput [KLTrainTargetChangeInfo GetOutput]
 
-    vtkITKNormalizeImageFilter KLTrainTargetNorm
-    KLTrainTargetNorm SetInput [KLTrainTargetCast GetOutput]
+    if {[info command vtkITKNormalizeImageFilter] == ""} {
+        DevErrorWindow "Rigid Intensity Registration:\nERROR: vtkITKNormalizeImageFilter does not exist.\nThis module depends on a missing module, vtkITK, and will not work properly."
+    } else {
+        vtkITKNormalizeImageFilter KLTrainTargetNorm
+        KLTrainTargetNorm SetInput [KLTrainTargetCast GetOutput]
+    }
 
     ### normalize and center the training source
     vtkImageChangeInformation KLTrainSourceChangeInfo
@@ -494,8 +498,13 @@ proc KullbackLeiblerRegistrationBuildVTK {} {
     KLTrainSourceCast SetOutputScalarTypeToFloat
     KLTrainSourceCast SetInput [KLTrainSourceChangeInfo GetOutput]
 
-    vtkITKNormalizeImageFilter KLTrainSourceNorm
-    KLTrainSourceNorm SetInput [KLTrainSourceCast GetOutput]
+
+    if {[info command vtkITKNormalizeImageFilter] == ""} {
+        DevErrorWindow "Rigid Intensity Registration:\nERROR: vtkITKNormalizeImageFilter does not exist.\nThis module depends on a missing module, vtkITK, and will not work properly."
+    } else { 
+        vtkITKNormalizeImageFilter KLTrainSourceNorm
+        KLTrainSourceNorm SetInput [KLTrainSourceCast GetOutput]
+    }
 }
 
 #-------------------------------------------------------------------------------
