@@ -73,7 +73,7 @@
 #define max(a,b) (((a)>(b))?(a):(b))
 #define min(a,b) (((a)<(b))?(a):(b))
 
-#define GB_debug 1
+#define GB_debug 0
 
 #define EPSILON 1E-5
 
@@ -107,6 +107,8 @@ vtkLevelSets* vtkLevelSets::New()
 // Constructor sets default values
 vtkLevelSets::vtkLevelSets()
 {
+  verbose = 0;
+
   AdvectionCoeff = 1;
   NumIters       = 10;
   ReinitFreq     = 3;
@@ -879,13 +881,17 @@ void vtkLevelSets::DistanceMapFM()
    // Probably not necessary
    fm->GetOutput();
 
-   fprintf(stderr, ".");fflush(stderr);
+   if (verbose) {
+     fprintf(stderr, ".");fflush(stderr);
+   }
 
    // Put the sign back to the image
    ptr = (float*) current_image->GetScalarPointer(); 
    for(i=0;i<imsize;i++) if (ptr[i]<0) newU[i] = -newU[i];
 
-   fprintf(stderr, ".");fflush(stderr);
+   if (verbose) {
+     fprintf(stderr, ".");fflush(stderr);
+   }
    
    isodist->SetInput(NULL);
    //   isodist->Delete();
@@ -933,8 +939,9 @@ void vtkLevelSets::DistanceMapChamfer()
    vtkImageData*              current_image;
    vtkImageData*              res1;
 
-   //   if (GB_debug) 
-   fprintf(stderr, "DistanceMapChamfer() .");fflush(stderr);
+   if (GB_debug) {
+     fprintf(stderr, "DistanceMapChamfer() .");fflush(stderr);
+   }
 
    current_image = vtkImageData::New();
    if (isodist==NULL) isodist = vtkImageIsoContourDist::New();
@@ -1030,7 +1037,7 @@ void vtkLevelSets::DistanceMapChamfer()
 
    //   chamfer->SetInput(NULL);
 
-   //   if (GB_debug) 
+   if (GB_debug) 
      fprintf(stderr, ";\n");
 
 } // DistanceMapChamfer()
@@ -1110,7 +1117,7 @@ void vtkLevelSets::DistanceMapShape()
      SkeletonImage->SetDimensions(inputImage->GetDimensions() );
      SkeletonImage->SetOrigin(    inputImage ->GetOrigin());
      SkeletonImage->SetSpacing(   inputImage->GetSpacing() );
-      inputImage->CopyAndCastFrom(inputImage,
+     SkeletonImage->CopyAndCastFrom(inputImage,
                                   inputImage->GetExtent());
       //     SkeletonImage->AllocateScalars();
      SkeletonImage_allocated = 1;
@@ -1301,8 +1308,10 @@ void vtkLevelSets::MakeBand0( )
     register int xmin,xmax,ymin,ymax,zmin,zmax;
 
 
-  fprintf(stderr, "MB0() .");
-  fflush(stderr);
+    if (verbose) {
+      fprintf(stderr, "MB0() .");
+      fflush(stderr);
+    }
 
   // Allocating the band of the size of the image,
   // which is in general not necessary ...
@@ -1366,12 +1375,20 @@ void vtkLevelSets::MakeBand0( )
     // loop on x,y and z to avoid adding border points in the narrow
     // band and thus to avoid checking its limits and speed up
     // the other functions
-    p = txy;
-    for(z=1;z<tz-1;z++) {
+    zmin = 1;
+    zmax = tz-2;
+
+    if (Dimension==2) {
+      zmin = zmax = 0;
+    }
+
+
+    p = zmin*txy;
+    for(z=zmin;z<=zmax;z++) {
       p += tx;
       for(y=1;y<ty-1;y++) {
-    p++;
-    for(x=1;x<tx-1;x++) {
+      p++;
+      for(x=1;x<tx-1;x++) {
       //      if (p>=imsize) fprintf(stderr,"Pb ...\n");
       val = U[p];
       if (fabs(val)<=Band) {
@@ -1515,7 +1532,7 @@ void vtkLevelSets::MakeBand0( )
 
 
   //  fprintf(stderr, " %2.1f \% ; \n", (100.0*bnd_pc)/(1.0*imsize));
-  fprintf(stderr, "band size %d \n",bnd_pc);
+  //  fprintf(stderr, "band size %d \n",bnd_pc);
 
 } // MakeBand0()
 
@@ -1848,45 +1865,28 @@ void vtkLevelSets::Evolve2D()
       balloonterm = balloon_coeff;
       if (Probability!=NULL) 
     balloonterm *= Probability[(int) (im[p]*10)];
-      if (balloonterm>0) {
-    Gx = Gy = 0;
-    if (D_x>=0) Gx = D_x;
-    if ((Dx<0)&&(-Dx>Gx)) Gx = Dx;
-    if (D_y>=0) Gy = D_y;
-    if ((Dy<0)&&(-Dy>Gy)) Gy = Dy;
-      }
-      else {
-    Gx = Gy = 0;
-    if (D_x<=0) Gx = D_x;
-    if ((Dx>0)&&(Dx>-Gx)) Gx = Dx;
-    if (D_y<=0) Gy = D_y;
-    if ((Dy>0)&&(Dy>-Gy)) Gy = Dy;
-      }
-      Gnorm = sqrt(Gx*Gx+Gy*Gy);
-      balloonterm *= Gnorm;
     }
     else
-    if (balloon_image != NULL) {
+    if (balloon_image != NULL) 
       balloonterm = ((float*)balloon_image->GetScalarPointer())[p];
-      if (balloonterm>0) {
-    Gx = Gy = 0;
-    if (D_x>=0) Gx = D_x;
-    if ((Dx<0)&&(-Dx>Gx)) Gx = Dx;
-    if (D_y>=0) Gy = D_y;
-    if ((Dy<0)&&(-Dy>Gy)) Gy = Dy;
-      }
-      else {
-    Gx = Gy = 0;
-    if (D_x<=0) Gx = D_x;
-    if ((Dx>0)&&(Dx>-Gx)) Gx = Dx;
-    if (D_y<=0) Gy = D_y;
-    if ((Dy>0)&&(Dy>-Gy)) Gy = Dy;
-      }
-      Gnorm = sqrt(Gx*Gx+Gy*Gy);
-      balloonterm *= Gnorm;
-     
-    }
 
+    if (balloonterm>0) {
+      Gx = Gy = 0;
+      if (D_x>=0) Gx = D_x;
+      if ((Dx<0)&&(-Dx>Gx)) Gx = Dx;
+      if (D_y>=0) Gy = D_y;
+      if ((Dy<0)&&(-Dy>Gy)) Gy = Dy;
+    }
+    else {
+      Gx = Gy = 0;
+      if (D_x<=0) Gx = D_x;
+      if ((Dx>0)&&(Dx>-Gx)) Gx = Dx;
+      if (D_y<=0) Gy = D_y;
+      if ((Dy>0)&&(Dy>-Gy)) Gy = Dy;
+    }
+    Gnorm = sqrt(Gx*Gx+Gy*Gy);
+    balloonterm *= Gnorm;
+    
     //--------------------------------------------------
     // Velocity Term
     //--------------------------------------------------
@@ -1999,13 +1999,15 @@ void vtkLevelSets::Evolve2D()
   this->mean_advection /= bnd_pc;
   this->mean_vel       /= bnd_pc;
 
-  fprintf(stderr,"Evolve2D()\n");
-  fprintf(stderr," MEAN curv      = %2.2f\n",this->mean_curv);
-  fprintf(stderr," MEAN advection = %2.2f\n",this->mean_advection);
-  fprintf(stderr," MEAN balloon   = %2.2f\n",this->mean_balloon);
-  fprintf(stderr," MEAN velocity  = %2.2f\n",this->mean_vel);
+  if (verbose) {
+    fprintf(stderr,"Evolve2D()\n");
+    fprintf(stderr," MEAN curv      = %2.2f\n",this->mean_curv);
+    fprintf(stderr," MEAN advection = %2.2f\n",this->mean_advection);
+    fprintf(stderr," MEAN balloon   = %2.2f\n",this->mean_balloon);
+    fprintf(stderr," MEAN velocity  = %2.2f\n",this->mean_vel);
 
-   if (GB_debug) fprintf(stderr, ";\n");
+  }
+  if (GB_debug) fprintf(stderr, ";\n");
 
 } // Evolve2D()
 
@@ -2307,61 +2309,70 @@ void vtkLevelSets::Evolve3D( int first_band, int last_band)
     // Curvature Term
     //--------------------------------------------------
 
+    curvterm = 0;
+    if (coeff_curvature>0) {
 
-    //    if (delta0!=0) 
-    if (delta0>.1) {
-    meancurv_grad =  ( 0.5*(  (Dpmy+Dpmz)*dxsq 
-                  +(Dpmx+Dpmz)*dysq
-                  +(Dpmx+Dpmy)*dzsq
-                  )
-               -( dxy*D0xy
-                  +dxz*D0zx
-                  +dyz*D0yz)
-               ) /delta0; 
+      //    if (delta0!=0) 
+      if (delta0>.1) {
+        meancurv_grad =  ( 0.5*(  (Dpmy+Dpmz)*dxsq 
+                    +(Dpmx+Dpmz)*dysq
+                    +(Dpmx+Dpmy)*dzsq
+                    )
+                 -( dxy*D0xy
+                    +dxz*D0zx
+                    +dyz*D0yz)
+                 ) /delta0; 
 
-      if (!DoMean) {
-      gausscurv_grad2 = (2*(dxy*(D0zx*D0yz-D0xy*Dpmz) +  
-                dyz*(D0zx*D0xy-D0yz*Dpmx) +
-                dxz*(D0yz*D0xy-D0zx*Dpmy)
-                ) + 
-                 dxsq*(Dpmy*Dpmz-D0yz*D0yz) + 
-                 dysq*(Dpmx*Dpmz-D0zx*D0zx) + 
-                 dzsq*(Dpmy*Dpmx-D0xy*D0xy))/delta0;
+        if (!DoMean) {
+        gausscurv_grad2 = (2*(dxy*(D0zx*D0yz-D0xy*Dpmz) +  
+                  dyz*(D0zx*D0xy-D0yz*Dpmx) +
+                  dxz*(D0yz*D0xy-D0zx*Dpmy)
+                  ) + 
+                   dxsq*(Dpmy*Dpmz-D0yz*D0yz) + 
+                   dysq*(Dpmx*Dpmz-D0zx*D0zx) + 
+                   dzsq*(Dpmy*Dpmx-D0xy*D0xy))/delta0;
 
-        discriminant = meancurv_grad*meancurv_grad-gausscurv_grad2;
-        if (discriminant<0) discriminant=0;
-        discriminant = sqrt(discriminant);
-        smallercurv_grad  = meancurv_grad-discriminant;
-        biggercurv_grad   = meancurv_grad+discriminant;
-      }
+          discriminant = meancurv_grad*meancurv_grad-gausscurv_grad2;
+          if (discriminant<0) discriminant=0;
+          discriminant = sqrt(discriminant);
+          smallercurv_grad  = meancurv_grad-discriminant;
+          biggercurv_grad   = meancurv_grad+discriminant;
+        }
 
+      if (DoMean) curvterm = meancurv_grad   ;
+      else        curvterm = smallercurv_grad;
+      curvterm *= coeff_curvature;
+
+      this->mean_curv      += curvterm;
+      ut = curvterm;
+    }
 
     //--------------------------------------------------
     // Data Attachment Term
     //--------------------------------------------------
 
-
-
+    imcomp = 0;
+    if (fabsf(AdvectionCoeff)>1E-10) {
       
       // BELOW IS WHAT WAS USED FOR IPMI PAPER 
       if (UseCosTerm) {
         if (!isotropic_voxels) {
-      i0x=(im[p+px]-im[p+mx])*(doubxspacing);     
-      i0y=(im[p+py]-im[p+my])*(doubyspacing);     
-      i0z=(im[p+pz]-im[p+mz])*(doubzspacing);     
-      normcompsq = (i0x*i0x+i0y*i0y+i0z*i0z);
-      }
-    else {
-      i0x=(im[p+px]-im[p+mx])/2;  // /2
-      i0y=(im[p+py]-im[p+my])/2;  // /2
-      i0z=(im[p+pz]-im[p+mz])/2;  // /2
-      normcompsq = i0x*i0x+i0y*i0y+i0z*i0z;  // /4
-    }
+          i0x=(im[p+px]-im[p+mx])*(doubxspacing);     
+          i0y=(im[p+py]-im[p+my])*(doubyspacing);     
+          i0z=(im[p+pz]-im[p+mz])*(doubzspacing);     
+          normcompsq = (i0x*i0x+i0y*i0y+i0z*i0z);
+        }
+        else {
+          i0x=(im[p+px]-im[p+mx])/2;  // /2
+          i0y=(im[p+py]-im[p+my])/2;  // /2
+          i0z=(im[p+pz]-im[p+mz])/2;  // /2
+          normcompsq = i0x*i0x+i0y*i0y+i0z*i0z;  // /4
+        }
         sqrtdelta0 = sqrt(delta0); // (/2)
-    costerm = -(D0x*i0x+D0y*i0y+D0z*i0z)/(sqrtdelta0*sqrt(normcompsq));
+        costerm = -(D0x*i0x+D0y*i0y+D0z*i0z)/(sqrtdelta0*sqrt(normcompsq));
       }
       else
-    costerm = 1;
+       costerm = 1;
 
       // recall that image is rescaled to 0-255 when loaded.  
       //
@@ -2371,56 +2382,58 @@ void vtkLevelSets::Evolve3D( int first_band, int last_band)
       
       switch (advection_scheme) {
       case ADVECTION_UPWIND_VECTORS: 
-    // Use upwind differences for advection term :
-    imx = data_attach_x[p];
-    imy = data_attach_y[p];
-    imz = data_attach_z[p];
-    adv = 0;
-    if (costerm>0) {
-      if (imx>0) adv += imx*D_x;  else   adv += imx*Dx;
-      if (imy>0) adv += imy*D_y;  else   adv += imy*Dy;
-      if (imz>0) adv += imz*D_z;  else   adv += imz*Dz;
-    } else {
-      if (imx>0) adv += imx*Dx;  else   adv += imx*D_x;
-      if (imy>0) adv += imy*Dy;  else   adv += imy*D_y;
-      if (imz>0) adv += imz*Dz;  else   adv += imz*D_z;
-    }
-    imcomp = adv*AdvectionCoeff*costerm; 
-    break;
+        // Use upwind differences for advection term :
+        imx = data_attach_x[p];
+        imy = data_attach_y[p];
+        imz = data_attach_z[p];
+        adv = 0;
+        if (costerm>0) {
+          if (imx>0) adv += imx*D_x;  else   adv += imx*Dx;
+          if (imy>0) adv += imy*D_y;  else   adv += imy*Dy;
+          if (imz>0) adv += imz*D_z;  else   adv += imz*Dz;
+        } else {
+          if (imx>0) adv += imx*Dx;  else   adv += imx*D_x;
+          if (imy>0) adv += imy*Dy;  else   adv += imy*D_y;
+          if (imz>0) adv += imz*Dz;  else   adv += imz*D_z;
+        } 
+        imcomp = adv*AdvectionCoeff*costerm; 
+        break;
       case ADVECTION_CENTRAL_VECTORS:
-    imx = data_attach_x[p];
-    imy = data_attach_y[p];
-    imz = data_attach_z[p];
-    adv =  D0x*imx+D0y*imy+D0z*imz;
-    //    if (isotropic_voxels) adv/=2;
-    imcomp = adv*AdvectionCoeff*costerm; 
-    break;
+        imx = data_attach_x[p];
+        imy = data_attach_y[p];
+        imz = data_attach_z[p];
+        adv =  D0x*imx+D0y*imy+D0z*imz;
+        //    if (isotropic_voxels) adv/=2;
+        imcomp = adv*AdvectionCoeff*costerm; 
+        break;
       case ADVECTION_MORPHO:
-    if (secdergrad[p]*AdvectionCoeff<0) {
-      Gx = Gy = Gz = 0;
-      if (D_x>=0) Gx = D_x;
-      if ((Dx<0)&&(-Dx>Gx)) Gx = Dx;
-      if (D_y>=0) Gy = D_y;
-      if ((Dy<0)&&(-Dy>Gy)) Gy = Dy;
-      if (D_z>=0) Gz = D_z;
-      if ((Dz<0)&&(-Dz>Gz)) Gz = Dz;
-    }
-    else {
-      Gx = Gy = Gz = 0;
-      if (D_x<=0) Gx = D_x;
-      if ((Dx>0)&&(Dx>-Gx)) Gx = Dx;
-      if (D_y<=0) Gy = D_y;
-      if ((Dy>0)&&(Dy>-Gy)) Gy = Dy;
-      if (D_z<=0) Gz = D_z;
-      if ((Dz>0)&&(Dz>-Gz)) Gz = Dz;
-    }
-    Gnorm = sqrt(Gx*Gx+Gy*Gy+Gz*Gz);
-    imcomp = -Gnorm*secdergrad[p];
+        if (secdergrad[p]*AdvectionCoeff<0) {
+          Gx = Gy = Gz = 0;
+          if (D_x>=0) Gx = D_x;
+          if ((Dx<0)&&(-Dx>Gx)) Gx = Dx;
+          if (D_y>=0) Gy = D_y;
+          if ((Dy<0)&&(-Dy>Gy)) Gy = Dy;
+          if (D_z>=0) Gz = D_z;
+          if ((Dz<0)&&(-Dz>Gz)) Gz = Dz;
+        }
+        else {
+          Gx = Gy = Gz = 0;
+          if (D_x<=0) Gx = D_x;
+          if ((Dx>0)&&(Dx>-Gx)) Gx = Dx;
+          if (D_y<=0) Gy = D_y;
+          if ((Dy>0)&&(Dy>-Gy)) Gy = Dy;
+          if (D_z<=0) Gz = D_z;
+          if ((Dz>0)&&(Dz>-Gz)) Gz = Dz;
+        }
+        Gnorm = sqrt(Gx*Gx+Gy*Gy+Gz*Gz);
+        imcomp = -Gnorm*secdergrad[p];
         imcomp *= AdvectionCoeff;
-    break;
+        break;
       } // end switch
 
-        
+      this->mean_advection += imcomp;
+      ut -= imcomp;
+    }        
       //      g = exp(-sqrt(normcompsq)/0.3);
 
     //--------------------------------------------------
@@ -2428,117 +2441,94 @@ void vtkLevelSets::Evolve3D( int first_band, int last_band)
     //--------------------------------------------------
 
     balloonterm = 0.0;
-    if (balloon_coeff != 0) {
+    if (fabsf(balloon_coeff)>1E-10) {
       balloonterm = balloon_coeff;
       if (Probability!=NULL) 
     balloonterm *= Probability[(int) (im[p]*10)];
-      if (balloon_coeff>0) {
-    Gx = Gy = Gz = 0;
-    if (D_x>=0) Gx = D_x;
-    if ((Dx<0)&&(-Dx>Gx)) Gx = Dx;
-    if (D_y>=0) Gy = D_y;
-    if ((Dy<0)&&(-Dy>Gy)) Gy = Dy;
-    if (D_z>=0) Gz = D_z;
-    if ((Dz<0)&&(-Dz>Gz)) Gz = Dz;
-      }
-      else {
-    Gx = Gy = Gz = 0;
-    if (D_x<=0) Gx = D_x;
-    if ((Dx>0)&&(Dx>-Gx)) Gx = Dx;
-    if (D_y<=0) Gy = D_y;
-    if ((Dy>0)&&(Dy>-Gy)) Gy = Dy;
-    if (D_z<=0) Gz = D_z;
-    if ((Dz>0)&&(Dz>-Gz)) Gz = Dz;
-      }
-      balloonterm *= sqrt(Gx*Gx+Gy*Gy+Gz*Gz);
     }
     else
-    if (balloon_image != NULL) {
+    if (balloon_image != NULL) 
       balloonterm = ((float*)balloon_image->GetScalarPointer())[p];
+
+    if (fabsf(balloon_coeff)>1E-10) {
       if (balloonterm>0) {
-    Gx = Gy = Gz = 0;
-    if (D_x>=0) Gx = D_x;
-    if ((Dx<0)&&(-Dx>Gx)) Gx = Dx;
-    if (D_y>=0) Gy = D_y;
-    if ((Dy<0)&&(-Dy>Gy)) Gy = Dy;
-    if (D_z>=0) Gz = D_z;
-    if ((Dz<0)&&(-Dz>Gz)) Gz = Dz;
+        Gx = Gy = Gz = 0;
+        if (D_x>=0) Gx = D_x;
+        if ((Dx<0)&&(-Dx>Gx)) Gx = Dx;
+        if (D_y>=0) Gy = D_y;
+        if ((Dy<0)&&(-Dy>Gy)) Gy = Dy;
+        if (D_z>=0) Gz = D_z;
+        if ((Dz<0)&&(-Dz>Gz)) Gz = Dz;
       }
       else {
-    Gx = Gy = Gz = 0;
-    if (D_x<=0) Gx = D_x;
-    if ((Dx>0)&&(Dx>-Gx)) Gx = Dx;
-    if (D_y<=0) Gy = D_y;
-    if ((Dy>0)&&(Dy>-Gy)) Gy = Dy;
-    if (D_z<=0) Gz = D_z;
-    if ((Dz>0)&&(Dz>-Gz)) Gz = Dz;
+        Gx = Gy = Gz = 0;
+        if (D_x<=0) Gx = D_x;
+        if ((Dx>0)&&(Dx>-Gx)) Gx = Dx;
+        if (D_y<=0) Gy = D_y;
+        if ((Dy>0)&&(Dy>-Gy)) Gy = Dy;
+        if (D_z<=0) Gz = D_z;
+        if ((Dz>0)&&(Dz>-Gz)) Gz = Dz;
       }
       balloonterm *= sqrt(Gx*Gx+Gy*Gy+Gz*Gz);
-     
+
+      this->mean_balloon   += balloonterm;
+      ut -= balloonterm;
     }
+
 
     //--------------------------------------------------
     // Velocity Term
     //--------------------------------------------------
 
-      vel = 0;
-      // Compute the velocity term
-      if ((velocity != NULL)) {
-    //    printf("* ");fflush(stdout);
+    vel = 0;
+    // Compute the velocity term
+    if ((velocity != NULL)) {
+
       if ((velocity->GetNumberOfScalarComponents()==3)) {
 
-
-    //    printf("+ ");fflush(stdout);
-    // Scheme of Brokett-Maragos
-    ExtractCoords(p,i,j,k);
+        //    printf("+ ");fflush(stdout);
+        // Scheme of Brokett-Maragos
+        ExtractCoords(p,i,j,k);
         Vx = velocity->GetScalarComponentAsFloat(i,j,k,0);
         Vy = velocity->GetScalarComponentAsFloat(i,j,k,1);
         Vz = velocity->GetScalarComponentAsFloat(i,j,k,2);
     
-    // Scalar product
-    norm_vel = sqrt(Vx*Vx+Vy*Vy+Vz*Vz);
-    if (norm_vel>1E-2) {
-
-      // Always expansion (erosion in our case) ...
-      Gx = 0;
-      if (D_x>=0) Gx = D_x;
-      if ((Dx<0)&&(-Dx>Gx)) Gx = Dx;
-      
+        // Scalar product
+        norm_vel = sqrt(Vx*Vx+Vy*Vy+Vz*Vz);
+        if (norm_vel>1E-2) {
+          // Always expansion (erosion in our case) ...
+          Gx = 0;
+          if (D_x>=0) Gx = D_x;
+          if ((Dx<0)&&(-Dx>Gx)) Gx = Dx;
           Gy = 0;
-      if (D_y>=0) Gy = D_y;
-      if ((Dy<0)&&(-Dy>Gy)) Gy = Dy;
-      
+          if (D_y>=0) Gy = D_y;
+          if ((Dy<0)&&(-Dy>Gy)) Gy = Dy;
           Gz = 0;
-      if (D_z>=0) Gz = D_z;
-      if ((Dz<0)&&(-Dz>Gz)) Gz = Dz;
-      
+          if (D_z>=0) Gz = D_z;
+          if ((Dz<0)&&(-Dz>Gz)) Gz = Dz;
           Gnorm = sqrt(Gx*Gx+Gy*Gy+Gz*Gz);
 
-//      sp = (Vx*D0x+Vy*D0y+Vz*D0z)/sqrtdelta0/norm_vel;
-      if (Gnorm>1E-2)
-        sp = (Vx*Gx+Vy*Gy+Vz*Gz)/Gnorm/norm_vel;
-      else
-        sp = 0;
+          if (Gnorm>1E-2)
+            sp = (Vx*Gx+Vy*Gy+Vz*Gz)/Gnorm/norm_vel;
+          else
+            sp = 0;
 
+          sp = fabs(sp);
+          vel = Gnorm*sp*(1-exp(-1*(norm_vel*norm_vel)/100/100));
 
-      sp = fabs(sp);
-      vel = Gnorm*sp*(1-exp(-1*(norm_vel*norm_vel)/100/100));
-
-      if (!((vel>-100)&&(vel<100))) {
-        fprintf(stderr,"(%d,%d,%d); vel=%f; sp=%f; G=(%f,%f,%f) \n",
-            i,j,k,vel,sp,Gx,Gy,Gz);
+          if (!((vel>-100)&&(vel<100))) {
+            fprintf(stderr,"(%d,%d,%d); vel=%f; sp=%f; G=(%f,%f,%f) \n",
+                i,j,k,vel,sp,Gx,Gy,Gz);
+          }
+          vel *= coeff_velocity;
+        }
+        else
+          vel = 0;
       }
-      vel *= coeff_velocity;
+
+      this->mean_vel       += vel;
+      ut -= vel;
     }
-    else
-      vel = 0;
-      
-      }
-      }
-      /*
-      if (DoMean) ut = sqrtdelta0*meancurv    - imcomp;
-      else        ut = sqrtdelta0*smallercurv - imcomp;
-      */
 
     //--------------------------------------------------
     // new intensity
@@ -2546,21 +2536,12 @@ void vtkLevelSets::Evolve3D( int first_band, int last_band)
 
       //      if (isotropic_voxels) sqrtdelta0 /= 2;
 
-      if (DoMean) curvterm = meancurv_grad   ;
-      else        curvterm = smallercurv_grad;
-      curvterm *= coeff_curvature;
 
       if (curvature_data!=NULL) curvature_data[p] = curvterm*StepDt;
       if (advection_data!=NULL) advection_data[p] = -imcomp*StepDt;
       if (velocity_data !=NULL) velocity_data [p] = -vel*StepDt;
       if (balloon_data  !=NULL) balloon_data  [p] = -balloonterm*StepDt;
 
-      ut = curvterm -imcomp - balloonterm - vel;
-
-      this->mean_curv      += curvterm;
-      this->mean_balloon   += balloonterm;
-      this->mean_advection += imcomp;
-      this->mean_vel       += vel;
 
       ut = min(max(StepDt*ut,-Band),Band);
       newU[p]=u0+ut;
@@ -3383,6 +3364,24 @@ void vtkLevelSets::ExecuteData( vtkDataObject *outData)
   EndEvolution();
 
 } // Execute()
+
+
+//----------------------------------------------------------------------
+//
+// Updates the resulting image so that it contains the current result
+//
+int vtkLevelSets::UpdateResult(){
+
+  if ((float*) u[this->current] != (float*) outputImage->GetScalarPointer())
+    {
+      if (verbose)
+        cout << "Updating result ... " << 1-current <<"\n" ;
+      memcpy(u[1-current],u[current],imsize*sizeof(float));
+      return 1;
+    }
+  return 0;
+
+} // UpdateResult()
 
 
 
