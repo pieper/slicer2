@@ -84,7 +84,7 @@ proc VolAnalyzeBuildGUI {parentFrame} {
 
     set f $parentFrame.fVolume
 
-    DevAddFileBrowse $f Volume "VolAnalyze,FileName" "Analyze File:" "VolAnalyzeSetFileName" ".hdr" "\$Volume(DefaultDir)" "Open" "Browse for a Analyze file (.hdr that has matching .img)" 
+    DevAddFileBrowse $f Volume "VolAnalyze,FileName" "Analyze File:" "VolAnalyzeSetFileName" "hdr" "\$Volume(DefaultDir)" "Open" "Browse for a Analyze file (.hdr that has matching .img)" 
 
     frame $f.fLabelMap -bg $Gui(activeWorkspace)
 
@@ -318,7 +318,7 @@ proc VolAnalyzeApply {} {
     }
 
     # allow use of other module GUIs
-    set Volumes(freeze) 0
+    set Volume(freeze) 0
 
     # Unfreeze
     if {$Module(freezer) != ""} {
