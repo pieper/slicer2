@@ -99,7 +99,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.80 $} {$Date: 2003/06/19 23:16:42 $}]
+            {$Revision: 1.81 $} {$Date: 2003/06/26 20:30:55 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -1731,7 +1731,7 @@ proc VolumesReformatSave {} {
     
     Volumes(reformatter) SetInput [Volume($Volume(activeID),vol) GetOutput]
     Volumes(reformatter) SetWldToIjkMatrix [[Volume($Volume(activeID),vol) GetMrmlNode] GetWldToIjk]
-    Volumes(reformatter) SetInterpolate 1
+    Volumes(reformatter) SetInterpolate [[Volume($Volume(activeID),vol) GetMrmlNode] GetInterpolate]
     Volumes(reformatter) SetResolution [lindex [Volume($Volume(activeID),node) GetDimensions] 0]
     # Volumes(reformatter) SetFieldOfView [expr [lindex [Volume($Volume(activeID),node) GetDimensions] 0] * [lindex [Volume($Volume(activeID),node) GetSpacing] 0]]
     set maxfov 0
