@@ -550,6 +550,7 @@ proc EdLiveWireToggleWeight {feat} {
 # Displays "edge image," which shows edge weights (costs)
 # that are derived from the image.
 # Boundaries of interest should be enhanced in these images.
+# This proc creates the window with GUI and sets inputs for display.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -645,7 +646,6 @@ proc EdLiveWireRaiseEdgeImageWin {} {
     pack $f.f1.windowLabel $f.f1.window -side left
     pack $f.f2.levelLabel $f.f2.level -side left
     
-
     # radiobuttons switch between edge images
     frame $w.fBottom.fedgeBtns
     set f $w.fBottom.fedgeBtns
@@ -663,6 +663,14 @@ proc EdLiveWireRaiseEdgeImageWin {} {
 
     #"Ed(EdLiveWire,viewer$s) SetInput [Ed(EdLiveWire,lwSetup$s) GetEdgeImage $edge]; $viewer Render" 
     #"Ed(EdLiveWire,viewer$s) SetInput [Slicer GetActiveOutput $s]; $viewer Render" 
+
+    # make save image button
+    frame $w.fBottom.fSave
+    set f $w.fBottom.fSave
+    button $f.b -text "Save Edge Image" -command EdLiveWireWriteEdgeImage
+    pack $f -side top
+    pack $f.b -side top -fill x
+
     # make close button
     frame $w.fBottom.fcloseBtn
     set f $w.fBottom.fcloseBtn
@@ -698,6 +706,36 @@ proc EdLiveWireUpdateEdgeImageWin {viewerWidget edgeNum} {
     HistogramWidgetSetExtent $Ed(EdLiveWire,edgeHistWidget$s) \
 	    $x1 $x2 $y1 $y2 $z1 $z2
     HistogramWidgetRender $Ed(EdLiveWire,edgeHistWidget$s)
+}
+
+proc EdLiveWireWriteEdgeImage {} {
+    global Ed Slice
+    
+    set s $Slice(activeID)
+    # currently chosen edge dir on GUI
+    set edge $Ed(EdLiveWire,edge$s)
+    if {$edge == ""} {
+	set edge 0
+    }
+    # get filename
+    set filename "edgeImage${edge}.001"
+    
+
+    # save it  (ppm default now)
+    vtkImageCast cast
+    cast SetInput [Ed(EdLiveWire,lwSetup$s) GetEdgeImage $edge]
+    cast SetOutputScalarTypeToUnsignedChar
+
+    vtkPNMWriter writer
+    writer SetInput [cast GetOutput]
+    writer SetFileName $filename
+    writer Write
+
+    cast Delete
+    writer Delete
+    tk_messageBox -message \
+	    "Saved image as $filename in dir where slicer was run.\nOpen image as unsigned char to view in slicer."
+
 }
 
 #-------------------------------------------------------------------------------
