@@ -272,6 +272,31 @@ proc DisplayMatrix {mat} {
 
 
 #======================================================================
+proc SImageToUSHORT {imname extension} {
+#    --------------
+
+  global Volume
+
+
+  vtkImageCast vtkcast
+  vtkcast SetInput [SGetImage $imname]
+  vtkcast SetOutputScalarTypeToUnsignedShort
+  vtkcast ClampOverflowOff
+  vtkcast SetNumberOfThreads 1
+
+  vtkcast Update
+
+  set newvol [SAddMrmlImage $imname $extension ]
+
+  Volume($newvol,vol) SetImageData [vtkcast GetOutput]
+  MainVolumesUpdate $newvol
+
+  vtkcast Delete
+
+
+}
+
+#======================================================================
 proc SInvertIntensity {imname sd} {
 #    ----------------
 
@@ -293,6 +318,31 @@ proc SInvertIntensity {imname sd} {
   vtk_immath Delete
 
   return [append $imname "_invert"]
+
+}
+
+#======================================================================
+proc SMultiplyIntensity {imname ext f} {
+#    ----------------
+
+  global Volume
+
+
+  vtkImageMathematics vtk_immath
+  vtk_immath SetInput1 [SGetImage $imname]
+  vtk_immath SetOperationToMultiplyByK
+  vtk_immath SetConstantK $f
+
+  vtk_immath Update
+
+  set newvol [SAddMrmlImage $imname $ext ]
+
+  Volume($newvol,vol) SetImageData [vtk_immath GetOutput]
+  MainVolumesUpdate $newvol
+
+  vtk_immath Delete
+
+  return [append $imname $ext]
 
 }
 
