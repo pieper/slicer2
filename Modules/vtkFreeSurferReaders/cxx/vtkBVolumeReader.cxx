@@ -3,14 +3,18 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkBVolumeReader.cxx,v $
   Language:  C++
-  Date:      $Date: 2003/08/20 12:17:57 $
-  Version:   $Revision: 1.2 $
+  Date:      $Date: 2003/08/26 12:23:57 $
+  Version:   $Revision: 1.3 $
 
 =========================================================================*/
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <ctype.h>
+#ifdef _WIN32 // WINDOWS
+#define S_ISREG(m)  (((m)&_S_IFMT) == _S_IFREG)
+#else
 #include <unistd.h>
+#endif
 #include "vtkBVolumeReader.h"
 #include "vtkShortArray.h"
 #include "vtkUnsignedCharArray.h"
