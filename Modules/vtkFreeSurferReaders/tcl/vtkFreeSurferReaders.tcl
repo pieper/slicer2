@@ -79,6 +79,25 @@ proc vtkFreeSurferReadersInit {} {
     # set up the mapping between the surface labels and umls ids
     vtkFreeSurferReadersSetUMLSMapping
 
+
+    # for QA 
+    if {[info exist ::env(SUBJECTS_DIR)]} {
+        set vtkFreeSurferReaders(QADirName) $::env(SUBJECTS_DIR)
+        # try to read SUBJECTS env var from $SUBJECTS_DIR/scripts/subjects.csh
+        if {[file exists [file join $::env(SUBJECTS_DIR) scripts subjects.csh]]} {
+            if {$::Module(verbose)} { puts "Trying to read from subjects.csh in scripts subdir of $::env(SUBJECTS_DIR)" }
+            set vtkFreeSurferReaders(QASubjectsFileName) [file join $::env(SUBJECTS_DIR) scripts subjects.csh]
+            set vtkFreeSurferReaders(QAUseSubjectsFile) 1
+            vtkFreeSurferReadersSetQASubjects
+        }
+    } else {
+        set vtkFreeSurferReaders(QADirName) $::env(SLICER_HOME)
+    }
+    set vtkFreeSurferReaders(QAVolTypes) {aseg brain filled flash norm orig T1 wm}
+    set vtkFreeSurferReaders(QADefaultVolTypes) {T1}
+    set vtkFreeSurferReaders(QAVolFiles) ""
+    set vtkFreeSurferReaders(QAUseSubjectsFile) 0
+
     lappend Module($m,fiducialsPointCreatedCallback) FreeSurferReadersFiducialsPointCreatedCallback
 
     # Module Summary Info
@@ -112,8 +131,8 @@ proc vtkFreeSurferReadersInit {} {
     #   row2,tab = like row1 
     #
 
-    set Module($m,row1List) "Help Volumes Models Plot"
-    set Module($m,row1Name) "{Help} {Volumes} {Models} {Plot}"
+    set Module($m,row1List) "Help Volumes Models Plot QA"
+    set Module($m,row1Name) "{Help} {Volumes} {Models} {Plot} {QA}"
     set Module($m,row1,tab) Volumes
 
     # Define Procedures
@@ -175,7 +194,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.10 $} {$Date: 2005/02/11 22:33:54 $}]
+        {$Revision: 1.11 $} {$Date: 2005/03/08 23:37:21 $}]
 
 }
 
@@ -196,7 +215,7 @@ proc vtkFreeSurferReadersBuildGUI {} {
     #-------------------------------------------
     # Help frame
     #-------------------------------------------
-    set help "The vtkFreeSuferReaders module allows you to read in FreeSufer format files.<P>Description by tab:<BR><UL><LI><B>Volumes</B>: Load in COR. mgh volumes.<LI><B>Models</B>: Load in model files (${vtkFreeSurferReaders(surfaces)}) and associate scalars with them.(${vtkFreeSurferReaders(scalars)}).<LI><B>Plot</B>: under development: plot statistical data"
+    set help "The vtkFreeSuferReaders module allows you to read in FreeSufer format files.<P>Description by tab:<BR><UL><LI><B>Volumes</B>: Load in COR. mgh volumes.<LI><B>Models</B>: Load in model files (${vtkFreeSurferReaders(surfaces)}) and associate scalars with them.(${vtkFreeSurferReaders(scalars)}).<LI><B>Plot</B>: under development: plot statistical data.<LI><B>QA</B>: under development: Load in a series of freesurfer volume files for quality assurance. Select a subjects dir and volume types to load then press Start QA."
     regsub -all "\n" $help {} help
     MainHelpApplyTags vtkFreeSurferReaders $help
     MainHelpBuildGUI vtkFreeSurferReaders
@@ -430,6 +449,9 @@ proc vtkFreeSurferReadersBuildGUI {} {
     set fPlot $Module(vtkFreeSurferReaders,fPlot)
     set f $fPlot
 
+    DevAddLabel $f.lWarning "UNDER CONSTRUCTION"
+    pack $f.lWarning -side top -padx $Gui(pad) -pady 0
+
     DevAddFileBrowse $f vtkFreeSurferReaders "PlotFileName" "Plot header file:" "vtkFreeSurferReadersSetPlotFileName" "fsgd" "\$Volume(DefaultDir)" "Open" "Browse for a plot header file (fsgd)"
     frame $f.fApply -bg $Gui(activeWorkspace)
 
@@ -443,6 +465,106 @@ proc vtkFreeSurferReadersBuildGUI {} {
     DevAddButton $f.bApply "Apply" "vtkFreeSurferReadersPlotApply" 8
     DevAddButton $f.bCancel "Cancel" "vtkFreeSurferReadersPlotCancel" 8
     grid $f.bApply $f.bCancel -padx $Gui(pad)
+
+    #-------------------------------------------
+    # QA frame
+    #-------------------------------------------
+    set fQA $Module(vtkFreeSurferReaders,fQA)
+    set f $fQA
+
+    DevAddLabel $f.lWarning "UNDER CONSTRUCTION"
+    pack $f.lWarning  -side top -padx $Gui(pad) -pady 0
+
+    frame $f.fSubjects  -bg $Gui(activeWorkspace)
+    frame $f.fVolumes -bg $Gui(activeWorkspace)
+    frame $f.fBtns -bg $Gui(activeWorkspace)
+
+    pack $f.fSubjects -side top  -padx $Gui(pad) -pady $Gui(pad) -fill x -expand 1
+    pack $f.fVolumes -side top  -padx $Gui(pad) -pady $Gui(pad) -fill x -expand 1
+    pack $f.fBtns -side top  -padx $Gui(pad) -pady $Gui(pad) -fill x -expand 1
+
+    #---------------
+    # QA -> Subjects
+    #---------------
+    set f $fQA.fSubjects
+
+    DevAddLabel $f.lCurDir "Current Subjects directory:"
+    eval {entry $f.eCurDir -textvariable vtkFreeSurferReaders(QADirName) -width 50} $Gui(WEA)
+    bind $f.eCurDir <Return> "vtkFreeSurferReadersSetQADirName [$f.eCurDir get]"
+
+    pack $f.lCurDir -padx $Gui(pad) -pady $Gui(pad) -expand 1 -fill x
+    pack $f.eCurDir -padx $Gui(pad) -pady $Gui(pad) -expand 1 -fill x
+
+    DevAddButton $f.bSetDir "Set the Subjects directory" {vtkFreeSurferReadersSetQADirName $vtkFreeSurferReaders(QADirName)} 
+    TooltipAdd $f.bSetDir "Select a directory containing subjects for which you wish to load FreeSurfer data.\nValid subject directories contain an mri subdirectory"
+    pack $f.bSetDir -padx $Gui(pad) -pady $Gui(pad)
+    
+    # a list of the subjects found in the directory
+    set qaSubjectNameListBox [ScrolledListbox $f.slbQASubjects 0 0 -height 5 -bg $Gui(activeWorkspace) -selectmode multiple]
+    # make the scroll bars a bit skinnier when they appear
+    $f.slbQASubjects.xscroll configure -width 10
+    $f.slbQASubjects.yscroll configure -width 10
+    set vtkFreeSurferReaders(qaSubjectsListbox) $qaSubjectNameListBox
+    pack $f.slbQASubjects  -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
+
+    # if the list of subjects has already been set, populate it
+    if {[info exist vtkFreeSurferReaders(QASubjectNames)] && $vtkFreeSurferReaders(QASubjectNames) != ""} {
+        if {$::Module(verbose)} { puts "Using already set QASubjectNames" }
+        foreach sub $vtkFreeSurferReaders(QASubjectNames) {
+            $vtkFreeSurferReaders(qaSubjectsListbox) insert end $sub
+            # for now make them all active as add them
+            $vtkFreeSurferReaders(qaSubjectsListbox) selection set end end
+        }
+    }
+
+    DevAddLabel $f.lClick "Click on Subjects you wish to load for QA\nOR set a subjects file name below"
+    pack $f.lClick  -side top -padx $Gui(pad) -pady 0
+
+    # alternately, read in the list of subjects from a file
+    DevAddFileBrowse $f vtkFreeSurferReaders "QASubjectsFileName" "File with subject list:" {vtkFreeSurferReadersSetQASubjectsFileName ; vtkFreeSurferReadersSetQASubjects} "csh" "\$vtkFreeSurferReaders(QADirName)" "Open" "Browse for the subjects.csh containing a list of subjects"
+
+    #---------------
+    # QA -> Volumes
+    #---------------
+    set f $fQA.fVolumes
+
+    DevAddLabel $f.lVolumesSelect "Volumes you wish to load for each subject:"
+    pack $f.lVolumesSelect  -side top -padx $Gui(pad) -pady 0
+
+    foreach voltype $vtkFreeSurferReaders(QAVolTypes) {
+        # turn on the default ones
+        if {[lsearch $vtkFreeSurferReaders(QADefaultVolTypes) $voltype] == -1} {
+            set defaultOn 0
+        } else {
+            set defaultOn 1
+        }
+        eval {checkbutton $f.c$voltype \
+                  -text $voltype -command "vtkFreeSurferReadersQASetLoad $voltype" \
+                  -variable vtkFreeSurferReaders(QAVolFiles,$voltype) \
+                  -width 4 \
+                  -indicatoron 0} $Gui(WCA)
+        set vtkFreeSurferReaders(QAVolFiles,$voltype) $defaultOn
+        vtkFreeSurferReadersQASetLoad $voltype
+        pack $f.c$voltype -side left -padx 0
+    }
+
+    #-----------
+    # QA -> Btns
+    #-----------
+    set f $fQA.fBtns
+
+    DevAddButton $f.bStart "Run QA" vtkFreeSurferReadersStartQA
+    TooltipAdd $f.bStart "Start the QA process, loading the volumes for the selected subjects (if they exist)"
+
+    DevAddButton $f.bPause "Pause QA" vtkFreeSurferReadersPauseQA
+    TooltipAdd $f.bPause "Pause the QA process, hitting Continue QA again will continue"
+
+    DevAddButton $f.bContinue "Continue QA" vtkFreeSurferReadersContinueQA
+    TooltipAdd $f.bContinue "Continue the QA process from pause point"
+
+    pack $f.bStart $f.bPause $f.bContinue -side left -padx $Gui(pad) -expand 1
+
+    
 }
 
 #-------------------------------------------------------------------------------
@@ -576,6 +698,15 @@ proc vtkFreeSurferReadersApply {} {
         vtkFreeSurferReadersCORApply
     } elseif {[string match *.mgh $vtkFreeSurferReaders(VolumeFileName)]} {
         vtkFreeSurferReadersMGHApply
+    } elseif {[string match *.mgz $vtkFreeSurferReaders(VolumeFileName)]} {
+        # unzip it first and then send it to vtkFreeSurferReadersMGHApply
+        if {[vtkFreeSurferReadersUncompressMGH] != -1} {
+            vtkFreeSurferReadersMGHApply
+        }
+    } elseif {[string match *.mgh.gz $vtkFreeSurferReaders(VolumeFileName)]} {
+        if {[vtkFreeSurferReadersUncompressMGH] != -1} {
+            vtkFreeSurferReadersMGHApply
+        }
     } elseif {[string match *.bfloat $vtkFreeSurferReaders(VolumeFileName)]} {
         vtkFreeSurferReadersBfloatApply
     } else {
@@ -965,16 +1096,40 @@ proc vtkFreeSurferReadersMGHApply {} {
     # now apply it to the rasmat
     rasmat$i Multiply4x4 rasmat$i scalemat$i rasmat$i
 
+    if {$::Module(verbose)} {
+        if {[info command DevPrintMatrix4x4] != ""} {
+            DevPrintMatrix4x4 rasmat$i "MGH vol $i RAS -> IJK (with scale)"
+        }
+    }
     # rasmat$i Identity
 
     # invert it to get the RAS to IJK
     rasmat$i Invert
 
-    # the Slicer assumption shifts the MGH volume by 128 into the R
+    if {$::Module(verbose)} {
+        DevPrintMatrix4x4 rasmat$i "MGH vol $i RAS -> IJK (with scale) INVERTED"
+    }
+
+    # the Slicer assumption shifts the MGH volume by 128 to the R
     # the MGH volume center: (from http://www.nmr.mgh.harvard.edu/~tosa/#coords)
     # the c_(r,a,s) value is the RAS coordinate position of (width/2, height/2, depth/2) in the voxel coordinates.
-    rasmat$i SetElement 0 3 [expr [rasmat$i GetElement 0 3] - 128]
-    
+    # rasmat$i SetElement 0 3 [expr [rasmat$i GetElement 0 3] - 128]
+
+    if {$Module(verbose)} {
+      #  DevPrintMatrix4x4 rasmat$i "MGH vol $i RAS -> IJK (with scale) INVERTED, SHIFTED"
+    }
+
+    # set up the Position matrix for the node, with a 128 shift
+    vtkMatrix4x4 posmat$i
+    posmat$i Identity
+    posmat$i SetElement 0 3 -128
+    set curPos [Volume($i,node) GetPosition]
+    $curPos DeepCopy posmat$i
+    # doubly sure? sometimes works?
+    vtkMrmlMatrixNode mymat
+    Volume($i,node) SetPositionMatrix [mymat GetMatrixToString posmat$i]
+    mymat Delete
+
     # turn off using the ras to vtk matrix, as otherwise the MGH volume is flipped in Y
     if {$::Module(verbose)} {
         puts "Turning off UseRasToVtkMatrix on volume $i"
@@ -991,6 +1146,7 @@ proc vtkFreeSurferReadersMGHApply {} {
     if {$::Module(verbose)} {
 #        vtkFreeSurferReadersShowMGH $i
     }
+    DevPrintMrmlDataTree
 
     if {$::Module(verbose)} {
         puts "vtkFreeSurferReaders: About  to call main update mrml for an MGH volume, \# $i"
@@ -2269,7 +2425,7 @@ proc vtkFreeSurferReadersLoadVolume { filename {labelMap 0} {name ""} } {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC vtkFreeSurferReadersLoadVolume
+# .PROC vtkFreeSurferReadersLoadModel
 # Scriptable load function -- tied into command line arguments
 # .ARGS 
 # filename model file to load
@@ -3736,3 +3892,272 @@ proc vtkFreeSurferReadersPlotCancel {} {
        puts "vtkFreeSurferReadersPlotCancel: does nothing"
     }
 }
+
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersUncompressMGH 
+# Uncompresses gzipped mgh files, which can be named .mgz or .mgh.gz.
+# Will reset the vtkFreeSurferReaders(VolumeFileName), creating a new file (if possible) that's the uncompressed mgh volume.
+# Returns -1 on failure.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc vtkFreeSurferReadersUncompressMGH {} {
+    global vtkFreeSurferReaders Module
+
+    # if it's a .mgz file, copy it to .mgh.gz so that gunzip can process it, otherwise just make a copy to uncompress
+    if {[string match *.mgz $vtkFreeSurferReaders(VolumeFileName)]} {
+        set longFileName [file rootname $vtkFreeSurferReaders(VolumeFileName)].mgh.gz
+        set retval [catch {file copy -force $vtkFreeSurferReaders(VolumeFileName) $longFileName} errmsg]
+        if {$retval != 0} {
+            DevErrorWindow "Error: Cannot copy $vtkFreeSurferReaders(VolumeFileName) to $longFileName for decompression:\n$errmsg"
+            return -1
+        } else {
+            set vtkFreeSurferReaders(VolumeFileName) $longFileName
+        }
+    } 
+    switch $::tcl_platform(os) {
+        "win32" {
+            puts " -- calling unzip"
+            exec unzip $vtkFreeSurferReaders(VolumeFileName)
+        }
+        default {
+            puts " -- calling gunzip"
+            exec gunzip -f $vtkFreeSurferReaders(VolumeFileName)
+        }
+    }
+    # take the .gz off the volume file name
+    set vtkFreeSurferReaders(VolumeFileName) [file rootname $vtkFreeSurferReaders(VolumeFileName)]
+    return 0
+}
+
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersSetQADirName
+# Set the directory name that contains a series of subjects, then populates a frame with the subject names for selection.
+# .ARGS
+# startdir a default directory to start looking from
+# .END
+#-------------------------------------------------------------------------------
+proc vtkFreeSurferReadersSetQADirName { { startdir $::env(SLICER_HOME) } } {
+    global vtkFreeSurferReaders Module
+
+    set vtkFreeSurferReaders(QADirName) [tk_chooseDirectory \
+                                             -initialdir $startdir \
+                                             -mustexist true \
+                                             -title "Select Directory Containing Subject Files" \
+                                             -parent .tMain ]
+    if {$Module(verbose) == 1} {
+        puts "FreeSurferReaders QA directory name: $vtkFreeSurferReaders(QADirName)"
+    }
+
+    # got a valid directory, so let's not use the subjects file
+    set vtkFreeSurferReaders(QAUseSubjectsFile) 0
+
+    # pick up subject dirs from this directory and put them in the list box
+    vtkFreeSurferReadersSetQASubjects
+    $vtkFreeSurferReaders(qaSubjectsListbox) delete 0 end
+    foreach sub $vtkFreeSurferReaders(QASubjectNames) {
+        $vtkFreeSurferReaders(qaSubjectsListbox) insert end $sub
+        # for now make them all active
+        $vtkFreeSurferReaders(qaSubjectsListbox) selection set end end
+    }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersSetQASubjectsFileName
+# The filename is set elsewhere, in variable vtkFreeSurferReaders(QASubjectsFileName)
+# Set the flag to use it or not, vtkFreeSurferReaders(QAUseSubjectsFile) 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc vtkFreeSurferReadersSetQASubjectsFileName {} {
+    global vtkFreeSurferReaders Module
+
+    if {$Module(verbose) == 1} {
+        puts "FreeSurferReaders QA Subjects filename: $vtkFreeSurferReaders(QASubjectsFileName)"
+    }
+    if {$vtkFreeSurferReaders(QASubjectsFileName) != ""} {
+        set vtkFreeSurferReaders(QAUseSubjectsFile) 1
+    } else {
+        set vtkFreeSurferReaders(QAUseSubjectsFile) 0
+    } 
+}
+
+
+proc vtkFreeSurferReadersSetQASubjects {} {
+    global vtkFreeSurferReaders Module
+
+    set dirs ""
+    set subjectnames ""
+
+    # do we want to read from the subjects file or from the directory?
+    if {!$vtkFreeSurferReaders(QAUseSubjectsFile)} {
+        set dir $vtkFreeSurferReaders(QADirName)
+        if { $dir != "" } {
+            set files [glob -nocomplain $dir/*]
+            
+            foreach f $files {
+                if { [file isdirectory $f] &&
+                     [file exists [file join $f mri]]} {
+                    lappend dirs $f
+                    lappend subjectnames [file tail $f]
+                } 
+                if {$::Module(verbose)} {
+                    if {[file isdirectory $f] && ![file exists [file join $f mri]]} {
+                        puts "Skipping subject dir $f, no mri subdirectory"
+                    }
+                }
+            }
+            
+        }
+    } else {
+        # parse the names from the subject file
+        
+        puts "TBD: parsing $vtkFreeSurferReaders(QASubjectsFileName)"
+        DevInfoWindow "TBD: parsing $vtkFreeSurferReaders(QASubjectsFileName)"
+    }
+    if {$::Module(verbose)} {
+        puts "vtkFreeSurferReadersSetQASubjects: dirs =\n$dirs\nnames = \n$subjectnames"
+    }
+    set vtkFreeSurferReaders(QASubjectNames) $subjectnames
+}
+
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersQASetLoad
+# Add this kind of volume to the list of volumes to load when doing a QA process.
+# .ARGS
+# voltype - the kind of volume file to read in, added to vtkFreeSurferReaders(QAVolFiles)
+# .END
+#-------------------------------------------------------------------------------
+proc vtkFreeSurferReadersQASetLoad {voltype} {
+    global vtkFreeSurferReaders
+ 
+    if {$::Module(verbose)} {
+        puts "vtkFreeSurferReadersQASetLoad: start: loading: $vtkFreeSurferReaders(QAVolFiles)"
+    }
+    set ind [lsearch $vtkFreeSurferReaders(QAVolFiles) $voltype]
+    if {$vtkFreeSurferReaders(QAVolFiles,$voltype) == 1} {
+        if {$ind == -1} {
+            # add it to the list
+            lappend vtkFreeSurferReaders(QAVolFiles) $voltype
+        }
+    } else {
+        if {$ind != -1} {
+            # remove it from the list
+            set vtkFreeSurferReaders(QAVolFiles) [lreplace $vtkFreeSurferReaders(QAVolFiles) $ind $ind]
+        }
+    }
+    if {$::Module(verbose)} {
+        puts "vtkFreeSurferReadersQASetLoad: new: loading: $vtkFreeSurferReaders(QAVolFiles)"
+    }
+}
+
+proc vtkFreeSurferReadersStartQA {} {
+    global vtkFreeSurferReaders Module
+
+    # get the selected subjects from the list box
+    set subjects ""
+    foreach ind [$vtkFreeSurferReaders(qaSubjectsListbox) curselection] {
+        lappend subjects [$vtkFreeSurferReaders(qaSubjectsListbox) get $ind]
+    }
+    
+    if {$::Module(verbose)} {
+        puts "vtkFreeSurferReadersStartQA"
+        puts "\t subjects dir =  $vtkFreeSurferReaders(QADirName)"
+        puts "\t subjects to QA = $subjects"
+        puts "\t vols to load = $vtkFreeSurferReaders(QAVolFiles)"
+    }
+
+    # turn off casting to short, as we're just viewing
+    set cast $vtkFreeSurferReaders(castToShort)
+    set vtkFreeSurferReaders(castToShort) 0
+    # turn it into a better viewing set up
+    set viewmode $::View(mode)
+    MainViewerSetMode Quad256
+
+    set islabelmap 0
+
+    foreach subject $subjects {
+        foreach vol $vtkFreeSurferReaders(QAVolFiles) {
+            set subdirname [file join $vtkFreeSurferReaders(QADirName) $subject mri $vol]
+            if {[file isdirectory $subdirname]} {
+                # check to see if there's a COR-.info file there
+                set corfilename [file join $subdirname COR-.info]
+                if {[file exist $corfilename]} {
+                    # load it up
+                    puts "Loading $corfilename"
+
+                    if {$vol == "aseg"} {
+                        set islabelmap 1
+                    } else {
+                        set islabelmap 0
+                    }
+                    vtkFreeSurferReadersLoadVolume $corfilename $islabelmap ${subject}-${vol}
+                    # make all slices visible
+                    foreach s {0 1 2} {
+                        set ::Slice($s,visibility) 1
+                        MainSlicesSetVisibility $s
+                    }
+                    # then update the viewer
+                    RenderAll
+
+                    # then spin it until the user clicks
+                    # set ::View(spinDir) 1
+                    # MainViewSpin
+
+                    # need to put up a pause box here before go on to the next one
+                    tk_messageBox -type ok \
+                        -message "Click when you're ready to go onto the next one\nCurrently viewing:\n$corfilename" \
+                        -title "QA $subject $vol"
+
+                    # stop spinning
+                    # set ::View(spinDir) 0
+
+                    # if it was a label map, take it off the label
+                    if {$islabelmap} {
+                        MainSlicesSetVolumeAll Label None
+                        RenderAll
+                    }
+
+                    # should probably unload the file now
+                    # MainFileClose
+
+                    
+                } else {
+                    # or an .mgh one
+                    puts "Can't find a COR file in $subdirname, skipping $subject $vol"
+                }
+            } else {
+                puts "Can't find directory $subdirname, skipping $subject $vol"
+            }
+        }
+    }
+
+    # puts stuff back the way it was
+    set vtkFreeSurferReaders(castToShort) $cast
+    MainViewerSetMode $viewmode
+
+    set closeup [tk_messageBox -type yesno -message "Do you want to close all volumes?"]
+    if {$closeup == "yes"} {
+        MainFileClose
+    }
+    
+}
+
+proc vtkFreeSurferReadersPauseQA {} {
+    global vtkFreeSurferReaders Module
+
+    if {$::Module(verbose)} {
+        puts "vtkFreeSurferReadersPauseQA"
+    }
+    DevInfoWindow "Not Implemented"
+}
+
+proc vtkFreeSurferReadersContinueQA {} {
+    global vtkFreeSurferReaders Module
+
+    if {$::Module(verbose)} {
+        puts "vtkFreeSurferReadersContinueQA"
+    }
+    DevInfoWindow "Not Implemented"
+}
+
