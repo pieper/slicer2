@@ -6,7 +6,6 @@ IF (USE_ITK_FILE)
   INCLUDE(${USE_ITK_FILE})
 ENDIF(USE_ITK_FILE)
 
-
 SET( LOCAL_MODULE_SRCS
 vtkITKAntiAliasBinaryImageFilter.h
 vtkITKArchetypeImageSeriesReader.cxx
@@ -48,6 +47,23 @@ vtkITKImageToImageFilterUSUS.h
 vtkITKVersion.h
 ABSTRACT
 )
+
+# SpatialObjects Viewers
+IF(SOV_BINARY_DIR)
+  INCLUDE (${SOV_BINARY_DIR}/UseSOV.cmake)
+  LINK_LIBRARIES(
+    SOViewer
+    SOVCommon
+    SOVOpenGLRenderMethod
+    SOVVTKRenderMethod
+  )
+
+  SET( LOCAL_MODULE_SRCS
+    ${LOCAL_MODULE_SRCS}
+    vtkITKSceneSpatialObjectViewer.cxx
+  )
+ENDIF(SOV_BINARY_DIR)
+
 
 ADD_LIBRARY ( ${LOCAL_LIBRARY_BASENAME} ${LOCAL_MODULE_SRCS})
 
