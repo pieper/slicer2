@@ -67,14 +67,16 @@ switch $tcl_platform(os) {
 
 
 
+#
 # Add any modules here, as found in the Modules/vtk* directories of SLICER_HOME
 # or in the SLICER_MODULES environment variable
+#
 regsub -all {\\} $SLICER_HOME / slicer_home
 set baseModulePath $slicer_home/Modules
 set modulePaths [glob -nocomplain $baseModulePath/vtk*]
 if { [info exists env(SLICER_MODULES)] } {
     foreach dir $env(SLICER_MODULES) {
-        lappend modulePaths [glob -nocomplain $dir/vtk*]
+        eval lappend modulePaths [glob -nocomplain $dir/vtk*]
     }
 }
 
