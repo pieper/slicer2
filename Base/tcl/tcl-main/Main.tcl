@@ -331,7 +331,7 @@ proc MainInit {} {
 
         # Set version info
 	lappend Module(versions) [ParseCVSInfo Main \
-		{$Revision: 1.40 $} {$Date: 2000/03/06 17:55:36 $}]
+		{$Revision: 1.41 $} {$Date: 2000/04/08 00:49:30 $}]
 
 	# Call each "Init" routine that's not part of a module
 	#-------------------------------------------
@@ -1000,8 +1000,7 @@ proc Tab {m {row ""} {tab ""}} {
 # .PROC MainStartProgress
 #
 # Does Nothing
-# The results become an input to Slicer SetStartMethod
-# which is created for all vtkProcessObjects
+#
 # .END
 #-------------------------------------------------------------------------------
 proc MainStartProgress {} {
@@ -1012,12 +1011,12 @@ proc MainStartProgress {} {
 #-------------------------------------------------------------------------------
 # .PROC MainShowProgress
 #
-# Displays progress bar when reading off disk.
+# Displays progress bar (for when reading off disk, making models, etc.)
 # .END
 #-------------------------------------------------------------------------------
 proc MainShowProgress {filter} {
-	global BarId TextId Gui Volume
-	
+	global BarId TextId Gui
+
 	set progress [$filter GetProgress]
 	set height   [winfo height $Gui(fStatus)]
 	set width    [winfo width $Gui(fStatus)]
@@ -1036,15 +1035,14 @@ proc MainShowProgress {filter} {
 		[expr $height/3] -anchor center -justify center -text \
 		"$Gui(progressText)"]
  
-	update
+	update idletasks
 }
 
 #-------------------------------------------------------------------------------
 # .PROC MainEndProgress
 #
-# Becomes Slicer class EndMethod
-# Called when the slicer is done initializing.
-# Note sure what it does.
+# Clears the progress bar (for when done reading off disk, etc.)
+# 
 # .END
 #-------------------------------------------------------------------------------
 proc MainEndProgress {} {
@@ -1060,7 +1058,7 @@ proc MainEndProgress {} {
 	set width    [winfo width $Gui(fStatus)]
 	set BarId [$Gui(fStatus).canvas create rect 0 0 $width \
 		$height -fill [MakeColorNormalized ".7 .7 .7"]]
-	update
+	update idletasks
 }
 
 #-------------------------------------------------------------------------------
