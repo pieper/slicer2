@@ -123,7 +123,7 @@ proc DTMRIInit {} {
     set Module($m,author) "Lauren O'Donnell"
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.21 $} {$Date: 2004/08/12 21:02:22 $}]
+                  {$Revision: 1.22 $} {$Date: 2004/08/13 21:55:27 $}]
 
      # Define Tabs
     #------------------------------------
@@ -2884,11 +2884,12 @@ proc RunLSDIrecon {} {
 
             }
 
-            lappend DTMRI(patternpar) "Slice"
+            lappend DTMRI(patternpar) "SLICE"
 
         } else {
 
             puts "You must fill in name entry"
+        return
 
         }
 
@@ -2949,7 +2950,6 @@ proc RunLSDIrecon {} {
 
               # put information of the entries of create pattern frame in a list in order to write this information in a file
               lappend DTMRI(patternpar) $DTMRI(name,$par)
-              lappend DTMRI(patternpar) "Volume"
 
           } else {
 
@@ -2960,11 +2960,12 @@ proc RunLSDIrecon {} {
 
         }
 
-        lappend DTMRI(patternpar) "Volume"
+        lappend DTMRI(patternpar) "VOLUME"
 
       } else {
 
         puts "You must fill in name entry"
+        return
 
       }
 
@@ -3112,7 +3113,7 @@ proc RunLSDIrecon {} {
         while {[eof $filelist] != 1} {
 
             set line [gets $filelist]
-        if {[lindex $line 0] == "vtkDTMRIprotocol"} {
+        if { [ lindex $line  0 ] == "vtkDTMRIprotocol" } {
         set DTMRI(ispatternfile) 1
         }
         }
@@ -5541,8 +5542,15 @@ if {[info exists DTMRI(selectedpattern)]} {
 } else {
 
     puts "Please select a pattern"
+    return
 
 }
+
+# define if the conversion is volume interleaved or slice interleaved depending on the pattern
+
+
+
+
 
     # setup - these are now globals linked with GUI
     #set slicePeriod 8
@@ -5650,12 +5658,25 @@ if {[info exists DTMRI(selectedpattern)]} {
     DTMRI SetTransform trans
     trans Delete
 
+    #check if input correct
+
+    set dimz [lindex [$input GetDimensions] 2]
+    set rest [expr $dimz%$slicePeriod]
+   
+   if {$rest != 0 && [lindex $DTMRI($DTMRI(selectedpattern),parameters) 7] == "VOLUME"} {
+       DevErrorWindow "Check your Input Data.\n Not enough number of slices"
+       DTMRI Delete
+       return
+   }
+        
+
     # produce input vols for DTMRI creation
     set inputNum 0
     set DTMRI(recalculate,gradientVolumes) ""
     foreach slice $offsetsGradient {
         vtkImageExtractSlices extract$slice
         extract$slice SetInput $input
+        extract$slice SetModeTo$DTMRI(convert,order)
         extract$slice SetSliceOffset $slice
         extract$slice SetSlicePeriod $slicePeriod
 
@@ -5702,6 +5723,7 @@ if {[info exists DTMRI(selectedpattern)]} {
     foreach slice $offsetsNoGradient {
         vtkImageExtractSlices extract$slice
         extract$slice SetInput $input
+        extract$slice SetModeTo$DTMRI(convert,order)
         extract$slice SetSliceOffset $slice
         extract$slice SetSlicePeriod $slicePeriod
         
