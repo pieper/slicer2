@@ -262,7 +262,7 @@ proc EndoscopicInit {} {
     set Module($m,category) "Visualisation"
     
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.82 $} {$Date: 2004/12/07 18:37:51 $}] 
+    {$Revision: 1.83 $} {$Date: 2004/12/07 18:58:55 $}] 
        
     # Define Procedures
     #------------------------------------
@@ -1259,7 +1259,7 @@ proc EndoscopicBuildGUI {} {
     <BR>- select absolute mode (to move along the world's axis) or relative mode (to move along the camera's axis)
     <BR>- to move the camera with precision, use the sliders or type a world coordinate in the text box, next to the sliders. For the orientation of the camera, the number displayed is the angle of rotation in degrees.
     <BR>- to move the camera intuitively, use the 3D Gyro (read instructions on the tab). 
-    <BR>- you can also move the camera by moving the mouse/pressing mouse buttons in the endoscopic view, just like you control the main view.
+    <BR>- you can also move the camera by combining the shift or control key with mouse button press and motion. For example: Shift+moving the mouse with left button pressed down controls the camera's 'Pitch'. Shift + middle or right mouse button motion controls the camera's 'Roll' and 'Yaw' respectively. Control + Left, middle, or right mouse button press and motion controls the camera's 'L<->R', 'I<->S', and 'P<->A'. The precise amount of camera motion, as you use the key + mouse motion, can be read off from the sliders in the camera tab.
     <P>
     <BR><B>To create a path</B>:
     <BR><B>Automatically:</B>
