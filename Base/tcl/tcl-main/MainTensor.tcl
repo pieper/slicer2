@@ -98,7 +98,7 @@ proc MainTensorInit {} {
     # Set version info
     #-------------------------------------------
     lappend Module(versions) [ParseCVSInfo MainTensor \
-        {$Revision: 1.13 $} {$Date: 2004/03/22 20:49:17 $}]
+        {$Revision: 1.14 $} {$Date: 2004/07/06 15:52:29 $}]
 
 
     # List variables that shadow the active MRML node 
@@ -147,7 +147,7 @@ proc MainTensorSetActive {Module id} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainTensorUpdateMRML {} {
-    puts "Lauren in MainTensorUpdateMRML"
+    # puts "Lauren in MainTensorUpdateMRML"
     
     MainDataUpdateMRML Tensor
 
