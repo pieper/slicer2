@@ -26,8 +26,9 @@ double FMpdf::value( double k )
 {
   if( !( (k>=0) && (k<=realizationMax) ) )
     {
-      cerr << "Error in FMpdf::value(k)!" << endl
-       << "k=" << k << " realizationMax=" << realizationMax << endl;
+      vtkErrorMacro( "Error in FMpdf::value(k)!" << endl
+             << "k=" << k << " realizationMax=" 
+             << realizationMax << endl );
 
       return valueGauss( k );
     }

@@ -53,6 +53,9 @@ class FMpdf
   bool isUnlikelyBigGauss( double k );
 
   void show( void );
+
+  const char* GetClassName(void)
+    {return "FMpdf"; };
 };
 
 #endif

@@ -54,9 +54,9 @@ float vtkFastMarching::speed( int index )
 
   if( (I<0) || (I>depth) || (H<0) || (H>depth) )
     {
-      cerr << "Error in vtkFastMarching::speed(index)!" << endl
-       << "index=" << index << " I=" << I << " H=" << H 
-       << " depth=" << depth << endl;
+      vtkErrorMacro( "Error in vtkFastMarching::speed(index)!" << endl
+             << "index=" << index << " I=" << I << " H=" << H 
+             << " depth=" << depth << endl );
     }
 
   return (float)min(pdfIntensityIn->value(I)/pdfIntensityAll->value(I),
@@ -536,6 +536,8 @@ vtkFastMarching::vtkFastMarching()
 
 void vtkFastMarching::init(int dimX, int dimY, int dimZ, int depth)
 {
+  vtkErrorMacro("In vtkFastMarching::init()" << endl);
+
   nNeighbors=6; // 6 or 26
   dx=1.0;
 
