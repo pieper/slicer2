@@ -2,7 +2,12 @@
 package require Tk
 wm withdraw .
 
-set env(SLICER_HOME) [file dir [file dir [info script]]]
+set cmdname [file dir [info script]]
+while { [file type $cmdname] == "link" } {
+    set cmdname [file readlink $cmdname]
+}
+
+set env(SLICER_HOME) [file dir $cmdname]
 
 # add the necessary library directories, both Base and Modules, to the 
 # LD_LIBRARY_PATH environment variable
