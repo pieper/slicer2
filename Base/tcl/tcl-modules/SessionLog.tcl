@@ -27,6 +27,7 @@
 #   SessionLogEnter
 #   SessionLogExit
 #   SessionLogStartLogging
+#   SessionLogGetVersionInfo
 #   SessionLogSetFilenameAutomatically
 #   SessionLogLog
 #   SessionLogShowLog
@@ -96,7 +97,7 @@ proc SessionLogInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.5 $} {$Date: 2001/03/10 19:43:55 $}]
+	    {$Revision: 1.6 $} {$Date: 2001/04/05 23:38:13 $}]
 
     # Initialize module-level variables
     set SessionLog(fileName)  ""
@@ -114,7 +115,7 @@ proc SessionLogInit {} {
     set SessionLog(eventManager)  ""
 
     # call init functions
-    SessionLogInitRandomFortune
+    #SessionLogInitRandomFortune
 
     # figure out if we should automatically log this user.
     # Lauren put all this stuff in Options.xml!
@@ -133,7 +134,7 @@ proc SessionLogInit {} {
 		if {$logname == $user} {
 		    #puts "match: $user == $logname"
 		    set SessionLog(autoLogging) 1
-		    puts "Automatically logging user $user."
+		    puts "Automatically logging user $user.  Thanks!"
 		    SessionLogStartLogging
 		    SessionLogSetFilenameAutomatically
 		}
@@ -358,7 +359,7 @@ proc SessionLogStartLogging {{tk "0"}} {
     }
     
     # make a funny joke
-    SessionLogShowRandomFortune $tk
+    #SessionLogShowRandomFortune $tk
 
     # in case any module wants to know if we are logging or not
     set SessionLog(currentlyLogging) 1
@@ -379,6 +380,12 @@ proc SessionLogStartLogging {{tk "0"}} {
     SessionLogGetVersionInfo
 }
 
+#-------------------------------------------------------------------------------
+# .PROC SessionLogGetVersionInfo
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc SessionLogGetVersionInfo {}  {
     global SessionLog Module
 
