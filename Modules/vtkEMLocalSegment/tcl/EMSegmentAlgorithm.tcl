@@ -106,7 +106,6 @@ proc EMSegmentSetVtkPrivateSuperClassSetting {SuperClass} {
   EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetStopEMValue                 $EMSegment(Cattrib,$SuperClass,StopEMValue)
   # Current Legacy 
   if {$EMSegment(Cattrib,$SuperClass,StopEMMaxIter) == 0} {set EMSegment(Cattrib,$SuperClass,StopEMMaxIter)  $EMSegment(Cattrib,0,StopEMMaxIter) }
-
   EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetStopEMMaxIter               $EMSegment(Cattrib,$SuperClass,StopEMMaxIter)
 
   EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPrintMFALabelMapConvergence  $EMSegment(Cattrib,$SuperClass,PrintMFALabelMapConvergence)
