@@ -85,7 +85,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.67 $} {$Date: 2002/05/09 14:50:43 $}]
+            {$Revision: 1.68 $} {$Date: 2002/07/12 15:55:49 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -768,12 +768,18 @@ proc VolumesManualSetPropertyType {n} {
 
     # These get set down below, but we need them before MainUpdateMRML
     $n SetFilePrefix [file root $Volume(firstFile)]
+    if {[$n GetFilePrefix] == $Volume(firstFile)} {
+        # file root didn't work in this case, trim the right hand numerals
+        set tmpPrefix [string trimright $Volume(firstFile) 0123456789]
+        # now take the assumed single separater character off of the end as well (works with more than one instance, ie if have --)
+        $n SetFilePrefix [string trimright $tmpPrefix [string index $tmpPrefix end]]
+    }
     $n SetFilePattern $Volume(filePattern)
     $n SetFullPrefix [file join $Mrml(dir) [$n GetFilePrefix]]
     if { !$Volume(isDICOM) } {
         set firstNum [MainFileFindImageNumber First [file join $Mrml(dir) $Volume(firstFile)]]
     } else {
-    set firstNum 1
+        set firstNum 1
     }
     $n SetImageRange $firstNum $Volume(lastNum)
     $n SetDimensions $Volume(width) $Volume(height)
