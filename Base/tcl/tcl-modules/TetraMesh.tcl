@@ -85,8 +85,8 @@ proc TetraMeshInit {} {
 	#   row2,tab = like row1 
 	#
 	set m TetraMesh
-	set Module($m,row1List) "Help Surface Edges"
-        set Module($m,row1Name) "{Help} {Extract Surfaces} {Extract Edges}"
+	set Module($m,row1List) "Help Surface Edges View"
+        set Module($m,row1Name) "{Help} {Surfaces} {Edges} {View}"
 	set Module($m,row1,tab) Surface
 
 	# Define Procedures
@@ -142,7 +142,7 @@ proc TetraMeshInit {} {
 	#   appropriate revision number and date when the module is checked in.
 	#   
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.6 $} {$Date: 2000/11/09 01:07:58 $}]
+		{$Revision: 1.7 $} {$Date: 2000/11/16 22:46:15 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -169,7 +169,7 @@ proc TetraMeshInit {} {
 # .END
 #-------------------------------------------------------------------------------
 proc TetraMeshBuildGUI {} {
-	global Gui TetraMesh Module Volume Model
+	global Gui TetraMesh Module Volume Model View
 
 	# A frame has already been constructed automatically for each tab.
 	# A frame named "Props" can be referenced as follows:
@@ -208,7 +208,7 @@ The TetraMesh module allows a user to read in a Tetrahedral Mesh.  The Mesh is c
 
 <LI><B>Extract Edges:</B> The mesh is processed and a model is produced consisting of the lines that connect each node. The lines are color coded according to the scalar value of the mesh. The colors should match those of the surfaces extracted. The mesh need not have integer scalar values.
 
-<LI><B>Useful Comment:</B> Often, the edges of the mesh produce such a dense set of lines that it is difficult to determine useful information. When this occurs, I reccomend making two slicer parallel to each other and clip so that only the region in between the two slices is displayed. By doing this, you can create a thin region of lines that you can visually interpret.
+<LI><B>Useful Comment:</B> Often, the edges of the mesh produce such a dense set of lines that it is difficult to determine useful information. When this occurs, I reccomend making two slicer parallel to each other and clip so that only the region in between the two slices is displayed. (Set Clipping to Union in the View menu). By doing this, you can create a thin region of lines that you can visually interpret. Also, you might consider turning on parallel viewing.
 
 <LI><B>Known Problems:</B> In order to clip the resulting models, you must turn clipping off and on in the <B>Models</B> module. It is not clear if this is a general slicer error or an error in this module.
 
@@ -258,6 +258,9 @@ The TetraMesh module allows a user to read in a Tetrahedral Mesh.  The Mesh is c
 	set f $fSurface.fAlignment
 
         DevAddSelectButton TetraMesh $f AlignmentVolume "Alignment Volume(Optional)" Pack
+
+        lappend Volume(mbActiveList) $f.mbAlignmentVolume
+        lappend Volume(mActiveList)  $f.mbAlignmentVolume.m
 
 	#-------------------------------------------
 	# Surface->Bottom frame
@@ -314,6 +317,9 @@ The TetraMesh module allows a user to read in a Tetrahedral Mesh.  The Mesh is c
 
         DevAddSelectButton TetraMesh $f AlignmentVolume "Alignment Volume(Optional)" Pack
 
+        lappend Volume(mbActiveList) $f.mbAlignmentVolume
+        lappend Volume(mActiveList)  $f.mbAlignmentVolume.m
+
 	#-------------------------------------------
 	# Edges->Bottom frame
 	#-------------------------------------------
@@ -323,13 +329,78 @@ The TetraMesh module allows a user to read in a Tetrahedral Mesh.  The Mesh is c
 #        pack $f.lEdges -side top -padx $Gui(pad) -fill x
 #	set TetraMesh(lEdges) $f.lEdges
 
-        DevAddButton $f.bGo Process TetraMeshProcessEdges
+        DevAddButton $f.bGo Process TetraMeshProcessEdges2
 
         # Tooltip example: Add a tooltip for the button
         TooltipAdd $f.bGo "Press this button to start Processing the Mesh into its Edges"
 
 	pack $f.bGo  -side top -padx $Gui(pad) -pady $Gui(pad)
 
+        #-------------------------------------------
+        # View frame
+        #-------------------------------------------
+        set fView $Module(TetraMesh,fView)
+        set f $fView
+
+        foreach frame "Top Bottom" {
+                frame $f.f$frame -bg $Gui(activeWorkspace)
+                pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
+        }
+
+        #-------------------------------------------
+        # View->Top frame
+        #-------------------------------------------
+        set f $fView.fTop
+
+	# Parallel button
+         # Copied from MainView.tcl
+
+	eval {label $f.lParallelViewing  -justify left -text \
+" Parallel, rather than perspective,\n\
+viewing can be helpful:\n"} $Gui(WLA)
+
+        pack $f.lParallelViewing -side top
+
+	eval {checkbutton $f.cParallel \
+        -text "Parallel" -variable View(parallelProjection) -width 7 \
+        -indicatoron 0 -command "MainViewSetParallelProjection"} $Gui(WCA)
+        TooltipAdd $f.cParallel "Toggle parallel/perspective projection"
+
+	DevAddLabel $f.lblank "         "
+
+	# Scale Label
+	DevAddLabel $f.lParallelScale "Scale:"
+
+	#  Scale entry box
+	DevAddEntry View parallelScale $f.eParallelScale
+        TooltipAdd $f.eParallelScale "Scale for parallel projection"
+
+	pack $f.lblank $f.cParallel $f.lParallelScale $f.eParallelScale \
+		-side left -padx 3
+
+        #-------------------------------------------
+        # View->Bottom frame
+        #-------------------------------------------
+        set f $fView.fBottom
+
+	eval {label $f.l  -justify left -text \
+" Clipping can either be done as Intersection\n\
+or Union. Intersection clips all regions that\n\
+satisfy the constraints of all clipping planes.\n\
+Union clips all regions that satisfy the\n\
+constrains of at least one clipping plane.\n"} $Gui(WLA)
+
+	grid $f.l
+
+        foreach p "Union Intersection" {
+            eval {radiobutton $f.r$p -width 10 \
+                    -text "$p" -value "$p" \
+                    -variable Slice(clipType) \
+                   -command "Slice(clipPlanes) SetOperationTypeTo$p; Render3D"\
+                    -indicatoron 0 \
+                } $Gui(WCA) 
+        grid $f.r$p -padx 0 -pady 0
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -387,7 +458,8 @@ proc TetraMeshExit {} {
 proc TetraMeshUpdateGUI {} {
 	global TetraMesh Volume
 
-   DevUpdateNodeSelectButton Volume TetraMesh AlignmentVolume AlignmentVolume DevSelectNode
+#   DevUpdateNodeSelectButton Volume TetraMesh AlignmentVolume AlignmentVolume DevSelectNode
+#"   DevUpdateNodeSelectButton Volume TetraMesh AlignmentVolume AlignmentVolume DevSelectNode
 }
 
 #-------------------------------------------------------------------------------
@@ -588,6 +660,238 @@ Render3D
 set TetraMesh(modelbasename) ""
 }      
 
+#-------------------------------------------------------------------------------
+# .PROC TetraMeshProcessEdges2
+#
+# This Routine Reads in the TetraMesh and produces
+# a Model of lines for each scalar in the TetraMesh.
+# .END
+#-------------------------------------------------------------------------------
+proc TetraMeshProcessEdges2 {} {
+	global TetraMesh Model Volume
+
+#    puts "$TetraMesh(FileName) $TetraMesh(modelbasename)"
+    set fileName "$TetraMesh(FileName)"
+    set modelbasename "$TetraMesh(modelbasename)"
+
+######################################################################
+#### Check for problems in the input
+######################################################################
+
+    TetraMeshCheckErrors
+
+######################################################################
+#### Read the tetrahedral mesh
+######################################################################
+
+vtkUnstructuredGridReader tetra_reader
+  tetra_reader SetFileName $fileName
+  tetra_reader Update
+#  tetra_reader SetStartMethod     MainStartProgress
+#  tetra_reader SetProgressMethod "MainShowProgress reader"
+#  tetra_reader SetEndMethod       MainEndProgress
+
+set CurrentTetraMesh [tetra_reader GetOutput]
+$CurrentTetraMesh Update
+
+######################################################################
+#### Get the range of the data, not exactly thread safe. See vtkDataSet.h
+#### But, since we are not concurrently modifying the dataset, we should
+#### be OK.
+######################################################################
+
+set range [$CurrentTetraMesh GetScalarRange]
+set lowscalar [ lindex $range 0 ] 
+set highscalar [ lindex $range 1 ] 
+
+  ## need to hold on to full range of scalars
+  ## so that each model gets a different color
+set LOWSCALAR $lowscalar
+set HIGHSCALAR $highscalar
+
+######################################################################
+#### I tried to scale the data first, it didn't work. I don't know why.
+#### I tested the output by piping to a file, that worked just fine.
+#### So, it seems the data is processed more before being displayed.
+#### I don't understand why that would be.
+######################################################################
+#vtkTransform TheTransform
+#
+#if {$TetraMesh(AlignmentVolume) != "" && \
+#        $TetraMesh(AlignmentVolume) != $Volume(idNone) } {
+#    
+# TheTransform Concatenate [Volume($TetraMesh(AlignmentVolume),node) GetPosition]
+#puts "yo"
+#} else {
+#    TheTransform Identity
+#}
+#
+#vtkMatrix4x4 testme
+#  testme Identity
+#  testme SetElement 0 0 20
+#  testme SetElement 1 1 20
+#  testme SetElement 2 2 20
+#
+## TheTransform Concatenate testme
+#
+#
+#vtkTransformFilter TransformMesh
+#  TransformMesh SetInput $CurrentTetraMesh
+#  TransformMesh SetTransform TheTransform
+#
+#set $CurrentTetraMesh [TransformMesh GetOutput]
+#$CurrentTetraMesh Update
+#
+#vtkUnstructuredGridWriter ugw
+#   ugw SetInput $CurrentTetraMesh
+#   ugw SetFileName "/tmp/tt.vtk"
+#   ugw SetFileTypeToASCII
+#   ugw Update
+#
+
+#######################################################################
+#### Setup the pipeline: Threshold the data, grab lines, Transform
+#######################################################################
+
+  #############################################################
+  #### Threshold the Data
+  #############################################################
+
+vtkThreshold Thresh
+  Thresh SetInput $CurrentTetraMesh
+  # Only take cells whose entire cells satisfy the criteria
+  Thresh SetAttributeModeToUseCellData
+  Thresh AllScalarsOn 
+
+  #############################################################
+  #### Convert the Tetrahedral Mesh to PolyData
+  #############################################################
+
+  vtkExtractEdges TetraEdges
+    TetraEdges SetInput [Thresh GetOutput]
+
+  ######################################################################
+  #### Now, determine the transform
+  #### If a volume has been selected, use that volumes ScaledIJK to RAS
+  #### Otherwise, just use the identity.
+  ######################################################################
+
+vtkTransform TheTransform
+
+if {$TetraMesh(AlignmentVolume) != "" && \
+        $TetraMesh(AlignmentVolume) != $Volume(idNone) } {
+    
+ TheTransform Concatenate [Volume($TetraMesh(AlignmentVolume),node) GetPosition]
+} else {
+    TheTransform Identity
+}
+
+vtkTransformPolyDataFilter TransformPolyData
+  TransformPolyData SetInput [TetraEdges GetOutput]
+  TransformPolyData SetTransform TheTransform
+
+ ######################################################################
+ #### For each Scalar Determine if there is any points in there
+ #### If so, create an output model
+ ######################################################################
+
+set i 0
+set first $Model(idNone)
+
+while { [$CurrentTetraMesh GetNumberOfPoints] > 0 } {
+#  puts "starting new"
+  ### Get the lowest Scalar Data
+  Thresh ThresholdBetween $lowscalar $lowscalar
+  ### Finish the pipeline
+  TransformPolyData Update
+
+  ### Create the new Model
+  set m [ TetraMeshCreateModel $modelbasename$lowscalar $LOWSCALAR $HIGHSCALAR \
+          $TetraMesh(AlignmentVolume) ]
+
+  if { $first == $Model(idNone) }  { 
+     set first $m
+  }
+
+  ### Need to copy the output of the pipeline so that the results
+  ### Don't get over-written later. Also, when we delete the inputs,
+  ### We don't want the outputs deleted. These lines should prevent this.
+  vtkPolyData ModelPolyData$m
+  set Model($m,polyData) ModelPolyData$m
+  $Model($m,polyData) CopyStructure [TransformPolyData GetOutput]
+  [ $Model($m,polyData) GetPointData] PassData [[TransformPolyData GetOutput] GetPointData]
+  [ $Model($m,polyData) GetCellData] PassData [[TransformPolyData GetOutput] GetCellData]
+
+  ### The next line would replace the last bunch if we didn't care about
+  ### deleting the inputs causing the results to be deleted.
+  #  set Model($m,polyData) [gf GetOutput]
+  #  $Model($m,polyData) Update
+  #  puts [ $Model($m,polyData) GetNumberOfPolys]
+  Model($m,mapper) SetInput $Model($m,polyData)
+
+  ### Get the remaining Data ###
+  Thresh ThresholdBetween [ expr { $lowscalar + 0.01} ] $highscalar
+  set CurrentTetraMesh [Thresh GetOutput]
+  $CurrentTetraMesh Update
+  set range [$CurrentTetraMesh GetScalarRange]
+  set lowscalar [ lindex $range 0 ]
+  set highscalar [ lindex $range 1 ]
+  incr i
+#  puts [ $Model($m,polyData) GetNumberOfPolys]
+}
+
+#   puts [ $Model($m,polyData) GetNumberOfPolys]
+
+#TransformMesh Delete
+
+#ugw Delete
+#testme Delete
+TheTransform Delete
+TransformPolyData Delete
+Thresh Delete
+TetraEdges Delete
+tetra_reader Delete
+
+
+## This code is obsolete. Though, it is an excellent example of how
+## to add a transform to the Mrml tree. This is the right way to do things,
+## but it doesn't work in the slicer. GRUMBLE!
+#
+#######################################################################
+##### Now, add a transform
+##### by putting a transform around the newly created models
+##### 
+#######################################################################
+#
+#if {$TetraMesh(AlignmentVolume) != "" && \
+#        $TetraMesh(AlignmentVolume) != $Volume(idNone) } {
+#    
+#    set last $m
+#
+#    set matrixnum [ DataAddTransform 0 Model($first,node) Model($last,node) ]
+#    Matrix($matrixnum,node) SetName "TetraMeshTransform"
+#
+#
+#######################################################################
+##### Now, transform the data appropriately
+##### By editing the new matrix
+#######################################################################
+#
+#      Matrix($matrixnum,node) SetMatrix \
+#              [Volume($TetraMesh(AlignmentVolume),node) GetPositionMatrix]
+#
+##      [Matrix($matrixnum,node) GetTransform] Inverse
+#}
+
+######################################################################
+#### Update and Redraw
+######################################################################
+MainModelsUpdateMRML 
+MainUpdateMRML
+Render3D
+
+set TetraMesh(modelbasename) ""
+}   
 
 #-------------------------------------------------------------------------------
 # .PROC TetraMeshProcessSurface
