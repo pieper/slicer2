@@ -14,18 +14,17 @@ IF (WIN32)
     SET (LOCAL_MODULE_SRCS
         vtkDataTimeDef.cxx
         vtkFileOps.cxx
+	vtkImageEMGeneral.cxx
         vtkImageEMLocalSegmenter.cxx
-        vtkImageEMGeneral.cxx
-        vtkImageEMMarkov.cxx
     )
     SET_SOURCE_FILES_PROPERTIES ( vtkThread.cxx ABSTRACT )
 ELSE (WIN32)
     SET (LOCAL_MODULE_SRCS
         vtkDataTimeDef.cxx
         vtkFileOps.cxx
-        vtkImageEMLocalSegmenter.cxx
-        vtkImageEMGeneral.cxx
         vtkThread.cxx
+        vtkImageEMGeneral.cxx
+        vtkImageEMLocalSegmenter.cxx
     )
 ENDIF (WIN32)
 

@@ -68,7 +68,7 @@ vtkImageEMLocalSegmenter::vtkImageEMLocalSegmenter()
   this->ImageProd = 0;                   // Size of Image = maxX*maxY*maxZ
 
   this->IntensityAvgClass = -1;          // Label of Tissue class for which Intensity value is defined, = -1 => no intensity correction 
-  this->BiasPrint = 0;                   // Should the bias field be printed or not
+  this->BiasPrint = 1;                   // Should the bias field be printed or not
 
   this->ErrorFlag = 0;                  // Did a user error occure
   this->LogMu = NULL;this->LogCovariance = NULL;this->Label = NULL;this->TissueProbability = NULL;this->MrfParams = NULL;
@@ -157,7 +157,7 @@ char* vtkImageEMLocalSegmenter::GetErrorMessages() {
   else return NULL;
 }
 
-#define vtkEMSetErrorMessage(Message,Flag, x)                          \
+#define vtkEMLocalSetErrorMessage(Message,Flag, x)                          \
    {                                                                   \
      vtkOStreamWrapper::EndlType endl;                                 \
      vtkOStreamWrapper::UseEndl(endl);                                 \
@@ -348,13 +348,13 @@ bool vtkImageEMLocalSegmenter::CheckInputImage(vtkImageData * inData,int DataTyp
   // Check if InData is defined 
   int inExt[6];
   if (inData == 0) {
-    vtkEMSetErrorMessage(this->ErrorMessage,this->ErrorFlag,"Probability Map for class "<< num << " must be specified.");
+    vtkEMLocalSetErrorMessage(this->ErrorMessage,this->ErrorFlag,"Probability Map for class "<< num << " must be specified.");
     return false;
   }
 
   // Check for Data Type if correct : Remember ProbabilityData all has to be of the same data Type
   if (DataTypeOrig != DataTypeNew) {
-    vtkEMSetErrorMessage(this->ErrorMessage,this->ErrorFlag,"Probability Map for class "<< num << " has wrong data type - not conform with others.");
+    vtkEMLocalSetErrorMessage(this->ErrorMessage,this->ErrorFlag,"Probability Map for class "<< num << " has wrong data type - not conform with others.");
     return false;
   }
 
@@ -367,12 +367,12 @@ bool vtkImageEMLocalSegmenter::CheckInputImage(vtkImageData * inData,int DataTyp
   // Could be easily fixed if needed 
   inData->GetWholeExtent(inExt);
   if ((inExt[1] != outExt[1]) || (inExt[0] != outExt[0]) || (inExt[3] != outExt[3]) || (inExt[2] != outExt[2]) || (inExt[5] != outExt[5]) || (inExt[4] != outExt[4])) {
-    vtkEMSetErrorMessage(this->ErrorMessage,this->ErrorFlag,"Execute: Extension of Input Image " << num << ", " << inExt[0] << "," << inExt[1] << "," << inExt[2] << "," << inExt[3] << "," << inExt[4] << "," << inExt[5] 
+    vtkEMLocalSetErrorMessage(this->ErrorMessage,this->ErrorFlag,"Execute: Extension of Input Image " << num << ", " << inExt[0] << "," << inExt[1] << "," << inExt[2] << "," << inExt[3] << "," << inExt[4] << "," << inExt[5] 
                   << "is not alligned with output image "  << outExt[0] << "," << outExt[1] << "," << outExt[2] << "," << outExt[3] << "," << outExt[4] << " " << outExt[5]);
     return false;
   }
   if (inData->GetNumberOfScalarComponents() != 1) {
-    vtkEMSetErrorMessage(this->ErrorMessage,this->ErrorFlag,"Execute: This filter assumes input to filter is defined with one scalar component. " << num  << " has " << inData->GetNumberOfScalarComponents() 
+    vtkEMLocalSetErrorMessage(this->ErrorMessage,this->ErrorFlag,"Execute: This filter assumes input to filter is defined with one scalar component. " << num  << " has " << inData->GetNumberOfScalarComponents() 
                   << " Can be easily changed !");
     return false;
   }
@@ -388,7 +388,7 @@ void vtkImageEMLocalSegmenter::SetNumClasses(int NumberOfClasses)
 {
   int z,y;
   if (this->NumInputImages < 1) {
-    vtkEMSetErrorMessage(this->ErrorMessage,this->ErrorFlag,"Number of Input Images has to be defined before setting the number of classes");
+    vtkEMLocalSetErrorMessage(this->ErrorMessage,this->ErrorFlag,"Number of Input Images has to be defined before setting the number of classes");
     return;
   }
 
@@ -464,16 +464,16 @@ int vtkImageEMLocalSegmenter::checkValues()
   int i,k,j;
   for (i=0;i < this->NumClasses; i++) {
     if (this->Label[i] < 0) {
-      vtkEMSetErrorMessage(this->ErrorMessage,this->ErrorFlag, "Color[" << i+1 <<"] = " << this->Label[i] << " is not defined");
+      vtkEMLocalSetErrorMessage(this->ErrorMessage,this->ErrorFlag, "Color[" << i+1 <<"] = " << this->Label[i] << " is not defined");
       return -6;
     } 
     if (this->TissueProbability[i] < 0) {
-      vtkEMSetErrorMessage(this->ErrorMessage,this->ErrorFlag,"TissueProbability[" << i+1 <<"] = " << this->TissueProbability[i] << " is not defined");
+      vtkEMLocalSetErrorMessage(this->ErrorMessage,this->ErrorFlag,"TissueProbability[" << i+1 <<"] = " << this->TissueProbability[i] << " is not defined");
       return -7;
     } 
     for (j = 0; j < this->NumInputImages; j++) {
       if (this->LogMu[i][j] < 0) {
-        vtkEMSetErrorMessage(this->ErrorMessage,this->ErrorFlag, "Mu[" << i+1<<"][" << j+1 <<"] = " << this->LogMu[i][j] << " must be greater than 0!");
+        vtkEMLocalSetErrorMessage(this->ErrorMessage,this->ErrorFlag, "Mu[" << i+1<<"][" << j+1 <<"] = " << this->LogMu[i][j] << " must be greater than 0!");
         return -2;
       }
     }
@@ -482,7 +482,7 @@ int vtkImageEMLocalSegmenter::checkValues()
     for (j=0; j< this->NumInputImages; j++) {
       for (k=j+1; k <   this->NumInputImages; k++) 
         if (this->LogCovariance[i][j][k] != this->LogCovariance[i][k][j]) {
-          vtkEMSetErrorMessage(this->ErrorMessage,this->ErrorFlag,"Covariance must be syymetric for tissue class " << i+1);
+          vtkEMLocalSetErrorMessage(this->ErrorMessage,this->ErrorFlag,"Covariance must be syymetric for tissue class " << i+1);
           return -3;
         }
     }
@@ -499,7 +499,7 @@ int vtkImageEMLocalSegmenter::checkValues()
     for (j = 0; j < this->NumClasses; j++) {
        for (k = 0; k < 6; k++) {
      if ((this->MrfParams[k][j][i] < 0) || (this->MrfParams[k][j][i] > 1)) {
-       vtkEMSetErrorMessage(this->ErrorMessage,this->ErrorFlag,"vtkImageEMLocalSegmenter:checkValues:  MrfParams[" << k+1 <<"] [" << j+1 <<"] [" << i+1 <<"] = " << this->MrfParams[k][j][i] << " is not between 0 and 1!");
+       vtkEMLocalSetErrorMessage(this->ErrorMessage,this->ErrorFlag,"vtkImageEMLocalSegmenter:checkValues:  MrfParams[" << k+1 <<"] [" << j+1 <<"] [" << i+1 <<"] = " << this->MrfParams[k][j][i] << " is not between 0 and 1!");
        return -5;
      }
        }
@@ -1612,17 +1612,17 @@ void vtkImageEMLocalSegmenter::ExecuteData(vtkDataObject *)
     if (this->ProbDataLocal[idx1]) StartInputImages ++;
   }
   if (this->NumberOfTrainingSamples < 1) {
-    vtkEMSetErrorMessage(this->ErrorMessage,this->ErrorFlag,"Number of Training Samples taken for the probability map has to be defined first!");
+    vtkEMLocalSetErrorMessage(this->ErrorMessage,this->ErrorFlag,"Number of Training Samples taken for the probability map has to be defined first!");
     return;
   }
   if (this->ProbDataLocal) {
     if ((StartInputImages+this-> NumInputImages) > this->NumberOfInputs) {
-      vtkEMSetErrorMessage(this->ErrorMessage,this->ErrorFlag,"Not enough Input images defined (defined :"<< this->NumberOfInputs << ", need: "<< StartInputImages+this->NumInputImages);
+      vtkEMLocalSetErrorMessage(this->ErrorMessage,this->ErrorFlag,"Not enough Input images defined (defined :"<< this->NumberOfInputs << ", need: "<< StartInputImages+this->NumInputImages);
       return;
     }
   } 
   if (outData == NULL) {
-    vtkEMSetErrorMessage(this->ErrorMessage,this->ErrorFlag,"Ouput must be specified.");
+    vtkEMLocalSetErrorMessage(this->ErrorMessage,this->ErrorFlag,"Ouput must be specified.");
     return;
   }
   // -----------------------------------------------------
@@ -1638,7 +1638,7 @@ void vtkImageEMLocalSegmenter::ExecuteData(vtkDataObject *)
   // -----------------------------------------------------
   // Making sure values are set correctly
   if ((this->StartSlice < 1) || (this->StartSlice > this->EndSlice) || (this->EndSlice > (outExt[5] - outExt[4] + 1))) {
-    vtkEMSetErrorMessage(this->ErrorMessage,this->ErrorFlag,"Start Slice,"<<this->StartSlice<< ", or EndSlice," << this->EndSlice << ", not defined correctly !");
+    vtkEMLocalSetErrorMessage(this->ErrorMessage,this->ErrorFlag,"Start Slice,"<<this->StartSlice<< ", or EndSlice," << this->EndSlice << ", not defined correctly !");
     return;
   }
   // -----------------------------------------------------
@@ -1657,7 +1657,7 @@ void vtkImageEMLocalSegmenter::ExecuteData(vtkDataObject *)
        switch (this->GetInput(NumProbMap)->GetScalarType()) {
      vtkTemplateMacro4(vtkImageEMLocalSegmenterIncrementProbDataPointer,this,idx1, (VTK_TT*) inData[NumProbMap]->GetScalarPointerForExtent(outExt), jump);
       default:
-    vtkEMSetErrorMessage(this->ErrorMessage,this->ErrorFlag,"Execute: Unknown ScalarType");
+    vtkEMLocalSetErrorMessage(this->ErrorMessage,this->ErrorFlag,"Execute: Unknown ScalarType");
     return;
       } 
        NumProbMap ++;
@@ -1679,7 +1679,7 @@ void vtkImageEMLocalSegmenter::ExecuteData(vtkDataObject *)
     switch (this->GetInput(idx1)->GetScalarType()) {
       vtkTemplateMacro9(vtkImageEMLocalSegmenterReadInputChannel,this, inData[idx1], (VTK_TT *)(inData[idx1]->GetScalarPointerForExtent(outExt)),outExt,this->ImageMaxX,this->ImageMaxY,this->ImageMaxZ,InputVector,idx1-StartInputImages);
     default:
-      vtkEMSetErrorMessage(this->ErrorMessage,this->ErrorFlag,"Execute: Unknown ScalarType");
+      vtkEMLocalSetErrorMessage(this->ErrorMessage,this->ErrorFlag,"Execute: Unknown ScalarType");
       return;
     } 
 
@@ -1691,7 +1691,7 @@ void vtkImageEMLocalSegmenter::ExecuteData(vtkDataObject *)
   switch (this->GetOutput()->GetScalarType()) {
     vtkTemplateMacro5(vtkImageEMLocalSegmenterExecute, this, InputVector, outData, (VTK_TT*)outPtr,outExt);
   default:
-    vtkEMSetErrorMessage(this->ErrorMessage,this->ErrorFlag,"Execute: Unknown ScalarType");
+    vtkEMLocalSetErrorMessage(this->ErrorMessage,this->ErrorFlag,"Execute: Unknown ScalarType");
     return;
   }
   for(idx1 = 0; idx1 <this->ImageProd; idx1++) delete[] InputVector[idx1];

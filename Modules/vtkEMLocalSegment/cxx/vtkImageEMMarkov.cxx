@@ -232,7 +232,6 @@ void vtkImageEMMarkov::ExecuteData(vtkDataObject *)
 
 void vtkImageEMMarkov::SetNumClasses(int NumberOfClasses)
 {
-  int z,y,x;
   if (this->NumClasses == NumberOfClasses) return;
   this->DeleteVariables();
 
@@ -243,7 +242,7 @@ void vtkImageEMMarkov::SetNumClasses(int NumberOfClasses)
     this->LabelNumber       = new int[NumberOfClasses];
     this->ClassProbability  = new double[NumberOfClasses];
     // Set all initial values to -1 and 0
-    for (x= 0; x < NumberOfClasses; x++) {
+    for (int x= 0; x < NumberOfClasses; x++) {
       *this->Label++                = NULL;
       *this->LabelNumber++          = -1;
       *this->ClassProbability++     = 0.0;

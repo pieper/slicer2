@@ -87,7 +87,7 @@ static void TransferDataFormat(Tin *vec_in, Tout *vec_out, int Size, Tout max_ou
 template <class T> 
 static void WriteToFlippedGEFile(char *filename,T *vec, int XSize, int YSize, int XYSize) {
   T* res = new T[XYSize];
-  int x,y;
+  int y;
 
   // Flip around the Y Axis
   // vec += XSize;
@@ -114,7 +114,7 @@ template <class T>
 static void WriteToGEFile(char *filename,T *vec, int size) {
   int appendFlag = 0;
   // If you enter - as name => prints it on the screen
-  FILE *f = (strcmp(filename,"-")) ? fopen(filename,((appendFlag)?"a":"w")):stdout;
+  FILE *f = (strcmp(filename,"-")) ? fopen(filename,((appendFlag)?"ab":"wb")):stdout;
   if ( f == NULL ) {
     cerr << "Could not open file " << filename << "\n";
     return;

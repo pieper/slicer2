@@ -96,20 +96,16 @@ void EMVolume::Test(int Vdim) {
 }
 
 // Kilian : This is just so we are compatible with older version
-void EMVolume::Conv(double v[],int vLen) {
+void EMVolume::Conv(double *v,int vLen) {
   float *v_f = new float[vLen];
   for (int i = 0; i < vLen; i++) v_f[i] = float(v[i]);
   this->Conv(v_f,vLen);  
   delete[] v_f;
 }
 
-void EMVolume::Conv(float v[],int vLen) {
-  this->ConvY(v,vLen);
-  this->ConvX(v,vLen);
-  this->ConvZ(v,vLen);
-}
 
-inline void EMVolume::ConvY(float v[], int vLen) {
+
+inline void EMVolume::ConvY(float *v, int vLen) {
   int x,y,z;
 
   // => Utrans[i] represents the i column of U;    
@@ -141,7 +137,7 @@ inline void EMVolume::ConvY(float v[], int vLen) {
 // Same just v is a row vector instead of column one
 // We use the following equation :
 // conv(U,v) = conv(U',v')' => conv(U,v') = conv(U',v)';
-inline void EMVolume::ConvX(float v[], int vLen) {
+inline void EMVolume::ConvX(float *v, int vLen) {
   int x,i,MaxYZ;
 
   // Use the i-th Rows of U = ith Column of U';
@@ -165,7 +161,7 @@ inline void EMVolume::ConvX(float v[], int vLen) {
 // Same just v is a row vector instead of column one
 // We use the following equation :
 // conv(U,v) = conv(U',v')' => conv(U,v') = conv(U',v)';
-inline void EMVolume::ConvX(EMVolume &src,float v[], int vLen) {
+inline void EMVolume::ConvX(EMVolume &src,float *v, int vLen) {
   int x,i,MaxYZ;
 
   // Use the i-th Rows of U = ith Column of U';
@@ -189,7 +185,7 @@ inline void EMVolume::ConvX(EMVolume &src,float v[], int vLen) {
 
 // Convolution and polynomial multiplication . 
 // This is assuming u and 'this' have the same dimension
-inline void EMVolume::ConvZ(EMVolume &src,float v[],int vLen) {
+inline void EMVolume::ConvZ(EMVolume &src,float *v,int vLen) {
   int stump = vLen /2;
   int i,k,j,jMin,jMax;
 
@@ -223,7 +219,7 @@ inline void EMVolume::ConvZ(EMVolume &src,float v[],int vLen) {
 }
 
 // No unecessary memrory -> faster
-inline void EMVolume::ConvZ(float v[], int vLen) {
+inline void EMVolume::ConvZ(float *v, int vLen) {
   int z,i,MaxXYZ;
 
   // Use the i-th Rows of U = ith Column of U';

@@ -150,27 +150,20 @@ inline void convVector(float vec[], float u[], int uLen, float v[], int vLen){
 // ----------------------------------------------------------------------------------------------/ 
 
 // Kilian turn around dimension so it is y,x,z like in matlab ! 
-class EMVolume {
-
-protected :
-  float *Data;
-  int MaxX, MaxY, MaxZ, MaxXY;
-
-  void allocate (int initZ,int initY, int initX) {
-    this->MaxX  = initX;this->MaxY  = initY;this->MaxZ  = initZ;
-    this->MaxXY = initX*initY;this->Data = new float[this->MaxXY*this->MaxZ];
-  } 
-
-  void deallocate () {
-    if (this->Data) delete[] this->Data;
-    this->Data  = NULL;this->MaxX  = 0;this->MaxY  = 0;this->MaxZ  = 0;this->MaxXY = 0;
-  }
-
+class VTK_EMLOCALSEGMENT_EXPORT EMVolume {
 public:
+  //static EMVolume *New() {return (new vtkDataTimeDef);}
   EMVolume(){this->Data  = NULL;this->MaxX  = 0;this->MaxY  = 0;this->MaxZ  = 0;this->MaxXY = 0;}
   EMVolume(int initZ,int initY, int initX) {this->allocate(initZ,initY, initX);}
   ~EMVolume() {this->deallocate();}
 
+  // Convolution in all three direction 
+  // Can be made using less memory but then it will be probably be slower
+  void Conv(float *v,int vLen) {
+    this->ConvY(v,vLen);
+    this->ConvX(v,vLen);
+    this->ConvZ(v,vLen);
+  }
   void Resize(int DimZ,int DimY,int DimX) {
     if ((this->MaxX == DimX) && (this->MaxY == DimY) && (this->MaxZ == DimZ)) return;
     this->deallocate();this->allocate(DimZ,DimY,DimX);
@@ -190,9 +183,6 @@ public:
     for (int i = 0; i < mul; i++ ) this->Data[i] = trg.Data[i];
     return *this;
   }
-  // Convolution in all three direction 
-  // Can be made using less memory but then it will be probably be slower
-  void Conv(float *v,int vLen);
   // Kilian : Just to be compatible with older version
   void Conv(double *v,int vLen);
   int ConvMultiThread(float* filter, int filterLen);
@@ -200,11 +190,11 @@ public:
   int ConvolutionFilter_workpile(float *input, float *filter, int M1, int M2, int N1, int N2, int O1, int O2);
 
   // End -  Multi Thread Function
-  void ConvY(float v[], int vLen);
-  void ConvX(float v[], int vLen);
+  void ConvY(float *v, int vLen);
+  void ConvX(float *v, int vLen);
   // Same as above only sorce and target Volume are different => Slower 
   void ConvX(EMVolume &src,float v[], int vLen);
-  void ConvZ(float v[], int vLen);
+  void ConvZ(float *v, int vLen);
   // Same as above only sorce and target Volume are different => Slower 
   void ConvZ(EMVolume &src,float v[], int vLen);
   void Print(char name[]);
@@ -214,6 +204,21 @@ public:
     if (val) {for (int i = 0; i < Max; i++ ) this->Data[i] = val;}
     else { memset(this->Data, 0,sizeof(float)*Max);}
   }
+protected :
+  float *Data;
+  int MaxX, MaxY, MaxZ, MaxXY;
+
+  void allocate (int initZ,int initY, int initX) {
+    this->MaxX  = initX;this->MaxY  = initY;this->MaxZ  = initZ;
+    this->MaxXY = initX*initY;this->Data = new float[this->MaxXY*this->MaxZ];
+  } 
+
+  void deallocate () {
+    if (this->Data) delete[] this->Data;
+    this->Data  = NULL;this->MaxX  = 0;this->MaxY  = 0;this->MaxZ  = 0;this->MaxXY = 0;
+  }
+
+
 }; 
 
 // ----------------------------------------------------------------------------------------------
@@ -221,7 +226,7 @@ public:
 // ----------------------------------------------------------------------------------------------/ 
 // It is a 5 dimensional Volume where m[y][x][][[][] y>= x is only defined 
 // Lower Traingular matrix - or a symmetric matrix where you only save the lower triangle
-class EMTriVolume {
+class VTK_EMLOCALSEGMENT_EXPORT EMTriVolume {
 protected :
   EMVolume **TriVolume;
   int Dim;
@@ -285,7 +290,7 @@ public:
 // ----------------------------------------------------------------------------------------------
 // Dummy class 
 // ----------------------------------------------------------------------------------------------/ 
-class VTK_EXPORT vtkDataTimeDef { 
+class VTK_EMLOCALSEGMENT_EXPORT vtkDataTimeDef { 
 public:
   static vtkDataTimeDef *New() {return (new vtkDataTimeDef);}
 protected:

@@ -133,7 +133,7 @@ void  vtkFileOps::WriteDoubleToUShortToGEFile(char* FileName, double* vec,int XS
 // Functions to write Short Data to an MRI File
 // ---------------------------------------------------------
 /* Copyright (c) Simon Warfield simonw@bwh.harvard.edu */
-/* $Id: vtkFileOps.cxx,v 1.3 2003/08/21 19:25:07 pohl Exp $ */
+/* $Id: vtkFileOps.cxx,v 1.4 2003/08/26 16:20:16 pohl Exp $ */
 int vtkFileOps::uncompressedFileName(char *fname, char **newFileName)
 {
 #ifndef _WIN32
@@ -229,7 +229,7 @@ char* vtkFileOps::pathComponent(char *fname)
   char *tmp = strdup(fname);
   assert(tmp != NULL);
 
-  len = strlen(tmp);
+  len = int(strlen(tmp));
 
   for (j = (len-1); j >= 0; j--) {
     if (tmp[j] != '/') {
