@@ -357,7 +357,7 @@ proc MainInit {} {
 
         # Set version info
     lappend Module(versions) [ParseCVSInfo Main \
-        {$Revision: 1.77 $} {$Date: 2002/05/13 14:26:04 $}]
+        {$Revision: 1.78 $} {$Date: 2002/07/26 03:24:04 $}]
 
     # Call each "Init" routine that's not part of a module
     #-------------------------------------------
@@ -930,11 +930,11 @@ proc MainUpdateMRML {} {
     MainVolumesUpdateMRML
     if {$verbose == 1} {puts "MRML: MainModels"}
     MainModelsUpdateMRML
-    if {$verbose == 1} {puts "MRML: MainMatrices"}
+    if {$verbose == 1} {puts "MRML: MainAlignments"}
     MainTetraMeshUpdateMRML
     if {$verbose == 1} {puts "MRML: MainTetraMesh"}
 
-    MainMatricesUpdateMRML
+    MainAlignmentsUpdateMRML
 
     foreach p $Module(procMRML) {
         if {$verbose == 1} {puts "MRML: $p"}
@@ -1087,7 +1087,7 @@ proc MainSetup {} {
     # Active transform
     set m [lindex $Matrix(idList) 0]
     if {$m != ""} {    
-        MainMatricesSetActive $m
+        MainAlignmentsSetActive $m
     }
 
     # Active color
