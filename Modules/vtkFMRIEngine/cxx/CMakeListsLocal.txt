@@ -43,6 +43,7 @@ vtkMultiInputsSimpleImageToImageFilter.cxx
 vtkActivationVolumeGenerator.cxx
 vtkActivationDetector.cxx
 vtkTimeCoursePlotActor.cxx
+vtkCDF.cxx
 )
 
 ## classes that one does not want tcl wrapped
