@@ -71,7 +71,8 @@ vtkImageNeighborhoodFilter \
 vtkImageLiveWire \
 vtkImageLiveWireTester \
 vtkImageLiveWireEdgeWeights \
-vtkImageBandedDistanceMap
+vtkImageBandedDistanceMap \
+vtkDCMLister
 
 #vtkSurfaceProps \
 #vtkMathUtils \
