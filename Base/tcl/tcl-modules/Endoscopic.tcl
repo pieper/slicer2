@@ -2918,6 +2918,11 @@ proc EndoscopicAddLandmarkNoDirectionSpecified {x y z {list ""}} {
         set id $Endoscopic(path,activeId)
         set list $Endoscopic($id,path,name)
     }
+    } else {
+    if {[info exists Fiducials($list,fid)] == 0} {    
+        # if the list doesn't exist, create it
+        EndoscopicCreateAndActivatePath $list
+    }
     }
     # make that list active
     FiducialsSetActiveList $list
@@ -2969,6 +2974,11 @@ proc EndoscopicAddLandmarkDirectionSpecified {{coords ""} {list ""}} {
         } else {
         set id $Endoscopic(path,activeId)
         set list $Endoscopic($id,path,name)
+    }
+    } else {
+    if {[info exists Fiducials($list,fid)] == 0} {    
+        # if the list doesn't exist, create it
+        EndoscopicCreateAndActivatePath $list
     }
     }
     # make that list active
