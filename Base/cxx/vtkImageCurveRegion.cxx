@@ -216,6 +216,7 @@ vtkImageCurveRegion::vtkImageCurveRegion()
   this->Mean = NULL;
   this->Covariance = NULL;
   this->Probability = 1.0;
+  this->FileName = NULL;
 }
 
 //----------------------------------------------------------------------------
@@ -231,49 +232,97 @@ void vtkImageCurveRegion:: DeleteVariables() {
 //----------------------------------------------------------------------------
 void vtkImageCurveRegion::ExecuteInformation()
 {
-  vtkImageData *output = this->GetOutput();
   int Extent[6];
-  float dist;
   Extent[0] = Extent[2] = Extent[4] = Extent[5] = 0;
-  if ((this->Xunit <= 0.0) && (this->Xlength <= 0)) {
-    vtkErrorMacro(<< "Value for Xunit or Xlength has to be greater 0 !");
-    return;
-  }
-  if (this->Xlength > 0) {
-    dist = this->Xmax - this->Xmin;
-    if (dist) {
-      this->Xunit = dist / float(this->Xlength);
-      while (dist/this->Xunit <  float(this->Xlength))  this->Xunit *= 0.999;
-    } else this->Xunit = 1.0;
-  } else {
-    this->Xlength = int((this->Xmax - this->Xmin)/this->Xunit);
-  }
-  Extent[1] = this->Xlength - 1;
+  vtkImageData *output = this->GetOutput();
+  int ScalarComp = 0;
 
-  if (this->Dimension == 2) {
-    if ((this->Yunit <= 0.0) && (this->Ylength <= 0)) {
-      vtkErrorMacro(<< "Value for Yunit or Ylength has to be greater 0 !");
+  if (this->Function == 3 ) {
+    FILE *f = fopen(this->FileName,"r");
+    if ( f == NULL ) {
+      cerr << "vtkImageCurveRegion::ExecuteInformation: Could not open file " << this->FileName << "\n";
+      Extent[1] = Extent[3] = 0; 
+      output->SetUpdateExtent(Extent);
+      output->SetWholeExtent(Extent);
+      output->SetScalarType(VTK_FLOAT);
+      output->SetNumberOfScalarComponents(0);
+      fclose(f);
       return;
     }
-    if (this->Ylength > 0) {
-      dist = this->Ymax - this->Ymin;
-      if (dist) {
-    this->Yunit = dist / float(this->Ylength);
-    while (dist/this->Yunit <  float(this->Ylength))  this->Yunit *= 0.999;
-      } else this->Yunit = 1.0;
-    } else {
-      this->Ylength = int((this->Ymax - this->Ymin)/this->Yunit);
+    int MaxLength = 100;
+    int index = 0; 
+    bool flag = false;
+    char line[MaxLength];
+    if (feof(f) || fgets(line, MaxLength, f ) == NULL) {
+      cout << "vtkImageCurveRegion::ExecuteInformation: Error : File was empty !" << endl;
+      fclose(f);
+      return;
     }
-    Extent[3] = this->Ylength - 1;
-  } else {Extent[3] = 0;}
+    Extent[1] = Extent[3] = 0;
+
+    line[MaxLength-1] = '\n';
+    if (line[index] != ' ') ScalarComp = 1;
+    // Check how many numbers are in a row 
+    cout << line << endl;
+    while(line[index] != '\n') {
+      if (line[index] == ' ' ) flag = true;
+      else if (flag) { 
+    ScalarComp++;
+    flag = false;
+      } 
+      index ++;
+    }
+    // Check How many rows there are
+    fgets(line, MaxLength, f); 
+    while(!feof(f)) {
+      Extent[1] ++;
+      fgets(line, MaxLength, f);
+    }
+    fclose(f);
+  } else {
+    float dist;
+    ScalarComp = 1;
+    if ((this->Xunit <= 0.0) && (this->Xlength <= 0)) {
+    vtkErrorMacro(<< "Value for Xunit or Xlength has to be greater 0 !");
+    return;
+    }
+    if (this->Xlength > 0) {
+      dist = this->Xmax - this->Xmin;
+      if (dist) {
+    this->Xunit = dist / float(this->Xlength);
+    while (dist/this->Xunit <  float(this->Xlength))  this->Xunit *= 0.999;
+      } else this->Xunit = 1.0;
+    } else {
+      this->Xlength = int((this->Xmax - this->Xmin)/this->Xunit);
+    }
+    Extent[1] = this->Xlength - 1;
+    
+    if (this->Dimension == 2) {
+      if ((this->Yunit <= 0.0) && (this->Ylength <= 0)) {
+    vtkErrorMacro(<< "Value for Yunit or Ylength has to be greater 0 !");
+    return;
+      }
+      if (this->Ylength > 0) {
+    dist = this->Ymax - this->Ymin;
+    if (dist) {
+      this->Yunit = dist / float(this->Ylength);
+      while (dist/this->Yunit <  float(this->Ylength))  this->Yunit *= 0.999;
+    } else this->Yunit = 1.0;
+      } else {
+    this->Ylength = int((this->Ymax - this->Ymin)/this->Yunit);
+      }
+      Extent[3] = this->Ylength - 1;
+    } else {Extent[3] = 0;}
+   
+  }
   output->SetUpdateExtent(Extent);
   output->SetWholeExtent(Extent);
   output->SetScalarType(VTK_FLOAT);
-  output->SetNumberOfScalarComponents(1);
+  output->SetNumberOfScalarComponents(ScalarComp);
 }
 //----------------------------------------------------------------------------
 void vtkImageCurveRegion::SetFunction(int val) {
-  if ((2<val) || (val < 1)) {
+  if ((3<val) || (val < 1)) {
     vtkErrorMacro(<< "Currently Function has to bedefined as 1 (for log gaussian) or 2 (normal gaussian) !");
     return;
   }
@@ -301,8 +350,7 @@ void vtkImageCurveRegion::SetDimension (int value){
   this->Modified();
 }
 
-//----------------------------------------------------------------------------
-void vtkImageCurveRegion::ExecuteData(vtkDataObject *output) {
+void vtkImageCurveRegion::ExecuteDataGauss(vtkDataObject *output) {
   vtkImageData *data = this->AllocateOutputData(output);
   float *outPtr;
   int idxR, idxY, idxZ;
@@ -396,6 +444,46 @@ void vtkImageCurveRegion::ExecuteData(vtkDataObject *output) {
   for (int idxR = 0 ; idxR < this->Dimension; idxR++) delete[] InvCov[idxR];
   delete[] InvCov;
   delete[] value;  
+}
+
+void vtkImageCurveRegion::ExecuteDataReadFile(vtkDataObject *output) {
+  vtkImageData *data = this->AllocateOutputData(output);
+  int *outExt = data->GetExtent();
+  int Numbers = data->GetNumberOfScalarComponents();  
+  if (Numbers == 0) {return;}
+  int index = 0;
+  int ReadNumber =0;
+  int Lines =  outExt[1] - outExt[0]+1;
+
+  // Set read format 
+  float* outPtr = (float *) data->GetScalarPointer(outExt[0],outExt[2],outExt[4]);
+  FILE *f = fopen(this->FileName,"r");
+  if ( f == NULL ) {
+    cerr << "vtkImageCurveRegion::ExecuteDataFileRead: Could not open file " << this->FileName << "\n";
+    fclose(f);
+    return;
+  }
+
+  index = 0;
+  while ((index < Lines) && (!feof(f))) {
+    ReadNumber = 0;   
+    while  (ReadNumber < Numbers) {
+      fscanf(f, "%f", outPtr++);
+      ReadNumber ++;
+    }
+    index ++;
+  }
+  fclose(f);
+}
+
+//----------------------------------------------------------------------------
+void vtkImageCurveRegion::ExecuteData(vtkDataObject *output) {
+  switch (this->Function) {
+    case 1: 
+    case 2: this->ExecuteDataGauss(output); break;
+    case 3: this->ExecuteDataReadFile(output); break;
+    default:   cerr << "vtkImageCurveRegion::ExecuteData:Error: Function " << this->Function << "not available !" << endl;   
+  }
 }
 
 void vtkImageCurveRegion::PrintSelf(ostream& os, vtkIndent indent)

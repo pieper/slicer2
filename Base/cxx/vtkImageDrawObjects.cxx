@@ -303,7 +303,7 @@ void vtkImageDrawObjects::ExecuteData(vtkDataObject *)
     // Currently only drawing lines
     ConvertColor(ListPtr->GetColor(),color); 
     switch(ListPtr->GetType()) {
-    case 0 :  DrawContinousLine(pos[0],pos[1], pos[2], pos[3], color, outPtr,outPtrXlength, Xlength, ListPtr->GetThickness());
+    case 0 :  DrawContinousLine(pos[0],pos[1], pos[2], pos[3], color, outPtr,outPtrXlength, ListPtr->GetThickness());
               break;
       default:
       vtkErrorMacro(<< "DrawObjects: Unknown Object Type");

@@ -88,6 +88,7 @@ public:
   // 1 = Gausian
   // 2 = Log Gausian, where *min, *max, *unit correspond to the non log values (e.g. 0, 100, 1.0) 
   //     and Covariance and mean to log values  (3.65, 0.2)
+  // 3 = Data will be read from file (FileName has to be defined)
   void SetFunction(int val);
   vtkGetMacro(Function, int);
   // Description:
@@ -104,6 +105,9 @@ public:
   // Global probability, necessary if you have different curves with different weights 
   vtkSetMacro(Probability, float);
   vtkGetMacro(Probability, float);
+
+  vtkGetStringMacro(FileName);
+  vtkSetStringMacro(FileName);
 
 protected:
   vtkImageCurveRegion();
@@ -129,8 +133,12 @@ protected:
   float** Covariance;
   float Probability;
 
+  char* FileName;
+
   virtual void ExecuteInformation();
   virtual void ExecuteData(vtkDataObject *data);
+  void ExecuteDataReadFile(vtkDataObject *output) ;
+  void ExecuteDataGauss(vtkDataObject *output);
 private:
   vtkImageCurveRegion(const vtkImageCurveRegion&);  // Not implemented.
   void operator=(const vtkImageCurveRegion&);  // Not implemented.

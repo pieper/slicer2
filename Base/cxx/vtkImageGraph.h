@@ -200,7 +200,7 @@ inline void ConvertColor(float *f, unsigned char *c)
 
 //----------------------------------------------------------------------------
 inline void DrawThickPoint (int Xpos, int Ypos, unsigned char color[3], unsigned char *outPtr, 
-                int NumXScalar, int Xlength, int radius) {
+                int NumXScalar, int radius) {
   unsigned char *ptr;
   int x ,y;
   Xpos -= radius;
@@ -212,23 +212,23 @@ inline void DrawThickPoint (int Xpos, int Ypos, unsigned char color[3], unsigned
 
 //----------------------------------------------------------------------------
 inline void DrawContinousLine(int xx1, int yy1, int xx2, int yy2, unsigned char color[3],
-                              unsigned char *outPtr, int NumXScalar, int Xlength, int radius) {
+                              unsigned char *outPtr, int NumXScalar, int radius) {
   float slope; 
   int Yold = yy1, Ynew, x,y;
 
   if (xx2 != xx1)  {
     slope = float(yy2 - yy1)/float(xx2 - xx1);
-    DrawThickPoint(xx1, yy1, color, outPtr, NumXScalar, Xlength, radius);
+    DrawThickPoint(xx1, yy1, color, outPtr, NumXScalar, radius);
     for(x=xx1+1; x <=  xx2; x++) { 
       Ynew = (int) slope*(x - xx1) + yy1; 
-      if (slope < 0) for (y = Yold; y >= Ynew; y --) DrawThickPoint(x, y, color, outPtr, NumXScalar, Xlength, radius); 
-      else  for (y = Yold; y <= Ynew; y ++)  DrawThickPoint(x, y, color, outPtr, NumXScalar, Xlength, radius);
+      if (slope < 0) for (y = Yold; y >= Ynew; y --) DrawThickPoint(x, y, color, outPtr, NumXScalar, radius); 
+      else  for (y = Yold; y <= Ynew; y ++)  DrawThickPoint(x, y, color, outPtr, NumXScalar, radius);
       Yold = Ynew; 
     } 
   } else {
     if (yy1 > yy2) { 
-      for (y = yy2; y <= yy1; y++) DrawThickPoint(xx1, y, color, outPtr, NumXScalar, Xlength, radius); 
-    } else for (y = yy1; y <= yy2; y++) DrawThickPoint(xx1, y, color, outPtr, NumXScalar, Xlength, radius); 
+      for (y = yy2; y <= yy1; y++) DrawThickPoint(xx1, y, color, outPtr, NumXScalar, radius); 
+    } else for (y = yy1; y <= yy2; y++) DrawThickPoint(xx1, y, color, outPtr, NumXScalar, radius); 
   }
 }
 #endif

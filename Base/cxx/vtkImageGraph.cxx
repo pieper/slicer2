@@ -553,7 +553,7 @@ static void vtkImageGraphDrawCurve(vtkImageGraph *self,Tin *CurvePtr,int outIncY
     } else if (y2 > Yborder)  y2 = Yborder ;
     if (idxX >= CurveThickness && idxX < Xborder) {
       if (type) DrawDiscreteLine(idxX, y1, idxX+1, y2, color, outPtr, NumXScalar, Xlength, CurveThickness);
-      else DrawContinousLine(idxX, y1, idxX+1, y2, color, outPtr, NumXScalar, Xlength, CurveThickness);
+      else DrawContinousLine(idxX, y1, idxX+1, y2, color, outPtr, NumXScalar, CurveThickness);
     }
     CurvePtr++;
   }
@@ -685,8 +685,8 @@ void vtkImageGraph::Draw2DGraph(vtkImageData *data, int NumRegion, float* CurveR
   int            TempIncX, TempIncZ, *TempExt;
   vtkImageData   *TempCurve;
   void           **RegionPtr = new void*[NumRegion];
-  unsigned char  *RegionColor[NumRegion];
-  int            RegionIncY[NumRegion];  
+  unsigned char  **RegionColor = new unsigned char*[NumRegion];
+  int            *RegionIncY = new int[NumRegion];  
 
   for (idxR =0; idxR < NumRegion; idxR++) {
     RegionColor[idxR] = new unsigned char[3];
@@ -706,7 +706,9 @@ void vtkImageGraph::Draw2DGraph(vtkImageData *data, int NumRegion, float* CurveR
     return;
   }
   for (idxR =0; idxR < NumRegion; idxR++) delete[] RegionColor[idxR];
+  delete[] RegionColor;
   delete[] RegionPtr;
+  delete[] RegionIncY;  
 #endif
 }
 
@@ -768,7 +770,7 @@ void vtkImageGraph::DrawBackground(unsigned char *outPtr, int outIncY) {
   int            SIZE_OF_CHAR    = 3*sizeof(unsigned char);
   int            SIZE_OF_XLENGTH = this->Xlength*3 *sizeof(unsigned char);
   int            NumXScalar = this->Xlength*3 + outIncY;
-  unsigned char  BackXAxis[this->Xlength*3];
+  unsigned char  *BackXAxis = new unsigned char[this->Xlength*3];
   unsigned char  *BackXAxisPtr = BackXAxis;
   
   if (this->Xlength > 1) {
@@ -785,6 +787,7 @@ void vtkImageGraph::DrawBackground(unsigned char *outPtr, int outIncY) {
     memcpy(outPtr, BackXAxis,SIZE_OF_XLENGTH);
     outPtr += NumXScalar;
   }
+  delete[] BackXAxis; 
 #endif
 }
 
