@@ -431,10 +431,10 @@ if { ![file exists $gslTestFile] } {
 
     cd $SLICER_LIB/gsl-build
 
-#    runcmd $::CVS -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer login
-#    runcmd $::CVS -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer co gsl-mirror
-    runcmd $::CVS -d:pserver:anoncvs:anoncvs@sources.redhat.com:/cvs/gsl login
-    runcmd $::CVS -z3 -d:pserver:anoncvs:anoncvs@sources.redhat.com:/cvs/gsl co -r $gslTag gsl
+    runcmd $::CVS -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer login
+    runcmd $::CVS -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer co gsl-mirror
+#    runcmd $::CVS -d:pserver:anoncvs:anoncvs@sources.redhat.com:/cvs/gsl login
+#    runcmd $::CVS -z3 -d:pserver:anoncvs:anoncvs@sources.redhat.com:/cvs/gsl co -r $gslTag gsl
 
     if { !$isWindows } {
         # can't do Windows
