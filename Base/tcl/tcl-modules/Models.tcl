@@ -82,7 +82,7 @@ proc ModelsInit {} {
 
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.56 $} {$Date: 2003/10/03 17:42:00 $}]
+            {$Revision: 1.57 $} {$Date: 2004/03/01 15:49:06 $}]
 
     # Props
     set Model(propertyType) Basic
@@ -571,10 +571,11 @@ proc ModelsBuildGUI {} {
     #-------------------------------------------
     set f $fProps.fBot.fAdvanced.fScalars
 
+    DevAddButton $f.bPick "Pick Scalars" "ModelsPickScalars $f.bPick; Render3D" 12
     frame $f.fVisible -bg $Gui(activeWorkspace)
     frame $f.fAutoRange   -bg $Gui(activeWorkspace)
     frame $f.fRange   -bg $Gui(activeWorkspace)
-    pack $f.fVisible $f.fAutoRange $f.fRange -side top -pady $Gui(pad)
+    pack $f.bPick $f.fVisible $f.fAutoRange $f.fRange -side top -pady $Gui(pad)
     set fVisible $f.fVisible
     set fRange $f.fRange
     set fAutoRange $f.fAutoRange
@@ -848,7 +849,7 @@ proc ModelsSetFileName {} {
 
     # Name the model based on the entered file.
     set Model(name) [ file root [file tail $Model(FileName)]]
-    puts "$Model(FileName), $Model(name)"
+
     # Guess the color
     set name [string tolower $Model(name)]
     set guess ""
@@ -1036,6 +1037,136 @@ proc ModelsSmoothNormals {} {
         foreach p "ModelNormals" {
             #            $p SetInput ""
             $p Delete
+        }
+    }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC ModelsPickScalars 
+# 
+#  Pick which scalars should be visible for this model
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc ModelsPickScalars { parentButton } {
+    global Gui Model 
+
+    set m $Model(activeID)
+
+    set ptdata [$Model($m,polyData) GetPointData]
+    if { [$ptdata GetScalars] != "" } {
+        set currscalars [[$ptdata GetScalars] GetName]
+    } else {
+        set currscalars ""
+    }
+    set narrays [$ptdata GetNumberOfArrays]
+
+    set scalararrays ""
+    set scalararraynames ""
+    for {set i 0} {$i < $narrays} {incr i} {
+        set arr [$ptdata GetArray $i]
+        if { [$arr GetNumberOfComponents] == 1 } {
+            lappend scalararrays $i
+            lappend scalararraynames [$arr GetName]
+        }
+    }
+
+    catch "destroy .mpickscalars"
+    eval menu .mpickscalars $Gui(WMA)
+    foreach s $scalararraynames {
+        if { $s == $currscalars } {
+            set ll "* $s *"
+        } else {
+            set ll $s
+        }
+        .mpickscalars insert end command -command "$ptdata SetActiveScalars \"$s\" \; Render3D" -label $ll
+    }
+    .mpickscalars insert end separator
+    .mpickscalars insert end command -command ModelsAddScalars -label "Add New..."
+
+    set x [expr [winfo rootx $parentButton] + 10]
+    set y [expr [winfo rooty $parentButton] + 10]
+    
+    .mpickscalars post $x $y
+}
+
+#-------------------------------------------------------------------------------
+# .PROC ModelsAddScalars 
+# 
+#  Pick a .vtk .anno file that has scalars for this model
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc ModelsAddScalars { {scalarfile ""} } {
+    global Model 
+
+    set m $Model(activeID)
+    set mnpts [$Model($m,polyData) GetNumberOfPoints]
+    set mptdata [$Model($m,polyData) GetPointData]
+
+    if { $scalarfile == "" } {
+        set scalarfile [tk_getOpenFile \
+            -initialdir [file dirname [Model($m,node) GetFileName]] \
+            -title "Select Scalar File" ]
+    }
+    
+    if { $scalarfile == "" } { return }
+
+    switch [file extension $scalarfile] {
+        ".annot" {
+            if { [catch "package require vtkFreeSurferReaders"] } {
+                DevErrorWindow ".annot files not readable without vtkFreeSurferReaders Module"
+                return
+            }
+            set s annotation
+            catch "Model($m,intArray$s) Delete"
+            vtkIntArray Model($m,intArray$s)
+            catch "Model($m,colorTable$s) Delete"
+            vtkLookupTable Model($m,colorTable$s)
+            Model($m,intArray$s) SetName $s
+
+            set fssar fssar_ModelSetScalars
+            catch "$fssar Delete"
+            vtkFSSurfaceAnnotationReader $fssar
+            $fssar SetFileName $scalarfile
+            $fssar SetOutput Model($m,intArray$s)
+            $fssar SetColorTableOutput Model($m,colorTable$s)
+            $fssar ReadFSAnnotation
+            if { [Model($m,intArray$s) GetNumberOfTuples] != $mnpts } {
+                DevErrorWindow "No valid scalar arrays in $scalarfile"
+            } else {
+                $mptdata AddArray Model($m,intArray$s)
+                $mptdata SetActiveScalars "labels"
+            }
+            catch "$fssar Delete"
+        }
+        ".vtk" {
+            catch "scalars_spr Delete"
+            vtkStructuredPointsReader scalars_spr
+            scalars_spr SetFileName $scalarfile
+            scalars_spr Update
+            set sp [scalars_spr GetOutput]
+
+            set ptdata [$sp GetPointData]
+            set narrays [$ptdata GetNumberOfArrays]
+            set scalararrays ""
+            set scalararraynames ""
+            for {set i 0} {$i < $narrays} {incr i} {
+                set arr [$ptdata GetArray $i]
+                if { [$arr GetNumberOfComponents] == 1 &&
+                        [$arr GetNumberOfTuples] == $mnpts } {
+                    lappend scalararrays $arr
+                    $mptdata AddArray $arr
+                    $arr SetName "[$arr GetName] ([file rootname [file tail $scalarfile]])"
+                    $mptdata SetActiveScalars [$arr GetName]
+                }
+            }
+            if { $scalararrays == "" } {
+                DevErrorWindow "No valid scalar arrays in $scalarfile"
+            } 
+            scalars_spr Delete
         }
     }
 }
