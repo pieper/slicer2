@@ -510,7 +510,7 @@ protected:
   int Driver[NUM_SLICES];
   float OffsetRange[NUM_SLICES][MRML_SLICER_NUM_ORIENT][2];
   int Orient[NUM_SLICES];
-  int Offset[NUM_SLICES][MRML_SLICER_NUM_ORIENT];
+  float Offset[NUM_SLICES][MRML_SLICER_NUM_ORIENT];
 
   vtkImageReformat     *BackReformat[NUM_SLICES];
   vtkImageReformat     *ForeReformat[NUM_SLICES];
