@@ -32,11 +32,16 @@
 #   MainOptionsUseDefaultPresets
 #   MainOptionsUseDefaultPresetsForOneScene
 #   MainOptionsParseDefaults
+#   MainOptionsRetrievePresetValues
 #   MainOptionsUnparsePresets
 #   MainOptionsPreset
 #   MainOptionsPresetCallback
 #   MainOptionsRecallPresets
 #   MainOptionsStorePresets
+#   MainOptionsPresetSaveCreateDialog path
+#   MainOptionsPresetSaveOk
+#   MainOptionsPresetDeleteDialog
+#   MainOptionsPresetDelete
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -60,7 +65,7 @@ proc MainOptionsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainOptions \
-		{$Revision: 1.17 $} {$Date: 2001/11/23 19:18:53 $}]
+		{$Revision: 1.18 $} {$Date: 2001/12/26 15:23:39 $}]
 
 	# Props
 	set Options(program) "slicer"
@@ -809,6 +814,12 @@ proc MainOptionsPresetSaveOk {} {
 	}
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MainOptionsPresetDeleteDialog
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc MainOptionsPresetDeleteDialog {widget} {
 	global Gui
 	
@@ -823,6 +834,12 @@ proc MainOptionsPresetDeleteDialog {widget} {
 	}
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MainOptionsPresetDelete
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc MainOptionsPresetDelete {name} {
 	global Scenes Preset Gui
 	

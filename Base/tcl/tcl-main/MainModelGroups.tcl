@@ -22,15 +22,15 @@
 #===============================================================================
 # FILE:        MainModelGroups.tcl
 # PROCEDURES:  
-#	MainModelGroupsCreateGUI
-#	MainModelGroupsPopupCallback
-#	MainModelGroupsSetActive
-#	MainModelGroupsSetVisibility
-#	MainModelGroupsSetOpacityInit
-#	MainModelGroupsSetOpacity
-#	MainModelGroupsSetExpansion
-#	MainModelGroupsDeleteGUI
-#	MainModelGroupsDete
+#   MainModelGroupsCreateGUI
+#   MainModelGroupsPopupCallback
+#   MainModelGroupsSetActive
+#   MainModelGroupsSetVisibility
+#   MainModelGroupsSetOpacityInit
+#   MainModelGroupsSetOpacity
+#   MainModelGroupsSetExpansion
+#   MainModelGroupsDeleteGUI
+#   MainModelGroupsDelete
 #==========================================================================auto=
 
 

@@ -22,7 +22,8 @@
 #===============================================================================
 # FILE:        Parse.tcl
 # PROCEDURES:  
-#   MainMrmlReadVersion2.0 filename verbose
+#   MainMrmlReadVersion2.0 MainMrmlReadVersion2.x
+#   MainMrmlReadVersion2.0
 #   MainMrmlReadVersion2.x filename verbose
 #==========================================================================auto=
 
@@ -38,6 +39,12 @@
 # .END
 #-------------------------------------------------------------------------------
 
+#-------------------------------------------------------------------------------
+# .PROC MainMrmlReadVersion2.0
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc MainMrmlReadVersion2.0 {fileName {verbose 1}} {
 	
 	return [MainMrmlReadVersion2.x $fileName $verbose]

@@ -30,7 +30,8 @@
 #   MainModelsInitGUIVariables
 #   MainModelsDelete
 #   MainModelsBuildGUI
-#   MainModelsCreateGUI
+#   MainModelsCreateGUI widget int int
+#   MainModelsRefreshGUI
 #   MainModelsPopupCallback
 #   MainModelsDeleteGUI
 #   MainModelsDestroyGUI
@@ -50,6 +51,7 @@
 #   MainModelsRaiseScalarBar m
 #   MainModelsRemoveScalarBar m
 #   MainModelsToggleScalarBar m
+#   MainModelsChangeRenderer
 #==========================================================================auto=
 
 
@@ -72,7 +74,7 @@ proc MainModelsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainModels \
-		{$Revision: 1.43 $} {$Date: 2001/12/12 03:06:43 $}]
+		{$Revision: 1.44 $} {$Date: 2001/12/26 15:23:39 $}]
 
 	set Model(idNone) -1
 	set Model(activeID) ""
@@ -587,6 +589,12 @@ proc MainModelsCreateGUI {f m {hlevel 0}} {
 	return 1
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MainModelsRefreshGUI
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc MainModelsRefreshGUI {m c} {
     global Model
 
@@ -1068,6 +1076,7 @@ since the last time it was saved."
 		[file join $Mrml(dir) [Model($m,node) GetFileName]]
 
 	vtkPolyDataWriter writer
+        writer SetFileTypeToASCII
 	writer SetInput $Model($m,polyData)
 	writer SetFileType 2
 	writer SetFileName [Model($m,node) GetFullFileName]
