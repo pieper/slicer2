@@ -138,17 +138,16 @@ void MIRegistration<TFixedImage,TMovingImage>::InitializeRegistration(
   // Quaternions have 7 parameters. The first four represents the
   // quaternion and the last three represents the offset. 
 
-  RegistrationType::ParametersType guess(7);
-  guess[0] = matrixAsQuaternion.x();
-  guess[1] = matrixAsQuaternion.y();
-  guess[2] = matrixAsQuaternion.z();
-  guess[3] = matrixAsQuaternion.r();
-  guess[4] = matrix->Element[0][3];
-  guess[5] = matrix->Element[1][3];
-  guess[6] = matrix->Element[2][3];
+  m_InitialParameters[0] = matrixAsQuaternion.x();
+  m_InitialParameters[1] = matrixAsQuaternion.y();
+  m_InitialParameters[2] = matrixAsQuaternion.z();
+  m_InitialParameters[3] = matrixAsQuaternion.r();
+  m_InitialParameters[4] = matrix->Element[0][3];
+  m_InitialParameters[5] = matrix->Element[1][3];
+  m_InitialParameters[6] = matrix->Element[2][3];
 
   // The guess is: a quaternion followed by a translation
-  m_Registration->SetInitialTransformParameters(guess);
+  m_Registration->SetInitialTransformParameters(m_InitialParameters);
 }
 
 //----------------------------------------------------------------------------
@@ -285,7 +284,6 @@ void MIRegistration<TFixedImage,TMovingImage>::StartNewLevel()
             << m_Optimizer->GetLearningRate()
             << std::endl;
 }
-
 
 } // namespace itk
 
