@@ -838,8 +838,8 @@ void vtkImageLiveWireEdgeWeights::ThreadedExecute(vtkImageData **inDatas,
       memcpy(inExt, outExt, 6*sizeof(int));
     }
 
-  for (int i = 0; i < 6; i++)
-    printf("id: %d ext %d: %d\n", id, i, inExt[i]);
+  //for (int i = 0; i < 6; i++)
+  //printf("id: %d ext %d: %d\n", id, i, inExt[i]);
 
   inPtrs[0] = inDatas[0]->GetScalarPointerForExtent(inExt);
 
