@@ -24,7 +24,9 @@ if {[info exists env(SLICER_HOME)]} {
     # if sourcing this into cmaker, SLICER_HOME may not be set
     # set the SLICER_HOME directory to the one in which this script resides
     set SLICER_HOME [file dirname [info script]]
-    catch {set SLICER_HOME [file normalize $SLICER_HOME]}
+    if { [catch {set SLICER_HOME [file normalize $SLICER_HOME]} res] } {
+        puts "Could not normalize the SLICER_HOME variable -- probably you need to install tcl8.4"
+    }
 }
 puts "SLICER_HOME is $SLICER_HOME"
 
@@ -85,20 +87,22 @@ switch $tcl_platform(os) {
         # (VC7 is Visual C++ 7.0, also known as the .NET version)
 
         set env(BUILD) $windows
-        set VTK_BINARY_PATH $env(SLICER_HOME)/Lib/Win32VC7/vtk/VTK-build
-        set VTK_SRC_DIR $env(SLICER_HOME)/Lib/Win32VC7/vtk/VTK
+        set VTK_BINARY_PATH c:/downloads/vtk/VTK-4.2.6/VTK-build
+        set VTK_SRC_DIR c:/downloads/vtk/VTK-4.2.6/VTK
         set VTK_DIR $VTK_BINARY_PATH
-        set ITK_BINARY_PATH "c:/downloads/itk/InsightToolkit-1.4.0-build"
+        set ITK_BINARY_PATH "c:/downloads/itk/InsightToolkit-1.6.0-build"
+        set env(ITK_BIN_DIR) $ITK_BINARY_PATH 
         set VTKSLICERBASE_BUILD_LIB $SLICER_HOME/Base/builds/$env(BUILD)/bin/debug/vtkSlicerBase.lib
         set VTKSLICERBASE_BUILD_TCL_LIB $SLICER_HOME/Base/builds/$env(BUILD)/bin/debug/vtkSlicerBaseTCL.lib
         set GENERATOR "Visual Studio 7" 
-        #set COMPILER_PATH "C:/Program Files/Microsoft Visual Studio .NET/Vc7/bin"
-        set COMPILER_PATH "C:/Program Files/Microsoft Visual Studio .NET 2003/Vc7/bin"
+        #set COMPILER_PATH [file attributes "C:/Program Files/Microsoft Visual Studio .NET/Vc7/bin" -shortname]
         set COMPILER "cl"
-        set CMAKE "c:/Program Files/CMake/bin/cmake.exe"
+        set CMAKE [file attributes "c:/Program Files/CMake20/bin/cmake.exe" -shortname]
         set MAKE make
         # needed in launch.tcl
-        set TCL_BIN_DIR $SLICER_HOME/Lib/$env(BUILD)/ActiveTcl/bin
-        set TCL_LIB_DIR $SLICER_HOME/Lib/$env(BUILD)/ActiveTcl/lib
+        #set TCL_BIN_DIR $SLICER_HOME/Lib/$env(BUILD)/ActiveTcl/bin
+        #set TCL_LIB_DIR $SLICER_HOME/Lib/$env(BUILD)/ActiveTcl/lib
+        set TCL_BIN_DIR c:/Tcl/bin
+        set TCL_LIB_DIR c:/Tcl/lib
     }
 }
