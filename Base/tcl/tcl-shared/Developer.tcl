@@ -164,6 +164,9 @@ proc DevInfoWindow {message} {
 proc DevErrorWindow {{message "Unknown Error"}} {
     set oscaling [tk scaling]
     tk scaling 1
+    if {$::Module(verbose)} {
+        puts "$message"
+    }
     tk_messageBox -title Slicer -icon error -message $message -type ok
     tk scaling $oscaling
 }
