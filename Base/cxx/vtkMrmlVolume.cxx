@@ -34,6 +34,8 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkImageCopy.h"
 #include <time.h>
 
+#include "vtkImageDICOMReader.h"
+
 //------------------------------------------------------------------------------
 vtkMrmlVolume* vtkMrmlVolume::New()
 {
@@ -431,14 +433,46 @@ void vtkMrmlVolume::Read()
   ext[4] = range[0];
   ext[5] = range[1];
 
-  vtkImageReader *reader = vtkImageReader::New();
-  reader->SetNumberOfScalarComponents(node->GetNumScalars());
-  reader->SetDataScalarType(node->GetScalarType());
-  reader->SetDataByteOrder(node->GetLittleEndian());
-  reader->SetDataSpacing(node->GetSpacing());
-  reader->SetFilePattern(node->GetFilePattern());
-  reader->SetFilePrefix(node->GetFullPrefix());
-  reader->SetDataExtent(ext);
+  //
+  // Modified by Attila Tanacs 8/28/2000
+  //
+
+  vtkImageSource *reader;
+
+  // try as DICOM
+
+  vtkImageDICOMReader *dcmreader = vtkImageDICOMReader::New();
+  dcmreader->SetNumberOfScalarComponents(node->GetNumScalars());
+  dcmreader->SetDataScalarType(node->GetScalarType());
+  dcmreader->SetDataByteOrder(node->GetLittleEndian());
+  dcmreader->SetDataSpacing(node->GetSpacing());
+  dcmreader->SetFilePattern(node->GetFilePattern());
+  dcmreader->SetFilePrefix(node->GetFullPrefix());
+  dcmreader->SetDataExtent(ext);
+  if(dcmreader->GetDICOMHeaderSize(ext[4]) != -1)
+    { // DICOM
+      reader = (vtkImageSource *) dcmreader;
+    }
+  else
+    { // Not DICOM (use the original code)
+      dcmreader->Delete();
+
+      vtkImageReader *ireader = vtkImageReader::New();
+      ireader->SetNumberOfScalarComponents(node->GetNumScalars());
+      ireader->SetDataScalarType(node->GetScalarType());
+      ireader->SetDataByteOrder(node->GetLittleEndian());
+      ireader->SetDataSpacing(node->GetSpacing());
+      ireader->SetFilePattern(node->GetFilePattern());
+      ireader->SetFilePrefix(node->GetFullPrefix());
+      ireader->SetDataExtent(ext);
+      
+      reader = (vtkImageSource *) ireader;
+   }
+
+  //
+  //
+  //
+
 
   // Progress callback
   this->ProcessObject = reader;
