@@ -83,7 +83,7 @@ proc CreateAndBindTkEvents { widget } {
     EvDeclareEventHandler tkRegularEvents <Leave> {focus $oldFocus;}
     EvDeclareEventHandler tkRegularEvents <Expose> {Expose %W}
 
-    if {[IsModule Fiducials] == 1 ||[IsModule Matrices] == 1} {
+    if {[IsModule Fiducials] == 1 ||[IsModule Alignments] == 1} {
     EvDeclareEventHandler tkRegularEvents <KeyPress-p> { 
         if { [SelectPick Fiducials(picker) %W %x %y] != 0 } \
             { eval FiducialsCreatePointFromWorldXYZ "default" $Select(xyz) ; MainUpdateMRML; Render3D}
