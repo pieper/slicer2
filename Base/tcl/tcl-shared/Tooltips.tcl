@@ -50,20 +50,30 @@ proc TooltipAdd {widget tip} {
     # surround the tip string with brackets
     set tip "\{$tip\}"
 
+    # bindings
+    bind $widget <Enter> "TooltipEnterWidget %W $tip %X %Y"
+    bind $widget <Leave> TooltipExitWidget
+
+
+    # The following are fixes to make buttons work right with tooltips...
+
     # put the class (i.e. Button) first in the bindtags so it executes earlier
     # (this makes button highlighting work)
     # just swap the first two list elements
     set btags [bindtags $widget]
     if {[llength $btags] > 1} {
-	set tmp [lindex $btags 0]
-	set btags [lreplace $btags 0 0 [lindex $btags 1]]
-	set btags [lreplace $btags 1 1 $tmp]
+	set class [lindex $btags 1]
+	set btags [lreplace $btags 1 1 [lindex $btags 0]]
+	set btags [lreplace $btags 0 0 $class]
     }
     bindtags $widget $btags
 
-    # bindings
-    bind $widget <Enter> "TooltipEnterWidget %W $tip %X %Y"
-    bind $widget <Leave> TooltipExitWidget
+    # if the button is pressed, this should be like a Leave event
+    # (otherwise the tooltip will come up incorrectly)
+    if {$class == "Button" || $class == "Radiobutton"} {
+	set cmd [$widget cget -command]
+	set cmd "TooltipExitWidget; $cmd"
+    }
 }
 
 
@@ -77,11 +87,15 @@ proc TooltipAdd {widget tip} {
 proc TooltipEnterWidget {widget tip X Y} {
     global Tooltips
 
-    # set Tooltips(stillOverWidget) after a delay.
-    set id [after 1000 {set Tooltips(stillOverWidget) 1}]
+    # We are over the widget
+    set Tooltips(stillOverWidget) 1
+
+    # reset Tooltips(stillOverWidget) after a delay (to end the "vwait")
+    set id [after 1000 \
+	    {if {$Tooltips(stillOverWidget) == 1} {set Tooltips(stillOverWidget) 1}}]
 
     # wait until Tooltips(stillOverWidget) is set (by us or by exiting the widget).
-    # vwait allows event loop to be entered.
+    # "vwait" allows event loop to be entered (but using an "after" does not)
     vwait Tooltips(stillOverWidget)
 
     # if Tooltips(stillOverWidget) is 1, the mouse is still over widget.
