@@ -156,7 +156,7 @@ proc FluxDiffusionInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.3 $} {$Date: 2003/02/13 19:31:38 $}]
+        {$Revision: 1.4 $} {$Date: 2003/05/14 18:36:23 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -372,7 +372,7 @@ proc FluxDiffusionBuildMainFrame {} {
           -width 16 -justify right } $Gui(WLA)
     pack $f.l -side left -padx $Gui(pad) -pady 0
 
-    puts "WCA  $Gui(WCA)"
+    # puts "WCA  $Gui(WCA)"
     
     foreach value "2 3" width "5 5" {
     eval {radiobutton $f.r$value              \
