@@ -26,7 +26,7 @@ switch $tcl_platform(os) {
     "SunOS" {
         set SLICER_HOME /projects/birn/slicer2/latest/slicer2
         set VTK_BINARY_PATH /projects/birn/slicer2/Lib/solaris8/vtk/VTK-build
-        set ITK_BINARY_PATH ""
+        set ITK_BINARY_PATH /projects/birn/itk/itk-1.2/itk-build
         set BUILD solaris8
         set VTKSLICERBASE_BUILD_LIB $SLICER_HOME/Base/builds/$BUILD/bin/vtkSlicerBase.so
         set GENERATOR "Unix Makefiles"
@@ -35,8 +35,8 @@ switch $tcl_platform(os) {
     }
     "Linux" {
         set SLICER_HOME /home/pieper/slicer2/latest/slicer2
-        set VTK_BINARY_PATH /home/pieper/vtk/latest/VTK-build
-        set ITK_BINARY_PATH ""
+        set VTK_BINARY_PATH /home/pieper/downloads/vtk/VTK-build
+        set ITK_BINARY_PATH /home/pieper/downloads/itk/itk-build
         set BUILD redhat7.3
         set VTKSLICERBASE_BUILD_LIB $SLICER_HOME/Base/builds/$BUILD/bin/vtkSlicerBase.so
         set GENERATOR "Unix Makefiles" 
