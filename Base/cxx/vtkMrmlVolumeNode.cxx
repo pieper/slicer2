@@ -634,7 +634,7 @@ void vtkMrmlVolumeNode::SetRasToWld(vtkMatrix4x4 *rasToWld)
     vtkIndent indent;
     if (this->Debug)
     {
-        vtkDebugMacro(<<"\n\n\n\n****************************************\n***\t\t\t\t\t***\n***\t\t\t\t\t***\nmrml volume node, starting set ras to world, volume " << this->ID << "\n ");
+        vtkDebugMacro(<<"\n\n\n\n*************************************\n***\t\t\t\t\t***\n***\t\t\t\t\t***\nmrml volume node, starting set ras to world, volume " << this->ID << "\n ");
         vtkDebugMacro(<<"Original rasToWld: ");
         this->RasToWld->PrintSelf(cerr, indent);
 
