@@ -175,7 +175,7 @@ proc tarup { {destdir "auto"} } {
             foreach lib $libs {
                 file copy $lib $destdir/Lib/$::env(BUILD)/itk/ITK-build/bin
                 set ll [file tail $lib]
-                exec strip $destdir/Lib/$::env(BUILD)/vtk/VTK-build/bin/$ll
+                exec strip $destdir/Lib/$::env(BUILD)/itk/ITK-build/bin/$ll
             }
         }
         "Darwin" {
