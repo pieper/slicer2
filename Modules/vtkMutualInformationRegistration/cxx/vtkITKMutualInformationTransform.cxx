@@ -44,6 +44,9 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkUnsignedIntArray.h"
 #include "vtkDoubleArray.h"
 
+#include "vtkMatrix4x4.h"
+#include "vtkImageFlip.h"
+
 #include "itkVTKImageImport.h"
 #include "vtkITKUtility.h"
 
@@ -96,7 +99,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
   }
 
 
-vtkCxxRevisionMacro(vtkITKMutualInformationTransform, "$Revision: 1.4 $");
+vtkCxxRevisionMacro(vtkITKMutualInformationTransform, "$Revision: 1.5 $");
 vtkStandardNewMacro(vtkITKMutualInformationTransform);
 
 //----------------------------------------------------------------------------
@@ -122,6 +125,18 @@ vtkITKMutualInformationTransform::vtkITKMutualInformationTransform()
   // Default Shrink Factors: No Shrink
   this->SetSourceShrinkFactors(1,1,1);
   this->SetTargetShrinkFactors(1,1,1);
+
+  // Default: no flipping!
+  this->FlipTargetZAxis = 0;
+  this->ImageFlip = vtkImageFlip::New();
+    this->ImageFlip->SetFilteredAxis(2);
+  this->ZFlipMat = vtkMatrix4x4::New();
+    this->ZFlipMat->Identity();
+    this->ZFlipMat->SetElement(2,2,-1);
+
+    // The output matrix
+  this->OutputMatrix = vtkMatrix4x4::New();
+    this->OutputMatrix->Zero();
 }
 
 //----------------------------------------------------------------------------
@@ -138,6 +153,8 @@ vtkITKMutualInformationTransform::~vtkITKMutualInformationTransform()
     }
   this->LearningRate->Delete();
   this->MaxNumberOfIterations->Delete();
+  this->ImageFlip->Delete();
+  this->ZFlipMat->Delete();
 }
 
 //----------------------------------------------------------------------------
@@ -161,6 +178,14 @@ void vtkITKMutualInformationTransform::PrintSelf(ostream& os, vtkIndent indent)
     this->MaxNumberOfIterations->PrintSelf(os,indent.GetNextIndent());
   os << "LearningRate: "       << this->LearningRate  << endl;
     this->LearningRate->PrintSelf(os,indent.GetNextIndent());
+
+   os << "Flip Target Z Axis? " << this->FlipTargetZAxis << endl;
+   os << "Image Flipping:" << this->ImageFlip << endl;
+   this->ImageFlip->PrintSelf(os,indent.GetNextIndent());
+   os << "ZFlipMat" << this->ZFlipMat << endl;
+   this->ZFlipMat->PrintSelf(os,indent.GetNextIndent());
+   os << "OutputMatrix" << this->OutputMatrix << endl;
+   this->OutputMatrix->PrintSelf(os,indent.GetNextIndent());
 
   os << "SourceImage: " << this->SourceImage << endl;
   if(this->SourceImage)
@@ -205,7 +230,17 @@ static void vtkITKMutualInformationExecute(vtkITKMutualInformationTransform *sel
 
   // Target Image that is not moving
   vtkImageExport *fixedVtkExporter = vtkImageExport::New();
-    fixedVtkExporter->SetInput(target);
+
+  if (!self->GetFlipTargetZAxis())
+    {
+      fixedVtkExporter->SetInput(target);
+    }
+  else 
+    {
+      self->GetImageFlip()->SetInput(target);
+      self->GetImageFlip()->Update();
+      fixedVtkExporter->SetInput(self->GetImageFlip()->GetOutput());
+    }
 
   // Target Image that is not moving into ITK
   ImageImportType::Pointer fixedItkImporter = ImageImportType::New();
@@ -262,8 +297,8 @@ static void vtkITKMutualInformationExecute(vtkITKMutualInformationTransform *sel
   typedef typename RegistratorType::UnsignedIntArray UnsignedIntArray;
   typedef typename RegistratorType::DoubleArray      DoubleArray;
   
- DoubleArray      LearnRates(self->GetLearningRate()->GetNumberOfTuples());
- UnsignedIntArray NumIterations(self->GetLearningRate()->GetNumberOfTuples());
+  DoubleArray      LearnRates(self->GetLearningRate()->GetNumberOfTuples());
+  UnsignedIntArray NumIterations(self->GetLearningRate()->GetNumberOfTuples());
 
   for(int i=0;i<self->GetLearningRate()->GetNumberOfTuples();i++)
     {
@@ -303,6 +338,7 @@ static void vtkITKMutualInformationExecute(vtkITKMutualInformationTransform *sel
   // Get the Value of the agreement
   self->SetMetricValue(MIRegistrator->GetMetricValue());
   // self->SetMetricValue(optimizer->GetValue());
+
 
   self->Modified();
 }
@@ -352,17 +388,39 @@ void vtkITKMutualInformationTransform::InternalUpdate()
 }
 
 //------------------------------------------------------------------------
-void vtkITKMutualInformationTransform::Identity()
-{
-    this->Matrix->Identity();
-}
 
-//------------------------------------------------------------------------
 void vtkITKMutualInformationTransform::Initialize(vtkMatrix4x4 *mat)
 {
   this->Matrix->DeepCopy(mat);
+
+  // Do we need the flip?
+  if (mat->Determinant()<0)
+    {
+      this->FlipTargetZAxis = 1;
+      vtkMatrix4x4::Multiply4x4(this->ZFlipMat,mat,this->Matrix);
+    }
+  else
+    {
+      this->FlipTargetZAxis = 0;
+      this->Matrix->DeepCopy(mat);
+    }
 }
 
+//------------------------------------------------------------------------
+
+vtkMatrix4x4 *vtkITKMutualInformationTransform::GetOutputMatrix()
+{
+  if(this->FlipTargetZAxis)
+    {
+      vtkMatrix4x4::Multiply4x4(this->ZFlipMat,this->Matrix,
+                                this->OutputMatrix);
+    }
+  else
+    {
+      this->OutputMatrix->DeepCopy(this->Matrix);
+    }
+  return this->OutputMatrix;
+}
 //------------------------------------------------------------------------
 unsigned long vtkITKMutualInformationTransform::GetMTime()
 {

@@ -50,6 +50,18 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 // Steve Pieper. It was also strongly derived from one of
 // the ITK application Examples: the MultiResolutionMIRegistration.
 //
+// .Section Dealing with Flips
+//  The registration algorithm is based on quaternions, so any registration
+//  that requires an inversion (flip), rotation and translation cannot be
+//  represented. Thus, sometimes we deal with flips by flipping the image first
+//
+//  When the matrix is initialized, it is checked for negative
+//  determinant If it has negative determinant, the target image is
+//  flipped along the z-axis. The matrix is then modified
+//  appropriately, and then determined from source to flipped target
+//  image. The resulting matrix is then modified appropriately and returned.
+//  (Note, there is an assumption that the images are centered....)
+//
 // .SECTION see also
 // vtkLinearTransform
 //
@@ -62,6 +74,8 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkMutualInformationRegistrationConfigure.h"
 
 class vtkImageData;
+class vtkMatrix4x4;
+class vtkImageFlip;
 #include "vtkDoubleArray.h"
 #include "vtkUnsignedIntArray.h"
 
@@ -152,20 +166,36 @@ public:
   void Inverse();
 
   // Description:
-  // Set the transformation to the Identity matrix.
-  void Identity();
-
-  // Description:
   // Initialize the transformation to a Matrix
   void Initialize(vtkMatrix4x4 *mat);
+
+  // Description:
+  // Get the resulting found matrix
+  vtkMatrix4x4 *GetOutputMatrix();
 
   // Description:
   // Get the MTime.
   unsigned long GetMTime();
 
+  // Description:
+  // Should we flip the Target Z Axis
+  // Used during execute
+  vtkGetMacro(FlipTargetZAxis, double);
+
+  // Description:
+  // Get the ImageFlip()
+  // Called during the execute function
+  vtkGetObjectMacro(ImageFlip, vtkImageFlip);
+
 protected:
   vtkITKMutualInformationTransform();
   ~vtkITKMutualInformationTransform();
+
+  // Description:
+  // Do not use this routine
+  // This is not the correct matrix when a z-flip exists.
+  vtkMatrix4x4 *GetMatrix()
+    { return this->vtkLinearTransform::GetMatrix(); }
 
   // Update the matrix from the quaternion.
   void InternalUpdate();
@@ -180,6 +210,11 @@ protected:
 
   vtkImageData *SourceImage;
   vtkImageData *TargetImage;
+
+  int FlipTargetZAxis;     // 1 if flipped z-axis on target
+  vtkImageFlip *ImageFlip;
+  vtkMatrix4x4 *ZFlipMat;
+  vtkMatrix4x4 *OutputMatrix;
 
   double SourceStandardDeviation;
   double TargetStandardDeviation;
