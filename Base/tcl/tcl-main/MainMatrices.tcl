@@ -47,7 +47,7 @@ proc MainMatricesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo MainMatrices \
-            {$Revision: 1.17 $} {$Date: 2002/04/22 15:23:08 $}]
+            {$Revision: 1.18 $} {$Date: 2002/04/22 15:45:58 $}]
 
     # Append widgets to list that gets refreshed during UpdateMRML
     set Matrix(mbActiveList) ""
@@ -324,9 +324,11 @@ proc MatricesSetMatrixIntoNode {m} {
     set str ""
     foreach i $Matrix(rows) {
         foreach j $Matrix(cols) {
-            set str [lappend $str $Matrix(matrix,$i,$j)]
+            set str "$str $Matrix(matrix,$i,$j)"
+            puts $str
         }
     }
+    puts "---- $str"
 
     Matrix($m,node) SetMatrix $str
 }
