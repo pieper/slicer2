@@ -155,7 +155,7 @@ proc LDMMViewerInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.4 $} {$Date: 2003/09/08 13:28:11 $}]
+        {$Revision: 1.5 $} {$Date: 2003/09/18 13:13:56 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -281,8 +281,10 @@ proc LDMMViewerBuildGUI {} {
     set ::LDMMViewer(timescale) $f.time
 
     if { ![catch "package require iSlicer"] } {
+        if { [info command istask] != "" } { 
         istask $f.play -taskcommand LDMMViewerStepFrame
         pack $f.play
+    }
     }
 
     DevAddButton $f.movie "Movie" LDMMViewerMovie 
