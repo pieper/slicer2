@@ -113,7 +113,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.104 $} {$Date: 2005/01/03 21:27:06 $}]
+            {$Revision: 1.105 $} {$Date: 2005/01/03 22:53:25 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -934,7 +934,6 @@ proc VolumesManualSetPropertyType {n} {
         set firstNum [MainFileFindImageNumber First [file join $Mrml(dir) $Volume(firstFile)]]
         if {$firstNum ==""} {
             set firstNum 1
-            set Volume(firstFile) 0
         }
     } else {
         set firstNum 1
