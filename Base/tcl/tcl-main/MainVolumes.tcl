@@ -72,7 +72,7 @@ proc MainVolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.62 $} {$Date: 2003/07/22 20:38:27 $}]
+    {$Revision: 1.63 $} {$Date: 2003/07/25 18:43:54 $}]
 
     set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -451,6 +451,7 @@ proc MainVolumesWrite {v prefix} {
     volumeTree Write $filename
     if {[volumeTree GetErrorCode] != 0} {
         puts "ERROR: MainVolumesWrite: unable to write MRML file $filename"
+        DevErrorWindow "ERROR: MainVolumesWrite: unable to write MRML file $filename"
         volumeTree RemoveAllItems
         volumeTree Delete
         return
