@@ -29,7 +29,6 @@
 #   VolumesAutomaticSetPropertyType n
 #   VolumesSetPropertyType
 #   VolumesPropsApply
-#   VolumesPropsApply
 #   VolumesPropsCancel
 #   VolumesSetFirst
 #   VolumesSetScanOrder
@@ -157,7 +156,7 @@ DICOMDataDictFile='$Volumes(DICOMDataDictFile)'"
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-                {$Revision: 1.57 $} {$Date: 2002/01/28 18:38:09 $}]
+                {$Revision: 1.58 $} {$Date: 2002/01/28 19:04:49 $}]
 
 	# Props
 	set Volume(propertyType) Basic

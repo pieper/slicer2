@@ -24,16 +24,16 @@
 # PROCEDURES:  
 #   MainSlicesInit
 #   MainSlicesBuildVTK
-#   MainSlicesBuildControlsForVolume
+#   MainSlicesBuildControlsForVolume widget int str str
 #   MainSlicesBuildControls s F
 #   MainSlicesBuildAdvancedControlsPopup
 #   MainSlicesUpdateMRML
-#   MainSlicesVolumeParam
-#   MainSlicesSetClipState
-#   MainSlicesRefreshClip
+#   MainSlicesVolumeParam int str str
+#   MainSlicesSetClipState int int
+#   MainSlicesRefreshClip int
 #   MainSlicesSetFov
-#   MainSlicesCenterCursor
-#   MainSlicesKeyPress
+#   MainSlicesCenterCursor int
+#   MainSlicesKeyPress str
 #   MainSlicesSetActive
 #   MainSlicesSetVolumeAll
 #   MainSlicesSetVolume string int int
@@ -48,8 +48,8 @@
 #   MainSlicesSetZoom
 #   MainSlicesSetVisibilityAll
 #   MainSlicesSetVisibility
-#   MainSlicesSetOpacityAll
-#   MainSlicesSetFadeAll
+#   MainSlicesSetOpacityAll int
+#   MainSlicesSetFadeAll bool
 #   MainSlicesSave
 #   MainSlicesSavePopup
 #   MainSlicesWrite
@@ -58,7 +58,7 @@
 #   MainSlicesOffsetToPoint
 #   MainSlicesAllOffsetToPoint
 #   MainSlicesAdvancedControlsPopup
-#   MainSlicesSetOffsetIncrement
+#   MainSlicesSetOffsetIncrement int float
 #==========================================================================auto=
 
 
@@ -88,7 +88,7 @@ proc MainSlicesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainSlices \
-		{$Revision: 1.32 $} {$Date: 2002/01/28 16:51:57 $}]
+		{$Revision: 1.33 $} {$Date: 2002/01/28 19:04:49 $}]
 
 	# Initialize Variables
 	set Slice(idList) "0 1 2"
