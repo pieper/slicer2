@@ -338,7 +338,7 @@ proc MainInit {} {
 
         # Set version info
 	lappend Module(versions) [ParseCVSInfo Main \
-		{$Revision: 1.48 $} {$Date: 2000/10/31 00:32:16 $}]
+		{$Revision: 1.49 $} {$Date: 2000/11/07 01:55:03 $}]
 
 	# Call each "Init" routine that's not part of a module
 	#-------------------------------------------
@@ -745,8 +745,7 @@ proc MainBuildModuleTabs {ModuleName}  {
     set m $ModuleName
     set fWork .tMain.fControls.fWorkspace
     set f .tMain.fControls.fTabs
-
-
+    
     # Make page frames for each tab
     foreach tab "$Module($m,row1List) $Module($m,row2List)" {
         frame $fWork.f${m}${tab} -bg $Gui(activeWorkspace)
@@ -759,6 +758,7 @@ proc MainBuildModuleTabs {ModuleName}  {
         frame $f.f${m}${row} -bg $Gui(activeWorkspace)
         place $f.f${m}${row} -in $f -relheight 1.0 -relwidth 1.0
         set Module($m,f$row) $f.f${m}${row}
+
         
         foreach tab $Module($m,${row}List) name $Module($m,${row}Name) {
             set Module($m,b$tab) $Module($m,f$row).b$tab
@@ -1074,6 +1074,10 @@ proc Tab {m {row ""} {tab ""}} {
 	# Show panel
 	raise $Module($m,f$tab)
 	set Module(btn) $m
+	
+	# Give tab the focus.  
+	# (make sure entry boxes from other tabs don't keep focus!)
+	focus $Module($m,f$tab)
 	
 	# Execute Entrance procedure
 	if {$prevID != $m} {

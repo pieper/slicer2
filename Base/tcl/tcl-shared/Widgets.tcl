@@ -112,7 +112,7 @@ proc TabbedFrame {arrayName buttonsFrame tabsFrame buttonsLabel tabs titles {too
     foreach tab $tabs title $titles {
 	eval {radiobutton $f.f.r$tab \
 		-text "$title" \
-		-command "raise $tabsFrame.f$tab" \
+		-command "raise $tabsFrame.f$tab; focus $tabsFrame.f$tab" \
 		-variable "$arrayName\(TabbedFrame,$tabsFrame,tab)" \
 		-value $tab -width  $width \
 		-indicatoron 0} $Gui(WCA)
