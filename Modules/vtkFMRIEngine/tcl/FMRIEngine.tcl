@@ -170,7 +170,7 @@ proc FMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.15 $} {$Date: 2004/07/12 15:43:04 $}]
+        {$Revision: 1.16 $} {$Date: 2004/07/12 19:54:38 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -749,7 +749,11 @@ proc FMRIEngineBuildUIForAnalyze {parent} {
         "VolAnalyzeSetFileName" "hdr" "\$Volume(DefaultDir)" \
         "Open" "Browse for an Analyze header file (.hdr) that has a matching .img" \
         "" "Absolute"
-
+    DevAddLabel $f.label "Filter:"
+    eval {entry $f.entry -width 30 \
+              -textvariable FMRIEngine(filter)} $Gui(WEA)
+    pack $f.label $f.entry -side left -padx $Gui(pad) -pady 5
+ 
     set f $parent.fSlider
     DevAddLabel $f.label "Volume No:"
     eval { scale $f.slider \
@@ -876,8 +880,29 @@ proc FMRIEngineLoadAnalyzeVolumes {} {
         return
     }
 
+    # file filter
     set path [file dirname $fileName]
-    set pattern [file join $path "*.hdr"]
+    set filter $FMRIEngine(filter)
+    set wildcard "*.hdr"
+    set hdr ".hdr"
+    string trim $filter
+    if {$filter == ""} {
+        set pattern [file join $path $wildcard]
+    } else {
+        set len [string length $filter]
+        if {$len < 5} {
+            set pattern [file join $path $filter$hdr]
+        } else {
+            set ext [string range $filter [expr $len-4] [expr $len-1]]
+            if {$ext == $hdr} {
+                set pattern [file join $path $filter]
+            } else {
+                set wildcard [string range $filter 0 [expr $len-5]]
+                set pattern [file join $path $wildcard$hdr]
+            }
+        }
+    }
+
     set fileList [glob -nocomplain $pattern]
     if {$fileList == ""} {
         set path $Mrml(dir)
