@@ -67,24 +67,29 @@ public:
 
     // Description:
     // Gets the low range. 
-    float GetLowRange() {return lowRange;}
+    float GetLowRange() {return LowRange;}
  
     // Description:
     // Gets the high range. 
-    float GetHighRange() {return highRange;}
+    float GetHighRange() {return HighRange;}
 
     // Description:
     // Sets the contrast vector. 
     void SetContrastVector(vtkIntArray *vec);
+
+    // Description:
+    // Sets the total number of volumes (total data points). 
+    void SetNumberOfVolumes(int vols);
 
 protected:
     vtkActivationVolumeGenerator();
     ~vtkActivationVolumeGenerator();
 
     void SimpleExecute(vtkImageData *input,vtkImageData *output);
-    float lowRange;
-    float highRange;
 
+    float LowRange;
+    float HighRange;
+    int NumberOfVolumes;
     vtkIntArray *ContrastVector;
 };
 
