@@ -198,8 +198,11 @@ if { [info exists env(SLICER_MODULES)] } {
 set env(SLICER_MODULES_TO_REQUIRE) " "
 foreach modulePath $modulePaths {
     set modulePath [string trimright $modulePath "/"] ;# remove trailing slash
-    set modules [glob -nocomplain $modulePath/vtk*]
+    set modules [glob -nocomplain $modulePath/*]
     foreach dir $modules {
+        if { ![file exists $dir/Wrapping/Tcl] } {
+            continue ;# without this dir then it's not one we want
+        }
         # get the module name
         regexp "$modulePath/(\.\*)" $dir match moduleName
         # if it's not the custom one, append it to the path
