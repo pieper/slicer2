@@ -74,7 +74,7 @@ proc MainModelsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainModels \
-        {$Revision: 1.52 $} {$Date: 2002/11/15 23:20:24 $}]
+        {$Revision: 1.53 $} {$Date: 2002/12/30 20:29:29 $}]
 
     set Model(idNone) -1
     set Model(activeID) ""
@@ -274,7 +274,7 @@ proc MainModelsCreate {m} {
     global Model View Slice Gui Module
 
     # See if it already exists
-        foreach r $Module(Renderers) {
+    foreach r $Module(Renderers) {
         if {[info command Model($m,actor,$r)] != ""} {
         return 0
         }
