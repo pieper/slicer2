@@ -57,9 +57,11 @@ proc Render3D {{scale ""}} {
     global Video viewWin Twin twinWin Save View Slice
 
     # don't render when starting/stopping the program
-    if { $View(render_on) == 1 } {
+    # or when certain modules need to do a lot of work w/o updates
+    if { $View(render_on) == 0 } {
         return
     }
+
     # Apply the fog parameters to all the renderers of viewWin
     FogApply $viewWin
 
