@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkMGHReader.cxx,v $
   Language:  C++
-  Date:      $Date: 2004/09/16 18:21:30 $
-  Version:   $Revision: 1.4 $
+  Date:      $Date: 2005/02/11 22:32:46 $
+  Version:   $Revision: 1.5 $
 
 =========================================================================*/
 #include "vtkMGHReader.h"
@@ -282,6 +282,29 @@ vtkDataArray *vtkMGHReader::ReadVolumeData()
   return scalars;
 }
 
+/*
+From http://www.nmr.mgh.harvard.edu/~tosa/#coords:
+To go from freesurfer voxel coordinates to RAS coordinates, they use:
+translation:  t_r, t_a, t_s is defined using c_r, c_a, c_s centre voxel position in RAS
+rotation: direction cosines x_(r,a,s), y_(r,a,s), z_(r,a,s)
+voxel size for scale: s_x, s_y, s_z
+
+ [ x_r y_r z_r t_r][s_x  0   0  0]
+ [ x_a y_a z_a t_a][0   s_y  0  0]
+ [ x_s y_s z_s t_s][0    0  s_z 0]
+ [  0   0   0   1 ][0    0   0  1]
+Voxel center is a column matrix, multipled from the right
+[v_x]
+[v_y]
+[v_z]
+[ 1 ]
+
+In the MGH header, they hold:
+ x_r x_a x_s
+ y_r y_a y_s
+ z_r z_a z_s
+ c_r c_a c_s
+*/
 void vtkMGHReader::ReadVolumeHeader()
 {
   FILE *fp;
@@ -346,7 +369,7 @@ void vtkMGHReader::ReadVolumeHeader()
     // c_r c_a c_s
     for( int nMatrix = 0; nMatrix < 12; nMatrix++ ) {
       vtkFSIO::ReadFloat( fp, this->RASMatrix[nMatrix] );
-      //vtkErrorMacro(<<"RASMatrix[" << nMatrix << "] = " << this->RASMatrix[nMatrix] << ".");
+      vtkDebugMacro(<<"RASMatrix[" << nMatrix << "] = " << this->RASMatrix[nMatrix] << ".");
     }
   }
 
