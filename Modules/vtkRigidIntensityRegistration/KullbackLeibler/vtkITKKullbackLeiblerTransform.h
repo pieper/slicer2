@@ -98,15 +98,15 @@ public:
 
   // Description:
   // Specify the images that are already aligned
-  vtkSetObjectMacro(GivenSourceImage, vtkImageData);
-  vtkSetObjectMacro(GivenTargetImage, vtkImageData);
-  vtkGetObjectMacro(GivenSourceImage, vtkImageData);
-  vtkGetObjectMacro(GivenTargetImage, vtkImageData);
+  vtkSetObjectMacro(TrainingSourceImage, vtkImageData);
+  vtkSetObjectMacro(TrainingTargetImage, vtkImageData);
+  vtkGetObjectMacro(TrainingSourceImage, vtkImageData);
+  vtkGetObjectMacro(TrainingTargetImage, vtkImageData);
 
   // Description:
-  // Specify the Given transform between the Given Images
-  vtkSetObjectMacro(GivenTransform, vtkMatrix4x4);
-  vtkGetObjectMacro(GivenTransform, vtkMatrix4x4);
+  // Specify the Training transform between the Training Images
+  vtkSetObjectMacro(TrainingTransform, vtkMatrix4x4);
+  vtkGetObjectMacro(TrainingTransform, vtkMatrix4x4);
 
   // Description:
   // Set the size of the histogram for the metric
@@ -243,13 +243,13 @@ protected:
   vtkImageData *SourceImage;
   vtkImageData *TargetImage;
 
-  vtkImageData *GivenSourceImage;
-  vtkImageData *GivenTargetImage;
-  vtkMatrix4x4 *GivenTransform;
+  vtkImageData *TrainingSourceImage;
+  vtkImageData *TrainingTargetImage;
+  vtkMatrix4x4 *TrainingTransform;
   int HistSizeSource;
   int HistSizeTarget;
   double HistEpsilon;
-  void *GivenHistogram;
+  void *TrainingHistogram;
 
   int FlipTargetZAxis;     // 1 if flipped z-axis on target
   vtkImageFlip *ImageFlip;

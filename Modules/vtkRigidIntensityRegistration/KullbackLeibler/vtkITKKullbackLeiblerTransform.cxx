@@ -74,7 +74,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 #include "KLRegistration.h"
 
-vtkCxxRevisionMacro(vtkITKKullbackLeiblerTransform, "$Revision: 1.3 $");
+vtkCxxRevisionMacro(vtkITKKullbackLeiblerTransform, "$Revision: 1.4 $");
 vtkStandardNewMacro(vtkITKKullbackLeiblerTransform);
 
 //----------------------------------------------------------------------------
@@ -93,7 +93,7 @@ vtkITKKullbackLeiblerTransform::vtkITKKullbackLeiblerTransform()
   this->HistSizeSource = 32;
   this->HistSizeTarget = 32;
   this->HistEpsilon = 1e-12;
-  this->GivenHistogram = NULL; // No Histogram until calculated
+  this->TrainingHistogram = NULL; // No Histogram until calculated
 
   // the last iteration finished with no error
   this->Error = 0;
@@ -136,17 +136,17 @@ vtkITKKullbackLeiblerTransform::~vtkITKKullbackLeiblerTransform()
     this->TargetImage->Delete();
     }
 
-  if(this->GivenSourceImage)
+  if(this->TrainingSourceImage)
     {
-    this->GivenSourceImage->Delete();
+    this->TrainingSourceImage->Delete();
     }
-  if(this->GivenTargetImage)
+  if(this->TrainingTargetImage)
     {
-    this->GivenTargetImage->Delete();
+    this->TrainingTargetImage->Delete();
     }
-  if(this->GivenTransform)
+  if(this->TrainingTransform)
     {
-    this->GivenTransform->Delete();
+    this->TrainingTransform->Delete();
     }
 
   this->LearningRate->Delete();
@@ -263,11 +263,11 @@ static void vtkITKKLExecute(vtkITKKullbackLeiblerTransform *self,
   // Set Up the KL Metric
   // --------------------------------------
 
-  typedef itk::AffineTransform< double, 3 > GivenTransformType;
-  GivenTransformType::Pointer ITKGivenTransform = GivenTransformType::New();
-  typedef GivenTransformType::ParametersType ParametersType;
+  typedef itk::AffineTransform< double, 3 > TrainingTransformType;
+  TrainingTransformType::Pointer ITKTrainingTransform = TrainingTransformType::New();
+  typedef TrainingTransformType::ParametersType ParametersType;
 
-  ParametersType parameters( ITKGivenTransform->GetNumberOfParameters() );
+  ParametersType parameters( ITKTrainingTransform->GetNumberOfParameters() );
   
   int count = 0;
   for( unsigned int row = 0; row < 3; row++ )
@@ -277,7 +277,7 @@ static void vtkITKKLExecute(vtkITKKullbackLeiblerTransform *self,
       parameters[count] = 0;
       if( row == col )
         {
-        parameters[count] = self->GetGivenTransform()->GetElement(row,col);
+        parameters[count] = self->GetTrainingTransform()->GetElement(row,col);
         }
       ++count;
       }
@@ -285,18 +285,18 @@ static void vtkITKKLExecute(vtkITKKullbackLeiblerTransform *self,
   // initialize the offset/vector part
   for( unsigned int k = 0; k < 3; k++ )
     {
-    parameters[count] =  self->GetGivenTransform()->GetElement(3,k);
+    parameters[count] =  self->GetTrainingTransform()->GetElement(3,k);
     ++count;
     }
-  ITKGivenTransform->SetParameters(parameters);
+  ITKTrainingTransform->SetParameters(parameters);
 
-  KLRegistrator->SetGivenTransform(ITKGivenTransform);
-  KLRegistrator->SetGivenFixedImage(VTKtoITKImage(self->GetGivenTargetImage(),(T*)(NULL)))->UnRegister();
-  KLRegistrator->SetGivenMovingImage(VTKtoITKImage(self->GetGivenSourceImage(),(T*)(NULL)))->UnRegister();
+  KLRegistrator->SetTrainingTransform(ITKTrainingTransform);
+  KLRegistrator->SetTrainingFixedImage(VTKtoITKImage(self->GetTrainingTargetImage(),(T*)(NULL)))->UnRegister();
+  KLRegistrator->SetTrainingMovingImage(VTKtoITKImage(self->GetTrainingSourceImage(),(T*)(NULL)))->UnRegister();
 
   // take care of memory leak 
-  //  KLRegistrator->GetGivenFixedImage()
-  //  KLRegistrator->GetGivenMovingImage()->UnRegister();
+  //  KLRegistrator->GetTrainingFixedImage()
+  //  KLRegistrator->GetTrainingMovingImage()->UnRegister();
 
   typedef RegistratorType::SizeType SizeType;
 

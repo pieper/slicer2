@@ -79,8 +79,8 @@ KLRegistration<TFixedImage,TMovingImage>::KLRegistration()
   m_Metric->SetHistogramSize(histSize);
   m_Metric->SetDerivativeStepLength(0.1); // 0.1 mm
   // possible memory leak
-  InterpolatorType::Pointer  GivenInterpolator = InterpolatorType::New();
-  m_Metric->SetGivenInterpolator(GivenInterpolator);
+  InterpolatorType::Pointer  TrainingInterpolator = InterpolatorType::New();
+  m_Metric->SetTrainingInterpolator(TrainingInterpolator);
 
   // Default parameters
   m_NumberOfLevels = 1;
