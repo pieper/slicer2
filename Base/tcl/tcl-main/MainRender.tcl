@@ -42,10 +42,19 @@
 proc Render3D {{scale ""}} {
     global Video viewWin Twin twinWin View Slice
 
+    if { $View(render_on) == 1 } {
+        return
+    }
     # Apply the fog parameters to all the renderers of viewWin
     FogApply $viewWin
 
-    viewRen ResetCameraClippingRange    
+    set rens [$viewWin GetRenderers]
+    set rencount [$rens GetNumberOfItems] 
+    for {set r 0} {$r < $rencount} {incr r} {
+        set ren [$rens GetItemAsObject $r]
+        $ren ResetCameraClippingRange    
+    }
+
     $viewWin Render
     
     if {[IsModule Twin] == 1 && $Twin(mode) == "On"} {
