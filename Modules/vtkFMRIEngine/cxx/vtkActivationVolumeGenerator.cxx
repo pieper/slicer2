@@ -44,13 +44,6 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 #include <stdio.h>
 
-    
-// TODO: 150 is usde here to mask out the brain volume in order for 
-// us not to compute t values of voxels outside the brain. The 
-// threshold (150) may be different run by run. Need a general algorithm
-// here to do masking.
-#define BrainMaskThreshold 200.0
-
 #define TTestThreshold 0.0 
 
 
@@ -60,6 +53,7 @@ vtkStandardNewMacro(vtkActivationVolumeGenerator);
 vtkActivationVolumeGenerator::vtkActivationVolumeGenerator()
 {
     this->Detector = NULL; 
+    this->lowerThreshold = 0;
 }
 
 
@@ -139,7 +133,7 @@ void vtkActivationVolumeGenerator::SimpleExecute(vtkImageData *inputs, vtkImageD
                     total += *value;
                 }   
 
-                if ((total/this->NumberOfInputs) < BrainMaskThreshold)
+                if ((total/this->NumberOfInputs) < lowerThreshold)
                 {
                     t = TTestThreshold;
                 }
