@@ -186,7 +186,7 @@ proc FMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.35 $} {$Date: 2004/11/23 20:35:01 $}]
+        {$Revision: 1.36 $} {$Date: 2004/11/23 20:54:11 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -313,7 +313,6 @@ proc FMRIEngineBuildGUI {} {
 
     set helpWidget $FMRIEngine(helpWidget) 
     $helpWidget configure -height 22
-    set FMRIEngine(helpFont) [$helpWidget cget -font]
 
     set fHelp $Module(FMRIEngine,fHelp)
     set f $fHelp
