@@ -17,11 +17,11 @@
 class FMpdf
 {
   // the histogram
-  unsigned int *bins;
-  unsigned int realizationMax;
+  int *bins;
+  int realizationMax;
 
   // the number of realizations
-  unsigned int N;
+  int N;
 
   // first 2 moments (not centered)  
   double m1;
@@ -38,12 +38,12 @@ class FMpdf
   double getMean( void );
   double getSigma2( void );
 
-  double valueHisto( unsigned int k );
+  double valueHisto( int k );
   double valueGauss( double k );
 
  public:
 
-  FMpdf( unsigned int realizationMax );
+  FMpdf( int realizationMax );
   ~FMpdf();
 
   double value( double k );

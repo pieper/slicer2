@@ -45,12 +45,19 @@ void vtkFastMarching::collectInfoSeed( int index )
 }
 
 // speed at index
-double vtkFastMarching::speed( int index )
+float vtkFastMarching::speed( int index )
 {
   int I;
   int H;
 
   getMedianInhomo( index, I, H );
+
+  if( (I<0) || (I>depth) || (H<0) || (H>depth) )
+    {
+      cerr << "Error in vtkFastMarching::speed(index)!" << endl
+       << "index=" << index << " I=" << I << " H=" << H 
+       << " depth=" << depth << endl;
+    }
 
   return min(pdfIntensityIn->value(I)/pdfIntensityAll->value(I),
          pdfInhomoIn->value(H)/pdfInhomoAll->value(H));
@@ -162,7 +169,7 @@ void vtkFastMarchingExecute(vtkFastMarching *self,
           if( currentPercentage > lastPercentageProgressBarUpdated )
             {
               lastPercentageProgressBarUpdated = currentPercentage;
-              self->UpdateProgress(double(currentPercentage)/double(GRANULARITY_PROGRESS));
+              self->UpdateProgress(float(currentPercentage)/float(GRANULARITY_PROGRESS));
             }
 
           self->node[index].status=fmsOUT;
@@ -197,7 +204,7 @@ void vtkFastMarchingExecute(vtkFastMarching *self,
 
       assert(self->seedPoints.size()>0);
   
-      for(int k=0;k<self->seedPoints.size();k++)
+      for(int k=0;k<(int)self->seedPoints.size();k++)
     self->collectInfoSeed( self->seedPoints[k] );
 
     }
@@ -205,10 +212,10 @@ void vtkFastMarchingExecute(vtkFastMarching *self,
   // reinitialize the points that were removed by the user
   if( self->nEvolutions>=0 )
     if( (self->knownPoints[self->nEvolutions].size()>1) && 
-    (self->knownPoints[self->nEvolutions].size()-1>self->nPointsBeforeLeakEvolution) )
+    ((signed)self->knownPoints[self->nEvolutions].size()-1>self->nPointsBeforeLeakEvolution) )
       {
     // reinitialize all the points
-    for(int k=self->nPointsBeforeLeakEvolution;k<self->knownPoints[self->nEvolutions].size();k++)
+    for(int k=self->nPointsBeforeLeakEvolution;k<(int)self->knownPoints[self->nEvolutions].size();k++)
       {
         int index = self->knownPoints[self->nEvolutions][k];
         self->node[ index ].status = fmsFAR;
@@ -231,7 +238,7 @@ void vtkFastMarchingExecute(vtkFastMarching *self,
       }
 
     // if the points still have a KNOWN neighbor, put them back in TRIAL
-    for(int k=self->nPointsBeforeLeakEvolution;k<self->knownPoints[self->nEvolutions].size();k++)
+    for(int k=self->nPointsBeforeLeakEvolution;k<(int)self->knownPoints[self->nEvolutions].size();k++)
       {
         int index = self->knownPoints[self->nEvolutions][k];
         int indexN;
@@ -259,7 +266,7 @@ void vtkFastMarchingExecute(vtkFastMarching *self,
     // remove all the points from the displayed knownPoints
     // ok since (self->knownPoints[self->nEvolutions].size()-1>self->nPointsBeforeLeakEvolution)
     // is true
-    while(self->knownPoints[self->nEvolutions].size()>self->nPointsBeforeLeakEvolution)
+    while((int)self->knownPoints[self->nEvolutions].size()>self->nPointsBeforeLeakEvolution)
       self->knownPoints[self->nEvolutions].pop_back();
       }
 
@@ -283,9 +290,9 @@ void vtkFastMarchingExecute(vtkFastMarching *self,
   for(n=0;n<self->nPointsEvolution;n++)
     {
       if( n % (self->nPointsEvolution/GRANULARITY_PROGRESS) == 0 )
-    self->UpdateProgress(double(n)/double(self->nPointsEvolution));
+    self->UpdateProgress(float(n)/float(self->nPointsEvolution));
 
-      double T=self->step();
+      float T=self->step();
 
       if( T==INF )
     {
@@ -295,7 +302,7 @@ void vtkFastMarchingExecute(vtkFastMarching *self,
     }
 }
 
-void vtkFastMarching::show(double r)
+void vtkFastMarching::show(float r)
 {
   assert( (r>=0) && (r<=1.0) );
 
@@ -343,7 +350,7 @@ void vtkFastMarching::ExecuteData(vtkDataObject *)
   outData->SetExtent(this->GetOutput()->GetWholeExtent());
   outData->AllocateScalars();
 
-  int outExt[6], id=0, s;
+  int outExt[6], s;
   outData->GetWholeExtent(outExt);
   void *inPtr = inData->GetScalarPointerForExtent(outExt);
   void *outPtr = outData->GetScalarPointerForExtent(outExt);
@@ -396,11 +403,11 @@ void vtkFastMarching::insert(const FMleaf leaf) {
 
   // insert element at the back
   tree.push_back( leaf );
-  node[ leaf.nodeIndex ].leafIndex=tree.size()-1;
+  node[ leaf.nodeIndex ].leafIndex=(int)(tree.size()-1);
 
   // trickle the element up until everything 
   // is sorted again
-  upTree( tree.size()-1 );
+  upTree( (int)(tree.size()-1) );
 }
 
 void vtkFastMarching::downTree(int index) {
@@ -412,10 +419,10 @@ void vtkFastMarching::downTree(int index) {
    * starting index is greater than all its parents.
    */
 
-  unsigned int LeftChild = 2 * index + 1;
-  unsigned int RightChild = 2 * index + 2;
+  int LeftChild = 2 * index + 1;
+  int RightChild = 2 * index + 2;
   
-  while (LeftChild < tree.size())
+  while (LeftChild < (int)tree.size())
     {
       /*
        * Terminate the process when the current leaf has no
@@ -434,7 +441,7 @@ void vtkFastMarching::downTree(int index) {
        * has smaller crossing time than the left child, then the 
        * right child is the MinChild.
        */
-      if (RightChild < tree.size()) {
+      if (RightChild < (int)tree.size()) {
     if (node[tree[LeftChild].nodeIndex].T>
         node[tree[RightChild].nodeIndex].T) 
       MinChild = RightChild;
@@ -462,7 +469,7 @@ void vtkFastMarching::downTree(int index) {
      * If the current leaf has a lower value than its
      * MinChild, the job is done, force a stop.
      */
-    index = tree.size();
+    index = (int) tree.size();
      
       LeftChild = 2 * index + 1;
       RightChild = 2 * index + 2;
@@ -616,7 +623,7 @@ inline int vtkFastMarching::shiftNeighbor(int n)
   return arrayShiftNeighbor[n];
 }
 
-double vtkFastMarching::step( void )
+float vtkFastMarching::step( void )
 {
   int indexN;
   int n;
@@ -638,7 +645,7 @@ double vtkFastMarching::step( void )
     // reachjed them.
     return INF;
 
-  double EPS=1e-1;
+  float EPS=1e-1;
 
   while( speed(min.nodeIndex)<EPS )
     {
@@ -697,9 +704,9 @@ double vtkFastMarching::step( void )
   return node[min.nodeIndex].T; 
 }
 
-double vtkFastMarching::computeT(int index )
+float vtkFastMarching::computeT(int index )
 {
-  double A, B, C, Discr;
+  float A, B, C, Discr;
 
   A = 0.0;
   B = 0.0;
@@ -712,7 +719,7 @@ double vtkFastMarching::computeT(int index )
 
   C = -dx*dx/( s*s ); 
 
-  double Tij, Txm, Txp, Tym, Typ, Tzm, Tzp, TijNew;
+  float Tij, Txm, Txp, Tym, Typ, Tzm, Tzp, TijNew;
 
   Tij = node[index].T;
 
@@ -725,7 +732,7 @@ double vtkFastMarching::computeT(int index )
   Tzm = node[index+shiftNeighbor(5)].T;
   Tzp = node[index+shiftNeighbor(6)].T;
   
-  double Dxm, Dxp, Dym, Dyp, Dzm, Dzp;
+  float Dxm, Dxp, Dym, Dyp, Dzm, Dzp;
 
   Dxm = Tij - Txm;
   Dxp = Txp - Tij;

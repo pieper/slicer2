@@ -56,11 +56,11 @@ typedef std::vector<VecInt> VecVecInt;
 class VTK_FASTMARCHING_EXPORT vtkFastMarching : public vtkImageToImageFilter
 {
  private:
-  unsigned int nNeighbors; // =6 pb wrap, cannot be defined as constant
+  int nNeighbors; // =6 pb wrap, cannot be defined as constant
   int arrayShiftNeighbor[27];
   int tmpNeighborhood[27]; // allocate it here so that we do not have to
   // allocate it over and over in getMedianInhomo
-  double dx; // =1
+  float dx; // =1
 
   bool initialized;
   bool firstCall;
@@ -128,17 +128,17 @@ class VTK_FASTMARCHING_EXPORT vtkFastMarching : public vtkImageToImageFilter
   void downTree(int index);
   void upTree(int index);
 
-  void getMedianInhomo( int index, int &median, int &inhomo );
+  void getMedianInhomo(int index, int &median, int &inhomo );
 
   int shiftNeighbor(int n);
-  double computeT(int index );
+  float computeT(int index );
   
-  void setSeed( int index );
+  void setSeed(int index );
 
-  void collectInfoSeed( int index );
+  void collectInfoSeed(int index );
   void collectInfoAll( void );
   
-  double speed( int index );
+  float speed(int index );
  public:
 
   static vtkFastMarching *New();
@@ -173,9 +173,9 @@ class VTK_FASTMARCHING_EXPORT vtkFastMarching : public vtkImageToImageFilter
 
   /* perform one step of fast marching
      return the leaf which has just been added to fmsKNOWN */
-  double step( void );
+  float step( void );
 
-  void show(double r);
+  void show(float r);
 
  protected:
   void ExecuteData(vtkDataObject *);

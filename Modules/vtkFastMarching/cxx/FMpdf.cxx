@@ -1,6 +1,6 @@
 #include "FMpdf.h"
 
-FMpdf::FMpdf( unsigned int realizationMax )
+FMpdf::FMpdf( int realizationMax )
 {
   m1=m2=0.0;
   N=0;
@@ -8,7 +8,7 @@ FMpdf::FMpdf( unsigned int realizationMax )
 
   this->realizationMax=realizationMax;
 
-  bins = new unsigned int [realizationMax+1];
+  bins = new int [realizationMax+1];
 
   assert( bins!=NULL );
   // or else there was a problem during allocation
@@ -24,12 +24,18 @@ FMpdf::~FMpdf()
 
 double FMpdf::value( double k )
 {
-  assert( (k>=0) && (k<=realizationMax) );
+  if( !( (k>=0) && (k<=realizationMax) ) )
+    {
+      cerr << "Error in FMpdf::value(k)!" << endl
+       << "k=" << k << " realizationMax=" << realizationMax << endl;
+
+      return valueGauss( k );
+    }
 
   // if we have enough points then use the histogram
   // (i.e. N>50*sigma)
   if( N*N>2500*getSigma2() )
-    return valueHisto( (unsigned int)k );
+    return valueHisto( (int)k );
 
   // otherwise we make a gaussian assumption
   return valueGauss( k );
@@ -43,7 +49,7 @@ double FMpdf::valueGauss( double k )
   return 1.0/sqrt(2*M_PI*s2)*exp( -0.5*(k-m)*(k-m)/s2 );
 }
 
-double FMpdf::valueHisto( unsigned int k )
+double FMpdf::valueHisto( int k )
 {
   // note: assert( (k>=0) && (k<=realizationMax) )
   // already checked in FMpdf::value()
@@ -64,7 +70,7 @@ void FMpdf::addRealization( double k )
   N++;
 
   if( (k>=0) && (k<=realizationMax) )
-      bins[(unsigned int)k]++;
+      bins[(int)k]++;
 
   needUpdateMoments=true;
 }
@@ -79,8 +85,8 @@ void FMpdf::removeRealization( double k )
 
   if( (k>=0) && (k<=realizationMax) )
     {
-      assert( bins[(unsigned int)k]>0 );
-      bins[(unsigned int)k]--;
+      assert( bins[(int)k]>0 );
+      bins[(int)k]--;
     }
 
   needUpdateMoments=true;
