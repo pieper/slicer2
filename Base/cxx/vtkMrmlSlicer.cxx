@@ -174,6 +174,7 @@ vtkMrmlSlicer::vtkMrmlSlicer()
   this->BackFilter = 0;
   this->ForeFilter = 0;
   this->FilterActive = 0;
+  this->FilterOverlay = 0;
 
   // Matrix
   this->DirN[0] = 0;
@@ -720,7 +721,7 @@ void vtkMrmlSlicer::BuildUpper(int s)
       // Active filter?
       if (filter)
       {
-	      // Filter
+	// Filter
         if (this->ForeFilter)
         {
           this->FirstFilter[s]->SetInput(this->ForeReformat[s]->GetOutput());
@@ -729,15 +730,26 @@ void vtkMrmlSlicer::BuildUpper(int s)
         {
           this->FirstFilter[s]->SetInput(this->BackReformat[s]->GetOutput());
         }
-        // Mapper
-        this->ForeMapper[s]->SetInput(this->LastFilter[s]->GetOutput());
-      }
+	// Mapper
+	if (this->FilterOverlay)
+	  {
+	    // Lauren: what is the fastest way to do this?
+	    // don't display the filter in the fore layer.  Its output
+	    // will go directly into the label layer.
+	    this->ForeMapper[s]->SetInput(this->ForeReformat[s]->GetOutput());
+	  }
+	else
+	  {
+	    // default display: just replace fore layer with filter output
+	    this->ForeMapper[s]->SetInput(this->LastFilter[s]->GetOutput());
+	  }
+      } // end if filter
       else 
       {
         // Mapper
         this->ForeMapper[s]->SetInput(this->ForeReformat[s]->GetOutput());
       }
-	    // Mapper
+      // Mapper
       this->ForeMapper[s]->SetLookupTable(v->GetIndirectLUT());
       // Overlay
       this->Overlay[s]->SetInput(1, this->ForeMapper[s]->GetOutput());
@@ -760,11 +772,10 @@ void vtkMrmlSlicer::BuildUpper(int s)
     // If ForeVolume == LabelVolume, then save reformatting work
     if (v == this->ForeVolume[s])
     {
-      // Active filter?
       if (filter)
       {
         // Outline
-        this->LabelOutline[s]->SetInput(this->LastFilter[s]->GetOutput());
+	this->LabelOutline[s]->SetInput(this->LastFilter[s]->GetOutput());
       }
       else 
       {

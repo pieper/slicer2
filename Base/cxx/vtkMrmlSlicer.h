@@ -78,8 +78,8 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 class VTK_EXPORT vtkMrmlSlicer : public vtkObject 
 {
-public:
-
+  public:
+  
   // The Usual vtk class functions
   static vtkMrmlSlicer *New();
   vtkTypeMacro(vtkMrmlSlicer,vtkObject);
@@ -90,6 +90,7 @@ public:
 
   // Description:
   // Overlay is merged fore, back, and label images, for display
+  // in slice window s (where s is 0, 1, or 2)
   vtkImageData *GetOutput(int s) {
     this->Update(); return this->Overlay[s]->GetOutput();};
 
@@ -291,6 +292,13 @@ public:
   vtkSetMacro(FilterActive, int);
   vtkBooleanMacro(FilterActive, int);
 
+  // Description:
+  // Whether to overlay filter output on all layers 
+  // or use it to replace the fore layer.
+  vtkGetMacro(FilterOverlay, int);
+  vtkSetMacro(FilterOverlay, int);
+  vtkBooleanMacro(FilterOverlay, int);
+
 
   //-------------------- Draw ---------------------------//
   // Description:
@@ -423,6 +431,7 @@ protected:
   int BackFilter;
   int ForeFilter;
   int FilterActive;
+  int FilterOverlay;
 
   // DAVE need a better way
   float ZoomCenter0[2];
