@@ -128,8 +128,8 @@ proc FMRIEngineInit {} {
     #   row2Name = like row1
     #   row2,tab = like row1 
     #
-    set Module($m,row1List) "Help Sequence Compute Display"
-    set Module($m,row1Name) "{Help} {Sequence} {Compute} {Display}"
+    set Module($m,row1List) "Help Sequence Setup Compute Inspect"
+    set Module($m,row1Name) "{Help} {Sequence} {Set Up} {Compute} {Inspect}"
     set Module($m,row1,tab) Sequence 
 
     # Define Procedures
@@ -186,7 +186,7 @@ proc FMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.42 $} {$Date: 2005/01/28 22:32:55 $}]
+        {$Revision: 1.43 $} {$Date: 2005/03/18 21:40:54 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -196,9 +196,10 @@ proc FMRIEngineInit {} {
     #   the procedures in this module and others need to access.
     #
     set FMRIEngine(dir)  ""
-    set FMRIEngine(trackMotion) 1
     set FMRIEngine(modulePath) "$env(SLICER_HOME)/Modules/vtkFMRIEngine"
 
+    set FMRIEngine(baselineEVsAdded) 0
+ 
 
     # For now, spew heavily.
     # this bypasses the command line setting of --verbose or -v
@@ -208,9 +209,15 @@ proc FMRIEngineInit {} {
     FMRIEngineCreateBindings 
 
     # Source all appropriate tcl files here. 
-    source "$FMRIEngine(modulePath)/tcl/FMRIEnginePlot.tcl"
-    source "$FMRIEngine(modulePath)/tcl/FMRIEngineParadigmParser.tcl"
     source "$FMRIEngine(modulePath)/tcl/notebook.tcl"
+    source "$FMRIEngine(modulePath)/tcl/modelView.tcl"
+    source "$FMRIEngine(modulePath)/tcl/FMRIEnginePlot.tcl"
+    source "$FMRIEngine(modulePath)/tcl/FMRIEngineModel.tcl"
+    source "$FMRIEngine(modulePath)/tcl/fMRIEngineHelpText.tcl"
+    source "$FMRIEngine(modulePath)/tcl/FMRIEngineContrasts.tcl"
+    source "$FMRIEngine(modulePath)/tcl/userInputForModelView.tcl"
+    source "$FMRIEngine(modulePath)/tcl/FMRIEngineSignalModeling.tcl"
+    source "$FMRIEngine(modulePath)/tcl/FMRIEngineParadigmParser.tcl"
 }
 
 
@@ -241,6 +248,13 @@ proc FMRIEngineInit {} {
 proc FMRIEngineBuildGUI {} {
     global Gui FMRIEngine Module Volume Model
 
+    # error if no private segment
+    if { [catch "package require BLT"] } {
+        DevErrorWindow "Must have the BLT package for building fMRIEngine UI \
+        and plotting time course."
+        return
+    }
+
     # A frame has already been constructed automatically for each tab.
     # A frame named "FMRI" can be referenced as follows:
     #   
@@ -265,6 +279,9 @@ proc FMRIEngineBuildGUI {} {
     #-------------------------------------------
     # Help tab 
     #-------------------------------------------
+    set b $Module(FMRIEngine,bHelp)
+    bind $b <1> "FMRIEngineUpdateHelpTab" 
+
     # Write the "help" in the form of psuedo-html.  
     # Refer to the documentation for details on the syntax.
     set help "
@@ -277,7 +294,7 @@ proc FMRIEngineBuildGUI {} {
     <B>Compute</B> lets you to input a paradigm design, select \
     an activation detector and compute activation.
     <P>
-    <B>Display</B> gives you the ability to view the activation \
+    <B>Inspect</B> gives you the ability to view the activation \
     volume at different thresholds and dynamically plot any voxel \
     time course.
     <P>
@@ -326,6 +343,9 @@ proc FMRIEngineBuildGUI {} {
     #-------------------------------------------
     # Sequence tab 
     #-------------------------------------------
+    set b $Module(FMRIEngine,bSequence)
+    bind $b <1> "FMRIEngineUpdateSequenceTab" 
+
     set fSequence $Module(FMRIEngine,fSequence)
     set f $fSequence
     frame $f.fOption -bg $Gui(activeWorkspace) 
@@ -336,110 +356,428 @@ proc FMRIEngineBuildGUI {} {
     #------------------------------
     set f $fSequence.fOption
 
-    Notebook:create $f.fNotebook \
+    Notebook-create $f.fNotebook \
                     -pages {Load Select} \
                     -pad 2 \
                     -bg $Gui(activeWorkspace) \
                     -height 356 \
                     -width 240
+    Notebook-setCallback $f.fNotebook \
+        FMRIEngineUpdateSequences
     pack $f.fNotebook -fill both -expand 1
-    set w [Notebook:frame $f.fNotebook Load]
+ 
+    set w [Notebook-frame $f.fNotebook Load]
     FMRIEngineBuildUIForLoad $w
-    set w [Notebook:frame $f.fNotebook Select]
+    set w [Notebook-frame $f.fNotebook Select]
     FMRIEngineBuildUIForSelect $w
+ 
+    #-------------------------------------------
+    # Setup tab 
+    #-------------------------------------------
+    set fSetup $Module(FMRIEngine,fSetup)
+    FMRIEngineBuildUIForSetupTab $fSetup
+    set b $Module(FMRIEngine,bSetup)
+    bind $b <1> "FMRIEngineAskModelClearing" 
 
     #-------------------------------------------
     # Compute tab 
     #-------------------------------------------
     set fCompute $Module(FMRIEngine,fCompute)
-    set f $fCompute
-    frame $f.fOption -bg $Gui(activeWorkspace) 
-    grid $f.fOption -row 0 -column 0 -sticky ew 
-    
-    #------------------------------
-    # Compute->Option frame
-    #------------------------------
-    set f $fCompute.fOption
-
-    Notebook:create $f.fNotebook \
-                    -pages {Paradigm Detectors} \
-                    -pad 2 \
-                    -bg $Gui(activeWorkspace) \
-                    -height 356 \
-                    -width 240
-    pack $f.fNotebook -fill both -expand 1
-
-    set w [Notebook:frame $f.fNotebook Paradigm]
-    FMRIEngineBuildUIForParadigm $w
-    set w [Notebook:frame $f.fNotebook Detectors]
-    FMRIEngineBuildUIForDetectors $w
+    FMRIEngineBuildUIForComputeTab $fCompute
+    set b $Module(FMRIEngine,bCompute)
+    bind $b <1> "FMRIEngineUpdateContrastList" 
 
     #-------------------------------------------
-    # Display tab 
+    # Inspect tab 
     #-------------------------------------------
-    set fDisplay $Module(FMRIEngine,fDisplay)
-    set f $fDisplay
+    set fInspect $Module(FMRIEngine,fInspect)
+    FMRIEngineBuildUIForInspectTab $fInspect
+    set b $Module(FMRIEngine,bInspect)
+    bind $b <1> "FMRIEngineUpdateInspectTab" 
+}
 
-    foreach m "ActThresholding TcPlotting" {
-        frame $f.f${m} -bg $Gui(activeWorkspace) -relief groove -bd 3
-        pack $f.f${m} -side top -fill x -pady $Gui(pad) 
+
+proc FMRIEngineUpdateSequenceTab {} {
+    global FMRIEngine
+
+    set FMRIEngine(currentTab) "Sequence"
+}
+
+
+proc FMRIEngineUpdateHelpTab {} {
+    global FMRIEngine
+
+    set FMRIEngine(currentTab) "Help"
+}
+
+     
+proc FMRIEngineUpdateInspectTab {} {
+    global FMRIEngine Gui Volume
+
+    set FMRIEngine(tcPlottingOption) "" 
+    set FMRIEngine(currentTab) "Inspect"
+
+    $FMRIEngine(inspectListBox) delete 0 end
+    if {[info exists FMRIEngine(actVolumeNames)]} {
+        set size [llength $FMRIEngine(actVolumeNames)]
+
+        for {set i 0} {$i < $size} {incr i} {
+            set name [lindex $FMRIEngine(actVolumeNames) $i] 
+            if {$name != ""} {
+                $FMRIEngine(inspectListBox) insert end $name
+            }
+        } 
     }
+}
 
-    # Act thresholding frame 
-    #-----------------------
-    set f $fDisplay.fActThresholding 
+
+proc FMRIEngineInspectActVolume {} {
+    global FMRIEngine Gui Volume
+
+    unset -nocomplain FMRIEngine(currentActVolID)
+
+    set curs [$FMRIEngine(inspectListBox) curselection] 
+    if {$curs != ""} {
+        set name [$FMRIEngine(inspectListBox) get $curs] 
+
+        set id [MIRIADSegmentGetVolumeByName $name] 
+        set FMRIEngine(currentActVolID) $id
+        set FMRIEngine(currentActVolName) $name
+
+        MainSlicesSetVolumeAll Fore $id
+        MainVolumesSetActive $id
+        MainVolumesRender
+    }
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC FMRIEngineComputeContrasts
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc FMRIEngineComputeContrasts {} {
+    global FMRIEngine Gui Volume
+
+    set curs [$FMRIEngine(computeListBox) curselection] 
+    if {$curs != ""} {
+        if {! [info exists FMRIEngine(actBetaAndStd)]} {
+            DevErrorWindow "Estimating the model first."
+            return
+        }
+
+        unset -nocomplain FMRIEngine(actVolumeNames)
+ 
+        set size [llength $curs]
+        for {set ii 0} {$ii < $size} {incr ii} {
+            set jj [lindex $curs $ii]
+            set name [$FMRIEngine(computeListBox) get $jj] 
+
+            if {$name != ""} {
+                # always uses a new instance of vtkActivationVolumeGenerator 
+                if {[info commands FMRIEngine(actVolumeGenerator)] != ""} {
+                    FMRIEngine(actVolumeGenerator) Delete
+                        unset -nocomplain FMRIEngine(actVolumeGenerator)
+                }
+                vtkActivationVolumeGenerator FMRIEngine(actVolumeGenerator)
+
+                # adds progress bar
+                set obs1 [FMRIEngine(actVolumeGenerator) AddObserver StartEvent MainStartProgress]
+                set obs2 [FMRIEngine(actVolumeGenerator) AddObserver ProgressEvent \
+                    "MainShowProgress FMRIEngine(actVolumeGenerator)"]
+                set obs3 [FMRIEngine(actVolumeGenerator) AddObserver EndEvent MainEndProgress]
+                set Gui(progressText) "Computing contrast $name..."
+                set FMRIEngine(actVolName) $name 
+
+                set vec $FMRIEngine($name,contrastVector) 
+                set contrList [split $vec " "]
+                set len [llength $contrList]
+                if {[info commands FMRIEngine(contrast)] != ""} {
+                    FMRIEngine(contrast) Delete
+                        unset -nocomplain FMRIEngine(contrast)
+                }
+                vtkIntArray FMRIEngine(contrast)
+
+                FMRIEngine(contrast) SetNumberOfTuples $len 
+                FMRIEngine(contrast) SetNumberOfComponents 1
+                set count 0
+                foreach entry $contrList {
+                    FMRIEngine(contrast) SetComponent $count 0 $entry 
+                    incr count
+                }
+
+                FMRIEngine(actVolumeGenerator) SetContrastVector FMRIEngine(contrast) 
+                FMRIEngine(actVolumeGenerator) SetInput $FMRIEngine(actBetaAndStd) 
+                set act [FMRIEngine(actVolumeGenerator) GetOutput]
+                $act Update
+                set FMRIEngine(act) $act
+
+                # add a mrml node
+                set n [MainMrmlAddNode Volume]
+                set i [$n GetID]
+                MainVolumesCreate $i
+
+                # set the name and description of the volume
+                $n SetName "activation-$name" 
+                lappend FMRIEngine(actVolumeNames) "activation-$name"
+                $n SetDescription "activation-$name"
+
+                eval Volume($i,node) SetSpacing [$act GetSpacing]
+                Volume($i,node) SetScanOrder [Volume($FMRIEngine(firstMRMLid),node) GetScanOrder]
+                Volume($i,node) SetNumScalars [$act GetNumberOfScalarComponents]
+                set ext [$act GetWholeExtent]
+                Volume($i,node) SetImageRange [expr 1 + [lindex $ext 4]] [expr 1 + [lindex $ext 5]]
+                Volume($i,node) SetScalarType [$act GetScalarType]
+                Volume($i,node) SetDimensions [lindex [$act GetDimensions] 0] [lindex [$act GetDimensions] 1]
+                Volume($i,node) ComputeRasToIjkFromScanOrder [Volume($i,node) GetScanOrder]
+
+                Volume($i,vol) SetImageData $act
+                MainSlicesSetVolumeAll Fore $i
+                MainVolumesSetActive $i
+
+                # set the lower threshold to 1
+                Volume($i,node) AutoThresholdOff
+                Volume($i,node) ApplyThresholdOn
+                Volume($i,node) SetLowerThreshold 1
+
+                # set the act volume to the color of iron
+                MainVolumesSetParam LutID 1 
+
+                set FMRIEngine($i,actLow) [FMRIEngine(actVolumeGenerator) GetLowRange] 
+                set FMRIEngine($i,actHigh) [FMRIEngine(actVolumeGenerator) GetHighRange] 
+                # puts "low = $FMRIEngine($i,actLow)"
+                # puts "high = $FMRIEngine($i,actHigh)"
+                
+            }
+        } 
+
+        set FMRIEngine(actVolName) "" 
+        set Gui(progressText) "Updating..."
+        puts $Gui(progressText)
+        MainStartProgress
+        MainShowProgress FMRIEngine(actVolumeGenerator) 
+        MainUpdateMRML
+        # RenderAll
+        MainEndProgress
+
+        FMRIEngine(actVolumeGenerator) RemoveObserver $obs1 
+        FMRIEngine(actVolumeGenerator) RemoveObserver $obs2 
+        FMRIEngine(actVolumeGenerator) RemoveObserver $obs3 
+
+        puts "...done"
+
+    } else {
+        DevWarningWindow "There is no contrast to compute."
+    }
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC FMRIEngineUpdateContrastList
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc FMRIEngineUpdateContrastList {} {
+    global FMRIEngine
+
+    set FMRIEngine(currentTab) "Compute"
+
+    $FMRIEngine(computeListBox) delete 0 end
+
+    set size [$FMRIEngine(contrastsListBox) size]
+    for {set i 0} {$i < $size} {incr i} {
+        set name [$FMRIEngine(contrastsListBox) get $i] 
+        if {$name != ""} {
+            $FMRIEngine(computeListBox) insert end $name
+        }
+    } 
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC FMRIEngineAskModelClearing
+# Asks the usre if s/he needs to clear the current model 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc FMRIEngineAskModelClearing {} {
+    global FMRIEngine
+
+    set FMRIEngine(currentTab) "Set Up"
+
+    if {$FMRIEngine(baselineEVsAdded) == 0} {
+        FMRIEngineAddBaselineEVs
+    } elseif {$FMRIEngine(baselineEVsAdded) != 0 &&
+      $FMRIEngine(baselineEVsAdded) != $FMRIEngine(noOfRuns)} {
+        DevWarningWindow "The number of runs has changed. You probably need to save/clear the current model."
+        Tab FMRIEngine row1 Model
+    }
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC FMRIEngineBuildUIForInspectTab
+# Creates UI for the inspect tab 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc FMRIEngineBuildUIForInspectTab {parent} {
+    global FMRIEngine Gui
+
+    frame $parent.fChoose    -bg $Gui(activeWorkspace)
+    frame $parent.fThreshold -bg $Gui(activeWorkspace) -relief groove -bd 3
+    frame $parent.fPlot      -bg $Gui(activeWorkspace) -relief groove -bd 3
+    pack $parent.fChoose $parent.fThreshold $parent.fPlot \
+        -side top -fill x -padx 5 -pady 3 
+
+    #-------------------------------------------
+    # Choose a volume tab 
+    #-------------------------------------------
+    set f $parent.fChoose
+    DevAddLabel $f.l "Choose a volume:"
+
+    scrollbar $f.vs -orient vertical -bg $Gui(activeWorkspace)
+    set FMRIEngine(inspectVerScroll) $f.vs
+    listbox $f.lb -height 4 -bg $Gui(activeWorkspace) \
+        -yscrollcommand {$::FMRIEngine(inspectVerScroll) set}
+    set FMRIEngine(inspectListBox) $f.lb
+    $FMRIEngine(inspectVerScroll) configure -command {$FMRIEngine(inspectListBox) yview}
+
+    DevAddButton $f.bGo "Select" "FMRIEngineInspectActVolume" 15 
+ 
+    blt::table $f \
+        0,0 $f.l -cspan 2 -fill x -padx 1 -pady 5 \
+        1,0 $FMRIEngine(inspectListBox) -fill x -padx 1 -pady 1 \
+        1,1 $FMRIEngine(inspectVerScroll) -fill y -padx 1 -pady 1 \
+        2,0 $f.bGo -cspan 2 -padx 1 -pady 3
+
+    #-------------------------------------------
+    # Threshold tab 
+    #-------------------------------------------
+    set f $parent.fThreshold
     foreach m "Title Params" {
         frame $f.f${m} -bg $Gui(activeWorkspace)
         pack $f.f${m} -side top -fill x -pady $Gui(pad)
     }
 
-    set f $fDisplay.fActThresholding.fTitle 
-    DevAddLabel $f.lTitle "Activation thresholding:"
-    pack $f.lTitle -side top -fill x -padx $Gui(pad) 
+    set f $parent.fThreshold.fTitle 
+    DevAddButton $f.bHelp "?" "fMRIEngineHelpInspectActivationThreshold" 2
+    DevAddLabel $f.lLabel "Activation thresholding:"
+    grid $f.bHelp $f.lLabel -padx 1 -pady 3 
 
-    set f $fDisplay.fActThresholding.fParams 
-    # Entry fields (the loop makes a frame for each variable)
-    foreach param "pValue tStat actScale" \
-        name "{p Value} {t Statistic} {Act Scale}" {
+    set f $parent.fThreshold.fParams 
+    frame $f.fStat  -bg $Gui(activeWorkspace) 
+    frame $f.fScale -bg $Gui(activeWorkspace)
+    pack $f.fStat $f.fScale -side top -fill x -padx 2 -pady 1 
 
-        eval {label $f.l$param -text "$name:"} $Gui(WLA)
-        if {$param == "actScale"} {
-            eval {scale $f.e$param \
-                -orient horizontal \
-                -from 1 -to 20 \
-                -resolution 1 \
-                -bigincrement 10 \
-                -length 155 \
-                -command {FMRIEngineScaleActivation}} \
-                $Gui(WSA) {-showvalue 1}
-        } else {
-            set FMRIEngine($param) "None"
-            eval {entry $f.e$param -width 10 -state readonly \
-                -textvariable FMRIEngine($param)} $Gui(WEA)
-        }
+    set f $parent.fThreshold.fParams.fStat 
+    DevAddLabel $f.lPV "p Value:"
+    DevAddLabel $f.lTS "t Stat:"
+    set FMRIEngine(pValue) "None"
+    set FMRIEngine(tStat) "None"
+    eval {entry $f.ePV -width 10 -state readonly \
+        -textvariable FMRIEngine(pValue)} $Gui(WEA)
+    eval {entry $f.eTS -width 10 -state readonly \
+        -textvariable FMRIEngine(tStat)} $Gui(WEA)
+   grid $f.lPV $f.ePV -padx 1 -pady 2 -sticky e
+   grid $f.lTS $f.eTS -padx 1 -pady 2 -sticky e
 
-        grid $f.l$param $f.e$param -padx $Gui(pad) -pady 2 -sticky e
-        grid $f.e$param -sticky w
-    }
+   set f $parent.fThreshold.fParams.fScale 
+#   DevAddLabel $f.lactScale "Levels:"
+   eval {scale $f.sactScale \
+       -orient horizontal \
+           -from 1 -to 20 \
+           -resolution 1 \
+           -bigincrement 10 \
+           -length 155 \
+           -command {FMRIEngineScaleActivation}} \
+           $Gui(WSA) {-showvalue 0}
+#   grid $f.lactScale $f.sactScale -padx 1 -pady 1 
+   grid $f.sactScale -padx 1 -pady 1 
+ 
+   # grid $f.l$param $f.e$param -padx $Gui(pad) -pady 2 -sticky e
+   #  grid $f.e$param -sticky w
 
-    # Time course plotting frame 
-    #---------------------------
-    set f $fDisplay.fTcPlotting 
-    DevAddLabel $f.lTitle "Time series plotting:"
-    pack $f.lTitle -side top -fill x -pady $Gui(pad) 
+    #-------------------------------------------
+    # Plot frame 
+    #-------------------------------------------
+    set f $parent.fPlot
+    frame $f.fTitle  -bg $Gui(activeWorkspace)
+    frame $f.fChoice -bg $Gui(activeWorkspace)
+    pack $f.fTitle $f.fChoice -side top -fill x -padx 2 -pady 1 
 
-    foreach param "None Long Short ROI" \
-        name "{None} {Voxel-Natural} {Voxel-Combined} {ROI}" {
+    set f $parent.fPlot.fTitle
+    DevAddButton $f.bHelp "?" "fMRIEngineHelpInspectPlotting " 2
+    DevAddLabel $f.lLabel "Time series plotting:"
+    grid $f.bHelp $f.lLabel -padx 1 -pady 5 
+
+    set f $parent.fPlot.fChoice
+    foreach param "Long Short ROI" \
+        name "{Timecourse} {Peristimulus histogram} {ROI}" {
 
         eval {radiobutton $f.r$param -width 20 -text $name \
             -variable FMRIEngine(tcPlottingOption) -value $param \
             -relief raised -offrelief raised -overrelief raised \
             -selectcolor white} $Gui(WEA)
-        pack $f.r$param -side top -pady $Gui(pad) 
+        pack $f.r$param -side top -pady 2 
     } 
 
     $f.rROI configure -state disabled
-    set FMRIEngine(tcPlottingOption) None
+    set FMRIEngine(tcPlottingOption) "" 
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC FMRIEngineBuildUIForComputeTab
+# Creates UI for the compute tab 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc FMRIEngineBuildUIForComputeTab {parent} {
+    global FMRIEngine Gui
+
+    frame $parent.fTop -bg $Gui(activeWorkspace) -relief groove -bd 3
+    frame $parent.fBot -bg $Gui(activeWorkspace)
+    pack $parent.fTop $parent.fBot \
+        -side top -fill x -pady 5 -padx 5 
+
+    #-------------------------------------------
+    # Top frame 
+    #-------------------------------------------
+    set f $parent.fTop
+    frame $f.fBox    -bg $Gui(activeWorkspace)
+    frame $f.fButtons -bg $Gui(activeWorkspace)
+    pack $f.fBox $f.fButtons -side top -fill x -pady 2 -padx 1 
+
+    set f $parent.fTop.fBox
+    DevAddLabel $f.l "Select contrast(s):"
+
+    scrollbar $f.vs -orient vertical -bg $Gui(activeWorkspace)
+    set FMRIEngine(computeVerScroll) $f.vs
+    listbox $f.lb -height 4 -bg $Gui(activeWorkspace) \
+        -selectmode multiple \
+        -yscrollcommand {$::FMRIEngine(computeVerScroll) set}
+    set FMRIEngine(computeListBox) $f.lb
+    $FMRIEngine(computeVerScroll) configure -command {$FMRIEngine(computeListBox) yview}
+
+    blt::table $f \
+        0,0 $f.l -cspan 2 -fill x -padx 1 -pady 5 \
+        1,0 $FMRIEngine(computeListBox) -fill x -padx 1 -pady 1 \
+        1,1 $FMRIEngine(computeVerScroll) -fill y -padx 1 -pady 1
+
+    set f $parent.fTop.fButtons
+    DevAddButton $f.bHelp "?" "fMRIEngineHelpComputeActivationVolume" 2 
+    DevAddButton $f.bCompute "Compute" "FMRIEngineComputeContrasts" 10 
+    grid $f.bHelp $f.bCompute -padx 1 -pady 3 
+
+    #-------------------------------------------
+    # Bottom frame 
+    #-------------------------------------------
+    set f $parent.fBot
+    DevAddLabel $f.l "Computing volume for this contrast:"
+    eval {entry $f.eStatus -width 20 \
+                -textvariable FMRIEngine(actVolName)} $Gui(WEA)
+    pack $f.l $f.eStatus -side top -expand false -fill x -padx 5 -pady 3 
 }
 
 
@@ -592,7 +930,7 @@ proc FMRIEngineSetDetector {detector} {
 proc FMRIEngineBuildUIForParadigm {parent} {
     global FMRIEngine Gui
 
-    Notebook:create $parent.fNotebook \
+    Notebook-create $parent.fNotebook \
                     -pages {{Load from file} {Input from user}} \
                     -pad 2 \
                     -bg $Gui(activeWorkspace) \
@@ -600,8 +938,8 @@ proc FMRIEngineBuildUIForParadigm {parent} {
                     -width 240
     pack $parent.fNotebook -fill both -expand 1
 
-    set fLoad [Notebook:frame $parent.fNotebook {Load from file}]
-    set fInput [Notebook:frame $parent.fNotebook {Input from user}]
+    set fLoad [Notebook-frame $parent.fNotebook {Load from file}]
+    set fInput [Notebook-frame $parent.fNotebook {Input from user}]
 
     #-------------------------------------------
     # Load tab 
@@ -663,69 +1001,234 @@ proc FMRIEngineBuildUIForParadigm {parent} {
 proc FMRIEngineBuildUIForSelect {parent} {
     global FMRIEngine Gui
 
-    frame $parent.fTop    -bg $Gui(activeWorkspace) 
-    frame $parent.fMiddle -bg $Gui(activeWorkspace) 
-    frame $parent.fBottom -bg $Gui(activeWorkspace) 
-    frame $parent.fSpace -bg $Gui(activeWorkspace) -height 83  
-    frame $parent.fLogo -bg $Gui(activeWorkspace)  
-    pack $parent.fTop $parent.fMiddle -side top -padx $Gui(pad) 
-    pack $parent.fBottom -side top -pady 15 
-    pack $parent.fSpace $parent.fLogo -side top 
+    frame $parent.fTop    -bg $Gui(activeWorkspace) -relief groove -bd 3 
+    frame $parent.fBottom -bg $Gui(activeWorkspace) -relief groove -bd 3
+    pack $parent.fTop $parent.fBottom -side top -pady 5 -padx 0  
 
+    #-------------------------------------------
+    # Top frame 
+    #-------------------------------------------
     set f $parent.fTop
-    DevAddLabel $f.l "Available sequences:"
-    listbox $f.lb -height 3 -bg $Gui(activeWorkspace) 
-    pack $f.l $f.lb -side top -pady $Gui(pad)   
+    frame $f.fSeqs    -bg $Gui(activeWorkspace) -relief groove -bd 1 
+    frame $f.fOK      -bg $Gui(activeWorkspace)
+    frame $f.fListbox -bg $Gui(activeWorkspace)
+    pack $f.fSeqs $f.fOK $f.fListbox -side top -pady 3 -padx 1  
 
-    set FMRIEngine(seqsListBox) $f.lb
+    #------------------------------
+    # Loaded sequences 
+    #------------------------------
+    set f $parent.fTop.fSeqs
 
-    set f $parent.fMiddle
-    DevAddButton $f.bSelect "Select" "FMRIEngineSelectSequence" 10 
-    TooltipAdd $f.bSelect "Select a sequence."
- 
-    DevAddButton $f.bUpdate "Update" "FMRIEngineUpdateSequences" 10 
-    TooltipAdd $f.bUpdate "Update the sequence list."
- 
-    pack $f.bUpdate $f.bSelect -side left -expand 1 -pady $Gui(pad) -padx $Gui(pad) -fill both
+    DevAddLabel $f.lNo "How many runs:"
+    eval {entry $f.eRun -width 17 \
+        -textvariable FMRIEngine(noOfRuns)} $Gui(WEA)
+    set FMRIEngine(noOfRuns) 1
 
-    # The Navigate frame
+    # Build pulldown menu for all loaded sequences 
+    DevAddLabel $f.lSeq "Choose a sequence:"
+    set sequenceList [list {none}]
+    set df [lindex $sequenceList 0] 
+    eval {menubutton $f.mbType -text $df \
+        -relief raised -bd 2 -width 17 \
+        -menu $f.mbType.m} $Gui(WMBA)
+    eval {menu $f.mbType.m} $Gui(WMA)
+
+    # Add menu items
+    foreach m $sequenceList {
+        $f.mbType.m add command -label $m \
+            -command ""
+    }
+
+    # Save menubutton for config
+    set FMRIEngine(gui,sequenceMenuButton) $f.mbType
+    set FMRIEngine(gui,sequenceMenu) $f.mbType.m
+
+    # Build pulldown menu for all runs 
+    DevAddLabel $f.lRun "Used for run#:"
+    set runList [list {1}]
+    set df [lindex $runList 0] 
+    eval {menubutton $f.mbType2 -text $df \
+        -relief raised -bd 2 -width 17 \
+        -menu $f.mbType2.m} $Gui(WMBA)
+    bind $f.mbType2 <1> "FMRIEngineUpdateRuns" 
+    eval {menu $f.mbType2.m} $Gui(WMA)
+
+    set FMRIEngine(currentSelectedRun) 1
+
+    # Save menubutton for config
+    set FMRIEngine(gui,runListMenuButton) $f.mbType2
+    set FMRIEngine(gui,runListMenu) $f.mbType2.m
+    FMRIEngineUpdateRuns
+
+    blt::table $f \
+        0,0 $f.lNo -padx 3 -pady 3 \
+        0,1 $f.eRun -padx 2 -pady 3 \
+        1,0 $f.lSeq -fill x -padx 3 -pady 3 \
+        1,1 $f.mbType -padx 2 -pady 3 \
+        2,0 $f.lRun -fill x -padx 3 -pady 3 \
+        2,1 $f.mbType2 -padx 2 -pady 3 
+
+    #------------------------------
+    # OK  
+    #------------------------------
+    set f $parent.fTop.fOK
+    DevAddButton $f.bOK "OK" "FMRIEngineAddSeq-RunMatch" 6 
+    grid $f.bOK -padx 2 
+
+    #-----------------------
+    # List box  
+    #-----------------------
+    set f $parent.fTop.fListbox
+    frame $f.fBox -bg $Gui(activeWorkspace)
+    frame $f.fAction  -bg $Gui(activeWorkspace)
+    pack $f.fBox $f.fAction -side top -fill x -pady 1 -padx 2 
+
+    set f $parent.fTop.fListbox.fBox
+    DevAddLabel $f.lSeq "Specified runs:"
+    scrollbar $f.vs -orient vertical -bg $Gui(activeWorkspace)
+    set FMRIEngine(seqVerScroll) $f.vs
+    listbox $f.lb -height 4 -bg $Gui(activeWorkspace) \
+        -yscrollcommand {$::FMRIEngine(seqVerScroll) set}
+    set FMRIEngine(seqListBox) $f.lb
+    $FMRIEngine(seqVerScroll) configure -command {$FMRIEngine(seqListBox) yview}
+
+    blt::table $f \
+        0,0 $f.lSeq -cspan 2 -pady 5 -fill x \
+        1,0 $FMRIEngine(seqListBox) -padx 1 -pady 1 \
+        1,1 $FMRIEngine(seqVerScroll) -fill y -padx 1 -pady 1
+
+    #-----------------------
+    # Action  
+    #-----------------------
+    set f $parent.fTop.fListbox.fAction
+    DevAddButton $f.bDelete "Delete" "FMRIEngineDeleteSeq-RunMatch" 6 
+    grid $f.bDelete -padx 2 -pady 2 
+
+    #-------------------------------------------
+    # Bottom frame 
+    #-------------------------------------------
     set f $parent.fBottom
+    frame $f.fLabel   -bg $Gui(activeWorkspace)
+    frame $f.fButtons -bg $Gui(activeWorkspace)
+    frame $f.fSlider  -bg $Gui(activeWorkspace)
+    pack $f.fLabel $f.fButtons $f.fSlider -side top -fill x -pady 1 -padx 2 
 
+    set f $parent.fBottom.fLabel
+    DevAddLabel $f.lLabel "Navigate the sequence:"
+    pack $f.lLabel -side top -fill x -pady 1 -padx 2 
+
+    set f $parent.fBottom.fButtons
+    DevAddButton $f.bHelp "?" "fMRIEngineHelpLoadVolumeAdjust" 2
     DevAddButton $f.bSet "Set Window/Level/Thresholds" \
-        "FMRIEngineSetWindowLevelThresholds" 30
-    TooltipAdd $f.bSet \
-        "Set window, level and low/high threshold\n\
-        for the first volume within the selected \n\
-        sequence. Hit this button to set the same \n\
-        values for the entire sequence.             "
- 
-    DevAddLabel $f.lVolNo "Vol Index:"
+        "FMRIEngineSetWindowLevelThresholds" 30 
+    grid $f.bHelp $f.bSet -padx 1 
+
+    set f $parent.fBottom.fSlider
+    DevAddLabel $f.lVolno "Volume index:"
     eval { scale $f.sSlider \
         -orient horizontal \
         -from 0 -to 0 \
         -resolution 1 \
         -bigincrement 10 \
-        -length 130 \
+        -length 120 \
         -state active \
         -command {FMRIEngineUpdateVolume}} \
         $Gui(WSA) {-showvalue 1}
+    grid $f.lVolno $f.sSlider 
 
     set FMRIEngine(slider) $f.sSlider
-    TooltipAdd $f.sSlider \
-        "Slide this scale to navigate the selected multi-volume sequence."
- 
-    #The "sticky" option aligns items to the left (west) side
-    grid $f.bSet -row 0 -column 0 -columnspan 2 -padx 5 -pady 3 -sticky w
-    grid $f.lVolNo -row 1 -column 0 -padx 1 -pady 1 -sticky w
-    grid $f.sSlider -row 1 -column 1 -padx 1 -pady 1 -sticky w
+}
 
-    set f $parent.fLogo
-    set uselogo [image create photo -file \
-        $FMRIEngine(modulePath)/tcl/images/LogosForIbrowser.gif]
-    eval {label $f.lLogoImages -width 200 -height 45 \
-        -image $uselogo -justify center} $Gui(BLA)
-    pack $f.lLogoImages -side bottom -padx 0 -pady \
-        $Gui(pad) -expand 0
+
+#-------------------------------------------------------------------------------
+# .PROC FMRIEngineUpdateRuns
+# Chooses one sequence from the sequence list loaded within the Ibrowser module 
+# .END
+#-------------------------------------------------------------------------------
+proc FMRIEngineUpdateRuns {} {
+    global FMRIEngine 
+
+    set runs [string trim $FMRIEngine(noOfRuns)]
+    if {$runs < 1} {
+        DevErrorWindow "No of runs must be at least 1."
+    } else { 
+        $FMRIEngine(gui,runListMenu) delete 0 end
+        set count 1
+        while {$count <= $runs} {
+            $FMRIEngine(gui,runListMenu) add command -label $count \
+                -command "FMRIEngineSelectRun $count"
+            incr count
+        }
+    }
+}
+
+
+proc FMRIEngineSelectRun {run} {
+    global FMRIEngine 
+
+    # configure menubutton
+    $FMRIEngine(gui,runListMenuButton) config -text $run
+    set FMRIEngine(currentSelectedRun) $run
+}
+
+
+proc FMRIEngineDeleteSeq-RunMatch {} {
+    global FMRIEngine 
+
+    set curs [$FMRIEngine(seqListBox) curselection]
+    if {$curs != ""} {
+        set first [lindex $curs 0] 
+        set last [lindex $curs end]
+        $FMRIEngine(seqListBox) delete $first $last
+    }
+}
+
+
+proc FMRIEngineAddSeq-RunMatch {} {
+    global FMRIEngine 
+
+    # Add a sequence-run match
+    if {! [info exists FMRIEngine(currentSelectedSequence)] ||
+        $FMRIEngine(currentSelectedSequence) == "none"} {
+        DevErrorWindow "Select a valid sequence."
+        return
+    }
+
+    if {! [info exists FMRIEngine(currentSelectedRun)] ||
+        $FMRIEngine(currentSelectedRun) == "none"} {
+        DevErrorWindow "Select a valid run."
+        return
+    }
+
+    set str \
+        "r$FMRIEngine(currentSelectedRun):$FMRIEngine(currentSelectedSequence)"
+    set i 0
+    set found 0
+    set size [$FMRIEngine(seqListBox) size]
+    while {$i < $size} {  
+        set v [$FMRIEngine(seqListBox) get $i] 
+        if {$v != ""} {
+            set i1 1 
+            set i2 [string first ":" $v]
+            set r [string range $v $i1 [expr $i2-1]] 
+            set r [string trim $r]
+
+            if {$r == $FMRIEngine(currentSelectedRun)} {
+                set found 1
+                break
+            }
+        }
+
+        incr i
+    }
+
+    if {$found} {
+        DevErrorWindow "The r$r has been specified."
+    } else {
+        $FMRIEngine(seqListBox) insert end $str 
+        set FMRIEngine($FMRIEngine(currentSelectedRun),sequenceName) \
+            $FMRIEngine(currentSelectedSequence)
+    }
 }
 
 
@@ -734,44 +1237,26 @@ proc FMRIEngineBuildUIForSelect {parent} {
 # Chooses one sequence from the sequence list loaded within the Ibrowser module 
 # .END
 #-------------------------------------------------------------------------------
-proc FMRIEngineSelectSequence {} {
+proc FMRIEngineSelectSequence {seq} {
     global FMRIEngine Ibrowser MultiVolumeReader
 
-    set ci [$FMRIEngine(seqsListBox) cursel]
-    set size [$FMRIEngine(seqsListBox) size]
-
-    if {[string length $ci] == 0} {
-        if {$size > 1} {
-            DevErrorWindow "Please select a sequence."
-            return
-        } else {
-            set ci 0 
-        }
+    # configure menubutton
+    $FMRIEngine(gui,sequenceMenuButton) config -text $seq
+    set FMRIEngine(currentSelectedSequence) $seq
+    if {$seq == "none"} {
+        return
     }
 
-    set cc [$FMRIEngine(seqsListBox) get $ci]
-    set l [string trim $cc]
+    set l [string trim $seq]
 
-    if {$l == "none"} {
-        DevErrorWindow "No sequence available."
-        return
-    } elseif {$l == "Loaded-in-fMRIEngine"} {
-        set FMRIEngine(firstMRMLid) $MultiVolumeReader(firstMRMLid) 
-        set FMRIEngine(lastMRMLid) $MultiVolumeReader(lastMRMLid)
-        set FMRIEngine(volumeExtent) $MultiVolumeReader(volumeExtent) 
-        set FMRIEngine(noOfVolumes) $MultiVolumeReader(noOfVolumes) 
-    } else {
-        set index [string last "-" $l]
-        set start [expr $index + 1]
-        set id [string range $l $start end]
-        set id [string trim $id]
-        set FMRIEngine(firstMRMLid) $Ibrowser($id,firstMRMLid)
-        set FMRIEngine(lastMRMLid) $Ibrowser($id,lastMRMLid)
-
-        set ext [[Volume($FMRIEngine(firstMRMLid),vol) GetOutput] GetWholeExtent]
-        set FMRIEngine(volumeExtent) $ext 
-        set FMRIEngine(noOfVolumes) \
-            [expr $FMRIEngine(lastMRMLid) - $FMRIEngine(firstMRMLid) + 1]
+    if {[info exists MultiVolumeReader(sequenceNames)]} {
+        set found [lsearch -exact $MultiVolumeReader(sequenceNames) $seq]
+        if {$found >= 0} {
+            set FMRIEngine(firstMRMLid) $MultiVolumeReader($seq,firstMRMLid) 
+            set FMRIEngine(lastMRMLid) $MultiVolumeReader($seq,lastMRMLid)
+            set FMRIEngine(volumeExtent) $MultiVolumeReader($seq,volumeExtent) 
+            set FMRIEngine(noOfVolumes) $MultiVolumeReader($seq,noOfVolumes) 
+        }
     }
 
     # Sets range for the volume slider
@@ -789,33 +1274,24 @@ proc FMRIEngineSelectSequence {} {
 proc FMRIEngineUpdateSequences {} {
     global FMRIEngine Ibrowser MultiVolumeReader 
 
-    # clears the listbox
-    set size [$FMRIEngine(seqsListBox) size]
-    $FMRIEngine(seqsListBox) delete 0 [expr $size - 1]
- 
-    # checks sequences from Ibrowser
-    set b1 [info exists Ibrowser(idList)] 
-    set n1 [expr {$b1 == 0 ? 0 : [llength $Ibrowser(idList)]}]
+    # clears the menu 
+    $FMRIEngine(gui,sequenceMenu) delete 0 end 
 
     # checks sequence loaded from fMRIEngine
-    set b2 [info exists MultiVolumeReader(noOfVolumes)] 
-    set n2 [expr {$b2 == 0 ? 0 : $MultiVolumeReader(noOfVolumes)}]
+    set b [info exists MultiVolumeReader(sequenceNames)] 
+    set n [expr {$b == 0 ? 0 : [llength $MultiVolumeReader(sequenceNames)]}]
 
-    set n [expr $n1 + $n2]
-    if {$n > 1} {
-        set i 1 
-        while {$i < $n1} {
-            set id [lindex $Ibrowser(idList) $i]
-            # $FMRIEngine(seqsListBox) insert end "$Ibrowser($id,name) \[id: $id\]" 
-            $FMRIEngine(seqsListBox) insert end "$Ibrowser($id,name)-$id" 
+    $FMRIEngine(gui,sequenceMenu) add command -label "none" \
+        -command "FMRIEngineSelectSequence none"
+
+    if {$n > 0} {
+        set i 0 
+        while {$i < $n} {
+            set name [lindex $MultiVolumeReader(sequenceNames) $i]
+            $FMRIEngine(gui,sequenceMenu) add command -label $name \
+                -command "FMRIEngineSelectSequence $name"
             incr i
         }
-
-        if {$n2 > 1} {
-            $FMRIEngine(seqsListBox) insert end "Loaded-in-fMRIEngine" 
-        }
-    } else {
-        $FMRIEngine(seqsListBox) insert end none 
     }
 }
 
@@ -831,10 +1307,10 @@ proc FMRIEngineBuildUIForLoad {parent} {
     global FMRIEngine Gui
 
     frame $parent.fTop -bg $Gui(activeWorkspace)
-    pack $parent.fTop -side top 
+    frame $parent.fBot -bg $Gui(activeWorkspace)
+    pack $parent.fTop $parent.fBot -side top 
  
     set f $parent.fTop
-
     # error if no private segment
     if {[catch "package require MultiVolumeReader"]} {
         DevAddLabel $f.lError \
@@ -846,6 +1322,13 @@ proc FMRIEngineBuildUIForLoad {parent} {
     }
 
     MultiVolumeReaderBuildGUI $f 1
+
+    set f $parent.fBot
+    set uselogo [image create photo -file \
+        $FMRIEngine(modulePath)/tcl/images/LogosForIbrowser.gif]
+    eval {label $f.lLogoImages -width 200 -height 45 \
+        -image $uselogo -justify center} $Gui(BLA)
+    pack $f.lLogoImages -side bottom -padx 0 -pady 0 -expand 0
 }
 
 
@@ -857,9 +1340,9 @@ proc FMRIEngineBuildUIForLoad {parent} {
 # .END
 #-------------------------------------------------------------------------------
 proc FMRIEngineScaleActivation {no} {
-    global Volume FMRIEngine
+    global Volume FMRIEngine MultiVolumeReader
 
-    if {[info exists FMRIEngine(allPValues)] == 0} {
+    if {! [info exists FMRIEngine(allPValues)]} {
         
         set i 10 
         while {$i >= 1} {
@@ -878,10 +1361,9 @@ proc FMRIEngineScaleActivation {no} {
         }
     }
 
-    if {[info exists FMRIEngine(noOfVolumes)] == 1} {
-
+    if {[info exists FMRIEngine(currentActVolID)]} {
         vtkCDF cdf
-        set dof [expr $FMRIEngine(noOfVolumes) - 1]
+        set dof [expr $MultiVolumeReader(noOfVolumes) - 1]
         # The index of list starts with 0
         set p [lindex $FMRIEngine(allPValues) [expr $no - 1]]
         set t [cdf p2t $p $dof]
@@ -890,20 +1372,18 @@ proc FMRIEngineScaleActivation {no} {
         set FMRIEngine(pValue) $p
         set FMRIEngine(tStat) $t
 
-        set index [MIRIADSegmentGetVolumeByName $FMRIEngine(actVolName)] 
-        if {$index > 0} {
 
+        set id $FMRIEngine(currentActVolID) 
+        if {$id > 0} {
             # map the t value into the range between 1 and 100
-            set value [expr 100 * ($t - $FMRIEngine(actLow)) / \
-                ($FMRIEngine(actHigh) - $FMRIEngine(actLow))]
+            set value [expr 100 * ($t - $FMRIEngine($id,actLow)) / \
+                ($FMRIEngine($id,actHigh) - $FMRIEngine($id,actLow))]
      
-            Volume($index,node) AutoThresholdOff
-            Volume($index,node) ApplyThresholdOn
-            Volume($index,node) SetLowerThreshold [expr round($value)] 
+            Volume($id,node) AutoThresholdOff
+            Volume($id,node) ApplyThresholdOn
+            Volume($id,node) SetLowerThreshold [expr round($value)] 
             MainVolumesSetParam ApplyThreshold 
             MainVolumesRender
-            # puts "low = $FMRIEngine(actLow)"
-            # puts "high = $FMRIEngine(actHigh)"
         }
     }
 }
@@ -939,6 +1419,8 @@ proc FMRIEngineSetImageFormat {imgFormat} {
 #-------------------------------------------------------------------------------
 proc FMRIEngineEnter {} {
     global FMRIEngine
+
+    FMRIEngineUpdateSequences
 
     #--- push all event bindings onto the stack.
     FMRIEnginePushBindings
@@ -1091,7 +1573,7 @@ proc FMRIEngineComputeActivationVolume {} {
     MainUpdateMRML
     RenderAll
     MainEndProgress
-
+ 
     FMRIEngine(actvolgen) RemoveObserver $obs1 
     FMRIEngine(actvolgen) RemoveObserver $obs2 
     FMRIEngine(actvolgen) RemoveObserver $obs3 
@@ -1174,10 +1656,7 @@ proc FMRIEnginePopBindings {} {
 proc FMRIEngineCreateBindings {} {
     global Gui Ev
 
-    EvDeclareEventHandler FMRIEngineSlicesEvents <ButtonPress-1> \
-        {set FMRIEngine(trackMotion) [expr {! $FMRIEngine(trackMotion)}]}
- 
-    EvDeclareEventHandler FMRIEngineSlicesEvents <Motion> \
+    EvDeclareEventHandler FMRIEngineSlicesEvents <1> \
         { FMRIEnginePopUpPlot %x %y }
            
     EvAddWidgetToBindingSet FMRISlice0Events $Gui(fSl0Win) {FMRIEngineSlicesEvents}
