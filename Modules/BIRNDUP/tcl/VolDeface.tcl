@@ -701,7 +701,7 @@ proc DefaceSortBySeries { datapath PatientID VisitID StudyUID} {
                 append pDir $DICOMFiles($i,ProjectID) 
                 set subjectDir BIRN_
                 append subjectDir $DICOMFiles($i,SubjectID) 
-                set path [file join $datapath $pDir $subjectDir $VisitID Study_$StudyUID "Raw Data"]
+                set path [file join $datapath $pDir $subjectDir $VisitID Study_$StudyUID "Raw_Data"]
                 
                 set num [llength $DICOMSeriesList ]
                 for {set idx 0} {$idx < $num} {incr idx} {
@@ -749,9 +749,8 @@ proc DefaceInvoke { parent idsnames study series fileNames } {
     global DefaceDir DefaceMaskDirList 
     global env
 
-    if { ![info exists env(DEFACE_DATA)] || \
-    [file isdirectory $env(DEFACE_DATA)] == 0 } {
-        set msg "1 Please set environmental variable DEFACE_DATA as"
+    if { ![info exists env(DEFACE_DATA)] || ![file isdirectory $env(DEFACE_DATA)] } {
+        set msg "Please set environmental variable DEFACE_DATA as"
         set msg "$msg the root directory of defaced data files.\n"
         set msg "$msg\nClick Ok to browse for directory."
         if { [tk_messageBox -message $msg -type "okcancel"] == "cancel" } {
@@ -763,6 +762,20 @@ proc DefaceInvoke { parent idsnames study series fileNames } {
         }
     }
     puts "DEFACE_DATA: $env(DEFACE_DATA)" 
+
+    if { ![info exists env(DCANON)] || ![file executable $env(DCANON)] } {
+        set msg "Please set environmental variable DCANON as"
+        set msg "$msg the executable of the dcanon program.\n"
+        set msg "$msg\nClick Ok to browse for file."
+        if { [tk_messageBox -message $msg -type "okcancel"] == "cancel" } {
+            return 0
+        }
+        set env(DCANON) [tk_getOpenFile -title DCANON]
+        if { $env(DCANON) == "" } {
+            return 0
+        }
+    }
+    puts "DCANON: $env(DCANON)" 
   
     set num [llength $DefaceMask]
     set ll_count 0
@@ -800,31 +813,25 @@ proc DefaceInvoke { parent idsnames study series fileNames } {
     
     DefaceSortBySeries $dataPath $patientid $VisitID $studyid
   
-    tk_messageBox -message "running mri_deface with series in ${DefaceDir} .... "
-    #DefaceDir is the series to be defaced
-    #set outdir "$DefaceDir" 
-    #set cmd "$env(DCANON_DIR)/mri_deface $dcmfile"
-    #set cmd "$cmd $env(DCANON_DIR)/talairach_mixed.gca"
-    #set cmd "$cmd $env(DCANON_DIR)/face.gca $outdir/strip.img"
-    #set ret [catch "exec $env(DCANON_DIR)/mri_deface $DefaceDir $env(DCANON_DIR)/talairach_mixed.gca $env(DCANON_DIR)/face.gca $outdir/strip.img res]
-    #set ret [catch  "exec $cmd res]
-    #puts $res
-    #puts "return code from mri_deface is: $ret"
-    #if { [linded $res end] != "minimization..."} {
-    #   puts stderr "error: mri_deface may have failed"
-    #}
+    puts "running dcanon --deface with series in ${DefaceDir} .... "; update
+    DefaceProgressExec $env(DCANON) -deface ${DefaceDir}
+    foreach s $DefaceMaskDirList {
+       puts "running dcanon --mask with series in $s  .... "; update
+       DefaceProgressExec $env(DCANON) -mask $s ${DefaceDir}-anon
+    }
+}
 
-    #puts "running mri_mask ..."
-    #foreach s $DefaceMaskDirList {
-    #   tk_messageBox -message  "running mri_mask with series in $s  .... "
-    #   #set cmd "mri_mask ...$s ..."
-    #   #set ret [catch "exec $cmd res]
-    #}
-
-    #tk_messageBox -message " $name --- $patientid \n $studyid \n $seriesid \n $fileNames" -title "DYW" -type ok
-    
-    #set Pressed OK
-    #destroy $parent
+#-------------------------------------------------------------------------------
+# .PROC DefaceProgressExec
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc DefaceProgressExec {args} {
+    set fp [open "| /bin/csh -c \"$args\" |& cat" r]
+    while { ![catch "pid $fp"] && ![eof $fp] } {
+        puts [gets $fp]; update
+    }
 }
 
 #-------------------------------------------------------------------------------
