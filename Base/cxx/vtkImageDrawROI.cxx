@@ -813,6 +813,102 @@ void vtkImageDrawROI::DrawPoints(vtkImageData *outData, int outExt[6])
 	}
 }
 
+//>> AT 01/17/01
+void vtkImageDrawROI::DrawCrosses(vtkImageData *outData, int outExt[6])
+{
+	int x, y, x1, x2, y1, y2;
+	unsigned char color[3], *ptr;
+	unsigned char *outPtr = (unsigned char *) \
+		outData->GetScalarPointerForExtent(outExt);
+	int r = this->PointRadius;
+	Point *p;
+	int nx, nc, nxnc;
+	int xMin, xMax, yMin, yMax;
+	xMin = outExt[0];
+	xMax = outExt[1];
+	yMin = outExt[2];
+	yMax = outExt[3];
+	nx = outExt[1] - outExt[0] + 1;
+	nc = outData->GetNumberOfScalarComponents();
+	nxnc = nx*nc;
+
+	p = this->firstPoint;
+	while (p)
+	{
+		if (p->IsSelected())
+			ConvertColor(this->SelectedPointColor, color);
+		else
+			ConvertColor(this->PointColor, color);
+
+		x1 = p->x - r;
+		x2 = p->x + r;
+		y1 = p->y - r;
+		y2 = p->y + r;
+		if (x1 >= xMin && x1 <= xMax && y1 >= yMin && y1 <= yMax &&
+		    x2 >= xMin && x2 <= xMax && y2 >= yMin && y2 <= yMax)
+		  {
+		    for(y = y1; y <= y2; y++)
+		      SET_PIXEL(p->x, y, color);
+		    
+		    for(x = x1; x <= x2; x++)
+		      SET_PIXEL(x, p->y, color);
+		  }
+		p = p->GetNext();
+	}
+}
+//<< AT 01/17/01
+
+//>> AT 01/19/01
+void vtkImageDrawROI::DrawBoxes(vtkImageData *outData, int outExt[6])
+{
+	int x, y, x1, x2, y1, y2;
+	unsigned char color[3], *ptr;
+	unsigned char *outPtr = (unsigned char *) \
+		outData->GetScalarPointerForExtent(outExt);
+	int r = this->PointRadius;
+	Point *p;
+	int nx, nc, nxnc;
+	int xMin, xMax, yMin, yMax;
+	xMin = outExt[0];
+	xMax = outExt[1];
+	yMin = outExt[2];
+	yMax = outExt[3];
+	nx = outExt[1] - outExt[0] + 1;
+	nc = outData->GetNumberOfScalarComponents();
+	nxnc = nx*nc;
+
+	p = this->firstPoint;
+	while (p)
+	{
+		if (p->IsSelected())
+			ConvertColor(this->SelectedPointColor, color);
+		else
+			ConvertColor(this->PointColor, color);
+
+		x1 = p->x - r;
+		x2 = p->x + r;
+		y1 = p->y - r;
+		y2 = p->y + r;
+		if (x1 >= xMin && x1 <= xMax && y1 >= yMin && y1 <= yMax &&
+		    x2 >= xMin && x2 <= xMax && y2 >= yMin && y2 <= yMax)
+		  {
+		    for(y = y1; y <= y2; y++)
+		      {
+			SET_PIXEL(x1, y, color);
+			SET_PIXEL(x2, y, color);
+		      }
+		    
+		    for(x = x1; x <= x2; x++)
+		      {
+			SET_PIXEL(x, y1, color);
+			SET_PIXEL(x, y2, color);
+		      }
+		  }
+		p = p->GetNext();
+	}
+}
+//<< AT 01/19/01
+
 //----------------------------------------------------------------------------
 // Description:
 // this is cool
@@ -862,6 +958,14 @@ int x1, *inExt;
 		case ROI_SHAPE_POINTS:
 			DrawPoints(outData, outExt);
 			break;
+		//>> AT 01/17/01 01/19/01
+		case ROI_SHAPE_CROSSES:
+		  DrawCrosses(outData, outExt);
+		  break;
+		case ROI_SHAPE_BOXES:
+		  DrawBoxes(outData, outExt);
+		  break;
+		//<< AT 01/17/01 01/19/01
 		}
 	}
 

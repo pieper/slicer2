@@ -35,6 +35,10 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #define ROI_SHAPE_POLYGON 1
 #define ROI_SHAPE_LINES   2
 #define ROI_SHAPE_POINTS  3
+//>> AT 01/17/01 01/19/01
+#define ROI_SHAPE_CROSSES 4
+#define ROI_SHAPE_BOXES   5
+//<< AT 01/17/01 01/19/01
 
 class VTK_EXPORT vtkImageDrawROI : public vtkImageInPlaceFilter
 {
@@ -89,11 +93,33 @@ public:
 	void SetShapeToPoints() {
 		this->Shape = ROI_SHAPE_POINTS; this->Modified();};
 	int GetShape() {return this->Shape;};
-	char *GetShapeString() {switch (this->Shape) {
+	// >> AT 01/17/01 01/19/01
+	void SetShapeToCrosses() 
+	  {
+	    this->Shape = ROI_SHAPE_CROSSES;
+	    this->Modified();
+	  }
+	void SetShapeToBoxes() 
+	  {
+	    this->Shape = ROI_SHAPE_BOXES;
+	    this->Modified();
+	  }
+	/*char *GetShapeString() {switch (this->Shape) {
 		case ROI_SHAPE_POLYGON: return "Polygon";
 		case ROI_SHAPE_LINES: return "Lines";
 		case ROI_SHAPE_POINTS: return "Points";
-		default: return "None";};};
+		default: return "None";};};*/
+	char *GetShapeString()
+	  {
+	    switch (this->Shape) {
+	    case ROI_SHAPE_POLYGON: return "Polygon";
+	    case ROI_SHAPE_LINES: return "Lines";
+	    case ROI_SHAPE_POINTS: return "Points";
+	    case ROI_SHAPE_CROSSES: return "Crosses";
+	    case ROI_SHAPE_BOXES: return "Boxes";
+	    default: return "None";}
+	  }
+	// << AT 01/17/01 01/19/01
 
 	// Description:
 	// Get the points from the contour drawn on the slice.
@@ -129,7 +155,10 @@ protected:
 	void DrawPoints(vtkImageData *outData, int extent[6]);
 	void DrawLines(vtkImageData *outData, int extent[6]);
 	void DrawSelectBox(vtkImageData *outData, int extent[6]);
-
+	//>> AT 01/17/01 01/19/01
+	void DrawCrosses(vtkImageData *outData, int extent[6]);
+	void DrawBoxes(vtkImageData *outData, int extent[6]);
+	//<< AT 01/17/01 01/19/01
 	// Not threaded because its too simple of a filter
 	void Execute(vtkImageData *inData, vtkImageData *outData);
 };
