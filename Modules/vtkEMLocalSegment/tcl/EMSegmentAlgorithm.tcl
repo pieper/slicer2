@@ -47,7 +47,7 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS. 
 #
 #===============================================================================
-
+ 
 #-------------------------------------------------------------------------------
 # .PROC  EMSegmentSetVtkSuperClassSetting
 # Setting up everything for the super classes  
@@ -98,14 +98,9 @@ proc EMSegmentSetVtkSuperClassSetting {SuperClass NumInputImagesSet } {
       }
 
       for {set y 0} {$y < $EMSegment(NumInputChannel)} {incr y} {
-          if {$EMSegment(SegmentMode)} {
-             EMSegment(vtkEMSegment) SetLogMu $EMSegment(Cattrib,$i,LogMean,$y) $y
-             for {set x 0} {$x < $EMSegment(NumInputChannel)} {incr x} {
-               EMSegment(vtkEMSegment) SetLogCovariance $EMSegment(Cattrib,$i,LogCovariance,$y,$x) $y $x
-             }
-          } else {
-             EMSegment(vtkEMSegment) SetMu $EMSegment(Cattrib,$i,LogMean,[expr $y+1]) $i
-             EMSegment(vtkEMSegment) SetSigma $EMSegment(Cattrib,$i,LogCovariance,$y,$y) $i 
+          EMSegment(vtkEMSegment) SetLogMu $EMSegment(Cattrib,$i,LogMean,$y) $y
+          for {set x 0} {$x < $EMSegment(NumInputChannel)} {incr x} {
+            EMSegment(vtkEMSegment) SetLogCovariance $EMSegment(Cattrib,$i,LogCovariance,$y,$x) $y $x
           }
       }
       if {$EMSegment(IntensityAvgClass) == $EMSegment(Cattrib,$i,Label)} {
@@ -199,8 +194,7 @@ proc EMSegmentSetVtkClassSettingOld {} {
 proc EMSegmentAlgorithmStart { } {
    global EMSegment Volume 
    set NumInputImagesSet 0
-   if {$EMSegment(SegmentMode) > 0} {
-       # EMLocalSegmentation: Multiple Input Images
+   # EMLocalSegmentation: Multiple Input Images
        if {$EMSegment(SegmentMode) == 1} {vtkImageEMLocalSegmenter EMSegment(vtkEMSegment) 
        } else {vtkImageEMPrivateSegmenter EMSegment(vtkEMSegment) }
        # How many input images do you have
@@ -236,32 +230,6 @@ proc EMSegmentAlgorithmStart { } {
        } else {
           EMSegmentSetVtkClassSettingOld
        }
-   } else {
-       # EM Specific Information - Simple EM Algorithm
-       vtkImageEMSegmenter EMSegment(vtkEMSegment)    
-       EMSegment(vtkEMSegment) SetNumClasses     [llength $EMSegment(Cattrib,0,ClassList)]
-       EMSegment(vtkEMSegment) SetImgTestNo       -1 
-       EMSegment(vtkEMSegment) SetImgTestDivision 0
-       EMSegment(vtkEMSegment) SetImgTestPixel    0
-       # Transfer image information
-       EMSegment(vtkEMSegment) SetInput [Volume([lindex $EMSegment(SelVolList,VolumeList) 0],vol) GetOutput]
-       set xindex 1 
-       foreach i $EMSegment(Cattrib,0,ClassList) {
-          EMSegment(vtkEMSegment) SetProbability  $EMSegment(Cattrib,$i,Prob)              $xindex
-          EMSegment(vtkEMSegment) SetMu           $EMSegment(Cattrib,$i,LogMean,0)         $xindex
-          EMSegment(vtkEMSegment) SetSigma        $EMSegment(Cattrib,$i,LogCovariance,0,0) $xindex 
-          EMSegment(vtkEMSegment) SetLabel        $EMSegment(Cattrib,$i,Label)             $xindex
-          # Reads in the value for each class individually
-          set yindex 1
-          foreach j $EMSegment(Cattrib,0,ClassList) { 
-             for {set k 0} { $k< 6} {incr k} {
-               EMSegment(vtkEMSegment) SetMarkovMatrix $EMSegment(Cattrib,0,CIMMatrix,$i,$j,[lindex $EMSegment(CIMList) $k]) [expr $k+1] $yindex $xindex
-             }
-             incr yindex
-          }
-          incr xindex
-       }
-   }
 
    #----------------------------------------------------------------------------
    # Transfering General Information
