@@ -140,9 +140,22 @@ switch $env(BUILD) {
 set env(TCL_LIBRARY) $env(SLICER_HOME)/Lib/$env(BUILD)/ActiveTcl-8.4.1/lib/tcl8.4
 set env(TK_LIBRARY) $env(SLICER_HOME)/Lib/$env(BUILD)/ActiveTcl-8.4.1/lib/tk8.4
 
+#
 # add the default search locations for tcl packages
+#  (window has special tcl packages depending on build type)
+#
+switch $env(BUILD) {
+    "solaris8" -
+    "redhat7.3" -
+    "Darwin" {
+        set env(TCLLIBPATH) "$env(VTK_BIN_DIR)/Wrapping/Tcl $env(TCLLIBPATH)"
+    }
+    "Win32VC7" {
+        set env(TCLLIBPATH) "$env(VTK_BIN_DIR)/Wrapping/Tcl/Debug $env(TCLLIBPATH)"
+    }
+}
+# same for all platforms
 set env(TCLLIBPATH) "$env(SLICER_HOME)/Base/Wrapping/Tcl/vtkSlicerBase $env(TCLLIBPATH)"
-set env(TCLLIBPATH) "$env(VTK_BIN_DIR)/Wrapping/Tcl $env(TCLLIBPATH)"
 
 
 #
