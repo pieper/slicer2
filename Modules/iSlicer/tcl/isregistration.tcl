@@ -79,7 +79,12 @@ if { [itcl::find class isregistration] == "" } {
         itk_option define -verbose verbose Verbose 1
 
         variable _name ""
-        variable _lastmatrix ""
+    # is this the first time we are iterating
+    variable _firsttime 1
+
+    # the m_time of matrix being altered
+    # keep track so we can see if it was changed
+        variable _mat_m_time  -1
 
         # widgets
         variable _controls ""
@@ -97,7 +102,11 @@ if { [itcl::find class isregistration] == "" } {
         variable _sourcenorm ""
 
         method step {} {}
-        method matrix {} {}
+        method stringmatrix { mat4x4 } {}
+    method getP1 {} {}
+    method getP2 {} {}
+        method update_slicer_mat {} {}
+        method set_init_mat {} {}
     }
 }
 
@@ -176,14 +185,24 @@ itcl::body isregistration::constructor {args} {
     catch "$_targetcast Delete"
     catch "$_targetnorm Delete"
 
+    ## hack by Samson
+    set _targetchangeinfo ::targetchangeinfo_$_name
+    set _sourcechangeinfo ::sourcechangeinfo_$_name
+    catch "$_targetchangeinfo Delete"
+    catch "$_sourcechangeinfo Delete"
+
     vtkImageCast $_targetcast
     $_targetcast SetOutputScalarTypeToFloat
     $_targetcast SetInput [$_targetvol imagedata]
-    ### big hack by Samson -- turned off
-    ### $_targetcast SetInput [Volume($Matrix(refVolume),vol) GetOutput]
+
+    ### big hack by Samson -- turned on
+    vtkImageChangeInformation $_targetchangeinfo
+    $_targetchangeinfo CenterImageOn
+    $_targetchangeinfo SetInput [Volume($Matrix(refVolume),vol) GetOutput]
+    $_targetcast SetInput [$_targetchangeinfo GetOutput]
+
     vtkITKNormalizeImageFilter $_targetnorm
     $_targetnorm SetInput [$_targetcast GetOutput]
-
 
     ##
     ## Cast source image to float and normalize
@@ -196,8 +215,13 @@ itcl::body isregistration::constructor {args} {
     vtkImageCast $_sourcecast
     $_sourcecast SetOutputScalarTypeToFloat
     $_sourcecast SetInput [$_sourcevol imagedata]
-    ### big hack by Samson -- turned off
-    ### $_sourcecast SetInput [Volume($Matrix(volume),vol) GetOutput]
+
+    ### big hack by Samson -- turned on
+    vtkImageChangeInformation $_sourcechangeinfo
+    $_sourcechangeinfo CenterImageOn
+    $_sourcechangeinfo SetInput [Volume($Matrix(volume),vol) GetOutput]
+    $_sourcecast SetInput [$_sourcechangeinfo GetOutput]
+
     vtkITKNormalizeImageFilter $_sourcenorm
     $_sourcenorm SetInput [$_sourcecast GetOutput]
 
@@ -344,11 +368,9 @@ itcl::body isregistration::step {} {
 
     # set for MultiResStuff
     foreach iter  $itk_option(-iterations) {
-#        puts "$_reg SetNextMaxNumberOfIterations $iter"
         $_reg SetNextMaxNumberOfIterations $iter
     }
     foreach rate $itk_option(-learningrate) {
-#        puts "$_reg SetNextLearningRate  $rate"
         $_reg SetNextLearningRate  $rate
     }
 
@@ -358,23 +380,7 @@ itcl::body isregistration::step {} {
        return
      }
 
-    #
-    # Get the current matrix - if it's different from the
-    # the last matrix we set, copy it in and re-init reg 
-    #
-
-    set t $itk_option(-transform)
-
-    ## The first time through, we need to set the matrix
-    if { $_lastmatrix != [Matrix($t,node) GetMatrix] } {
-        $_matrix DeepCopy [[Matrix($t,node) GetTransform] GetMatrix]
-        if {$itk_option(-verbose)} {
-            set mat [Matrix($t,node) GetMatrix]
-            puts "setting matrix $mat"
-        }
-        $_matrix Invert
-        $_reg Initialize $_xform
-    }
+     $this set_init_mat
 
     $_reg Modified
     $_reg Update
@@ -383,43 +389,174 @@ itcl::body isregistration::step {} {
         puts "Metric [$_reg GetMetricValue]"
     }
 
-    ## Call the matrix command
-    set results_mat [$this matrix]
-    Matrix($t,node) SetMatrix $results_mat
-    if {$itk_option(-verbose)} {
-        puts "the last matrix is $_lastmatrix"
-        puts "resulting mat: $results_mat"
-        puts [Matrix($t,node) GetMatrix]
-    }
-    set _lastmatrix $results_mat
-
+    $this update_slicer_mat
 
     # Update MRML and display
     MainUpdateMRML
     RenderAll
+
+    # the next iteration will not be the first iter...
+    set _firsttime 0;
+}
+
+
+#-------------------------------------------------------------------------------
+# METHOD: update_slicer_mat
+#
+# DESCRIPTION: set the slicer matrix appropriately
+#
+# The matrix M returned by the registration takes vectors r1 from a space 
+# centered on the center of the image, in mm space, and maps it to space r2
+# centered on the center of the target image, in mm space
+#
+#  r2 <- M r1
+#
+# We want a matrix M' from Ras to Ras space. This is simply the Position Matrix
+# P1 and P2 (for each volume)
+#
+#  R2 <- M' R1,  R1 = P1 r1, R2 = P2 r2
+#  P2 r2 <- M' P1 r1
+# So we conclude
+#  M = P2^-1 M'P1
+#
+# or M' = P2 M P1^-1
+#
+#-------------------------------------------------------------------------------
+
+itcl::body isregistration::update_slicer_mat {} {
+
+    set t $itk_option(-transform)
+
+    ## Call the matrix command
+
+    set mat ::tmpmatrix_$_name
+    catch "$mat Delete"
+    vtkMatrix4x4 $mat
+
+    $mat DeepCopy [$_reg GetMatrix]
+    puts [$this stringmatrix $mat]
+    $mat Multiply4x4 [$this getP2] $mat $mat
+    puts "intermediate"
+    puts [$this stringmatrix $mat]
+
+    set tmpnode ::tmpnode_$_name
+    catch "$tmpnode Delete"
+    vtkMrmlVolumeNode $tmpnode
+    $tmpnode SolveABeqCforA $mat [$this getP1] $mat
+
+    Matrix($t,node) SetMatrix [$this stringmatrix $mat]
+
+    if {$itk_option(-verbose)} {
+    set results_mat [$this stringmatrix [$_reg GetMatrix] ]
+        puts "resulting mat: $results_mat"
+    set tmp_mat [Matrix($t,node) GetMatrix]
+        puts "actually set $tmp_mat"
+    }
+
+    $tmpnode Delete
+    $mat Delete
+
+    set _mat_m_time [[Matrix($t,node) GetTransform] GetMTime]
 }
 
 #-------------------------------------------------------------------------------
-# METHOD: matrix
+# METHOD: set_init_mat
 #
-# DESCRIPTION: return the current registration matrix as 16 floats
+# DESCRIPTION: set the matrix from the slicer matrix
+#
+# Using the logic from update_slicer_mat, M = P2^-1 M'P1
+#
+#
 #-------------------------------------------------------------------------------
 
-itcl::body isregistration::matrix {} {
+itcl::body isregistration::set_init_mat {} {
 
-    set m ::tmpmatrix_$_name
-    catch "$m Delete"
-    vtkMatrix4x4 $m
-    $m DeepCopy [$_reg GetMatrix] 
-    $m Invert
+    #
+    # Get the current matrix - if this is the first time through
+    # OR someone has edited it since the last iteration
+    #
+
+    set t $itk_option(-transform)
+
+    if { $_firsttime == 1 || [[Matrix($t,node) GetTransform] GetMTime] != $_mat_m_time } {
+    set mat ::tmpmatrix_$_name
+    catch "$mat Delete"
+    vtkMatrix4x4 $mat
+
+        $mat DeepCopy [[Matrix($t,node) GetTransform] GetMatrix]
+    puts [$this stringmatrix $mat]
+    puts [$this stringmatrix [$this getP1]]
+    puts [$this stringmatrix [$this getP2]]
+    $mat Multiply4x4 $mat [$this getP1] $mat
+    puts "multiply 1"
+    puts [$this stringmatrix $mat]
+
+    ## solve the system of equations
+    set tmpnode ::tmpnode_$_name
+    catch "$tmpnode Delete"
+    vtkMrmlVolumeNode $tmpnode
+    $tmpnode SolveABeqCforB [$this getP2] $_matrix $mat
+
+    $tmpnode Delete
+    $mat Delete
+
+        $_reg Initialize $_xform
+    
+        if {$itk_option(-verbose)} {
+            set matstring [Matrix($t,node) GetMatrix]
+            puts "input matrix $matstring"
+        set matstring [$this stringmatrix $_matrix ]
+        puts "transformed input matrix $matstring"
+        set matstring [$this stringmatrix [$_reg GetMatrix ]]
+        puts "transformed input matrix $matstring"
+        }
+    
+    ## keep track of MTime just in case user updates that transform...
+    set _mat_m_time [[Matrix($t,node) GetTransform] GetMTime]
+    }
+}
+
+
+#-------------------------------------------------------------------------------
+# METHOD: getP1
+#
+# DESCRIPTION: return a matrix for ...
+#-------------------------------------------------------------------------------
+
+itcl::body isregistration::getP1 {  } {
+    global Matrix
+
+    return [Volume($Matrix(volume),node) GetPosition]
+}
+
+#-------------------------------------------------------------------------------
+# METHOD: getP2
+#
+# DESCRIPTION: return a matrix for ...
+#-------------------------------------------------------------------------------
+
+itcl::body isregistration::getP2 {  } {
+    global Matrix
+
+    return [Volume($Matrix(refVolume),node) GetPosition]
+}
+
+
+
+#-------------------------------------------------------------------------------
+# METHOD: stringmatrix
+#
+# DESCRIPTION: return a  matrix as 16 floats
+#-------------------------------------------------------------------------------
+
+itcl::body isregistration::stringmatrix { mat4x4 } {
 
     set mat ""
     for {set i 0} {$i < 4} {incr i} {
         for {set j 0} {$j < 4} {incr j} {
-            set mat "$mat [$m GetElement $i $j]"
+            set mat "$mat [$mat4x4 GetElement $i $j]"
         }
     }
-    $m Delete
     return [string trimleft $mat " "]
 }
 
