@@ -151,6 +151,7 @@ proc DefaceFindDICOM2 { StartDir AddDir Pattern } {
         }
     }
     
+    catch "parser Delete"
     vtkDCMParser parser
     foreach match [glob -nocomplain -- $Pattern] {
         #puts stdout [file join $StartDir $match]
@@ -206,7 +207,7 @@ proc DefaceFindDICOM2 { StartDir AddDir Pattern } {
                        set StudyInstanceUID [string range $StudyInstanceUID [expr $zeros - 4] end]
                     } else {
                        set zeros [expr 4 - $zeros]
-                       for {set lloop $zeros} {$lloop > 0} {inrc lloop -1} {
+                       for {set lloop $zeros} {$lloop > 0} {incr lloop -1} {
                           set StudyInstanceUID "0$StudyInstanceUID"
                        }
                     }             
@@ -817,7 +818,7 @@ proc DefaceInvoke { parent idsnames study series fileNames } {
     DefaceProgressExec $env(DCANON) -deface ${DefaceDir}
     foreach s $DefaceMaskDirList {
        puts "running dcanon --mask with series in $s  .... "; update
-       DefaceProgressExec $env(DCANON) -mask $s ${DefaceDir}-anon
+       DefaceProgressExec $env(DCANON) -mask ${DefaceDir}-anon $s
     }
 }
 
