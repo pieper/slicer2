@@ -1521,14 +1521,6 @@ proc DICOMReadHeaderValues { filename } {
             puts stderr "No PixelSize found - using 1.0 ($filename)"
         }
 
-        if { [parser FindElement 0x0018 0x0050] == "1" } {
-            set NextBlock [lindex [split [parser ReadElement]] 4]
-            set Volume(sliceThickness) [parser ReadFloatAsciiNumeric $NextBlock]
-        } else  {
-            set Volume(sliceThickness) 1.0
-            puts stderr "No SliceThickness found - using 1.0 ($filename)"
-        }
-
         if { [parser FindElement 0x0018 0x1120] == "1" } {
             set NextBlock [lindex [split [parser ReadElement]] 4]
             set Volume(gantryDetectorTilt) [parser ReadFloatAsciiNumeric $NextBlock]
@@ -1556,6 +1548,33 @@ proc DICOMReadHeaderValues { filename } {
         } else {
             set Volume(littleEndian) 1
         }
+
+        if { [parser FindElement 0x0018 0x0050] == "1" } {
+            set NextBlock [lindex [split [parser ReadElement]] 4]
+            set readThickness [parser ReadFloatAsciiNumeric $NextBlock]
+        } else  {
+            set readThickness 1.0
+            puts stderr "No SliceThickness found - using 1.0 ($filename)"
+        }
+        # check to see if the sliceThickness was already set, and not to the default
+
+        # from MainVolumes.tcl, getting the default thickness for a volume
+        vtkMrmlVolumeNode voldicomDefaultVol
+        set defspacing [voldicomDefaultVol GetSpacing]
+        set defthickness [lindex $defspacing 2]
+        voldicomDefaultVol Delete
+
+        if {$Volume(sliceThickness) != $defthickness && $Volume(sliceThickness) != $readThickness} {
+            set answer [tk_messageBox -message "Slice thickness is already set to $Volume(sliceThickness). The value in the file header is $readThickness.\nWould you like to use the value from the header ($readThickness)?" \
+                    -type yesno -icon question -title "Slice thickness question."]
+            if {$answer == "yes"} {
+                set Volume(sliceThickness) $readThickness
+            }
+        } else {
+            # just use the read value
+            set Volume(sliceThickness) $readThickness
+        }
+
 
         # Number of Scalars and ScalarType 
 
@@ -1622,6 +1641,7 @@ proc DICOMPredictScanOrder { file1 file2 } {
         return
     }
 
+    catch "parser Delete"
     vtkDCMParser parser
 
     set found [parser OpenFile $file1]
