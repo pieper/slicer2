@@ -1,10 +1,10 @@
 TestAllMrml
+TestMrmlVolume
 TestCopy
 TestImageBandedDistanceMap  NO ?????   vtkImageBandedDistanceMap
 TestImageDrawROI
 TestImageEMMarkov
 TestImageEMSegment
-TestImageEditor         NO   ?????       vtkImageEditor
 TestImageFrameSource
 TestImageLiveWire
 TestImageLiveWireEdgeWeights
@@ -25,6 +25,6 @@ TestImageWeightedSum    OK   goot_test   vtkImageWeightedSum
 TestImageZoom2D         OK   bad_test    vtkImageZoom2D
 TestIndirectLookupTable OK   not_sure     vtkIndirectLookupTable
 TestLabelChange         OK   good_test    vtkImageLabelChange
-TestMrmlVolume
+TestImageEditor         ??  looks_good  vtkImageEditor
 TestPlot                ??  looks_good    vtkImageBimodalAnalysis_vtkImagePlot
 TestImageCCA            NO   ???????      vtkImageConnectivity
