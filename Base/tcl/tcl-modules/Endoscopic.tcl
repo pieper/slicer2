@@ -545,8 +545,11 @@ proc EndoscopicCreateLandmarks {} {
 
     foreach l "cLand fLand" {
 
-	vtkFloatPoints    Endoscopic($l,inputPoints)  
-	vtkFloatPoints    Endoscopic($l,points)
+	vtkPoints    Endoscopic($l,inputPoints)  
+	vtkPoints    Endoscopic($l,points)
+	Endoscopic($l,inputPoints)  SetDataTypeToFloat
+	Endoscopic($l,points) SetDataTypeToFloat
+
 	vtkPolyData       Endoscopic($l,polyData)       
 	vtkSphereSource   Endoscopic($l,source)        
 	vtkGlyph3D        Endoscopic($l,glyph)        
