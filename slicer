@@ -11,7 +11,7 @@ else
 endif
 
 if (${?DISPLAY} == 0) then
-	setenv DISPLAY `${SLICER_HOME}/program/bin/finddisplay`
+    setenv DISPLAY `${SLICER_HOME}/program/bin/finddisplay`
 endif
 setenv FINDDISPLAY `${SLICER_HOME}/program/bin/finddisplay`
 
