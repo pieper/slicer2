@@ -2,11 +2,12 @@
 # ./slicer2-linux-x86 --exec ValidationSelectWindow
 set ::Validation(SubjectFolder) /nas/nas0/miriad/subjects
 set ::Validation(Subject) ""
+set ::Validation(XMLPrefix) Visit_001/Study_0001/DerivedData/SPL/EM-reg_LONIbAb__params_params-sp-duke-2004-02-19_ic/Validation.xml
 
 proc ValidationLoadSubject {} {
     if { $::Validation(Subject) != "" } { 
     set ::Mrml(dir) [file join $::Validation(SubjectFolder) $::Validation(Subject)] 
-    set ::File(filePrefix) Visit_001/Study_0001/DerivedData/SPL/EM-reg_LONIbAb__params_params-sp-duke-2004-02-19_ic/Validation.xml
+    set ::File(filePrefix) $::Validation(XMLPrefix)
     ValidationLoadXML 
     ValidationSetView
     } else {
@@ -70,10 +71,25 @@ proc ValidationSelectWindow {} {
     eval {label $f.fSelect.lText -text "Select Subject:  " } $::Gui(WTA)
     eval {menubutton $f.fSelect.mbSubject -text "None"  -menu $f.fSelect.mbSubject.m -width 13} $::Gui(WMBA) 
     pack $f.fSelect.lText  $f.fSelect.mbSubject -side left
-    if {[catch { set SubjectList [exec ls -1 $::Validation(SubjectFolder) | grep 0003 ] } ErrorMessage] } {
+    if {[catch { set SubjectList [glob $::Validation(SubjectFolder)/* ] } ErrorMessage] } {
        DevErrorWindow "No subjects in $::Validation(SubjectFolder) ErrorMessage: $ErrorMessage" 
        return
     }
+    set NewSubjectList ""
+    foreach SUBJECT $SubjectList {
+    set SUBJECT [file tail $SUBJECT]
+    # puts "$SUBJECT [string first "0003" $SUBJECT] [file exists [file join $::Validation(SubjectFolder) $SUBJECT $::Validation(XMLPrefix)]]
+    if {([string first "0003" $SUBJECT] == 0) && [file exists [file join $::Validation(SubjectFolder) $SUBJECT $::Validation(XMLPrefix)]]} {
+        lappend NewSubjectList $SUBJECT
+    }
+    } 
+    if {$NewSubjectList == "" } {
+    DevErrorWindow "No proper subjects found in $::Validation(SubjectFolder) where the following file exists $::Validation(XMLPrefix)" 
+    return 
+    } else {
+    set SubjectList $NewSubjectList
+    } 
+
     TooltipAdd  $f.fSelect.mbSubject "Select Subject to be validated"
 
     # Define Menu selection 
@@ -93,7 +109,6 @@ proc ValidationSelectWindow {} {
     set SelectedSubjectList  [lrange $SubjectList $Min $Max] 
     set index 0
     foreach SUBJECT  $SelectedSubjectList {
-        set SUBJECT [file tail $SUBJECT]
         $f.fSelect.mbSubject.m.m$i add command -label $SUBJECT -command "set ::Validation(Subject) $SUBJECT; $f.fSelect.mbSubject configure -text $SUBJECT"
         incr index
     }
