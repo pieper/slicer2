@@ -14,6 +14,10 @@ if {[info exists env(SLICER_HOME)] == 0 || $env(SLICER_HOME) == ""} {
 	set prog [file join $env(SLICER_HOME) program]
 }
 
+# Set the SLICER_DOC environment variable to output html files 
+# into another doc directory.  If you want them to go into /mystuff/doc,
+# set SLICER_DOC to mystuff.
+
 if {[info exists env(SLICER_DOC)] == 0 || $env(SLICER_DOC) == ""} {
 	set outputdir [file dirname $prog]
 } else {
