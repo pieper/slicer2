@@ -81,7 +81,7 @@ proc ModelMakerInit {} {
 
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.43 $} {$Date: 2003/06/03 20:49:24 $}]
+        {$Revision: 1.44 $} {$Date: 2003/07/08 17:32:05 $}]
 
     # Create
     set ModelMaker(idVolume) $Volume(idNone)
@@ -95,9 +95,14 @@ proc ModelMakerInit {} {
     # Edit
     set ModelMaker(edit,smooth) 20
     set ModelMaker(prefix) ""
+
+    #### Splits normals at sharp points by point duplication
     ## Can be "Off" or "On"
     set ModelMaker(SplitNormals) On
 
+    #### Calculates the Point Normals
+    ## Can be "Off" or "On"
+    set ModelMaker(PointNormals) On
 }
 
 #-------------------------------------------------------------------------------
@@ -534,6 +539,7 @@ proc ModelMakerTransform {volume} {
     
     set p normals
     vtkPolyDataNormals $p
+    $p ComputePointNormals$ModelMaker(PointNormals)
     $p SetInput [transformer GetOutput]
     $p SetFeatureAngle 60
     $p Splitting$ModelMaker(SplitNormals)
@@ -722,7 +728,7 @@ $ModelMaker(n,mcubes) polygons reduced to $ModelMaker(n,decimator)."
 
 
     set name [Model($m,node) GetName]
-    tk_messageBox -message "The model '$name' has been created."
+    # tk_messageBox -message "The model '$name' has been created."
 }
 
 #-------------------------------------------------------------------------------
@@ -801,6 +807,7 @@ proc ModelMakerSmooth {m iterations} {
 
     set p normals
     vtkPolyDataNormals $p
+    $p ComputePointNormals$ModelMaker(PointNormals)
     $p SetInput [smoother GetOutput]
     $p SetFeatureAngle 60
     $p Splitting$ModelMaker(SplitNormals)
@@ -1055,6 +1062,7 @@ proc ModelMakerMarch {m v decimateIterations smoothIterations} {
 
     set p normals
     vtkPolyDataNormals $p
+    $p ComputePointNormals$ModelMaker(PointNormals)
     $p SetInput [transformer GetOutput]
     $p SetFeatureAngle 60
     $p Splitting$ModelMaker(SplitNormals)
