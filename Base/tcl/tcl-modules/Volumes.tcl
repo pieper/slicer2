@@ -99,7 +99,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.90 $} {$Date: 2003/10/03 17:08:34 $}]
+            {$Revision: 1.91 $} {$Date: 2003/12/19 13:41:45 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -948,7 +948,7 @@ proc VolumesPropsApply {} {
         return
     }
     if {[ValidateName $Volume(name)] == 0} {
-        tk_messageBox -message "The name can consist of letters, digits, dashes, or underscores"
+        tk_messageBox -message "The name can consist of letters, digits, dashes, or underscores.\nName \"$Volume(name)\" not valid."
         return
     }
 
