@@ -98,7 +98,7 @@ proc MainMrmlInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainMrml \
-        {$Revision: 1.77 $} {$Date: 2003/05/14 22:26:52 $}]
+        {$Revision: 1.78 $} {$Date: 2003/05/14 22:33:04 $}]
 
     set Mrml(colorsUnsaved) 0
 }
@@ -1864,7 +1864,7 @@ proc MainMrmlRelativity {oldRoot} {
 proc MainMrmlWrite {filename} {
     global Mrml
 
-    if { ![file writable $filename] } {
+    if { ![file writable [file dirname $filename]] } {
         DevErrorWindow "Can't write to $filename"
         return
     }
